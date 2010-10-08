@@ -19,7 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "vpi_user.h"
+# include  "sv_vpi_user.h"
 # include  "vvp_net.h"
 # include  "config.h"
 
@@ -243,7 +243,6 @@ struct __vpiSignal {
       int msb, lsb;
 	/* Flags */
       unsigned signed_flag  : 1;
-      unsigned isint_       : 1; // original type was integer
       unsigned is_netarray  : 1; // This is word of a net array
 	/* The represented value is here. */
       vvp_net_t*node;
@@ -251,12 +250,14 @@ struct __vpiSignal {
 extern unsigned vpip_size(__vpiSignal *sig);
 extern struct __vpiScope* vpip_scope(__vpiSignal*sig);
 
-extern vpiHandle vpip_make_int(const char*name, int msb, int lsb,
+extern vpiHandle vpip_make_int2(const char*name, int msb, int lsb,
 			       vvp_net_t*vec);
-extern vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
+extern vpiHandle vpip_make_int4(const char*name, int msb, int lsb,
+			       vvp_net_t*vec);
+extern vpiHandle vpip_make_var4(const char*name, int msb, int lsb,
 			       bool signed_flag, vvp_net_t*net);
-extern vpiHandle vpip_make_net(const char*name, int msb, int lsb,
-			       bool signed_flag, vvp_net_t*node);
+extern vpiHandle vpip_make_net4(const char*name, int msb, int lsb,
+				bool signed_flag, vvp_net_t*node);
 
 /*
  * This is used by system calls to represent a bit/part select of

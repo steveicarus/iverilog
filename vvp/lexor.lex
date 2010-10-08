@@ -188,6 +188,8 @@ static char* strdupnew(char const *str)
 ".var/real" { return K_VAR_R; }
 ".var/s"    { return K_VAR_S; }
 ".var/i"    { return K_VAR_I; /* integer */ }
+".var/2s"    { return K_VAR_2S; /* byte/shortint/int/longint signed */ }
+".var/2u"    { return K_VAR_2U; /* byte/shortint/int/longint unsigned */ }
 ".udp"         { return K_UDP; }
 ".udp/c"(omb)? { return K_UDP_C; }
 ".udp/s"(equ)? { return K_UDP_S; }

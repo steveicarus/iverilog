@@ -23,7 +23,7 @@
 # include  <fstream>
 # include  <vector>
 # include  "parse_misc.h"
-# include  "vpi_user.h"
+# include  "sv_vpi_user.h"
 # include  "vvp_net.h"
 
 using namespace std;
@@ -431,10 +431,15 @@ extern void compile_thread(char*start_sym, char*flag);
 
 /*
  * This function is called to create a var vector with the given name.
+ *
+ * The vpi_type_code argument of compile_variable() is one of the vpi
+ * object codes that identify the type: vpiReg, vpiIntegerVar,
+ * vpiIntVar, etc.
  */
 extern void compile_variable(char*label, char*name,
-			     int msb, int lsb, char signed_flag,
-			     bool local_flag);
+			     int msb, int lsb, int vpi_type_code,
+			     bool signed_flag, bool local_flag);
+
 extern void compile_var_real(char*label, char*name,
 			     int msb, int lsb);
 

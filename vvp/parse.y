@@ -84,7 +84,8 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_RESOLV K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
 %token K_UFUNC K_UFUNC_E K_UDP K_UDP_C K_UDP_S
-%token K_VAR K_VAR_S K_VAR_I K_VAR_R K_vpi_call K_vpi_call_w K_vpi_call_i
+%token K_VAR K_VAR_S K_VAR_I K_VAR_R K_VAR_2S K_VAR_2U
+%token K_vpi_call K_vpi_call_w K_vpi_call_i
 %token K_vpi_func K_vpi_func_r
 %token K_disable K_fork
 %token K_ivl_version K_ivl_delay_selection
@@ -650,13 +651,19 @@ statement
      the variable in the netlist. */
 
   | T_LABEL K_VAR local_flag T_STRING ',' signed_t_number signed_t_number ';'
-      { compile_variable($1, $4, $6, $7, 0 /* unsigned */, $3); }
+      { compile_variable($1, $4, $6, $7, vpiLogicVar, false, $3); }
 
   | T_LABEL K_VAR_S local_flag T_STRING ',' signed_t_number signed_t_number ';'
-      { compile_variable($1, $4, $6, $7, 1 /* signed */, $3); }
+      { compile_variable($1, $4, $6, $7, vpiLogicVar, true, $3); }
 
   | T_LABEL K_VAR_I local_flag T_STRING ',' T_NUMBER T_NUMBER ';'
-      { compile_variable($1, $4, $6, $7, 2 /* integer */, $3); }
+      { compile_variable($1, $4, $6, $7, vpiIntegerVar, true, $3); }
+
+  | T_LABEL K_VAR_2S local_flag T_STRING ',' T_NUMBER T_NUMBER ';'
+      { compile_variable($1, $4, $6, $7, vpiIntVar, true, $3); }
+
+  | T_LABEL K_VAR_2U local_flag T_STRING ',' T_NUMBER T_NUMBER ';'
+      { compile_variable($1, $4, $6, $7, vpiIntVar, false, $3); }
 
   | T_LABEL K_VAR_R T_STRING ',' signed_t_number signed_t_number ';'
       { compile_var_real($1, $3, $5, $6); }

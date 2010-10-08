@@ -84,7 +84,8 @@ void compile_varw_real(char*label, vvp_array_t array,
  */
 static void __compile_var(char*label, char*name,
 			  vvp_array_t array, unsigned long array_addr,
-			  int msb, int lsb, char signed_flag, bool local_flag)
+			  int msb, int lsb, int vpi_type_code,
+			  bool signed_flag, bool local_flag)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
@@ -105,9 +106,21 @@ static void __compile_var(char*label, char*name,
       vpiHandle obj = 0;
       if (! local_flag && !array) {
 	      /* Make the vpiHandle for the reg. */
-	    obj = (signed_flag > 1) ?
-		  vpip_make_int(name, msb, lsb, net) :
-		  vpip_make_reg(name, msb, lsb, signed_flag!=0, net);
+	    switch (vpi_type_code) {
+		case vpiLogicVar:
+		  obj = vpip_make_var4(name, msb, lsb, signed_flag, net);
+		  break;
+		case vpiIntegerVar:
+		  obj = vpip_make_int4(name, msb, lsb, net);
+		  break;
+		case vpiIntVar: // This handles all the atom2 int types
+		  obj = vpip_make_int2(name, msb, lsb, net);
+		  break;
+		default:
+		  fprintf(stderr, "internal error: %s: vpi_type_code=%d\n", name, vpi_type_code);
+		  break;
+	    }
+	    assert(obj);
 	    compile_vpi_symbol(label, obj);
       }
 	// If the signal has a name, then it goes into the current
@@ -132,24 +145,10 @@ static void __compile_var(char*label, char*name,
 }
 
 void compile_variable(char*label, char*name,
-		      int msb, int lsb, char signed_flag, bool local_flag)
+		      int msb, int lsb, int vpi_type_code,
+		      bool signed_flag, bool local_flag)
 {
-      __compile_var(label, name, 0, 0, msb, lsb, signed_flag, local_flag);
-}
-
-/*
-* In this case, the variable it intended to be attached to the array
-* as a word. The array_addr is the *canonical* address of the word in
-* the array.
-*
-* This function is actually used by the compile_array function,
-* instead of directly by the parser.
-*/
-void compile_variablew(char*label, vvp_array_t array,
-		       unsigned long array_addr,
-		       int msb, int lsb, char signed_flag)
-{
-      __compile_var(label, 0, array, array_addr, msb, lsb, signed_flag, false);
+      __compile_var(label, name, 0, 0, msb, lsb, vpi_type_code, signed_flag, local_flag);
 }
 
 vvp_net_t* create_constant_node(const char*label, const char*val_str)
@@ -238,7 +237,7 @@ class __compile_net_resolv : public base_net_resolv {
  * references into the net.
  */
 
-static void __compile_net2(vvp_net_t*node, vvp_array_t array,
+static void do_compile_net(vvp_net_t*node, vvp_array_t array,
 			   struct __vpiScope*scope,
 			   char*my_label, char*name,
 			   int msb, int lsb, unsigned array_addr,
@@ -260,7 +259,7 @@ static void __compile_net2(vvp_net_t*node, vvp_array_t array,
       vpiHandle obj = 0;
       if (! local_flag) {
 	      /* Make the vpiHandle for the reg. */
-	    obj = vpip_make_net(name, msb, lsb, signed_flag, node);
+	    obj = vpip_make_net4(name, msb, lsb, signed_flag, node);
 	      /* This attaches the label to the vpiHandle */
 	    compile_vpi_symbol(my_label, obj);
       }
@@ -321,7 +320,7 @@ static void __compile_net(char*label,
       assert(node);
 
       struct __vpiScope*scope = vpip_peek_current_scope();
-      __compile_net2(node, array, scope, label, name, msb, lsb, array_addr,
+      do_compile_net(node, array, scope, label, name, msb, lsb, array_addr,
 		     signed_flag, net8_flag, local_flag);
 
       free(argv[0].text);
@@ -335,7 +334,7 @@ bool __compile_net_resolv::resolve(bool msg_flag)
 	    return false;
       }
 
-      __compile_net2(node, array_, scope_, my_label_, name_, msb_, lsb_, array_addr_, signed_flag_, net8_flag_, local_flag_);
+      do_compile_net(node, array_, scope_, my_label_, name_, msb_, lsb_, array_addr_, signed_flag_, net8_flag_, local_flag_);
       return true;
 }
 

@@ -1047,6 +1047,10 @@ static int sys_check_args(vpiHandle callh, vpiHandle argv, const PLI_BYTE8*name,
 	      case vpiNet:
 	      case vpiReg:
 	      case vpiIntegerVar:
+	      case vpiByteVar:
+	      case vpiShortIntVar:
+	      case vpiIntVar:
+	      case vpiLongIntVar:
 	      case vpiTimeVar:
 	      case vpiRealVar:
 	      case vpiSysFuncCall:

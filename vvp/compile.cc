@@ -285,6 +285,10 @@ vvp_net_t* vvp_net_lookup(const char*label)
 	    switch (vpi->vpi_type->type_code) {
 		case vpiNet:
 		case vpiReg:
+		case vpiByteVar:
+		case vpiShortIntVar:
+		case vpiIntVar:
+		case vpiLongIntVar:
 		case vpiIntegerVar: {
 		      __vpiSignal*sig = (__vpiSignal*)vpi;
 		      return sig->node;
