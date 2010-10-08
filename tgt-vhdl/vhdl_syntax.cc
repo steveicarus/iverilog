@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,7 +31,8 @@
 using namespace std;
 
 vhdl_scope::vhdl_scope()
-   : parent_(NULL), init_(false), sig_assign_(true)
+   : parent_(NULL), init_(false), sig_assign_(true),
+     hoisted_init_(false)
 {
 
 }
@@ -100,6 +101,16 @@ vhdl_scope *vhdl_scope::get_parent() const
    return parent_;
 }
 
+bool vhdl_scope::hoisted_initialiser() const
+{
+   return hoisted_init_;
+}
+
+void vhdl_scope::hoisted_initialiser(bool h)
+{
+   hoisted_init_ = h;
+}
+
 vhdl_entity::vhdl_entity(const string& name, vhdl_arch *arch, int depth__)
    :  depth(depth__), name_(name), arch_(arch),
       time_unit_(TIME_UNIT_NS)
@@ -124,7 +135,6 @@ void vhdl_entity::emit(std::ostream &of, int level) const
    of << "library ieee;" << std::endl;
    of << "use ieee.std_logic_1164.all;" << std::endl;
    of << "use ieee.numeric_std.all;" << std::endl;
-   of << "use std.textio.all;" << std::endl;
    of << std::endl;
 
    emit_comment(of, level);
@@ -193,6 +203,16 @@ void vhdl_arch::emit(std::ostream &of, int level) const
    blank_line(of, level);  // Extra blank line after architectures;
 }
 
+void vhdl_procedural::add_blocking_target(vhdl_var_ref* ref)
+{
+   blocking_targets_.insert(ref->get_name());
+}
+
+bool vhdl_procedural::is_blocking_target(vhdl_var_ref* ref) const
+{
+   return blocking_targets_.find(ref->get_name()) != blocking_targets_.end();
+}
+   
 void vhdl_process::add_sensitivity(const std::string &name)
 {
    sens_.push_back(name);
@@ -399,6 +419,7 @@ void vhdl_wait_stmt::emit(std::ostream &of, int level) const
    }
 
    of << ";";
+   emit_comment(of, level, true);
 }
 
 vhdl_decl::~vhdl_decl()
@@ -598,11 +619,7 @@ void vhdl_var_ref::emit(std::ostream &of, int level) const
 
 void vhdl_const_string::emit(std::ostream &of, int level) const
 {
-   // In some instances a string literal can be ambiguous between
-   // a String type and some other types (e.g. std_logic_vector)
-   // The explicit cast to String removes this ambiguity (although
-   // isn't always strictly necessary)
-   of << "String'(\"" << value_ << "\")";
+   of << "\"" << value_ << "\"";
 }
 
 void vhdl_null_stmt::emit(std::ostream &of, int level) const
@@ -630,7 +647,7 @@ vhdl_abstract_assign_stmt::~vhdl_abstract_assign_stmt()
 void vhdl_abstract_assign_stmt::find_vars(vhdl_var_set_t& read,
                                           vhdl_var_set_t& write)
 {
-   write.insert(lhs_);
+   lhs_->find_vars(write);
    rhs_->find_vars(read);
 }
 
@@ -766,10 +783,42 @@ void vhdl_cassign_stmt::emit(std::ostream &of, int level) const
    of << ";";
 }
 
+vhdl_report_stmt::vhdl_report_stmt(vhdl_expr *text,
+                                   vhdl_severity_t severity)
+   : severity_(severity),
+     text_(text)
+{
+
+}
+
+void vhdl_report_stmt::emit(ostream& of, int level) const
+{
+   of << "report ";
+   text_->emit(of, level);
+
+   if (severity_ != SEVERITY_NOTE) {
+      const char *levels[] = { "note", "warning", "error", "failure" };
+      of << " severity " << levels[severity_];
+   }
+   
+   of << ";";
+}
+
+void vhdl_report_stmt::find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write)
+{
+   text_->find_vars(read);
+}
+
+vhdl_assert_stmt::vhdl_assert_stmt(const char *reason)
+   : vhdl_report_stmt(new vhdl_const_string(reason), SEVERITY_FAILURE)
+{
+   
+}
+
 void vhdl_assert_stmt::emit(std::ostream &of, int level) const
 {
-   of << "assert false";  // TODO: Allow arbitrary expression
-   of << " report \"" << reason_ << "\" severity failure;";
+   of << "assert false ";  // TODO: Allow arbitrary expression
+   vhdl_report_stmt::emit(of, level);
 }
 
 vhdl_if_stmt::vhdl_if_stmt(vhdl_expr *test)

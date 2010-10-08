@@ -52,7 +52,8 @@ public:
    virtual vhdl_expr *to_std_logic();
    virtual vhdl_expr *to_std_ulogic();
    virtual vhdl_expr *to_vector(vhdl_type_name_t name, int w);
-   virtual void find_vars(vhdl_var_set_t& read) const {}
+   virtual vhdl_expr *to_string();
+   virtual void find_vars(vhdl_var_set_t& read) {}
    
 protected:
    static void open_parens(ostream& of);
@@ -176,7 +177,7 @@ private:
 
 class vhdl_const_string : public vhdl_expr {
 public:
-   vhdl_const_string(const char *value)
+   vhdl_const_string(const string& value)
       : vhdl_expr(vhdl_type::string(), true), value_(value) {}
 
    void emit(std::ostream &of, int level) const;
@@ -270,7 +271,7 @@ private:
  */
 class vhdl_fcall : public vhdl_expr {
 public:
-   vhdl_fcall(const char *name, vhdl_type *rtype)
+   vhdl_fcall(const string& name, vhdl_type *rtype)
       : vhdl_expr(rtype), name_(name) {};
    ~vhdl_fcall() {}
 
@@ -453,15 +454,32 @@ public:
 };
 
 
-class vhdl_assert_stmt : public vhdl_seq_stmt {
-public:
-   vhdl_assert_stmt(const char *reason)
-      : reason_(reason) {}
+enum vhdl_severity_t {
+   SEVERITY_NOTE,
+   SEVERITY_WARNING,
+   SEVERITY_ERROR,
+   SEVERITY_FAILURE
+};
 
-   void emit(std::ostream &of, int level) const;
-   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write) {}
+class vhdl_report_stmt : public vhdl_seq_stmt {
+public:
+   vhdl_report_stmt(vhdl_expr *text,
+                    vhdl_severity_t severity = SEVERITY_NOTE);
+   virtual ~vhdl_report_stmt() {}
+
+   virtual void emit(ostream& of, int level) const;
+   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write);
 private:
-   std::string reason_;
+   vhdl_severity_t severity_;
+   vhdl_expr *text_;
+};
+
+
+class vhdl_assert_stmt : public vhdl_report_stmt {
+public:
+   vhdl_assert_stmt(const char *reason);
+
+   void emit(ostream &of, int level) const;
 };
 
 
@@ -770,6 +788,8 @@ public:
 
    bool initializing() const { return init_; }
    void set_initializing(bool i);
+   bool hoisted_initialiser() const;
+   void hoisted_initialiser(bool h);
 
    void set_allow_signal_assignment(bool b) { sig_assign_ = b; }
    bool allow_signal_assignment() const { return sig_assign_; }
@@ -777,6 +797,7 @@ private:
    decl_list_t decls_;
    vhdl_scope *parent_;
    bool init_, sig_assign_;
+   bool hoisted_init_;
 };
 
 
@@ -795,6 +816,11 @@ public:
 
    void added_wait_stmt() { contains_wait_stmt_ = true; }
    bool contains_wait_stmt() const { return contains_wait_stmt_; }
+
+   // Managing set of blocking assignment targets in this block
+   void add_blocking_target(vhdl_var_ref* ref);
+   bool is_blocking_target(vhdl_var_ref* ref) const;
+   
 protected:
    stmt_container stmts_;
    vhdl_scope scope_;
@@ -804,6 +830,10 @@ protected:
    // If this is the case then we can't use a sensitivity list for
    // the process
    bool contains_wait_stmt_;
+
+   // The set of variable we have performed a blocking
+   // assignment to
+   set<string> blocking_targets_;
 };
 
 
