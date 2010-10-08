@@ -2708,12 +2708,12 @@ net_type
 	| K_supply1 { $$ = NetNet::SUPPLY1; }
 	| K_wor     { $$ = NetNet::WOR; }
 	| K_trior   { $$ = NetNet::TRIOR; }
-	| K_wone    { $$ = NetNet::UWIRE;
+	| K_wone    { $$ = NetNet::UNRESOLVED_WIRE;
 		      cerr << @1.text << ":" << @1.first_line << ": warning: "
 		              "'wone' is deprecated, please use 'uwire' "
 		              "instead." << endl;
 		    }
-	| K_uwire   { $$ = NetNet::UWIRE; }
+	| K_uwire   { $$ = NetNet::UNRESOLVED_WIRE; }
 	;
 
 var_type

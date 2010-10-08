@@ -78,7 +78,7 @@ ostream& operator<< (ostream&o, NetNet::Type t)
 	  case NetNet::WIRE:
 	    o << "wire";
 	    break;
-	  case NetNet::UWIRE:
+	  case NetNet::UNRESOLVED_WIRE:
 	    o << "uwire";
       }
       return o;

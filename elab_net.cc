@@ -414,6 +414,22 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 
       assert(sig);
 
+	/* If this is SystemVerilog and the variable is not yet
+	   assigned by anything, then convert it to an unresolved
+	   wire. */
+      if (gn_var_can_be_uwire()
+	  && (sig->type() == NetNet::REG)
+	  && (sig->peek_eref() == 0) ) {
+	    sig->type(NetNet::UNRESOLVED_WIRE);
+      }
+
+      if (sig->type() == NetNet::UNRESOLVED_WIRE && sig->pin(0).is_linked()) {
+	    cerr << get_fileline() << ": error: Unresolved net " << sig->name()
+		 << " cannot have multiple drivers." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
 	/* Don't allow registers as assign l-values. */
       if (sig->type() == NetNet::REG) {
 	    cerr << get_fileline() << ": error: reg " << sig->name()

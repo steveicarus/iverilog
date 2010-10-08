@@ -2386,7 +2386,7 @@ void dll_target::signal(const NetNet*net)
 
 	      /* We will convert this to a TRI after we check that there
 		 is only one driver. */
-	  case NetNet::UWIRE:
+	  case NetNet::UNRESOLVED_WIRE:
 	    obj->type_ = IVL_SIT_UWIRE;
 	    break;
 
