@@ -23,6 +23,7 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
+# include  "ivl_alloc.h"
 # include  <cstdio>
 # include  <cstring>
 # include  <climits>     /* for CHAR_BIT */
@@ -149,9 +150,7 @@ unsigned vpip_vec4_to_dec_str(const vvp_vector4_t&vec4,
 #define ALLOC_MARGIN 4
       if (!valv || vlen > vlen_alloc) {
 	    if (valv) free(valv);
-	    valv = (unsigned long*)
-		  calloc( vlen+ALLOC_MARGIN, sizeof (*valv));
-	    if (!valv) {perror("malloc"); return 0; }
+	    valv = (unsigned long*) calloc(vlen+ALLOC_MARGIN, sizeof (*valv));
 	    vlen_alloc=vlen+ALLOC_MARGIN;
       } else {
 	    memset(valv,0,vlen*sizeof(valv[0]));

@@ -33,7 +33,8 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  <valgrind/memcheck.h>
 # include  <map>
-# include "sfunc.h"
+# include  "sfunc.h"
+# include  "ivl_alloc.h"
 #endif
 
 permaheap vvp_net_fun_t::heap_;

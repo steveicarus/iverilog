@@ -37,6 +37,7 @@ const char NOTICE[] =
 "  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.\n"
 ;
 
+# include  "ivl_alloc.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <unistd.h>

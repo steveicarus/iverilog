@@ -25,6 +25,7 @@
 
 # include  "priv.h"
 
+# include  "ivl_alloc.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <assert.h>
@@ -84,7 +85,6 @@ int target_design(ivl_design_t des)
 
 	/* Allocate the pin array, ready to start assigning resources. */
       bind_pin = calloc(pins, sizeof (struct pal_bind_s));
-      assert(bind_pin);
 
 	/* Connect all the macrocells that drive pins to the pin that
 	   they drive. This doesn't yet look at the design, but is

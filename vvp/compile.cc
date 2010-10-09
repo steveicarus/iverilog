@@ -28,6 +28,7 @@
 # include  "vpi_priv.h"
 # include  "parse_misc.h"
 # include  "statistics.h"
+# include  "ivl_alloc.h"
 # include  <iostream>
 # include  <list>
 # include  <cstdlib>

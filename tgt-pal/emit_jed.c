@@ -20,6 +20,7 @@
 # include "config.h"
 
 # include  "priv.h"
+# include  "ivl_alloc.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <assert.h>

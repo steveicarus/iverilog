@@ -22,6 +22,7 @@
 
 # include  <iostream>
 
+# include  "ivl_alloc.h"
 # include  <cstring>
 # include  "target.h"
 # include  "ivl_target.h"
@@ -49,7 +50,6 @@ bool dll_target::process(const NetAnalogTop*net)
 
       assert(stmt_cur_ == 0);
       stmt_cur_ = (struct ivl_statement_s*)calloc(1, sizeof*stmt_cur_);
-      assert(stmt_cur_);
       rc_flag = net->statement()->emit_proc(this) && rc_flag;
 
       assert(stmt_cur_);

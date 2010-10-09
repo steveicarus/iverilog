@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,6 +21,7 @@
 # include  "vpi_priv.h"
 # include  "ivl_dlfcn.h"
 # include  "vvp_cleanup.h"
+# include  "ivl_alloc.h"
 # include  <cstdio>
 # include  <cstring>
 # include  <sys/types.h>

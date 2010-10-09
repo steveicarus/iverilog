@@ -19,6 +19,7 @@
 
 # include "config.h"
 
+# include  "ivl_alloc.h"
 # include  <iostream>
 
 # include  <cstring>
@@ -118,7 +119,6 @@ void dll_target::mul_expr_by_const_(long val)
 ivl_expr_t dll_target::expr_from_value_(const verinum&val)
 {
       ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-      assert(expr);
 
       unsigned idx;
       char*bits;
@@ -180,7 +180,6 @@ void dll_target::expr_binary(const NetEBinary*net)
       ivl_expr_t rght = expr_;
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-      assert(expr_);
 
       expr_->type_ = IVL_EX_BINARY;
       expr_->value_= get_expr_type(net);
@@ -225,7 +224,6 @@ void dll_target::expr_const(const NetEConst*net)
       assert(expr_ == 0);
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-      assert(expr_);
       expr_->value_= net->expr_type();
       FILE_NAME(expr_, net);
 
@@ -312,7 +310,6 @@ void dll_target::expr_event(const NetEEvent*net)
       assert(expr_ == 0);
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-      assert(expr_);
 
       expr_->type_ = IVL_EX_EVENT;
       FILE_NAME(expr_, net);
@@ -337,7 +334,6 @@ void dll_target::expr_scope(const NetEScope*net)
       assert(expr_ == 0);
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-      assert(expr_);
 
       expr_->type_ = IVL_EX_SCOPE;
       expr_->value_= IVL_VT_VOID;
@@ -358,7 +354,6 @@ void dll_target::expr_select(const NetESelect*net)
       ivl_expr_t rght = expr_;
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-      assert(expr_);
       FILE_NAME(expr_, net);
 
       expr_->type_ = IVL_EX_SELECT;
@@ -376,7 +371,6 @@ void dll_target::expr_sfunc(const NetESFunc*net)
       assert(expr_ == 0);
 
       ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-      assert(expr);
 
       expr->type_ = IVL_EX_SFUNC;
       FILE_NAME(expr, net);
@@ -407,7 +401,6 @@ void dll_target::expr_ternary(const NetETernary*net)
       assert(expr_ == 0);
 
       ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-      assert(expr);
 
       expr->type_  = IVL_EX_TERNARY;
       FILE_NAME(expr, net);
@@ -449,7 +442,6 @@ void dll_target::expr_signal(const NetESignal*net)
       }
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-      assert(expr_);
 
       expr_->type_ = IVL_EX_SIGNAL;
       expr_->value_= net->expr_type();
@@ -478,7 +470,6 @@ void dll_target::expr_ufunc(const NetEUFunc*net)
       assert(expr_ == 0);
 
       ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-      assert(expr);
 
       expr->type_ = IVL_EX_UFUNC;
       FILE_NAME(expr, net);

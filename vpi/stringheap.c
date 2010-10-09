@@ -19,6 +19,7 @@
 
 # include  "sys_priv.h"
 # include  "stringheap.h"
+# include  "ivl_alloc.h"
 # include  <string.h>
 # include  <stdlib.h>
 # include  <assert.h>

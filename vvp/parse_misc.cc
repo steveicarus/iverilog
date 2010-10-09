@@ -19,6 +19,7 @@
 
 # include  "parse_misc.h"
 # include  "compile.h"
+# include  "ivl_alloc.h"
 # include  <cstdio>
 # include  <cstdlib>
 

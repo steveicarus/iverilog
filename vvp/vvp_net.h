@@ -23,6 +23,7 @@
 # include  "vpi_user.h"
 # include  "vvp_vpi_callback.h"
 # include  "permaheap.h"
+# include  "ivl_alloc.h"
 # include  <cstddef>
 # include  <cstdlib>
 # include  <cstring>

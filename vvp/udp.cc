@@ -27,6 +27,7 @@
 #include "config.h"
 #ifdef CHECK_WITH_VALGRIND
 #include "vvp_cleanup.h"
+#include "ivl_alloc.h"
 #endif
 #include <cassert>
 #include <cstdlib>

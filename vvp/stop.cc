@@ -28,6 +28,7 @@
 # include  "vpi_priv.h"
 # include  "vthread.h"
 # include  "schedule.h"
+# include  "ivl_alloc.h"
 # include  <cstdio>
 # include  <cctype>
 #ifdef USE_READLINE

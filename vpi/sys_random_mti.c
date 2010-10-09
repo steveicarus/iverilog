@@ -20,6 +20,7 @@
 # include "sys_priv.h"
 # include "sys_random.h"
 
+# include  "ivl_alloc.h"
 # include  <assert.h>
 # include  <stdlib.h>
 # include  <math.h>
@@ -164,4 +165,3 @@ void sys_random_mti_register()
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 }
-

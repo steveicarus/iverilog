@@ -21,6 +21,7 @@
 # include  "StringHeap.h"
 # include  "t-dll.h"
 # include  "discipline.h"
+# include  "ivl_alloc.h"
 # include  <cstdlib>
 # include  <cstdio>
 # include  <cstring>

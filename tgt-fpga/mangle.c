@@ -18,6 +18,7 @@
  */
 
 # include  "fpga_priv.h"
+# include  "ivl_alloc.h"
 # include  <string.h>
 # include  <stdlib.h>
 

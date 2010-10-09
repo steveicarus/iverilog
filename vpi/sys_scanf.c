@@ -22,6 +22,7 @@
 # define _SVID_SOURCE 1
 
 # include  "sys_priv.h"
+# include  "ivl_alloc.h"
 # include  <ctype.h>
 # include  <errno.h>
 # include  <string.h>

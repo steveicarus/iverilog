@@ -18,6 +18,7 @@
  */
 
 # include  "vvp_priv.h"
+# include  "ivl_alloc.h"
 # include  <stdlib.h>
 # include  <math.h>
 # include  <string.h>
@@ -640,7 +641,6 @@ static void draw_net_input_x(ivl_nexus_t nex,
 	    if (ndrivers >= adrivers) {
 		  adrivers += 4;
 		  drivers = realloc(drivers, adrivers*sizeof(ivl_nexus_ptr_t));
-		  assert(drivers);
 	    }
 	    drivers[ndrivers] = nptr;
 	    ndrivers += 1;

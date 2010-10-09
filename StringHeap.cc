@@ -18,6 +18,7 @@
  */
 
 # include  "StringHeap.h"
+# include  "ivl_alloc.h"
 # include  <cstdlib>
 # include  <cstring>
 # include  <cassert>

@@ -20,6 +20,7 @@
  */
 
 #include "vpi_config.h"
+#include "ivl_alloc.h"
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
@@ -202,12 +203,6 @@ static PLI_INT32 va_single_argument_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *ud)
 
     fun_data = malloc(sizeof(va_single_t));
 
-    /* Check that malloc gave use some memory. */
-    if (fun_data == 0) {
-        va_error_message(callh, "%s failed to allocate memory.\n", name);
-        return 0;
-    }
-
     /* Check that there are arguments. */
     if (argv == 0) {
         va_error_message(callh, "%s requires one argument.\n", name);
@@ -283,12 +278,6 @@ static PLI_INT32 va_double_argument_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *ud)
     name = data->name;
 
     fun_data = malloc(sizeof(va_double_t));
-
-    /* Check that malloc gave use some memory. */
-    if (fun_data == 0) {
-        va_error_message(callh, "%s failed to allocate memory.\n", name);
-        return 0;
-    }
 
     /* Check that there are arguments. */
     if (argv == 0) {

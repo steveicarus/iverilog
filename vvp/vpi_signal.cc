@@ -31,6 +31,7 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
+# include  "ivl_alloc.h"
 # include  <cmath>
 # include  <iostream>
 # include  <cstdio>

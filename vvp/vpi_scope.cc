@@ -25,6 +25,7 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
+# include  "ivl_alloc.h"
 # include  <cstring>
 # include  <cstdlib>
 # include  <cassert>

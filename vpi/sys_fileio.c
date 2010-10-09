@@ -18,6 +18,7 @@
  */
 
 # include  "sys_priv.h"
+# include  "ivl_alloc.h"
 # include  <assert.h>
 # include  <ctype.h>
 # include  <errno.h>

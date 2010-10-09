@@ -19,6 +19,7 @@
 
 # include  "compile.h"
 # include  "vpi_priv.h"
+# include  "ivl_alloc.h"
 # include  <cstdio>
 # include  <cstdlib>
 # include  <cstring>

@@ -18,6 +18,7 @@
  */
 
 # include  "edif.h"
+# include  "ivl_alloc.h"
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>

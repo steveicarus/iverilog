@@ -21,6 +21,7 @@
 # include  "util.h"
 # include  "parse_api.h"
 # include  "compiler.h"
+# include  "ivl_alloc.h"
 # include  <iostream>
 # include  <map>
 # include  <cstdlib>

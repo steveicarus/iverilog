@@ -21,6 +21,7 @@
 
 # include  <iostream>
 
+# include  "ivl_alloc.h"
 # include  <cstring>
 # include  <cstdio> // sprintf()
 # include  "compiler.h"
@@ -561,9 +562,12 @@ void dll_target::add_root(ivl_design_s &des__, const NetScope *s)
 
       des__.nroots_++;
       if (des__.roots_)
-	    des__.roots_ = (ivl_scope_t *)realloc(des__.roots_, des__.nroots_ * sizeof(ivl_scope_t));
+	    des__.roots_ = (ivl_scope_t *)realloc(des__.roots_,
+	                                          des__.nroots_ *
+	                                            sizeof(ivl_scope_t));
       else
-	    des__.roots_ = (ivl_scope_t *)malloc(des__.nroots_ * sizeof(ivl_scope_t));
+	    des__.roots_ = (ivl_scope_t *)malloc(des__.nroots_ *
+	                                           sizeof(ivl_scope_t));
       des__.roots_[des__.nroots_ - 1] = root_;
 }
 
@@ -1256,7 +1260,6 @@ void dll_target::udp(const NetUDP*net)
 	  u = new struct ivl_udp_s;
 	  u->nrows = net->rows();
 	  u->table = (ivl_udp_s::ccharp_t*)malloc((u->nrows+1)*sizeof(char*));
-	  assert(u->table);
 	  u->table[u->nrows] = 0x0;
 	  u->nin = net->nin();
 	  u->sequ = net->is_sequential();

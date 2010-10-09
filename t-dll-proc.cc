@@ -22,6 +22,7 @@
 
 # include  <iostream>
 
+# include  "ivl_alloc.h"
 # include  <cstring>
 # include  "target.h"
 # include  "ivl_target.h"
@@ -59,7 +60,6 @@ bool dll_target::process(const NetProcTop*net)
 
       assert(stmt_cur_ == 0);
       stmt_cur_ = (struct ivl_statement_s*)calloc(1, sizeof*stmt_cur_);
-      assert(stmt_cur_);
       rc_flag = net->statement()->emit_proc(this) && rc_flag;
 
       assert(stmt_cur_);
@@ -80,7 +80,6 @@ void dll_target::task_def(const NetScope*net)
 
       assert(stmt_cur_ == 0);
       stmt_cur_ = (struct ivl_statement_s*)calloc(1, sizeof*stmt_cur_);
-      assert(stmt_cur_);
       def->proc()->emit_proc(this);
 
       assert(stmt_cur_);
@@ -96,7 +95,6 @@ bool dll_target::func_def(const NetScope*net)
 
       assert(stmt_cur_ == 0);
       stmt_cur_ = (struct ivl_statement_s*)calloc(1, sizeof*stmt_cur_);
-      assert(stmt_cur_);
       def->proc()->emit_proc(this);
 
       assert(stmt_cur_);

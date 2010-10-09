@@ -22,6 +22,7 @@
 # include  <iostream>
 
 # include  "netlist.h"
+# include  "ivl_alloc.h"
 # include  <sstream>
 # include  <cstring>
 # include  <string>

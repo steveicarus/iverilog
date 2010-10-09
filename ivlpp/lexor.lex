@@ -20,6 +20,7 @@
 
 # include "config.h"
 
+# include  "ivl_alloc.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>
@@ -977,7 +978,7 @@ static void do_define()
     }
 
     /* Accumulate this text into the define_text string. */
-    define_text = realloc(define_text, define_cnt + (cp-yytext) + 1); assert(define_text != 0);
+    define_text = realloc(define_text, define_cnt + (cp-yytext) + 1);
 
     head = &define_text[define_cnt];
     strcpy(head, yytext);
@@ -1023,7 +1024,7 @@ static void do_define()
                 char* base = define_text;
 
                 define_cnt += added_cnt;
-                define_text = realloc(define_text, define_cnt + 1); assert(define_text != 0);
+                define_text = realloc(define_text, define_cnt + 1);
 
                 head = &define_text[head - base];
                 tail = &define_text[tail - base];
@@ -1280,7 +1281,7 @@ static void exp_buf_grow_to_fit(int length)
     {
         exp_buf_size += EXP_BUF_CHUNK;
         exp_buf_free += EXP_BUF_CHUNK;
-        exp_buf = realloc(exp_buf, exp_buf_size); assert(exp_buf != 0);
+        exp_buf = realloc(exp_buf, exp_buf_size);
     }
 }
 

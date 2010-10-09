@@ -25,6 +25,7 @@
  * This file contains the implementations of the FST related functions.
  */
 
+# include  "ivl_alloc.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>

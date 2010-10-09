@@ -24,6 +24,7 @@
  * This file contains the implementations of the VCD related functions.
  */
 
+# include  "ivl_alloc.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>

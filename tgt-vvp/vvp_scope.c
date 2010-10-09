@@ -18,6 +18,7 @@
  */
 
 # include  "vvp_priv.h"
+# include  "ivl_alloc.h"
 # include  <stdlib.h>
 # include  <math.h>
 # include  <string.h>
@@ -59,7 +60,6 @@ const char *vvp_mangle_id(const char *id)
 	    unsigned int nlen = strlen(id) + 4*(++nesc) + 1;
 	    if (out_len < nlen) {
 		  out = realloc(out, nlen);
-		  assert(out);
 		  out_len = nlen;
 	    }
 	    if (n) {
@@ -109,7 +109,6 @@ const char *vvp_mangle_name(const char *id)
 	    unsigned int nlen = strlen(id) + 2*(++nesc) + 1;
 	    if (out_len < nlen) {
 		  out = realloc(out, nlen);
-		  assert(out);
 		  out_len = nlen;
 	    }
 	    if (n) {
@@ -738,7 +737,6 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
 
       if (i >= nudps) {
 	    udps = realloc(udps, (nudps+1)*sizeof(ivl_udp_t));
-	    assert(udps);
 	    udps[nudps++] = udp;
 	    draw_udp_def(udp);
       }

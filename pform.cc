@@ -28,6 +28,7 @@
 # include  "PGenerate.h"
 # include  "PSpec.h"
 # include  "discipline.h"
+# include  "ivl_alloc.h"
 # include  <list>
 # include  <map>
 # include  <cassert>

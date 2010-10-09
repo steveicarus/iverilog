@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,13 +16,11 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: fit_log.c,v 1.6 2007/02/26 19:49:50 steve Exp $"
-#endif
 
 # include "config.h"
 
 # include  "ivl_target.h"
+# include  "ivl_alloc.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <assert.h>
@@ -125,27 +123,3 @@ int fit_logic(void)
 
       return 0;
 }
-
-/*
- * $Log: fit_log.c,v $
- * Revision 1.6  2007/02/26 19:49:50  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.5  2002/08/12 01:35:03  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.4  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.3  2001/05/16 03:55:30  steve
- *  Update to new LPM API for flip-flops.
- *
- * Revision 1.2  2001/02/07 22:22:00  steve
- *  ivl_target header search path fixes.
- *
- * Revision 1.1  2000/12/14 23:37:47  steve
- *  Start support for fitting the logic.
- *
- */
-

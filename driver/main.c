@@ -50,6 +50,7 @@ const char HELP[] =
 
 #define MAXSIZE 4096
 
+#include "ivl_alloc.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -886,7 +887,8 @@ int main(int argc, char **argv)
 		  break;
 		case 'P':
 		  defparm_size += 1;
-		  defparm_base = (const char**)realloc(defparm_base, defparm_size*sizeof(char*));
+		  defparm_base = (const char**)realloc(defparm_base,
+		                                   defparm_size*sizeof(char*));
 		  defparm_base[defparm_size-1] = optarg;
 		  break;
 		case 'p':

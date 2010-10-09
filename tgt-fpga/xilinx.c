@@ -21,6 +21,7 @@
 # include  "generic.h"
 # include  "xilinx.h"
 # include  "fpga_priv.h"
+# include  "ivl_alloc.h"
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>

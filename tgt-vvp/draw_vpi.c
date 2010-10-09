@@ -18,6 +18,7 @@
  */
 
 # include  "vvp_priv.h"
+# include  "ivl_alloc.h"
 # include  <string.h>
 # include  <stdlib.h>
 # include  <assert.h>

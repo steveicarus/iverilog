@@ -22,6 +22,7 @@
  */
 
 # include  "vpi_priv.h"
+# include  "ivl_alloc.h"
 # include  <cstdlib>
 # include  <cassert>
 

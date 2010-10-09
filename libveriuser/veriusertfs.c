@@ -23,6 +23,7 @@
  * via VPI. This is extremely ugly, so don't look after eating dinner.
  */
 
+# include "ivl_alloc.h"
 # include <string.h>
 # include <stdlib.h>
 # include <assert.h>
@@ -104,7 +105,6 @@ void veriusertfs_register_table(p_tfcell vtable)
 
 	    /* squirrel away veriusertfs in persistent user_data */
 	    data = calloc(1, sizeof(s_pli_data));
-	    assert(data != NULL);
 	    udata_count += 1;
 	    udata_store = (p_pli_data*)realloc(udata_store,
 	                  udata_count*sizeof(p_pli_data*));
@@ -222,7 +222,6 @@ static PLI_INT32 compiletf(char *data)
 	    while ((arg_h = vpi_scan(arg_i)) != NULL) {
 		  /* replicate user_data for each instance */
 		  dp = calloc(1, sizeof(s_pli_data));
-		  assert(dp != NULL);
 		  memcpy(dp, cb_data.user_data, sizeof(s_pli_data));
 		  dp->paramvc = paramvc++;
 		  cb_data.user_data = (char *)dp;

@@ -28,6 +28,7 @@
 # include "version_tag.h"
 # include "config.h"
 # include "priv.h"
+# include "ivl_alloc.h"
 # include <stdlib.h>
 # include <inttypes.h>
 # include <string.h>

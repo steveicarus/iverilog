@@ -19,6 +19,7 @@
 
 #include  "sys_priv.h"
 #include  "vcd_priv.h"
+#include  "ivl_alloc.h"
 #include  <stdio.h>
 #include  <stdlib.h>
 #include  <string.h>
@@ -56,7 +57,6 @@ void vcd_names_add(struct vcd_names_list_s*tab, const char *name)
 {
       struct vcd_names_s *nl = (struct vcd_names_s *)
 	    malloc(sizeof(struct vcd_names_s));
-      assert(nl);
       nl->name = strdup_sh(&name_heap, name);
       nl->next = tab->vcd_names_list;
       tab->vcd_names_list = nl;
@@ -110,7 +110,6 @@ void vcd_names_sort(struct vcd_names_list_s*tab)
 	    tab->vcd_names_sorted = (const char **)
 		  realloc(tab->vcd_names_sorted,
 			  tab->sorted_names*(sizeof(const char *)));
-	    assert(tab->vcd_names_sorted);
 
 	    l = tab->vcd_names_sorted + tab->sorted_names - tab->listed_names;
 	    tab->listed_names = 0;

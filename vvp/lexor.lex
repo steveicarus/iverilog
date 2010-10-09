@@ -25,6 +25,7 @@
 # include  "parse_misc.h"
 # include  "compile.h"
 # include  "parse.h"
+# include  "ivl_alloc.h"
 # include  <cstring>
 # include  <cassert>
 
@@ -73,7 +74,6 @@ static char* strdupnew(char const *str)
 [1-9][0-9]*("'b"|"'sb")[01xz]+ {
       yylval.vect.idx = strtoul(yytext, 0, 10);
       yylval.vect.text = (char*)malloc(yylval.vect.idx + 2);
-      assert(yylval.vect.text);
       char*dest = yylval.vect.text;
 
       const char*bits = strchr(yytext, '\'');
