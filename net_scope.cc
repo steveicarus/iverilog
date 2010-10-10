@@ -69,6 +69,9 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t)
 	  default:  /* BEGIN_END and FORK_JOIN, do nothing */
 	    break;
       }
+      lineno_ = 0;
+      def_lineno_ = 0;
+      genvar_tmp_val = 0;
 }
 
 NetScope::~NetScope()

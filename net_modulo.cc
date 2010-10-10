@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,6 +40,7 @@ NetModulo::NetModulo(NetScope*s, perm_string n, unsigned wr,
       pin(0).set_dir(Link::OUTPUT); // Result
       pin(1).set_dir(Link::INPUT);  // DataA
       pin(2).set_dir(Link::INPUT);  // DataB
+      signed_flag_ = false;
 }
 
 NetModulo::~NetModulo()

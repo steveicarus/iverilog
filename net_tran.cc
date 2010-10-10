@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -50,6 +50,9 @@ NetTran::NetTran(NetScope*scope__, perm_string n, ivl_switch_type_t tt)
       if (pin_count() == 3) {
 	    pin(2).set_dir(Link::INPUT); // Enable
       }
+      wid_ = 0;
+      part_ = 0;
+      off_ = 0;
 }
 
 NetTran::NetTran(NetScope*scope__, perm_string n, unsigned wid, unsigned part, unsigned off)

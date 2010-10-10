@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -113,6 +113,7 @@ int do_expr::event_wait(NetEvWait*stmt)
 class synth_f  : public functor_t {
 
     public:
+      synth_f() { top_ = NULL; }
       void process(class Design*, class NetProcTop*);
 
     private:

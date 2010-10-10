@@ -154,12 +154,15 @@ static int startsWith (char *prefix, char *str)
 
 static void appendn (char **ptr, char *app, int count)
 {
-	*ptr = (char *) realloc(*ptr,strlen(*ptr)+(count?count:strlen(app))+1);
+	char *nptr = (char *) realloc(*ptr, strlen(*ptr) +
+                                            (count?count:strlen(app)) + 1);
 
-	if (*ptr == NULL) {
+	if (nptr == NULL) {
 		fprintf(stderr,"error: out of memory\n");
+		free(*ptr);
 		myExit(4);
 	}
+	*ptr = nptr;
 
 	if (count)
 		strncat(*ptr,app,count);
@@ -187,12 +190,14 @@ static void appendBackSlash(char **str)
 
 static void assignn (char **ptr, char *str, int count)
 {
-	*ptr = (char *) realloc(*ptr,(count?count:strlen(str))+1);
+	char *nptr = (char *) realloc(*ptr, (count?count:strlen(str)) + 1);
 
-	if (*ptr == NULL) {
+	if (nptr == NULL) {
 		fprintf(stderr,"error: out of memory\n");
+		free(*ptr);
 		myExit(4);
 	}
+	*ptr = nptr;
 
 	if (count) {
 		strncpy(*ptr,str,count);
