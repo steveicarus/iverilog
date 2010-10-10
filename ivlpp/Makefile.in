@@ -37,9 +37,17 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = -I. -I.. -I$(srcdir)/.. -I$(srcdir) @CPPFLAGS@ @DEFS@
+ifeq (@srcdir@,.)
+INCLUDE_PATH = -I. -I..
+else
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+endif
+
+CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
+
+O = main.o lexor.o
 
 all: ivlpp@EXEEXT@
 
@@ -51,10 +59,11 @@ clean:
 distclean: clean
 	rm -f Makefile config.log
 
+cppcheck: $(O:.o=.c)
+	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+
 Makefile: $(srcdir)/Makefile.in ../config.status
 	cd ..; ./config.status --file=ivlpp/$@
-
-O = main.o lexor.o
 
 ivlpp@EXEEXT@: $O
 	$(CC) $(LDFLAGS) $O -o ivlpp@EXEEXT@ @EXTRALIBS@

@@ -34,13 +34,33 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = -I.. -I$(srcdir)/.. -I$(srcdir) @CPPFLAGS@ @DEFS@ @PICFLAG@
+ifeq (@srcdir@,.)
+INCLUDE_PATH = -I. -I..
+else
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+endif
+
+CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
+
+O = null.o
 
 all: dep null.tgt
 
 check: all
+
+clean:
+	rm -rf *.o dep null.tgt
+
+distclean: clean
+	rm -f Makefile config.log
+
+cppcheck: $(O:.o=.c)
+	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+
+Makefile: $(srcdir)/Makefile.in ../config.status
+	cd ..; ./config.status --file=tgt-null/$@
 
 dep:
 	mkdir dep
@@ -48,8 +68,6 @@ dep:
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
-
-O = null.o
 
 ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl
@@ -59,18 +77,8 @@ else
   TGTDEPLIBS=
 endif
 
-
 null.tgt: $O $(TGTDEPLIBS)
 	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
-
-clean:
-	rm -rf *.o dep null.tgt
-
-distclean: clean
-	rm -f Makefile config.log
-
-Makefile: $(srcdir)/Makefile.in ../config.status
-	cd ..; ./config.status --file=tgt-null/$@
 
 install: all installdirs $(libdir)/ivl$(suffix)/null.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/null.conf $(libdir)/ivl$(suffix)/null-s.conf
 

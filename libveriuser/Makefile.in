@@ -35,32 +35,50 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = -I. -I.. -I$(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
+ifeq (@srcdir@,.)
+INCLUDE_PATH = -I. -I..
+else
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+endif
+
+CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 RANLIB = @RANLIB@
 
 A = a_close.o a_compare_handles.o a_configure.o a_fetch_argc.o \
-a_fetch_argv.o a_fetch_dir.o a_fetch_fullname.o a_fetch_location.o \
-a_fetch_param.o a_fetch_range.o a_fetch_tfarg.o a_fetch_time.o \
-a_fetch_type.o a_fetch_type_str.o a_fetch_value.o a_handle_by_name.o \
-a_handle_hiconn.o a_handle_object.o a_handle_parent.o \
-a_handle_simulated_net.o a_handle_tfarg.o a_initialize.o \
-a_next.o a_next_bit.o a_next_port.o a_next_topmod.o \
-a_object_of_type.o a_product_version.o \
-a_set_value.o a_vcl.o a_version.o
+    a_fetch_argv.o a_fetch_dir.o a_fetch_fullname.o a_fetch_location.o \
+    a_fetch_param.o a_fetch_range.o a_fetch_tfarg.o a_fetch_time.o \
+    a_fetch_type.o a_fetch_type_str.o a_fetch_value.o a_handle_by_name.o \
+    a_handle_hiconn.o a_handle_object.o a_handle_parent.o \
+    a_handle_simulated_net.o a_handle_tfarg.o a_initialize.o a_next.o \
+    a_next_bit.o a_next_port.o a_next_topmod.o a_object_of_type.o \
+    a_product_version.o a_set_value.o a_vcl.o a_version.o
 
 O = asynch.o delay.o exprinfo.o finish.o getcstringp.o getinstance.o \
-getlongp.o getp.o getsimtime.o io_print.o math.o mc_scan_plusargs.o \
-nodeinfo.o nump.o putlongp.o putp.o spname.o typep.o workarea.o \
-veriusertfs.o priv.o $A
+    getlongp.o getp.o getsimtime.o io_print.o math.o mc_scan_plusargs.o \
+    nodeinfo.o nump.o putlongp.o putp.o spname.o typep.o workarea.o \
+    veriusertfs.o priv.o $A
 
 all: dep libveriuser.a $(ALL32)
 
 check: all
 
+clean:
+	rm -rf *.o dep libveriuser.a libveriuser.o
+
+distclean: clean
+	rm -f Makefile config.log
+	rm -f config.h stamp-config-h
+
+cppcheck: $(O:.o=.c)
+	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+
 Makefile: $(srcdir)/Makefile.in
 	cd ..; ./config.status --file=libveriuser/$@
+
+dep:
+	mkdir dep
 
 stamp-config-h: $(srcdir)/config.h.in ../config.status
 	@rm -f $@
@@ -75,20 +93,9 @@ libveriuser.a: libveriuser.o
 	ar cvq $@ libveriuser.o
 	$(RANLIB) $@
 
-dep:
-	mkdir dep
-
 %.o: %.c config.h
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
-
-
-clean:
-	rm -rf *.o dep libveriuser.a libveriuser.o
-
-distclean: clean
-	rm -f Makefile config.log
-	rm -f config.h stamp-config-h
 
 install:: all installdirs $(libdir)/libveriuser$(suffix).a $(INSTALL32)
 

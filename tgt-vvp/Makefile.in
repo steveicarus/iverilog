@@ -38,11 +38,36 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = -I. -I.. -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
+ifeq (@srcdir@,.)
+INCLUDE_PATH = -I. -I..
+else
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+endif
+
+CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
+O = vvp.o draw_mux.o draw_net_input.o draw_switch.o draw_ufunc.o draw_vpi.o \
+    eval_bool.o eval_expr.o eval_real.o modpath.o vector.o vvp_process.o \
+    vvp_scope.o
+
 all: dep vvp.tgt vvp.conf vvp-s.conf
+
+check: all
+
+clean:
+	rm -rf *.o dep vvp.tgt vvp.conf vvp-s.conf
+
+distclean: clean
+	rm -f Makefile config.log
+	rm -f stamp-vvp_config-h vvp_config.h
+
+cppcheck: $(O:.o=.c)
+	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+
+Makefile: $(srcdir)/Makefile.in ../config.status
+	cd ..; ./config.status --file=tgt-vvp/$@
 
 dep:
 	mkdir dep
@@ -51,11 +76,6 @@ dep:
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
 
-O = vvp.o draw_mux.o draw_net_input.o draw_switch.o draw_ufunc.o draw_vpi.o \
-eval_bool.o eval_expr.o \
-eval_real.o modpath.o vector.o \
-vvp_process.o vvp_scope.o
-
 ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl
   TGTDEPLIBS=../libivl.a
@@ -63,7 +83,6 @@ else
   TGTLDFLAGS=
   TGTDEPLIBS=
 endif
-
 
 vvp.tgt: $O $(TGTDEPLIBS)
 	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
@@ -74,22 +93,10 @@ vvp.conf: $(srcdir)/vvp.conf.in Makefile
 vvp-s.conf: $(srcdir)/vvp-s.conf.in Makefile
 	echo 'flag:VVP_EXECUTABLE=$(bindir)/vvp$(suffix)' | cat $(srcdir)/vvp-s.conf.in - > vvp-s.conf
 
-Makefile: $(srcdir)/Makefile.in ../config.status
-	cd ..; ./config.status --file=tgt-vvp/$@
-
 stamp-vvp_config-h: $(srcdir)/vvp_config.h.in ../config.status
 	@rm -f $@
 	cd ..; ./config.status --header=tgt-vvp/vvp_config.h
 vvp_config.h: stamp-vvp_config-h
-
-clean:
-	rm -rf *.o dep vvp.tgt vvp.conf vvp-s.conf
-
-distclean: clean
-	rm -f Makefile config.log
-	rm -f stamp-vvp_config-h vvp_config.h
-
-check: all
 
 install: all installdirs $(libdir)/ivl$(suffix)/vvp.tgt $(libdir)/ivl$(suffix)/vvp.conf $(libdir)/ivl$(suffix)/vvp-s.conf
 

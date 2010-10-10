@@ -76,10 +76,33 @@ MAN = @MAN@
 PS2PDF = @PS2PDF@
 GIT = @GIT@
 
-CPPFLAGS = @DEFS@ -I. -I$(srcdir) @CPPFLAGS@
+ifeq (@srcdir@,.)
+INCLUDE_PATH = -I.
+else
+INCLUDE_PATH = -I. -I$(srcdir)
+endif
+
+CPPFLAGS = @DEFS@ $(INCLUDE_PATH) @CPPFLAGS@
 CXXFLAGS = @WARNING_FLAGS@ @CXXFLAGS@
 PICFLAGS = @PICFLAG@
 LDFLAGS = @rdynamic@ @LDFLAGS@
+
+TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o t-dll-analog.o
+FF = cprop.o nodangle.o synth.o synth2.o syn-rules.o
+
+O = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o \
+    elab_expr.o elaborate_analog.o elab_lval.o elab_net.o elab_pexpr.o \
+    elab_scope.o elab_sig.o elab_sig_analog.o emit.o eval.o eval_attrib.o \
+    eval_tree.o expr_synth.o functor.o lexor.o lexor_keyword.o link_const.o \
+    load_module.o netlist.o netmisc.o net_analog.o net_assign.o net_design.o \
+    net_event.o net_expr.o net_func.o net_link.o net_modulo.o net_nex_input.o \
+    net_nex_output.o net_proc.o net_scope.o net_tran.o net_udp.o \
+    pad_to_width.o parse.o parse_misc.o pform.o pform_analog.o \
+    pform_disciplines.o pform_dump.o pform_types.o set_width.o \
+    symbol_search.o sync.o sys_funcs.o verinum.o verireal.o target.o \
+    Attrib.o HName.o LineInfo.o Module.o PDelays.o PEvent.o PExpr.o PGate.o \
+    PGenerate.o PScope.o PSpec.o PTask.o PUdp.o PFunction.o PWire.o \
+    Statement.o AStatement.o StringHeap.o $(FF) $(TT)
 
 all: dep config.h _pli_types.h version_tag.h ivl@EXEEXT@ version.exe iverilog-vpi.man
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
@@ -87,7 +110,7 @@ all: dep config.h _pli_types.h version_tag.h ivl@EXEEXT@ version.exe iverilog-vp
 # In the windows world, the installer will need a dosify program to
 # dosify text files.
 ifeq (@MINGW32@,yes)
-all: dep dosify.exe
+all: dosify.exe
 dosify.exe: $(srcdir)/dosify.c
 	$(CC) -o dosify.exe $(srcdir)/dosify.c
 endif
@@ -133,29 +156,19 @@ ifneq (@srcdir@,.)
 endif
 	rm -rf autom4te.cache
 
-TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o t-dll-analog.o
-FF = cprop.o nodangle.o synth.o synth2.o syn-rules.o
+cppcheck: $(O:.o=.cc) $(srcdir)/dosify.c $(srcdir)/version.c
+	cppcheck --enable=all -f $(INCLUDE_PATH) $^
 
-O = main.o async.o design_dump.o discipline.o dup_expr.o \
-elaborate.o elab_expr.o elaborate_analog.o \
-elab_lval.o elab_net.o elab_pexpr.o elab_scope.o \
-elab_sig.o elab_sig_analog.o emit.o eval.o eval_attrib.o \
-eval_tree.o expr_synth.o functor.o lexor.o lexor_keyword.o link_const.o \
-load_module.o netlist.o netmisc.o net_analog.o net_assign.o \
-net_design.o net_event.o net_expr.o net_func.o \
-net_link.o net_modulo.o net_nex_input.o net_nex_output.o \
-net_proc.o net_scope.o net_tran.o net_udp.o pad_to_width.o \
-parse.o parse_misc.o pform.o pform_analog.o pform_disciplines.o \
-pform_dump.o pform_types.o \
-set_width.o symbol_search.o sync.o sys_funcs.o \
-verinum.o verireal.o target.o \
-Attrib.o HName.o LineInfo.o Module.o PDelays.o PEvent.o \
-PExpr.o PGate.o PGenerate.o PScope.o PSpec.o \
-PTask.o PUdp.o PFunction.o PWire.o Statement.o AStatement.o StringHeap.o \
-$(FF) $(TT)
+cppcheck-all:
+	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) cppcheck && ) true
+	$(foreach dir,$(NOTUSED),$(MAKE) -C $(dir) cppcheck && ) true
+	cppcheck
 
 Makefile: $(srcdir)/Makefile.in config.status
 	./config.status --file=$@
+
+dep:
+	mkdir dep
 
 stamp-config-h: $(srcdir)/config.h.in config.status
 	@rm -f $@
@@ -190,7 +203,7 @@ ivl@EXEEXT@: $O
 endif
 
 ifeq (@MINGW32@,no)
-all: dep iverilog-vpi
+all: iverilog-vpi
 
 iverilog-vpi: $(srcdir)/iverilog-vpi.sh Makefile
 	sed -e 's;@SHARED@;@shared@;' -e 's;@PIC@;@PICFLAG@;' \
@@ -205,9 +218,6 @@ endif
 
 version.exe: $(srcdir)/version.c $(srcdir)/version_base.h version_tag.h
 	$(HOSTCC) @WARNING_FLAGS@ -o version.exe -I. -I$(srcdir) $(srcdir)/version.c
-
-dep:
-	mkdir dep
 
 %.o: %.cc config.h
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
@@ -352,4 +362,3 @@ uninstall:
 
 
 -include $(patsubst %.o, dep/%.d, $O)
--include $(patsubst %.o, dep/%.d, vpithunk.o)

@@ -33,11 +33,33 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
+ifeq (@srcdir@,.)
+INCLUDE_PATH = -I. -I..
+else
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+endif
+
+CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
+O = imain.o dump_final.o emit_jed.o enables.o fit_log.o fit_reg.o pads.o
+
 all: dep pal.tgt
+
+check: all
+
+clean:
+	rm -rf *.o dep pal.tgt
+
+distclean: clean
+	rm -f Makefile config.log
+
+cppcheck: $(O:.o=.c)
+	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+
+Makefile: $(srcdir)/Makefile.in ../config.status
+	cd ..; ./config.status --file=tgt-pal/$@
 
 dep:
 	mkdir dep
@@ -45,8 +67,6 @@ dep:
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
-
-O = imain.o dump_final.o emit_jed.o enables.o fit_log.o fit_reg.o pads.o
 
 ifeq (@CYGWIN@,yes)
   TGTLDFLAGS=-L.. -livl
@@ -56,18 +76,8 @@ else
   TGTDEPLIBS=
 endif
 
-
 pal.tgt: $O $(TGTDEPLIBS)
 	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS) $(LDFLAGS) -lipal
-
-clean:
-	rm -rf *.o dep pal.tgt
-
-distclean: clean
-	rm -f Makefile config.log
-
-Makefile: $(srcdir)/Makefile.in ../config.status
-	../config.status --file=$@
 
 install: all installdirs $(libdir)/ivl/pal.tgt
 

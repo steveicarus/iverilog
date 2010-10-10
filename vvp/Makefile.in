@@ -45,7 +45,13 @@ YACC = @YACC@
 MAN = @MAN@
 PS2PDF = @PS2PDF@
 
-CPPFLAGS = -I. -I.. -I $(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@
+ifeq (@srcdir@,.)
+INCLUDE_PATH = -I. -I..
+else
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+endif
+
+CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 CXXFLAGS = @WARNING_FLAGS@ @CXXFLAGS@
 LDFLAGS = @rdynamic@ @LDFLAGS@
@@ -55,15 +61,18 @@ dllib=@DLLIB@
 
 MDIR1 = -DMODULE_DIR1='"$(libdir)/ivl$(suffix)"'
 
+V = vpi_modules.o vpi_callback.o vpi_const.o vpi_event.o vpi_iter.o vpi_mcd.o \
+    vpi_priv.o vpi_scope.o vpi_real.o vpi_signal.o vpi_tasks.o vpi_time.o \
+    vpi_vthr_vector.o vpip_bin.o vpip_hex.o vpip_oct.o \
+    vpip_to_dec.o vpip_format.o vvp_vpi.o
+
+O = main.o parse.o parse_misc.o lexor.o arith.o array.o bufif.o compile.o \
+    concat.o dff.o extend.o npmos.o part.o permaheap.o reduce.o resolv.o \
+    sfunc.o stop.o symbols.o ufunc.o codes.o vthread.o schedule.o \
+    statistics.o tables.o udp.o vvp_island.o vvp_net.o vvp_net_sig.o \
+    event.o logic.o delay.o words.o island_tran.o $V
+
 all: dep vvp@EXEEXT@ libvpi.a vvp.man
-
-clean:
-	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc
-	rm -rf dep vvp@EXEEXT@ libvpi.a parse.output vvp.man vvp.ps vvp.pdf vvp.exp
-
-distclean: clean
-	rm -f Makefile config.log
-	rm -f stamp-config-h config.h
 
 check: all
 ifeq (@WIN32@,yes)
@@ -80,17 +89,22 @@ else
 	./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
 endif
 
-V = vpi_modules.o vpi_callback.o vpi_const.o vpi_event.o vpi_iter.o vpi_mcd.o \
-vpi_priv.o vpi_scope.o vpi_real.o vpi_signal.o vpi_tasks.o vpi_time.o \
-vpi_vthr_vector.o vpip_bin.o vpip_hex.o vpip_oct.o \
-vpip_to_dec.o vpip_format.o vvp_vpi.o
+clean:
+	rm -f *.o *~ parse.cc parse.h lexor.cc tables.cc
+	rm -rf dep vvp@EXEEXT@ libvpi.a parse.output vvp.man vvp.ps vvp.pdf vvp.exp
 
-O = main.o parse.o parse_misc.o lexor.o arith.o array.o bufif.o compile.o \
-concat.o \
-dff.o extend.o npmos.o part.o permaheap.o reduce.o resolv.o sfunc.o stop.o \
-symbols.o ufunc.o codes.o \
-vthread.o schedule.o statistics.o tables.o udp.o vvp_island.o vvp_net.o \
-vvp_net_sig.o event.o logic.o delay.o words.o island_tran.o $V
+distclean: clean
+	rm -f Makefile config.log
+	rm -f stamp-config-h config.h
+
+cppcheck: $(O:.o=.cc) libvpi.c draw_tt.c
+	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+
+Makefile: $(srcdir)/Makefile.in
+	cd ..; ./config.status --file=vvp/$@
+
+dep:
+	mkdir dep
 
 ifeq (@WIN32@,yes)
 # Under Windows (mingw) I need to make the vvp.exe in two steps.
@@ -108,7 +122,7 @@ vvp@EXEEXT@ libvpi.a: $O $(srcdir)/vvp.def
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ vvp.exp $(LDFLAGS) $O $(dllib) $(LIBS)
 else
 libvpi.a: libvpi.c
-	$(CC) -c $(srcdir)/libvpi.c
+	$(CC) $(CFLAGS) -c $<
 	rm -f libvpi.a
 	ar cqv libvpi.a libvpi.o
 	$(RANLIB) libvpi.a
@@ -116,9 +130,6 @@ libvpi.a: libvpi.c
 vvp@EXEEXT@: $O
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $O $(LIBS) $(dllib)
 endif
-
-dep:
-	mkdir dep
 
 %.o: %.cc config.h
 	$(CXX) $(CPPFLAGS) -DIVL_SUFFIX='"$(suffix)"' $(MDIR1) $(MDIR2) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
@@ -174,9 +185,6 @@ else
 INSTALL_DOC = $(mandir)/man1/vvp$(suffix).1
 INSTALL_DOCDIR = $(mandir)/man1
 endif
-
-Makefile: $(srcdir)/Makefile.in
-	cd ..; ./config.status --file=vvp/$@
 
 stamp-config-h: $(srcdir)/config.h.in ../config.status
 	@rm -f $@

@@ -41,9 +41,17 @@ INSTALL_DATA = @INSTALL_DATA@
 MAN = @MAN@
 PS2PDF = @PS2PDF@
 
-CPPFLAGS = -I. -I.. -I$(srcdir)/.. -I$(srcdir) @CPPFLAGS@ @DEFS@
+ifeq (@srcdir@,.)
+INCLUDE_PATH = -I. -I..
+else
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+endif
+
+CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
+
+O = main.o substit.o cflexor.o cfparse.o
 
 all: dep iverilog@EXEEXT@ iverilog.man
 
@@ -57,10 +65,14 @@ clean:
 distclean: clean
 	rm -f Makefile config.log
 
+cppcheck: $(O:.o=.c)
+	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+
 Makefile: $(srcdir)/Makefile.in ../config.status
 	cd ..; ./config.status --file=driver/$@
 
-O = main.o substit.o cflexor.o cfparse.o
+dep:
+	mkdir dep
 
 iverilog@EXEEXT@: $O
 	$(CC) $(LDFLAGS) $O -o iverilog@EXEEXT@ @EXTRALIBS@
@@ -70,9 +82,6 @@ cflexor.c: cflexor.lex
 
 cfparse.h cfparse.c: cfparse.y
 	bison --verbose -t -d -o cfparse.c --name-prefix=cf $(srcdir)/cfparse.y
-
-dep:
-	mkdir dep
 
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o

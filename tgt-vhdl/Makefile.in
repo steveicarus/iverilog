@@ -36,11 +36,35 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = -I. -I.. -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
+ifeq (@srcdir@,.)
+INCLUDE_PATH = -I. -I..
+else
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+endif
+
+CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CXXFLAGS = @WARNING_FLAGS@ @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
+O = vhdl.o state.o vhdl_element.o vhdl_type.o vhdl_syntax.o scope.o process.o \
+    stmt.o expr.o lpm.o support.o cast.o logic.o
+
 all: dep vhdl.tgt vhdl.conf vhdl-s.conf
+
+check: all
+
+clean:
+	rm -rf $(O) dep vhdl.tgt
+
+distclean: clean
+	rm -f Makefile config.log
+	rm -f stamp-vhdl_config-h vhdl_config.h
+
+cppcheck: $(O:.o=.cc)
+	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+
+Makefile: $(srcdir)/Makefile.in ../config.status
+	cd ..; ./config.status --file=tgt-vhdl/$@
 
 dep:
 	mkdir dep
@@ -48,9 +72,6 @@ dep:
 %.o: %.cc vhdl_config.h
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
-
-O = vhdl.o state.o vhdl_element.o vhdl_type.o vhdl_syntax.o scope.o process.o \
-	stmt.o expr.o lpm.o support.o cast.o logic.o
 
 ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl
@@ -63,22 +84,10 @@ endif
 vhdl.tgt: $O $(TGTDEPLIBS)
 	$(CXX) @shared@ -o $@ $O $(TGTLDFLAGS)
 
-Makefile: $(srcdir)/Makefile.in ../config.status
-	cd ..; ./config.status --file=tgt-vhdl/$@
-
 stamp-vhdl_config-h: $(srcdir)/vhdl_config.h.in ../config.status
 	@rm -f $@
 	cd ..; ./config.status --header=tgt-vhdl/vhdl_config.h
 vhdl_config.h: stamp-vhdl_config-h
-
-clean:
-	rm -rf $(O) dep vhdl.tgt
-
-distclean: clean
-	rm -f Makefile config.log
-	rm -f stamp-vhdl_config-h vhdl_config.h
-
-check: all
 
 install: all installdirs $(libdir)/ivl$(suffix)/vhdl.tgt $(libdir)/ivl$(suffix)/vhdl.conf \
 	$(libdir)/ivl$(suffix)/vhdl-s.conf

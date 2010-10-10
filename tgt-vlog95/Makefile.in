@@ -34,13 +34,33 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = -I. -I.. -I$(srcdir)/.. -I$(srcdir) @CPPFLAGS@ @DEFS@ @PICFLAG@
+ifeq (@srcdir@,.)
+INCLUDE_PATH = -I. -I..
+else
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+endif
+
+CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
+
+O = vlog95.o
 
 all: dep vlog95.tgt
 
 check: all
+
+clean:
+	rm -rf *.o dep vlog95.tgt
+
+distclean: clean
+	rm -f Makefile config.log
+
+cppcheck: $(O:.o=.c)
+	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+
+Makefile: $(srcdir)/Makefile.in ../config.status
+	cd ..; ./config.status --file=tgt-vlog95/$@
 
 dep:
 	mkdir dep
@@ -48,8 +68,6 @@ dep:
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
-
-O = vlog95.o
 
 ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl
@@ -59,18 +77,8 @@ else
   TGTDEPLIBS=
 endif
 
-
 vlog95.tgt: $O $(TGTDEPLIBS)
 	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
-
-clean:
-	rm -rf *.o dep vlog95.tgt
-
-distclean: clean
-	rm -f Makefile config.log
-
-Makefile: $(srcdir)/Makefile.in ../config.status
-	cd ..; ./config.status --file=tgt-vlog95/$@
 
 install: all installdirs $(libdir)/ivl$(suffix)/vlog95.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/vlog95.conf $(libdir)/ivl$(suffix)/vlog95-s.conf
 

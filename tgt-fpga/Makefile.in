@@ -38,11 +38,34 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = -I.. -I$(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
+ifeq (@srcdir@,.)
+INCLUDE_PATH = -I. -I..
+else
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+endif
+
+CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
+D = d-generic.o d-generic-edif.o d-lpm.o d-virtex.o d-virtex2.o
+O = edif.o fpga.o gates.o mangle.o tables.o generic.o xilinx.o $D
+
 all: dep fpga.tgt
+
+check: all
+
+clean:
+	rm -rf *.o dep fpga.tgt
+
+distclean: clean
+	rm -f Makefile config.log
+
+cppcheck: $(O:.o=.c)
+	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+
+Makefile: $(srcdir)/Makefile.in ../config.status
+	cd ..; ./config.status --file=tgt-fpga$@
 
 dep:
 	mkdir dep
@@ -50,9 +73,6 @@ dep:
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
-
-D = d-generic.o d-generic-edif.o d-lpm.o d-virtex.o d-virtex2.o
-O = edif.o fpga.o gates.o mangle.o tables.o generic.o xilinx.o $D
 
 ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl
@@ -62,7 +82,6 @@ else
   TGTDEPLIBS=
 endif
 
-
 fpga.tgt: $O $(TGTDEPLIBS)
 	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
 
@@ -71,18 +90,6 @@ iverilog-fpga.ps: $(srcdir)/iverilog-fpga.man
 
 iverilog-fpga.pdf: iverilog-fpga.ps
 	ps2pdf iverilog-fpga.ps iverilog-fpga.pdf
-
-
-Makefile: $(srcdir)/Makefile.in ../config.status
-	../config.status --file=$@
-
-clean:
-	rm -rf *.o dep fpga.tgt
-
-distclean: clean
-	rm -f Makefile config.log
-
-check: all
 
 ifeq (@WIN32@,yes)
 INSTALL_DOC = $(prefix)/iverilog-fpga$(suffix).pdf $(mandir)/man1/iverilog-fpga$(suffix).1

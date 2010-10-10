@@ -40,33 +40,24 @@ INSTALL_DATA = @INSTALL_DATA@
 LEX = @LEX@
 YACC = @YACC@
 
-CPPFLAGS = -I. -I$(srcdir)/.. -I$(srcdir) -I.. @file64_support@ @CPPFLAGS@ @DEFS@ @PICFLAG@
+ifeq (@srcdir@,.)
+INCLUDE_PATH = -I. -I..
+else
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+endif
+
+CPPFLAGS = $(INCLUDE_PATH) @file64_support@ @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 CXXFLAGS = @WARNING_FLAGS@ @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
-all: dep system.vpi va_math.vpi v2005_math.vpi $(ALL32)
-
-check: all
-
-dep:
-	mkdir dep
-
-%.o: %.c vpi_config.h
-	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
-	mv $*.d dep
-
-%.o: %.cc vpi_config.h
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
-	mv $*.d dep
-
 # Object files for system.vpi
 O = sys_table.o sys_convert.o sys_deposit.o sys_display.o sys_fileio.o \
-sys_finish.o sys_icarus.o sys_plusargs.o sys_random.o sys_random_mti.o \
-sys_readmem.o sys_readmem_lex.o sys_scanf.o sys_sdf.o \
-sys_time.o sys_vcd.o sys_vcdoff.o vcd_priv.o vcd_priv2.o \
-mt19937int.o sys_priv.o sdf_lexor.o sdf_parse.o stringheap.o \
-vams_simparam.o
+    sys_finish.o sys_icarus.o sys_plusargs.o sys_random.o sys_random_mti.o \
+    sys_readmem.o sys_readmem_lex.o sys_scanf.o sys_sdf.o sys_time.o \
+    sys_vcd.o sys_vcdoff.o vcd_priv.o  mt19937int.o sys_priv.o sdf_lexor.o \
+    sdf_parse.o stringheap.o vams_simparam.o
+OPP = vcd_priv2.o
 
 ifeq (@HAVE_LIBZ@,yes)
 ifeq (@HAVE_LIBBZ2@,yes)
@@ -82,6 +73,36 @@ M = sys_clog2.o v2005_math.o
 # Object files for va_math.vpi
 V = va_math.o
 
+all: dep system.vpi va_math.vpi v2005_math.vpi $(ALL32)
+
+check: all
+
+clean:
+	rm -rf *.o sys_readmem_lex.c dep system.vpi
+	rm -f sdf_lexor.c sdf_parse.c sdf_parse.output sdf_parse.h
+	rm -f va_math.vpi v2005_math.vpi
+
+distclean: clean
+	rm -f Makefile config.log
+	rm -f vpi_config.h stamp-vpi_config-h
+
+cppcheck: $(O:.o=.c) $(OPP:.o=.cc) $(M:.o=.c) $(V:.o=.c)
+	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+
+Makefile: $(srcdir)/Makefile.in ../config.status
+	cd ..; ./config.status --file=vpi/$@
+
+dep:
+	mkdir dep
+
+%.o: %.c vpi_config.h
+	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
+	mv $*.d dep
+
+%.o: %.cc vpi_config.h
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
+	mv $*.d dep
+
 LIBS = @LIBS@
 SYSTEM_VPI_LDFLAGS = $(LIBS)
 VA_MATH_LDFLAGS =
@@ -90,8 +111,8 @@ ifeq (@MINGW32@,yes)
     VA_MATH_LDFLAGS += @EXTRALIBS@
 endif
 
-system.vpi: $O ../vvp/libvpi.a
-	$(CXX) @shared@ -o $@ $O -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
+system.vpi: $O $(OPP) ../vvp/libvpi.a
+	$(CXX) @shared@ -o $@ $O $(OPP) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
 sys_readmem_lex.c: sys_readmem_lex.lex
 	flex -t -Preadmem $(srcdir)/sys_readmem_lex.lex > sys_readmem_lex.c
@@ -110,24 +131,10 @@ v2005_math.vpi: $M ../vvp/libvpi.a
 va_math.vpi: $V ../vvp/libvpi.a
 	$(CC) @shared@ -o $@ $V -L../vvp $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
 
-clean:
-	rm -rf *.o sys_readmem_lex.c dep system.vpi
-	rm -f sdf_lexor.c sdf_parse.c sdf_parse.output sdf_parse.h
-	rm -f va_math.vpi v2005_math.vpi
-
-distclean: clean
-	rm -f Makefile config.log
-	rm -f vpi_config.h stamp-vpi_config-h
-
-Makefile: $(srcdir)/Makefile.in ../config.status
-	cd ..; ./config.status --file=vpi/$@
-
 stamp-vpi_config-h: $(srcdir)/vpi_config.h.in ../config.status
 	@rm -f $@
 	cd ..; ./config.status --header=vpi/vpi_config.h
 vpi_config.h: stamp-vpi_config-h
-
-check: all
 
 install: all installdirs \
     $(vpidir)/system.vpi $(vpidir)/system.sft \
@@ -164,3 +171,6 @@ uninstall:
 	rm -f "$(DESTDIR)$(vpidir)/v2005_math.sft"
 
 -include $(patsubst %.o, dep/%.d, $O)
+-include $(patsubst %.o, dep/%.d, $(OPP))
+-include $(patsubst %.o, dep/%.d, $M)
+-include $(patsubst %.o, dep/%.d, $V)

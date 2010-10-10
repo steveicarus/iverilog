@@ -37,18 +37,35 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = -I$(srcdir) -I$(srcdir)/.. -I.. @CPPFLAGS@ @DEFS@ @PICFLAG@
+ifeq (@srcdir@,.)
+INCLUDE_PATH = -I. -I..
+else
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+endif
+
+CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
 SHARED = @shared@
 
-all:
+O = cadpli.o
 
 all: dep cadpli.vpl $(ALL32)
 
-# No specific check operations.
 check: all
+
+clean:
+	rm -rf *.o dep cadpli.vpl
+
+distclean: clean
+	rm -f Makefile config.log
+
+cppcheck: $(O:.o=.c)
+	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+
+Makefile: $(srcdir)/Makefile.in ../config.status
+	cd ..; ./config.status --file=cadpli/$@
 
 dep:
 	mkdir dep
@@ -57,11 +74,6 @@ dep:
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $<
 	mv $*.d dep
 
-O = cadpli.o
-
-Makefile: $(srcdir)/Makefile.in ../config.status
-	cd ..; ./config.status --file=cadpli/$@
-
 SYSTEM_VPI_LDFLAGS = -L../vvp -lvpi
 ifeq (@MINGW32@,yes)
     SYSTEM_VPI_LDFLAGS += @EXTRALIBS@
@@ -69,12 +81,6 @@ endif
 
 cadpli.vpl: $O ../vvp/libvpi.a ../libveriuser/libveriuser.o
 	$(CC) @shared@ -o $@ $O ../libveriuser/libveriuser.o $(SYSTEM_VPI_LDFLAGS)
-
-clean:
-	rm -rf *.o dep cadpli.vpl
-
-distclean: clean
-	rm -f Makefile config.log
 
 install: all installdirs $(vpidir)/cadpli.vpl
 

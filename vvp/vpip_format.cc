@@ -18,9 +18,9 @@
  */
 
 # include  "vpi_user.h"
-# include  <assert.h>
+# include  <cassert>
 
-static const char str_char1_table[256] = {
+static const char str_char1_table[257] = {
       ".HS1M222" "W3333333" /* 00 0F */ "L4444444" "44444444" /* 10 1F */
       "P5555555" "55555555" /* 20 2F */ "55555555" "55555555" /* 30 3F */
       "S6666666" "66666666" /* 40 4F */ "66666666" "66666666" /* 50 5F */
@@ -30,7 +30,7 @@ static const char str_char1_table[256] = {
       "77777777" "77777777" /* C0 CF */ "77777777" "77777777" /* D0 DF */
       "77777777" "77777777" /* E0 EF */ "77777777" "77777777" /* F0 FF */ };
 
-static const char str_char2_table[256] = {
+static const char str_char2_table[257] = {
       ".im0e010" "e0102010" /* 00 0F */ "a0102010" "30102010" /* 10 1F */
       "u0102010" "30102010" /* 20 2F */ "40102010" "30102010" /* 30 3F */
       "t0102010" "30102010" /* 40 4F */ "40102010" "30102010" /* 50 5F */
@@ -41,7 +41,7 @@ static const char str_char2_table[256] = {
       "50102010" "30102010" /* E0 EF */ "40102010" "30102010" /* F0 FF */ };
 
 
-void vpip_format_strength(char*str, s_vpi_value*value, unsigned bit)
+extern "C" void vpip_format_strength(char*str, s_vpi_value*value, unsigned bit)
 {
       str[0] = '.';
       str[1] = '.';

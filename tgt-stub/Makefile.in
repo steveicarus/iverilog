@@ -35,13 +35,33 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = -I.. -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
+ifeq (@srcdir@,.)
+INCLUDE_PATH = -I. -I..
+else
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+endif
+
+CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
+
+O = stub.o expression.o statement.o switches.o
 
 all: dep stub.tgt
 
 check: all
+
+clean:
+	rm -rf *.o dep stub.tgt
+
+distclean: clean
+	rm -f Makefile config.log
+
+cppcheck: $(O:.o=.c)
+	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+
+Makefile: $(srcdir)/Makefile.in ../config.status
+	cd ..; ./config.status --file=tgt-stub/$@
 
 dep:
 	mkdir dep
@@ -49,8 +69,6 @@ dep:
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
-
-O = stub.o expression.o statement.o switches.o
 
 ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl
@@ -60,18 +78,8 @@ else
   TGTDEPLIBS=
 endif
 
-
 stub.tgt: $O $(TGTDEPLIBS)
 	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
-
-clean:
-	rm -rf *.o dep stub.tgt
-
-distclean: clean
-	rm -f Makefile config.log
-
-Makefile: $(srcdir)/Makefile.in ../config.status
-	cd ..; ./config.status --file=tgt-stub/$@
 
 install: all installdirs $(libdir)/ivl$(suffix)/stub.tgt \
 	$(libdir)/ivl$(suffix)/stub.conf $(libdir)/ivl$(suffix)/stub-s.conf

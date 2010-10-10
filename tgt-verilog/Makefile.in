@@ -33,11 +33,33 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = @ident_support@ -I.. -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
-CFLAGS = -Wall @CFLAGS@
+ifeq (@srcdir@,.)
+INCLUDE_PATH = -I. -I..
+else
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+endif
+
+CPPFLAGS = @ident_support@ $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
+CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
+O = verilog.o
+
 all: dep verilog.tgt
+
+check: all
+
+clean:
+	rm -rf *.o dep verilog.tgt
+
+distclean: clean
+	rm -f Makefile config.log
+
+cppcheck: $(O:.o=.c)
+	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+
+Makefile: $(srcdir)/Makefile.in ../config.status
+	cd ..; ./config.status --file=tgt-verilog/$@
 
 dep:
 	mkdir dep
@@ -45,8 +67,6 @@ dep:
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -MD -c $< -o $*.o
 	mv $*.d dep
-
-O = verilog.o
 
 ifeq (@WIN32@,yes)
   TGTLDFLAGS= -L.. -livl
@@ -58,17 +78,6 @@ endif
 
 verilog.tgt: $O $(TGTDEPLIBS)
 	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
-
-clean:
-	rm -rf *.o dep verilog.tgt
-
-distclean: clean
-	rm -f Makefile config.log
-
-Makefile: $(srcdir)/Makefile.in ../config.status
-	../config.status --file=$@
-
-check: all
 
 install: all installdirs $(libdir)/ivl/verilog.tgt \
 	$(includedir)/vpi_user.h
