@@ -428,6 +428,12 @@ static void draw_reg_in_scope(ivl_signal_t sig)
       const char*local_flag = ivl_signal_local(sig)? "*" : "";
 
       switch (ivl_signal_data_type(sig)) {
+	  case IVL_VT_BOOL:
+	    if (ivl_signal_signed(sig))
+		  datatype_flag = "/2s";
+	    else
+		  datatype_flag = "/2u";
+	    break;
 	  case IVL_VT_REAL:
 	    datatype_flag = "/real";
 	    break;
