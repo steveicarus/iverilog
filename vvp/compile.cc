@@ -432,7 +432,9 @@ void functor_ref_lookup(vvp_net_t**ref, char*lab)
  */
 
 struct vpi_handle_resolv_list_s: public resolv_list_s {
-      explicit vpi_handle_resolv_list_s(char*lab) : resolv_list_s(lab) { }
+      explicit vpi_handle_resolv_list_s(char*lab) : resolv_list_s(lab) {
+	    handle = NULL;
+      }
       virtual bool resolve(bool mes);
       vpiHandle *handle;
 };
@@ -531,7 +533,9 @@ void compile_vpi_lookup(vpiHandle *handle, char*label)
  */
 
 struct code_label_resolv_list_s: public resolv_list_s {
-      code_label_resolv_list_s(char*lab) : resolv_list_s(lab) { }
+      code_label_resolv_list_s(char*lab) : resolv_list_s(lab) {
+	    code = NULL;
+      }
       struct vvp_code_s *code;
       virtual bool resolve(bool mes);
 };
@@ -564,7 +568,9 @@ void code_label_lookup(struct vvp_code_s *code, char *label)
 }
 
 struct code_array_resolv_list_s: public resolv_list_s {
-      code_array_resolv_list_s(char*lab) : resolv_list_s(lab) { }
+      code_array_resolv_list_s(char*lab) : resolv_list_s(lab) {
+	    code = NULL;
+      }
       struct vvp_code_s *code;
       virtual bool resolve(bool mes);
 };

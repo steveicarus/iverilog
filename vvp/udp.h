@@ -191,8 +191,6 @@ class vvp_udp_seq_s : public vvp_udp_s {
 
     private:
 
-      vvp_bit4_t init_;
-
       vvp_bit4_t test_levels_(const udp_levels_table&cur);
 
 	// Level sensitive rows of the device.

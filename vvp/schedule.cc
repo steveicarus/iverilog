@@ -75,6 +75,7 @@ struct event_time_s {
 	    rwsync = 0;
 	    rosync = 0;
 	    del_thr = 0;
+	    next = NULL;
       }
       vvp_time64_t delay;
 
@@ -160,10 +161,16 @@ void del_thr_event_s::single_step_display(void)
 
 struct assign_vector4_event_s  : public event_s {
 	/* The default constructor. */
-      assign_vector4_event_s(const vvp_vector4_t&that) : val(that) { }
+      assign_vector4_event_s(const vvp_vector4_t&that) : val(that) {
+	    base = 0;
+	    vwid = 0;
+      }
 	/* A constructor that makes the val directly. */
       assign_vector4_event_s(const vvp_vector4_t&that, unsigned adr, unsigned wid)
-      : val(that,adr,wid) { }
+      : val(that,adr,wid) {
+	    base = 0;
+	    vwid = 0;
+      }
 
 	/* Where to do the assign. */
       vvp_net_ptr_t ptr;
@@ -324,10 +331,14 @@ unsigned long count_assign_aword_pool(void) { return array_w_heap.pool; }
  */
 struct propagate_vector4_event_s : public event_s {
 	/* The default constructor. */
-      propagate_vector4_event_s(const vvp_vector4_t&that) : val(that) { }
+      propagate_vector4_event_s(const vvp_vector4_t&that) : val(that) {
+	    net = NULL;
+      }
 	/* A constructor that makes the val directly. */
       propagate_vector4_event_s(const vvp_vector4_t&that, unsigned adr, unsigned wid)
-      : val(that,adr,wid) { }
+      : val(that,adr,wid) {
+	    net = NULL;
+      }
 
 	/* Propagate the output of this net. */
       vvp_net_t*net;

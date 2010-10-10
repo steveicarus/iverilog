@@ -79,7 +79,10 @@ static void my_getrusage(struct rusage *a)
 		  perror("/proc/self/statm");
 		  return;
 	    }
-	    if (3<=fscanf(statm, "%u%u%u", &siz, &rss, &shd)) {
+	      /* Given that these are in pages we'll limit the value to
+	       * what will fit in a 32 bit integer to prevent undefined
+	       * behavior in fscanf(). */
+	    if (3 == fscanf(statm, "%9u %9u %9u", &siz, &rss, &shd)) {
 		  a->ru_maxrss = page_size * siz;
 		  a->ru_idrss  = page_size * rss;
 		  a->ru_ixrss  = page_size * shd;

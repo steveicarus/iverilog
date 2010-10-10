@@ -81,8 +81,6 @@ vvp_array_t array_find(const char*label)
 * vector4 array works.
 */
 struct __vpiArray {
-      __vpiArray() { }
-
       struct __vpiHandle base;
       struct __vpiScope*scope;
       const char*name; /* Permanently allocated string */
@@ -1092,11 +1090,8 @@ void compile_real_array(char*label, char*name, int last, int first,
       arr->valsr = new vvp_realarray_t(arr->array_count);
       arr->vals_width = 1;
 
-	/* Do these even make sense for real arrays? These are the
-	   part select of a vector, but the real value is not
-	   vectorable. */
-      vpip_make_dec_const(&arr->msb, msb);
-      vpip_make_dec_const(&arr->lsb, lsb);
+	/* For a real array the MSB and LSB must be zero. */
+      assert(msb == 0 && lsb == 0);
 
       count_real_arrays += 1;
       count_real_array_words += arr->array_count;
@@ -1449,7 +1444,8 @@ bool array_resolv_list_t::resolve(bool mes)
 class array_port_resolv_list_t : public resolv_list_s {
 
     public:
-      explicit array_port_resolv_list_t(char*lab) : resolv_list_s(lab) { }
+      explicit array_port_resolv_list_t(char* lab, bool use_addr__,
+                                        long addr__);
 
       vvp_net_t*ptr;
       bool use_addr;
@@ -1458,6 +1454,13 @@ class array_port_resolv_list_t : public resolv_list_s {
 
     private:
 };
+
+array_port_resolv_list_t::array_port_resolv_list_t(char *lab, bool use_addr__,
+                                                   long addr__)
+: resolv_list_s(lab), use_addr(use_addr__), addr(addr__)
+{
+      ptr = new vvp_net_t;
+}
 
 bool array_port_resolv_list_t::resolve(bool mes)
 {
@@ -1513,10 +1516,8 @@ void vpip_array_change(struct __vpiCallback*cb, vpiHandle obj)
 void compile_array_port(char*label, char*array, char*addr)
 {
       array_port_resolv_list_t*resolv_mem
-	    = new array_port_resolv_list_t(array);
+	    = new array_port_resolv_list_t(array, false, 0);
 
-      resolv_mem->ptr = new vvp_net_t;
-      resolv_mem->use_addr = false;
       define_functor_symbol(label, resolv_mem->ptr);
       free(label);
 	// Connect the port-0 input as the address.
@@ -1528,11 +1529,8 @@ void compile_array_port(char*label, char*array, char*addr)
 void compile_array_port(char*label, char*array, long addr)
 {
       array_port_resolv_list_t*resolv_mem
-	    = new array_port_resolv_list_t(array);
+	    = new array_port_resolv_list_t(array, true, addr);
 
-      resolv_mem->ptr = new vvp_net_t;
-      resolv_mem->use_addr = true;
-      resolv_mem->addr = addr;
       define_functor_symbol(label, resolv_mem->ptr);
       free(label);
 
@@ -1551,16 +1549,25 @@ void compile_array_alias(char*label, char*name, char*src)
       obj->scope = vpip_peek_current_scope();
       obj->name  = vpip_name_string(name);
       obj->array_count = mem->array_count;
+      obj->signed_flag = mem->signed_flag;
 
-	// XXXX Need to set an accurate range of addresses.
+	// Need to set an accurate range of addresses.
       vpip_make_dec_const(&obj->first_addr, mem->first_addr.value);
       vpip_make_dec_const(&obj->last_addr, mem->last_addr.value);
+      obj->swap_addr = mem->swap_addr;
+
+      vpip_make_dec_const(&obj->msb, mem->msb.value);
+      vpip_make_dec_const(&obj->lsb, mem->lsb.value);
 
 	// Share the words with the source array.
       obj->nets = mem->nets;
       obj->vals4 = mem->vals4;
+      obj->valsr = mem->valsr;
+      obj->vals_width = mem->vals_width;
+      obj->vals_words = mem->vals_words;
 
       obj->ports_ = 0;
+      obj->vpi_callbacks = 0;
 
       assert(array_table);
       assert(!array_find(label));

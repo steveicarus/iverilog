@@ -75,7 +75,10 @@ class vvp_fun_delay  : public vvp_net_fun_t, private vvp_gen_event_s {
 
       enum delay_type_t {UNKNOWN_DELAY, VEC4_DELAY, VEC8_DELAY, REAL_DELAY};
       struct event_ {
-	    event_(vvp_time64_t s) : sim_time(s) { }
+	    event_(vvp_time64_t s) : sim_time(s) {
+		  ptr_real = 0.0;
+		  next = NULL;
+	    }
 	    void (vvp_fun_delay::*run_run_ptr)(struct vvp_fun_delay::event_*cur);
 	    const vvp_time64_t sim_time;
 	    vvp_vector4_t ptr_vec4;

@@ -273,7 +273,9 @@ extern void compile_param_real(char*label, char*name, char*value,
 class resolv_list_s {
 
     public:
-      explicit resolv_list_s(char*lab) : label_(lab) { }
+      explicit resolv_list_s(char*lab) : label_(lab) {
+	    next = NULL;
+      }
       virtual ~resolv_list_s();
       virtual bool resolve(bool mes = false) = 0;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,12 +36,11 @@ struct vvp_island_branch_tran : public vvp_island_branch {
 	// Behavior. (This stuff should be moved to a derived
 	// class. The members here are specific to the tran island
 	// class.)
+      vvp_island_branch_tran(vvp_net_t*en__, bool active_high__,
+                             unsigned width__, unsigned part__,
+                             unsigned offset__);
       bool run_test_enabled();
       void run_resolution();
-      bool active_high;
-      bool enabled_flag;
-      vvp_net_t*en;
-      unsigned width, part, offset;
 
       void clear_resolution_flags() { flags_ &= ~0x0f; }
 
@@ -55,9 +54,26 @@ struct vvp_island_branch_tran : public vvp_island_branch {
 	// Use the peek only for diagnostic purposes.
       int peek_flags() const { return flags_; }
 
+      vvp_net_t*en;
+      unsigned width, part, offset;
+      bool active_high;
+      bool enabled_flag;
+
     private:
       int flags_;
 };
+
+vvp_island_branch_tran::vvp_island_branch_tran(vvp_net_t*en__,
+                                               bool active_high__,
+                                               unsigned width__,
+                                               unsigned part__,
+                                               unsigned offset__)
+: en(en__), width(width__), part(part__), offset(offset__),
+  active_high(active_high__)
+{
+      flags_ = 0;
+      enabled_flag = en__ ? false : true;
+}
 
 static inline vvp_island_branch_tran* BRANCH_TRAN(vvp_island_branch*tmp)
 {
@@ -410,23 +426,18 @@ void compile_island_tranif(int sense, char*island, char*pa, char*pb, char*pe)
       assert(use_island);
       free(island);
 
-      vvp_island_branch_tran*br = new vvp_island_branch_tran;
-      if (sense)
-	    br->active_high = true;
-      else
-	    br->active_high = false;
+      vvp_net_t*en = NULL;
 
-      if (pe == 0) {
-	    br->en = 0;
-      } else {
-	    br->en = use_island->find_port(pe);
-	    assert(br->en);
+      if (pe) {
+	    en = use_island->find_port(pe);
+	    assert(en);
 	    free(pe);
       }
 
-      br->width = 0;
-      br->part = 0;
-      br->offset = 0;
+      vvp_island_branch_tran*br = new vvp_island_branch_tran(en,
+                                                             sense ? true :
+                                                                     false,
+                                                             0, 0, 0);
 
       use_island->add_branch(br, pa, pb);
 
@@ -442,12 +453,8 @@ void compile_island_tranvp(char*island, char*pa, char*pb,
       assert(use_island);
       free(island);
 
-      vvp_island_branch_tran*br = new vvp_island_branch_tran;
-      br->active_high = false;
-      br->en = 0;
-      br->width = wid;
-      br->part = par;
-      br->offset = off;
+      vvp_island_branch_tran*br = new vvp_island_branch_tran(NULL, false,
+                                                             wid, par, off) ;
 
       use_island->add_branch(br, pa, pb);
 

@@ -42,9 +42,9 @@ permaheap vvp_net_fil_t::heap_;
 
 // Allocate around 1Megbytes/chunk.
 static const size_t VVP_NET_CHUNK = 1024*1024/sizeof(vvp_net_t);
-static vvp_net_t*vvp_net_alloc_table = 0;
+static vvp_net_t*vvp_net_alloc_table = NULL;
 #ifdef CHECK_WITH_VALGRIND
-static vvp_net_t **vvp_net_pool = 0;
+static vvp_net_t **vvp_net_pool = NULL;
 static unsigned vvp_net_pool_count = 0;
 #endif
 static size_t vvp_net_alloc_remaining = 0;
@@ -140,7 +140,7 @@ void vvp_net_pool_delete()
 	    ::delete [] vvp_net_pool[idx];
       }
       free(vvp_net_pool);
-      vvp_net_pool = 0;
+      vvp_net_pool = NULL;
       vvp_net_pool_count = 0;
 }
 #endif
@@ -155,6 +155,9 @@ vvp_net_t::vvp_net_t()
       out_ = vvp_net_ptr_t(0,0);
       fun = 0;
       fil = 0;
+#ifdef CHECK_WITH_VALGRIND
+      pool = NULL;
+#endif
 }
 
 void vvp_net_t::link(vvp_net_ptr_t port_to_link)
