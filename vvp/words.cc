@@ -208,12 +208,12 @@ class __compile_net_resolv : public base_net_resolv {
 				    struct __vpiScope*scope,
 				    char*my_label, char*name,
 				    int msb, int lsb, unsigned array_addr,
-				    bool signed_flag, bool net8_flag, bool local_flag)
+				    int vpi_type_code, bool signed_flag, bool local_flag)
       : base_net_resolv(ref_label, array, scope, my_label, name, array_addr, local_flag)
       { msb_ = msb;
 	lsb_ = lsb;
+	vpi_type_code_ = vpi_type_code;
 	signed_flag_ = signed_flag;
-	net8_flag_ = net8_flag;
       }
 
       ~__compile_net_resolv() { }
@@ -222,7 +222,8 @@ class __compile_net_resolv : public base_net_resolv {
 
     private:
       int msb_, lsb_;
-      bool signed_flag_, net8_flag_;
+      int vpi_type_code_;
+      bool signed_flag_;
 };
 
 /*
@@ -241,7 +242,7 @@ static void do_compile_net(vvp_net_t*node, vvp_array_t array,
 			   struct __vpiScope*scope,
 			   char*my_label, char*name,
 			   int msb, int lsb, unsigned array_addr,
-			   bool signed_flag, bool net8_flag, bool local_flag)
+			   int vpi_type_code, bool signed_flag, bool local_flag)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
       assert(node);
@@ -249,10 +250,18 @@ static void do_compile_net(vvp_net_t*node, vvp_array_t array,
       vvp_wire_base*vsig = dynamic_cast<vvp_wire_base*>(node->fil);
 
       if (vsig == 0) {
-	    vsig = net8_flag
-		  ? dynamic_cast<vvp_wire_base*>(new vvp_wire_vec8(wid))
-		  : dynamic_cast<vvp_wire_base*>(new vvp_wire_vec4(wid,BIT4_Z));
-
+	    switch (vpi_type_code) {
+		case vpiLogicVar:
+		  vsig = new vvp_wire_vec4(wid,BIT4_Z);
+		  break;
+		case -vpiLogicVar:
+		  vsig = new vvp_wire_vec8(wid);
+		  break;
+		case vpiIntVar:
+		  vsig = new vvp_wire_vec4(wid,BIT4_Z);
+		  break;
+	    }
+	    assert(vsig);
 	    node->fil = vsig;
       }
 
@@ -285,7 +294,7 @@ static void do_compile_net(vvp_net_t*node, vvp_array_t array,
 static void __compile_net(char*label,
 			  char*name, char*array_label, unsigned long array_addr,
 			  int msb, int lsb,
-			  bool signed_flag, bool net8_flag, bool local_flag,
+			  int vpi_type_code, bool signed_flag, bool local_flag,
 			  unsigned argc, struct symb_s*argv)
 {
       vvp_array_t array = array_label? array_find(array_label) : 0;
@@ -312,7 +321,7 @@ static void __compile_net(char*label,
 		  = new __compile_net_resolv(argv[0].text,
 					     array, scope, label, name,
 					     msb, lsb, array_addr,
-					     signed_flag, net8_flag, local_flag);
+					     vpi_type_code, signed_flag, local_flag);
 	    resolv_submit(res);
 	    free(argv);
 	    return;
@@ -321,7 +330,7 @@ static void __compile_net(char*label,
 
       struct __vpiScope*scope = vpip_peek_current_scope();
       do_compile_net(node, array, scope, label, name, msb, lsb, array_addr,
-		     signed_flag, net8_flag, local_flag);
+		     vpi_type_code, signed_flag, local_flag);
 
       free(argv[0].text);
       free(argv);
@@ -334,29 +343,27 @@ bool __compile_net_resolv::resolve(bool msg_flag)
 	    return false;
       }
 
-      do_compile_net(node, array_, scope_, my_label_, name_, msb_, lsb_, array_addr_, signed_flag_, net8_flag_, local_flag_);
+      do_compile_net(node, array_, scope_, my_label_, name_, msb_, lsb_, array_addr_, vpi_type_code_, signed_flag_, local_flag_);
       return true;
 }
 
 void compile_net(char*label, char*name, int msb, int lsb,
-		 bool signed_flag, bool net8_flag, bool local_flag,
+		 int vpi_type_code, bool signed_flag, bool local_flag,
 		 unsigned argc, struct symb_s*argv)
 {
-      __compile_net(label, name, 0, 0,
-		    msb, lsb, signed_flag, net8_flag, local_flag,
+      __compile_net(label, name, 0, 0, msb, lsb,
+		    vpi_type_code, signed_flag, local_flag,
 		    argc, argv);
 }
 
 void compile_netw(char*label, char*array_label, unsigned long array_addr,
-		 int msb, int lsb,
-		 bool signed_flag, bool net8_flag,
-		 unsigned argc, struct symb_s*argv)
+		  int msb, int lsb, int vpi_type_code, bool signed_flag,
+		  unsigned argc, struct symb_s*argv)
 {
       __compile_net(label, 0, array_label, array_addr,
-		    msb, lsb, signed_flag, net8_flag, false,
+		    msb, lsb, vpi_type_code, signed_flag, false,
 		    argc, argv);
 }
-
 
 class __compile_real_net_resolv : public base_net_resolv {
 

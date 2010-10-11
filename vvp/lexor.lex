@@ -148,8 +148,10 @@ static char* strdupnew(char const *str)
 ".functor"  { return K_FUNCTOR; }
 ".import"   { return K_IMPORT; }
 ".island"   { return K_ISLAND; }
-".modpath" { return K_MODPATH; }
+".modpath"  { return K_MODPATH; }
 ".net"      { return K_NET; }
+".net/2s"   { return K_NET_2S; }
+".net/2u"   { return K_NET_2U; }
 ".net8"     { return K_NET8; }
 ".net8/s"   { return K_NET8_S; }
 ".net/real" { return K_NET_R; }

@@ -477,6 +477,12 @@ static void draw_net_in_scope(ivl_signal_t sig)
       unsigned iword;
 
       switch (ivl_signal_data_type(sig)) {
+	  case IVL_VT_BOOL:
+	    if (ivl_signal_signed(sig))
+		  datatype_flag = "/2s";
+	    else
+		  datatype_flag = "/2u";
+	    break;
 	  case IVL_VT_REAL:
 	    datatype_flag = "/real";
 	    break;
