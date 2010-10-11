@@ -450,6 +450,10 @@ static const struct __vpirt vpip_vthr_const_rt = {
       vthr_vec_get_value,
       vthr_vec_put_value,
       0,
+      0,
+      0,
+      0,
+      0,
       0
 };
 
@@ -592,6 +596,10 @@ static const struct __vpirt vpip_vthr_const_real_rt = {
       vthr_word_get,
       0,
       vthr_real_get_value,
+      0,
+      0,
+      0,
+      0,
       0,
       0,
       0

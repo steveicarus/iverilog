@@ -157,7 +157,7 @@ class vvp_fun_edge : public vvp_net_fun_t, public waitable_hooks_s {
       virtual ~vvp_fun_edge();
 
     protected:
-      bool recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+      bool recv_vec4_(const vvp_vector4_t&bit,
                       vvp_bit4_t&old_bit, vthread_t&threads);
 
       vvp_bit4_t bits_[4];
@@ -233,9 +233,9 @@ class vvp_fun_anyedge : public vvp_net_fun_t, public waitable_hooks_s {
       virtual ~vvp_fun_anyedge();
 
     protected:
-      bool recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+      bool recv_vec4_(const vvp_vector4_t&bit,
                       vvp_vector4_t&old_bits, vthread_t&threads);
-      bool recv_real_(vvp_net_ptr_t port, double bit,
+      bool recv_real_(double bit,
                       double&old_bits, vthread_t&threads);
 
       vvp_vector4_t bits_[4];

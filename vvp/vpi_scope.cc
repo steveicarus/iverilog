@@ -322,7 +322,11 @@ static const struct __vpirt vpip_scope_module_rt = {
       0,
       0,
       scope_get_handle,
-      module_iter
+      module_iter,
+      0,
+      0,
+      0,
+      0
 };
 
 static const struct __vpirt vpip_scope_task_rt = {
@@ -332,7 +336,11 @@ static const struct __vpirt vpip_scope_task_rt = {
       0,
       0,
       scope_get_handle,
-      module_iter
+      module_iter,
+      0,
+      0,
+      0,
+      0
 };
 
 static const struct __vpirt vpip_scope_function_rt = {
@@ -342,7 +350,11 @@ static const struct __vpirt vpip_scope_function_rt = {
       0,
       0,
       scope_get_handle,
-      module_iter
+      module_iter,
+      0,
+      0,
+      0,
+      0
 };
 
 static const struct __vpirt vpip_scope_begin_rt = {
@@ -352,7 +364,11 @@ static const struct __vpirt vpip_scope_begin_rt = {
       0,
       0,
       scope_get_handle,
-      module_iter
+      module_iter,
+      0,
+      0,
+      0,
+      0
 };
 
 static const struct __vpirt vpip_scope_fork_rt = {
@@ -362,7 +378,11 @@ static const struct __vpirt vpip_scope_fork_rt = {
       0,
       0,
       scope_get_handle,
-      module_iter
+      module_iter,
+      0,
+      0,
+      0,
+      0
 };
 
 /*

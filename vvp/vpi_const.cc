@@ -181,6 +181,10 @@ static const struct __vpirt vpip_string_rt = {
       string_value,
       0,
       0,
+      0,
+      0,
+      0,
+      0,
       0
 };
 
@@ -200,12 +204,12 @@ static const struct __vpirt vpip_string_temp_rt = {
       0,
       string_value,
       0,
-
       0,
       0,
       0,
-
-      free_temp_string
+      free_temp_string,
+      0,
+      0
 };
 
 /*
@@ -313,11 +317,11 @@ static const struct __vpirt vpip_string_param_rt = {
       string_param_get_str,
       string_value,
       0,
-
       string_param_handle,
       0,
       0,
-
+      0,
+      0,
       0
 };
 
@@ -415,6 +419,10 @@ static const struct __vpirt vpip_binary_rt = {
       binary_get,
       0,
       binary_value,
+      0,
+      0,
+      0,
+      0,
       0,
       0,
       0
@@ -522,11 +530,11 @@ static const struct __vpirt vpip_binary_param_rt = {
       binary_param_get_str,
       binary_value,
       0,
-
       binary_param_handle,
       0,
       0,
-
+      0,
+      0,
       0
 };
 
@@ -549,7 +557,7 @@ vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
 }
 
 
-static int dec_get(int code, vpiHandle ref)
+static int dec_get(int code, vpiHandle)
 {
 
       switch (code) {
@@ -636,6 +644,10 @@ static const struct __vpirt vpip_dec_rt = {
       dec_value,
       0,
       0,
+      0,
+      0,
+      0,
+      0,
       0
 };
 
@@ -657,7 +669,7 @@ vpiHandle vpip_make_dec_const(int value)
 }
 
 
-static int real_get(int code, vpiHandle ref)
+static int real_get(int code, vpiHandle)
 {
 
       switch (code) {
@@ -703,6 +715,10 @@ static const struct __vpirt vpip_real_rt = {
       real_get,
       0,
       real_value,
+      0,
+      0,
+      0,
+      0,
       0,
       0,
       0
@@ -779,11 +795,11 @@ static const struct __vpirt vpip_real_param_rt = {
       real_param_get_str,
       real_value,
       0,
-
       real_param_handle,
       0,
       0,
-
+      0,
+      0,
       0
 };
 

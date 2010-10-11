@@ -76,11 +76,11 @@ static const struct __vpirt vpip_named_event_rt = {
       named_event_get_str,
       0,
       0,
-
       named_event_get_handle,
       0,
       0,
-
+      0,
+      0,
       0
 };
 

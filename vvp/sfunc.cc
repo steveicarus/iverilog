@@ -53,7 +53,7 @@ sfunc_core::~sfunc_core()
  * This method is only called when a trigger event occurs. Just arrange for
  * the function to be called.
  */
-void sfunc_core::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+void sfunc_core::recv_vec4(vvp_net_ptr_t, const vvp_vector4_t&/*bit*/,
                            vvp_context_t)
 {
       schedule_functor(this);

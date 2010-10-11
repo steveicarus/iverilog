@@ -597,14 +597,15 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 	    break;
 
 	  case vpiOctStrVal: {
-		unsigned hwid = (width+2) / 3;
-		rbuf = need_result_buf(hwid+1, RBUF_VAL);
-		vpip_vec4_to_oct_str(word_val, rbuf, hwid+1, signed_flag);
+		unsigned hwid = ((width+2) / 3) + 1;
+		rbuf = need_result_buf(hwid, RBUF_VAL);
+		vpip_vec4_to_oct_str(word_val, rbuf, hwid);
 		vp->value.str = rbuf;
 		break;
 	  }
 
 	  case vpiDecStrVal: {
+// HERE need a better estimate.
 		rbuf = need_result_buf(width+1, RBUF_VAL);
 		vpip_vec4_to_dec_str(word_val, rbuf, width+1, signed_flag);
 		vp->value.str = rbuf;
@@ -612,12 +613,9 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 	  }
 
 	  case vpiHexStrVal: {
-		unsigned  hwid = (width + 3) / 4;
-
-		rbuf = need_result_buf(hwid+1, RBUF_VAL);
-		rbuf[hwid] = 0;
-
-		vpip_vec4_to_hex_str(word_val, rbuf, hwid+1, signed_flag);
+		unsigned  hwid = ((width + 3) / 4) + 1;
+		rbuf = need_result_buf(hwid, RBUF_VAL);
+		vpip_vec4_to_hex_str(word_val, rbuf, hwid);
 		vp->value.str = rbuf;
 		break;
 	  }

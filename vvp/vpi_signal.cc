@@ -868,6 +868,9 @@ static const struct __vpirt vpip_reg_rt = {
       signal_put_value,
       signal_get_handle,
       signal_iterate,
+      0,
+      0,
+      0,
       0
 };
 
@@ -879,6 +882,9 @@ static const struct __vpirt vpip_net_rt = {
       signal_put_value,
       signal_get_handle,
       signal_iterate,
+      0,
+      0,
+      0,
       0
 };
 
@@ -1261,6 +1267,10 @@ static const struct __vpirt vpip_PV_rt = {
       PV_get_value,
       PV_put_value,
       PV_get_handle,
+      0,
+      0,
+      0,
+      0,
       0
 };
 

@@ -1369,7 +1369,7 @@ static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
       }
 
       vvp_net_t*net = new vvp_net_t;
-      struct __vpiModPathSrc* srcobj = vpip_make_modpath_src (path, use_delay, net) ;
+      struct __vpiModPathSrc* srcobj = vpip_make_modpath_src(path, net) ;
       vpip_attach_to_current_scope(vpi_handle(srcobj));
       net->fun = obj;
 
@@ -1495,7 +1495,7 @@ char **compile_udp_table(char **table, char *row)
     assert(strlen(*table)==strlen(row));
 
   char **tt;
-  for (tt = table; tt && *tt; tt++);
+  for (tt = table; tt && *tt; tt++) { }
   int n = (tt-table) + 2;
 
   table = (char**)realloc(table, n*sizeof(char*));

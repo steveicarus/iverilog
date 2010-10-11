@@ -299,6 +299,7 @@ vvp_udp_seq_s::vvp_udp_seq_s(char*label, char*name,
 			     unsigned ports, vvp_bit4_t init)
 : vvp_udp_s(label, ports, init, true)
 {
+      name_ = name;
       levels0_ = 0;
       levels1_ = 0;
       levelsx_ = 0;

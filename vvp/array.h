@@ -1,4 +1,4 @@
-#ifndef __array_H                                      // -*- c++ -*-
+#ifndef __array_H
 #define __array_H
 /*
  * Copyright (c) 2007-2008 Stephen Williams (steve@icarus.com)

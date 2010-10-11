@@ -219,12 +219,16 @@ vvp_net_fil_t::~vvp_net_fil_t()
       assert(force_link_ == 0);
 }
 
-vvp_net_fil_t::prop_t vvp_net_fil_t::filter_vec4(const vvp_vector4_t&val, vvp_vector4_t&, unsigned, unsigned)
+vvp_net_fil_t::prop_t vvp_net_fil_t::filter_vec4(const vvp_vector4_t&,
+                                                 vvp_vector4_t&,
+                                                 unsigned, unsigned)
 {
       return PROP;
 }
 
-vvp_net_fil_t::prop_t vvp_net_fil_t::filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&, unsigned, unsigned)
+vvp_net_fil_t::prop_t vvp_net_fil_t::filter_vec8(const vvp_vector8_t&,
+                                                 vvp_vector8_t&,
+                                                 unsigned, unsigned)
 {
       return PROP;
 }
@@ -622,7 +626,8 @@ void vvp_vector4_t::copy_inverted_from_(const vvp_vector4_t&that)
       }
 }
 
-void vvp_vector4_t::allocate_words_(unsigned wid, unsigned long inita, unsigned long initb)
+/* Make sure to set size_ before calling this routine. */
+void vvp_vector4_t::allocate_words_(unsigned long inita, unsigned long initb)
 {
       if (size_ > BITS_PER_WORD) {
 	    unsigned cnt = (size_ + BITS_PER_WORD - 1) / BITS_PER_WORD;
@@ -648,7 +653,7 @@ vvp_vector4_t::vvp_vector4_t(unsigned size__, double val)
 
 	/* We return 'bx for a NaN or +/- infinity. */
       if (val != val || (val && (val == 0.5*val)))  {
-	    allocate_words_(size_, WORD_X_ABITS, WORD_X_BBITS);
+	    allocate_words_(WORD_X_ABITS, WORD_X_BBITS);
 	    return;
       }
 
@@ -657,7 +662,7 @@ vvp_vector4_t::vvp_vector4_t(unsigned size__, double val)
 	    is_neg = true;
 	    val = -val;
       }
-      allocate_words_(size_, WORD_0_ABITS, WORD_0_BBITS);
+      allocate_words_(WORD_0_ABITS, WORD_0_BBITS);
 
 	/* Get the exponent and fractional part of the number. */
       fraction = frexp(val, &exponent);
@@ -720,7 +725,7 @@ vvp_vector4_t::vvp_vector4_t(const vvp_vector4_t&that,
       size_ = wid;
       assert((adr + wid) <= that.size_);
 
-      allocate_words_(wid, WORD_X_ABITS, WORD_X_BBITS);
+      allocate_words_(WORD_X_ABITS, WORD_X_BBITS);
 
       if (wid > BITS_PER_WORD) {
 	      /* In this case, the subvector and the source vector are
@@ -2803,7 +2808,7 @@ vvp_net_fun_t::~vvp_net_fun_t()
 {
 }
 
-void vvp_net_fun_t::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+void vvp_net_fun_t::recv_vec4(vvp_net_ptr_t, const vvp_vector4_t&,
                               vvp_context_t)
 {
       fprintf(stderr, "internal error: %s: recv_vec4 not implemented\n",
@@ -2811,8 +2816,8 @@ void vvp_net_fun_t::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       assert(0);
 }
 
-void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
-				 unsigned base, unsigned wid, unsigned vwid,
+void vvp_net_fun_t::recv_vec4_pv(vvp_net_ptr_t, const vvp_vector4_t&bit,
+                                 unsigned base, unsigned wid, unsigned vwid,
                                  vvp_context_t)
 {
       cerr << "internal error: " << typeid(*this).name() << ": "
@@ -2832,7 +2837,7 @@ void vvp_net_fun_t::recv_vec8_pv(vvp_net_ptr_t port, const vvp_vector8_t&bit,
       recv_vec4_pv(port, reduce4(bit), base, wid, vwid, 0);
 }
 
-void vvp_net_fun_t::recv_real(vvp_net_ptr_t port, double bit, vvp_context_t)
+void vvp_net_fun_t::recv_real(vvp_net_ptr_t, double bit, vvp_context_t)
 {
       fprintf(stderr, "internal error: %s: recv_real(%f) not implemented\n",
 	      typeid(*this).name(), bit);
@@ -2859,7 +2864,7 @@ void vvp_net_fun_t::force_flag(void)
 
 /* **** vvp_fun_drive methods **** */
 
-vvp_fun_drive::vvp_fun_drive(vvp_bit4_t init, unsigned str0, unsigned str1)
+vvp_fun_drive::vvp_fun_drive(vvp_bit4_t /*init*/, unsigned str0, unsigned str1)
 {
       assert(str0 < 8);
       assert(str1 < 8);
@@ -2935,7 +2940,7 @@ double vvp_wide_fun_core::value_r(unsigned idx)
       return port_rvalues_? port_rvalues_[idx] : 0.0;
 }
 
-void vvp_wide_fun_core::recv_real_from_inputs(unsigned p)
+void vvp_wide_fun_core::recv_real_from_inputs(unsigned)
 {
       assert(0);
 }

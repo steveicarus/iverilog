@@ -67,9 +67,11 @@ if test ${using_sunpro_c} = 1
 then
 AC_SUBST(DEPENDENCY_FLAG, [-xMMD])
 AC_SUBST(WARNING_FLAGS, [""])
+AC_SUBST(WARNING_FLAGS_CXX, [""])
 else
 AC_SUBST(DEPENDENCY_FLAG, [-MD])
 AC_SUBST(WARNING_FLAGS, ["-Wall -Wshadow"])
+AC_SUBST(WARNING_FLAGS_CXX, ["-Wextra"])
 fi
 
 AC_LANG(C++)

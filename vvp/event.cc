@@ -226,7 +226,7 @@ vvp_fun_edge::~vvp_fun_edge()
 {
 }
 
-bool vvp_fun_edge::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+bool vvp_fun_edge::recv_vec4_(const vvp_vector4_t&bit,
                               vvp_bit4_t&old_bit, vthread_t&threads)
 {
 	/* See what kind of edge this represents. */
@@ -262,7 +262,7 @@ vthread_t vvp_fun_edge_sa::add_waiting_thread(vthread_t thread)
 void vvp_fun_edge_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                                 vvp_context_t)
 {
-      if (recv_vec4_(port, bit, bits_[port.port()], threads_)) {
+      if (recv_vec4_(bit, bits_[port.port()], threads_)) {
 	    vvp_net_t*net = port.ptr();
 	    net->send_vec4(bit, 0);
       }
@@ -273,7 +273,7 @@ void vvp_fun_edge_sa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 				   vvp_context_t)
 {
       assert(base == 0);
-      if (recv_vec4_(port, bit, bits_[port.port()], threads_)) {
+      if (recv_vec4_(bit, bits_[port.port()], threads_)) {
 	    vvp_net_t*net = port.ptr();
 	    net->send_vec4_pv(bit, base, wid, vwid, 0);
       }
@@ -333,7 +333,7 @@ void vvp_fun_edge_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
             vvp_fun_edge_state_s*state = static_cast<vvp_fun_edge_state_s*>
                   (vvp_get_context_item(context, context_idx_));
 
-            if (recv_vec4_(port, bit, state->bits[port.port()], state->threads)) {
+            if (recv_vec4_(bit, state->bits[port.port()], state->threads)) {
                   vvp_net_t*net = port.ptr();
                   net->send_vec4(bit, context);
             }
@@ -368,7 +368,7 @@ vvp_fun_anyedge::~vvp_fun_anyedge()
 {
 }
 
-bool vvp_fun_anyedge::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+bool vvp_fun_anyedge::recv_vec4_(const vvp_vector4_t&bit,
                                  vvp_vector4_t&old_bits, vthread_t&threads)
 {
       bool flag = false;
@@ -406,7 +406,7 @@ bool vvp_fun_anyedge::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       return flag;
 }
 
-bool vvp_fun_anyedge::recv_real_(vvp_net_ptr_t port, double bit,
+bool vvp_fun_anyedge::recv_real_(double bit,
                                  double&old_bits, vthread_t&threads)
 {
       if (old_bits != bit) {
@@ -437,7 +437,7 @@ vthread_t vvp_fun_anyedge_sa::add_waiting_thread(vthread_t thread)
 void vvp_fun_anyedge_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                                    vvp_context_t)
 {
-      if (recv_vec4_(port, bit, bits_[port.port()], threads_)) {
+      if (recv_vec4_(bit, bits_[port.port()], threads_)) {
 	    vvp_net_t*net = port.ptr();
 	    net->send_vec4(bit, 0);
       }
@@ -455,7 +455,7 @@ void vvp_fun_anyedge_sa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bi
       assert(tmp.size() == vwid);
       tmp.set_vec(base, bit);
 
-      if (recv_vec4_(port, tmp, bits_[port.port()], threads_)) {
+      if (recv_vec4_(tmp, bits_[port.port()], threads_)) {
 	    vvp_net_t*net = port.ptr();
 	    net->send_vec4(bit, 0);
       }
@@ -464,7 +464,7 @@ void vvp_fun_anyedge_sa::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bi
 void vvp_fun_anyedge_sa::recv_real(vvp_net_ptr_t port, double bit,
                                    vvp_context_t)
 {
-      if (recv_real_(port, bit, bitsr_[port.port()], threads_)) {
+      if (recv_real_(bit, bitsr_[port.port()], threads_)) {
 	    vvp_net_t*net = port.ptr();
 	    net->send_vec4(vvp_vector4_t(), 0);
       }
@@ -525,7 +525,7 @@ void vvp_fun_anyedge_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
             vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
                   (vvp_get_context_item(context, context_idx_));
 
-            if (recv_vec4_(port, bit, state->bits[port.port()], state->threads)) {
+            if (recv_vec4_(bit, state->bits[port.port()], state->threads)) {
                   vvp_net_t*net = port.ptr();
                   net->send_vec4(bit, context);
             }
@@ -546,7 +546,7 @@ void vvp_fun_anyedge_aa::recv_real(vvp_net_ptr_t port, double bit,
             vvp_fun_anyedge_state_s*state = static_cast<vvp_fun_anyedge_state_s*>
                   (vvp_get_context_item(context, context_idx_));
 
-            if (recv_real_(port, bit, state->bitsr[port.port()], state->threads)) {
+            if (recv_real_(bit, state->bitsr[port.port()], state->threads)) {
                   vvp_net_t*net = port.ptr();
                   net->send_vec4(vvp_vector4_t(), context);
             }

@@ -167,7 +167,7 @@ vvp_island_port::~vvp_island_port()
 {
 }
 
-void vvp_island_port::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+void vvp_island_port::recv_vec4(vvp_net_ptr_t, const vvp_vector4_t&bit,
                                 vvp_context_t)
 {
       vvp_vector8_t tmp (bit, 6, 6);
@@ -187,7 +187,7 @@ void vvp_island_port::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 }
 
 
-void vvp_island_port::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
+void vvp_island_port::recv_vec8(vvp_net_ptr_t, const vvp_vector8_t&bit)
 {
       if (invalue .eeq(bit))
 	    return;
@@ -196,8 +196,8 @@ void vvp_island_port::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
       island_->flag_island();
 }
 
-void vvp_island_port::recv_vec8_pv(vvp_net_ptr_t p, const vvp_vector8_t&bit,
-				   unsigned base, unsigned wid, unsigned vwid)
+void vvp_island_port::recv_vec8_pv(vvp_net_ptr_t, const vvp_vector8_t&bit,
+                                   unsigned base, unsigned wid, unsigned vwid)
 {
       if (invalue.size() == 0) {
 	    assert(bit.size() == wid);

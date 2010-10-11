@@ -730,27 +730,27 @@ bool vvp_fun_modpath_edge::test_vec4(const vvp_vector4_t&bit)
  * make some specific delays path operations
  *
  */
-static int modpath_src_get(int code, vpiHandle ref)
+static int modpath_src_get(int, vpiHandle ref)
 {
       struct __vpiModPathSrc*obj = vpip_modpath_src_from_handle(ref);
       assert(obj);
-      return 0 ;
+      return 0;
 }
 
-static void modpath_src_get_value(vpiHandle ref, p_vpi_value vp)
+static void modpath_src_get_value(vpiHandle ref, p_vpi_value)
 {
       assert((ref->vpi_type->type_code == vpiModPathIn));
-      struct __vpiModPathSrc* modpathsrc = vpip_modpath_src_from_handle( ref) ;
-      assert ( modpathsrc ) ;
-      return  ;
+      struct __vpiModPathSrc* modpathsrc = vpip_modpath_src_from_handle(ref);
+      assert(modpathsrc);
+      return;
 }
 
-static vpiHandle modpath_src_put_value(vpiHandle ref, s_vpi_value *vp, int )
+static vpiHandle modpath_src_put_value(vpiHandle ref, s_vpi_value *, int )
 {
       assert((ref->vpi_type->type_code == vpiModPathIn));
-      struct __vpiModPathSrc* modpathsrc = vpip_modpath_src_from_handle( ref) ;
-      assert ( modpathsrc ) ;
-      return 0 ;
+      struct __vpiModPathSrc* modpathsrc = vpip_modpath_src_from_handle(ref);
+      assert(modpathsrc);
+      return 0;
 }
 
 static vpiHandle modpath_src_get_handle(int code, vpiHandle ref)
@@ -780,10 +780,10 @@ static vpiHandle modpath_src_get_handle(int code, vpiHandle ref)
       return 0;
 }
 
-static vpiHandle modpath_src_index ( vpiHandle ref, int code  )
+static vpiHandle modpath_src_index ( vpiHandle ref, int)
 {
-      assert( (ref->vpi_type->type_code == vpiModPathIn ) );
-      return 0 ;
+      assert(ref->vpi_type->type_code == vpiModPathIn);
+      return 0;
 }
 
 
@@ -1021,7 +1021,8 @@ void modpath_delete()
  *
  */
 
-struct __vpiModPathSrc* vpip_make_modpath_src (struct __vpiModPath*path, vvp_time64_t use_delay[12] ,  vvp_net_t *net )
+struct __vpiModPathSrc* vpip_make_modpath_src(struct __vpiModPath*path,
+                                              vvp_net_t *net)
 {
       struct __vpiModPathSrc *obj = (struct __vpiModPathSrc *) calloc (1, sizeof ( struct __vpiModPathSrc ) ) ;
 

@@ -96,7 +96,7 @@ vvp_time64_t vpip_scaled_real_to_time64(double val, struct __vpiScope*scope)
       return delay;
 }
 
-static int timevar_time_get(int code, vpiHandle ref)
+static int timevar_time_get(int code, vpiHandle)
 {
       switch (code) {
           case vpiSize:
@@ -129,7 +129,7 @@ static int timevar_stime_get(int code, vpiHandle ref)
       }
 }
 
-static char* timevar_time_get_str(int code, vpiHandle ref)
+static char* timevar_time_get_str(int code, vpiHandle)
 {
       switch (code) {
 	  case vpiName:
@@ -141,7 +141,7 @@ static char* timevar_time_get_str(int code, vpiHandle ref)
       }
 }
 
-static char* timevar_stime_get_str(int code, vpiHandle ref)
+static char* timevar_stime_get_str(int code, vpiHandle)
 {
       switch (code) {
 	  case vpiName:
@@ -153,7 +153,7 @@ static char* timevar_stime_get_str(int code, vpiHandle ref)
       }
 }
 
-static char* timevar_simtime_get_str(int code, vpiHandle ref)
+static char* timevar_simtime_get_str(int code, vpiHandle)
 {
       switch (code) {
 	  case vpiName:
@@ -165,7 +165,7 @@ static char* timevar_simtime_get_str(int code, vpiHandle ref)
       }
 }
 
-static char* timevar_realtime_get_str(int code, vpiHandle ref)
+static char* timevar_realtime_get_str(int code, vpiHandle)
 {
       switch (code) {
 	  case vpiName:
@@ -177,7 +177,7 @@ static char* timevar_realtime_get_str(int code, vpiHandle ref)
       }
 }
 
-static int timevar_realtime_get(int code, vpiHandle ref)
+static int timevar_realtime_get(int code, vpiHandle)
 {
       switch (code) {
           case vpiSize:
@@ -322,6 +322,10 @@ static const struct __vpirt vpip_system_time_rt = {
       timevar_get_ivalue,
       0,
       timevar_handle,
+      0,
+      0,
+      0,
+      0,
       0
 };
 
@@ -332,6 +336,10 @@ static const struct __vpirt vpip_system_stime_rt = {
       timevar_get_svalue,
       0,
       timevar_handle,
+      0,
+      0,
+      0,
+      0,
       0
 };
 
@@ -342,6 +350,10 @@ static const struct __vpirt vpip_system_simtime_rt = {
       timevar_get_ivalue,
       0,
       timevar_handle,
+      0,
+      0,
+      0,
+      0,
       0
 };
 
@@ -352,6 +364,10 @@ static const struct __vpirt vpip_system_realtime_rt = {
       timevar_get_rvalue,
       0,
       timevar_handle,
+      0,
+      0,
+      0,
+      0,
       0
 };
 

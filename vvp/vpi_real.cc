@@ -163,7 +163,8 @@ static const struct __vpirt vpip_real_var_rt = {
       real_var_get_handle,
       real_var_iterate,
       0,
-
+      0,
+      0,
       0
 };
 

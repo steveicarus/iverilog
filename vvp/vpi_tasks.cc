@@ -42,6 +42,10 @@ static const struct __vpirt vpip_systf_def_rt = {
       0,
       0,
       0,
+      0,
+      0,
+      0,
+      0,
       0
 };
 
@@ -141,7 +145,7 @@ static char *systask_get_str(int type, vpiHandle ref)
  * the iter function only supports getting an iterator of the
  * arguments. This works equally well for tasks and functions.
  */
-static vpiHandle systask_iter(int type, vpiHandle ref)
+static vpiHandle systask_iter(int, vpiHandle ref)
 {
       struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
       assert((ref->vpi_type->type_code == vpiSysTaskCall)
@@ -160,7 +164,11 @@ static const struct __vpirt vpip_systask_rt = {
       0,
       0,
       systask_handle,
-      systask_iter
+      systask_iter,
+      0,
+      0,
+      0,
+      0
 };
 
 
@@ -474,7 +482,11 @@ static const struct __vpirt vpip_sysfunc_rt = {
       0,
       sysfunc_put_value,
       systask_handle,
-      systask_iter
+      systask_iter,
+      0,
+      0,
+      0,
+      0
 };
 
 static const struct __vpirt vpip_sysfunc_real_rt = {
@@ -484,7 +496,11 @@ static const struct __vpirt vpip_sysfunc_real_rt = {
       0,
       sysfunc_put_real_value,
       systask_handle,
-      systask_iter
+      systask_iter,
+      0,
+      0,
+      0,
+      0
 };
 
 static const struct __vpirt vpip_sysfunc_4net_rt = {
@@ -494,7 +510,11 @@ static const struct __vpirt vpip_sysfunc_4net_rt = {
       0,
       sysfunc_put_4net_value,
       systask_handle,
-      systask_iter
+      systask_iter,
+      0,
+      0,
+      0,
+      0
 };
 
 static const struct __vpirt vpip_sysfunc_rnet_rt = {
@@ -504,7 +524,11 @@ static const struct __vpirt vpip_sysfunc_rnet_rt = {
       0,
       sysfunc_put_rnet_value,
       systask_handle,
-      systask_iter
+      systask_iter,
+      0,
+      0,
+      0,
+      0
 };
 
 static const struct __vpirt vpip_sysfunc_no_rt = {
@@ -514,7 +538,11 @@ static const struct __vpirt vpip_sysfunc_no_rt = {
       0,
       sysfunc_put_no_value,
       systask_handle,
-      systask_iter
+      systask_iter,
+      0,
+      0,
+      0,
+      0
 };
 
   /* **** Manipulate the internal data structures. **** */
@@ -602,7 +630,9 @@ static const struct __vpirt vpip_systf_iterator_rt = {
       0,
       0,
       systf_iterator_scan,
-      systf_iterator_free_object
+      systf_iterator_free_object,
+      0,
+      0
 };
 
 vpiHandle vpip_make_systf_iterator(void)
@@ -714,17 +744,17 @@ void print_vpi_call_errors()
       free(vpi_call_error_lst);
 }
 
+#ifdef CHECK_WITH_VALGRIND
 static void cleanup_vpi_call_args(unsigned argc, vpiHandle*argv)
 {
-#ifdef CHECK_WITH_VALGRIND
       if (argc) {
 	    struct __vpiSysTaskCall*obj = new struct __vpiSysTaskCall;
 	    obj->nargs = argc;
 	    obj->args  = argv;
 	    vpi_call_delete(&obj->base);
       }
-#endif
 }
+#endif
 
 /*
  * A vpi_call is actually built up into a vpiSysTaskCall VPI object
@@ -749,7 +779,9 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
       struct __vpiUserSystf*defn = vpip_find_systf(name);
       if (defn == 0) {
 	    add_vpi_call_error(VPI_CALL_NO_DEF, name, file_idx, lineno);
+#ifdef CHECK_WITH_VALGRIND
 	    cleanup_vpi_call_args(argc, argv);
+#endif
 	    return 0;
       }
 
@@ -758,7 +790,9 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 	    if (vwid != 0 || fnet != 0) {
 		  add_vpi_call_error(VPI_CALL_TASK_AS_FUNC, name, file_idx,
 		                     lineno);
+#ifdef CHECK_WITH_VALGRIND
 		  cleanup_vpi_call_args(argc, argv);
+#endif
 		  return 0;
 	    }
 	    assert(vbit == 0);
@@ -769,7 +803,9 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 		  if (func_as_task_err) {
 			add_vpi_call_error(VPI_CALL_FUNC_AS_TASK,
 			                   name, file_idx, lineno);
+#ifdef CHECK_WITH_VALGRIND
 			cleanup_vpi_call_args(argc, argv);
+#endif
 			return 0;
 		  } else if (func_as_task_warn) {
 			add_vpi_call_error(VPI_CALL_FUNC_AS_TASK_WARN,

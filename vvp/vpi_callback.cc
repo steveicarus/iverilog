@@ -42,24 +42,23 @@
 * deletes the *handle*, and not the object itself, so given the vvp
 * implementation, there is nothing to do here.
 */
-static int free_simple_callback(vpiHandle ref)
+static int free_simple_callback(vpiHandle)
 {
       return 1;
 }
 
 const struct __vpirt callback_rt = {
       vpiCallback,
-
       0,
       0,
       0,
       0,
-
       0,
       0,
       0,
-
-      &free_simple_callback
+      &free_simple_callback,
+      0,
+      0
 };
 
 /*

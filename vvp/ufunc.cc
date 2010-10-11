@@ -104,7 +104,7 @@ void ufunc_core::assign_bits_to_ports(vvp_context_t context)
  * result from the return code variable and deliver it to the output
  * of the functor, back into the netlist.
  */
-void ufunc_core::finish_thread(vthread_t thr)
+void ufunc_core::finish_thread()
 {
       thread_ = 0;
       if (vvp_fun_signal_real*sig = dynamic_cast<vvp_fun_signal_real*>(result_->fun))
@@ -118,7 +118,7 @@ void ufunc_core::finish_thread(vthread_t thr)
  * This method is only called when a trigger event occurs. Just arrange for
  * the function to be called.
  */
-void ufunc_core::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+void ufunc_core::recv_vec4(vvp_net_ptr_t, const vvp_vector4_t&,
                            vvp_context_t)
 {
       invoke_thread_();
@@ -129,12 +129,12 @@ void ufunc_core::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
  * input value to the port of the functor. I save the input value and
  * arrange for the function to be called.
  */
-void ufunc_core::recv_vec4_from_inputs(unsigned port)
+void ufunc_core::recv_vec4_from_inputs(unsigned)
 {
       invoke_thread_();
 }
 
-void ufunc_core::recv_real_from_inputs(unsigned port)
+void ufunc_core::recv_real_from_inputs(unsigned)
 {
       invoke_thread_();
 }

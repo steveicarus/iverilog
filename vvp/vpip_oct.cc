@@ -120,8 +120,7 @@ void vpip_oct_str_to_vec4(vvp_vector4_t&val, const char*str)
 
 }
 
-void vpip_vec4_to_oct_str(const vvp_vector4_t&bits, char*buf, unsigned nbuf,
-			  bool signed_flag)
+void vpip_vec4_to_oct_str(const vvp_vector4_t&bits, char*buf, unsigned nbuf)
 {
       unsigned slen = (bits.size() + 2) / 3;
       assert(slen < nbuf);

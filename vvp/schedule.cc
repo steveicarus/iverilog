@@ -471,7 +471,7 @@ inline void* event_time_s::operator new (size_t size)
       return ptr;
 }
 
-inline void event_time_s::operator delete(void*ptr, size_t size)
+inline void event_time_s::operator delete(void*ptr, size_t)
 {
       event_time_heap.free_slab(ptr);
 }

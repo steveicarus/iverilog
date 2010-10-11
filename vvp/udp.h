@@ -190,6 +190,7 @@ class vvp_udp_seq_s : public vvp_udp_s {
 				  vvp_bit4_t cur_out);
 
     private:
+      char*name_;
 
       vvp_bit4_t test_levels_(const udp_levels_table&cur);
 

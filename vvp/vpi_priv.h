@@ -336,9 +336,8 @@ extern struct __vpiModPathSrc* vpip_modpath_src_from_handle(vpiHandle ref);
  * for vpiModPath && vpiModPathIn objects
  */
 
-extern struct __vpiModPathSrc* vpip_make_modpath_src  (struct __vpiModPath*path_dest,
-					 vvp_time64_t use_delay[12] ,
-					 vvp_net_t *net ) ;
+extern struct __vpiModPathSrc* vpip_make_modpath_src(struct __vpiModPath*path,
+                                                     vvp_net_t *net) ;
 
 extern struct __vpiModPath* vpip_make_modpath(vvp_net_t *net) ;
 
@@ -596,10 +595,10 @@ extern unsigned vpip_vec4_to_dec_str(const vvp_vector4_t&vec4,
 
 
 extern void vpip_vec4_to_hex_str(const vvp_vector4_t&bits, char*buf,
-				 unsigned nbuf, bool signed_flag);
+				 unsigned nbuf);
 
 extern void vpip_vec4_to_oct_str(const vvp_vector4_t&bits, char*buf,
-				 unsigned nbuf, bool signed_flag);
+				 unsigned nbuf);
 
 extern void vpip_bin_str_to_vec4(vvp_vector4_t&val, const char*buf);
 extern void vpip_oct_str_to_vec4(vvp_vector4_t&val, const char*str);

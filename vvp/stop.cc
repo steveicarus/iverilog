@@ -417,7 +417,7 @@ static struct {
       { 0,        &cmd_unknown, 0}
 };
 
-static void cmd_help(unsigned argc, char*argv[])
+static void cmd_help(unsigned, char*[])
 {
       printf("Commands can be from the following table of base commands,\n"
 	     "or can be invocations of system tasks/functions.\n\n");

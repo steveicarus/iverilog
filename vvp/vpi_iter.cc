@@ -47,7 +47,9 @@ static const struct __vpirt vpip_iterator_rt = {
       0, // handle_
       0, // iterate_
       0, // index_
-      &iterator_free_object
+      &iterator_free_object,
+      0, // vpi_get_delay
+      0  // vpi_put_delay
 };
 
 vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,

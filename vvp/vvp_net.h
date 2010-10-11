@@ -289,7 +289,7 @@ class vvp_vector4_t {
       void copy_from_(const vvp_vector4_t&that);
       void copy_inverted_from_(const vvp_vector4_t&that);
 
-      void allocate_words_(unsigned size, unsigned long inita, unsigned long initb);
+      void allocate_words_(unsigned long inita, unsigned long initb);
 
 	// Values in the vvp_vector4_t are stored split across two
 	// arrays. For each bit in the vector, there is an abit and a
@@ -341,7 +341,7 @@ inline vvp_vector4_t::vvp_vector4_t(unsigned size__, vvp_bit4_t val)
 	    WORD_Z_BBITS,
 	    WORD_X_BBITS };
 
-      allocate_words_(size_, init_atable[val], init_btable[val]);
+      allocate_words_(init_atable[val], init_btable[val]);
 }
 
 inline vvp_vector4_t::~vvp_vector4_t()

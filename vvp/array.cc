@@ -257,16 +257,17 @@ static int array_index_free_object(vpiHandle ref);
 
 static int vpi_array_var_word_get(int code, vpiHandle);
 static char*vpi_array_var_word_get_str(int code, vpiHandle);
-static void vpi_array_var_word_get_value(vpiHandle, p_vpi_value);
-static vpiHandle vpi_array_var_word_put_value(vpiHandle, p_vpi_value, int);
+static void vpi_array_var_word_get_value(vpiHandle ref, p_vpi_value vp);
+static vpiHandle vpi_array_var_word_put_value(vpiHandle ref, p_vpi_value vp,
+                                              int);
 static vpiHandle vpi_array_var_word_get_handle(int code, vpiHandle ref);
 
-static void vpi_array_var_index_get_value(vpiHandle, p_vpi_value);
+static void vpi_array_var_index_get_value(vpiHandle ref, p_vpi_value vp);
 
 static int vpi_array_vthr_A_get(int code, vpiHandle);
 static char*vpi_array_vthr_A_get_str(int code, vpiHandle);
-static void vpi_array_vthr_A_get_value(vpiHandle, p_vpi_value);
-static vpiHandle vpi_array_vthr_A_put_value(vpiHandle, p_vpi_value, int);
+static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value vp);
+static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int);
 static vpiHandle vpi_array_vthr_A_get_handle(int code, vpiHandle ref);
 
 static const struct __vpirt vpip_arraymem_rt = {
@@ -278,6 +279,9 @@ static const struct __vpirt vpip_arraymem_rt = {
       vpi_array_get_handle,
       vpi_array_iterate,
       vpi_array_index,
+      0,
+      0,
+      0
 };
 
 static const struct __vpirt vpip_array_iterator_rt = {
@@ -289,7 +293,9 @@ static const struct __vpirt vpip_array_iterator_rt = {
       0,
       0,
       array_iterator_scan,
-      &array_iterator_free_object
+      &array_iterator_free_object,
+      0,
+      0
 };
 
 /* This should look a bit odd since it provides a fake iteration on
@@ -304,7 +310,9 @@ static const struct __vpirt vpip_array_index_rt = {
       0,
       array_index_iterate,
       array_index_scan,
-      array_index_free_object
+      array_index_free_object,
+      0,
+      0
 };
 
 static const struct __vpirt vpip_array_var_word_rt = {
@@ -314,6 +322,8 @@ static const struct __vpirt vpip_array_var_word_rt = {
       &vpi_array_var_word_get_value,
       &vpi_array_var_word_put_value,
       &vpi_array_var_word_get_handle,
+      0,
+      0,
       0,
       0,
       0
@@ -328,6 +338,8 @@ static const struct __vpirt vpip_array_var_index_rt = {
       0,
       0,
       0,
+      0,
+      0,
       0
 };
 
@@ -338,6 +350,8 @@ static const struct __vpirt vpip_array_vthr_A_rt = {
       &vpi_array_vthr_A_get_value,
       &vpi_array_vthr_A_put_value,
       &vpi_array_vthr_A_get_handle,
+      0,
+      0,
       0,
       0,
       0
@@ -558,7 +572,7 @@ static char*vpi_array_var_word_get_str(int code, vpiHandle ref)
       return generic_get_str(code, &parent->scope->base, parent->name, sidx);
 }
 
-static void vpi_array_var_word_get_value(vpiHandle ref, p_vpi_value value)
+static void vpi_array_var_word_get_value(vpiHandle ref, p_vpi_value vp)
 {
       struct __vpiArrayWord*obj = array_var_word_from_handle(ref);
       struct __vpiArray*parent;
@@ -568,10 +582,10 @@ static void vpi_array_var_word_get_value(vpiHandle ref, p_vpi_value value)
       unsigned width = parent->vals4->width();
 
       vpip_vec4_get_value(parent->vals4->get_word(index), width,
-                          parent->signed_flag, value);
+                          parent->signed_flag, vp);
 }
 
-static vpiHandle vpi_array_var_word_put_value(vpiHandle ref, p_vpi_value vp, int flags)
+static vpiHandle vpi_array_var_word_put_value(vpiHandle ref, p_vpi_value vp, int)
 {
       struct __vpiArrayWord*obj = array_var_word_from_handle(ref);
       struct __vpiArray*parent;
@@ -616,7 +630,7 @@ static vpiHandle vpi_array_var_word_get_handle(int code, vpiHandle ref)
       return 0;
 }
 
-static void vpi_array_var_index_get_value(vpiHandle ref, p_vpi_value value)
+static void vpi_array_var_index_get_value(vpiHandle ref, p_vpi_value vp)
 {
       struct __vpiArrayWord*obj = array_var_index_from_handle(ref);
       struct __vpiArray*parent;
@@ -624,8 +638,8 @@ static void vpi_array_var_index_get_value(vpiHandle ref, p_vpi_value value)
       assert(obj);
       unsigned index = decode_array_word_pointer(obj, parent);
 
-      assert(value->format == vpiIntVal);
-      value->value.integer = index;
+      assert(vp->format == vpiIntVal);
+      vp->value.integer = index;
 }
 
 # define ARRAY_ITERATOR(ref) (assert(ref->vpi_type->type_code==vpiIterator), \
@@ -776,7 +790,7 @@ static unsigned vpi_array_is_real(vvp_array_t arr)
       return 0U;
 }
 
-static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value value)
+static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value vp)
 {
       struct __vpiArrayVthrA*obj = array_vthr_a_from_handle(ref);
       assert(obj);
@@ -787,11 +801,11 @@ static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value value)
       unsigned index = obj->get_address();
       if (vpi_array_is_real(parent)) {
 	    double tmp = array_get_word_r(parent, index);
-	    vpip_real_get_value(tmp, value);
+	    vpip_real_get_value(tmp, vp);
       } else {
 	    vvp_vector4_t tmp = array_get_word(parent, index);
 	    unsigned width = get_array_word_size(parent);
-	    vpip_vec4_get_value(tmp, width, parent->signed_flag, value);
+	    vpip_vec4_get_value(tmp, width, parent->signed_flag, vp);
       }
 }
 

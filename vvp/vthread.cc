@@ -1226,7 +1226,7 @@ bool of_ASSIGN_WRE(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_ASSIGN_X0(vthread_t thr, vvp_code_t cp)
+bool of_ASSIGN_X0(vthread_t, vvp_code_t)
 {
 #if 0
       unsigned char bit_val = thr_get_bit(thr, cp->bit_idx[1]);
@@ -1268,7 +1268,7 @@ bool of_BLEND_WR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_BREAKPOINT(vthread_t thr, vvp_code_t cp)
+bool of_BREAKPOINT(vthread_t, vvp_code_t)
 {
       return true;
 }
@@ -1280,7 +1280,7 @@ bool of_BREAKPOINT(vthread_t thr, vvp_code_t cp)
  * unlinked without specifically knowing the source that this
  * instruction used.
  */
-bool of_CASSIGN_LINK(vthread_t thr, vvp_code_t cp)
+bool of_CASSIGN_LINK(vthread_t, vvp_code_t cp)
 {
       vvp_net_t*dst = cp->net;
       vvp_net_t*src = cp->net2;
@@ -1825,7 +1825,7 @@ bool of_CVT_VR(vthread_t thr, vvp_code_t cp)
  * long(1) to port-3 of the addressed net. This turns off an active
  * continuous assign activated by %cassign/v
  */
-bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
+bool of_DEASSIGN(vthread_t, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
       unsigned base  = cp->bit_idx[0];
@@ -1864,7 +1864,7 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_DEASSIGN_WR(vthread_t thr, vvp_code_t cp)
+bool of_DEASSIGN_WR(vthread_t, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
 
@@ -2395,7 +2395,7 @@ bool of_EVCTLS(vthread_t thr, vvp_code_t cp)
  * unlinked without specifically knowing the source that this
  * instruction used.
  */
-bool of_FORCE_LINK(vthread_t thr, vvp_code_t cp)
+bool of_FORCE_LINK(vthread_t, vvp_code_t cp)
 {
       vvp_net_t*dst = cp->net;
       vvp_net_t*src = cp->net2;
@@ -2829,7 +2829,7 @@ bool of_JMP1(vthread_t thr, vvp_code_t cp)
  * reap it and go on. Otherwise, I tell the child that I am ready for
  * it to die, and it will reschedule me when it does.
  */
-bool of_JOIN(vthread_t thr, vvp_code_t cp)
+bool of_JOIN(vthread_t thr, vvp_code_t)
 {
       assert(thr->child);
       assert(thr->child->parent == thr);
@@ -3073,7 +3073,7 @@ bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t cp)
  * The functor to read from is the vvp_net_t object pointed to by the
  * cp->net pointer.
  */
-static void load_base(vthread_t thr, vvp_code_t cp, vvp_vector4_t&dst)
+static void load_base(vvp_code_t cp, vvp_vector4_t&dst)
 {
       vvp_net_t*net = cp->net;
 
@@ -3095,7 +3095,7 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
       unsigned wid = cp->bit_idx[1];
 
       vvp_vector4_t sig_value;
-      load_base(thr, cp, sig_value);
+      load_base(cp, sig_value);
 
 	/* Check the address once, before we scan the vector. */
       thr_check_addr(thr, bit+wid-1);
@@ -3129,7 +3129,7 @@ bool of_LOAD_VP0(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t sig_value(wid, BIT4_0);
 
       vvp_vector4_t tmp;
-      load_base(thr, cp, tmp);
+      load_base(cp, tmp);
       sig_value.copy_bits(tmp);
 
       load_vp0_common(thr, cp, sig_value);
@@ -3141,7 +3141,7 @@ bool of_LOAD_VP0_S(vthread_t thr, vvp_code_t cp)
       unsigned wid = cp->bit_idx[1];
 
       vvp_vector4_t tmp;
-      load_base(thr, cp, tmp);
+      load_base(cp, tmp);
 
         /* We need a vector this wide to make the math work correctly.
          * Copy the base bits into the vector, but keep the width. */
@@ -3713,7 +3713,7 @@ bool of_NAND(vthread_t thr, vvp_code_t cp)
 }
 
 
-bool of_NOOP(vthread_t thr, vvp_code_t cp)
+bool of_NOOP(vthread_t, vvp_code_t)
 {
       return true;
 }
@@ -4033,7 +4033,7 @@ bool of_POW_WR(vthread_t thr, vvp_code_t cp)
  * the release/reg command instead. These are very similar to the
  * %deassign instruction.
  */
-static bool do_release_vec(vthread_t thr, vvp_code_t cp, bool net_flag)
+static bool do_release_vec(vvp_code_t cp, bool net_flag)
 {
       vvp_net_t*net = cp->net;
       unsigned base  = cp->bit_idx[0];
@@ -4062,19 +4062,19 @@ static bool do_release_vec(vthread_t thr, vvp_code_t cp, bool net_flag)
       return true;
 }
 
-bool of_RELEASE_NET(vthread_t thr, vvp_code_t cp)
+bool of_RELEASE_NET(vthread_t, vvp_code_t cp)
 {
-      return do_release_vec(thr, cp, true);
+      return do_release_vec(cp, true);
 }
 
 
-bool of_RELEASE_REG(vthread_t thr, vvp_code_t cp)
+bool of_RELEASE_REG(vthread_t, vvp_code_t cp)
 {
-      return do_release_vec(thr, cp, false);
+      return do_release_vec(cp, false);
 }
 
 /* The type is 1 for registers and 0 for everything else. */
-bool of_RELEASE_WR(vthread_t thr, vvp_code_t cp)
+bool of_RELEASE_WR(vthread_t, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
       unsigned type  = cp->bit_idx[0];
@@ -4591,7 +4591,7 @@ bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t cp)
 
 	/* Now copy the output from the result variable to the output
 	   ports of the .ufunc device. */
-      cp->ufunc_core_ptr->finish_thread(thr);
+      cp->ufunc_core_ptr->finish_thread();
 
         /* If an automatic function, free the context for this call. */
       if (child_scope->is_automatic) {

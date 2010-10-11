@@ -308,7 +308,7 @@ const vvp_vector4_t& vvp_fun_signal4_sa::vec4_unfiltered_value() const
       return bits4_;
 }
 
-vvp_fun_signal4_aa::vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t init)
+vvp_fun_signal4_aa::vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t /*init */)
 {
       context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
       size_ = wid;
@@ -537,13 +537,13 @@ unsigned vvp_fun_signal_real_aa::value_size() const
       return 1;
 }
 
-vvp_bit4_t vvp_fun_signal_real_aa::value(unsigned idx) const
+vvp_bit4_t vvp_fun_signal_real_aa::value(unsigned) const
 {
       assert(0);
       return BIT4_X;
 }
 
-vvp_scalar_t vvp_fun_signal_real_aa::scalar_value(unsigned idx) const
+vvp_scalar_t vvp_fun_signal_real_aa::scalar_value(unsigned) const
 {
       assert(0);
       return vvp_scalar_t();
@@ -642,7 +642,10 @@ vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec4(const vvp_vector4_t&bit, vvp_ve
       return filter_mask_(bit, force4_, rep, base);
 }
 
-vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec8(const vvp_vector8_t&bit, vvp_vector8_t&rep, unsigned base, unsigned vwid)
+vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec8(const vvp_vector8_t&bit,
+                                                 vvp_vector8_t&rep,
+                                                 unsigned /*base */,
+                                                 unsigned /*vwid */)
 {
       assert(bits4_.size() == bit.size());
       bits4_ = reduce4(bit);
@@ -671,12 +674,12 @@ void vvp_wire_vec4::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
       run_vpi_callbacks();
 }
 
-void vvp_wire_vec4::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
+void vvp_wire_vec4::force_fil_vec8(const vvp_vector8_t&, vvp_vector2_t)
 {
       assert(0);
 }
 
-void vvp_wire_vec4::force_fil_real(double val, vvp_vector2_t mask)
+void vvp_wire_vec4::force_fil_real(double, vvp_vector2_t)
 {
       assert(0);
 }
@@ -764,8 +767,10 @@ vvp_wire_vec8::vvp_wire_vec8(unsigned wid)
       needs_init_ = true;
 }
 
-vvp_net_fil_t::prop_t vvp_wire_vec8::filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
-						 unsigned base, unsigned vwid)
+vvp_net_fil_t::prop_t vvp_wire_vec8::filter_vec4(const vvp_vector4_t&bit,
+                                                 vvp_vector4_t&rep,
+                                                 unsigned /*base */,
+                                                 unsigned vwid)
 {
 	// QUESTION: Is it really correct to propagate a vec4 if this
 	// is a vec8 node? In fact, it is really possible for a vec4
@@ -828,7 +833,7 @@ void vvp_wire_vec8::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
       run_vpi_callbacks();
 }
 
-void vvp_wire_vec8::force_fil_real(double val, vvp_vector2_t mask)
+void vvp_wire_vec8::force_fil_real(double, vvp_vector2_t)
 {
       assert(0);
 }
@@ -928,12 +933,12 @@ unsigned vvp_wire_real::filter_size() const
       return 0;
 }
 
-void vvp_wire_real::force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask)
+void vvp_wire_real::force_fil_vec4(const vvp_vector4_t&, vvp_vector2_t)
 {
       assert(0);
 }
 
-void vvp_wire_real::force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask)
+void vvp_wire_real::force_fil_vec8(const vvp_vector8_t&, vvp_vector2_t)
 {
       assert(0);
 }
@@ -962,13 +967,13 @@ void vvp_wire_real::release(vvp_net_ptr_t ptr, bool net_flag)
       }
 }
 
-void vvp_wire_real::release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag)
+void vvp_wire_real::release_pv(vvp_net_ptr_t, unsigned, unsigned, bool)
 {
+      assert(0);
+#if 0
 	// A real is a single value. If for some reason this part release
 	// can happen the following code should work correctly (requires
 	// a base of 0 and a width of 1).
-      assert(0);
-#if 0
       vvp_vector2_t mask (vvp_vector2_t::FILL1, 1);
       assert(base == 0 && wid == 1);
 
@@ -991,13 +996,13 @@ unsigned vvp_wire_real::value_size() const
       return 1;
 }
 
-vvp_bit4_t vvp_wire_real::value(unsigned idx) const
+vvp_bit4_t vvp_wire_real::value(unsigned) const
 {
       assert(0);
       return BIT4_X;
 }
 
-vvp_scalar_t vvp_wire_real::scalar_value(unsigned idx) const
+vvp_scalar_t vvp_wire_real::scalar_value(unsigned) const
 {
       assert(0);
       return vvp_scalar_t();

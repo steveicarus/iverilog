@@ -33,8 +33,7 @@
 # include  <cassert>
 
 static void __compile_var_real(char*label, char*name,
-			       vvp_array_t array, unsigned long array_addr,
-			       int msb, int lsb)
+			       vvp_array_t array, unsigned long array_addr)
 {
       vvp_net_t*net = new vvp_net_t;
 
@@ -68,14 +67,16 @@ static void __compile_var_real(char*label, char*name,
 
 void compile_var_real(char*label, char*name, int msb, int lsb)
 {
-      __compile_var_real(label, name, 0, 0, msb, lsb);
+      assert(msb == 0 && lsb == 0);
+      __compile_var_real(label, name, 0, 0);
 }
 
 void compile_varw_real(char*label, vvp_array_t array,
 		       unsigned long addr,
 		       int msb, int lsb)
 {
-      __compile_var_real(label, 0, array, addr, msb, lsb);
+      assert(msb == 0 && lsb == 0);
+      __compile_var_real(label, 0, array, addr);
 }
 
 /*
@@ -152,7 +153,7 @@ void compile_variablew(char*label, vvp_array_t array,
       __compile_var(label, 0, array, array_addr, msb, lsb, signed_flag, false);
 }
 
-vvp_net_t* create_constant_node(const char*label, const char*val_str)
+vvp_net_t* create_constant_node(const char*val_str)
 {
       if (c4string_test(val_str)) {
 	    vvp_net_t*net = new vvp_net_t;
@@ -304,7 +305,7 @@ static void __compile_net(char*label,
 
 	         NOTE: This is a hack! The code generator should be
 	         fixed so that this is no longer needed. */
-	    node = create_constant_node(label, argv[0].text);
+	    node = create_constant_node(argv[0].text);
       }
 #endif
       if (node == 0) {
@@ -332,6 +333,8 @@ bool __compile_net_resolv::resolve(bool msg_flag)
 {
       vvp_net_t*node = vvp_net_lookup(label());
       if (node == 0) {
+	    if (msg_flag)
+		  cerr << "Unable to resolve label " << label() << endl;
 	    return false;
       }
 
@@ -415,6 +418,7 @@ static void __compile_real(char*label, char*name,
                            int msb, int lsb, bool local_flag,
                            unsigned argc, struct symb_s*argv)
 {
+      assert(msb == 0 && lsb == 0);
       vvp_array_t array = array_label ? array_find(array_label) : 0;
       assert(array_label ? array!=0 : true);
 
@@ -426,7 +430,7 @@ static void __compile_real(char*label, char*name,
 	      /* No existing net, but the string value may be a
 		 constant. In that case, we will wind up generating a
 		 bufz node that can carry the constant value. */
-	    node = create_constant_node(label, argv[0].text);
+	    node = create_constant_node(argv[0].text);
       }
       struct __vpiScope*scope = vpip_peek_current_scope();
       if (node == 0) {
