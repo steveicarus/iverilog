@@ -274,6 +274,45 @@ class vvp_wire_base  : public vvp_net_fil_t, public vvp_signal_value {
       ~vvp_wire_base();
 };
 
+class vvp_wire_vec2 : public vvp_wire_base {
+
+    public:
+      vvp_wire_vec2(unsigned wid);
+
+	// The main filter behavior for this class. These methods take
+	// the value that the node is driven to, and applies the force
+	// filters. In wires, this also saves the driven value, so
+	// that when a force is released, we can revert to the driven value.
+      prop_t filter_vec4(const vvp_vector4_t&bit, vvp_vector4_t&rep,
+			 unsigned base, unsigned vwid);
+      prop_t filter_vec8(const vvp_vector8_t&val, vvp_vector8_t&rep,
+			 unsigned base, unsigned vwid);
+
+	// Abstract methods from vvp_vpi_callback
+      void get_value(struct t_vpi_value*value);
+	// Abstract methods from vvp_net_fit_t
+      unsigned filter_size() const;
+      void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
+      void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
+      void force_fil_real(double val, vvp_vector2_t mask);
+      void release(vvp_net_ptr_t ptr, bool net_flag);
+      void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag);
+
+	// Implementation of vvp_signal_value methods
+      unsigned value_size() const;
+      vvp_bit4_t value(unsigned idx) const;
+      vvp_scalar_t scalar_value(unsigned idx) const;
+      void vec4_value(vvp_vector4_t&) const;
+
+    private:
+      vvp_bit4_t filtered_value_(unsigned idx) const;
+
+    private:
+      bool needs_init_;
+      vvp_vector2_t bits2_; // The tracked driven value
+      vvp_vector2_t force2_; // the value being forced
+};
+
 class vvp_wire_vec4 : public vvp_wire_base {
 
     public:

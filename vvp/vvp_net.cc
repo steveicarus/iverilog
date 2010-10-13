@@ -1940,7 +1940,24 @@ vvp_vector2_t::vvp_vector2_t(vvp_vector2_t::fill_t fill, unsigned wid)
 	    vec_[idx] = fill? -1 : 0;
 }
 
-vvp_vector2_t::vvp_vector2_t(const vvp_vector4_t&that)
+vvp_vector2_t::vvp_vector2_t(const vvp_vector2_t&that, unsigned base, unsigned wid)
+{
+      wid_ = wid;
+      const unsigned words = (wid_ + BITS_PER_WORD-1) / BITS_PER_WORD;
+
+      vec_ = new unsigned long[words];
+
+      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+	    int bit = that.value(base+idx);
+	    if (bit == 0)
+		  continue;
+	    unsigned word = idx / BITS_PER_WORD;
+	    unsigned long mask = 1UL << (idx % BITS_PER_WORD);
+	    vec_[word] |= mask;
+      }
+}
+
+void vvp_vector2_t::copy_from_that_(const vvp_vector4_t&that)
 {
       wid_ = that.size();
       const unsigned words = (that.size() + BITS_PER_WORD-1) / BITS_PER_WORD;
@@ -1961,15 +1978,12 @@ vvp_vector2_t::vvp_vector2_t(const vvp_vector4_t&that)
 
 	    switch (that.value(idx)) {
 		case BIT4_0:
+		case BIT4_X:
+		case BIT4_Z:
 		  break;
 		case BIT4_1:
 		  vec_[addr] |= 1UL << shift;
 		  break;
-		default:
-		  delete[]vec_;
-		  vec_ = 0;
-		  wid_ = 0;
-		  return;
 	    }
       }
 }
@@ -1988,11 +2002,6 @@ void vvp_vector2_t::copy_from_that_(const vvp_vector2_t&that)
       vec_ = new unsigned long[words];
       for (unsigned idx = 0 ;  idx < words ;  idx += 1)
 	    vec_[idx] = that.vec_[idx];
-}
-
-vvp_vector2_t::vvp_vector2_t(const vvp_vector2_t&that)
-{
-      copy_from_that_(that);
 }
 
 vvp_vector2_t::vvp_vector2_t(const vvp_vector2_t&that, unsigned newsize)
@@ -2023,6 +2032,14 @@ vvp_vector2_t& vvp_vector2_t::operator= (const vvp_vector2_t&that)
       delete[] vec_;
       vec_ = 0;
 
+      copy_from_that_(that);
+      return *this;
+}
+
+vvp_vector2_t& vvp_vector2_t::operator= (const vvp_vector4_t&that)
+{
+      delete[]vec_;
+      vec_ = 0;
       copy_from_that_(that);
       return *this;
 }
@@ -2191,11 +2208,6 @@ vvp_vector2_t& vvp_vector2_t::operator -= (const vvp_vector2_t&that)
       return *this;
 }
 
-vvp_vector2_t::~vvp_vector2_t()
-{
-      delete[] vec_;
-}
-
 void vvp_vector2_t::trim()
 {
       while (value(wid_-1) == 0 && wid_ > 1) wid_ -= 1;
@@ -2237,6 +2249,14 @@ void vvp_vector2_t::set_bit(unsigned idx, int bit)
 	    vec_[addr] |= 1UL << mask;
       else
 	    vec_[addr] &= ~(1UL << mask);
+}
+
+void vvp_vector2_t::set_vec(unsigned adr, const vvp_vector2_t&that)
+{
+      assert((adr + that.wid_) <= wid_);
+
+      for (unsigned idx = 0 ; idx < that.wid_ ; idx += 1)
+	    set_bit(adr+idx, that.value(idx));
 }
 
 bool vvp_vector2_t::is_NaN() const
@@ -2647,6 +2667,24 @@ vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that,
 	    ptr_ = new unsigned char[size_];
 	    for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
 		  ptr_[idx] = vvp_scalar_t(that.value(idx), str0, str1).raw();
+      }
+}
+
+vvp_vector8_t::vvp_vector8_t(const vvp_vector2_t&that,
+			     unsigned str0, unsigned str1)
+: size_(that.size())
+{
+      if (size_ == 0)
+	    return;
+
+      if (size_ <= sizeof val_) {
+	    ptr_ = 0;
+	    for (unsigned idx = 0 ; idx < size_ ; idx += 1)
+		  val_[idx] = vvp_scalar_t(that.value(idx)? BIT4_1:BIT4_0, str0, str1).raw();
+      } else {
+	    ptr_ = new unsigned char[size_];
+	    for (unsigned idx = 0 ; idx < size_ ; idx += 1)
+		  ptr_[idx] = vvp_scalar_t(that.value(idx)? BIT4_1:BIT4_0, str0, str1).raw();
       }
 }
 

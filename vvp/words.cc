@@ -251,14 +251,14 @@ static void do_compile_net(vvp_net_t*node, vvp_array_t array,
 
       if (vsig == 0) {
 	    switch (vpi_type_code) {
+		case vpiIntVar:
+		  vsig = new vvp_wire_vec2(wid);
+		  break;
 		case vpiLogicVar:
 		  vsig = new vvp_wire_vec4(wid,BIT4_Z);
 		  break;
 		case -vpiLogicVar:
 		  vsig = new vvp_wire_vec8(wid);
-		  break;
-		case vpiIntVar:
-		  vsig = new vvp_wire_vec4(wid,BIT4_Z);
 		  break;
 	    }
 	    assert(vsig);
