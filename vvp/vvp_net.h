@@ -1328,7 +1328,7 @@ class vvp_fun_repeat  : public vvp_net_fun_t {
 class vvp_fun_drive  : public vvp_net_fun_t {
 
     public:
-      vvp_fun_drive(vvp_bit4_t init, unsigned str0 =6, unsigned str1 =6);
+      vvp_fun_drive(unsigned str0 =6, unsigned str1 =6);
       ~vvp_fun_drive();
 
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,

@@ -493,7 +493,7 @@ void compile_aliasw(char*label, char*array_label, unsigned long array_addr,
 
       vpiHandle obj = vvp_lookup_handle(argv[0].text);
       assert(obj);
-      array_alias_word(array, array_addr, obj);
+      array_alias_word(array, array_addr, obj, msb, lsb);
 
       free(label);
       free(array_label);

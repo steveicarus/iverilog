@@ -675,7 +675,7 @@ void compile_functor(char*label, char*type, unsigned width,
       }
 
       vvp_net_t*net_drv = new vvp_net_t;
-      vvp_net_fun_t*obj_drv = new vvp_fun_drive(BIT4_X, ostr0, ostr1);
+      vvp_net_fun_t*obj_drv = new vvp_fun_drive(ostr0, ostr1);
       net_drv->fun = obj_drv;
 
 	/* Point the gate to the drive node. */

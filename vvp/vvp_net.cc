@@ -2864,7 +2864,7 @@ void vvp_net_fun_t::force_flag(void)
 
 /* **** vvp_fun_drive methods **** */
 
-vvp_fun_drive::vvp_fun_drive(vvp_bit4_t /*init*/, unsigned str0, unsigned str1)
+vvp_fun_drive::vvp_fun_drive(unsigned str0, unsigned str1)
 {
       assert(str0 < 8);
       assert(str1 < 8);

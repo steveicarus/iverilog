@@ -1028,8 +1028,11 @@ static vpiHandle vpip_make_array(char*label, const char*name,
       return &(obj->base);
 }
 
-void array_alias_word(vvp_array_t array, unsigned long addr, vpiHandle word)
+void array_alias_word(vvp_array_t array, unsigned long addr, vpiHandle word,
+                      int msb, int lsb)
 {
+      assert(array->msb.value == msb);
+      assert(array->lsb.value == lsb);
       assert(addr < array->array_count);
       assert(array->nets);
       array->nets[addr] = word;

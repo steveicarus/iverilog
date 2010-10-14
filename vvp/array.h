@@ -1,7 +1,7 @@
 #ifndef __array_H
 #define __array_H
 /*
- * Copyright (c) 2007-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,7 +36,7 @@ extern void array_word_change(vvp_array_t array, unsigned long addr);
 
 extern void array_attach_word(vvp_array_t array, unsigned addr, vpiHandle word);
 extern void array_alias_word(vvp_array_t array, unsigned long addr,
-                             vpiHandle word);
+                             vpiHandle word, int msb, int lsb);
 
 extern void array_set_word(vvp_array_t arr, unsigned idx,
 			    unsigned off, vvp_vector4_t val);

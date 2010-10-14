@@ -308,8 +308,12 @@ const vvp_vector4_t& vvp_fun_signal4_sa::vec4_unfiltered_value() const
       return bits4_;
 }
 
-vvp_fun_signal4_aa::vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t /*init */)
+vvp_fun_signal4_aa::vvp_fun_signal4_aa(unsigned wid, vvp_bit4_t init)
 {
+	/* To make init work we would need to save it and then use the
+	 * saved value when we ran reset_instance(). For now just make
+	 * sure it matches the value we use in reset_instance(). */
+      assert(init == BIT4_X);
       context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
       size_ = wid;
 }
@@ -644,9 +648,12 @@ vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec4(const vvp_vector4_t&bit, vvp_ve
 
 vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec8(const vvp_vector8_t&bit,
                                                  vvp_vector8_t&rep,
-                                                 unsigned /*base */,
-                                                 unsigned /*vwid */)
+                                                 unsigned base,
+                                                 unsigned vwid)
 {
+	// For now there is no support for a non-zero base.
+      assert(0 == base);
+      assert(bits4_.size() == vwid);
       assert(bits4_.size() == bit.size());
       bits4_ = reduce4(bit);
       return filter_mask_(bit, vvp_vector8_t(force4_,6,6), rep, 0);
@@ -769,9 +776,13 @@ vvp_wire_vec8::vvp_wire_vec8(unsigned wid)
 
 vvp_net_fil_t::prop_t vvp_wire_vec8::filter_vec4(const vvp_vector4_t&bit,
                                                  vvp_vector4_t&rep,
-                                                 unsigned /*base */,
+                                                 unsigned base,
                                                  unsigned vwid)
 {
+	// For now there is no support for a non-zero base.
+      assert(0 == base);
+      assert(bits8_.size() == vwid);
+      assert(bits8_.size() == bit.size());
 	// QUESTION: Is it really correct to propagate a vec4 if this
 	// is a vec8 node? In fact, it is really possible for a vec4
 	// value to get through to a vec8 filter?
