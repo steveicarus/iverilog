@@ -2359,11 +2359,13 @@ ivl_variable_type_t NetETernary::expr_type() const
       ivl_assert(*this, false_val_);
       ivl_variable_type_t tru = true_val_->expr_type();
       ivl_variable_type_t fal = false_val_->expr_type();
+      ivl_variable_type_t sel = cond_->expr_type();
       if (tru == IVL_VT_LOGIC && fal == IVL_VT_BOOL)
 	    return IVL_VT_LOGIC;
       if (tru == IVL_VT_BOOL && fal == IVL_VT_LOGIC)
 	    return IVL_VT_LOGIC;
-
+      if (sel == IVL_VT_LOGIC && (tru == IVL_VT_LOGIC || tru == IVL_VT_BOOL) && (fal == IVL_VT_LOGIC || fal == IVL_VT_BOOL))
+	    return IVL_VT_LOGIC;
       if (tru == IVL_VT_REAL && (fal == IVL_VT_LOGIC || fal == IVL_VT_BOOL))
 	    return IVL_VT_REAL;
       if (fal == IVL_VT_REAL && (tru == IVL_VT_LOGIC || tru == IVL_VT_BOOL))
