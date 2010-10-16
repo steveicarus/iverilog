@@ -95,6 +95,9 @@ static void __compile_var(char*label, char*name,
 	    vvp_fun_signal4_aa*tmp = new vvp_fun_signal4_aa(wid);
 	    net->fil = tmp;
             net->fun = tmp;
+      } else if (vpi_type_code == vpiIntVar) {
+	    net->fil = new vvp_wire_vec4(wid, BIT4_0);
+            net->fun = new vvp_fun_signal4_sa(wid);
       } else {
 	    net->fil = new vvp_wire_vec4(wid, BIT4_X);
             net->fun = new vvp_fun_signal4_sa(wid);
@@ -252,7 +255,7 @@ static void do_compile_net(vvp_net_t*node, vvp_array_t array,
       if (vsig == 0) {
 	    switch (vpi_type_code) {
 		case vpiIntVar:
-		  vsig = new vvp_wire_vec2(wid);
+		  vsig = new vvp_wire_vec4(wid,BIT4_0);
 		  break;
 		case vpiLogicVar:
 		  vsig = new vvp_wire_vec4(wid,BIT4_Z);

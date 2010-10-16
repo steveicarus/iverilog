@@ -660,7 +660,8 @@ void NetUserFunc::dump_node(ostream&o, unsigned ind) const
       if (rise_time())
 	    o << " #(" <<*rise_time()
 	      <<","<<*fall_time()
-	      << "," <<*decay_time() << ")" << endl;
+	      << "," <<*decay_time() << ")";
+      o << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }
