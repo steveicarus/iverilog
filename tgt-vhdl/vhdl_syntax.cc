@@ -80,7 +80,7 @@ bool vhdl_scope::name_collides(const string& name) const
 {
    const vhdl_decl* decl = get_decl(name);
    if (decl)
-      return decl->get_name() != name;
+      return strcasecmp(decl->get_name().c_str(), name.c_str()) == 0;
    else
       return false;
 }

@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for scopes.
  *
- *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1165,10 +1165,11 @@ extern "C" int draw_hierarchy(ivl_scope_t scope, void *_parent)
       }
 
       // And an instantiation statement
-      string inst_name(ivl_scope_basename(scope));
+      string inst_name = ivl_scope_basename(scope);
       inst_name += genvar_unique_suffix(ivl_scope_parent(scope));
       if (inst_name == ent->get_name()
-          || parent_scope->have_declared(inst_name)
+          || parent_scope->name_collides(inst_name)
+          || find_entity(inst_name) != NULL
           || is_vhdl_reserved_word(inst_name)) {
 
          // Would produce an invalid instance name
