@@ -787,6 +787,12 @@ void PFunction::dump(ostream&out, unsigned ind) const
 	  case PTF_TIME:
 	    out << "time ";
 	    break;
+	  case PTF_ATOM2:
+	    out << "int unsigned ";
+	    break;
+	  case PTF_ATOM2_S:
+	    cout << "int signed ";
+	    break;
       }
 
       if (return_type_.range) {

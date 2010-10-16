@@ -121,6 +121,28 @@ void vvp_arith_cast_real::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       ptr.ptr()->send_real(val, 0);
 }
 
+vvp_arith_cast_vec2::vvp_arith_cast_vec2(unsigned wid)
+: wid_(wid)
+{
+}
+
+vvp_arith_cast_vec2::~vvp_arith_cast_vec2()
+{
+}
+
+void vvp_arith_cast_vec2::recv_real(vvp_net_ptr_t ptr, double bit,
+                                   vvp_context_t)
+{
+      ptr.ptr()->send_vec4(vvp_vector4_t(wid_, bit), 0);
+}
+
+void vvp_arith_cast_vec2::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                                    vvp_context_t)
+{
+      vvp_vector2_t tmp = bit;
+      ptr.ptr()->send_vec4(vector2_to_vector4(tmp,tmp.size()), 0);
+}
+
 // Division
 
 vvp_arith_div::vvp_arith_div(unsigned wid, bool signed_flag)

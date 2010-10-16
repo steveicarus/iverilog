@@ -158,6 +158,8 @@ extern void compile_arith_cast_int(char*label, long width,
 			           unsigned argc, struct symb_s*argv);
 extern void compile_arith_cast_real(char*label, bool signed_flag,
 			            unsigned argc, struct symb_s*argv);
+extern void compile_arith_cast_vec2(char*label, long width,
+				    unsigned argc, struct symb_s*argv);
 extern void compile_arith_div(char*label, long width, bool signed_flag,
 			      unsigned argc, struct symb_s*argv);
 extern void compile_arith_mod(char*label, long width, bool signed_flag,

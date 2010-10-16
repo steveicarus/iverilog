@@ -951,7 +951,14 @@ const NetScope* NetAnalogTop::scope() const
       return scope_;
 }
 
-NetCastInt::NetCastInt(NetScope*scope__, perm_string n, unsigned width__)
+NetCastInt2::NetCastInt2(NetScope*scope__, perm_string n, unsigned width__)
+: NetNode(scope__, n, 2), width_(width__)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      pin(1).set_dir(Link::INPUT);
+}
+
+NetCastInt4::NetCastInt4(NetScope*scope__, perm_string n, unsigned width__)
 : NetNode(scope__, n, 2), width_(width__)
 {
       pin(0).set_dir(Link::OUTPUT);
@@ -2456,6 +2463,9 @@ ivl_variable_type_t NetECast::expr_type() const
 	    break;
 	  case 'r':
 	    ret = IVL_VT_REAL;
+	    break;
+	  case '2':
+	    ret = IVL_VT_BOOL;
 	    break;
 	  default:
 	    assert(0);

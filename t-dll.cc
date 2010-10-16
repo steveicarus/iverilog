@@ -1485,16 +1485,17 @@ void dll_target::lpm_clshift(const NetCLShift*net)
       scope_add_lpm(obj->scope, obj);
 }
 
-bool dll_target::lpm_cast_int(const NetCastInt*net)
+bool dll_target::lpm_arith1_(ivl_lpm_type_t lpm_type, unsigned width, bool signed_flag, const NetNode*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
-      obj->type = IVL_LPM_CAST_INT;
-      obj->name = net->name(); // NetCastInt names are permallocated
+      obj->type = lpm_type;
+      obj->name = net->name(); // NetCastInt2 names are permallocated
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
 
-      obj->width = net->width();
+      obj->width = width;
+      obj->u_.arith.signed_flag = signed_flag? 1 : 0;
 
       const Nexus*nex;
 
@@ -1517,37 +1518,19 @@ bool dll_target::lpm_cast_int(const NetCastInt*net)
       return true;
 }
 
+bool dll_target::lpm_cast_int2(const NetCastInt2*net)
+{
+      return lpm_arith1_(IVL_LPM_CAST_INT2, net->width(), true, net);
+}
+
+bool dll_target::lpm_cast_int4(const NetCastInt4*net)
+{
+      return lpm_arith1_(IVL_LPM_CAST_INT, net->width(), true, net);
+}
+
 bool dll_target::lpm_cast_real(const NetCastReal*net)
 {
-      ivl_lpm_t obj = new struct ivl_lpm_s;
-      obj->type = IVL_LPM_CAST_REAL;
-      obj->name = net->name(); // NetCastReal names are permallocated
-      assert(net->scope());
-      obj->scope = find_scope(des_, net->scope());
-      assert(obj->scope);
-
-      obj->width = 0;
-      obj->u_.arith.signed_flag = net->signed_flag()? 1 : 0;
-
-      const Nexus*nex;
-
-      nex = net->pin(0).nexus();
-      assert(nex->t_cookie());
-
-      obj->u_.arith.q = nex->t_cookie();
-
-      nex = net->pin(1).nexus();
-      assert(nex->t_cookie());
-      obj->u_.arith.a = nex->t_cookie();
-
-      nexus_lpm_add(obj->u_.arith.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
-      nexus_lpm_add(obj->u_.arith.a, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
-
-      make_lpm_delays_(obj, net);
-
-      scope_add_lpm(obj->scope, obj);
-
-      return true;
+      return lpm_arith1_(IVL_LPM_CAST_REAL, 0, net->signed_flag(), net);
 }
 
 /*

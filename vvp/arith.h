@@ -86,6 +86,20 @@ class vvp_arith_cast_real : public vvp_net_fun_t {
       bool signed_;
 };
 
+class vvp_arith_cast_vec2 : public vvp_net_fun_t {
+    public:
+      explicit vvp_arith_cast_vec2(unsigned wid);
+      ~vvp_arith_cast_vec2();
+
+      void recv_real(vvp_net_ptr_t ptr, double bit,
+                     vvp_context_t);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
+
+    private:
+      unsigned wid_;
+};
+
 class vvp_arith_div : public vvp_arith_ {
 
     public:

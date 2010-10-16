@@ -74,7 +74,8 @@ extern NetNet*pad_to_width_signed(Design*des, NetNet*n, unsigned w,
  * Generate the nodes necessary to cast an expression (a net) to a
  * real value.
  */
-extern NetNet*cast_to_int(Design*des, NetScope*scope, NetNet*src, unsigned wid);
+extern NetNet*cast_to_int4(Design*des, NetScope*scope, NetNet*src, unsigned wid);
+extern NetNet*cast_to_int2(Design*des, NetScope*scope, NetNet*src, unsigned wid);
 extern NetNet*cast_to_real(Design*des, NetScope*scope, NetNet*src);
 
 /*

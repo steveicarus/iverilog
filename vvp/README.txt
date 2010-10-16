@@ -358,6 +358,7 @@ net or from a bit based net to a real valued net. These statements
 are used to perform that operation:
 
 	<label> .cast/int <width>, <symbol>;
+	<label> .cast/2 <width>, <symbol>;
 	<label> .cast/real <symbol>;
 	<label> .cast/real.s <symbol>;
 

@@ -993,7 +993,7 @@ NetNet* NetECast::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       switch (op()) {
 	  case 'i':
-	    isig = cast_to_int(des, scope, isig, isig->vector_width());
+	    isig = cast_to_int4(des, scope, isig, isig->vector_width());
 	    break;
 	  case 'r':
 	    isig = cast_to_real(des, scope, isig);

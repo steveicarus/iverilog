@@ -71,7 +71,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_ARITH_MULT K_ARITH_MULT_R K_ARITH_SUB K_ARITH_SUB_R
 %token K_ARITH_SUM K_ARITH_SUM_R K_ARITH_POW K_ARITH_POW_R K_ARITH_POW_S
 %token K_ARRAY K_ARRAY_I K_ARRAY_R K_ARRAY_S K_ARRAY_PORT
-%token K_CAST_INT K_CAST_REAL K_CAST_REAL_S
+%token K_CAST_INT K_CAST_REAL K_CAST_REAL_S K_CAST_2
 %token K_CMP_EEQ K_CMP_EQ K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
 %token K_CMP_GE K_CMP_GE_R K_CMP_GE_S K_CMP_GT K_CMP_GT_R K_CMP_GT_S
 %token K_CONCAT K_DEBUG K_DELAY K_DFF
@@ -271,20 +271,25 @@ statement
 		  compile_arith_abs($1, obj.cnt, obj.vect);
 		}
 
-        | T_LABEL K_CAST_INT T_NUMBER ',' symbols ';'
-		{ struct symbv_s obj = $5;
-		  compile_arith_cast_int($1, $3, obj.cnt, obj.vect);
-		}
+  | T_LABEL K_CAST_INT T_NUMBER ',' symbols ';'
+      { struct symbv_s obj = $5;
+	compile_arith_cast_int($1, $3, obj.cnt, obj.vect);
+      }
 
-        | T_LABEL K_CAST_REAL symbols ';'
-		{ struct symbv_s obj = $3;
-		  compile_arith_cast_real($1, false, obj.cnt, obj.vect);
-		}
+  | T_LABEL K_CAST_REAL symbols ';'
+      { struct symbv_s obj = $3;
+	compile_arith_cast_real($1, false, obj.cnt, obj.vect);
+      }
 
-        | T_LABEL K_CAST_REAL_S symbols ';'
-		{ struct symbv_s obj = $3;
-		  compile_arith_cast_real($1, true, obj.cnt, obj.vect);
-		}
+  | T_LABEL K_CAST_REAL_S symbols ';'
+      { struct symbv_s obj = $3;
+	compile_arith_cast_real($1, true, obj.cnt, obj.vect);
+      }
+
+  | T_LABEL K_CAST_2 T_NUMBER ',' symbols ';'
+      { struct symbv_s obj = $5;
+	compile_arith_cast_vec2($1, $3, obj.cnt, obj.vect);
+      }
 
   /* Arithmetic statements generate functor arrays of a given width
      that take like size input vectors. */

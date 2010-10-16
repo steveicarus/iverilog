@@ -123,6 +123,7 @@ static char* strdupnew(char const *str)
 ".array/real" { return K_ARRAY_R; }
 ".array/s" { return K_ARRAY_S; }
 ".array/port" { return K_ARRAY_PORT; }
+".cast/2"   { return K_CAST_2; }
 ".cast/int" { return K_CAST_INT; }
 ".cast/real" { return K_CAST_REAL; }
 ".cast/real.s" { return K_CAST_REAL_S; }

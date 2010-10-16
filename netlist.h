@@ -1016,10 +1016,24 @@ class NetArrayDq  : public NetNode {
  * Convert an IVL_VT_REAL input to a logical value with the
  * given width. The input is pin(1) and the output is pin(0).
  */
-class NetCastInt  : public NetNode {
+class NetCastInt4  : public NetNode {
 
     public:
-      NetCastInt(NetScope*s, perm_string n, unsigned width);
+      NetCastInt4(NetScope*s, perm_string n, unsigned width);
+
+      unsigned width() const { return width_; }
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*) const;
+
+    private:
+      unsigned width_;
+};
+
+class NetCastInt2  : public NetNode {
+
+    public:
+      NetCastInt2(NetScope*s, perm_string n, unsigned width);
 
       unsigned width() const { return width_; }
 
@@ -3763,6 +3777,7 @@ class NetETernary  : public NetExpr {
  *   X  -- Reduction NXOR (~^ or ^~)
  *   m  -- abs(x)  (i.e. "magnitude")
  *   i  -- Cast from real to integer (vector)
+ *   2  -- Cast from real or logic (vector) to bool (vector)
  *   r  -- Cast from integer (vector) to real
  */
 class NetEUnary  : public NetExpr {
