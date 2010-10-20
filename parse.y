@@ -330,7 +330,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 
 %type <flag>    from_exclude
 %type <number>  number
-%type <flag>    signed_opt signed_unsigned_opt
+%type <flag>    unsigned_signed_opt signed_unsigned_opt
 %type <flag>    udp_reg_opt edge_operator automatic_opt
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
@@ -508,7 +508,7 @@ attribute
 
 block_item_decl
 	: attribute_list_opt K_reg
-          primitive_type_opt signed_opt range
+          primitive_type_opt unsigned_signed_opt range
           register_variable_list ';'
 		{ ivl_variable_type_t dtype = $3;
 		  if (dtype == IVL_VT_NO_TYPE)
@@ -521,7 +521,7 @@ block_item_decl
      range. This is the rule for a scalar. */
 
 	| attribute_list_opt K_reg
-          primitive_type_opt signed_opt
+          primitive_type_opt unsigned_signed_opt
           register_variable_list ';'
 		{ ivl_variable_type_t dtype = $3;
 		  if (dtype == IVL_VT_NO_TYPE)
@@ -1900,7 +1900,7 @@ list_of_port_declarations
 
 port_declaration
   : attribute_list_opt
-    K_input net_type_opt primitive_type_opt signed_opt range_opt IDENTIFIER
+    K_input net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($7);
 	ptmp = pform_module_port_reference(name, @2.text,
@@ -1937,7 +1937,7 @@ port_declaration
 	$$ = ptmp;
       }
   | attribute_list_opt
-    K_inout  net_type_opt primitive_type_opt signed_opt range_opt IDENTIFIER
+    K_inout  net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($7);
 	ptmp = pform_module_port_reference(name, @2.text,
@@ -1955,7 +1955,7 @@ port_declaration
 	$$ = ptmp;
       }
   | attribute_list_opt
-    K_output net_type_opt primitive_type_opt signed_opt range_opt IDENTIFIER
+    K_output net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($7);
 	ptmp = pform_module_port_reference(name, @2.text,
@@ -1973,7 +1973,7 @@ port_declaration
 	$$ = ptmp;
       }
   | attribute_list_opt
-    K_output var_type primitive_type_opt signed_opt range_opt IDENTIFIER
+    K_output var_type primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($7);
 	ptmp = pform_module_port_reference(name, @2.text,
@@ -1991,7 +1991,7 @@ port_declaration
 	$$ = ptmp;
       }
   | attribute_list_opt
-    K_output var_type primitive_type_opt signed_opt range_opt IDENTIFIER '=' expression
+    K_output var_type primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER '=' expression
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($7);
 	ptmp = pform_module_port_reference(name, @2.text,
@@ -2049,9 +2049,10 @@ net_type_opt
    * "true". This corresponds to the declaration defaults for
    * byte/shortint/int/longint.
    */
-signed_opt
-  : K_signed { $$ = true; }
-  |          {$$ = false; }
+unsigned_signed_opt
+  : K_signed   { $$ = true; }
+  | K_unsigned { $$ = false; }
+  |            { $$ = false; }
   ;
 
 signed_unsigned_opt
@@ -2206,7 +2207,7 @@ module_item
      resort to the default type LOGIC. */
 
 	: attribute_list_opt net_type
-          primitive_type_opt signed_opt range_opt
+          primitive_type_opt unsigned_signed_opt range_opt
           delay3_opt
           net_variable_list ';'
 
@@ -2227,7 +2228,7 @@ module_item
      declarations. */
 
 	| attribute_list_opt net_type
-          primitive_type_opt signed_opt range_opt
+          primitive_type_opt unsigned_signed_opt range_opt
           delay3_opt net_decl_assigns ';'
 
 		{ ivl_variable_type_t dtype = $3;
@@ -2246,7 +2247,7 @@ module_item
      gives strength to the assignment drivers. */
 
 	| attribute_list_opt net_type
-          primitive_type_opt signed_opt
+          primitive_type_opt unsigned_signed_opt
           drive_strength net_decl_assigns ';'
 
 		{ ivl_variable_type_t dtype = $3;
@@ -2266,7 +2267,7 @@ module_item
 		  delete $4;
 		}
 
-	| port_type signed_opt range_opt delay3_opt list_of_identifiers ';'
+	| port_type unsigned_signed_opt range_opt delay3_opt list_of_identifiers ';'
 		{ pform_set_port_type(@1, $5, $3, $2, $1);
 		}
 
@@ -2274,12 +2275,12 @@ module_item
        input wire signed [h:l] <list>;
      This creates the wire and sets the port type all at once. */
 
-	| port_type net_type signed_opt range_opt list_of_identifiers ';'
+	| port_type net_type unsigned_signed_opt range_opt list_of_identifiers ';'
 		{ pform_makewire(@1, $4, $3, $5, $2, $1, IVL_VT_NO_TYPE, 0,
 		                 SR_BOTH);
 		}
 
-	| K_output var_type signed_opt range_opt list_of_port_identifiers ';'
+	| K_output var_type unsigned_signed_opt range_opt list_of_port_identifiers ';'
 		{ list<pair<perm_string,PExpr*> >::const_iterator pp;
 		  list<perm_string>*tmp = new list<perm_string>;
 		  for (pp = $5->begin(); pp != $5->end(); pp++) {
@@ -2299,19 +2300,19 @@ module_item
      because the port declaration implies an external driver, which
      cannot be attached to a reg. These rules catch that error early. */
 
-	| K_input var_type signed_opt range_opt list_of_identifiers ';'
+	| K_input var_type unsigned_signed_opt range_opt list_of_identifiers ';'
 		{ pform_makewire(@1, $4, $3, $5, $2, NetNet::PINPUT,
 				 IVL_VT_NO_TYPE, 0);
 		  yyerror(@2, "error: reg variables cannot be inputs.");
 		}
 
-	| K_inout var_type signed_opt range_opt list_of_identifiers ';'
+	| K_inout var_type unsigned_signed_opt range_opt list_of_identifiers ';'
 		{ pform_makewire(@1, $4, $3, $5, $2, NetNet::PINOUT,
 				 IVL_VT_NO_TYPE, 0);
 		  yyerror(@2, "error: reg variables cannot be inouts.");
 		}
 
-	| port_type signed_opt range_opt delay3_opt error ';'
+	| port_type unsigned_signed_opt range_opt delay3_opt error ';'
 		{ yyerror(@1, "error: Invalid variable list"
 			  " in port declaration.");
 		  if ($3) delete $3;
@@ -3284,8 +3285,9 @@ dimensions
 
   /* This is used to express the return type of a function. */
 function_range_or_type_opt
-  : range           { $$.range = $1; $$.type = PTF_REG; }
-  | K_signed range  { $$.range = $2; $$.type = PTF_REG_S; }
+  : range            { $$.range = $1; $$.type = PTF_REG; }
+  | K_signed range   { $$.range = $2; $$.type = PTF_REG_S; }
+  | K_unsigned range { $$.range = $2; $$.type = PTF_REG; }
   | K_integer  { $$.range = 0;  $$.type = PTF_INTEGER; }
   | K_real     { $$.range = 0;  $$.type = PTF_REAL; }
   | K_realtime { $$.range = 0;  $$.type = PTF_REALTIME; }
@@ -4131,30 +4133,27 @@ reg_opt
 
 task_port_item
 
-	: K_input reg_opt signed_opt range_opt list_of_identifiers ';'
-		{ svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT,
+  : K_input reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
+      { svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINPUT,
 						IVL_VT_NO_TYPE, $3,
 						$4, $5,
 						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-	| K_output reg_opt signed_opt range_opt list_of_identifiers ';'
-		{ svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::POUTPUT,
+	$$ = tmp;
+      }
+  | K_output reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
+      { svector<PWire*>*tmp = pform_make_task_ports(NetNet::POUTPUT,
 						IVL_VT_LOGIC, $3,
 						$4, $5,
 						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-	| K_inout reg_opt signed_opt range_opt list_of_identifiers ';'
-		{ svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINOUT,
+	$$ = tmp;
+      }
+  | K_inout reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
+      { svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINOUT,
 						IVL_VT_LOGIC, $3,
 						$4, $5,
 						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
+	$$ = tmp;
+      }
 
   /* When the port is an integer, infer a signed vector of the integer
      shape. Generate a range ([31:0]) to make it work. */
@@ -4298,7 +4297,7 @@ task_item_list_opt
 
 task_port_decl
 
-	: K_input reg_opt signed_opt range_opt IDENTIFIER
+	: K_input reg_opt unsigned_signed_opt range_opt IDENTIFIER
 		{ port_declaration_context.port_type = NetNet::PINPUT;
 		  port_declaration_context.var_type = IVL_VT_LOGIC;
 		  port_declaration_context.sign_flag = $3;
@@ -4312,7 +4311,7 @@ task_port_decl
 		  $$ = tmp;
 		}
 
-	| K_output reg_opt signed_opt range_opt IDENTIFIER
+	| K_output reg_opt unsigned_signed_opt range_opt IDENTIFIER
 		{ port_declaration_context.port_type = NetNet::POUTPUT;
 		  port_declaration_context.var_type = IVL_VT_LOGIC;
 		  port_declaration_context.sign_flag = $3;
@@ -4325,7 +4324,7 @@ task_port_decl
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
-	| K_inout reg_opt signed_opt range_opt IDENTIFIER
+	| K_inout reg_opt unsigned_signed_opt range_opt IDENTIFIER
 		{ port_declaration_context.port_type = NetNet::PINOUT;
 		  port_declaration_context.var_type = IVL_VT_LOGIC;
 		  port_declaration_context.sign_flag = $3;
