@@ -78,6 +78,8 @@ extern NetNet*cast_to_int4(Design*des, NetScope*scope, NetNet*src, unsigned wid)
 extern NetNet*cast_to_int2(Design*des, NetScope*scope, NetNet*src, unsigned wid);
 extern NetNet*cast_to_real(Design*des, NetScope*scope, NetNet*src);
 
+extern NetExpr*cast_to_int2(NetExpr*expr);
+
 /*
  * Take the input expression and return a variation that assures that
  * the expression is 1-bit wide and logical. This reflects the needs

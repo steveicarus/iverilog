@@ -107,6 +107,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%cassign/v",of_CASSIGN_V,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%cassign/wr",of_CASSIGN_WR,2,{OA_FUNC_PTR,OA_BIT1,  OA_NONE} },
       { "%cassign/x0",of_CASSIGN_X0,3,{OA_FUNC_PTR,OA_BIT1,  OA_BIT2} },
+      { "%cast2",  of_CAST2,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/s",  of_CMPS,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/u",  of_CMPU,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/wr", of_CMPWR,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },

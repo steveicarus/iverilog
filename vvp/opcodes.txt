@@ -217,6 +217,12 @@ cassign port (port-1) of the signal functor instead of the normal
 assign port (port-0), so the signal responds differently. See
 "VARIABLE STATEMENTS" and "NET STATEMENTS" in the README.txt file.
 
+* %cast2 <dst>, <src>, <wid>
+
+Convert the source vector, of type logic, to a bool vector by
+changing all the X and Z bits to 0. The source and destinations may
+overlap.
+
 * %cmp/u <bit-l>, <bit-r>, <wid>
 * %cmp/s <bit-l>, <bit-r>, <wid>
 

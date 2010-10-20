@@ -3125,6 +3125,21 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 	    local_count += 1;
 	    break;
 
+	  case '2': /* Cast logic to bool */
+	    assert(ivl_expr_value(sub) == IVL_VT_LOGIC);
+	    res = draw_eval_expr_wid(sub, wid, 0);
+
+	      /* Handle special case that value is 0 or 1. */
+	    if (res.base == 0 || res.base == 1)
+		  break;
+	    if (res.base == 2 || res.base == 2) {
+		  res.base = 0;
+		  break;
+	    }
+
+	    fprintf(vvp_out, "    %%cast2 %d, %d, %u;\n", res.base, res.base, res.wid);
+	    break;
+
 	  case 'i': /* Cast a real value to an integer. */
 	    assert(ivl_expr_value(sub) == IVL_VT_REAL);
 	    word = draw_eval_real(sub);

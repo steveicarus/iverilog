@@ -2265,6 +2265,12 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    ivl_assert(*this, rv->expr_width() >= wid);
       }
 
+      if (lv->expr_type() == IVL_VT_BOOL && rv->expr_type() != IVL_VT_BOOL) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: Cast expression to int2" << endl;
+	    rv = cast_to_int2(rv);
+      }
+
       NetAssign*cur = new NetAssign(lv, rv);
       cur->set_line(*this);
 
@@ -3561,6 +3567,14 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
 
       rexp->set_width(lwid, true);
       rexp = pad_to_width(rexp, lwid, *this);
+
+      if (ltype==IVL_VT_BOOL && rexp->expr_type()!=IVL_VT_BOOL) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Cast force rvalue to int2" << endl;
+	    }
+	    rexp = cast_to_int2(rexp);
+      }
 
       dev = new NetForce(lval, rexp);
 

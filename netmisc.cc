@@ -176,6 +176,14 @@ NetNet* cast_to_real(Design*des, NetScope*scope, NetNet*src)
       return tmp;
 }
 
+NetExpr* cast_to_int2(NetExpr*expr)
+{
+      NetECast*cast = new NetECast('2', expr);
+      cast->set_line(*expr);
+      cast->cast_signed(expr->has_sign());
+      return cast;
+}
+
 /*
  * Add a signed constant to an existing expression. Generate a new
  * NetEBAdd node that has the input expression and an expression made
