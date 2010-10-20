@@ -1920,17 +1920,18 @@ port_declaration
   | attribute_list_opt K_input atom2_type signed_unsigned_opt IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
+	svector<PExpr*>*use_range = make_range_from_width($3);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::PINPUT,
 				 NetNet::UNRESOLVED_WIRE, IVL_VT_BOOL,
-				 $4, 0, $1);
+				 $4, use_range, $1);
 	port_declaration_context.port_type = NetNet::PINPUT;
 	port_declaration_context.port_net_type = NetNet::UNRESOLVED_WIRE;
 	port_declaration_context.var_type = IVL_VT_BOOL;
 	port_declaration_context.sign_flag = $4;
 	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
+	port_declaration_context.range = use_range;
 	delete $1;
 	delete[]$5;
 	$$ = ptmp;
@@ -2013,17 +2014,18 @@ port_declaration
   | attribute_list_opt K_output atom2_type signed_unsigned_opt IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
+	svector<PExpr*>*use_range = make_range_from_width($3);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
 				 NetNet::IMPLICIT_REG, IVL_VT_BOOL,
-				 $4, 0, $1);
+				 $4, use_range, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = NetNet::IMPLICIT_REG;
 	port_declaration_context.var_type = IVL_VT_BOOL;
 	port_declaration_context.sign_flag = $4;
 	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
+	port_declaration_context.range = use_range;
 	delete $1;
 	delete[]$5;
 	$$ = ptmp;
