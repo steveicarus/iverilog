@@ -997,6 +997,8 @@ vpiHandle vpip_make_int2(const char*name, int msb, int lsb, vvp_net_t*vec)
 	  case 63:
 	    obj->vpi_type = &vpip_longint_rt;
 	    break;
+	  default:
+	    assert(0);
       }
 
       return obj;

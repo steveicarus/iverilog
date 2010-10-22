@@ -155,9 +155,6 @@ vvp_net_t::vvp_net_t()
       out_ = vvp_net_ptr_t(0,0);
       fun = 0;
       fil = 0;
-#ifdef CHECK_WITH_VALGRIND
-      pool = NULL;
-#endif
 }
 
 void vvp_net_t::link(vvp_net_ptr_t port_to_link)

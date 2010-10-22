@@ -63,8 +63,6 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		  vthreads_delete(lscope);
 		  delete (scope->intern)[idx];
 		  break;
-		case vpiIntegerVar:
-		  break;
 		case vpiMemory:
 		case vpiNetArray:
 		  memory_delete((scope->intern)[idx]);
@@ -78,6 +76,11 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		  break;
 		case vpiNet:
 		case vpiReg:
+		case vpiIntegerVar:
+		case vpiLongIntVar:
+		case vpiShortIntVar:
+		case vpiIntVar:
+		case vpiByteVar:
 		  signal_delete((scope->intern)[idx]);
 		  break;
 		case vpiParameter:
