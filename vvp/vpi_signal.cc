@@ -890,6 +890,9 @@ static const struct __vpirt vpip_integer_rt = {
       signal_put_value,
       signal_get_handle,
       signal_iterate,
+      0,
+      0,
+      0,
       0
 };
 
@@ -915,6 +918,9 @@ static const struct __vpirt vpip_byte_rt = {
       signal_put_value,
       signal_get_handle,
       signal_iterate,
+      0,
+      0,
+      0,
       0
 };
 
@@ -926,6 +932,9 @@ static const struct __vpirt vpip_shortint_rt = {
       signal_put_value,
       signal_get_handle,
       signal_iterate,
+      0,
+      0,
+      0,
       0
 };
 
@@ -937,6 +946,9 @@ static const struct __vpirt vpip_int_rt = {
       signal_put_value,
       signal_get_handle,
       signal_iterate,
+      0,
+      0,
+      0,
       0
 };
 
@@ -948,6 +960,9 @@ static const struct __vpirt vpip_longint_rt = {
       signal_put_value,
       signal_get_handle,
       signal_iterate,
+      0,
+      0,
+      0,
       0
 };
 
