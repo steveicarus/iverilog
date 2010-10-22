@@ -302,7 +302,7 @@ else
 WIN32_INSTALL = $(bindir)/iverilog-vpi$(suffix)
 endif
 
-install: all installdirs $(libdir)/ivl$(suffix)/ivl@EXEEXT@  $(libdir)/ivl$(suffix)/include/constants.vams $(libdir)/ivl$(suffix)/include/disciplines.vams $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
+install: all installdirs $(libdir)/ivl$(suffix)/ivl@EXEEXT@  $(libdir)/ivl$(suffix)/include/constants.vams $(libdir)/ivl$(suffix)/include/disciplines.vams $(includedir)/ivl_target.h $(includedir)/_pli_types.h $(includedir)/sv_vpi_user.h $(includedir)/vpi_user.h $(includedir)/acc_user.h $(includedir)/veriuser.h $(WIN32_INSTALL) $(INSTALL_DOC)
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 
 $(bindir)/iverilog-vpi$(suffix): ./iverilog-vpi
@@ -322,6 +322,9 @@ $(includedir)/ivl_target.h: $(srcdir)/ivl_target.h
 
 $(includedir)/_pli_types.h: _pli_types.h
 	$(INSTALL_DATA) $< "$(DESTDIR)$(includedir)/_pli_types.h"
+
+$(includedir)/sv_vpi_user.h: $(srcdir)/sv_vpi_user.h
+	$(INSTALL_DATA) $(srcdir)/sv_vpi_user.h "$(DESTDIR)$(includedir)/sv_vpi_user.h"
 
 $(includedir)/vpi_user.h: $(srcdir)/vpi_user.h
 	$(INSTALL_DATA) $(srcdir)/vpi_user.h "$(DESTDIR)$(includedir)/vpi_user.h"

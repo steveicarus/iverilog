@@ -255,14 +255,20 @@ static const char* vpi_type_values(PLI_INT32 code)
 {
       static char buf[32];
       switch (code) {
+	  case vpiByteVar:
+	    return "vpiByteVar";
 	  case vpiConstant:
 	    return "vpiConstant";
 	  case vpiFunction:
 	    return "vpiFunction";
+	  case vpiIntVar:
+	    return "vpiIntVar";
 	  case vpiIntegerVar:
 	    return "vpiIntegerVar";
 	  case vpiIterator:
 	    return "vpiIterator";
+	  case vpiLongIntVar:
+	    return "vpiLongIntVar";
 	  case vpiMemory:
 	    return "vpiMemory";
 	  case vpiMemoryWord:
@@ -287,6 +293,8 @@ static const char* vpi_type_values(PLI_INT32 code)
 	    return "vpiRealVar";
 	  case vpiReg:
 	    return "vpiReg";
+	  case vpiShortIntVar:
+	    return "vpiShortIntVar";
 	  case vpiSysFuncCall:
 	    return "vpiSysFuncCall";
 	  case vpiSysTaskCall:
@@ -318,9 +326,7 @@ PLI_INT32 vpi_get(int property, vpiHandle ref)
 	    }
 
 	    struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
-	    if (ref->vpi_type->type_code == vpiReg && rfp->isint_)
-		  return vpiIntegerVar;
-	    else if (ref->vpi_type->type_code == vpiMemory && is_net_array(ref))
+	    if (ref->vpi_type->type_code == vpiMemory && is_net_array(ref))
 		  return vpiNetArray;
 	    else
 		  return ref->vpi_type->type_code;
@@ -375,9 +381,7 @@ char* vpi_get_str(PLI_INT32 property, vpiHandle ref)
 
 	    struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
             PLI_INT32 type;
-	    if (ref->vpi_type->type_code == vpiReg && rfp->isint_)
-		  type = vpiIntegerVar;
-	    else if (ref->vpi_type->type_code == vpiMemory && is_net_array(ref))
+	    if (ref->vpi_type->type_code == vpiMemory && is_net_array(ref))
 		  type = vpiNetArray;
 	    else
 		  type = ref->vpi_type->type_code;

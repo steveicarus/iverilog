@@ -123,6 +123,7 @@ static char* strdupnew(char const *str)
 ".array/real" { return K_ARRAY_R; }
 ".array/s" { return K_ARRAY_S; }
 ".array/port" { return K_ARRAY_PORT; }
+".cast/2"   { return K_CAST_2; }
 ".cast/int" { return K_CAST_INT; }
 ".cast/real" { return K_CAST_REAL; }
 ".cast/real.s" { return K_CAST_REAL_S; }
@@ -148,8 +149,10 @@ static char* strdupnew(char const *str)
 ".functor"  { return K_FUNCTOR; }
 ".import"   { return K_IMPORT; }
 ".island"   { return K_ISLAND; }
-".modpath" { return K_MODPATH; }
+".modpath"  { return K_MODPATH; }
 ".net"      { return K_NET; }
+".net/2s"   { return K_NET_2S; }
+".net/2u"   { return K_NET_2U; }
 ".net8"     { return K_NET8; }
 ".net8/s"   { return K_NET8_S; }
 ".net/real" { return K_NET_R; }
@@ -188,6 +191,8 @@ static char* strdupnew(char const *str)
 ".var/real" { return K_VAR_R; }
 ".var/s"    { return K_VAR_S; }
 ".var/i"    { return K_VAR_I; /* integer */ }
+".var/2s"    { return K_VAR_2S; /* byte/shortint/int/longint signed */ }
+".var/2u"    { return K_VAR_2U; /* byte/shortint/int/longint unsigned */ }
 ".udp"         { return K_UDP; }
 ".udp/c"(omb)? { return K_UDP_C; }
 ".udp/s"(equ)? { return K_UDP_S; }

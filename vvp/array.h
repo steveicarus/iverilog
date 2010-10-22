@@ -52,9 +52,6 @@ extern void vpip_array_word_change(struct __vpiCallback*cb, vpiHandle word);
 extern void vpip_array_change(struct __vpiCallback*cb, vpiHandle word);
 
 /* Compile hooks */
-extern void compile_variablew(char*label, vvp_array_t array,
-			      unsigned long array_addr,
-			     int msb, int lsb, char signed_flag);
 extern void compile_varw_real(char*label, vvp_array_t array,
 			      unsigned long array_addr,
 			      int msb, int lsb);

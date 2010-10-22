@@ -20,7 +20,7 @@
  */
 
 #include "vpi_config.h"
-#include "vpi_user.h"
+#include "sv_vpi_user.h"
 
 /*
  * Context structure for PRNG in mt19937int.c

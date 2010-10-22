@@ -129,13 +129,17 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    need_driver_flag = true;
 
 	/* Cast the right side when needed. */
-      if ((lval->data_type() == IVL_VT_REAL &&
-           rval->data_type() != IVL_VT_REAL)) {
+      if ((lval->data_type() == IVL_VT_REAL) &&
+	  (rval->data_type() != IVL_VT_REAL)) {
 	    rval = cast_to_real(des, scope, rval);
 	    need_driver_flag = false;
-      } else if ((lval->data_type() != IVL_VT_REAL &&
-                  rval->data_type() == IVL_VT_REAL)) {
-	    rval = cast_to_int(des, scope, rval, lval->vector_width());
+      } else if ((lval->data_type() == IVL_VT_BOOL) &&
+		 (rval->data_type() != IVL_VT_BOOL)) {
+	    rval = cast_to_int2(des, scope, rval, lval->vector_width());
+	    need_driver_flag = false;
+      } else if ((lval->data_type() != IVL_VT_REAL) &&
+		 (rval->data_type() == IVL_VT_REAL)) {
+	    rval = cast_to_int4(des, scope, rval, lval->vector_width());
 	    need_driver_flag = false;
       }
 
@@ -1370,7 +1374,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // thing needs to go to each instance when arrayed.
 		  if ((sig->data_type() == IVL_VT_REAL ) &&
 		      !prts.empty() && (prts[0]->data_type() != IVL_VT_REAL )) {
-			sig = cast_to_int(des, scope, sig,
+			sig = cast_to_int4(des, scope, sig,
 			                  prts_vector_width/instance.size());
 		  }
 		    // If we have a bit/vector signal driving a real port
@@ -1478,7 +1482,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			prts_vector_width = sig->vector_width();
 			for (unsigned pidx = 0; pidx < prts.size(); pidx += 1) {
 			      prts[pidx]->port_type(NetNet::NOT_A_PORT);
-			      prts[pidx] = cast_to_int(des, scope, prts[pidx],
+			      prts[pidx] = cast_to_int4(des, scope, prts[pidx],
 			                               prts_vector_width /
 			                               instance.size());
 			      prts[pidx]->port_type(NetNet::POUTPUT);
@@ -2259,6 +2263,12 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 		  rv = pad_to_width(rv, wid, *this);
 	    }
 	    ivl_assert(*this, rv->expr_width() >= wid);
+      }
+
+      if (lv->expr_type() == IVL_VT_BOOL && rv->expr_type() != IVL_VT_BOOL) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: Cast expression to int2" << endl;
+	    rv = cast_to_int2(rv);
       }
 
       NetAssign*cur = new NetAssign(lv, rv);
@@ -3557,6 +3567,14 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
 
       rexp->set_width(lwid, true);
       rexp = pad_to_width(rexp, lwid, *this);
+
+      if (ltype==IVL_VT_BOOL && rexp->expr_type()!=IVL_VT_BOOL) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Cast force rvalue to int2" << endl;
+	    }
+	    rexp = cast_to_int2(rexp);
+      }
 
       dev = new NetForce(lval, rexp);
 

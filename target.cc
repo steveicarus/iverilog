@@ -114,10 +114,17 @@ bool target_t::lpm_array_dq(const NetArrayDq*)
       return false;
 }
 
-bool target_t::lpm_cast_int(const NetCastInt*)
+bool target_t::lpm_cast_int2(const NetCastInt2*)
 {
       cerr << "target (" << typeid(*this).name() << "): "
-	    "Unhandled NetCastInt." << endl;
+	    "Unhandled NetCastInt2." << endl;
+      return false;
+}
+
+bool target_t::lpm_cast_int4(const NetCastInt4*)
+{
+      cerr << "target (" << typeid(*this).name() << "): "
+	    "Unhandled NetCastInt4." << endl;
       return false;
 }
 

@@ -108,6 +108,7 @@ const static struct opcode_table_s opcode_table[] = {
       { "%cassign/v",of_CASSIGN_V,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
       { "%cassign/wr",of_CASSIGN_WR,2,{OA_FUNC_PTR,OA_BIT1,  OA_NONE} },
       { "%cassign/x0",of_CASSIGN_X0,3,{OA_FUNC_PTR,OA_BIT1,  OA_BIT2} },
+      { "%cast2",  of_CAST2,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/s",  of_CMPS,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/u",  of_CMPU,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/wr", of_CMPWR,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
@@ -286,6 +287,10 @@ vvp_net_t* vvp_net_lookup(const char*label)
 	    switch (vpi->vpi_type->type_code) {
 		case vpiNet:
 		case vpiReg:
+		case vpiByteVar:
+		case vpiShortIntVar:
+		case vpiIntVar:
+		case vpiLongIntVar:
 		case vpiIntegerVar: {
 		      __vpiSignal*sig = (__vpiSignal*)vpi;
 		      return sig->node;
@@ -896,6 +901,22 @@ void compile_arith_cast_int(char*label, long width,
                             unsigned argc, struct symb_s*argv)
 {
       vvp_arith_cast_int*arith = new vvp_arith_cast_int((unsigned) width);
+
+      vvp_net_t* ptr = new vvp_net_t;
+      ptr->fun = arith;
+
+      define_functor_symbol(label, ptr);
+      free(label);
+
+      assert(argc == 1);
+      inputs_connect(ptr, argc, argv);
+      free(argv);
+}
+
+void compile_arith_cast_vec2(char*label, long width,
+			     unsigned argc, struct symb_s*argv)
+{
+      vvp_arith_cast_vec2*arith = new vvp_arith_cast_vec2((unsigned) width);
 
       vvp_net_t* ptr = new vvp_net_t;
       ptr->fun = arith;

@@ -278,8 +278,10 @@ A variable is a bit vector that can be written by behavioral code (so
 has no structural input) and propagates its output to a functor. The
 general syntax of a variable is:
 
-	<label> .var   "name", <msb>, <lsb>; Unsigned logic variable
-	<label> .var/s "name", <msb>, <lsb>; Signed logic variable
+	<label> .var   "name", <msb> <lsb>; Unsigned logic variable
+	<label> .var/s "name", <msb> <lsb>; Signed logic variable
+	<label> .var/2u "name", <msb> <lsb>; Unsigned bool/bit variable
+	<label> .var/2s "name", <msb> <lsb>; Signed bool/bit variable
 	<label> .var/real "name", <msb>, <lsb>; real varibale
 	<label> .var/i "name", <msb>, <lsb>; vpiIntegerVar variable
 
@@ -356,6 +358,7 @@ net or from a bit based net to a real valued net. These statements
 are used to perform that operation:
 
 	<label> .cast/int <width>, <symbol>;
+	<label> .cast/2 <width>, <symbol>;
 	<label> .cast/real <symbol>;
 	<label> .cast/real.s <symbol>;
 

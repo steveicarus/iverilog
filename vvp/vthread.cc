@@ -1385,6 +1385,34 @@ bool of_CASSIGN_X0(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_CAST2(vthread_t thr, vvp_code_t cp)
+{
+      unsigned dst = cp->bit_idx[0];
+      unsigned src = cp->bit_idx[1];
+      unsigned wid = cp->number;
+
+      thr_check_addr(thr, dst+wid-1);
+      thr_check_addr(thr, src+wid-1);
+
+      vvp_vector4_t res;
+      switch (src) {
+	  case 0:
+	  case 2:
+	  case 3:
+	    res = vvp_vector4_t(wid, BIT4_0);
+	    break;
+	  case 1:
+	    res = vvp_vector4_t(wid, BIT4_1);
+	    break;
+	  default:
+	    res = vector2_to_vector4(vvp_vector2_t(vthread_bits_to_vector(thr, src, wid)), wid);
+	    break;
+      }
+
+      thr->bits4.set_vec(dst, res);
+      return true;
+}
+
 bool of_CMPS(vthread_t thr, vvp_code_t cp)
 {
       vvp_bit4_t eq  = BIT4_1;

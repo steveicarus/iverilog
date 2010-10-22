@@ -42,6 +42,10 @@ using namespace std;
 /* Data types */
 class  vvp_scalar_t;
 
+class vvp_vector2_t;
+class vvp_vector4_t;
+class vvp_vector8_t;
+
 /* Basic netlist types. */
 class  vvp_net_t;
 class  vvp_net_fun_t;
@@ -607,9 +611,10 @@ class vvp_vector2_t {
       vvp_vector2_t();
       vvp_vector2_t(const vvp_vector2_t&);
       vvp_vector2_t(const vvp_vector2_t&, unsigned newsize);
+      vvp_vector2_t(const vvp_vector2_t&, unsigned base, unsigned wid);
 	// Make a vvp_vector2_t from a vvp_vector4_t. If there are X
 	// or Z bits, then the result becomes a NaN value.
-      explicit vvp_vector2_t(const vvp_vector4_t&that);
+      vvp_vector2_t(const vvp_vector4_t&that);
 	// Make from a native long and a specified width.
       vvp_vector2_t(unsigned long val, unsigned wid);
 	// Make with the width, and filled with 1 or 0 bits.
@@ -623,11 +628,19 @@ class vvp_vector2_t {
       vvp_vector2_t&operator >>= (unsigned shift);
       vvp_vector2_t&operator = (const vvp_vector2_t&);
 
+	// Assign a vec4 to a vec2, using Verilog rules for converting
+	// XZ values to 0.
+      vvp_vector2_t&operator = (const vvp_vector4_t&);
+
       bool is_NaN() const;
       bool is_zero() const;
       unsigned size() const;
       int value(unsigned idx) const;
+      vvp_bit4_t value4(unsigned idx) const;
+	// Get the vector2 subvector starting at the address
+      vvp_vector2_t subvalue(unsigned idx, unsigned size) const;
       void set_bit(unsigned idx, int bit);
+      void set_vec(unsigned idx, const vvp_vector2_t&that);
 	// Make the size just big enough to hold the first 1 bit.
       void trim();
 	// Trim off extra 1 bit since this is representing a negative value.
@@ -641,6 +654,7 @@ class vvp_vector2_t {
 
     private:
       void copy_from_that_(const vvp_vector2_t&that);
+      void copy_from_that_(const vvp_vector4_t&that);
 };
 
 extern bool operator >  (const vvp_vector2_t&, const vvp_vector2_t&);
@@ -667,10 +681,38 @@ extern double crstring_to_double(const char*str);
 
 extern ostream& operator<< (ostream&, const vvp_vector2_t&);
 
+inline vvp_vector2_t::vvp_vector2_t(const vvp_vector2_t&that)
+{
+      copy_from_that_(that);
+}
+
+inline vvp_vector2_t::vvp_vector2_t(const vvp_vector4_t&that)
+{
+      copy_from_that_(that);
+}
+
+inline vvp_vector2_t::~vvp_vector2_t()
+{
+      delete[] vec_;
+}
+
 /* Inline some of the vector2_t methods. */
 inline unsigned vvp_vector2_t::size() const
 {
       return wid_;
+}
+
+inline vvp_bit4_t vvp_vector2_t::value4(unsigned idx) const
+{
+      if (value(idx))
+	    return BIT4_1;
+      else
+	    return BIT4_0;
+}
+
+inline vvp_vector2_t vvp_vector2_t::subvalue(unsigned base, unsigned wid) const
+{
+      return vvp_vector2_t(*this, base, wid);
 }
 
 /*
@@ -808,6 +850,9 @@ class vvp_vector8_t {
 	// Make a vvp_vector8_t from a vector4 and a specified
 	// strength.
       explicit vvp_vector8_t(const vvp_vector4_t&that,
+			     unsigned str0,
+			     unsigned str1);
+      explicit vvp_vector8_t(const vvp_vector2_t&that,
 			     unsigned str0,
 			     unsigned str1);
 
@@ -1220,7 +1265,9 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
 	// the val through the force mask. The force value is the
 	// currently forced value, and the buf is a value that this
 	// method will use to hold a filtered value, if needed. This
-	// method returns a pointer to val or buf.
+	// method returns the replacement value into the "rep"
+	// argument and returns a code indicating whether any changes
+	// were made.
       template <class T> prop_t filter_mask_(const T&val, const T&force, T&rep, unsigned addr);
 	// This template method is similar to the above, but works for
 	// native types that are not so expensive to edit in place.

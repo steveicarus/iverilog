@@ -72,9 +72,14 @@ bool NetCaseCmp::emit_node(struct target_t*tgt) const
       return true;
 }
 
-bool NetCastInt::emit_node(struct target_t*tgt) const
+bool NetCastInt2::emit_node(struct target_t*tgt) const
 {
-      return tgt->lpm_cast_int(this);
+      return tgt->lpm_cast_int2(this);
+}
+
+bool NetCastInt4::emit_node(struct target_t*tgt) const
+{
+      return tgt->lpm_cast_int4(this);
 }
 
 bool NetCastReal::emit_node(struct target_t*tgt) const

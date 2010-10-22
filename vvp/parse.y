@@ -72,20 +72,21 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_ARITH_MULT K_ARITH_MULT_R K_ARITH_SUB K_ARITH_SUB_R
 %token K_ARITH_SUM K_ARITH_SUM_R K_ARITH_POW K_ARITH_POW_R K_ARITH_POW_S
 %token K_ARRAY K_ARRAY_I K_ARRAY_R K_ARRAY_S K_ARRAY_PORT
-%token K_CAST_INT K_CAST_REAL K_CAST_REAL_S
+%token K_CAST_INT K_CAST_REAL K_CAST_REAL_S K_CAST_2
 %token K_CMP_EEQ K_CMP_EQ K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
 %token K_CMP_GE K_CMP_GE_R K_CMP_GE_S K_CMP_GT K_CMP_GT_R K_CMP_GT_S
 %token K_CONCAT K_DEBUG K_DELAY K_DFF
 %token K_EVENT K_EVENT_OR K_EXPORT K_EXTEND_S K_FUNCTOR K_IMPORT K_ISLAND
-%token K_MODPATH K_NET K_NET_S K_NET_R
-%token K_NET8 K_NET8_S
+%token K_MODPATH
+%token K_NET K_NET_S K_NET_R K_NET_2S K_NET_2U K_NET8 K_NET8_S
 %token K_PARAM_STR K_PARAM_L K_PARAM_REAL K_PART K_PART_PV
 %token K_PART_V K_PART_V_S K_PORT K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
 %token K_RESOLV K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
 %token K_UFUNC K_UFUNC_E K_UDP K_UDP_C K_UDP_S
-%token K_VAR K_VAR_S K_VAR_I K_VAR_R K_vpi_call K_vpi_call_w K_vpi_call_i
+%token K_VAR K_VAR_S K_VAR_I K_VAR_R K_VAR_2S K_VAR_2U
+%token K_vpi_call K_vpi_call_w K_vpi_call_i
 %token K_vpi_func K_vpi_func_r
 %token K_disable K_fork
 %token K_ivl_version K_ivl_delay_selection
@@ -271,20 +272,25 @@ statement
 		  compile_arith_abs($1, obj.cnt, obj.vect);
 		}
 
-        | T_LABEL K_CAST_INT T_NUMBER ',' symbols ';'
-		{ struct symbv_s obj = $5;
-		  compile_arith_cast_int($1, $3, obj.cnt, obj.vect);
-		}
+  | T_LABEL K_CAST_INT T_NUMBER ',' symbols ';'
+      { struct symbv_s obj = $5;
+	compile_arith_cast_int($1, $3, obj.cnt, obj.vect);
+      }
 
-        | T_LABEL K_CAST_REAL symbols ';'
-		{ struct symbv_s obj = $3;
-		  compile_arith_cast_real($1, false, obj.cnt, obj.vect);
-		}
+  | T_LABEL K_CAST_REAL symbols ';'
+      { struct symbv_s obj = $3;
+	compile_arith_cast_real($1, false, obj.cnt, obj.vect);
+      }
 
-        | T_LABEL K_CAST_REAL_S symbols ';'
-		{ struct symbv_s obj = $3;
-		  compile_arith_cast_real($1, true, obj.cnt, obj.vect);
-		}
+  | T_LABEL K_CAST_REAL_S symbols ';'
+      { struct symbv_s obj = $3;
+	compile_arith_cast_real($1, true, obj.cnt, obj.vect);
+      }
+
+  | T_LABEL K_CAST_2 T_NUMBER ',' symbols ';'
+      { struct symbv_s obj = $5;
+	compile_arith_cast_vec2($1, $3, obj.cnt, obj.vect);
+      }
 
   /* Arithmetic statements generate functor arrays of a given width
      that take like size input vectors. */
@@ -651,13 +657,19 @@ statement
      the variable in the netlist. */
 
   | T_LABEL K_VAR local_flag T_STRING ',' signed_t_number signed_t_number ';'
-      { compile_variable($1, $4, $6, $7, 0 /* unsigned */, $3); }
+      { compile_variable($1, $4, $6, $7, vpiLogicVar, false, $3); }
 
   | T_LABEL K_VAR_S local_flag T_STRING ',' signed_t_number signed_t_number ';'
-      { compile_variable($1, $4, $6, $7, 1 /* signed */, $3); }
+      { compile_variable($1, $4, $6, $7, vpiLogicVar, true, $3); }
 
   | T_LABEL K_VAR_I local_flag T_STRING ',' T_NUMBER T_NUMBER ';'
-      { compile_variable($1, $4, $6, $7, 2 /* integer */, $3); }
+      { compile_variable($1, $4, $6, $7, vpiIntegerVar, true, $3); }
+
+  | T_LABEL K_VAR_2S local_flag T_STRING ',' T_NUMBER T_NUMBER ';'
+      { compile_variable($1, $4, $6, $7, vpiIntVar, true, $3); }
+
+  | T_LABEL K_VAR_2U local_flag T_STRING ',' T_NUMBER T_NUMBER ';'
+      { compile_variable($1, $4, $6, $7, vpiIntVar, false, $3); }
 
   | T_LABEL K_VAR_R T_STRING ',' signed_t_number signed_t_number ';'
       { compile_var_real($1, $3, $5, $6); }
@@ -667,19 +679,27 @@ statement
 
   | T_LABEL K_NET local_flag T_STRING ',' signed_t_number signed_t_number
     ',' symbols_net ';'
-      { compile_net($1, $4, $6, $7, false, false, $3, $9.cnt, $9.vect); }
+      { compile_net($1, $4, $6, $7, vpiLogicVar, false, $3, $9.cnt, $9.vect); }
 
   | T_LABEL K_NET_S local_flag T_STRING ',' signed_t_number signed_t_number
     ',' symbols_net ';'
-      { compile_net($1, $4, $6, $7, true, false, $3, $9.cnt, $9.vect); }
+      { compile_net($1, $4, $6, $7, vpiLogicVar, true, $3, $9.cnt, $9.vect); }
+
+  | T_LABEL K_NET_2U local_flag T_STRING ',' signed_t_number signed_t_number
+    ',' symbols_net ';'
+      { compile_net($1, $4, $6, $7, vpiIntVar, false, $3, $9.cnt, $9.vect); }
+
+  | T_LABEL K_NET_2S local_flag T_STRING ',' signed_t_number signed_t_number
+    ',' symbols_net ';'
+      { compile_net($1, $4, $6, $7, vpiIntVar, true, $3, $9.cnt, $9.vect); }
 
   | T_LABEL K_NET8 local_flag T_STRING ',' signed_t_number signed_t_number
     ',' symbols_net ';'
-      { compile_net($1, $4, $6, $7, false, true, $3, $9.cnt, $9.vect); }
+      { compile_net($1, $4, $6, $7, -vpiLogicVar, false, $3, $9.cnt, $9.vect); }
 
   | T_LABEL K_NET8_S local_flag T_STRING ',' signed_t_number signed_t_number
     ',' symbols_net ';'
-      { compile_net($1, $4, $6, $7, true, true, $3, $9.cnt, $9.vect); }
+      { compile_net($1, $4, $6, $7, -vpiLogicVar, true, $3, $9.cnt, $9.vect); }
 
   | T_LABEL K_NET_R local_flag T_STRING ',' signed_t_number signed_t_number
     ',' symbols_net ';'
@@ -687,30 +707,25 @@ statement
 
   /* Arrayed versions of net directives. */
 
-        | T_LABEL K_NET T_SYMBOL T_NUMBER ','
-	  signed_t_number signed_t_number ','
-          symbols_net ';'
-                 { compile_netw($1, $3, $4, $6, $7, false, false, $9.cnt, $9.vect); }
+  | T_LABEL K_NET T_SYMBOL T_NUMBER ',' signed_t_number signed_t_number ','
+    symbols_net ';'
+      { compile_netw($1, $3, $4, $6, $7, vpiLogicVar, false, $9.cnt, $9.vect); }
 
-        | T_LABEL K_NET_S T_SYMBOL T_NUMBER ','
-	  signed_t_number signed_t_number ','
-          symbols_net ';'
-                 { compile_netw($1, $3, $4, $6, $7, true, false, $9.cnt, $9.vect); }
+  | T_LABEL K_NET_S T_SYMBOL T_NUMBER ',' signed_t_number signed_t_number ','
+    symbols_net ';'
+      { compile_netw($1, $3, $4, $6, $7, vpiLogicVar, true, $9.cnt, $9.vect); }
 
-        | T_LABEL K_NET8 T_SYMBOL T_NUMBER ','
-	  signed_t_number signed_t_number ','
-          symbols_net ';'
-                 { compile_netw($1, $3, $4, $6, $7, false, true, $9.cnt, $9.vect); }
+  | T_LABEL K_NET8 T_SYMBOL T_NUMBER ',' signed_t_number signed_t_number ','
+    symbols_net ';'
+      { compile_netw($1, $3, $4, $6, $7, -vpiLogicVar, false, $9.cnt, $9.vect); }
 
-        | T_LABEL K_NET8_S T_SYMBOL T_NUMBER ','
-	  signed_t_number signed_t_number ','
-          symbols_net ';'
-                 { compile_netw($1, $3, $4, $6, $7, true, true, $9.cnt, $9.vect); }
+  | T_LABEL K_NET8_S T_SYMBOL T_NUMBER ',' signed_t_number signed_t_number ','
+    symbols_net ';'
+      { compile_netw($1, $3, $4, $6, $7, -vpiLogicVar, true, $9.cnt, $9.vect); }
 
-        | T_LABEL K_NET_R T_SYMBOL T_NUMBER ','
-	  signed_t_number signed_t_number ','
-          symbols_net ';'
-                 { compile_netw_real($1, $3, $4, $6, $7, $9.cnt, $9.vect); }
+  | T_LABEL K_NET_R T_SYMBOL T_NUMBER ',' signed_t_number signed_t_number ','
+    symbols_net ';'
+      { compile_netw_real($1, $3, $4, $6, $7, $9.cnt, $9.vect); }
 
   /* Array word versions of alias directives. */
 

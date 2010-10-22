@@ -23,7 +23,7 @@
 # include  <fstream>
 # include  <vector>
 # include  "parse_misc.h"
-# include  "vpi_user.h"
+# include  "sv_vpi_user.h"
 # include  "vvp_net.h"
 
 using namespace std;
@@ -158,6 +158,8 @@ extern void compile_arith_cast_int(char*label, long width,
 			           unsigned argc, struct symb_s*argv);
 extern void compile_arith_cast_real(char*label, bool signed_flag,
 			            unsigned argc, struct symb_s*argv);
+extern void compile_arith_cast_vec2(char*label, long width,
+				    unsigned argc, struct symb_s*argv);
 extern void compile_arith_div(char*label, long width, bool signed_flag,
 			      unsigned argc, struct symb_s*argv);
 extern void compile_arith_mod(char*label, long width, bool signed_flag,
@@ -433,26 +435,41 @@ extern void compile_thread(char*start_sym, char*flag);
 
 /*
  * This function is called to create a var vector with the given name.
+ *
+ * The vpi_type_code argument of compile_variable() is one of the vpi
+ * object codes that identify the type: vpiReg, vpiIntegerVar,
+ * vpiIntVar, etc.
  */
 extern void compile_variable(char*label, char*name,
-			     int msb, int lsb, char signed_flag,
-			     bool local_flag);
+			     int msb, int lsb, int vpi_type_code,
+			     bool signed_flag, bool local_flag);
+
 extern void compile_var_real(char*label, char*name,
 			     int msb, int lsb);
 
-extern void compile_net(char*label, char*name,
-			int msb, int lsb, bool signed_flag,
-			bool net8_flag, bool local_flag,
+/*
+ * The compile_net functio is called to create a .net vector with a
+ * given name.
+ *
+ * The vpi_type_code argument of compile_net() is one of the vpi
+ * object codes for the equivelent variable types. The supported codes
+ * are:
+ *   vpiLogic  -- 4-value logic
+ *   vpiIntVar -- 2-value logic
+ *  -vpiLogic  -- 8-value (i.e. strength aware) logic
+ */
+extern void compile_net(char*label, char*name, int msb, int lsb,
+			int vpi_type_code, bool signed_flag, bool local_flag,
 			unsigned argc, struct symb_s*argv);
+
 extern void compile_net_real(char*label, char*name,
 			     int msb, int lsb, bool local_flag,
 			     unsigned argc, struct symb_s*argv);
 
-extern void compile_netw(char*label, char*array_symbol,
-			 unsigned long array_addr,
-			 int msb, int lsb, bool signed_flag,
-			 bool net8_flag,
+extern void compile_netw(char*label, char*array_label, unsigned long array_addr,
+			 int msb, int lsb, int vpi_type_code, bool signed_flag,
 			 unsigned argc, struct symb_s*argv);
+
 extern void compile_netw_real(char*label, char*array_symbol,
 			      unsigned long array_addr,
 			      int msb, int lsb,

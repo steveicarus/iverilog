@@ -335,9 +335,17 @@ void NetArrayDq::dump_node(ostream&o, unsigned ind) const
       dump_obj_attr(o, ind+4);
 }
 
-void NetCastInt::dump_node(ostream&o, unsigned ind) const
+void NetCastInt2::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "Cast to int. (NetCastInt): " <<
+      o << setw(ind) << "" << "Cast to int2. (NetCastInt2): " <<
+	    name() << " width=" << width() << endl;
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
+void NetCastInt4::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "Cast to int4. (NetCastInt4): " <<
 	    name() << " width=" << width() << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
@@ -660,7 +668,8 @@ void NetUserFunc::dump_node(ostream&o, unsigned ind) const
       if (rise_time())
 	    o << " #(" <<*rise_time()
 	      <<","<<*fall_time()
-	      << "," <<*decay_time() << ")" << endl;
+	      << "," <<*decay_time() << ")";
+      o << endl;
       dump_node_pins(o, ind+4);
       dump_obj_attr(o, ind+4);
 }

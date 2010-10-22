@@ -67,7 +67,8 @@ struct dll_target  : public target_t, public expr_scan_t {
       void lpm_abs(const NetAbs*);
       void lpm_add_sub(const NetAddSub*);
       bool lpm_array_dq(const NetArrayDq*);
-      bool lpm_cast_int(const NetCastInt*);
+      bool lpm_cast_int2(const NetCastInt2*);
+      bool lpm_cast_int4(const NetCastInt4*);
       bool lpm_cast_real(const NetCastReal*);
       void lpm_clshift(const NetCLShift*);
       void lpm_compare(const NetCompare*);
@@ -174,6 +175,8 @@ struct dll_target  : public target_t, public expr_scan_t {
       void make_scope_param_expr(ivl_parameter_t cur_par, NetExpr*etmp);
 
       ivl_event_t make_lpm_trigger(const NetEvWait*ev);
+
+      bool lpm_arith1_(ivl_lpm_type_t lpm_type, unsigned wid, bool signed_flag, const NetNode*net);
 
       static ivl_expr_t expr_from_value_(const verinum&that);
 };

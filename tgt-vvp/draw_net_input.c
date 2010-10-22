@@ -468,6 +468,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_ABS:
 	  case IVL_LPM_ADD:
 	  case IVL_LPM_ARRAY:
+	  case IVL_LPM_CAST_INT2:
 	  case IVL_LPM_CAST_INT:
 	  case IVL_LPM_CAST_REAL:
 	  case IVL_LPM_CONCAT:

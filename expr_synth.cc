@@ -737,8 +737,16 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
 		  tmp[idx] = parms_[idx]->synthesize(des, scope, root);
 		  if (tmp[idx] == 0) flag = false;
 		    /* Set the data type to the first one found. */
-		  if (data_type == IVL_VT_NO_TYPE) {
-			 data_type = tmp[idx]->data_type();
+		  switch (data_type) {
+		      case IVL_VT_NO_TYPE:
+			data_type = tmp[idx]->data_type();
+			break;
+		      case IVL_VT_BOOL:
+			if (tmp[idx]->data_type()==IVL_VT_LOGIC)
+			      data_type = IVL_VT_LOGIC;
+			break;
+		      default:
+			break;
 		  }
 	    }
       }
@@ -985,7 +993,7 @@ NetNet* NetECast::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       switch (op()) {
 	  case 'i':
-	    isig = cast_to_int(des, scope, isig, isig->vector_width());
+	    isig = cast_to_int4(des, scope, isig, isig->vector_width());
 	    break;
 	  case 'r':
 	    isig = cast_to_real(des, scope, isig);

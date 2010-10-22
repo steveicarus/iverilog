@@ -24,6 +24,7 @@
 # include  "schedule.h"
 # include  "delay.h"
 # include  "statistics.h"
+# include  <iostream>
 # include  <cstring>
 # include  <cassert>
 # include  <cstdlib>

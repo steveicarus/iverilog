@@ -151,6 +151,16 @@ extern bool gn_io_range_error_flag;
    re-evaluated. */
 extern bool gn_strict_ca_eval_flag;
 
+/* If variables can be converted to uwires by a continuous assignment
+   (assuming no procedural assign, then return true. This will be true
+   for SystemVerilog */
+static inline bool gn_var_can_be_uwire(void)
+{
+      if (generation_flag == GN_VER2009)
+	    return true;
+      return false;
+}
+
 /* The bits of these GN_KEYWORDS_* constants define non-intersecting
    sets of keywords. The compiler enables groups of keywords by setting
    lexor_keyword_mask with the OR of the bits for the keywords to be

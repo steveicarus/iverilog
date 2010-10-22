@@ -116,7 +116,27 @@ NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
       return tmp;
 }
 
-NetNet* cast_to_int(Design*des, NetScope*scope, NetNet*src, unsigned wid)
+NetNet* cast_to_int2(Design*des, NetScope*scope, NetNet*src, unsigned wid)
+{
+      if (src->data_type() == IVL_VT_BOOL)
+	    return src;
+
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, wid);
+      tmp->data_type(IVL_VT_BOOL);
+      tmp->set_line(*src);
+      tmp->local_flag(true);
+
+      NetCastInt2*cast = new NetCastInt2(scope, scope->local_symbol(), wid);
+      cast->set_line(*src);
+      des->add_node(cast);
+
+      connect(cast->pin(0), tmp->pin(0));
+      connect(cast->pin(1), src->pin(0));
+
+      return tmp;
+}
+
+NetNet* cast_to_int4(Design*des, NetScope*scope, NetNet*src, unsigned wid)
 {
       if (src->data_type() != IVL_VT_REAL)
 	    return src;
@@ -126,7 +146,7 @@ NetNet* cast_to_int(Design*des, NetScope*scope, NetNet*src, unsigned wid)
       tmp->set_line(*src);
       tmp->local_flag(true);
 
-      NetCastInt*cast = new NetCastInt(scope, scope->local_symbol(), wid);
+      NetCastInt4*cast = new NetCastInt4(scope, scope->local_symbol(), wid);
       cast->set_line(*src);
       des->add_node(cast);
 
@@ -154,6 +174,14 @@ NetNet* cast_to_real(Design*des, NetScope*scope, NetNet*src)
       connect(cast->pin(1), src->pin(0));
 
       return tmp;
+}
+
+NetExpr* cast_to_int2(NetExpr*expr)
+{
+      NetECast*cast = new NetECast('2', expr);
+      cast->set_line(*expr);
+      cast->cast_signed(expr->has_sign());
+      return cast;
 }
 
 /*

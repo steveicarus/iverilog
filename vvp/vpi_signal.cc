@@ -507,11 +507,19 @@ static void format_vpiVectorVal(vvp_signal_value*sig, int base, unsigned wid,
 
 struct __vpiSignal* vpip_signal_from_handle(vpiHandle ref)
 {
-      if ((ref->vpi_type->type_code != vpiNet)
-	  && (ref->vpi_type->type_code != vpiReg))
-	    return 0;
+      switch (ref->vpi_type->type_code) {
+	  case vpiNet:
+	  case vpiReg:
+	  case vpiIntegerVar:
+	  case vpiByteVar:
+	  case vpiShortIntVar:
+	  case vpiIntVar:
+	  case vpiLongIntVar:
+	    return (struct __vpiSignal*)ref;
 
-      return (struct __vpiSignal*)ref;
+	  default:
+	    return 0;
+      }
 }
 
 /*
@@ -874,6 +882,17 @@ static const struct __vpirt vpip_reg_rt = {
       0
 };
 
+static const struct __vpirt vpip_integer_rt = {
+      vpiIntegerVar,
+      signal_get,
+      signal_get_str,
+      signal_get_value,
+      signal_put_value,
+      signal_get_handle,
+      signal_iterate,
+      0
+};
+
 static const struct __vpirt vpip_net_rt = {
       vpiNet,
       signal_get,
@@ -888,31 +907,97 @@ static const struct __vpirt vpip_net_rt = {
       0
 };
 
+static const struct __vpirt vpip_byte_rt = {
+      vpiByteVar,
+      signal_get,
+      signal_get_str,
+      signal_get_value,
+      signal_put_value,
+      signal_get_handle,
+      signal_iterate,
+      0
+};
+
+static const struct __vpirt vpip_shortint_rt = {
+      vpiShortIntVar,
+      signal_get,
+      signal_get_str,
+      signal_get_value,
+      signal_put_value,
+      signal_get_handle,
+      signal_iterate,
+      0
+};
+
+static const struct __vpirt vpip_int_rt = {
+      vpiIntVar,
+      signal_get,
+      signal_get_str,
+      signal_get_value,
+      signal_put_value,
+      signal_get_handle,
+      signal_iterate,
+      0
+};
+
+static const struct __vpirt vpip_longint_rt = {
+      vpiLongIntVar,
+      signal_get,
+      signal_get_str,
+      signal_get_value,
+      signal_put_value,
+      signal_get_handle,
+      signal_iterate,
+      0
+};
+
 
 /*
  * Construct a vpiIntegerVar object. Indicate the type using a flag
  * to minimize the code modifications. Icarus implements integers
  * as 'reg signed [31:0]'.
  */
-vpiHandle vpip_make_int(const char*name, int msb, int lsb, vvp_net_t*vec)
+vpiHandle vpip_make_int4(const char*name, int msb, int lsb, vvp_net_t*vec)
 {
-      vpiHandle obj = vpip_make_net(name, msb,lsb, true, vec);
-      struct __vpiSignal*rfp = (struct __vpiSignal*)obj;
-      obj->vpi_type = &vpip_reg_rt;
-      rfp->isint_ = true;
+      vpiHandle obj = vpip_make_net4(name, msb,lsb, true, vec);
+      obj->vpi_type = &vpip_integer_rt;
+      return obj;
+}
+
+vpiHandle vpip_make_int2(const char*name, int msb, int lsb, vvp_net_t*vec)
+{
+      vpiHandle obj = vpip_make_net4(name, msb,lsb, true, vec);
+
+      assert(lsb == 0);
+      switch (msb) {
+	  case 7:
+	    obj->vpi_type = &vpip_byte_rt;
+	    break;
+	  case 15:
+	    obj->vpi_type = &vpip_shortint_rt;
+	    break;
+	  case 31:
+	    obj->vpi_type = &vpip_int_rt;
+	    break;
+	  case 63:
+	    obj->vpi_type = &vpip_longint_rt;
+	    break;
+      }
+
       return obj;
 }
 
 /*
- * Construct a vpiReg object. It's like a net, except for the type.
+ * Construct a vpiReg/vpiLogicVar object. It's like a net, except for the type.
  */
-vpiHandle vpip_make_reg(const char*name, int msb, int lsb,
+vpiHandle vpip_make_var4(const char*name, int msb, int lsb,
 			bool signed_flag, vvp_net_t*vec)
 {
-      vpiHandle obj = vpip_make_net(name, msb,lsb, signed_flag, vec);
+      vpiHandle obj = vpip_make_net4(name, msb,lsb, signed_flag, vec);
       obj->vpi_type = &vpip_reg_rt;
       return obj;
 }
+
 #ifdef CHECK_WITH_VALGRIND
 static struct __vpiSignal **signal_pool = 0;
 static unsigned signal_pool_count = 0;
@@ -988,7 +1073,7 @@ void signal_pool_delete()
  * The name is the PLI name for the object. If it is an array it is
  * <name>[<index>].
  */
-vpiHandle vpip_make_net(const char*name, int msb, int lsb,
+vpiHandle vpip_make_net4(const char*name, int msb, int lsb,
 			bool signed_flag, vvp_net_t*node)
 {
       struct __vpiSignal*obj = allocate_vpiSignal();
@@ -997,7 +1082,6 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
       obj->msb = msb;
       obj->lsb = lsb;
       obj->signed_flag = signed_flag? 1 : 0;
-      obj->isint_ = 0;
       obj->is_netarray = 0;
       obj->node = node;
 

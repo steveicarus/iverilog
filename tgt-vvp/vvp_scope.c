@@ -427,6 +427,12 @@ static void draw_reg_in_scope(ivl_signal_t sig)
       const char*local_flag = ivl_signal_local(sig)? "*" : "";
 
       switch (ivl_signal_data_type(sig)) {
+	  case IVL_VT_BOOL:
+	    if (ivl_signal_signed(sig))
+		  datatype_flag = "/2s";
+	    else
+		  datatype_flag = "/2u";
+	    break;
 	  case IVL_VT_REAL:
 	    datatype_flag = "/real";
 	    break;
@@ -470,6 +476,12 @@ static void draw_net_in_scope(ivl_signal_t sig)
       unsigned iword;
 
       switch (ivl_signal_data_type(sig)) {
+	  case IVL_VT_BOOL:
+	    if (ivl_signal_signed(sig))
+		  datatype_flag = "/2s";
+	    else
+		  datatype_flag = "/2u";
+	    break;
 	  case IVL_VT_REAL:
 	    datatype_flag = "/real";
 	    break;
@@ -1209,6 +1221,19 @@ static void draw_lpm_abs(ivl_lpm_t net)
 	      net, dly, src_table[0]);
 }
 
+static void draw_lpm_cast_int2(ivl_lpm_t net)
+{
+      const char*src_table[1];
+      const char*dly;
+
+      draw_lpm_data_inputs(net, 0, 1, src_table);
+
+      dly = draw_lpm_output_delay(net, IVL_VT_BOOL);
+
+      fprintf(vvp_out, "L_%p%s .cast/2 %u, %s;\n",
+	      net, dly, ivl_lpm_width(net), src_table[0]);
+}
+
 static void draw_lpm_cast_int(ivl_lpm_t net)
 {
       const char*src_table[1];
@@ -1827,6 +1852,10 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 
 	  case IVL_LPM_CAST_INT:
 	    draw_lpm_cast_int(net);
+	    return;
+
+	  case IVL_LPM_CAST_INT2:
+	    draw_lpm_cast_int2(net);
 	    return;
 
 	  case IVL_LPM_CAST_REAL:
