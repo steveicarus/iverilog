@@ -1644,7 +1644,7 @@ extern "C" int ivl_scope_children(ivl_scope_t net,
 				  void*cd)
 {
       for (map<hname_t,ivl_scope_t>::iterator cur = net->children.begin()
-		 ; cur != net->children.end() ; cur ++) {
+		 ; cur != net->children.end() ; ++ cur ) {
 	    int rc = func(cur->second, cd);
 	    if (rc != 0)
 		  return rc;

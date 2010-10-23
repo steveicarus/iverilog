@@ -149,8 +149,7 @@ int build_library_index(const char*path, bool key_case_sensitive)
 	    char*key = 0;
 
 	    for (list<const char*>::iterator suf = library_suff.begin()
-		       ; suf != library_suff.end()
-		       ; suf ++ ) {
+		       ; suf != library_suff.end() ; ++ suf ) {
 		  const char*sufptr = *suf;
 		  unsigned sufsiz = strlen(sufptr);
 

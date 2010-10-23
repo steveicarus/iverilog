@@ -113,7 +113,7 @@ void nodangle_f::event(Design*des, NetEvent*ev)
             list<NetEvent*> match;
             ev->find_similar_event(match);
             for (list<NetEvent*>::iterator idx = match.begin()
-                       ; idx != match.end() ;  idx ++) {
+                       ; idx != match.end() ; ++ idx ) {
 
                   NetEvent*tmp = *idx;
                   assert(tmp != ev);

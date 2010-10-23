@@ -161,7 +161,7 @@ bool vvp_island_branch_tran::run_test_enabled()
 static void island_send_value(list<vvp_branch_ptr_t>&connections, const vvp_vector8_t&val)
 {
       for (list<vvp_branch_ptr_t>::iterator idx = connections.begin()
-		 ; idx != connections.end() ; idx ++ ) {
+		 ; idx != connections.end() ; ++ idx ) {
 
 	    vvp_island_branch*tmp_ptr = idx->ptr();
 
@@ -173,7 +173,7 @@ static void island_send_value(list<vvp_branch_ptr_t>&connections, const vvp_vect
 static void mark_done_flags(list<vvp_branch_ptr_t>&connections)
 {
       for (list<vvp_branch_ptr_t>::iterator idx = connections.begin()
-		 ; idx != connections.end() ; idx ++ ) {
+		 ; idx != connections.end() ; ++ idx ) {
 
 	    vvp_island_branch*tmp_ptr = idx->ptr();
 	    vvp_island_branch_tran*cur = dynamic_cast<vvp_island_branch_tran*>(tmp_ptr);
@@ -186,7 +186,7 @@ static void mark_done_flags(list<vvp_branch_ptr_t>&connections)
 static void mark_visited_flags(list<vvp_branch_ptr_t>&connections)
 {
       for (list<vvp_branch_ptr_t>::iterator idx = connections.begin()
-		 ; idx != connections.end() ; idx ++ ) {
+		 ; idx != connections.end() ; ++ idx ) {
 
 	    vvp_island_branch*tmp_ptr = idx->ptr();
 	    vvp_island_branch_tran*cur = dynamic_cast<vvp_island_branch_tran*>(tmp_ptr);
@@ -200,7 +200,7 @@ static void mark_visited_flags(list<vvp_branch_ptr_t>&connections)
 static void clear_visited_flags(list<vvp_branch_ptr_t>&connections)
 {
       for (list<vvp_branch_ptr_t>::iterator idx = connections.begin()
-		 ; idx != connections.end() ; idx ++ ) {
+		 ; idx != connections.end() ; ++ idx ) {
 
 	    vvp_island_branch_tran*tmp_ptr = BRANCH_TRAN(idx->ptr());
 
@@ -215,7 +215,7 @@ static void resolve_values_from_connections(vvp_vector8_t&val,
 					    list<vvp_branch_ptr_t>&connections)
 {
       for (list<vvp_branch_ptr_t>::iterator idx = connections.begin()
-		 ; idx != connections.end() ; idx ++ ) {
+		 ; idx != connections.end() ; ++ idx ) {
 	    vvp_vector8_t tmp = get_value_from_branch(*idx);
 	    if (val.size() == 0)
 		  val = tmp;
@@ -287,7 +287,7 @@ static void push_value_through_branches(const vvp_vector8_t&val,
 					list<vvp_branch_ptr_t>&connections)
 {
       for (list<vvp_branch_ptr_t>::iterator idx = connections.begin()
-		 ; idx != connections.end() ; idx ++ ) {
+		 ; idx != connections.end() ; ++ idx ) {
 
 	    vvp_island_branch_tran*tmp_ptr = BRANCH_TRAN(idx->ptr());
 	    unsigned tmp_ab = idx->port();

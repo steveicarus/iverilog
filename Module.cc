@@ -93,8 +93,7 @@ unsigned Module::find_port(const char*name) const
 PGate* Module::get_gate(perm_string name)
 {
       for (list<PGate*>::iterator cur = gates_.begin()
-		 ; cur != gates_.end()
-		 ; cur ++ ) {
+		 ; cur != gates_.end() ; ++ cur ) {
 
 	    if ((*cur)->get_name() == name)
 		  return *cur;

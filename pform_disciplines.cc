@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -188,7 +188,7 @@ void pform_attach_discipline(const struct vlltype&loc,
 			     ivl_discipline_t discipline, list<perm_string>*names)
 {
       for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end() ; cur ++ ) {
+		 ; cur != names->end() ; ++ cur ) {
 
 	    PWire* cur_net = pform_get_wire_in_scope(*cur);
 	    if (cur_net == 0) {

@@ -203,7 +203,7 @@ static void final_cleanup()
 #ifdef CHECK_WITH_VALGRIND
 	/* Clean up the file name table. */
       for (vector<const char*>::iterator cur = file_names.begin();
-           cur != file_names.end() ; cur++) {
+           cur != file_names.end() ; ++ cur ) {
 	    delete[] *cur;
       }
 	/* Clear the static result buffer. */

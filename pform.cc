@@ -448,7 +448,7 @@ void pform_set_timescale(int unit, int prec,
 	/* Look to see if we have any modules without a timescale. */
       bool have_no_ts = false;
       map<perm_string,Module*>::iterator mod;
-      for (mod = pform_modules.begin(); mod != pform_modules.end(); mod++) {
+      for (mod = pform_modules.begin(); mod != pform_modules.end(); ++ mod ) {
 	    const Module*mp = (*mod).second;
 	    if (mp->time_from_timescale ||
 	        mp->timescale_warn_done) continue;
@@ -466,7 +466,7 @@ void pform_set_timescale(int unit, int prec,
 		 << endl;
 
 	    for (mod = pform_modules.begin()
-		       ; mod != pform_modules.end() ; mod++) {
+		       ; mod != pform_modules.end() ; ++ mod ) {
 		  Module*mp = (*mod).second;
 		  if (mp->time_from_timescale ||
 		      mp->timescale_warn_done) continue;
@@ -1078,8 +1078,7 @@ static void process_udp_table(PUdp*udp, list<string>*table,
       svector<char>   output  (table->size());
       { unsigned idx = 0;
         for (list<string>::iterator cur = table->begin()
-		   ; cur != table->end()
-		   ; cur ++, idx += 1) {
+		   ; cur != table->end() ; ++ cur , idx += 1) {
 	      string tmp = *cur;
 
 		/* Pull the input values from the string. */
@@ -1435,8 +1434,7 @@ void pform_set_net_range(list<perm_string>*names,
       assert((range == 0) || (range->count() == 2));
 
       for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end()
-		 ; cur ++ ) {
+		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
 	    pform_set_net_range(txt, range, signed_flag, dt, rt);
       }
@@ -1469,7 +1467,7 @@ static void pform_make_event(perm_string name, const char*fn, unsigned ln)
 void pform_make_events(list<perm_string>*names, const char*fn, unsigned ln)
 {
       list<perm_string>::iterator cur;
-      for (cur = names->begin() ;  cur != names->end() ;  cur++) {
+      for (cur = names->begin() ;  cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
 	    pform_make_event(txt, fn, ln);
       }
@@ -1930,8 +1928,7 @@ void pform_makewire(const vlltype&li,
 		    PWSRType rt)
 {
       for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end()
-		 ; cur ++ ) {
+		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
 	    pform_makewire(li, txt, type, pt, dt, attr);
 	    /* This has already been done for real variables. */
@@ -2066,7 +2063,7 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
       assert(names);
       svector<PWire*>*res = new svector<PWire*>(0);
       for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end() ; cur ++ ) {
+		 ; cur != names->end() ; ++ cur ) {
 
 	    perm_string name = *cur;
 
@@ -2355,8 +2352,7 @@ void pform_set_port_type(const struct vlltype&li,
 			 NetNet::PortType pt)
 {
       for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end()
-		 ; cur ++ ) {
+		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
 	    pform_set_port_type(txt, pt, li.text, li.first_line);
 	    pform_set_net_range(txt, range, signed_flag, IVL_VT_NO_TYPE,
@@ -2393,8 +2389,7 @@ static void pform_set_reg_integer(perm_string name)
 void pform_set_reg_integer(list<perm_string>*names)
 {
       for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end()
-		 ; cur ++ ) {
+		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
 	    pform_set_reg_integer(txt);
       }
@@ -2423,8 +2418,7 @@ static void pform_set_reg_time(perm_string name)
 void pform_set_reg_time(list<perm_string>*names)
 {
       for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end()
-		 ; cur ++ ) {
+		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
 	    pform_set_reg_time(txt);
       }
@@ -2455,8 +2449,7 @@ static void pform_set_integer_2atom(uint64_t width, bool signed_flag, perm_strin
 void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>*names)
 {
       for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end()
-		 ; cur ++ ) {
+		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
 	    pform_set_integer_2atom(width, signed_flag, txt);
       }
@@ -2469,8 +2462,7 @@ svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)
 
       unsigned idx = 0;
       for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end()
-		 ; cur ++ ) {
+		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
 	    PWire*pp = new PWire(txt,
 				 NetNet::IMPLICIT,

@@ -1984,7 +1984,7 @@ static void probe_index_expr_width(Design*des, NetScope*scope,
 				   const name_component_t&name)
 {
       for (list<index_component_t>::const_iterator cur = name.index.begin()
-		 ; cur != name.index.end() ; cur ++) {
+		 ; cur != name.index.end() ; ++ cur ) {
 
 	    if (cur->msb)
 		  probe_expr_width(des, scope, cur->msb);

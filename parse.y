@@ -2283,12 +2283,12 @@ module_item
 	| K_output var_type unsigned_signed_opt range_opt list_of_port_identifiers ';'
 		{ list<pair<perm_string,PExpr*> >::const_iterator pp;
 		  list<perm_string>*tmp = new list<perm_string>;
-		  for (pp = $5->begin(); pp != $5->end(); pp++) {
+		  for (pp = $5->begin(); pp != $5->end(); ++ pp ) {
 			tmp->push_back((*pp).first);
 		  }
 		  pform_makewire(@1, $4, $3, tmp, $2, NetNet::POUTPUT,
 		                 IVL_VT_NO_TYPE, 0, SR_BOTH);
-		  for (pp = $5->begin(); pp != $5->end(); pp++) {
+		  for (pp = $5->begin(); pp != $5->end(); ++ pp ) {
 			if ((*pp).second) {
 			      pform_make_reginit(@1, (*pp).first, (*pp).second);
 			}

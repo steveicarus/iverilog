@@ -468,7 +468,7 @@ void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
       typedef map<perm_string,NetScope::param_expr_t>::const_iterator pit_t;
 
       for (pit_t cur_pit = net->parameters.begin()
-		 ; cur_pit != net->parameters.end() ;  cur_pit ++) {
+		 ; cur_pit != net->parameters.end() ; ++ cur_pit ) {
 
 	    assert(idx < scop->nparam_);
 	    ivl_parameter_t cur_par = scop->param_ + idx;
@@ -482,7 +482,7 @@ void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 	    idx += 1;
       }
       for (pit_t cur_pit = net->localparams.begin()
-		 ; cur_pit != net->localparams.end() ;  cur_pit ++) {
+		 ; cur_pit != net->localparams.end() ; ++ cur_pit ) {
 
 	    assert(idx < scop->nparam_);
 	    ivl_parameter_t cur_par = scop->param_ + idx;
@@ -603,7 +603,7 @@ bool dll_target::start_design(const Design*des)
       des_.disciplines.resize(disciplines.size());
       unsigned idx = 0;
       for (map<perm_string,ivl_discipline_t>::const_iterator cur = disciplines.begin()
-		 ; cur != disciplines.end() ; cur ++) {
+		 ; cur != disciplines.end() ; ++ cur ) {
 	    des_.disciplines[idx] = cur->second;
 	    idx += 1;
       }
@@ -611,7 +611,7 @@ bool dll_target::start_design(const Design*des)
 
       root_scopes = des->find_root_scopes();
       for (list<NetScope*>::const_iterator scop = root_scopes.begin();
-	   scop != root_scopes.end(); scop++)
+	   scop != root_scopes.end(); ++ scop )
 	    add_root(des_, *scop);
 
 

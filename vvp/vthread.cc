@@ -456,7 +456,7 @@ static void child_delete(vthread_t base)
 void vthreads_delete(struct __vpiScope*scope)
 {
       for (std::set<vthread_t>::iterator cur = scope->threads.begin()
-		 ; cur != scope->threads.end() ; cur ++) {
+		 ; cur != scope->threads.end() ; ++ cur ) {
 	    delete *cur;
       }
       scope->threads.clear();

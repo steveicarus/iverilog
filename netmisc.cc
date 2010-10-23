@@ -579,7 +579,7 @@ std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 
       typedef pform_name_t::const_iterator pform_path_it;
 
-      for (pform_path_it cur = path.begin() ; cur != path.end(); cur++) {
+      for (pform_path_it cur = path.begin() ; cur != path.end(); ++ cur ) {
 	    const name_component_t&comp = *cur;
 	    res.push_back( eval_path_component(des,scope,comp) );
       }

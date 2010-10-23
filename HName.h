@@ -1,7 +1,7 @@
 #ifndef __HName_H
 #define __HName_H
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -94,10 +94,10 @@ inline ostream& operator<< (ostream&out, const list<hname_t>&ll)
 {
       list<hname_t>::const_iterator cur = ll.begin();
       out << *cur;
-      cur ++;
+      ++ cur;
       while (cur != ll.end()) {
 	    out << "." << *cur;
-	    cur ++;
+	    ++ cur;
       }
       return out;
 }

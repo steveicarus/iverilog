@@ -43,7 +43,7 @@ attrib_list_t* evaluate_attributes(const map<perm_string,PExpr*>&att,
       unsigned idx = 0;
 
       typedef map<perm_string,PExpr*>::const_iterator iter_t;
-      for (iter_t cur = att.begin() ;  cur != att.end() ;  cur ++, idx++) {
+      for (iter_t cur = att.begin() ;  cur != att.end() ;  ++ cur , idx += 1) {
 	    table[idx].key = (*cur).first;
 	    PExpr*exp = (*cur).second;
 

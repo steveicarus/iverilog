@@ -234,7 +234,7 @@ void exec_ufunc_delete(vvp_code_t euf_code)
 void ufunc_pool_delete(void)
 {
       map<ufunc_core*, bool>::iterator iter;
-      for (iter = ufunc_map.begin(); iter != ufunc_map.end(); iter++) {
+      for (iter = ufunc_map.begin(); iter != ufunc_map.end(); ++ iter ) {
 	    delete iter->first;
       }
 }

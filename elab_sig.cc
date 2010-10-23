@@ -87,7 +87,7 @@ bool PScope::elaborate_sig_wires_(Design*des, NetScope*scope) const
       bool flag = true;
 
       for (map<perm_string,PWire*>::const_iterator wt = wires.begin()
-		 ; wt != wires.end() ; wt ++ ) {
+		 ; wt != wires.end() ; ++ wt ) {
 
 	    PWire*cur = (*wt).second;
 	    NetNet*sig = cur->elaborate_sig(des, scope);
@@ -143,7 +143,7 @@ static void elaborate_sig_funcs(Design*des, NetScope*scope,
       typedef map<perm_string,PFunction*>::const_iterator mfunc_it_t;
 
       for (mfunc_it_t cur = funcs.begin()
-		 ; cur != funcs.end() ;  cur ++) {
+		 ; cur != funcs.end() ; ++ cur ) {
 
 	    hname_t use_name ( (*cur).first );
 	    NetScope*fscope = scope->child(use_name);
@@ -165,7 +165,7 @@ static void elaborate_sig_tasks(Design*des, NetScope*scope,
       typedef map<perm_string,PTask*>::const_iterator mtask_it_t;
 
       for (mtask_it_t cur = tasks.begin()
-		 ; cur != tasks.end() ;  cur ++) {
+		 ; cur != tasks.end() ; ++ cur ) {
 	    NetScope*tscope = scope->child( hname_t((*cur).first) );
 	    assert(tscope);
 	    (*cur).second->elaborate_sig(des, tscope);
@@ -229,7 +229,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 	// scope in.
       typedef list<PGenerate*>::const_iterator generate_it_t;
       for (generate_it_t cur = generate_schemes.begin()
-		 ; cur != generate_schemes.end() ; cur ++ ) {
+		 ; cur != generate_schemes.end() ; ++ cur ) {
 	    (*cur) -> elaborate_sig(des, scope);
       }
 
@@ -241,8 +241,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
       const list<PGate*>&gl = get_gates();
 
       for (list<PGate*>::const_iterator gt = gl.begin()
-		 ; gt != gl.end()
-		 ; gt ++ ) {
+		 ; gt != gl.end() ; ++ gt ) {
 
 	    flag &= (*gt)->elaborate_sig(des, scope);
       }
@@ -261,7 +260,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
       typedef list<PProcess*>::const_iterator proc_it_t;
 
       for (proc_it_t cur = behaviors.begin()
-		 ; cur != behaviors.end() ;  cur ++ ) {
+		 ; cur != behaviors.end() ; ++ cur ) {
 
 	    (*cur) -> statement() -> elaborate_sig(des, scope);
       }
@@ -338,7 +337,7 @@ bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 
 	    typedef list<PGenerate*>::const_iterator generate_it_t;
 	    for (generate_it_t cur = generate_schemes.begin()
-		       ; cur != generate_schemes.end() ; cur ++) {
+		       ; cur != generate_schemes.end() ; ++ cur ) {
 		  PGenerate*item = *cur;
 		  if (item->direct_nested_ || !item->scope_list_.empty()) {
 			flag &= item->elaborate_sig(des, container);
@@ -349,7 +348,7 @@ bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 
       typedef list<NetScope*>::const_iterator scope_list_it_t;
       for (scope_list_it_t cur = scope_list_.begin()
-		 ; cur != scope_list_.end() ; cur ++ ) {
+		 ; cur != scope_list_.end() ; ++ cur ) {
 
 	    NetScope*scope = *cur;
 
@@ -382,7 +381,7 @@ bool PGenerate::elaborate_sig_direct_(Design*des, NetScope*container) const
       bool flag = true;
       typedef list<PGenerate*>::const_iterator generate_it_t;
       for (generate_it_t cur = generate_schemes.begin()
-		 ; cur != generate_schemes.end() ; cur ++) {
+		 ; cur != generate_schemes.end() ; ++ cur ) {
 	    PGenerate*item = *cur;
 	    if (item->direct_nested_ || !item->scope_list_.empty()) {
 		    // Found the item, and it is direct nested.
@@ -398,7 +397,7 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
 	// in the current scope.
       typedef map<perm_string,PWire*>::const_iterator wires_it_t;
       for (wires_it_t wt = wires.begin()
-		 ; wt != wires.end() ;  wt ++ ) {
+		 ; wt != wires.end() ; ++ wt ) {
 
 	    PWire*cur = (*wt).second;
 
@@ -414,19 +413,19 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
 
       typedef list<PGenerate*>::const_iterator generate_it_t;
       for (generate_it_t cur = generate_schemes.begin()
-		 ; cur != generate_schemes.end() ; cur ++ ) {
+		 ; cur != generate_schemes.end() ; ++ cur ) {
 	    (*cur) -> elaborate_sig(des, scope);
       }
 
       typedef list<PGate*>::const_iterator pgate_list_it_t;
       for (pgate_list_it_t cur = gates.begin()
-		 ; cur != gates.end() ;  cur ++) {
+		 ; cur != gates.end() ; ++ cur ) {
 	    (*cur) ->elaborate_sig(des, scope);
       }
 
       typedef list<PProcess*>::const_iterator proc_it_t;
       for (proc_it_t cur = behaviors.begin()
-		 ; cur != behaviors.end() ;  cur ++ ) {
+		 ; cur != behaviors.end() ; ++ cur ) {
 	    (*cur) -> statement() -> elaborate_sig(des, scope);
       }
 

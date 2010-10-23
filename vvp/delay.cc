@@ -617,7 +617,7 @@ void vvp_fun_modpath::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 		  out_at[idx] -= now;
       }
 
-      for (cur ++ ; cur != candidate_list.end() ; cur ++) {
+      for (cur ++ ; cur != candidate_list.end() ; ++ cur ) {
 	    src = *cur;
 	    for (unsigned idx = 0 ;  idx < 12 ;  idx += 1) {
 		  vvp_time64_t tmp = src->wake_time_ + src->delay_[idx];

@@ -4069,7 +4069,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	/* Create all the various paths from the path specifier. */
       typedef std::vector<perm_string>::const_iterator str_vector_iter;
       for (str_vector_iter cur = dst.begin()
-		 ; cur != dst.end() ;  cur ++) {
+		 ; cur != dst.end() ; ++ cur ) {
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Path to " << (*cur);
@@ -4137,7 +4137,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 
 	    unsigned idx = 0;
 	    for (str_vector_iter cur_src = src.begin()
-		       ; cur_src != src.end() ;  cur_src ++) {
+		       ; cur_src != src.end() ; ++ cur_src ) {
 		  NetNet*src_sig = scope->find_signal(*cur_src);
 		  assert(src_sig);
 
@@ -4175,7 +4175,7 @@ static void elaborate_functions(Design*des, NetScope*scope,
 {
       typedef map<perm_string,PFunction*>::const_iterator mfunc_it_t;
       for (mfunc_it_t cur = funcs.begin()
-		 ; cur != funcs.end() ;  cur ++) {
+		 ; cur != funcs.end() ; ++ cur ) {
 
 	    hname_t use_name ( (*cur).first );
 	    NetScope*fscope = scope->child(use_name);
@@ -4189,7 +4189,7 @@ static void elaborate_tasks(Design*des, NetScope*scope,
 {
       typedef map<perm_string,PTask*>::const_iterator mtask_it_t;
       for (mtask_it_t cur = tasks.begin()
-		 ; cur != tasks.end() ;  cur ++) {
+		 ; cur != tasks.end() ; ++ cur ) {
 
 	    hname_t use_name ( (*cur).first );
 	    NetScope*tscope = scope->child(use_name);
@@ -4210,7 +4210,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	      // Elaborate specparams
 	    typedef map<perm_string,PExpr*>::const_iterator specparam_it_t;
 	    for (specparam_it_t cur = specparams.begin()
-		       ; cur != specparams.end() ; cur ++ ) {
+		       ; cur != specparams.end() ; ++ cur ) {
 
 		  probe_expr_width(des, scope, (*cur).second);
 		  need_constant_expr = true;
@@ -4255,7 +4255,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	// Elaborate within the generate blocks.
       typedef list<PGenerate*>::const_iterator generate_it_t;
       for (generate_it_t cur = generate_schemes.begin()
-		 ; cur != generate_schemes.end() ; cur ++ ) {
+		 ; cur != generate_schemes.end() ; ++ cur ) {
 	    (*cur)->elaborate(des, scope);
       }
 
@@ -4273,8 +4273,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       const list<PGate*>&gl = get_gates();
 
       for (list<PGate*>::const_iterator gt = gl.begin()
-		 ; gt != gl.end()
-		 ; gt ++ ) {
+		 ; gt != gl.end() ; ++ gt ) {
 
 	    (*gt)->elaborate(des, scope);
       }
@@ -4287,7 +4286,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	// Elaborate the specify paths of the module.
 
       for (list<PSpecPath*>::const_iterator sp = specify_paths.begin()
-		 ; sp != specify_paths.end() ;  sp ++) {
+		 ; sp != specify_paths.end() ; ++ sp ) {
 
 	    (*sp)->elaborate(des, scope);
       }
@@ -4314,7 +4313,7 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 
 	    typedef list<PGenerate*>::const_iterator generate_it_t;
 	    for (generate_it_t cur = generate_schemes.begin()
-		       ; cur != generate_schemes.end() ; cur ++) {
+		       ; cur != generate_schemes.end() ; ++ cur ) {
 		  PGenerate*item = *cur;
 		  if (item->direct_nested_ || !item->scope_list_.empty()) {
 			flag &= item->elaborate(des, container);
@@ -4325,7 +4324,7 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 
       typedef list<NetScope*>::const_iterator scope_list_it_t;
       for (scope_list_it_t cur = scope_list_.begin()
-		 ; cur != scope_list_.end() ; cur ++ ) {
+		 ; cur != scope_list_.end() ; ++ cur ) {
 
 	    NetScope*scope = *cur;
 	      // Check that this scope is one that is contained in the
@@ -4368,7 +4367,7 @@ bool PGenerate::elaborate_direct_(Design*des, NetScope*container) const
       bool flag = true;
       typedef list<PGenerate*>::const_iterator generate_it_t;
       for (generate_it_t cur = generate_schemes.begin()
-		 ; cur != generate_schemes.end() ; cur ++) {
+		 ; cur != generate_schemes.end() ; ++ cur ) {
 	    PGenerate*item = *cur;
 	    if (item->direct_nested_ || !item->scope_list_.empty()) {
 		    // Found the item, and it is direct nested.
@@ -4384,16 +4383,16 @@ bool PGenerate::elaborate_(Design*des, NetScope*scope) const
       elaborate_tasks(des, scope, tasks);
 
       typedef list<PGate*>::const_iterator gates_it_t;
-      for (gates_it_t cur = gates.begin() ; cur != gates.end() ; cur ++ )
+      for (gates_it_t cur = gates.begin() ; cur != gates.end() ; ++ cur )
 	    (*cur)->elaborate(des, scope);
 
       typedef list<PProcess*>::const_iterator proc_it_t;
-      for (proc_it_t cur = behaviors.begin(); cur != behaviors.end(); cur++)
+      for (proc_it_t cur = behaviors.begin(); cur != behaviors.end(); ++ cur )
 	    (*cur)->elaborate(des, scope);
 
       typedef list<PGenerate*>::const_iterator generate_it_t;
       for (generate_it_t cur = generate_schemes.begin()
-		 ; cur != generate_schemes.end() ; cur ++ ) {
+		 ; cur != generate_schemes.end() ; ++ cur ) {
 	    (*cur)->elaborate(des, scope);
       }
 
@@ -4408,13 +4407,13 @@ bool PScope::elaborate_behaviors_(Design*des, NetScope*scope) const
 	// involves scanning the PProcess* list, creating a NetProcTop
 	// for each process.
       for (list<PProcess*>::const_iterator st = behaviors.begin()
-		 ; st != behaviors.end() ; st ++ ) {
+		 ; st != behaviors.end() ; ++ st ) {
 
 	    result_flag &= (*st)->elaborate(des, scope);
       }
 
       for (list<AProcess*>::const_iterator st = analog_behaviors.begin()
-		 ; st != analog_behaviors.end() ; st ++ ) {
+		 ; st != analog_behaviors.end() ; ++ st ) {
 
 	    result_flag &= (*st)->elaborate(des, scope);
       }
@@ -4439,7 +4438,7 @@ class elaborate_root_scope_t : public elaborator_work_item_t {
       {
 	    Module::replace_t root_repl;
 	    for (list<Module::named_expr_t>::iterator cur = Module::user_defparms.begin()
-		       ; cur != Module::user_defparms.end() ; cur++) {
+		       ; cur != Module::user_defparms.end() ; ++ cur ) {
 
 		  pform_name_t tmp_name = cur->first;
 		  if (peek_head_name(tmp_name) != scope_->basename())
@@ -4498,7 +4497,7 @@ class later_defparams : public elaborator_work_item_t {
       {
 	    list<NetScope*>tmp_list;
 	    for (set<NetScope*>::iterator cur = des->defparams_later.begin()
-		       ; cur != des->defparams_later.end() ; cur ++ )
+		       ; cur != des->defparams_later.end() ; ++ cur )
 		  tmp_list.push_back(*cur);
 
 	    des->defparams_later.clear();
@@ -4561,8 +4560,7 @@ Design* elaborate(list<perm_string>roots)
 
 	// Scan the root modules by name, and elaborate their scopes.
       for (list<perm_string>::const_iterator root = roots.begin()
-		 ; root != roots.end()
-		 ; root++) {
+		 ; root != roots.end() ; ++ root ) {
 
 	      // Look for the root module in the list.
 	    map<perm_string,Module*>::const_iterator mod = pform_modules.find(*root);
