@@ -19,9 +19,9 @@
 
 # include  "parse_misc.h"
 # include  "compile.h"
-# include  "ivl_alloc.h"
 # include  <cstdio>
 # include  <cstdlib>
+# include  "ivl_alloc.h"
 
 const char*yypath;
 unsigned yyline;

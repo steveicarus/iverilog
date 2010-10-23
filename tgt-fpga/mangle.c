@@ -18,9 +18,9 @@
  */
 
 # include  "fpga_priv.h"
-# include  "ivl_alloc.h"
 # include  <string.h>
 # include  <stdlib.h>
+# include  "ivl_alloc.h"
 
 static size_t xnf_mangle_scope_name(ivl_scope_t net, char*buf, size_t nbuf)
 {

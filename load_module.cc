@@ -21,7 +21,6 @@
 # include  "util.h"
 # include  "parse_api.h"
 # include  "compiler.h"
-# include  "ivl_alloc.h"
 # include  <iostream>
 # include  <map>
 # include  <cstdlib>
@@ -31,6 +30,7 @@
 # include  <dirent.h>
 # include  <cctype>
 # include  <cassert>
+# include  "ivl_alloc.h"
 
 /*
  * The module library items are maps of key names to file name within

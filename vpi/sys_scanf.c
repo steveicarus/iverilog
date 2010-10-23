@@ -22,7 +22,6 @@
 # define _SVID_SOURCE 1
 
 # include  "sys_priv.h"
-# include  "ivl_alloc.h"
 # include  <ctype.h>
 # include  <errno.h>
 # include  <string.h>
@@ -30,6 +29,7 @@
 # include  <stdlib.h>
 # include  <math.h>
 # include  <assert.h>
+# include  "ivl_alloc.h"
 
 struct byte_source {
       const char*str;

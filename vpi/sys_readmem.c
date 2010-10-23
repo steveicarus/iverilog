@@ -18,7 +18,6 @@
  */
 
 # include  "sys_priv.h"
-# include  "ivl_alloc.h"
 # include  <ctype.h>
 # include  <string.h>
 # include  <stdlib.h>
@@ -26,6 +25,7 @@
 # include  <assert.h>
 # include  "sys_readmem_lex.h"
 # include  <sys/stat.h>
+# include  "ivl_alloc.h"
 
 char **search_list = NULL;
 unsigned sl_count = 0;

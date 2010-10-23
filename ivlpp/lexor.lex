@@ -20,7 +20,6 @@
 
 # include "config.h"
 
-# include  "ivl_alloc.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>
@@ -28,6 +27,7 @@
 # include  <assert.h>
 
 # include  "globals.h"
+# include  "ivl_alloc.h"
 
 static void output_init();
 #define YY_USER_INIT output_init()

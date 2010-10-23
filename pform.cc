@@ -28,7 +28,6 @@
 # include  "PGenerate.h"
 # include  "PSpec.h"
 # include  "discipline.h"
-# include  "ivl_alloc.h"
 # include  <list>
 # include  <map>
 # include  <cassert>
@@ -39,6 +38,7 @@
 # include  <cstdlib>
 
 # include  "ivl_assert.h"
+# include  "ivl_alloc.h"
 
 map<perm_string,Module*> pform_modules;
 map<perm_string,PUdp*> pform_primitives;

@@ -25,10 +25,10 @@
 
 # include  "priv.h"
 
-# include  "ivl_alloc.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <assert.h>
+# include  "ivl_alloc.h"
 
 extern void dump_final_design(FILE*out);
 

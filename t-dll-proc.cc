@@ -22,13 +22,13 @@
 
 # include  <iostream>
 
-# include  "ivl_alloc.h"
 # include  <cstring>
 # include  "target.h"
 # include  "ivl_target.h"
 # include  "compiler.h"
 # include  "t-dll.h"
 # include  <cstdlib>
+# include  "ivl_alloc.h"
 
 bool dll_target::process(const NetProcTop*net)
 {

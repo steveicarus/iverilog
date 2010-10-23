@@ -24,10 +24,10 @@ static void yyerror(const char*msg);
 # include  "vpi_user.h"
 # include  "sdf_parse_priv.h"
 # include  "sdf_priv.h"
-# include  "ivl_alloc.h"
 # include  <stdio.h>
 # include  <string.h>
 # include  <stdlib.h>
+# include  "ivl_alloc.h"
 
 /* This is the hierarchy separator to use. */
 char sdf_use_hchar = '.';

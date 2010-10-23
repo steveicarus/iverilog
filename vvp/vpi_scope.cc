@@ -25,10 +25,10 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-# include  "ivl_alloc.h"
 # include  <cstring>
 # include  <cstdlib>
 # include  <cassert>
+# include  "ivl_alloc.h"
 
 static vpiHandle *vpip_root_table_ptr = 0;
 static unsigned   vpip_root_table_cnt = 0;

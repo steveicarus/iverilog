@@ -18,11 +18,11 @@
  */
 
 #include "sys_priv.h"
-#include "ivl_alloc.h"
 #include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include "ivl_alloc.h"
 
 PLI_UINT64 timerec_to_time64(const struct t_vpi_time*timerec)
 {

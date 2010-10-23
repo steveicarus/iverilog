@@ -23,11 +23,11 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-# include  "ivl_alloc.h"
 # include  <cstdio>
 # include  <cstdlib>
 # include  <cstring>
 # include  <cassert>
+# include  "ivl_alloc.h"
 
 static int string_get(int code, vpiHandle ref)
 {

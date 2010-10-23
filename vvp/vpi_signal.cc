@@ -31,7 +31,6 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-# include  "ivl_alloc.h"
 # include  <cmath>
 # include  <iostream>
 # include  <cstdio>
@@ -42,6 +41,7 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  <valgrind/memcheck.h>
 #endif
+# include  "ivl_alloc.h"
 
 /*
  * Hex digits that represent 4-value bits of Verilog are not as

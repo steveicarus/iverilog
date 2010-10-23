@@ -22,12 +22,12 @@
 # include  <iostream>
 
 # include  "netlist.h"
-# include  "ivl_alloc.h"
 # include  <sstream>
 # include  <cstring>
 # include  <string>
 # include  <typeinfo>
 # include  <cstdlib>
+# include  "ivl_alloc.h"
 
 void Nexus::connect(Link&r)
 {

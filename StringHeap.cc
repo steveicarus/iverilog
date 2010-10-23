@@ -18,10 +18,10 @@
  */
 
 # include  "StringHeap.h"
-# include  "ivl_alloc.h"
 # include  <cstdlib>
 # include  <cstring>
 # include  <cassert>
+# include  "ivl_alloc.h"
 
 #ifdef CHECK_WITH_VALGRIND
 static char **string_pool = NULL;

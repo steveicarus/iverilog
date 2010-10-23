@@ -20,12 +20,12 @@
  */
 
 #include "vpi_config.h"
-#include "ivl_alloc.h"
 #include <assert.h>
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include "vpi_user.h"
+#include "ivl_alloc.h"
 
 /* Single argument functions. */
 typedef struct s_single_data {

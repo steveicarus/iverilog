@@ -25,15 +25,15 @@
 #include "symbols.h"
 #include "compile.h"
 #include "config.h"
-#ifdef CHECK_WITH_VALGRIND
-#include "vvp_cleanup.h"
-#include "ivl_alloc.h"
-#endif
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
 #include <iostream>
+#ifdef CHECK_WITH_VALGRIND
+#include "vvp_cleanup.h"
+#include "ivl_alloc.h"
+#endif
 
 // We may need these later when we build the VPI interface to
 // UDP definitions.

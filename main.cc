@@ -38,7 +38,6 @@ const char NOTICE[] =
 "  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.\n"
 ;
 
-# include  "ivl_alloc.h"
 # include  <cstdio>
 # include  <iostream>
 # include  <fstream>
@@ -88,6 +87,8 @@ static void signals_handler(int sig)
       exit(1);
 }
 #endif
+
+# include  "ivl_alloc.h"
 
 /* Count errors detected in flag processing. */
 unsigned flag_errors = 0;

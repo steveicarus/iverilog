@@ -30,10 +30,10 @@
 # include  "vvp_cleanup.h"
 # include <map>
 #endif
-# include  "ivl_alloc.h"
 # include  <cstdio>
 # include  <cstdlib>
 # include  <cassert>
+# include  "ivl_alloc.h"
 
 struct __vpiVThrVec {
       struct __vpiHandle base;

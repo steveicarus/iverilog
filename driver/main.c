@@ -50,7 +50,6 @@ const char HELP[] =
 
 #define MAXSIZE 4096
 
-#include "ivl_alloc.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -64,11 +63,13 @@ const char HELP[] =
 #endif
 
 #ifdef __MINGW32__
-#include <windows.h>
+# include  <windows.h>
+# include  <io.h>
 #ifdef HAVE_LIBIBERTY_H
-#include <libiberty.h>
+# include  <libiberty.h>
 #endif
 #endif
+#include  <fcntl.h>
 
 #if HAVE_GETOPT_H
 #include <getopt.h>
@@ -94,6 +95,7 @@ extern const char*optarg;
 
 # include  "globals.h"
 #include "cfparse_misc.h"   /* cfparse() */
+#include "ivl_alloc.h"
 
 #ifdef __MINGW32__
 const char sep = '\\';
@@ -211,8 +213,6 @@ char *get_cmd_file()
 }
 
 #ifdef __MINGW32__
-# include  <io.h>
-# include  <fcntl.h>
 static FILE*fopen_safe(const char*path)
 {
       FILE*file = 0;
@@ -225,7 +225,6 @@ static FILE*fopen_safe(const char*path)
       return file;
 }
 #else
-# include  <fcntl.h>
 static FILE*fopen_safe(const char*path)
 {
       FILE*file = 0;

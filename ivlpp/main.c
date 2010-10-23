@@ -37,7 +37,6 @@ const char NOTICE[] =
 "  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.\n"
 ;
 
-# include  "ivl_alloc.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <unistd.h>
@@ -47,6 +46,7 @@ const char NOTICE[] =
 # include  <getopt.h>
 #endif
 # include  "globals.h"
+# include  "ivl_alloc.h"
 
 #if defined(__MINGW32__) && !defined(HAVE_GETOPT_H)
 extern int getopt(int argc, char*argv[], const char*fmt);

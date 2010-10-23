@@ -24,12 +24,12 @@
 #ifdef CHECK_WITH_VALGRIND
 #include "vvp_cleanup.h"
 #endif
-#include "ivl_alloc.h"
 #include <iostream>
 #include <cstdlib>
 #include <list>
 #include <cassert>
 #include <cmath>
+#include "ivl_alloc.h"
 
 void vvp_delay_t::calculate_min_delay_()
 {
@@ -526,7 +526,7 @@ static vvp_time64_t delay_from_edge(vvp_bit4_t a, vvp_bit4_t b,
                                            vvp_time64_t array[12])
 {
       typedef delay_edge_t bit4_table4[4];
-      const static bit4_table4 edge_table[4] = {
+      static const bit4_table4 edge_table[4] = {
 	    { DELAY_EDGE_01, DELAY_EDGE_01, DELAY_EDGE_0x, DELAY_EDGE_0z },
 	    { DELAY_EDGE_10, DELAY_EDGE_10, DELAY_EDGE_1x, DELAY_EDGE_1z },
 	    { DELAY_EDGE_x0, DELAY_EDGE_x1, DELAY_EDGE_x0, DELAY_EDGE_xz },

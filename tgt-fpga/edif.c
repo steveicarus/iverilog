@@ -18,10 +18,10 @@
  */
 
 # include  "edif.h"
-# include  "ivl_alloc.h"
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
+# include  "ivl_alloc.h"
 
 typedef enum property_e {
       PRP_NONE = 0,

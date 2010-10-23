@@ -25,12 +25,12 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-# include "ivl_alloc.h"
 # include  <iostream>
 # include  <list>
 # include  <cassert>
 # include  <cstdlib>
 # include  <cstring>
+# include "ivl_alloc.h"
 
 static bool at_EOS = false;
 

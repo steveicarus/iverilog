@@ -21,7 +21,6 @@
 
 # include  <iostream>
 
-# include  "ivl_alloc.h"
 # include  <cstring>
 # include  <cstdio> // sprintf()
 # include  "compiler.h"
@@ -30,6 +29,7 @@
 # include  "discipline.h"
 # include  <cstdlib>
 # include  "ivl_assert.h"
+# include  "ivl_alloc.h"
 
 struct dll_target dll_target_obj;
 

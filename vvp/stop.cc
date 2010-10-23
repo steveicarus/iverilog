@@ -28,7 +28,6 @@
 # include  "vpi_priv.h"
 # include  "vthread.h"
 # include  "schedule.h"
-# include  "ivl_alloc.h"
 # include  <cstdio>
 # include  <cctype>
 #ifdef USE_READLINE
@@ -39,6 +38,7 @@
 #endif
 # include  <cstring>
 # include  <cstdlib>
+# include  "ivl_alloc.h"
 
 struct __vpiScope*stop_current_scope = 0;
 bool stop_is_finish;  /* When set, $stop acts like $finish (set in main.cc). */
