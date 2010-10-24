@@ -171,6 +171,21 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
       return tmp;
 }
 
+static named_number_t* make_named_number(perm_string name)
+{
+      named_number_t*res = new named_number_t;
+      res->name = name;
+      return res;
+}
+
+static named_number_t* make_named_number(perm_string name, const verinum&val)
+{
+      named_number_t*res = new named_number_t;
+      res->name = name;
+      res->parm = val;
+      return res;
+}
+
 %}
 
 %union {
@@ -206,6 +221,9 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
       LexicalScope::range_t* value_range;
       vector<Module::port_t*>*mports;
 
+      named_number_t* named_number;
+      list<named_number_t>* named_numbers;
+
       named_pexpr_t*named_pexpr;
       svector<named_pexpr_t*>*named_pexprs;
       struct parmvalue_t*parmvalue;
@@ -230,6 +248,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
       PTaskFuncArg function_type;
 
       net_decl_assign_t*net_decl_assign;
+      enum_type_t*enum_type;
 
       verinum* number;
 
@@ -356,6 +375,10 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %type <value_range> parameter_value_range parameter_value_ranges
 %type <value_range> parameter_value_ranges_opt
 %type <expr> value_range_expression
+
+%type <named_number> enum_name
+%type <named_numbers> enum_name_list
+%type <enum_type> enum_data_type
 
 %type <wires> task_item task_item_list task_item_list_opt
 %type <wires> task_port_item task_port_decl task_port_decl_list
@@ -549,6 +572,13 @@ block_item_decl
        if ($1) delete $1;
      }
 
+  /* Enum data types are possible here. */
+
+  | attribute_list_opt enum_data_type register_variable_list ';'
+      { pform_set_enum(@2, $2, $3);
+	if ($1) delete $1;
+      }
+
   /* real declarations are fairly simple as there is no range of
      signed flag in the declaration. Create the real as a NetNet::REG
      with real value. Note that real and realtime are interchangeable
@@ -610,6 +640,67 @@ block_item_decls_opt
 	: block_item_decls
 	|
 	;
+
+  /* The structure for an enumeration data type is the keyword "enum",
+     followed by the enumeration values in curly braces. Also allow
+     for an optional base type. The default base type is "int", but it
+     can be any of the integral or vector types. */
+
+enum_data_type
+  : K_enum '{' enum_name_list '}'
+      { enum_type_t*enum_type = new enum_type_t;
+	enum_type->names .reset($3);
+	enum_type->base_type = IVL_VT_BOOL;
+	enum_type->signed_flag = true;
+	enum_type->range.reset( make_range_from_width(32) );
+	$$ = enum_type;
+      }
+  | K_enum atom2_type signed_unsigned_opt '{' enum_name_list '}'
+      { enum_type_t*enum_type = new enum_type_t;
+	enum_type->names .reset($5);
+	enum_type->base_type = IVL_VT_BOOL;
+	enum_type->signed_flag = $3;
+	enum_type->range.reset( make_range_from_width($2) );
+	$$ = enum_type;
+      }
+  | K_enum K_integer signed_unsigned_opt '{' enum_name_list '}'
+      { enum_type_t*enum_type = new enum_type_t;
+	enum_type->names .reset($5);
+	enum_type->base_type = IVL_VT_LOGIC;
+	enum_type->signed_flag = $3;
+	enum_type->range.reset( make_range_from_width(integer_width) );
+	$$ = enum_type;
+      }
+  ;
+
+enum_name_list
+  : enum_name
+      { list<named_number_t>*lst = new list<named_number_t>;
+	lst->push_back(*$1);
+	delete $1;
+	$$ = lst;
+      }
+  | enum_name_list ',' enum_name
+      { list<named_number_t>*lst = $1;
+	lst->push_back(*$3);
+	delete $3;
+	$$ = lst;
+      }
+  ;
+
+enum_name
+  : IDENTIFIER
+      { perm_string name = lex_strings.make($1);
+	delete[]$1;
+	$$ = make_named_number(name);
+      }
+  | IDENTIFIER '=' number
+      { perm_string name = lex_strings.make($1);
+	delete[]$1;
+	$$ = make_named_number(name, *$3);
+	delete $3;
+      }
+  ;
 
 case_item
 	: expression_list_proper ':' statement_or_null

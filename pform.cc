@@ -2463,6 +2463,15 @@ void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>
       delete names;
 }
 
+void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_string>*names)
+{
+      cerr << li.text << ":" << li.first_line << ": "
+	   << "sorry: enum types not supported yet." << endl;
+      error_count += 1;
+      delete enum_type;
+      delete names;
+}
+
 svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)
 {
       svector<PWire*>*out = new svector<PWire*>(names->size());

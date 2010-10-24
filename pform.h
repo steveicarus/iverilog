@@ -35,6 +35,7 @@
 # include  <iostream>
 # include  <string>
 # include  <list>
+# include  <memory>
 # include  <cstdio>
 
 /*
@@ -83,8 +84,9 @@ extern bool pform_library_flag;
 /* This is information about port name information for named port
    connections. */
 
-//typedef struct named<PExpr*> named_pexpr_t;
 typedef named<PExpr*> named_pexpr_t;
+
+typedef named<verinum> named_number_t;
 
 struct parmvalue_t {
       svector<PExpr*>*by_order;
@@ -93,10 +95,18 @@ struct parmvalue_t {
 
 struct str_pair_t { ivl_drive_t str0, str1; };
 
+
 struct net_decl_assign_t {
       perm_string name;
       PExpr*expr;
       struct net_decl_assign_t*next;
+};
+
+struct enum_type_t {
+      ivl_variable_type_t base_type;
+      bool signed_flag;
+      auto_ptr< svector<PExpr*> > range;
+      auto_ptr< list<named_number_t> > names;
 };
 
 /* The lgate is gate instantiation information. */
@@ -276,6 +286,8 @@ extern void pform_set_reg_integer(list<perm_string>*names);
 extern void pform_set_reg_time(list<perm_string>*names);
 
 extern void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>*names);
+
+extern void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_string>*names);
 
   /* pform_set_attrib and pform_set_type_attrib exist to support the
      $attribute syntax, which can only set string values to
