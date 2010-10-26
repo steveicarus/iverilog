@@ -1653,5 +1653,6 @@ inline bool vvp_net_fil_t::test_force_mask_is_zero(void) const
 #undef malloc
 #undef realloc
 #undef calloc
+#undef __ivl_alloc_H
 
 #endif
