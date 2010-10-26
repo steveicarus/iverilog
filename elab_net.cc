@@ -41,7 +41,7 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 {
       assert(scope);
 
-      svector<NetNet*>nets (parms_.count());
+      svector<NetNet*>nets (parms_.size());
       unsigned width = 0;
       unsigned errors = 0;
 

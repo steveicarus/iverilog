@@ -38,7 +38,7 @@ extern void lex_end_table();
 bool have_timeunit_decl = false;
 bool have_timeprec_decl = false;
 
-static svector<PExpr*>* param_active_range = 0;
+static list<PExpr*>* param_active_range = 0;
 static bool param_active_signed = false;
 static ivl_variable_type_t param_active_type = IVL_VT_LOGIC;
 
@@ -48,7 +48,7 @@ static struct {
       NetNet::PortType port_type;
       ivl_variable_type_t var_type;
       bool sign_flag;
-      svector<PExpr*>* range;
+      list<PExpr*>* range;
 } port_declaration_context = {NetNet::NONE, NetNet::NOT_A_PORT,
                               IVL_VT_NO_TYPE, false, 0};
 
@@ -106,14 +106,39 @@ static list<pair<perm_string,PExpr*> >* make_port_list(list<pair<perm_string,
       return tmp;
 }
 
-static svector<PExpr*>* make_range_from_width(uint64_t wid)
+static list<PExpr*>* make_range_from_width(uint64_t wid)
 {
-      svector<PExpr*>*range = new svector<PExpr*>(2);
+      list<PExpr*>*range = new list<PExpr*>;
 
-      (*range)[0] = new PENumber(new verinum(wid-1, integer_width));
-      (*range)[1] = new PENumber(new verinum((uint64_t)0, integer_width));
+      range->push_back(new PENumber(new verinum(wid-1, integer_width)));
+      range->push_back(new PENumber(new verinum((uint64_t)0, integer_width)));
 
       return range;
+}
+
+/*
+ * Make a rqange vector from an existing pair of expressions.
+ */
+static vector<PExpr*>* make_range_vector(list<PExpr*>*that)
+{
+      assert(that->size() == 2);
+      vector<PExpr*>*tmp = new vector<PExpr*> (2);
+      tmp->at(0) = that->front();
+      tmp->at(1) = that->back();
+      delete that;
+      return tmp;
+}
+
+/*
+ * Make a range vector from a width. Generate the msb and lsb
+ * expressions to get the canonical range for the given width.
+ */
+static vector<PExpr*>* make_range_vector(uint64_t wid)
+{
+      vector<PExpr*>*tmp = new vector<PExpr*> (2);
+      tmp->at(0) = new PENumber(new verinum(wid-1, integer_width));
+      tmp->at(1) = new PENumber(new verinum((uint64_t)0, integer_width));
+      return tmp;
 }
 
 static list<perm_string>* list_from_identifier(char*id)
@@ -131,15 +156,12 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
       return tmp;
 }
 
-static svector<PExpr*>* copy_range(svector<PExpr*>* orig)
+static list<PExpr*>* copy_range(list<PExpr*>* orig)
 {
-      svector<PExpr*>*copy = 0;
+      list<PExpr*>*copy = 0;
 
-      if (orig) {
-	    copy = new svector<PExpr*>(2);
-	    (*copy)[0] = (*orig)[0];
-	    (*copy)[1] = (*orig)[1];
-      }
+      if (orig)
+	    copy = new list<PExpr*> (*orig);
 
       return copy;
 }
@@ -156,7 +178,7 @@ template <class T> void append(vector<T>&out, const vector<T>&in)
  */
 static PECallFunction*make_call_function(perm_string tn, PExpr*arg)
 {
-      svector<PExpr*> parms(1);
+      vector<PExpr*> parms(1);
       parms[0] = arg;
       PECallFunction*tmp = new PECallFunction(tn, parms);
       return tmp;
@@ -164,7 +186,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg)
 
 static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 {
-      svector<PExpr*> parms(2);
+      vector<PExpr*> parms(2);
       parms[0] = arg1;
       parms[1] = arg2;
       PECallFunction*tmp = new PECallFunction(tn, parms);
@@ -229,7 +251,7 @@ static named_number_t* make_named_number(perm_string name, const verinum&val)
       struct parmvalue_t*parmvalue;
 
       PExpr*expr;
-      svector<PExpr*>*exprs;
+      list<PExpr*>*exprs;
 
       svector<PEEvent*>*event_expr;
 
@@ -769,39 +791,39 @@ defparam_assign_list
 
 delay1
 	: '#' delay_value_simple
-		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
-		  (*tmp)[0] = $2;
+		{ list<PExpr*>*tmp = new list<PExpr*>;
+		  tmp->push_back($2);
 		  $$ = tmp;
 		}
 	| '#' '(' delay_value ')'
-		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
-		  (*tmp)[0] = $3;
+		{ list<PExpr*>*tmp = new list<PExpr*>;
+		  tmp->push_back($3);
 		  $$ = tmp;
 		}
 	;
 
 delay3
 	: '#' delay_value_simple
-		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
-		  (*tmp)[0] = $2;
+		{ list<PExpr*>*tmp = new list<PExpr*>;
+		  tmp->push_back($2);
 		  $$ = tmp;
 		}
 	| '#' '(' delay_value ')'
-		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
-		  (*tmp)[0] = $3;
+		{ list<PExpr*>*tmp = new list<PExpr*>;
+		  tmp->push_back($3);
 		  $$ = tmp;
 		}
 	| '#' '(' delay_value ',' delay_value ')'
-		{ svector<PExpr*>*tmp = new svector<PExpr*>(2);
-		  (*tmp)[0] = $3;
-		  (*tmp)[1] = $5;
+		{ list<PExpr*>*tmp = new list<PExpr*>;
+		  tmp->push_back($3);
+		  tmp->push_back($5);
 		  $$ = tmp;
 		}
 	| '#' '(' delay_value ',' delay_value ',' delay_value ')'
-		{ svector<PExpr*>*tmp = new svector<PExpr*>(3);
-		  (*tmp)[0] = $3;
-		  (*tmp)[1] = $5;
-		  (*tmp)[2] = $7;
+		{ list<PExpr*>*tmp = new list<PExpr*>;
+		  tmp->push_back($3);
+		  tmp->push_back($5);
+		  tmp->push_back($7);
 		  $$ = tmp;
 		}
 	;
@@ -812,17 +834,17 @@ delay3_opt
 	;
 
 delay_value_list
-        : delay_value
-              { svector<PExpr*>*tmp = new svector<PExpr*>(1);
-	        (*tmp)[0] = $1;
-		$$ = tmp;
-	      }
-	| delay_value_list ',' delay_value
-              { svector<PExpr*>*tmp = new svector<PExpr*>(*$1, $3);
-		delete $1;
-		$$ = tmp;
-	      }
-	;
+  : delay_value
+      { list<PExpr*>*tmp = new list<PExpr*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
+  | delay_value_list ',' delay_value
+      { list<PExpr*>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
+  ;
 
 delay_value
 	: expression
@@ -1360,41 +1382,40 @@ expr_mintypmax
      expression list, so can be used where nul expressions are not allowed. */
 
 expression_list_with_nuls
-	: expression_list_with_nuls ',' expression
-		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, $3);
-		  delete $1;
-		  $$ = tmp;
-		}
-	| expression
-		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
-		  (*tmp)[0] = $1;
-		  $$ = tmp;
-		}
-	|
-		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
-		  (*tmp)[0] = 0;
-		  $$ = tmp;
-		}
-
-	| expression_list_with_nuls ','
-		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, 0);
-		  delete $1;
-		  $$ = tmp;
-		}
+  : expression_list_with_nuls ',' expression
+      { list<PExpr*>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
+  | expression
+      { list<PExpr*>*tmp = new list<PExpr*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
+  |
+      { list<PExpr*>*tmp = new list<PExpr*>;
+        tmp->push_back(0);
+	$$ = tmp;
+      }
+  | expression_list_with_nuls ','
+      { list<PExpr*>*tmp = $1;
+	tmp->push_back(0);
+	$$ = tmp;
+      }
 	;
 
 expression_list_proper
-	: expression_list_proper ',' expression
-		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, $3);
-		  delete $1;
-		  $$ = tmp;
-		}
-	| expression
-		{ svector<PExpr*>*tmp = new svector<PExpr*>(1);
-		  (*tmp)[0] = $1;
-		  $$ = tmp;
-		}
-        ;
+  : expression_list_proper ',' expression
+      { list<PExpr*>*tmp = $1;
+        tmp->push_back($3);
+        $$ = tmp;
+      }
+  | expression
+      { list<PExpr*>*tmp = new list<PExpr*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
+  ;
 
 expr_primary
 	: number
@@ -1695,11 +1716,12 @@ gate_instance
 
 	| IDENTIFIER range '(' expression_list_with_nuls ')'
 		{ lgate*tmp = new lgate;
-		  svector<PExpr*>*rng = $2;
+		  list<PExpr*>*rng = $2;
 		  tmp->name = $1;
 		  tmp->parms = $4;
-		  tmp->range[0] = (*rng)[0];
-		  tmp->range[1] = (*rng)[1];
+		  tmp->range[0] = rng->front(); rng->pop_front();
+		  tmp->range[1] = rng->front(); rng->pop_front();
+		  assert(rng->empty());
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
 		  delete[]$1;
@@ -1719,12 +1741,13 @@ gate_instance
 
 	| IDENTIFIER range
 		{ lgate*tmp = new lgate;
-		  svector<PExpr*>*rng = $2;
+		  list<PExpr*>*rng = $2;
 		  tmp->name = $1;
 		  tmp->parms = 0;
 		  tmp->parms_by_name = 0;
-		  tmp->range[0] = (*rng)[0];
-		  tmp->range[1] = (*rng)[1];
+		  tmp->range[0] = rng->front(); rng->pop_front();
+		  tmp->range[1] = rng->front(); rng->pop_front();
+		  assert(rng->empty());
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
 		  delete[]$1;
@@ -1747,12 +1770,13 @@ gate_instance
 
 	| IDENTIFIER range '(' port_name_list ')'
 		{ lgate*tmp = new lgate;
-		  svector<PExpr*>*rng = $2;
+		  list<PExpr*>*rng = $2;
 		  tmp->name = $1;
 		  tmp->parms = 0;
 		  tmp->parms_by_name = $4;
-		  tmp->range[0] = (*rng)[0];
-		  tmp->range[1] = (*rng)[1];
+		  tmp->range[0] = rng->front(); rng->pop_front();
+		  tmp->range[1] = rng->front(); rng->pop_front();
+		  assert(rng->empty());
 		  tmp->file  = @1.text;
 		  tmp->lineno = @1.first_line;
 		  delete[]$1;
@@ -2011,7 +2035,7 @@ port_declaration
   | attribute_list_opt K_input atom2_type signed_unsigned_opt IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
-	svector<PExpr*>*use_range = make_range_from_width($3);
+	list<PExpr*>*use_range = make_range_from_width($3);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::PINPUT,
@@ -2105,7 +2129,7 @@ port_declaration
   | attribute_list_opt K_output atom2_type signed_unsigned_opt IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
-	svector<PExpr*>*use_range = make_range_from_width($3);
+	list<PExpr*>*use_range = make_range_from_width($3);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
@@ -2186,24 +2210,24 @@ lpvalue
   /* Continuous assignments have a list of individual assignments. */
 
 cont_assign
-	: lpvalue '=' expression
-		{ svector<PExpr*>*tmp = new svector<PExpr*>(2);
-		  (*tmp)[0] = $1;
-		  (*tmp)[1] = $3;
-		  $$ = tmp;
-		}
-	;
+  : lpvalue '=' expression
+      { list<PExpr*>*tmp = new list<PExpr*>;
+	tmp->push_back($1);
+	tmp->push_back($3);
+	$$ = tmp;
+      }
+  ;
 
 cont_assign_list
-	: cont_assign_list ',' cont_assign
-		{ svector<PExpr*>*tmp = new svector<PExpr*>(*$1, *$3);
-		  delete $1;
-		  delete $3;
-		  $$ = tmp;
-		}
-	| cont_assign
-		{ $$ = $1; }
-	;
+  : cont_assign_list ',' cont_assign
+      { list<PExpr*>*tmp = $1;
+	tmp->splice(tmp->end(), *$3);
+	delete $3;
+	$$ = tmp;
+      }
+  | cont_assign
+      { $$ = $1; }
+  ;
 
   /* We allow zero, one or two unique declarations. */
 local_timeunit_prec_decl_opt
@@ -2876,14 +2900,7 @@ parameter_assign_decl
 	param_active_type = IVL_VT_LOGIC;
       }
   | K_integer
-      { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
-        PExpr*re;
-        re = new PENumber(new verinum(integer_width-1, integer_width));
-        (*range_stub)[0] = re;
-        re = new PENumber(new verinum((uint64_t)0, integer_width));
-        (*range_stub)[1] = re;
-        /* The default range is [31:0] */
-        param_active_range = range_stub;
+      { param_active_range = make_range_from_width(integer_width);
 	param_active_signed = true;
 	param_active_type = IVL_VT_LOGIC;
       }
@@ -2893,14 +2910,7 @@ parameter_assign_decl
 	param_active_type = IVL_VT_LOGIC;
       }
   | K_time
-      { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
-        PExpr*re;
-        re = new PENumber(new verinum((uint64_t)63, integer_width));
-        (*range_stub)[0] = re;
-        re = new PENumber(new verinum((uint64_t)0, integer_width));
-        (*range_stub)[1] = re;
-        /* The range is [63:0] */
-        param_active_range = range_stub;
+      { param_active_range = make_range_from_width(64);
 	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
@@ -3005,14 +3015,7 @@ localparam_assign_decl
 	param_active_type = IVL_VT_LOGIC;
       }
   | K_integer
-      { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
-        PExpr*re;
-        re = new PENumber(new verinum(integer_width-1, integer_width));
-        (*range_stub)[0] = re;
-        re = new PENumber(new verinum((uint64_t)0, integer_width));
-        (*range_stub)[1] = re;
-        /* The default range is [31:0] */
-        param_active_range = range_stub;
+      { param_active_range = make_range_from_width(integer_width);
 	param_active_signed = true;
 	param_active_type = IVL_VT_LOGIC;
       }
@@ -3022,14 +3025,7 @@ localparam_assign_decl
 	param_active_type = IVL_VT_LOGIC;
       }
   | K_time
-      { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
-        PExpr*re;
-        re = new PENumber(new verinum((uint64_t)63, integer_width));
-        (*range_stub)[0] = re;
-        re = new PENumber(new verinum((uint64_t)0, integer_width));
-        (*range_stub)[1] = re;
-        /* The range is [63:0] */
-        param_active_range = range_stub;
+      { param_active_range = make_range_from_width(64);
 	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
@@ -3090,8 +3086,8 @@ parameter_value_opt
 		  FILE_NAME(tmp, @1);
 
 		  struct parmvalue_t*lst = new struct parmvalue_t;
-		  lst->by_order = new svector<PExpr*>(1);
-		  (*lst->by_order)[0] = tmp;
+		  lst->by_order = new list<PExpr*>;
+		  lst->by_order->push_back(tmp);
 		  lst->by_name = 0;
 		  $$ = lst;
 		  based_size = 0;
@@ -3340,13 +3336,13 @@ port_type
 	;
 
 range
-	: '[' expression ':' expression ']'
-		{ svector<PExpr*>*tmp = new svector<PExpr*> (2);
-		  (*tmp)[0] = $2;
-		  (*tmp)[1] = $4;
-		  $$ = tmp;
-		}
-	;
+  : '[' expression ':' expression ']'
+      { list<PExpr*>*tmp = new list<PExpr*>;
+	tmp->push_back($2);
+	tmp->push_back($4);
+	$$ = tmp;
+      }
+  ;
 
 range_opt
 	: range
@@ -3376,16 +3372,16 @@ dimensions
 
   /* This is used to express the return type of a function. */
 function_range_or_type_opt
-  : range            { $$.range = $1; $$.type = PTF_REG; }
-  | K_signed range   { $$.range = $2; $$.type = PTF_REG_S; }
-  | K_unsigned range { $$.range = $2; $$.type = PTF_REG; }
+  : range            { $$.range = make_range_vector($1); $$.type = PTF_REG; }
+  | K_signed range   { $$.range = make_range_vector($2); $$.type = PTF_REG_S; }
+  | K_unsigned range { $$.range = make_range_vector($2); $$.type = PTF_REG; }
   | K_integer  { $$.range = 0;  $$.type = PTF_INTEGER; }
   | K_real     { $$.range = 0;  $$.type = PTF_REAL; }
   | K_realtime { $$.range = 0;  $$.type = PTF_REALTIME; }
   | K_time     { $$.range = 0;  $$.type = PTF_TIME; }
-  | atom2_type { $$.range = make_range_from_width($1); $$.type = PTF_ATOM2_S; }
-  | atom2_type K_signed  { $$.range = make_range_from_width($1); $$.type = PTF_ATOM2_S; }
-  | atom2_type K_unsigned { $$.range = make_range_from_width($1); $$.type = PTF_ATOM2; }
+  | atom2_type { $$.range = make_range_vector($1); $$.type = PTF_ATOM2_S; }
+  | atom2_type K_signed  { $$.range = make_range_vector($1); $$.type = PTF_ATOM2_S; }
+  | atom2_type K_unsigned { $$.range = make_range_vector($1); $$.type = PTF_ATOM2; }
   |            { $$.range = 0;  $$.type = PTF_REG; }
   ;
 
@@ -3619,8 +3615,8 @@ specify_edge_path_decl
 	: specify_edge_path '=' '(' delay_value_list ')'
                 { $$ = pform_assign_path_delay($1, $4); }
 	| specify_edge_path '=' delay_value_simple
-                { svector<PExpr*>*tmp = new svector<PExpr*>(1);
-		  (*tmp)[0] = $3;
+                { list<PExpr*>*tmp = new list<PExpr*>;
+		  tmp->push_back($3);
 		  $$ = pform_assign_path_delay($1, tmp);
 		}
 	;
@@ -3656,8 +3652,8 @@ specify_simple_path_decl
 	: specify_simple_path '=' '(' delay_value_list ')'
                 { $$ = pform_assign_path_delay($1, $4); }
 	| specify_simple_path '=' delay_value_simple
-                { svector<PExpr*>*tmp = new svector<PExpr*>(1);
-		  (*tmp)[0] = $3;
+                { list<PExpr*>*tmp = new list<PExpr*>;
+		  tmp->push_back($3);
 		  $$ = pform_assign_path_delay($1, tmp);
 		}
 	| specify_simple_path '=' '(' error ')'
@@ -4044,8 +4040,9 @@ statement
 		  yyerror(@1, "error: Error in while loop condition.");
 		}
 	| delay1 statement_or_null
-		{ PExpr*del = (*$1)[0];
-		  assert($1->count() == 1);
+                { PExpr*del = $1->front();
+		  assert($1->size() == 1);
+		  delete $1;
 		  PDelayStatement*tmp = new PDelayStatement(del, $2);
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
@@ -4096,15 +4093,15 @@ statement
 		  $$ = new PNoop;
 		}
 	| lpvalue '=' delay1 expression ';'
-		{ assert($3->count() == 1);
-		  PExpr*del = (*$3)[0];
+		{ PExpr*del = $3->front(); $3->pop_front();
+		  assert($3->empty());
 		  PAssign*tmp = new PAssign($1,del,$4);
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
 	| lpvalue K_LE delay1 expression ';'
-		{ assert($3->count() == 1);
-		  PExpr*del = (*$3)[0];
+		{ PExpr*del = $3->front(); $3->pop_front();
+		  assert($3->empty());
 		  PAssignNB*tmp = new PAssignNB($1,del,$4);
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
@@ -4146,7 +4143,7 @@ statement
 		  $$ = tmp;
 		}
 	| SYSTEM_IDENTIFIER ';'
-		{ svector<PExpr*>pt (0);
+		{ list<PExpr*>pt;
 		  PCallTask*tmp = new PCallTask(lex_strings.make($1), pt);
 		  FILE_NAME(tmp,@1);
 		  delete[]$1;
@@ -4165,14 +4162,14 @@ statement
      want it. So accept it explicitly. */
 
 	| hierarchy_identifier '(' ')' ';'
-		{ svector<PExpr*>pt (0);
+		{ list<PExpr*>pt;
 		  PCallTask*tmp = new PCallTask(*$1, pt);
 		  FILE_NAME(tmp, @1);
 		  delete $1;
 		  $$ = tmp;
 		}
 	| hierarchy_identifier ';'
-		{ svector<PExpr*>pt (0);
+		{ list<PExpr*>pt;
 		  PCallTask*tmp = new PCallTask(*$1, pt);
 		  FILE_NAME(tmp, @1);
 		  delete $1;
@@ -4249,96 +4246,57 @@ task_port_item
   /* When the port is an integer, infer a signed vector of the integer
      shape. Generate a range ([31:0]) to make it work. */
 
-	| K_input K_integer list_of_identifiers ';'
-                { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
-		  PExpr*re;
-		  re = new PENumber(new verinum(integer_width-1,
-						integer_width));
-		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, integer_width));
-		  (*range_stub)[1] = re;
-		  svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT,
+  | K_input K_integer list_of_identifiers ';'
+      { list<PExpr*>*range_stub = make_range_from_width(integer_width);
+	svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINPUT,
 						IVL_VT_LOGIC, true,
 						range_stub, $3,
 						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-	| K_output K_integer list_of_identifiers ';'
-		{ svector<PExpr*>*range_stub = new svector<PExpr*>(2);
-		  PExpr*re;
-		  re = new PENumber(new verinum(integer_width-1,
-						integer_width));
-		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, integer_width));
-		  (*range_stub)[1] = re;
-		  svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::POUTPUT,
+	$$ = tmp;
+      }
+  | K_output K_integer list_of_identifiers ';'
+      { list<PExpr*>*range_stub = make_range_from_width(integer_width);
+	svector<PWire*>*tmp = pform_make_task_ports(NetNet::POUTPUT,
 						IVL_VT_LOGIC, true,
 						range_stub, $3,
 						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-	| K_inout K_integer list_of_identifiers ';'
-		{ svector<PExpr*>*range_stub = new svector<PExpr*>(2);
-		  PExpr*re;
-		  re = new PENumber(new verinum(integer_width-1,
-						integer_width));
-		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, integer_width));
-		  (*range_stub)[1] = re;
-		  svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINOUT,
+	$$ = tmp;
+      }
+  | K_inout K_integer list_of_identifiers ';'
+      { list<PExpr*>*range_stub = make_range_from_width(integer_width);
+	svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINOUT,
 						IVL_VT_LOGIC, true,
 						range_stub, $3,
 						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
+	$$ = tmp;
+      }
 
   /* Ports can be time with a width of [63:0] (unsigned). */
 
-	| K_input K_time list_of_identifiers ';'
-                { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
-		  PExpr*re;
-		  re = new PENumber(new verinum((uint64_t)63, integer_width));
-		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, integer_width));
-		  (*range_stub)[1] = re;
-		  svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT,
+  | K_input K_time list_of_identifiers ';'
+      { list<PExpr*>*range_stub = make_range_from_width(64);
+	svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINPUT,
 						IVL_VT_LOGIC, false,
 						range_stub, $3,
 						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-	| K_output K_time list_of_identifiers ';'
-		{ svector<PExpr*>*range_stub = new svector<PExpr*>(2);
-		  PExpr*re;
-		  re = new PENumber(new verinum((uint64_t)63, integer_width));
-		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, integer_width));
-		  (*range_stub)[1] = re;
-		  svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::POUTPUT,
+	$$ = tmp;
+      }
+  | K_output K_time list_of_identifiers ';'
+      { list<PExpr*>*range_stub = make_range_from_width(64);
+	svector<PWire*>*tmp = pform_make_task_ports(NetNet::POUTPUT,
 						IVL_VT_LOGIC, false,
 						range_stub, $3,
 						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-	| K_inout K_time list_of_identifiers ';'
-		{ svector<PExpr*>*range_stub = new svector<PExpr*>(2);
-		  PExpr*re;
-		  re = new PENumber(new verinum((uint64_t)63, integer_width));
-		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, integer_width));
-		  (*range_stub)[1] = re;
-		  svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINOUT,
+	$$ = tmp;
+      }
+  | K_inout K_time list_of_identifiers ';'
+      { list<PExpr*>*range_stub = make_range_from_width(64);
+	svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINOUT,
 						IVL_VT_LOGIC, false,
 						range_stub, $3,
 						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
+	$$ = tmp;
+      }
 
   /* Ports can be real or realtime. */
 
@@ -4431,74 +4389,53 @@ task_port_decl
 
   /* Ports can be integer with a width of [31:0]. */
 
-	| K_input K_integer IDENTIFIER
-                { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
-		  PExpr*re;
-		  re = new PENumber(new verinum(integer_width-1,
-						integer_width));
-		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, integer_width));
-		  (*range_stub)[1] = re;
-		  port_declaration_context.port_type = NetNet::PINPUT;
-		  port_declaration_context.var_type = IVL_VT_LOGIC;
-		  port_declaration_context.sign_flag = true;
-		  delete port_declaration_context.range;
-		  port_declaration_context.range = copy_range(range_stub);
-		  svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT,
+  | K_input K_integer IDENTIFIER
+      { list<PExpr*>*range_stub = make_range_from_width(integer_width);
+	port_declaration_context.port_type = NetNet::PINPUT;
+	port_declaration_context.var_type = IVL_VT_LOGIC;
+	port_declaration_context.sign_flag = true;
+	delete port_declaration_context.range;
+	port_declaration_context.range = copy_range(range_stub);
+	svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINPUT,
 						IVL_VT_LOGIC, true,
 						range_stub,
 						list_from_identifier($3),
 						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-	| K_output K_integer IDENTIFIER
-                { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
-		  PExpr*re;
-		  re = new PENumber(new verinum(integer_width-1,
-						integer_width));
-		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, integer_width));
-		  (*range_stub)[1] = re;
-		  port_declaration_context.port_type = NetNet::POUTPUT;
-		  port_declaration_context.var_type = IVL_VT_LOGIC;
-		  port_declaration_context.sign_flag = true;
-		  delete port_declaration_context.range;
-		  port_declaration_context.range = copy_range(range_stub);
-		  svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::POUTPUT,
+	$$ = tmp;
+      }
+  | K_output K_integer IDENTIFIER
+      { list<PExpr*>*range_stub = make_range_from_width(integer_width);
+	port_declaration_context.port_type = NetNet::POUTPUT;
+	port_declaration_context.var_type = IVL_VT_LOGIC;
+	port_declaration_context.sign_flag = true;
+	delete port_declaration_context.range;
+	port_declaration_context.range = copy_range(range_stub);
+	svector<PWire*>*tmp = pform_make_task_ports(NetNet::POUTPUT,
 						IVL_VT_LOGIC, true,
 						range_stub,
 						list_from_identifier($3),
 						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-	| K_inout K_integer IDENTIFIER
-                { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
-		  PExpr*re;
-		  re = new PENumber(new verinum(integer_width-1,
-						integer_width));
-		  (*range_stub)[0] = re;
-		  re = new PENumber(new verinum((uint64_t)0, integer_width));
-		  (*range_stub)[1] = re;
-		  port_declaration_context.port_type = NetNet::PINOUT;
-		  port_declaration_context.var_type = IVL_VT_LOGIC;
-		  port_declaration_context.sign_flag = true;
-		  delete port_declaration_context.range;
-		  port_declaration_context.range = copy_range(range_stub);
-		  svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINOUT,
+	$$ = tmp;
+      }
+  | K_inout K_integer IDENTIFIER
+      { list<PExpr*>*range_stub = make_range_from_width(integer_width);
+	port_declaration_context.port_type = NetNet::PINOUT;
+	port_declaration_context.var_type = IVL_VT_LOGIC;
+	port_declaration_context.sign_flag = true;
+	delete port_declaration_context.range;
+	port_declaration_context.range = copy_range(range_stub);
+	svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINOUT,
 						IVL_VT_LOGIC, true,
 						range_stub,
 						list_from_identifier($3),
 						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
+	$$ = tmp;
+      }
 
   /* Ports can be time with a width of [63:0] (unsigned). */
 
   | K_input K_time IDENTIFIER
-     { svector<PExpr*>*range_stub = make_range_from_width(64);
+     { list<PExpr*>*range_stub = make_range_from_width(64);
        port_declaration_context.port_type = NetNet::PINPUT;
        port_declaration_context.var_type = IVL_VT_LOGIC;
        port_declaration_context.sign_flag = false;
@@ -4512,7 +4449,7 @@ task_port_decl
        $$ = tmp;
      }
   | K_output K_time IDENTIFIER
-     { svector<PExpr*>*range_stub = make_range_from_width(64);
+     { list<PExpr*>*range_stub = make_range_from_width(64);
        port_declaration_context.port_type = NetNet::POUTPUT;
        port_declaration_context.var_type = IVL_VT_LOGIC;
        port_declaration_context.sign_flag = false;
@@ -4526,7 +4463,7 @@ task_port_decl
        $$ = tmp;
      }
   | K_inout K_time IDENTIFIER
-     { svector<PExpr*>*range_stub = make_range_from_width(64);
+     { list<PExpr*>*range_stub = make_range_from_width(64);
        port_declaration_context.port_type = NetNet::PINOUT;
        port_declaration_context.var_type = IVL_VT_LOGIC;
        port_declaration_context.sign_flag = false;
@@ -4585,7 +4522,7 @@ task_port_decl
   /* Ports can be 2-value atom types. */
 
   | K_input atom2_type signed_unsigned_opt IDENTIFIER
-     { svector<PExpr*>*range_stub = make_range_from_width($2);
+     { list<PExpr*>*range_stub = make_range_from_width($2);
        port_declaration_context.port_type = NetNet::PINPUT;
        port_declaration_context.var_type = IVL_VT_BOOL;
        port_declaration_context.sign_flag = $3;
@@ -4599,21 +4536,21 @@ task_port_decl
      }
 
   | K_output atom2_type signed_unsigned_opt IDENTIFIER
-     { svector<PExpr*>*range_stub = make_range_from_width($2);
+     { list<PExpr*>*range_stub = make_range_from_width($2);
        port_declaration_context.port_type = NetNet::POUTPUT;
        port_declaration_context.var_type = IVL_VT_BOOL;
        port_declaration_context.sign_flag = $3;
        delete port_declaration_context.range;
        port_declaration_context.range = copy_range(range_stub);
        svector<PWire*>*tmp = pform_make_task_ports(NetNet::POUTPUT,
-						   IVL_VT_BOOL, $3,
-						   range_stub, list_from_identifier($4),
-						   @1.text, @1.first_line);
+					   IVL_VT_BOOL, $3,
+					   range_stub, list_from_identifier($4),
+					   @1.text, @1.first_line);
        $$ = tmp;
      }
 
   | K_inout atom2_type signed_unsigned_opt IDENTIFIER
-     { svector<PExpr*>*range_stub = make_range_from_width($2);
+     { list<PExpr*>*range_stub = make_range_from_width($2);
        port_declaration_context.port_type = NetNet::PINOUT;
        port_declaration_context.var_type = IVL_VT_BOOL;
        port_declaration_context.sign_flag = $3;

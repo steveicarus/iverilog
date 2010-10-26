@@ -26,6 +26,8 @@
 # include  "PDelays.h"
 # include  "netlist.h"
 # include  <map>
+# include  <list>
+# include  <vector>
 # include  <string>
 class PExpr;
 class PUdp;
@@ -48,13 +50,13 @@ class Module;
 class PGate : public LineInfo {
 
     public:
-      explicit PGate(perm_string name, svector<PExpr*>*pins,
-		     const svector<PExpr*>*del);
+      explicit PGate(perm_string name, list<PExpr*>*pins,
+		     const list<PExpr*>*del);
 
-      explicit PGate(perm_string name, svector<PExpr*>*pins,
+      explicit PGate(perm_string name, list<PExpr*>*pins,
 		     PExpr*del);
 
-      explicit PGate(perm_string name, svector<PExpr*>*pins);
+      explicit PGate(perm_string name, list<PExpr*>*pins);
 
       virtual ~PGate();
 
@@ -70,8 +72,8 @@ class PGate : public LineInfo {
 
       unsigned delay_count() const;
 
-      unsigned pin_count() const { return pins_? pins_->count() : 0; }
-      PExpr*pin(unsigned idx) const { return (*pins_)[idx]; }
+      unsigned pin_count() const { return pins_.size(); }
+      PExpr*pin(unsigned idx) const { return pins_[idx]; }
 
       ivl_drive_t strength0() const;
       ivl_drive_t strength1() const;
@@ -87,7 +89,7 @@ class PGate : public LineInfo {
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
     protected:
-      const svector<PExpr*>& get_pins() const { return *pins_; }
+      const vector<PExpr*>& get_pins() const { return pins_; }
 
       void dump_pins(ostream&out) const;
       void dump_delays(ostream&out) const;
@@ -95,9 +97,11 @@ class PGate : public LineInfo {
     private:
       perm_string name_;
       PDelays delay_;
-      svector<PExpr*>*pins_;
+      vector<PExpr*>pins_;
 
       ivl_drive_t str0_, str1_;
+
+      void set_pins_(list<PExpr*>*pins);
 
     private: // not implemented
       PGate(const PGate&);
@@ -111,8 +115,8 @@ class PGate : public LineInfo {
 class PGAssign  : public PGate {
 
     public:
-      explicit PGAssign(svector<PExpr*>*pins);
-      explicit PGAssign(svector<PExpr*>*pins, svector<PExpr*>*dels);
+      explicit PGAssign(list<PExpr*>*pins);
+      explicit PGAssign(list<PExpr*>*pins, list<PExpr*>*dels);
       ~PGAssign();
 
       void dump(ostream&out, unsigned ind =4) const;
@@ -143,10 +147,10 @@ class PGBuiltin  : public PGate {
 
     public:
       explicit PGBuiltin(Type t, perm_string name,
-			 svector<PExpr*>*pins,
-			 svector<PExpr*>*del);
+			 list<PExpr*>*pins,
+			 list<PExpr*>*del);
       explicit PGBuiltin(Type t, perm_string name,
-			 svector<PExpr*>*pins,
+			 list<PExpr*>*pins,
 			 PExpr*del);
       ~PGBuiltin();
 
@@ -189,7 +193,7 @@ class PGModule  : public PGate {
 	// If the binding of ports is by position, this constructor
 	// builds everything all at once.
       explicit PGModule(perm_string type, perm_string name,
-			svector<PExpr*>*pins);
+			list<PExpr*>*pins);
 
 	// If the binding of ports is by name, this constructor takes
 	// the bindings and stores them for later elaboration.
@@ -201,7 +205,7 @@ class PGModule  : public PGate {
 
 	// Parameter overrides can come as an ordered list, or a set
 	// of named expressions.
-      void set_parameters(svector<PExpr*>*o);
+      void set_parameters(list<PExpr*>*o);
       void set_parameters(named<PExpr*>*pa, unsigned npa);
 
 	// Modules can be instantiated in ranges. The parser uses this
@@ -219,7 +223,7 @@ class PGModule  : public PGate {
 
     private:
       perm_string type_;
-      svector<PExpr*>*overrides_;
+      list<PExpr*>*overrides_;
       named<PExpr*>*pins_;
       unsigned npins_;
 

@@ -939,7 +939,7 @@ void pform_start_generate_nblock(const struct vlltype&li, char*name)
  * case schema can only instantiate exactly one item, so the items
  * need not have a unique number.
  */
-void pform_generate_case_item(const struct vlltype&li, svector<PExpr*>*expr_list)
+void pform_generate_case_item(const struct vlltype&li, list<PExpr*>*expr_list)
 {
       assert(pform_cur_generate);
       assert(pform_cur_generate->scheme_type == PGenerate::GS_CASE);
@@ -958,9 +958,13 @@ void pform_generate_case_item(const struct vlltype&li, svector<PExpr*>*expr_list
       pform_cur_generate->loop_step = 0;
 
       if (expr_list != 0) {
-	    pform_cur_generate->item_test.resize(expr_list->count());
-	    for (unsigned idx = 0 ; idx < expr_list->count() ; idx += 1)
-		  pform_cur_generate->item_test[idx] = expr_list[0][idx];
+	    list<PExpr*>::iterator expr_cur = expr_list->begin();
+	    pform_cur_generate->item_test.resize(expr_list->size());
+	    for (unsigned idx = 0 ; idx < expr_list->size() ; idx += 1) {
+		  pform_cur_generate->item_test[idx] = *expr_cur;
+		  ++ expr_cur;
+	    }
+	    assert(expr_cur == expr_list->end());
       }
 }
 
@@ -1398,7 +1402,7 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
  * and the name that I receive only has the tail component.
  */
 static void pform_set_net_range(perm_string name,
-				const svector<PExpr*>*range,
+				const list<PExpr*>*range,
 				bool signed_flag,
 				ivl_variable_type_t dt,
 				PWSRType rt)
@@ -1415,10 +1419,8 @@ static void pform_set_net_range(perm_string name,
 	    cur->set_range(0, 0, rt, true);
 
       } else {
-	    assert(range->count() == 2);
-	    assert((*range)[0]);
-	    assert((*range)[1]);
-	    cur->set_range((*range)[0], (*range)[1], rt, false);
+	    assert(range->size() == 2);
+	    cur->set_range(range->front(), range->back(), rt, false);
       }
       cur->set_signed(signed_flag);
 
@@ -1427,12 +1429,12 @@ static void pform_set_net_range(perm_string name,
 }
 
 void pform_set_net_range(list<perm_string>*names,
-			 svector<PExpr*>*range,
+			 list<PExpr*>*range,
 			 bool signed_flag,
 			 ivl_variable_type_t dt,
 			 PWSRType rt)
 {
-      assert((range == 0) || (range->count() == 2));
+      assert((range == 0) || (range->size() == 2));
 
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end()
@@ -1484,7 +1486,7 @@ void pform_make_events(list<perm_string>*names, const char*fn, unsigned ln)
  */
 void pform_makegate(PGBuiltin::Type type,
 		    struct str_pair_t str,
-		    svector<PExpr*>* delay,
+		    list<PExpr*>* delay,
 		    const lgate&info,
 		    svector<named_pexpr_t*>*attr)
 {
@@ -1495,8 +1497,9 @@ void pform_makegate(PGBuiltin::Type type,
 	    return;
       }
 
-      for (unsigned idx = 0 ;  idx < info.parms->count() ;  idx += 1) {
-            pform_declare_implicit_nets((*info.parms)[idx]);
+      for (list<PExpr*>::iterator cur = info.parms->begin()
+		 ; cur != info.parms->end() ; ++cur) {
+	    pform_declare_implicit_nets(*cur);
       }
 
       perm_string dev_name = lex_strings.make(info.name);
@@ -1523,7 +1526,7 @@ void pform_makegate(PGBuiltin::Type type,
 
 void pform_makegates(PGBuiltin::Type type,
 		     struct str_pair_t str,
-		     svector<PExpr*>*delay,
+		     list<PExpr*>*delay,
 		     svector<lgate>*gates,
 		     svector<named_pexpr_t*>*attr)
 {
@@ -1559,12 +1562,13 @@ void pform_makegates(PGBuiltin::Type type,
 static void pform_make_modgate(perm_string type,
 			       perm_string name,
 			       struct parmvalue_t*overrides,
-			       svector<PExpr*>*wires,
+			       list<PExpr*>*wires,
 			       PExpr*msb, PExpr*lsb,
 			       const char*fn, unsigned ln)
 {
-      for (unsigned idx = 0 ;  idx < wires->count() ;  idx += 1) {
-            pform_declare_implicit_nets((*wires)[idx]);
+      for (list<PExpr*>::iterator idx = wires->begin()
+		 ; idx != wires->end() ; ++idx) {
+	    pform_declare_implicit_nets(*idx);
       }
 
       PGModule*cur = new PGModule(type, name, wires);
@@ -1657,9 +1661,9 @@ void pform_make_modgates(perm_string type,
 		    /* If there are no parameters, the parser will be
 		       tricked into thinking it is one empty
 		       parameter. This fixes that. */
-		  if ((cur.parms->count() == 1) && (cur.parms[0][0] == 0)) {
+		  if ((cur.parms->size() == 1) && (cur.parms->front() == 0)) {
 			delete cur.parms;
-			cur.parms = new svector<PExpr*>(0);
+			cur.parms = new list<PExpr*>;
 		  }
 		  pform_make_modgate(type, cur_name, overrides,
 				     cur.parms,
@@ -1667,7 +1671,7 @@ void pform_make_modgates(perm_string type,
 				     cur.file, cur.lineno);
 
 	    } else {
-		  svector<PExpr*>*wires = new svector<PExpr*>(0);
+		  list<PExpr*>*wires = new list<PExpr*>;
 		  pform_make_modgate(type, cur_name, overrides,
 				     wires,
 				     cur.range[0], cur.range[1],
@@ -1679,7 +1683,7 @@ void pform_make_modgates(perm_string type,
 }
 
 static PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
-			      svector<PExpr*>*del,
+			      list<PExpr*>*del,
 			      struct str_pair_t str)
 {
         /* Implicit declaration of nets on the LHS of a continuous
@@ -1687,9 +1691,9 @@ static PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
       if (generation_flag != GN_VER1995)
             pform_declare_implicit_nets(lval);
 
-      svector<PExpr*>*wires = new svector<PExpr*>(2);
-      (*wires)[0] = lval;
-      (*wires)[1] = rval;
+      list<PExpr*>*wires = new list<PExpr*>;
+      wires->push_back(lval);
+      wires->push_back(rval);
 
       PGAssign*cur;
 
@@ -1709,19 +1713,19 @@ static PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
       return cur;
 }
 
-void pform_make_pgassign_list(svector<PExpr*>*alist,
-			      svector<PExpr*>*del,
+void pform_make_pgassign_list(list<PExpr*>*alist,
+			      list<PExpr*>*del,
 			      struct str_pair_t str,
 			      const char* fn,
 			      unsigned lineno)
 {
-	PGAssign*tmp;
-	for (unsigned idx = 0 ;  idx < alist->count()/2 ;  idx += 1) {
-	      tmp = pform_make_pgassign((*alist)[2*idx],
-					(*alist)[2*idx+1],
-					del, str);
-	      FILE_NAME(tmp, fn, lineno);
-	}
+      assert(alist->size() % 2 == 0);
+      while (! alist->empty()) {
+	    PExpr*lval = alist->front(); alist->pop_front();
+	    PExpr*rval = alist->front(); alist->pop_front();
+	    PGAssign*tmp = pform_make_pgassign(lval, rval, del, str);
+	    FILE_NAME(tmp, fn, lineno);
+      }
 }
 
 /*
@@ -1783,7 +1787,7 @@ void pform_module_define_port(const struct vlltype&li,
 			      NetNet::Type type,
 			      ivl_variable_type_t data_type,
 			      bool signed_flag,
-			      svector<PExpr*>*range,
+			      list<PExpr*>*range,
 			      svector<named_pexpr_t*>*attr)
 {
       PWire*cur = pform_get_wire_in_scope(name);
@@ -1811,10 +1815,10 @@ void pform_module_define_port(const struct vlltype&li,
 	                   true);
 
       } else {
-	    assert(range->count() == 2);
-	    assert((*range)[0]);
-	    assert((*range)[1]);
-	    cur->set_range((*range)[0], (*range)[1],
+	    assert(range->size() == 2);
+	    assert(range->front());
+	    assert(range->back());
+	    cur->set_range(range->front(), range->back(),
 	                   (type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH,
 	                   false);
       }
@@ -1920,7 +1924,7 @@ void pform_makewire(const vlltype&li, perm_string name,
  * pform_makewire above.
  */
 void pform_makewire(const vlltype&li,
-		    svector<PExpr*>*range,
+		    list<PExpr*>*range,
 		    bool signed_flag,
 		    list<perm_string>*names,
 		    NetNet::Type type,
@@ -1948,9 +1952,9 @@ void pform_makewire(const vlltype&li,
  * This form makes nets with delays and continuous assignments.
  */
 void pform_makewire(const vlltype&li,
-		    svector<PExpr*>*range,
+		    list<PExpr*>*range,
 		    bool signed_flag,
-		    svector<PExpr*>*delay,
+		    list<PExpr*>*delay,
 		    str_pair_t str,
 		    net_decl_assign_t*decls,
 		    NetNet::Type type,
@@ -2058,7 +2062,7 @@ void pform_set_port_type(perm_string name, NetNet::PortType pt,
 svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 				      ivl_variable_type_t vtype,
 				      bool signed_flag,
-				      svector<PExpr*>*range,
+				      list<PExpr*>*range,
 				      list<perm_string>*names,
 				      const char* file,
 				      unsigned lineno)
@@ -2084,8 +2088,10 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 	    curw->set_signed(signed_flag);
 
 	      /* If there is a range involved, it needs to be set. */
-	    if (range)
-		  curw->set_range((*range)[0], (*range)[1], SR_PORT, false);
+	    if (range) {
+		  assert(range->size() == 2);
+		  curw->set_range(range->front(), range->back(), SR_PORT, false);
+	    }
 
 	    svector<PWire*>*tmp = new svector<PWire*>(*res, curw);
 
@@ -2166,7 +2172,7 @@ LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,
 
 void pform_set_parameter(const struct vlltype&loc,
 			 perm_string name, ivl_variable_type_t type,
-			 bool signed_flag, svector<PExpr*>*range, PExpr*expr,
+			 bool signed_flag, list<PExpr*>*range, PExpr*expr,
 			 LexicalScope::range_t*value_range)
 {
       LexicalScope*scope = lexical_scope;
@@ -2201,11 +2207,11 @@ void pform_set_parameter(const struct vlltype&loc,
 
       parm.type = type;
       if (range) {
-	    assert(range->count() == 2);
-	    assert((*range)[0]);
-	    assert((*range)[1]);
-	    parm.msb = (*range)[0];
-	    parm.lsb = (*range)[1];
+	    assert(range->size() == 2);
+	    assert(range->front());
+	    assert(range->back());
+	    parm.msb = range->front();
+	    parm.lsb = range->back();
       } else {
 	    parm.msb = 0;
 	    parm.lsb = 0;
@@ -2219,7 +2225,7 @@ void pform_set_parameter(const struct vlltype&loc,
 
 void pform_set_localparam(const struct vlltype&loc,
 			  perm_string name, ivl_variable_type_t type,
-			  bool signed_flag, svector<PExpr*>*range, PExpr*expr)
+			  bool signed_flag, list<PExpr*>*range, PExpr*expr)
 {
       LexicalScope*scope = lexical_scope;
 
@@ -2249,11 +2255,11 @@ void pform_set_localparam(const struct vlltype&loc,
 
       parm.type = type;
       if (range) {
-	    assert(range->count() == 2);
-	    assert((*range)[0]);
-	    assert((*range)[1]);
-	    parm.msb = (*range)[0];
-	    parm.lsb = (*range)[1];
+	    assert(range->size() == 2);
+	    assert(range->front());
+	    assert(range->back());
+	    parm.msb = range->front();
+	    parm.lsb = range->back();
       } else {
 	    parm.msb  = 0;
 	    parm.lsb  = 0;
@@ -2324,16 +2330,18 @@ extern PSpecPath*pform_make_specify_edge_path(const struct vlltype&li,
       return tmp;
 }
 
-extern PSpecPath* pform_assign_path_delay(PSpecPath*path, svector<PExpr*>*del)
+extern PSpecPath* pform_assign_path_delay(PSpecPath*path, list<PExpr*>*del)
 {
       if (path == 0)
 	    return 0;
 
       assert(path->delays.size() == 0);
 
-      path->delays.resize(del->count());
-      for (unsigned idx = 0 ;  idx < path->delays.size() ;  idx += 1)
-	    path->delays[idx] = (*del)[idx];
+      path->delays.resize(del->size());
+      for (unsigned idx = 0 ;  idx < path->delays.size() ;  idx += 1) {
+	    path->delays[idx] = del->front();
+	    del->pop_front();
+      }
 
       delete del;
 
@@ -2350,7 +2358,7 @@ extern void pform_module_specify_path(PSpecPath*obj)
 
 void pform_set_port_type(const struct vlltype&li,
 			 list<perm_string>*names,
-			 svector<PExpr*>*range,
+			 list<PExpr*>*range,
 			 bool signed_flag,
 			 NetNet::PortType pt)
 {

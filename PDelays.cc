@@ -55,12 +55,14 @@ void PDelays::set_delay(PExpr*del)
 }
 
 
-void PDelays::set_delays(const svector<PExpr*>*del, bool df)
+void PDelays::set_delays(const list<PExpr*>*del, bool df)
 {
       assert(del);
-      assert(del->count() <= 3);
-      for (unsigned idx = 0 ;  idx < del->count() ;  idx += 1)
-	    delay_[idx] = (*del)[idx];
+      assert(del->size() <= 3);
+
+      list<PExpr*>::const_iterator cur = del->begin();
+      for (unsigned idx = 0 ;  cur != del->end() ;  idx += 1, ++cur)
+	    delay_[idx] = *cur;
 
       delete_flag_ = df;
 }

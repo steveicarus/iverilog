@@ -21,6 +21,7 @@
 
 # include  "svector.h"
 # include  <string>
+# include  <list>
 # include  <iostream>
 
 #ifdef __GNUC__
@@ -48,7 +49,7 @@ class PDelays {
 	   this object takes ownership of the expressions, and will
 	   delete it in the destructor. */
       void set_delay(PExpr*);
-      void set_delays(const svector<PExpr*>*del, bool delete_flag=true);
+      void set_delays(const list<PExpr*>*del, bool delete_flag=true);
 
       unsigned delay_count() const;
 

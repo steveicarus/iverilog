@@ -468,15 +468,16 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	  case PTF_REG:
 	  case PTF_REG_S:
 	    if (return_type_.range) {
-		  probe_expr_width(des, scope, (*return_type_.range)[0]);
-		  probe_expr_width(des, scope, (*return_type_.range)[1]);
+		  ivl_assert(*this, return_type_.range->size() == 2);
+		  probe_expr_width(des, scope, return_type_.range->at(0));
+		  probe_expr_width(des, scope, return_type_.range->at(1));
 
 		  need_constant_expr = true;
 		  NetExpr*me = elab_and_eval(des, scope,
-					     (*return_type_.range)[0], -1);
+					     return_type_.range->at(0), -1);
 		  assert(me);
 		  NetExpr*le = elab_and_eval(des, scope,
-					     (*return_type_.range)[1], -1);
+					     return_type_.range->at(1), -1);
 		  assert(le);
 		  need_constant_expr = false;
 

@@ -1105,7 +1105,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	// order of the declaration. If the source instantiation uses
 	// bind by order, this is the same as the source list. Otherwise,
 	// the source list is rearranged by name binding into this list.
-      svector<PExpr*>pins (rmod->port_count());
+      vector<PExpr*>pins (rmod->port_count());
 
 	// If the instance has a pins_ member, then we know we are
 	// binding by name. Therefore, make up a pins array that
@@ -1204,7 +1204,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	// to a concatenation, or connected to an internally
 	// unconnected port.
 
-      for (unsigned idx = 0 ;  idx < pins.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < pins.size() ;  idx += 1) {
 
 	      // Skip unconnected module ports. This happens when a
 	      // null parameter is passed in.
@@ -1748,7 +1748,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	   module or primitive, it interprets them as parameter
 	   overrides. Correct that misconception here. */
       if (overrides_) {
-	    if (overrides_->count() > 2) {
+	    if (overrides_->size() > 2) {
 		  cerr << get_fileline() << ": error: UDPs take at most two "
 		          "delay arguments." << endl;
 		  des->errors += 1;
@@ -1782,7 +1782,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	// bind by order, this is the same as the source
 	// list. Otherwise, the source list is rearranged by name
 	// binding into this list.
-      svector<PExpr*>pins;
+      vector<PExpr*>pins;
 
 	// Detect binding by name. If I am binding by name, then make
 	// up a pins array that reflects the positions of the named
@@ -1790,7 +1790,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	// place, then get the binding from the base class.
       if (pins_) {
 	    unsigned nexp = udp->ports.count();
-	    pins = svector<PExpr*>(nexp);
+	    pins = vector<PExpr*>(nexp);
 
 	      // Scan the bindings, matching them with port names.
 	    for (unsigned idx = 0 ;  idx < npins_ ;  idx += 1) {
@@ -2488,10 +2488,10 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
 	    PCase::Item*cur = (*items_)[idx];
 
-	    if (cur->expr.count() == 0)
+	    if (cur->expr.empty())
 		  icount += 1;
 	    else
-		  icount += cur->expr.count();
+		  icount += cur->expr.size();
       }
 
       NetCase*res = new NetCase(type_, expr, icount);
@@ -2507,7 +2507,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 	    assert(inum < icount);
 	    PCase::Item*cur = (*items_)[idx];
 
-	    if (cur->expr.count() == 0) {
+	    if (cur->expr.empty()) {
 		    /* If there are no expressions, then this is the
 		       default case. */
 		  NetProc*st = 0;
@@ -2517,17 +2517,19 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 		  res->set_case(inum, 0, st);
 		  inum += 1;
 
-	    } else for (unsigned e = 0; e < cur->expr.count(); e += 1) {
+	    } else for (list<PExpr*>::iterator idx_expr = cur->expr.begin()
+			      ; idx_expr != cur->expr.end() ; ++idx_expr) {
 
 		    /* If there are one or more expressions, then
 		       iterate over the guard expressions, elaborating
 		       a separate case for each. (Yes, the statement
 		       will be elaborated again for each.) */
+		  PExpr*cur_expr = *idx_expr;
 		  NetExpr*gu = 0;
 		  NetProc*st = 0;
-		  assert(cur->expr[e]);
-		  probe_expr_width(des, scope, cur->expr[e]);
-		  gu = elab_and_eval(des, scope, cur->expr[e], -1);
+		  assert(cur_expr);
+		  probe_expr_width(des, scope, cur_expr);
+		  gu = elab_and_eval(des, scope, cur_expr, -1);
 
 		  if (cur->stat)
 			st = cur->stat->elaborate(des, scope);

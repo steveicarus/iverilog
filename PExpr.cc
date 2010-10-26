@@ -26,6 +26,7 @@
 # include  "PWire.h"
 # include  "Module.h"
 # include  "netmisc.h"
+# include  "util.h"
 # include  <typeinfo>
 
 PExpr::PExpr()
@@ -161,14 +162,24 @@ PECallFunction::PECallFunction(perm_string n)
 }
 
 // NOTE: Anachronism. Try to work all use of svector out.
-PECallFunction::PECallFunction(const pform_name_t&n, const svector<PExpr *> &parms)
-: path_(n), parms_(vector_from_svector(parms))
+PECallFunction::PECallFunction(const pform_name_t&n, const list<PExpr *> &parms)
+: path_(n), parms_(parms.size())
 {
+      int tmp_idx = 0;
+      assert(parms_.size() == parms.size());
+      for (list<PExpr*>::const_iterator idx = parms.begin()
+		 ; idx != parms.end() ; ++idx)
+	    parms_[tmp_idx++] = *idx;
 }
 
-PECallFunction::PECallFunction(perm_string n, const svector<PExpr*>&parms)
-: path_(pn_from_ps(n)), parms_(vector_from_svector(parms))
+PECallFunction::PECallFunction(perm_string n, const list<PExpr*>&parms)
+: path_(pn_from_ps(n)), parms_(parms.size())
 {
+      int tmp_idx = 0;
+      assert(parms_.size() == parms.size());
+      for (list<PExpr*>::const_iterator idx = parms.begin()
+		 ; idx != parms.end() ; ++idx)
+	    parms_[tmp_idx++] = *idx;
 }
 
 PECallFunction::~PECallFunction()
@@ -191,9 +202,14 @@ bool PECallFunction::has_aa_term(Design*des, NetScope*scope) const
       return flag;
 }
 
-PEConcat::PEConcat(const svector<PExpr*>&p, PExpr*r)
-: parms_(p), tested_widths_(p.count()), repeat_(r)
+PEConcat::PEConcat(const list<PExpr*>&p, PExpr*r)
+: parms_(p.size()), tested_widths_(p.size()), repeat_(r)
 {
+      int tmp_idx = 0;
+      assert(parms_.size() == p.size());
+      for (list<PExpr*>::const_iterator idx = p.begin()
+		 ; idx != p.end() ; ++idx)
+	    parms_[tmp_idx++] = *idx;
 }
 
 PEConcat::~PEConcat()
@@ -203,7 +219,7 @@ PEConcat::~PEConcat()
 
 void PEConcat::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 {
-      for (unsigned idx = 0 ; idx < parms_.count() ; idx += 1) {
+      for (unsigned idx = 0 ; idx < parms_.size() ; idx += 1) {
 	    parms_[idx]->declare_implicit_nets(scope, type);
       }
 }
@@ -211,7 +227,7 @@ void PEConcat::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
 bool PEConcat::has_aa_term(Design*des, NetScope*scope) const
 {
       bool flag = false;
-      for (unsigned idx = 0 ; idx < parms_.count() ; idx += 1) {
+      for (unsigned idx = 0 ; idx < parms_.size() ; idx += 1) {
 	    flag = parms_[idx]->has_aa_term(des, scope) || flag;
       }
       if (repeat_)

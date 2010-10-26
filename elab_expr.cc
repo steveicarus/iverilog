@@ -1617,7 +1617,7 @@ unsigned PEConcat::test_width(Design*des, NetScope*scope,
       expr_type_ = IVL_VT_LOGIC;
 
       unsigned count_width = 0;
-      for (unsigned idx = 0 ; idx < parms_.count() ; idx += 1) {
+      for (unsigned idx = 0 ; idx < parms_.size() ; idx += 1) {
 	    tested_widths_[idx] = parms_[idx]->test_width(des, scope, 0, 0, expr_type__, unsized_flag);
 	    count_width += tested_widths_[idx];
       }
@@ -1730,10 +1730,10 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 
       unsigned wid_sum = 0;
       unsigned parm_cnt = 0;
-      svector<NetExpr*> parms(parms_.count());
+      svector<NetExpr*> parms(parms_.size());
 
 	/* Elaborate all the parameters and attach them to the concat node. */
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
 	    if (parms_[idx] == 0) {
 		  cerr << get_fileline() << ": error: Missing expression "
 		       << (idx+1) << " of concatenation list." << endl;

@@ -169,14 +169,14 @@ void PEConcat::dump(ostream&out) const
       if (repeat_)
 	    out << "{" << *repeat_;
 
-      if (parms_.count() == 0) {
+      if (parms_.size() == 0) {
 	    out << "{}";
 	    return;
       }
 
       out << "{";
       if (parms_[0]) out << *parms_[0];
-      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
 	    out << ", ";
 	    if (parms_[idx]) out << *parms_[idx];
       }
@@ -478,16 +478,18 @@ void PGModule::dump(ostream&out, unsigned ind) const
       out << setw(ind) << "" << type_ << " ";
 
 	// If parameters are overridden by order, dump them.
-      if (overrides_ && overrides_->count() > 0) {
+      if (overrides_ && overrides_->size() > 0) {
 	    assert(parms_ == 0);
             out << "#(";
 
-	    if ((*overrides_)[0] == 0)
+	    list<PExpr*>::const_iterator idx = overrides_->begin();
+
+	    if (*idx == 0)
 		  out << "<nil>";
 	    else
-		  out << *((*overrides_)[0]);
-	    for (unsigned idx = 1 ;  idx < overrides_->count() ;  idx += 1) {
-	          out << "," << *((*overrides_)[idx]);
+		  out << *idx;
+	    for ( ;  idx != overrides_->end() ;  ++ idx) {
+	          out << "," << *idx;
 	    }
 	    out << ") ";
       }
@@ -600,12 +602,12 @@ void PCallTask::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << path_;
 
-      if (parms_.count() > 0) {
+      if (parms_.size() > 0) {
 	    out << "(";
 	    if (parms_[0])
 		  out << *parms_[0];
 
-	    for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+	    for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
 		  out << ", ";
 		  if (parms_[idx])
 			out << *parms_[idx];
@@ -636,14 +638,15 @@ void PCase::dump(ostream&out, unsigned ind) const
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
 	    PCase::Item*cur = (*items_)[idx];
 
-	    if (cur->expr.count() == 0) {
+	    if (cur->expr.size() == 0) {
 		  out << setw(ind+2) << "" << "default:";
 
 	    } else {
-		  out << setw(ind+2) << "" << *cur->expr[0];
+		  list<PExpr*>::iterator idx_exp = cur->expr.begin();
+		  out << setw(ind+2) << "" << *idx_exp;
 
-		  for(unsigned e = 1 ; e < cur->expr.count() ; e += 1)
-			out << ", " << *cur->expr[e];
+		  for( ; idx_exp != cur->expr.end() ; ++idx_exp)
+			out << ", " << *idx_exp;
 
 		  out << ":";
 	    }

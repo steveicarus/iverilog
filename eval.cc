@@ -147,7 +147,7 @@ verinum* PEConcat::eval_const(Design*des, NetScope*scope) const
       if (accum == 0)
 	    return 0;
 
-      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
 
 	    verinum*tmp = parms_[idx]->eval_const(des, scope);
 	    if (tmp == 0) {

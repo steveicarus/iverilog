@@ -24,6 +24,7 @@
 # include  "svector.h"
 # include  "StringHeap.h"
 # include  <string>
+# include  <list>
 class Design;
 class NetScope;
 class PWire;
@@ -44,7 +45,7 @@ enum PTaskFuncEnum {
 
 struct PTaskFuncArg {
       PTaskFuncEnum type;
-      svector<PExpr*>*range;
+      vector<PExpr*>*range;
 };
 
 /*

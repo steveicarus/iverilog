@@ -89,7 +89,7 @@ typedef named<PExpr*> named_pexpr_t;
 typedef named<verinum> named_number_t;
 
 struct parmvalue_t {
-      svector<PExpr*>*by_order;
+      list<PExpr*>*by_order;
       svector<named_pexpr_t*>*by_name;
 };
 
@@ -105,7 +105,7 @@ struct net_decl_assign_t {
 struct enum_type_t {
       ivl_variable_type_t base_type;
       bool signed_flag;
-      auto_ptr< svector<PExpr*> > range;
+      auto_ptr< list<PExpr*> > range;
       auto_ptr< list<named_number_t> > names;
 };
 
@@ -118,7 +118,7 @@ struct lgate {
       }
 
       string name;
-      svector<PExpr*>*parms;
+      list<PExpr*>*parms;
       svector<named_pexpr_t*>*parms_by_name;
 
       PExpr*range[2];
@@ -165,7 +165,7 @@ extern void pform_module_define_port(const struct vlltype&li,
 				     NetNet::Type type,
 				     ivl_variable_type_t data_type,
 				     bool signed_flag,
-				     svector<PExpr*>*range,
+				     list<PExpr*>*range,
 				     svector<named_pexpr_t*>*attr);
 
 extern Module::port_t* pform_module_port_reference(perm_string name,
@@ -220,7 +220,7 @@ extern void pform_start_generate_if(const struct vlltype&li, PExpr*test);
 extern void pform_start_generate_else(const struct vlltype&li);
 extern void pform_start_generate_case(const struct vlltype&lp, PExpr*test);
 extern void pform_start_generate_nblock(const struct vlltype&lp, char*name);
-extern void pform_generate_case_item(const struct vlltype&lp, svector<PExpr*>*test);
+extern void pform_generate_case_item(const struct vlltype&lp, list<PExpr*>*test);
 extern void pform_generate_block_name(char*name);
 extern void pform_endgenerate();
 
@@ -243,7 +243,7 @@ extern void pform_makewire(const struct vlltype&li, perm_string name,
 
 /* This form handles simple declarations */
 extern void pform_makewire(const struct vlltype&li,
-			   svector<PExpr*>*range,
+			   list<PExpr*>*range,
 			   bool signed_flag,
 			   list<perm_string>*names,
 			   NetNet::Type type,
@@ -254,9 +254,9 @@ extern void pform_makewire(const struct vlltype&li,
 
 /* This form handles assignment declarations. */
 extern void pform_makewire(const struct vlltype&li,
-			   svector<PExpr*>*range,
+			   list<PExpr*>*range,
 			   bool signed_flag,
-			   svector<PExpr*>*delay,
+			   list<PExpr*>*delay,
 			   str_pair_t str,
 			   net_decl_assign_t*assign_list,
 			   NetNet::Type type,
@@ -270,14 +270,14 @@ extern void pform_make_reginit(const struct vlltype&li,
      it. The second form takes a single name. */
 extern void pform_set_port_type(const struct vlltype&li,
 				list<perm_string>*names,
-				svector<PExpr*>*range,
+				list<PExpr*>*range,
 				bool signed_flag,
 				NetNet::PortType);
 extern void pform_set_port_type(perm_string nm, NetNet::PortType pt,
 				const char*file, unsigned lineno);
 
 extern void pform_set_net_range(list<perm_string>*names,
-				svector<PExpr*>*,
+				list<PExpr*>*,
 				bool signed_flag,
 				ivl_variable_type_t,
 				PWSRType rt = SR_NET);
@@ -306,13 +306,13 @@ extern void pform_set_parameter(const struct vlltype&loc,
 				perm_string name,
 				ivl_variable_type_t type,
 				bool signed_flag,
-				svector<PExpr*>*range,
+				list<PExpr*>*range,
 				PExpr*expr, LexicalScope::range_t*value_range);
 extern void pform_set_localparam(const struct vlltype&loc,
 				 perm_string name,
 				 ivl_variable_type_t type,
 				 bool signed_flag,
-				 svector<PExpr*>*range,
+				 list<PExpr*>*range,
 				 PExpr*expr);
 extern void pform_set_defparam(const pform_name_t&name, PExpr*expr);
 
@@ -329,7 +329,7 @@ extern PSpecPath*pform_make_specify_edge_path(const struct vlltype&li,
 					 list<perm_string>*src, char pol,
 					 bool full_flag, list<perm_string>*dst,
 					 PExpr*data_source_expression);
-extern PSpecPath*pform_assign_path_delay(PSpecPath*obj, svector<PExpr*>*delays);
+extern PSpecPath*pform_assign_path_delay(PSpecPath*obj, list<PExpr*>*delays);
 
 extern void pform_module_specify_path(PSpecPath*obj);
 
@@ -356,7 +356,7 @@ extern void pform_make_reals(list<perm_string>*names,
  */
 extern void pform_makegates(PGBuiltin::Type type,
 			    struct str_pair_t str,
-			    svector<PExpr*>*delay,
+			    list<PExpr*>*delay,
 			    svector<lgate>*gates,
 			    svector<named_pexpr_t*>*attr);
 
@@ -365,8 +365,8 @@ extern void pform_make_modgates(perm_string type,
 				svector<lgate>*gates);
 
 /* Make a continuous assignment node, with optional bit- or part- select. */
-extern void pform_make_pgassign_list(svector<PExpr*>*alist,
-				     svector<PExpr*>*del,
+extern void pform_make_pgassign_list(list<PExpr*>*alist,
+				     list<PExpr*>*del,
 				     struct str_pair_t str,
 				     const char* fn, unsigned lineno);
 
@@ -375,7 +375,7 @@ extern void pform_make_pgassign_list(svector<PExpr*>*alist,
 extern svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 					     ivl_variable_type_t vtype,
 					     bool signed_flag,
-					     svector<PExpr*>*range,
+					     list<PExpr*>*range,
 					     list<perm_string>*names,
 					     const char* file,
 					     unsigned lineno);

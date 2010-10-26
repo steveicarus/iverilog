@@ -160,7 +160,7 @@ ostream& operator << (ostream&, const PExpr&);
 class PEConcat : public PExpr {
 
     public:
-      PEConcat(const svector<PExpr*>&p, PExpr*r =0);
+      PEConcat(const list<PExpr*>&p, PExpr*r =0);
       ~PEConcat();
 
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
@@ -187,7 +187,7 @@ class PEConcat : public PExpr {
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
 				     bool bidirectional_flag) const;
     private:
-      svector<PExpr*>parms_;
+      vector<PExpr*>parms_;
       std::valarray<unsigned>tested_widths_;
 
       PExpr*repeat_;
@@ -661,8 +661,8 @@ class PECallFunction : public PExpr {
       explicit PECallFunction(perm_string n);
 
 	// svector versions. Should be removed!
-      explicit PECallFunction(const pform_name_t&n, const svector<PExpr *> &parms);
-      explicit PECallFunction(perm_string n, const svector<PExpr *> &parms);
+      explicit PECallFunction(const pform_name_t&n, const list<PExpr *> &parms);
+      explicit PECallFunction(perm_string n, const list<PExpr *> &parms);
 
       ~PECallFunction();
 

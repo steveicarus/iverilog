@@ -107,7 +107,7 @@ NetAssign_* PEConcat::elaborate_lval(Design*des,
 
       NetAssign_*res = 0;
 
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
 
 	    if (parms_[idx] == 0) {
 		  cerr << get_fileline() << ": error: Empty expressions "

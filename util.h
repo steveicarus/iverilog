@@ -20,6 +20,8 @@
  */
 
 # include  <map>
+# include  <vector>
+# include  <list>
 # include  "StringHeap.h"
 # include  "verinum.h"
 

@@ -20,6 +20,7 @@
  */
 
 # include  <string>
+# include  <list>
 # include  "ivl_target.h"
 # include  "svector.h"
 # include  "StringHeap.h"
@@ -181,21 +182,21 @@ class PBlock  : public PScope, public Statement {
 class PCallTask  : public Statement {
 
     public:
-      explicit PCallTask(const pform_name_t&n, const svector<PExpr*>&parms);
-      explicit PCallTask(perm_string n, const svector<PExpr*>&parms);
+      explicit PCallTask(const pform_name_t&n, const list<PExpr*>&parms);
+      explicit PCallTask(perm_string n, const list<PExpr*>&parms);
       ~PCallTask();
 
       const pform_name_t& path() const;
 
-      unsigned nparms() const { return parms_.count(); }
+      unsigned nparms() const { return parms_.size(); }
 
       PExpr*&parm(unsigned idx)
-	    { assert(idx < parms_.count());
+	    { assert(idx < parms_.size());
 	      return parms_[idx];
 	    }
 
       PExpr* parm(unsigned idx) const
-	    { assert(idx < parms_.count());
+	    { assert(idx < parms_.size());
 	      return parms_[idx];
 	    }
 
@@ -207,14 +208,14 @@ class PCallTask  : public Statement {
       NetProc* elaborate_usr(Design*des, NetScope*scope) const;
 
       pform_name_t path_;
-      svector<PExpr*> parms_;
+      vector<PExpr*> parms_;
 };
 
 class PCase  : public Statement {
 
     public:
       struct Item {
-	    svector<PExpr*>expr;
+	    list<PExpr*>expr;
 	    Statement*stat;
       };
 

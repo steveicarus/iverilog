@@ -1321,17 +1321,17 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 		  assert(parms_ == 0);
 		  list<perm_string>::const_iterator cur
 			= mod->param_names.begin();
-		  unsigned jdx = 0;
+		  list<PExpr*>::const_iterator jdx = overrides_->begin();
 		  for (;;) {
-			if (jdx >= overrides_->count())
+			if (jdx == overrides_->end())
 			      break;
 			if (cur == mod->param_names.end())
 			      break;
 
-			replace[*cur] = (*overrides_)[jdx];
+			replace[*cur] = *jdx;
 
-			jdx += 1;
-			cur ++;
+			++ jdx;
+			++ cur;
 		  }
 	    }
 

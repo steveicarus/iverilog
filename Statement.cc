@@ -114,14 +114,26 @@ void PBlock::set_statement(const svector<Statement*>&st)
       list_ = st;
 }
 
-PCallTask::PCallTask(const pform_name_t&n, const svector<PExpr*>&p)
-: path_(n), parms_(p)
+PCallTask::PCallTask(const pform_name_t&n, const list<PExpr*>&p)
+: path_(n), parms_(p.size())
 {
+      list<PExpr*>::const_iterator cur = p.begin();
+      for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
+	    parms_[idx] = *cur;
+	    ++cur;
+      }
+      assert(cur == p.end());
 }
 
-PCallTask::PCallTask(perm_string n, const svector<PExpr*>&p)
-: parms_(p)
+PCallTask::PCallTask(perm_string n, const list<PExpr*>&p)
+: parms_(p.size())
 {
+      list<PExpr*>::const_iterator cur = p.begin();
+      for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
+	    parms_[idx] = *cur;
+	    ++cur;
+      }
+      assert(cur == p.end());
       path_.push_back(name_component_t(n));
 }
 

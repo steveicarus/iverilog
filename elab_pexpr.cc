@@ -144,14 +144,14 @@ NetEConcat* PEConcat::elaborate_pexpr(Design*des, NetScope*scope) const
       }
 
 	/* Make the empty concat expression. */
-      NetEConcat*tmp = new NetEConcat(parms_.count(), repeat);
+      NetEConcat*tmp = new NetEConcat(parms_.size(), repeat);
       tmp->set_line(*this);
 
 	/* Elaborate all the operands and attach them to the concat
 	   node. Use the elaborate_pexpr method instead of the
 	   elaborate_expr method. */
       bool fail = false;
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
 	    assert(parms_[idx]);
 	    NetExpr*ex = parms_[idx]->elaborate_pexpr(des, scope);
 	    if (ex == 0) continue;
