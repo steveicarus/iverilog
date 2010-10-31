@@ -161,6 +161,13 @@ static inline bool gn_var_can_be_uwire(void)
       return false;
 }
 
+static inline bool gn_system_verilog(void)
+{
+      if (generation_flag == GN_VER2009)
+	    return true;
+      return false;
+}
+
 /* The bits of these GN_KEYWORDS_* constants define non-intersecting
    sets of keywords. The compiler enables groups of keywords by setting
    lexor_keyword_mask with the OR of the bits for the keywords to be

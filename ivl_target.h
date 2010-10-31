@@ -405,6 +405,7 @@ typedef enum ivl_variable_type_e {
       IVL_VT_REAL    = 2,
       IVL_VT_BOOL    = 3,
       IVL_VT_LOGIC   = 4,
+      IVL_VT_STRING  = 5,
       IVL_VT_VECTOR = IVL_VT_LOGIC /* For compatibility */
 } ivl_variable_type_t;
 

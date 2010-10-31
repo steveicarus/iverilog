@@ -2200,6 +2200,41 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    }
       }
 
+	// Maybe this is a method attached to an enumeration name? If
+	// this is system verilog, then test to see if the name is
+	// really a method attached to an object.
+
+      if (gn_system_verilog() && found_in==0 && path_.size() >= 2) {
+	    pform_name_t use_path = path_;
+	    perm_string method_name = peek_tail_name(use_path);
+	    use_path.pop_back();
+
+	    found_in = symbol_search(this, des, scope, use_path,
+				     net, par, eve, ex1, ex2);
+
+	    if (net != 0) {
+		  const char*func_name = 0;
+		  if (method_name == "name") {
+			func_name = "$ivl_method$name";
+		  } else {
+			cerr << get_fileline() << ": error: "
+			     << "Unknown method name `" << method_name << "'"
+			     << " attached to " << use_path << "." << endl;
+			des->errors += 1;
+			return elaborate_expr_net(des, scope, net, found_in, false);
+		  }
+
+		  NetESFunc*tmp = new NetESFunc(func_name, IVL_VT_STRING, 0, 1);
+		  tmp->parm(0, elaborate_expr_net(des, scope, net, found_in, false));
+		  tmp->set_line(*this);
+
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: Generate "
+			     << func_name << "(" << use_path << ")" << endl;
+		  return tmp;
+	    }
+      }
+
 	// At this point we've exhausted all the possibilities that
 	// are not scopes. If this is not a system task argument, then
 	// it cannot be a scope name, so give up.
@@ -2207,7 +2242,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       if (! sys_task_arg) {
 	      // I cannot interpret this identifier. Error message.
 	    cerr << get_fileline() << ": error: Unable to bind wire/reg/memory "
-		  "`" << path_ << "' in `" << scope_path(scope) << "'" << endl;
+		  "`" << path_ << "' in `" << scope_path(scope) << "'"<< endl;
 	    des->errors += 1;
 	    return 0;
       }

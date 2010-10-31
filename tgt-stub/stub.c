@@ -166,6 +166,9 @@ const char*data_type_string(ivl_variable_type_t vtype)
 	  case IVL_VT_LOGIC:
 	    vt = "logic";
 	    break;
+	  case IVL_VT_STRING:
+	    vt = "string";
+	    break;
       }
 
       return vt;
