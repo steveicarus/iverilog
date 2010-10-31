@@ -99,12 +99,17 @@ class LexicalScope {
       list<PProcess*> behaviors;
       list<AProcess*> analog_behaviors;
 
+	// Enumeration sets.
+      list<enum_set_t> enum_sets;
+
       LexicalScope* parent_scope() const { return parent_; }
 
     protected:
       void dump_parameters_(ostream&out, unsigned indent) const;
 
       void dump_localparams_(ostream&out, unsigned indent) const;
+
+      void dump_enumerations_(ostream&out, unsigned indent) const;
 
       void dump_events_(ostream&out, unsigned indent) const;
 

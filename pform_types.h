@@ -21,8 +21,10 @@
 
 // This for the perm_string type.
 # include  "StringHeap.h"
+# include  "verinum.h"
 # include  <iostream>
 # include  <list>
+# include  <map>
 
 /*
  * parse-form types.
@@ -46,6 +48,13 @@ struct name_component_t {
       perm_string name;
       std::list<index_component_t>index;
 };
+
+/*
+ * The enum_map_t holds the values that represent the enumeration. An
+ * enumeration, then, is defined by its pointer to the set.
+ */
+typedef map<perm_string,verinum> enum_set_m;
+typedef enum_set_m *enum_set_t;
 
 
 /*

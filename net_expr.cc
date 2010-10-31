@@ -432,6 +432,20 @@ unsigned NetEConcat::repeat() const
       return repeat_value_;
 }
 
+NetEConstEnum::NetEConstEnum(NetScope*s, perm_string n, enum_set_t eset, const verinum&v)
+: NetEConst(v), scope_(s), enum_set_(eset)
+{
+}
+
+NetEConstEnum::~NetEConstEnum()
+{
+}
+
+const enum_set_t NetEConstEnum::enumeration() const
+{
+      return enum_set_;
+}
+
 NetECReal::NetECReal(const verireal&val)
 : value_(val)
 {

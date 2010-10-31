@@ -64,6 +64,7 @@ class NetScope;
 class NetEvProbe;
 class NetExpr;
 class NetEAccess;
+class NetEConstEnum;
 class NetESignal;
 class NetFuncDef;
 class NetRamDq;
@@ -718,6 +719,9 @@ class NetScope : public Attrib {
       const NetExpr*get_parameter(const char* name,
 				  const NetExpr*&msb,
 				  const NetExpr*&lsb) const;
+      const NetExpr*get_parameter(perm_string name,
+				  const NetExpr*&msb,
+				  const NetExpr*&lsb) const;
 
 	/* These are used by defparam elaboration to replace the
 	   expression with a new expression, without affecting the
@@ -744,6 +748,9 @@ class NetScope : public Attrib {
       void add_signal(NetNet*);
       void rem_signal(NetNet*);
       NetNet* find_signal(perm_string name);
+
+      void add_enumeration_set(enum_set_t enum_set);
+      bool add_enumeration_name(enum_set_t enum_set, perm_string);
 
 	/* The parent and child() methods allow users of NetScope
 	   objects to locate nearby scopes. */
@@ -919,6 +926,13 @@ class NetScope : public Attrib {
 	    NetTaskDef*task_;
 	    NetFuncDef*func_;
       };
+
+	// Enumerations. The enum_sets_ is a list of all the
+	// enumerations present in this scope. The enum_names_ is a
+	// map of all the enumeration names back to the sets that
+	// contain them.
+      std::list<enum_set_t> enum_sets_;
+      std::map<perm_string,NetEConstEnum*> enum_names_;
 
       NetScope*up_;
       map<hname_t,NetScope*> children_;
@@ -1705,6 +1719,29 @@ class NetEConst  : public NetExpr {
 
     private:
       verinum value_;
+};
+
+class NetEConstEnum  : public NetEConst {
+
+    public:
+      explicit NetEConstEnum(NetScope*scope, perm_string name,
+			     enum_set_t enum_set, const verinum&val);
+      ~NetEConstEnum();
+
+      perm_string name() const;
+      const NetScope*scope() const;
+      const enum_set_t enumeration() const;
+
+      virtual bool set_width(unsigned w, bool last_chance =false);
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual void dump(ostream&) const;
+
+      virtual NetEConstEnum* dup_expr() const;
+
+    private:
+      NetScope*scope_;
+      enum_set_t enum_set_;
+      perm_string name_;
 };
 
 class NetEConstParam  : public NetEConst {

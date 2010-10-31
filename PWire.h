@@ -79,6 +79,8 @@ class PWire : public LineInfo {
 
       void set_memory_idx(PExpr*ldx, PExpr*rdx);
 
+      void set_enumeration(enum_set_t enum_set);
+
       void set_discipline(ivl_discipline_t);
       ivl_discipline_t get_discipline(void) const;
 
@@ -112,6 +114,8 @@ class PWire : public LineInfo {
 	// me the size and address range of the memory.
       PExpr*lidx_;
       PExpr*ridx_;
+
+      enum_set_t enum_set_;
 
       ivl_discipline_t discipline_;
 

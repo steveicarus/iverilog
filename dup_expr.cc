@@ -49,6 +49,14 @@ NetEConst* NetEConst::dup_expr() const
       return tmp;
 }
 
+NetEConstEnum* NetEConstEnum::dup_expr() const
+{
+      NetEConstEnum*tmp = new NetEConstEnum(scope_, name_, enum_set_, value());
+      assert(tmp);
+      tmp->set_line(*this);
+      return tmp;
+}
+
 NetEConstParam* NetEConstParam::dup_expr() const
 {
       NetEConstParam*tmp = new NetEConstParam(scope_, name_, value());

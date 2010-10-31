@@ -377,9 +377,14 @@ void NetEConst::cast_signed(bool sign_flag)
 
 /*
  * Parameter vectors cannot be resized because they refer to a common
- * value.
+ * value. Ditto for enumeration names.
  */
 bool NetEConstParam::set_width(unsigned w, bool)
+{
+      return w == expr_width();
+}
+
+bool NetEConstEnum::set_width(unsigned w, bool)
 {
       return w == expr_width();
 }

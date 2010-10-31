@@ -1106,6 +1106,22 @@ void LexicalScope::dump_localparams_(ostream&out, unsigned indent) const
       }
 }
 
+void LexicalScope::dump_enumerations_(ostream&out, unsigned indent) const
+{
+      for (list<enum_set_t>::const_iterator cur = enum_sets.begin()
+		 ; cur != enum_sets.end() ; ++ cur) {
+	    out << setw(indent) << "" << "enum {" << endl;
+
+	    for (map<perm_string,verinum>::const_iterator idx = (*cur)->begin()
+		       ; idx != (*cur)->end() ; ++ idx) {
+		  out << setw(indent+4) << "" << idx->first
+		      << " = " << idx->second << endl;
+	    }
+
+	    out << setw(indent) << "" << "}" << endl;
+      }
+}
+
 void LexicalScope::dump_events_(ostream&out, unsigned indent) const
 {
       for (map<perm_string,PEvent*>::const_iterator cur = events.begin()
@@ -1166,6 +1182,8 @@ void Module::dump(ostream&out) const
       dump_parameters_(out, 4);
 
       dump_localparams_(out, 4);
+
+      dump_enumerations_(out, 4);
 
       typedef map<perm_string,LineInfo*>::const_iterator genvar_iter_t;
       for (genvar_iter_t cur = genvars.begin()

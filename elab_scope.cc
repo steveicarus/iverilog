@@ -206,6 +206,31 @@ static void elaborate_scope_localparams_(Design*des, NetScope*scope,
       }
 }
 
+static void elaborate_scope_enumeration(Design*des, NetScope*scope,
+					enum_set_t enum_set)
+{
+      scope->add_enumeration_set(enum_set);
+
+      for (map<perm_string,verinum>::const_iterator cur = enum_set->begin()
+		 ; cur != enum_set->end() ;  ++ cur) {
+
+	    bool rc = scope->add_enumeration_name(enum_set, cur->first);
+	    if (! rc) {
+		  cerr << "<>:0: error: Duplicate enumeration name " << cur->first << endl;
+		  des->errors += 1;
+	    }
+      }
+}
+
+static void elaborate_scope_enumerations(Design*des, NetScope*scope,
+					 const list<enum_set_t>&enum_sets)
+{
+      for (list<enum_set_t>::const_iterator cur = enum_sets.begin()
+		 ; cur != enum_sets.end() ; ++ cur) {
+	    elaborate_scope_enumeration(des, scope, *cur);
+      }
+}
+
 static void replace_scope_parameters_(NetScope*scope, const LineInfo&loc,
 			              const Module::replace_t&replacements)
 {
@@ -433,6 +458,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       replace_scope_parameters_(scope, *this, replacements);
 
       elaborate_scope_localparams_(des, scope, localparams);
+
+      elaborate_scope_enumerations(des, scope, enum_sets);
 
 	// Run through the defparams for this module, elaborate the
 	// expressions in this context and save the result is a table

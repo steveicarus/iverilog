@@ -41,7 +41,7 @@ extern NetScope* symbol_search(const LineInfo*li,
 			       NetScope*start,
                                pform_name_t path,
 			       NetNet*&net,       /* net/reg */
-			       const NetExpr*&par,/* parameter */
+			       const NetExpr*&par,/* parameter/expr */
 			       NetEvent*&eve,     /* named event */
 			       const NetExpr*&ex1, const NetExpr*&ex2);
 
@@ -50,7 +50,7 @@ inline NetScope* symbol_search(const LineInfo*li,
 			       NetScope*start,
                                const pform_name_t&path,
 			       NetNet*&net,       /* net/reg */
-			       const NetExpr*&par,/* parameter */
+			       const NetExpr*&par,/* parameter/expr */
 			       NetEvent*&eve      /* named event */)
 {
       const NetExpr*ex1, *ex2;

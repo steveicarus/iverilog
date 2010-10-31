@@ -516,6 +516,11 @@ void NetEConst::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_const(this);
 }
 
+void NetEConstEnum::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_const(this);
+}
+
 void NetEConstParam::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_param(this);

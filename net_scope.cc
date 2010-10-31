@@ -208,24 +208,41 @@ const NetExpr* NetScope::get_parameter(const char* key,
 				       const NetExpr*&msb,
 				       const NetExpr*&lsb) const
 {
+      return get_parameter(perm_string::literal(key), msb, lsb);
+}
+
+const NetExpr* NetScope::get_parameter(perm_string key,
+				       const NetExpr*&msb,
+				       const NetExpr*&lsb) const
+{
       map<perm_string,param_expr_t>::const_iterator idx;
 
-      idx = parameters.find(perm_string::literal(key));
+      idx = parameters.find(key);
       if (idx != parameters.end()) {
 	    msb = (*idx).second.msb;
 	    lsb = (*idx).second.lsb;
 	    return (*idx).second.expr;
       }
 
-      idx = localparams.find(perm_string::literal(key));
+      idx = localparams.find(key);
       if (idx != localparams.end()) {
 	    msb = (*idx).second.msb;
 	    lsb = (*idx).second.lsb;
 	    return (*idx).second.expr;
       }
 
+      map<perm_string,NetEConstEnum*>::const_iterator eidx;
+
+      eidx = enum_names_.find(key);
+      if (eidx != enum_names_.end()) {
+	    msb = 0;
+	    lsb = 0;
+	    return eidx->second;
+      }
+
       return 0;
 }
+
 map<perm_string,NetScope::param_expr_t>::iterator NetScope::find_parameter(perm_string key)
 {
       map<perm_string,param_expr_t>::iterator idx;
@@ -434,6 +451,25 @@ NetNet* NetScope::find_signal(perm_string key)
 	    return signals_map_[key];
       else
 	    return 0;
+}
+
+void NetScope::add_enumeration_set(enum_set_t enum_set)
+{
+      enum_sets_.push_back(enum_set);
+}
+
+bool NetScope::add_enumeration_name(enum_set_t enum_set, perm_string name)
+{
+      enum_set_m::const_iterator enum_val = enum_set->find(name);
+      assert(enum_val != enum_set->end());
+
+      NetEConstEnum*val = new NetEConstEnum(this, name, enum_set, enum_val->second);
+
+      pair<map<perm_string,NetEConstEnum*>::iterator, bool> cur;
+      cur = enum_names_.insert(make_pair(name,val));
+
+	// Return TRUE if the name is added (i.e. is NOT a duplicate.)
+      return cur.second;
 }
 
 /*

@@ -378,6 +378,27 @@ static void pform_put_wire_in_scope(perm_string name, PWire*net)
       lexical_scope->wires[name] = net;
 }
 
+static void pform_put_enum_set_in_scope(enum_set_t enum_set)
+{
+      lexical_scope->enum_sets.push_back(enum_set);
+}
+
+static PWire*pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_type, NetNet::PortType port_type, ivl_variable_type_t vt_type)
+{
+      PWire*cur = pform_get_wire_in_scope(name);
+      if (cur == 0) {
+	    cur = new PWire(name, net_type, port_type, vt_type);
+	    pform_put_wire_in_scope(name, cur);
+      } else {
+	    bool rc = cur->set_wire_type(net_type);
+	    assert(rc);
+	    rc = cur->set_data_type(vt_type);
+	    assert(rc);
+      }
+
+      return cur;
+}
+
 static void pform_put_behavior_in_scope(PProcess*pp)
 {
       lexical_scope->behaviors.push_back(pp);
@@ -2377,19 +2398,7 @@ void pform_set_port_type(const struct vlltype&li,
 
 static void pform_set_reg_integer(perm_string name)
 {
-      PWire*cur = pform_get_wire_in_scope(name);
-      if (cur == 0) {
-	    cur = new PWire(name, NetNet::INTEGER,
-			    NetNet::NOT_A_PORT,
-			    IVL_VT_LOGIC);
-	    cur->set_signed(true);
-	    pform_put_wire_in_scope(name, cur);
-      } else {
-	    bool rc = cur->set_wire_type(NetNet::INTEGER);
-	    assert(rc);
-	    cur->set_data_type(IVL_VT_LOGIC);
-	    cur->set_signed(true);
-      }
+      PWire*cur = pform_get_make_wire_in_scope(name, NetNet::INTEGER, NetNet::NOT_A_PORT, IVL_VT_LOGIC);
       assert(cur);
 
       cur->set_range(new PENumber(new verinum(integer_width-1, integer_width)),
@@ -2411,16 +2420,7 @@ void pform_set_reg_integer(list<perm_string>*names)
 
 static void pform_set_reg_time(perm_string name)
 {
-      PWire*cur = pform_get_wire_in_scope(name);
-      if (cur == 0) {
-	    cur = new PWire(name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_LOGIC);
-	    pform_put_wire_in_scope(name, cur);
-      } else {
-	    bool rc = cur->set_wire_type(NetNet::REG);
-	    assert(rc);
-	    rc = cur->set_data_type(IVL_VT_LOGIC);
-	    assert(rc);
-      }
+      PWire*cur = pform_get_make_wire_in_scope(name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_LOGIC);
       assert(cur);
 
       cur->set_range(new PENumber(new verinum(TIME_WIDTH-1, integer_width)),
@@ -2441,17 +2441,7 @@ void pform_set_reg_time(list<perm_string>*names)
 
 static void pform_set_integer_2atom(uint64_t width, bool signed_flag, perm_string name)
 {
-      PWire*cur = pform_get_wire_in_scope(name);
-      if (cur == 0) {
-	    cur = new PWire(name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_BOOL);
-	    pform_put_wire_in_scope(name, cur);
-      } else {
-	    bool rc = cur->set_wire_type(NetNet::REG);
-	    assert(rc);
-	    rc = cur->set_data_type(IVL_VT_BOOL);
-	    assert(rc);
-      }
-
+      PWire*cur = pform_get_make_wire_in_scope(name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_BOOL);
       assert(cur);
 
       cur->set_signed(signed_flag);
@@ -2471,13 +2461,85 @@ void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>
       delete names;
 }
 
+static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
+			   enum_set_t enum_set, perm_string name)
+{
+      PWire*cur = pform_get_make_wire_in_scope(name, NetNet::REG, NetNet::NOT_A_PORT, enum_type->base_type);
+      assert(cur);
+
+      cur->set_signed(enum_type->signed_flag);
+
+      assert(enum_type->range.get() != 0);
+      assert(enum_type->range->size() == 2);
+      cur->set_range(enum_type->range->front(), enum_type->range->back(), SR_NET, false);
+      cur->set_enumeration(enum_set);
+}
+
 void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_string>*names)
 {
-      cerr << li.text << ":" << li.first_line << ": "
-	   << "sorry: enum types not supported yet." << endl;
-      error_count += 1;
-      delete enum_type;
+	// By definition, the base type can only be IVL_VT_LOGIC or
+	// IVL_VT_BOOL.
+      assert(enum_type->base_type==IVL_VT_LOGIC || enum_type->base_type==IVL_VT_BOOL);
+
+      assert(enum_type->range.get() != 0);
+      assert(enum_type->range->size() == 2);
+
+	// Scan the list of enum name declarations and evaluate them
+	// to a map of names with values. This expands out the
+	// inferred values (if any) and checks for duplicates.
+      enum_set_t enum_map = new enum_set_m;
+      verinum cur_value (0);
+      verinum one_value (1);
+      for (list<named_number_t>::iterator cur = enum_type->names->begin()
+		 ; cur != enum_type->names->end() ; ++ cur) {
+
+	    verinum next_value = cur->parm;
+	    if (next_value.len() == 0) {
+		  if (! cur_value.is_defined()) {
+			cerr << li.text << ":" << li.first_line << ": "
+			     << "error: Enumeration name " << cur->name
+			     << " cannot have inferred value." << endl;
+			next_value = cur_value;
+			error_count += 1;
+		  } else {
+			next_value = cur_value;
+			cur_value = cur_value + one_value;
+		  }
+	    } else {
+		  if (enum_type->base_type==IVL_VT_BOOL && ! next_value.is_defined()) {
+			cerr << li.text << ":" << li.first_line << ": "
+			     << "error: Enumeration name " << cur->name
+			     << " Cannot have logic value " << next_value << "." << endl;
+			error_count += 1;
+		  }
+		  cur_value = next_value + one_value;
+	    }
+
+	    map<perm_string,verinum>::iterator map_name = enum_map->find(cur->name);
+	    if (map_name == enum_map->end()) {
+		  enum_map->insert(make_pair(cur->name, next_value));;
+
+	    } else {
+		  cerr << li.text << ":" << li.first_line << ": "
+		       << "error: Enumeration name " << cur->name
+		       << " is already defined." << endl;
+		  error_count += 1;
+	    }
+      }
+
+	// Attach the enumeration to the current scope.
+      pform_put_enum_set_in_scope(enum_map);
+
+	// Now apply the checked enumeration type to the variables
+	// that are being declared with this type.
+      for (list<perm_string>::iterator cur = names->begin()
+		 ; cur != names->end() ; ++ cur) {
+	    perm_string txt = *cur;
+	    pform_set_enum(li, enum_type, enum_map, txt);
+      }
+
       delete names;
+      delete enum_type;
 }
 
 svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)

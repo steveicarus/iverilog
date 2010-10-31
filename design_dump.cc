@@ -1187,6 +1187,23 @@ void NetScope::dump(ostream&o) const
 	    }
       }
 
+      o << "    enum sets {" << endl;
+
+	/* Dump the enumerations and enum names in this scope. */
+      for (list<enum_set_t>::const_iterator cur = enum_sets_.begin()
+		 ; cur != enum_sets_.end() ; ++ cur) {
+	    o << "      " << *cur << endl;
+      }
+      o << "    }" << endl;
+
+      o << "    enum names {" << endl;
+      for (map<perm_string,NetEConstEnum*>::const_iterator cur = enum_names_.begin()
+		 ; cur != enum_names_.end() ; ++ cur) {
+	    o << "      " << cur->first << " = " << cur->second->value()
+	      << " from " << cur->second->enumeration() << endl;
+      }
+      o << "    }" << endl;
+
 	/* Dump the events in this scope. */
       for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_) {
 	    o << "    event " << cur->name() << "; nprobe="
@@ -1399,6 +1416,13 @@ void NetEConst::dump(ostream&o) const
 	    o << "\"" << value_.as_string() << "\"";
       else
 	    o << value_;
+}
+
+void NetEConstEnum::dump(ostream&o) const
+{
+      o << "<" << name_ << "=";
+      NetEConst::dump(o);
+      o << ", wid=" << expr_width() << ">";
 }
 
 void NetEConstParam::dump(ostream&o) const
