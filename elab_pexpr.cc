@@ -220,6 +220,7 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
 	    list<hname_t> tmp = eval_scope_path(des, scope, oldpath);
 	    pscope = des->find_scope(scope, tmp);
       }
+      ivl_assert(*this, pscope);
 
       const NetExpr*ex_msb;
       const NetExpr*ex_lsb;
