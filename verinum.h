@@ -1,7 +1,7 @@
 #ifndef __verinum_H
 #define __verinum_H
 /*
- * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,7 +46,7 @@ class verinum {
       verinum(const V*v, unsigned nbits, bool has_len =true);
       verinum(V, unsigned nbits =1, bool has_len =true);
       verinum(uint64_t val, unsigned bits);
-      verinum(double val, bool dummy);
+      verinum(double val, bool);
       verinum(const verinum&);
 
 	// Create a signed number, with an unspecified number of bits.

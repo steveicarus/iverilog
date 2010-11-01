@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2008 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2010 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -217,14 +217,14 @@ bool target_t::net_const(const NetConst*)
       return false;
 }
 
-bool target_t::net_sysfunction(const NetSysFunc*net)
+bool target_t::net_sysfunction(const NetSysFunc*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled NetSysFunc node." << endl;
       return false;
 }
 
-bool target_t::net_function(const NetUserFunc*net)
+bool target_t::net_function(const NetUserFunc*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled NetUserFunc node." << endl;
@@ -245,21 +245,21 @@ void target_t::net_probe(const NetEvProbe*net)
       net->dump_node(cerr, 4);
 }
 
-bool target_t::sign_extend(const NetSignExtend*net)
+bool target_t::sign_extend(const NetSignExtend*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled NetSignExtend node." << endl;
       return false;
 }
 
-bool target_t::process(const NetProcTop*top)
+bool target_t::process(const NetProcTop*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled process(NetProcTop)." << endl;
       return false;
 }
 
-bool target_t::process(const NetAnalogTop*top)
+bool target_t::process(const NetAnalogTop*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled process(NetAnalogTop)." << endl;
@@ -346,7 +346,7 @@ bool target_t::proc_disable(const NetDisable*obj)
       return false;
 }
 
-bool target_t::proc_force(const NetForce*dev)
+bool target_t::proc_force(const NetForce*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "
 	    "Unhandled proc_force." << endl;

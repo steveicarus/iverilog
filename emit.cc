@@ -31,7 +31,7 @@
 # include  <cassert>
 # include  <cstring>
 
-bool NetNode::emit_node(struct target_t*tgt) const
+bool NetNode::emit_node(struct target_t*) const
 {
       cerr << "EMIT: Gate type? " << typeid(*this).name() << endl;
       return false;
@@ -200,7 +200,7 @@ bool NetAnalogTop::emit(struct target_t*tgt) const
       return tgt->process(this);
 }
 
-bool NetProc::emit_proc(struct target_t*tgt) const
+bool NetProc::emit_proc(struct target_t*) const
 {
       cerr << "EMIT: Proc type? " << typeid(*this).name() << endl;
       return false;
@@ -531,7 +531,7 @@ void NetECRealParam::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_rparam(this);
 }
 
-void NetEParam::expr_scan(struct expr_scan_t*tgt) const
+void NetEParam::expr_scan(struct expr_scan_t*) const
 {
       cerr << get_fileline() << ":internal error: unexpected NetEParam."
 	   << endl;

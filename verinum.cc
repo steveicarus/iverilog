@@ -170,7 +170,7 @@ verinum::verinum(uint64_t val, unsigned n)
 
 /* The second argument is not used! It is there to make this
  * constructor unique. */
-verinum::verinum(double val, bool dummy)
+verinum::verinum(double val, bool)
 : has_len_(false), has_sign_(true), string_flag_(false)
 {
       bool is_neg = false;

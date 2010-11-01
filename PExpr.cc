@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2008,2010 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2010 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -38,7 +38,7 @@ PExpr::~PExpr()
 {
 }
 
-void PExpr::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
+void PExpr::declare_implicit_nets(LexicalScope*, NetNet::Type)
 {
 }
 
@@ -52,18 +52,19 @@ bool PExpr::is_the_same(const PExpr*that) const
       return typeid(this) == typeid(that);
 }
 
-NetNet* PExpr::elaborate_lnet(Design*des, NetScope*) const
+NetNet* PExpr::elaborate_lnet(Design*, NetScope*) const
 {
-      cerr << get_fileline() << ": error: expression not valid in assign l-value: "
-	   << *this << endl;
+      cerr << get_fileline() << ": error: "
+           << "expression not valid in assign l-value: "
+           << *this << endl;
       return 0;
 }
 
-NetNet* PExpr::elaborate_bi_net(Design*des, NetScope*) const
+NetNet* PExpr::elaborate_bi_net(Design*, NetScope*) const
 {
       cerr << get_fileline() << ": error: "
-	   << "expression not valid as argument to inout port: "
-	   << *this << endl;
+           << "expression not valid as argument to inout port: "
+           << *this << endl;
       return 0;
 }
 

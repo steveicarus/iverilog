@@ -28,7 +28,7 @@
 # include  <iostream>
 # include  "ivl_assert.h"
 
-NetExpr*PExpr::elaborate_pexpr(Design*des, NetScope*sc) const
+NetExpr*PExpr::elaborate_pexpr(Design*des, NetScope*) const
 {
       cerr << get_fileline() << ": error: invalid parameter expression: "
 	   << *this << endl;

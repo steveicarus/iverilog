@@ -103,7 +103,7 @@ bool NetEBAdd::set_width(unsigned w, bool)
       }
 
       expr_width(wid);
-      return wid == w;
+      return w == wid;
 }
 
 void NetEBAdd::cast_signed(bool sign_flag)
@@ -168,7 +168,7 @@ bool NetEBBits::set_width(unsigned w, bool)
  */
 bool NetEBComp::set_width(unsigned w, bool)
 {
-      return (w == 1);
+      return w == 1;
 }
 
 /*
@@ -199,7 +199,7 @@ bool NetEBLogic::set_width(unsigned w, bool)
       flag = left_->set_width(right_->expr_width());
       if (!flag)
 	    flag = right_->set_width(left_->expr_width());
-      return (w == 1);
+      return w == 1;
 }
 
 /*
@@ -230,7 +230,7 @@ void NetEBMult::cast_signed(bool sign_flag)
       cast_signed_base_(sign_flag);
 }
 
-bool NetEBPow::set_width(unsigned w, bool last_chance)
+bool NetEBPow::set_width(unsigned w, bool)
 {
       return w == expr_width();
 }
@@ -242,8 +242,6 @@ bool NetEBPow::set_width(unsigned w, bool last_chance)
  */
 bool NetEBShift::set_width(unsigned w, bool)
 {
-      bool flag = true;
-
       switch (op()) {
 
 	  case 'l':
@@ -263,9 +261,8 @@ bool NetEBShift::set_width(unsigned w, bool)
       }
 
       expr_width(left_->expr_width());
-      flag = expr_width() == w;
 
-      return flag;
+      return w == expr_width();
 }
 
 /*
@@ -287,8 +284,7 @@ bool NetEConcat::set_width(unsigned w, bool)
 
       sum *= repeat();
       expr_width(sum);
-      if (sum != w) return false;
-      return true;
+      return w == sum;
 }
 
 bool NetEConst::set_width(unsigned w, bool last_chance)
@@ -365,7 +361,7 @@ bool NetEConst::set_width(unsigned w, bool last_chance)
 	    tmp.has_sign(value_.has_sign());
 	    value_ = tmp;
 	    expr_width(use_w);
-	    return use_w == w;
+	    return w == use_w;
       }
 }
 
@@ -409,12 +405,9 @@ bool NetEParam::set_width(unsigned, bool)
       return false;
 }
 
-bool NetESelect::set_width(unsigned w, bool)
+bool NetESelect::set_width(unsigned, bool)
 {
-      if (expr_width() == 1)
-	    return true;
-      else
-	    return false;
+      return  expr_width() == 1;
 }
 
 bool NetESFunc::set_width(unsigned w, bool)
@@ -428,10 +421,7 @@ bool NetESFunc::set_width(unsigned w, bool)
  */
 bool NetESignal::set_width(unsigned w, bool)
 {
-      if (w != vector_width())
-	    return false;
-
-      return true;
+      return  w == vector_width();
 }
 
 bool NetETernary::set_width(unsigned w, bool last_chance)
@@ -460,12 +450,9 @@ bool NetETernary::set_width(unsigned w, bool last_chance)
  * width. What I really need to do is note the width of the output
  * parameter of the function definition and take that into account.
  */
-bool NetEUFunc::set_width(unsigned wid, bool)
+bool NetEUFunc::set_width(unsigned w, bool)
 {
-      if (result_sig_->expr_width() == wid)
-	    return true;
-      else
-	    return false;
+      return w == result_sig_->expr_width();
 }
 
 bool NetEUnary::set_width(unsigned w, bool)

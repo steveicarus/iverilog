@@ -247,7 +247,6 @@ static void elaborate_scope_events_(Design*des, NetScope*scope,
 }
 
 static void elaborate_scope_tasks(Design*des, NetScope*scope,
-				  const LineInfo&loc,
 				  const map<perm_string,PTask*>&tasks)
 {
       typedef map<perm_string,PTask*>::const_iterator tasks_it_t;
@@ -302,7 +301,6 @@ static void elaborate_scope_tasks(Design*des, NetScope*scope,
 }
 
 static void elaborate_scope_funcs(Design*des, NetScope*scope,
-				  const LineInfo&loc,
 				  const map<perm_string,PFunction*>&funcs)
 {
       typedef map<perm_string,PFunction*>::const_iterator funcs_it_t;
@@ -482,14 +480,14 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// elaborate_scope method of the PTask for detailed
 	// processing.
 
-      elaborate_scope_tasks(des, scope, *this, tasks);
+      elaborate_scope_tasks(des, scope, tasks);
 
 
 	// Functions are very similar to tasks, at least from the
 	// perspective of scopes. So handle them exactly the same
 	// way.
 
-      elaborate_scope_funcs(des, scope, *this, funcs);
+      elaborate_scope_funcs(des, scope, funcs);
 
 	// Gates include modules, which might introduce new scopes, so
 	// scan all of them to create those scopes.
@@ -1050,8 +1048,8 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 
         // Scan through all the task and function declarations in this
         // scope.
-      elaborate_scope_tasks(des, scope, *this, tasks);
-      elaborate_scope_funcs(des, scope, *this, funcs);
+      elaborate_scope_tasks(des, scope, tasks);
+      elaborate_scope_funcs(des, scope, funcs);
 
 	// Scan the generated scope for gates that may create
 	// their own scopes.

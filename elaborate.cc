@@ -42,7 +42,7 @@
 # include  "ivl_assert.h"
 
 
-void PGate::elaborate(Design*des, NetScope*scope) const
+void PGate::elaborate(Design*, NetScope*) const
 {
       cerr << "internal error: what kind of gate? " <<
 	    typeid(*this).name() << endl;
@@ -1903,9 +1903,13 @@ bool PGModule::elaborate_sig(Design*des, NetScope*scope) const
       if (mod != pform_modules.end())
 	    return elaborate_sig_mod_(des, scope, (*mod).second);
 
+	// elaborate_sig_udp_ currently always returns true so skip all this
+	// for now.
+#if 0
       map<perm_string,PUdp*>::const_iterator udp = pform_primitives.find(type_);
       if (udp != pform_primitives.end())
 	    return elaborate_sig_udp_(des, scope, (*udp).second);
+#endif
 
       return true;
 }

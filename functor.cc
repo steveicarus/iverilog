@@ -244,7 +244,7 @@ proc_match_t::~proc_match_t()
 {
 }
 
-int NetProc::match_proc(proc_match_t*that)
+int NetProc::match_proc(proc_match_t*)
 {
       return 0;
 }

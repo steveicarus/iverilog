@@ -40,7 +40,7 @@ class nodangle_f  : public functor_t {
       bool scomplete, ecomplete;
 };
 
-void nodangle_f::event(Design*des, NetEvent*ev)
+void nodangle_f::event(Design*, NetEvent*ev)
 {
       if (ecomplete) return;
 
@@ -122,7 +122,7 @@ void nodangle_f::event(Design*des, NetEvent*ev)
       }
 }
 
-void nodangle_f::signal(Design*des, NetNet*sig)
+void nodangle_f::signal(Design*, NetNet*sig)
 {
       if (scomplete) return;
 

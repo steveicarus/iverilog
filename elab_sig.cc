@@ -78,7 +78,7 @@ static bool get_const_argument(NetExpr*exp, long&res)
       return true;
 }
 
-void Statement::elaborate_sig(Design*des, NetScope*scope) const
+void Statement::elaborate_sig(Design*, NetScope*) const
 {
 }
 
@@ -268,17 +268,17 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
       return flag;
 }
 
-bool PGate::elaborate_sig(Design*des, NetScope*scope) const
+bool PGate::elaborate_sig(Design*, NetScope*) const
 {
       return true;
 }
 
-bool PGBuiltin::elaborate_sig(Design*des, NetScope*scope) const
+bool PGBuiltin::elaborate_sig(Design*, NetScope*) const
 {
       return true;
 }
 
-bool PGAssign::elaborate_sig(Design*des, NetScope*scope) const
+bool PGAssign::elaborate_sig(Design*, NetScope*) const
 {
       return true;
 }
@@ -313,10 +313,13 @@ bool PGModule::elaborate_sig_mod_(Design*des, NetScope*scope,
       return flag;
 }
 
+	// Not currently used.
+#if 0
 bool PGModule::elaborate_sig_udp_(Design*des, NetScope*scope, PUdp*udp) const
 {
       return true;
 }
+#endif
 
 bool PGenerate::elaborate_sig(Design*des,  NetScope*container) const
 {

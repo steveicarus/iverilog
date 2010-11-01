@@ -22,6 +22,7 @@
 CC="@IVCC@"
 CXX=@IVCXX@
 CFLAGS="@PIC@ @IVCFLAGS@ -I@INCLUDEDIR@"
+CXXFLAGS="@PIC@ @IVCXXFLAGS@ -I@INCLUDEDIR@"
 
 SUFFIX=@SUFFIX@
 
@@ -136,7 +137,7 @@ do
     obj=$base".o"
 
     echo "Compiling $src..."
-    $CXX -c -o $obj $DEFS $CFLAGS $INCOPT $src || compile_errors=`expr $compile_errors + 1`
+    $CXX -c -o $obj $DEFS $CXXFLAGS $INCOPT $src || compile_errors=`expr $compile_errors + 1`
     OBJ="$OBJ $obj"
 done
 

@@ -39,8 +39,7 @@ static NetNet* convert_to_real_const(Design*des, NetScope*scope, NetEConst*expr)
   /* Note that lsig, rsig and real_args are references. */
 static bool process_binary_args(Design*des, NetScope*scope, NetExpr*root,
 				NetExpr*left, NetExpr*right,
-				NetNet*&lsig, NetNet*&rsig, bool&real_args,
-				NetExpr*obj)
+				NetNet*&lsig, NetNet*&rsig, bool&real_args)
 {
       if (left->expr_type() == IVL_VT_REAL ||
           right->expr_type() == IVL_VT_REAL) {
@@ -77,7 +76,7 @@ static bool process_binary_args(Design*des, NetScope*scope, NetExpr*root,
       else return false;
 }
 
-NetNet* NetExpr::synthesize(Design*des, NetScope*scope, NetExpr*root)
+NetNet* NetExpr::synthesize(Design*des, NetScope*, NetExpr*)
 {
       cerr << get_fileline() << ": internal error: cannot synthesize expression: "
 	   << *this << endl;
@@ -95,7 +94,7 @@ NetNet* NetEBAdd::synthesize(Design*des, NetScope*scope, NetExpr*root)
       NetNet *lsig=0, *rsig=0;
       bool real_args=false;
       if (process_binary_args(des, scope, root, left_, right_, lsig, rsig,
-                              real_args, this)) {
+                              real_args)) {
 	    return 0;
       }
 
@@ -221,7 +220,7 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope, NetExpr*root)
       unsigned width;
       bool real_args=false;
       if (process_binary_args(des, scope, root, left_, right_, lsig, rsig,
-                              real_args, this)) {
+                              real_args)) {
 	    return 0;
       }
 
@@ -370,7 +369,7 @@ NetNet* NetEBPow::synthesize(Design*des, NetScope*scope, NetExpr*root)
       unsigned width;
       bool real_args=false;
       if (process_binary_args(des, scope, root, left_, right_, lsig, rsig,
-                              real_args, this)) {
+                              real_args)) {
 	    return 0;
       }
 
@@ -406,7 +405,7 @@ NetNet* NetEBMult::synthesize(Design*des, NetScope*scope, NetExpr*root)
       unsigned width;
       bool real_args=false;
       if (process_binary_args(des, scope, root, left_, right_, lsig, rsig,
-                              real_args, this)) {
+                              real_args)) {
 	    return 0;
       }
 
@@ -443,7 +442,7 @@ NetNet* NetEBDiv::synthesize(Design*des, NetScope*scope, NetExpr*root)
       unsigned width;
       bool real_args=false;
       if (process_binary_args(des, scope, root, left_, right_, lsig, rsig,
-                              real_args, this)) {
+                              real_args)) {
 	    return 0;
       }
 
