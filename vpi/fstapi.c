@@ -504,6 +504,7 @@ unsigned compress_hier : 1;
 unsigned repack_on_close : 1;
 unsigned skip_writing_section_hdr : 1;
 unsigned size_limit_locked : 1;
+unsigned section_header_only : 1;
 
 /* should really be semaphores, but are bytes to cut down on read-modify-write window size */
 unsigned char already_in_flush; /* in case control-c handlers interrupt */
@@ -702,6 +703,13 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 	off_t fixup_offs, tlen, hlen;
 
 	xc->already_in_close = 1; /* never need to zero this out as it is freed at bottom */
+
+	if(xc->section_header_only && xc->section_header_truncpos)
+		{
+		fstFtruncate(fileno(xc->handle), xc->section_header_truncpos);
+		fseeko(xc->handle, xc->section_header_truncpos, SEEK_SET);
+		xc->section_header_only = 0;
+		}
 
 	xc->skip_writing_section_hdr = 1;
 	if(!xc->size_limit_locked)
@@ -969,6 +977,7 @@ if(xc)
 
 	fputc(FST_BL_SKIP, xc->handle);			/* temporarily tag the section, use FST_BL_VCDATA on finalize */
 	xc->section_start = ftello(xc->handle);
+	xc->section_header_only = 1;			/* indicates truncate might be needed */
 	fstWriterUint64(xc->handle, 0); 		/* placeholder = section length */
 	fstWriterUint64(xc->handle, xc->is_initial_time ? xc->firsttime : xc->curtime); 	/* begin time of section */
 	fstWriterUint64(xc->handle, xc->curtime); 	/* end time of section (placeholder) */
@@ -1024,6 +1033,7 @@ struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
 if((!xc)||(xc->vchn_siz <= 1)||(xc->already_in_flush)) return;
 xc->already_in_flush = 1; /* should really do this with a semaphore */
 
+xc->section_header_only = 0;
 scratchpad = malloc(xc->vchn_siz);
 
 fflush(xc->vchn_handle);
@@ -1322,7 +1332,6 @@ if(xc->dump_size_limit)
 #endif
 		}
 	}
-
 
 if(!xc->skip_writing_section_hdr)
 	{
