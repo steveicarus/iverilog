@@ -738,53 +738,61 @@ NetEConst* NetEBComp::eval_eqeq_(bool ne_flag)
       return new NetEConst(verinum(res));
 }
 
-NetEConst* NetEBComp::eval_eqeqeq_()
+NetEConst* NetEBComp::eval_eqeqeq_(bool ne_flag)
 {
-      NetEConst*l = dynamic_cast<NetEConst*>(left_);
-      if (l == 0) return 0;
-      NetEConst*r = dynamic_cast<NetEConst*>(right_);
-      if (r == 0) return 0;
+      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
+      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      if (lc == 0 || rc == 0) return 0;
 
-      const verinum&lv = l->value();
-      const verinum&rv = r->value();
+      const verinum&lv = lc->value();
+      const verinum&rv = rc->value();
 
       verinum::V res = verinum::V1;
 
+	// Find the smallest argument length.
       unsigned cnt = lv.len();
-      if (cnt > rv.len())
-	    cnt = rv.len();
+      if (cnt > rv.len()) cnt = rv.len();
 
+	// Check the common bits.
       for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
-	    if (lv.get(idx) != rv.get(idx))
+	    if (lv.get(idx) != rv.get(idx)) {
 		  res = verinum::V0;
+		  break;
+	    }
 
-      for (unsigned idx = cnt ;  idx < lv.len() ;  idx += 1)
-	    if (lv.get(idx) != verinum::V0)
-		  res = verinum::V0;
+      bool is_signed = lv.has_sign() && rv.has_sign();
 
-      for (unsigned idx = cnt ;  idx < rv.len() ;  idx += 1)
-	    if (rv.get(idx) != verinum::V0)
-		  res = verinum::V0;
+	// If the left value is longer check it against the pad bit.
+      if (res == verinum::V1) {
+	    verinum::V pad = verinum::V0;
+	    if (is_signed) pad = rv.get(rv.len()-1);
+	    for (unsigned idx = cnt ;  idx < lv.len() ;  idx += 1)
+		  if (lv.get(idx) != pad) {
+			res = verinum::V0;
+			break;
+		  }
+      }
 
-      return new NetEConst(verinum(res, 1));
-}
+	// If the right value is longer check it against the pad bit.
+      if (res == verinum::V1) {
+	    verinum::V pad = verinum::V0;
+	    if (is_signed) pad = lv.get(lv.len()-1);
+	    for (unsigned idx = cnt ;  idx < rv.len() ;  idx += 1)
+		  if (rv.get(idx) != pad) {
+			res = verinum::V0;
+			break;
+		  }
+      }
 
-NetEConst* NetEBComp::eval_neeqeq_()
-{
-      NetEConst*tmp = eval_eqeqeq_();
-      if (tmp == 0)
-	    return 0;
+      if (ne_flag) {
+	    if (res == verinum::V0) res = verinum::V1;
+	    else res = verinum::V0;
+      }
 
-      NetEConst*res;
-
-      if (tmp->value().get(0) == verinum::V0)
-	    res = new NetEConst(verinum(verinum::V1,1));
-      else
-	    res = new NetEConst(verinum(verinum::V0,1));
-
-      delete tmp;
-      res->set_line(*this);
-      return res;
+      NetEConst*result = new NetEConst(verinum(res, 1));
+      ivl_assert(*this, result);
+      result->set_line(*this);
+      return result;
 }
 
 NetEConst* NetEBComp::eval_tree(int prune_to_width)
@@ -794,7 +802,7 @@ NetEConst* NetEBComp::eval_tree(int prune_to_width)
 
       switch (op_) {
 	  case 'E': // Case equality (===)
-	    return eval_eqeqeq_();
+	    return eval_eqeqeq_(false);
 
 	  case 'e': // Equality (==)
 	    return eval_eqeq_(false);
@@ -806,7 +814,7 @@ NetEConst* NetEBComp::eval_tree(int prune_to_width)
 	    return eval_leeq_();
 
 	  case 'N': // Case inequality (!==)
-	    return eval_neeqeq_();
+	    return eval_eqeqeq_(true);
 
 	  case 'n': // not-equal (!=)
 	    return eval_eqeq_(true);
@@ -884,10 +892,56 @@ NetExpr* NetEBDiv::eval_tree(int prune_to_width)
       return tmp;
 }
 
+NetEConst* NetEBLogic::eval_tree_real_()
+{
+      verireal lval;
+      verireal rval;
+
+      bool flag = get_real_arguments_(lval, rval);
+      if (! flag) return 0;
+
+      verinum::V res;
+      switch (op_) {
+	  case 'a': { // Logical AND (&&)
+	    if ((lval.as_double() != 0.0) && (rval.as_double() != 0.0))
+		  res = verinum::V1;
+	    else
+		  res = verinum::V0;
+	    break;
+	  }
+
+	  case 'o': { // Logical OR (||)
+	    if ((lval.as_double() != 0.0) || (rval.as_double() != 0.0))
+		  res = verinum::V1;
+	    else
+		  res = verinum::V0;
+	    break;
+	  }
+
+	  default:
+	    return 0;
+      }
+
+      NetEConst*tmp = new NetEConst(verinum(res, 1));
+      ivl_assert(*this, tmp);
+      tmp->set_line(*this);
+
+      if (debug_eval_tree)
+	    cerr << get_fileline() << ": debug: Evaluated (real): " << *this
+	         << " --> " << *tmp << endl;
+
+      return tmp;
+}
+
 NetEConst* NetEBLogic::eval_tree(int prune_to_width)
 {
       eval_expr(left_);
       eval_expr(right_);
+
+      if (left_->expr_type() == IVL_VT_REAL ||
+          right_->expr_type() == IVL_VT_REAL)
+	    return eval_tree_real_();
+      assert(expr_type() == IVL_VT_LOGIC);
 
       NetEConst*lc = dynamic_cast<NetEConst*>(left_);
       NetEConst*rc = dynamic_cast<NetEConst*>(right_);
@@ -898,57 +952,61 @@ NetEConst* NetEBLogic::eval_tree(int prune_to_width)
 
       verinum v = lc->value();
       for (unsigned idx = 0 ;  idx < v.len() ;  idx += 1)
-	    if (v.get(idx) == verinum::V1)
+	    if (v.get(idx) == verinum::V1) {
 		  lv = verinum::V1;
+		  break;
+	    }
 
-      if (lv == verinum::V0)
-	    for (unsigned idx = 0 ;  idx < v.len() ;  idx += 1)
-		  if (v.get(idx) != verinum::V0)
-			lv = verinum::Vx;
+      if (lv == verinum::V0 && ! v.is_defined()) lv = verinum::Vx;
 
       v = rc->value();
       for (unsigned idx = 0 ;  idx < v.len() ;  idx += 1)
-	    if (v.get(idx) == verinum::V1)
+	    if (v.get(idx) == verinum::V1) {
 		  rv = verinum::V1;
+		  break;
+	    }
 
-      if (rv == verinum::V0)
-	    for (unsigned idx = 0 ;  idx < v.len() ;  idx += 1)
-		  if (v.get(idx) != verinum::V0)
-			rv = verinum::Vx;
+      if (rv == verinum::V0 && ! v.is_defined()) rv = verinum::Vx;
 
       verinum::V res;
       switch (op_) {
-	  case 'a': { // Logical AND (&&)
-		if ((lv == verinum::V0) || (rv == verinum::V0))
-		      res = verinum::V0;
+	  case 'a': // Logical AND (&&)
+	    if ((lv == verinum::V0) || (rv == verinum::V0))
+		  res = verinum::V0;
 
-		else if ((lv == verinum::V1) && (rv == verinum::V1))
-		      res = verinum::V1;
+	    else if ((lv == verinum::V1) && (rv == verinum::V1))
+		  res = verinum::V1;
 
-		else
-		      res = verinum::Vx;
+	    else
+		  res = verinum::Vx;
 
-		break;
-	  }
+	    break;
 
-	  case 'o': { // Logical OR (||)
-		if ((lv == verinum::V1) || (rv == verinum::V1))
-		      res = verinum::V1;
+	  case 'o': // Logical OR (||)
+	    if ((lv == verinum::V1) || (rv == verinum::V1))
+		  res = verinum::V1;
 
-		else if ((lv == verinum::V0) && (rv == verinum::V0))
-		      res = verinum::V0;
+	    else if ((lv == verinum::V0) && (rv == verinum::V0))
+		  res = verinum::V0;
 
-		else
-		      res = verinum::Vx;
+	    else
+		  res = verinum::Vx;
 
-		break;
-	  }
+	    break;
 
 	  default:
 	    return 0;
       }
 
-      return new NetEConst(verinum(res, 1));
+      NetEConst*tmp = new NetEConst(verinum(res, 1));
+      ivl_assert(*this, tmp);
+      tmp->set_line(*this);
+
+      if (debug_eval_tree)
+	    cerr << get_fileline() << ": debug: Evaluated: " << *this
+	         << " --> " << *tmp << endl;
+
+      return tmp;
 }
 
 

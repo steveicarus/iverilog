@@ -377,7 +377,7 @@ static void nexus_lpm_add(ivl_nexus_t nex, ivl_lpm_t net, unsigned pin,
 
       nex->ptrs_[top].type_= __NEXUS_PTR_LPM;
       nex->ptrs_[top].drive0 = drive0;
-      nex->ptrs_[top].drive1 = drive0;
+      nex->ptrs_[top].drive1 = drive1;
       nex->ptrs_[top].pin_ = pin;
       nex->ptrs_[top].l.lpm= net;
 }

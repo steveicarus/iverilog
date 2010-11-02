@@ -3386,8 +3386,7 @@ class NetEBComp : public NetEBinary {
       NetEConst*eval_leeq_real_(NetExpr*le, NetExpr*ri, bool eq_flag);
       NetEConst*eval_gt_();
       NetEConst*eval_gteq_();
-      NetEConst*eval_eqeqeq_();
-      NetEConst*eval_neeqeq_();
+      NetEConst*eval_eqeqeq_(bool ne_flag);
 };
 
 /*
@@ -3409,6 +3408,7 @@ class NetEBLogic : public NetEBinary {
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
+      NetEConst* eval_tree_real_();
 };
 
 /*
