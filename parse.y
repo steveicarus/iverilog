@@ -87,8 +87,8 @@ static unsigned args_after_notifier;
  * These are some common strength pairs that are used as defaults when
  * the user is not otherwise specific.
  */
-const static struct str_pair_t pull_strength = { IVL_DR_PULL,  IVL_DR_PULL };
-const static struct str_pair_t str_strength = { IVL_DR_STRONG, IVL_DR_STRONG };
+static const struct str_pair_t pull_strength = { IVL_DR_PULL,  IVL_DR_PULL };
+static const struct str_pair_t str_strength = { IVL_DR_STRONG, IVL_DR_STRONG };
 
 static list<pair<perm_string,PExpr*> >* make_port_list(char*id, PExpr*expr)
 {
