@@ -23,11 +23,13 @@
 # include  <cstdlib>
 
 #define ivl_assert(tok, expression)  \
-      if (! (expression)) { \
-	    cerr << (tok).get_fileline() << ": assert: " \
-		 << __FILE__ << ":" << __LINE__ \
-		 << ": failed assertion " << #expression << endl; \
-	    abort(); \
-      }
+      do { \
+	    if (! (expression)) { \
+		  cerr << (tok).get_fileline() << ": assert: " \
+		       << __FILE__ << ":" << __LINE__ \
+		       << ": failed assertion " << #expression << endl; \
+		  abort(); \
+	    } \
+      } while (0)
 
 #endif
