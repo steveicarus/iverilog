@@ -1098,6 +1098,15 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    ? new NetNet(scope, name_, wtype, msb, lsb, array_s0, array_e0)
 	    : new NetNet(scope, name_, wtype, msb, lsb);
 
+	// If this is an enumeration, then set the enumeration set for
+	// the new signal. This turns it into an enumeration.
+      if (enum_set_) {
+	    ivl_assert(*this, enum_set_->size() > 0);
+	    enum_set_m::const_iterator sample_name = enum_set_->begin();
+	    netenum_t*use_enum = scope->enumeration_for_name(sample_name->first);
+	    sig->set_enumeration(use_enum);
+      }
+
       if (wtype == NetNet::WIRE) sig->devirtualize_pins();
 
       ivl_variable_type_t use_data_type = data_type_;

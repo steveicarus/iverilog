@@ -2271,6 +2271,12 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    rv = cast_to_int2(rv);
       }
 
+      if (lv->enumeration() && (lv->enumeration() != rv->enumeration())) {
+	    cerr << get_fileline() << ": error: "
+		 << "Enumeration type mismatch in assignment." << endl;
+	    des->errors += 1;
+      }
+		  
       NetAssign*cur = new NetAssign(lv, rv);
       cur->set_line(*this);
 

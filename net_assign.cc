@@ -87,6 +87,25 @@ ivl_variable_type_t NetAssign_::expr_type() const
       return sig_->data_type();
 }
 
+netenum_t*NetAssign_::enumeration() const
+{
+      netenum_t*tmp = 0;
+
+	// If the base signal is not an enumeration, return nil.
+      if ( (tmp = sig_->enumeration()) == 0 )
+	    return 0;
+
+	// Part select of an enumeration is not an enumeration.
+      if (base_ != 0)
+	    return 0;
+
+	// Concatenation of enumerations is not an enumeration.
+      if (more != 0)
+	    return 0;
+
+      return tmp;
+}
+
 perm_string NetAssign_::name() const
 {
       if (sig_) {

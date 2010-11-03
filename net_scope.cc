@@ -21,6 +21,7 @@
 # include "compiler.h"
 
 # include  "netlist.h"
+# include  "netenum.h"
 # include  <cstring>
 # include  <cstdlib>
 # include  <sstream>
@@ -453,15 +454,15 @@ NetNet* NetScope::find_signal(perm_string key)
 	    return 0;
 }
 
-void NetScope::add_enumeration_set(enum_set_t enum_set)
+void NetScope::add_enumeration_set(netenum_t*enum_set)
 {
       enum_sets_.push_back(enum_set);
 }
 
-bool NetScope::add_enumeration_name(enum_set_t enum_set, perm_string name)
+bool NetScope::add_enumeration_name(netenum_t*enum_set, perm_string name)
 {
-      enum_set_m::const_iterator enum_val = enum_set->find(name);
-      assert(enum_val != enum_set->end());
+      enum_set_m::const_iterator enum_val = enum_set->find_name(name);
+      assert(enum_val != enum_set->end_name());
 
       NetEConstEnum*val = new NetEConstEnum(this, name, enum_set, enum_val->second);
 
@@ -470,6 +471,14 @@ bool NetScope::add_enumeration_name(enum_set_t enum_set, perm_string name)
 
 	// Return TRUE if the name is added (i.e. is NOT a duplicate.)
       return cur.second;
+}
+
+netenum_t*NetScope::enumeration_for_name(perm_string name)
+{
+      NetEConstEnum*tmp = enum_names_[name];
+      assert(tmp != 0);
+
+      return tmp->enumeration();
 }
 
 /*

@@ -104,6 +104,7 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 
       switch (data_type_lv) {
 	  case IVL_VT_REAL:
+	  case IVL_VT_STRING:
 	    unsized_flag = true;
 	    expr_wid = -2;
 	    expr_wid_lv = -1;
@@ -2782,7 +2783,15 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 		  tmp = stmp;
 	    }
 
+      } else if (NetEConstEnum*etmp = dynamic_cast<NetEConstEnum*>(tmp)) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "Elaborate parameter <" << path_
+		       << "> as enumeration constant." << endl;
+	    tmp = etmp->dup_expr();
+
       } else {
+	    
 	      /* No bit or part select. Make the constant into a
 		 NetEConstParam if possible. */
 	    NetEConst*ctmp = dynamic_cast<NetEConst*>(tmp);

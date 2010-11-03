@@ -31,6 +31,11 @@ ivl_variable_type_t NetExpr::expr_type() const
       return IVL_VT_LOGIC;
 }
 
+netenum_t*NetExpr::enumeration() const
+{
+      return 0;
+}
+
 /*
  * Create an add/sub node from the two operands. Make a best guess of
  * the
@@ -432,7 +437,7 @@ unsigned NetEConcat::repeat() const
       return repeat_value_;
 }
 
-NetEConstEnum::NetEConstEnum(NetScope*s, perm_string n, enum_set_t eset, const verinum&v)
+NetEConstEnum::NetEConstEnum(NetScope*s, perm_string n, netenum_t*eset, const verinum&v)
 : NetEConst(v), scope_(s), enum_set_(eset)
 {
 }
@@ -441,7 +446,7 @@ NetEConstEnum::~NetEConstEnum()
 {
 }
 
-const enum_set_t NetEConstEnum::enumeration() const
+netenum_t*NetEConstEnum::enumeration() const
 {
       return enum_set_;
 }

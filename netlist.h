@@ -71,6 +71,7 @@ class NetRamDq;
 class NetTaskDef;
 class NetEvTrig;
 class NetEvWait;
+class netenum_t;
 
 struct target;
 struct functor_t;
@@ -596,6 +597,9 @@ class NetNet  : public NetObj {
       bool get_scalar() const;
       void set_scalar(bool);
 
+      void set_enumeration(netenum_t*enum_set);
+      netenum_t*enumeration(void) const;
+
 	/* Attach a discipline to the net. */
       ivl_discipline_t get_discipline() const;
       void set_discipline(ivl_discipline_t dis);
@@ -668,6 +672,7 @@ class NetNet  : public NetObj {
       bool isint_     : 1;		// original type of integer
       bool is_scalar_ : 1;
       bool local_flag_: 1;
+      netenum_t*enumeration_;
       ivl_discipline_t discipline_;
 
       long msb_, lsb_;
@@ -749,8 +754,10 @@ class NetScope : public Attrib {
       void rem_signal(NetNet*);
       NetNet* find_signal(perm_string name);
 
-      void add_enumeration_set(enum_set_t enum_set);
-      bool add_enumeration_name(enum_set_t enum_set, perm_string);
+      void add_enumeration_set(netenum_t*enum_set);
+      bool add_enumeration_name(netenum_t*enum_set, perm_string enum_name);
+
+      netenum_t* enumeration_for_name(perm_string name);
 
 	/* The parent and child() methods allow users of NetScope
 	   objects to locate nearby scopes. */
@@ -931,7 +938,7 @@ class NetScope : public Attrib {
 	// enumerations present in this scope. The enum_names_ is a
 	// map of all the enumeration names back to the sets that
 	// contain them.
-      std::list<enum_set_t> enum_sets_;
+      std::list<netenum_t*> enum_sets_;
       std::map<perm_string,NetEConstEnum*> enum_names_;
 
       NetScope*up_;
@@ -1633,6 +1640,11 @@ class NetExpr  : public LineInfo {
 	// expressions to check validity.
       virtual bool has_width() const;
 
+	// Return the enumeration set that defines this expressions
+	// enumeration type, or return nil if the expression is not
+	// part of the enumeration.
+      virtual netenum_t*enumeration() const;
+
 	// Expressions in parameter declarations may have encountered
 	// arguments that are themselves untyped parameters. These
 	// cannot be fully resolved for type when elaborated (they are
@@ -1725,12 +1737,12 @@ class NetEConstEnum  : public NetEConst {
 
     public:
       explicit NetEConstEnum(NetScope*scope, perm_string name,
-			     enum_set_t enum_set, const verinum&val);
+			     netenum_t*enum_set, const verinum&val);
       ~NetEConstEnum();
 
       perm_string name() const;
       const NetScope*scope() const;
-      const enum_set_t enumeration() const;
+      netenum_t*enumeration() const;
 
       virtual bool set_width(unsigned w, bool last_chance =false);
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -1740,7 +1752,7 @@ class NetEConstEnum  : public NetEConst {
 
     private:
       NetScope*scope_;
-      enum_set_t enum_set_;
+      netenum_t*enum_set_;
       perm_string name_;
 };
 
@@ -2288,6 +2300,10 @@ class NetAssign_ {
 	// necessarily the same as the pin_count().
       unsigned lwidth() const;
       ivl_variable_type_t expr_type() const;
+
+	// Return the enumeration type of this l-value, or nil if it's
+	// not an enumeration.
+      netenum_t*enumeration() const;
 
 	// Get the name of the underlying object.
       perm_string name() const;

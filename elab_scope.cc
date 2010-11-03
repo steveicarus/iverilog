@@ -42,6 +42,7 @@
 # include  "Statement.h"
 # include  "AStatement.h"
 # include  "netlist.h"
+# include  "netenum.h"
 # include  "util.h"
 # include  <typeinfo>
 # include  <cassert>
@@ -209,12 +210,15 @@ static void elaborate_scope_localparams_(Design*des, NetScope*scope,
 static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 					enum_set_t enum_set)
 {
-      scope->add_enumeration_set(enum_set);
+      netenum_t*use_enum = new netenum_t(IVL_VT_BOOL, true, 31, 0);
+
+      scope->add_enumeration_set(use_enum);
 
       for (map<perm_string,verinum>::const_iterator cur = enum_set->begin()
 		 ; cur != enum_set->end() ;  ++ cur) {
 
-	    bool rc = scope->add_enumeration_name(enum_set, cur->first);
+	    bool rc = use_enum->insert_name(cur->first, cur->second);
+	    rc &= scope->add_enumeration_name(use_enum, cur->first);
 	    if (! rc) {
 		  cerr << "<>:0: error: Duplicate enumeration name " << cur->first << endl;
 		  des->errors += 1;

@@ -94,6 +94,9 @@ ostream& operator << (ostream&o, ivl_variable_type_t val)
 	  case IVL_VT_LOGIC:
 	    o << "logic";
 	    break;
+	  case IVL_VT_STRING:
+	    o << "string";
+	    break;
       }
       return o;
 }
@@ -1190,7 +1193,7 @@ void NetScope::dump(ostream&o) const
       o << "    enum sets {" << endl;
 
 	/* Dump the enumerations and enum names in this scope. */
-      for (list<enum_set_t>::const_iterator cur = enum_sets_.begin()
+      for (list<netenum_t*>::const_iterator cur = enum_sets_.begin()
 		 ; cur != enum_sets_.end() ; ++ cur) {
 	    o << "      " << *cur << endl;
       }
