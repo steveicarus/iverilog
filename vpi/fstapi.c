@@ -704,27 +704,29 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 
 	xc->already_in_close = 1; /* never need to zero this out as it is freed at bottom */
 
-	if(xc->section_header_only && xc->section_header_truncpos)
+	if(xc->section_header_only && xc->section_header_truncpos && (xc->vchn_siz <= 1) && (!xc->is_initial_time))
 		{
 		fstFtruncate(fileno(xc->handle), xc->section_header_truncpos);
 		fseeko(xc->handle, xc->section_header_truncpos, SEEK_SET);
 		xc->section_header_only = 0;
 		}
-
-	xc->skip_writing_section_hdr = 1;
-	if(!xc->size_limit_locked)
+		else
 		{
-		if(xc->is_initial_time) /* simulation time never advanced so mock up the changes as time zero ones */
+		xc->skip_writing_section_hdr = 1;
+		if(!xc->size_limit_locked)
 			{
-			fstHandle dupe_idx;
-
-			fstWriterEmitTimeChange(xc, 0); /* emit some time change just to have one */
-			for(dupe_idx = 0; dupe_idx < xc->maxhandle; dupe_idx++) /* now clone the values */
+			if(xc->is_initial_time) /* simulation time never advanced so mock up the changes as time zero ones */
 				{
-				fstWriterEmitValueChange(xc, dupe_idx+1, xc->curval_mem + xc->valpos_mem[4*dupe_idx]);
+				fstHandle dupe_idx;
+	
+				fstWriterEmitTimeChange(xc, 0); /* emit some time change just to have one */
+				for(dupe_idx = 0; dupe_idx < xc->maxhandle; dupe_idx++) /* now clone the values */
+					{
+					fstWriterEmitValueChange(xc, dupe_idx+1, xc->curval_mem + xc->valpos_mem[4*dupe_idx]);
+					}
 				}
+			fstWriterFlushContext(xc);
 			}
-		fstWriterFlushContext(xc);
 		}
 	fstDestroyMmaps(xc, 1);
 
@@ -1603,10 +1605,10 @@ if(xc)
 /*
  * value and time change emission
  */
-void fstWriterEmitValueChange(void *ctx, fstHandle handle, void *val)
+void fstWriterEmitValueChange(void *ctx, fstHandle handle, const void *val)
 {
 struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
-unsigned char *buf = (unsigned char *)val;
+const unsigned char *buf = (const unsigned char *)val;
 uint32_t offs;
 size_t len;
 
@@ -3412,6 +3414,7 @@ for(;;)
 	printf("\tindx_pos: %d (%d bytes)\n", (int)indx_pos, (int)chain_clen);
 #endif
 	chain_cmem = malloc(chain_clen);
+	if(!chain_cmem) goto block_err;
 	fseeko(xc->f, indx_pos, SEEK_SET);
 	fstFread(chain_cmem, chain_clen, 1, xc->f);
 	
@@ -3424,6 +3427,8 @@ for(;;)
 		chain_table = malloc((vc_maxhandle+1) * sizeof(off_t));
 		chain_table_lengths = malloc((vc_maxhandle+1) * sizeof(uint32_t));
 		}
+
+	if(!chain_table || !chain_table_lengths) goto block_err;
 
 	pnt = chain_cmem;
 	idx = 0;
@@ -3792,6 +3797,7 @@ for(;;)
 			}
 		}
 
+block_err:
 	free(tc_head);
 	free(chain_cmem);
 	free(mem_for_traversal);

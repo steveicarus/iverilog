@@ -157,7 +157,7 @@ void fstWriterSetTimescaleFromString(void *ctx, const char *s);
 void fstWriterSetScope(void *ctx, enum fstScopeType scopetype,
                 const char *scopename, const char *scopecomp);
 void fstWriterSetUpscope(void *ctx);
-void fstWriterEmitValueChange(void *ctx, fstHandle handle, void *val);
+void fstWriterEmitValueChange(void *ctx, fstHandle handle, const void *val);
 void fstWriterEmitDumpActive(void *ctx, int enable);
 void fstWriterEmitTimeChange(void *ctx, uint64_t tim);
 void fstWriterFlushContext(void *ctx);
