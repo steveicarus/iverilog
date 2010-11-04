@@ -1325,6 +1325,9 @@ void NetEBinary::dump(ostream&o) const
 	  case 'a':
 	    o << "&&";
 	    break;
+	  case 'A':
+	    o << "~&";
+	    break;
 	  case 'E':
 	    o << "===";
 	    break;
@@ -1498,11 +1501,17 @@ void NetEUFunc::dump(ostream&o) const
 void NetEUnary::dump(ostream&o) const
 {
       switch (op_) {
+	  case 'A':
+	    o << "~&";
+	    break;
 	  case 'm':
 	    o << "abs";
 	    break;
 	  case 'N':
 	    o << "~|";
+	    break;
+	  case 'X':
+	    o << "~^";
 	    break;
 	  default:
 	    o << op_;

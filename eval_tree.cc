@@ -899,21 +899,19 @@ NetEConst* NetEBLogic::eval_tree_real_()
 
       verinum::V res;
       switch (op_) {
-	  case 'a': { // Logical AND (&&)
-		if ((lval.as_double() != 0.0) && (rval.as_double() != 0.0))
-		      res = verinum::V1;
-		else
-		      res = verinum::V0;
-		break;
-	  }
+	  case 'a': // Logical AND (&&)
+	    if ((lval.as_double() != 0.0) && (rval.as_double() != 0.0))
+		  res = verinum::V1;
+	    else
+		  res = verinum::V0;
+	    break;
 
-	  case 'o': { // Logical OR (||)
-		if ((lval.as_double() != 0.0) || (rval.as_double() != 0.0))
-		      res = verinum::V1;
-		else
-		      res = verinum::V0;
-		break;
-	  }
+	  case 'o': // Logical OR (||)
+	    if ((lval.as_double() != 0.0) || (rval.as_double() != 0.0))
+		  res = verinum::V1;
+	    else
+		  res = verinum::V0;
+	    break;
 
 	  default:
 	    return 0;
@@ -967,31 +965,29 @@ NetEConst* NetEBLogic::eval_tree(int)
 
       verinum::V res;
       switch (op_) {
-	  case 'a': { // Logical AND (&&)
-		if ((lv == verinum::V0) || (rv == verinum::V0))
-		      res = verinum::V0;
+	  case 'a': // Logical AND (&&)
+	    if ((lv == verinum::V0) || (rv == verinum::V0))
+		  res = verinum::V0;
 
-		else if ((lv == verinum::V1) && (rv == verinum::V1))
-		      res = verinum::V1;
+	    else if ((lv == verinum::V1) && (rv == verinum::V1))
+		  res = verinum::V1;
 
-		else
-		      res = verinum::Vx;
+	    else
+		  res = verinum::Vx;
 
-		break;
-	  }
+	    break;
 
-	  case 'o': { // Logical OR (||)
-		if ((lv == verinum::V1) || (rv == verinum::V1))
-		      res = verinum::V1;
+	  case 'o': // Logical OR (||)
+	    if ((lv == verinum::V1) || (rv == verinum::V1))
+		  res = verinum::V1;
 
-		else if ((lv == verinum::V0) && (rv == verinum::V0))
-		      res = verinum::V0;
+	    else if ((lv == verinum::V0) && (rv == verinum::V0))
+		  res = verinum::V0;
 
-		else
-		      res = verinum::Vx;
+	    else
+		  res = verinum::Vx;
 
-		break;
-	  }
+	    break;
 
 	  default:
 	    return 0;
@@ -1612,26 +1608,29 @@ NetExpr* NetEUnary::eval_tree_real_()
       switch (op_) {
 	  case '+':
 	    res = new NetECReal(val->value());
-	    res->set_line(*this);
-	    return res;
+	    ivl_assert(*this, res);
+	    break;
 
 	  case '-':
 	    res = new NetECReal(-(val->value()));
-	    res->set_line(*this);
-	    return res;
+	    ivl_assert(*this, res);
+	    break;
 
 	  default:
 	    return 0;
       }
+
+      res->set_line(*this);
+
+      if (debug_eval_tree)
+	    cerr << get_fileline() << ": debug: Evaluated (real): " << *this
+	         << " --> " << *res << endl;
+
+      return res;
 }
 
 NetExpr* NetEUnary::eval_tree(int prune_to_width)
 {
-      if (debug_eval_tree) {
-	    cerr << get_fileline() << ": debug: Evaluating expression:"
-	         << *this << ", prune_to_width=" << prune_to_width << endl;
-      }
-
       eval_expr(expr_);
       if (expr_type() == IVL_VT_REAL) return eval_tree_real_();
 
@@ -1644,47 +1643,52 @@ NetExpr* NetEUnary::eval_tree(int prune_to_width)
 
 	  case '+':
 	      /* Unary + is a no-op. */
-	    return new NetEConst(val);
+	    break;
 
-	  case '-': {
-		if (val.is_defined()) {
+	  case '-':
+	    if (val.is_defined()) {
+		  verinum tmp (verinum::V0, val.len());
+		  tmp.has_sign(val.has_sign());
+		  val = tmp - val;
+	    } else {
+		  for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
+			val.set(idx, verinum::Vx);
+	    }
+	    break;
 
-		      verinum tmp (verinum::V0, val.len());
-		      tmp.has_sign(val.has_sign());
-		      val = tmp - val;
+	  case '~':
+	      /* Bitwise not is even simpler then logical
+	         not. Just invert all the bits of the operand and
+	         make the new value with the same dimensions. */
+	    for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
+		  switch (val.get(idx)) {
+		      case verinum::V0:
+			val.set(idx, verinum::V1);
+			break;
+		      case verinum::V1:
+			val.set(idx, verinum::V0);
+			break;
+		      default:
+			val.set(idx, verinum::Vx);
+		  }
 
-		} else {
-		      for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
-			    val.set(idx, verinum::Vx);
-		}
-
-		return new NetEConst(val);
-	  }
-
-	  case '~': {
-		  /* Bitwise not is even simpler then logical
-		     not. Just invert all the bits of the operand and
-		     make the new value with the same dimensions. */
-		for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
-		      switch (val.get(idx)) {
-			  case verinum::V0:
-			    val.set(idx, verinum::V1);
-			    break;
-			  case verinum::V1:
-			    val.set(idx, verinum::V0);
-			    break;
-			  default:
-			    val.set(idx, verinum::Vx);
-		      }
-
-		return new NetEConst(val);
-	  }
+	    break;
 
 	  case '!':
 	    assert(0);
 	  default:
 	    return 0;
       }
+
+      NetEConst *res = new NetEConst(val);
+      ivl_assert(*this, res);
+      res->set_line(*this);
+
+      if (debug_eval_tree)
+	    cerr << get_fileline() << ": debug: Evaluated: " << *this
+	         << " --> " << *res << endl;
+
+      return res;
 }
 
 
@@ -1693,18 +1697,37 @@ NetExpr* NetEUBits::eval_tree(int prune_to_width)
       return NetEUnary::eval_tree(prune_to_width);
 }
 
-NetEConst* NetEUReduce::eval_tree(int prune_to_width)
+NetEConst* NetEUReduce::eval_tree_real_()
 {
-      if (debug_eval_tree) {
-	    cerr << get_fileline() << ": debug: Evaluating expression:"
-	         << *this << ", prune_to_width=" << prune_to_width << endl;
-      }
+      ivl_assert(*this, op_ == '!');
 
+      NetECReal*val= dynamic_cast<NetECReal*> (expr_);
+      if (val == 0) return 0;
+
+      verinum::V res = val->value().as_double() == 0.0 ? verinum::V1 :
+                                                         verinum::V0;
+
+      NetEConst*tmp = new NetEConst(verinum(res, 1));
+      ivl_assert(*this, tmp);
+      tmp->set_line(*this);
+
+      if (debug_eval_tree)
+	    cerr << get_fileline() << ": debug: Evaluated (real): " << *this
+	         << " --> " << *tmp << endl;
+
+      return tmp;
+}
+
+NetEConst* NetEUReduce::eval_tree(int)
+{
       eval_expr(expr_);
+      if (expr_type() == IVL_VT_REAL) return eval_tree_real_();
+
       NetEConst*rval = dynamic_cast<NetEConst*>(expr_);
       if (rval == 0) return 0;
 
       verinum val = rval->value();
+
       verinum::V res;
       bool invert = false;
 
@@ -1717,16 +1740,16 @@ NetEConst* NetEUReduce::eval_tree(int prune_to_width)
 		     the result of ! is V0. If there are no V1 bits
 		     but there are some Vx/Vz bits, the result is
 		     unknown. Otherwise, the result is V1. */
-		unsigned v1 = 0, vx = 0;
-		for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1) {
+		bool v1 = false, vx = false;
+		for (unsigned idx = 0 ;  idx < val.len() && !v1 ;  idx += 1) {
 		      switch (val.get(idx)) {
 			  case verinum::V0:
 			    break;
 			  case verinum::V1:
-			    v1 += 1;
+			    v1 = true;
 			    break;
 			  default:
-			    vx += 1;
+			    vx = true;
 			    break;
 		      }
 		}
@@ -1781,32 +1804,47 @@ NetEConst* NetEUReduce::eval_tree(int prune_to_width)
       }
 
       if (invert) res = ~res;
-      return new NetEConst(verinum(res, 1));
+
+      NetEConst*tmp = new NetEConst(verinum(res, 1));
+      ivl_assert(*this, tmp);
+      tmp->set_line(*this);
+
+      if (debug_eval_tree)
+	    cerr << get_fileline() << ": debug: Evaluated: " << *this
+	         << " --> " << *tmp << endl;
+
+      return tmp;
 }
 
 NetExpr* evaluate_clog2(NetExpr*&arg_)
 {
       eval_expr(arg_);
+
       NetEConst*tmpi = dynamic_cast<NetEConst *>(arg_);
       NetECReal*tmpr = dynamic_cast<NetECReal *>(arg_);
-      if (tmpi || tmpr) {
-	    verinum arg;
-	    if (tmpi) {
-		  arg = tmpi->value();
-	    } else {
-		  arg = verinum(tmpr->value().as_double(), true);
-	    }
 
-	      /* If we have an x in the verinum we return 'bx. */
-	    if (!arg.is_defined()) {
-		  verinum tmp (verinum::Vx, integer_width);
-		  tmp.has_sign(true);
-		  NetEConst*rtn = new NetEConst(tmp);
-		  return rtn;
-	    }
+      if (tmpi == 0 && tmpr == 0) return 0;
 
+      verinum arg;
+      if (tmpi) {
+	    arg = tmpi->value();
+      } else {
+	    arg = verinum(tmpr->value().as_double(), true);
+      }
+
+      NetEConst*rtn;
+
+	/* If we have an x in the verinum we return 'bx. */
+      if (!arg.is_defined()) {
+	    verinum tmp (verinum::Vx, integer_width);
+	    tmp.has_sign(true);
+
+	    rtn = new NetEConst(tmp);
+	    ivl_assert(*arg_, rtn);
+      } else {
 	    bool is_neg = false;
 	    uint64_t res = 0;
+
 	    if (arg.is_negative()) {
 		  is_neg = true;
 		    // If the length is not defined, then work with
@@ -1829,11 +1867,12 @@ NetExpr* evaluate_clog2(NetExpr*&arg_)
 
 	    verinum tmp (res, integer_width);
 	    tmp.has_sign(true);
-	    NetEConst*rtn = new NetEConst(tmp);
-	    return rtn;
+
+	    rtn = new NetEConst(tmp);
+	    ivl_assert(*arg_, rtn);
       }
 
-      return 0;
+      return rtn;
 }
 
 NetExpr* evaluate_math_one_arg(NetExpr*&arg_, const char*name)
@@ -1987,11 +2026,8 @@ NetExpr* evaluate_min_max(NetExpr*&arg0_, NetExpr*&arg1_, const char*name)
 
 NetExpr* NetESFunc::eval_tree(int prune_to_width)
 {
-      if (debug_eval_tree) {
-	    cerr << get_fileline() << ": debug: Evaluating expression:"
-	         << *this << ", prune_to_width=" << prune_to_width << endl;
-      }
-
+//      assert(prune_to_width <= 0);
+// HERE
 	/* If we are not targeting at least Verilog-2005, Verilog-AMS
 	 * or using the Icarus misc flag then we do not support these
 	 * functions as constant. */
@@ -2080,10 +2116,10 @@ NetExpr* NetESFunc::eval_tree(int prune_to_width)
 
       if (rtn != 0) {
 	    rtn->set_line(*this);
-	    if (debug_eval_tree) {
-		  cerr << get_fileline() << ": debug: Evaluate constant "
-		       << nm << "." << endl;
-	    }
+
+	    if (debug_eval_tree)
+		  cerr << get_fileline() << ": debug: Evaluated: " << *this
+		       << " --> " << *rtn << endl;
       }
 
       return rtn;
