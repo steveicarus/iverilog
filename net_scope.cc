@@ -461,7 +461,7 @@ void NetScope::add_enumeration_set(netenum_t*enum_set)
 
 bool NetScope::add_enumeration_name(netenum_t*enum_set, perm_string name)
 {
-      enum_set_m::const_iterator enum_val = enum_set->find_name(name);
+      netenum_t::iterator enum_val = enum_set->find_name(name);
       assert(enum_val != enum_set->end_name());
 
       NetEConstEnum*val = new NetEConstEnum(this, name, enum_set, enum_val->second);

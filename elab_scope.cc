@@ -208,29 +208,41 @@ static void elaborate_scope_localparams_(Design*des, NetScope*scope,
 }
 
 static void elaborate_scope_enumeration(Design*des, NetScope*scope,
-					enum_set_t enum_set)
+					enum_type_t*enum_type)
 {
-      netenum_t*use_enum = new netenum_t(IVL_VT_BOOL, true, 31, 0);
+      bool rc_flag;
+      assert(enum_type->range->size() == 2);
+      NetExpr*msb_ex = enum_type->range->front()->elaborate_pexpr(des, scope);
+      NetExpr*lsb_ex = enum_type->range->back() ->elaborate_pexpr(des, scope);
+
+      long msb = 0;
+      rc_flag = eval_as_long(msb, msb_ex);
+      assert(rc_flag);
+      long lsb = 0;
+      rc_flag = eval_as_long(lsb, lsb_ex);
+      assert(rc_flag);
+
+      netenum_t*use_enum = new netenum_t(enum_type->base_type, enum_type->signed_flag, msb, lsb);
 
       scope->add_enumeration_set(use_enum);
 
-      for (map<perm_string,verinum>::const_iterator cur = enum_set->begin()
-		 ; cur != enum_set->end() ;  ++ cur) {
+      for (list<named_number_t>::const_iterator cur = enum_type->names->begin()
+		 ; cur != enum_type->names->end() ;  ++ cur) {
 
-	    bool rc = use_enum->insert_name(cur->first, cur->second);
-	    rc &= scope->add_enumeration_name(use_enum, cur->first);
-	    if (! rc) {
-		  cerr << "<>:0: error: Duplicate enumeration name " << cur->first << endl;
+	    rc_flag = use_enum->insert_name(cur->name, cur->parm);
+	    rc_flag &= scope->add_enumeration_name(use_enum, cur->name);
+	    if (! rc_flag) {
+		  cerr << "<>:0: error: Duplicate enumeration name " << cur->name << endl;
 		  des->errors += 1;
 	    }
       }
 }
 
 static void elaborate_scope_enumerations(Design*des, NetScope*scope,
-					 const list<enum_set_t>&enum_sets)
+					 const list<enum_type_t*>&enum_types)
 {
-      for (list<enum_set_t>::const_iterator cur = enum_sets.begin()
-		 ; cur != enum_sets.end() ; ++ cur) {
+      for (list<enum_type_t*>::const_iterator cur = enum_types.begin()
+		 ; cur != enum_types.end() ; ++ cur) {
 	    elaborate_scope_enumeration(des, scope, *cur);
       }
 }

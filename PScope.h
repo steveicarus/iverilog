@@ -100,7 +100,7 @@ class LexicalScope {
       list<AProcess*> analog_behaviors;
 
 	// Enumeration sets.
-      list<enum_set_t> enum_sets;
+      list<enum_type_t*> enum_sets;
 
       LexicalScope* parent_scope() const { return parent_; }
 

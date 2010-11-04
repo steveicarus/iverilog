@@ -86,8 +86,6 @@ extern bool pform_library_flag;
 
 typedef named<PExpr*> named_pexpr_t;
 
-typedef named<verinum> named_number_t;
-
 struct parmvalue_t {
       list<PExpr*>*by_order;
       svector<named_pexpr_t*>*by_name;
@@ -100,13 +98,6 @@ struct net_decl_assign_t {
       perm_string name;
       PExpr*expr;
       struct net_decl_assign_t*next;
-};
-
-struct enum_type_t {
-      ivl_variable_type_t base_type;
-      bool signed_flag;
-      auto_ptr< list<PExpr*> > range;
-      auto_ptr< list<named_number_t> > names;
 };
 
 /* The lgate is gate instantiation information. */

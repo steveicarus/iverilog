@@ -438,7 +438,7 @@ unsigned NetEConcat::repeat() const
 }
 
 NetEConstEnum::NetEConstEnum(NetScope*s, perm_string n, netenum_t*eset, const verinum&v)
-: NetEConst(v), scope_(s), enum_set_(eset)
+: NetEConst(v), scope_(s), enum_set_(eset), name_(n)
 {
 }
 

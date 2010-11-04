@@ -378,7 +378,7 @@ static void pform_put_wire_in_scope(perm_string name, PWire*net)
       lexical_scope->wires[name] = net;
 }
 
-static void pform_put_enum_set_in_scope(enum_set_t enum_set)
+static void pform_put_enum_type_in_scope(enum_type_t*enum_set)
 {
       lexical_scope->enum_sets.push_back(enum_set);
 }
@@ -2462,7 +2462,7 @@ void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>
 }
 
 static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
-			   enum_set_t enum_set, perm_string name)
+			   perm_string name)
 {
       PWire*cur = pform_get_make_wire_in_scope(name, NetNet::REG, NetNet::NOT_A_PORT, enum_type->base_type);
       assert(cur);
@@ -2472,7 +2472,7 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
       assert(enum_type->range.get() != 0);
       assert(enum_type->range->size() == 2);
       cur->set_range(enum_type->range->front(), enum_type->range->back(), SR_NET, false);
-      cur->set_enumeration(enum_set);
+      cur->set_enumeration(enum_type);
 }
 
 void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_string>*names)
@@ -2487,7 +2487,6 @@ void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_st
 	// Scan the list of enum name declarations and evaluate them
 	// to a map of names with values. This expands out the
 	// inferred values (if any) and checks for duplicates.
-      enum_set_t enum_map = new enum_set_m;
       verinum cur_value (0);
       verinum one_value (1);
       for (list<named_number_t>::iterator cur = enum_type->names->begin()
@@ -2505,6 +2504,9 @@ void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_st
 			next_value = cur_value;
 			cur_value = cur_value + one_value;
 		  }
+
+		  cur->parm - next_value;
+
 	    } else {
 		  if (enum_type->base_type==IVL_VT_BOOL && ! next_value.is_defined()) {
 			cerr << li.text << ":" << li.first_line << ": "
@@ -2514,32 +2516,20 @@ void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_st
 		  }
 		  cur_value = next_value + one_value;
 	    }
-
-	    map<perm_string,verinum>::iterator map_name = enum_map->find(cur->name);
-	    if (map_name == enum_map->end()) {
-		  enum_map->insert(make_pair(cur->name, next_value));;
-
-	    } else {
-		  cerr << li.text << ":" << li.first_line << ": "
-		       << "error: Enumeration name " << cur->name
-		       << " is already defined." << endl;
-		  error_count += 1;
-	    }
       }
 
 	// Attach the enumeration to the current scope.
-      pform_put_enum_set_in_scope(enum_map);
+      pform_put_enum_type_in_scope(enum_type);
 
 	// Now apply the checked enumeration type to the variables
 	// that are being declared with this type.
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur) {
 	    perm_string txt = *cur;
-	    pform_set_enum(li, enum_type, enum_map, txt);
+	    pform_set_enum(li, enum_type, txt);
       }
 
       delete names;
-      delete enum_type;
 }
 
 svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)

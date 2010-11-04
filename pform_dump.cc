@@ -1108,14 +1108,14 @@ void LexicalScope::dump_localparams_(ostream&out, unsigned indent) const
 
 void LexicalScope::dump_enumerations_(ostream&out, unsigned indent) const
 {
-      for (list<enum_set_t>::const_iterator cur = enum_sets.begin()
+      for (list<enum_type_t*>::const_iterator cur = enum_sets.begin()
 		 ; cur != enum_sets.end() ; ++ cur) {
 	    out << setw(indent) << "" << "enum {" << endl;
 
-	    for (map<perm_string,verinum>::const_iterator idx = (*cur)->begin()
-		       ; idx != (*cur)->end() ; ++ idx) {
-		  out << setw(indent+4) << "" << idx->first
-		      << " = " << idx->second << endl;
+	    for (list<named_number_t>::const_iterator idx = (*cur)->names->begin()
+		       ; idx != (*cur)->names->end() ; ++ idx) {
+		  out << setw(indent+4) << "" << idx->name
+		      << " = " << idx->parm << endl;
 	    }
 
 	    out << setw(indent) << "" << "}" << endl;

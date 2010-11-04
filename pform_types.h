@@ -22,6 +22,8 @@
 // This for the perm_string type.
 # include  "StringHeap.h"
 # include  "verinum.h"
+# include  "named.h"
+# include  "ivl_target.h"
 # include  <iostream>
 # include  <list>
 # include  <map>
@@ -29,6 +31,8 @@
 /*
  * parse-form types.
  */
+
+typedef named<verinum> named_number_t;
 
 struct index_component_t {
       enum ctype_t { SEL_NONE, SEL_BIT, SEL_PART, SEL_IDX_UP, SEL_IDX_DO };
@@ -50,11 +54,17 @@ struct name_component_t {
 };
 
 /*
- * The enum_map_t holds the values that represent the enumeration. An
- * enumeration, then, is defined by its pointer to the set.
+ * The enum_type_t holds the parsed declaration to represent an
+ * enumeration. Since this is in the pform, it represents the type
+ * before elaboration to the range, for example, man not be complete
+ * until it is elaborated in a scope.
  */
-typedef map<perm_string,verinum> enum_set_m;
-typedef enum_set_m *enum_set_t;
+struct enum_type_t {
+      ivl_variable_type_t base_type;
+      bool signed_flag;
+      auto_ptr< list<PExpr*> > range;
+      auto_ptr< list<named_number_t> > names;
+};
 
 
 /*
