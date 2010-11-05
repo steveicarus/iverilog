@@ -1816,7 +1816,7 @@ NetEConst* NetEUReduce::eval_tree(int)
       return tmp;
 }
 
-NetExpr* evaluate_clog2(NetExpr*&arg_)
+static NetEConst* evaluate_clog2(NetExpr*&arg_)
 {
       eval_expr(arg_);
 
@@ -1875,11 +1875,15 @@ NetExpr* evaluate_clog2(NetExpr*&arg_)
       return rtn;
 }
 
-NetExpr* evaluate_math_one_arg(NetExpr*&arg_, const char*name)
+static NetECReal* evaluate_math_one_arg(NetExpr*&arg_, const char*name)
 {
       eval_expr(arg_);
+
       NetEConst*tmpi = dynamic_cast<NetEConst *>(arg_);
       NetECReal*tmpr = dynamic_cast<NetECReal *>(arg_);
+
+      NetECReal*res = 0;
+
       if (tmpi || tmpr) {
 	    double arg;
 	    if (tmpi) {
@@ -1889,55 +1893,81 @@ NetExpr* evaluate_math_one_arg(NetExpr*&arg_, const char*name)
 	    }
 
 	    if (strcmp(name, "$ln") == 0) {
-		  return new NetECReal(verireal(log(arg)));
+		  res = new NetECReal(verireal(log(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$log10") == 0) {
-		  return new NetECReal(verireal(log10(arg)));
+		  res = new NetECReal(verireal(log10(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$exp") == 0) {
-		  return new NetECReal(verireal(exp(arg)));
+		  res = new NetECReal(verireal(exp(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$sqrt") == 0) {
-		  return new NetECReal(verireal(sqrt(arg)));
+		  res = new NetECReal(verireal(sqrt(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$floor") == 0) {
-		  return new NetECReal(verireal(floor(arg)));
+		  res = new NetECReal(verireal(floor(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$ceil") == 0) {
-		  return new NetECReal(verireal(ceil(arg)));
+		  res = new NetECReal(verireal(ceil(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$sin") == 0) {
-		  return new NetECReal(verireal(sin(arg)));
+		  res = new NetECReal(verireal(sin(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$cos") == 0) {
-		  return new NetECReal(verireal(cos(arg)));
+		  res = new NetECReal(verireal(cos(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$tan") == 0) {
-		  return new NetECReal(verireal(tan(arg)));
+		  res = new NetECReal(verireal(tan(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$asin") == 0) {
-		  return new NetECReal(verireal(asin(arg)));
+		  res = new NetECReal(verireal(asin(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$acos") == 0) {
-		  return new NetECReal(verireal(acos(arg)));
+		  res = new NetECReal(verireal(acos(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$atan") == 0) {
-		  return new NetECReal(verireal(atan(arg)));
+		  res = new NetECReal(verireal(atan(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$sinh") == 0) {
-		  return new NetECReal(verireal(sinh(arg)));
+		  res = new NetECReal(verireal(sinh(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$cosh") == 0) {
-		  return new NetECReal(verireal(cosh(arg)));
+		  res = new NetECReal(verireal(cosh(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$tanh") == 0) {
-		  return new NetECReal(verireal(tanh(arg)));
+		  res = new NetECReal(verireal(tanh(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$asinh") == 0) {
-		  return new NetECReal(verireal(asinh(arg)));
+		  res = new NetECReal(verireal(asinh(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$acosh") == 0) {
-		  return new NetECReal(verireal(acosh(arg)));
+		  res = new NetECReal(verireal(acosh(arg)));
+		  ivl_assert(*arg_, res);
 	    } else if (strcmp(name, "$atanh") == 0) {
-		  return new NetECReal(verireal(atanh(arg)));
+		  res = new NetECReal(verireal(atanh(arg)));
+		  ivl_assert(*arg_, res);
+	    } else {
+		  cerr << arg_->get_fileline() << ": warning: Unhandled"
+		          "constant system function " << name << "." << endl;
 	    }
       }
 
-      return 0;
+      return res;
 }
 
-NetExpr* evaluate_math_two_args(NetExpr*&arg0_, NetExpr*&arg1_, const char*name)
+static NetECReal* evaluate_math_two_args(NetExpr*&arg0_, NetExpr*&arg1_,
+                                         const char*name)
 {
       eval_expr(arg0_);
       eval_expr(arg1_);
+
       NetEConst*tmpi0 = dynamic_cast<NetEConst *>(arg0_);
       NetECReal*tmpr0 = dynamic_cast<NetECReal *>(arg0_);
       NetEConst*tmpi1 = dynamic_cast<NetEConst *>(arg1_);
       NetECReal*tmpr1 = dynamic_cast<NetECReal *>(arg1_);
+
+      NetECReal*res = 0;
+
       if ((tmpi0 || tmpr0) && (tmpi1 || tmpr1)) {
 	    double arg0, arg1;
 	    if (tmpi0) {
@@ -1952,57 +1982,73 @@ NetExpr* evaluate_math_two_args(NetExpr*&arg0_, NetExpr*&arg1_, const char*name)
 	    }
 
 	    if (strcmp(name, "$pow") == 0) {
-		  return new NetECReal(verireal(pow(arg0, arg1)));
+		  res = new NetECReal(verireal(pow(arg0, arg1)));
+		  ivl_assert(*arg0_, res);
 	    } else if (strcmp(name, "$atan2") == 0) {
-		  return new NetECReal(verireal(atan2(arg0, arg1)));
+		  res = new NetECReal(verireal(atan2(arg0, arg1)));
+		  ivl_assert(*arg0_, res);
 	    } else if (strcmp(name, "$hypot") == 0) {
-		  return new NetECReal(verireal(hypot(arg0, arg1)));
+		  res = new NetECReal(verireal(hypot(arg0, arg1)));
+		  ivl_assert(*arg0_, res);
+	    } else {
+		  cerr << arg0_->get_fileline() << ": warning: Unhandled"
+		          "constant system function " << name << "." << endl;
 	    }
       }
 
-      return 0;
+      return res;
 }
 
-NetExpr* evaluate_abs(NetExpr*&arg_)
+static NetExpr* evaluate_abs(NetExpr*&arg_)
 {
       eval_expr(arg_);
+
+      NetExpr*res = 0;
+
       NetEConst*tmpi = dynamic_cast<NetEConst *>(arg_);
       if (tmpi) {
 	    verinum arg = tmpi->value();
 	    if (arg.is_negative()) {
 		  arg = v_not(arg) + verinum(1);
 	    }
-	    return new NetEConst(arg);
+	    res = new NetEConst(arg);
+	    ivl_assert(*arg_, res);
       }
 
       NetECReal*tmpr = dynamic_cast<NetECReal *>(arg_);
       if (tmpr) {
 	    double arg = tmpr->value().as_double();
-	    return new NetECReal(verireal(fabs(arg)));
+	    res = new NetECReal(verireal(fabs(arg)));
+	    ivl_assert(*arg_, res);
       }
 
-      return 0;
+      return res;
 }
 
-NetExpr* evaluate_min_max(NetExpr*&arg0_, NetExpr*&arg1_, const char*name)
+static NetExpr* evaluate_min_max(NetExpr*&arg0_, NetExpr*&arg1_,
+                                 const char*name)
 {
       eval_expr(arg0_);
       eval_expr(arg1_);
+
       NetEConst*tmpi0 = dynamic_cast<NetEConst *>(arg0_);
       NetECReal*tmpr0 = dynamic_cast<NetECReal *>(arg0_);
       NetEConst*tmpi1 = dynamic_cast<NetEConst *>(arg1_);
       NetECReal*tmpr1 = dynamic_cast<NetECReal *>(arg1_);
+
+      NetExpr*res = 0;
+
       if (tmpi0 && tmpi1) {
 	    verinum arg0 = tmpi0->value();
 	    verinum arg1 = tmpi1->value();
 	    if (strcmp(name, "$min") == 0) {
-		  return new NetEConst( arg0 < arg1 ? arg0 : arg1);
+		  res = new NetEConst( arg0 < arg1 ? arg0 : arg1);
+		  ivl_assert(*arg0_, res);
 	    } else if (strcmp(name, "$max") == 0) {
-		  return new NetEConst( arg0 < arg1 ? arg1 : arg0);
+		  res = new NetEConst( arg0 < arg1 ? arg1 : arg0);
+		  ivl_assert(*arg0_, res);
 	    }
-      }
-
-      if ((tmpi0 || tmpr0) && (tmpi1 || tmpr1)) {
+      } else if ((tmpi0 || tmpr0) && (tmpi1 || tmpr1)) {
 	    double arg0, arg1;
 	    if (tmpi0) {
 		  arg0 = tmpi0->value().as_double();
@@ -2015,13 +2061,18 @@ NetExpr* evaluate_min_max(NetExpr*&arg0_, NetExpr*&arg1_, const char*name)
 		  arg1 = tmpr1->value().as_double();
 	    }
 	    if (strcmp(name, "$min") == 0) {
-		  return new NetECReal(verireal(arg0 < arg1 ? arg0 : arg1));
+		  res = new NetECReal(verireal(arg0 < arg1 ? arg0 : arg1));
+		  ivl_assert(*arg0_, res);
 	    } else if (strcmp(name, "$max") == 0) {
-		  return new NetECReal(verireal(arg0 < arg1 ? arg1 : arg0));
+		  res = new NetECReal(verireal(arg0 < arg1 ? arg1 : arg0));
+		  ivl_assert(*arg0_, res);
+	    } else {
+		  cerr << arg0_->get_fileline() << ": warning: Unhandled"
+		          "constant system function " << name << "." << endl;
 	    }
       }
 
-      return 0;
+      return res;
 }
 
 NetExpr* NetESFunc::eval_tree(int prune_to_width)
