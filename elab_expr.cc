@@ -26,6 +26,7 @@
 
 # include  "pform.h"
 # include  "netlist.h"
+# include  "netenum.h"
 # include  "discipline.h"
 # include  "netmisc.h"
 # include  "util.h"
@@ -2214,9 +2215,36 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 				     net, par, eve, ex1, ex2);
 
 	    if (net != 0) {
+		    // Special case: The net is an enum, and the
+		    // method name is "num".
+		  netenum_t*netenum = net->enumeration();
+		  if (netenum && method_name == "num") {
+			NetEConst*tmp = make_const_val(netenum->size());
+			tmp->set_line(*this);
+			return tmp;
+		  }
+
+		    // Special case: The net is an enum, and the
+		    // method name is "first".
+		  if (netenum && method_name == "first") {
+			netenum_t::iterator item = netenum->first_name();
+			NetEConstEnum*tmp = new NetEConstEnum(scope,  item->first,
+							      netenum, item->second);
+			tmp->set_line(*this);
+			return tmp;
+		  }
+		  if (netenum && method_name == "last") {
+			netenum_t::iterator item = netenum->last_name();
+			NetEConstEnum*tmp = new NetEConstEnum(scope,  item->first,
+							      netenum, item->second);
+			tmp->set_line(*this);
+			return tmp;
+		  }
+
 		  const char*func_name = 0;
 		  if (method_name == "name") {
 			func_name = "$ivl_method$name";
+
 		  } else {
 			cerr << get_fileline() << ": error: "
 			     << "Unknown method name `" << method_name << "'"

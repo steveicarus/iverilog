@@ -22,6 +22,7 @@
 # include  "ivl_target.h"
 # include  "verinum.h"
 # include  "StringHeap.h"
+# include  <list>
 # include  <map>
 
 class netenum_t {
@@ -31,18 +32,27 @@ class netenum_t {
 			 long msb, long lsb);
       ~netenum_t();
 
+      size_t size() const;
+
       bool insert_name(perm_string name, const verinum&val);
 
       typedef std::map<perm_string,verinum>::const_iterator iterator;
       iterator find_name(perm_string name) const;
       iterator end_name() const;
 
+	// These methods roughly match the .first() and .last() methods.
+      iterator first_name() const;
+      iterator last_name() const;
+
     private:
       ivl_variable_type_t base_type_;
       bool signed_flag_;
       long msb_, lsb_;
 
-      std::map<perm_string,verinum> names_;
+      std::map<perm_string,verinum> names_map_;
+      std::list<perm_string> names_;
 };
+
+inline size_t netenum_t::size() const { return names_.size(); }
 
 #endif

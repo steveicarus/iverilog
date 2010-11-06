@@ -24,6 +24,7 @@
 # include  "netmisc.h"
 # include  "PExpr.h"
 # include  "pform_types.h"
+# include  "compiler.h"
 # include  "ivl_assert.h"
 
 NetNet* add_to_net(Design*des, NetNet*sig, long val)
@@ -391,6 +392,13 @@ NetEConst* make_const_0(unsigned long wid)
       verinum xxx (verinum::V0, wid);
       NetEConst*resx = new NetEConst(xxx);
       return resx;
+}
+
+NetEConst* make_const_val(unsigned long value)
+{
+      verinum tmp (value, integer_width);
+      NetEConst*res = new NetEConst(tmp);
+      return res;
 }
 
 NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid)

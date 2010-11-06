@@ -30,16 +30,31 @@ netenum_t::~netenum_t()
 
 bool netenum_t::insert_name(perm_string name, const verinum&val)
 {
-      names_[name] = verinum(val, msb_-lsb_+1);
-      return true;
+      std::pair<std::map<perm_string,verinum>::iterator, bool> res;
+
+      res = names_map_.insert( make_pair(name,val) );
+	// Only add the name to the list if it is not there already.
+      if (res.second) names_.push_back(name);
+
+      return res.second;
 }
 
 netenum_t::iterator netenum_t::find_name(perm_string name) const
 {
-      return names_.find(name);
+      return names_map_.find(name);
 }
 
 netenum_t::iterator netenum_t::end_name() const
 {
-      return names_.end();
+      return names_map_.end();
+}
+
+netenum_t::iterator netenum_t::first_name() const
+{
+      return names_map_.find(names_.front());
+}
+
+netenum_t::iterator netenum_t::last_name() const
+{
+      return names_map_.find(names_.back());
 }
