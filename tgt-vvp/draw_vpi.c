@@ -352,6 +352,8 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  snprintf(buffer, sizeof buffer,
 		           "W<%u,r>", args[idx].vec.base);
 		  break;
+		case IVL_VT_STRING:
+		    /* STRING expressions not supported yet. */
 		default:
 		  assert(0);
 	    }
