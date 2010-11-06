@@ -1661,9 +1661,25 @@ NetExpr* NetEUBits::eval_tree(int prune_to_width)
       return NetEUnary::eval_tree(prune_to_width);
 }
 
+NetEConst* NetEUReduce::eval_tree_real_()
+{
+      ivl_assert(*this, op_ == '!');
+
+      NetECReal*val= dynamic_cast<NetECReal*> (expr_);
+      if (val == 0) return 0;
+
+      verinum::V res = val->value().as_double() == 0.0 ? verinum::V1 :
+                                                         verinum::V0;
+
+      return new NetEConst(verinum(res, 1));
+}
+
+
 NetEConst* NetEUReduce::eval_tree(int prune_to_width)
 {
       eval_expr(expr_);
+      if (expr_type() == IVL_VT_REAL) return eval_tree_real_();
+
       NetEConst*rval = dynamic_cast<NetEConst*>(expr_);
       if (rval == 0) return 0;
 

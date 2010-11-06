@@ -3804,6 +3804,9 @@ class NetEUReduce : public NetEUnary {
       virtual NetEUReduce* dup_expr() const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
       virtual ivl_variable_type_t expr_type() const;
+
+    private:
+      virtual NetEConst* eval_tree_real_();
 };
 
 /*
