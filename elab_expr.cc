@@ -2238,7 +2238,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		  }
 
 		    // Special case: The net is an enum, and the
-		    // method name is "first".
+		    // method name is "first" or "last". These
+		    // evaluate to constant values.
 		  if (netenum && method_name == "first") {
 			netenum_t::iterator item = netenum->first_name();
 			NetEConstEnum*tmp = new NetEConstEnum(scope,  item->first,
@@ -2254,10 +2255,18 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			return tmp;
 		  }
 
-		  const char*func_name = 0;
-		  if (method_name == "name") {
-			func_name = "$ivl_method$name";
+		  NetExpr*expr = elaborate_expr_net(des, scope, net, found_in, false);
+		  NetESFunc*sys_expr = 0;
 
+		  if (method_name == "name") {
+			sys_expr = new NetESFunc("$ivl_method$name", IVL_VT_STRING,0, 1);
+			sys_expr->parm(0, expr);
+		  } else if (method_name == "next") {
+			sys_expr = new NetESFunc("$ivl_method$next", netenum, 1);
+			sys_expr->parm(0, expr);
+		  } else if (method_name == "prev") {
+			sys_expr = new NetESFunc("$ivl_method$prev", netenum, 1);
+			sys_expr->parm(0, expr);
 		  } else {
 			cerr << get_fileline() << ": error: "
 			     << "Unknown method name `" << method_name << "'"
@@ -2266,14 +2275,12 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			return elaborate_expr_net(des, scope, net, found_in, false);
 		  }
 
-		  NetESFunc*tmp = new NetESFunc(func_name, IVL_VT_STRING, 0, 1);
-		  tmp->parm(0, elaborate_expr_net(des, scope, net, found_in, false));
-		  tmp->set_line(*this);
+		  sys_expr->set_line(*this);
 
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug: Generate "
-			     << func_name << "(" << use_path << ")" << endl;
-		  return tmp;
+			     << sys_expr->name() << "(" << use_path << ")" << endl;
+		  return sys_expr;
 	    }
       }
 

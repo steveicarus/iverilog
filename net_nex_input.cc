@@ -125,11 +125,11 @@ NexusSet* NetESelect::nex_input(bool rem_out)
 
 NexusSet* NetESFunc::nex_input(bool rem_out)
 {
-      if (nparms_ == 0)
+      if (parms_.size() == 0)
 	    return new NexusSet;
 
       NexusSet*result = parms_[0]->nex_input(rem_out);
-      for (unsigned idx = 1 ;  idx < nparms_ ;  idx += 1) {
+      for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
 	    NexusSet*tmp = parms_[idx]->nex_input(rem_out);
 	    result->add(*tmp);
 	    delete tmp;

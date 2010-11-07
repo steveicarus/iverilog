@@ -3748,6 +3748,7 @@ class NetESFunc  : public NetExpr {
     public:
       NetESFunc(const char*name, ivl_variable_type_t t,
 		unsigned width, unsigned nprms);
+      NetESFunc(const char*name, netenum_t*enum_type, unsigned nprms);
       ~NetESFunc();
 
       const char* name() const;
@@ -3762,6 +3763,7 @@ class NetESFunc  : public NetExpr {
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual bool set_width(unsigned, bool last_chance);
+      virtual netenum_t* enumeration() const;
       virtual void dump(ostream&) const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -3771,8 +3773,8 @@ class NetESFunc  : public NetExpr {
     private:
       const char* name_;
       ivl_variable_type_t type_;
-      unsigned nparms_;
-      NetExpr**parms_;
+      netenum_t*enum_type_;
+      std::vector<NetExpr*>parms_;
 
     private: // not implemented
       NetESFunc(const NetESFunc&);

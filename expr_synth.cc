@@ -1359,12 +1359,12 @@ NetNet* NetESFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
       }
 
       NetEvWait*trigger = 0;
-      if (nparms_ == 0) {
+      if (parms_.size() == 0) {
             trigger = make_func_trigger(des, scope, root);
       }
 
       NetSysFunc*net = new NetSysFunc(scope, scope->local_symbol(),
-				      def, 1+nparms_, trigger);
+				      def, 1+parms_.size(), trigger);
       net->set_line(*this);
       des->add_node(net);
 
@@ -1378,7 +1378,7 @@ NetNet* NetESFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
       connect(net->pin(0), osig->pin(0));
 
       unsigned errors = 0;
-      for (unsigned idx = 0 ;  idx < nparms_ ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
 	    NetNet*tmp = parms_[idx]->synthesize(des, scope, root);
 	    if (tmp == 0) {
 		  cerr << get_fileline() << ": error: Unable to elaborate "

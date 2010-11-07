@@ -19,6 +19,7 @@
 
 # include  "config.h"
 # include  "netlist.h"
+# include  "netenum.h"
 # include  "compiler.h"
 # include  "netmisc.h"
 # include  <iostream>
@@ -586,22 +587,24 @@ bool NetESelect::has_width() const
 
 NetESFunc::NetESFunc(const char*n, ivl_variable_type_t t,
 		     unsigned width, unsigned np)
-: name_(0), type_(t)
+: name_(0), type_(t), enum_type_(0), parms_(np)
 {
       name_ = lex_strings.add(n);
       expr_width(width);
-      nparms_ = np;
-      parms_ = new NetExpr*[np];
-      for (unsigned idx = 0 ;  idx < nparms_ ;  idx += 1)
-	    parms_[idx] = 0;
+}
+
+NetESFunc::NetESFunc(const char*n, netenum_t*enum_type, unsigned np)
+: name_(0), type_(enum_type->base_type()), enum_type_(enum_type), parms_(np)
+{
+      name_ = lex_strings.add(n);
+      expr_width(enum_type->base_width());
 }
 
 NetESFunc::~NetESFunc()
 {
-      for (unsigned idx = 0 ;  idx < nparms_ ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1)
 	    if (parms_[idx]) delete parms_[idx];
 
-      delete[]parms_;
 	/* name_ string ls lex_strings allocated. */
 }
 
@@ -612,12 +615,12 @@ const char* NetESFunc::name() const
 
 unsigned NetESFunc::nparms() const
 {
-      return nparms_;
+      return parms_.size();
 }
 
 void NetESFunc::parm(unsigned idx, NetExpr*v)
 {
-      assert(idx < nparms_);
+      assert(idx < parms_.size());
       if (parms_[idx])
 	    delete parms_[idx];
       parms_[idx] = v;
@@ -625,19 +628,24 @@ void NetESFunc::parm(unsigned idx, NetExpr*v)
 
 const NetExpr* NetESFunc::parm(unsigned idx) const
 {
-      assert(idx < nparms_);
+      assert(idx < parms_.size());
       return parms_[idx];
 }
 
 NetExpr* NetESFunc::parm(unsigned idx)
 {
-      assert(idx < nparms_);
+      assert(idx < parms_.size());
       return parms_[idx];
 }
 
 ivl_variable_type_t NetESFunc::expr_type() const
 {
       return type_;
+}
+
+netenum_t* NetESFunc::enumeration() const
+{
+      return enum_type_;
 }
 
 NetEAccess::NetEAccess(NetBranch*br, ivl_nature_t nat)
