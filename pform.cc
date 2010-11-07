@@ -2505,7 +2505,7 @@ void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_st
 			cur_value = cur_value + one_value;
 		  }
 
-		  cur->parm - next_value;
+		  cur->parm = next_value;
 
 	    } else {
 		  if (enum_type->base_type==IVL_VT_BOOL && ! next_value.is_defined()) {
