@@ -2070,6 +2070,19 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 	    return expr_width_;
       }
 
+	// The width of an enumeration literal is the width of the
+	// enumeration base.
+      if (const NetEConstEnum*par_enum = dynamic_cast<const NetEConstEnum*> (par)) {
+	    netenum_t*use_enum = par_enum->enumeration();
+	    ivl_assert(*this, use_enum != 0);
+
+	    expr_type_ = use_enum->base_type();
+	    unsized_flag = false;
+	    expr_width_ = max(use_enum->base_width(), min);
+	    expr_type__ = expr_type_;
+	    return expr_width_;
+      }
+
 	// The width of a parameter name is the width of the range for
 	// the parameter name, if a range is declared. Otherwise, the
 	// width is undefined.

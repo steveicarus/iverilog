@@ -18,9 +18,10 @@
  */
 
 # include  "netenum.h"
+# include  <cassert>
 
-netenum_t::netenum_t(ivl_variable_type_t base_type, bool signed_flag, long msb, long lsb)
-: base_type_(base_type), signed_flag_(signed_flag), msb_(msb), lsb_(lsb)
+netenum_t::netenum_t(ivl_variable_type_t btype, bool signed_flag, long msb, long lsb)
+: base_type_(btype), signed_flag_(signed_flag), msb_(msb), lsb_(lsb)
 {
 }
 
@@ -31,6 +32,8 @@ netenum_t::~netenum_t()
 bool netenum_t::insert_name(perm_string name, const verinum&val)
 {
       std::pair<std::map<perm_string,verinum>::iterator, bool> res;
+
+      assert(val.has_len() && val.len() == (msb_-lsb_+1));
 
       res = names_map_.insert( make_pair(name,val) );
 	// Only add the name to the list if it is not there already.

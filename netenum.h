@@ -32,6 +32,10 @@ class netenum_t {
 			 long msb, long lsb);
       ~netenum_t();
 
+      ivl_variable_type_t base_type() const;
+      unsigned base_width() const;
+
+	// The size() is the number of enumeration literals.
       size_t size() const;
 
       bool insert_name(perm_string name, const verinum&val);
@@ -52,6 +56,17 @@ class netenum_t {
       std::map<perm_string,verinum> names_map_;
       std::list<perm_string> names_;
 };
+
+inline ivl_variable_type_t netenum_t::base_type() const
+{ return base_type_; }
+
+inline unsigned netenum_t::base_width() const
+{
+      if (msb_ >= lsb_)
+	    return msb_ - lsb_ + 1;
+      else
+	    return lsb_ - msb_ + 1;
+}
 
 inline size_t netenum_t::size() const { return names_.size(); }
 

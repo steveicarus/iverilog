@@ -229,7 +229,11 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       for (list<named_number_t>::const_iterator cur = enum_type->names->begin()
 		 ; cur != enum_type->names->end() ;  ++ cur) {
 
-	    rc_flag = use_enum->insert_name(cur->name, cur->parm);
+	      // The values are explicitly sized to the width of the
+	      // base type of the enumeration.
+	    verinum tmp_val (cur->parm, use_enum->base_width());
+
+	    rc_flag = use_enum->insert_name(cur->name, tmp_val);
 	    rc_flag &= scope->add_enumeration_name(use_enum, cur->name);
 	    if (! rc_flag) {
 		  cerr << "<>:0: error: Duplicate enumeration name " << cur->name << endl;
