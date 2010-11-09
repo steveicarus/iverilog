@@ -1757,6 +1757,10 @@ void dll_target::lpm_latch( const NetLatch *latchPtr )
 
       // Set the gate signal to point to the nexus, and the nexus to point back to this device.
       const Nexus *const nexPtr = latchPtr->pin_Gate().nexus();
+      assert( nexPtr->t_cookie() ); // C++ programmers prefer using exceptions rather than assertions.
+      objPtr->u_.latch.gatePtr = static_cast< ivl_nexus_s * >( nexPtr->t_cookie() );
+      assert( objPtr->u_.latch.gatePtr ); // C++ programmers prefer using exceptions rather than assertions.
+      nexus_lpm_add( objPtr->u_.latch.gatePtr, objPtr, 0u, IVL_DR_HiZ, IVL_DR_HiZ );
     }
   catch ( bad_alloc &memoryAllocationException )
     {
