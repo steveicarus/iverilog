@@ -232,6 +232,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	      // The values are explicitly sized to the width of the
 	      // base type of the enumeration.
 	    verinum tmp_val (cur->parm, use_enum->base_width());
+	    tmp_val.has_sign(enum_type->signed_flag);
 
 	    rc_flag = use_enum->insert_name(cur->name, tmp_val);
 	    rc_flag &= scope->add_enumeration_name(use_enum, cur->name);
