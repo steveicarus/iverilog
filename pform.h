@@ -84,11 +84,10 @@ extern bool pform_library_flag;
 /* This is information about port name information for named port
    connections. */
 
-typedef named<PExpr*> named_pexpr_t;
 
 struct parmvalue_t {
       list<PExpr*>*by_order;
-      svector<named_pexpr_t*>*by_name;
+      list<named_pexpr_t>*by_name;
 };
 
 struct str_pair_t { ivl_drive_t str0, str1; };
@@ -110,7 +109,7 @@ struct lgate {
 
       string name;
       list<PExpr*>*parms;
-      svector<named_pexpr_t*>*parms_by_name;
+      list<named_pexpr_t>*parms_by_name;
 
       PExpr*range[2];
 
@@ -121,7 +120,8 @@ struct lgate {
   /* Use this function to transform the parted form of the attribute
      list to the attribute map that is used later. */
 extern void pform_bind_attributes(map<perm_string,PExpr*>&attributes,
-				  svector<named_pexpr_t*>*attr);
+				  list<named_pexpr_t>*attr,
+				  bool keep_attr =false);
 
   /* The lexor calls this function to change the default nettype. */
 extern void pform_set_default_nettype(NetNet::Type net,
@@ -143,7 +143,7 @@ extern PWire* pform_get_wire_in_scope(perm_string name);
  * pform to close up and finish the named module.
  */
 extern void pform_startmodule(const char*, const char*file, unsigned lineno,
-			      svector<named_pexpr_t*>*attr);
+			      list<named_pexpr_t>*attr);
 extern void pform_check_timeunit_prec();
 extern void pform_module_set_ports(vector<Module::port_t*>*);
 
@@ -157,7 +157,7 @@ extern void pform_module_define_port(const struct vlltype&li,
 				     ivl_variable_type_t data_type,
 				     bool signed_flag,
 				     list<PExpr*>*range,
-				     svector<named_pexpr_t*>*attr);
+				     list<named_pexpr_t>*attr);
 
 extern Module::port_t* pform_module_port_reference(perm_string name,
 						   const char*file,
@@ -230,7 +230,7 @@ extern void pform_makewire(const struct vlltype&li, perm_string name,
 			   NetNet::Type type,
 			   NetNet::PortType pt,
 			   ivl_variable_type_t,
-			   svector<named_pexpr_t*>*attr);
+			   list<named_pexpr_t>*attr);
 
 /* This form handles simple declarations */
 extern void pform_makewire(const struct vlltype&li,
@@ -240,7 +240,7 @@ extern void pform_makewire(const struct vlltype&li,
 			   NetNet::Type type,
 			   NetNet::PortType,
 			   ivl_variable_type_t,
-			   svector<named_pexpr_t*>*attr,
+			   list<named_pexpr_t>*attr,
 			   PWSRType rt = SR_NET);
 
 /* This form handles assignment declarations. */
@@ -329,7 +329,7 @@ extern void pform_module_specify_path(PSpecPath*obj);
  * or initial items.
  */
 extern PProcess*  pform_make_behavior(ivl_process_type_t, Statement*,
-				      svector<named_pexpr_t*>*attr);
+				      list<named_pexpr_t>*attr);
 
 extern svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*);
 
@@ -349,7 +349,7 @@ extern void pform_makegates(PGBuiltin::Type type,
 			    struct str_pair_t str,
 			    list<PExpr*>*delay,
 			    svector<lgate>*gates,
-			    svector<named_pexpr_t*>*attr);
+			    list<named_pexpr_t>*attr);
 
 extern void pform_make_modgates(perm_string type,
 				struct parmvalue_t*overrides,

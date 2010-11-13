@@ -1112,7 +1112,7 @@ void LexicalScope::dump_enumerations_(ostream&out, unsigned indent) const
 		 ; cur != enum_sets.end() ; ++ cur) {
 	    out << setw(indent) << "" << "enum {" << endl;
 
-	    for (list<named_number_t>::const_iterator idx = (*cur)->names->begin()
+	    for (list<named_pexpr_t>::const_iterator idx = (*cur)->names->begin()
 		       ; idx != (*cur)->names->end() ; ++ idx) {
 		  out << setw(indent+4) << "" << idx->name
 		      << " = " << idx->parm << endl;

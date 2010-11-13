@@ -350,16 +350,18 @@ PGenerate* pform_parent_generate(void)
 }
 
 void pform_bind_attributes(map<perm_string,PExpr*>&attributes,
-			   svector<named_pexpr_t*>*attr)
+			   list<named_pexpr_t>*attr, bool keep_attrs)
 {
       if (attr == 0)
 	    return;
 
-      for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
-	    named_pexpr_t*tmp = (*attr)[idx];
-	    attributes[tmp->name] = tmp->parm;
+      while (attr->size() > 0) {
+	    named_pexpr_t tmp = attr->front();
+	    attr->pop_front();
+	    attributes[tmp.name] = tmp.parm;
       }
-      delete attr;
+      if (!keep_attrs)
+	    delete attr;
 }
 
 static bool pform_at_module_level()
@@ -689,7 +691,7 @@ verinum* pform_verinum_with_size(verinum*siz, verinum*val,
 }
 
 void pform_startmodule(const char*name, const char*file, unsigned lineno,
-		       svector<named_pexpr_t*>*attr)
+		       list<named_pexpr_t>*attr)
 {
       assert( pform_cur_module == 0 );
 
@@ -724,12 +726,7 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
 	    cerr << pform_timescale_file << ":" << pform_timescale_line
 		 << ": ...: The inherited timescale is here." << endl;
       }
-      if (attr) {
-	      for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
-		      named_pexpr_t*tmp = (*attr)[idx];
-		      pform_cur_module->attributes[tmp->name] = tmp->parm;
-	      }
-      }
+      pform_bind_attributes(pform_cur_module->attributes, attr);
 }
 
 /*
@@ -1505,11 +1502,11 @@ void pform_make_events(list<perm_string>*names, const char*fn, unsigned ln)
  * are ready to be instantiated. The function runs through the list of
  * gates and calls the pform_makegate function to make the individual gate.
  */
-void pform_makegate(PGBuiltin::Type type,
-		    struct str_pair_t str,
-		    list<PExpr*>* delay,
-		    const lgate&info,
-		    svector<named_pexpr_t*>*attr)
+static void pform_makegate(PGBuiltin::Type type,
+			   struct str_pair_t str,
+			   list<PExpr*>* delay,
+			   const lgate&info,
+			   list<named_pexpr_t>*attr)
 {
       if (info.parms_by_name) {
 	    cerr << info.file << ":" << info.lineno << ": Gates do not "
@@ -1528,12 +1525,10 @@ void pform_makegate(PGBuiltin::Type type,
       if (info.range[0])
 	    cur->set_range(info.range[0], info.range[1]);
 
-      if (attr) {
-	    for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
-		  named_pexpr_t*tmp = (*attr)[idx];
-		  cur->attributes[tmp->name] = tmp->parm;
-	    }
-      }
+	// The pform_makegates() that calls me will take care of
+	// deleting the attr pointer, so tell the
+	// pform_bind_attributes function to keep the attr object.
+      pform_bind_attributes(cur->attributes, attr, true);
 
       cur->strength0(str.str0);
       cur->strength1(str.str1);
@@ -1549,20 +1544,13 @@ void pform_makegates(PGBuiltin::Type type,
 		     struct str_pair_t str,
 		     list<PExpr*>*delay,
 		     svector<lgate>*gates,
-		     svector<named_pexpr_t*>*attr)
+		     list<named_pexpr_t>*attr)
 {
       for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
 	    pform_makegate(type, str, delay, (*gates)[idx], attr);
       }
 
-      if (attr) {
-	    for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
-		  named_pexpr_t*cur = (*attr)[idx];
-		  delete cur;
-	    }
-	    delete attr;
-      }
-
+      if (attr) delete attr;
       delete gates;
 }
 
@@ -1597,13 +1585,13 @@ static void pform_make_modgate(perm_string type,
       cur->set_range(msb,lsb);
 
       if (overrides && overrides->by_name) {
-	    unsigned cnt = overrides->by_name->count();
+	    unsigned cnt = overrides->by_name->size();
 	    named<PExpr*>*byname = new named<PExpr*>[cnt];
 
-	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
-		  named_pexpr_t*curp = (*overrides->by_name)[idx];
-		  byname[idx].name = curp->name;
-		  byname[idx].parm = curp->parm;
+	    list<named_pexpr_t>::iterator by_name_cur = overrides->by_name->begin();
+	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1, ++ by_name_cur) {
+		  byname[idx].name = by_name_cur->name;
+		  byname[idx].parm = by_name_cur->parm;
 	    }
 
 	    cur->set_parameters(byname, cnt);
@@ -1621,17 +1609,17 @@ static void pform_make_modgate(perm_string type,
 static void pform_make_modgate(perm_string type,
 			       perm_string name,
 			       struct parmvalue_t*overrides,
-			       svector<named_pexpr_t*>*bind,
+			       list<named_pexpr_t>*bind,
 			       PExpr*msb, PExpr*lsb,
 			       const char*fn, unsigned ln)
 {
-      unsigned npins = bind->count();
+      unsigned npins = bind->size();
       named<PExpr*>*pins = new named<PExpr*>[npins];
-      for (unsigned idx = 0 ;  idx < npins ;  idx += 1) {
-	    named_pexpr_t*curp = (*bind)[idx];
-	    pins[idx].name = curp->name;
-	    pins[idx].parm = curp->parm;
-            pform_declare_implicit_nets(curp->parm);
+      list<named_pexpr_t>::iterator bind_cur = bind->begin();
+      for (unsigned idx = 0 ;  idx < npins ;  idx += 1,  ++bind_cur) {
+	    pins[idx].name = bind_cur->name;
+	    pins[idx].parm = bind_cur->parm;
+            pform_declare_implicit_nets(bind_cur->parm);
       }
 
       PGModule*cur = new PGModule(type, name, pins, npins);
@@ -1639,13 +1627,13 @@ static void pform_make_modgate(perm_string type,
       cur->set_range(msb,lsb);
 
       if (overrides && overrides->by_name) {
-	    unsigned cnt = overrides->by_name->count();
+	    unsigned cnt = overrides->by_name->size();
 	    named<PExpr*>*byname = new named<PExpr*>[cnt];
 
-	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
-		  named_pexpr_t*curp = (*overrides->by_name)[idx];
-		  byname[idx].name = curp->name;
-		  byname[idx].parm = curp->parm;
+	    list<named_pexpr_t>::iterator by_name_cur = overrides->by_name->begin();
+	    for (unsigned idx = 0 ;  idx < cnt ;  idx += 1,  ++by_name_cur) {
+		  byname[idx].name = by_name_cur->name;
+		  byname[idx].parm = by_name_cur->parm;
 	    }
 
 	    cur->set_parameters(byname, cnt);
@@ -1809,7 +1797,7 @@ void pform_module_define_port(const struct vlltype&li,
 			      ivl_variable_type_t data_type,
 			      bool signed_flag,
 			      list<PExpr*>*range,
-			      svector<named_pexpr_t*>*attr)
+			      list<named_pexpr_t>*attr)
 {
       PWire*cur = pform_get_wire_in_scope(name);
       if (cur) {
@@ -1844,12 +1832,7 @@ void pform_module_define_port(const struct vlltype&li,
 	                   false);
       }
 
-      if (attr) {
-	      for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
-		      named_pexpr_t*tmp = (*attr)[idx];
-		      cur->attributes[tmp->name] = tmp->parm;
-	      }
-      }
+      pform_bind_attributes(cur->attributes, attr);
       pform_put_wire_in_scope(name, cur);
 }
 
@@ -1881,7 +1864,7 @@ void pform_module_define_port(const struct vlltype&li,
 void pform_makewire(const vlltype&li, perm_string name,
 		    NetNet::Type type, NetNet::PortType pt,
 		    ivl_variable_type_t dt,
-		    svector<named_pexpr_t*>*attr)
+		    list<named_pexpr_t>*attr)
 {
       PWire*cur = pform_get_wire_in_scope(name);
 
@@ -1929,9 +1912,9 @@ void pform_makewire(const vlltype&li, perm_string name,
       }
 
       if (attr) {
-	    for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
-		  named_pexpr_t*tmp = (*attr)[idx];
-		  cur->attributes[tmp->name] = tmp->parm;
+	    for (list<named_pexpr_t>::iterator attr_cur = attr->begin()
+		       ; attr_cur != attr->end() ;  ++attr_cur) {
+		  cur->attributes[attr_cur->name] = attr_cur->parm;
 	    }
       }
 
@@ -1951,7 +1934,7 @@ void pform_makewire(const vlltype&li,
 		    NetNet::Type type,
 		    NetNet::PortType pt,
 		    ivl_variable_type_t dt,
-		    svector<named_pexpr_t*>*attr,
+		    list<named_pexpr_t>*attr,
 		    PWSRType rt)
 {
       for (list<perm_string>::iterator cur = names->begin()
@@ -2484,40 +2467,6 @@ void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_st
       assert(enum_type->range.get() != 0);
       assert(enum_type->range->size() == 2);
 
-	// Scan the list of enum name declarations and evaluate them
-	// to a map of names with values. This expands out the
-	// inferred values (if any) and checks for duplicates.
-      verinum cur_value (0);
-      verinum one_value (1);
-      for (list<named_number_t>::iterator cur = enum_type->names->begin()
-		 ; cur != enum_type->names->end() ; ++ cur) {
-
-	    verinum next_value = cur->parm;
-	    if (next_value.len() == 0) {
-		  if (! cur_value.is_defined()) {
-			cerr << li.text << ":" << li.first_line << ": "
-			     << "error: Enumeration name " << cur->name
-			     << " cannot have inferred value." << endl;
-			next_value = cur_value;
-			error_count += 1;
-		  } else {
-			next_value = cur_value;
-			cur_value = cur_value + one_value;
-		  }
-
-		  cur->parm = next_value;
-
-	    } else {
-		  if (enum_type->base_type==IVL_VT_BOOL && ! next_value.is_defined()) {
-			cerr << li.text << ":" << li.first_line << ": "
-			     << "error: Enumeration name " << cur->name
-			     << " Cannot have logic value " << next_value << "." << endl;
-			error_count += 1;
-		  }
-		  cur_value = next_value + one_value;
-	    }
-      }
-
 	// Attach the enumeration to the current scope.
       pform_put_enum_type_in_scope(enum_type);
 
@@ -2554,7 +2503,7 @@ svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)
 }
 
 PProcess* pform_make_behavior(ivl_process_type_t type, Statement*st,
-			      svector<named_pexpr_t*>*attr)
+			      list<named_pexpr_t>*attr)
 {
       PProcess*pp = new PProcess(type, st);
 

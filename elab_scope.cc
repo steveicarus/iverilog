@@ -226,12 +226,40 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 
       scope->add_enumeration_set(use_enum);
 
-      for (list<named_number_t>::const_iterator cur = enum_type->names->begin()
+      verinum cur_value (0);
+      verinum one_value (1);
+      for (list<named_pexpr_t>::const_iterator cur = enum_type->names->begin()
 		 ; cur != enum_type->names->end() ;  ++ cur) {
+
+
+	    if (cur->parm) {
+		    // There is an explicit value. elaborate/evaluate
+		    // the value and assign it to the enumeration name.
+		  NetExpr*val = elab_and_eval(des, scope, cur->parm, -1);
+		  NetEConst*val_const = dynamic_cast<NetEConst*> (val);
+		  if (val_const == 0) {
+			cerr << "<>:0: error: Enumeration expression is not constant." << endl;
+			des->errors += 1;
+			continue;
+		  }
+		  cur_value = val_const->value();
+
+		  if (enum_type->base_type==IVL_VT_BOOL && ! cur_value.is_defined()) {
+			cerr << "<>:0: error: Enumeration name " << cur->name
+			     << " cannot have a logic value." << endl;
+			des->errors += 1;
+		  }
+
+	    } else if (! cur_value.is_defined()) {
+		  cerr << "<>:0: error: Enumeration name " << cur->name
+		       << " cannot have an inferred value." << endl;
+		  des->errors += 1;
+		  continue;
+	    }
 
 	      // The values are explicitly sized to the width of the
 	      // base type of the enumeration.
-	    verinum tmp_val (cur->parm, use_enum->base_width());
+	    verinum tmp_val (cur_value, use_enum->base_width());
 	    tmp_val.has_sign(enum_type->signed_flag);
 
 	    rc_flag = use_enum->insert_name(cur->name, tmp_val);
@@ -240,6 +268,11 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 		  cerr << "<>:0: error: Duplicate enumeration name " << cur->name << endl;
 		  des->errors += 1;
 	    }
+
+	      // In case the next name has an implicit value,
+	      // increment the current value by one.
+	    if (cur_value.is_defined())
+		  cur_value = cur_value + one_value;
       }
 }
 

@@ -193,35 +193,26 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
       return tmp;
 }
 
-static list<named_number_t>* make_named_number(perm_string name)
+static list<named_pexpr_t>* make_named_numbers(perm_string name, long first, long last, PExpr*val =0)
 {
-      list<named_number_t>*lst = new list<named_number_t>;
-      named_number_t tmp;
-      tmp.name = name;
-      lst->push_back(tmp);
-      return lst;
-}
-
-static list<named_number_t>* make_named_numbers(perm_string name, long first, long last, verinum*val =0)
-{
-      list<named_number_t>*lst = new list<named_number_t>;
-      named_number_t tmp;
+      list<named_pexpr_t>*lst = new list<named_pexpr_t>;
+      named_pexpr_t tmp;
       assert(first <= last);
       for (long idx = first ; idx <= last ; idx += 1) {
 	    ostringstream buf;
 	    buf << name.str() << idx << ends;
 	    tmp.name = lex_strings.make(buf.str());
-	    tmp.parm = val ? *val : verinum();
+	    tmp.parm = val;
 	    val = 0;
 	    lst->push_back(tmp);
       }
       return lst;
 }
 
-static list<named_number_t>* make_named_number(perm_string name, const verinum&val)
+static list<named_pexpr_t>* make_named_number(perm_string name, PExpr*val =0)
 {
-      list<named_number_t>*lst = new list<named_number_t>;
-      named_number_t tmp;
+      list<named_pexpr_t>*lst = new list<named_pexpr_t>;
+      named_pexpr_t tmp;
       tmp.name = name;
       tmp.parm = val;
       lst->push_back(tmp);
@@ -267,7 +258,7 @@ static list<named_number_t>* make_named_number(perm_string name, const verinum&v
       list<named_number_t>* named_numbers;
 
       named_pexpr_t*named_pexpr;
-      svector<named_pexpr_t*>*named_pexprs;
+      list<named_pexpr_t>*named_pexprs;
       struct parmvalue_t*parmvalue;
 
       PExpr*expr;
@@ -418,7 +409,7 @@ static list<named_number_t>* make_named_number(perm_string name, const verinum&v
 %type <value_range> parameter_value_ranges_opt
 %type <expr> value_range_expression
 
-%type <named_numbers> enum_name_list enum_name
+%type <named_pexprs> enum_name_list enum_name
 %type <enum_type> enum_data_type
 
 %type <wires> task_item task_item_list task_item_list_opt
@@ -531,18 +522,19 @@ attribute_list_opt
 	;
 
 attribute_list
-	: attribute_list ',' attribute
-		{ svector<named_pexpr_t*>*tmp =
-			new svector<named_pexpr_t*>(*$1,$3);
-		  delete $1;
-		  $$ = tmp;
-		}
-	| attribute
-		{ svector<named_pexpr_t*>*tmp = new svector<named_pexpr_t*>(1);
-		  (*tmp)[0] = $1;
-		  $$ = tmp;
-		}
-	;
+  : attribute_list ',' attribute
+      { list<named_pexpr_t>*tmp = $1;
+        tmp->push_back(*$3);
+	delete $3;
+	$$ = tmp;
+      }
+  | attribute
+      { list<named_pexpr_t>*tmp = new list<named_pexpr_t>;
+        tmp->push_back(*$1);
+	delete $1;
+	$$ = tmp;
+      }
+  ;
 
 
 attribute
@@ -719,7 +711,7 @@ enum_name_list
       { $$ = $1;
       }
   | enum_name_list ',' enum_name
-      { list<named_number_t>*lst = $1;
+      { list<named_pexpr_t>*lst = $1;
 	lst->splice(lst->end(), *$3);
 	delete $3;
 	$$ = lst;
@@ -746,27 +738,24 @@ enum_name
 	delete $3;
 	delete $5;
       }
-  | IDENTIFIER '=' number
+  | IDENTIFIER '=' expression
       { perm_string name = lex_strings.make($1);
 	delete[]$1;
-	$$ = make_named_number(name, *$3);
-	delete $3;
+	$$ = make_named_number(name, $3);
       }
-  | IDENTIFIER '[' DEC_NUMBER ']' '=' number
+  | IDENTIFIER '[' DEC_NUMBER ']' '=' expression
       { perm_string name = lex_strings.make($1);
 	long count = $3->as_ulong();
 	$$ = make_named_numbers(name, 0, count-1, $6);
 	delete[]$1;
 	delete $3;
-	delete $6;
       }
-  | IDENTIFIER '[' DEC_NUMBER ':' DEC_NUMBER ']' '=' number
+  | IDENTIFIER '[' DEC_NUMBER ':' DEC_NUMBER ']' '=' expression
       { perm_string name = lex_strings.make($1);
-	    $$ = make_named_numbers(name, $3->as_long(), $5->as_long(), $8);
+	$$ = make_named_numbers(name, $3->as_long(), $5->as_long(), $8);
 	delete[]$1;
 	delete $3;
 	delete $5;
-	delete $8;
       }
   ;
 
@@ -3165,18 +3154,19 @@ parameter_value_byname
 	;
 
 parameter_value_byname_list
-	: parameter_value_byname
-		{ svector<named_pexpr_t*>*tmp = new svector<named_pexpr_t*>(1);
-		  (*tmp)[0] = $1;
-		  $$ = tmp;
-		}
-	| parameter_value_byname_list ',' parameter_value_byname
-		{ svector<named_pexpr_t*>*tmp =
-			new svector<named_pexpr_t*>(*$1,$3);
-		  delete $1;
-		  $$ = tmp;
-		}
-	;
+  : parameter_value_byname
+      { list<named_pexpr_t>*tmp = new list<named_pexpr_t>;
+	tmp->push_back(*$1);
+	delete $1;
+	$$ = tmp;
+      }
+  | parameter_value_byname_list ',' parameter_value_byname
+      { list<named_pexpr_t>*tmp = $1;
+	tmp->push_back(*$3);
+	delete $3;
+	$$ = tmp;
+      }
+  ;
 
 
   /* The port (of a module) is a fairly complex item. Each port is
@@ -3233,6 +3223,58 @@ port_opt
 	: port { $$ = $1; }
 	| { $$ = 0; }
 	;
+
+  /* The port_name rule is used with a module is being *instantiated*,
+     and not when it is being declared. See the port rule if you are
+     looking for the ports of a module declaration. */
+
+port_name
+	: '.' IDENTIFIER '(' expression ')'
+		{ named_pexpr_t*tmp = new named_pexpr_t;
+		  tmp->name = lex_strings.make($2);
+		  tmp->parm = $4;
+		  delete[]$2;
+		  $$ = tmp;
+		}
+	| '.' IDENTIFIER '(' error ')'
+		{ yyerror(@3, "error: invalid port connection expression.");
+		  named_pexpr_t*tmp = new named_pexpr_t;
+		  tmp->name = lex_strings.make($2);
+		  tmp->parm = 0;
+		  delete[]$2;
+		  $$ = tmp;
+		}
+	| '.' IDENTIFIER '(' ')'
+		{ named_pexpr_t*tmp = new named_pexpr_t;
+		  tmp->name = lex_strings.make($2);
+		  tmp->parm = 0;
+		  delete[]$2;
+		  $$ = tmp;
+		}
+	| '.' IDENTIFIER
+		{ named_pexpr_t*tmp = new named_pexpr_t;
+		  tmp->name = lex_strings.make($2);
+		  tmp->parm = new PEIdent(lex_strings.make($2), true);
+		  FILE_NAME(tmp->parm, @1);
+		  delete[]$2;
+		  $$ = tmp;
+		}
+	;
+
+port_name_list
+  : port_name_list ',' port_name
+      { list<named_pexpr_t>*tmp = $1;
+        tmp->push_back(*$3);
+	delete $3;
+	$$ = tmp;
+      }
+  | port_name
+      { list<named_pexpr_t>*tmp = new list<named_pexpr_t>;
+        tmp->push_back(*$1);
+	delete $1;
+	$$ = tmp;
+      }
+  ;
 
 
   /* A port reference is an internal (to the module) name of the port,
@@ -3320,57 +3362,6 @@ port_reference_list
 		{ Module::port_t*tmp = $1;
 		  append(tmp->expr, $3->expr);
 		  delete $3;
-		  $$ = tmp;
-		}
-	;
-
-  /* The port_name rule is used with a module is being *instantiated*,
-     and not when it is being declared. See the port rule if you are
-     looking for the ports of a module declaration. */
-
-port_name
-	: '.' IDENTIFIER '(' expression ')'
-		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = lex_strings.make($2);
-		  tmp->parm = $4;
-		  delete[]$2;
-		  $$ = tmp;
-		}
-	| '.' IDENTIFIER '(' error ')'
-		{ yyerror(@3, "error: invalid port connection expression.");
-		  named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = lex_strings.make($2);
-		  tmp->parm = 0;
-		  delete[]$2;
-		  $$ = tmp;
-		}
-	| '.' IDENTIFIER '(' ')'
-		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = lex_strings.make($2);
-		  tmp->parm = 0;
-		  delete[]$2;
-		  $$ = tmp;
-		}
-	| '.' IDENTIFIER
-		{ named_pexpr_t*tmp = new named_pexpr_t;
-		  tmp->name = lex_strings.make($2);
-		  tmp->parm = new PEIdent(lex_strings.make($2), true);
-		  FILE_NAME(tmp->parm, @1);
-		  delete[]$2;
-		  $$ = tmp;
-		}
-	;
-
-port_name_list
-	: port_name_list ',' port_name
-		{ svector<named_pexpr_t*>*tmp;
-		  tmp = new svector<named_pexpr_t*>(*$1, $3);
-		  delete $1;
-		  $$ = tmp;
-		}
-	| port_name
-		{ svector<named_pexpr_t*>*tmp = new svector<named_pexpr_t*>(1);
-		  (*tmp)[0] = $1;
 		  $$ = tmp;
 		}
 	;

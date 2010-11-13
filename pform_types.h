@@ -32,7 +32,9 @@
  * parse-form types.
  */
 
+class PExpr;
 typedef named<verinum> named_number_t;
+typedef named<PExpr*> named_pexpr_t;
 
 struct index_component_t {
       enum ctype_t { SEL_NONE, SEL_BIT, SEL_PART, SEL_IDX_UP, SEL_IDX_DO };
@@ -63,7 +65,7 @@ struct enum_type_t {
       ivl_variable_type_t base_type;
       bool signed_flag;
       auto_ptr< list<PExpr*> > range;
-      auto_ptr< list<named_number_t> > names;
+      auto_ptr< list<named_pexpr_t> > names;
 };
 
 
