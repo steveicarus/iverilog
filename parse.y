@@ -704,6 +704,30 @@ enum_data_type
 	enum_type->range.reset( make_range_from_width(integer_width) );
 	$$ = enum_type;
       }
+  | K_enum K_logic range unsigned_signed_opt '{' enum_name_list '}'
+      { enum_type_t*enum_type = new enum_type_t;
+	enum_type->names .reset($6);
+	enum_type->base_type = IVL_VT_LOGIC;
+	enum_type->signed_flag = $4;
+	enum_type->range.reset( $3 );
+	$$ = enum_type;
+      }
+  | K_enum K_reg range unsigned_signed_opt '{' enum_name_list '}'
+      { enum_type_t*enum_type = new enum_type_t;
+	enum_type->names .reset($6);
+	enum_type->base_type = IVL_VT_LOGIC;
+	enum_type->signed_flag = $4;
+	enum_type->range.reset( $3 );
+	$$ = enum_type;
+      }
+  | K_enum K_bit range unsigned_signed_opt '{' enum_name_list '}'
+      { enum_type_t*enum_type = new enum_type_t;
+	enum_type->names .reset($6);
+	enum_type->base_type = IVL_VT_BOOL;
+	enum_type->signed_flag = $4;
+	enum_type->range.reset( $3 );
+	$$ = enum_type;
+      }
   ;
 
 enum_name_list
