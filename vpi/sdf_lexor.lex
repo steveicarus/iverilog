@@ -85,7 +85,7 @@ static int yywrap(void)
       return REAL_NUMBER;
 }
 
-[a-zA-Z_][a-zA-Z0-9$_]* {
+([a-zA-Z_]|(\\[^ \t\b\f\r\n]))([a-zA-Z0-9$_]|(\\[^ \t\b\f\r\n]))* {
       return lookup_keyword(yytext);
 }
 
@@ -153,11 +153,23 @@ void stop_edge_id(void)
 
 static int lookup_keyword(const char*text)
 {
-      int idx;
+      unsigned idx, len, skip;
       for (idx = 0 ;  keywords[idx].name ;  idx += 1) {
 	    if (strcasecmp(text, keywords[idx].name) == 0)
 		  return keywords[idx].code;
       }
+
+	/* Process any escaped characters. */
+      skip = 0;
+      len = strlen(yytext);
+      for (idx = 0; idx < len; idx += 1) {
+	    if (yytext[idx] == '\\') {
+		  skip += 1;
+		  idx += 1;
+	    }
+	    yytext[idx-skip] = yytext[idx];
+      }
+      yytext[idx-skip] = 0;
 
       yylval.string_val = strdup(yytext);
       return IDENTIFIER;
