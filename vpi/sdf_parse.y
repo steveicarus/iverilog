@@ -44,12 +44,13 @@ char sdf_use_hchar = '.';
       struct sdf_delval_list_s delval_list;
 };
 
-%token K_ABSOLUTE K_CELL K_CELLTYPE K_DATE K_DELAYFILE K_DELAY K_DESIGN
+%token K_ABSOLUTE K_CELL K_CELLTYPE K_COND K_DATE K_DELAYFILE K_DELAY K_DESIGN
 %token K_DIVIDER K_HOLD K_INCREMENT K_INSTANCE K_INTERCONNECT K_IOPATH
 %token K_NEGEDGE K_POSEDGE K_PROCESS K_PROGRAM K_RECREM K_RECOVERY
 %token K_REMOVAL K_SDFVERSION K_SETUP K_SETUPHOLD K_TEMPERATURE
 %token K_TIMESCALE K_TIMINGCHECK K_VENDOR K_VERSION K_VOLTAGE K_WIDTH
 %token K_01 K_10 K_0Z K_Z1 K_1Z K_Z0
+%token K_EQ K_NE K_CEQ K_CNE K_LOGICAL_ONE K_LOGICAL_ZERO
 
 %token HCHAR
 %token <string_val> QSTRING IDENTIFIER
@@ -290,8 +291,47 @@ tchk_def
   ;
 
 port_tchk
-  : port_spec
-    /* | '(' K_COND qstring_opt timing_check_condition port_spec ')' */
+  : port_instance
+  /* This must only be an edge. For now we just accept everything. */
+  | cond_edge_start port_instance ')'
+  /* These must only be a cond. For now we just accept everything. */
+  | cond_edge_start timing_check_condition port_spec ')'
+  | cond_edge_start QSTRING timing_check_condition port_spec ')'
+  ;
+
+cond_edge_start
+  : '(' { start_edge_id(1); } cond_edge_identifier { stop_edge_id(); }
+  ;
+
+cond_edge_identifier
+  : K_POSEDGE
+  | K_NEGEDGE
+  | K_01
+  | K_10
+  | K_0Z
+  | K_Z1
+  | K_1Z
+  | K_Z0
+  | K_COND
+  ;
+
+timing_check_condition
+  : port_interconnect
+  | '~' port_interconnect
+  | '!' port_interconnect
+  | port_interconnect equality_operator scalar_constant
+  ;
+
+equality_operator
+  : K_EQ
+  | K_NE
+  | K_CEQ
+  | K_CNE
+  ;
+
+scalar_constant
+  : K_LOGICAL_ONE
+  | K_LOGICAL_ZERO
   ;
 
 port_spec
@@ -318,7 +358,7 @@ port_interconnect
   ;
 
 port_edge
-  : '(' {start_edge_id();} edge_identifier {stop_edge_id();} port_instance ')'
+  : '(' {start_edge_id(0);} edge_identifier {stop_edge_id();} port_instance ')'
       { $$.vpi_edge = $3; $$.string_val = $5; }
   ;
 
