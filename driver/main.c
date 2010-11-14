@@ -40,7 +40,7 @@ const char NOTICE[] =
 ;
 
 const char HELP[] =
-"Usage: iverilog [-ESvV] [-B base] [-c cmdfile] [-g1|-g2|-g3.0]\n"
+"Usage: iverilog [-EhSvV] [-B base] [-c cmdfile] [-g1|-g2|-g3.0]\n"
 "                [-D macro[=defn]] [-I includedir] [-M depfile] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
 "                [-s topmodule] [-t target] [-T min|typ|max]\n"
