@@ -285,8 +285,8 @@ tchk_def
   | '(' K_HOLD port_tchk port_tchk rvalue ')'
   | '(' K_SETUPHOLD port_tchk port_tchk rvalue rvalue ')'
   | '(' K_RECOVERY port_tchk port_tchk rvalue ')'
-  | '(' K_REMOVAL port_tchk port_tchk rvalue ')'
   | '(' K_RECREM port_tchk port_tchk rvalue rvalue ')'
+  | '(' K_REMOVAL port_tchk port_tchk rvalue ')'
   | '(' K_WIDTH port_tchk rvalue ')'
   ;
 
@@ -460,6 +460,7 @@ signed_real_number_opt
       { $$.value = $1;
 	$$.defined = 1;
       }
+  ;
 
 signed_real_number
   :     REAL_NUMBER { $$ = $1; }
