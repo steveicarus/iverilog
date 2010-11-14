@@ -43,12 +43,13 @@ char sdf_use_hchar = '.';
       struct sdf_delval_list_s delval_list;
 };
 
-%token K_ABSOLUTE K_CELL K_CELLTYPE K_DATE K_DELAYFILE K_DELAY K_DESIGN
+%token K_ABSOLUTE K_CELL K_CELLTYPE K_COND K_DATE K_DELAYFILE K_DELAY K_DESIGN
 %token K_DIVIDER K_HOLD K_INCREMENT K_INSTANCE K_INTERCONNECT K_IOPATH
-%token K_NEGEDGE K_POSEDGE K_PROCESS K_PROGRAM K_RECOVERY K_REMOVAL
-%token K_SDFVERSION K_SETUP K_SETUPHOLD K_TEMPERATURE K_TIMESCALE
-%token K_TIMINGCHECK K_VENDOR K_VERSION K_VOLTAGE K_WIDTH
+%token K_NEGEDGE K_POSEDGE K_PROCESS K_PROGRAM K_RECREM K_RECOVERY
+%token K_REMOVAL K_SDFVERSION K_SETUP K_SETUPHOLD K_TEMPERATURE
+%token K_TIMESCALE K_TIMINGCHECK K_VENDOR K_VERSION K_VOLTAGE K_WIDTH
 %token K_01 K_10 K_0Z K_Z1 K_1Z K_Z0
+%token K_EQ K_NE K_CEQ K_CNE K_LOGICAL_ONE K_LOGICAL_ZERO
 
 %token HCHAR
 %token <string_val> QSTRING IDENTIFIER
@@ -60,8 +61,8 @@ char sdf_use_hchar = '.';
 %type <string_val> hierarchical_identifier
 %type <string_val> port port_instance port_interconnect
 
-%type <real_val> rtriple signed_real_number
-%type <delay> delval rvalue
+%type <real_val> signed_real_number
+%type <delay> delval rvalue rtriple signed_real_number_opt
 
 %type <int_val> edge_identifier
 %type <port_with_edge> port_edge port_spec
@@ -283,13 +284,53 @@ tchk_def
   | '(' K_HOLD port_tchk port_tchk rvalue ')'
   | '(' K_SETUPHOLD port_tchk port_tchk rvalue rvalue ')'
   | '(' K_RECOVERY port_tchk port_tchk rvalue ')'
+  | '(' K_RECREM port_tchk port_tchk rvalue rvalue ')'
   | '(' K_REMOVAL port_tchk port_tchk rvalue ')'
   | '(' K_WIDTH port_tchk rvalue ')'
   ;
 
 port_tchk
-  : port_spec
-    /* | '(' K_COND qstring_opt timing_check_condition port_spec ')' */
+  : port_instance
+  /* This must only be an edge. For now we just accept everything. */
+  | cond_edge_start port_instance ')'
+  /* These must only be a cond. For now we just accept everything. */
+  | cond_edge_start timing_check_condition port_spec ')'
+  | cond_edge_start QSTRING timing_check_condition port_spec ')'
+  ;
+
+cond_edge_start
+  : '(' { start_edge_id(1); } cond_edge_identifier { stop_edge_id(); }
+  ;
+
+cond_edge_identifier
+  : K_POSEDGE
+  | K_NEGEDGE
+  | K_01
+  | K_10
+  | K_0Z
+  | K_Z1
+  | K_1Z
+  | K_Z0
+  | K_COND
+  ;
+
+timing_check_condition
+  : port_interconnect
+  | '~' port_interconnect
+  | '!' port_interconnect
+  | port_interconnect equality_operator scalar_constant
+  ;
+
+equality_operator
+  : K_EQ
+  | K_NE
+  | K_CEQ
+  | K_CNE
+  ;
+
+scalar_constant
+  : K_LOGICAL_ONE
+  | K_LOGICAL_ZERO
   ;
 
 port_spec
@@ -316,7 +357,7 @@ port_interconnect
   ;
 
 port_edge
-  : '(' {start_edge_id();} edge_identifier {stop_edge_id();} port_instance ')'
+  : '(' {start_edge_id(0);} edge_identifier {stop_edge_id();} port_instance ')'
       { $$.vpi_edge = $3; $$.string_val = $5; }
   ;
 
@@ -369,8 +410,7 @@ rvalue
       { $$.defined = 1;
         $$.value = $2; }
   | '(' rtriple ')'
-      { $$.defined = 1;
-        $$.value = $2; }
+      { $$ = $2; }
   | '(' ')'
       { $$.defined = 0;
         $$.value = 0.0; }
@@ -390,8 +430,25 @@ hierarchical_identifier
   ;
 
 rtriple
-  : signed_real_number ':' signed_real_number ':' signed_real_number
-      { $$ = $3; /* XXXX Assume typical value. */ }
+  : signed_real_number_opt ':' signed_real_number_opt ':' signed_real_number_opt
+      { $$ = $3; /* V0.9 only supports using the typical value. */
+	  /* At least one of the values must be defined. */
+	if (! ($1.defined || $3.defined || $5.defined)) {
+	      vpi_printf("%s:%d: SDF ERROR: rtriple must have at least one "
+	                 "defined value.\n", sdf_parse_path, @1.first_line);
+	}
+      }
+  ;
+
+signed_real_number_opt
+  : /* When missing. */
+      { $$.value = 0.0;
+	$$.defined = 0;
+      }
+  | signed_real_number
+      { $$.value = $1;
+	$$.defined = 1;
+      }
   ;
 
 signed_real_number
