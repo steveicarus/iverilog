@@ -123,16 +123,23 @@ NexusSet* NetESelect::nex_input(bool rem_out)
       return result;
 }
 
+/*
+ * The $fread, etc. system functions can have NULL arguments.
+ */
 NexusSet* NetESFunc::nex_input(bool rem_out)
 {
       if (nparms_ == 0)
 	    return new NexusSet;
 
-      NexusSet*result = parms_[0]->nex_input(rem_out);
+      NexusSet*result;
+      if (parms_[0]) result = parms_[0]->nex_input(rem_out);
+      else result = new NexusSet;
       for (unsigned idx = 1 ;  idx < nparms_ ;  idx += 1) {
-	    NexusSet*tmp = parms_[idx]->nex_input(rem_out);
-	    result->add(*tmp);
-	    delete tmp;
+	    if (parms_[idx]) {
+		  NexusSet*tmp = parms_[idx]->nex_input(rem_out);
+		  result->add(*tmp);
+		  delete tmp;
+	    }
       }
       return result;
 }
@@ -387,16 +394,23 @@ NexusSet* NetRepeat::nex_input(bool rem_out)
       return result;
 }
 
+/*
+ * The $display, etc. system tasks can have NULL arguments.
+ */
 NexusSet* NetSTask::nex_input(bool rem_out)
 {
       if (parms_.count() == 0)
 	    return new NexusSet;
 
-      NexusSet*result = parms_[0]->nex_input(rem_out);
+      NexusSet*result;
+      if (parms_[0]) result = parms_[0]->nex_input(rem_out);
+      else result = new NexusSet;
       for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
-	    NexusSet*tmp = parms_[idx]->nex_input(rem_out);
-	    result->add(*tmp);
-	    delete tmp;
+	    if (parms_[idx]) {
+		  NexusSet*tmp = parms_[idx]->nex_input(rem_out);
+		  result->add(*tmp);
+		  delete tmp;
+	    }
       }
 
       return result;
