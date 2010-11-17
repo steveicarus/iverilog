@@ -75,9 +75,11 @@ static void gen_new_vcd_id(void)
            v /= 94;
            if(!v) {
                  vcdid[i+1] = '\0';
-                 break;
+                 return;
            }
       }
+	// This should never happen since 94**7 is a lot if identifiers!
+      assert(0);
 }
 
 static char *truncate_bitvec(char *s)
