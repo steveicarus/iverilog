@@ -58,16 +58,30 @@ static ivl_signal_type_t signal_type_of_nexus(ivl_nexus_t nex)
 static ivl_variable_type_t signal_data_type_of_nexus(ivl_nexus_t nex)
 {
       unsigned idx;
+      ivl_variable_type_t out = IVL_VT_NO_TYPE;
 
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_variable_type_t vtype;
 	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
 	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
 	    if (sig == 0) continue;
 
-	    return ivl_signal_data_type(sig);
+	    vtype = ivl_signal_data_type(sig);
+	    if (out == IVL_VT_NO_TYPE && vtype == IVL_VT_BOOL) {
+		  out = vtype;
+		  continue;
+	    }
+	    if (out != IVL_VT_LOGIC && vtype == IVL_VT_LOGIC) {
+		  out = vtype;
+		  continue;
+	    }
+	    if (vtype == IVL_VT_REAL) {
+		  out = vtype;
+		  break;
+	    }
       }
 
-      return IVL_VT_NO_TYPE;
+      return out;
 }
 
 static void draw_C4_repeated_constant(char bit_char, unsigned width)
@@ -538,6 +552,70 @@ static char* draw_island_port(ivl_island_t island, int island_input_flag,
 }
 
 /*
+ * This routine is called to display an error message when a uwire or
+ * wire real has multiple drivers.
+ */
+typedef enum mdriver_type_e {
+      MDRV_UWIRE = 0,
+      MDRV_REAL  = 1
+} mdriver_type_t;
+
+static void display_multi_driver_error(ivl_nexus_t nex, unsigned ndrivers,
+                                       mdriver_type_t type)
+{
+      unsigned idx;
+      unsigned scope_len = -1;
+      ivl_signal_t sig = 0;
+	/* Find the signal. */
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t tsig = ivl_nexus_ptr_sig(ptr);
+	    if (tsig != 0) {
+		  ivl_scope_t scope;
+		  unsigned len;
+		  if (ivl_signal_local(tsig)) continue;
+
+		    /* If this is not a local signal then find the signal
+		     * that has the shortest scope (is the furthest up
+		     * the hierarchy). */
+		  scope = ivl_signal_scope(tsig);
+		  assert(scope);
+		  len = strlen(ivl_scope_name(scope));
+		  if (len < scope_len) {
+			scope_len = len;
+			sig = tsig;
+		  }
+	    }
+      }
+      assert(sig);
+
+      fprintf(stderr, "%s:%u: vvp.tgt error: ",
+                      ivl_signal_file(sig), ivl_signal_lineno(sig));
+      switch (type) {
+	  case MDRV_UWIRE:
+	    if (ivl_signal_type(sig) != IVL_SIT_UWIRE) {
+		  fprintf(stderr, "(implicit) ");
+	    }
+	    fprintf(stderr, "uwire");
+	    break;
+
+	  case MDRV_REAL:
+	    assert(ivl_signal_type(sig) == IVL_SIT_TRI);
+	    if (ivl_signal_data_type(sig) != IVL_VT_REAL) {
+		  fprintf(stderr, "(implicit) ");
+	    }
+	    fprintf(stderr, "wire real");
+	    break;
+
+	  default:
+	    assert(0);;
+      }
+      fprintf(stderr, " \"%s\" must have a single driver, found (%u).\n",
+                      ivl_signal_basename(sig), ndrivers);
+      vvp_errors += 1;
+}
+
+/*
  * This function draws the input to a net into a string. What that
  * means is that it returns a static string that can be used to
  * represent a resolved driver to a nexus. If there are multiple
@@ -711,22 +789,7 @@ static void draw_net_input_x(ivl_nexus_t nex,
 	/* A uwire is a tri with only one driver. */
       if (res == IVL_SIT_UWIRE) {
 	    if (ndrivers > 1) {
-		  unsigned uidx;
-		  ivl_signal_t usig = 0;
-		    /* Find the uwire signal. */
-		  for (uidx = 0 ;  uidx < ivl_nexus_ptrs(nex) ;  uidx += 1) {
-			ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, uidx);
-			usig = ivl_nexus_ptr_sig(ptr);
-			if (usig != 0) break;
-		  }
-		  assert(usig);
-
-		  fprintf(stderr, "%s:%u: vvp.tgt error: uwire \"%s\" must "
-		                  "have a single driver, found (%u).\n",
-		                  ivl_signal_file(usig),
-		                  ivl_signal_lineno(usig),
-		                  ivl_signal_basename(usig), ndrivers);
-		  vvp_errors += 1;
+		  display_multi_driver_error(nex, ndrivers, MDRV_UWIRE);
 	    }
 	    res = IVL_SIT_TRI;
       }
@@ -755,6 +818,11 @@ static void draw_net_input_x(ivl_nexus_t nex,
 	    assert(nex_data->net_input == 0);
 	    nex_data->net_input = nex_private;
 	    return;
+      }
+
+	/* We currently only support one driver on real nets. */
+      if (ndrivers > 1 && signal_data_type_of_nexus(nex) == IVL_VT_REAL) {
+	    display_multi_driver_error(nex, ndrivers, MDRV_REAL);
       }
 
       level = 0;
