@@ -70,6 +70,11 @@ struct numbv_s {
       long*nvec;
 };
 
+struct enum_name_s {
+      char*text;
+      uint64_t val2;
+};
+
 extern void numbv_init(struct numbv_s*obj);
 extern void numbv_add(struct numbv_s*obj, long item);
 extern void numbv_clear(struct numbv_s*obj);

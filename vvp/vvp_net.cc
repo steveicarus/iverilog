@@ -1697,6 +1697,24 @@ bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
       return flag;
 }
 
+bool vector2_to_value(const vvp_vector2_t&a, int32_t&val, bool is_signed)
+{
+      val = 0;
+      int idx;
+      int32_t mask;
+      for (idx = 0, mask = 1 ; idx < a.size() && idx < 32 ; idx += 1, mask <<= 1) {
+	    if (a.value(idx)) val |= mask;
+      }
+
+      if (is_signed && a.size() < 32 && a.value(a.size()-1)) {
+	    mask = -1;
+	    mask <<= a.size();
+	    val |= mask;
+      }
+
+      return a.size() <= 32;
+}
+
 vvp_realarray_t::vvp_realarray_t(unsigned wor)
 : words_(wor)
 {

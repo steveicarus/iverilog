@@ -21,6 +21,7 @@
 
 # include  <cstdio>
 # include  <fstream>
+# include  <list>
 # include  <vector>
 # include  "parse_misc.h"
 # include  "sv_vpi_user.h"
@@ -200,6 +201,8 @@ extern void compile_dff(char*label,
 			struct symb_s arg_c,
 			struct symb_s arg_e,
 			struct symb_s arg_a);
+
+extern void compile_enum_type(char*label, std::list<struct enum_name_s>*names);
 
 class __vpiModPath;
 extern __vpiModPath* compile_modpath(char*label,

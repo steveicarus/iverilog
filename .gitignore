@@ -7,6 +7,9 @@
 # Object files and libraries
 *.[oa]
 
+gmon*.out
+gmon*.txt
+
 # From autoconf
 configure
 config.log
@@ -54,6 +57,7 @@ dep
 /vpi/sdf_parse.output
 /vpi/sys_readmem_lex.c
 
+/vvp/dump.*
 /vvp/lexor.cc
 /vvp/parse.cc
 /vvp/parse.h

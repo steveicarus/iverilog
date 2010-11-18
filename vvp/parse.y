@@ -23,6 +23,7 @@
 # include  "compile.h"
 # include  "delay.h"
 # include  "ivl_alloc.h"
+# include  <list>
 # include  <cstdio>
 # include  <cstdlib>
 # include  <cassert>
@@ -58,6 +59,9 @@ static struct __vpiModPath*modpath_dst = 0;
 
       struct numbv_s numbv;
 
+      struct enum_name_s enum_name;
+      std::list<struct enum_name_s>*enum_namev;
+
       struct symb_s vect;
 
       struct argv_s argv;
@@ -76,7 +80,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_CMP_EEQ K_CMP_EQ K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
 %token K_CMP_GE K_CMP_GE_R K_CMP_GE_S K_CMP_GT K_CMP_GT_R K_CMP_GT_S
 %token K_CONCAT K_DEBUG K_DELAY K_DFF
-%token K_EVENT K_EVENT_OR K_EXPORT K_EXTEND_S K_FUNCTOR K_IMPORT K_ISLAND
+%token K_ENUM K_EVENT K_EVENT_OR K_EXPORT K_EXTEND_S K_FUNCTOR K_IMPORT K_ISLAND
 %token K_MODPATH
 %token K_NET K_NET_S K_NET_R K_NET_2S K_NET_2U K_NET8 K_NET8_S
 %token K_PARAM_STR K_PARAM_L K_PARAM_REAL K_PART K_PART_PV
@@ -111,6 +115,9 @@ static struct __vpiModPath*modpath_dst = 0;
 %type <argv> argument_opt argument_list
 %type <vpi>  argument symbol_access
 %type <cdelay> delay
+
+%type <enum_name> enum_type_name
+%type <enum_namev> enum_type_names
 
 %%
 
@@ -780,10 +787,39 @@ statement
   | K_TRANVP T_NUMBER T_NUMBER T_NUMBER ',' T_SYMBOL ',' T_SYMBOL T_SYMBOL ';'
       { compile_island_tranvp($6, $8, $9, $2, $3, $4); }
 
+  /* Other statemehts */
+
+  | enum_type
+      { ; }
+
   /* Oh and by the way, empty statements are OK as well. */
 
-	| ';'
-	;
+  | ';'
+  ;
+
+  /* Enumeration types */
+enum_type
+  : T_LABEL K_ENUM enum_type_names ';'
+      { compile_enum_type($1, $3); }
+  ;
+
+enum_type_names
+  : enum_type_name
+      { list<struct enum_name_s>*tmp = new list<struct enum_name_s>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
+  | enum_type_names ',' enum_type_name
+      { list<struct enum_name_s>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
+  ;
+
+enum_type_name
+  : T_STRING T_NUMBER
+      { $$.text = $1; $$.val2 = $2; }
+  ;
 
 local_flag
   : '*' { $$ = true; }

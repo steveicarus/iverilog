@@ -496,6 +496,8 @@ extern bool vector4_to_value(const vvp_vector4_t&a, vvp_time64_t&val);
 #endif
 extern bool vector4_to_value(const vvp_vector4_t&a, double&val, bool is_signed);
 
+extern bool vector2_to_value(const vvp_vector2_t&a, int32_t&val, bool is_signed);
+
 /*
  * The __vpiArray handle uses instances of this to keep an array of
  * real valued variables.

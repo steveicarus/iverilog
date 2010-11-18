@@ -1,5 +1,3 @@
-#ifndef __sv_vpi_user_H
-#define __sv_vpi_user_H
 /*
  * Copyright (c) 2010 Stephen Williams (steve@icarus.com)
  *
@@ -19,43 +17,15 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "vpi_user.h"
+# include "vpi_config.h"
+# include "vpi_user.h"
+# include <stdio.h>
+# include <stdlib.h>
+# include <string.h>
 
-#if defined(__MINGW32__) || defined (__CYGWIN32__)
-#  define DLLEXPORT __declspec(dllexport)
-#else
-#  define DLLEXPORT
-#endif
+extern void v2009_enum_register(void);
 
-#ifdef __cplusplus
-# define EXTERN_C_START extern "C" {
-# define EXTERN_C_END }
-#else
-# define EXTERN_C_START
-# define EXTERN_C_END
-#endif
-
-#ifndef __GNUC__
-# undef  __attribute__
-# define __attribute__(x)
-#endif
-
-EXTERN_C_START
-
-/********* OBJECT TYPES ***********/
-#define vpiLongIntVar       610
-#define vpiShortIntVar      611
-#define vpiIntVar           612
-#define vpiByteVar          614
-#define vpiLogicVar         vpiReg
-
-/********* TYPESPECS *************/
-#define vpiEnumTypespec     633
-#define vpiEnumConst        634
-
-/********* Many-to-One ***********/
-#define vpiMember           742
-
-EXTERN_C_END
-
-#endif
+void (*vlog_startup_routines[])() = {
+      v2009_enum_register,
+      0
+};
