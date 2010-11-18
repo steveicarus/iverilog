@@ -577,7 +577,7 @@ extern PLI_INT32 vpi_chk_error(p_vpi_error_info info);
 
 
 /* This is the table of startup routines included in each module. */
-extern DLLEXPORT void (*vlog_startup_routines[])();
+extern DLLEXPORT void (*vlog_startup_routines[])(void);
 
 
 /*
