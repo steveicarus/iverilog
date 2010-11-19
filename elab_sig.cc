@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1119,6 +1119,17 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    array_dimensions = 1;
       }
 
+      if (data_type_ == IVL_VT_REAL && (msb != 0 || lsb != 0)) {
+	    cerr << get_fileline() << ": error: real ";
+	    if (wtype == NetNet::REG) cerr << "variable";
+	    else cerr << "net";
+	    cerr << " '" << name_ 
+	         << "' cannot be declared as a vector, found a range ["
+	         << msb << ":" << lsb << "]." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
 	/* If the net type is supply0 or supply1, replace it
 	   with a simple wire with a pulldown/pullup with supply
 	   strength. In other words, transform:
@@ -1148,8 +1159,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: "
-		       << "Generate a SUPPLY pulldown for the "
-		       << "supply0 net." << endl;
+		       << "Generate a SUPPLY pull for the ";
+		  if (wtype == NetNet::SUPPLY0) cerr << "supply0";
+		  else cerr << "supply1";
+		  cerr << " net." << endl;
 	    }
       }
 
