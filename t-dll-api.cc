@@ -21,6 +21,7 @@
 # include  "StringHeap.h"
 # include  "t-dll.h"
 # include  "discipline.h"
+# include  "netenum.h"
 # include  "ivl_alloc.h"
 # include  <cstdlib>
 # include  <cstdio>
@@ -210,6 +211,26 @@ extern "C" unsigned ivl_const_width(ivl_net_const_t net)
       return net->width_;
 }
 
+extern "C" unsigned ivl_enum_names(ivl_enumtype_t net)
+{
+      assert(net);
+      return net->size();
+}
+
+extern "C" const char* ivl_enum_name(ivl_enumtype_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->size());
+      return net->name_at(idx);
+}
+
+extern "C" const char* ivl_enum_bits(ivl_enumtype_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->size());
+      return net->bits_at(idx);
+}
+
 extern "C" const char* ivl_event_name(ivl_event_t net)
 {
       static char*name_buffer = 0;
@@ -321,6 +342,12 @@ extern "C" double ivl_expr_dvalue(ivl_expr_t net)
 {
       assert(net->type_ == IVL_EX_REALNUM);
       return net->u_.real_.value;
+}
+
+extern "C" ivl_enumtype_t ivl_expr_enumtype(ivl_expr_t net)
+{
+      assert(net->type_ == IVL_EX_ENUMTYPE);
+      return net->u_.enumtype_.type;
 }
 
 extern "C" const char* ivl_expr_name(ivl_expr_t net)
@@ -1669,6 +1696,19 @@ extern "C" unsigned ivl_scope_def_lineno(ivl_scope_t net)
 {
       assert(net);
       return net->def_lineno;
+}
+
+extern "C" unsigned ivl_scope_enumerates(ivl_scope_t net)
+{
+      assert(net);
+      return net->enumerations_.size();
+}
+
+extern "C" ivl_enumtype_t ivl_scope_enumerate(ivl_scope_t net, unsigned idx)
+{
+      assert(net);
+      assert(idx < net->enumerations_.size());
+      return net->enumerations_[idx];
 }
 
 extern "C" unsigned ivl_scope_events(ivl_scope_t net)

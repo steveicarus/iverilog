@@ -222,14 +222,16 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       rc_flag = eval_as_long(lsb, lsb_ex);
       assert(rc_flag);
 
-      netenum_t*use_enum = new netenum_t(enum_type->base_type, enum_type->signed_flag, msb, lsb);
+      netenum_t*use_enum = new netenum_t(enum_type->base_type, enum_type->signed_flag,
+					 msb, lsb, enum_type->names->size());
 
       scope->add_enumeration_set(use_enum);
 
       verinum cur_value (0);
       verinum one_value (1);
+      size_t name_idx = 0;
       for (list<named_pexpr_t>::const_iterator cur = enum_type->names->begin()
-		 ; cur != enum_type->names->end() ;  ++ cur) {
+		 ; cur != enum_type->names->end() ;  ++ cur, name_idx += 1) {
 
 
 	    if (cur->parm) {
@@ -262,7 +264,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	    verinum tmp_val (cur_value, use_enum->base_width());
 	    tmp_val.has_sign(enum_type->signed_flag);
 
-	    rc_flag = use_enum->insert_name(cur->name, tmp_val);
+	    rc_flag = use_enum->insert_name(name_idx, cur->name, tmp_val);
 	    rc_flag &= scope->add_enumeration_name(use_enum, cur->name);
 	    if (! rc_flag) {
 		  cerr << "<>:0: error: Duplicate enumeration name " << cur->name << endl;

@@ -396,6 +396,11 @@ void scope_add_logic(ivl_scope_t scope, ivl_net_logic_t net)
 
 }
 
+static void scope_add_enumeration(ivl_scope_t scope, ivl_enumtype_t net)
+{
+      scope->enumerations_.push_back(net);
+}
+
 void scope_add_event(ivl_scope_t scope, ivl_event_t net)
 {
       if (scope->nevent_ == 0) {
@@ -783,6 +788,13 @@ bool dll_target::bufz(const NetBUFZ*net)
 
       scope_add_logic(scop, obj);
 
+      return true;
+}
+
+bool dll_target::enumeration(const NetScope*in_scope, netenum_t*net)
+{
+      ivl_scope_t scop = find_scope(des_, in_scope);
+      scope_add_enumeration(scop, net);
       return true;
 }
 

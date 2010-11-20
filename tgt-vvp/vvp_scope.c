@@ -25,11 +25,6 @@
 # include  <inttypes.h>
 # include  <assert.h>
 
-#ifdef __MINGW32__  /* MinGW has inconsistent %p output. */
-#define snprintf _snprintf
-#endif
-
-
 /*
  *  Escape non-symbol characters in ids, and quotes in strings.
  */
@@ -2024,6 +2019,14 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 			  ivl_expr_type(pex));
 		  break;
 	    }
+      }
+
+	/* Scan the scope for enumeration types, and write out
+	   enumeration typespecs. */
+
+      for (idx = 0 ; idx < ivl_scope_enumerates(net) ; idx += 1) {
+	    ivl_enumtype_t enumtype = ivl_scope_enumerate(net, idx);
+	    draw_enumeration_in_scope(enumtype);
       }
 
 	/* Scan the scope for logic devices. For each device, draw out

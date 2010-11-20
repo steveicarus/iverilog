@@ -176,6 +176,8 @@ StringHeapLex lex_strings;
 
 StringHeapLex filename_strings;
 
+StringHeapLex bits_strings;
+
 /*
  * In library searches, Windows file names are never case sensitive.
  */
@@ -748,6 +750,7 @@ static void EOC_cleanup(void)
       flags.clear();
 
       lex_strings.cleanup();
+      bits_strings.cleanup();
       filename_strings.cleanup();
 }
 

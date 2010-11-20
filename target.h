@@ -59,6 +59,9 @@ struct target_t {
 	/* Output an event object. Called for each named event in the scope. */
       virtual void event(const NetEvent*);
 
+        /* Output an enumeration typespec. */
+      virtual bool enumeration(const NetScope*, netenum_t*);
+
 	/* Output a signal (called for each signal) */
       virtual void signal(const NetNet*) =0;
       virtual bool signal_paths(const NetNet*);
@@ -156,6 +159,7 @@ struct expr_scan_t {
       virtual void expr_ufunc(const NetEUFunc*);
       virtual void expr_unary(const NetEUnary*);
       virtual void expr_binary(const NetEBinary*);
+      virtual void expr_netenum(const NetENetenum*);
 };
 
 

@@ -22,14 +22,16 @@
 # include  "ivl_target.h"
 # include  "verinum.h"
 # include  "StringHeap.h"
-# include  <list>
+# include  <vector>
 # include  <map>
+
+class NetScope;
 
 class netenum_t {
 
     public:
       explicit netenum_t(ivl_variable_type_t base_type, bool signed_flag,
-			 long msb, long lsb);
+			 long msb, long lsb, size_t name_count);
       ~netenum_t();
 
       ivl_variable_type_t base_type() const;
@@ -38,7 +40,10 @@ class netenum_t {
 	// The size() is the number of enumeration literals.
       size_t size() const;
 
-      bool insert_name(perm_string name, const verinum&val);
+	// Insert the name (and value) at the specific place in the
+	// enumeration. This must be done exactly once for each
+	// enumeration value.
+      bool insert_name(size_t idx, perm_string name, const verinum&val);
 
       typedef std::map<perm_string,verinum>::const_iterator iterator;
       iterator find_name(perm_string name) const;
@@ -48,13 +53,17 @@ class netenum_t {
       iterator first_name() const;
       iterator last_name() const;
 
+      perm_string name_at(size_t idx) const;
+      perm_string bits_at(size_t idx);
+
     private:
       ivl_variable_type_t base_type_;
       bool signed_flag_;
       long msb_, lsb_;
 
       std::map<perm_string,verinum> names_map_;
-      std::list<perm_string> names_;
+      std::vector<perm_string> names_;
+      std::vector<perm_string> bits_;
 };
 
 inline ivl_variable_type_t netenum_t::base_type() const

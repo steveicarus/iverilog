@@ -1590,6 +1590,9 @@ static int show_scope(ivl_scope_t net, void*x)
       for (idx = 0 ;  idx < ivl_scope_params(net) ;  idx += 1)
 	    show_parameter(ivl_scope_param(net, idx));
 
+      for (idx = 0 ; idx < ivl_scope_enumerates(net) ; idx += 1)
+	    show_enumerate(ivl_scope_enumerate(net, idx));
+
       for (idx = 0 ;  idx < ivl_scope_sigs(net) ;  idx += 1)
 	    show_signal(ivl_scope_sig(net, idx));
 

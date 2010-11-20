@@ -200,7 +200,12 @@ extern map<perm_string,bool> library_file_map;
  * much sense to use a StringHeapLex to hold them.
  */
 extern StringHeapLex lex_strings;
-extern StringHeap misc_strings;
+
+/*
+ * The ivl_target.h API in a variety of places keeps strings of
+ * bits. Manage these as perm_string in a StringHeap.
+ */
+extern StringHeapLex bits_strings;
 
 /*
  * The filename_strings are perm_strings for file names. They are put

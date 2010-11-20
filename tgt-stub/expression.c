@@ -137,6 +137,11 @@ static void show_binary_expression(ivl_expr_t net, unsigned ind)
       }
 }
 
+static void show_enumtype_expression(ivl_expr_t net, unsigned ind)
+{
+      fprintf(out, "%*s<enumtype=%p>\n", ind, "", ivl_expr_enumtype(net));
+}
+
 static void show_function_call(ivl_expr_t net, unsigned ind)
 {
       ivl_scope_t def = ivl_expr_def(net);
@@ -280,6 +285,10 @@ void show_expression(ivl_expr_t net, unsigned ind)
 	    for (idx = 0 ;  idx < ivl_expr_parms(net) ;  idx += 1)
 		  show_expression(ivl_expr_parm(net, idx), ind+3);
 
+	    break;
+
+	  case IVL_EX_ENUMTYPE:
+	    show_enumtype_expression(net, ind);
 	    break;
 
 	  case IVL_EX_MEMORY:

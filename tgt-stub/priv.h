@@ -49,6 +49,8 @@ extern ivl_discipline_t discipline_of_nexus(ivl_nexus_t nex);
  */
 extern void test_expr_is_delay(ivl_expr_t expr);
 
+extern void show_enumerate(ivl_enumtype_t net);
+
 /*
  * Show the details of the expression.
  */

@@ -79,6 +79,12 @@ NetEEvent* NetEEvent::dup_expr() const
       return 0;
 }
 
+NetENetenum* NetENetenum::dup_expr() const
+{
+      assert(0);
+      return 0;
+}
+
 NetEScope* NetEScope::dup_expr() const
 {
       assert(0);

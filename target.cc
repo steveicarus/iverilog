@@ -45,6 +45,13 @@ void target_t::event(const NetEvent*ev)
 	   <<  "): Unhandled event <" << ev->name() << ">." << endl;
 }
 
+bool target_t::enumeration(const NetScope*, netenum_t*obj)
+{
+      cerr << "<>:0" << ": error: target (" << typeid(*this).name()
+	   <<  "): Unhandled enumeration <" << obj << ">." << endl;
+      return false;
+}
+
 bool target_t::signal_paths(const NetNet*)
 {
       return true;
@@ -458,6 +465,12 @@ void expr_scan_t::expr_event(const NetEEvent*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "
 	    "unhandled expr_event." << endl;
+}
+
+void expr_scan_t::expr_netenum(const NetENetenum*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_netenum." << endl;
 }
 
 void expr_scan_t::expr_scope(const NetEScope*)

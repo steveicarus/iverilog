@@ -506,6 +506,21 @@ const NetScope* NetECRealParam::scope() const
 }
 
 
+NetENetenum::NetENetenum(netenum_t*s)
+: netenum_(s)
+{
+}
+
+NetENetenum::~NetENetenum()
+{
+}
+
+netenum_t* NetENetenum::netenum() const
+{
+      return netenum_;
+}
+
+
 NetEParam::NetEParam()
 : des_(0), scope_(0)
 {

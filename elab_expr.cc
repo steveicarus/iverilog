@@ -2262,11 +2262,13 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			sys_expr = new NetESFunc("$ivl_method$name", IVL_VT_STRING,0, 1);
 			sys_expr->parm(0, expr);
 		  } else if (method_name == "next") {
-			sys_expr = new NetESFunc("$ivl_method$next", netenum, 1);
-			sys_expr->parm(0, expr);
+			sys_expr = new NetESFunc("$ivl_method$next", netenum, 2);
+			sys_expr->parm(0, new NetENetenum(netenum));
+			sys_expr->parm(1, expr);
 		  } else if (method_name == "prev") {
-			sys_expr = new NetESFunc("$ivl_method$prev", netenum, 1);
-			sys_expr->parm(0, expr);
+			sys_expr = new NetESFunc("$ivl_method$prev", netenum, 2);
+			sys_expr->parm(0, new NetENetenum(netenum));
+			sys_expr->parm(1, expr);
 		  } else {
 			cerr << get_fileline() << ": error: "
 			     << "Unknown method name `" << method_name << "'"

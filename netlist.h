@@ -3717,6 +3717,29 @@ class NetEEvent : public NetExpr {
 
 /*
  * This class is a special (and magical) expression node type that
+ * represents enumeration types. These can only be found as parameters
+ * to NetSTask objects.
+ */
+class NetENetenum  : public NetExpr {
+
+    public:
+      NetENetenum(netenum_t*);
+      ~NetENetenum();
+
+      netenum_t* netenum() const;
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetENetenum* dup_expr() const;
+      virtual NexusSet* nex_input(bool rem_out = true);
+
+      virtual void dump(ostream&os) const;
+
+    private:
+      netenum_t*netenum_;
+};
+
+/*
+ * This class is a special (and magical) expression node type that
  * represents scope names. These can only be found as parameters to
  * NetSTask objects.
  */

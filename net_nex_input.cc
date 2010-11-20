@@ -100,6 +100,11 @@ NexusSet* NetEEvent::nex_input(bool rem_out)
       return new NexusSet;
 }
 
+NexusSet* NetENetenum::nex_input(bool rem_out)
+{
+      return new NexusSet;
+}
+
 NexusSet* NetEScope::nex_input(bool rem_out)
 {
       return new NexusSet;

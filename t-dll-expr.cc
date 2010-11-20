@@ -340,6 +340,17 @@ void dll_target::expr_scope(const NetEScope*net)
       expr_->u_.scope_.scope = lookup_scope_(net->scope());
 }
 
+void dll_target::expr_netenum(const NetENetenum*net)
+{
+      assert(expr_ == 0);
+
+      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+
+      expr_->type_ = IVL_EX_ENUMTYPE;
+      expr_->value_= IVL_VT_VOID;
+      expr_->u_.enumtype_.type = net->netenum();
+}
+
 void dll_target::expr_select(const NetESelect*net)
 {
       assert(expr_ == 0);

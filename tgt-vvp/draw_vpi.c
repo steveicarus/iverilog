@@ -287,7 +287,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			assert((unsigned)(dp - buffer) <= sizeof buffer);
 		  }
 		  args[idx].text = strdup(buffer);
-		  continue;
+		  continue;			
 		}
 
 		case IVL_EX_STRING:
@@ -308,6 +308,10 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  }
 		  break;
 
+		case IVL_EX_ENUMTYPE:
+		  snprintf(buffer, sizeof buffer, "enum%p", ivl_expr_enumtype(expr));
+		  args[idx].text = strdup(buffer);
+		  continue;
 		case IVL_EX_EVENT:
 		  snprintf(buffer, sizeof buffer, "E_%p", ivl_expr_event(expr));
 		  args[idx].text = strdup(buffer);

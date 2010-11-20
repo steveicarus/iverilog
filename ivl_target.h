@@ -159,6 +159,7 @@ typedef struct ivl_branch_s   *ivl_branch_t;
 typedef struct ivl_delaypath_s*ivl_delaypath_t;
 typedef struct ivl_design_s   *ivl_design_t;
 typedef struct ivl_discipline_s*ivl_discipline_t;
+typedef struct netenum_t      *ivl_enumtype_t;
 typedef struct ivl_event_s    *ivl_event_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
 typedef struct ivl_island_s   *ivl_island_t;
@@ -212,6 +213,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_BINARY = 2,
       IVL_EX_CONCAT = 3,
       IVL_EX_DELAY = 20,
+      IVL_EX_ENUMTYPE = 21,
       IVL_EX_EVENT  = 17,
       IVL_EX_MEMORY = 4,
       IVL_EX_NUMBER = 5,
@@ -618,6 +620,16 @@ extern ivl_nature_t ivl_discipline_flow(ivl_discipline_t net);
 
 extern const char* ivl_nature_name(ivl_nature_t net);
 
+/* ENUMERATIONS
+ *
+ * Enumerations are a collections of symbolic names and vector
+ * values. The enumeration has a base type, and a list of names and
+ * values.
+ */
+extern unsigned ivl_enum_names(ivl_enumtype_t net);
+extern const char*ivl_enum_name(ivl_enumtype_t net, unsigned idx);
+extern const char*ivl_enum_bits(ivl_enumtype_t net, unsigned idx);
+
 /* EVENTS
  *
  * Events are a unification of named events and implicit events
@@ -774,6 +786,8 @@ extern ivl_scope_t ivl_expr_def(ivl_expr_t net);
 extern uint64_t ivl_expr_delay_val(ivl_expr_t net);
   /* IVL_EX_REALNUM */
 extern double ivl_expr_dvalue(ivl_expr_t net);
+  /* IVL_EX_ENUMTYPE */
+extern ivl_enumtype_t ivl_expr_enumtype(ivl_expr_t net);
   /* IVL_EX_SIGNAL, IVL_EX_SFUNC, IVL_EX_VARIABLE */
 extern const char* ivl_expr_name(ivl_expr_t net);
   /* IVL_EX_BACCESS */
@@ -1550,6 +1564,10 @@ extern unsigned ivl_parameter_lineno(ivl_parameter_t net);
  * ivl_scope_def_lineno
  *    Returns the file and line where this scope is defined.
  *
+ * ivl_scope_enumerate
+ * ivl_scope_enumerates
+ *    Scopes have 0 or more enumeration types in them.
+ *
  * ivl_scope_event
  * ivl_scope_events
  *    Scopes have 0 or more event objects in them.
@@ -1637,6 +1655,8 @@ extern ivl_statement_t ivl_scope_def(ivl_scope_t net);
 extern const char* ivl_scope_def_file(ivl_scope_t net);
 extern unsigned ivl_scope_def_lineno(ivl_scope_t net);
 
+extern unsigned       ivl_scope_enumerates(ivl_scope_t net);
+extern ivl_enumtype_t ivl_scope_enumerate(ivl_scope_t net, unsigned idx);
 extern unsigned     ivl_scope_events(ivl_scope_t net);
 extern ivl_event_t  ivl_scope_event(ivl_scope_t net, unsigned idx);
 extern const char* ivl_scope_file(ivl_scope_t net);

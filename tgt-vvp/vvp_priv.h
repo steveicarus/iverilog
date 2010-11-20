@@ -23,6 +23,11 @@
 # include  "ivl_target.h"
 # include  <stdio.h>
 
+#ifdef __MINGW32__  /* MinGW has inconsistent %p output. */
+#define snprintf _snprintf
+#endif
+
+
 /*
  * The target_design entry opens the output file that receives the
  * compiled design, and sets the vvp_out to the descriptor.

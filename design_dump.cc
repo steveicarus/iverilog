@@ -1452,6 +1452,11 @@ void NetEEvent::dump(ostream&o) const
       o << "<event=" << event_->name() << ">";
 }
 
+void NetENetenum::dump(ostream&o) const
+{
+      o << "<netenum=" << netenum_ << ">";
+}
+
 void NetEScope::dump(ostream&o) const
 {
       o << "<scope=" << scope_path(scope_) << ">";

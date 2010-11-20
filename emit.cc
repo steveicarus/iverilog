@@ -385,6 +385,10 @@ void NetScope::emit_scope(struct target_t*tgt) const
       for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_)
 	    tgt->event(cur);
 
+      for (list<netenum_t*>::const_iterator cur = enum_sets_.begin()
+		 ; cur != enum_sets_.end() ;  ++cur)
+	    tgt->enumeration(this, *cur);
+
       for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
 		 ; cur != children_.end() ; cur ++)
 	    cur->second->emit_scope(tgt);
@@ -545,6 +549,11 @@ void NetEParam::expr_scan(struct expr_scan_t*tgt) const
 void NetEEvent::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_event(this);
+}
+
+void NetENetenum::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_netenum(this);
 }
 
 void NetEScope::expr_scan(struct expr_scan_t*tgt) const

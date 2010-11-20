@@ -58,6 +58,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       bool bufz(const NetBUFZ*);
       bool branch(const NetBranch*);
+      bool enumeration(const NetScope*, netenum_t*);
       void event(const NetEvent*);
       void logic(const NetLogic*);
       bool tran(const NetTran*);
@@ -139,6 +140,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_rparam(const NetECRealParam*);
       void expr_event(const NetEEvent*);
       void expr_scope(const NetEScope*);
+      void expr_netenum(const NetENetenum*);
       void expr_select(const NetESelect*);
       void expr_sfunc(const NetESFunc*);
       void expr_ternary(const NetETernary*);
@@ -250,6 +252,10 @@ struct ivl_expr_s {
 	    struct {
 		  ivl_scope_t scope;
 	    } scope_;
+
+	    struct {
+		  ivl_enumtype_t type;
+	    } enumtype_;
 
 	    struct {
 		  ivl_signal_t sig;
@@ -598,6 +604,8 @@ struct ivl_scope_s {
       unsigned lineno;
       unsigned def_lineno;
       ivl_scope_type_t type_;
+
+      std::vector<ivl_enumtype_t> enumerations_;
 
       unsigned nsigs_;
       ivl_signal_t*sigs_;
