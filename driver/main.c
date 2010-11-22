@@ -1031,6 +1031,12 @@ int main(int argc, char **argv)
 	    fprintf(iconfig_file, "sys_func:%s%cva_math.sft\n", base, sep);
 	    fprintf(iconfig_file, "module:va_math\n");
       }
+      /* If verilog-2009 (SystemVerilog) is enabled, then include the
+         v2009 module. */
+      if (strcmp(generation, "2009") == 0) {
+	    fprintf(iconfig_file, "sys_func:%s%cv2009.sft\n", base, sep);
+	    fprintf(iconfig_file, "module:v2009\n");
+      }
 
       if (mtm != 0) fprintf(iconfig_file, "-T:%s\n", mtm);
       fprintf(iconfig_file, "generation:%s\n", generation);
