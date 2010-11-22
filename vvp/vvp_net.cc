@@ -1527,11 +1527,11 @@ ostream& operator<< (ostream&out, const vvp_vector4_t&that)
       return out;
 }
 
-bool vector4_to_value(const vvp_vector4_t&vec, long&val,
-		      bool is_signed, bool is_arithmetic)
+template <class INT>bool do_vector4_to_value(const vvp_vector4_t&vec, INT&val,
+					     bool is_signed, bool is_arithmetic)
 {
       long res = 0;
-      long msk = 1;
+      INT  msk = 1;
       bool rc_flag = true;
 
       unsigned size = vec.size();
@@ -1555,11 +1555,23 @@ bool vector4_to_value(const vvp_vector4_t&vec, long&val,
 
       if (is_signed && vec.value(vec.size()-1) == BIT4_1) {
 	    if (vec.size() < 8*sizeof(val))
-		  res |= (-1L) << vec.size();
+		  res |= (INT)(-1L) << vec.size();
       }
 
       val = res;
       return rc_flag;
+}
+
+bool vector4_to_value(const vvp_vector4_t&vec, long&val,
+		      bool is_signed, bool is_arithmetic)
+{
+      return do_vector4_to_value(vec, val, is_signed, is_arithmetic);
+}
+
+bool vector4_to_value(const vvp_vector4_t&vec, int32_t&val,
+		      bool is_signed, bool is_arithmetic)
+{
+      return do_vector4_to_value(vec, val, is_signed, is_arithmetic);
 }
 
 bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
@@ -1591,36 +1603,7 @@ bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
 bool vector4_to_value(const vvp_vector4_t&vec, int64_t&val,
 		      bool is_signed, bool is_arithmetic)
 {
-      long res = 0;
-      long msk = 1;
-      bool rc_flag = true;
-
-      unsigned size = vec.size();
-      if (size > 8*sizeof(val)) size = 8*sizeof(val);
-      for (unsigned idx = 0 ;  idx < size ;  idx += 1) {
-	    switch (vec.value(idx)) {
-		case BIT4_0:
-		  break;
-		case BIT4_1:
-		  res |= msk;
-		  break;
-		default:
-		  if (is_arithmetic)
-			return false;
-		  else
-			rc_flag = false;
-	    }
-
-	    msk <<= 1L;
-      }
-
-      if (is_signed && vec.value(vec.size()-1) == BIT4_1) {
-	    if (vec.size() < 8*sizeof(val))
-		  res |= (-1L) << vec.size();
-      }
-
-      val = res;
-      return rc_flag;
+      return do_vector4_to_value(vec, val, is_signed, is_arithmetic);
 }
 
 bool vector4_to_value(const vvp_vector4_t&vec, vvp_time64_t&val)

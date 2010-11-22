@@ -711,6 +711,53 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
       }
 }
 
+void vpip_vec2_get_value(const vvp_vector2_t&word_val, unsigned width,
+			 bool signed_flag, s_vpi_value*vp)
+{
+      char *rbuf = 0;
+
+      switch (vp->format) {
+	  default:
+	    fprintf(stderr, "sorry: Format %d not implemented for "
+	                    "getting vector2 values.\n", (int)vp->format);
+	    assert(0);
+
+	  case vpiSuppressVal:
+	    break;
+
+	  case vpiObjTypeVal:
+	    vp->format = vpiIntVal;
+	  case vpiIntVal:
+	    vector2_to_value(word_val, vp->value.integer, true);
+	    break;
+
+	  case vpiVectorVal: {
+		unsigned hwid = (width - 1)/32 + 1;
+
+		rbuf = need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
+		s_vpi_vecval *op = (p_vpi_vecval)rbuf;
+		vp->value.vector = op;
+
+		op->aval = op->bval = 0;
+		for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+		      if (word_val.value(idx)) {
+			    op->aval |=  (1 << idx % 32);
+			    op->bval &= ~(1 << idx % 32);
+		      } else {
+			    op->aval &= ~(1 << idx % 32);
+			    op->bval &= ~(1 << idx % 32);
+		      }
+		      if (!((idx+1) % 32) && (idx+1 < width)) {
+			    op++;
+			    op->aval = op->bval = 0;
+		      }
+		}
+		break;
+	  }
+      }
+
+}
+
 /*
  * Convert a real value to the appropriate integer.
  */

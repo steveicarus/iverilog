@@ -625,10 +625,34 @@ extern const char* ivl_nature_name(ivl_nature_t net);
  * Enumerations are a collections of symbolic names and vector
  * values. The enumeration has a base type, and a list of names and
  * values.
+ *
+ * FUNCTION SUMMARY
+ *
+ * ivl_enum_names
+ *    This is the number of enumeration names in the enum type.
+ *
+ * ivl_enum_name
+ *    Get the string name for an item in the enumeration
+ *
+ * ivl_enum_bits
+ *    Get the bits (lsb first) of the enumeration value. The width
+ *    of the enumeration should match the length of this string. Every
+ *    name also has bits that make up the value.
+ *
+ * ivl_enum_type
+ *    Get the data-type for the base type that the enum uses. This
+ *    will be either IVL_VT_BOOL or IVL_VT_LOGIC
+ *
+ * ivl_enum_width
+ *    Return the bit width of the base type for this enum type.
+ *
+ * SEMANTIC NOTES
  */
 extern unsigned ivl_enum_names(ivl_enumtype_t net);
 extern const char*ivl_enum_name(ivl_enumtype_t net, unsigned idx);
 extern const char*ivl_enum_bits(ivl_enumtype_t net, unsigned idx);
+extern ivl_variable_type_t ivl_enum_type(ivl_enumtype_t net);
+extern unsigned ivl_enum_width(ivl_enumtype_t net);
 
 /* EVENTS
  *

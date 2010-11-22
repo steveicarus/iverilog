@@ -73,6 +73,7 @@ struct numbv_s {
 struct enum_name_s {
       char*text;
       uint64_t val2;
+      char*val4;
 };
 
 extern void numbv_init(struct numbv_s*obj);

@@ -231,6 +231,18 @@ extern "C" const char* ivl_enum_bits(ivl_enumtype_t net, unsigned idx)
       return net->bits_at(idx);
 }
 
+extern "C" ivl_variable_type_t ivl_enum_type(ivl_enumtype_t net)
+{
+      assert(net);
+      return net->base_type();
+}
+
+extern "C" unsigned ivl_enum_width(ivl_enumtype_t net)
+{
+      assert(net);
+      return net->base_width();
+}
+
 extern "C" const char* ivl_event_name(ivl_event_t net)
 {
       static char*name_buffer = 0;

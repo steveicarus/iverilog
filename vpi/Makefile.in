@@ -165,7 +165,7 @@ $(vpidir)/v2005_math.vpi: ./v2005_math.vpi
 $(vpidir)/v2005_math.sft: v2005_math.sft
 	$(INSTALL_DATA) $< "$(DESTDIR)$@"
 
-$(vpidir)/v2009_math.vpi: ./v2009.vpi
+$(vpidir)/v2009.vpi: ./v2009.vpi
 	$(INSTALL_PROGRAM) ./v2009.vpi "$(DESTDIR)$(vpidir)/v2009.vpi"
 
 $(vpidir)/v2009.sft: v2009.sft

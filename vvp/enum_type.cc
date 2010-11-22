@@ -26,6 +26,7 @@ struct enumconst_s {
       struct __vpiHandle base;
       const char*name;
       vvp_vector2_t val2;
+      vvp_vector4_t val4;
 };
 
 static struct enumconst_s* enumconst_from_handle(vpiHandle obj)
@@ -49,6 +50,22 @@ static struct __vpiEnumTypespec* vpip_enum_typespec_from_handle(vpiHandle obj)
       return 0;
 }
 
+static int enum_type_get(int code, vpiHandle obj)
+{
+      struct __vpiEnumTypespec*ref = vpip_enum_typespec_from_handle(obj);
+      assert(ref);
+
+      switch (code) {
+	  case vpiSize:
+	    return ref->names.size();
+	  default:
+	    fprintf(stderr, "vvp error: get %d not supported "
+		    "by __vpiEnumTypespec\n", code);
+	    assert(0);
+	    return 0;
+      }
+}
+
 static vpiHandle enum_type_iterate(int code, vpiHandle obj)
 {
       struct __vpiEnumTypespec*ref = vpip_enum_typespec_from_handle(obj);
@@ -57,7 +74,7 @@ static vpiHandle enum_type_iterate(int code, vpiHandle obj)
       if (code == vpiMember) {
 	    vpiHandle*args = (vpiHandle*)
 		  calloc(ref->names.size(), sizeof(vpiHandle*));
-	    for (int idx = 0 ; idx < ref->names.size() ; idx += 1)
+	    for (size_t idx = 0 ; idx < ref->names.size() ; idx += 1)
 		  args[idx] = vpi_handle(&ref->names[idx]);
 
 	    return vpip_make_iterator(ref->names.size(), args, true);
@@ -68,7 +85,7 @@ static vpiHandle enum_type_iterate(int code, vpiHandle obj)
 
 static const struct __vpirt enum_type_rt = {
       vpiEnumTypespec,
-      0, //enum_type_get,
+      enum_type_get,
       0, //enum_type_get_str,
       0, //enum_type_get_value,
       0, //enum_type_put_value,
@@ -79,6 +96,19 @@ static const struct __vpirt enum_type_rt = {
       0, //enum_type_get_delays,
       0, //enum_type_put_delays
 };
+
+static int enum_name_get(int code, vpiHandle obj)
+{
+      struct enumconst_s*ref = enumconst_from_handle(obj);
+      assert(ref);
+
+      switch (code) {
+	  case vpiSize:
+	    return ref->val4.size()? ref->val4.size() : ref->val2.size();
+	  default:
+	    return 0;
+      }
+}
 
 static char* enum_name_get_str(int code, vpiHandle obj)
 {
@@ -98,20 +128,15 @@ static void enum_name_get_value(vpiHandle obj, p_vpi_value value)
       struct enumconst_s*ref = enumconst_from_handle(obj);
       assert(ref);
 
-      switch (value->format) {
-	  case vpiObjTypeVal:
-	    value->format = vpiIntVal;
-	  case vpiIntVal:
-	    vector2_to_value(ref->val2, value->value.integer, true);
-	    break;
-	  default:
-	    break;
-      }
+      if (ref->val4.size() > 0)
+	    vpip_vec4_get_value(ref->val4, ref->val4.size(), false, value);
+      else
+	    vpip_vec2_get_value(ref->val2, ref->val2.size(), true,  value);
 }
 
 static const struct __vpirt enum_name_rt = {
       vpiEnumConst,
-      0, //enum_name_get,
+      enum_name_get,
       enum_name_get_str,
       enum_name_get_value,
       0, //enum_name_put_value,
@@ -123,7 +148,29 @@ static const struct __vpirt enum_name_rt = {
       0, //enum_name_put_delays
 };
 
-void compile_enum_type(char*label, std::list<struct enum_name_s>*names)
+void compile_enum2_type(char*label, long width, std::list<struct enum_name_s>*names)
+{
+      struct __vpiEnumTypespec*spec = new struct __vpiEnumTypespec;
+      spec->base.vpi_type = &enum_type_rt;
+      spec->names = std::vector<enumconst_s> (names->size());
+
+      size_t idx = 0;
+      for (list<struct enum_name_s>::iterator cur = names->begin()
+		 ; cur != names->end() ;  ++cur, ++idx) {
+	    assert(cur->val4 == 0);
+	    spec->names[idx].base.vpi_type = &enum_name_rt;
+	    spec->names[idx].name = cur->text;
+	    spec->names[idx].val2 = vvp_vector2_t(cur->val2, width);
+      }
+
+      assert(idx == spec->names.size());
+      compile_vpi_symbol(label, vpi_handle(spec));
+
+      free(label);
+      delete names;
+}
+
+void compile_enum4_type(char*label, long width, std::list<struct enum_name_s>*names)
 {
       struct __vpiEnumTypespec*spec = new struct __vpiEnumTypespec;
       spec->base.vpi_type = &enum_type_rt;
@@ -134,7 +181,10 @@ void compile_enum_type(char*label, std::list<struct enum_name_s>*names)
 		 ; cur != names->end() ;  ++cur, ++idx) {
 	    spec->names[idx].base.vpi_type = &enum_name_rt;
 	    spec->names[idx].name = cur->text;
-	    spec->names[idx].val2 = vvp_vector2_t(cur->val2, 32);
+	    assert(cur->val4);
+	    spec->names[idx].val4 = vector4_from_text(cur->val4, width);
+	    free(cur->val4);
+	    cur->val4 = 0;
       }
 
       assert(idx == spec->names.size());
