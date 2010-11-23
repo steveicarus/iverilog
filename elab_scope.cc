@@ -237,7 +237,9 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	    if (cur->parm) {
 		    // There is an explicit value. elaborate/evaluate
 		    // the value and assign it to the enumeration name.
-		  NetExpr*val = elab_and_eval(des, scope, cur->parm, -1);
+		  NetExpr*val = elab_and_eval(des, scope, cur->parm,
+					      use_enum->base_width(),
+					      use_enum->base_width());
 		  NetEConst*val_const = dynamic_cast<NetEConst*> (val);
 		  if (val_const == 0) {
 			cerr << "<>:0: error: Enumeration expression is not constant." << endl;
