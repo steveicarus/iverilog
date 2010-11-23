@@ -26,6 +26,7 @@
 # include  <cassert>
 # include  <cstdlib>
 # include  <cmath>
+# include  <iostream>
 
 vpi_mode_t vpi_mode_flag = VPI_MODE_NONE;
 FILE*vpi_trace = 0;
@@ -728,7 +729,7 @@ void vpip_vec2_get_value(const vvp_vector2_t&word_val, unsigned width,
 	  case vpiObjTypeVal:
 	    vp->format = vpiIntVal;
 	  case vpiIntVal:
-	    vector2_to_value(word_val, vp->value.integer, true);
+	    vector2_to_value(word_val, vp->value.integer, signed_flag);
 	    break;
 
 	  case vpiVectorVal: {

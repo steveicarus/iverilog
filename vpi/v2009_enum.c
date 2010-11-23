@@ -170,7 +170,7 @@ static PLI_INT32 ivl_method_next_calltf(PLI_BYTE8*data)
 
       } while (! compare_value_eequal(&item_value, &memb_value, use_width));
 
-      if (memb != 0);
+      if (memb != 0)
 	    memb = vpi_scan(enum_list);
 
       if (memb != 0)

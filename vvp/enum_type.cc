@@ -131,7 +131,7 @@ static void enum_name_get_value(vpiHandle obj, p_vpi_value value)
       if (ref->val4.size() > 0)
 	    vpip_vec4_get_value(ref->val4, ref->val4.size(), false, value);
       else
-	    vpip_vec2_get_value(ref->val2, ref->val2.size(), true,  value);
+	    vpip_vec2_get_value(ref->val2, ref->val2.size(), false, value);
 }
 
 static const struct __vpirt enum_name_rt = {
