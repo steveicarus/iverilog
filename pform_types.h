@@ -27,6 +27,7 @@
 # include  <iostream>
 # include  <list>
 # include  <map>
+# include  <memory>
 
 /*
  * parse-form types.
@@ -64,8 +65,8 @@ struct name_component_t {
 struct enum_type_t {
       ivl_variable_type_t base_type;
       bool signed_flag;
-      auto_ptr< list<PExpr*> > range;
-      auto_ptr< list<named_pexpr_t> > names;
+      std::auto_ptr< list<PExpr*> > range;
+      std::auto_ptr< list<named_pexpr_t> > names;
 };
 
 
