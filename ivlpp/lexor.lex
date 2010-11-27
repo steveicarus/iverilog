@@ -77,6 +77,7 @@ struct include_stack_t
     char* comment;
 };
 
+static unsigned get_line(struct include_stack_t* isp);
 static void emit_pathline(struct include_stack_t* isp);
 
 /*
@@ -662,7 +663,23 @@ struct define_t
 };
 
 static struct define_t* def_table = 0;
-static struct define_t* magic_table = 0;
+
+/*
+ * magic macros
+ */
+static struct define_t def_LINE =
+{
+    .name       = "__LINE__",
+    .value      = "__LINE__",
+    .keyword    = 0,
+    .argc       = 1,
+    .magic      = 1,
+    .left       = 0,
+    .right      = 0,
+    .up         = 0
+};
+static struct define_t* magic_table = &def_LINE;
+
 
 /*
  * helper function for def_lookup
@@ -1490,7 +1507,23 @@ static const char* do_magic(const char*name)
 
     if(!strcmp(name, "__LINE__"))
     {
-        // to be implemented
+        // istack->lineno is unsigned. the largest it could be is 64 bits.
+        // 2^64 is between 10^19 and 10^20. So the decimal representation of
+        // lineno can't possibly be longer than 23 bytes. I'm generous but
+        // bytes are cheap and this is nobody's critical path.
+        desired_cnt = 24;
+
+        if(magic_cnt < desired_cnt)
+        {
+            magic_text = realloc(magic_text, desired_cnt);
+            assert(magic_text);
+            magic_cnt = desired_cnt;
+        }
+
+        int actual_len = snprintf(magic_text, desired_cnt,
+                                  "%u", get_line(istack));
+        assert(actual_len < desired_cnt);
+        return magic_text;
     }
 
     // if we get here, then either there was no magic macro with the requested
@@ -1615,6 +1648,21 @@ code_that_switches_buffers:
     standby = 0;
 
     yy_switch_to_buffer(yy_create_buffer(istack->file, YY_BUF_SIZE));
+}
+
+/*
+ * walk the include stack until we find an entry with a valid pathname,
+ * and return the line from that entry for use in an error message.
+ * This is the real file and line in which the outermost macro was used.
+ */
+static unsigned get_line(struct include_stack_t* isp)
+{
+    while(isp && (isp->path == NULL))
+        isp = isp->next;
+
+    assert(isp);
+
+    return isp->lineno+1;
 }
 
 /* walk the include stack until we find an entry with a valid pathname,
