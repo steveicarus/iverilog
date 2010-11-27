@@ -78,6 +78,7 @@ struct include_stack_t
 };
 
 static unsigned get_line(struct include_stack_t* isp);
+static const char *get_path(struct include_stack_t* isp);
 static void emit_pathline(struct include_stack_t* isp);
 
 /*
@@ -667,6 +668,7 @@ static struct define_t* def_table = 0;
 /*
  * magic macros
  */
+static struct define_t def_FILE;
 static struct define_t def_LINE =
 {
     .name       = "__LINE__",
@@ -674,9 +676,20 @@ static struct define_t def_LINE =
     .keyword    = 0,
     .argc       = 1,
     .magic      = 1,
-    .left       = 0,
+    .left       = &def_FILE,
     .right      = 0,
     .up         = 0
+};
+static struct define_t def_FILE =
+{
+    .name       = "__FILE__",
+    .value      = "__FILE__",
+    .keyword    = 0,
+    .argc       = 1,
+    .magic      = 1,
+    .left       = 0,
+    .right      = 0,
+    .up         = &def_LINE
 };
 static struct define_t* magic_table = &def_LINE;
 
@@ -1525,6 +1538,27 @@ static const char* do_magic(const char*name)
         assert(actual_len < desired_cnt);
         return magic_text;
     }
+    else if(!strcmp(name, "__FILE__"))
+    {
+        const char *path = get_path(istack);
+        if(path)
+        {
+
+            desired_cnt = strlen(path)+2+1; // two quotes and a null
+
+            if(magic_cnt < desired_cnt)
+            {
+                magic_text = realloc(magic_text, desired_cnt);
+                assert(magic_text);
+                magic_cnt = desired_cnt;
+            }
+
+            int actual_len = snprintf(magic_text, desired_cnt,
+                                    "\"%s\"", path);
+            assert(actual_len < desired_cnt);
+            return magic_text;
+        }
+    }
 
     // if we get here, then either there was no magic macro with the requested
     // name, or for some reason (an error?) we want to return an empty string
@@ -1663,6 +1697,21 @@ static unsigned get_line(struct include_stack_t* isp)
     assert(isp);
 
     return isp->lineno+1;
+}
+
+/*
+ * walk the include stack until we find an entry with a valid pathname,
+ * and return the path from that entry for use in an error message.
+ * This is the real file and line in which the outermost macro was used.
+ */
+static const char* get_path(struct include_stack_t* isp)
+{
+    while(isp && (isp->path == NULL))
+        isp = isp->next;
+
+    assert(isp);
+
+    return isp->path;
 }
 
 /* walk the include stack until we find an entry with a valid pathname,
