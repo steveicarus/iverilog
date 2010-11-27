@@ -45,6 +45,7 @@ static void  macro_start_args();
 static void  macro_add_to_arg();
 static void  macro_finish_arg();
 static void  do_expand(int use_args);
+static const char* do_magic(const char*name);
 static const char* macro_name();
 
 static void include_filename();
@@ -650,6 +651,10 @@ struct define_t
     char*   value;
     int     keyword; /* keywords don't get rescanned for fresh values. */
     int     argc;
+    int     magic; /* 1 for 'magic' macros like __FILE__ and __LINE__. magic
+                    * macros cannot be undefined. magic macros are expanded
+                    * by do_magic. N.B. DON'T set a magic macro with
+                    * argc > 1 or with keyword true. */
 
     struct define_t*    left;
     struct define_t*    right;
@@ -779,6 +784,7 @@ void define_macro(const char* name, const char* value, int keyword, int argc)
     def->value = strdup(value);
     def->keyword = keyword;
     def->argc = argc;
+    def->magic = 0;
     def->left = 0;
     def->right = 0;
     def->up = 0;
@@ -853,6 +859,17 @@ static char*  define_text = 0;
 static size_t define_cnt = 0;
 
 static int define_continue_flag = 0;
+
+/*
+ * The do_magic function puts the expansions of magic macros into
+ * this buffer and returns its address. It reallocs as needed to
+ * fit its whole expansion. Because of this, do_magic is
+ * -NOT REENTRANT-. It is called from do_expand, which strdups
+ * or otherwise copies the result before doing any recursion, so
+ * I don't anticipate any problems.
+ */
+static char* magic_text = 0;
+static size_t magic_cnt = 0;
 
 /*
  * Define a special character code used to mark the insertion point
@@ -1095,6 +1112,7 @@ static void def_undefine()
 
     cur = def_lookup(def_buf);
     if (cur == 0) return;
+    if (cur->magic) return;
 
     if (cur->up == 0)
     {
@@ -1379,6 +1397,12 @@ static void do_expand(int use_args)
         {
             isp->str = &exp_buf[head];
         }
+        else if(cur_macro->magic)
+        {
+            // cast const char * to char * to suppress warning, since we won't
+            // be modifying isp->str in place.
+            isp->str = (char*)do_magic(cur_macro->name);
+        }
         else
         {
             isp->str = cur_macro->value;
@@ -1431,6 +1455,31 @@ static void do_expand(int use_args)
 	  }
     }
 }
+
+/*
+ * Expand the magic macro named name. Return a buffer containing the expansion.
+ */
+static const char* do_magic(const char*name)
+{
+    size_t desired_cnt = 0;
+
+    if(!magic_text)
+    {
+        magic_text = malloc(24); // unimportant initial size
+    }
+
+    if(!strcmp(name, "__LINE__"))
+    {
+        // to be implemented
+    }
+
+    // if we get here, then either there was no magic macro with the requested
+    // name, or for some reason (an error?) we want to return an empty string
+    assert(magic_cnt > 0);
+    magic_text[0] = '\0';
+    return magic_text;
+}
+
 
 /*
  * Include file handling works by keeping an include stack of the
