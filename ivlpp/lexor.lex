@@ -662,11 +662,13 @@ struct define_t
 };
 
 static struct define_t* def_table = 0;
+static struct define_t* magic_table = 0;
 
-static struct define_t* def_lookup(const char*name)
+/*
+ * helper function for def_lookup
+ */
+static struct define_t* def_lookup_internal(const char*name, struct define_t*cur)
 {
-    struct define_t* cur = def_table;
-
     if (cur == 0)
         return 0;
 
@@ -684,6 +686,24 @@ static struct define_t* def_lookup(const char*name)
 
     return 0;
 }
+
+static struct define_t* def_lookup(const char*name)
+{
+    // first, try a magic macro
+    if(name[0] == '_' && name[1] == '_' && name[2] != '\0')
+    {
+        struct define_t* result = def_lookup_internal(name, magic_table);
+        if(result)
+        {
+            return result;
+        }
+    }
+
+    // either there was no matching magic macro, or we didn't try looking
+    // look for a normal macro
+    return def_lookup_internal(name, def_table);
+}
+
 
 static int is_defined(const char*name)
 {
