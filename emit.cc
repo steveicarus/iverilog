@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,7 +31,7 @@
 # include  <cassert>
 # include  <cstring>
 
-bool NetNode::emit_node(struct target_t*tgt) const
+bool NetNode::emit_node(struct target_t*) const
 {
       cerr << "EMIT: Gate type? " << typeid(*this).name() << endl;
       return false;
@@ -200,7 +200,7 @@ bool NetAnalogTop::emit(struct target_t*tgt) const
       return tgt->process(this);
 }
 
-bool NetProc::emit_proc(struct target_t*tgt) const
+bool NetProc::emit_proc(struct target_t*) const
 {
       cerr << "EMIT: Proc type? " << typeid(*this).name() << endl;
       return false;
@@ -390,11 +390,11 @@ void NetScope::emit_scope(struct target_t*tgt) const
 	    tgt->enumeration(this, *cur);
 
       for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
-		 ; cur != children_.end() ; cur ++)
+		 ; cur != children_.end() ; ++ cur )
 	    cur->second->emit_scope(tgt);
 
       for (signals_map_iter_t cur = signals_map_.begin()
-		 ; cur != signals_map_.end() ; cur ++) {
+		 ; cur != signals_map_.end() ; ++ cur ) {
 	    tgt->signal(cur->second);
       }
 
@@ -418,7 +418,7 @@ bool NetScope::emit_defs(struct target_t*tgt) const
       switch (type_) {
 	  case MODULE:
 	    for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
-		       ; cur != children_.end() ; cur ++)
+		       ; cur != children_.end() ; ++ cur )
 		  flag &= cur->second->emit_defs(tgt);
 	    break;
 
@@ -430,7 +430,7 @@ bool NetScope::emit_defs(struct target_t*tgt) const
 	    break;
 	  default:  /* BEGIN_END and FORK_JOIN, GENERATE... */
 	    for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
-		       ; cur != children_.end() ; cur ++)
+		       ; cur != children_.end() ; ++ cur )
 		  flag &= cur->second->emit_defs(tgt);
 	    break;
       }
@@ -452,7 +452,7 @@ int Design::emit(struct target_t*tgt) const
 
 	// enumerate the scopes
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
-	   scope != root_scopes_.end(); scope++)
+	   scope != root_scopes_.end(); ++ scope )
 	    (*scope)->emit_scope(tgt);
 
 
@@ -475,7 +475,7 @@ int Design::emit(struct target_t*tgt) const
 	// emit task and function definitions
       bool tasks_rc = true;
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
-	   scope != root_scopes_.end(); scope++)
+	   scope != root_scopes_.end(); ++ scope )
 	    tasks_rc &= (*scope)->emit_defs(tgt);
 
 
@@ -540,7 +540,7 @@ void NetECRealParam::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_rparam(this);
 }
 
-void NetEParam::expr_scan(struct expr_scan_t*tgt) const
+void NetEParam::expr_scan(struct expr_scan_t*) const
 {
       cerr << get_fileline() << ":internal error: unexpected NetEParam."
 	   << endl;

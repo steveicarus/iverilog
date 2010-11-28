@@ -54,7 +54,7 @@ static void collect_scope_parameters_(NetScope*scope,
       const map<perm_string,LexicalScope::param_expr_t>&parameters)
 {
       for (mparm_it_t cur = parameters.begin()
-		 ; cur != parameters.end() ;  cur ++) {
+		 ; cur != parameters.end() ;  ++ cur ) {
 
 	    NetEParam*tmp = new NetEParam;
 	    tmp->set_line(*((*cur).second.expr));
@@ -69,7 +69,7 @@ static void collect_scope_localparams_(NetScope*scope,
       const map<perm_string,LexicalScope::param_expr_t>&localparams)
 {
       for (mparm_it_t cur = localparams.begin()
-		 ; cur != localparams.end() ;  cur ++) {
+		 ; cur != localparams.end() ;  ++ cur ) {
 
 	    NetEParam*tmp = new NetEParam;
 	    tmp->set_line(*((*cur).second.expr));
@@ -173,7 +173,7 @@ static void elaborate_scope_parameters_(Design*des, NetScope*scope,
       const map<perm_string,LexicalScope::param_expr_t>&parameters)
 {
       for (mparm_it_t cur = parameters.begin()
-		 ; cur != parameters.end() ;  cur ++) {
+		 ; cur != parameters.end() ;  ++ cur ) {
 
 	      // A parameter can not have the same name as a genvar.
 	    if (scope->find_genvar((*cur).first)) {
@@ -192,7 +192,7 @@ static void elaborate_scope_localparams_(Design*des, NetScope*scope,
       const map<perm_string,LexicalScope::param_expr_t>&localparams)
 {
       for (mparm_it_t cur = localparams.begin()
-		 ; cur != localparams.end() ;  cur ++) {
+		 ; cur != localparams.end() ;  ++ cur ) {
 
 	      // A localparam can not have the same name as a genvar.
 	    if (scope->find_genvar((*cur).first)) {
@@ -293,7 +293,7 @@ static void replace_scope_parameters_(NetScope*scope, const LineInfo&loc,
 			              const Module::replace_t&replacements)
 {
       for (Module::replace_t::const_iterator cur = replacements.begin()
-		 ; cur != replacements.end() ;  cur ++) {
+		 ; cur != replacements.end() ;  ++ cur ) {
 
 	    NetExpr*val = (*cur).second;
 	    if (val == 0) {
@@ -323,20 +323,19 @@ static void elaborate_scope_events_(Design*des, NetScope*scope,
                                     const map<perm_string,PEvent*>&events)
 {
       for (map<perm_string,PEvent*>::const_iterator et = events.begin()
-		 ; et != events.end() ;  et ++ ) {
+		 ; et != events.end() ;  ++ et ) {
 
 	    (*et).second->elaborate_scope(des, scope);
       }
 }
 
 static void elaborate_scope_tasks(Design*des, NetScope*scope,
-				  const LineInfo&loc,
 				  const map<perm_string,PTask*>&tasks)
 {
       typedef map<perm_string,PTask*>::const_iterator tasks_it_t;
 
       for (tasks_it_t cur = tasks.begin()
-		 ; cur != tasks.end() ;  cur ++ ) {
+		 ; cur != tasks.end() ;  ++ cur ) {
 
 	    hname_t use_name( (*cur).first );
 	      // A task can not have the same name as another scope object.
@@ -385,13 +384,12 @@ static void elaborate_scope_tasks(Design*des, NetScope*scope,
 }
 
 static void elaborate_scope_funcs(Design*des, NetScope*scope,
-				  const LineInfo&loc,
 				  const map<perm_string,PFunction*>&funcs)
 {
       typedef map<perm_string,PFunction*>::const_iterator funcs_it_t;
 
       for (funcs_it_t cur = funcs.begin()
-		 ; cur != funcs.end() ;  cur ++ ) {
+		 ; cur != funcs.end() ;  ++ cur ) {
 
 	    hname_t use_name( (*cur).first );
 	      // A function can not have the same name as another scope object.
@@ -459,7 +457,7 @@ class generate_schemes_work_item_t : public elaborator_work_item_t {
 	      // elaboration.
 	    typedef list<PGenerate*>::const_iterator generate_it_t;
 	    for (generate_it_t cur = mod_->generate_schemes.begin()
-		       ; cur != mod_->generate_schemes.end() ; cur ++ ) {
+		       ; cur != mod_->generate_schemes.end() ; ++ cur ) {
 		  (*cur) -> generate_scope(des, scope_);
 	    }
       }
@@ -482,7 +480,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
 	// Add the genvars to the scope.
       typedef map<perm_string,LineInfo*>::const_iterator genvar_it_t;
-      for (genvar_it_t cur = genvars.begin(); cur != genvars.end(); cur++ ) {
+      for (genvar_it_t cur = genvars.begin(); cur != genvars.end(); ++ cur ) {
 	    scope->add_genvar((*cur).first, (*cur).second);
       }
 
@@ -531,7 +529,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
       typedef list<Module::named_expr_t>::const_iterator defparms_iter_t;
       for (defparms_iter_t cur = defparms.begin()
-		 ; cur != defparms.end() ;  cur ++) {
+		 ; cur != defparms.end() ; ++ cur ) {
 
 	    PExpr*ex = cur->second;
 	    assert(ex);
@@ -567,21 +565,21 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// elaborate_scope method of the PTask for detailed
 	// processing.
 
-      elaborate_scope_tasks(des, scope, *this, tasks);
+      elaborate_scope_tasks(des, scope, tasks);
 
 
 	// Functions are very similar to tasks, at least from the
 	// perspective of scopes. So handle them exactly the same
 	// way.
 
-      elaborate_scope_funcs(des, scope, *this, funcs);
+      elaborate_scope_funcs(des, scope, funcs);
 
 	// Gates include modules, which might introduce new scopes, so
 	// scan all of them to create those scopes.
 
       typedef list<PGate*>::const_iterator gates_it_t;
       for (gates_it_t cur = gates_.begin()
-		 ; cur != gates_.end() ;  cur ++ ) {
+		 ; cur != gates_.end() ; ++ cur ) {
 
 	    (*cur) -> elaborate_scope(des, scope);
       }
@@ -594,7 +592,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       typedef list<PProcess*>::const_iterator proc_it_t;
 
       for (proc_it_t cur = behaviors.begin()
-		 ; cur != behaviors.end() ;  cur ++ ) {
+		 ; cur != behaviors.end() ; ++ cur ) {
 
 	    (*cur) -> statement() -> elaborate_scope(des, scope);
       }
@@ -934,7 +932,7 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 	      // Detect that the item is a default.
 	    if (item->item_test.size() == 0) {
 		  default_item = item;
-		  cur ++;
+		  ++ cur;
 		  continue;
 	    }
 
@@ -966,7 +964,7 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 	    if (match_flag)
 		  break;
 
-	    cur ++;
+	    ++ cur;
       }
 
       delete case_value_co;
@@ -1102,7 +1100,7 @@ void PGenerate::elaborate_subscope_direct_(Design*des, NetScope*scope)
 {
       typedef list<PGenerate*>::const_iterator generate_it_t;
       for (generate_it_t cur = generate_schemes.begin()
-		 ; cur != generate_schemes.end() ; cur ++ ) {
+		 ; cur != generate_schemes.end() ; ++ cur ) {
 	    (*cur) -> generate_scope(des, scope);
       }
 }
@@ -1111,7 +1109,7 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 {
 	// Add the genvars to this scope.
       typedef map<perm_string,LineInfo*>::const_iterator genvar_it_t;
-      for (genvar_it_t cur = genvars.begin(); cur != genvars.end(); cur++ ) {
+      for (genvar_it_t cur = genvars.begin(); cur != genvars.end(); ++ cur ) {
 	    scope->add_genvar((*cur).first, (*cur).second);
       }
 
@@ -1121,7 +1119,7 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 
       typedef list<PGenerate*>::const_iterator generate_it_t;
       for (generate_it_t cur = generate_schemes.begin()
-		 ; cur != generate_schemes.end() ; cur ++ ) {
+		 ; cur != generate_schemes.end() ; ++ cur ) {
 	    (*cur) -> generate_scope(des, scope);
       }
 
@@ -1135,20 +1133,20 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 
         // Scan through all the task and function declarations in this
         // scope.
-      elaborate_scope_tasks(des, scope, *this, tasks);
-      elaborate_scope_funcs(des, scope, *this, funcs);
+      elaborate_scope_tasks(des, scope, tasks);
+      elaborate_scope_funcs(des, scope, funcs);
 
 	// Scan the generated scope for gates that may create
 	// their own scopes.
       typedef list<PGate*>::const_iterator pgate_list_it_t;
       for (pgate_list_it_t cur = gates.begin()
-		 ; cur != gates.end() ;  cur ++) {
+		 ; cur != gates.end() ; ++ cur ) {
 	    (*cur) ->elaborate_scope(des, scope);
       }
 
       typedef list<PProcess*>::const_iterator proc_it_t;
       for (proc_it_t cur = behaviors.begin()
-		 ; cur != behaviors.end() ;  cur ++ ) {
+		 ; cur != behaviors.end() ; ++ cur ) {
 	    (*cur) -> statement() -> elaborate_scope(des, scope);
       }
 
@@ -1437,7 +1435,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // parameter value with the new expression.
 
 	    for (mparm_local_it_t cur = replace.begin()
-		       ; cur != replace.end() ;  cur ++ ) {
+		       ; cur != replace.end() ; ++ cur ) {
 
 		  PExpr*tmp = (*cur).second;
 		    // No expression means that the parameter is not

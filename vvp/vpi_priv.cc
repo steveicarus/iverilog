@@ -326,7 +326,6 @@ PLI_INT32 vpi_get(int property, vpiHandle ref)
 			  ref, vpi_type_values(ref->vpi_type->type_code));
 	    }
 
-	    struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
 	    if (ref->vpi_type->type_code == vpiMemory && is_net_array(ref))
 		  return vpiNetArray;
 	    else
@@ -380,7 +379,6 @@ char* vpi_get_str(PLI_INT32 property, vpiHandle ref)
 			  ref, vpi_type_values(ref->vpi_type->type_code));
 	    }
 
-	    struct __vpiSignal*rfp = (struct __vpiSignal*)ref;
             PLI_INT32 type;
 	    if (ref->vpi_type->type_code == vpiMemory && is_net_array(ref))
 		  type = vpiNetArray;

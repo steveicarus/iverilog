@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -100,7 +100,7 @@ void functor_t::lpm_ureduce(class Design*, class NetUReduce*)
 void NetScope::run_functor(Design*des, functor_t*fun)
 {
       for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
-		 ; cur != children_.end() ; cur ++)
+		 ; cur != children_.end() ; ++ cur )
 	    cur->second->run_functor(des, fun);
 
       for (NetEvent*cur = events_ ;  cur ;  /* */) {
@@ -124,7 +124,7 @@ void Design::functor(functor_t*fun)
 {
 	// Scan the scopes
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
-	   scope != root_scopes_.end(); scope++)
+	   scope != root_scopes_.end(); ++ scope )
 	    (*scope)->run_functor(this, fun);
 
 	// apply to processes
@@ -244,7 +244,7 @@ proc_match_t::~proc_match_t()
 {
 }
 
-int NetProc::match_proc(proc_match_t*that)
+int NetProc::match_proc(proc_match_t*)
 {
       return 0;
 }

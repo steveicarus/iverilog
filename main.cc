@@ -38,7 +38,6 @@ const char NOTICE[] =
 "  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.\n"
 ;
 
-# include  "ivl_alloc.h"
 # include  <cstdio>
 # include  <iostream>
 # include  <fstream>
@@ -88,6 +87,8 @@ static void signals_handler(int sig)
       exit(1);
 }
 #endif
+
+# include  "ivl_alloc.h"
 
 /* Count errors detected in flag processing. */
 unsigned flag_errors = 0;
@@ -734,7 +735,7 @@ static void EOC_cleanup(void)
       cleanup_sys_func_table();
 
       for (list<const char*>::iterator suf = library_suff.begin() ;
-           suf != library_suff.end() ; suf ++ ) {
+           suf != library_suff.end() ; ++ suf ) {
 	    free((void *)*suf);
       }
       library_suff.clear();
@@ -744,7 +745,7 @@ static void EOC_cleanup(void)
       free(depfile_name);
 
       for (map<string, const char*>::iterator flg = flags.begin() ;
-           flg != flags.end() ; flg ++ ) {
+           flg != flags.end() ; ++ flg ) {
 	    free((void *)flg->second);
       }
       flags.clear();
@@ -941,24 +942,22 @@ int main(int argc, char*argv[])
 	    ofstream out (pf_path);
 	    out << "PFORM DUMP NATURES:" << endl;
 	    for (map<perm_string,ivl_nature_t>::iterator cur = natures.begin()
-		       ; cur != natures.end() ; cur ++ ) {
+		       ; cur != natures.end() ; ++ cur ) {
 		  pform_dump(out, (*cur).second);
 	    }
 	    out << "PFORM DUMP DISCIPLINES:" << endl;
 	    for (map<perm_string,ivl_discipline_t>::iterator cur = disciplines.begin()
-		       ; cur != disciplines.end() ; cur ++ ) {
+		       ; cur != disciplines.end() ; ++ cur ) {
 		  pform_dump(out, (*cur).second);
 	    }
 	    out << "PFORM DUMP MODULES:" << endl;
 	    for (map<perm_string,Module*>::iterator mod = pform_modules.begin()
-		       ; mod != pform_modules.end()
-		       ; mod ++ ) {
+		       ; mod != pform_modules.end() ; ++ mod ) {
 		  pform_dump(out, (*mod).second);
 	    }
 	    out << "PFORM DUMP PRIMITIVES:" << endl;
 	    for (map<perm_string,PUdp*>::iterator idx = pform_primitives.begin()
-		       ; idx != pform_primitives.end()
-		       ; idx ++ ) {
+		       ; idx != pform_primitives.end() ; ++ idx ) {
 		  (*idx).second->dump(out);
 	    }
       }
@@ -977,14 +976,12 @@ int main(int argc, char*argv[])
 	    if (verbose_flag)
 		  cout << "LOCATING TOP-LEVEL MODULES" << endl << "  ";
 	    for (mod = pform_modules.begin()
-		       ; mod != pform_modules.end()
-		       ; mod++) {
+		       ; mod != pform_modules.end() ; ++ mod ) {
 		  find_module_mention(mentioned_p, mod->second);
 	    }
 
 	    for (mod = pform_modules.begin()
-		       ; mod != pform_modules.end()
-		       ; mod++) {
+		       ; mod != pform_modules.end() ; ++ mod ) {
 
 		    /* Don't choose library modules. */
 		  if ((*mod).second->library_flag)
@@ -1064,7 +1061,7 @@ int main(int argc, char*argv[])
 
 	/* Done with all the pform data. Delete the modules. */
       for (map<perm_string,Module*>::iterator idx = pform_modules.begin()
-		 ; idx != pform_modules.end() ; idx ++) {
+		 ; idx != pform_modules.end() ; ++ idx ) {
 
 	    delete (*idx).second;
 	    (*idx).second = 0;
@@ -1161,8 +1158,7 @@ int main(int argc, char*argv[])
 
 	    map<perm_string,unsigned>::const_iterator idx;
 	    for (idx = missing_modules.begin()
-		       ; idx != missing_modules.end()
-		       ; idx ++)
+		       ; idx != missing_modules.end() ; ++ idx )
 		  cerr << "        " << (*idx).first
 		       << " referenced " << (*idx).second
 		       << " times."<< endl;
@@ -1177,7 +1173,7 @@ static void find_module_mention(map<perm_string,bool>&check_map, Module*mod)
 {
       list<PGate*> gates = mod->get_gates();
       list<PGate*>::const_iterator gate;
-      for (gate = gates.begin(); gate != gates.end(); gate++) {
+      for (gate = gates.begin(); gate != gates.end(); ++ gate ) {
 	    PGModule*tmp = dynamic_cast<PGModule*>(*gate);
 	    if (tmp) {
 		    // Note that this module has been instantiated
@@ -1187,7 +1183,7 @@ static void find_module_mention(map<perm_string,bool>&check_map, Module*mod)
 
       list<PGenerate*>::const_iterator cur;
       for (cur = mod->generate_schemes.begin()
-		 ; cur != mod->generate_schemes.end() ; cur ++) {
+		 ; cur != mod->generate_schemes.end() ; ++ cur ) {
 	    find_module_mention(check_map, *cur);
       }
 }
@@ -1195,7 +1191,7 @@ static void find_module_mention(map<perm_string,bool>&check_map, Module*mod)
 static void find_module_mention(map<perm_string,bool>&check_map, PGenerate*schm)
 {
       list<PGate*>::const_iterator gate;
-      for (gate = schm->gates.begin(); gate != schm->gates.end(); gate++) {
+      for (gate = schm->gates.begin(); gate != schm->gates.end(); ++ gate ) {
 	    PGModule*tmp = dynamic_cast<PGModule*>(*gate);
 	    if (tmp) {
 		    // Note that this module has been instantiated
@@ -1205,7 +1201,7 @@ static void find_module_mention(map<perm_string,bool>&check_map, PGenerate*schm)
 
       list<PGenerate*>::const_iterator cur;
       for (cur = schm->generate_schemes.begin()
-		 ; cur != schm->generate_schemes.end() ; cur ++) {
+		 ; cur != schm->generate_schemes.end() ; ++ cur ) {
 	    find_module_mention(check_map, *cur);
       }
 }

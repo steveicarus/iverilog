@@ -18,10 +18,10 @@
  */
 
 # include  "vvp_priv.h"
-# include  "ivl_alloc.h"
 # include  <string.h>
 # include  <stdlib.h>
 # include  <assert.h>
+# include  "ivl_alloc.h"
 
 #ifdef __MINGW32__  /* MinGW has inconsistent %p output. */
 #define snprintf _snprintf

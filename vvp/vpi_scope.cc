@@ -25,10 +25,10 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-# include  "ivl_alloc.h"
 # include  <cstring>
 # include  <cstdlib>
 # include  <cassert>
+# include  "ivl_alloc.h"
 
 static vpiHandle *vpip_root_table_ptr = 0;
 static unsigned   vpip_root_table_cnt = 0;
@@ -63,8 +63,6 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		  vthreads_delete(lscope);
 		  delete (scope->intern)[idx];
 		  break;
-		case vpiIntegerVar:
-		  break;
 		case vpiMemory:
 		case vpiNetArray:
 		  memory_delete((scope->intern)[idx]);
@@ -78,6 +76,11 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		  break;
 		case vpiNet:
 		case vpiReg:
+		case vpiIntegerVar:
+		case vpiLongIntVar:
+		case vpiShortIntVar:
+		case vpiIntVar:
+		case vpiByteVar:
 		  signal_delete((scope->intern)[idx]);
 		  break;
 		case vpiParameter:

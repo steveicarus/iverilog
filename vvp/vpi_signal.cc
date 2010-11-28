@@ -31,7 +31,6 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-# include  "ivl_alloc.h"
 # include  <cmath>
 # include  <iostream>
 # include  <cstdio>
@@ -42,6 +41,7 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  <valgrind/memcheck.h>
 #endif
+# include  "ivl_alloc.h"
 
 /*
  * Hex digits that represent 4-value bits of Verilog are not as
@@ -890,6 +890,9 @@ static const struct __vpirt vpip_integer_rt = {
       signal_put_value,
       signal_get_handle,
       signal_iterate,
+      0,
+      0,
+      0,
       0
 };
 
@@ -915,6 +918,9 @@ static const struct __vpirt vpip_byte_rt = {
       signal_put_value,
       signal_get_handle,
       signal_iterate,
+      0,
+      0,
+      0,
       0
 };
 
@@ -926,6 +932,9 @@ static const struct __vpirt vpip_shortint_rt = {
       signal_put_value,
       signal_get_handle,
       signal_iterate,
+      0,
+      0,
+      0,
       0
 };
 
@@ -937,6 +946,9 @@ static const struct __vpirt vpip_int_rt = {
       signal_put_value,
       signal_get_handle,
       signal_iterate,
+      0,
+      0,
+      0,
       0
 };
 
@@ -948,6 +960,9 @@ static const struct __vpirt vpip_longint_rt = {
       signal_put_value,
       signal_get_handle,
       signal_iterate,
+      0,
+      0,
+      0,
       0
 };
 
@@ -982,6 +997,8 @@ vpiHandle vpip_make_int2(const char*name, int msb, int lsb, vvp_net_t*vec)
 	  case 63:
 	    obj->vpi_type = &vpip_longint_rt;
 	    break;
+	  default:
+	    assert(0);
       }
 
       return obj;

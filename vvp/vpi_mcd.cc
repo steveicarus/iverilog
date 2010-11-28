@@ -22,12 +22,12 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-# include  "ivl_alloc.h"
 # include  <cassert>
 # include  <cstdarg>
 # include  <cstdio>
 # include  <cstdlib>
 # include  <cstring>
+# include  "ivl_alloc.h"
 
 extern FILE* vpi_trace;
 

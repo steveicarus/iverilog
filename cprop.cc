@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -48,11 +48,11 @@ struct cprop_functor  : public functor_t {
       virtual void lpm_mux(Design*des, NetMux*obj);
 };
 
-void cprop_functor::signal(Design*des, NetNet*obj)
+void cprop_functor::signal(Design*, NetNet*)
 {
 }
 
-void cprop_functor::lpm_add_sub(Design*des, NetAddSub*obj)
+void cprop_functor::lpm_add_sub(Design*, NetAddSub*)
 {
 }
 
@@ -70,11 +70,11 @@ void cprop_functor::lpm_compare(Design*des, NetCompare*obj)
       }
 }
 
-void cprop_functor::lpm_compare_eq_(Design*des, NetCompare*obj)
+void cprop_functor::lpm_compare_eq_(Design*, NetCompare*)
 {
 }
 
-void cprop_functor::lpm_ff(Design*des, NetFF*obj)
+void cprop_functor::lpm_ff(Design*, NetFF*obj)
 {
 	// Look for and count unlinked FF outputs. Note that if the
 	// Data and Q pins are connected together, they can be removed
@@ -91,7 +91,7 @@ void cprop_functor::lpm_ff(Design*des, NetFF*obj)
       }
 }
 
-void cprop_functor::lpm_logic(Design*des, NetLogic*obj)
+void cprop_functor::lpm_logic(Design*, NetLogic*)
 {
 }
 
@@ -167,7 +167,7 @@ struct nexus_info_s {
       unsigned out;
 };
 
-void cprop_dc_functor::lpm_const(Design*des, NetConst*obj)
+void cprop_dc_functor::lpm_const(Design*, NetConst*obj)
 {
 	// 'bz constant values drive high impedance to whatever is
 	// connected to it. In other words, it is a noop. But that is

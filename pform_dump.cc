@@ -89,7 +89,7 @@ ostream& operator<< (ostream&out, const name_component_t&that)
 
       typedef std::list<index_component_t>::const_iterator index_it_t;
       for (index_it_t idx = that.index.begin()
-		 ; idx != that.index.end() ;  idx++) {
+		 ; idx != that.index.end() ; ++ idx ) {
 
 	    out << *idx;
       }
@@ -103,10 +103,10 @@ ostream& operator<< (ostream&o, const pform_name_t&that)
       cur = that.begin();
       o << *cur;
 
-      cur++;
+      ++ cur;
       while (cur != that.end()) {
 	    o << "." << *cur;
-	    cur++;
+	    ++ cur;
       }
 
       return o;
@@ -149,7 +149,7 @@ static void dump_attributes_map(ostream&out,
 				int ind)
 {
       for (map<perm_string,PExpr*>::const_iterator idx = attributes.begin()
-		 ; idx != attributes.end() ; idx++ ) {
+		 ; idx != attributes.end() ; ++ idx ) {
 
 	    out << setw(ind) << "" << "(* " << (*idx).first;
 	    if ((*idx).second) {
@@ -1008,28 +1008,28 @@ void PGenerate::dump(ostream&out, unsigned indent) const
       dump_wires_(out, indent+2);
 
       for (list<PGate*>::const_iterator idx = gates.begin()
-		 ; idx != gates.end() ;  idx++) {
+		 ; idx != gates.end() ; ++ idx ) {
 	    (*idx)->dump(out, indent+2);
       }
 
       for (list<PProcess*>::const_iterator idx = behaviors.begin()
-		 ; idx != behaviors.end() ;  idx++) {
+		 ; idx != behaviors.end() ; ++ idx ) {
 	    (*idx)->dump(out, indent+2);
       }
 
       for (list<AProcess*>::const_iterator idx = analog_behaviors.begin()
-		 ; idx != analog_behaviors.end() ;  idx++) {
+		 ; idx != analog_behaviors.end() ; ++ idx ) {
 	    (*idx)->dump(out, indent+2);
       }
 
       typedef map<perm_string,LineInfo*>::const_iterator genvar_iter_t;
       for (genvar_iter_t cur = genvars.begin()
-		 ; cur != genvars.end() ; cur++) {
+		 ; cur != genvars.end() ; ++ cur ) {
 	    out << setw(indent+2) << "" << "genvar " << ((*cur).first) << ";" << endl;
       }
 
       for (list<PGenerate*>::const_iterator idx = generate_schemes.begin()
-		 ; idx != generate_schemes.end() ;  idx++) {
+		 ; idx != generate_schemes.end() ; ++ idx ) {
 	    (*idx)->dump(out, indent+2);
       }
 
@@ -1044,7 +1044,7 @@ void LexicalScope::dump_parameters_(ostream&out, unsigned indent) const
 {
       typedef map<perm_string,param_expr_t>::const_iterator parm_iter_t;
       for (parm_iter_t cur = parameters.begin()
-		 ; cur != parameters.end() ; cur ++) {
+		 ; cur != parameters.end() ; ++ cur ) {
 	    out << setw(indent) << "" << "parameter "
                 << (*cur).second.type << " ";
 	    if ((*cur).second.signed_flag)
@@ -1093,7 +1093,7 @@ void LexicalScope::dump_localparams_(ostream&out, unsigned indent) const
 {
       typedef map<perm_string,param_expr_t>::const_iterator parm_iter_t;
       for (parm_iter_t cur = localparams.begin()
-		 ; cur != localparams.end() ; cur ++) {
+		 ; cur != localparams.end() ; ++ cur ) {
 	    out << setw(indent) << "" << "localparam ";
 	    if ((*cur).second.msb)
 		  out << "[" << *(*cur).second.msb << ":"
@@ -1125,7 +1125,7 @@ void LexicalScope::dump_enumerations_(ostream&out, unsigned indent) const
 void LexicalScope::dump_events_(ostream&out, unsigned indent) const
 {
       for (map<perm_string,PEvent*>::const_iterator cur = events.begin()
-		 ; cur != events.end() ;  cur ++ ) {
+		 ; cur != events.end() ; ++ cur ) {
 	    PEvent*ev = (*cur).second;
 	    out << setw(indent) << "" << "event " << ev->name() << "; // "
 		<< ev->get_fileline() << endl;
@@ -1136,7 +1136,7 @@ void LexicalScope::dump_wires_(ostream&out, unsigned indent) const
 {
 	// Iterate through and display all the wires.
       for (map<perm_string,PWire*>::const_iterator wire = wires.begin()
-		 ; wire != wires.end() ; wire ++ ) {
+		 ; wire != wires.end() ; ++ wire ) {
 
 	    (*wire).second->dump(out, indent);
       }
@@ -1147,7 +1147,7 @@ void Module::dump(ostream&out) const
       if (attributes.begin() != attributes.end()) {
 	    out << "(* ";
 	    for (map<perm_string,PExpr*>::const_iterator idx = attributes.begin()
-		 ; idx != attributes.end() ; idx++ ) {
+		 ; idx != attributes.end() ; ++ idx ) {
 		    if (idx != attributes.begin()) {
 			out << " , ";
 		    }
@@ -1187,26 +1187,26 @@ void Module::dump(ostream&out) const
 
       typedef map<perm_string,LineInfo*>::const_iterator genvar_iter_t;
       for (genvar_iter_t cur = genvars.begin()
-		 ; cur != genvars.end() ; cur++) {
+		 ; cur != genvars.end() ; ++ cur ) {
 	    out << "    genvar " << ((*cur).first) << ";" << endl;
       }
 
       typedef list<PGenerate*>::const_iterator genscheme_iter_t;
       for (genscheme_iter_t cur = generate_schemes.begin()
-		 ; cur != generate_schemes.end() ; cur++) {
+		 ; cur != generate_schemes.end() ; ++ cur ) {
 	    (*cur)->dump(out, 4);
       }
 
       typedef map<perm_string,PExpr*>::const_iterator specparm_iter_t;
       for (specparm_iter_t cur = specparams.begin()
-		 ; cur != specparams.end() ; cur ++) {
+		 ; cur != specparams.end() ; ++ cur ) {
 	    out << "    specparam " << (*cur).first << " = "
 		<< *(*cur).second << ";" << endl;
       }
 
       typedef list<Module::named_expr_t>::const_iterator parm_hiter_t;
       for (parm_hiter_t cur = defparms.begin()
-		 ; cur != defparms.end() ;  cur ++) {
+		 ; cur != defparms.end() ;  ++ cur ) {
 	    out << "    defparam " << (*cur).first << " = ";
 	    if ((*cur).second)
 		  out << *(*cur).second << ";" << endl;
@@ -1222,7 +1222,7 @@ void Module::dump(ostream&out) const
 	// Dump the task definitions.
       typedef map<perm_string,PTask*>::const_iterator task_iter_t;
       for (task_iter_t cur = tasks.begin()
-		 ; cur != tasks.end() ; cur ++) {
+		 ; cur != tasks.end() ; ++ cur ) {
 	    out << "    task " << (*cur).first << ";" << endl;
 	    (*cur).second->dump(out, 6);
 	    out << "    endtask;" << endl;
@@ -1231,7 +1231,7 @@ void Module::dump(ostream&out) const
 	// Dump the function definitions.
       typedef map<perm_string,PFunction*>::const_iterator func_iter_t;
       for (func_iter_t cur = funcs.begin()
-		 ; cur != funcs.end() ; cur ++) {
+		 ; cur != funcs.end() ; ++ cur ) {
 	    out << "    function " << (*cur).first << ";" << endl;
 	    (*cur).second->dump(out, 6);
 	    out << "    endfunction;" << endl;
@@ -1240,28 +1240,25 @@ void Module::dump(ostream&out) const
 
 	// Iterate through and display all the gates
       for (list<PGate*>::const_iterator gate = gates_.begin()
-		 ; gate != gates_.end()
-		 ; gate ++ ) {
+		 ; gate != gates_.end() ; ++ gate ) {
 
 	    (*gate)->dump(out);
       }
 
 
       for (list<PProcess*>::const_iterator behav = behaviors.begin()
-		 ; behav != behaviors.end()
-		 ; behav ++ ) {
+		 ; behav != behaviors.end() ; ++ behav ) {
 
 	    (*behav)->dump(out, 4);
       }
 
       for (list<AProcess*>::const_iterator idx = analog_behaviors.begin()
-		 ; idx != analog_behaviors.end() ;  idx++) {
+		 ; idx != analog_behaviors.end() ; ++ idx) {
 	    (*idx)->dump(out, 4);
       }
 
       for (list<PSpecPath*>::const_iterator spec = specify_paths.begin()
-		 ; spec != specify_paths.end()
-		 ; spec ++ ) {
+		 ; spec != specify_paths.end() ; ++ spec ) {
 
 	    (*spec)->dump(out, 4);
       }
@@ -1304,8 +1301,7 @@ void PUdp::dump(ostream&out) const
 	// Dump the attributes for the primitive as attribute
 	// statements.
       for (map<string,PExpr*>::const_iterator idx = attributes.begin()
-		 ; idx != attributes.end()
-		 ; idx ++) {
+		 ; idx != attributes.end() ; ++ idx ) {
 	    out << "    attribute " << (*idx).first;
 	    if ((*idx).second)
 		  out << " = " << *(*idx).second;

@@ -18,10 +18,10 @@
  */
 
 # include  "vvp_priv.h"
-# include  "ivl_alloc.h"
 # include  <string.h>
 # include  <stdlib.h>
 # include  <assert.h>
+# include  "ivl_alloc.h"
 
 static void draw_eval_expr_dest(ivl_expr_t expr, struct vector_info dest,
 				int ok_flags);

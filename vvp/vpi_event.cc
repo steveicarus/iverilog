@@ -19,11 +19,11 @@
 
 # include  "compile.h"
 # include  "vpi_priv.h"
-# include  "ivl_alloc.h"
 # include  <cstdio>
 # include  <cstdlib>
 # include  <cstring>
 # include  <cassert>
+# include  "ivl_alloc.h"
 
 static int named_event_get(int code, vpiHandle ref)
 {

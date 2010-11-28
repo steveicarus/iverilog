@@ -20,11 +20,11 @@
 # include "config.h"
 
 # include  "ivl_target.h"
-# include  "ivl_alloc.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <assert.h>
 # include  "priv.h"
+# include  "ivl_alloc.h"
 
 /*
  * By the time we get here, all the flip-flops have been placed in

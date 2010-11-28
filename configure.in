@@ -69,9 +69,18 @@ AC_SUBST(DEPENDENCY_FLAG, [-xMMD])
 AC_SUBST(WARNING_FLAGS, [""])
 AC_SUBST(WARNING_FLAGS_CXX, [""])
 else
+# Check to see if -Wextra is supported.
+iverilog_temp_cflags="$CFLAGS"
+CFLAGS="-Wextra $CFLAGS"
+AC_MSG_CHECKING(if gcc supports -Wextra)
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
+   [[iverilog_wextra_flag="-Wextra";] AC_MSG_RESULT(yes)],
+   [[iverilog_wextra_flag="-W";] AC_MSG_RESULT(no)])
+CFLAGS="$iverilog_temp_cflags"
+
 AC_SUBST(DEPENDENCY_FLAG, [-MD])
 AC_SUBST(WARNING_FLAGS, ["-Wall -Wshadow"])
-AC_SUBST(WARNING_FLAGS_CXX, ["-Wextra"])
+AC_SUBST(WARNING_FLAGS_CXX, ["$iverilog_wextra_flag"])
 fi
 
 AC_LANG(C++)

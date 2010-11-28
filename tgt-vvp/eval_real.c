@@ -160,7 +160,7 @@ static int draw_number_real(ivl_expr_t expr)
       int res = allocate_word();
       const char*bits = ivl_expr_bits(expr);
       unsigned wid = ivl_expr_width(expr);
-      unsigned long mant = 0, mask = -1UL;
+      unsigned long mant = 0;
       int vexp = 0x1000;
 
 	/* If this is a negative number, then arrange for the 2's
@@ -176,7 +176,6 @@ static int draw_number_real(ivl_expr_t expr)
       }
 
       for (idx = 0 ;  idx < wid && idx < IMM_WID ;  idx += 1) {
-	    mask <<= 1;
 	    int cur_bit = bits[idx] == '1'? 1 : 0;
 
 	    if (negate) {

@@ -23,7 +23,6 @@
 # include  "vpi_user.h"
 # include  "vvp_vpi_callback.h"
 # include  "permaheap.h"
-# include  "ivl_alloc.h"
 # include  <cstddef>
 # include  <cstdlib>
 # include  <cstring>
@@ -35,6 +34,8 @@
 #else
 class ostream;
 #endif
+
+# include  "ivl_alloc.h"
 
 using namespace std;
 
@@ -334,12 +335,12 @@ inline vvp_vector4_t::vvp_vector4_t(unsigned size__, vvp_bit4_t val)
 : size_(size__)
 {
 	/* note: this relies on the bit encoding for the vvp_bit4_t. */
-      const static unsigned long init_atable[4] = {
+      static const unsigned long init_atable[4] = {
 	    WORD_0_ABITS,
 	    WORD_1_ABITS,
 	    WORD_Z_ABITS,
 	    WORD_X_ABITS };
-      const static unsigned long init_btable[4] = {
+      static const unsigned long init_btable[4] = {
 	    WORD_0_BBITS,
 	    WORD_1_BBITS,
 	    WORD_Z_BBITS,
@@ -1650,5 +1651,13 @@ inline bool vvp_net_fil_t::test_force_mask_is_zero(void) const
 	    return true;
       return false;
 }
+
+/*
+ * Undefine the ivl_alloc.h definitions so they don't leak out of this file.
+ */
+#undef malloc
+#undef realloc
+#undef calloc
+#undef __ivl_alloc_H
 
 #endif

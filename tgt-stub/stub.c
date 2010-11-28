@@ -28,11 +28,11 @@
 # include "version_tag.h"
 # include "config.h"
 # include "priv.h"
-# include "ivl_alloc.h"
 # include <stdlib.h>
 # include <inttypes.h>
 # include <string.h>
 # include <assert.h>
+# include "ivl_alloc.h"
 
 static const char*version_string =
 "Icarus Verilog STUB Code Generator " VERSION " (" VERSION_TAG ")\n\n"

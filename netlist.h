@@ -3458,14 +3458,13 @@ class NetEBComp : public NetEBinary {
       NetEConst* must_be_leeq_(NetExpr*le, const verinum&rv, bool eq_flag);
 
       NetEConst*eval_eqeq_(bool ne_flag);
-      NetEConst*eval_eqeq_real_(NetExpr*le, NetExpr*ri, bool ne_flag);
+      NetEConst*eval_eqeq_real_(bool ne_flag);
       NetEConst*eval_less_();
       NetEConst*eval_leeq_();
       NetEConst*eval_leeq_real_(NetExpr*le, NetExpr*ri, bool eq_flag);
       NetEConst*eval_gt_();
       NetEConst*eval_gteq_();
-      NetEConst*eval_eqeqeq_();
-      NetEConst*eval_neeqeq_();
+      NetEConst*eval_eqeqeq_(bool ne_flag);
 };
 
 /*
@@ -3487,6 +3486,7 @@ class NetEBLogic : public NetEBinary {
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
+      NetEConst* eval_tree_real_();
 };
 
 /*
@@ -3910,6 +3910,9 @@ class NetEUReduce : public NetEUnary {
       virtual NetEUReduce* dup_expr() const;
       virtual NetEConst* eval_tree(int prune_to_width = -1);
       virtual ivl_variable_type_t expr_type() const;
+
+    private:
+      virtual NetEConst* eval_tree_real_();
 };
 
 class NetECast : public NetEUnary {

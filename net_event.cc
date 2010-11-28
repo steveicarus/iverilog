@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -138,7 +138,7 @@ void NetEvent::find_similar_event(list<NetEvent*>&event_list)
       probes_->find_similar_probes(first_probes);
 
       for (list<NetEvProbe*>::iterator idx = first_probes.begin()
-		 ; idx != first_probes.end() ;  idx ++) {
+		 ; idx != first_probes.end() ; ++ idx ) {
 
 	    candidate_events.insert( (*idx)->event() );
       }
@@ -158,7 +158,7 @@ void NetEvent::find_similar_event(list<NetEvent*>&event_list)
 
 	    set<NetEvent*> candidate_tmp;
 	    for (list<NetEvProbe*>::iterator idx = similar_probes.begin()
-		       ; idx != similar_probes.end() ;  idx ++) {
+		       ; idx != similar_probes.end() ; ++ idx ) {
 
 		  NetEvent*tmp = (*idx)->event();
 		  if (candidate_events.find(tmp) != candidate_events.end())
@@ -178,7 +178,7 @@ void NetEvent::find_similar_event(list<NetEvent*>&event_list)
 	   for remaining compatibility details and save the survivors
 	   in the event_list that the caller passed. */
       for (set<NetEvent*>::iterator idx = candidate_events.begin()
-		 ; idx != candidate_events.end() ;  idx ++) {
+		 ; idx != candidate_events.end() ; ++ idx ) {
 
 	    NetEvent*tmp = *idx;
 
@@ -459,4 +459,3 @@ NetProc* NetEvWait::statement()
 {
       return statement_;
 }
-

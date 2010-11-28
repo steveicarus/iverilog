@@ -116,14 +116,14 @@ void vvp_net_pool_delete()
       local_net_pool_count = 0;
 
       map<vvp_net_t*, bool>::iterator iter;
-      for (iter = vvp_net_map.begin(); iter != vvp_net_map.end(); iter++) {
+      for (iter = vvp_net_map.begin(); iter != vvp_net_map.end(); ++ iter ) {
 	    vvp_nets_del += 1;
 	    VALGRIND_MEMPOOL_FREE(iter->first->pool, iter->first);
       }
       vvp_net_map.clear();
 
       map<sfunc_core*, bool>::iterator siter;
-      for (siter = sfunc_map.begin(); siter != sfunc_map.end(); siter++) {
+      for (siter = sfunc_map.begin(); siter != sfunc_map.end(); ++ siter ) {
 	    delete siter->first;
       }
       sfunc_map.clear();
@@ -155,9 +155,6 @@ vvp_net_t::vvp_net_t()
       out_ = vvp_net_ptr_t(0,0);
       fun = 0;
       fil = 0;
-#ifdef CHECK_WITH_VALGRIND
-      pool = NULL;
-#endif
 }
 
 void vvp_net_t::link(vvp_net_ptr_t port_to_link)

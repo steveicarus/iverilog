@@ -1115,7 +1115,7 @@ void NetScope::dump(ostream&o) const
       {
 	    map<perm_string,param_expr_t>::const_iterator pp;
 	    for (pp = parameters.begin()
-		       ; pp != parameters.end() ;  pp ++) {
+		       ; pp != parameters.end() ;  ++ pp ) {
 		  o << "    parameter ";
 
 		  o << pp->second.type << " ";
@@ -1165,7 +1165,7 @@ void NetScope::dump(ostream&o) const
 	    }
 
 	    for (pp = localparams.begin()
-		       ; pp != localparams.end() ;  pp ++) {
+		       ; pp != localparams.end() ;  ++ pp ) {
 		  o << "    localparam " << (*pp).first << " = "  <<
 			*(*pp).second.expr << ";" << endl;
 	    }
@@ -1175,7 +1175,7 @@ void NetScope::dump(ostream&o) const
       {
 	    list<pair<pform_name_t,NetExpr*> >::const_iterator pp;
 	    for (pp = defparams.begin()
-		       ; pp != defparams.end() ;  pp ++ ) {
+		       ; pp != defparams.end() ;  ++ pp ) {
 		  o << "    defparam " << (*pp).first << " = " <<
 			*(*pp).second << ";" << endl;
 	    }
@@ -1184,7 +1184,7 @@ void NetScope::dump(ostream&o) const
       {
 	    list<pair<list<hname_t>,NetExpr*> >::const_iterator pp;
 	    for (pp = defparams_later.begin()
-		       ; pp != defparams_later.end() ;  pp ++ ) {
+		       ; pp != defparams_later.end() ;  ++ pp ) {
 		  o << "    defparam(later) " << pp->first << " = " <<
 			*(pp->second) << ";" << endl;
 	    }
@@ -1223,7 +1223,7 @@ void NetScope::dump(ostream&o) const
 	// Dump specparams
       typedef map<perm_string,spec_val_t>::const_iterator specparam_it_t;
       for (specparam_it_t cur = specparams.begin()
-		 ; cur != specparams.end() ;  cur ++ ) {
+		 ; cur != specparams.end() ;  ++ cur ) {
 	    o << "    specparam " << (*cur).first
 	      << " = ";
 	    spec_val_t value = (*cur).second;
@@ -1260,7 +1260,7 @@ void NetScope::dump(ostream&o) const
 
 	/* Dump any sub-scopes. */
       for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
-		 ; cur != children_.end() ; cur ++)
+		 ; cur != children_.end() ; ++ cur )
 	    cur->second->dump(o);
 }
 
@@ -1344,6 +1344,9 @@ void NetEBinary::dump(ostream&o) const
 	    break;
 	  case 'a':
 	    o << "&&";
+	    break;
+	  case 'A':
+	    o << "~&";
 	    break;
 	  case 'E':
 	    o << "===";
@@ -1530,11 +1533,17 @@ void NetEUFunc::dump(ostream&o) const
 void NetEUnary::dump(ostream&o) const
 {
       switch (op_) {
+	  case 'A':
+	    o << "~&";
+	    break;
 	  case 'm':
 	    o << "abs";
 	    break;
 	  case 'N':
 	    o << "~|";
+	    break;
+	  case 'X':
+	    o << "~^";
 	    break;
 	  default:
 	    o << op_;
@@ -1550,7 +1559,7 @@ void Design::dump(ostream&o) const
       o << "DESIGN TIME PRECISION: 10e" << get_precision() << endl;
       o << "SCOPES:" << endl;
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
-	   scope != root_scopes_.end(); scope++)
+	   scope != root_scopes_.end(); ++ scope )
 	    (*scope)->dump(o);
 
       o << "ELABORATED NODES:" << endl;

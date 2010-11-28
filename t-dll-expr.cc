@@ -19,7 +19,6 @@
 
 # include "config.h"
 
-# include  "ivl_alloc.h"
 # include  <iostream>
 
 # include  <cstring>
@@ -27,6 +26,7 @@
 # include  "netlist.h"
 # include  <cassert>
 # include  <cstdlib>
+# include  "ivl_alloc.h"
 
 /*
  * This is a little convenience function for converting a NetExpr

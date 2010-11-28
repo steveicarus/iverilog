@@ -30,10 +30,10 @@
 # include  "vvp_cleanup.h"
 # include <map>
 #endif
-# include  "ivl_alloc.h"
 # include  <cstdio>
 # include  <cstdlib>
 # include  <cassert>
+# include  "ivl_alloc.h"
 
 struct __vpiVThrVec {
       struct __vpiHandle base;
@@ -636,7 +636,7 @@ static void thread_word_delete_real(vpiHandle item)
 void vpi_handle_delete()
 {
       map<vpiHandle, bool>::iterator iter;
-      for (iter = handle_map.begin(); iter != handle_map.end(); iter++) {
+      for (iter = handle_map.begin(); iter != handle_map.end(); ++ iter ) {
 	    if (iter->second) thread_vthr_delete_real(iter->first);
 	    else thread_word_delete_real(iter->first);
       }

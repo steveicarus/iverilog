@@ -22,10 +22,10 @@
 # include  "t-dll.h"
 # include  "discipline.h"
 # include  "netenum.h"
-# include  "ivl_alloc.h"
 # include  <cstdlib>
 # include  <cstdio>
 # include  <cstring>
+# include  "ivl_alloc.h"
 
 static StringHeap api_strings;
 
@@ -1683,7 +1683,7 @@ extern "C" int ivl_scope_children(ivl_scope_t net,
 				  void*cd)
 {
       for (map<hname_t,ivl_scope_t>::iterator cur = net->children.begin()
-		 ; cur != net->children.end() ; cur ++) {
+		 ; cur != net->children.end() ; ++ cur ) {
 	    int rc = func(cur->second, cd);
 	    if (rc != 0)
 		  return rc;

@@ -1,0 +1,41 @@
+// The following three files are copied directly from GTKWave and we do not
+// have control over them. Tony has a specific programming style so these
+// problems will not be fixed.
+
+// fstapi.c from GTKWave
+variableScope:fstapi.c:1497
+variableScope:fstapi.c:1614
+variableScope:fstapi.c:1663
+variableScope:fstapi.c:1664
+variableScope:fstapi.c:2355
+variableScope:fstapi.c:2670
+variableScope:fstapi.c:2674
+variableScope:fstapi.c:2675
+
+// lxt2_write.c from GTKWave
+variableScope:lxt2_write.c:63
+variableScope:lxt2_write.c:523
+variableScope:lxt2_write.c:581
+variableScope:lxt2_write.c:587
+variableScope:lxt2_write.c:1602
+variableScope:lxt2_write.c:2049
+
+// lxt_write.c from GTKWave
+variableScope:lxt_write.c:31
+variableScope:lxt_write.c:587
+variableScope:lxt_write.c:640
+variableScope:lxt_write.c:1056
+variableScope:lxt_write.c:1057
+variableScope:lxt_write.c:1058
+variableScope:lxt_write.c:1841
+variableScope:lxt_write.c:2586
+variableScope:lxt_write.c:2587
+variableScope:lxt_write.c:2588
+variableScope:lxt_write.c:2589
+
+// The routines in sys_random.c are exact copies from IEEE1364-2005 and
+// they have scope warnings that we need to ignore.
+variableScope:sys_random.c:46
+variableScope:sys_random.c:69
+variableScope:sys_random.c:92
+variableScope:sys_random.c:147

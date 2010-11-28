@@ -87,8 +87,8 @@ static unsigned args_after_notifier;
  * These are some common strength pairs that are used as defaults when
  * the user is not otherwise specific.
  */
-const static struct str_pair_t pull_strength = { IVL_DR_PULL,  IVL_DR_PULL };
-const static struct str_pair_t str_strength = { IVL_DR_STRONG, IVL_DR_STRONG };
+static const struct str_pair_t pull_strength = { IVL_DR_PULL,  IVL_DR_PULL };
+static const struct str_pair_t str_strength = { IVL_DR_STRONG, IVL_DR_STRONG };
 
 static list<pair<perm_string,PExpr*> >* make_port_list(char*id, PExpr*expr)
 {
@@ -2457,12 +2457,12 @@ module_item
 	| K_output var_type unsigned_signed_opt range_opt list_of_port_identifiers ';'
 		{ list<pair<perm_string,PExpr*> >::const_iterator pp;
 		  list<perm_string>*tmp = new list<perm_string>;
-		  for (pp = $5->begin(); pp != $5->end(); pp++) {
+		  for (pp = $5->begin(); pp != $5->end(); ++ pp ) {
 			tmp->push_back((*pp).first);
 		  }
 		  pform_makewire(@1, $4, $3, tmp, $2, NetNet::POUTPUT,
 		                 IVL_VT_NO_TYPE, 0, SR_BOTH);
-		  for (pp = $5->begin(); pp != $5->end(); pp++) {
+		  for (pp = $5->begin(); pp != $5->end(); ++ pp ) {
 			if ((*pp).second) {
 			      pform_make_reginit(@1, (*pp).first, (*pp).second);
 			}

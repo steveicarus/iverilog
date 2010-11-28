@@ -23,7 +23,6 @@
  * via VPI. This is extremely ugly, so don't look after eating dinner.
  */
 
-# include "ivl_alloc.h"
 # include <string.h>
 # include <stdlib.h>
 # include <assert.h>
@@ -32,6 +31,7 @@
 # include "priv.h"
 # include "vpi_user.h"
 # include "veriuser.h"
+# include "ivl_alloc.h"
 
 /*
  * local structure used to hold the persistent veriusertfs data

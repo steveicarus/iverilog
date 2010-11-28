@@ -66,9 +66,7 @@
  * is to try to make a net elaboration, and see if the result is
  * suitable for assignment.
  */
-NetAssign_* PExpr::elaborate_lval(Design*des,
-				  NetScope*scope,
-				  bool is_force) const
+NetAssign_* PExpr::elaborate_lval(Design*, NetScope*, bool) const
 {
       NetNet*ll = 0;
       if (ll == 0) {

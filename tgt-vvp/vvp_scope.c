@@ -18,12 +18,12 @@
  */
 
 # include  "vvp_priv.h"
-# include  "ivl_alloc.h"
 # include  <stdlib.h>
 # include  <math.h>
 # include  <string.h>
 # include  <inttypes.h>
 # include  <assert.h>
+# include  "ivl_alloc.h"
 
 /*
  *  Escape non-symbol characters in ids, and quotes in strings.
@@ -371,7 +371,7 @@ char* draw_Cr_to_string(double value)
       }
 
       sign = 0;
-      if (value < 0) {
+      if (value < 0.0 || (value == 0.0 && 1.0/value < 0.0)) {
 	    sign = 0x4000;
 	    value *= -1;
       }

@@ -27,11 +27,14 @@
 # include  "compiler.h"
 # include  "ivl_assert.h"
 
+// This routines is not currently used!
+#if 0
 NetNet* add_to_net(Design*des, NetNet*sig, long val)
 {
       if (val == 0)
 	    return sig;
-#if 0
+      cerr << sig->get_fileline() << ": XXXX: Forgot how to implement add_to_net" << endl;
+      return 0;
       NetScope*scope = sig->scope();
       unsigned long abs_val = (val >= 0)? val : (-val);
       unsigned width = sig->pin_count();
@@ -71,11 +74,8 @@ NetNet* add_to_net(Design*des, NetNet*sig, long val)
       des->add_node(val_c);
 
       return res;
-#else
-      cerr << sig->get_fileline() << ": XXXX: Forgot how to implement add_to_net" << endl;
-      return 0;
-#endif
 }
+#endif
 
 NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
 {
@@ -587,7 +587,7 @@ std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 
       typedef pform_name_t::const_iterator pform_path_it;
 
-      for (pform_path_it cur = path.begin() ; cur != path.end(); cur++) {
+      for (pform_path_it cur = path.begin() ; cur != path.end(); ++ cur ) {
 	    const name_component_t&comp = *cur;
 	    res.push_back( eval_path_component(des,scope,comp) );
       }
@@ -665,7 +665,7 @@ const_bool const_logical(const NetExpr*expr)
 	    for (unsigned idx = 0; idx < cval.len(); idx += 1) {
 		  switch (cval.get(idx)) {
 		      case verinum::V1:
-			res = C_1;
+			return C_1;
 			break;
 
 		      case verinum::V0:

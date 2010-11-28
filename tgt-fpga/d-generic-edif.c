@@ -19,10 +19,10 @@
 
 # include  "device.h"
 # include  "fpga_priv.h"
-# include  "ivl_alloc.h"
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
+# include  "ivl_alloc.h"
 
 struct nexus_recall {
       struct nexus_recall*next;

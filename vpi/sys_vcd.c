@@ -24,12 +24,12 @@
  * This file contains the implementations of the VCD related functions.
  */
 
-# include  "ivl_alloc.h"
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
 # include  <time.h>
+# include  "ivl_alloc.h"
 
 static char *dump_path = NULL;
 static FILE *dump_file = NULL;
@@ -76,9 +76,11 @@ static void gen_new_vcd_id(void)
            v /= 94;
            if(!v) {
                  vcdid[i+1] = '\0';
-                 break;
+                 return;
            }
       }
+	// This should never happen since 94**7 is a lot if identifiers!
+      assert(0);
 }
 
 static char *truncate_bitvec(char *s)

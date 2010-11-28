@@ -45,6 +45,7 @@ static int yywrap(void)
 %}
 
 %x CCOMMENT
+%x COND_EDGE_ID
 %x EDGE_ID
 
 %%
@@ -64,14 +65,15 @@ static int yywrap(void)
 \n { sdflloc.first_line += 1; }
 
   /* The other edge identifiers. */
-<EDGE_ID>"01"    {return K_01; }
-<EDGE_ID>"10"    {return K_10; }
-<EDGE_ID>"0"[zZ] {return K_0Z; }
-<EDGE_ID>[zZ]"1" {return K_Z1; }
-<EDGE_ID>"1"[zZ] {return K_1Z; }
-<EDGE_ID>[zZ]"0" {return K_Z0; }
-<EDGE_ID>[pP][oO][sS][eE][dD][gG][eE] {return K_POSEDGE; }
-<EDGE_ID>[nN][eE][gG][eE][dD][gG][eE] {return K_NEGEDGE; }
+<COND_EDGE_ID,EDGE_ID>"01"    {return K_01; }
+<COND_EDGE_ID,EDGE_ID>"10"    {return K_10; }
+<COND_EDGE_ID,EDGE_ID>"0"[zZ] {return K_0Z; }
+<COND_EDGE_ID,EDGE_ID>[zZ]"1" {return K_Z1; }
+<COND_EDGE_ID,EDGE_ID>"1"[zZ] {return K_1Z; }
+<COND_EDGE_ID,EDGE_ID>[zZ]"0" {return K_Z0; }
+<COND_EDGE_ID,EDGE_ID>[pP][oO][sS][eE][dD][gG][eE] {return K_POSEDGE; }
+<COND_EDGE_ID,EDGE_ID>[nN][eE][gG][eE][dD][gG][eE] {return K_NEGEDGE; }
+<COND_EDGE_ID>[cC][oO][nN][dD] {return K_COND; }
 
   /* Integer values */
 [0-9]+ {
@@ -85,7 +87,7 @@ static int yywrap(void)
       return REAL_NUMBER;
 }
 
-[a-zA-Z_][a-zA-Z0-9$_]* {
+([a-zA-Z_]|(\\[^ \t\b\f\r\n]))([a-zA-Z0-9$_]|(\\[^ \t\b\f\r\n]))* {
       return lookup_keyword(yytext);
 }
 
@@ -93,6 +95,17 @@ static int yywrap(void)
       process_quoted_string();
       return QSTRING;
 }
+
+  /* Scalar constants. */
+("1"?"'"[bB])?"0" { return K_LOGICAL_ZERO; }
+("1"?"'"[bB])?"1" { return K_LOGICAL_ONE; }
+
+  /* Equality operators. */
+
+"=="  { return K_EQ; }
+"!="  { return K_NE; }
+"==="  { return K_CEQ; }
+"!=="  { return K_CNE; }
 
   /* The HCHAR (hierarchy separator) is set by the SDF file itself. We
      recognize here the HCHAR. */
@@ -142,9 +155,10 @@ static struct {
       { 0, IDENTIFIER }
 };
 
-void start_edge_id(void)
+void start_edge_id(unsigned cond)
 {
-      BEGIN(EDGE_ID);
+      if (cond) BEGIN(COND_EDGE_ID);
+      else BEGIN(EDGE_ID);
 }
 
 void stop_edge_id(void)
@@ -154,11 +168,23 @@ void stop_edge_id(void)
 
 static int lookup_keyword(const char*text)
 {
-      int idx;
+      unsigned idx, len, skip;
       for (idx = 0 ;  keywords[idx].name ;  idx += 1) {
 	    if (strcasecmp(text, keywords[idx].name) == 0)
 		  return keywords[idx].code;
       }
+
+	/* Process any escaped characters. */
+      skip = 0;
+      len = strlen(yytext);
+      for (idx = 0; idx < len; idx += 1) {
+	    if (yytext[idx] == '\\') {
+		  skip += 1;
+		  idx += 1;
+	    }
+	    yytext[idx-skip] = yytext[idx];
+      }
+      yytext[idx-skip] = 0;
 
       yylval.string_val = strdup(yytext);
       return IDENTIFIER;

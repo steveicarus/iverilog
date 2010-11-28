@@ -26,13 +26,13 @@
 #ifdef CHECK_WITH_VALGRIND
 #include  "vvp_cleanup.h"
 #endif
-# include  "ivl_alloc.h"
 # include  <cstdlib>
 # include  <cstring>
 # include  <climits>
 # include  <iostream>
 # include  "compile.h"
 # include  <cassert>
+# include  "ivl_alloc.h"
 
 unsigned long count_net_arrays = 0;
 unsigned long count_net_array_words = 0;

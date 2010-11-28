@@ -138,7 +138,7 @@ NetScope* Design::find_scope(const std::list<hname_t>&path) const
 	    return 0;
 
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin()
-		 ; scope != root_scopes_.end(); scope++) {
+		 ; scope != root_scopes_.end(); ++ scope ) {
 
 	    NetScope*cur = *scope;
 	    if (path.front() != cur->fullname())
@@ -213,14 +213,14 @@ NetScope* Design::find_scope(NetScope*scope, const std::list<hname_t>&path,
 void Design::run_defparams()
 {
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
-	   scope != root_scopes_.end(); scope++)
+	   scope != root_scopes_.end(); ++ scope )
 	    (*scope)->run_defparams(this);
 }
 
 void NetScope::run_defparams(Design*des)
 {
       for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
-		 ; cur != children_.end() ; cur ++)
+		 ; cur != children_.end() ; ++ cur )
 	    cur->second->run_defparams(des);
 
       while (! defparams.empty()) {
@@ -312,7 +312,7 @@ void NetScope::run_defparams_later(Design*des)
 	// All the scopes that this defparam set touched should have
 	// their parameters re-evaluated.
       for (set<NetScope*>::iterator cur = target_scopes.begin()
-		 ; cur != target_scopes.end() ; cur ++ )
+		 ; cur != target_scopes.end() ; ++ cur )
 	    (*cur)->evaluate_parameters(des);
 
 	// If there are some scopes that still have missing scopes,
@@ -326,7 +326,7 @@ void NetScope::run_defparams_later(Design*des)
 void Design::evaluate_parameters()
 {
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
-	   scope != root_scopes_.end(); scope++)
+	   scope != root_scopes_.end(); ++ scope )
 	    (*scope)->evaluate_parameters(this);
 }
 
@@ -610,7 +610,7 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
 void NetScope::evaluate_parameters(Design*des)
 {
       for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
-		 ; cur != children_.end() ; cur ++)
+		 ; cur != children_.end() ; ++ cur )
 	    cur->second->evaluate_parameters(des);
 
       if (debug_scopes)
@@ -659,7 +659,7 @@ void NetScope::evaluate_parameters(Design*des)
 void Design::residual_defparams()
 {
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
-	   scope != root_scopes_.end(); scope++)
+	   scope != root_scopes_.end(); ++ scope )
 	    (*scope)->residual_defparams(this);
 }
 
@@ -676,7 +676,7 @@ void NetScope::residual_defparams(Design*des)
       }
 
       for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
-		 ; cur != children_.end() ; cur ++)
+		 ; cur != children_.end() ; ++ cur )
 	    cur->second->residual_defparams(des);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -26,7 +26,7 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 
-void NetProc::nex_output(NexusSet&out)
+void NetProc::nex_output(NexusSet&)
 {
       cerr << get_fileline()
 	   << ": internal error: NetProc::nex_output not implemented"
@@ -108,7 +108,7 @@ void NetPDelay::nex_output(NexusSet&out)
  * all. This is OK because most system tasks are not synthesizable in
  * the first place.
  */
-void NetSTask::nex_output(NexusSet&out)
+void NetSTask::nex_output(NexusSet&)
 {
 }
 
@@ -117,7 +117,7 @@ void NetSTask::nex_output(NexusSet&out)
 * right, we should be listing as outputs all the output ports, but for
 * the purposes that this method is used, this will do for now.
 */
-void NetUTask::nex_output(NexusSet&out)
+void NetUTask::nex_output(NexusSet&)
 {
 }
 

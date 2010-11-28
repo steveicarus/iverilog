@@ -17,10 +17,10 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "ivl_alloc.h"
 # include  <veriuser.h>
 # include  <vpi_user.h>
 # include  <stdlib.h>
+# include  "ivl_alloc.h"
 
 /*
  * Keep a list of sys handle to work area bindings.

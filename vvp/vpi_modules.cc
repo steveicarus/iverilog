@@ -21,11 +21,11 @@
 # include  "vpi_priv.h"
 # include  "ivl_dlfcn.h"
 # include  "vvp_cleanup.h"
-# include  "ivl_alloc.h"
 # include  <cstdio>
 # include  <cstring>
 # include  <sys/types.h>
 # include  <sys/stat.h>
+# include  "ivl_alloc.h"
 
 static ivl_dll_t*dll_list = 0;
 static unsigned dll_list_cnt = 0;

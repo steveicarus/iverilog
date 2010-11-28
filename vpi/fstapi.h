@@ -126,7 +126,7 @@ union {
 
 	/* if htyp == FST_HT_VAR */
 	struct fstHierVar {
-		unsigned char typ; /* FST_VT_VCD_EVENT ... FST_VT_VCD_WOR */
+		unsigned char typ; /* FST_VT_VCD_EVENT ... FST_VT_VCD_REALTIME */
 		unsigned char direction; /* FST_VD_IMPLICIT ... FST_VD_INOUT */
 		const char *name;
 		uint32_t length;
@@ -157,7 +157,7 @@ void fstWriterSetTimescaleFromString(void *ctx, const char *s);
 void fstWriterSetScope(void *ctx, enum fstScopeType scopetype,
                 const char *scopename, const char *scopecomp);
 void fstWriterSetUpscope(void *ctx);
-void fstWriterEmitValueChange(void *ctx, fstHandle handle, void *val);
+void fstWriterEmitValueChange(void *ctx, fstHandle handle, const void *val);
 void fstWriterEmitDumpActive(void *ctx, int enable);
 void fstWriterEmitTimeChange(void *ctx, uint64_t tim);
 void fstWriterFlushContext(void *ctx);

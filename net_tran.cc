@@ -161,7 +161,7 @@ void join_island(NetPins*obj)
 	// process, and thus they will join my island. This process
 	// will recurse until all the connected branches join this island.
       for (list<NetObj*>::iterator cur = uncommitted_neighbors.begin()
-		 ; cur != uncommitted_neighbors.end() ; cur ++ ) {
+		 ; cur != uncommitted_neighbors.end() ; ++ cur ) {
 	    join_island(*cur);
       }
 }

@@ -28,7 +28,6 @@
 # include  "vpi_priv.h"
 # include  "parse_misc.h"
 # include  "statistics.h"
-# include  "ivl_alloc.h"
 # include  <iostream>
 # include  <list>
 # include  <cstdlib>
@@ -38,6 +37,8 @@
 #ifdef __MINGW32__
 #include <windows.h>
 #endif
+
+# include  "ivl_alloc.h"
 
 unsigned compile_errors = 0;
 
@@ -76,7 +77,7 @@ struct opcode_table_s {
       enum operand_e argt[OPERAND_MAX];
 };
 
-const static struct opcode_table_s opcode_table[] = {
+static const struct opcode_table_s opcode_table[] = {
       { "%abs/wr", of_ABS_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%add",    of_ADD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%add/wr", of_ADD_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },

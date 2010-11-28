@@ -23,13 +23,13 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-# include  "ivl_alloc.h"
 # include  <cstdio>
 # include  <cstring>
 # include  <climits>     /* for CHAR_BIT */
 # include  <cstdlib>
 # include  <cctype>
 # include  <cassert>
+# include  "ivl_alloc.h"
 
 /* If you are allergic to malloc, you can set a stack memory allocation
  * here.  Otherwise, malloc() is used for the temporary array, so the

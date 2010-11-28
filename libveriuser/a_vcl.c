@@ -17,12 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-#include  "ivl_alloc.h"
 #include  <vpi_user.h>
 #include  <acc_user.h>
 #include  <stdlib.h>
 #include  "priv.h"
 #include  <assert.h>
+#include  "ivl_alloc.h"
 
 /*
  * This is the structure of a record that I use locally to hold the

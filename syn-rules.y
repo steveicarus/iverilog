@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -53,7 +53,7 @@ static int yylex();
 static void yyerror(const char*);
 static Design*des_;
 
-static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
+static void make_DFF_CE(Design*des, NetProcTop*top,
 			NetEvent*eclk, NetExpr*cexp, NetAssignBase*asn);
 
 %}
@@ -80,13 +80,11 @@ start
      flip-flops. */
 
 	: S_ALWAYS '@' '(' S_EVENT ')' S_ASSIGN ';'
-		{ make_DFF_CE(des_, $1->top, $2->evwait, $4->event,
-			      0, $6->assign);
+		{ make_DFF_CE(des_, $1->top, $4->event, 0, $6->assign);
 		}
 
 	| S_ALWAYS '@' '(' S_EVENT ')' S_IF S_EXPR S_ASSIGN ';' ';'
-		{ make_DFF_CE(des_, $1->top, $2->evwait, $4->event,
-			      $7->expr, $8->assign);
+		{ make_DFF_CE(des_, $1->top, $4->event, $7->expr, $8->assign);
 		}
 
   /* Unconditional assignments in initial blocks should be made into
@@ -102,6 +100,7 @@ static void hookup_DFF_CE(NetFF*ff, NetESignal*d, NetEvProbe*pclk,
                           NetNet*ce, NetAssign_*a, unsigned rval_pinoffset)
 {
 
+      assert(rval_pinoffset == 0);
 	// a->sig() is a *NetNet, which doesn't have the loff_ and
 	// lwid_ context.  Add the correction for loff_ ourselves.
 
@@ -129,7 +128,7 @@ static void hookup_DFF_CE(NetFF*ff, NetESignal*d, NetEvProbe*pclk,
       a->turn_sig_to_wire_on_release();
 }
 
-static void make_DFF_CE(Design*des, NetProcTop*top, NetEvWait*wclk,
+static void make_DFF_CE(Design*des, NetProcTop*top,
 			NetEvent*eclk, NetExpr*cexp, NetAssignBase*asn)
 {
       assert(asn);
@@ -335,7 +334,7 @@ static int yylex()
 struct syn_rules_f  : public functor_t {
       ~syn_rules_f() { }
 
-      void process(class Design*des, class NetProcTop*top)
+      void process(class Design*, class NetProcTop*top)
       {
 	      /* If the scope that contains this process as a cell
 		 attribute attached to it, then skip synthesis. */

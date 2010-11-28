@@ -20,12 +20,17 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#ifdef _WAVE_USE_CONFIG_HDR
+#include <config.h>
+#endif
+
 #include "fstapi.h"
 #include "fastlz.h"
 
 #undef  FST_DEBUG
 
-#define FST_BREAK_SIZE 			(32 * 1024 * 1024)
+#define FST_BREAK_SIZE 			(128 * 1024 * 1024)
+#define FST_BREAK_ADD_SIZE		(4 * 1024 * 1024)
 #define FST_WRITER_STR 			"fstWriter"
 #define FST_ID_NAM_SIZ 			(512)
 #define FST_DOUBLE_ENDTEST 		(2.7182818284590452354)
@@ -33,17 +38,12 @@
 #define FST_HDR_DATE_SIZE 		(128)
 #define FST_GZIO_LEN			(32768)
 
-
 #if defined(__i386__) || defined(__x86_64__) || defined(_AIX)
 #define FST_DO_MISALIGNED_OPS
 #endif
 
 #if defined(__APPLE__) && defined(__MACH__)
 #define FST_MACOSX 
-#endif
-
-#if defined(__CYGWIN__) && defined(__GNUC__)
-#define FST_USE_FWRITE_COMBINING
 #endif
 
 
@@ -215,6 +215,19 @@ for(;;)
 	} 
 
 return(rc);
+}
+
+
+static uint32_t fstGetVarint32Length(unsigned char *mem)
+{
+unsigned char *mem_orig = mem;
+
+while(*mem & 0x80)
+	{
+	mem++;
+	}
+
+return(mem - mem_orig + 1);
 }
 
 
@@ -395,50 +408,6 @@ fstFwrite(buf, len, 1, handle);
 return(len);
 }
 
-#ifndef FST_USE_FWRITE_COMBINING
-static int fstWriterUint32WithVarint(FILE *handle, uint32_t *u, uint64_t v)
-{
-uint64_t nxt;
-unsigned char buf[10 + sizeof(uint32_t)];
-unsigned char *pnt = buf + sizeof(uint32_t);
-int len;
-
-memcpy(buf, u, sizeof(uint32_t));
-
-while((nxt = v>>7))
-        {
-        *(pnt++) = (v&0x7f) | 0x80;
-        v = nxt;
-        }
-*(pnt++) = (v&0x7f);
-
-len = pnt-buf;
-fstFwrite(buf, len, 1, handle);
-return(len);
-}
-#else
-static int fstWriterUint32WithVarint(FILE *handle, uint32_t *u, uint64_t v, const void *dbuf, size_t siz)
-{
-uint64_t nxt;
-unsigned char buf[10 + sizeof(uint32_t) + siz]; /* gcc extension ok for cygwin */
-unsigned char *pnt = buf + sizeof(uint32_t);
-int len;
-
-memcpy(buf, u, sizeof(uint32_t));
-
-while((nxt = v>>7))
-        {
-        *(pnt++) = (v&0x7f) | 0x80;
-        v = nxt;
-        }
-*(pnt++) = (v&0x7f);
-memcpy(pnt, dbuf, siz);
-
-len = pnt-buf + siz;
-fstFwrite(buf, len, 1, handle);
-return(len);
-}
-#endif
 
 /***********************/
 /***                 ***/
@@ -464,8 +433,9 @@ FILE *hier_handle;
 FILE *geom_handle;
 FILE *valpos_handle;
 FILE *curval_handle;
-FILE *vchn_handle;
 FILE *tchn_handle;
+
+unsigned char *vchg_mem;
 
 off_t hier_file_len;
 
@@ -486,7 +456,9 @@ off_t section_header_truncpos;
 uint32_t tchn_cnt, tchn_idx;
 uint64_t curtime;
 uint64_t firsttime;
-off_t vchn_siz;
+uint32_t vchg_siz;
+uint32_t vchg_alloc_siz;
+
 
 uint32_t secnum;
 off_t section_start;
@@ -504,11 +476,39 @@ unsigned compress_hier : 1;
 unsigned repack_on_close : 1;
 unsigned skip_writing_section_hdr : 1;
 unsigned size_limit_locked : 1;
+unsigned section_header_only : 1;
 
 /* should really be semaphores, but are bytes to cut down on read-modify-write window size */
 unsigned char already_in_flush; /* in case control-c handlers interrupt */
 unsigned char already_in_close; /* in case control-c handlers interrupt */
 };
+
+
+static int fstWriterUint32WithVarint32(struct fstWriterContext *xc, uint32_t *u, uint32_t v, const void *dbuf, int siz)
+{
+unsigned char *buf = xc->vchg_mem + xc->vchg_siz;
+unsigned char *pnt = buf;
+uint32_t nxt;
+int len;
+
+#ifdef FST_DO_MISALIGNED_OPS
+(*(uint32_t *)(pnt)) = (*(uint32_t *)(u));
+#else
+memcpy(pnt, u, sizeof(uint32_t));
+#endif
+pnt += 4;
+
+while((nxt = v>>7))
+        {
+        *(pnt++) = (v&0x7f) | 0x80;
+        v = nxt;
+        }
+*(pnt++) = (v&0x7f);
+memcpy(pnt, dbuf, siz);
+
+len = pnt-buf + siz;
+return(len);
+}
 
 
 /*
@@ -664,11 +664,12 @@ if((!nam)||(!(xc->handle=fopen(nam, "w+b"))))
 	xc->geom_handle = tmpfile();	/* .geom */
 	xc->valpos_handle = tmpfile();	/* .offs */
 	xc->curval_handle = tmpfile();	/* .bits */
-	xc->vchn_handle = tmpfile();	/* .vchn */
 	xc->tchn_handle = tmpfile();	/* .tchn */
+	xc->vchg_alloc_siz = FST_BREAK_SIZE + FST_BREAK_ADD_SIZE;
+	xc->vchg_mem = malloc(xc->vchg_alloc_siz);
 
 	free(hf);
-	if(xc->hier_handle && xc->geom_handle && xc->valpos_handle && xc->curval_handle && xc->vchn_handle && xc->tchn_handle)
+	if(xc->hier_handle && xc->geom_handle && xc->valpos_handle && xc->curval_handle && xc->vchg_mem && xc->tchn_handle)
 		{
 	        xc->filename = strdup(nam);
 		xc->is_initial_time = 1;
@@ -682,8 +683,8 @@ if((!nam)||(!(xc->handle=fopen(nam, "w+b"))))
 		if(xc->geom_handle) fclose(xc->geom_handle);
 		if(xc->valpos_handle) fclose(xc->valpos_handle);
 		if(xc->curval_handle) fclose(xc->curval_handle);
-		if(xc->vchn_handle) fclose(xc->vchn_handle);
 		if(xc->tchn_handle) fclose(xc->tchn_handle);
+		free(xc->vchg_mem);
 	        free(xc);
 	        xc=NULL;
 		}
@@ -703,20 +704,29 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 
 	xc->already_in_close = 1; /* never need to zero this out as it is freed at bottom */
 
-	xc->skip_writing_section_hdr = 1;
-	if(!xc->size_limit_locked)
+	if(xc->section_header_only && xc->section_header_truncpos && (xc->vchg_siz <= 1) && (!xc->is_initial_time))
 		{
-		if(xc->is_initial_time) /* simulation time never advanced so mock up the changes as time zero ones */
+		fstFtruncate(fileno(xc->handle), xc->section_header_truncpos);
+		fseeko(xc->handle, xc->section_header_truncpos, SEEK_SET);
+		xc->section_header_only = 0;
+		}
+		else
+		{
+		xc->skip_writing_section_hdr = 1;
+		if(!xc->size_limit_locked)
 			{
-			fstHandle dupe_idx;
-
-			fstWriterEmitTimeChange(xc, 0); /* emit some time change just to have one */
-			for(dupe_idx = 0; dupe_idx < xc->maxhandle; dupe_idx++) /* now clone the values */
+			if(xc->is_initial_time) /* simulation time never advanced so mock up the changes as time zero ones */
 				{
-				fstWriterEmitValueChange(xc, dupe_idx+1, xc->curval_mem + xc->valpos_mem[4*dupe_idx]);
+				fstHandle dupe_idx;
+	
+				fstWriterEmitTimeChange(xc, 0); /* emit some time change just to have one */
+				for(dupe_idx = 0; dupe_idx < xc->maxhandle; dupe_idx++) /* now clone the values */
+					{
+					fstWriterEmitValueChange(xc, dupe_idx+1, xc->curval_mem + xc->valpos_mem[4*dupe_idx]);
+					}
 				}
+			fstWriterFlushContext(xc);
 			}
-		fstWriterFlushContext(xc);
 		}
 	fstDestroyMmaps(xc, 1);
 
@@ -855,7 +865,7 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 	fflush(xc->handle);
 	
 	if(xc->tchn_handle) { fclose(xc->tchn_handle); xc->tchn_handle = NULL; }
-	if(xc->vchn_handle) { fclose(xc->vchn_handle); xc->vchn_handle = NULL; }
+	free(xc->vchg_mem); xc->vchg_mem = NULL;
 	if(xc->curval_handle) { fclose(xc->curval_handle); xc->curval_handle = NULL; }
 	if(xc->valpos_handle) { fclose(xc->valpos_handle); xc->valpos_handle = NULL; }
 	if(xc->geom_handle) { fclose(xc->geom_handle); xc->geom_handle = NULL; }
@@ -969,6 +979,7 @@ if(xc)
 
 	fputc(FST_BL_SKIP, xc->handle);			/* temporarily tag the section, use FST_BL_VCDATA on finalize */
 	xc->section_start = ftello(xc->handle);
+	xc->section_header_only = 1;			/* indicates truncate might be needed */
 	fstWriterUint64(xc->handle, 0); 		/* placeholder = section length */
 	fstWriterUint64(xc->handle, xc->is_initial_time ? xc->firsttime : xc->curtime); 	/* begin time of section */
 	fstWriterUint64(xc->handle, xc->curtime); 	/* end time of section (placeholder) */
@@ -1021,13 +1032,13 @@ uint32_t *vm4ip;
 
 struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
 
-if((!xc)||(xc->vchn_siz <= 1)||(xc->already_in_flush)) return;
+if((!xc)||(xc->vchg_siz <= 1)||(xc->already_in_flush)) return;
 xc->already_in_flush = 1; /* should really do this with a semaphore */
 
-scratchpad = malloc(xc->vchn_siz);
+xc->section_header_only = 0;
+scratchpad = malloc(xc->vchg_siz);
 
-fflush(xc->vchn_handle);
-vchg_mem = fstMmap(NULL, xc->vchn_siz, PROT_READ|PROT_WRITE, MAP_SHARED, fileno(xc->vchn_handle), 0);
+vchg_mem = xc->vchg_mem;
 
 f = xc->handle;
 fstWriterVarint(f, xc->maxhandle);	/* emit current number of handles */
@@ -1049,9 +1060,12 @@ for(i=0;i<xc->maxhandle;i++)
 
 		vm4ip[2] = fpos;
 
-		scratchpnt = scratchpad + xc->vchn_siz;		/* build this buffer backwards */
+		scratchpnt = scratchpad + xc->vchg_siz;		/* build this buffer backwards */
 		if(vm4ip[1] == 1)
 			{
+			wrlen = fstGetVarint32Length(vchg_mem + offs + 4); /* used to advance and determine wrlen */
+			xc->curval_mem[vm4ip[0]] = vchg_mem[offs + 4 + wrlen]; /* checkpoint variable */
+
                         while(offs)
                                 {
                                 unsigned char val;
@@ -1083,6 +1097,9 @@ for(i=0;i<xc->maxhandle;i++)
 			}
 			else
 			{
+			wrlen = fstGetVarint32Length(vchg_mem + offs + 4); /* used to advance and determine wrlen */
+			memcpy(xc->curval_mem + vm4ip[0], vchg_mem + offs + 4 + wrlen, vm4ip[1]); /* checkpoint variable */
+
 			while(offs)
 				{
 				int idx;
@@ -1139,7 +1156,7 @@ for(i=0;i<xc->maxhandle;i++)
 				}
 			}
 
-		wrlen = scratchpad + xc->vchn_siz - scratchpnt;
+		wrlen = scratchpad + xc->vchg_siz - scratchpnt;
 		unc_memreq += wrlen;
 		if(wrlen > 32)
 			{
@@ -1252,12 +1269,8 @@ if(zerocnt)
 printf("value chains: %d\n", cnt);
 #endif
 
-fstMunmap(vchg_mem, xc->vchn_siz);
-
-fseeko(xc->vchn_handle, 0, SEEK_SET);
-fstFtruncate(fileno(xc->vchn_handle), 0);
-fputc('!', xc->vchn_handle);
-xc->vchn_siz = 1;
+xc->vchg_mem[0] = '!';
+xc->vchg_siz = 1;
 
 endpos = ftello(xc->handle);
 fstWriterUint64(xc->handle, endpos-indxpos);		/* write delta index position at very end of block */
@@ -1322,7 +1335,6 @@ if(xc->dump_size_limit)
 #endif
 		}
 	}
-
 
 if(!xc->skip_writing_section_hdr)
 	{
@@ -1594,12 +1606,12 @@ if(xc)
 /*
  * value and time change emission
  */
-void fstWriterEmitValueChange(void *ctx, fstHandle handle, void *val)
+void fstWriterEmitValueChange(void *ctx, fstHandle handle, const void *val)
 {
 struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
-unsigned char *buf = (unsigned char *)val;
+const unsigned char *buf = (const unsigned char *)val;
 uint32_t offs;
-size_t len;
+int len;
 
 if((xc) && (handle <= xc->maxhandle))
 	{
@@ -1614,23 +1626,32 @@ if((xc) && (handle <= xc->maxhandle))
 
 	handle--; /* move starting at 1 index to starting at 0 */
 	vm4ip = &(xc->valpos_mem[4*handle]);
-	offs = vm4ip[0];
+
 	len  = vm4ip[1];
-	memcpy(xc->curval_mem + offs, buf, len);
 
 	if(!xc->is_initial_time)
 		{
-		fpos = xc->vchn_siz;
-		/* cygwin runs faster if these writes are combined, so the new fstWriterUint32WithVarint function, but should help with regular */
-#ifndef FST_USE_FWRITE_COMBINING
-                xc->vchn_siz += fstWriterUint32WithVarint(xc->vchn_handle, &vm4ip[2], xc->tchn_idx - vm4ip[3]); /* prev_chg is vm4ip[2] */
-                fstFwrite(buf, len, 1, xc->vchn_handle);
-                xc->vchn_siz += len;
-#else
-		xc->vchn_siz += fstWriterUint32WithVarint(xc->vchn_handle, &vm4ip[2], xc->tchn_idx - vm4ip[3], buf, len); /* do one fwrite op only */
-#endif
+		fpos = xc->vchg_siz;
+
+		if((fpos + len + 10) > xc->vchg_alloc_siz)
+			{
+			xc->vchg_alloc_siz += FST_BREAK_ADD_SIZE;
+			xc->vchg_mem = realloc(xc->vchg_mem, xc->vchg_alloc_siz);
+			if(!xc->vchg_mem)
+				{
+				fprintf(stderr, "FATAL ERROR, could not realloc() in fstWriterEmitValueChange, exiting.\n");
+				exit(255); 
+				}
+			}
+
+		xc->vchg_siz += fstWriterUint32WithVarint32(xc, &vm4ip[2], xc->tchn_idx - vm4ip[3], buf, len); /* do one fwrite op only */
 		vm4ip[3] = xc->tchn_idx;
 		vm4ip[2] = fpos;
+		}
+		else
+		{
+		offs = vm4ip[0];
+		memcpy(xc->curval_mem + offs, buf, len);
 		}
 	}
 }
@@ -1659,10 +1680,8 @@ if(xc)
 
 		xc->firsttime = (xc->vc_emitted) ? 0: tim;
 		xc->curtime = 0;
-		fseeko(xc->vchn_handle, 0, SEEK_SET);
-		fstFtruncate(fileno(xc->vchn_handle), 0);
-		fputc('!', xc->vchn_handle);
-		xc->vchn_siz = 1;
+		xc->vchg_mem[0] = '!';
+		xc->vchg_siz = 1;
 		fstWriterEmitSectionHeader(xc);
 		for(i=0;i<xc->maxhandle;i++)
 			{
@@ -1673,7 +1692,7 @@ if(xc)
 		}
 		else
 		{
-		if(xc->vchn_siz >= FST_BREAK_SIZE)
+		if(xc->vchg_siz >= FST_BREAK_SIZE)
 			{
 			fstWriterFlushContext(xc);
 			xc->tchn_cnt++;
@@ -3403,6 +3422,7 @@ for(;;)
 	printf("\tindx_pos: %d (%d bytes)\n", (int)indx_pos, (int)chain_clen);
 #endif
 	chain_cmem = malloc(chain_clen);
+	if(!chain_cmem) goto block_err;
 	fseeko(xc->f, indx_pos, SEEK_SET);
 	fstFread(chain_cmem, chain_clen, 1, xc->f);
 	
@@ -3415,6 +3435,8 @@ for(;;)
 		chain_table = malloc((vc_maxhandle+1) * sizeof(off_t));
 		chain_table_lengths = malloc((vc_maxhandle+1) * sizeof(uint32_t));
 		}
+
+	if(!chain_table || !chain_table_lengths) goto block_err;
 
 	pnt = chain_cmem;
 	idx = 0;
@@ -3783,6 +3805,7 @@ for(;;)
 			}
 		}
 
+block_err:
 	free(tc_head);
 	free(chain_cmem);
 	free(mem_for_traversal);

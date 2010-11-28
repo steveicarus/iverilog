@@ -83,7 +83,8 @@ INCLUDE_PATH = -I. -I$(srcdir)
 endif
 
 CPPFLAGS = @DEFS@ $(INCLUDE_PATH) @CPPFLAGS@
-CXXFLAGS = @WARNING_FLAGS@ @CXXFLAGS@
+CFLAGS = @WARNING_FLAGS@ @CFLAGS@
+CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 PICFLAGS = @PICFLAG@
 LDFLAGS = @rdynamic@ @LDFLAGS@
 
@@ -157,12 +158,13 @@ endif
 	rm -rf autom4te.cache
 
 cppcheck: $(O:.o=.cc) $(srcdir)/dosify.c $(srcdir)/version.c
-	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+	cppcheck --enable=all -f --suppressions $(srcdir)/cppcheck.sup \
+	         $(INCLUDE_PATH) $^
 
 cppcheck-all:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) cppcheck && ) true
 	$(foreach dir,$(NOTUSED),$(MAKE) -C $(dir) cppcheck && ) true
-	cppcheck
+	$(MAKE) cppcheck
 
 Makefile: $(srcdir)/Makefile.in config.status
 	./config.status --file=$@
@@ -210,7 +212,8 @@ iverilog-vpi: $(srcdir)/iverilog-vpi.sh Makefile
 	    -e 's;@SUFFIX@;$(suffix);' \
 	    -e 's;@IVCC@;$(CC);' \
 	    -e 's;@IVCXX@;$(CXX);' \
-	    -e 's;@IVCFLAGS@;$(CXXFLAGS);' \
+	    -e 's;@IVCFLAGS@;$(CFLAGS);' \
+	    -e 's;@IVCXXFLAGS@;$(CXXFLAGS);' \
 	    -e 's;@INCLUDEDIR@;$(includedir);' \
 	    -e 's;@LIBDIR@;@libdir@;' $< > $@
 	chmod +x $@

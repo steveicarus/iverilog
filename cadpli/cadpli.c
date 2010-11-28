@@ -17,7 +17,6 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "ivl_alloc.h"
 # include  <vpi_user.h>
 # include  <veriuser.h>
 # include  <stdlib.h>
@@ -25,6 +24,7 @@
 # include  <assert.h>
 # include  "config.h"
 # include  "ivl_dlfcn.h"
+# include  "ivl_alloc.h"
 
 typedef void* (*funcvp)(void);
 

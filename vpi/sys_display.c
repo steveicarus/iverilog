@@ -18,7 +18,6 @@
  */
 
 # include  "sys_priv.h"
-# include  "ivl_alloc.h"
 # include  <assert.h>
 # include  <string.h>
 # include  <errno.h>
@@ -26,6 +25,7 @@
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <math.h>
+# include  "ivl_alloc.h"
 
 #define IS_MCD(mcd)     !((mcd)>>31&1)
 

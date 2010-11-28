@@ -25,9 +25,9 @@
 # include  "parse_misc.h"
 # include  "compile.h"
 # include  "parse.h"
-# include  "ivl_alloc.h"
 # include  <cstring>
 # include  <cassert>
+# include  "ivl_alloc.h"
 
 static char* strdupnew(char const *str)
 {

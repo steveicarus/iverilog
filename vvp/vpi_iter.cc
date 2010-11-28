@@ -22,9 +22,9 @@
  */
 
 # include  "vpi_priv.h"
-# include  "ivl_alloc.h"
 # include  <cstdlib>
 # include  <cassert>
+# include  "ivl_alloc.h"
 
 static int iterator_free_object(vpiHandle ref)
 {

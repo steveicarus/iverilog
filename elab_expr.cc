@@ -129,8 +129,8 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
  * The default behavior for the test_width method is to just return the
  * minimum width that is passed in.
  */
-unsigned PExpr::test_width(Design*des, NetScope*scope,
-			   unsigned min, unsigned lval,
+unsigned PExpr::test_width(Design*, NetScope*,
+			   unsigned min, unsigned,
 			   ivl_variable_type_t&, bool&)
 {
       if (debug_elaborate) {
@@ -228,9 +228,12 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope,
 	    break;
       }
 
-      if (type_is_vectorable(expr_type_))
+      if (type_is_vectorable(expr_type_)) {
+	      // We don't use (need?) lval so make sure the minimum width
+	      // is greater than or equal to the the L-value width.
+	    assert(min >= lval);
 	    expr_width_ = min;
-      else
+      } else
 	    expr_width_ = 1;
 
       expr_type__ = expr_type_;
@@ -449,7 +452,7 @@ NetExpr* PEBinary::elaborate_expr_base_bits_(Design*des,
 
 NetExpr* PEBinary::elaborate_expr_base_div_(Design*des,
 					    NetExpr*lp, NetExpr*rp,
-					    int expr_wid, bool is_pexpr) const
+					    int expr_wid, bool) const
 {
 	/* The % operator does not support real arguments in
 	   baseline Verilog. But we allow it in our extended
@@ -739,7 +742,7 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
       return tmp;
 }
 
-NetExpr* PEBinary::elaborate_expr_base_mult_(Design*des,
+NetExpr* PEBinary::elaborate_expr_base_mult_(Design*,
 					     NetExpr*lp, NetExpr*rp,
 					     int expr_wid, bool is_pexpr) const
 {
@@ -802,7 +805,7 @@ NetExpr* PEBinary::elaborate_expr_base_mult_(Design*des,
       return tmp;
 }
 
-NetExpr* PEBinary::elaborate_expr_base_add_(Design*des,
+NetExpr* PEBinary::elaborate_expr_base_add_(Design*,
 					    NetExpr*lp, NetExpr*rp,
 					    int expr_wid, bool is_pexpr) const
 {
@@ -890,7 +893,7 @@ unsigned PEBComp::test_width(Design*des, NetScope*scope, unsigned, unsigned,
 }
 
 NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
-				 int expr_width_dummy, bool sys_task_arg) const
+				 int, bool) const
 {
       assert(left_);
       assert(right_);
@@ -945,10 +948,10 @@ NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
       return tmp;
 }
 
-unsigned PEBLogic::test_width(Design*des, NetScope*scope,
-			      unsigned min, unsigned lval,
+unsigned PEBLogic::test_width(Design*, NetScope*,
+			      unsigned, unsigned,
 			      ivl_variable_type_t&expr_type_out,
-			      bool&unsized_flag)
+			      bool&)
 {
       expr_type_ = IVL_VT_LOGIC;
       expr_width_ = 1;
@@ -957,7 +960,7 @@ unsigned PEBLogic::test_width(Design*des, NetScope*scope,
 }
 
 NetExpr*PEBLogic::elaborate_expr(Design*des, NetScope*scope,
-				 int expr_width_dummp, bool sys_task_arg) const
+				 int, bool) const
 {
       assert(left_);
       assert(right_);
@@ -1040,7 +1043,7 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope,
 }
 
 NetExpr*PEBLeftWidth::elaborate_expr(Design*des, NetScope*scope,
-				     int expr_wid, bool sys_task_arg) const
+				     int expr_wid, bool) const
 {
       assert(left_);
       assert(right_);
@@ -1067,7 +1070,7 @@ NetExpr*PEBLeftWidth::elaborate_expr(Design*des, NetScope*scope,
       return elaborate_expr_leaf(des, lp, rp, expr_wid);
 }
 
-NetExpr*PEBPower::elaborate_expr_leaf(Design*des, NetExpr*lp, NetExpr*rp,
+NetExpr*PEBPower::elaborate_expr_leaf(Design*, NetExpr*lp, NetExpr*rp,
 				      int expr_wid) const
 {
       if (debug_elaborate) {
@@ -1131,6 +1134,9 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 		       << " argument width = " << expr_width_
 		       << ", result width = " << min << "." << endl;
 
+	      // We don't use (need?) lval so make sure the minimum width
+	      // is greater than or equal to the the L-value width.
+	    assert(min >= lval);
             return min;
       }
 
@@ -1612,7 +1618,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 }
 
 unsigned PEConcat::test_width(Design*des, NetScope*scope,
-			      unsigned min, unsigned lval,
+			      unsigned, unsigned,
 			      ivl_variable_type_t&expr_type__,
 			      bool&unsized_flag)
 {
@@ -1809,8 +1815,8 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
  *
  * Absent any better idea, we call all real valued results a width of 1.
  */
-unsigned PEFNumber::test_width(Design*des, NetScope*scope,
-			       unsigned min, unsigned lval,
+unsigned PEFNumber::test_width(Design*, NetScope*,
+			       unsigned, unsigned,
 			       ivl_variable_type_t&expr_type__,
 			       bool&unsized_flag)
 {
@@ -1822,7 +1828,7 @@ unsigned PEFNumber::test_width(Design*des, NetScope*scope,
       return 1;
 }
 
-NetExpr* PEFNumber::elaborate_expr(Design*des, NetScope*scope, int, bool) const
+NetExpr* PEFNumber::elaborate_expr(Design*, NetScope*, int, bool) const
 {
       NetECReal*tmp = new NetECReal(*value_);
       tmp->set_line(*this);
@@ -1955,7 +1961,7 @@ NetExpr* PEIdent::calculate_up_do_base_(Design*des, NetScope*scope) const
       return tmp;
 }
 
-bool PEIdent::calculate_param_range_(Design*des, NetScope*scope,
+bool PEIdent::calculate_param_range_(Design*, NetScope*,
 				     const NetExpr*par_msb, long&par_msv,
 				     const NetExpr*par_lsb, long&par_lsv,
 				     long length) const
@@ -1986,7 +1992,7 @@ static void probe_index_expr_width(Design*des, NetScope*scope,
 				   const name_component_t&name)
 {
       for (list<index_component_t>::const_iterator cur = name.index.begin()
-		 ; cur != name.index.end() ; cur ++) {
+		 ; cur != name.index.end() ; ++ cur ) {
 
 	    if (cur->msb)
 		  probe_expr_width(des, scope, cur->msb);
@@ -2107,7 +2113,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 	      // This is a parameter. If it is sized (meaning it was
 	      // declared with range expressions) then the range
 	      // expressions would have been caught above. So if we
-	      // got there there we know this is an unsized constant.
+	      // got here then we know this is an unsized constant.
 	    expr_width_ = par->expr_width();
 	    unsized_flag = true;
 	    return expr_width_;
@@ -2117,6 +2123,10 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 	// set the width that we collected.
       expr_type_ = IVL_VT_NO_TYPE;
       expr_width_ = min;
+
+	// We don't use (need?) lval so make sure the minimum width
+	// is greater than or equal to the the L-value width.
+      assert(min >= lval);
 
       expr_type__ = expr_type_;
       return min;
@@ -2387,7 +2397,7 @@ static verinum param_part_select_bits(const verinum&par_val, long wid,
 
 NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 					     const NetExpr*par,
-					     NetScope*found_in,
+					     NetScope*,
 					     const NetExpr*par_msb,
 					     const NetExpr*par_lsb) const
 {
@@ -2511,7 +2521,7 @@ static void warn_param_ob(long par_msv, long par_lsv, bool defined,
 
 NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 					       const NetExpr*par,
-					       NetScope*found_in,
+					       NetScope*,
 					       const NetExpr*par_msb,
 					       const NetExpr*par_lsb) const
 {
@@ -2590,7 +2600,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 
 NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 					       const NetExpr*par,
-					       NetScope*found_in,
+					       NetScope*,
 					       const NetExpr*par_msb,
 					       const NetExpr*par_lsb) const
 {
@@ -2994,7 +3004,7 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
  * Handle part selects of NetNet identifiers.
  */
 NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
-				      NetESignal*net, NetScope*found_in) const
+				      NetESignal*net, NetScope*) const
 {
       long msv, lsv;
       bool parts_defined_flag;
@@ -3099,7 +3109,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
  * Part select indexed up, i.e. net[<m> +: <l>]
  */
 NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
-				      NetESignal*net, NetScope*found_in) const
+				      NetESignal*net, NetScope*) const
 {
       NetExpr*base = calculate_up_do_base_(des, scope);
 
@@ -3187,7 +3197,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
  * Part select indexed down, i.e. net[<m> -: <l>]
  */
 NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
-					   NetESignal*net, NetScope*found_in)const
+					   NetESignal*net, NetScope*)const
 {
       NetExpr*base = calculate_up_do_base_(des, scope);
 
@@ -3271,7 +3281,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 }
 
 NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
-				      NetESignal*net, NetScope*found_in) const
+				      NetESignal*net, NetScope*) const
 {
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
@@ -3439,7 +3449,7 @@ unsigned PENumber::test_width(Design*, NetScope*,
       return use_wid;
 }
 
-NetEConst* PENumber::elaborate_expr(Design*des, NetScope*,
+NetEConst* PENumber::elaborate_expr(Design*, NetScope*,
 				    int expr_width__, bool) const
 {
       assert(value_);
@@ -3463,10 +3473,10 @@ NetEConst* PENumber::elaborate_expr(Design*des, NetScope*,
       return tmp;
 }
 
-unsigned PEString::test_width(Design*des, NetScope*scope,
+unsigned PEString::test_width(Design*, NetScope*,
 			      unsigned min, unsigned lval,
 			      ivl_variable_type_t&expr_type__,
-			      bool&unsized_flag)
+			      bool&)
 {
       expr_type_ = IVL_VT_BOOL;
       expr_width_ = text_? 8*strlen(text_) : 0;
@@ -3474,11 +3484,14 @@ unsigned PEString::test_width(Design*des, NetScope*scope,
 	    expr_width_ = min;
 
       expr_type__ = expr_type_;
+	// We don't use (need?) lval so make sure the minimum width
+	// is greater than or equal to the the L-value width.
+      assert(expr_width_ >= lval);
       return expr_width_;
 }
 
-NetEConst* PEString::elaborate_expr(Design*des, NetScope*,
-				    int expr_width_dummy, bool) const
+NetEConst* PEString::elaborate_expr(Design*, NetScope*,
+				    int, bool) const
 {
       NetEConst*tmp = new NetEConst(value());
       tmp->set_line(*this);

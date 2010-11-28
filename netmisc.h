@@ -107,8 +107,12 @@ extern NetExpr*normalize_variable_array_base(NetExpr *base, long offset,
  * This function takes as input a NetNet signal and adds a constant
  * value to it. If the val is 0, then simply return sig. Otherwise,
  * return a new NetNet value that is the output of an addition.
+ *
+ * Not currently used.
  */
+#if 0
 extern NetNet*add_to_net(Design*des, NetNet*sig, long val);
+#endif
 extern NetNet*sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig);
 
 /*

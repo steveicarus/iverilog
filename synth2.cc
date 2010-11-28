@@ -26,13 +26,12 @@
 # include  <cassert>
 
 
-bool NetProc::synth_async(Design*des, NetScope*scope,
-			  const NetBus&nex_map, NetBus&nex_out)
+bool NetProc::synth_async(Design*, NetScope*, const NetBus&, NetBus&)
 {
       return false;
 }
 
-bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
+bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF* /*ff*/,
 			 const NetBus&nex_map, NetBus&nex_out,
 			 const svector<NetEvProbe*>&events)
 {
@@ -58,7 +57,7 @@ bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF*ff,
  * r-value.
  */
 bool NetAssignBase::synth_async(Design*des, NetScope*scope,
-				const NetBus&nex_map, NetBus&nex_out)
+				const NetBus& /*nex_map*/, NetBus&nex_out)
 {
       NetNet*rsig = rval_->synthesize(des, scope, rval_);
       assert(rsig);
@@ -152,7 +151,7 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 }
 
 bool NetCase::synth_async(Design*des, NetScope*scope,
-			  const NetBus&nex_map, NetBus&nex_out)
+			  const NetBus& /*nex_map*/, NetBus&nex_out)
 {
 	/* Synthesize the select expression. */
       NetNet*esig = expr_->synthesize(des, scope, expr_);
@@ -237,9 +236,13 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       return true;
 }
 
-bool NetCondit::synth_async(Design*des, NetScope*scope,
-			    const NetBus&nex_map, NetBus&nex_out)
+bool NetCondit::synth_async(Design*des, NetScope* /*scope*/,
+			    const NetBus& /*nex_map*/, NetBus& /*nex_out*/)
 {
+      cerr << get_fileline() << ": sorry: "
+	   << "Forgot to implement NetCondit::synth_async" << endl;
+      des->errors += 1;
+      return false;
 #if 0
       NetNet*ssig = expr_->synthesize(des);
       assert(ssig);
@@ -295,11 +298,6 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
       DEBUG_SYNTH2_EXIT("NetCondit",true)
       return true;
 
-#else
-      cerr << get_fileline() << ": sorry: "
-	   << "Forgot to implement NetCondit::synth_async" << endl;
-      des->errors += 1;
-      return false;
 #endif
 }
 
@@ -351,13 +349,17 @@ bool NetProcTop::synth_async(Design*des)
  * This needs to be split into a DFF bank for each statement, because
  * the statements may each infer different reset and enable signals.
  */
-bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			   const NetBus&nex_map, NetBus&nex_out,
-			   const svector<NetEvProbe*>&events_in)
+bool NetBlock::synth_sync(Design*des, NetScope* /*scope*/, NetFF* /*ff*/,
+			   const NetBus& /*nex_map*/, NetBus& /*nex_out*/,
+			   const svector<NetEvProbe*>& /*events_in*/)
 {
       if (last_ == 0) {
 	    return true;
       }
+      cerr << get_fileline() << ": sorry: "
+	   << "Forgot to implement NetBlock::synth_sync" << endl;
+      des->errors += 1;
+      return false;
 
 #if 0
       bool flag = true;
@@ -503,12 +505,6 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
       return flag;
 
-#else
-      cerr << get_fileline() << ": sorry: "
-	   << "Forgot to implement NetBlock::synth_sync"
-	   << endl;
-      des->errors += 1;
-      return false;
 #endif
 }
 
@@ -518,10 +514,14 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope, NetFF*ff,
  * asynchronous set/reset, depending on whether the pin of the
  * expression is connected to an event, or not.
  */
-bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
-			   const NetBus&nex_map, NetBus&nex_out,
-			   const svector<NetEvProbe*>&events_in)
+bool NetCondit::synth_sync(Design*des, NetScope* /*scope*/, NetFF* /*ff*/,
+			   const NetBus& /*nex_map*/, NetBus& /*nex_out*/,
+			   const svector<NetEvProbe*>& /*events_in*/)
 {
+      cerr << get_fileline() << ": sorry: "
+	   << "Forgot to implement NetCondit::synth_sync" << endl;
+      des->errors += 1;
+      return false;
 #if 0
 	/* First try to turn the condition expression into an
 	   asynchronous set/reset. If the condition expression has
@@ -726,11 +726,6 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 
       return flag;
 
-#else
-      cerr << get_fileline() << ": sorry: "
-	   << "Forgot to implement NetCondit::synth_sync" << endl;
-      des->errors += 1;
-      return false;
 #endif
 }
 

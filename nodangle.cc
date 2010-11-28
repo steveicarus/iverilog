@@ -40,7 +40,7 @@ class nodangle_f  : public functor_t {
       bool scomplete, ecomplete;
 };
 
-void nodangle_f::event(Design*des, NetEvent*ev)
+void nodangle_f::event(Design*, NetEvent*ev)
 {
       if (ecomplete) return;
 
@@ -113,7 +113,7 @@ void nodangle_f::event(Design*des, NetEvent*ev)
             list<NetEvent*> match;
             ev->find_similar_event(match);
             for (list<NetEvent*>::iterator idx = match.begin()
-                       ; idx != match.end() ;  idx ++) {
+                       ; idx != match.end() ; ++ idx ) {
 
                   NetEvent*tmp = *idx;
                   assert(tmp != ev);
@@ -122,7 +122,7 @@ void nodangle_f::event(Design*des, NetEvent*ev)
       }
 }
 
-void nodangle_f::signal(Design*des, NetNet*sig)
+void nodangle_f::signal(Design*, NetNet*sig)
 {
       if (scomplete) return;
 

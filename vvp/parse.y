@@ -22,11 +22,11 @@
 # include  "parse_misc.h"
 # include  "compile.h"
 # include  "delay.h"
-# include  "ivl_alloc.h"
 # include  <list>
 # include  <cstdio>
 # include  <cstdlib>
 # include  <cassert>
+# include  "ivl_alloc.h"
 
 /*
  * These are bits in the lexor.

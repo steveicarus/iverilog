@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -27,7 +27,7 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 
-NexusSet* NetExpr::nex_input(bool rem_out)
+NexusSet* NetExpr::nex_input(bool)
 {
       cerr << get_fileline()
 	   << ": internal error: nex_input not implemented: "
@@ -35,7 +35,7 @@ NexusSet* NetExpr::nex_input(bool rem_out)
       return 0;
 }
 
-NexusSet* NetProc::nex_input(bool rem_out)
+NexusSet* NetProc::nex_input(bool)
 {
       cerr << get_fileline()
 	   << ": internal error: NetProc::nex_input not implemented"
@@ -68,7 +68,7 @@ NexusSet* NetEConcat::nex_input(bool rem_out)
       return result;
 }
 
-NexusSet* NetEAccess::nex_input(bool rem_out)
+NexusSet* NetEAccess::nex_input(bool)
 {
       return new NexusSet;
 }
@@ -76,12 +76,12 @@ NexusSet* NetEAccess::nex_input(bool rem_out)
 /*
  * A constant has not inputs, so always return an empty set.
  */
-NexusSet* NetEConst::nex_input(bool rem_out)
+NexusSet* NetEConst::nex_input(bool)
 {
       return new NexusSet;
 }
 
-NexusSet* NetECReal::nex_input(bool rem_out)
+NexusSet* NetECReal::nex_input(bool)
 {
       return new NexusSet;
 }
@@ -90,22 +90,22 @@ NexusSet* NetECReal::nex_input(bool rem_out)
  * A parameter by definition has no inputs. It represents a constant
  * value, even if that value is a constant expression.
  */
-NexusSet* NetEParam::nex_input(bool rem_out)
+NexusSet* NetEParam::nex_input(bool)
 {
       return new NexusSet;
 }
 
-NexusSet* NetEEvent::nex_input(bool rem_out)
+NexusSet* NetEEvent::nex_input(bool)
 {
       return new NexusSet;
 }
 
-NexusSet* NetENetenum::nex_input(bool rem_out)
+NexusSet* NetENetenum::nex_input(bool)
 {
       return new NexusSet;
 }
 
-NexusSet* NetEScope::nex_input(bool rem_out)
+NexusSet* NetEScope::nex_input(bool)
 {
       return new NexusSet;
 }
@@ -128,16 +128,23 @@ NexusSet* NetESelect::nex_input(bool rem_out)
       return result;
 }
 
+/*
+ * The $fread, etc. system functions can have NULL arguments.
+ */
 NexusSet* NetESFunc::nex_input(bool rem_out)
 {
       if (parms_.size() == 0)
 	    return new NexusSet;
 
-      NexusSet*result = parms_[0]->nex_input(rem_out);
+      NexusSet*result;
+      if (parms_[0]) result = parms_[0]->nex_input(rem_out);
+      else result = new NexusSet;
       for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
-	    NexusSet*tmp = parms_[idx]->nex_input(rem_out);
-	    result->add(*tmp);
-	    delete tmp;
+	    if (parms_[idx]) {
+		  NexusSet*tmp = parms_[idx]->nex_input(rem_out);
+		  result->add(*tmp);
+		  delete tmp;
+	    }
       }
       return result;
 }
@@ -329,7 +336,7 @@ NexusSet* NetCase::nex_input(bool rem_out)
       return result;
 }
 
-NexusSet* NetCAssign::nex_input(bool rem_out)
+NexusSet* NetCAssign::nex_input(bool)
 {
       cerr << get_fileline() << ": internal warning: NetCAssign::nex_input()"
 	   << " not implemented." << endl;
@@ -354,7 +361,7 @@ NexusSet* NetCondit::nex_input(bool rem_out)
       return result;
 }
 
-NexusSet* NetForce::nex_input(bool rem_out)
+NexusSet* NetForce::nex_input(bool)
 {
       cerr << get_fileline() << ": internal warning: NetForce::nex_input()"
 	   << " not implemented." << endl;
@@ -392,16 +399,23 @@ NexusSet* NetRepeat::nex_input(bool rem_out)
       return result;
 }
 
+/*
+ * The $display, etc. system tasks can have NULL arguments.
+ */
 NexusSet* NetSTask::nex_input(bool rem_out)
 {
       if (parms_.count() == 0)
 	    return new NexusSet;
 
-      NexusSet*result = parms_[0]->nex_input(rem_out);
+      NexusSet*result;
+      if (parms_[0]) result = parms_[0]->nex_input(rem_out);
+      else result = new NexusSet;
       for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
-	    NexusSet*tmp = parms_[idx]->nex_input(rem_out);
-	    result->add(*tmp);
-	    delete tmp;
+	    if (parms_[idx]) {
+		  NexusSet*tmp = parms_[idx]->nex_input(rem_out);
+		  result->add(*tmp);
+		  delete tmp;
+	    }
       }
 
       return result;
@@ -412,7 +426,7 @@ NexusSet* NetSTask::nex_input(bool rem_out)
  * parameters to consider, because the compiler already removed them
  * and converted them to blocking assignments.
  */
-NexusSet* NetUTask::nex_input(bool rem_out)
+NexusSet* NetUTask::nex_input(bool)
 {
       return new NexusSet;
 }

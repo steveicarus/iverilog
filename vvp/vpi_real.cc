@@ -24,11 +24,11 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
-# include  "ivl_alloc.h"
 # include  <cstdio>
 # include  <cstdlib>
 # include  <cstring>
 # include  <cassert>
+# include  "ivl_alloc.h"
 
 struct __vpiRealVar* vpip_realvar_from_handle(vpiHandle obj)
 {

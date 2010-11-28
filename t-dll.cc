@@ -21,7 +21,6 @@
 
 # include  <iostream>
 
-# include  "ivl_alloc.h"
 # include  <cstring>
 # include  <cstdio> // sprintf()
 # include  "compiler.h"
@@ -30,6 +29,7 @@
 # include  "discipline.h"
 # include  <cstdlib>
 # include  "ivl_assert.h"
+# include  "ivl_alloc.h"
 
 struct dll_target dll_target_obj;
 
@@ -363,7 +363,7 @@ static void nexus_lpm_add(ivl_nexus_t nex, ivl_lpm_t net, unsigned pin,
 
       nex->ptrs_[top].type_= __NEXUS_PTR_LPM;
       nex->ptrs_[top].drive0 = drive0;
-      nex->ptrs_[top].drive1 = drive0;
+      nex->ptrs_[top].drive1 = drive1;
       nex->ptrs_[top].pin_ = pin;
       nex->ptrs_[top].l.lpm= net;
 }
@@ -473,7 +473,7 @@ void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
       typedef map<perm_string,NetScope::param_expr_t>::const_iterator pit_t;
 
       for (pit_t cur_pit = net->parameters.begin()
-		 ; cur_pit != net->parameters.end() ;  cur_pit ++) {
+		 ; cur_pit != net->parameters.end() ; ++ cur_pit ) {
 
 	    assert(idx < scop->nparam_);
 	    ivl_parameter_t cur_par = scop->param_ + idx;
@@ -487,7 +487,7 @@ void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 	    idx += 1;
       }
       for (pit_t cur_pit = net->localparams.begin()
-		 ; cur_pit != net->localparams.end() ;  cur_pit ++) {
+		 ; cur_pit != net->localparams.end() ; ++ cur_pit ) {
 
 	    assert(idx < scop->nparam_);
 	    ivl_parameter_t cur_par = scop->param_ + idx;
@@ -608,7 +608,7 @@ bool dll_target::start_design(const Design*des)
       des_.disciplines.resize(disciplines.size());
       unsigned idx = 0;
       for (map<perm_string,ivl_discipline_t>::const_iterator cur = disciplines.begin()
-		 ; cur != disciplines.end() ; cur ++) {
+		 ; cur != disciplines.end() ; ++ cur ) {
 	    des_.disciplines[idx] = cur->second;
 	    idx += 1;
       }
@@ -616,7 +616,7 @@ bool dll_target::start_design(const Design*des)
 
       root_scopes = des->find_root_scopes();
       for (list<NetScope*>::const_iterator scop = root_scopes.begin();
-	   scop != root_scopes.end(); scop++)
+	   scop != root_scopes.end(); ++ scop )
 	    add_root(des_, *scop);
 
 
@@ -2222,7 +2222,7 @@ bool dll_target::net_literal(const NetLiteral*net)
       return true;
 }
 
-void dll_target::net_probe(const NetEvProbe*net)
+void dll_target::net_probe(const NetEvProbe*)
 {
 }
 
