@@ -36,7 +36,8 @@ bool netenum_t::insert_name(size_t name_idx, perm_string name, const verinum&val
 {
       std::pair<std::map<perm_string,verinum>::iterator, bool> res;
 
-      assert(val.has_len() && val.len() == (msb_-lsb_+1));
+      assert((msb_-lsb_+1) > 0);
+      assert(val.has_len() && val.len() == (unsigned)(msb_-lsb_+1));
 
 	// Insert a map of the name to the value. This also gets a
 	// flag that returns true if the  name is unique, or false

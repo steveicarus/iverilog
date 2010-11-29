@@ -1680,7 +1680,7 @@ bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
 bool vector2_to_value(const vvp_vector2_t&a, int32_t&val, bool is_signed)
 {
       val = 0;
-      int idx;
+      unsigned idx;
       int32_t mask;
       for (idx = 0, mask = 1 ; idx < a.size() && idx < 32 ; idx += 1, mask <<= 1) {
 	    if (a.value(idx)) val |= mask;

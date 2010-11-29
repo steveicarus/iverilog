@@ -26,6 +26,12 @@ ivl_discipline_flow
 ivl_discipline_name
 ivl_discipline_potential
 
+ivl_enum_name
+ivl_enum_names
+ivl_enum_bits
+ivl_enum_type
+ivl_enum_width
+
 ivl_event_any
 ivl_event_basename
 ivl_event_name
@@ -42,6 +48,7 @@ ivl_expr_branch
 ivl_expr_def
 ivl_expr_delay_val
 ivl_expr_dvalue
+ivl_expr_enumtype
 ivl_expr_event
 ivl_expr_file
 ivl_expr_lineno
@@ -161,6 +168,8 @@ ivl_scope_children
 ivl_scope_def
 ivl_scope_def_file
 ivl_scope_def_lineno
+ivl_scope_enumerate
+ivl_scope_enumerates
 ivl_scope_event
 ivl_scope_events
 ivl_scope_file

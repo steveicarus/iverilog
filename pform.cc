@@ -2440,6 +2440,7 @@ void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>
 static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
 			   perm_string name)
 {
+      (void) li; // The line information is not currently needed.
       PWire*cur = pform_get_make_wire_in_scope(name, NetNet::REG, NetNet::NOT_A_PORT, enum_type->base_type);
       assert(cur);
 

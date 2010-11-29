@@ -124,6 +124,11 @@ extern struct vector_info draw_vpi_func_call(ivl_expr_t expr,
 extern int draw_vpi_rfunc_call(ivl_expr_t expr);
 
 /*
+ * Enumeration draw routine.
+ */
+void draw_enumeration_in_scope(ivl_enumtype_t enumtype);
+
+/*
  * Switches (tran)
  */
 extern void draw_switch_in_scope(ivl_switch_t sw);
