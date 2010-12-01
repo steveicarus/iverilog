@@ -20,12 +20,30 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifdef _WAVE_USE_CONFIG_HDR
 #include <config.h>
-#endif
 
 #include "fstapi.h"
 #include "fastlz.h"
+
+
+/* this define is to force writer backward compatibility with old readers */
+#ifndef FST_DYNAMIC_ALIAS_DISABLE
+/* note that Judy versus Jenkins requires more experimentation: they are  */
+/* functionally equivalent though it appears Jenkins is slightly faster.  */
+/* in addition, Jenkins is not bound by the LGPL.                         */
+#ifdef _WAVE_HAVE_JUDY
+#include <Judy.h>
+#else
+typedef const void *Pcvoid_t;
+typedef void *Pvoid_t;
+typedef void **PPvoid_t;
+#define JudyHSIns(a,b,c,d) JenkinsIns((a),(b),(c),(hashmask))
+#define JudyHSFreeArray(a,b) JenkinsFree((a),(hashmask))
+void JenkinsFree(void *base_i, uint32_t hashmask);
+void **JenkinsIns(void *base_i, unsigned char *mem, uint32_t length, uint32_t hashmask);
+#endif
+#endif
+
 
 #undef  FST_DEBUG
 
@@ -1029,8 +1047,19 @@ off_t unc_memreq = 0; /* for reader */
 unsigned char *packmem;
 unsigned int packmemlen;
 uint32_t *vm4ip;
-
 struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+
+#ifndef FST_DYNAMIC_ALIAS_DISABLE
+Pvoid_t PJHSArray = (Pvoid_t) NULL;
+#ifndef _WAVE_HAVE_JUDY
+uint32_t hashmask =  xc->maxhandle;
+hashmask |= hashmask >> 1;
+hashmask |= hashmask >> 2;
+hashmask |= hashmask >> 4;
+hashmask |= hashmask >> 8;
+hashmask |= hashmask >> 16;
+#endif
+#endif
 
 if((!xc)||(xc->vchg_siz <= 1)||(xc->already_in_flush)) return;
 xc->already_in_flush = 1; /* should really do this with a semaphore */
@@ -1179,15 +1208,43 @@ for(i=0;i<xc->maxhandle;i++)
 		        	rc = compress2(dmem, &destlen, scratchpnt, wrlen, 4);
 				if(rc == Z_OK)
 					{
-					fpos += fstWriterVarint(f, wrlen);
-					fpos += destlen;
-					fstFwrite(dmem, destlen, 1, f);
+#ifndef FST_DYNAMIC_ALIAS_DISABLE
+					PPvoid_t pv = JudyHSIns(&PJHSArray, dmem, destlen, NULL);
+					if(*pv)
+						{
+						uint32_t pvi = (long)(*pv);
+						vm4ip[2] = -pvi;
+						}
+						else
+						{
+						*pv = (void *)(long)(i+1);
+#endif
+						fpos += fstWriterVarint(f, wrlen);
+						fpos += destlen;
+						fstFwrite(dmem, destlen, 1, f);
+#ifndef FST_DYNAMIC_ALIAS_DISABLE
+						}
+#endif
 					}
 					else
 					{
-					fpos += fstWriterVarint(f, 0);
-					fpos += wrlen;
-					fstFwrite(scratchpnt, wrlen, 1, f);
+#ifndef FST_DYNAMIC_ALIAS_DISABLE
+					PPvoid_t pv = JudyHSIns(&PJHSArray, scratchpnt, wrlen, NULL);
+					if(*pv)
+						{
+						uint32_t pvi = (long)(*pv);
+						vm4ip[2] = -pvi;
+						}
+						else
+						{
+						*pv = (void *)(long)(i+1);
+#endif
+						fpos += fstWriterVarint(f, 0);
+						fpos += wrlen;
+						fstFwrite(scratchpnt, wrlen, 1, f);
+#ifndef FST_DYNAMIC_ALIAS_DISABLE
+						}
+#endif
 					}
 				}
 				else
@@ -1205,23 +1262,65 @@ for(i=0;i<xc->maxhandle;i++)
 				rc = fastlz_compress(scratchpnt, wrlen, dmem);
 				if(rc < destlen)
         				{
-					fpos += fstWriterVarint(f, wrlen);
-					fpos += rc;
-					fstFwrite(dmem, rc, 1, f);
+#ifndef FST_DYNAMIC_ALIAS_DISABLE
+					PPvoid_t pv = JudyHSIns(&PJHSArray, dmem, rc, NULL);
+					if(*pv)
+						{
+						uint32_t pvi = (long)(*pv);
+						vm4ip[2] = -pvi;
+						}
+						else
+						{
+						*pv = (void *)(long)(i+1);
+#endif
+						fpos += fstWriterVarint(f, wrlen);
+						fpos += rc;
+						fstFwrite(dmem, rc, 1, f);
+#ifndef FST_DYNAMIC_ALIAS_DISABLE
+						}
+#endif
         				}
         				else
         				{
-					fpos += fstWriterVarint(f, 0);
-					fpos += wrlen;
-					fstFwrite(scratchpnt, wrlen, 1, f);
+#ifndef FST_DYNAMIC_ALIAS_DISABLE
+					PPvoid_t pv = JudyHSIns(&PJHSArray, scratchpnt, wrlen, NULL);
+					if(*pv)
+						{
+						uint32_t pvi = (long)(*pv);
+						vm4ip[2] = -pvi;
+						}
+						else
+						{
+						*pv = (void *)(long)(i+1);
+#endif
+						fpos += fstWriterVarint(f, 0);
+						fpos += wrlen;
+						fstFwrite(scratchpnt, wrlen, 1, f);
+#ifndef FST_DYNAMIC_ALIAS_DISABLE
+						}
+#endif
         				}
 				}
 			}
 			else
 			{
-			fpos += fstWriterVarint(f, 0);
-			fpos += wrlen;
-			fstFwrite(scratchpnt, wrlen, 1, f);
+#ifndef FST_DYNAMIC_ALIAS_DISABLE
+			PPvoid_t pv = JudyHSIns(&PJHSArray, scratchpnt, wrlen, NULL);
+			if(*pv)
+				{
+				uint32_t pvi = (long)(*pv);
+				vm4ip[2] = -pvi;
+				}
+				else
+				{
+				*pv = (void *)(long)(i+1);
+#endif
+				fpos += fstWriterVarint(f, 0);
+				fpos += wrlen;
+				fstFwrite(scratchpnt, wrlen, 1, f);
+#ifndef FST_DYNAMIC_ALIAS_DISABLE
+				}
+#endif
 			}
 
 		vm4ip[3] = 0;
@@ -1230,6 +1329,10 @@ for(i=0;i<xc->maxhandle;i++)
 #endif
 		}
 	}
+
+#ifndef FST_DYNAMIC_ALIAS_DISABLE
+JudyHSFreeArray(&PJHSArray, NULL);
+#endif
 
 free(packmem); packmem = NULL; packmemlen = 0;
 
@@ -1251,8 +1354,16 @@ for(i=0;i<xc->maxhandle;i++)
 			zerocnt = 0;
 			}
 
-		fpos += fstWriterVarint(f, ((vm4ip[2] - prevpos) << 1) | 1);
-		prevpos = vm4ip[2];
+		if(vm4ip[2] & 0x80000000)
+			{
+			fpos += fstWriterVarint(f, 0); /* signal */
+			fpos += fstWriterVarint(f, (-(int32_t)vm4ip[2]));
+			}
+			else
+			{
+			fpos += fstWriterVarint(f, ((vm4ip[2] - prevpos) << 1) | 1);
+			prevpos = vm4ip[2];
+			}
 		vm4ip[2] = 0;
 		vm4ip[3] = 0; /* clear out tchn idx */
 		}
@@ -1317,7 +1428,13 @@ fstWriterUint64(xc->handle, unc_memreq);			/* amount of buffer memory required i
 fflush(xc->handle);
 
 fseeko(xc->handle, xc->section_start-1, SEEK_SET);		/* write out FST_BL_VCDATA over FST_BL_SKIP */
+
+#ifndef FST_DYNAMIC_ALIAS_DISABLE
+fputc(FST_BL_VCDATA_DYN_ALIAS, xc->handle);
+#else
 fputc(FST_BL_VCDATA, xc->handle);
+#endif
+
 fflush(xc->handle);
 
 fseeko(xc->handle, endpos, SEEK_SET);				/* seek to end of file */
@@ -2827,7 +2944,7 @@ if(gzread_pass_status)
 				xc->date[FST_HDR_DATE_SIZE] = 0;
 				}
 			}
-		else if(sectype == FST_BL_VCDATA)
+		else if((sectype == FST_BL_VCDATA) || (sectype == FST_BL_VCDATA_DYN_ALIAS))
 			{
 			if(hdr_incomplete)
 				{
@@ -3128,7 +3245,7 @@ for(;;)
 		}
 
 	blkpos++;
-	if(sectype != FST_BL_VCDATA)
+	if((sectype != FST_BL_VCDATA) && (sectype != FST_BL_VCDATA_DYN_ALIAS))
 		{
 		blkpos += seclen;
 		continue;
@@ -3432,8 +3549,8 @@ for(;;)
 		free(chain_table_lengths);
 
 		vc_maxhandle_largest = vc_maxhandle;
-		chain_table = malloc((vc_maxhandle+1) * sizeof(off_t));
-		chain_table_lengths = malloc((vc_maxhandle+1) * sizeof(uint32_t));
+		chain_table = calloc((vc_maxhandle+1), sizeof(off_t));
+		chain_table_lengths = calloc((vc_maxhandle+1), sizeof(uint32_t));
 		}
 
 	if(!chain_table || !chain_table_lengths) goto block_err;
@@ -3441,18 +3558,28 @@ for(;;)
 	pnt = chain_cmem;
 	idx = 0;
 	pval = 0;
+
 	do
 		{
 		int skiplen;
 		uint64_t val = fstGetVarint32(pnt, &skiplen);
 		
+		if(!val)
+			{
+			pnt += skiplen;
+			val = fstGetVarint32(pnt, &skiplen);
+			chain_table[idx] = 0;			/* need to explicitly zero as calloc above might not run */
+			chain_table_lengths[idx] = -val;	/* because during this loop iter would give stale data! */
+			idx++;
+			}
+		else 
 		if(val&1)
 			{
 			pval = chain_table[idx] = pval + (val >> 1);
 			if(idx) { chain_table_lengths[pidx] = pval - chain_table[pidx]; }
 			pidx = idx++;
 			}
-			else
+		else
 			{
 			int loopcnt = val >> 1;
 			for(i=0;i<loopcnt;i++)
@@ -3465,6 +3592,22 @@ for(;;)
 		} while (pnt != (chain_cmem + chain_clen));
 	chain_table[idx] = indx_pos - vc_start;
 	chain_table_lengths[pidx] = chain_table[idx] - chain_table[pidx];
+
+	for(i=0;i<idx;i++)
+		{
+		int32_t v32 = chain_table_lengths[i];
+		if((v32 < 0) && (!chain_table[i]))
+			{
+			v32 = -v32;
+			v32--;
+			if(((uint32_t)v32) < i) /* sanity check */
+				{
+				chain_table[i] = chain_table[v32];
+				chain_table_lengths[i] = chain_table_lengths[v32];	
+				}
+			}
+		}
+
 #ifdef FST_DEBUG
 	printf("\tdecompressed chain idx len: %"PRIu32"\n", idx);
 #endif
@@ -3521,7 +3664,7 @@ for(;;)
 	
 				if(rc != Z_OK)
 					{
-					printf("\tclen: %d (rc=%d)\n", (int)val, rc);
+					printf("\tfac: %d clen: %d (rc=%d)\n", (int)i, (int)val, rc);
 					exit(255);
 					}
 	
@@ -3941,7 +4084,7 @@ for(;;)
 		}
 
 	blkpos++;
-	if(sectype != FST_BL_VCDATA)
+	if((sectype != FST_BL_VCDATA) && (sectype != FST_BL_VCDATA_DYN_ALIAS))
 		{
 		blkpos += seclen;
 		continue;
@@ -3963,7 +4106,7 @@ for(;;)
 			beg_tim2 = fstReaderUint64(xc->f);
 			end_tim2 = fstReaderUint64(xc->f);
 
-			if((sectype != FST_BL_VCDATA) || (!seclen) || (beg_tim2 != tim))
+			if(((sectype != FST_BL_VCDATA)&&(sectype != FST_BL_VCDATA_DYN_ALIAS)) || (!seclen) || (beg_tim2 != tim))
 				{
 				blkpos = prev_blkpos;
 				break;
@@ -4096,8 +4239,8 @@ chain_cmem = malloc(chain_clen);
 fseeko(xc->f, indx_pos, SEEK_SET);
 fstFread(chain_cmem, chain_clen, 1, xc->f);
 	
-xc->rvat_chain_table = malloc((xc->rvat_vc_maxhandle+1) * sizeof(off_t));
-xc->rvat_chain_table_lengths = malloc((xc->rvat_vc_maxhandle+1) * sizeof(uint32_t));
+xc->rvat_chain_table = calloc((xc->rvat_vc_maxhandle+1), sizeof(off_t));
+xc->rvat_chain_table_lengths = calloc((xc->rvat_vc_maxhandle+1), sizeof(uint32_t));
 
 pnt = chain_cmem;
 idx = 0;
@@ -4106,7 +4249,16 @@ do
 	{
 	int skiplen;
 	uint64_t val = fstGetVarint32(pnt, &skiplen);
-		
+
+        if(!val)
+		{
+		pnt += skiplen;
+		val = fstGetVarint32(pnt, &skiplen);
+		xc->rvat_chain_table[idx] = 0;
+                xc->rvat_chain_table_lengths[idx] = -val;
+                idx++;
+                }
+	else		
 	if(val&1)
 		{
 		pval = xc->rvat_chain_table[idx] = pval + (val >> 1);
@@ -4128,6 +4280,21 @@ do
 free(chain_cmem); 
 xc->rvat_chain_table[idx] = indx_pos - xc->rvat_vc_start;
 xc->rvat_chain_table_lengths[pidx] = xc->rvat_chain_table[idx] - xc->rvat_chain_table[pidx];
+
+for(i=0;i<idx;i++)
+	{
+        int32_t v32 = xc->rvat_chain_table_lengths[i];
+	if((v32 < 0) && (!xc->rvat_chain_table[i]))
+        	{
+                v32 = -v32;
+		v32--;
+		if(((uint32_t)v32) < i) /* sanity check */
+			{
+	                xc->rvat_chain_table[i] = xc->rvat_chain_table[v32];
+	                xc->rvat_chain_table_lengths[i] = xc->rvat_chain_table_lengths[v32];
+			}
+                }
+	}
 
 #ifdef FST_DEBUG
 printf("\tdecompressed chain idx len: %"PRIu32"\n", idx);
@@ -4389,3 +4556,212 @@ if(xc->signal_lens[facidx] == 1)
 
 /* return(NULL); */
 }
+
+
+
+/**********************************************************************/
+#ifndef FST_DYNAMIC_ALIAS_DISABLE
+#ifndef _WAVE_HAVE_JUDY
+
+/***********************/
+/***                 ***/
+/***  jenkins hash   ***/
+/***                 ***/
+/***********************/
+
+/*
+--------------------------------------------------------------------
+mix -- mix 3 32-bit values reversibly.
+For every delta with one or two bits set, and the deltas of all three
+  high bits or all three low bits, whether the original value of a,b,c
+  is almost all zero or is uniformly distributed,
+* If mix() is run forward or backward, at least 32 bits in a,b,c
+  have at least 1/4 probability of changing.
+* If mix() is run forward, every bit of c will change between 1/3 and
+  2/3 of the time.  (Well, 22/100 and 78/100 for some 2-bit deltas.)
+mix() was built out of 36 single-cycle latency instructions in a 
+  structure that could supported 2x parallelism, like so:
+      a -= b; 
+      a -= c; x = (c>>13);
+      b -= c; a ^= x;
+      b -= a; x = (a<<8);
+      c -= a; b ^= x;
+      c -= b; x = (b>>13);
+      ...
+  Unfortunately, superscalar Pentiums and Sparcs can't take advantage 
+  of that parallelism.  They've also turned some of those single-cycle
+  latency instructions into multi-cycle latency instructions.  Still,
+  this is the fastest good hash I could find.  There were about 2^^68
+  to choose from.  I only looked at a billion or so.
+--------------------------------------------------------------------
+*/
+#define mix(a,b,c) \
+{ \
+  a -= b; a -= c; a ^= (c>>13); \
+  b -= c; b -= a; b ^= (a<<8); \
+  c -= a; c -= b; c ^= (b>>13); \
+  a -= b; a -= c; a ^= (c>>12);  \
+  b -= c; b -= a; b ^= (a<<16); \
+  c -= a; c -= b; c ^= (b>>5); \
+  a -= b; a -= c; a ^= (c>>3);  \
+  b -= c; b -= a; b ^= (a<<10); \
+  c -= a; c -= b; c ^= (b>>15); \
+}
+
+/*
+--------------------------------------------------------------------
+j_hash() -- hash a variable-length key into a 32-bit value
+  k       : the key (the unaligned variable-length array of bytes)
+  len     : the length of the key, counting by bytes
+  initval : can be any 4-byte value
+Returns a 32-bit value.  Every bit of the key affects every bit of
+the return value.  Every 1-bit and 2-bit delta achieves avalanche.
+About 6*len+35 instructions.
+
+The best hash table sizes are powers of 2.  There is no need to do
+mod a prime (mod is sooo slow!).  If you need less than 32 bits,
+use a bitmask.  For example, if you need only 10 bits, do
+  h = (h & hashmask(10));
+In which case, the hash table should have hashsize(10) elements.
+
+If you are hashing n strings (uint8_t **)k, do it like this:
+  for (i=0, h=0; i<n; ++i) h = hash( k[i], len[i], h);
+
+By Bob Jenkins, 1996.  bob_jenkins@burtleburtle.net.  You may use this
+code any way you wish, private, educational, or commercial.  It's free.
+
+See http://burtleburtle.net/bob/hash/evahash.html
+Use for hash table lookup, or anything where one collision in 2^^32 is
+acceptable.  Do NOT use for cryptographic purposes.
+--------------------------------------------------------------------
+*/
+
+static uint32_t j_hash(uint8_t *k, uint32_t length, uint32_t initval)
+{
+   uint32_t a,b,c,len;
+
+   /* Set up the internal state */
+   len = length;
+   a = b = 0x9e3779b9;  /* the golden ratio; an arbitrary value */
+   c = initval;         /* the previous hash value */
+
+   /*---------------------------------------- handle most of the key */
+   while (len >= 12)
+   {
+      a += (k[0] +((uint32_t)k[1]<<8) +((uint32_t)k[2]<<16) +((uint32_t)k[3]<<24));
+      b += (k[4] +((uint32_t)k[5]<<8) +((uint32_t)k[6]<<16) +((uint32_t)k[7]<<24));
+      c += (k[8] +((uint32_t)k[9]<<8) +((uint32_t)k[10]<<16)+((uint32_t)k[11]<<24));
+      mix(a,b,c);
+      k += 12; len -= 12;
+   }
+
+   /*------------------------------------- handle the last 11 bytes */
+   c += length;
+   switch(len)              /* all the case statements fall through */
+   {
+   case 11: c+=((uint32_t)k[10]<<24);
+   case 10: c+=((uint32_t)k[9]<<16);
+   case 9 : c+=((uint32_t)k[8]<<8);
+      /* the first byte of c is reserved for the length */
+   case 8 : b+=((uint32_t)k[7]<<24);
+   case 7 : b+=((uint32_t)k[6]<<16);
+   case 6 : b+=((uint32_t)k[5]<<8);
+   case 5 : b+=k[4];
+   case 4 : a+=((uint32_t)k[3]<<24);
+   case 3 : a+=((uint32_t)k[2]<<16);
+   case 2 : a+=((uint32_t)k[1]<<8);
+   case 1 : a+=k[0];
+     /* case 0: nothing left to add */
+   }
+   mix(a,b,c);
+   /*-------------------------------------------- report the result */
+   return(c);
+}
+
+/********************************************************************/
+
+/***************************/
+/***                     ***/
+/***  judy HS emulation  ***/
+/***                     ***/
+/***************************/
+
+struct collchain_t
+{
+struct collchain_t *next;
+void *payload;
+uint32_t fullhash, length;
+unsigned char mem[1];
+};
+
+
+void **JenkinsIns(void *base_i, unsigned char *mem, uint32_t length, uint32_t hashmask)
+{
+struct collchain_t ***base = (struct collchain_t ***)base_i;
+uint32_t hf, h;
+struct collchain_t **ar;
+struct collchain_t *chain, *pchain;
+
+if(!*base)
+	{
+	*base = calloc(1, (hashmask + 1) * sizeof(void *));
+	}
+ar = *base;
+
+h = (hf = j_hash(mem, length, length)) & hashmask;
+pchain = chain = ar[h];
+while(chain)
+	{
+	if((chain->fullhash == hf) && (chain->length == length) && !memcmp(chain->mem, mem, length))
+		{
+		if(pchain != chain) /* move hit to front */
+			{
+			pchain->next = chain->next;
+			chain->next = ar[h];
+			ar[h] = chain;
+			}
+		return(&(chain->payload));
+		}
+
+	pchain = chain;
+	chain = chain->next;
+	}
+
+chain = calloc(1, sizeof(struct collchain_t) + length - 1);
+memcpy(chain->mem, mem, length);
+chain->fullhash = hf;	
+chain->length = length;	
+chain->next = ar[h];
+ar[h] = chain;
+return(&(chain->payload));
+}
+
+
+void JenkinsFree(void *base_i, uint32_t hashmask)
+{
+struct collchain_t ***base = (struct collchain_t ***)base_i;
+uint32_t h;
+struct collchain_t **ar;
+struct collchain_t *chain, *chain_next;
+
+if(base && *base)
+	{
+	ar = *base;
+	for(h=0;h<=hashmask;h++)
+		{
+		chain = ar[h];
+		while(chain)
+			{
+			chain_next = chain->next;
+			free(chain);
+			chain = chain_next;
+			}
+		}
+
+	free(*base);
+	*base = NULL;
+	}
+}
+
+#endif
+#endif
