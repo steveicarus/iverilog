@@ -29,6 +29,7 @@
 # include  "compiler.h"
 # include  "discipline.h"
 # include  "ivl_assert.h"
+# include  "PExpr.h"
 
 static ostream& operator<< (ostream&o, NetBlock::Type t)
 {
@@ -1128,8 +1129,8 @@ void NetScope::dump(ostream&o) const
 			  << ":" << *(*pp).second.lsb << "] ";
 
 		  o << (*pp).first << " = ";
-		  if (pp->second.expr)
-			o << *(*pp).second.expr;
+		  if (pp->second.val)
+			o << *(*pp).second.val;
 		  else
 			o << "<nil>";
 
@@ -1167,13 +1168,13 @@ void NetScope::dump(ostream&o) const
 	    for (pp = localparams.begin()
 		       ; pp != localparams.end() ;  ++ pp ) {
 		  o << "    localparam " << (*pp).first << " = "  <<
-			*(*pp).second.expr << ";" << endl;
+			*(*pp).second.val << ";" << endl;
 	    }
       }
 
 	/* Dump the saved defparam assignments here. */
       {
-	    list<pair<pform_name_t,NetExpr*> >::const_iterator pp;
+	    list<pair<pform_name_t,PExpr*> >::const_iterator pp;
 	    for (pp = defparams.begin()
 		       ; pp != defparams.end() ;  ++ pp ) {
 		  o << "    defparam " << (*pp).first << " = " <<
@@ -1182,7 +1183,7 @@ void NetScope::dump(ostream&o) const
       }
 
       {
-	    list<pair<list<hname_t>,NetExpr*> >::const_iterator pp;
+	    list<pair<list<hname_t>,PExpr*> >::const_iterator pp;
 	    for (pp = defparams_later.begin()
 		       ; pp != defparams_later.end() ;  ++ pp ) {
 		  o << "    defparam(later) " << pp->first << " = " <<

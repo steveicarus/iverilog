@@ -106,6 +106,7 @@ bool gn_cadence_types_flag = true;
 bool gn_specify_blocks_flag = true;
 bool gn_io_range_error_flag = true;
 bool gn_strict_ca_eval_flag = false;
+bool gn_strict_expr_width_flag = false;
 bool gn_verilog_ams_flag = false;
 
 /*
@@ -294,6 +295,12 @@ static void process_generation_flag(const char*gen)
 
       } else if (strcmp(gen,"no-strict-ca-eval") == 0) {
 	    gn_strict_ca_eval_flag = false;
+
+      } else if (strcmp(gen,"strict-expr-width") == 0) {
+	    gn_strict_expr_width_flag = true;
+
+      } else if (strcmp(gen,"no-strict-expr-width") == 0) {
+	    gn_strict_expr_width_flag = false;
 
 	  } else {
       }

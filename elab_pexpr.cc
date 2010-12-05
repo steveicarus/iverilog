@@ -229,7 +229,7 @@ NetExpr*PEIdent::elaborate_pexpr(Design*des, NetScope*scope) const
 	// name is not found in the pscope, look in containing scopes,
 	// but do not go outside the containing module instance.
       for (;;) {
-	    ex = pscope->get_parameter(name_tail.name, ex_msb, ex_lsb);
+	    ex = pscope->get_parameter(des, name_tail.name, ex_msb, ex_lsb);
 	    if (ex != 0)
 		  break;
 	    if (pscope->type() == NetScope::MODULE)
@@ -509,7 +509,7 @@ void NetEParam::resolve_pexpr_type(void)
       if (reference_->second.signed_flag) {
 	    cast_signed_base_(true);
 
-      } else if (reference_->second.expr) {
-	    cast_signed_base_( reference_->second.expr->has_sign() );
+      } else if (reference_->second.val) {
+	    cast_signed_base_( reference_->second.val->has_sign() );
       }
 }

@@ -151,6 +151,10 @@ extern bool gn_io_range_error_flag;
    re-evaluated. */
 extern bool gn_strict_ca_eval_flag;
 
+/* If this flag is true, then force strict conformance to the IEEE
+   standard expression width rules. */
+extern bool gn_strict_expr_width_flag;
+
 /* If variables can be converted to uwires by a continuous assignment
    (assuming no procedural assign, then return true. This will be true
    for SystemVerilog */

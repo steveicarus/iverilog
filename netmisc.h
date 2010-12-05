@@ -141,6 +141,11 @@ extern unsigned count_lval_width(const class NetAssign_*first);
 extern bool need_constant_expr;
 
 /*
+ * This is used to indicate that we are evaluating a parameter expression.
+ */
+extern bool is_param_expr;
+
+/*
  * This function elaborates an expression, and tries to evaluate it
  * right away. If the expression can be evaluated, this returns a
  * constant expression. If it cannot be evaluated, it returns whatever

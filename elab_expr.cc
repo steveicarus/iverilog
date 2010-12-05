@@ -2089,33 +2089,14 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope,
 	    return expr_width_;
       }
 
-	// The width of a parameter name is the width of the range for
-	// the parameter name, if a range is declared. Otherwise, the
-	// width is undefined.
+	// The width of a parameter is the width of the parameter value
+        // (as evaluated earlier).
       if (par != 0) {
 	    expr_type_ = par->expr_type();
-	    expr_type__ = expr_type_;
-	    if (ex1) {
-		  ivl_assert(*this, ex2);
-		  const NetEConst*ex1_const = dynamic_cast<const NetEConst*> (ex1);
-		  const NetEConst*ex2_const = dynamic_cast<const NetEConst*> (ex2);
-		  ivl_assert(*this, ex1_const && ex2_const);
-
-		  long msb = ex1_const->value().as_long();
-		  long lsb = ex2_const->value().as_long();
-		  if (msb >= lsb)
-			expr_width_ = msb - lsb + 1;
-		  else
-			expr_width_ = lsb - msb + 1;
-		  return expr_width_;
-	    }
-
-	      // This is a parameter. If it is sized (meaning it was
-	      // declared with range expressions) then the range
-	      // expressions would have been caught above. So if we
-	      // got here then we know this is an unsized constant.
 	    expr_width_ = par->expr_width();
-	    unsized_flag = true;
+	    expr_type__ = expr_type_;
+            if (!par->has_width())
+	          unsized_flag = true;
 	    return expr_width_;
       }
 
@@ -2154,6 +2135,14 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       const NetExpr*ex1, *ex2;
 
+      if (is_param_expr && path_.size() > 1) {
+	    cerr << get_fileline() << ": error: parameter r-value expression "
+	            "does not support hierarchical references `" << path_
+	         << "`." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       NetScope*found_in = symbol_search(this, des, scope, path_,
 					net, par, eve,
 					ex1, ex2);
@@ -2163,6 +2152,14 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       if (par != 0)
 	    return elaborate_expr_param_(des, scope, par, found_in, ex1, ex2, expr_wid);
 
+        // If this is a parameter expression, no other identifiers are valid.
+      if (is_param_expr) {
+	    cerr << get_fileline() << ": error: identifier `"
+	         << path_ << "` is not a parameter in "
+	         << scope_path(scope) << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
 	// If the identifier names a signal (a register or wire)
 	// then create a NetESignal node to handle it.
@@ -3461,7 +3458,8 @@ NetEConst* PENumber::elaborate_expr(Design*, NetScope*,
 	// the self-determined size.
       if (expr_width__ > 0) {
 	    tvalue = pad_to_width(tvalue, expr_width__);
-	    if (tvalue.len() > (unsigned)expr_width__) {
+	    if ( (tvalue.len() > (unsigned)expr_width__) ||
+                 (is_param_expr && !tvalue.has_len()) ) {
 		  verinum tmp (tvalue, expr_width__);
 		  tmp.has_sign(tvalue.has_sign());
 		  tvalue = tmp;

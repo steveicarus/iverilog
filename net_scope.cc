@@ -27,6 +27,8 @@
 # include  <sstream>
 # include  "ivl_assert.h"
 
+class PExpr;
+
 /*
  * The NetScope class keeps a scope tree organized. Each node of the
  * scope tree points to its parent, its right sibling and its leftmost
@@ -107,26 +109,27 @@ void NetScope::set_line(perm_string file, perm_string def_file,
       def_lineno_ = def_lineno;
 }
 
-NetExpr* NetScope::set_parameter(perm_string key, NetExpr*expr,
-				 ivl_variable_type_t type__,
-				 NetExpr*msb, NetExpr*lsb, bool signed_flag,
-				 NetScope::range_t*range_list,
-				 const LineInfo&file_line)
+void NetScope::set_parameter(perm_string key, PExpr*val,
+			     ivl_variable_type_t type__,
+			     PExpr*msb, PExpr*lsb, bool signed_flag,
+			     NetScope::range_t*range_list,
+			     const LineInfo&file_line)
 {
       param_expr_t&ref = parameters[key];
-      NetExpr* res = ref.expr;
-      ref.expr = expr;
+      ref.msb_expr = msb;
+      ref.lsb_expr = lsb;
+      ref.val_expr = val;
+      ref.val_scope = this;
       ref.type = type__;
-      ref.msb = msb;
-      ref.lsb = lsb;
+      ref.msb = 0;
+      ref.lsb = 0;
       ref.signed_flag = signed_flag;
       ivl_assert(file_line, ref.range == 0);
       ref.range = range_list;
+      ref.val = 0;
       ref.set_line(file_line);
 
       ivl_assert(file_line, type__ != IVL_VT_NO_TYPE);
-
-      return res;
 }
 
 bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
@@ -166,15 +169,14 @@ bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
  * Return false if the parameter does not already exist.
  * A parameter is not automatically created.
  */
-bool NetScope::replace_parameter(perm_string key, NetExpr*expr)
+bool NetScope::replace_parameter(perm_string key, PExpr*val, NetScope*scope)
 {
       bool flag = false;
 
       if (parameters.find(key) != parameters.end()) {
 	    param_expr_t&ref = parameters[key];
-
-	    delete ref.expr;
-	    ref.expr = expr;
+	    ref.val_expr = val;
+            ref.val_scope = scope;
 	    flag = true;
       }
 
@@ -185,15 +187,20 @@ bool NetScope::replace_parameter(perm_string key, NetExpr*expr)
  * This is not really complete (msb, lsb, sign). It is currently only
  * used to add a genvar to the local parameter list.
  */
-NetExpr* NetScope::set_localparam(perm_string key, NetExpr*expr,
+NetExpr* NetScope::set_localparam(perm_string key, NetExpr*val,
 				  const LineInfo&file_line)
 {
       param_expr_t&ref = localparams[key];
-      NetExpr* res = ref.expr;
-      ref.expr = expr;
+      NetExpr* res = ref.val;
+      ref.msb_expr = 0;
+      ref.lsb_expr = 0;
+      ref.val_expr = 0;
+      ref.val_scope = this;
+      ref.type = IVL_VT_BOOL;
       ref.msb = 0;
       ref.lsb = 0;
       ref.signed_flag = false;
+      ref.val = val;
       ref.set_line(file_line);
       return res;
 }
@@ -205,31 +212,39 @@ NetExpr* NetScope::set_localparam(perm_string key, NetExpr*expr,
  * perm_string::literal method to fake the compiler into doing the
  * compare without actually creating a perm_string.
  */
-const NetExpr* NetScope::get_parameter(const char* key,
+const NetExpr* NetScope::get_parameter(Design*des,
+				       const char* key,
 				       const NetExpr*&msb,
-				       const NetExpr*&lsb) const
+				       const NetExpr*&lsb)
 {
-      return get_parameter(perm_string::literal(key), msb, lsb);
+      return get_parameter(des, perm_string::literal(key), msb, lsb);
 }
 
-const NetExpr* NetScope::get_parameter(perm_string key,
+const NetExpr* NetScope::get_parameter(Design*des,
+				       perm_string key,
 				       const NetExpr*&msb,
-				       const NetExpr*&lsb) const
+				       const NetExpr*&lsb)
 {
-      map<perm_string,param_expr_t>::const_iterator idx;
+      map<perm_string,param_expr_t>::iterator idx;
 
       idx = parameters.find(key);
       if (idx != parameters.end()) {
-	    msb = (*idx).second.msb;
-	    lsb = (*idx).second.lsb;
-	    return (*idx).second.expr;
+            if (idx->second.val_expr)
+                  evaluate_parameter_(des, idx);
+
+	    msb = idx->second.msb;
+	    lsb = idx->second.lsb;
+	    return idx->second.val;
       }
 
       idx = localparams.find(key);
       if (idx != localparams.end()) {
-	    msb = (*idx).second.msb;
-	    lsb = (*idx).second.lsb;
-	    return (*idx).second.expr;
+            if (idx->second.val_expr)
+                  evaluate_parameter_(des, idx);
+
+	    msb = idx->second.msb;
+	    lsb = idx->second.lsb;
+	    return idx->second.val;
       }
 
       map<perm_string,NetEConstEnum*>::const_iterator eidx;
@@ -244,7 +259,7 @@ const NetExpr* NetScope::get_parameter(perm_string key,
       return 0;
 }
 
-map<perm_string,NetScope::param_expr_t>::iterator NetScope::find_parameter(perm_string key)
+NetScope::param_ref_t NetScope::find_parameter(perm_string key)
 {
       map<perm_string,param_expr_t>::iterator idx;
 

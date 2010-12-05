@@ -74,7 +74,7 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 	    if ( (eve = scope->find_event(key)) )
 		  return scope;
 
-	    if ( (par = scope->get_parameter(key, ex1, ex2)) )
+	    if ( (par = scope->get_parameter(des, key, ex1, ex2)) )
 		  return scope;
 
 	      /* We can't look up if we are at the enclosing module scope

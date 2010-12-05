@@ -50,63 +50,9 @@
 
 typedef map<perm_string,LexicalScope::param_expr_t>::const_iterator mparm_it_t;
 
-static void collect_scope_parameters_(NetScope*scope,
-      const map<perm_string,LexicalScope::param_expr_t>&parameters)
+static void collect_parm_item_(Design*des, NetScope*scope, perm_string name, 
+			       const LexicalScope::param_expr_t&cur)
 {
-      for (mparm_it_t cur = parameters.begin()
-		 ; cur != parameters.end() ;  ++ cur ) {
-
-	    NetEParam*tmp = new NetEParam;
-	    tmp->set_line(*((*cur).second.expr));
-	    tmp->cast_signed( (*cur).second.signed_flag );
-
-	    scope->set_parameter((*cur).first, tmp, (*cur).second.type,
-				 0, 0, false, 0, (*cur).second);
-      }
-}
-
-static void collect_scope_localparams_(NetScope*scope,
-      const map<perm_string,LexicalScope::param_expr_t>&localparams)
-{
-      for (mparm_it_t cur = localparams.begin()
-		 ; cur != localparams.end() ;  ++ cur ) {
-
-	    NetEParam*tmp = new NetEParam;
-	    tmp->set_line(*((*cur).second.expr));
-	    if ((*cur).second.msb)
-		  tmp->cast_signed( (*cur).second.signed_flag );
-
-	    scope->set_parameter((*cur).first, tmp, (*cur).second.type,
-				 0, 0, false, 0, (*cur).second);
-      }
-}
-
-static void elaborate_parm_item_(perm_string name,
-                                 const LexicalScope::param_expr_t&cur,
-				 Design*des, NetScope*scope)
-{
-      PExpr*ex = cur.expr;
-      assert(ex);
-
-      NetExpr*val = ex->elaborate_pexpr(des, scope);
-
-      NetExpr*msb = 0;
-      NetExpr*lsb = 0;
-      bool signed_flag = cur.signed_flag;
-
-	/* If the parameter declaration includes msb and lsb,
-	   then use them to calculate a width for the
-	   result. Then make sure the constant expression of the
-	   parameter value is coerced to have the correct
-	   and defined width. */
-      if (cur.msb) {
-	    assert(cur.lsb);
-	    msb = cur.msb ->elaborate_pexpr(des, scope);
-	    assert(msb);
-	    lsb = cur.lsb ->elaborate_pexpr(des, scope);
-	    assert(lsb);
-      }
-
       NetScope::range_t*range_list = 0;
       for (LexicalScope::range_t*range = cur.range ; range ; range = range->next) {
 	    NetScope::range_t*tmp = new NetScope::range_t;
@@ -143,33 +89,11 @@ static void elaborate_parm_item_(perm_string name,
 	    range_list = tmp;
       }
 
-	/* Set the parameter expression to 0 if the evaluation failed. */
-      if (val == 0) {
-	    val = scope->set_parameter(name, val, cur.type, msb, lsb,
-	                               signed_flag, range_list, cur);
-	    delete val;
-	    return;
-      }
-
-      if (signed_flag) {
-	      /* If explicitly signed, then say so. */
-	    val->cast_signed(true);
-      } else if (cur.msb) {
-	      /* If there is a range, then the signedness comes
-		 from the type and not the expression. */
-	    val->cast_signed(signed_flag);
-      } else {
-	      /* otherwise, let the expression describe
-		 itself. */
-	    signed_flag = val->has_sign();
-      }
-
-      val = scope->set_parameter(name, val, cur.type, msb, lsb, signed_flag,
-                                 range_list, cur);
-      delete val;
+      scope->set_parameter(name, cur.expr, cur.type, cur.msb, cur.lsb,
+			   cur.signed_flag, range_list, cur);
 }
 
-static void elaborate_scope_parameters_(Design*des, NetScope*scope,
+static void collect_scope_parameters_(Design*des, NetScope*scope,
       const map<perm_string,LexicalScope::param_expr_t>&parameters)
 {
       for (mparm_it_t cur = parameters.begin()
@@ -184,11 +108,11 @@ static void elaborate_scope_parameters_(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
-	    elaborate_parm_item_((*cur).first, (*cur).second, des, scope);
+	    collect_parm_item_(des, scope, (*cur).first, (*cur).second);
       }
 }
 
-static void elaborate_scope_localparams_(Design*des, NetScope*scope,
+static void collect_scope_localparams_(Design*des, NetScope*scope,
       const map<perm_string,LexicalScope::param_expr_t>&localparams)
 {
       for (mparm_it_t cur = localparams.begin()
@@ -203,7 +127,7 @@ static void elaborate_scope_localparams_(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
-	    elaborate_parm_item_((*cur).first, (*cur).second, des, scope);
+	    collect_parm_item_(des, scope, (*cur).first, (*cur).second);
       }
 }
 
@@ -295,7 +219,7 @@ static void replace_scope_parameters_(NetScope*scope, const LineInfo&loc,
       for (Module::replace_t::const_iterator cur = replacements.begin()
 		 ; cur != replacements.end() ;  ++ cur ) {
 
-	    NetExpr*val = (*cur).second;
+	    PExpr*val = (*cur).second;
 	    if (val == 0) {
 		  cerr << loc.get_fileline() << ": internal error: "
 		       << "Missing expression in parameter replacement for "
@@ -310,7 +234,8 @@ static void replace_scope_parameters_(NetScope*scope, const LineInfo&loc,
 		  cerr << loc.get_fileline() << ":      : "
 		       << "Type=" << val->expr_type() << endl;
 	    }
-	    bool flag = scope->replace_parameter((*cur).first, val);
+	    bool flag = scope->replace_parameter((*cur).first, val,
+                                                 scope->parent());
 	    if (! flag) {
 		  cerr << val->get_fileline() << ": warning: parameter "
 		       << (*cur).first << " not found in "
@@ -360,8 +285,8 @@ static void elaborate_scope_tasks(Design*des, NetScope*scope,
 
 	      // A task can not have the same name as a parameter.
 	    const NetExpr *ex_msb, *ex_lsb;
-	    const NetExpr *parm = scope->get_parameter((*cur).first, ex_msb,
-	                                               ex_lsb);
+	    const NetExpr *parm = scope->get_parameter(des, (*cur).first,
+                                                       ex_msb, ex_lsb);
 	    if (parm) {
 		  cerr << cur->second->get_fileline()
 		       << ": error: task and parameter in '"
@@ -415,8 +340,8 @@ static void elaborate_scope_funcs(Design*des, NetScope*scope,
 
 	      // A function can not have the same name as a parameter.
 	    const NetExpr *ex_msb, *ex_lsb;
-	    const NetExpr *parm = scope->get_parameter((*cur).first, ex_msb,
-	                                               ex_lsb);
+	    const NetExpr *parm = scope->get_parameter(des, (*cur).first,
+                                                       ex_msb, ex_lsb);
 	    if (parm) {
 		  cerr << cur->second->get_fileline()
 		       << ": error: function and parameter in '"
@@ -484,60 +409,29 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	    scope->add_genvar((*cur).first, (*cur).second);
       }
 
-	// Generate all the parameters that this instance of this
-	// module introduces to the design. This loop elaborates the
-	// parameters, but doesn't evaluate references to
-	// parameters. This scan practically locates all the
-	// parameters and puts them in the parameter table in the
-	// design.
+	// Scan the parameters in the module, and store the information
+	// needed to evaluate the parameter expressions. The expressions
+	// will be evaluated later, once all parameter overrides for this
+	// module have been done.
 
-	// No expressions are evaluated, yet. For now, leave them in
-	// the pform and just place a NetEParam placeholder in the
-	// place of the elaborated expression.
+      collect_scope_parameters_(des, scope, parameters);
 
-	// Scan the parameters in the module, and create stub parameter
-        // entries in the scope for the parameter names.
+      collect_scope_localparams_(des, scope, localparams);
 
-      collect_scope_parameters_(scope, parameters);
+	// Run parameter replacements that were collected from the
+	// containing scope and meant for me.
 
-      collect_scope_localparams_(scope, localparams);
-
-	// Now scan the parameters again, this time elaborating them
-	// for use as parameter values. This is after the previous
-	// scan so that local parameter names can be used in the
-	// r-value expressions.
-
-      elaborate_scope_parameters_(des, scope, parameters);
-
-	/* run parameter replacements that were collected from the
-	   containing scope and meant for me. */
       replace_scope_parameters_(scope, *this, replacements);
-
-      elaborate_scope_localparams_(des, scope, localparams);
 
       elaborate_scope_enumerations(des, scope, enum_sets);
 
-	// Run through the defparams for this module, elaborate the
-	// expressions in this context and save the result is a table
-	// for later final override.
-
-	// It is OK to elaborate the expressions of the defparam here
-	// because Verilog requires that the expressions only use
-	// local parameter names. It is *not* OK to do the override
-	// here because the parameter receiving the assignment may be
-	// in a scope not discovered by this pass.
-
+	// Run through the defparams for this module and save the result
+	// in a table for later final override.
+  
       typedef list<Module::named_expr_t>::const_iterator defparms_iter_t;
       for (defparms_iter_t cur = defparms.begin()
 		 ; cur != defparms.end() ; ++ cur ) {
-
-	    PExpr*ex = cur->second;
-	    assert(ex);
-
-	    NetExpr*val = ex->elaborate_pexpr(des, scope);
-	    if (val == 0) continue;
-
-	    scope->defparams.push_back(make_pair(cur->first, val));
+	    scope->defparams.push_back(make_pair(cur->first, cur->second));
       }
 
 	// Evaluate the attributes. Evaluate them in the scope of the
@@ -708,7 +602,8 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	// A generate "loop" can not have the same name as a parameter.
       const NetExpr*tmsb;
       const NetExpr*tlsb;
-      const NetExpr*texpr = container->get_parameter(scope_name, tmsb, tlsb);
+      const NetExpr*texpr = container->get_parameter(des, scope_name,
+                                                     tmsb, tlsb);
       if (texpr != 0) {
 	    cerr << get_fileline() << ": error: generate \"loop\" and "
 	            "parameter in '" << container->fullname()
@@ -719,7 +614,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	// These have all been checked so we just need to skip the actual
 	// generation for these name conflicts. Not skipping these two will
 	// cause the compiler to have problems (assert, inf. loop, etc.).
-      if (container->get_parameter(loop_index, tmsb, tlsb)) return false;
+      if (container->get_parameter(des, loop_index, tmsb, tlsb)) return false;
       if (container->find_event(loop_index)) return false;
 
       genvar = init->value().as_long();
@@ -868,8 +763,8 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
 
 	// A generate "if" can not have the same name as a parameter.
       const NetExpr *ex_msb, *ex_lsb;
-      const NetExpr *parm = container->get_parameter(scope_name, ex_msb,
-                                                     ex_lsb);
+      const NetExpr *parm = container->get_parameter(des, scope_name,
+                                                     ex_msb, ex_lsb);
       if (parm) {
 	    cerr << get_fileline() << ": error: generate \"if\" and "
 	            "parameter in '" << container->fullname()
@@ -1014,8 +909,8 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 
 	// A generate "case" can not have the same name as a parameter.
       const NetExpr *ex_msb, *ex_lsb;
-      const NetExpr *parm = container->get_parameter(item->scope_name, ex_msb,
-                                                     ex_lsb);
+      const NetExpr *parm = container->get_parameter(des, item->scope_name,
+                                                     ex_msb, ex_lsb);
       if (parm) {
 	    cerr << get_fileline() << ": error: generate \"case\" and "
 	            "parameter in '" << container->fullname()
@@ -1074,8 +969,8 @@ bool PGenerate::generate_scope_nblock_(Design*des, NetScope*container)
 
 	// A generate "block" can not have the same name as a parameter.
       const NetExpr *ex_msb, *ex_lsb;
-      const NetExpr *parm = container->get_parameter(scope_name, ex_msb,
-                                                     ex_lsb);
+      const NetExpr *parm = container->get_parameter(des, scope_name,
+                                                     ex_msb, ex_lsb);
       if (parm) {
 	    cerr << get_fileline() << ": error: generate \"block\" and "
 	            "parameter in '" << container->fullname()
@@ -1123,13 +1018,11 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 	    (*cur) -> generate_scope(des, scope);
       }
 
-	// Scan the localparams in this scope, and create stub parameter
-        // entries in the scope for the parameter names.
-      collect_scope_localparams_(scope, localparams);
-
-	// Now scan the localparams again, this time elaborating them
-	// for use as parameter values.
-      elaborate_scope_localparams_(des, scope, localparams);
+	// Scan the localparams in this scope, and store the information
+        // needed to evaluate the parameter expressions. The expressions
+	// will be evaluated later, once all parameter overrides for this
+	// module have been done.
+      collect_scope_localparams_(des, scope, localparams);
 
         // Scan through all the task and function declarations in this
         // scope.
@@ -1230,7 +1123,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 
 	// A module instance can not have the same name as a parameter.
       const NetExpr *ex_msb, *ex_lsb;
-      const NetExpr *parm = sc->get_parameter(get_name(), ex_msb, ex_lsb);
+      const NetExpr *parm = sc->get_parameter(des, get_name(), ex_msb, ex_lsb);
       if (parm) {
 	    cerr << get_fileline() << ": error: module <" << mod->mod_name()
 	         << "> instance and parameter in '" << sc->fullname()
@@ -1391,9 +1284,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // passed. It is built up by the ordered overrides or named
 	      // overrides.
 
-	    typedef map<perm_string,PExpr*>::const_iterator mparm_local_it_t;
-	    map<perm_string,PExpr*> replace;
-
+	    Module::replace_t replace;
 
 	      // Positional parameter overrides are matched to parameter
 	      // names by using the param_names list of parameter
@@ -1411,7 +1302,10 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 			if (cur == mod->param_names.end())
 			      break;
 
-			replace[*cur] = *jdx;
+		          // No expression means that the parameter is not
+		          // replaced at all.
+			if (*jdx)
+			      replace[*cur] = *jdx;
 
 			++ jdx;
 			++ cur;
@@ -1427,31 +1321,12 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 
 	    }
 
-
-	    Module::replace_t replace_net;
-
-	      // And here we scan the replacements we collected. Elaborate
-	      // the expression in my context, then replace the sub-scope
-	      // parameter value with the new expression.
-
-	    for (mparm_local_it_t cur = replace.begin()
-		       ; cur != replace.end() ; ++ cur ) {
-
-		  PExpr*tmp = (*cur).second;
-		    // No expression means that the parameter is not
-		    // replaced at all.
-		  if (tmp == 0) continue;
-		  NetExpr*val = tmp->elaborate_pexpr(des, sc);
-		  if (val == 0) continue;
-		  replace_net[(*cur).first] = val;
-	    }
-
 	      // This call actually arranges for the description of the
 	      // module type to process this instance and handle parameters
 	      // and sub-scopes that might occur. Parameters are also
 	      // created in that scope, as they exist. (I'll override them
 	      // later.)
-	    mod->elaborate_scope(des, my_scope, replace_net);
+	    mod->elaborate_scope(des, my_scope, replace);
 
       }
 
@@ -1494,7 +1369,7 @@ void PEvent::elaborate_scope(Design*des, NetScope*scope) const
 
 	// A named event can not have the same name as a parameter.
       const NetExpr *ex_msb, *ex_lsb;
-      const NetExpr *parm = scope->get_parameter(name_, ex_msb, ex_lsb);
+      const NetExpr *parm = scope->get_parameter(des, name_, ex_msb, ex_lsb);
       if (parm) {
 	    cerr << get_fileline() << ": error: named event and "
 	         << "parameter in '" << scope->fullname()
@@ -1511,21 +1386,12 @@ void PFunction::elaborate_scope(Design*des, NetScope*scope) const
 {
       assert(scope->type() == NetScope::FUNC);
 
-	// Scan the parameters in the function, and create stub parameter
-        // entries in the scope for the parameter names.
+	// Scan the parameters in the function, and store the information
+        // needed to evaluate the parameter expressions. 
 
-      collect_scope_parameters_(scope, parameters);
+      collect_scope_parameters_(des, scope, parameters);
 
-      collect_scope_localparams_(scope, localparams);
-
-	// Now scan the parameters again, this time elaborating them
-	// for use as parameter values. This is after the previous
-	// scan so that local parameter names can be used in the
-	// r-value expressions.
-
-      elaborate_scope_parameters_(des, scope, parameters);
-
-      elaborate_scope_localparams_(des, scope, localparams);
+      collect_scope_localparams_(des, scope, localparams);
 
 	// Scan through all the named events in this scope.
       elaborate_scope_events_(des, scope, events);
@@ -1538,21 +1404,12 @@ void PTask::elaborate_scope(Design*des, NetScope*scope) const
 {
       assert(scope->type() == NetScope::TASK);
 
-	// Scan the parameters in the task, and create stub parameter
-        // entries in the scope for the parameter names.
+	// Scan the parameters in the task, and store the information
+        // needed to evaluate the parameter expressions. 
 
-      collect_scope_parameters_(scope, parameters);
+      collect_scope_parameters_(des, scope, parameters);
 
-      collect_scope_localparams_(scope, localparams);
-
-	// Now scan the parameters again, this time elaborating them
-	// for use as parameter values. This is after the previous
-	// scan so that local parameter names can be used in the
-	// r-value expressions.
-
-      elaborate_scope_parameters_(des, scope, parameters);
-
-      elaborate_scope_localparams_(des, scope, localparams);
+      collect_scope_localparams_(des, scope, localparams);
 
 	// Scan through all the named events in this scope.
       elaborate_scope_events_(des, scope, events);
@@ -1604,8 +1461,8 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 
 	      // A named block can not have the same name as a parameter.
 	    const NetExpr *ex_msb, *ex_lsb;
-	    const NetExpr *parm = scope->get_parameter(pscope_name(), ex_msb,
-	                                               ex_lsb);
+	    const NetExpr *parm = scope->get_parameter(des, pscope_name(),
+                                                       ex_msb, ex_lsb);
 	    if (parm) {
 		  cerr << get_fileline() << ": error: named block and "
 		          "parameter in '" << scope->fullname()
@@ -1624,21 +1481,12 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 	    my_scope->set_line(get_file(), get_lineno());
             my_scope->is_auto(scope->is_auto());
 
-	      // Scan the parameters in the scope, and create stub parameter
-              // entries in the scope for the parameter names.
+	      // Scan the parameters in the scope, and store the information
+	      // needed to evaluate the parameter expressions. 
 
-            collect_scope_parameters_(my_scope, parameters);
+            collect_scope_parameters_(des, my_scope, parameters);
 
-            collect_scope_localparams_(my_scope, localparams);
-
-	      // Now scan the parameters again, this time elaborating them
-	      // for use as parameter values. This is after the previous
-	      // scan so that local parameter names can be used in the
-	      // r-value expressions.
-
-            elaborate_scope_parameters_(des, my_scope, parameters);
-
-            elaborate_scope_localparams_(des, my_scope, localparams);
+            collect_scope_localparams_(des, my_scope, localparams);
 
               // Scan through all the named events in this scope.
             elaborate_scope_events_(des, my_scope, events);

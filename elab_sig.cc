@@ -831,7 +831,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       }
 	// A signal can not have the same name as a parameter.
       const NetExpr *ex_msb, *ex_lsb;
-      const NetExpr *parm = scope->get_parameter(name_, ex_msb, ex_lsb);
+      const NetExpr *parm = scope->get_parameter(des, name_, ex_msb, ex_lsb);
       if (parm) {
 	    cerr << get_fileline() << ": error: signal and parameter in '"
 	         << scope->fullname() << "' have the same name '" << name_

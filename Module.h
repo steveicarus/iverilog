@@ -138,7 +138,7 @@ class Module : public PScope, public LineInfo {
       void dump(ostream&out) const;
       bool elaborate(Design*, NetScope*scope) const;
 
-      typedef map<perm_string,NetExpr*> replace_t;
+      typedef map<perm_string,PExpr*> replace_t;
       bool elaborate_scope(Design*, NetScope*scope, const replace_t&rep);
 
       bool elaborate_sig(Design*, NetScope*scope) const;

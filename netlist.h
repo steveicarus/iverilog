@@ -71,6 +71,7 @@ class NetRamDq;
 class NetTaskDef;
 class NetEvTrig;
 class NetEvWait;
+class PExpr;
 class netenum_t;
 
 struct target;
@@ -713,26 +714,28 @@ class NetScope : public Attrib {
 	   previous expression, if there was one. */
 
       struct range_t;
-      NetExpr* set_parameter(perm_string name, NetExpr*val,
-			     ivl_variable_type_t type,
-			     NetExpr*msb, NetExpr*lsb, bool signed_flag,
-			     NetScope::range_t*range_list,
-			     const LineInfo&file_line);
+      void set_parameter(perm_string name, PExpr*val,
+			 ivl_variable_type_t type,
+			 PExpr*msb, PExpr*lsb, bool signed_flag,
+			 NetScope::range_t*range_list,
+			 const LineInfo&file_line);
       NetExpr* set_localparam(perm_string name, NetExpr*val,
 			      const LineInfo&file_line);
 
-      const NetExpr*get_parameter(const char* name,
+      const NetExpr*get_parameter(Design*des,
+				  const char* name,
 				  const NetExpr*&msb,
-				  const NetExpr*&lsb) const;
-      const NetExpr*get_parameter(perm_string name,
+				  const NetExpr*&lsb);
+      const NetExpr*get_parameter(Design*des,
+				  perm_string name,
 				  const NetExpr*&msb,
-				  const NetExpr*&lsb) const;
+				  const NetExpr*&lsb);
 
 	/* These are used by defparam elaboration to replace the
 	   expression with a new expression, without affecting the
 	   range or signed_flag. Return false if the name does not
 	   exist. */
-      bool replace_parameter(perm_string name, NetExpr*val);
+      bool replace_parameter(perm_string name, PExpr*val, NetScope*scope);
 
 	/* These methods set or access events that live in this
 	   scope. */
@@ -848,8 +851,8 @@ class NetScope : public Attrib {
 	   assignments from the scope pass to the parameter evaluation
 	   step. After that, it is not used. */
 
-      list<pair<pform_name_t,NetExpr*> > defparams;
-      list<pair<list<hname_t>,NetExpr*> > defparams_later;
+      list<pair<pform_name_t,PExpr*> > defparams;
+      list<pair<list<hname_t>,PExpr*> > defparams_later;
 
     public:
       struct range_t {
@@ -867,7 +870,17 @@ class NetScope : public Attrib {
 	/* After everything is all set up, the code generators like
 	   access to these things to make up the parameter lists. */
       struct param_expr_t : public LineInfo {
-	    param_expr_t() : type(IVL_VT_NO_TYPE), signed_flag(false), msb(0), lsb(0), range(0), expr(0) { }
+	    param_expr_t() : msb_expr(0), lsb_expr(0), val_expr(0), val_scope(0),
+                             solving(false), type(IVL_VT_NO_TYPE), signed_flag(false),
+                             msb(0), lsb(0), range(0), val(0) { }
+              // Source expressions
+	    PExpr*msb_expr;
+	    PExpr*lsb_expr;
+	    PExpr*val_expr;
+              // Scope information
+            NetScope*val_scope;
+	      // Evaluation status
+	    bool solving;
 	      // Type information
 	    ivl_variable_type_t type;
 	    bool signed_flag;
@@ -876,7 +889,7 @@ class NetScope : public Attrib {
 	      // range constraints
 	    struct range_t*range;
 	      // Expression value
-	    NetExpr*expr;
+	    NetExpr*val;
       };
       map<perm_string,param_expr_t>parameters;
       map<perm_string,param_expr_t>localparams;
@@ -909,6 +922,7 @@ class NetScope : public Attrib {
     private:
       void evaluate_parameter_logic_(Design*des, param_ref_t cur);
       void evaluate_parameter_real_(Design*des, param_ref_t cur);
+      void evaluate_parameter_(Design*des, param_ref_t cur);
 
     private:
       TYPE type_;

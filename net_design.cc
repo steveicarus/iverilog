@@ -32,6 +32,7 @@
 # include  "util.h"
 # include  "compiler.h"
 # include  "netmisc.h"
+# include  "PExpr.h"
 # include  <sstream>
 # include  "ivl_assert.h"
 
@@ -224,11 +225,11 @@ void NetScope::run_defparams(Design*des)
 	    cur->second->run_defparams(des);
 
       while (! defparams.empty()) {
-	    pair<pform_name_t,NetExpr*> pp = defparams.front();
+	    pair<pform_name_t,PExpr*> pp = defparams.front();
 	    defparams.pop_front();
 
 	    pform_name_t path = pp.first;
-	    NetExpr*val = pp.second;
+	    PExpr*val = pp.second;
 
 	    perm_string perm_name = peek_tail_name(path);
 	    path.pop_back();
@@ -249,11 +250,7 @@ void NetScope::run_defparams(Design*des)
 		  continue;
 	    }
 
-	      // Once placed in the parameter map, the expression may
-	      // be deleted when evaluated, so give it a copy of this
-	      // expression, not the original.
-	    val = val->dup_expr();
-	    bool flag = targ_scope->replace_parameter(perm_name, val);
+	    bool flag = targ_scope->replace_parameter(perm_name, val, this);
 	    if (! flag) {
 		  cerr << val->get_fileline() << ": warning: parameter "
 		       << perm_name << " not found in "
@@ -272,17 +269,17 @@ void NetScope::run_defparams(Design*des)
 void NetScope::run_defparams_later(Design*des)
 {
       set<NetScope*> target_scopes;
-      list<pair<list<hname_t>,NetExpr*> > defparams_even_later;
+      list<pair<list<hname_t>,PExpr*> > defparams_even_later;
 
       while (! defparams_later.empty()) {
-	    pair<list<hname_t>,NetExpr*> cur = defparams_later.front();
+	    pair<list<hname_t>,PExpr*> cur = defparams_later.front();
 	    defparams_later.pop_front();
 
 	    list<hname_t>eval_path = cur.first;
 	    perm_string name = eval_path.back().peek_name();
 	    eval_path.pop_back();
 
-	    NetExpr*val = cur.second;
+	    PExpr*val = cur.second;
 
 	    NetScope*targ_scope = des->find_scope(this, eval_path);
 	    if (targ_scope == 0) {
@@ -294,11 +291,7 @@ void NetScope::run_defparams_later(Design*des)
 		  continue;
 	    }
 
-	      // Once placed in the parameter map, the expression may
-	      // be deleted when evaluated, so give it a copy of this
-	      // expression, not the original.
-	    val = val->dup_expr();
-	    bool flag = targ_scope->replace_parameter(name, val);
+	    bool flag = targ_scope->replace_parameter(name, val, this);
 	    if (! flag) {
 		  cerr << val->get_fileline() << ": warning: parameter "
 		       << name << " not found in "
@@ -337,10 +330,12 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
       bool range_flag = false;
 
 	/* Evaluate the msb expression, if it is present. */
-      if ((*cur).second.msb) {
-	    eval_expr((*cur).second.msb);
+      PExpr*msb_expr = (*cur).second.msb_expr;
+      if (msb_expr) {
+            probe_expr_width(des, this, msb_expr);
+            (*cur).second.msb = elab_and_eval(des, this, msb_expr, -2);
 	    if (! eval_as_long(msb, (*cur).second.msb)) {
-		  cerr << (*cur).second.expr->get_fileline()
+		  cerr << (*cur).second.val->get_fileline()
 		       << ": error: Unable to evaluate msb expression "
 		       << "for parameter " << (*cur).first << ": "
 		       << *(*cur).second.msb << endl;
@@ -352,10 +347,12 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
       }
 
 	/* Evaluate the lsb expression, if it is present. */
-      if ((*cur).second.lsb) {
-	    eval_expr((*cur).second.lsb);
+      PExpr*lsb_expr = (*cur).second.lsb_expr;
+      if (lsb_expr) {
+            probe_expr_width(des, this, lsb_expr);
+            (*cur).second.lsb = elab_and_eval(des, this, lsb_expr, -2);
 	    if (! eval_as_long(lsb, (*cur).second.lsb)) {
-		  cerr << (*cur).second.expr->get_fileline()
+		  cerr << (*cur).second.val->get_fileline()
 		       << ": error: Unable to evaluate lsb expression "
 		       << "for parameter " << (*cur).first << ": "
 		       << *(*cur).second.lsb << endl;
@@ -366,17 +363,31 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	    range_flag = true;
       }
 
+	/* Evaluate the parameter expression. */
+      PExpr*val_expr = (*cur).second.val_expr;
+      NetScope*val_scope = (*cur).second.val_scope;
 
-	/* Evaluate the parameter expression, if necessary. */
-      NetExpr*expr = (*cur).second.expr;
-      if (expr == NULL) return;  // This is an invalid parameter so return.
+      unsigned lval_wid = 0;
+      if (range_flag)
+	    lval_wid = (msb >= lsb) ? 1 + msb - lsb : 1 + lsb - msb;
 
-      eval_expr(expr);
+      bool unsized_flag = false;
+      ivl_variable_type_t rval_type = IVL_VT_NO_TYPE;
+      int expr_wid = val_expr->test_width(des, val_scope, lval_wid, lval_wid,
+                                          rval_type, unsized_flag);
 
-      /* The eval_expr may delete and replace the expr pointer, so the
-         second.expr value cannot be relied on. Might as well replace
-         it now with the expression that we evaluated. */
-      (*cur).second.expr = expr;
+      if (unsized_flag && !range_flag)
+            expr_wid = -1;
+
+      int prune_wid = -1;
+      if (gn_strict_expr_width_flag)
+            prune_wid = 0;
+      if (range_flag)
+            prune_wid = lval_wid;
+
+      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, expr_wid, prune_wid);
+      if (! expr) 
+            return;
 
       switch (expr->expr_type()) {
 	  case IVL_VT_REAL:
@@ -385,7 +396,6 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 		       << ": error: Unable to evaluate real parameter "
 		       << (*cur).first << " value: " << *expr << endl;
 		  des->errors += 1;
-		  (*cur).second.expr = NULL;
 		  return;
 	    }
 	    break;
@@ -397,7 +407,6 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 		       << ": error: Unable to evaluate parameter "
 		       << (*cur).first << " value: " << *expr << endl;
 		  des->errors += 1;
-		  (*cur).second.expr = NULL;
 		  return;
 	    }
 	    break;
@@ -407,41 +416,24 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 		 << ": internal error: "
 		 << "Unhandled expression type?" << endl;
 	    des->errors += 1;
-	    (*cur).second.expr = NULL;
 	    return;
       }
+      (*cur).second.val = expr;
 
 	/* If the parameter has range information, then make
-	sure the value is set right. Note that if the
-	parameter doesn't have an explicit range, then it
-	will get the signedness from the expression itself. */
+	   sure the type is set right. Note that if the
+	   parameter doesn't have an explicit range, then it
+	   will get the signedness from the expression itself. */
       if (range_flag) {
-	    unsigned long wid = (msb >= lsb)? msb - lsb : lsb - msb;
-	    wid += 1;
-
 	    /* If we have a real value convert it to an integer. */
 	    if(NetECReal*tmp = dynamic_cast<NetECReal*>(expr)) {
-		  verinum nval(tmp->value().as_long64());
+		  verinum nval(tmp->value().as_long64(), lval_wid);
 		  expr = new NetEConst(nval);
-		  expr->set_line(*((*cur).second.expr));
-		  (*cur).second.expr = expr;
+		  expr->set_line(*((*cur).second.val));
+		  (*cur).second.val = expr;
 	    }
 
-	    NetEConst*val = dynamic_cast<NetEConst*>(expr);
-	    assert(val);
-
-	    verinum value = val->value();
-
-	    if (! (value.has_len()
-		   && (value.len() == wid)
-		   && (value.has_sign() == (*cur).second.signed_flag))) {
-
-		  verinum tmp (value, wid);
-		  tmp.has_sign ( (*cur).second.signed_flag );
-		  delete val;
-		  val = new NetEConst(tmp);
-		  (*cur).second.expr = expr = val;
-	    }
+            (*cur).second.val->cast_signed((*cur).second.signed_flag);
       }
 
 	// If there are no value ranges to test the value against,
@@ -450,9 +442,9 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	    return;
       }
 
-      NetEConst*val = dynamic_cast<NetEConst*>((*cur).second.expr);
-      ivl_assert(*(*cur).second.expr, (*cur).second.expr);
-      ivl_assert(*(*cur).second.expr, val);
+      NetEConst*val = dynamic_cast<NetEConst*>((*cur).second.val);
+      ivl_assert(*(*cur).second.val, (*cur).second.val);
+      ivl_assert(*(*cur).second.val, val);
 
       verinum value = val->value();
 
@@ -509,11 +501,25 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 
 void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
 {
-      NetExpr*expr = (*cur).second.expr;
-      if (expr == NULL) return;  // This is an invalid parameter so return.
+      PExpr*val_expr = (*cur).second.val_expr;
+      NetScope*val_scope = (*cur).second.val_scope;
+
+      bool unsized_flag = false;
+      ivl_variable_type_t rval_type = IVL_VT_NO_TYPE;
+      int expr_wid = val_expr->test_width(des, val_scope, 0, 0,
+                                          rval_type, unsized_flag);
+      if (unsized_flag)
+            expr_wid = -1;
+
+      int prune_wid = -1;
+      if (gn_strict_expr_width_flag)
+            prune_wid = 0;
+
+      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, expr_wid, prune_wid);
+      if (! expr) 
+            return;
 
       NetECReal*res = 0;
-      eval_expr(expr);
 
       switch (expr->expr_type()) {
 	  case IVL_VT_REAL:
@@ -525,7 +531,6 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
 		       << "Unable to evaluate real parameter "
 		       << (*cur).first << " value: " << *expr << endl;
 		  des->errors += 1;
-		  (*cur).second.expr = NULL;
 		  return;
 	    }
 	    break;
@@ -542,7 +547,6 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
 		       << "Unable to evaluate parameter "
 		       << (*cur).first << " value: " << *expr << endl;
 		  des->errors += 1;
-		  (*cur).second.expr = NULL;
 		  return;
 	    }
 	    break;
@@ -552,12 +556,11 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
 		 << ": internal error: "
 		 << "Unhandled expression type?" << endl;
 	    des->errors += 1;
-	    (*cur).second.expr = NULL;
 	    return;
 	    break;
       }
 
-      (*cur).second.expr = res;
+      (*cur).second.val = res;
       double value = res->value().as_double();
 
       bool from_flag = (*cur).second.range == 0? true : false;
@@ -607,6 +610,62 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
       }
 }
 
+void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
+{
+	// If the parameter has already been evaluated, quietly return.
+      if (cur->second.val_expr == 0)
+            return;
+
+      if (cur->second.solving) {
+            cerr << cur->second.get_fileline() << ": error: "
+	         << "Recursive parameter reference found involving "
+                 << cur->first << "." << endl;
+	    des->errors += 1;
+      } else {
+            cur->second.solving = true;
+            switch (cur->second.type) {
+                case IVL_VT_BOOL:
+                case IVL_VT_LOGIC:
+                  evaluate_parameter_logic_(des, cur);
+                  break;
+
+                case IVL_VT_REAL:
+                  evaluate_parameter_real_(des, cur);
+                  break;
+
+                default:
+                  cerr << cur->second.get_fileline() << ": internal error: "
+                       << "Unexpected expression type " << cur->second.type
+                       << "." << endl;
+                  cerr << cur->second.get_fileline() << ":               : "
+                       << "Parameter name: " << cur->first << endl;
+                  cerr << cur->second.get_fileline() << ":               : "
+                       << "Expression is: " << *cur->second.val_expr << endl;
+                  ivl_assert(cur->second, 0);
+                  break;
+            }
+            cur->second.solving = false;
+      }
+
+        // If we have failed to evaluate the expression, create a dummy
+        // value. This prevents spurious error messages being output.
+      if (cur->second.val == 0) {
+            verinum val(verinum::Vx);
+            cur->second.val = new NetEConst(val);
+      }
+
+        // Flag that the expression has been evaluated.
+      cur->second.val_expr = 0;
+}
+
+/*
+ * Set the following to true when evaluating the parameter expressions.
+ * This causes PEIdent::elaborate_expr() to report an error if an
+ * identifier in an expression is anything other than a non-hierarchical
+ * parameter name.
+ */
+bool is_param_expr = false;
+
 void NetScope::evaluate_parameters(Design*des)
 {
       for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
@@ -617,43 +676,13 @@ void NetScope::evaluate_parameters(Design*des)
 	    cerr << ":0" << ": debug: "
 		 << "Evaluate parameters in " << scope_path(this) << endl;
 
-	// Evaluate the parameter values. The parameter expressions
-	// have already been elaborated and replaced by the scope
-	// scanning code. Now the parameter expression can be fully
-	// evaluated, or it cannot be evaluated at all.
-
+      is_param_expr = true;
       for (param_ref_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  cur ++) {
 
-	      // Resolve the expression type (signed/unsigned) if the
-	      // expression is present. It is possible to not be
-	      // present if there are earlier errors in elaboration.
-	    if (cur->second.expr)
-		  cur->second.expr->resolve_pexpr_type();
-
-	    switch ((*cur).second.type) {
-		case IVL_VT_BOOL:
-		case IVL_VT_LOGIC:
-		  evaluate_parameter_logic_(des, cur);
-		  break;
-
-		case IVL_VT_REAL:
-		  evaluate_parameter_real_(des, cur);
-		  break;
-
-		default:
-		  cerr << (*cur).second.get_fileline() << ": internal error: "
-		       << "Unexpected expression type " << (*cur).second.type
-		       << "." << endl;
-		  cerr << (*cur).second.get_fileline() << ":               : "
-		       << "Parameter name: " << (*cur).first << endl;
-		  cerr << (*cur).second.get_fileline() << ":               : "
-		       << "Expression is: " << *(*cur).second.expr << endl;
-		  ivl_assert((*cur).second, 0);
-		  break;
-	    }
+            evaluate_parameter_(des, cur);
       }
-
+      is_param_expr = false;
 }
 
 void Design::residual_defparams()
@@ -668,7 +697,7 @@ void NetScope::residual_defparams(Design*des)
 	// Clean out the list of defparams that never managed to match
 	// a scope. Print a warning for each.
       while (! defparams_later.empty()) {
-	    pair<list<hname_t>,NetExpr*> cur = defparams_later.front();
+	    pair<list<hname_t>,PExpr*> cur = defparams_later.front();
 	    defparams_later.pop_front();
 
 	    cerr << cur.second->get_fileline() << ": warning: "
