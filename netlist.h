@@ -1659,15 +1659,6 @@ class NetExpr  : public LineInfo {
 	// part of the enumeration.
       virtual netenum_t*enumeration() const;
 
-	// Expressions in parameter declarations may have encountered
-	// arguments that are themselves untyped parameters. These
-	// cannot be fully resolved for type when elaborated (they are
-	// elaborated before all parameter overrides are complete) so
-	// this virtual method needs to be called right before
-	// evaluating the expression. This wraps up the evaluation of
-	// the type.
-      virtual void resolve_pexpr_type();
-
 	// This method evaluates the expression and returns an
 	// equivalent expression that is reduced as far as compile
 	// time knows how. Essentially, this is designed to fold
@@ -3348,7 +3339,6 @@ class NetEBinary  : public NetExpr {
 	// widths.
       virtual bool has_width() const;
 
-      virtual void resolve_pexpr_type();
       virtual NetEBinary* dup_expr() const;
       virtual NexusSet* nex_input(bool rem_out = true);
 
@@ -3629,45 +3619,6 @@ class NetEConcat  : public NetExpr {
       NetExpr* repeat_;
       unsigned repeat_value_;
       bool repeat_calculated_;
-};
-
-
-/*
- * This class is a placeholder for a parameter expression. When
- * parameters are first created, an instance of this object is used to
- * hold the place where the parameter expression goes. Then, when the
- * parameters are resolved, these objects are removed.
- *
- * If the parameter object is created with a path and name, then the
- * object represents a reference to a parameter that is known to exist.
- */
-class NetEParam  : public NetExpr {
-    public:
-      NetEParam();
-      NetEParam(class Design*des, NetScope*scope, perm_string name);
-      ~NetEParam();
-
-      virtual NexusSet* nex_input(bool rem_out = true);
-      virtual void resolve_pexpr_type();
-      virtual bool set_width(unsigned w, bool last_chance);
-      virtual bool has_width() const;
-      virtual void expr_scan(struct expr_scan_t*) const;
-      virtual ivl_variable_type_t expr_type() const;
-      virtual NetExpr* eval_tree(int prune_to_width = -1);
-      virtual NetEParam* dup_expr() const;
-      void solving(bool arg);
-      bool solving() const;
-
-      virtual void dump(ostream&) const;
-
-    private:
-      Design*des_;
-      NetScope*scope_;
-      typedef map<perm_string,NetScope::param_expr_t>::iterator ref_t;
-      ref_t reference_;
-      bool solving_;
-
-      NetEParam(class Design*des, NetScope*scope, ref_t ref);
 };
 
 

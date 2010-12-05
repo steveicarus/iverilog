@@ -1289,13 +1289,6 @@ NetEConst* NetEConcat::eval_tree(int prune_to_width)
       return res;
 }
 
-NetExpr* NetEParam::eval_tree(int prune_to_width)
-{
-	// The NetEParam class is now redundant.
-      assert(0);
-      return 0;
-}
-
 NetEConst* NetESelect::eval_tree(int prune_to_width)
 {
 // HERE

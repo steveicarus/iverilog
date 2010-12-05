@@ -184,8 +184,7 @@ first, followed by the structural and behavioral elaboration.
 This pass scans through the pform looking for scopes and parameters. A
 tree of NetScope objects is built up and placed in the Design object,
 with the root module represented by the root NetScope object. The
-elab_scope.cc and elab_pexpr.cc files contain most of the code for
-handling this phase.
+elab_scope.cc file contains most of the code for handling this phase.
 
 The tail of the elaborate_scope behavior (after the pform is
 traversed) includes a scan of the NetScope tree to locate defparam
@@ -476,4 +475,3 @@ file. However, I have early on received aid in the form of fixes,
 Verilog guidance, and especially testing from many people. Testers in
 particular include a larger community of people interested in a GPL
 Verilog for Linux.
-

@@ -110,12 +110,6 @@ class PExpr : public LineInfo {
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     int expr_width, bool sys_task_arg) const;
 
-	// Elaborate expressions that are the r-value of parameter
-	// assignments. This elaboration follows the restrictions of
-	// constant expressions and supports later overriding and
-	// evaluation of parameters.
-      virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
-
 	// This method elaborates the expression as gates, but
 	// restricted for use as l-values of continuous assignments.
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
@@ -179,7 +173,6 @@ class PEConcat : public PExpr {
       virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     int expr_width, bool sys_task_arg) const;
-      virtual NetEConcat*elaborate_pexpr(Design*des, NetScope*) const;
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
 					 bool is_force) const;
@@ -244,7 +237,6 @@ class PEFNumber : public PExpr {
 				  bool&unsized_flag);
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     int expr_width, bool sys_task_arg) const;
-      virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
       virtual void dump(ostream&) const;
 
@@ -286,7 +278,6 @@ class PEIdent : public PExpr {
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     int expr_width, bool sys_task_arg) const;
-      virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
 	// Elaborate the PEIdent as a port to a module. This method
 	// only applies to Ident expressions.
@@ -405,7 +396,6 @@ class PENumber : public PExpr {
 
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				       int expr_width, bool) const;
-      virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
 					 bool is_force) const;
@@ -441,7 +431,6 @@ class PEString : public PExpr {
 
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				       int expr_width, bool) const;
-      virtual NetEConst*elaborate_pexpr(Design*des, NetScope*sc) const;
       verinum* eval_const(Design*, NetScope*) const;
 
     private:
@@ -467,7 +456,6 @@ class PEUnary : public PExpr {
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     int expr_width, bool sys_task_arg) const;
-      virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
     private:
@@ -497,7 +485,6 @@ class PEBinary : public PExpr {
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 					int expr_width, bool sys_task_arg) const;
-      virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
     protected:
@@ -506,19 +493,22 @@ class PEBinary : public PExpr {
       PExpr*right_;
 
       NetExpr*elaborate_expr_base_(Design*, NetExpr*lp, NetExpr*rp,
-				   int use_wid, bool is_pexpr =false) const;
+				   int use_wid) const;
       NetExpr*elaborate_eval_expr_base_(Design*, NetExpr*lp, NetExpr*rp,
 					int use_wid) const;
 
-      NetExpr*elaborate_expr_base_bits_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
+      NetExpr*elaborate_expr_base_bits_(Design*, NetExpr*lp, NetExpr*rp,
+                                        int use_wid) const;
       NetExpr*elaborate_expr_base_div_(Design*, NetExpr*lp, NetExpr*rp,
-				       int use_wid, bool is_pexpr) const;
-      NetExpr*elaborate_expr_base_lshift_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
-      NetExpr*elaborate_expr_base_rshift_(Design*, NetExpr*lp, NetExpr*rp, int use_wid) const;
+				       int use_wid) const;
+      NetExpr*elaborate_expr_base_lshift_(Design*, NetExpr*lp, NetExpr*rp,
+                                          int use_wid) const;
+      NetExpr*elaborate_expr_base_rshift_(Design*, NetExpr*lp, NetExpr*rp,
+                                          int use_wid) const;
       NetExpr*elaborate_expr_base_mult_(Design*, NetExpr*lp, NetExpr*rp,
-					int use_wid, bool is_pexpr) const;
+					int use_wid) const;
       NetExpr*elaborate_expr_base_add_(Design*, NetExpr*lp, NetExpr*rp,
-				       int use_wid, bool is_pexpr) const;
+				       int use_wid) const;
 
 };
 
@@ -539,7 +529,6 @@ class PEBComp  : public PEBinary {
 
       NetExpr* elaborate_expr(Design*des, NetScope*scope,
 			      int expr_width, bool sys_task_arg) const;
-      NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
     private:
       int left_width_;
@@ -562,7 +551,6 @@ class PEBLogic  : public PEBinary {
 
       NetExpr* elaborate_expr(Design*des, NetScope*scope,
 			      int expr_width, bool sys_task_arg) const;
-      NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 };
 
 /*
@@ -587,8 +575,6 @@ class PEBLeftWidth  : public PEBinary {
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     int expr_width, bool sys_task_arg) const;
-
-      virtual NetExpr*elaborate_pexpr(Design*des, NetScope*scope) const;
 
 };
 
@@ -635,7 +621,6 @@ class PETernary : public PExpr {
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 					 int expr_width, bool sys_task_arg) const;
-      virtual NetETernary*elaborate_pexpr(Design*des, NetScope*sc) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
     private:
@@ -674,7 +659,6 @@ class PECallFunction : public PExpr {
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     int expr_wid, bool sys_task_arg) const;
-      virtual NetExpr*elaborate_pexpr(Design*des, NetScope*sc) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  unsigned min, unsigned lval,

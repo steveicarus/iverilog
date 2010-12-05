@@ -540,12 +540,6 @@ void NetECRealParam::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_rparam(this);
 }
 
-void NetEParam::expr_scan(struct expr_scan_t*) const
-{
-      cerr << get_fileline() << ":internal error: unexpected NetEParam."
-	   << endl;
-}
-
 void NetEEvent::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_event(this);

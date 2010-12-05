@@ -405,11 +405,6 @@ bool NetEMemory::set_width(unsigned w, bool)
       return true;
 }
 #endif
-bool NetEParam::set_width(unsigned, bool)
-{
-      return false;
-}
-
 bool NetESelect::set_width(unsigned, bool)
 {
       return  expr_width() == 1;

@@ -1504,14 +1504,6 @@ void NetESignal::dump(ostream&o) const
       o << "[" << msi()<<":"<<lsi() << "]";
 }
 
-void NetEParam::dump(ostream&o) const
-{
-      if (scope_ != 0)
-	    o << "<" << scope_path(scope_) << "." << (*reference_).first << ">";
-      else
-	    o << "<" << (*reference_).first << ">";
-}
-
 void NetETernary::dump(ostream&o) const
 {
       o << "(" << *cond_ << ") ? (" << *true_val_ << ") : (" <<

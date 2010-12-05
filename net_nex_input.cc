@@ -86,15 +86,6 @@ NexusSet* NetECReal::nex_input(bool)
       return new NexusSet;
 }
 
-/*
- * A parameter by definition has no inputs. It represents a constant
- * value, even if that value is a constant expression.
- */
-NexusSet* NetEParam::nex_input(bool)
-{
-      return new NexusSet;
-}
-
 NexusSet* NetEEvent::nex_input(bool)
 {
       return new NexusSet;

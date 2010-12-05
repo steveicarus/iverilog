@@ -149,7 +149,6 @@ bool warn_sens_entire_arr = false;
 bool debug_scopes = false;
 bool debug_eval_tree = false;
 bool debug_elaborate = false;
-bool debug_elab_pexpr = false;
 bool debug_synth2 = false;
 bool debug_optimizer = false;
 
@@ -567,9 +566,6 @@ static void read_iconfig_file(const char*ipath)
 		  } else if (strcmp(cp,"elaborate") == 0) {
 			debug_elaborate = true;
 			cerr << "debug: Enable elaborate debug" << endl;
-		  } else if (strcmp(cp,"elab_pexpr") == 0) {
-			debug_elab_pexpr = true;
-			cerr << "debug: Enable elaborate-pexpr debug" << endl;
 		  } else if (strcmp(cp,"synth2") == 0) {
 			debug_synth2 = true;
 			cerr << "debug: Enable synth2 debug" << endl;

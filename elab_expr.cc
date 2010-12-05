@@ -332,7 +332,7 @@ NetExpr* PEBinary::elaborate_eval_expr_base_(Design*des,
  */
 NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 					NetExpr*lp, NetExpr*rp,
-					int expr_wid, bool is_pexpr) const
+					int expr_wid) const
 {
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: elaborate expression "
@@ -362,12 +362,12 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 	    break;
 
 	  case '*':
-	    tmp = elaborate_expr_base_mult_(des, lp, rp, expr_wid, is_pexpr);
+	    tmp = elaborate_expr_base_mult_(des, lp, rp, expr_wid);
 	    break;
 
 	  case '%':
 	  case '/':
-	    tmp = elaborate_expr_base_div_(des, lp, rp, expr_wid, is_pexpr);
+	    tmp = elaborate_expr_base_div_(des, lp, rp, expr_wid);
 	    break;
 
 	  case 'l':
@@ -391,7 +391,7 @@ NetExpr* PEBinary::elaborate_expr_base_(Design*des,
 
 	  case '+':
 	  case '-':
-	    tmp = elaborate_expr_base_add_(des, lp, rp, expr_wid, is_pexpr);
+	    tmp = elaborate_expr_base_add_(des, lp, rp, expr_wid);
 	    break;
 
 	  case 'E': /* === */
@@ -452,7 +452,7 @@ NetExpr* PEBinary::elaborate_expr_base_bits_(Design*des,
 
 NetExpr* PEBinary::elaborate_expr_base_div_(Design*des,
 					    NetExpr*lp, NetExpr*rp,
-					    int expr_wid, bool) const
+					    int expr_wid) const
 {
 	/* The % operator does not support real arguments in
 	   baseline Verilog. But we allow it in our extended
@@ -744,7 +744,7 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 
 NetExpr* PEBinary::elaborate_expr_base_mult_(Design*,
 					     NetExpr*lp, NetExpr*rp,
-					     int expr_wid, bool is_pexpr) const
+					     int expr_wid) const
 {
 	// First, Make sure that signed arguments are padded to the
 	// width of the output. This is necessary for 2s complement
@@ -785,9 +785,7 @@ NetExpr* PEBinary::elaborate_expr_base_mult_(Design*,
 	// If this expression is unsigned, then make sure the
 	// arguments are unsigned so that the padding below doesn't
 	// cause any sign extension to happen.
-      if (! is_pexpr)
-	    suppress_binary_operand_sign_if_needed(lp, rp);
-
+      suppress_binary_operand_sign_if_needed(lp, rp);
 
 	// Multiply will guess a width that is the sum of the
 	// widths of the operand. If that sum is too small, then
@@ -807,7 +805,7 @@ NetExpr* PEBinary::elaborate_expr_base_mult_(Design*,
 
 NetExpr* PEBinary::elaborate_expr_base_add_(Design*,
 					    NetExpr*lp, NetExpr*rp,
-					    int expr_wid, bool is_pexpr) const
+					    int expr_wid) const
 {
       NetExpr*tmp;
       bool use_lossless_flag = expr_wid == -2;
@@ -823,8 +821,7 @@ NetExpr* PEBinary::elaborate_expr_base_add_(Design*,
 	// If the expression is unsigned, then force the operands to
 	// unsigned so that the set_width below doesn't cause them to
 	// be sign-extended.
-      if (! is_pexpr)
-	    suppress_binary_operand_sign_if_needed(lp, rp);
+      suppress_binary_operand_sign_if_needed(lp, rp);
 
       tmp = new NetEBAdd(op_, lp, rp, use_lossless_flag);
       if (expr_wid > 0 && type_is_vectorable(tmp->expr_type()))

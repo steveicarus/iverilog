@@ -98,7 +98,6 @@ extern bool verbose_flag;
 extern bool debug_scopes;
 extern bool debug_eval_tree;
 extern bool debug_elaborate;
-extern bool debug_elab_pexpr;
 extern bool debug_synth2;
 extern bool debug_optimizer;
 

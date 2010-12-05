@@ -146,9 +146,6 @@ class Module : public PScope, public LineInfo {
     private:
       list<PGate*> gates_;
 
-      static void elaborate_parm_item_(perm_string name, const param_expr_t&cur,
-				       Design*des, NetScope*scope);
-
     private: // Not implemented
       Module(const Module&);
       Module& operator= (const Module&);

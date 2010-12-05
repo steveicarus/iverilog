@@ -520,59 +520,6 @@ netenum_t* NetENetenum::netenum() const
       return netenum_;
 }
 
-
-NetEParam::NetEParam()
-: des_(0), scope_(0)
-{
-      solving_ = false;
-}
-
-NetEParam::NetEParam(Design*d, NetScope*s, perm_string n)
-    : des_(d), scope_(s), reference_(scope_->find_parameter(n))
-{
-      cast_signed_base_(reference_->second.signed_flag);
-      solving_ = false;
-}
-
-NetEParam::NetEParam(Design*d, NetScope*s, ref_t ref)
-    : des_(d), scope_(s), reference_(ref)
-{
-      cast_signed_base_(reference_->second.signed_flag);
-      solving_ = false;
-}
-
-NetEParam::~NetEParam()
-{
-}
-
-bool NetEParam::has_width() const
-{
-      return false;
-}
-
-ivl_variable_type_t NetEParam::expr_type() const
-{
-      return (*reference_).second.type;
-}
-
-NetEParam* NetEParam::dup_expr() const
-{
-      NetEParam*tmp = new NetEParam(des_, scope_, reference_);
-      tmp->solving(solving_);
-      tmp->set_line(*this);
-      return tmp;
-}
-
-void NetEParam::solving(bool arg)
-{
-      solving_ = arg;
-}
-
-bool NetEParam::solving() const
-{
-      return solving_;
-}
-
 NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid)
 : expr_(exp), base_(base)
 {
