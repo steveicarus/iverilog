@@ -1524,7 +1524,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	      // We do not currently support constant user function and
 	      // this is where things fail because of that, though we
 	      // don't know for sure so we need to display both messages.
-	    if (need_constant_expr) {
+	    if (need_constant_expr || is_param_expr) {
 		  cerr << get_fileline() << ": sorry: constant user "
 		          "functions are not currently supported: "
 		       << path_ << "()." << endl << "    or" << endl;
