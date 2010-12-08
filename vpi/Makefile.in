@@ -82,7 +82,7 @@ check: all
 clean:
 	rm -rf *.o sys_readmem_lex.c dep system.vpi
 	rm -f sdf_lexor.c sdf_parse.c sdf_parse.output sdf_parse.h
-	rm -f va_math.vpi v2005_math.vpi
+	rm -f va_math.vpi v2005_math.vpi v2009.vpi
 
 distclean: clean
 	rm -f Makefile config.log
