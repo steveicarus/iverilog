@@ -43,6 +43,13 @@ dep
 
 /ivlpp/lexor.c
 
+/vhdlpp/lexor.cc
+/vhdlpp/lexor_keyword.cc
+/vhdlpp/parse.cc
+/vhdlpp/parse.h
+/vhdlpp/vhdlpp_config.h
+/vhdlpp/vhdlpp
+
 /lexor.cc
 /lexor_keyword.cc
 /parse.cc

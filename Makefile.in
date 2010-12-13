@@ -38,7 +38,7 @@ exec_prefix = @exec_prefix@
 srcdir = @srcdir@
 datarootdir = @datarootdir@
 
-SUBDIRS = ivlpp vvp vpi libveriuser cadpli tgt-null tgt-stub tgt-vvp \
+SUBDIRS = ivlpp vhdlpp vvp vpi libveriuser cadpli tgt-null tgt-stub tgt-vvp \
           tgt-vhdl tgt-vlog95 driver
 # Only run distclean for these directories.
 NOTUSED = tgt-fpga tgt-pal tgt-verilog
