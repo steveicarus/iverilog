@@ -3597,6 +3597,11 @@ specify_item
 		  }
 		  pform_module_specify_path(tmp);
 		}
+	| K_ifnone specify_edge_path_decl ';'
+		{ yyerror(@1, "Sorry: ifnone with an edge-sensitive path is "
+		              "not supported.");
+		  yyerrok;
+		}
 	| K_Sfullskew '(' spec_reference_event ',' spec_reference_event
 	  ',' delay_value ',' delay_value spec_notifier_opt ')' ';'
 		{ delete $7;
