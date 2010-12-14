@@ -106,8 +106,8 @@ void draw_switch_in_scope(ivl_switch_t sw)
 	    break;
 
 	  default:
-	    fprintf(stderr, "%s:%u: sorry: resistive switch modeling is not "
-	                    "currently supported.\n",
+	    fprintf(stderr, "%s:%u: tgt-vvp sorry: resistive switch modeling "
+	                    "is not currently supported.\n",
 		            ivl_switch_file(sw), ivl_switch_lineno(sw));
 	    vvp_errors += 1;
 	    return;
