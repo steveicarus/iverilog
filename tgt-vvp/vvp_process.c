@@ -630,8 +630,8 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
 	    /* This method no longer works since variable arrays do not
 	     * support <variable_id>_<idx> access any more. We need real
 	     * array specific opcodes (%assign/ar, etc.). */
-	    fprintf(stderr, "%s:%u: vvp-tgt sorry: non-blocking assignment "
-	            "to a real array word is not supported.\n",
+	    fprintf(stderr, "%s:%u: tgt-vvp sorry: non-blocking assignment "
+	            "to a real array word is not supported in V0.9.\n",
 	            ivl_expr_file(rval), ivl_expr_lineno(rval));
 	    exit(1);
       }
@@ -1201,7 +1201,7 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
       }
       if (ivl_signal_width(lsig) > ivl_signal_width(rsig) ||
           (part_off_ex && get_number_immediate(part_off_ex) != 0)) {
-	    fprintf(stderr, "%s:%u: vvp-tgt sorry: cannot %s signal to "
+	    fprintf(stderr, "%s:%u: tgt-vvp sorry: cannot %s signal to "
 	            "a bit/part select.\n", ivl_expr_file(rval),
 	            ivl_expr_lineno(rval), command_name);
 	    exit(1);
