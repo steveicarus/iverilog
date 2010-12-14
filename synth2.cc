@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: synth2.cc,v 1.39.2.48 2007/05/30 17:48:54 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -2665,152 +2662,3 @@ void synth2(Design*des)
       synth2_f synth_obj;
       des->functor(&synth_obj);
 }
-
-/*
- * $Log: synth2.cc,v $
- * Revision 1.39.2.48  2007/05/30 17:48:54  steve
- *  Support Latch synthesis (Alan Feldstein)
- *
- * Revision 1.39.2.47  2006/11/11 23:10:20  steve
- *  Fix async blocks to take accumulated input.
- *
- * Revision 1.39.2.46  2006/11/02 02:13:15  steve
- *  Error message for condit expression not synthesized.
- *
- * Revision 1.39.2.45  2006/10/30 02:03:30  steve
- *  Detect and synthesize enables using condit false.
- *
- * Revision 1.39.2.44  2006/08/23 04:08:19  steve
- *  Fix missing sig on certain mux outputs.
- *  Ignore condit statements (for synthesis) with no outputs.
- *
- * Revision 1.39.2.43  2006/08/22 04:22:45  steve
- *  Add synthesis for casez statements.
- *
- * Revision 1.39.2.42  2006/08/15 03:41:25  steve
- *  Improve performance of unlink of heavily connected nexa.
- *
- * Revision 1.39.2.41  2006/08/08 02:17:49  steve
- *  Improved nexus management performance.
- *
- * Revision 1.39.2.40  2006/07/23 19:42:34  steve
- *  Handle statement output override better in blocks.
- *
- * Revision 1.39.2.39  2006/07/10 00:21:54  steve
- *  Add support for full_case attribute.
- *
- * Revision 1.39.2.38  2006/07/02 00:50:15  steve
- *  Properly synthesize casex statements.
- *
- * Revision 1.39.2.37  2006/06/26 00:05:46  steve
- *  Handle case where case output appears to be internal.
- *
- * Revision 1.39.2.36  2006/06/23 03:49:47  steve
- *  synthesis of NetCondit handles partial resets.
- *
- * Revision 1.39.2.35  2006/06/07 03:17:39  steve
- *  Fix partial use of NetMux in sync condit statements.
- *
- * Revision 1.39.2.34  2006/06/02 23:42:48  steve
- *  Compilation warnings.
- *
- * Revision 1.39.2.33  2006/06/01 03:01:48  steve
- *  Handle condit clauses with unassigned outputs.
- *
- * Revision 1.39.2.32  2006/05/20 16:06:48  steve
- *  Replace assertions with error messages.
- *
- * Revision 1.39.2.31  2006/05/18 01:47:12  steve
- *  Fix synthesis of l-value bit select in block.
- *
- * Revision 1.39.2.30  2006/05/05 01:56:36  steve
- *  Handle memory assignments out of range during synthesis
- *
- * Revision 1.39.2.29  2006/04/16 19:26:39  steve
- *  Fix handling of exploded memories with partial or missing resets.
- *
- * Revision 1.39.2.28  2006/04/10 03:43:40  steve
- *  Exploded memories accessed by constant indices.
- *
- * Revision 1.39.2.27  2006/04/01 01:37:58  steve
- *  Punt on set/reset if some sources are unconnected.
- *
- * Revision 1.39.2.26  2006/03/26 23:09:24  steve
- *  Handle asynchronous demux/bit replacements.
- *
- * Revision 1.39.2.25  2006/03/18 18:43:22  steve
- *  Better error messages when synthesis fails.
- *
- * Revision 1.39.2.24  2006/03/16 05:39:43  steve
- *  Fix a spelling error in an error message.
- *
- * Revision 1.39.2.23  2006/03/12 07:34:18  steve
- *  Fix the memsynth1 case.
- *
- * Revision 1.39.2.22  2006/02/25 05:03:29  steve
- *  Add support for negedge FFs by using attributes.
- *
- * Revision 1.39.2.21  2006/02/19 00:11:33  steve
- *  Handle synthesis of FF vectors with l-value decoder.
- *
- * Revision 1.39.2.20  2006/01/27 01:58:53  steve
- *  Document how the default statement handling works.
- *
- * Revision 1.39.2.19  2006/01/22 00:13:59  steve
- *  Fix pin_Sel overrun.
- *
- * Revision 1.39.2.18  2006/01/21 21:42:32  steve
- *  When mux has wide select but sparse choices, use 1hot translation.
- *
- * Revision 1.39.2.17  2006/01/18 06:16:11  steve
- *  Restrict DFF to only one of Sset and Sclr.
- *
- * Revision 1.39.2.16  2006/01/18 01:23:25  steve
- *  Rework l-value handling to allow for more l-value type flexibility.
- *
- * Revision 1.39.2.15  2006/01/01 02:25:07  steve
- *  Case statement handles partial outputs.
- *
- * Revision 1.39.2.14  2006/01/01 01:30:39  steve
- *  Allow for implicit case default in synchronous processes.
- *
- * Revision 1.39.2.13  2005/12/31 04:28:15  steve
- *  Fix crashes caused bu synthesis of sqrt32.v.
- *
- * Revision 1.39.2.12  2005/12/19 01:13:47  steve
- *  Handle DFF definitions spread out within a block.
- *
- * Revision 1.39.2.11  2005/12/15 02:38:51  steve
- *  Fix missing outputs from synchronous conditionals to get out from in.
- *
- * Revision 1.39.2.10  2005/12/14 01:53:39  steve
- *  Handle both asynchronous set and reset.
- *
- * Revision 1.39.2.9  2005/12/14 00:54:30  steve
- *  Account for sync vs async muxes.
- *
- * Revision 1.39.2.8  2005/12/10 04:26:32  steve
- *  Handle concatenations in l-values.
- *
- * Revision 1.39.2.7  2005/12/10 03:30:51  steve
- *  Fix crash on block with assignments that assign lval to self.
- *
- * Revision 1.39.2.6  2005/12/07 02:14:37  steve
- *  Error messages for missing else clauses.
- *
- * Revision 1.39.2.5  2005/11/16 00:38:26  steve
- *  Handle partial sets of conditional clauses.
- *
- * Revision 1.39.2.4  2005/11/13 22:28:48  steve
- *  Allow for block output to be set throughout the statements.
- *
- * Revision 1.39.2.3  2005/09/11 02:56:38  steve
- *  Attach line numbers to NetMux devices.
- *
- * Revision 1.39.2.2  2005/08/22 01:00:42  steve
- *  Add support for implicit defaults in case and conditions.
- *
- * Revision 1.39.2.1  2005/08/21 22:49:54  steve
- *  Handle statements in blocks overriding previous statement outputs.
- */
-

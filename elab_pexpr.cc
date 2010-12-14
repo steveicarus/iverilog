@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_pexpr.cc,v 1.21 2004/02/20 06:22:56 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -228,88 +225,3 @@ NetExpr*PEUnary::elaborate_pexpr (Design*des, NetScope*scope) const
       }
       return tmp;
 }
-
-/*
- * $Log: elab_pexpr.cc,v $
- * Revision 1.21  2004/02/20 06:22:56  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.20  2003/05/30 02:55:32  steve
- *  Support parameters in real expressions and
- *  as real expressions, and fix multiply and
- *  divide with real results.
- *
- * Revision 1.19  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.18  2002/12/05 02:14:33  steve
- *  Support bit select in constant expressions.
- *
- * Revision 1.17  2002/11/09 01:40:19  steve
- *  Postpone parameter width check to evaluation.
- *
- * Revision 1.16  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.15  2002/05/06 02:30:27  steve
- *  Allow parameters in concatenation of widths are defined.
- *
- * Revision 1.14  2002/05/05 21:11:50  steve
- *  Put off evaluation of concatenation repeat expresions
- *  until after parameters are defined. This allows parms
- *  to be used in repeat expresions.
- *
- *  Add the builtin $signed system function.
- *
- * Revision 1.13  2002/01/28 00:52:41  steve
- *  Add support for bit select of parameters.
- *  This leads to a NetESelect node and the
- *  vvp code generator to support that.
- *
- * Revision 1.12  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.11  2001/11/07 04:01:59  steve
- *  eval_const uses scope instead of a string path.
- *
- * Revision 1.10  2001/10/07 03:38:08  steve
- *  parameter names do not have defined size.
- *
- * Revision 1.9  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.8  2001/01/14 23:04:56  steve
- *  Generalize the evaluation of floating point delays, and
- *  get it working with delay assignment statements.
- *
- *  Allow parameters to be referenced by hierarchical name.
- *
- * Revision 1.7  2001/01/02 04:21:13  steve
- *  Support a bunch of unary operators in parameter expressions.
- *
- * Revision 1.6  2000/12/16 19:03:30  steve
- *  Evaluate <= and ?: in parameter expressions (PR#81)
- *
- * Revision 1.5  2000/06/13 05:22:16  steve
- *  Support concatenation in parameter expressions.
- *
- * Revision 1.4  2000/06/01 02:31:39  steve
- *  Parameters can be strings.
- *
- * Revision 1.3  2000/03/12 18:22:11  steve
- *  Binary and unary operators in parameter expressions.
- *
- * Revision 1.2  2000/03/12 04:35:22  steve
- *  Allow parameter identifiers in parameter expressions.
- *
- * Revision 1.1  2000/03/08 04:36:53  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
- *
- */
-

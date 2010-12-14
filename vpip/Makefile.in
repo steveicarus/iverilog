@@ -17,10 +17,7 @@
 #    Software Foundation, Inc.,
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
-#
-#ident "$Id: Makefile.in,v 1.8.2.1 2005/02/23 18:40:24 steve Exp $"
-#
-#
+
 SHELL = /bin/sh
 
 
@@ -39,7 +36,7 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = @ident_support@ -I$(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@
+CPPFLAGS = -I$(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@
 CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
 STRIP = @STRIP@

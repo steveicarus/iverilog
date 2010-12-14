@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Stephen Williams
+ * Copyright (c) 2005-2010 Stephen Williams
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,9 +24,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: tables.c,v 1.1.2.3 2007/02/26 19:51:39 steve Exp $"
-#endif
 
 # include  "device.h"
 # include  <string.h>
@@ -46,17 +43,3 @@ const struct device_table_s edif_device_table[] = {
       { "virtex",&d_virtex_edif },
       { 0, 0 }
 };
-
-/*
- * $Log: tables.c,v $
- * Revision 1.1.2.3  2007/02/26 19:51:39  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.1.2.2  2005/09/25 16:35:37  steve
- *  Add Xilinx virtex as a reference EDIF device.
- *
- * Revision 1.1.2.1  2005/08/17 01:17:29  steve
- *  Add the tgt-edif target.
- *
- */
-

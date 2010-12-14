@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_output.cc,v 1.11.2.8 2006/08/08 02:17:48 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -173,67 +170,3 @@ void NetWhile::nex_output(NexusSet&out)
       if (proc_ != 0)
 	    proc_->nex_output(out);
 }
-
-/*
- * $Log: net_nex_output.cc,v $
- * Revision 1.11.2.8  2006/08/08 02:17:48  steve
- *  Improved nexus management performance.
- *
- * Revision 1.11.2.7  2006/06/02 23:42:48  steve
- *  Compilation warnings.
- *
- * Revision 1.11.2.6  2006/06/01 03:01:48  steve
- *  Handle condit clauses with unassigned outputs.
- *
- * Revision 1.11.2.5  2006/05/18 01:47:12  steve
- *  Fix synthesis of l-value bit select in block.
- *
- * Revision 1.11.2.4  2006/05/05 01:56:36  steve
- *  Handle memory assignments out of range during synthesis
- *
- * Revision 1.11.2.3  2006/04/16 19:26:38  steve
- *  Fix handling of exploded memories with partial or missing resets.
- *
- * Revision 1.11.2.2  2006/03/12 07:34:17  steve
- *  Fix the memsynth1 case.
- *
- * Revision 1.11.2.1  2006/01/18 01:23:23  steve
- *  Rework l-value handling to allow for more l-value type flexibility.
- *
- * Revision 1.11  2004/09/16 03:17:33  steve
- *  net_output handles l-value concatenations.
- *
- * Revision 1.10  2004/08/28 16:23:05  steve
- *  Fix use of system tasks in AT_STAR statements.
- *
- * Revision 1.9  2004/06/30 15:32:18  steve
- *  nex_output for NetPDelay statements.
- *
- * Revision 1.8  2003/12/20 00:59:31  steve
- *  Synthesis debug messages.
- *
- * Revision 1.7  2003/10/26 04:51:39  steve
- *  Output of While is output of while substatement.
- *
- * Revision 1.6  2002/09/17 04:39:20  steve
- *  Account for part select in l-value.
- *
- * Revision 1.5  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.4  2002/07/29 00:00:28  steve
- *  Asynchronous synthesis of sequential blocks.
- *
- * Revision 1.3  2002/07/07 22:32:15  steve
- *  Asynchronous synthesis of case statements.
- *
- * Revision 1.2  2002/07/01 00:54:21  steve
- *  synth_asych of if/else requires redirecting the target
- *  if sub-statements. Use NetNet objects to manage the
- *  situation.
- *
- * Revision 1.1  2002/06/30 02:21:32  steve
- *  Add structure for asynchronous logic synthesis.
- *
- */
-

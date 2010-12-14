@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.cc,v 1.13 2004/10/04 01:10:59 steve Exp $"
-#endif
 
 # include  "logic.h"
 # include  "compile.h"
@@ -163,51 +160,3 @@ void compile_functor(char*label, char*type,
       inputs_connect(fdx, argc, argv);
       free(argv);
 }
-
-
-/*
- * $Log: logic.cc,v $
- * Revision 1.13  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.12  2002/09/06 04:56:29  steve
- *  Add support for %v is the display system task.
- *  Change the encoding of H and L outputs from
- *  the bufif devices so that they are logic x.
- *
- * Revision 1.11  2002/08/29 03:04:01  steve
- *  Generate x out for x select on wide muxes.
- *
- * Revision 1.10  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.9  2002/07/05 20:08:44  steve
- *  Count different types of functors.
- *
- * Revision 1.8  2002/03/17 05:48:49  steve
- *  Do not push values through logic gates.
- *
- * Revision 1.7  2002/01/12 04:02:16  steve
- *  Support the BUFZ logic device.
- *
- * Revision 1.6  2001/12/14 06:03:17  steve
- *  Arrange bufif to support notif as well.
- *
- * Revision 1.5  2001/12/14 02:04:49  steve
- *  Support strength syntax on functors.
- *
- * Revision 1.4  2001/12/06 03:31:24  steve
- *  Support functor delays for gates and UDP devices.
- *  (Stephan Boettcher)
- *
- * Revision 1.3  2001/11/16 04:22:27  steve
- *  include stdlib.h for portability.
- *
- * Revision 1.2  2001/11/07 03:34:42  steve
- *  Use functor pointers where vvp_ipoint_t is unneeded.
- *
- * Revision 1.1  2001/11/06 03:07:22  steve
- *  Code rearrange. (Stephan Boettcher)
- *
- */
-

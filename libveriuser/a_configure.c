@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: a_configure.c,v 1.4 2003/12/17 15:45:07 steve Exp $"
-#endif
 
 #include  <acc_user.h>
 #include  <vpi_user.h>
@@ -80,31 +77,3 @@ int acc_configure(PLI_INT32 config_param, const char*value)
 
       return rc;
 }
-
-/*
- * $Log: a_configure.c,v $
- * Revision 1.4  2003/12/17 15:45:07  steve
- *  Add acc_set_scope function.
- *
- * Revision 1.3  2003/06/17 16:55:07  steve
- *  1) setlinebuf() for vpi_trace
- *  2) Addes error checks for trace file opens
- *  3) removes now extraneous flushes
- *  4) fixes acc_next() bug
- *
- * Revision 1.2  2003/05/18 00:16:35  steve
- *  Add PLI_TRACE tracing of PLI1 modules.
- *
- *  Add tf_isetdelay and friends, and add
- *  callback return values for acc_vcl support.
- *
- * Revision 1.1  2003/02/17 06:39:47  steve
- *  Add at least minimal implementations for several
- *  acc_ functions. Add support for standard ACC
- *  string handling.
- *
- *  Add the _pli_types.h header file to carry the
- *  IEEE1364-2001 standard PLI type declarations.
- *
- */
-

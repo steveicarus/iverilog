@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_sig.cc,v 1.36 2004/09/27 22:34:10 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -621,95 +618,3 @@ void PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  sig->attribute(attrib_list[idx].key, attrib_list[idx].val);
       }
 }
-
-/*
- * $Log: elab_sig.cc,v $
- * Revision 1.36  2004/09/27 22:34:10  steve
- *  Cleanup and factoring of autoconf.
- *
- * Revision 1.35  2004/09/05 17:44:41  steve
- *  Add support for module instance arrays.
- *
- * Revision 1.34  2004/05/31 23:34:37  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.33  2004/02/18 17:11:55  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.32  2003/09/20 05:24:00  steve
- *  Evaluate memory index constants using elab_and_eval.
- *
- * Revision 1.31  2003/07/15 03:49:22  steve
- *  Spelling fixes.
- *
- * Revision 1.30  2003/06/24 01:38:02  steve
- *  Various warnings fixed.
- *
- * Revision 1.29  2003/06/21 01:21:43  steve
- *  Harmless fixup of warnings.
- *
- * Revision 1.28  2003/03/06 00:28:41  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.27  2003/01/30 16:23:07  steve
- *  Spelling fixes.
- *
- * Revision 1.26  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.25  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.24  2002/08/05 04:18:45  steve
- *  Store only the base name of memories.
- *
- * Revision 1.23  2002/06/21 04:59:35  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.22  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.21  2002/05/19 23:37:28  steve
- *  Parse port_declaration_lists from the 2001 Standard.
- *
- * Revision 1.20  2002/01/26 05:28:28  steve
- *  Detect scalar/vector declarion mismatch.
- *
- * Revision 1.19  2002/01/23 03:35:17  steve
- *  Detect incorrect function ports.
- *
- * Revision 1.18  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.17  2001/11/07 04:01:59  steve
- *  eval_const uses scope instead of a string path.
- *
- * Revision 1.16  2001/11/01 05:21:26  steve
- *  Catch ports that have no direction.
- *
- * Revision 1.15  2001/10/31 03:11:15  steve
- *  detect module ports not declared within the module.
- *
- * Revision 1.14  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.13  2001/05/25 02:21:34  steve
- *  Detect input and input ports declared as reg.
- *
- * Revision 1.12  2001/02/17 05:15:33  steve
- *  Allow task ports to be given real types.
- *
- * Revision 1.11  2001/02/10 20:29:39  steve
- *  In the context of range declarations, use elab_and_eval instead
- *  of the less robust eval_const methods.
- */
-

@@ -1,7 +1,7 @@
 #ifndef __PExpr_H
 #define __PExpr_H
 /*
- * Copyright (c) 1998-2000 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2010 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: PExpr.h,v 1.66.2.2 2006/07/28 16:26:17 steve Exp $"
-#endif
 
 # include  <string>
 # include  "netlist.h"
@@ -492,75 +489,4 @@ class PECallFunction : public PExpr {
       NetExpr* elaborate_sfunc_(Design*des, NetScope*scope) const;
 };
 
-/*
- * $Log: PExpr.h,v $
- * Revision 1.66.2.2  2006/07/28 16:26:17  steve
- *  Remove excess PEString:: prefix for stubborn compilers.
- *
- * Revision 1.66.2.1  2005/12/07 03:28:44  steve
- *  Support constant concatenation of constants.
- *
- * Revision 1.66  2004/10/04 01:10:51  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.65  2003/02/08 19:49:21  steve
- *  Calculate delay statement delays using elaborated
- *  expressions instead of pre-elaborated expression
- *  trees.
- *
- *  Remove the eval_pexpr methods from PExpr.
- *
- * Revision 1.64  2003/01/30 16:23:07  steve
- *  Spelling fixes.
- *
- * Revision 1.63  2002/11/09 19:20:48  steve
- *  Port expressions for output ports are lnets, not nets.
- *
- * Revision 1.62  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.61  2002/06/04 05:38:43  steve
- *  Add support for memory words in l-value of
- *  blocking assignments, and remove the special
- *  NetAssignMem class.
- *
- * Revision 1.60  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.59  2002/04/23 03:53:59  steve
- *  Add support for non-constant bit select.
- *
- * Revision 1.58  2002/04/14 03:55:25  steve
- *  Precalculate unary - if possible.
- *
- * Revision 1.57  2002/04/13 02:33:17  steve
- *  Detect missing indices to memories (PR#421)
- *
- * Revision 1.56  2002/03/09 04:02:26  steve
- *  Constant expressions are not l-values for task ports.
- *
- * Revision 1.55  2002/03/09 02:10:22  steve
- *  Add the NetUserFunc netlist node.
- *
- * Revision 1.54  2001/12/30 21:32:03  steve
- *  Support elaborate_net for PEString objects.
- *
- * Revision 1.53  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.52  2001/11/08 05:15:50  steve
- *  Remove string paths from PExpr elaboration.
- *
- * Revision 1.51  2001/11/07 04:26:46  steve
- *  elaborate_lnet uses scope instead of string path.
- *
- * Revision 1.50  2001/11/07 04:01:59  steve
- *  eval_const uses scope instead of a string path.
- */
 #endif

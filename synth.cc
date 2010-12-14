@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: synth.cc,v 1.14 2002/08/12 01:35:00 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -159,28 +156,3 @@ void synth(Design*des)
       synth_f synth_obj;
       des->functor(&synth_obj);
 }
-
-/*
- * $Log: synth.cc,v $
- * Revision 1.14  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.13  2002/06/05 03:44:25  steve
- *  Add support for memory words in l-value of
- *  non-blocking assignments, and remove the special
- *  NetAssignMem_ and NetAssignMemNB classes.
- *
- * Revision 1.12  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.11  2000/11/22 21:18:42  steve
- *  synthesize the rvalue of <= statements.
- *
- * Revision 1.10  2000/05/13 20:55:47  steve
- *  Use yacc based synthesizer.
- *
- * Revision 1.9  2000/04/16 22:57:34  steve
- *  Catch expressions that are part of conditionals.
- */
-

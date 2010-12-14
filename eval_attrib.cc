@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_attrib.cc,v 1.7 2004/02/20 18:53:35 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "util.h"
@@ -71,34 +68,3 @@ attrib_list_t* evaluate_attributes(const map<perm_string,PExpr*>&att,
       assert(idx == natt);
       return table;
 }
-
-/*
- * $Log: eval_attrib.cc,v $
- * Revision 1.7  2004/02/20 18:53:35  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.6  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.5  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.4  2002/08/10 21:59:39  steve
- *  The default attribute value is 1.
- *
- * Revision 1.3  2002/06/06 18:57:18  steve
- *  Use standard name for iostream.
- *
- * Revision 1.2  2002/06/03 03:55:14  steve
- *  compile warnings.
- *
- * Revision 1.1  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- */
-

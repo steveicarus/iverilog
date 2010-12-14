@@ -100,8 +100,6 @@ AX_C_UNDERSCORES_TRAILING
 ## end of test for underscores
 #######################
 
-AX_CPP_IDENT
-
 # If not otherwise specified, set the libdir64 variable
 # to the same as libdir.
 AC_MSG_CHECKING(for libdir64 path)

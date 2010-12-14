@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_vpi.c,v 1.9 2004/10/04 01:10:57 steve Exp $"
-#endif
 
 # include  "vvp_priv.h"
 # include  <string.h>
@@ -293,35 +290,3 @@ int draw_vpi_rfunc_call(ivl_expr_t fnet)
 
       return res;
 }
-
-/*
- * $Log: draw_vpi.c,v $
- * Revision 1.9  2004/10/04 01:10:57  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.8  2003/04/23 02:22:47  steve
- *  Fix word register leak.
- *
- * Revision 1.7  2003/04/22 04:48:30  steve
- *  Support event names as expressions elements.
- *
- * Revision 1.6  2003/04/12 23:25:20  steve
- *  Properly pass $signed(signal) to tasks.
- *
- * Revision 1.5  2003/03/25 02:15:48  steve
- *  Use hash code for scope labels.
- *
- * Revision 1.4  2003/03/15 04:45:18  steve
- *  Allow real-valued vpi functions to have arguments.
- *
- * Revision 1.3  2003/03/10 23:40:54  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.2  2003/03/07 02:43:32  steve
- *  Handle general $function arguments as expresions.
- *
- * Revision 1.1  2003/02/28 20:21:13  steve
- *  Merge vpi_call and vpi_func draw functions.
- *
- */
-

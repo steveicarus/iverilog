@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_time.cc,v 1.16 2004/10/04 01:11:00 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "vpi_priv.h"
@@ -282,65 +279,3 @@ void vpip_set_time_precision(int pre)
 {
       vpi_time_precision = pre;
 }
-
-
-/*
- * $Log: vpi_time.cc,v $
- * Revision 1.16  2004/10/04 01:11:00  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.15  2003/03/14 18:01:00  steve
- *  Refix vpiRealVal scaling of time.
- *
- * Revision 1.14  2003/03/13 20:31:41  steve
- *  Warnings about long long time.
- *
- * Revision 1.13  2003/03/13 04:59:21  steve
- *  Use rbufs instead of static buffers.
- *
- * Revision 1.12  2003/02/03 01:09:20  steve
- *  Allow $display of $simtime.
- *
- * Revision 1.11  2003/02/02 02:14:14  steve
- *  Proper rounding of scaled integer time.
- *
- * Revision 1.10  2003/02/01 05:50:04  steve
- *  Make $time and $realtime available to $display uniquely.
- *
- * Revision 1.9  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.8  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.7  2002/04/20 04:33:23  steve
- *  Support specified times in cbReadOnlySync, and
- *  add support for cbReadWriteSync.
- *  Keep simulation time in a 64bit number.
- *
- * Revision 1.6  2002/01/15 03:06:29  steve
- *  Support vpiSize and vpiSigned for time objects.
- *
- * Revision 1.5  2001/10/15 02:55:03  steve
- *  sign warning.
- *
- * Revision 1.4  2001/08/16 03:29:31  steve
- *  Support various other string formats for time.
- *
- * Revision 1.3  2001/06/30 23:03:17  steve
- *  support fast programming by only writing the bits
- *  that are listed in the input file.
- *
- * Revision 1.2  2001/04/03 03:46:14  steve
- *  VPI access time as a decimal string, and
- *  stub vpi access to the scopes.
- *
- * Revision 1.1  2001/03/31 19:00:44  steve
- *  Add VPI support for the simulation time.
- *
- */
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: netmisc.cc,v 1.8.2.1 2006/05/15 03:55:23 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -106,37 +103,3 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, const PExpr*pe)
 
       return tmp;
 }
-
-
-/*
- * $Log: netmisc.cc,v $
- * Revision 1.8.2.1  2006/05/15 03:55:23  steve
- *  Fix synthesis of expressions with land of vectors.
- *
- * Revision 1.8  2004/02/20 18:53:35  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.7  2004/02/18 17:11:57  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.6  2003/03/06 00:28:42  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.5  2003/02/26 01:29:24  steve
- *  LPM objects store only their base names.
- *
- * Revision 1.4  2002/08/31 03:48:50  steve
- *  Fix reverse bit ordered bit select in continuous assignment.
- *
- * Revision 1.3  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.2  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.1  2001/02/11 02:15:52  steve
- *  Add the netmisc.cc source file.
- *
- */
-

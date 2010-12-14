@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_random.c,v 1.14 2004/10/04 01:10:58 steve Exp $"
-#endif
 
 # include "sys_priv.h"
 
@@ -365,21 +362,3 @@ void sys_random_register()
       tf_data.user_data = "$dist_uniform";
       vpi_register_systf(&tf_data);
 }
-
-/*
- * $Log: sys_random.c,v $
- * Revision 1.14  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.13  2004/06/17 14:44:01  steve
- *  Save seed in static variable, in case user doesnt pass it.
- *
- * Revision 1.12  2004/06/10 02:14:42  steve
- *  Fix transcription error scaling c in uniform range.
- *
- * Revision 1.11  2004/06/09 22:14:10  steve
- *  Move Mersenne Twister to $mti_random, and make
- *  the standard $random standard. Also, add $dist_poisson.
- *
- */
-

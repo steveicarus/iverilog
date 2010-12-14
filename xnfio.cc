@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: xnfio.cc,v 1.29 2004/02/20 18:53:36 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -189,7 +186,7 @@ static void absorb_OFF(Design*des, NetLogic*buf)
 
 	/* Finally, build up an XNF-LCA value that defines this
 	   devices as an OUTFF and gives each pin an XNF name. */
-      char**names = new char*[ff->pin_count()];
+      const char**names = new const char*[ff->pin_count()];
       for (unsigned idx = 0 ;  idx < ff->pin_count() ;  idx += 1)
 	    names[idx] = "";
 
@@ -362,114 +359,3 @@ void xnfio(Design*des)
       xnfio_f xnfio_obj;
       des->functor(&xnfio_obj);
 }
-
-/*
- * $Log: xnfio.cc,v $
- * Revision 1.29  2004/02/20 18:53:36  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.28  2004/02/18 17:11:58  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.27  2003/06/24 01:38:03  steve
- *  Various warnings fixed.
- *
- * Revision 1.26  2003/03/06 00:28:42  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.25  2003/01/30 16:23:08  steve
- *  Spelling fixes.
- *
- * Revision 1.24  2003/01/14 21:16:18  steve
- *  Move strstream to ostringstream for compatibility.
- *
- * Revision 1.23  2002/08/12 01:35:01  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.22  2002/06/25 01:33:22  steve
- *  Cache calculated driven value.
- *
- * Revision 1.21  2002/06/24 01:49:39  steve
- *  Make link_drive_constant cache its results in
- *  the Nexus, to improve cprop performance.
- *
- * Revision 1.20  2002/05/23 03:08:52  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.19  2001/10/20 05:21:51  steve
- *  Scope/module names are char* instead of string.
- *
- * Revision 1.18  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.17  2000/11/20 00:58:40  steve
- *  Add support for supply nets (PR#17)
- *
- * Revision 1.16  2000/10/07 19:45:43  steve
- *  Put logic devices into scopes.
- *
- * Revision 1.15  2000/06/25 19:59:42  steve
- *  Redesign Links to include the Nexus class that
- *  carries properties of the connected set of links.
- *
- * Revision 1.14  2000/05/07 04:37:56  steve
- *  Carry strength values from Verilog source to the
- *  pform and netlist for gates.
- *
- *  Change vvm constants to use the driver_t to drive
- *  a constant value. This works better if there are
- *  multiple drivers on a signal.
- *
- * Revision 1.13  2000/05/02 00:58:12  steve
- *  Move signal tables to the NetScope class.
- *
- * Revision 1.12  2000/04/20 00:28:03  steve
- *  Catch some simple identity compareoptimizations.
- *
- * Revision 1.11  2000/02/23 02:56:56  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.10  1999/12/11 05:45:41  steve
- *  Fix support for attaching attributes to primitive gates.
- *
- * Revision 1.9  1999/11/27 19:07:58  steve
- *  Support the creation of scopes.
- *
- * Revision 1.8  1999/11/19 05:02:15  steve
- *  Handle inverted clock into OUTFF.
- *
- * Revision 1.7  1999/11/19 03:02:25  steve
- *  Detect flip-flops connected to opads and turn
- *  them into OUTFF devices. Inprove support for
- *  the XNF-LCA attribute in the process.
- *
- * Revision 1.6  1999/11/18 02:58:37  steve
- *  Handle (with a warning) unconnected opads.
- *
- * Revision 1.5  1999/11/02 04:55:01  steve
- *  repair the sense of T from bufif01
- *
- * Revision 1.4  1999/11/02 01:43:55  steve
- *  Fix iobuf and iobufif handling.
- *
- * Revision 1.3  1999/10/09 17:52:27  steve
- *  support XNF OBUFT devices.
- *
- * Revision 1.2  1999/07/17 22:01:14  steve
- *  Add the functor interface for functor transforms.
- *
- * Revision 1.1  1998/12/07 04:53:17  steve
- *  Generate OBUF or IBUF attributes (and the gates
- *  to garry them) where a wire is a pad. This involved
- *  figuring out enough of the netlist to know when such
- *  was needed, and to generate new gates and signales
- *  to handle what's missing.
- *
- */
-

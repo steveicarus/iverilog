@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: LineInfo.cc,v 1.4.2.1 2005/08/13 00:45:53 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -58,24 +55,3 @@ void LineInfo::set_lineno(unsigned n)
 {
       lineno_ = n;
 }
-
-/*
- * $Log: LineInfo.cc,v $
- * Revision 1.4.2.1  2005/08/13 00:45:53  steve
- *  Fix compilation warnings/errors with newer compilers.
- *
- * Revision 1.4  2003/01/17 05:49:03  steve
- *  Use stringstream in place of sprintf.
- *
- * Revision 1.3  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.2  2001/07/25 03:10:48  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.1  2000/11/30 17:31:42  steve
- *  Change LineInfo to store const C strings.
- *
- */
-

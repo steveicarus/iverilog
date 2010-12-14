@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -15,9 +15,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vector.c,v 1.4.2.1 2007/02/26 19:51:40 steve Exp $"
-#endif
 
 # include  "vvp_priv.h"
 # include  <assert.h>
@@ -208,23 +205,3 @@ unsigned allocate_vector_exp(ivl_expr_t exp, unsigned wid)
 
       return la;
 }
-
-/*
- * $Log: vector.c,v $
- * Revision 1.4.2.1  2007/02/26 19:51:40  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.4  2003/07/03 17:44:10  steve
- *  Wider thread vector limit.
- *
- * Revision 1.3  2003/06/17 19:17:42  steve
- *  Remove short int restrictions from vvp opcodes.
- *
- * Revision 1.2  2003/06/05 04:18:50  steve
- *  Better width testing for thread vector allocation.
- *
- * Revision 1.1  2002/09/27 16:33:34  steve
- *  Add thread expression lookaside map.
- *
- */
-

@@ -1,7 +1,7 @@
 #ifndef __functor_H
 #define __functor_H
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.h,v 1.52.2.1 2006/02/19 00:11:36 steve Exp $"
-#endif
 
 # include  "pointers.h"
 # include  "delay.h"
@@ -356,62 +353,4 @@ unsigned char functor_get_input(vvp_ipoint_t ip)
   return (bits >> (2*ipoint_port(ip))) & 3;
 }
 
-
-/*
- * $Log: functor.h,v $
- * Revision 1.52.2.1  2006/02/19 00:11:36  steve
- *  Handle synthesis of FF vectors with l-value decoder.
- *
- * Revision 1.52  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.51  2003/09/09 00:56:45  steve
- *  Reimpelement scheduler to divide nonblocking assign queue out.
- *
- * Revision 1.50  2003/03/13 04:36:57  steve
- *  Remove the obsolete functor delete functions.
- *
- * Revision 1.49  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.48  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.47  2002/08/07 00:54:20  steve
- *  Documentation, and excessive inlines.
- *
- * Revision 1.46  2002/05/19 05:18:16  steve
- *  Add callbacks for vpiNamedEvent objects.
- *
- * Revision 1.45  2002/03/17 03:23:10  steve
- *  Force the push flags to be explicit.
- *
- * Revision 1.44  2002/01/06 17:50:50  steve
- *  Support scope for functors. (Stephan Boettcher)
- *
- * Revision 1.43  2002/01/06 03:15:13  steve
- *  Support weak functor inputs.
- *
- * Revision 1.42  2001/12/18 05:32:11  steve
- *  Improved functor debug dumps.
- *
- * Revision 1.41  2001/12/14 01:59:28  steve
- *  Better variable names for functor chunks.
- *
- * Revision 1.40  2001/12/06 03:31:24  steve
- *  Support functor delays for gates and UDP devices.
- *  (Stephan Boettcher)
- *
- * Revision 1.39  2001/11/10 18:07:12  steve
- *  Runtime support for functor delays. (Stephan Boettcher)
- *
- * Revision 1.38  2001/11/07 03:34:42  steve
- *  Use functor pointers where vvp_ipoint_t is unneeded.
- *
- * Revision 1.37  2001/11/06 03:07:22  steve
- *  Code rearrange. (Stephan Boettcher)
- *
- * Revision 1.36  2001/11/01 03:00:19  steve
- *  Add force/cassign/release/deassign support. (Stephan Boettcher)
- */
 #endif

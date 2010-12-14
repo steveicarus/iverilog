@@ -1,7 +1,7 @@
 #ifndef __event_H
 #define __event_H
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: event.h,v 1.5 2004/10/04 01:10:59 steve Exp $"
-#endif
 
 # include  "functor.h"
 
@@ -78,22 +75,4 @@ struct named_event_functor_s  : public waitable_hooks_s, public functor_s {
 struct callback_functor_s *vvp_fvector_make_callback
                     (vvp_fvector_t, event_functor_s::edge_t = vvp_edge_none);
 
-/*
- * $Log: event.h,v $
- * Revision 1.5  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.4  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.3  2002/07/17 18:30:01  steve
- *  Fix uninitialized thread pointer in named event.
- *
- * Revision 1.2  2002/05/19 05:18:16  steve
- *  Add callbacks for vpiNamedEvent objects.
- *
- * Revision 1.1  2001/11/06 03:07:22  steve
- *  Code rearrange. (Stephan Boettcher)
- *
- */
 #endif // __event_H

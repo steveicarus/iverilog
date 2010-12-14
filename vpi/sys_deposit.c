@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2000 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -17,9 +17,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_deposit.c,v 1.5 2004/10/04 01:10:58 steve Exp $"
-#endif
 
 # include "vpi_config.h"
 
@@ -75,25 +72,3 @@ void sys_deposit_register()
   tf_data.user_data = "$deposit";
   vpi_register_systf(&tf_data);
 }
-
-
-/*
- * $Log: sys_deposit.c,v $
- * Revision 1.5  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.4  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- * Revision 1.3  2002/08/12 01:35:04  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.2  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.1  2001/04/26 00:01:33  steve
- *  Support $deposit to a wire or reg.
- *
- */
-

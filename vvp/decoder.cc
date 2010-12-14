@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,7 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ident "$Id: decoder.cc,v 1.1.2.4 2006/11/02 17:47:52 steve Exp $"
 
 # include  "compile.h"
 # include  "functor.h"
@@ -183,7 +182,7 @@ void vvp_decode_en_s::set(vvp_ipoint_t i, bool push,
 	    break;
       }
 
-      if (extra_en && decode_en || mass_en)
+      if ((extra_en && decode_en) || mass_en)
 	    put_oval(1, true);
       else
 	    put_oval(0, true);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: eval.cc,v 1.36.2.3 2006/09/20 20:27:02 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -260,95 +257,3 @@ verinum* PEUnary::eval_const(const Design*des, const NetScope*scope) const
 	    delete val;
       return 0;
 }
-
-
-/*
- * $Log: eval.cc,v $
- * Revision 1.36.2.3  2006/09/20 20:27:02  steve
- *  Fix left shift of small unsized constants.
- *
- * Revision 1.36.2.2  2005/12/18 21:06:01  steve
- *  Properly fail when concat is not actually constant.
- *
- * Revision 1.36.2.1  2005/12/07 03:28:44  steve
- *  Support constant concatenation of constants.
- *
- * Revision 1.36  2003/06/21 01:21:43  steve
- *  Harmless fixup of warnings.
- *
- * Revision 1.35  2003/04/14 03:40:21  steve
- *  Make some effort to preserve bits while
- *  operating on constant values.
- *
- * Revision 1.34  2003/03/26 06:16:18  steve
- *  Evaluate > and < in constant expressions.
- *
- * Revision 1.33  2003/03/10 23:40:53  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.32  2002/10/19 22:59:49  steve
- *  Redo the parameter vector support to allow
- *  parameter names in range expressions.
- *
- * Revision 1.31  2002/10/13 05:01:07  steve
- *  More verbose eval_const assert message.
- *
- * Revision 1.30  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.29  2002/06/07 02:57:54  steve
- *  Simply give up on constants with indices.
- *
- * Revision 1.28  2002/06/06 18:57:04  steve
- *  Better error for identifier index eval.
- *
- * Revision 1.27  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.26  2001/12/29 22:10:10  steve
- *  constant eval of arithmetic with x and z.
- *
- * Revision 1.25  2001/12/29 00:43:55  steve
- *  Evaluate constant right shifts.
- *
- * Revision 1.24  2001/12/03 04:47:15  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.23  2001/11/07 04:01:59  steve
- *  eval_const uses scope instead of a string path.
- *
- * Revision 1.22  2001/11/06 06:11:55  steve
- *  Support more real arithmetic in delay constants.
- *
- * Revision 1.21  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.20  2001/02/09 02:49:59  steve
- *  Be more clear about scope of failure.
- *
- * Revision 1.19  2001/01/27 05:41:48  steve
- *  Fix sign extension of evaluated constants. (PR#91)
- *
- * Revision 1.18  2001/01/14 23:04:56  steve
- *  Generalize the evaluation of floating point delays, and
- *  get it working with delay assignment statements.
- *
- *  Allow parameters to be referenced by hierarchical name.
- *
- * Revision 1.17  2001/01/04 04:47:51  steve
- *  Add support for << is signal indices.
- *
- * Revision 1.16  2000/12/10 22:01:36  steve
- *  Support decimal constants in behavioral delays.
- *
- * Revision 1.15  2000/09/07 22:38:13  steve
- *  Support unary + and - in constants.
- */
-

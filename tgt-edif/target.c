@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Stephen Williams
+ * Copyright (c) 2005-2010 Stephen Williams
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,10 +24,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: target.c,v 1.1.2.1 2005/08/17 01:17:29 steve Exp $"
-#endif
-
 
 /*
  * This is the EDIF target module.
@@ -228,11 +224,3 @@ int test_nexus_constant(ivl_nexus_t nex, char*val)
 	/* Return TRUE */
       return 1;
 }
-
-/*
- * $Log: target.c,v $
- * Revision 1.1.2.1  2005/08/17 01:17:29  steve
- *  Add the tgt-edif target.
- *
- */
-

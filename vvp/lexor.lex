@@ -1,7 +1,10 @@
+
 %option never-interactive
+%option nounput
+
 %{
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +21,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.43.2.3 2006/05/08 04:33:36 steve Exp $"
-#endif
 
 # include  "parse_misc.h"
 # include  "compile.h"
@@ -182,149 +182,3 @@ int yywrap()
 {
       return -1;
 }
-
-
-/*
- * $Log: lexor.lex,v $
- * Revision 1.43.2.3  2006/05/08 04:33:36  steve
- *  Update to use only Mingw for build.
- *
- * Revision 1.43.2.2  2006/03/26 23:09:00  steve
- *  Add the .demux device.
- *
- * Revision 1.43.2.1  2006/02/19 00:11:36  steve
- *  Handle synthesis of FF vectors with l-value decoder.
- *
- * Revision 1.43  2004/06/30 02:15:57  steve
- *  Add signed LPM divide.
- *
- * Revision 1.42  2004/06/16 16:33:26  steve
- *  Add structural equality compare nodes.
- *
- * Revision 1.41  2003/08/26 16:26:02  steve
- *  ifdef idents correctly.
- *
- * Revision 1.40  2003/04/11 05:15:39  steve
- *  Add signed versions of .cmp/gt/ge
- *
- * Revision 1.39  2003/03/10 23:37:07  steve
- *  Direct support for string parameters.
- *
- * Revision 1.38  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.37  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.36  2003/01/25 23:48:06  steve
- *  Add thread word array, and add the instructions,
- *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
- *
- * Revision 1.35  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.34  2002/06/21 04:58:55  steve
- *  Add support for special integer vectors.
- *
- * Revision 1.33  2002/04/14 03:53:20  steve
- *  Allow signed constant vectors for call_vpi parameters.
- *
- * Revision 1.32  2002/03/18 00:19:34  steve
- *  Add the .ufunc statement.
- *
- * Revision 1.31  2002/03/01 05:42:50  steve
- *  out-of-memory asserts.
- *
- * Revision 1.30  2002/02/27 05:46:33  steve
- *  carriage return is white space.
- *
- * Revision 1.29  2002/01/03 04:19:02  steve
- *  Add structural modulus support down to vvp.
- *
- * Revision 1.28  2001/11/01 03:00:19  steve
- *  Add force/cassign/release/deassign support. (Stephan Boettcher)
- *
- * Revision 1.27  2001/10/16 02:47:37  steve
- *  Add arith/div object.
- *
- * Revision 1.26  2001/07/07 02:57:33  steve
- *  Add the .shift/r functor.
- *
- * Revision 1.25  2001/07/06 04:46:44  steve
- *  Add structural left shift (.shift/l)
- *
- * Revision 1.24  2001/06/30 23:03:17  steve
- *  support fast programming by only writing the bits
- *  that are listed in the input file.
- *
- * Revision 1.23  2001/06/18 03:10:34  steve
- *   1. Logic with more than 4 inputs
- *   2. Id and name mangling
- *   3. A memory leak in draw_net_in_scope()
- *   (Stephan Boettcher)
- *
- * Revision 1.22  2001/06/16 23:45:05  steve
- *  Add support for structural multiply in t-dll.
- *  Add code generators and vvp support for both
- *  structural and behavioral multiply.
- *
- * Revision 1.21  2001/06/15 04:07:58  steve
- *  Add .cmp statements for structural comparison.
- *
- * Revision 1.20  2001/06/07 03:09:03  steve
- *  Implement .arith/sub subtraction.
- *
- * Revision 1.19  2001/06/05 03:05:41  steve
- *  Add structural addition.
- *
- * Revision 1.18  2001/05/20 00:46:12  steve
- *  Add support for system function calls.
- *
- * Revision 1.17  2001/05/10 00:26:53  steve
- *  VVP support for memories in expressions,
- *  including general support for thread bit
- *  vectors as system task parameters.
- *  (Stephan Boettcher)
- *
- * Revision 1.16  2001/05/09 02:53:25  steve
- *  Implement the .resolv syntax.
- *
- * Revision 1.15  2001/05/01 01:09:39  steve
- *  Add support for memory objects. (Stephan Boettcher)
- *
- * Revision 1.14  2001/04/24 02:23:59  steve
- *  Support for UDP devices in VVP (Stephen Boettcher)
- *
- * Revision 1.13  2001/04/18 04:21:23  steve
- *  Put threads into scopes.
- *
- * Revision 1.12  2001/04/14 05:10:56  steve
- *  support the .event/or statement.
- *
- * Revision 1.11  2001/04/05 01:34:26  steve
- *  Add the .var/s and .net/s statements for VPI support.
- *
- * Revision 1.10  2001/04/04 04:33:08  steve
- *  Take vector form as parameters to vpi_call.
- *
- * Revision 1.9  2001/03/26 04:00:39  steve
- *  Add the .event statement and the %wait instruction.
- *
- * Revision 1.8  2001/03/25 19:36:45  steve
- *  Accept <> characters in labels and symbols.
- *
- * Revision 1.7  2001/03/25 00:35:35  steve
- *  Add the .net statement.
- *
- * Revision 1.6  2001/03/23 02:40:22  steve
- *  Add the :module header statement.
- *
- * Revision 1.5  2001/03/20 02:48:40  steve
- *  Copyright notices.
- *
- */

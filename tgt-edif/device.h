@@ -1,7 +1,7 @@
 #ifndef __device_H
 #define __device_H
 /*
- * Copyright (c) 2005 Stephen Williams
+ * Copyright (c) 2005-2010 Stephen Williams
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,9 +26,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: device.h,v 1.1.2.1 2005/08/17 01:17:28 steve Exp $"
-#endif
 
 # include  <ivl_target.h>
 
@@ -92,10 +89,4 @@ extern const struct device_table_s {
       device_t driver;
 } edif_device_table[];
 
-/*
- * $Log: device.h,v $
- * Revision 1.1.2.1  2005/08/17 01:17:28  steve
- *  Add the tgt-edif target.
- *
- */
 #endif

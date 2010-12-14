@@ -62,8 +62,6 @@ AX_C_UNDERSCORES_TRAILING
 ## end of test for underscores
 #######################
 
-AX_CPP_IDENT
-
 # where to put vpi subdirectories
 AC_MSG_CHECKING(for VPI subdirectories)
 if test x${vpidir1} = x

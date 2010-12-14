@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_func.cc,v 1.6 2004/05/31 23:34:37 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "netlist.h"
@@ -161,28 +158,3 @@ bool PECallFunction::check_call_matches_definition_(Design*des, NetScope*dscope)
 
       return true;
 }
-
-/*
- * $Log: net_func.cc,v $
- * Revision 1.6  2004/05/31 23:34:37  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.5  2004/02/18 17:11:56  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.4  2003/03/06 00:28:41  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.3  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.2  2002/03/31 04:07:40  steve
- *  Update for gcc 3.0
- *
- * Revision 1.1  2002/03/09 02:10:22  steve
- *  Add the NetUserFunc netlist node.
- *
- */
-

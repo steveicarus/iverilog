@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2000 Picture Elements, Inc.
+ * Copyright (c) 1999-2010 Picture Elements, Inc.
  *    Stephen Williams (steve@picturel.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
@@ -26,9 +26,6 @@
  *    binary (compiled) form. If you have not received it, contact
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_memory.cc,v 1.23.2.1 2006/02/19 16:57:31 steve Exp $"
-#endif
 
 # include  "vpi_priv.h"
 # include  "memory.h"
@@ -590,87 +587,3 @@ void vpip_memory_value_change(struct __vpiCallback*cbh,
       cbh->next = obj->mem->cb;
       obj->mem->cb = cbh;
 }
-
-/*
- * $Log: vpi_memory.cc,v $
- * Revision 1.23.2.1  2006/02/19 16:57:31  steve
- *  Add change callback to vpiMemory objects.
- *
- * Revision 1.23  2004/05/19 03:30:46  steve
- *  Support delayed/non-blocking assignment to reals and others.
- *
- * Revision 1.22  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.21  2003/02/02 01:40:24  steve
- *  Five vpi_free_object a default behavior.
- *
- * Revision 1.20  2002/09/12 15:13:07  steve
- *  Account for buffer overrun in memory word names.
- *
- * Revision 1.19  2002/09/11 16:06:57  steve
- *  Fix wrecked rbuf in vpi_get_str of signals and memories.
- *
- * Revision 1.18  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.17  2002/07/09 03:24:37  steve
- *  Dynamic resizevpi result buf in more places.
- *
- * Revision 1.16  2002/07/05 17:14:15  steve
- *  Names of vpi objects allocated as vpip_strings.
- *
- * Revision 1.15  2002/07/04 16:37:07  steve
- *  Fix s_vpi_vecval array byte size.
- *
- * Revision 1.14  2002/07/03 23:39:57  steve
- *  Dynamic size result buffer for _str and _get_value functions.
- *
- * Revision 1.13  2002/07/03 23:16:27  steve
- *  don't pollute name space
- *  fix vecval for Z/X cases
- *
- * Revision 1.12  2002/07/03 02:09:38  steve
- *  vpiName, vpiFullName support in memory types,
- *  length checks for *_get_str() buffers,
- *  temporary buffers for *_get_str() data,
- *  dynamic storage for vpi_get_data() in memory types
- *  shared with signal white space
- *
- * Revision 1.11  2002/07/01 15:36:12  steve
- *  Limit word writing to vector limits.
- *
- * Revision 1.10  2002/06/30 04:35:47  steve
- *  Get vpiVectorVal for memories.
- *
- * Revision 1.9  2002/05/17 04:12:19  steve
- *  Rewire vpiMemory and vpiMemoryWord handles to
- *  support proper iteration of words, and the
- *  vpiIndex value.
- *
- * Revision 1.8  2002/05/11 04:39:35  steve
- *  Set and get memory words by string value.
- *
- * Revision 1.7  2002/05/10 16:00:57  steve
- *  Support scope iterate over vpiNet,vpiReg/vpiMemory.
- *
- * Revision 1.6  2002/05/03 15:44:11  steve
- *  Add vpiModule iterator to vpiScope objects.
- *
- * Revision 1.5  2002/02/06 04:48:34  steve
- *  get bin or hex string values of memory words.
- *
- * Revision 1.4  2002/01/31 04:28:17  steve
- *  Full support for $readmem ranges (Tom Verbeure)
- *
- * Revision 1.3  2001/12/07 23:23:05  steve
- *  vpi_put_value of vpiIntVal for memory words.
- *
- * Revision 1.2  2001/11/09 03:39:07  steve
- *  Support vpiIntVal from memory.
- *
- * Revision 1.1  2001/05/08 23:59:33  steve
- *  Add ivl and vvp.tgt support for memories in
- *  expressions and l-values. (Stephan Boettcher)
- *
- */

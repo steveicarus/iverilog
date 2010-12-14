@@ -1,7 +1,7 @@
 #ifndef __ivl_dlfcn_H
 #define __ivl_dlfcn_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_dlfcn.h,v 1.3 2004/10/04 01:10:56 steve Exp $"
-#endif
 
 #if defined(__MINGW32__)
 # include <windows.h>
@@ -94,20 +91,4 @@ inline const char*dlerror(void)
 { return strerror( errno ); }
 #endif
 
-/*
- * $Log: ivl_dlfcn.h,v $
- * Revision 1.3  2004/10/04 01:10:56  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.2  2003/12/12 05:43:08  steve
- *  Some systems dlsym requires leading _ or not on whim.
- *
- * Revision 1.1  2003/02/17 00:01:25  steve
- *  Use a variant of ivl_dlfcn to do dynamic loading
- *  from within the cadpli module.
- *
- *  Change the +cadpli flag to -cadpli, to keep the
- *  plusargs namespace clear.
- *
- */
 #endif

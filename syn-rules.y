@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: syn-rules.y,v 1.31 2004/10/04 01:10:55 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -405,7 +402,7 @@ static int yylex()
 {
       if (ptr_ == 0) {
 	    yylval = 0;
-	    return EOF;
+	    return 0;
       }
 
       yylval = ptr_;

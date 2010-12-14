@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_scope.c,v 1.103.2.7 2007/02/26 19:51:40 steve Exp $"
-#endif
 
 # include  "vvp_priv.h"
 # include  <assert.h>
@@ -1883,109 +1880,3 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       ivl_scope_children(net, (ivl_scope_f*) draw_scope, net);
       return 0;
 }
-
-/*
- * $Log: vvp_scope.c,v $
- * Revision 1.103.2.7  2007/02/26 19:51:40  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.103.2.6  2006/04/16 19:26:41  steve
- *  Fix handling of exploded memories with partial or missing resets.
- *
- * Revision 1.103.2.5  2006/03/26 23:09:26  steve
- *  Handle asynchronous demux/bit replacements.
- *
- * Revision 1.103.2.4  2006/03/12 07:34:20  steve
- *  Fix the memsynth1 case.
- *
- * Revision 1.103.2.3  2006/02/25 05:03:30  steve
- *  Add support for negedge FFs by using attributes.
- *
- * Revision 1.103.2.2  2006/02/19 00:11:35  steve
- *  Handle synthesis of FF vectors with l-value decoder.
- *
- * Revision 1.103.2.1  2006/01/18 06:15:45  steve
- *  Support DFF with synchronous inputs.
- *
- * Revision 1.103  2004/10/04 01:10:57  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.102  2004/09/25 21:04:25  steve
- *  More carefull about eliding bufzs that carry strength.
- *
- * Revision 1.101  2004/09/10 23:13:05  steve
- *  Compile cleanup of C code.
- *
- * Revision 1.100  2004/06/30 02:16:27  steve
- *  Implement signed divide and signed right shift in nets.
- *
- * Revision 1.99  2004/06/16 23:33:42  steve
- *  Generate .cmp/eq nodes instead of sea of gates.
- *
- * Revision 1.98  2003/12/19 01:27:10  steve
- *  Fix various unsigned compare warnings.
- *
- * Revision 1.97  2003/10/09 23:45:03  steve
- *  Emit .event inputs before the .event statement.
- *
- * Revision 1.96  2003/08/22 23:14:26  steve
- *  Preserve variable ranges all the way to the vpi.
- *
- * Revision 1.95  2003/07/30 01:13:28  steve
- *  Add support for triand and trior.
- *
- * Revision 1.94  2003/05/29 02:21:45  steve
- *  Implement acc_fetch_defname and its infrastructure in vvp.
- *
- * Revision 1.93  2003/05/13 01:56:15  steve
- *  Allow primitives to hvae unconnected input ports.
- *
- * Revision 1.92  2003/04/11 05:18:08  steve
- *  Handle signed magnitude compare all the
- *  way through to the vvp code generator.
- *
- * Revision 1.91  2003/03/25 02:15:48  steve
- *  Use hash code for scope labels.
- *
- * Revision 1.90  2003/03/13 06:07:11  steve
- *  Use %p name for all LPM functors.
- *
- * Revision 1.89  2003/03/10 23:40:54  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.88  2003/03/06 01:17:46  steve
- *  Use number for event labels.
- *
- * Revision 1.87  2003/03/06 00:27:09  steve
- *  Use numbers for functor labels.
- *
- * Revision 1.86  2003/03/03 23:05:49  steve
- *  Printed nexus names need not use ivl_nexus_name.
- *
- * Revision 1.85  2003/03/03 01:48:41  steve
- *  Only give scope basename to .scope directives.
- *
- * Revision 1.84  2003/02/25 03:40:45  steve
- *  Eliminate use of ivl_lpm_name function.
- *
- * Revision 1.83  2003/01/26 21:16:00  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.82  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.81  2002/11/21 18:08:09  steve
- *  Better handling of select width of shifters.
- *
- * Revision 1.80  2002/10/23 04:39:35  steve
- *  draw lpm ff with aset_expr taken into account.
- *
- * Revision 1.79  2002/09/26 03:18:04  steve
- *  Generate vvp code for asynch set/reset of NetFF.
- */
-

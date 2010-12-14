@@ -1,7 +1,7 @@
 #ifndef __edif_H
 #define __edif_H
 /*
- * Copyright (c) 2005 Stephen Williams
+ * Copyright (c) 2005-2010 Stephen Williams
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,9 +26,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.h,v 1.1.2.3 2007/02/26 19:51:39 steve Exp $"
-#endif
 
 # include  <stdio.h>
 # include  <ivl_target.h>
@@ -248,17 +245,4 @@ extern void edif_print(FILE*fd, edif_t design);
  */
 extern FILE*xnf;
 
-
-/*
- * $Log: edif.h,v $
- * Revision 1.1.2.3  2007/02/26 19:51:39  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.1.2.2  2005/09/25 16:35:36  steve
- *  Add Xilinx virtex as a reference EDIF device.
- *
- * Revision 1.1.2.1  2005/08/17 01:17:29  steve
- *  Add the tgt-edif target.
- *
- */
 #endif

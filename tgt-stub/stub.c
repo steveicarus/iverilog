@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: stub.c,v 1.90.2.11 2006/09/15 23:56:05 steve Exp $"
-#endif
 
 # include "config.h"
 # include <assert.h>
@@ -1127,106 +1124,3 @@ int target_design(ivl_design_t des)
 
       return 0;
 }
-
-
-/*
- * $Log: stub.c,v $
- * Revision 1.90.2.11  2006/09/15 23:56:05  steve
- *  Special handling of exploded memory arguments.
- *
- * Revision 1.90.2.10  2006/07/23 19:42:35  steve
- *  Handle statement output override better in blocks.
- *
- * Revision 1.90.2.9  2006/04/16 19:26:41  steve
- *  Fix handling of exploded memories with partial or missing resets.
- *
- * Revision 1.90.2.8  2006/03/26 23:09:25  steve
- *  Handle asynchronous demux/bit replacements.
- *
- * Revision 1.90.2.7  2006/03/12 07:34:20  steve
- *  Fix the memsynth1 case.
- *
- * Revision 1.90.2.6  2006/02/25 05:03:30  steve
- *  Add support for negedge FFs by using attributes.
- *
- * Revision 1.90.2.5  2006/02/19 00:11:34  steve
- *  Handle synthesis of FF vectors with l-value decoder.
- *
- * Revision 1.90.2.4  2006/01/21 21:42:33  steve
- *  When mux has wide select but sparse choices, use 1hot translation.
- *
- * Revision 1.90.2.3  2006/01/14 20:13:22  steve
- *  Show synchronous set/clr of FF.
- *
- * Revision 1.90.2.2  2005/08/28 17:37:28  steve
- *  Dump CMP_GE devices.
- *
- * Revision 1.90.2.1  2005/08/21 22:27:57  steve
- *  Display NOR gates.
- *
- * Revision 1.90  2004/10/04 01:10:57  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.89  2004/09/25 01:57:33  steve
- *  Dump tri0 and tri1 nets.
- *
- * Revision 1.88  2004/06/30 03:05:04  steve
- *  Dump variable type of system function.
- *
- * Revision 1.87  2004/06/30 02:16:27  steve
- *  Implement signed divide and signed right shift in nets.
- *
- * Revision 1.86  2004/06/17 16:06:19  steve
- *  Help system function signedness survive elaboration.
- *
- * Revision 1.85  2004/06/16 16:22:04  steve
- *  Dump NE LPM device.
- *
- * Revision 1.84  2003/12/03 04:27:10  steve
- *  Pre-gcc3 compile error.
- *
- * Revision 1.83  2003/12/03 02:46:24  steve
- *  Add support for wait on list of named events.
- *
- * Revision 1.82  2003/12/03 01:54:07  steve
- *  Handle erroneous event lists.
- *
- * Revision 1.81  2003/07/26 03:34:43  steve
- *  Start handling pad of expressions in code generators.
- *
- * Revision 1.80  2003/06/23 01:25:44  steve
- *  Module attributes make it al the way to ivl_target.
- *
- * Revision 1.79  2003/05/14 05:26:41  steve
- *  Support real expressions in case statements.
- *
- * Revision 1.78  2003/05/13 01:56:15  steve
- *  Allow primitives to hvae unconnected input ports.
- *
- * Revision 1.77  2003/04/11 05:18:08  steve
- *  Handle signed magnitude compare all the
- *  way through to the vvp code generator.
- *
- * Revision 1.76  2003/03/29 05:51:26  steve
- *  Sign extend NetMult inputs if result is signed.
- *
- * Revision 1.75  2003/03/10 23:40:54  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.74  2003/03/07 06:04:58  steve
- *  Raw dump of double values for testing purposes.
- *
- * Revision 1.73  2003/02/25 03:39:53  steve
- *  Eliminate use of ivl_lpm_name.
- *
- * Revision 1.72  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.71  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- */

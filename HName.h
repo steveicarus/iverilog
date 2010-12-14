@@ -1,7 +1,7 @@
 #ifndef __HName_H
 #define __HName_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: HName.h,v 1.4 2002/11/02 03:27:51 steve Exp $"
-#endif
 
 # include  <iostream>
 #ifdef __GNUC__
@@ -81,21 +78,4 @@ class hname_t {
 extern bool operator <  (const hname_t&, const hname_t&);
 extern bool operator == (const hname_t&, const hname_t&);
 
-/*
- * $Log: HName.h,v $
- * Revision 1.4  2002/11/02 03:27:51  steve
- *  Allow named events to be referenced by
- *  hierarchical names.
- *
- * Revision 1.3  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.2  2002/06/14 03:25:51  steve
- *  Compiler portability.
- *
- * Revision 1.1  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- */
 #endif

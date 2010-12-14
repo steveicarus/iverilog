@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1999 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)";
 /*
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@ const char COPYRIGHT[] =
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.20.2.1 2006/06/27 01:37:14 steve Exp $"
-#endif
 
 # include "config.h"
 # include "version.h"
@@ -286,47 +283,3 @@ int main(int argc, char*argv[])
 
       return error_count;
 }
-
-/*
- * $Log: main.c,v $
- * Revision 1.20.2.1  2006/06/27 01:37:14  steve
- *  Fix const/non-const warnings.
- *
- * Revision 1.20  2004/09/10 00:15:45  steve
- *  Remove bad casts.
- *
- * Revision 1.19  2004/09/05 21:29:08  steve
- *  Better type safety.
- *
- * Revision 1.18  2004/02/15 18:03:30  steve
- *  Cleanup of warnings.
- *
- * Revision 1.17  2003/09/26 02:08:31  steve
- *  Detect missing endif markers.
- *
- * Revision 1.16  2002/08/12 01:35:02  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.15  2002/04/04 05:26:13  steve
- *  Add dependency generation.
- *
- * Revision 1.14  2001/11/21 02:59:27  steve
- *  Remove diag print.
- *
- * Revision 1.13  2001/11/21 02:20:35  steve
- *  Pass list of file to ivlpp via temporary file.
- *
- * Revision 1.12  2001/09/15 18:27:04  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.11  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.10  2001/06/23 18:41:02  steve
- *  Include stdlib.h
- *
- * Revision 1.9  2001/05/20 18:08:07  steve
- *  local declares if the header is missing.
- */
-

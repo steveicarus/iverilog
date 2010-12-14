@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_scope.cc,v 1.32 2004/10/04 01:10:59 steve Exp $"
-#endif
 
 # include  "compile.h"
 # include  "vpi_priv.h"
@@ -469,72 +466,3 @@ void vpip_attach_to_current_scope(vpiHandle obj)
 {
       attach_to_scope_(current_scope, obj);
 }
-
-
-/*
- * $Log: vpi_scope.cc,v $
- * Revision 1.32  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.31  2003/05/29 02:21:45  steve
- *  Implement acc_fetch_defname and its infrastructure in vvp.
- *
- * Revision 1.30  2003/05/27 16:22:10  steve
- *  PLI get time units/precision.
- *
- * Revision 1.29  2003/03/14 05:01:22  steve
- *  vpiModule handle of scope is parent scope.
- *
- * Revision 1.28  2003/03/06 04:32:00  steve
- *  Use hashed name strings for identifiers.
- *
- * Revision 1.27  2003/03/03 01:47:50  steve
- *  .scope directives store only the base names.
- *
- * Revision 1.26  2003/02/27 21:54:44  steve
- *  Add scope type have a vpi_get function.
- *
- * Revision 1.25  2003/02/23 06:41:54  steve
- *  Add to interactive stop mode support for
- *  current scope, the ability to scan/traverse
- *  scopes, and the ability to call system tasks.
- *
- * Revision 1.24  2003/02/11 05:20:45  steve
- *  Include vpiRealVar objects in vpiVariables scan.
- *
- * Revision 1.23  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.22  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.21  2002/11/15 22:14:12  steve
- *  Add vpiScope iterate on vpiScope objects.
- *
- * Revision 1.20  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.19  2002/07/17 05:13:43  steve
- *  Implementation of vpi_handle_by_name, and
- *  add the vpiVariables iterator.
- *
- * Revision 1.18  2002/07/14 02:52:05  steve
- *  Fix vpiScope iterator.
- *
- * Revision 1.17  2002/07/12 18:23:30  steve
- *  Use result buf for event and scope names.
- *
- * Revision 1.16  2002/07/05 17:14:15  steve
- *  Names of vpi objects allocated as vpip_strings.
- *
- * Revision 1.15  2002/05/18 02:34:11  steve
- *  Add vpi support for named events.
- *
- *  Add vpi_mode_flag to track the mode of the
- *  vpi engine. This is for error checking.
- */
-

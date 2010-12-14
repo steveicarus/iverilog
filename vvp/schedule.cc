@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.cc,v 1.28.2.1 2006/08/06 18:09:42 steve Exp $"
-#endif
 
 # include  "schedule.h"
 # include  "functor.h"
@@ -555,28 +552,3 @@ void schedule_simulate(void)
       // Execute post-simulation callbacks
       vpiPostsim();
 }
-
-/*
- * $Log: schedule.cc,v $
- * Revision 1.28.2.1  2006/08/06 18:09:42  steve
- *  Typo clearing an event cell.
- *
- * Revision 1.28  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.27  2003/09/26 02:15:15  steve
- *  Slight performance tweaks of scheduler.
- *
- * Revision 1.26  2003/09/09 00:56:45  steve
- *  Reimpelement scheduler to divide nonblocking assign queue out.
- *
- * Revision 1.25  2003/04/19 23:32:57  steve
- *  Add support for cbNextSimTime.
- *
- * Revision 1.24  2003/02/22 02:52:06  steve
- *  Check for stopped flag in certain strategic points.
- *
- * Revision 1.23  2003/02/21 03:40:35  steve
- *  Add vpiStop and interactive mode.
- */
-

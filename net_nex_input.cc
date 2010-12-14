@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_nex_input.cc,v 1.12.2.1 2006/05/21 21:58:47 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -419,52 +416,3 @@ NexusSet* NetWhile::nex_input(bool rem_out)
       delete tmp;
       return result;
 }
-
-/*
- * $Log: net_nex_input.cc,v $
- * Revision 1.12.2.1  2006/05/21 21:58:47  steve
- *  NetESignal input is only selected bits.
- *
- * Revision 1.12  2004/09/04 04:24:15  steve
- *  PR1026: assignment statements can have sensitivities in the l-values.
- *
- * Revision 1.11  2003/10/26 04:50:46  steve
- *  Case with empty statements has no inputs.
- *
- * Revision 1.10  2003/07/26 03:34:42  steve
- *  Start handling pad of expressions in code generators.
- *
- * Revision 1.9  2003/04/22 04:48:29  steve
- *  Support event names as expressions elements.
- *
- * Revision 1.8  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.7  2002/11/16 05:45:41  steve
- *  Handle default: case in net_inputs for NetCase.
- *
- * Revision 1.6  2002/08/18 22:07:16  steve
- *  Detect temporaries in sequential block synthesis.
- *
- * Revision 1.5  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.4  2002/07/14 23:47:58  steve
- *  Infinite loop in nex_input of NetBlock objects.
- *
- * Revision 1.3  2002/06/05 03:44:25  steve
- *  Add support for memory words in l-value of
- *  non-blocking assignments, and remove the special
- *  NetAssignMem_ and NetAssignMemNB classes.
- *
- * Revision 1.2  2002/04/21 17:43:12  steve
- *  implement nex_input for behavioral statements.
- *
- * Revision 1.1  2002/04/21 04:59:08  steve
- *  Add support for conbinational events by finding
- *  the inputs to expressions and some statements.
- *  Get case and assignment statements working.
- *
- */
-

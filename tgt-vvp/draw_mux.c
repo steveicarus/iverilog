@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_mux.c,v 1.7.2.1 2007/02/26 19:51:39 steve Exp $"
-#endif
 
 # include  "vvp_priv.h"
 # include  <assert.h>
@@ -182,25 +179,3 @@ void draw_lpm_mux(ivl_lpm_t net)
 	    draw_lpm_mux_bitslice(net, idx);
 
 }
-
-/*
- * $Log: draw_mux.c,v $
- * Revision 1.7.2.1  2007/02/26 19:51:39  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.7  2003/12/19 01:27:10  steve
- *  Fix various unsigned compare warnings.
- *
- * Revision 1.6  2003/02/25 03:40:45  steve
- *  Eliminate use of ivl_lpm_name function.
- *
- * Revision 1.5  2002/08/29 03:04:01  steve
- *  Generate x out for x select on wide muxes.
- *
- * Revision 1.4  2002/08/12 01:35:03  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.3  2002/08/11 23:47:04  steve
- *  Add missing Log and Ident strings.
- *
- */

@@ -1,7 +1,7 @@
 #ifndef __t_dll_H
 #define __t_dll_H
 /*
- * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.h,v 1.115.2.5 2006/04/16 19:26:40 steve Exp $"
-#endif
 
 # include  "target.h"
 # include  "ivl_target.h"
@@ -710,78 +707,4 @@ struct ivl_variable_s {
       ivl_scope_t scope;
 };
 
-/*
- * $Log: t-dll.h,v $
- * Revision 1.115.2.5  2006/04/16 19:26:40  steve
- *  Fix handling of exploded memories with partial or missing resets.
- *
- * Revision 1.115.2.4  2006/03/26 23:09:25  steve
- *  Handle asynchronous demux/bit replacements.
- *
- * Revision 1.115.2.3  2006/03/12 07:34:19  steve
- *  Fix the memsynth1 case.
- *
- * Revision 1.115.2.2  2006/02/25 05:03:30  steve
- *  Add support for negedge FFs by using attributes.
- *
- * Revision 1.115.2.1  2006/02/19 00:11:34  steve
- *  Handle synthesis of FF vectors with l-value decoder.
- *
- * Revision 1.115  2004/10/04 01:10:56  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.114  2004/06/30 02:16:27  steve
- *  Implement signed divide and signed right shift in nets.
- *
- * Revision 1.113  2004/05/31 23:34:39  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.112  2004/02/20 06:22:58  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.111  2004/02/19 07:06:57  steve
- *  LPM, logic and Variables have perm_string names.
- *
- * Revision 1.110  2004/02/19 06:57:11  steve
- *  Memory and Event names use perm_string.
- *
- * Revision 1.109  2004/02/18 17:11:58  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.108  2003/12/03 02:46:24  steve
- *  Add support for wait on list of named events.
- *
- * Revision 1.107  2003/11/10 20:59:04  steve
- *  Design::get_flag returns const char* instead of string.
- *
- * Revision 1.106  2003/09/03 23:33:29  steve
- *  Pass FF synchronous set values to code generator.
- *
- * Revision 1.105  2003/08/15 02:23:53  steve
- *  Add synthesis support for synchronous reset.
- *
- * Revision 1.104  2003/06/23 01:25:44  steve
- *  Module attributes make it al the way to ivl_target.
- *
- * Revision 1.103  2003/06/17 21:28:59  steve
- *  Remove short int restrictions from vvp opcodes. (part 2)
- *
- * Revision 1.102  2003/04/22 04:48:30  steve
- *  Support event names as expressions elements.
- *
- * Revision 1.101  2003/04/11 05:18:08  steve
- *  Handle signed magnitude compare all the
- *  way through to the vvp code generator.
- *
- * Revision 1.100  2003/03/10 23:40:54  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.99  2003/03/01 06:25:30  steve
- *  Add the lex_strings string handler, and put
- *  scope names and system task/function names
- *  into this table. Also, permallocate event
- *  names from the beginning.
- */
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt2.c,v 1.8 2004/10/04 01:10:58 steve Exp $"
-#endif
 
 # include "sys_priv.h"
 # include "lxt2_write.h"
@@ -292,9 +289,8 @@ inline static int install_dumpvars_callback(void)
 	    return 0;
 
       if (dumpvars_status == 2) {
-	    vpi_mcd_printf(1, "VCD Error:"
-			   " $dumpvars ignored,"
-			   " previously called at simtime %lu\n",
+	    vpi_mcd_printf(1, "LXT2 warning: $dumpvars ignored, previously"
+			   " called at simtime %" PLI_UINT64_FMT "\n",
 			   dumpvars_time);
 	    return 1;
       }
@@ -409,14 +405,14 @@ static void open_dumpfile(const char*path)
 
       if (dump_file == 0) {
 	    vpi_mcd_printf(1,
-			   "LXT Error: Unable to open %s for output.\n",
+			   "LXT2 Error: Unable to open %s for output.\n",
 			   path);
 	    return;
       } else {
 	    int prec = vpi_get(vpiTimePrecision, 0);
 
 	    vpi_mcd_printf(1,
-			   "LXT info: dumpfile %s opened for output.\n",
+			   "LXT2 info: dumpfile %s opened for output.\n",
 			   path);
 
 	    assert(prec >= -15);
@@ -445,7 +441,7 @@ static PLI_INT32 sys_dumpfile_calltf(char*name)
 	    if (vpi_get(vpiType, item) != vpiConstant
 		|| vpi_get(vpiConstType, item) != vpiStringConst) {
 		  vpi_mcd_printf(1,
-				 "LXT Error:"
+				 "LXT2 Error:"
 				 " %s parameter must be a string constant\n",
 				 name);
 		  return 0;
@@ -627,7 +623,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 #if 0
 		  vpi_mcd_printf(1,
-				 "LXT info:"
+				 "LXT2 info:"
 				 " scanning scope %s, %u levels\n",
 				 fullname, depth);
 #endif
@@ -637,7 +633,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			vcd_names_add(&lxt_tab, fullname);
 		  else
 		    vpi_mcd_printf(1,
-				   "LXT warning:"
+				   "LXT2 warning:"
 				   " ignoring signals"
 				   " in previously scanned scope %s\n",
 				   fullname);
@@ -660,7 +656,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	  default:
 	    vpi_mcd_printf(1,
-			   "LXT Error: $lxtdumpvars: Unsupported parameter "
+			   "LXT2 Error: $lxtdumpvars: Unsupported parameter "
 			   "type (%d)\n", vpi_get(vpiType, item));
       }
 
@@ -836,44 +832,3 @@ void sys_lxt2_register()
       tf_data.user_data = "$dumpvars";
       vpi_register_systf(&tf_data);
 }
-
-/*
- * $Log: sys_lxt2.c,v $
- * Revision 1.8  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.7  2004/02/15 20:46:01  steve
- *  Add the $dumpflush function
- *
- * Revision 1.6  2004/02/06 18:23:30  steve
- *  Add support for lxt2 break size
- *
- * Revision 1.5  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- * Revision 1.4  2003/09/30 01:33:39  steve
- *  dumpers must be aware of 64bit time.
- *
- * Revision 1.3  2003/09/26 21:23:08  steve
- *  turn partial off when maximally compressing.
- *
- * Revision 1.2  2003/09/10 17:53:42  steve
- *  Add lxt2 support for partial mode.
- *
- * Revision 1.1  2003/09/01 04:04:03  steve
- *  Add lxt2 support.
- *
- * Revision 1.22  2003/08/22 23:14:27  steve
- *  Preserve variable ranges all the way to the vpi.
- *
- * Revision 1.21  2003/05/15 16:51:09  steve
- *  Arrange for mcd id=00_00_00_01 to go to stdout
- *  as well as a user specified log file, set log
- *  file to buffer lines.
- *
- *  Add vpi_flush function, and clear up some cunfused
- *  return codes from other vpi functions.
- *
- *  Adjust $display and vcd/lxt messages to use the
- *  standard output/log file.
- */

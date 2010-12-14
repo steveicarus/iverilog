@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -17,9 +17,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: force.cc,v 1.8 2004/10/04 01:10:59 steve Exp $"
-#endif
 
 # include  "codes.h"
 # include  "force.h"
@@ -176,7 +173,7 @@ void var_functor_s::set(vvp_ipoint_t ptr, bool push, unsigned val, unsigned)
 {
       unsigned pp = ipoint_port(ptr);
 
-      if (assigned() && pp==1  ||  !assigned() && pp==0) {
+      if ((assigned() && pp==1) || (!assigned() && pp==0)) {
 	    put_oval(val, push);
       }
 }
@@ -265,32 +262,3 @@ bool of_DEASSIGN(vthread_t thr, vvp_code_t cp)
 
       return true;
 }
-
-/*
- * $Log: force.cc,v $
- * Revision 1.8  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.7  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.6  2002/08/07 00:54:20  steve
- *  Documentation, and excessive inlines.
- *
- * Revision 1.5  2002/03/17 03:23:11  steve
- *  Force the push flags to be explicit.
- *
- * Revision 1.4  2001/12/06 03:31:24  steve
- *  Support functor delays for gates and UDP devices.
- *  (Stephan Boettcher)
- *
- * Revision 1.3  2001/11/07 03:34:42  steve
- *  Use functor pointers where vvp_ipoint_t is unneeded.
- *
- * Revision 1.2  2001/11/01 04:42:40  steve
- *  Handle procedural constant functor pointers.
- *
- * Revision 1.1  2001/11/01 03:00:19  steve
- *  Add force/cassign/release/deassign support. (Stephan Boettcher)
- *
- */

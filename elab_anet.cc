@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_anet.cc,v 1.10 2004/10/04 01:10:52 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -164,40 +161,3 @@ NetNet* PEIdent::elaborate_anet(Design*des, NetScope*scope) const
 
       return sig;
 }
-
-/*
- * $Log: elab_anet.cc,v $
- * Revision 1.10  2004/10/04 01:10:52  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.9  2003/09/19 03:50:12  steve
- *  Remove find_memory method from Design class.
- *
- * Revision 1.8  2003/06/21 01:21:43  steve
- *  Harmless fixup of warnings.
- *
- * Revision 1.7  2003/03/06 00:28:41  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.6  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.5  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.4  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.3  2001/07/25 03:10:48  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.2  2001/01/06 02:29:36  steve
- *  Support arrays of integers.
- *
- * Revision 1.1  2000/12/06 06:31:09  steve
- *  Check lvalue of procedural continuous assign (PR#29)
- *
- */
-

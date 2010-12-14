@@ -1,7 +1,7 @@
 #ifndef __compile_H
 #define __compile_H
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.h,v 1.56.2.3 2006/03/26 23:09:00 steve Exp $"
-#endif
 
 # include  <stdio.h>
 # include  "parse_misc.h"
@@ -274,60 +271,4 @@ extern void compile_net(char*label, char*name,
 			int msb, int lsb, bool signed_flag,
 			unsigned argc, struct symb_s*argv);
 
-/*
- * $Log: compile.h,v $
- * Revision 1.56.2.3  2006/03/26 23:09:00  steve
- *  Add the .demux device.
- *
- * Revision 1.56.2.2  2006/03/12 07:34:21  steve
- *  Fix the memsynth1 case.
- *
- * Revision 1.56.2.1  2006/02/19 00:11:35  steve
- *  Handle synthesis of FF vectors with l-value decoder.
- *
- * Revision 1.56  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.55  2004/06/30 02:15:57  steve
- *  Add signed LPM divide.
- *
- * Revision 1.54  2004/06/16 16:33:26  steve
- *  Add structural equality compare nodes.
- *
- * Revision 1.53  2003/09/04 20:26:31  steve
- *  Add $push flag for threads.
- *
- * Revision 1.52  2003/05/29 02:21:45  steve
- *  Implement acc_fetch_defname and its infrastructure in vvp.
- *
- * Revision 1.51  2003/04/11 05:15:39  steve
- *  Add signed versions of .cmp/gt/ge
- *
- * Revision 1.50  2003/03/10 23:37:07  steve
- *  Direct support for string parameters.
- *
- * Revision 1.49  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.48  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.47  2003/01/25 23:48:06  steve
- *  Add thread word array, and add the instructions,
- *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
- *
- * Revision 1.46  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.45  2002/08/12 01:35:07  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.44  2002/07/15 00:21:42  steve
- *  Fix initialization of symbol table string heap.
- */
 #endif

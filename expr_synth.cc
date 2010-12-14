@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: expr_synth.cc,v 1.59.2.11 2007/02/26 19:51:38 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -1095,49 +1092,3 @@ NetNet* NetESignal::synthesize(Design*des)
 
       return tmp;
 }
-
-/*
- * $Log: expr_synth.cc,v $
- * Revision 1.59.2.11  2007/02/26 19:51:38  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.59.2.10  2006/11/26 01:54:05  steve
- *  Add synthesis of user defined functions.
- *
- * Revision 1.59.2.9  2006/08/08 02:17:48  steve
- *  Improved nexus management performance.
- *
- * Revision 1.59.2.8  2006/06/15 01:57:26  steve
- *  Handle simple memory addressing in expression synthesis.
- *
- * Revision 1.59.2.7  2006/06/14 03:02:54  steve
- *  synthesis for NetEBitSel.
- *
- * Revision 1.59.2.6  2006/06/12 00:16:52  steve
- *  Add support for -Wunused warnings.
- *
- * Revision 1.59.2.5  2006/05/15 03:55:22  steve
- *  Fix synthesis of expressions with land of vectors.
- *
- * Revision 1.59.2.4  2006/04/10 03:43:39  steve
- *  Exploded memories accessed by constant indices.
- *
- * Revision 1.59.2.3  2006/03/16 05:39:20  steve
- *  Right shifts really are allowed.
- *
- * Revision 1.59.2.2  2005/09/11 02:56:37  steve
- *  Attach line numbers to NetMux devices.
- *
- * Revision 1.59.2.1  2005/02/19 16:39:31  steve
- *  Spellig fixes.
- *
- * Revision 1.59  2004/06/30 02:16:26  steve
- *  Implement signed divide and signed right shift in nets.
- *
- * Revision 1.58  2004/06/16 16:21:34  steve
- *  Connect rsif of multiply to DataB.
- *
- * Revision 1.57  2004/06/12 15:00:02  steve
- *  Support / and % in synthesized contexts.
- */
-

@@ -1,7 +1,7 @@
 #ifndef __generic_H
 #define __generic_H
 /*
- * Copyright (c) 2005 Stephen Williams
+ * Copyright (c) 2005-2010 Stephen Williams
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,9 +26,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: generic.h,v 1.1.2.1 2005/08/17 01:17:29 steve Exp $"
-#endif
 
 # include  "edif.h"
 
@@ -50,11 +47,4 @@ extern edif_cell_t cell_ipad;
 extern edif_cell_t cell_opad;
 extern edif_cell_t cell_iopad;
 
-
-/*
- * $Log: generic.h,v $
- * Revision 1.1.2.1  2005/08/17 01:17:29  steve
- *  Add the tgt-edif target.
- *
- */
 #endif

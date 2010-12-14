@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -17,9 +17,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_vthr_vector.cc,v 1.21 2004/10/04 01:11:00 steve Exp $"
-#endif
 
 /*
  * vpiReg handles are handled here. These objects represent vectors of
@@ -534,78 +531,3 @@ vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 
       return &obj->base;
 }
-
-/*
- * $Log: vpi_vthr_vector.cc,v $
- * Revision 1.21  2004/10/04 01:11:00  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.20  2004/05/19 03:30:46  steve
- *  Support delayed/non-blocking assignment to reals and others.
- *
- * Revision 1.19  2004/02/20 01:52:25  steve
- *  vpiStringVal does not include leading nulls.
- *
- * Revision 1.18  2003/06/17 19:17:42  steve
- *  Remove short int restrictions from vvp opcodes.
- *
- * Revision 1.17  2003/06/11 05:07:31  steve
- *  support vpiVectorVal for value of thread vector.
- *
- * Revision 1.16  2003/05/29 03:46:21  steve
- *  Add tf_getp/putp support for integers
- *  and real valued arguments.
- *
- *  Add tf_mipname function.
- *
- * Revision 1.15  2003/05/28 03:10:52  steve
- *  Some asserts that check for thread vector overflow.
- *
- * Revision 1.14  2003/03/13 04:59:21  steve
- *  Use rbufs instead of static buffers.
- *
- * Revision 1.13  2003/03/01 00:46:13  steve
- *  Careful about compiletf calls.
- *
- * Revision 1.12  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.11  2003/02/06 17:41:33  steve
- *  Support constant types for thread words.
- *
- * Revision 1.10  2003/02/04 04:03:40  steve
- *  Add hex and binary formatting of real values.
- *
- * Revision 1.9  2003/01/26 18:16:22  steve
- *  Add %cvt/ir and %cvt/ri instructions, and support
- *  real values passed as arguments to VPI tasks.
- *
- * Revision 1.8  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.7  2002/05/12 00:32:21  steve
- *  Get thread vectors by vpiIntVal.
- *
- * Revision 1.6  2002/04/14 02:56:19  steve
- *  Support signed expressions through to VPI.
- *
- * Revision 1.5  2002/01/10 01:54:04  steve
- *  odd width thread vectors as strings.
- *
- * Revision 1.4  2001/12/30 21:31:38  steve
- *  Support vpiStringVal in vhtread vectors.
- *
- * Revision 1.3  2001/09/15 18:27:05  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.2  2001/05/20 00:40:12  steve
- *  Get bit ordering right when making decimal strings.
- *
- * Revision 1.1  2001/05/10 00:26:53  steve
- *  VVP support for memories in expressions,
- *  including general support for thread bit
- *  vectors as system task parameters.
- *  (Stephan Boettcher)
- *
- */
-

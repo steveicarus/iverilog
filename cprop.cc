@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2006 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: cprop.cc,v 1.47.2.7 2007/02/26 19:51:38 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -1333,69 +1330,3 @@ void cprop(Design*des)
       cprop_dc_functor dc;
       des->functor(&dc);
 }
-
-/*
- * $Log: cprop.cc,v $
- * Revision 1.47.2.7  2007/02/26 19:51:38  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.47.2.6  2006/11/12 01:20:45  steve
- *  Prevent constant mux outputs from confusing itself.
- *
- * Revision 1.47.2.5  2006/04/23 04:26:13  steve
- *  Constant propagate addresses through NetRamDq read ports.
- *
- * Revision 1.47.2.4  2005/09/11 02:50:51  steve
- *  Fix overly agressive constant propagation through MUX causing lost Z bits.
- *
- * Revision 1.47.2.3  2005/08/28 22:00:39  steve
- *  Reduce mux slices that are constant throughout range.
- *
- * Revision 1.47.2.2  2005/08/28 19:51:02  steve
- *  More thorough constant propagation through MUX devices.
- *
- * Revision 1.47  2004/02/20 18:53:34  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.46  2003/11/08 17:53:34  steve
- *  Do not remove constants accessible to VPI.
- *
- * Revision 1.45  2003/10/31 02:40:06  steve
- *  Donot elide FF that has set or clr connections.
- *
- * Revision 1.44  2003/04/25 05:06:32  steve
- *  Handle X values in constant == nets.
- *
- * Revision 1.43  2003/03/06 00:28:41  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.42  2003/02/26 01:29:24  steve
- *  LPM objects store only their base names.
- *
- * Revision 1.41  2003/01/30 16:23:07  steve
- *  Spelling fixes.
- *
- * Revision 1.40  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.39  2002/08/20 04:12:22  steve
- *  Copy gate delays when doing gate delay substitutions.
- *
- * Revision 1.38  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.37  2002/06/25 01:33:22  steve
- *  Cache calculated driven value.
- *
- * Revision 1.36  2002/06/24 01:49:38  steve
- *  Make link_drive_constant cache its results in
- *  the Nexus, to improve cprop performance.
- *
- * Revision 1.35  2002/05/26 01:39:02  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
- */
-

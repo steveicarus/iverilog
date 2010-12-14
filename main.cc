@@ -1,6 +1,6 @@
 
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -18,9 +18,6 @@ const char COPYRIGHT[] =
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: main.cc,v 1.86.2.3 2006/06/12 00:16:53 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -761,83 +758,3 @@ int main(int argc, char*argv[])
 
       return des? des->errors : 1;
 }
-
-/*
- * $Log: main.cc,v $
- * Revision 1.86.2.3  2006/06/12 00:16:53  steve
- *  Add support for -Wunused warnings.
- *
- * Revision 1.86.2.2  2006/04/23 04:25:45  steve
- *  Add cprop debugging.
- *
- * Revision 1.86.2.1  2006/04/01 01:37:24  steve
- *  Add synth debug flag
- *
- * Revision 1.86  2004/10/04 01:10:53  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.85  2004/09/25 01:58:44  steve
- *  Add a debug_elaborate flag
- *
- * Revision 1.84  2004/09/10 23:51:42  steve
- *  Fix the evaluation of constant ternary expressions.
- *
- * Revision 1.83  2004/09/05 17:44:42  steve
- *  Add support for module instance arrays.
- *
- * Revision 1.82  2004/03/10 04:51:24  steve
- *  Add support for system function table files.
- *
- * Revision 1.81  2004/02/18 17:11:56  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.80  2004/02/15 00:19:29  steve
- *  Report elaboration errors without crashing.
- *
- * Revision 1.79  2003/11/26 01:37:14  steve
- *  Properly initialize vpi_module_list with system.
- *
- * Revision 1.78  2003/11/13 05:55:33  steve
- *  Move the DLL= flag to target config files.
- *
- * Revision 1.77  2003/11/13 04:09:49  steve
- *  Pass flags through the temporary config file.
- *
- * Revision 1.76  2003/11/13 03:10:38  steve
- *  ivl -F and -t flags are onpassed throught the -C file.
- *
- * Revision 1.75  2003/11/10 20:59:03  steve
- *  Design::get_flag returns const char* instead of string.
- *
- * Revision 1.74  2003/11/01 04:22:30  steve
- *  Accept functors in the config file.
- *
- * Revision 1.73  2003/10/26 22:43:42  steve
- *  Improve -V messages,
- *
- * Revision 1.72  2003/09/26 02:17:14  steve
- *  Delete pform when done with it.
- *
- * Revision 1.71  2003/09/25 00:25:14  steve
- *  Summary list of missing modules.
- *
- * Revision 1.70  2003/09/23 05:57:36  steve
- *  Pass -m flag from driver via iconfig file.
- *
- * Revision 1.69  2003/09/22 01:12:08  steve
- *  Pass more ivl arguments through the iconfig file.
- *
- * Revision 1.68  2003/06/20 00:53:19  steve
- *  Module attributes from the parser
- *  through to elaborated form.
- *
- * Revision 1.67  2003/04/24 05:25:27  steve
- *  Dump design even on errors.
- *
- * Revision 1.66  2003/03/01 06:25:30  steve
- *  Add the lex_strings string handler, and put
- *  scope names and system task/function names
- *  into this table. Also, permallocate event
- *  names from the beginning.
- */
-

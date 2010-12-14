@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: PGate.cc,v 1.16 2004/02/18 17:11:54 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -188,63 +185,3 @@ perm_string PGModule::get_type()
 {
       return type_;
 }
-
-/*
- * $Log: PGate.cc,v $
- * Revision 1.16  2004/02/18 17:11:54  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.15  2003/03/06 04:37:12  steve
- *  lex_strings.add module names earlier.
- *
- * Revision 1.14  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.13  2001/11/22 06:20:59  steve
- *  Use NetScope instead of string for scope path.
- *
- * Revision 1.12  2001/10/21 00:42:47  steve
- *  Module types in pform are char* instead of string.
- *
- * Revision 1.11  2001/10/19 01:55:32  steve
- *  Method to get the type_ member
- *
- * Revision 1.10  2001/07/25 03:10:48  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.9  2000/05/06 15:41:56  steve
- *  Carry assignment strength to pform.
- *
- * Revision 1.8  2000/03/08 04:36:53  steve
- *  Redesign the implementation of scopes and parameters.
- *  I now generate the scopes and notice the parameters
- *  in a separate pass over the pform. Once the scopes
- *  are generated, I can process overrides and evalutate
- *  paremeters before elaboration begins.
- *
- * Revision 1.7  2000/02/23 02:56:53  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.6  2000/02/18 05:15:02  steve
- *  Catch module instantiation arrays.
- *
- * Revision 1.5  1999/09/14 01:50:35  steve
- *  Handle gates without delays.
- *
- * Revision 1.4  1999/09/04 19:11:46  steve
- *  Add support for delayed non-blocking assignments.
- *
- * Revision 1.3  1999/08/01 21:18:55  steve
- *  elaborate rise/fall/decay for continuous assign.
- *
- * Revision 1.2  1999/08/01 16:34:50  steve
- *  Parse and elaborate rise/fall/decay times
- *  for gates, and handle the rules for partial
- *  lists of times.
- *
- * Revision 1.1  1999/02/15 02:06:15  steve
- *  Elaborate gate ranges.
- *
- */
-

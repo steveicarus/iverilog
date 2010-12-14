@@ -21,8 +21,6 @@ AC_SUBST(EXEEXT)
 # Combined check for Microsoft-related bogosities; sets WIN32 if found
 AX_WIN32
 
-AX_CPP_IDENT
-
 # vvp32 is by default disabled
 #enable_vvp32=no
 AC_SUBST(enable_vvp32)
@@ -90,8 +88,6 @@ AX_LD_RDYNAMIC
 
 # linker options when building a shared library
 AX_LD_SHAREDLIB_OPTS
-
-AX_CPP_IDENT
 
 # If not otherwise specified, set the libdir64 variable
 # to the same as libdir.

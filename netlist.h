@@ -1,7 +1,7 @@
 #ifndef __netlist_H
 #define __netlist_H
 /*
- * Copyright (c) 1998-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.h,v 1.321.2.25 2007/05/30 17:48:53 steve Exp $"
-#endif
 
 /*
  * The netlist types, as described in this header file, are intended
@@ -3544,137 +3541,4 @@ inline ostream& operator << (ostream&o, const NetExpr&exp)
 
 extern ostream& operator << (ostream&, NetNet::Type);
 
-/*
- * $Log: netlist.h,v $
- * Revision 1.321.2.25  2007/05/30 17:48:53  steve
- *  Support Latch synthesis (Alan Feldstein)
- *
- * Revision 1.321.2.24  2006/11/26 01:54:05  steve
- *  Add synthesis of user defined functions.
- *
- * Revision 1.321.2.23  2006/08/15 03:41:24  steve
- *  Improve performance of unlink of heavily connected nexa.
- *
- * Revision 1.321.2.22  2006/08/08 02:17:48  steve
- *  Improved nexus management performance.
- *
- * Revision 1.321.2.21  2006/07/23 19:42:33  steve
- *  Handle statement output override better in blocks.
- *
- * Revision 1.321.2.20  2006/07/10 00:21:51  steve
- *  Add support for full_case attribute.
- *
- * Revision 1.321.2.19  2006/06/23 03:49:46  steve
- *  synthesis of NetCondit handles partial resets.
- *
- * Revision 1.321.2.18  2006/06/14 03:02:54  steve
- *  synthesis for NetEBitSel.
- *
- * Revision 1.321.2.17  2006/04/23 04:26:14  steve
- *  Constant propagate addresses through NetRamDq read ports.
- *
- * Revision 1.321.2.16  2006/04/16 19:26:38  steve
- *  Fix handling of exploded memories with partial or missing resets.
- *
- * Revision 1.321.2.15  2006/04/10 03:43:39  steve
- *  Exploded memories accessed by constant indices.
- *
- * Revision 1.321.2.14  2006/03/26 23:09:23  steve
- *  Handle asynchronous demux/bit replacements.
- *
- * Revision 1.321.2.13  2006/03/18 18:43:21  steve
- *  Better error messages when synthesis fails.
- *
- * Revision 1.321.2.12  2006/03/16 05:40:18  steve
- *  Fix crash when memory exploding doesnot work
- *
- * Revision 1.321.2.11  2006/03/12 07:34:17  steve
- *  Fix the memsynth1 case.
- *
- * Revision 1.321.2.10  2006/02/19 00:11:32  steve
- *  Handle synthesis of FF vectors with l-value decoder.
- *
- * Revision 1.321.2.9  2006/01/21 21:42:31  steve
- *  When mux has wide select but sparse choices, use 1hot translation.
- *
- * Revision 1.321.2.8  2006/01/18 01:23:24  steve
- *  Rework l-value handling to allow for more l-value type flexibility.
- *
- * Revision 1.321.2.7  2005/12/31 04:28:14  steve
- *  Fix crashes caused bu synthesis of sqrt32.v.
- *
- * Revision 1.321.2.6  2005/12/14 00:54:29  steve
- *  Account for sync vs async muxes.
- *
- * Revision 1.321.2.5  2005/11/13 22:28:48  steve
- *  Allow for block output to be set throughout the statements.
- *
- * Revision 1.321.2.4  2005/09/09 02:17:08  steve
- *  Evaluate  magnitude compare with real operands.
- *
- * Revision 1.321.2.3  2005/08/22 01:00:41  steve
- *  Add support for implicit defaults in case and conditions.
- *
- * Revision 1.321.2.2  2005/08/13 00:45:54  steve
- *  Fix compilation warnings/errors with newer compilers.
- *
- * Revision 1.321.2.1  2005/07/06 22:41:34  steve
- *  Fix compile errors with g++-4.
- *
- * Revision 1.321  2004/10/04 01:10:54  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.320  2004/10/04 00:25:18  steve
- *  Remove inaccurate comment.
- *
- * Revision 1.319  2004/09/05 17:44:42  steve
- *  Add support for module instance arrays.
- *
- * Revision 1.318  2004/09/04 04:24:15  steve
- *  PR1026: assignment statements can have sensitivities in the l-values.
- *
- * Revision 1.317  2004/08/28 16:23:05  steve
- *  Fix use of system tasks in AT_STAR statements.
- *
- * Revision 1.316  2004/08/28 15:08:31  steve
- *  Do not change reg to wire in NetAssign_ unless synthesizing.
- *
- * Revision 1.315  2004/06/30 15:32:18  steve
- *  nex_output for NetPDelay statements.
- *
- * Revision 1.314  2004/06/30 02:16:26  steve
- *  Implement signed divide and signed right shift in nets.
- *
- * Revision 1.313  2004/06/13 04:56:55  steve
- *  Add support for the default_nettype directive.
- *
- * Revision 1.312  2004/05/31 23:34:38  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.311  2004/02/20 06:22:57  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.310  2004/02/19 07:06:57  steve
- *  LPM, logic and Variables have perm_string names.
- *
- * Revision 1.309  2004/02/19 06:57:10  steve
- *  Memory and Event names use perm_string.
- *
- * Revision 1.308  2004/02/18 17:11:57  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.307  2003/12/17 16:52:39  steve
- *  Debug dumps for synth2.
- *
- * Revision 1.306  2003/11/10 20:59:03  steve
- *  Design::get_flag returns const char* instead of string.
- *
- * Revision 1.305  2003/11/08 20:06:21  steve
- *  Spelling fixes in comments.
- *
- * Revision 1.304  2003/10/31 02:47:11  steve
- *  NetEUReduce has its own dup_expr method.
- */
 #endif

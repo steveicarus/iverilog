@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vthread.cc,v 1.122.2.1 2006/10/11 00:17:35 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "vthread.h"
@@ -2878,79 +2875,3 @@ bool of_JOIN_UFUNC(vthread_t thr, vvp_code_t cp)
 
       return true;
 }
-
-/*
- * $Log: vthread.cc,v $
- * Revision 1.122.2.1  2006/10/11 00:17:35  steve
- *  Get rounding of conversion correct.
- *
- * Revision 1.122  2004/10/04 01:11:00  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.121  2004/06/19 16:17:02  steve
- *  Watch type of mak bit matches masked value.
- *
- * Revision 1.120  2004/06/19 15:52:53  steve
- *  Add signed modulus operator.
- *
- * Revision 1.119  2004/06/04 23:26:34  steve
- *  Pick sign bit from the right place in the exponent number.
- *
- * Revision 1.118  2004/05/19 03:26:25  steve
- *  Support delayed/non-blocking assignment to reals and others.
- *
- * Revision 1.117  2003/11/10 20:19:32  steve
- *  Include config.h
- *
- * Revision 1.116  2003/09/26 02:15:15  steve
- *  Slight performance tweaks of scheduler.
- *
- * Revision 1.115  2003/09/01 04:03:38  steve
- *  32bit vs 64bit handling in SUBI.
- *
- * Revision 1.114  2003/08/01 00:58:03  steve
- *  Initialize allocated memory.
- *
- * Revision 1.113  2003/07/21 02:39:15  steve
- *  Overflow of unsigned when calculating unsigned long value.
- *
- * Revision 1.112  2003/07/03 20:03:36  steve
- *  Remove the vvp_cpoint_t indirect code pointer.
- *
- * Revision 1.111  2003/06/18 03:55:19  steve
- *  Add arithmetic shift operators.
- *
- * Revision 1.110  2003/06/17 21:28:59  steve
- *  Remove short int restrictions from vvp opcodes. (part 2)
- *
- * Revision 1.109  2003/06/17 19:17:42  steve
- *  Remove short int restrictions from vvp opcodes.
- *
- * Revision 1.108  2003/05/26 04:44:54  steve
- *  Add the set/x0/x instruction.
- *
- * Revision 1.107  2003/05/07 03:39:12  steve
- *  ufunc calls to functions can have scheduling complexities.
- *
- * Revision 1.106  2003/03/28 02:33:57  steve
- *  Add support for division of real operands.
- *
- * Revision 1.105  2003/03/13 04:36:57  steve
- *  Remove the obsolete functor delete functions.
- *
- * Revision 1.104  2003/02/27 20:36:29  steve
- *  Add the cvt/vr instruction.
- *
- * Revision 1.103  2003/02/22 06:26:58  steve
- *  When checking for stop, remember to reschedule.
- *
- * Revision 1.102  2003/02/22 02:52:06  steve
- *  Check for stopped flag in certain strategic points.
- *
- * Revision 1.101  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.100  2003/02/06 17:41:47  steve
- *  Add the %sub/wr instruction.
- */
-

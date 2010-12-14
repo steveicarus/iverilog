@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Stephen Williams
+ * Copyright (c) 2005-2010 Stephen Williams
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,9 +24,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: d-lpm.c,v 1.1.2.3 2007/06/06 15:46:22 steve Exp $"
-#endif
 
 /*
  * This is the driver for a purely generic LPM module writer. This
@@ -1000,17 +997,3 @@ const struct device_s d_lpm_edif = {
       lpm_show_mult, /* show_mult */
       lpm_show_constant /* show_constant */
 };
-
-/*
- * $Log: d-lpm.c,v $
- * Revision 1.1.2.3  2007/06/06 15:46:22  steve
- *  Add support for NAND gates. (Chris H)
- *
- * Revision 1.1.2.2  2005/08/21 14:39:33  steve
- *  Generate LPM for the CMP_EQ device.
- *
- * Revision 1.1.2.1  2005/08/17 01:17:28  steve
- *  Add the tgt-edif target.
- *
- */
-

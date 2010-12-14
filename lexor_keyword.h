@@ -1,7 +1,7 @@
 #ifndef __lexor_keyword_H
 #define __lexor_keyword_H
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,19 +18,7 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor_keyword.h,v 1.2 2002/08/12 01:34:59 steve Exp $"
-#endif
 
 extern int lexor_keyword_code (const char*str, unsigned len);
 
-/*
- * $Log: lexor_keyword.h,v $
- * Revision 1.2  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.1  2000/03/12 17:09:41  steve
- *  Support localparam.
- *
- */
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_process.c,v 1.93.2.3 2007/02/26 19:51:40 steve Exp $"
-#endif
 
 # include  "vvp_priv.h"
 # include  <string.h>
@@ -1650,52 +1647,3 @@ int draw_func_definition(ivl_scope_t scope)
       thread_count += 1;
       return rc;
 }
-
-/*
- * $Log: vvp_process.c,v $
- * Revision 1.93.2.3  2007/02/26 19:51:40  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.93.2.2  2005/01/28 18:29:29  steve
- *  Add ability to compile real values into index registers.
- *
- * Revision 1.93.2.1  2004/12/12 04:25:10  steve
- *  Fix leak of word registers in code generator.
- *
- * Revision 1.93  2004/10/04 01:10:57  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.92  2004/05/19 03:25:42  steve
- *  Generate code for nb assign to reals.
- *
- * Revision 1.91  2003/12/03 02:46:24  steve
- *  Add support for wait on list of named events.
- *
- * Revision 1.90  2003/10/25 02:07:57  steve
- *  vvp_signal_label does not return a unique string.
- *
- * Revision 1.89  2003/09/04 20:28:06  steve
- *  Support time0 resolution of combinational threads.
- *
- * Revision 1.88  2003/07/29 05:12:10  steve
- *  All the threads of a named fork go into sub-scope.
- *
- * Revision 1.87  2003/05/26 04:45:37  steve
- *  Use set/x0/x if the target vector is too wide for set/x0.
- *
- * Revision 1.86  2003/05/17 04:38:19  steve
- *  Account for nested fork scopes in disable.
- *
- * Revision 1.85  2003/05/14 05:26:41  steve
- *  Support real expressions in case statements.
- *
- * Revision 1.84  2003/03/25 02:15:48  steve
- *  Use hash code for scope labels.
- *
- * Revision 1.83  2003/03/15 04:45:18  steve
- *  Allow real-valued vpi functions to have arguments.
- *
- * Revision 1.82  2003/03/06 01:17:46  steve
- *  Use number for event labels.
- */
-

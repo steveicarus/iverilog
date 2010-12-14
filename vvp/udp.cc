@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -17,9 +17,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.cc,v 1.26 2004/10/04 01:10:59 steve Exp $"
-#endif
 
 #include "udp.h"
 #include "schedule.h"
@@ -371,92 +368,3 @@ void vvp_udp_s::compile_row_(udp_table_entry_t row, char *rchr)
     }
 
 }
-
-/*
- * $Log: udp.cc,v $
- * Revision 1.26  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.25  2003/09/24 20:46:48  steve
- *  Standard udp scheduling behavior.
- *
- * Revision 1.24  2003/09/17 03:39:55  steve
- *  Internal documentation of UDP devices.
- *
- * Revision 1.23  2003/09/13 00:59:02  steve
- *  Comments.
- *
- * Revision 1.22  2003/09/09 00:56:45  steve
- *  Reimpelement scheduler to divide nonblocking assign queue out.
- *
- * Revision 1.21  2003/06/17 21:28:59  steve
- *  Remove short int restrictions from vvp opcodes. (part 2)
- *
- * Revision 1.20  2003/04/01 05:32:56  steve
- *  Propagate output of sequential udp like non-blocksing assign.
- *
- * Revision 1.19  2003/03/18 01:32:33  steve
- *  Add the q edge flag.
- *
- * Revision 1.18  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.17  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.16  2002/01/20 23:27:51  steve
- *  return calculated oval from UDP (Stephan Boettcher)
- *
- * Revision 1.15  2002/01/06 17:35:01  steve
- *  Feedback output, not propagated output. (Stephan Boettcher)
- *
- * Revision 1.14  2001/12/06 03:31:25  steve
- *  Support functor delays for gates and UDP devices.
- *  (Stephan Boettcher)
- *
- * Revision 1.13  2001/11/07 03:34:42  steve
- *  Use functor pointers where vvp_ipoint_t is unneeded.
- *
- * Revision 1.12  2001/10/31 04:27:47  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.11  2001/09/19 04:10:40  steve
- *  Change UDP output only if table matches.
- *
- * Revision 1.10  2001/09/15 18:27:05  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.9  2001/08/09 19:38:23  steve
- *  Nets (wires) do not use their own functors.
- *  Modifications to propagation of values.
- *  (Stephan Boettcher)
- *
- * Revision 1.8  2001/07/24 01:44:50  steve
- *  Fast UDP tables (Stephan Boettcher)
- *
- * Revision 1.7  2001/07/16 19:08:32  steve
- *  Schedule instead of propagating UDP output. (Stephan Boettcher)
- *
- * Revision 1.6  2001/06/18 00:51:23  steve
- *  Add more UDP edge types, and finish up compile
- *  and run-time support. (Stephan Boettcher)
- *
- * Revision 1.5  2001/05/31 04:12:43  steve
- *  Make the bufif0 and bufif1 gates strength aware,
- *  and accurately propagate strengths of outputs.
- *
- * Revision 1.4  2001/05/06 03:51:37  steve
- *  Regularize the mode-42 functor handling.
- *
- * Revision 1.3  2001/04/26 15:52:22  steve
- *  Add the mode-42 functor concept to UDPs.
- *
- * Revision 1.2  2001/04/26 03:10:55  steve
- *  Redo and simplify UDP behavior.
- *
- * Revision 1.1  2001/04/24 02:23:59  steve
- *  Support for UDP devices in VVP (Stephen Boettcher)
- *
- */

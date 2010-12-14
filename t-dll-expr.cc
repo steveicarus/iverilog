@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-expr.cc,v 1.39.2.2 2006/09/15 23:56:05 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -663,112 +660,3 @@ void dll_target::expr_variable(const NetEVariable*net)
       expr_->signed_= net->has_sign()? 1 : 0;
       expr_->u_.variable_.var = find_variable(des_, net->variable());
 }
-
-/*
- * $Log: t-dll-expr.cc,v $
- * Revision 1.39.2.2  2006/09/15 23:56:05  steve
- *  Special handling of exploded memory arguments.
- *
- * Revision 1.39.2.1  2006/03/12 07:34:19  steve
- *  Fix the memsynth1 case.
- *
- * Revision 1.39  2004/06/17 16:06:19  steve
- *  Help system function signedness survive elaboration.
- *
- * Revision 1.38  2003/07/26 03:34:43  steve
- *  Start handling pad of expressions in code generators.
- *
- * Revision 1.37  2003/06/24 01:38:03  steve
- *  Various warnings fixed.
- *
- * Revision 1.36  2003/04/22 04:48:30  steve
- *  Support event names as expressions elements.
- *
- * Revision 1.35  2003/03/10 23:40:53  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.34  2003/03/01 06:25:30  steve
- *  Add the lex_strings string handler, and put
- *  scope names and system task/function names
- *  into this table. Also, permallocate event
- *  names from the beginning.
- *
- * Revision 1.33  2003/02/02 00:19:27  steve
- *  Terminate bits string from ivl_expr_bits.
- *
- * Revision 1.32  2003/01/30 16:23:08  steve
- *  Spelling fixes.
- *
- * Revision 1.31  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.30  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.29  2002/10/23 01:47:17  steve
- *  Fix synth2 handling of aset/aclr signals where
- *  flip-flops are split by begin-end blocks.
- *
- * Revision 1.28  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.27  2002/08/04 18:28:15  steve
- *  Do not use hierarchical names of memories to
- *  generate vvp labels. -tdll target does not
- *  used hierarchical name string to look up the
- *  memory objects in the design.
- *
- * Revision 1.26  2002/06/16 20:39:12  steve
- *  Normalize run-time index expressions for bit selects
- *
- * Revision 1.25  2002/06/16 19:19:16  steve
- *  Generate runtime code to normalize indices.
- *
- * Revision 1.24  2002/05/29 22:05:54  steve
- *  Offset lvalue index expressions.
- *
- * Revision 1.23  2002/04/14 02:56:19  steve
- *  Support signed expressions through to VPI.
- *
- * Revision 1.22  2002/01/28 00:52:41  steve
- *  Add support for bit select of parameters.
- *  This leads to a NetESelect node and the
- *  vvp code generator to support that.
- *
- * Revision 1.21  2001/12/31 00:08:14  steve
- *  Support $signed cast of expressions.
- *
- * Revision 1.20  2001/10/23 04:22:41  steve
- *  Support bit selects of non-0 lsb for vectors.
- *
- * Revision 1.19  2001/10/19 21:53:24  steve
- *  Support multiple root modules (Philip Blundell)
- *
- * Revision 1.18  2001/09/15 18:27:04  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.17  2001/07/27 04:51:44  steve
- *  Handle part select expressions as variants of
- *  NetESignal/IVL_EX_SIGNAL objects, instead of
- *  creating new and useless temporary signals.
- *
- * Revision 1.16  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.15  2001/07/22 00:17:49  steve
- *  Support the NetESubSignal expressions in vvp.tgt.
- *
- * Revision 1.14  2001/07/07 20:20:10  steve
- *  Pass parameters to system functions.
- *
- * Revision 1.13  2001/05/17 04:37:02  steve
- *  Behavioral ternary operators for vvp.
- *
- * Revision 1.12  2001/05/08 23:59:33  steve
- *  Add ivl and vvp.tgt support for memories in
- *  expressions and l-values. (Stephan Boettcher)
- */
-

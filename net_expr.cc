@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_expr.cc,v 1.23 2004/10/04 01:10:54 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "netlist.h"
@@ -513,91 +510,3 @@ NetExpr::TYPE NetESFunc::expr_type() const
 {
       return type_;
 }
-
-/*
- * $Log: net_expr.cc,v $
- * Revision 1.23  2004/10/04 01:10:54  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.22  2004/02/20 06:22:56  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.21  2003/08/28 04:11:19  steve
- *  Spelling patch.
- *
- * Revision 1.20  2003/06/18 03:55:18  steve
- *  Add arithmetic shift operators.
- *
- * Revision 1.19  2003/06/15 18:53:20  steve
- *  Operands of unsigned multiply are unsigned.
- *
- * Revision 1.18  2003/05/30 02:55:32  steve
- *  Support parameters in real expressions and
- *  as real expressions, and fix multiply and
- *  divide with real results.
- *
- * Revision 1.17  2003/05/20 15:05:33  steve
- *  Do not try to set constants to width 0.
- *
- * Revision 1.16  2003/03/15 18:08:43  steve
- *  Comparison operators do have defined width.
- *
- * Revision 1.15  2003/03/15 04:46:29  steve
- *  Better organize the NetESFunc return type guesses.
- *
- * Revision 1.14  2003/03/01 06:25:30  steve
- *  Add the lex_strings string handler, and put
- *  scope names and system task/function names
- *  into this table. Also, permallocate event
- *  names from the beginning.
- *
- * Revision 1.13  2003/02/06 17:50:23  steve
- *  Real constants have no defined vector width
- *
- * Revision 1.12  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.11  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.10  2002/11/09 01:40:19  steve
- *  Postpone parameter width check to evaluation.
- *
- * Revision 1.9  2002/11/06 02:25:13  steve
- *  No need to keep excess width from an
- *  unsigned constant value, if it can
- *  be trimmed safely.
- *
- * Revision 1.8  2002/10/19 22:59:49  steve
- *  Redo the parameter vector support to allow
- *  parameter names in range expressions.
- *
- * Revision 1.7  2002/09/01 03:01:48  steve
- *  Properly cast signedness of parameters with ranges.
- *
- * Revision 1.6  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.5  2002/06/06 18:57:18  steve
- *  Use standard name for iostream.
- *
- * Revision 1.4  2002/05/25 16:51:37  steve
- *  include iostream for gcc 3.1
- *
- * Revision 1.3  2002/05/05 21:11:50  steve
- *  Put off evaluation of concatenation repeat expresions
- *  until after parameters are defined. This allows parms
- *  to be used in repeat expresions.
- *
- *  Add the builtin $signed system function.
- *
- * Revision 1.2  2002/01/29 22:36:31  steve
- *  include config.h to eliminate warnings.
- *
- * Revision 1.1  2002/01/28 01:39:45  steve
- *  Add ne_expr.cc
- *
- */
-

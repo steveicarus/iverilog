@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001  Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010  Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: parse_misc.cc,v 1.8 2002/08/12 01:35:08 steve Exp $"
-#endif
 
 # include  "parse_misc.h"
 # include  "compile.h"
@@ -95,36 +92,3 @@ void argv_sym_lookup(struct argv_s*obj)
 		  compile_vpi_lookup(&obj->argv[i], obj->syms[i]);
       free(obj->syms);
 }
-
-/*
- * $Log: parse_misc.cc,v $
- * Revision 1.8  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.7  2001/09/15 18:27:05  steve
- *  Make configure detect malloc.h
- *
- * Revision 1.6  2001/07/11 04:43:57  steve
- *  support postpone of $systask parameters. (Stephan Boettcher)
- *
- * Revision 1.5  2001/05/02 23:16:50  steve
- *  Document memory related opcodes,
- *  parser uses numbv_s structures instead of the
- *  symbv_s and a mess of unions,
- *  Add the %is/sub instruction.
- *        (Stephan Boettcher)
- *
- * Revision 1.4  2001/05/01 01:09:39  steve
- *  Add support for memory objects. (Stephan Boettcher)
- *
- * Revision 1.3  2001/03/20 06:16:24  steve
- *  Add support for variable vectors.
- *
- * Revision 1.2  2001/03/18 04:35:18  steve
- *  Add support for string constants to VPI.
- *
- * Revision 1.1  2001/03/11 00:29:39  steve
- *  Add the vvp engine to cvs.
- *
- */
-

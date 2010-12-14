@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_plusargs.c,v 1.5 2004/10/04 01:10:58 steve Exp $"
-#endif
 
 # include  <vpi_user.h>
 # include  <string.h>
@@ -326,23 +323,3 @@ void sys_plusargs_register()
       vpi_register_systf(&tf_data);
 
 }
-
-/*
- * $Log: sys_plusargs.c,v $
- * Revision 1.5  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.4  2002/08/12 01:35:05  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.3  2002/08/11 23:47:04  steve
- *  Add missing Log and Ident strings.
- *
- * Revision 1.2  2002/08/10 17:00:31  steve
- *  Allow vpiIntegerVar as parameter to $value$plusarg
- *
- * Revision 1.1  2002/04/07 04:37:53  steve
- *  Add $plusargs system functions.
- *
- */
-

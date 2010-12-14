@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_lval.cc,v 1.29 2004/10/04 01:10:52 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -349,106 +346,3 @@ NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*) const
       des->errors += 1;
       return 0;
 }
-
-/*
- * $Log: elab_lval.cc,v $
- * Revision 1.29  2004/10/04 01:10:52  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.28  2004/08/28 14:59:44  steve
- *  More detailed error message about bad variable.
- *
- * Revision 1.27  2003/09/19 03:30:05  steve
- *  Fix name search in elab_lval.
- *
- * Revision 1.26  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.25  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.24  2003/01/19 00:35:39  steve
- *  Detect null arguments to concatenation operator.
- *
- * Revision 1.23  2002/11/21 23:27:51  steve
- *  Precalculate indices to l-value arrays.
- *
- * Revision 1.22  2002/11/21 18:15:40  steve
- *  Fix const test of msb in assignment l-values.
- *
- * Revision 1.21  2002/11/02 01:10:49  steve
- *  Detect memories without work index in l-value.
- *
- * Revision 1.20  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.19  2002/06/04 05:38:44  steve
- *  Add support for memory words in l-value of
- *  blocking assignments, and remove the special
- *  NetAssignMem class.
- *
- * Revision 1.18  2002/03/09 04:02:26  steve
- *  Constant expressions are not l-values for task ports.
- *
- * Revision 1.17  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.16  2001/11/08 05:15:50  steve
- *  Remove string paths from PExpr elaboration.
- *
- * Revision 1.15  2001/11/07 04:01:59  steve
- *  eval_const uses scope instead of a string path.
- *
- * Revision 1.14  2001/08/25 23:50:02  steve
- *  Change the NetAssign_ class to refer to the signal
- *  instead of link into the netlist. This is faster
- *  and uses less space. Make the NetAssignNB carry
- *  the delays instead of the NetAssign_ lval objects.
- *
- *  Change the vvp code generator to support multiple
- *  l-values, i.e. concatenations of part selects.
- *
- * Revision 1.13  2001/07/25 03:10:48  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.12  2001/02/09 03:16:48  steve
- *  Report bit/part select out of range errors. (PR#133)
- *
- * Revision 1.11  2001/01/10 03:13:23  steve
- *  Build task outputs as lval instead of nets. (PR#98)
- *
- * Revision 1.10  2001/01/06 06:31:58  steve
- *  declaration initialization for time variables.
- *
- * Revision 1.9  2001/01/06 02:29:36  steve
- *  Support arrays of integers.
- *
- * Revision 1.8  2000/12/12 06:14:51  steve
- *  sorry for concatenated memories in l-values. (PR#76)
- *
- * Revision 1.7  2000/12/01 02:55:37  steve
- *  Detect part select errors on l-values.
- *
- * Revision 1.6  2000/10/31 17:49:02  steve
- *  Support time variables.
- *
- * Revision 1.5  2000/10/26 17:09:46  steve
- *  Fix handling of errors in behavioral lvalues. (PR#28)
- *
- * Revision 1.4  2000/09/10 15:43:59  steve
- *  Some error checking.
- *
- * Revision 1.3  2000/09/10 03:59:59  steve
- *  Agressively merge NetAssign_ within concatenations.
- *
- * Revision 1.2  2000/09/10 02:18:16  steve
- *  elaborate complex l-values
- *
- * Revision 1.1  2000/09/09 15:21:26  steve
- *  move lval elaboration to PExpr virtual methods.
- *
- */
-

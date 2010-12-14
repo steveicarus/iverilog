@@ -1,7 +1,7 @@
 #ifndef __target_H
 #define __target_H
 /*
- * Copyright (c) 1998-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: target.h,v 1.65.2.2 2006/03/26 23:09:25 steve Exp $"
-#endif
 
 # include  "netlist.h"
 #include "NetLatch.h"
@@ -172,73 +169,4 @@ extern string stresc(const string&str);
    terminated array of pointers to targets. */
 extern const struct target *target_table[];
 
-/*
- * $Log: target.h,v $
- * Revision 1.65.2.2  2006/03/26 23:09:25  steve
- *  Handle asynchronous demux/bit replacements.
- *
- * Revision 1.65.2.1  2006/02/19 00:11:34  steve
- *  Handle synthesis of FF vectors with l-value decoder.
- *
- * Revision 1.65  2004/05/31 23:34:39  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.64  2003/05/30 02:55:32  steve
- *  Support parameters in real expressions and
- *  as real expressions, and fix multiply and
- *  divide with real results.
- *
- * Revision 1.63  2003/04/22 04:48:30  steve
- *  Support event names as expressions elements.
- *
- * Revision 1.62  2003/03/10 23:40:54  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.61  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.60  2002/08/12 01:35:01  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.59  2002/06/05 03:44:25  steve
- *  Add support for memory words in l-value of
- *  non-blocking assignments, and remove the special
- *  NetAssignMem_ and NetAssignMemNB classes.
- *
- * Revision 1.58  2002/06/04 05:38:44  steve
- *  Add support for memory words in l-value of
- *  blocking assignments, and remove the special
- *  NetAssignMem class.
- *
- * Revision 1.57  2002/03/09 02:10:22  steve
- *  Add the NetUserFunc netlist node.
- *
- * Revision 1.56  2002/01/28 00:52:41  steve
- *  Add support for bit select of parameters.
- *  This leads to a NetESelect node and the
- *  vvp code generator to support that.
- *
- * Revision 1.55  2002/01/19 19:02:08  steve
- *  Pass back target errors processing conditionals.
- *
- * Revision 1.54  2001/08/25 23:50:03  steve
- *  Change the NetAssign_ class to refer to the signal
- *  instead of link into the netlist. This is faster
- *  and uses less space. Make the NetAssignNB carry
- *  the delays instead of the NetAssign_ lval objects.
- *
- *  Change the vvp code generator to support multiple
- *  l-values, i.e. concatenations of part selects.
- *
- * Revision 1.53  2001/07/27 04:51:44  steve
- *  Handle part select expressions as variants of
- *  NetESignal/IVL_EX_SIGNAL objects, instead of
- *  creating new and useless temporary signals.
- *
- * Revision 1.52  2001/04/22 23:09:46  steve
- *  More UDP consolidation from Stephan Boettcher.
- */
 #endif

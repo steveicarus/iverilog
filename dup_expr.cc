@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: dup_expr.cc,v 1.18.2.2 2006/11/02 02:13:15 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -143,72 +140,3 @@ NetEVariable* NetEVariable::dup_expr() const
       NetEVariable*tmp = new NetEVariable(var_);
       return tmp;
 }
-
-/*
- * $Log: dup_expr.cc,v $
- * Revision 1.18.2.2  2006/11/02 02:13:15  steve
- *  Error message for condit expression not synthesized.
- *
- * Revision 1.18.2.1  2006/06/12 00:16:50  steve
- *  Add support for -Wunused warnings.
- *
- * Revision 1.18  2004/06/17 16:06:18  steve
- *  Help system function signedness survive elaboration.
- *
- * Revision 1.17  2004/05/31 23:34:36  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.16  2003/10/31 02:47:11  steve
- *  NetEUReduce has its own dup_expr method.
- *
- * Revision 1.15  2003/05/30 02:55:32  steve
- *  Support parameters in real expressions and
- *  as real expressions, and fix multiply and
- *  divide with real results.
- *
- * Revision 1.14  2003/04/22 04:48:29  steve
- *  Support event names as expressions elements.
- *
- * Revision 1.13  2003/03/15 18:08:43  steve
- *  Comparison operators do have defined width.
- *
- * Revision 1.12  2003/03/15 04:46:28  steve
- *  Better organize the NetESFunc return type guesses.
- *
- * Revision 1.11  2003/03/10 23:40:53  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.10  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.9  2002/11/09 00:25:27  steve
- *  Add dup_expr for user defined function calls.
- *
- * Revision 1.8  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.7  2002/01/28 00:52:41  steve
- *  Add support for bit select of parameters.
- *  This leads to a NetESelect node and the
- *  vvp code generator to support that.
- *
- * Revision 1.6  2001/11/19 01:54:14  steve
- *  Port close cropping behavior from mcrgb
- *  Move window array reset to libmc.
- *
- * Revision 1.5  2001/07/25 03:10:48  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.4  2000/05/07 18:20:07  steve
- *  Import MCD support from Stephen Tell, and add
- *  system function parameter support to the IVL core.
- *
- * Revision 1.3  2000/05/04 03:37:58  steve
- *  Add infrastructure for system functions, move
- *  $time to that structure and add $random.
- */
-

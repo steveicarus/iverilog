@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex2.c,v 1.20 2004/10/04 01:10:57 steve Exp $"
-#endif
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -91,38 +88,3 @@ const struct device_s d_virtex2_edif = {
       xilinx_shiftl, /* show_shiftl */
       0  /* show_shiftr */
 };
-
-
-/*
- * $Log: d-virtex2.c,v $
- * Revision 1.20  2004/10/04 01:10:57  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.19  2003/11/12 03:20:14  steve
- *  devices need show_cmp_gt
- *
- * Revision 1.18  2003/07/04 00:10:09  steve
- *  Generate MUXF5 based 4-input N-wide muxes.
- *
- * Revision 1.17  2003/07/02 03:02:15  steve
- *  More xilinx common code.
- *
- * Revision 1.16  2003/06/28 04:18:47  steve
- *  Add support for wide OR/NOR gates.
- *
- * Revision 1.15  2003/06/26 03:57:05  steve
- *  Add Xilinx support for A/B MUX devices.
- *
- * Revision 1.14  2003/06/25 02:55:57  steve
- *  Virtex and Virtex2 share much code.
- *
- * Revision 1.13  2003/06/25 01:49:06  steve
- *  Spelling fixes.
- *
- * Revision 1.12  2003/06/25 01:46:44  steve
- *  Virtex support for NOT gates.
- *
- * Revision 1.11  2003/06/24 03:55:00  steve
- *  Add ivl_synthesis_cell support for virtex2.
- */
-

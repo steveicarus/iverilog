@@ -1,7 +1,7 @@
 #ifndef __vpi_config_H
 #define __config_H
 /*
- * Copyright (c) 2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_config.h.in,v 1.2 2004/01/26 21:52:46 steve Exp $"
-#endif
 
 # undef HAVE_LIBIBERTY_H
 # undef HAVE_MALLOC_H
@@ -35,13 +32,4 @@
 # define _FILE_OFFSET_BITS 64
 #endif
 
-/*
- * $Log: vpi_config.h.in,v $
- * Revision 1.2  2004/01/26 21:52:46  steve
- *  Make sure file64 support is on cc -D flags.
- *
- * Revision 1.1  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- */
 #endif // __config_H

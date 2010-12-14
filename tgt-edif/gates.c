@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Stephen Williams
+ * Copyright (c) 2005-2010 Stephen Williams
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,9 +24,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: gates.c,v 1.1.2.1 2005/08/17 01:17:29 steve Exp $"
-#endif
 
 # include  <ivl_target.h>
 # include  "edif_priv.h"
@@ -182,11 +179,3 @@ int show_scope_gates(ivl_scope_t net, void*x)
 
       return ivl_scope_children(net, show_scope_gates, 0);
 }
-
-/*
- * $Log: gates.c,v $
- * Revision 1.1.2.1  2005/08/17 01:17:29  steve
- *  Add the tgt-edif target.
- *
- */
-

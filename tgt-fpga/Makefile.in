@@ -1,5 +1,5 @@
 #
-# Copyright 2003 Stephen Williams  (steve at icarus.com)
+# Copyright 2003-2010 Stephen Williams  (steve at icarus.com)
 #    This source code is free software; you can redistribute it
 #    and/or modify it in source code form under the terms of the GNU
 #    Library General Public License as published by the Free Software
@@ -16,10 +16,7 @@
 #    Software Foundation, Inc.,
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
-#
-#ident "$Id: Makefile.in,v 1.16.2.2 2006/05/08 04:33:36 steve Exp $"
-#
-#
+
 SHELL = /bin/sh
 
 suffix = @install_suffix@
@@ -28,6 +25,7 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
 mandir = @mandir@
+datarootdir = @datarootdir@
 
 VPATH = $(srcdir)
 
@@ -42,7 +40,7 @@ INSTALL_DATA = @INSTALL_DATA@
 MAN = @MAN@
 PS2PDF = @PS2PDF@
 
-CPPFLAGS = @ident_support@ -I.. -I$(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
+CPPFLAGS = -I.. -I$(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
 

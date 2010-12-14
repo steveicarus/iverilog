@@ -15,10 +15,7 @@
 #    Software Foundation, Inc.,
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
-#
-#ident "$Id: Makefile.in,v 1.61.2.3 2006/05/08 04:33:36 steve Exp $"
-#
-#
+
 SHELL = /bin/sh
 
 suffix = @install_suffix@
@@ -26,6 +23,7 @@ suffix = @install_suffix@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
+datarootdir = @datarootdir@
 
 VPATH = $(srcdir)
 
@@ -50,7 +48,7 @@ YACC = @YACC@
 MAN = @MAN@
 PS2PDF = @PS2PDF@
 
-CPPFLAGS = @ident_support@ -I. -I.. -I $(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@
+CPPFLAGS = -I. -I.. -I $(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@
 CXXFLAGS = -Wall @CXXFLAGS@
 LDFLAGS = @rdynamic@ @LDFLAGS@
 LIBS = @LIBS@ @EXTRALIBS@

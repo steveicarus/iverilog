@@ -1,7 +1,7 @@
 #ifndef __xilinx_H
 #define __xilinx_H
 /*
- * Copyright (c) 2005 Stephen Williams (steve at icarus.com)
+ * Copyright (c) 2005-2010 Stephen Williams (steve at icarus.com)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,9 +26,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: xilinx.h,v 1.1.2.2 2007/02/26 19:51:39 steve Exp $"
-#endif
 
 /*
  * This header file includes XILINX library support functions. They
@@ -140,13 +137,4 @@ extern void xilinx_mux(ivl_lpm_t net);
 extern void xilinx_add(ivl_lpm_t net);
 extern void xilinx_shiftl(ivl_lpm_t net);
 
-/*
- * $Log: xilinx.h,v $
- * Revision 1.1.2.2  2007/02/26 19:51:39  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.1.2.1  2005/09/25 16:35:37  steve
- *  Add Xilinx virtex as a reference EDIF device.
- *
- */
 #endif

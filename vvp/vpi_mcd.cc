@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen G. Tell <steve@telltronics.org>
+ * Copyright (c) 2000-2010 Stephen G. Tell <steve@telltronics.org>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_mcd.cc,v 1.12 2004/10/04 01:10:59 steve Exp $"
-#endif
 
 # include  "vpi_priv.h"
 # include  <assert.h>
@@ -235,33 +232,3 @@ extern "C" FILE *vpi_get_file(PLI_INT32 fd)
 
 	return fd_table[FD_IDX(fd)].fp;
 }
-
-/*
- * $Log: vpi_mcd.cc,v $
- * Revision 1.12  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.11  2003/07/21 01:20:59  steve
- *  vpi_mcd_vprintf can only scan the va_list once.
- *
- * Revision 1.10  2003/05/23 04:04:02  steve
- *  Add vpi_fopen and vpi_get_file.
- *
- * Revision 1.9  2003/05/15 16:51:09  steve
- *  Arrange for mcd id=00_00_00_01 to go to stdout
- *  as well as a user specified log file, set log
- *  file to buffer lines.
- *
- *  Add vpi_flush function, and clear up some cunfused
- *  return codes from other vpi functions.
- *
- *  Adjust $display and vcd/lxt messages to use the
- *  standard output/log file.
- *
- * Revision 1.8  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.7  2002/08/11 23:47:05  steve
- *  Add missing Log and Ident strings.
- *
- */

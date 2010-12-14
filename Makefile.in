@@ -15,10 +15,7 @@
 #    Software Foundation, Inc.,
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
-#
-#ident "$Id: Makefile.in,v 1.169.2.7 2007/05/30 17:48:53 steve Exp $"
-#
-#
+
 SHELL = /bin/sh
 
 # This string is used as an installation suffix. It modifies certain
@@ -30,6 +27,7 @@ suffix = @install_suffix@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
+datarootdir = @datarootdir@
 
 SUBDIRS = @subdirs@
 
@@ -59,7 +57,7 @@ YACC = @YACC@
 MAN = @MAN@
 PS2PDF = @PS2PDF@
 
-CPPFLAGS = @ident_support@ @DEFS@ -I. -I$(srcdir) @CPPFLAGS@
+CPPFLAGS = @DEFS@ -I. -I$(srcdir) @CPPFLAGS@
 CXXFLAGS = @WARNING_CXXFLAGS@ @CXXFLAGS@
 PICFLAGS = @PICFLAG@
 LDFLAGS = @rdynamic@ @LDFLAGS@
@@ -97,7 +95,7 @@ clean:
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) $@); done
 	for dir in vpi ivlpp tgt-verilog tgt-stub driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
-	rm -f *.o parse.cc parse.cc.output parse.h lexor.cc
+	rm -f *.o parse.cc parse.output parse.h lexor.cc syn-rules.output
 	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc*
 	rm -rf dep ivl@EXEEXT@
 

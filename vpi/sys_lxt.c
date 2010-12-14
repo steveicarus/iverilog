@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_lxt.c,v 1.26 2004/10/04 01:10:58 steve Exp $"
-#endif
 
 # include "sys_priv.h"
 # include "lxt_write.h"
@@ -290,9 +287,8 @@ inline static int install_dumpvars_callback(void)
 	    return 0;
 
       if (dumpvars_status == 2) {
-	    vpi_mcd_printf(1, "VCD Error:"
-			   " $dumpvars ignored,"
-			   " previously called at simtime %lu\n",
+	    vpi_mcd_printf(1, "LXT warning: $dumpvars ignored, previously"
+			   " called at simtime %" PLI_UINT64_FMT "\n",
 			   dumpvars_time);
 	    return 1;
       }
@@ -816,99 +812,3 @@ void sys_lxt_register()
       tf_data.user_data = "$dumpvars";
       vpi_register_systf(&tf_data);
 }
-
-/*
- * $Log: sys_lxt.c,v $
- * Revision 1.26  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.25  2004/02/15 20:46:01  steve
- *  Add the $dumpflush function
- *
- * Revision 1.24  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- * Revision 1.23  2003/09/30 01:33:39  steve
- *  dumpers must be aware of 64bit time.
- *
- * Revision 1.22  2003/08/22 23:14:27  steve
- *  Preserve variable ranges all the way to the vpi.
- *
- * Revision 1.21  2003/05/15 16:51:09  steve
- *  Arrange for mcd id=00_00_00_01 to go to stdout
- *  as well as a user specified log file, set log
- *  file to buffer lines.
- *
- *  Add vpi_flush function, and clear up some cunfused
- *  return codes from other vpi functions.
- *
- *  Adjust $display and vcd/lxt messages to use the
- *  standard output/log file.
- *
- * Revision 1.20  2003/04/28 01:03:11  steve
- *  Fix stringheap list management failure.
- *
- * Revision 1.19  2003/04/27 02:22:27  steve
- *  Capture VCD dump value in the rosync time period.
- *
- * Revision 1.18  2003/02/21 01:36:25  steve
- *  Move dumpon/dumpoff around to the right times.
- *
- * Revision 1.17  2003/02/20 00:50:06  steve
- *  Update lxt_write implementation, and add compression control flags.
- *
- * Revision 1.16  2003/02/13 18:13:28  steve
- *  Make lxt use stringheap to perm-allocate strings.
- *
- * Revision 1.15  2003/02/12 05:28:01  steve
- *  Set dumpoff of real variables to NaN.
- *
- * Revision 1.14  2003/02/11 05:21:33  steve
- *  Support dump of vpiRealVar objects.
- *
- * Revision 1.13  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.12  2002/11/17 22:28:42  steve
- *  Close old file if $dumpfile is called again.
- *
- * Revision 1.11  2002/08/15 02:12:20  steve
- *  add dumpvars_compiletf to check first argument.
- *
- * Revision 1.10  2002/08/12 01:35:04  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.9  2002/07/17 05:13:43  steve
- *  Implementation of vpi_handle_by_name, and
- *  add the vpiVariables iterator.
- *
- * Revision 1.8  2002/07/15 03:57:30  steve
- *  Fix dangling pointer in pop_scope.
- *
- * Revision 1.7  2002/07/12 17:09:21  steve
- *  Remember to scan IntegerVars.
- *
- * Revision 1.6  2002/07/12 17:08:13  steve
- *  Eliminate use of vpiInternalScope.
- *
- * Revision 1.5  2002/06/21 04:59:36  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.4  2002/06/03 03:56:06  steve
- *  Ignore memories and named events.
- *
- * Revision 1.3  2002/04/06 21:33:29  steve
- *  allow runtime selection of VCD vs LXT.
- *
- * Revision 1.2  2002/04/06 20:25:45  steve
- *  cbValueChange automatically replays.
- *
- * Revision 1.1  2002/03/09 21:54:49  steve
- *  Add LXT dumper support. (Anthony Bybell)
- *
- */
-

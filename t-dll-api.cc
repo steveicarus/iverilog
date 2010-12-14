@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll-api.cc,v 1.108.2.5 2006/04/16 19:26:40 steve Exp $"
-#endif
 
 # include "config.h"
 # include  "t-dll.h"
@@ -2050,125 +2047,3 @@ extern "C" ivl_variable_type_t ivl_variable_type(ivl_variable_t net)
       assert(net);
       return net->type;
 }
-
-/*
- * $Log: t-dll-api.cc,v $
- * Revision 1.108.2.5  2006/04/16 19:26:40  steve
- *  Fix handling of exploded memories with partial or missing resets.
- *
- * Revision 1.108.2.4  2006/03/26 23:09:24  steve
- *  Handle asynchronous demux/bit replacements.
- *
- * Revision 1.108.2.3  2006/03/12 07:34:19  steve
- *  Fix the memsynth1 case.
- *
- * Revision 1.108.2.2  2006/02/25 05:03:29  steve
- *  Add support for negedge FFs by using attributes.
- *
- * Revision 1.108.2.1  2006/02/19 00:11:33  steve
- *  Handle synthesis of FF vectors with l-value decoder.
- *
- * Revision 1.108  2004/10/04 01:10:55  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.107  2004/06/30 02:16:27  steve
- *  Implement signed divide and signed right shift in nets.
- *
- * Revision 1.106  2003/12/03 02:46:24  steve
- *  Add support for wait on list of named events.
- *
- * Revision 1.105  2003/11/10 20:59:03  steve
- *  Design::get_flag returns const char* instead of string.
- *
- * Revision 1.104  2003/09/03 23:33:30  steve
- *  Pass FF synchronous set values to code generator.
- *
- * Revision 1.103  2003/08/22 23:14:26  steve
- *  Preserve variable ranges all the way to the vpi.
- *
- * Revision 1.102  2003/08/15 02:23:53  steve
- *  Add synthesis support for synchronous reset.
- *
- * Revision 1.101  2003/06/24 01:38:03  steve
- *  Various warnings fixed.
- *
- * Revision 1.100  2003/06/23 01:25:44  steve
- *  Module attributes make it al the way to ivl_target.
- *
- * Revision 1.99  2003/05/14 05:26:41  steve
- *  Support real expressions in case statements.
- *
- * Revision 1.98  2003/04/22 04:48:30  steve
- *  Support event names as expressions elements.
- *
- * Revision 1.97  2003/04/11 05:18:08  steve
- *  Handle signed magnitude compare all the
- *  way through to the vvp code generator.
- *
- * Revision 1.96  2003/03/10 23:40:53  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.95  2003/03/06 04:32:40  steve
- *  Wrong sense of need compared to have.
- *
- * Revision 1.94  2003/03/06 01:24:37  steve
- *  Obsolete the ivl_event_name function.
- *
- * Revision 1.93  2003/03/06 00:28:42  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.92  2003/03/03 02:22:41  steve
- *  Scope names stored only as basename.
- *
- * Revision 1.91  2003/02/26 01:29:24  steve
- *  LPM objects store only their base names.
- *
- * Revision 1.90  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.89  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.88  2002/10/23 01:47:17  steve
- *  Fix synth2 handling of aset/aclr signals where
- *  flip-flops are split by begin-end blocks.
- *
- * Revision 1.87  2002/09/26 03:18:04  steve
- *  Generate vvp code for asynch set/reset of NetFF.
- *
- * Revision 1.86  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.85  2002/08/07 02:17:14  steve
- *  Dead code.
- *
- * Revision 1.84  2002/08/05 04:18:45  steve
- *  Store only the base name of memories.
- *
- * Revision 1.83  2002/07/05 21:26:17  steve
- *  Avoid emitting to vvp local net symbols.
- *
- * Revision 1.82  2002/06/21 04:59:35  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.81  2002/05/27 00:08:45  steve
- *  Support carrying the scope of named begin-end
- *  blocks down to the code generator, and have
- *  the vvp code generator use that to support disable.
- *
- * Revision 1.80  2002/05/26 01:39:03  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
- *
- * Revision 1.79  2002/05/24 04:36:23  steve
- *  Verilog 2001 attriubtes on nets/wires.
- */
-

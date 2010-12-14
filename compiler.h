@@ -1,7 +1,7 @@
 #ifndef __compiler_H
 #define __compiler_H
 /*
- * Copyright (c) 1999-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: compiler.h,v 1.26.2.3 2006/06/12 00:16:50 steve Exp $"
-#endif
 
 # include  <list>
 # include  <map>
@@ -139,54 +136,4 @@ struct sfunc_return_type {
 extern const struct sfunc_return_type* lookup_sys_func(const char*name);
 extern int load_sys_func_table(const char*path);
 
-/*
- * $Log: compiler.h,v $
- * Revision 1.26.2.3  2006/06/12 00:16:50  steve
- *  Add support for -Wunused warnings.
- *
- * Revision 1.26.2.2  2006/04/23 04:25:45  steve
- *  Add cprop debugging.
- *
- * Revision 1.26.2.1  2006/04/01 01:37:24  steve
- *  Add synth debug flag
- *
- * Revision 1.26  2004/10/04 01:10:52  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.25  2004/09/25 01:58:44  steve
- *  Add a debug_elaborate flag
- *
- * Revision 1.24  2004/09/10 23:51:42  steve
- *  Fix the evaluation of constant ternary expressions.
- *
- * Revision 1.23  2004/09/05 17:44:41  steve
- *  Add support for module instance arrays.
- *
- * Revision 1.22  2004/03/10 04:51:24  steve
- *  Add support for system function table files.
- *
- * Revision 1.21  2004/03/09 04:29:42  steve
- *  Separate out the lookup_sys_func table, for eventual
- *  support for function type tables.
- *
- *  Remove ipal compile flags.
- *
- * Revision 1.20  2004/02/18 17:11:54  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.19  2003/11/13 05:55:33  steve
- *  Move the DLL= flag to target config files.
- *
- * Revision 1.18  2003/11/08 20:06:21  steve
- *  Spelling fixes in comments.
- *
- * Revision 1.17  2003/09/25 00:25:14  steve
- *  Summary list of missing modules.
- *
- * Revision 1.16  2003/03/01 06:25:30  steve
- *  Add the lex_strings string handler, and put
- *  scope names and system task/function names
- *  into this table. Also, permallocate event
- *  names from the beginning.
- */
 #endif

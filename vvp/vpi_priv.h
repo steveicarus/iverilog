@@ -1,7 +1,7 @@
 #ifndef __vpi_priv_H
 #define __vpi_priv_H
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.h,v 1.59.2.1 2006/02/19 16:57:31 steve Exp $"
-#endif
 
 # include  "vpi_user.h"
 # include  "pointers.h"
@@ -422,50 +419,4 @@ enum vpi_rbuf_t {
 };
 extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 
-/*
- * $Log: vpi_priv.h,v $
- * Revision 1.59.2.1  2006/02/19 16:57:31  steve
- *  Add change callback to vpiMemory objects.
- *
- * Revision 1.59  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.58  2004/06/30 03:00:36  steve
- *  Some explination of vpi_func arguments.
- *
- * Revision 1.57  2004/05/19 03:26:24  steve
- *  Support delayed/non-blocking assignment to reals and others.
- *
- * Revision 1.56  2003/06/17 19:17:42  steve
- *  Remove short int restrictions from vvp opcodes.
- *
- * Revision 1.55  2003/05/29 02:21:45  steve
- *  Implement acc_fetch_defname and its infrastructure in vvp.
- *
- * Revision 1.54  2003/05/02 04:29:57  steve
- *  Add put_value with transport delay.
- *
- * Revision 1.53  2003/04/23 03:09:25  steve
- *  VPI Access to named events.
- *
- * Revision 1.52  2003/03/10 23:37:07  steve
- *  Direct support for string parameters.
- *
- * Revision 1.51  2003/03/06 04:32:00  steve
- *  Use hashed name strings for identifiers.
- *
- * Revision 1.50  2003/02/24 06:35:45  steve
- *  Interactive task calls take string arguments.
- *
- * Revision 1.49  2003/02/23 06:41:54  steve
- *  Add to interactive stop mode support for
- *  current scope, the ability to scan/traverse
- *  scopes, and the ability to call system tasks.
- *
- * Revision 1.48  2003/02/10 05:20:10  steve
- *  Add value change callbacks to real variables.
- *
- * Revision 1.47  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- */
 #endif

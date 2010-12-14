@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
+ * Copyright (c) 2001-2010 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: fvectors.cc,v 1.6 2002/08/12 01:35:08 steve Exp $"
-#endif
 
 # include  "config.h"
 
@@ -92,13 +89,3 @@ vvp_fvector_t vvp_fvector_new(unsigned size)
       memset(v->iptrs, 0, size*sizeof(vvp_ipoint_t));
       return v;
 }
-
-/*
- * $Log: fvectors.cc,v $
- * Revision 1.6  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.5  2002/08/11 23:47:05  steve
- *  Add missing Log and Ident strings.
- *
- */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Stephen Williams
+ * Copyright (c) 2005-2010 Stephen Williams
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,9 +24,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: generic.c,v 1.1.2.1 2005/08/17 01:17:29 steve Exp $"
-#endif
 
 # include  "generic.h"
 
@@ -39,13 +36,3 @@ edif_cell_t cell_1 = 0;
 edif_cell_t cell_ipad = 0;
 edif_cell_t cell_opad = 0;
 edif_cell_t cell_iopad = 0;
-
-
-
-/*
- * $Log: generic.c,v $
- * Revision 1.1.2.1  2005/08/17 01:17:29  steve
- *  Add the tgt-edif target.
- *
- */
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: pform_dump.cc,v 1.88.2.1 2006/07/10 00:21:54 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -924,91 +921,3 @@ void PUdp::dump(ostream&out) const
 
       out << "endprimitive" << endl;
 }
-
-
-/*
- * $Log: pform_dump.cc,v $
- * Revision 1.88.2.1  2006/07/10 00:21:54  steve
- *  Add support for full_case attribute.
- *
- * Revision 1.88  2004/10/04 01:10:55  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.87  2004/05/31 23:34:39  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.86  2004/05/25 19:21:07  steve
- *  More identifier lists use perm_strings.
- *
- * Revision 1.85  2004/02/20 18:53:35  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.84  2004/02/20 06:22:58  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.83  2004/02/18 17:11:57  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.82  2003/07/05 20:42:08  steve
- *  Fix some enumeration warnings.
- *
- * Revision 1.81  2003/06/20 00:53:19  steve
- *  Module attributes from the parser
- *  through to elaborated form.
- *
- * Revision 1.80  2003/06/13 19:10:46  steve
- *  Properly manage real variables in subscopes.
- *
- * Revision 1.79  2003/02/27 06:45:11  steve
- *  specparams as far as pform.
- *
- * Revision 1.78  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.77  2002/10/19 22:59:49  steve
- *  Redo the parameter vector support to allow
- *  parameter names in range expressions.
- *
- * Revision 1.76  2002/08/19 02:39:17  steve
- *  Support parameters with defined ranges.
- *
- * Revision 1.75  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.74  2002/05/26 01:39:02  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
- *
- * Revision 1.73  2002/05/24 04:36:23  steve
- *  Verilog 2001 attriubtes on nets/wires.
- *
- * Revision 1.72  2002/05/23 03:08:51  steve
- *  Add language support for Verilog-2001 attribute
- *  syntax. Hook this support into existing $attribute
- *  handling, and add number and void value types.
- *
- *  Add to the ivl_target API new functions for access
- *  of complex attributes attached to gates.
- *
- * Revision 1.71  2002/05/19 23:37:28  steve
- *  Parse port_declaration_lists from the 2001 Standard.
- *
- * Revision 1.70  2002/04/21 04:59:08  steve
- *  Add support for conbinational events by finding
- *  the inputs to expressions and some statements.
- *  Get case and assignment statements working.
- *
- * Revision 1.69  2002/01/26 05:28:28  steve
- *  Detect scalar/vector declarion mismatch.
- *
- * Revision 1.68  2001/12/03 04:47:15  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- */
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: d-generic.c,v 1.14 2003/11/12 03:20:14 steve Exp $"
-#endif
 
 # include  "device.h"
 # include  "fpga_priv.h"
@@ -512,55 +509,3 @@ const struct device_s d_generic = {
       0,
       0
 };
-
-
-/*
- * $Log: d-generic.c,v $
- * Revision 1.14  2003/11/12 03:20:14  steve
- *  devices need show_cmp_gt
- *
- * Revision 1.13  2003/06/24 03:55:00  steve
- *  Add ivl_synthesis_cell support for virtex2.
- *
- * Revision 1.12  2002/10/28 02:05:56  steve
- *  Add Virtex code generators for left shift,
- *  subtraction, and GE comparators.
- *
- * Revision 1.11  2002/08/12 01:35:02  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.10  2002/08/11 23:47:04  steve
- *  Add missing Log and Ident strings.
- *
- * Revision 1.9  2001/09/16 01:48:16  steve
- *  Suppor the PAD attribute on signals.
- *
- * Revision 1.8  2001/09/02 21:33:07  steve
- *  Rearrange the XNF code generator to be generic-xnf
- *  so that non-XNF code generation is also possible.
- *
- *  Start into the virtex EDIF output driver.
- *
- * Revision 1.7  2001/09/01 04:30:44  steve
- *  Generic ADD code.
- *
- * Revision 1.6  2001/09/01 02:28:42  steve
- *  Generate code for MUX devices.
- *
- * Revision 1.5  2001/09/01 02:01:30  steve
- *  identity compare, and PWR records for constants.
- *
- * Revision 1.4  2001/08/31 23:02:13  steve
- *  Relax pin count restriction on logic gates.
- *
- * Revision 1.3  2001/08/31 04:17:56  steve
- *  Many more logic gate types.
- *
- * Revision 1.2  2001/08/31 02:59:06  steve
- *  Add root port SIG records.
- *
- * Revision 1.1  2001/08/28 04:14:20  steve
- *  Add the fpga target.
- *
- */
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: async.cc,v 1.7.2.2 2007/05/30 17:48:53 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -96,35 +93,3 @@ bool NetProcTop::is_asynchronous() const
 
       return statement_->is_asynchronous();
 }
-
-/*
- * $Log: async.cc,v $
- * Revision 1.7.2.2  2007/05/30 17:48:53  steve
- *  Support Latch synthesis (Alan Feldstein)
- *
- * Revision 1.7.2.1  2006/05/21 21:58:46  steve
- *  NetESignal input is only selected bits.
- *
- * Revision 1.7  2004/01/18 23:26:54  steve
- *  The is_combinational function really need not recurse.
- *
- * Revision 1.6  2003/12/20 00:33:39  steve
- *  More thorough check that NetEvWait is asynchronous.
- *
- * Revision 1.5  2003/09/04 20:28:05  steve
- *  Support time0 resolution of combinational threads.
- *
- * Revision 1.4  2002/08/18 22:07:16  steve
- *  Detect temporaries in sequential block synthesis.
- *
- * Revision 1.3  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.2  2002/07/04 00:24:16  steve
- *  initial statements are not asynchronous.
- *
- * Revision 1.1  2002/06/30 02:21:31  steve
- *  Add structure for asynchronous logic synthesis.
- *
- */
-

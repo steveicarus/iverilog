@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_design.cc,v 1.45.2.1 2006/10/04 00:34:45 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -615,86 +612,3 @@ void Design::delete_process(NetProcTop*top)
 
       delete top;
 }
-
-/*
- * $Log: net_design.cc,v $
- * Revision 1.45.2.1  2006/10/04 00:34:45  steve
- *  Fix a dangling reference to NetEParam objects in defparams.
- *
- * Revision 1.45  2004/10/04 01:10:54  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.44  2004/02/20 06:22:56  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.43  2004/02/18 17:11:56  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.42  2003/11/10 20:59:03  steve
- *  Design::get_flag returns const char* instead of string.
- *
- * Revision 1.41  2003/09/20 01:05:36  steve
- *  Obsolete find_symbol and find_event from the Design class.
- *
- * Revision 1.40  2003/09/19 03:50:12  steve
- *  Remove find_memory method from Design class.
- *
- * Revision 1.39  2003/09/19 03:30:05  steve
- *  Fix name search in elab_lval.
- *
- * Revision 1.38  2003/08/28 04:11:19  steve
- *  Spelling patch.
- *
- * Revision 1.37  2003/06/24 01:38:02  steve
- *  Various warnings fixed.
- *
- * Revision 1.36  2003/03/10 23:40:53  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.35  2003/03/06 04:37:12  steve
- *  lex_strings.add module names earlier.
- *
- * Revision 1.34  2003/02/01 23:37:34  steve
- *  Allow parameter expressions to be type real.
- *
- * Revision 1.33  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.32  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.31  2003/01/14 21:16:18  steve
- *  Move strstream to ostringstream for compatibility.
- *
- * Revision 1.30  2002/12/07 02:49:24  steve
- *  Named event triggers can take hierarchical names.
- *
- * Revision 1.29  2002/11/02 03:27:52  steve
- *  Allow named events to be referenced by
- *  hierarchical names.
- *
- * Revision 1.28  2002/10/19 22:59:49  steve
- *  Redo the parameter vector support to allow
- *  parameter names in range expressions.
- *
- * Revision 1.27  2002/08/16 05:18:27  steve
- *  Fix intermix of node functors and node delete.
- *
- * Revision 1.26  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.25  2002/07/03 05:34:59  steve
- *  Fix scope search for events.
- *
- * Revision 1.24  2002/06/25 02:39:34  steve
- *  Fix mishandling of incorect defparam error message.
- *
- * Revision 1.23  2001/12/03 04:47:15  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.22  2001/10/20 05:21:51  steve
- *  Scope/module names are char* instead of string.
- */
-

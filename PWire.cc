@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: PWire.cc,v 1.10 2002/08/12 01:34:58 steve Exp $"
-#endif
 
 # include "config.h"
 # include  "PWire.h"
@@ -137,42 +134,3 @@ void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
       lidx_ = ldx;
       ridx_ = rdx;
 }
-
-/*
- * $Log: PWire.cc,v $
- * Revision 1.10  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.9  2002/06/21 04:59:35  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.8  2002/01/26 05:28:28  steve
- *  Detect scalar/vector declarion mismatch.
- *
- * Revision 1.7  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.6  2001/07/25 03:10:48  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.5  2001/01/06 02:29:35  steve
- *  Support arrays of integers.
- *
- * Revision 1.4  2000/12/11 00:31:43  steve
- *  Add support for signed reg variables,
- *  simulate in t-vvm signed comparisons.
- *
- * Revision 1.3  2000/02/23 02:56:54  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.2  1999/09/10 05:02:09  steve
- *  Handle integers at task parameters.
- *
- * Revision 1.1  1999/06/17 05:34:42  steve
- *  Clean up interface of the PWire class,
- *  Properly match wire ranges.
- *
- */
-

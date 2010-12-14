@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_callback.cc,v 1.34.2.1 2006/02/19 16:57:31 steve Exp $"
-#endif
 
 /*
  * Callbacks are objects that carry a function to be called when some
@@ -567,89 +564,3 @@ void callback_functor_s::set(vvp_ipoint_t, bool, unsigned val, unsigned)
 
       }
 }
-
-
-
-/*
- * $Log: vpi_callback.cc,v $
- * Revision 1.34.2.1  2006/02/19 16:57:31  steve
- *  Add change callback to vpiMemory objects.
- *
- * Revision 1.34  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.33  2004/02/18 02:51:59  steve
- *  Fix type mismatches of various VPI functions.
- *
- * Revision 1.32  2003/09/09 00:56:45  steve
- *  Reimpelement scheduler to divide nonblocking assign queue out.
- *
- * Revision 1.31  2003/04/25 04:36:42  steve
- *  Properly skip cancelled callbacks.
- *
- * Revision 1.30  2003/04/19 23:32:57  steve
- *  Add support for cbNextSimTime.
- *
- * Revision 1.29  2003/03/12 02:50:32  steve
- *  Add VPI tracing.
- *
- * Revision 1.28  2003/02/17 00:58:38  steve
- *  Strict correctness of vpi_free_object results.
- *
- * Revision 1.27  2003/02/10 05:20:10  steve
- *  Add value change callbacks to real variables.
- *
- * Revision 1.26  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.25  2002/09/20 02:42:11  steve
- *  Add support for cbAfterDelay.
- *
- * Revision 1.24  2002/09/07 04:54:51  steve
- *  Implement vpi_remove_cb for cbValueChange.
- *
- * Revision 1.23  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.22  2002/07/31 03:22:23  steve
- *  Set vpi_mode_flag to represent cpReadOnlySync actions.
- *
- * Revision 1.21  2002/07/12 02:07:36  steve
- *  vpiIntegerVars can have callbacks.
- *
- * Revision 1.20  2002/06/11 03:47:34  steve
- *  Stub value change callbacks for consts and modules.
- *
- * Revision 1.19  2002/06/02 19:05:50  steve
- *  Check for null pointers from users.
- *
- * Revision 1.18  2002/05/28 22:55:20  steve
- *  Callbacks can happen during calltf functions.
- *
- * Revision 1.17  2002/05/19 05:18:16  steve
- *  Add callbacks for vpiNamedEvent objects.
- *
- * Revision 1.16  2002/05/18 02:34:11  steve
- *  Add vpi support for named events.
- *
- *  Add vpi_mode_flag to track the mode of the
- *  vpi engine. This is for error checking.
- *
- * Revision 1.15  2002/05/09 03:34:31  steve
- *  Handle null time and calltf pointers.
- *
- * Revision 1.14  2002/05/04 03:17:29  steve
- *  Properly free vpi callback objects.
- *
- * Revision 1.13  2002/05/04 03:03:17  steve
- *  Add simulator event callbacks.
- *
- * Revision 1.12  2002/04/20 04:33:23  steve
- *  Support specified times in cbReadOnlySync, and
- *  add support for cbReadWriteSync.
- *  Keep simulation time in a 64bit number.
- *
- * Revision 1.11  2002/04/06 20:25:45  steve
- *  cbValueChange automatically replays.
- */
-

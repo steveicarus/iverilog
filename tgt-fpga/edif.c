@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 200Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.c,v 1.8.2.1 2005/08/27 22:29:30 steve Exp $"
-#endif
 
 # include  "edif.h"
 # include  <stdlib.h>
@@ -636,36 +633,3 @@ void edif_print(FILE*fd, edif_t edf)
       fprintf(fd, ")\n");
       fflush(fd);
 }
-
-/*
- * $Log: edif.c,v $
- * Revision 1.8.2.1  2005/08/27 22:29:30  steve
- *  Back-port edif_nexus_to_joint from tgt-edif.
- *
- * Revision 1.8  2003/09/03 23:34:09  steve
- *  Support synchronous set of LPM_FF devices.
- *
- * Revision 1.7  2003/08/07 05:18:04  steve
- *  Add support for OR/NOR/bufif0/bufif1.
- *
- * Revision 1.6  2003/08/07 04:04:01  steve
- *  Add an LPM device type.
- *
- * Revision 1.5  2003/06/24 03:55:00  steve
- *  Add ivl_synthesis_cell support for virtex2.
- *
- * Revision 1.4  2003/04/04 04:59:03  steve
- *  Add xlibrary celltable.
- *
- * Revision 1.3  2003/03/30 03:43:44  steve
- *  Handle wide ports of macros.
- *
- * Revision 1.2  2003/03/24 02:29:04  steve
- *  Give proper basenames to PAD signals.
- *
- * Revision 1.1  2003/03/24 00:47:54  steve
- *  Add new virtex2 architecture family, and
- *  also the new edif.h EDIF management functions.
- *
- */
-

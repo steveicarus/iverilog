@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: elab_scope.cc,v 1.35 2004/09/10 00:15:17 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "compiler.h"
@@ -639,86 +636,3 @@ void PWhile::elaborate_scope(Design*des, NetScope*scope) const
       if (statement_)
 	    statement_ -> elaborate_scope(des, scope);
 }
-
-
-/*
- * $Log: elab_scope.cc,v $
- * Revision 1.35  2004/09/10 00:15:17  steve
- *  Missing stdio.h header for warnings.
- *
- * Revision 1.34  2004/09/05 17:44:41  steve
- *  Add support for module instance arrays.
- *
- * Revision 1.33  2004/08/26 04:02:03  steve
- *  Add support for localparam ranges.
- *
- * Revision 1.32  2004/06/13 04:56:54  steve
- *  Add support for the default_nettype directive.
- *
- * Revision 1.31  2004/05/25 19:21:06  steve
- *  More identifier lists use perm_strings.
- *
- * Revision 1.30  2004/02/20 06:22:56  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.29  2004/02/19 07:06:57  steve
- *  LPM, logic and Variables have perm_string names.
- *
- * Revision 1.28  2004/02/18 17:11:55  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.27  2003/09/13 01:01:51  steve
- *  Spelling fixes.
- *
- * Revision 1.26  2003/08/28 04:11:17  steve
- *  Spelling patch.
- *
- * Revision 1.25  2003/06/24 01:38:02  steve
- *  Various warnings fixed.
- *
- * Revision 1.24  2003/06/20 00:53:19  steve
- *  Module attributes from the parser
- *  through to elaborated form.
- *
- * Revision 1.23  2003/06/16 00:34:08  steve
- *  Functions can have sub-scope.
- *
- * Revision 1.22  2003/06/13 19:10:46  steve
- *  Properly manage real variables in subscopes.
- *
- * Revision 1.21  2003/05/30 02:55:32  steve
- *  Support parameters in real expressions and
- *  as real expressions, and fix multiply and
- *  divide with real results.
- *
- * Revision 1.20  2003/03/06 00:28:41  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.19  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.18  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.17  2002/10/19 22:59:49  steve
- *  Redo the parameter vector support to allow
- *  parameter names in range expressions.
- *
- * Revision 1.16  2002/09/01 03:01:48  steve
- *  Properly cast signedness of parameters with ranges.
- *
- * Revision 1.15  2002/08/19 02:39:16  steve
- *  Support parameters with defined ranges.
- *
- * Revision 1.14  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.13  2001/12/30 04:47:57  steve
- *  Properly handle empty target in positionla parameter override.
- *
- * Revision 1.12  2001/12/03 04:47:14  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- */
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: link_const.cc,v 1.17 2004/10/04 01:10:53 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -161,78 +158,3 @@ verinum::V Nexus::driven_value() const
 
       return val;
 }
-
-/*
- * $Log: link_const.cc,v $
- * Revision 1.17  2004/10/04 01:10:53  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.16  2003/06/21 01:21:43  steve
- *  Harmless fixup of warnings.
- *
- * Revision 1.15  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.14  2002/06/25 01:33:22  steve
- *  Cache calculated driven value.
- *
- * Revision 1.13  2002/06/24 01:49:39  steve
- *  Make link_drive_constant cache its results in
- *  the Nexus, to improve cprop performance.
- *
- * Revision 1.12  2002/06/19 04:18:46  steve
- *  Shuffle link_drivers_constant for speed.
- *
- * Revision 1.11  2001/08/25 23:50:03  steve
- *  Change the NetAssign_ class to refer to the signal
- *  instead of link into the netlist. This is faster
- *  and uses less space. Make the NetAssignNB carry
- *  the delays instead of the NetAssign_ lval objects.
- *
- *  Change the vvp code generator to support multiple
- *  l-values, i.e. concatenations of part selects.
- *
- * Revision 1.10  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.9  2001/07/07 03:01:37  steve
- *  Detect and make available to t-dll the right shift.
- *
- * Revision 1.8  2001/02/16 03:27:07  steve
- *  links to root inputs are not constant.
- *
- * Revision 1.7  2000/11/20 01:41:12  steve
- *  Whoops, return the calculated constant value rom driven_value.
- *
- * Revision 1.6  2000/11/20 00:58:40  steve
- *  Add support for supply nets (PR#17)
- *
- * Revision 1.5  2000/07/14 06:12:57  steve
- *  Move inital value handling from NetNet to Nexus
- *  objects. This allows better propogation of inital
- *  values.
- *
- *  Clean up constant propagation  a bit to account
- *  for regs that are not really values.
- *
- * Revision 1.4  2000/06/25 19:59:42  steve
- *  Redesign Links to include the Nexus class that
- *  carries properties of the connected set of links.
- *
- * Revision 1.3  2000/05/14 17:55:04  steve
- *  Support initialization of FF Q value.
- *
- * Revision 1.2  2000/05/07 04:37:56  steve
- *  Carry strength values from Verilog source to the
- *  pform and netlist for gates.
- *
- *  Change vvm constants to use the driver_t to drive
- *  a constant value. This works better if there are
- *  multiple drivers on a signal.
- *
- * Revision 1.1  2000/04/20 00:28:03  steve
- *  Catch some simple identity compareoptimizations.
- *
- */
-

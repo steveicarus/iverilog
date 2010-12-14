@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: draw_tt.c,v 1.16 2004/10/04 01:10:59 steve Exp $"
-#endif
 
 # include  <stdio.h>
 
@@ -755,56 +752,3 @@ main()
       draw_oct_table();
       return 0;
 }
-
-/*
- * $Log: draw_tt.c,v $
- * Revision 1.16  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.15  2003/07/30 01:13:29  steve
- *  Add support for triand and trior.
- *
- * Revision 1.14  2002/08/29 03:04:01  steve
- *  Generate x out for x select on wide muxes.
- *
- * Revision 1.13  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.12  2002/01/12 04:02:16  steve
- *  Support the BUFZ logic device.
- *
- * Revision 1.11  2001/11/06 03:07:22  steve
- *  Code rearrange. (Stephan Boettcher)
- *
- * Revision 1.10  2001/10/09 02:28:17  steve
- *  Add the PMOS and NMOS functor types.
- *
- * Revision 1.9  2001/06/19 03:01:10  steve
- *  Add structural EEQ gates (Stephan Boettcher)
- *
- * Revision 1.8  2001/04/29 23:13:34  steve
- *  Add bufif0 and bufif1 functors.
- *
- * Revision 1.7  2001/04/26 05:12:02  steve
- *  Implement simple MUXZ for ?: operators.
- *
- * Revision 1.6  2001/04/21 02:04:01  steve
- *  Add NAND and XNOR functors.
- *
- * Revision 1.5  2001/04/15 16:37:48  steve
- *  add XOR support.
- *
- * Revision 1.4  2001/04/01 21:31:46  steve
- *  Add the buf functor type.
- *
- * Revision 1.3  2001/03/25 20:45:09  steve
- *  Add vpiOctStrVal access to signals.
- *
- * Revision 1.2  2001/03/25 19:37:26  steve
- *  Calculate NOR and NOT tables, and also the hex_digits table.
- *
- * Revision 1.1  2001/03/11 22:42:11  steve
- *  Functor values and propagation.
- *
- */
-

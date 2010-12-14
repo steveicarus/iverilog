@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: npmos.cc,v 1.9 2004/10/04 01:10:59 steve Exp $"
-#endif
 
 # include  "npmos.h"
 # include  "schedule.h"
@@ -87,42 +84,3 @@ void vvp_pmos_s::set(vvp_ipoint_t ptr, bool push, unsigned v, unsigned s)
 
       put_ostr(val, str, push);
 }
-
-/*
- * $Log: npmos.cc,v $
- * Revision 1.9  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.8  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.7  2001/12/06 03:31:24  steve
- *  Support functor delays for gates and UDP devices.
- *  (Stephan Boettcher)
- *
- * Revision 1.6  2001/11/07 03:34:42  steve
- *  Use functor pointers where vvp_ipoint_t is unneeded.
- *
- * Revision 1.5  2001/10/31 04:27:47  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.4  2001/10/24 03:18:52  steve
- *  npmos outputs have 3bit strengths, not 2.
- *
- * Revision 1.3  2001/10/18 17:30:26  steve
- *  Support rnpmos devices. (Philip Blundell)
- *
- * Revision 1.2  2001/10/11 18:20:51  steve
- *  npmos devices pass strength.
- *
- * Revision 1.1  2001/10/09 02:28:17  steve
- *  Add the PMOS and NMOS functor types.
- *
- * Revision 1.1  2001/05/31 04:12:43  steve
- *  Make the bufif0 and bufif1 gates strength aware,
- *  and accurately propagate strengths of outputs.
- *
- */
-

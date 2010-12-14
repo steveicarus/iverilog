@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.cc,v 1.14 2003/08/01 00:58:03 steve Exp $"
-#endif
 
 # include  "codes.h"
 # include  "statistics.h"
@@ -94,22 +91,3 @@ vvp_code_t codespace_null(void)
 {
       return first_chunk + 0;
 }
-
-/*
- * $Log: codes.cc,v $
- * Revision 1.14  2003/08/01 00:58:03  steve
- *  Initialize allocated memory.
- *
- * Revision 1.13  2003/07/03 20:03:36  steve
- *  Remove the vvp_cpoint_t indirect code pointer.
- *
- * Revision 1.12  2002/08/12 01:35:07  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.11  2002/07/05 03:46:43  steve
- *  Track opcode memory space.
- *
- * Revision 1.10  2002/07/05 02:50:58  steve
- *  Remove the vpi object symbol table after compile.
- */
-

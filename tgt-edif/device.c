@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Stephen Williams
+ * Copyright (c) 2005-2010 Stephen Williams
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ident "$Id: device.c,v 1.1.2.1 2005/08/17 01:17:28 steve Exp $"
 
 # include "device.h"
 # include  <string.h>
@@ -45,11 +44,3 @@ device_t device_from_arch(const char*arch)
 
       return 0;
 }
-
-/*
- * $Log: device.c,v $
- * Revision 1.1.2.1  2005/08/17 01:17:28  steve
- *  Add the tgt-edif target.
- *
- */
-

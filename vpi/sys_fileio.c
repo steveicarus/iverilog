@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_fileio.c,v 1.5.2.1 2005/01/01 20:07:41 steve Exp $"
-#endif
 
 # include  "vpi_user.h"
 # include  "sys_priv.h"
@@ -36,7 +33,7 @@
 static PLI_INT32 sys_fopen_calltf(char *name)
 {
       s_vpi_value value;
-      unsigned char *mode_string = 0;
+      char *mode_string = 0;
 
       vpiHandle call_handle = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, call_handle);
@@ -485,26 +482,3 @@ void sys_fileio_register()
       vpi_register_systf(&tf_data);
 
 }
-
-/*
- * $Log: sys_fileio.c,v $
- * Revision 1.5.2.1  2005/01/01 20:07:41  steve
- *  More robust handling of file name argument to $fopen.
- *
- * Revision 1.5  2004/08/24 16:16:23  steve
- *  Fix read count passed to fgets.
- *
- * Revision 1.4  2004/02/20 03:20:04  steve
- *  unused variable warning.
- *
- * Revision 1.3  2004/02/19 21:33:13  steve
- *  Add the $fgets function.
- *
- * Revision 1.2  2003/11/07 19:40:05  steve
- *  Implement basic fflush.
- *
- * Revision 1.1  2003/10/30 03:43:20  steve
- *  Rearrange fileio functions, and add ungetc.
- *
- */
-

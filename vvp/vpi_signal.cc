@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_signal.cc,v 1.62 2004/05/19 03:26:25 steve Exp $"
-#endif
 
 /*
  * vpiReg handles are handled here. These objects represent vectors of
@@ -827,69 +824,3 @@ vpiHandle vpip_make_net(const char*name, int msb, int lsb,
 
       return &obj->base;
 }
-
-
-/*
- * $Log: vpi_signal.cc,v $
- * Revision 1.62  2004/05/19 03:26:25  steve
- *  Support delayed/non-blocking assignment to reals and others.
- *
- * Revision 1.61  2004/03/09 03:11:02  steve
- *  Get vpiModule of signals.
- *
- * Revision 1.60  2004/02/20 01:52:25  steve
- *  vpiStringVal does not include leading nulls.
- *
- * Revision 1.59  2004/02/19 21:31:59  steve
- *  vpiStringVal writes need to set all the bits of a reg.
- *
- * Revision 1.58  2003/08/15 18:23:56  steve
- *  vpiIntVal treats x and z bits as 0.
- *
- * Revision 1.57  2003/06/04 01:56:20  steve
- * 1) Adds configure logic to clean up compiler warnings
- * 2) adds acc_compare_handle, acc_fetch_range, acc_next_scope and
- *    tf_isetrealdelay, acc_handle_scope
- * 3) makes acc_next reentrant
- * 4) adds basic vpiWire type support
- * 5) fills in some acc_object_of_type() and acc_fetch_{full}type()
- * 6) add vpiLeftRange/RigthRange to signals
- *
- * Revision 1.56  2003/05/02 04:29:57  steve
- *  Add put_value with transport delay.
- *
- * Revision 1.55  2003/04/12 18:56:57  steve
- *  Add vpoiScalarVal support for signals.
- *
- * Revision 1.54  2003/03/06 04:32:00  steve
- *  Use hashed name strings for identifiers.
- *
- * Revision 1.53  2003/02/16 23:40:05  steve
- *  Permanent allocate vpiSignals more efficiently.
- *
- * Revision 1.52  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.51  2003/01/07 18:07:50  steve
- *  Allocate res-buf in bigger chunks
- *
- * Revision 1.50  2002/11/25 23:33:45  steve
- *  Support put of vpiStringVal to signals.
- *
- * Revision 1.49  2002/09/11 16:06:57  steve
- *  Fix wrecked rbuf in vpi_get_str of signals and memories.
- *
- * Revision 1.48  2002/09/10 02:27:11  steve
- *  Actually set strength pointer when getting strength val.
- *
- * Revision 1.47  2002/09/06 04:56:29  steve
- *  Add support for %v is the display system task.
- *  Change the encoding of H and L outputs from
- *  the bufif devices so that they are logic x.
- *
- * Revision 1.46  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.45  2002/07/23 15:11:41  steve
- *  integral type/ptrdiff_t warning.
- */

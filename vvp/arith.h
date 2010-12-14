@@ -1,7 +1,7 @@
 #ifndef __arith_H
 #define __arith_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: arith.h,v 1.19 2004/10/04 01:10:58 steve Exp $"
-#endif
 
 # include  "functor.h"
 
@@ -167,68 +164,4 @@ class vvp_shiftr  : public vvp_arith_ {
       void set(vvp_ipoint_t i, bool push, unsigned val, unsigned str);
 };
 
-/*
- * $Log: arith.h,v $
- * Revision 1.19  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.18  2004/09/22 16:44:07  steve
- *  Fix LPM GE to match LPM GT behavior.
- *
- * Revision 1.17  2004/06/30 02:15:57  steve
- *  Add signed LPM divide.
- *
- * Revision 1.16  2004/06/16 16:33:26  steve
- *  Add structural equality compare nodes.
- *
- * Revision 1.15  2003/04/11 05:15:38  steve
- *  Add signed versions of .cmp/gt/ge
- *
- * Revision 1.14  2002/08/12 01:35:07  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.13  2002/05/07 04:15:43  steve
- *  Fix uninitialized memory accesses.
- *
- * Revision 1.12  2002/01/03 04:19:02  steve
- *  Add structural modulus support down to vvp.
- *
- * Revision 1.11  2001/10/31 04:27:46  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.10  2001/10/27 03:22:26  steve
- *  Minor rework of summation carry propagation (Stephan Boettcher)
- *
- * Revision 1.9  2001/10/16 02:47:37  steve
- *  Add arith/div object.
- *
- * Revision 1.8  2001/07/13 00:38:57  steve
- *  Remove width restriction on subtraction.
- *
- * Revision 1.7  2001/07/07 02:57:33  steve
- *  Add the .shift/r functor.
- *
- * Revision 1.6  2001/07/06 04:46:44  steve
- *  Add structural left shift (.shift/l)
- *
- * Revision 1.5  2001/06/29 01:20:20  steve
- *  Relax limit on width of structural sum.
- *
- * Revision 1.4  2001/06/16 23:45:05  steve
- *  Add support for structural multiply in t-dll.
- *  Add code generators and vvp support for both
- *  structural and behavioral multiply.
- *
- * Revision 1.3  2001/06/15 04:07:58  steve
- *  Add .cmp statements for structural comparison.
- *
- * Revision 1.2  2001/06/07 03:09:03  steve
- *  Implement .arith/sub subtraction.
- *
- * Revision 1.1  2001/06/05 03:05:41  steve
- *  Add structural addition.
- *
- */
 #endif

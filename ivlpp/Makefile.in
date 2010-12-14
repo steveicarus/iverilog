@@ -17,10 +17,7 @@
 #    Software Foundation, Inc.,
 #    59 Temple Place - Suite 330
 #    Boston, MA 02111-1307, USA
-#
-#ident "$Id: Makefile.in,v 1.17 2004/10/04 01:10:56 steve Exp $"
-#
-#
+
 SHELL = /bin/sh
 
 suffix = @install_suffix@
@@ -40,7 +37,7 @@ INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
-CPPFLAGS = @ident_support@ -I. -I.. -I$(srcdir)/.. -I$(srcdir) @CPPFLAGS@ @DEFS@
+CPPFLAGS = -I. -I.. -I$(srcdir)/.. -I$(srcdir) @CPPFLAGS@ @DEFS@
 CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
@@ -76,4 +73,4 @@ uninstall:
 
 lexor.o: lexor.c parse.h globals.h
 main.o: main.c globals.h
-parse.o: parse.c
+parse.o: parse.c globals.h

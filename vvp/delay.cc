@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
+ * Copyright (c) 2001-2010 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: delay.cc,v 1.3 2004/10/04 01:10:59 steve Exp $"
-#endif
 
 #include "delay.h"
 #include <string.h>
@@ -244,16 +241,3 @@ vvp_delay_t vvp_delay_set(vvp_delay_t tgt, vvp_delay_t src, unsigned mask)
       vvp_delay_delete(tgt);
       return src;
 }
-
-/*
-** $Log: delay.cc,v $
-** Revision 1.3  2004/10/04 01:10:59  steve
-**  Clean up spurious trailing white space.
-**
-** Revision 1.2  2002/08/12 01:35:08  steve
-**  conditional ident string using autoconfig.
-**
-** Revision 1.1  2001/11/10 18:07:11  steve
-**  Runtime support for functor delays. (Stephan Boettcher)
-**
-*/

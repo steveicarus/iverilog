@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.cc,v 1.43.2.4 2007/03/23 23:02:31 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -1009,82 +1006,3 @@ verinum::V operator ^ (verinum::V l, verinum::V r)
 
       return verinum::Vx;
 }
-
-/*
- * $Log: verinum.cc,v $
- * Revision 1.43.2.4  2007/03/23 23:02:31  steve
- *  Fix compile time eval of <= comparison.
- *
- * Revision 1.43.2.3  2007/03/23 20:59:26  steve
- *  Fix compile time evaluation of < operator.
- *
- * Revision 1.43.2.2  2005/12/07 03:28:44  steve
- *  Support constant concatenation of constants.
- *
- * Revision 1.43.2.1  2005/08/13 00:45:55  steve
- *  Fix compilation warnings/errors with newer compilers.
- *
- * Revision 1.43  2004/05/18 18:43:15  steve
- *  Handle null string as a single nul character.
- *
- * Revision 1.42  2004/02/17 06:52:55  steve
- *  Support unsigned divide of huge numbers.
- *
- * Revision 1.41  2003/10/26 04:54:56  steve
- *  Support constant evaluation of binary ^ operator.
- *
- * Revision 1.40  2003/05/25 03:01:19  steve
- *  Get length of trimed unsigned value right.
- *
- * Revision 1.39  2003/04/14 03:40:21  steve
- *  Make some effort to preserve bits while
- *  operating on constant values.
- *
- * Revision 1.38  2003/04/03 04:30:00  steve
- *  Prevent overrun comparing verinums to zero.
- *
- * Revision 1.37  2003/02/02 00:43:16  steve
- *  Fix conversion of signed numbes to long
- *
- * Revision 1.36  2003/01/30 16:23:08  steve
- *  Spelling fixes.
- *
- * Revision 1.35  2002/08/19 02:39:17  steve
- *  Support parameters with defined ranges.
- *
- * Revision 1.34  2002/08/12 01:35:01  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.33  2002/04/27 23:26:24  steve
- *  Trim leading nulls from string forms.
- *
- * Revision 1.32  2002/04/27 04:48:43  steve
- *  Display string verinums as strings.
- *
- * Revision 1.31  2002/02/01 05:09:14  steve
- *  Propagate sign in unary minus.
- *
- * Revision 1.30  2001/12/31 00:02:33  steve
- *  Include s indicator in dump of signed numbers.
- *
- * Revision 1.29  2001/11/19 02:54:12  steve
- *  Handle division and modulus by zero while
- *  evaluating run-time constants.
- *
- * Revision 1.28  2001/11/06 06:11:55  steve
- *  Support more real arithmetic in delay constants.
- *
- * Revision 1.27  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.26  2001/02/09 05:44:23  steve
- *  support evaluation of constant < in expressions.
- *
- * Revision 1.25  2001/02/08 05:38:18  steve
- *  trim the length of unsized numbers.
- *
- * Revision 1.24  2001/02/07 21:47:13  steve
- *  Fix expression widths for rvalues and parameters (PR#131,132)
- */
-

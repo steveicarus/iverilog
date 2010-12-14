@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: compile.cc,v 1.175 2004/10/04 01:10:58 steve Exp $"
-#endif
 
 # include  "arith.h"
 # include  "compile.h"
@@ -1576,55 +1573,3 @@ void compile_param_string(char*label, char*name, char*str, char*value)
 
       free(label);
 }
-
-/*
- * $Log: compile.cc,v $
- * Revision 1.175  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.174  2004/06/30 02:15:57  steve
- *  Add signed LPM divide.
- *
- * Revision 1.173  2004/06/19 15:52:53  steve
- *  Add signed modulus operator.
- *
- * Revision 1.172  2004/06/16 16:33:26  steve
- *  Add structural equality compare nodes.
- *
- * Revision 1.171  2004/05/19 03:26:24  steve
- *  Support delayed/non-blocking assignment to reals and others.
- *
- * Revision 1.170  2003/09/04 20:26:31  steve
- *  Add $push flag for threads.
- *
- * Revision 1.169  2003/07/30 01:13:28  steve
- *  Add support for triand and trior.
- *
- * Revision 1.168  2003/07/22 20:30:24  steve
- *  Forgot to read the /x parameter for %load/x
- *
- * Revision 1.167  2003/07/03 20:03:36  steve
- *  Remove the vvp_cpoint_t indirect code pointer.
- *
- * Revision 1.166  2003/06/18 03:55:19  steve
- *  Add arithmetic shift operators.
- *
- * Revision 1.165  2003/06/17 19:17:42  steve
- *  Remove short int restrictions from vvp opcodes.
- *
- * Revision 1.164  2003/05/26 04:44:54  steve
- *  Add the set/x0/x instruction.
- *
- * Revision 1.163  2003/05/25 03:04:55  steve
- *  Useless cast.
- *
- * Revision 1.162  2003/05/24 02:48:37  steve
- *  More thorough overflow error message.
- *
- * Revision 1.161  2003/05/23 03:44:34  steve
- *  Assert that parameters fix into opcode.
- *
- * Revision 1.160  2003/04/23 03:09:25  steve
- *  VPI Access to named events.
- */
-

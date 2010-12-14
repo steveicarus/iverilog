@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: functor.cc,v 1.44 2004/10/04 01:10:59 steve Exp $"
-#endif
 
 # include  "functor.h"
 # include  "statistics.h"
@@ -219,31 +216,3 @@ void extra_inputs_functor_s::set(vvp_ipoint_t i, bool push,
 
 edge_inputs_functor_s::~edge_inputs_functor_s()
 {}
-
-/*
- * $Log: functor.cc,v $
- * Revision 1.44  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.43  2003/09/09 00:56:45  steve
- *  Reimpelement scheduler to divide nonblocking assign queue out.
- *
- * Revision 1.42  2003/03/13 04:36:57  steve
- *  Remove the obsolete functor delete functions.
- *
- * Revision 1.41  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.40  2002/08/07 00:54:20  steve
- *  Documentation, and excessive inlines.
- *
- * Revision 1.39  2002/07/05 02:50:58  steve
- *  Remove the vpi object symbol table after compile.
- *
- * Revision 1.38  2002/01/06 17:50:50  steve
- *  Support scope for functors. (Stephan Boettcher)
- *
- * Revision 1.37  2001/12/18 05:32:11  steve
- *  Improved functor debug dumps.
- */
-

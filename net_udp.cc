@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -17,9 +17,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_udp.cc,v 1.10 2004/10/04 01:10:54 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "compiler.h"
@@ -88,40 +85,3 @@ char NetUDP::get_initial() const
   assert(0);
   return 'x';
 }
-
-
-/*
- * $Log: net_udp.cc,v $
- * Revision 1.10  2004/10/04 01:10:54  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.9  2004/02/18 17:11:56  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.8  2003/03/06 00:28:42  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.7  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.6  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.5  2001/04/24 02:23:58  steve
- *  Support for UDP devices in VVP (Stephen Boettcher)
- *
- * Revision 1.4  2001/04/22 23:09:46  steve
- *  More UDP consolidation from Stephan Boettcher.
- *
- * Revision 1.3  2000/12/15 01:24:17  steve
- *  Accept x in outputs of primitive. (PR#84)
- *
- * Revision 1.2  2000/11/04 06:36:24  steve
- *  Apply sequential UDP rework from Stephan Boettcher  (PR#39)
- *
- * Revision 1.1  2000/03/29 04:37:11  steve
- *  New and improved combinational primitives.
- *
- */
-

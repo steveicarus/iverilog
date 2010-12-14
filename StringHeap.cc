@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: StringHeap.cc,v 1.6.2.1 2005/08/13 00:45:53 steve Exp $"
-#endif
 
 # include  "StringHeap.h"
 #ifdef HAVE_MALLOC_H
@@ -178,32 +175,3 @@ bool operator < (perm_string a, perm_string b)
 
       return false;
 }
-
-/*
- * $Log: StringHeap.cc,v $
- * Revision 1.6.2.1  2005/08/13 00:45:53  steve
- *  Fix compilation warnings/errors with newer compilers.
- *
- * Revision 1.6  2004/02/18 17:11:54  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.5  2003/03/01 06:25:30  steve
- *  Add the lex_strings string handler, and put
- *  scope names and system task/function names
- *  into this table. Also, permallocate event
- *  names from the beginning.
- *
- * Revision 1.4  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.3  2003/01/16 21:44:46  steve
- *  Keep some debugging status.
- *
- * Revision 1.2  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.1  2002/08/04 19:13:16  steve
- *  dll uses StringHeap for named items.
- *
- */
-

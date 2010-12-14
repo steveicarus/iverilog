@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_assign.cc,v 1.18.2.3 2006/05/02 02:00:15 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -282,58 +279,3 @@ NetAssignNB::NetAssignNB(NetAssign_*lv, NetExpr*rv)
 NetAssignNB::~NetAssignNB()
 {
 }
-
-/*
- * $Log: net_assign.cc,v $
- * Revision 1.18.2.3  2006/05/02 02:00:15  steve
- *  Fix uninitialized mem_lref_ member.
- *
- * Revision 1.18.2.2  2006/04/16 19:26:38  steve
- *  Fix handling of exploded memories with partial or missing resets.
- *
- * Revision 1.18.2.1  2006/03/12 07:34:17  steve
- *  Fix the memsynth1 case.
- *
- * Revision 1.18  2004/08/28 15:08:31  steve
- *  Do not change reg to wire in NetAssign_ unless synthesizing.
- *
- * Revision 1.17  2004/02/18 17:11:56  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.16  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.15  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.14  2002/08/04 18:28:15  steve
- *  Do not use hierarchical names of memories to
- *  generate vvp labels. -tdll target does not
- *  used hierarchical name string to look up the
- *  memory objects in the design.
- *
- * Revision 1.13  2002/07/02 03:02:57  steve
- *  Change the signal to a net when assignments go away.
- *
- * Revision 1.12  2002/06/08 23:42:46  steve
- *  Add NetRamDq synthsesis from memory l-values.
- *
- * Revision 1.11  2002/06/04 05:38:44  steve
- *  Add support for memory words in l-value of
- *  blocking assignments, and remove the special
- *  NetAssignMem class.
- *
- * Revision 1.10  2002/05/26 01:39:02  steve
- *  Carry Verilog 2001 attributes with processes,
- *  all the way through to the ivl_target API.
- *
- *  Divide signal reference counts between rval
- *  and lval references.
- *
- * Revision 1.9  2002/04/21 22:31:02  steve
- *  Redo handling of assignment internal delays.
- *  Leave it possible for them to be calculated
- *  at run time.
- */
-

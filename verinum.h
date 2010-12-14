@@ -1,7 +1,7 @@
 #ifndef __verinum_H
 #define __verinum_H
 /*
- * Copyright (c) 1998 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: verinum.h,v 1.26.2.4 2007/03/23 20:59:26 steve Exp $"
-#endif
 
 # include  <string>
 
@@ -167,104 +164,4 @@ extern verinum concat(const verinum&left, const verinum&right);
 /* Bitwise not returns the ones complement. */
 extern verinum v_not(const verinum&left);
 
-/*
- * $Log: verinum.h,v $
- * Revision 1.26.2.4  2007/03/23 20:59:26  steve
- *  Fix compile time evaluation of < operator.
- *
- * Revision 1.26.2.3  2005/12/07 03:28:45  steve
- *  Support constant concatenation of constants.
- *
- * Revision 1.26.2.2  2005/08/13 00:45:55  steve
- *  Fix compilation warnings/errors with newer compilers.
- *
- * Revision 1.26.2.1  2005/06/14 15:33:54  steve
- *  Fix gcc4 build issues.
- *
- * Revision 1.26  2004/02/17 06:52:55  steve
- *  Support unsigned divide of huge numbers.
- *
- * Revision 1.25  2003/10/26 04:54:56  steve
- *  Support constant evaluation of binary ^ operator.
- *
- * Revision 1.24  2003/04/14 03:40:21  steve
- *  Make some effort to preserve bits while
- *  operating on constant values.
- *
- * Revision 1.23  2003/04/03 04:30:00  steve
- *  Prevent overrun comparing verinums to zero.
- *
- * Revision 1.22  2003/01/30 16:23:08  steve
- *  Spelling fixes.
- *
- * Revision 1.21  2003/01/30 04:23:25  steve
- *  include config.h to get iosfwd flags.
- *
- * Revision 1.20  2002/08/12 01:35:01  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.19  2002/06/03 04:04:24  steve
- *  Add verinum != operator.
- *
- * Revision 1.18  2001/02/10 20:29:39  steve
- *  In the context of range declarations, use elab_and_eval instead
- *  of the less robust eval_const methods.
- *
- * Revision 1.17  2001/02/09 05:44:23  steve
- *  support evaluation of constant < in expressions.
- *
- * Revision 1.16  2001/02/07 02:46:31  steve
- *  Support constant evaluation of / and % (PR#124)
- *
- * Revision 1.15  2001/01/16 02:44:18  steve
- *  Use the iosfwd header if available.
- *
- * Revision 1.14  2001/01/02 03:23:40  steve
- *  Evaluate constant &, | and unary ~.
- *
- * Revision 1.13  2000/12/10 22:01:36  steve
- *  Support decimal constants in behavioral delays.
- *
- * Revision 1.12  2000/09/27 18:28:37  steve
- *  multiply in parameter expressions.
- *
- * Revision 1.11  2000/02/23 04:43:43  steve
- *  Some compilers do not accept the not symbol.
- *
- * Revision 1.10  2000/02/23 02:56:56  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.9  2000/01/07 03:45:49  steve
- *  Initial support for signed constants.
- *
- * Revision 1.8  1999/11/06 16:00:17  steve
- *  Put number constants into a static table.
- *
- * Revision 1.7  1999/10/22 23:57:53  steve
- *  do the <= in bits, not numbers.
- *
- * Revision 1.6  1999/10/10 23:29:37  steve
- *  Support evaluating + operator at compile time.
- *
- * Revision 1.5  1999/05/13 04:02:09  steve
- *  More precise handling of verinum bit lengths.
- *
- * Revision 1.4  1998/12/20 02:05:41  steve
- *  Function to calculate wire initial value.
- *
- * Revision 1.3  1998/11/11 00:01:51  steve
- *  Check net ranges in declarations.
- *
- * Revision 1.2  1998/11/09 18:55:35  steve
- *  Add procedural while loops,
- *  Parse procedural for loops,
- *  Add procedural wait statements,
- *  Add constant nodes,
- *  Add XNOR logic gate,
- *  Make vvm output look a bit prettier.
- *
- * Revision 1.1  1998/11/03 23:29:08  steve
- *  Introduce verilog to CVS.
- *
- */
 #endif

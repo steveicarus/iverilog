@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: workarea.c,v 1.1 2002/12/19 21:37:04 steve Exp $"
-#endif
 
 # include  <veriuser.h>
 # include  <vpi_user.h>
@@ -82,13 +79,3 @@ PLI_BYTE8* tf_getworkarea(void)
 
       return 0;
 }
-
-/*
- * $Log: workarea.c,v $
- * Revision 1.1  2002/12/19 21:37:04  steve
- *  Add tf_message, tf_get/setworkarea, and
- *  ty_typep functions, along with defines
- *  related to these functions.
- *
- */
-

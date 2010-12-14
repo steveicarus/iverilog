@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: set_width.cc,v 1.34.2.1 2005/03/05 01:36:16 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -408,126 +405,3 @@ bool NetEUReduce::set_width(unsigned w)
 {
       return w == 1;
 }
-
-
-/*
- * $Log: set_width.cc,v $
- * Revision 1.34.2.1  2005/03/05 01:36:16  steve
- *  Fix set_width to allow binary logical operands to be self determined.
- *
- * Revision 1.34  2003/08/28 04:11:19  steve
- *  Spelling patch.
- *
- * Revision 1.33  2003/07/26 03:34:42  steve
- *  Start handling pad of expressions in code generators.
- *
- * Revision 1.32  2003/06/21 01:21:43  steve
- *  Harmless fixup of warnings.
- *
- * Revision 1.31  2003/06/18 03:55:19  steve
- *  Add arithmetic shift operators.
- *
- * Revision 1.30  2003/05/20 15:05:33  steve
- *  Do not try to set constants to width 0.
- *
- * Revision 1.29  2003/05/04 20:04:09  steve
- *  Fix truncation of signed constant in constant addition.
- *
- * Revision 1.28  2003/04/02 04:25:26  steve
- *  Fix xz extension of constants.
- *
- * Revision 1.27  2003/02/06 17:50:23  steve
- *  Real constants have no defined vector width
- *
- * Revision 1.26  2003/01/26 21:02:21  steve
- *  Remember to save signedness of number.
- *
- * Revision 1.25  2002/11/13 03:03:08  steve
- *  Do not truncate high bits of right shift.
- *
- * Revision 1.24  2002/11/06 02:25:13  steve
- *  No need to keep excess width from an
- *  unsigned constant value, if it can
- *  be trimmed safely.
- *
- * Revision 1.23  2002/08/12 01:35:00  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.22  2002/05/05 21:11:50  steve
- *  Put off evaluation of concatenation repeat expresions
- *  until after parameters are defined. This allows parms
- *  to be used in repeat expresions.
- *
- *  Add the builtin $signed system function.
- *
- * Revision 1.21  2002/04/27 04:49:27  steve
- *  If the verinum is already right, no need to reset it.
- *
- * Revision 1.20  2001/11/19 04:26:46  steve
- *  Unary reduction operators are all 1-bit results.
- *
- * Revision 1.19  2001/07/27 04:51:44  steve
- *  Handle part select expressions as variants of
- *  NetESignal/IVL_EX_SIGNAL objects, instead of
- *  creating new and useless temporary signals.
- *
- * Revision 1.18  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.17  2001/02/08 01:10:30  steve
- *  Remove dead code.
- *
- * Revision 1.16  2001/02/07 21:47:13  steve
- *  Fix expression widths for rvalues and parameters (PR#131,132)
- *
- * Revision 1.15  2001/01/27 05:41:48  steve
- *  Fix sign extension of evaluated constants. (PR#91)
- *
- * Revision 1.14  2000/06/18 03:29:52  steve
- *  Handle width expansion of shift operators.
- *
- * Revision 1.13  2000/05/04 03:37:59  steve
- *  Add infrastructure for system functions, move
- *  $time to that structure and add $random.
- *
- * Revision 1.12  2000/04/28 18:43:23  steve
- *  integer division in expressions properly get width.
- *
- * Revision 1.11  2000/04/26 03:33:32  steve
- *  Do not set width too small to hold significant bits.
- *
- * Revision 1.10  2000/04/21 02:46:42  steve
- *  Many Unary operators have known widths.
- *
- * Revision 1.9  2000/02/23 02:56:55  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.8  2000/01/13 03:35:35  steve
- *  Multiplication all the way to simulation.
- *
- * Revision 1.7  2000/01/01 19:56:51  steve
- *  Properly expand/shrink constants in expressions.
- *
- * Revision 1.6  1999/10/05 06:19:46  steve
- *  Add support for reduction NOR.
- *
- * Revision 1.5  1999/10/05 04:02:10  steve
- *  Relaxed width handling for <= assignment.
- *
- * Revision 1.4  1999/09/29 00:42:51  steve
- *  Allow expanding of additive operators.
- *
- * Revision 1.3  1999/09/23 03:56:57  steve
- *  Support shift operators.
- *
- * Revision 1.2  1999/09/23 02:27:50  steve
- *  comparison parameter width is self determined.
- *
- * Revision 1.1  1999/09/23 00:21:55  steve
- *  Move set_width methods into a single file,
- *  Add the NetEBLogic class for logic expressions,
- *  Fix error setting with of && in if statements.
- *
- */
-

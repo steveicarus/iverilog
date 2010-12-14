@@ -1,7 +1,7 @@
 #ifndef __udp_H
 #define __udp_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -19,9 +19,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: udp.h,v 1.14 2004/10/04 01:10:59 steve Exp $"
-#endif
 
 #include "functor.h"
 
@@ -97,29 +94,4 @@ class udp_functor_s : public edge_inputs_functor_s
       vvp_udp_s *udp;
 };
 
-
-/*
- * $Log: udp.h,v $
- * Revision 1.14  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.13  2003/09/17 03:39:55  steve
- *  Internal documentation of UDP devices.
- *
- * Revision 1.12  2003/06/17 21:28:59  steve
- *  Remove short int restrictions from vvp opcodes. (part 2)
- *
- * Revision 1.11  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.10  2001/10/31 04:27:47  steve
- *  Rewrite the functor type to have fewer functor modes,
- *  and use objects to manage the different types.
- *  (Stephan Boettcher)
- *
- * Revision 1.9  2001/08/09 19:38:23  steve
- *  Nets (wires) do not use their own functors.
- *  Modifications to propagation of values.
- *  (Stephan Boettcher)
- */
 #endif

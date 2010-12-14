@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: symbols.cc,v 1.12 2004/10/04 01:10:59 steve Exp $"
-#endif
 
 # include  "symbols.h"
 # include  <string.h>
@@ -418,47 +415,3 @@ symbol_value_t sym_get_value(symbol_table_t tbl, const char*key)
 	    return find_value_(tbl, tbl->root, key, def, false);
       }
 }
-
-
-/*
- * $Log: symbols.cc,v $
- * Revision 1.12  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.11  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.10  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.9  2002/07/15 00:21:42  steve
- *  Fix initialization of symbol table string heap.
- *
- * Revision 1.8  2002/07/09 03:20:51  steve
- *  Fix split of root btree node.
- *
- * Revision 1.7  2002/07/05 04:40:59  steve
- *  Symbol table uses more efficient key string allocator,
- *  and remove all the symbol tables after compile is done.
- *
- * Revision 1.6  2002/07/05 02:50:58  steve
- *  Remove the vpi object symbol table after compile.
- *
- * Revision 1.5  2002/05/29 05:37:35  steve
- *  Use binary search to speed up deep lookups.
- *
- * Revision 1.4  2001/11/02 04:48:03  steve
- *  Implement split_node for symbol table (hendrik)
- *
- * Revision 1.3  2001/05/09 04:23:19  steve
- *  Now that the interactive debugger exists,
- *  there is no use for the output dump.
- *
- * Revision 1.2  2001/03/18 00:37:55  steve
- *  Add support for vpi scopes.
- *
- * Revision 1.1  2001/03/11 00:29:39  steve
- *  Add the vvp engine to cvs.
- *
- */
-

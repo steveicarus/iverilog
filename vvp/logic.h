@@ -1,7 +1,7 @@
 #ifndef __logic_H
 #define __logic_H
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: logic.h,v 1.7 2003/07/30 01:13:29 steve Exp $"
-#endif
 
 # include  "functor.h"
 # include  <stddef.h>
@@ -64,28 +61,4 @@ extern const unsigned char ft_XNOR[];
 extern const unsigned char ft_XOR[];
 extern const unsigned char ft_var[];
 
-/*
- * $Log: logic.h,v $
- * Revision 1.7  2003/07/30 01:13:29  steve
- *  Add support for triand and trior.
- *
- * Revision 1.6  2002/08/29 03:04:01  steve
- *  Generate x out for x select on wide muxes.
- *
- * Revision 1.5  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.4  2002/07/05 20:08:44  steve
- *  Count different types of functors.
- *
- * Revision 1.3  2002/01/12 04:02:16  steve
- *  Support the BUFZ logic device.
- *
- * Revision 1.2  2001/12/14 02:04:49  steve
- *  Support strength syntax on functors.
- *
- * Revision 1.1  2001/11/06 03:07:22  steve
- *  Code rearrange. (Stephan Boettcher)
- *
- */
 #endif // __logic_H

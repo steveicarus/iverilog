@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2010 Stephen Williams (steve@icarus.com)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,9 +24,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: d-virtex.c,v 1.1.2.1 2005/09/25 16:35:36 steve Exp $"
-#endif
 
 /*
  * This is the driver for Xilinx Virtex style FPGA devices. The device
@@ -861,12 +858,3 @@ const struct device_s d_virtex_edif = {
       0,  /* show_mult */
       0   /* show_constant */
 };
-
-
-/*
- * $Log: d-virtex.c,v $
- * Revision 1.1.2.1  2005/09/25 16:35:36  steve
- *  Add Xilinx virtex as a reference EDIF device.
- *
- */
-

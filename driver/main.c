@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: main.c,v 1.65.2.6 2007/05/30 17:48:26 steve Exp $"
-#endif
 
 # include "config.h"
 # include "version.h"
@@ -690,7 +687,7 @@ int main(int argc, char **argv)
 
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION "\n\n");
-	    printf("Copyright 1998-2009 Stephen Williams\n");
+	    printf("Copyright 1998-2010 Stephen Williams\n");
 	    puts(NOTICE);
 
 	    if (version_flag)
@@ -827,70 +824,3 @@ int main(int argc, char **argv)
 
       return 0;
 }
-
-/*
- * $Log: main.c,v $
- * Revision 1.65.2.6  2007/05/30 17:48:26  steve
- *  DEBUG aids. (Alan Feldstein)
- *
- * Revision 1.65.2.5  2006/07/07 21:31:50  steve
- *  Root dir variable does not include lib/ivl components.
- *
- * Revision 1.65.2.4  2006/06/27 01:30:20  steve
- *  Fix unused var warning for mingw32 build.
- *
- * Revision 1.65.2.3  2006/06/14 03:01:49  steve
- *  Remove redundant call to get_root_dir.
- *
- * Revision 1.65.2.2  2006/06/12 00:16:53  steve
- *  Add support for -Wunused warnings.
- *
- * Revision 1.65.2.1  2006/03/26 21:47:26  steve
- *  More installation directory flexibility.
- *
- * Revision 1.65  2004/06/17 14:47:22  steve
- *  Add a .sft file for the system functions.
- *
- * Revision 1.64  2004/03/10 04:51:25  steve
- *  Add support for system function table files.
- *
- * Revision 1.63  2004/02/15 18:03:30  steve
- *  Cleanup of warnings.
- *
- * Revision 1.62  2003/12/12 04:36:48  steve
- *  Fix make check to support -tconf configuration method.
- *
- * Revision 1.61  2003/11/18 06:31:46  steve
- *  Remove the iverilog.conf file.
- *
- * Revision 1.60  2003/11/13 05:55:33  steve
- *  Move the DLL= flag to target config files.
- *
- * Revision 1.59  2003/11/13 04:09:49  steve
- *  Pass flags through the temporary config file.
- *
- * Revision 1.58  2003/11/01 04:21:57  steve
- *  Add support for a target static config file.
- *
- * Revision 1.57  2003/10/26 22:43:42  steve
- *  Improve -V messages,
- *
- * Revision 1.56  2003/09/26 21:25:58  steve
- *  Warnings cleanup.
- *
- * Revision 1.55  2003/09/23 05:57:15  steve
- *  Pass -m flag from driver via iconfig file.
- *
- * Revision 1.54  2003/09/22 01:12:09  steve
- *  Pass more ivl arguments through the iconfig file.
- *
- * Revision 1.53  2003/08/26 16:26:02  steve
- *  ifdef idents correctly.
- *
- * Revision 1.52  2003/02/22 04:55:36  steve
- *  portbind adds p, not i, flag.
- *
- * Revision 1.51  2003/02/22 04:12:49  steve
- *  Add the portbind warning.
- */
-

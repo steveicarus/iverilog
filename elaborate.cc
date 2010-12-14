@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: elaborate.cc,v 1.308.2.6 2006/11/27 01:47:14 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -2964,118 +2961,3 @@ Design* elaborate(list<perm_string>roots)
 
       return des;
 }
-
-
-/*
- * $Log: elaborate.cc,v $
- * Revision 1.308.2.6  2006/11/27 01:47:14  steve
- *  Fix crash handling constant true conditional.
- *
- * Revision 1.308.2.5  2006/11/27 01:32:24  steve
- *  Fix evaluate of constant condition expressions.
- *
- * Revision 1.308.2.4  2006/07/10 00:21:50  steve
- *  Add support for full_case attribute.
- *
- * Revision 1.308.2.3  2006/06/12 00:16:51  steve
- *  Add support for -Wunused warnings.
- *
- * Revision 1.308.2.2  2005/12/10 03:30:50  steve
- *  Fix crash on block with assignments that assign lval to self.
- *
- * Revision 1.308.2.1  2005/11/13 22:28:14  steve
- *  Do not panic if case statement is nul.
- *
- * Revision 1.308  2004/10/04 01:10:52  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.307  2004/09/05 21:07:26  steve
- *  Support degenerat wait statements.
- *
- * Revision 1.306  2004/09/05 17:44:41  steve
- *  Add support for module instance arrays.
- *
- * Revision 1.305  2004/06/30 15:32:02  steve
- *  Propagate source line number in synthetic delay statements.
- *
- * Revision 1.304  2004/06/20 15:59:06  steve
- *  Only pad the width of vector r-values.
- *
- * Revision 1.303  2004/06/13 04:56:54  steve
- *  Add support for the default_nettype directive.
- *
- * Revision 1.302  2004/05/31 23:34:37  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.301  2004/05/25 03:42:58  steve
- *  Handle wait with constant-false expression.
- *
- * Revision 1.300  2004/03/08 00:47:44  steve
- *  primitive ports can bind bi name.
- *
- * Revision 1.299  2004/03/08 00:10:29  steve
- *  Verilog2001 new style port declartions for primitives.
- *
- * Revision 1.298  2004/03/07 20:04:10  steve
- *  MOre thorough use of elab_and_eval function.
- *
- * Revision 1.297  2004/02/20 18:53:34  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.296  2004/02/18 17:11:55  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.295  2004/01/21 04:35:03  steve
- *  Get rid of useless warning.
- *
- * Revision 1.294  2004/01/13 03:42:49  steve
- *  Handle wide expressions in wait condition.
- *
- * Revision 1.293  2003/10/26 04:49:51  steve
- *  Attach line number information to for loop parts.
- *
- * Revision 1.292  2003/09/25 00:25:14  steve
- *  Summary list of missing modules.
- *
- * Revision 1.291  2003/09/20 06:08:53  steve
- *  Evaluate nb-assign r-values using elab_and_eval.
- *
- * Revision 1.290  2003/09/20 06:00:37  steve
- *  Evaluate gate array index constants using elab_and_eval.
- *
- * Revision 1.289  2003/09/20 01:05:35  steve
- *  Obsolete find_symbol and find_event from the Design class.
- *
- * Revision 1.288  2003/09/13 01:01:51  steve
- *  Spelling fixes.
- *
- * Revision 1.287  2003/09/04 20:28:05  steve
- *  Support time0 resolution of combinational threads.
- *
- * Revision 1.286  2003/08/28 04:11:17  steve
- *  Spelling patch.
- *
- * Revision 1.285  2003/08/05 03:01:58  steve
- *  Primitive outputs have same limitations as continuous assignment.
- *
- * Revision 1.284  2003/07/02 04:19:16  steve
- *  Elide empty begin-end in conditionals.
- *
- * Revision 1.283  2003/06/21 01:21:43  steve
- *  Harmless fixup of warnings.
- *
- * Revision 1.282  2003/06/13 19:10:20  steve
- *  Handle assign of real to vector.
- *
- * Revision 1.281  2003/05/19 02:50:58  steve
- *  Implement the wait statement behaviorally instead of as nets.
- *
- * Revision 1.280  2003/05/04 20:04:08  steve
- *  Fix truncation of signed constant in constant addition.
- *
- * Revision 1.279  2003/04/24 05:25:55  steve
- *  Include port name in port assignment error message.
- */
-

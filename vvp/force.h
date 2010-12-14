@@ -1,7 +1,7 @@
 #ifndef __force_H
 #define __force_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -19,9 +19,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: force.h,v 1.2 2002/08/12 01:35:08 steve Exp $"
-#endif
 
 #include "functor.h"
 
@@ -49,14 +46,4 @@ struct var_functor_s: public functor_s {
       bool deassign(vvp_ipoint_t itgt);
 };
 
-
-/*
- * $Log: force.h,v $
- * Revision 1.2  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.1  2001/11/01 03:00:19  steve
- *  Add force/cassign/release/deassign support. (Stephan Boettcher)
- *
- */
 #endif

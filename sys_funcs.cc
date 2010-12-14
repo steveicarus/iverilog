@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_funcs.cc,v 1.6 2004/10/04 01:10:55 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "compiler.h"
@@ -192,28 +189,3 @@ int load_sys_func_table(const char*path)
 
       return 0;
 }
-
-/*
- * $Log: sys_funcs.cc,v $
- * Revision 1.6  2004/10/04 01:10:55  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.5  2004/03/17 17:07:12  steve
- *  Protect ident pragma.
- *
- * Revision 1.4  2004/03/13 05:12:36  steve
- *  standard conpliant stdio.h.
- *
- * Revision 1.3  2004/03/11 06:02:58  steve
- *  Verbose details for sft parsing.
- *
- * Revision 1.2  2004/03/10 04:51:24  steve
- *  Add support for system function table files.
- *
- * Revision 1.1  2004/03/09 04:29:42  steve
- *  Separate out the lookup_sys_func table, for eventual
- *  support for function type tables.
- *
- *  Remove ipal compile flags.
- */
-

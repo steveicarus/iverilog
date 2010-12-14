@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1999-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: lexor.lex,v 1.46.2.1 2007/05/25 18:35:45 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -141,6 +138,9 @@ static int comment_enter = 0;
 %}
 
 %option stack
+%option nounput
+%option noinput
+%option noyy_top_state
 
 %x PPINCLUDE
 %x PPDEFINE

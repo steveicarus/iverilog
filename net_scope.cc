@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_scope.cc,v 1.33.2.1 2005/02/19 16:39:31 steve Exp $"
-#endif
 
 # include "config.h"
 # include "compiler.h"
@@ -464,105 +461,3 @@ string NetScope::local_hsymbol()
 {
       return string(name()) + "." + string(local_symbol());
 }
-
-
-/*
- * $Log: net_scope.cc,v $
- * Revision 1.33.2.1  2005/02/19 16:39:31  steve
- *  Spellig fixes.
- *
- * Revision 1.33  2004/10/04 01:10:54  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.32  2004/06/13 04:56:54  steve
- *  Add support for the default_nettype directive.
- *
- * Revision 1.31  2004/02/20 06:22:56  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.30  2004/02/18 17:11:56  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.29  2003/09/13 01:30:07  steve
- *  Missing case warnings.
- *
- * Revision 1.28  2003/03/10 23:40:53  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.27  2003/03/06 04:37:12  steve
- *  lex_strings.add module names earlier.
- *
- * Revision 1.26  2003/03/06 00:28:41  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.25  2003/03/01 06:25:30  steve
- *  Add the lex_strings string handler, and put
- *  scope names and system task/function names
- *  into this table. Also, permallocate event
- *  names from the beginning.
- *
- * Revision 1.24  2003/01/27 05:09:17  steve
- *  Spelling fixes.
- *
- * Revision 1.23  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.22  2003/01/14 21:16:18  steve
- *  Move strstream to ostringstream for compatibility.
- *
- * Revision 1.21  2002/12/07 02:49:24  steve
- *  Named event triggers can take hierarchical names.
- *
- * Revision 1.20  2002/10/19 22:59:49  steve
- *  Redo the parameter vector support to allow
- *  parameter names in range expressions.
- *
- * Revision 1.19  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.18  2002/08/05 04:18:45  steve
- *  Store only the base name of memories.
- *
- * Revision 1.17  2002/07/22 21:07:08  steve
- *  Initialize the lcounter_ to 0.
- *
- * Revision 1.16  2001/12/03 04:47:15  steve
- *  Parser and pform use hierarchical names as hname_t
- *  objects instead of encoded strings.
- *
- * Revision 1.15  2001/11/08 05:15:50  steve
- *  Remove string paths from PExpr elaboration.
- *
- * Revision 1.14  2001/10/20 05:21:51  steve
- *  Scope/module names are char* instead of string.
- *
- * Revision 1.13  2001/07/25 03:10:49  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.12  2001/07/04 04:34:06  steve
- *  Scope-locals use _s instead of _l.
- *
- * Revision 1.11  2000/12/16 01:45:48  steve
- *  Detect recursive instantiations (PR#2)
- *
- * Revision 1.10  2000/10/06 23:46:50  steve
- *  ivl_target updates, including more complete
- *  handling of ivl_nexus_t objects. Much reduced
- *  dependencies on pointers to netlist objects.
- *
- * Revision 1.9  2000/08/27 15:51:50  steve
- *  t-dll iterates signals, and passes them to the
- *  target module.
- *
- *  Some of NetObj should return char*, not string.
- *
- * Revision 1.8  2000/07/30 18:25:44  steve
- *  Rearrange task and function elaboration so that the
- *  NetTaskDef and NetFuncDef functions are created during
- *  signal enaboration, and carry these objects in the
- *  NetScope class instead of the extra, useless map in
- *  the Design class.
- */
-

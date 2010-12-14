@@ -1,7 +1,7 @@
 #ifndef __schedule_H
 #define __schedule_H
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: schedule.h,v 1.16 2003/09/09 00:56:45 steve Exp $"
-#endif
 
 # include  "vthread.h"
 # include  "pointers.h"
@@ -106,30 +103,4 @@ extern unsigned long count_prop_events;
 extern unsigned long count_thread_events;
 extern unsigned long count_event_pool;
 
-/*
- * $Log: schedule.h,v $
- * Revision 1.16  2003/09/09 00:56:45  steve
- *  Reimpelement scheduler to divide nonblocking assign queue out.
- *
- * Revision 1.15  2003/02/22 02:52:06  steve
- *  Check for stopped flag in certain strategic points.
- *
- * Revision 1.14  2003/02/21 03:40:35  steve
- *  Add vpiStop and interactive mode.
- *
- * Revision 1.13  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.12  2003/01/06 23:57:26  steve
- *  Schedule wait lists of threads as a single event,
- *  to save on events. Also, improve efficiency of
- *  event_s allocation. Add some event statistics to
- *  get an idea where performance is really going.
- *
- * Revision 1.11  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.10  2002/05/12 23:44:41  steve
- *  task calls and forks push the thread event in the queue.
- */
 #endif

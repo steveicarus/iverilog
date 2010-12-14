@@ -8,7 +8,6 @@ AC_PROG_INSTALL
 AC_PROG_RANLIB
 
 AC_EXEEXT
-AX_CPP_IDENT
 
 # vvp32 is by default disabled
 #enable_vvp32=no

@@ -1,7 +1,7 @@
 #ifndef __ivl_target_H
 #define __ivl_target_H
 /*
- * Copyright (c) 2000-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: ivl_target.h,v 1.126.2.5 2006/04/16 19:26:37 steve Exp $"
-#endif
 
 #ifdef __cplusplus
 #define _BEGIN_DECL extern "C" {
@@ -1313,81 +1310,4 @@ typedef int  (*target_design_f)(ivl_design_t des);
 
 _END_DECL
 
-/*
- * $Log: ivl_target.h,v $
- * Revision 1.126.2.5  2006/04/16 19:26:37  steve
- *  Fix handling of exploded memories with partial or missing resets.
- *
- * Revision 1.126.2.4  2006/03/26 23:09:22  steve
- *  Handle asynchronous demux/bit replacements.
- *
- * Revision 1.126.2.3  2006/03/12 07:34:16  steve
- *  Fix the memsynth1 case.
- *
- * Revision 1.126.2.2  2006/02/25 05:03:28  steve
- *  Add support for negedge FFs by using attributes.
- *
- * Revision 1.126.2.1  2006/02/19 00:11:31  steve
- *  Handle synthesis of FF vectors with l-value decoder.
- *
- * Revision 1.126  2004/10/04 01:10:53  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.125  2004/09/25 01:58:12  steve
- *  Some commentary on ivl_logic_pin.
- *
- * Revision 1.124  2003/12/03 02:46:24  steve
- *  Add support for wait on list of named events.
- *
- * Revision 1.123  2003/11/08 20:06:21  steve
- *  Spelling fixes in comments.
- *
- * Revision 1.122  2003/08/22 23:14:26  steve
- *  Preserve variable ranges all the way to the vpi.
- *
- * Revision 1.121  2003/08/15 02:23:52  steve
- *  Add synthesis support for synchronous reset.
- *
- * Revision 1.120  2003/07/30 01:13:28  steve
- *  Add support for triand and trior.
- *
- * Revision 1.119  2003/06/23 01:25:44  steve
- *  Module attributes make it al the way to ivl_target.
- *
- * Revision 1.118  2003/05/14 05:26:41  steve
- *  Support real expressions in case statements.
- *
- * Revision 1.117  2003/04/22 04:48:29  steve
- *  Support event names as expressions elements.
- *
- * Revision 1.116  2003/04/11 05:18:08  steve
- *  Handle signed magnitude compare all the
- *  way through to the vvp code generator.
- *
- * Revision 1.115  2003/03/10 23:40:53  steve
- *  Keep parameter constants for the ivl_target API.
- *
- * Revision 1.114  2003/03/06 01:24:37  steve
- *  Obsolete the ivl_event_name function.
- *
- * Revision 1.113  2003/03/06 00:28:41  steve
- *  All NetObj objects have lex_string base names.
- *
- * Revision 1.112  2003/02/26 01:29:24  steve
- *  LPM objects store only their base names.
- *
- * Revision 1.111  2003/01/30 16:23:07  steve
- *  Spelling fixes.
- *
- * Revision 1.110  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.109  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- */
 #endif

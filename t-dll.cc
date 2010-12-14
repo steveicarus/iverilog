@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: t-dll.cc,v 1.131.2.8 2006/07/23 19:42:35 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -2391,71 +2388,3 @@ void dll_target::signal(const NetNet*net)
 }
 
 extern const struct target tgt_dll = { "dll", &dll_target_obj };
-
-
-/*
- * $Log: t-dll.cc,v $
- * Revision 1.131.2.8  2006/07/23 19:42:35  steve
- *  Handle statement output override better in blocks.
- *
- * Revision 1.131.2.7  2006/04/16 19:26:40  steve
- *  Fix handling of exploded memories with partial or missing resets.
- *
- * Revision 1.131.2.6  2006/03/26 23:09:24  steve
- *  Handle asynchronous demux/bit replacements.
- *
- * Revision 1.131.2.5  2006/03/12 07:34:19  steve
- *  Fix the memsynth1 case.
- *
- * Revision 1.131.2.4  2006/02/25 05:03:29  steve
- *  Add support for negedge FFs by using attributes.
- *
- * Revision 1.131.2.3  2006/02/19 00:11:34  steve
- *  Handle synthesis of FF vectors with l-value decoder.
- *
- * Revision 1.131.2.2  2006/01/21 21:42:33  steve
- *  When mux has wide select but sparse choices, use 1hot translation.
- *
- * Revision 1.131.2.1  2005/02/19 16:39:31  steve
- *  Spellig fixes.
- *
- * Revision 1.131  2004/10/04 01:10:55  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.130  2004/06/30 02:16:27  steve
- *  Implement signed divide and signed right shift in nets.
- *
- * Revision 1.129  2004/02/20 18:53:35  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.128  2004/02/20 06:22:58  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.127  2004/02/19 06:57:10  steve
- *  Memory and Event names use perm_string.
- *
- * Revision 1.126  2004/02/18 17:11:58  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.125  2003/12/12 05:43:08  steve
- *  Some systems dlsym requires leading _ or not on whim.
- *
- * Revision 1.124  2003/11/26 01:37:38  steve
- *  Warning about sprintf.
- *
- * Revision 1.123  2003/11/13 05:55:33  steve
- *  Move the DLL= flag to target config files.
- *
- * Revision 1.122  2003/11/10 20:59:04  steve
- *  Design::get_flag returns const char* instead of string.
- *
- * Revision 1.121  2003/09/03 23:33:29  steve
- *  Pass FF synchronous set values to code generator.
- *
- * Revision 1.120  2003/08/22 04:14:33  steve
- *  Fix uninitialized sset member.
- *
- * Revision 1.119  2003/08/15 02:23:53  steve
- *  Add synthesis support for synchronous reset.
- */
-

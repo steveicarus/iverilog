@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: net_link.cc,v 1.14.2.6 2006/08/23 04:09:14 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -584,50 +581,3 @@ bool NexusSet::intersect(const NexusSet&that) const
 
       return false;
 }
-
-/*
- * $Log: net_link.cc,v $
- * Revision 1.14.2.6  2006/08/23 04:09:14  steve
- *  missing sig diagnostics.
- *
- * Revision 1.14.2.5  2006/08/15 03:41:24  steve
- *  Improve performance of unlink of heavily connected nexa.
- *
- * Revision 1.14.2.4  2006/08/08 02:17:48  steve
- *  Improved nexus management performance.
- *
- * Revision 1.14.2.3  2006/07/23 19:42:33  steve
- *  Handle statement output override better in blocks.
- *
- * Revision 1.14.2.2  2006/01/27 02:05:46  steve
- *  Speed up processing of connect when one side is empty.
- *
- * Revision 1.14.2.1  2005/09/25 23:30:31  steve
- *  More predictable ordering of items in NexusSet.
- *
- * Revision 1.14  2004/02/18 17:11:56  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.13  2003/01/14 21:16:18  steve
- *  Move strstream to ostringstream for compatibility.
- *
- * Revision 1.12  2002/10/21 01:42:08  steve
- *  Synthesizer support for synchronous begin-end blocks.
- *
- * Revision 1.11  2002/08/18 22:07:16  steve
- *  Detect temporaries in sequential block synthesis.
- *
- * Revision 1.10  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.9  2002/07/03 03:08:47  steve
- *  Clear drive cache on link or unlink.
- *
- * Revision 1.8  2002/06/30 02:21:31  steve
- *  Add structure for asynchronous logic synthesis.
- *
- * Revision 1.7  2002/06/24 01:49:39  steve
- *  Make link_drive_constant cache its results in
- *  the Nexus, to improve cprop performance.
- */
-

@@ -1,7 +1,7 @@
 #ifndef __vcd_priv_H
 #define __vcd_priv_H
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vcd_priv.h,v 1.2 2003/02/13 18:13:28 steve Exp $"
-#endif
 
 struct vcd_names_s;
 extern struct stringheap_s name_heap;
@@ -42,13 +39,4 @@ extern void vcd_names_sort(struct vcd_names_list_s*tab);
 extern const char*find_nexus_ident(int nex);
 extern void       set_nexus_ident(int nex, const char *id);
 
-/*
- * $Log: vcd_priv.h,v $
- * Revision 1.2  2003/02/13 18:13:28  steve
- *  Make lxt use stringheap to perm-allocate strings.
- *
- * Revision 1.1  2003/02/11 05:21:33  steve
- *  Support dump of vpiRealVar objects.
- *
- */
 #endif

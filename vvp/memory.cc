@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -17,9 +17,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: memory.cc,v 1.22.2.2 2006/02/19 16:57:31 steve Exp $"
-#endif
 
 #include "vpi_priv.h"
 #include "memory.h"
@@ -507,31 +504,3 @@ void schedule_memory(vvp_memory_t mem, unsigned idx,
   e->idx = idx;
   schedule_generic(e, val, delay, false);
 }
-
-/*
- * $Log: memory.cc,v $
- * Revision 1.22.2.2  2006/02/19 16:57:31  steve
- *  Add change callback to vpiMemory objects.
- *
- * Revision 1.22.2.1  2006/02/19 00:11:36  steve
- *  Handle synthesis of FF vectors with l-value decoder.
- *
- * Revision 1.22  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.21  2003/09/09 00:56:45  steve
- *  Reimpelement scheduler to divide nonblocking assign queue out.
- *
- * Revision 1.20  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.19  2002/09/17 00:42:22  steve
- *  Proper initialization of the memories table.
- *
- * Revision 1.18  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.17  2002/08/11 23:47:05  steve
- *  Add missing Log and Ident strings.
- *
- */

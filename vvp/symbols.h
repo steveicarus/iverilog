@@ -1,7 +1,7 @@
 #ifndef __symbols_H
 #define __symbols_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: symbols.h,v 1.4 2002/08/12 01:35:08 steve Exp $"
-#endif
 
 /*
  * The symbol_table_t is intended as a means to hold and quickly index
@@ -77,20 +74,4 @@ void sym_set_value(symbol_table_t tbl, const char*key, symbol_value_t val);
  */
 symbol_value_t sym_get_value(symbol_table_t tbl, const char*key);
 
-/*
- * $Log: symbols.h,v $
- * Revision 1.4  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.3  2001/05/09 04:23:19  steve
- *  Now that the interactive debugger exists,
- *  there is no use for the output dump.
- *
- * Revision 1.2  2001/03/18 00:37:55  steve
- *  Add support for vpi scopes.
- *
- * Revision 1.1  2001/03/11 00:29:39  steve
- *  Add the vvp engine to cvs.
- *
- */
 #endif

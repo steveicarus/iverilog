@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_display.c,v 1.71 2004/10/04 01:10:58 steve Exp $"
-#endif
 
 # include "vpi_config.h"
 
@@ -1617,149 +1614,3 @@ void sys_display_register()
       cb_data.user_data = "system";
       vpi_register_cb(&cb_data);
 }
-
-
-/*
- * $Log: sys_display.c,v $
- * Revision 1.71  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.70  2004/02/20 01:53:02  steve
- *  Do not strip leading spaces, or expect them either.
- *
- * Revision 1.69  2004/01/23 23:40:44  steve
- *  Honor default format of numbers.
- *
- * Revision 1.68  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- * Revision 1.67  2003/12/19 01:27:10  steve
- *  Fix various unsigned compare warnings.
- *
- * Revision 1.66  2003/10/30 03:43:19  steve
- *  Rearrange fileio functions, and add ungetc.
- *
- * Revision 1.65  2003/08/26 03:51:05  steve
- *  Add support for fstrobe system tasks.
- *
- * Revision 1.64  2003/08/03 03:54:02  steve
- *  mcd value can come from a vpiNet.
- *
- * Revision 1.63  2003/07/21 01:19:58  steve
- *  Careful to save format string to prevent overwrite.
- *
- * Revision 1.62  2003/06/17 16:55:08  steve
- *  1) setlinebuf() for vpi_trace
- *  2) Addes error checks for trace file opens
- *  3) removes now extraneous flushes
- *  4) fixes acc_next() bug
- *
- * Revision 1.61  2003/05/23 04:04:02  steve
- *  Add vpi_fopen and vpi_get_file.
- *
- * Revision 1.60  2003/05/15 16:51:08  steve
- *  Arrange for mcd id=00_00_00_01 to go to stdout
- *  as well as a user specified log file, set log
- *  file to buffer lines.
- *
- *  Add vpi_flush function, and clear up some cunfused
- *  return codes from other vpi functions.
- *
- *  Adjust $display and vcd/lxt messages to use the
- *  standard output/log file.
- *
- * Revision 1.59  2003/05/02 15:45:43  steve
- *  Certain constants are allowed as mcd parameters.
- *
- * Revision 1.58  2003/05/02 04:44:41  steve
- *  $fdisplay can have a RealVar, not RealVal argument.
- *
- * Revision 1.57  2003/04/20 02:49:07  steve
- *  acc_fetch_value support for %v format.
- *
- * Revision 1.56  2003/03/12 03:11:00  steve
- *  Donot rely on persistence of format string.
- *
- * Revision 1.55  2003/03/10 20:52:42  steve
- *  Account for constants being vpiParameters.
- *
- * Revision 1.54  2003/03/05 02:58:04  steve
- *  Add support for sizes in %f format.
- *
- * Revision 1.53  2003/02/10 05:20:48  steve
- *  Support monitor of real variables.
- *
- * Revision 1.52  2003/02/06 17:40:02  steve
- *  Format real values as time.
- *
- * Revision 1.51  2003/02/04 04:06:36  steve
- *  Rearrange format-string formatting code.
- *
- * Revision 1.50  2003/02/01 05:49:13  steve
- *  Display $time and $realtime specially.
- *
- * Revision 1.49  2003/01/26 18:18:36  steve
- *  Support display of real values and constants.
- *
- * Revision 1.48  2003/01/09 04:10:58  steve
- *  use userdata to save $display argument handles.
- *
- * Revision 1.47  2002/12/21 19:41:49  steve
- *  Rewrite time formatting to account for local scope.
- *
- * Revision 1.46  2002/11/09 06:01:11  steve
- *  display octal escapes properly.
- *
- * Revision 1.45  2002/09/06 04:56:28  steve
- *  Add support for %v is the display system task.
- *  Change the encoding of H and L outputs from
- *  the bufif devices so that they are logic x.
- *
- * Revision 1.44  2002/08/24 02:02:44  steve
- *  Rewire time formatting to handle all cases.
- *
- * Revision 1.43  2002/08/22 23:34:52  steve
- *  Watch signed comparisons, that lead to infinite loops.
- *
- * Revision 1.42  2002/08/12 01:35:04  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.41  2002/07/25 03:35:51  steve
- *  Add monitoron and monitoroff system tasks.
- *
- * Revision 1.40  2002/07/23 02:41:15  steve
- *  Fix display of no arguments.
- *
- * Revision 1.39  2002/06/21 04:59:36  steve
- *  Carry integerness throughout the compilation.
- *
- * Revision 1.38  2002/05/31 04:26:54  steve
- *  Add support for $timeformat.
- *
- * Revision 1.37  2002/05/24 19:05:30  steve
- *  support GCC __attributes__ for printf formats.
- *
- * Revision 1.36  2002/04/06 20:25:45  steve
- *  cbValueChange automatically replays.
- *
- * Revision 1.35  2002/02/06 04:50:04  steve
- *  Detect and skip suppressed values in display
- *
- * Revision 1.34  2002/01/22 00:18:10  steve
- *  Better calcuation of dec string width (Larry Doolittle)
- *
- * Revision 1.33  2002/01/15 03:23:34  steve
- *  Default widths pad out as per the standard,
- *  add $displayb/o/h et al., and some better
- *  error messages for incorrect formats.
- *
- * Revision 1.32  2002/01/11 04:48:01  steve
- *  Add the %c format, and some warning messages.
- *
- * Revision 1.31  2001/11/02 05:56:47  steve
- *  initialize scope for %m in $fdisplay.
- *
- * Revision 1.30  2001/10/25 04:19:53  steve
- *  VPI support for callback to return values.
- */
-

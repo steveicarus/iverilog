@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_vcd.c,v 1.56 2004/10/04 01:10:58 steve Exp $"
-#endif
 
 # include "sys_priv.h"
 
@@ -832,43 +829,3 @@ void sys_vcd_register()
       tf_data.user_data = "$dumpvars";
       vpi_register_systf(&tf_data);
 }
-
-/*
- * $Log: sys_vcd.c,v $
- * Revision 1.56  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.55  2004/02/15 20:46:01  steve
- *  Add the $dumpflush function
- *
- * Revision 1.54  2004/02/15 03:17:15  steve
- *  dumpfile selects file at compiletf time.
- *
- * Revision 1.53  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- * Revision 1.52  2003/12/19 01:27:10  steve
- *  Fix various unsigned compare warnings.
- *
- * Revision 1.51  2003/10/29 03:28:27  steve
- *  Add the PLU_UINT64_FMT string for formatting output.
- *
- * Revision 1.50  2003/10/29 03:23:12  steve
- *  Portably handle time format of VCD prints.
- *
- * Revision 1.49  2003/10/08 23:14:29  steve
- *  TIME_FMT does not include the % character.
- *
- * Revision 1.48  2003/10/02 21:30:06  steve
- *  Use configured TIME_FMT in vcd dump printf.
- *
- * Revision 1.47  2003/09/30 01:33:39  steve
- *  dumpers must be aware of 64bit time.
- *
- * Revision 1.46  2003/08/22 23:14:27  steve
- *  Preserve variable ranges all the way to the vpi.
- *
- * Revision 1.45  2003/08/06 18:24:55  steve
- *  Fix error truncating bitvec in output.
- */
-

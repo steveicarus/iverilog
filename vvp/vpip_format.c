@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpip_format.c,v 1.1 2003/04/20 02:49:07 steve Exp $"
-#endif
 
 # include  <vpi_user.h>
 # include  <assert.h>
@@ -105,11 +102,3 @@ void vpip_format_strength(char*str, s_vpi_value*value)
 	    assert(0);
       }
 }
-
-/*
- * $Log: vpip_format.c,v $
- * Revision 1.1  2003/04/20 02:49:07  steve
- *  acc_fetch_value support for %v format.
- *
- */
-

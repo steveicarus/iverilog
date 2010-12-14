@@ -1,7 +1,7 @@
 #ifndef __codes_H
 #define __codes_H
 /*
- * Copyright (c) 2001-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: codes.h,v 1.66 2004/06/19 15:52:53 steve Exp $"
-#endif
 
 
 # include  "pointers.h"
@@ -167,93 +164,4 @@ extern vvp_code_t codespace_allocate(void);
 extern vvp_code_t codespace_next(void);
 extern vvp_code_t codespace_null(void);
 
-
-/*
- * $Log: codes.h,v $
- * Revision 1.66  2004/06/19 15:52:53  steve
- *  Add signed modulus operator.
- *
- * Revision 1.65  2004/05/19 03:26:24  steve
- *  Support delayed/non-blocking assignment to reals and others.
- *
- * Revision 1.64  2003/07/03 20:03:36  steve
- *  Remove the vvp_cpoint_t indirect code pointer.
- *
- * Revision 1.63  2003/06/18 03:55:19  steve
- *  Add arithmetic shift operators.
- *
- * Revision 1.62  2003/06/17 19:17:42  steve
- *  Remove short int restrictions from vvp opcodes.
- *
- * Revision 1.61  2003/05/26 04:44:54  steve
- *  Add the set/x0/x instruction.
- *
- * Revision 1.60  2003/05/07 03:39:12  steve
- *  ufunc calls to functions can have scheduling complexities.
- *
- * Revision 1.59  2003/03/28 02:33:56  steve
- *  Add support for division of real operands.
- *
- * Revision 1.58  2003/02/27 20:36:29  steve
- *  Add the cvt/vr instruction.
- *
- * Revision 1.57  2003/02/06 17:41:47  steve
- *  Add the %sub/wr instruction.
- *
- * Revision 1.56  2003/01/26 18:16:22  steve
- *  Add %cvt/ir and %cvt/ri instructions, and support
- *  real values passed as arguments to VPI tasks.
- *
- * Revision 1.55  2003/01/25 23:48:06  steve
- *  Add thread word array, and add the instructions,
- *  %add/wr, %cmp/wr, %load/wr, %mul/wr and %set/wr.
- *
- * Revision 1.54  2002/11/21 22:43:13  steve
- *  %set/x0 instruction to support bounds checking.
- *
- * Revision 1.53  2002/11/08 04:59:57  steve
- *  Add the %assign/v0 instruction.
- *
- * Revision 1.52  2002/11/07 02:32:39  steve
- *  Add vector set and load instructions.
- *
- * Revision 1.51  2002/09/18 04:29:55  steve
- *  Add support for binary NOR operator.
- *
- * Revision 1.50  2002/09/12 15:49:43  steve
- *  Add support for binary nand operator.
- *
- * Revision 1.49  2002/08/28 18:38:07  steve
- *  Add the %subi instruction, and use it where possible.
- *
- * Revision 1.48  2002/08/28 17:15:06  steve
- *  Add the %load/nx opcode to index vpi nets.
- *
- * Revision 1.47  2002/08/22 03:38:40  steve
- *  Fix behavioral eval of x?a:b expressions.
- *
- * Revision 1.46  2002/08/12 01:35:07  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.45  2002/07/05 02:50:58  steve
- *  Remove the vpi object symbol table after compile.
- *
- * Revision 1.44  2002/06/02 18:55:58  steve
- *  Add %cmpi/u instruction.
- *
- * Revision 1.43  2002/05/31 20:04:22  steve
- *  Add the %muli instruction.
- *
- * Revision 1.42  2002/05/31 04:09:58  steve
- *  Slight improvement in %mov performance.
- *
- * Revision 1.41  2002/05/29 16:29:34  steve
- *  Add %addi, which is faster to simulate.
- *
- * Revision 1.40  2002/04/21 22:29:49  steve
- *  Add the assign/d instruction for computed delays.
- *
- * Revision 1.39  2002/04/14 18:41:34  steve
- *  Support signed integer division.
- */
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: typep.c,v 1.2 2003/03/13 05:07:46 steve Exp $"
-#endif
 
 #include  <assert.h>
 #include  <veriuser.h>
@@ -69,16 +66,3 @@ PLI_INT32 tf_typep(PLI_INT32 narg)
       vpi_free_object(argv);
       return rtn;
 }
-
-/*
- * $Log: typep.c,v $
- * Revision 1.2  2003/03/13 05:07:46  steve
- *  Declaration warnings.
- *
- * Revision 1.1  2002/12/19 21:37:04  steve
- *  Add tf_message, tf_get/setworkarea, and
- *  ty_typep functions, along with defines
- *  related to these functions.
- *
- */
-

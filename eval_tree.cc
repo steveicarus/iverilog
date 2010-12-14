@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_tree.cc,v 1.62.2.5 2007/03/23 23:02:31 steve Exp $"
-#endif
 
 # include "config.h"
 # include "compiler.h"
@@ -1566,65 +1563,3 @@ NetEConst* NetEUReduce::eval_tree()
       if (invert) res = ~res;
       return new NetEConst(verinum(res, 1));
 }
-
-
-/*
- * $Log: eval_tree.cc,v $
- * Revision 1.62.2.5  2007/03/23 23:02:31  steve
- *  Fix compile time eval of <= comparison.
- *
- * Revision 1.62.2.4  2007/03/23 20:59:25  steve
- *  Fix compile time evaluation of < operator.
- *
- * Revision 1.62.2.3  2005/09/09 02:17:08  steve
- *  Evaluate  magnitude compare with real operands.
- *
- * Revision 1.62.2.2  2005/09/04 15:41:54  steve
- *  More explicit internal error message.
- *
- * Revision 1.62.2.1  2005/09/04 15:39:19  steve
- *  More explicit internal error message.
- *
- * Revision 1.62  2004/10/04 01:10:53  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.61  2004/09/10 23:51:42  steve
- *  Fix the evaluation of constant ternary expressions.
- *
- * Revision 1.60  2004/02/20 06:22:56  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.59  2003/10/31 02:47:11  steve
- *  NetEUReduce has its own dup_expr method.
- *
- * Revision 1.58  2003/10/26 04:54:56  steve
- *  Support constant evaluation of binary ^ operator.
- *
- * Revision 1.57  2003/09/04 01:52:50  steve
- *  Evaluate real parameter expressions that contain real parameters.
- *
- * Revision 1.56  2003/08/01 02:12:30  steve
- *  Fix || with true case on the right.
- *
- * Revision 1.55  2003/06/24 01:38:02  steve
- *  Various warnings fixed.
- *
- * Revision 1.54  2003/06/05 04:28:24  steve
- *  Evaluate <= with real operands.
- *
- * Revision 1.53  2003/06/04 01:26:17  steve
- *  internal error for <= expression errors.
- *
- * Revision 1.52  2003/05/30 02:55:32  steve
- *  Support parameters in real expressions and
- *  as real expressions, and fix multiply and
- *  divide with real results.
- *
- * Revision 1.51  2003/04/15 05:06:56  steve
- *  Handle real constants evaluation > and >=.
- *
- * Revision 1.50  2003/04/14 03:40:21  steve
- *  Make some effort to preserve bits while
- *  operating on constant values.
- */
-

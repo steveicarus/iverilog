@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: netlist.cc,v 1.226.2.7 2006/04/23 04:26:14 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -2484,68 +2481,3 @@ const NetProc*NetTaskDef::proc() const
 {
       return proc_;
 }
-
-/*
- * $Log: netlist.cc,v $
- * Revision 1.226.2.7  2006/04/23 04:26:14  steve
- *  Constant propagate addresses through NetRamDq read ports.
- *
- * Revision 1.226.2.6  2006/04/16 19:26:38  steve
- *  Fix handling of exploded memories with partial or missing resets.
- *
- * Revision 1.226.2.5  2006/03/26 23:09:22  steve
- *  Handle asynchronous demux/bit replacements.
- *
- * Revision 1.226.2.4  2006/03/16 05:40:18  steve
- *  Fix crash when memory exploding doesnot work
- *
- * Revision 1.226.2.3  2006/03/12 07:34:17  steve
- *  Fix the memsynth1 case.
- *
- * Revision 1.226.2.2  2006/02/19 00:11:32  steve
- *  Handle synthesis of FF vectors with l-value decoder.
- *
- * Revision 1.226.2.1  2006/01/18 01:23:23  steve
- *  Rework l-value handling to allow for more l-value type flexibility.
- *
- * Revision 1.226  2004/10/04 01:10:54  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.225  2004/06/30 02:16:26  steve
- *  Implement signed divide and signed right shift in nets.
- *
- * Revision 1.224  2004/06/13 04:56:54  steve
- *  Add support for the default_nettype directive.
- *
- * Revision 1.223  2004/05/31 23:34:37  steve
- *  Rewire/generalize parsing an elaboration of
- *  function return values to allow for better
- *  speed and more type support.
- *
- * Revision 1.222  2004/02/20 06:22:56  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.221  2004/02/18 17:11:56  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.220  2003/11/10 19:44:30  steve
- *  Fix return value warnings.
- *
- * Revision 1.219  2003/09/03 23:32:10  steve
- *  Oops, missing pin_Sset implementation.
- *
- * Revision 1.218  2003/08/15 02:23:52  steve
- *  Add synthesis support for synchronous reset.
- *
- * Revision 1.217  2003/07/05 20:42:08  steve
- *  Fix some enumeration warnings.
- *
- * Revision 1.216  2003/06/18 03:55:18  steve
- *  Add arithmetic shift operators.
- *
- * Revision 1.215  2003/05/01 01:13:57  steve
- *  More complete bit range internal error message,
- *  Better test of part select ranges on non-zero
- *  signal ranges.
- */
-

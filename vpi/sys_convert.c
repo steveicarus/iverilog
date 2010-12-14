@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Michael Ruff (mruff  at chiaro.com)
+ * Copyright (c) 2003-2010 Michael Ruff (mruff  at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_convert.c,v 1.5 2004/02/15 18:03:30 steve Exp $"
-#endif
 
 # include  "vpi_config.h"
 # include  "vpi_user.h"
@@ -278,22 +275,3 @@ void sys_convert_register()
       tf_data.calltf    = sys_rtoi_calltf;
       vpi_register_systf(&tf_data);
 }
-
-/*
- * $Log: sys_convert.c,v $
- * Revision 1.5  2004/02/15 18:03:30  steve
- *  Cleanup of warnings.
- *
- * Revision 1.4  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- * Revision 1.3  2003/03/17 21:59:54  steve
- *  Implement $itor and $bitstoreal
- *
- * Revision 1.2  2003/03/10 23:40:10  steve
- *  Add support for $rtoi
- *
- * Revision 1.1  2003/03/07 02:44:34  steve
- *  Implement $realtobits.
- *
- */

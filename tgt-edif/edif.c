@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005 Stephen Williams
+ * Copyright (c) 2005-2010 Stephen Williams
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,9 +24,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: edif.c,v 1.1.2.3 2006/11/11 21:21:21 steve Exp $"
-#endif
 
 # include  "edif.h"
 # include  <stdlib.h>
@@ -674,17 +671,3 @@ void edif_print(FILE*fd, edif_t edf)
       fprintf(fd, ")\n");
       fflush(fd);
 }
-
-/*
- * $Log: edif.c,v $
- * Revision 1.1.2.3  2006/11/11 21:21:21  steve
- *  Make signal lookup use extended names.
- *
- * Revision 1.1.2.2  2005/08/21 22:25:51  steve
- *  Fix the comment in the EDIT header.
- *
- * Revision 1.1.2.1  2005/08/17 01:17:28  steve
- *  Add the tgt-edif target.
- *
- */
-

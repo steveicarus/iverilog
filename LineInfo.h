@@ -1,7 +1,7 @@
 #ifndef __LineInfo_H
 #define __LineInfo_H
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: LineInfo.h,v 1.7.2.2 2005/08/13 00:45:53 steve Exp $"
-#endif
 
 # include  <string>
 
@@ -52,27 +49,4 @@ class LineInfo {
       unsigned lineno_;
 };
 
-/*
- * $Log: LineInfo.h,v $
- * Revision 1.7.2.2  2005/08/13 00:45:53  steve
- *  Fix compilation warnings/errors with newer compilers.
- *
- * Revision 1.7.2.1  2005/06/14 15:33:54  steve
- *  Fix gcc4 build issues.
- *
- * Revision 1.7  2003/01/17 05:49:03  steve
- *  Use stringstream in place of sprintf.
- *
- * Revision 1.6  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.5  2000/11/30 17:31:42  steve
- *  Change LineInfo to store const C strings.
- *
- * Revision 1.4  2000/02/23 02:56:53  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.3  1999/02/15 02:06:15  steve
- *  Elaborate gate ranges.
- */
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2002 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_expr.c,v 1.110.2.2 2007/02/26 19:51:40 steve Exp $"
-#endif
 
 # include  "vvp_priv.h"
 # include  <string.h>
@@ -1843,7 +1840,7 @@ static struct vector_info draw_ufunc_expr(ivl_expr_t exp, unsigned wid)
 
 static struct vector_info draw_ulong_expr(ivl_expr_t exp, unsigned wid)
 {
-      unsigned long idx;
+      unsigned idx;
       struct vector_info res;
       unsigned long uval = ivl_expr_uvalue(exp);
 
@@ -2179,88 +2176,3 @@ struct vector_info draw_eval_expr(ivl_expr_t exp, int stuff_ok_flag)
 {
       return draw_eval_expr_wid(exp, ivl_expr_width(exp), stuff_ok_flag);
 }
-
-/*
- * $Log: eval_expr.c,v $
- * Revision 1.110.2.2  2007/02/26 19:51:40  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.110.2.1  2006/03/12 07:34:20  steve
- *  Fix the memsynth1 case.
- *
- * Revision 1.110  2004/10/04 01:10:57  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.109  2004/09/10 00:14:31  steve
- *  Relaxed width constraint on pad_expression output.
- *
- * Revision 1.108  2004/06/30 03:07:32  steve
- *  Watch out for real compared to constant. Handle as real.
- *
- * Revision 1.107  2004/06/19 16:17:37  steve
- *  Generate signed modulus if appropriate.
- *
- * Revision 1.106  2003/10/01 17:44:20  steve
- *  Slightly more efficient unary minus.
- *
- * Revision 1.105  2003/09/24 20:46:20  steve
- *  Clear expression lookaside after true cause of ternary.
- *
- * Revision 1.104  2003/08/03 03:53:38  steve
- *  Subtract from constant values.
- *
- * Revision 1.103  2003/07/26 03:34:43  steve
- *  Start handling pad of expressions in code generators.
- *
- * Revision 1.102  2003/06/18 03:55:19  steve
- *  Add arithmetic shift operators.
- *
- * Revision 1.101  2003/06/17 19:17:42  steve
- *  Remove short int restrictions from vvp opcodes.
- *
- * Revision 1.100  2003/06/16 22:14:15  steve
- *  Fix fprintf warning.
- *
- * Revision 1.99  2003/06/15 22:49:32  steve
- *  More efficient code for ternary expressions.
- *
- * Revision 1.98  2003/06/14 22:18:54  steve
- *  Sign extend signed vectors.
- *
- * Revision 1.97  2003/06/13 19:10:20  steve
- *  Handle assign of real to vector.
- *
- * Revision 1.96  2003/06/11 02:23:45  steve
- *  Proper pad of signed constants.
- *
- * Revision 1.95  2003/05/10 02:38:49  steve
- *  Proper width handling of || expressions.
- *
- * Revision 1.94  2003/03/25 02:15:48  steve
- *  Use hash code for scope labels.
- *
- * Revision 1.93  2003/03/15 04:45:18  steve
- *  Allow real-valued vpi functions to have arguments.
- *
- * Revision 1.92  2003/02/28 20:21:13  steve
- *  Merge vpi_call and vpi_func draw functions.
- *
- * Revision 1.91  2003/02/07 02:46:16  steve
- *  Handle real value subtract and comparisons.
- *
- * Revision 1.90  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.89  2003/01/26 21:15:59  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.88  2002/12/20 01:11:14  steve
- *  Evaluate shift index after shift operand because
- *  the chift operand may use the index register itself.
- *
- * Revision 1.87  2002/12/19 23:11:29  steve
- *  Keep bit select subexpression width if it is constant.
- */
-

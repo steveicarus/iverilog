@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_const.cc,v 1.32 2004/10/04 01:10:59 steve Exp $"
-#endif
 
 # include  "vpi_priv.h"
 # include  <stdio.h>
@@ -648,56 +645,3 @@ vpiHandle vpip_make_dec_const(int value)
 	    malloc(sizeof (struct __vpiDecConst));
       return vpip_make_dec_const(obj, value);
 }
-
-
-/*
- * $Log: vpi_const.cc,v $
- * Revision 1.32  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.31  2004/05/18 18:43:38  steve
- *  Allow vpiParamter as a string type.
- *
- * Revision 1.30  2003/05/30 04:22:13  steve
- *  Add tf_strgetp functions.
- *
- * Revision 1.29  2003/05/29 03:46:21  steve
- *  Add tf_getp/putp support for integers
- *  and real valued arguments.
- *
- *  Add tf_mipname function.
- *
- * Revision 1.28  2003/03/17 23:47:25  steve
- *  Make a safe copy of const string values.
- *
- * Revision 1.27  2003/03/15 05:44:50  steve
- *  Remove excess assignment.
- *
- * Revision 1.26  2003/03/14 05:02:13  steve
- *  Streamline parameter string value, get paramete scope.
- *
- * Revision 1.25  2003/03/13 04:59:21  steve
- *  Use rbufs instead of static buffers.
- *
- * Revision 1.24  2003/03/10 23:37:07  steve
- *  Direct support for string parameters.
- *
- * Revision 1.23  2003/03/10 19:14:27  steve
- *  More carful about shifting beyond word size.
- *
- * Revision 1.22  2003/02/24 06:35:45  steve
- *  Interactive task calls take string arguments.
- *
- * Revision 1.21  2002/11/03 20:33:43  steve
- *  Compiler error wrt ptrdiff_t.
- *
- * Revision 1.20  2002/11/03 02:07:24  steve
- *  Get VectorVals from constant values.
- *
- * Revision 1.19  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.18  2002/06/23 18:23:09  steve
- *  trivial performance boost.
- */
-

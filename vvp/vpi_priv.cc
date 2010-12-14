@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vpi_priv.cc,v 1.46 2004/05/19 03:26:24 steve Exp $"
-#endif
 
 # include  "vpi_priv.h"
 # include  "schedule.h"
@@ -716,101 +713,3 @@ extern "C" void vpi_control(PLI_INT32 operation, ...)
       vpi_sim_vcontrol(operation, ap);
       va_end(ap);
 }
-
-/*
- * $Log: vpi_priv.cc,v $
- * Revision 1.46  2004/05/19 03:26:24  steve
- *  Support delayed/non-blocking assignment to reals and others.
- *
- * Revision 1.45  2004/02/18 17:52:00  steve
- *  PRototypes match the standard.
- *
- * Revision 1.44  2004/02/18 02:51:59  steve
- *  Fix type mismatches of various VPI functions.
- *
- * Revision 1.43  2003/06/25 04:04:19  steve
- *  Fix mingw portability problems.
- *
- * Revision 1.42  2003/06/22 04:19:26  steve
- *  vpi_handle diagnostic message.
- *
- * Revision 1.41  2003/06/17 16:55:08  steve
- *  1) setlinebuf() for vpi_trace
- *  2) Addes error checks for trace file opens
- *  3) removes now extraneous flushes
- *  4) fixes acc_next() bug
- *
- * Revision 1.40  2003/05/30 04:08:28  steve
- *  vpi_trace of vpi_free_object.
- *
- * Revision 1.39  2003/05/15 16:51:09  steve
- *  Arrange for mcd id=00_00_00_01 to go to stdout
- *  as well as a user specified log file, set log
- *  file to buffer lines.
- *
- *  Add vpi_flush function, and clear up some cunfused
- *  return codes from other vpi functions.
- *
- *  Adjust $display and vcd/lxt messages to use the
- *  standard output/log file.
- *
- * Revision 1.38  2003/05/15 01:24:46  steve
- *  Return all 64bits of time in vpi_get_time.
- *
- * Revision 1.37  2003/05/02 04:29:57  steve
- *  Add put_value with transport delay.
- *
- * Revision 1.36  2003/04/27 04:19:24  steve
- *  Support vpiScaledRealTime.
- *
- * Revision 1.35  2003/03/14 05:02:34  steve
- *  More detail in vpi tracing.
- *
- * Revision 1.34  2003/03/13 04:34:18  steve
- *  Add VPI_TRACE tracing of VPI calls.
- *  vpi_handle_by_name takes a const char*.
- *
- * Revision 1.33  2003/03/12 02:50:32  steve
- *  Add VPI tracing.
- *
- * Revision 1.32  2003/03/06 04:32:00  steve
- *  Use hashed name strings for identifiers.
- *
- * Revision 1.31  2003/02/21 03:40:35  steve
- *  Add vpiStop and interactive mode.
- *
- * Revision 1.30  2003/02/09 23:33:26  steve
- *  Spelling fixes.
- *
- * Revision 1.29  2003/02/02 01:40:24  steve
- *  Five vpi_free_object a default behavior.
- *
- * Revision 1.28  2003/01/10 19:02:21  steve
- *  Add missing vpi entry points.
- *
- * Revision 1.27  2003/01/10 03:06:32  steve
- *  Remove vpithunk, and move libvpi to vvp directory.
- *
- * Revision 1.26  2002/12/21 00:55:58  steve
- *  The $time system task returns the integer time
- *  scaled to the local units. Change the internal
- *  implementation of vpiSystemTime the $time functions
- *  to properly account for this. Also add $simtime
- *  to get the simulation time.
- *
- * Revision 1.25  2002/12/11 23:55:22  steve
- *  Add vpi_handle_by_name to the VPI interface,
- *  and bump the vpithunk magic number.
- *
- * Revision 1.24  2002/08/24 05:02:58  steve
- *  Fix = vs == error.
- *
- * Revision 1.23  2002/08/12 01:35:09  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.22  2002/07/19 01:57:26  steve
- *  Add vpi_chk_error and vpi_control functions.
- *
- * Revision 1.21  2002/07/19 01:12:50  steve
- *  vpi_iterate returns 0 on error.
- */

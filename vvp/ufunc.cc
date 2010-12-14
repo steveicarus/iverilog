@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: ufunc.cc,v 1.4 2003/07/03 20:03:36 steve Exp $"
-#endif
 
 # include  "compile.h"
 # include  "symbols.h"
@@ -233,20 +230,3 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 
       inputs_connect(ibase, argc, argv);
 }
-
-/*
- * $Log: ufunc.cc,v $
- * Revision 1.4  2003/07/03 20:03:36  steve
- *  Remove the vvp_cpoint_t indirect code pointer.
- *
- * Revision 1.3  2003/05/07 03:39:12  steve
- *  ufunc calls to functions can have scheduling complexities.
- *
- * Revision 1.2  2002/08/12 01:35:08  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.1  2002/03/18 00:19:34  steve
- *  Add the .ufunc statement.
- *
- */
-

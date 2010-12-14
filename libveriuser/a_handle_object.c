@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: a_handle_object.c,v 1.2 2003/12/17 15:45:07 steve Exp $"
-#endif
 
 #include  <vpi_user.h>
 #include  <acc_user.h>
@@ -52,14 +49,3 @@ char* acc_set_scope(handle ref, ...)
 
       return acc_fetch_fullname(ref);
 }
-
-/*
- * $Log: a_handle_object.c,v $
- * Revision 1.2  2003/12/17 15:45:07  steve
- *  Add acc_set_scope function.
- *
- * Revision 1.1  2003/03/13 04:35:09  steve
- *  Add a bunch of new acc_ and tf_ functions.
- *
- */
-

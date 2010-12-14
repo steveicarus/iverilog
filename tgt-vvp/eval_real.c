@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: eval_real.c,v 1.11.2.2 2007/02/26 19:51:40 steve Exp $"
-#endif
 
 /*
  * This file includes functions for evaluating REAL expressions.
@@ -304,50 +301,3 @@ int draw_eval_real(ivl_expr_t exp)
 
       return res;
 }
-
-
-/*
- * $Log: eval_real.c,v $
- * Revision 1.11.2.2  2007/02/26 19:51:40  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.11.2.1  2006/10/11 00:19:04  steve
- *  Fix code generation for signed numbers in real expressions.
- *
- * Revision 1.11  2004/10/04 01:10:57  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.10  2003/12/19 01:27:10  steve
- *  Fix various unsigned compare warnings.
- *
- * Revision 1.9  2003/05/25 02:50:08  steve
- *  Add % in real expressions.
- *
- * Revision 1.8  2003/04/23 02:22:47  steve
- *  Fix word register leak.
- *
- * Revision 1.7  2003/03/28 02:33:56  steve
- *  Add support for division of real operands.
- *
- * Revision 1.6  2003/03/15 04:45:18  steve
- *  Allow real-valued vpi functions to have arguments.
- *
- * Revision 1.5  2003/03/08 01:04:01  steve
- *  Excess precision breaks some targets.
- *
- * Revision 1.4  2003/02/07 02:46:16  steve
- *  Handle real value subtract and comparisons.
- *
- * Revision 1.3  2003/01/28 04:15:50  steve
- *  Deliver residual bits of real value.
- *
- * Revision 1.2  2003/01/27 00:14:37  steve
- *  Support in various contexts the $realtime
- *  system task.
- *
- * Revision 1.1  2003/01/26 21:16:00  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- */
-

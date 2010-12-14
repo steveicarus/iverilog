@@ -1,7 +1,7 @@
 #ifndef __Module_H
 #define __Module_H
 /*
- * Copyright (c) 1998-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: Module.h,v 1.37 2004/06/13 04:56:53 steve Exp $"
-#endif
 
 # include  <list>
 # include  <map>
@@ -164,48 +161,4 @@ class Module : public LineInfo {
       Module& operator= (const Module&);
 };
 
-
-/*
- * $Log: Module.h,v $
- * Revision 1.37  2004/06/13 04:56:53  steve
- *  Add support for the default_nettype directive.
- *
- * Revision 1.36  2004/05/25 19:21:06  steve
- *  More identifier lists use perm_strings.
- *
- * Revision 1.35  2004/02/20 18:53:33  steve
- *  Addtrbute keys are perm_strings.
- *
- * Revision 1.34  2004/02/20 06:22:56  steve
- *  parameter keys are per_strings.
- *
- * Revision 1.33  2004/02/18 17:11:54  steve
- *  Use perm_strings for named langiage items.
- *
- * Revision 1.32  2003/06/20 00:53:19  steve
- *  Module attributes from the parser
- *  through to elaborated form.
- *
- * Revision 1.31  2003/06/13 19:10:45  steve
- *  Properly manage real variables in subscopes.
- *
- * Revision 1.30  2003/03/06 04:37:12  steve
- *  lex_strings.add module names earlier.
- *
- * Revision 1.29  2003/02/27 06:45:11  steve
- *  specparams as far as pform.
- *
- * Revision 1.28  2003/01/26 21:15:58  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.27  2002/08/19 02:39:16  steve
- *  Support parameters with defined ranges.
- *
- * Revision 1.26  2002/08/12 01:34:58  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.25  2002/05/19 23:37:28  steve
- *  Parse port_declaration_lists from the 2001 Standard.
- */
 #endif

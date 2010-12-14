@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: load_module.cc,v 1.12.2.1 2005/03/22 15:53:12 steve Exp $"
-#endif
 
 # include  "config.h"
 # include  "util.h"
@@ -192,50 +189,3 @@ int build_library_index(const char*path, bool key_case_sensitive)
 
       return 0;
 }
-
-/*
- * $Log: load_module.cc,v $
- * Revision 1.12.2.1  2005/03/22 15:53:12  steve
- *  popen must be matched by pclose.
- *
- * Revision 1.12  2003/06/05 04:31:09  steve
- *  INclude missing assert.h in load_module.
- *
- * Revision 1.11  2002/08/12 01:34:59  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.10  2002/08/03 22:30:00  steve
- *  Fix suffix parsing of library index.
- *
- * Revision 1.9  2002/07/10 04:34:18  steve
- *  Library dir case insensitivity includes the suffix.
- *
- * Revision 1.8  2002/06/06 18:57:18  steve
- *  Use standard name for iostream.
- *
- * Revision 1.7  2002/05/28 20:40:37  steve
- *  ivl indexes the search path for libraries, and
- *  supports case insensitive module-to-file lookup.
- *
- * Revision 1.6  2002/05/28 00:50:39  steve
- *  Add the ivl -C flag for bulk configuration
- *  from the driver, and use that to run library
- *  modules through the preprocessor.
- *
- * Revision 1.5  2002/04/04 05:26:13  steve
- *  Add dependency generation.
- *
- * Revision 1.4  2001/11/20 23:36:34  steve
- *  Close library files after parsing.
- *
- * Revision 1.3  2001/11/16 05:07:19  steve
- *  Add support for +libext+ in command files.
- *
- * Revision 1.2  2001/10/22 02:05:21  steve
- *  Handle activating tasks in another root.
- *
- * Revision 1.1  2001/10/20 23:02:40  steve
- *  Add automatic module libraries.
- *
- */
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: stop.cc,v 1.12 2004/10/04 01:10:59 steve Exp $"
-#endif
 
 /*
  * This file provides a simple command line debugger for the vvp
@@ -499,47 +496,3 @@ void stop_handler(int rc)
 }
 
 #endif
-
-/*
- * $Log: stop.cc,v $
- * Revision 1.12  2004/10/04 01:10:59  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.11  2004/02/21 00:44:34  steve
- *  Add load command to interactive stop.
- *  Support decimal constants passed interactive to system tasks.
- *
- * Revision 1.10  2003/11/07 05:58:02  steve
- *  Fix conditional compilation of readline history.
- *
- * Revision 1.9  2003/10/15 02:17:39  steve
- *  Include net objects in list display.
- *
- * Revision 1.8  2003/05/16 03:50:28  steve
- *  Fallback functionality if readline is not present.
- *
- * Revision 1.7  2003/03/13 20:31:40  steve
- *  Warnings about long long time.
- *
- * Revision 1.6  2003/03/10 23:37:07  steve
- *  Direct support for string parameters.
- *
- * Revision 1.5  2003/03/08 20:59:41  steve
- *  Missing include ctype.h.
- *
- * Revision 1.4  2003/02/24 06:35:45  steve
- *  Interactive task calls take string arguments.
- *
- * Revision 1.3  2003/02/23 06:41:54  steve
- *  Add to interactive stop mode support for
- *  current scope, the ability to scan/traverse
- *  scopes, and the ability to call system tasks.
- *
- * Revision 1.2  2003/02/22 06:32:36  steve
- *  Basic support for system task calls.
- *
- * Revision 1.1  2003/02/21 03:40:35  steve
- *  Add vpiStop and interactive mode.
- *
- */
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: sys_readmem.c,v 1.16.2.1 2006/04/25 05:11:14 steve Exp $"
-#endif
 
 # include "vpi_config.h"
 
@@ -591,63 +588,3 @@ void sys_readmem_register()
       tf_data.user_data = "$writememb";
       vpi_register_systf(&tf_data);
 }
-
-/*
- * $Log: sys_readmem.c,v $
- * Revision 1.16.2.1  2006/04/25 05:11:14  steve
- *  Merge fixes from devel tree.
- *
- * Revision 1.17  2006/04/25 05:00:12  steve
- *  Warning when file is inadequate for requested range.
- *
- * Revision 1.16  2004/10/04 01:10:58  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.15  2004/01/21 01:22:53  steve
- *  Give the vip directory its own configure and vpi_config.h
- *
- * Revision 1.14  2003/12/19 01:27:10  steve
- *  Fix various unsigned compare warnings.
- *
- * Revision 1.13  2003/05/10 16:06:50  steve
- *  $readmem more flexible with file name argument.
- *
- * Revision 1.12  2003/04/23 04:57:41  steve
- *  Accept string parameters for file name argument.
- *
- * Revision 1.11  2002/08/12 01:35:05  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.10  2002/02/06 04:50:22  steve
- *  Add writememb (Tom Verbeure)
- *
- * Revision 1.9  2002/01/31 04:28:17  steve
- *  Full support for $readmem ranges (Tom Verbeure)
- *
- * Revision 1.8  2001/12/01 02:40:10  steve
- *  Support addresses in readmemh.
- *
- * Revision 1.7  2001/11/09 03:39:21  steve
- *  Support $writememh
- *
- * Revision 1.6  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.5  2000/02/23 02:56:56  steve
- *  Macintosh compilers do not support ident.
- *
- * Revision 1.4  2000/01/23 23:54:36  steve
- *  Compile time problems with vpi_user.h
- *
- * Revision 1.3  1999/12/15 04:35:34  steve
- *  Add readmemb.
- *
- * Revision 1.2  1999/12/15 04:02:38  steve
- *  Excess warning.
- *
- * Revision 1.1  1999/12/15 04:01:14  steve
- *  Add the VPI implementation of $readmemh.
- *
- */
-

@@ -1,7 +1,7 @@
 #ifndef __vvp_priv_H
 #define __vvp_priv_H
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +18,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: vvp_priv.h,v 1.28.2.1 2007/02/26 19:51:40 steve Exp $"
-#endif
 
 # include  "vvp_config.h"
 # include  "ivl_target.h"
@@ -191,74 +188,4 @@ extern void clr_word(int idx);
 extern unsigned local_count;
 extern unsigned thread_count;
 
-/*
- * $Log: vvp_priv.h,v $
- * Revision 1.28.2.1  2007/02/26 19:51:40  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.28  2004/01/20 21:00:47  steve
- *  Isolate configure from containing config.h
- *
- * Revision 1.27  2003/06/17 19:17:42  steve
- *  Remove short int restrictions from vvp opcodes.
- *
- * Revision 1.26  2003/06/05 04:18:50  steve
- *  Better width testing for thread vector allocation.
- *
- * Revision 1.25  2003/03/15 04:45:18  steve
- *  Allow real-valued vpi functions to have arguments.
- *
- * Revision 1.24  2003/02/28 20:21:13  steve
- *  Merge vpi_call and vpi_func draw functions.
- *
- * Revision 1.23  2003/01/26 21:16:00  steve
- *  Rework expression parsing and elaboration to
- *  accommodate real/realtime values and expressions.
- *
- * Revision 1.22  2002/09/27 16:33:34  steve
- *  Add thread expression lookaside map.
- *
- * Revision 1.21  2002/09/24 04:20:32  steve
- *  Allow results in register bits 47 in certain cases.
- *
- * Revision 1.20  2002/09/13 03:12:50  steve
- *  Optimize ==1 when in context where x vs z doesnt matter.
- *
- * Revision 1.19  2002/08/27 05:39:57  steve
- *  Fix l-value indexing of memories and vectors so that
- *  an unknown (x) index causes so cell to be addresses.
- *
- *  Fix tangling of label identifiers in the fork-join
- *  code generator.
- *
- * Revision 1.18  2002/08/12 01:35:04  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.17  2002/08/04 18:28:15  steve
- *  Do not use hierarchical names of memories to
- *  generate vvp labels. -tdll target does not
- *  used hierarchical name string to look up the
- *  memory objects in the design.
- *
- * Revision 1.16  2002/08/03 22:30:48  steve
- *  Eliminate use of ivl_signal_name for signal labels.
- *
- * Revision 1.15  2002/07/08 04:04:07  steve
- *  Generate code for wide muxes.
- *
- * Revision 1.14  2002/06/02 18:57:17  steve
- *  Generate %cmpi/u where appropriate.
- *
- * Revision 1.13  2002/04/22 02:41:30  steve
- *  Reduce the while loop expression if needed.
- *
- * Revision 1.12  2001/11/01 04:26:57  steve
- *  Generate code for deassign and cassign.
- *
- * Revision 1.11  2001/06/18 03:10:34  steve
- *   1. Logic with more than 4 inputs
- *   2. Id and name mangling
- *   3. A memory leak in draw_net_in_scope()
- *   (Stephan Boettcher)
- */
 #endif
