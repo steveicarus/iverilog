@@ -391,6 +391,11 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
       lpm = ivl_nexus_ptr_lpm(nptr);
       if (lpm) switch (ivl_lpm_type(lpm)) {
+	  case IVL_LPM_LATCH:
+	    fprintf(stderr, "tgt-vvp sorry: simulating a latch primitive is "
+	                    "not currently supported.\n");
+	    exit(1);
+	    break;
 
 	  case IVL_LPM_DECODE:
 	      /* The decoder has no outputs.
