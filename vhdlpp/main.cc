@@ -38,17 +38,33 @@ const char NOTICE[] =
 "  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.\n"
 ;
 
-# include <stdio.h>
-# include  <stdlib.h>
+# include  "parse_api.h"
+# include  <cstdio>
+# include  <cstdlib>
+# include  <cstring>
 #if defined(HAVE_GETOPT_H)
 # include  <getopt.h>
 #endif
 
+static void process_debug_token(const char*word)
+{
+      if (strcmp(word, "yydebug") == 0) {
+	    yydebug = 1;
+      } else if (strcmp(word, "no-yydebug") == 0) {
+	    yydebug = 0;
+      }
+}
+
 int main(int argc, char*argv[])
 {
       int opt;
+      int rc;
 
-      while ( (opt=getopt(argc, argv, "vV")) != EOF) switch (opt) {
+      while ( (opt=getopt(argc, argv, "D:vV")) != EOF) switch (opt) {
+
+	  case 'D':
+	    process_debug_token(optarg);
+	    break;
 
 	  case 'v':
 	    fprintf(stderr, "Icarus Verilog VHDL Parse version "
@@ -64,6 +80,26 @@ int main(int argc, char*argv[])
 	    fputs(NOTICE, stdout);
 	    break;
 
+      }
+
+      for (int idx = optind ; idx < argc ; idx += 1) {
+	    parse_errors = 0;
+	    FILE*fd = fopen(argv[idx], "r");
+	    if (fd == 0) {
+		  perror(argv[idx]);
+		  return 1;
+	    }
+
+	    reset_lexor(fd, argv[idx]);
+	    rc = yyparse();
+	    fprintf(stderr, "yyparse() returns %d, parse_errors=%d\n", rc, parse_errors);
+
+	    if (parse_errors > 0) {
+		  fprintf(stderr, "%d errors parsing %s\n", parse_errors, argv[idx]);
+		  return 2;
+	    }
+
+	    fclose(fd);
       }
 
       return 0;

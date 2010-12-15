@@ -25,6 +25,7 @@
 
 # include  "parse_api.h"
 # include  "lexor_keyword.h"
+# include  "parse.h"
 
 extern int lexor_keyword_code (const char*str, unsigned len);
 
@@ -35,7 +36,7 @@ extern int lexor_keyword_code (const char*str, unsigned len);
  * the name as it exists in the list (and delete the passed string.)
  * If the name is new, it will be added to the list.
  */
-YYLTYPE yylloc;
+extern YYLTYPE yylloc;
 
 static int comment_enter;
 
@@ -71,3 +72,22 @@ W [ \t\b\f\r]+
       int rc = lexor_keyword_code(yytext, yyleng);
       return rc;
   }
+
+  /* Compound symbols */
+"<=" { return LEQ; }
+">=" { return GEQ; }
+":=" { return VASSIGN; }
+
+. { return yytext[0]; }
+
+%%
+
+extern void yyparse_set_filepath(const char*path);
+
+void reset_lexor(FILE*fd, const char*path)
+{
+      yylloc.first_line = 1;
+      yyrestart(fd);
+
+      yyparse_set_filepath(path);
+}

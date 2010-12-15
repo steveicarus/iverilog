@@ -19,6 +19,8 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+# include  <cstdio>
+
 /*
  * The vlltype supports the passing of detailed source file location
  * information between the lexical analyzer and the parser. Defining
@@ -33,6 +35,26 @@ struct yyltype {
 };
 # define YYLTYPE struct yyltype
 
+/*
+ * The reset_lexor function takes the fd and makes it the input file
+ * for the lexor. The path argument is used in lexor/parser error messages.
+ */
+extern void reset_lexor(FILE*fd, const char*path);
+
 extern int yylex(void);
+
+extern int yyparse(void);
+
+/*
+ * Set this to a non-zero value to enable parser debug output.
+ */
+extern int yydebug;
+
+/*
+ * The parser counts the errors that is handed in the parse_errors
+ * variable. For a clean compile, this value should not change. (The
+ * caller sets its initial value.)
+ */
+extern int parse_errors;
 
 #endif

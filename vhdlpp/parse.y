@@ -21,9 +21,12 @@
 
 # include "vhdlpp_config.h"
 # include "parse_api.h"
+# include  <cstdarg>
 
 static void yyerror(const char*msg);
 
+static void errormsg(const YYLTYPE&loc, const char*msg, ...);
+int parse_errors = 0;
 %}
 
   /* The keywords are all tokens. */
@@ -53,12 +56,192 @@ static void yyerror(const char*msg);
 %token K_xnor K_xor
  /* Identifiers that are not keywords are identifiers. */
 %token IDENTIFIER
+ /* compound symbols */
+%token LEQ GEQ VASSIGN
+
 %%
 
-main : ;
+ /* The design_file is the root for the VHDL parse. */
+design_file : design_units ;
+
+architecture_body
+  : K_architecture IDENTIFIER
+    K_of IDENTIFIER
+    K_is
+    K_begin architecture_statement_part K_end K_architecture_opt ';'
+  | K_architecture IDENTIFIER
+    K_of IDENTIFIER
+    K_is
+    K_begin error K_end K_architecture_opt ';'
+      { errormsg(@1, "Syntax error in architecture statement.\n"); yyerrok; }
+  | K_architecture error ';'
+      { errormsg(@1, "Syntax error in architecture body.\n"); yyerrok; }
+  ;
+
+  /* The architecture_statement_part is a list of concurrent
+     statements. */
+architecture_statement_part
+  : architecture_statement_part concurrent_statement
+  | concurrent_statement
+  ;
+
+concurrent_signal_assignment_statement
+  : IDENTIFIER LEQ waveform ';'
+  ;
+
+concurrent_statement
+  : concurrent_signal_assignment_statement
+  ;
+
+context_clause : context_items | ;
+
+context_item
+  : library_clause
+  | use_clause
+  ;
+
+context_items
+  : context_items context_item
+  | context_item
+  ;
+
+
+design_unit
+  : context_clause library_unit
+  | error { errormsg(@1, "Invalid design_unit\n"); }
+  ;
+
+design_units
+  : design_units design_unit 
+  | design_unit
+  ;
+
+entity_declaration
+  : K_entity IDENTIFIER K_is entity_header K_end K_entity ';'
+  ;
+
+entity_header
+  : port_clause
+  ;
+
+expression
+  : expression_logical
+  ;
+
+expression_logical
+  : relation K_and relation
+  | relation K_or relation
+  ;
+
+factor : primary ;
+
+  /* The interface_element is also an interface_declaration */
+interface_element
+  : IDENTIFIER ':' mode IDENTIFIER
+  ;
+
+interface_list
+  : interface_list ';' interface_element
+  | interface_element
+  ;
+
+library_clause
+  : K_library logical_name_list ';'
+  | K_library error ';'
+     { errormsg(@1, "Syntax error in library clause.\n"); yyerrok; }
+  ;
+
+  /* Collapse the primary_unit and secondary_unit of the library_unit
+     into this single set of rules. */
+library_unit
+  : entity_declaration
+  | architecture_body
+  ;
+
+logical_name : IDENTIFIER ;
+
+logical_name_list
+  : logical_name_list ',' logical_name
+  | logical_name
+  ;
+
+mode : K_in | K_out ;
+
+port_clause : K_port '(' interface_list ')' ';' ;
+
+primary
+  : IDENTIFIER
+  ;
+
+relation : shift_expression ;
+
+selected_name
+  : IDENTIFIER '.' K_all
+  | IDENTIFIER '.' IDENTIFIER '.' K_all
+  ;
+
+selected_names
+  : selected_names ',' selected_name
+  | selected_name
+  ;
+
+shift_expression : simple_expression ;
+
+simple_expression : term ;
+
+term : factor ;
+
+use_clause
+  : K_use selected_names ';'
+  | K_use error ';'
+     { errormsg(@1, "Syntax error in use clause.\n"); yyerrok; }
+  ;
+
+waveform
+  : waveform_elements
+  | K_unaffected
+  ;
+
+waveform_elements
+  : waveform_elements ',' waveform_element
+  | waveform_element
+  ;
+
+waveform_element
+  : expression
+  | K_null
+  ;
+
+  /* Some keywords are optional in some contexts. In all such cases, a
+     similar rule is used, as described here. */
+K_architecture_opt : K_architecture | ;
 
 %%
 
 static void yyerror(const char*msg)
 {
+      fprintf(stderr, "%s\n", msg);
+      parse_errors += 1;
+}
+
+static const char*file_path = "";
+
+static void errormsg(const YYLTYPE&loc, const char*fmt, ...)
+{
+      va_list ap;
+      va_start(ap, fmt);
+
+      fprintf(stderr, "%s:%d: ", file_path, loc.first_line);
+      vfprintf(stderr, fmt, ap);
+      va_end(ap);
+      parse_errors += 1;
+}
+
+/*
+ * This is used only by the lexor, to set the file path used in error
+ * messages.
+ */
+void yyparse_set_filepath(const char*path)
+{
+      file_path = path;
 }

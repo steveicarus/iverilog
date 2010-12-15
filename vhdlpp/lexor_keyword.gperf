@@ -17,7 +17,19 @@ struct lexor_keyword { const char*name; int mask; int tokenType; };
 %%
 abs,		GN_KEYWORD_2008,	K_abs
 access,		GN_KEYWORD_2008,	K_access
+all,		GN_KEYWORD_2008,	K_all
+and,		GN_KEYWORD_2008,	K_and
 architecture,	GN_KEYWORD_2008,	K_architecture
+begin,		GN_KEYWORD_2008,	K_begin
+end,		GN_KEYWORD_2008,	K_end
+entity,		GN_KEYWORD_2008,	K_entity
+in,		GN_KEYWORD_2008,	K_in
+is,		GN_KEYWORD_2008,	K_is
+library,	GN_KEYWORD_2008,	K_library
+of,		GN_KEYWORD_2008,	K_of
+out,		GN_KEYWORD_2008,	K_out
+port,		GN_KEYWORD_2008,	K_port
+use,		GN_KEYWORD_2008,	K_use
 %%
 
 int lexor_keyword_mask = GN_KEYWORD_2008;
