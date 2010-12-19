@@ -92,6 +92,16 @@ lexor_keyword.o: lexor_keyword.cc parse.h
 lexor_keyword.cc: $(srcdir)/lexor_keyword.gperf
 	gperf -o -i 7 --ignore-case -C -k 1-4,6,9,$$ -L ANSI-C -H keyword_hash -N check_identifier -t $(srcdir)/lexor_keyword.gperf > lexor_keyword.cc || (rm -f lexor_keyword.cc ; false)
 
+install: all installdirs $(libdir)/ivl$(suffix)/vhdlpp@EXEEXT@
+
+$(libdir)/ivl$(suffix)/vhdlpp@EXEEXT@: vhdlpp@EXEEXT@
+	$(INSTALL_PROGRAM) ./vhdlpp@EXEEXT@ "$(DESTDIR)$(libdir)/ivl$(suffix)/vhdlpp@EXEEXT@"
+
+installdirs: $(srcdir)/../mkinstalldirs
+	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)/ivl$(suffix)"
+
+uninstall:
+	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/ivhdlpp@EXEEXT@"
 
 stamp-vhdlpp_config-h: $(srcdir)/vhdlpp_config.h.in ../config.status
 	@rm -f $@

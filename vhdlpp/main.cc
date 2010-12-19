@@ -46,6 +46,8 @@ const char NOTICE[] =
 # include  <getopt.h>
 #endif
 
+bool verbose_flag = false;
+
 static void process_debug_token(const char*word)
 {
       if (strcmp(word, "yydebug") == 0) {
@@ -71,6 +73,7 @@ int main(int argc, char*argv[])
 		    VERSION " (" VERSION_TAG ")\n\n");
 	    fprintf(stderr, "%s\n\n", COPYRIGHT);
 	    fputs(NOTICE, stderr);
+	    verbose_flag = true;
 	    break;
 
 	  case 'V':
@@ -92,7 +95,8 @@ int main(int argc, char*argv[])
 
 	    reset_lexor(fd, argv[idx]);
 	    rc = yyparse();
-	    fprintf(stderr, "yyparse() returns %d, parse_errors=%d\n", rc, parse_errors);
+	    if (verbose_flag)
+		  fprintf(stderr, "yyparse() returns %d, parse_errors=%d\n", rc, parse_errors);
 
 	    if (parse_errors > 0) {
 		  fprintf(stderr, "%d errors parsing %s\n", parse_errors, argv[idx]);
