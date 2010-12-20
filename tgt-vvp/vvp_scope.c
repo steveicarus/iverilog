@@ -1466,7 +1466,7 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	    draw_input_from_net(ivl_lpm_enable(net));
 	    fprintf(vvp_out, ", ");
 	    draw_input_from_net(ivl_lpm_sync_clr(net));
-	    fprintf(vvp_out, ";\n");
+	    fprintf(vvp_out, ", C<0>, C<0>;\n");
       }
 
       if (ivl_lpm_enable(net) && ivl_lpm_sync_set(net)) {
@@ -1476,7 +1476,21 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	    draw_input_from_net(ivl_lpm_enable(net));
 	    fprintf(vvp_out, ", ");
 	    draw_input_from_net(ivl_lpm_sync_set(net));
-	    fprintf(vvp_out, ";\n");
+	    fprintf(vvp_out, ", C<0>, C<0>;\n");
+      }
+
+      for (idx = 0 ;  idx < width ;  idx += 1) {
+	    if (ivl_lpm_async_clr(net) &&
+	        aset_bits && (aset_bits[idx] == '0')) {
+		  fprintf(vvp_out, "L_%s.%s/clr_or .functor OR, ",
+			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+			  vvp_mangle_id(ivl_lpm_basename(net)));
+		  draw_input_from_net(ivl_lpm_async_clr(net));
+		  fprintf(vvp_out, ", ");
+		  draw_input_from_net(ivl_lpm_async_set(net));
+		  fprintf(vvp_out, ", C<0>, C<0>;\n");
+		  break;
+	    }
       }
 
       for (idx = 0 ;  idx < width ;  idx += 1) {
@@ -1590,11 +1604,15 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	    fprintf(vvp_out, ", ");
 	    tmp = ivl_lpm_async_clr(net);
 	    if (tmp) {
-		  draw_input_from_net(tmp);
-	    } else {
-		  tmp = ivl_lpm_async_set(net);
 		  if (aset_bits && (aset_bits[idx] == '0'))
+			fprintf(vvp_out, "L_%s.%s/clr_or",
+			        vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+			        vvp_mangle_id(ivl_lpm_basename(net)));
+		  else
 			draw_input_from_net(tmp);
+	    } else {
+		  if (aset_bits && (aset_bits[idx] == '0'))
+			draw_input_from_net(ivl_lpm_async_set(net));
 		  else
 			fprintf(vvp_out, "C<0>");
 	    }
