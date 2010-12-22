@@ -33,6 +33,17 @@
 # include  <string.h>
 # include  <assert.h>
 
+ivl_attribute_t find_lpm_attr(ivl_lpm_t net, const char*key)
+{
+      unsigned idx;
+      for (idx = 0 ;  idx < ivl_lpm_attr_cnt(net) ;  idx += 1) {
+	    ivl_attribute_t atr = ivl_lpm_attr_val(net, idx);
+	    if (strcmp(key,atr->key) == 0) return atr;
+      }
+
+      return 0;
+}
+
 static edif_cell_t lpm_cell_buf(void)
 {
       static edif_cell_t tmp = 0;
@@ -424,6 +435,7 @@ static void lpm_show_dff(ivl_lpm_t net)
       cell = edif_xlibrary_findcell(xlib, name);
 
       if (cell == 0) {
+	    ivl_expr_t aset_expr, sset_expr;
 	    unsigned nports = 2 * wid + 1;
 	    pin = 0;
 	    if (ivl_lpm_enable(net))
@@ -440,6 +452,42 @@ static void lpm_show_dff(ivl_lpm_t net)
 	    cell = edif_xcell_create(xlib, strdup(name), nports);
 	    edif_cell_pstring(cell,  "LPM_Type", "LPM_FF");
 	    edif_cell_pinteger(cell, "LPM_Width", wid);
+
+	      /* Output an async. set value if needed. */
+	    aset_expr = ivl_lpm_aset_value(net);
+	    if (aset_expr) {
+		  const char*aset_bits = ivl_expr_bits(aset_expr);
+		  int aset_value = 0;
+		  assert(ivl_expr_width(aset_expr) == wid);
+		    /* The async. set value must fit into an integer. */
+		  assert(wid < 8*sizeof(int));
+		  for (idx = 0; idx < wid; idx += 1) {
+			if (aset_bits[idx] == '1') aset_value |= 1 << idx;
+		  }
+		    /* If all the FF async value bits are 1 then we don't need
+		     * to set the Avalue parameter. The default is all ones. */
+		  if (aset_value != (1 << wid) - 1) {
+			edif_cell_pinteger(cell, "LPM_Avalue", aset_value);
+		  }
+	    }
+
+	      /* Output a sync. set value if needed. */
+	    sset_expr = ivl_lpm_sset_value(net);
+	    if (sset_expr) {
+		  const char*sset_bits = ivl_expr_bits(sset_expr);
+		  int sset_value = 0;
+		  assert(ivl_expr_width(sset_expr) == wid);
+		    /* The sync. set value must fit into an integer. */
+		  assert(wid < 8*sizeof(int));
+		  for (idx = 0; idx < wid; idx += 1) {
+			if (sset_bits[idx] == '1') sset_value |= 1 << idx;
+		  }
+		    /* If all the FF sync value bits are 1 then we don't need
+		     * to set the Svalue parameter. The default is all ones. */
+		  if (sset_value != (1 << wid) - 1) {
+			edif_cell_pinteger(cell, "LPM_Svalue", sset_value);
+		  }
+	    }
 
 	    for (idx = 0 ;  idx < wid ;  idx += 1) {
 
@@ -485,11 +533,25 @@ static void lpm_show_dff(ivl_lpm_t net)
 	    assert(pin == nports);
       }
 
+	/* Do we need to insert an inverter in the clock path? */
+      ivl_attribute_t clock_pol = find_lpm_attr(net, "ivl:clock_polarity");
+      if (clock_pol) {
+	    edif_cell_t cell_inv = lpm_cell_inv();
+	    ref = edif_cellref_create(edf, cell_inv);
+
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_clk(net));
+	    edif_add_to_joint(jnt, ref, 1);
+
+	    jnt = edif_joint_create(edf);
+	    edif_add_to_joint(jnt, ref, 0);
+      } else {
+	    jnt = edif_joint_of_nexus(edf, ivl_lpm_clk(net));
+      }
+
       ref = edif_cellref_create(edf, cell);
 
       pin = edif_cell_port_byname(cell, "Clock");
 
-      jnt = edif_joint_of_nexus(edf, ivl_lpm_clk(net));
       edif_add_to_joint(jnt, ref, pin);
 
       if (ivl_lpm_enable(net)) {
