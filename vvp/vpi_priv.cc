@@ -110,7 +110,7 @@ PLI_INT32 vpi_chk_error(p_vpi_error_info info)
       info->level = vpip_last_error.level;
       info->message = vpip_last_error.message;
       info->product = vpi_vlog_info.product;
-      info->code = "";
+      info->code = (char *) "";
       info->file = 0;
       info->line = 0;
 
@@ -329,8 +329,10 @@ PLI_INT32 vpi_get_vlog_info(p_vpi_vlog_info vlog_info_p)
 
 void vpi_set_vlog_info(int argc, char** argv)
 {
-    vpi_vlog_info.product = "Icarus Verilog";
-    vpi_vlog_info.version = "$Name:  $";
+    static char icarus_product[] = "Icarus Verilog";
+    static char icarus_version[] = "0.8.7";
+    vpi_vlog_info.product = icarus_product;
+    vpi_vlog_info.version = icarus_version;
     vpi_vlog_info.argc    = argc;
     vpi_vlog_info.argv    = argv;
 

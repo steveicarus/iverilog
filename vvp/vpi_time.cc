@@ -75,9 +75,10 @@ static int timevar_time_get(int code, vpiHandle ref)
 
 static char* timevar_time_get_str(int code, vpiHandle ref)
 {
+      static char func_name[] = "$time";
       switch (code) {
 	  case vpiName:
-	    return "$time";
+	    return func_name;
 	  default:
 	    fprintf(stderr, "Code: %d\n", code);
 	    assert(0);
@@ -87,9 +88,10 @@ static char* timevar_time_get_str(int code, vpiHandle ref)
 
 static char* timevar_realtime_get_str(int code, vpiHandle ref)
 {
+      static char func_name[] = "$realtime";
       switch (code) {
 	  case vpiName:
-	    return "$realtime";
+	    return func_name;
 	  default:
 	    fprintf(stderr, "Code: %d\n", code);
 	    assert(0);

@@ -400,7 +400,8 @@ compile_scope_decl(char*label, char*type, char*name, char*tname, char*parent)
       assert(scope->base.vpi_type);
 
       scope->name = vpip_name_string(name);
-      scope->tname = vpip_name_string(tname);
+      if (tname) scope->tname = vpip_name_string(tname);
+      else scope->tname = vpip_name_string("");
       scope->intern = 0;
       scope->nintern = 0;
       scope->threads = 0;

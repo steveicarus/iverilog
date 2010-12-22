@@ -1336,7 +1336,7 @@ static PLI_INT32 sys_printtimescale_calltf(char *xx)
 {
       vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv  = vpi_iterate(vpiArgument, sys);
-      vpiHandle scope;
+      vpiHandle scope = 0;
       if (!argv) {
             vpiHandle parent = vpi_handle(vpiScope, sys);
             while (parent) {

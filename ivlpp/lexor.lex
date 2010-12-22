@@ -403,6 +403,12 @@ W [ \t\b\f]+
   /* Absorb the rest of the line when a broken directive is detected. */
 <ERROR_LINE>[^\r\n]* { yy_pop_state(); }
 
+<ERROR_LINE>(\n|"\r\n"|"\n\r"|\r) {
+    yy_pop_state();
+    istack->lineno += 1;
+    fputc('\n', yyout);
+}
+
 %%
   /* Defined macros are kept in this table for convenient lookup. As
      `define directives are matched (and the do_define() function

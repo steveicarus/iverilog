@@ -37,7 +37,7 @@ struct __vpiVThrVec {
       unsigned bas;
       unsigned wid;
       unsigned signed_flag : 1;
-      char *name;
+      const char *name;
 };
 
 inline static
@@ -413,7 +413,7 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag)
 
 struct __vpiVThrWord {
       struct __vpiHandle base;
-      char* name;
+      const char* name;
       int subtype;
       unsigned index;
 };

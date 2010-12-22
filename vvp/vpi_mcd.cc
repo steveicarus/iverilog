@@ -55,14 +55,14 @@ static FILE* logfile;
 void vpi_mcd_init(FILE *log)
 {
 	mcd_table[0].fp = stdout;
-	mcd_table[0].filename = "stdout";
+	mcd_table[0].filename = strdup("stdout");
 
 	fd_table[0].fp = stdin;
-	fd_table[0].filename = "stdin";
+	fd_table[0].filename = strdup("stdin");
 	fd_table[1].fp = stdout;
-	fd_table[1].filename = "stdout";
+	fd_table[1].filename = strdup("stdout");
 	fd_table[2].fp = stderr;
-	fd_table[2].filename = "stderr";
+	fd_table[2].filename = strdup("stderr");
 
 	logfile = log;
 }

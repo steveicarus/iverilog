@@ -404,7 +404,7 @@ W [ \t\b\f\r]+
 
   /* Final catchall. something got lost or mishandled. */
 
-. {   cerr << yylloc.text << ":" << yylloc.first_line
+<*>.|\n {   cerr << yylloc.text << ":" << yylloc.first_line
 	   << ": error: unmatched character (";
       if (isgraph(yytext[0]))
 	    cerr << yytext[0];
