@@ -777,13 +777,10 @@ class NetFF  : public NetNode {
 
       Link& pin_Clock();
       Link& pin_Enable();
-      Link& pin_Aload();
       Link& pin_Aset();
       Link& pin_Aclr();
-      Link& pin_Sload();
       Link& pin_Sset();
       Link& pin_Sclr();
-
       Link& pin_Data(unsigned);
       Link& pin_Q(unsigned);
 
@@ -818,6 +815,41 @@ class NetFF  : public NetNode {
     private:
       verinum aset_value_;
       verinum sset_value_;
+};
+
+/*
+ * This class represents an LPM_LATCH device. There is no literal gate
+ * type in Verilog that maps, but gates of this type can be inferred.
+ */
+class NetLatch  : public NetNode {
+
+    public:
+      NetLatch(NetScope*s, perm_string n, unsigned width);
+      ~NetLatch();
+
+      unsigned width() const;
+
+      Link& pin_Clock();
+      Link& pin_Aset();
+      Link& pin_Aclr();
+      Link& pin_Data(unsigned);
+      Link& pin_Q(unsigned);
+
+      const Link& pin_Aset() const;
+      const Link& pin_Aclr() const;
+      const Link& pin_Clock() const;
+      const Link& pin_Data(unsigned) const;
+      const Link& pin_Q(unsigned) const;
+
+      void aset_value(const verinum&val);
+      const verinum& aset_value() const;
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*) const;
+      virtual void functor_node(Design*des, functor_t*fun);
+
+    private:
+      verinum aset_value_;
 };
 
 

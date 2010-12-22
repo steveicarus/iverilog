@@ -66,6 +66,9 @@ struct functor_t {
 	/* This method is called for each FF in the design. */
       virtual void lpm_ff(class Design*des, class NetFF*);
 
+	/* This method is called for each latch in the design. */
+      virtual void lpm_latch(class Design*des, class NetLatch*);
+
 	/* Handle LPM combinational logic devices. */
       virtual void lpm_logic(class Design*des, class NetLogic*);
 

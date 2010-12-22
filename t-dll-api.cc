@@ -644,6 +644,7 @@ extern "C" ivl_nexus_t ivl_lpm_async_clr(ivl_lpm_t net)
       assert(net);
       switch(net->type) {
 	  case IVL_LPM_FF:
+	  case IVL_LPM_LATCH:
 	    return net->u_.ff.aclr;
 	  default:
 	    assert(0);
@@ -668,6 +669,7 @@ extern "C" ivl_nexus_t ivl_lpm_async_set(ivl_lpm_t net)
       assert(net);
       switch(net->type) {
 	  case IVL_LPM_FF:
+	  case IVL_LPM_LATCH:
 	    return net->u_.ff.aset;
 	  default:
 	    assert(0);
@@ -692,6 +694,7 @@ extern "C" ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_FF:
+	  case IVL_LPM_LATCH:
 	  case IVL_LPM_RAM:
 	    return net->u_.ff.clk;
 	  default:
@@ -700,26 +703,12 @@ extern "C" ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net)
       }
 }
 
-extern "C" ivl_nexus_t ivl_lpm_gate( ivl_lpm_t netPtr )
-{
-  assert( netPtr );
-
-  switch ( netPtr->type )
-    {
-    case IVL_LPM_LATCH:
-      return netPtr->u_.latch.gatePtr;
-    default:
-      assert( false );
-      return 0;
-    }
-
-}
-
 extern "C" ivl_expr_t ivl_lpm_aset_value(ivl_lpm_t net)
 {
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_FF:
+	  case IVL_LPM_LATCH:
 	  case IVL_LPM_RAM:
 	    return net->u_.ff.aset_value;
 	  default:
@@ -792,25 +781,12 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 
 	  case IVL_LPM_FF:
 	  case IVL_LPM_RAM:
+	  case IVL_LPM_LATCH:
 	    assert(idx < net->u_.ff.width);
 	    if (net->u_.ff.width == 1)
 		  return net->u_.ff.d.pin;
 	    else
 		  return net->u_.ff.d.pins[idx];
-
-          case IVL_LPM_LATCH:
-
-	    if( idx >= net->u_.latch.width )
-	      {
-		throw invalid_argument( "idx too high" );
-	      }
-
-	    if ( net->u_.latch.width != 1U )
-	      {
-		throw invalid_argument( "Only 1-wide latches are currently supported." );
-	      }
-
-	    return net->u_.latch.dataPtr;
 
 	  default:
 	    assert(0);
@@ -963,26 +939,13 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net, unsigned idx)
 	    return net->u_.arith.q[0];
 
 	  case IVL_LPM_FF:
+	  case IVL_LPM_LATCH:
 	  case IVL_LPM_RAM:
 	    assert(idx < net->u_.ff.width);
 	    if (net->u_.ff.width == 1)
 		  return net->u_.ff.q.pin;
 	    else
 		  return net->u_.ff.q.pins[idx];
-
-          case IVL_LPM_LATCH:
-
-	    if ( idx >= net->u_.latch.width )
-	      {
-		throw invalid_argument( "idx too high" );
-	      }
-
-	    if ( net->u_.latch.width != 1U )
-	      {
-		throw invalid_argument( "Only 1-wide latches are currently supported." );
-	      }
-
-	    return net->u_.latch.qPtr;
 
 	  case IVL_LPM_MUX:
 	    assert(idx < net->u_.mux.width);
@@ -1073,6 +1036,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_FF:
+	  case IVL_LPM_LATCH:
 	  case IVL_LPM_RAM:
 	  case IVL_LPM_MUX:
 	  case IVL_LPM_DEMUX:
@@ -1126,10 +1090,9 @@ extern "C" unsigned ivl_lpm_width(ivl_lpm_t net)
       assert(net);
       switch (net->type) {
 	  case IVL_LPM_FF:
+	  case IVL_LPM_LATCH:
 	  case IVL_LPM_RAM:
 	    return net->u_.ff.width;
-          case IVL_LPM_LATCH:
-	    return net->u_.latch.width;
 	  case IVL_LPM_DECODE:
 	  case IVL_LPM_MUX:
 	    return net->u_.mux.width;

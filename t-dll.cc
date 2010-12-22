@@ -1618,8 +1618,6 @@ void dll_target::lpm_ff(const NetFF*net)
       ivl_lpm_t obj = new struct ivl_lpm_s;
       obj->type  = IVL_LPM_FF;
       obj->name  = net->name();
-      obj->attr  = 0;
-      obj->nattr = 0;
       obj->scope = find_scope(des_, net->scope());
       obj->u_.ff.a.decode = lpm_decode_ff_(net->get_demux());
       assert(obj->scope);
@@ -1735,36 +1733,95 @@ void dll_target::lpm_ff(const NetFF*net)
       }
 }
 
-void dll_target::lpm_latch( const NetLatch *latchPtr )
+void dll_target::lpm_latch( const NetLatch*net)
 {
-  try
-    {
-      ivl_lpm_s *objPtr = new ivl_lpm_s;
-      objPtr->type = IVL_LPM_LATCH;
-      objPtr->name = latchPtr->name();
-      objPtr->scope = find_scope( des_, latchPtr->scope() );
-      assert( objPtr->scope ); // C++ programmers prefer using exceptions rather than assertions.
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type  = IVL_LPM_LATCH;
+      obj->name  = net->name();
+      obj->scope = find_scope(des_, net->scope());
+      obj->u_.ff.a.decode = 0;
+      assert(obj->scope);
 
-      objPtr->u_.latch.width = latchPtr->width();
+      obj->u_.ff.width = net->width();
 
-      objPtr->nattr = latchPtr->attr_cnt();
-      objPtr->attr = fill_in_attributes( latchPtr );
+      obj->nattr = net->attr_cnt();
+      obj->attr = fill_in_attributes(net);
 
-      scope_add_lpm( objPtr->scope, objPtr );
+      scope_add_lpm(obj->scope, obj);
 
-      // Set the gate signal to point to the nexus, and the nexus to point back to this device.
-      const Nexus *const nexPtr = latchPtr->pin_Gate().nexus();
-      assert( nexPtr->t_cookie() ); // C++ programmers prefer using exceptions rather than assertions.
-      objPtr->u_.latch.gatePtr = static_cast< ivl_nexus_s * >( nexPtr->t_cookie() );
-      assert( objPtr->u_.latch.gatePtr ); // C++ programmers prefer using exceptions rather than assertions.
-      nexus_lpm_add( objPtr->u_.latch.gatePtr, objPtr, 0u, IVL_DR_HiZ, IVL_DR_HiZ );
-    }
-  catch ( bad_alloc &memoryAllocationException )
-    {
-      cerr << "Exception occurred: " << memoryAllocationException.what() << endl;
-    }
+      const Nexus*nex;
 
-} // end function lpm_latch
+	/* Set the clk signal to point to the nexus, and the nexus to
+	   point back to this device. */
+      nex = net->pin_Clock().nexus();
+      assert(nex->t_cookie());
+      obj->u_.ff.clk = (ivl_nexus_t) nex->t_cookie();
+      assert(obj->u_.ff.clk);
+      nexus_lpm_add(obj->u_.ff.clk, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+      obj->u_.ff.we = 0;
+
+      if (net->pin_Aclr().is_linked()) {
+	    nex = net->pin_Aclr().nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.ff.aclr = (ivl_nexus_t) nex->t_cookie();
+	    assert(obj->u_.ff.aclr);
+	    nexus_lpm_add(obj->u_.ff.aclr, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+      } else {
+	    obj->u_.ff.aclr = 0;
+      }
+
+      if (net->pin_Aset().is_linked()) {
+	    nex = net->pin_Aset().nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.ff.aset = (ivl_nexus_t) nex->t_cookie();
+	    assert(obj->u_.ff.aset);
+	    nexus_lpm_add(obj->u_.ff.aset, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+	    verinum tmp = net->aset_value();
+	    obj->u_.ff.aset_value = expr_from_value_(tmp);
+
+      } else {
+	    obj->u_.ff.aset = 0;
+	    obj->u_.ff.aset_value = 0;
+      }
+
+      obj->u_.ff.sset = 0;
+
+      obj->u_.ff.sset_value = 0;
+      obj->u_.ff.sclr = 0;
+
+      if (obj->u_.ff.width == 1) {
+	    nex = net->pin_Q(0).nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.ff.q.pin = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.ff.q.pin, obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
+
+	    nex = net->pin_Data(0).nexus();
+	    assert(nex->t_cookie());
+	    obj->u_.ff.d.pin = (ivl_nexus_t) nex->t_cookie();
+	    nexus_lpm_add(obj->u_.ff.d.pin, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
+
+      } else {
+	    obj->u_.ff.q.pins = new ivl_nexus_t [obj->u_.ff.width * 2];
+	    obj->u_.ff.d.pins = obj->u_.ff.q.pins + obj->u_.ff.width;
+
+	    for (unsigned idx = 0 ;  idx < obj->u_.ff.width ;  idx += 1) {
+		  nex = net->pin_Q(idx).nexus();
+		  assert(nex->t_cookie());
+		  obj->u_.ff.q.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.ff.q.pins[idx], obj, 0,
+			  IVL_DR_STRONG, IVL_DR_STRONG);
+
+		  nex = net->pin_Data(idx).nexus();
+		  assert(nex->t_cookie());
+		  obj->u_.ff.d.pins[idx] = (ivl_nexus_t) nex->t_cookie();
+		  nexus_lpm_add(obj->u_.ff.d.pins[idx], obj, 0,
+				IVL_DR_HiZ, IVL_DR_HiZ);
+	    }
+      }
+}
 
 void dll_target::lpm_ram_dq(const NetRamDq*net)
 {

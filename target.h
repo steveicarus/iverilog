@@ -20,7 +20,6 @@
  */
 
 # include  "netlist.h"
-#include "NetLatch.h"
 
 /*
  * This header file describes the types and constants used to describe

@@ -112,6 +112,12 @@ bool NetForce::emit_node(struct target_t*tgt) const
       return true;
 }
 
+bool NetLatch::emit_node(struct target_t*tgt) const
+{
+      tgt->lpm_latch(this);
+      return true;
+}
+
 bool NetModulo::emit_node(struct target_t*tgt) const
 {
       tgt->lpm_modulo(this);

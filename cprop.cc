@@ -307,10 +307,8 @@ void cprop_functor::lpm_ff(Design*des, NetFF*obj)
 				  obj->width()-unlinked_count);
 	    connect(tmp->pin_Clock(), obj->pin_Clock());
 	    connect(tmp->pin_Enable(), obj->pin_Enable());
-	    connect(tmp->pin_Aload(), obj->pin_Aload());
 	    connect(tmp->pin_Aset(), obj->pin_Aset());
 	    connect(tmp->pin_Aclr(), obj->pin_Aclr());
-	    connect(tmp->pin_Sload(), obj->pin_Sload());
 	    connect(tmp->pin_Sset(), obj->pin_Sset());
 	    connect(tmp->pin_Sclr(), obj->pin_Sclr());
 

@@ -301,6 +301,16 @@ void NetFF::dump_node(ostream&o, unsigned ind) const
       dump_obj_attr(o, ind+4);
 }
 
+void NetLatch::dump_node(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "LPM_LATCH: " << name()
+	<< " scope=" << (scope()? scope()->name() : "")
+	<< " aset_value=" << aset_value_ << endl;
+
+      dump_node_pins(o, ind+4);
+      dump_obj_attr(o, ind+4);
+}
+
 void NetLogic::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "logic: ";

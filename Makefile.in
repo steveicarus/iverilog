@@ -114,7 +114,7 @@ O = main.o async.o design_dump.o dup_expr.o elaborate.o elab_expr.o \
 elab_lval.o elab_net.o elab_anet.o elab_pexpr.o elab_scope.o \
 elab_sig.o emit.o eval.o eval_attrib.o \
 eval_tree.o expr_synth.o functor.o lexor.o lexor_keyword.o link_const.o \
-load_module.o netlist.o NetLatch.o netmisc.o net_assign.o \
+load_module.o netlist.o netmisc.o net_assign.o \
 net_design.o net_event.o net_expr.o net_force.o net_func.o \
 net_link.o net_modulo.o net_nex_input.o net_nex_output.o \
 net_proc.o net_scope.o net_udp.o net_variable.o pad_to_width.o \

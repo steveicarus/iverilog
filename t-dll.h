@@ -326,14 +326,6 @@ struct ivl_lpm_s {
 		  ivl_expr_t sset_value;
 	    } ff;
 
-	    struct ivl_lpm_latch_s
-	    {
-	      unsigned width;
-	      ivl_nexus_s *gatePtr;
-	      ivl_nexus_s *qPtr;
-	      ivl_nexus_s *dataPtr;
-	    } latch;
-
 	    struct ivl_lpm_mux_s {
 		  unsigned width;
 		  unsigned size;

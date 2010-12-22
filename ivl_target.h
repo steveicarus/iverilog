@@ -738,17 +738,16 @@ extern unsigned       ivl_lpm_width(ivl_lpm_t net);
 extern unsigned        ivl_lpm_attr_cnt(ivl_lpm_t net);
 extern ivl_attribute_t ivl_lpm_attr_val(ivl_lpm_t net, unsigned idx);
 
-  /* IVL_LPM_FF */
+  /* IVL_LPM_FF IVL_LPM_LATCH*/
 extern ivl_nexus_t ivl_lpm_async_clr(ivl_lpm_t net);
 extern ivl_nexus_t ivl_lpm_async_set(ivl_lpm_t net);
 extern ivl_expr_t  ivl_lpm_aset_value(ivl_lpm_t net);
+  /* IVL_LPM_FF */
 extern ivl_nexus_t ivl_lpm_sync_clr(ivl_lpm_t net);
 extern ivl_nexus_t ivl_lpm_sync_set(ivl_lpm_t net);
 extern ivl_expr_t  ivl_lpm_sset_value(ivl_lpm_t net);
-  /* IVL_LPM_FF IVL_LPM_RAM */
+  /* IVL_LPM_FF IVL_LPM_LATCH IVL_LPM_RAM */
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
-/* IVL_LPM_LATCH */
-extern ivl_nexus_t ivl_lpm_gate( ivl_lpm_t netPtr );
   /* IVL_LPM_FF */
 extern ivl_lpm_t   ivl_lpm_decode(ivl_lpm_t net);
   /* IVL_LPM_UFUNC */

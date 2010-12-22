@@ -391,11 +391,6 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 
       lpm = ivl_nexus_ptr_lpm(nptr);
       if (lpm) switch (ivl_lpm_type(lpm)) {
-	  case IVL_LPM_LATCH:
-	    fprintf(stderr, "tgt-vvp sorry: simulating a latch primitive is "
-	                    "not currently supported.\n");
-	    exit(1);
-	    break;
 
 	  case IVL_LPM_DECODE:
 	      /* The decoder has no outputs.
@@ -403,6 +398,7 @@ static const char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	    break;
 
 	  case IVL_LPM_FF:
+	  case IVL_LPM_LATCH:
 	  case IVL_LPM_MUX:
 	  case IVL_LPM_DEMUX:
 	    for (idx = 0 ;  idx < ivl_lpm_width(lpm) ;  idx += 1)
@@ -1379,7 +1375,7 @@ static void draw_lpm_eq(ivl_lpm_t net)
 }
 
 /*
- *  primitive FD (q, clk, ce, d);
+ *  primitive IVL_DFF (q, clk, ce, d);
  *    output q;
  *    reg q;
  *    input clk, ce, d;
@@ -1410,7 +1406,7 @@ static void draw_lpm_ff(ivl_lpm_t net)
 
       if (clock_pol) {
 	      /*        Q   C   CE  D   RS  --> Q+ */
-	    fprintf(vvp_out, "L_%s.%s/def .udp/sequ \"DFF\", 5, 2,"
+	    fprintf(vvp_out, "L_%s.%s/def .udp/sequ \"IVL_DFF\", 5, 2,"
 		    " \"?" "f" "1" "0" "00"    "0\","
 		    " \"?" "f" "1" "1" "00"    "1\","
 		    " \"?" "f" "1" "x" "00"    "x\","
@@ -1427,7 +1423,7 @@ static void draw_lpm_ff(ivl_lpm_t net)
 		    vvp_mangle_id(ivl_lpm_basename(net)));
       } else {
 	      /*        Q   C   CE  D   RS  --> Q+ */
-	    fprintf(vvp_out, "L_%s.%s/def .udp/sequ \"DFF\", 5, 2,"
+	    fprintf(vvp_out, "L_%s.%s/def .udp/sequ \"IVL_DFF\", 5, 2,"
 		    " \"?" "r" "1" "0" "00"    "0\","
 		    " \"?" "r" "1" "1" "00"    "1\","
 		    " \"?" "r" "1" "x" "00"    "x\","
@@ -1443,6 +1439,7 @@ static void draw_lpm_ff(ivl_lpm_t net)
 		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
 		    vvp_mangle_id(ivl_lpm_basename(net)));
       }
+
       aset_expr = ivl_lpm_aset_value(net);
       if (aset_expr) {
 	    assert(ivl_expr_width(aset_expr) == width);
@@ -1593,11 +1590,145 @@ static void draw_lpm_ff(ivl_lpm_t net)
 			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
 			  vvp_mangle_id(ivl_lpm_basename(net)), idx);
 	    } else {
-		  tmp = ivl_lpm_data(net, idx);
-		  assert(tmp);
 		  fprintf(vvp_out, ", ");
+		  tmp = ivl_lpm_data(net, idx);
 		  draw_input_from_net(tmp);
 	    }
+
+	      /* Connect reset input. This may be the Aclr input, or
+		 an Aset to zero. */
+	    fprintf(vvp_out, ", ");
+	    tmp = ivl_lpm_async_clr(net);
+	    if (tmp) {
+		  if (aset_bits && (aset_bits[idx] == '0'))
+			fprintf(vvp_out, "L_%s.%s/clr_or",
+			        vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+			        vvp_mangle_id(ivl_lpm_basename(net)));
+		  else
+			draw_input_from_net(tmp);
+	    } else {
+		  if (aset_bits && (aset_bits[idx] == '0'))
+			draw_input_from_net(ivl_lpm_async_set(net));
+		  else
+			fprintf(vvp_out, "C<0>");
+	    }
+
+	      /* Connect set input */
+	    fprintf(vvp_out, ", ");
+	    tmp = ivl_lpm_async_set(net);
+	    if (aset_bits && (aset_bits[idx] != '1'))
+		  tmp = 0;
+
+	    if (tmp)
+		  draw_input_from_net(tmp);
+	    else
+		  fprintf(vvp_out, "C<0>");
+
+	    fprintf(vvp_out, ";\n");
+      }
+}
+
+/*
+ * primitive IVL_DLAT(q, clk, d, clr, set);
+ *   output q;
+ *   reg q;
+ *   input clk, d, clr, set;
+ * 
+ *   table
+ *     // clk d clr set : q : q+
+ *         1  0  0   0  : ? : 0;
+ *         1  1  0   0  : ? : 1;
+ *         x  0  0   0  : 0 : 0;
+ *         x  1  0   0  : 1 : 1;
+ *         0  ?  0   0  : ? : -;
+ *         ?  ?  0   1  : ? : 1;
+ *         ?  ?  0   x  : 1 : 1;
+ *         ?  ?  1   ?  : ? : 0;
+ *         ?  ?  x   0  : 0 : 0;
+ *   endtable
+ * endprimitive
+ */
+static void draw_lpm_latch(ivl_lpm_t net)
+{
+      ivl_expr_t aset_expr = 0;
+      const char*aset_bits = 0;
+      unsigned width, idx;
+
+      ivl_attribute_t clock_pol = find_lpm_attr(net, "ivl:clock_polarity");
+
+      width = ivl_lpm_width(net);
+
+      if (clock_pol) {
+	      /*        Q  CLK  D   RS --> Q+ */
+	    fprintf(vvp_out, "L_%s.%s/def .udp/sequ \"IVL_DLAT\", 4, 2,"
+		    " \"?" "0" "0" "00"   "0\","
+		    " \"?" "0" "1" "00"   "1\","
+		    " \"0" "x" "0" "00"   "0\","
+		    " \"1" "x" "1" "00"   "1\","
+		    " \"?" "1" "?" "00"   "-\","
+		    " \"?" "?" "?" "01"   "1\","
+		    " \"1" "?" "?" "0x"   "1\","
+		    " \"?" "?" "?" "1?"   "0\","
+		    " \"0" "?" "?" "x0"   "0\""
+		    ";\n",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)));
+      } else {
+	      /*        Q  CLK  D   RS --> Q+ */
+	    fprintf(vvp_out, "L_%s.%s/def .udp/sequ \"IVL_DLAT\", 4, 2,"
+		    " \"?" "1" "0" "00"   "0\","
+		    " \"?" "1" "1" "00"   "1\","
+		    " \"0" "x" "0" "00"   "0\","
+		    " \"1" "x" "1" "00"   "1\","
+		    " \"?" "0" "?" "00"   "-\","
+		    " \"?" "?" "?" "01"   "1\","
+		    " \"1" "?" "?" "0x"   "1\","
+		    " \"?" "?" "?" "1?"   "0\","
+		    " \"0" "?" "?" "x0"   "0\""
+		    ";\n",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)));
+      }
+
+      aset_expr = ivl_lpm_aset_value(net);
+      if (aset_expr) {
+	    assert(ivl_expr_width(aset_expr) == width);
+	    aset_bits = ivl_expr_bits(aset_expr);
+      }
+
+      for (idx = 0 ;  idx < width ;  idx += 1) {
+	    if (ivl_lpm_async_clr(net) &&
+	        aset_bits && (aset_bits[idx] == '0')) {
+		  fprintf(vvp_out, "L_%s.%s/clr_or .functor OR, ",
+			  vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+			  vvp_mangle_id(ivl_lpm_basename(net)));
+		  draw_input_from_net(ivl_lpm_async_clr(net));
+		  fprintf(vvp_out, ", ");
+		  draw_input_from_net(ivl_lpm_async_set(net));
+		  fprintf(vvp_out, ", C<0>, C<0>;\n");
+		  break;
+	    }
+      }
+
+      for (idx = 0 ;  idx < width ;  idx += 1) {
+	    ivl_nexus_t tmp;
+
+	    fprintf(vvp_out, "L_%s.%s/%u .udp ",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)), idx);
+
+	    fprintf(vvp_out, "L_%s.%s/def, ",
+		    vvp_mangle_id(ivl_scope_name(ivl_lpm_scope(net))),
+		    vvp_mangle_id(ivl_lpm_basename(net)));
+
+	      /* Draw the clock (gate) input. */
+	    tmp = ivl_lpm_clk(net);
+	    draw_input_from_net(tmp);
+
+	      /* Draw the data input. */
+	    fprintf(vvp_out, ", ");
+	    tmp = ivl_lpm_data(net, idx);
+	    draw_input_from_net(tmp);
 
 	      /* Connect reset input. This may be the Aclr input, or
 		 an Aset to zero. */
@@ -1755,6 +1886,10 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 
 	  case IVL_LPM_FF:
 	    draw_lpm_ff(net);
+	    return;
+
+	  case IVL_LPM_LATCH:
+	    draw_lpm_latch(net);;
 	    return;
 
 	  case IVL_LPM_CMP_GE:

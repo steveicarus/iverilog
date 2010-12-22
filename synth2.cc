@@ -23,7 +23,6 @@
 # include  "netlist.h"
 # include  "compiler.h"
 #include <cassert>
-#include "NetLatch.h"
 #include <climits>
 #include <cstdlib>
 
@@ -225,7 +224,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 			unsigned ptr = static_cast< unsigned >( tmp );
 			connect( latchPtr->pin_Data( idx ), rsig->pin( roff + idx ) );
 			connect( nex_out->pin( ptr ), latchPtr->pin_Q( idx ) );
-			connect( latchPtr->pin_Gate(), gsig->pin( 0 ) );
+			connect( latchPtr->pin_Clock(), gsig->pin( 0 ) );
 		      }
 
 		    des->add_node( latchPtr );
