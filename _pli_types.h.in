@@ -39,7 +39,7 @@ typedef int32_t  PLI_INT32;
 
 typedef signed short   PLI_INT16;
 typedef unsigned short PLI_UINT16;
-typedef signed char    PLI_BYTE8;
+typedef char           PLI_BYTE8;
 typedef unsigned char  PLI_UBYTE8;
 
 # define PLI_UINT64_FMT PRIu64
