@@ -489,6 +489,7 @@ const char* draw_net_input(ivl_nexus_t nex)
       unsigned ndrivers = 0;
       static ivl_nexus_ptr_t *drivers = 0x0;
       static unsigned adrivers = 0;
+      ivl_signal_type_t ntype = IVL_SIT_NONE;
 
       const char*resolv_type;
 
@@ -534,14 +535,51 @@ const char* draw_net_input(ivl_nexus_t nex)
 	    break;
       }
 
-
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
 	    ivl_nexus_ptr_t nptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t nsig = ivl_nexus_ptr_sig(nptr);
+	    ivl_lpm_t nlpm = ivl_nexus_ptr_lpm(nptr);
 
 	      /* Skip input only pins. */
 	    if ((ivl_nexus_ptr_drive0(nptr) == IVL_DR_HiZ)
 		&& (ivl_nexus_ptr_drive1(nptr) == IVL_DR_HiZ))
 		  continue;
+
+	      /* Check that both an LPM and a reg are not driving a net. */
+	    if (nlpm) {
+		  if (ntype != IVL_SIT_REG) {
+			ntype = IVL_SIT_TRI;
+		  } else {
+			fprintf(stderr, "vvp.tgt: error: Found a net driven by "
+			                "both a reg and an lpm (wire)!\n");
+			fprintf(stderr, "              : This may be caused by "
+				        "invalid Verilog code (e.g. "
+			                "assigning \n");
+			fprintf(stderr, "              : to a synthesized net "
+				        "from non-synthesized code).\n");
+			fprintf(stderr, "              : C source file %s:%u\n",
+			                __FILE__, __LINE__);
+			exit(1);
+		  }
+	    }
+	    if (nsig) {
+		  ivl_signal_type_t stype = ivl_signal_type(nsig);
+		  if (ntype == IVL_SIT_NONE) {
+			ntype = stype;
+		  } else if ((ntype == IVL_SIT_REG || stype == IVL_SIT_REG) &&
+		             (ntype != stype)) {
+			fprintf(stderr, "vvp.tgt: error: Found a net driven by "
+			                "both a reg and a wire (lpm?)!\n");
+			fprintf(stderr, "              : This may be caused by "
+				        "invalid Verilog code (e.g. "
+			                "assigning \n");
+			fprintf(stderr, "              : to a synthesized net "
+				        "from non-synthesized code).\n");
+			fprintf(stderr, "              : C source file %s:%u\n",
+			                __FILE__, __LINE__);
+			exit(1);
+		  }
+	    }
 
 	      /* Save this driver. */
 	    if (ndrivers >= adrivers) {
