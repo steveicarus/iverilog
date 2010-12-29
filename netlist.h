@@ -1512,9 +1512,9 @@ class NetProc : public virtual LineInfo, public Attrib {
 			       NetNet*nex_map, NetNet*nex_out);
 
       virtual bool synth_async(Design*des, NetScope*scope, bool sync_flag,
-			       struct sync_accounting_cell*nex_ff,
-			       NetNet*nex_map, NetNet*nex_out,
-			       NetNet*accum_in, bool latch_inferred = false, NetNet *gsig = 0);
+                               struct sync_accounting_cell*nex_ff,
+                               NetNet*nex_map, NetNet*nex_out, NetNet*accum_in,
+                               bool&latch_inferred, NetNet *gsig = 0);
 
 	// Synthesize synchronous logic, and return true. The nex_out
 	// is where outputs are actually connected, and the nex_map
@@ -1660,9 +1660,9 @@ class NetAssignBase : public NetProc {
       unsigned lwidth() const;
 
       virtual bool synth_async(Design*des, NetScope*scope, bool sync_flag,
-		       struct sync_accounting_cell*nex_ff,
-		       NetNet*nex_map, NetNet*nex_out,
-		       NetNet*accum_in, bool latch_inferred = false, NetNet *gsig = 0);
+                               struct sync_accounting_cell*nex_ff,
+                               NetNet*nex_map, NetNet*nex_out, NetNet*accum_in,
+                               bool&latch_inferred, NetNet *gsig = 0);
       bool synth_sync(Design*des, NetScope*scope,
 		      struct sync_accounting_cell*nex_ff,
 		      NetNet*nex_map, NetNet*nex_out,
@@ -1738,8 +1738,9 @@ class NetBlock  : public NetProc {
 
 	// synthesize as asynchronous logic, and return true.
       virtual bool synth_async(Design*des, NetScope*scope, bool sync_flag,
-		       struct sync_accounting_cell*nex_ff,
-		       NetNet*nex_map, NetNet*nex_out, NetNet*accum_in, bool latch_inferred = false, NetNet *gsig = 0);
+                               struct sync_accounting_cell*nex_ff,
+                               NetNet*nex_map, NetNet*nex_out, NetNet*accum_in,
+                               bool&latch_inferred, NetNet *gsig = 0);
 
       bool synth_sync(Design*des, NetScope*scope,
 		      struct sync_accounting_cell*nex_ff,
@@ -1795,17 +1796,19 @@ class NetCase  : public NetProc {
       virtual void nex_output(NexusSet&out);
 
       virtual bool synth_async(Design*des, NetScope*scope, bool sync_flag,
-		       struct sync_accounting_cell*nex_ff,
-		       NetNet*nex_map, NetNet*nex_out, NetNet*accum_in, bool latch_inferred = false, NetNet *gsig = 0);
+                               struct sync_accounting_cell*nex_ff,
+                               NetNet*nex_map, NetNet*nex_out, NetNet*accum_in,
+                               bool&latch_inferred, NetNet *gsig = 0);
 
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
       bool synth_async_1hot_(Design*des, NetScope*scope, bool sync_flag,
-			     struct sync_accounting_cell*nex_ff,
-			     NetNet*nex_map, NetNet*nex_out, NetNet*accum_in,
-			     NetNet*esig, unsigned hot_items);
+                             struct sync_accounting_cell*nex_ff,
+                             NetNet*nex_map, NetNet*nex_out, NetNet*accum_in,
+                             NetNet*esig, unsigned hot_items,
+                             bool&latch_inferred, NetNet *gsig = 0);
     private:
 
       TYPE type_;
@@ -1883,8 +1886,9 @@ class NetCondit  : public NetProc {
 
       bool is_asynchronous();
       virtual bool synth_async(Design*des, NetScope*scope, bool sync_flag,
-		       struct sync_accounting_cell*nex_ff,
-		       NetNet*nex_map, NetNet*nex_out, NetNet*accum, bool latch_inferred = false, NetNet *gsig = 0);
+                               struct sync_accounting_cell*nex_ff,
+                               NetNet*nex_map, NetNet*nex_out, NetNet*accum,
+                               bool&latch_inferred, NetNet *gsig = 0);
 
       bool synth_sync(Design*des, NetScope*scope,
 		      struct sync_accounting_cell*nex_ff,
@@ -2117,9 +2121,9 @@ class NetEvWait  : public NetProc {
       virtual void nex_output(NexusSet&out);
 
       virtual bool synth_async(Design*des, NetScope*scope, bool sync_flag,
-			       struct sync_accounting_cell*nex_ff,
-			       NetNet*nex_map, NetNet*nex_out,
-			       NetNet*accum_in, bool latch_inferred = false, NetNet *gsig = 0);
+                               struct sync_accounting_cell*nex_ff,
+                               NetNet*nex_map, NetNet*nex_out, NetNet*accum_in,
+                               bool&latch_inferred, NetNet *gsig = 0);
 
       virtual bool synth_sync(Design*des, NetScope*scope,
 			      struct sync_accounting_cell*nex_ff,
@@ -2523,8 +2527,9 @@ class NetWhile  : public NetProc {
       virtual void dump(ostream&, unsigned ind) const;
 
       virtual bool synth_async(Design*des, NetScope*scope, bool sync_flag,
-		       struct sync_accounting_cell*nex_ff,
-		       NetNet*nex_map, NetNet*nex_out, NetNet*accum_in, bool latch_inferred = false, NetNet *gsig = 0);
+                               struct sync_accounting_cell*nex_ff,
+                               NetNet*nex_map, NetNet*nex_out, NetNet*accum_in,
+                               bool&latch_inferred, NetNet *gsig = 0);
 
     private:
       NetExpr* cond_;

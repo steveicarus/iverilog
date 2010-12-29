@@ -51,28 +51,30 @@ bool NetProc::synth_async_noaccum(Design*des, NetScope*scope, bool sync_flag,
       const perm_string tmp = perm_string::literal("tmp");
       NetNet*stub = new NetNet(scope, tmp, NetNet::WIRE, nex_out->pin_count());
 
+      bool latch_inferred = false;
       bool flag = synth_async(des, scope, sync_flag, nex_ff,
-			      nex_map, nex_out, stub);
+                              nex_map, nex_out, stub, latch_inferred);
 
       delete stub;
       return flag;
 }
 
 bool NetProc::synth_async(Design*des, NetScope*scope, bool sync_flag,
-			  struct sync_accounting_cell*nex_ff,
-			  NetNet*nex_map, NetNet*nex_out,
-			  NetNet*accum_in, bool latch_inferred, NetNet *gsig)
+                          struct sync_accounting_cell*nex_ff,
+                          NetNet*nex_map, NetNet*nex_out,
+                          NetNet*accum_in, bool&latch_inferred, NetNet*gsig)
 {
       return false;
 }
 
 bool NetProc::synth_sync(Design*des, NetScope*scope,
-			 struct sync_accounting_cell*nex_ff,
-			 NetNet*nex_map, NetNet*nex_out,
-			 const svector<NetEvProbe*>&events)
+                         struct sync_accounting_cell*nex_ff,
+                         NetNet*nex_map, NetNet*nex_out,
+                         const svector<NetEvProbe*>&events)
 {
       return synth_async_noaccum(des, scope, true, nex_ff, nex_map, nex_out);
 }
+
 #if 0
 static unsigned find_nexus_in_set(const NetNet*nset, const Nexus*nex)
 {
@@ -84,10 +86,12 @@ static unsigned find_nexus_in_set(const NetNet*nset, const Nexus*nex)
       return idx;
 }
 #endif
+
 struct nexus_map_t {
       const Nexus*nex;
       int idx;
 };
+
 static int ncp_compare(const void*p1, const void*p2)
 {
       const Nexus*a1 = ((const struct nexus_map_t*)p1) -> nex;
@@ -138,9 +142,10 @@ static int map_nexus_in_index(struct nexus_map_t*table, size_t ntable,
  */
 
 bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
-				struct sync_accounting_cell*nex_ff,
-				NetNet*nex_map, NetNet*nex_out,
-				NetNet*accum_in, bool latch_inferred, NetNet *gsig)
+                                struct sync_accounting_cell*nex_ff,
+                                NetNet*nex_map, NetNet*nex_out,
+                                NetNet*accum_in, bool&latch_inferred,
+                                NetNet*gsig)
 {
       NetNet*rsig = rval_->synthesize(des);
       if (rsig == 0) {
@@ -199,138 +204,126 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  return false;
 	    }
 
-	    if ( latch_inferred )
-	      {
-		// By this point any bmux() has been dealt with. Panic if that is not so.
-		assert( !cur->bmux() );
+	    if (latch_inferred) {
+		    /* We do not support a bmux with a latch. */
+		  assert(!cur->bmux());
 
-		// Bind the outputs that we do make to the nex_out. Use the nex_map to map the l-value bit position to the nex_out bit position.
+		    /* Build a latch wide enough to hold the signal. */
+		  NetLatch *latch = new NetLatch(scope, lsig->name(),
+		                                 lsig->pin_count());
+		  des->add_node(latch);
+		  latch->set_line(*this);
 
-		struct nexus_map_t *nex_map_idx = make_nexus_index( nex_map );
+		  /* Connect the output to the nex_output. Use the nex_map
+		     to map the l-value bit position to the nex_out bit
+		     position. Also connect the data and clock (gate) pins. */
+		  struct nexus_map_t *nex_map_idx = make_nexus_index(nex_map);
 
-		assert( cur->sig()->msb() - cur->sig()->lsb() >= 0L &&
-			static_cast< unsigned long >( cur->sig()->msb() - cur->sig()->lsb() ) <= static_cast< unsigned long >( UINT_MAX ) - 1UL );
-
-		try
-		  {
-		    NetLatch *const latchPtr = new NetLatch( scope, cur->sig()->name(), static_cast< unsigned >( cur->sig()->msb() - cur->sig()->lsb() ) + 1U );
-		    latchPtr->set_line( *this );
-
-		    for ( unsigned idx = 0U; idx < cur->lwidth(); idx += 1U )
-		      {
+		  for (unsigned idx = 0U; idx < cur->lwidth(); idx += 1U) {
 			unsigned off = cur->get_loff() + idx;
-			int tmp = map_nexus_in_index( nex_map_idx, nex_map->pin_count(), lsig->pin( off ).nexus() );
-			assert( tmp >= 0 );
-			unsigned ptr = static_cast< unsigned >( tmp );
-			connect( latchPtr->pin_Data( idx ), rsig->pin( roff + idx ) );
-			connect( nex_out->pin( ptr ), latchPtr->pin_Q( idx ) );
-			connect( latchPtr->pin_Clock(), gsig->pin( 0 ) );
-		      }
+			int tmp = map_nexus_in_index(nex_map_idx,
+			                             nex_map->pin_count(),
+			                             lsig->pin(off).nexus());
+			assert(tmp >= 0);
+			unsigned ptr = tmp;
+			connect(latch->pin_Data(idx), rsig->pin(roff + idx));
+			connect(nex_out->pin(ptr), latch->pin_Q(idx) );
+			connect(latch->pin_Clock(), gsig->pin(0));
+		  }
+	    } else {
 
-		    des->add_node( latchPtr );
+		  /* Handle the special case that this is a decoded
+		     enable. generate a demux for the device, with the
+		     WriteData connected to the r-value and the Data
+		     vector connected to the feedback. */
+		  if (cur->bmux() != 0) {
+			assert(sync_flag);
+
+			NetNet*adr = cur->bmux()->synthesize(des);
+
+			  /* Create a NetEemux wide enough to connect to all
+			     the bits of the lvalue signal (generally more
+			     then the bits of lwidth). */
+			NetDemux*dq = new NetDemux(scope,
+			                           scope->local_symbol(),
+			                           lsig->pin_count(),
+			                           adr->pin_count(),
+			                           lsig->pin_count());
+			des->add_node(dq);
+			dq->set_line(*this);
+
+			  /* The bmux expression connects to the address of
+			     the Demux device. */
+			for (unsigned idx = 0; idx < adr->pin_count(); idx += 1)
+			      connect(dq->pin_Address(idx), adr->pin(idx));
+
+			assert(cur->lwidth() == 1);
+
+			  /* Cycle the associated FF Data and Q through the
+			     demux to make synchronous "latches" that the
+			     Demux modifies. */
+			assert(nex_ff[0].ff->width() >= lsig->pin_count());
+			for (unsigned idx = 0; idx < lsig->pin_count();
+			     idx += 1) {
+			      unsigned off = cur->get_loff()+idx;
+			      connect(nex_ff[0].ff->pin_Q(off),
+			              dq->pin_Data(idx));
+			}
+
+			struct nexus_map_t*nex_map_idx;
+			nex_map_idx = make_nexus_index(nex_map);
+
+			for (unsigned idx = 0; idx < lsig->pin_count();
+			     idx += 1) {
+			      unsigned off = cur->get_loff()+idx;
+			      int tmp;
+			      tmp = map_nexus_in_index(nex_map_idx,
+			                               nex_map->pin_count(),
+			                               lsig->pin(off).nexus());
+			      assert(tmp >= 0);
+			      unsigned ptr = tmp;
+			      connect(nex_out->pin(ptr), dq->pin_Q(idx));
+			}
+
+			delete[] nex_map_idx;
+
+			  /* The r-value (1 bit) connects to the WriteData
+			     input of the demux. */
+			connect(dq->pin_WriteData(0), rsig->pin(roff));
+
+			roff += cur->lwidth();
+			cur->turn_sig_to_wire_on_release();
+			continue;
 		  }
 
-		catch ( bad_alloc &memoryAllocationException )
-		  {
-		    cerr << "Exception occurred: " << memoryAllocationException.what() << endl;
-		    cerr << get_line() << ": error: NetAssignBase::synth_async on failure to create latch at lval ";
-		    dump_lval( cerr );
-		    cerr << endl;
-		    des->errors += 1;
-		    return false;
-		  }
+		    /* By this point any bmux() has been dealt with. Panic
+		       if that is not so. */
+		  assert(! cur->bmux());
 
-	      }
-	    else
-	      {
-
-		/* Handle the special case that this is a decoded
-		   enable. generate a demux for the device, with the
-		   WriteData connected to the r-value and the Data
-		   vector connected to the feedback. */
-		if (cur->bmux() != 0) {
-		  assert(sync_flag);
-
-		  NetNet*adr = cur->bmux()->synthesize(des);
-
-		  /* Create a NetEemux wide enough to connect to all
-		     the bits of the lvalue signal (generally more
-		     then the bits of lwidth). */
-		  NetDemux*dq = new NetDemux(scope, scope->local_symbol(),
-					     lsig->pin_count(),
-					     adr->pin_count(),
-					     lsig->pin_count());
-		  des->add_node(dq);
-		  dq->set_line(*this);
-
-		  /* The bmux expression connects to the address of
-		     the Demux device. */
-		  for (unsigned idx = 0; idx < adr->pin_count() ;  idx += 1)
-		    connect(dq->pin_Address(idx), adr->pin(idx));
-
-		  assert(cur->lwidth() == 1);
-
-		  /* Cycle the associated FF Data and Q through the
-		     demux to make synchronous "latches" that the
-		     Demux modifies. */
-		  assert(nex_ff[0].ff->width() >= lsig->pin_count());
-		  for (unsigned idx = 0; idx < lsig->pin_count(); idx += 1) {
-		    unsigned off = cur->get_loff()+idx;
-		    connect(nex_ff[0].ff->pin_Q(off), dq->pin_Data(idx));
-		  }
-
+		    /* Bind the outputs that we do make to the nex_out. Use
+		       the nex_map to map the l-value bit position to the
+		       nex_out bit position. */
 		  struct nexus_map_t*nex_map_idx = make_nexus_index(nex_map);
 
-		  for (unsigned idx = 0; idx < lsig->pin_count(); idx += 1) {
-		    unsigned off = cur->get_loff()+idx;
-		    int tmp = map_nexus_in_index(nex_map_idx,
-						 nex_map->pin_count(),
-						 lsig->pin(off).nexus());
-		    assert(tmp >= 0);
-		    unsigned ptr = tmp;
-		    connect(nex_out->pin(ptr), dq->pin_Q(idx));
+		  for (unsigned idx = 0 ;  idx < cur->lwidth() ;  idx += 1) {
+			unsigned off = cur->get_loff()+idx;
+			int tmp = map_nexus_in_index(nex_map_idx,
+			                             nex_map->pin_count(),
+			                             lsig->pin(off).nexus());
+			assert(tmp >= 0);
+			unsigned ptr = tmp;
+			connect(nex_out->pin(ptr), rsig->pin(roff+idx));
 		  }
 
-		  delete[]nex_map_idx;
-
-		  /* The r-value (1 bit) connects to the WriteData
-		     input of the demux. */
-		  connect(dq->pin_WriteData(0), rsig->pin(roff));
-
-		  roff += cur->lwidth();
-		  cur->turn_sig_to_wire_on_release();
-		  continue;
-		}
-
-		/* By this point ant bmux() has been dealt with. Panic
-		   if that is not so. */
-		assert(! cur->bmux());
-
-		/* Bind the outputs that we do make to the nex_out. Use the
-		   nex_map to map the l-value bit position to the nex_out bit
-		   position. */
-
-		struct nexus_map_t*nex_map_idx = make_nexus_index(nex_map);
-
-		for (unsigned idx = 0 ;  idx < cur->lwidth() ;  idx += 1) {
-		  unsigned off = cur->get_loff()+idx;
-		  int tmp = map_nexus_in_index(nex_map_idx,
-					       nex_map->pin_count(),
-					       lsig->pin(off).nexus());
-		  assert(tmp >= 0);
-		  unsigned ptr = tmp;
-		  connect(nex_out->pin(ptr), rsig->pin(roff+idx));
-		}
-
-	      }
+	    }
 
 	    roff += cur->lwidth();
 
-	    /* This lval_ represents a reg that is a WIRE in the
-	       synthesized results. This function signals the destructor
-	       to change the REG that this l-value refers to into a
-	       WIRE. It is done then, at the last minute, so that pending
-	       synthesis can continue to work with it as a WIRE. */
+	      /* This lval_ represents a reg that is a WIRE in the
+	         synthesized results. This function signals the destructor
+	         to change the REG that this l-value refers to into a
+	         WIRE. It is done then, at the last minute, so that pending
+	         synthesis can continue to work with it as a WIRE. */
 	    cur->turn_sig_to_wire_on_release();
       }
 
@@ -444,8 +437,9 @@ bool NetAssignBase::synth_async_mem_sync_(Design*des, NetScope*scope,
  * substatements.
  */
 bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
-			   struct sync_accounting_cell*nex_ff,
-			   NetNet*nex_map, NetNet*nex_out, NetNet*accum_in, bool latch_inferred, NetNet *gsig)
+                           struct sync_accounting_cell*nex_ff,
+                           NetNet*nex_map, NetNet*nex_out, NetNet*accum_in,
+                           bool&latch_inferred, NetNet*gsig)
 {
       if (last_ == 0) {
 	    return true;
@@ -516,7 +510,8 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	    delete [] nex_map_idx;
 
 	    bool ok_flag = cur->synth_async(des, scope, sync_flag, nex_ff,
-					    tmp_map, tmp_out, new_accum);
+	                                    tmp_map, tmp_out, new_accum,
+	                                    latch_inferred, gsig);
 	    flag = flag && ok_flag;
 
 	    delete new_accum;
@@ -615,8 +610,9 @@ bool NetBlock::synth_async(Design*des, NetScope*scope, bool sync_flag,
 }
 
 bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
-			  struct sync_accounting_cell*nex_ff,
-			  NetNet*nex_map, NetNet*nex_out, NetNet*accum, bool latch_inferred, NetNet *gsig)
+                          struct sync_accounting_cell*nex_ff,
+                          NetNet*nex_map, NetNet*nex_out, NetNet*accum,
+                          bool&latch_inferred, NetNet*gsig)
 {
       unsigned cur;
 
@@ -671,16 +667,16 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  nondefault_items += 1;
       }
 
-	/* Handle the special case that this can be done it a smaller
+	/* Handle the special case that this can be done in a smaller
 	   1-hot MUX. If there are fewer active cases then there are
 	   select pins, then a 1-hot encoding should be better. */
       if (nondefault_items < sel_pins) {
 	    if (debug_synth)
 		  cerr << get_line() << ": debug: "
 		       << "Implement case statement as 1-hot MUX." << endl;
-	    return synth_async_1hot_(des, scope, sync_flag, nex_ff,
-				    nex_map, nex_out, accum,
-				    esig, nondefault_items);
+	    return synth_async_1hot_(des, scope, sync_flag, nex_ff, nex_map,
+	                             nex_out, accum, esig, nondefault_items,
+	                             latch_inferred, gsig);
       }
 
       NetMux*mux = new NetMux(scope, scope->local_symbol(),
@@ -889,8 +885,8 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	      /* Synthesize this specified case. The synth_async will
 		 connect all the output bits it knows how to the sig net. */
 	    statement_map[item]->synth_async(des, scope, sync_flag,
-					     nex_ff,
-					     nex_map, sig, accum);
+	                                     nex_ff, nex_map, sig, accum,
+	                                     latch_inferred, gsig);
 
 	    for (unsigned idx = 0 ;  idx < mux->width() ;  idx += 1) {
 		  if (sig->pin(idx).is_linked())
@@ -960,9 +956,10 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 }
 
 bool NetCase::synth_async_1hot_(Design*des, NetScope*scope, bool sync_flag,
-				struct sync_accounting_cell*nex_ff,
-				NetNet*nex_map, NetNet*nex_out, NetNet*accum,
-				NetNet*esig, unsigned hot_items)
+                                struct sync_accounting_cell*nex_ff,
+                                NetNet*nex_map, NetNet*nex_out, NetNet*accum,
+                                NetNet*esig, unsigned hot_items,
+                                bool&latch_inferred, NetNet*gsig)
 {
       unsigned sel_pins = hot_items;
 
@@ -1013,10 +1010,11 @@ bool NetCase::synth_async_1hot_(Design*des, NetScope*scope, bool sync_flag,
 	    connect(mux->pin_Sel(use_item), reduc->pin(0));
 
 	    NetNet*item_sig = new NetNet(scope, scope->local_symbol(),
-					 NetNet::WIRE, nex_map->pin_count());
+	                                 NetNet::WIRE, nex_map->pin_count());
 	    assert(items_[item].statement);
 	    items_[item].statement->synth_async(des, scope, sync_flag, nex_ff,
-						nex_map, item_sig, accum);
+	                                        nex_map, item_sig, accum,
+	                                        latch_inferred, gsig);
 	    for (unsigned idx = 0 ;  idx < item_sig->pin_count() ;  idx += 1)
 		  connect(mux->pin_Data(idx, 1<<use_item), item_sig->pin(idx));
 
@@ -1031,9 +1029,10 @@ bool NetCase::synth_async_1hot_(Design*des, NetScope*scope, bool sync_flag,
       NetNet*default_sig = 0;
       if (default_statement) {
 	    default_sig = new NetNet(scope, scope->local_symbol(),
-				     NetNet::WIRE, nex_map->pin_count());
+	                             NetNet::WIRE, nex_map->pin_count());
 	    default_statement->synth_async(des, scope, sync_flag, nex_ff,
-					   nex_map, default_sig, accum);
+	                                   nex_map, default_sig, accum,
+	                                   latch_inferred, gsig);
 
       }
 
@@ -1079,12 +1078,13 @@ bool NetCase::synth_async_1hot_(Design*des, NetScope*scope, bool sync_flag,
 /*
  * Handle synthesis for an asynchronous condition statement. If we get
  * here, we know that the CE of a DFF has already been filled, so the
- * condition expression goes to the select of an asynchronous mux, unless a latch is inferred in which case it goes to the latch's gate input.
+ * condition expression goes to the select of an asynchronous mux, unless
+ * a latch is inferred in which case it goes to the latch's gate input.
  */
 bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
-			    struct sync_accounting_cell*nex_ff,
-			    NetNet*nex_map, NetNet*nex_out,
-			    NetNet*accum, bool latch_inferred, NetNet *gsig)
+                            struct sync_accounting_cell*nex_ff,
+                            NetNet*nex_map, NetNet*nex_out,
+                            NetNet*accum, bool&latch_inferred, NetNet*gsig)
 {
 	/* Detect the special case that this is a nul-effect (for
 	   synthesis) statement. This happens, for example, for code
@@ -1119,66 +1119,50 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 	    }
       }
 
-	// At least one of the clauses must have contents. */
+	/* At least one of the clauses must have content. */
       assert(if_ != 0 || else_ != 0);
 
-      // This is the beginning of where it will be decided whether or not a latch is inferred.
-      // We prefer that latch_inferred be a local variable rather than a function parameter.
-      // It must be a function parameter to match the signature of the function that we are overriding in the base class, the result of a chain reaction caused by adding that
-      // parameter to NetAssignBase::synth_async (to give that function awareness of what we are recognizing here).
-      // Of course, the parameter and the local variable could have been given distinct names.
-      // Instead, we simply assert that the following code governs.
-      // In other words, the parameter value coming into this function does not override the value (false) that would be the initial value of a local variable here.
-      // Probably the incoming parameter got this value from the default argument, but it is not essential to prove that.
-      assert( latch_inferred == false );
+	/* Latches cannot nest! */
+      assert(!latch_inferred);
 
 	/* If there is no default_sig, and if this is a fully
 	   asynchronous process (nex_map is not a synchronous output)
-	   then, if !(both clauses are present), a latch is inferred.
+	   then, if a clause is missing, a latch will be inferred.
 
 	   If either clause is missing, and the output is synchronous,
 	   then the code below can take as the input the output from
 	   the DFF without worry for asynchronous cycles. */
-      if (default_sig == 0 && ! sync_flag) {
-	    if (if_ == 0) {
-	      latch_inferred = true;
-	    }
-
-	    if (else_ == 0) {
-	      latch_inferred = true;
-	    }
+      if (default_sig == 0 && ! sync_flag && (if_ == 0 || else_ == 0)) {
+	    latch_inferred = true;
       }
+      bool my_latch_inferred = latch_inferred;
 
       NetNet*asig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, nex_map->pin_count());
-      bool asigIsLatchOutput = false;
       asig->local_flag(true);
 
       if (if_ == 0) {
 	      /* If the if clause is missing, then take the clause to
-		 be an assignment from the defaults input. If there is
-		 no defaults input and a latch is not inferred, then take the input to be from the
-		 output. */
+		 be an assignment from the default input. If there is
+		 no default input and a latch is not inferred, then
+		 take the input to be from the output (sync). */
 	    if (default_sig) {
 		  for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1)
 			connect(asig->pin(idx), default_sig->pin(idx));
-	    } else {
-	      if ( latch_inferred )
-		{
+	    } else if (latch_inferred) {
 		  delete asig ;
-		}
-	      else
-		{
-		  assert( sync_flag );
+		  asig = 0;
+	    } else {
+		  assert(sync_flag);
 
 		  for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1)
 			connect(asig->pin(idx), nex_map->pin(idx));
-		}
 	    }
 
       } else {
 	    bool flag = if_->synth_async(des, scope, sync_flag, nex_ff,
-					 nex_map, asig, accum, latch_inferred, ssig);
+					 nex_map, asig, accum, latch_inferred,
+					 ssig);
 	    if (!flag) {
 		  delete asig;
 		  cerr << get_line() << ": error: Asynchronous if statement"
@@ -1186,34 +1170,33 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  des->errors += 1;
 		  return false;
 	    }
-	    asigIsLatchOutput = latch_inferred;
       }
 
       NetNet*bsig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, nex_map->pin_count());
-      bool bsigIsLatchOutput = false;
       bsig->local_flag(true);
 
       if (else_ == 0) {
+	      /* If the else clause is missing, then take the clause to
+		 be an assignment from the default input. If there is
+		 no default input and a latch is not inferred, then
+		 take the input to be from the output (sync). */
 	    if (default_sig) {
 		  for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1)
 			connect(bsig->pin(idx), default_sig->pin(idx));
-	    } else {
-	      if ( latch_inferred )
-		{
+	    } else if (latch_inferred) {
 		  delete bsig;
-		}
-	      else
-		{
-		  assert( sync_flag );
+		  bsig = 0;
+	    } else {
+		  assert(sync_flag);
 
 		  for (unsigned idx = 0 ;  idx < asig->pin_count() ;  idx += 1)
 			connect(bsig->pin(idx), nex_map->pin(idx));
-		}
 	    }
       } else {
 	    bool flag = else_->synth_async(des, scope, sync_flag, nex_ff,
-					   nex_map, bsig, accum, latch_inferred, ssig);
+					   nex_map, bsig, accum,
+					   latch_inferred, ssig);
 	    if (!flag) {
 		  delete asig;
 		  delete bsig;
@@ -1222,38 +1205,30 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		  des->errors += 1;
 		  return false;
 	    }
-	    bsigIsLatchOutput = latch_inferred;
       }
 
-      if ( latch_inferred )
-	{
-	  // The value of a pointer that refers to deallocated storage is indeterminate, so I can't examine asig and bsig to determine which one hasn't been deallocated.
-	  assert ( ( asigIsLatchOutput || bsigIsLatchOutput ) && !( asigIsLatchOutput && bsigIsLatchOutput ) ); // logical exclusive OR
-
-	  if ( asigIsLatchOutput )
-	    {
-	      asig->set_line( *this );
-
-	      for ( unsigned idx = 0U; idx < nex_out->pin_count(); idx += 1U )
-		{
-		  connect( nex_out->pin( idx ), asig->pin( idx ) );
-		}
-
+	/* If we have inferred a latch then connect the appropriate signal to
+	 * the output. */
+      if (latch_inferred) {
+	    if (!my_latch_inferred) {
+		  cerr << get_line() << ": sorry: D-latch asynchronous "
+		       << "set/clear synthesis is not currently supported."
+		       << endl;
+		  des->errors += 1;
+		  return false;
 	    }
-	  else // bsigIsLatchOutput
-	    {
-	      bsig->set_line( *this );
-
-	      for ( unsigned idx = 0U; idx < nex_out->pin_count(); idx += 1U )
-		{
-		  connect( nex_out->pin( idx ), bsig->pin( idx ) );
-		}
-
+	    if (asig) {
+		  assert(bsig == 0);
+		  asig->set_line( *this );
+		  for (unsigned idx = 0; idx < nex_out->pin_count(); idx += 1)
+			connect(nex_out->pin(idx), asig->pin(idx));
+	    } else {
+		  assert(bsig);
+		  bsig->set_line( *this );
+		  for (unsigned idx = 0; idx < nex_out->pin_count(); idx += 1)
+			connect(nex_out->pin(idx), bsig->pin(idx));
 	    }
-
-	} // end if latch_inferred
-      else
-	{
+      } else {
 	  unsigned mux_width = 0;
 
 	  /* Figure out how many mux bits we are going to need. */
@@ -1355,13 +1330,8 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		des->errors += 1;
 		return_flag = false;
 #else
-		/* This should check that asig is latched by
-		   the condition select or is used
-		   internally by the false clause. but since
-		   there is no latch support, assume it is
-		   used internally. */
-		// Now there is latch support, but if a latch is inferred this code will not be reached.
-		// Note, however, the similarity to the latch inferred code.
+		/* Assume that asig is used internally. Note the
+		 * similarity to the latch inferred code. */
 		connect(nex_out->pin(idx), asig->pin(idx));
 #endif
 	      }
@@ -1386,13 +1356,8 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 		des->errors += 1;
 		return_flag = false;
 #else
-		/* This should check that bsig is latched by
-		   the condition select or is used
-		   internally by the false clause. but since
-		   there is no latch support, assume it is
-		   used internally. */
-		// Now there is latch support, but if a latch is inferred this code will not be reached.
-		// Note, however, the similarity to the latch inferred code.
+		/* Assume that asig is used internally. Note the
+		 * similarity to the latch inferred code. */
 		connect(nex_out->pin(idx), bsig->pin(idx));
 #endif
 	      }
@@ -1425,17 +1390,19 @@ bool NetCondit::synth_async(Design*des, NetScope*scope, bool sync_flag,
 
 
 	  des->add_node(mux);
-	} // end if !latch_inferred
+	}
 
       return true;
 }
 
 bool NetEvWait::synth_async(Design*des, NetScope*scope, bool sync_flag,
-			    sync_accounting_cell*nex_ff,
-			    NetNet*nex_map, NetNet*nex_out, NetNet*accum_in, bool latch_inferred, NetNet *gsig)
+                            sync_accounting_cell*nex_ff,
+                            NetNet*nex_map, NetNet*nex_out, NetNet*accum_in,
+                            bool&latch_inferred, NetNet*gsig)
 {
       bool flag = statement_->synth_async(des, scope, sync_flag, nex_ff,
-					  nex_map, nex_out, accum_in);
+                                          nex_map, nex_out, accum_in,
+                                          latch_inferred, gsig);
       return flag;
 }
 
@@ -2510,8 +2477,9 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 }
 
 bool NetWhile::synth_async(Design*des, NetScope*scope, bool sync_flag,
-			   struct sync_accounting_cell*nex_ff,
-			   NetNet*nex_map, NetNet*nex_out, NetNet*accum_in, bool latch_inferred, NetNet *gsig)
+                           struct sync_accounting_cell*nex_ff,
+                           NetNet*nex_map, NetNet*nex_out, NetNet*accum_in,
+                           bool&latch_inferred, NetNet*gsig)
 {
       cerr << get_line()
 	   << ": error: Cannot synthesize for or while loops."
