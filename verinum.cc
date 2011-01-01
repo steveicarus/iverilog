@@ -516,11 +516,11 @@ string verinum::as_string() const
 		  char tmp[5];
 		  snprintf(tmp, sizeof tmp, "\\%03o", char_val);
 		  res = res + tmp;
-	    } else if (char_val == ' ' || isgraph(char_val)) {
+	    } else if (isprint(char_val)) {
 		  res = res + char_val;
 	    } else {
 		  char tmp[5];
-		  snprintf(tmp, sizeof tmp, "\\%03o", char_val);
+		  snprintf(tmp, sizeof tmp, "\\%03o", (unsigned char)char_val);
 		  res = res + tmp;
 	    }
       }

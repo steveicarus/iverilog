@@ -644,14 +644,14 @@ TU [munpf]
        error_count += 1; }
 
   /* Final catchall. something got lost or mishandled. */
-  /* XXX Should we tell the luser something about the lexical state? */
+  /* XXX Should we tell the user something about the lexical state? */
 
 <*>.|\n {   cerr << yylloc.text << ":" << yylloc.first_line
 	   << ": error: unmatched character (";
-      if (isgraph(yytext[0]))
+      if (isprint(yytext[0]))
 	    cerr << yytext[0];
       else
-	    cerr << "hex " << hex << (0xffU & ((unsigned) (yytext[0])));
+	    cerr << "hex " << hex << ((unsigned char) yytext[0]);
 
       cerr << ")" << endl;
       error_count += 1; }
