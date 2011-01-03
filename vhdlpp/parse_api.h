@@ -20,6 +20,7 @@
  */
 
 # include  <cstdio>
+# include  "entity.h"
 
 /*
  * The vlltype supports the passing of detailed source file location

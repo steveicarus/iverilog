@@ -20,14 +20,24 @@
  */
 
 # include "vhdlpp_config.h"
+# include "compiler.h"
 # include "parse_api.h"
 # include  <cstdarg>
+# include  <list>
 
 static void yyerror(const char*msg);
 
 static void errormsg(const YYLTYPE&loc, const char*msg, ...);
 int parse_errors = 0;
 %}
+
+%union {
+      port_mode_t port_mode;
+      char*text;
+
+      InterfacePort*interface_element;
+      std::list<InterfacePort*>* interface_list;
+};
 
   /* The keywords are all tokens. */
 %token K_abs K_access K_after K_alias K_all K_and K_architecture
@@ -55,9 +65,14 @@ int parse_errors = 0;
 %token K_wait K_when K_while K_with
 %token K_xnor K_xor
  /* Identifiers that are not keywords are identifiers. */
-%token IDENTIFIER
+%token <text> IDENTIFIER
  /* compound symbols */
 %token LEQ GEQ VASSIGN
+
+ /* The rules may have types. */
+%type <interface_element> interface_element
+%type <interface_list>    interface_list entity_header port_clause
+%type <port_mode>  mode
 
 %%
 
@@ -116,12 +131,28 @@ design_units
   | design_unit
   ;
 
+  /* As an entity is declared, add it to the map of design entities. */
 entity_declaration
   : K_entity IDENTIFIER K_is entity_header K_end K_entity ';'
+      { Entity*tmp = new Entity;
+	  // Store the name
+	tmp->name = lex_strings.make($2);
+	delete[]$2;
+	  // Transfer the ports
+	std::list<InterfacePort*>*ports = $4;
+	while (ports->size() > 0) {
+	      tmp->ports.push_back(ports->front());
+	      ports->pop_front();
+	}
+	delete ports;
+	  // Save the entity in the entity map.
+	design_entities[tmp->name] = tmp;
+      }
   ;
 
 entity_header
   : port_clause
+      { $$ = $1; }
   ;
 
 expression
@@ -138,11 +169,26 @@ factor : primary ;
   /* The interface_element is also an interface_declaration */
 interface_element
   : IDENTIFIER ':' mode IDENTIFIER
+      { InterfacePort*tmp = new InterfacePort;
+	tmp->mode = $3;
+	tmp->name = lex_strings.make($1);
+	delete[]$1;
+	delete[]$4;
+	$$ = tmp;
+      }
   ;
 
 interface_list
   : interface_list ';' interface_element
+      { std:list<InterfacePort*>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
   | interface_element
+      { std::list<InterfacePort*>*tmp = new std::list<InterfacePort*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
   ;
 
 library_clause
@@ -165,9 +211,15 @@ logical_name_list
   | logical_name
   ;
 
-mode : K_in | K_out ;
+mode
+  : K_in  { $$ = PORT_IN; }
+  | K_out { $$ = PORT_OUT; }
+  ;
 
-port_clause : K_port '(' interface_list ')' ';' ;
+port_clause
+  : K_port '(' interface_list ')' ';'
+      { $$ = $3; }
+  ;
 
 primary
   : IDENTIFIER

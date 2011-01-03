@@ -38,6 +38,7 @@ const char NOTICE[] =
 "  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.\n"
 ;
 
+# include  "compiler.h"
 # include  "parse_api.h"
 # include  <cstdio>
 # include  <cstdlib>
@@ -46,7 +47,10 @@ const char NOTICE[] =
 # include  <getopt.h>
 #endif
 
+
 bool verbose_flag = false;
+  // Where to dump design entities
+const char*dump_design_entities_path = 0;
 
 static void process_debug_token(const char*word)
 {
@@ -54,6 +58,8 @@ static void process_debug_token(const char*word)
 	    yydebug = 1;
       } else if (strcmp(word, "no-yydebug") == 0) {
 	    yydebug = 0;
+      } else if (strncmp(word, "entities=", 9) == 0) {
+	    dump_design_entities_path = strdup(word+9);
       }
 }
 
@@ -106,5 +112,9 @@ int main(int argc, char*argv[])
 	    fclose(fd);
       }
 
+      if (dump_design_entities_path)
+	    dump_design_entities(dump_design_entities_path);
+
+      lex_strings.cleanup();
       return 0;
 }

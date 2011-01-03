@@ -25,7 +25,7 @@
 
 # include  "parse_api.h"
 # include  "lexor_keyword.h"
-# include  "parse.h"
+# include  "parse_wrap.h"
 
 extern int lexor_keyword_code (const char*str, unsigned len);
 
@@ -37,6 +37,11 @@ extern int lexor_keyword_code (const char*str, unsigned len);
  * If the name is new, it will be added to the list.
  */
 extern YYLTYPE yylloc;
+
+static char* strdupnew(char const *str)
+{
+       return str ? strcpy(new char [strlen(str)+1], str) : 0;
+}
 
 static int comment_enter;
 
@@ -70,6 +75,13 @@ W [ \t\b\f\r]+
 
 [a-zA-Z_][a-zA-Z0-9_]* {
       int rc = lexor_keyword_code(yytext, yyleng);
+      switch (rc) {
+	  case IDENTIFIER:
+	    yylval.text = strdupnew(yytext);
+	    break;
+	  default:
+	    break;
+      }
       return rc;
   }
 

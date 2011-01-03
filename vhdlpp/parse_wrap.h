@@ -1,5 +1,5 @@
-#ifndef __compiler_H
-#define __compiler_H
+#ifndef __parse_wrap_H
+#define __parse_wrap_H
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
  *
@@ -19,10 +19,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "StringHeap.h"
+/*
+ * This header wraps the parse.h header file that is generated from
+ * the parse.y source file. This is used to include definitions that
+ * are needed by the parse type, etc.
+ */
 
-const int GN_KEYWORD_2008  = 0x0001;
-
-extern StringHeapLex lex_strings;
+# include  <list>
+# include  "parse.h"
 
 #endif

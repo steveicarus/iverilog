@@ -1,5 +1,5 @@
-#ifndef __compiler_H
-#define __compiler_H
+#ifndef __entity_H
+#define __entity_H
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
  *
@@ -19,10 +19,36 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+# include  <map>
+# include  <vector>
 # include  "StringHeap.h"
 
-const int GN_KEYWORD_2008  = 0x0001;
+typedef enum { PORT_NONE=0, PORT_IN, PORT_OUT } port_mode_t;
 
-extern StringHeapLex lex_strings;
+class InterfacePort {
+    public:
+      port_mode_t mode;
+      perm_string name;
+};
+
+class Entity {
+
+    public:
+      perm_string name;
+      std::vector<InterfacePort*> ports;
+
+};
+
+/*
+ * As the parser parses entities, it puts them into this map. It uses
+ * a map because sometimes it needs to look back at an entity by name.
+ */
+extern std::map<perm_string,Entity*> design_entities;
+
+/*
+ * Use this function to dump a description of the design entities to a
+ * file. This is for debug, not for any useful purpose.
+ */
+extern void dump_design_entities(const char*path);
 
 #endif

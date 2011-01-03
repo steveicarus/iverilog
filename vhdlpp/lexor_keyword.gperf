@@ -10,7 +10,8 @@
 #include "vhdlpp_config.h"
 #include <cstring>
 #include "compiler.h"
-#include "parse.h"
+#include "parse_api.h"
+#include "parse_wrap.h"
 
 %}
 struct lexor_keyword { const char*name; int mask; int tokenType; };
