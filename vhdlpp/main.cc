@@ -115,6 +115,13 @@ int main(int argc, char*argv[])
       if (dump_design_entities_path)
 	    dump_design_entities(dump_design_entities_path);
 
+      int elaborate_errors = 0;
+      elaborate_errors = elaborate_entities();
+      if (elaborate_errors > 0) {
+	    fprintf(stderr, "%d errors elaborating design.\n", elaborate_errors);
+	    return 3;
+      }
+
       lex_strings.cleanup();
       return 0;
 }

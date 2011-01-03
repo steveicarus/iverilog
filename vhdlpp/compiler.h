@@ -23,6 +23,9 @@
 
 const int GN_KEYWORD_2008  = 0x0001;
 
+// TRUE if processing is supposed to dump progress to stderr.
+extern bool verbose_flag;
+
 extern StringHeapLex lex_strings;
 
 #endif

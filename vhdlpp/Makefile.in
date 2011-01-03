@@ -51,7 +51,8 @@ CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@ @EXTRALIBS@
 
-O = main.o compiler.o entity.o lexor.o lexor_keyword.o parse.o StringHeap.o
+O = main.o compiler.o entity.o entity_elaborate.o \
+    lexor.o lexor_keyword.o parse.o StringHeap.o
 
 all: dep vhdlpp@EXEEXT@
 

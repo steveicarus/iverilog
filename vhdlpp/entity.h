@@ -34,6 +34,9 @@ class InterfacePort {
 class Entity {
 
     public:
+      int elaborate();
+
+    public:
       perm_string name;
       std::vector<InterfacePort*> ports;
 
@@ -44,6 +47,12 @@ class Entity {
  * a map because sometimes it needs to look back at an entity by name.
  */
 extern std::map<perm_string,Entity*> design_entities;
+
+/*
+ * Elaborate the collected entities, and return the number of
+ * elaboration errors.
+ */
+extern int elaborate_entities(void);
 
 /*
  * Use this function to dump a description of the design entities to a
