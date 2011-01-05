@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -115,7 +115,7 @@ void NetScope::run_functor(Design*des, functor_t*fun)
       signals_map_iter_t cur = signals_map_.begin();
       while (cur != signals_map_.end()) {
 	    signals_map_iter_t tmp = cur;
-	    cur ++;
+	    ++ cur;
 	    fun->signal(des, tmp->second);
       }
 }

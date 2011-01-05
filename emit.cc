@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -404,7 +404,7 @@ void NetScope::emit_scope(struct target_t*tgt) const
 	// in the list. We can do it here because delay paths are
 	// always connected within the scope.
       for (signals_map_iter_t cur = signals_map_.begin()
-		 ; cur != signals_map_.end() ; cur ++) {
+		 ; cur != signals_map_.end() ; ++ cur) {
 
 	    tgt->signal_paths(cur->second);
       }
