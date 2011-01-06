@@ -25,6 +25,13 @@
 # include  <cstdarg>
 # include  <list>
 
+inline void FILE_NAME(LineInfo*tmp, const struct yyltype&where)
+{
+      tmp->set_lineno(where.first_line);
+      tmp->set_file(filename_strings.make(where.text));
+}
+
+
 static void yyerror(const char*msg);
 
 static void errormsg(const YYLTYPE&loc, const char*msg, ...);
@@ -135,6 +142,7 @@ design_units
 entity_declaration
   : K_entity IDENTIFIER K_is entity_header K_end K_entity ';'
       { Entity*tmp = new Entity;
+	FILE_NAME(tmp, @1);
 	  // Store the name
 	tmp->name = lex_strings.make($2);
 	delete[]$2;
@@ -170,6 +178,7 @@ factor : primary ;
 interface_element
   : IDENTIFIER ':' mode IDENTIFIER
       { InterfacePort*tmp = new InterfacePort;
+	FILE_NAME(tmp, @1);
 	tmp->mode = $3;
 	tmp->name = lex_strings.make($1);
 	tmp->type_name = lex_strings.make($4);

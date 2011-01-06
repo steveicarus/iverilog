@@ -22,10 +22,11 @@
 # include  <map>
 # include  <vector>
 # include  "StringHeap.h"
+# include  "LineInfo.h"
 
 typedef enum { PORT_NONE=0, PORT_IN, PORT_OUT } port_mode_t;
 
-class InterfacePort {
+class InterfacePort : public LineInfo {
     public:
 	// Port direction from the source code.
       port_mode_t mode;
@@ -35,7 +36,7 @@ class InterfacePort {
       perm_string type_name;
 };
 
-class Entity {
+class Entity : public LineInfo {
 
     public:
       int elaborate();

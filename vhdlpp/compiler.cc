@@ -19,3 +19,5 @@
 # include  "compiler.h"
 
 StringHeapLex lex_strings;
+
+StringHeapLex filename_strings;

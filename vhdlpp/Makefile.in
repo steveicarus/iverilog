@@ -40,9 +40,9 @@ LEX = @LEX@
 YACC = @YACC@
 
 ifeq (.,.)
-INCLUDE_PATH = -I. -I..
+INCLUDE_PATH = -I. -I.. -I../libmisc
 else
-INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/../libmisc
 endif
 
 CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@
@@ -51,8 +51,10 @@ CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@ @EXTRALIBS@
 
+M = StringHeap.o LineInfo.o
+
 O = main.o compiler.o entity.o entity_elaborate.o \
-    lexor.o lexor_keyword.o parse.o StringHeap.o
+    lexor.o lexor_keyword.o parse.o $M
 
 all: dep vhdlpp@EXEEXT@
 
@@ -72,6 +74,9 @@ dep:
 
 vhdlpp@EXEEXT@: $O
 	$(CXX) -o vhdlpp@EXEEXT@ $(LDFLAGS) $O $(LIBS)
+
+%.o: $(srcdir)/../libmisc/%.cc
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 
 %.o: %.cc vhdlpp_config.h
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o

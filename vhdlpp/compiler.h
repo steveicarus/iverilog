@@ -28,4 +28,6 @@ extern bool verbose_flag;
 
 extern StringHeapLex lex_strings;
 
+extern StringHeapLex filename_strings;
+
 #endif

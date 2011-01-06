@@ -47,7 +47,7 @@ static ostream& operator << (ostream&out, port_mode_t that)
 
 static void dump_design_entity(ostream&out, Entity*obj)
 {
-      out << "entity " << obj->name << endl;
+      out << "entity " << obj->name << " file=" << obj->get_fileline() << endl;
       if (obj->ports.size() == 0) {
 	    out << "    No ports" << endl;
       } else {
@@ -57,7 +57,8 @@ static void dump_design_entity(ostream&out, Entity*obj)
 		  InterfacePort*item = *cur;
 		  out << setw(6) << "" << item->name
 		      << " : " << item->mode
-		      << ", type=" << item->type_name << endl;
+		      << ", type=" << item->type_name
+		      << ", file=" << item->get_fileline() << endl;
 	    }
       }
 }

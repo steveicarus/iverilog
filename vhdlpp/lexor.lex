@@ -98,6 +98,7 @@ extern void yyparse_set_filepath(const char*path);
 
 void reset_lexor(FILE*fd, const char*path)
 {
+      yylloc.text = path;
       yylloc.first_line = 1;
       yyrestart(fd);
 
