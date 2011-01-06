@@ -56,7 +56,8 @@ static void dump_design_entity(ostream&out, Entity*obj)
 		       ; cur != obj->ports.end() ; ++cur) {
 		  InterfacePort*item = *cur;
 		  out << setw(6) << "" << item->name
-		      << " : " << item->mode << endl;
+		      << " : " << item->mode
+		      << ", type=" << item->type_name << endl;
 	    }
       }
 }

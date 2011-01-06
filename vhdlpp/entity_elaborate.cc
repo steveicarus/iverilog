@@ -54,6 +54,16 @@ int Entity::elaborate()
 		       ; cur != ports.end() ; ++cur) {
 		  InterfacePort*port = *cur;
 
+		    // FIXME: this is a stub. This port handling code
+		    // currently only supports std_logic signal tyes,
+		    // so just assert that the user asked for std_logic.
+		  if (port->type_name != "std_logic") {
+			cerr << "sorry: VHDL only supports std_logic ports."
+			     << " Expecting std_logic, but got \""
+			     << port->type_name << "\"" << endl;
+			errors += 1;
+		  }
+
 		  if (sep) cout << sep;
 		  else sep = ", ";
 

@@ -27,8 +27,12 @@ typedef enum { PORT_NONE=0, PORT_IN, PORT_OUT } port_mode_t;
 
 class InterfacePort {
     public:
+	// Port direction from the source code.
       port_mode_t mode;
+	// Name of the port from the source code
       perm_string name;
+	// Name of interface type as given in the source code.
+      perm_string type_name;
 };
 
 class Entity {

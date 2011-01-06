@@ -172,6 +172,7 @@ interface_element
       { InterfacePort*tmp = new InterfacePort;
 	tmp->mode = $3;
 	tmp->name = lex_strings.make($1);
+	tmp->type_name = lex_strings.make($4);
 	delete[]$1;
 	delete[]$4;
 	$$ = tmp;
@@ -180,7 +181,7 @@ interface_element
 
 interface_list
   : interface_list ';' interface_element
-      { std:list<InterfacePort*>*tmp = $1;
+      { std::list<InterfacePort*>*tmp = $1;
 	tmp->push_back($3);
 	$$ = tmp;
       }
