@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -336,7 +336,7 @@ TU [munpf]
 
   /* This rule handles scaled time values for SystemVerilog. */
 [0-9][0-9_]*(\.[0-9][0-9_]*)?{TU}?s {
-      if(generation_flag & GN_VER2009) {
+      if(generation_flag & (GN_VER2005_SV | GN_VER2009)) {
 	    yylval.text = strdupnew(yytext);
 	    return TIME_LITERAL;
       } else REJECT; }
@@ -496,11 +496,18 @@ TU [munpf]
 		                |GN_KEYWORDS_1364_2001
 		                |GN_KEYWORDS_1364_2001_CONFIG
 		                |GN_KEYWORDS_1364_2005;
+      } else if (strcmp(word,"1800-2005") == 0) {
+	    lexor_keyword_mask = GN_KEYWORDS_1364_1995
+		                |GN_KEYWORDS_1364_2001
+		                |GN_KEYWORDS_1364_2001_CONFIG
+		                |GN_KEYWORDS_1364_2005
+		                |GN_KEYWORDS_1800_2005;
       } else if (strcmp(word,"1800-2009") == 0) {
 	    lexor_keyword_mask = GN_KEYWORDS_1364_1995
 		                |GN_KEYWORDS_1364_2001
 		                |GN_KEYWORDS_1364_2001_CONFIG
 		                |GN_KEYWORDS_1364_2005
+		                |GN_KEYWORDS_1800_2005
 		                |GN_KEYWORDS_1800_2009;
       } else if (strcmp(word,"VAMS-2.3") == 0) {
 	    lexor_keyword_mask = GN_KEYWORDS_1364_1995

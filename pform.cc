@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -737,8 +737,8 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
 void pform_check_timeunit_prec()
 {
       assert(pform_cur_module);
-      if ((generation_flag & GN_VER2009) && (pform_cur_module->time_unit <
-                                     pform_cur_module->time_precision)) {
+      if ((generation_flag & (GN_VER2005_SV | GN_VER2009)) &&
+          (pform_cur_module->time_unit < pform_cur_module->time_precision)) {
 	    VLerror("error: a timeprecision is missing or is too "
 	            "large!");
       } else assert(pform_cur_module->time_unit >=

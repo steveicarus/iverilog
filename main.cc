@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -255,6 +255,9 @@ static void process_generation_flag(const char*gen)
 
       } else if (strcmp(gen,"2005") == 0) {
 	    generation_flag = GN_VER2005;
+
+      } else if (strcmp(gen,"2005-sv") == 0) {
+	    generation_flag = GN_VER2005_SV;
 
       } else if (strcmp(gen,"2009") == 0) {
 	    generation_flag = GN_VER2009;
@@ -868,6 +871,8 @@ int main(int argc, char*argv[])
       switch (generation_flag) {
         case GN_VER2009:
 	  lexor_keyword_mask |= GN_KEYWORDS_1800_2009;
+        case GN_VER2005_SV:
+	  lexor_keyword_mask |= GN_KEYWORDS_1800_2005;
         case GN_VER2005:
 	  lexor_keyword_mask |= GN_KEYWORDS_1364_2005;
         case GN_VER2001:
@@ -901,6 +906,9 @@ int main(int argc, char*argv[])
 		  break;
 		case GN_VER2005:
 		  cout << "IEEE1364-2005";
+		  break;
+		case GN_VER2005_SV:
+		  cout << "IEEE1800-2005";
 		  break;
 		case GN_VER2009:
 		  cout << "IEEE1800-2009";
@@ -1024,7 +1032,7 @@ int main(int argc, char*argv[])
 
 	/* Decide if we are going to allow system functions to be called
 	 * as tasks. */
-      if (generation_flag >= GN_VER2009) {
+      if (generation_flag >= GN_VER2005_SV) {
 	    def_sfunc_as_task = IVL_SFUNC_AS_TASK_WARNING;
       }
 

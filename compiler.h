@@ -1,7 +1,7 @@
 #ifndef __compiler_H
 #define __compiler_H
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -122,7 +122,8 @@ enum generation_t {
       GN_VER2001_NOCONFIG  = 2,
       GN_VER2001  = 3,
       GN_VER2005  = 4,
-      GN_VER2009  = 5,
+      GN_VER2005_SV  = 5,
+      GN_VER2009  = 6,
       GN_DEFAULT  = 4
 };
 
@@ -159,14 +160,16 @@ extern bool gn_strict_expr_width_flag;
    for SystemVerilog */
 static inline bool gn_var_can_be_uwire(void)
 {
-      if (generation_flag == GN_VER2009)
+      if (generation_flag == GN_VER2005_SV ||
+          generation_flag == GN_VER2009)
 	    return true;
       return false;
 }
 
 static inline bool gn_system_verilog(void)
 {
-      if (generation_flag == GN_VER2009)
+      if (generation_flag == GN_VER2005_SV ||
+          generation_flag == GN_VER2009)
 	    return true;
       return false;
 }
@@ -180,7 +183,8 @@ enum { GN_KEYWORDS_1364_1995        = 0x0001,
        GN_KEYWORDS_1364_2001_CONFIG = 0x0004,
        GN_KEYWORDS_1364_2005        = 0x0008,
        GN_KEYWORDS_VAMS_2_3         = 0x0010,
-       GN_KEYWORDS_1800_2009        = 0x0020,
+       GN_KEYWORDS_1800_2005        = 0x0020,
+       GN_KEYWORDS_1800_2009        = 0x0040,
        GN_KEYWORDS_ICARUS           = 0x8000
 };
 extern int lexor_keyword_mask;

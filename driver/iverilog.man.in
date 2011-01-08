@@ -1,4 +1,4 @@
-.TH iverilog 1 "December 29th, 2009" "" "Version %M.%m.%n %E"
+.TH iverilog 1 "January 8th, 2011" "" "Version %M.%m.%n %E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -6,7 +6,7 @@ iverilog - Icarus Verilog compiler
 .B iverilog
 [\-ESVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
 [\-Pparameter=value] [\-pflag=value]
-[\-dname] [\-g1995|\-g2001|\-g2005|-g2009|\-g<feature>]
+[\-dname] [\-g1995|\-g2001|\-g2005|\-g2005-sv|\-g2009|\-g<feature>]
 [\-Iincludedir] [\-mmodule] [\-M[mode=]file] [\-Nfile] [\-ooutputfilename]
 [\-stopmodule] [\-ttype] [\-Tmin/typ/max] [\-Wclass] [\-ypath] sourcefile
 
@@ -61,14 +61,18 @@ is the Verilog input, but with file inclusions and macro references
 expanded and removed. This is useful, for example, to preprocess
 Verilog source for use by other compilers.
 .TP 8
-.B -g1995\fI|\fP-g2001\fI|\fP-g2001-noconfig\fI|\fP-g2005\fI|\fP-g2009
-Select the Verilog language \fIgeneration\fP to support in the
-compiler. This selects between \fIIEEE1364\-1995\fP,
-\fIIEEE1364\-2001\fP, \fIIEEE1364\-2005\fP, or \fIIEEE1800-2009\fP.
-Normally, Icarus Verilog defaults to the latest known generation of the
-language. This flag is most useful to restrict the language to a set
-supported by tools of specific generations, for compatibility with
-other tools.
+.B -g1995\fI|\fP-g2001\fI|\fP-g2001-noconfig\fI|\fP-g2005\fI|\fP-g2005-sv\fI|\fP-g2009
+Select the Verilog language \fIgeneration\fP to support in the compiler.
+This selects between \fIIEEE1364\-1995\fP, \fIIEEE1364\-2001\fP,
+\fIIEEE1364\-2005\fP, \fIIEEE1800\-2005\fP, or \fIIEEE1800\-2009\fP.
+Icarus Verilog currently defaults to the \fIIEEE1364\-2005\fP generation
+of the language. This flag is used to restrict the language to a set of
+keywords/features, this allows simulation of older Verilog code that may
+use newer keywords and for compatibility with other tools. Much of the
+\fIIEEE1800\fP generations functionality is not currently supported.
+The \fIIEEE1800\fP generations do parse all the keywords, so they can
+be used to verify that \fIIEEE1364\fP compliant Verilog code does not
+use any of the new \fIIEEE1800\fP keywords.
 .TP 8
 .B -gverilog-ams\fI|\fP-gno-verilog-ams
 Enable or disable (default) support for Verilog\-AMS.
@@ -506,7 +510,7 @@ Tips on using, debugging, and developing the compiler can be found at
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002\-2009 Stephen Williams
+Copyright \(co  2002\-2011 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0

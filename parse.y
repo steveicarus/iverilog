@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -341,7 +341,7 @@ static list<named_pexpr_t>* make_named_number(perm_string name, PExpr*val =0)
  /* The new tokens from 1364-2005. */
 %token K_wone K_uwire
 
- /* The new tokens from 1800-2009. */
+ /* The new tokens from 1800-2005. */
 %token K_alias K_always_comb K_always_ff K_always_latch K_assert
 %token K_assume K_before K_bind K_bins K_binsof K_bit K_break K_byte
 %token K_chandle K_class K_clocking K_const K_constraint K_context
@@ -361,6 +361,12 @@ static list<named_pexpr_t>* make_named_number(perm_string name, PExpr*val =0)
 %token K_wildcard K_with K_within
  /* Fake tokens that are passed once we have an initial token. */
 %token K_timeprecision_check K_timeunit_check
+
+ /* The new tokens from 1800-2009. */
+%token K_accept_on K_checker K_endchecker K_eventually K_global K_implies
+%token K_let K_nexttime K_reject_on K_restrict K_s_always K_s_eventually
+%token K_s_nexttime K_s_until K_s_until_with K_strong K_sync_accept_on
+%token K_sync_reject_on K_unique0 K_until K_until_with K_untyped K_weak
 
  /* The new tokens for Verilog-AMS 2.3. */
 %token K_above K_abs K_absdelay K_abstol K_access K_acos K_acosh

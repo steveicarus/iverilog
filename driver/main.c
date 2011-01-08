@@ -39,7 +39,7 @@ const char NOTICE[] =
 
 const char HELP[] =
 "Usage: iverilog [-ESvV] [-B base] [-c cmdfile|-f cmdfile]\n"
-"                [-g1995|-g2001|-g2005|-g2009] [-g<feature>]\n"
+"                [-g1995|-g2001|-g2005|-g2005-sv|-g2009] [-g<feature>]\n"
 "                [-D macro[=defn]] [-I includedir]\n"
 "                [-M [mode=]depfile] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
@@ -621,6 +621,9 @@ int process_generation(const char*name)
       else if (strcmp(name,"2005") == 0)
 	    generation = "2005";
 
+      else if (strcmp(name,"2005-sv") == 0)
+	    generation = "2005-sv";
+
       else if (strcmp(name,"2009") == 0)
 	    generation = "2009";
 
@@ -997,7 +1000,7 @@ int main(int argc, char **argv)
 
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
-	    printf("Copyright 1998-2010 Stephen Williams\n\n");
+	    printf("Copyright 1998-2011 Stephen Williams\n\n");
 	    puts(NOTICE);
       }
 
@@ -1040,7 +1043,8 @@ int main(int argc, char **argv)
       }
       /* If verilog-2009 (SystemVerilog) is enabled, then include the
          v2009 module. */
-      if (strcmp(generation, "2009") == 0) {
+      if (strcmp(generation, "2005-sv") == 0 ||
+          strcmp(generation, "2009") == 0) {
 	    fprintf(iconfig_file, "sys_func:%s%cv2009.sft\n", base, sep);
 	    fprintf(iconfig_file, "module:v2009\n");
       }
