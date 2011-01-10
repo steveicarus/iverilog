@@ -1,7 +1,7 @@
 #ifndef __netlist_H
 #define __netlist_H
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -3088,7 +3088,7 @@ class NetTaskDef {
       const NetProc*proc() const;
 
       unsigned port_count() const;
-      NetNet*port(unsigned idx);
+      NetNet*port(unsigned idx) const;
 
       void dump(ostream&, unsigned) const;
       DelayType delay_type() const;

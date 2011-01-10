@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1851,14 +1851,16 @@ extern "C" ivl_scope_t ivl_scope_parent(ivl_scope_t net)
 extern "C" unsigned ivl_scope_ports(ivl_scope_t net)
 {
       assert(net);
-      assert(net->type_ == IVL_SCT_FUNCTION);
-      return net->ports;
+      if (net->type_ == IVL_SCT_FUNCTION ||
+          net->type_ == IVL_SCT_TASK) return net->ports;
+      return 0;
 }
 
 extern "C" ivl_signal_t ivl_scope_port(ivl_scope_t net, unsigned idx)
 {
       assert(net);
-      assert(net->type_ == IVL_SCT_FUNCTION);
+      assert(net->type_ == IVL_SCT_FUNCTION ||
+             net->type_ == IVL_SCT_TASK);
       assert(idx < net->ports);
       return net->port[idx];
 }

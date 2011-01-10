@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -85,6 +85,13 @@ void dll_target::task_def(const NetScope*net)
       assert(stmt_cur_);
       scop->def = stmt_cur_;
       stmt_cur_ = 0;
+
+      scop->ports = def->port_count();
+      if (scop->ports > 0) {
+	    scop->port = new ivl_signal_t[scop->ports];
+	    for (unsigned idx = 0 ;  idx < scop->ports ;  idx += 1)
+		  scop->port[idx] = find_signal(des_, def->port(idx));
+      }
 
 }
 

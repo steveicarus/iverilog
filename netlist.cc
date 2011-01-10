@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2545,7 +2545,7 @@ unsigned NetTaskDef::port_count() const
       return ports_.count();
 }
 
-NetNet* NetTaskDef::port(unsigned idx)
+NetNet* NetTaskDef::port(unsigned idx) const
 {
       assert(idx < ports_.count());
       return ports_[idx];

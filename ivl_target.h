@@ -1,7 +1,7 @@
 #ifndef __ivl_target_H
 #define __ivl_target_H
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1353,11 +1353,6 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  *
  *    (Should this be combined with ivl_lval_idx? -Ed)
  *
- * ivl_lval_mem (deprecated)
- *    If the l-value is a memory, this method returns an
- *    ivl_memory_t that represents that memory. Otherwise, it
- *    returns 0.
- *
  * ivl_lval_sig
  *    If the l-value is a variable, this method returns the signal
  *    object that is the target of the assign.
@@ -1382,13 +1377,6 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  *
  * The ivl_lval_part_off is the canonical base of a part or
  * bit select.
- *
- * - Memory words (Replace this with Array words below)
- * If the l-value is a memory word, the ivl_lval_mem function returns
- * a non-nil value. The ivl_lval_idx function will return an
- * expression that calculates an address for the memory. The compiler
- * will assure that the ivl_lval_width will exactly match the
- * ivl_memory_width of the memory word.
  *
  * - Array words
  * If the l-value is an array, then ivl_lval_idx function will return
