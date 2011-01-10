@@ -1,7 +1,7 @@
 #ifndef __vlog95_priv_H
 #define __vlog95_priv_H
 /*
- * Copyright (C) 2010 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2011 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,5 +37,31 @@ extern FILE*vlog_out;
  * Keep a count of the fatal errors that happen during code generation.
  */
 extern int vlog_errors;
+
+/*
+ * Keep the simulation time precision so that we can scale delays.
+ */
+extern int sim_precision;
+
+/*
+ * Keep the current indent level.
+ */
+extern unsigned indent;
+extern unsigned indent_incr;
+
+/*
+ * Emit the Verilog code for the given scope.
+ */
+extern int emit_scope(ivl_scope_t scope, ivl_scope_t parent);
+
+/*
+ * Emit a Verilog statement.
+ */
+extern void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt);
+
+/*
+ * Emit a Verilog expression.
+ */
+extern void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned width);
 
 #endif /* __vlog95_priv_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2011 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
 
 static const char*version_string =
 "Icarus Verilog VLOG95 Code Generator " VERSION " (" VERSION_TAG ")\n\n"
-"Copyright (C) 2010 Cary R. (cygcary@yahoo.com)\n\n"
+"Copyright (C) 2010-2011 Cary R. (cygcary@yahoo.com)\n\n"
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"
 "  the Free Software Foundation; either version 2 of the License, or\n"
@@ -45,9 +45,14 @@ static const char*version_string =
 
 FILE*vlog_out;
 int vlog_errors = 0;
+int sim_precision = 0;
+unsigned indent = 0;
+unsigned indent_incr = 2;
 
 int target_design(ivl_design_t des)
 {
+      ivl_scope_t *roots;
+      unsigned nroots, idx;
       const char*path = ivl_design_flag(des, "-o");
       assert(path);
 
@@ -66,6 +71,12 @@ int target_design(ivl_design_t des)
                         "VLOG95 Code Generator,\n");
       fprintf(vlog_out, " * Version: " VERSION " (" VERSION_TAG ")\n");
       fprintf(vlog_out, " */\n");
+
+      sim_precision = ivl_design_time_precision(des);
+
+	/* Get all the root modules and then convert each one. */
+      ivl_design_roots(des, &roots, &nroots);
+      for (idx = 0; idx < nroots; idx += 1) emit_scope(roots[idx], 0);
 
       fclose(vlog_out);
 
