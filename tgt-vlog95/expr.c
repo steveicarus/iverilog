@@ -76,16 +76,22 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case '|':
 	case '^':
 	case 'X':
-// HERE: Do these two need to be done differently (wid = 0)?
+	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    fprintf(vlog_out, " %s ", oper);
+	    emit_expr(scope, ivl_expr_oper2(expr), wid);
+	    break;
 	case 'a':
 	case 'o':
-// HERE: Do these two need to be done differently (r-value wid = 0)?
+	    emit_expr(scope, ivl_expr_oper1(expr), 0);
+	    fprintf(vlog_out, " %s ", oper);
+	    emit_expr(scope, ivl_expr_oper2(expr), 0);
+	    break;
 	case 'l':
 	case 'r':
 	case 'R':
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
 	    fprintf(vlog_out, " %s ", oper);
-	    emit_expr(scope, ivl_expr_oper2(expr), wid);
+	    emit_expr(scope, ivl_expr_oper2(expr), 0);
 	    break;
 	case 'A':
 	case 'O':
@@ -118,6 +124,20 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    break;
       }
       fprintf(vlog_out, ")");
+}
+
+static void emit_expr_concat(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+{
+      unsigned repeat = ivl_expr_repeat(expr);
+      unsigned idx, count = ivl_expr_parms(expr);
+
+      if (repeat != 1) fprintf(vlog_out, "{%u", repeat);
+      fprintf(vlog_out, "{");
+      for (idx = 0; idx < count; idx += 1) {
+	    emit_expr(scope, ivl_expr_parm(expr, idx), 0);
+      }
+      fprintf(vlog_out, "}");
+      if (repeat != 1) fprintf(vlog_out, "}");
 }
 
 static void emit_expr_number(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
@@ -181,8 +201,24 @@ static void emit_expr_number(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       if (ivl_expr_oper2(expr)) {
+	    assert(0);
+// HERE: Not finished.
       } else {
+// HERE: Should this sign extend if the expression is signed?
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+      }
+}
+
+static void emit_expr_sfunc(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+{
+      unsigned idx, count = ivl_expr_parms(expr);
+      fprintf(vlog_out, "%s", ivl_expr_name(expr));
+      if (count != 0) {
+	    fprintf(vlog_out, "(");
+	    for (idx = 0; idx < count; idx += 1) {
+		  emit_expr(scope, ivl_expr_parm(expr, idx), 0);
+	    }
+	    fprintf(vlog_out, ")");
       }
 }
 
@@ -192,6 +228,17 @@ static void emit_expr_signal(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 // HERE: Need support for an array select and an out of scope reference.
 //       Also pad a signed value to the given width.
       fprintf(vlog_out, "%s", ivl_signal_basename(sig));
+}
+
+static void emit_expr_ternary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+{
+      fprintf(vlog_out, "(");
+      emit_expr(scope, ivl_expr_oper1(expr), 0);
+      fprintf(vlog_out, " ? ");
+      emit_expr(scope, ivl_expr_oper2(expr), wid);
+      fprintf(vlog_out, " : ");
+      emit_expr(scope, ivl_expr_oper3(expr), wid);
+      fprintf(vlog_out, ")");
 }
 
 static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
@@ -243,6 +290,9 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case IVL_EX_BINARY:
 	    emit_expr_binary(scope, expr, wid);
 	    break;
+	case IVL_EX_CONCAT:
+	    emit_expr_concat(scope, expr, wid);
+	    break;
 	case IVL_EX_NUMBER:
 	    emit_expr_number(scope, expr, wid);
 	    break;
@@ -252,11 +302,17 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case IVL_EX_SELECT:
 	    emit_expr_select(scope, expr, wid);
 	    break;
+	case IVL_EX_SFUNC:
+	    emit_expr_sfunc(scope, expr, wid);
+	    break;
 	case IVL_EX_SIGNAL:
 	    emit_expr_signal(scope, expr, wid);
 	    break;
 	case IVL_EX_STRING:
 	    fprintf(vlog_out, "\"%s\"", ivl_expr_string(expr));
+	    break;
+	case IVL_EX_TERNARY:
+	    emit_expr_ternary(scope, expr, wid);
 	    break;
 	case IVL_EX_UNARY:
 	    emit_expr_unary(scope, expr, wid);

@@ -192,6 +192,9 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    fprintf(vlog_out, "\n`timescale %s/%s\n",
 	                      get_time_const(ivl_scope_time_units(scope)),
 	                      get_time_const(ivl_scope_time_precision(scope)));
+	    if (ivl_scope_is_cell(scope)) {
+		  fprintf(vlog_out, "`celldefine\n");
+	    }
 	    fprintf(vlog_out, "module %s", ivl_scope_tname(scope));
 // HERE: Still need to add port information.
 	    break;
@@ -287,7 +290,6 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 		  emit_net_def(sig);
 	    }
       }
-      if (count) fprintf(vlog_out, "\n");
 
 	/* Output the function/task body. */
       if (sc_type == IVL_SCT_TASK || sc_type == IVL_SCT_FUNCTION) {
@@ -304,6 +306,9 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	case IVL_SCT_MODULE:
 	    assert(indent == 0);
 	    fprintf(vlog_out, "endmodule\n");
+	    if (ivl_scope_is_cell(scope)) {
+		  fprintf(vlog_out, "`endcelldefine\n");
+	    }
 	    break;
 	case IVL_SCT_FUNCTION:
 	    fprintf(vlog_out, "%*cendfunction\n", indent, ' ');
