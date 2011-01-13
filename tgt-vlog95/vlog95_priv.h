@@ -25,6 +25,7 @@
 
 # include "config.h"
 # include "ivl_target.h"
+# include <inttypes.h>
 # include <stdio.h>
 # include <assert.h>
 
@@ -63,5 +64,10 @@ extern void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt);
  * Emit a Verilog expression.
  */
 extern void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned width);
+
+/*
+ * Emit a delay scaled to the current timescale (units and precision).
+ */
+extern void emit_scaled_delay(ivl_scope_t scope, uint64_t delay);
 
 #endif /* __vlog95_priv_H */

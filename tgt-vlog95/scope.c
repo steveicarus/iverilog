@@ -305,16 +305,18 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
       switch (sc_type) {
 	case IVL_SCT_MODULE:
 	    assert(indent == 0);
-	    fprintf(vlog_out, "endmodule\n");
+	    fprintf(vlog_out, "endmodule  /* %s */\n", ivl_scope_tname(scope));
 	    if (ivl_scope_is_cell(scope)) {
 		  fprintf(vlog_out, "`endcelldefine\n");
 	    }
 	    break;
 	case IVL_SCT_FUNCTION:
-	    fprintf(vlog_out, "%*cendfunction\n", indent, ' ');
+	    fprintf(vlog_out, "%*cendfunction  /* %s */\n", indent, ' ',
+	                      ivl_scope_tname(scope));
 	    break;
 	case IVL_SCT_TASK:
-	    fprintf(vlog_out, "%*cendtask\n", indent, ' ');
+	    fprintf(vlog_out, "%*cendtask  /* %s */\n", indent, ' ',
+	                      ivl_scope_tname(scope));
 	    break;
 	default:
 	    assert(0);

@@ -24,7 +24,7 @@
 # include "config.h"
 # include "vlog95_priv.h"
 
-// HERE: Do we need to use scope and wid?
+// HERE: Do we need to use wid?
 
 static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
@@ -138,6 +138,11 @@ static void emit_expr_concat(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       }
       fprintf(vlog_out, "}");
       if (repeat != 1) fprintf(vlog_out, "}");
+}
+
+static void emit_expr_delay(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+{
+      emit_scaled_delay(scope, ivl_expr_delay_val(expr));
 }
 
 static void emit_expr_number(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
@@ -292,6 +297,9 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    break;
 	case IVL_EX_CONCAT:
 	    emit_expr_concat(scope, expr, wid);
+	    break;
+	case IVL_EX_DELAY:
+	    emit_expr_delay(scope, expr, wid);
 	    break;
 	case IVL_EX_NUMBER:
 	    emit_expr_number(scope, expr, wid);
