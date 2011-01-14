@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -564,6 +564,7 @@ void dll_target::add_root(ivl_design_s &des__, const NetScope *s)
       root_->nattr = s->attr_cnt();
       root_->attr  = fill_in_attributes(s);
       root_->is_auto = 0;
+      root_->is_cell = s->is_cell();
 
       des__.nroots_++;
       if (des__.roots_)
