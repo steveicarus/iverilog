@@ -24,6 +24,7 @@
 # include <stdlib.h>
 # include "config.h"
 # include "vlog95_priv.h"
+# include "ivl_alloc.h"
 
 void emit_scaled_delay(ivl_scope_t scope, uint64_t delay)
 {

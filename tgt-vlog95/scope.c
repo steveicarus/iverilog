@@ -25,6 +25,7 @@
 # include <string.h>
 # include "config.h"
 # include "vlog95_priv.h"
+# include "ivl_alloc.h"
 
 static char*get_time_const(int time_value)
 {
@@ -48,8 +49,7 @@ static char*get_time_const(int time_value)
 	case -14: return "10fs";
 	case -15: return "1fs";
 	default:
-	    fprintf(stderr, "Invalid time constant %d\n", time_value);
-	    assert(0);
+	    fprintf(stderr, "Invalid time constant value %d.\n", time_value);
 	    return "N/A";
       }
 }
@@ -177,16 +177,98 @@ void emit_net_def(ivl_signal_t sig)
       }
 }
 
+static char *get_mangled_name(ivl_scope_t scope)
+{
+      char *name;
+	/* If the module has parameters than it may not be unique
+	 * so we create a mangled name version instead. */
+      if (ivl_scope_params(scope)) {
+	    unsigned idx;
+	    size_t len = strlen(ivl_scope_name(scope)) +
+	                 strlen(ivl_scope_tname(scope)) + 2;
+	    name = (char *)malloc(len);
+	    (void) strcpy(name, ivl_scope_tname(scope));
+	    (void) strcat(name, "_");
+	    (void) strcat(name, ivl_scope_name(scope));
+	    assert(name[len-1] == 0);
+	    for (idx = 0; idx < len; idx += 1) {
+		  if (name[idx] == '.') name[idx] = '_';
+	    }
+      } else {
+	    name = strdup(ivl_scope_tname(scope));
+      }
+      return name;
+}
+
+/*
+ * This search method may be slow for a large structural design with a
+ * large number of gate types. That's not what this converter was built
+ * for so this is probably OK. If this becomes an issue then we need a
+ * better method/data structure.
+*/
+static const char **scopes_emitted = 0;
+static unsigned num_scopes_emitted = 0;
+
+static unsigned scope_has_been_emitted(ivl_scope_t scope)
+{
+      unsigned idx;
+      for (idx = 0; idx < num_scopes_emitted; idx += 1) {
+	    if (! strcmp(ivl_scope_tname(scope), scopes_emitted[idx])) return 1;
+      }
+      return 0;
+}
+
+static void add_scope_to_list(ivl_scope_t scope)
+{
+      num_scopes_emitted += 1;
+      scopes_emitted = realloc(scopes_emitted, num_scopes_emitted *
+                                               sizeof(char *));
+      scopes_emitted[num_scopes_emitted-1] = ivl_scope_tname(scope);
+}
+
+void free_emitted_scope_list()
+{
+      free(scopes_emitted);
+      scopes_emitted = 0;
+      num_scopes_emitted = 0;
+}
+
+/*
+ * A list of module scopes that need to have their definition emitted when
+ * the current root scope (module) is finished is kept here.
+ */
+static ivl_scope_t *scopes_to_emit = 0;
+static unsigned num_scopes_to_emit = 0;
+static unsigned emitting_scopes = 0;
+
 int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 {
       ivl_scope_type_t sc_type = ivl_scope_type(scope);
       unsigned is_auto = ivl_scope_is_auto(scope);
       unsigned idx, count, start = 0;
+      char *name;
 
 	/* Output the scope definition. */
       switch (sc_type) {
 	case IVL_SCT_MODULE:
 	    assert(!is_auto);
+	    name = get_mangled_name(scope);
+	      /* This is an instantiation. */
+	    if (parent) {
+		  assert(indent != 0);
+		    /* If the module has parameters than it may not be unique
+		     * so we create a mangled name version instead. */
+		  fprintf(vlog_out, "\n%*c%s %s(", indent, ' ', name,
+		                    ivl_scope_basename(scope));
+// HERE: Still need to add port information.
+		  fprintf(vlog_out, ");\n");
+		  free(name);
+		  num_scopes_to_emit += 1;
+		  scopes_to_emit = realloc(scopes_to_emit, num_scopes_to_emit *
+		                                           sizeof(ivl_scope_t));
+		  scopes_to_emit[num_scopes_to_emit-1] = scope;
+		  return 0;
+	    }
 	    assert(indent == 0);
 	      /* Set the time scale for this scope. */
 	    fprintf(vlog_out, "\n`timescale %s/%s\n",
@@ -195,10 +277,12 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    if (ivl_scope_is_cell(scope)) {
 		  fprintf(vlog_out, "`celldefine\n");
 	    }
-	    fprintf(vlog_out, "module %s", ivl_scope_tname(scope));
+	    fprintf(vlog_out, "module %s", name);
+	    free(name);
 // HERE: Still need to add port information.
 	    break;
 	case IVL_SCT_FUNCTION:
+	    assert(indent != 0);
 	    fprintf(vlog_out, "\n%*cfunction", indent, ' ');
 	    assert(ivl_scope_ports(scope) >= 2);
 	      /* The function return information is the zero port. */
@@ -213,6 +297,7 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    }
 	    break;
 	case IVL_SCT_TASK:
+	    assert(indent != 0);
 	    fprintf(vlog_out, "\n%*ctask %s", indent, ' ',
 	                      ivl_scope_tname(scope));
 	    if (is_auto) {
@@ -224,6 +309,7 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    break;
 	case IVL_SCT_BEGIN:
 	case IVL_SCT_FORK:
+	    assert(indent != 0);
 	    return 0; /* A named begin/fork is handled in line. */
 	default:
 	    fprintf(stderr, "%s:%u: vlog95 error: Unsupported scope type "
@@ -282,7 +368,7 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    ivl_signal_t sig = ivl_scope_sig(scope, idx);
 	    if (ivl_signal_type(sig) == IVL_SIT_REG) {
 		    /* Do not output the implicit function return register. */
-		  if (sc_type == IVL_SCT_FUNCTION && 
+		  if (sc_type == IVL_SCT_FUNCTION &&
                       strcmp(ivl_signal_basename(sig),
 		              ivl_scope_tname(scope)) == 0) continue;
 		  emit_var_def(sig);
@@ -290,6 +376,9 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 		  emit_net_def(sig);
 	    }
       }
+
+// HERE: Need to find and print any continuous assignments/logic cells or
+//       initial/always blocks.
 
 	/* Output the function/task body. */
       if (sc_type == IVL_SCT_TASK || sc_type == IVL_SCT_FUNCTION) {
@@ -308,6 +397,25 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    fprintf(vlog_out, "endmodule  /* %s */\n", ivl_scope_tname(scope));
 	    if (ivl_scope_is_cell(scope)) {
 		  fprintf(vlog_out, "`endcelldefine\n");
+	    }
+	      /* If this is a root scope then emit any saved instance scopes.
+	       * Save any scope that does not have parameters/a mangled name
+	       * to a list so we don't print duplicate module definitions. */
+	    if (!emitting_scopes) {
+		  emitting_scopes = 1;
+		  for (idx =0; idx < num_scopes_to_emit; idx += 1) {
+			ivl_scope_t scope_to_emit = scopes_to_emit[idx];
+			if (scope_has_been_emitted(scope_to_emit)) continue;
+			(void) emit_scope(scope_to_emit, 0);
+			  /* If we used a mangled name then the instance is
+			   * unique so don't add it to the list. */
+			if (ivl_scope_params(scope_to_emit)) continue;
+			add_scope_to_list(scope_to_emit);
+		  }
+		  free(scopes_to_emit);
+		  scopes_to_emit = 0;
+		  num_scopes_to_emit = 0;
+		  emitting_scopes = 0;
 	    }
 	    break;
 	case IVL_SCT_FUNCTION:

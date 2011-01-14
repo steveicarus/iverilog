@@ -143,7 +143,49 @@ void emit_stmt_block_named(ivl_scope_t scope, ivl_statement_t stmt)
 
 static void emit_stmt_case(ivl_scope_t scope, ivl_statement_t stmt)
 {
-      assert(0);
+      char *name;
+      unsigned idx, default_case, count = ivl_stmt_case_count(stmt);
+      switch(ivl_statement_type(stmt)) {
+	case IVL_ST_CASE:
+	case IVL_ST_CASER:
+	    name = "case";
+	    break;
+	case IVL_ST_CASEX:
+	    name = "casex";
+	    break;
+	case IVL_ST_CASEZ:
+	    name = "casez";
+	    break;
+	default:
+	    assert(0);
+      }
+      fprintf(vlog_out, "%*c%s (", get_indent(), ' ', name);
+      emit_expr(scope, ivl_stmt_cond_expr(stmt), 0);
+      fprintf(vlog_out, ")\n");
+      indent += indent_incr;
+      default_case = count;
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_expr_t expr = ivl_stmt_case_expr(stmt, idx);
+	      /* This is the default case so emit it last. */
+	    if (expr == 0) {
+		  assert(default_case == count);
+		  default_case = idx;
+		  continue;
+	    }
+	    fprintf(vlog_out, "%*c", get_indent(), ' ');
+	    emit_expr(scope, expr, 0);
+	    fprintf(vlog_out, ":");
+	    single_indent = 1;
+	    emit_stmt(scope, ivl_stmt_case_stmt(stmt, idx));
+      }
+      if (default_case < count) {
+	    fprintf(vlog_out, "%*cdefault:", get_indent(), ' ');
+	    single_indent = 1;
+	    emit_stmt(scope, ivl_stmt_case_stmt(stmt, default_case));
+      }
+      assert(indent >= indent_incr);
+      indent -= indent_incr;
+      fprintf(vlog_out, "%*cendcase\n", get_indent(), ' ');
 }
 
 static void emit_stmt_cassign(ivl_scope_t scope, ivl_statement_t stmt)

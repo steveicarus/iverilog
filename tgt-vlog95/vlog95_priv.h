@@ -70,4 +70,9 @@ extern void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned width);
  */
 extern void emit_scaled_delay(ivl_scope_t scope, uint64_t delay);
 
+/*
+ * Cleanup functions.
+ */
+extern void free_emitted_scope_list();
+
 #endif /* __vlog95_priv_H */

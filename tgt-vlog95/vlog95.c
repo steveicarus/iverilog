@@ -78,6 +78,8 @@ int target_design(ivl_design_t des)
       ivl_design_roots(des, &roots, &nroots);
       for (idx = 0; idx < nroots; idx += 1) emit_scope(roots[idx], 0);
 
+      free_emitted_scope_list();
+
       fclose(vlog_out);
 
       return vlog_errors;
