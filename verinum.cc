@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -496,7 +496,6 @@ string verinum::as_string() const
 	    return "";
 
       string res;
-      bool leading_nuls = true;
       for (unsigned idx = nbits_ ;  idx > 0 ;  idx -= 8) {
 	    char char_val = 0;
 	    V*bp = bits_+idx;
@@ -509,8 +508,6 @@ string verinum::as_string() const
 	    if (*(--bp) == V1) char_val |= 0x04;
 	    if (*(--bp) == V1) char_val |= 0x02;
 	    if (*(--bp) == V1) char_val |= 0x01;
-	    if (char_val == 0 && leading_nuls)
-		  continue;
 
 	    if (char_val == '"' || char_val == '\\') {
 		  char tmp[5];
@@ -588,6 +585,9 @@ verinum pad_to_width(const verinum&that, unsigned width)
 	    val.set(idx, that[idx]);
 
       val.has_sign(that.has_sign());
+      if (that.is_string() && (width % 8) == 0) {
+	    val = verinum(val.as_string());
+      }
       return val;
 }
 
