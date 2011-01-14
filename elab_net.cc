@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -424,8 +424,8 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       }
 
       if (sig->type() == NetNet::UNRESOLVED_WIRE && sig->pin(0).is_linked()) {
-	    cerr << get_fileline() << ": error: Unresolved net " << sig->name()
-		 << " cannot have multiple drivers." << endl;
+	    cerr << get_fileline() << ": error: Unresolved net/uwire "
+	         << sig->name() << " cannot have multiple drivers." << endl;
 	    des->errors += 1;
 	    return 0;
       }
