@@ -203,6 +203,11 @@ static void emit_expr_number(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       }
 }
 
+static void emit_expr_scope(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+{
+      fprintf(vlog_out, "%s", ivl_scope_name(ivl_expr_scope(expr)));
+}
+
 static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       if (ivl_expr_oper2(expr)) {
@@ -214,17 +219,28 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       }
 }
 
-static void emit_expr_sfunc(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+/*
+ * This routine is used to emit both system and user functions.
+ */
+static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, const char* name)
 {
       unsigned idx, count = ivl_expr_parms(expr);
-      fprintf(vlog_out, "%s", ivl_expr_name(expr));
+      fprintf(vlog_out, "%s", name);
       if (count != 0) {
 	    fprintf(vlog_out, "(");
+	    count -= 1;
 	    for (idx = 0; idx < count; idx += 1) {
 		  emit_expr(scope, ivl_expr_parm(expr, idx), 0);
+		  fprintf(vlog_out, ", ");
 	    }
+	    emit_expr(scope, ivl_expr_parm(expr, count), 0);
 	    fprintf(vlog_out, ")");
       }
+}
+
+static void emit_expr_sfunc(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+{
+      emit_expr_func(scope, expr, ivl_expr_name(expr));
 }
 
 static void emit_expr_signal(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
@@ -244,6 +260,12 @@ static void emit_expr_ternary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       fprintf(vlog_out, " : ");
       emit_expr(scope, ivl_expr_oper3(expr), wid);
       fprintf(vlog_out, ")");
+}
+
+static void emit_expr_ufunc(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+{
+      ivl_scope_t ufunc_def = ivl_expr_def(expr);
+      emit_expr_func(scope, expr, ivl_scope_tname(ufunc_def));
 }
 
 static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
@@ -307,6 +329,9 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case IVL_EX_REALNUM:
 	    fprintf(vlog_out, "%#g", ivl_expr_dvalue(expr));
 	    break;
+	case IVL_EX_SCOPE:
+	    emit_expr_scope(scope, expr, wid);
+	    break;
 	case IVL_EX_SELECT:
 	    emit_expr_select(scope, expr, wid);
 	    break;
@@ -321,6 +346,9 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    break;
 	case IVL_EX_TERNARY:
 	    emit_expr_ternary(scope, expr, wid);
+	    break;
+	case IVL_EX_UFUNC:
+	    emit_expr_ufunc(scope, expr, wid);
 	    break;
 	case IVL_EX_UNARY:
 	    emit_expr_unary(scope, expr, wid);

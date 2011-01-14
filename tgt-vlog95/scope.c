@@ -177,12 +177,12 @@ void emit_net_def(ivl_signal_t sig)
       }
 }
 
-static char *get_mangled_name(ivl_scope_t scope)
+static char *get_mangled_name(ivl_scope_t scope, unsigned root)
 {
       char *name;
-	/* If the module has parameters than it may not be unique
-	 * so we create a mangled name version instead. */
-      if (ivl_scope_params(scope)) {
+	/* If the module has parameters and it's not a root module than it
+	 * may not be unique so we create a mangled name version instead. */
+      if (ivl_scope_params(scope) && ! root) {
 	    unsigned idx;
 	    size_t len = strlen(ivl_scope_name(scope)) +
 	                 strlen(ivl_scope_tname(scope)) + 2;
@@ -252,7 +252,7 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
       switch (sc_type) {
 	case IVL_SCT_MODULE:
 	    assert(!is_auto);
-	    name = get_mangled_name(scope);
+	    name = get_mangled_name(scope, !parent && !emitting_scopes);
 	      /* This is an instantiation. */
 	    if (parent) {
 		  assert(indent != 0);

@@ -291,9 +291,12 @@ static void emit_stmt_stask(ivl_scope_t scope, ivl_statement_t stmt)
       fprintf(vlog_out, "%*c%s", get_indent(), ' ', ivl_stmt_name(stmt));
       if (count != 0) {
 	    fprintf(vlog_out, "(");
+	    count -= 1;
 	    for (idx = 0; idx < count; idx += 1) {
 		  emit_expr(scope, ivl_stmt_parm(stmt, idx), 0);
+		  fprintf(vlog_out, ", ");
 	    }
+	    emit_expr(scope, ivl_stmt_parm(stmt, count), 0);
 	    fprintf(vlog_out, ")");
       }
       fprintf(vlog_out, ";\n");
