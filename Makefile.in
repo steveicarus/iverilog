@@ -51,7 +51,10 @@ endif
 
 # To get the version headers to build correctly we only want to look
 # for C++ files in the source directory. All other files will require
-# an explicit $(srcdir).
+# an explicit $(srcdir). The one exception to this is if we need to
+# rebuild the lexor_keyword.cc file. If we do, then we want to use the
+# local version instead of the one is $(srcdir).
+vpath lexor_keyword.cc .
 vpath %.cc $(srcdir)
 
 bindir = @bindir@
