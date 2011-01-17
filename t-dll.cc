@@ -942,6 +942,9 @@ void dll_target::logic(const NetLogic*net)
 
       make_logic_delays_(obj, net);
 
+      obj->file = net->get_file();
+      obj->lineno = net->get_lineno();
+
       scope_add_logic(scop, obj);
 }
 

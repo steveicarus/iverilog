@@ -693,6 +693,18 @@ extern "C" int ivl_island_flag_test(ivl_island_t net, unsigned flag)
 	    return net->flags[flag];
 }
 
+extern "C" const char*ivl_logic_file(ivl_net_logic_t net)
+{
+      assert(net);
+      return net->file.str();
+}
+
+extern "C" unsigned ivl_logic_lineno(ivl_net_logic_t net)
+{
+      assert(net);
+      return net->lineno;
+}
+
 extern "C" const char* ivl_logic_attr(ivl_net_logic_t net, const char*key)
 {
       assert(net);

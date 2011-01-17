@@ -85,6 +85,8 @@ ivl_logic_basename
 ivl_logic_delay
 ivl_logic_drive0
 ivl_logic_drive1
+ivl_logic_file
+ivl_logic_lineno
 ivl_logic_name
 ivl_logic_pin
 ivl_logic_pins

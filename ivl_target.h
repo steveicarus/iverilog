@@ -217,6 +217,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_EVENT  = 17,
       IVL_EX_MEMORY = 4,
       IVL_EX_NUMBER = 5,
+      IVL_EX_REALNUM  = 16,
       IVL_EX_SCOPE  = 6,
       IVL_EX_SELECT = 7,
       IVL_EX_SFUNC  = 8,
@@ -225,8 +226,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_TERNARY = 11,
       IVL_EX_UFUNC = 12,
       IVL_EX_ULONG = 13,
-      IVL_EX_UNARY = 14,
-      IVL_EX_REALNUM  = 16
+      IVL_EX_UNARY = 14
 } ivl_expr_type_t;
 
 /* This is the type code for an ivl_net_logic_t object. */
@@ -246,12 +246,12 @@ typedef enum ivl_logic_e {
       IVL_LO_NOTIF0 = 10,
       IVL_LO_NOTIF1 = 11,
       IVL_LO_OR     = 12,
+      IVL_LO_PMOS   = 17,
       IVL_LO_PULLDOWN  = 13,
       IVL_LO_PULLUP = 14,
       IVL_LO_RCMOS  = 23,
       IVL_LO_RNMOS  = 15,
       IVL_LO_RPMOS  = 16,
-      IVL_LO_PMOS   = 17,
       IVL_LO_XNOR   = 18,
       IVL_LO_XOR    = 19,
 
@@ -864,6 +864,9 @@ extern unsigned ivl_file_table_size(void);
 extern int ivl_island_flag_set(ivl_island_t net, unsigned flag, int value);
 extern int ivl_island_flag_test(ivl_island_t net, unsigned flag);
 
+extern const char* ivl_logic_file(ivl_net_logic_t net);
+extern unsigned ivl_logic_lineno(ivl_net_logic_t net);
+
 /* LOGIC
  * These types and functions support manipulation of logic gates. The
  * ivl_logic_t enumeration identifies the various kinds of gates that
@@ -1023,7 +1026,6 @@ extern unsigned    ivl_udp_init(ivl_udp_t net);
 extern const char* ivl_udp_row(ivl_udp_t net, unsigned idx);
 extern unsigned    ivl_udp_rows(ivl_udp_t net);
 extern const char* ivl_udp_name(ivl_udp_t net);
-
 
 extern const char* ivl_lpm_file(ivl_lpm_t net);
 extern unsigned ivl_lpm_lineno(ivl_lpm_t net);

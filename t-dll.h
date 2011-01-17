@@ -1,7 +1,7 @@
 #ifndef __t_dll_H
 #define __t_dll_H
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -467,6 +467,8 @@ struct ivl_net_logic_s {
 
       perm_string name_;
       ivl_scope_t scope_;
+      perm_string file;
+      unsigned lineno;
 
       unsigned npins_;
       ivl_nexus_t*pins_;
