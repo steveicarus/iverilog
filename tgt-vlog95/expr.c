@@ -14,11 +14,6 @@
  *  You should have received a copy of the GNU General Public License along
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *
- * This is the vlog95 target module. It generates a 1364-1995 compliant
- * netlist from the input netlist. The generated netlist is expected to
- * be simulation equivalent to the original.
  */
 
 # include "config.h"
@@ -153,52 +148,63 @@ static void emit_expr_number(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	 * represented as an integer. We can trim any matching MSB bits
 	 * to make it fit. We do not support undefined bits. */
       if (ivl_expr_signed(expr)) {
-	    unsigned trim_wid = nbits - 1;
-	    const char msb = bits[trim_wid];
-	    for (/* none */; trim_wid > 0; trim_wid -= 1) {
-		  if (msb != bits[trim_wid]) {
-			trim_wid += 1;
+	    int rtype;
+	    int32_t value = get_int32_from_number(expr, &rtype);
+	    if (rtype > 0) {
+		  fprintf(vlog_out, "<invalid>");
+		  fprintf(stderr, "%s:%u: vlog95 error: Signed number is "
+		                  "greater than 32 bits (%u) and cannot be "
+		                  "safely represented.\n",
+		                  ivl_expr_file(expr), ivl_expr_lineno(expr),
+		                  rtype);
+	    }
+	    if (rtype < 0) {
+		  fprintf(vlog_out, "<invalid>");
+		  fprintf(stderr, "%s:%u: vlog95 error: Signed number has "
+		                  "an undefined bit and cannot be "
+		                  "represented.\n",
+		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
+		  vlog_errors += 1;
+		  return;
+	    }
+	    fprintf(vlog_out, "%"PRId32, value);
+	/* An unsigned number is represented in hex if all the bits are
+	 * defined and it is more than a single bit otherwise it is
+	 * represented in binary form to preserve all the information. */
+      } else {
+	    int idx;
+	    unsigned has_undef = 0;
+	    for (idx = (int)nbits -1; idx >= 0; idx -= 1) {
+		  if ((bits[idx] != '0') && (bits[idx] != '1')) {
+			has_undef = 1;
 			break;
 		  }
 	    }
-	    trim_wid += 1;
-	    if (trim_wid > 32U) {
-		  fprintf(vlog_out, "<oversized_signed>");
-		  fprintf(stderr, "%s:%u: vlog95 error: Signed number is "
-		          "greater than 32 bits (%u) and cannot be safely "
-		          "represented.\n",
-		          ivl_expr_file(expr), ivl_expr_lineno(expr), trim_wid);
-		  vlog_errors += 1;
-		  return;
+	    if (has_undef || (nbits < 2)) {
+		  fprintf(vlog_out, "%u'b", nbits);
+		  for (idx = (int)nbits-1; idx >= 0; idx -= 1) {
+			fprintf(vlog_out, "%c", bits[idx]);
+		  }
 	    } else {
-		  unsigned idx;
-		  int32_t value = 0;
-		  for (idx = 0; idx < trim_wid; idx += 1) {
-			if (bits[idx] == '1') value |= 1U << idx;
-			else if (bits[idx] != '0') {
-			      fprintf(vlog_out, "<undefined_signed>");
-			      fprintf(stderr, "%s:%u: vlog95 error: Signed "
-			                      "number has an undefined bit "
-			                      "and cannot be represented.\n",
-			                      ivl_expr_file(expr),
-			                      ivl_expr_lineno(expr));
-			      vlog_errors += 1;
-			      return;
+		  int start = 4*(nbits/4);
+		  unsigned result = 0;
+		  fprintf(vlog_out, "%u'h", nbits);
+		    /* The first digit may not be a full hex digit. */
+		  if (start < nbits) {
+			for (idx = start; idx < nbits; idx += 1) {
+			      if (bits[idx] == '1') result |= 1U << (idx%4);
 			}
+			fprintf(vlog_out, "%1x", result);
 		  }
-		    /* Sign extend as needed. */
-		  if (msb == '1' && trim_wid < 32U) {
-			value |= ~((1U << trim_wid) - 1U);
+		    /* Now print the full hex digits. */
+		  for (idx = start-1; idx >= 0; idx -= 4) {
+			result = 0;
+			if (bits[idx] == '1') result |= 0x8;
+			if (bits[idx-1] == '1') result |= 0x4;
+			if (bits[idx-2] == '1') result |= 0x2;
+			if (bits[idx-3] == '1') result |= 0x1;
+			fprintf(vlog_out, "%1x", result);
 		  }
-		  fprintf(vlog_out, "%"PRId32, value);
-	    }
-	/* An unsigned number is always represented in binary form to
-	 * preserve all the information. */
-      } else {
-	    int idx;
-	    fprintf(vlog_out, "%u'b", nbits);
-	    for (idx = (int)nbits-1; idx >= 0; idx -= 1) {
-		  fprintf(vlog_out, "%c", bits[idx]);
 	    }
       }
 }
@@ -210,12 +216,29 @@ static void emit_expr_scope(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 
 static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
-      if (ivl_expr_oper2(expr)) {
-	    assert(0);
-// HERE: Not finished.
+      ivl_expr_t sel_expr = ivl_expr_oper2(expr);
+      ivl_expr_t sub_expr = ivl_expr_oper1(expr);
+      if (sel_expr) {
+	    ivl_signal_t sig = ivl_expr_signal(sub_expr);
+	    int msb = 1;
+	    int lsb = 0;
+	    unsigned width = ivl_expr_width(expr);
+	    assert(width > 0);
+	    if (ivl_expr_type(sub_expr) == IVL_EX_SIGNAL) {
+		  msb = ivl_signal_msb(sig);
+		  lsb = ivl_signal_lsb(sig);
+	    }
+	    emit_expr(scope, sub_expr, wid);
+	    if (width == 1) {
+		  fprintf(vlog_out, "[");
+		  emit_scaled_expr(scope, sel_expr, msb, lsb);
+		  fprintf(vlog_out, "]");
+	    } else {
+		  emit_scaled_range(scope, sel_expr, width, msb, lsb);
+	    }
       } else {
 // HERE: Should this sign extend if the expression is signed?
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    emit_expr(scope, sub_expr, wid);
       }
 }
 
@@ -231,6 +254,8 @@ static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, const char* name)
 	    count -= 1;
 	    for (idx = 0; idx < count; idx += 1) {
 		  emit_expr(scope, ivl_expr_parm(expr, idx), 0);
+// HERE: Do we need to support a NULL argument for the system functions?
+//       See what was done system tasks.
 		  fprintf(vlog_out, ", ");
 	    }
 	    emit_expr(scope, ivl_expr_parm(expr, count), 0);
@@ -246,9 +271,15 @@ static void emit_expr_sfunc(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 static void emit_expr_signal(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
-// HERE: Need support for an array select and an out of scope reference.
-//       Also pad a signed value to the given width.
+      emit_scope_module_path(scope, ivl_signal_scope(sig));
       fprintf(vlog_out, "%s", ivl_signal_basename(sig));
+      if (ivl_signal_dimensions(sig)) {
+	    int lsb = ivl_signal_array_base(sig);
+	    int msb = lsb + ivl_signal_array_count(sig);
+	    fprintf(vlog_out, "[");
+	    emit_scaled_expr(scope, ivl_expr_oper1(expr), msb, lsb);
+	    fprintf(vlog_out, "]");
+      }
 }
 
 static void emit_expr_ternary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
@@ -265,6 +296,8 @@ static void emit_expr_ternary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 static void emit_expr_ufunc(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_scope_t ufunc_def = ivl_expr_def(expr);
+// HERE: I think we need to also consider the scope of the func relative
+//       to the calling scope to get the correct name.
       emit_expr_func(scope, expr, ivl_scope_tname(ufunc_def));
 }
 

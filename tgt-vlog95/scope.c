@@ -14,11 +14,6 @@
  *  You should have received a copy of the GNU General Public License along
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *
- * This is the vlog95 target module. It generates a 1364-1995 compliant
- * netlist from the input netlist. The generated netlist is expected to
- * be simulation equivalent to the original.
  */
 
 # include <inttypes.h>
@@ -200,6 +195,208 @@ static char *get_mangled_name(ivl_scope_t scope, unsigned root)
       return name;
 }
 
+static void emit_gate_drive(ivl_net_logic_t nlogic, ivl_drive_t drive)
+{
+      switch (drive) {
+	case IVL_DR_HiZ:
+	    fprintf(vlog_out, "highz");
+	    break;
+	case IVL_DR_WEAK:
+	    fprintf(vlog_out, "weak");
+	    break;
+	case IVL_DR_PULL:
+	    fprintf(vlog_out, "pull");
+	    break;
+	case IVL_DR_STRONG:
+	    fprintf(vlog_out, "strong");
+	    break;
+	case IVL_DR_SUPPLY:
+	    fprintf(vlog_out, "supply");
+	    break;
+	default:
+	    fprintf(vlog_out, "<invalid>");
+	    fprintf(stderr, "%s:%u: vlog95 error: Unsupported gate "
+	                    "drive (%d)\n", ivl_logic_file(nlogic),
+	                    ivl_logic_lineno(nlogic), (int)drive);
+	    vlog_errors += 1;
+	    break;
+      }
+}
+
+static void emit_gate_strength(ivl_net_logic_t nlogic)
+{
+      ivl_drive_t drive1 = ivl_logic_drive1(nlogic);
+      ivl_drive_t drive0 = ivl_logic_drive0(nlogic);
+      if ((drive1 != IVL_DR_STRONG) || (drive0 != IVL_DR_STRONG)) {
+	    fprintf(vlog_out, " (");
+	    emit_gate_drive(nlogic, drive1);
+	    fprintf(vlog_out, "1, ");
+	    emit_gate_drive(nlogic, drive0);
+	    fprintf(vlog_out, "0)");
+      }
+}
+
+static void emit_gate_delay(ivl_scope_t scope, ivl_net_logic_t nlogic,
+                            unsigned dly_count)
+{
+      ivl_expr_t rise = ivl_logic_delay(nlogic, 0);
+      ivl_expr_t fall = ivl_logic_delay(nlogic, 1);
+      ivl_expr_t decay = ivl_logic_delay(nlogic, 2);
+      assert((dly_count >= 2) && (dly_count <= 3));
+
+	/* No delays. */
+      if (! rise) {
+	    assert(! fall);
+	    assert(! decay);
+	    return;
+      }
+	/* If all three delays match then we only have a single delay. */
+      if ((rise == fall) && (rise == decay)) {
+	    fprintf(vlog_out, " #");
+	    emit_scaled_delayx(scope, rise);
+	    return;
+      }
+	/* If we have a gate that only supports two delays then print them. */
+      if (dly_count == 2) {
+	    fprintf(vlog_out, " #(");
+	    emit_scaled_delayx(scope, rise);
+	    fprintf(vlog_out, ",");
+	    emit_scaled_delayx(scope, fall);
+	    fprintf(vlog_out, ")");
+	    return;
+      }
+
+	/* What's left is a gate that supports three delays. */
+      fprintf(vlog_out, " #(");
+      emit_scaled_delayx(scope, rise);
+      fprintf(vlog_out, ",");
+      emit_scaled_delayx(scope, fall);
+      if (decay) {
+	    fprintf(vlog_out, ",");
+	    emit_scaled_delayx(scope, decay);
+      }
+      fprintf(vlog_out, ")");
+}
+
+static void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
+{
+      unsigned idx, count, dly_count;
+      fprintf(vlog_out, "%*c", indent, ' ');
+      switch (ivl_logic_type(nlogic)) {
+	case IVL_LO_AND:
+            fprintf(vlog_out, "and");
+            dly_count = 2;
+	    break;
+	case IVL_LO_BUF:
+            fprintf(vlog_out, "buf");
+            dly_count = 2;
+	    break;
+	case IVL_LO_BUFIF0:
+            fprintf(vlog_out, "bufif0");
+            dly_count = 3;
+	    break;
+	case IVL_LO_BUFIF1:
+            fprintf(vlog_out, "bufif1");
+            dly_count = 3;
+	    break;
+	case IVL_LO_CMOS:
+            fprintf(vlog_out, "cmos");
+            dly_count = 3;
+	    break;
+	case IVL_LO_NAND:
+            fprintf(vlog_out, "nand");
+            dly_count = 2;
+	    break;
+	case IVL_LO_NMOS:
+            fprintf(vlog_out, "nmos");
+            dly_count = 3;
+	    break;
+	case IVL_LO_NOR:
+            fprintf(vlog_out, "nor");
+            dly_count = 2;
+	    break;
+	case IVL_LO_NOT:
+            fprintf(vlog_out, "not");
+            dly_count = 2;
+	    break;
+	case IVL_LO_NOTIF0:
+            fprintf(vlog_out, "notif0");
+            dly_count = 3;
+	    break;
+	case IVL_LO_NOTIF1:
+            fprintf(vlog_out, "notif1");
+            dly_count = 3;
+	    break;
+	case IVL_LO_OR:
+            fprintf(vlog_out, "or");
+            dly_count = 2;
+	    break;
+	case IVL_LO_PMOS:
+            fprintf(vlog_out, "pmos");
+            dly_count = 3;
+	    break;
+	case IVL_LO_PULLDOWN:
+            fprintf(vlog_out, "pulldown");
+            dly_count = 0;
+	    break;
+	case IVL_LO_PULLUP:
+            fprintf(vlog_out, "pullup");
+            dly_count = 0;
+	    break;
+	case IVL_LO_RCMOS:
+            fprintf(vlog_out, "rcmos");
+            dly_count = 3;
+	    break;
+	case IVL_LO_RNMOS:
+            fprintf(vlog_out, "rnmos");
+            dly_count = 3;
+	    break;
+	case IVL_LO_RPMOS:
+            fprintf(vlog_out, "rpmos");
+            dly_count = 3;
+	    break;
+	case IVL_LO_XNOR:
+            fprintf(vlog_out, "xnor");
+            dly_count = 2;
+	    break;
+	case IVL_LO_XOR:
+            fprintf(vlog_out, "xor");
+            dly_count = 2;
+	    break;
+	default:
+// HERE: Missing support for BUFT, BUFZ, UDP.
+            fprintf(vlog_out, "<unknown>(");
+	    fprintf(stderr, "%s:%u: vlog95 error: Unsupported logic type "
+	                    "(%d) named: %s.\n", ivl_logic_file(nlogic),
+	                    ivl_logic_lineno(nlogic), ivl_logic_type(nlogic),
+	                    ivl_logic_basename(nlogic));
+            vlog_errors += 1;
+            dly_count = 0;
+	    break;
+      }
+      emit_gate_strength(nlogic);
+      if (dly_count) emit_gate_delay(scope, nlogic, dly_count);
+      fprintf(vlog_out, " %s(", ivl_logic_basename(nlogic));
+      count = ivl_logic_pins(nlogic);
+      count -= 1;
+      for (idx = 0; idx < count; idx += 1) {
+	    emit_name_of_nexus(ivl_logic_pin(nlogic, idx));
+	    fprintf(vlog_out, ", ");
+      }
+      emit_name_of_nexus(ivl_logic_pin(nlogic, count));
+      fprintf(vlog_out, ");\n");
+}
+
+/*
+ * This function is called for each process in the design so that we
+ * can extract the processes for the given scope.
+ */
+static int find_process(ivl_process_t proc, ivl_scope_t scope)
+{
+      if (scope == ivl_process_scope(proc)) emit_process(scope, proc);
+      return 0;
+}
+
 /*
  * This search method may be slow for a large structural design with a
  * large number of gate types. That's not what this converter was built
@@ -377,8 +574,18 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    }
       }
 
-// HERE: Need to find and print any continuous assignments/logic cells or
-//       initial/always blocks.
+// HERE: Need to find and print any continuous assignments.
+
+      if (sc_type == IVL_SCT_MODULE) {
+	      /* Output any logic devices. */
+	    count = ivl_scope_logs(scope);
+	    for (idx = 0; idx < count; idx += 1) {
+		  emit_logic(scope, ivl_scope_log(scope, idx));
+	    }
+
+	      /* Output the initial/always blocks for this module. */
+	    ivl_design_process(design, (ivl_process_f)find_process, scope);
+      }
 
 	/* Output the function/task body. */
       if (sc_type == IVL_SCT_TASK || sc_type == IVL_SCT_FUNCTION) {

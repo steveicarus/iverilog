@@ -16,11 +16,6 @@
  *  You should have received a copy of the GNU General Public License along
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- *
- * This is the vlog95 target module. It generates a 1364-1995 compliant
- * netlist from the input netlist. The generated netlist is expected to
- * be simulation equivalent to the original.
  */
 
 # include "config.h"
@@ -28,6 +23,11 @@
 # include <inttypes.h>
 # include <stdio.h>
 # include <assert.h>
+
+/*
+ * The design we are emitting.
+ */
+extern ivl_design_t design;
 
 /*
  * This is the file that the converted design is written to.
@@ -51,24 +51,38 @@ extern unsigned indent;
 extern unsigned indent_incr;
 
 /*
- * Emit the Verilog code for the given scope.
+ * Emit various Verilog types.
  */
+extern void emit_event(ivl_scope_t scope, ivl_statement_t stmt);
+extern void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned width);
+extern void emit_process(ivl_scope_t scope, ivl_process_t proc);
 extern int emit_scope(ivl_scope_t scope, ivl_scope_t parent);
-
-/*
- * Emit a Verilog statement.
- */
 extern void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt);
 
-/*
- * Emit a Verilog expression.
- */
-extern void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned width);
+extern void emit_scaled_delay(ivl_scope_t scope, uint64_t delay);
+extern void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr);
+extern void emit_scaled_expr(ivl_scope_t scope, ivl_expr_t expr,
+                             int msb, int lsb);
+extern void emit_scaled_range(ivl_scope_t scope, ivl_expr_t expr,
+                              unsigned width, int msb, int lsb);
+extern void emit_scope_path(ivl_scope_t scope, ivl_scope_t call_scope);
+extern void emit_scope_module_path(ivl_scope_t scope, ivl_scope_t call_scope);
+extern void emit_name_of_nexus(ivl_nexus_t nex);
 
 /*
- * Emit a delay scaled to the current timescale (units and precision).
+ * Find the enclosing module scope.
  */
-extern void emit_scaled_delay(ivl_scope_t scope, uint64_t delay);
+extern ivl_scope_t get_module_scope(ivl_scope_t scope);
+
+/*
+ * Get an int32_t/uint64_t from a number is possible. The return type is
+ * 0 for a valid value, negative for a number with undefined bits and
+ * positive it the value is too large. The positive value is the minimum
+ * number of bits required to represent the value.
+ */
+extern int32_t get_int32_from_number(ivl_expr_t expr, int *return_type);
+extern int64_t get_int64_from_number(ivl_expr_t expr, int *return_type);
+extern uint64_t get_uint64_from_number(ivl_expr_t expr, int *return_type);
 
 /*
  * Cleanup functions.
