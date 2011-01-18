@@ -16,10 +16,57 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+# include <inttypes.h>
 # include "config.h"
 # include "vlog95_priv.h"
 
-// HERE: Do we need to use wid?
+// HERE: Do we need to use wid in these routines? We should probably use
+//       it to verify that the expressions have the expected width.
+
+/*
+ * We can convert any 2^n ** <unsigned variable> expression to
+ * 1 << (n * <unsigned variable>). If the variable is signed then we need
+ * to add a check for less than zero and for that case return 0.
+ */
+static unsigned emit_power_as_shift(ivl_scope_t scope, ivl_expr_t expr,
+                                    unsigned wid)
+{
+      int rtype;
+      int64_t value, scale;
+      unsigned is_signed_rval = 0;
+      unsigned expr_wid;
+      ivl_expr_t lval = ivl_expr_oper1(expr);
+      ivl_expr_t rval = ivl_expr_oper2(expr);
+	/* The L-value must be a number. */
+      if (ivl_expr_type(lval) != IVL_EX_NUMBER) return 0;
+	/* The L-value must of the form 2^n. */
+      value = get_int64_from_number(lval, &rtype);
+      if (rtype) return 0;
+      expr_wid = ivl_expr_width(lval);
+      if (value < 2) return 0;
+      if (value % 2) return 0;
+	/* Generate the appropriate conversion. */
+      if (ivl_expr_signed(rval)) {
+	    emit_expr(scope, rval, 0);
+	    fprintf(vlog_out, " < 0 ? %u'h0 : (", expr_wid);
+	    is_signed_rval = 1;
+      }
+      scale = value / 2;
+      fprintf(vlog_out, "%u'h1 << ", expr_wid);
+      if (scale != 1) {
+	    if (is_signed_rval) {
+		  fprintf(vlog_out, "(%"PRId64, scale);
+	    } else {
+		  fprintf(vlog_out, "(%u'h%"PRIx64,
+		                    ivl_expr_width(rval), scale);
+	    }
+	    fprintf(vlog_out, " * ");
+      }
+      emit_expr(scope, rval, 0);
+      if (scale != 1) fprintf(vlog_out, ")");
+      if (is_signed_rval) fprintf(vlog_out, ")");
+      return 1;
+}
 
 static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
@@ -97,14 +144,15 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    fprintf(vlog_out, ")");
 	    break;
 	case 'p':
-// HERE: We can convert 2 ** <r-val> to 1 << <r-val>
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
-	    fprintf(vlog_out, " ** ");
-	    emit_expr(scope, ivl_expr_oper2(expr), 0);
-	    fprintf(stderr, "%s:%u: vlog95 error: Power operator is not "
-	                    "supported.\n",
-	                    ivl_expr_file(expr), ivl_expr_lineno(expr));
-	    vlog_errors += 1;
+	    if (! emit_power_as_shift(scope, expr, wid)) {
+		  emit_expr(scope, ivl_expr_oper1(expr), wid);
+		  fprintf(vlog_out, " ** ");
+		  emit_expr(scope, ivl_expr_oper2(expr), 0);
+		  fprintf(stderr, "%s:%u: vlog95 error: Power operator is not "
+		                  "supported.\n",
+		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
+		  vlog_errors += 1;
+	    }
 	    break;
 	default:
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
