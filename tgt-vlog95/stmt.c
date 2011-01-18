@@ -111,10 +111,10 @@ static void emit_stmt_lval_piece(ivl_scope_t scope, ivl_lval_t lval)
 
 static unsigned emit_stmt_lval(ivl_scope_t scope, ivl_statement_t stmt)
 {
-      unsigned idx;
       unsigned count = ivl_stmt_lvals(stmt);
       unsigned wid = 0;
       if (count > 1) {
+	    unsigned idx;
 	    ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
 	    wid += ivl_lval_width(lval);
 	    fprintf(vlog_out, "{");
@@ -399,9 +399,10 @@ static void emit_stmt_repeat(ivl_scope_t scope, ivl_statement_t stmt)
 
 static void emit_stmt_stask(ivl_scope_t scope, ivl_statement_t stmt)
 {
-      unsigned idx, count = ivl_stmt_parm_count(stmt);
+      unsigned count = ivl_stmt_parm_count(stmt);
       fprintf(vlog_out, "%*c%s", get_indent(), ' ', ivl_stmt_name(stmt));
       if (count != 0) {
+	    unsigned idx;
 	    fprintf(vlog_out, "(");
 	    count -= 1;
 	    for (idx = 0; idx < count; idx += 1) {

@@ -247,9 +247,10 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
  */
 static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, const char* name)
 {
-      unsigned idx, count = ivl_expr_parms(expr);
+      unsigned count = ivl_expr_parms(expr);
       fprintf(vlog_out, "%s", name);
       if (count != 0) {
+	    unsigned idx;
 	    fprintf(vlog_out, "(");
 	    count -= 1;
 	    for (idx = 0; idx < count; idx += 1) {

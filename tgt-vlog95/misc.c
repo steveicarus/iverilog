@@ -89,11 +89,10 @@ void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr)
 	    emit_scaled_delay(scope, value);
       } else {
 	    int exp = ivl_scope_time_units(scope) - sim_precision;
-	    uint64_t scale = 1;
 	    assert(exp >= 0);
 	    if (exp == 0) emit_expr(scope, expr, 0);
 	    else {
-		  uint64_t scale_val;
+		  uint64_t scale_val, scale = 1;
 		  int rtype;
 		    /* This is as easy as removing the multiple that was
 		     * added to scale the value to the simulation time,
