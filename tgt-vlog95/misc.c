@@ -49,11 +49,14 @@ void emit_scaled_delay(ivl_scope_t scope, uint64_t delay)
 	    }
 	    delay /= 10;
       }
-// HERE: If there is no frac then this has to fit into 31 bits like any
-//       other integer.
-      fprintf(vlog_out, "%"PRIu64, delay);
       if (real_dly) {
-	    fprintf(vlog_out, ".%s", frac);
+	    fprintf(vlog_out, "%"PRIu64".%s", delay, frac);
+      } else {
+	    if (delay & 0xffffffff80000000) {
+		  fprintf(vlog_out, "(64'd%"PRIu64")", delay);
+	    } else {
+		  fprintf(vlog_out, "%"PRIu64, delay);
+	    }
       }
       free(frac);
 }
@@ -153,37 +156,103 @@ void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr)
       }
 }
 
+static int64_t get_valid_int64_from_number(ivl_expr_t expr, int *rtype,
+                                           const char *msg)
+{
+      int64_t value = get_int64_from_number(expr, rtype);
+      if (*rtype > 0) {
+	    fprintf(vlog_out, "<invalid>");
+	    fprintf(stderr, "%s:%u: vlog95 error: Scaled %s is greater than "
+	                    "64 bits (%d) and cannot be safely represented.\n",
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr),
+	                    msg, *rtype);
+	    vlog_errors += 1;
+	    return 0;
+      } else if (*rtype < 0) {
+	    fprintf(vlog_out, "<invalid>");
+	    fprintf(stderr, "%s:%u: vlog95 error: Scaled %s has an undefined "
+	                    "bit and cannot be represented.\n",
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr), msg);
+	    vlog_errors += 1;
+	    return 0;
+      }
+      return value;
+}
+
+// HERE: Probably need to pass in a msg string to make this work with
+//       indexed part selects.
+static unsigned is_scaled_expr(ivl_expr_t expr, int msb, int lsb)
+{
+      int64_t scale_val;
+      int rtype;
+	/* This is as easy as removing the addition/subtraction that was
+	 * added to scale the value to be zero based, but we need to verify
+	 * that the scaling value is correct first. */
+      if (msb > lsb) {
+	    if ((ivl_expr_type(expr) != IVL_EX_BINARY) ||
+	        ((ivl_expr_opcode(expr) != '+') &&
+	         (ivl_expr_opcode(expr) != '-')) ||
+	        (ivl_expr_type(ivl_expr_oper2(expr)) != IVL_EX_NUMBER)) {
+		  fprintf(vlog_out, "<invalid>");
+		  fprintf(stderr, "%s:%u: vlog95 error: Scaled "
+		                  "expression value cannot be scaled.\n",
+		                  ivl_expr_file(expr),
+		                  ivl_expr_lineno(expr));
+		  vlog_errors += 1;
+		  return 0;
+	    }
+	    scale_val = get_valid_int64_from_number(
+	                      ivl_expr_oper2(expr), &rtype,
+	                      "expression value scale coefficient");
+      } else {
+	    if ((ivl_expr_type(expr) != IVL_EX_BINARY) ||
+	        ((ivl_expr_opcode(expr) != '+') &&
+	         (ivl_expr_opcode(expr) != '-')) ||
+	        (ivl_expr_type(ivl_expr_oper1(expr)) != IVL_EX_NUMBER)) {
+		  fprintf(vlog_out, "<invalid>");
+		  fprintf(stderr, "%s:%u: vlog95 error: Scaled "
+		                  "expression value cannot be scaled.\n",
+		                  ivl_expr_file(expr),
+		                  ivl_expr_lineno(expr));
+		  vlog_errors += 1;
+		  return 0;
+	    }
+	    scale_val = get_valid_int64_from_number(
+	                      ivl_expr_oper1(expr), &rtype,
+	                      "expression value scale coefficient");
+      }
+      if (rtype) return 0;
+      if (ivl_expr_opcode(expr) == '+') scale_val *= -1;
+      if (lsb !=  scale_val) {
+	    fprintf(vlog_out, "<invalid>");
+	    fprintf(stderr, "%s:%u: vlog95 error: Scaled expression value "
+	                    "scaling coefficient did not match expected "
+	                    "value (%d != %"PRIu64").\n",
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr),
+	                    lsb, scale_val);
+	    vlog_errors += 1;
+	    return 0;
+      }
+      return 1;
+}
+
 void emit_scaled_range(ivl_scope_t scope, ivl_expr_t expr, unsigned width,
                        int msb, int lsb)
 {
       if (msb >= lsb) {
 	    if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
 		  int rtype;
-		  int64_t value = get_int64_from_number(expr, &rtype);
-		  if (rtype > 0) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Scaled range is "
-			                "greater than 64 bits (%u) and cannot "
-			                "be safely represented.\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr), rtype);
-			vlog_errors += 1;
-			return;
-		  }
-		  if (rtype < 0) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Scaled range "
-			                "has an undefined bit and cannot be "
-			                "represented.\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr));
-			vlog_errors += 1;
-			return;
-		  }
+		  int64_t value = get_valid_int64_from_number(expr, &rtype,
+		                        "range value");
+		  if (rtype) return;
 		  value += lsb;
 		  fprintf(vlog_out, "[%"PRId64":%"PRId64"]",
 		                    value + (int64_t)(width - 1), value);
 	    } else {
+// HERE: Need to scale the select expression and create a concatenation of
+//       variable bit selects for that. We need the signal name as well.
+//       As an optimization determine if this is an up or down to simplify
+//       the generated expression.
 		  fprintf(vlog_out, "[<invalid>:<invalid>]");
 		  fprintf(stderr, "%s:%u: vlog95 error: Indexed part-selects "
 		                  "are not currently supported.\n",
@@ -193,31 +262,14 @@ void emit_scaled_range(ivl_scope_t scope, ivl_expr_t expr, unsigned width,
       } else {
 	    if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
 		  int rtype;
-		  int64_t value = get_int64_from_number(expr, &rtype);
-		  if (rtype > 0) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Scaled value is "
-			                "greater than 64 bits (%u) and cannot "
-			                "be safely represented.\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr), rtype);
-			vlog_errors += 1;
-			return;
-		  }
-		  if (rtype < 0) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Scaled value "
-			                "has an undefined bit and cannot be "
-			                "represented.\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr));
-			vlog_errors += 1;
-			return;
-		  }
+		  int64_t value = get_valid_int64_from_number(expr, &rtype,
+		                        "range value");
+		  if (rtype) return;
 		  value = (int64_t)lsb - value;
 		  fprintf(vlog_out, "[%"PRId64":%"PRId64"]",
 		                    value - (int64_t)(width - 1), value);
 	    } else {
+// HERE: Do basically the same as above.
 		  fprintf(vlog_out, "[<invalid>:<invalid>]");
 		  fprintf(stderr, "%s:%u: vlog95 error: Indexed part-selects "
 		                  "are not currently supported.\n",
@@ -232,175 +284,99 @@ void emit_scaled_expr(ivl_scope_t scope, ivl_expr_t expr, int msb, int lsb)
       if (msb >= lsb) {
 	    if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
 		  int rtype;
-		  int64_t value = get_int64_from_number(expr, &rtype);
-		  if (rtype > 0) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Scaled value is "
-			                "greater than 64 bits (%u) and cannot "
-			                "be safely represented.\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr), rtype);
-			vlog_errors += 1;
-			return;
-		  }
-		  if (rtype < 0) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Scaled value "
-			                "has an undefined bit and cannot be "
-			                "represented.\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr));
-			vlog_errors += 1;
-			return;
-		  }
+		  int64_t value = get_valid_int64_from_number(expr, &rtype,
+		                        "value");
+		  if (rtype) return;
 		  value += lsb;
 		  fprintf(vlog_out, "%"PRId64, value);
+	    } else if (lsb == 0) {
+		    /* If the LSB is zero then there is no scale. */
+		  emit_expr(scope, expr, 0);
 	    } else {
-		  int64_t scale_val;
-		  int rtype;
-		    /* This is as easy as removing the addition/subtraction
-		     * that was added to scale the value to be zero based,
-		     * but we need to verify that the scaling value is
-		     * correct first. */
-		  if ((ivl_expr_type(expr) != IVL_EX_BINARY) ||
-		      ((ivl_expr_opcode(expr) != '+') &&
-		       (ivl_expr_opcode(expr) != '-')) ||
-		      (ivl_expr_type(ivl_expr_oper2(expr)) != IVL_EX_NUMBER)) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Scaled value "
-			                "expression/value cannot be scaled.\n ",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr));
-			vlog_errors += 1;
-			return;
+		  if (is_scaled_expr(expr, msb, lsb)) {
+			emit_expr(scope, ivl_expr_oper1(expr), 0);
 		  }
-		  scale_val = get_int64_from_number(ivl_expr_oper2(expr),
-		                                    &rtype);
-		  if (rtype > 0) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Scaled value "
-			                "expression/value scale coefficient "
-			                "was greater then 64 bits (%d).\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr),
-			                rtype);
-			vlog_errors += 1;
-			return;
-		  }
-		  if (rtype < 0) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Scaled value "
-			                "expression/value scale coefficient "
-			                "has an undefined bit.\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr));
-			vlog_errors += 1;
-			return;
-		  }
-		  if (ivl_expr_opcode(expr) == '+') scale_val *= -1;
-		  if (lsb !=  scale_val) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Scaled value "
-			                "expression/value scale coefficient "
-			                "did not match expected value "
-			                "(%d != %"PRIu64").\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr),
-			                lsb, scale_val);
-			vlog_errors += 1;
-			return;
-		  }
-		  emit_expr(scope, ivl_expr_oper1(expr), 0);
 	    }
       } else {
 	    if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
 		  int rtype;
-		  int64_t value = get_int64_from_number(expr, &rtype);
-		  if (rtype > 0) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Scaled value is "
-			                "greater than 64 bits (%u) and cannot "
-			                "be safely represented.\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr), rtype);
-			vlog_errors += 1;
-			return;
-		  }
-		  if (rtype < 0) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Scaled value "
-			                "has an undefined bit and cannot be "
-			                "represented.\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr));
-			vlog_errors += 1;
-			return;
-		  }
+		  int64_t value = get_valid_int64_from_number(expr, &rtype,
+		                                                  "value");
+		  if (rtype) return;
 		  value = (int64_t)lsb - value;
 		  fprintf(vlog_out, "%"PRId64, value);
 	    } else {
-		  int64_t scale_val;
-		  int rtype;
-		    /* This is as easy as removing the addition/subtraction
-		     * that was added to scale the value to be zero based,
-		     * but we need to verify that the scaling value is
-		     * correct first. */
-		  if ((ivl_expr_type(expr) != IVL_EX_BINARY) ||
-		      ((ivl_expr_opcode(expr) != '+') &&
-		       (ivl_expr_opcode(expr) != '-')) ||
-		      (ivl_expr_type(ivl_expr_oper1(expr)) != IVL_EX_NUMBER)) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Scaled value "
-			                "expression/value cannot be scaled.\n ",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr));
-			vlog_errors += 1;
-			return;
+		  if (is_scaled_expr(expr, msb, lsb)) {
+			emit_expr(scope, ivl_expr_oper2(expr), 0);
 		  }
-		  scale_val = get_int64_from_number(ivl_expr_oper1(expr),
-		                                    &rtype);
-		  if (rtype > 0) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Scaled value "
-			                "expression/value scale coefficient "
-			                "was greater then 64 bits (%d).\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr),
-			                rtype);
-			vlog_errors += 1;
-			return;
-		  }
-		  if (rtype < 0) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Scaled value "
-			                "expression/value scale coefficient "
-			                "has an undefined bit.\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr));
-			vlog_errors += 1;
-			return;
-		  }
-		  if (ivl_expr_opcode(expr) == '+') scale_val *= -1;
-		  if (lsb !=  scale_val) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Scaled value "
-			                "expression/value scale coefficient "
-			                "did not match expected value "
-			                "(%d != %"PRIu64").\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr),
-			                lsb, scale_val);
-			vlog_errors += 1;
-			return;
-		  }
-		  emit_expr(scope, ivl_expr_oper2(expr), 0);
 	    }
       }
 }
 
-// HERE: Do we need the scope to know which name to use?
-void emit_name_of_nexus(ivl_nexus_t nex)
+static unsigned find_signal_in_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 {
+      ivl_signal_t sig, use_sig = 0;
+      unsigned is_array = 0;
+      int64_t array_idx = 0;
+      unsigned idx, count;
+
+      count = ivl_nexus_ptrs(nex);
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    sig = ivl_nexus_ptr_sig(nex_ptr);
+	    if (! sig) continue;
+	    if (ivl_signal_local(sig)) continue;
+	    if (scope == ivl_signal_scope(sig)) {
+		  if (use_sig) {
+// HERE: Which one should we use? For now it's the first one found.
+			fprintf(stderr, "%s:%u: vlog95 warning: Duplicate "
+			                "name (%s",
+			                ivl_signal_file(sig),
+			                ivl_signal_lineno(sig),
+			                ivl_signal_basename(sig));
+			if (ivl_signal_dimensions(sig) > 0) {
+			      int64_t tmp_idx = ivl_nexus_ptr_pin(nex_ptr);
+			      tmp_idx += ivl_signal_array_base(sig);
+			      fprintf(stderr, "[%"PRId64"]", tmp_idx);
+			}
+			fprintf(stderr, ") found for nexus ");
+			fprintf(stderr, "(%s", ivl_signal_basename(use_sig));
+			if (is_array) fprintf(stderr, "[%"PRId64"]", array_idx);
+			fprintf(stderr, ")\n");
+		  } else {
+			use_sig = sig;
+			if (ivl_signal_dimensions(sig) > 0) {
+			      is_array = 1;
+			      array_idx = ivl_nexus_ptr_pin(nex_ptr);
+			      array_idx += ivl_signal_array_base(sig);
+			}
+		  }
+	    }
+      }
+
+// HERE: Check bit, part, etc. selects to make sure they work as well.
+      if (use_sig) {
+	    fprintf(vlog_out, "%s", ivl_signal_basename(use_sig));
+	    if (is_array) fprintf(vlog_out, "[%"PRId64"]", array_idx);
+	    return 1;
+      }
+
+      return 0;
+}
+
+// HERE: Does this work correctly with an array reference created from @*?
+void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex)
+{
+	/* First look in the local scope for the nexus name. */
+      if (find_signal_in_nexus(scope, nex)) return;
+
+	/* If the signal was not found in the passed scope then look in
+	 * the module scope if the passed scope was not the module scope. */
+      if (find_signal_in_nexus(get_module_scope(scope), nex)) return;
+
+// HERE: Need to check arr[var]? Can this be rebuilt?
+//       Then look for down scopes and then any scope. For all this warn if
+//       multiples are found in a given scope.
       fprintf(vlog_out, "<missing>");
 }
 
@@ -526,6 +502,11 @@ uint64_t get_uint64_from_number(ivl_expr_t expr, int *result_type)
 	    if (bits[idx] == '1') value |= (uint64_t)1 << idx;
 	    else if (bits[idx] != '0') {
 		  *result_type = -1;
+		    /* If the value is entirely x/z then return -2 or -3. */
+		  if ((idx == 0) && (trim_wid == 1)) {
+			 if (bits[idx] == 'x') *result_type -= 1;
+			 *result_type -= 1;
+		  }
 		  return 0;
 	    }
       }
@@ -537,7 +518,7 @@ uint64_t get_uint64_from_number(ivl_expr_t expr, int *result_type)
  * Extract an int64_t value from the given number expression. If the result
  * type is 0 then the returned value is valid. If it is positive then the
  * value was too large and if it is negative then the value had undefined
- * bits.
+ * bits. -2 is all bits z and -3 is all bits x.
  */
 int64_t get_int64_from_number(ivl_expr_t expr, int *result_type)
 {
@@ -567,6 +548,11 @@ int64_t get_int64_from_number(ivl_expr_t expr, int *result_type)
 	    if (bits[idx] == '1') value |= (int64_t)1 << idx;
 	    else if (bits[idx] != '0') {
 		  *result_type = -1;
+		    /* If the value is entirely x/z then return -2 or -3. */
+		  if ((idx == 0) && (trim_wid == 1)) {
+			 if (bits[idx] == 'x') *result_type -= 1;
+			 *result_type -= 1;
+		  }
 		  return 0;
 	    }
       }
@@ -582,7 +568,7 @@ int64_t get_int64_from_number(ivl_expr_t expr, int *result_type)
  * Extract an int32_t value from the given number expression. If the result
  * type is 0 then the returned value is valid. If it is positive then the
  * value was too large and if it is negative then the value had undefined
- * bits.
+ * bits. -2 is all bits z and -3 is all bits x.
  */
 int32_t get_int32_from_number(ivl_expr_t expr, int *result_type)
 {
@@ -612,6 +598,11 @@ int32_t get_int32_from_number(ivl_expr_t expr, int *result_type)
 	    if (bits[idx] == '1') value |= (int32_t)1 << idx;
 	    else if (bits[idx] != '0') {
 		  *result_type = -1;
+		    /* If the value is entirely x/z then return -2 or -3. */
+		  if ((idx == 0) && (trim_wid == 1)) {
+			 if (bits[idx] == 'x') *result_type -= 1;
+			 *result_type -= 1;
+		  }
 		  return 0;
 	    }
       }

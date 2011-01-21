@@ -67,7 +67,7 @@ extern void emit_scaled_range(ivl_scope_t scope, ivl_expr_t expr,
                               unsigned width, int msb, int lsb);
 extern void emit_scope_path(ivl_scope_t scope, ivl_scope_t call_scope);
 extern void emit_scope_module_path(ivl_scope_t scope, ivl_scope_t call_scope);
-extern void emit_name_of_nexus(ivl_nexus_t nex);
+extern void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex);
 
 /*
  * Find the enclosing module scope.

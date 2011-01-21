@@ -463,6 +463,11 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 	    single_indent = 0;
 	    fprintf(vlog_out, ";\n");
 	    break;
+	case IVL_ST_ALLOC:
+	      /* This statement is only used with an automatic task so we
+	       * can safely skip it. The automatic task definition will
+	       * generate an appropriate error message.*/
+	    break;
 	case IVL_ST_ASSIGN:
 	    emit_stmt_assign(scope, stmt);
 	    break;
@@ -513,6 +518,11 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 	    } else {
 		  emit_stmt_fork(scope, stmt);
 	    }
+	    break;
+	case IVL_ST_FREE:
+	      /* This statement is only used with an automatic task so we
+	       * can safely skip it. The automatic task definition will
+	       * generate an appropriate error message.*/
 	    break;
 	case IVL_ST_RELEASE:
 	    emit_stmt_release(scope, stmt);

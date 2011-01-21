@@ -36,7 +36,7 @@ void emit_event(ivl_scope_t scope, ivl_statement_t stmt)
 	    for (idx = 0; idx < count; idx += 1) {
 		  if (first) first = 0;
 		  else fprintf(vlog_out, " or ");
-		  emit_name_of_nexus(ivl_event_any(event, idx));
+		  emit_name_of_nexus(scope, ivl_event_any(event, idx));
 	    }
 
 	      /* Check for positive edge events. */
@@ -46,7 +46,7 @@ void emit_event(ivl_scope_t scope, ivl_statement_t stmt)
 		  if (first) first = 0;
 		  else fprintf(vlog_out, " or ");
 		  fprintf(vlog_out, "posedge ");
-		  emit_name_of_nexus(ivl_event_pos(event, idx));
+		  emit_name_of_nexus(scope, ivl_event_pos(event, idx));
 	    }
 
 	      /* Check for negative edge events. */
@@ -56,7 +56,7 @@ void emit_event(ivl_scope_t scope, ivl_statement_t stmt)
 		  if (first) first = 0;
 		  else fprintf(vlog_out, " or ");
 		  fprintf(vlog_out, "negedge ");
-		  emit_name_of_nexus(ivl_event_neg(event, idx));
+		  emit_name_of_nexus(scope, ivl_event_neg(event, idx));
 	    }
 
 	      /* We have a named event if there were no edge events. */

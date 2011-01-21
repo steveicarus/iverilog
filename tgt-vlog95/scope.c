@@ -69,21 +69,24 @@ void emit_func_return(ivl_signal_t sig)
 
 void emit_var_def(ivl_signal_t sig)
 {
+      if (ivl_signal_local(sig)) return;
       fprintf(vlog_out, "%*c", indent, ' ');
       if (ivl_signal_integer(sig)) {
 	    fprintf(vlog_out, "integer %s;\n", ivl_signal_basename(sig));
 	    if (ivl_signal_dimensions(sig) > 0) {
-		  fprintf(stderr, "%s:%u: vlog95 error: Integer arrays are "
-		                  "not supported.\n", ivl_signal_file(sig),
-		                  ivl_signal_lineno(sig));
+		  fprintf(stderr, "%s:%u: vlog95 error: Integer arrays (%s) "
+		                  "are not supported.\n", ivl_signal_file(sig),
+		                  ivl_signal_lineno(sig),
+		                  ivl_signal_basename(sig));
 		  vlog_errors += 1;
 	    }
       } else if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
 	    fprintf(vlog_out, "real %s;\n", ivl_signal_basename(sig));
 	    if (ivl_signal_dimensions(sig) > 0) {
-		  fprintf(stderr, "%s:%u: vlog95 error: Real arrays are "
-		                  "not supported.\n", ivl_signal_file(sig),
-		                  ivl_signal_lineno(sig));
+		  fprintf(stderr, "%s:%u: vlog95 error: Real arrays (%s) "
+		                  "are not supported.\n", ivl_signal_file(sig),
+		                  ivl_signal_lineno(sig),
+		                  ivl_signal_basename(sig));
 		  vlog_errors += 1;
 	    }
       } else {
@@ -104,9 +107,10 @@ void emit_var_def(ivl_signal_t sig)
 	    }
 	    fprintf(vlog_out, ";\n");
 	    if (ivl_signal_signed(sig)) {
-		  fprintf(stderr, "%s:%u: vlog95 error: Signed registers are "
-		                  "not supported.\n", ivl_signal_file(sig),
-		                  ivl_signal_lineno(sig));
+		  fprintf(stderr, "%s:%u: vlog95 error: Signed registers (%s) "
+		                  "are not supported.\n", ivl_signal_file(sig),
+		                  ivl_signal_lineno(sig),
+		                  ivl_signal_basename(sig));
 		  vlog_errors += 1;
 	    }
       }
@@ -114,30 +118,31 @@ void emit_var_def(ivl_signal_t sig)
 
 void emit_net_def(ivl_signal_t sig)
 {
-      fprintf(vlog_out, "%*c", indent, ' ');
       int msb = ivl_signal_msb(sig);
       int lsb = ivl_signal_lsb(sig);
+      if (ivl_signal_local(sig)) return;
+      fprintf(vlog_out, "%*c", indent, ' ');
       if (ivl_signal_data_type(sig) == IVL_VT_REAL){
 	    fprintf(vlog_out, "wire %s;\n", ivl_signal_basename(sig));
-	    fprintf(stderr, "%s:%u: vlog95 error: Real nets are "
+	    fprintf(stderr, "%s:%u: vlog95 error: Real nets (%s) are "
 	                    "not supported.\n", ivl_signal_file(sig),
-	                    ivl_signal_lineno(sig));
+	                    ivl_signal_lineno(sig), ivl_signal_basename(sig));
 	    vlog_errors += 1;
       } else if (ivl_signal_signed(sig)) {
 	    fprintf(vlog_out, "wire");
 	    if (msb != 0 || lsb != 0) fprintf(vlog_out, " [%d:%d]", msb, lsb);
 	    fprintf(vlog_out, " %s;\n", ivl_signal_basename(sig));
-	    fprintf(stderr, "%s:%u: vlog95 error: Signed nets are "
+	    fprintf(stderr, "%s:%u: vlog95 error: Signed nets (%s) are "
 	                    "not supported.\n", ivl_signal_file(sig),
-	                    ivl_signal_lineno(sig));
+	                    ivl_signal_lineno(sig), ivl_signal_basename(sig));
 	    vlog_errors += 1;
       } else if (ivl_signal_dimensions(sig) > 0) {
 	    fprintf(vlog_out, "wire");
 	    if (msb != 0 || lsb != 0) fprintf(vlog_out, " [%d:%d]", msb, lsb);
 	    fprintf(vlog_out, " %s;\n", ivl_signal_basename(sig));
-	    fprintf(stderr, "%s:%u: vlog95 error: Array nets are "
+	    fprintf(stderr, "%s:%u: vlog95 error: Array nets (%s) are "
 	                    "not supported.\n", ivl_signal_file(sig),
-	                    ivl_signal_lineno(sig));
+	                    ivl_signal_lineno(sig), ivl_signal_basename(sig));
 	    vlog_errors += 1;
       } else {
 	    switch(ivl_signal_type(sig)) {
@@ -380,10 +385,10 @@ static void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
       count = ivl_logic_pins(nlogic);
       count -= 1;
       for (idx = 0; idx < count; idx += 1) {
-	    emit_name_of_nexus(ivl_logic_pin(nlogic, idx));
+	    emit_name_of_nexus(scope, ivl_logic_pin(nlogic, idx));
 	    fprintf(vlog_out, ", ");
       }
-      emit_name_of_nexus(ivl_logic_pin(nlogic, count));
+      emit_name_of_nexus(scope, ivl_logic_pin(nlogic, count));
       fprintf(vlog_out, ");\n");
 }
 
@@ -487,9 +492,9 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    start = 1;
 	    fprintf(vlog_out, " %s", ivl_scope_tname(scope));
 	    if (is_auto) {
-		  fprintf(stderr, "%s:%u: vlog95 error: Automatic function is "
-	                    "not supported.\n", ivl_scope_file(scope),
-	                    ivl_scope_lineno(scope));
+		  fprintf(stderr, "%s:%u: vlog95 error: Automatic functions "
+	                    "(%s) are not supported.\n", ivl_scope_file(scope),
+	                    ivl_scope_lineno(scope), ivl_scope_tname(scope));
 		  vlog_errors += 1;
 	    }
 	    break;
@@ -498,9 +503,9 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    fprintf(vlog_out, "\n%*ctask %s", indent, ' ',
 	                      ivl_scope_tname(scope));
 	    if (is_auto) {
-		  fprintf(stderr, "%s:%u: vlog95 error: Automatic task is "
-	                    "not supported.\n", ivl_scope_file(scope),
-	                    ivl_scope_lineno(scope));
+		  fprintf(stderr, "%s:%u: vlog95 error: Automatic tasks "
+	                    "(%s) are not supported.\n", ivl_scope_file(scope),
+	                    ivl_scope_lineno(scope), ivl_scope_tname(scope));
 		  vlog_errors += 1;
 	    }
 	    break;
@@ -537,9 +542,10 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	      default:
 		  fprintf(vlog_out, "<unknown>");
 		  fprintf(stderr, "%s:%u: vlog95 error: Unknown port "
-	                    "direction (%d).\n", ivl_signal_file(port),
-	                    ivl_signal_lineno(port),
-	                    (int)ivl_signal_port(port));
+	                    "direction (%d) for signal %s.\n",
+	                    ivl_signal_file(port), ivl_signal_lineno(port),
+	                    (int)ivl_signal_port(port),
+		            ivl_signal_basename(port));
 		  vlog_errors += 1;
 		  break;
 	    }

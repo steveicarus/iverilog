@@ -101,11 +101,17 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 
       fprintf(vlog_out, "(");
       switch(ivl_expr_opcode(expr)) {
+	case '%':
+	    if (ivl_expr_value(expr) == IVL_VT_REAL) {
+		  fprintf(stderr, "%s:%u: vlog95 error: Real modulus operator "
+		                  "is not supported.\n",
+		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
+		  vlog_errors += 1;
+	    }
 	case '+':
 	case '-':
 	case '*':
 	case '/':
-	case '%':
 	case 'E':
 	case 'e':
 	case 'N':
@@ -176,9 +182,12 @@ static void emit_expr_concat(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 
       if (repeat != 1) fprintf(vlog_out, "{%u", repeat);
       fprintf(vlog_out, "{");
+      count -= 1;
       for (idx = 0; idx < count; idx += 1) {
 	    emit_expr(scope, ivl_expr_parm(expr, idx), 0);
+	    fprintf(vlog_out, ", ");
       }
+      emit_expr(scope, ivl_expr_parm(expr, count), 0);
       fprintf(vlog_out, "}");
       if (repeat != 1) fprintf(vlog_out, "}");
 }
@@ -205,8 +214,8 @@ static void emit_expr_number(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 		                  "safely represented.\n",
 		                  ivl_expr_file(expr), ivl_expr_lineno(expr),
 		                  rtype);
-	    }
-	    if (rtype < 0) {
+		  vlog_errors += 1;
+	    } else if (rtype == -1) {
 		  fprintf(vlog_out, "<invalid>");
 		  fprintf(stderr, "%s:%u: vlog95 error: Signed number has "
 		                  "an undefined bit and cannot be "
@@ -214,8 +223,13 @@ static void emit_expr_number(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
 		  vlog_errors += 1;
 		  return;
+	    } else if (rtype == -2) {
+		  fprintf(vlog_out, "'bz");
+	    } else if (rtype == -3) {
+		  fprintf(vlog_out, "'bx");
+	    } else  {
+		  fprintf(vlog_out, "%"PRId32, value);
 	    }
-	    fprintf(vlog_out, "%"PRId32, value);
 	/* An unsigned number is represented in hex if all the bits are
 	 * defined and it is more than a single bit otherwise it is
 	 * represented in binary form to preserve all the information. */
@@ -265,18 +279,18 @@ static void emit_expr_scope(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_expr_t sel_expr = ivl_expr_oper2(expr);
-      ivl_expr_t sub_expr = ivl_expr_oper1(expr);
+      ivl_expr_t sig_expr = ivl_expr_oper1(expr);
       if (sel_expr) {
-	    ivl_signal_t sig = ivl_expr_signal(sub_expr);
+	    ivl_signal_t sig = ivl_expr_signal(sig_expr);
 	    int msb = 1;
 	    int lsb = 0;
 	    unsigned width = ivl_expr_width(expr);
 	    assert(width > 0);
-	    if (ivl_expr_type(sub_expr) == IVL_EX_SIGNAL) {
+	    if (ivl_expr_type(sig_expr) == IVL_EX_SIGNAL) {
 		  msb = ivl_signal_msb(sig);
 		  lsb = ivl_signal_lsb(sig);
 	    }
-	    emit_expr(scope, sub_expr, wid);
+	    emit_expr(scope, sig_expr, wid);
 	    if (width == 1) {
 		  fprintf(vlog_out, "[");
 		  emit_scaled_expr(scope, sel_expr, msb, lsb);
@@ -286,7 +300,7 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    }
       } else {
 // HERE: Should this sign extend if the expression is signed?
-	    emit_expr(scope, sub_expr, wid);
+	    emit_expr(scope, sig_expr, wid);
       }
 }
 
@@ -303,8 +317,6 @@ static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, const char* name)
 	    count -= 1;
 	    for (idx = 0; idx < count; idx += 1) {
 		  emit_expr(scope, ivl_expr_parm(expr, idx), 0);
-// HERE: Do we need to support a NULL argument for the system functions?
-//       See what was done system tasks.
 		  fprintf(vlog_out, ", ");
 	    }
 	    emit_expr(scope, ivl_expr_parm(expr, count), 0);
@@ -373,6 +385,7 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case 'A':
 	case 'N':
 	case 'X':
+	case '!':
 	    fprintf(vlog_out, "%s", oper);
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
 	    break;
