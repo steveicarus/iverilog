@@ -1,0 +1,118 @@
+#
+#    This source code is free software; you can redistribute it
+#    and/or modify it in source code form under the terms of the GNU
+#    Library General Public License as published by the Free Software
+#    Foundation; either version 2 of the License, or (at your option)
+#    any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Library General Public License for more details.
+#
+#    You should have received a copy of the GNU Library General Public
+#    License along with this program; if not, write to the Free
+#    Software Foundation, Inc.,
+#    59 Temple Place - Suite 330
+#    Boston, MA 02111-1307, USA
+#
+SHELL = /bin/sh
+
+suffix = @install_suffix@
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+srcdir = @srcdir@
+
+VPATH = $(srcdir)
+
+bindir = @bindir@
+libdir = @libdir@
+includedir = $(prefix)/include
+
+CC = @CC@
+CXX = @CXX@
+INSTALL = @INSTALL@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+LEX = @LEX@
+YACC = @YACC@
+
+ifeq (.,.)
+INCLUDE_PATH = -I. -I.. -I../libmisc
+else
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/../libmisc
+endif
+
+CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@
+CFLAGS = @WARNING_FLAGS@ @CFLAGS@
+CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@ @EXTRALIBS@
+
+M = StringHeap.o LineInfo.o
+
+O = main.o compiler.o entity.o entity_elaborate.o \
+    lexor.o lexor_keyword.o parse.o $M
+
+all: dep vhdlpp@EXEEXT@
+
+clean:
+	rm -f *.o *~
+	rm -rf dep vhdlpp@EXEEXT@
+
+distclean: clean
+	rm -f Makefile config.log
+	rm -f stamp-vhdlpp_config-h vhdlpp_config.h
+
+Makefile: $(srcdir)/Makefile.in
+	cd ..; ./config.status --file=vhdlpp/$@
+
+dep:
+	mkdir dep
+
+vhdlpp@EXEEXT@: $O
+	$(CXX) -o vhdlpp@EXEEXT@ $(LDFLAGS) $O $(LIBS)
+
+%.o: $(srcdir)/../libmisc/%.cc
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
+
+%.o: %.cc vhdlpp_config.h
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
+	mv $*.d dep/$*.d
+
+lexor.o: lexor.cc parse.h
+
+parse.o: parse.cc
+
+lexor.cc: $(srcdir)/lexor.lex
+	$(LEX) -s -olexor.cc $(srcdir)/lexor.lex
+
+parse.cc parse.h: $(srcdir)/parse.y
+	$(YACC) --verbose -t -d -o parse.cc $(srcdir)/parse.y
+	mv parse.cc.h parse.h 2>/dev/null || mv parse.hh parse.h
+
+lexor_keyword.o: lexor_keyword.cc parse.h
+
+lexor_keyword.cc: $(srcdir)/lexor_keyword.gperf
+	gperf -o -i 7 --ignore-case -C -k 1-4,6,9,$$ -L ANSI-C -H keyword_hash -N check_identifier -t $(srcdir)/lexor_keyword.gperf > lexor_keyword.cc || (rm -f lexor_keyword.cc ; false)
+
+install: all installdirs $(libdir)/ivl$(suffix)/vhdlpp@EXEEXT@
+
+$(libdir)/ivl$(suffix)/vhdlpp@EXEEXT@: vhdlpp@EXEEXT@
+	$(INSTALL_PROGRAM) ./vhdlpp@EXEEXT@ "$(DESTDIR)$(libdir)/ivl$(suffix)/vhdlpp@EXEEXT@"
+
+installdirs: $(srcdir)/../mkinstalldirs
+	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)/ivl$(suffix)"
+
+uninstall:
+	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/ivhdlpp@EXEEXT@"
+
+stamp-vhdlpp_config-h: $(srcdir)/vhdlpp_config.h.in ../config.status
+	@rm -f $@
+	cd ..; ./config.status --header=vhdlpp/vhdlpp_config.h
+vhplpp_config.h: stamp-vhdlpp_config-h
+
+
+-include $(patsubst %.o, dep/%.d, $O)

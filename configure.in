@@ -2,6 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(netlist.h)
 AC_CONFIG_HEADER(config.h)
 AC_CONFIG_HEADER(_pli_types.h)
+AC_CONFIG_HEADER(vhdlpp/vhdlpp_config.h)
 AC_CONFIG_HEADER(vvp/config.h)
 AC_CONFIG_HEADER(vpi/vpi_config.h)
 AC_CONFIG_HEADER(libveriuser/config.h)
@@ -295,4 +296,4 @@ AC_MSG_RESULT(ok)
 
 # XXX disable tgt-fpga for the moment
 
-AC_OUTPUT(Makefile ivlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile)
+AC_OUTPUT(Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile)

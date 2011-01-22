@@ -59,6 +59,7 @@ struct include_stack_t
 
     /* If the current input is from a file, this member is set. */
     FILE* file;
+    int (*file_close)(FILE*);
 
     /* If we are reparsing a macro expansion, file is 0 and this
      * member points to the string in progress
@@ -1614,8 +1615,10 @@ static void do_include()
 {
     /* standby is defined by include_filename() */
     if (standby->path[0] == '/') {
-        if ((standby->file = fopen(standby->path, "r")))
+	if ((standby->file = fopen(standby->path, "r"))) {
+	    standby->file_close = fclose;
             goto code_that_switches_buffers;
+	}
     } else {
         unsigned idx, start = 1;
         char path[4096];
@@ -1644,6 +1647,7 @@ static void do_include()
             sprintf(path, "%s/%s", include_dir[idx], standby->path);
 
             if ((standby->file = fopen(path, "r"))) {
+		standby->file_close = fclose;
                 /* Free the original path before we overwrite it. */
                 free(standby->path);
                 standby->path = strdup(path);
@@ -1750,6 +1754,58 @@ static void lexor_done()
     }
 }
 
+/*
+ * Use this function to open a source file that is to be
+ * processed. Do NOT use this function for opening include files,
+ * instead only use this file for opening base source files.
+ */
+static void open_input_file(struct include_stack_t*isp)
+{
+      char*cp;
+      int is_vhdl = 0;
+
+      isp->file = 0;
+
+	/* look for a suffix for the input file. If the suffix
+	   indicates that this is a VHDL source file, then invoke
+	   vhdlpp to get a data stream. */
+      cp = strrchr(isp->path, '.');
+      if (cp && vhdlpp_path) {
+	    if (strcmp(cp, ".vhd") == 0) {
+		  is_vhdl = 1;
+	    } else if (strcmp(cp, ".vhdl") == 0) {
+		  is_vhdl = 1;
+	    }
+      }
+
+      if (is_vhdl == 0) {
+	    isp->file = fopen(isp->path, "r");
+	    isp->file_close = fclose;
+	    return;
+      }
+
+      size_t cmdlen = strlen(vhdlpp_path);
+      cmdlen += strlen(isp->path);
+      cmdlen += 32;
+
+      char*cmd = malloc(cmdlen);
+      snprintf(cmd, cmdlen, "%s %s", vhdlpp_path, isp->path);
+
+      isp->file = popen(cmd, "r");
+      isp->file_close = pclose;
+
+      free(cmd);
+      return;
+}
+
+/*
+ * The load_next_input() function is called by the lexical analyzer
+ * when the current file runs out. When the EOF of the current input
+ * file is matched, this function figures out if this is the end of an
+ * included file (in which case the including file is resumed) or the
+ * end of a base file, in which case the next base source file is
+ * opened.
+ */
 static int load_next_input()
 {
     int line_mask_flag = 0;
@@ -1773,7 +1829,8 @@ static int load_next_input()
     if (isp->file)
     {
         free(isp->path);
-        fclose(isp->file);
+	assert(isp->file_close);
+        isp->file_close(isp->file);
     }
     else
     {
@@ -1813,7 +1870,7 @@ static int load_next_input()
 
         istack->next = 0;
         istack->lineno = 0;
-        istack->file = fopen(istack->path, "r");
+        open_input_file(istack);
 
         if (istack->file == 0)
         {
@@ -1966,7 +2023,7 @@ void reset_lexor(FILE* out, char* paths[])
     isp = malloc(sizeof(struct include_stack_t));
     isp->next = 0;
     isp->path = strdup(paths[0]);
-    isp->file = fopen(paths[0], "r");
+    open_input_file(isp);
     isp->str = 0;
     isp->lineno = 0;
     isp->stringify_flag = 0;

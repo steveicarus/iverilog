@@ -57,7 +57,8 @@ extern const char*optarg;
 char *dep_path = NULL;
 /* Dependency file output mode */
 char dep_mode = 'a';
-
+/* Path to vhdlpp */
+char *vhdlpp_path = 0;
 
 /*
  * Keep in source_list an array of pointers to file names. The array
@@ -164,6 +165,13 @@ static int flist_read_flags(const char*path)
 			relative_include = 1;
 		  } else {
 			relative_include = 0;
+		  }
+
+	    } else if (strcmp(cp,"vhdlpp") == 0) {
+		  if (vhdlpp_path) {
+			fprintf(stderr, "Ignore multiple vhdlpp flags\n");
+		  } else {
+			vhdlpp_path = strdup(arg);
 		  }
 
 	    } else {

@@ -38,7 +38,7 @@ exec_prefix = @exec_prefix@
 srcdir = @srcdir@
 datarootdir = @datarootdir@
 
-SUBDIRS = ivlpp vvp vpi libveriuser cadpli tgt-null tgt-stub tgt-vvp \
+SUBDIRS = ivlpp vhdlpp vvp vpi libveriuser cadpli tgt-null tgt-stub tgt-vvp \
           tgt-vhdl tgt-vlog95 driver
 # Only run distclean for these directories.
 NOTUSED = tgt-fpga tgt-pal tgt-verilog
@@ -80,9 +80,9 @@ PS2PDF = @PS2PDF@
 GIT = @GIT@
 
 ifeq (@srcdir@,.)
-INCLUDE_PATH = -I.
+INCLUDE_PATH = -I. -Ilibmisc
 else
-INCLUDE_PATH = -I. -I$(srcdir)
+INCLUDE_PATH = -I. -Ilibmisc -I$(srcdir) -I$(srcdir)/libmisc
 endif
 
 CPPFLAGS = @DEFS@ $(INCLUDE_PATH) @CPPFLAGS@
@@ -90,6 +90,9 @@ CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 PICFLAGS = @PICFLAG@
 LDFLAGS = @rdynamic@ @LDFLAGS@
+
+# Source files in the libmisc directory
+M = LineInfo.o StringHeap.o
 
 TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o t-dll-analog.o
 FF = cprop.o nodangle.o synth.o synth2.o syn-rules.o
@@ -104,9 +107,9 @@ O = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o \
     net_udp.o pad_to_width.o parse.o parse_misc.o pform.o pform_analog.o \
     pform_disciplines.o pform_dump.o pform_types.o set_width.o \
     symbol_search.o sync.o sys_funcs.o verinum.o verireal.o target.o \
-    Attrib.o HName.o LineInfo.o Module.o PDelays.o PEvent.o PExpr.o PGate.o \
+    Attrib.o HName.o Module.o PDelays.o PEvent.o PExpr.o PGate.o \
     PGenerate.o PScope.o PSpec.o PTask.o PUdp.o PFunction.o PWire.o \
-    Statement.o AStatement.o StringHeap.o $(FF) $(TT)
+    Statement.o AStatement.o $M $(FF) $(TT)
 
 all: dep config.h _pli_types.h version_tag.h ivl@EXEEXT@ version.exe iverilog-vpi.man
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
@@ -197,7 +200,7 @@ ifeq (@WIN32@,yes)
 # The first step makes an ivl.exe that dlltool can use to make an
 # export and import library, and the last link makes a, ivl.exe
 # that really exports the things that the import library imports.
-ivl@EXEEXT@: $O $(srcdir)/ivl.def
+ivl@EXEEXT@: $O  $(srcdir)/ivl.def
 	$(CXX) -o ivl@EXEEXT@ $O $(dllib) @EXTRALIBS@
 	dlltool --dllname ivl@EXEEXT@ --def $(srcdir)/ivl.def \
 		--output-lib libivl.a --output-exp ivl.exp
@@ -226,6 +229,10 @@ version.exe: $(srcdir)/version.c $(srcdir)/version_base.h version_tag.h
 	$(HOSTCC) @WARNING_FLAGS@ -o version.exe -I. -I$(srcdir) $(srcdir)/version.c
 
 %.o: %.cc config.h
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
+	mv $*.d dep/$*.d
+
+%.o: $(srcdir)/libmisc/%.cc
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep/$*.d
 

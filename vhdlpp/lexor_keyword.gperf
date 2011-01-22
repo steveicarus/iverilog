@@ -1,0 +1,47 @@
+/*
+ * We need this to prevent -Wextra (-W) from complaining that the mask and
+ * tokenType values are not initialized for the empty table entries.
+ */
+%define initializer-suffix ,0,0
+
+%{
+/* Command-line: gperf -o -i 1 --ignore-case -C -k 1-3,$ -L C -H keyword_hash -N check_identifier -tT lexor_keyword.gperf */
+
+#include "vhdlpp_config.h"
+#include <cstring>
+#include "compiler.h"
+#include "parse_api.h"
+#include "parse_wrap.h"
+
+%}
+struct lexor_keyword { const char*name; int mask; int tokenType; };
+%%
+abs,		GN_KEYWORD_2008,	K_abs
+access,		GN_KEYWORD_2008,	K_access
+all,		GN_KEYWORD_2008,	K_all
+and,		GN_KEYWORD_2008,	K_and
+architecture,	GN_KEYWORD_2008,	K_architecture
+begin,		GN_KEYWORD_2008,	K_begin
+end,		GN_KEYWORD_2008,	K_end
+entity,		GN_KEYWORD_2008,	K_entity
+in,		GN_KEYWORD_2008,	K_in
+is,		GN_KEYWORD_2008,	K_is
+library,	GN_KEYWORD_2008,	K_library
+of,		GN_KEYWORD_2008,	K_of
+out,		GN_KEYWORD_2008,	K_out
+port,		GN_KEYWORD_2008,	K_port
+use,		GN_KEYWORD_2008,	K_use
+%%
+
+int lexor_keyword_mask = GN_KEYWORD_2008;
+
+int lexor_keyword_code(const char*str, unsigned nstr)
+{
+      const struct lexor_keyword*rc = check_identifier(str, nstr);
+      if (rc == 0)
+	  return IDENTIFIER;
+      else if ((rc->mask & lexor_keyword_mask) == 0)
+          return IDENTIFIER;
+      else
+	  return rc->tokenType;
+}

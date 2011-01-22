@@ -33,6 +33,8 @@ extern void dump_precompiled_defines(FILE*out);
    an include directive in encountered. */
 extern char**include_dir;
 extern unsigned include_cnt;
+/* Program to use for VHDL processing. */
+extern char*vhdlpp_path;
 
 extern int relative_include;
 

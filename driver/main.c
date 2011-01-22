@@ -106,7 +106,8 @@ const char sep = '/';
 extern void cfreset(FILE*fd, const char*path);
 
 const char*base = 0;
-const char*pbase = 0;
+const char*ivlpp_dir = 0;
+const char*vhdlpp_dir= 0;
 const char*mtm  = 0;
 const char*opath = "a.out";
 const char*npath = 0;
@@ -304,7 +305,7 @@ static int t_version_only(void)
       free(source_path);
 
       fflush(0);
-      snprintf(tmp, sizeof tmp, "%s%civlpp -V", pbase, sep);
+      snprintf(tmp, sizeof tmp, "%s%civlpp -V", ivlpp_dir, sep);
       rc = system(tmp);
       if (rc != 0) {
 	    fprintf(stderr, "Unable to get version from \"%s\"\n", tmp);
@@ -333,7 +334,7 @@ static int t_version_only(void)
 static void build_preprocess_command(int e_flag)
 {
       snprintf(tmp, sizeof tmp, "%s%civlpp %s%s -F\"%s\" -f\"%s\" -p\"%s\" ",
-	       pbase, sep, verbose_flag?" -v":"",
+	       ivlpp_dir, sep, verbose_flag?" -v":"",
 	       e_flag?"":" -L", defines_path, source_path,
 	       compiled_defines_path);
 }
@@ -875,14 +876,20 @@ int main(int argc, char **argv)
 
 	    switch (opt) {
 		case 'B':
-		    /* Undocumented feature: The preprocessor itself
-		       may be located at a different location. If the
-		       base starts with a 'P', set this special base
-		       instead of the main base. */
-		  if (optarg[0] == 'P') {
-			pbase = optarg+1;
-		  } else {
+		    /* The individual components can be located by a
+		       single base, or by individual bases. The first
+		       character of the path indicates which path the
+		       user is specifying. */
+		  switch (optarg[0]) {
+		      case 'P': /* Path for the ivlpp preprocessor */
+			ivlpp_dir = optarg+1;
+			break;
+		      case 'V': /* Path for the vhdlpp VHDL processor */
+			vhdlpp_dir = optarg+1;
+			break;
+		      default: /* Otherwise, this is a default base. */
 			base=optarg;
+			break;
 		  }
 		  break;
 		case 'c':
@@ -995,8 +1002,10 @@ int main(int argc, char **argv)
 	    }
       }
 
-      if (pbase == 0)
-	    pbase = base;
+      if (ivlpp_dir == 0)
+	    ivlpp_dir = base;
+      if (vhdlpp_dir == 0)
+	    vhdlpp_dir = base;
 
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
@@ -1016,6 +1025,8 @@ int main(int argc, char **argv)
 	/* Make a common conf file path to reflect the target. */
       snprintf(iconfig_common_path, sizeof iconfig_common_path, "%s%c%s%s.conf",
 	      base, sep, targ, synth_flag? "-s" : "");
+
+      fprintf(defines_file, "vhdlpp:%s%cvhdlpp\n", vhdlpp_dir, sep);
 
 	/* Write values to the iconfig file. */
       fprintf(iconfig_file, "basedir:%s\n", base);
@@ -1143,7 +1154,7 @@ int main(int argc, char **argv)
 	   single file. This may be used to preprocess library
 	   files. */
       fprintf(iconfig_file, "ivlpp:%s%civlpp -L -F\"%s\" -P\"%s\"\n",
-	      pbase, sep, defines_path, compiled_defines_path);
+	      ivlpp_dir, sep, defines_path, compiled_defines_path);
 
 	/* Done writing to the iconfig file. Close it now. */
       fclose(iconfig_file);
