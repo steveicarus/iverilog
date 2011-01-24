@@ -58,6 +58,8 @@ O = main.o compiler.o entity.o entity_elaborate.o \
 
 all: dep vhdlpp@EXEEXT@
 
+check: all
+
 clean:
 	rm -f *.o *~
 	rm -rf dep vhdlpp@EXEEXT@

@@ -55,6 +55,7 @@ endif
 # rebuild the lexor_keyword.cc file. If we do, then we want to use the
 # local version instead of the one is $(srcdir).
 vpath lexor_keyword.cc .
+vpath %.cc $(srcdir)/libmisc
 vpath %.cc $(srcdir)
 
 bindir = @bindir@
@@ -200,7 +201,7 @@ ifeq (@WIN32@,yes)
 # The first step makes an ivl.exe that dlltool can use to make an
 # export and import library, and the last link makes a, ivl.exe
 # that really exports the things that the import library imports.
-ivl@EXEEXT@: $O  $(srcdir)/ivl.def
+ivl@EXEEXT@: $O $(srcdir)/ivl.def
 	$(CXX) -o ivl@EXEEXT@ $O $(dllib) @EXTRALIBS@
 	dlltool --dllname ivl@EXEEXT@ --def $(srcdir)/ivl.def \
 		--output-lib libivl.a --output-exp ivl.exp
@@ -229,10 +230,6 @@ version.exe: $(srcdir)/version.c $(srcdir)/version_base.h version_tag.h
 	$(HOSTCC) @WARNING_FLAGS@ -o version.exe -I. -I$(srcdir) $(srcdir)/version.c
 
 %.o: %.cc config.h
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
-	mv $*.d dep/$*.d
-
-%.o: $(srcdir)/libmisc/%.cc
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep/$*.d
 
