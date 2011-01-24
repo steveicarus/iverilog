@@ -43,12 +43,12 @@ extern "C" long int lround(double x)
 static verinum::V add_with_carry(verinum::V l, verinum::V r, verinum::V&c);
 
 verinum::verinum()
-: bits_(0), nbits_(0), has_len_(false), has_sign_(false), string_flag_(false)
+: bits_(0), nbits_(0), has_len_(false), has_sign_(false), is_single_(false), string_flag_(false)
 {
 }
 
 verinum::verinum(const V*bits, unsigned nbits, bool has_len__)
-: has_len_(has_len__), has_sign_(false), string_flag_(false)
+: has_len_(has_len__), has_sign_(false), is_single_(false), string_flag_(false)
 {
       nbits_ = nbits;
       bits_ = new V [nbits];
@@ -111,7 +111,7 @@ static string process_verilog_string_quotes(const string&str)
 }
 
 verinum::verinum(const string&s)
-: has_len_(true), has_sign_(false), string_flag_(true)
+: has_len_(true), has_sign_(false), is_single_(false), string_flag_(true)
 {
       string str = process_verilog_string_quotes(s);
       nbits_ = str.length() * 8;
@@ -149,7 +149,7 @@ verinum::verinum(const string&s)
 }
 
 verinum::verinum(verinum::V val, unsigned n, bool h)
-: has_len_(h), has_sign_(false), string_flag_(false)
+: has_len_(h), has_sign_(false), is_single_(false), string_flag_(false)
 {
       nbits_ = n;
       bits_ = new V[nbits_];
@@ -158,7 +158,7 @@ verinum::verinum(verinum::V val, unsigned n, bool h)
 }
 
 verinum::verinum(uint64_t val, unsigned n)
-: has_len_(true), has_sign_(false), string_flag_(false)
+: has_len_(true), has_sign_(false), is_single_(false), string_flag_(false)
 {
       nbits_ = n;
       bits_ = new V[nbits_];
@@ -171,7 +171,7 @@ verinum::verinum(uint64_t val, unsigned n)
 /* The second argument is not used! It is there to make this
  * constructor unique. */
 verinum::verinum(double val, bool)
-: has_len_(false), has_sign_(true), string_flag_(false)
+: has_len_(false), has_sign_(true), is_single_(false), string_flag_(false)
 {
       bool is_neg = false;
       double fraction;
@@ -281,6 +281,7 @@ verinum::verinum(const verinum&that)
       bits_ = new V[nbits_];
       has_len_ = that.has_len_;
       has_sign_ = that.has_sign_;
+      is_single_ = that.is_single_;
       for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1)
 	    bits_[idx] = that.bits_[idx];
 }
@@ -292,6 +293,7 @@ verinum::verinum(const verinum&that, unsigned nbits)
       bits_ = new V[nbits_];
       has_len_ = true;
       has_sign_ = that.has_sign_;
+      is_single_ = false;
 
       unsigned copy = nbits;
       if (copy > that.nbits_)
@@ -300,7 +302,7 @@ verinum::verinum(const verinum&that, unsigned nbits)
 	    bits_[idx] = that.bits_[idx];
 
       if (copy < nbits_) {
-	    if (has_sign_) {
+	    if (has_sign_ || that.is_single_) {
 		  for (unsigned idx = copy ;  idx < nbits_ ;  idx += 1)
 			bits_[idx] = bits_[idx-1];
 	    } else {
@@ -311,7 +313,7 @@ verinum::verinum(const verinum&that, unsigned nbits)
 }
 
 verinum::verinum(int64_t that)
-: has_len_(false), has_sign_(true), string_flag_(false)
+: has_len_(false), has_sign_(true), is_single_(false), string_flag_(false)
 {
       int64_t tmp;
 
@@ -348,6 +350,7 @@ verinum& verinum::operator= (const verinum&that)
 
       has_len_ = that.has_len_;
       has_sign_ = that.has_sign_;
+      is_single_ = that.is_single_;
       string_flag_ = that.string_flag_;
       return *this;
 }
@@ -570,9 +573,9 @@ verinum pad_to_width(const verinum&that, unsigned width)
       }
 
       verinum::V pad = that[that.len()-1];
-      if (pad==verinum::V1 && !that.has_sign())
+      if (pad==verinum::V1 && !that.has_sign() && !that.is_single())
 	    pad = verinum::V0;
-      if (that.has_len() && !that.has_sign()) {
+      if (that.has_len() && !that.has_sign() && !that.is_single()) {
 	    if (pad==verinum::Vx)
 		  pad = verinum::V0;
 	    if (pad==verinum::Vz)
@@ -606,9 +609,9 @@ verinum cast_to_width(const verinum&that, unsigned width)
       }
 
       verinum::V pad = that[that.len()-1];
-      if (pad==verinum::V1 && !that.has_sign())
+      if (pad==verinum::V1 && !that.has_sign() && !that.is_single())
 	    pad = verinum::V0;
-      if (that.has_len() && !that.has_sign()) {
+      if (that.has_len() && !that.has_sign() && !that.is_single()) {
 	    if (pad==verinum::Vx)
 		  pad = verinum::V0;
 	    if (pad==verinum::Vz)

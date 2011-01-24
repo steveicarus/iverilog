@@ -3166,7 +3166,7 @@ unsigned PENumber::test_width(Design*, NetScope*, width_mode_t&mode)
       min_width_   = 1;
       signed_flag_ = value_->has_sign();
 
-      if ((mode < LOSSLESS) && !value_->has_len())
+      if ((mode < LOSSLESS) && !value_->has_len() && !value_->is_single())
             mode = LOSSLESS;
 
       return expr_width_;

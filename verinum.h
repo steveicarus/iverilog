@@ -70,6 +70,10 @@ class verinum {
       bool has_sign(bool flag) { has_sign_ = flag; return has_sign_; }
       bool has_sign() const { return has_sign_; }
 
+        // A number "is single" if it comes from a SystemVerilog 'N bit vector
+      bool is_single(bool flag) { is_single_ = flag; return is_single_; }
+      bool is_single() const { return is_single_; }
+
 	// A number is "defined" if there are no x or z bits in its value.
       bool is_defined() const;
       bool is_zero() const;
@@ -103,6 +107,7 @@ class verinum {
       unsigned nbits_;
       bool has_len_;
       bool has_sign_;
+      bool is_single_;
 
 	// These are some convenience flags that help us do a better
 	// job of pretty-printing values.
