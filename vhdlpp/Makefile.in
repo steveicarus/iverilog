@@ -39,10 +39,10 @@ INSTALL_DATA = @INSTALL_DATA@
 LEX = @LEX@
 YACC = @YACC@
 
-ifeq (.,.)
+ifeq (@srcdir@,.)
 INCLUDE_PATH = -I. -I.. -I../libmisc
 else
-INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/../libmisc
+INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/.. -I$(srcdir)/../libmisc
 endif
 
 CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@
