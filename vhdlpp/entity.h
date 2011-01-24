@@ -26,6 +26,8 @@
 
 typedef enum { PORT_NONE=0, PORT_IN, PORT_OUT } port_mode_t;
 
+class Architecture;
+
 class InterfacePort : public LineInfo {
     public:
 	// Port direction from the source code.
@@ -39,12 +41,31 @@ class InterfacePort : public LineInfo {
 class Entity : public LineInfo {
 
     public:
+      Entity(perm_string name);
+      ~Entity();
+
+	// Entities have names.
+      perm_string get_name() const { return name_; }
+
+	// bind an architecture to the entity, and return the
+	// Architecture that was bound. If there was a previous
+	// architecture with the same name bound, then do not replace
+	// the architecture and instead return the old
+	// value. The caller can tell that the bind worked if the
+	// returned pointer is the same as the passed pointer.
+      Architecture* add_architecture(Architecture*);
+
       int elaborate();
 
+      void dump(ostream&out) const;
+
     public:
-      perm_string name;
       std::vector<InterfacePort*> ports;
 
+    private:
+      perm_string name_;
+
+      std::map<perm_string,Architecture*>arch_;
 };
 
 /*

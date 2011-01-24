@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
  *
@@ -18,27 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "entity.h"
 # include  "architec.h"
 
-using namespace std;
-
-std::map<perm_string,Entity*> design_entities;
-
-Entity::Entity(perm_string name)
+Architecture::Architecture(perm_string name)
 : name_(name)
 {
 }
 
-Entity::~Entity()
+Architecture::~Architecture()
 {
-}
-
-Architecture* Entity::add_architecture(Architecture*that)
-{
-      if (Architecture*tmp = arch_ [that->get_name()]) {
-	    return tmp;
-      }
-
-      return arch_[that->get_name()] = that;
 }

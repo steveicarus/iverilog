@@ -1,6 +1,7 @@
-
+#ifndef __architec_H
+#define __architec_H
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,27 +19,23 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "entity.h"
-# include  "architec.h"
+# include  "StringHeap.h"
+# include  "LineInfo.h"
 
-using namespace std;
+class Architecture : public LineInfo {
 
-std::map<perm_string,Entity*> design_entities;
+    public:
+      Architecture(perm_string name);
+      ~Architecture();
 
-Entity::Entity(perm_string name)
-: name_(name)
-{
-}
+      perm_string get_name() const { return name_; }
 
-Entity::~Entity()
-{
-}
+      void dump(ostream&out, perm_string of_entity) const;
 
-Architecture* Entity::add_architecture(Architecture*that)
-{
-      if (Architecture*tmp = arch_ [that->get_name()]) {
-	    return tmp;
-      }
+    private:
+      perm_string name_;
 
-      return arch_[that->get_name()] = that;
-}
+    private: // Not implemented
+};
+
+#endif

@@ -24,7 +24,8 @@
 # include "vhdlreal.h"
 # include "compiler.h"
 # include "parse_api.h"
-# include  <string.h>
+# include "parse_misc.h"
+# include "architec.h"
 # include  <cstdarg>
 # include  <list>
 
@@ -100,6 +101,12 @@ architecture_body
     K_of IDENTIFIER
     K_is
     K_begin architecture_statement_part K_end K_architecture_opt ';'
+      { Architecture*tmp = new Architecture(lex_strings.make($2));
+	FILE_NAME(tmp, @1);
+	bind_architecture_to_entity($4, tmp);
+	delete[]$2;
+	delete[]$4;
+      }
   | K_architecture IDENTIFIER
     K_of IDENTIFIER
     K_is
@@ -150,11 +157,8 @@ design_units
   /* As an entity is declared, add it to the map of design entities. */
 entity_declaration
   : K_entity IDENTIFIER K_is entity_header K_end K_entity_opt ';'
-      { Entity*tmp = new Entity;
+      { Entity*tmp = new Entity(lex_strings.make($2));
 	FILE_NAME(tmp, @1);
-	  // Store the name
-	tmp->name = lex_strings.make($2);
-	delete[]$2;
 	  // Transfer the ports
 	std::list<InterfacePort*>*ports = $4;
 	while (ports->size() > 0) {
@@ -163,15 +167,14 @@ entity_declaration
 	}
 	delete ports;
 	  // Save the entity in the entity map.
-	design_entities[tmp->name] = tmp;
+	design_entities[tmp->get_name()] = tmp;
+	delete[]$2;
       }
   | K_entity IDENTIFIER K_is entity_header K_end K_entity_opt IDENTIFIER ';'
-      { Entity*tmp = new Entity;
+      { Entity*tmp = new Entity(lex_strings.make($2));
 	FILE_NAME(tmp, @1);
-	// Store the name
-	tmp->name = lex_strings.make($2);
-	if(strcmp($2, $7) != 0) {
-		errormsg(@1, "Syntax error in entity clause. \n"); yyerrok;
+	if(tmp->get_name() != $7) {
+	      errormsg(@1, "Syntax error in entity clause. \n");
 	}
 	
 	delete[]$2;
@@ -184,7 +187,7 @@ entity_declaration
 	}
 	delete ports;
 	// Save the entity in the entity map.
-	design_entities[tmp->name] = tmp;
+	design_entities[tmp->get_name()] = tmp;
       }
   ;
 

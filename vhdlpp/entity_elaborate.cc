@@ -42,9 +42,9 @@ int Entity::elaborate()
       int errors = 0;
 
       if (verbose_flag)
-	    cerr << "Elaborate entity " << name << "..." << endl;
+	    cerr << "Elaborate entity " << name_ << "..." << endl;
 
-      cout << "module " << name;
+      cout << "module " << name_;
 
 	// If there are ports, emit them.
       if (ports.size() > 0) {
