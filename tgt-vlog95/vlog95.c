@@ -25,6 +25,7 @@
 # include "version_tag.h"
 # include "config.h"
 # include "vlog95_priv.h"
+# include <stdlib.h>
 # include <string.h>
 
 static const char*version_string =
@@ -56,7 +57,42 @@ int target_design(ivl_design_t des)
       ivl_scope_t *roots;
       unsigned nroots, idx;
       const char*path = ivl_design_flag(des, "-o");
+	/* Set the indent spacing with the -pspacing flag passed to iverilog
+	 * (e.g. -pspacing=4). */
+      const char*spacing = ivl_design_flag(des, "spacing");
       assert(path);
+
+	/* Check for and use a provided indent spacing. */
+      if (strcmp(spacing, "") != 0) {
+	    char *eptr;
+	    long sp_incr = strtol(spacing, &eptr, 0);
+	      /* Nothing usable in the spacing string. */
+	    if (spacing == eptr) {
+		  fprintf(stderr, "vlog95 error: Unable to extract spacing "
+		                  "increment from string: %s\n", spacing);
+		  return 1;
+	    }
+	      /* Extra stuff at the end. */
+	    if (*eptr != 0) {
+		  fprintf(stderr, "vlog95 error: Extra characters '%s' "
+		                  "included at end of spacing string: %s\n",
+		                  eptr, spacing);
+		  return 1;
+	    }
+	      /* The increment must be positive. */
+	    if (sp_incr < 1) {
+		  fprintf(stderr, "vlog95 error: Spacing increment (%ld) must "
+		                  "be greater than zero.\n", sp_incr);
+		  return 1;
+	    }
+	      /* An increment of more than sixteen is too much. */
+	    if (sp_incr > 16) {
+		  fprintf(stderr, "vlog95 error: Spacing increment (%ld) must "
+		                  "be sixteen or less.\n", sp_incr);
+		  return 1;
+	    }
+	    indent_incr = sp_incr;
+      }
 
       design = des;
 

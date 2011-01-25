@@ -495,7 +495,7 @@ extern int ivl_path_source_negedge(ivl_delaypath_t obj);
  *
  * ivl_design_flag
  *    This function returns the string value of a named flag. Flags
- *    come from the "-fkey=value" options to the iverilog command and
+ *    come from the "-pkey=value" options to the iverilog command and
  *    are stored in a map for this function. Given the key, this
  *    function returns the value.
  *
