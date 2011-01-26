@@ -22,6 +22,7 @@
 # include "vhdlpp_config.h"
 # include "compiler.h"
 # include "parse_api.h"
+# include <string.h>
 # include  <cstdarg>
 # include  <list>
 
@@ -140,8 +141,9 @@ design_units
 
   /* As an entity is declared, add it to the map of design entities. */
 entity_declaration
-  : K_entity IDENTIFIER K_is entity_header K_end K_entity ';'
-      { Entity*tmp = new Entity;
+  : K_entity IDENTIFIER K_is entity_header K_end K_entity_opt ';'
+	{ 
+	Entity*tmp = new Entity;
 	FILE_NAME(tmp, @1);
 	  // Store the name
 	tmp->name = lex_strings.make($2);
@@ -155,7 +157,29 @@ entity_declaration
 	delete ports;
 	  // Save the entity in the entity map.
 	design_entities[tmp->name] = tmp;
-      }
+	}
+  | K_entity IDENTIFIER K_is entity_header K_end K_entity_opt IDENTIFIER ';'
+	{ 
+	Entity*tmp = new Entity;
+	FILE_NAME(tmp, @1);
+	// Store the name
+	tmp->name = lex_strings.make($2);
+	if(strcmp($2, $7) != 0) {
+		errormsg(@1, "Syntax error in entity clause. \n"); yyerrok;
+	}
+	
+	delete[]$2;
+	delete[]$7;
+	// Transfer the ports
+	std::list<InterfacePort*>*ports = $4;
+	while (ports->size() > 0) {
+		tmp->ports.push_back(ports->front());
+		ports->pop_front();
+	}
+	delete ports;
+	// Save the entity in the entity map.
+	design_entities[tmp->name] = tmp;
+  }
   ;
 
 entity_header
@@ -277,7 +301,7 @@ waveform_element
   /* Some keywords are optional in some contexts. In all such cases, a
      similar rule is used, as described here. */
 K_architecture_opt : K_architecture | ;
-
+K_entity_opt : K_entity | ;
 %%
 
 static void yyerror(const char*msg)
