@@ -91,9 +91,9 @@ void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr)
 	    }
 	    emit_scaled_delay(scope, value);
       } else {
-	    int exp = ivl_scope_time_units(scope) - sim_precision;
-	    assert(exp >= 0);
-	    if (exp == 0) emit_expr(scope, expr, 0);
+	    int exponent = ivl_scope_time_units(scope) - sim_precision;
+	    assert(exponent >= 0);
+	    if (exponent == 0) emit_expr(scope, expr, 0);
 	    else {
 		  uint64_t scale_val, scale = 1;
 		  int rtype;
@@ -135,9 +135,9 @@ void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr)
 			vlog_errors += 1;
 			return;
 		  }
-		  while (exp > 0) {
+		  while (exponent > 0) {
 			scale *= 10;
-			exp -= 1;
+			exponent -= 1;
 		  }
 		  if (scale !=  scale_val) {
 			fprintf(vlog_out, "<invalid>");
