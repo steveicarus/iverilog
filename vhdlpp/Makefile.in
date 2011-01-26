@@ -24,7 +24,13 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 srcdir = @srcdir@
 
-VPATH = $(srcdir)
+# Look in the appropriate source directory for the C++ files. The one
+# exception to this is if we need to rebuild the lexor_keyword.cc file.
+# If we do, then we want to use the local version instead of the one is
+# $(srcdir).
+vpath lexor_keyword.cc .
+vpath %.cc $(srcdir)/../libmisc
+vpath %.cc $(srcdir)
 
 bindir = @bindir@
 libdir = @libdir@
@@ -61,12 +67,15 @@ all: dep vhdlpp@EXEEXT@
 check: all
 
 clean:
-	rm -f *.o *~
+	rm -f *.o *~ parse.cc parse.h lexor.cc parse.output lexor_keyword.cc
 	rm -rf dep vhdlpp@EXEEXT@
 
 distclean: clean
 	rm -f Makefile config.log
 	rm -f stamp-vhdlpp_config-h vhdlpp_config.h
+
+cppcheck: $(O:.o=.cc)
+	cppcheck --enable=all -f $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in
 	cd ..; ./config.status --file=vhdlpp/$@
@@ -76,10 +85,6 @@ dep:
 
 vhdlpp@EXEEXT@: $O
 	$(CXX) -o vhdlpp@EXEEXT@ $(LDFLAGS) $O $(LIBS)
-
-%.o: $(srcdir)/../libmisc/%.cc
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
-	mv $*.d dep/$*.d
 
 %.o: %.cc vhdlpp_config.h
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
