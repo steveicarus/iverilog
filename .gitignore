@@ -47,6 +47,7 @@ dep
 /vhdlpp/lexor_keyword.cc
 /vhdlpp/parse.cc
 /vhdlpp/parse.h
+/vhdlpp/parse.output
 /vhdlpp/vhdlpp_config.h
 /vhdlpp/vhdlpp
 

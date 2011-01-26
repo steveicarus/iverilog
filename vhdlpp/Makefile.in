@@ -79,6 +79,7 @@ vhdlpp@EXEEXT@: $O
 
 %.o: $(srcdir)/../libmisc/%.cc
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
+	mv $*.d dep/$*.d
 
 %.o: %.cc vhdlpp_config.h
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
