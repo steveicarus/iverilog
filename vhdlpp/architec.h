@@ -21,11 +21,35 @@
 
 # include  "StringHeap.h"
 # include  "LineInfo.h"
+# include  <list>
 
+/*
+ * The Architecture class carries the contents (name, statements,
+ * etc.) of a parsed VHDL architecture. These objects are ultimately
+ * put into entities.
+ */
 class Architecture : public LineInfo {
 
     public:
-      Architecture(perm_string name);
+	// Architectures contain concurrent statements, that are
+	// derived from this nested class.
+      class Statement : public LineInfo {
+
+	  public:
+	    Statement();
+	    virtual ~Statement() =0;
+
+	    virtual void dump(ostream&out) const;
+
+	  private:
+
+	  private: // Not implemented
+      };
+
+    public:
+	// Create an architecture from its name and its statements.
+	// NOTE: The statement list passed in is emptied.
+      Architecture(perm_string name, std::list<Architecture::Statement*>&s);
       ~Architecture();
 
       perm_string get_name() const { return name_; }
@@ -35,7 +59,25 @@ class Architecture : public LineInfo {
     private:
       perm_string name_;
 
+      std::list<Architecture::Statement*> statements_;
+
     private: // Not implemented
+};
+
+/*
+ * The SignalAssignment class represents the
+ * concurrent_signal_assignment that is placed in an architecture.
+ */
+class SignalAssignment  : public Architecture::Statement {
+
+    public:
+      SignalAssignment(perm_string target_name);
+      ~SignalAssignment();
+
+      virtual void dump(ostream&out) const;
+
+    private:
+      perm_string target_name_;
 };
 
 #endif

@@ -51,6 +51,9 @@ int parse_errors = 0;
       
       InterfacePort*interface_element;
       std::list<InterfacePort*>* interface_list;
+
+      Architecture::Statement* arch_statement;
+      std::list<Architecture::Statement*>* arch_statement_list;
 };
 
   /* The keywords are all tokens. */
@@ -87,9 +90,13 @@ int parse_errors = 0;
 %token LEQ GEQ VASSIGN NE BOX EXP ARROW DLT DGT
 
  /* The rules may have types. */
+
 %type <interface_element> interface_element
 %type <interface_list>    interface_list entity_header port_clause
 %type <port_mode>  mode
+
+%type <arch_statement> concurrent_statement concurrent_signal_assignment_statement
+%type <arch_statement_list> architecture_statement_part
 
 %%
 
@@ -101,11 +108,12 @@ architecture_body
     K_of IDENTIFIER
     K_is
     K_begin architecture_statement_part K_end K_architecture_opt ';'
-      { Architecture*tmp = new Architecture(lex_strings.make($2));
+      { Architecture*tmp = new Architecture(lex_strings.make($2), *$7);
 	FILE_NAME(tmp, @1);
 	bind_architecture_to_entity($4, tmp);
 	delete[]$2;
 	delete[]$4;
+	delete $7;
       }
   | K_architecture IDENTIFIER
     K_of IDENTIFIER
@@ -120,11 +128,26 @@ architecture_body
      statements. */
 architecture_statement_part
   : architecture_statement_part concurrent_statement
+      { std::list<Architecture::Statement*>*tmp = $1;
+	tmp->push_back($2);
+	$$ = tmp;
+      }
   | concurrent_statement
+      { std::list<Architecture::Statement*>*tmp = new std::list<Architecture::Statement*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
   ;
 
 concurrent_signal_assignment_statement
   : IDENTIFIER LEQ waveform ';'
+      { perm_string targ_name = lex_strings.make($1);
+	SignalAssignment*tmp = new SignalAssignment(targ_name);
+	FILE_NAME(tmp, @1);
+
+	$$ = tmp;
+	delete[]$1;
+      }
   ;
 
 concurrent_statement

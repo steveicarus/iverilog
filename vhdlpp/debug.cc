@@ -80,4 +80,20 @@ void Architecture::dump(ostream&out, perm_string of_entity) const
       out << "architecture " << name_
 	  << " of entity " << of_entity
 	  << " file=" << get_fileline() << endl;
+
+      for (list<Architecture::Statement*>::const_iterator cur = statements_.begin()
+		 ; cur != statements_.end() ; ++cur) {
+	    (*cur)->dump(out);
+      }
+}
+
+void Architecture::Statement::dump(ostream&out) const
+{
+      out << "   Architecutre::Statement at file=" << get_fileline() << endl;
+}
+
+void SignalAssignment::dump(ostream&out) const
+{
+      out << "   SignalAssignment file=" << get_fileline() << endl;
+      out << "     " << target_name_ << " <= <expr>" << endl;
 }

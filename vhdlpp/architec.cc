@@ -19,11 +19,29 @@
 
 # include  "architec.h"
 
-Architecture::Architecture(perm_string name)
+Architecture::Architecture(perm_string name, std::list<Architecture::Statement*>&s)
 : name_(name)
 {
+      statements_.splice(statements_.end(), s);
 }
 
 Architecture::~Architecture()
+{
+}
+
+Architecture::Statement::Statement()
+{
+}
+
+Architecture::Statement::~Statement()
+{
+}
+
+SignalAssignment::SignalAssignment(perm_string targ_name)
+: target_name_(targ_name)
+{
+}
+
+SignalAssignment::~SignalAssignment()
 {
 }
