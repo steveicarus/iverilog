@@ -142,8 +142,7 @@ design_units
   /* As an entity is declared, add it to the map of design entities. */
 entity_declaration
   : K_entity IDENTIFIER K_is entity_header K_end K_entity_opt ';'
-	{ 
-	Entity*tmp = new Entity;
+      { Entity*tmp = new Entity;
 	FILE_NAME(tmp, @1);
 	  // Store the name
 	tmp->name = lex_strings.make($2);
@@ -157,10 +156,9 @@ entity_declaration
 	delete ports;
 	  // Save the entity in the entity map.
 	design_entities[tmp->name] = tmp;
-	}
+      }
   | K_entity IDENTIFIER K_is entity_header K_end K_entity_opt IDENTIFIER ';'
-	{ 
-	Entity*tmp = new Entity;
+      { Entity*tmp = new Entity;
 	FILE_NAME(tmp, @1);
 	// Store the name
 	tmp->name = lex_strings.make($2);
@@ -179,7 +177,7 @@ entity_declaration
 	delete ports;
 	// Save the entity in the entity map.
 	design_entities[tmp->name] = tmp;
-  }
+      }
   ;
 
 entity_header
