@@ -1,7 +1,7 @@
 #ifndef __pform_H
 #define __pform_H
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -369,7 +369,8 @@ extern svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 					     list<PExpr*>*range,
 					     list<perm_string>*names,
 					     const char* file,
-					     unsigned lineno);
+					     unsigned lineno,
+					     bool isint = false);
 
 
 /*

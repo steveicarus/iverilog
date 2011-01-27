@@ -2066,7 +2066,8 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 				      list<PExpr*>*range,
 				      list<perm_string>*names,
 				      const char* file,
-				      unsigned lineno)
+				      unsigned lineno,
+				      bool isint)
 {
       assert(names);
       svector<PWire*>*res = new svector<PWire*>(0);
@@ -2087,6 +2088,7 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 	    }
 
 	    curw->set_signed(signed_flag);
+	    if (isint) assert(curw->set_wire_type(NetNet::INTEGER));
 
 	      /* If there is a range involved, it needs to be set. */
 	    if (range) {

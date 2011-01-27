@@ -388,7 +388,7 @@ static list<named_pexpr_t>* make_named_number(perm_string name, PExpr*val =0)
 
 %type <flag>    from_exclude
 %type <number>  number
-%type <flag>    unsigned_signed_opt signed_unsigned_opt
+%type <flag>    unsigned_signed_opt signed_unsigned_opt reg_opt
 %type <flag>    udp_reg_opt edge_operator automatic_opt
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
@@ -4287,30 +4287,32 @@ task_item
         ;
 
 reg_opt
-	: K_reg
-	|
+	: K_reg { $$ = true; }
+	| { $$ = false; }
 	;
 
 task_port_item
-
   : K_input reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
       { svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_NO_TYPE, $3,
-						$4, $5,
+						$2 ? IVL_VT_LOGIC :
+						     IVL_VT_NO_TYPE,
+						$3, $4, $5,
 						@1.text, @1.first_line);
 	$$ = tmp;
       }
   | K_output reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
       { svector<PWire*>*tmp = pform_make_task_ports(NetNet::POUTPUT,
-						IVL_VT_LOGIC, $3,
-						$4, $5,
+						$2 ? IVL_VT_LOGIC :
+						     IVL_VT_NO_TYPE,
+						$3, $4, $5,
 						@1.text, @1.first_line);
 	$$ = tmp;
       }
   | K_inout reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
       { svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINOUT,
-						IVL_VT_LOGIC, $3,
-						$4, $5,
+						$2 ? IVL_VT_LOGIC :
+						     IVL_VT_NO_TYPE,
+						$3, $4, $5,
 						@1.text, @1.first_line);
 	$$ = tmp;
       }
@@ -4323,7 +4325,7 @@ task_port_item
 	svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINPUT,
 						IVL_VT_LOGIC, true,
 						range_stub, $3,
-						@1.text, @1.first_line);
+						@1.text, @1.first_line, true);
 	$$ = tmp;
       }
   | K_output K_integer list_of_identifiers ';'
@@ -4331,7 +4333,7 @@ task_port_item
 	svector<PWire*>*tmp = pform_make_task_ports(NetNet::POUTPUT,
 						IVL_VT_LOGIC, true,
 						range_stub, $3,
-						@1.text, @1.first_line);
+						@1.text, @1.first_line, true);
 	$$ = tmp;
       }
   | K_inout K_integer list_of_identifiers ';'
@@ -4339,7 +4341,7 @@ task_port_item
 	svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINOUT,
 						IVL_VT_LOGIC, true,
 						range_stub, $3,
-						@1.text, @1.first_line);
+						@1.text, @1.first_line, true);
 	$$ = tmp;
       }
 
@@ -4472,7 +4474,7 @@ task_port_decl
 						IVL_VT_LOGIC, true,
 						range_stub,
 						list_from_identifier($3),
-						@1.text, @1.first_line);
+						@1.text, @1.first_line, true);
 	$$ = tmp;
       }
   | K_output K_integer IDENTIFIER
@@ -4486,7 +4488,7 @@ task_port_decl
 						IVL_VT_LOGIC, true,
 						range_stub,
 						list_from_identifier($3),
-						@1.text, @1.first_line);
+						@1.text, @1.first_line, true);
 	$$ = tmp;
       }
   | K_inout K_integer IDENTIFIER
@@ -4500,7 +4502,7 @@ task_port_decl
 						IVL_VT_LOGIC, true,
 						range_stub,
 						list_from_identifier($3),
-						@1.text, @1.first_line);
+						@1.text, @1.first_line, true);
 	$$ = tmp;
       }
 
