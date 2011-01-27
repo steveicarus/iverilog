@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1740,7 +1740,8 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 				      svector<PExpr*>*range,
 				      list<perm_string>*names,
 				      const char* file,
-				      unsigned lineno)
+				      unsigned lineno,
+				      bool isint)
 {
       assert(names);
       svector<PWire*>*res = new svector<PWire*>(0);
@@ -1761,6 +1762,7 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 	    }
 
 	    curw->set_signed(signed_flag);
+	    if (isint) assert(curw->set_wire_type(NetNet::INTEGER));
 
 	      /* If there is a range involved, it needs to be set. */
 	    if (range)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -58,7 +58,15 @@ bool PWire::set_wire_type(NetNet::Type t)
 	    type_ = t;
 	    return true;
 	  case NetNet::IMPLICIT_REG:
-	    if (t == NetNet::REG) { type_ = t; return true; }
+	    if (t == NetNet::REG) {
+		  type_ = t;
+		  return true;
+	    }
+	    if (t == NetNet::INTEGER) {
+		  type_ = NetNet::REG;
+		  isint_ = true;
+		  return true;
+	    }
 	    return false;
 	  case NetNet::REG:
 	    if (t == NetNet::INTEGER) {
