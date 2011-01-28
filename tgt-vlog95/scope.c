@@ -257,15 +257,16 @@ static void emit_gate_delay(ivl_scope_t scope, ivl_net_logic_t nlogic,
       }
 	/* If all three delays match then we only have a single delay. */
       if ((rise == fall) && (rise == decay)) {
-	    fprintf(vlog_out, " #");
+	    fprintf(vlog_out, " #(");
 	    emit_scaled_delayx(scope, rise);
+	    fprintf(vlog_out, ")");
 	    return;
       }
 	/* If we have a gate that only supports two delays then print them. */
       if (dly_count == 2) {
 	    fprintf(vlog_out, " #(");
 	    emit_scaled_delayx(scope, rise);
-	    fprintf(vlog_out, ",");
+	    fprintf(vlog_out, ", ");
 	    emit_scaled_delayx(scope, fall);
 	    fprintf(vlog_out, ")");
 	    return;
@@ -274,10 +275,10 @@ static void emit_gate_delay(ivl_scope_t scope, ivl_net_logic_t nlogic,
 	/* What's left is a gate that supports three delays. */
       fprintf(vlog_out, " #(");
       emit_scaled_delayx(scope, rise);
-      fprintf(vlog_out, ",");
+      fprintf(vlog_out, ", ");
       emit_scaled_delayx(scope, fall);
       if (decay) {
-	    fprintf(vlog_out, ",");
+	    fprintf(vlog_out, ", ");
 	    emit_scaled_delayx(scope, decay);
       }
       fprintf(vlog_out, ")");
@@ -381,6 +382,8 @@ static void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
       }
       emit_gate_strength(nlogic);
       if (dly_count) emit_gate_delay(scope, nlogic, dly_count);
+// HERE: The name has the location information encoded in it. We need to
+//       remove this and rebuild the instance array.
       fprintf(vlog_out, " %s(", ivl_logic_basename(nlogic));
       count = ivl_logic_pins(nlogic);
       count -= 1;

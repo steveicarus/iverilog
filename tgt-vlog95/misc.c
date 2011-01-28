@@ -67,8 +67,8 @@ void emit_scaled_delay(ivl_scope_t scope, uint64_t delay)
  */
 void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr)
 {
-      assert(! ivl_expr_signed(expr));
       if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
+	    assert(! ivl_expr_signed(expr));
 	    int rtype;
 	    uint64_t value = get_uint64_from_number(expr, &rtype);
 	    if (rtype > 0) {
@@ -94,9 +94,24 @@ void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr)
 	    int exponent = ivl_scope_time_units(scope) - sim_precision;
 	    assert(exponent >= 0);
 	    if (exponent == 0) emit_expr(scope, expr, 0);
-	    else {
+		    /* A real delay variable is not scaled by the compiler. */
+	    else if (ivl_expr_type(expr) == IVL_EX_SIGNAL) {
+		  ivl_signal_t sig = ivl_expr_signal(expr);
+		  if (ivl_signal_data_type(sig) != IVL_VT_REAL) {
+			fprintf(vlog_out, "<invalid>");
+			fprintf(stderr, "%s:%u: vlog95 error: Only real "
+			                "delay variables are scaled at run "
+			                "time.\n", ivl_expr_file(expr),
+			                ivl_expr_lineno(expr));
+			vlog_errors += 1;
+			return;
+		  }
+		  emit_expr(scope, expr, 0);
+		  return;
+	    } else {
 		  uint64_t scale_val, scale = 1;
 		  int rtype;
+		  assert(! ivl_expr_signed(expr));
 		    /* This is as easy as removing the multiple that was
 		     * added to scale the value to the simulation time,
 		     * but we need to verify that the scaling value is

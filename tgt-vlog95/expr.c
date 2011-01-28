@@ -68,6 +68,13 @@ static unsigned emit_power_as_shift(ivl_scope_t scope, ivl_expr_t expr,
       return 1;
 }
 
+static void emit_expr_array(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+{
+      ivl_signal_t sig = ivl_expr_signal(expr);
+      emit_scope_module_path(scope, ivl_signal_scope(sig));
+      fprintf(vlog_out, "%s", ivl_signal_basename(sig));
+}
+
 static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       char *oper = "<invalid>";
@@ -271,6 +278,27 @@ static void emit_expr_number(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       }
 }
 
+static void emit_expr_real_number(ivl_scope_t scope, ivl_expr_t expr,
+                                  unsigned wid)
+{
+      double value = ivl_expr_dvalue(expr);
+	/* Check for NaN. */
+      if (value != value) {
+	    fprintf(vlog_out, "(0.0/0.0)");
+	    return;
+      }
+	/* Check for the infinities. */
+      if (value && value == 0.5*value) {
+	    if (value > 0) fprintf(vlog_out, "(1.0/0.0)");
+	    else fprintf(vlog_out, "(-1.0/0.0)");
+	    return;
+      }
+// HERE: This needs to be reworked. We must have a trailing digit after the
+//       decimal point and we want to print all the significant digits.
+//       I think the will require our own printing routine.
+      fprintf(vlog_out, "%#.16g", ivl_expr_dvalue(expr));
+}
+
 static void emit_expr_scope(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       fprintf(vlog_out, "%s", ivl_scope_name(ivl_expr_scope(expr)));
@@ -409,6 +437,9 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       switch(ivl_expr_type(expr)) {
+	case IVL_EX_ARRAY:
+	    emit_expr_array(scope, expr, wid);
+	    break;
 	case IVL_EX_BINARY:
 	    emit_expr_binary(scope, expr, wid);
 	    break;
@@ -422,7 +453,7 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    emit_expr_number(scope, expr, wid);
 	    break;
 	case IVL_EX_REALNUM:
-	    fprintf(vlog_out, "%#g", ivl_expr_dvalue(expr));
+	    emit_expr_real_number(scope, expr, wid);
 	    break;
 	case IVL_EX_SCOPE:
 	    emit_expr_scope(scope, expr, wid);

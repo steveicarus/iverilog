@@ -117,16 +117,17 @@ static unsigned emit_stmt_lval(ivl_scope_t scope, ivl_statement_t stmt)
       unsigned wid = 0;
       if (count > 1) {
 	    unsigned idx;
-	    ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
-	    wid += ivl_lval_width(lval);
+	    ivl_lval_t lval;
 	    fprintf(vlog_out, "{");
-	    emit_stmt_lval_piece(scope, lval);
-	    for (idx = 1; idx < count; idx += 1) {
-		  fprintf(vlog_out, ", ");
+	    for (idx = count - 1; idx > 0; idx -= 1) {
 		  lval = ivl_stmt_lval(stmt, idx);
 		  wid += ivl_lval_width(lval);
 		  emit_stmt_lval_piece(scope, lval);
+		  fprintf(vlog_out, ", ");
 	    }
+	    lval = ivl_stmt_lval(stmt, 0);
+	    wid += ivl_lval_width(lval);
+	    emit_stmt_lval_piece(scope, lval);
 	    fprintf(vlog_out, "}");
       } else {
 	    ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
@@ -188,9 +189,9 @@ static unsigned find_delayed_assign(ivl_scope_t scope, ivl_statement_t stmt)
 // HERE: Do we need to calculate the width? The compiler should have already
 //       done this for us.
       wid = emit_stmt_lval(scope, delayed_assign);
-      fprintf(vlog_out, " = #");
+      fprintf(vlog_out, " = #(");
       emit_scaled_delayx(scope, ivl_stmt_delay_expr(delay));
-      fprintf(vlog_out, " ");
+      fprintf(vlog_out, ") ");
       emit_expr(scope, ivl_stmt_rval(assign), wid);
       fprintf(vlog_out, ";\n");
 
@@ -494,19 +495,38 @@ static void emit_stmt_cassign(ivl_scope_t scope, ivl_statement_t stmt)
 
 static void emit_stmt_condit(ivl_scope_t scope, ivl_statement_t stmt)
 {
+      ivl_statement_t true_stmt = ivl_stmt_cond_true(stmt);
+      ivl_statement_t false_stmt = ivl_stmt_cond_false(stmt);
+      unsigned nest = 0;
       fprintf(vlog_out, "%*cif (", get_indent(), ' ');
       emit_expr(scope, ivl_stmt_cond_expr(stmt), 0);
       fprintf(vlog_out, ")");
-      if (ivl_stmt_cond_true(stmt)) {
-	    single_indent = 1;
-	    emit_stmt(scope, ivl_stmt_cond_true(stmt));
+      if (true_stmt) {
+	      /* If we have a false statement and the true statement is a
+	       * condition that does not have a false clause then we need
+	       * to add a begin/end pair to keep the else clause attached
+	       * to this condition. */
+	    if (false_stmt && 
+	        (ivl_statement_type(true_stmt) == IVL_ST_CONDIT) &&
+	        (! ivl_stmt_cond_false(true_stmt))) nest = 1;
+	    if (nest) {
+		  fprintf(vlog_out, " begin\n");
+		  indent += indent_incr;
+	    } else single_indent = 1;
+	    emit_stmt(scope, true_stmt);
       } else {
 	    fprintf(vlog_out, ";\n");
       }
-      if (ivl_stmt_cond_false(stmt)) {
-	    fprintf(vlog_out, "%*celse", get_indent(), ' ');
+      if (false_stmt) {
+	    if (nest) {
+		  assert(indent >= indent_incr);
+		  indent -= indent_incr;
+	    }
+	    fprintf(vlog_out, "%*c", get_indent(), ' ');
+	    if (nest) fprintf(vlog_out, "end ");
+	    fprintf(vlog_out, "else");
 	    single_indent = 1;
-	    emit_stmt(scope, ivl_stmt_cond_false(stmt));
+	    emit_stmt(scope, false_stmt);
       }
 }
 
@@ -527,8 +547,9 @@ static void emit_stmt_delay(ivl_scope_t scope, ivl_statement_t stmt)
 
 static void emit_stmt_delayx(ivl_scope_t scope, ivl_statement_t stmt)
 {
-      fprintf(vlog_out, "%*c#", get_indent(), ' ');
+      fprintf(vlog_out, "%*c#(", get_indent(), ' ');
       emit_scaled_delayx(scope, ivl_stmt_delay_expr(stmt));
+      fprintf(vlog_out, ")");
       single_indent = 1;
       emit_stmt(scope, ivl_stmt_sub_stmt(stmt));
 }
