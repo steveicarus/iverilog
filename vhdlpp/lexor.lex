@@ -73,6 +73,7 @@ W [ \t\b\f\r]+
 <CCOMMENT>\n   { yylloc.first_line += 1; }
 <CCOMMENT>"*/" { BEGIN(comment_enter); }
 
+
 [a-zA-Z_][a-zA-Z0-9_]* {
       int rc = lexor_keyword_code(yytext, yyleng);
       switch (rc) {
@@ -89,6 +90,18 @@ W [ \t\b\f\r]+
 "<=" { return LEQ; }
 ">=" { return GEQ; }
 ":=" { return VASSIGN; }
+"/=" { return NE; }
+"<>" { return BOX; }
+j
+	/* 
+"??" { return K_CC; }
+"?=" {}
+"?/=" {}
+"?<" {}
+"?<=" {}
+"?>" {}
+"?>=" {}
+*/
 
 . { return yytext[0]; }
 

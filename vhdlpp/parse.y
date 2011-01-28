@@ -75,7 +75,7 @@ int parse_errors = 0;
  /* Identifiers that are not keywords are identifiers. */
 %token <text> IDENTIFIER
  /* compound symbols */
-%token LEQ GEQ VASSIGN
+%token LEQ GEQ VASSIGN NE BOX EXP
 
  /* The rules may have types. */
 %type <interface_element> interface_element
