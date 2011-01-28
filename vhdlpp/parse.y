@@ -66,7 +66,7 @@ int parse_errors = 0;
 %token K_range K_record K_register K_reject K_release K_rem K_report
 %token K_restrict K_restrict_guarantee K_return K_rol K_ror
 %token K_select K_sequence K_severity K_signal K_shared
-%token K_sla K_sll K_sra K_srl K_string K_subtype
+%token K_sla K_sll K_sra K_srl K_strong K_subtype
 %token K_then K_to K_transport K_type
 %token K_unaffected K_units K_until K_use
 %token K_variable K_vmode K_vprop K_vunit

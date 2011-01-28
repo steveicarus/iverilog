@@ -38,6 +38,8 @@ extern int lexor_keyword_code (const char*str, unsigned len);
  */
 extern YYLTYPE yylloc;
 
+static int check_underscores(char*);
+
 static char* strdupnew(char const *str)
 {
        return str ? strcpy(new char [strlen(str)+1], str) : 0;
@@ -51,7 +53,11 @@ static int comment_enter;
 %x LCOMMENT
 
 W [ \t\b\f\r]+
+decimal_literal		{integer}(\.{integer})?({exponent})?
+integer				[0-9](_?[0-9])*
+exponent			[eE][-+]?{integer}
 
+based_integer		[0-9a-fA-F](_?[0-9a-fA-F])*
 %%
 
 [ \t\b\f\r] { ; }
@@ -74,7 +80,7 @@ W [ \t\b\f\r]+
 <CCOMMENT>"*/" { BEGIN(comment_enter); }
 
 
-[a-zA-Z_][a-zA-Z0-9_]* {
+[a-zA-Z][a-zA-Z0-9_]* {
       int rc = lexor_keyword_code(yytext, yyleng);
       switch (rc) {
 	  case IDENTIFIER:
@@ -92,7 +98,7 @@ W [ \t\b\f\r]+
 ":=" { return VASSIGN; }
 "/=" { return NE; }
 "<>" { return BOX; }
-j
+"**" { return EXP; }
 	/* 
 "??" { return K_CC; }
 "?=" {}
@@ -108,6 +114,10 @@ j
 %%
 
 extern void yyparse_set_filepath(const char*path);
+
+static int check_underscores(char* text) {
+
+}
 
 void reset_lexor(FILE*fd, const char*path)
 {
