@@ -479,6 +479,10 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    if (ivl_scope_is_cell(scope)) {
 		  fprintf(vlog_out, "`celldefine\n");
 	    }
+	    fprintf(vlog_out, "/* This module was originally defined in "
+	                      "file %s at line %u. */\n",
+	                      ivl_scope_def_file(scope),
+	                      ivl_scope_def_lineno(scope));
 	    fprintf(vlog_out, "module %s", name);
 	    free(name);
 // HERE: Still need to add port information.

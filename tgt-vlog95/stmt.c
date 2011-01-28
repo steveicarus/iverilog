@@ -16,6 +16,8 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+# include <stdlib.h>
+# include <string.h>
 # include "config.h"
 # include "vlog95_priv.h"
 
@@ -195,6 +197,199 @@ static unsigned find_delayed_assign(ivl_scope_t scope, ivl_statement_t stmt)
       return 1;
 }
 
+/*
+ * Check to see if the statement L-value is a port in the given scope.
+ * If it is return the zero based port number.
+ */
+static unsigned utask_in_port_idx(ivl_scope_t scope, ivl_statement_t stmt)
+{
+      unsigned idx, ports = ivl_scope_ports(scope);
+      ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
+      ivl_signal_t lsig = ivl_lval_sig(lval);
+      const char *sig_name;
+	/* The L-value must be a single signal. */
+      if (ivl_stmt_lvals(stmt) != 1) return ports;
+	/* It must not have an array select. */
+      if (ivl_lval_idx(lval)) return ports;
+	/* It must not have a non-zero base. */
+      if (ivl_lval_part_off(lval)) return ports;
+	/* It must not be part of the signal. */
+      if (ivl_lval_width(lval) != ivl_signal_width(lsig)) return ports;
+	/* It must have the same scope as the task. */
+      if (scope != ivl_signal_scope(lsig)) return ports;
+	/* It must be an input or inout port of the task. */
+      sig_name = ivl_signal_basename(lsig);
+      for (idx = 0; idx < ports; idx += 1) {
+	    ivl_signal_t port = ivl_scope_port(scope, idx);
+	    ivl_signal_port_t port_type = ivl_signal_port(port);
+	    if ((port_type != IVL_SIP_INPUT) &&
+	        (port_type != IVL_SIP_INOUT)) continue;
+	    if (strcmp(sig_name, ivl_signal_basename(port)) == 0) break;
+      }
+      return idx;
+}
+
+/*
+ * Check to see if the statement R-value is a port in the given scope.
+ * If it is return the zero based port number.
+ */
+static unsigned utask_out_port_idx(ivl_scope_t scope, ivl_statement_t stmt)
+{
+      unsigned idx, ports = ivl_scope_ports(scope);
+      ivl_expr_t rval = ivl_stmt_rval(stmt);
+      ivl_signal_t rsig = 0;
+      ivl_expr_type_t expr_type = ivl_expr_type(rval);
+      const char *sig_name;
+	/* We can have a simple signal. */
+      if (expr_type == IVL_EX_SIGNAL) {
+	    rsig = ivl_expr_signal(rval);
+	/* Or a simple select of a simple signal. */
+      } else if (expr_type == IVL_EX_SELECT) {
+	    ivl_expr_t expr = ivl_expr_oper1(rval);
+	      /* We must have a zero select base. */
+	    if (ivl_expr_oper2(rval)) return ports;
+	      /* We must be selecting a signal. */
+	    if (ivl_expr_type(expr) != IVL_EX_SIGNAL) return ports;
+	    rsig = ivl_expr_signal(expr);
+      } else return ports;
+	/* The R-value must have the same scope as the task. */
+      if (scope != ivl_signal_scope(rsig)) return ports;
+	/* It must not be an array element. */
+      if (ivl_signal_dimensions(rsig)) return ports;
+	/* It must be an output or inout port of the task. */
+      sig_name = ivl_signal_basename(rsig);
+      for (idx = 0; idx < ports; idx += 1) {
+	    ivl_signal_t port = ivl_scope_port(scope, idx);
+	    ivl_signal_port_t port_type = ivl_signal_port(port);
+	    if ((port_type != IVL_SIP_OUTPUT) &&
+	        (port_type != IVL_SIP_INOUT)) continue;
+	    if (strcmp(sig_name, ivl_signal_basename(port)) == 0) break;
+      }
+      return idx;
+}
+
+/*
+ * Structure to hold the port information as we extract it from the block.
+ */
+typedef struct port_expr_s {
+      ivl_signal_port_t type;
+      union {
+	    ivl_statement_t lval;
+	    ivl_expr_t rval;
+      };
+}  *port_expr_t;
+
+/*
+ * An input prints the R-value and an output or inout print the L-value.
+ */
+static void emit_port(ivl_scope_t scope, struct port_expr_s port_expr)
+{
+      if (port_expr.type == IVL_SIP_INPUT) {
+	    emit_expr(scope, port_expr.rval, 0);
+      } else {
+	      /* This is a self-determined context so we don't care about
+	       * the width of the L-value. */
+	    (void) emit_stmt_lval(scope, port_expr.lval);
+      }
+}
+
+
+/*
+ * Icarus encodes a task call with arguments as:
+ *   begin
+ *     <input 1> = <arg>
+ *     ...
+ *     <input n> = <arg>
+ *     <task_call>
+ *     <arg> = <output 1>
+ *     ...
+ *     <arg> = <output n>
+ *   end
+ * This routine looks for that pattern and translates it into the
+ * appropriate task call. It returns true (1) if it successfully
+ * translated the block to a task call, otherwise it returns false
+ * (0) to indicate the block needs to be emitted.
+ */
+static unsigned is_utask_call_with_args(ivl_scope_t scope,
+                                        ivl_statement_t stmt)
+{
+      unsigned idx, ports, task_idx = 0;
+      unsigned count = ivl_stmt_block_count(stmt);
+      ivl_scope_t task_scope = 0;
+      port_expr_t port_exprs;
+	/* Check to see if the block is of the basic form first.  */
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_statement_t tmp = ivl_stmt_block_stmt(stmt, idx);
+	    if (ivl_statement_type(tmp) == IVL_ST_ASSIGN) continue;
+	    if (ivl_statement_type(tmp) == IVL_ST_UTASK && !task_scope) {
+		  task_idx = idx;
+		  task_scope = ivl_stmt_call(tmp);
+		  assert(ivl_scope_type(task_scope) == IVL_SCT_TASK);
+		  continue;
+	    }
+	    return 0;
+      }
+	/* If there is no task call or it takes no argument then return. */
+      if (!task_scope) return 0;
+      ports = ivl_scope_ports(task_scope);
+      if (ports == 0) return 0;
+
+	/* Allocate space to save the port information and initialize it. */
+      port_exprs = (port_expr_t) malloc(sizeof(struct port_expr_s)*ports);
+      for (idx = 0; idx < ports; idx += 1) {
+	    port_exprs[idx].type = IVL_SIP_NONE;
+	    port_exprs[idx].rval = 0;
+      }
+	/* Now do a detailed check that the arguments are correct. */
+      for (idx = 0; idx < task_idx; idx += 1) {
+	    ivl_statement_t assign = ivl_stmt_block_stmt(stmt, idx);
+	    unsigned port = utask_in_port_idx(task_scope, assign);
+	    if (port == ports) {
+		  free(port_exprs);
+		  return 0;
+	    }
+	    port_exprs[port].type = IVL_SIP_INPUT;
+	    port_exprs[port].rval = ivl_stmt_rval(assign);
+      }
+      for (idx = task_idx + 1; idx < count; idx += 1) {
+	    ivl_statement_t assign = ivl_stmt_block_stmt(stmt, idx);
+	    unsigned port = utask_out_port_idx(task_scope, assign);
+	    if (port == ports) {
+		  free(port_exprs);
+		  return 0;
+	    }
+	    if (port_exprs[port].type == IVL_SIP_INPUT) {
+		  port_exprs[port].type = IVL_SIP_INOUT;
+// HERE: We probably should verify that the current R-value matches the
+//       new L-value.
+	    } else {
+		  port_exprs[port].type = IVL_SIP_OUTPUT;
+	    }
+	    port_exprs[port].lval = assign;
+      }
+
+	/* Verify that all the ports were defined. */
+      for (idx = 0; idx < ports; idx += 1) {
+	    if (port_exprs[idx].type == IVL_SIP_NONE) {
+		  free(port_exprs);
+		  return 0;
+	    }
+      }
+
+	/* Now that we have the arguments figured out, print the task call. */
+      fprintf(vlog_out, "%*c", get_indent(), ' ');
+      emit_scope_path(scope, task_scope);
+      fprintf(vlog_out, "(");
+      emit_port(scope, port_exprs[0]);
+      for (idx = 1; idx < ports; idx += 1) {
+	    fprintf(vlog_out, ", ");
+	    emit_port(scope, port_exprs[idx]);
+      }
+      free(port_exprs);
+      fprintf(vlog_out, ");\n");
+      return 1;
+}
+
 static void emit_stmt_assign(ivl_scope_t scope, ivl_statement_t stmt)
 {
       unsigned wid;
@@ -222,6 +417,7 @@ static void emit_stmt_assign_nb(ivl_scope_t scope, ivl_statement_t stmt)
 
 static void emit_stmt_block(ivl_scope_t scope, ivl_statement_t stmt)
 {
+      if (is_utask_call_with_args(scope, stmt)) return;
       fprintf(vlog_out, "%*cbegin\n", get_indent(), ' ');
       emit_stmt_block_body(scope, stmt);
       fprintf(vlog_out, "%*cend\n", get_indent(), ' ');
@@ -424,17 +620,18 @@ static void emit_stmt_trigger(ivl_scope_t scope, ivl_statement_t stmt)
       fprintf(vlog_out, ";\n");
 }
 
+/*
+ * A user defined task call with arguments is generated as a block with
+ * input assignments, a simple call and then output assignments. This is
+ * handled by the is_utask_call_with_args() routine above.
+ */
 static void emit_stmt_utask(ivl_scope_t scope, ivl_statement_t stmt)
 {
       ivl_scope_t task_scope = ivl_stmt_call(stmt);
+      assert(ivl_scope_type(task_scope) == IVL_SCT_TASK);
+      assert(ivl_scope_ports(task_scope) == 0);
       fprintf(vlog_out, "%*c", get_indent(), ' ');
       emit_scope_path(scope, task_scope);
-// HERE: No support for the calling arguments. We need ivl_stmt_parm() and
-//       ivl_stmt_parm_count() like is used for the system tasks. This is
-//       the same basic issue we have with module instantiation. Maybe we
-//       can look for assignments to a task scope and assignments from a
-//       task scope after the call to handle input and output ports. inout
-//       is a bit harder.
       fprintf(vlog_out, ";\n");
 }
 
