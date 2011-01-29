@@ -2560,8 +2560,24 @@ module_item
 		{ pform_makegates(PGBuiltin::PULLUP, $3, 0, $5, 0);
 		}
 
+	| K_pullup '(' dr_strength1 ',' dr_strength0 ')' gate_instance_list ';'
+		{ pform_makegates(PGBuiltin::PULLUP, $3, 0, $7, 0);
+		}
+
+	| K_pullup '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
+		{ pform_makegates(PGBuiltin::PULLUP, $5, 0, $7, 0);
+		}
+
 	| K_pulldown '(' dr_strength0 ')' gate_instance_list ';'
 		{ pform_makegates(PGBuiltin::PULLDOWN, $3, 0, $5, 0);
+		}
+
+	| K_pulldown '(' dr_strength1 ',' dr_strength0 ')' gate_instance_list ';'
+		{ pform_makegates(PGBuiltin::PULLDOWN, $5, 0, $7, 0);
+		}
+
+	| K_pulldown '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
+		{ pform_makegates(PGBuiltin::PULLDOWN, $3, 0, $7, 0);
 		}
 
   /* This rule handles instantiations of modules and user defined
