@@ -1,5 +1,3 @@
-#ifndef __parse_wrap_H
-#define __parse_wrap_H
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
  *
@@ -19,17 +17,32 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-/*
- * This header wraps the parse.h header file that is generated from
- * the parse.y source file. This is used to include definitions that
- * are needed by the parse type, etc.
- */
+# include "expression.h"
 
-# include  <list>
-# include "vhdlint.h"
-# include "vhdlreal.h"
-# include  "architec.h"
-# include  "expression.h"
-# include  "parse.h"
+Expression::Expression()
+{
+}
 
-#endif
+Expression::~Expression()
+{
+}
+
+ExpLogical::ExpLogical(ExpLogical::fun_t ty, Expression*op1, Expression*op2)
+: fun_(ty), operand1_(op1), operand2_(op2)
+{
+}
+
+ExpLogical::~ExpLogical()
+{
+      delete operand1_;
+      delete operand2_;
+}
+
+ExpName::ExpName(perm_string nn)
+: name_(nn)
+{
+}
+
+ExpName::~ExpName()
+{
+}

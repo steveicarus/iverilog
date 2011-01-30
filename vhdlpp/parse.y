@@ -26,6 +26,7 @@
 # include "parse_api.h"
 # include "parse_misc.h"
 # include "architec.h"
+# include "expression.h"
 # include  <cstdarg>
 # include  <list>
 
@@ -46,9 +47,13 @@ int parse_errors = 0;
 %union {
       port_mode_t port_mode;
       char*text;
+
       vhdlint* integer;
       vhdlreal* real;
       
+      Expression*expr;
+      std::list<Expression*>* expr_list;
+
       InterfacePort*interface_element;
       std::list<InterfacePort*>* interface_list;
 
@@ -98,6 +103,10 @@ int parse_errors = 0;
 %type <arch_statement> concurrent_statement concurrent_signal_assignment_statement
 %type <arch_statement_list> architecture_statement_part
 
+%type <expr> expression expression_logical factor primary relation
+%type <expr> shift_expression simple_expression term waveform_element
+
+%type <expr_list> waveform waveform_elements
 %%
 
  /* The design_file is the root for the VHDL parse. */
@@ -142,11 +151,12 @@ architecture_statement_part
 concurrent_signal_assignment_statement
   : IDENTIFIER LEQ waveform ';'
       { perm_string targ_name = lex_strings.make($1);
-	SignalAssignment*tmp = new SignalAssignment(targ_name);
+	SignalAssignment*tmp = new SignalAssignment(targ_name, *$3);
 	FILE_NAME(tmp, @1);
 
 	$$ = tmp;
 	delete[]$1;
+	delete $3;
       }
   ;
 
@@ -221,14 +231,43 @@ entity_header
 
 expression
   : expression_logical
+      { $$ = $1; }
   ;
 
 expression_logical
   : relation K_and relation
+      { ExpLogical*tmp = new ExpLogical(ExpLogical::AND, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
   | relation K_or relation
+      { ExpLogical*tmp = new ExpLogical(ExpLogical::OR, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | relation K_xor relation
+      { ExpLogical*tmp = new ExpLogical(ExpLogical::XOR, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | relation K_nand relation
+      { ExpLogical*tmp = new ExpLogical(ExpLogical::NAND, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | relation K_nor relation
+      { ExpLogical*tmp = new ExpLogical(ExpLogical::NOR, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | relation K_xnor relation
+      { ExpLogical*tmp = new ExpLogical(ExpLogical::XNOR, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
   ;
 
-factor : primary ;
+factor : primary { $$ = $1; } ;
 
   /* The interface_element is also an interface_declaration */
 interface_element
@@ -289,9 +328,14 @@ port_clause
 
 primary
   : IDENTIFIER
+      { ExpName*tmp = new ExpName(lex_strings.make($1));
+	FILE_NAME(tmp, @1);
+	delete[]$1;
+	$$ = tmp;
+      }
   ;
 
-relation : shift_expression ;
+relation : shift_expression { $$ = $1; } ;
 
 selected_name
   : IDENTIFIER '.' K_all
@@ -303,11 +347,11 @@ selected_names
   | selected_name
   ;
 
-shift_expression : simple_expression ;
+shift_expression : simple_expression { $$ = $1; } ;
 
-simple_expression : term ;
+simple_expression : term { $$ = $1; } ;
 
-term : factor ;
+term : factor { $$ = $1; } ;
 
 use_clause
   : K_use selected_names ';'
@@ -317,17 +361,29 @@ use_clause
 
 waveform
   : waveform_elements
+      { $$ = $1; }
   | K_unaffected
+      { $$ = 0; }
   ;
 
 waveform_elements
   : waveform_elements ',' waveform_element
+      { std::list<Expression*>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
   | waveform_element
+      { std::list<Expression*>*tmp = new std::list<Expression*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
   ;
 
 waveform_element
   : expression
+      { $$ = $1; }
   | K_null
+      { $$ = 0; }
   ;
 
   /* Some keywords are optional in some contexts. In all such cases, a

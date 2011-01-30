@@ -20,8 +20,10 @@
 
 # include  "entity.h"
 # include  "architec.h"
+# include  "expression.h"
 # include  <fstream>
 # include  <iomanip>
+# include  <typeinfo>
 
 static ostream& operator << (ostream&out, port_mode_t that)
 {
@@ -95,5 +97,52 @@ void Architecture::Statement::dump(ostream&out) const
 void SignalAssignment::dump(ostream&out) const
 {
       out << "   SignalAssignment file=" << get_fileline() << endl;
-      out << "     " << target_name_ << " <= <expr>" << endl;
+      out << "     " << target_name_ << " <= <expr>..." << endl;
+
+      for (list<Expression*>::const_iterator cur = rval_.begin()
+		 ; cur != rval_.end() ; ++cur) {
+	    (*cur)->dump(out, 5);
+      }
+}
+
+void Expression::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "Expression [" << typeid(*this).name() << "]"
+	  << " at " << get_fileline()<< endl;
+}
+
+void ExpLogical::dump(ostream&out, int indent) const
+{
+      const char*fun_name = "?";
+      switch (fun_) {
+	  case AND:
+	    fun_name = "AND";
+	    break;
+	  case OR:
+	    fun_name = "OR";
+	    break;
+	  case NAND:
+	    fun_name = "NAND";
+	    break;
+	  case NOR:
+	    fun_name = "NOR";
+	    break;
+	  case XOR:
+	    fun_name = "XOR";
+	    break;
+	  case XNOR:
+	    fun_name = "XNOR";
+	    break;
+      }
+
+      out << setw(indent) << "" << "Logical " << fun_name
+	  << " at " << get_fileline() << endl;
+      operand1_->dump(out, indent+4);
+      operand2_->dump(out, indent+4);
+}
+
+void ExpName::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "ExpName(\"" << name_ << "\")"
+	  << " at " << get_fileline() << endl;
 }

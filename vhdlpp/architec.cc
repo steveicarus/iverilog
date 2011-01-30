@@ -18,8 +18,11 @@
  */
 
 # include  "architec.h"
+# include  "expression.h"
 
-Architecture::Architecture(perm_string name, std::list<Architecture::Statement*>&s)
+using namespace std;
+
+Architecture::Architecture(perm_string name, list<Architecture::Statement*>&s)
 : name_(name)
 {
       statements_.splice(statements_.end(), s);
@@ -37,11 +40,16 @@ Architecture::Statement::~Statement()
 {
 }
 
-SignalAssignment::SignalAssignment(perm_string targ_name)
+SignalAssignment::SignalAssignment(perm_string targ_name, list<Expression*>&rv)
 : target_name_(targ_name)
 {
+      rval_.splice(rval_.end(), rv);
 }
 
 SignalAssignment::~SignalAssignment()
 {
+      for (list<Expression*>::iterator cur = rval_.begin()
+		 ; cur != rval_.end() ; ++cur) {
+	    delete *cur;
+      }
 }

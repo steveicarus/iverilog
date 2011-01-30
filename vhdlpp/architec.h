@@ -23,6 +23,8 @@
 # include  "LineInfo.h"
 # include  <list>
 
+class Expression;
+
 /*
  * The Architecture class carries the contents (name, statements,
  * etc.) of a parsed VHDL architecture. These objects are ultimately
@@ -71,13 +73,14 @@ class Architecture : public LineInfo {
 class SignalAssignment  : public Architecture::Statement {
 
     public:
-      SignalAssignment(perm_string target_name);
+      SignalAssignment(perm_string target_name, std::list<Expression*>&rval);
       ~SignalAssignment();
 
       virtual void dump(ostream&out) const;
 
     private:
       perm_string target_name_;
+      std::list<Expression*> rval_;
 };
 
 #endif
