@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -153,6 +153,8 @@ NexusSet* NetESignal::nex_input(bool rem_out)
 	 * as the trigger. Other simulators also add everything.
 	 */
       NexusSet*result = new NexusSet;
+	/* Local signals are not added to the sensitivity list. */
+      if (net_->local_flag()) return result;
 	/* If we have an array index add it to the sensitivity list. */
       if (word_) {
 	    NexusSet*tmp;
