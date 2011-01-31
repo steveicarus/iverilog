@@ -35,7 +35,9 @@ static unsigned get_indent()
 static void emit_stmt_block_body(ivl_scope_t scope, ivl_statement_t stmt)
 {
       unsigned idx, count = ivl_stmt_block_count(stmt);
+      ivl_scope_t my_scope = ivl_stmt_block_scope(stmt);
       indent += indent_incr;
+      if (my_scope) emit_scope_variables(my_scope);
       for (idx = 0; idx < count; idx += 1) {
 	    emit_stmt(scope, ivl_stmt_block_stmt(stmt, idx));
       }
@@ -135,6 +137,81 @@ static unsigned emit_stmt_lval(ivl_scope_t scope, ivl_statement_t stmt)
 	    emit_stmt_lval_piece(scope, lval);
       }
       return wid;
+}
+
+/*
+ * Icarus translated <var> = <event> <value> into
+ *   begin
+ *    <tmp> = <value>;
+ *    <event>;
+ *    <var> = <tmp>;
+ *   end
+ * This routine looks for this pattern and turns it back into the
+ * appropriate blocking assignment.
+ */
+static unsigned find_event_assign(ivl_scope_t scope, ivl_statement_t stmt)
+{
+      unsigned wid;
+      ivl_statement_t assign, event, event_assign, repeat = 0;
+      ivl_lval_t lval;
+      ivl_expr_t rval;
+      ivl_signal_t lsig, rsig;
+
+	/* We must have three block elements. */
+      if (ivl_stmt_block_count(stmt) != 3) return 0;
+	/* The first must be an assign. */
+      assign = ivl_stmt_block_stmt(stmt, 0);
+      if (ivl_statement_type(assign) != IVL_ST_ASSIGN) return 0;
+	/* The second must be a repeat with an event or an event. */
+      event = ivl_stmt_block_stmt(stmt, 1);
+      if (ivl_statement_type(event) != IVL_ST_REPEAT &&
+          ivl_statement_type(event) != IVL_ST_WAIT) return 0;
+      if (ivl_statement_type(event) == IVL_ST_REPEAT) {
+	    repeat = event;
+	    event = ivl_stmt_sub_stmt(repeat);
+	    if (ivl_statement_type(event) != IVL_ST_WAIT) return 0;
+      }
+	/* The third must be an assign. */
+      event_assign = ivl_stmt_block_stmt(stmt, 2);
+      if (ivl_statement_type(event_assign) != IVL_ST_ASSIGN) return 0;
+	/* The L-value must be a single signal. */
+      if (ivl_stmt_lvals(assign) != 1) return 0;
+      lval = ivl_stmt_lval(assign, 0);
+	/* It must not have an array select. */
+      if (ivl_lval_idx(lval)) return 0;
+	/* It must not have a non-zero base. */
+      if (ivl_lval_part_off(lval)) return 0;
+      lsig = ivl_lval_sig(lval);
+	/* It must not be part of the signal. */
+      if (ivl_lval_width(lval) != ivl_signal_width(lsig)) return 0;
+	/* The R-value must be a single signal. */
+      rval = ivl_stmt_rval(event_assign);
+      if (ivl_expr_type(rval) != IVL_EX_SIGNAL) return 0;
+	/* It must not be an array word. */
+      if (ivl_expr_oper1(rval)) return 0;
+      rsig = ivl_expr_signal(rval);
+	/* And finally the two signals must be the same. */
+      if (lsig != rsig) return 0;
+
+	/* The pattern matched so generate the appropriate code. */
+      fprintf(vlog_out, "%*c", get_indent(), ' ');
+// HERE: Do we need to calculate the width? The compiler should have already
+//       done this for us.
+      wid = emit_stmt_lval(scope, event_assign);
+      fprintf(vlog_out, " =");
+      single_indent = 1;
+      if (repeat) {
+	    fprintf(vlog_out, " repeat (");
+	    emit_expr(scope, ivl_stmt_cond_expr(repeat), 0);
+	    fprintf(vlog_out, ")");
+      }
+      fprintf(vlog_out, " @(");
+      emit_event(scope, event);
+      fprintf(vlog_out, ") ");
+      emit_expr(scope, ivl_stmt_rval(assign), wid);
+      fprintf(vlog_out, ";\n");
+
+      return 1;
 }
 
 /*
@@ -506,7 +583,7 @@ static void emit_stmt_condit(ivl_scope_t scope, ivl_statement_t stmt)
 	       * condition that does not have a false clause then we need
 	       * to add a begin/end pair to keep the else clause attached
 	       * to this condition. */
-	    if (false_stmt && 
+	    if (false_stmt &&
 	        (ivl_statement_type(true_stmt) == IVL_ST_CONDIT) &&
 	        (! ivl_stmt_cond_false(true_stmt))) nest = 1;
 	    if (nest) {
@@ -697,6 +774,7 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 		  emit_stmt_block_named(scope, stmt);
 	    } else {
 		  if (find_delayed_assign(scope, stmt)) break;
+		  if (find_event_assign(scope, stmt)) break;
 		  emit_stmt_block(scope, stmt);
 	    }
 	    break;

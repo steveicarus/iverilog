@@ -204,99 +204,18 @@ static void emit_expr_delay(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       emit_scaled_delay(scope, ivl_expr_delay_val(expr));
 }
 
-static void emit_expr_number(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+/*
+ * An event in an expression context must be a named event.
+ */
+static void emit_expr_event(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
-      const char *bits = ivl_expr_bits(expr);
-      unsigned nbits = ivl_expr_width(expr);
-	/* A signed value can only be 32 bits long since it can only be
-	 * represented as an integer. We can trim any matching MSB bits
-	 * to make it fit. We do not support undefined bits. */
-      if (ivl_expr_signed(expr)) {
-	    int rtype;
-	    int32_t value = get_int32_from_number(expr, &rtype);
-	    if (rtype > 0) {
-		  fprintf(vlog_out, "<invalid>");
-		  fprintf(stderr, "%s:%u: vlog95 error: Signed number is "
-		                  "greater than 32 bits (%u) and cannot be "
-		                  "safely represented.\n",
-		                  ivl_expr_file(expr), ivl_expr_lineno(expr),
-		                  rtype);
-		  vlog_errors += 1;
-	    } else if (rtype == -1) {
-		  fprintf(vlog_out, "<invalid>");
-		  fprintf(stderr, "%s:%u: vlog95 error: Signed number has "
-		                  "an undefined bit and cannot be "
-		                  "represented.\n",
-		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
-		  vlog_errors += 1;
-		  return;
-	    } else if (rtype == -2) {
-		  fprintf(vlog_out, "'bz");
-	    } else if (rtype == -3) {
-		  fprintf(vlog_out, "'bx");
-	    } else  {
-		  fprintf(vlog_out, "%"PRId32, value);
-	    }
-	/* An unsigned number is represented in hex if all the bits are
-	 * defined and it is more than a single bit otherwise it is
-	 * represented in binary form to preserve all the information. */
-      } else {
-	    int idx;
-	    unsigned has_undef = 0;
-	    for (idx = (int)nbits -1; idx >= 0; idx -= 1) {
-		  if ((bits[idx] != '0') && (bits[idx] != '1')) {
-			has_undef = 1;
-			break;
-		  }
-	    }
-	    if (has_undef || (nbits < 2)) {
-		  fprintf(vlog_out, "%u'b", nbits);
-		  for (idx = (int)nbits-1; idx >= 0; idx -= 1) {
-			fprintf(vlog_out, "%c", bits[idx]);
-		  }
-	    } else {
-		  int start = 4*(nbits/4);
-		  unsigned result = 0;
-		  fprintf(vlog_out, "%u'h", nbits);
-		    /* The first digit may not be a full hex digit. */
-		  if (start < nbits) {
-			for (idx = start; idx < nbits; idx += 1) {
-			      if (bits[idx] == '1') result |= 1U << (idx%4);
-			}
-			fprintf(vlog_out, "%1x", result);
-		  }
-		    /* Now print the full hex digits. */
-		  for (idx = start-1; idx >= 0; idx -= 4) {
-			result = 0;
-			if (bits[idx] == '1') result |= 0x8;
-			if (bits[idx-1] == '1') result |= 0x4;
-			if (bits[idx-2] == '1') result |= 0x2;
-			if (bits[idx-3] == '1') result |= 0x1;
-			fprintf(vlog_out, "%1x", result);
-		  }
-	    }
-      }
-}
-
-static void emit_expr_real_number(ivl_scope_t scope, ivl_expr_t expr,
-                                  unsigned wid)
-{
-      double value = ivl_expr_dvalue(expr);
-	/* Check for NaN. */
-      if (value != value) {
-	    fprintf(vlog_out, "(0.0/0.0)");
-	    return;
-      }
-	/* Check for the infinities. */
-      if (value && value == 0.5*value) {
-	    if (value > 0) fprintf(vlog_out, "(1.0/0.0)");
-	    else fprintf(vlog_out, "(-1.0/0.0)");
-	    return;
-      }
-// HERE: This needs to be reworked. We must have a trailing digit after the
-//       decimal point and we want to print all the significant digits.
-//       I think the will require our own printing routine.
-      fprintf(vlog_out, "%#.16g", ivl_expr_dvalue(expr));
+      ivl_event_t event = ivl_expr_event(expr);
+      ivl_scope_t ev_scope = ivl_event_scope(event);
+      assert(! ivl_event_nany(event));
+      assert(! ivl_event_npos(event));
+      assert(! ivl_event_nneg(event));
+      emit_scope_module_path(scope, ev_scope);
+      fprintf(vlog_out, "%s", ivl_event_basename(event));
 }
 
 static void emit_expr_scope(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
@@ -309,12 +228,12 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       ivl_expr_t sel_expr = ivl_expr_oper2(expr);
       ivl_expr_t sig_expr = ivl_expr_oper1(expr);
       if (sel_expr) {
-	    ivl_signal_t sig = ivl_expr_signal(sig_expr);
 	    int msb = 1;
 	    int lsb = 0;
 	    unsigned width = ivl_expr_width(expr);
 	    assert(width > 0);
 	    if (ivl_expr_type(sig_expr) == IVL_EX_SIGNAL) {
+		  ivl_signal_t sig = ivl_expr_signal(sig_expr);
 		  msb = ivl_signal_msb(sig);
 		  lsb = ivl_signal_lsb(sig);
 	    }
@@ -385,8 +304,7 @@ static void emit_expr_ternary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 static void emit_expr_ufunc(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_scope_t ufunc_def = ivl_expr_def(expr);
-// HERE: I think we need to also consider the scope of the func relative
-//       to the calling scope to get the correct name.
+      emit_scope_module_path(scope, ufunc_def);
       emit_expr_func(scope, expr, ivl_scope_tname(ufunc_def));
 }
 
@@ -449,11 +367,16 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case IVL_EX_DELAY:
 	    emit_expr_delay(scope, expr, wid);
 	    break;
+	case IVL_EX_EVENT:
+	    emit_expr_event(scope, expr, wid);
+	    break;
 	case IVL_EX_NUMBER:
-	    emit_expr_number(scope, expr, wid);
+	    emit_number(ivl_expr_bits(expr), ivl_expr_width(expr),
+	                ivl_expr_signed(expr), ivl_expr_file(expr),
+	                ivl_expr_lineno(expr));
 	    break;
 	case IVL_EX_REALNUM:
-	    emit_expr_real_number(scope, expr, wid);
+	    emit_real_number(ivl_expr_dvalue(expr));
 	    break;
 	case IVL_EX_SCOPE:
 	    emit_expr_scope(scope, expr, wid);

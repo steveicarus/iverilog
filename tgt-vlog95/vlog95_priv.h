@@ -66,8 +66,14 @@ extern void emit_scaled_expr(ivl_scope_t scope, ivl_expr_t expr,
 extern void emit_scaled_range(ivl_scope_t scope, ivl_expr_t expr,
                               unsigned width, int msb, int lsb);
 extern void emit_scope_path(ivl_scope_t scope, ivl_scope_t call_scope);
+extern void emit_scope_variables(ivl_scope_t scope);
 extern void emit_scope_module_path(ivl_scope_t scope, ivl_scope_t call_scope);
 extern void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex);
+extern void emit_const_nexus(ivl_scope_t scope, ivl_net_const_t const_net);
+
+extern void emit_real_number(double value);
+extern void emit_number(const char *bits, unsigned nbits, unsigned is_signed,
+                        const char *file, unsigned lineno);
 
 /*
  * Find the enclosing module scope.

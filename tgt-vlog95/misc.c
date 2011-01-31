@@ -330,7 +330,8 @@ void emit_scaled_expr(ivl_scope_t scope, ivl_expr_t expr, int msb, int lsb)
 
 static unsigned find_signal_in_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 {
-      ivl_signal_t sig, use_sig = 0;
+      ivl_signal_t use_sig = 0;
+      unsigned is_driver = 0;
       unsigned is_array = 0;
       int64_t array_idx = 0;
       unsigned idx, count;
@@ -338,12 +339,34 @@ static unsigned find_signal_in_nexus(ivl_scope_t scope, ivl_nexus_t nex)
       count = ivl_nexus_ptrs(nex);
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
-	    sig = ivl_nexus_ptr_sig(nex_ptr);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(nex_ptr);
 	    if (! sig) continue;
-	    if (ivl_signal_local(sig)) continue;
+	    if (ivl_signal_local(sig)) {
+		    /* If the local signal is another receiver skip it. */
+		  if ((ivl_nexus_ptr_drive1(nex_ptr) == IVL_DR_HiZ) &&
+		      (ivl_nexus_ptr_drive0(nex_ptr) == IVL_DR_HiZ)) {
+			continue;
+		  }
+	          assert(0);
+	    }
+	      /* We have a signal that can be used to find the name. */
 	    if (scope == ivl_signal_scope(sig)) {
 		  if (use_sig) {
+			  /* Swap a receiver for a driver. */
+			if (is_driver &&
+			    (ivl_nexus_ptr_drive1(nex_ptr) == IVL_DR_HiZ) &&
+			    (ivl_nexus_ptr_drive0(nex_ptr) == IVL_DR_HiZ)) {
+			      use_sig = sig;
+			      is_driver = 0;
+			      if (ivl_signal_dimensions(sig) > 0) {
+				    is_array = 1;
+				    array_idx = ivl_nexus_ptr_pin(nex_ptr);
+				    array_idx += ivl_signal_array_base(sig);
+			      }
+			      continue;
+			}
 // HERE: Which one should we use? For now it's the first one found.
+//       I believe this needs to be solved (see the inout.v test).
 			fprintf(stderr, "%s:%u: vlog95 warning: Duplicate "
 			                "name (%s",
 			                ivl_signal_file(sig),
@@ -360,6 +383,11 @@ static unsigned find_signal_in_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 			fprintf(stderr, ")\n");
 		  } else {
 			use_sig = sig;
+			  /* This signal is a driver. */
+			if ((ivl_nexus_ptr_drive1(nex_ptr) != IVL_DR_HiZ) ||
+			    (ivl_nexus_ptr_drive0(nex_ptr) != IVL_DR_HiZ)) {
+			      is_driver = 1;
+			}
 			if (ivl_signal_dimensions(sig) > 0) {
 			      is_array = 1;
 			      array_idx = ivl_nexus_ptr_pin(nex_ptr);
@@ -379,6 +407,50 @@ static unsigned find_signal_in_nexus(ivl_scope_t scope, ivl_nexus_t nex)
       return 0;
 }
 
+void emit_const_nexus(ivl_scope_t scope, ivl_net_const_t const_net)
+{
+      switch (ivl_const_type(const_net)) {
+	case IVL_VT_LOGIC:
+	case IVL_VT_BOOL:
+	    emit_number(ivl_const_bits(const_net),
+	                ivl_const_width(const_net),
+	                ivl_const_signed(const_net),
+	                ivl_const_file(const_net),
+	                ivl_const_lineno(const_net));
+	    break;
+	case IVL_VT_REAL:
+	    emit_real_number(ivl_const_real(const_net));
+	    break;
+	default:
+	    fprintf(vlog_out, "<invalid>");
+	    fprintf(stderr, "%s:%u: vlog95 error: Unknown constant type "
+	                    "(%d).\n",
+	                    ivl_const_file(const_net),
+	                    ivl_const_lineno(const_net),
+	                    (int)ivl_const_type(const_net));
+	    vlog_errors += 1;
+	    break;
+      }
+}
+
+static unsigned find_const_nexus(ivl_scope_t scope, ivl_nexus_t nex)
+{
+      unsigned idx, count;
+
+      count = ivl_nexus_ptrs(nex);
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_net_const_t const_net = ivl_nexus_ptr_con(nex_ptr);
+// HERE: Do we need to check for duplicates?
+	    if (const_net) {
+		  assert(! ivl_nexus_ptr_pin(nex_ptr));
+		  emit_const_nexus(scope, const_net);
+		  return 1;
+	    }
+      }
+      return 0;
+}
+
 // HERE: Does this work correctly with an array reference created from @*?
 void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 {
@@ -389,9 +461,13 @@ void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 	 * the module scope if the passed scope was not the module scope. */
       if (find_signal_in_nexus(get_module_scope(scope), nex)) return;
 
+	/* If there is no signals driving this then look for a constant. */
+      if (find_const_nexus(scope, nex)) return;
+
 // HERE: Need to check arr[var]? Can this be rebuilt?
 //       Then look for down scopes and then any scope. For all this warn if
-//       multiples are found in a given scope.
+//       multiples are found in a given scope. This all needs to be before
+//       the constant code.
       fprintf(vlog_out, "<missing>");
 }
 
@@ -482,149 +558,4 @@ void emit_scope_path(ivl_scope_t scope, ivl_scope_t call_scope)
 	    free(sc_name);
 	    free(call_name);
       }
-}
-
-/*
- * Extract an uint64_t value from the given number expression. If the result
- * type is 0 then the returned value is valid. If it is positive then the
- * value was too large and if it is negative then the value had undefined
- * bits.
- */
-uint64_t get_uint64_from_number(ivl_expr_t expr, int *result_type)
-{
-      unsigned nbits = ivl_expr_width(expr);
-      unsigned trim_wid = nbits - 1;
-      const char *bits = ivl_expr_bits(expr);
-      unsigned idx;
-      uint64_t value = 0;
-      assert(ivl_expr_type(expr) == IVL_EX_NUMBER);
-      assert(! ivl_expr_signed(expr));
-	/* Trim any '0' bits from the MSB. */
-      for (/* none */; trim_wid > 0; trim_wid -= 1) {
-	    if ('0' != bits[trim_wid]) {
-		  trim_wid += 1;
-		  break;
-	    }
-      }
-      if (trim_wid < nbits) trim_wid += 1;
-	/* Check to see if the value is too large. */
-      if (trim_wid > 64U) {
-	    *result_type = trim_wid;
-	    return 0;
-      }
-	/* Now build the value from the bits. */
-      for (idx = 0; idx < trim_wid; idx += 1) {
-	    if (bits[idx] == '1') value |= (uint64_t)1 << idx;
-	    else if (bits[idx] != '0') {
-		  *result_type = -1;
-		    /* If the value is entirely x/z then return -2 or -3. */
-		  if ((idx == 0) && (trim_wid == 1)) {
-			 if (bits[idx] == 'x') *result_type -= 1;
-			 *result_type -= 1;
-		  }
-		  return 0;
-	    }
-      }
-      *result_type = 0;
-      return value;
-}
-
-/*
- * Extract an int64_t value from the given number expression. If the result
- * type is 0 then the returned value is valid. If it is positive then the
- * value was too large and if it is negative then the value had undefined
- * bits. -2 is all bits z and -3 is all bits x.
- */
-int64_t get_int64_from_number(ivl_expr_t expr, int *result_type)
-{
-      unsigned is_signed = ivl_expr_signed(expr);
-      unsigned nbits = ivl_expr_width(expr);
-      unsigned trim_wid = nbits - 1;
-      const char *bits = ivl_expr_bits(expr);
-      const char msb = is_signed ? bits[trim_wid] : '0';
-      unsigned idx;
-      int64_t value = 0;
-      assert(ivl_expr_type(expr) == IVL_EX_NUMBER);
-	/* Trim any duplicate bits from the MSB. */
-      for (/* none */; trim_wid > 0; trim_wid -= 1) {
-	    if (msb != bits[trim_wid]) {
-		  trim_wid += 1;
-		  break;
-	    }
-      }
-      if (trim_wid < nbits) trim_wid += 1;
-	/* Check to see if the value is too large. */
-      if (trim_wid > 64U) {
-	    *result_type = trim_wid;
-	    return 0;
-      }
-	/* Now build the value from the bits. */
-      for (idx = 0; idx < trim_wid; idx += 1) {
-	    if (bits[idx] == '1') value |= (int64_t)1 << idx;
-	    else if (bits[idx] != '0') {
-		  *result_type = -1;
-		    /* If the value is entirely x/z then return -2 or -3. */
-		  if ((idx == 0) && (trim_wid == 1)) {
-			 if (bits[idx] == 'x') *result_type -= 1;
-			 *result_type -= 1;
-		  }
-		  return 0;
-	    }
-      }
-	/* Sign extend as needed. */
-      if (is_signed && (msb == '1') && (trim_wid < 64U)) {
-	    value |= ~(((int64_t)1 << trim_wid) - (int64_t)1);
-      }
-      *result_type = 0;
-      return value;
-}
-
-/*
- * Extract an int32_t value from the given number expression. If the result
- * type is 0 then the returned value is valid. If it is positive then the
- * value was too large and if it is negative then the value had undefined
- * bits. -2 is all bits z and -3 is all bits x.
- */
-int32_t get_int32_from_number(ivl_expr_t expr, int *result_type)
-{
-      unsigned is_signed = ivl_expr_signed(expr);
-      unsigned nbits = ivl_expr_width(expr);
-      unsigned trim_wid = nbits - 1;
-      const char *bits = ivl_expr_bits(expr);
-      const char msb = is_signed ? bits[trim_wid] : '0';
-      unsigned idx;
-      int32_t value = 0;
-      assert(ivl_expr_type(expr) == IVL_EX_NUMBER);
-	/* Trim any duplicate bits from the MSB. */
-      for (/* none */; trim_wid > 0; trim_wid -= 1) {
-	    if (msb != bits[trim_wid]) {
-		  trim_wid += 1;
-		  break;
-	    }
-      }
-      if (trim_wid < nbits) trim_wid += 1;
-	/* Check to see if the value is too large. */
-      if (trim_wid > 32U) {
-	    *result_type = trim_wid;
-	    return 0;
-      }
-	/* Now build the value from the bits. */
-      for (idx = 0; idx < trim_wid; idx += 1) {
-	    if (bits[idx] == '1') value |= (int32_t)1 << idx;
-	    else if (bits[idx] != '0') {
-		  *result_type = -1;
-		    /* If the value is entirely x/z then return -2 or -3. */
-		  if ((idx == 0) && (trim_wid == 1)) {
-			 if (bits[idx] == 'x') *result_type -= 1;
-			 *result_type -= 1;
-		  }
-		  return 0;
-	    }
-      }
-	/* Sign extend as needed. */
-      if (is_signed && (msb == '1') && (trim_wid < 32U)) {
-	    value |= ~(((int32_t)1 << trim_wid) - (int32_t)1);
-      }
-      *result_type = 0;
-      return value;
 }

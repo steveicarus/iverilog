@@ -44,7 +44,7 @@ CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
-O = vlog95.o event.o expr.o misc.o scope.o stmt.o
+O = vlog95.o event.o expr.o misc.o numbers.o scope.o stmt.o
 
 all: dep vlog95.tgt
 
