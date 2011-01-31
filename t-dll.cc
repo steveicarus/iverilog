@@ -2192,6 +2192,9 @@ bool dll_target::net_const(const NetConst*net)
       des_.consts.resize( des_.consts.size() + 1 );
       des_.consts[des_.consts.size()-1] = obj;
 
+      obj->file = net->get_file();
+      obj->lineno = net->get_lineno();
+
       make_const_delays_(obj, net);
 
       return true;

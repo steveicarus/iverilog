@@ -591,6 +591,9 @@ extern int         ivl_const_signed(ivl_net_const_t net);
 extern unsigned    ivl_const_width(ivl_net_const_t net);
 extern double      ivl_const_real(ivl_net_const_t net);
 
+extern const char* ivl_const_file(ivl_net_const_t net);
+extern unsigned ivl_const_lineno(ivl_net_const_t net);
+
 /* extern ivl_nexus_t ivl_const_pin(ivl_net_const_t net, unsigned idx); */
 /* extern unsigned    ivl_const_pins(ivl_net_const_t net); */
 

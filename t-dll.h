@@ -442,6 +442,8 @@ struct ivl_net_const_s {
       ivl_variable_type_t type :  3;
       unsigned width_          : 24;
       unsigned signed_         :  1;
+      perm_string file;
+      unsigned lineno;
 
       union {
 	    double real_value;

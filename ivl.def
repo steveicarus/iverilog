@@ -16,6 +16,8 @@ ivl_design_time_precision
 
 ivl_const_bits
 ivl_const_delay
+ivl_const_file
+ivl_const_lineno
 ivl_const_real
 ivl_const_signed
 ivl_const_type
