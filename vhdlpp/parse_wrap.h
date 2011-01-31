@@ -26,6 +26,8 @@
  */
 
 # include  <list>
+# include "vhdlnum.h"
+# include "vhdlreal.h"
 # include  "parse.h"
 
 #endif

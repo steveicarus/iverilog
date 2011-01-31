@@ -57,7 +57,7 @@ guarded,	GN_KEYWORD_2008,	K_guarded
 if,			GN_KEYWORD_2008,	K_if
 impure,		GN_KEYWORD_2008,	K_impure
 in,		GN_KEYWORD_2008,	K_in
-inertial,	GN_KEYWORD_2008,	K_internal
+inertial,	GN_KEYWORD_2008,	K_inertial
 inout,		GN_KEYWORD_2008,	K_inout
 is,		GN_KEYWORD_2008,	K_is
 label,		GN_KEYWORD_2008,	K_label
@@ -83,7 +83,7 @@ port,		GN_KEYWORD_2008,	K_port
 postponed,	GN_KEYWORD_2008,	K_postponed
 procedure,	GN_KEYWORD_2008,	K_procedure
 process,	GN_KEYWORD_2008,	K_process
-property,	GN_KEYWORD_2008,	K_propoerty
+property,	GN_KEYWORD_2008,	K_property
 protected,	GN_KEYWORD_2008,	K_protected
 pure,		GN_KEYWORD_2008,	K_pure
 range,		GN_KEYWORD_2008,	K_range

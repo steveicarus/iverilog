@@ -20,9 +20,11 @@
  */
 
 # include "vhdlpp_config.h"
+# include "vhdlnum.h"
+# include "vhdlreal.h"
 # include "compiler.h"
 # include "parse_api.h"
-# include <string.h>
+# include  <string.h>
 # include  <cstdarg>
 # include  <list>
 
@@ -39,10 +41,13 @@ static void errormsg(const YYLTYPE&loc, const char*msg, ...);
 int parse_errors = 0;
 %}
 
+
 %union {
       port_mode_t port_mode;
       char*text;
-
+      vhdlnum* integer;
+      vhdlreal* real;
+      
       InterfacePort*interface_element;
       std::list<InterfacePort*>* interface_list;
 };
@@ -74,8 +79,11 @@ int parse_errors = 0;
 %token K_xnor K_xor
  /* Identifiers that are not keywords are identifiers. */
 %token <text> IDENTIFIER
+%token <integer> INT_LITERAL 
+%token <real> REAL_LITERAL
+%token <text> STRING_LITERAL CHARACTER_LITERAL
  /* compound symbols */
-%token LEQ GEQ VASSIGN NE BOX EXP
+%token LEQ GEQ VASSIGN NE BOX EXP ARROW DLT DGT
 
  /* The rules may have types. */
 %type <interface_element> interface_element
