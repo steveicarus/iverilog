@@ -56,6 +56,7 @@ class Entity : public LineInfo {
       Architecture* add_architecture(Architecture*);
 
       int elaborate();
+      int emit(ostream&out);
 
       void dump(ostream&out) const;
 
@@ -66,6 +67,8 @@ class Entity : public LineInfo {
       perm_string name_;
 
       std::map<perm_string,Architecture*>arch_;
+
+      Architecture*bind_arch_;
 };
 
 /*
@@ -79,6 +82,8 @@ extern std::map<perm_string,Entity*> design_entities;
  * elaboration errors.
  */
 extern int elaborate_entities(void);
+
+extern int emit_entities(void);
 
 /*
  * Use this function to dump a description of the design entities to a

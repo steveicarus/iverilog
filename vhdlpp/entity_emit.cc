@@ -18,59 +18,70 @@
  */
 
 # include  "entity.h"
-# include  "compiler.h"
 # include  "architec.h"
 # include  <iostream>
 # include  <fstream>
 # include  <iomanip>
 
-using namespace std;
-
-int elaborate_entities(void)
+int emit_entities(void)
 {
       int errors = 0;
 
       for (map<perm_string,Entity*>::iterator cur = design_entities.begin()
 		 ; cur != design_entities.end() ; ++cur) {
-	    errors += cur->second->elaborate();
+	    errors += cur->second->emit(cout);
       }
 
       return errors;
 }
 
-int Entity::elaborate()
+int Entity::emit(ostream&out)
 {
       int errors = 0;
 
-      if (verbose_flag)
-	    cerr << "Elaborate entity " << name_ << "..." << endl;
+      out << "module " << name_;
 
-      if (arch_.size() == 0) {
-	    cerr << get_fileline() << ": error: "
-		 << "No architectures to choose from for entity " << name_
-		 << "." << endl;
-	    return 1;
-      }
+	// If there are ports, emit them.
+      if (ports.size() > 0) {
+	    out << "(";
+	    const char*sep = 0;
+	    for (vector<InterfacePort*>::iterator cur = ports.begin()
+		       ; cur != ports.end() ; ++cur) {
+		  InterfacePort*port = *cur;
 
+		    // FIXME: this is a stub. This port handling code
+		    // currently only supports std_logic signal tyes,
+		    // so just assert that the user asked for std_logic.
+		  if (port->type_name != "std_logic") {
+			cerr << "sorry: VHDL only supports std_logic ports."
+			     << " Expecting std_logic, but got \""
+			     << port->type_name << "\"" << endl;
+			errors += 1;
+		  }
 
-      if (arch_.size() > 1) {
-	    cerr << get_fileline() << ": sorry: "
-		 << "Too many architectures for entity " << name_
-		 << ". Architectures are:" << endl;
-	    for (map<perm_string,Architecture*>::const_iterator cur = arch_.begin()
-		       ; cur != arch_.end() ; ++cur) {
-		  cerr << get_fileline() << ":      : " << cur->first
-		       << " at " << cur->second->get_fileline() << endl;
+		  if (sep) out << sep;
+		  else sep = ", ";
+
+		  switch (port->mode) {
+		      case PORT_NONE: // Should not happen
+			out << "NO_PORT " << port->name;
+			break;
+		      case PORT_IN:
+			out << "input " << port->name;
+			break;
+		      case PORT_OUT:
+			out << "output " << port->name;
+			break;
+		  }
 	    }
-
-	    errors += 1;
+	    cout << ")";
       }
 
-      bind_arch_ = arch_.begin()->second;
-      if (verbose_flag)
-	    cerr << "For entity " << get_name()
-		 << ", choosing architecture " << bind_arch_->get_name()
-		 << "." << endl;
+      out << ";" << endl;
+
+      errors += bind_arch_->emit(out, this);
+
+      out << "endmodule" << endl;
 
       return errors;
 }

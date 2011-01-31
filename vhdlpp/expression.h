@@ -22,6 +22,9 @@
 # include  "StringHeap.h"
 # include  "LineInfo.h"
 
+class Entity;
+class Architecture;
+
 /*
  * The Expression class represents parsed expressions from the parsed
  * VHDL input. The Expression class is a virtual class that holds more
@@ -33,6 +36,12 @@ class Expression : public LineInfo {
       Expression();
       virtual ~Expression() =0;
 
+	// The emit virtual method is called bu architecture emit to
+	// output the generated code for the expression. The derived
+	// class fills in the details of what exactly happend.
+      virtual int emit(ostream&out, Entity*ent, Architecture*arc);
+
+	// Debug dump of the expression.
       virtual void dump(ostream&out, int indent) const;
 
     private:
@@ -51,6 +60,7 @@ class ExpLogical : public Expression {
       ExpLogical(ExpLogical::fun_t ty, Expression*op1, Expression*op2);
       ~ExpLogical();
 
+      int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent) const;
 
     private:
@@ -69,6 +79,7 @@ class ExpName : public Expression {
       ExpName(perm_string nn);
       ~ExpName();
 
+      int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent) const;
 
     private:

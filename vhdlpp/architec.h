@@ -23,6 +23,7 @@
 # include  "LineInfo.h"
 # include  <list>
 
+class Entity;
 class Expression;
 
 /*
@@ -41,6 +42,7 @@ class Architecture : public LineInfo {
 	    Statement();
 	    virtual ~Statement() =0;
 
+	    virtual int emit(ostream&out, Entity*ent, Architecture*arc);
 	    virtual void dump(ostream&out) const;
 
 	  private:
@@ -56,6 +58,13 @@ class Architecture : public LineInfo {
 
       perm_string get_name() const { return name_; }
 
+	// Emit this architecture to the given out file in the context
+	// of the specified entity. This method is used by the
+	// elaborate code to display generated code to the specified
+	// output.
+      int emit(ostream&out, Entity*entity);
+
+	// The dump method writes a debug display to the given output.
       void dump(ostream&out, perm_string of_entity) const;
 
     private:
@@ -76,6 +85,7 @@ class SignalAssignment  : public Architecture::Statement {
       SignalAssignment(perm_string target_name, std::list<Expression*>&rval);
       ~SignalAssignment();
 
+      int emit(ostream&out, Entity*entity, Architecture*arc);
       virtual void dump(ostream&out) const;
 
     private:
