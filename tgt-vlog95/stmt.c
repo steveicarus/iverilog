@@ -755,8 +755,15 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 {
       switch(ivl_statement_type(stmt)) {
 	case IVL_ST_NOOP:
-	    single_indent = 0;
-	    fprintf(vlog_out, ";\n");
+	      /* If this is a statement termination then just finish the
+	       * statement, otherwise print an empty begin/end pair. */
+	    if (single_indent) {
+		  single_indent = 0;
+		  fprintf(vlog_out, ";\n");
+	    } else {
+		  fprintf(vlog_out, "%*cbegin\n", get_indent(), ' ');
+		  fprintf(vlog_out, "%*cend\n", get_indent(), ' ');
+	    }
 	    break;
 	case IVL_ST_ALLOC:
 	      /* This statement is only used with an automatic task so we
