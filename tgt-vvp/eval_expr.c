@@ -395,7 +395,7 @@ static struct vector_info draw_eq_immediate(ivl_expr_t expr, unsigned ewid,
 	    lv.base = base;
 	    lv.wid = ewid;
 	    if (ewid > 1)
-		  fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base+1, ewid-1);
+		  fprintf(vvp_out, "    %%pad %u, 0, %u;\n", base+1, ewid-1);
 
       } else if (lv.wid < ewid) {
 	    unsigned base = allocate_vector(ewid);
@@ -411,7 +411,7 @@ static struct vector_info draw_eq_immediate(ivl_expr_t expr, unsigned ewid,
 		  clr_vector(lv);
 	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n", base,
 		    lv.base, lv.wid);
-	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+	    fprintf(vvp_out, "    %%pad %u, 0, %u;\n",
 		    base+lv.wid, ewid-lv.wid);
 	    lv.base = base;
 	    lv.wid = ewid;
@@ -576,7 +576,7 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t expr,
 	lv.base = base;
 	lv.wid = ewid;
 	if (ewid > 1)
-	      fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base+1, ewid-1);
+	      fprintf(vvp_out, "    %%pad %u, 0, %u;\n", base+1, ewid-1);
       }
 
       return lv;
@@ -659,7 +659,7 @@ static struct vector_info draw_binary_expr_land(ivl_expr_t expr, unsigned wid)
 	clr_vector(lv);
 	lv.base = base;
 	lv.wid = wid;
-	fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base+1, wid-1);
+	fprintf(vvp_out, "    %%pad %u, 0, %u;\n", base+1, wid-1);
       }
 
       return lv;
@@ -770,7 +770,7 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t expr, unsigned wid,
 	if (lv.base >= 8) clr_vector(lv);
 	lv.base = base;
 	lv.wid = wid;
-	fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base+1, wid-1);
+	fprintf(vvp_out, "    %%pad %u, 0, %u;\n", base+1, wid-1);
       }
 
       return lv;
@@ -883,7 +883,7 @@ static struct vector_info draw_binary_expr_le_bool(ivl_expr_t expr,
 	tmp.base = base;
 	tmp.wid = wid;
 	if (wid > 1)
-	      fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base+1, wid-1);
+	      fprintf(vvp_out, "    %%pad %u, 0, %u;\n", base+1, wid-1);
       }
 
       return tmp;
@@ -1018,7 +1018,7 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 	lv.base = base;
 	lv.wid = wid;
 	if (wid > 1)
-	      fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base+1, wid-1);
+	      fprintf(vvp_out, "    %%pad %u, 0, %u;\n", base+1, wid-1);
       }
 
       return lv;
@@ -1762,16 +1762,15 @@ static struct vector_info draw_concat_expr(ivl_expr_t expr, unsigned wid,
 
 	      /* Pad the expression when needed. */
 	    if (wid > concat_wid) {
+                  unsigned base = res.base+concat_wid;
+                  unsigned count = wid-concat_wid;
 		    /* We can get a signed concatenation with $signed({...}). */
 		  if (ivl_expr_signed(expr)) {
-			unsigned base = res.base+concat_wid-1;
-			for (idx = 1; idx <= wid-concat_wid; idx += 1) {
-			      fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
-			                       base+idx, base);
-			}
+			fprintf(vvp_out, "    %%pad %u, %u, %u;\n",
+			                 base, base-1, count);
 		  } else {
-			fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
-			                 res.base+concat_wid, wid-concat_wid);
+			fprintf(vvp_out, "    %%pad %u, 0, %u;\n",
+			                 base, count);
 		  }
 	    }
       } else {
@@ -1918,19 +1917,19 @@ static struct vector_info draw_number_expr(ivl_expr_t expr, unsigned wid)
 	/* Pad the number up to the expression width. */
       if (idx < wid) {
 	    if (ivl_expr_signed(expr) && bits[nwid-1] == '1')
-		  fprintf(vvp_out, "    %%mov %u, 1, %u;\n",
+		  fprintf(vvp_out, "    %%pad %u, 1, %u;\n",
 			  res.base+idx, wid-idx);
 
 	    else if (bits[nwid-1] == 'x')
-		  fprintf(vvp_out, "    %%mov %u, 2, %u;\n",
+		  fprintf(vvp_out, "    %%pad %u, 2, %u;\n",
 			  res.base+idx, wid-idx);
 
 	    else if (bits[nwid-1] == 'z')
-		  fprintf(vvp_out, "    %%mov %u, 3, %u;\n",
+		  fprintf(vvp_out, "    %%pad %u, 3, %u;\n",
 			  res.base+idx, wid-idx);
 
 	    else
-		  fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
+		  fprintf(vvp_out, "    %%pad %u, 0, %u;\n",
 			  res.base+idx, wid-idx);
       }
 
@@ -1948,14 +1947,14 @@ static struct vector_info draw_number_expr(ivl_expr_t expr, unsigned wid)
  */
 static void pad_in_place(struct vector_info dest, unsigned sub_width, int signed_flag)
 {
+      unsigned base = dest.base+sub_width;
+      unsigned count = dest.wid-sub_width;
       if (signed_flag) {
-	    unsigned idx;
-	    for (idx = sub_width ;  idx < dest.wid ;  idx += 1)
-			fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
-				dest.base+idx, dest.base+sub_width-1);
+	    fprintf(vvp_out, "    %%pad %u, %u, %u;\n",
+		    base, base-1, count);
       } else {
-	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n",
-		    dest.base+sub_width, dest.wid - sub_width);
+	    fprintf(vvp_out, "    %%pad %u, 0, %u;\n",
+		    base, count);
       }
 }
 
@@ -2152,7 +2151,7 @@ static struct vector_info draw_string_expr(ivl_expr_t expr, unsigned wid)
 
 	/* Pad the number up to the expression width. */
       if (idx < wid)
-	    fprintf(vvp_out, "    %%mov %u, 0, %u;\n", res.base+idx, wid-idx);
+	    fprintf(vvp_out, "    %%pad %u, 0, %u;\n", res.base+idx, wid-idx);
 
       if (res.base >= 8)
 	    save_expression_lookaside(res.base, expr, wid);
@@ -2173,21 +2172,18 @@ void pad_expr_in_place(ivl_expr_t expr, struct vector_info res, unsigned swid)
       if (res.wid <= swid)
 	    return;
 
+      unsigned base = res.base+swid;
+      unsigned count = res.wid-swid;
       if (ivl_expr_signed(expr)) {
-	    unsigned idx;
-	    for (idx = swid ;  idx < res.wid ;  idx += 1)
-		  fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
-			  res.base+idx, res.base+swid-1);
-
+            fprintf(vvp_out, "    %%pad %u, %u, %u;\n",
+                    base, base-1, count);
       } else {
-	    unsigned base = res.base+swid;
-	    unsigned count = res.wid-swid;
 	      /* The %movi is faster for larger widths, but for very
-		 small counts, the %mov is faster. */
+		 small counts, the %pad is faster. */
 	    if (count > 4)
 		  fprintf(vvp_out, "    %%movi %u, 0, %u;\n", base, count);
 	    else
-		  fprintf(vvp_out, "    %%mov %u, 0, %u;\n", base, count);
+		  fprintf(vvp_out, "    %%pad %u, 0, %u;\n", base, count);
       }
 }
 
@@ -2609,16 +2605,8 @@ static struct vector_info draw_select_unsized_literal(ivl_expr_t expr,
 	    assert(res.base);
 	    fprintf(vvp_out, "    %%mov %u, %u, %u; Pad sub-expression to match width\n",
 		    res.base, subv.base, subv.wid);
-	    if (ivl_expr_signed(sube)) {
-		  unsigned idx;
-		  for (idx = subv.wid ; idx < res.wid ; idx += 1) {
-			fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
-				res.base+idx, subv.base+subv.wid-1);
-		  }
-	    } else {
-		  fprintf(vvp_out, "    %%mov %u, 0, %u\n",
-			  res.base+subv.wid, wid-subv.wid);
-	    }
+
+            pad_in_place(res, subv.wid, ivl_expr_signed(sube));
 
 	    subv = res;
       }

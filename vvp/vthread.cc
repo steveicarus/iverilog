@@ -3558,6 +3558,24 @@ bool of_MOV(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_PAD(vthread_t thr, vvp_code_t cp)
+{
+      assert(cp->bit_idx[0] >= 4);
+
+      vvp_bit4_t pad_bit;
+      if (cp->bit_idx[1] < 4)
+            pad_bit = thr_index_to_bit4[cp->bit_idx[1]];
+      else
+            pad_bit = thr->bits4.value(cp->bit_idx[1]);
+
+      thr_check_addr(thr, cp->bit_idx[0]+cp->number-1);
+      vvp_vector4_t tmp (cp->number, pad_bit);
+      thr->bits4.set_vec(cp->bit_idx[0], tmp);
+      return true;
+
+      return true;
+}
+
 /*
 *  %mov/wr <dst>, <src>
 */

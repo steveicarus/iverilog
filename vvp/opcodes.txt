@@ -706,6 +706,14 @@ and the <dst> is a writable scalar. The <dst> gets the value of the
 or of all the bits of the src vector.
 
 
+* %pad <dst>, <src>, <wid>
+
+This instruction replicates a single bit in register space into a
+destination vector in register space. The destination may overlap
+the source bit. The <dst> may not be 0-3. This is useful for zero
+or sign extending a vector.
+
+
 * %pow <bit-l>, <bit-r>, <wid>
 * %pow/s <bit-l>, <bit-r>, <wid>
 
