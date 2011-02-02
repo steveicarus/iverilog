@@ -225,28 +225,42 @@ static unsigned emit_drive(ivl_drive_t drive)
       return 0;
 }
 
-static void emit_gate_strength(ivl_net_logic_t nlogic)
+/*
+ * If the strength type is 2 then emit both strengths. If it is 1 then only
+ * emit the 1 strength (pullup) and if it is 0 only emit the 0 strength
+ * (pulldown).
+ */
+static void emit_gate_strength(ivl_net_logic_t nlogic, unsigned strength_type)
 {
+      assert(strength_type <= 2);
       ivl_drive_t drive1 = ivl_logic_drive1(nlogic);
       ivl_drive_t drive0 = ivl_logic_drive0(nlogic);
       if ((drive1 != IVL_DR_STRONG) || (drive0 != IVL_DR_STRONG)) {
 	    fprintf(vlog_out, " (");
-	    if (emit_drive(drive1)) {
-		  fprintf(vlog_out, "<invalid>");
-		  fprintf(stderr, "%s:%u: vlog95 error: Unsupported gate "
-		                  "1 drive (%d)\n", ivl_logic_file(nlogic),
-		                  ivl_logic_lineno(nlogic), (int)drive1);
-		  vlog_errors += 1;
+	    if (strength_type > 0) {
+		  if (emit_drive(drive1)) {
+			fprintf(vlog_out, "<invalid>");
+			fprintf(stderr, "%s:%u: vlog95 error: Unsupported gate "
+			                "1 drive (%d)\n",
+			                ivl_logic_file(nlogic),
+			                ivl_logic_lineno(nlogic), (int)drive1);
+			vlog_errors += 1;
+		  }
+		  fprintf(vlog_out, "1");
 	    }
-	    fprintf(vlog_out, "1, ");
-	    if (emit_drive(drive0)) {
-		  fprintf(vlog_out, "<invalid>");
-		  fprintf(stderr, "%s:%u: vlog95 error: Unsupported gate "
-		                  "0 drive (%d)\n", ivl_logic_file(nlogic),
-		                  ivl_logic_lineno(nlogic), (int)drive0);
-		  vlog_errors += 1;
+	    if (strength_type == 2) fprintf(vlog_out, ", ");
+	    if ((strength_type & 0x01) == 0) {
+		  if (emit_drive(drive0)) {
+			fprintf(vlog_out, "<invalid>");
+			fprintf(stderr, "%s:%u: vlog95 error: Unsupported gate "
+			                "0 drive (%d)\n",
+			                ivl_logic_file(nlogic),
+			                ivl_logic_lineno(nlogic), (int)drive0);
+			vlog_errors += 1;
+		  }
+		  fprintf(vlog_out, "0");
 	    }
-	    fprintf(vlog_out, "0)");
+	    fprintf(vlog_out, ")");
       }
 }
 
@@ -264,7 +278,6 @@ static void emit_lpm_strength(ivl_lpm_t lpm)
 		  vlog_errors += 1;
 	    }
 	    fprintf(vlog_out, "1, ");
-	    emit_drive(drive0);
 	    if (emit_drive(drive0)) {
 		  fprintf(vlog_out, "<invalid>");
 		  fprintf(stderr, "%s:%u: vlog95 error: Unsupported LPM "
@@ -742,7 +755,7 @@ static void emit_bufz(ivl_scope_t scope, ivl_net_logic_t nlogic)
 {
       assert(ivl_logic_pins(nlogic) == 2);
       fprintf(vlog_out, "assign");
-      emit_gate_strength(nlogic);
+      emit_gate_strength(nlogic, 2);
       emit_delay(scope,
                  ivl_logic_delay(nlogic, 0),
                  ivl_logic_delay(nlogic, 1),
@@ -757,7 +770,7 @@ static void emit_bufz(ivl_scope_t scope, ivl_net_logic_t nlogic)
 
 static void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 {
-      unsigned idx, count, dly_count;
+      unsigned idx, count, dly_count, strength_type = 2;
       fprintf(vlog_out, "%*c", indent, ' ');
       switch (ivl_logic_type(nlogic)) {
 	case IVL_LO_AND:
@@ -819,10 +832,12 @@ static void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 	case IVL_LO_PULLDOWN:
             fprintf(vlog_out, "pulldown");
             dly_count = 0;
+            strength_type = 0;
 	    break;
 	case IVL_LO_PULLUP:
             fprintf(vlog_out, "pullup");
             dly_count = 0;
+            strength_type = 1;
 	    break;
 	case IVL_LO_RCMOS:
             fprintf(vlog_out, "rcmos");
@@ -855,7 +870,7 @@ static void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
             dly_count = 0;
 	    break;
       }
-      emit_gate_strength(nlogic);
+      emit_gate_strength(nlogic, strength_type);
       if (dly_count) emit_delay(scope,
                                 ivl_logic_delay(nlogic, 0),
                                 ivl_logic_delay(nlogic, 1),

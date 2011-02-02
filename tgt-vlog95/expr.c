@@ -237,6 +237,8 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 		  msb = ivl_signal_msb(sig);
 		  lsb = ivl_signal_lsb(sig);
 	    }
+// HERE: If this is a constant then it was likely a parameter reference.
+//       We need to find the appropriate parameter and use it instead.
 	    emit_expr(scope, sig_expr, wid);
 	    if (width == 1) {
 		  fprintf(vlog_out, "[");

@@ -140,6 +140,67 @@ static unsigned emit_stmt_lval(ivl_scope_t scope, ivl_statement_t stmt)
 }
 
 /*
+ * Icarus translated <var> = <delay> <value> into
+ *   begin
+ *    <tmp> = <value>;
+ *    <delay> <var> = <tmp>;
+ *   end
+ * This routine looks for this pattern and turns it back into the
+ * appropriate blocking assignment.
+ */
+static unsigned find_delayed_assign(ivl_scope_t scope, ivl_statement_t stmt)
+{
+      unsigned wid;
+      ivl_statement_t assign, delay, delayed_assign;
+      ivl_lval_t lval;
+      ivl_expr_t rval;
+      ivl_signal_t lsig, rsig;
+
+	/* We must have two block elements. */
+      if (ivl_stmt_block_count(stmt) != 2) return 0;
+	/* The first must be an assign. */
+      assign = ivl_stmt_block_stmt(stmt, 0);
+      if (ivl_statement_type(assign) != IVL_ST_ASSIGN) return 0;
+	/* The second must be a delayx. */
+      delay = ivl_stmt_block_stmt(stmt, 1);
+      if (ivl_statement_type(delay) != IVL_ST_DELAYX) return 0;
+	/* The statement for the delayx must be an assign. */
+      delayed_assign = ivl_stmt_sub_stmt(delay);
+      if (ivl_statement_type(delayed_assign) != IVL_ST_ASSIGN) return 0;
+	/* The L-value must be a single signal. */
+      if (ivl_stmt_lvals(assign) != 1) return 0;
+      lval = ivl_stmt_lval(assign, 0);
+	/* It must not have an array select. */
+      if (ivl_lval_idx(lval)) return 0;
+	/* It must not have a non-zero base. */
+      if (ivl_lval_part_off(lval)) return 0;
+      lsig = ivl_lval_sig(lval);
+	/* It must not be part of the signal. */
+      if (ivl_lval_width(lval) != ivl_signal_width(lsig)) return 0;
+	/* The R-value must be a single signal. */
+      rval = ivl_stmt_rval(delayed_assign);
+      if (ivl_expr_type(rval) != IVL_EX_SIGNAL) return 0;
+	/* It must not be an array word. */
+      if (ivl_expr_oper1(rval)) return 0;
+      rsig = ivl_expr_signal(rval);
+	/* And finally the two signals must be the same. */
+      if (lsig != rsig) return 0;
+
+	/* The pattern matched so generate the appropriate code. */
+      fprintf(vlog_out, "%*c", get_indent(), ' ');
+// HERE: Do we need to calculate the width? The compiler should have already
+//       done this for us.
+      wid = emit_stmt_lval(scope, delayed_assign);
+      fprintf(vlog_out, " = #(");
+      emit_scaled_delayx(scope, ivl_stmt_delay_expr(delay));
+      fprintf(vlog_out, ") ");
+      emit_expr(scope, ivl_stmt_rval(assign), wid);
+      fprintf(vlog_out, ";\n");
+
+      return 1;
+}
+
+/*
  * Icarus translated <var> = <event> <value> into
  *   begin
  *    <tmp> = <value>;
@@ -215,63 +276,48 @@ static unsigned find_event_assign(ivl_scope_t scope, ivl_statement_t stmt)
 }
 
 /*
- * Icarus translated <var> = <delay> <value> into
+ * Icarus translated wait(<expr) <stmt> into
  *   begin
- *    <tmp> = <value>;
- *    <delay> <var> = <tmp>;
+ *    while (<expr> !== 1'b1) @(<expr sensitivities>);
+ *    <stmt>
  *   end
- * This routine looks for this pattern and turns it back into the
- * appropriate blocking assignment.
+ * This routine looks for this pattern and turns it back into a
+ * wait statement.
  */
-static unsigned find_delayed_assign(ivl_scope_t scope, ivl_statement_t stmt)
+static unsigned find_wait(ivl_scope_t scope, ivl_statement_t stmt)
 {
-      unsigned wid;
-      ivl_statement_t assign, delay, delayed_assign;
-      ivl_lval_t lval;
-      ivl_expr_t rval;
-      ivl_signal_t lsig, rsig;
-
+      ivl_statement_t while_wait, wait, wait_stmt;
+      ivl_expr_t while_expr, expr;
+      const char *bits;
 	/* We must have two block elements. */
       if (ivl_stmt_block_count(stmt) != 2) return 0;
-	/* The first must be an assign. */
-      assign = ivl_stmt_block_stmt(stmt, 0);
-      if (ivl_statement_type(assign) != IVL_ST_ASSIGN) return 0;
-	/* The second must be a delayx. */
-      delay = ivl_stmt_block_stmt(stmt, 1);
-      if (ivl_statement_type(delay) != IVL_ST_DELAYX) return 0;
-	/* The statement for the delayx must be an assign. */
-      delayed_assign = ivl_stmt_sub_stmt(delay);
-      if (ivl_statement_type(delayed_assign) != IVL_ST_ASSIGN) return 0;
-	/* The L-value must be a single signal. */
-      if (ivl_stmt_lvals(assign) != 1) return 0;
-      lval = ivl_stmt_lval(assign, 0);
-	/* It must not have an array select. */
-      if (ivl_lval_idx(lval)) return 0;
-	/* It must not have a non-zero base. */
-      if (ivl_lval_part_off(lval)) return 0;
-      lsig = ivl_lval_sig(lval);
-	/* It must not be part of the signal. */
-      if (ivl_lval_width(lval) != ivl_signal_width(lsig)) return 0;
-	/* The R-value must be a single signal. */
-      rval = ivl_stmt_rval(delayed_assign);
-      if (ivl_expr_type(rval) != IVL_EX_SIGNAL) return 0;
-	/* It must not be an array word. */
-      if (ivl_expr_oper1(rval)) return 0;
-      rsig = ivl_expr_signal(rval);
-	/* And finally the two signals must be the same. */
-      if (lsig != rsig) return 0;
+	/* The first must be a while. */
+      while_wait = ivl_stmt_block_stmt(stmt, 0);
+      if (ivl_statement_type(while_wait) != IVL_ST_WHILE) return 0;
+	/* That has a wait with a NOOP statement. */
+      wait = ivl_stmt_sub_stmt(while_wait);
+      if (ivl_statement_type(wait) != IVL_ST_WAIT) return 0;
+      wait_stmt = ivl_stmt_sub_stmt(wait);
+      if (ivl_statement_type(wait_stmt) != IVL_ST_NOOP) return 0;
+	/* Check that the while condition has the correct form. */
+      while_expr = ivl_stmt_cond_expr(while_wait);
+      if (ivl_expr_type(while_expr) != IVL_EX_BINARY) return 0;
+      if (ivl_expr_opcode(while_expr) != 'N') return 0;
+	/* And has a second operator that is a constant 1'b1. */
+      expr = ivl_expr_oper2(while_expr);
+      if (ivl_expr_type(expr) != IVL_EX_NUMBER) return 0;
+      if (ivl_expr_width(expr) != 1) return 0;
+      bits = ivl_expr_bits(expr);
+      if (*bits != '1') return 0;
+// HERE: There is no easy way to verify that the @ sensitivity list
+//       matches the first expression so we don't check for that yet.
 
 	/* The pattern matched so generate the appropriate code. */
-      fprintf(vlog_out, "%*c", get_indent(), ' ');
-// HERE: Do we need to calculate the width? The compiler should have already
-//       done this for us.
-      wid = emit_stmt_lval(scope, delayed_assign);
-      fprintf(vlog_out, " = #(");
-      emit_scaled_delayx(scope, ivl_stmt_delay_expr(delay));
-      fprintf(vlog_out, ") ");
-      emit_expr(scope, ivl_stmt_rval(assign), wid);
-      fprintf(vlog_out, ";\n");
-
+      fprintf(vlog_out, "%*cwait(", get_indent(), ' ');
+      emit_expr(scope, ivl_expr_oper1(while_expr), 0);
+      fprintf(vlog_out, ")");
+      single_indent = 1;
+      emit_stmt(scope, ivl_stmt_block_stmt(stmt, 1));
       return 1;
 }
 
@@ -782,6 +828,7 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 	    } else {
 		  if (find_delayed_assign(scope, stmt)) break;
 		  if (find_event_assign(scope, stmt)) break;
+		  if (find_wait(scope, stmt)) break;
 		  emit_stmt_block(scope, stmt);
 	    }
 	    break;
