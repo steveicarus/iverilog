@@ -55,9 +55,12 @@ extern unsigned indent_incr;
  */
 extern void emit_event(ivl_scope_t scope, ivl_statement_t stmt);
 extern void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned width);
+extern void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic);
+extern void emit_lpm(ivl_scope_t scope, ivl_lpm_t lpm);
 extern void emit_process(ivl_scope_t scope, ivl_process_t proc);
 extern int emit_scope(ivl_scope_t scope, ivl_scope_t parent);
 extern void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt);
+extern void emit_tran(ivl_scope_t scope, ivl_switch_t tran);
 
 extern void emit_scaled_delay(ivl_scope_t scope, uint64_t delay);
 extern void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr);
