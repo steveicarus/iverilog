@@ -73,8 +73,16 @@ class Entity : public LineInfo {
       std::vector<InterfacePort*> ports_;
 
       std::map<perm_string,Architecture*>arch_;
-
       Architecture*bind_arch_;
+
+      enum vtype_t { VNONE, VUWIRE };
+      struct decl_t {
+	    vtype_t type;
+	    long msb, lsb;
+      };
+      map<perm_string,decl_t> declarations_;
+
+      int elaborate_ports_(void);
 };
 
 /*

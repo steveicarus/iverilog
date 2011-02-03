@@ -49,16 +49,6 @@ int Entity::emit(ostream&out)
 		       ; cur != ports_.end() ; ++cur) {
 		  InterfacePort*port = *cur;
 
-		    // FIXME: this is a stub. This port handling code
-		    // currently only supports std_logic signal tyes,
-		    // so just assert that the user asked for std_logic.
-		  if (port->type_name != "std_logic") {
-			cerr << "sorry: VHDL only supports std_logic ports."
-			     << " Expecting std_logic, but got \""
-			     << port->type_name << "\"" << endl;
-			errors += 1;
-		  }
-
 		  if (sep) out << sep;
 		  else sep = ", ";
 
@@ -78,6 +68,23 @@ int Entity::emit(ostream&out)
       }
 
       out << ";" << endl;
+
+      for (map<perm_string,decl_t>::const_iterator cur = declarations_.begin()
+		 ; cur != declarations_.end() ; ++cur) {
+
+	    switch (cur->second.type) {
+		case VNONE:
+		  out << "// N type for " << cur->first << endl;
+		  break;
+		case VUWIRE:
+		  out << "wire ";
+		  if (cur->second.msb != cur->second.lsb)
+			out << "[" << cur->second.msb
+			    << ":" << cur->second.lsb << "] ";
+		  out << cur->first << ";" << endl;
+		  break;
+	    }
+      }
 
       errors += bind_arch_->emit(out, this);
 

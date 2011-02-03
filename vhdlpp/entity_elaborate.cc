@@ -23,6 +23,7 @@
 # include  <iostream>
 # include  <fstream>
 # include  <iomanip>
+# include  <cstring>
 
 using namespace std;
 
@@ -71,6 +72,42 @@ int Entity::elaborate()
 	    cerr << "For entity " << get_name()
 		 << ", choosing architecture " << bind_arch_->get_name()
 		 << "." << endl;
+
+      errors += elaborate_ports_();
+      return errors;
+}
+
+int Entity::elaborate_ports_(void)
+{
+      int errors = 0;
+
+      for (std::vector<InterfacePort*>::const_iterator cur = ports_.begin()
+		 ; cur != ports_.end() ; ++cur) {
+
+	    InterfacePort*cur_port = *cur;
+	    decl_t cur_decl;
+	    cur_decl.type = VNONE;
+	    cur_decl.msb = 0;
+	    cur_decl.lsb = 0;
+
+	    if (strcasecmp(cur_port->type_name, "std_logic") == 0) {
+		  cur_decl.type = VUWIRE;
+
+	    } else if (strcasecmp(cur_port->type_name, "bit") == 0) {
+		  cur_decl.type = VUWIRE;
+
+	    } else if (strcasecmp(cur_port->type_name, "boolean") == 0) {
+		  cur_decl.type = VUWIRE;
+
+	    } else {
+		  cerr << get_fileline() << ": error: "
+		       << "I don't know how to map port " << cur_port->name
+		       << " type " << cur_port->type_name << "." << endl;
+		  errors += 1;
+	    }
+
+	    declarations_[cur_port->name] = cur_decl;
+      }
 
       return errors;
 }
