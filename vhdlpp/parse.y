@@ -107,6 +107,9 @@ int parse_errors = 0;
 %type <expr> shift_expression simple_expression term waveform_element
 
 %type <expr_list> waveform waveform_elements
+
+%type <text> identifier_opt
+
 %%
 
  /* The design_file is the root for the VHDL parse. */
@@ -116,13 +119,16 @@ architecture_body
   : K_architecture IDENTIFIER
     K_of IDENTIFIER
     K_is
-    K_begin architecture_statement_part K_end K_architecture_opt ';'
+    K_begin architecture_statement_part K_end K_architecture_opt identifier_opt ';'
       { Architecture*tmp = new Architecture(lex_strings.make($2), *$7);
 	FILE_NAME(tmp, @1);
 	bind_architecture_to_entity($4, tmp);
+	if ($10 && tmp->get_name() != $10)
+	      errormsg(@2, "Architecture name doesn't match closing name\n");
 	delete[]$2;
 	delete[]$4;
 	delete $7;
+	if ($10) delete[]$10
       }
   | K_architecture IDENTIFIER
     K_of IDENTIFIER
@@ -262,6 +268,8 @@ expression_logical
   ;
 
 factor : primary { $$ = $1; } ;
+
+identifier_opt : IDENTIFIER { $$ = $1; } |  { $$ = 0; } ;
 
   /* The interface_element is also an interface_declaration */
 interface_element
