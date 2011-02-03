@@ -2833,7 +2833,7 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 		       evaluate the select at run-time. */
 
 		  NetESelect*stmp = new NetESelect(tmp, mtmp, 1);
-		  tmp->set_line(*this);
+		  stmp->set_line(*this);
 		  tmp = stmp;
 	    }
 
