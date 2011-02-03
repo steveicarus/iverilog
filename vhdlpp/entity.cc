@@ -34,6 +34,14 @@ Entity::~Entity()
 {
 }
 
+void Entity::set_interface(std::list<InterfacePort*>*ports)
+{
+	while (ports->size() > 0) {
+	      ports_.push_back(ports->front());
+	      ports->pop_front();
+	}
+}
+
 Architecture* Entity::add_architecture(Architecture*that)
 {
       if (Architecture*tmp = arch_ [that->get_name()]) {

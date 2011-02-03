@@ -194,10 +194,7 @@ entity_declaration
 	FILE_NAME(tmp, @1);
 	  // Transfer the ports
 	std::list<InterfacePort*>*ports = $4;
-	while (ports->size() > 0) {
-	      tmp->ports.push_back(ports->front());
-	      ports->pop_front();
-	}
+	tmp->set_interface(ports);
 	delete ports;
 	  // Save the entity in the entity map.
 	design_entities[tmp->get_name()] = tmp;
@@ -214,10 +211,7 @@ entity_declaration
 	delete[]$7;
 	// Transfer the ports
 	std::list<InterfacePort*>*ports = $4;
-	while (ports->size() > 0) {
-		tmp->ports.push_back(ports->front());
-		ports->pop_front();
-	}
+	tmp->set_interface(ports);
 	delete ports;
 	// Save the entity in the entity map.
 	design_entities[tmp->get_name()] = tmp;

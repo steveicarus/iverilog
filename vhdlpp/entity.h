@@ -20,6 +20,7 @@
  */
 
 # include  <map>
+# include  <list>
 # include  <vector>
 # include  "StringHeap.h"
 # include  "LineInfo.h"
@@ -47,6 +48,12 @@ class Entity : public LineInfo {
 	// Entities have names.
       perm_string get_name() const { return name_; }
 
+	// Declare the ports for the entity. The parser calls this
+	// method with a list of interface elements that were parsed
+	// for the entity. This method collects those entities, and
+	// empties the list in the process.
+      void set_interface(std::list<InterfacePort*>*ports);
+
 	// bind an architecture to the entity, and return the
 	// Architecture that was bound. If there was a previous
 	// architecture with the same name bound, then do not replace
@@ -60,11 +67,10 @@ class Entity : public LineInfo {
 
       void dump(ostream&out) const;
 
-    public:
-      std::vector<InterfacePort*> ports;
-
     private:
       perm_string name_;
+
+      std::vector<InterfacePort*> ports_;
 
       std::map<perm_string,Architecture*>arch_;
 

@@ -57,12 +57,12 @@ void Entity::dump(ostream&out) const
 {
       out << "entity " << name_
 	  << " file=" << get_fileline() << endl;
-      if (ports.size() == 0) {
+      if (ports_.size() == 0) {
 	    out << "    No ports" << endl;
       } else {
 	    out << "    PORTS:" << endl;
-	    for (vector<InterfacePort*>::const_iterator cur = ports.begin()
-		       ; cur != ports.end() ; ++cur) {
+	    for (vector<InterfacePort*>::const_iterator cur = ports_.begin()
+		       ; cur != ports_.end() ; ++cur) {
 		  InterfacePort*item = *cur;
 		  out << setw(6) << "" << item->name
 		      << " : " << item->mode

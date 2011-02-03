@@ -42,11 +42,11 @@ int Entity::emit(ostream&out)
       out << "module " << name_;
 
 	// If there are ports, emit them.
-      if (ports.size() > 0) {
+      if (ports_.size() > 0) {
 	    out << "(";
 	    const char*sep = 0;
-	    for (vector<InterfacePort*>::iterator cur = ports.begin()
-		       ; cur != ports.end() ; ++cur) {
+	    for (vector<InterfacePort*>::iterator cur = ports_.begin()
+		       ; cur != ports_.end() ; ++cur) {
 		  InterfacePort*port = *cur;
 
 		    // FIXME: this is a stub. This port handling code
