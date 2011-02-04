@@ -26,7 +26,7 @@
  */
 
 # include  <list>
-# include "vhdlnum.h"
+# include "vhdlint.h"
 # include "vhdlreal.h"
 # include  "parse.h"
 

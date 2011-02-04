@@ -20,7 +20,7 @@
  */
 
 # include "vhdlpp_config.h"
-# include "vhdlnum.h"
+# include "vhdlint.h"
 # include "vhdlreal.h"
 # include "compiler.h"
 # include "parse_api.h"
@@ -45,7 +45,7 @@ int parse_errors = 0;
 %union {
       port_mode_t port_mode;
       char*text;
-      vhdlnum* integer;
+      vhdlint* integer;
       vhdlreal* real;
       
       InterfacePort*interface_element;
