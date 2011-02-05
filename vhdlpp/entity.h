@@ -75,8 +75,9 @@ class Entity : public LineInfo {
       std::map<perm_string,Architecture*>arch_;
       Architecture*bind_arch_;
 
-      enum vtype_t { VNONE, VUWIRE };
+      enum vtype_t { VNONE, VBOOL, VLOGIC };
       struct decl_t {
+	    bool signed_flag;
 	    vtype_t type;
 	    long msb, lsb;
       };

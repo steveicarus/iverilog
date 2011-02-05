@@ -87,17 +87,24 @@ int Entity::elaborate_ports_(void)
 	    InterfacePort*cur_port = *cur;
 	    decl_t cur_decl;
 	    cur_decl.type = VNONE;
+	    cur_decl.signed_flag = false;
 	    cur_decl.msb = 0;
 	    cur_decl.lsb = 0;
 
 	    if (strcasecmp(cur_port->type_name, "std_logic") == 0) {
-		  cur_decl.type = VUWIRE;
+		  cur_decl.type = VLOGIC;
 
 	    } else if (strcasecmp(cur_port->type_name, "bit") == 0) {
-		  cur_decl.type = VUWIRE;
+		  cur_decl.type = VBOOL;
 
 	    } else if (strcasecmp(cur_port->type_name, "boolean") == 0) {
-		  cur_decl.type = VUWIRE;
+		  cur_decl.type = VBOOL;
+
+	    } else if (strcasecmp(cur_port->type_name, "integer") == 0) {
+		  cur_decl.type = VBOOL;
+		  cur_decl.signed_flag = true;
+		  cur_decl.msb = 31;
+		  cur_decl.lsb = 0;
 
 	    } else {
 		  cerr << get_fileline() << ": error: "

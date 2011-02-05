@@ -49,6 +49,8 @@ int Entity::emit(ostream&out)
 		       ; cur != ports_.end() ; ++cur) {
 		  InterfacePort*port = *cur;
 
+		  decl_t&decl = declarations_[port->name];
+
 		  if (sep) out << sep;
 		  else sep = ", ";
 
@@ -57,10 +59,18 @@ int Entity::emit(ostream&out)
 			out << "NO_PORT " << port->name;
 			break;
 		      case PORT_IN:
-			out << "input " << port->name;
+			out << "input ";
+			if (decl.msb != decl.lsb)
+			      out << "[" << decl.msb
+				  << ":" << decl.lsb << "] ";
+			out << port->name;
 			break;
 		      case PORT_OUT:
-			out << "output " << port->name;
+			out << "output ";
+			if (decl.msb != decl.lsb)
+			      out << "[" << decl.msb
+				  << ":" << decl.lsb << "] ";
+			out << port->name;
 			break;
 		  }
 	    }
@@ -76,8 +86,16 @@ int Entity::emit(ostream&out)
 		case VNONE:
 		  out << "// N type for " << cur->first << endl;
 		  break;
-		case VUWIRE:
-		  out << "wire ";
+		case VLOGIC:
+		  out << "wire logic ";
+		  if (cur->second.msb != cur->second.lsb)
+			out << "[" << cur->second.msb
+			    << ":" << cur->second.lsb << "] ";
+		  out << cur->first << ";" << endl;
+		case VBOOL:
+		  out << "wire bool ";
+		  if (cur->second.signed_flag)
+			out << "signed ";
 		  if (cur->second.msb != cur->second.lsb)
 			out << "[" << cur->second.msb
 			    << ":" << cur->second.lsb << "] ";
