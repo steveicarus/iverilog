@@ -17,6 +17,7 @@
  */
 
 # include <inttypes.h>
+# include <string.h>
 # include "config.h"
 # include "vlog95_priv.h"
 
@@ -223,6 +224,67 @@ static void emit_expr_scope(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       fprintf(vlog_out, "%s", ivl_scope_name(ivl_expr_scope(expr)));
 }
 
+static unsigned emit_param_name_in_scope(ivl_scope_t scope, ivl_expr_t expr)
+{
+      unsigned idx, count, lineno;
+      const char* file;
+      count = ivl_scope_params(scope);
+      file = ivl_expr_file(expr);
+      lineno = ivl_expr_lineno(expr);
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_parameter_t par = ivl_scope_param(scope, idx);
+	    if (lineno != ivl_parameter_lineno(par)) continue;
+	    if (strcmp(file, ivl_parameter_file(par)) == 0) {
+		    /* Check that the appropriate expression bits match the
+		     * the original parameter bits. */
+		  ivl_expr_t pex = ivl_parameter_expr(par);
+		  unsigned wid = ivl_expr_width(expr);
+		  unsigned param_wid = ivl_expr_width(pex);
+		  const char *my_bits = ivl_expr_bits(expr);
+		  const char *param_bits = ivl_expr_bits(pex);
+		  unsigned bit;
+		  if (param_wid < wid) wid = param_wid;
+		  for (bit = 0; bit < wid; bit += 1) {
+			if (my_bits[bit] != param_bits[bit]) {
+			      fprintf(stderr, "%s:%u: vlog95 error: Constant "
+			                      "expression bits do not match "
+			                      "parameter bits.\n",
+			                      ivl_expr_file(expr),
+			                      ivl_expr_lineno(expr));
+			      break;
+			}
+		  }
+		  fprintf(vlog_out, "%s", ivl_parameter_basename(par));
+		  return 1;
+	    }
+      }
+      return 0;
+}
+
+static void emit_select_name(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+{
+	/* A select of a number is reall a parameter select. */
+      if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
+	      /* Look in the current scope. */
+	    if (emit_param_name_in_scope(scope, expr)) return;
+	      /* Now look in the enclosing module scope if this is not a
+	       * module scope. */
+	    if (ivl_scope_type(scope) != IVL_SCT_MODULE) {
+		  if (emit_param_name_in_scope(get_module_scope(scope),
+		                               expr)) return;
+	    }
+// HERE: For now we only look in the current and module scope for the
+//       parameter that is being selected. We need to also look in other
+//       scopes, but that involves a big search.
+	    fprintf(vlog_out, "<missing>");
+	    fprintf(stderr, "%s:%u: vlog95 error: Unable to find parameter "
+	                    "for select expression \n",
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr));
+      } else {
+	    emit_expr(scope, expr, wid);
+      }
+}
+
 static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_expr_t sel_expr = ivl_expr_oper2(expr);
@@ -231,21 +293,29 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    int msb = 1;
 	    int lsb = 0;
 	    unsigned width = ivl_expr_width(expr);
+	    ivl_expr_type_t type = ivl_expr_type(sig_expr);
 	    assert(width > 0);
-	    if (ivl_expr_type(sig_expr) == IVL_EX_SIGNAL) {
+	    if (type == IVL_EX_SIGNAL) {
 		  ivl_signal_t sig = ivl_expr_signal(sig_expr);
 		  msb = ivl_signal_msb(sig);
 		  lsb = ivl_signal_lsb(sig);
 	    }
-// HERE: If this is a constant then it was likely a parameter reference.
-//       We need to find the appropriate parameter and use it instead.
-	    emit_expr(scope, sig_expr, wid);
-	    if (width == 1) {
-		  fprintf(vlog_out, "[");
+	      /* The compiler uses selects for some shifts. */
+	    if (type != IVL_EX_NUMBER && type != IVL_EX_SIGNAL) {
+		  fprintf(vlog_out, "(" );
+		  emit_select_name(scope, sig_expr, wid);
+		  fprintf(vlog_out, " >> " );
 		  emit_scaled_expr(scope, sel_expr, msb, lsb);
-		  fprintf(vlog_out, "]");
+		  fprintf(vlog_out, ")" );
 	    } else {
-		  emit_scaled_range(scope, sel_expr, width, msb, lsb);
+		  emit_select_name(scope, sig_expr, wid);
+		  if (width == 1) {
+			fprintf(vlog_out, "[");
+			emit_scaled_expr(scope, sel_expr, msb, lsb);
+			fprintf(vlog_out, "]");
+		  } else {
+			emit_scaled_range(scope, sel_expr, width, msb, lsb);
+		  }
 	    }
       } else {
 // HERE: Should this sign extend if the expression is signed?

@@ -38,8 +38,9 @@ static void emit_stmt_block_body(ivl_scope_t scope, ivl_statement_t stmt)
       ivl_scope_t my_scope = ivl_stmt_block_scope(stmt);
       indent += indent_incr;
       if (my_scope) emit_scope_variables(my_scope);
+      else my_scope = scope;
       for (idx = 0; idx < count; idx += 1) {
-	    emit_stmt(scope, ivl_stmt_block_stmt(stmt, idx));
+	    emit_stmt(my_scope, ivl_stmt_block_stmt(stmt, idx));
       }
       assert(indent >= indent_incr);
       indent -= indent_incr;
