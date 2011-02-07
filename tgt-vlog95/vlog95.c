@@ -122,6 +122,12 @@ int target_design(ivl_design_t des)
 
       free_emitted_scope_list();
 
+	/* Emit any UDP definitions that the design used. */
+      emit_udp_list();
+
+	/* Emit any UDPs that are Icarus generated (D-FF). */
+      emit_icarus_generated_udps();
+
       fclose(vlog_out);
 
       return vlog_errors;

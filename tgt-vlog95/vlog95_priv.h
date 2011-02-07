@@ -73,6 +73,11 @@ extern void emit_scope_variables(ivl_scope_t scope);
 extern void emit_scope_module_path(ivl_scope_t scope, ivl_scope_t call_scope);
 extern void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex);
 extern void emit_const_nexus(ivl_scope_t scope, ivl_net_const_t const_net);
+extern void emit_signal_net_const_as_ca(ivl_scope_t scope, ivl_signal_t sig);
+extern void emit_icarus_generated_udps();
+
+extern void add_udp_to_list(ivl_udp_t udp);
+extern void emit_udp_list();
 
 extern void emit_real_number(double value);
 extern void emit_number(const char *bits, unsigned nbits, unsigned is_signed,

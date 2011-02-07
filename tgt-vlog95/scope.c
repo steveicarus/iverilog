@@ -116,7 +116,47 @@ void emit_var_def(ivl_signal_t sig)
       }
 }
 
-void emit_net_def(ivl_signal_t sig)
+/*
+ * Keep a list of constants that drive nets and need to be emitted as
+ * a continuous assignment.
+*/
+static ivl_signal_t *net_consts = 0;
+static unsigned num_net_consts = 0;
+
+static void add_net_const_to_list(ivl_signal_t net_const)
+{
+      num_net_consts += 1;
+      net_consts = realloc(net_consts, num_net_consts * sizeof(ivl_signal_t));
+      net_consts[num_net_consts-1] = net_const;
+}
+
+static unsigned emit_and_free_net_const_list(ivl_scope_t scope)
+{
+      unsigned idx;
+      for (idx = 0; idx < num_net_consts; idx += 1) {
+	    emit_signal_net_const_as_ca(scope, net_consts[idx]);
+      }
+      free(net_consts);
+      net_consts = 0;
+      idx = num_net_consts != 0;
+      num_net_consts = 0;
+      return idx;
+}
+
+static void save_net_constants(ivl_scope_t scope, ivl_signal_t sig)
+{
+      ivl_nexus_t nex = ivl_signal_nex(sig, 0);
+      unsigned idx, count = ivl_nexus_ptrs(nex);
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_net_const_t net_const = ivl_nexus_ptr_con(nex_ptr);
+	    if (! net_const) continue;
+	    if (scope != ivl_const_scope(net_const)) continue;
+	    add_net_const_to_list(sig);
+      }
+}
+
+void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
 {
       int msb = ivl_signal_msb(sig);
       int lsb = ivl_signal_lsb(sig);
@@ -174,6 +214,9 @@ void emit_net_def(ivl_signal_t sig)
 	    }
 	    if (msb != 0 || lsb != 0) fprintf(vlog_out, " [%d:%d]", msb, lsb);
 	    fprintf(vlog_out, " %s;\n", ivl_signal_basename(sig));
+	      /* A constant driving a net does not create an lpm or logic
+	       * element in the design so save them from the definition. */
+	    save_net_constants(scope, sig);
       }
 }
 
@@ -213,6 +256,7 @@ static int find_process(ivl_process_t proc, ivl_scope_t scope)
 void emit_scope_variables(ivl_scope_t scope)
 {
       unsigned idx, count;
+      assert(! num_net_consts);
 	/* Output the parameters for this scope. */
       count = ivl_scope_params(scope);
       for (idx = 0; idx < count; idx += 1) {
@@ -236,7 +280,7 @@ void emit_scope_variables(ivl_scope_t scope)
 		              ivl_scope_tname(scope)) == 0) continue;
 		  emit_var_def(sig);
 	    } else {
-		  emit_net_def(sig);
+		  emit_net_def(scope, sig);
 	    }
       }
       if (count) fprintf(vlog_out, "\n");
@@ -254,6 +298,7 @@ void emit_scope_variables(ivl_scope_t scope)
 	                      ivl_event_basename(event));
       }
       if (count) fprintf(vlog_out, "\n");
+      if (emit_and_free_net_const_list(scope)) fprintf(vlog_out, "\n");;
 }
 
 /*
