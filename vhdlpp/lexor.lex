@@ -104,7 +104,7 @@ based_integer		[0-9a-fA-F](_?[0-9a-fA-F])*
     return CHARACTER_LITERAL;
 }
 
-(\"([^"]|(\"\"))*?\")|(\"[^\"]*\")  {
+(\"([^\"]|(\"\"))*?\")|(\"[^\"]*\")  {
 /* first pattern: string literals with doubled quotation mark */
 /* second pattern: string literals without doubled quotation */
     yylval.text = escape_quot_and_dup(yytext);
@@ -112,7 +112,9 @@ based_integer		[0-9a-fA-F](_?[0-9a-fA-F])*
     return STRING_LITERAL;
 }
 
-[a-zA-Z][a-zA-Z0-9_]* {
+[a-zA-Z_][a-zA-Z0-9_]* {
+      for (char*cp = yytext ; *cp ; cp += 1)
+	    *cp = tolower(*cp);
       int rc = lexor_keyword_code(yytext, yyleng);
       switch (rc) {
 	  case IDENTIFIER:
