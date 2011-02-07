@@ -20,6 +20,7 @@
 # include  "entity.h"
 # include  "compiler.h"
 # include  "architec.h"
+# include  "vtype.h"
 # include  <iostream>
 # include  <fstream>
 # include  <iomanip>
@@ -91,20 +92,29 @@ int Entity::elaborate_ports_(void)
 	    cur_decl.msb = 0;
 	    cur_decl.lsb = 0;
 
-	    if (strcasecmp(cur_port->type_name, "std_logic") == 0) {
-		  cur_decl.type = VLOGIC;
+	    const VType*type = global_types[cur_port->type_name];
+	    if (type == 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "No such type mark " << cur_port->type_name
+		       << "." << endl;
+		  continue;
+	    }
 
-	    } else if (strcasecmp(cur_port->type_name, "bit") == 0) {
-		  cur_decl.type = VBOOL;
-
-	    } else if (strcasecmp(cur_port->type_name, "boolean") == 0) {
-		  cur_decl.type = VBOOL;
-
-	    } else if (strcasecmp(cur_port->type_name, "integer") == 0) {
-		  cur_decl.type = VBOOL;
-		  cur_decl.signed_flag = true;
-		  cur_decl.msb = 31;
-		  cur_decl.lsb = 0;
+	    if (const VTypePrimitive*use_type = dynamic_cast<const VTypePrimitive*>(type)) {
+		  switch (use_type->type()) {
+		      case VTypePrimitive::BOOLEAN:
+		      case VTypePrimitive::BIT:
+			cur_decl.type = VBOOL;
+			break;
+		      case VTypePrimitive::STDLOGIC:
+			cur_decl.type = VLOGIC;
+			break;
+		      case VTypePrimitive::INTEGER:
+			cur_decl.type = VBOOL;
+			cur_decl.msb = 31;
+			cur_decl.lsb = 0;
+			break;
+		  }
 
 	    } else {
 		  cerr << get_fileline() << ": error: "

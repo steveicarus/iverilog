@@ -40,6 +40,7 @@ const char NOTICE[] =
 
 # include  "compiler.h"
 # include  "parse_api.h"
+# include  "vtype.h"
 # include  <cstdio>
 # include  <cstdlib>
 # include  <cstring>
@@ -114,6 +115,8 @@ int main(int argc, char*argv[])
 
       if (dump_design_entities_path)
 	    dump_design_entities(dump_design_entities_path);
+
+      preload_global_types();
 
       int errors = 0;
       errors = elaborate_entities();
