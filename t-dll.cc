@@ -479,8 +479,7 @@ void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 	    ivl_parameter_t cur_par = scop->param_ + idx;
 	    cur_par->basename = (*cur_pit).first;
 	    cur_par->scope = scop;
-	    cur_par->file = (*cur_pit).second.get_file();
-	    cur_par->lineno = (*cur_pit).second.get_lineno();
+	    FILE_NAME(cur_par, &((*cur_pit).second));
 
 	    NetExpr*etmp = (*cur_pit).second.val;
 	    make_scope_param_expr(cur_par, etmp);
@@ -493,8 +492,7 @@ void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 	    ivl_parameter_t cur_par = scop->param_ + idx;
 	    cur_par->basename = (*cur_pit).first;
 	    cur_par->scope = scop;
-	    cur_par->file = (*cur_pit).second.get_file();
-	    cur_par->lineno = (*cur_pit).second.get_lineno();
+	    FILE_NAME(cur_par, &((*cur_pit).second));
 
 	    NetExpr*etmp = (*cur_pit).second.val;
 	    make_scope_param_expr(cur_par, etmp);
@@ -756,6 +754,7 @@ bool dll_target::bufz(const NetBUFZ*net)
       obj->width_= net->width();
       obj->npins_= 2;
       obj->pins_ = new ivl_nexus_t[2];
+      FILE_NAME(obj, net);
 
 	/* Get the ivl_nexus_t objects connected to the two pins.
 
@@ -843,6 +842,8 @@ void dll_target::logic(const NetLogic*net)
       struct ivl_net_logic_s *obj = new struct ivl_net_logic_s;
 
       obj->width_ = net->width();
+
+      FILE_NAME(obj, net);
 
       switch (net->type()) {
 	  case NetLogic::AND:
@@ -942,9 +943,6 @@ void dll_target::logic(const NetLogic*net)
 
       make_logic_delays_(obj, net);
 
-      obj->file = net->get_file();
-      obj->lineno = net->get_lineno();
-
       scope_add_logic(scop, obj);
 }
 
@@ -960,6 +958,7 @@ bool dll_target::tran(const NetTran*net)
       obj->island = net->get_island();
       assert(obj->scope);
       assert(obj->island);
+      FILE_NAME(obj, net);
 
       const Nexus*nex;
 
@@ -989,9 +988,6 @@ bool dll_target::tran(const NetTran*net)
 	    obj->offset= net->part_offset();
       }
 
-      obj->file = net->get_file();
-      obj->lineno = net->get_lineno();
-
       switch_attributes(obj, net);
       make_switch_delays_(obj, net);
       scope_add_switch(obj->scope, obj);
@@ -1007,6 +1003,7 @@ bool dll_target::sign_extend(const NetSignExtend*net)
       obj->name = net->name();
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
       const Nexus*nex;
 
@@ -1059,6 +1056,7 @@ bool dll_target::ureduce(const NetUReduce*net)
       obj->name = net->name();
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
       obj->width = net->width();
 
@@ -1090,6 +1088,7 @@ void dll_target::net_case_cmp(const NetCaseCmp*net)
       obj->name  = net->name();
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
       obj->width = net->width();
       obj->u_.arith.signed_flag = 0;
@@ -1160,10 +1159,10 @@ bool dll_target::net_sysfunction(const NetSysFunc*net)
 
       struct ivl_lpm_s*obj = new struct ivl_lpm_s;
       obj->type = IVL_LPM_SFUNC;
-      FILE_NAME(obj, net);
       obj->name  = net->name();
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
       obj->u_.sfunc.ports = net->pin_count();
 
@@ -1212,6 +1211,7 @@ bool dll_target::net_function(const NetUserFunc*net)
       obj->name  = net->name();
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
 	/* Get the definition of the function and save it. */
       const NetScope*def = net->def();
@@ -1259,6 +1259,7 @@ void dll_target::udp(const NetUDP*net)
       struct ivl_net_logic_s *obj = new struct ivl_net_logic_s;
 
       obj->type_ = IVL_LO_UDP;
+      FILE_NAME(obj, net);
 
 	/* The NetUDP class hasn't learned about width yet, so we
 	   assume a width of 1. */
@@ -1279,6 +1280,8 @@ void dll_target::udp(const NetUDP*net)
 	  u->table[u->nrows] = 0x0;
 	  u->nin = net->nin();
 	  u->sequ = net->is_sequential();
+	  u->file = net->udp_file();
+	  u->lineno = net->udp_lineno();
 	  if (u->sequ)
 	    u->init = net->get_initial();
 	  else
@@ -1327,6 +1330,7 @@ void dll_target::udp(const NetUDP*net)
 
       obj->scope_= scop;
       obj->name_ = net->name();
+      FILE_NAME(obj, net);
 
       make_logic_delays_(obj, net);
 
@@ -1344,6 +1348,7 @@ void dll_target::lpm_abs(const NetAbs*net)
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
       obj->u_.arith.signed_flag = 0;
       obj->width = net->width();
@@ -1379,6 +1384,7 @@ void dll_target::lpm_add_sub(const NetAddSub*net)
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
       obj->u_.arith.signed_flag = 0;
 
@@ -1431,6 +1437,7 @@ bool dll_target::lpm_array_dq(const NetArrayDq*net)
       assert(obj->u_.array.sig);
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
       obj->width = net->width();
       obj->u_.array.swid = net->awidth();
 
@@ -1466,6 +1473,7 @@ void dll_target::lpm_clshift(const NetCLShift*net)
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
 	/* Look at the direction input of the device, and select the
 	   shift direction accordingly. */
@@ -1512,6 +1520,7 @@ bool dll_target::lpm_arith1_(ivl_lpm_type_t lpm_type, unsigned width, bool signe
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
       obj->width = width;
       obj->u_.arith.signed_flag = signed_flag? 1 : 0;
@@ -1564,6 +1573,7 @@ void dll_target::lpm_compare(const NetCompare*net)
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
       bool swap_operands = false;
 
@@ -1667,6 +1677,7 @@ void dll_target::lpm_divide(const NetDivide*net)
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
       unsigned wid = net->width_r();
 
@@ -1706,6 +1717,7 @@ void dll_target::lpm_modulo(const NetModulo*net)
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
       unsigned wid = net->width_r();
 
@@ -1744,6 +1756,7 @@ void dll_target::lpm_ff(const NetFF*net)
       obj->name  = net->name();
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
       obj->width = net->width();
 
@@ -1831,7 +1844,6 @@ void dll_target::lpm_ff(const NetFF*net)
       assert(nex->t_cookie());
       obj->u_.ff.d.pin = nex->t_cookie();
       nexus_lpm_add(obj->u_.ff.d.pin, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
-
 }
 
 /*
@@ -1845,6 +1857,7 @@ void dll_target::lpm_mult(const NetMult*net)
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
       unsigned wid = net->width_r();
 
@@ -1887,6 +1900,7 @@ void dll_target::lpm_mux(const NetMux*net)
       obj->name  = net->name(); // The NetMux permallocates its name.
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
       obj->width = net->width();
       obj->u_.mux.size  = net->size();
@@ -1938,6 +1952,7 @@ void dll_target::lpm_pow(const NetPow*net)
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
       unsigned wid = net->width_r();
       obj->u_.arith.signed_flag = net->get_signed()? 1 : 0;
@@ -1977,6 +1992,7 @@ bool dll_target::concat(const NetConcat*net)
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
       obj->width = net->width();
 
@@ -2010,11 +2026,11 @@ bool dll_target::part_select(const NetPartSelect*net)
 	    obj->type = IVL_LPM_PART_PV;
 	    break;
       }
-      FILE_NAME(obj, net);
       obj->name = net->name(); // NetPartSelect names are permallocated.
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
 	/* Part selects are always unsigned, so we use this to indicate
 	 * if the part select base signal is signed or not. */
@@ -2093,6 +2109,7 @@ bool dll_target::replicate(const NetReplicate*net)
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);
+      FILE_NAME(obj, net);
 
       obj->width = net->width();
       obj->u_.repeat.count = net->repeat();
@@ -2136,6 +2153,9 @@ bool dll_target::net_const(const NetConst*net)
       struct ivl_net_const_s *obj = new struct ivl_net_const_s;
 
       obj->type = IVL_VT_BOOL;
+      assert(net->scope());
+      obj->scope = find_scope(des_, net->scope());
+      FILE_NAME(obj, net);
 
 	/* constants have a single vector output. */
       assert(net->pin_count() == 1);
@@ -2192,9 +2212,6 @@ bool dll_target::net_const(const NetConst*net)
       des_.consts.resize( des_.consts.size() + 1 );
       des_.consts[des_.consts.size()-1] = obj;
 
-      obj->file = net->get_file();
-      obj->lineno = net->get_lineno();
-
       make_const_delays_(obj, net);
 
       return true;
@@ -2206,6 +2223,9 @@ bool dll_target::net_literal(const NetLiteral*net)
       struct ivl_net_const_s *obj = new struct ivl_net_const_s;
 
       obj->type = IVL_VT_REAL;
+      assert(net->scope());
+      obj->scope = find_scope(des_, net->scope());
+      FILE_NAME(obj, net);
       obj->width_  = 1;
       obj->signed_ = 1;
       obj->b.real_value = net->value_real().as_double();
@@ -2322,8 +2342,8 @@ void dll_target::signal(const NetNet*net)
 	   object, or creating the sigs_ array if this is the first
 	   signal. */
       obj->scope_ = find_scope(des_, net->scope());
-      FILE_NAME(obj, net);
       assert(obj->scope_);
+      FILE_NAME(obj, net);
 
       if (obj->scope_->nsigs_ == 0) {
 	    assert(obj->scope_->sigs_ == 0);

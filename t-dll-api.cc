@@ -211,6 +211,12 @@ extern "C" double ivl_const_real(ivl_net_const_t net)
       return net->b.real_value;
 }
 
+extern "C" ivl_scope_t ivl_const_scope(ivl_net_const_t net)
+{
+      assert(net);
+      return net->scope;
+}
+
 extern "C" int ivl_const_signed(ivl_net_const_t net)
 {
       assert(net);
@@ -838,12 +844,12 @@ extern "C" int  ivl_udp_sequ(ivl_udp_t net)
       return net->sequ;
 }
 
-extern "C" unsigned    ivl_udp_nin(ivl_udp_t net)
+extern "C" unsigned ivl_udp_nin(ivl_udp_t net)
 {
       return net->nin;
 }
 
-extern "C" unsigned    ivl_udp_init(ivl_udp_t net)
+extern "C" char ivl_udp_init(ivl_udp_t net)
 {
       return net->init;
 }
@@ -865,6 +871,16 @@ extern "C" const char* ivl_udp_name(ivl_udp_t net)
 {
       assert(net->name);
       return net->name;
+}
+
+extern "C" const char* ivl_udp_file(ivl_udp_t net)
+{
+      return net->file.str();
+}
+
+extern "C" unsigned ivl_udp_lineno(ivl_udp_t net)
+{
+      return net->lineno;
 }
 
 extern "C" const char* ivl_lpm_basename(ivl_lpm_t net)
@@ -1010,7 +1026,6 @@ extern "C" ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net)
       }
 }
 
-/* The file name and line number are only set for system functions! */
 extern "C" const char* ivl_lpm_file(ivl_lpm_t net)
 {
       return net->file.str();

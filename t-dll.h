@@ -444,6 +444,7 @@ struct ivl_net_const_s {
       unsigned signed_         :  1;
       perm_string file;
       unsigned lineno;
+      ivl_scope_t scope;
 
       union {
 	    double real_value;
@@ -512,6 +513,8 @@ struct ivl_udp_s {
       unsigned nrows;
       typedef const char*ccharp_t;
       ccharp_t*table; // zero terminated array of pointers
+      perm_string file;
+      unsigned lineno;
 };
 
 /*
@@ -797,12 +800,6 @@ struct ivl_statement_s {
  * The FILE_NAME function is a shorthand for attaching file/line
  * information to the statement object.
  */
-static inline void FILE_NAME(ivl_statement_t stmt, const LineInfo*info)
-{
-      stmt->file = info->get_file();
-      stmt->lineno = info->get_lineno();
-}
-
 static inline void FILE_NAME(ivl_expr_t expr, const LineInfo*info)
 {
       expr->file = info->get_file();
@@ -815,6 +812,30 @@ static inline void FILE_NAME(ivl_lpm_t lpm, const LineInfo*info)
       lpm->lineno = info->get_lineno();
 }
 
+static inline void FILE_NAME(ivl_net_const_t net, const LineInfo*info)
+{
+      net->file = info->get_file();
+      net->lineno = info->get_lineno();
+}
+
+static inline void FILE_NAME(ivl_net_logic_t net, const LineInfo*info)
+{
+      net->file = info->get_file();
+      net->lineno = info->get_lineno();
+}
+
+static inline void FILE_NAME(ivl_parameter_t net, const LineInfo*info)
+{
+      net->file = info->get_file();
+      net->lineno = info->get_lineno();
+}
+
+static inline void FILE_NAME(ivl_process_t net, const LineInfo*info)
+{
+      net->file = info->get_file();
+      net->lineno = info->get_lineno();
+}
+
 static inline void FILE_NAME(ivl_scope_t scope, const NetScope*info)
 {
       scope->file = info->get_file();
@@ -823,13 +844,13 @@ static inline void FILE_NAME(ivl_scope_t scope, const NetScope*info)
       scope->def_lineno = info->get_def_lineno();
 }
 
-static inline void FILE_NAME(ivl_switch_t net, const LineInfo*info)
+static inline void FILE_NAME(ivl_statement_t stmt, const LineInfo*info)
 {
-      net->file = info->get_file();
-      net->lineno = info->get_lineno();
+      stmt->file = info->get_file();
+      stmt->lineno = info->get_lineno();
 }
 
-static inline void FILE_NAME(ivl_process_t net, const LineInfo*info)
+static inline void FILE_NAME(ivl_switch_t net, const LineInfo*info)
 {
       net->file = info->get_file();
       net->lineno = info->get_lineno();

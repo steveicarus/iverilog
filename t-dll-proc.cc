@@ -600,6 +600,7 @@ bool dll_target::proc_force(const NetForce*net)
 
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
 
       stmt_cur_->type_ = IVL_ST_FORCE;
 

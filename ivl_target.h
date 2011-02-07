@@ -561,6 +561,9 @@ extern ivl_discipline_t ivl_design_discipline(ivl_design_t des, unsigned idx);
  * ivl_const_nex
  *    Return the ivl_nexus_t of the output for the constant.
  *
+ * ivl_const_scope
+ *    Return the scope this constant was defined in.
+
  * ivl_const_signed
  *    Return true (!0) if the constant is a signed value, 0 otherwise.
  *
@@ -587,6 +590,7 @@ extern ivl_variable_type_t ivl_const_type(ivl_net_const_t net);
 extern const char* ivl_const_bits(ivl_net_const_t net);
 extern ivl_expr_t  ivl_const_delay(ivl_net_const_t net, unsigned transition);
 extern ivl_nexus_t ivl_const_nex(ivl_net_const_t net);
+extern ivl_scope_t ivl_const_scope(ivl_net_const_t net);
 extern int         ivl_const_signed(ivl_net_const_t net);
 extern unsigned    ivl_const_width(ivl_net_const_t net);
 extern double      ivl_const_real(ivl_net_const_t net);
@@ -1025,13 +1029,15 @@ extern ivl_attribute_t ivl_logic_attr_val(ivl_net_logic_t net, unsigned idx);
 
 extern int         ivl_udp_sequ(ivl_udp_t net);
 extern unsigned    ivl_udp_nin(ivl_udp_t net);
-extern unsigned    ivl_udp_init(ivl_udp_t net);
+extern char        ivl_udp_init(ivl_udp_t net);
 extern const char* ivl_udp_row(ivl_udp_t net, unsigned idx);
 extern unsigned    ivl_udp_rows(ivl_udp_t net);
 extern const char* ivl_udp_name(ivl_udp_t net);
+extern const char* ivl_udp_file(ivl_udp_t net);
+extern unsigned    ivl_udp_lineno(ivl_udp_t net);
 
 extern const char* ivl_lpm_file(ivl_lpm_t net);
-extern unsigned ivl_lpm_lineno(ivl_lpm_t net);
+extern unsigned    ivl_lpm_lineno(ivl_lpm_t net);
 
 /* LPM
  * These functions support access to the properties of LPM

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -158,11 +158,10 @@ void dll_target::expr_access_func(const NetEAccess*net)
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       expr_->type_  = IVL_EX_BACCESS;
       expr_->value_ = IVL_VT_REAL;
-      expr_->file   = net->get_file();
-      expr_->lineno = net->get_lineno();
       expr_->width_ = 1;
       expr_->signed_= 1;
       expr_->sized_ = 1;
+      FILE_NAME(expr_, net);
 
       expr_->u_.branch_.branch = net->get_branch()->target_obj();
       expr_->u_.branch_.nature = net->get_nature();
@@ -186,6 +185,7 @@ void dll_target::expr_binary(const NetEBinary*net)
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
       expr_->sized_= 1;
+      FILE_NAME(expr_, net);
 
       expr_->u_.binary_.op_ = net->op();
       expr_->u_.binary_.lef_ = left;
@@ -204,6 +204,7 @@ void dll_target::expr_concat(const NetEConcat*net)
       cur->width_ = net->expr_width();
       cur->signed_ = net->has_sign() ? 1 : 0;
       cur->sized_ = 1;
+      FILE_NAME(cur, net);
 
       cur->u_.concat_.rept  = net->repeat();
       cur->u_.concat_.parms = net->nparms();
@@ -336,6 +337,7 @@ void dll_target::expr_scope(const NetEScope*net)
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
 
       expr_->type_ = IVL_EX_SCOPE;
+      FILE_NAME(expr_, net);
       expr_->value_= IVL_VT_VOID;
       expr_->u_.scope_.scope = lookup_scope_(net->scope());
 }
@@ -347,6 +349,7 @@ void dll_target::expr_netenum(const NetENetenum*net)
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
 
       expr_->type_ = IVL_EX_ENUMTYPE;
+      FILE_NAME(expr_, net);
       expr_->value_= IVL_VT_VOID;
       expr_->u_.enumtype_.type = net->netenum();
 }
@@ -365,13 +368,13 @@ void dll_target::expr_select(const NetESelect*net)
       ivl_expr_t rght = expr_;
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
-      FILE_NAME(expr_, net);
 
       expr_->type_ = IVL_EX_SELECT;
       expr_->value_= IVL_VT_VECTOR;
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
       expr_->sized_= 1;
+      FILE_NAME(expr_, net);
 
       expr_->u_.binary_.lef_ = left;
       expr_->u_.binary_.rig_ = rght;
@@ -389,6 +392,7 @@ void dll_target::expr_sfunc(const NetESFunc*net)
       expr->width_= net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
       expr->sized_= 1;
+      FILE_NAME(expr, net);
 	/* system function names are lex_strings strings. */
       expr->u_.sfunc_.name_ = net->name();
 
@@ -414,11 +418,11 @@ void dll_target::expr_ternary(const NetETernary*net)
       ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
 
       expr->type_  = IVL_EX_TERNARY;
-      FILE_NAME(expr, net);
       expr->value_= net->expr_type();
       expr->width_ = net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
       expr->sized_ = 1;
+      FILE_NAME(expr, net);
 
       net->cond_expr()->expr_scan(this);
       assert(expr_);
@@ -456,11 +460,10 @@ void dll_target::expr_signal(const NetESignal*net)
 
       expr_->type_ = IVL_EX_SIGNAL;
       expr_->value_= net->expr_type();
-      expr_->file  = net->get_file();
-      expr_->lineno= net->get_lineno();
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
       expr_->sized_= 1;
+      FILE_NAME(expr_, net);
       expr_->u_.signal_.word = word_expr;
       expr_->u_.signal_.sig = sig;
 
@@ -483,11 +486,11 @@ void dll_target::expr_ufunc(const NetEUFunc*net)
       ivl_expr_t expr = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
 
       expr->type_ = IVL_EX_UFUNC;
-      FILE_NAME(expr, net);
       expr->value_= net->expr_type();
       expr->width_= net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
       expr->sized_= 1;
+      FILE_NAME(expr, net);
 
       expr->u_.ufunc_.def = lookup_scope_(net->func());
       assert(expr->u_.ufunc_.def->type_ == IVL_SCT_FUNCTION);
@@ -522,6 +525,7 @@ void dll_target::expr_unary(const NetEUnary*net)
       expr_->width_ = net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
       expr_->sized_ = 1;
+      FILE_NAME(expr_, net);
       expr_->u_.unary_.op_ = net->op();
       expr_->u_.unary_.sub_ = sub;
 }

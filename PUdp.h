@@ -1,7 +1,7 @@
 #ifndef __PUdp_H
 #define __PUdp_H
 /*
- * Copyright (c) 1998-2004 Stephen Williams (steve@picturel.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@picturel.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,6 +20,7 @@
  */
 
 # include  <map>
+# include  "LineInfo.h"
 # include  "StringHeap.h"
 # include  "svector.h"
 # include  "verinum.h"
@@ -47,7 +48,7 @@ class PExpr;
  * If the UDP is sequential, the "initial" member is taken to be the
  * initial value assigned in the source, or 'x' if none is given.
  */
-class PUdp {
+class PUdp : public LineInfo {
 
     public:
       explicit PUdp(perm_string n, unsigned nports);

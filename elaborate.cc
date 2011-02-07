@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1867,6 +1867,13 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	    } else {
 		  connect(sig->pin(0), net->pin(0));
 	    }
+	    if (sig->vector_width() != 1) {
+		  cerr << get_fileline() << ": error: "
+		       << "Output port expression " << *pins[0]
+		       << " is too wide (" << sig->vector_width()
+		       << ") expected 1." << endl;
+		  des->errors += 1;
+	    }
       }
 
 	/* Run through the pins, making netlists for the pin
@@ -1879,7 +1886,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	    NetExpr*expr_tmp = elab_and_eval(des, scope, pins[idx], 1, 1);
 	    if (expr_tmp == 0) {
 		  cerr << "internal error: Expression too complicated "
-			"for elaboration:" << pins[idx] << endl;
+			"for elaboration:" << *pins[idx] << endl;
 		  continue;
 	    }
 	    NetNet*sig = expr_tmp->synthesize(des, scope, expr_tmp);
@@ -1889,6 +1896,13 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	    delete expr_tmp;
 
 	    connect(sig->pin(0), net->pin(idx));
+	    if (sig->vector_width() != 1) {
+		  cerr << get_fileline() << ": error: "
+		       << "Input port expression " << *pins[idx]
+		       << " is too wide (" << sig->vector_width()
+		       << ") expected 1." << endl;
+		  des->errors += 1;
+	    }
       }
 
 	// All done. Add the object to the design.

@@ -2165,6 +2165,8 @@ class NetUDP  : public NetNode {
       unsigned nin() const { return pin_count()-1; }
       bool is_sequential() const { return udp->sequential; }
       perm_string udp_name() const { return udp->name_; }
+      perm_string udp_file() const { return udp->get_file(); }
+      unsigned udp_lineno() const { return udp->get_lineno(); }
       char get_initial() const;
 
     private:

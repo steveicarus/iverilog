@@ -1312,6 +1312,7 @@ void pform_make_udp(perm_string name, list<perm_string>*parms,
 
       } else {
 	    PUdp*udp = new PUdp(name, parms->size());
+	    FILE_NAME(udp, file, lineno);
 
 	      // Detect sequential udp.
 	    if (pins[0]->get_wire_type() == NetNet::REG)
@@ -1392,6 +1393,7 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
 
       } else {
 	    PUdp*udp = new PUdp(name, pins.count());
+	    FILE_NAME(udp, file, lineno);
 
 	      // Detect sequential udp.
 	    udp->sequential = synchronous_flag;

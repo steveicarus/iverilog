@@ -19,6 +19,7 @@ ivl_const_delay
 ivl_const_file
 ivl_const_lineno
 ivl_const_real
+ivl_const_scope
 ivl_const_signed
 ivl_const_type
 ivl_const_width
@@ -281,6 +282,8 @@ ivl_switch_type
 ivl_switch_width
 
 ivl_udp_init
+ivl_udp_file
+ivl_udp_lineno
 ivl_udp_name
 ivl_udp_nin
 ivl_udp_row
