@@ -217,6 +217,8 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm);
 
 static void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 {
+	/* If there is no nexus then there is nothing to print. */
+      if (! nex) return;
 	/* A local nexus only has a single driver. */
       if (is_local_nexus(scope, nex)) {
 	    unsigned idx, count = ivl_nexus_ptrs(nex);
@@ -280,42 +282,43 @@ static void emit_logic_as_ca(ivl_scope_t scope, ivl_net_logic_t nlogic)
 // HERE: Do we need to check that the pin count is correct for these?
       switch (ivl_logic_type(nlogic)) {
 	case IVL_LO_AND:
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 0));
-	    fprintf(vlog_out, " & ");
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
+	    fprintf(vlog_out, " & ");
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
 	    break;
 	case IVL_LO_BUF:
 //	case IVL_LO_BUFT:
 	case IVL_LO_BUFZ:
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 0));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
 	    break;
 	case IVL_LO_NAND:
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 0));
-	    fprintf(vlog_out, " ~& ");
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
+	    fprintf(vlog_out, " ~& ");
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
 	    break;
 	case IVL_LO_NOR:
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 0));
-	    fprintf(vlog_out, " ~| ");
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
+	    fprintf(vlog_out, " ~| ");
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
 	    break;
 	case IVL_LO_NOT:
 	    fprintf(vlog_out, "~ ");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 0));
-	case IVL_LO_OR:
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 0));
-	    fprintf(vlog_out, " | ");
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
+	    break;
+	case IVL_LO_OR:
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
+	    fprintf(vlog_out, " | ");
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
 	    break;
 	case IVL_LO_XNOR:
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 0));
-	    fprintf(vlog_out, " ~^ ");
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
+	    fprintf(vlog_out, " ~^ ");
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
 	    break;
 	case IVL_LO_XOR:
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 0));
-	    fprintf(vlog_out, " ^ ");
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
+	    fprintf(vlog_out, " ^ ");
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
 	    break;
 	default:
 	    fprintf(vlog_out, "<unknown>");
@@ -770,6 +773,10 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 //       compiler to support logical 'and' and logical 'or' since they
 //       short circuit.
       unsigned idx, count, dly_count, strength_type = 2;
+      unsigned outputs = 1;
+	/* Skip gates that have a local nexus as the output since they are
+	 * part of a continuous assignment. */
+      if (is_local_nexus(scope, ivl_logic_pin(nlogic, 0))) return;
       fprintf(vlog_out, "%*c", indent, ' ');
       switch (ivl_logic_type(nlogic)) {
 	case IVL_LO_AND:
@@ -779,6 +786,7 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 	case IVL_LO_BUF:
             fprintf(vlog_out, "buf");
             dly_count = 2;
+            outputs = 0;
 	    break;
 	case IVL_LO_BUFIF0:
             fprintf(vlog_out, "bufif0");
@@ -811,6 +819,7 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 	case IVL_LO_NOT:
             fprintf(vlog_out, "not");
             dly_count = 2;
+            outputs = 0;
 	    break;
 	case IVL_LO_NOTIF0:
             fprintf(vlog_out, "notif0");
@@ -884,11 +893,16 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
       fprintf(vlog_out, " (");
       count = ivl_logic_pins(nlogic);
       count -= 1;
-      for (idx = 0; idx < count; idx += 1) {
+      if (outputs == 0) outputs = count;
+      for (idx = 0; idx < outputs; idx += 1) {
 	    emit_name_of_logic_nexus(scope, nlogic, ivl_logic_pin(nlogic, idx));
 	    fprintf(vlog_out, ", ");
       }
-      emit_name_of_logic_nexus(scope, nlogic, ivl_logic_pin(nlogic, count));
+      for (/* None */; idx < count; idx += 1) {
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, idx));
+	    fprintf(vlog_out, ", ");
+      }
+      emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, count));
       fprintf(vlog_out, ");\n");
 }
 
@@ -953,7 +967,7 @@ void emit_tran(ivl_scope_t scope, ivl_switch_t tran)
       emit_name_of_nexus(scope, ivl_switch_b(tran));
       if (pins == 3) {
 	    fprintf(vlog_out, ", ");
-	    emit_name_of_nexus(scope, ivl_switch_enable(tran));
+	    emit_nexus_as_ca(scope, ivl_switch_enable(tran));
       }
       fprintf(vlog_out, ");\n");
 }
