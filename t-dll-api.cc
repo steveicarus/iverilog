@@ -290,6 +290,19 @@ extern "C" const char* ivl_event_basename(ivl_event_t net)
       return net->name;
 }
 
+
+extern "C" const char*ivl_event_file(ivl_event_t net)
+{
+      assert(net);
+      return net->file.str();
+}
+
+extern "C" unsigned ivl_event_lineno(ivl_event_t net)
+{
+      assert(net);
+      return net->lineno;
+}
+
 extern "C" ivl_scope_t ivl_event_scope(ivl_event_t net)
 {
       return net->scope;

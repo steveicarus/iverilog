@@ -853,9 +853,9 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
 			sig = new NetNet(scope, scope->local_symbol(),
 					 NetNet::WIRE, instance_width);
+			sig->set_line(*this);
 			sig->data_type(IVL_VT_LOGIC);
 			sig->local_flag(true);
-			sig->set_line(*this);
 			connect(rep->pin(0), sig->pin(0));
 
 		  }
@@ -914,6 +914,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 						     scope->local_symbol(),
 						     sig->vector_width(),
 						     array_count);
+			cc->set_line(*this);
 			des->add_node(cc);
 
 			  /* Connect the concat to the signal. */
@@ -927,6 +928,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			      NetNet*tmp2 = new NetNet(scope,
 						       scope->local_symbol(),
 						       NetNet::WIRE, 1);
+			      tmp2->set_line(*this);
 			      tmp2->local_flag(true);
 			      tmp2->data_type(IVL_VT_LOGIC);
 			      connect(cc->pin(gdx+1), tmp2->pin(0));
@@ -942,6 +944,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			connect(tmp1->pin(1), sig->pin(0));
 			NetNet*tmp2 = new NetNet(scope, scope->local_symbol(),
 						 NetNet::WIRE, 1);
+			tmp2->set_line(*this);
 			tmp2->local_flag(true);
 			tmp2->data_type(sig->data_type());
 			connect(tmp1->pin(0), tmp2->pin(0));
@@ -1669,6 +1672,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		case NetNet::POUTPUT:
 		  ctmp = new NetConcat(scope, scope->local_symbol(),
 				       prts_vector_width, prts.size());
+		  ctmp->set_line(*this);
 		  des->add_node(ctmp);
 		  connect(ctmp->pin(0), sig->pin(0));
 		  for (unsigned ldx = 0 ;  ldx < prts.size() ;  ldx += 1) {
@@ -1692,6 +1696,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			NetPartSelect*ptmp = new NetPartSelect(sig, spin,
 							   sp->vector_width(),
 							   NetPartSelect::VP);
+			ptmp->set_line(*this);
 			des->add_node(ptmp);
 			connect(ptmp->pin(0), sp->pin(0));
 			spin += sp->vector_width();
@@ -1706,8 +1711,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			                           sig->vector_width(),
 			                           sp->vector_width(),
 			                           spin);
-			des->add_node(ttmp);
 			ttmp->set_line(*this);
+			des->add_node(ttmp);
 			connect(ttmp->pin(0), sig->pin(0));
 			connect(ttmp->pin(1), sp->pin(0));
 			spin += sp->vector_width();
@@ -1762,6 +1767,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 
       assert(udp);
       NetUDP*net = new NetUDP(scope, my_name, udp->ports.count(), udp);
+      net->set_line(*this);
       net->rise_time(rise_expr);
       net->fall_time(fall_expr);
       net->decay_time(decay_expr);
@@ -2263,6 +2269,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    bl->append(a1);
 	    if (st) bl->append(st);
 	    if (count_) bl->append(a2);
+	    bl->set_line(*this);
 
 	    return bl;
       }
@@ -2487,6 +2494,7 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	    cur->append(tmp);
       }
 
+      cur->set_line(*this);
       return cur;
 }
 
@@ -2817,7 +2825,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       }
 
       NetBlock*block = new NetBlock(NetBlock::SEQU, 0);
-
+      block->set_line(*this);
 
 	/* Detect the case where the definition of the task is known
 	   empty. In this case, we need not bother with calls to the
@@ -2832,6 +2840,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
            allocate the local storage. */
       if (task->is_auto()) {
 	    NetAlloc*ap = new NetAlloc(task);
+	    ap->set_line(*this);
 	    block->append(ap);
       }
 
@@ -2867,6 +2876,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    ivl_assert(*this, rv->expr_width() >= wid);
 
 	    NetAssign*pr = new NetAssign(lv, rv);
+	    pr->set_line(*this);
 	    block->append(pr);
       }
 
@@ -2922,6 +2932,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
 	      /* Generate the assignment statement. */
 	    NetAssign*ass = new NetAssign(lv, rv);
+	    ass->set_line(*this);
 
 	    block->append(ass);
       }
@@ -2930,6 +2941,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
            the local storage. */
       if (task->is_auto()) {
 	    NetFree*fp = new NetFree(task);
+	    fp->set_line(*this);
 	    block->append(fp);
       }
 
@@ -3035,22 +3047,24 @@ NetProc* PDelayStatement::elaborate(Design*des, NetScope*scope) const
 	   integers, and applying the proper scaling. */
       NetExpr*dex = elaborate_delay_expr(delay_, des, scope);
 
+      NetPDelay *obj;
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(dex)) {
 	    if (statement_)
-		  return new NetPDelay(tmp->value().as_ulong64(),
-				       statement_->elaborate(des, scope));
+		  obj = new NetPDelay(tmp->value().as_ulong64(),
+		                      statement_->elaborate(des, scope));
 	    else
-		  return new NetPDelay(tmp->value().as_ulong64(), 0);
+		  obj = new NetPDelay(tmp->value().as_ulong64(), 0);
 
 	    delete dex;
 
       } else {
 	    if (statement_)
-		  return new NetPDelay(dex, statement_->elaborate(des, scope));
+		  obj = new NetPDelay(dex, statement_->elaborate(des, scope));
 	    else
-		  return new NetPDelay(dex, 0);
+		  obj = new NetPDelay(dex, 0);
       }
-
+      obj->set_line(*this);
+      return obj;
 }
 
 /*
@@ -3300,7 +3314,6 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    }
 
 	    NetNet*expr = tmp->synthesize(des, scope, tmp);
-	    expr->set_line(*this);
 	    if (expr == 0) {
 		  expr_[idx]->dump(cerr);
 		  cerr << endl;
@@ -3546,6 +3559,7 @@ NetProc* PForever::elaborate(Design*des, NetScope*scope) const
       if (stat == 0) return 0;
 
       NetForever*proc = new NetForever(stat);
+      proc->set_line(*this);
       return proc;
 }
 
@@ -3843,6 +3857,7 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
       }
 
       NetRepeat*proc = new NetRepeat(expr, stat);
+      proc->set_line( *this );
       return proc;
 }
 

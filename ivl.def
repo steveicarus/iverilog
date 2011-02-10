@@ -37,6 +37,8 @@ ivl_enum_width
 
 ivl_event_any
 ivl_event_basename
+ivl_event_file
+ivl_event_lineno
 ivl_event_name
 ivl_event_nany
 ivl_event_neg

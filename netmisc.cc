@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -81,12 +81,14 @@ NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
 {
       NetNet*zero_net = new NetNet(scope, scope->local_symbol(),
 				   NetNet::WIRE, sig->vector_width());
+      zero_net->set_line(*sig);
       zero_net->data_type(sig->data_type());
       zero_net->local_flag(true);
 
       if (sig->data_type() == IVL_VT_REAL) {
 	    verireal zero (val);
 	    NetLiteral*zero_obj = new NetLiteral(scope, scope->local_symbol(), zero);
+	    zero_obj->set_line(*sig);
 	    des->add_node(zero_obj);
 
 	    connect(zero_net->pin(0), zero_obj->pin(0));
@@ -95,12 +97,14 @@ NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
 	    verinum zero ((int64_t)val);
 	    zero = pad_to_width(zero, sig->vector_width());
 	    NetConst*zero_obj = new NetConst(scope, scope->local_symbol(), zero);
+	    zero_obj->set_line(*sig);
 	    des->add_node(zero_obj);
 
 	    connect(zero_net->pin(0), zero_obj->pin(0));
       }
 
       NetAddSub*adder = new NetAddSub(scope, scope->local_symbol(), sig->vector_width());
+      adder->set_line(*sig);
       des->add_node(adder);
       adder->attribute(perm_string::literal("LPM_Direction"), verinum("SUB"));
 
@@ -109,6 +113,7 @@ NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
 
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 			      NetNet::WIRE, sig->vector_width());
+      tmp->set_line(*sig);
       tmp->data_type(sig->data_type());
       tmp->local_flag(true);
 
@@ -123,8 +128,8 @@ NetNet* cast_to_int2(Design*des, NetScope*scope, NetNet*src, unsigned wid)
 	    return src;
 
       NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, wid);
-      tmp->data_type(IVL_VT_BOOL);
       tmp->set_line(*src);
+      tmp->data_type(IVL_VT_BOOL);
       tmp->local_flag(true);
 
       NetCastInt2*cast = new NetCastInt2(scope, scope->local_symbol(), wid);
@@ -143,8 +148,8 @@ NetNet* cast_to_int4(Design*des, NetScope*scope, NetNet*src, unsigned wid)
 	    return src;
 
       NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, wid);
-      tmp->data_type(IVL_VT_LOGIC);
       tmp->set_line(*src);
+      tmp->data_type(IVL_VT_LOGIC);
       tmp->local_flag(true);
 
       NetCastInt4*cast = new NetCastInt4(scope, scope->local_symbol(), wid);
@@ -163,8 +168,8 @@ NetNet* cast_to_real(Design*des, NetScope*scope, NetNet*src)
 	    return src;
 
       NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
-      tmp->data_type(IVL_VT_REAL);
       tmp->set_line(*src);
+      tmp->data_type(IVL_VT_REAL);
       tmp->local_flag(true);
 
       NetCastReal*cast = new NetCastReal(scope, scope->local_symbol(), src->get_signed());
@@ -441,13 +446,13 @@ NetExpr* condition_reduce(NetExpr*expr)
       verinum zero (verinum::V0, expr->expr_width());
 
       NetEConst*ezero = new NetEConst(zero);
-      ezero->cast_signed(expr->has_sign());
       ezero->set_line(*expr);
+      ezero->cast_signed(expr->has_sign());
       ezero->set_width(expr->expr_width());
 
       NetEBComp*cmp = new NetEBComp('n', expr, ezero);
-      cmp->cast_signed(false);
       cmp->set_line(*expr);
+      cmp->cast_signed(false);
 
       return cmp;
 }

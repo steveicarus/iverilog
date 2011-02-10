@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -120,6 +120,7 @@ NetEBAdd* NetEBAdd::dup_expr() const
 {
       NetEBAdd*result = new NetEBAdd(op_, left_->dup_expr(),
 				     right_->dup_expr());
+      result->set_line(*this);
       return result;
 }
 
@@ -225,6 +226,7 @@ NetEBDiv* NetEBDiv::dup_expr() const
 {
       NetEBDiv*result = new NetEBDiv(op_, left_->dup_expr(),
 				       right_->dup_expr());
+      result->set_line(*this);
       return result;
 }
 
@@ -280,6 +282,7 @@ NetEBMult* NetEBMult::dup_expr() const
 {
       NetEBMult*result = new NetEBMult(op_, left_->dup_expr(),
 				       right_->dup_expr());
+      result->set_line(*this);
       return result;
 }
 
@@ -347,6 +350,7 @@ NetEBShift* NetEBShift::dup_expr() const
 {
       NetEBShift*result = new NetEBShift(op_, left_->dup_expr(),
 					 right_->dup_expr());
+      result->set_line(*this);
       return result;
 }
 

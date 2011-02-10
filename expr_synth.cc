@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -119,12 +119,14 @@ NetNet* NetEBAdd::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       perm_string path = lsig->scope()->local_symbol();
       NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT, width);
+      osig->set_line(*this);
       osig->local_flag(true);
       osig->data_type(expr_type());
       osig->set_signed(has_sign());
 
       perm_string oname = osig->scope()->local_symbol();
       NetAddSub *adder = new NetAddSub(lsig->scope(), oname, width);
+      adder->set_line(*this);
       connect(lsig->pin(0), adder->pin_DataA());
       connect(rsig->pin(0), adder->pin_DataB());
       connect(osig->pin(0), adder->pin_Result());
@@ -173,6 +175,7 @@ NetNet* NetEBBits::synthesize(Design*des, NetScope*scope, NetExpr*root)
       assert(lsig->vector_width() == rsig->vector_width());
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, width);
+      osig->set_line(*this);
       osig->local_flag(true);
       osig->data_type(expr_type());
 
@@ -379,10 +382,10 @@ NetNet* NetEBPow::synthesize(Design*des, NetScope*scope, NetExpr*root)
       NetPow*powr = new NetPow(scope, scope->local_symbol(), width,
 			       lsig->vector_width(),
 			       rsig->vector_width());
+      powr->set_line(*this);
       des->add_node(powr);
 
       powr->set_signed( has_sign() );
-      powr->set_line(*this);
 
       connect(powr->pin_DataA(), lsig->pin(0));
       connect(powr->pin_DataB(), rsig->pin(0));
@@ -416,10 +419,10 @@ NetNet* NetEBMult::synthesize(Design*des, NetScope*scope, NetExpr*root)
 				 width,
 				 lsig->vector_width(),
 				 rsig->vector_width());
+      mult->set_line(*this);
       des->add_node(mult);
 
       mult->set_signed( has_sign() );
-      mult->set_line(*this);
 
       connect(mult->pin_DataA(), lsig->pin(0));
       connect(mult->pin_DataB(), rsig->pin(0));
@@ -528,6 +531,7 @@ NetNet* NetEBLogic::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, 1);
+      osig->set_line(*this);
       osig->data_type(expr_type());
       osig->local_flag(true);
 
@@ -543,6 +547,7 @@ NetNet* NetEBLogic::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    NetLogic*olog = new NetLogic(scope, oname,
 					 lsig->pin_count()+rsig->pin_count()+1,
 					 NetLogic::OR, 1);
+	    olog->set_line(*this);
 
 	    connect(osig->pin(0), olog->pin(0));
 
@@ -565,6 +570,7 @@ NetNet* NetEBLogic::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    perm_string oname = scope->local_symbol();
 
 	    olog = new NetLogic(scope, oname, 3, NetLogic::AND, 1);
+	    olog->set_line(*this);
 
 	    connect(osig->pin(0), olog->pin(0));
 	    des->add_node(olog);
@@ -622,6 +628,7 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
 	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::IMPLICIT, expr_width());
+	    osig->set_line(*this);
 	    osig->data_type(expr_type());
 	    osig->local_flag(true);
 
@@ -637,13 +644,14 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    NetPartSelect*psel = new NetPartSelect(lsig, shift<0? ushift : 0,
 						   part_width,
 						   NetPartSelect::VP);
+	    psel->set_line(*this);
 	    des->add_node(psel);
 
 	    NetNet*psig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::IMPLICIT, part_width);
+	    psig->set_line(*this);
 	    psig->data_type(expr_type());
 	    psig->local_flag(true);
-	    psig->set_line(*this);
 	    connect(psig->pin(0), psel->pin(0));
 
 	      // Handle the special case of a signed right shift. In
@@ -652,8 +660,8 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    if (signed_flag && right_flag) {
 		  NetSignExtend*pad = new NetSignExtend(scope, scope->local_symbol(),
 							osig->vector_width());
-		  des->add_node(pad);
 		  pad->set_line(*this);
+		  des->add_node(pad);
 
 		  connect(pad->pin(1), psig->pin(0));
 		  connect(pad->pin(0), osig->pin(0));
@@ -669,9 +677,9 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
 	    NetNet*zsig = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, znum.len());
+	    zsig->set_line(*this);
 	    zsig->data_type(osig->data_type());
 	    zsig->local_flag(true);
-	    zsig->set_line(*this);
 	    connect(zcon->pin(0), zsig->pin(0));
 
 	    NetConcat*ccat = new NetConcat(scope, scope->local_symbol(),
@@ -699,6 +707,7 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, expr_width());
+      osig->set_line(*this);
       osig->data_type(expr_type());
       osig->local_flag(true);
 
@@ -760,6 +769,7 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	/* Make a NetNet object to carry the output vector. */
       perm_string path = scope->local_symbol();
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, expr_width());
+      osig->set_line(*this);
       osig->local_flag(true);
       osig->data_type(data_type);
 
@@ -805,14 +815,14 @@ NetNet* NetEConst::synthesize(Design*des, NetScope*scope, NetExpr*)
       }
 
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, width);
+      osig->set_line(*this);
       osig->local_flag(true);
       osig->data_type(expr_type());
       osig->set_signed(has_sign());
-      osig->set_line(*this);
 
       NetConst*con = new NetConst(scope, scope->local_symbol(), value());
-      des->add_node(con);
       con->set_line(*this);
+      des->add_node(con);
 
       connect(osig->pin(0), con->pin(0));
       return osig;
@@ -826,14 +836,14 @@ NetNet* NetECReal::synthesize(Design*des, NetScope*scope, NetExpr*)
       perm_string path = scope->local_symbol();
 
       NetNet*osig = new NetNet(scope, path, NetNet::WIRE, 1);
+      osig->set_line(*this);
       osig->local_flag(true);
       osig->data_type(IVL_VT_REAL);
       osig->set_signed(has_sign());
-      osig->set_line(*this);
 
       NetLiteral*con = new NetLiteral(scope, scope->local_symbol(), value_);
-      des->add_node(con);
       con->set_line(*this);
+      des->add_node(con);
 
       connect(osig->pin(0), con->pin(0));
       return osig;
@@ -860,6 +870,7 @@ NetNet* NetEUBits::synthesize(Design*des, NetScope*scope, NetExpr*root)
       unsigned width = isig->vector_width();
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, width);
+      osig->set_line(*this);
       osig->data_type(expr_type());
       osig->local_flag(true);
 
@@ -869,6 +880,7 @@ NetNet* NetEUBits::synthesize(Design*des, NetScope*scope, NetExpr*root)
       switch (op()) {
 	  case '~':
 	    gate = new NetLogic(scope, oname, 2, NetLogic::NOT, width);
+	    gate->set_line(*this);
 	    break;
 	  default:
 	    gate = NULL;
@@ -906,8 +918,8 @@ NetNet* NetEUnary::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	    sig->data_type(sub->data_type());
 
 	    NetAbs*tmp = new NetAbs(scope, scope->local_symbol(), sub->vector_width());
-	    des->add_node(tmp);
 	    tmp->set_line(*this);
+	    des->add_node(tmp);
 
 	    connect(tmp->pin(1), sub->pin(0));
 	    connect(tmp->pin(0), sig->pin(0));
@@ -970,10 +982,12 @@ NetNet* NetEUReduce::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       NetUReduce*gate = new NetUReduce(scope, scope->local_symbol(),
 				       rtype, isig->vector_width());
+      gate->set_line(*this);
       des->add_node(gate);
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, 1);
+      osig->set_line(*this);
       osig->data_type(expr_type());
       osig->local_flag(true);
 
@@ -1081,9 +1095,9 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, select_width);
+	    tmp->set_line(*this);
 	    tmp->data_type(sub->data_type());
 	    tmp->local_flag(true);
-	    tmp->set_line(*this);
 	    connect(sel->pin(0), tmp->pin(0));
 
 	    unsigned concat_count = 1;
@@ -1108,9 +1122,9 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 
 		  tmp = new NetNet(scope, scope->local_symbol(),
 				   NetNet::WIRE, expr_width());
+		  tmp->set_line(*this);
 		  tmp->data_type(sub->data_type());
 		  tmp->local_flag(true);
-		  tmp->set_line(*this);
 		  connect(cat->pin(0), tmp->pin(0));
 	    }
 	    return tmp;
@@ -1152,9 +1166,9 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 
       NetNet*net = new NetNet(scope, scope->local_symbol(),
 			      NetNet::IMPLICIT, expr_width());
+      net->set_line(*this);
       net->data_type(expr_type());
       net->local_flag(true);
-      net->set_line(*this);
       if (has_sign()) {
 	    NetSignExtend*pad = new NetSignExtend(scope,
 						  scope->local_symbol(),
@@ -1183,9 +1197,9 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::IMPLICIT, pad_width);
+	    tmp->set_line(*this);
 	    tmp->data_type(expr_type());
 	    tmp->local_flag(true);
-	    tmp->set_line(*this);
 	    connect(tmp->pin(0), con->pin(0));
 
 	    connect(cat->pin(0), net->pin(0));
@@ -1237,6 +1251,7 @@ NetNet* NetETernary::synthesize(Design *des, NetScope*scope, NetExpr*root)
 
       unsigned width=expr_width();
       NetNet*osig = new NetNet(csig->scope(), path, NetNet::IMPLICIT, width);
+      osig->set_line(*this);
       osig->data_type(expr_type());
       osig->local_flag(true);
 
@@ -1259,6 +1274,7 @@ NetNet* NetETernary::synthesize(Design *des, NetScope*scope, NetExpr*root)
       perm_string oname = csig->scope()->local_symbol();
       NetMux *mux = new NetMux(csig->scope(), oname, width,
 			       2, csig->vector_width());
+      mux->set_line(*this);
       connect(tsig->pin(0), mux->pin_Data(1));
       connect(fsig->pin(0), mux->pin_Data(0));
       connect(osig->pin(0), mux->pin_Result());
@@ -1321,6 +1337,7 @@ static NetEvWait* make_func_trigger(Design*des, NetScope*scope, NetExpr*root)
             NetEvProbe*pr = new NetEvProbe(scope, scope->local_symbol(),
                                            ev, NetEvProbe::ANYEDGE,
                                            nset->count());
+            pr->set_line(*root);
             for (unsigned idx = 0 ;  idx < nset->count() ;  idx += 1)
                   connect(nset[0][idx], pr->pin(idx));
 
@@ -1369,10 +1386,10 @@ NetNet* NetESFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, def->wid);
+      osig->set_line(*this);
       osig->local_flag(true);
       osig->set_signed(def->type==IVL_VT_REAL? true : false);
       osig->data_type(def->type);
-      osig->set_line(*this);
 
       connect(net->pin(0), osig->pin(0));
 
@@ -1437,6 +1454,7 @@ NetNet* NetEUFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
         /* Create an output signal and connect it to the function. */
       NetNet*osig = new NetNet(scope_, scope_->local_symbol(), NetNet::WIRE,
                                result_sig_->vector_width());
+      osig->set_line(*this);
       osig->local_flag(true);
       osig->data_type(result_sig_->expr_type());
       connect(net->pin(0), osig->pin(0));

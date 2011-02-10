@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -64,6 +64,7 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid, const LineInfo&info)
 
 	// Make the NetConcat and connect the input net to the lsb input.
       NetConcat*cc = new NetConcat(scope, scope->local_symbol(), wid, 2);
+      cc->set_line(info);
       des->add_node(cc);
       connect(cc->pin(1), net->pin(0));
 
@@ -71,14 +72,15 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid, const LineInfo&info)
 	// lsb input of the NetConcat.
       verinum pad(verinum::V0, wid - net->vector_width());
       NetConst*con = new NetConst(scope, scope->local_symbol(), pad);
+      con->set_line(info);
       des->add_node(con);
       connect(cc->pin(2), con->pin(0));
 
 	// Make a NetNet for the NetConst to NetConcat link.
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, wid - net->vector_width());
-      tmp->data_type( net->data_type() );
       tmp->set_line(info);
+      tmp->data_type( net->data_type() );
       tmp->local_flag(true);
       connect(cc->pin(2), tmp->pin(0));
 
@@ -86,8 +88,8 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid, const LineInfo&info)
 	// NetConcat node output pin.
       tmp = new NetNet(scope, scope->local_symbol(),
 		       NetNet::WIRE, wid);
-      tmp->data_type( net->data_type() );
       tmp->set_line(info);
+      tmp->data_type( net->data_type() );
       tmp->local_flag(true);
       connect(cc->pin(0), tmp->pin(0));
 
@@ -127,14 +129,14 @@ NetNet*crop_to_width(Design*des, NetNet*net, unsigned wid)
 	    return net;
 
       NetPartSelect*ps = new NetPartSelect(net, 0, wid, NetPartSelect::VP);
-      des->add_node(ps);
       ps->set_line(*net);
+      des->add_node(ps);
 
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 			      NetNet::WIRE, wid);
+      tmp->set_line(*net);
       tmp->data_type(net->data_type());
       tmp->local_flag(true);
-      tmp->set_line(*net);
       connect(ps->pin(0), tmp->pin(0));
 
       return tmp;

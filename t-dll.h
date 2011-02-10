@@ -202,6 +202,8 @@ struct ivl_delaypath_s {
 struct ivl_event_s {
       perm_string name;
       ivl_scope_t scope;
+      perm_string file;
+      unsigned lineno;
       unsigned nany, nneg, npos;
       ivl_nexus_t*pins;
 };
@@ -804,6 +806,12 @@ static inline void FILE_NAME(ivl_expr_t expr, const LineInfo*info)
 {
       expr->file = info->get_file();
       expr->lineno = info->get_lineno();
+}
+
+static inline void FILE_NAME(ivl_event_t event, const LineInfo*info)
+{
+      event->file = info->get_file();
+      event->lineno = info->get_lineno();
 }
 
 static inline void FILE_NAME(ivl_lpm_t lpm, const LineInfo*info)

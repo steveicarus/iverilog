@@ -802,6 +802,8 @@ void dll_target::event(const NetEvent*net)
 {
       struct ivl_event_s *obj = new struct ivl_event_s;
 
+      FILE_NAME(obj, net);
+
       ivl_scope_t scop = find_scope(des_, net->scope());
       obj->name = net->name();
       obj->scope = scop;

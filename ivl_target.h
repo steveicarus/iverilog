@@ -685,6 +685,8 @@ extern unsigned ivl_enum_width(ivl_enumtype_t net);
  *
  * Named events are referenced in trigger statements.
  *
+ * Named events have file and line number information.
+ *
  * Edge events are created implicitly by the @(...) Verilog syntax to
  * watch for the correct type of edge for the functor being
  * watched. The nodes to watch are collected into groups based on the
@@ -704,6 +706,9 @@ extern ivl_nexus_t ivl_event_neg(ivl_event_t net, unsigned idx);
 
 extern unsigned    ivl_event_npos(ivl_event_t net);
 extern ivl_nexus_t ivl_event_pos(ivl_event_t net, unsigned idx);
+
+extern const char*ivl_event_file(ivl_event_t net);
+extern unsigned ivl_event_lineno(ivl_event_t net);
 
 
 /* EXPRESSIONS
