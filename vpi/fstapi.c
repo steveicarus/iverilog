@@ -91,6 +91,16 @@ void **JenkinsIns(void *base_i, unsigned char *mem, uint32_t length, uint32_t ha
 /*                   01234567 */
 
 
+/*
+ * prevent old file overwrite when currently being read
+ */
+static FILE *unlink_fopen(const char *nam, const char *mode)
+{
+unlink(nam);
+return(fopen(nam, mode));
+}
+
+
 /* 
  * to remove warn_unused_result compile time messages
  * (in the future there needs to be results checking)
@@ -502,12 +512,12 @@ unsigned char already_in_close; /* in case control-c handlers interrupt */
 };
 
 
-static int fstWriterUint32WithVarint32(struct fstWriterContext *xc, uint32_t *u, uint32_t v, const void *dbuf, int siz)
+static uint32_t fstWriterUint32WithVarint32(struct fstWriterContext *xc, uint32_t *u, uint32_t v, const void *dbuf, uint32_t siz)
 {
 unsigned char *buf = xc->vchg_mem + xc->vchg_siz;
 unsigned char *pnt = buf;
 uint32_t nxt;
-int len;
+uint32_t len;
 
 #ifdef FST_DO_MISALIGNED_OPS
 (*(uint32_t *)(pnt)) = (*(uint32_t *)(u));
@@ -522,6 +532,42 @@ while((nxt = v>>7))
         v = nxt;
         }
 *(pnt++) = (v&0x7f);
+memcpy(pnt, dbuf, siz);
+
+len = pnt-buf + siz;
+return(len);
+}
+
+
+static uint32_t fstWriterUint32WithVarint32AndLength(struct fstWriterContext *xc, uint32_t *u, uint32_t v, const void *dbuf, uint32_t siz)
+{
+unsigned char *buf = xc->vchg_mem + xc->vchg_siz;
+unsigned char *pnt = buf;
+uint32_t nxt;
+uint32_t len;
+
+#ifdef FST_DO_MISALIGNED_OPS
+(*(uint32_t *)(pnt)) = (*(uint32_t *)(u));
+#else
+memcpy(pnt, u, sizeof(uint32_t));
+#endif
+pnt += 4;
+
+while((nxt = v>>7))
+        {
+        *(pnt++) = (v&0x7f) | 0x80;
+        v = nxt;
+        }
+*(pnt++) = (v&0x7f);
+
+v = siz;
+while((nxt = v>>7))
+        {
+        *(pnt++) = (v&0x7f) | 0x80;
+        v = nxt;
+        }
+*(pnt++) = (v&0x7f);
+
 memcpy(pnt, dbuf, siz);
 
 len = pnt-buf + siz;
@@ -665,7 +711,7 @@ struct fstWriterContext *xc = calloc(1, sizeof(struct fstWriterContext));
 
 xc->compress_hier = use_compressed_hier;
 
-if((!nam)||(!(xc->handle=fopen(nam, "w+b"))))
+if((!nam)||(!(xc->handle=unlink_fopen(nam, "w+b"))))
         {
         free(xc);
         xc=NULL;
@@ -677,7 +723,7 @@ if((!nam)||(!(xc->handle=fopen(nam, "w+b"))))
 
 	memcpy(hf, nam, flen);
 	strcpy(hf + flen, ".hier");
-	xc->hier_handle = fopen(hf, "w+b");
+	xc->hier_handle = unlink_fopen(hf, "w+b");
 
 	xc->geom_handle = tmpfile();	/* .geom */
 	xc->valpos_handle = tmpfile();	/* .offs */
@@ -1090,38 +1136,67 @@ for(i=0;i<xc->maxhandle;i++)
 		vm4ip[2] = fpos;
 
 		scratchpnt = scratchpad + xc->vchg_siz;		/* build this buffer backwards */
-		if(vm4ip[1] == 1)
+		if(vm4ip[1] <= 1)
 			{
-			wrlen = fstGetVarint32Length(vchg_mem + offs + 4); /* used to advance and determine wrlen */
-			xc->curval_mem[vm4ip[0]] = vchg_mem[offs + 4 + wrlen]; /* checkpoint variable */
+			if(vm4ip[1] == 1)
+				{
+				wrlen = fstGetVarint32Length(vchg_mem + offs + 4); /* used to advance and determine wrlen */
+				xc->curval_mem[vm4ip[0]] = vchg_mem[offs + 4 + wrlen]; /* checkpoint variable */
 
-                        while(offs)
-                                {
-                                unsigned char val;
-                                uint32_t time_delta, rcv;
-                                next_offs = fstGetUint32(vchg_mem + offs);
-                                offs += 4;   
+	                        while(offs)
+	                                {
+	                                unsigned char val;
+	                                uint32_t time_delta, rcv;
+	                                next_offs = fstGetUint32(vchg_mem + offs);
+	                                offs += 4;   
                         
-                                time_delta = fstGetVarint32(vchg_mem + offs, &wrlen);
-                                val = vchg_mem[offs+wrlen];
-				offs = next_offs;
+	                                time_delta = fstGetVarint32(vchg_mem + offs, &wrlen);
+	                                val = vchg_mem[offs+wrlen];
+					offs = next_offs;
 
-                                switch(val)
-                                        {
-                                        case '0':
-                                        case '1':               rcv = ((val&1)<<1) | (time_delta<<2);
-                                                                break; /* pack more delta bits in for 0/1 vchs */
-        
-                                        case 'x': case 'X':     rcv = FST_RCV_X | (time_delta<<4); break;
-                                        case 'z': case 'Z':     rcv = FST_RCV_Z | (time_delta<<4); break;
-                                        case 'h': case 'H':     rcv = FST_RCV_H | (time_delta<<4); break;
-                                        case 'u': case 'U':     rcv = FST_RCV_U | (time_delta<<4); break;
-                                        case 'w': case 'W':     rcv = FST_RCV_W | (time_delta<<4); break;
-                                        case 'l': case 'L':     rcv = FST_RCV_L | (time_delta<<4); break;
-                                        default:                rcv = FST_RCV_D | (time_delta<<4); break;
-                                        }
-                
-                                scratchpnt = fstCopyVarint32ToLeft(scratchpnt, rcv);
+	                                switch(val)
+	                                        {
+	                                        case '0':
+	                                        case '1':               rcv = ((val&1)<<1) | (time_delta<<2);
+	                                                                break; /* pack more delta bits in for 0/1 vchs */
+	        
+	                                        case 'x': case 'X':     rcv = FST_RCV_X | (time_delta<<4); break;
+	                                        case 'z': case 'Z':     rcv = FST_RCV_Z | (time_delta<<4); break;
+	                                        case 'h': case 'H':     rcv = FST_RCV_H | (time_delta<<4); break;
+	                                        case 'u': case 'U':     rcv = FST_RCV_U | (time_delta<<4); break;
+	                                        case 'w': case 'W':     rcv = FST_RCV_W | (time_delta<<4); break;
+	                                        case 'l': case 'L':     rcv = FST_RCV_L | (time_delta<<4); break;
+	                                        default:                rcv = FST_RCV_D | (time_delta<<4); break;
+	                                        }
+	                
+	                                scratchpnt = fstCopyVarint32ToLeft(scratchpnt, rcv);
+					}
+				}
+				else
+				{
+				/* variable length */
+				/* fstGetUint32 (next_offs) + fstGetVarint32 (time_delta) + fstGetVarint32 (len) + payload */
+				unsigned char *pnt;
+				uint32_t record_len;
+				uint32_t time_delta;				
+
+				while(offs)
+					{
+					next_offs = fstGetUint32(vchg_mem + offs);
+					offs += 4;
+					pnt = vchg_mem + offs;
+					offs = next_offs;
+					time_delta = fstGetVarint32(pnt, &wrlen);
+					pnt += wrlen;
+					record_len = fstGetVarint32(pnt, &wrlen);
+					pnt += wrlen;
+
+					scratchpnt -= record_len;
+					memcpy(scratchpnt, pnt, record_len);
+
+					scratchpnt = fstCopyVarint32ToLeft(scratchpnt, record_len);
+					scratchpnt = fstCopyVarint32ToLeft(scratchpnt, (time_delta << 1)); /* reserve | 1 case for future expansion */
+					}
 				}
 			}
 			else
@@ -1635,6 +1710,10 @@ if(xc && nam)
 		else
 		{
 		is_real = 0;
+		if(vt == FST_VT_GEN_STRING)
+			{
+			len = 0;
+			}
 		}
 
 	xc->hier_file_len += fstWriterVarint(xc->hier_handle, len);	
@@ -1646,7 +1725,14 @@ if(xc && nam)
 		{
 		uint32_t zero = 0;
 
-		fstWriterVarint(xc->geom_handle, !is_real ? len : 0); /* geom section encodes reals as zero byte */
+		if(len)
+			{
+			fstWriterVarint(xc->geom_handle, !is_real ? len : 0); /* geom section encodes reals as zero byte */
+			}
+			else
+			{
+			fstWriterVarint(xc->geom_handle, 0xFFFFFFFF);         /* geom section encodes zero len as 32b -1 */
+			}
 
 		fstFwrite(&xc->maxvalpos, sizeof(uint32_t), 1, xc->valpos_handle);
 		fstFwrite(&len, sizeof(uint32_t), 1, xc->valpos_handle);
@@ -1745,30 +1831,75 @@ if((xc) && (handle <= xc->maxhandle))
 	vm4ip = &(xc->valpos_mem[4*handle]);
 
 	len  = vm4ip[1];
+	if(len) /* len of zero = variable length, use fstWriterEmitVariableLengthValueChange */
+		{
+		if(!xc->is_initial_time)
+			{
+			fpos = xc->vchg_siz;
+	
+			if((fpos + len + 10) > xc->vchg_alloc_siz)
+				{
+				xc->vchg_alloc_siz += (FST_BREAK_ADD_SIZE + len); /* +len added in the case of extremely long vectors and small break add sizes */
+				xc->vchg_mem = realloc(xc->vchg_mem, xc->vchg_alloc_siz);
+				if(!xc->vchg_mem)
+					{
+					fprintf(stderr, "FATAL ERROR, could not realloc() in fstWriterEmitValueChange, exiting.\n");
+					exit(255); 
+					}
+				}
+	
+			xc->vchg_siz += fstWriterUint32WithVarint32(xc, &vm4ip[2], xc->tchn_idx - vm4ip[3], buf, len); /* do one fwrite op only */
+			vm4ip[3] = xc->tchn_idx;
+			vm4ip[2] = fpos;
+			}
+			else
+			{
+			offs = vm4ip[0];
+			memcpy(xc->curval_mem + offs, buf, len);
+			}
+		}
+	}
+}
 
-	if(!xc->is_initial_time)
+
+void fstWriterEmitVariableLengthValueChange(void *ctx, fstHandle handle, const void *val, uint32_t len)
+{
+struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+const unsigned char *buf = (const unsigned char *)val;
+
+if((xc) && (handle <= xc->maxhandle))
+	{
+	uint32_t fpos;
+	uint32_t *vm4ip;
+
+	if(!xc->valpos_mem)
+		{
+		xc->vc_emitted = 1;
+		fstWriterCreateMmaps(xc);
+		}
+
+	handle--; /* move starting at 1 index to starting at 0 */
+	vm4ip = &(xc->valpos_mem[4*handle]);
+
+	/* there is no initial time dump for variable length value changes */
+	if(!vm4ip[1]) /* len of zero = variable length */
 		{
 		fpos = xc->vchg_siz;
 
-		if((fpos + len + 10) > xc->vchg_alloc_siz)
+		if((fpos + len + 10 + 5) > xc->vchg_alloc_siz)
 			{
-			xc->vchg_alloc_siz += FST_BREAK_ADD_SIZE;
+			xc->vchg_alloc_siz += (FST_BREAK_ADD_SIZE + len + 5); /* +len added in the case of extremely long vectors and small break add sizes */
 			xc->vchg_mem = realloc(xc->vchg_mem, xc->vchg_alloc_siz);
 			if(!xc->vchg_mem)
 				{
-				fprintf(stderr, "FATAL ERROR, could not realloc() in fstWriterEmitValueChange, exiting.\n");
+				fprintf(stderr, "FATAL ERROR, could not realloc() in fstWriterEmitVariableLengthValueChange, exiting.\n");
 				exit(255); 
 				}
 			}
 
-		xc->vchg_siz += fstWriterUint32WithVarint32(xc, &vm4ip[2], xc->tchn_idx - vm4ip[3], buf, len); /* do one fwrite op only */
+		xc->vchg_siz += fstWriterUint32WithVarint32AndLength(xc, &vm4ip[2], xc->tchn_idx - vm4ip[3], buf, len); /* do one fwrite op only */
 		vm4ip[3] = xc->tchn_idx;
 		vm4ip[2] = fpos;
-		}
-		else
-		{
-		offs = vm4ip[0];
-		memcpy(xc->curval_mem + offs, buf, len);
 		}
 	}
 }
@@ -1867,7 +1998,8 @@ static const char *vartypes[] = {
 	"event", "integer", "parameter", "real", "real_parameter",
 	"reg", "supply0", "supply1", "time", "tri",
 	"triand", "trior", "trireg", "tri0", "tri1", 
-	"wand", "wire", "wor", "port", "array", "realtime"
+	"wand", "wire", "wor", "port", "array", "realtime",
+	"string"
 	};
 
 static const char *modtypes[] = {
@@ -2071,6 +2203,19 @@ if(xc)
 	}
 
 return(NULL);
+}
+
+
+int fstReaderGetCurrentScopeLen(void *ctx)
+{
+struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
+
+if(xc && xc->curr_hier)
+	{
+	return(xc->curr_hier->len);
+	}
+
+return(0);
 }
 
 
@@ -2503,6 +2648,7 @@ if(!(isfeof=feof(xc->fh)))
 				*(pnt++) = ch; 
 				}; /* scopename */
 			*pnt = 0;
+			xc->hier.u.scope.name_length = pnt - xc->hier.u.scope.name;
 
 			xc->hier.u.scope.component = pnt = xc->str_scope_comp;
 			while((ch = fgetc(xc->fh))) 
@@ -2510,6 +2656,7 @@ if(!(isfeof=feof(xc->fh)))
 				*(pnt++) = ch; 
 				}; /* scopecomp */
 			*pnt = 0;
+			xc->hier.u.scope.component_length = pnt - xc->hier.u.scope.component;
 			break;
 
 		case FST_ST_VCD_UPSCOPE:
@@ -2537,6 +2684,7 @@ if(!(isfeof=feof(xc->fh)))
 		case FST_VT_VCD_PORT:
 		case FST_VT_VCD_ARRAY:
 		case FST_VT_VCD_REALTIME:
+		case FST_VT_GEN_STRING:
 			xc->hier.htyp = FST_HT_VAR;
 
 			xc->hier.u.var.typ = tag;
@@ -2547,6 +2695,7 @@ if(!(isfeof=feof(xc->fh)))
 				*(pnt++) = ch; 
 				}; /* varname */
 			*pnt = 0;
+			xc->hier.u.var.name_length = pnt - xc->hier.u.var.name;
 			xc->hier.u.var.length = fstReaderVarint32(xc->fh);
 			if(tag == FST_VT_VCD_PORT)
 				{
@@ -2701,6 +2850,7 @@ while(!feof(xc->fh))
 		case FST_VT_VCD_PORT:
 		case FST_VT_VCD_ARRAY:
 		case FST_VT_VCD_REALTIME:
+		case FST_VT_GEN_STRING:
 			vartype = tag;
 			/* vardir = */ fgetc(xc->fh); /* unused in VCD reader, but need to advance read pointer */
 			pnt = str;
@@ -3010,11 +3160,11 @@ if(gzread_pass_status)
 	
 					if(val)
 						{
-						xc->signal_lens[i] = val;
+						xc->signal_lens[i] = (val != 0xFFFFFFFF) ? val : 0;
 						xc->signal_typs[i] = FST_VT_VCD_WIRE;
-						if(val > xc->longest_signal_value_len)
+						if(xc->signal_lens[i] > xc->longest_signal_value_len)
 	                                        	{
-	                                        	xc->longest_signal_value_len = val;
+	                                        	xc->longest_signal_value_len = xc->signal_lens[i];
 	                                        	}
 						}
 						else
@@ -3190,6 +3340,15 @@ if(xc)
 /* normal read which re-interleaves the value change data */
 int fstReaderIterBlocks(void *ctx,
         void (*value_change_callback)(void *user_callback_data_pointer, uint64_t time, fstHandle facidx, const unsigned char *value),
+        void *user_callback_data_pointer, FILE *fv)
+{
+return(fstReaderIterBlocks2(ctx, value_change_callback, NULL, user_callback_data_pointer, fv));
+}
+
+
+int fstReaderIterBlocks2(void *ctx,
+        void (*value_change_callback)(void *user_callback_data_pointer, uint64_t time, fstHandle facidx, const unsigned char *value),
+	void (*value_change_callback_varlen)(void *user_callback_data_pointer, uint64_t time, fstHandle facidx, const unsigned char *value, uint32_t len),
         void *user_callback_data_pointer, FILE *fv)
 {
 struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
@@ -3394,25 +3553,32 @@ for(;;)
 
 		                if(xc->process_mask[process_idx]&(1<<process_bit))
 					{
-					if(xc->signal_lens[idx] == 1)
+					if(xc->signal_lens[idx] <= 1)
 						{
-						unsigned char val = mu[sig_offs];
-						if(value_change_callback)
+						if(xc->signal_lens[idx] == 1)
 							{
-							xc->temp_signal_value_buf[0] = val;
-							xc->temp_signal_value_buf[1] = 0;
-							value_change_callback(user_callback_data_pointer, beg_tim, idx+1, xc->temp_signal_value_buf);
+							unsigned char val = mu[sig_offs];
+							if(value_change_callback)
+								{
+								xc->temp_signal_value_buf[0] = val;
+								xc->temp_signal_value_buf[1] = 0;
+								value_change_callback(user_callback_data_pointer, beg_tim, idx+1, xc->temp_signal_value_buf);
+								}
+								else
+								{
+								if(fv)
+									{
+									int vcdid_len;
+									const char *vcd_id = fstVcdIDForFwrite(idx+1, &vcdid_len);
+									fputc(val, fv);
+									fstFwrite(vcd_id, vcdid_len, 1, fv);
+									fputc('\n', fv);
+									}
+								}
 							}
 							else
 							{
-							if(fv)
-								{
-								int vcdid_len;
-								const char *vcd_id = fstVcdIDForFwrite(idx+1, &vcdid_len);
-								fputc(val, fv);
-								fstFwrite(vcd_id, vcdid_len, 1, fv);
-								fputc('\n', fv);
-								}
+							/* variable-length ("0" length) records have no initial state */
 							}
 						}
 						else
@@ -3689,7 +3855,7 @@ for(;;)
 	for(i=0;i<tsec_nitems;i++)
 		{
 		uint32_t tdelta;
-		int skiplen;
+		int skiplen, skiplen2;
 		uint32_t vli;
 
 		if(fv)
@@ -3721,52 +3887,111 @@ for(;;)
 			idx = tc_head[i] - 1;
 			vli = fstGetVarint32(mem_for_traversal + headptr[idx], &skiplen);
 
-			if(xc->signal_lens[idx] == 1)
+			if(xc->signal_lens[idx] <= 1)
 				{
-				unsigned char val;
-				if(!(vli & 1))
+				if(xc->signal_lens[idx] == 1)
 					{
-					tdelta = vli >> 2;
-					val = ((vli >> 1) & 1) | '0'; 
-					}
-					else
-					{
-					tdelta = vli >> 4;
-					val = FST_RCV_STR[((vli >> 1) & 7)];
-					}
-
-				if(value_change_callback)
-					{
-					xc->temp_signal_value_buf[0] = val;
-					xc->temp_signal_value_buf[1] = 0;
-					value_change_callback(user_callback_data_pointer, time_table[i], idx+1, xc->temp_signal_value_buf);
-					}
-					else
-					{
-					if(fv) 
+					unsigned char val;
+					if(!(vli & 1))
 						{
-						int vcdid_len;
-						const char *vcd_id = fstVcdIDForFwrite(idx+1, &vcdid_len);
-						fputc(val, fv);
-						fstFwrite(vcd_id, vcdid_len, 1, fv);
-						fputc('\n', fv);
+						tdelta = vli >> 2;
+						val = ((vli >> 1) & 1) | '0'; 
+						}
+						else
+						{
+						tdelta = vli >> 4;
+						val = FST_RCV_STR[((vli >> 1) & 7)];
+						}
+
+					if(value_change_callback)
+						{
+						xc->temp_signal_value_buf[0] = val;
+						xc->temp_signal_value_buf[1] = 0;
+						value_change_callback(user_callback_data_pointer, time_table[i], idx+1, xc->temp_signal_value_buf);
+						}
+						else
+						{
+						if(fv) 
+							{
+							int vcdid_len;
+							const char *vcd_id = fstVcdIDForFwrite(idx+1, &vcdid_len);
+							fputc(val, fv);
+							fstFwrite(vcd_id, vcdid_len, 1, fv);
+							fputc('\n', fv);
+							}
+						}
+					headptr[idx] += skiplen;
+					length_remaining[idx] -= skiplen;
+	
+					tc_head[i] = scatterptr[idx];
+					scatterptr[idx] = 0;
+		
+					if(length_remaining[idx])
+						{
+						int shamt;
+						vli = fstGetVarint32NoSkip(mem_for_traversal + headptr[idx]);
+						shamt = 2 << (vli & 1);
+						tdelta = vli >> shamt;
+	
+						scatterptr[idx] = tc_head[i+tdelta];
+						tc_head[i+tdelta] = idx+1;
 						}
 					}
-				headptr[idx] += skiplen;
-				length_remaining[idx] -= skiplen;
-
-				tc_head[i] = scatterptr[idx];
-				scatterptr[idx] = 0;
-	
-				if(length_remaining[idx])
+					else
 					{
-					int shamt;
-					vli = fstGetVarint32NoSkip(mem_for_traversal + headptr[idx]);
-					shamt = 2 << (vli & 1);
-					tdelta = vli >> shamt;
+					unsigned char *vdata;
+					uint32_t len;
 
-					scatterptr[idx] = tc_head[i+tdelta];
-					tc_head[i+tdelta] = idx+1;
+					vli = fstGetVarint32(mem_for_traversal + headptr[idx], &skiplen);
+					len = fstGetVarint32(mem_for_traversal + headptr[idx] + skiplen, &skiplen2);
+					tdelta = vli >> 1;
+					skiplen += skiplen2;
+					vdata = mem_for_traversal + headptr[idx] + skiplen;
+
+					if(!(vli & 1))
+						{
+						if(value_change_callback_varlen)
+							{
+							value_change_callback_varlen(user_callback_data_pointer, time_table[i], idx+1, vdata, len);
+							}
+							else
+							{
+							if(fv) 
+								{
+								int vcdid_len;
+								const char *vcd_id = fstVcdIDForFwrite(idx+1, &vcdid_len);
+	
+								fputc('s', fv);
+								{
+								unsigned char *vesc = malloc(len*4 + 1);
+								int vlen = fstUtilityBinToEsc(vesc, vdata, len);
+
+								vesc[vlen] = 0;
+								fstFwrite(vesc, vlen, 1, fv);
+								free(vesc);
+								}
+								fputc(' ', fv);
+								fstFwrite(vcd_id, vcdid_len, 1, fv);
+								fputc('\n', fv);
+								}
+							}
+						}
+
+					skiplen += len;
+					headptr[idx] += skiplen;
+					length_remaining[idx] -= skiplen;
+
+					tc_head[i] = scatterptr[idx];
+					scatterptr[idx] = 0;
+	
+					if(length_remaining[idx])
+						{
+						vli = fstGetVarint32NoSkip(mem_for_traversal + headptr[idx]);
+						tdelta = vli >> 1;
+	
+						scatterptr[idx] = tc_head[i+tdelta];
+						tc_head[i+tdelta] = idx+1;
+						}
 					}
 				}
 				else
@@ -4042,7 +4267,7 @@ unsigned char *pnt;
 fstHandle idx, pidx=0, i;
 uint64_t pval;
 
-if((!xc) || (!facidx) || (facidx > xc->maxhandle) || (!buf))
+if((!xc) || (!facidx) || (facidx > xc->maxhandle) || (!buf) || (!xc->signal_lens[facidx-1]))
 	{
 	return(NULL);
 	}
@@ -4765,3 +4990,111 @@ if(base && *base)
 
 #endif
 #endif
+
+/**********************************************************************/
+
+/************************/
+/***                  ***/
+/*** utility function ***/
+/***                  ***/
+/************************/
+
+int fstUtilityBinToEsc(unsigned char *d, unsigned char *s, int len)
+{
+unsigned char *src = s;
+unsigned char *dst = d;
+int i;
+
+for(i=0;i<len;i++)
+	{
+	switch(src[i])
+		{
+		case '\a':	*(dst++) = '\\'; *(dst++) = 'a'; break;
+		case '\b':	*(dst++) = '\\'; *(dst++) = 'b'; break;
+		case '\f':	*(dst++) = '\\'; *(dst++) = 'f'; break;
+		case '\n':	*(dst++) = '\\'; *(dst++) = 'n'; break;
+		case '\r':	*(dst++) = '\\'; *(dst++) = 'r'; break;
+		case '\t':	*(dst++) = '\\'; *(dst++) = 't'; break;
+		case '\v':	*(dst++) = '\\'; *(dst++) = 'v'; break;
+		case '\'':	*(dst++) = '\\'; *(dst++) = '\''; break;
+		case '\"':	*(dst++) = '\\'; *(dst++) = '\"'; break;
+		case '\\':	*(dst++) = '\\'; *(dst++) = '\\'; break;
+		case '\?':	*(dst++) = '\\'; *(dst++) = '\?'; break;
+		default:	if((src[i] > ' ') && (src[i] <= '~')) /* no white spaces in output */
+					{
+					*(dst++) = src[i];
+					}
+					else
+					{
+					*(dst++) = '\\';
+					*(dst++) = (src[i]/64) + '0';	src[i] = src[i] & 63;
+					*(dst++) = (src[i]/8)  + '0';   src[i] = src[i] & 7;
+					*(dst++) = (src[i]) + '0';
+					}
+				break;
+		}
+	}
+
+return(dst - d);
+}
+
+
+/*
+ * this overwrites the original string if the destination pointer is NULL
+ */
+int fstUtilityEscToBin(unsigned char *d, unsigned char *s, int len)
+{
+unsigned char *src = s;
+unsigned char *dst = (!d) ? s : (s = d);
+unsigned char val[3];
+int i;
+
+for(i=0;i<len;i++)
+	{
+	if(src[i] != '\\')
+		{
+		*(dst++) = src[i];
+		}
+		else
+		{
+		switch(src[++i])
+			{
+			case 'a':	*(dst++) = '\a'; break;
+			case 'b':	*(dst++) = '\b'; break;
+			case 'f':	*(dst++) = '\f'; break;
+			case 'n':	*(dst++) = '\n'; break;
+			case 'r':	*(dst++) = '\r'; break;
+			case 't':	*(dst++) = '\t'; break;
+			case 'v':	*(dst++) = '\v'; break;
+			case '\'':	*(dst++) = '\''; break;
+			case '\"':	*(dst++) = '\"'; break;
+			case '\\':	*(dst++) = '\\'; break;
+			case '\?':	*(dst++) = '\?'; break;
+
+			case 'x':	val[0] = toupper(src[++i]);
+					val[1] = toupper(src[++i]);
+					val[0] = ((val[0]>='A')&&(val[0]<='F')) ? (val[0] - 'A' + 10) : (val[0] - '0');
+					val[1] = ((val[1]>='A')&&(val[1]<='F')) ? (val[1] - 'A' + 10) : (val[1] - '0');
+					*(dst++) = val[0] * 16 + val[1];
+					break;
+
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':	val[0] = src[  i] - '0';
+					val[1] = src[++i] - '0';
+					val[2] = src[++i] - '0';
+					*(dst++) = val[0] * 64 + val[1] * 8 + val[2];
+					break;
+
+			default:	*(dst++) = src[i]; break;
+			}
+		}
+	}
+
+return(dst - s);
+}
