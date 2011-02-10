@@ -51,6 +51,12 @@ extern unsigned indent;
 extern unsigned indent_incr;
 
 /*
+ * Set to non-zero when the user wants to emit all the file and line
+ * number information.
+ */
+extern unsigned emit_file_line;
+
+/*
  * Emit various Verilog types.
  */
 extern void emit_event(ivl_scope_t scope, ivl_statement_t stmt);
@@ -78,6 +84,7 @@ extern void emit_icarus_generated_udps();
 
 extern void add_udp_to_list(ivl_udp_t udp);
 extern void emit_udp_list();
+extern void emit_sig_file_line(ivl_signal_t sig);
 
 extern void emit_real_number(double value);
 extern void emit_number(const char *bits, unsigned nbits, unsigned is_signed,

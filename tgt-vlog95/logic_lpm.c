@@ -717,11 +717,26 @@ void emit_lpm(ivl_scope_t scope, ivl_lpm_t lpm)
       emit_name_of_nexus(scope, output);
       fprintf(vlog_out, " = ");
       emit_lpm_as_ca(scope, lpm);
-      fprintf(vlog_out, ";\n");
+      fprintf(vlog_out, ";");
+      if (emit_file_line) {
+	    fprintf(vlog_out, " /* %s:%u */",
+	                      ivl_lpm_file(lpm),
+	                      ivl_lpm_lineno(lpm));
+      }
+      fprintf(vlog_out, "\n");
+}
+
+static void emit_logic_file_line(ivl_net_logic_t nlogic)
+{
+      if (emit_file_line) {
+	    fprintf(vlog_out, " /* %s:%u */",
+	                      ivl_logic_file(nlogic),
+	                      ivl_logic_lineno(nlogic));
+      }
 }
 
 /*
- * A BUFZ is a simple variable assignment possible with strength and/or delay.
+ * A BUFZ is a simple variable assignment possibly with strength and/or delay.
  */
 static void emit_bufz(ivl_scope_t scope, ivl_net_logic_t nlogic)
 {
@@ -737,7 +752,9 @@ static void emit_bufz(ivl_scope_t scope, ivl_net_logic_t nlogic)
       emit_name_of_nexus(scope, ivl_logic_pin(nlogic, 0));
       fprintf(vlog_out, " = ");
       emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
-      fprintf(vlog_out, ";\n");
+      fprintf(vlog_out, ";");
+      emit_logic_file_line(nlogic);
+      fprintf(vlog_out, "\n");
 }
 
 static void emit_and_save_udp_name(ivl_net_logic_t nlogic){
@@ -903,7 +920,9 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 	    fprintf(vlog_out, ", ");
       }
       emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, count));
-      fprintf(vlog_out, ");\n");
+      fprintf(vlog_out, ");");
+      emit_logic_file_line(nlogic);
+      fprintf(vlog_out, "\n");
 }
 
 void emit_tran(ivl_scope_t scope, ivl_switch_t tran)
@@ -969,7 +988,14 @@ void emit_tran(ivl_scope_t scope, ivl_switch_t tran)
 	    fprintf(vlog_out, ", ");
 	    emit_nexus_as_ca(scope, ivl_switch_enable(tran));
       }
-      fprintf(vlog_out, ");\n");
+      fprintf(vlog_out, ");");
+      if (emit_file_line) {
+assert(ivl_switch_lineno(tran));
+	    fprintf(vlog_out, " /* %s:%u */",
+	                      ivl_switch_file(tran),
+	                      ivl_switch_lineno(tran));
+      }
+      fprintf(vlog_out, "\n");
 }
 
 void emit_signal_net_const_as_ca(ivl_scope_t scope, ivl_signal_t sig)
@@ -994,7 +1020,9 @@ void emit_signal_net_const_as_ca(ivl_scope_t scope, ivl_signal_t sig)
 	               3);
 	    fprintf(vlog_out, " %s = ", ivl_signal_basename(sig));
 	    emit_const_nexus(scope, net_const);
-	    fprintf(vlog_out, ";\n");
+	    fprintf(vlog_out, ";");
+	    emit_sig_file_line(sig);
+	    fprintf(vlog_out, "\n");
 	    return;
       }
 	/* We must find the constant in the nexus. */

@@ -50,6 +50,8 @@ int sim_precision = 0;
 unsigned indent = 0;
 unsigned indent_incr = 2;
 
+unsigned emit_file_line = 0;
+
 ivl_design_t design = 0;
 
 int target_design(ivl_design_t des)
@@ -58,8 +60,12 @@ int target_design(ivl_design_t des)
       unsigned nroots, idx;
       const char*path = ivl_design_flag(des, "-o");
 	/* Set the indent spacing with the -pspacing flag passed to iverilog
-	 * (e.g. -pspacing=4). */
+	 * (e.g. -pspacing=4). The default is 2 spaces. */
       const char*spacing = ivl_design_flag(des, "spacing");
+	/* Use -pfileline to determine if file and line information is
+	 * printed for most lines. (e.g. -pfileline=1). The default is no
+	 * file/line information will be printed for individual lines. */
+      const char*fileline = ivl_design_flag(des, "fileline");
       assert(path);
 
 	/* Check for and use a provided indent spacing. */
@@ -79,7 +85,7 @@ int target_design(ivl_design_t des)
 		                  eptr, spacing);
 		  return 1;
 	    }
-	      /* The increment must be positive. */
+	      /* The increment must be greater than zero. */
 	    if (sp_incr < 1) {
 		  fprintf(stderr, "vlog95 error: Spacing increment (%ld) must "
 		                  "be greater than zero.\n", sp_incr);
@@ -92,6 +98,32 @@ int target_design(ivl_design_t des)
 		  return 1;
 	    }
 	    indent_incr = sp_incr;
+      }
+
+	/* Check to see if file/line information should be printed. */
+      if (strcmp(fileline, "") != 0) {
+	    char *eptr;
+	    long fl_value = strtol(fileline, &eptr, 0);
+	      /* Nothing usable in the file/line string. */
+	    if (spacing == eptr) {
+		  fprintf(stderr, "vlog95 error: Unable to extract file/line "
+		                  "information from string: %s\n", fileline);
+		  return 1;
+	    }
+	      /* Extra stuff at the end. */
+	    if (*eptr != 0) {
+		  fprintf(stderr, "vlog95 error: Extra characters '%s' "
+		                  "included at end of file/line string: %s\n",
+		                  eptr, fileline);
+		  return 1;
+	    }
+	      /* The file/line flag must be positive. */
+	    if (fl_value < 0) {
+		  fprintf(stderr, "vlog95 error: File/line flag (%ld) must "
+		                  "be positive.\n", fl_value);
+		  return 1;
+	    }
+	    emit_file_line = fl_value > 0;
       }
 
       design = des;

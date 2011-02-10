@@ -67,12 +67,23 @@ void emit_func_return(ivl_signal_t sig)
       }
 }
 
+void emit_sig_file_line(ivl_signal_t sig)
+{
+      if (emit_file_line) {
+	    fprintf(vlog_out, " /* %s:%u */",
+	                      ivl_signal_file(sig),
+	                      ivl_signal_lineno(sig));
+      }
+}
+
 void emit_var_def(ivl_signal_t sig)
 {
       if (ivl_signal_local(sig)) return;
       fprintf(vlog_out, "%*c", indent, ' ');
       if (ivl_signal_integer(sig)) {
-	    fprintf(vlog_out, "integer %s;\n", ivl_signal_basename(sig));
+	    fprintf(vlog_out, "integer %s;", ivl_signal_basename(sig));
+	    emit_sig_file_line(sig);
+	    fprintf(vlog_out, "\n");
 	    if (ivl_signal_dimensions(sig) > 0) {
 		  fprintf(stderr, "%s:%u: vlog95 error: Integer arrays (%s) "
 		                  "are not supported.\n", ivl_signal_file(sig),
@@ -81,7 +92,9 @@ void emit_var_def(ivl_signal_t sig)
 		  vlog_errors += 1;
 	    }
       } else if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
-	    fprintf(vlog_out, "real %s;\n", ivl_signal_basename(sig));
+	    fprintf(vlog_out, "real %s;", ivl_signal_basename(sig));
+	    emit_sig_file_line(sig);
+	    fprintf(vlog_out, "\n");
 	    if (ivl_signal_dimensions(sig) > 0) {
 		  fprintf(stderr, "%s:%u: vlog95 error: Real arrays (%s) "
 		                  "are not supported.\n", ivl_signal_file(sig),
@@ -105,7 +118,9 @@ void emit_var_def(ivl_signal_t sig)
 			fprintf(vlog_out, " [%d:%d]", first, last);
 		  }
 	    }
-	    fprintf(vlog_out, ";\n");
+	    fprintf(vlog_out, ";");
+	    emit_sig_file_line(sig);
+	    fprintf(vlog_out, "\n");
 	    if (ivl_signal_signed(sig)) {
 		  fprintf(stderr, "%s:%u: vlog95 error: Signed registers (%s) "
 		                  "are not supported.\n", ivl_signal_file(sig),
@@ -213,7 +228,9 @@ void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
 		  break;
 	    }
 	    if (msb != 0 || lsb != 0) fprintf(vlog_out, " [%d:%d]", msb, lsb);
-	    fprintf(vlog_out, " %s;\n", ivl_signal_basename(sig));
+	    fprintf(vlog_out, " %s;", ivl_signal_basename(sig));
+	    emit_sig_file_line(sig);
+	    fprintf(vlog_out, "\n");
 	      /* A constant driving a net does not create an lpm or logic
 	       * element in the design so save them from the definition. */
 	    save_net_constants(scope, sig);
@@ -265,7 +282,13 @@ void emit_scope_variables(ivl_scope_t scope)
 	    fprintf(vlog_out, "%*cparameter %s = ", indent, ' ',
 	                      ivl_parameter_basename(par));
 	    emit_expr(scope, pex, 0);
-	    fprintf(vlog_out, ";\n");
+	    fprintf(vlog_out, ";");
+	    if (emit_file_line) {
+		  fprintf(vlog_out, " /* %s:%u */",
+		                    ivl_parameter_file(par),
+		                    ivl_parameter_lineno(par));
+	    }
+	    fprintf(vlog_out, "\n");
       }
       if (count) fprintf(vlog_out, "\n");
 
@@ -294,11 +317,26 @@ void emit_scope_variables(ivl_scope_t scope)
 	    if (ivl_event_nany(event)) continue;
 	    if (ivl_event_npos(event)) continue;
 	    if (ivl_event_nneg(event)) continue;
-	    fprintf(vlog_out, "%*cevent %s;\n", indent, ' ',
+	    fprintf(vlog_out, "%*cevent %s;", indent, ' ',
 	                      ivl_event_basename(event));
+	    if (emit_file_line) {
+		  fprintf(vlog_out, " /* %s:%u */",
+		                    ivl_event_file(event),
+		                    ivl_event_lineno(event));
+	    }
+	    fprintf(vlog_out, "\n");
       }
       if (count) fprintf(vlog_out, "\n");
-      if (emit_and_free_net_const_list(scope)) fprintf(vlog_out, "\n");;
+      if (emit_and_free_net_const_list(scope)) fprintf(vlog_out, "\n");
+}
+
+static void emit_scope_file_line(ivl_scope_t scope)
+{
+      if (emit_file_line) {
+	    fprintf(vlog_out, " /* %s:%u */",
+	                      ivl_scope_file(scope),
+	                      ivl_scope_lineno(scope));
+      }
 }
 
 /*
@@ -362,7 +400,9 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 		  fprintf(vlog_out, "\n%*c%s %s(", indent, ' ', name,
 		                    ivl_scope_basename(scope));
 // HERE: Still need to add port information.
-		  fprintf(vlog_out, ");\n");
+		  fprintf(vlog_out, ");");
+		  emit_scope_file_line(scope);
+		  fprintf(vlog_out, "\n");
 		  free(name);
 		  num_scopes_to_emit += 1;
 		  scopes_to_emit = realloc(scopes_to_emit, num_scopes_to_emit *
@@ -424,7 +464,9 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    vlog_errors += 1;
 	    return 0;
       }
-      fprintf(vlog_out, ";\n");
+      fprintf(vlog_out, ";");
+      emit_scope_file_line(scope);
+      fprintf(vlog_out, "\n");
       indent += indent_incr;
 
 	/* Output the scope ports for this scope. */
@@ -452,7 +494,9 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 		  vlog_errors += 1;
 		  break;
 	    }
-	    fprintf(vlog_out, " %s;\n", ivl_signal_basename(port));
+	    fprintf(vlog_out, " %s;", ivl_signal_basename(port));
+	    emit_sig_file_line(port);
+	    fprintf(vlog_out, " \n");
       }
       if (count) fprintf(vlog_out, "\n");
 
