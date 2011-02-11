@@ -29,7 +29,7 @@ attribute,	GN_KEYWORD_2008,	K_attribute
 begin,		GN_KEYWORD_2008,	K_begin
 block,		GN_KEYWORD_2008,	K_block
 body,		GN_KEYWORD_2008,	K_body
-buffer,	GN_KEYWORD_2008,	K_buffer
+buffer,		GN_KEYWORD_2008,	K_buffer
 bus,		GN_KEYWORD_2008,	K_bus
 case,		GN_KEYWORD_2008,	K_case
 component,	GN_KEYWORD_2008,	K_component
@@ -41,7 +41,7 @@ default,	GN_KEYWORD_2008,	K_default
 disconnect,	GN_KEYWORD_2008,	K_disconnect
 downto,		GN_KEYWORD_2008,	K_downto
 else,		GN_KEYWORD_2008,	K_else
-elsif		GN_KEYWORD_2008,	K_elsif
+elsif,		GN_KEYWORD_2008,	K_elsif
 end,		GN_KEYWORD_2008,	K_end
 entity,		GN_KEYWORD_2008,	K_entity
 exit,		GN_KEYWORD_2008,	K_exit
@@ -54,7 +54,7 @@ generate,	GN_KEYWORD_2008,	K_generate
 generic,	GN_KEYWORD_2008,	K_generic
 group,		GN_KEYWORD_2008,	K_group
 guarded,	GN_KEYWORD_2008,	K_guarded
-if,			GN_KEYWORD_2008,	K_if
+if,		GN_KEYWORD_2008,	K_if
 impure,		GN_KEYWORD_2008,	K_impure
 in,		GN_KEYWORD_2008,	K_in
 inertial,	GN_KEYWORD_2008,	K_inertial
@@ -74,7 +74,7 @@ nor,		GN_KEYWORD_2008,	K_nor
 not,		GN_KEYWORD_2008,	K_not 
 null,		GN_KEYWORD_2008,	K_null
 of,		GN_KEYWORD_2008,	K_of
-on,			GN_KEYWORD_2008,	K_on
+on,		GN_KEYWORD_2008,	K_on
 or,		GN_KEYWORD_2008,	K_or
 others,		GN_KEYWORD_2008,	K_others
 out,		GN_KEYWORD_2008,	K_out
@@ -109,11 +109,11 @@ srl,		GN_KEYWORD_2008,	K_srl
 strong,		GN_KEYWORD_2008,	K_strong
 subtype,	GN_KEYWORD_2008,	K_subtype
 then,		GN_KEYWORD_2008,	K_then
-to,			GN_KEYWORD_2008,	K_to
+to,		GN_KEYWORD_2008,	K_to
 transport,	GN_KEYWORD_2008,	K_transport
 type,		GN_KEYWORD_2008,	K_type
 unaffected,	GN_KEYWORD_2008,	K_unaffected
-units.		GN_KEYWORD_2008,	K_units
+units,		GN_KEYWORD_2008,	K_units
 until,		GN_KEYWORD_2008,	K_until
 use,		GN_KEYWORD_2008,	K_use
 variable,	GN_KEYWORD_2008,	K_variable
