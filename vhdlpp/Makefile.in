@@ -57,10 +57,10 @@ CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@ @EXTRALIBS@
 
-M = StringHeap.o LineInfo.o
+M = StringHeap.o LineInfo.o 
 
 O = main.o compiler.o entity.o entity_elaborate.o \
-    lexor.o lexor_keyword.o parse.o $M
+    lexor.o lexor_keyword.o parse.o vhdlreal.o vhdlint.o $M
 
 all: dep vhdlpp@EXEEXT@
 

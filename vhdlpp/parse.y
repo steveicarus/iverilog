@@ -20,9 +20,11 @@
  */
 
 # include "vhdlpp_config.h"
+# include "vhdlint.h"
+# include "vhdlreal.h"
 # include "compiler.h"
 # include "parse_api.h"
-# include <string.h>
+# include  <string.h>
 # include  <cstdarg>
 # include  <list>
 
@@ -39,10 +41,13 @@ static void errormsg(const YYLTYPE&loc, const char*msg, ...);
 int parse_errors = 0;
 %}
 
+
 %union {
       port_mode_t port_mode;
       char*text;
-
+      vhdlint* integer;
+      vhdlreal* real;
+      
       InterfacePort*interface_element;
       std::list<InterfacePort*>* interface_list;
 };
@@ -52,11 +57,11 @@ int parse_errors = 0;
 %token K_array K_assert K_assume K_assume_guarantee K_attribute
 %token K_begin K_block K_body K_buffer K_bus
 %token K_case K_component K_configuration K_constant K_context K_cover
-%token K_default K_disconect K_downto
+%token K_default K_disconnect K_downto
 %token K_else K_elsif K_end K_entity K_exit
 %token K_fairness K_file K_for K_force K_function
 %token K_generate K_generic K_group K_guarded
-%token K_if K_impure K_in K_internal K_inout K_is
+%token K_if K_impure K_in K_inertial K_inout K_is
 %token K_label K_library K_linkage K_literal K_loop
 %token K_map K_mod
 %token K_nand K_new K_next K_nor K_not K_null
@@ -65,8 +70,8 @@ int parse_errors = 0;
 %token K_property K_protected K_pure
 %token K_range K_record K_register K_reject K_release K_rem K_report
 %token K_restrict K_restrict_guarantee K_return K_rol K_ror
-%token K_select K_sequence K_seerity K_signal K_shared
-%token K_sla K_sll K_sra K_srl K_string K_subtype
+%token K_select K_sequence K_severity K_signal K_shared
+%token K_sla K_sll K_sra K_srl K_strong K_subtype
 %token K_then K_to K_transport K_type
 %token K_unaffected K_units K_until K_use
 %token K_variable K_vmode K_vprop K_vunit
@@ -74,8 +79,11 @@ int parse_errors = 0;
 %token K_xnor K_xor
  /* Identifiers that are not keywords are identifiers. */
 %token <text> IDENTIFIER
+%token <integer> INT_LITERAL 
+%token <real> REAL_LITERAL
+%token <text> STRING_LITERAL CHARACTER_LITERAL
  /* compound symbols */
-%token LEQ GEQ VASSIGN
+%token LEQ GEQ VASSIGN NE BOX EXP ARROW DLT DGT
 
  /* The rules may have types. */
 %type <interface_element> interface_element
