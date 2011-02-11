@@ -61,6 +61,21 @@ void emit_scaled_delay(ivl_scope_t scope, uint64_t delay)
       free(frac);
 }
 
+static void emit_delay(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
+{
+	/* A delay in a continuous assignment can also be a continuous
+	 * assignment expression. */
+      if (ivl_expr_type(expr) == IVL_EX_SIGNAL) {
+	    ivl_signal_t sig = ivl_expr_signal(expr);
+	    if (ivl_signal_local(sig)) {
+		  assert(! is_stmt);
+		  emit_nexus_as_ca(scope, ivl_signal_nex(sig, 0));
+		  return;
+	    }
+      }
+      emit_expr(scope, expr, 0);
+}
+
 /*
  * Emit a constant or variable delay that has been rescaled to the given
  * scopes timescale.
@@ -93,7 +108,7 @@ void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
       } else {
 	    int exponent = ivl_scope_time_units(scope) - sim_precision;
 	    assert(exponent >= 0);
-	    if (exponent == 0) emit_expr(scope, expr, 0);
+	    if (exponent == 0) emit_delay(scope, expr, is_stmt);
 		    /* A real delay variable is not scaled by the compiler. */
 	    else if (ivl_expr_type(expr) == IVL_EX_SIGNAL) {
 		  ivl_signal_t sig = ivl_expr_signal(expr);
@@ -106,8 +121,7 @@ void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
 			vlog_errors += 1;
 			return;
 		  }
-		  emit_expr(scope, expr, 0);
-		  return;
+		  emit_delay(scope, expr, is_stmt);
 	    } else {
 // HERE: If we have a statement delay then a real variable delay has already
 //       been encoded as int((real expr) * tu_tp_scale) * tp_sim_scale. So
@@ -169,7 +183,7 @@ void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
 			vlog_errors += 1;
 			return;
 		  }
-		  emit_expr(scope, ivl_expr_oper1(expr), 0);
+		  emit_delay(scope, ivl_expr_oper1(expr), is_stmt);
 	    }
       }
 }

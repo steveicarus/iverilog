@@ -351,18 +351,14 @@ static void emit_expr_sfunc(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 static void emit_expr_signal(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
-      if (ivl_signal_local(sig)) {
-	    emit_nexus_as_ca(scope, ivl_signal_nex(sig, 0));
-      } else {
-	    emit_scope_module_path(scope, ivl_signal_scope(sig));
-	    fprintf(vlog_out, "%s", ivl_signal_basename(sig));
-	    if (ivl_signal_dimensions(sig)) {
-		  int lsb = ivl_signal_array_base(sig);
-		  int msb = lsb + ivl_signal_array_count(sig);
-		  fprintf(vlog_out, "[");
-		  emit_scaled_expr(scope, ivl_expr_oper1(expr), msb, lsb);
-		  fprintf(vlog_out, "]");
-	    }
+      emit_scope_module_path(scope, ivl_signal_scope(sig));
+      fprintf(vlog_out, "%s", ivl_signal_basename(sig));
+      if (ivl_signal_dimensions(sig)) {
+	    int lsb = ivl_signal_array_base(sig);
+	    int msb = lsb + ivl_signal_array_count(sig);
+	    fprintf(vlog_out, "[");
+	    emit_scaled_expr(scope, ivl_expr_oper1(expr), msb, lsb);
+	    fprintf(vlog_out, "]");
       }
 }
 
