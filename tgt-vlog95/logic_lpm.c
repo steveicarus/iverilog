@@ -54,30 +54,45 @@ static void emit_strength(ivl_drive_t drive1, ivl_drive_t drive0,
                           const char *file, unsigned lineno)
 {
       assert(strength_type <= 2);
-      if ((drive1 != IVL_DR_STRONG) || (drive0 != IVL_DR_STRONG)) {
+      if ((strength_type == 2) &&
+          ((drive1 != IVL_DR_STRONG) || (drive0 != IVL_DR_STRONG))) {
 	    fprintf(vlog_out, " (");
-	    if (strength_type > 0) {
-		  if (emit_drive(drive1)) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Unsupported %s "
-			                "1 drive (%d)\n", file, lineno,
-			                type, (int)drive1);
-			vlog_errors += 1;
-		  }
-		  fprintf(vlog_out, "1");
+	    if (emit_drive(drive1)) {
+		  fprintf(vlog_out, "<invalid>");
+		  fprintf(stderr, "%s:%u: vlog95 error: Unsupported %s "
+		                  "1 drive (%d)\n", file, lineno,
+		                  type, (int)drive1);
+		  vlog_errors += 1;
 	    }
-	    if (strength_type == 2) fprintf(vlog_out, ", ");
-	    if ((strength_type & 0x01) == 0) {
-		  if (emit_drive(drive0)) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Unsupported %s "
-			                "0 drive (%d)\n", file, lineno,
-			                type, (int)drive1);
-			vlog_errors += 1;
-		  }
-		  fprintf(vlog_out, "0");
+	    fprintf(vlog_out, "1, ");
+	    if (emit_drive(drive0)) {
+		  fprintf(vlog_out, "<invalid>");
+		  fprintf(stderr, "%s:%u: vlog95 error: Unsupported %s "
+		                  "0 drive (%d)\n", file, lineno,
+		                  type, (int)drive0);
+		  vlog_errors += 1;
 	    }
-	    fprintf(vlog_out, ")");
+	    fprintf(vlog_out, "0)");
+      } else if ((strength_type == 1) && (drive1 != IVL_DR_PULL)) {
+	    fprintf(vlog_out, " (");
+	    if (emit_drive(drive1)) {
+		  fprintf(vlog_out, "<invalid>");
+		  fprintf(stderr, "%s:%u: vlog95 error: Unsupported %s "
+		                  "1 drive (%d)\n", file, lineno,
+		                  type, (int)drive1);
+		  vlog_errors += 1;
+	    }
+	    fprintf(vlog_out, "1)");
+      } else if ((strength_type == 0) && (drive0 != IVL_DR_PULL)) {
+	    fprintf(vlog_out, " (");
+	    if (emit_drive(drive0)) {
+		  fprintf(vlog_out, "<invalid>");
+		  fprintf(stderr, "%s:%u: vlog95 error: Unsupported %s "
+		                  "0 drive (%d)\n", file, lineno,
+		                  type, (int)drive0);
+		  vlog_errors += 1;
+	    }
+	    fprintf(vlog_out, "0)");
       }
 }
 
@@ -108,28 +123,28 @@ static void emit_delay(ivl_scope_t scope, ivl_expr_t rise, ivl_expr_t fall,
 	/* If all three delays match then we only have a single delay. */
       if ((rise == fall) && (rise == decay)) {
 	    fprintf(vlog_out, " #(");
-	    emit_scaled_delayx(scope, rise);
+	    emit_scaled_delayx(scope, rise, 0);
 	    fprintf(vlog_out, ")");
 	    return;
       }
 	/* If we have a gate that only supports two delays then print them. */
       if (dly_count == 2) {
 	    fprintf(vlog_out, " #(");
-	    emit_scaled_delayx(scope, rise);
+	    emit_scaled_delayx(scope, rise, 0);
 	    fprintf(vlog_out, ", ");
-	    emit_scaled_delayx(scope, fall);
+	    emit_scaled_delayx(scope, fall, 0);
 	    fprintf(vlog_out, ")");
 	    return;
       }
 
 	/* What's left is a gate that supports three delays. */
       fprintf(vlog_out, " #(");
-      emit_scaled_delayx(scope, rise);
+      emit_scaled_delayx(scope, rise, 0);
       fprintf(vlog_out, ", ");
-      emit_scaled_delayx(scope, fall);
+      emit_scaled_delayx(scope, fall, 0);
       if (decay) {
 	    fprintf(vlog_out, ", ");
-	    emit_scaled_delayx(scope, decay);
+	    emit_scaled_delayx(scope, decay, 0);
       }
       fprintf(vlog_out, ")");
 }
@@ -215,7 +230,7 @@ static ivl_nexus_t get_lpm_output(ivl_scope_t scope, ivl_lpm_t lpm)
 static void emit_logic_as_ca(ivl_scope_t scope, ivl_net_logic_t nlogic);
 static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm);
 
-static void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
+void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 {
 	/* If there is no nexus then there is nothing to print. */
       if (! nex) return;
@@ -857,11 +872,13 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 	case IVL_LO_PULLDOWN:
             fprintf(vlog_out, "pulldown");
             dly_count = 0;
+            outputs = 0;
             strength_type = 0;
 	    break;
 	case IVL_LO_PULLUP:
             fprintf(vlog_out, "pullup");
             dly_count = 0;
+            outputs = 0;
             strength_type = 1;
 	    break;
 	case IVL_LO_RCMOS:
@@ -919,7 +936,13 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, idx));
 	    fprintf(vlog_out, ", ");
       }
-      emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, count));
+      if (strength_type == 2) {
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, idx));
+      } else {
+	      /* A pull gate only has a single output connection. */
+	    assert(count == 0);
+	    emit_name_of_logic_nexus(scope, nlogic, ivl_logic_pin(nlogic, idx));
+      }
       fprintf(vlog_out, ");");
       emit_logic_file_line(nlogic);
       fprintf(vlog_out, "\n");
@@ -990,7 +1013,6 @@ void emit_tran(ivl_scope_t scope, ivl_switch_t tran)
       }
       fprintf(vlog_out, ");");
       if (emit_file_line) {
-assert(ivl_switch_lineno(tran));
 	    fprintf(vlog_out, " /* %s:%u */",
 	                      ivl_switch_file(tran),
 	                      ivl_switch_lineno(tran));

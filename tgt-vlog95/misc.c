@@ -65,7 +65,7 @@ void emit_scaled_delay(ivl_scope_t scope, uint64_t delay)
  * Emit a constant or variable delay that has been rescaled to the given
  * scopes timescale.
  */
-void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr)
+void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
 {
       if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
 	    assert(! ivl_expr_signed(expr));
@@ -109,6 +109,9 @@ void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr)
 		  emit_expr(scope, expr, 0);
 		  return;
 	    } else {
+// HERE: If we have a statement delay then a real variable delay has already
+//       been encoded as int((real expr) * tu_tp_scale) * tp_sim_scale. So
+//       we need to look for that pattern as well.
 		  uint64_t scale_val, scale = 1;
 		  int rtype;
 		  assert(! ivl_expr_signed(expr));
@@ -154,7 +157,7 @@ void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr)
 			scale *= 10;
 			exponent -= 1;
 		  }
-		  if (scale !=  scale_val) {
+		  if (scale != scale_val) {
 			fprintf(vlog_out, "<invalid>");
 			fprintf(stderr, "%s:%u: vlog95 error: Variable time "
 			                "expression/value scale coefficient "

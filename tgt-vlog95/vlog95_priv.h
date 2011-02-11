@@ -69,7 +69,8 @@ extern void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt);
 extern void emit_tran(ivl_scope_t scope, ivl_switch_t tran);
 
 extern void emit_scaled_delay(ivl_scope_t scope, uint64_t delay);
-extern void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr);
+extern void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr,
+                               unsigned is_stmt);
 extern void emit_scaled_expr(ivl_scope_t scope, ivl_expr_t expr,
                              int msb, int lsb);
 extern void emit_scaled_range(ivl_scope_t scope, ivl_expr_t expr,
@@ -78,6 +79,7 @@ extern void emit_scope_path(ivl_scope_t scope, ivl_scope_t call_scope);
 extern void emit_scope_variables(ivl_scope_t scope);
 extern void emit_scope_module_path(ivl_scope_t scope, ivl_scope_t call_scope);
 extern void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex);
+extern void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex);
 extern void emit_const_nexus(ivl_scope_t scope, ivl_net_const_t const_net);
 extern void emit_signal_net_const_as_ca(ivl_scope_t scope, ivl_signal_t sig);
 extern void emit_icarus_generated_udps();

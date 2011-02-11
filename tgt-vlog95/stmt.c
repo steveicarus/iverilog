@@ -150,18 +150,20 @@ static unsigned emit_stmt_lval(ivl_scope_t scope, ivl_statement_t stmt)
 }
 
 /*
- * Icarus translated <var> = <delay> <value> into
+ * Icarus translated <var> = <delay or event> <value> into
  *   begin
  *    <tmp> = <value>;
- *    <delay> <var> = <tmp>;
+ *    <delay or event> <var> = <tmp>;
  *   end
  * This routine looks for this pattern and turns it back into the
  * appropriate blocking assignment.
  */
-static unsigned find_delayed_assign(ivl_scope_t scope, ivl_statement_t stmt)
+static unsigned find_delayed_or_event_assign(ivl_scope_t scope,
+                                             ivl_statement_t stmt)
 {
       unsigned wid;
       ivl_statement_t assign, delay, delayed_assign;
+      ivl_statement_type_t delay_type;
       ivl_lval_t lval;
       ivl_expr_t rval;
       ivl_signal_t lsig, rsig;
@@ -173,7 +175,9 @@ static unsigned find_delayed_assign(ivl_scope_t scope, ivl_statement_t stmt)
       if (ivl_statement_type(assign) != IVL_ST_ASSIGN) return 0;
 	/* The second must be a delayx. */
       delay = ivl_stmt_block_stmt(stmt, 1);
-      if (ivl_statement_type(delay) != IVL_ST_DELAYX) return 0;
+      delay_type = ivl_statement_type(delay);
+      if ((delay_type != IVL_ST_DELAYX) &&
+          (delay_type != IVL_ST_WAIT)) return 0;
 	/* The statement for the delayx must be an assign. */
       delayed_assign = ivl_stmt_sub_stmt(delay);
       if (ivl_statement_type(delayed_assign) != IVL_ST_ASSIGN) return 0;
@@ -201,8 +205,14 @@ static unsigned find_delayed_assign(ivl_scope_t scope, ivl_statement_t stmt)
 // HERE: Do we need to calculate the width? The compiler should have already
 //       done this for us.
       wid = emit_stmt_lval(scope, delayed_assign);
-      fprintf(vlog_out, " = #(");
-      emit_scaled_delayx(scope, ivl_stmt_delay_expr(delay));
+      fprintf(vlog_out, " = ");
+      if (delay_type == IVL_ST_DELAYX) {
+	    fprintf(vlog_out, "#(");
+	    emit_scaled_delayx(scope, ivl_stmt_delay_expr(delay), 1);
+      } else {
+	    fprintf(vlog_out, "@(");
+	    emit_event(scope, delay);
+      }
       fprintf(vlog_out, ") ");
       emit_expr(scope, ivl_stmt_rval(assign), wid);
       fprintf(vlog_out, ";");
@@ -213,16 +223,17 @@ static unsigned find_delayed_assign(ivl_scope_t scope, ivl_statement_t stmt)
 }
 
 /*
- * Icarus translated <var> = <event> <value> into
+ * Icarus translated <var> = repeat(<count>) <event> <value> into
  *   begin
  *    <tmp> = <value>;
- *    <event>;
+ *    repeat(<count>) <event>;
  *    <var> = <tmp>;
  *   end
  * This routine looks for this pattern and turns it back into the
  * appropriate blocking assignment.
  */
-static unsigned find_event_assign(ivl_scope_t scope, ivl_statement_t stmt)
+static unsigned find_repeat_event_assign(ivl_scope_t scope,
+                                         ivl_statement_t stmt)
 {
       unsigned wid;
       ivl_statement_t assign, event, event_assign, repeat = 0;
@@ -237,8 +248,7 @@ static unsigned find_event_assign(ivl_scope_t scope, ivl_statement_t stmt)
       if (ivl_statement_type(assign) != IVL_ST_ASSIGN) return 0;
 	/* The second must be a repeat with an event or an event. */
       event = ivl_stmt_block_stmt(stmt, 1);
-      if (ivl_statement_type(event) != IVL_ST_REPEAT &&
-          ivl_statement_type(event) != IVL_ST_WAIT) return 0;
+      if (ivl_statement_type(event) != IVL_ST_REPEAT) return 0;
       if (ivl_statement_type(event) == IVL_ST_REPEAT) {
 	    repeat = event;
 	    event = ivl_stmt_sub_stmt(repeat);
@@ -704,7 +714,7 @@ static void emit_stmt_delay(ivl_scope_t scope, ivl_statement_t stmt)
 static void emit_stmt_delayx(ivl_scope_t scope, ivl_statement_t stmt)
 {
       fprintf(vlog_out, "%*c#(", get_indent(), ' ');
-      emit_scaled_delayx(scope, ivl_stmt_delay_expr(stmt));
+      emit_scaled_delayx(scope, ivl_stmt_delay_expr(stmt), 1);
       fprintf(vlog_out, ")");
       emit_stmt_file_line(stmt);
       single_indent = 1;
@@ -880,8 +890,8 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 	    if (ivl_stmt_block_scope(stmt)) {
 		  emit_stmt_block_named(scope, stmt);
 	    } else {
-		  if (find_delayed_assign(scope, stmt)) break;
-		  if (find_event_assign(scope, stmt)) break;
+		  if (find_delayed_or_event_assign(scope, stmt)) break;
+		  if (find_repeat_event_assign(scope, stmt)) break;
 		  if (find_wait(scope, stmt)) break;
 		  emit_stmt_block(scope, stmt);
 	    }
