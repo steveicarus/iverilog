@@ -82,7 +82,10 @@ static void emit_delay(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
  */
 void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
 {
-      if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
+      ivl_expr_type_t type = ivl_expr_type(expr);
+      if (type == IVL_EX_DELAY) {
+	    emit_scaled_delay(scope, ivl_expr_delay_val(expr));
+      } else if (type == IVL_EX_NUMBER) {
 	    assert(! ivl_expr_signed(expr));
 	    int rtype;
 	    uint64_t value = get_uint64_from_number(expr, &rtype);
@@ -108,9 +111,10 @@ void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
       } else {
 	    int exponent = ivl_scope_time_units(scope) - sim_precision;
 	    assert(exponent >= 0);
-	    if (exponent == 0) emit_delay(scope, expr, is_stmt);
-		    /* A real delay variable is not scaled by the compiler. */
-	    else if (ivl_expr_type(expr) == IVL_EX_SIGNAL) {
+	    if ((exponent == 0) && (type == IVL_EX_SIGNAL)) {
+		  emit_delay(scope, expr, is_stmt);
+	      /* A real delay variable is not scaled by the compiler. */
+	    } else if (type == IVL_EX_SIGNAL) {
 		  ivl_signal_t sig = ivl_expr_signal(expr);
 		  if (ivl_signal_data_type(sig) != IVL_VT_REAL) {
 			fprintf(vlog_out, "<invalid>");

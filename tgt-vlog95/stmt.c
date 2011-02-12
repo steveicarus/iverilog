@@ -80,9 +80,9 @@ static void emit_stmt_inter_delay(ivl_scope_t scope, ivl_statement_t stmt)
       }
       if (delay) {
 	    assert(nevents == 0);
-	    fprintf(vlog_out, "#");
-	    emit_expr(scope, delay, 0);
-	    fprintf(vlog_out, " ");
+	    fprintf(vlog_out, "#(");
+	    emit_scaled_delayx(scope, delay, 1);
+	    fprintf(vlog_out, ") ");
       }
 }
 

@@ -404,8 +404,9 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case 'N':
 	case 'X':
 	case '!':
-	    fprintf(vlog_out, "%s", oper);
+	    fprintf(vlog_out, "(%s", oper);
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    fprintf(vlog_out, ")");
 	    break;
 	case '2':
 	case 'i':
