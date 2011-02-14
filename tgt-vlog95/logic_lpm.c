@@ -16,6 +16,8 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+# include <stdlib.h>
+# include <string.h>
 # include "config.h"
 # include "vlog95_priv.h"
 
@@ -294,9 +296,10 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 
 static void emit_logic_as_ca(ivl_scope_t scope, ivl_net_logic_t nlogic)
 {
-// HERE: Do we need to check that the pin count is correct for these?
+      unsigned inputs = ivl_logic_pins(nlogic) - 1;
       switch (ivl_logic_type(nlogic)) {
 	case IVL_LO_AND:
+	    assert(inputs == 2);
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
 	    fprintf(vlog_out, " & ");
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
@@ -304,33 +307,40 @@ static void emit_logic_as_ca(ivl_scope_t scope, ivl_net_logic_t nlogic)
 	case IVL_LO_BUF:
 //	case IVL_LO_BUFT:
 	case IVL_LO_BUFZ:
+	    assert(inputs == 1);
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
 	    break;
 	case IVL_LO_NAND:
+	    assert(inputs == 2);
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
 	    fprintf(vlog_out, " ~& ");
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
 	    break;
 	case IVL_LO_NOR:
+	    assert(inputs == 2);
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
 	    fprintf(vlog_out, " ~| ");
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
 	    break;
 	case IVL_LO_NOT:
+	    assert(inputs == 1);
 	    fprintf(vlog_out, "~ ");
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
 	    break;
 	case IVL_LO_OR:
+	    assert(inputs == 2);
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
 	    fprintf(vlog_out, " | ");
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
 	    break;
 	case IVL_LO_XNOR:
+	    assert(inputs == 2);
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
 	    fprintf(vlog_out, " ~^ ");
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
 	    break;
 	case IVL_LO_XOR:
+	    assert(inputs == 2);
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
 	    fprintf(vlog_out, " ^ ");
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
@@ -558,6 +568,7 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 static void emit_posedge_dff_prim()
 {
       fprintf(vlog_out, "\n");
+// HERE: Add copyright info for this primitive. LGPL?
       fprintf(vlog_out, "/* Icarus generated UDP to represent a synthesized "
                         "positive edge D-FF. */\n");
       fprintf(vlog_out, "primitive IVL_posedge_DFF "
@@ -803,9 +814,11 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 //       gate only allows a signal or a signal bit select for the output(s)
 //       and a scalar expression for the input. We also need to modify the
 //       compiler to support logical 'and' and logical 'or' since they
-//       short circuit.
+//       short circuit. Verify input count.
       unsigned idx, count, dly_count, strength_type = 2;
       unsigned outputs = 1;
+      unsigned width = ivl_logic_width(nlogic);
+      const char *name;
 	/* Skip gates that have a local nexus as the output since they are
 	 * part of a continuous assignment. */
       if (is_local_nexus(scope, ivl_logic_pin(nlogic, 0))) return;
@@ -922,8 +935,26 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
                                 ivl_logic_delay(nlogic, 2),
                                 dly_count);
 // HERE: The name has the location information encoded in it. We need to
-//       remove this and rebuild the instance array. For now skip the name.
-//      fprintf(vlog_out, " %s(", ivl_logic_basename(nlogic));
+//       remove this and rebuild the instance array. For now we just strip
+//       this encoding and create an zero based range. Need to skip the
+//       local names _s<digits>.
+      name = ivl_logic_basename(nlogic);
+      if (name) {
+	    char *fixed_name = strdup(name);
+	    unsigned lp = strlen(name) - 1;
+	    if (fixed_name[lp] == '>') {
+		  while (fixed_name[lp] != '<') {
+			assert(lp > 0);
+			lp -= 1;
+		  }
+		  fixed_name[lp] = 0;
+	    }
+	    fprintf(vlog_out, " %s", fixed_name);
+	    free(fixed_name);
+	    if (width > 1) {
+		  fprintf(vlog_out, " [%u:0]", width-1);
+	    }
+      }
       fprintf(vlog_out, " (");
       count = ivl_logic_pins(nlogic);
       count -= 1;
