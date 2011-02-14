@@ -77,6 +77,84 @@ static void emit_delay(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
 }
 
 /*
+ * Check to see if the bit based expression is of the form (expr) * <scale>
+ */
+static unsigned check_scaled_expr(ivl_expr_t expr, uint64_t scale,
+                                  const char *msg, unsigned must_match)
+{
+      uint64_t scale_val;
+      int rtype;
+      if ((ivl_expr_type(expr) != IVL_EX_BINARY) ||
+          (ivl_expr_opcode(expr) != '*') ||
+          (ivl_expr_type(ivl_expr_oper2(expr)) != IVL_EX_NUMBER)) {
+	    fprintf(stderr, "%s:%u: vlog95 error: %s expression/value "
+	                    "cannot be scaled.\n ",
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr), msg);
+	    vlog_errors += 1;
+	    return 0;
+      }
+      scale_val = get_uint64_from_number(ivl_expr_oper2(expr), &rtype);
+      if (rtype > 0) {
+	    fprintf(stderr, "%s:%u: vlog95 error: %s expression/value "
+	                    "scale coefficient was greater then 64 bits "
+	                    "(%d).\n", ivl_expr_file(expr),
+	                    ivl_expr_lineno(expr), msg, rtype);
+	    vlog_errors += 1;
+	    return 0;
+      }
+      if (rtype < 0) {
+	    fprintf(stderr, "%s:%u: vlog95 error: %s expression/value "
+	                    "scale coefficient has an undefined bit.\n",
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr), msg);
+	    vlog_errors += 1;
+	    return 0;
+      }
+      if (scale != scale_val) {
+	    if (must_match) {
+		  fprintf(stderr, "%s:%u: vlog95 error: %s expression/value "
+		                  "scale coefficient did not match expected "
+		                  "value (%"PRIu64" != %"PRIu64").\n",
+		                  ivl_expr_file(expr), ivl_expr_lineno(expr),
+		                  msg, scale, scale_val);
+		  vlog_errors += 1;
+		  return 0;
+	    }
+	    return 2;
+      }
+	/* Yes, this expression is of the correct form. */
+      return 1;
+}
+
+/*
+ * Check to see if the real expression is of the form (expr) * <scale>
+ */
+static unsigned check_scaled_real_expr(ivl_expr_t expr, double scale)
+{
+      double scale_val;
+      if ((ivl_expr_type(expr) != IVL_EX_BINARY) ||
+          (ivl_expr_opcode(expr) != '*') ||
+          (ivl_expr_type(ivl_expr_oper2(expr)) != IVL_EX_REALNUM)) {
+	    fprintf(stderr, "%s:%u: vlog95 error: Variable real time unit "
+	                    " expression/value cannot be scaled.\n ",
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr));
+	    vlog_errors += 1;
+	    return 0;
+      }
+      scale_val = ivl_expr_dvalue(ivl_expr_oper2(expr));
+      if (scale != scale_val) {
+	    fprintf(stderr, "%s:%u: vlog95 error: Variable real time unit "
+	                    "expression/value scale coefficient did not "
+	                    "match expected value (%g != %g).\n",
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr),
+	                    scale, scale_val);
+	    vlog_errors += 1;
+	    return 0;
+      }
+	/* Yes, this expression is of the correct form. */
+      return 1;
+}
+
+/*
  * Emit a constant or variable delay that has been rescaled to the given
  * scopes timescale.
  */
@@ -115,79 +193,78 @@ void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
 		  emit_delay(scope, expr, is_stmt);
 	      /* A real delay variable is not scaled by the compiler. */
 	    } else if (type == IVL_EX_SIGNAL) {
-		  ivl_signal_t sig = ivl_expr_signal(expr);
-		  if (ivl_signal_data_type(sig) != IVL_VT_REAL) {
+		  if (is_stmt) {
 			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Only real "
-			                "delay variables are scaled at run "
-			                "time.\n", ivl_expr_file(expr),
+			fprintf(stderr, "%s:%u: vlog95 error: Only continuous "
+			                "assignment delay variables are scaled "
+			                "at run time.\n", ivl_expr_file(expr),
 			                ivl_expr_lineno(expr));
 			vlog_errors += 1;
 			return;
 		  }
 		  emit_delay(scope, expr, is_stmt);
 	    } else {
-// HERE: If we have a statement delay then a real variable delay has already
-//       been encoded as int((real expr) * tu_tp_scale) * tp_sim_scale. So
-//       we need to look for that pattern as well.
-		  uint64_t scale_val, scale = 1;
-		  int rtype;
+		  uint64_t iscale = 1;
+		  unsigned rtn;
 		  assert(! ivl_expr_signed(expr));
-		    /* This is as easy as removing the multiple that was
-		     * added to scale the value to the simulation time,
-		     * but we need to verify that the scaling value is
-		     * correct first. */
-		  if ((ivl_expr_type(expr) != IVL_EX_BINARY) ||
-		      (ivl_expr_opcode(expr) != '*') ||
-		      (ivl_expr_type(ivl_expr_oper2(expr)) != IVL_EX_NUMBER)) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Variable time "
-			                "expression/value cannot be scaled.\n ",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr));
-			vlog_errors += 1;
-			return;
-		  }
-		  scale_val = get_uint64_from_number(ivl_expr_oper2(expr),
-		                                     &rtype);
-		  if (rtype > 0) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Variable time "
-			                "expression/value scale coefficient "
-			                "was greater then 64 bits (%d).\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr),
-			                rtype);
-			vlog_errors += 1;
-			return;
-		  }
-		  if (rtype < 0) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Variable time "
-			                "expression/value scale coefficient "
-			                "has an undefined bit.\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr));
-			vlog_errors += 1;
-			return;
-		  }
+		    /* Calculate the integer time scaling coefficient. */
 		  while (exponent > 0) {
-			scale *= 10;
+			iscale *= 10;
 			exponent -= 1;
 		  }
-		  if (scale != scale_val) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Variable time "
-			                "expression/value scale coefficient "
-			                "did not match expected value "
-			                "(%"PRIu64" != %"PRIu64").\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr),
-			                scale, scale_val);
-			vlog_errors += 1;
+		    /* Check to see if this is an integer time value. */
+		  rtn = check_scaled_expr(expr, iscale, "Variable time", 0);
+		    /* This may be a scaled real value. */
+		  if (rtn == 2){
+			ivl_expr_t tmp_expr;
+			uint64_t rprec = 1;
+			  /* This could be a scaled real time so calculate
+			   * the real time scaling coefficients and check
+			   * that the expression matches (statements only). */
+			exponent = ivl_scope_time_precision(scope) -
+			           sim_precision;
+			assert(exponent >= 0);
+			while (exponent > 0) {
+			      rprec *= 10;
+			      exponent -= 1;
+			}
+			  /* Verify that the precision scaling is correct. */
+			if (! check_scaled_expr(expr, rprec,
+			                        "Variable real time prec.",
+			                        1)) {
+			      fprintf(vlog_out, "<invalid>");
+			      return;
+			}
+			  /* Verify that the left operator is a real to
+			   * integer cast. */
+			tmp_expr = ivl_expr_oper1(expr);
+			if ((ivl_expr_type(tmp_expr) != IVL_EX_UNARY) ||
+		            (ivl_expr_opcode(tmp_expr) != 'i')) {
+			      fprintf(vlog_out, "<invalid>");
+			      fprintf(stderr, "%s:%u: vlog95 error: Real time "
+			                      "value does not have a cast to "
+			                      "integer.\n",
+			                      ivl_expr_file(expr),
+			                      ivl_expr_lineno(expr));
+			      vlog_errors += 1;
+			      return;
+			}
+			  /* Check that the cast value is scaled correctly. */
+			assert(iscale >= rprec);
+			tmp_expr = ivl_expr_oper1(tmp_expr);
+			assert(ivl_expr_value(tmp_expr) == IVL_VT_REAL);
+			if (! check_scaled_real_expr(tmp_expr, iscale/rprec)) {
+			      fprintf(vlog_out, "<invalid>");
+			      return;
+			}
+			assert(is_stmt);
+			emit_delay(scope, ivl_expr_oper1(tmp_expr), is_stmt);
+			return;
+		  } else if (rtn == 1) {
+			emit_delay(scope, ivl_expr_oper1(expr), is_stmt);
 			return;
 		  }
-		  emit_delay(scope, ivl_expr_oper1(expr), is_stmt);
+		  fprintf(vlog_out, "<invalid>");
 	    }
       }
 }
