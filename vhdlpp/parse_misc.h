@@ -20,7 +20,14 @@
  */
 
 class Architecture;
+class Expression;
+class VType;
 
 extern void bind_architecture_to_entity(const char*ename, Architecture*arch);
+
+extern const VType* calculate_subtype(const char*base_name,
+				      Expression*array_left,
+				      bool downto,
+				      Expression*array_right);
 
 #endif

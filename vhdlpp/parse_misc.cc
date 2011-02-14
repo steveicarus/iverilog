@@ -22,8 +22,11 @@
 # include  "parse_api.h"
 # include  "entity.h"
 # include  "architec.h"
+# include  "expression.h"
+# include  "vtype.h"
 # include  "compiler.h"
 # include  <iostream>
+# include  <cassert>
 
 using namespace std;
 
@@ -48,4 +51,39 @@ void bind_architecture_to_entity(const char*ename, Architecture*arch)
 	    parse_errors += 1;
 	    return;
       }
+}
+
+const VType* calculate_subtype(const char*base_name,
+			       Expression*array_left,
+			       bool downto,
+			       Expression*array_right)
+{
+      const VType*base_type = global_types[lex_strings.make(base_name)];
+
+      assert(array_left==0 || array_right!=0);
+
+      const VTypeArray*base_array = dynamic_cast<const VTypeArray*> (base_type);
+      if (base_array) {
+	    assert(array_left && array_right);
+
+	    vector<VTypeArray::range_t> range (base_array->dimensions());
+
+	      // For now, I only know how to handle 1 dimension
+	    assert(base_array->dimensions() == 1);
+
+	    int64_t left_val;
+	    int64_t right_val;
+	    bool rc = array_left->evaluate(left_val);
+	    assert(rc);
+
+	    rc = array_right->evaluate(right_val);
+	    assert(rc);
+
+	    range[0] = VTypeArray::range_t(left_val, right_val);
+
+	    VTypeArray*subtype = new VTypeArray(base_array->element_type(), range);
+	    return subtype;
+      }
+
+      return base_type;
 }

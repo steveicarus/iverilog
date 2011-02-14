@@ -27,6 +27,26 @@ Expression::~Expression()
 {
 }
 
+bool Expression::evaluate(int64_t&) const
+{
+      return false;
+}
+
+ExpInteger::ExpInteger(int64_t val)
+: value_(val)
+{
+}
+
+ExpInteger::~ExpInteger()
+{
+}
+
+bool ExpInteger::evaluate(int64_t&val) const
+{
+      val = value_;
+      return true;
+}
+
 ExpLogical::ExpLogical(ExpLogical::fun_t ty, Expression*op1, Expression*op2)
 : fun_(ty), operand1_(op1), operand2_(op2)
 {

@@ -19,6 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+# include  <iostream>
 # include  <map>
 # include  <vector>
 # include  <climits>
@@ -34,7 +35,15 @@ class VType {
     public:
       VType() { }
       virtual ~VType() =0;
+
+      virtual void show(std::ostream&) const;
 };
+
+inline std::ostream&operator << (std::ostream&out, const VType&item)
+{
+      item.show(out);
+      return out;
+}
 
 /*
  * The global_types variable maps type names to a type
@@ -57,6 +66,8 @@ class VTypePrimitive : public VType {
     public:
       VTypePrimitive(type_t);
       ~VTypePrimitive();
+
+      void show(std::ostream&) const;
 
       type_t type() const { return type_; }
 
@@ -97,7 +108,12 @@ class VTypeArray : public VType {
       VTypeArray(const VType*etype, const std::vector<range_t>&r);
       ~VTypeArray();
 
+      void show(std::ostream&) const;
+
       size_t dimensions() const;
+      const range_t&dimension(size_t idx) const
+      { return ranges_[idx]; }
+
       const VType* element_type() const;
 
     private:

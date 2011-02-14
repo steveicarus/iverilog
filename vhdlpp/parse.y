@@ -49,8 +49,9 @@ int parse_errors = 0;
       port_mode_t port_mode;
       char*text;
 
-      vhdlint* integer;
-      vhdlreal* real;
+      bool flag;
+      int64_t uni_integer;
+      double  uni_real;
       
       Expression*expr;
       std::list<Expression*>* expr_list;
@@ -91,13 +92,15 @@ int parse_errors = 0;
 %token K_xnor K_xor
  /* Identifiers that are not keywords are identifiers. */
 %token <text> IDENTIFIER
-%token <integer> INT_LITERAL 
-%token <real> REAL_LITERAL
+%token <uni_integer> INT_LITERAL 
+%token <uni_real> REAL_LITERAL
 %token <text> STRING_LITERAL CHARACTER_LITERAL
  /* compound symbols */
 %token LEQ GEQ VASSIGN NE BOX EXP ARROW DLT DGT
 
  /* The rules may have types. */
+
+%type <flag> direction
 
 %type <interface_element> interface_element
 %type <interface_list>    interface_list entity_header port_clause
@@ -175,10 +178,6 @@ concurrent_statement
   : concurrent_signal_assignment_statement
   ;
 
-constraint
-  : '(' simple_expression direction simple_expression ')'
-  ;
-
 context_clause : context_items | ;
 
 context_item
@@ -202,7 +201,8 @@ design_units
   | design_unit
   ;
 
-direction : K_to | K_downto ;
+  /* Indicate the direction as a flag, with "downto" being TRUE. */
+direction : K_to { $$ = false; } | K_downto { $$ = true; } ;
 
   /* As an entity is declared, add it to the map of design entities. */
 entity_declaration
@@ -355,6 +355,11 @@ primary
 	delete[]$1;
 	$$ = tmp;
       }
+  | INT_LITERAL
+      { ExpInteger*tmp = new ExpInteger($1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
   ;
 
 relation : shift_expression { $$ = $1; } ;
@@ -379,8 +384,8 @@ subtype_indication
 	delete[]$1;
 	$$ = tmp;
       }
-  | IDENTIFIER constraint
-      { const VType*tmp = global_types[lex_strings.make($1)];
+  | IDENTIFIER '(' simple_expression direction simple_expression ')'
+      { const VType*tmp = calculate_subtype($1, $3, $4, $5);
 	delete[]$1;
 	$$ = tmp;
       }

@@ -135,19 +135,26 @@ based_integer		[0-9a-fA-F](_?[0-9a-fA-F])*
     return IDENTIFIER;    
 }
 
-   
 {decimal_literal} {
-    if(!are_underscores_correct(yytext))
-        std::cerr << "An invalid underscore in the decimal literal:" 
-            << yytext << std::endl;
-    
-    if(strchr(yytext, '.')) {
-        yylval.real = new vhdlreal(yytext);
-        return REAL_LITERAL;
-    } else {
-        yylval.integer = new vhdlint(yytext); 
-        return INT_LITERAL;
-    }
+      char*tmp = new char[strlen(yytext)+1];
+      char*dst, *src;
+      int rc = INT_LITERAL;
+      for (dst = tmp, src = yytext ; *src ; ++src) {
+	    if (*src == '_')
+		  continue;
+	    if (*src == '.')
+		  rc = REAL_LITERAL;
+	    *dst++ = *src;
+      }
+      *dst = 0;
+
+      if (rc == REAL_LITERAL) {
+	    yylval.uni_real = strtod(tmp, 0);
+      } else {
+	    yylval.uni_integer = strtoimax(tmp, 0, 10);
+      }
+      delete[]tmp;
+      return rc;
 }
 
 {based_literal} {
@@ -158,13 +165,13 @@ based_integer		[0-9a-fA-F](_?[0-9a-fA-F])*
     if(strchr(yytext, '.'))
     {
         double val = make_double_from_based(yytext);
-        yylval.real = new vhdlreal(val);
+        yylval.uni_real = val;
         return REAL_LITERAL;
     }
     else
     {
         int64_t val = make_long_from_based(yytext);
-        yylval.integer = new vhdlint(val);
+        yylval.uni_integer = val;
         return INT_LITERAL;
     }
 }

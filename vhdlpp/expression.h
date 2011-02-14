@@ -21,6 +21,7 @@
 
 # include  "StringHeap.h"
 # include  "LineInfo.h"
+# include  <inttypes.h>
 
 class Entity;
 class Architecture;
@@ -39,16 +40,36 @@ class Expression : public LineInfo {
 	// The emit virtual method is called bu architecture emit to
 	// output the generated code for the expression. The derived
 	// class fills in the details of what exactly happend.
-      virtual int emit(ostream&out, Entity*ent, Architecture*arc);
+      virtual int emit(ostream&out, Entity*ent, Architecture*arc) =0;
+
+	// The evaluate virtual method tries to evaluate expressions
+	// to constant literal values. Return true and set the val
+	// argument if the evaluation works, or return false if it
+	// cannot be done.
+      virtual bool evaluate(int64_t&val) const;
 
 	// Debug dump of the expression.
-      virtual void dump(ostream&out, int indent) const;
+      virtual void dump(ostream&out, int indent) const =0;
 
     private:
 
     private: // Not implemented
       Expression(const Expression&);
       Expression& operator = (const Expression&);
+};
+
+class ExpInteger : public Expression {
+
+    public:
+      ExpInteger(int64_t val);
+      ~ExpInteger();
+
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      bool evaluate(int64_t&val) const;
+      void dump(ostream&out, int indent) const;
+
+    private:
+      int64_t value_;
 };
 
 class ExpLogical : public Expression {
@@ -85,5 +106,6 @@ class ExpName : public Expression {
     private:
       perm_string name_;
 };
+
 
 #endif

@@ -18,6 +18,7 @@
  */
 
 # include  "vtype.h"
+# include  <typeinfo>
 
 using namespace std;
 
@@ -45,6 +46,11 @@ VType::~VType()
 {
 }
 
+void VType::show(ostream&out) const
+{
+      out << typeid(*this).name();
+}
+
 VTypePrimitive::VTypePrimitive(VTypePrimitive::type_t tt)
 : type_(tt)
 {
@@ -54,6 +60,24 @@ VTypePrimitive::~VTypePrimitive()
 {
 }
 
+void VTypePrimitive::show(ostream&out) const
+{
+      switch (type_) {
+	  case BOOLEAN:
+	    out << "BOOLEAN";
+	    break;
+	  case BIT:
+	    out << "BIT";
+	    break;
+	  case INTEGER:
+	    out << "INTEGER";
+	    break;
+	  case STDLOGIC:
+	    out << "std_logic";
+	    break;
+      }
+}
+
 VTypeArray::VTypeArray(const VType*element, const vector<VTypeArray::range_t>&r)
 : etype_(element), ranges_(r)
 {
@@ -61,4 +85,28 @@ VTypeArray::VTypeArray(const VType*element, const vector<VTypeArray::range_t>&r)
 
 VTypeArray::~VTypeArray()
 {
+}
+
+size_t VTypeArray::dimensions() const
+{
+      return ranges_.size();
+}
+
+const VType* VTypeArray::element_type() const
+{
+      return etype_;
+}
+
+void VTypeArray::show(ostream&out) const
+{
+      out << "array ";
+      for (vector<range_t>::const_iterator cur = ranges_.begin()
+		 ; cur != ranges_.end() ; ++cur) {
+	    out << "(" << cur->msb() << " downto " << cur->lsb() << ")";
+      }
+      out << " of ";
+      if (etype_)
+	    etype_->show(out);
+      else
+	    out << "<nil>";
 }

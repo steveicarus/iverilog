@@ -31,6 +31,13 @@ int Expression::emit(ostream&out, Entity*, Architecture*)
       return 1;
 }
 
+int ExpInteger::emit(ostream&out, Entity*, Architecture*)
+{
+      out << " /* " << get_fileline() << ": internal error: "
+	  << "INTEGER LITERAL */ ";
+      return 1;
+}
+
 int ExpLogical::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;

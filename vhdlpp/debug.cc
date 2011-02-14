@@ -67,8 +67,12 @@ void Entity::dump(ostream&out) const
 		  InterfacePort*item = *cur;
 		  out << setw(6) << "" << item->name
 		      << " : " << item->mode
-		      << ", type=" << (item->type? typeid(*item->type).name() : "NOTYPE")
-		      << ", file=" << item->get_fileline() << endl;
+		      << ", type=";
+		  if (item->type)
+			item->type->show(out);
+		  else
+			out << "<nil>";
+		  out << ", file=" << item->get_fileline() << endl;
 	    }
       }
 
@@ -110,6 +114,11 @@ void Expression::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "Expression [" << typeid(*this).name() << "]"
 	  << " at " << get_fileline()<< endl;
+}
+
+void ExpInteger::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "Integer" << endl;
 }
 
 void ExpLogical::dump(ostream&out, int indent) const

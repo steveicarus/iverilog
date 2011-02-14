@@ -26,6 +26,7 @@
 # include  <fstream>
 # include  <iomanip>
 # include  <cstring>
+# include  <cassert>
 
 using namespace std;
 
@@ -117,6 +118,27 @@ int Entity::elaborate_ports_(void)
 			cur_decl.lsb = 0;
 			break;
 		  }
+
+	    } else if (const VTypeArray*arr_type = dynamic_cast<const VTypeArray*>(type)) {
+		  const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*>(arr_type->element_type());
+		  assert(base != 0);
+
+		  switch (base->type()) {
+		      case VTypePrimitive::BOOLEAN:
+		      case VTypePrimitive::BIT:
+			cur_decl.type = VBOOL;
+			break;
+		      case VTypePrimitive::STDLOGIC:
+			cur_decl.type = VLOGIC;
+			break;
+		      case VTypePrimitive::INTEGER:
+			cur_decl.type = VLOGIC;
+			assert(0);
+			break;
+		  }
+
+		  cur_decl.msb = arr_type->dimension(0).msb();
+		  cur_decl.lsb = arr_type->dimension(0).lsb();
 
 	    } else {
 		  cerr << get_fileline() << ": error: "
