@@ -568,7 +568,6 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 static void emit_posedge_dff_prim()
 {
       fprintf(vlog_out, "\n");
-// HERE: Add copyright info for this primitive. LGPL?
       fprintf(vlog_out, "/* Icarus generated UDP to represent a synthesized "
                         "positive edge D-FF. */\n");
       fprintf(vlog_out, "primitive IVL_posedge_DFF "
@@ -603,8 +602,48 @@ static void emit_posedge_dff_prim()
 
 static unsigned need_posedge_dff_prim = 0;
 
+/*
+ * Synthesis creates a D-FF LPM object. To allow this to be simulated as
+ * Verilog we need to generate a D-FF UDP that is used to represent this
+ * LPM. Since this must be included with user derived code it must be
+ * licensed using the lesser GPL to avoid the requirement that their code
+ * also be licensed under the GPL. We print a note that LGPL code is
+ * being included in the output so the user can remove it if desired.
+ *
+ * The general idea with all this is that we want the user to be able to
+ * simulate a synthesized D-FF, etc., but we don't want them to take the
+ * ideas behind the primitive(s) and claim them as their own.
+ */
 void emit_icarus_generated_udps()
 {
+	/* Emit the copyright information and LGPL note and then emit any
+	 * needed primitives. */
+      if (need_posedge_dff_prim) {
+	    fprintf(vlog_out,
+"\n"
+"/*\n"
+" * This is the copyright information for the following primitive(s)\n"
+" * (library elements).\n"
+" *\n"
+" * Copyright (C) 2011 Cary R. (cygcary@yahoo.com)\n"
+" *\n"
+" * This library is free software; you can redistribute it and/or\n"
+" * modify it under the terms of the GNU Lesser General Public\n"
+" * License as published by the Free Software Foundation; either\n"
+" * version 2.1 of the License, or (at your option) any later version.\n"
+" *\n"
+" * This library is distributed in the hope that it will be useful,\n"
+" * but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+" * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU\n"
+" * Lesser General Public License for more details.\n"
+" *\n"
+" * You should have received a copy of the GNU Lesser General Public\n"
+" * License along with this library; if not, write to the Free Software\n"
+" * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA\n"
+" */\n");
+	    fprintf(stderr,
+"NOTE: vlog95: Adding LGPL 2.1 primitive(s) at the end of the output file.\n");
+      }
       if (need_posedge_dff_prim) emit_posedge_dff_prim();
 }
 
