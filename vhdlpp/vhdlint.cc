@@ -51,7 +51,7 @@ vhdlint::vhdlint(const char* text)
     
     const char* ptr;
     char* new_ptr;
-    for(ptr = text, new_ptr = new_text; *ptr != '\0'; ++ptr)
+    for(ptr = text, new_ptr = new_text; *ptr != 0; ++ptr)
     {
         if(*ptr == '_')
             continue;
@@ -59,10 +59,9 @@ vhdlint::vhdlint(const char* text)
         {
             *new_ptr = *ptr;
             ++new_ptr;
-            ++ptr;
         }
     }
-    *new_ptr = '\0';
+    *new_ptr = 0;
     
     istringstream str(new_text);
     delete[] new_text;
