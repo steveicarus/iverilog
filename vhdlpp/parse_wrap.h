@@ -30,6 +30,9 @@
 # include "vhdlreal.h"
 # include  "architec.h"
 # include  "expression.h"
+
+class VType;
+
 # include  "parse.h"
 
 #endif

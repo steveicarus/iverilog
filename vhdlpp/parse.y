@@ -27,6 +27,7 @@
 # include "parse_misc.h"
 # include "architec.h"
 # include "expression.h"
+# include "vtype.h"
 # include  <cstdarg>
 # include  <list>
 
@@ -53,6 +54,8 @@ int parse_errors = 0;
       
       Expression*expr;
       std::list<Expression*>* expr_list;
+
+      const VType* vtype;
 
       InterfacePort*interface_element;
       std::list<InterfacePort*>* interface_list;
@@ -107,6 +110,8 @@ int parse_errors = 0;
 %type <expr> shift_expression simple_expression term waveform_element
 
 %type <expr_list> waveform waveform_elements
+
+%type <vtype> subtype_indication
 
 %type <text> identifier_opt
 
@@ -170,6 +175,10 @@ concurrent_statement
   : concurrent_signal_assignment_statement
   ;
 
+constraint
+  : '(' simple_expression direction simple_expression ')'
+  ;
+
 context_clause : context_items | ;
 
 context_item
@@ -192,6 +201,8 @@ design_units
   : design_units design_unit 
   | design_unit
   ;
+
+direction : K_to | K_downto ;
 
   /* As an entity is declared, add it to the map of design entities. */
 entity_declaration
@@ -221,6 +232,11 @@ entity_declaration
 	delete ports;
 	// Save the entity in the entity map.
 	design_entities[tmp->get_name()] = tmp;
+      }
+  | K_entity error K_end K_entity_opt identifier_opt ';'
+      { errormsg(@1, "Too many errors, giving up on entity declaration.\n");
+	yyerrok;
+	if ($5) delete[]$5;
       }
   ;
 
@@ -273,14 +289,13 @@ identifier_opt : IDENTIFIER { $$ = $1; } |  { $$ = 0; } ;
 
   /* The interface_element is also an interface_declaration */
 interface_element
-  : IDENTIFIER ':' mode IDENTIFIER
+  : IDENTIFIER ':' mode subtype_indication
       { InterfacePort*tmp = new InterfacePort;
 	FILE_NAME(tmp, @1);
 	tmp->mode = $3;
 	tmp->name = lex_strings.make($1);
-	tmp->type_name = lex_strings.make($4);
+	tmp->type = $4;
 	delete[]$1;
-	delete[]$4;
 	$$ = tmp;
       }
   ;
@@ -326,6 +341,11 @@ mode
 port_clause
   : K_port '(' interface_list ')' ';'
       { $$ = $3; }
+  | K_port '(' error ')' ';'
+      { errormsg(@1, "Syntax error in port list\n");
+	yyerrok;
+	$$ = 0;
+      }
   ;
 
 primary
@@ -352,6 +372,19 @@ selected_names
 shift_expression : simple_expression { $$ = $1; } ;
 
 simple_expression : term { $$ = $1; } ;
+
+subtype_indication
+  : IDENTIFIER
+      { const VType*tmp = global_types[lex_strings.make($1)];
+	delete[]$1;
+	$$ = tmp;
+      }
+  | IDENTIFIER constraint
+      { const VType*tmp = global_types[lex_strings.make($1)];
+	delete[]$1;
+	$$ = tmp;
+      }
+  ;
 
 term : factor { $$ = $1; } ;
 

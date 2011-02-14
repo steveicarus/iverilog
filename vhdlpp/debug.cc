@@ -21,6 +21,7 @@
 # include  "entity.h"
 # include  "architec.h"
 # include  "expression.h"
+# include  "vtype.h"
 # include  <fstream>
 # include  <iomanip>
 # include  <typeinfo>
@@ -66,7 +67,7 @@ void Entity::dump(ostream&out) const
 		  InterfacePort*item = *cur;
 		  out << setw(6) << "" << item->name
 		      << " : " << item->mode
-		      << ", type=" << item->type_name
+		      << ", type=" << (item->type? typeid(*item->type).name() : "NOTYPE")
 		      << ", file=" << item->get_fileline() << endl;
 	    }
       }

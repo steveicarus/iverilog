@@ -22,6 +22,7 @@
 # include  "architec.h"
 # include  "vtype.h"
 # include  <iostream>
+# include <typeinfo>
 # include  <fstream>
 # include  <iomanip>
 # include  <cstring>
@@ -92,11 +93,12 @@ int Entity::elaborate_ports_(void)
 	    cur_decl.msb = 0;
 	    cur_decl.lsb = 0;
 
-	    const VType*type = global_types[cur_port->type_name];
+	    const VType*type = cur_port->type;
 	    if (type == 0) {
 		  cerr << get_fileline() << ": error: "
-		       << "No such type mark " << cur_port->type_name
+		       << "Giving up on unknown type for port " << cur_port->name
 		       << "." << endl;
+		  errors += 1;
 		  continue;
 	    }
 
@@ -119,7 +121,7 @@ int Entity::elaborate_ports_(void)
 	    } else {
 		  cerr << get_fileline() << ": error: "
 		       << "I don't know how to map port " << cur_port->name
-		       << " type " << cur_port->type_name << "." << endl;
+		       << " type " << typeid(*cur_port->type).name() << "." << endl;
 		  errors += 1;
 	    }
 

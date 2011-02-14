@@ -92,6 +92,8 @@ int main(int argc, char*argv[])
 
       }
 
+      preload_global_types();
+
       for (int idx = optind ; idx < argc ; idx += 1) {
 	    parse_errors = 0;
 	    FILE*fd = fopen(argv[idx], "r");
@@ -115,8 +117,6 @@ int main(int argc, char*argv[])
 
       if (dump_design_entities_path)
 	    dump_design_entities(dump_design_entities_path);
-
-      preload_global_types();
 
       int errors = 0;
       errors = elaborate_entities();

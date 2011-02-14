@@ -20,8 +20,15 @@
  */
 
 # include  <map>
+# include  <vector>
+# include  <climits>
 # include  "StringHeap.h"
 
+/*
+ * A description of a VHDL type consists of a graph of VType
+ * objects. Derived types are specific kinds of types, and those that
+ * are compound may in turn reference other types.
+ */
 class VType {
 
     public:
@@ -62,18 +69,41 @@ extern const VTypePrimitive primitive_BIT;
 extern const VTypePrimitive primitive_INTEGER;
 extern const VTypePrimitive primitive_STDLOGIC;
 
+/*
+ * An array is a compound N-dimensional array of element type. The
+ * construction of the array is from an element type and a vector of
+ * ranges. The array type can be left incomplete by leaving some
+ * ranges as "box" ranges, meaning present but not defined.
+ */
 class VTypeArray : public VType {
 
     public:
-      VTypeArray(size_t dimensions, VType*etype);
+      class range_t {
+	  public:
+	    range_t()             : msb_(INT_MAX), lsb_(INT_MIN) { }
+	    range_t(int m, int l) : msb_(m),       lsb_(l)       { }
+
+	    bool is_box() const { return msb_==INT_MAX && lsb_==INT_MIN; }
+
+	    int msb() const { return msb_; }
+	    int lsb() const { return lsb_; }
+
+	  private:
+	    int msb_;
+	    int lsb_;
+      };
+
+    public:
+      VTypeArray(const VType*etype, const std::vector<range_t>&r);
       ~VTypeArray();
 
       size_t dimensions() const;
-      VType* element_type() const;
+      const VType* element_type() const;
 
     private:
-      size_t dimensions_;
-      VType*etype_;
+      const VType*etype_;
+
+      std::vector<range_t> ranges_;
 };
 
 #endif

@@ -34,6 +34,10 @@ void preload_global_types(void)
       global_types[perm_string::literal("bit")]       = &primitive_BIT;
       global_types[perm_string::literal("integer")]   = &primitive_INTEGER;
       global_types[perm_string::literal("std_logic")] = &primitive_STDLOGIC;
+
+      { vector<VTypeArray::range_t> dims (1);
+	global_types[perm_string::literal("unsigned")] = new VTypeArray(&primitive_BIT, dims);
+      }
 }
 
 
@@ -47,5 +51,14 @@ VTypePrimitive::VTypePrimitive(VTypePrimitive::type_t tt)
 }
 
 VTypePrimitive::~VTypePrimitive()
+{
+}
+
+VTypeArray::VTypeArray(const VType*element, const vector<VTypeArray::range_t>&r)
+: etype_(element), ranges_(r)
+{
+}
+
+VTypeArray::~VTypeArray()
 {
 }

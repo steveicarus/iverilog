@@ -28,6 +28,7 @@
 typedef enum { PORT_NONE=0, PORT_IN, PORT_OUT } port_mode_t;
 
 class Architecture;
+class VType;
 
 class InterfacePort : public LineInfo {
     public:
@@ -36,7 +37,7 @@ class InterfacePort : public LineInfo {
 	// Name of the port from the source code
       perm_string name;
 	// Name of interface type as given in the source code.
-      perm_string type_name;
+      const VType*type;
 };
 
 class Entity : public LineInfo {
