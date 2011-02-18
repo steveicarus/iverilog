@@ -353,42 +353,21 @@ void emit_scaled_range(ivl_scope_t scope, ivl_expr_t expr, unsigned width,
                        int msb, int lsb)
 {
       if (msb >= lsb) {
-	    if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
-		  int rtype;
-		  int64_t value = get_valid_int64_from_number(expr, &rtype,
-		                        "range value");
-		  if (rtype) return;
-		  value += lsb;
-		  fprintf(vlog_out, "[%"PRId64":%"PRId64"]",
-		                    value + (int64_t)(width - 1), value);
-	    } else {
-// HERE: Need to scale the select expression and create a concatenation of
-//       variable bit selects for that. We need the signal name as well.
-//       As an optimization determine if this is an up or down to simplify
-//       the generated expression.
-		  fprintf(vlog_out, "[<invalid>:<invalid>]");
-		  fprintf(stderr, "%s:%u: vlog95 error: Indexed part-selects "
-		                  "are not currently supported.\n",
-		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
-		  vlog_errors += 1;
-	    }
+	    int rtype;
+	    int64_t value = get_valid_int64_from_number(expr, &rtype,
+	                                               "range value");
+	    if (rtype) return;
+	    value += lsb;
+	    fprintf(vlog_out, "[%"PRId64":%"PRId64"]",
+	                      value + (int64_t)(width - 1), value);
       } else {
-	    if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
-		  int rtype;
-		  int64_t value = get_valid_int64_from_number(expr, &rtype,
-		                        "range value");
-		  if (rtype) return;
-		  value = (int64_t)lsb - value;
-		  fprintf(vlog_out, "[%"PRId64":%"PRId64"]",
-		                    value - (int64_t)(width - 1), value);
-	    } else {
-// HERE: Do basically the same as above.
-		  fprintf(vlog_out, "[<invalid>:<invalid>]");
-		  fprintf(stderr, "%s:%u: vlog95 error: Indexed part-selects "
-		                  "are not currently supported.\n",
-		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
-		  vlog_errors += 1;
-	    }
+	    int rtype;
+	    int64_t value = get_valid_int64_from_number(expr, &rtype,
+	                                               "range value");
+	    if (rtype) return;
+	    value = (int64_t)lsb - value;
+	    fprintf(vlog_out, "[%"PRId64":%"PRId64"]",
+	                      value - (int64_t)(width - 1), value);
       }
 }
 

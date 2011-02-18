@@ -86,40 +86,102 @@ static void emit_stmt_inter_delay(ivl_scope_t scope, ivl_statement_t stmt)
       }
 }
 
-static void emit_stmt_lval_piece(ivl_scope_t scope, ivl_lval_t lval)
+static void emit_stmt_lval_name(ivl_scope_t scope, ivl_lval_t lval,
+                                ivl_signal_t sig)
 {
-      ivl_expr_t expr;
-      ivl_signal_t sig = ivl_lval_sig(lval);
-      unsigned width = ivl_lval_width(lval);
-      int msb, lsb;
-      assert(width > 0);
+      ivl_expr_t array_idx = ivl_lval_idx(lval);
       emit_scope_module_path(scope, ivl_signal_scope(sig));
       fprintf(vlog_out, "%s", ivl_signal_basename(sig));
-	/* Check to see if we have an array word access. */
-      expr = ivl_lval_idx(lval);
-      if (expr) {
+      if (array_idx) {
+	    int msb, lsb;
 	    assert(ivl_signal_dimensions(sig));
 	    fprintf(vlog_out, "[");
 	      /* For an array the LSB/MSB order is not important. They are
 	       * always accessed from base counting up. */
 	    lsb = ivl_signal_array_base(sig);
 	    msb = lsb + ivl_signal_array_count(sig) - 1;
-	    emit_scaled_expr(scope, expr, msb, lsb);
+	    emit_scaled_expr(scope, array_idx, msb, lsb);
 	    fprintf(vlog_out, "]");
       }
+}
 
-	/* If there are no selects then just return. */
-      if (width == ivl_signal_width(sig)) return;
+static void emit_stmt_lval_ips(ivl_scope_t scope, ivl_lval_t lval,
+                               ivl_signal_t sig, ivl_expr_t sel_expr,
+                               unsigned wid, unsigned msb, unsigned lsb)
+{
+      unsigned idx;
+      if ((msb >= lsb) && (lsb != 0)) {
+	    fprintf(vlog_out, "<unsupported>");
+	    fprintf(stderr, "%s:%u: vlog95 sorry: Variable indexed part "
+	                    "select lsb must be zero.\n",
+	                    ivl_expr_file(sel_expr),
+	                    ivl_expr_lineno(sel_expr));
+	    vlog_errors += 1;
+	    return;
+      }
+      if (msb < lsb) {
+	    fprintf(vlog_out, "<unsupported>");
+	    fprintf(stderr, "%s:%u: vlog95 sorry: Variable indexed part "
+	                    "selects must be little endian.\n",
+	                    ivl_expr_file(sel_expr),
+	                    ivl_expr_lineno(sel_expr));
+	    vlog_errors += 1;
+	    return;
+      }
+
+      fprintf(vlog_out, "{");
+      for (idx = wid - 1; idx > 0; idx -= 1) {
+	    emit_stmt_lval_name(scope, lval, sig);
+	    fprintf(vlog_out, "[");
+// HERE: Ideally we should simplify the scaled expression and the addition
+//       of the idx value. Also we should simplify any offset with the base
+//       expression as a compiler enhancement. All this will require a
+//       modified/updated version of emit_scaled_expr(). We can remove the
+//       above fails when this is finished.
+	    emit_scaled_expr(scope, sel_expr, msb, lsb);
+	    fprintf(vlog_out, " + %u], ", idx);
+      }
+      emit_stmt_lval_name(scope, lval, sig);
+      fprintf(vlog_out, "[");
+      emit_scaled_expr(scope, sel_expr, msb, lsb);
+      fprintf(vlog_out, "]}");
+}
+
+static void emit_stmt_lval_piece(ivl_scope_t scope, ivl_lval_t lval)
+{
+      ivl_signal_t sig = ivl_lval_sig(lval);
+      ivl_expr_t sel_expr;
+      unsigned width = ivl_lval_width(lval);
+      int msb, lsb;
+      assert(width > 0);
+
+	/* If there are no selects then just print the name. */
+      if (width == ivl_signal_width(sig)) {
+	    emit_stmt_lval_name(scope, lval, sig);
+	    return;
+      }
 
 	/* We have some kind of select. */
       lsb = ivl_signal_lsb(sig);
       msb = ivl_signal_msb(sig);
+      sel_expr = ivl_lval_part_off(lval);
+      assert(sel_expr);
+	/* A bit select. */
       if (width == 1) {
+	    emit_stmt_lval_name(scope, lval, sig);
 	    fprintf(vlog_out, "[");
-	    emit_scaled_expr(scope, ivl_lval_part_off(lval), msb, lsb);
+	    emit_scaled_expr(scope, sel_expr, msb, lsb);
 	    fprintf(vlog_out, "]");
       } else {
-	    emit_scaled_range(scope, ivl_lval_part_off(lval), width, msb, lsb);
+	      /* A constant part select. */
+	    if (ivl_expr_type(sel_expr) == IVL_EX_NUMBER) {
+		  emit_stmt_lval_name(scope, lval, sig);
+		  emit_scaled_range(scope, sel_expr, width, msb, lsb);
+	      /* An indexed part select. */
+	    } else {
+		  emit_stmt_lval_ips(scope, lval, sig, sel_expr, width,
+		                     msb, lsb);
+	    }
       }
 }
 

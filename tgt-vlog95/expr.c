@@ -263,7 +263,7 @@ static unsigned emit_param_name_in_scope(ivl_scope_t scope, ivl_expr_t expr)
 
 static void emit_select_name(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
-	/* A select of a number is reall a parameter select. */
+	/* A select of a number is really a parameter select. */
       if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
 	      /* Look in the current scope. */
 	    if (emit_param_name_in_scope(scope, expr)) return;
@@ -283,6 +283,50 @@ static void emit_select_name(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       } else {
 	    emit_expr(scope, expr, wid);
       }
+}
+
+/*
+ * Emit an indexed part select as a concatenation of bit selects.
+ */
+static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
+                          ivl_expr_t sel_expr, unsigned wid,
+                          unsigned msb, unsigned lsb)
+{
+      unsigned idx;
+      if ((msb >= lsb) && (lsb != 0)) {
+	    fprintf(vlog_out, "<unsupported>");
+	    fprintf(stderr, "%s:%u: vlog95 sorry: Variable indexed part "
+	                    "select lsb must be zero.\n",
+	                    ivl_expr_file(sel_expr),
+	                    ivl_expr_lineno(sel_expr));
+	    vlog_errors += 1;
+	    return;
+      }
+      if (msb < lsb) {
+	    fprintf(vlog_out, "<unsupported>");
+	    fprintf(stderr, "%s:%u: vlog95 sorry: Variable indexed part "
+	                    "selects must be little endian.\n",
+	                    ivl_expr_file(sel_expr),
+	                    ivl_expr_lineno(sel_expr));
+	    vlog_errors += 1;
+	    return;
+      }
+      fprintf(vlog_out, "{");
+      for (idx = wid - 1; idx > 0; idx -= 1) {
+	    emit_select_name(scope, sig_expr, wid);
+	    fprintf(vlog_out, "[");
+// HERE: Ideally we should simplify the scaled expression and the addition
+//       of the idx value. Also we should simplify any offset with the base
+//       expression as a compiler enhancement. All this will require a
+//       modified/updated version of emit_scaled_expr(). We can remove the
+//       above fails when this is finished.
+	    emit_scaled_expr(scope, sel_expr, msb, lsb);
+	    fprintf(vlog_out, " + %u], ", idx);
+      }
+      emit_select_name(scope, sig_expr, wid);
+      fprintf(vlog_out, "[");
+      emit_scaled_expr(scope, sel_expr, msb, lsb);
+      fprintf(vlog_out, "]}");
 }
 
 static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
@@ -308,13 +352,23 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 		  emit_scaled_expr(scope, sel_expr, msb, lsb);
 		  fprintf(vlog_out, ")" );
 	    } else {
-		  emit_select_name(scope, sig_expr, wid);
+		    /* A bit select. */
 		  if (width == 1) {
+			emit_select_name(scope, sig_expr, wid);
 			fprintf(vlog_out, "[");
 			emit_scaled_expr(scope, sel_expr, msb, lsb);
 			fprintf(vlog_out, "]");
 		  } else {
-			emit_scaled_range(scope, sel_expr, width, msb, lsb);
+			if (ivl_expr_type(sel_expr) == IVL_EX_NUMBER) {
+				/* A constant part select. */
+			      emit_select_name(scope, sig_expr, wid);
+			      emit_scaled_range(scope, sel_expr, width,
+			                        msb, lsb);
+			} else {
+				/* An indexed part select. */
+			      emit_expr_ips(scope, sig_expr, sel_expr, width,
+			                    msb, lsb);
+			}
 		  }
 	    }
       } else {
