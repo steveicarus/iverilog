@@ -39,9 +39,48 @@ void preload_global_types(void)
 
 void import_ieee(void)
 {
+}
 
-      vector<VTypeArray::range_t> dims (1);
-      global_types[perm_string::literal("unsigned")] = new VTypeArray(&primitive_BIT, dims);
+static void import_ieee_use_std_logic_1164(perm_string)
+{
+}
+
+static void import_ieee_use_numeric_bit(perm_string name)
+{
+      bool all_flag = name=="all";
+
+      if (all_flag || name == "unsigned") {
+	    vector<VTypeArray::range_t> dims (1);
+	    global_types[perm_string::literal("unsigned")] = new VTypeArray(&primitive_BIT, dims);
+      }
+}
+
+static void import_ieee_use_numeric_std(perm_string name)
+{
+      bool all_flag = name=="all";
+
+      if (all_flag || name == "unsigned") {
+	    vector<VTypeArray::range_t> dims (1);
+	    global_types[perm_string::literal("unsigned")] = new VTypeArray(&primitive_STDLOGIC, dims);
+      }
+}
+
+void import_ieee_use(perm_string package, perm_string name)
+{
+      if (package == "std_logic_1164") {
+	    import_ieee_use_std_logic_1164(name);
+	    return;
+      }
+
+      if (package == "numeric_bit") {
+	    import_ieee_use_numeric_bit(name);
+	    return;
+      }
+
+      if (package == "numeric_std") {
+	    import_ieee_use_numeric_std(name);
+	    return;
+      }
 }
 
 VType::~VType()

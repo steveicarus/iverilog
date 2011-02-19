@@ -101,3 +101,23 @@ void library_import(const YYLTYPE&loc, const std::list<perm_string>*names)
 	    }
       }
 }
+
+void library_use(const YYLTYPE&loc, const char*libname, const char*pack, const char*name)
+{
+      if (libname == 0) {
+	    errormsg(loc, "error: No library name for this use clause?\n");
+	    return;
+      }
+
+      perm_string use_library = lex_strings.make(libname);
+      perm_string use_package = lex_strings.make(pack);
+      perm_string use_name = name? lex_strings.make(name) : perm_string::literal("all");
+
+	// Special case handling for the IEEE library.
+      if (use_library == "ieee") {
+	    import_ieee_use(use_package, use_name);
+	    return;
+      }
+
+      errormsg(loc, "sorry: Only the IEEE library is supported,\n");
+}

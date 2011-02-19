@@ -92,6 +92,7 @@ int Entity::emit(ostream&out)
 			out << "[" << cur->second.msb
 			    << ":" << cur->second.lsb << "] ";
 		  out << cur->first << ";" << endl;
+		  break;
 		case VBOOL:
 		  out << "wire bool ";
 		  if (cur->second.signed_flag)

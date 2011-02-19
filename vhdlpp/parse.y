@@ -379,14 +379,24 @@ primary
 
 relation : shift_expression { $$ = $1; } ;
 
-selected_name
+  /* The *_use variant of selected_name is used by the "use"
+     clause. It is syntactically identical to other selected_name
+     rules, but is a convenient place to attach use_clause actions. */
+selected_name_use
   : IDENTIFIER '.' K_all
+      { library_use(@1, 0, $1, 0);
+	delete[]$1;
+      }
   | IDENTIFIER '.' IDENTIFIER '.' K_all
+      { library_use(@1, $1, $3, 0);
+	delete[]$1;
+	delete[]$3;
+      }
   ;
 
-selected_names
-  : selected_names ',' selected_name
-  | selected_name
+selected_names_use
+  : selected_names_use ',' selected_name_use
+  | selected_name_use
   ;
 
 shift_expression : simple_expression { $$ = $1; } ;
@@ -409,7 +419,7 @@ subtype_indication
 term : factor { $$ = $1; } ;
 
 use_clause
-  : K_use selected_names ';'
+  : K_use selected_names_use ';'
   | K_use error ';'
      { errormsg(@1, "Syntax error in use clause.\n"); yyerrok; }
   ;

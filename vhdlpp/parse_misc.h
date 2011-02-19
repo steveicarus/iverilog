@@ -34,4 +34,6 @@ extern const VType* calculate_subtype(const char*base_name,
 
 extern void library_import(const YYLTYPE&loc, const std::list<perm_string>*names);
 
+extern void library_use(const YYLTYPE&loc, const char*libname, const char*pack, const char*ident);
+
 #endif
