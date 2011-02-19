@@ -40,14 +40,15 @@ inline void FILE_NAME(LineInfo*tmp, const struct yyltype&where)
 
 static void yyerror(const char*msg);
 
-static void errormsg(const YYLTYPE&loc, const char*msg, ...);
 int parse_errors = 0;
 %}
 
 
 %union {
       port_mode_t port_mode;
+
       char*text;
+      std::list<perm_string>* name_list;
 
       bool flag;
       int64_t uni_integer;
@@ -116,7 +117,8 @@ int parse_errors = 0;
 
 %type <vtype> subtype_indication
 
-%type <text> identifier_opt
+%type <text> identifier_opt logical_name
+%type <name_list> logical_name_list
 
 %%
 
@@ -315,6 +317,9 @@ interface_list
 
 library_clause
   : K_library logical_name_list ';'
+      { library_import(@1, $2);
+	delete $2;
+      }
   | K_library error ';'
      { errormsg(@1, "Syntax error in library clause.\n"); yyerrok; }
   ;
@@ -326,11 +331,21 @@ library_unit
   | architecture_body
   ;
 
-logical_name : IDENTIFIER ;
+logical_name : IDENTIFIER { $$ = $1; } ;
 
 logical_name_list
   : logical_name_list ',' logical_name
+      { std::list<perm_string>*tmp = $1;
+	tmp->push_back(lex_strings.make($3));
+	delete[]$3;
+	$$ = tmp;
+      }
   | logical_name
+      { std::list<perm_string>*tmp = new std::list<perm_string>;
+	tmp->push_back(lex_strings.make($1));
+	delete[]$1;
+	$$ = tmp;
+      }
   ;
 
 mode
@@ -440,7 +455,7 @@ static void yyerror(const char*msg)
 
 static const char*file_path = "";
 
-static void errormsg(const YYLTYPE&loc, const char*fmt, ...)
+void errormsg(const YYLTYPE&loc, const char*fmt, ...)
 {
       va_list ap;
       va_start(ap, fmt);

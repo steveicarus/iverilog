@@ -53,6 +53,7 @@ inline std::ostream&operator << (std::ostream&out, const VType&item)
 extern std::map<perm_string, const VType*> global_types;
 
 extern void preload_global_types(void);
+extern void import_ieee(void);
 
 /*
  * This class represents the primative types that are available to the

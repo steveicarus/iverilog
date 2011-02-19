@@ -42,9 +42,23 @@ struct yyltype {
  */
 extern void reset_lexor(FILE*fd, const char*path);
 
+/*
+ * The parser calls yylex to get the next lexical token. It is only
+ * called by the bison-generated parser.
+ */
 extern int yylex(void);
 
+/*
+ * This is the bison-generated parser.
+ */
 extern int yyparse(void);
+
+/*
+ * Use this functio during parse to generate error messages. The "loc"
+ * is the location of the token that triggered the error, and the fmt
+ * is printf-style format.
+ */
+extern void errormsg(const YYLTYPE&loc, const char*fmt, ...) __attribute__((format (printf, 2, 3)));
 
 /*
  * Set this to a non-zero value to enable parser debug output.

@@ -19,6 +19,8 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+# include  "parse_api.h"
+
 class Architecture;
 class Expression;
 class VType;
@@ -29,5 +31,7 @@ extern const VType* calculate_subtype(const char*base_name,
 				      Expression*array_left,
 				      bool downto,
 				      Expression*array_right);
+
+extern void library_import(const YYLTYPE&loc, const std::list<perm_string>*names);
 
 #endif

@@ -87,3 +87,17 @@ const VType* calculate_subtype(const char*base_name,
 
       return base_type;
 }
+
+void library_import(const YYLTYPE&loc, const std::list<perm_string>*names)
+{
+      for (std::list<perm_string>::const_iterator cur = names->begin()
+		 ; cur != names->end() ; ++cur) {
+	    if (*cur == "ieee") {
+		    // The ieee library is special and handled by an
+		    // internal function.
+		  import_ieee();
+	    } else {
+		  errormsg(loc, "sorry: library import (%s) not implemented.\n", cur->str());
+	    }
+      }
+}
