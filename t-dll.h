@@ -517,6 +517,7 @@ struct ivl_udp_s {
       ccharp_t*table; // zero terminated array of pointers
       perm_string file;
       unsigned lineno;
+      string*ports;
 };
 
 /*

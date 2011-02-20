@@ -288,6 +288,7 @@ ivl_udp_file
 ivl_udp_lineno
 ivl_udp_name
 ivl_udp_nin
+ivl_udp_port
 ivl_udp_row
 ivl_udp_rows
 ivl_udp_sequ

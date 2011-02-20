@@ -1040,6 +1040,7 @@ extern unsigned    ivl_udp_rows(ivl_udp_t net);
 extern const char* ivl_udp_name(ivl_udp_t net);
 extern const char* ivl_udp_file(ivl_udp_t net);
 extern unsigned    ivl_udp_lineno(ivl_udp_t net);
+extern const char* ivl_udp_port(ivl_udp_t net, unsigned idx);
 
 extern const char* ivl_lpm_file(ivl_lpm_t net);
 extern unsigned    ivl_lpm_lineno(ivl_lpm_t net);

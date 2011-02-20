@@ -867,6 +867,14 @@ extern "C" char ivl_udp_init(ivl_udp_t net)
       return net->init;
 }
 
+extern "C" const char* ivl_udp_port(ivl_udp_t net, unsigned idx)
+{
+      assert(idx <= net->nin);
+      assert(net->ports);
+      assert(net->ports[idx].c_str());
+      return net->ports[idx].c_str();
+}
+
 extern "C" const char* ivl_udp_row(ivl_udp_t net, unsigned idx)
 {
       assert(idx < net->nrows);

@@ -42,6 +42,7 @@
 # include  "LineInfo.h"
 # include  "svector.h"
 # include  "Attrib.h"
+# include  "PUdp.h"
 
 #ifdef HAVE_IOSFWD
 # include  <iosfwd>
@@ -2144,7 +2145,6 @@ class NetUReduce  : public NetNode {
  * 1 are listed.
  *
  */
-#include "PUdp.h"
 
 class NetUDP  : public NetNode {
 
@@ -2168,6 +2168,9 @@ class NetUDP  : public NetNode {
       perm_string udp_file() const { return udp->get_file(); }
       unsigned udp_lineno() const { return udp->get_lineno(); }
       char get_initial() const;
+
+      unsigned port_count() const;
+      string port_name(unsigned idx) const;
 
     private:
       mutable unsigned table_idx;

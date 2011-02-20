@@ -1270,38 +1270,36 @@ void dll_target::udp(const NetUDP*net)
       static map<perm_string,ivl_udp_t> udps;
       ivl_udp_t u;
 
-      if (udps.find(net->udp_name()) != udps.end())
-	{
-	  u = udps[net->udp_name()];
-	}
-      else
-	{
-	  u = new struct ivl_udp_s;
-	  u->nrows = net->rows();
-	  u->table = (ivl_udp_s::ccharp_t*)malloc((u->nrows+1)*sizeof(char*));
-	  u->table[u->nrows] = 0x0;
-	  u->nin = net->nin();
-	  u->sequ = net->is_sequential();
-	  u->file = net->udp_file();
-	  u->lineno = net->udp_lineno();
-	  if (u->sequ)
-	    u->init = net->get_initial();
-	  else
-	    u->init = 'x';
-	  u->name = net->udp_name();
-	  string inp;
-	  char out;
-	  unsigned int i = 0;
-	  if (net->first(inp, out))
-	    do
-	      {
-		string tt = inp+out;
-		u->table[i++] = strings_.add(tt.c_str());
-	      } while (net->next(inp, out));
-	  assert(i==u->nrows);
+      if (udps.find(net->udp_name()) != udps.end()) {
+	    u = udps[net->udp_name()];
+      } else {
+	    u = new struct ivl_udp_s;
+	    u->nrows = net->rows();
+	    u->table = (ivl_udp_s::ccharp_t*)malloc((u->nrows+1)*sizeof(char*));
+	    u->table[u->nrows] = 0x0;
+	    u->nin = net->nin();
+	    u->sequ = net->is_sequential();
+	    u->file = net->udp_file();
+	    u->lineno = net->udp_lineno();
+	    if (u->sequ) u->init = net->get_initial();
+	    else u->init = 'x';
+	    u->name = net->udp_name();
+	    string inp;
+	    char out;
+	    unsigned int i = 0;
+	    if (net->first(inp, out)) do {
+		  string tt = inp+out;
+		  u->table[i++] = strings_.add(tt.c_str());
+	    } while (net->next(inp, out));
+	    assert(i==u->nrows);
+	    assert((u->nin + 1) == net->port_count());
+	    u->ports = new string [u->nin + 1];
+	    for(unsigned idx = 0; idx <= u->nin; idx += 1) {
+		  u->ports[idx] = net->port_name(idx);
+	    }
 
-	  udps[net->udp_name()] = u;
-	}
+	    udps[net->udp_name()] = u;
+      }
 
       obj->udp = u;
 
