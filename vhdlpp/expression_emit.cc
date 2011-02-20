@@ -31,6 +31,41 @@ int Expression::emit(ostream&out, Entity*, Architecture*)
       return 1;
 }
 
+int ExpArithmetic::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      errors += operand1()->emit(out, ent, arc);
+
+      switch (fun_) {
+	  case PLUS:
+	    out << " + ";
+	    break;
+	  case MINUS:
+	    out << " - ";
+	    break;
+	  case MULT:
+	    out << " * ";
+	    break;
+	  case DIV:
+	    out << " / ";
+	    break;
+	  case MOD:
+	    out << " % ";
+	    break;
+	  case POW:
+	    out << " ** ";
+	    break;
+	  case REM:
+	    out << " /* ?remainder? */ ";
+	    break;
+      }
+
+      errors += operand2()->emit(out, ent, arc);
+
+      return errors;
+}
+
 int ExpInteger::emit(ostream&out, Entity*, Architecture*)
 {
       out << " /* " << get_fileline() << ": internal error: "
@@ -42,7 +77,7 @@ int ExpLogical::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-      errors += operand1_->emit(out, ent, arc);
+      errors += operand1()->emit(out, ent, arc);
 
       switch (fun_) {
 	  case AND:
@@ -65,7 +100,7 @@ int ExpLogical::emit(ostream&out, Entity*ent, Architecture*arc)
 	    break;
       }
 
-      errors += operand2_->emit(out, ent, arc);
+      errors += operand2()->emit(out, ent, arc);
 
       return errors;
 }

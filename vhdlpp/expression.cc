@@ -32,6 +32,26 @@ bool Expression::evaluate(int64_t&) const
       return false;
 }
 
+ExpBinary::ExpBinary(Expression*op1, Expression*op2)
+: operand1_(op1), operand2_(op2)
+{
+}
+
+ExpBinary::~ExpBinary()
+{
+      delete operand1_;
+      delete operand2_;
+}
+
+ExpArithmetic::ExpArithmetic(ExpArithmetic::fun_t op, Expression*op1, Expression*op2)
+: ExpBinary(op1, op2), fun_(op)
+{
+}
+
+ExpArithmetic::~ExpArithmetic()
+{
+}
+
 ExpInteger::ExpInteger(int64_t val)
 : value_(val)
 {
@@ -48,14 +68,12 @@ bool ExpInteger::evaluate(int64_t&val) const
 }
 
 ExpLogical::ExpLogical(ExpLogical::fun_t ty, Expression*op1, Expression*op2)
-: fun_(ty), operand1_(op1), operand2_(op2)
+: ExpBinary(op1, op2), fun_(ty)
 {
 }
 
 ExpLogical::~ExpLogical()
 {
-      delete operand1_;
-      delete operand2_;
 }
 
 ExpName::ExpName(perm_string nn)

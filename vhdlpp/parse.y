@@ -253,7 +253,8 @@ expression
   ;
 
 expression_logical
-  : relation K_and relation
+  : relation { $$ = $1; }
+  | relation K_and relation
       { ExpLogical*tmp = new ExpLogical(ExpLogical::AND, $1, $3);
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
@@ -285,7 +286,15 @@ expression_logical
       }
   ;
 
-factor : primary { $$ = $1; } ;
+factor
+  : primary
+      { $$ = $1; }
+  | primary EXP primary
+      { ExpArithmetic*tmp = new ExpArithmetic(ExpArithmetic::POW, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  ;
 
 identifier_opt : IDENTIFIER { $$ = $1; } |  { $$ = 0; } ;
 
@@ -401,7 +410,20 @@ selected_names_use
 
 shift_expression : simple_expression { $$ = $1; } ;
 
-simple_expression : term { $$ = $1; } ;
+simple_expression
+  : term
+      { $$ = $1; }
+  | term '+' term
+      { ExpArithmetic*tmp = new ExpArithmetic(ExpArithmetic::PLUS, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | term '-' term
+      { ExpArithmetic*tmp = new ExpArithmetic(ExpArithmetic::MINUS, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  ;
 
 subtype_indication
   : IDENTIFIER
@@ -416,7 +438,30 @@ subtype_indication
       }
   ;
 
-term : factor { $$ = $1; } ;
+term
+  : factor
+      { $$ = $1; }
+  | factor '*' factor
+      { ExpArithmetic*tmp = new ExpArithmetic(ExpArithmetic::MULT, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | factor '/' factor
+      { ExpArithmetic*tmp = new ExpArithmetic(ExpArithmetic::DIV, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | factor K_mod factor
+      { ExpArithmetic*tmp = new ExpArithmetic(ExpArithmetic::MOD, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | factor K_rem factor
+      { ExpArithmetic*tmp = new ExpArithmetic(ExpArithmetic::REM, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  ;
 
 use_clause
   : K_use selected_names_use ';'

@@ -116,6 +116,39 @@ void Expression::dump(ostream&out, int indent) const
 	  << " at " << get_fileline()<< endl;
 }
 
+void ExpArithmetic::dump(ostream&out, int indent) const
+{
+      const char*fun_name = "?";
+      switch (fun_) {
+	  case PLUS:
+	    fun_name = "+";
+	    break;
+	  case MINUS:
+	    fun_name = "-";
+	    break;
+	  case MULT:
+	    fun_name = "*";
+	    break;
+	  case DIV:
+	    fun_name = "/";
+	    break;
+	  case MOD:
+	    fun_name = "mod";
+	    break;
+	  case REM:
+	    fun_name = "rem";
+	    break;
+	  case POW:
+	    fun_name = "**";
+	    break;
+      }
+
+      out << setw(indent) << "" << "Arithmetic " << fun_name
+	  << " at " << get_fileline() << endl;
+      operand1()->dump(out, indent+4);
+      operand2()->dump(out, indent+4);
+}
+
 void ExpInteger::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "Integer" << endl;
@@ -147,8 +180,8 @@ void ExpLogical::dump(ostream&out, int indent) const
 
       out << setw(indent) << "" << "Logical " << fun_name
 	  << " at " << get_fileline() << endl;
-      operand1_->dump(out, indent+4);
-      operand2_->dump(out, indent+4);
+      operand1()->dump(out, indent+4);
+      operand2()->dump(out, indent+4);
 }
 
 void ExpName::dump(ostream&out, int indent) const

@@ -58,6 +58,43 @@ class Expression : public LineInfo {
       Expression& operator = (const Expression&);
 };
 
+/*
+ * This is an abstract class that collects some of the common features
+ * of binary operators.
+ */
+class ExpBinary : public Expression {
+
+    public:
+      ExpBinary(Expression*op1, Expression*op2);
+      ~ExpBinary();
+
+    protected:
+      inline Expression* operand1() { return operand1_; }
+      inline Expression* operand2() { return operand2_; }
+      inline const Expression* operand1() const { return operand1_; }
+      inline const Expression* operand2() const { return operand2_; }
+
+    private:
+      Expression*operand1_;
+      Expression*operand2_;
+};
+
+class ExpArithmetic : public ExpBinary {
+
+    public:
+      enum fun_t { PLUS, MINUS, MULT, DIV, MOD, REM, POW };
+
+    public:
+      ExpArithmetic(ExpArithmetic::fun_t op, Expression*op1, Expression*op2);
+      ~ExpArithmetic();
+
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      void dump(ostream&out, int indent) const;
+
+    private:
+      fun_t fun_;
+};
+
 class ExpInteger : public Expression {
 
     public:
@@ -72,7 +109,7 @@ class ExpInteger : public Expression {
       int64_t value_;
 };
 
-class ExpLogical : public Expression {
+class ExpLogical : public ExpBinary {
 
     public:
       enum fun_t { AND, OR, NAND, NOR, XOR, XNOR };
@@ -86,8 +123,6 @@ class ExpLogical : public Expression {
 
     private:
       fun_t fun_;
-      Expression*operand1_;
-      Expression*operand2_;
 };
 
 /*
