@@ -49,6 +49,10 @@ static void import_ieee_use_numeric_bit(perm_string name)
 {
       bool all_flag = name=="all";
 
+      if (all_flag || name == "signed") {
+	    vector<VTypeArray::range_t> dims (1);
+	    global_types[perm_string::literal("signed")] = new VTypeArray(&primitive_STDLOGIC, dims);
+      }
       if (all_flag || name == "unsigned") {
 	    vector<VTypeArray::range_t> dims (1);
 	    global_types[perm_string::literal("unsigned")] = new VTypeArray(&primitive_BIT, dims);
@@ -59,6 +63,10 @@ static void import_ieee_use_numeric_std(perm_string name)
 {
       bool all_flag = name=="all";
 
+      if (all_flag || name == "signed") {
+	    vector<VTypeArray::range_t> dims (1);
+	    global_types[perm_string::literal("signed")] = new VTypeArray(&primitive_STDLOGIC, dims);
+      }
       if (all_flag || name == "unsigned") {
 	    vector<VTypeArray::range_t> dims (1);
 	    global_types[perm_string::literal("unsigned")] = new VTypeArray(&primitive_STDLOGIC, dims);
