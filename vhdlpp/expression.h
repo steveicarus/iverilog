@@ -48,6 +48,13 @@ class Expression : public LineInfo {
 	// cannot be done.
       virtual bool evaluate(int64_t&val) const;
 
+	// This method returns true if the drawn Verilog for this
+	// expression is a primary. A containing expressin can use
+	// this method to know if it needs to wrap parentheses. This
+	// is somewhile optional, so it is better to return false if
+	// not certain. The default implementation does return false.
+      virtual bool is_primary(void) const;
+
 	// Debug dump of the expression.
       virtual void dump(ostream&out, int indent) const =0;
 
@@ -56,6 +63,20 @@ class Expression : public LineInfo {
     private: // Not implemented
       Expression(const Expression&);
       Expression& operator = (const Expression&);
+};
+
+class ExpUnary : public Expression {
+
+    public:
+      ExpUnary(Expression*op1);
+      ~ExpUnary();
+
+    protected:
+      int emit_operand1(ostream&out, Entity*ent, Architecture*arc);
+      void dump_operand1(ostream&out, int indent) const;
+
+    private:
+      Expression*operand1_;
 };
 
 /*
@@ -69,10 +90,11 @@ class ExpBinary : public Expression {
       ~ExpBinary();
 
     protected:
-      inline Expression* operand1() { return operand1_; }
-      inline Expression* operand2() { return operand2_; }
-      inline const Expression* operand1() const { return operand1_; }
-      inline const Expression* operand2() const { return operand2_; }
+
+      int emit_operand1(ostream&out, Entity*ent, Architecture*arc);
+      int emit_operand2(ostream&out, Entity*ent, Architecture*arc);
+
+      void dump_operands(ostream&out, int indent) const;
 
     private:
       Expression*operand1_;
@@ -102,6 +124,7 @@ class ExpInteger : public Expression {
       ~ExpInteger();
 
       int emit(ostream&out, Entity*ent, Architecture*arc);
+      bool is_primary(void) const;
       bool evaluate(int64_t&val) const;
       void dump(ostream&out, int indent) const;
 
@@ -136,11 +159,31 @@ class ExpName : public Expression {
       ~ExpName();
 
       int emit(ostream&out, Entity*ent, Architecture*arc);
+      bool is_primary(void) const;
       void dump(ostream&out, int indent) const;
 
     private:
       perm_string name_;
 };
 
+class ExpUAbs : public ExpUnary {
+
+    public:
+      ExpUAbs(Expression*op1);
+      ~ExpUAbs();
+
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      void dump(ostream&out, int indent) const;
+};
+
+class ExpUNot : public ExpUnary {
+
+    public:
+      ExpUNot(Expression*op1);
+      ~ExpUNot();
+
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      void dump(ostream&out, int indent) const;
+};
 
 #endif

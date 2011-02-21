@@ -31,11 +31,43 @@ int Expression::emit(ostream&out, Entity*, Architecture*)
       return 1;
 }
 
+bool Expression::is_primary(void) const
+{
+      return false;
+}
+
+int ExpBinary::emit_operand1(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      bool oper_primary = operand1_->is_primary();
+      if (! oper_primary) out << "(";
+      errors += operand1_->emit(out, ent, arc);
+      if (! oper_primary) out << ")";
+      return errors;
+}
+
+int ExpBinary::emit_operand2(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      bool oper_primary = operand2_->is_primary();
+      if (! oper_primary) out << "(";
+      errors += operand2_->emit(out, ent, arc);
+      if (! oper_primary) out << ")";
+      return errors;
+}
+
+int ExpUnary::emit_operand1(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      errors += operand1_->emit(out, ent, arc);
+      return errors;
+}
+
 int ExpArithmetic::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-      errors += operand1()->emit(out, ent, arc);
+      errors += emit_operand1(out, ent, arc);
 
       switch (fun_) {
 	  case PLUS:
@@ -61,23 +93,27 @@ int ExpArithmetic::emit(ostream&out, Entity*ent, Architecture*arc)
 	    break;
       }
 
-      errors += operand2()->emit(out, ent, arc);
+      errors += emit_operand2(out, ent, arc);
 
       return errors;
 }
 
 int ExpInteger::emit(ostream&out, Entity*, Architecture*)
 {
-      out << " /* " << get_fileline() << ": internal error: "
-	  << "INTEGER LITERAL */ ";
-      return 1;
+      out << value_;
+      return 0;
+}
+
+bool ExpInteger::is_primary(void) const
+{
+      return true;
 }
 
 int ExpLogical::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-      errors += operand1()->emit(out, ent, arc);
+      errors += emit_operand1(out, ent, arc);
 
       switch (fun_) {
 	  case AND:
@@ -100,7 +136,7 @@ int ExpLogical::emit(ostream&out, Entity*ent, Architecture*arc)
 	    break;
       }
 
-      errors += operand2()->emit(out, ent, arc);
+      errors += emit_operand2(out, ent, arc);
 
       return errors;
 }
@@ -110,5 +146,28 @@ int ExpName::emit(ostream&out, Entity*, Architecture*)
       int errors = 0;
 
       out << name_;
+      return errors;
+}
+
+bool ExpName::is_primary(void) const
+{
+      return true;
+}
+
+int ExpUAbs::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      out << "abs(";
+      errors += emit_operand1(out, ent, arc);
+      out << ")";
+      return errors;
+}
+
+int ExpUNot::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      out << "~(";
+      errors += emit_operand1(out, ent, arc);
+      out << ")";
       return errors;
 }

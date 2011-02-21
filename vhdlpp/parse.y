@@ -294,6 +294,16 @@ factor
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
+  | K_abs primary
+      { ExpUAbs*tmp = new ExpUAbs($2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_not primary
+      { ExpUNot*tmp = new ExpUNot($2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
   ;
 
 identifier_opt : IDENTIFIER { $$ = $1; } |  { $$ = 0; } ;
@@ -384,6 +394,8 @@ primary
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  | '(' expression ')'
+      { $$ = $2; }
   ;
 
 relation : shift_expression { $$ = $1; } ;

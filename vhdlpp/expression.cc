@@ -43,6 +43,16 @@ ExpBinary::~ExpBinary()
       delete operand2_;
 }
 
+ExpUnary::ExpUnary(Expression*op1)
+: operand1_(op1)
+{
+}
+
+ExpUnary::~ExpUnary()
+{
+      delete operand1_;
+}
+
 ExpArithmetic::ExpArithmetic(ExpArithmetic::fun_t op, Expression*op1, Expression*op2)
 : ExpBinary(op1, op2), fun_(op)
 {
@@ -82,5 +92,23 @@ ExpName::ExpName(perm_string nn)
 }
 
 ExpName::~ExpName()
+{
+}
+
+ExpUAbs::ExpUAbs(Expression*op1)
+: ExpUnary(op1)
+{
+}
+
+ExpUAbs::~ExpUAbs()
+{
+}
+
+ExpUNot::ExpUNot(Expression*op1)
+: ExpUnary(op1)
+{
+}
+
+ExpUNot::~ExpUNot()
 {
 }

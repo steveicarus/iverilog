@@ -145,13 +145,19 @@ void ExpArithmetic::dump(ostream&out, int indent) const
 
       out << setw(indent) << "" << "Arithmetic " << fun_name
 	  << " at " << get_fileline() << endl;
-      operand1()->dump(out, indent+4);
-      operand2()->dump(out, indent+4);
+      dump_operands(out, indent+4);
+}
+
+void ExpBinary::dump_operands(ostream&out, int indent) const
+{
+      operand1_->dump(out, indent);
+      operand2_->dump(out, indent);
 }
 
 void ExpInteger::dump(ostream&out, int indent) const
 {
-      out << setw(indent) << "" << "Integer" << endl;
+      out << setw(indent) << "" << "Integer " << value_
+	  << " at " << get_fileline() << endl;
 }
 
 void ExpLogical::dump(ostream&out, int indent) const
@@ -180,12 +186,28 @@ void ExpLogical::dump(ostream&out, int indent) const
 
       out << setw(indent) << "" << "Logical " << fun_name
 	  << " at " << get_fileline() << endl;
-      operand1()->dump(out, indent+4);
-      operand2()->dump(out, indent+4);
+      dump_operands(out, indent+4);
 }
 
 void ExpName::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "ExpName(\"" << name_ << "\")"
 	  << " at " << get_fileline() << endl;
+}
+
+void ExpUAbs::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "abs() at " << get_fileline() << endl;
+      dump_operand1(out, indent+4);
+}
+
+void ExpUnary::dump_operand1(ostream&out, int indent) const
+{
+      operand1_->dump(out, indent);
+}
+
+void ExpUNot::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "not() at " << get_fileline() << endl;
+      dump_operand1(out, indent+4);
 }
