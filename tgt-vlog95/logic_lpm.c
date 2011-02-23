@@ -359,7 +359,7 @@ static void emit_lpm_array(ivl_scope_t scope, ivl_lpm_t lpm)
       ivl_signal_t sig = ivl_lpm_array(lpm);
       emit_scope_module_path(scope, ivl_signal_scope(sig));
       fprintf(vlog_out, "%s[", ivl_signal_basename(sig));
-// HERE : Need to scale this to match array base.
+// HERE: Need to scale this to match array base.
       emit_nexus_as_ca(scope, ivl_lpm_select(lpm));
       fprintf(vlog_out, "]");
 }

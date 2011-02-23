@@ -107,50 +107,78 @@ static void emit_stmt_lval_name(ivl_scope_t scope, ivl_lval_t lval,
 
 static void emit_stmt_lval_ips(ivl_scope_t scope, ivl_lval_t lval,
                                ivl_signal_t sig, ivl_expr_t sel_expr,
-                               unsigned wid, unsigned msb, unsigned lsb)
+                               ivl_select_type_t sel_type,
+                               unsigned wid, int msb, int lsb)
 {
       unsigned idx;
-      if ((msb >= lsb) && (lsb != 0)) {
-	    fprintf(vlog_out, "<unsupported>");
-	    fprintf(stderr, "%s:%u: vlog95 sorry: Variable indexed part "
-	                    "select lsb must be zero.\n",
-	                    ivl_expr_file(sel_expr),
-	                    ivl_expr_lineno(sel_expr));
-	    vlog_errors += 1;
-	    return;
-      }
-      if (msb < lsb) {
-	    fprintf(vlog_out, "<unsupported>");
-	    fprintf(stderr, "%s:%u: vlog95 sorry: Variable indexed part "
-	                    "selects must be little endian.\n",
-	                    ivl_expr_file(sel_expr),
-	                    ivl_expr_lineno(sel_expr));
-	    vlog_errors += 1;
-	    return;
-      }
-
+      assert(wid > 0);
       fprintf(vlog_out, "{");
-      for (idx = wid - 1; idx > 0; idx -= 1) {
-	    emit_stmt_lval_name(scope, lval, sig);
-	    fprintf(vlog_out, "[");
-// HERE: Ideally we should simplify the scaled expression and the addition
-//       of the idx value. Also we should simplify any offset with the base
-//       expression as a compiler enhancement. All this will require a
-//       modified/updated version of emit_scaled_expr(). We can remove the
-//       above fails when this is finished.
-	    emit_scaled_expr(scope, sel_expr, msb, lsb);
-	    fprintf(vlog_out, " + %u], ", idx);
+      if (msb >= lsb) {
+	    if (sel_type == IVL_SEL_IDX_DOWN) {
+		  lsb += wid - 1;
+		  msb += wid - 1;
+		  emit_stmt_lval_name(scope, lval, sig);
+		  fprintf(vlog_out, "[");
+		  emit_scaled_expr(scope, sel_expr, msb, lsb);
+		  fprintf(vlog_out, "]");
+		  for (idx = 1; idx < wid; idx += 1) {
+			fprintf(vlog_out, ", ");
+			emit_stmt_lval_name(scope, lval, sig);
+			fprintf(vlog_out, "[");
+			emit_scaled_expr(scope, sel_expr, msb, lsb);
+			fprintf(vlog_out, " - %u]", idx);
+		  }
+		  fprintf(vlog_out, "}");
+	    } else {
+		  assert(sel_type == IVL_SEL_IDX_UP);
+		  for (idx = wid - 1; idx > 0; idx -= 1) {
+			emit_stmt_lval_name(scope, lval, sig);
+			fprintf(vlog_out, "[");
+			emit_scaled_expr(scope, sel_expr, msb, lsb);
+			fprintf(vlog_out, " + %u], ", idx);
+		  }
+		  emit_stmt_lval_name(scope, lval, sig);
+		  fprintf(vlog_out, "[");
+		  emit_scaled_expr(scope, sel_expr, msb, lsb);
+		  fprintf(vlog_out, "]}");
+	    }
+      } else {
+	    if (sel_type == IVL_SEL_IDX_UP) {
+		  lsb -= wid - 1;
+		  msb -= wid - 1;
+		  emit_stmt_lval_name(scope, lval, sig);
+		  fprintf(vlog_out, "[");
+		  emit_scaled_expr(scope, sel_expr, msb, lsb);
+		  fprintf(vlog_out, "]");
+		  for (idx = 1; idx < wid; idx += 1) {
+			fprintf(vlog_out, ", ");
+			emit_stmt_lval_name(scope, lval, sig);
+			fprintf(vlog_out, "[");
+			emit_scaled_expr(scope, sel_expr, msb, lsb);
+			fprintf(vlog_out, " + %u]", idx);
+		  }
+		  fprintf(vlog_out, "}");
+	    } else {
+		  assert(sel_type == IVL_SEL_IDX_DOWN);
+		  for (idx = wid - 1; idx > 0; idx -= 1) {
+			emit_stmt_lval_name(scope, lval, sig);
+			fprintf(vlog_out, "[");
+			emit_scaled_expr(scope, sel_expr, msb, lsb);
+			fprintf(vlog_out, " - %u], ", idx);
+		  }
+		  emit_stmt_lval_name(scope, lval, sig);
+		  fprintf(vlog_out, "[");
+		  emit_scaled_expr(scope, sel_expr, msb, lsb);
+		  fprintf(vlog_out, "]}");
+	    }
       }
-      emit_stmt_lval_name(scope, lval, sig);
-      fprintf(vlog_out, "[");
-      emit_scaled_expr(scope, sel_expr, msb, lsb);
-      fprintf(vlog_out, "]}");
 }
 
 static void emit_stmt_lval_piece(ivl_scope_t scope, ivl_lval_t lval)
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
       ivl_expr_t sel_expr;
+      ivl_select_type_t sel_type;
       unsigned width = ivl_lval_width(lval);
       int msb, lsb;
       assert(width > 0);
@@ -165,6 +193,7 @@ static void emit_stmt_lval_piece(ivl_scope_t scope, ivl_lval_t lval)
       lsb = ivl_signal_lsb(sig);
       msb = ivl_signal_msb(sig);
       sel_expr = ivl_lval_part_off(lval);
+      sel_type = ivl_lval_sel_type(lval);
       assert(sel_expr);
 	/* A bit select. */
       if (width == 1) {
@@ -179,8 +208,9 @@ static void emit_stmt_lval_piece(ivl_scope_t scope, ivl_lval_t lval)
 		  emit_scaled_range(scope, sel_expr, width, msb, lsb);
 	      /* An indexed part select. */
 	    } else {
-		  emit_stmt_lval_ips(scope, lval, sig, sel_expr, width,
-		                     msb, lsb);
+		  assert(sel_type != IVL_SEL_OTHER);
+		  emit_stmt_lval_ips(scope, lval, sig, sel_expr, sel_type,
+		                     width, msb, lsb);
 	    }
       }
 }
@@ -1035,6 +1065,7 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 
 void emit_process(ivl_scope_t scope, ivl_process_t proc)
 {
+      ivl_statement_t stmt;
       fprintf(vlog_out, "\n%*c", get_indent(), ' ');
       switch (ivl_process_type(proc)) {
         case IVL_PR_INITIAL:
@@ -1056,6 +1087,11 @@ void emit_process(ivl_scope_t scope, ivl_process_t proc)
 	                      ivl_process_file(proc),
 	                      ivl_process_lineno(proc));
       }
-      single_indent = 1;
-      emit_stmt(scope, ivl_process_stmt(proc));
+      stmt = ivl_process_stmt(proc);
+      if (ivl_statement_type(stmt) == IVL_ST_NOOP) {
+            fprintf(vlog_out, " begin\n%*cend\n", get_indent(), ' ');
+      } else {
+	    single_indent = 1;
+	    emit_stmt(scope, stmt);
+      }
 }

@@ -289,69 +289,101 @@ static void emit_select_name(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
  * Emit an indexed part select as a concatenation of bit selects.
  */
 static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
-                          ivl_expr_t sel_expr, unsigned wid,
-                          unsigned msb, unsigned lsb)
+                          ivl_expr_t sel_expr, ivl_select_type_t sel_type,
+                          unsigned wid, int msb, int lsb)
 {
       unsigned idx;
-      if ((msb >= lsb) && (lsb != 0)) {
-	    fprintf(vlog_out, "<unsupported>");
-	    fprintf(stderr, "%s:%u: vlog95 sorry: Variable indexed part "
-	                    "select lsb must be zero.\n",
-	                    ivl_expr_file(sel_expr),
-	                    ivl_expr_lineno(sel_expr));
-	    vlog_errors += 1;
-	    return;
-      }
-      if (msb < lsb) {
-	    fprintf(vlog_out, "<unsupported>");
-	    fprintf(stderr, "%s:%u: vlog95 sorry: Variable indexed part "
-	                    "selects must be little endian.\n",
-	                    ivl_expr_file(sel_expr),
-	                    ivl_expr_lineno(sel_expr));
-	    vlog_errors += 1;
-	    return;
-      }
+      assert(wid > 0);
       fprintf(vlog_out, "{");
-      for (idx = wid - 1; idx > 0; idx -= 1) {
-	    emit_select_name(scope, sig_expr, wid);
-	    fprintf(vlog_out, "[");
-// HERE: Ideally we should simplify the scaled expression and the addition
-//       of the idx value. Also we should simplify any offset with the base
-//       expression as a compiler enhancement. All this will require a
-//       modified/updated version of emit_scaled_expr(). We can remove the
-//       above fails when this is finished.
-	    emit_scaled_expr(scope, sel_expr, msb, lsb);
-	    fprintf(vlog_out, " + %u], ", idx);
+      if (msb >= lsb) {
+	    if (sel_type == IVL_SEL_IDX_DOWN) {
+		  lsb  += wid - 1;
+		  msb  += wid - 1;
+		  emit_select_name(scope, sig_expr, wid);
+		  fprintf(vlog_out, "[");
+		  emit_scaled_expr(scope, sel_expr, msb, lsb);
+		  fprintf(vlog_out, "]");
+		  for (idx = 1; idx < wid; idx += 1) {
+			fprintf(vlog_out, ", ");
+			emit_select_name(scope, sig_expr, wid);
+			fprintf(vlog_out, "[");
+			emit_scaled_expr(scope, sel_expr, msb, lsb);
+			fprintf(vlog_out, " - %u]", idx);
+		  }
+		  fprintf(vlog_out, "}");
+	    } else {
+		  assert(sel_type == IVL_SEL_IDX_UP);
+		  for (idx = wid - 1; idx > 0; idx -= 1) {
+			emit_select_name(scope, sig_expr, wid);
+			fprintf(vlog_out, "[");
+			emit_scaled_expr(scope, sel_expr, msb, lsb);
+			fprintf(vlog_out, " + %u], ", idx);
+		  }
+		  emit_select_name(scope, sig_expr, wid);
+		  fprintf(vlog_out, "[");
+		  emit_scaled_expr(scope, sel_expr, msb, lsb);
+		  fprintf(vlog_out, "]}");
+	    }
+      } else {
+	    if (sel_type == IVL_SEL_IDX_UP) {
+		  lsb  -= wid - 1;
+		  msb  -= wid - 1;
+		  emit_select_name(scope, sig_expr, wid);
+		  fprintf(vlog_out, "[");
+		  emit_scaled_expr(scope, sel_expr, msb, lsb);
+		  fprintf(vlog_out, "]");
+		  for (idx = 1; idx < wid; idx += 1) {
+			fprintf(vlog_out, ", ");
+			emit_select_name(scope, sig_expr, wid);
+			fprintf(vlog_out, "[");
+			emit_scaled_expr(scope, sel_expr, msb, lsb);
+			fprintf(vlog_out, " + %u]", idx);
+		  }
+		  fprintf(vlog_out, "}");
+	    } else {
+		  assert(sel_type == IVL_SEL_IDX_DOWN);
+		  for (idx = wid - 1; idx > 0; idx -= 1) {
+			emit_select_name(scope, sig_expr, wid);
+			fprintf(vlog_out, "[");
+			emit_scaled_expr(scope, sel_expr, msb, lsb);
+			fprintf(vlog_out, " - %u], ", idx);
+		  }
+		  emit_select_name(scope, sig_expr, wid);
+		  fprintf(vlog_out, "[");
+		  emit_scaled_expr(scope, sel_expr, msb, lsb);
+		  fprintf(vlog_out, "]}");
+	    }
       }
-      emit_select_name(scope, sig_expr, wid);
-      fprintf(vlog_out, "[");
-      emit_scaled_expr(scope, sel_expr, msb, lsb);
-      fprintf(vlog_out, "]}");
 }
 
 static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_expr_t sel_expr = ivl_expr_oper2(expr);
       ivl_expr_t sig_expr = ivl_expr_oper1(expr);
+      ivl_select_type_t sel_type = ivl_expr_sel_type(expr);
       if (sel_expr) {
-	    int msb = 1;
-	    int lsb = 0;
 	    unsigned width = ivl_expr_width(expr);
 	    ivl_expr_type_t type = ivl_expr_type(sig_expr);
 	    assert(width > 0);
-	    if (type == IVL_EX_SIGNAL) {
-		  ivl_signal_t sig = ivl_expr_signal(sig_expr);
-		  msb = ivl_signal_msb(sig);
-		  lsb = ivl_signal_lsb(sig);
-	    }
 	      /* The compiler uses selects for some shifts. */
 	    if (type != IVL_EX_NUMBER && type != IVL_EX_SIGNAL) {
 		  fprintf(vlog_out, "(" );
 		  emit_select_name(scope, sig_expr, wid);
 		  fprintf(vlog_out, " >> " );
-		  emit_scaled_expr(scope, sel_expr, msb, lsb);
+		  emit_scaled_expr(scope, sel_expr, 1, 0);
 		  fprintf(vlog_out, ")" );
 	    } else {
+		  int msb;
+		  int lsb;
+		  if (type == IVL_EX_SIGNAL) {
+			ivl_signal_t sig = ivl_expr_signal(sig_expr);
+			msb = ivl_signal_msb(sig);
+			lsb = ivl_signal_lsb(sig);
+		  } else {
+// HERE: Need to get the parameter and then the MSB/LSB information.
+			msb = 1;
+			lsb = 0;
+		  }
 		    /* A bit select. */
 		  if (width == 1) {
 			emit_select_name(scope, sig_expr, wid);
@@ -366,8 +398,9 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 			                        msb, lsb);
 			} else {
 				/* An indexed part select. */
-			      emit_expr_ips(scope, sig_expr, sel_expr, width,
-			                    msb, lsb);
+			      assert(sel_type != IVL_SEL_OTHER);
+			      emit_expr_ips(scope, sig_expr, sel_expr,
+			                    sel_type, width, msb, lsb);
 			}
 		  }
 	    }
