@@ -232,6 +232,12 @@ struct ivl_expr_s {
 	    } binary_;
 
 	    struct {
+		  ivl_select_type_t  sel_type_;
+		  ivl_expr_t expr_;
+		  ivl_expr_t base_;
+	    } select_;
+
+	    struct {
 		  ivl_branch_t branch;
 		  ivl_nature_t nature;
 	    } branch_;
@@ -427,6 +433,7 @@ enum ivl_lval_type_t {
 
 struct ivl_lval_s {
       ivl_expr_t loff;
+      ivl_select_type_t sel_type;
       ivl_expr_t idx;
       unsigned width_;
       unsigned type_   : 8;

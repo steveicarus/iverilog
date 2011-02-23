@@ -2301,9 +2301,11 @@ class NetAssign_ {
 	// Get the base index of the part select, or 0 if there is no
 	// part select.
       const NetExpr* get_base() const;
+      ivl_select_type_t select_type() const;
 
       void set_word(NetExpr*);
-      void set_part(NetExpr* loff, unsigned wid);
+      void set_part(NetExpr* loff, unsigned wid,
+                    ivl_select_type_t = IVL_SEL_OTHER);
 
 	// Get the width of the r-value that this node expects. This
 	// method accounts for the presence of the mux, so it is not
@@ -2345,6 +2347,7 @@ class NetAssign_ {
 	// indexed part select base
       NetExpr*base_;
       unsigned lwid_;
+      ivl_select_type_t sel_type_;
 };
 
 class NetAssignBase : public NetProc {
@@ -3644,11 +3647,13 @@ class NetEConcat  : public NetExpr {
 class NetESelect  : public NetExpr {
 
     public:
-      NetESelect(NetExpr*exp, NetExpr*base, unsigned wid);
+      NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,
+                 ivl_select_type_t sel_type = IVL_SEL_OTHER);
       ~NetESelect();
 
       const NetExpr*sub_expr() const;
       const NetExpr*select() const;
+      ivl_select_type_t select_type() const;
 
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual bool set_width(unsigned w, bool last_chance =false);
@@ -3662,6 +3667,7 @@ class NetESelect  : public NetExpr {
     private:
       NetExpr*expr_;
       NetExpr*base_;
+      ivl_select_type_t sel_type_;
 };
 
 /*

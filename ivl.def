@@ -68,6 +68,7 @@ ivl_expr_parm
 ivl_expr_parms
 ivl_expr_repeat
 ivl_expr_scope
+ivl_expr_sel_type
 ivl_expr_signal
 ivl_expr_signed
 ivl_expr_sized
@@ -134,6 +135,7 @@ ivl_lpm_width
 ivl_lval_idx
 ivl_lval_mux
 ivl_lval_part_off
+ivl_lval_sel_type
 ivl_lval_sig
 ivl_lval_width
 

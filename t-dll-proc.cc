@@ -153,9 +153,11 @@ void dll_target::make_assign_lvals_(const NetAssignBase*net)
 
 	    if (loff == 0) {
 		  cur->loff = 0;
+		  cur->sel_type = IVL_SEL_OTHER;
 	    } else {
 		  loff->expr_scan(this);
 		  cur->loff = expr_;
+		  cur->sel_type = asn->select_type();
 		  expr_ = 0;
 	    }
 

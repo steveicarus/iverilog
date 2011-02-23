@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2587,7 +2587,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
       base = normalize_variable_base(base, par_msv, par_lsv, wid, true);
 
       NetExpr*tmp = par->dup_expr();
-      tmp = new NetESelect(tmp, base, wid);
+      tmp = new NetESelect(tmp, base, wid, IVL_SEL_IDX_UP);
       tmp->set_line(*this);
       return tmp;
 }
@@ -2667,7 +2667,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
       base = normalize_variable_base(base, par_msv, par_lsv, wid, false);
 
       NetExpr*tmp = par->dup_expr();
-      tmp = new NetESelect(tmp, base, wid);
+      tmp = new NetESelect(tmp, base, wid, IVL_SEL_IDX_DOWN);
       tmp->set_line(*this);
       return tmp;
 }
@@ -3176,7 +3176,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 
       base = normalize_variable_base(base, net->msi(), net->lsi(), wid, true);
 
-      NetESelect*ss = new NetESelect(net, base, wid);
+      NetESelect*ss = new NetESelect(net, base, wid, IVL_SEL_IDX_UP);
       ss->set_line(*this);
 
       if (debug_elaborate) {
@@ -3263,7 +3263,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 
       base = normalize_variable_base(base, net->msi(), net->lsi(), wid, false);
 
-      NetESelect*ss = new NetESelect(net, base, wid);
+      NetESelect*ss = new NetESelect(net, base, wid, IVL_SEL_IDX_DOWN);
       ss->set_line(*this);
 
       if (debug_elaborate) {

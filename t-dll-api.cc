@@ -436,8 +436,10 @@ extern "C" ivl_expr_t ivl_expr_oper1(ivl_expr_t net)
       assert(net);
       switch (net->type_) {
 	  case IVL_EX_BINARY:
-	  case IVL_EX_SELECT:
 	    return net->u_.binary_.lef_;
+
+	  case IVL_EX_SELECT:
+	    return net->u_.select_.expr_;
 
 	  case IVL_EX_UNARY:
 	    return net->u_.unary_.sub_;
@@ -463,8 +465,10 @@ extern "C" ivl_expr_t ivl_expr_oper2(ivl_expr_t net)
       assert(net);
       switch (net->type_) {
 	  case IVL_EX_BINARY:
-	  case IVL_EX_SELECT:
 	    return net->u_.binary_.rig_;
+
+	  case IVL_EX_SELECT:
+	    return net->u_.select_.base_;
 
 	  case IVL_EX_TERNARY:
 	    return net->u_.ternary_.true_e;
@@ -567,6 +571,13 @@ extern "C" ivl_scope_t ivl_expr_scope(ivl_expr_t net)
       assert(net);
       assert(net->type_ == IVL_EX_SCOPE);
       return net->u_.scope_.scope;
+}
+
+extern "C" ivl_select_type_t ivl_expr_sel_type(ivl_expr_t net)
+{
+      assert(net);
+      assert(net->type_ == IVL_EX_SELECT);
+      return net->u_.select_.sel_type_;
 }
 
 extern "C" ivl_signal_t ivl_expr_signal(ivl_expr_t net)
@@ -1465,6 +1476,12 @@ extern "C" ivl_expr_t ivl_lval_part_off(ivl_lval_t net)
 {
       assert(net);
       return net->loff;
+}
+
+extern "C" ivl_select_type_t ivl_lval_sel_type(ivl_lval_t net)
+{
+      assert(net);
+      return net->sel_type;
 }
 
 extern "C" unsigned ivl_lval_width(ivl_lval_t net)

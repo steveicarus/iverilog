@@ -470,6 +470,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 			         expr_type_tmp, unsized_flag_tmp);
 
       NetExpr*base = elab_and_eval(des, scope, index_tail.msb, -1);
+      ivl_select_type_t sel_type = IVL_SEL_OTHER;
 
 	// Handle the special case that the base is constant. For this
 	// case we can reduce the expression.
@@ -532,10 +533,12 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 	    if (use_sel == index_component_t::SEL_IDX_UP) {
 		  base = normalize_variable_base(base, reg->msb(), reg->lsb(),
 		                                 wid, true);
+		  sel_type = IVL_SEL_IDX_UP;
 	    } else {
 		    // This is assumed to be a SEL_IDX_DO.
 		  base = normalize_variable_base(base, reg->msb(), reg->lsb(),
 		                                 wid, false);
+		  sel_type = IVL_SEL_IDX_DOWN;
 	    }
       }
 
@@ -543,7 +546,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 	    cerr << get_fileline() << ": debug: Set part select width="
 		 << wid << ", base=" << *base << endl;
 
-      lv->set_part(base, wid);
+      lv->set_part(base, wid, sel_type);
 
       return true;
 }

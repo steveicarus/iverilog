@@ -524,8 +524,9 @@ netenum_t* NetENetenum::netenum() const
       return netenum_;
 }
 
-NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid)
-: expr_(exp), base_(base)
+NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,
+                       ivl_select_type_t sel_type)
+: expr_(exp), base_(base), sel_type_(sel_type)
 {
       expr_width(wid);
 }
@@ -544,6 +545,11 @@ const NetExpr*NetESelect::sub_expr() const
 const NetExpr*NetESelect::select() const
 {
       return base_;
+}
+
+ivl_select_type_t NetESelect::select_type() const
+{
+      return sel_type_;
 }
 
 bool NetESelect::has_width() const
