@@ -978,7 +978,7 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 //       this encoding and create an zero based range. Need to skip the
 //       local names _s<digits>.
       name = ivl_logic_basename(nlogic);
-      if (name) {
+      if (name && *name) {
 	    char *fixed_name = strdup(name);
 	    unsigned lp = strlen(name) - 1;
 	    if (fixed_name[lp] == '>') {
