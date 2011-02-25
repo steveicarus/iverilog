@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -84,12 +84,7 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 
       }
 
-	/* If any of the sub expressions failed to elaborate, then
-	   delete all those that did and abort myself. */
       if (errors) {
-	    for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
-		  if (nets[idx]) delete nets[idx];
-	    }
 	    des->errors += errors;
 	    return 0;
       }

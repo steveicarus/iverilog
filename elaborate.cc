@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1326,8 +1326,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			     << "Inout port expression must support "
 			     << "continuous assignment." << endl;
 			cerr << pins[idx]->get_fileline() << ":      : "
-			     << "Port of " << rmod->mod_name()
-			     << " is " << rmod->ports[idx]->name << endl;
+			     << "Port " << rmod->ports[idx]->name << " of "
+			     << rmod->mod_name() << " is connected to "
+			     << *pins[idx] << endl;
 			des->errors += 1;
 			continue;
 		  }
@@ -1372,8 +1373,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			     << "Output port expression must support "
 			     << "continuous assignment." << endl;
 			cerr << pins[idx]->get_fileline() << ":      : "
-			     << "Port of " << rmod->mod_name()
-			     << " is " << rmod->ports[idx]->name << endl;
+			     << "Port " << rmod->ports[idx]->name << " of "
+			     << rmod->mod_name() << " is connected to "
+			     << *pins[idx] << endl;
 			des->errors += 1;
 			continue;
 		  }
