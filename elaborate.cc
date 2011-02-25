@@ -1411,8 +1411,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			     << "Inout port expression must support "
 			     << "continuous assignment." << endl;
 			cerr << pins[idx]->get_fileline() << ":      : "
-			     << "Port of " << rmod->mod_name()
-			     << " is " << rmod->ports[idx]->name << endl;
+			     << "Port " << rmod->ports[idx]->name << " of "
+			     << rmod->mod_name() << " is connected to "
+			     << *pins[idx] << endl;
 			des->errors += 1;
 			continue;
 		  }
@@ -1457,8 +1458,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			     << "Output port expression must support "
 			     << "continuous assignment." << endl;
 			cerr << pins[idx]->get_fileline() << ":      : "
-			     << "Port of " << rmod->mod_name()
-			     << " is " << rmod->ports[idx]->name << endl;
+			     << "Port " << rmod->ports[idx]->name << " of "
+			     << rmod->mod_name() << " is connected to "
+			     << *pins[idx] << endl;
 			des->errors += 1;
 			continue;
 		  }
