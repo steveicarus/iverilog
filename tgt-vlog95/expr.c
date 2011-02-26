@@ -280,6 +280,7 @@ static void emit_select_name(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    fprintf(stderr, "%s:%u: vlog95 error: Unable to find parameter "
 	                    "for select expression \n",
 	                    ivl_expr_file(expr), ivl_expr_lineno(expr));
+	    vlog_errors += 1;
       } else {
 	    emit_expr(scope, expr, wid);
       }
@@ -373,16 +374,16 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 		  emit_scaled_expr(scope, sel_expr, 1, 0);
 		  fprintf(vlog_out, ")" );
 	    } else {
-		  int msb;
-		  int lsb;
+		    /* A constant/parameter must be zero based in 1364-1995
+		     * so keep the compiler generated normalization. This
+		     * does not always work for selects before the parameter
+		     * since 1364-1995 does not support signed math. */
+		  int msb = 1;
+		  int lsb = 0;
 		  if (type == IVL_EX_SIGNAL) {
 			ivl_signal_t sig = ivl_expr_signal(sig_expr);
 			msb = ivl_signal_msb(sig);
 			lsb = ivl_signal_lsb(sig);
-		  } else {
-// HERE: Need to get the parameter and then the MSB/LSB information.
-			msb = 1;
-			lsb = 0;
 		  }
 		    /* A bit select. */
 		  if (width == 1) {
