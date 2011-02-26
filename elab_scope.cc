@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -61,7 +61,6 @@ static void collect_parm_item_(Design*des, NetScope*scope, perm_string name,
 	    tmp->high_open_flag = range->high_open_flag;
 
 	    if (range->low_expr) {
-		  probe_expr_width(des, scope, range->low_expr);
 		  tmp->low_expr = elab_and_eval(des, scope, range->low_expr, -1);
 		  ivl_assert(*range->low_expr, tmp->low_expr);
 	    } else {
@@ -78,7 +77,6 @@ static void collect_parm_item_(Design*des, NetScope*scope, perm_string name,
 		  tmp->high_expr = tmp->low_expr;
 
 	    } else if (range->high_expr) {
-		  probe_expr_width(des, scope, range->high_expr);
 		  tmp->high_expr = elab_and_eval(des, scope, range->high_expr, -1);
 		  ivl_assert(*range->high_expr, tmp->high_expr);
 	    } else {
@@ -136,8 +134,8 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 {
       bool rc_flag;
       assert(enum_type->range->size() == 2);
-      NetExpr*msb_ex = enum_type->range->front()->elaborate_expr(des, scope, -2, false);
-      NetExpr*lsb_ex = enum_type->range->back() ->elaborate_expr(des, scope, -2, false);
+      NetExpr*msb_ex = elab_and_eval(des, scope, enum_type->range->front(), -1);
+      NetExpr*lsb_ex = elab_and_eval(des, scope, enum_type->range->back(),  -1);
 
       long msb = 0;
       rc_flag = eval_as_long(msb, msb_ex);
@@ -162,7 +160,6 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 		    // There is an explicit value. elaborate/evaluate
 		    // the value and assign it to the enumeration name.
 		  NetExpr*val = elab_and_eval(des, scope, cur->parm,
-					      use_enum->base_width(),
 					      use_enum->base_width());
 		  NetEConst*val_const = dynamic_cast<NetEConst*> (val);
 		  if (val_const == 0) {
@@ -557,7 +554,6 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	// The initial value for the genvar does not need (nor can it
 	// use) the genvar itself, so we can evaluate this expression
 	// the same way any other parameter value is evaluated.
-      probe_expr_width(des, container, loop_init);
       need_constant_expr = true;
       NetExpr*init_ex = elab_and_eval(des, container, loop_init, -1);
       need_constant_expr = false;
@@ -624,7 +620,6 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    cerr << get_fileline() << ": debug: genvar init = " << genvar << endl;
       container->genvar_tmp = loop_index;
       container->genvar_tmp_val = genvar;
-      probe_expr_width(des, container, loop_test);
       need_constant_expr = true;
       NetExpr*test_ex = elab_and_eval(des, container, loop_test, -1);
       need_constant_expr = false;
@@ -673,7 +668,6 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    elaborate_subscope_(des, scope);
 
 	      // Calculate the step for the loop variable.
-	    probe_expr_width(des, container, loop_step);
 	    need_constant_expr = true;
 	    NetExpr*step_ex = elab_and_eval(des, container, loop_step, -1);
 	    need_constant_expr = false;
@@ -692,7 +686,6 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 	    container->genvar_tmp_val = genvar;
 	    delete step;
 	    delete test_ex;
-	    probe_expr_width(des, container, loop_test);
 	    test_ex = elab_and_eval(des, container, loop_test, -1);
 	    test = dynamic_cast<NetEConst*>(test_ex);
 	    assert(test);
@@ -707,7 +700,6 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 
 bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else_flag)
 {
-      probe_expr_width(des, container, loop_test);
       need_constant_expr = true;
       NetExpr*test_ex = elab_and_eval(des, container, loop_test, -1);
       need_constant_expr = false;
@@ -800,7 +792,6 @@ bool PGenerate::generate_scope_condit_(Design*des, NetScope*container, bool else
 
 bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 {
-      probe_expr_width(des, container, loop_test);
       need_constant_expr = true;
       NetExpr*case_value_ex = elab_and_eval(des, container, loop_test, -1);
       need_constant_expr = false;
@@ -833,7 +824,6 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 
 	    bool match_flag = false;
 	    for (unsigned idx = 0 ; idx < item->item_test.size() && !match_flag ; idx +=1 ) {
-		  probe_expr_width(des, container, item->item_test[idx]);
 		  need_constant_expr = true;
 		  NetExpr*item_value_ex = elab_and_eval(des, container, item->item_test[idx], -1);
 		  need_constant_expr = false;
@@ -1206,8 +1196,6 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
  */
 void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*sc) const
 {
-      if (msb_) probe_expr_width(des, sc, msb_);
-      if (lsb_) probe_expr_width(des, sc, lsb_);
       need_constant_expr = true;
       NetExpr*mse = msb_ ? elab_and_eval(des, sc, msb_, -1) : 0;
       NetExpr*lse = lsb_ ? elab_and_eval(des, sc, lsb_, -1) : 0;

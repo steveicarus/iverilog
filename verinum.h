@@ -1,7 +1,7 @@
 #ifndef __verinum_H
 #define __verinum_H
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -64,6 +64,7 @@ class verinum {
 
 	// A number "has a length" if the length was specified fixed
 	// in some way.
+      bool has_len(bool flag) { has_len_ = flag; return has_len_; }
       bool has_len() const { return has_len_; }
 
       bool has_sign(bool flag) { has_sign_ = flag; return has_sign_; }
@@ -125,6 +126,12 @@ inline verinum::V sign_bit(const verinum&val)
    least as wide as the requested width. This may involve sign
    extension, if the value is signed. */
 extern verinum pad_to_width(const verinum&, unsigned width);
+
+/* Return a verinum that has the same value as the input, but is
+   exactly the requested width. This may involve sign extension,
+   if the value is signed. The returned verinum will have fixed
+   width. */
+extern verinum cast_to_width(const verinum&, unsigned width);
 
 /* Return a verinum that is minimal. That is, it has only the length
    needed to accurately represent the contained value, signed or not. */

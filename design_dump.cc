@@ -1396,12 +1396,8 @@ void NetEBinary::dump(ostream&o) const
 
 void NetEConcat::dump(ostream&o) const
 {
-      if (repeat_calculated_) {
-	    if (repeat_value_ != 1)
-		  o << repeat_value_;
-      } else if (repeat_) {
-	    o << "<" << *repeat_ << ">";
-      }
+      if (repeat_ != 1)
+            o << repeat_;
 
       if (parms_[0])
 	    o << "{" << *parms_[0];

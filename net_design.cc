@@ -332,8 +332,7 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	/* Evaluate the msb expression, if it is present. */
       PExpr*msb_expr = (*cur).second.msb_expr;
       if (msb_expr) {
-            probe_expr_width(des, this, msb_expr);
-            (*cur).second.msb = elab_and_eval(des, this, msb_expr, -2);
+            (*cur).second.msb = elab_and_eval(des, this, msb_expr, -1);
 	    if (! eval_as_long(msb, (*cur).second.msb)) {
 		  cerr << (*cur).second.val->get_fileline()
 		       << ": error: Unable to evaluate msb expression "
@@ -349,8 +348,7 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	/* Evaluate the lsb expression, if it is present. */
       PExpr*lsb_expr = (*cur).second.lsb_expr;
       if (lsb_expr) {
-            probe_expr_width(des, this, lsb_expr);
-            (*cur).second.lsb = elab_and_eval(des, this, lsb_expr, -2);
+            (*cur).second.lsb = elab_and_eval(des, this, lsb_expr, -1);
 	    if (! eval_as_long(lsb, (*cur).second.lsb)) {
 		  cerr << (*cur).second.val->get_fileline()
 		       << ": error: Unable to evaluate lsb expression "
@@ -367,25 +365,11 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
       PExpr*val_expr = (*cur).second.val_expr;
       NetScope*val_scope = (*cur).second.val_scope;
 
-      unsigned lval_wid = 0;
+      int lv_width = -2;
       if (range_flag)
-	    lval_wid = (msb >= lsb) ? 1 + msb - lsb : 1 + lsb - msb;
+	    lv_width = (msb >= lsb) ? 1 + msb - lsb : 1 + lsb - msb;
 
-      bool unsized_flag = false;
-      ivl_variable_type_t rval_type = IVL_VT_NO_TYPE;
-      int expr_wid = val_expr->test_width(des, val_scope, lval_wid, lval_wid,
-                                          rval_type, unsized_flag);
-
-      if (unsized_flag && !range_flag)
-            expr_wid = -1;
-
-      int prune_wid = -1;
-      if (gn_strict_expr_width_flag)
-            prune_wid = 0;
-      if (range_flag)
-            prune_wid = lval_wid;
-
-      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, expr_wid, prune_wid);
+      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, lv_width);
       if (! expr) 
             return;
 
@@ -427,7 +411,7 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
       if (range_flag) {
 	    /* If we have a real value convert it to an integer. */
 	    if(NetECReal*tmp = dynamic_cast<NetECReal*>(expr)) {
-		  verinum nval(tmp->value().as_long64(), lval_wid);
+		  verinum nval(tmp->value().as_long64(), (unsigned)lv_width);
 		  expr = new NetEConst(nval);
 		  expr->set_line(*((*cur).second.val));
 		  (*cur).second.val = expr;
@@ -504,18 +488,7 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
       PExpr*val_expr = (*cur).second.val_expr;
       NetScope*val_scope = (*cur).second.val_scope;
 
-      bool unsized_flag = false;
-      ivl_variable_type_t rval_type = IVL_VT_NO_TYPE;
-      int expr_wid = val_expr->test_width(des, val_scope, 0, 0,
-                                          rval_type, unsized_flag);
-      if (unsized_flag)
-            expr_wid = -1;
-
-      int prune_wid = -1;
-      if (gn_strict_expr_width_flag)
-            prune_wid = 0;
-
-      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, expr_wid, prune_wid);
+      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, -1);
       if (! expr) 
             return;
 

@@ -198,12 +198,6 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 
 	  case index_component_t::SEL_IDX_DO:
 	  case index_component_t::SEL_IDX_UP: {
-		  // These are not used, but they need to have a default value.
-		ivl_variable_type_t expr_type_tmp = IVL_VT_NO_TYPE;
-		bool unsized_flag_tmp = false;
-		index_tail.msb->test_width(des, scope,
-					   integer_width, integer_width,
-					   expr_type_tmp, unsized_flag_tmp);
 		need_constant_expr = true;
 		NetExpr*tmp_ex = elab_and_eval(des, scope, index_tail.msb, -1);
 		need_constant_expr = false;
@@ -477,12 +471,6 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    }
 	    ivl_assert(*this, index_head.sel == index_component_t::SEL_BIT);
 
-	      // These are not used, but they need to have a default value.
-	    ivl_variable_type_t expr_type_tmp = IVL_VT_NO_TYPE;
-	    bool unsized_flag_tmp = false;
-	    index_head.msb->test_width(des, scope,
-	                               integer_width, integer_width,
-	                               expr_type_tmp, unsized_flag_tmp);
 	    need_constant_expr = true;
 	    NetExpr*tmp_ex = elab_and_eval(des, scope, index_head.msb, -1);
 	    need_constant_expr = false;

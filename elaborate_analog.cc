@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008,2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,8 +28,6 @@
 
 NetProc* AContrib::elaborate(Design*des, NetScope*scope) const
 {
-      probe_expr_width(des, scope, lval_);
-      probe_expr_width(des, scope, rval_);
       NetExpr*lval = elab_and_eval(des, scope, lval_, -1);
       NetExpr*rval = elab_and_eval(des, scope, rval_, -1);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -29,7 +29,7 @@
 # include  "ivl_assert.h"
 # include  "netmisc.h"
 
-NetExpr* NetExpr::eval_tree(int)
+NetExpr* NetExpr::eval_tree()
 {
       return 0;
 }
@@ -114,12 +114,12 @@ NetECReal* NetEBAdd::eval_tree_real_()
       return res;
 }
 
-NetExpr* NetEBAdd::eval_tree(int prune_to_width)
+NetExpr* NetEBAdd::eval_tree()
 {
-      eval_expr(left_, prune_to_width);
-      eval_expr(right_, prune_to_width);
+      eval_expr(left_);
+      eval_expr(right_);
 
-      if (left_->expr_type() == IVL_VT_REAL || right_->expr_type()==IVL_VT_REAL)
+      if (expr_type() == IVL_VT_REAL)
 	    return eval_tree_real_();
 
       NetEConst*lc = dynamic_cast<NetEConst*>(left_);
@@ -131,31 +131,21 @@ NetExpr* NetEBAdd::eval_tree(int prune_to_width)
 	    verinum lval = lc->value();
 	    verinum rval = rc->value();
 
+            unsigned wid = expr_width();
+            ivl_assert(*this, wid > 0);
+            ivl_assert(*this, lval.len() == wid);
+            ivl_assert(*this, rval.len() == wid);
+
 	    verinum val;
 	    switch (op_) {
 		case '+':
-		  val = lval + rval;
+		  val = verinum(lval + rval, wid);
 		  break;
 		case '-':
-		  val = lval - rval;
+		  val = verinum(lval - rval, wid);
 		  break;
 		default:
 		  return 0;
-	    }
-
-	    /* Result might have known width. */
-	    if (has_width()) {
-		  unsigned lwid = lc->expr_width();
-		  unsigned rwid = rc->expr_width();
-		  unsigned  wid = (rwid > lwid) ? rwid : lwid;
-		  if (prune_to_width < 0)
-			wid += 1;
-		  verinum val2=verinum(val,wid);
-		  val=val2;
-	    } else {
-		    /* No fixed width, so trim the bits losslessly. */
-		  verinum val2 = trim_vnum(val);
-		  val = val2;
 	    }
 
 	    NetEConst *res = new NetEConst(val);
@@ -188,37 +178,20 @@ NetExpr* NetEBAdd::eval_tree(int prune_to_width)
 	    verinum lval = lc->value();
 	    verinum rval = rc->value();
 
-	    if (lval.len() < expr_width())
-		  lval = pad_to_width(lval, expr_width());
-	    if (rval.len() < expr_width())
-		  rval = pad_to_width(rval, expr_width());
-
-	    if (se->expr_width() > this->expr_width()) {
-		  cerr << get_fileline() << ": internal error: "
-		       << "expr_width()=" << expr_width()
-		       << ", sub expr_width()=" << se->expr_width()
-		       << ", sub expression=" << *se << endl;
-	    }
-	    ivl_assert(*this, se->expr_width() <= this->expr_width());
+            unsigned wid = expr_width();
+            ivl_assert(*this, wid > 0);
+            ivl_assert(*this, lval.len() == wid);
+            ivl_assert(*this, rval.len() == wid);
 
 	    verinum val;
 	    if (op_ == se->op_) {
 		    /* (a + lval) + rval  --> a + (rval+lval) */
 		    /* (a - lval) - rval  --> a - (rval+lval) */
-		  val = rval + lval;
+		  val = verinum(rval + lval, wid);
 	    } else {
 		    /* (a - lval) + rval  -->  a + (rval-lval) */
 		    /* (a + lval) - rval  -->  a - (rval-lval) */
-		  val = rval - lval;
-	    }
-
-	      // Since we padded the operands above to be the minimum
-	      // width, the val should also be at least expr_width().
-	    ivl_assert(*this, val.len() >= expr_width());
-	    if (val.len() > expr_width()) {
-		  verinum tmp (val, expr_width());
-		  tmp.has_sign(val.has_sign());
-		  val = tmp;
+		  val = verinum(rval - lval, wid);
 	    }
 
 	    NetEConst*tmp = new NetEConst(val);
@@ -236,15 +209,15 @@ NetExpr* NetEBAdd::eval_tree(int prune_to_width)
       return 0;
 }
 
-NetEConst* NetEBBits::eval_tree(int prune_to_width)
+NetEConst* NetEBBits::eval_tree()
 {
       if (debug_eval_tree) {
 	    cerr << get_fileline() << ": debug: Evaluating expression:"
-	         << *this << ", prune_to_width=" << prune_to_width << endl;
+	         << *this << endl;
       }
 
-      eval_expr(left_, prune_to_width);
-      eval_expr(right_, prune_to_width);
+      eval_expr(left_);
+      eval_expr(right_);
 
       NetEConst*lc = dynamic_cast<NetEConst*>(left_);
       NetEConst*rc = dynamic_cast<NetEConst*>(right_);
@@ -266,78 +239,32 @@ NetEConst* NetEBBits::eval_tree(int prune_to_width)
       verinum lval = lc->value();
       verinum rval = rc->value();
 
-      unsigned lwid = lc->expr_width();
-      if (lwid == 0) lwid = lval.len();
-
-      unsigned rwid = rc->expr_width();
-      if (rwid == 0) rwid = rval.len();
-
       unsigned wid = expr_width();
-      if (wid == 0)
-	    wid = (rwid > lwid)? rwid : lwid;
+      ivl_assert(*this, wid > 0);
+      ivl_assert(*this, lval.len() == wid);
+      ivl_assert(*this, rval.len() == wid);
 
       verinum res (verinum::V0, wid);
-
-      if (lwid > wid)
-	    lwid = wid;
-      if (rwid > wid)
-	    rwid = wid;
-
-	// Sub-expressions of bitwise operators need to be the same
-	// width. Pad them out if necessary.
-      if (lwid < wid) {
-	    lval = pad_to_width(lval, wid);
-	    lwid = wid;
-      }
-      if (rwid < wid) {
-	    rval = pad_to_width(rval, wid);
-	    rwid = wid;
-      }
 
       switch (op()) {
 
 	  case '|': {
-		unsigned cnt = lwid;
-		if (cnt > wid)  cnt = wid;
-		if (cnt > rwid) cnt = rwid;
-		for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
+		for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		      res.set(idx, lval.get(idx) | rval.get(idx));
-
-		if (lwid < rwid)
-		      for (unsigned idx = lwid ;  idx < rwid ;  idx += 1)
-			    res.set(idx, rval.get(idx));
-
-		if (rwid < lwid)
-		      for (unsigned idx = rwid ;  idx < lwid ;  idx += 1)
-			    res.set(idx, lval.get(idx));
 
 		break;
 	  }
 
 	  case '&': {
-		unsigned cnt = lwid;
-		if (cnt > wid)  cnt = wid;
-		if (cnt > rwid) cnt = rwid;
-		for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
+		for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		      res.set(idx, lval.get(idx) & rval.get(idx));
 
 		break;
 	  }
 
 	  case '^': {
-		unsigned cnt = lwid;
-		if (cnt > wid)  cnt = wid;
-		if (cnt > rwid) cnt = rwid;
-		for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
+		for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		      res.set(idx, lval.get(idx) ^ rval.get(idx));
-
-		if (lwid < rwid)
-		      for (unsigned idx = lwid ;  idx < rwid ;  idx += 1)
-			    res.set(idx, rval.get(idx));
-
-		if (rwid < lwid)
-		      for (unsigned idx = rwid ;  idx < lwid ;  idx += 1)
-			    res.set(idx, lval.get(idx));
 
 		break;
 	  }
@@ -761,7 +688,7 @@ NetEConst* NetEBComp::eval_eqeqeq_(bool ne_flag)
       return result;
 }
 
-NetEConst* NetEBComp::eval_tree(int)
+NetEConst* NetEBComp::eval_tree()
 {
       eval_expr(left_);
       eval_expr(right_);
@@ -850,11 +777,8 @@ NetExpr* NetEBDiv::eval_tree_real_()
  * The NetEBDiv operator includes the / and % operators. First evaluate
  * the sub-expressions, then perform the required operation.
  */
-NetExpr* NetEBDiv::eval_tree(int prune_to_width)
+NetExpr* NetEBDiv::eval_tree()
 {
-//      assert(prune_to_width <= 0);
-// HERE
-
       eval_expr(left_);
       eval_expr(right_);
 
@@ -865,20 +789,26 @@ NetExpr* NetEBDiv::eval_tree(int prune_to_width)
       NetEConst*rc = dynamic_cast<NetEConst*>(right_);
       if (lc == 0 || rc == 0) return 0;
 
-	// Make sure the expression is evaluated at the
-	// expression width.
-      verinum lval = pad_to_width(lc->value(), expr_width());
-      verinum rval = pad_to_width(rc->value(), expr_width());
+      verinum lval = lc->value();
+      verinum rval = rc->value();
 
-      NetExpr*tmp = 0;
+      unsigned wid = expr_width();
+      ivl_assert(*this, wid > 0);
+      ivl_assert(*this, lval.len() == wid);
+      ivl_assert(*this, rval.len() == wid);
+
+      verinum val;
       switch (op_) {
 	  case '/':
-	    tmp = new NetEConst(lval / rval);
+	    val = verinum(lval / rval, wid);
 	    break;
 	  case '%':
-	    tmp = new NetEConst(lval % rval);
+	    val = verinum(lval % rval, wid);
 	    break;
+	  default:
+	    return 0;
       }
+      NetExpr*tmp = new NetEConst(val);
       ivl_assert(*this, tmp);
       tmp->set_line(*this);
 
@@ -928,7 +858,7 @@ NetEConst* NetEBLogic::eval_tree_real_()
       return tmp;
 }
 
-NetEConst* NetEBLogic::eval_tree(int)
+NetEConst* NetEBLogic::eval_tree()
 {
       eval_expr(left_);
       eval_expr(right_);
@@ -1024,11 +954,8 @@ NetExpr* NetEBMult::eval_tree_real_()
       return res;
 }
 
-NetExpr* NetEBMult::eval_tree(int prune_to_width)
+NetExpr* NetEBMult::eval_tree()
 {
-//      assert(prune_to_width <= 0);
-// HERE
-
       eval_expr(left_);
       eval_expr(right_);
 
@@ -1042,7 +969,13 @@ NetExpr* NetEBMult::eval_tree(int prune_to_width)
       verinum lval = lc->value();
       verinum rval = rc->value();
 
-      NetEConst*tmp = new NetEConst(lval * rval);
+      unsigned wid = expr_width();
+      ivl_assert(*this, wid > 0);
+      ivl_assert(*this, lval.len() == wid);
+      ivl_assert(*this, rval.len() == wid);
+
+      verinum val(lval * rval, wid);
+      NetEConst*tmp = new NetEConst(val);
       ivl_assert(*this, tmp);
       tmp->set_line(*this);
 
@@ -1072,11 +1005,8 @@ NetExpr* NetEBPow::eval_tree_real_()
       return res;
 }
 
-NetExpr* NetEBPow::eval_tree(int prune_to_width)
+NetExpr* NetEBPow::eval_tree()
 {
-//      assert(prune_to_width <= 0);
-// HERE
-
       eval_expr(left_);
       eval_expr(right_);
 
@@ -1090,7 +1020,12 @@ NetExpr* NetEBPow::eval_tree(int prune_to_width)
       verinum lval = lc->value();
       verinum rval = rc->value();
 
-      NetEConst*res = new NetEConst( pow(lval,rval) );
+      unsigned wid = expr_width();
+      ivl_assert(*this, wid > 0);
+      ivl_assert(*this, lval.len() == wid);
+
+      verinum val(pow(lval, rval), wid);
+      NetEConst*res = new NetEConst(val);
       ivl_assert(*this, res);
       res->set_line(*this);
 
@@ -1105,7 +1040,7 @@ NetExpr* NetEBPow::eval_tree(int prune_to_width)
  * Evaluate the shift operator if possible. For this to work, both
  * operands must be constant.
  */
-NetEConst* NetEBShift::eval_tree(int prune_to_width)
+NetEConst* NetEBShift::eval_tree()
 {
       eval_expr(left_);
       eval_expr(right_);
@@ -1116,79 +1051,44 @@ NetEConst* NetEBShift::eval_tree(int prune_to_width)
 
       NetEConst*res;
 
-      verinum rv = re->value();
       verinum lv = le->value();
+      verinum rv = re->value();
 
-	/* Make an early estimate of the expression width. */
       unsigned wid = expr_width();
+      ivl_assert(*this, wid > 0);
+      ivl_assert(*this, lv.len() == wid);
 
       if (rv.is_defined()) {
-
 	    unsigned shift = rv.as_ulong();
 
 	    if (debug_eval_tree) {
 		  cerr << get_fileline() << ": debug: "
 		       << "Evaluate " << lv << "<<" << op() << ">> "
-		       << rv << ", wid=" << wid << ", shift=" << shift
-		       << ", lv.has_len()=" << lv.has_len() << endl;
+		       << rv << ", wid=" << wid << ", shift=" << shift << endl;
 	    }
 
-	    if ((wid == 0) || ! lv.has_len()) {
-		    /* If the caller doesn't care what the width is,
-		       then calculate a width from the trimmed left
-		       expression, plus the shift. This avoids
-		       data loss. */
-		  lv = trim_vnum(lv);
-		  wid = lv.len();
-		  if (op() == 'l')
-			wid = lv.len() + shift;
+            verinum val;
+	    switch (op_) {
+		case 'l':
+		  val = verinum(lv << shift, wid);
+		  break;
+		case 'r':
+                  lv.has_sign(false);
+		  val = verinum(lv >> shift, wid);
+		  break;
+		case 'R':
+                  lv.has_sign(true);
+		  val = verinum(lv >> shift, wid);
+		  break;
+		default:
+		  return 0;
 	    }
+            val.has_sign(has_sign());
 
-	    if (prune_to_width > 0 && wid > (unsigned)prune_to_width)
-		  wid = prune_to_width;
-
-	    assert(wid > 0);
-	    verinum::V pad = verinum::V0;
-	    if (op() == 'R' && has_sign()) {
-		  pad = lv[lv.len()-1];
-	    }
-	    verinum nv (pad, wid, lv.has_len());
-
-	    if (op() == 'r' || op() == 'R') {
-		  unsigned cnt = wid;
-		  if (cnt > nv.len())
-			cnt = nv.len();
-		  if (shift >= lv.len())
-			cnt = 0;
-		  else if (cnt > (lv.len()-shift))
-			cnt = (lv.len()-shift);
-		  for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
-			nv.set(idx, lv[idx+shift]);
-
-	    } else {
-		  unsigned cnt = wid;
-		  if (cnt > lv.len())
-			cnt = lv.len();
-		  if (shift >= nv.len())
-			cnt = 0;
-		  else if (cnt > (nv.len()-shift))
-			cnt = nv.len() - shift;
-
-		  for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
-			nv.set(idx+shift, lv[idx]);
-	    }
-
-	    res = new NetEConst(nv);
-
+	    res = new NetEConst(val);
       } else {
-	    if (wid == 0) wid = left_->expr_width();
-
-	    if (prune_to_width > 0 && wid > (unsigned)prune_to_width)
-		  wid = prune_to_width;
-
-	    assert(wid > 0);
-	    verinum nv (verinum::Vx, wid);
-	    res = new NetEConst(nv);
+	    verinum val (verinum::Vx, wid);
+	    res = new NetEConst(val);
       }
 
       res->set_line(*this);
@@ -1196,7 +1096,7 @@ NetEConst* NetEBShift::eval_tree(int prune_to_width)
       return res;
 }
 
-NetEConst* NetEConcat::eval_tree(int prune_to_width)
+NetEConst* NetEConcat::eval_tree()
 {
 // HERE
       unsigned repeat_val = repeat();
@@ -1204,7 +1104,7 @@ NetEConst* NetEConcat::eval_tree(int prune_to_width)
 
       if (debug_eval_tree) {
 	    cerr << get_fileline() << ": debug: Evaluating expression:"
-	         << *this << ", prune_to_width=" << prune_to_width << endl;
+	         << *this << endl;
       }
 
       unsigned gap = 0;
@@ -1225,7 +1125,7 @@ NetEConst* NetEConcat::eval_tree(int prune_to_width)
 	      // that is here. If I succeed, reset the parameter to
 	      // the evaluated value.
 	    assert(parms_[idx]);
-	    NetExpr*expr = parms_[idx]->eval_tree(0);
+	    NetExpr*expr = parms_[idx]->eval_tree();
 	    if (expr) {
 		  expr->set_line(*parms_[idx]);
 		  delete parms_[idx];
@@ -1285,16 +1185,15 @@ NetEConst* NetEConcat::eval_tree(int prune_to_width)
       val.has_sign( this->has_sign() );
 
       NetEConst*res = new NetEConst(val);
-      res->set_width(val.len());
       return res;
 }
 
-NetEConst* NetESelect::eval_tree(int prune_to_width)
+NetEConst* NetESelect::eval_tree()
 {
 // HERE
       if (debug_eval_tree) {
 	    cerr << get_fileline() << ": debug: Evaluating expression:"
-	         << *this << ", prune_to_width=" << prune_to_width << endl;
+	         << *this << endl;
       }
 
       eval_expr(expr_);
@@ -1318,14 +1217,12 @@ NetEConst* NetESelect::eval_tree(int prune_to_width)
       verinum::V pad_bit = verinum::Vx;
       if (base_ == 0) {
 
-	      /* If the base is NULL (different from 0) the this
-		 select is here for sign extension. So calculate a
-		 proper pad bit. Extend x or z or 0, and sign extend 1
-		 if this is signed. */
-	    unsigned top = expr->expr_width()-1;
-
-	    pad_bit = eval.get(top);
-	    if (pad_bit==verinum::V1 && !has_sign())
+	      /* If the base is NULL (different from 0) then this
+		 select is here for zero or sign extension. So
+                 calculate a proper pad bit. */
+            if (has_sign())
+	          pad_bit = eval.get(expr->expr_width()-1);
+            else
 		  pad_bit = verinum::V0;
       }
 
@@ -1365,12 +1262,12 @@ static void print_ternary_cond(NetExpr*expr)
  * evaluates to x or z, then merge the constant bits of the true and
  * false expressions.
  */
-NetExpr* NetETernary::eval_tree(int prune_to_width)
+NetExpr* NetETernary::eval_tree()
 {
       eval_expr(cond_);
       switch (const_logical(cond_)) {
 	  case C_0:
-	    eval_expr(false_val_, prune_to_width);
+	    eval_expr(false_val_);
 	    if (debug_eval_tree) {
 
 		  cerr << get_fileline() << ": debug: Evaluate ternary with "
@@ -1393,7 +1290,7 @@ NetExpr* NetETernary::eval_tree(int prune_to_width)
 	    return false_val_->dup_expr();
 
 	  case C_1:
-	    eval_expr(true_val_, prune_to_width);
+	    eval_expr(true_val_);
 	    if (debug_eval_tree) {
 		  cerr << get_fileline() << ": debug: Evaluate ternary with "
 		       << "constant condition value: ";
@@ -1425,8 +1322,8 @@ NetExpr* NetETernary::eval_tree(int prune_to_width)
 	   expressions down to constants then compare the values to
 	   build up a constant result. */
 
-      eval_expr(true_val_, prune_to_width);
-      eval_expr(false_val_, prune_to_width);
+      eval_expr(true_val_);
+      eval_expr(false_val_);
 
       NetEConst*t = dynamic_cast<NetEConst*>(true_val_);
       NetEConst*f = dynamic_cast<NetEConst*>(false_val_);
@@ -1509,7 +1406,7 @@ NetExpr* NetEUnary::eval_tree_real_()
       return res;
 }
 
-NetExpr* NetEUnary::eval_tree(int prune_to_width)
+NetExpr* NetEUnary::eval_tree()
 {
       eval_expr(expr_);
       if (expr_type() == IVL_VT_REAL) return eval_tree_real_();
@@ -1529,7 +1426,7 @@ NetExpr* NetEUnary::eval_tree(int prune_to_width)
 	    if (val.is_defined()) {
 		  verinum tmp (verinum::V0, val.len());
 		  tmp.has_sign(val.has_sign());
-		  val = tmp - val;
+		  val = verinum(tmp - val, val.len());
 	    } else {
 		  for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
 			val.set(idx, verinum::Vx);
@@ -1572,9 +1469,9 @@ NetExpr* NetEUnary::eval_tree(int prune_to_width)
 }
 
 
-NetExpr* NetEUBits::eval_tree(int prune_to_width)
+NetExpr* NetEUBits::eval_tree()
 {
-      return NetEUnary::eval_tree(prune_to_width);
+      return NetEUnary::eval_tree();
 }
 
 NetEConst* NetEUReduce::eval_tree_real_()
@@ -1598,7 +1495,7 @@ NetEConst* NetEUReduce::eval_tree_real_()
       return tmp;
 }
 
-NetEConst* NetEUReduce::eval_tree(int)
+NetEConst* NetEUReduce::eval_tree()
 {
       eval_expr(expr_);
       if (expr_type() == IVL_VT_REAL) return eval_tree_real_();
@@ -1955,9 +1852,8 @@ static NetExpr* evaluate_min_max(NetExpr*&arg0_, NetExpr*&arg1_,
       return res;
 }
 
-NetExpr* NetESFunc::eval_tree(int prune_to_width)
+NetExpr* NetESFunc::eval_tree()
 {
-//      assert(prune_to_width <= 0);
 // HERE
 	/* If we are not targeting at least Verilog-2005, Verilog-AMS
 	 * or using the Icarus misc flag then we do not support these
@@ -2056,7 +1952,7 @@ NetExpr* NetESFunc::eval_tree(int prune_to_width)
       return rtn;
 }
 
-NetExpr* NetEUFunc::eval_tree(int)
+NetExpr* NetEUFunc::eval_tree()
 {
       if (need_constant_expr) {
 	    cerr << get_fileline() << ": sorry: constant user "

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -78,11 +78,7 @@ unsigned PDelays::delay_count() const
 
 static NetExpr*calculate_val(Design*des, NetScope*scope, PExpr*expr)
 {
-      ivl_variable_type_t tmp_type = IVL_VT_NO_TYPE;
-      bool tmp_flag = false;
-      expr->test_width(des, scope, 0, 0, tmp_type, tmp_flag);
-      NetExpr*dex = expr->elaborate_expr(des, scope, -1, false);
-      eval_expr(dex);
+      NetExpr*dex = elab_and_eval(des, scope, expr, -1);
 
 	/* Print a warning if we find default and `timescale based
 	 * delays in the design, since this is likely an error. */

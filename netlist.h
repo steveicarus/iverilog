@@ -1601,12 +1601,8 @@ class NetTran  : public NetNode, public IslandBranch {
  * There are cases where expressions need to be represented. The
  * NetExpr class is the root of a hierarchy that serves that purpose.
  *
- * The expr_width() is the width of the expression, that accounts
- * for the widths of the sub-expressions I might have. It is up to the
- * derived classes to properly set the expr width, if need be. The
- * set_width() method is used to compel an expression to have a
- * certain width, and is used particularly when the expression is an
- * rvalue in an assignment statement.
+ * The expr_width() is the width of the expression, which is calculated
+ * before the expression is elaborated.
  */
 class NetExpr  : public LineInfo {
     public:
@@ -1622,27 +1618,9 @@ class NetExpr  : public LineInfo {
 	// How wide am I?
       unsigned expr_width() const { return width_; }
 
-	// Coerce the expression to have a specific width. If the
-	// coercion works, then return true. Otherwise, return false.
-	// A coercion will work or not depending on the implementation
-	// in the derived class. Normally, the width will be set if
-	// the expression is:
-	//    - already the requested size, OR
-	//    - otherwise unsized.
-	// Normally, the resize will not allow a width size that loses
-	// data. For example, it will not reduce a constant expression
-	// to the point where significant bits are lost. But if the
-	// last_chance flag is true, then the method assumes that high
-	// bits will be lost anyhow, so try harder. Loss will be
-	// allowed, but it still won't resize fixed size expressions
-	// such as vector signals. This flag is meant to be used by
-	// elaboration of procedural assignment to set the expression
-	// width to the l-value width, if possible.
-      virtual bool set_width(unsigned wid, bool last_chance =false);
-
 	// This method returns true if the expression is
 	// signed. Unsigned expressions return false.
-      bool has_sign() const;
+      bool has_sign() const { return signed_flag_; }
       virtual void cast_signed(bool flag);
 
 	// This returns true if the expression has a definite
@@ -1664,14 +1642,7 @@ class NetExpr  : public LineInfo {
 	// equivalent expression that is reduced as far as compile
 	// time knows how. Essentially, this is designed to fold
 	// constants.
-	//
-	// The prune_to_width is the maximum width that the result
-	// should be. If it is 0 or -1, then do not prune the
-	// result. If it is -1, go through special efforts to preserve
-	// values that may expand. A width of 0 corresponds to a
-	// self-determined context, and a width of -1 corresponds to
-	// an infinitely wide context.
-      virtual NetExpr*eval_tree(int prune_to_width = -1);
+      virtual NetExpr*eval_tree();
 
 	// Make a duplicate of myself, and subexpressions if I have
 	// any. This is a deep copy operation.
@@ -1696,10 +1667,9 @@ class NetExpr  : public LineInfo {
 	//                 the expression output.
       virtual NetNet*synthesize(Design*des, NetScope*scope, NetExpr*root);
 
-
     protected:
-      void expr_width(unsigned w);
-      void cast_signed_base_(bool flag) {signed_flag_ = flag; }
+      void expr_width(unsigned wid) { width_ = wid; }
+      void cast_signed_base_(bool flag) { signed_flag_ = flag; }
 
     private:
       unsigned width_;
@@ -1723,10 +1693,14 @@ class NetEConst  : public NetExpr {
 
       const verinum&value() const;
 
-      virtual bool set_width(unsigned w, bool last_chance =false);
-      virtual void cast_signed(bool sign_flag);
+      virtual void cast_signed(bool flag);
       virtual bool has_width() const;
       virtual ivl_variable_type_t expr_type() const;
+
+        /* This method allows the constant value to be converted
+           to an unsized value. This is used after evaluating a
+           unsized constant expression. */
+      virtual void trim();
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -1750,7 +1724,6 @@ class NetEConstEnum  : public NetEConst {
       const NetScope*scope() const;
       netenum_t*enumeration() const;
 
-      virtual bool set_width(unsigned w, bool last_chance =false);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -1772,7 +1745,6 @@ class NetEConstParam  : public NetEConst {
       perm_string name() const;
       const NetScope*scope() const;
 
-      virtual bool set_width(unsigned w, bool last_chance =false);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
@@ -1793,10 +1765,6 @@ class NetECReal  : public NetExpr {
       ~NetECReal();
 
       const verireal&value() const;
-
-	// Reals can be used in vector expressions. Conversions will
-	// be done at the right time.
-      virtual bool set_width(unsigned w, bool last_chance);
 
 	// This type has no self-determined width. This is false.
       virtual bool has_width() const;
@@ -3129,14 +3097,13 @@ class NetEUFunc  : public NetExpr {
 
       const NetScope* func() const;
 
-      virtual bool set_width(unsigned, bool last_chance);
       virtual ivl_variable_type_t expr_type() const;
       virtual void dump(ostream&) const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEUFunc*dup_expr() const;
       virtual NexusSet* nex_input(bool rem_out = true);
-      virtual NetExpr* eval_tree(int prune_to_width = -1);
+      virtual NetExpr* eval_tree();
       virtual NetNet* synthesize(Design*des, NetScope*scope, NetExpr*root);
 
     private:
@@ -3332,15 +3299,13 @@ class NetAnalogTop  : public LineInfo, public Attrib {
 class NetEBinary  : public NetExpr {
 
     public:
-      NetEBinary(char op, NetExpr*l, NetExpr*r);
+      NetEBinary(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
       ~NetEBinary();
 
       const NetExpr*left() const { return left_; }
       const NetExpr*right() const { return right_; }
 
       char op() const { return op_; }
-
-      virtual bool set_width(unsigned w, bool last_chance =false);
 
 	// A binary expression node only has a definite
 	// self-determinable width if the operands both have definite
@@ -3371,15 +3336,13 @@ class NetEBinary  : public NetExpr {
 class NetEBAdd : public NetEBinary {
 
     public:
-      NetEBAdd(char op, NetExpr*l, NetExpr*r, bool lossless_flag =false);
+      NetEBAdd(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
       ~NetEBAdd();
 
       virtual ivl_variable_type_t expr_type() const;
 
-      virtual bool set_width(unsigned w, bool last_chance);
-      virtual void cast_signed(bool sign_flag);
       virtual NetEBAdd* dup_expr() const;
-      virtual NetExpr* eval_tree(int prune_to_width = -1);
+      virtual NetExpr* eval_tree();
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
@@ -3394,15 +3357,13 @@ class NetEBAdd : public NetEBinary {
 class NetEBDiv : public NetEBinary {
 
     public:
-      NetEBDiv(char op, NetExpr*l, NetExpr*r);
+      NetEBDiv(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
       ~NetEBDiv();
 
       virtual ivl_variable_type_t expr_type() const;
 
-      virtual bool set_width(unsigned w, bool last_chance);
-      virtual void cast_signed(bool sign_flag);
       virtual NetEBDiv* dup_expr() const;
-      virtual NetExpr* eval_tree(int prune_to_width = -1);
+      virtual NetExpr* eval_tree();
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
@@ -3426,12 +3387,11 @@ class NetEBDiv : public NetEBinary {
 class NetEBBits : public NetEBinary {
 
     public:
-      NetEBBits(char op, NetExpr*l, NetExpr*r);
+      NetEBBits(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
       ~NetEBBits();
 
-      virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBBits* dup_expr() const;
-      virtual NetEConst* eval_tree(int prune_to_width = -1);
+      virtual NetEConst* eval_tree();
 
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 };
@@ -3456,13 +3416,11 @@ class NetEBComp : public NetEBinary {
       NetEBComp(char op, NetExpr*l, NetExpr*r);
       ~NetEBComp();
 
-      virtual bool set_width(unsigned w, bool last_chance =false);
-
 	/* A compare expression has a definite width. */
       virtual bool has_width() const;
       virtual ivl_variable_type_t expr_type() const;
       virtual NetEBComp* dup_expr() const;
-      virtual NetEConst* eval_tree(int prune_to_width = -1);
+      virtual NetEConst* eval_tree();
 
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
@@ -3492,9 +3450,8 @@ class NetEBLogic : public NetEBinary {
       NetEBLogic(char op, NetExpr*l, NetExpr*r);
       ~NetEBLogic();
 
-      virtual bool set_width(unsigned w, bool last_chance =false);
       virtual NetEBLogic* dup_expr() const;
-      virtual NetEConst* eval_tree(int prune_to_width = -1);
+      virtual NetEConst* eval_tree();
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
@@ -3511,7 +3468,7 @@ class NetEBLogic : public NetEBinary {
 class NetEBMinMax : public NetEBinary {
 
     public:
-      NetEBMinMax(char op, NetExpr*l, NetExpr*r);
+      NetEBMinMax(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
       ~NetEBMinMax();
 
       virtual ivl_variable_type_t expr_type() const;
@@ -3525,15 +3482,13 @@ class NetEBMinMax : public NetEBinary {
 class NetEBMult : public NetEBinary {
 
     public:
-      NetEBMult(char op, NetExpr*l, NetExpr*r);
+      NetEBMult(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
       ~NetEBMult();
 
       virtual ivl_variable_type_t expr_type() const;
 
-      virtual bool set_width(unsigned w, bool last_chance);
-      virtual void cast_signed(bool sign_flag);
       virtual NetEBMult* dup_expr() const;
-      virtual NetExpr* eval_tree(int prune_to_width = -1);
+      virtual NetExpr* eval_tree();
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
@@ -3546,14 +3501,13 @@ class NetEBMult : public NetEBinary {
 class NetEBPow : public NetEBinary {
 
     public:
-      NetEBPow(char op, NetExpr*l, NetExpr*r);
+      NetEBPow(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
       ~NetEBPow();
 
       virtual ivl_variable_type_t expr_type() const;
 
-      virtual bool set_width(unsigned w, bool last_chance);
       virtual NetEBPow* dup_expr() const;
-      virtual NetExpr* eval_tree(int prune_to_width = -1);
+      virtual NetExpr* eval_tree();
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
@@ -3572,17 +3526,15 @@ class NetEBPow : public NetEBinary {
 class NetEBShift : public NetEBinary {
 
     public:
-      NetEBShift(char op, NetExpr*l, NetExpr*r);
+      NetEBShift(char op, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag);
       ~NetEBShift();
-
-      virtual bool set_width(unsigned w, bool last_chance);
 
 	// A shift expression only needs the left expression to have a
 	// definite width to give the expression a definite width.
       virtual bool has_width() const;
 
       virtual NetEBShift* dup_expr() const;
-      virtual NetEConst* eval_tree(int prune_to_width = -1);
+      virtual NetEConst* eval_tree();
 
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
@@ -3602,31 +3554,27 @@ class NetEBShift : public NetEBinary {
 class NetEConcat  : public NetExpr {
 
     public:
-      NetEConcat(unsigned cnt, NetExpr* repeat =0);
+      NetEConcat(unsigned cnt, unsigned repeat =1);
       ~NetEConcat();
 
 	// Manipulate the parameters.
       void set(unsigned idx, NetExpr*e);
 
-      unsigned repeat();
-      unsigned repeat() const;
+      unsigned repeat() const { return repeat_; }
       unsigned nparms() const { return parms_.count() ; }
       NetExpr* parm(unsigned idx) const { return parms_[idx]; }
 
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual bool has_width() const;
-      virtual bool set_width(unsigned w, bool last_chance =false);
       virtual NetEConcat* dup_expr() const;
-      virtual NetEConst*  eval_tree(int prune_to_width = -1);
+      virtual NetEConst*  eval_tree();
       virtual NetNet*synthesize(Design*, NetScope*scope, NetExpr*root);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
 
     private:
       svector<NetExpr*>parms_;
-      NetExpr* repeat_;
-      unsigned repeat_value_;
-      bool repeat_calculated_;
+      unsigned repeat_;
 };
 
 
@@ -3656,10 +3604,9 @@ class NetESelect  : public NetExpr {
       ivl_select_type_t select_type() const;
 
       virtual NexusSet* nex_input(bool rem_out = true);
-      virtual bool set_width(unsigned w, bool last_chance =false);
       virtual bool has_width() const;
       virtual void expr_scan(struct expr_scan_t*) const;
-      virtual NetEConst* eval_tree(int prune_to_width = -1);
+      virtual NetEConst* eval_tree();
       virtual NetESelect* dup_expr() const;
       virtual NetNet*synthesize(Design*des, NetScope*scope, NetExpr*root);
       virtual void dump(ostream&) const;
@@ -3757,11 +3704,10 @@ class NetESFunc  : public NetExpr {
       NetExpr* parm(unsigned idx);
       const NetExpr* parm(unsigned idx) const;
 
-      virtual NetExpr* eval_tree(int prune_to_width = -1);
+      virtual NetExpr* eval_tree();
 
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true);
-      virtual bool set_width(unsigned, bool last_chance);
       virtual netenum_t* enumeration() const;
       virtual void dump(ostream&) const;
 
@@ -3788,17 +3734,15 @@ class NetESFunc  : public NetExpr {
 class NetETernary  : public NetExpr {
 
     public:
-      NetETernary(NetExpr*c, NetExpr*t, NetExpr*f);
+      NetETernary(NetExpr*c, NetExpr*t, NetExpr*f, unsigned wid, bool signed_flag);
       ~NetETernary();
-
-      virtual bool set_width(unsigned w, bool last_chance);
 
       const NetExpr*cond_expr() const;
       const NetExpr*true_expr() const;
       const NetExpr*false_expr() const;
 
       virtual NetETernary* dup_expr() const;
-      virtual NetExpr* eval_tree(int prune_to_width = -1);
+      virtual NetExpr* eval_tree();
 
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true);
@@ -3837,16 +3781,14 @@ class NetETernary  : public NetExpr {
 class NetEUnary  : public NetExpr {
 
     public:
-      NetEUnary(char op, NetExpr*ex);
+      NetEUnary(char op, NetExpr*ex, unsigned wid, bool signed_flag);
       ~NetEUnary();
 
       char op() const { return op_; }
       const NetExpr* expr() const { return expr_; }
 
-      virtual bool set_width(unsigned w, bool last_chance);
-
       virtual NetEUnary* dup_expr() const;
-      virtual NetExpr* eval_tree(int prune_to_width = -1);
+      virtual NetExpr* eval_tree();
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
       virtual ivl_variable_type_t expr_type() const;
@@ -3865,13 +3807,13 @@ class NetEUnary  : public NetExpr {
 class NetEUBits : public NetEUnary {
 
     public:
-      NetEUBits(char op, NetExpr*ex);
+      NetEUBits(char op, NetExpr*ex, unsigned wid, bool signed_flag);
       ~NetEUBits();
 
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
       virtual NetEUBits* dup_expr() const;
-      virtual NetExpr* eval_tree(int prune_to_width = -1);
+      virtual NetExpr* eval_tree();
       virtual ivl_variable_type_t expr_type() const;
 };
 
@@ -3881,10 +3823,9 @@ class NetEUReduce : public NetEUnary {
       NetEUReduce(char op, NetExpr*ex);
       ~NetEUReduce();
 
-      virtual bool set_width(unsigned w, bool last_chance);
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
       virtual NetEUReduce* dup_expr() const;
-      virtual NetEConst* eval_tree(int prune_to_width = -1);
+      virtual NetEConst* eval_tree();
       virtual ivl_variable_type_t expr_type() const;
 
     private:
@@ -3894,7 +3835,7 @@ class NetEUReduce : public NetEUnary {
 class NetECast : public NetEUnary {
 
     public:
-      NetECast(char op, NetExpr*ex);
+      NetECast(char op, NetExpr*ex, unsigned wid, bool signed_flag);
       ~NetECast();
 
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
@@ -3920,7 +3861,6 @@ class NetESignal  : public NetExpr {
       ~NetESignal();
 
       perm_string name() const;
-      virtual bool set_width(unsigned, bool last_chance);
 
       virtual NetESignal* dup_expr() const;
       NetNet* synthesize(Design*des, NetScope*scope, NetExpr*root);

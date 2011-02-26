@@ -38,90 +38,15 @@ netenum_t*NetExpr::enumeration() const
 }
 
 /*
- * Create an add/sub node from the two operands. Make a best guess of
- * the
+ * Create an add/sub node from the two operands.
  */
-NetEBAdd::NetEBAdd(char op__, NetExpr*l, NetExpr*r, bool lossless_flag)
-: NetEBinary(op__, l, r)
+NetEBAdd::NetEBAdd(char op__, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag)
+: NetEBinary(op__, l, r, wid, signed_flag)
 {
-      NetEConst* tmp;
-
-	/* Catch the special case that one of the operands is an
-	   unsized constant number. If so, then we should set the
-	   width of that number to the size of the other operand, plus
-	   one. This expands the expression to account for the largest
-	   possible result.
-
-	   Remember to handle the special case of an unsized constant,
-	   which we define to be at least "integer_width" bits.
-
-	   The set_width applied to a constant value will only
-	   truncate the constant so far as it can still hold its
-	   logical value, so this is safe to do. */
-      if ( (tmp = dynamic_cast<NetEConst*>(r))
-	   && (! tmp->has_width())
-	   && (tmp->expr_width() > l->expr_width() || integer_width > l->expr_width()) ) {
-
-	    verinum tmp_v = trim_vnum(tmp->value());
-	    unsigned target_width = l->expr_width();
-	    if (target_width < tmp_v.len())
-		  target_width = tmp_v.len();
-	    if (lossless_flag)
-		  target_width += 1;
-	    if (target_width < integer_width)
-		  target_width = integer_width;
-
-	    r->set_width(target_width);
-
-	      /* Note: This constant value will not gain a defined
-		 width from this. Make sure. */
-	    assert(! r->has_width() );
-
-	    expr_width(target_width);
-
-      } else if ( (tmp = dynamic_cast<NetEConst*>(l))
-	   && (! tmp->has_width())
-		  && (tmp->expr_width() > r->expr_width() || integer_width > r->expr_width()) ) {
-
-	    verinum tmp_v = trim_vnum(tmp->value());
-	    unsigned target_width = r->expr_width();
-	    if (target_width < tmp_v.len())
-		  target_width = tmp_v.len();
-	    if (lossless_flag)
-		  target_width += 1;
-	    if (target_width < integer_width)
-		  target_width = integer_width;
-
-	    l->set_width(target_width);
-
-	      /* Note: This constant value will not gain a defined
-		 width from this. Make sure. */
-	    assert(! l->has_width() );
-
-	    expr_width(target_width);
-
-      } else if (r->expr_width() > l->expr_width()) {
-	    unsigned loss_pad = lossless_flag? 1 : 0;
-	    expr_width(r->expr_width() + loss_pad);
-
-      } else {
-	    unsigned loss_pad = lossless_flag? 1 : 0;
-	    expr_width(l->expr_width() + loss_pad);
-      }
-
-      cast_signed(l->has_sign() && r->has_sign());
 }
 
 NetEBAdd::~NetEBAdd()
 {
-}
-
-NetEBAdd* NetEBAdd::dup_expr() const
-{
-      NetEBAdd*result = new NetEBAdd(op_, left_->dup_expr(),
-				     right_->dup_expr());
-      result->set_line(*this);
-      return result;
 }
 
 ivl_variable_type_t NetEBAdd::expr_type() const
@@ -137,50 +62,10 @@ ivl_variable_type_t NetEBAdd::expr_type() const
 
 /*
  * Create a comparison operator with two sub-expressions.
- *
- * Handle the special case of an unsized constant on the left or right
- * side by resizing the number to match the other
- * expression. Otherwise, the netlist will have to allow the
- * expressions to have different widths.
  */
 NetEBComp::NetEBComp(char op__, NetExpr*l, NetExpr*r)
-: NetEBinary(op__, l, r)
+: NetEBinary(op__, l, r, 1, false)
 {
-	// The output of compare is always unsigned.
-      cast_signed_base_(false);
-
-      if (NetEConst*tmp = dynamic_cast<NetEConst*>(r)) do {
-
-	    if (tmp->has_width())
-		  break;
-
-	    if (l->expr_width() == 0)
-		  break;
-
-	    if (tmp->expr_width() == l->expr_width())
-		  break;
-
-	    tmp->set_width(l->expr_width());
-
-      } while (0);
-
-      if (NetEConst*tmp = dynamic_cast<NetEConst*>(l)) do {
-
-	    if (tmp->has_width())
-		  break;
-
-	    if (r->expr_width() == 0)
-		  break;
-
-	    if (tmp->expr_width() == r->expr_width())
-		  break;
-
-	    tmp->set_width(r->expr_width());
-
-      } while (0);
-
-
-      expr_width(1);
 }
 
 NetEBComp::~NetEBComp()
@@ -207,27 +92,13 @@ ivl_variable_type_t NetEBComp::expr_type() const
       return IVL_VT_BOOL;
 }
 
-NetEBDiv::NetEBDiv(char op__, NetExpr*l, NetExpr*r)
-: NetEBinary(op__, l, r)
+NetEBDiv::NetEBDiv(char op__, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag)
+: NetEBinary(op__, l, r, wid, signed_flag)
 {
-      unsigned w = l->expr_width();
-      if (r->expr_width() > w)
-	    w = r->expr_width();
-
-      expr_width(w);
-      cast_signed(l->has_sign() && r->has_sign());
 }
 
 NetEBDiv::~NetEBDiv()
 {
-}
-
-NetEBDiv* NetEBDiv::dup_expr() const
-{
-      NetEBDiv*result = new NetEBDiv(op_, left_->dup_expr(),
-				       right_->dup_expr());
-      result->set_line(*this);
-      return result;
 }
 
 ivl_variable_type_t NetEBDiv::expr_type() const
@@ -241,11 +112,9 @@ ivl_variable_type_t NetEBDiv::expr_type() const
       return IVL_VT_LOGIC;
 }
 
-NetEBMinMax::NetEBMinMax(char op__, NetExpr*l, NetExpr*r)
-: NetEBinary(op__, l, r)
+NetEBMinMax::NetEBMinMax(char op__, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag)
+: NetEBinary(op__, l, r, wid, signed_flag)
 {
-      expr_width( max(l->expr_width(), r->expr_width()) );
-      cast_signed(l->has_sign() || r->has_sign());
 }
 
 NetEBMinMax::~NetEBMinMax()
@@ -262,28 +131,13 @@ ivl_variable_type_t NetEBMinMax::expr_type() const
       return IVL_VT_LOGIC;
 }
 
-NetEBMult::NetEBMult(char op__, NetExpr*l, NetExpr*r)
-: NetEBinary(op__, l, r)
+NetEBMult::NetEBMult(char op__, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag)
+: NetEBinary(op__, l, r, wid, signed_flag)
 {
-      if (expr_type() == IVL_VT_REAL) {
-	    expr_width(1);
-	    cast_signed(true);
-      } else {
-	    expr_width(l->expr_width() + r->expr_width());
-	    cast_signed(l->has_sign() && r->has_sign());
-      }
 }
 
 NetEBMult::~NetEBMult()
 {
-}
-
-NetEBMult* NetEBMult::dup_expr() const
-{
-      NetEBMult*result = new NetEBMult(op_, left_->dup_expr(),
-				       right_->dup_expr());
-      result->set_line(*this);
-      return result;
 }
 
 ivl_variable_type_t NetEBMult::expr_type() const
@@ -297,25 +151,13 @@ ivl_variable_type_t NetEBMult::expr_type() const
       return IVL_VT_LOGIC;
 }
 
-NetEBPow::NetEBPow(char op__, NetExpr*l, NetExpr*r)
-: NetEBinary(op__, l, r)
+NetEBPow::NetEBPow(char op__, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag)
+: NetEBinary(op__, l, r, wid, signed_flag)
 {
-      assert(op__ == 'p');
-	/* You could need up to a * (2^b - 1) bits. */
-      expr_width(l->expr_width());
-      cast_signed(l->has_sign() || r->has_sign());
 }
 
 NetEBPow::~NetEBPow()
 {
-}
-
-NetEBPow* NetEBPow::dup_expr() const
-{
-      NetEBPow*result = new NetEBPow(op_, left_->dup_expr(),
-				     right_->dup_expr());
-      result->set_line(*this);
-      return result;
 }
 
 ivl_variable_type_t NetEBPow::expr_type() const
@@ -328,13 +170,9 @@ ivl_variable_type_t NetEBPow::expr_type() const
       return IVL_VT_LOGIC;
 }
 
-NetEBShift::NetEBShift(char op__, NetExpr*l, NetExpr*r)
-: NetEBinary(op__, l, r)
+NetEBShift::NetEBShift(char op__, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag)
+: NetEBinary(op__, l, r, wid, signed_flag)
 {
-      expr_width(l->expr_width());
-
-	// The >>> is signed if the left operand is signed.
-      if (op__ == 'R') cast_signed(l->has_sign());
 }
 
 NetEBShift::~NetEBShift()
@@ -346,24 +184,9 @@ bool NetEBShift::has_width() const
       return left_->has_width();
 }
 
-NetEBShift* NetEBShift::dup_expr() const
-{
-      NetEBShift*result = new NetEBShift(op_, left_->dup_expr(),
-					 right_->dup_expr());
-      result->set_line(*this);
-      return result;
-}
-
-NetEConcat::NetEConcat(unsigned cnt, NetExpr* r)
+NetEConcat::NetEConcat(unsigned cnt, unsigned r)
 : parms_(cnt), repeat_(r)
 {
-      if (repeat_ == 0) {
-	    repeat_calculated_ = true;
-	    repeat_value_ = 1;
-      } else {
-	    repeat_calculated_ = false;
-      }
-
       expr_width(0);
 }
 
@@ -383,63 +206,7 @@ void NetEConcat::set(unsigned idx, NetExpr*e)
       assert(idx < parms_.count());
       assert(parms_[idx] == 0);
       parms_[idx] = e;
-      expr_width( expr_width() + e->expr_width() );
-}
-
-NetEConcat* NetEConcat::dup_expr() const
-{
-      NetEConcat*dup = new NetEConcat(parms_.count(), 0);
-      dup->set_line(*this);
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
-	    if (parms_[idx]) {
-		  NetExpr*tmp = parms_[idx]->dup_expr();
-		  assert(tmp);
-		  dup->parms_[idx] = tmp;
-	    }
-
-
-      dup->repeat_ = repeat_? repeat_->dup_expr() : 0;
-      dup->repeat_value_ = repeat_value_;
-      dup->repeat_calculated_ = repeat_calculated_;
-      dup->expr_width(expr_width());
-
-      return dup;
-}
-
-unsigned NetEConcat::repeat()
-{
-      if (repeat_calculated_)
-	    return repeat_value_;
-
-      eval_expr(repeat_);
-
-      NetEConst*repeat_const = dynamic_cast<NetEConst*>(repeat_);
-
-	/* This should not be possible, as it was checked earlier to
-	   assure that this is a constant expression. */
-      if (repeat_const == 0) {
-	    cerr << get_fileline() << ": internal error: repeat expression "
-		 << "is not a compile time constant." << endl;
-	    cerr << get_fileline() << ":               : Expression is: "
-		 << *repeat_ << endl;
-	    repeat_calculated_ = true;
-	    repeat_value_ = 1;
-	    return 1;
-      }
-
-      repeat_calculated_ = true;
-      repeat_value_ = repeat_const->value().as_ulong();
-
-      delete repeat_;
-      repeat_ = 0;
-
-      return repeat_value_;
-}
-
-unsigned NetEConcat::repeat() const
-{
-      assert(repeat_calculated_);
-      return repeat_value_;
+      expr_width( expr_width() + repeat_ * e->expr_width() );
 }
 
 NetEConstEnum::NetEConstEnum(NetScope*s, perm_string n, netenum_t*eset, const verinum&v)
@@ -461,7 +228,7 @@ NetECReal::NetECReal(const verireal&val)
 : value_(val)
 {
       expr_width(1);
-      cast_signed(true);
+      cast_signed_base_(true);
 }
 
 NetECReal::~NetECReal()
@@ -475,14 +242,7 @@ const verireal& NetECReal::value() const
 
 bool NetECReal::has_width() const
 {
-      return false;
-}
-
-NetECReal* NetECReal::dup_expr() const
-{
-      NetECReal*tmp = new NetECReal(value_);
-      tmp->set_line(*this);
-      return tmp;
+      return true;
 }
 
 ivl_variable_type_t NetECReal::expr_type() const

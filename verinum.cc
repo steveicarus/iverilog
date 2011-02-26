@@ -287,7 +287,7 @@ verinum::verinum(const verinum&that)
 
 verinum::verinum(const verinum&that, unsigned nbits)
 {
-      string_flag_ = false;
+      string_flag_ = that.string_flag_ && (that.nbits_ == nbits);
       nbits_ = nbits;
       bits_ = new V[nbits_];
       has_len_ = true;
@@ -588,6 +588,39 @@ verinum pad_to_width(const verinum&that, unsigned width)
       if (that.is_string() && (width % 8) == 0) {
 	    val = verinum(val.as_string());
       }
+      return val;
+}
+
+verinum cast_to_width(const verinum&that, unsigned width)
+{
+      if (that.has_len() && (that.len() == width))
+            return that;
+
+      if (that.len() >= width)
+            return verinum(that, width);
+
+      if (that.len() == 0) {
+	    verinum val (verinum::V0, width, true);
+	    val.has_sign(that.has_sign());
+	    return val;
+      }
+
+      verinum::V pad = that[that.len()-1];
+      if (pad==verinum::V1 && !that.has_sign())
+	    pad = verinum::V0;
+      if (that.has_len() && !that.has_sign()) {
+	    if (pad==verinum::Vx)
+		  pad = verinum::V0;
+	    if (pad==verinum::Vz)
+		  pad = verinum::V0;
+      }
+
+      verinum val(pad, width, true);
+
+      for (unsigned idx = 0 ;  idx < that.len() ;  idx += 1)
+	    val.set(idx, that[idx]);
+
+      val.has_sign(that.has_sign());
       return val;
 }
 
@@ -1097,6 +1130,7 @@ verinum pow(const verinum&left, const verinum&right)
 verinum operator << (const verinum&that, unsigned shift)
 {
       verinum result(verinum::V0, that.len() + shift, that.has_len());
+      result.has_sign(that.has_sign());
 
       for (unsigned idx = 0 ;  idx < that.len() ;  idx += 1)
 	    result.set(idx+shift, that.get(idx));
@@ -1119,6 +1153,7 @@ verinum operator >> (const verinum&that, unsigned shift)
 
       verinum result(that.has_sign()? that.get(that.len()-1) : verinum::V0,
 		     that.len() - shift, that.has_len());
+      result.has_sign(that.has_sign());
 
       for (unsigned idx = shift ;  idx < that.len() ;  idx += 1)
 	    result.set(idx-shift, that.get(idx));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2010 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2011 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,8 +31,10 @@
 
 PExpr::PExpr()
 {
-      expr_width_ = 0;
-      expr_type_ = IVL_VT_NO_TYPE;
+      expr_type_   = IVL_VT_NO_TYPE;
+      expr_width_  = 0;
+      min_width_   = 0;
+      signed_flag_ = false;
 }
 
 PExpr::~PExpr()
@@ -94,8 +96,8 @@ bool PEBinary::has_aa_term(Design*des, NetScope*scope) const
 PEBComp::PEBComp(char op, PExpr*l, PExpr*r)
 : PEBinary(op, l, r)
 {
-      left_width_ = 0;
-      right_width_ = 0;
+      l_width_ = 0;
+      r_width_ = 0;
 }
 
 PEBComp::~PEBComp()
@@ -204,13 +206,16 @@ bool PECallFunction::has_aa_term(Design*des, NetScope*scope) const
 }
 
 PEConcat::PEConcat(const list<PExpr*>&p, PExpr*r)
-: parms_(p.size()), tested_widths_(p.size()), repeat_(r)
+: parms_(p.size()), width_modes_(p.size()), repeat_(r)
 {
       int tmp_idx = 0;
       assert(parms_.size() == p.size());
       for (list<PExpr*>::const_iterator idx = p.begin()
 		 ; idx != p.end() ; ++idx)
 	    parms_[tmp_idx++] = *idx;
+
+      tested_scope_ = 0;
+      repeat_count_ = 1;
 }
 
 PEConcat::~PEConcat()
@@ -436,4 +441,12 @@ bool PEUnary::has_aa_term(Design*des, NetScope*scope) const
 {
       assert(expr_);
       return expr_->has_aa_term(des, scope);
+}
+
+PEVoid::PEVoid()
+{
+}
+
+PEVoid::~PEVoid()
+{
 }

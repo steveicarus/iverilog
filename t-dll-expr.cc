@@ -274,8 +274,8 @@ void dll_target::expr_param(const NetEConstParam*net)
 		 << ivl_scope_name(scop) << endl;
       }
       assert(par);
-      assert(par->value);
-      expr_ = par->value;
+      expr_const(net);
+      expr_->u_.string_.parameter = par;
 }
 
 void dll_target::expr_rparam(const NetECRealParam*net)
