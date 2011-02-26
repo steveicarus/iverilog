@@ -29,12 +29,16 @@ const VTypePrimitive primitive_BIT     (VTypePrimitive::BIT);;
 const VTypePrimitive primitive_INTEGER (VTypePrimitive::INTEGER);;
 const VTypePrimitive primitive_STDLOGIC(VTypePrimitive::STDLOGIC);;
 
+const VTypeArray primitive_BIT_VECTOR(&primitive_BIT,      vector<VTypeArray::range_t> (1));
+const VTypeArray primitive_BOOL_VECTOR(&primitive_BOOLEAN, vector<VTypeArray::range_t> (1));
+
 void preload_global_types(void)
 {
       global_types[perm_string::literal("boolean")]   = &primitive_BOOLEAN;
       global_types[perm_string::literal("bit")]       = &primitive_BIT;
       global_types[perm_string::literal("integer")]   = &primitive_INTEGER;
       global_types[perm_string::literal("std_logic")] = &primitive_STDLOGIC;
+      global_types[perm_string::literal("bit_vector")]= &primitive_BOOL_VECTOR;
 }
 
 void import_ieee(void)
@@ -51,11 +55,11 @@ static void import_ieee_use_numeric_bit(perm_string name)
 
       if (all_flag || name == "signed") {
 	    vector<VTypeArray::range_t> dims (1);
-	    global_types[perm_string::literal("signed")] = new VTypeArray(&primitive_STDLOGIC, dims);
+	    global_types[perm_string::literal("signed")] = new VTypeArray(&primitive_STDLOGIC, dims, true);
       }
       if (all_flag || name == "unsigned") {
 	    vector<VTypeArray::range_t> dims (1);
-	    global_types[perm_string::literal("unsigned")] = new VTypeArray(&primitive_BIT, dims);
+	    global_types[perm_string::literal("unsigned")] = new VTypeArray(&primitive_BIT, dims, false);
       }
 }
 
@@ -127,8 +131,8 @@ void VTypePrimitive::show(ostream&out) const
       }
 }
 
-VTypeArray::VTypeArray(const VType*element, const vector<VTypeArray::range_t>&r)
-: etype_(element), ranges_(r)
+VTypeArray::VTypeArray(const VType*element, const vector<VTypeArray::range_t>&r, bool sv)
+: etype_(element), ranges_(r), signed_flag_(sv)
 {
 }
 
@@ -154,6 +158,8 @@ void VTypeArray::show(ostream&out) const
 	    out << "(" << cur->msb() << " downto " << cur->lsb() << ")";
       }
       out << " of ";
+      if (signed_flag_)
+	    out << "signed ";
       if (etype_)
 	    etype_->show(out);
       else

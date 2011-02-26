@@ -108,7 +108,7 @@ class VTypeArray : public VType {
       };
 
     public:
-      VTypeArray(const VType*etype, const std::vector<range_t>&r);
+      VTypeArray(const VType*etype, const std::vector<range_t>&r, bool signed_vector =false);
       ~VTypeArray();
 
       void show(std::ostream&) const;
@@ -117,12 +117,15 @@ class VTypeArray : public VType {
       const range_t&dimension(size_t idx) const
       { return ranges_[idx]; }
 
+      bool signed_vector() const { return signed_flag_; }
+
       const VType* element_type() const;
 
     private:
       const VType*etype_;
 
       std::vector<range_t> ranges_;
+      bool signed_flag_;
 };
 
 #endif

@@ -139,6 +139,7 @@ int Entity::elaborate_ports_(void)
 
 		  cur_decl.msb = arr_type->dimension(0).msb();
 		  cur_decl.lsb = arr_type->dimension(0).lsb();
+		  cur_decl.signed_flag = arr_type->signed_vector();
 
 	    } else {
 		  cerr << get_fileline() << ": error: "

@@ -88,6 +88,8 @@ int Entity::emit(ostream&out)
 		  break;
 		case VLOGIC:
 		  out << "wire logic ";
+		  if (cur->second.signed_flag)
+			out << "signed ";
 		  if (cur->second.msb != cur->second.lsb)
 			out << "[" << cur->second.msb
 			    << ":" << cur->second.lsb << "] ";

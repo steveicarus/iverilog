@@ -81,7 +81,7 @@ const VType* calculate_subtype(const char*base_name,
 
 	    range[0] = VTypeArray::range_t(left_val, right_val);
 
-	    VTypeArray*subtype = new VTypeArray(base_array->element_type(), range);
+	    VTypeArray*subtype = new VTypeArray(base_array->element_type(), range, base_array->signed_vector());
 	    return subtype;
       }
 
