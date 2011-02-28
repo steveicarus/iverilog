@@ -250,8 +250,8 @@ static unsigned emit_stmt_lval(ivl_scope_t scope, ivl_statement_t stmt)
  * This routine looks for this pattern and turns it back into the
  * appropriate blocking assignment.
  */
-static unsigned find_delayed_or_event_assign(ivl_scope_t scope,
-                                             ivl_statement_t stmt)
+static unsigned is_delayed_or_event_assign(ivl_scope_t scope,
+                                           ivl_statement_t stmt)
 {
       unsigned wid;
       ivl_statement_t assign, delay, delayed_assign;
@@ -289,13 +289,18 @@ static unsigned find_delayed_or_event_assign(ivl_scope_t scope,
 	/* It must not be an array word. */
       if (ivl_expr_oper1(rval)) return 0;
       rsig = ivl_expr_signal(rval);
-	/* And finally the two signals must be the same. */
+	/* The two signals must be the same. */
       if (lsig != rsig) return 0;
+	/* And finally the three statements must have the same line number
+	 * as the block. */
+      if ((ivl_stmt_lineno(stmt) != ivl_stmt_lineno(assign)) ||
+          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(delay)) ||
+          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(delayed_assign))) {
+	    return 0;
+      }
 
 	/* The pattern matched so generate the appropriate code. */
       fprintf(vlog_out, "%*c", get_indent(), ' ');
-// HERE: Do we need to calculate the width? The compiler should have already
-//       done this for us.
       wid = emit_stmt_lval(scope, delayed_assign);
       fprintf(vlog_out, " = ");
       if (delay_type == IVL_ST_DELAYX) {
@@ -324,11 +329,10 @@ static unsigned find_delayed_or_event_assign(ivl_scope_t scope,
  * This routine looks for this pattern and turns it back into the
  * appropriate blocking assignment.
  */
-static unsigned find_repeat_event_assign(ivl_scope_t scope,
-                                         ivl_statement_t stmt)
+static unsigned is_repeat_event_assign(ivl_scope_t scope, ivl_statement_t stmt)
 {
       unsigned wid;
-      ivl_statement_t assign, event, event_assign, repeat = 0;
+      ivl_statement_t assign, event, event_assign, repeat;
       ivl_lval_t lval;
       ivl_expr_t rval;
       ivl_signal_t lsig, rsig;
@@ -339,13 +343,11 @@ static unsigned find_repeat_event_assign(ivl_scope_t scope,
       assign = ivl_stmt_block_stmt(stmt, 0);
       if (ivl_statement_type(assign) != IVL_ST_ASSIGN) return 0;
 	/* The second must be a repeat with an event or an event. */
-      event = ivl_stmt_block_stmt(stmt, 1);
-      if (ivl_statement_type(event) != IVL_ST_REPEAT) return 0;
-      if (ivl_statement_type(event) == IVL_ST_REPEAT) {
-	    repeat = event;
-	    event = ivl_stmt_sub_stmt(repeat);
-	    if (ivl_statement_type(event) != IVL_ST_WAIT) return 0;
-      }
+      repeat = ivl_stmt_block_stmt(stmt, 1);
+      if (ivl_statement_type(repeat) != IVL_ST_REPEAT) return 0;
+	/* The repeat must have an event statement. */
+      event = ivl_stmt_sub_stmt(repeat);
+      if (ivl_statement_type(event) != IVL_ST_WAIT) return 0;
 	/* The third must be an assign. */
       event_assign = ivl_stmt_block_stmt(stmt, 2);
       if (ivl_statement_type(event_assign) != IVL_ST_ASSIGN) return 0;
@@ -365,16 +367,21 @@ static unsigned find_repeat_event_assign(ivl_scope_t scope,
 	/* It must not be an array word. */
       if (ivl_expr_oper1(rval)) return 0;
       rsig = ivl_expr_signal(rval);
-	/* And finally the two signals must be the same. */
+	/* The two signals must be the same. */
       if (lsig != rsig) return 0;
+	/* And finally the four statements must have the same line number
+	 * as the block. */
+      if ((ivl_stmt_lineno(stmt) != ivl_stmt_lineno(assign)) ||
+          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(repeat)) ||
+          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(event)) ||
+          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(event_assign))) {
+	    return 0;
+      }
 
 	/* The pattern matched so generate the appropriate code. */
       fprintf(vlog_out, "%*c", get_indent(), ' ');
-// HERE: Do we need to calculate the width? The compiler should have already
-//       done this for us.
       wid = emit_stmt_lval(scope, event_assign);
       fprintf(vlog_out, " =");
-      single_indent = 1;
       if (repeat) {
 	    fprintf(vlog_out, " repeat (");
 	    emit_expr(scope, ivl_stmt_cond_expr(repeat), 0);
@@ -400,7 +407,7 @@ static unsigned find_repeat_event_assign(ivl_scope_t scope,
  * This routine looks for this pattern and turns it back into a
  * wait statement.
  */
-static unsigned find_wait(ivl_scope_t scope, ivl_statement_t stmt)
+static unsigned is_wait(ivl_scope_t scope, ivl_statement_t stmt)
 {
       ivl_statement_t while_wait, wait, wait_stmt;
       ivl_expr_t while_expr, expr;
@@ -419,7 +426,7 @@ static unsigned find_wait(ivl_scope_t scope, ivl_statement_t stmt)
       while_expr = ivl_stmt_cond_expr(while_wait);
       if (ivl_expr_type(while_expr) != IVL_EX_BINARY) return 0;
       if (ivl_expr_opcode(while_expr) != 'N') return 0;
-	/* And has a second operator that is a constant 1'b1. */
+	/* Has a second operator that is a constant 1'b1. */
       expr = ivl_expr_oper2(while_expr);
       if (ivl_expr_type(expr) != IVL_EX_NUMBER) return 0;
       if (ivl_expr_width(expr) != 1) return 0;
@@ -427,6 +434,12 @@ static unsigned find_wait(ivl_scope_t scope, ivl_statement_t stmt)
       if (*bits != '1') return 0;
 // HERE: There is no easy way to verify that the @ sensitivity list
 //       matches the first expression so we don't check for that yet.
+	/* And finally the two statements that represent the wait must
+	 * have the same line number as the block. */
+      if ((ivl_stmt_lineno(stmt) != ivl_stmt_lineno(while_wait)) ||
+          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(wait))) {
+	    return 0;
+      }
 
 	/* The pattern matched so generate the appropriate code. */
       fprintf(vlog_out, "%*cwait(", get_indent(), ' ');
@@ -534,9 +547,8 @@ static void emit_port(ivl_scope_t scope, struct port_expr_s port_expr)
       }
 }
 
-
 /*
- * Icarus encodes a task call with arguments as:
+ * Icarus encodes a user task call with arguments as:
  *   begin
  *     <input 1> = <arg>
  *     ...
@@ -556,6 +568,7 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
 {
       unsigned idx, ports, task_idx = 0;
       unsigned count = ivl_stmt_block_count(stmt);
+      unsigned lineno = ivl_stmt_lineno(stmt);
       ivl_scope_t task_scope = 0;
       port_expr_t port_exprs;
 	/* Check to see if the block is of the basic form first.  */
@@ -581,21 +594,22 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
 	    port_exprs[idx].type = IVL_SIP_NONE;
 	    port_exprs[idx].rval = 0;
       }
-	/* Now do a detailed check that the arguments are correct. */
+	/* Check that the input arguments are correct. */
       for (idx = 0; idx < task_idx; idx += 1) {
 	    ivl_statement_t assign = ivl_stmt_block_stmt(stmt, idx);
 	    unsigned port = utask_in_port_idx(task_scope, assign);
-	    if (port == ports) {
+	    if ((port == ports) || (lineno != ivl_stmt_lineno(assign))) {
 		  free(port_exprs);
 		  return 0;
 	    }
 	    port_exprs[port].type = IVL_SIP_INPUT;
 	    port_exprs[port].rval = ivl_stmt_rval(assign);
       }
+	/* Check that the output arguments are correct. */
       for (idx = task_idx + 1; idx < count; idx += 1) {
 	    ivl_statement_t assign = ivl_stmt_block_stmt(stmt, idx);
 	    unsigned port = utask_out_port_idx(task_scope, assign);
-	    if (port == ports) {
+	    if ((port == ports) || (lineno != ivl_stmt_lineno(assign))) {
 		  free(port_exprs);
 		  return 0;
 	    }
@@ -607,6 +621,11 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
 		  port_exprs[port].type = IVL_SIP_OUTPUT;
 	    }
 	    port_exprs[port].lval = assign;
+      }
+	/* Check that the task call has the correct line number. */
+      if (lineno != ivl_stmt_lineno(ivl_stmt_block_stmt(stmt, task_idx))) {
+	    free(port_exprs);
+	    return 0;
       }
 
 	/* Verify that all the ports were defined. */
@@ -664,7 +683,6 @@ static void emit_stmt_assign_nb(ivl_scope_t scope, ivl_statement_t stmt)
 
 static void emit_stmt_block(ivl_scope_t scope, ivl_statement_t stmt)
 {
-      if (is_utask_call_with_args(scope, stmt)) return;
       fprintf(vlog_out, "%*cbegin", get_indent(), ' ');
       emit_stmt_file_line(stmt);
       fprintf(vlog_out, "\n");
@@ -982,9 +1000,10 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 	    if (ivl_stmt_block_scope(stmt)) {
 		  emit_stmt_block_named(scope, stmt);
 	    } else {
-		  if (find_delayed_or_event_assign(scope, stmt)) break;
-		  if (find_repeat_event_assign(scope, stmt)) break;
-		  if (find_wait(scope, stmt)) break;
+		  if (is_delayed_or_event_assign(scope, stmt)) break;
+		  if (is_repeat_event_assign(scope, stmt)) break;
+		  if (is_wait(scope, stmt)) break;
+		  if (is_utask_call_with_args(scope, stmt)) break;
 		  emit_stmt_block(scope, stmt);
 	    }
 	    break;

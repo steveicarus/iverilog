@@ -105,7 +105,7 @@ int target_design(ivl_design_t des)
 	    char *eptr;
 	    long fl_value = strtol(fileline, &eptr, 0);
 	      /* Nothing usable in the file/line string. */
-	    if (spacing == eptr) {
+	    if (fileline == eptr) {
 		  fprintf(stderr, "vlog95 error: Unable to extract file/line "
 		                  "information from string: %s\n", fileline);
 		  return 1;
