@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1029,6 +1029,12 @@ void schedule_simulate(void)
 
 		  if (!schedule_runnable) break;
 		  schedule_time += ctim->delay;
+		    /* When the design is being traced (we are emitting
+		     * file/line information) also print any time changes. */
+		  if (show_file_line) {
+			cerr << "Advancing to simulation time: "
+			     << schedule_time << endl;
+		  }
 		  ctim->delay = 0;
 
 		  vpiNextSimTime();

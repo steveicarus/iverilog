@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -51,7 +51,7 @@ static void function_argument_real(ivl_signal_t port, ivl_expr_t expr)
 	/* ports cannot be arrays. */
       assert(ivl_signal_dimensions(port) == 0);
 
-      fprintf(vvp_out, "   %%set/wr v%p_0, %d;\n", port, res);
+      fprintf(vvp_out, "    %%set/wr v%p_0, %d;\n", port, res);
       clr_word(res);
 }
 
@@ -180,9 +180,9 @@ int draw_ufunc_real(ivl_expr_t expr)
 
 
 	/* Call the function */
-      fprintf(vvp_out, "   %%fork TD_%s", vvp_mangle_id(ivl_scope_name(def)));
+      fprintf(vvp_out, "    %%fork TD_%s", vvp_mangle_id(ivl_scope_name(def)));
       fprintf(vvp_out, ", S_%p;\n", def);
-      fprintf(vvp_out, "   %%join;\n");
+      fprintf(vvp_out, "    %%join;\n");
 
 	/* Return value signal cannot be an array. */
       assert(ivl_signal_dimensions(retval) == 0);

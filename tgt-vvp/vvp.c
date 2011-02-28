@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,12 +22,13 @@
 # include  "vvp_priv.h"
 # include  <string.h>
 # include  <assert.h>
+# include  <stdlib.h>
 # include  <sys/types.h>
 # include  <sys/stat.h>
 
 static const char*version_string =
 "Icarus Verilog VVP Code Generator " VERSION " (" VERSION_TAG ")\n\n"
-"Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)\n\n"
+"Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)\n\n"
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"
 "  the Free Software Foundation; either version 2 of the License, or\n"
@@ -45,6 +46,7 @@ static const char*version_string =
 
 FILE*vvp_out = 0;
 int vvp_errors = 0;
+unsigned show_file_line = 0;
 
 __inline__ static void draw_execute_header(ivl_design_t des)
 {
@@ -95,7 +97,38 @@ int target_design(ivl_design_t des)
       unsigned size;
       unsigned idx;
       const char*path = ivl_design_flag(des, "-o");
+	/* Use -pfileline to determine if file and line information is
+	 * printed for procedural statements. (e.g. -pfileline=1).
+	 * The default is no file/line information will be included. */
+      const char*fileline = ivl_design_flag(des, "fileline");
+
       assert(path);
+
+        /* Check to see if file/line information should be included. */
+      if (strcmp(fileline, "") != 0) {
+            char *eptr;
+            long fl_value = strtol(fileline, &eptr, 0);
+              /* Nothing usable in the file/line string. */
+            if (fileline == eptr) {
+                  fprintf(stderr, "vvp error: Unable to extract file/line "
+                                  "information from string: %s\n", fileline);
+                  return 1;
+            }
+              /* Extra stuff at the end. */
+            if (*eptr != 0) {
+                  fprintf(stderr, "vvp error: Extra characters '%s' "
+                                  "included at end of file/line string: %s\n",
+                                  eptr, fileline);
+                  return 1;
+            }
+              /* The file/line flag must be positive. */
+            if (fl_value < 0) {
+                  fprintf(stderr, "vvp error: File/line flag (%ld) must "
+                                  "be positive.\n", fl_value);
+                  return 1;
+            }
+            show_file_line = fl_value > 0;
+      }
 
 #ifdef HAVE_FOPEN64
       vvp_out = fopen64(path, "w");

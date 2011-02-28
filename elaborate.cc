@@ -2192,6 +2192,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 			      return 0;
 			}
 			st = event_->elaborate(des, scope);
+			st->set_line(*this);
 			if (st == 0) {
 			      cerr << event_->get_fileline() << ": error: "
 			              "unable to elaborate event expression."
@@ -2217,12 +2218,15 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 				// We need a repeat statement.
 			      } else {
 				    st = new NetRepeat(count, st);
+				    st->set_line(*this);
 			      }
 			} else {
 			      st = new NetRepeat(count, st);
+			      st->set_line(*this);
 			}
 		  } else {
 			st = event_->elaborate_st(des, scope, a2);
+			st->set_line(*this);
 			if (st == 0) {
 			      cerr << event_->get_fileline() << ": error: "
 			              "unable to elaborate event expression."
@@ -3852,7 +3856,9 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
 NetProc* PWhile::elaborate(Design*des, NetScope*scope) const
 {
       NetExpr*tmp = elab_and_eval(des, scope, cond_, -1);
+      tmp->set_line(*this);
       NetWhile*loop = new NetWhile(tmp, statement_->elaborate(des, scope));
+      loop->set_line(*this);
       return loop;
 }
 

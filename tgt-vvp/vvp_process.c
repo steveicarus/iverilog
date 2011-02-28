@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -111,13 +111,13 @@ static void set_to_lvariable(ivl_lval_t lval,
 	    unsigned skip_set = transient_id++;
 	    if (word_ix) {
 		  draw_eval_expr_into_integer(word_ix, 3);
-		  fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
+		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
 	    } else {
-		  fprintf(vvp_out, "   %%ix/load 3, %lu, 0;\n", use_word);
+		  fprintf(vvp_out, "    %%ix/load 3, %lu, 0;\n", use_word);
 	    }
 	    draw_eval_expr_into_integer(part_off_ex, 1);
-	    fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
-	    fprintf(vvp_out, "   %%set/av v%p, %u, %u;\n",
+	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+	    fprintf(vvp_out, "    %%set/av v%p, %u, %u;\n",
 		    sig, bit, wid);
 	    fprintf(vvp_out, "t_%u ;\n", skip_set);
 
@@ -128,12 +128,12 @@ static void set_to_lvariable(ivl_lval_t lval,
 	    unsigned skip_set = transient_id++;
 	    if (word_ix) {
 		  draw_eval_expr_into_integer(word_ix, 3);
-		  fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
+		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
 	    } else {
-		  fprintf(vvp_out, "   %%ix/load 3, %lu, 0;\n", use_word);
+		  fprintf(vvp_out, "    %%ix/load 3, %lu, 0;\n", use_word);
 	    }
-	    fprintf(vvp_out, "   %%ix/load 1, %lu, 0;\n", part_off);
-	    fprintf(vvp_out, "   %%set/av v%p, %u, %u;\n",
+	    fprintf(vvp_out, "    %%ix/load 1, %lu, 0;\n", part_off);
+	    fprintf(vvp_out, "    %%set/av v%p, %u, %u;\n",
 		    sig, bit, wid);
 	    if (word_ix) /* Only need this label if word_ix is set. */
 		  fprintf(vvp_out, "t_%u ;\n", skip_set);
@@ -155,9 +155,9 @@ static void set_to_lvariable(ivl_lval_t lval,
 		  unsigned skip_set = transient_id++;
 		  unsigned index_reg = 3;
 		  draw_eval_expr_into_integer(word_ix, index_reg);
-		  fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
-		  fprintf(vvp_out, "   %%ix/load 1, %lu, 0;\n", part_off);
-		  fprintf(vvp_out, "   %%set/av v%p, %u, %u;\n",
+		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+		  fprintf(vvp_out, "    %%ix/load 1, %lu, 0;\n", part_off);
+		  fprintf(vvp_out, "    %%set/av v%p, %u, %u;\n",
 			  sig, bit, wid);
 		  fprintf(vvp_out, "t_%u ;\n", skip_set);
 	    }
@@ -171,9 +171,10 @@ static void set_to_lvariable(ivl_lval_t lval,
 	         directly to the word and save the index calculation. */
 	    if (word_ix == 0) {
 		  if (use_word < ivl_signal_array_count(sig)) {
-			fprintf(vvp_out, "   %%ix/load 1, 0, 0;\n");
-			fprintf(vvp_out, "   %%ix/load 3, %lu, 0;\n", use_word);
-			fprintf(vvp_out, "   %%set/av v%p, %u, %u;\n",
+			fprintf(vvp_out, "    %%ix/load 1, 0, 0;\n");
+			fprintf(vvp_out, "    %%ix/load 3, %lu, 0;\n",
+			        use_word);
+			fprintf(vvp_out, "    %%set/av v%p, %u, %u;\n",
 				sig, bit, wid);
 		  } else {
 			fprintf(vvp_out, " ; %%set/v v%p_%lu, %u, %u "
@@ -184,9 +185,9 @@ static void set_to_lvariable(ivl_lval_t lval,
 		  unsigned skip_set = transient_id++;
 		  unsigned index_reg = 3;
 		  draw_eval_expr_into_integer(word_ix, index_reg);
-		  fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
-		  fprintf(vvp_out, "   %%ix/load 1, 0, 0;\n");
-		  fprintf(vvp_out, "   %%set/av v%p, %u, %u;\n",
+		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+		  fprintf(vvp_out, "    %%ix/load 1, 0, 0;\n");
+		  fprintf(vvp_out, "    %%set/av v%p, %u, %u;\n",
 			  sig, bit, wid);
 		  fprintf(vvp_out, "t_%u ;\n", skip_set);
 	    }
@@ -535,6 +536,24 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
       }
 }
 
+/*
+ * Routine to insert statement tracing information into the output stream
+ * when requested by the user (compiler).
+ */
+static void show_stmt_file_line(ivl_statement_t net, const char* desc)
+{
+      if (show_file_line) {
+	      /* If the line number is not zero then the file should also
+	       * be set. It's safe to skip the assert during debug, but
+	       * the assert represents missing file/line information that
+	       * should be reported/fixed. */
+	    unsigned lineno = ivl_stmt_lineno(net);
+	    assert(lineno);
+	    fprintf(vvp_out, "    %%file_line %d %d \"%s\";\n",
+	            ivl_file_table_index(ivl_stmt_file(net)), lineno, desc);
+      }
+}
+
 static int show_stmt_alloc(ivl_statement_t net)
 {
       ivl_scope_t scope = ivl_stmt_call(net);
@@ -637,6 +656,8 @@ static int show_stmt_assign(ivl_statement_t net)
       ivl_lval_t lval;
       ivl_signal_t sig;
 
+      show_stmt_file_line(net, "Blocking assignment.");
+
       lval = ivl_stmt_lval(net, 0);
 
       sig = ivl_lval_sig(lval);
@@ -738,6 +759,8 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       ivl_expr_t del  = ivl_stmt_delay_expr(net);
       ivl_signal_t sig;
       unsigned nevents = ivl_stmt_nevent(net);
+
+      show_stmt_file_line(net, "Nonblocking assignment.");
 
 	/* If we have an event control build the control structure. */
       if (nevents) {
@@ -922,6 +945,8 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 
       unsigned idx, default_case;
 
+      show_stmt_file_line(net, "Case statement.");
+
       local_count += count + 1;
 
 	/* First draw the branch table.  All the non-default cases
@@ -1039,8 +1064,9 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 
       unsigned idx, default_case;
 
-      local_count += count + 1;
+      show_stmt_file_line(net, "Case statement.");
 
+      local_count += count + 1;
 
 	/* First draw the branch table.  All the non-default cases
 	   generate a branch out of here, to the code that implements
@@ -1282,6 +1308,8 @@ static int show_stmt_cassign(ivl_statement_t net)
       ivl_expr_t rval;
       ivl_signal_t sig;
 
+      show_stmt_file_line(net, "Assign statement.");
+
       rval = ivl_stmt_rval(net);
       assert(rval);
 
@@ -1317,6 +1345,8 @@ static int show_stmt_deassign(ivl_statement_t net)
 {
       ivl_signal_t sig = ivl_lval_sig(ivl_stmt_lval(net, 0));
       unsigned lidx;
+
+      show_stmt_file_line(net, "Deassign statement.");
 
       if (sig && ivl_signal_data_type(sig) == IVL_VT_REAL) {
 	    ivl_lval_t lval;
@@ -1372,8 +1402,11 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
       unsigned lab_false, lab_out;
       ivl_expr_t expr = ivl_stmt_cond_expr(net);
-      struct vector_info cond
-	    = draw_eval_expr(expr, STUFF_OK_XZ|STUFF_OK_47|STUFF_OK_RO);
+      struct vector_info cond;
+
+      show_stmt_file_line(net, "If statement.");
+
+      cond = draw_eval_expr(expr, STUFF_OK_XZ|STUFF_OK_47|STUFF_OK_RO);
 
       assert(cond.wid == 1);
 
@@ -1426,6 +1459,8 @@ static int show_stmt_delay(ivl_statement_t net, ivl_scope_t sscope)
       unsigned long low = delay % UINT64_C(0x100000000);
       unsigned long hig = delay / UINT64_C(0x100000000);
 
+      show_stmt_file_line(net, "Delay statement.");
+
       fprintf(vvp_out, "    %%delay %lu, %lu;\n", low, hig);
 	/* Lots of things can happen during a delay. */
       clear_expression_lookaside();
@@ -1446,6 +1481,8 @@ static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
       ivl_expr_t expr = ivl_stmt_delay_expr(net);
       ivl_statement_t stmt = ivl_stmt_sub_stmt(net);
+
+      show_stmt_file_line(net, "Delay statement.");
 
       switch (ivl_expr_value(expr)) {
 
@@ -1480,8 +1517,10 @@ static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
 static int show_stmt_disable(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
-
       ivl_scope_t target = ivl_stmt_call(net);
+
+      show_stmt_file_line(net, "Disable statement.");
+
       fprintf(vvp_out, "    %%disable S_%p;\n", target);
 
       return rc;
@@ -1491,6 +1530,8 @@ static int show_stmt_force(ivl_statement_t net)
 {
       ivl_expr_t rval;
       ivl_signal_t sig;
+
+      show_stmt_file_line(net, "Force statement.");
 
       rval = ivl_stmt_rval(net);
       assert(rval);
@@ -1523,6 +1564,8 @@ static int show_stmt_forever(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
       ivl_statement_t stmt = ivl_stmt_sub_stmt(net);
       unsigned lab_top = local_count++;
+
+      show_stmt_file_line(net, "Forever statement.");
 
       fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_top);
       rc += show_statement(stmt, sscope);
@@ -1614,6 +1657,8 @@ static int show_stmt_release(ivl_statement_t net)
       ivl_signal_t sig = ivl_lval_sig(ivl_stmt_lval(net, 0));
       unsigned lidx;
 
+      show_stmt_file_line(net, "Release statement.");
+
       if (sig && ivl_signal_data_type(sig) == IVL_VT_REAL) {
 	    unsigned type = 0;
 	    ivl_lval_t lval;
@@ -1682,8 +1727,12 @@ static int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
       unsigned lab_top = local_count++, lab_out = local_count++;
       ivl_expr_t expr = ivl_stmt_cond_expr(net);
-      struct vector_info cnt = draw_eval_expr(expr, 0);
+      struct vector_info cnt;
       const char *sign = ivl_expr_signed(expr) ? "s" : "u";
+
+      show_stmt_file_line(net, "Repeat statement.");
+
+      cnt = draw_eval_expr(expr, 0);
 
 	/* Test that 0 < expr */
       fprintf(vvp_out, "T_%u.%u %%cmp/%s 0, %u, %u;\n", thread_count,
@@ -1712,6 +1761,9 @@ static int show_stmt_trigger(ivl_statement_t net)
 {
       ivl_event_t ev = ivl_stmt_events(net, 0);
       assert(ev);
+
+      show_stmt_file_line(net, "Event trigger statement.");
+
       fprintf(vvp_out, "    %%set/v E_%p, 0,1;\n", ev);
       return 0;
 }
@@ -1719,6 +1771,8 @@ static int show_stmt_trigger(ivl_statement_t net)
 static int show_stmt_utask(ivl_statement_t net)
 {
       ivl_scope_t task = ivl_stmt_call(net);
+
+      show_stmt_file_line(net, "User task call.");
 
       fprintf(vvp_out, "    %%fork TD_%s",
 	      vvp_mangle_id(ivl_scope_name(task)));
@@ -1730,6 +1784,8 @@ static int show_stmt_utask(ivl_statement_t net)
 
 static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
 {
+      show_stmt_file_line(net, "Event wait (@) statement.");
+
       if (ivl_stmt_nevent(net) == 1) {
 	    ivl_event_t ev = ivl_stmt_events(net, 0);
 	    fprintf(vvp_out, "    %%wait E_%p;\n", ev);
@@ -1793,6 +1849,8 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
       unsigned top_label = local_count++;
       unsigned out_label = local_count++;
 
+      show_stmt_file_line(net, "While statement.");
+
 	/* Start the loop. The top of the loop starts a basic block
 	   because it can be entered from above or from the bottom of
 	   the loop. */
@@ -1824,6 +1882,8 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 
 static int show_system_task_call(ivl_statement_t net)
 {
+      show_stmt_file_line(net, "System task call.");
+
       draw_vpi_task_call(net);
 
 	/* VPI calls can manipulate anything, so clear the expression
@@ -1831,6 +1891,361 @@ static int show_system_task_call(ivl_statement_t net)
       clear_expression_lookaside();
 
       return 0;
+}
+
+/*
+ * Icarus translated <var> = <delay or event> <value> into
+ *   begin
+ *    <tmp> = <value>;
+ *    <delay or event> <var> = <tmp>;
+ *   end
+ * This routine looks for this pattern so we only emit one %file_line opcode.
+ */
+
+static unsigned is_delayed_or_event_assign(ivl_scope_t scope,
+                                           ivl_statement_t stmt)
+{
+      ivl_statement_t assign, delay, delayed_assign;
+      ivl_statement_type_t delay_type;
+      ivl_lval_t lval;
+      ivl_expr_t rval;
+      ivl_signal_t lsig, rsig;
+
+	/* We must have two block elements. */
+      if (ivl_stmt_block_count(stmt) != 2) return 0;
+	/* The first must be an assign. */
+      assign = ivl_stmt_block_stmt(stmt, 0);
+      if (ivl_statement_type(assign) != IVL_ST_ASSIGN) return 0;
+	/* The second must be a delayx. */
+      delay = ivl_stmt_block_stmt(stmt, 1);
+      delay_type = ivl_statement_type(delay);
+      if ((delay_type != IVL_ST_DELAYX) &&
+          (delay_type != IVL_ST_WAIT)) return 0;
+	/* The statement for the delayx must be an assign. */
+      delayed_assign = ivl_stmt_sub_stmt(delay);
+      if (ivl_statement_type(delayed_assign) != IVL_ST_ASSIGN) return 0;
+	/* The L-value must be a single signal. */
+      if (ivl_stmt_lvals(assign) != 1) return 0;
+      lval = ivl_stmt_lval(assign, 0);
+	/* It must not have an array select. */
+      if (ivl_lval_idx(lval)) return 0;
+	/* It must not have a non-zero base. */
+      if (ivl_lval_part_off(lval)) return 0;
+      lsig = ivl_lval_sig(lval);
+	/* It must not be part of the signal. */
+      if (ivl_lval_width(lval) != ivl_signal_width(lsig)) return 0;
+	/* The R-value must be a single signal. */
+      rval = ivl_stmt_rval(delayed_assign);
+      if (ivl_expr_type(rval) != IVL_EX_SIGNAL) return 0;
+	/* It must not be an array word. */
+      if (ivl_expr_oper1(rval)) return 0;
+      rsig = ivl_expr_signal(rval);
+	/* The two signals must be the same. */
+      if (lsig != rsig) return 0;
+	/* And finally the three statements must have the same line number
+	 * as the block. */
+      if ((ivl_stmt_lineno(stmt) != ivl_stmt_lineno(assign)) ||
+          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(delay)) ||
+          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(delayed_assign))) {
+            return 0;
+      }
+	/* The pattern matched so this block represents a blocking
+	 * assignment with an inter-assignment delay or event. */
+      if (delay_type == IVL_ST_DELAYX) {
+	    show_stmt_file_line(stmt, "Blocking assignment (delay).");
+      } else {
+	    show_stmt_file_line(stmt, "Blocking assignment (event).");
+      }
+      return 1;
+}
+
+/*
+ * Icarus translated <var> = repeat(<count>) <event> <value> into
+ *   begin
+ *    <tmp> = <value>;
+ *    repeat(<count>) <event>;
+ *    <var> = <tmp>;
+ *   end
+ * This routine looks for this pattern so we only emit one %file_line opcode.
+ */
+static unsigned is_repeat_event_assign(ivl_scope_t scope,
+                                       ivl_statement_t stmt)
+{
+      ivl_statement_t assign, event, event_assign, repeat;
+      ivl_lval_t lval;
+      ivl_expr_t rval;
+      ivl_signal_t lsig, rsig;
+
+	/* We must have three block elements. */
+      if (ivl_stmt_block_count(stmt) != 3) return 0;
+	/* The first must be an assign. */
+      assign = ivl_stmt_block_stmt(stmt, 0);
+      if (ivl_statement_type(assign) != IVL_ST_ASSIGN) return 0;
+	/* The second must be a repeat with an event or an event. */
+      repeat = ivl_stmt_block_stmt(stmt, 1);
+      if (ivl_statement_type(repeat) != IVL_ST_REPEAT) return 0;
+	/* The repeat must have an event statement. */
+      event = ivl_stmt_sub_stmt(repeat);
+      if (ivl_statement_type(event) != IVL_ST_WAIT) return 0;
+	/* The third must be an assign. */
+      event_assign = ivl_stmt_block_stmt(stmt, 2);
+      if (ivl_statement_type(event_assign) != IVL_ST_ASSIGN) return 0;
+	/* The L-value must be a single signal. */
+      if (ivl_stmt_lvals(assign) != 1) return 0;
+      lval = ivl_stmt_lval(assign, 0);
+	/* It must not have an array select. */
+      if (ivl_lval_idx(lval)) return 0;
+	/* It must not have a non-zero base. */
+      if (ivl_lval_part_off(lval)) return 0;
+      lsig = ivl_lval_sig(lval);
+	/* It must not be part of the signal. */
+      if (ivl_lval_width(lval) != ivl_signal_width(lsig)) return 0;
+	/* The R-value must be a single signal. */
+      rval = ivl_stmt_rval(event_assign);
+      if (ivl_expr_type(rval) != IVL_EX_SIGNAL) return 0;
+	/* It must not be an array word. */
+      if (ivl_expr_oper1(rval)) return 0;
+      rsig = ivl_expr_signal(rval);
+	/* The two signals must be the same. */
+      if (lsig != rsig) return 0;
+	/* And finally the four statements must have the same line number
+	 * as the block. */
+      if ((ivl_stmt_lineno(stmt) != ivl_stmt_lineno(assign)) ||
+          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(repeat)) ||
+          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(event)) ||
+          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(event_assign))) {
+	    return 0;
+      }
+
+	/* The pattern matched so this block represents a blocking
+	 * assignment with an inter-assignment repeat event. */
+      show_stmt_file_line(stmt, "Blocking assignment (repeat event).");
+      return 1;
+}
+
+/*
+ * Icarus translated wait(<expr) <stmt> into
+ *   begin
+ *    while (<expr> !== 1'b1) @(<expr sensitivities>);
+ *    <stmt>
+ *   end
+ * This routine looks for this pattern and turns it back into a
+ * wait statement.
+ */
+static unsigned is_wait(ivl_scope_t scope, ivl_statement_t stmt)
+{
+      ivl_statement_t while_wait, wait, wait_stmt;
+      ivl_expr_t while_expr, expr;
+      const char *bits;
+	/* We must have two block elements. */
+      if (ivl_stmt_block_count(stmt) != 2) return 0;
+	/* The first must be a while. */
+      while_wait = ivl_stmt_block_stmt(stmt, 0);
+      if (ivl_statement_type(while_wait) != IVL_ST_WHILE) return 0;
+	/* That has a wait with a NOOP statement. */
+      wait = ivl_stmt_sub_stmt(while_wait);
+      if (ivl_statement_type(wait) != IVL_ST_WAIT) return 0;
+      wait_stmt = ivl_stmt_sub_stmt(wait);
+      if (ivl_statement_type(wait_stmt) != IVL_ST_NOOP) return 0;
+	/* Check that the while condition has the correct form. */
+      while_expr = ivl_stmt_cond_expr(while_wait);
+      if (ivl_expr_type(while_expr) != IVL_EX_BINARY) return 0;
+      if (ivl_expr_opcode(while_expr) != 'N') return 0;
+	/* Has a second operator that is a constant 1'b1. */
+      expr = ivl_expr_oper2(while_expr);
+      if (ivl_expr_type(expr) != IVL_EX_NUMBER) return 0;
+      if (ivl_expr_width(expr) != 1) return 0;
+      bits = ivl_expr_bits(expr);
+      if (*bits != '1') return 0;
+	/* There is no easy way to verify that the @ sensitivity list
+	 * matches the first expression so that is not currently checked. */
+	/* And finally the two statements that represent the wait must
+	 * have the same line number as the block. */
+      if ((ivl_stmt_lineno(stmt) != ivl_stmt_lineno(while_wait)) ||
+          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(wait))) {
+	    return 0;
+      }
+
+	/* The pattern matched so this block represents a wait statement. */
+      show_stmt_file_line(stmt, "Wait statement.");
+      return 1;
+}
+
+/*
+ * Check to see if the statement L-value is a port in the given scope.
+ * If it is return the zero based port number.
+ */
+static unsigned utask_in_port_idx(ivl_scope_t scope, ivl_statement_t stmt)
+{
+      unsigned idx, ports = ivl_scope_ports(scope);
+      ivl_lval_t lval = ivl_stmt_lval(stmt, 0);
+      ivl_signal_t lsig = ivl_lval_sig(lval);
+      const char *sig_name;
+	/* The L-value must be a single signal. */
+      if (ivl_stmt_lvals(stmt) != 1) return ports;
+	/* It must not have an array select. */
+      if (ivl_lval_idx(lval)) return ports;
+	/* It must not have a non-zero base. */
+      if (ivl_lval_part_off(lval)) return ports;
+	/* It must not be part of the signal. */
+      if (ivl_lval_width(lval) != ivl_signal_width(lsig)) return ports;
+	/* It must have the same scope as the task. */
+      if (scope != ivl_signal_scope(lsig)) return ports;
+	/* It must be an input or inout port of the task. */
+      sig_name = ivl_signal_basename(lsig);
+      for (idx = 0; idx < ports; idx += 1) {
+	    ivl_signal_t port = ivl_scope_port(scope, idx);
+	    ivl_signal_port_t port_type = ivl_signal_port(port);
+	    if ((port_type != IVL_SIP_INPUT) &&
+	        (port_type != IVL_SIP_INOUT)) continue;
+	    if (strcmp(sig_name, ivl_signal_basename(port)) == 0) break;
+      }
+      return idx;
+}
+
+/*
+ * Check to see if the statement R-value is a port in the given scope.
+ * If it is return the zero based port number.
+ */
+static unsigned utask_out_port_idx(ivl_scope_t scope, ivl_statement_t stmt)
+{
+      unsigned idx, ports = ivl_scope_ports(scope);
+      ivl_expr_t rval = ivl_stmt_rval(stmt);
+      ivl_signal_t rsig = 0;
+      ivl_expr_type_t expr_type = ivl_expr_type(rval);
+      const char *sig_name;
+	/* We can have a simple signal. */
+      if (expr_type == IVL_EX_SIGNAL) {
+	    rsig = ivl_expr_signal(rval);
+	/* Or a simple select of a simple signal. */
+      } else if (expr_type == IVL_EX_SELECT) {
+	    ivl_expr_t expr = ivl_expr_oper1(rval);
+	      /* We must have a zero select base. */
+	    if (ivl_expr_oper2(rval)) return ports;
+	      /* We must be selecting a signal. */
+	    if (ivl_expr_type(expr) != IVL_EX_SIGNAL) return ports;
+	    rsig = ivl_expr_signal(expr);
+      } else return ports;
+	/* The R-value must have the same scope as the task. */
+      if (scope != ivl_signal_scope(rsig)) return ports;
+	/* It must not be an array element. */
+      if (ivl_signal_dimensions(rsig)) return ports;
+	/* It must be an output or inout port of the task. */
+      sig_name = ivl_signal_basename(rsig);
+      for (idx = 0; idx < ports; idx += 1) {
+	    ivl_signal_t port = ivl_scope_port(scope, idx);
+	    ivl_signal_port_t port_type = ivl_signal_port(port);
+	    if ((port_type != IVL_SIP_OUTPUT) &&
+	        (port_type != IVL_SIP_INOUT)) continue;
+	    if (strcmp(sig_name, ivl_signal_basename(port)) == 0) break;
+      }
+      return idx;
+}
+
+/*
+ * Structure to hold the port information as we extract it from the block.
+ */
+typedef struct port_expr_s {
+      ivl_signal_port_t type;
+      union {
+	    ivl_statement_t lval;
+	    ivl_expr_t rval;
+      };
+}  *port_expr_t;
+
+/*
+ * Icarus encodes a user task call with arguments as:
+ *   begin
+ *     <input 1> = <arg>
+ *     ...
+ *     <input n> = <arg>
+ *     <task_call>
+ *     <arg> = <output 1>
+ *     ...
+ *     <arg> = <output n>
+ *   end
+ * This routine looks for that pattern and translates it into the
+ * appropriate task call. It returns true (1) if it successfully
+ * translated the block to a task call, otherwise it returns false
+ * (0) to indicate the block needs to be emitted.
+ */
+static unsigned is_utask_call_with_args(ivl_scope_t scope,
+                                        ivl_statement_t stmt)
+{
+      unsigned idx, ports, task_idx = 0;
+      unsigned count = ivl_stmt_block_count(stmt);
+      unsigned lineno = ivl_stmt_lineno(stmt);
+      ivl_scope_t task_scope = 0;
+      port_expr_t port_exprs;
+	/* Check to see if the block is of the basic form first.  */
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_statement_t tmp = ivl_stmt_block_stmt(stmt, idx);
+	    if (ivl_statement_type(tmp) == IVL_ST_ASSIGN) continue;
+	    if (ivl_statement_type(tmp) == IVL_ST_UTASK && !task_scope) {
+		  task_idx = idx;
+		  task_scope = ivl_stmt_call(tmp);
+		  assert(ivl_scope_type(task_scope) == IVL_SCT_TASK);
+		  continue;
+	    }
+	    return 0;
+      }
+	/* If there is no task call or it takes no argument then return. */
+      if (!task_scope) return 0;
+      ports = ivl_scope_ports(task_scope);
+      if (ports == 0) return 0;
+
+	/* Allocate space to save the port information and initialize it. */
+      port_exprs = (port_expr_t) malloc(sizeof(struct port_expr_s)*ports);
+      for (idx = 0; idx < ports; idx += 1) {
+	    port_exprs[idx].type = IVL_SIP_NONE;
+	    port_exprs[idx].rval = 0;
+      }
+	/* Check that the input arguments are correct. */
+      for (idx = 0; idx < task_idx; idx += 1) {
+	    ivl_statement_t assign = ivl_stmt_block_stmt(stmt, idx);
+	    unsigned port = utask_in_port_idx(task_scope, assign);
+	    if ((port == ports) || (lineno != ivl_stmt_lineno(assign))) {
+		  free(port_exprs);
+		  return 0;
+	    }
+	    port_exprs[port].type = IVL_SIP_INPUT;
+	    port_exprs[port].rval = ivl_stmt_rval(assign);
+      }
+	/* Check that the output arguments are correct. */
+      for (idx = task_idx + 1; idx < count; idx += 1) {
+	    ivl_statement_t assign = ivl_stmt_block_stmt(stmt, idx);
+	    unsigned port = utask_out_port_idx(task_scope, assign);
+	    if ((port == ports) || (lineno != ivl_stmt_lineno(assign))) {
+		  free(port_exprs);
+		  return 0;
+	    }
+	    if (port_exprs[port].type == IVL_SIP_INPUT) {
+		    /* We probably should verify that the current R-value
+		     * matches the new L-value. */
+		  port_exprs[port].type = IVL_SIP_INOUT;
+	    } else {
+		  port_exprs[port].type = IVL_SIP_OUTPUT;
+	    }
+	    port_exprs[port].lval = assign;
+      }
+	/* Check that the task call has the correct line number. */
+      if (lineno != ivl_stmt_lineno(ivl_stmt_block_stmt(stmt, task_idx))) {
+	    free(port_exprs);
+	    return 0;
+      }
+
+	/* Verify that all the ports were defined. */
+      for (idx = 0; idx < ports; idx += 1) {
+	    if (port_exprs[idx].type == IVL_SIP_NONE) {
+		  free(port_exprs);
+		  return 0;
+	    }
+      }
+
+	/* The pattern matched so this block represents a call to a user
+	 * defined task with arguments. */
+      show_stmt_file_line(stmt, "User task call (with arguments).");
+      return 1;
 }
 
 /*
@@ -1842,6 +2257,7 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 {
       const ivl_statement_type_t code = ivl_statement_type(net);
       int rc = 0;
+      unsigned saved_file_line = 0;
 
       switch (code) {
 
@@ -1860,8 +2276,21 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 	  case IVL_ST_BLOCK:
 	    if (ivl_stmt_block_scope(net))
 		  rc += show_stmt_block_named(net, sscope);
-	    else
+	    else {
+		    /* This block could really represent a single statement.
+		     * If so only emit a single %file_line opcode. */
+		  if (show_file_line) {
+			if (is_delayed_or_event_assign(sscope, net) ||
+			    is_repeat_event_assign(sscope, net) ||
+			    is_wait(sscope, net) ||
+			    is_utask_call_with_args(sscope, net)) {
+			      saved_file_line = show_file_line;
+			      show_file_line = 0;
+			}
+		  }
 		  rc += show_stmt_block(net, sscope);
+		  if (saved_file_line) show_file_line = 1;
+	    }
 	    break;
 
 	  case IVL_ST_CASE:

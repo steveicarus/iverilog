@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -4484,6 +4484,18 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t tmp(cp->number, BIT4_X);
       thr->bits4.set_vec(cp->bit_idx[0], tmp);
 
+      return true;
+}
+
+bool of_FILE_LINE(vthread_t, vvp_code_t cp)
+{
+      if (show_file_line) {
+	    vpiHandle handle = cp->handle;
+	    cerr << vpi_get_str(vpiFile, handle) << ":"
+	         << vpi_get(vpiLineNo, handle) << ": ";
+	    cerr << vpi_get_str(_vpiDescription, handle);
+	    cerr << endl;
+      }
       return true;
 }
 
