@@ -110,7 +110,8 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 unsigned PExpr::fix_width_(width_mode_t mode)
 {
       unsigned width = expr_width_;
-      if ((mode == UNSIZED) && (width < integer_width))
+      if ((mode == UNSIZED) && type_is_vectorable(expr_type_)
+          && (width < integer_width))
             expr_width_ = integer_width;
 
       return width;
@@ -459,7 +460,7 @@ NetExpr* PEBinary::elaborate_expr_base_lshift_(Design*des,
 	    }
 
       } else if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
-	    long shift = rpc->value().as_long();
+	    unsigned long shift = rpc->value().as_ulong();
 
               // Special case: The shift is at least the size of the entire
               // left operand. Elaborate as a constant-0.
@@ -520,7 +521,7 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
       }
 
       if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
-	    long shift = rpc->value().as_ulong();
+	    unsigned long shift = rpc->value().as_ulong();
 
 	      // Special case: The shift is the size of the entire
 	      // left operand, and the shift is unsigned. Elaborate as
@@ -3435,7 +3436,7 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 NetExpr* PETernary::elab_and_eval_alternative_(Design*des, NetScope*scope,
 					       PExpr*expr, unsigned expr_wid) const
 {
-      unsigned context_wid = expr_wid;
+      int context_wid = expr_wid;
       if (type_is_vectorable(expr->expr_type()) && !type_is_vectorable(expr_type_)) {
 	    expr_wid = expr->expr_width();
             context_wid = -1;

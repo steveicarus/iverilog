@@ -459,6 +459,8 @@ static const char*width_mode_name(PExpr::width_mode_t mode)
       switch (mode) {
           case PExpr::SIZED:
             return "sized";
+          case PExpr::EXPAND:
+            return "expand";
           case PExpr::LOSSLESS:
             return "lossless";
           case PExpr::UNSIZED:
