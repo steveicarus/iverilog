@@ -61,7 +61,7 @@ static char *file_line_get_str(int type, vpiHandle ref)
 }
 
 static const struct __vpirt vpip_file_line_rt = {
-       _vpiFileLine, 
+       _vpiFileLine,
        file_line_get,
        file_line_get_str,
        0,
@@ -71,7 +71,7 @@ static const struct __vpirt vpip_file_line_rt = {
        0,
        0,
        0,
-       0 
+       0
 };
 
 vpiHandle vpip_build_file_line(char*description, long file_idx, long lineno)

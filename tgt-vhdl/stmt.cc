@@ -32,7 +32,7 @@
 
 static void emit_wait_for_0(vhdl_procedural *proc, stmt_container *container,
                             ivl_statement_t stmt, vhdl_expr *expr);
-   
+
 /*
  * VHDL has no real equivalent of Verilog's $finish task. The
  * current solution is to use `assert false ...' to terminate
@@ -79,7 +79,7 @@ static int draw_stask_display(vhdl_procedural *proc,
 {
    vhdl_binop_expr *text = new vhdl_binop_expr(VHDL_BINOP_CONCAT,
                                                vhdl_type::string());
-   
+
    const int count = ivl_stmt_parm_count(stmt);
    int i = 0;
    while (i < count) {
@@ -91,7 +91,7 @@ static int draw_stask_display(vhdl_procedural *proc,
          text->add_expr(new vhdl_const_string(" "));
          continue;
       }
-      
+
       if (ivl_expr_type(net) == IVL_EX_STRING) {
          ostringstream ss;
          for (const char *p = ivl_expr_string(net); *p; p++) {
@@ -110,7 +110,7 @@ static int draw_stask_display(vhdl_procedural *proc,
                // Flush the output string up to this point
                text->add_expr(new vhdl_const_string(ss.str()));
                ss.str("");
-               
+
                // Skip over width for now
                while (isdigit(*p)) ++p;
 
@@ -125,13 +125,13 @@ static int draw_stask_display(vhdl_procedural *proc,
                      assert(i < count);
                      ivl_expr_t netp = ivl_stmt_parm(stmt, i++);
                      assert(netp);
-                     
+
                      vhdl_expr *base = translate_expr(netp);
                      if (NULL == base)
                         return 1;
 
                      emit_wait_for_0(proc, container, stmt, base);
-         
+
                      text->add_expr(base->cast(text->get_type()));
                   }
                }
@@ -141,16 +141,16 @@ static int draw_stask_display(vhdl_procedural *proc,
          }
 
          // Emit any non-empty string data left in the buffer
-         if (!ss.str().empty())  
+         if (!ss.str().empty())
             text->add_expr(new vhdl_const_string(ss.str()));
       }
       else {
          vhdl_expr *base = translate_expr(net);
-         if (NULL == base) 
+         if (NULL == base)
             return 1;
 
          emit_wait_for_0(proc, container, stmt, base);
-         
+
          text->add_expr(base->cast(text->get_type()));
       }
    }
@@ -158,7 +158,7 @@ static int draw_stask_display(vhdl_procedural *proc,
    if (count == 0)
       text->add_expr(new vhdl_const_string(""));
 
-   container->add_stmt(new vhdl_report_stmt(text));      
+   container->add_stmt(new vhdl_report_stmt(text));
    return 0;
 }
 
@@ -397,7 +397,7 @@ static void emit_wait_for_0(vhdl_procedural *proc,
          << ivl_stmt_file(stmt)
          << ":" << ivl_stmt_lineno(stmt) << ")";
       wait->set_comment(ss.str());
-      
+
       container->add_stmt(wait);
       proc->added_wait_stmt();
    }
@@ -451,7 +451,7 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
       assign_type = decl->assignment_type();
 
       if (assign_type == vhdl_decl::ASSIGN_NONBLOCK && emul_blocking)
-          proc->add_blocking_target(lhs);   
+          proc->add_blocking_target(lhs);
 
       // A small optimisation is to expand ternary RHSs into an
       // if statement (eliminates a function call and produces
@@ -589,7 +589,7 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
          width_so_far += lval_width;
 
          if (assign_type == vhdl_decl::ASSIGN_NONBLOCK && emul_blocking)
-            proc->add_blocking_target(*it);   
+            proc->add_blocking_target(*it);
       }
    }
 }
@@ -615,9 +615,9 @@ static int draw_assign(vhdl_procedural *proc, stmt_container *container,
 {
    vhdl_decl::assign_type_t assign_type = vhdl_decl::ASSIGN_NONBLOCK;
    bool emulate_blocking = proc->get_scope()->allow_signal_assignment();
-   
+
    make_assignment(proc, container, stmt, emulate_blocking, assign_type);
-      
+
    return 0;
 }
 
@@ -645,7 +645,7 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
       if (NULL == time)
          return 1;
    }
-   
+
    ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
    vhdl_wait_stmt *wait =
       new vhdl_wait_stmt(VHDL_WAIT_FOR, time);
@@ -665,8 +665,8 @@ static int draw_delay(vhdl_procedural *proc, stmt_container *container,
    // Any further assignments occur after simulation time 0
    // so they cannot be used to initialise signal declarations
    // (if this scope is an initial process)
-   proc->get_scope()->set_initializing(false);   
-   
+   proc->get_scope()->set_initializing(false);
+
    return 0;
 }
 
@@ -1022,10 +1022,10 @@ static int draw_if(vhdl_procedural *proc, stmt_container *container,
       return 1;
 
    emit_wait_for_0(proc, container, stmt, test);
-   
+
    vhdl_if_stmt *vhdif = new vhdl_if_stmt(test);
    container->add_stmt(vhdif);
-   
+
    ivl_statement_t cond_true_stmt = ivl_stmt_cond_true(stmt);
    if (cond_true_stmt)
       draw_stmt(proc, vhdif->get_then_container(), cond_true_stmt, is_last);
@@ -1555,7 +1555,7 @@ int draw_while(vhdl_procedural *proc, stmt_container *container,
    draw_stmt(proc, loop->get_container(), ivl_stmt_sub_stmt(stmt));
 
    emit_wait_for_0(proc, loop->get_container(), stmt, test);
-   
+
    container->add_stmt(loop);
    return 0;
 }

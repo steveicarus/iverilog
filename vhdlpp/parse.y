@@ -47,7 +47,7 @@ int parse_errors = 0;
       char*text;
       vhdlint* integer;
       vhdlreal* real;
-      
+
       InterfacePort*interface_element;
       std::list<InterfacePort*>* interface_list;
 };
@@ -79,7 +79,7 @@ int parse_errors = 0;
 %token K_xnor K_xor
  /* Identifiers that are not keywords are identifiers. */
 %token <text> IDENTIFIER
-%token <integer> INT_LITERAL 
+%token <integer> INT_LITERAL
 %token <real> REAL_LITERAL
 %token <text> STRING_LITERAL CHARACTER_LITERAL
  /* compound symbols */
@@ -143,7 +143,7 @@ design_unit
   ;
 
 design_units
-  : design_units design_unit 
+  : design_units design_unit
   | design_unit
   ;
 
@@ -173,7 +173,7 @@ entity_declaration
 	if(strcmp($2, $7) != 0) {
 		errormsg(@1, "Syntax error in entity clause. \n"); yyerrok;
 	}
-	
+
 	delete[]$2;
 	delete[]$7;
 	// Transfer the ports

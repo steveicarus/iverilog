@@ -59,7 +59,7 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    // will optimise the process out of the output
    bool is_initial = ivl_process_type(proc) == IVL_PR_INITIAL;
    bool is_empty = vhdl_proc->get_container()->empty();
-   
+
    if (is_initial && !is_empty) {
       vhdl_wait_stmt *wait = new vhdl_wait_stmt();
       vhdl_proc->get_container()->add_stmt(wait);

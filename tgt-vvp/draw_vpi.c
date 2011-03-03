@@ -287,7 +287,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			assert((unsigned)(dp - buffer) <= sizeof buffer);
 		  }
 		  args[idx].text = strdup(buffer);
-		  continue;			
+		  continue;
 		}
 
 		case IVL_EX_STRING:

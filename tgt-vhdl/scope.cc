@@ -945,7 +945,7 @@ static void create_skeleton_entity_for(ivl_scope_t scope, int depth)
          assert(false);
       }
    }
-   
+
    arch->set_comment(ss.str());
    ent->set_comment(ss.str());
 

@@ -1042,7 +1042,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    cerr << get_fileline() << ": error: real ";
 	    if (wtype == NetNet::REG) cerr << "variable";
 	    else cerr << "net";
-	    cerr << " '" << name_ 
+	    cerr << " '" << name_
 	         << "' cannot be declared as a vector, found a range ["
 	         << msb << ":" << lsb << "]." << endl;
 	    des->errors += 1;

@@ -212,7 +212,7 @@ bool vhdl_procedural::is_blocking_target(vhdl_var_ref* ref) const
 {
    return blocking_targets_.find(ref->get_name()) != blocking_targets_.end();
 }
-   
+
 void vhdl_process::add_sensitivity(const std::string &name)
 {
    sens_.push_back(name);
@@ -283,7 +283,7 @@ void stmt_container::find_vars(vhdl_var_set_t& read,
 
    for (stmt_list_t::const_iterator it = stmts_.begin();
         it != stmts_.end(); ++it)
-      (*it)->find_vars(read, write); 
+      (*it)->find_vars(read, write);
 }
 
 void stmt_container::emit(std::ostream &of, int level, bool newline) const
@@ -800,7 +800,7 @@ void vhdl_report_stmt::emit(ostream& of, int level) const
       const char *levels[] = { "note", "warning", "error", "failure" };
       of << " severity " << levels[severity_];
    }
-   
+
    of << ";";
 }
 
@@ -812,7 +812,7 @@ void vhdl_report_stmt::find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write)
 vhdl_assert_stmt::vhdl_assert_stmt(const char *reason)
    : vhdl_report_stmt(new vhdl_const_string(reason), SEVERITY_FAILURE)
 {
-   
+
 }
 
 void vhdl_assert_stmt::emit(std::ostream &of, int level) const
@@ -876,7 +876,7 @@ void vhdl_if_stmt::find_vars(vhdl_var_set_t& read,
         it != elsif_parts_.end(); ++it) {
       (*it).test->find_vars(read);
       (*it).container->find_vars(read, write);
-   }      
+   }
 }
 
 int vhdl_expr::paren_levels(0);
@@ -890,7 +890,7 @@ void vhdl_expr::open_parens(std::ostream& of)
 void vhdl_expr::close_parens(std::ostream& of)
 {
    assert(paren_levels > 0);
-   
+
    if (--paren_levels > 0)
       of << ")";
 }
@@ -908,7 +908,7 @@ void vhdl_unaryop_expr::find_vars(vhdl_var_set_t& read)
 void vhdl_unaryop_expr::emit(std::ostream &of, int level) const
 {
    open_parens(of);
-   
+
    switch (op_) {
    case VHDL_UNARYOP_NOT:
       of << "not ";
@@ -944,7 +944,7 @@ void vhdl_binop_expr::find_vars(vhdl_var_set_t& read)
 {
    for (list<vhdl_expr*>::const_iterator it = operands_.begin();
        it != operands_.end(); ++it)
-      (*it)->find_vars(read);      
+      (*it)->find_vars(read);
 }
 
 void vhdl_binop_expr::emit(std::ostream &of, int level) const

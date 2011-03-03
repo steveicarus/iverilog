@@ -2262,7 +2262,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 		 << "Enumeration type mismatch in assignment." << endl;
 	    des->errors += 1;
       }
-		  
+
       NetAssign*cur = new NetAssign(lv, rv);
       cur->set_line(*this);
 
@@ -3584,7 +3584,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 
 	/* Make the r-value of the initial assignment, and size it
 	   properly. Then use it to build the assignment statement. */
-      etmp = elaborate_rval_expr(des, scope, lv->expr_type(), lv->lwidth(), 
+      etmp = elaborate_rval_expr(des, scope, lv->expr_type(), lv->lwidth(),
                                  expr1_);
 
       if (debug_elaborate) {
@@ -3625,7 +3625,7 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 
 	/* Make the r-value of the increment assignment, and size it
 	   properly. Then use it to build the assignment statement. */
-      etmp = elaborate_rval_expr(des, scope, lv->expr_type(), lv->lwidth(), 
+      etmp = elaborate_rval_expr(des, scope, lv->expr_type(), lv->lwidth(),
                                  expr2_);
 
       if (debug_elaborate) {

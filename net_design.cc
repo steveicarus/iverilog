@@ -370,7 +370,7 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	    lv_width = (msb >= lsb) ? 1 + msb - lsb : 1 + lsb - msb;
 
       NetExpr*expr = elab_and_eval(des, val_scope, val_expr, lv_width);
-      if (! expr) 
+      if (! expr)
             return;
 
       switch (expr->expr_type()) {
@@ -489,7 +489,7 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
       NetScope*val_scope = (*cur).second.val_scope;
 
       NetExpr*expr = elab_and_eval(des, val_scope, val_expr, -1);
-      if (! expr) 
+      if (! expr)
             return;
 
       NetECReal*res = 0;

@@ -99,7 +99,7 @@ based_integer		[0-9a-fA-F](_?[0-9a-fA-F])*
 <CCOMMENT>\n   { yylloc.first_line += 1; }
 <CCOMMENT>"*/" { BEGIN(comment_enter); }
 
-\'.\' { 
+\'.\' {
     yylval.text = escape_apostrophe_and_dup(yytext);
     return CHARACTER_LITERAL;
 }
@@ -119,7 +119,7 @@ based_integer		[0-9a-fA-F](_?[0-9a-fA-F])*
 		if(!are_underscores_correct(yytext))
 			std::cerr << "An invalid underscore in the identifier:"
                     << yytext << std::endl;
-                //yywarn(yylloc, "An invalid underscore in the identifier"); 
+                //yywarn(yylloc, "An invalid underscore in the identifier");
 	    yylval.text = strdupnew(yytext);
 	    break;
 	  default:
@@ -127,32 +127,32 @@ based_integer		[0-9a-fA-F](_?[0-9a-fA-F])*
       }
       return rc;
   }
-  
+
 \\([^\\]|\\\\)*\\ { /* extended identifiers */
     yylval.text = strdupnew(yytext);
-    return IDENTIFIER;    
+    return IDENTIFIER;
 }
 
-   
+
 {decimal_literal} {
     if(!are_underscores_correct(yytext))
-        std::cerr << "An invalid underscore in the decimal literal:" 
+        std::cerr << "An invalid underscore in the decimal literal:"
             << yytext << std::endl;
-    
+
     if(strchr(yytext, '.')) {
         yylval.real = new vhdlreal(yytext);
         return REAL_LITERAL;
     } else {
-        yylval.integer = new vhdlint(yytext); 
+        yylval.integer = new vhdlint(yytext);
         return INT_LITERAL;
     }
 }
 
 {based_literal} {
     if(!are_underscores_correct(yytext) || !is_based_correct(yytext))
-        std::cerr << "An invalid form of based literal:" 
+        std::cerr << "An invalid form of based literal:"
             << yytext << std::endl;
-            
+
     if(strchr(yytext, '.'))
     {
         double val = make_double_from_based(yytext);
@@ -167,7 +167,7 @@ based_integer		[0-9a-fA-F](_?[0-9a-fA-F])*
     }
 }
 
-    
+
   /* Compound symbols */
 "<=" { return LEQ; }
 ">=" { return GEQ; }
@@ -178,10 +178,10 @@ based_integer		[0-9a-fA-F](_?[0-9a-fA-F])*
 "=>" { return ARROW; }
 "<<" { return DLT; }
 ">>" { return DGT; }
-    /* 
+    /*
     Here comes a list of symbols that are more then strange,
     at least for the time being.
-    
+
 "??" { return K_CC; }
 "?=" {}
 "?/=" {}
@@ -204,7 +204,7 @@ extern void yyparse_set_filepath(const char*path);
 * \return true is returned if underscores are placed
 * correctly according to specification
 */
-static bool are_underscores_correct(char* text) 
+static bool are_underscores_correct(char* text)
 {
 	unsigned char underscore_allowed = 0;
 	const char* cp;
@@ -248,12 +248,12 @@ static bool is_based_correct(char* text)
         ++clean_base_ptr;
     }
     unsigned length = clean_base_ptr - clean_base;
-    unsigned base; 
+    unsigned base;
     if(length > 2 || length == 0)
         return 0; //the base is too big or too small
     if(length == 2)
     {
-        base = 10*(clean_base[0] - '0') + (clean_base[1] - '0'); 
+        base = 10*(clean_base[0] - '0') + (clean_base[1] - '0');
         //the base exceeds 16 or equals 0
         if(base > 16 || base == 0)
             return 0;
@@ -266,7 +266,7 @@ static bool is_based_correct(char* text)
     }
     bool point = 0;
     set<char> allowed_chars;
-    
+
     unsigned c;
     if(base <= 10) {
         for(c = 0; c < base; ++c)
@@ -282,7 +282,7 @@ static bool is_based_correct(char* text)
     //MANTISSA examination
     for(ptr = strchr(text, '#') + 1, length = 0; ptr != strrchr(text, '#'); ++ptr)
     {
-        if(*ptr == '.') 
+        if(*ptr == '.')
         {
             //we found a dot and another one was already found
             if(point == 1)
@@ -301,7 +301,7 @@ static bool is_based_correct(char* text)
     }
     if(length == 0)
         return 0;
-    
+
     //EXPONENT examination
     if(strchr(text, '\0') - strrchr(text, '#') > 1) { //the number contains an exponent
         if(*(strrchr(text, '#') + 2) == '-')
@@ -313,7 +313,7 @@ static bool is_based_correct(char* text)
             if(!((*ptr >= '0' && *ptr <= '9') || (*ptr >= 'a' && *ptr <= 'f')))
                 return 0;
         }
-    } 
+    }
     return 1;
 }
 
@@ -327,13 +327,13 @@ static bool is_based_correct(char* text)
 static char* escape_quot_and_dup(char* text)
 {
     char* newstr = new char[strlen(text)+1];
-    
+
     unsigned old_idx, new_idx;
-    for(new_idx = 0, old_idx = 0; old_idx < strlen(text); ) 
+    for(new_idx = 0, old_idx = 0; old_idx < strlen(text); )
     {
-        if(text[old_idx] == '"' && old_idx == 0) 
+        if(text[old_idx] == '"' && old_idx == 0)
         { //the beginning of the literal
-            ++old_idx; 
+            ++old_idx;
             continue;
         }
         else
@@ -343,12 +343,12 @@ static char* escape_quot_and_dup(char* text)
             return newstr;
         }
         else
-        if(text[old_idx] == '"' && text[old_idx+1] == '"') 
+        if(text[old_idx] == '"' && text[old_idx+1] == '"')
         {
             newstr[new_idx++] = '"';
             old_idx += 2; //jump across two chars
         }
-        else 
+        else
         {
             newstr[new_idx] = text[old_idx];
             ++old_idx;
@@ -374,7 +374,7 @@ static char* escape_apostrophe_and_dup(char* text)
 }
 
 /**
-* This function takes a floating point based number 
+* This function takes a floating point based number
 * in form of a C-strings and converts it to a double.
 *
 * \return new double is returned
@@ -387,10 +387,10 @@ static double make_double_from_based(char* text)
     //put null byte in lieu of hashes
     *first_hash_ptr = '\0';
     *second_hash_ptr = '\0';
-    
+
     //now lets deduce the base
     unsigned base = (unsigned)strtol(text, 0, 10) ;
-    
+
     double mantissa = 0.0;
     char*ptr = first_hash_ptr + 1;
     for( ; ptr != second_hash_ptr ; ++ptr)
@@ -416,12 +416,12 @@ static double make_double_from_based(char* text)
     {
         return mantissa + fraction;
     }
-    
+
     //now calculate the value of the exponent
     double exponent = 0.0;
     //leave 'e'/'E' and '+'
-    ptr = *(second_hash_ptr + 2) == '+' ? second_hash_ptr + 3 : second_hash_ptr + 2;  
-    
+    ptr = *(second_hash_ptr + 2) == '+' ? second_hash_ptr + 3 : second_hash_ptr + 2;
+
     for( ; *ptr != '\0'; ++ptr)
     {
         if(*ptr != '_')
@@ -430,13 +430,13 @@ static double make_double_from_based(char* text)
         }
     }
     return pow(mantissa + fraction, exponent);
-}   
+}
 
-/** 
+/**
 * This function takes a hexadecimal digit in form of
 * a char and returns its litteral value as short
 */
-static unsigned short short_from_hex_char(char ch) 
+static unsigned short short_from_hex_char(char ch)
 {
     if(ch >= '0' && ch <= '9')
         return ch - '0';
@@ -455,9 +455,9 @@ static int64_t make_long_from_based(char* text) {
     char* second_hash_ptr = strrchr(text, '#');
     char* end_ptr = strrchr(text, '\0');
     //now lets deduce the base
-    *first_hash_ptr = '\0'; 
+    *first_hash_ptr = '\0';
     unsigned base = (unsigned)strtol(text, 0, 10) ;
-    
+
     char *ptr = first_hash_ptr + 1;
     int64_t mantissa = 0;
     for( ; ptr != second_hash_ptr ; ++ptr)
@@ -470,9 +470,9 @@ static int64_t make_long_from_based(char* text) {
     //if there is an exponent
     if(end_ptr - second_hash_ptr > 1)
     {
-       int64_t exponent = 0L; 
-       
-       ptr = *(second_hash_ptr + 2) == '+' ? second_hash_ptr + 3 : second_hash_ptr + 2; 
+       int64_t exponent = 0L;
+
+       ptr = *(second_hash_ptr + 2) == '+' ? second_hash_ptr + 3 : second_hash_ptr + 2;
        for( ; *ptr != '\0'; ++ptr)
        {
            if(*ptr != '_')

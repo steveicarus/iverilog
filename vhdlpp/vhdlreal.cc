@@ -39,7 +39,7 @@ vhdlreal::vhdlreal(const vhdlreal& val) {
 vhdlreal::vhdlreal(const char* text) {
     assert(strlen(text) != 0);
     char* buffer = new char[strlen(text)+1];
-    
+
     char* buf_ptr;
     for(buf_ptr = buffer; *text != 0; ++buf_ptr, ++text) {
         if(*text == '_')
@@ -47,7 +47,7 @@ vhdlreal::vhdlreal(const char* text) {
         *buf_ptr = *text;
     }
     *buf_ptr = '\0';
-    
+
     value_ = strtod(buffer, NULL);
     delete[] buffer;
 }

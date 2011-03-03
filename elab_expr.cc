@@ -850,7 +850,7 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
                 case 'R': // >>>
                     // A logical shift will effectively coerce a signed
                     // operand to unsigned. We have to assume an arithmetic
-                    // shift may do the same, as we don't yet know the final 
+                    // shift may do the same, as we don't yet know the final
                     // expression type.
                   if ((mode == LOSSLESS) && signed_flag_)
                         mode = UNSIZED;
@@ -2634,7 +2634,7 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
             tmp = pad_to_width(tmp, expr_wid, *this);
 
       } else {
-	    
+
 	      /* No bit or part select. Make the constant into a
 		 NetEConstParam or NetECRealParam as appropriate. */
 	    NetEConst*ctmp = dynamic_cast<NetEConst*>(tmp);
@@ -3381,7 +3381,7 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 			cerr << get_fileline() << ": debug: Short-circuit "
 			        "elaborate TRUE clause of ternary."
 			     << endl;
-		                                             
+
 		  return elab_and_eval_alternative_(des, scope, tru_, expr_wid);
 	    }
 

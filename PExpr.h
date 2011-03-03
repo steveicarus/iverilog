@@ -101,7 +101,7 @@ class PExpr : public LineInfo {
 	// this method is the calculated lossless width, but the width
 	// returned by a subsequent call to the expr_width method will be
 	// the final expression width.
-      virtual unsigned test_width(Design*des, NetScope*scope, 
+      virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
 
 	// After the test_width method is complete, these methods

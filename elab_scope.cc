@@ -50,7 +50,7 @@
 
 typedef map<perm_string,LexicalScope::param_expr_t>::const_iterator mparm_it_t;
 
-static void collect_parm_item_(Design*des, NetScope*scope, perm_string name, 
+static void collect_parm_item_(Design*des, NetScope*scope, perm_string name,
 			       const LexicalScope::param_expr_t&cur)
 {
       NetScope::range_t*range_list = 0;
@@ -424,7 +424,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
 	// Run through the defparams for this module and save the result
 	// in a table for later final override.
-  
+
       typedef list<Module::named_expr_t>::const_iterator defparms_iter_t;
       for (defparms_iter_t cur = defparms.begin()
 		 ; cur != defparms.end() ; ++ cur ) {
@@ -1375,7 +1375,7 @@ void PFunction::elaborate_scope(Design*des, NetScope*scope) const
       assert(scope->type() == NetScope::FUNC);
 
 	// Scan the parameters in the function, and store the information
-        // needed to evaluate the parameter expressions. 
+        // needed to evaluate the parameter expressions.
 
       collect_scope_parameters_(des, scope, parameters);
 
@@ -1393,7 +1393,7 @@ void PTask::elaborate_scope(Design*des, NetScope*scope) const
       assert(scope->type() == NetScope::TASK);
 
 	// Scan the parameters in the task, and store the information
-        // needed to evaluate the parameter expressions. 
+        // needed to evaluate the parameter expressions.
 
       collect_scope_parameters_(des, scope, parameters);
 
@@ -1470,7 +1470,7 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
             my_scope->is_auto(scope->is_auto());
 
 	      // Scan the parameters in the scope, and store the information
-	      // needed to evaluate the parameter expressions. 
+	      // needed to evaluate the parameter expressions.
 
             collect_scope_parameters_(des, my_scope, parameters);
 
