@@ -705,22 +705,20 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
       switch (sig->port_type()) {
 
 	  case NetNet::PINPUT:
-	    ps = new NetPartSelect(sig, sig->sb_to_idx(lidx), swid,
-				   NetPartSelect::PV);
+	    ps = new NetPartSelect(sig, lidx, swid, NetPartSelect::PV);
 	    connect(tmp->pin(0), ps->pin(0));
 	    sig = tmp;
 	    break;
 
 	  case NetNet::POUTPUT:
-	    ps = new NetPartSelect(sig, sig->sb_to_idx(lidx), swid,
-				   NetPartSelect::VP);
+	    ps = new NetPartSelect(sig, lidx, swid, NetPartSelect::VP);
 	    connect(tmp->pin(0), ps->pin(0));
 	    sig = tmp;
 	    break;
 
 	  case NetNet::PINOUT:
 	    ps = new NetTran(scope, scope->local_symbol(), sig->vector_width(),
-			     swid, sig->sb_to_idx(lidx));
+			     swid, lidx);
 	    connect(sig->pin(0), ps->pin(0));
 	    connect(tmp->pin(0), ps->pin(1));
 	    sig = tmp;
