@@ -29,7 +29,7 @@ semicolon that terminates a statement. Like so:
 The semicolon is required, whether the comment is there or not.
 
 Statements may span multiple lines, as long as there is no text (other
-then the first character of a label) in the first column of the
+than the first character of a label) in the first column of the
 continuation line.
 
 HEADER SYNTAX
@@ -83,7 +83,7 @@ references symbolically.)
 
 If the functor is part of a vector, then the symbol is the
 vvp_ipoint_t for the first functor. The [] operator can then be used
-to reference a functor other then the first in the vector.
+to reference a functor other than the first in the vector.
 
 There are some special symbols that in certain contexts have special
 meanings. As inputs to functors, the symbols "C<0>", "C<1>", "C<x>"
@@ -139,7 +139,7 @@ implementation. Most of the core gate types have built in tables.
 The initial values of all the inputs and the output is x. Any other
 value is passed around as run-time behavior. If the inputs have C<?>
 symbols, then the inputs are initialized to the specified bit value,
-and if this causes the output to be something other then x, a
+and if this causes the output to be something other than x, a
 propagation event is created to be executed at the start of run time.
 
 The strengths of inputs are ignored by functors, and the output has
@@ -234,7 +234,7 @@ sake of VPI code that might access it. The variable is placed in the
 current scope. The variable also has a width, defined by the indices
 for the most significant and lest significant bits. If the indices are
 equal (normally 0) the vector has width of one. If the width is greater
-then one, a contiguous array of functors is created and the value of
+than one, a contiguous array of functors is created and the value of
 the label is the address of the least significant bit.
 
 A variable does not take inputs, since its value is set behaviorally
@@ -619,7 +619,7 @@ of four possible values (0, 1, x and z) so two bits are needed to
 represent them. So the input of the functor is 8 bits, and the output
 2 bits. A complete lookup table for generating the 2-bit output from
 an 8-bit input is 512 bits. That can be packed into 64 bytes. This is
-small enough that the table should take less space then the code to
+small enough that the table should take less space than the code to
 implement the logic.
 
 To implement the truth table, we need to assign 2-bit encodings for
@@ -779,7 +779,7 @@ becomes:
 
 Notice the first parameter of the .functor is the type. The type
 includes a truth table that describes the output with a given
-input. If the gate is wider then four inputs, then cascade
+input. If the gate is wider than four inputs, then cascade
 functors. For example:
 
 	and gate (out, i1, i2, i3, i4, i5, i6, i7, i8);

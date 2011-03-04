@@ -63,7 +63,7 @@
   *
   *  The $dumpvars task tells the simulation what variables to write to
   *  the VCD output. The first parameter is how far to descend while
-  *  scanning a scope, and the remaining paramters are signals or scope
+  *  scanning a scope, and the remaining parameters are signals or scope
   *  names to include in the dump. If a scope name is given, all the
   *  signals within the scope are dumped. If a wire or register name is
   *  given, that signal is included.

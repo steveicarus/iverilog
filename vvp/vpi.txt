@@ -11,7 +11,7 @@ System tasks and functions in Verilog are implemented in Icarus
 Verilog by C routines written with VPI. This implies that the vvp
 engine must provide at least a subset of the Verilog VPI
 interface. The minimalist concepts of vvp, however, make the method
-less then obvious.
+less than obvious.
 
 Within a Verilog design, there is a more or less fixed web of
 vpiHandles that is the design database as is available to VPI
@@ -108,7 +108,7 @@ A scope is created with a .scope directive, like so:
 The scope takes a string name as the first parameter. If there is an
 additional parameter, it is a label of the directive for the parent
 scope. Scopes that have no parent are root scopes. It is an error to
-declare a scope with the same name more then once in a parent scope.
+declare a scope with the same name more than once in a parent scope.
 
 The name string given when creating the scope is the basename for the
 scope. The vvp automatically constructs full names from the scope

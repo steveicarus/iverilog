@@ -29,7 +29,7 @@
 extern char* __acc_newstring(const char*txt);
 
 /*
- * Trace file for loggint ACC and TF calls.
+ * Trace file for logging ACC and TF calls.
  */
 FILE* pli_trace;
 

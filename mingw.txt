@@ -71,7 +71,7 @@ The msys package is available from the mingw download site. This is
 not the compiler but a collection of *nix tools ported to Windows and
 wrapped in a convenient installer. The msys package is all the various
 basic tools (shells, file utils, etc) and the msysDTK is extra
-developer tools other then the compiler.
+developer tools other than the compiler.
 
 Download the msys-1.x.x.exe and msysdtc-1.x.x.exe binaries. These are
 self-installing packages. Install msys first, and then msysDTC. Most
@@ -91,7 +91,7 @@ commands below.
 The obvious step 2, then, is install the mingw compilers. These can be
 found at the web page <http://www.mingw.org>. The Mingw-5.x.x package
 is a convenient remote installer. Download this program and run
-it. The installer will ask wich components you want to install. You
+it. The installer will ask which components you want to install. You
 need only the base C compiler and the C++ compiler. (You may install
 other languages if you wish.)
 
@@ -150,7 +150,7 @@ You will need these gnuwin32 packages to compile Icarus Verilog:
 I suggest creating a common directory for holding all your gnuwin32
 packages. I use C:\gnuwin32. The download page at the gnuwin32 site
 has a "setup" link for each of these packages. Click the setup to
-download the installer for each of the desired programes, then execute
+download the installer for each of the desired programs, then execute
 the downloaded .exe files to invoke the installer. Install into the
 c:\gunwin32 directory.
 

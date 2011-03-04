@@ -548,7 +548,7 @@ class NetCLShift  : public NetNode {
  * This class supports the LPM_COMPARE device.
  *
  * The width of the device is the width of the inputs. If one of the
- * inputs is narrower then the other, it is up to the generator to
+ * inputs is narrower than the other, it is up to the generator to
  * make sure all the data pins are properly driven.
  *
  * NOTE: This is not the same as the device used to support case
@@ -919,7 +919,7 @@ class NetMemory  {
  * EDIF LPM Version 2 1 0 standard. It is used as a structural
  * implementation of the * operator. The device has inputs DataA and
  * DataB that can have independent widths, as can the result. If the
- * result is smaller then the widths of a and b together, then the
+ * result is smaller than the widths of a and b together, then the
  * device drops the least significant bits of the product.
  */
 class NetMult  : public NetNode {
@@ -1389,7 +1389,7 @@ class NetLogic  : public NetNode {
 
 /*
  * The UDP is a User Defined Primitive from the Verilog source. Do not
- * expand it out any further then this in the netlist, as this can be
+ * expand it out any further than this in the netlist, as this can be
  * used to represent target device primitives.
  *
  * The UDP can be combinational or sequential. The sequential UDP
@@ -1411,7 +1411,7 @@ class NetLogic  : public NetNode {
  *      N   -- (1x)
  *
  * It also takes one of the following glob letters to represent more
- * then one item.
+ * than one item.
  *
  *      p   -- 01, 0x or x1 // check this with the lexer
  *      n   -- 10, 1x or x0 // check this with the lexer
@@ -1424,7 +1424,7 @@ class NetLogic  : public NetNode {
  * SEQUENTIAL
  * These objects have a single bit of memory. The logic table includes
  * an entry for the current value, and allows edges on the inputs. In
- * canonical form, inly then entries that generate 0, 1 or - (no change)
+ * canonical form, only the entries that generate 0, 1 or - (no change)
  * are listed.
  *
  * COMBINATIONAL
@@ -2596,8 +2596,8 @@ class NetProcTop  : public LineInfo, public Attrib {
  *   %  -- Arithmetic modulus
  *   &  -- Bit-wise AND
  *   |  -- Bit-wise OR
- *   <  -- Less then
- *   >  -- Greater then
+ *   <  -- Less than
+ *   >  -- Greater than
  *   e  -- Logical equality (==)
  *   E  -- Case equality (===)
  *   L  -- Less or equal
@@ -2717,8 +2717,8 @@ class NetEBBits : public NetEBinary {
  * this case the bit width of the expression is 1 bit, and the
  * operands take their natural widths. The supported operators are:
  *
- *   <  -- Less then
- *   >  -- Greater then
+ *   <  -- Less than
+ *   >  -- Greater than
  *   e  -- Logical equality (==)
  *   E  -- Case equality (===)
  *   L  -- Less or equal (<=)

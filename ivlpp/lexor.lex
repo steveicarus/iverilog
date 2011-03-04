@@ -593,7 +593,7 @@ static void do_define()
       }
 
 	/* Detect the continuation sequence. If I find it, remove it
-	   and the white space that preceeds it, then replace all that
+	   and the white space that precedes it, then replace all that
 	   with a single newline. */
       if ((cp > yytext) && (cp[-1] == '\\')) {
 

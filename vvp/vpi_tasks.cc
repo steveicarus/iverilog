@@ -281,7 +281,7 @@ static const struct __vpirt vpip_sysfunc_real_rt = {
       systask_iter
 };
 
-  /* **** Manipulate the internal datastructures. **** */
+  /* **** Manipulate the internal data structures. **** */
 
 static struct __vpiUserSystf**def_table = 0;
 static unsigned def_count = 0;

@@ -686,7 +686,7 @@ NetEConst* NetEBComp::eval_tree()
 	  case '<': // Less than
 	    return eval_less_();
 
-	  case '>': // Greater then
+	  case '>': // Greater than
 	    return eval_gt_();
 
 	  default:

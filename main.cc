@@ -662,7 +662,7 @@ int main(int argc, char*argv[])
 
       des->set_flags(flags);
 
-	/* Done iwth all the pform data. Delete the modules. */
+	/* Done with all the pform data. Delete the modules. */
       for (map<perm_string,Module*>::iterator idx = pform_modules.begin()
 		 ; idx != pform_modules.end() ; idx ++) {
 

@@ -243,7 +243,7 @@ bool Module::elaborate_scope(Design*des, NetScope*scope) const
       }
 
 	// Scan through all the named events in this scope. We do not
-	// need anything more then the current scope to do this
+	// need anything more than the current scope to do this
 	// elaboration, so do it now. This allows for normal
 	// elaboration to reference these events.
 

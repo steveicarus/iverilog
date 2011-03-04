@@ -192,7 +192,7 @@ NetNet* PEBinary::elaborate_net_add_(Design*des, NetScope*scope,
 
 
 	/* The owidth is the output width of the lpm_add_sub
-	   device. If the desired width is greater then the width of
+	   device. If the desired width is greater than the width of
 	   the operands, then widen the adder and let code below pad
 	   the operands. If this is an adder, we can take advantage of
 	   the carry bit. */
@@ -735,7 +735,7 @@ NetNet* PEBinary::elaborate_net_cmp_(Design*des, NetScope*scope,
 /*
  * Elaborate a divider gate. This function create a NetDivide gate
  * which has exactly the right sized DataA, DataB and Result ports. If
- * the l-value is wider then the result, then pad.
+ * the l-value is wider than the result, then pad.
  */
 NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 				     unsigned lwidth,
@@ -789,7 +789,7 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 
 	// Make an output signal that is the width of the l-value.
 	// Due to above calculation of rwidth, we know that the result
-	// will be no more then the l-value, so it is safe to connect
+	// will be no more than the l-value, so it is safe to connect
 	// all the result pins to the osig.
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
@@ -801,7 +801,7 @@ NetNet* PEBinary::elaborate_net_div_(Design*des, NetScope*scope,
 	    connect(div->pin_Result(idx), osig->pin(idx));
 
 
-	// If the lvalue is larger then the result, then pad the
+	// If the lvalue is larger than the result, then pad the
 	// output with constant 0. This can happen for example in
 	// cases like this:
 	//    wire [3;0] a, b;
@@ -859,7 +859,7 @@ NetNet* PEBinary::elaborate_net_mod_(Design*des, NetScope*scope,
       for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
 	    connect(mod->pin_Result(idx), osig->pin(idx));
 
-	/* If the lvalue is larger then the result, then pad the
+	/* If the lvalue is larger than the result, then pad the
 	   output with constant 0. */
       if (cnt < osig->pin_count()) {
 	    NetConst*tmp = new NetConst(scope, scope->local_symbol(),
@@ -1030,7 +1030,7 @@ NetNet* PEBinary::elaborate_net_mul_(Design*des, NetScope*scope,
       for (unsigned idx = 0 ;  idx < cnt ;  idx += 1)
 	    connect(mult->pin_Result(idx), osig->pin(idx));
 
-	/* If the lvalue is larger then the result, then pad the
+	/* If the lvalue is larger than the result, then pad the
 	   output with constant 0. */
       if (cnt < osig->pin_count()) {
 	    NetConst*tmp = new NetConst(scope, scope->local_symbol(),
@@ -1235,7 +1235,7 @@ NetNet* PECallFunction::elaborate_net(Design*des, NetScope*scope,
       NetScope*dscope = def->scope();
       assert(dscope);
 
-	/* This must be a ufuction that returns a signal. */
+	/* This must be a function that returns a signal. */
       assert(def->return_sig());
 
 	/* check the validity of the parameters. */
@@ -1418,7 +1418,7 @@ NetNet* PEConcat::elaborate_net(Design*des, NetScope*scope,
 	   concat operator from least significant to most significant,
 	   which is opposite from how they are given in the list.
 
-	   Allow for a repeat count other then 1 by repeating the
+	   Allow for a repeat count other than 1 by repeating the
 	   connect loop as many times as necessary. */
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
@@ -1634,7 +1634,7 @@ NetNet* PEIdent::elaborate_net(Design*des, NetScope*scope,
 		 with the sig type.
 
 		 Be careful to check the bit ordering. If the msb is
-		 less significant then the msb, then the source is
+		 less significant than the msb, then the source is
 		 broken. I can hack it in order to go on, but report
 		 an error. */
 
@@ -2273,7 +2273,7 @@ NetNet* PETernary::elaborate_net(Design*des, NetScope*scope,
       assert(expr_sig->pin_count() == 1);
 
 	/* This is the width of the LPM_MUX device that I'm about to
-	   create. It may be smaller then the desired output, but I'll
+	   create. It may be smaller than the desired output, but I'll
 	   handle padding below.
 
 	   Create a NetNet object wide enough to hold the

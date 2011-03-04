@@ -83,7 +83,7 @@ void vpip_run_value_changes(struct __vpiSignal*sig)
 /*
  * Handle read-only synch events. This causes the callback to be
  * scheduled for a moment at the end of the time period. This method
- * handles scheduling with itme delays.
+ * handles scheduling with time delays.
  */
 static void go_readonly_synch(struct __vpiCallback*rfp)
 {

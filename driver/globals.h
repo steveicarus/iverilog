@@ -28,10 +28,10 @@ extern const char*base;
 extern char* iconfig_path;
 extern char* iconfig_common_path;
 
-  /* Ths is the optional -M<dependfile> value, if one was supplied. */
+  /* This is the optional -M<dependfile> value, if one was supplied. */
 extern const char*depfile;
 
-  /* Ths is the optional -N<path> value, if one was supplied. */
+  /* This is the optional -N<path> value, if one was supplied. */
 extern const char*npath;
 
   /* This is the name of the output file that the user selected. */

@@ -160,7 +160,7 @@ device pins are connected.
 .SH EXAMPLES
 
 .TB 8
-.I COMPILING WITH XILINX FOUNDATION/iSE
+.I COMPILING WITH XILINX FOUNDATION/ISE
 Compile a single-file design with command line tools like so:
 
 .nf

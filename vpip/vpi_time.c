@@ -25,7 +25,7 @@
 # include  <stdio.h>
 
 /*
- * IEEE-1364 VPI pretty much mandates the existance of this sort of
+ * IEEE-1364 VPI pretty much mandates the existence of this sort of
  * thing. (Either this or a huge memory leak.) Sorry.
  */
 static char buf_obj[128];

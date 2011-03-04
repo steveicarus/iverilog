@@ -149,7 +149,7 @@ void NetPDelay::nex_output(NexusSet&out)
 
 /*
  * For the purposes of synthesis, system task calls have no output at
- * all. This is OK because most system tasks are not synthesizeable in
+ * all. This is OK because most system tasks are not synthesizable in
  * the first place.
  */
 void NetSTask::nex_output(NexusSet&out)

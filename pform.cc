@@ -365,7 +365,7 @@ static void process_udp_table(PUdp*udp, list<string>*table,
 	   placed in the PUdp object.
 
 	   The table strings are made up by the parser to be two or
-	   three substrings seperated by ';', i.e.:
+	   three substrings separated by ';', i.e.:
 
 	   0101:1:1  (synchronous device entry)
 	   0101:0    (combinational device entry)

@@ -650,7 +650,7 @@ extern const char* ivl_udp_name(ivl_udp_t net);
  * ivl_lpm_decode
  *    Return the DECODER associated with this LPM_FF device. The
  *    decoder for a FF takes an input address and generates an enable
- *    input for no more then 1 bit (can be none) of the FF device.
+ *    input for no more than 1 bit (can be none) of the FF device.
  *
  * ivl_lpm_q
  *    Return the output data nexus for device types that have a single
@@ -985,7 +985,7 @@ extern ivl_expr_t  ivl_parameter_expr(ivl_parameter_t net);
  * ivl_scope_children
  *    A scope may in turn contain other scopes. This method iterates
  *    through all the child scopes of a given scope. If the function
- *    returns any value other then 0, the iteration stops and the
+ *    returns any value other than 0, the iteration stops and the
  *    method returns that value. Otherwise, iteration continues until
  *    the children run out.
  *
@@ -1212,7 +1212,7 @@ extern ivl_statement_type_t ivl_statement_type(ivl_statement_t net);
 /*
  * The following functions retrieve specific single values from the
  * statement. These values are the bits of data and parameters that
- * make up the statement. Many of these functions apply to more then
+ * make up the statement. Many of these functions apply to more than
  * one type of statement, so the comment in front of them tells which
  * statement types can be passed to the function.
  *

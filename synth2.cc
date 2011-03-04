@@ -871,7 +871,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope, bool sync_flag,
 
 	      /* If after all this is an unspecified case, then get the
 		 input from the synchronous output. Note that we know
-		 by design that there is no relevent default or accum
+		 by design that there is no relevant default or accum
 		 input to use here, as those cases are handled above. */
 	    if (statement_map[item] == 0) {
 
@@ -2076,7 +2076,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 
 	      /* XXXX I really should find a way to check that the
 		 edge used on the reset input is correct. This would
-		 involve interpreting the exression that is fed by the
+		 involve interpreting the expression that is fed by the
 		 reset expression. */
 	      //assert(ev->edge() == NetEvProbe::POSEDGE);
 
@@ -2231,7 +2231,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
       }
 
 	/* Detect the case that this is a *synchronous* set/reset. It
-	   is not asyncronous because we know the condition is not
+	   is not asynchronous because we know the condition is not
 	   included in the sensitivity list, but if the if_ case is
 	   constant (has no inputs) then we can model this as a
 	   synchronous set/reset.
@@ -2402,7 +2402,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 		 << endl;
       }
 
-	/* This can't be other then one unless there are named events,
+	/* This can't be other than one unless there are named events,
 	   which I cannot synthesize. */
       assert(nevents_ == 1);
       NetEvent*ev = events_[0];

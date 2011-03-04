@@ -53,7 +53,7 @@ So, if your program doesn't compile, tell me so, tell me where the
 error occurs, and include a complete Perfectly Valid Test Program(tm).
 You tell me that it fails to compile for you, and I find that it
 compiles for me, then hooray I fixed it. It can happen, you
-know. What's on my disk is more recent then the latest snapshot.
+know. What's on my disk is more recent than the latest snapshot.
 
 If your program does compile, but generates incorrect output, I need
 to know what it says and what you think it should say. From this I can
@@ -76,13 +76,13 @@ In this case, if possible include not only the sample verilog program,
 but the generated netlist file(s) and a clear indication of what went
 wrong. If it is not clear to me, I will ask for clarification.
 
-* The Output is Correct, But Less Then Ideal
+* The Output is Correct, But Less Than Ideal
 
 If the output is strictly correct, but just not good enough for
 practical use, I would like to know. These sorts of problems are
-likely to be more subjective then a core dump, but are worthy of
+likely to be more subjective than a core dump, but are worthy of
 consideration. However, realize that outright errors will get more
-attention then missed optimizations.
+attention than missed optimizations.
 
 THE MAKING OF A GOOD TEST PROGRAM
 
@@ -104,7 +104,7 @@ module may not be needed as long as the ``-s <name>'' switch is
 given.
 
 So when you send a test case, ask yourself "Can poor overworked Steve
-invoke the error without any Verilog other then what is included?" And
+invoke the error without any Verilog other than what is included?" And
 while we are at it, please place a copyright notice in your test
 program and include a GPL license statement if you can. Your test
 program may find its way into the test suite, and the notices will

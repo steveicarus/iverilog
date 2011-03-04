@@ -75,7 +75,7 @@ void vpip_load_module(const char*name)
 		  sprintf(buf, "%s.vpi", name);
 		  rc = stat(buf, &sb);
 
-		    /* Tray alwo with the .vpl suffix. */
+		    /* Try also with the .vpl suffix. */
 		  if (rc != 0) {
 			export_flag = true;
 			sprintf(buf, "%s.vpl", name);

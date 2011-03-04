@@ -279,7 +279,7 @@ struct lxt2_wr_symbol *	lxt2_wr_symbol_add(struct lxt2_wr_trace *lt, const char 
 struct lxt2_wr_symbol *	lxt2_wr_symbol_alias(struct lxt2_wr_trace *lt, const char *existing_name, const char *alias, int msb, int lsb);
 void			lxt2_wr_symbol_bracket_stripping(struct lxt2_wr_trace *lt, int doit);
 
-			/* each granule is LXT2_WR_GRANULE_SIZE (32 or 64) timesteps, default is 256 per section */
+			/* each granule is LXT2_WR_GRANULE_SIZE (32 or 64) time steps, default is 256 per section */
 void 			lxt2_wr_set_maxgranule(struct lxt2_wr_trace *lt, unsigned int maxgranule);
 
 			/* time ops */

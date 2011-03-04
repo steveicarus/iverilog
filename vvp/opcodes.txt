@@ -9,7 +9,7 @@
 EXECUTABLE INSTRUCTION OPCODES
 
 Instruction opcodes all start with a % character and have 0 or more
-operands. In no case are there more then 3 operands. This chapter
+operands. In no case are there more than 3 operands. This chapter
 describes the specific behavior of each opcode, in enough detail
 (I hope) that its complete effect can be predicted.
 
@@ -160,8 +160,8 @@ same, or 0 otherwise. The eq bit is true if the values are logically
 the same. That is, x and z are considered equal. In other words the eq
 bit is the same as ``=='' and the eeq bit ``===''.
 
-The lt bit is 1 if the left vector is less then the right vector, or 0
-if greater then or equal to the right vector. It is the equivalent of
+The lt bit is 1 if the left vector is less than the right vector, or 0
+if greater than or equal to the right vector. It is the equivalent of
 the Verilog < operator. Combinations of these three bits can be used
 to implement all the Verilog comparison operators.
 
@@ -252,7 +252,7 @@ thread to start executing at the specified address. The new thread is
 created and pushed onto the child stack.  It is also marked runnable,
 but is not necessarily started until the current thread yields.
 
-The %fork instruction has no effect other then to push a child thread.
+The %fork instruction has no effect other than to push a child thread.
 
 See also %join.
 
@@ -327,7 +327,7 @@ will jump to T_label if bit 8 is x or z.
 
 This is the partner to %fork. This instruction causes the thread to
 wait for the top thread in the child stack to terminate, then
-continues. It has no effect in the current thread other then to wait
+continues. It has no effect in the current thread other than to wait
 until the top child is cleared.
 
 It is an error to execute %join if there are no children in the child
@@ -539,7 +539,7 @@ complete bounds checking.
 
 The %set/x0/x instruction is the same, except the bound value is in
 a word register instead of in the opcode. This allows for bounds that
-are larger then 0xffff.
+are larger than 0xffff.
 
 
 * %shiftl/i0 <bit>, <wid>

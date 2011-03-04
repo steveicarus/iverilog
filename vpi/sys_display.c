@@ -184,7 +184,7 @@ static void format_time(unsigned mcd, int fsize,
 
 	/* This is the number of characters to the right of the
 	   decimal point. This is defined completely by the
-	   timeformat. It is legal for the precision to be larger then
+	   timeformat. It is legal for the precision to be larger than
 	   the units, and in this case there will be no fraction_chars
 	   at all. */
       fraction_chars = timeformat_info.units - format_precision;
@@ -193,7 +193,7 @@ static void format_time(unsigned mcd, int fsize,
 
 	/* This is the number of zeros I must add to the value to get
 	   the desired precision within the fraction. If this value is
-	   greater then 0, the value does not have enough characters,
+	   greater than 0, the value does not have enough characters,
 	   so I will be adding zeros. */
 
       fraction_pad = time_units - format_precision;
@@ -213,7 +213,7 @@ static void format_time(unsigned mcd, int fsize,
 	/* This is the number of zeros that I must add to the integer
 	   part of the output string to pad the value out to the
 	   desired units. This will only have a non-zero value if the
-	   units of the value is greater then the desired units.
+	   units of the value is greater than the desired units.
 
 	   Detect the special case where the value is 0. In this case,
 	   do not do any integer filling ever. The output should be
@@ -1117,7 +1117,7 @@ static PLI_INT32 sys_monitor_calltf(char*name)
       vpiHandle scope = vpi_handle(vpiScope, sys);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
 
-	/* If there was a previous $monitor, then remove the calbacks
+	/* If there was a previous $monitor, then remove the callbacks
 	   related to it. */
       if (monitor_callbacks) {
 	    for (idx = 0 ;  idx < monitor_info.nitems ;  idx += 1)

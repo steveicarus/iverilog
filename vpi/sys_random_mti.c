@@ -143,7 +143,7 @@ static PLI_INT32 sys_mti_random_calltf(char*name)
 		  context->mti = NP1;
 		  assert(context);
 
-		    /* squrrel away context */
+		    /* squirrel away context */
 		  vpi_put_userdata(call_handle, (void *)context);
 	    }
 

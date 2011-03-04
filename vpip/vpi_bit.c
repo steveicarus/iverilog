@@ -107,7 +107,7 @@ vpip_bit_t vpip_pair_resolve(vpip_bit_t a, vpip_bit_t b)
 	    res = tmp;
       }
 
-	/* Cannonicalize the HiZ value. */
+	/* Canonicalize the HiZ value. */
       if ((res&0x77) == 0)
 	    res = HiZ;
 

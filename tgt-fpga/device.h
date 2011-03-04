@@ -69,7 +69,7 @@ struct device_s {
  * Return the device_t cookie given the name of the architecture. If
  * the device is not found, return 0.
  *
- * This function is used if the user specifies the archetecture
+ * This function is used if the user specifies the architecture
  * explicitly, with the -parch=name flag.
  */
 extern device_t device_from_arch(const char*arch);

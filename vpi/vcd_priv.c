@@ -109,7 +109,7 @@ void vcd_names_sort(struct vcd_names_list_s*tab)
 
    The new signal will be listed as a $var, but no callback
    will be installed.  This saves considerable CPU time and leads
-   to smalle VCD files.
+   to smaller VCD files.
 
    The _vpiNexusId is a private (int) property of IVL simulators.
 */

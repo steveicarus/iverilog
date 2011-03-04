@@ -184,7 +184,7 @@ implies the synthesis \fB-S\fP flag.
 
 .SH "WARNING TYPES"
 These are the types of warnings that can be selected by the \fB-W\fP
-switch. All the warning types (other then \fBall\fP) can also be
+switch. All the warning types (other than \fBall\fP) can also be
 prefixed with \fBno-\fP to turn off that warning. This is most useful
 after a \fB-Wall\fP argument to suppress isolated warning types.
 

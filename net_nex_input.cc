@@ -208,7 +208,7 @@ NexusSet* NetAssignBase::nex_input(bool rem_out)
 {
       NexusSet*result = rval_->nex_input(rem_out);
 
-	/* It is possible that the lval_ can hav nex_input values. In
+	/* It is possible that the lval_ can have nex_input values. In
 	   particular, index expressions are statement inputs as well,
 	   so should be addressed here. */
       for (NetAssign_*cur = lval_ ;  cur ;  cur = cur->more) {

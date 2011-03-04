@@ -885,7 +885,7 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 
 	      /* Otherwise, we cannot accurately do a substitution. If
 		 one input is non-constant, then that input may have a
-		 HiZ value, and there is no Verilog logic other then a
+		 HiZ value, and there is no Verilog logic other than a
 		 MUX that can pass a HiZ value. */
 	    flag = false;
       }

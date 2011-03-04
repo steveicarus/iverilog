@@ -49,7 +49,7 @@ handle acc_next(PLI_INT32 *type, handle scope, handle prev)
 
       /*
        * The acc_next_* functions need to be reentrant, so we need to
-       * rescan all the items upto the previous one, then return
+       * rescan all the items up to the previous one, then return
        * the next one.
       */
       iter = vpi_iterate(vpiScope, scope);	// ICARUS extension

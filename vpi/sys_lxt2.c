@@ -24,7 +24,7 @@
 
 /*
  * This file contains the implementations of the VCD related
- * funcitons.
+ * functions.
  */
 
 # include  "vpi_user.h"

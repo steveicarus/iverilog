@@ -20,7 +20,7 @@
  */
 
 /*
- * This module is a synthesizeable square-root function. It is also a
+ * This module is a synthesizable square-root function. It is also a
  * detailed example of how to target Xilinx Virtex parts using
  * Icarus Verilog. In fact, for no particular reason other than to
  * be excessively specific, I will step through the process of
@@ -30,7 +30,7 @@
  * In addition to Icarus Verilog, you will need implementation
  * software from Xilinx. As of this writing, this example was tested
  * with Foundation 4.2i, but it should work the same with ISE and
- * Webpack software.
+ * WebPACK software.
  *
  * This example source contains all the Verilog needed to do
  * everything described below. We use conditional compilation to
@@ -55,7 +55,7 @@
  * "PASSED" and finishes the simulation.
  *
  * When you take a close look at the "main" module below, you will see
- * that it uses Verilog constructs that are not synthesizeable. This
+ * that it uses Verilog constructs that are not synthesizable. This
  * is fine, as we will never try to synthesize it.
  *
  * LIBRARY PARTS
@@ -78,7 +78,7 @@
  * Without any preprocessor directives, the only module is the sqrt32
  * module, so sqrt32 is compiled as the root. The ports of the module
  * are automatically made into ports of the sqrt32.edf netlist, and
- * the contents of the sqrt32 module are connected approprately.
+ * the contents of the sqrt32 module are connected appropriately.
  *
  * COMPLETE CHIP DESIGNS
  *
@@ -154,7 +154,7 @@
  *
  * The POST_MAP compiler directive causes the GSR manipulations
  * included in the test bench to be compiled in, to simulate the chip
- * startup. Other then that, the test bench runs the post-map design
+ * startup. Other than that, the test bench runs the post-map design
  * the same way the pre-synthesis design works.
  *
  * Run this design with the command:
@@ -183,7 +183,7 @@
   * where sqrt(y) is the exact square root of y and floor(N) is the
   * largest integer <= N.
   *
-  * For 32bit numbers, this will never run more then 16 iterations,
+  * For 32bit numbers, this will never run more than 16 iterations,
   * which amounts to 16 clocks.
   */
 

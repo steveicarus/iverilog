@@ -21,7 +21,7 @@
 #include  <acc_user.h>
 
 /*
- * tf_getinstance implemented using equvalent acc_ routing
+ * tf_getinstance implemented using equivalent acc_ routing
  */
 char *tf_getcstringp(int n)
 {

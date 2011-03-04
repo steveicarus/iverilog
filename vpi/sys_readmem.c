@@ -180,7 +180,7 @@ static PLI_INT32 sys_readmem_calltf(char*name)
 	      return 0;
 	  }
 
-	  /* Get optional forth parameter. It must be a constant. */
+	  /* Get optional fourth parameter. It must be a constant. */
 	  stop_item = vpi_scan(argv);
 	  if (stop_item!=0){
 	      if (check_integer_constant(name, stop_item) == 0){
@@ -188,7 +188,7 @@ static PLI_INT32 sys_readmem_calltf(char*name)
 		  return 0;
 	      }
 
-	      /* Check that ther is no 5th parameter */
+	      /* Check that there is no 5th parameter */
 	      if (vpi_scan(argv) != 0){
 		  vpi_printf("ERROR: %s accepts maximum 4 parameters!\n", name );
 		  vpi_free_object(argv);
@@ -424,7 +424,7 @@ static PLI_INT32 sys_writemem_calltf(char*name)
 	      return 0;
 	  }
 
-	  /* Get optional forth parameter. It must be a constant. */
+	  /* Get optional fourth parameter. It must be a constant. */
 	  stop_item = vpi_scan(argv);
 	  if (stop_item!=0){
 	      if (check_integer_constant(name, stop_item) == 0){
@@ -432,7 +432,7 @@ static PLI_INT32 sys_writemem_calltf(char*name)
 		  return 0;
 	      }
 
-	      /* Check that ther is no 5th parameter */
+	      /* Check that there is no 5th parameter */
 	      if (vpi_scan(argv) != 0){
 		  vpi_printf("ERROR: %s accepts maximum 4 parameters!\n", name );
 		  vpi_free_object(argv);
@@ -450,7 +450,7 @@ static PLI_INT32 sys_writemem_calltf(char*name)
       /* Open the data file. */
       file = fopen(path, "w");
       if (file == 0) {
-	    vpi_printf("%s: Unable to open %s for writeing.\n", name, path);
+	    vpi_printf("%s: Unable to open %s for writing.\n", name, path);
 	    free(path);
 	    return 0;
       }

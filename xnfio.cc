@@ -305,7 +305,7 @@ void xnfio_f::lpm_compare(Design*des, NetCompare*dev)
 
 bool xnfio_f::compare_sideb_const(Design*des, NetCompare*dev)
 {
-	/* Even if side B is all constant, if there are more then 4
+	/* Even if side B is all constant, if there are more than 4
 	   signals on side A we will not be able to fit the operation
 	   into a function unit, so we might as well accept a
 	   comparator. Give up. */

@@ -81,7 +81,7 @@ NetNet* PEConcat::elaborate_anet(Design*des, NetScope*scope) const
 	   concat operator from least significant to most significant,
 	   which is opposite from how they are given in the list.
 
-	   Allow for a repeat count other then 1 by repeating the
+	   Allow for a repeat count other than 1 by repeating the
 	   connect loop as many times as necessary. */
 
       NetNet*osig = new NetNet(scope, scope->local_symbol(),

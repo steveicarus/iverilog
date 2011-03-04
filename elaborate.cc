@@ -257,7 +257,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       assert(lval && rval);
 
 
-	/* If the r-value insists on being smaller then the l-value
+	/* If the r-value insists on being smaller than the l-value
 	   (perhaps it is explicitly sized) the pad it out to be the
 	   right width so that something is connected to all the bits
 	   of the l-value. */
@@ -286,7 +286,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 	    name = scope->local_symbol();
 
 	/* If the Verilog source has a range specification for the
-	   gates, then I am expected to make more then one
+	   gates, then I am expected to make more than one
 	   gate. Figure out how many are desired. */
       if (msb_) {
 	    NetExpr*msb_exp = elab_and_eval(des, scope, msb_);
@@ -1640,7 +1640,7 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 	    }
       }
 
-	// If the condition expression is more then 1 bits, then
+	// If the condition expression is more than 1 bits, then
 	// generate a comparison operator to get the result down to
 	// one bit. Turn <e> into <e> != 0;
 
@@ -2260,7 +2260,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	    return 0;
       }
 
-	// If the condition expression is more then 1 bits, then
+	// If the condition expression is more than 1 bits, then
 	// generate a reduction operator to get the result down to
 	// one bit. In other words, Turn <e> into |<e>;
 

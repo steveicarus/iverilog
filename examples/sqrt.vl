@@ -50,7 +50,7 @@
   * where sqrt(y) is the exact square root of y and floor(N) is the
   * largest integer <= N.
   *
-  * For 32bit numbers, this will never run more then 16 iterations,
+  * For 32bit numbers, this will never run more than 16 iterations,
   * which amounts to 16 clocks.
   */
 

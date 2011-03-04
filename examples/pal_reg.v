@@ -26,7 +26,7 @@
  *   iverilog -tpal -ppart=generic-22v10-plcc -opal_reg.jed pal_reg.v
  *
  * The output file name (passed through the -o<file> switch) can be
- * any file you desire. If the compilation and fittin all succeed, the
+ * any file you desire. If the compilation and fitting all succeed, the
  * output file will be a JEDEC file that you can take to your favorite
  * PROM programmer to program the part.
  *
@@ -45,7 +45,7 @@
  *
  * The output drivers are controlled by a single active low output
  * enable. I used bufif0 devices in this example, but the exact same
- * thing can be achived with a continuous assignment like so:
+ * thing can be achieved with a continuous assignment like so:
  *
  *   assign out = oe? 8'hzz : Q;
  *
@@ -76,7 +76,7 @@ endmodule
  * a PLCC package.
  *
  * Note that this module has no logic in it. It is a convention I use
- * that I put all the functionality in a seperate module (seen above)
+ * that I put all the functionality in a separate module (seen above)
  * and isolate the Icarus Verilog specific $attribute madness into a
  * top-level module. The advantage of this style is that the entire
  * module can be `ifdef'ed out when doing simulation and you don't

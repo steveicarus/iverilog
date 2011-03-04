@@ -681,7 +681,7 @@ static verinum*make_unsized_dec(const char*ptr)
       if (ptr[0] == '\'') {
 	      /* The number has decorations of the form 'sd<digits>,
 		 possibly with space between the d and the <digits>.
-		 Also, the 's' is optional, and markes the number as
+		 Also, the 's' is optional, and marks the number as
 		 signed. */
 	    ptr += 1;
 

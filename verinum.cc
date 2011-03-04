@@ -212,7 +212,7 @@ unsigned long verinum::as_ulong() const
  *
  * If the value is undefined, return 0.
  *
- * This function presumes that the native format is 2s compliment
+ * This function presumes that the native format is 2s complement
  * (pretty safe these days) and masks/sets bits accordingly. If the
  * value is too large for the native form, it truncates the high bits.
  */

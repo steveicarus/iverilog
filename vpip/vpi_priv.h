@@ -224,7 +224,7 @@ extern struct __vpiNull *vpip_get_null(void);
  * This type represents the handle to a Verilog scope. These include
  * module instantiations and name begin-end blocks. The attach
  * function is used to attach handles to the scope by the runtime
- * initializaiton.
+ * initialization.
  */
 struct __vpiScope {
       struct __vpiHandle base;
@@ -380,7 +380,7 @@ extern void vpip_simulation_run();
 extern void vpi_mcd_init(void);
 
 /*
- * Schedule an event to be run sometime in the future. The d parmater
+ * Schedule an event to be run sometime in the future. The d parameter
  * is the delay in simulation units before the event is processed. If
  * the non-block flag is set, the event is scheduled to happen at the
  * end of the time step.

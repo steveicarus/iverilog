@@ -59,7 +59,7 @@ m	.var	"m", 6,0;
 ;;; memory words occupy 8 bits each, that is 7 rounded up to the next
 ;;; multiple of 4.
 
-;;; Four bits ber byte.	 Word fill bits are included.  Commas are
+;;; Four bits per byte.	 Word fill bits are included.  Commas are
 ;;; optional, there may be a comma after the last byte.
 
 	.mem/init memory[20],

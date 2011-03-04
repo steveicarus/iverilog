@@ -20,7 +20,7 @@
 
 /*
  * Contains the routines required to implement veriusertfs routines
- * via VPI. This is extremly ugly, so don't look after eating dinner.
+ * via VPI. This is extremely ugly, so don't look after eating dinner.
  */
 
 # include <string.h>

@@ -53,7 +53,7 @@ struct vvp_udp_s *udp_find(char *label);
  * also points to the vvp_udp_s table that is the behavior for the
  * device.
  *
- * If there are more then 4 inputs to the device, then enough
+ * If there are more than 4 inputs to the device, then enough
  * edge_inputs_functor_s functors is created to receive all the
  * inputs. All the edge_inputs_functors_s ::out members point to the
  * leading udp_functor_s object, so the ::set methods all invoke the

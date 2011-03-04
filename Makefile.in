@@ -21,7 +21,7 @@ SHELL = /bin/sh
 # This string is used as an installation suffix. It modifies certain
 # key install paths/files such that a build and install of Icarus Verilog
 # with the same $(prefix) but a different $(suffix) will not interfere.
-# The normal configuratin leaves suffix empty
+# The normal configuration leaves suffix empty
 suffix = @install_suffix@
 
 prefix = @prefix@

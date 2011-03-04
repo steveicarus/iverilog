@@ -669,7 +669,7 @@ void inputs_connect(vvp_ipoint_t fdx, unsigned argc, struct symb_s*argv)
       for (unsigned idx = 0;  idx < argc;  idx += 1) {
 
 	      /* Find the functor for this input. This assumes that
-		 wide (more then 4 inputs) gates are consecutive
+		 wide (more than 4 inputs) gates are consecutive
 		 functors. */
 	    vvp_ipoint_t ifdx = ipoint_input_index(fdx, idx);
 	    functor_t iobj = functor_index(ifdx);

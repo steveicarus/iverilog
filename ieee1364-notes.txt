@@ -249,7 +249,7 @@ exactly the same so far as the compiler is concerned.
 
 Unfortunately, Cadence seems to feel otherwise. In particular, it has
 been reported that although {1'b0, 16} causes an error, {1'b0, 15+1}
-is accepted. Further testing shows that any expression other then a
+is accepted. Further testing shows that any expression other than a
 simple unsized constant is accepted there, even if all the operands of
 all the operators that make up the expression are unsized integers.
 
@@ -282,12 +282,12 @@ One might note that the quote from section 4.1.14 says "Unsized
 expressions...", so arguably accepting (15+1) or even (16+0) as an
 operand to a concatenation is not a violation of the letter of the
 law. However, the very next sentence of the quote expresses the
-intent, and accepting (15+1) as having a more defined size then (16)
+intent, and accepting (15+1) as having a more defined size than (16)
 seems to be a violation of that intent.
 
 Whatever a compiler decides the size is, the user has no way to
 predict it, and the compiler should not have the right to treat (15+1)
-any differently then (16). Therefore, Icarus Verilog takes the
+any differently than (16). Therefore, Icarus Verilog takes the
 position that such expressions are *unsized* and are not allowed as
 operands to concatenations. Icarus Verilog will in general assume that
 operations on unsized numbers produce unsized results. There are

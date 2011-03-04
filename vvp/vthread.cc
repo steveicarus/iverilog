@@ -345,7 +345,7 @@ void vthread_run(vthread_t thr)
 }
 
 /*
- * The CHUNK_LINK instruction is a specla next pointer for linking
+ * The CHUNK_LINK instruction is a special next pointer for linking
  * chunks of code space. It's like a simplified %jmp.
  */
 bool of_CHUNK_LINK(vthread_t thr, vvp_code_t code)
@@ -2862,7 +2862,7 @@ bool of_FORK_UFUNC(vthread_t thr, vvp_code_t cp)
 
 	/* After this function, the .ufunc code has placed an of_JOIN
 	   to pause this thread. Since the child was pushed by the
-	   flag to schecule_vthread, the called function starts up
+	   flag to schedule_vthread, the called function starts up
 	   immediately. */
       return true;
 }
