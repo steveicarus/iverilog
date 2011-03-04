@@ -1,7 +1,6 @@
 
 %option never-interactive
 %option nounput
-%option noyywrap
 
 %{
 /*
@@ -501,4 +500,9 @@ void reset_lexor(FILE*fd, const char*path)
       yyrestart(fd);
 
       yyparse_set_filepath(path);
+}
+
+int yywrap()
+{
+      return 1;
 }

@@ -530,7 +530,7 @@ typedef struct port_expr_s {
       union {
 	    ivl_statement_t lval;
 	    ivl_expr_t rval;
-      };
+      } expr;
 }  *port_expr_t;
 
 /*
@@ -539,11 +539,11 @@ typedef struct port_expr_s {
 static void emit_port(ivl_scope_t scope, struct port_expr_s port_expr)
 {
       if (port_expr.type == IVL_SIP_INPUT) {
-	    emit_expr(scope, port_expr.rval, 0);
+	    emit_expr(scope, port_expr.expr.rval, 0);
       } else {
 	      /* This is a self-determined context so we don't care about
 	       * the width of the L-value. */
-	    (void) emit_stmt_lval(scope, port_expr.lval);
+	    (void) emit_stmt_lval(scope, port_expr.expr.lval);
       }
 }
 
@@ -592,7 +592,7 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
       port_exprs = (port_expr_t) malloc(sizeof(struct port_expr_s)*ports);
       for (idx = 0; idx < ports; idx += 1) {
 	    port_exprs[idx].type = IVL_SIP_NONE;
-	    port_exprs[idx].rval = 0;
+	    port_exprs[idx].expr.rval = 0;
       }
 	/* Check that the input arguments are correct. */
       for (idx = 0; idx < task_idx; idx += 1) {
@@ -603,7 +603,7 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
 		  return 0;
 	    }
 	    port_exprs[port].type = IVL_SIP_INPUT;
-	    port_exprs[port].rval = ivl_stmt_rval(assign);
+	    port_exprs[port].expr.rval = ivl_stmt_rval(assign);
       }
 	/* Check that the output arguments are correct. */
       for (idx = task_idx + 1; idx < count; idx += 1) {
@@ -620,7 +620,7 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
 	    } else {
 		  port_exprs[port].type = IVL_SIP_OUTPUT;
 	    }
-	    port_exprs[port].lval = assign;
+	    port_exprs[port].expr.lval = assign;
       }
 	/* Check that the task call has the correct line number. */
       if (lineno != ivl_stmt_lineno(ivl_stmt_block_stmt(stmt, task_idx))) {

@@ -206,7 +206,7 @@ bool PECallFunction::has_aa_term(Design*des, NetScope*scope) const
 }
 
 PEConcat::PEConcat(const list<PExpr*>&p, PExpr*r)
-: parms_(p.size()), width_modes_(p.size()), repeat_(r)
+: parms_(p.size()), width_modes_(SIZED, p.size()), repeat_(r)
 {
       int tmp_idx = 0;
       assert(parms_.size() == p.size());
