@@ -50,6 +50,7 @@ PS2PDF = @PS2PDF@
 
 CPPFLAGS = -I. -I.. -I $(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@
 CXXFLAGS = -Wall @CXXFLAGS@
+CFLAGS = -Wall @CFLAGS@
 LDFLAGS = @rdynamic@ @LDFLAGS@
 LIBS = @LIBS@ @EXTRALIBS@
 
