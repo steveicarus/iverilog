@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -357,6 +357,36 @@ static void cmd_time(unsigned, char*[])
       printf("%lu ticks\n", ticks);
 }
 
+static void cmd_trace(unsigned argc, char*argv[])
+{
+      assert(argc);
+      switch (argc) {
+	case 1:
+	    show_file_line = true;
+	    break;
+	default:
+	    printf("Only using the first argument to trace.\n");
+	case 2:
+	    if ((strcmp(argv[1], "on") == 0) || (strcmp(argv[1], "1") == 0)) {
+		  show_file_line = true;
+	    } else show_file_line = false;
+	    break;
+      }
+
+	/* You can't trace a file if the compiler didn't insert the
+	 * %file_line opcodes. */
+      if (!code_is_instrumented) {
+	    printf("The vvp input must be instrumented before tracing is "
+	           "available.\n");
+	    printf("Recompile with the -pfileline=1 flag to instrument "
+	           "the input.\n");
+	    show_file_line = false;
+      } else {
+	    printf("Turning statement tracing %s.\n",
+	           show_file_line ? "on" : "off");
+      }
+}
+
 static void cmd_where(unsigned, char*[])
 {
       struct __vpiScope*cur = stop_current_scope;
@@ -412,6 +442,8 @@ static struct {
         "Single-step the scheduler for 1 event."},
       { "time",   &cmd_time,
         "Print the current simulation time."},
+      { "trace",   &cmd_trace,
+        "Control statement tracing (on/off) when the code is instrumented."},
       { "where",  &cmd_where,
         "Show current scope, and scope hierarchy stack."},
       { 0,        &cmd_unknown, 0}

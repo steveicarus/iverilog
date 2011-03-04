@@ -27,6 +27,7 @@ struct __vpiFileLine {
 };
 
 bool show_file_line = false;
+bool code_is_instrumented = false;
 
 static int file_line_get(int type, vpiHandle ref)
 {
@@ -80,6 +81,7 @@ vpiHandle vpip_build_file_line(char*description, long file_idx, long lineno)
 
 	/* Turn on the diagnostic output when we find a %file_line. */
       show_file_line = true;
+      code_is_instrumented = true;
 
       obj->base.vpi_type = &vpip_file_line_rt;
       if (description) obj->description = vpip_name_string(description);

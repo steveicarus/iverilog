@@ -45,6 +45,7 @@
 #define _vpiDescription 0x1000004
 
 extern bool show_file_line;
+extern bool code_is_instrumented;
 
 extern vpiHandle vpip_build_file_line(char*description,
                                       long file_idx, long lineno);
