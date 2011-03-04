@@ -1347,7 +1347,7 @@ static PLI_INT32 sys_printtimescale_calltf(char *xx)
             scope = vpi_scan(argv);
             vpi_free_object(argv);
       }
-      
+
       vpi_printf("Time scale of (%s) is ", vpi_get_str(vpiFullName, scope));
       vpi_printf("%s / ", pts_convert(vpi_get(vpiTimeUnit, scope)));
       vpi_printf("%s\n", pts_convert(vpi_get(vpiTimePrecision, scope)));

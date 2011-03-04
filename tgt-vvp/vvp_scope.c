@@ -1677,7 +1677,7 @@ static void draw_lpm_ff(ivl_lpm_t net)
  *   output q;
  *   reg q;
  *   input clk, d, clr, set;
- * 
+ *
  *   table
  *     // clk d clr set : q : q+
  *         1  0  0   0  : ? : 0;

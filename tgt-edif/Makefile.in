@@ -102,7 +102,7 @@ check: all
 
 ifeq (@WIN32@,yes)
 ifeq ($(MAN),none)
-INSTALL_DOC = 
+INSTALL_DOC =
 else
 ifeq ($(PS2PDF),none)
 #INSTALL_DOC = $(mandir)/man1/iverilog-edif.1

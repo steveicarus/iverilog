@@ -1656,7 +1656,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 		s->clk_mask <<= 1;
 		s->clk_mask |= 1;
 
-		if(     ((s->clk_mask&0x1f)==0x1f) && 
+		if(     ((s->clk_mask&0x1f)==0x1f) &&
 			( (delta1=(ivalue         - s->clk_prevval1) & lt_optimask[s->len]) == ((s->clk_prevval1 - s->clk_prevval3) & lt_optimask[s->len]) ) &&
 			( (delta2=(s->clk_prevval - s->clk_prevval2) & lt_optimask[s->len]) == ((s->clk_prevval2 - s->clk_prevval4) & lt_optimask[s->len]) ) &&
 			( (delta1==delta2) || ((!delta1)&&(!delta2)) )
@@ -2287,7 +2287,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 		s->clk_mask <<= 1;
 		s->clk_mask |= legal;
 
-		if(     ((s->clk_mask&0x1f)==0x1f) && 
+		if(     ((s->clk_mask&0x1f)==0x1f) &&
 			( (delta1=(ivalue         - s->clk_prevval1) & lt_optimask[s->len]) == ((s->clk_prevval1 - s->clk_prevval3) & lt_optimask[s->len]) ) &&
 			( (delta2=(s->clk_prevval - s->clk_prevval2) & lt_optimask[s->len]) == ((s->clk_prevval2 - s->clk_prevval4) & lt_optimask[s->len]) ) &&
 			( (delta1==delta2) || ((!delta1)&&(!delta2)) )

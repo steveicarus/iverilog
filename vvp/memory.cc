@@ -48,7 +48,7 @@ struct vvp_memory_s
 
   vvp_memory_bits_t bits;         // Array of bits
   vvp_memory_port_t addr_root;    // Port list root;
-  
+
   // callbacks
   struct __vpiCallback*cb;        // callback list for this vpiMemory
 };

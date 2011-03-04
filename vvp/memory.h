@@ -51,8 +51,8 @@ struct vvp_memory_s
   int msb, lsb;                   // Most/Least Significant data bit (VPI)
 
   vvp_memory_bits_t bits;         // Array of bits
-  vvp_memory_port_t addr_root;    // Port list root; 
-  
+  vvp_memory_port_t addr_root;    // Port list root;
+
   // callbacks
   struct __vpiCallback*cb;        // callback list for this vpiMemory
 };

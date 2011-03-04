@@ -1768,7 +1768,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 	    bool ok_flag = cur->synth_sync(des, scope,
 					   tmp_ff, tmp_map, tmp_out,
 					   events_in);
-	    ff2 = 0; // NOTE: The synth_sync may delete ff2. 
+	    ff2 = 0; // NOTE: The synth_sync may delete ff2.
 	    flag = flag && ok_flag;
 
 	    if (ok_flag == false)
@@ -1973,7 +1973,7 @@ int NetCondit::connect_enable_range_(Design*des, NetScope*scope,
 
 	      /* Watch out for the special case that there is already
 		 a CE connected to this FF. This can be caused by code
-		 like this: 
+		 like this:
 
 		 if (a) if (b) <statement>;
 
