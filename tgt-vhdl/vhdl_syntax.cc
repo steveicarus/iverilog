@@ -923,7 +923,7 @@ void vhdl_unaryop_expr::emit(std::ostream &of, int level) const
 }
 
 vhdl_binop_expr::vhdl_binop_expr(vhdl_expr *left, vhdl_binop_t op,
-                                 vhdl_expr *right, vhdl_type *type)
+                                 vhdl_expr *right, const vhdl_type *type)
    : vhdl_expr(type), op_(op)
 {
    add_expr(left);

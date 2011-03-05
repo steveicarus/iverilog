@@ -119,10 +119,10 @@ enum vhdl_binop_t {
  */
 class vhdl_binop_expr : public vhdl_expr {
 public:
-   vhdl_binop_expr(vhdl_binop_t op, vhdl_type *type)
+   vhdl_binop_expr(vhdl_binop_t op, const vhdl_type *type)
       : vhdl_expr(type), op_(op) {}
    vhdl_binop_expr(vhdl_expr *left, vhdl_binop_t op,
-                   vhdl_expr *right, vhdl_type *type);
+                   vhdl_expr *right, const vhdl_type *type);
    ~vhdl_binop_expr();
 
    void add_expr(vhdl_expr *e);
@@ -271,7 +271,7 @@ private:
  */
 class vhdl_fcall : public vhdl_expr {
 public:
-   vhdl_fcall(const string& name, vhdl_type *rtype)
+   vhdl_fcall(const string& name, const vhdl_type *rtype)
       : vhdl_expr(rtype), name_(name) {};
    ~vhdl_fcall() {}
 
