@@ -339,6 +339,75 @@ static void emit_scope_file_line(ivl_scope_t scope)
       }
 }
 
+static void emit_module_ports(ivl_scope_t scope)
+{
+      unsigned idx, count = ivl_scope_ports(scope);
+
+      if (count == 0) return;
+
+      fprintf(stderr, "%s:%u: vlog95 sorry: Modules with port are not "
+                      "currently supported.\n", ivl_scope_file(scope),
+                      ivl_scope_lineno(scope));
+      vlog_errors += 1;
+      fprintf(vlog_out, "(");
+      emit_nexus_as_ca(scope, ivl_scope_mod_port(scope, 0));
+      for (idx = 1; idx < count; idx += 1) {
+	    fprintf(vlog_out, ", ");
+	    emit_nexus_as_ca(scope, ivl_scope_mod_port(scope, idx));
+// HERE: Save the signals that are connected to the nexi and use those
+//       in the port_def code below.
+      }
+      fprintf(vlog_out, ")");
+}
+
+static void emit_module_port_defs(ivl_scope_t scope)
+{
+      unsigned idx, count = ivl_scope_ports(scope);
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_t port = ivl_scope_mod_port(scope, idx);
+	    fprintf(vlog_out, "%*c", indent, ' ');
+// HERE: Need port type/size information.
+	    emit_nexus_as_ca(scope, port);
+//	    emit_sig_file_line(port);
+	    fprintf(vlog_out, " \n");
+      }
+      if (count) fprintf(vlog_out, "\n");
+}
+
+static void emit_task_func_port_defs(ivl_scope_t scope)
+{
+      unsigned idx, count = ivl_scope_ports(scope);
+      unsigned start = ivl_scope_type(scope) == IVL_SCT_FUNCTION;
+      for (idx = start; idx < count; idx += 1) {
+	    ivl_signal_t port = ivl_scope_port(scope, idx);
+	    fprintf(vlog_out, "%*c", indent, ' ');
+	    switch (ivl_signal_port(port)) {
+	      case IVL_SIP_INPUT:
+		  fprintf(vlog_out, "input");
+		  break;
+	      case IVL_SIP_OUTPUT:
+		  fprintf(vlog_out, "output");
+		  break;
+	      case IVL_SIP_INOUT:
+		  fprintf(vlog_out, "inout");
+		  break;
+	      default:
+		  fprintf(vlog_out, "<unknown>");
+		  fprintf(stderr, "%s:%u: vlog95 error: Unknown port "
+	                    "direction (%d) for signal %s.\n",
+	                    ivl_signal_file(port), ivl_signal_lineno(port),
+	                    (int)ivl_signal_port(port),
+		            ivl_signal_basename(port));
+		  vlog_errors += 1;
+		  break;
+	    }
+	    fprintf(vlog_out, " %s;", ivl_signal_basename(port));
+	    emit_sig_file_line(port);
+	    fprintf(vlog_out, " \n");
+      }
+      if (count) fprintf(vlog_out, "\n");
+}
+
 /*
  * This search method may be slow for a large structural design with a
  * large number of gate types. That's not what this converter was built
@@ -384,7 +453,7 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 {
       ivl_scope_type_t sc_type = ivl_scope_type(scope);
       unsigned is_auto = ivl_scope_is_auto(scope);
-      unsigned idx, count, start = 0;
+      unsigned idx, count;
       char *name;
 
 	/* Output the scope definition. */
@@ -424,7 +493,7 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	                      ivl_scope_def_lineno(scope));
 	    fprintf(vlog_out, "module %s", name);
 	    free(name);
-// HERE: Still need to add port information.
+	    emit_module_ports(scope);
 	    break;
 	case IVL_SCT_FUNCTION:
 	    assert(indent != 0);
@@ -432,7 +501,6 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    assert(ivl_scope_ports(scope) >= 2);
 	      /* The function return information is the zero port. */
 	    emit_func_return(ivl_scope_port(scope, 0));
-	    start = 1;
 	    fprintf(vlog_out, " %s", ivl_scope_tname(scope));
 	    if (is_auto) {
 		  fprintf(stderr, "%s:%u: vlog95 error: Automatic functions "
@@ -470,35 +538,11 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
       indent += indent_incr;
 
 	/* Output the scope ports for this scope. */
-      count = ivl_scope_ports(scope);
-      for (idx = start; idx < count; idx += 1) {
-	    fprintf(vlog_out, "%*c", indent, ' ');
-	    ivl_signal_t port = ivl_scope_port(scope, idx);
-	    switch (ivl_signal_port(port)) {
-	      case IVL_SIP_INPUT:
-		  fprintf(vlog_out, "input");
-		  break;
-	      case IVL_SIP_OUTPUT:
-		  fprintf(vlog_out, "output");
-		  break;
-	      case IVL_SIP_INOUT:
-		  fprintf(vlog_out, "inout");
-		  break;
-	      default:
-		  fprintf(vlog_out, "<unknown>");
-		  fprintf(stderr, "%s:%u: vlog95 error: Unknown port "
-	                    "direction (%d) for signal %s.\n",
-	                    ivl_signal_file(port), ivl_signal_lineno(port),
-	                    (int)ivl_signal_port(port),
-		            ivl_signal_basename(port));
-		  vlog_errors += 1;
-		  break;
-	    }
-	    fprintf(vlog_out, " %s;", ivl_signal_basename(port));
-	    emit_sig_file_line(port);
-	    fprintf(vlog_out, " \n");
+      if (sc_type == IVL_SCT_MODULE) {
+	    emit_module_port_defs(scope);
+      } else {
+	    emit_task_func_port_defs(scope);
       }
-      if (count) fprintf(vlog_out, "\n");
 
       emit_scope_variables(scope);
 

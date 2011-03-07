@@ -474,7 +474,6 @@ static unsigned find_signal_in_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 	    }
       }
 
-// HERE: Check bit, part, etc. selects to make sure they work as well.
       if (use_sig) {
 	    fprintf(vlog_out, "%s", ivl_signal_basename(use_sig));
 	    if (is_array) fprintf(vlog_out, "[%"PRId64"]", array_idx);
@@ -545,6 +544,8 @@ void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 //       Then look for down scopes and then any scope. For all this warn if
 //       multiples are found in a given scope. This all needs to be before
 //       the constant code.
+      fprintf(stderr, "?:?: vlog95 sorry: Unable to find nexus name.\n");
+      vlog_errors += 1;
       fprintf(vlog_out, "<missing>");
 }
 
@@ -575,6 +576,7 @@ void emit_scope_module_path(ivl_scope_t scope, ivl_scope_t call_scope)
 {
       ivl_scope_t mod_scope = get_module_scope(scope);
       ivl_scope_t call_mod_scope = get_module_scope(call_scope);
+
       if (mod_scope != call_mod_scope) {
 	      /* Trim off the top of the call name if it exactly matches
 	       * the module scope of the caller. */
@@ -599,6 +601,55 @@ void emit_scope_module_path(ivl_scope_t scope, ivl_scope_t call_scope)
       }
 }
 
+/* This is the same as emit_scope_module_path() except we need to add down
+ * references for variables, etc. */
+void emit_scope_call_path(ivl_scope_t scope, ivl_scope_t call_scope)
+{
+      ivl_scope_t mod_scope = get_module_scope(scope);
+      ivl_scope_t call_mod_scope = get_module_scope(call_scope);
+
+      if (mod_scope != call_mod_scope) {
+	      /* Trim off the top of the call name if it exactly matches
+	       * the module scope of the caller. */
+	    char *sc_name = strdup(ivl_scope_name(mod_scope));
+            const char *sc_ptr = sc_name;
+	    char *call_name = strdup(ivl_scope_name(call_mod_scope));
+	    const char *call_ptr = call_name;
+	    while ((*sc_ptr == *call_ptr) &&
+	           (*sc_ptr != 0) && (*call_ptr != 0)) {
+		  sc_ptr += 1;
+		  call_ptr += 1;
+	    }
+	    if (*sc_ptr == 0) {
+		  assert(*call_ptr == '.');
+		  call_ptr += 1;
+	    } else {
+		  call_ptr = call_name;
+	    }
+	    fprintf(vlog_out, "%s.", call_ptr);
+	    free(sc_name);
+	    free(call_name);
+      } else if (scope != call_scope) {
+	      /* Look for a down reference that is local to the module scope. */
+	    char *sc_name = strdup(ivl_scope_name(scope));
+            const char *sc_ptr = sc_name;
+	    char *call_name = strdup(ivl_scope_name(call_scope));
+	    const char *call_ptr = call_name;
+	    while ((*sc_ptr == *call_ptr) &&
+	           (*sc_ptr != 0) && (*call_ptr != 0)) {
+		  sc_ptr += 1;
+		  call_ptr += 1;
+	    }
+	    if (*sc_ptr == 0) {
+		  assert(*call_ptr == '.');
+		  call_ptr += 1;
+		  fprintf(vlog_out, "%s.", call_ptr);
+	    }
+	    free(sc_name);
+	    free(call_name);
+      }
+}
+
 /*
  * This routine emits the appropriate string to call the call_scope from the
  * given scope. If the module scopes for the two match then just return the
@@ -611,6 +662,7 @@ void emit_scope_path(ivl_scope_t scope, ivl_scope_t call_scope)
 {
       ivl_scope_t mod_scope = get_module_scope(scope);
       ivl_scope_t call_mod_scope = get_module_scope(call_scope);
+
       if (mod_scope == call_mod_scope) {
 	    fprintf(vlog_out, "%s", ivl_scope_basename(call_scope));
       } else {

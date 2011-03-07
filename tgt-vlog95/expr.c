@@ -72,7 +72,7 @@ static unsigned emit_power_as_shift(ivl_scope_t scope, ivl_expr_t expr,
 static void emit_expr_array(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
-      emit_scope_module_path(scope, ivl_signal_scope(sig));
+      emit_scope_call_path(scope, ivl_signal_scope(sig));
       fprintf(vlog_out, "%s", ivl_signal_basename(sig));
 }
 
@@ -142,9 +142,13 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    fprintf(vlog_out, " %s ", oper);
 	    emit_expr(scope, ivl_expr_oper2(expr), 0);
 	    break;
+	case 'R':
+	    fprintf(stderr, "%s:%u: vlog95 error: >>> operator is not "
+	                    "supported.\n",
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr));
+	    vlog_errors += 1;
 	case 'l':
 	case 'r':
-	case 'R':
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
 	    fprintf(vlog_out, " %s ", oper);
 	    emit_expr(scope, ivl_expr_oper2(expr), 0);
@@ -215,7 +219,7 @@ static void emit_expr_event(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       assert(! ivl_event_nany(event));
       assert(! ivl_event_npos(event));
       assert(! ivl_event_nneg(event));
-      emit_scope_module_path(scope, ev_scope);
+      emit_scope_call_path(scope, ev_scope);
       fprintf(vlog_out, "%s", ivl_event_basename(event));
 }
 
@@ -439,7 +443,7 @@ static void emit_expr_sfunc(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 static void emit_expr_signal(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
-      emit_scope_module_path(scope, ivl_signal_scope(sig));
+      emit_scope_call_path(scope, ivl_signal_scope(sig));
       fprintf(vlog_out, "%s", ivl_signal_basename(sig));
       if (ivl_signal_dimensions(sig)) {
 	    int lsb = ivl_signal_array_base(sig);

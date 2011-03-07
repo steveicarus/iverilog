@@ -90,7 +90,7 @@ static void emit_stmt_lval_name(ivl_scope_t scope, ivl_lval_t lval,
                                 ivl_signal_t sig)
 {
       ivl_expr_t array_idx = ivl_lval_idx(lval);
-      emit_scope_module_path(scope, ivl_signal_scope(sig));
+      emit_scope_call_path(scope, ivl_signal_scope(sig));
       fprintf(vlog_out, "%s", ivl_signal_basename(sig));
       if (array_idx) {
 	    int msb, lsb;
@@ -184,7 +184,8 @@ static void emit_stmt_lval_piece(ivl_scope_t scope, ivl_lval_t lval)
       assert(width > 0);
 
 	/* If there are no selects then just print the name. */
-      if (width == ivl_signal_width(sig)) {
+      sel_expr = ivl_lval_part_off(lval);
+      if (! sel_expr && (width == ivl_signal_width(sig))) {
 	    emit_stmt_lval_name(scope, lval, sig);
 	    return;
       }
@@ -192,7 +193,6 @@ static void emit_stmt_lval_piece(ivl_scope_t scope, ivl_lval_t lval)
 	/* We have some kind of select. */
       lsb = ivl_signal_lsb(sig);
       msb = ivl_signal_msb(sig);
-      sel_expr = ivl_lval_part_off(lval);
       sel_type = ivl_lval_sel_type(lval);
       assert(sel_expr);
 	/* A bit select. */
@@ -315,6 +315,80 @@ static unsigned is_delayed_or_event_assign(ivl_scope_t scope,
       fprintf(vlog_out, ";");
       emit_stmt_file_line(stmt);
       fprintf(vlog_out, "\n");
+
+      return 1;
+}
+
+/*
+ * Icarus translated for(<assign>; <cond>; <incr_assign>) <body> into
+ *
+ *   begin
+ *     <assign>;
+ *     while (<cond>) begin
+ *       <body>
+ *       <incr_assign>
+ *     end
+ *   end
+ * This routine looks for this pattern and turns it back into the
+ * appropriate for loop.
+ */
+static unsigned is_for_loop(ivl_scope_t scope, ivl_statement_t stmt)
+{
+      unsigned wid;
+      ivl_statement_t assign, while_lp, while_blk, body, incr_assign;
+
+	/* We must have two block elements. */
+      if (ivl_stmt_block_count(stmt) != 2) return 0;
+	/* The first must be an assign. */
+      assign = ivl_stmt_block_stmt(stmt, 0);
+      if (ivl_statement_type(assign) != IVL_ST_ASSIGN) return 0;
+	/* The second must be a while. */
+      while_lp = ivl_stmt_block_stmt(stmt, 1);
+      if (ivl_statement_type(while_lp) != IVL_ST_WHILE) return 0;
+	/* The while statement must be a block. */
+      while_blk = ivl_stmt_sub_stmt(while_lp);
+      if (ivl_statement_type(while_blk) != IVL_ST_BLOCK) return 0;
+	/* It must not be a named block. */
+      if (ivl_stmt_block_scope(while_blk)) return 0;
+	/* It must have two elements. */
+      if (ivl_stmt_block_count(while_blk) != 2) return 0;
+	/* The first block element (the body) can be anything. */
+      body = ivl_stmt_block_stmt(while_blk, 0);
+	/* The second block element must be the increment assign. */
+      incr_assign = ivl_stmt_block_stmt(while_blk, 1);
+      if (ivl_statement_type(incr_assign) != IVL_ST_ASSIGN) return 0;
+	/* And finally the for statements must have the same line number
+	 * as the block. */
+      if ((ivl_stmt_lineno(stmt) != ivl_stmt_lineno(assign)) ||
+          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(while_lp)) ||
+          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(while_blk)) ||
+          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(incr_assign))) {
+	    return 0;
+      }
+
+	/* The pattern matched so generate the appropriate code. */
+      fprintf(vlog_out, "%*cfor(", get_indent(), ' ');
+	/* Emit the initialization statement. */
+// HERE: Do we need to calculate the width? The compiler should have already
+//       done this for us.
+      wid = emit_stmt_lval(scope, assign);
+      fprintf(vlog_out, " = ");
+      emit_expr(scope, ivl_stmt_rval(assign), wid);
+      fprintf(vlog_out, "; ");
+	/* Emit the condition. */
+      emit_expr(scope, ivl_stmt_cond_expr(while_lp), 0);
+      fprintf(vlog_out, "; ");
+	/* Emit in increment statement. */
+// HERE: Do we need to calculate the width? The compiler should have already
+//       done this for us.
+      wid = emit_stmt_lval(scope, incr_assign);
+      fprintf(vlog_out, " = ");
+      emit_expr(scope, ivl_stmt_rval(incr_assign), wid);
+      fprintf(vlog_out, ")");
+      emit_stmt_file_line(stmt);
+	/* Now emit the body. */
+      single_indent = 1;
+      emit_stmt(scope, body);
 
       return 1;
 }
@@ -1001,6 +1075,7 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 		  emit_stmt_block_named(scope, stmt);
 	    } else {
 		  if (is_delayed_or_event_assign(scope, stmt)) break;
+		  if (is_for_loop(scope, stmt)) break;
 		  if (is_repeat_event_assign(scope, stmt)) break;
 		  if (is_wait(scope, stmt)) break;
 		  if (is_utask_call_with_args(scope, stmt)) break;
