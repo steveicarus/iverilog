@@ -594,10 +594,10 @@ int main(int argc, char **argv)
 			base=optarg;
 		  }
 		  break;
- 		case 'c':
+		case 'c':
 		  command_filename = malloc(strlen(optarg)+1);
- 		  strcpy(command_filename, optarg);
- 		  break;
+		  strcpy(command_filename, optarg);
+		  break;
 		case 'D':
 		  process_define(optarg);
 		  break;
@@ -615,9 +615,9 @@ int main(int argc, char **argv)
 		  if (rc != 0)
 			return -1;
 		  break;
- 		case 'h':
- 		  fprintf(stderr, "%s\n", HELP);
- 		  return 1;
+		case 'h':
+		  fprintf(stderr, "%s\n", HELP);
+		  return 1;
 
 		case 'I':
 		  process_include_dir(optarg);
@@ -741,7 +741,7 @@ int main(int argc, char **argv)
 
       if (source_count == 0) {
 	    fprintf(stderr, "%s: No input files.\n", argv[0]);
- 	    fprintf(stderr, "%s\n", HELP);
+	    fprintf(stderr, "%s\n", HELP);
 	    return 1;
       }
 

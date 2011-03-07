@@ -2,6 +2,6 @@
 
 main	.scope "main";
 
-T0 	%vpi_call "$display", "Display the number: %b", 5'b0zx1;
+T0	%vpi_call "$display", "Display the number: %b", 5'b0zx1;
 	%end;
 	.thread T0;

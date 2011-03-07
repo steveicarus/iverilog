@@ -456,7 +456,7 @@ void stop_handler(int rc)
 
       printf("** VVP Stop(%d) **\n", rc);
       printf("** Current simulation time is %" TIME_FMT "u ticks.\n",
-      		schedule_simtime());
+		schedule_simtime());
 
       interact_flag = true;
       while (interact_flag) {
@@ -489,7 +489,7 @@ void stop_handler(int rc)
 {
       printf("** VVP Stop(%d) **\n", rc);
       printf("** Current simulation time is %" TIME_FMT "u ticks.\n",
-      		schedule_simtime());
+		schedule_simtime());
 
       printf("** Interactive mode not supported, exiting simulation.\n");
       exit(0);

@@ -55,12 +55,12 @@
 module register (out, val, clk, oe);
 
    output [7:0] out;
-   input [7:0] 	val;
-   input 	clk, oe;
+   input [7:0]	val;
+   input	clk, oe;
 
-   reg [7:0] 	Q;
+   reg [7:0]	Q;
 
-   wire [7:0] 	out;
+   wire [7:0]	out;
 
    bufif0 drv[7:0](out, Q, oe);
 

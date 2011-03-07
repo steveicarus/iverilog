@@ -63,7 +63,7 @@ enum operand_e {
       OA_CODE_PTR,
 	/* The operand is a variable or net pointer */
       OA_FUNC_PTR,
- 	/* The operand is a second functor pointer */
+	/* The operand is a second functor pointer */
       OA_FUNC_PTR2,
        /* The operand is a pointer to a memory */
       OA_MEM_PTR,
@@ -1365,7 +1365,7 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		  code->number = opa->argv[idx].numb;
 		  break;
 
-        	case OA_MEM_PTR:
+		case OA_MEM_PTR:
 		  if (opa->argv[idx].ltype != L_SYMB) {
 			yyerror("operand format");
 			break;

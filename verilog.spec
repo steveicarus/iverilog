@@ -10,7 +10,7 @@ Packager: Stephen Williams <steve@icarus.com>
 
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 
-BuildRequires: 	gcc-c++, zlib-devel, bison, flex, gperf, termcap
+BuildRequires:	gcc-c++, zlib-devel, bison, flex, gperf, termcap
 BuildRequires:	libbz2-devel, bzip2, readline-devel
 %ifarch x86_64
 BuildRequires:	glibc-devel-32bit, libbz2-1-32bit, zlib-devel-32bit, glibc-32bit

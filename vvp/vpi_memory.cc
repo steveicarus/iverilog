@@ -467,7 +467,7 @@ static void memory_word_get_value(vpiHandle ref, s_vpi_value*vp)
 		break;
 	  }
 
-      	  case vpiIntVal:
+	  case vpiIntVal:
 	    assert(width <= 8 * sizeof vp->value.integer);
 
 	    vp->value.integer = 0;

@@ -279,7 +279,7 @@ int vpip_time_units_from_handle(vpiHandle obj)
 	  case vpiNet:
 	  case vpiReg:
 	    signal = (struct __vpiSignal*)obj;
- 	    return signal->scope->time_units;
+	    return signal->scope->time_units;
 
 	  default:
 	    fprintf(stderr, "ERROR: vpi_get_time called with object "
@@ -429,40 +429,40 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
       if (flags != vpiNoDelay) {
 	    vvp_time64_t dly;
 
- 	    switch (when->type) {
- 		case vpiScaledRealTime:
- 		  dly = (vvp_time64_t)(when->real *
+	    switch (when->type) {
+		case vpiScaledRealTime:
+		  dly = (vvp_time64_t)(when->real *
 				       (pow(10,
 					    vpip_time_units_from_handle(obj) -
 					    vpip_get_time_precision())));
- 		  break;
- 		case vpiSimTime:
+		  break;
+		case vpiSimTime:
 		  dly = vpip_timestruct_to_time(when);
- 		  break;
- 		default:
+		  break;
+		default:
 		  dly = 0;
 		  break;
- 	    }
+	    }
 
 	    vpip_put_value_event*put = new vpip_put_value_event;
 	    put->handle = obj;
 	    put->value = *vp;
- 	    switch (put->value.format) {
+	    switch (put->value.format) {
 		  /* If this is scheduled make a copy of the string. */
- 		case vpiBinStrVal:
- 		case vpiOctStrVal:
- 		case vpiDecStrVal:
- 		case vpiHexStrVal:
- 		case vpiStringVal:
+		case vpiBinStrVal:
+		case vpiOctStrVal:
+		case vpiDecStrVal:
+		case vpiHexStrVal:
+		case vpiStringVal:
 		  put->value.value.str = strdup(put->value.value.str);
 		  break;
 		  /* Do these also need to be copied? */
- 		case vpiTimeVal:
- 		case vpiVectorVal:
- 		case vpiStrengthVal:
- 		default:
+		case vpiTimeVal:
+		case vpiVectorVal:
+		case vpiStrengthVal:
+		default:
 		  break;
- 	    }
+	    }
 	    put->run = &vpip_put_value_callback;
 	    schedule_generic(put, 0, dly, false);
 	    return 0;

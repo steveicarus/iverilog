@@ -34,9 +34,9 @@ static int debug_synth2=0;
 #ifdef __FUNCTION__
 
 #define DEBUG_SYNTH2_ENTRY(class) if (debug_synth2) { cerr << "Enter " << class << "::" \
-       	<< __FUNCTION__ << endl; dump(cerr, 4); }
+	<< __FUNCTION__ << endl; dump(cerr, 4); }
 #define DEBUG_SYNTH2_EXIT(class,val) if (debug_synth2) { cerr << "Exit " << class << "::" \
-       	<< __FUNCTION__ << ", result " << val << endl; }
+	<< __FUNCTION__ << ", result " << val << endl; }
 
 #else
 #define DEBUG_SYNTH2_ENTRY(class)

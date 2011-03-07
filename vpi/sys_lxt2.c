@@ -244,7 +244,7 @@ static PLI_INT32 variable_cb_1(p_cb_data cause)
       struct t_cb_data cb;
       struct vcd_info*info = (struct vcd_info*)cause->user_data;
 
-      if (dump_is_off) 		 return 0;
+      if (dump_is_off)		 return 0;
       if (dump_header_pending()) return 0;
       if (info->scheduled)       return 0;
 
@@ -680,7 +680,7 @@ static int draw_scope(vpiHandle item)
 	  case vpiTask:        type = "task";       break;
 	  case vpiFunction:    type = "function";   break;
 	  case vpiNamedFork:   type = "fork";       break;
-      	  default:             type = "module";     break;
+	  default:             type = "module";     break;
       }
 
       push_scope(name);	/* keep in type info determination for possible future usage */

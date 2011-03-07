@@ -160,7 +160,7 @@ static int compare_types(int code, int type)
 	     (type == vpiIntegerVar ||
 	      type == vpiTimeVar    ||
 	      type == vpiRealVar))
-      	    return 1;
+	    return 1;
 
       return 0;
 }

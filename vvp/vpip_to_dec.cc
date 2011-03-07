@@ -146,7 +146,7 @@ unsigned vpip_bits_to_dec_str(const unsigned char *bits, unsigned int nbits,
 		else if (!comp && B_IS1(bits[mbits-idx-1])) ++val;
 		else if ( comp && B_IS0(bits[mbits-idx-1])) ++val;
 		if ((mbits-idx-1)%BBITS==0) {
-  			/* make negative 2's complement, not 1's complement */
+			/* make negative 2's complement, not 1's complement */
 			if (comp && idx==mbits-1) ++val;
 			shift_in(valv,vlen,val);
 			val=0;
@@ -202,7 +202,7 @@ unsigned vpip_bits_to_dec_str(const unsigned char *bits, unsigned int nbits,
 void vpip_dec_str_to_bits(unsigned char*bits, unsigned nbits,
 			  const char*buf, bool signed_flag)
 {
- 	/* The str string is the decimal value with the least
+	/* The str string is the decimal value with the least
 	   significant digit first. This loop creates that string by
 	   reversing the order of the buf string. For example, if the
 	   input is "1234", str gets "4321". */
