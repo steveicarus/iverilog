@@ -563,6 +563,13 @@ void dll_target::add_root(ivl_design_s &des__, const NetScope *s)
       root_->attr  = fill_in_attributes(s);
       root_->is_auto = 0;
       root_->is_cell = s->is_cell();
+      root_->ports = s->module_ports();
+      if (root_->ports > 0) {
+	    root_->u_.net = new NetNet*[root_->ports];
+	    for (unsigned idx = 0; idx < root_->ports; idx += 1) {
+		  root_->u_.net[idx] = s->module_port(idx);
+	    }
+      }
 
       des__.nroots_++;
       if (des__.roots_)
@@ -2273,6 +2280,7 @@ void dll_target::scope(const NetScope*net)
 	    FILE_NAME(scop, net);
 	    scop->parent = find_scope(des_, net->parent());
 	    assert(scop->parent);
+	    scop->parent->children[net->fullname()] = scop;
 	    scop->nsigs_ = 0;
 	    scop->sigs_ = 0;
 	    scop->nlog_ = 0;
@@ -2294,6 +2302,13 @@ void dll_target::scope(const NetScope*net)
 		case NetScope::MODULE:
 		  scop->type_ = IVL_SCT_MODULE;
 		  scop->tname_ = net->module_name();
+		  scop->ports = net->module_ports();
+		  if (scop->ports > 0) {
+			scop->u_.net = new NetNet*[scop->ports];
+			for (unsigned idx = 0; idx < scop->ports; idx += 1) {
+			      scop->u_.net[idx] = net->module_port(idx);
+			}
+		  }
 		  break;
 		case NetScope::TASK: {
 		      const NetTaskDef*def = net->task_def();
@@ -2324,10 +2339,20 @@ void dll_target::scope(const NetScope*net)
 		  scop->tname_ = scop->name_;
 		  break;
 	    }
+      }
+}
 
-	    assert(scop->parent != 0);
-
-	    scop->parent->children[net->fullname()] = scop;
+void dll_target::convert_module_ports(const NetScope*net)
+{
+      ivl_scope_t scop = find_scope(des_, net);
+      if (scop->ports > 0) {
+	    NetNet**nets = scop->u_.net;
+	    scop->u_.nex = new ivl_nexus_t[scop->ports];
+	    for (unsigned idx = 0; idx < scop->ports; idx += 1) {
+		  ivl_signal_t sig = find_signal(des_, nets[idx]);
+		  scop->u_.nex[idx] = nexus_sig_make(sig, 0);
+	    }
+	    delete nets;
       }
 }
 

@@ -638,6 +638,7 @@ NetNet* PEIdent::elaborate_bi_net(Design*des, NetScope*scope) const
  */
 NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 {
+      assert(scope->type() == NetScope::MODULE);
       NetNet*sig = des->find_signal(scope, path_);
       if (sig == 0) {
 	    cerr << get_fileline() << ": error: no wire/reg " << path_
@@ -690,8 +691,10 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 
 	/* If this is a part select of the entire signal (or no part
 	   select at all) then we're done. */
-      if ((lidx == 0) && (midx == (long)sig->vector_width()-1))
+      if ((lidx == 0) && (midx == (long)sig->vector_width()-1)) {
+	    scope->add_module_port(sig);
 	    return sig;
+      }
 
       unsigned swid = abs(midx - lidx) + 1;
       ivl_assert(*this, swid > 0 && swid < sig->vector_width());
@@ -701,6 +704,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
       tmp->port_type(sig->port_type());
       tmp->data_type(sig->data_type());
       tmp->set_line(*this);
+      tmp->local_flag(true);
       NetNode*ps = 0;
       switch (sig->port_type()) {
 
@@ -732,5 +736,6 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
       ps->set_line(*this);
       des->add_node(ps);
 
+      scope->add_module_port(sig);
       return sig;
 }

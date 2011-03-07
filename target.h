@@ -1,7 +1,7 @@
 #ifndef __target_H
 #define __target_H
 /*
- * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -55,6 +55,10 @@ struct target_t {
 	/* This is called once for each scope in the design, before
 	   anything else is called. */
       virtual void scope(const NetScope*);
+
+	/* This is called to convert module ports from a NetNet* to an
+	 * ivl_signal_t object. */
+      virtual void convert_module_ports(const NetScope*);
 
 	/* Output an event object. Called for each named event in the scope. */
       virtual void event(const NetEvent*);

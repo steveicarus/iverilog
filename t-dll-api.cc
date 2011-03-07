@@ -1928,7 +1928,8 @@ extern "C" ivl_scope_t ivl_scope_parent(ivl_scope_t net)
 extern "C" unsigned ivl_scope_ports(ivl_scope_t net)
 {
       assert(net);
-      if (net->type_ == IVL_SCT_FUNCTION ||
+      if (net->type_ == IVL_SCT_MODULE ||
+          net->type_ == IVL_SCT_FUNCTION ||
           net->type_ == IVL_SCT_TASK) return net->ports;
       return 0;
 }
@@ -1939,7 +1940,15 @@ extern "C" ivl_signal_t ivl_scope_port(ivl_scope_t net, unsigned idx)
       assert(net->type_ == IVL_SCT_FUNCTION ||
              net->type_ == IVL_SCT_TASK);
       assert(idx < net->ports);
-      return net->port[idx];
+      return net->u_.port[idx];
+}
+
+extern "C" ivl_nexus_t ivl_scope_mod_port(ivl_scope_t net, unsigned idx)
+{
+      assert(net);
+      assert(net->type_ == IVL_SCT_MODULE);
+      assert(idx < net->ports);
+      return net->u_.nex[idx];
 }
 
 extern "C" unsigned ivl_scope_sigs(ivl_scope_t net)

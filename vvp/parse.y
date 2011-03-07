@@ -560,7 +560,7 @@ statement
      requirements so are handled by their own rules. */
 	| label_opt K_file_line T_NUMBER T_NUMBER T_STRING ';'
 		{ compile_file_line($1, $3, $4, $5); }
-	
+
 	| label_opt K_file_line T_NUMBER T_NUMBER T_NUMBER ';'
 		{ assert($5 == 0);
 		  compile_file_line($1, $3, $4, 0); }

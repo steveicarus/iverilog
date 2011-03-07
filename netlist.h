@@ -804,6 +804,11 @@ class NetScope : public Attrib {
 	/* If the scope represents a module instance, the module_name
 	   is the name of the module itself. */
       perm_string module_name() const;
+	/* If the scope is a module then it may have ports that we need
+	 * to keep track of. */
+      void add_module_port(NetNet*port);
+      unsigned module_ports() const;
+      NetNet*module_port(unsigned idx) const;
 
 	/* Scopes have their own time units and time precision. The
 	   unit and precision are given as power of 10, i.e., -3 is
@@ -944,6 +949,7 @@ class NetScope : public Attrib {
       typedef std::map<perm_string,NetNet*>::const_iterator signals_map_iter_t;
       std::map <perm_string,NetNet*> signals_map_;
       perm_string module_name_;
+      vector<NetNet*>ports_;
       union {
 	    NetTaskDef*task_;
 	    NetFuncDef*func_;

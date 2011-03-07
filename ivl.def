@@ -189,6 +189,7 @@ ivl_scope_logs
 ivl_scope_log
 ivl_scope_lpms
 ivl_scope_lpm
+ivl_scope_mod_port
 ivl_scope_name
 ivl_scope_param
 ivl_scope_params

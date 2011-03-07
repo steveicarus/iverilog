@@ -93,6 +93,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool process(const NetProcTop*);
       bool process(const NetAnalogTop*);
       void scope(const NetScope*);
+      void convert_module_ports(const NetScope*);
       void signal(const NetNet*);
       bool signal_paths(const NetNet*);
       ivl_dll_t dll_;
@@ -646,7 +647,11 @@ struct ivl_scope_s {
       unsigned is_cell;
 
       unsigned ports;
-      ivl_signal_t*port;
+      union {
+	    ivl_signal_t*port;
+	    ivl_nexus_t*nex;
+	    NetNet**net;
+      } u_;
 
       std::vector<ivl_switch_t>switches;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2010 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2011 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -29,6 +29,10 @@ target_t::~target_t()
 }
 
 void target_t::scope(const NetScope*)
+{
+}
+
+void target_t::convert_module_ports(const NetScope*)
 {
 }
 
