@@ -799,7 +799,7 @@ static PLI_INT32 sys_dumpvars_calltf(PLI_BYTE8*name)
 		  scname = strdup(vpi_get_str(vpiFullName,
 		                              vpi_handle(vpiScope, item)));
 		  fullname = vpi_get_str(vpiFullName, item);
-		  if (((item_type != vpiMemoryWord) && 
+		  if (((item_type != vpiMemoryWord) &&
 		       vcd_names_search(&vcd_tab, scname)) ||
 		      vcd_names_search(&vcd_var, fullname)) {
 		        vpi_printf("VCD warning: skipping signal %s, "

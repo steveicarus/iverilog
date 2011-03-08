@@ -414,7 +414,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
                      info->filename, info->lineno, info->name, fmtb);
         } else {
           unsigned pad = 0;
-          unsigned swidth = strlen(value.value.str) + 
+          unsigned swidth = strlen(value.value.str) +
                             (value.value.str[0] == '-' ? 0 : (unsigned)plus);
           char *tbuf, *cpb, *cp = value.value.str;
 
@@ -586,7 +586,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
         type = vpi_get(vpiType, info->items[*idx]);
         if (((type == vpiConstant || type == vpiParameter) &&
              vpi_get(vpiConstType, info->items[*idx]) == vpiRealConst) ||
-            type == vpiRealVar || (type == vpiSysFuncCall && 
+            type == vpiRealVar || (type == vpiSysFuncCall &&
              vpi_get(vpiFuncType, info->items[*idx]) == vpiRealFunc)) {
           value.format = vpiRealVal;
         } else {
@@ -1662,7 +1662,7 @@ static PLI_INT32 sys_timeformat_compiletf(PLI_BYTE8*name)
 	    if (! arg) {
 		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
-       		  vpi_printf("%s requires zero or four arguments.\n", name);
+		  vpi_printf("%s requires zero or four arguments.\n", name);
 		  vpi_control(vpiFinish, 1);
 		  return 0;
 	    }
@@ -1680,7 +1680,7 @@ static PLI_INT32 sys_timeformat_compiletf(PLI_BYTE8*name)
 	    if (! arg) {
 		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
-       		  vpi_printf("%s requires zero or four arguments.\n", name);
+		  vpi_printf("%s requires zero or four arguments.\n", name);
 		  vpi_control(vpiFinish, 1);
 		  return 0;
 	    }
@@ -1697,7 +1697,7 @@ static PLI_INT32 sys_timeformat_compiletf(PLI_BYTE8*name)
 	    if (! arg) {
 		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
-       		  vpi_printf("%s requires zero or four arguments.\n", name);
+		  vpi_printf("%s requires zero or four arguments.\n", name);
 		  vpi_control(vpiFinish, 1);
 		  return 0;
 	    }

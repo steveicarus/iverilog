@@ -37,7 +37,7 @@ vhdl_expr *vhdl_expr::cast(const vhdl_type *to)
    // we can't generate any type conversion code
    if (NULL == type_)
       return this;
-   
+
    if (to->get_name() == type_->get_name()) {
       if (to->get_width() == type_->get_width())
          return this;  // Identical
@@ -75,7 +75,7 @@ vhdl_expr *vhdl_expr::to_vector(vhdl_type_name_t name, int w)
       vhdl_bit_spec_expr *bs =
          new vhdl_bit_spec_expr(new vhdl_type(name, w - 1, 0), others);
       bs->add_bit(0, this);
-      
+
       return bs;
    }
    else {
@@ -85,11 +85,11 @@ vhdl_expr *vhdl_expr::to_vector(vhdl_type_name_t name, int w)
       vhdl_type *t = new vhdl_type(name, w - 1, 0);
       vhdl_fcall *conv = new vhdl_fcall(t->get_string().c_str(), t);
       conv->add_expr(this);
-      
+
       if (w != type_->get_width())
          return conv->resize(w);
       else
-         return conv;     
+         return conv;
    }
 }
 
@@ -106,9 +106,9 @@ vhdl_expr *vhdl_expr::to_integer()
    }
    else
       conv = new vhdl_fcall("To_Integer", vhdl_type::integer());
-   
+
    conv->add_expr(this);
-   
+
    return conv;
 }
 
@@ -126,7 +126,7 @@ vhdl_expr *vhdl_expr::to_boolean()
    else if (type_->get_name() == VHDL_TYPE_UNSIGNED) {
       // Need to use a support function for this conversion
       require_support_function(SF_UNSIGNED_TO_BOOLEAN);
-      
+
       vhdl_fcall *conv =
          new vhdl_fcall(support_function::function_name(SF_UNSIGNED_TO_BOOLEAN),
                         vhdl_type::boolean());
@@ -135,7 +135,7 @@ vhdl_expr *vhdl_expr::to_boolean()
    }
    else if (type_->get_name() == VHDL_TYPE_SIGNED) {
       require_support_function(SF_SIGNED_TO_BOOLEAN);
-      
+
       vhdl_fcall *conv =
          new vhdl_fcall(support_function::function_name(SF_SIGNED_TO_BOOLEAN),
                         vhdl_type::boolean());
@@ -153,12 +153,12 @@ vhdl_expr *vhdl_expr::to_std_logic()
 {
    if (type_->get_name() == VHDL_TYPE_BOOLEAN) {
       require_support_function(SF_BOOLEAN_TO_LOGIC);
-      
+
       vhdl_fcall *ah =
          new vhdl_fcall(support_function::function_name(SF_BOOLEAN_TO_LOGIC),
                         vhdl_type::std_logic());
       ah->add_expr(this);
-      
+
       return ah;
    }
    else if (type_->get_name() == VHDL_TYPE_SIGNED) {
@@ -204,11 +204,11 @@ vhdl_expr *vhdl_expr::resize(int newwidth)
       vhdl_binop_expr* concat =
          new vhdl_binop_expr(zeros, VHDL_BINOP_CONCAT, this,
                              vhdl_type::nunsigned(newwidth));
-      return concat;      
+      return concat;
    }
    else
       return this;   // Doesn't make sense to resize non-vector type
-   
+
    vhdl_fcall *resizef = new vhdl_fcall("Resize", rtype);
    resizef->add_expr(this);
    resizef->add_expr(new vhdl_const_int(newwidth));
@@ -252,10 +252,10 @@ vhdl_expr *vhdl_const_bits::to_std_logic()
    // VHDL won't let us cast directly between a vector and
    // a scalar type
    // But we don't need to here as we have the bits available
-   
+
    // Take the least significant bit
    char lsb = value_[0];
-   
+
    return new vhdl_const_bit(lsb);
 }
 
@@ -265,14 +265,14 @@ char vhdl_const_bits::sign_bit() const
 }
 
 vhdl_expr *vhdl_const_bits::to_vector(vhdl_type_name_t name, int w)
-{  
+{
    if (name == VHDL_TYPE_STD_LOGIC_VECTOR) {
       // Don't need to do anything
       return this;
    }
    else if (name == VHDL_TYPE_SIGNED || name == VHDL_TYPE_UNSIGNED) {
       // Extend with sign bit
-      value_.resize(w, sign_bit());  
+      value_.resize(w, sign_bit());
       return this;
    }
    assert(false);
@@ -289,8 +289,8 @@ vhdl_expr *vhdl_const_bits::resize(int w)
    // Rather than generating a call to Resize, when can just sign-extend
    // the bits here. As well as looking better, this avoids any ambiguity
    // between which of the signed/unsigned versions of Resize to use.
-   
-   value_.resize(w, sign_bit());  
+
+   value_.resize(w, sign_bit());
    return this;
 }
 

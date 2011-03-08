@@ -276,7 +276,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %token K_wone K_uwire
 
  /* The new tokens from 1800-2005. */
-%token K_always_comb K_always_ff K_always_latch K_assert 
+%token K_always_comb K_always_ff K_always_latch K_assert
 
  /* The new tokens for Verilog-AMS 2.3. */
 %token K_abs K_abstol K_access K_acos K_acosh K_analog K_asin K_asinh
@@ -2007,7 +2007,7 @@ cont_assign_list
 module  : attribute_list_opt module_start IDENTIFIER
 		{ pform_startmodule($3, @2.text, @2.first_line, $1); }
           module_parameter_port_list_opt
-	  module_port_list_opt 
+	  module_port_list_opt
 	  module_attribute_foreign ';'
 		{ pform_module_set_ports($6); }
 	  module_item_list_opt

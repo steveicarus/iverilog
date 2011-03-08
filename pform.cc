@@ -496,7 +496,7 @@ void pform_endmodule(const char*name, bool inside_celldefine,
       pform_cur_module = 0;
 }
 
-static void pform_add_genvar(const struct vlltype&li, const perm_string&name, 
+static void pform_add_genvar(const struct vlltype&li, const perm_string&name,
                              map<perm_string,LineInfo*>&genvars)
 {
       LineInfo*lni = new LineInfo();

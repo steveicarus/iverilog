@@ -463,7 +463,7 @@ static PLI_INT32 sys_fread_compiletf(PLI_BYTE8*name)
 	    return 0;
       }
 
- 	/* Check that the first required argument is a register or memory. */
+	/* Check that the first required argument is a register or memory. */
       type = vpi_get(vpiType, vpi_scan(argv));
       if (type != vpiReg && type != vpiMemory) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),

@@ -48,16 +48,16 @@ static void display_write(stmt_container *container, vhdl_expr *expr)
       // supported by std.textio
       std::string name(expr->get_type()->get_string());
       name += "'Image";
-      
+
       vhdl_fcall *cast
          = new vhdl_fcall(name.c_str(), vhdl_type::string());
       cast->add_expr(expr);
-      
+
       write->add_expr(cast);
    }
-   else  
+   else
       write->add_expr(expr);
-   
+
    container->add_stmt(write);
 }
 
@@ -125,7 +125,7 @@ int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
       line_var->set_comment("For generating $display output");
       proc->get_scope()->add_decl(line_var);
    }
-    
+
    // Write the data into the line
    int count = ivl_stmt_parm_count(stmt), i = 0;
    while (i < count) {
@@ -137,7 +137,7 @@ int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
          display_write(container, new vhdl_const_string(" "));
          continue;
       }
-         
+
       if (ivl_expr_type(net) == IVL_EX_STRING) {
          ostringstream ss;
          for (const char *p = ivl_expr_string(net); *p; p++) {
@@ -154,7 +154,7 @@ int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
             }
             else if (*p == '%' && *(++p) != '%') {
                flush_string(ss, container);
-               
+
                // Skip over width for now
                while (isdigit(*p)) ++p;
 
@@ -167,11 +167,11 @@ int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
                      assert(i < count);
                      ivl_expr_t netp = ivl_stmt_parm(stmt, i++);
                      assert(netp);
-                     
+
                      vhdl_expr *base = translate_expr(netp);
                      if (NULL == base)
                         return 1;
-                     
+
                      display_write(container, base);
                   }
                }
@@ -181,20 +181,20 @@ int draw_stask_display(vhdl_procedural *proc, stmt_container *container,
          }
 
          // Call Write on any non-empty string data left in the buffer
-         if (!ss.str().empty())  
+         if (!ss.str().empty())
             display_write(container, new vhdl_const_string(ss.str().c_str()));
       }
       else {
          vhdl_expr *base = translate_expr(net);
-         if (NULL == base) 
+         if (NULL == base)
             return 1;
-         
+
          display_write(container, base);
       }
    }
 
    if (newline)
       display_line(container);
-   
+
    return 0;
 }

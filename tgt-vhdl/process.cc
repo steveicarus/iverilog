@@ -33,7 +33,7 @@
 static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
 {
    set_active_entity(ent);
-   
+
    // Create a new process and store it in the entity's
    // architecture. This needs to be done first or the
    // parent link won't be valid (and draw_stmt needs this
@@ -45,7 +45,7 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    // into the declarations
    vhdl_proc->get_scope()->set_initializing
       (ivl_process_type(proc) == IVL_PR_INITIAL);
-   
+
    ivl_statement_t stmt = ivl_process_stmt(proc);
    int rc = draw_stmt(vhdl_proc, vhdl_proc->get_container(), stmt);
    if (rc != 0)
@@ -61,13 +61,13 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
       // Get rid of any useless `wait for 0 ns's at the end of the process
       prune_wait_for_0(vhdl_proc->get_container());
 
-      // The above pruning might have removed all logic from the process 
+      // The above pruning might have removed all logic from the process
       if (!vhdl_proc->get_container()->empty()) {
          vhdl_wait_stmt *wait = new vhdl_wait_stmt();
          vhdl_proc->get_container()->add_stmt(wait);
       }
    }
-   
+
    // Add a comment indicating where it came from
    ivl_scope_t scope = ivl_process_scope(proc);
    const char *type = ivl_process_type(proc) == IVL_PR_INITIAL
@@ -90,21 +90,21 @@ extern "C" int draw_process(ivl_process_t proc, void *cd)
    if (!is_default_scope_instance(scope))
       return 0;  // Ignore this process at it's not in a scope that
                  // we're using to generate code
-      
+
    debug_msg("Translating process in scope type %s (%s:%d)",
              ivl_scope_tname(scope), ivl_process_file(proc),
              ivl_process_lineno(proc));
-   
+
    // Skip over any generate and begin scopes until we find
    // the module that contains them - this is where we will
    // generate the process
    while (ivl_scope_type(scope) == IVL_SCT_GENERATE
       || ivl_scope_type(scope) == IVL_SCT_BEGIN)
       scope = ivl_scope_parent(scope);
-   
+
    assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
    vhdl_entity *ent = find_entity(scope);
    assert(ent != NULL);
-   
+
    return generate_vhdl_process(ent, proc);
 }

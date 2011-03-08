@@ -56,7 +56,7 @@ public:
 
    // Copy constructor
    vhdl_type(const vhdl_type &other);
-   
+
    virtual ~vhdl_type();
 
    void emit(std::ostream &of, int level) const;
@@ -68,7 +68,7 @@ public:
    int get_width() const { return msb_ - lsb_ + 1; }
    int get_msb() const { return msb_; }
    int get_lsb() const { return lsb_; }
-   
+
    // Common types
    static vhdl_type *std_logic();
    static vhdl_type *string();

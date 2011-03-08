@@ -228,7 +228,7 @@ static void __compile_real(char*label, char*name,
 
       vvp_array_t array = array_label ? array_find(array_label) : 0;
       assert(array_label ? array!=0 : true);
-   
+
       vvp_fun_signal_real*fun = new vvp_fun_signal_real_sa;
       net->fun = fun;
 

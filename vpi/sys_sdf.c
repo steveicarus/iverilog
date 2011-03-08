@@ -197,7 +197,6 @@ void sdf_iopath_delays(int vpi_edge, const char*src, const char*dst,
 			      delay_vals[idx].real = 0.0;
 			}
 		  }
- 
 	    }
 
 	    vpi_put_delays(path, &delays);

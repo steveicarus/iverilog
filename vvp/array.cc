@@ -744,7 +744,7 @@ static unsigned vpi_array_is_real(vvp_array_t arr)
       assert(arr->array_count > 0);
       struct __vpiRealVar*rsig = vpip_realvar_from_handle(arr->nets[0]);
       if (rsig) {
-    	    struct __vpiSignal*vsig = vpip_signal_from_handle(arr->nets[0]);
+	    struct __vpiSignal*vsig = vpip_signal_from_handle(arr->nets[0]);
 	    assert(vsig == 0);
 	    return 1U;
       }
@@ -1325,7 +1325,7 @@ void vvp_fun_arrayport_aa::check_word_change(unsigned long addr)
             }
       }
 }
-  
+
 static void array_attach_port(vvp_array_t array, vvp_fun_arrayport*fun)
 {
       assert(fun->next_ == 0);
@@ -1468,7 +1468,6 @@ void vpip_array_word_change(struct __vpiCallback*cb, vpiHandle obj)
 
 void vpip_array_change(struct __vpiCallback*cb, vpiHandle obj)
 {
-      
       struct __vpiArray*arr = ARRAY_HANDLE(obj);
       cb->extra_data = -1; // This is a callback for every element.
       cb->next = arr->vpi_callbacks;

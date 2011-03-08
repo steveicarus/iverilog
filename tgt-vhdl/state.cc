@@ -53,7 +53,7 @@ using namespace std;
  * provides a mechanism for renaming signals -- i.e. when
  * an output has the same name as register: valid in Verilog
  * but not in VHDL, so two separate signals need to be
- * defined. 
+ * defined.
  */
 struct signal_defn_t {
    std::string renamed;     // The name of the VHDL signal
@@ -64,7 +64,7 @@ struct signal_defn_t {
 // These are stored in a list rather than a set so the first
 // entity added will correspond to the first (top) Verilog module
 // encountered and hence it will appear first in the output file.
-static entity_list_t g_entities;  
+static entity_list_t g_entities;
 
 // Store the mapping of ivl scope names to entity names
 typedef map<string, string> scope_name_map_t;
@@ -145,7 +145,7 @@ ivl_signal_t find_signal_named(const std::string &name, const vhdl_scope *scope)
 // Compare the name of an entity against a string
 struct cmp_ent_name {
    cmp_ent_name(const string& n) : name_(n) {}
-   
+
    bool operator()(const vhdl_entity* ent) const
    {
       return ent->get_name() == name_;
@@ -156,7 +156,7 @@ struct cmp_ent_name {
 
 // Find an entity given its name.
 vhdl_entity* find_entity(const string& name)
-{   
+{
    entity_list_t::const_iterator it
       = find_if(g_entities.begin(), g_entities.end(),
                 cmp_ent_name(name));
@@ -176,7 +176,7 @@ vhdl_entity* find_entity(ivl_scope_t scope)
    // Skip over generate scopes
    while (ivl_scope_type(scope) == IVL_SCT_GENERATE)
       scope = ivl_scope_parent(scope);
-   
+
    assert(ivl_scope_type(scope) == IVL_SCT_MODULE);
 
    scope_name_map_t::iterator it = g_scope_names.find(ivl_scope_tname(scope));
@@ -213,7 +213,7 @@ void free_all_vhdl_objects()
 
    size_t total = vhdl_element::total_allocated();
    debug_msg("%d total bytes used for VHDL syntax objects", total);
-   
+
    g_entities.clear();
 }
 

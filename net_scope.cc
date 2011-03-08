@@ -241,14 +241,14 @@ void NetScope::print_type(ostream&stream) const
 	    break;
 	case FORK_JOIN:
 	    stream << "parallel block";
-       	    break;
+	    break;
 	case FUNC:
 	    stream << "function";
 	    break;
 	case MODULE:
 	    stream << "module <" << (module_name_ ? module_name_.str() : "")
 	           << "> instance";
-       	    break;
+	    break;
 	case TASK:
 	    stream << "task";
 	    break;

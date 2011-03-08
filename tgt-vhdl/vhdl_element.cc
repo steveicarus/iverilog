@@ -40,7 +40,7 @@ std::string nl_string(int level)
 {
    std::ostringstream ss;
    newline(ss, level);
-   return ss.str();           
+   return ss.str();
 }
 
 /*
@@ -98,7 +98,7 @@ void vhdl_element::print() const
 // This records the pointer allocated in a static field of vhdl_element
 // so we can delete it just before the code generator exits.
 void* vhdl_element::operator new(size_t size) throw (bad_alloc)
-{   
+{
    // Let the default new handle the allocation
    void* ptr = ::operator new(size);
 
@@ -115,7 +115,7 @@ void* vhdl_element::operator new(size_t size) throw (bad_alloc)
 // This just sets the corresponding pointer in vhdl_element::allocated_
 // to NULL (since it's safe to delete a NULL pointer).
 void vhdl_element::operator delete(void* ptr)
-{   
+{
    // Let the default delete handle the deallocation
    ::operator delete(ptr);
 

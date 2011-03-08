@@ -557,7 +557,7 @@ int draw_eval_real(ivl_expr_t expr)
 
             warn_about_large_cast(expr, vi.wid);
 	    fprintf(vvp_out, "    %%cvt/ri %d, %d;\n", res, res);
-	    
+
 	    clr_vector(vi);
 	    return res;
       }

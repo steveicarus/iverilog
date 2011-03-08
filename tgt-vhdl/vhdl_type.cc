@@ -80,7 +80,7 @@ std::string vhdl_type::get_string() const
    case VHDL_TYPE_STD_LOGIC:
       return std::string("std_logic");
    case VHDL_TYPE_STD_LOGIC_VECTOR:
-      return std::string("std_logic_vector");      
+      return std::string("std_logic_vector");
    case VHDL_TYPE_STRING:
       return std::string("String");
    case VHDL_TYPE_LINE:
