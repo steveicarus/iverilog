@@ -54,12 +54,12 @@ public:
    virtual vhdl_expr *to_vector(vhdl_type_name_t name, int w);
    virtual vhdl_expr *to_string();
    virtual void find_vars(vhdl_var_set_t& read) {}
-   
+
 protected:
    static void open_parens(ostream& of);
    static void close_parens(ostream& of);
    static int paren_levels;
-   
+
    const vhdl_type *type_;
    bool isconst_;
 };
@@ -820,7 +820,7 @@ public:
    // Managing set of blocking assignment targets in this block
    void add_blocking_target(vhdl_var_ref* ref);
    bool is_blocking_target(vhdl_var_ref* ref) const;
-   
+
 protected:
    stmt_container stmts_;
    vhdl_scope scope_;
