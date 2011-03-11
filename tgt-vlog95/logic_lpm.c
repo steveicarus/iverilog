@@ -1352,7 +1352,7 @@ void emit_signal_net_const_as_ca(ivl_scope_t scope, ivl_signal_t sig)
 {
       ivl_nexus_t nex = ivl_signal_nex(sig, 0);
       unsigned idx, count = ivl_nexus_ptrs(nex);
-      unsigned emitted = (unsigned) ivl_nexus_get_private(nex);
+      unsigned long emitted = (unsigned long) ivl_nexus_get_private(nex);
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
 	    ivl_net_const_t net_const = ivl_nexus_ptr_con(nex_ptr);
@@ -1380,7 +1380,7 @@ void emit_signal_net_const_as_ca(ivl_scope_t scope, ivl_signal_t sig)
 	    fprintf(vlog_out, "\n");
 	      /* Increment the emitted constant count by one. */
 	    ivl_nexus_set_private(nex,
-	          (void *) ((unsigned) ivl_nexus_get_private(nex) + 1U));
+	          (void *) ((unsigned long) ivl_nexus_get_private(nex) + 1U));
 	    return;
       }
 	/* We must find the constant in the nexus. */
