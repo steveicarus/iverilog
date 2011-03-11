@@ -91,6 +91,7 @@ clean:
 
 distclean: clean
 	rm -f Makefile config.status config.log config.cache
+	rm -f config.h
 	rm -rf autom4te.cache
 
 install:: all installdirs $(libdir64)/libveriuser$(suffix).a $(INSTALL32)

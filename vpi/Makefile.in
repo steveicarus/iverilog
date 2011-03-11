@@ -112,6 +112,7 @@ clean:
 
 distclean: clean
 	rm -f Makefile config.log config.status
+	rm -f vpi_config.h
 	rm -rf autom4te.cache
 
 check: all

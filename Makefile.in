@@ -78,8 +78,8 @@ all: dep ivl@EXEEXT@
 # dosify text files.
 ifeq (@WIN32@,yes)
 all: dep dosify.exe
-dosify.exe: dosify.c
-	$(CC) -o dosify.exe dosify.c
+dosify.exe: $(srcdir)/dosify.c
+	$(CC) -o dosify.exe $(srcdir)/dosify.c
 endif
 
 # This rule rules the compiler in the trivial hello.vl program to make
@@ -107,17 +107,24 @@ clean:
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) $@); done
 	for dir in vpi ivlpp tgt-verilog tgt-stub driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
-	rm -f *.o parse.cc parse.output parse.h lexor.cc syn-rules.output
-	rm -f iverilog-vpi.ps iverilog-vpi.pdf
+	rm -f *.o parse.cc parse.h lexor.cc
+	rm -f ivl.exp iverilog-vpi.pdf iverilog-vpi.ps parse.output
+	rm -f syn-rules.output dosify.exe ivl@EXEEXT@ check.vvp
 	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc
-	rm -rf dep ivl@EXEEXT@ dosify.exe check.vvp
+	rm -rf dep
 
 distclean: clean
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
 	for tgt in $(TARGETS); do (cd $$tgt ; $(MAKE) $@); done
 	for dir in vpi ivlpp tgt-verilog tgt-stub driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
-	rm -f Makefile config.status config.log config.cache config.h
+	rm -f Makefile config.status config.log config.cache
+	rm -f config.h
+	rm -f _pli_types.h
+ifneq (@srcdir@,.)
+	rm -f check.conf
+	rmdir $(SUBDIRS)
+endif
 	rm -rf autom4te.cache
 
 TT = t-dll.o t-dll-api.o t-dll-expr.o t-dll-proc.o t-xnf.o
@@ -148,9 +155,9 @@ ifeq (@WIN32@,yes)
 # The first step makes an ivl.exe that dlltool can use to make an
 # export and import library, and the last link makes a, ivl.exe
 # that really exports the things that the import library imports.
-ivl@EXEEXT@: $O ivl.def
+ivl@EXEEXT@: $O $(srcdir)/ivl.def
 	$(CXX) -o ivl@EXEEXT@ $O $(dllib) @EXTRALIBS@
-	dlltool --dllname ivl@EXEEXT@ --def ivl.def \
+	dlltool --dllname ivl@EXEEXT@ --def $(srcdir)/ivl.def \
 		--output-lib libivl.a --output-exp ivl.exp
 	$(CXX) $(LDFLAGS) -o ivl@EXEEXT@ ivl.exp $O $(dllib) @EXTRALIBS@
 else

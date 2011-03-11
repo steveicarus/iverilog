@@ -92,7 +92,7 @@ Makefile: Makefile.in config.status
 	./config.status
 
 clean:
-	rm -rf *.o dep edif.tgt
+	rm -rf *.o dep libedif_tgt.a edif.tgt
 
 distclean: clean
 	rm -f Makefile config.status config.log config.cache

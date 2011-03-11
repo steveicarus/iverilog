@@ -70,8 +70,8 @@ endif
 all: dep vvp@EXEEXT@ libvpi.a $(ALL32)
 
 clean:
-	rm -f *.o *~ parse.cc parse.cc.output parse.h lexor.cc tables.cc
-	rm -f vvp.ps vvp.pdf
+	rm -f *.o *~ parse.cc parse.output parse.h lexor.cc tables.cc
+	rm -f vvp.ps vvp.pdf vvp.exp
 	rm -rf dep vvp@EXEEXT@ libvpi.a bin32
 
 distclean: clean
@@ -112,9 +112,9 @@ ifeq (@WIN32@,yes)
 #
 # To get this to work correctly we must use the suffixed version of the
 # executable to build the library.
-vvp@EXEEXT@ libvpi.a: $O vvp.def
+vvp@EXEEXT@ libvpi.a: $O $(srcdir)/vvp.def
 	$(CXX) -o vvp$(suffix)@EXEEXT@ $(LDFLAGS) $O $(dllib) $(LIBS)
-	dlltool --dllname vvp$(suffix)@EXEEXT@ --def vvp.def \
+	dlltool --dllname vvp$(suffix)@EXEEXT@ --def $(srcdir)/vvp.def \
 		--output-lib libvpi.a --output-exp vvp.exp
 	rm -f vvp$(suffix)@EXEEXT@
 	$(CXX) -o vvp@EXEEXT@ vvp.exp $(LDFLAGS) $O $(dllib) $(LIBS)
