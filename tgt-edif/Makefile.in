@@ -105,42 +105,42 @@ ifeq ($(MAN),none)
 INSTALL_DOC =
 else
 ifeq ($(PS2PDF),none)
-#INSTALL_DOC = $(mandir)/man1/iverilog-edif.1
+#INSTALL_DOC = $(DESTDIR)$(mandir)/man1/iverilog-edif.1
 else
-#INSTALL_DOC = $(prefix)/iverilog-edif.pdf $(mandir)/man1/iverilog-edif.1
+#INSTALL_DOC = $(DESTDIR)$(prefix)/iverilog-edif.pdf $(DESTDIR)$(mandir)/man1/iverilog-edif.1
 #all: iverilog-edif.pdf
 endif
 endif
 else
-#INSTALL_DOC = $(prefix)/iverilog-edif.pdf $(mandir)/man1/iverilog-edif.1
+#INSTALL_DOC = $(DESTDIR)$(prefix)/iverilog-edif.pdf $(DESTDIR)$(mandir)/man1/iverilog-edif.1
 #INSTALL_DOCDIR = $(mandir)/man1
 endif
 
-install: all installdirs $(libdir)/ivl$(suffix)/edif.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/edif.conf $(libdir)/ivl$(suffix)/edif-s.conf
+install: all installdirs $(DESTDIR)$(libdir)/ivl$(suffix)/edif.tgt $(INSTALL_DOC) $(DESTDIR)$(libdir)/ivl$(suffix)/edif.conf $(DESTDIR)$(libdir)/ivl$(suffix)/edif-s.conf
 
-$(libdir)/ivl$(suffix)/edif.tgt: ./edif.tgt
-	$(INSTALL_PROGRAM) ./edif.tgt $(DESTDIR)/$(libdir)/ivl$(suffix)/edif.tgt
+$(DESTDIR)$(libdir)/ivl$(suffix)/edif.tgt: ./edif.tgt
+	$(INSTALL_PROGRAM) ./edif.tgt $(DESTDIR)$(libdir)/ivl$(suffix)/edif.tgt
 
-$(libdir)/ivl$(suffix)/edif.conf: $(srcdir)/edif.conf
-	$(INSTALL_DATA) $(srcdir)/edif.conf $(DESTDIR)/$(libdir)/ivl$(suffix)/edif.conf
+$(DESTDIR)$(libdir)/ivl$(suffix)/edif.conf: $(srcdir)/edif.conf
+	$(INSTALL_DATA) $(srcdir)/edif.conf $(DESTDIR)$(libdir)/ivl$(suffix)/edif.conf
 
-$(libdir)/ivl$(suffix)/edif-s.conf: $(srcdir)/edif-s.conf
-	$(INSTALL_DATA) $(srcdir)/edif-s.conf $(DESTDIR)/$(libdir)/ivl$(suffix)/edif-s.conf
+$(DESTDIR)$(libdir)/ivl$(suffix)/edif-s.conf: $(srcdir)/edif-s.conf
+	$(INSTALL_DATA) $(srcdir)/edif-s.conf $(DESTDIR)$(libdir)/ivl$(suffix)/edif-s.conf
 
 
-$(mandir)/man1/iverilog-edif$(suffix).1: $(srcdir)/iverilog-edif.man
-	$(INSTALL_DATA) $(srcdir)/iverilog-edif.man $(DESTDIR)/$(mandir)/man1/iverilog-edif$(suffix).1
+$(DESTDIR)$(mandir)/man1/iverilog-edif$(suffix).1: $(srcdir)/iverilog-edif.man
+	$(INSTALL_DATA) $(srcdir)/iverilog-edif.man $(DESTDIR)$(mandir)/man1/iverilog-edif$(suffix).1
 
-$(prefix)/iverilog-edif$(suffix).pdf: iverilog-edif.pdf
-	$(INSTALL_DATA) iverilog-edif.pdf $(DESTDIR)/$(prefix)/iverilog-edif$(suffix).pdf
+$(DESTDIR)$(prefix)/iverilog-edif$(suffix).pdf: iverilog-edif.pdf
+	$(INSTALL_DATA) iverilog-edif.pdf $(DESTDIR)$(prefix)/iverilog-edif$(suffix).pdf
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(DESTDIR)/$(libdir)/ivl$(suffix)
+	$(srcdir)/../mkinstalldirs $(DESTDIR)$(prefix) $(DESTDIR)$(libdir)/ivl$(suffix)
 
 uninstall:
-	rm -f $(DESTDIR)/$(libdir)/ivl$(suffix)/edif.tgt
-	rm -f $(DESTDIR)/$(INSTALL_DOC)
-	rm -f $(DESTDIR)/$(libdir)/ivl$(suffix)/edif-s.conf
-	rm -f $(DESTDIR)/$(libdir)/ivl$(suffix)/edif.conf
+	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/edif.tgt
+	rm -f $(INSTALL_DOC)
+	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/edif-s.conf
+	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/edif.conf
 
 -include $(patsubst %.o, dep/%.d, $O)

@@ -71,6 +71,7 @@ all: dep vvp@EXEEXT@ libvpi.a $(ALL32)
 
 clean:
 	rm -f *.o *~ parse.cc parse.cc.output parse.h lexor.cc tables.cc
+	rm -f vvp.ps vvp.pdf
 	rm -rf dep vvp@EXEEXT@ libvpi.a bin32
 
 distclean: clean
@@ -78,7 +79,19 @@ distclean: clean
 	rm -rf autom4te.cache
 
 check: all
+ifeq (@WIN32@,yes)
+ifeq (@install_suffix@,)
 	./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
+else
+	# On Windows if we have a suffix we must run the vvp test with
+	# a suffix since it was built/linked that way.
+	ln vvp.exe vvp$(suffix).exe
+	./vvp$(suffix) -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
+	rm -f vvp$(suffix).exe
+endif
+else
+	./vvp -M../vpi $(srcdir)/examples/hello.vvp | grep 'Hello, World.'
+endif
 
 V = vpi_modules.o vpi_callback.o vpi_const.o vpi_event.o vpi_iter.o vpi_mcd.o \
 vpi_priv.o vpi_scope.o vpi_real.o vpi_signal.o vpi_tasks.o vpi_time.o \
@@ -95,10 +108,15 @@ ifeq (@WIN32@,yes)
 # The first step makes an ivl.exe that dlltool can use to make an
 # export and import library, and the last link makes a, ivl.exe
 # that really exports the things that the import library imports.
+# that really exports the things that the import library imports.
+#
+# To get this to work correctly we must use the suffixed version of the
+# executable to build the library.
 vvp@EXEEXT@ libvpi.a: $O vvp.def
-	$(CXX) -o vvp@EXEEXT@ $(LDFLAGS) $O $(dllib) $(LIBS)
-	dlltool --dllname vvp@EXEEXT@ --def vvp.def \
+	$(CXX) -o vvp$(suffix)@EXEEXT@ $(LDFLAGS) $O $(dllib) $(LIBS)
+	dlltool --dllname vvp$(suffix)@EXEEXT@ --def vvp.def \
 		--output-lib libvpi.a --output-exp vvp.exp
+	rm -f vvp$(suffix)@EXEEXT@
 	$(CXX) -o vvp@EXEEXT@ vvp.exp $(LDFLAGS) $O $(dllib) $(LIBS)
 else
 libvpi.a: libvpi.c
@@ -107,8 +125,8 @@ libvpi.a: libvpi.c
 	ar cqv libvpi.a libvpi.o
 	$(RANLIB) libvpi.a
 
-vvp: $O
-	$(CXX) $(LDFLAGS) -o vvp $O $(LIBS) $(dllib)
+vvp@EXEEXT@: $O
+	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ $O $(LIBS) $(dllib)
 endif
 
 dep:
@@ -169,23 +187,26 @@ parse.h: parse.cc
 lexor.cc: $(srcdir)/lexor.lex
 	$(LEX) -s -olexor.cc $(srcdir)/lexor.lex
 
-vvp.pdf: $(srcdir)/vvp.man
-	$(MAN) -t $(srcdir)/vvp.man | $(PS2PDF) - vvp.pdf
+vvp.ps: $(srcdir)/vvp.man
+	$(MAN) -t $(srcdir)/vvp.man > vvp.ps
+
+vvp.pdf: vvp.ps
+	$(PS2PDF) vvp.ps vvp.pdf
 
 ifeq (@WIN32@,yes)
 ifeq ($(MAN),none)
-INSTALL_DOC = $(mandir)/man1/vvp$(suffix).1
+INSTALL_DOC = $(DESTDIR)$(mandir)/man1/vvp$(suffix).1
 else
 ifeq ($(PS2PDF),none)
-INSTALL_DOC = $(mandir)/man1/vvp$(suffix).1
+INSTALL_DOC = $(DESTDIR)$(mandir)/man1/vvp$(suffix).1
 else
-INSTALL_DOC = $(prefix)/vvp$(suffix).pdf $(mandir)/man1/vvp$(suffix).1
+INSTALL_DOC = $(DESTDIR)$(prefix)/vvp$(suffix).pdf $(DESTDIR)$(mandir)/man1/vvp$(suffix).1
 all: vvp.pdf
 endif
 endif
 INSTALL_DOCDIR = $(mandir)/man1
 else
-INSTALL_DOC = $(mandir)/man1/vvp$(suffix).1
+INSTALL_DOC = $(DESTDIR)$(mandir)/man1/vvp$(suffix).1
 INSTALL_DOCDIR = $(mandir)/man1
 endif
 
@@ -193,42 +214,43 @@ Makefile: Makefile.in config.status
 	./config.status
 
 
-install: all installdirs $(bindir)/vvp$(suffix)@EXEEXT@ $(libdir64)/libvpi$(suffix).a $(INSTALL_DOC) $(INSTALL32)
+install: all installdirs $(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@ $(DESTDIR)$(libdir64)/libvpi$(suffix).a $(INSTALL_DOC) $(INSTALL32)
 
-$(bindir)/vvp$(suffix)@EXEEXT@: ./vvp@EXEEXT@
-	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ $(DESTDIR)/$(bindir)/vvp$(suffix)@EXEEXT@
+$(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@: ./vvp@EXEEXT@
+	$(INSTALL_PROGRAM) ./vvp@EXEEXT@ $(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@
 
-$(libdir64)/libvpi$(suffix).a : ./libvpi.a
-	$(INSTALL_DATA) libvpi.a $(DESTDIR)/$(libdir64)/libvpi$(suffix).a
+$(DESTDIR)$(libdir64)/libvpi$(suffix).a : ./libvpi.a
+	$(INSTALL_DATA) libvpi.a $(DESTDIR)$(libdir64)/libvpi$(suffix).a
 
 $(mandir)/man1/vvp$(suffix).1: $(srcdir)/vvp.man
-	$(INSTALL_DATA) $(srcdir)/vvp.man $(DESTDIR)/$(mandir)/man1/vvp$(suffix).1
+	$(INSTALL_DATA) $(srcdir)/vvp.man $(DESTDIR)$(mandir)/man1/vvp$(suffix).1
 
-$(prefix)/vvp.pdf: vvp.pdf
-	$(INSTALL_DATA) vvp.pdf $(DESTDIR)/$(prefix)/vvp$(suffix).pdf
+$(DESTDIR)$(prefix)/vvp$(suffix).pdf: ./vvp.pdf
+	$(INSTALL_DATA) vvp.pdf $(DESTDIR)$(prefix)/vvp$(suffix).pdf
 
 installdirs: $(srcdir)/mkinstalldirs
-	$(srcdir)/mkinstalldirs $(DESTDIR)/$(bindir) $(DESTDIR)/$(libdir) \
-		$(DESTDIR)/$(libdir64) $(DESTDIR)/$(INSTALL_DOCDIR)
+	$(srcdir)/mkinstalldirs $(DESTDIR)$(bindir) $(DESTDIR)$(libdir) \
+		$(DESTDIR)$(libdir64) $(DESTDIR)$(INSTALL_DOCDIR)
 
 
 ifeq (@enable_vvp32@,yes)
 install32: all32 $(libdir)/libvpi$(suffix).a $(bindir)/vvp32$(suffix)
 
-$(libdir)/libvpi$(suffix).a: bin32/libvpi.a
-	$(INSTALL_DATA) bin32/libvpi.a $(DESTDIR)/$(libdir)/libvpi$(suffix).a
+$(DESTDIR)$(libdir)/libvpi$(suffix).a: bin32/libvpi.a
+	$(INSTALL_DATA) bin32/libvpi.a $(DESTDIR)$(libdir)/libvpi$(suffix).a
 
-$(bindir)/vvp32$(suffix): ./vvp32
-	$(INSTALL_PROGRAM) ./vvp32 $(DESTDIR)/$(bindir)/vvp32$(suffix)
+$(DESTDIR)$(bindir)/vvp32$(suffix): ./vvp32
+	$(INSTALL_PROGRAM) ./vvp32 $(DESTDIR)$(bindir)/vvp32$(suffix)
 
 uninstall32:
-	rm -f $(DESTDIR)/$(libdir)/libvpi$(suffix).a
-	rm -f $(DESTDIR)/$(bindir)/vvp32$(suffix)
+	rm -f $(DESTDIR)$(libdir)/libvpi$(suffix).a
+	rm -f $(DESTDIR)$(bindir)/vvp32$(suffix)
 endif
 
 uninstall: $(UNINSTALL32)
-	rm -f $(DESTDIR)/$(bindir)/vvp$(suffix)@EXEEXT@
-	rm -f $(DESTDIR)/$(libdir64)/libvpi$(suffix).a
-	rm -f $(DESTDIR)/$(mandir)/man1/vvp$(suffix).1
+	rm -f $(DESTDIR)$(bindir)/vvp$(suffix)@EXEEXT@
+	rm -f $(DESTDIR)$(libdir64)/libvpi$(suffix).a
+	rm -f $(DESTDIR)$(mandir)/man1/vvp$(suffix).1
+	rm -f $(DESTDIR)$(prefix)/vvp$(suffix).pdf
 
 -include $(patsubst %.o, dep/%.d, $O)

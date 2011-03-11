@@ -95,14 +95,14 @@ distclean: clean
 
 install:: all installdirs $(libdir64)/libveriuser$(suffix).a $(INSTALL32)
 
-$(libdir64)/libveriuser$(suffix).a: ./libveriuser.a
-	$(INSTALL_DATA) ./libveriuser.a $(DESTDIR)/$(libdir64)/libveriuser$(suffix).a
+$(DESTDIR)$(libdir64)/libveriuser$(suffix).a: ./libveriuser.a
+	$(INSTALL_DATA) ./libveriuser.a $(DESTDIR)$(libdir64)/libveriuser$(suffix).a
 
 installdirs: mkinstalldirs
-	$(srcdir)/mkinstalldirs $(includedir) $(DESTDIR)/$(libdir64)
+	$(srcdir)/mkinstalldirs $(includedir) $(DESTDIR)$(libdir64)
 
 uninstall::
-	rm -f $(DESTDIR)/$(libdir64)/libveriuser$(suffix).a
+	rm -f $(DESTDIR)$(libdir64)/libveriuser$(suffix).a
 
 ifeq (@enable_vvp32@,yes)
 all32: bin32 bin32/libveriuser.a
@@ -123,8 +123,8 @@ bin32/libveriuser.a: bin32/libveriuser.o
 
 install32: $(libdir)/libveriuser$(suffix).a
 
-$(libdir)/libveriuser$(suffix).a: bin32/libveriuser.a
-	$(INSTALL_DATA) bin32/libveriuser.a $(DESTDIR)/$(libdir)/libveriuser$(suffix).a
+$(DESTDIR)$(libdir)/libveriuser$(suffix).a: bin32/libveriuser.a
+	$(INSTALL_DATA) bin32/libveriuser.a $(DESTDIR)$(libdir)/libveriuser$(suffix).a
 
 uninstall::
 	rm -f $(DESTDIR)$(libdir)/libveriuser$(suffix).a

@@ -70,3 +70,13 @@ dep
 
 # Check output
 /check.vvp
+
+# The PostScript and PDF generated manual files.
+/driver/iverilog.ps
+/driver/iverilog.pdf
+/iverilog-vpi.ps
+/iverilog-vpi.pdf
+/tgt-fpga/iverilog-fpga.ps
+/tgt-fpga/iverilog-fpga.pdf
+/vvp/vvp.ps
+/vvp/vvp.pdf

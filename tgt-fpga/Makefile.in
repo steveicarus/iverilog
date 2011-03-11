@@ -79,6 +79,7 @@ Makefile: Makefile.in config.status
 	./config.status
 
 clean:
+	rm -f iverilog-fpga.ps iverilog-fpga.pdf
 	rm -rf *.o dep fpga.tgt
 
 distclean: clean
@@ -89,47 +90,49 @@ check: all
 
 ifeq (@WIN32@,yes)
 ifeq ($(MAN),none)
-INSTALL_DOC = $(mandir)/man1/iverilog-fpga$(suffix).1
+INSTALL_DOC = $(DESTDIR)$(mandir)/man1/iverilog-fpga$(suffix).1
 else
 ifeq (@PS2PDF@,none)
-INSTALL_DOC = $(mandir)/man1/iverilog-fpga$(suffix).1
+INSTALL_DOC = $(DESTDIR)$(mandir)/man1/iverilog-fpga$(suffix).1
 else
-INSTALL_DOC = $(prefix)/iverilog-fpga$(suffix).pdf $(mandir)/man1/iverilog-fpga$(suffix).1
+INSTALL_DOC = $(DESTDIR)$(prefix)/iverilog-fpga$(suffix).pdf $(DESTDIR)$(mandir)/man1/iverilog-fpga$(suffix).1
 INSTALL_DOCDIR = $(mandir)/man1
 all: iverilog-fpga.pdf
 endif
 endif
 INSTALL_DOCDIR = $(mandir)/man1
 else
-INSTALL_DOC = $(mandir)/man1/iverilog-fpga$(suffix).1
+INSTALL_DOC = $(DESTDIR)$(mandir)/man1/iverilog-fpga$(suffix).1
 INSTALL_DOCDIR = $(mandir)/man1
 endif
 
-install: all installdirs $(libdir)/ivl$(suffix)/fpga.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/fpga.conf $(libdir)/ivl$(suffix)/fpga-s.conf
+install: all installdirs $(DESTDIR)$(libdir)/ivl$(suffix)/fpga.tgt $(INSTALL_DOC) $(DESTDIR)$(libdir)/ivl$(suffix)/fpga.conf $(DESTDIR)$(libdir)/ivl$(suffix)/fpga-s.conf
 
-$(libdir)/ivl$(suffix)/fpga.tgt: ./fpga.tgt
-	$(INSTALL_PROGRAM) ./fpga.tgt $(DESTDIR)/$(libdir)/ivl$(suffix)/fpga.tgt
+$(DESTDIR)$(libdir)/ivl$(suffix)/fpga.tgt: ./fpga.tgt
+	$(INSTALL_PROGRAM) ./fpga.tgt $(DESTDIR)$(libdir)/ivl$(suffix)/fpga.tgt
 
-$(libdir)/ivl$(suffix)/fpga.conf: $(srcdir)/fpga.conf
-	$(INSTALL_DATA) $(srcdir)/fpga.conf $(DESTDIR)/$(libdir)/ivl$(suffix)/fpga.conf
+$(DESTDIR)$(libdir)/ivl$(suffix)/fpga.conf: $(srcdir)/fpga.conf
+	$(INSTALL_DATA) $(srcdir)/fpga.conf $(DESTDIR)$(libdir)/ivl$(suffix)/fpga.conf
 
-$(libdir)/ivl$(suffix)/fpga-s.conf: $(srcdir)/fpga-s.conf
-	$(INSTALL_DATA) $(srcdir)/fpga-s.conf $(DESTDIR)/$(libdir)/ivl$(suffix)/fpga-s.conf
+$(DESTDIR)$(libdir)/ivl$(suffix)/fpga-s.conf: $(srcdir)/fpga-s.conf
+	$(INSTALL_DATA) $(srcdir)/fpga-s.conf $(DESTDIR)$(libdir)/ivl$(suffix)/fpga-s.conf
 
 
-$(mandir)/man1/iverilog-fpga$(suffix).1: $(srcdir)/iverilog-fpga.man
-	$(INSTALL_DATA) $(srcdir)/iverilog-fpga.man $(DESTDIR)/$(mandir)/man1/iverilog-fpga$(suffix).1
+$(DESTDIR)$(mandir)/man1/iverilog-fpga$(suffix).1: $(srcdir)/iverilog-fpga.man
+	$(INSTALL_DATA) $(srcdir)/iverilog-fpga.man $(DESTDIR)$(mandir)/man1/iverilog-fpga$(suffix).1
 
-$(prefix)/iverilog-fpga$(suffix).pdf: iverilog-fpga.pdf
-	$(INSTALL_DATA) iverilog-fpga.pdf $(DESTDIR)/$(prefix)/iverilog-fpga$(suffix).pdf
+$(DESTDIR)$(prefix)/iverilog-fpga$(suffix).pdf: iverilog-fpga.pdf
+	$(INSTALL_DATA) iverilog-fpga.pdf $(DESTDIR)$(prefix)/iverilog-fpga$(suffix).pdf
 
 installdirs: ../mkinstalldirs
-	$(srcdir)/../mkinstalldirs $(DESTDIR)/$(libdir)/ivl$(suffix)
+	$(srcdir)/../mkinstalldirs $(DESTDIR)$(libdir)/ivl$(suffix)
 
 uninstall:
-	rm -f $(DESTDIR)/$(libdir)/ivl$(suffix)/fpga.tgt
-	rm -f $(DESTDIR)/$(INSTALL_DOC)
-	rm -f $(DESTDIR)/$(libdir)/ivl$(suffix)/fpga-s.conf
-	rm -f $(DESTDIR)/$(libdir)/ivl$(suffix)/fpga.conf
+	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/fpga.tgt
+	rm -f $(INSTALL_DOC)
+	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/fpga-s.conf
+	rm -f $(DESTDIR)$(libdir)/ivl$(suffix)/fpga.conf
+	rm -f $(DESTDIR)$(mandir)/man1/iverilog-fpga$(suffix).man
+	rm -f $(DESTDIR)$(prefix)/iverilog-fpga$(suffix).pdf
 
 -include $(patsubst %.o, dep/%.d, $O)

@@ -88,7 +88,19 @@ check: all
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) check); done
 	test -r check.conf || cp $(srcdir)/check.conf .
 	driver/iverilog -B. -BPivlpp -tcheck -ocheck.vvp $(srcdir)/examples/hello.vl
+ifeq (@WIN32@,yes)
+ifeq (@install_suffix@,)
 	vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
+else
+	# On Windows if we have a suffix we must run the vvp part of
+	# the test with a suffix since it was built/linked that way.
+	ln vvp/vvp.exe vvp/vvp$(suffix).exe
+	vvp/vvp$(suffix) -M- -M./vpi ./check.vvp | grep 'Hello, World'
+	rm vvp/vvp$(suffix).exe
+endif
+else
+	vvp/vvp -M- -M./vpi ./check.vvp | grep 'Hello, World'
+endif
 
 clean:
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
@@ -96,8 +108,9 @@ clean:
 	for dir in vpi ivlpp tgt-verilog tgt-stub driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
 	rm -f *.o parse.cc parse.output parse.h lexor.cc syn-rules.output
-	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc*
-	rm -rf dep ivl@EXEEXT@
+	rm -f iverilog-vpi.ps iverilog-vpi.pdf
+	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc
+	rm -rf dep ivl@EXEEXT@ dosify.exe check.vvp
 
 distclean: clean
 	for dir in $(SUBDIRS); do (cd $$dir ; $(MAKE) $@); done
@@ -230,37 +243,37 @@ install: all installdirs $(libdir)/ivl$(suffix)/ivl@EXEEXT@  $(includedir)/ivl_t
 	for dir in vpi ivlpp driver; \
 	    do (cd $$dir ; $(MAKE) $@); done
 
-$(bindir)/iverilog-vpi$(suffix): ./iverilog-vpi
+$(DESTDIR)$(bindir)/iverilog-vpi$(suffix): ./iverilog-vpi
 	$(INSTALL_SCRIPT) ./iverilog-vpi $(DESTDIR)$(bindir)/iverilog-vpi$(suffix)
 
 $(libdir)/ivl$(suffix)/ivl@EXEEXT@: ./ivl@EXEEXT@
 	$(INSTALL_PROGRAM) ./ivl@EXEEXT@ $(DESTDIR)$(libdir)/ivl$(suffix)/ivl@EXEEXT@
 
-$(libdir)/ivl$(suffix)/xnf-s.conf: $(srcdir)/xnf-s.conf
+$(DESTDIR)$(libdir)/ivl$(suffix)/xnf-s.conf: $(srcdir)/xnf-s.conf
 	$(INSTALL_DATA) $(srcdir)/xnf-s.conf $(DESTDIR)$(libdir)/ivl$(suffix)/xnf-s.conf
 
-$(libdir)/ivl$(suffix)/xnf.conf: $(srcdir)/xnf.conf
+$(DESTDIR)$(libdir)/ivl$(suffix)/xnf.conf: $(srcdir)/xnf.conf
 	$(INSTALL_DATA) $(srcdir)/xnf.conf $(DESTDIR)$(libdir)/ivl$(suffix)/xnf.conf
 
-$(includedir)/ivl_target.h: $(srcdir)/ivl_target.h
+$(DESTDIR)$(includedir)/ivl_target.h: $(srcdir)/ivl_target.h
 	$(INSTALL_DATA) $(srcdir)/ivl_target.h $(DESTDIR)$(includedir)/ivl_target.h
 
-$(includedir)/_pli_types.h: _pli_types.h
+$(DESTDIR)$(includedir)/_pli_types.h: _pli_types.h
 	$(INSTALL_DATA) $< $(DESTDIR)$(includedir)/_pli_types.h
 
-$(includedir)/vpi_user.h: $(srcdir)/vpi_user.h
+$(DESTDIR)$(includedir)/vpi_user.h: $(srcdir)/vpi_user.h
 	$(INSTALL_DATA) $(srcdir)/vpi_user.h $(DESTDIR)$(includedir)/vpi_user.h
 
-$(includedir)/acc_user.h: $(srcdir)/acc_user.h
+$(DESTDIR)$(includedir)/acc_user.h: $(srcdir)/acc_user.h
 	$(INSTALL_DATA) $(srcdir)/acc_user.h $(DESTDIR)$(includedir)/acc_user.h
 
-$(includedir)/veriuser.h: $(srcdir)/veriuser.h
+$(DESTDIR)$(includedir)/veriuser.h: $(srcdir)/veriuser.h
 	$(INSTALL_DATA) $(srcdir)/veriuser.h $(DESTDIR)$(includedir)/veriuser.h
 
-$(mandir)/man1/iverilog-vpi$(suffix).1: $(srcdir)/iverilog-vpi.man
+$(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1: $(srcdir)/iverilog-vpi.man
 	$(INSTALL_DATA) $(srcdir)/iverilog-vpi.man $(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1
 
-$(prefix)/iverilog-vpi$(suffix).pdf: iverilog-vpi.pdf
+$(DESTDIR)$(prefix)/iverilog-vpi$(suffix).pdf: iverilog-vpi.pdf
 	$(INSTALL_DATA) iverilog-vpi.pdf $(DESTDIR)$(prefix)/iverilog-vpi$(suffix).pdf
 
 
@@ -281,8 +294,9 @@ uninstall:
 	    do rm -f $(DESTDIR)$(bindir)/$$f; done
 	for f in ivl_target.h vpi_user.h _pli_types.h acc_user.h veriuser.h; \
 	    do rm -f $(DESTDIR)$(includedir)/$$f; done
-	-test X$(suffix) = X || rmdir $(DESTDIR)/$(includedir)
-	rm -f $(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1 $(DESTDIR)$(prefix)/iverilog-vpi$(suffix).pdf
+	-test X$(suffix) = X || rmdir $(DESTDIR)$(includedir)
+	rm -f $(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1
+	rm -f $(DESTDIR)$(prefix)/iverilog-vpi$(suffix).pdf
 
 
 -include $(patsubst %.o, dep/%.d, $O)
