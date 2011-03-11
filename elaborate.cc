@@ -144,7 +144,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    need_driver_flag = false;
       }
 
-	/* If the r-value insists on being smaller then the l-value
+	/* If the r-value insists on being smaller than the l-value
 	   (perhaps it is explicitly sized) the pad it out to be the
 	   right width so that something is connected to all the bits
 	   of the l-value. */
@@ -157,7 +157,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       }
 
 	/* If, on the other hand, the r-value insists on being
-	   LARGER then the l-value, use a part select to chop it down
+	   LARGER than the l-value, use a part select to chop it down
 	   down to size. */
       if (lval->vector_width() < rval->vector_width()) {
 	    NetPartSelect*tmp = new NetPartSelect(rval, 0,lval->vector_width(),
@@ -3487,7 +3487,7 @@ NetProc* PForever::elaborate(Design*des, NetScope*scope) const
  *    force <lval> = <rval>
  *
  * The <lval> can be anything that a normal behavioral assignment can
- * take, plus net signals. This is a little bit more lax then the
+ * take, plus net signals. This is a little bit more lax than the
  * other procedural assignments.
  */
 NetForce* PForce::elaborate(Design*des, NetScope*scope) const

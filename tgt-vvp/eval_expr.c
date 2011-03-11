@@ -1984,7 +1984,7 @@ static struct vector_info draw_pad_expr(ivl_expr_t expr, unsigned wid)
 	    return res;
       }
 
-	/* So now we know that the subexpression is smaller then the
+	/* So now we know that the subexpression is smaller than the
 	   desired result (the usual case) so we build the
 	   result. Evaluate the subexpression into the target buffer,
 	   then pad it as appropriate. */
@@ -2441,7 +2441,7 @@ static void draw_select_signal_dest(ivl_expr_t expr,
 
 	/* Special case: If the operand is a signal (not an array) and
 	   the part select is coming from the LSB, and the part select
-	   is no larger then the signal itself, then we can load the
+	   is no larger than the signal itself, then we can load the
 	   value in place, directly. */
       if ((ivl_signal_dimensions(sig) == 0)
 	  && (ivl_expr_width(sube) >= dest.wid)
@@ -2597,7 +2597,7 @@ static struct vector_info draw_select_unsized_literal(ivl_expr_t expr,
 	    subv = res;
       }
 
-	/* If the subv result is narrower then the select width, then
+	/* If the subv result is narrower than the select width, then
 	   copy it into a wider vector. */
       if (subv.wid < wid && ivl_expr_signed(sube)) {
 	    res.base = allocate_vector(wid);
@@ -3008,7 +3008,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 		  break;
 	    }
 
-	      /* If the result needs to be bigger then the calculated
+	      /* If the result needs to be bigger than the calculated
 		 value, then write it into a padded vector. */
 	    if (res.wid < wid) {
 		  struct vector_info tmp;
@@ -3071,7 +3071,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
 	    }
 
-	      /* If the result needs to be bigger then the calculated
+	      /* If the result needs to be bigger than the calculated
 		 value, then write it into a passed vector. */
 	    if (res.wid < wid) {
 		  struct vector_info tmp;

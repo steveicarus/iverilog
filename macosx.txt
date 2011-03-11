@@ -34,7 +34,7 @@ quite similar.
 
   Snapshots of Icarus Verilog source now come with the
   lexor_keyword.cc file pre-made, so if you have trouble with gperf,
-  then just make sure the distributed lexor_keyword.cc is newer then
+  then just make sure the distributed lexor_keyword.cc is newer than
   lexor_keyword.gperf, and use that.
 
 3) If working with a CVS snapshot, you must run autoconf in several

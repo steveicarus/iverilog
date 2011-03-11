@@ -483,7 +483,7 @@ bool NetBlock::synth_sync(Design*des, NetScope* /*scope*/, NetFF* /*ff*/,
 		 substatement to the output of the block as a
 		 whole. It is occasionally possible to have outputs
 		 beyond the input set, for example when the l-value of
-		 an assignment is smaller then the r-value. */
+		 an assignment is smaller than the r-value. */
 	    for (unsigned idx = 0 ;  idx < tmp_out->pin_count() ; idx += 1) {
 		  unsigned ptr = find_nexus_in_set(nex_map,
 						   tmp_map->pin(idx).nexus());

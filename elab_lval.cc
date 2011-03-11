@@ -56,7 +56,7 @@
  * l-value.
  *
  * This last case can turn up in statements like: {a, b[1]} = c;
- * rather then create a NetAssign_ for each item in the concatenation,
+ * rather than create a NetAssign_ for each item in the concatenation,
  * elaboration makes a single NetAssign_ and connects it up properly.
  */
 

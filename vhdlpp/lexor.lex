@@ -178,7 +178,7 @@ based_integer		[0-9a-fA-F](_?[0-9a-fA-F])*
 "<<" { return DLT; }
 ">>" { return DGT; }
     /*
-    Here comes a list of symbols that are more then strange,
+    Here comes a list of symbols that are more than strange,
     at least for the time being.
 
 "??" { return K_CC; }

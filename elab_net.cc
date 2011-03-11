@@ -565,10 +565,10 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    sig = tmp;
       }
 
-	/* If the desired l-value vector is narrower then the
+	/* If the desired l-value vector is narrower than the
 	   signal itself, then use a NetPartSelect node to
 	   arrange for connection to the desired bits. All this
-	   can be skipped if the desired with matches the
+	   can be skipped if the desired width matches the
 	   original vector. */
 
       if (subnet_wid != sig->vector_width()) {

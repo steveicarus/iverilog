@@ -928,7 +928,7 @@ void vpip_put_value_event::run_run()
 	  case vpiStringVal:
 	    free(value.value.str);
 	    break;
-	    /* If these are every copied then free them too. */
+	    /* If these are ever copied then free them too. */
 	  case vpiTimeVal:
 	  case vpiVectorVal:
 	  case vpiStrengthVal:

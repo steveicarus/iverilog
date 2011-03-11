@@ -2267,7 +2267,7 @@ atom2_type
 
   /* An lpvalue is the expression that can go on the left side of a
      procedural assignment. This rule handles only procedural
-     assignments. It is more limited then the general expr_primary
+     assignments. It is more limited than the general expr_primary
      rule to reflect the rules for assignment l-values. */
 lpvalue
     : hierarchy_identifier
@@ -3937,7 +3937,7 @@ statement
 
   /* assign and deassign statements are procedural code to do
      structural assignments, and to turn that structural assignment
-     off. This stronger then any other assign, but weaker then the
+     off. This is stronger than any other assign, but weaker than the
      force assignments. */
 
 	: K_assign lpvalue '=' expression ';'
@@ -3970,7 +3970,7 @@ statement
   /* begin-end blocks come in a variety of forms, including named and
      anonymous. The named blocks can also carry their own reg
      variables, which are placed in the scope created by the block
-     name. These are handled by pushing the scope name then matching
+     name. These are handled by pushing the scope name, then matching
      the declarations. The scope is popped at the end of the block. */
 
   | K_begin statement_list K_end

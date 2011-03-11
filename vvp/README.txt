@@ -874,7 +874,7 @@ of four possible values (0, 1, x and z) so two bits are needed to
 represent them. So the input of the functor is 8 bits, and the output
 2 bits. A complete lookup table for generating the 2-bit output from
 an 8-bit input is 512 bits. That can be packed into 64 bytes. This is
-small enough that the table should take less space then the code to
+small enough that the table should take less space than the code to
 implement the logic.
 
 To implement the truth table, we need to assign 2-bit encodings for
@@ -1034,7 +1034,7 @@ becomes:
 
 Notice the first parameter of the .functor is the type. The type
 includes a truth table that describes the output with a given
-input. If the gate is wider then four inputs, then cascade
+input. If the gate is wider than four inputs, then cascade
 functors. For example:
 
 	and gate (out, i1, i2, i3, i4, i5, i6, i7, i8);

@@ -979,9 +979,9 @@ verinum* make_undef_highz_dec(const char* ptr)
 }
 
 /*
- * Making a decimal number is much easier then the other base numbers
+ * Making a decimal number is much easier than the other base numbers
  * because there are no z or x values to worry about. It is much
- * harder then other base numbers because the width needed in bits is
+ * harder than other base numbers because the width needed in bits is
  * hard to calculate.
  */
 

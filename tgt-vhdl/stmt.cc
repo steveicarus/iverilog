@@ -939,7 +939,7 @@ static int draw_wait(vhdl_procedural *_proc, stmt_container *container,
    else {
       // Build a test expression to represent the edge event
       // If this process contains no `wait' statements and this
-      // is the top-level container then we
+      // is the top-level container, then we
       // wrap it in an `if' statement with this test and add the
       // edge triggered signals to the sensitivity, otherwise
       // build a `wait until' statement at the top of the process

@@ -664,7 +664,7 @@ unsigned PEBComp::test_width(Design*des, NetScope*scope, width_mode_t&)
       if (type_is_vectorable(r_type) && (l_width > r_width))
 	    r_width_ = l_width;
 
-	// If the expression is unsized and smaller then the integer
+	// If the expression is unsized and smaller than the integer
 	// minimum, then tweak the size up.
 	// NOTE: I really would rather try to figure out what it would
 	// take to get expand the sub-expressions so that they are

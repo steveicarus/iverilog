@@ -240,7 +240,7 @@ void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
 static char *get_mangled_name(ivl_scope_t scope, unsigned root)
 {
       char *name;
-	/* If the module has parameters and it's not a root module than it
+	/* If the module has parameters and it's not a root module then it
 	 * may not be unique so we create a mangled name version instead. */
       if (ivl_scope_params(scope) && ! root) {
 	    unsigned idx;
@@ -464,7 +464,7 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	      /* This is an instantiation. */
 	    if (parent) {
 		  assert(indent != 0);
-		    /* If the module has parameters than it may not be unique
+		    /* If the module has parameters then it may not be unique
 		     * so we create a mangled name version instead. */
 		  fprintf(vlog_out, "\n%*c%s %s(", indent, ' ', name,
 		                    ivl_scope_basename(scope));

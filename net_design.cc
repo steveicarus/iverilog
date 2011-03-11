@@ -309,7 +309,7 @@ void NetScope::run_defparams_later(Design*des)
 	    (*cur)->evaluate_parameters(des);
 
 	// If there are some scopes that still have missing scopes,
-	// then sav them back into the defparams_later list for a
+	// then save them back into the defparams_later list for a
 	// later pass.
       defparams_later = defparams_even_later;
       if (! defparams_later.empty())

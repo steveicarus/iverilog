@@ -96,7 +96,7 @@ static unsigned check_scaled_expr(ivl_expr_t expr, uint64_t scale,
       scale_val = get_uint64_from_number(ivl_expr_oper2(expr), &rtype);
       if (rtype > 0) {
 	    fprintf(stderr, "%s:%u: vlog95 error: %s expression/value "
-	                    "scale coefficient was greater then 64 bits "
+	                    "scale coefficient was greater than 64 bits "
 	                    "(%d).\n", ivl_expr_file(expr),
 	                    ivl_expr_lineno(expr), msg, rtype);
 	    vlog_errors += 1;

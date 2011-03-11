@@ -1144,7 +1144,7 @@ class NetCLShift  : public NetNode {
  * This class supports the LPM_COMPARE device.
  *
  * The width of the device is the width of the inputs. If one of the
- * inputs is narrower then the other, it is up to the generator to
+ * inputs is narrower than the other, it is up to the generator to
  * make sure all the data pins are properly driven.
  *
  * The signed() property is true if the comparison is to be done to

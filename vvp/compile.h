@@ -457,7 +457,7 @@ extern void compile_var_real(char*label, char*name,
 			     int msb, int lsb);
 
 /*
- * The compile_net functio is called to create a .net vector with a
+ * The compile_net function is called to create a .net vector with a
  * given name.
  *
  * The vpi_type_code argument of compile_net() is one of the vpi

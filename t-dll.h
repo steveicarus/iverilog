@@ -608,7 +608,7 @@ struct ivl_process_s {
 /*
  * Scopes are kept in a tree. Each scope points to its first child,
  * and also to any siblings. Thus a parent can scan all its children
- * by following its child pointer then following sibling pointers from
+ * by following its child pointer, then following sibling pointers from
  * there.
  */
 struct ivl_scope_s {

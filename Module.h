@@ -79,7 +79,7 @@ class Module : public PScope, public LineInfo {
       enum UCDriveType { UCD_NONE, UCD_PULL0, UCD_PULL1 };
       UCDriveType uc_drive;
 
-	/* specparams are simpler then other params, in that they have
+	/* specparams are simpler than other params, in that they have
 	   no type information. They are merely constant
 	   expressions. */
       map<perm_string,PExpr*>specparams;

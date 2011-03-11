@@ -1434,7 +1434,7 @@ NetExpr* NetEUnary::eval_tree()
 	    break;
 
 	  case '~':
-	      /* Bitwise not is even simpler then logical
+	      /* Bitwise not is even simpler than logical
 	         not. Just invert all the bits of the operand and
 	         make the new value with the same dimensions. */
 	    for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
