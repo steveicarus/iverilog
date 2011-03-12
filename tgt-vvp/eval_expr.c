@@ -1158,8 +1158,9 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t expr, unsigned wid)
 	  case 'l': /* << (left shift) */
 	    lv = draw_eval_expr_wid(le, wid, 0);
 
-	      /* shifting 0 gets 0. */
-	    if (lv.base == 0)
+	      /* Shifting 0 gets 0, if we can be sure the shift value
+                 contains no 'x' or 'z' bits. */
+	    if ((lv.base == 0) && (ivl_expr_value(re) == IVL_VT_BOOL))
 		  return lv;
 
 	    if (lv.base < 4) {
@@ -1194,8 +1195,9 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t expr, unsigned wid)
 		  lv = draw_eval_expr_wid(le, ivl_expr_width(le), 0);
 	    }
 
-	      /* shifting 0 gets 0. */
-	    if (lv.base == 0)
+	      /* Shifting 0 gets 0, if we can be sure the shift value
+                 contains no 'x' or 'z' bits. */
+	    if ((lv.base == 0) && (ivl_expr_value(re) == IVL_VT_BOOL))
 		  return lv;
 
 	    if (lv.base < 4) {
@@ -1230,13 +1232,15 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t expr, unsigned wid)
 		  lv = draw_eval_expr_wid(le, ivl_expr_width(le), 0);
 	    }
 
-	      /* shifting 0 gets 0. */
-	    if (lv.base == 0)
+	      /* Shifting 0 gets 0, if we can be sure the shift value
+                 contains no 'x' or 'z' bits. */
+	    if ((lv.base == 0) && (ivl_expr_value(re) == IVL_VT_BOOL))
 		  return lv;
 
-	      /* Sign extend any constant begets itself, if this
-		 expression is signed. */
-	    if ((lv.base < 4) && (ivl_expr_signed(expr)))
+	      /* Similarly, sign extending any constant bit begets itself,
+                 if this expression is signed. */
+	    if ((lv.base < 4) && ivl_expr_signed(expr)
+                && (ivl_expr_value(re) == IVL_VT_BOOL))
 		  return lv;
 
 	    if (lv.base < 4) {

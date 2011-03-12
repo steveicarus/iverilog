@@ -1058,40 +1058,32 @@ NetEConst* NetEBShift::eval_tree()
       ivl_assert(*this, wid > 0);
       ivl_assert(*this, lv.len() == wid);
 
+      verinum val;
       if (rv.is_defined()) {
 	    unsigned shift = rv.as_ulong();
 
-	    if (debug_eval_tree) {
-		  cerr << get_fileline() << ": debug: "
-		       << "Evaluate " << lv << "<<" << op() << ">> "
-		       << rv << ", wid=" << wid << ", shift=" << shift << endl;
-	    }
-
-            verinum val;
 	    switch (op_) {
 		case 'l':
 		  val = verinum(lv << shift, wid);
 		  break;
 		case 'r':
                   lv.has_sign(false);
-		  val = verinum(lv >> shift, wid);
-		  break;
 		case 'R':
-                  lv.has_sign(true);
 		  val = verinum(lv >> shift, wid);
 		  break;
 		default:
 		  return 0;
 	    }
-            val.has_sign(has_sign());
-
-	    res = new NetEConst(val);
       } else {
-	    verinum val (verinum::Vx, wid);
-	    res = new NetEConst(val);
+	    val = verinum(verinum::Vx, wid);
       }
-
+      val.has_sign(has_sign());
+      res = new NetEConst(val);
       res->set_line(*this);
+
+      if (debug_eval_tree)
+	    cerr << get_fileline() << ": debug: Evaluated: " << *this
+	         << " --> " << *res << endl;
 
       return res;
 }

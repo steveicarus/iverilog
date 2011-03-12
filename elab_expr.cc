@@ -403,192 +403,6 @@ NetExpr* PEBinary::elaborate_expr_base_div_(Design*des,
       return tmp;
 }
 
-NetExpr* PEBinary::elaborate_expr_base_lshift_(Design*des,
-					       NetExpr*lp, NetExpr*rp,
-					       unsigned expr_wid) const
-{
-      if (lp->expr_type() == IVL_VT_REAL || rp->expr_type() == IVL_VT_REAL) {
-	    cerr << get_fileline() << ": error: "
-	         << human_readable_op(op_)
-	         << " operator may not have REAL operands." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
-      NetExpr*tmp;
-
-	// If the left expression is constant, then there are some
-	// special cases we can work with. If the left expression is
-	// not constant, but the right expression is constant, then
-	// there are some other interesting cases. But if neither are
-	// constant, then there is the general case.
-
-      if (NetEConst*lpc = dynamic_cast<NetEConst*> (lp)) {
-
-              // Special case: The left expression is zero. No matter what
-              // the shift, the result is going to be zero.
-	    if (lpc->value().is_defined() && lpc->value().is_zero()) {
-
-		  if (debug_elaborate)
-			cerr << get_fileline() << ": debug: "
-			     << "Shift of zero always returns zero."
-			     << " Elaborate as constant zero." << endl;
-
-		  tmp = make_const_0(expr_wid);
-                  tmp->cast_signed(signed_flag_);
-                  tmp->set_line(*this);
-
-                  return tmp;
-            }
-
-              // Special case: Both operands are constants. Precalculate
-              // the entire value here.
-	    if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
-		  unsigned shift = rpc->value().as_ulong();
-		  verinum result (lpc->value() << shift, expr_wid);
-		  tmp = new NetEConst(result);
-                  tmp->cast_signed(signed_flag_);
-                  tmp->set_line(*this);
-
-		  if (debug_elaborate)
-			cerr << get_fileline() << ": debug: "
-			     << "Precalculate " << *lpc << " << " << shift
-			     << " to constant " << *tmp
-			     << " (expr_wid=" << expr_wid << ")" << endl;
-
-                  return tmp;
-	    }
-
-      } else if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
-	    unsigned long shift = rpc->value().as_ulong();
-
-              // Special case: The shift is at least the size of the entire
-              // left operand. Elaborate as a constant-0.
-	    if (shift >= expr_wid) {
-
-		  if (debug_elaborate)
-			cerr << get_fileline() << ": debug: "
-			     << "Value left-shifted " << shift
-			     << " beyond width of " << expr_wid
-			     << ". Elaborate as constant zero." << endl;
-
-		  tmp = make_const_0(expr_wid);
-                  tmp->cast_signed(signed_flag_);
-                  tmp->set_line(*this);
-
-                  return tmp;
-	    }
-      }
-
-	// Fallback, handle the general case.
-      tmp = new NetEBShift(op_, lp, rp, expr_wid, signed_flag_);
-      tmp->set_line(*this);
-
-      return tmp;
-}
-
-NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
-					       NetExpr*lp, NetExpr*rp,
-					       unsigned expr_wid) const
-{
-      if (lp->expr_type() == IVL_VT_REAL || rp->expr_type() == IVL_VT_REAL) {
-	    cerr << get_fileline() << ": error: "
-	         << human_readable_op(op_)
-	         << " operator may not have REAL operands." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
-      NetExpr*tmp;
-
-      if (NetEConst*lpc = dynamic_cast<NetEConst*> (lp)) {
-
-	      // Special case: The left expression is zero. No matter
-	      // what the shift, the result is going to be zero.
-	    if (lpc->value().is_defined() && lpc->value().is_zero()) {
-
-		  if (debug_elaborate)
-			cerr << get_fileline() << ": debug: "
-			     << "Shift of zero always returns zero."
-			     << " Elaborate as constant zero." << endl;
-
-		  tmp = make_const_0(expr_wid);
-                  tmp->cast_signed(signed_flag_);
-		  tmp->set_line(*this);
-
-		  return tmp;
-	    }
-      }
-
-      if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
-	    unsigned long shift = rpc->value().as_ulong();
-
-	      // Special case: The shift is the size of the entire
-	      // left operand, and the shift is unsigned. Elaborate as
-	      // a constant-0.
-	    if ((op_=='r' || !signed_flag_) && shift >= expr_wid) {
-
-		  if (debug_elaborate)
-			cerr << get_fileline() << ": debug: "
-			     << "Value right-shifted " << shift
-			     << " beyond width of " << expr_wid
-			     << ". Elaborate as constant zero." << endl;
-
-		  tmp = make_const_0(expr_wid);
-                  tmp->cast_signed(signed_flag_);
-		  tmp->set_line(*this);
-
-		  return tmp;
-	    }
-
-	      // Special case: the shift is the size of the entire
-	      // left operand, and the shift is signed. Elaborate as a
-	      // replication of the top bit of the left expression.
-	      //
-	      // The above test assures us that op_ == 'R' && the left
-	      // argument is signed when the shift is greater than the
-	      // expression width.
-	    if (shift >= expr_wid) {
-
-		  if (debug_elaborate)
-			cerr << get_fileline() << ": debug: "
-			     << "Value signed-right-shifted " << shift
-			     << " beyond width of " << expr_wid
-			     << ". Elaborate as replicated top bit." << endl;
-
-		  tmp = new NetEConst(verinum(expr_wid-1));
-		  tmp->set_line(*this);
-		  tmp = new NetESelect(lp, tmp, 1);
-		  tmp->set_line(*this);
-		  tmp = pad_to_width(tmp, expr_wid, *this);
-		  tmp->cast_signed(true);
-
-		  return tmp;
-	    }
-
-	    tmp = new NetEConst(verinum(shift));
-	    tmp->set_line(*this);
-
-	      // Pad the left expression enough to cover the right shift.
-            lp->cast_signed(signed_flag_ && op_=='R');
-            lp = pad_to_width(lp, expr_wid + shift, *this);
-
-	      // Implement the right-shift by part-selecting the low
-	      // bits out.
-	    tmp = new NetESelect(lp, tmp, expr_wid);
-	    tmp->cast_signed(signed_flag_);
-	    tmp->set_line(*this);
-
-	    return tmp;
-      }
-
-	// Fallback, handle the general case.
-      tmp = new NetEBShift(op_, lp, rp, expr_wid, signed_flag_);
-      tmp->set_line(*this);
-
-      return tmp;
-}
-
 NetExpr* PEBinary::elaborate_expr_base_mult_(Design*,
 					     NetExpr*lp, NetExpr*rp,
 					     unsigned expr_wid) const
@@ -897,6 +711,10 @@ NetExpr*PEBLeftWidth::elaborate_expr(Design*des, NetScope*scope,
 {
       ivl_assert(*this, left_);
 
+        // The left operand is always context determined, so propagate
+        // down the expression type (signed/unsigned).
+      left_->cast_signed(signed_flag_);
+
       unsigned r_width = right_->expr_width();
 
       NetExpr*lp =  left_->elaborate_expr(des, scope, expr_wid, false);
@@ -906,6 +724,15 @@ NetExpr*PEBLeftWidth::elaborate_expr(Design*des, NetScope*scope,
 	    delete rp;
 	    return 0;
       }
+
+        // For shift operations, the right operand is always treated as
+        // unsigned, so coerce it if necessary.
+      if ((op_ != 'p') && rp->has_sign()) {
+            rp = new NetESelect(rp, 0, rp->expr_width());
+            rp->cast_signed(false);
+            rp->set_line(*this);
+      }
+
       eval_expr(lp, expr_wid);
       eval_expr(rp, r_width);
 
@@ -929,16 +756,10 @@ NetExpr*PEBPower::elaborate_expr_leaf(Design*, NetExpr*lp, NetExpr*rp,
 NetExpr*PEBShift::elaborate_expr_leaf(Design*des, NetExpr*lp, NetExpr*rp,
 				      unsigned expr_wid) const
 {
-      NetExpr*tmp = 0;
-
       switch (op_) {
-	  case 'l':
-	    tmp = elaborate_expr_base_lshift_(des, lp, rp, expr_wid);
-	    break;
-
+	  case 'l': // <<
 	  case 'r': // >>
 	  case 'R': // >>>
-	    tmp = elaborate_expr_base_rshift_(des, lp, rp, expr_wid);
 	    break;
 
 	  default:
@@ -946,7 +767,130 @@ NetExpr*PEBShift::elaborate_expr_leaf(Design*des, NetExpr*lp, NetExpr*rp,
 		 << "Unexpected opcode " << human_readable_op(op_)
 		 << " in PEBShift::elaborate_expr_leaf." << endl;
 	    des->errors += 1;
+            return 0;
       }
+
+      if (lp->expr_type() == IVL_VT_REAL || rp->expr_type() == IVL_VT_REAL) {
+	    cerr << get_fileline() << ": error: "
+	         << human_readable_op(op_)
+	         << " operator may not have REAL operands." << endl;
+	    des->errors += 1;
+            delete lp;
+            delete rp;
+	    return 0;
+      }
+
+      NetExpr*tmp;
+
+	// If the left expression is constant, then there are some
+	// special cases we can work with. If the left expression is
+	// not constant, but the right expression is constant, then
+	// there are some other interesting cases. But if neither are
+	// constant, then there is the general case.
+
+      if (NetEConst*lpc = dynamic_cast<NetEConst*> (lp)) {
+
+	      // Special case: The left expression is zero. If the
+	      // shift value contains no 'x' or 'z' bits, the result
+	      // is going to be zero.
+	    if (lpc->value().is_defined() && lpc->value().is_zero()
+		&& (rp->expr_type() == IVL_VT_BOOL)) {
+
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Shift of zero always returns zero."
+			     << " Elaborate as constant zero." << endl;
+
+		  tmp = make_const_0(expr_wid);
+                  tmp->cast_signed(signed_flag_);
+                  tmp->set_line(*this);
+
+                  return tmp;
+            }
+
+      } else if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
+
+              // Special case: The shift value contains 'x' or 'z' bits.
+              // Elaborate as a constant-x.
+            if (!rpc->value().is_defined()) {
+
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Shift by undefined value. "
+			     << "Elaborate as constant 'x'." << endl;
+
+		  tmp = make_const_x(expr_wid);
+                  tmp->cast_signed(signed_flag_);
+                  tmp->set_line(*this);
+
+                  delete lp;
+                  delete rp;
+                  return tmp;
+	    }
+
+	    unsigned long shift = rpc->value().as_ulong();
+
+              // Special case: The shift is zero. The result is simply
+              // the left operand.
+	    if (shift == 0) {
+
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Shift by zero. Elaborate as the "
+			     << "left hand operand." << endl;
+
+                  delete rp;
+                  return lp;
+	    }
+
+	      // Special case: the shift is at least the size of the entire
+	      // left operand, and the shift is a signed right shift. 
+              // Elaborate as a replication of the top bit of the left
+              // expression.
+	    if ((op_=='R' && signed_flag_) && (shift >= expr_wid)) {
+
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Value signed-right-shifted " << shift
+			     << " beyond width of " << expr_wid
+			     << ". Elaborate as replicated top bit." << endl;
+
+		  tmp = new NetEConst(verinum(expr_wid-1));
+		  tmp->set_line(*this);
+		  tmp = new NetESelect(lp, tmp, 1);
+		  tmp->set_line(*this);
+		  tmp = pad_to_width(tmp, expr_wid, *this);
+		  tmp->cast_signed(true);
+
+                  delete rp;
+		  return tmp;
+	    }
+
+	      // Special case: The shift is at least the size of the entire
+	      // left operand, and the shift is not a signed right shift
+              // (which is caught by the previous special case). Elaborate
+              // as a constant-0.
+	    if (shift >= expr_wid) {
+
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: "
+			     << "Value shifted " << shift
+			     << " beyond width of " << expr_wid
+			     << ". Elaborate as constant zero." << endl;
+
+		  tmp = make_const_0(expr_wid);
+                  tmp->cast_signed(signed_flag_);
+		  tmp->set_line(*this);
+
+                  delete lp;
+                  delete rp;
+		  return tmp;
+	    }
+      }
+
+	// Fallback, handle the general case.
+      tmp = new NetEBShift(op_, lp, rp, expr_wid, signed_flag_);
+      tmp->set_line(*this);
 
       return tmp;
 }
@@ -3494,9 +3438,9 @@ unsigned PEUnary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 				 unsigned expr_wid, bool) const
 {
-	/* Reduction operators and ! always have a self determined width. */
       unsigned sub_width = expr_wid;
       switch (op_) {
+            // Reduction operators and ! always have a self determined width.
 	  case '!':
 	  case '&': // Reduction AND
 	  case '|': // Reduction OR
@@ -3505,7 +3449,12 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 	  case 'N': // Reduction NOR (~|)
 	  case 'X': // Reduction NXOR (~^)
 	    sub_width = expr_->expr_width();
+	    break;
+
+            // Other operators have context determined operands, so propagate
+            // the expression type (signed/unsigned) down to the operands.
 	  default:
+            expr_->cast_signed(signed_flag_);
 	    break;
       }
       NetExpr*ip = expr_->elaborate_expr(des, scope, sub_width, false);

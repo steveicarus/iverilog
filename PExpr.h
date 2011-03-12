@@ -516,10 +516,6 @@ class PEBinary : public PExpr {
                                         unsigned expr_wid) const;
       NetExpr*elaborate_expr_base_div_(Design*, NetExpr*lp, NetExpr*rp,
 				       unsigned expr_wid) const;
-      NetExpr*elaborate_expr_base_lshift_(Design*, NetExpr*lp, NetExpr*rp,
-                                          unsigned expr_wid) const;
-      NetExpr*elaborate_expr_base_rshift_(Design*, NetExpr*lp, NetExpr*rp,
-                                          unsigned expr_wid) const;
       NetExpr*elaborate_expr_base_mult_(Design*, NetExpr*lp, NetExpr*rp,
 					unsigned expr_wid) const;
       NetExpr*elaborate_expr_base_add_(Design*, NetExpr*lp, NetExpr*rp,
