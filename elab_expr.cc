@@ -509,9 +509,11 @@ NetExpr* PEBinary::elaborate_expr_base_lshift_(Design*des,
 
       if (NetEConst*lpc = dynamic_cast<NetEConst*> (lp)) {
 
-	      // Special case: The left expression is zero. No matter
-	      // what the shift, the result is going to be zero.
-	    if (lpc->value().is_defined() && lpc->value().is_zero()) {
+	      // Special case: The left expression is zero. If the
+	      // shift value contains no 'x' or 'z' bits, the result
+              // is going to be zero.
+	    if (lpc->value().is_defined() && lpc->value().is_zero()
+                && (rp->expr_type() == IVL_VT_BOOL)) {
 
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug: "
@@ -527,6 +529,11 @@ NetExpr* PEBinary::elaborate_expr_base_lshift_(Design*des,
 		    // Handle the super-special case that both
 		    // operands are constants. Precalculate the
 		    // entire value here.
+                  if (!rpc->value().is_defined()) {
+		        tmp = make_const_x(use_wid);
+		        tmp->set_line(*this);
+		        return tmp;
+                  }
 		  verinum lpval = lpc->value();
 		  unsigned shift = rpc->value().as_ulong();
 		  verinum result = lpc->value() << shift;
@@ -566,6 +573,20 @@ NetExpr* PEBinary::elaborate_expr_base_lshift_(Design*des,
 	    }
 
       } else if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
+              // Special case: The shift value contains 'x' or 'z' bits.
+              // Elaborate as a constant-x.
+            if (!rpc->value().is_defined()) {
+
+                  if (debug_elaborate)
+                        cerr << get_fileline() << ": debug: " 
+                             << "Shift by undefined value. "
+                             << "Elaborate as constant 'x'." << endl;
+      
+                  tmp = make_const_x(expr_wid);
+                  tmp->set_line(*this);
+                  return tmp;
+            }
+
 	    long shift = rpc->value().as_long();
 	    use_wid = lp->expr_width();
 	    if (expr_wid > 0)
@@ -594,6 +615,11 @@ NetExpr* PEBinary::elaborate_expr_base_lshift_(Design*des,
 	      // default way.
 	    if (expr_wid >= 0)
 		  lp = pad_to_width(lp, expr_wid, *this);
+
+            rp = new NetESelect(rp, 0, rp->expr_width());
+            rp->cast_signed(false);
+            rp->set_line(*this);
+
 	    tmp = new NetEBShift(op_, lp, rp);
       }
 
@@ -631,9 +657,11 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 
       if (NetEConst*lpc = dynamic_cast<NetEConst*> (lp)) {
 
-	      // Special case: The left expression is zero. No matter
-	      // what the shift, the result is going to be zero.
-	    if (lpc->value().is_defined() && lpc->value().is_zero()) {
+	      // Special case: The left expression is zero. If the
+	      // shift value contains no 'x' or 'z' bits, the result
+              // is going to be zero.
+	    if (lpc->value().is_defined() && lpc->value().is_zero()
+                && (rp->expr_type() == IVL_VT_BOOL)) {
 
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug: "
@@ -647,6 +675,20 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
       }
 
       if (NetEConst*rpc = dynamic_cast<NetEConst*> (rp)) {
+              // Special case: The shift value contains 'x' or 'z' bits.
+              // Elaborate as a constant-x.
+            if (!rpc->value().is_defined()) {
+
+                  if (debug_elaborate)
+                        cerr << get_fileline() << ": debug: " 
+                             << "Shift by undefined value. "
+                             << "Elaborate as constant 'x'." << endl;
+      
+                  tmp = make_const_x(expr_wid);
+                  tmp->set_line(*this);
+                  return tmp;
+            }
+
 	    unsigned long shift = rpc->value().as_ulong();
 
 	      // Special case: The shift is the size of the entire
@@ -692,36 +734,16 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
 		  tmp = pad_to_width(tmp, use_wid, *this);
 		  return tmp;
 	    }
-
-	      // If this is lossless, then pad the left expression
-	      // enough to cover the right shift.
-	    if (expr_wid == -2 && use_wid+shift > lp->expr_width()) {
-	          lp->cast_signed(lp->has_sign() && op_=='R');
-		  lp = pad_to_width(lp, use_wid + shift, *this);
-	    }
-
-	    tmp = new NetEConst(verinum(shift));
-	    tmp->set_line(*this);
-	    long tmp_wid = lp->expr_width() - shift;
-	    if (tmp_wid > use_wid)
-		  tmp_wid = use_wid;
-
-	    ivl_assert(*this, tmp_wid > 0);
-	    ivl_assert(*this, use_wid > 0);
-
-	      // Implement the right-shift by part-selecting the low
-	      // bits out. Pad the result of the part select back out
-	      // to the desired size.
-	    tmp = new NetESelect(lp, tmp, tmp_wid);
-	    tmp->set_line(*this);
-	    tmp->cast_signed(lp->has_sign() && op_=='R');
-	    tmp = pad_to_width(tmp, use_wid, *this);
-	    return tmp;
       }
 
 	// Fallback, handle the general case.
       if (expr_wid > 0)
 	    lp = pad_to_width(lp, expr_wid, *this);
+
+      rp = new NetESelect(rp, 0, rp->expr_width());
+      rp->cast_signed(false);
+      rp->set_line(*this);
+
       tmp = new NetEBShift(op_, lp, rp);
       tmp->set_line(*this);
       return tmp;
