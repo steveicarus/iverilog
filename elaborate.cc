@@ -1534,7 +1534,11 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			     << " high bits of the port."
 			     << endl;
 		  } else {
-			cerr << get_fileline() << ":        : Padding ";
+			if (prts[0]->port_type() == NetNet::PINPUT) {
+			      cerr << get_fileline() << ":        : Pruning ";
+			} else {
+			      cerr << get_fileline() << ":        : Padding ";
+			}
 			if (as_signed) cerr << "(signed) ";
 			cerr << (sig->vector_width()-prts_vector_width)
 			     << " high bits of the expression."
