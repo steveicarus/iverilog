@@ -1229,6 +1229,15 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    if (instance.size() != 1)
 		  desired_vector_width = 0;
 
+	    if (!prts.empty() && (prts[0]->port_type() == NetNet::PINPUT)
+                && prts[0]->pin(0).nexus()->drivers_present()
+                && pins[idx]->is_collapsible_net(des, scope)) {
+                  prts[0]->port_type(NetNet::PINOUT);
+
+		  cerr << pins[idx]->get_fileline() << ": warning: input port "
+		       << prts[0]->name() << " is coerced to inout." << endl;
+	    }
+
 	      // Elaborate the expression that connects to the
 	      // module[s] port. sig is the thing outside the module
 	      // that connects to the port.

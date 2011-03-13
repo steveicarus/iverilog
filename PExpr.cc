@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2008 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2008,2011 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -59,6 +59,11 @@ NetNet* PExpr::elaborate_bi_net(Design*des, NetScope*) const
 	   << "expression not valid as argument to inout port: "
 	   << *this << endl;
       return 0;
+}
+
+bool PExpr::is_collapsible_net(Design*, NetScope*) const
+{
+      return false;
 }
 
 PEBinary::PEBinary(char op, PExpr*l, PExpr*r)
