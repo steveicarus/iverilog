@@ -91,7 +91,7 @@ static void emit_stmt_lval_name(ivl_scope_t scope, ivl_lval_t lval,
 {
       ivl_expr_t array_idx = ivl_lval_idx(lval);
       emit_scope_call_path(scope, ivl_signal_scope(sig));
-      fprintf(vlog_out, "%s", ivl_signal_basename(sig));
+      emit_id(ivl_signal_basename(sig));
       if (array_idx) {
 	    int msb, lsb;
 	    assert(ivl_signal_dimensions(sig));
@@ -767,8 +767,8 @@ static void emit_stmt_block(ivl_scope_t scope, ivl_statement_t stmt)
 static void emit_stmt_block_named(ivl_scope_t scope, ivl_statement_t stmt)
 {
       ivl_scope_t my_scope = ivl_stmt_block_scope(stmt);
-      fprintf(vlog_out, "%*cbegin: %s", get_indent(), ' ',
-                        ivl_scope_basename(my_scope));
+      fprintf(vlog_out, "%*cbegin: ", get_indent(), ' ');
+      emit_id(ivl_scope_basename(my_scope));
       emit_stmt_file_line(stmt);
       fprintf(vlog_out, "\n");
       emit_stmt_block_body(scope, stmt);
@@ -778,23 +778,23 @@ static void emit_stmt_block_named(ivl_scope_t scope, ivl_statement_t stmt)
 
 static void emit_stmt_case(ivl_scope_t scope, ivl_statement_t stmt)
 {
-      char *name;
+      char *case_type;
       unsigned idx, default_case, count = ivl_stmt_case_count(stmt);
       switch(ivl_statement_type(stmt)) {
 	case IVL_ST_CASE:
 	case IVL_ST_CASER:
-	    name = "case";
+	    case_type = "case";
 	    break;
 	case IVL_ST_CASEX:
-	    name = "casex";
+	    case_type = "casex";
 	    break;
 	case IVL_ST_CASEZ:
-	    name = "casez";
+	    case_type = "casez";
 	    break;
 	default:
 	    assert(0);
       }
-      fprintf(vlog_out, "%*c%s (", get_indent(), ' ', name);
+      fprintf(vlog_out, "%*c%s (", get_indent(), ' ', case_type);
       emit_expr(scope, ivl_stmt_cond_expr(stmt), 0);
       fprintf(vlog_out, ")");
       emit_stmt_file_line(stmt);
@@ -949,8 +949,8 @@ static void emit_stmt_fork(ivl_scope_t scope, ivl_statement_t stmt)
 static void emit_stmt_fork_named(ivl_scope_t scope, ivl_statement_t stmt)
 {
       ivl_scope_t my_scope = ivl_stmt_block_scope(stmt);
-      fprintf(vlog_out, "%*cfork: %s", get_indent(), ' ',
-                        ivl_scope_basename(my_scope));
+      fprintf(vlog_out, "%*cfork: ", get_indent(), ' ');
+      emit_id(ivl_scope_basename(my_scope));
       emit_stmt_file_line(stmt);
       fprintf(vlog_out, "\n");
       emit_stmt_block_body(scope, stmt);

@@ -232,6 +232,55 @@ static ivl_nexus_t get_lpm_output(ivl_scope_t scope, ivl_lpm_t lpm)
 static void emit_logic_as_ca(ivl_scope_t scope, ivl_net_logic_t nlogic);
 static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm);
 
+void emit_nexus_port_driver_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
+{
+      unsigned idx, count = ivl_nexus_ptrs(nex);
+      ivl_lpm_t lpm = 0;
+      ivl_net_const_t net_const = 0;
+      ivl_net_logic_t net_logic = 0;
+      ivl_signal_t sig = 0;
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    if ((ivl_nexus_ptr_drive1(nex_ptr) == IVL_DR_HiZ) &&
+	        (ivl_nexus_ptr_drive0(nex_ptr) == IVL_DR_HiZ)) continue;
+	    ivl_lpm_t t_lpm = ivl_nexus_ptr_lpm(nex_ptr);
+	    ivl_net_const_t t_net_const = ivl_nexus_ptr_con(nex_ptr);
+	    ivl_net_logic_t t_net_logic = ivl_nexus_ptr_log(nex_ptr);
+	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
+	    if (t_lpm) {
+		  assert(! lpm);
+		  lpm = t_lpm;
+	    }
+	    if (t_net_const) {
+		  assert(! net_const);
+		  net_const = t_net_const;
+	    }
+	    if (t_net_logic) {
+		  assert(! net_logic);
+		  net_logic = t_net_logic;
+	    }
+	    if (t_sig) {
+		  assert(! sig);
+		  sig = t_sig;
+	    }
+      }
+      if (lpm) {
+	    assert(! net_const);
+	    assert(! net_logic);
+	    assert(! sig);
+	    emit_lpm_as_ca(scope, lpm);
+      } else if (net_const) {
+	    assert( !net_logic);
+	    assert(! sig);
+	    emit_const_nexus(scope, net_const);
+      } else if (net_logic) {
+	    assert(! sig);
+	    emit_logic_as_ca(scope, net_logic);
+      } else if (sig) {
+	    emit_nexus_as_ca(scope, ivl_signal_nex(sig, 0));
+      } else assert(0);
+}
+
 void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 {
 	/* If there is no nexus then there is nothing to print. */
@@ -240,6 +289,7 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
       if (is_local_nexus(scope, nex)) {
 	    unsigned idx, count = ivl_nexus_ptrs(nex);
 	    unsigned must_be_sig = 0;
+	    unsigned out_of_scope_drive = 0;
 	    ivl_lpm_t lpm = 0;
 	    ivl_net_const_t net_const = 0;
 	    ivl_net_logic_t net_logic = 0;
@@ -263,6 +313,10 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 			lpm = t_lpm;
 		  }
 		  if (t_net_const) {
+			if (scope != ivl_const_scope(t_net_const)) {
+// HERE: Need to verify that this is not a parameter
+			      out_of_scope_drive = 1;
+			}
 			assert(! net_const);
 			net_const = t_net_const;
 		  }
@@ -285,7 +339,15 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 		  assert( !net_logic);
 		  assert(! sig);
 		  assert(! must_be_sig);
-		  emit_const_nexus(scope, net_const);
+		  if (out_of_scope_drive) {
+// HERE: An out of scope const drive that is not a parameter is really a
+//       port so look for and emit the local signal name (nexus_is_signal
+//       may work). The is_local_nexus code also needs to be changed to
+//       not emit the port expressions as a CA. Make sure this works
+//       correctly if the parameter is passed as a port argument.
+// For now report this as missing.
+			fprintf(vlog_out, "<missing>");
+		  } else emit_const_nexus(scope, net_const);
 	    } else if (net_logic) {
 		  assert(! sig);
 		  assert(! must_be_sig);
@@ -385,8 +447,9 @@ static void emit_lpm_array(ivl_scope_t scope, ivl_lpm_t lpm)
 {
       ivl_signal_t sig = ivl_lpm_array(lpm);
       emit_scope_module_path(scope, ivl_signal_scope(sig));
-      fprintf(vlog_out, "%s[", ivl_signal_basename(sig));
-// HERE: Need to remove the scale to match array base.
+      emit_id(ivl_signal_basename(sig));
+      fprintf(vlog_out, "[");
+// HERE: Need to remove the scale to match array base instead of adding it back.
       emit_nexus_as_ca(scope, ivl_lpm_select(lpm));
       fprintf(vlog_out, " + %d]", ivl_signal_array_base(sig));
 }
@@ -488,7 +551,7 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm)
 	    if (base) fprintf(vlog_out, " >> %d)", base);
 	    return;
       }
-      fprintf(vlog_out, "%s", ivl_signal_basename(sig));
+      emit_id(ivl_signal_basename(sig));
       if (ivl_signal_dimensions(sig)) {
 	    array_word += ivl_signal_array_base(sig);
 	    fprintf(vlog_out, "[%d]", array_word);
@@ -538,16 +601,19 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm)
 }
 
 // HERE: No support for trigger. Is this actually needed?
-static void emit_lpm_func(ivl_scope_t scope, ivl_lpm_t lpm, const char *name)
+static void emit_lpm_func(ivl_scope_t scope, ivl_lpm_t lpm)
 {
-      unsigned idx, count= ivl_lpm_size(lpm);
-      fprintf(vlog_out, "%s(", name);;
-      for (idx = count-1; idx > 0; idx -= 1) {
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, idx));
-	    fprintf(vlog_out, ", ");
+      unsigned count = ivl_lpm_size(lpm);
+      if (count) {
+	    unsigned idx;
+	    fprintf(vlog_out, "(");
+	    for (idx = count-1; idx > 0; idx -= 1) {
+		  emit_nexus_as_ca(scope, ivl_lpm_data(lpm, idx));
+		  fprintf(vlog_out, ", ");
+	    }
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    fprintf(vlog_out, ")");
       }
-      emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
-      fprintf(vlog_out, ")");
 }
 
 static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
@@ -692,7 +758,8 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	    fprintf(vlog_out, "}}");
 	    break;
 	case IVL_LPM_SFUNC:
-	    emit_lpm_func(scope, lpm, ivl_lpm_string(lpm));
+	    fprintf(vlog_out, "%s", ivl_lpm_string(lpm));
+	    emit_lpm_func(scope, lpm);
 	    break;
 	case IVL_LPM_SHIFTL:
 	    fprintf(vlog_out, "(");
@@ -720,7 +787,8 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_UFUNC:
-	    emit_lpm_func(scope, lpm, ivl_scope_name(ivl_lpm_define(lpm)));
+	    emit_scope_path(scope, ivl_lpm_define(lpm));
+	    emit_lpm_func(scope, lpm);
 	    break;
 	default:
 	    fprintf(vlog_out, "<unknown>");
@@ -966,8 +1034,8 @@ static ivl_signal_t get_output_from_nexus(ivl_scope_t scope, ivl_nexus_t nex,
 			tmp_idx += ivl_signal_array_base(sig);
 			fprintf(stderr, "[%"PRId64"]", tmp_idx);
 		  }
-		  fprintf(stderr, ") found for nexus ");
-		  fprintf(stderr, "(%s", ivl_signal_basename(use_sig));
+		  fprintf(stderr, ") found for nexus (%s",
+		                  ivl_signal_basename(use_sig));
 		  if (is_array) fprintf(stderr, "[%"PRId64"]", *array_idx);
 		  fprintf(stderr, ")\n");
 	    } else {
@@ -994,7 +1062,7 @@ static void emit_lpm_part_pv(ivl_scope_t scope, ivl_lpm_t lpm)
                                                &array_word);
       assert(sig);
       assert(ivl_lpm_data(lpm, 1) == 0);
-      fprintf(vlog_out, "%s", ivl_signal_basename(sig));
+      emit_id(ivl_signal_basename(sig));
       if (ivl_signal_dimensions(sig)) {
 	    fprintf(vlog_out, "[%"PRId64"]", array_word);
       }
@@ -1083,7 +1151,7 @@ static void emit_bufz(ivl_scope_t scope, ivl_net_logic_t nlogic)
 static void emit_and_save_udp_name(ivl_net_logic_t nlogic){
       ivl_udp_t udp = ivl_logic_udp(nlogic);
       assert(udp);
-      fprintf(vlog_out, "%s", ivl_udp_name(udp));
+      emit_id(ivl_udp_name(udp));
       add_udp_to_list(udp);
 }
 
@@ -1235,6 +1303,7 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 //       remove this and rebuild the instance array. For now we just strip
 //       this encoding and create an zero based range. Need to skip the
 //       local names _s<digits>.
+//       This can also be an escaped id.
       name = ivl_logic_basename(nlogic);
       if (name && *name) {
 	    char *fixed_name = strdup(name);
@@ -1246,7 +1315,8 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 		  }
 		  fixed_name[lp] = 0;
 	    }
-	    fprintf(vlog_out, " %s", fixed_name);
+	    fprintf(vlog_out, " ");
+	    emit_id(fixed_name);
 	    free(fixed_name);
 	    if (width > 1) {
 		  fprintf(vlog_out, " [%u:0]", width-1);
@@ -1373,7 +1443,9 @@ void emit_signal_net_const_as_ca(ivl_scope_t scope, ivl_signal_t sig)
 	               ivl_const_delay(net_const, 1),
 	               ivl_const_delay(net_const, 2),
 	               3);
-	    fprintf(vlog_out, " %s = ", ivl_signal_basename(sig));
+	    fprintf(vlog_out, " ");
+	    emit_id(ivl_signal_basename(sig));
+	    fprintf(vlog_out, " = ");
 	    emit_const_nexus(scope, net_const);
 	    fprintf(vlog_out, ";");
 	    emit_sig_file_line(sig);

@@ -16,6 +16,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+# include <ctype.h>
 # include <stdlib.h>
 # include <string.h>
 # include "config.h"
@@ -454,8 +455,8 @@ static unsigned find_signal_in_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 			      tmp_idx += ivl_signal_array_base(sig);
 			      fprintf(stderr, "[%"PRId64"]", tmp_idx);
 			}
-			fprintf(stderr, ") found for nexus ");
-			fprintf(stderr, "(%s", ivl_signal_basename(use_sig));
+			fprintf(stderr, ") found for nexus (%s",
+			                ivl_signal_basename(use_sig));
 			if (is_array) fprintf(stderr, "[%"PRId64"]", array_idx);
 			fprintf(stderr, ")\n");
 		  } else {
@@ -475,7 +476,7 @@ static unsigned find_signal_in_nexus(ivl_scope_t scope, ivl_nexus_t nex)
       }
 
       if (use_sig) {
-	    fprintf(vlog_out, "%s", ivl_signal_basename(use_sig));
+	    emit_id(ivl_signal_basename(use_sig));
 	    if (is_array) fprintf(vlog_out, "[%"PRId64"]", array_idx);
 	    return 1;
       }
@@ -530,12 +531,16 @@ static unsigned find_const_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 // HERE: Does this work correctly with an array reference created from @*?
 void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 {
+      ivl_scope_t mod_scope;
 	/* First look in the local scope for the nexus name. */
       if (find_signal_in_nexus(scope, nex)) return;
 
 	/* If the signal was not found in the passed scope then look in
 	 * the module scope if the passed scope was not the module scope. */
-      if (find_signal_in_nexus(get_module_scope(scope), nex)) return;
+      mod_scope = get_module_scope(scope);
+      if (mod_scope != scope) {
+	    if (find_signal_in_nexus(mod_scope, nex)) return;
+      }
 
 	/* If there is no signals driving this then look for a constant. */
       if (find_const_nexus(scope, nex)) return;
@@ -564,6 +569,19 @@ ivl_scope_t get_module_scope(ivl_scope_t scope)
       return scope;
 }
 
+static void emit_scope_piece(ivl_scope_t scope, ivl_scope_t call_scope)
+{
+      ivl_scope_t parent = ivl_scope_parent(call_scope);
+	/* If we are not at the top of the scope (parent != 0) and the two
+	 * scopes do not match then print the parent scope. */
+      if ((parent != 0) && (scope != parent)) {
+	    emit_scope_piece(scope, parent);
+      }
+	/* Print the base scope. */
+      emit_id(ivl_scope_basename(call_scope));
+      fprintf(vlog_out, ".");
+}
+
 /*
  * This routine emits the appropriate string to call the call_scope from the
  * given scope. If the module scopes for the two match then do nothing. If
@@ -577,28 +595,8 @@ void emit_scope_module_path(ivl_scope_t scope, ivl_scope_t call_scope)
       ivl_scope_t mod_scope = get_module_scope(scope);
       ivl_scope_t call_mod_scope = get_module_scope(call_scope);
 
-      if (mod_scope != call_mod_scope) {
-	      /* Trim off the top of the call name if it exactly matches
-	       * the module scope of the caller. */
-	    char *sc_name = strdup(ivl_scope_name(mod_scope));
-            const char *sc_ptr = sc_name;
-	    char *call_name = strdup(ivl_scope_name(call_mod_scope));
-	    const char *call_ptr = call_name;
-	    while ((*sc_ptr == *call_ptr) &&
-	           (*sc_ptr != 0) && (*call_ptr != 0)) {
-		  sc_ptr += 1;
-		  call_ptr += 1;
-	    }
-	    if (*sc_ptr == 0) {
-		  assert(*call_ptr == '.');
-		  call_ptr += 1;
-	    } else {
-		  call_ptr = call_name;
-	    }
-	    fprintf(vlog_out, "%s.", call_ptr);
-	    free(sc_name);
-	    free(call_name);
-      }
+      if (mod_scope == call_mod_scope) return;
+      emit_scope_piece(mod_scope, call_mod_scope);
 }
 
 /* This is the same as emit_scope_module_path() except we need to add down
@@ -609,45 +607,33 @@ void emit_scope_call_path(ivl_scope_t scope, ivl_scope_t call_scope)
       ivl_scope_t call_mod_scope = get_module_scope(call_scope);
 
       if (mod_scope != call_mod_scope) {
-	      /* Trim off the top of the call name if it exactly matches
-	       * the module scope of the caller. */
-	    char *sc_name = strdup(ivl_scope_name(mod_scope));
-            const char *sc_ptr = sc_name;
-	    char *call_name = strdup(ivl_scope_name(call_mod_scope));
-	    const char *call_ptr = call_name;
-	    while ((*sc_ptr == *call_ptr) &&
-	           (*sc_ptr != 0) && (*call_ptr != 0)) {
-		  sc_ptr += 1;
-		  call_ptr += 1;
-	    }
-	    if (*sc_ptr == 0) {
-		  assert(*call_ptr == '.');
-		  call_ptr += 1;
-	    } else {
-		  call_ptr = call_name;
-	    }
-	    fprintf(vlog_out, "%s.", call_ptr);
-	    free(sc_name);
-	    free(call_name);
+	    emit_scope_piece(mod_scope, call_mod_scope);
       } else if (scope != call_scope) {
-	      /* Look for a down reference that is local to the module scope. */
-	    char *sc_name = strdup(ivl_scope_name(scope));
-            const char *sc_ptr = sc_name;
-	    char *call_name = strdup(ivl_scope_name(call_scope));
-	    const char *call_ptr = call_name;
-	    while ((*sc_ptr == *call_ptr) &&
-	           (*sc_ptr != 0) && (*call_ptr != 0)) {
-		  sc_ptr += 1;
-		  call_ptr += 1;
+	    ivl_scope_t parent;
+	      /* We only emit a scope path if the scope is a parent of the
+	       * call scope. */
+	    for (parent = ivl_scope_parent(call_scope);
+	         parent != 0;
+	         parent = ivl_scope_parent(parent)) {
+		  if (parent == scope) {
+			emit_scope_piece(scope, call_scope);
+			return;
+		  }
 	    }
-	    if (*sc_ptr == 0) {
-		  assert(*call_ptr == '.');
-		  call_ptr += 1;
-		  fprintf(vlog_out, "%s.", call_ptr);
-	    }
-	    free(sc_name);
-	    free(call_name);
       }
+}
+
+static void emit_scope_path_piece(ivl_scope_t scope, ivl_scope_t call_scope)
+{
+      ivl_scope_t parent = ivl_scope_parent(call_scope);
+	/* If we are not at the top of the scope (parent != 0) and the two
+	 * scopes do not match then print the parent scope. */
+      if ((parent != 0) && (scope != parent)) {
+	    emit_scope_path_piece(scope, parent);
+	    fprintf(vlog_out, ".");
+      }
+	/* Print the base scope. */
+      emit_id(ivl_scope_basename(call_scope));
 }
 
 /*
@@ -664,27 +650,32 @@ void emit_scope_path(ivl_scope_t scope, ivl_scope_t call_scope)
       ivl_scope_t call_mod_scope = get_module_scope(call_scope);
 
       if (mod_scope == call_mod_scope) {
-	    fprintf(vlog_out, "%s", ivl_scope_basename(call_scope));
+	    emit_id(ivl_scope_basename(call_scope));
       } else {
-	      /* Trim off the top of the call name if it exactly matches
-	       * the module scope of the caller. */
-	    char *sc_name = strdup(ivl_scope_name(mod_scope));
-            const char *sc_ptr = sc_name;
-	    char *call_name = strdup(ivl_scope_name(call_scope));
-	    const char *call_ptr = call_name;
-	    while ((*sc_ptr == *call_ptr) &&
-	           (*sc_ptr != 0) && (*call_ptr != 0)) {
-		  sc_ptr += 1;
-		  call_ptr += 1;
-	    }
-	    if (*sc_ptr == 0) {
-		  assert(*call_ptr == '.');
-		  call_ptr += 1;
-	    } else {
-		  call_ptr = call_name;
-	    }
-	    fprintf(vlog_out, "%s", call_ptr);
-	    free(sc_name);
-	    free(call_name);
+	    emit_scope_path_piece(mod_scope, call_scope);
       }
+}
+
+static unsigned is_escaped(const char *id)
+{
+      assert(id);
+	/* The first digit must be alpha or '_' to be a normal id. */
+      if (isalpha((int)id[0]) || id[0] == '_') {
+	    unsigned idx;
+	    for (idx = 1; id[idx] != '\0'; idx += 1) {
+		  if (! (isalnum((int)id[idx]) ||
+		         id[idx] == '_' || id[idx] == '$')) {
+			return 1;
+		  }
+	    }
+	      /* We looked at all the digits, so this is a normal id. */
+	    return 0;
+      }
+      return 1;
+}
+
+void emit_id(const char *id)
+{
+      if (is_escaped(id)) fprintf(vlog_out, "\\%s ", id);
+      else fprintf(vlog_out, "%s", id);
 }

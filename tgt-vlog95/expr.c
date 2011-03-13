@@ -73,7 +73,7 @@ static void emit_expr_array(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
       emit_scope_call_path(scope, ivl_signal_scope(sig));
-      fprintf(vlog_out, "%s", ivl_signal_basename(sig));
+      emit_id(ivl_signal_basename(sig));
 }
 
 static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
@@ -220,12 +220,23 @@ static void emit_expr_event(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       assert(! ivl_event_npos(event));
       assert(! ivl_event_nneg(event));
       emit_scope_call_path(scope, ev_scope);
-      fprintf(vlog_out, "%s", ivl_event_basename(event));
+      emit_id(ivl_event_basename(event));
+}
+
+static void emit_expr_scope_piece(ivl_scope_t scope)
+{
+      ivl_scope_t parent = ivl_scope_parent(scope);
+	/* If this scope has a parent then emit it first. */
+      if (parent) {
+	    emit_expr_scope_piece(parent);
+	    fprintf(vlog_out, ".");
+      }
+      emit_id(ivl_scope_basename(scope));
 }
 
 static void emit_expr_scope(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
-      fprintf(vlog_out, "%s", ivl_scope_name(ivl_expr_scope(expr)));
+      emit_expr_scope_piece(ivl_expr_scope(expr));
 }
 
 static unsigned emit_param_name_in_scope(ivl_scope_t scope, ivl_expr_t expr)
@@ -258,7 +269,7 @@ static unsigned emit_param_name_in_scope(ivl_scope_t scope, ivl_expr_t expr)
 			      break;
 			}
 		  }
-		  fprintf(vlog_out, "%s", ivl_parameter_basename(par));
+		  emit_id(ivl_parameter_basename(par));
 		  return 1;
 	    }
       }
@@ -418,11 +429,10 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 /*
  * This routine is used to emit both system and user functions.
  */
-static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, const char* name)
+static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       unsigned count = ivl_expr_parms(expr);
-      fprintf(vlog_out, "%s", name);
-      if (count != 0) {
+      if (count) {
 	    unsigned idx;
 	    fprintf(vlog_out, "(");
 	    count -= 1;
@@ -435,16 +445,11 @@ static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, const char* name)
       }
 }
 
-static void emit_expr_sfunc(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
-{
-      emit_expr_func(scope, expr, ivl_expr_name(expr));
-}
-
 static void emit_expr_signal(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
       emit_scope_call_path(scope, ivl_signal_scope(sig));
-      fprintf(vlog_out, "%s", ivl_signal_basename(sig));
+      emit_id(ivl_signal_basename(sig));
       if (ivl_signal_dimensions(sig)) {
 	    int lsb = ivl_signal_array_base(sig);
 	    int msb = lsb + ivl_signal_array_count(sig);
@@ -463,13 +468,6 @@ static void emit_expr_ternary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       fprintf(vlog_out, " : ");
       emit_expr(scope, ivl_expr_oper3(expr), wid);
       fprintf(vlog_out, ")");
-}
-
-static void emit_expr_ufunc(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
-{
-      ivl_scope_t ufunc_def = ivl_expr_def(expr);
-      emit_scope_module_path(scope, ufunc_def);
-      emit_expr_func(scope, expr, ivl_scope_tname(ufunc_def));
 }
 
 static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
@@ -551,7 +549,8 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    emit_expr_select(scope, expr, wid);
 	    break;
 	case IVL_EX_SFUNC:
-	    emit_expr_sfunc(scope, expr, wid);
+	    fprintf(vlog_out, "%s", ivl_expr_name(expr));
+	    emit_expr_func(scope, expr, wid);
 	    break;
 	case IVL_EX_SIGNAL:
 	    emit_expr_signal(scope, expr, wid);
@@ -563,7 +562,8 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    emit_expr_ternary(scope, expr, wid);
 	    break;
 	case IVL_EX_UFUNC:
-	    emit_expr_ufunc(scope, expr, wid);
+	    emit_scope_path(scope, ivl_expr_def(expr));
+	    emit_expr_func(scope, expr, wid);
 	    break;
 	case IVL_EX_UNARY:
 	    emit_expr_unary(scope, expr, wid);

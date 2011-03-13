@@ -51,7 +51,7 @@ static int32_t get_int32_from_bits(const char *bits, unsigned nbits,
 	    else if (bits[idx] != '0') {
 		  *result_type = -1;
 		    /* If the value is entirely x/z then return -2 or -3. */
-		  if ((idx == 0) && (trim_wid == 1)) {
+		  if (trim_wid == 1) {
 			 if (bits[idx] == 'x') *result_type -= 1;
 			 *result_type -= 1;
 		  }
@@ -190,7 +190,7 @@ uint64_t get_uint64_from_number(ivl_expr_t expr, int *result_type)
 	    else if (bits[idx] != '0') {
 		  *result_type = -1;
 		    /* If the value is entirely x/z then return -2 or -3. */
-		  if ((idx == 0) && (trim_wid == 1)) {
+		  if (trim_wid == 1) {
 			 if (bits[idx] == 'x') *result_type -= 1;
 			 *result_type -= 1;
 		  }
@@ -236,7 +236,7 @@ int64_t get_int64_from_number(ivl_expr_t expr, int *result_type)
 	    else if (bits[idx] != '0') {
 		  *result_type = -1;
 		    /* If the value is entirely x/z then return -2 or -3. */
-		  if ((idx == 0) && (trim_wid == 1)) {
+		  if (trim_wid == 1) {
 			 if (bits[idx] == 'x') *result_type -= 1;
 			 *result_type -= 1;
 		  }

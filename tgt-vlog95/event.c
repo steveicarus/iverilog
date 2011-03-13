@@ -65,7 +65,7 @@ void emit_event(ivl_scope_t scope, ivl_statement_t stmt)
 		  if (first) first = 0;
 		  else fprintf(vlog_out, " or ");
 		  emit_scope_module_path(scope, ev_scope);
-		  fprintf(vlog_out, "%s", ivl_event_basename(event));
+		  emit_id(ivl_event_basename(event));
 	    }
       }
 }
