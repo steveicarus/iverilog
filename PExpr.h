@@ -148,6 +148,12 @@ class PExpr : public LineInfo {
 	// evaluated, return 0.
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
+	// This method returns true if the expression represents a
+        // structural net that can have multiple drivers. This is
+        // used to test whether an input port connection can be
+        // collapsed to a single wire.
+      virtual bool is_collapsible_net(Design*des, NetScope*scope) const;
+
 	// This method returns true if that expression is the same as
 	// this expression. This method is used for comparing
 	// expressions that must be structurally "identical".
@@ -193,6 +199,7 @@ class PEConcat : public PExpr {
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
 					 bool is_force) const;
+      virtual bool is_collapsible_net(Design*des, NetScope*scope) const;
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
 				     bool bidirectional_flag) const;
@@ -301,6 +308,8 @@ class PEIdent : public PExpr {
       NetNet* elaborate_port(Design*des, NetScope*sc) const;
 
       verinum* eval_const(Design*des, NetScope*sc) const;
+
+      virtual bool is_collapsible_net(Design*des, NetScope*scope) const;
 
       const pform_name_t& path() const { return path_; }
 

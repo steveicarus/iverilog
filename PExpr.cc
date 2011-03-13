@@ -71,6 +71,11 @@ NetNet* PExpr::elaborate_bi_net(Design*, NetScope*) const
       return 0;
 }
 
+bool PExpr::is_collapsible_net(Design*, NetScope*) const
+{
+      return false;
+}
+
 PEBinary::PEBinary(char op, PExpr*l, PExpr*r)
 : op_(op), left_(l), right_(r)
 {

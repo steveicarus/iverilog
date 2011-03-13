@@ -73,15 +73,17 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  nets[idx] = parms_[idx]->elaborate_lnet(des, scope);
 	    }
 
-	    if (nets[idx] == 0) errors += 1;
-	    else if (nets[idx]->data_type() == IVL_VT_REAL) {
+	    if (nets[idx] == 0) {
+                  errors += 1;
+            } else if (nets[idx]->data_type() == IVL_VT_REAL) {
 		  cerr << parms_[idx]->get_fileline() << ": error: "
 		       << "concatenation operand can no be real: "
 		       << *parms_[idx] << endl;
 		  errors += 1;
 		  continue;
-	    } else width += nets[idx]->vector_width();
-
+	    } else {
+                  width += nets[idx]->vector_width();
+            }
       }
 
       if (errors) {
@@ -163,6 +165,28 @@ NetNet* PEConcat::elaborate_lnet(Design*des, NetScope*scope) const
 NetNet* PEConcat::elaborate_bi_net(Design*des, NetScope*scope) const
 {
       return elaborate_lnet_common_(des, scope, true);
+}
+
+bool PEConcat::is_collapsible_net(Design*des, NetScope*scope) const
+{
+      assert(scope);
+
+        // Repeat concatenations are not currently supported.
+      if (repeat_)
+            return false;
+
+	// Test the operands of the concatenation.
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
+
+              // Empty expressions are not allowed in concatenations
+	    if (parms_[idx] == 0)
+                  return false;
+
+	    if (!parms_[idx]->is_collapsible_net(des, scope))
+                  return false;
+      }
+
+      return true;
 }
 
 /*
@@ -426,21 +450,6 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		 << " or continuous assignment." << endl;
 	    des->errors += 1;
 	    return 0;
-      }
-
-      if (sig->port_type() == NetNet::PINPUT) {
-	    sig->port_type(NetNet::PINOUT);
-	      // This map mask prevents an error message being
-	      // repeated endlessly.
-	    static map<string,bool> mask_map;
-	    bool&flag = mask_map[sig->get_fileline() + ":" + string(sig->name())];
-	    if (! flag) {
-		  cerr << get_fileline() << ": warning: L-value ``"
-		       << sig->name() << "'' is also an input port." << endl;
-		  cerr << sig->get_fileline() << ": warning: input "
-		       << sig->name() << "; is coerced to inout." << endl;
-		  flag = true;
-	    }
       }
 
 	// Default part select is the entire word.
@@ -738,4 +747,40 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 
       scope->add_module_port(sig);
       return sig;
+}
+
+bool PEIdent::is_collapsible_net(Design*des, NetScope*scope) const
+{
+      assert(scope);
+
+      NetNet*       sig = 0;
+      const NetExpr*par = 0;
+      NetEvent*     eve = 0;
+
+      symbol_search(this, des, scope, path_, sig, par, eve);
+
+      if (eve != 0)
+            return false;
+
+      if (sig == 0)
+            return false;
+
+      assert(sig);
+
+	/* If this is SystemVerilog and the variable is not yet
+	   assigned by anything, then convert it to an unresolved
+	   wire. */
+      if (gn_var_can_be_uwire()
+	  && (sig->type() == NetNet::REG)
+	  && (sig->peek_eref() == 0) ) {
+	    sig->type(NetNet::UNRESOLVED_WIRE);
+      }
+
+      if (sig->type() == NetNet::UNRESOLVED_WIRE && sig->pin(0).is_linked())
+            return false;
+
+      if (sig->type() == NetNet::REG)
+            return false;
+
+      return true;
 }
