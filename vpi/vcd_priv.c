@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,7 +36,8 @@ int is_escaped_id(const char *name)
 	    for (lp=1; name[lp] != '\0'; lp++) {
 		    /* If this digit is not alpha-numeric or '_' we have
 		     * an escaped identifier. */
-		  if (!(isalnum((int)name[lp]) || name[lp] == '_')) {
+		  if (!(isalnum((int)name[lp]) ||
+		        name[lp] == '_') || name[lp] == '$') {
 		        return 1;
 		  }
 	    }
