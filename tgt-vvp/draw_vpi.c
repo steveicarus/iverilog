@@ -80,7 +80,7 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 
       switch (ivl_expr_type(expr)) {
 	  case IVL_EX_SIGNAL:
-	      /* If the signal node is narrower then the signal itself,
+	      /* If the signal node is narrower than the signal itself,
 	         then this is a part select so I'm going to need to
 	         evaluate the expression.
 
@@ -287,7 +287,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			assert((unsigned)(dp - buffer) <= sizeof buffer);
 		  }
 		  args[idx].text = strdup(buffer);
-		  continue;			
+		  continue;
 		}
 
 		case IVL_EX_STRING:

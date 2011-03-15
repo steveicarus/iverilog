@@ -79,3 +79,14 @@ char NetUDP::get_initial() const
       assert(0);
       return 'x';
 }
+
+unsigned NetUDP::port_count() const
+{
+      return udp->ports.count();
+}
+
+string NetUDP::port_name(unsigned idx) const
+{
+      assert(idx < udp->ports.count());
+      return udp->ports[idx];
+}

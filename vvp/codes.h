@@ -1,7 +1,7 @@
 #ifndef __codes_H
 #define __codes_H
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -94,6 +94,7 @@ extern bool of_EVCTL(vthread_t thr, vvp_code_t code);
 extern bool of_EVCTLC(vthread_t thr, vvp_code_t code);
 extern bool of_EVCTLI(vthread_t thr, vvp_code_t code);
 extern bool of_EVCTLS(vthread_t thr, vvp_code_t code);
+extern bool of_FILE_LINE(vthread_t thr, vvp_code_t code);
 extern bool of_FORCE_LINK(vthread_t thr, vvp_code_t code);
 extern bool of_FORCE_V(vthread_t thr, vvp_code_t code);
 extern bool of_FORCE_WR(vthread_t thr, vvp_code_t code);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -357,6 +357,25 @@ perm_string NetScope::module_name() const
 {
       assert(type_ == MODULE);
       return module_name_;
+}
+
+void NetScope::add_module_port(NetNet*port)
+{
+      assert(type_ == MODULE);
+      ports_.push_back(port);
+}
+
+unsigned NetScope::module_ports() const
+{
+      assert(type_ == MODULE);
+      return ports_.size();
+}
+
+NetNet* NetScope::module_port(unsigned idx) const
+{
+      assert(type_ == MODULE);
+      assert(idx < ports_.size());
+      return ports_[idx];
 }
 
 void NetScope::time_unit(int val)

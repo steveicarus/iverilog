@@ -187,8 +187,8 @@ vhdl_entity* find_entity(ivl_scope_t scope)
          return NULL;
    }
    else {
-      const char *tname = ivl_scope_tname(scope);         
-      
+      const char *tname = ivl_scope_tname(scope);
+
       for (scope_name_map_t::iterator it = g_scope_names.begin();
            it != g_scope_names.end(); ++it) {
          if (strcmp(tname, ivl_scope_tname((*it).first)) == 0)
@@ -248,8 +248,8 @@ void set_active_entity(vhdl_entity *ent)
 static bool same_scope_type_name(ivl_scope_t a, ivl_scope_t b)
 {
    if (strcmp(ivl_scope_tname(a), ivl_scope_tname(b)) != 0)
-      return false;   
-   
+      return false;
+
    unsigned nparams_a = ivl_scope_params(a);
    unsigned nparams_b = ivl_scope_params(b);
 

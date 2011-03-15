@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -56,7 +56,7 @@
  * l-value.
  *
  * This last case can turn up in statements like: {a, b[1]} = c;
- * rather then create a NetAssign_ for each item in the concatenation,
+ * rather than create a NetAssign_ for each item in the concatenation,
  * elaboration makes a single NetAssign_ and connects it up properly.
  */
 
@@ -255,12 +255,6 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       ivl_assert(*this, index_head.msb != 0);
       ivl_assert(*this, index_head.lsb == 0);
 
-	// These are not used, but they need to have a default value.
-      ivl_variable_type_t expr_type_tmp = IVL_VT_NO_TYPE;
-      bool unsized_flag_tmp = false;
-      index_head.msb->test_width(des, scope, integer_width, integer_width,
-                                 expr_type_tmp, unsized_flag_tmp);
-
       NetExpr*word = elab_and_eval(des, scope, index_head.msb, -1);
 
 	// If there is a non-zero base to the memory, then build an
@@ -334,12 +328,6 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
       ivl_assert(*this, index_tail.lsb == 0);
 
       NetNet*reg = lv->sig();
-
-	// These are not used, but they need to have a default value.
-      ivl_variable_type_t expr_type_tmp = IVL_VT_NO_TYPE;
-      bool unsized_flag_tmp = false;
-      index_tail.msb->test_width(des, scope, integer_width, integer_width,
-			         expr_type_tmp, unsized_flag_tmp);
 
 	// Bit selects have a single select expression. Evaluate the
 	// constant value and treat it as a part select with a bit
@@ -463,13 +451,8 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       unsigned long wid;
       calculate_up_do_width_(des, scope, wid);
 
-	// These are not used, but they need to have a default value.
-      ivl_variable_type_t expr_type_tmp = IVL_VT_NO_TYPE;
-      bool unsized_flag_tmp = false;
-      index_tail.msb->test_width(des, scope, integer_width, integer_width,
-			         expr_type_tmp, unsized_flag_tmp);
-
       NetExpr*base = elab_and_eval(des, scope, index_tail.msb, -1);
+      ivl_select_type_t sel_type = IVL_SEL_OTHER;
 
 	// Handle the special case that the base is constant. For this
 	// case we can reduce the expression.
@@ -532,10 +515,12 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 	    if (use_sel == index_component_t::SEL_IDX_UP) {
 		  base = normalize_variable_base(base, reg->msb(), reg->lsb(),
 		                                 wid, true);
+		  sel_type = IVL_SEL_IDX_UP;
 	    } else {
 		    // This is assumed to be a SEL_IDX_DO.
 		  base = normalize_variable_base(base, reg->msb(), reg->lsb(),
 		                                 wid, false);
+		  sel_type = IVL_SEL_IDX_DOWN;
 	    }
       }
 
@@ -543,7 +528,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 	    cerr << get_fileline() << ": debug: Set part select width="
 		 << wid << ", base=" << *base << endl;
 
-      lv->set_part(base, wid);
+      lv->set_part(base, wid, sel_type);
 
       return true;
 }

@@ -46,9 +46,9 @@ vhdlint::vhdlint(const char* text)
         value_ = 0L;
         return;
     }
-    
+
     char* new_text = new char[text_length + 1];
-    
+
     const char* ptr;
     char* new_ptr;
     for(ptr = text, new_ptr = new_text; *ptr != 0; ++ptr)
@@ -65,7 +65,7 @@ vhdlint::vhdlint(const char* text)
     
     istringstream str(new_text);
     delete[] new_text;
-    
+
     //TODO: check if numbers greater than MAX_INT are handled correctly
     str >> value_;
 }

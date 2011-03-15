@@ -473,8 +473,18 @@ static vhdl_expr *translate_select(ivl_expr_t e)
          // We can't directly select bits from something that's not
          // a variable reference in VHDL, but we can emulate the
          // effect with a shift and a resize
-         return new vhdl_binop_expr(from, VHDL_BINOP_SR, base->to_integer(),
-                                    new vhdl_type(*from->get_type()));
+
+         if (ivl_expr_signed(ivl_expr_oper1(e))) {
+            vhdl_fcall *sra = new vhdl_fcall("shift_right", from->get_type());
+            sra->add_expr(from);
+            sra->add_expr(base->to_integer());
+
+            return sra;
+         }
+         else
+            return new vhdl_binop_expr(from, VHDL_BINOP_SR, base->to_integer(),
+                                       from->get_type());
+
       }
       else if (from_var_ref->get_type()->get_name() != VHDL_TYPE_STD_LOGIC) {
          // We can use the more idiomatic VHDL slice notation on a

@@ -72,8 +72,8 @@ static unsigned emit_power_as_shift(ivl_scope_t scope, ivl_expr_t expr,
 static void emit_expr_array(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
-      emit_scope_module_path(scope, ivl_signal_scope(sig));
-      fprintf(vlog_out, "%s", ivl_signal_basename(sig));
+      emit_scope_call_path(scope, ivl_signal_scope(sig));
+      emit_id(ivl_signal_basename(sig));
 }
 
 static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
@@ -142,9 +142,13 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    fprintf(vlog_out, " %s ", oper);
 	    emit_expr(scope, ivl_expr_oper2(expr), 0);
 	    break;
+	case 'R':
+	    fprintf(stderr, "%s:%u: vlog95 error: >>> operator is not "
+	                    "supported.\n",
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr));
+	    vlog_errors += 1;
 	case 'l':
 	case 'r':
-	case 'R':
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
 	    fprintf(vlog_out, " %s ", oper);
 	    emit_expr(scope, ivl_expr_oper2(expr), 0);
@@ -215,13 +219,24 @@ static void emit_expr_event(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       assert(! ivl_event_nany(event));
       assert(! ivl_event_npos(event));
       assert(! ivl_event_nneg(event));
-      emit_scope_module_path(scope, ev_scope);
-      fprintf(vlog_out, "%s", ivl_event_basename(event));
+      emit_scope_call_path(scope, ev_scope);
+      emit_id(ivl_event_basename(event));
+}
+
+static void emit_expr_scope_piece(ivl_scope_t scope)
+{
+      ivl_scope_t parent = ivl_scope_parent(scope);
+	/* If this scope has a parent then emit it first. */
+      if (parent) {
+	    emit_expr_scope_piece(parent);
+	    fprintf(vlog_out, ".");
+      }
+      emit_id(ivl_scope_basename(scope));
 }
 
 static void emit_expr_scope(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
-      fprintf(vlog_out, "%s", ivl_scope_name(ivl_expr_scope(expr)));
+      emit_expr_scope_piece(ivl_expr_scope(expr));
 }
 
 static unsigned emit_param_name_in_scope(ivl_scope_t scope, ivl_expr_t expr)
@@ -254,7 +269,7 @@ static unsigned emit_param_name_in_scope(ivl_scope_t scope, ivl_expr_t expr)
 			      break;
 			}
 		  }
-		  fprintf(vlog_out, "%s", ivl_parameter_basename(par));
+		  emit_id(ivl_parameter_basename(par));
 		  return 1;
 	    }
       }
@@ -263,7 +278,7 @@ static unsigned emit_param_name_in_scope(ivl_scope_t scope, ivl_expr_t expr)
 
 static void emit_select_name(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
-	/* A select of a number is reall a parameter select. */
+	/* A select of a number is really a parameter select. */
       if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
 	      /* Look in the current scope. */
 	    if (emit_param_name_in_scope(scope, expr)) return;
@@ -280,8 +295,80 @@ static void emit_select_name(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    fprintf(stderr, "%s:%u: vlog95 error: Unable to find parameter "
 	                    "for select expression \n",
 	                    ivl_expr_file(expr), ivl_expr_lineno(expr));
+	    vlog_errors += 1;
       } else {
 	    emit_expr(scope, expr, wid);
+      }
+}
+
+/*
+ * Emit an indexed part select as a concatenation of bit selects.
+ */
+static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
+                          ivl_expr_t sel_expr, ivl_select_type_t sel_type,
+                          unsigned wid, int msb, int lsb)
+{
+      unsigned idx;
+      assert(wid > 0);
+      fprintf(vlog_out, "{");
+      if (msb >= lsb) {
+	    if (sel_type == IVL_SEL_IDX_DOWN) {
+		  lsb  += wid - 1;
+		  msb  += wid - 1;
+		  emit_select_name(scope, sig_expr, wid);
+		  fprintf(vlog_out, "[");
+		  emit_scaled_expr(scope, sel_expr, msb, lsb);
+		  fprintf(vlog_out, "]");
+		  for (idx = 1; idx < wid; idx += 1) {
+			fprintf(vlog_out, ", ");
+			emit_select_name(scope, sig_expr, wid);
+			fprintf(vlog_out, "[");
+			emit_scaled_expr(scope, sel_expr, msb, lsb);
+			fprintf(vlog_out, " - %u]", idx);
+		  }
+		  fprintf(vlog_out, "}");
+	    } else {
+		  assert(sel_type == IVL_SEL_IDX_UP);
+		  for (idx = wid - 1; idx > 0; idx -= 1) {
+			emit_select_name(scope, sig_expr, wid);
+			fprintf(vlog_out, "[");
+			emit_scaled_expr(scope, sel_expr, msb, lsb);
+			fprintf(vlog_out, " + %u], ", idx);
+		  }
+		  emit_select_name(scope, sig_expr, wid);
+		  fprintf(vlog_out, "[");
+		  emit_scaled_expr(scope, sel_expr, msb, lsb);
+		  fprintf(vlog_out, "]}");
+	    }
+      } else {
+	    if (sel_type == IVL_SEL_IDX_UP) {
+		  lsb  -= wid - 1;
+		  msb  -= wid - 1;
+		  emit_select_name(scope, sig_expr, wid);
+		  fprintf(vlog_out, "[");
+		  emit_scaled_expr(scope, sel_expr, msb, lsb);
+		  fprintf(vlog_out, "]");
+		  for (idx = 1; idx < wid; idx += 1) {
+			fprintf(vlog_out, ", ");
+			emit_select_name(scope, sig_expr, wid);
+			fprintf(vlog_out, "[");
+			emit_scaled_expr(scope, sel_expr, msb, lsb);
+			fprintf(vlog_out, " + %u]", idx);
+		  }
+		  fprintf(vlog_out, "}");
+	    } else {
+		  assert(sel_type == IVL_SEL_IDX_DOWN);
+		  for (idx = wid - 1; idx > 0; idx -= 1) {
+			emit_select_name(scope, sig_expr, wid);
+			fprintf(vlog_out, "[");
+			emit_scaled_expr(scope, sel_expr, msb, lsb);
+			fprintf(vlog_out, " - %u], ", idx);
+		  }
+		  emit_select_name(scope, sig_expr, wid);
+		  fprintf(vlog_out, "[");
+		  emit_scaled_expr(scope, sel_expr, msb, lsb);
+		  fprintf(vlog_out, "]}");
+	    }
       }
 }
 
@@ -289,32 +376,48 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_expr_t sel_expr = ivl_expr_oper2(expr);
       ivl_expr_t sig_expr = ivl_expr_oper1(expr);
+      ivl_select_type_t sel_type = ivl_expr_sel_type(expr);
       if (sel_expr) {
-	    int msb = 1;
-	    int lsb = 0;
 	    unsigned width = ivl_expr_width(expr);
 	    ivl_expr_type_t type = ivl_expr_type(sig_expr);
 	    assert(width > 0);
-	    if (type == IVL_EX_SIGNAL) {
-		  ivl_signal_t sig = ivl_expr_signal(sig_expr);
-		  msb = ivl_signal_msb(sig);
-		  lsb = ivl_signal_lsb(sig);
-	    }
 	      /* The compiler uses selects for some shifts. */
 	    if (type != IVL_EX_NUMBER && type != IVL_EX_SIGNAL) {
 		  fprintf(vlog_out, "(" );
 		  emit_select_name(scope, sig_expr, wid);
 		  fprintf(vlog_out, " >> " );
-		  emit_scaled_expr(scope, sel_expr, msb, lsb);
+		  emit_scaled_expr(scope, sel_expr, 1, 0);
 		  fprintf(vlog_out, ")" );
 	    } else {
-		  emit_select_name(scope, sig_expr, wid);
+		    /* A constant/parameter must be zero based in 1364-1995
+		     * so keep the compiler generated normalization. This
+		     * does not always work for selects before the parameter
+		     * since 1364-1995 does not support signed math. */
+		  int msb = 1;
+		  int lsb = 0;
+		  if (type == IVL_EX_SIGNAL) {
+			ivl_signal_t sig = ivl_expr_signal(sig_expr);
+			msb = ivl_signal_msb(sig);
+			lsb = ivl_signal_lsb(sig);
+		  }
+		    /* A bit select. */
 		  if (width == 1) {
+			emit_select_name(scope, sig_expr, wid);
 			fprintf(vlog_out, "[");
 			emit_scaled_expr(scope, sel_expr, msb, lsb);
 			fprintf(vlog_out, "]");
 		  } else {
-			emit_scaled_range(scope, sel_expr, width, msb, lsb);
+			if (ivl_expr_type(sel_expr) == IVL_EX_NUMBER) {
+				/* A constant part select. */
+			      emit_select_name(scope, sig_expr, wid);
+			      emit_scaled_range(scope, sel_expr, width,
+			                        msb, lsb);
+			} else {
+				/* An indexed part select. */
+			      assert(sel_type != IVL_SEL_OTHER);
+			      emit_expr_ips(scope, sig_expr, sel_expr,
+			                    sel_type, width, msb, lsb);
+			}
 		  }
 	    }
       } else {
@@ -326,11 +429,10 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 /*
  * This routine is used to emit both system and user functions.
  */
-static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, const char* name)
+static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       unsigned count = ivl_expr_parms(expr);
-      fprintf(vlog_out, "%s", name);
-      if (count != 0) {
+      if (count) {
 	    unsigned idx;
 	    fprintf(vlog_out, "(");
 	    count -= 1;
@@ -343,16 +445,11 @@ static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, const char* name)
       }
 }
 
-static void emit_expr_sfunc(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
-{
-      emit_expr_func(scope, expr, ivl_expr_name(expr));
-}
-
 static void emit_expr_signal(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
-      emit_scope_module_path(scope, ivl_signal_scope(sig));
-      fprintf(vlog_out, "%s", ivl_signal_basename(sig));
+      emit_scope_call_path(scope, ivl_signal_scope(sig));
+      emit_id(ivl_signal_basename(sig));
       if (ivl_signal_dimensions(sig)) {
 	    int lsb = ivl_signal_array_base(sig);
 	    int msb = lsb + ivl_signal_array_count(sig);
@@ -371,13 +468,6 @@ static void emit_expr_ternary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       fprintf(vlog_out, " : ");
       emit_expr(scope, ivl_expr_oper3(expr), wid);
       fprintf(vlog_out, ")");
-}
-
-static void emit_expr_ufunc(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
-{
-      ivl_scope_t ufunc_def = ivl_expr_def(expr);
-      emit_scope_module_path(scope, ufunc_def);
-      emit_expr_func(scope, expr, ivl_scope_tname(ufunc_def));
 }
 
 static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
@@ -404,13 +494,15 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case 'N':
 	case 'X':
 	case '!':
-	    fprintf(vlog_out, "%s", oper);
+	    fprintf(vlog_out, "(%s", oper);
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    fprintf(vlog_out, ")");
 	    break;
 	case '2':
 	case 'i':
 	case 'r':
 	    /* A cast is a noop. */
+	    emit_expr(scope, ivl_expr_oper1(expr), wid);
 	    break;
 	default:
 	    fprintf(vlog_out, "<unknown>");
@@ -457,7 +549,8 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    emit_expr_select(scope, expr, wid);
 	    break;
 	case IVL_EX_SFUNC:
-	    emit_expr_sfunc(scope, expr, wid);
+	    fprintf(vlog_out, "%s", ivl_expr_name(expr));
+	    emit_expr_func(scope, expr, wid);
 	    break;
 	case IVL_EX_SIGNAL:
 	    emit_expr_signal(scope, expr, wid);
@@ -469,7 +562,8 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    emit_expr_ternary(scope, expr, wid);
 	    break;
 	case IVL_EX_UFUNC:
-	    emit_expr_ufunc(scope, expr, wid);
+	    emit_scope_path(scope, ivl_expr_def(expr));
+	    emit_expr_func(scope, expr, wid);
 	    break;
 	case IVL_EX_UNARY:
 	    emit_expr_unary(scope, expr, wid);

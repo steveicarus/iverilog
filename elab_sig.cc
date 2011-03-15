@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -471,8 +471,6 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	  case PTF_REG_S:
 	    if (return_type_.range) {
 		  ivl_assert(*this, return_type_.range->size() == 2);
-		  probe_expr_width(des, scope, return_type_.range->at(0));
-		  probe_expr_width(des, scope, return_type_.range->at(1));
 
 		  need_constant_expr = true;
 		  NetExpr*me = elab_and_eval(des, scope,
@@ -545,8 +543,6 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	  case PTF_ATOM2:
 	  case PTF_ATOM2_S:
 	    ivl_assert(*this, return_type_.range != 0);
-	    probe_expr_width(des, scope, (*return_type_.range)[0]);
-	    probe_expr_width(des, scope, (*return_type_.range)[1]);
 	    long use_wid;
 	    {
 		  need_constant_expr = true;
@@ -852,7 +848,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
             bool bad_lsb = false, bad_msb = false;
 	    /* If they exist get the port definition MSB and LSB */
 	    if (port_set_ && port_msb_ != 0) {
-		  probe_expr_width(des, scope, port_msb_);
 		  /* We do not currently support constant user function. */
 		  need_constant_expr = true;
 		  NetExpr*texpr = elab_and_eval(des, scope, port_msb_, -1);
@@ -870,7 +865,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 		  delete texpr;
 
-		  probe_expr_width(des, scope, port_lsb_);
 		  /* We do not currently support constant user function. */
 		  need_constant_expr = true;
 		  texpr = elab_and_eval(des, scope, port_lsb_, -1);
@@ -898,7 +892,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    /* If they exist get the net/etc. definition MSB and LSB */
 	    if (net_set_ && net_msb_ != 0 && !bad_msb && !bad_lsb) {
-		  probe_expr_width(des, scope, net_msb_);
 		  /* We do not currently support constant user function. */
 		  need_constant_expr = true;
 		  NetExpr*texpr = elab_and_eval(des, scope, net_msb_, -1);
@@ -916,7 +909,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 		  delete texpr;
 
-		  probe_expr_width(des, scope, net_lsb_);
 		  /* We do not currently support constant user function. */
 		  need_constant_expr = true;
 		  texpr = elab_and_eval(des, scope, net_lsb_, -1);
@@ -1011,9 +1003,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       if (lidx_ || ridx_) {
 	    assert(lidx_ && ridx_);
 
-	    probe_expr_width(des, scope, lidx_);
-	    probe_expr_width(des, scope, ridx_);
-
 	    need_constant_expr = true;
 	    NetExpr*lexp = elab_and_eval(des, scope, lidx_, -1);
 	    NetExpr*rexp = elab_and_eval(des, scope, ridx_, -1);
@@ -1053,7 +1042,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    cerr << get_fileline() << ": error: real ";
 	    if (wtype == NetNet::REG) cerr << "variable";
 	    else cerr << "net";
-	    cerr << " '" << name_ 
+	    cerr << " '" << name_
 	         << "' cannot be declared as a vector, found a range ["
 	         << msb << ":" << lsb << "]." << endl;
 	    des->errors += 1;

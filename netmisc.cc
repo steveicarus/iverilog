@@ -184,9 +184,9 @@ NetNet* cast_to_real(Design*des, NetScope*scope, NetNet*src)
 
 NetExpr* cast_to_int2(NetExpr*expr)
 {
-      NetECast*cast = new NetECast('2', expr);
+      NetECast*cast = new NetECast('2', expr, expr->expr_width(),
+                                   expr->has_sign());
       cast->set_line(*expr);
-      cast->cast_signed(expr->has_sign());
       return cast;
 }
 
@@ -208,17 +208,14 @@ static NetExpr* make_add_expr(NetExpr*expr, long val)
 	    val = -val;
       }
 
-      verinum val_v (val);
+      verinum val_v (val, expr->expr_width());
       val_v.has_sign(true);
-
-      if (expr->has_width()) {
-	    val_v = verinum(val_v, expr->expr_width());
-      }
 
       NetEConst*val_c = new NetEConst(val_v);
       val_c->set_line(*expr);
 
-      NetEBAdd*res = new NetEBAdd(add_op, expr, val_c);
+      NetEBAdd*res = new NetEBAdd(add_op, expr, val_c, expr->expr_width(),
+                                  expr->has_sign());
       res->set_line(*expr);
 
       return res;
@@ -235,7 +232,8 @@ static NetExpr* make_sub_expr(long val, NetExpr*expr)
       NetEConst*val_c = new NetEConst(val_v);
       val_c->set_line(*expr);
 
-      NetEBAdd*res = new NetEBAdd('-', val_c, expr);
+      NetEBAdd*res = new NetEBAdd('-', val_c, expr, expr->expr_width(),
+                                  expr->has_sign());
       res->set_line(*expr);
 
       return res;
@@ -444,11 +442,10 @@ NetExpr* condition_reduce(NetExpr*expr)
 	    return expr;
 
       verinum zero (verinum::V0, expr->expr_width());
+      zero.has_sign(expr->has_sign());
 
       NetEConst*ezero = new NetEConst(zero);
       ezero->set_line(*expr);
-      ezero->cast_signed(expr->has_sign());
-      ezero->set_width(expr->expr_width());
 
       NetEBComp*cmp = new NetEBComp('n', expr, ezero);
       cmp->set_line(*expr);
@@ -457,42 +454,131 @@ NetExpr* condition_reduce(NetExpr*expr)
       return cmp;
 }
 
-void probe_expr_width(Design*des, NetScope*scope, PExpr*pe)
+static const char*width_mode_name(PExpr::width_mode_t mode)
 {
-      ivl_variable_type_t expr_type = IVL_VT_NO_TYPE;
-      bool flag = false;
-      pe->test_width(des, scope, 0, 0, expr_type, flag);
+      switch (mode) {
+          case PExpr::SIZED:
+            return "sized";
+          case PExpr::EXPAND:
+            return "expand";
+          case PExpr::LOSSLESS:
+            return "lossless";
+          case PExpr::UNSIZED:
+            return "unsized";
+          default:
+            return "??";
+      }
 }
 
-NetExpr* elab_and_eval(Design*des, NetScope*scope,
-		       const PExpr*pe, int expr_wid, int prune_width)
+NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe, int context_width)
 {
-      NetExpr*tmp = pe->elaborate_expr(des, scope, expr_wid, false);
+      PExpr::width_mode_t mode = PExpr::SIZED;
+      if ((context_width == -2) && !gn_strict_expr_width_flag)
+            mode = PExpr::EXPAND;
+
+      pe->test_width(des, scope, mode);
+
+        // Get the final expression width. If the expression is unsized,
+        // this may be different from the value returned by test_width().
+      unsigned expr_width = pe->expr_width();
+
+        // If context_width is positive, this is the RHS of an assignment,
+        // so the LHS width must also be included in the width calculation.
+      if ((context_width > 0) && (pe->expr_type() != IVL_VT_REAL)
+          && (expr_width < (unsigned)context_width))
+            expr_width = context_width;
+
+      if (debug_elaborate) {
+            cerr << pe->get_fileline() << ": debug: test_width of "
+                 << *pe << endl;
+            cerr << pe->get_fileline() << ":        "
+                 << "returns type=" << pe->expr_type()
+                 << ", width=" << expr_width
+                 << ", signed=" << pe->has_sign()
+                 << ", mode=" << width_mode_name(mode) << endl;
+      }
+
+        // If we can get the same result using a smaller expression
+        // width, do so.
+      if ((context_width > 0) && (pe->expr_type() != IVL_VT_REAL)
+          && (expr_width > (unsigned)context_width)) {
+            expr_width = max(pe->min_width(), (unsigned)context_width);
+
+            if (debug_elaborate) {
+                  cerr << pe->get_fileline() << ":        "
+                       << "pruned to width=" << expr_width << endl;
+            }
+      }
+
+      NetExpr*tmp = pe->elaborate_expr(des, scope, expr_width, false);
       if (tmp == 0) return 0;
 
-      eval_expr(tmp, prune_width);
+      eval_expr(tmp, context_width);
+
+      if (NetEConst*ce = dynamic_cast<NetEConst*>(tmp)) {
+            if ((mode >= PExpr::LOSSLESS) && (context_width < 0))
+                  ce->trim();
+      }
 
       return tmp;
 }
 
-void eval_expr(NetExpr*&expr, int prune_width)
+NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
+                           unsigned arg_idx, PExpr*pe)
+{
+      PExpr::width_mode_t mode = PExpr::SIZED;
+      pe->test_width(des, scope, mode);
+
+      if (debug_elaborate) {
+            cerr << pe->get_fileline() << ": debug: test_width of "
+                 << name << " argument " << (arg_idx+1) << " " << *pe << endl;
+            cerr << pe->get_fileline() << ":        "
+                 << "returns type=" << pe->expr_type()
+                 << ", width=" << pe->expr_width()
+                 << ", signed=" << pe->has_sign()
+                 << ", mode=" << width_mode_name(mode) << endl;
+      }
+
+      NetExpr*tmp = pe->elaborate_expr(des, scope, pe->expr_width(), true);
+      if (tmp == 0) return 0;
+
+      eval_expr(tmp, -1);
+
+      if (NetEConst*ce = dynamic_cast<NetEConst*>(tmp)) {
+            if (mode != PExpr::SIZED)
+                  ce->trim();
+      }
+
+      return tmp;
+}
+
+void eval_expr(NetExpr*&expr, int context_width)
 {
       assert(expr);
       if (dynamic_cast<NetECReal*>(expr)) return;
-	/* Resize a constant if allowed and needed. */
-      if (NetEConst *tmp = dynamic_cast<NetEConst*>(expr)) {
-	    if (prune_width <= 0) return;
-	    if (tmp->has_width()) return;
-	    if ((unsigned)prune_width <= tmp->expr_width()) return;
-	    expr = pad_to_width(expr, (unsigned)prune_width, *expr);
-	    return;
-      }
 
-      NetExpr*tmp = expr->eval_tree(prune_width);
+      NetExpr*tmp = expr->eval_tree();
       if (tmp != 0) {
 	    tmp->set_line(*expr);
 	    delete expr;
 	    expr = tmp;
+      }
+
+      if (context_width <= 0) return;
+
+      NetEConst *ce = dynamic_cast<NetEConst*>(expr);
+      if (ce == 0) return;
+
+        // The expression is a constant, so resize it if needed.
+      if (ce->expr_width() < (unsigned)context_width) {
+            expr = pad_to_width(expr, context_width, *expr);
+      }
+      if (ce->expr_width() > (unsigned)context_width) {
+            verinum value(ce->value(), context_width);
+            ce = new NetEConst(value);
+            ce->set_line(*expr);
+            delete expr;
+            expr = ce;
       }
 }
 
@@ -560,7 +646,6 @@ hname_t eval_path_component(Design*des, NetScope*scope,
       assert(index.sel == index_component_t::SEL_BIT);
 
 	// Evaluate the bit select to get a number.
-      probe_expr_width(des, scope, index.msb);
       NetExpr*tmp = elab_and_eval(des, scope, index.msb, -1);
       ivl_assert(*index.msb, tmp);
 

@@ -76,14 +76,21 @@ void emit_sig_file_line(ivl_signal_t sig)
       }
 }
 
+static void emit_sig_id(ivl_signal_t sig)
+{
+      emit_id(ivl_signal_basename(sig));
+      fprintf(vlog_out, ";");
+      emit_sig_file_line(sig);
+      fprintf(vlog_out, "\n");
+}
+
 void emit_var_def(ivl_signal_t sig)
 {
       if (ivl_signal_local(sig)) return;
       fprintf(vlog_out, "%*c", indent, ' ');
       if (ivl_signal_integer(sig)) {
-	    fprintf(vlog_out, "integer %s;", ivl_signal_basename(sig));
-	    emit_sig_file_line(sig);
-	    fprintf(vlog_out, "\n");
+	    fprintf(vlog_out, "integer ");
+	    emit_sig_id(sig);
 	    if (ivl_signal_dimensions(sig) > 0) {
 		  fprintf(stderr, "%s:%u: vlog95 error: Integer arrays (%s) "
 		                  "are not supported.\n", ivl_signal_file(sig),
@@ -92,9 +99,8 @@ void emit_var_def(ivl_signal_t sig)
 		  vlog_errors += 1;
 	    }
       } else if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
-	    fprintf(vlog_out, "real %s;", ivl_signal_basename(sig));
-	    emit_sig_file_line(sig);
-	    fprintf(vlog_out, "\n");
+	    fprintf(vlog_out, "real ");
+	    emit_sig_id(sig);
 	    if (ivl_signal_dimensions(sig) > 0) {
 		  fprintf(stderr, "%s:%u: vlog95 error: Real arrays (%s) "
 		                  "are not supported.\n", ivl_signal_file(sig),
@@ -105,9 +111,9 @@ void emit_var_def(ivl_signal_t sig)
       } else {
 	    int msb = ivl_signal_msb(sig);
 	    int lsb = ivl_signal_lsb(sig);
-	    fprintf(vlog_out, "reg");
-	    if (msb != 0 || lsb != 0) fprintf(vlog_out, " [%d:%d]", msb, lsb);
-	    fprintf(vlog_out, " %s", ivl_signal_basename(sig));
+	    fprintf(vlog_out, "reg ");
+	    if (msb != 0 || lsb != 0) fprintf(vlog_out, "[%d:%d] ", msb, lsb);
+	    emit_id(ivl_signal_basename(sig));
 	    if (ivl_signal_dimensions(sig) > 0) {
 		  unsigned wd_count = ivl_signal_array_count(sig);
 		  int first = ivl_signal_array_base(sig);
@@ -178,23 +184,24 @@ void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
       if (ivl_signal_local(sig)) return;
       fprintf(vlog_out, "%*c", indent, ' ');
       if (ivl_signal_data_type(sig) == IVL_VT_REAL){
-	    fprintf(vlog_out, "wire %s;\n", ivl_signal_basename(sig));
+	    fprintf(vlog_out, "wire ");
+	    emit_sig_id(sig);
 	    fprintf(stderr, "%s:%u: vlog95 error: Real nets (%s) are "
 	                    "not supported.\n", ivl_signal_file(sig),
 	                    ivl_signal_lineno(sig), ivl_signal_basename(sig));
 	    vlog_errors += 1;
       } else if (ivl_signal_signed(sig)) {
-	    fprintf(vlog_out, "wire");
-	    if (msb != 0 || lsb != 0) fprintf(vlog_out, " [%d:%d]", msb, lsb);
-	    fprintf(vlog_out, " %s;\n", ivl_signal_basename(sig));
+	    fprintf(vlog_out, "wire ");
+	    if (msb != 0 || lsb != 0) fprintf(vlog_out, "[%d:%d] ", msb, lsb);
+	    emit_sig_id(sig);
 	    fprintf(stderr, "%s:%u: vlog95 error: Signed nets (%s) are "
 	                    "not supported.\n", ivl_signal_file(sig),
 	                    ivl_signal_lineno(sig), ivl_signal_basename(sig));
 	    vlog_errors += 1;
       } else if (ivl_signal_dimensions(sig) > 0) {
-	    fprintf(vlog_out, "wire");
-	    if (msb != 0 || lsb != 0) fprintf(vlog_out, " [%d:%d]", msb, lsb);
-	    fprintf(vlog_out, " %s;\n", ivl_signal_basename(sig));
+	    fprintf(vlog_out, "wire ");
+	    if (msb != 0 || lsb != 0) fprintf(vlog_out, "[%d:%d] ", msb, lsb);
+	    emit_sig_id(sig);
 	    fprintf(stderr, "%s:%u: vlog95 error: Array nets (%s) are "
 	                    "not supported.\n", ivl_signal_file(sig),
 	                    ivl_signal_lineno(sig), ivl_signal_basename(sig));
@@ -205,59 +212,58 @@ void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
 	      case IVL_SIT_UWIRE:
 // HERE: Need to add support for supply nets. Probably supply strength
 //       with a constant 0/1 driver for all the bits.
-		  fprintf(vlog_out, "wire");
+		  fprintf(vlog_out, "wire ");
 		  break;
 	      case IVL_SIT_TRI0:
-		  fprintf(vlog_out, "tri0");
+		  fprintf(vlog_out, "tri0 ");
 		  break;
 	      case IVL_SIT_TRI1:
-		  fprintf(vlog_out, "tri1");
+		  fprintf(vlog_out, "tri1 ");
 		  break;
 	      case IVL_SIT_TRIAND:
-		  fprintf(vlog_out, "wand");
+		  fprintf(vlog_out, "wand ");
 		  break;
 	      case IVL_SIT_TRIOR:
-		  fprintf(vlog_out, "wor");
+		  fprintf(vlog_out, "wor ");
 		  break;
 	      default:
-		  fprintf(vlog_out, "<unknown>");
+		  fprintf(vlog_out, "<unknown> ");
 		  fprintf(stderr, "%s:%u: vlog95 error: Unknown net type "
 	                    "(%d).\n", ivl_signal_file(sig),
 	                    ivl_signal_lineno(sig), (int)ivl_signal_type(sig));
 		  vlog_errors += 1;
 		  break;
 	    }
-	    if (msb != 0 || lsb != 0) fprintf(vlog_out, " [%d:%d]", msb, lsb);
-	    fprintf(vlog_out, " %s;", ivl_signal_basename(sig));
-	    emit_sig_file_line(sig);
-	    fprintf(vlog_out, "\n");
+	    if (msb != 0 || lsb != 0) fprintf(vlog_out, "[%d:%d] ", msb, lsb);
+	    emit_sig_id(sig);
 	      /* A constant driving a net does not create an lpm or logic
 	       * element in the design so save them from the definition. */
 	    save_net_constants(scope, sig);
       }
 }
 
-static char *get_mangled_name(ivl_scope_t scope, unsigned root)
+static void emit_mangled_name(ivl_scope_t scope, unsigned root)
 {
-      char *name;
-	/* If the module has parameters and it's not a root module than it
-	 * may not be unique so we create a mangled name version instead. */
+	/* If the module has parameters and it's not a root module then it
+	 * may not be unique so we create a mangled name version instead.
+	 * The mangled name is of the form:
+	 *   <module_name>[<full_instance_scope>]. */
       if (ivl_scope_params(scope) && ! root) {
-	    unsigned idx;
+	    char *name;
 	    size_t len = strlen(ivl_scope_name(scope)) +
-	                 strlen(ivl_scope_tname(scope)) + 2;
+	                 strlen(ivl_scope_tname(scope)) + 3;
 	    name = (char *)malloc(len);
 	    (void) strcpy(name, ivl_scope_tname(scope));
-	    (void) strcat(name, "_");
+	    (void) strcat(name, "[");
 	    (void) strcat(name, ivl_scope_name(scope));
+	    (void) strcat(name, "]");
 	    assert(name[len-1] == 0);
-	    for (idx = 0; idx < len; idx += 1) {
-		  if (name[idx] == '.') name[idx] = '_';
-	    }
+	      /* Emit the mangled name as an escaped identifier. */
+	    fprintf(vlog_out, "\\%s ", name);
+	    free(name);
       } else {
-	    name = strdup(ivl_scope_tname(scope));
+	    emit_id(ivl_scope_tname(scope));
       }
-      return name;
 }
 
 /*
@@ -279,8 +285,9 @@ void emit_scope_variables(ivl_scope_t scope)
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_parameter_t par = ivl_scope_param(scope, idx);
 	    ivl_expr_t pex = ivl_parameter_expr(par);
-	    fprintf(vlog_out, "%*cparameter %s = ", indent, ' ',
-	                      ivl_parameter_basename(par));
+	    fprintf(vlog_out, "%*cparameter ", indent, ' ');
+	    emit_id(ivl_parameter_basename(par));
+	    fprintf(vlog_out, " = ");
 	    emit_expr(scope, pex, 0);
 	    fprintf(vlog_out, ";");
 	    if (emit_file_line) {
@@ -317,8 +324,9 @@ void emit_scope_variables(ivl_scope_t scope)
 	    if (ivl_event_nany(event)) continue;
 	    if (ivl_event_npos(event)) continue;
 	    if (ivl_event_nneg(event)) continue;
-	    fprintf(vlog_out, "%*cevent %s;", indent, ' ',
-	                      ivl_event_basename(event));
+	    fprintf(vlog_out, "%*cevent ", indent, ' ');
+	    emit_id(ivl_event_basename(event));
+	    fprintf(vlog_out, ";");
 	    if (emit_file_line) {
 		  fprintf(vlog_out, " /* %s:%u */",
 		                    ivl_event_file(event),
@@ -337,6 +345,176 @@ static void emit_scope_file_line(ivl_scope_t scope)
 	                      ivl_scope_file(scope),
 	                      ivl_scope_lineno(scope));
       }
+}
+
+static void emit_module_ports(ivl_scope_t scope)
+{
+      unsigned idx, count = ivl_scope_ports(scope);
+
+      if (count == 0) return;
+
+      fprintf(vlog_out, "(");
+      emit_nexus_as_ca(scope, ivl_scope_mod_port(scope, 0));
+      for (idx = 1; idx < count; idx += 1) {
+	    fprintf(vlog_out, ", ");
+	    emit_nexus_as_ca(scope, ivl_scope_mod_port(scope, idx));
+      }
+      fprintf(vlog_out, ")");
+}
+
+static ivl_signal_t get_port_from_nexus(ivl_scope_t scope, ivl_nexus_t nex)
+{
+      assert(nex);
+      unsigned idx, count = ivl_nexus_ptrs(nex);
+      ivl_signal_t sig = 0;
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
+	    if (t_sig) {
+		  if (ivl_signal_scope(t_sig) != scope) continue;
+		  assert(! sig);
+		  sig = t_sig;
+	    }
+      }
+      return sig;
+}
+
+static void emit_sig_type(ivl_signal_t sig)
+{
+      ivl_signal_type_t type = ivl_signal_type(sig);
+      assert(ivl_signal_dimensions(sig) == 0);
+	/* Check to see if we have a variable (reg) or a net. */
+      if (type == IVL_SIT_REG) {
+	    if (ivl_signal_integer(sig)) {
+		  fprintf(vlog_out, " integer");
+	    } else if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
+		  fprintf(vlog_out, " real");
+	    } else {
+		  int msb = ivl_signal_msb(sig);
+		  int lsb = ivl_signal_lsb(sig);
+		  if (msb != 0 || lsb != 0) {
+			fprintf(vlog_out, " [%d:%d]", msb, lsb);
+		  }
+		  if (ivl_signal_signed(sig)) {
+			fprintf(stderr, "%s:%u: vlog95 error: Signed ports "
+			                "(%s) are not supported.\n",
+			                ivl_signal_file(sig),
+			                ivl_signal_lineno(sig),
+			                ivl_signal_basename(sig));
+			vlog_errors += 1;
+		  }
+	    }
+      } else {
+	    assert(type == IVL_SIT_TRI);
+	    if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
+		  fprintf(stderr, "%s:%u: vlog95 error: Real net ports (%s) "
+		                  "are not supported.\n",
+		                  ivl_signal_file(sig),
+		                  ivl_signal_lineno(sig),
+		                  ivl_signal_basename(sig));
+		  vlog_errors += 1;
+	    } else {
+		  int msb = ivl_signal_msb(sig);
+		  int lsb = ivl_signal_lsb(sig);
+		  if (ivl_signal_signed(sig)) {
+			fprintf(stderr, "%s:%u: vlog95 error: Signed net ports "
+			                "(%s) are not supported.\n",
+			                ivl_signal_file(sig),
+			                ivl_signal_lineno(sig),
+			                ivl_signal_basename(sig));
+			vlog_errors += 1;
+		  }
+		  if (msb != 0 || lsb != 0) {
+			fprintf(vlog_out, " [%d:%d]", msb, lsb);
+		  }
+	    }
+      }
+}
+
+static void emit_port(ivl_signal_t port)
+{
+      assert(port);
+      fprintf(vlog_out, "%*c", indent, ' ');
+      switch (ivl_signal_port(port)) {
+	case IVL_SIP_INPUT:
+	    fprintf(vlog_out, "input");
+	    break;
+	case IVL_SIP_OUTPUT:
+	    fprintf(vlog_out, "output");
+	    break;
+	case IVL_SIP_INOUT:
+	    fprintf(vlog_out, "inout");
+	    break;
+	default:
+	    fprintf(vlog_out, "<unknown>");
+	    fprintf(stderr, "%s:%u: vlog95 error: Unknown port direction (%d) "
+	                    "for signal %s.\n", ivl_signal_file(port),
+	                    ivl_signal_lineno(port), (int)ivl_signal_port(port),
+	                    ivl_signal_basename(port));
+	    vlog_errors += 1;
+	    break;
+      }
+      emit_sig_type(port);
+      fprintf(vlog_out, " ");
+      emit_id(ivl_signal_basename(port));
+      fprintf(vlog_out, ";");
+      emit_sig_file_line(port);
+      fprintf(vlog_out, "\n");
+}
+
+static void emit_module_port_defs(ivl_scope_t scope)
+{
+      unsigned idx, count = ivl_scope_ports(scope);
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_t nex = ivl_scope_mod_port(scope, idx);
+	    ivl_signal_t port = get_port_from_nexus(scope, nex);
+	    if (port) emit_port(port);
+	    else {
+		  fprintf(vlog_out, "<missing>");
+		  fprintf(stderr, "%s:%u: vlog95 error: Could not find signal "
+	                    "definition for port (%u) of module %s.\n",
+		            ivl_scope_file(scope), ivl_scope_lineno(scope),
+	                    idx + 1, ivl_scope_basename(scope));
+		  vlog_errors += 1;
+	    }
+      }
+      if (count) fprintf(vlog_out, "\n");
+}
+
+static void emit_module_call_expr(ivl_scope_t scope, unsigned idx)
+{
+      ivl_nexus_t nex = ivl_scope_mod_port(scope, idx);
+      ivl_signal_t port = get_port_from_nexus(scope, nex);
+	/* For an input port we need to emit the driving expression. */
+      if (ivl_signal_port(port) == IVL_SIP_INPUT) {
+	    emit_nexus_port_driver_as_ca(ivl_scope_parent(scope),
+	                                 ivl_signal_nex(port, 0));
+	/* For an output we need to emit the signal the output is driving. */
+      } else {
+	    emit_nexus_as_ca(ivl_scope_parent(scope), ivl_signal_nex(port, 0));
+      }
+}
+
+static void emit_module_call_expressions(ivl_scope_t scope)
+{
+      unsigned idx, count = ivl_scope_ports(scope);
+      if (count == 0) return;
+      emit_module_call_expr(scope, 0);
+      for (idx = 1; idx < count; idx += 1) {
+	    fprintf(vlog_out, ", ");
+	    emit_module_call_expr(scope, idx);
+      }
+}
+
+static void emit_task_func_port_defs(ivl_scope_t scope)
+{
+      unsigned idx, count = ivl_scope_ports(scope);
+      unsigned start = ivl_scope_type(scope) == IVL_SCT_FUNCTION;
+      for (idx = start; idx < count; idx += 1) {
+	    ivl_signal_t port = ivl_scope_port(scope, idx);
+	    emit_port(port);
+      }
+      if (count) fprintf(vlog_out, "\n");
 }
 
 /*
@@ -384,26 +562,26 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 {
       ivl_scope_type_t sc_type = ivl_scope_type(scope);
       unsigned is_auto = ivl_scope_is_auto(scope);
-      unsigned idx, count, start = 0;
-      char *name;
+      unsigned idx, count;
 
 	/* Output the scope definition. */
       switch (sc_type) {
 	case IVL_SCT_MODULE:
 	    assert(!is_auto);
-	    name = get_mangled_name(scope, !parent && !emitting_scopes);
 	      /* This is an instantiation. */
 	    if (parent) {
 		  assert(indent != 0);
-		    /* If the module has parameters than it may not be unique
+		    /* If the module has parameters then it may not be unique
 		     * so we create a mangled name version instead. */
-		  fprintf(vlog_out, "\n%*c%s %s(", indent, ' ', name,
-		                    ivl_scope_basename(scope));
-// HERE: Still need to add port information.
+		  fprintf(vlog_out, "\n%*c", indent, ' ');
+		  emit_mangled_name(scope, !parent && !emitting_scopes);
+		  fprintf(vlog_out, " ");
+		  emit_id(ivl_scope_basename(scope));
+		  fprintf(vlog_out, "(");
+		  emit_module_call_expressions(scope);
 		  fprintf(vlog_out, ");");
 		  emit_scope_file_line(scope);
 		  fprintf(vlog_out, "\n");
-		  free(name);
 		  num_scopes_to_emit += 1;
 		  scopes_to_emit = realloc(scopes_to_emit, num_scopes_to_emit *
 		                                           sizeof(ivl_scope_t));
@@ -422,9 +600,9 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	                      "file %s at line %u. */\n",
 	                      ivl_scope_def_file(scope),
 	                      ivl_scope_def_lineno(scope));
-	    fprintf(vlog_out, "module %s", name);
-	    free(name);
-// HERE: Still need to add port information.
+	    fprintf(vlog_out, "module ");
+	    emit_mangled_name(scope, !parent && !emitting_scopes);
+	    emit_module_ports(scope);
 	    break;
 	case IVL_SCT_FUNCTION:
 	    assert(indent != 0);
@@ -432,8 +610,8 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    assert(ivl_scope_ports(scope) >= 2);
 	      /* The function return information is the zero port. */
 	    emit_func_return(ivl_scope_port(scope, 0));
-	    start = 1;
-	    fprintf(vlog_out, " %s", ivl_scope_tname(scope));
+	    fprintf(vlog_out, " ");
+	    emit_id(ivl_scope_tname(scope));
 	    if (is_auto) {
 		  fprintf(stderr, "%s:%u: vlog95 error: Automatic functions "
 	                    "(%s) are not supported.\n", ivl_scope_file(scope),
@@ -443,8 +621,8 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    break;
 	case IVL_SCT_TASK:
 	    assert(indent != 0);
-	    fprintf(vlog_out, "\n%*ctask %s", indent, ' ',
-	                      ivl_scope_tname(scope));
+	    fprintf(vlog_out, "\n%*ctask ", indent, ' ');
+	    emit_id(ivl_scope_tname(scope));
 	    if (is_auto) {
 		  fprintf(stderr, "%s:%u: vlog95 error: Automatic tasks "
 	                    "(%s) are not supported.\n", ivl_scope_file(scope),
@@ -470,35 +648,11 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
       indent += indent_incr;
 
 	/* Output the scope ports for this scope. */
-      count = ivl_scope_ports(scope);
-      for (idx = start; idx < count; idx += 1) {
-	    fprintf(vlog_out, "%*c", indent, ' ');
-	    ivl_signal_t port = ivl_scope_port(scope, idx);
-	    switch (ivl_signal_port(port)) {
-	      case IVL_SIP_INPUT:
-		  fprintf(vlog_out, "input");
-		  break;
-	      case IVL_SIP_OUTPUT:
-		  fprintf(vlog_out, "output");
-		  break;
-	      case IVL_SIP_INOUT:
-		  fprintf(vlog_out, "inout");
-		  break;
-	      default:
-		  fprintf(vlog_out, "<unknown>");
-		  fprintf(stderr, "%s:%u: vlog95 error: Unknown port "
-	                    "direction (%d) for signal %s.\n",
-	                    ivl_signal_file(port), ivl_signal_lineno(port),
-	                    (int)ivl_signal_port(port),
-		            ivl_signal_basename(port));
-		  vlog_errors += 1;
-		  break;
-	    }
-	    fprintf(vlog_out, " %s;", ivl_signal_basename(port));
-	    emit_sig_file_line(port);
-	    fprintf(vlog_out, " \n");
+      if (sc_type == IVL_SCT_MODULE) {
+	    emit_module_port_defs(scope);
+      } else {
+	    emit_task_func_port_defs(scope);
       }
-      if (count) fprintf(vlog_out, "\n");
 
       emit_scope_variables(scope);
 
@@ -539,7 +693,9 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
       switch (sc_type) {
 	case IVL_SCT_MODULE:
 	    assert(indent == 0);
-	    fprintf(vlog_out, "endmodule  /* %s */\n", ivl_scope_tname(scope));
+	    fprintf(vlog_out, "endmodule  /* ");
+	    emit_mangled_name(scope, !parent && !emitting_scopes);
+	    fprintf(vlog_out, " */\n");
 	    if (ivl_scope_is_cell(scope)) {
 		  fprintf(vlog_out, "`endcelldefine\n");
 	    }

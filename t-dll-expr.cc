@@ -274,8 +274,8 @@ void dll_target::expr_param(const NetEConstParam*net)
 		 << ivl_scope_name(scop) << endl;
       }
       assert(par);
-      assert(par->value);
-      expr_ = par->value;
+      expr_const(net);
+      expr_->u_.string_.parameter = par;
 }
 
 void dll_target::expr_rparam(const NetECRealParam*net)
@@ -359,13 +359,13 @@ void dll_target::expr_select(const NetESelect*net)
       assert(expr_ == 0);
 
       net->sub_expr()->expr_scan(this);
-      ivl_expr_t left = expr_;
+      ivl_expr_t expr = expr_;
 
       expr_ = 0;
       if (net->select())
 	    net->select()->expr_scan(this);
 
-      ivl_expr_t rght = expr_;
+      ivl_expr_t base = expr_;
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
 
@@ -376,8 +376,9 @@ void dll_target::expr_select(const NetESelect*net)
       expr_->sized_= 1;
       FILE_NAME(expr_, net);
 
-      expr_->u_.binary_.lef_ = left;
-      expr_->u_.binary_.rig_ = rght;
+      expr_->u_.select_.sel_type_ = net->select_type();
+      expr_->u_.select_.expr_ = expr;
+      expr_->u_.select_.base_ = base;
 }
 
 void dll_target::expr_sfunc(const NetESFunc*net)

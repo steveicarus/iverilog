@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -54,7 +54,8 @@ static int eval_bool64_logic(ivl_expr_t expr)
       if (ivl_expr_signed(expr))
 	    s_flag = "/s";
 
-      fprintf(vvp_out, "   %%ix/get%s %d, %u, %u;\n", s_flag, res, tmp.base, tmp.wid);
+      fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n", s_flag, res,
+              tmp.base, tmp.wid);
       clr_vector(tmp);
 
       return res;
@@ -75,7 +76,7 @@ static int draw_number_bool64(ivl_expr_t expr)
       res = allocate_word();
       low = val % UINT64_C(0x100000000);
       hig = val / UINT64_C(0x100000000);
-      fprintf(vvp_out, "   %%ix/load %d, %lu, %lu;\n", res, low, hig);
+      fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n", res, low, hig);
       return res;
 }
 

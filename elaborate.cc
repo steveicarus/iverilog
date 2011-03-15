@@ -115,6 +115,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    cerr << get_fileline() << ": debug: PGAssign: elaborated r-value"
 		 << " width="<< rval->vector_width()
 		 << ", type="<< rval->data_type()
+		 << ", signed="<< rval->get_signed()
 		 << ", expr=" << *rval_expr << endl;
       }
 
@@ -143,7 +144,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    need_driver_flag = false;
       }
 
-	/* If the r-value insists on being smaller then the l-value
+	/* If the r-value insists on being smaller than the l-value
 	   (perhaps it is explicitly sized) the pad it out to be the
 	   right width so that something is connected to all the bits
 	   of the l-value. */
@@ -156,7 +157,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       }
 
 	/* If, on the other hand, the r-value insists on being
-	   LARGER then the l-value, use a part select to chop it down
+	   LARGER than the l-value, use a part select to chop it down
 	   down to size. */
       if (lval->vector_width() < rval->vector_width()) {
 	    NetPartSelect*tmp = new NetPartSelect(rval, 0,lval->vector_width(),
@@ -227,11 +228,6 @@ unsigned PGBuiltin::calculate_array_count_(Design*des, NetScope*scope,
 	   gate. Figure out how many are desired. */
       if (msb_) {
 	    need_constant_expr = true;
-	    ivl_variable_type_t use_type;
-	    bool flag = false;
-	    msb_->test_width(des, scope, 0, 0, use_type, flag);
-	    flag = false;
-	    lsb_->test_width(des, scope, 0, 0, use_type, flag);
 	    NetExpr*msb_exp = elab_and_eval(des, scope, msb_, -1);
 	    NetExpr*lsb_exp = elab_and_eval(des, scope, lsb_, -1);
 	    need_constant_expr = false;
@@ -820,12 +816,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  sig = lval_sigs[idx];
 
 	    } else {
-		  unsigned use_width = array_count * instance_width;
-		  ivl_variable_type_t tmp_type = IVL_VT_NO_TYPE;
-		  bool flag = false;
-		  ex->test_width(des, scope, 0, use_width, tmp_type, flag);
-		  NetExpr*tmp = elab_and_eval(des, scope, ex,
-					      use_width, use_width);
+		  NetExpr*tmp = elab_and_eval(des, scope, ex, -1);
 		  sig = tmp->synthesize(des, scope, tmp);
 		  delete tmp;
 	    }
@@ -1315,6 +1306,15 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    if (instance.size() != 1)
 		  desired_vector_width = 0;
 
+	    if (!prts.empty() && (prts[0]->port_type() == NetNet::PINPUT)
+                && prts[0]->pin(0).nexus()->drivers_present()
+                && pins[idx]->is_collapsible_net(des, scope)) {
+                  prts[0]->port_type(NetNet::PINOUT);
+
+		  cerr << pins[idx]->get_fileline() << ": warning: input port "
+		       << prts[0]->name() << " is coerced to inout." << endl;
+	    }
+
 	      // Elaborate the expression that connects to the
 	      // module[s] port. sig is the thing outside the module
 	      // that connects to the port.
@@ -1332,13 +1332,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		       port is actually empty on the inside. We assume
 		       in that case that the port is input. */
 
-		  ivl_variable_type_t tmp_type = IVL_VT_NO_TYPE;
-		  bool flag = false;
-		  pins[idx]->test_width(des, scope, 0, desired_vector_width,
-					tmp_type, flag);
-		  NetExpr*tmp_expr = elab_and_eval(des, scope, pins[idx],
-						   desired_vector_width,
-						   desired_vector_width);
+		  NetExpr*tmp_expr = elab_and_eval(des, scope, pins[idx], -1);
 		  if (tmp_expr == 0) {
 			cerr << pins[idx]->get_fileline()
 			     << ": internal error: Port expression "
@@ -1411,8 +1405,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			     << "Inout port expression must support "
 			     << "continuous assignment." << endl;
 			cerr << pins[idx]->get_fileline() << ":      : "
-			     << "Port of " << rmod->mod_name()
-			     << " is " << rmod->ports[idx]->name << endl;
+			     << "Port " << rmod->ports[idx]->name << " of "
+			     << rmod->mod_name() << " is connected to "
+			     << *pins[idx] << endl;
 			des->errors += 1;
 			continue;
 		  }
@@ -1457,8 +1452,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			     << "Output port expression must support "
 			     << "continuous assignment." << endl;
 			cerr << pins[idx]->get_fileline() << ":      : "
-			     << "Port of " << rmod->mod_name()
-			     << " is " << rmod->ports[idx]->name << endl;
+			     << "Port " << rmod->ports[idx]->name << " of "
+			     << rmod->mod_name() << " is connected to "
+			     << *pins[idx] << endl;
 			des->errors += 1;
 			continue;
 		  }
@@ -1608,7 +1604,11 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			     << " high bits of the port."
 			     << endl;
 		  } else {
-			cerr << get_fileline() << ":        : Padding ";
+			if (prts[0]->port_type() == NetNet::PINPUT) {
+			      cerr << get_fileline() << ":        : Pruning ";
+			} else {
+			      cerr << get_fileline() << ":        : Padding ";
+			}
 			if (as_signed) cerr << "(signed) ";
 			cerr << (sig->vector_width()-prts_vector_width)
 			     << " high bits of the expression."
@@ -1889,7 +1889,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	    if (pins[idx] == 0)
 		  continue;
 
-	    NetExpr*expr_tmp = elab_and_eval(des, scope, pins[idx], 1, 1);
+	    NetExpr*expr_tmp = elab_and_eval(des, scope, pins[idx], 1);
 	    if (expr_tmp == 0) {
 		  cerr << "internal error: Expression too complicated "
 			"for elaboration:" << *pins[idx] << endl;
@@ -2044,7 +2044,6 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
  */
 static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 {
-      probe_expr_width(des, scope, expr);
       NetExpr*dex = elab_and_eval(des, scope, expr, -1);
 
 	/* Print a warning if we find default and `timescale based
@@ -2099,12 +2098,11 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 
 	    NetExpr*scal_val = new NetECReal(verireal(round));
 	    scal_val->set_line(*expr);
-	    dex = new NetEBMult('*', dex, scal_val);
+	    dex = new NetEBMult('*', dex, scal_val, 1, true);
 	    dex->set_line(*expr);
 
 	      // Cast this part of the expression to an integer.
-	    dex = new NetECast('i', dex);
-	    dex->set_width(64);
+	    dex = new NetECast('i', dex, 64, false);
 	    dex->set_line(*expr);
 
 	      // Now scale the integer value.
@@ -2115,8 +2113,7 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 
 	    scal_val = new NetEConst(verinum(scale, 64));
 	    scal_val->set_line(*expr);
-	    dex = new NetEBMult('*', dex, scal_val);
-	    dex->set_width(64);
+	    dex = new NetEBMult('*', dex, scal_val, 64, false);
 	    dex->set_line(*expr);
       } else {
 	    int shift = scope->time_unit() - des->get_precision();
@@ -2126,7 +2123,7 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 
 	    NetExpr*scal_val = new NetEConst(verinum(scale, 64));
 	    scal_val->set_line(*expr);
-	    dex = new NetEBMult('*', dex, scal_val);
+	    dex = new NetEBMult('*', dex, scal_val, 64, false);
 	    dex->set_line(*expr);
       }
 
@@ -2174,17 +2171,6 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
       if (delay || event_) {
 	    unsigned wid = count_lval_width(lv);
 
-	    rv->set_width(wid);
-	    rv = pad_to_width(rv, wid, *this);
-
-	    if (wid > rv->expr_width()) {
-		  cerr << get_fileline() << ": error: Unable to match "
-			"expression width of " << rv->expr_width() <<
-			" to l-value width of " << wid << "." << endl;
-		    //XXXX delete rv;
-		  return 0;
-	    }
-
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::REG, wid);
 	    tmp->local_flag(true);
@@ -2219,6 +2205,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 			      return 0;
 			}
 			st = event_->elaborate(des, scope);
+			st->set_line(*this);
 			if (st == 0) {
 			      cerr << event_->get_fileline() << ": error: "
 			              "unable to elaborate event expression."
@@ -2244,12 +2231,15 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 				// We need a repeat statement.
 			      } else {
 				    st = new NetRepeat(count, st);
+				    st->set_line(*this);
 			      }
 			} else {
 			      st = new NetRepeat(count, st);
+			      st->set_line(*this);
 			}
 		  } else {
 			st = event_->elaborate_st(des, scope, a2);
+			st->set_line(*this);
 			if (st == 0) {
 			      cerr << event_->get_fileline() << ": error: "
 			              "unable to elaborate event expression."
@@ -2274,22 +2264,6 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    return bl;
       }
 
-	/* Based on the specific type of the l-value, do cleanup
-	   processing on the r-value. */
-      if (rv->expr_type() == IVL_VT_REAL) {
-
-	      // The r-value is a real. Casting will happen in the
-	      // code generator, so leave it.
-
-      } else {
-	    unsigned wid = count_lval_width(lv);
-	    if (wid > rv->expr_width()) {
-		  rv->set_width(wid);
-		  rv = pad_to_width(rv, wid, *this);
-	    }
-	    ivl_assert(*this, rv->expr_width() >= wid);
-      }
-
       if (lv->expr_type() == IVL_VT_BOOL && rv->expr_type() != IVL_VT_BOOL) {
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: Cast expression to int2" << endl;
@@ -2301,7 +2275,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 		 << "Enumeration type mismatch in assignment." << endl;
 	    des->errors += 1;
       }
-		  
+
       NetAssign*cur = new NetAssign(lv, rv);
       cur->set_line(*this);
 
@@ -2339,20 +2313,6 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 
       NetExpr*rv = elaborate_rval_(des, scope, count_lval_width(lv), lv->expr_type());
       if (rv == 0) return 0;
-
-	/* Handle the (common) case that the r-value is a vector. This
-	   includes just about everything but reals. In this case, we
-	   need to pad the r-value to match the width of the l-value.
-
-	   If in this case the l-val is a variable (i.e., real) then
-	   the width to pad to will be 0, so this code is harmless. */
-      if (rv->expr_type() == IVL_VT_REAL) {
-
-      } else {
-	    unsigned wid = count_lval_width(lv);
-	    rv->set_width(wid);
-	    rv = pad_to_width(rv, wid, *this);
-      }
 
       NetExpr*delay = 0;
       if (delay_ != 0) {
@@ -2505,7 +2465,6 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      probe_expr_width(des, scope, expr_);
       NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {
 	    cerr << get_fileline() << ": error: Unable to elaborate this case"
@@ -2560,7 +2519,6 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 		  NetExpr*gu = 0;
 		  NetProc*st = 0;
 		  assert(cur_expr);
-		  probe_expr_width(des, scope, cur_expr);
 		  gu = elab_and_eval(des, scope, cur_expr, -1);
 
 		  if (cur->stat)
@@ -2583,7 +2541,6 @@ NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 		 << " with conditional: " << *expr_ << endl;
 
 	// Elaborate and try to evaluate the conditional expression.
-      probe_expr_width(des, scope, expr_);
       NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {
 	    cerr << get_fileline() << ": error: Unable to elaborate"
@@ -2699,29 +2656,12 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 
       svector<NetExpr*>eparms (parm_count);
 
+      perm_string name = peek_tail_name(path_);
+
       for (unsigned idx = 0 ;  idx < parm_count ;  idx += 1) {
 	    PExpr*ex = parm(idx);
 	    if (ex != 0) {
-		  ivl_variable_type_t use_type;
-		  bool flag = false;
-		  int use_wid = ex->test_width(des,scope,0,0, use_type, flag);
-		  if (debug_elaborate)
-			cerr << ex->get_fileline() << ": debug: "
-			     << "Argument " << (idx+1)
-			     << " of system task tests its width as " << use_wid
-			     << ", type=" << use_type
-			     << ", unsized_flag=" << flag << endl;
-
-		    // If the argument expression is unsized, then
-		    // elaborate as self-determined *lossless* instead
-		    // of sized.
-		  if (flag==true)
-			use_wid = -2;
-
-		  eparms[idx] = ex->elaborate_expr(des, scope, use_wid, true);
-		  if (eparms[idx])
-			eval_expr(eparms[idx]);
-
+		  eparms[idx] = elab_sys_task_arg(des, scope, name, idx, ex);
 	    } else {
 		  eparms[idx] = 0;
 	    }
@@ -2731,8 +2671,7 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 	// $sdf_annotate system task. There will be nothing for $sdf
 	// to annotate, and the user is intending to turn the behavior
 	// off anyhow, so replace the system task invocation with a no-op.
-      if (gn_specify_blocks_flag == false
-	 && peek_tail_name(path_) == "$sdf_annotate") {
+      if (gn_specify_blocks_flag == false && name == "$sdf_annotate") {
 
 	    cerr << get_fileline() << ": warning: Omitting $sdf_annotate() "
 	         << "since specify blocks are being omitted." << endl;
@@ -2741,8 +2680,7 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 	    return noop;
       }
 
-      NetSTask*cur = new NetSTask(peek_tail_name(path_), def_sfunc_as_task,
-                                  eparms);
+      NetSTask*cur = new NetSTask(name, def_sfunc_as_task, eparms);
       cur->set_line(*this);
       return cur;
 }
@@ -2869,11 +2807,6 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  continue;
 	    }
-	    if (wid > rv->expr_width()) {
-		  rv->set_width(wid);
-		  rv = pad_to_width(rv, wid, *this);
-	    }
-	    ivl_assert(*this, rv->expr_width() >= wid);
 
 	    NetAssign*pr = new NetAssign(lv, rv);
 	    pr->set_line(*this);
@@ -2985,9 +2918,6 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
       NetExpr*rexp = elaborate_rval_expr(des, scope, ltype, lwid, expr_);
       if (rexp == 0)
 	    return 0;
-
-      rexp->set_width(lwid);
-      rexp = pad_to_width(rexp, lwid, *this);
 
       dev = new NetCAssign(lval, rexp);
 
@@ -3304,8 +3234,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
                   }
             }
 
-	    probe_expr_width(des, scope, expr_[idx]->expr());
-	    NetExpr*tmp = elab_and_eval(des, scope, expr_[idx]->expr(), 0);
+	    NetExpr*tmp = elab_and_eval(des, scope, expr_[idx]->expr(), -1);
 	    if (tmp == 0) {
 		  expr_[idx]->dump(cerr);
 		  cerr << endl;
@@ -3407,8 +3336,9 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	/* Elaborate wait expression. Don't eval yet, we will do that
 	   shortly, after we apply a reduction or. */
 
-      probe_expr_width(des, scope, pe);
-      NetExpr*expr = pe->elaborate_expr(des, scope, -1, false);
+      PExpr::width_mode_t mode;
+      pe->test_width(des, scope, mode);
+      NetExpr*expr = pe->elaborate_expr(des, scope, pe->expr_width(), false);
       if (expr == 0) {
 	    cerr << get_fileline() << ": error: Unable to elaborate"
 		  " wait condition expression." << endl;
@@ -3570,7 +3500,7 @@ NetProc* PForever::elaborate(Design*des, NetScope*scope) const
  *    force <lval> = <rval>
  *
  * The <lval> can be anything that a normal behavioral assignment can
- * take, plus net signals. This is a little bit more lax then the
+ * take, plus net signals. This is a little bit more lax than the
  * other procedural assignments.
  */
 NetForce* PForce::elaborate(Design*des, NetScope*scope) const
@@ -3604,9 +3534,6 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
       NetExpr*rexp = elaborate_rval_expr(des, scope, ltype, lwid, expr_);
       if (rexp == 0)
 	    return 0;
-
-      rexp->set_width(lwid, true);
-      rexp = pad_to_width(rexp, lwid, *this);
 
       if (ltype==IVL_VT_BOOL && rexp->expr_type()!=IVL_VT_BOOL) {
 	    if (debug_elaborate) {
@@ -3668,32 +3595,14 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       assert(sig);
       NetAssign_*lv = new NetAssign_(sig);
 
-	/* Calculate the width of the initialization as if this were
-	   any other assignment statement. */
-      unsigned use_width = lv->lwidth();
-      bool unsized_flag = false;
-      ivl_variable_type_t expr1_type = IVL_VT_NO_TYPE;
-      use_width = expr1_->test_width(des, scope, use_width, use_width, expr1_type, unsized_flag);
-
 	/* Make the r-value of the initial assignment, and size it
 	   properly. Then use it to build the assignment statement. */
-      etmp = elab_and_eval(des, scope, expr1_, use_width);
-      etmp->set_width(use_width);
-      etmp = pad_to_width(etmp, use_width, *this);
+      etmp = elaborate_rval_expr(des, scope, lv->expr_type(), lv->lwidth(),
+                                 expr1_);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: FOR initial assign: "
 		 << sig->name() << " = " << *etmp << endl;
-	    assert(etmp->expr_width() >= lv->lwidth());
-      }
-
-	/* Based on the specific type of the l-value, do cleanup
-	   processing on the r-value. */
-      if (etmp->expr_type() != IVL_VT_REAL) {
-	    unsigned wid = count_lval_width(lv);
-	    etmp->set_width(wid);
-	    etmp = pad_to_width(etmp, wid, *this);
-	    assert(etmp->expr_width() >= wid);
       }
 
       NetAssign*init = new NetAssign(lv, etmp);
@@ -3727,9 +3636,16 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
       assert(sig);
       lv = new NetAssign_(sig);
 
-	/* Make the rvalue of the increment expression, and size it
-	   for the lvalue. */
-      etmp = elab_and_eval(des, scope, expr2_, lv->lwidth());
+	/* Make the r-value of the increment assignment, and size it
+	   properly. Then use it to build the assignment statement. */
+      etmp = elaborate_rval_expr(des, scope, lv->expr_type(), lv->lwidth(),
+                                 expr2_);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: FOR increment assign: "
+		 << sig->name() << " = " << *etmp << endl;
+      }
+
       NetAssign*step = new NetAssign(lv, etmp);
       step->set_line(*this);
 
@@ -3739,7 +3655,6 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	/* Elaborate the condition expression. Try to evaluate it too,
 	   in case it is a constant. This is an interesting case
 	   worthy of a warning. */
-      probe_expr_width(des, scope, cond_);
       NetExpr*ce = elab_and_eval(des, scope, cond_, -1);
       if (ce == 0) {
 	    delete top;
@@ -3830,7 +3745,6 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      probe_expr_width(des, scope, expr_);
       NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
       if (expr == 0) {
 	    cerr << get_fileline() << ": Unable to elaborate"
@@ -3954,9 +3868,10 @@ NetProc* PTrigger::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PWhile::elaborate(Design*des, NetScope*scope) const
 {
-      probe_expr_width(des, scope, cond_);
       NetExpr*tmp = elab_and_eval(des, scope, cond_, -1);
+      tmp->set_line(*this);
       NetWhile*loop = new NetWhile(tmp, statement_->elaborate(des, scope));
+      loop->set_line(*this);
       return loop;
 }
 
@@ -4057,8 +3972,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	   them for the timescale/precision of the scope. */
       for (unsigned idx = 0 ;  idx < ndelays ;  idx += 1) {
 	    PExpr*exp = delays[idx];
-	    probe_expr_width(des, scope, exp);
-	    NetExpr*cur = elab_and_eval(des, scope, exp, 0);
+	    NetExpr*cur = elab_and_eval(des, scope, exp, -1);
 
 	    if (NetEConst*con = dynamic_cast<NetEConst*> (cur)) {
 		  verinum fn = con->value();
@@ -4096,7 +4010,6 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
       NetNet*condit_sig = 0;
       if (conditional && condition) {
 
-	    probe_expr_width(des, scope, condition);
 	    NetExpr*tmp = elab_and_eval(des, scope, condition, -1);
 	    ivl_assert(*condition, tmp);
 
@@ -4253,7 +4166,6 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	    for (specparam_it_t cur = specparams.begin()
 		       ; cur != specparams.end() ; ++ cur ) {
 
-		  probe_expr_width(des, scope, (*cur).second);
 		  need_constant_expr = true;
 		  NetExpr*val = elab_and_eval(des, scope, (*cur).second, -1);
 		  need_constant_expr = false;

@@ -29,7 +29,7 @@ class PExpr;
 
 /*
  * This class represents a parsed UDP. This is a much simpler object
- * then a module or macromodule.
+ * than a module or macromodule.
  *
  *   - all ports are scalar,
  *   - pin 0 (the first port) is always output,

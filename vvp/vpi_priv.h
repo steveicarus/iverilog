@@ -1,7 +1,7 @@
 #ifndef __vpi_priv_H
 #define __vpi_priv_H
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -37,6 +37,18 @@
  * program uses to implement the public interface in the vpi_user.h
  * header file elsewhere.
  */
+
+/*
+ * Routines/definitions used to build the file/line number tracing object.
+ */
+#define _vpiFileLine    0x1000003
+#define _vpiDescription 0x1000004
+
+extern bool show_file_line;
+extern bool code_is_instrumented;
+
+extern vpiHandle vpip_build_file_line(char*description,
+                                      long file_idx, long lineno);
 
 /*
  * Private VPI properties that are only used in the cleanup code.

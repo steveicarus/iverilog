@@ -350,7 +350,7 @@ class vvp_fun_event_or_aa : public vvp_fun_event_or, public automatic_hooks_s {
 };
 
 /*
- * A named event is simpler then a vvp_fun_edge in that it triggers on
+ * A named event is simpler than a vvp_fun_edge in that it triggers on
  * any input at all to port-0. The idea here is that behavioral code
  * can use a %set/v instruction to trigger the event.
  */

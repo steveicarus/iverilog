@@ -29,7 +29,7 @@
 */
 class vhdlreal
 {
-    public: 
+    public:
       friend std::ostream& operator<< (std::ostream&, const vhdlreal&);
       friend vhdlreal operator+ (const vhdlreal&, const vhdlreal&);
       friend vhdlreal operator- (const vhdlreal&, const vhdlreal&);

@@ -77,6 +77,11 @@ const NetExpr* NetAssign_::get_base() const
       return base_;
 }
 
+ivl_select_type_t NetAssign_::select_type() const
+{
+      return sel_type_;
+}
+
 unsigned NetAssign_::lwidth() const
 {
       return lwid_;
@@ -120,10 +125,12 @@ NetNet* NetAssign_::sig() const
       return sig_;
 }
 
-void NetAssign_::set_part(NetExpr*base, unsigned wid)
+void NetAssign_::set_part(NetExpr*base, unsigned wid,
+                          ivl_select_type_t sel_type)
 {
       base_ = base;
       lwid_ = wid;
+      sel_type_ = sel_type;
 }
 
 /*

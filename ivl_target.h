@@ -229,6 +229,12 @@ typedef enum ivl_expr_type_e {
       IVL_EX_UNARY = 14
 } ivl_expr_type_t;
 
+typedef enum ivl_select_type_e {
+      IVL_SEL_OTHER = 0,
+      IVL_SEL_IDX_UP = 1,
+      IVL_SEL_IDX_DOWN = 2
+} ivl_select_type_t;
+
 /* This is the type code for an ivl_net_logic_t object. */
 typedef enum ivl_logic_e {
       IVL_LO_NONE   =  0,
@@ -844,6 +850,8 @@ extern ivl_expr_t  ivl_expr_parm(ivl_expr_t net, unsigned idx);
 extern unsigned    ivl_expr_parms(ivl_expr_t net);
   /* IVL_EX_CONCAT */
 extern unsigned    ivl_expr_repeat(ivl_expr_t net);
+  /* IVL_EX_SELECT */
+extern ivl_select_type_t ivl_expr_sel_type(ivl_expr_t net);
   /* IVL_EX_EVENT */
 extern ivl_event_t ivl_expr_event(ivl_expr_t net);
   /* IVL_EX_SCOPE */
@@ -1040,6 +1048,7 @@ extern unsigned    ivl_udp_rows(ivl_udp_t net);
 extern const char* ivl_udp_name(ivl_udp_t net);
 extern const char* ivl_udp_file(ivl_udp_t net);
 extern unsigned    ivl_udp_lineno(ivl_udp_t net);
+extern const char* ivl_udp_port(ivl_udp_t net, unsigned idx);
 
 extern const char* ivl_lpm_file(ivl_lpm_t net);
 extern unsigned    ivl_lpm_lineno(ivl_lpm_t net);
@@ -1408,6 +1417,7 @@ extern unsigned    ivl_lval_width(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net); /* XXXX Obsolete? */
 extern ivl_expr_t  ivl_lval_idx(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_part_off(ivl_lval_t net);
+extern ivl_select_type_t ivl_lval_sel_type(ivl_lval_t net);
 extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);
 
 
@@ -1702,6 +1712,7 @@ extern ivl_parameter_t ivl_scope_param(ivl_scope_t net, unsigned idx);
 extern ivl_scope_t  ivl_scope_parent(ivl_scope_t net);
 extern unsigned     ivl_scope_ports(ivl_scope_t net);
 extern ivl_signal_t ivl_scope_port(ivl_scope_t net, unsigned idx);
+extern ivl_nexus_t  ivl_scope_mod_port(ivl_scope_t net, unsigned idx);
 extern unsigned     ivl_scope_sigs(ivl_scope_t net);
 extern ivl_signal_t ivl_scope_sig(ivl_scope_t net, unsigned idx);
 extern unsigned     ivl_scope_switches(ivl_scope_t net);

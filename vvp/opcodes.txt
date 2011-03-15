@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -383,6 +383,18 @@ register to read the repetition count from (signed or unsigned).
 event control information and the other %evctl statements assert
 that this information has been cleared. You can get an assert if
 this information is not managed correctly.
+
+
+* %file_line <file> <line> <description>
+
+This command emits the provided file and line information along with
+the description when it is executed. The output is sent to stderr and
+the format of the output is:
+   <file>:<line>: <description>
+<file> is the unsigned numeric file index.
+<line> is the unsigned line number.
+<description> is a string, if string is 0 then the following default
+message is used: "Procedural tracing.".
 
 
 * %force/v <label>, <bit>, <wid>

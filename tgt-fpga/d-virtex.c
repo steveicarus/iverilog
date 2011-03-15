@@ -206,7 +206,7 @@ static void virtex_or_wide(ivl_net_logic_t net)
 
 /*
  * Pick off the cases where there is a Virtex specific implementation
- * that is better then the generic Xilinx implementation. Route the
+ * that is better than the generic Xilinx implementation. Route the
  * remaining to the base xilinx_logic implementation.
  */
 void virtex_logic(ivl_net_logic_t net)

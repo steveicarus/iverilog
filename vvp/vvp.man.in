@@ -101,7 +101,7 @@ the expense of some file size.
 .ns
 .TP
 .B -lx2\fR|\fP-lx2-speed\fR|\fP-lx2-space
-The LXT2 format is slower then LXT but usually takes less space, and
+The LXT2 format is slower than LXT but usually takes less space, and
 is written out incrementally. Thus, you can view lxt2 files while a
 simulation is still running (or paused) or if your simulation crashes
 or is killed, you still have a useful dump. The \fB\-lxt2\-speed\fP

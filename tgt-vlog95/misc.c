@@ -16,6 +16,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+# include <ctype.h>
 # include <stdlib.h>
 # include <string.h>
 # include "config.h"
@@ -61,13 +62,109 @@ void emit_scaled_delay(ivl_scope_t scope, uint64_t delay)
       free(frac);
 }
 
+static void emit_delay(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
+{
+	/* A delay in a continuous assignment can also be a continuous
+	 * assignment expression. */
+      if (ivl_expr_type(expr) == IVL_EX_SIGNAL) {
+	    ivl_signal_t sig = ivl_expr_signal(expr);
+	    if (ivl_signal_local(sig)) {
+		  assert(! is_stmt);
+		  emit_nexus_as_ca(scope, ivl_signal_nex(sig, 0));
+		  return;
+	    }
+      }
+      emit_expr(scope, expr, 0);
+}
+
+/*
+ * Check to see if the bit based expression is of the form (expr) * <scale>
+ */
+static unsigned check_scaled_expr(ivl_expr_t expr, uint64_t scale,
+                                  const char *msg, unsigned must_match)
+{
+      uint64_t scale_val;
+      int rtype;
+      if ((ivl_expr_type(expr) != IVL_EX_BINARY) ||
+          (ivl_expr_opcode(expr) != '*') ||
+          (ivl_expr_type(ivl_expr_oper2(expr)) != IVL_EX_NUMBER)) {
+	    fprintf(stderr, "%s:%u: vlog95 error: %s expression/value "
+	                    "cannot be scaled.\n ",
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr), msg);
+	    vlog_errors += 1;
+	    return 0;
+      }
+      scale_val = get_uint64_from_number(ivl_expr_oper2(expr), &rtype);
+      if (rtype > 0) {
+	    fprintf(stderr, "%s:%u: vlog95 error: %s expression/value "
+	                    "scale coefficient was greater than 64 bits "
+	                    "(%d).\n", ivl_expr_file(expr),
+	                    ivl_expr_lineno(expr), msg, rtype);
+	    vlog_errors += 1;
+	    return 0;
+      }
+      if (rtype < 0) {
+	    fprintf(stderr, "%s:%u: vlog95 error: %s expression/value "
+	                    "scale coefficient has an undefined bit.\n",
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr), msg);
+	    vlog_errors += 1;
+	    return 0;
+      }
+      if (scale != scale_val) {
+	    if (must_match) {
+		  fprintf(stderr, "%s:%u: vlog95 error: %s expression/value "
+		                  "scale coefficient did not match expected "
+		                  "value (%"PRIu64" != %"PRIu64").\n",
+		                  ivl_expr_file(expr), ivl_expr_lineno(expr),
+		                  msg, scale, scale_val);
+		  vlog_errors += 1;
+		  return 0;
+	    }
+	    return 2;
+      }
+	/* Yes, this expression is of the correct form. */
+      return 1;
+}
+
+/*
+ * Check to see if the real expression is of the form (expr) * <scale>
+ */
+static unsigned check_scaled_real_expr(ivl_expr_t expr, double scale)
+{
+      double scale_val;
+      if ((ivl_expr_type(expr) != IVL_EX_BINARY) ||
+          (ivl_expr_opcode(expr) != '*') ||
+          (ivl_expr_type(ivl_expr_oper2(expr)) != IVL_EX_REALNUM)) {
+	    fprintf(stderr, "%s:%u: vlog95 error: Variable real time unit "
+	                    " expression/value cannot be scaled.\n ",
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr));
+	    vlog_errors += 1;
+	    return 0;
+      }
+      scale_val = ivl_expr_dvalue(ivl_expr_oper2(expr));
+      if (scale != scale_val) {
+	    fprintf(stderr, "%s:%u: vlog95 error: Variable real time unit "
+	                    "expression/value scale coefficient did not "
+	                    "match expected value (%g != %g).\n",
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr),
+	                    scale, scale_val);
+	    vlog_errors += 1;
+	    return 0;
+      }
+	/* Yes, this expression is of the correct form. */
+      return 1;
+}
+
 /*
  * Emit a constant or variable delay that has been rescaled to the given
  * scopes timescale.
  */
-void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr)
+void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
 {
-      if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
+      ivl_expr_type_t type = ivl_expr_type(expr);
+      if (type == IVL_EX_DELAY) {
+	    emit_scaled_delay(scope, ivl_expr_delay_val(expr));
+      } else if (type == IVL_EX_NUMBER) {
 	    assert(! ivl_expr_signed(expr));
 	    int rtype;
 	    uint64_t value = get_uint64_from_number(expr, &rtype);
@@ -93,80 +190,82 @@ void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr)
       } else {
 	    int exponent = ivl_scope_time_units(scope) - sim_precision;
 	    assert(exponent >= 0);
-	    if (exponent == 0) emit_expr(scope, expr, 0);
-		    /* A real delay variable is not scaled by the compiler. */
-	    else if (ivl_expr_type(expr) == IVL_EX_SIGNAL) {
-		  ivl_signal_t sig = ivl_expr_signal(expr);
-		  if (ivl_signal_data_type(sig) != IVL_VT_REAL) {
+	    if ((exponent == 0) && (type == IVL_EX_SIGNAL)) {
+		  emit_delay(scope, expr, is_stmt);
+	      /* A real delay variable is not scaled by the compiler. */
+	    } else if (type == IVL_EX_SIGNAL) {
+		  if (is_stmt) {
 			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Only real "
-			                "delay variables are scaled at run "
-			                "time.\n", ivl_expr_file(expr),
+			fprintf(stderr, "%s:%u: vlog95 error: Only continuous "
+			                "assignment delay variables are scaled "
+			                "at run time.\n", ivl_expr_file(expr),
 			                ivl_expr_lineno(expr));
 			vlog_errors += 1;
 			return;
 		  }
-		  emit_expr(scope, expr, 0);
-		  return;
+		  emit_delay(scope, expr, is_stmt);
 	    } else {
-		  uint64_t scale_val, scale = 1;
-		  int rtype;
+		  uint64_t iscale = 1;
+		  unsigned rtn;
 		  assert(! ivl_expr_signed(expr));
-		    /* This is as easy as removing the multiple that was
-		     * added to scale the value to the simulation time,
-		     * but we need to verify that the scaling value is
-		     * correct first. */
-		  if ((ivl_expr_type(expr) != IVL_EX_BINARY) ||
-		      (ivl_expr_opcode(expr) != '*') ||
-		      (ivl_expr_type(ivl_expr_oper2(expr)) != IVL_EX_NUMBER)) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Variable time "
-			                "expression/value cannot be scaled.\n ",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr));
-			vlog_errors += 1;
-			return;
-		  }
-		  scale_val = get_uint64_from_number(ivl_expr_oper2(expr),
-		                                     &rtype);
-		  if (rtype > 0) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Variable time "
-			                "expression/value scale coefficient "
-			                "was greater then 64 bits (%d).\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr),
-			                rtype);
-			vlog_errors += 1;
-			return;
-		  }
-		  if (rtype < 0) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Variable time "
-			                "expression/value scale coefficient "
-			                "has an undefined bit.\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr));
-			vlog_errors += 1;
-			return;
-		  }
+		    /* Calculate the integer time scaling coefficient. */
 		  while (exponent > 0) {
-			scale *= 10;
+			iscale *= 10;
 			exponent -= 1;
 		  }
-		  if (scale !=  scale_val) {
-			fprintf(vlog_out, "<invalid>");
-			fprintf(stderr, "%s:%u: vlog95 error: Variable time "
-			                "expression/value scale coefficient "
-			                "did not match expected value "
-			                "(%"PRIu64" != %"PRIu64").\n",
-			                ivl_expr_file(expr),
-			                ivl_expr_lineno(expr),
-			                scale, scale_val);
-			vlog_errors += 1;
+		    /* Check to see if this is an integer time value. */
+		  rtn = check_scaled_expr(expr, iscale, "Variable time", 0);
+		    /* This may be a scaled real value. */
+		  if (rtn == 2){
+			ivl_expr_t tmp_expr;
+			uint64_t rprec = 1;
+			  /* This could be a scaled real time so calculate
+			   * the real time scaling coefficients and check
+			   * that the expression matches (statements only). */
+			exponent = ivl_scope_time_precision(scope) -
+			           sim_precision;
+			assert(exponent >= 0);
+			while (exponent > 0) {
+			      rprec *= 10;
+			      exponent -= 1;
+			}
+			  /* Verify that the precision scaling is correct. */
+			if (! check_scaled_expr(expr, rprec,
+			                        "Variable real time prec.",
+			                        1)) {
+			      fprintf(vlog_out, "<invalid>");
+			      return;
+			}
+			  /* Verify that the left operator is a real to
+			   * integer cast. */
+			tmp_expr = ivl_expr_oper1(expr);
+			if ((ivl_expr_type(tmp_expr) != IVL_EX_UNARY) ||
+		            (ivl_expr_opcode(tmp_expr) != 'i')) {
+			      fprintf(vlog_out, "<invalid>");
+			      fprintf(stderr, "%s:%u: vlog95 error: Real time "
+			                      "value does not have a cast to "
+			                      "integer.\n",
+			                      ivl_expr_file(expr),
+			                      ivl_expr_lineno(expr));
+			      vlog_errors += 1;
+			      return;
+			}
+			  /* Check that the cast value is scaled correctly. */
+			assert(iscale >= rprec);
+			tmp_expr = ivl_expr_oper1(tmp_expr);
+			assert(ivl_expr_value(tmp_expr) == IVL_VT_REAL);
+			if (! check_scaled_real_expr(tmp_expr, iscale/rprec)) {
+			      fprintf(vlog_out, "<invalid>");
+			      return;
+			}
+			assert(is_stmt);
+			emit_delay(scope, ivl_expr_oper1(tmp_expr), is_stmt);
+			return;
+		  } else if (rtn == 1) {
+			emit_delay(scope, ivl_expr_oper1(expr), is_stmt);
 			return;
 		  }
-		  emit_expr(scope, ivl_expr_oper1(expr), 0);
+		  fprintf(vlog_out, "<invalid>");
 	    }
       }
 }
@@ -255,42 +354,21 @@ void emit_scaled_range(ivl_scope_t scope, ivl_expr_t expr, unsigned width,
                        int msb, int lsb)
 {
       if (msb >= lsb) {
-	    if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
-		  int rtype;
-		  int64_t value = get_valid_int64_from_number(expr, &rtype,
-		                        "range value");
-		  if (rtype) return;
-		  value += lsb;
-		  fprintf(vlog_out, "[%"PRId64":%"PRId64"]",
-		                    value + (int64_t)(width - 1), value);
-	    } else {
-// HERE: Need to scale the select expression and create a concatenation of
-//       variable bit selects for that. We need the signal name as well.
-//       As an optimization determine if this is an up or down to simplify
-//       the generated expression.
-		  fprintf(vlog_out, "[<invalid>:<invalid>]");
-		  fprintf(stderr, "%s:%u: vlog95 error: Indexed part-selects "
-		                  "are not currently supported.\n",
-		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
-		  vlog_errors += 1;
-	    }
+	    int rtype;
+	    int64_t value = get_valid_int64_from_number(expr, &rtype,
+	                                               "range value");
+	    if (rtype) return;
+	    value += lsb;
+	    fprintf(vlog_out, "[%"PRId64":%"PRId64"]",
+	                      value + (int64_t)(width - 1), value);
       } else {
-	    if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
-		  int rtype;
-		  int64_t value = get_valid_int64_from_number(expr, &rtype,
-		                        "range value");
-		  if (rtype) return;
-		  value = (int64_t)lsb - value;
-		  fprintf(vlog_out, "[%"PRId64":%"PRId64"]",
-		                    value - (int64_t)(width - 1), value);
-	    } else {
-// HERE: Do basically the same as above.
-		  fprintf(vlog_out, "[<invalid>:<invalid>]");
-		  fprintf(stderr, "%s:%u: vlog95 error: Indexed part-selects "
-		                  "are not currently supported.\n",
-		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
-		  vlog_errors += 1;
-	    }
+	    int rtype;
+	    int64_t value = get_valid_int64_from_number(expr, &rtype,
+	                                               "range value");
+	    if (rtype) return;
+	    value = (int64_t)lsb - value;
+	    fprintf(vlog_out, "[%"PRId64":%"PRId64"]",
+	                      value - (int64_t)(width - 1), value);
       }
 }
 
@@ -377,8 +455,8 @@ static unsigned find_signal_in_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 			      tmp_idx += ivl_signal_array_base(sig);
 			      fprintf(stderr, "[%"PRId64"]", tmp_idx);
 			}
-			fprintf(stderr, ") found for nexus ");
-			fprintf(stderr, "(%s", ivl_signal_basename(use_sig));
+			fprintf(stderr, ") found for nexus (%s",
+			                ivl_signal_basename(use_sig));
 			if (is_array) fprintf(stderr, "[%"PRId64"]", array_idx);
 			fprintf(stderr, ")\n");
 		  } else {
@@ -397,9 +475,8 @@ static unsigned find_signal_in_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 	    }
       }
 
-// HERE: Check bit, part, etc. selects to make sure they work as well.
       if (use_sig) {
-	    fprintf(vlog_out, "%s", ivl_signal_basename(use_sig));
+	    emit_id(ivl_signal_basename(use_sig));
 	    if (is_array) fprintf(vlog_out, "[%"PRId64"]", array_idx);
 	    return 1;
       }
@@ -454,12 +531,16 @@ static unsigned find_const_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 // HERE: Does this work correctly with an array reference created from @*?
 void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 {
+      ivl_scope_t mod_scope;
 	/* First look in the local scope for the nexus name. */
       if (find_signal_in_nexus(scope, nex)) return;
 
 	/* If the signal was not found in the passed scope then look in
 	 * the module scope if the passed scope was not the module scope. */
-      if (find_signal_in_nexus(get_module_scope(scope), nex)) return;
+      mod_scope = get_module_scope(scope);
+      if (mod_scope != scope) {
+	    if (find_signal_in_nexus(mod_scope, nex)) return;
+      }
 
 	/* If there is no signals driving this then look for a constant. */
       if (find_const_nexus(scope, nex)) return;
@@ -468,6 +549,8 @@ void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 //       Then look for down scopes and then any scope. For all this warn if
 //       multiples are found in a given scope. This all needs to be before
 //       the constant code.
+      fprintf(stderr, "?:?: vlog95 sorry: Unable to find nexus name.\n");
+      vlog_errors += 1;
       fprintf(vlog_out, "<missing>");
 }
 
@@ -486,6 +569,19 @@ ivl_scope_t get_module_scope(ivl_scope_t scope)
       return scope;
 }
 
+static void emit_scope_piece(ivl_scope_t scope, ivl_scope_t call_scope)
+{
+      ivl_scope_t parent = ivl_scope_parent(call_scope);
+	/* If we are not at the top of the scope (parent != 0) and the two
+	 * scopes do not match then print the parent scope. */
+      if ((parent != 0) && (scope != parent)) {
+	    emit_scope_piece(scope, parent);
+      }
+	/* Print the base scope. */
+      emit_id(ivl_scope_basename(call_scope));
+      fprintf(vlog_out, ".");
+}
+
 /*
  * This routine emits the appropriate string to call the call_scope from the
  * given scope. If the module scopes for the two match then do nothing. If
@@ -498,28 +594,46 @@ void emit_scope_module_path(ivl_scope_t scope, ivl_scope_t call_scope)
 {
       ivl_scope_t mod_scope = get_module_scope(scope);
       ivl_scope_t call_mod_scope = get_module_scope(call_scope);
+
+      if (mod_scope == call_mod_scope) return;
+      emit_scope_piece(mod_scope, call_mod_scope);
+}
+
+/* This is the same as emit_scope_module_path() except we need to add down
+ * references for variables, etc. */
+void emit_scope_call_path(ivl_scope_t scope, ivl_scope_t call_scope)
+{
+      ivl_scope_t mod_scope = get_module_scope(scope);
+      ivl_scope_t call_mod_scope = get_module_scope(call_scope);
+
       if (mod_scope != call_mod_scope) {
-	      /* Trim off the top of the call name if it exactly matches
-	       * the module scope of the caller. */
-	    char *sc_name = strdup(ivl_scope_name(mod_scope));
-            const char *sc_ptr = sc_name;
-	    char *call_name = strdup(ivl_scope_name(call_mod_scope));
-	    const char *call_ptr = call_name;
-	    while ((*sc_ptr == *call_ptr) &&
-	           (*sc_ptr != 0) && (*call_ptr != 0)) {
-		  sc_ptr += 1;
-		  call_ptr += 1;
+	    emit_scope_piece(mod_scope, call_mod_scope);
+      } else if (scope != call_scope) {
+	    ivl_scope_t parent;
+	      /* We only emit a scope path if the scope is a parent of the
+	       * call scope. */
+	    for (parent = ivl_scope_parent(call_scope);
+	         parent != 0;
+	         parent = ivl_scope_parent(parent)) {
+		  if (parent == scope) {
+			emit_scope_piece(scope, call_scope);
+			return;
+		  }
 	    }
-	    if (*sc_ptr == 0) {
-		  assert(*call_ptr == '.');
-		  call_ptr += 1;
-	    } else {
-		  call_ptr = call_name;
-	    }
-	    fprintf(vlog_out, "%s.", call_ptr);
-	    free(sc_name);
-	    free(call_name);
       }
+}
+
+static void emit_scope_path_piece(ivl_scope_t scope, ivl_scope_t call_scope)
+{
+      ivl_scope_t parent = ivl_scope_parent(call_scope);
+	/* If we are not at the top of the scope (parent != 0) and the two
+	 * scopes do not match then print the parent scope. */
+      if ((parent != 0) && (scope != parent)) {
+	    emit_scope_path_piece(scope, parent);
+	    fprintf(vlog_out, ".");
+      }
+	/* Print the base scope. */
+      emit_id(ivl_scope_basename(call_scope));
 }
 
 /*
@@ -534,28 +648,34 @@ void emit_scope_path(ivl_scope_t scope, ivl_scope_t call_scope)
 {
       ivl_scope_t mod_scope = get_module_scope(scope);
       ivl_scope_t call_mod_scope = get_module_scope(call_scope);
+
       if (mod_scope == call_mod_scope) {
-	    fprintf(vlog_out, "%s", ivl_scope_basename(call_scope));
+	    emit_id(ivl_scope_basename(call_scope));
       } else {
-	      /* Trim off the top of the call name if it exactly matches
-	       * the module scope of the caller. */
-	    char *sc_name = strdup(ivl_scope_name(mod_scope));
-            const char *sc_ptr = sc_name;
-	    char *call_name = strdup(ivl_scope_name(call_scope));
-	    const char *call_ptr = call_name;
-	    while ((*sc_ptr == *call_ptr) &&
-	           (*sc_ptr != 0) && (*call_ptr != 0)) {
-		  sc_ptr += 1;
-		  call_ptr += 1;
-	    }
-	    if (*sc_ptr == 0) {
-		  assert(*call_ptr == '.');
-		  call_ptr += 1;
-	    } else {
-		  call_ptr = call_name;
-	    }
-	    fprintf(vlog_out, "%s", call_ptr);
-	    free(sc_name);
-	    free(call_name);
+	    emit_scope_path_piece(mod_scope, call_scope);
       }
+}
+
+static unsigned is_escaped(const char *id)
+{
+      assert(id);
+	/* The first digit must be alpha or '_' to be a normal id. */
+      if (isalpha((int)id[0]) || id[0] == '_') {
+	    unsigned idx;
+	    for (idx = 1; id[idx] != '\0'; idx += 1) {
+		  if (! (isalnum((int)id[idx]) ||
+		         id[idx] == '_' || id[idx] == '$')) {
+			return 1;
+		  }
+	    }
+	      /* We looked at all the digits, so this is a normal id. */
+	    return 0;
+      }
+      return 1;
+}
+
+void emit_id(const char *id)
+{
+      if (is_escaped(id)) fprintf(vlog_out, "\\%s ", id);
+      else fprintf(vlog_out, "%s", id);
 }

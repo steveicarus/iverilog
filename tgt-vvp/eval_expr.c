@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -750,7 +750,7 @@ static struct vector_info draw_binary_expr_lor(ivl_expr_t expr, unsigned wid,
       if (wid == 1) {
 	    if (lv.base >= 4 && lv.base < 8) {
 		  unsigned tmp = allocate_vector(1);
-		  fprintf(vvp_out, "   %%mov %u, %u, 1;\n", tmp, lv.base);
+		  fprintf(vvp_out, "    %%mov %u, %u, 1;\n", tmp, lv.base);
 		  lv.base = tmp;
 	    }
 	    return lv;
@@ -932,7 +932,7 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 	    if (number_is_immediate(le,16,0) && !number_is_unknown(le)) {
 		  long imm = get_number_immediate(le);
 		  assert(imm >= 0);
-		  fprintf(vvp_out, "   %%cmpi/%c %u, %ld, %u;\n", s_flag,
+		  fprintf(vvp_out, "    %%cmpi/%c %u, %ld, %u;\n", s_flag,
 			  rv.base, imm, rv.wid);
 	    } else {
 		  lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
@@ -948,7 +948,7 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 	    if (number_is_immediate(re,16,0) && !number_is_unknown(re)) {
 		  long imm = get_number_immediate(re);
 		  assert(imm >= 0);
-		  fprintf(vvp_out, "   %%cmpi/%c %u, %ld, %u;\n", s_flag,
+		  fprintf(vvp_out, "    %%cmpi/%c %u, %ld, %u;\n", s_flag,
 			  lv.base, imm, lv.wid);
 	    } else {
 		  rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
@@ -964,7 +964,7 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 	    if (number_is_immediate(re,16,0) && !number_is_unknown(re)) {
 		  long imm = get_number_immediate(re);
 		  assert(imm >= 0);
-		  fprintf(vvp_out, "   %%cmpi/%c %u, %ld, %u;\n", s_flag,
+		  fprintf(vvp_out, "    %%cmpi/%c %u, %ld, %u;\n", s_flag,
 			  lv.base, imm, lv.wid);
 	    } else {
 		  rv = draw_eval_expr_wid(re, owid, STUFF_OK_XZ);
@@ -979,7 +979,7 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 	    if (number_is_immediate(le,16,0) && !number_is_unknown(le)) {
 		  long imm = get_number_immediate(le);
 		  assert(imm >= 0);
-		  fprintf(vvp_out, "   %%cmpi/%c %u, %ld, %u;\n", s_flag,
+		  fprintf(vvp_out, "    %%cmpi/%c %u, %ld, %u;\n", s_flag,
 			  rv.base, imm, rv.wid);
 	    } else {
 		  lv = draw_eval_expr_wid(le, owid, STUFF_OK_XZ);
@@ -1039,7 +1039,7 @@ static struct vector_info draw_logic_immediate(ivl_expr_t expr,
       switch (ivl_expr_opcode(expr)) {
 
 	  case '&':
-	    fprintf(vvp_out, "   %%andi %u, %lu, %u;\n", lv.base, imm, lv.wid);
+	    fprintf(vvp_out, "    %%andi %u, %lu, %u;\n", lv.base, imm, lv.wid);
 	    break;
 
 	  default:
@@ -1158,8 +1158,9 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t expr, unsigned wid)
 	  case 'l': /* << (left shift) */
 	    lv = draw_eval_expr_wid(le, wid, 0);
 
-	      /* shifting 0 gets 0. */
-	    if (lv.base == 0)
+	      /* Shifting 0 gets 0, if we can be sure the shift value
+                 contains no 'x' or 'z' bits. */
+	    if ((lv.base == 0) && (ivl_expr_value(re) == IVL_VT_BOOL))
 		  return lv;
 
 	    if (lv.base < 4) {
@@ -1194,8 +1195,9 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t expr, unsigned wid)
 		  lv = draw_eval_expr_wid(le, ivl_expr_width(le), 0);
 	    }
 
-	      /* shifting 0 gets 0. */
-	    if (lv.base == 0)
+	      /* Shifting 0 gets 0, if we can be sure the shift value
+                 contains no 'x' or 'z' bits. */
+	    if ((lv.base == 0) && (ivl_expr_value(re) == IVL_VT_BOOL))
 		  return lv;
 
 	    if (lv.base < 4) {
@@ -1230,13 +1232,15 @@ static struct vector_info draw_binary_expr_lrs(ivl_expr_t expr, unsigned wid)
 		  lv = draw_eval_expr_wid(le, ivl_expr_width(le), 0);
 	    }
 
-	      /* shifting 0 gets 0. */
-	    if (lv.base == 0)
+	      /* Shifting 0 gets 0, if we can be sure the shift value
+                 contains no 'x' or 'z' bits. */
+	    if ((lv.base == 0) && (ivl_expr_value(re) == IVL_VT_BOOL))
 		  return lv;
 
-	      /* Sign extend any constant begets itself, if this
-		 expression is signed. */
-	    if ((lv.base < 4) && (ivl_expr_signed(expr)))
+	      /* Similarly, sign extending any constant bit begets itself,
+                 if this expression is signed. */
+	    if ((lv.base < 4) && ivl_expr_signed(expr)
+                && (ivl_expr_value(re) == IVL_VT_BOOL))
 		  return lv;
 
 	    if (lv.base < 4) {
@@ -1984,7 +1988,7 @@ static struct vector_info draw_pad_expr(ivl_expr_t expr, unsigned wid)
 	    return res;
       }
 
-	/* So now we know that the subexpression is smaller then the
+	/* So now we know that the subexpression is smaller than the
 	   desired result (the usual case) so we build the
 	   result. Evaluate the subexpression into the target buffer,
 	   then pad it as appropriate. */
@@ -2441,7 +2445,7 @@ static void draw_select_signal_dest(ivl_expr_t expr,
 
 	/* Special case: If the operand is a signal (not an array) and
 	   the part select is coming from the LSB, and the part select
-	   is no larger then the signal itself, then we can load the
+	   is no larger than the signal itself, then we can load the
 	   value in place, directly. */
       if ((ivl_signal_dimensions(sig) == 0)
 	  && (ivl_expr_width(sube) >= dest.wid)
@@ -2597,7 +2601,7 @@ static struct vector_info draw_select_unsized_literal(ivl_expr_t expr,
 	    subv = res;
       }
 
-	/* If the subv result is narrower then the select width, then
+	/* If the subv result is narrower than the select width, then
 	   copy it into a wider vector. */
       if (subv.wid < wid && ivl_expr_signed(sube)) {
 	    res.base = allocate_vector(wid);
@@ -3008,7 +3012,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 		  break;
 	    }
 
-	      /* If the result needs to be bigger then the calculated
+	      /* If the result needs to be bigger than the calculated
 		 value, then write it into a padded vector. */
 	    if (res.wid < wid) {
 		  struct vector_info tmp;
@@ -3071,7 +3075,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
 	    }
 
-	      /* If the result needs to be bigger then the calculated
+	      /* If the result needs to be bigger than the calculated
 		 value, then write it into a passed vector. */
 	    if (res.wid < wid) {
 		  struct vector_info tmp;

@@ -183,24 +183,30 @@ static void emit_udp(ivl_udp_t udp)
       fprintf(vlog_out, "/* This primitive was originally defined in "
                         "file %s at line %u. */\n",
                         ivl_udp_file(udp), ivl_udp_lineno(udp));
-      fprintf(vlog_out, "primitive %s (", ivl_udp_name(udp));
-// HERE: we need to keep and export the real pin names.
-      fprintf(vlog_out, "out");
+      fprintf(vlog_out, "primitive ");
+      emit_id(ivl_udp_name(udp));
+      fprintf(vlog_out, " (");
+      emit_id(ivl_udp_port(udp, 0));
       count = ivl_udp_nin(udp);
       for (idx = 1; idx <= count; idx += 1) {
-	    fprintf(vlog_out, ", in%u", idx);
+	    fprintf(vlog_out, ", ");
+	    emit_id(ivl_udp_port(udp, idx));
       }
       fprintf(vlog_out, ");\n");
-// HERE: we need to keep and export the real pin names.
-      fprintf(vlog_out, "%*coutput out;\n", indent_incr, ' ');
+      fprintf(vlog_out, "%*coutput ", indent_incr, ' ');
+      emit_id(ivl_udp_port(udp, 0));
+      fprintf(vlog_out, ";\n");
       for (idx = 1; idx <= count; idx += 1) {
-	    fprintf(vlog_out, "%*cinput in%u;\n", indent_incr, ' ', idx);
+	    fprintf(vlog_out, "%*cinput ", indent_incr, ' ');
+	    emit_id(ivl_udp_port(udp, idx));
+	    fprintf(vlog_out, ";\n");
       }
       if (ivl_udp_sequ(udp)) {
 	    char init = ivl_udp_init(udp);
 	    fprintf(vlog_out, "\n");
-// HERE: we need to keep and export the real pin names.
-	    fprintf(vlog_out, "%*creg out;\n", indent_incr, ' ');
+	    fprintf(vlog_out, "%*creg ", indent_incr, ' ');
+	    emit_id(ivl_udp_port(udp, 0));
+	    fprintf(vlog_out, ";\n");
 	    switch (init) {
 	      case '0':
 	      case '1':
@@ -209,9 +215,9 @@ static void emit_udp(ivl_udp_t udp)
 		  init = 'x';
 		  break;
 	    }
-// HERE: we need to keep and export the real pin names.
-	    fprintf(vlog_out, "%*cinitial out = 1'b%c;\n",
-	                      indent_incr, ' ', init);
+	    fprintf(vlog_out, "%*cinitial ", indent_incr, ' ');
+	    emit_id(ivl_udp_port(udp, 0));
+	    fprintf(vlog_out, " = 1'b%c;\n", init);
       }
       fprintf(vlog_out, "\n");
       fprintf(vlog_out, "%*ctable\n", indent_incr, ' ');

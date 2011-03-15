@@ -68,6 +68,7 @@ ivl_expr_parm
 ivl_expr_parms
 ivl_expr_repeat
 ivl_expr_scope
+ivl_expr_sel_type
 ivl_expr_signal
 ivl_expr_signed
 ivl_expr_sized
@@ -134,6 +135,7 @@ ivl_lpm_width
 ivl_lval_idx
 ivl_lval_mux
 ivl_lval_part_off
+ivl_lval_sel_type
 ivl_lval_sig
 ivl_lval_width
 
@@ -187,6 +189,7 @@ ivl_scope_logs
 ivl_scope_log
 ivl_scope_lpms
 ivl_scope_lpm
+ivl_scope_mod_port
 ivl_scope_name
 ivl_scope_param
 ivl_scope_params
@@ -288,6 +291,7 @@ ivl_udp_file
 ivl_udp_lineno
 ivl_udp_name
 ivl_udp_nin
+ivl_udp_port
 ivl_udp_row
 ivl_udp_rows
 ivl_udp_sequ

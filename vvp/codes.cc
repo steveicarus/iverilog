@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -109,6 +109,8 @@ void codespace_delete(void)
 			vpi_call_delete((cur+idx)->handle);
 		  } else if ((cur+idx)->opcode == &of_EXEC_UFUNC) {
 			exec_ufunc_delete((cur+idx));
+		  } else if ((cur+idx)->opcode == &of_FILE_LINE) {
+			delete((cur+idx)->handle);
 		  }
 		  if (count_opcodes == 0) break;
 	    }

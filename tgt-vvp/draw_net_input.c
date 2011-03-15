@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,6 +22,7 @@
 # include  <math.h>
 # include  <string.h>
 # include  <inttypes.h>
+# include  <limits.h>
 # include  <assert.h>
 # include  "ivl_alloc.h"
 
@@ -564,7 +565,7 @@ static void display_multi_driver_error(ivl_nexus_t nex, unsigned ndrivers,
                                        mdriver_type_t type)
 {
       unsigned idx;
-      unsigned scope_len = -1;
+      unsigned scope_len = UINT_MAX;
       ivl_signal_t sig = 0;
 	/* Find the signal. */
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {

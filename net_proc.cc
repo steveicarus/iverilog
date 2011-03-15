@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -100,8 +100,6 @@ void NetCase::set_case(unsigned idx, NetExpr*e, NetProc*p)
       assert(idx < nitems_);
       items_[idx].guard = e;
       items_[idx].statement = p;
-      if (items_[idx].guard)
-	    items_[idx].guard->set_width(expr_->expr_width());
 }
 
 NetDisable::NetDisable(NetScope*tgt)
@@ -169,4 +167,3 @@ const NetExpr* NetRepeat::expr() const
 {
       return expr_;
 }
-

@@ -426,7 +426,7 @@ static list<named_pexpr_t>* make_named_number(perm_string name, PExpr*val =0)
 %type <named_pexprs> port_name_list parameter_value_byname_list
 
 %type <named_pexpr> attribute
-%type <named_pexprs> attribute_list attribute_list_opt
+%type <named_pexprs> attribute_list attribute_instance_list attribute_list_opt
 
 %type <citem>  case_item
 %type <citems> case_items
@@ -522,10 +522,23 @@ real_or_realtime
      variety of different objects. The syntax inside the (* *) is a
      comma separated list of names or names with assigned values. */
 attribute_list_opt
-	: K_PSTAR attribute_list K_STARP { $$ = $2; }
-	| K_PSTAR K_STARP { $$ = 0; }
+	: attribute_instance_list
 	| { $$ = 0; }
 	;
+
+attribute_instance_list
+  : K_PSTAR K_STARP { $$ = 0; }
+  | K_PSTAR attribute_list K_STARP { $$ = $2; }
+  | attribute_instance_list K_PSTAR K_STARP { $$ = $1; }
+  | attribute_instance_list K_PSTAR attribute_list K_STARP
+      { list<named_pexpr_t>*tmp = $1;
+	if (tmp) {
+	    tmp->splice(tmp->end(), *$3);
+	    delete $3;
+	    $$ = tmp;
+	} else $$ = $3;
+      }
+  ;
 
 attribute_list
   : attribute_list ',' attribute
@@ -2254,7 +2267,7 @@ atom2_type
 
   /* An lpvalue is the expression that can go on the left side of a
      procedural assignment. This rule handles only procedural
-     assignments. It is more limited then the general expr_primary
+     assignments. It is more limited than the general expr_primary
      rule to reflect the rules for assignment l-values. */
 lpvalue
     : hierarchy_identifier
@@ -3924,7 +3937,7 @@ statement
 
   /* assign and deassign statements are procedural code to do
      structural assignments, and to turn that structural assignment
-     off. This stronger then any other assign, but weaker then the
+     off. This is stronger than any other assign, but weaker than the
      force assignments. */
 
 	: K_assign lpvalue '=' expression ';'
@@ -3957,7 +3970,7 @@ statement
   /* begin-end blocks come in a variety of forms, including named and
      anonymous. The named blocks can also carry their own reg
      variables, which are placed in the scope created by the block
-     name. These are handled by pushing the scope name then matching
+     name. These are handled by pushing the scope name, then matching
      the declarations. The scope is popped at the end of the block. */
 
   | K_begin statement_list K_end

@@ -1,7 +1,7 @@
 #ifndef __vpi_user_H
 #define __vpi_user_H
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -373,6 +373,8 @@ typedef struct t_vpi_delay  {
 #  define _vpiDelaySelMinimum 1
 #  define _vpiDelaySelTypical 2
 #  define _vpiDelaySelMaximum 3
+/* used in vvp/vpi_priv.h  0x1000003 */
+/* used in vvp/vpi_priv.h  0x1000004 */
 
 /* DELAY MODES */
 #define vpiNoDelay            1

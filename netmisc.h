@@ -1,7 +1,7 @@
 #ifndef __netmisc_H
 #define __netmisc_H
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -151,45 +151,38 @@ extern bool is_param_expr;
  * constant expression. If it cannot be evaluated, it returns whatever
  * it can. If the expression cannot be elaborated, return 0.
  *
- * The expr_width is the width of the context where the expression is
- * being elaborated, or -1 if the expression is self-determined width.
- *
- * The prune_width is the maximum width of the result, and is passed
- * to the eval_tree method of the expression to limit constant
- * results. The evaluation will prune any constant result down to the
- * prune_width (if >0) so should only be used at the point where it is
- * bound to the destination.
+ * The context_width is the width of the context where the expression is
+ * being elaborated, or -1 if the expression is self-determined, or -2
+ * if the expression is lossless self-determined (this last option is
+ * treated as standard self-determined if the gn_strict_expr_width flag
+ * is set).
  */
 class PExpr;
 
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
-			      const PExpr*pe, int expr_wid,
-			      int prune_width =-1);
+			      PExpr*pe, int context_width);
 
-void probe_expr_width(Design*des, NetScope*scope, PExpr*pe);
-
+/*
+ * This function is a variant of elab_and_eval that elaborates and
+ * evaluates the arguments of a system task.
+ */
+extern NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
+                                  unsigned arg_idx, PExpr*pe);
 /*
  * This function elaborates an expression as if it is for the r-value
- * of an assignment, The data_type_lv and expr_wid_lv are the type and
- * with of the l-value, and the expr is the expression to
- * elaborate. The result is the NetExpr elaborated and evaluated.
- * (See elab_expr.cc)
+ * of an assignment, The lv_type and lv_width are the type and width
+ * of the l-value, and the expr is the expression to elaborate. The
+ * result is the NetExpr elaborated and evaluated. (See elab_expr.cc)
  */
 extern NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
-				    ivl_variable_type_t data_type_lv,
-				    int expr_wid_lv, PExpr*expr);
+				    ivl_variable_type_t lv_type,
+				    unsigned lv_width, PExpr*expr);
 
 /*
- * Used by elaboration to suppress the sign of an operand if the other
- * is unsigned.
- */
-extern void suppress_binary_operand_sign_if_needed(NetExpr*lp, NetExpr*rp);
-
-/*
- * This procedure elaborates an expression and if the elaboration is
+ * This procedure evaluates an expression and if the evaluation is
  * successful the original expression is replaced with the new one.
  */
-void eval_expr(NetExpr*&expr, int prune_width =-1);
+void eval_expr(NetExpr*&expr, int context_width =-1);
 
 /*
  * Get the long integer value for the passed in expression, if

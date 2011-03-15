@@ -2095,21 +2095,9 @@ NetExpr::~NetExpr()
 {
 }
 
-bool NetExpr::has_sign() const
-{
-      return signed_flag_;
-}
-
 void NetExpr::cast_signed(bool flag)
 {
-      signed_flag_ = flag;
-}
-
-void NetExpr::expr_width(unsigned w)
-{
-	// Catch underflow wrap errors.
-      ivl_assert(*this, w < (UINT_MAX - 256));
-      width_ = w;
+      cast_signed_base_(flag);
 }
 
 bool NetExpr::has_width() const
@@ -2119,37 +2107,22 @@ bool NetExpr::has_width() const
 
 /*
  * Create a bitwise operator node from the opcode and the left and
- * right expressions. Don't worry about the width of the expression
- * yet, we'll get that from the l-value, whatever that turns out to
- * be. However, if we don't, our default will be the width of the
- * largest operand.
+ * right expressions.
  */
-NetEBBits::NetEBBits(char op__, NetExpr*l, NetExpr*r)
-: NetEBinary(op__, l, r)
+NetEBBits::NetEBBits(char op__, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag)
+: NetEBinary(op__, l, r, wid, signed_flag)
 {
-      if (r->expr_width() > l->expr_width())
-	    expr_width(r->expr_width());
-      else
-	    expr_width(l->expr_width());
 }
 
 NetEBBits::~NetEBBits()
 {
 }
 
-NetEBBits* NetEBBits::dup_expr() const
-{
-      NetEBBits*result = new NetEBBits(op_, left_->dup_expr(),
-				       right_->dup_expr());
-      return result;
-}
-
-NetEBinary::NetEBinary(char op__, NetExpr*l, NetExpr*r)
+NetEBinary::NetEBinary(char op__, NetExpr*l, NetExpr*r, unsigned wid, bool signed_flag)
 : op_(op__), left_(l), right_(r)
 {
-	// Binary expressions of all sorts are signed if both the
-	// arguments are signed.
-      cast_signed_base_( left_->has_sign() && right_->has_sign());
+      expr_width(wid);
+      cast_signed_base_(signed_flag);
 }
 
 NetEBinary::~NetEBinary()
@@ -2163,27 +2136,13 @@ bool NetEBinary::has_width() const
       return left_->has_width() && right_->has_width();
 }
 
-NetEBinary* NetEBinary::dup_expr() const
-{
-      assert(0);
-      return 0;
-}
-
 NetEBLogic::NetEBLogic(char op__, NetExpr*l, NetExpr*r)
-: NetEBinary(op__, l, r)
+: NetEBinary(op__, l, r, 1, false)
 {
-      expr_width(1);
 }
 
 NetEBLogic::~NetEBLogic()
 {
-}
-
-NetEBLogic* NetEBLogic::dup_expr() const
-{
-      NetEBLogic*result = new NetEBLogic(op_, left_->dup_expr(),
-					 right_->dup_expr());
-      return result;
 }
 
 NetEConst::NetEConst(const verinum&val)
@@ -2194,6 +2153,12 @@ NetEConst::NetEConst(const verinum&val)
 
 NetEConst::~NetEConst()
 {
+}
+
+void NetEConst::cast_signed(bool flag)
+{
+      cast_signed_base_(flag);
+      value_.has_sign(flag);
 }
 
 const verinum& NetEConst::value() const
@@ -2216,6 +2181,17 @@ ivl_variable_type_t NetEConst::expr_type() const
 	    return IVL_VT_BOOL;
 
       return IVL_VT_LOGIC;
+}
+
+void NetEConst::trim()
+
+{
+      if (value_.is_string())
+            return;
+
+      value_.has_len(false);
+      value_ = trim_vnum(value_);
+      expr_width(value_.len());
 }
 
 NetEConstParam::NetEConstParam(NetScope*s, perm_string n, const verinum&v)
@@ -2272,7 +2248,7 @@ NetESignal::NetESignal(NetNet*n)
 {
       net_->incr_eref();
       set_line(*n);
-      cast_signed(net_->get_signed());
+      cast_signed_base_(net_->get_signed());
 }
 
 NetESignal::NetESignal(NetNet*n, NetExpr*w)
@@ -2280,7 +2256,7 @@ NetESignal::NetESignal(NetNet*n, NetExpr*w)
 {
       net_->incr_eref();
       set_line(*n);
-      cast_signed(net_->get_signed());
+      cast_signed_base_(net_->get_signed());
 }
 
 NetESignal::~NetESignal()
@@ -2334,20 +2310,12 @@ ivl_variable_type_t NetESignal::expr_type() const
 * should have the same width. NOTE: This matching of the widths really
 * has to be done in elaboration.
 */
-NetETernary::NetETernary(NetExpr*c, NetExpr*t, NetExpr*f)
+NetETernary::NetETernary(NetExpr*c, NetExpr*t, NetExpr*f,
+                         unsigned wid, bool signed_flag)
 : cond_(c), true_val_(t), false_val_(f)
 {
-      if (type_is_vectorable(expr_type())) {
-	      // use widest result
-	    if (true_val_->expr_width() > false_val_->expr_width())
-		  expr_width(true_val_->expr_width());
-	    else
-		  expr_width(false_val_->expr_width());
-      } else {
-	    expr_width(1);
-      }
-
-      cast_signed(c->has_sign() && t->has_sign() && f->has_sign());
+      expr_width(wid);
+      cast_signed_base_(signed_flag);
 }
 
 NetETernary::~NetETernary()
@@ -2399,23 +2367,10 @@ ivl_variable_type_t NetETernary::expr_type() const
       return tru;
 }
 
-NetEUnary::NetEUnary(char op__, NetExpr*ex)
-: NetExpr(ex->expr_width()), op_(op__), expr_(ex)
+NetEUnary::NetEUnary(char op__, NetExpr*ex, unsigned wid, bool signed_flag)
+: NetExpr(wid), op_(op__), expr_(ex)
 {
-      switch (op_) {
-	  case '!':
-	    expr_width(1);
-	    break;
-      }
-      switch (op_) {
-	  case '-':
-	  case '+':
-	  case 'm': // abs()
-	    cast_signed(ex->has_sign());
-	    break;
-	  default:
-	    ;
-      }
+      cast_signed_base_(signed_flag);
 }
 
 NetEUnary::~NetEUnary()
@@ -2428,8 +2383,8 @@ ivl_variable_type_t NetEUnary::expr_type() const
       return expr_->expr_type();
 }
 
-NetEUBits::NetEUBits(char op__, NetExpr*ex)
-: NetEUnary(op__, ex)
+NetEUBits::NetEUBits(char op__, NetExpr*ex, unsigned wid, bool signed_flag)
+: NetEUnary(op__, ex, wid, signed_flag)
 {
 }
 
@@ -2443,9 +2398,8 @@ ivl_variable_type_t NetEUBits::expr_type() const
 }
 
 NetEUReduce::NetEUReduce(char op__, NetExpr*ex)
-: NetEUnary(op__, ex)
+: NetEUnary(op__, ex, 1, false)
 {
-      expr_width(1);
 }
 
 NetEUReduce::~NetEUReduce()
@@ -2457,8 +2411,8 @@ ivl_variable_type_t NetEUReduce::expr_type() const
       return expr_->expr_type();
 }
 
-NetECast::NetECast(char op__, NetExpr*ex)
-: NetEUnary(op__, ex)
+NetECast::NetECast(char op__, NetExpr*ex, unsigned wid, bool signed_flag)
+: NetEUnary(op__, ex, wid, signed_flag)
 {
 }
 

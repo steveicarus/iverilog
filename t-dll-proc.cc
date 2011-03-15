@@ -88,9 +88,9 @@ void dll_target::task_def(const NetScope*net)
 
       scop->ports = def->port_count();
       if (scop->ports > 0) {
-	    scop->port = new ivl_signal_t[scop->ports];
+	    scop->u_.port = new ivl_signal_t[scop->ports];
 	    for (unsigned idx = 0 ;  idx < scop->ports ;  idx += 1)
-		  scop->port[idx] = find_signal(des_, def->port(idx));
+		  scop->u_.port[idx] = find_signal(des_, def->port(idx));
       }
 
 }
@@ -110,9 +110,9 @@ bool dll_target::func_def(const NetScope*net)
 
       scop->ports = def->port_count() + 1;
       if (scop->ports > 0) {
-	    scop->port = new ivl_signal_t[scop->ports];
+	    scop->u_.port = new ivl_signal_t[scop->ports];
 	    for (unsigned idx = 1 ;  idx < scop->ports ;  idx += 1)
-		  scop->port[idx] = find_signal(des_, def->port(idx-1));
+		  scop->u_.port[idx] = find_signal(des_, def->port(idx-1));
       }
 
 	/* FIXME: the ivl_target API expects port-0 to be the output
@@ -121,7 +121,7 @@ bool dll_target::func_def(const NetScope*net)
 	   this, but that will break code generators that use this
 	   result. */
       if (const NetNet*ret_sig = def->return_sig()) {
-	    scop->port[0] = find_signal(des_, ret_sig);
+	    scop->u_.port[0] = find_signal(des_, ret_sig);
 	    return true;
       }
 
@@ -153,9 +153,11 @@ void dll_target::make_assign_lvals_(const NetAssignBase*net)
 
 	    if (loff == 0) {
 		  cur->loff = 0;
+		  cur->sel_type = IVL_SEL_OTHER;
 	    } else {
 		  loff->expr_scan(this);
 		  cur->loff = expr_;
+		  cur->sel_type = asn->select_type();
 		  expr_ = 0;
 	    }
 

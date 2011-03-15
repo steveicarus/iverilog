@@ -73,23 +73,20 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  nets[idx] = parms_[idx]->elaborate_lnet(des, scope);
 	    }
 
-	    if (nets[idx] == 0) errors += 1;
-	    else if (nets[idx]->data_type() == IVL_VT_REAL) {
+	    if (nets[idx] == 0) {
+                  errors += 1;
+            } else if (nets[idx]->data_type() == IVL_VT_REAL) {
 		  cerr << parms_[idx]->get_fileline() << ": error: "
 		       << "concatenation operand can no be real: "
 		       << *parms_[idx] << endl;
 		  errors += 1;
 		  continue;
-	    } else width += nets[idx]->vector_width();
-
+	    } else {
+                  width += nets[idx]->vector_width();
+            }
       }
 
-	/* If any of the sub expressions failed to elaborate, then
-	   delete all those that did and abort myself. */
       if (errors) {
-	    for (unsigned idx = 0 ;  idx < nets.count() ;  idx += 1) {
-		  if (nets[idx]) delete nets[idx];
-	    }
 	    des->errors += errors;
 	    return 0;
       }
@@ -170,6 +167,28 @@ NetNet* PEConcat::elaborate_bi_net(Design*des, NetScope*scope) const
       return elaborate_lnet_common_(des, scope, true);
 }
 
+bool PEConcat::is_collapsible_net(Design*des, NetScope*scope) const
+{
+      assert(scope);
+
+        // Repeat concatenations are not currently supported.
+      if (repeat_)
+            return false;
+
+	// Test the operands of the concatenation.
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
+
+              // Empty expressions are not allowed in concatenations
+	    if (parms_[idx] == 0)
+                  return false;
+
+	    if (!parms_[idx]->is_collapsible_net(des, scope))
+                  return false;
+      }
+
+      return true;
+}
+
 /*
  * This private method evaluates the part selects (if any) for the
  * signal. The sig argument is the NetNet already located for the
@@ -203,12 +222,6 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 
 	  case index_component_t::SEL_IDX_DO:
 	  case index_component_t::SEL_IDX_UP: {
-		  // These are not used, but they need to have a default value.
-		ivl_variable_type_t expr_type_tmp = IVL_VT_NO_TYPE;
-		bool unsized_flag_tmp = false;
-		index_tail.msb->test_width(des, scope,
-					   integer_width, integer_width,
-					   expr_type_tmp, unsized_flag_tmp);
 		need_constant_expr = true;
 		NetExpr*tmp_ex = elab_and_eval(des, scope, index_tail.msb, -1);
 		need_constant_expr = false;
@@ -439,21 +452,6 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      if (sig->port_type() == NetNet::PINPUT) {
-	    sig->port_type(NetNet::PINOUT);
-	      // This map mask prevents an error message being
-	      // repeated endlessly.
-	    static map<string,bool> mask_map;
-	    bool&flag = mask_map[sig->get_fileline() + ":" + string(sig->name())];
-	    if (! flag) {
-		  cerr << get_fileline() << ": warning: L-value ``"
-		       << sig->name() << "'' is also an input port." << endl;
-		  cerr << sig->get_fileline() << ": warning: input "
-		       << sig->name() << "; is coerced to inout." << endl;
-		  flag = true;
-	    }
-      }
-
 	// Default part select is the entire word.
       unsigned midx = sig->vector_width()-1, lidx = 0;
 	// The default word select is the first.
@@ -482,12 +480,6 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    }
 	    ivl_assert(*this, index_head.sel == index_component_t::SEL_BIT);
 
-	      // These are not used, but they need to have a default value.
-	    ivl_variable_type_t expr_type_tmp = IVL_VT_NO_TYPE;
-	    bool unsized_flag_tmp = false;
-	    index_head.msb->test_width(des, scope,
-	                               integer_width, integer_width,
-	                               expr_type_tmp, unsized_flag_tmp);
 	    need_constant_expr = true;
 	    NetExpr*tmp_ex = elab_and_eval(des, scope, index_head.msb, -1);
 	    need_constant_expr = false;
@@ -582,10 +574,10 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    sig = tmp;
       }
 
-	/* If the desired l-value vector is narrower then the
+	/* If the desired l-value vector is narrower than the
 	   signal itself, then use a NetPartSelect node to
 	   arrange for connection to the desired bits. All this
-	   can be skipped if the desired with matches the
+	   can be skipped if the desired width matches the
 	   original vector. */
 
       if (subnet_wid != sig->vector_width()) {
@@ -655,6 +647,7 @@ NetNet* PEIdent::elaborate_bi_net(Design*des, NetScope*scope) const
  */
 NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 {
+      assert(scope->type() == NetScope::MODULE);
       NetNet*sig = des->find_signal(scope, path_);
       if (sig == 0) {
 	    cerr << get_fileline() << ": error: no wire/reg " << path_
@@ -707,8 +700,10 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 
 	/* If this is a part select of the entire signal (or no part
 	   select at all) then we're done. */
-      if ((lidx == 0) && (midx == (long)sig->vector_width()-1))
+      if ((lidx == 0) && (midx == (long)sig->vector_width()-1)) {
+	    scope->add_module_port(sig);
 	    return sig;
+      }
 
       unsigned swid = abs(midx - lidx) + 1;
       ivl_assert(*this, swid > 0 && swid < sig->vector_width());
@@ -718,26 +713,25 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
       tmp->port_type(sig->port_type());
       tmp->data_type(sig->data_type());
       tmp->set_line(*this);
+      tmp->local_flag(true);
       NetNode*ps = 0;
       switch (sig->port_type()) {
 
 	  case NetNet::PINPUT:
-	    ps = new NetPartSelect(sig, sig->sb_to_idx(lidx), swid,
-				   NetPartSelect::PV);
+	    ps = new NetPartSelect(sig, lidx, swid, NetPartSelect::PV);
 	    connect(tmp->pin(0), ps->pin(0));
 	    sig = tmp;
 	    break;
 
 	  case NetNet::POUTPUT:
-	    ps = new NetPartSelect(sig, sig->sb_to_idx(lidx), swid,
-				   NetPartSelect::VP);
+	    ps = new NetPartSelect(sig, lidx, swid, NetPartSelect::VP);
 	    connect(tmp->pin(0), ps->pin(0));
 	    sig = tmp;
 	    break;
 
 	  case NetNet::PINOUT:
 	    ps = new NetTran(scope, scope->local_symbol(), sig->vector_width(),
-			     swid, sig->sb_to_idx(lidx));
+			     swid, lidx);
 	    connect(sig->pin(0), ps->pin(0));
 	    connect(tmp->pin(0), ps->pin(1));
 	    sig = tmp;
@@ -751,5 +745,42 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
       ps->set_line(*this);
       des->add_node(ps);
 
+      scope->add_module_port(sig);
       return sig;
+}
+
+bool PEIdent::is_collapsible_net(Design*des, NetScope*scope) const
+{
+      assert(scope);
+
+      NetNet*       sig = 0;
+      const NetExpr*par = 0;
+      NetEvent*     eve = 0;
+
+      symbol_search(this, des, scope, path_, sig, par, eve);
+
+      if (eve != 0)
+            return false;
+
+      if (sig == 0)
+            return false;
+
+      assert(sig);
+
+	/* If this is SystemVerilog and the variable is not yet
+	   assigned by anything, then convert it to an unresolved
+	   wire. */
+      if (gn_var_can_be_uwire()
+	  && (sig->type() == NetNet::REG)
+	  && (sig->peek_eref() == 0) ) {
+	    sig->type(NetNet::UNRESOLVED_WIRE);
+      }
+
+      if (sig->type() == NetNet::UNRESOLVED_WIRE && sig->pin(0).is_linked())
+            return false;
+
+      if (sig->type() == NetNet::REG)
+            return false;
+
+      return true;
 }

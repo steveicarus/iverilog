@@ -409,6 +409,7 @@ void NetScope::emit_scope(struct target_t*tgt) const
 	    tgt->signal_paths(cur->second);
       }
 
+      if (type_ == MODULE) tgt->convert_module_ports(this);
 }
 
 bool NetScope::emit_defs(struct target_t*tgt) const

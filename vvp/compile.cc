@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1707,6 +1707,23 @@ void compile_fork(char*label, struct symb_s dest, struct symb_s scope)
 
 	/* Figure out the target SCOPE. */
       compile_vpi_lookup(&code->handle, scope.text);
+}
+
+void compile_file_line(char*label, long file_idx, long lineno,
+                       char*description)
+{
+      if (label) compile_codelabel(label);
+
+	/* Create an instruction in the code space. */
+      vvp_code_t code = codespace_allocate();
+      code->opcode = &of_FILE_LINE;
+
+	/* Create a vpiHandle that contains the information. */
+      code->handle = vpip_build_file_line(description, file_idx, lineno);
+      assert(code->handle);
+
+	/* Done with the lexor-allocated name string. */
+      delete[] description;
 }
 
 void compile_vpi_call(char*label, char*name,

@@ -122,7 +122,7 @@ vhdl_expr *vhdl_expr::to_string()
 {
    bool numeric = type_->get_name() == VHDL_TYPE_UNSIGNED
       || type_->get_name() == VHDL_TYPE_SIGNED;
-   
+
    if (numeric) {
       vhdl_fcall *image = new vhdl_fcall("integer'image", vhdl_type::string());
       image->add_expr(this->cast(vhdl_type::integer()));

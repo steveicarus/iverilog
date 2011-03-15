@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -95,7 +95,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_vpi_func K_vpi_func_r
 %token K_disable K_fork
 %token K_ivl_version K_ivl_delay_selection
-%token K_vpi_module K_vpi_time_precision K_file_names
+%token K_vpi_module K_vpi_time_precision K_file_names K_file_line
 
 %token <text> T_INSTR
 %token <text> T_LABEL
@@ -555,6 +555,15 @@ statement
 
 	| T_LABEL ';'
 		{ compile_codelabel($1); }
+
+  /* %file_line statements are instructions that have unusual operand
+     requirements so are handled by their own rules. */
+	| label_opt K_file_line T_NUMBER T_NUMBER T_STRING ';'
+		{ compile_file_line($1, $3, $4, $5); }
+
+	| label_opt K_file_line T_NUMBER T_NUMBER T_NUMBER ';'
+		{ assert($5 == 0);
+		  compile_file_line($1, $3, $4, 0); }
 
   /* %vpi_call statements are instructions that have unusual operand
      requirements so are handled by their own rules. The %vpi_func

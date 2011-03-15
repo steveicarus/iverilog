@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2945,7 +2945,7 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
 	   directly to skip the excess calls to thr_check_addr. */
       thr->bits4.set_vec(bit, word);
 
-	/* If the source is shorter then the desired width, then pad
+	/* If the source is shorter than the desired width, then pad
 	   with BIT4_X values. */
       for (unsigned idx = word.size() ; idx < wid ; idx += 1)
 	    thr->bits4.set_bit(bit+idx, BIT4_X);
@@ -3135,7 +3135,7 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
 	   directly to skip the excess calls to thr_check_addr. */
       thr->bits4.set_vec(bit, sig_value);
 
-	/* If the source is shorter then the desired width, then pad
+	/* If the source is shorter than the desired width, then pad
 	   with BIT4_X values. */
       for (unsigned idx = sig_value.size() ; idx < wid ; idx += 1)
 	    thr->bits4.set_bit(bit+idx, BIT4_X);
@@ -4236,7 +4236,7 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
       if (index < 0 && (wid <= (unsigned)-index))
 	    return true;
 
-	// If the entire part is above then end of the vector, then we
+	// If the entire part is above the end of the vector, then we
 	// are done.
       if (index >= (long)sig->value_size())
 	    return true;
@@ -4484,6 +4484,18 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t tmp(cp->number, BIT4_X);
       thr->bits4.set_vec(cp->bit_idx[0], tmp);
 
+      return true;
+}
+
+bool of_FILE_LINE(vthread_t, vvp_code_t cp)
+{
+      if (show_file_line) {
+	    vpiHandle handle = cp->handle;
+	    cerr << vpi_get_str(vpiFile, handle) << ":"
+	         << vpi_get(vpiLineNo, handle) << ": ";
+	    cerr << vpi_get_str(_vpiDescription, handle);
+	    cerr << endl;
+      }
       return true;
 }
 

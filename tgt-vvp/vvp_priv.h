@@ -1,7 +1,7 @@
 #ifndef __vvp_priv_H
 #define __vvp_priv_H
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -38,6 +38,12 @@ extern FILE* vvp_out;
  * Keep a count of errors that would render the output unusable.
  */
 extern int vvp_errors;
+
+/*
+ * Set to non-zero when the user wants to display file and line number
+ * information for procedural statements.
+ */
+extern unsigned show_file_line;
 
 struct vector_info {
       unsigned base;

@@ -58,7 +58,7 @@ void cleanup_sys_func_table()
 
 const struct sfunc_return_type* lookup_sys_func(const char*name)
 {
-	/* First, try to find then name in the function stack. */
+	/* First, try to find the name in the function stack. */
       struct sfunc_return_type_cell*cur = sfunc_stack;
       while (cur) {
 	    if (strcmp(cur->name, name) == 0)

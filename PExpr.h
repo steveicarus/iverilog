@@ -1,7 +1,7 @@
 #ifndef __PExpr_H
 #define __PExpr_H
 /*
- * Copyright (c) 1998-2010 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2011 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -43,6 +43,8 @@ class NetScope;
 class PExpr : public LineInfo {
 
     public:
+      enum width_mode_t { SIZED, EXPAND, LOSSLESS, UNSIZED };
+
       PExpr();
       virtual ~PExpr();
 
@@ -62,53 +64,65 @@ class PExpr : public LineInfo {
         // references to automatically allocated variables.
       virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
-	// This method tests the width that the expression wants to
-	// be. It is used by elaboration of assignments to figure out
-	// the width of the expression.
+	// This method tests the type and width that the expression wants
+	// to be. It should be called before elaborating an expression to
+	// figure out the type and width of the expression. It also figures
+	// out the minimum width that can be used to evaluate the expression
+	// without changing the result. This allows the expression width to
+	// be pruned when not all bits of the result are used.
 	//
-	// The "min" is the width of the local context, so is the
-	// minimum width that this function should return. Initially
-	// this is the same as the lval width.
+	// Normally mode should be initialised to SIZED before starting to
+	// test the width of an expression. In SIZED mode the expression
+	// width will be calculated strictly according to the IEEE standard
+	// rules for expression width.
+	// If the expression contains an unsized literal, mode will be
+	// changed to LOSSLESS. In LOSSLESS mode the expression width will
+	// be calculated as the minimum width necessary to avoid arithmetic
+	// overflow or underflow.
+	// If the expression both contains an unsized literal and contains
+	// an operation that coerces a vector operand to a different type
+	// (signed <-> unsigned), mode is changed to UNSIZED. UNSIZED mode
+	// is the same as LOSSLESS, except that the final expression width
+	// will be forced to be at least integer_width. This is necessary
+	// to ensure compatibility with the IEEE standard, which requires
+	// unsized literals to be treated as having the same width as an
+	// integer. The lossless width calculation is inadequate in this
+	// case because coercing an operand to a different type means that
+	// the expression no longer obeys the normal rules of arithmetic.
 	//
-	// The "lval" is the width of the destination where this
-	// result is going to go. This can be used to constrain the
-	// amount that an expression can reasonably expand. For
-	// example, there is no point expanding an addition to beyond
-	// the lval. This extra bit of information allows the
-	// expression to optimize itself a bit. If the lval==0, then
-	// the subexpression should not make l-value related
-	// optimizations.
+	// If mode is initialised to EXPAND instead of SIZED, the expression
+	// width will be calculated as the minimum width necessary to avoid
+	// arithmetic overflow or underflow, even if it contains no unsized
+	// literals. mode will be changed LOSSLESS or UNSIZED as described
+	// above. This supports a non-standard mode of expression width
+	// calculation.
 	//
-	// The expr_type is an output argument that gives the
-	// calculated type for the expression.
-	//
-	// The unsized_flag is set to true if the expression is
-	// unsized and therefore expandable. This happens if a
-	// sub-expression is an unsized literal. Some expressions make
-	// special use of that.
+	// When the final value of mode is UNSIZED, the width returned by
+	// this method is the calculated lossless width, but the width
+	// returned by a subsequent call to the expr_width method will be
+	// the final expression width.
       virtual unsigned test_width(Design*des, NetScope*scope,
-				  unsigned min, unsigned lval,
-				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag);
+				  width_mode_t&mode);
 
 	// After the test_width method is complete, these methods
 	// return valid results.
       ivl_variable_type_t expr_type() const { return expr_type_; }
       unsigned expr_width() const           { return expr_width_; }
+      unsigned min_width() const            { return min_width_; }
+      bool has_sign() const                 { return signed_flag_; }
+
+        // This method allows the expression type (signed/unsigned)
+        // to be propagated down to any context-dependant operands.
+      void cast_signed(bool flag) { signed_flag_ = flag; }
 
 	// Procedural elaboration of the expression. The expr_width is
-	// the width of the context of the expression (i.e. the
-	// l-value width of an assignment),
-	//
-	// ... or -1 if the expression is self-determined. or
-	// ... or -2 if the expression is losslessly
-	// self-determined. This can happen in situations where the
-	// result is going to a pseudo-infinitely wide context.
+	// the required width of the expression.
 	//
 	// The sys_task_arg flag is true if expressions are allowed to
 	// be incomplete.
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
-				     int expr_width, bool sys_task_arg) const;
+				     unsigned expr_wid,
+                                     bool sys_task_arg) const;
 
 	// This method elaborates the expression as gates, but
 	// restricted for use as l-values of continuous assignments.
@@ -134,15 +148,25 @@ class PExpr : public LineInfo {
 	// evaluated, return 0.
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
+	// This method returns true if the expression represents a
+        // structural net that can have multiple drivers. This is
+        // used to test whether an input port connection can be
+        // collapsed to a single wire.
+      virtual bool is_collapsible_net(Design*des, NetScope*scope) const;
+
 	// This method returns true if that expression is the same as
 	// this expression. This method is used for comparing
 	// expressions that must be structurally "identical".
       virtual bool is_the_same(const PExpr*that) const;
 
     protected:
+      unsigned fix_width_(width_mode_t mode);
+
 	// The derived class test_width methods should fill these in.
       ivl_variable_type_t expr_type_;
       unsigned expr_width_;
+      unsigned min_width_;
+      bool signed_flag_;
 
     private: // not implemented
       PExpr(const PExpr&);
@@ -165,25 +189,27 @@ class PEConcat : public PExpr {
       virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
-				  unsigned min, unsigned lval,
-				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag);
+				  width_mode_t&mode);
 
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
       virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
-				     int expr_width, bool sys_task_arg) const;
+				     unsigned expr_wid,
+                                     bool sys_task_arg) const;
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
 					 bool is_force) const;
+      virtual bool is_collapsible_net(Design*des, NetScope*scope) const;
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
 				     bool bidirectional_flag) const;
     private:
       vector<PExpr*>parms_;
-      std::valarray<unsigned>tested_widths_;
+      std::valarray<width_mode_t>width_modes_;
 
       PExpr*repeat_;
+      NetScope*tested_scope_;
+      unsigned repeat_count_;
 };
 
 /*
@@ -232,11 +258,10 @@ class PEFNumber : public PExpr {
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
-				  unsigned min, unsigned lval,
-				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag);
+				  width_mode_t&mode);
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
-				     int expr_width, bool sys_task_arg) const;
+				     unsigned expr_wid,
+                                     bool sys_task_arg) const;
 
       virtual void dump(ostream&) const;
 
@@ -262,9 +287,7 @@ class PEIdent : public PExpr {
       virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
-				  unsigned min, unsigned lval,
-				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag);
+				  width_mode_t&mode);
 
 	// Identifiers are allowed (with restrictions) is assign l-values.
       virtual NetNet* elaborate_lnet(Design*des, NetScope*scope) const;
@@ -277,13 +300,16 @@ class PEIdent : public PExpr {
 					 bool is_force) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
-				     int expr_width, bool sys_task_arg) const;
+				     unsigned expr_wid,
+                                     bool sys_task_arg) const;
 
 	// Elaborate the PEIdent as a port to a module. This method
 	// only applies to Ident expressions.
       NetNet* elaborate_port(Design*des, NetScope*sc) const;
 
       verinum* eval_const(Design*des, NetScope*sc) const;
+
+      virtual bool is_collapsible_net(Design*des, NetScope*scope) const;
 
       const pform_name_t& path() const { return path_; }
 
@@ -326,13 +352,14 @@ class PEIdent : public PExpr {
 				    NetScope*found,
 				    const NetExpr*par_msb,
 				    const NetExpr*par_lsb,
-				    int expr_wid) const;
+				    unsigned expr_wid) const;
       NetExpr*elaborate_expr_param_part_(Design*des,
 					 NetScope*scope,
 					 const NetExpr*par,
 					 NetScope*found,
 					 const NetExpr*par_msb,
-					 const NetExpr*par_lsb) const;
+					 const NetExpr*par_lsb,
+				         unsigned expr_wid) const;
       NetExpr*elaborate_expr_param_idx_up_(Design*des,
 					   NetScope*scope,
 					   const NetExpr*par,
@@ -349,28 +376,31 @@ class PEIdent : public PExpr {
 				 NetScope*scope,
 				 NetNet*net,
 				 NetScope*found,
+				 unsigned expr_wid,
 				 bool sys_task_arg) const;
       NetExpr*elaborate_expr_net_word_(Design*des,
 				       NetScope*scope,
 				       NetNet*net,
 				       NetScope*found,
+				       unsigned expr_wid,
 				       bool sys_task_arg) const;
       NetExpr*elaborate_expr_net_part_(Design*des,
-				   NetScope*scope,
-				   NetESignal*net,
-				   NetScope*found) const;
+				       NetScope*scope,
+				       NetESignal*net,
+				       NetScope*found,
+				       unsigned expr_wid) const;
       NetExpr*elaborate_expr_net_idx_up_(Design*des,
-				   NetScope*scope,
-				   NetESignal*net,
-				   NetScope*found) const;
+				         NetScope*scope,
+				         NetESignal*net,
+				         NetScope*found) const;
       NetExpr*elaborate_expr_net_idx_do_(Design*des,
-				   NetScope*scope,
-				   NetESignal*net,
-				   NetScope*found) const;
+				         NetScope*scope,
+				         NetESignal*net,
+				         NetScope*found) const;
       NetExpr*elaborate_expr_net_bit_(Design*des,
-				   NetScope*scope,
-				   NetESignal*net,
-				   NetScope*found) const;
+				      NetScope*scope,
+				      NetESignal*net,
+				      NetScope*found) const;
 
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
@@ -390,12 +420,10 @@ class PENumber : public PExpr {
 
       virtual void dump(ostream&) const;
       virtual unsigned test_width(Design*des, NetScope*scope,
-				  unsigned min, unsigned lval,
-				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag);
+				  width_mode_t&mode);
 
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
-				       int expr_width, bool) const;
+				       unsigned expr_wid, bool) const;
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
 					 bool is_force) const;
@@ -425,12 +453,10 @@ class PEString : public PExpr {
       virtual void dump(ostream&) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
-				  unsigned min, unsigned lval,
-				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag);
+				  width_mode_t&mode);
 
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
-				       int expr_width, bool) const;
+				       unsigned expr_wid, bool) const;
       verinum* eval_const(Design*, NetScope*) const;
 
     private:
@@ -450,16 +476,15 @@ class PEUnary : public PExpr {
       virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
-				  unsigned min, unsigned lval,
-				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag);
+				  width_mode_t&mode);
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
-				     int expr_width, bool sys_task_arg) const;
+				     unsigned expr_wid,
+                                     bool sys_task_arg) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
     private:
-      NetExpr* elaborate_expr_bits_(NetExpr*operand, int expr_wid) const;
+      NetExpr* elaborate_expr_bits_(NetExpr*operand, unsigned expr_wid) const;
 
     private:
       char op_;
@@ -479,12 +504,11 @@ class PEBinary : public PExpr {
       virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
-				  unsigned min, unsigned lval,
-				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag);
+				  width_mode_t&mode);
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
-					int expr_width, bool sys_task_arg) const;
+				     unsigned expr_wid,
+                                     bool sys_task_arg) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
     protected:
@@ -493,22 +517,18 @@ class PEBinary : public PExpr {
       PExpr*right_;
 
       NetExpr*elaborate_expr_base_(Design*, NetExpr*lp, NetExpr*rp,
-				   int use_wid) const;
+				   unsigned expr_wid) const;
       NetExpr*elaborate_eval_expr_base_(Design*, NetExpr*lp, NetExpr*rp,
-					int use_wid) const;
+					unsigned expr_wid) const;
 
       NetExpr*elaborate_expr_base_bits_(Design*, NetExpr*lp, NetExpr*rp,
-                                        int use_wid) const;
+                                        unsigned expr_wid) const;
       NetExpr*elaborate_expr_base_div_(Design*, NetExpr*lp, NetExpr*rp,
-				       int use_wid) const;
-      NetExpr*elaborate_expr_base_lshift_(Design*, NetExpr*lp, NetExpr*rp,
-                                          int use_wid) const;
-      NetExpr*elaborate_expr_base_rshift_(Design*, NetExpr*lp, NetExpr*rp,
-                                          int use_wid) const;
+				       unsigned expr_wid) const;
       NetExpr*elaborate_expr_base_mult_(Design*, NetExpr*lp, NetExpr*rp,
-					int use_wid) const;
+					unsigned expr_wid) const;
       NetExpr*elaborate_expr_base_add_(Design*, NetExpr*lp, NetExpr*rp,
-				       int use_wid) const;
+				       unsigned expr_wid) const;
 
 };
 
@@ -523,16 +543,14 @@ class PEBComp  : public PEBinary {
       ~PEBComp();
 
       virtual unsigned test_width(Design*des, NetScope*scope,
-				  unsigned min, unsigned lval,
-				  ivl_variable_type_t&expr_type,
-				  bool&flag);
+				  width_mode_t&mode);
 
       NetExpr* elaborate_expr(Design*des, NetScope*scope,
-			      int expr_width, bool sys_task_arg) const;
+			      unsigned expr_wid, bool sys_task_arg) const;
 
     private:
-      int left_width_;
-      int right_width_;
+      unsigned l_width_;
+      unsigned r_width_;
 };
 
 /*
@@ -545,12 +563,10 @@ class PEBLogic  : public PEBinary {
       ~PEBLogic();
 
       virtual unsigned test_width(Design*des, NetScope*scope,
-				  unsigned min, unsigned lval,
-				  ivl_variable_type_t&expr_type,
-				  bool&flag);
+				  width_mode_t&mode);
 
       NetExpr* elaborate_expr(Design*des, NetScope*scope,
-			      int expr_width, bool sys_task_arg) const;
+			      unsigned expr_wid, bool sys_task_arg) const;
 };
 
 /*
@@ -565,17 +581,15 @@ class PEBLeftWidth  : public PEBinary {
       ~PEBLeftWidth() =0;
 
       virtual NetExpr*elaborate_expr_leaf(Design*des, NetExpr*lp, NetExpr*rp,
-					  int expr_wid) const =0;
+					  unsigned expr_wid) const =0;
 
     protected:
       virtual unsigned test_width(Design*des, NetScope*scope,
-				  unsigned min, unsigned lval,
-				  ivl_variable_type_t&expr_type,
-				  bool&flag);
+				  width_mode_t&mode);
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
-				     int expr_width, bool sys_task_arg) const;
-
+				     unsigned expr_wid,
+                                     bool sys_task_arg) const;
 };
 
 class PEBPower  : public PEBLeftWidth {
@@ -585,7 +599,7 @@ class PEBPower  : public PEBLeftWidth {
       ~PEBPower();
 
       NetExpr*elaborate_expr_leaf(Design*des, NetExpr*lp, NetExpr*rp,
-				  int expr_wid) const;
+				  unsigned expr_wid) const;
 };
 
 class PEBShift  : public PEBLeftWidth {
@@ -595,7 +609,7 @@ class PEBShift  : public PEBLeftWidth {
       ~PEBShift();
 
       NetExpr*elaborate_expr_leaf(Design*des, NetExpr*lp, NetExpr*rp,
-				  int expr_wid) const;
+				  unsigned expr_wid) const;
 };
 
 /*
@@ -615,17 +629,16 @@ class PETernary : public PExpr {
       virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
-				  unsigned min, unsigned lval,
-				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag);
+				  width_mode_t&mode);
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
-					 int expr_width, bool sys_task_arg) const;
+		                     unsigned expr_wid,
+                                     bool sys_task_arg) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
     private:
       NetExpr* elab_and_eval_alternative_(Design*des, NetScope*scope,
-					  PExpr*expr, int use_wid) const;
+					  PExpr*expr, unsigned expr_wid) const;
 
     private:
       PExpr*expr_;
@@ -658,12 +671,11 @@ class PECallFunction : public PExpr {
       virtual bool has_aa_term(Design*des, NetScope*scope) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
-				     int expr_wid, bool sys_task_arg) const;
+				     unsigned expr_wid,
+                                     bool sys_task_arg) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
-				  unsigned min, unsigned lval,
-				  ivl_variable_type_t&expr_type,
-				  bool&unsized_flag);
+				  width_mode_t&mode);
 
     private:
       pform_name_t path_;
@@ -671,14 +683,29 @@ class PECallFunction : public PExpr {
 
       bool check_call_matches_definition_(Design*des, NetScope*dscope) const;
 
-      NetExpr* cast_to_width_(NetExpr*expr, int wid, bool signed_flag) const;
+      NetExpr* cast_to_width_(NetExpr*expr, unsigned wid) const;
 
-      NetExpr* elaborate_sfunc_(Design*des, NetScope*scope, int expr_wid) const;
-      NetExpr* elaborate_access_func_(Design*des, NetScope*scope, ivl_nature_t) const;
+      NetExpr* elaborate_sfunc_(Design*des, NetScope*scope,
+                                unsigned expr_wid) const;
+      NetExpr* elaborate_access_func_(Design*des, NetScope*scope, ivl_nature_t,
+                                      unsigned expr_wid) const;
       unsigned test_width_sfunc_(Design*des, NetScope*scope,
-				 unsigned min, unsigned lval,
-				 ivl_variable_type_t&expr_type,
-				 bool&unsized_flag);
+			         width_mode_t&mode);
+};
+
+/*
+ * This class is used for error recovery. All methods do nothing and return
+ * null or default values.
+ */
+class PEVoid : public PExpr {
+
+    public:
+      explicit PEVoid();
+      ~PEVoid();
+
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     unsigned expr_wid,
+                                     bool sys_task_arg) const;
 };
 
 #endif

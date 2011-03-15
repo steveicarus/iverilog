@@ -1,4 +1,4 @@
-.TH iverilog 1 "January 8th, 2011" "" "Version %M.%m.%n %E"
+.TH iverilog 1 "February 27th, 2011" "" "Version %M.%m.%n %E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -258,7 +258,9 @@ checking the syntax of the Verilog source.
 .B vvp
 This is the default. The vvp target generates code for the vvp
 runtime. The output is a complete program that simulates the design
-but must be run by the \fBvvp\fP command.
+but must be run by the \fBvvp\fP command. The -pfileline=1 option
+can be used to add procedural statement debugging opcodes to the
+generated code.
 .TP 8
 .B fpga
 This is a synthesis target that supports a variety of fpga devices,

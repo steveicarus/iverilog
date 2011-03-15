@@ -723,7 +723,7 @@ inline vvp_vector2_t vvp_vector2_t::subvalue(unsigned base, unsigned wid) const
 
 /*
  * This class represents a scalar value with strength. These are
- * heavier then the simple vvp_bit4_t, but more information is
+ * heavier than the simple vvp_bit4_t, but more information is
  * carried by that weight.
  *
  * The strength values are as defined here:
@@ -882,7 +882,7 @@ class vvp_vector8_t {
 
     private:
 	// This is the number of vvp_scalar_t objects we can keep in
-	// the val_ buffer. If the vector8 is bigger then this, then
+	// the val_ buffer. If the vector8 is bigger than this, then
 	// resort to allocations to get a larger buffer.
       unsigned size_;
       union {
@@ -1396,7 +1396,7 @@ class vvp_fun_drive  : public vvp_net_fun_t {
 /*
  * EXTEND functors expand an input vector to the desired output
  * width. The extend_signed functor sign extends the input. If the
- * input is already wider then the desired output, then it is passed
+ * input is already wider than the desired output, then it is passed
  * unmodified.
  */
 class vvp_fun_extend_signed  : public vvp_net_fun_t {

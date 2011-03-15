@@ -93,6 +93,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool process(const NetProcTop*);
       bool process(const NetAnalogTop*);
       void scope(const NetScope*);
+      void convert_module_ports(const NetScope*);
       void signal(const NetNet*);
       bool signal_paths(const NetNet*);
       ivl_dll_t dll_;
@@ -230,6 +231,12 @@ struct ivl_expr_s {
 		  ivl_expr_t lef_;
 		  ivl_expr_t rig_;
 	    } binary_;
+
+	    struct {
+		  ivl_select_type_t  sel_type_;
+		  ivl_expr_t expr_;
+		  ivl_expr_t base_;
+	    } select_;
 
 	    struct {
 		  ivl_branch_t branch;
@@ -427,6 +434,7 @@ enum ivl_lval_type_t {
 
 struct ivl_lval_s {
       ivl_expr_t loff;
+      ivl_select_type_t sel_type;
       ivl_expr_t idx;
       unsigned width_;
       unsigned type_   : 8;
@@ -517,6 +525,7 @@ struct ivl_udp_s {
       ccharp_t*table; // zero terminated array of pointers
       perm_string file;
       unsigned lineno;
+      string*ports;
 };
 
 /*
@@ -599,7 +608,7 @@ struct ivl_process_s {
 /*
  * Scopes are kept in a tree. Each scope points to its first child,
  * and also to any siblings. Thus a parent can scan all its children
- * by following its child pointer then following sibling pointers from
+ * by following its child pointer, then following sibling pointers from
  * there.
  */
 struct ivl_scope_s {
@@ -638,7 +647,11 @@ struct ivl_scope_s {
       unsigned is_cell;
 
       unsigned ports;
-      ivl_signal_t*port;
+      union {
+	    ivl_signal_t*port;
+	    ivl_nexus_t*nex;
+	    NetNet**net;
+      } u_;
 
       std::vector<ivl_switch_t>switches;
 

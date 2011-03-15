@@ -48,6 +48,7 @@ int parse_errors = 0;
       port_mode_t port_mode;
 
       char*text;
+
       std::list<perm_string>* name_list;
 
       bool flag;
@@ -199,7 +200,7 @@ design_unit
   ;
 
 design_units
-  : design_units design_unit 
+  : design_units design_unit
   | design_unit
   ;
 
@@ -225,7 +226,7 @@ entity_declaration
 	if(tmp->get_name() != $7) {
 	      errormsg(@1, "Syntax error in entity clause. \n");
 	}
-	
+
 	delete[]$2;
 	delete[]$7;
 	// Transfer the ports

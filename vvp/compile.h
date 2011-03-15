@@ -1,7 +1,7 @@
 #ifndef __compile_H
 #define __compile_H
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -404,6 +404,9 @@ typedef struct comp_operands_s*comp_operands_t;
 extern void compile_code(char*label, char*mnem, comp_operands_t opa);
 extern void compile_disable(char*label, struct symb_s symb);
 
+extern void compile_file_line(char*label, long file_idx, long lineno,
+                              char*description);
+
 extern void compile_vpi_call(char*label, char*name,
 			     bool func_as_task_err, bool func_as_task_warn,
 			     long file_idx, long lineno,
@@ -454,7 +457,7 @@ extern void compile_var_real(char*label, char*name,
 			     int msb, int lsb);
 
 /*
- * The compile_net functio is called to create a .net vector with a
+ * The compile_net function is called to create a .net vector with a
  * given name.
  *
  * The vpi_type_code argument of compile_net() is one of the vpi

@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -204,13 +204,14 @@ static char* strdupnew(char const *str)
      kind of instruction this really is. The few exceptions (that have
      exceptional parameter requirements) are listed first. */
 
-"%vpi_call" { return K_vpi_call; }
+"%vpi_call"   { return K_vpi_call; }
 "%vpi_call/w" { return K_vpi_call_w; }
 "%vpi_call/i" { return K_vpi_call_i; }
-"%vpi_func" { return K_vpi_func; }
+"%vpi_func"   { return K_vpi_func; }
 "%vpi_func/r" { return K_vpi_func_r; }
-"%disable"  { return K_disable; }
-"%fork"     { return K_fork; }
+"%disable"    { return K_disable; }
+"%fork"       { return K_fork; }
+"%file_line"  { return K_file_line; }
 
   /* Handle the specialized variable access functions. */
 
