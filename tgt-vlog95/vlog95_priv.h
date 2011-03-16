@@ -57,6 +57,12 @@ extern unsigned indent_incr;
 extern unsigned emit_file_line;
 
 /*
+ * Some tools that are mostly 1364-1995 compliant also support signed so
+ * add support for that as an extension.
+ */
+extern unsigned allow_signed;
+
+/*
  * Emit various Verilog types.
  */
 extern void emit_event(ivl_scope_t scope, ivl_statement_t stmt);

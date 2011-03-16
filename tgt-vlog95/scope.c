@@ -112,6 +112,18 @@ void emit_var_def(ivl_signal_t sig)
 	    int msb = ivl_signal_msb(sig);
 	    int lsb = ivl_signal_lsb(sig);
 	    fprintf(vlog_out, "reg ");
+	    if (ivl_signal_signed(sig)) {
+		  if (allow_signed) {
+			fprintf(vlog_out, "signed ");
+		  } else {
+			fprintf(stderr, "%s:%u: vlog95 error: Signed registers "
+			                "(%s) are not supported.\n",
+			                ivl_signal_file(sig),
+			                ivl_signal_lineno(sig),
+			                ivl_signal_basename(sig));
+			vlog_errors += 1;
+		  }
+	    }
 	    if (msb != 0 || lsb != 0) fprintf(vlog_out, "[%d:%d] ", msb, lsb);
 	    emit_id(ivl_signal_basename(sig));
 	    if (ivl_signal_dimensions(sig) > 0) {
@@ -127,13 +139,6 @@ void emit_var_def(ivl_signal_t sig)
 	    fprintf(vlog_out, ";");
 	    emit_sig_file_line(sig);
 	    fprintf(vlog_out, "\n");
-	    if (ivl_signal_signed(sig)) {
-		  fprintf(stderr, "%s:%u: vlog95 error: Signed registers (%s) "
-		                  "are not supported.\n", ivl_signal_file(sig),
-		                  ivl_signal_lineno(sig),
-		                  ivl_signal_basename(sig));
-		  vlog_errors += 1;
-	    }
       }
 }
 
@@ -190,14 +195,6 @@ void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
 	                    "not supported.\n", ivl_signal_file(sig),
 	                    ivl_signal_lineno(sig), ivl_signal_basename(sig));
 	    vlog_errors += 1;
-      } else if (ivl_signal_signed(sig)) {
-	    fprintf(vlog_out, "wire ");
-	    if (msb != 0 || lsb != 0) fprintf(vlog_out, "[%d:%d] ", msb, lsb);
-	    emit_sig_id(sig);
-	    fprintf(stderr, "%s:%u: vlog95 error: Signed nets (%s) are "
-	                    "not supported.\n", ivl_signal_file(sig),
-	                    ivl_signal_lineno(sig), ivl_signal_basename(sig));
-	    vlog_errors += 1;
       } else if (ivl_signal_dimensions(sig) > 0) {
 	    fprintf(vlog_out, "wire ");
 	    if (msb != 0 || lsb != 0) fprintf(vlog_out, "[%d:%d] ", msb, lsb);
@@ -233,6 +230,18 @@ void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
 	                    ivl_signal_lineno(sig), (int)ivl_signal_type(sig));
 		  vlog_errors += 1;
 		  break;
+	    }
+	    if (ivl_signal_signed(sig)) {
+		  if (allow_signed) {
+			fprintf(vlog_out, "signed ");
+		  } else {
+			fprintf(stderr, "%s:%u: vlog95 error: Signed nets (%s) "
+			                "are not supported.\n",
+			                ivl_signal_file(sig),
+			                ivl_signal_lineno(sig),
+			                ivl_signal_basename(sig));
+			vlog_errors += 1;
+		  }
 	    }
 	    if (msb != 0 || lsb != 0) fprintf(vlog_out, "[%d:%d] ", msb, lsb);
 	    emit_sig_id(sig);
@@ -392,16 +401,20 @@ static void emit_sig_type(ivl_signal_t sig)
 	    } else {
 		  int msb = ivl_signal_msb(sig);
 		  int lsb = ivl_signal_lsb(sig);
+		  if (ivl_signal_signed(sig)) {
+			if (allow_signed) {
+			      fprintf(vlog_out, " signed");
+			} else {
+			      fprintf(stderr, "%s:%u: vlog95 error: Signed "
+			                      "ports (%s) are not supported.\n",
+			                      ivl_signal_file(sig),
+			                      ivl_signal_lineno(sig),
+			                      ivl_signal_basename(sig));
+			      vlog_errors += 1;
+			}
+		  }
 		  if (msb != 0 || lsb != 0) {
 			fprintf(vlog_out, " [%d:%d]", msb, lsb);
-		  }
-		  if (ivl_signal_signed(sig)) {
-			fprintf(stderr, "%s:%u: vlog95 error: Signed ports "
-			                "(%s) are not supported.\n",
-			                ivl_signal_file(sig),
-			                ivl_signal_lineno(sig),
-			                ivl_signal_basename(sig));
-			vlog_errors += 1;
 		  }
 	    }
       } else {
@@ -417,12 +430,16 @@ static void emit_sig_type(ivl_signal_t sig)
 		  int msb = ivl_signal_msb(sig);
 		  int lsb = ivl_signal_lsb(sig);
 		  if (ivl_signal_signed(sig)) {
-			fprintf(stderr, "%s:%u: vlog95 error: Signed net ports "
-			                "(%s) are not supported.\n",
-			                ivl_signal_file(sig),
-			                ivl_signal_lineno(sig),
-			                ivl_signal_basename(sig));
-			vlog_errors += 1;
+			if (allow_signed) {
+			      fprintf(vlog_out, " signed");
+			} else {
+			      fprintf(stderr, "%s:%u: vlog95 error: Signed net "
+			                      "ports (%s) are not supported.\n",
+			                      ivl_signal_file(sig),
+			                      ivl_signal_lineno(sig),
+			                      ivl_signal_basename(sig));
+			      vlog_errors += 1;
+			}
 		  }
 		  if (msb != 0 || lsb != 0) {
 			fprintf(vlog_out, " [%d:%d]", msb, lsb);

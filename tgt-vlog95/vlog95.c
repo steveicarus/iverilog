@@ -52,6 +52,8 @@ unsigned indent_incr = 2;
 
 unsigned emit_file_line = 0;
 
+unsigned allow_signed = 0;
+
 ivl_design_t design = 0;
 
 int target_design(ivl_design_t des)
@@ -61,69 +63,100 @@ int target_design(ivl_design_t des)
       const char*path = ivl_design_flag(des, "-o");
 	/* Set the indent spacing with the -pspacing flag passed to iverilog
 	 * (e.g. -pspacing=4). The default is 2 spaces. */
-      const char*spacing = ivl_design_flag(des, "spacing");
+      const char*spacing_str = ivl_design_flag(des, "spacing");
 	/* Use -pfileline to determine if file and line information is
 	 * printed for most lines. (e.g. -pfileline=1). The default is no
 	 * file/line information will be printed for individual lines. */
-      const char*fileline = ivl_design_flag(des, "fileline");
+      const char*fileline_str = ivl_design_flag(des, "fileline");
+	/* Use -pallowsigned to allow signed registers/nets and the
+	 * $signed() and $unsigned() system tasks as an extension. */
+      const char*allowsigned_str = ivl_design_flag(des, "allowsigned");
       assert(path);
 
 	/* Check for and use a provided indent spacing. */
-      if (strcmp(spacing, "") != 0) {
+      if (strcmp(spacing_str, "") != 0) {
 	    char *eptr;
-	    long sp_incr = strtol(spacing, &eptr, 0);
+	    long value = strtol(spacing_str, &eptr, 0);
 	      /* Nothing usable in the spacing string. */
-	    if (spacing == eptr) {
+	    if (spacing_str == eptr) {
 		  fprintf(stderr, "vlog95 error: Unable to extract spacing "
-		                  "increment from string: %s\n", spacing);
+		                  "increment from string: %s\n", spacing_str);
 		  return 1;
 	    }
 	      /* Extra stuff at the end. */
 	    if (*eptr != 0) {
 		  fprintf(stderr, "vlog95 error: Extra characters '%s' "
 		                  "included at end of spacing string: %s\n",
-		                  eptr, spacing);
+		                  eptr, spacing_str);
 		  return 1;
 	    }
 	      /* The increment must be greater than zero. */
-	    if (sp_incr < 1) {
+	    if (value < 1) {
 		  fprintf(stderr, "vlog95 error: Spacing increment (%ld) must "
-		                  "be greater than zero.\n", sp_incr);
+		                  "be greater than zero.\n", value);
 		  return 1;
 	    }
 	      /* An increment of more than sixteen is too much. */
-	    if (sp_incr > 16) {
+	    if (value > 16) {
 		  fprintf(stderr, "vlog95 error: Spacing increment (%ld) must "
-		                  "be sixteen or less.\n", sp_incr);
+		                  "be sixteen or less.\n", value);
 		  return 1;
 	    }
-	    indent_incr = sp_incr;
+	    indent_incr = value;
       }
 
 	/* Check to see if file/line information should be printed. */
-      if (strcmp(fileline, "") != 0) {
+      if (strcmp(fileline_str, "") != 0) {
 	    char *eptr;
-	    long fl_value = strtol(fileline, &eptr, 0);
+	    long value = strtol(fileline_str, &eptr, 0);
 	      /* Nothing usable in the file/line string. */
-	    if (fileline == eptr) {
+	    if (fileline_str == eptr) {
 		  fprintf(stderr, "vlog95 error: Unable to extract file/line "
-		                  "information from string: %s\n", fileline);
+		                  "information from string: %s\n",
+		                  fileline_str);
 		  return 1;
 	    }
 	      /* Extra stuff at the end. */
 	    if (*eptr != 0) {
 		  fprintf(stderr, "vlog95 error: Extra characters '%s' "
 		                  "included at end of file/line string: %s\n",
-		                  eptr, fileline);
+		                  eptr, fileline_str);
 		  return 1;
 	    }
 	      /* The file/line flag must be positive. */
-	    if (fl_value < 0) {
+	    if (value < 0) {
 		  fprintf(stderr, "vlog95 error: File/line flag (%ld) must "
-		                  "be positive.\n", fl_value);
+		                  "be positive.\n", value);
 		  return 1;
 	    }
-	    emit_file_line = fl_value > 0;
+	    emit_file_line = value > 0;
+      }
+
+	/* Check to see if we should also print signed constructs. */
+      if (strcmp(allowsigned_str, "") != 0) {
+	    char *eptr;
+	    long value = strtol(allowsigned_str, &eptr, 0);
+	      /* Nothing usable in the allow signed string. */
+	    if (allowsigned_str == eptr) {
+		  fprintf(stderr, "vlog95 error: Unable to extract allow "
+		                  "signed information from string: %s\n",
+		                  allowsigned_str);
+		  return 1;
+	    }
+	      /* Extra stuff at the end. */
+	    if (*eptr != 0) {
+		  fprintf(stderr, "vlog95 error: Extra characters '%s' "
+		                  "included at end of allow signed string: "
+		                  "%s\n", eptr, allowsigned_str);
+		  return 1;
+	    }
+	      /* The allow signed flag must be positive. */
+	    if (value < 0) {
+		  fprintf(stderr, "vlog95 error: Allow signed flag (%ld) must "
+		                  "be positive.\n", value);
+		  return 1;
+	    }
+	    allow_signed = value > 0;
       }
 
       design = des;
