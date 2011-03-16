@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -27,7 +27,7 @@
 
 static const char*version_string =
 "Icarus Verilog VVP Code Generator " VERSION " (" VERSION_TAG ")\n\n"
-"Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)\n\n"
+"Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)\n\n"
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"
 "  the Free Software Foundation; either version 2 of the License, or\n"
@@ -48,15 +48,13 @@ int vvp_errors = 0;
 
 __inline__ static void draw_execute_header(ivl_design_t des)
 {
-#if !defined(__MINGW32__)
       const char*cp = ivl_design_flag(des, "VVP_EXECUTABLE");
       if (cp) {
 	    fprintf(vvp_out, "#! %s\n", cp);
+#if !defined(__MINGW32__)
 	    fchmod(fileno(vvp_out), 0755);
-      }
-#else
-      fprintf(vvp_out, "# MinGW does not support an executable header.\n");
 #endif
+      }
       fprintf(vvp_out, ":ivl_version \"" VERSION "\"");
 	/* I am assuming that a base release will have a blank tag. */
       if (strcmp(VERSION_TAG, "") != 0) {
