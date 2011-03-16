@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,15 +31,13 @@ FILE*vvp_out = 0;
 
 inline static void draw_execute_header(ivl_design_t des)
 {
-#if !defined(__MINGW32__)
       const char*cp = ivl_design_flag(des, "VVP_EXECUTABLE");
       if (cp) {
 	    fprintf(vvp_out, "#! %s\n", cp);
+#if !defined(__MINGW32__)
 	    fchmod(fileno(vvp_out), 0755);
-      }
-#else
-      fprintf(vvp_out, "# MinGW does not support an executable header.\n");
 #endif
+      }
       fprintf(vvp_out, ":ivl_version \"" VERSION "\";\n");
 }
 
