@@ -50,15 +50,13 @@ unsigned show_file_line = 0;
 
 __inline__ static void draw_execute_header(ivl_design_t des)
 {
-#if !defined(__MINGW32__)
       const char*cp = ivl_design_flag(des, "VVP_EXECUTABLE");
       if (cp) {
 	    fprintf(vvp_out, "#! %s\n", cp);
+#if !defined(__MINGW32__)
 	    fchmod(fileno(vvp_out), 0755);
-      }
-#else
-      fprintf(vvp_out, "# MinGW does not support an executable header.\n");
 #endif
+      }
       fprintf(vvp_out, ":ivl_version \"" VERSION "\"");
 	/* I am assuming that a base release will have a blank tag. */
       if (strcmp(VERSION_TAG, "") != 0) {
