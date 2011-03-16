@@ -159,7 +159,7 @@ distclean: clean
 	rm -f stamp-config-h config.h
 	rm -f stamp-_pli_types-h _pli_types.h
 ifneq (@srcdir@,.)
-	rm -f version.h version_tag.h check.conf
+	rm -f version_tag.h check.conf
 	rmdir $(SUBDIRS) $(NOTUSED)
 endif
 	rm -rf autom4te.cache
@@ -266,8 +266,8 @@ iverilog-vpi.pdf: iverilog-vpi.ps
 	$(PS2PDF) iverilog-vpi.ps iverilog-vpi.pdf
 
 # For VERSION_TAG in driver/main.c, first try git-describe, then look for a
-# version.h file in the source tree (included in snapshots and releases), and
-# finally use nothing.
+# version_tag.h file in the source tree (included in snapshots and releases),
+# and finally use nothing.
 
 # "true" and "false" in the next few lines are Unix shell command names
 ifeq ($(GIT),none)
