@@ -143,10 +143,12 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    emit_expr(scope, ivl_expr_oper2(expr), 0);
 	    break;
 	case 'R':
-	    fprintf(stderr, "%s:%u: vlog95 error: >>> operator is not "
-	                    "supported.\n",
-	                    ivl_expr_file(expr), ivl_expr_lineno(expr));
-	    vlog_errors += 1;
+	    if (! allow_signed) {
+		  fprintf(stderr, "%s:%u: vlog95 error: >>> operator is not "
+		                  "supported.\n",
+		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
+		  vlog_errors += 1;
+	    }
 	case 'l':
 	case 'r':
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
