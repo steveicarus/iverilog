@@ -38,6 +38,17 @@ inline void FILE_NAME(LineInfo*tmp, const struct yyltype&where)
 }
 
 
+/* Recent version of bison expect that the user supply a
+   YYLLOC_DEFAULT macro that makes up a yylloc value from existing
+   values. I need to supply an explicit version to account for the
+   text field, that otherwise won't be copied. */
+# define YYLLOC_DEFAULT(Current, Rhs, N)  do {       \
+  (Current).first_line   = (Rhs)[1].first_line;      \
+  (Current).first_column = (Rhs)[1].first_column;    \
+  (Current).last_line    = (Rhs)[N].last_line;       \
+  (Current).last_column  = (Rhs)[N].last_column;     \
+  (Current).text         = (Rhs)[1].text;   } while (0)
+
 static void yyerror(const char*msg);
 
 int parse_errors = 0;
@@ -60,7 +71,6 @@ int parse_errors = 0;
 
       const VType* vtype;
 
-      InterfacePort*interface_element;
       std::list<InterfacePort*>* interface_list;
 
       Architecture::Statement* arch_statement;
@@ -104,8 +114,7 @@ int parse_errors = 0;
 
 %type <flag> direction
 
-%type <interface_element> interface_element
-%type <interface_list>    interface_list entity_header port_clause
+%type <interface_list>    interface_element interface_list entity_header port_clause
 %type <port_mode>  mode
 
 %type <arch_statement> concurrent_statement concurrent_signal_assignment_statement
@@ -119,7 +128,7 @@ int parse_errors = 0;
 %type <vtype> subtype_indication
 
 %type <text> identifier_opt logical_name
-%type <name_list> logical_name_list
+%type <name_list> logical_name_list identifier_list
 
 %%
 
@@ -144,7 +153,7 @@ architecture_body
   | K_architecture IDENTIFIER
     K_of IDENTIFIER
     K_is
-    K_begin error K_end K_architecture_opt ';'
+    K_begin error K_end K_architecture_opt identifier_opt ';'
       { errormsg(@1, "Syntax error in architecture statement.\n"); yyerrok; }
   | K_architecture error ';'
       { errormsg(@1, "Syntax error in architecture body.\n"); yyerrok; }
@@ -155,12 +164,12 @@ architecture_body
 architecture_statement_part
   : architecture_statement_part concurrent_statement
       { std::list<Architecture::Statement*>*tmp = $1;
-	tmp->push_back($2);
+	if ($2) tmp->push_back($2);
 	$$ = tmp;
       }
   | concurrent_statement
       { std::list<Architecture::Statement*>*tmp = new std::list<Architecture::Statement*>;
-	tmp->push_back($1);
+	if ($1) tmp->push_back($1);
 	$$ = tmp;
       }
   ;
@@ -174,6 +183,11 @@ concurrent_signal_assignment_statement
 	$$ = tmp;
 	delete[]$1;
 	delete $3;
+      }
+  | IDENTIFIER LEQ error ';'
+      { errormsg(@2, "Syntax error in signal assignment waveform.\n");
+	$$ = 0;
+	yyerrok;
       }
   ;
 
@@ -307,17 +321,37 @@ factor
       }
   ;
 
+identifier_list
+  : identifier_list ',' IDENTIFIER
+      { std::list<perm_string>* tmp = $1;
+	tmp->push_back(lex_strings.make($3));
+	delete[]$3;
+	$$ = tmp;
+      }
+  | IDENTIFIER
+      { std::list<perm_string>*tmp = new std::list<perm_string>;
+	tmp->push_back(lex_strings.make($1));
+	delete[]$1;
+	$$ = tmp;
+      }
+  ;
+
 identifier_opt : IDENTIFIER { $$ = $1; } |  { $$ = 0; } ;
 
   /* The interface_element is also an interface_declaration */
 interface_element
-  : IDENTIFIER ':' mode subtype_indication
-      { InterfacePort*tmp = new InterfacePort;
-	FILE_NAME(tmp, @1);
-	tmp->mode = $3;
-	tmp->name = lex_strings.make($1);
-	tmp->type = $4;
-	delete[]$1;
+  : identifier_list ':' mode subtype_indication
+      { std::list<InterfacePort*>*tmp = new std::list<InterfacePort*>;
+	for (std::list<perm_string>::iterator cur = $1->begin()
+		   ; cur != $1->end() ; ++cur) {
+	      InterfacePort*port = new InterfacePort;
+	      FILE_NAME(port, @1);
+	      port->mode = $3;
+	      port->name = *(cur);
+	      port->type = $4;
+	      tmp->push_back(port);
+	}
+	delete $1;
 	$$ = tmp;
       }
   ;
@@ -325,12 +359,12 @@ interface_element
 interface_list
   : interface_list ';' interface_element
       { std::list<InterfacePort*>*tmp = $1;
-	tmp->push_back($3);
+	tmp->splice(tmp->end(), *$3);
+	delete $3;
 	$$ = tmp;
       }
   | interface_element
-      { std::list<InterfacePort*>*tmp = new std::list<InterfacePort*>;
-	tmp->push_back($1);
+      { std::list<InterfacePort*>*tmp = $1;
 	$$ = tmp;
       }
   ;
