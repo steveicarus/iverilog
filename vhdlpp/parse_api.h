@@ -60,6 +60,8 @@ extern int yyparse(void);
  */
 extern void errormsg(const YYLTYPE&loc, const char*fmt, ...) __attribute__((format (printf, 2, 3)));
 
+extern void sorrymsg(const YYLTYPE&loc, const char*fmt, ...) __attribute__((format (printf, 2, 3)));
+
 /*
  * Set this to a non-zero value to enable parser debug output.
  */
@@ -68,8 +70,10 @@ extern int yydebug;
 /*
  * The parser counts the errors that is handed in the parse_errors
  * variable. For a clean compile, this value should not change. (The
- * caller sets its initial value.)
+ * caller sets its initial value.) The sorrys are the count of
+ * unsupported constructs that are encountered.
  */
 extern int parse_errors;
+extern int parse_sorrys;
 
 #endif

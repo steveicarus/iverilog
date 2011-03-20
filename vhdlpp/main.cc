@@ -96,6 +96,7 @@ int main(int argc, char*argv[])
 
       for (int idx = optind ; idx < argc ; idx += 1) {
 	    parse_errors = 0;
+	    parse_sorrys = 0;
 	    FILE*fd = fopen(argv[idx], "r");
 	    if (fd == 0) {
 		  perror(argv[idx]);
@@ -105,10 +106,14 @@ int main(int argc, char*argv[])
 	    reset_lexor(fd, argv[idx]);
 	    rc = yyparse();
 	    if (verbose_flag)
-		  fprintf(stderr, "yyparse() returns %d, parse_errors=%d\n", rc, parse_errors);
+		  fprintf(stderr, "yyparse() returns %d, parse_errors=%d, parse_sorrys=%d\n", rc, parse_errors, parse_sorrys);
 
 	    if (parse_errors > 0) {
-		  fprintf(stderr, "%d errors parsing %s\n", parse_errors, argv[idx]);
+		  fprintf(stderr, "Encountered %d errors parsing %s\n", parse_errors, argv[idx]);
+		  return 2;
+	    }
+	    if (parse_sorrys > 0) {
+		  fprintf(stderr, "Encountered %d unsupported constructs parsing %s\n", parse_sorrys, argv[idx]);
 		  return 2;
 	    }
 

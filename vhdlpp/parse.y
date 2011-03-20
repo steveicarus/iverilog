@@ -52,6 +52,7 @@ inline void FILE_NAME(LineInfo*tmp, const struct yyltype&where)
 static void yyerror(const char*msg);
 
 int parse_errors = 0;
+int parse_sorrys = 0;
 %}
 
 
@@ -114,13 +115,17 @@ int parse_errors = 0;
 
 %type <flag> direction
 
-%type <interface_list>    interface_element interface_list entity_header port_clause
+%type <text> name
+%type <interface_list> interface_element interface_list entity_header
+%type <interface_list> port_clause port_clause_opt
 %type <port_mode>  mode
 
-%type <arch_statement> concurrent_statement concurrent_signal_assignment_statement
+%type <arch_statement> concurrent_statement component_instantiation_statement concurrent_signal_assignment_statement
 %type <arch_statement_list> architecture_statement_part
 
-%type <expr> expression expression_logical factor primary relation
+%type <expr> expression factor primary relation
+%type <expr> expression_logical expression_logical_and expression_logical_or
+%type <expr> expression_logical_xnor expression_logical_xor
 %type <expr> shift_expression simple_expression term waveform_element
 
 %type <expr_list> waveform waveform_elements
@@ -138,29 +143,31 @@ design_file : design_units ;
 architecture_body
   : K_architecture IDENTIFIER
     K_of IDENTIFIER
-    K_is
+    K_is block_declarative_items_opt
     K_begin architecture_statement_part K_end K_architecture_opt identifier_opt ';'
-      { Architecture*tmp = new Architecture(lex_strings.make($2), *$7);
+      { Architecture*tmp = new Architecture(lex_strings.make($2), *$8);
 	FILE_NAME(tmp, @1);
 	bind_architecture_to_entity($4, tmp);
-	if ($10 && tmp->get_name() != $10)
+	if ($11 && tmp->get_name() != $11)
 	      errormsg(@2, "Architecture name doesn't match closing name\n");
 	delete[]$2;
 	delete[]$4;
-	delete $7;
-	if ($10) delete[]$10
+	delete $8;
+	if ($11) delete[]$11;
       }
   | K_architecture IDENTIFIER
     K_of IDENTIFIER
-    K_is
+    K_is block_declarative_items_opt
     K_begin error K_end K_architecture_opt identifier_opt ';'
-      { errormsg(@1, "Syntax error in architecture statement.\n"); yyerrok; }
+      { errormsg(@8, "Errors in architecture statements.\n"); yyerrok; }
   | K_architecture error ';'
-      { errormsg(@1, "Syntax error in architecture body.\n"); yyerrok; }
+      { errormsg(@2, "Errors in architecture body.\n"); yyerrok; }
   ;
 
-  /* The architecture_statement_part is a list of concurrent
-     statements. */
+/*
+ * The architecture_statement_part is a list of concurrent
+ * statements.
+ */
 architecture_statement_part
   : architecture_statement_part concurrent_statement
       { std::list<Architecture::Statement*>*tmp = $1;
@@ -172,10 +179,85 @@ architecture_statement_part
 	if ($1) tmp->push_back($1);
 	$$ = tmp;
       }
+
+  | error ';'
+      { $$ = 0;
+	errormsg(@1, "Syntax error in architecture statement.\n");
+	yyerrok;
+      }
+  ;
+
+association_element
+  : name ARROW name
+  ;
+
+association_list
+  : association_list ',' association_element
+  | association_element
+  ;
+
+block_declarative_item
+  : K_signal identifier_list ':' subtype_indication ';'
+      { sorrymsg(@1, "Signal declarations are not supported.\n"); }
+
+  | K_component IDENTIFIER K_is_opt
+    port_clause_opt
+    K_end K_component identifier_opt ';'
+      { perm_string name = lex_strings.make($2);
+	if ($7 && name != $7) {
+	      errormsg(@7, "Identifier %s doesn't match component name %s\n",
+		       $7, name.str());
+	}
+
+	delete[]$2;
+	if ($4) delete $4;
+	delete[]$7;
+	sorrymsg(@1, "Component declarations not supported.\n");
+      }
+
+      /* Various error handling rules for block_declarative_item... */
+
+  | K_signal error ';'
+      { errormsg(@2, "Syntax error declaring signals.\n"); yyerrok; }
+  | error ';'
+      { errormsg(@1, "Syntax error in block declarations.\n"); yyerrok; }
+
+  | K_component IDENTIFIER K_is_opt error K_end K_component identifier_opt ';'
+      { errormsg(@4, "Syntax error in component declaration.\n"); yyerrok; }
+  ;
+
+/*
+ * The block_declarative_items rule matches "{ block_declarative_item }"
+ * which is a synonym for "architecture_declarative_part" and
+ * "block_declarative_part".
+ */
+block_declarative_items
+  : block_declarative_items block_declarative_item
+  | block_declarative_item
+  ;
+
+block_declarative_items_opt
+  : block_declarative_items
+  |
+  ;
+
+component_instantiation_statement
+  : IDENTIFIER ':' IDENTIFIER port_map_aspect_opt ';'
+      { sorrymsg(@1, "Component instantiation statements are not supported.\n");
+	delete[]$1;
+	delete[]$3;
+	$$ = 0;
+      }
+  | IDENTIFIER ':' IDENTIFIER error ';'
+      { errormsg(@4, "Errors in component instantiation.\n");
+	delete[]$1;
+	delete[]$3;
+	$$ = 0;
+      }
   ;
 
 concurrent_signal_assignment_statement
-  : IDENTIFIER LEQ waveform ';'
+  : name LEQ waveform ';'
       { perm_string targ_name = lex_strings.make($1);
 	SignalAssignment*tmp = new SignalAssignment(targ_name, *$3);
 	FILE_NAME(tmp, @1);
@@ -184,7 +266,7 @@ concurrent_signal_assignment_statement
 	delete[]$1;
 	delete $3;
       }
-  | IDENTIFIER LEQ error ';'
+  | name LEQ error ';'
       { errormsg(@2, "Syntax error in signal assignment waveform.\n");
 	$$ = 0;
 	yyerrok;
@@ -192,7 +274,8 @@ concurrent_signal_assignment_statement
   ;
 
 concurrent_statement
-  : concurrent_signal_assignment_statement
+  : component_instantiation_statement
+  | concurrent_signal_assignment_statement
   ;
 
 context_clause : context_items | ;
@@ -267,19 +350,42 @@ expression
       { $$ = $1; }
   ;
 
+/*
+ * The expression_logical matches the logical_expression from the
+ * standard. Note that this is a little more tricky then usual because
+ * of the strange VHDL rules for logical expressions. We have to
+ * account for things like this:
+ *
+ *        <exp> and <exp> and <exp>...
+ *
+ * which is matched by the standard rule:
+ *
+ *        logical_expression ::=
+ *           ...
+ *             relation { and relation }
+ *
+ * The {} is important, and implies that "and" can be strung together
+ * with other "and" operators without parentheses. This is true for
+ * "and", "or", "xor", and "xnor". The tricky part is that these
+ * cannot be mixed. For example, this is not OK:
+ *
+ *        <exp> and <exp> or <exp>
+ *
+ * Also note that "nand" and "nor" can not be chained in this manner.
+ */
 expression_logical
   : relation { $$ = $1; }
-  | relation K_and relation
+  | relation K_and expression_logical_and
       { ExpLogical*tmp = new ExpLogical(ExpLogical::AND, $1, $3);
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
-  | relation K_or relation
+  | relation K_or expression_logical_or
       { ExpLogical*tmp = new ExpLogical(ExpLogical::OR, $1, $3);
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
-  | relation K_xor relation
+  | relation K_xor expression_logical_xor
       { ExpLogical*tmp = new ExpLogical(ExpLogical::XOR, $1, $3);
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
@@ -294,8 +400,48 @@ expression_logical
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
-  | relation K_xnor relation
+  | relation K_xnor expression_logical_xnor
       { ExpLogical*tmp = new ExpLogical(ExpLogical::XNOR, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  ;
+
+expression_logical_and
+  : relation
+      { $$ = $1; }
+  | expression_logical_and K_and relation
+      { ExpLogical*tmp = new ExpLogical(ExpLogical::AND, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  ;
+
+expression_logical_or
+  : relation
+      { $$ = $1; }
+  | expression_logical_or K_or relation
+      { ExpLogical*tmp = new ExpLogical(ExpLogical::OR, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  ;
+
+expression_logical_xnor
+  : relation
+      { $$ = $1; }
+  | expression_logical_xnor K_xnor relation
+      { ExpLogical*tmp = new ExpLogical(ExpLogical::XNOR, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  ;
+
+expression_logical_xor
+  : relation
+      { $$ = $1; }
+  | expression_logical_xor K_xor relation
+      { ExpLogical*tmp = new ExpLogical(ExpLogical::XOR, $1, $3);
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
@@ -407,6 +553,15 @@ mode
   | K_out { $$ = PORT_OUT; }
   ;
 
+name
+  : IDENTIFIER
+      { $$ = $1; }
+  | IDENTIFIER '('  expression ')'
+      { sorrymsg(@3, "Indexed names not supported yet.\n");
+	$$ = $1;
+      }
+  ;
+
 port_clause
   : K_port '(' interface_list ')' ';'
       { $$ = $3; }
@@ -417,8 +572,19 @@ port_clause
       }
   ;
 
+port_clause_opt : port_clause {$$ = $1;} | {$$ = 0;} ;
+
+port_map_aspect
+  : K_port K_map '(' association_list ')'
+  ;
+
+port_map_aspect_opt
+  : port_map_aspect
+  |
+  ;
+
 primary
-  : IDENTIFIER
+  : name
       { ExpName*tmp = new ExpName(lex_strings.make($1));
 	FILE_NAME(tmp, @1);
 	delete[]$1;
@@ -546,12 +712,13 @@ waveform_element
   /* Some keywords are optional in some contexts. In all such cases, a
      similar rule is used, as described here. */
 K_architecture_opt : K_architecture | ;
-K_entity_opt : K_entity | ;
+K_entity_opt       : K_entity       | ;
+K_is_opt           : K_is           | ;
 %%
 
-static void yyerror(const char*msg)
+static void yyerror(const char* /*msg*/)
 {
-      fprintf(stderr, "%s\n", msg);
+	//fprintf(stderr, "%s\n", msg);
       parse_errors += 1;
 }
 
@@ -562,10 +729,21 @@ void errormsg(const YYLTYPE&loc, const char*fmt, ...)
       va_list ap;
       va_start(ap, fmt);
 
-      fprintf(stderr, "%s:%d: ", file_path, loc.first_line);
+      fprintf(stderr, "%s:%d: error: ", file_path, loc.first_line);
       vfprintf(stderr, fmt, ap);
       va_end(ap);
       parse_errors += 1;
+}
+
+void sorrymsg(const YYLTYPE&loc, const char*fmt, ...)
+{
+      va_list ap;
+      va_start(ap, fmt);
+
+      fprintf(stderr, "%s:%d: sorry: ", file_path, loc.first_line);
+      vfprintf(stderr, fmt, ap);
+      va_end(ap);
+      parse_sorrys += 1;
 }
 
 /*
