@@ -21,6 +21,9 @@
 # include "config.h"
 # include "vlog95_priv.h"
 
+/* This variable lets a select know it is really a >>> operator. */
+static unsigned sign_extend = 0;
+
 static unsigned emit_drive(ivl_drive_t drive)
 {
       switch (drive) {
@@ -232,6 +235,27 @@ static ivl_nexus_t get_lpm_output(ivl_scope_t scope, ivl_lpm_t lpm)
 static void emit_logic_as_ca(ivl_scope_t scope, ivl_net_logic_t nlogic);
 static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm);
 
+/* For an undriven port look for the local signal to get the nexus name. */
+static void emit_nexus_port_signal(ivl_scope_t scope, ivl_nexus_t nex)
+{
+      unsigned idx, count = ivl_nexus_ptrs(nex);
+      ivl_signal_t sig = 0;
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    if ((ivl_nexus_ptr_drive1(nex_ptr) != IVL_DR_HiZ) ||
+	        (ivl_nexus_ptr_drive0(nex_ptr) != IVL_DR_HiZ)) assert(0);
+	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
+	    if (t_sig) {
+		  if (scope != ivl_signal_scope(t_sig)) continue;
+		  assert(! sig);
+		  sig = t_sig;
+	    }
+      }
+	/* There will not be a signal for an empty port. */
+      if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, 0));
+      else fprintf(vlog_out, "/* Empty */");
+}
+
 void emit_nexus_port_driver_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 {
       unsigned idx, count = ivl_nexus_ptrs(nex);
@@ -278,7 +302,12 @@ void emit_nexus_port_driver_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 	    emit_logic_as_ca(scope, net_logic);
       } else if (sig) {
 	    emit_nexus_as_ca(scope, ivl_signal_nex(sig, 0));
-      } else assert(0);
+	/* If there is no driver then look for a single signal that is
+	 * driven by this nexus that has the correct scope. This is needed
+	 * to translate top level ports. */
+      } else {
+	    emit_nexus_port_signal(scope, nex);
+      }
 }
 
 void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
@@ -542,22 +571,47 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm)
       int msb, lsb;
       ivl_signal_t sig = nexus_is_signal(scope, ivl_lpm_data(lpm, 0),
                                          &base, &array_word);
+
+      if (sign_extend && !allow_signed) {
+	    fprintf(stderr, "%s:%u: vlog95 error: >>> operator is not "
+	                    "supported.\n",
+	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+	    vlog_errors += 1;
+      }
+
 // HERE: variable parameter select needs to be rebuilt.
       if (! sig) {
 	      /* Check if the compiler used a select for a shift. */
 	    assert(base >= 0);
 	    if (base) fprintf(vlog_out, "(");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
-	    if (base) fprintf(vlog_out, " >> %d)", base);
+	    if (base) {
+		  fprintf(vlog_out, " ");
+		  if (sign_extend) fprintf(vlog_out, ">");
+		  fprintf(vlog_out, ">> %d)", base);
+	    }
+	    sign_extend = 0;
 	    return;
       }
+
+      if (sign_extend) fprintf(vlog_out, "(");
       emit_id(ivl_signal_basename(sig));
       if (ivl_signal_dimensions(sig)) {
 	    array_word += ivl_signal_array_base(sig);
 	    fprintf(vlog_out, "[%d]", array_word);
       }
+
       msb = ivl_signal_msb(sig);
       lsb = ivl_signal_lsb(sig);
+      if (sign_extend) {
+	    assert(base != lsb);
+	    if (msb >= lsb) base += lsb;
+	    else base = lsb - base;
+	    fprintf(vlog_out, " >>> %d)", base);
+	    sign_extend = 0;
+	    return;
+      }
+
       fprintf(vlog_out, "[");
       if (width == 1) {
 	    ivl_nexus_t sel = ivl_lpm_data(lpm, 1);
@@ -771,12 +825,15 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	case IVL_LPM_SHIFTR:
 	    fprintf(vlog_out, "(");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    fprintf(vlog_out, " ");
+	    assert(! sign_extend);
 	    fprintf(vlog_out, " >> ");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1));
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_SIGN_EXT:
-// HERE: Do we need to extend here?
+//	    assert(! sign_extend);
+	    sign_extend = 1;
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
 	    break;
 	case IVL_LPM_SUB:

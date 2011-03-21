@@ -549,9 +549,10 @@ void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 //       Then look for down scopes and then any scope. For all this warn if
 //       multiples are found in a given scope. This all needs to be before
 //       the constant code.
-      fprintf(stderr, "?:?: vlog95 sorry: Unable to find nexus name.\n");
-      vlog_errors += 1;
-      fprintf(vlog_out, "<missing>");
+
+	/* It is possible that the nexus does not have a name. For this
+	 * case do not print an actual name. */
+      fprintf(vlog_out, "/* Empty */");
 }
 
 /*

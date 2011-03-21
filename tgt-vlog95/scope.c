@@ -418,7 +418,9 @@ static void emit_sig_type(ivl_signal_t sig)
 		  }
 	    }
       } else {
-	    assert(type == IVL_SIT_TRI);
+	    assert((type == IVL_SIT_TRI) ||
+	           (type == IVL_SIT_TRI0) ||
+	           (type == IVL_SIT_TRI1));
 	    if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
 		  fprintf(stderr, "%s:%u: vlog95 error: Real net ports (%s) "
 		                  "are not supported.\n",

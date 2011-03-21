@@ -66,13 +66,71 @@ static int32_t get_int32_from_bits(const char *bits, unsigned nbits,
       return value;
 }
 
+/* Emit the given bits as either a signed or unsigned constant. If the
+ * bits contain an undefined value then emit them as a binary constant
+ * otherwise emit them as a hex constant. */
+static void emit_bits(const char *bits, unsigned nbits, unsigned is_signed)
+{
+      int idx;
+      unsigned has_undef = 0;
+
+	/* Check for an undefined bit. */
+      for (idx = (int)nbits -1; idx >= 0; idx -= 1) {
+	    if ((bits[idx] != '0') && (bits[idx] != '1')) {
+		  has_undef = 1;
+		  break;
+	    }
+      }
+
+      fprintf(vlog_out, "%u'", nbits);
+      if (is_signed) fprintf(vlog_out, "s");
+
+	/* Emit as a binary constant. */
+      if (has_undef || (nbits < 2)) {
+	    fprintf(vlog_out, "b");
+	    for (idx = (int)nbits-1; idx >= 0; idx -= 1) {
+		  fprintf(vlog_out, "%c", bits[idx]);
+	    }
+	/* Emit as a hex constant. */
+      } else {
+	    int start = 4*(nbits/4);
+	    unsigned result = 0;
+	    fprintf(vlog_out, "h");
+	    /* The first digit may not be a full hex digit. */
+	    if (start < nbits) {
+		  for (idx = start; idx < nbits; idx += 1) {
+			if (bits[idx] == '1') result |= 1U << (idx%4);
+		  }
+		  fprintf(vlog_out, "%1x", result);
+	    }
+	    /* Now print the full hex digits. */
+	    for (idx = start-1; idx >= 0; idx -= 4) {
+		  result = 0;
+		  if (bits[idx] == '1') result |= 0x8;
+		  if (bits[idx-1] == '1') result |= 0x4;
+		  if (bits[idx-2] == '1') result |= 0x2;
+		  if (bits[idx-3] == '1') result |= 0x1;
+		  fprintf(vlog_out, "%1x", result);
+	    }
+      }
+}
+
 void emit_number(const char *bits, unsigned nbits, unsigned is_signed,
                  const char *file, unsigned lineno)
 {
-	/* A signed value can only be 32 bits long since it can only be
-	 * represented as an integer. We can trim any matching MSB bits
-	 * to make it fit. We do not support undefined bits. */
-      if (is_signed) {
+	/* If the user is allowing signed constructs then we can emit a
+	 * signed number as a normal integer or with the 's syntax if
+	 * an integer is not appropriate. */
+      if (is_signed && allow_signed) {
+	    int rtype;
+	    int32_t value = get_int32_from_bits(bits, nbits, 1, &rtype);
+	    if (rtype != 0) emit_bits(bits, nbits, is_signed);
+	    else fprintf(vlog_out, "%"PRId32, value);
+	/* Otherwise a signed value can only be 32 bits long since it can
+	 * only be represented as an integer. We can trim any matching MSB
+	 * bits to make it fit. We cannot support individual undefined
+	 * bits in the constant. */
+      } else if (is_signed) {
 	    int rtype;
 	    int32_t value = get_int32_from_bits(bits, nbits, 1, &rtype);
 	    if (rtype > 0) {
@@ -100,40 +158,7 @@ void emit_number(const char *bits, unsigned nbits, unsigned is_signed,
 	 * defined and it is more than a single bit otherwise it is
 	 * represented in binary form to preserve all the information. */
       } else {
-	    int idx;
-	    unsigned has_undef = 0;
-	    for (idx = (int)nbits -1; idx >= 0; idx -= 1) {
-		  if ((bits[idx] != '0') && (bits[idx] != '1')) {
-			has_undef = 1;
-			break;
-		  }
-	    }
-	    if (has_undef || (nbits < 2)) {
-		  fprintf(vlog_out, "%u'b", nbits);
-		  for (idx = (int)nbits-1; idx >= 0; idx -= 1) {
-			fprintf(vlog_out, "%c", bits[idx]);
-		  }
-	    } else {
-		  int start = 4*(nbits/4);
-		  unsigned result = 0;
-		  fprintf(vlog_out, "%u'h", nbits);
-		    /* The first digit may not be a full hex digit. */
-		  if (start < nbits) {
-			for (idx = start; idx < nbits; idx += 1) {
-			      if (bits[idx] == '1') result |= 1U << (idx%4);
-			}
-			fprintf(vlog_out, "%1x", result);
-		  }
-		    /* Now print the full hex digits. */
-		  for (idx = start-1; idx >= 0; idx -= 4) {
-			result = 0;
-			if (bits[idx] == '1') result |= 0x8;
-			if (bits[idx-1] == '1') result |= 0x4;
-			if (bits[idx-2] == '1') result |= 0x2;
-			if (bits[idx-3] == '1') result |= 0x1;
-			fprintf(vlog_out, "%1x", result);
-		  }
-	    }
+	    emit_bits(bits, nbits, is_signed);
       }
 }
 
@@ -152,8 +177,9 @@ void emit_real_number(double value)
       }
 // HERE: This needs to be reworked. We must have a trailing digit after the
 //       decimal point and we want to print all the significant digits.
-//       I think the will require our own printing routine.
-      fprintf(vlog_out, "%#.16g", value);
+//       I think this will require our own printing routine.
+      if (value == 0.0) fprintf(vlog_out, "0.0");
+      else fprintf(vlog_out, "%#.16g", value);
 }
 
 /*
