@@ -1229,6 +1229,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	// unconnected port.
 
       for (unsigned idx = 0 ;  idx < pins.size() ;  idx += 1) {
+	    bool unconnected_port = false;
 
 	      // Skip unconnected module ports. This happens when a
 	      // null parameter is passed in.
@@ -1289,10 +1290,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			      }
 			}
 		  }
-
-		  continue;
+		  unconnected_port = true;
 	    }
-
 
 	      // Inside the module, the port is zero or more signals
 	      // that were already elaborated. List all those signals
@@ -1332,7 +1331,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // If I find that the port is unconnected inside the
 	      // module, then there is nothing to connect. Skip the
 	      // argument.
-	    if (prts_vector_width == 0) {
+	    if ((prts_vector_width == 0) || unconnected_port) {
 		  continue;
 	    }
 
@@ -4649,6 +4648,17 @@ Design* elaborate(list<perm_string>roots)
 	    if (! rmod->elaborate_sig(des, scope)) {
 		  delete des;
 		  return 0;
+	    }
+
+	      // Some of the generators need to have the ports correctly
+	      // defined for the root modules. This code does that.
+	    for (unsigned idx = 0; idx < rmod->port_count(); idx += 1) {
+		  vector<PEIdent*> mport = rmod->get_port(idx);
+		  for (unsigned pin = 0; pin < mport.size(); pin += 1) {
+			  // This really does more than we need and adds extra 
+			  // stuff to the design that should be cleaned later.
+			(void) mport[pin]->elaborate_port(des, scope);
+		  }
 	    }
       }
 
