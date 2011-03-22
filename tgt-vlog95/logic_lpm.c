@@ -1245,6 +1245,28 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 	 * part of a continuous assignment. */
       if (is_local_nexus(scope, ivl_logic_pin(nlogic, 0))) return;
       fprintf(vlog_out, "%*c", indent, ' ');
+	/* Check to see if this logical should really be emitted as/was
+	 * generated from a continuous assignment. */
+      if (ivl_logic_is_cassign(nlogic)) {
+	    unsigned pin_count = 2;
+	    if (ivl_logic_type(nlogic) != IVL_LO_NOT) pin_count += 1;
+	    assert(ivl_logic_pins(nlogic) == pin_count);
+	    fprintf(vlog_out, "assign");
+	    emit_gate_strength(nlogic, strength_type);
+	    emit_delay(scope,
+	               ivl_logic_delay(nlogic, 0),
+	               ivl_logic_delay(nlogic, 1),
+	               ivl_logic_delay(nlogic, 2),
+	               3);
+	    fprintf(vlog_out, " ");
+	    emit_name_of_nexus(scope, ivl_logic_pin(nlogic, 0));
+	    fprintf(vlog_out, " = ");
+	    emit_logic_as_ca(scope, nlogic);
+	    fprintf(vlog_out, ";");
+	    emit_logic_file_line(nlogic);
+	    fprintf(vlog_out, "\n");
+	    return;
+      }
       switch (ivl_logic_type(nlogic)) {
 	case IVL_LO_AND:
             fprintf(vlog_out, "and");
