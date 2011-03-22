@@ -2008,10 +2008,11 @@ class NetLogic  : public NetNode {
 		  PMOS, XNOR, XOR };
 
       explicit NetLogic(NetScope*s, perm_string n, unsigned pins,
-			TYPE t, unsigned wid);
+			TYPE t, unsigned wid, bool is_cassign__=false);
 
       TYPE type() const;
       unsigned width() const;
+      bool is_cassign() const;
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
@@ -2020,6 +2021,7 @@ class NetLogic  : public NetNode {
     private:
       TYPE type_;
       unsigned width_;
+      bool is_cassign_;
 };
 
 /*

@@ -996,6 +996,7 @@ extern ivl_expr_t  ivl_logic_delay(ivl_net_logic_t net, unsigned transition);
 extern ivl_drive_t ivl_logic_drive0(ivl_net_logic_t net);
 extern ivl_drive_t ivl_logic_drive1(ivl_net_logic_t net);
 extern unsigned    ivl_logic_width(ivl_net_logic_t net);
+extern unsigned    ivl_logic_is_cassign(ivl_net_logic_t net);
 
   /* DEPRECATED */
 extern const char* ivl_logic_attr(ivl_net_logic_t net, const char*key);

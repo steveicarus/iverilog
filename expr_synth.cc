@@ -184,22 +184,22 @@ NetNet* NetEBBits::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       switch (op()) {
 	  case '&':
-	    gate = new NetLogic(scope, oname, 3, NetLogic::AND, width);
+	    gate = new NetLogic(scope, oname, 3, NetLogic::AND, width, true);
 	    break;
 	  case 'A':
-	    gate = new NetLogic(scope, oname, 3, NetLogic::NAND, width);
+	    gate = new NetLogic(scope, oname, 3, NetLogic::NAND, width, true);
 	    break;
 	  case '|':
-	    gate = new NetLogic(scope, oname, 3, NetLogic::OR, width);
+	    gate = new NetLogic(scope, oname, 3, NetLogic::OR, width, true);
 	    break;
 	  case '^':
-	    gate = new NetLogic(scope, oname, 3, NetLogic::XOR, width);
+	    gate = new NetLogic(scope, oname, 3, NetLogic::XOR, width, true);
 	    break;
 	  case 'O':
-	    gate = new NetLogic(scope, oname, 3, NetLogic::NOR, width);
+	    gate = new NetLogic(scope, oname, 3, NetLogic::NOR, width, true);
 	    break;
 	  case 'X':
-	    gate = new NetLogic(scope, oname, 3, NetLogic::XNOR, width);
+	    gate = new NetLogic(scope, oname, 3, NetLogic::XNOR, width, true);
 	    break;
 	  default:
 	    gate = NULL;
@@ -286,7 +286,7 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	   operation. Make an XNOR gate instead of a comparator. */
       if ((width == 1) && (op_ == 'e') && !real_args) {
 	    NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
-					 3, NetLogic::XNOR, 1);
+					 3, NetLogic::XNOR, 1, true);
 	    gate->set_line(*this);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
@@ -300,7 +300,7 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	   an XOR instead of an XNOR gate. */
       if ((width == 1) && (op_ == 'n')  && !real_args) {
 	    NetLogic*gate = new NetLogic(scope, scope->local_symbol(),
-					 3, NetLogic::XOR, 1);
+					 3, NetLogic::XOR, 1, true);
 	    gate->set_line(*this);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));
@@ -520,11 +520,12 @@ NetNet* NetEBLogic::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       if (lsig == 0 || rsig == 0) return 0;
 
-        /* You cannot currently do logical operations on real values. */
+        /* Any real value should have already been converted to a bit value. */
       if (lsig->data_type() == IVL_VT_REAL ||
           rsig->data_type() == IVL_VT_REAL) {
-	    cerr << get_fileline() << ": sorry: " << human_readable_op(op_)
-	         << " is currently unsupported for real values." << endl;
+	    cerr << get_fileline() << ": internal error: "
+	         << human_readable_op(op_)
+	         << " is missing real to bit conversion." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -535,60 +536,30 @@ NetNet* NetEBLogic::synthesize(Design*des, NetScope*scope, NetExpr*root)
       osig->data_type(expr_type());
       osig->local_flag(true);
 
+      NetLogic*olog;
+      perm_string oname = scope->local_symbol();
 
+	/* Create the logic OR/AND gate. This has a single bit output,
+	 * with single bit inputs for the two operands. */
       if (op() == 'o') {
-
-	      /* Logic OR can handle the reduction *and* the logical
-		 comparison with a single wide OR gate. So handle this
-		 magically. */
-
-	    perm_string oname = scope->local_symbol();
-
-	    NetLogic*olog = new NetLogic(scope, oname,
-					 lsig->pin_count()+rsig->pin_count()+1,
-					 NetLogic::OR, 1);
-	    olog->set_line(*this);
-
-	    connect(osig->pin(0), olog->pin(0));
-
-	    unsigned pin = 1;
-	    for (unsigned idx = 0 ;  idx < lsig->pin_count() ;  idx = 1)
-		  connect(olog->pin(pin+idx), lsig->pin(idx));
-
-	    pin += lsig->pin_count();
-	    for (unsigned idx = 0 ;  idx < rsig->pin_count() ;  idx = 1)
-		  connect(olog->pin(pin+idx), rsig->pin(idx));
-
-	    des->add_node(olog);
-
+	    olog = new NetLogic(scope, oname, 3, NetLogic::OR, 1, true);
       } else {
 	    assert(op() == 'a');
-
-	      /* Create the logic AND gate. This is a single bit
-		 output, with inputs for each of the operands. */
-	    NetLogic*olog;
-	    perm_string oname = scope->local_symbol();
-
-	    olog = new NetLogic(scope, oname, 3, NetLogic::AND, 1);
-	    olog->set_line(*this);
-
-	    connect(osig->pin(0), olog->pin(0));
-	    des->add_node(olog);
-
-	      /* XXXX Here, I need to reduce the parameters with
-		 reduction or. */
-
-
-	      /* By this point, the left and right parameters have been
-		 reduced to single bit values. Now we just connect them to
-		 the logic gate. */
-	    assert(lsig->pin_count() == 1);
-	    connect(lsig->pin(0), olog->pin(1));
-
-	    assert(rsig->pin_count() == 1);
-	    connect(rsig->pin(0), olog->pin(2));
+	    olog = new NetLogic(scope, oname, 3, NetLogic::AND, 1, true);
       }
 
+      olog->set_line(*this);
+      des->add_node(olog);
+
+      connect(osig->pin(0), olog->pin(0));
+
+	/* The left and right operands have already been reduced to a
+	 * single bit value, so just connect then to the logic gate. */
+      assert(lsig->pin_count() == 1);
+      connect(lsig->pin(0), olog->pin(1));
+
+      assert(rsig->pin_count() == 1);
+      connect(rsig->pin(0), olog->pin(2));
 
       return osig;
 }
@@ -879,7 +850,7 @@ NetNet* NetEUBits::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       switch (op()) {
 	  case '~':
-	    gate = new NetLogic(scope, oname, 2, NetLogic::NOT, width);
+	    gate = new NetLogic(scope, oname, 2, NetLogic::NOT, width, true);
 	    gate->set_line(*this);
 	    break;
 	  default:

@@ -759,6 +759,7 @@ bool dll_target::bufz(const NetBUFZ*net)
 
       obj->type_ = net->transparent()? IVL_LO_BUFT : IVL_LO_BUFZ;
       obj->width_= net->width();
+      obj->is_cassign = 0;
       obj->npins_= 2;
       obj->pins_ = new ivl_nexus_t[2];
       FILE_NAME(obj, net);
@@ -920,6 +921,9 @@ void dll_target::logic(const NetLogic*net)
 	    obj->type_ = IVL_LO_NONE;
 	    break;
       }
+	/* Some of the logical gates are used to represent operators in a
+	 * continuous assignment, so set a flag if that is the case. */
+      obj->is_cassign = net->is_cassign();
 
 	/* Connect all the ivl_nexus_t objects to the pins of the
 	   device. */
@@ -1273,6 +1277,7 @@ void dll_target::udp(const NetUDP*net)
 	/* The NetUDP class hasn't learned about width yet, so we
 	   assume a width of 1. */
       obj->width_ = 1;
+      obj->is_cassign = 0;
 
       static map<perm_string,ivl_udp_t> udps;
       ivl_udp_t u;
@@ -2352,7 +2357,7 @@ void dll_target::convert_module_ports(const NetScope*net)
 		  ivl_signal_t sig = find_signal(des_, nets[idx]);
 		  scop->u_.nex[idx] = nexus_sig_make(sig, 0);
 	    }
-	    delete nets;
+	    delete [] nets;
       }
 }
 

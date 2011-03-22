@@ -747,6 +747,12 @@ extern "C" unsigned ivl_logic_lineno(ivl_net_logic_t net)
       return net->lineno;
 }
 
+extern "C" unsigned ivl_logic_is_cassign(ivl_net_logic_t net)
+{
+      assert(net);
+      return net->is_cassign;
+}
+
 extern "C" const char* ivl_logic_attr(ivl_net_logic_t net, const char*key)
 {
       assert(net);

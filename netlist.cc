@@ -2441,8 +2441,8 @@ ivl_variable_type_t NetECast::expr_type() const
 }
 
 NetLogic::NetLogic(NetScope*s, perm_string n, unsigned pins,
-		   TYPE t, unsigned wid)
-: NetNode(s, n, pins), type_(t), width_(wid)
+		   TYPE t, unsigned wid, bool is_cassign__)
+: NetNode(s, n, pins), type_(t), width_(wid), is_cassign_(is_cassign__)
 {
       pin(0).set_dir(Link::OUTPUT);
       for (unsigned idx = 1 ;  idx < pins ;  idx += 1) {
@@ -2458,6 +2458,11 @@ NetLogic::TYPE NetLogic::type() const
 unsigned NetLogic::width() const
 {
       return width_;
+}
+
+bool NetLogic::is_cassign() const
+{
+      return is_cassign_;
 }
 
 NetUReduce::NetUReduce(NetScope*scope__, perm_string n,
