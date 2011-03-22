@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -656,6 +656,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	    if (depth > 0) {
 		  int nskip = (vcd_names_search(&fst_tab, fullname) != 0);
+		  char *defname = NULL;
 
 		    /* We have to always scan the scope because the
 		     * depth could be different for this call. */
@@ -666,8 +667,19 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			vcd_names_add(&fst_tab, fullname);
 		  }
 
+		    /* This must be done before the other name is fetched
+		     * and the string must always be freed */
+		  if (item_type == vpiModule) {
+			defname = strdup(vpi_get_str(vpiDefName, item));
+		  }
 		  name = vpi_get_str(vpiName, item);
-		  fstWriterSetScope(dump_file, type, name, NULL);
+		    /* If the two names match only use the vpiName. */
+		  if (defname && (strcmp(defname, name) == 0)) {
+			free(defname);
+			defname = NULL;
+		  }
+		  fstWriterSetScope(dump_file, type, name, defname);
+		  free(defname);
 
 		  for (i=0; types[i]>0; i++) {
 			vpiHandle hand;
@@ -688,15 +700,28 @@ static int draw_scope(vpiHandle item, vpiHandle callh)
 {
       int depth;
       const char *name;
-      PLI_INT32 type;
+      char *defname = NULL;
+      PLI_INT32 scope_type, type;
 
       vpiHandle scope = vpi_handle(vpiScope, item);
       if (!scope) return 0;
 
       depth = 1 + draw_scope(scope, callh);
-      name = vpi_get_str(vpiName, scope);
 
-      switch (vpi_get(vpiType, scope)) {
+      scope_type = vpi_get(vpiType, scope);
+	/* This must be done before the other name is fetched
+	 * and the string must always be freed */
+      if (scope_type == vpiModule) {
+	    defname = strdup(vpi_get_str(vpiDefName, scope));
+      }
+      name = vpi_get_str(vpiName, scope);
+	/* If the two names match only use the vpiName. */
+      if (defname && (strcmp(defname, name) == 0)) {
+	    free(defname);
+	    defname = NULL;
+      }
+
+      switch (scope_type) {
 	  case vpiNamedBegin:  type = FST_ST_VCD_BEGIN;      break;
 	  case vpiTask:        type = FST_ST_VCD_TASK;       break;
 	  case vpiFunction:    type = FST_ST_VCD_FUNCTION;   break;
@@ -711,7 +736,8 @@ static int draw_scope(vpiHandle item, vpiHandle callh)
             assert(0);
       }
 
-      fstWriterSetScope(dump_file, type, name, NULL);
+      fstWriterSetScope(dump_file, type, name, defname);
+      free(defname);
 
       return depth;
 }
