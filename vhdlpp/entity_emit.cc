@@ -39,14 +39,16 @@ int Entity::emit(ostream&out)
 {
       int errors = 0;
 
-      out << "module " << name_;
+      const std::vector<InterfacePort*>&ports = get_ports();
+
+      out << "module " << get_name();
 
 	// If there are ports, emit them.
-      if (ports_.size() > 0) {
+      if (ports.size() > 0) {
 	    out << "(";
 	    const char*sep = 0;
-	    for (vector<InterfacePort*>::iterator cur = ports_.begin()
-		       ; cur != ports_.end() ; ++cur) {
+	    for (vector<InterfacePort*>::const_iterator cur = ports.begin()
+		       ; cur != ports.end() ; ++cur) {
 		  InterfacePort*port = *cur;
 
 		  decl_t&decl = declarations_[port->name];

@@ -27,9 +27,11 @@
 # include "parse_misc.h"
 # include "architec.h"
 # include "expression.h"
+# include "vsignal.h"
 # include "vtype.h"
 # include  <cstdarg>
 # include  <list>
+# include  <map>
 
 inline void FILE_NAME(LineInfo*tmp, const struct yyltype&where)
 {
@@ -53,6 +55,18 @@ static void yyerror(const char*msg);
 
 int parse_errors = 0;
 int parse_sorrys = 0;
+
+/*
+ * This map accumulates signals that are matched in the declarations
+ * section of a block. When the declarations are over, these are
+ * transferred to a map for the block proper.
+ */
+static map<perm_string, Signal*> block_signals;
+
+/*
+ * This map accumulates component declarations.
+ */
+static map<perm_string, ComponentBase*> block_components;
 %}
 
 
@@ -145,7 +159,9 @@ architecture_body
     K_of IDENTIFIER
     K_is block_declarative_items_opt
     K_begin architecture_statement_part K_end K_architecture_opt identifier_opt ';'
-      { Architecture*tmp = new Architecture(lex_strings.make($2), *$8);
+      { Architecture*tmp = new Architecture(lex_strings.make($2),
+					    block_signals,
+					    block_components, *$8);
 	FILE_NAME(tmp, @1);
 	bind_architecture_to_entity($4, tmp);
 	if ($11 && tmp->get_name() != $11)
@@ -153,6 +169,8 @@ architecture_body
 	delete[]$2;
 	delete[]$4;
 	delete $8;
+	block_signals.clear();
+	block_components.clear();
 	if ($11) delete[]$11;
       }
   | K_architecture IDENTIFIER
@@ -198,7 +216,15 @@ association_list
 
 block_declarative_item
   : K_signal identifier_list ':' subtype_indication ';'
-      { sorrymsg(@1, "Signal declarations are not supported.\n"); }
+      { /* Save the signal declaration in the block_signals map. */
+	for (std::list<perm_string>::iterator cur = $2->begin()
+		   ; cur != $2->end() ; ++cur) {
+	      Signal*sig = new Signal(*cur, $4);
+	      FILE_NAME(sig, @1);
+	      block_signals[*cur] = sig;
+	}
+	delete $2;
+      }
 
   | K_component IDENTIFIER K_is_opt
     port_clause_opt
@@ -209,10 +235,11 @@ block_declarative_item
 		       $7, name.str());
 	}
 
+	ComponentBase*comp = new ComponentBase(name);
+	if ($4) comp->set_interface($4);
+	block_components[name] = comp;
 	delete[]$2;
-	if ($4) delete $4;
 	delete[]$7;
-	sorrymsg(@1, "Component declarations not supported.\n");
       }
 
       /* Various error handling rules for block_declarative_item... */

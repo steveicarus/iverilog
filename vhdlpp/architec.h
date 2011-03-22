@@ -22,9 +22,12 @@
 # include  "StringHeap.h"
 # include  "LineInfo.h"
 # include  <list>
+# include  <map>
 
+class ComponentBase;
 class Entity;
 class Expression;
+class Signal;
 
 /*
  * The Architecture class carries the contents (name, statements,
@@ -53,7 +56,9 @@ class Architecture : public LineInfo {
     public:
 	// Create an architecture from its name and its statements.
 	// NOTE: The statement list passed in is emptied.
-      Architecture(perm_string name, std::list<Architecture::Statement*>&s);
+      Architecture(perm_string name, std::map<perm_string,Signal*>&sigs,
+		   std::map<perm_string,ComponentBase*>&comps,
+		   std::list<Architecture::Statement*>&s);
       ~Architecture();
 
       perm_string get_name() const { return name_; }
@@ -69,7 +74,11 @@ class Architecture : public LineInfo {
 
     private:
       perm_string name_;
-
+	// Signals declared local to this architecture
+      std::map<perm_string,Signal*> signals_;
+	// Component declarations...
+      std::map<perm_string,ComponentBase*> components_;
+	// Concurrent statements local to this architecture
       std::list<Architecture::Statement*> statements_;
 
     private: // Not implemented

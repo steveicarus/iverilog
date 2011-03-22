@@ -1,3 +1,5 @@
+#ifndef __vsignal_H
+#define __vsignal_H
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
  *
@@ -17,43 +19,26 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "architec.h"
-# include  "expression.h"
+# include  "StringHeap.h"
+# include  "LineInfo.h"
 
-using namespace std;
+class VType;
 
-Architecture::Architecture(perm_string name, map<perm_string,Signal*>&sigs,
-			   map<perm_string,ComponentBase*>&comps,
-			   list<Architecture::Statement*>&s)
-: name_(name)
-{
-      signals_ = sigs;
-      components_ = comps;
-      statements_.splice(statements_.end(), s);
-}
+class Signal : public LineInfo {
 
-Architecture::~Architecture()
-{
-}
+    public:
+      Signal(perm_string name, const VType*type);
+      ~Signal();
 
-Architecture::Statement::Statement()
-{
-}
+      void dump(ostream&out) const;
 
-Architecture::Statement::~Statement()
-{
-}
+    private:
+      perm_string name_;
+      const VType*type_;
 
-SignalAssignment::SignalAssignment(perm_string targ_name, list<Expression*>&rv)
-: target_name_(targ_name)
-{
-      rval_.splice(rval_.end(), rv);
-}
+    private: // Not implemented
+      Signal(const Signal&);
+      Signal& operator = (const Signal&);
+};
 
-SignalAssignment::~SignalAssignment()
-{
-      for (list<Expression*>::iterator cur = rval_.begin()
-		 ; cur != rval_.end() ; ++cur) {
-	    delete *cur;
-      }
-}
+#endif

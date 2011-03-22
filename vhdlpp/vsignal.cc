@@ -17,43 +17,13 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "architec.h"
-# include  "expression.h"
+# include  "vsignal.h"
 
-using namespace std;
-
-Architecture::Architecture(perm_string name, map<perm_string,Signal*>&sigs,
-			   map<perm_string,ComponentBase*>&comps,
-			   list<Architecture::Statement*>&s)
-: name_(name)
-{
-      signals_ = sigs;
-      components_ = comps;
-      statements_.splice(statements_.end(), s);
-}
-
-Architecture::~Architecture()
+Signal::Signal(perm_string nam, const VType*typ)
+: name_(nam), type_(typ)
 {
 }
 
-Architecture::Statement::Statement()
+Signal::~Signal()
 {
-}
-
-Architecture::Statement::~Statement()
-{
-}
-
-SignalAssignment::SignalAssignment(perm_string targ_name, list<Expression*>&rv)
-: target_name_(targ_name)
-{
-      rval_.splice(rval_.end(), rv);
-}
-
-SignalAssignment::~SignalAssignment()
-{
-      for (list<Expression*>::iterator cur = rval_.begin()
-		 ; cur != rval_.end() ; ++cur) {
-	    delete *cur;
-      }
 }

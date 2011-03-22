@@ -40,11 +40,17 @@ class InterfacePort : public LineInfo {
       const VType*type;
 };
 
-class Entity : public LineInfo {
+/*
+ * The ComponentBase class represents the base entity
+ * declaration. When used as is, then this represents a forward
+ * declaration of an entity. Elaboration will match it to a proper
+ * entity. Or this can be the base class for a full-out Entity.
+ */
+class ComponentBase : public LineInfo {
 
     public:
-      Entity(perm_string name);
-      ~Entity();
+      ComponentBase(perm_string name);
+      ~ComponentBase();
 
 	// Entities have names.
       perm_string get_name() const { return name_; }
@@ -54,6 +60,27 @@ class Entity : public LineInfo {
 	// for the entity. This method collects those entities, and
 	// empties the list in the process.
       void set_interface(std::list<InterfacePort*>*ports);
+
+    public:
+      void dump_ports(ostream&out) const;
+
+    protected:
+	// This is really only used by the Entity derived class.
+      const std::vector<InterfacePort*>&get_ports() { return ports_; }
+
+    private:
+      perm_string name_;
+      std::vector<InterfacePort*> ports_;
+};
+
+/*
+ * Entities are fully declared components.
+ */
+class Entity : public ComponentBase {
+
+    public:
+      Entity(perm_string name);
+      ~Entity();
 
 	// bind an architecture to the entity, and return the
 	// Architecture that was bound. If there was a previous
@@ -69,10 +96,6 @@ class Entity : public LineInfo {
       void dump(ostream&out) const;
 
     private:
-      perm_string name_;
-
-      std::vector<InterfacePort*> ports_;
-
       std::map<perm_string,Architecture*>arch_;
       Architecture*bind_arch_;
 

@@ -25,21 +25,30 @@ using namespace std;
 
 std::map<perm_string,Entity*> design_entities;
 
-Entity::Entity(perm_string name)
+ComponentBase::ComponentBase(perm_string name)
 : name_(name)
 {
 }
 
-Entity::~Entity()
+ComponentBase::~ComponentBase()
 {
 }
 
-void Entity::set_interface(std::list<InterfacePort*>*ports)
+void ComponentBase::set_interface(std::list<InterfacePort*>*ports)
 {
 	while (ports->size() > 0) {
 	      ports_.push_back(ports->front());
 	      ports->pop_front();
 	}
+}
+
+Entity::Entity(perm_string name)
+: ComponentBase(name)
+{
+}
+
+Entity::~Entity()
+{
 }
 
 Architecture* Entity::add_architecture(Architecture*that)

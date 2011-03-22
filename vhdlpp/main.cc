@@ -93,6 +93,7 @@ int main(int argc, char*argv[])
       }
 
       preload_global_types();
+      int errors = 0;
 
       for (int idx = optind ; idx < argc ; idx += 1) {
 	    parse_errors = 0;
@@ -110,20 +111,26 @@ int main(int argc, char*argv[])
 
 	    if (parse_errors > 0) {
 		  fprintf(stderr, "Encountered %d errors parsing %s\n", parse_errors, argv[idx]);
-		  return 2;
 	    }
 	    if (parse_sorrys > 0) {
 		  fprintf(stderr, "Encountered %d unsupported constructs parsing %s\n", parse_sorrys, argv[idx]);
-		  return 2;
 	    }
 
 	    fclose(fd);
+
+	    if (parse_errors || parse_sorrys) {
+		  errors += parse_errors;
+		  errors += parse_sorrys;
+		  break;
+	    }
       }
 
       if (dump_design_entities_path)
 	    dump_design_entities(dump_design_entities_path);
 
-      int errors = 0;
+      if (errors > 0)
+	    return 2;
+
       errors = elaborate_entities();
       if (errors > 0) {
 	    fprintf(stderr, "%d errors elaborating design.\n", errors);

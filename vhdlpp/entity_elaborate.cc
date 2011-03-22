@@ -47,11 +47,11 @@ int Entity::elaborate()
       int errors = 0;
 
       if (verbose_flag)
-	    cerr << "Elaborate entity " << name_ << "..." << endl;
+	    cerr << "Elaborate entity " << get_name() << "..." << endl;
 
       if (arch_.size() == 0) {
 	    cerr << get_fileline() << ": error: "
-		 << "No architectures to choose from for entity " << name_
+		 << "No architectures to choose from for entity " << get_name()
 		 << "." << endl;
 	    return 1;
       }
@@ -59,7 +59,7 @@ int Entity::elaborate()
 
       if (arch_.size() > 1) {
 	    cerr << get_fileline() << ": sorry: "
-		 << "Too many architectures for entity " << name_
+		 << "Too many architectures for entity " << get_name()
 		 << ". Architectures are:" << endl;
 	    for (map<perm_string,Architecture*>::const_iterator cur = arch_.begin()
 		       ; cur != arch_.end() ; ++cur) {
@@ -83,9 +83,10 @@ int Entity::elaborate()
 int Entity::elaborate_ports_(void)
 {
       int errors = 0;
+      const std::vector<InterfacePort*>&ports = get_ports();
 
-      for (std::vector<InterfacePort*>::const_iterator cur = ports_.begin()
-		 ; cur != ports_.end() ; ++cur) {
+      for (std::vector<InterfacePort*>::const_iterator cur = ports.begin()
+		 ; cur != ports.end() ; ++cur) {
 
 	    InterfacePort*cur_port = *cur;
 	    decl_t cur_decl;

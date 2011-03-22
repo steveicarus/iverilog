@@ -21,6 +21,7 @@
 # include  "entity.h"
 # include  "architec.h"
 # include  "expression.h"
+# include  "vsignal.h"
 # include  "vtype.h"
 # include  <fstream>
 # include  <iomanip>
@@ -54,10 +55,8 @@ void dump_design_entities(const char*path)
       }
 }
 
-void Entity::dump(ostream&out) const
+void ComponentBase::dump_ports(ostream&out) const
 {
-      out << "entity " << name_
-	  << " file=" << get_fileline() << endl;
       if (ports_.size() == 0) {
 	    out << "    No ports" << endl;
       } else {
@@ -75,10 +74,17 @@ void Entity::dump(ostream&out) const
 		  out << ", file=" << item->get_fileline() << endl;
 	    }
       }
+}
+
+void Entity::dump(ostream&out) const
+{
+      out << "entity " << get_name()
+	  << " file=" << get_fileline() << endl;
+      dump_ports(out);
 
       for (map<perm_string,Architecture*>::const_iterator cur = arch_.begin()
 		 ; cur != arch_.end() ; ++cur) {
-	    cur->second->dump(out, name_);
+	    cur->second->dump(out, get_name());
       }
 }
 
@@ -87,6 +93,20 @@ void Architecture::dump(ostream&out, perm_string of_entity) const
       out << "architecture " << name_
 	  << " of entity " << of_entity
 	  << " file=" << get_fileline() << endl;
+
+	// Dump signal declarations
+      for (map<perm_string,Signal*>::const_iterator cur = signals_.begin()
+		 ; cur != signals_.end() ; ++cur) {
+	    cur->second->dump(out);
+      }
+
+	// Dump component declarations
+      for (map<perm_string,ComponentBase*>::const_iterator cur = components_.begin()
+		 ; cur != components_.end() ; ++cur) {
+	    out << "   component " << cur->first << " is" << endl;
+	    cur->second->dump_ports(out);
+	    out << "   end component " << cur->first << endl;
+      }
 
       for (list<Architecture::Statement*>::const_iterator cur = statements_.begin()
 		 ; cur != statements_.end() ; ++cur) {
@@ -97,6 +117,11 @@ void Architecture::dump(ostream&out, perm_string of_entity) const
 void Architecture::Statement::dump(ostream&out) const
 {
       out << "   Architecutre::Statement at file=" << get_fileline() << endl;
+}
+
+void Signal::dump(ostream&out) const
+{
+      out << "   signal " << name_ << " is " << *type_ << endl;
 }
 
 void SignalAssignment::dump(ostream&out) const
