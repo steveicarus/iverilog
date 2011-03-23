@@ -558,7 +558,7 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    emit_expr_signal(scope, expr, wid);
 	    break;
 	case IVL_EX_STRING:
-	    fprintf(vlog_out, "\"%s\"", ivl_expr_string(expr));
+	    emit_string(ivl_expr_string(expr));
 	    break;
 	case IVL_EX_TERNARY:
 	    emit_expr_ternary(scope, expr, wid);

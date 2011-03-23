@@ -16,6 +16,8 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+# include <stdlib.h>
+# include <string.h>
 # include "config.h"
 # include "vlog95_priv.h"
 
@@ -175,11 +177,34 @@ void emit_real_number(double value)
 	    else fprintf(vlog_out, "(-1.0/0.0)");
 	    return;
       }
-// HERE: This needs to be reworked. We must have a trailing digit after the
-//       decimal point and we want to print all the significant digits.
-//       I think this will require our own printing routine.
-      if (value == 0.0) fprintf(vlog_out, "0.0");
-      else fprintf(vlog_out, "%#.16g", value);
+      if (value == 0.0) {
+	    if (1.0/value < 0.0) fprintf(vlog_out, "-0.0");
+	    else fprintf(vlog_out, "0.0");
+      } else {
+	    char buffer[32];
+	    char *cptr;
+	    unsigned len;
+	      /* Print the double to a temporary string using an extra digit. */
+	    buffer[sizeof(buffer)-1] = 0;
+	    snprintf(buffer, sizeof(buffer), "%#.17g", value);
+	    assert(buffer[sizeof(buffer)-1] == 0);
+	      /* Check to see if there is a digit after the decimal point and
+	       * add a digit if it is missing. */
+	    len = strlen(buffer);
+	    if (buffer[len-1] == '.') {
+		  assert((len + 1) < sizeof(buffer));
+		  buffer[len] = '0';
+		  len += 1;
+		  buffer[len] = 0;
+	    }
+	      /* Now trim any extra trailing zero digits. */
+	    cptr = buffer + len - 1;
+	    while ((*cptr == '0') && (*(cptr-1) != '.')) cptr -= 1;
+	    *(cptr+1) = 0;
+
+	      /* Now print the processed output. */
+	    fprintf(vlog_out, "%s", buffer);
+      }
 }
 
 /*
@@ -288,4 +313,21 @@ int32_t get_int32_from_number(ivl_expr_t expr, int *result_type)
       assert(ivl_expr_type(expr) == IVL_EX_NUMBER);
       return get_int32_from_bits(ivl_expr_bits(expr), ivl_expr_width(expr),
                                  ivl_expr_signed(expr), result_type);
+}
+
+/*
+ * Routine to print a string value as a string after removing any leading
+ * escaped NULL bytes.
+ */
+void emit_string(const char* string)
+{
+      char *buffer = strdup(string);
+      char *cptr = buffer;
+      fprintf(vlog_out, "\"");
+	/* Prune any leading escaped NULL bytes. */
+      while ((cptr[0] == '\\') && (cptr[1] == '0') && 
+             (cptr[2] == '0') && (cptr[3] == '0')) cptr += 4;
+      if (*cptr) fprintf(vlog_out, "%s", cptr);
+      free(buffer);
+      fprintf(vlog_out, "\"");
 }

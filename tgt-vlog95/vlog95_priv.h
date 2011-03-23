@@ -100,6 +100,7 @@ extern void emit_id(const char *id);
 extern void emit_real_number(double value);
 extern void emit_number(const char *bits, unsigned nbits, unsigned is_signed,
                         const char *file, unsigned lineno);
+extern void emit_string(const char *string);
 
 /*
  * Find the enclosing module scope.
