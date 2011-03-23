@@ -333,7 +333,7 @@ direction : K_to { $$ = false; } | K_downto { $$ = true; } ;
 
   /* As an entity is declared, add it to the map of design entities. */
 entity_declaration
-  : K_entity IDENTIFIER K_is entity_header K_end K_entity_opt ';'
+  : K_entity IDENTIFIER K_is entity_header K_end K_entity_opt identifier_opt';'
       { Entity*tmp = new Entity(lex_strings.make($2));
 	FILE_NAME(tmp, @1);
 	  // Transfer the ports
@@ -343,22 +343,12 @@ entity_declaration
 	  // Save the entity in the entity map.
 	design_entities[tmp->get_name()] = tmp;
 	delete[]$2;
-      }
-  | K_entity IDENTIFIER K_is entity_header K_end K_entity_opt IDENTIFIER ';'
-      { Entity*tmp = new Entity(lex_strings.make($2));
-	FILE_NAME(tmp, @1);
-	if(tmp->get_name() != $7) {
-	      errormsg(@1, "Syntax error in entity clause. \n");
-	}
-
-	delete[]$2;
-	delete[]$7;
-	// Transfer the ports
-	std::list<InterfacePort*>*ports = $4;
-	tmp->set_interface(ports);
-	delete ports;
-	// Save the entity in the entity map.
-	design_entities[tmp->get_name()] = tmp;
+    if($7) {
+        if(tmp->get_name() != $7) {
+            errormsg(@1, "Syntax error in entity clause. Closing name doesn't match.\n");
+        }
+        delete $7;
+    }
       }
   | K_entity error K_end K_entity_opt identifier_opt ';'
       { errormsg(@1, "Too many errors, giving up on entity declaration.\n");
