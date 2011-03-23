@@ -56,20 +56,21 @@ int Entity::elaborate()
 	    return 1;
       }
 
-
+        /* FIXME: the architecture for the entity should be chosen in configuration
+        block (not yet implemented). Multiple architectures are allowed in general */
       if (arch_.size() > 1) {
 	    cerr << get_fileline() << ": sorry: "
-		 << "Too many architectures for entity " << get_name()
-		 << ". Architectures are:" << endl;
+		 << "Multiple architectures for an entity are not yet supported"
+		 << ". Architectures for entity " << get_name() << " are:" << endl;
 	    for (map<perm_string,Architecture*>::const_iterator cur = arch_.begin()
 		       ; cur != arch_.end() ; ++cur) {
 		  cerr << get_fileline() << ":      : " << cur->first
 		       << " at " << cur->second->get_fileline() << endl;
 	    }
 
-	    errors += 1;
+	    //errors += 1;
       }
-
+        /* FIXME: here we should look at configuration block */
       bind_arch_ = arch_.begin()->second;
       if (verbose_flag)
 	    cerr << "For entity " << get_name()

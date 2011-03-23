@@ -42,14 +42,15 @@ void bind_architecture_to_entity(const char*ename, Architecture*arch)
 	    return;
       }
 
+      /* FIXME: entities can have multiple architectures attached to them
+      This is to be configured by VHDL's configurations (not yet implemented) */
       Architecture*old_arch = idx->second->add_architecture(arch);
       if (old_arch != arch) {
-	    cerr << arch->get_fileline() << ": error: "
+	    cerr << arch->get_fileline() << ": warning: "
 		 << "Architecture " << arch->get_name()
-		 << " for entity " << idx->second->get_name()
+		 << " for entity " << idx->first
 		 << " is already defined here: " << old_arch->get_fileline() << endl;
 	    parse_errors += 1;
-	    return;
       }
 }
 
