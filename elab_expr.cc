@@ -3163,7 +3163,7 @@ unsigned PENumber::test_width(Design*, NetScope*, width_mode_t&mode)
 {
       expr_type_   = IVL_VT_LOGIC;
       expr_width_  = value_->len();
-      min_width_   = 1;
+      min_width_   = expr_width_;
       signed_flag_ = value_->has_sign();
 
       if ((mode < LOSSLESS) && !value_->has_len() && !value_->is_single())
