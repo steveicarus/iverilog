@@ -24,11 +24,11 @@
 # include  <vector>
 # include  "StringHeap.h"
 # include  "LineInfo.h"
+# include  "vtype.h"
 
 typedef enum { PORT_NONE=0, PORT_IN, PORT_OUT } port_mode_t;
 
 class Architecture;
-class VType;
 
 class InterfacePort : public LineInfo {
     public:
@@ -99,13 +99,7 @@ class Entity : public ComponentBase {
       std::map<perm_string,Architecture*>arch_;
       Architecture*bind_arch_;
 
-      enum vtype_t { VNONE, VBOOL, VLOGIC };
-      struct decl_t {
-	    bool signed_flag;
-	    vtype_t type;
-	    long msb, lsb;
-      };
-      map<perm_string,decl_t> declarations_;
+      map<perm_string,VType::decl_t> declarations_;
 
       int elaborate_ports_(void);
 };

@@ -59,10 +59,11 @@ LIBS = @LIBS@ @EXTRALIBS@
 
 M = StringHeap.o LineInfo.o
 
-O = main.o architec.o  compiler.o entity.o entity_elaborate.o \
-    expression.o vsignal.o vtype.o lexor.o lexor_keyword.o parse.o \
+O = main.o architec.o architec_elaborate.o compiler.o entity.o entity_elaborate.o \
+    expression.o vsignal.o vtype.o vtype_elaborate.o \
+    lexor.o lexor_keyword.o parse.o \
     parse_misc.o vhdlreal.o vhdlint.o debug.o \
-    architec_emit.o entity_emit.o expression_emit.o \
+    architec_emit.o entity_emit.o expression_emit.o vtype_emit.o \
     $M
 
 all: dep vhdlpp@EXEEXT@

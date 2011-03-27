@@ -32,6 +32,7 @@
 # include  <cstdarg>
 # include  <list>
 # include  <map>
+# include  <assert.h>
 
 inline void FILE_NAME(LineInfo*tmp, const struct yyltype&where)
 {
@@ -129,7 +130,6 @@ static map<perm_string, ComponentBase*> block_components;
 
 %type <flag> direction
 
-%type <text> name
 %type <interface_list> interface_element interface_list entity_header
 %type <interface_list> port_clause port_clause_opt
 %type <port_mode>  mode
@@ -140,6 +140,7 @@ static map<perm_string, ComponentBase*> block_components;
 %type <expr> expression factor primary relation
 %type <expr> expression_logical expression_logical_and expression_logical_or
 %type <expr> expression_logical_xnor expression_logical_xor
+%type <expr> name
 %type <expr> shift_expression simple_expression term waveform_element
 
 %type <expr_list> waveform waveform_elements
@@ -285,16 +286,17 @@ component_instantiation_statement
 
 concurrent_signal_assignment_statement
   : name LEQ waveform ';'
-      { perm_string targ_name = lex_strings.make($1);
-	SignalAssignment*tmp = new SignalAssignment(targ_name, *$3);
+      { ExpName*name = dynamic_cast<ExpName*> ($1);
+	assert(name);
+	SignalAssignment*tmp = new SignalAssignment(name, *$3);
 	FILE_NAME(tmp, @1);
 
 	$$ = tmp;
-	delete[]$1;
 	delete $3;
       }
   | name LEQ error ';'
       { errormsg(@2, "Syntax error in signal assignment waveform.\n");
+	delete $1;
 	$$ = 0;
 	yyerrok;
       }
@@ -572,10 +574,16 @@ mode
 
 name
   : IDENTIFIER
-      { $$ = $1; }
+      { ExpName*tmp = new ExpName(lex_strings.make($1));
+	FILE_NAME(tmp, @1);
+	delete[]$1;
+	$$ = tmp;
+      }
   | IDENTIFIER '('  expression ')'
-      { sorrymsg(@3, "Indexed names not supported yet.\n");
-	$$ = $1;
+      { ExpName*tmp = new ExpName(lex_strings.make($1), $3);
+	FILE_NAME(tmp, @1);
+	delete[]$1;
+	$$ = tmp;
       }
   ;
 
@@ -602,11 +610,7 @@ port_map_aspect_opt
 
 primary
   : name
-      { ExpName*tmp = new ExpName(lex_strings.make($1));
-	FILE_NAME(tmp, @1);
-	delete[]$1;
-	$$ = tmp;
-      }
+      { $$ = $1; }
   | INT_LITERAL
       { ExpInteger*tmp = new ExpInteger($1);
 	FILE_NAME(tmp, @1);

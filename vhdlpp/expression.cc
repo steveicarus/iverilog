@@ -87,12 +87,18 @@ ExpLogical::~ExpLogical()
 }
 
 ExpName::ExpName(perm_string nn)
-: name_(nn)
+: name_(nn), index_(0)
+{
+}
+
+ExpName::ExpName(perm_string nn, Expression*ix)
+: name_(nn), index_(ix)
 {
 }
 
 ExpName::~ExpName()
 {
+      delete index_;
 }
 
 ExpUAbs::ExpUAbs(Expression*op1)

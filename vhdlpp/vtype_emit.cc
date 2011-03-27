@@ -1,5 +1,3 @@
-#ifndef __vsignal_H
-#define __vsignal_H
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
  *
@@ -19,30 +17,37 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "StringHeap.h"
-# include  "LineInfo.h"
 
-class Architecture;
-class Entity;
-class VType;
+# include  "vtype.h"
+# include <iostream>
+# include  <typeinfo>
+# include  <cassert>
 
-class Signal : public LineInfo {
+using namespace std;
 
-    public:
-      Signal(perm_string name, const VType*type);
-      ~Signal();
+int VType::decl_t::emit(ostream&out, perm_string name) const
+{
+      switch (type) {
+	  case VType::VNONE:
+	    out << "// N type for " << name << endl;
+	    break;
+	  case VType::VLOGIC:
+	    out << "wire logic ";
+	    if (signed_flag)
+		  out << "signed ";
+	    if (msb != lsb)
+		  out << "[" << msb << ":" << lsb << "] ";
+	    out << name << ";" << endl;
+	    break;
+	  case VType::VBOOL:
+	    out << "wire bool ";
+	    if (signed_flag)
+		  out << "signed ";
+	    if (msb != lsb)
+		  out << "[" << msb << ":" << lsb << "] ";
+	    out << name << ";" << endl;
+	    break;
+      }
 
-      int emit(ostream&out, Entity*ent, Architecture*arc);
-
-      void dump(ostream&out) const;
-
-    private:
-      perm_string name_;
-      const VType*type_;
-
-    private: // Not implemented
-      Signal(const Signal&);
-      Signal& operator = (const Signal&);
-};
-
-#endif
+      return 0;
+}

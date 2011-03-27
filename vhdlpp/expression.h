@@ -156,14 +156,17 @@ class ExpName : public Expression {
 
     public:
       ExpName(perm_string nn);
+      ExpName(perm_string nn, Expression*index);
       ~ExpName();
 
+    public: // Base methods
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
       void dump(ostream&out, int indent) const;
 
     private:
       perm_string name_;
+      Expression*index_;
 };
 
 class ExpUAbs : public ExpUnary {
