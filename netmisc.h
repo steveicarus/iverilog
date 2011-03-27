@@ -135,17 +135,6 @@ extern NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid);
 extern unsigned count_lval_width(const class NetAssign_*first);
 
 /*
- * This is temporarily used to indicate that a user function elaboration
- * fail is likely the result of missing constant user function support.
- */
-extern bool need_constant_expr;
-
-/*
- * This is used to indicate that we are evaluating a parameter expression.
- */
-extern bool is_param_expr;
-
-/*
  * This function elaborates an expression, and tries to evaluate it
  * right away. If the expression can be evaluated, this returns a
  * constant expression. If it cannot be evaluated, it returns whatever
@@ -160,14 +149,16 @@ extern bool is_param_expr;
 class PExpr;
 
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
-			      PExpr*pe, int context_width);
+			      PExpr*pe, int context_width,
+                              bool need_const =false);
 
 /*
  * This function is a variant of elab_and_eval that elaborates and
  * evaluates the arguments of a system task.
  */
-extern NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
-                                  unsigned arg_idx, PExpr*pe);
+extern NetExpr* elab_sys_task_arg(Design*des, NetScope*scope,
+                                  perm_string name, unsigned arg_idx,
+                                  PExpr*pe, bool need_const =false);
 /*
  * This function elaborates an expression as if it is for the r-value
  * of an assignment, The lv_type and lv_width are the type and width
@@ -176,7 +167,8 @@ extern NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
  */
 extern NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 				    ivl_variable_type_t lv_type,
-				    unsigned lv_width, PExpr*expr);
+				    unsigned lv_width, PExpr*expr,
+                                    bool need_const =false);
 
 /*
  * This procedure evaluates an expression and if the evaluation is

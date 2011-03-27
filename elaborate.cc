@@ -227,10 +227,8 @@ unsigned PGBuiltin::calculate_array_count_(Design*des, NetScope*scope,
 	   gates, then I am expected to make more than one
 	   gate. Figure out how many are desired. */
       if (msb_) {
-	    need_constant_expr = true;
-	    NetExpr*msb_exp = elab_and_eval(des, scope, msb_, -1);
-	    NetExpr*lsb_exp = elab_and_eval(des, scope, lsb_, -1);
-	    need_constant_expr = false;
+	    NetExpr*msb_exp = elab_and_eval(des, scope, msb_, -1, true);
+	    NetExpr*lsb_exp = elab_and_eval(des, scope, lsb_, -1, true);
 
 	    NetEConst*msb_con = dynamic_cast<NetEConst*>(msb_exp);
 	    NetEConst*lsb_con = dynamic_cast<NetEConst*>(lsb_exp);
@@ -2057,9 +2055,8 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 {
       ivl_assert(*this, rval_);
 
-      need_constant_expr = is_constant_;
-      NetExpr*rv = elaborate_rval_expr(des, scope, lv_type, lv_width, rval());
-      need_constant_expr = false;
+      NetExpr*rv = elaborate_rval_expr(des, scope, lv_type, lv_width, rval(),
+                                       is_constant_);
 
       if (!is_constant_ || !rv) return rv;
 
@@ -3376,7 +3373,8 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 
       PExpr::width_mode_t mode;
       pe->test_width(des, scope, mode);
-      NetExpr*expr = pe->elaborate_expr(des, scope, pe->expr_width(), false);
+      NetExpr*expr = pe->elaborate_expr(des, scope, pe->expr_width(),
+                                        PExpr::NO_FLAGS);
       if (expr == 0) {
 	    cerr << get_fileline() << ": error: Unable to elaborate"
 		  " wait condition expression." << endl;
@@ -4204,9 +4202,8 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	    for (specparam_it_t cur = specparams.begin()
 		       ; cur != specparams.end() ; ++ cur ) {
 
-		  need_constant_expr = true;
-		  NetExpr*val = elab_and_eval(des, scope, (*cur).second, -1);
-		  need_constant_expr = false;
+		  NetExpr*val = elab_and_eval(des, scope, (*cur).second, -1,
+                                              true);
 		  NetScope::spec_val_t value;
 
 		  if (NetECReal*val_cr = dynamic_cast<NetECReal*> (val)) {

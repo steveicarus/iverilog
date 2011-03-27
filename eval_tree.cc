@@ -1946,12 +1946,5 @@ NetExpr* NetESFunc::eval_tree()
 
 NetExpr* NetEUFunc::eval_tree()
 {
-      if (need_constant_expr) {
-	    cerr << get_fileline() << ": sorry: constant user "
-	            "functions are not currently supported: "
-	         << func_->basename() << "()." << endl;
-
-      }
-
       return 0;
 }
