@@ -44,8 +44,8 @@ Architecture::Statement::~Statement()
 {
 }
 
-SignalAssignment::SignalAssignment(perm_string targ_name, list<Expression*>&rv)
-: target_name_(targ_name)
+SignalAssignment::SignalAssignment(ExpName*name, list<Expression*>&rv)
+: lval_(name)
 {
       rval_.splice(rval_.end(), rv);
 }

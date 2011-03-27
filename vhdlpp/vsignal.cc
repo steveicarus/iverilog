@@ -18,6 +18,10 @@
  */
 
 # include  "vsignal.h"
+# include  "vtype.h"
+# include  <iostream>
+
+using namespace std;
 
 Signal::Signal(perm_string nam, const VType*typ)
 : name_(nam), type_(typ)
@@ -26,4 +30,14 @@ Signal::Signal(perm_string nam, const VType*typ)
 
 Signal::~Signal()
 {
+}
+
+int Signal::emit(ostream&out, Entity*, Architecture*)
+{
+      int errors = 0;
+
+      VType::decl_t decl;
+      type_->elaborate(decl);
+      errors += decl.emit(out, name_);
+      return errors;
 }

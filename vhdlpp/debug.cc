@@ -127,7 +127,8 @@ void Signal::dump(ostream&out) const
 void SignalAssignment::dump(ostream&out) const
 {
       out << "   SignalAssignment file=" << get_fileline() << endl;
-      out << "     " << target_name_ << " <= <expr>..." << endl;
+      lval_->dump(out, 4);
+      out << "     <= <expr>..." << endl;
 
       for (list<Expression*>::const_iterator cur = rval_.begin()
 		 ; cur != rval_.end() ; ++cur) {
@@ -218,6 +219,8 @@ void ExpName::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "ExpName(\"" << name_ << "\")"
 	  << " at " << get_fileline() << endl;
+      if (index_)
+	    index_->dump(out, indent+6);
 }
 
 void ExpUAbs::dump(ostream&out, int indent) const

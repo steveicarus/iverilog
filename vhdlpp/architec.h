@@ -27,6 +27,7 @@
 class ComponentBase;
 class Entity;
 class Expression;
+class ExpName;
 class Signal;
 
 /*
@@ -63,6 +64,9 @@ class Architecture : public LineInfo {
 
       perm_string get_name() const { return name_; }
 
+	// Elaborate this architecture in the context of the given entity.
+      int elaborate(Entity*entity);
+
 	// Emit this architecture to the given out file in the context
 	// of the specified entity. This method is used by the
 	// elaborate code to display generated code to the specified
@@ -91,14 +95,14 @@ class Architecture : public LineInfo {
 class SignalAssignment  : public Architecture::Statement {
 
     public:
-      SignalAssignment(perm_string target_name, std::list<Expression*>&rval);
+      SignalAssignment(ExpName*target, std::list<Expression*>&rval);
       ~SignalAssignment();
 
       int emit(ostream&out, Entity*entity, Architecture*arc);
       virtual void dump(ostream&out) const;
 
     private:
-      perm_string target_name_;
+      ExpName*lval_;
       std::list<Expression*> rval_;
 };
 

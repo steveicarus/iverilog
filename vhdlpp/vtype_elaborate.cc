@@ -1,5 +1,3 @@
-#ifndef __vsignal_H
-#define __vsignal_H
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
  *
@@ -19,30 +17,44 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "StringHeap.h"
-# include  "LineInfo.h"
+# include  "vtype.h"
+# include  <typeinfo>
+# include  <cassert>
 
-class Architecture;
-class Entity;
-class VType;
+using namespace std;
 
-class Signal : public LineInfo {
+void VTypeArray::elaborate(VType::decl_t&decl) const
+{
+      const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*>(etype_);
+      assert(base != 0);
 
-    public:
-      Signal(perm_string name, const VType*type);
-      ~Signal();
+      base->elaborate(decl);
+	//assert(decl.msb == decl.lsb == 0);
 
-      int emit(ostream&out, Entity*ent, Architecture*arc);
+      decl.msb = dimension(0).msb();
+      decl.lsb = dimension(0).lsb();
+      decl.signed_flag = signed_flag_;
+}
 
-      void dump(ostream&out) const;
+void VTypePrimitive::elaborate(VType::decl_t&decl) const
+{
+      decl.type = VNONE;
+      decl.signed_flag = false;
+      decl.msb = 0;
+      decl.lsb = 0;
 
-    private:
-      perm_string name_;
-      const VType*type_;
-
-    private: // Not implemented
-      Signal(const Signal&);
-      Signal& operator = (const Signal&);
-};
-
-#endif
+      switch (type_) {
+	  case BOOLEAN:
+	  case BIT:
+	    decl.type = VBOOL;
+	    break;
+	  case STDLOGIC:
+	    decl.type = VLOGIC;
+	    break;
+	  case INTEGER:
+	    decl.type = VBOOL;
+	    decl.msb = 31;
+	    decl.lsb = 0;
+	    break;
+      }
+}

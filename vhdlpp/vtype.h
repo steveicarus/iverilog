@@ -37,6 +37,19 @@ class VType {
       virtual ~VType() =0;
 
       virtual void show(std::ostream&) const;
+
+    public:
+      enum vtype_t { VNONE, VBOOL, VLOGIC };
+      struct decl_t {
+	  public:
+	    decl_t() : signed_flag(false), type(VNONE), msb(0), lsb(0) { }
+	    int emit(std::ostream&out, perm_string name) const;
+	  public:
+	    bool signed_flag;
+	    vtype_t type;
+	    long msb, lsb;
+      };
+      virtual void elaborate(decl_t&decl) const =0;
 };
 
 inline std::ostream&operator << (std::ostream&out, const VType&item)
@@ -71,6 +84,7 @@ class VTypePrimitive : public VType {
       ~VTypePrimitive();
 
       void show(std::ostream&) const;
+      void elaborate(decl_t&decl) const;
 
       type_t type() const { return type_; }
 
@@ -112,6 +126,7 @@ class VTypeArray : public VType {
       ~VTypeArray();
 
       void show(std::ostream&) const;
+      void elaborate(decl_t&decl) const;
 
       size_t dimensions() const;
       const range_t&dimension(size_t idx) const

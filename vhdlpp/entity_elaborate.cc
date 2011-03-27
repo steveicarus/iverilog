@@ -78,6 +78,9 @@ int Entity::elaborate()
 		 << "." << endl;
 
       errors += elaborate_ports_();
+
+      errors += bind_arch_->elaborate(this);
+
       return errors;
 }
 
@@ -90,11 +93,7 @@ int Entity::elaborate_ports_(void)
 		 ; cur != ports.end() ; ++cur) {
 
 	    InterfacePort*cur_port = *cur;
-	    decl_t cur_decl;
-	    cur_decl.type = VNONE;
-	    cur_decl.signed_flag = false;
-	    cur_decl.msb = 0;
-	    cur_decl.lsb = 0;
+	    VType::decl_t cur_decl;
 
 	    const VType*type = cur_port->type;
 	    if (type == 0) {
@@ -105,50 +104,7 @@ int Entity::elaborate_ports_(void)
 		  continue;
 	    }
 
-	    if (const VTypePrimitive*use_type = dynamic_cast<const VTypePrimitive*>(type)) {
-		  switch (use_type->type()) {
-		      case VTypePrimitive::BOOLEAN:
-		      case VTypePrimitive::BIT:
-			cur_decl.type = VBOOL;
-			break;
-		      case VTypePrimitive::STDLOGIC:
-			cur_decl.type = VLOGIC;
-			break;
-		      case VTypePrimitive::INTEGER:
-			cur_decl.type = VBOOL;
-			cur_decl.msb = 31;
-			cur_decl.lsb = 0;
-			break;
-		  }
-
-	    } else if (const VTypeArray*arr_type = dynamic_cast<const VTypeArray*>(type)) {
-		  const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*>(arr_type->element_type());
-		  assert(base != 0);
-
-		  switch (base->type()) {
-		      case VTypePrimitive::BOOLEAN:
-		      case VTypePrimitive::BIT:
-			cur_decl.type = VBOOL;
-			break;
-		      case VTypePrimitive::STDLOGIC:
-			cur_decl.type = VLOGIC;
-			break;
-		      case VTypePrimitive::INTEGER:
-			cur_decl.type = VLOGIC;
-			assert(0);
-			break;
-		  }
-
-		  cur_decl.msb = arr_type->dimension(0).msb();
-		  cur_decl.lsb = arr_type->dimension(0).lsb();
-		  cur_decl.signed_flag = arr_type->signed_vector();
-
-	    } else {
-		  cerr << get_fileline() << ": error: "
-		       << "I don't know how to map port " << cur_port->name
-		       << " type " << typeid(*cur_port->type).name() << "." << endl;
-		  errors += 1;
-	    }
+	    type->elaborate(cur_decl);
 
 	    declarations_[cur_port->name] = cur_decl;
       }

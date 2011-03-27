@@ -51,7 +51,7 @@ int Entity::emit(ostream&out)
 		       ; cur != ports.end() ; ++cur) {
 		  InterfacePort*port = *cur;
 
-		  decl_t&decl = declarations_[port->name];
+		  VType::decl_t&decl = declarations_[port->name];
 
 		  if (sep) out << sep;
 		  else sep = ", ";
@@ -81,32 +81,10 @@ int Entity::emit(ostream&out)
 
       out << ";" << endl;
 
-      for (map<perm_string,decl_t>::const_iterator cur = declarations_.begin()
+      for (map<perm_string,VType::decl_t>::const_iterator cur = declarations_.begin()
 		 ; cur != declarations_.end() ; ++cur) {
 
-	    switch (cur->second.type) {
-		case VNONE:
-		  out << "// N type for " << cur->first << endl;
-		  break;
-		case VLOGIC:
-		  out << "wire logic ";
-		  if (cur->second.signed_flag)
-			out << "signed ";
-		  if (cur->second.msb != cur->second.lsb)
-			out << "[" << cur->second.msb
-			    << ":" << cur->second.lsb << "] ";
-		  out << cur->first << ";" << endl;
-		  break;
-		case VBOOL:
-		  out << "wire bool ";
-		  if (cur->second.signed_flag)
-			out << "signed ";
-		  if (cur->second.msb != cur->second.lsb)
-			out << "[" << cur->second.msb
-			    << ":" << cur->second.lsb << "] ";
-		  out << cur->first << ";" << endl;
-		  break;
-	    }
+	    cur->second.emit(out, cur->first);
       }
 
       errors += bind_arch_->emit(out, this);

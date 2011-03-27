@@ -20,6 +20,7 @@
 # include  "architec.h"
 # include  "entity.h"
 # include  "expression.h"
+# include  "vsignal.h"
 # include  <iostream>
 # include  <typeinfo>
 # include  <cassert>
@@ -27,6 +28,13 @@
 int Architecture::emit(ostream&out, Entity*entity)
 {
       int errors = 0;
+
+      for (map<perm_string,Signal*>::iterator cur = signals_.begin()
+		 ; cur != signals_.end() ; ++cur) {
+
+	    errors += cur->second->emit(out, entity, this);
+      }
+
       for (list<Architecture::Statement*>::iterator cur = statements_.begin()
 		 ; cur != statements_.end() ; ++cur) {
 
@@ -52,7 +60,9 @@ int SignalAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
       Expression*rval = rval_.front();
 
       out << "// " << get_fileline() << endl;
-      out << "assign " << target_name_ << " = ";
+      out << "assign ";
+      errors += lval_->emit(out, ent, arc);
+      out << " = ";
 
       errors += rval->emit(out, ent, arc);
 

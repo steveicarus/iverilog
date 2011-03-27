@@ -141,11 +141,17 @@ int ExpLogical::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
-int ExpName::emit(ostream&out, Entity*, Architecture*)
+int ExpName::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
       out << name_;
+      if (index_) {
+	    out << "[";
+	    errors += index_->emit(out, ent, arc);
+	    out << "]";
+      }
+
       return errors;
 }
 
