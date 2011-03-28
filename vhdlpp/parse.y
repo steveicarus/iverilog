@@ -165,7 +165,7 @@ architecture_body
 	FILE_NAME(tmp, @1);
 	bind_architecture_to_entity($4, tmp);
 	if ($11 && tmp->get_name() != $11)
-	      errormsg(@2, "Architecture name doesn't match closing name\n");
+	      errormsg(@2, "Architecture name doesn't match closing name.\n");
 	delete[]$2;
 	delete[]$4;
 	delete $8;
@@ -214,6 +214,31 @@ association_list
   | association_element
   ;
 
+//TODO: this list is only a sketch
+binding_indication
+  : K_use entity_aspect_opt
+   port_map_aspect_opt
+   generic_map_aspect_opt
+  ;
+
+binding_indication_semicolon_opt
+  : binding_indication ';'
+  |
+  ;
+
+block_configuration
+  : K_for IDENTIFIER
+    use_clauses_opt
+    configuration_items_opt
+    K_end K_for ';'
+    { delete[] $2; }
+ ;
+
+block_configuration_opt
+  : block_configuration
+  |
+  ;
+
 block_declarative_item
   : K_signal identifier_list ':' subtype_indication ';'
       { /* Save the signal declaration in the block_signals map. */
@@ -230,16 +255,17 @@ block_declarative_item
     port_clause_opt
     K_end K_component identifier_opt ';'
       { perm_string name = lex_strings.make($2);
-	if ($7 && name != $7) {
-	      errormsg(@7, "Identifier %s doesn't match component name %s\n",
+	if($7) {
+      if (name != $7)
+	      errormsg(@7, "Identifier %s doesn't match component name %s.\n",
 		       $7, name.str());
-	}
+	  delete[] $7;
+    }
 
 	ComponentBase*comp = new ComponentBase(name);
 	if ($4) comp->set_interface($4);
 	block_components[name] = comp;
 	delete[]$2;
-	delete[]$7;
       }
 
       /* Various error handling rules for block_declarative_item... */
@@ -250,7 +276,12 @@ block_declarative_item
       { errormsg(@1, "Syntax error in block declarations.\n"); yyerrok; }
 
   | K_component IDENTIFIER K_is_opt error K_end K_component identifier_opt ';'
-      { errormsg(@4, "Syntax error in component declaration.\n"); yyerrok; }
+      { errormsg(@4, "Syntax error in component declaration.\n");
+      delete[] $2;
+      if($7) {
+          delete[] $7;
+      }
+      yyerrok; }
   ;
 
 /*
@@ -268,6 +299,13 @@ block_declarative_items_opt
   |
   ;
 
+component_configuration
+  : K_for component_specification
+    binding_indication_semicolon_opt
+    block_configuration_opt
+    K_end K_for ';'
+  ;
+
 component_instantiation_statement
   : IDENTIFIER ':' IDENTIFIER port_map_aspect_opt ';'
       { sorrymsg(@1, "Component instantiation statements are not supported.\n");
@@ -280,6 +318,28 @@ component_instantiation_statement
 	delete[]$1;
 	delete[]$3;
 	$$ = 0;
+      }
+  ;
+
+component_specification
+  : instantiation_list ':' IDENTIFIER
+      { sorrymsg(@1, "Component specifications are not supported.\n");
+    delete[] $3
+      }
+  ;
+
+configuration_declaration
+  : K_configuration IDENTIFIER K_of IDENTIFIER K_is
+  configuration_declarative_part
+  block_configuration
+  K_end K_configuration_opt identifier_opt ';'
+     {
+  sorrymsg(@1, "Configuration declaration is not yet supported.\n");
+     }
+  | K_configuration error K_end K_configuration_opt identifier_opt ';'
+      { errormsg(@2, "Too many errors, giving up on configuration declaration.\n");
+    if($5) delete $5;
+    yyerrok;
       }
   ;
 
@@ -303,6 +363,35 @@ concurrent_signal_assignment_statement
 concurrent_statement
   : component_instantiation_statement
   | concurrent_signal_assignment_statement
+  ;
+//TODO: this list is only a sketch. It must be filled out later
+configuration_declarative_item
+  : use_clause
+  ;
+
+configuration_declarative_items
+  : configuration_declarative_items configuration_declarative_item
+  | configuration_declarative_item
+  ;
+
+configuration_declarative_part
+  : configuration_declarative_items
+  |
+  ;
+
+configuration_item
+  : block_configuration
+  | component_configuration
+  ;
+
+configuration_items
+  : configuration_items configuration_item
+  | configuration_item
+  ;
+
+configuration_items_opt
+  : configuration_items
+  |
   ;
 
 context_clause : context_items | ;
@@ -332,6 +421,17 @@ design_units
 direction : K_to { $$ = false; } | K_downto { $$ = true; } ;
 
   /* As an entity is declared, add it to the map of design entities. */
+entity_aspect
+  : K_entity IDENTIFIER {sorrymsg(@1, "Entity aspect not yet supported.\n"); delete $2;}
+  | K_configuration IDENTIFIER {sorrymsg(@1, "Instatiation lists not yet supported.\n"); delete $2;}
+  | K_open
+  ;
+
+entity_aspect_opt
+  : entity_aspect
+  |
+  ;
+
 entity_declaration
   : K_entity IDENTIFIER K_is entity_header K_end K_entity_opt identifier_opt';'
       { Entity*tmp = new Entity(lex_strings.make($2));
@@ -346,6 +446,7 @@ entity_declaration
     if($7) {
         if(tmp->get_name() != $7) {
             errormsg(@1, "Syntax error in entity clause. Closing name doesn't match.\n");
+            yyerrok;
         }
         delete $7;
     }
@@ -483,6 +584,14 @@ factor
 	$$ = tmp;
       }
   ;
+generic_map_aspect_opt
+  : generic_map_aspect
+  |
+  ;
+
+generic_map_aspect
+  : K_generic K_map '(' association_list ')'
+  ;
 
 identifier_list
   : identifier_list ',' IDENTIFIER
@@ -500,6 +609,20 @@ identifier_list
   ;
 
 identifier_opt : IDENTIFIER { $$ = $1; } |  { $$ = 0; } ;
+
+
+instantiation_list
+  : identifier_list
+   {
+    sorrymsg(@1, "Instatiation lists not yet supported");
+    delete $1;
+   }
+  | K_others
+  | K_all
+   {
+      sorrymsg(@1, "Instatiation lists not yet supported");
+   }
+  ;
 
   /* The interface_element is also an interface_declaration */
 interface_element
@@ -544,8 +667,8 @@ library_clause
   /* Collapse the primary_unit and secondary_unit of the library_unit
      into this single set of rules. */
 library_unit
-  : entity_declaration
-  | architecture_body
+  : primary_unit
+  | secondary_unit
   ;
 
 logical_name : IDENTIFIER { $$ = $1; } ;
@@ -579,11 +702,71 @@ name
       }
   ;
 
+package_declaration
+  : K_package IDENTIFIER K_is
+    package_declarative_part_opt
+    K_end K_package_opt identifier_opt ';'
+      { sorrymsg(@4, "Package declaration not supported yet.\n");
+    if($7) {
+        if($2 != $7) {
+            errormsg(@1, "Syntax error in package clause. Closing name doesn't match.\n");
+            yyerrok;
+        }
+        delete $7;
+    }
+    delete $2;
+      }
+  | K_package error K_end K_package_opt identifier_opt ';'
+        { errormsg(@2, "Syntax error in package clause.\n");
+          yyerrok;
+        }
+  ;
+
+/* TODO: this list must be extended in the future
+   presently it is only a sketch */
+package_body_declarative_item
+  : use_clause
+  ;
+
+package_body_declarative_items
+  : package_body_declarative_items package_body_declarative_item
+  | package_body_declarative_item
+  ;
+package_body_declarative_part_opt
+  : package_body_declarative_items
+  |
+  ;
+
+/* TODO: this list is only a sketch
+   it must be extended in the future */
+package_declarative_item
+  : use_clause
+  ;
+package_declarative_items
+  : package_declarative_items package_declarative_item
+  | package_declarative_item
+  ;
+
+package_declarative_part_opt
+  : package_declarative_items
+  |
+  ;
+
+package_body
+  : K_package K_body IDENTIFIER K_is
+    package_body_declarative_part_opt
+    K_end K_package_opt identifier_opt ';'
+      {
+    delete[] $3;
+    if($8) delete[] $8;
+      }
+  ;
+
 port_clause
   : K_port '(' interface_list ')' ';'
       { $$ = $3; }
   | K_port '(' error ')' ';'
-      { errormsg(@1, "Syntax error in port list\n");
+      { errormsg(@1, "Syntax error in port list.\n");
 	yyerrok;
 	$$ = 0;
       }
@@ -616,8 +799,18 @@ primary
       { $$ = $2; }
   ;
 
+primary_unit
+  : entity_declaration
+  | configuration_declaration
+  | package_declaration
+  ;
+
 relation : shift_expression { $$ = $1; } ;
 
+secondary_unit
+  : architecture_body
+  | package_body
+  ;
   /* The *_use variant of selected_name is used by the "use"
      clause. It is syntactically identical to other selected_name
      rules, but is a convenient place to attach use_clause actions. */
@@ -699,6 +892,16 @@ use_clause
      { errormsg(@1, "Syntax error in use clause.\n"); yyerrok; }
   ;
 
+use_clauses
+  : use_clauses use_clause
+  | use_clause
+  ;
+
+use_clauses_opt
+  : use_clauses
+  |
+  ;
+
 waveform
   : waveform_elements
       { $$ = $1; }
@@ -729,7 +932,9 @@ waveform_element
   /* Some keywords are optional in some contexts. In all such cases, a
      similar rule is used, as described here. */
 K_architecture_opt : K_architecture | ;
+K_configuration_opt: K_configuration| ;
 K_entity_opt       : K_entity       | ;
+K_package_opt      : K_package      | ;
 K_is_opt           : K_is           | ;
 %%
 
