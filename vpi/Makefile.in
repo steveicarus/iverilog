@@ -88,12 +88,12 @@ system.vpi: $O ../vvp/libvpi.a
 	$(CC) @shared@ -o $@ $O -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
 sys_readmem_lex.c: sys_readmem_lex.lex
-	flex -t -Preadmem $(srcdir)/sys_readmem_lex.lex > sys_readmem_lex.c
+	$(LEX) -t -Preadmem $(srcdir)/sys_readmem_lex.lex > sys_readmem_lex.c
 
 sdf_lexor.o: sdf_lexor.c sdf_parse.h
 
 sdf_lexor.c: sdf_lexor.lex
-	flex -t -Psdf $(srcdir)/sdf_lexor.lex > sdf_lexor.c
+	$(LEX) -t -Psdf $(srcdir)/sdf_lexor.lex > sdf_lexor.c
 
 sdf_parse.c sdf_parse.h: $(srcdir)/sdf_parse.y
 	$(YACC) --verbose -d -p sdf -o sdf_parse.c $(srcdir)/sdf_parse.y

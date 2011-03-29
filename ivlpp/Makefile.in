@@ -36,6 +36,7 @@ CC = @CC@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
+LEX = @LEX@
 
 CPPFLAGS = -I. -I.. -I$(srcdir)/.. -I$(srcdir) @CPPFLAGS@ @DEFS@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
@@ -60,7 +61,7 @@ ivlpp@EXEEXT@: $O
 	$(CC) $(LDFLAGS) $O -o ivlpp@EXEEXT@ @EXTRALIBS@
 
 lexor.c: lexor.lex
-	flex -olexor.c $(srcdir)/lexor.lex
+	$(LEX) -olexor.c $(srcdir)/lexor.lex
 
 install: all installdirs $(libdir)/ivl$(suffix)/ivlpp@EXEEXT@
 
