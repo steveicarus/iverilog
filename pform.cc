@@ -116,7 +116,7 @@ void parm_to_defparam_list(const string&param)
     if (*value == '"') {    // string type
         char *buf = strdup (value);
         char *buf_ptr = buf+1;
-        // Parse untill another '"' or '\0'
+        // Parse until another '"' or '\0'
         while (*buf_ptr != '"' && *buf_ptr != '\0') {
             buf_ptr++;
             // Check for escape, especially '\"', which does not mean the

@@ -116,7 +116,7 @@ static int draw_stask_display(vhdl_procedural *proc,
 
                switch (*p) {
                case 'm':
-                  // TOOD: we can get the module name via attributes
+                  // TODO: we can get the module name via attributes
                   cerr << "Warning: no VHDL translation for %m format code"
                        << endl;
                   break;
@@ -1603,7 +1603,7 @@ int draw_utask(vhdl_procedural *proc, stmt_container *container,
 
    // TODO: adding some comments to the output would be helpful
 
-   // TOOD: this completely ignores parameters!
+   // TODO: this completely ignores parameters!
    draw_stmt(proc, container, ivl_scope_def(tscope), false);
 
    return 0;
