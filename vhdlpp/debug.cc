@@ -116,7 +116,7 @@ void Architecture::dump(ostream&out, perm_string of_entity) const
 
 void Architecture::Statement::dump(ostream&out) const
 {
-      out << "   Architecutre::Statement at file=" << get_fileline() << endl;
+      out << "   Architecture::Statement at file=" << get_fileline() << endl;
 }
 
 void Signal::dump(ostream&out) const

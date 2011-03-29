@@ -1669,7 +1669,7 @@ class NetExpr  : public LineInfo {
 	//  rise/fall/decay: Attach these delays to the driver for the
 	//                   expression output.
 	//
-	//  drive0/drive1: Attach these strengths tp the driver for
+	//  drive0/drive1: Attach these strengths to the driver for
 	//                 the expression output.
       virtual NetNet*synthesize(Design*des, NetScope*scope, NetExpr*root);
 

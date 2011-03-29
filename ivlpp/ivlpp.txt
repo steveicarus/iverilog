@@ -49,7 +49,7 @@ valid options include:
 
 	-f <path>
 	    Read ivlpp input files from a file list. There can be no
-	    more then one file list.
+	    more than one file list.
 
 	-I <dir>
 	    Add a directory to the include path. Normally, only "." is

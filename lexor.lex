@@ -329,6 +329,14 @@ TU [munpf]
                         return BASED_NUMBER; }
 \'[sS]?[hH][ \t]*[0-9a-fA-FxzXZ_\?]+ { yylval.number = make_unsized_hex(yytext);
                               return BASED_NUMBER; }
+\'[01xzXZ] {
+      if (generation_flag < GN_VER2005_SV) {
+	    cerr << yylloc.text << ":" << yylloc.first_line << ": warning: "
+		 << "Using SystemVerilog 'N bit vector.  Use at least "
+		 << "-g2005-sv to remove this warning." << endl;
+      }
+      yylval.number = make_unsized_binary(yytext);
+      return BASED_NUMBER; }
 
 [0-9][0-9_]* {
       yylval.number = make_unsized_dec(yytext);
@@ -684,6 +692,7 @@ void lex_end_table()
 verinum*make_unsized_binary(const char*txt)
 {
       bool sign_flag = false;
+      bool single_flag = false;
       const char*ptr = txt;
       assert(*ptr == '\'');
       ptr += 1;
@@ -693,8 +702,13 @@ verinum*make_unsized_binary(const char*txt)
 	    ptr += 1;
       }
 
-      assert(tolower(*ptr) == 'b');
-      ptr += 1;
+      assert((tolower(*ptr) == 'b') || (generation_flag >= GN_VER2005_SV));
+      if (tolower(*ptr) == 'b') {
+	    ptr += 1;
+      } else {
+	    assert(sign_flag == false);
+	    single_flag = true;
+      }
 
       while (*ptr && ((*ptr == ' ') || (*ptr == '\t')))
 	    ptr += 1;
@@ -734,6 +748,7 @@ verinum*make_unsized_binary(const char*txt)
 
       verinum*out = new verinum(bits, size, false);
       out->has_sign(sign_flag);
+      out->is_single(single_flag);
       delete[]bits;
       return out;
 }

@@ -40,7 +40,7 @@
 permaheap vvp_net_fun_t::heap_;
 permaheap vvp_net_fil_t::heap_;
 
-// Allocate around 1Megbytes/chunk.
+// Allocate around 1Megabyte/chunk.
 static const size_t VVP_NET_CHUNK = 1024*1024/sizeof(vvp_net_t);
 static vvp_net_t*vvp_net_alloc_table = NULL;
 #ifdef CHECK_WITH_VALGRIND

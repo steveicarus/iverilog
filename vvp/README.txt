@@ -282,7 +282,7 @@ general syntax of a variable is:
 	<label> .var/s "name", <msb> <lsb>; Signed logic variable
 	<label> .var/2u "name", <msb> <lsb>; Unsigned bool/bit variable
 	<label> .var/2s "name", <msb> <lsb>; Signed bool/bit variable
-	<label> .var/real "name", <msb>, <lsb>; real varibale
+	<label> .var/real "name", <msb>, <lsb>; real variable
 	<label> .var/i "name", <msb>, <lsb>; vpiIntegerVar variable
 
 The "name" is the declared base name of the original variable, for the
@@ -757,7 +757,7 @@ code is undefined.
 * Thread Context
 
 The context of a thread is all the local data that only that thread
-can address. The local data is broken into two addresses spaces: bit
+can address. The local data is broken into two address spaces: bit
 memory and word memory.
 
 The bit memory is a region of 4-value bits (0,1,x,z) that can be
@@ -1109,8 +1109,8 @@ associated with that variable or event.
 
 Each VVP thread keeps track of its current write context and current
 read context. For threads executing in a static scope, these are both
-initialised to null values. For threads executing in an automatically
-allocated scope, these are both initialised to refer to the context
+initialized to null values. For threads executing in an automatically
+allocated scope, these are both initialized to refer to the context
 allocated to that scope.
 
 Before starting the copying of the input parameters of an automatic

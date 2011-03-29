@@ -37,9 +37,9 @@ class Expression : public LineInfo {
       Expression();
       virtual ~Expression() =0;
 
-	// The emit virtual method is called bu architecture emit to
+	// The emit virtual method is called by architecture emit to
 	// output the generated code for the expression. The derived
-	// class fills in the details of what exactly happend.
+	// class fills in the details of what exactly happened.
       virtual int emit(ostream&out, Entity*ent, Architecture*arc) =0;
 
 	// The evaluate virtual method tries to evaluate expressions
@@ -49,9 +49,9 @@ class Expression : public LineInfo {
       virtual bool evaluate(int64_t&val) const;
 
 	// This method returns true if the drawn Verilog for this
-	// expression is a primary. A containing expressin can use
+	// expression is a primary. A containing expression can use
 	// this method to know if it needs to wrap parentheses. This
-	// is somewhile optional, so it is better to return false if
+	// is somewhat optional, so it is better to return false if
 	// not certain. The default implementation does return false.
       virtual bool is_primary(void) const;
 

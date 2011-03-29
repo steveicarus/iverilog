@@ -54,7 +54,7 @@ extern int yylex(void);
 extern int yyparse(void);
 
 /*
- * Use this functio during parse to generate error messages. The "loc"
+ * Use this function during parse to generate error messages. The "loc"
  * is the location of the token that triggered the error, and the fmt
  * is printf-style format.
  */

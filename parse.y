@@ -3463,11 +3463,37 @@ dimensions
 		  tmp->push_back(index);
 		  $$ = tmp;
 		}
+        | '[' expression ']'
+		{ if (generation_flag < GN_VER2005_SV) {
+			warn_count += 1;
+			cerr << @2 << ": warning: Use of SystemVerilog [size] dimension. "
+			     << "Use at least -g2005-sv to remove this warning." << endl;
+		  }
+		  list<index_component_t> *tmp = new list<index_component_t>;
+		  index_component_t index;
+		  index.msb = new PENumber(new verinum((uint64_t)0, integer_width));
+		  index.lsb = new PEBinary('-', $2, new PENumber(new verinum((uint64_t)1, integer_width)));
+		  tmp->push_back(index);
+		  $$ = tmp;
+		}
 	| dimensions '[' expression ':' expression ']'
 		{ list<index_component_t> *tmp = $1;
 		  index_component_t index;
 		  index.msb = $3;
 		  index.lsb = $5;
+		  tmp->push_back(index);
+		  $$ = tmp;
+		}
+        | dimensions '[' expression ']'
+		{ if (generation_flag < GN_VER2005_SV) {
+			warn_count += 1;
+			cerr << @2 << ": warning: Use of SystemVerilog [size] dimension. "
+			     << "Use at least -g2005-sv to remove this warning." << endl;
+		  }
+		  list<index_component_t> *tmp = $1;
+		  index_component_t index;
+		  index.msb = new PENumber(new verinum((uint64_t)0, integer_width));
+		  index.lsb = new PEBinary('-', $3, new PENumber(new verinum((uint64_t)1, integer_width)));
 		  tmp->push_back(index);
 		  $$ = tmp;
 		}
