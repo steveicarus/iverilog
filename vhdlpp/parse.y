@@ -30,8 +30,10 @@
 # include "vsignal.h"
 # include "vtype.h"
 # include  <cstdarg>
+# include  <cstring>
 # include  <list>
 # include  <map>
+# include  <vector>
 # include  <assert.h>
 
 inline void FILE_NAME(LineInfo*tmp, const struct yyltype&where)
@@ -77,11 +79,13 @@ static map<perm_string, ComponentBase*> block_components;
       char*text;
 
       std::list<perm_string>* name_list;
+      std::vector<perm_string>* compound_name;
+      std::list<std::vector<perm_string>* >* compound_name_list;
 
       bool flag;
       int64_t uni_integer;
       double  uni_real;
-      
+
       Expression*expr;
       std::list<Expression*>* expr_list;
 
@@ -147,8 +151,10 @@ static map<perm_string, ComponentBase*> block_components;
 
 %type <vtype> subtype_indication
 
-%type <text> identifier_opt logical_name
+%type <text> identifier_opt logical_name suffix
 %type <name_list> logical_name_list identifier_list
+%type <compound_name> prefix selected_name
+%type <compound_name_list> selected_names use_clause
 
 %%
 
@@ -335,6 +341,9 @@ configuration_declaration
   block_configuration
   K_end K_configuration_opt identifier_opt ';'
      {
+  if(design_entities.find(lex_strings.make($4)) == design_entities.end())
+      errormsg(@4, "Couldn't find entity %s used in configuration declaration", $4);
+  //choose_architecture_for_entity();
   sorrymsg(@1, "Configuration declaration is not yet supported.\n");
      }
   | K_configuration error K_end K_configuration_opt identifier_opt ';'
@@ -400,7 +409,7 @@ context_clause : context_items | ;
 
 context_item
   : library_clause
-  | use_clause
+  | use_clause_lib
   ;
 
 context_items
@@ -424,8 +433,8 @@ direction : K_to { $$ = false; } | K_downto { $$ = true; } ;
 
   /* As an entity is declared, add it to the map of design entities. */
 entity_aspect
-  : K_entity IDENTIFIER {sorrymsg(@1, "Entity aspect not yet supported.\n"); delete $2;}
-  | K_configuration IDENTIFIER {sorrymsg(@1, "Instatiation lists not yet supported.\n"); delete $2;}
+  : K_entity name {sorrymsg(@1, "Entity aspect not yet supported.\n"); delete $2;}
+  | K_configuration name {sorrymsg(@1, "Entity aspect not yet supported.\n"); delete $2;}
   | K_open
   ;
 
@@ -791,6 +800,27 @@ port_map_aspect_opt
   |
   ;
 
+prefix
+  : IDENTIFIER
+      {
+    std::vector<perm_string>* tmp = new std::vector<perm_string>();
+    tmp->push_back(lex_strings.make($1));
+    delete[] $1;
+    $$ = tmp;
+      }
+  | STRING_LITERAL
+      {
+    std::vector<perm_string>* tmp = new std::vector<perm_string>();
+    tmp->push_back(lex_strings.make($1));
+    delete[] $1;
+    $$ = tmp;
+      }
+  | selected_name
+      {
+    $$ = $1;
+      }
+  ;
+
 primary
   : name
       { $$ = $1; }
@@ -814,6 +844,32 @@ relation : shift_expression { $$ = $1; } ;
 secondary_unit
   : architecture_body
   | package_body
+  ;
+
+selected_name
+  : prefix '.' suffix
+      {
+    std::vector<perm_string>* tmp = $1;
+    tmp->push_back(lex_strings.make($3));
+    delete[] $3;
+
+    $$ = tmp;
+      }
+  ;
+
+selected_names
+  : selected_names ',' selected_name
+      {
+    std::list<std::vector<perm_string>* >* tmp = $1;
+    tmp->push_back($3);
+    $$ = tmp;
+      }
+  | selected_name
+      {
+    std::list<std::vector<perm_string>* >* tmp = new std::list<std::vector<perm_string>* >();
+    tmp->push_back($1);
+    $$ = tmp;
+      }
   ;
   /* The *_use variant of selected_name is used by the "use"
      clause. It is syntactically identical to other selected_name
@@ -865,6 +921,22 @@ subtype_indication
       }
   ;
 
+suffix
+  : IDENTIFIER
+      {
+    $$ = $1;
+      }
+  | CHARACTER_LITERAL
+      {
+   $$ = $1;
+      }
+  | K_all
+      {
+  //do not have now better idea than using char constant
+    $$ = strcpy(new char[strlen("all"+1)], "all");
+      }
+  ;
+
 term
   : factor
       { $$ = $1; }
@@ -891,6 +963,15 @@ term
   ;
 
 use_clause
+  : K_use selected_names ';'
+     {
+    $$ = $2;
+     }
+  | K_use error ';'
+     { errormsg(@1, "Syntax error in use clause.\n"); yyerrok; }
+  ;
+
+use_clause_lib
   : K_use selected_names_use ';'
   | K_use error ';'
      { errormsg(@1, "Syntax error in use clause.\n"); yyerrok; }
