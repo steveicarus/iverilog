@@ -1796,7 +1796,11 @@ void compile_thread(char*start_sym, char*flag)
 	    push_flag = true;
 
       vthread_t thr = vthread_new(pc, vpip_peek_current_scope());
-      schedule_vthread(thr, 0, push_flag);
+
+      if (flag && (strcmp(flag,"$final") == 0))
+	    schedule_final_vthread(thr);
+      else
+	    schedule_vthread(thr, 0, push_flag);
 
       free(start_sym);
       free(flag);

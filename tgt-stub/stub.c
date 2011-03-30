@@ -1031,6 +1031,12 @@ static int show_process(ivl_process_t net, void*x)
 	    else
 		  fprintf(out, "always\n");
 	    break;
+	  case IVL_PR_FINAL:
+	    if (ivl_process_analog(net))
+		  fprintf(out, "analog final\n");
+	    else
+		  fprintf(out, "final\n");
+	    break;
       }
 
       for (idx = 0 ;  idx < ivl_process_attr_cnt(net) ;  idx += 1) {

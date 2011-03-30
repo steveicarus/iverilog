@@ -119,6 +119,7 @@ class synth_f  : public functor_t {
     private:
       void proc_always_(class Design*);
       void proc_initial_(class Design*);
+      void proc_final_(class Design*);
 
       NetProcTop*top_;
 };
@@ -138,6 +139,9 @@ void synth_f::process(class Design*des, class NetProcTop*top)
 	  case IVL_PR_INITIAL:
 	    proc_initial_(des);
 	    break;
+	  case IVL_PR_FINAL:
+	    proc_final_(des);
+	    break;
       }
 }
 
@@ -148,6 +152,12 @@ void synth_f::proc_always_(class Design*des)
 }
 
 void synth_f::proc_initial_(class Design*des)
+{
+      do_expr expr_pat(des, top_->scope());
+      top_->statement()->match_proc(&expr_pat);
+}
+
+void synth_f::proc_final_(class Design*des)
 {
       do_expr expr_pat(des, top_->scope());
       top_->statement()->match_proc(&expr_pat);

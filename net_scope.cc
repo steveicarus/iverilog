@@ -47,6 +47,7 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t)
       is_const_func_ = false;
       is_auto_ = false;
       is_cell_ = false;
+      in_final_ = false;
 
       if (up) {
 	    time_unit_ = up->time_unit();

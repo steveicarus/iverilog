@@ -2778,6 +2778,10 @@ module_item
       { PProcess*tmp = pform_make_behavior(IVL_PR_INITIAL, $3, $1);
 	FILE_NAME(tmp, @2);
       }
+  | attribute_list_opt K_final statement
+      { PProcess*tmp = pform_make_behavior(IVL_PR_FINAL, $3, $1);
+	FILE_NAME(tmp, @2);
+      }
 
   | attribute_list_opt K_analog analog_statement
       { pform_make_analog_behavior(@2, IVL_PR_ALWAYS, $3); }

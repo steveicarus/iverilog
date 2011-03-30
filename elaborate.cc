@@ -2428,6 +2428,13 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
 
+      if (scope->in_final()) {
+	    cerr << get_fileline() << ": error: final procedures cannot have "
+		    "non blocking assignment statements." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       if (scope->is_auto() && lval()->has_aa_term(des, scope)) {
 	    cerr << get_fileline() << ": error: automatically allocated "
                     "variables may not be assigned values using non-blocking "
@@ -2853,6 +2860,13 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    return 0;
       }
 
+      if (scope->in_final()) {
+	    cerr << get_fileline() << ": error: final procedures cannot "
+	            "enable/call tasks." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       NetScope*task = des->find_task(scope, path_);
       if (task == 0) {
 	    cerr << get_fileline() << ": error: Enable of unknown task "
@@ -3101,6 +3115,13 @@ NetProc* PDelayStatement::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
 
+      if (scope->in_final()) {
+	    cerr << get_fileline() << ": error: final procedures cannot "
+	            "have delay statements." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
 	/* This call evaluates the delay expression to a NetEConst, if
 	   possible. This includes transforming NetECReal values to
 	   integers, and applying the proper scaling. */
@@ -3251,6 +3272,13 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
       if (scope->in_func()) {
 	    cerr << get_fileline() << ": error: functions cannot have "
 	            "event statements." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (scope->in_final()) {
+	    cerr << get_fileline() << ": error: final procedures cannot "
+	            "have event statements." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -3456,6 +3484,13 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
       if (scope->in_func()) {
 	    cerr << get_fileline() << ": error: functions cannot have "
 	            "wait statements." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (scope->in_final()) {
+	    cerr << get_fileline() << ": error: final procedures cannot "
+	            "have wait statements." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -4013,7 +4048,9 @@ NetProc* PWhile::elaborate(Design*des, NetScope*scope) const
 
 bool PProcess::elaborate(Design*des, NetScope*scope) const
 {
+      scope->in_final(type() == IVL_PR_FINAL);
       NetProc*cur = statement_->elaborate(des, scope);
+      scope->in_final(false);
       if (cur == 0) {
 	    return false;
       }
@@ -4597,7 +4634,7 @@ class later_defparams : public elaborator_work_item_t {
       }
 };
 
-bool Design::check_always_delay() const
+bool Design::check_proc_delay() const
 {
       bool result_flag = true;
 
@@ -4621,6 +4658,20 @@ bool Design::check_always_delay() const
 			     << " statement may not have any delay." << endl;
 			cerr << pr->get_fileline() << ":        : A runtime"
 			     << " infinite loop may be possible." << endl;
+		  }
+	    }
+
+	        /* If this is a final block it must not have a delay,
+		   but this should have been caught by the statement
+		   elaboration, so maybe this should be an internal
+		   error? */
+	    if (pr->type() == IVL_PR_FINAL) {
+		  DelayType dly_type = pr->statement()->delay_type();
+
+		  if (dly_type != NO_DELAY && dly_type != ZERO_DELAY) {
+			cerr << pr->get_fileline() << ": error: final"
+			     << " statement contains a delay." << endl;
+			result_flag = false;
 		  }
 	    }
       }
@@ -4774,8 +4825,9 @@ Design* elaborate(list<perm_string>roots)
       }
 
 	// Now that everything is fully elaborated verify that we do
-	// not have an always block with no delay (an infinite loop).
-      if (des->check_always_delay() == false) {
+	// not have an always block with no delay (an infinite loop),
+        // or a final block with a delay.
+      if (des->check_proc_delay() == false) {
 	    delete des;
 	    des = 0;
       }

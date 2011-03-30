@@ -494,6 +494,11 @@ static struct event_time_s* sched_list = 0;
 static struct event_s* schedule_init_list = 0;
 
 /*
+ * This is the head of the list of final events.
+ */
+static struct event_s* schedule_final_list = 0;
+
+/*
  * This flag is true until a VPI task or function finishes the
  * simulation.
  */
@@ -557,6 +562,20 @@ static void schedule_init_event(struct event_s*cur)
             schedule_init_list->next = cur;
       }
       schedule_init_list = cur;
+}
+
+/*
+ * This function puts an event on the end of the post-simulation event queue.
+ */
+static void schedule_final_event(struct event_s*cur)
+{
+      if (schedule_final_list == 0) {
+            cur->next = cur;
+      } else {
+            cur->next = schedule_final_list->next;
+            schedule_final_list->next = cur;
+      }
+      schedule_final_list = cur;
 }
 
 /*
@@ -739,6 +758,16 @@ void schedule_vthread(vthread_t thr, vvp_time64_t delay, bool push_flag)
       } else {
 	    schedule_event_(cur, delay, SEQ_ACTIVE);
       }
+}
+
+void schedule_final_vthread(vthread_t thr)
+{
+      struct vthread_event_s*cur = new vthread_event_s;
+
+      cur->thr = thr;
+      vthread_mark_scheduled(thr);
+
+      schedule_final_event(cur);
 }
 
 void schedule_assign_vector(vvp_net_ptr_t ptr,
@@ -1096,6 +1125,17 @@ void schedule_simulate(void)
 	    delete (cur);
       }
 
+	// Execute final events.
+      while (schedule_final_list) {
+	    struct event_s*cur = schedule_final_list->next;
+	    if (cur->next == cur) {
+		  schedule_final_list = 0;
+	    } else {
+		  schedule_final_list->next = cur->next;
+	    }
+	    cur->run_run();
+	    delete cur;
+      }
 
       signals_revert();
 

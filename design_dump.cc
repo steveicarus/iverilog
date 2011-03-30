@@ -749,6 +749,10 @@ void NetProcTop::dump(ostream&o, unsigned ind) const
 	    o << "always  /* " << get_fileline() << " in "
 	      << scope_path(scope_) << " */" << endl;
 	    break;
+	  case IVL_PR_FINAL:
+	    o << "final  /* " << get_fileline() << " in "
+	      << scope_path(scope_) << " */" << endl;
+	    break;
       }
 
       for (unsigned idx = 0 ;  idx < attr_cnt() ;  idx += 1) {
@@ -769,6 +773,11 @@ void NetAnalogTop::dump(ostream&o, unsigned ind) const
 
 	  case IVL_PR_ALWAYS:
 	    o << "analog /* " << get_fileline() << " in "
+	      << scope_path(scope_) << " */" << endl;
+	    break;
+
+	  case IVL_PR_FINAL:
+	    o << "analog final /* " << get_fileline() << " in "
 	      << scope_path(scope_) << " */" << endl;
 	    break;
       }

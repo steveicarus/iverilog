@@ -35,6 +35,8 @@
 extern void schedule_vthread(vthread_t thr, vvp_time64_t delay,
 			     bool push_flag =false);
 
+extern void schedule_final_vthread(vthread_t thr);
+
 /*
  * Create an assignment event. The val passed here will be assigned to
  * the specified input when the delay times out. This is scheduled

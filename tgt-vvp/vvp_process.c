@@ -2435,6 +2435,7 @@ int draw_process(ivl_process_t net, void*x)
       switch (ivl_process_type(net)) {
 
 	  case IVL_PR_INITIAL:
+	  case IVL_PR_FINAL:
 	    fprintf(vvp_out, "    %%end;\n");
 	    break;
 
@@ -2443,13 +2444,22 @@ int draw_process(ivl_process_t net, void*x)
 	    break;
       }
 
-	/* Now write out the .thread directive that tells vvp where
-	   the thread starts. */
+	/* Now write out the directive that tells vvp where the thread
+	   starts. */
+      switch (ivl_process_type(net)) {
 
-      if (push_flag) {
-	    fprintf(vvp_out, "    .thread T_%d, $push;\n", thread_count);
-      } else {
-	    fprintf(vvp_out, "    .thread T_%d;\n", thread_count);
+	  case IVL_PR_INITIAL:
+	  case IVL_PR_ALWAYS:
+	    if (push_flag) {
+		  fprintf(vvp_out, "    .thread T_%d, $push;\n", thread_count);
+	    } else {
+		  fprintf(vvp_out, "    .thread T_%d;\n", thread_count);
+	    }
+	    break;
+
+	  case IVL_PR_FINAL:
+	    fprintf(vvp_out, "    .thread T_%d, $final;\n", thread_count);
+	    break;
       }
 
       thread_count += 1;

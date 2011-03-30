@@ -41,9 +41,9 @@ class NetScope;
 
 /*
  * The PProcess is the root of a behavioral process. Each process gets
- * one of these, which contains its type (initial or always) and a
- * pointer to the single statement that is the process. A module may
- * have several concurrent processes.
+ * one of these, which contains its type (initial, always, or final)
+ * and a pointer to the single statement that is the process. A module
+ * may have several concurrent processes.
  */
 class PProcess : public LineInfo {
 

@@ -398,6 +398,9 @@ static int show_process(ivl_process_t net, void*x)
 	  case IVL_PR_ALWAYS:
 	    fprintf(out, "    always\n");
 	    break;
+	  case IVL_PR_FINAL:
+	    fprintf(out, "    final\n");
+	    break;
       }
 
       show_statement(ivl_process_stmt(net), 8);
