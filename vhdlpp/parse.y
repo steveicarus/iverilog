@@ -362,24 +362,6 @@ component_specification
       }
   ;
 
-configuration_declaration
-  : K_configuration IDENTIFIER K_of IDENTIFIER K_is
-  configuration_declarative_part
-  block_configuration
-  K_end K_configuration_opt identifier_opt ';'
-     {
-  if(design_entities.find(lex_strings.make($4)) == design_entities.end())
-      errormsg(@4, "Couldn't find entity %s used in configuration declaration", $4);
-  //choose_architecture_for_entity();
-  sorrymsg(@1, "Configuration declaration is not yet supported.\n");
-     }
-  | K_configuration error K_end K_configuration_opt identifier_opt ';'
-      { errormsg(@2, "Too many errors, giving up on configuration declaration.\n");
-    if($5) delete $5;
-    yyerrok;
-      }
-  ;
-
 concurrent_signal_assignment_statement
   : name LEQ waveform ';'
       { ExpName*name = dynamic_cast<ExpName*> ($1);
@@ -401,6 +383,24 @@ concurrent_signal_assignment_statement
 concurrent_statement
   : component_instantiation_statement
   | concurrent_signal_assignment_statement
+  ;
+
+configuration_declaration
+  : K_configuration IDENTIFIER K_of IDENTIFIER K_is
+  configuration_declarative_part
+  block_configuration
+  K_end K_configuration_opt identifier_opt ';'
+     {
+  if(design_entities.find(lex_strings.make($4)) == design_entities.end())
+      errormsg(@4, "Couldn't find entity %s used in configuration declaration", $4);
+  //choose_architecture_for_entity();
+  sorrymsg(@1, "Configuration declaration is not yet supported.\n");
+     }
+  | K_configuration error K_end K_configuration_opt identifier_opt ';'
+      { errormsg(@2, "Too many errors, giving up on configuration declaration.\n");
+    if($5) delete $5;
+    yyerrok;
+      }
   ;
 //TODO: this list is only a sketch. It must be filled out later
 configuration_declarative_item
