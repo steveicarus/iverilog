@@ -38,4 +38,18 @@ class named_expr_t {
       named_expr_t& operator = (const named_expr_t&);
 };
 
+class entity_aspect_t {
+    public:
+      typedef enum { ENTITY = 0, CONFIGURATION, OPEN } entity_aspect_type_t;
+
+      entity_aspect_t(entity_aspect_type_t t, ExpName* n) : type_(t), name_(n) {}
+      ~entity_aspect_t() { delete name_; }
+
+      ExpName* name() const { return name_; }
+      entity_aspect_type_t type() const {return type_; }
+
+      entity_aspect_type_t type_;
+      ExpName* name_;
+};
+
 #endif

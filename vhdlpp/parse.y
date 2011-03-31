@@ -92,6 +92,7 @@ static map<perm_string, ComponentBase*> block_components;
 
       named_expr_t*named_expr;
       std::list<named_expr_t*>*named_expr_list;
+      entity_aspect_t* entity_aspect;
 
       const VType* vtype;
 
@@ -141,6 +142,8 @@ static map<perm_string, ComponentBase*> block_components;
 %type <interface_list> interface_element interface_list entity_header
 %type <interface_list> port_clause port_clause_opt
 %type <port_mode>  mode
+
+%type <entity_aspect> entity_aspect entity_aspect_opt
 
 %type <arch_statement> concurrent_statement component_instantiation_statement concurrent_signal_assignment_statement
 %type <arch_statement_list> architecture_statement_part
@@ -240,11 +243,13 @@ association_list
       }
   ;
 
-//TODO: this list is only a sketch
 binding_indication
   : K_use entity_aspect_opt
    port_map_aspect_opt
    generic_map_aspect_opt
+     {
+   sorrymsg(@1, "Binding indication is not supported.\n");
+     }
   ;
 
 binding_indication_semicolon_opt
@@ -455,14 +460,28 @@ direction : K_to { $$ = false; } | K_downto { $$ = true; } ;
 
   /* As an entity is declared, add it to the map of design entities. */
 entity_aspect
-  : K_entity name {sorrymsg(@1, "Entity aspect not yet supported.\n"); delete $2;}
-  | K_configuration name {sorrymsg(@1, "Entity aspect not yet supported.\n"); delete $2;}
+  : K_entity name
+      {
+    ExpName* name = dynamic_cast<ExpName*>($2);
+    entity_aspect_t* tmp = new entity_aspect_t(entity_aspect_t::ENTITY, name);
+    $$ = tmp;
+      }
+  | K_configuration name
+      {
+    ExpName* name = dynamic_cast<ExpName*>($2);
+    entity_aspect_t* tmp = new entity_aspect_t(entity_aspect_t::CONFIGURATION, name);
+    $$ = tmp;
+      }
   | K_open
+      {
+    entity_aspect_t* tmp = new entity_aspect_t(entity_aspect_t::OPEN, 0);
+    $$ = tmp;
+      }
   ;
 
 entity_aspect_opt
-  : entity_aspect
-  |
+  : entity_aspect { $$ = $1; }
+  | { $$ = 0; }
   ;
 
 entity_declaration
