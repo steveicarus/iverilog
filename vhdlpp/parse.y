@@ -93,6 +93,7 @@ static map<perm_string, ComponentBase*> block_components;
       named_expr_t*named_expr;
       std::list<named_expr_t*>*named_expr_list;
       entity_aspect_t* entity_aspect;
+      instant_list_t* instantiation_list;
 
       const VType* vtype;
 
@@ -143,7 +144,8 @@ static map<perm_string, ComponentBase*> block_components;
 %type <interface_list> port_clause port_clause_opt
 %type <port_mode>  mode
 
-%type <entity_aspect> entity_aspect entity_aspect_opt
+%type <entity_aspect> entity_aspect entity_aspect_opt binding_indication binding_indication_semicolon_opt
+%type <instantiation_list> instantiation_list
 
 %type <arch_statement> concurrent_statement component_instantiation_statement concurrent_signal_assignment_statement
 %type <arch_statement_list> architecture_statement_part
@@ -247,14 +249,14 @@ binding_indication
   : K_use entity_aspect_opt
    port_map_aspect_opt
    generic_map_aspect_opt
-     {
-   sorrymsg(@1, "Binding indication is not supported.\n");
-     }
+      { //TODO: do sth with generic map aspect
+   $$ = $2;
+      }
   ;
 
 binding_indication_semicolon_opt
-  : binding_indication ';'
-  |
+  : binding_indication ';' { $$ = $1; }
+  | { $$ = 0; }
   ;
 
 block_configuration
@@ -665,14 +667,19 @@ identifier_opt : IDENTIFIER { $$ = $1; } |  { $$ = 0; } ;
 
 instantiation_list
   : identifier_list
-   {
-    sorrymsg(@1, "Instatiation lists not yet supported");
-    delete $1;
-   }
+     {
+  instant_list_t* tmp = new instant_list_t(instant_list_t::NONE, $1);
+  $$ = tmp;
+     }
   | K_others
+     {
+  instant_list_t* tmp = new instant_list_t(instant_list_t::OTHERS, 0);
+  $$ = tmp;
+     }
   | K_all
    {
-      sorrymsg(@1, "Instatiation lists not yet supported");
+  instant_list_t* tmp = new instant_list_t(instant_list_t::ALL, 0);
+  $$ = tmp;
    }
   ;
 

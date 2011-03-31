@@ -52,4 +52,17 @@ class entity_aspect_t {
       ExpName* name_;
 };
 
+class instant_list_t {
+    public:
+      typedef enum { ALL = 0, OTHERS, NONE } application_domain_t;
+
+      instant_list_t(application_domain_t d, std::list<perm_string>* l) : domain_(d), labels_(l) {}
+      ~instant_list_t() { delete labels_; }
+
+      std::list<perm_string>* labels() const { return labels_; }
+      application_domain_t domain() const { return domain_; }
+
+      application_domain_t domain_;
+      std::list<perm_string>* labels_;
+};
 #endif
