@@ -163,6 +163,7 @@ class ExpName : public Expression {
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
       void dump(ostream&out, int indent) const;
+      const char* name() const;
 
     private:
       perm_string name_;

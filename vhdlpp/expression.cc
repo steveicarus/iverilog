@@ -101,6 +101,11 @@ ExpName::~ExpName()
       delete index_;
 }
 
+const char* ExpName::name() const
+{
+      return name_;
+}
+
 ExpUAbs::ExpUAbs(Expression*op1)
 : ExpUnary(op1)
 {
