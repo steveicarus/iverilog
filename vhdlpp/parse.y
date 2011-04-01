@@ -339,9 +339,15 @@ component_configuration
     binding_indication_semicolon_opt
     block_configuration_opt
     K_end K_for ';'
+      {
+    sorrymsg(@1, "Component configuration in not yet supported");
+    if($3) delete $3;
+    delete $2;
+      }
   | K_for component_specification error K_end K_for
       {
     errormsg(@1, "Error in component configuration statement.\n");
+    delete $2;
       }
   ;
 
@@ -653,6 +659,9 @@ generic_map_aspect_opt
 
 generic_map_aspect
   : K_generic K_map '(' association_list ')'
+      {
+    sorrymsg(@1, "Generic map aspect not yet supported.\n");
+      }
   ;
 
 identifier_list
@@ -789,7 +798,7 @@ package_declaration
     }
     delete $2;
       }
-  | K_package error K_end K_package_opt identifier_opt ';'
+  | K_package IDENTIFIER K_is error K_end K_package_opt identifier_opt ';'
         { errormsg(@2, "Syntax error in package clause.\n");
           yyerrok;
         }
@@ -830,8 +839,16 @@ package_body
     package_body_declarative_part_opt
     K_end K_package_opt identifier_opt ';'
       {
+    sorrymsg(@1, "Package body is not yet supported.\n");
     delete[] $3;
     if($8) delete[] $8;
+      }
+
+  | K_package K_body IDENTIFIER K_is
+    error
+    K_end K_package_opt identifier_opt ';'
+      {
+    errormsg(@1, "Errors in package body.\n");
       }
   ;
 
@@ -850,6 +867,10 @@ port_clause_opt : port_clause {$$ = $1;} | {$$ = 0;} ;
 port_map_aspect
   : K_port K_map '(' association_list ')'
       { $$ = $4; }
+  | K_port K_map '(' error ')'
+      {
+    errormsg(@1, "Syntax error in port map aspect.\n");
+      }
   ;
 
 port_map_aspect_opt
@@ -975,6 +996,10 @@ subtype_indication
       { const VType*tmp = calculate_subtype($1, $3, $4, $5);
 	delete[]$1;
 	$$ = tmp;
+      }
+  | IDENTIFIER '(' error ')'
+      {
+    errormsg(@1, "Syntax error in subtype indication.\n");
       }
   ;
 
