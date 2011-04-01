@@ -94,6 +94,7 @@ static map<perm_string, ComponentBase*> block_components;
       std::list<named_expr_t*>*named_expr_list;
       entity_aspect_t* entity_aspect;
       instant_list_t* instantiation_list;
+      std::pair<instant_list_t*, ExpName*>* component_specification;
 
       const VType* vtype;
 
@@ -146,6 +147,7 @@ static map<perm_string, ComponentBase*> block_components;
 
 %type <entity_aspect> entity_aspect entity_aspect_opt binding_indication binding_indication_semicolon_opt
 %type <instantiation_list> instantiation_list
+%type <component_specification> component_specification
 
 %type <arch_statement> concurrent_statement component_instantiation_statement concurrent_signal_assignment_statement
 %type <arch_statement_list> architecture_statement_part
@@ -337,6 +339,10 @@ component_configuration
     binding_indication_semicolon_opt
     block_configuration_opt
     K_end K_for ';'
+  | K_for component_specification error K_end K_for
+      {
+    errormsg(@1, "Error in component configuration statement.\n");
+      }
   ;
 
 component_instantiation_statement
@@ -358,9 +364,11 @@ component_instantiation_statement
   ;
 
 component_specification
-  : instantiation_list ':' IDENTIFIER
-      { sorrymsg(@1, "Component specifications are not supported.\n");
-    delete[] $3
+  : instantiation_list ':' name
+      {
+    ExpName* name = dynamic_cast<ExpName*>($3);
+    std::pair<instant_list_t*, ExpName*>* tmp = new std::pair<instant_list_t*, ExpName*>($1, name);
+    $$ = tmp;
       }
   ;
 
