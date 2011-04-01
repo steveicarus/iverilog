@@ -1,5 +1,5 @@
-#ifndef __parse_wrap_H
-#define __parse_wrap_H
+#ifndef __parse_types_H
+#define __parse_types_H
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
  *
@@ -19,21 +19,23 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-/*
- * This header wraps the parse.h header file that is generated from
- * the parse.y source file. This is used to include definitions that
- * are needed by the parse type, etc.
- */
+# include  "StringHeap.h"
+class Expression;
 
-# include  <list>
-# include "vhdlint.h"
-# include "vhdlreal.h"
-# include  "architec.h"
-# include  "expression.h"
-# include  "parse_types.h"
+class named_expr_t {
 
-class VType;
+    public:
+      named_expr_t (perm_string n, Expression*e) : name_(n), expr_(e) { }
 
-# include  "parse.h"
+      perm_string name() const { return name_; }
+      Expression* expr() const { return expr_; }
+    private:
+      perm_string name_;
+      Expression* expr_;
+
+    private: // Not implemented
+      named_expr_t(const named_expr_t&);
+      named_expr_t& operator = (const named_expr_t&);
+};
 
 #endif

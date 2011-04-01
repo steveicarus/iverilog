@@ -136,6 +136,18 @@ void SignalAssignment::dump(ostream&out) const
       }
 }
 
+void ComponentInstantiation::dump(ostream&out) const
+{
+      out << "   Component Instantiation file=" << get_fileline() << endl;
+
+      for (map<perm_string,Expression*>::const_iterator cur = port_map_.begin()
+		 ; cur != port_map_.end() ; ++cur) {
+	    out << "      " << cur->first << " => ..." << endl;
+	    cur->second->dump(out, 10);
+      }
+
+}
+
 void Expression::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "Expression [" << typeid(*this).name() << "]"
