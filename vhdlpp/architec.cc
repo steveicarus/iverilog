@@ -19,6 +19,7 @@
 
 # include  "architec.h"
 # include  "expression.h"
+# include  "parse_types.h"
 
 using namespace std;
 
@@ -56,4 +57,19 @@ SignalAssignment::~SignalAssignment()
 		 ; cur != rval_.end() ; ++cur) {
 	    delete *cur;
       }
+}
+
+ComponentInstantiation::ComponentInstantiation(perm_string i, perm_string c,
+					       list<named_expr_t*>*ports)
+: iname_(i), cname_(c)
+{
+      while (! ports->empty()) {
+	    named_expr_t*cur = ports->front();
+	    ports->pop_front();
+	    port_map_[cur->name()] = cur->expr();
+      }
+}
+
+ComponentInstantiation::~ComponentInstantiation()
+{
 }

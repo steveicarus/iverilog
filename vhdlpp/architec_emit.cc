@@ -70,3 +70,20 @@ int SignalAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
+int ComponentInstantiation::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      out << cname_ << " " << iname_ << "(";
+      const char*comma = "";
+      for (map<perm_string,Expression*>::iterator cur = port_map_.begin()
+		 ; cur != port_map_.end() ; ++cur) {
+	    out << comma << "." << cur->first << "(";
+	    errors += cur->second->emit(out, ent, arc);
+	    out << ")";
+	    comma = ", ";
+      }
+      out << ");" << endl;
+
+      return errors;
+}

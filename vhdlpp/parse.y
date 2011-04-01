@@ -32,6 +32,7 @@
 # include  <cstdarg>
 # include  <list>
 # include  <map>
+# include  "parse_types.h"
 # include  <assert.h>
 
 inline void FILE_NAME(LineInfo*tmp, const struct yyltype&where)
@@ -84,6 +85,9 @@ static map<perm_string, ComponentBase*> block_components;
       
       Expression*expr;
       std::list<Expression*>* expr_list;
+
+      named_expr_t*named_expr;
+      std::list<named_expr_t*>*named_expr_list;
 
       const VType* vtype;
 
@@ -144,6 +148,9 @@ static map<perm_string, ComponentBase*> block_components;
 %type <expr> shift_expression simple_expression term waveform_element
 
 %type <expr_list> waveform waveform_elements
+
+%type <named_expr> association_element
+%type <named_expr_list> association_list port_map_aspect port_map_aspect_opt
 
 %type <vtype> subtype_indication
 
@@ -207,12 +214,24 @@ architecture_statement_part
   ;
 
 association_element
-  : name ARROW name
+  : IDENTIFIER ARROW name
+      { named_expr_t*tmp = new named_expr_t(lex_strings.make($1), $3);
+	delete[]$1;
+	$$ = tmp;
+      }
   ;
 
 association_list
   : association_list ',' association_element
+      { std::list<named_expr_t*>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
   | association_element
+      { std::list<named_expr_t*>*tmp = new std::list<named_expr_t*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
   ;
 
 //TODO: this list is only a sketch
@@ -308,16 +327,19 @@ component_configuration
   ;
 
 component_instantiation_statement
-  : IDENTIFIER ':' IDENTIFIER port_map_aspect_opt ';'
-      { sorrymsg(@1, "Component instantiation statements are not supported.\n");
+  : IDENTIFIER ':' K_component_opt IDENTIFIER port_map_aspect_opt ';'
+      { perm_string iname = lex_strings.make($1);
+	perm_string cname = lex_strings.make($4);
+	ComponentInstantiation*tmp = new ComponentInstantiation(iname, cname, $5);
+	FILE_NAME(tmp, @1);
 	delete[]$1;
-	delete[]$3;
-	$$ = 0;
+	delete[]$4;
+	$$ = tmp;
       }
-  | IDENTIFIER ':' IDENTIFIER error ';'
+  | IDENTIFIER ':' K_component_opt IDENTIFIER error ';'
       { errormsg(@4, "Errors in component instantiation.\n");
 	delete[]$1;
-	delete[]$3;
+	delete[]$4;
 	$$ = 0;
       }
   ;
@@ -784,11 +806,12 @@ port_clause_opt : port_clause {$$ = $1;} | {$$ = 0;} ;
 
 port_map_aspect
   : K_port K_map '(' association_list ')'
+      { $$ = $4; }
   ;
 
 port_map_aspect_opt
-  : port_map_aspect
-  |
+  : port_map_aspect  { $$ = $1; }
+  |                  { $$ = 0; }
   ;
 
 primary
@@ -936,6 +959,7 @@ waveform_element
   /* Some keywords are optional in some contexts. In all such cases, a
      similar rule is used, as described here. */
 K_architecture_opt : K_architecture | ;
+K_component_opt    : K_component    | ;
 K_configuration_opt: K_configuration| ;
 K_entity_opt       : K_entity       | ;
 K_package_opt      : K_package      | ;

@@ -29,6 +29,7 @@ class Entity;
 class Expression;
 class ExpName;
 class Signal;
+class named_expr_t;
 
 /*
  * The Architecture class carries the contents (name, statements,
@@ -104,6 +105,23 @@ class SignalAssignment  : public Architecture::Statement {
     private:
       ExpName*lval_;
       std::list<Expression*> rval_;
+};
+
+class ComponentInstantiation  : public Architecture::Statement {
+
+    public:
+      ComponentInstantiation(perm_string iname, perm_string cname,
+			     std::list<named_expr_t*>*ports);
+      ~ComponentInstantiation();
+
+      int emit(ostream&out, Entity*entity, Architecture*arc);
+      virtual void dump(ostream&out) const;
+
+    private:
+      perm_string iname_;
+      perm_string cname_;
+
+      std::map<perm_string,Expression*> port_map_;
 };
 
 #endif
