@@ -83,10 +83,9 @@ void compile_varw_real(char*label, vvp_array_t array,
  * A variable is a special functor, so we allocate that functor and
  * write the label into the symbol table.
  */
-static void __compile_var(char*label, char*name,
-			  vvp_array_t array, unsigned long array_addr,
-			  int msb, int lsb, int vpi_type_code,
-			  bool signed_flag, bool local_flag)
+void compile_variable(char*label, char*name,
+		      int msb, int lsb, int vpi_type_code,
+		      bool signed_flag, bool local_flag)
 {
       unsigned wid = ((msb > lsb)? msb-lsb : lsb-msb) + 1;
 
@@ -108,7 +107,7 @@ static void __compile_var(char*label, char*name,
       define_functor_symbol(label, net);
 
       vpiHandle obj = 0;
-      if (! local_flag && !array) {
+      if (! local_flag) {
 	      /* Make the vpiHandle for the reg. */
 	    switch (vpi_type_code) {
 		case vpiLogicVar:
@@ -130,7 +129,6 @@ static void __compile_var(char*label, char*name,
 	// If the signal has a name, then it goes into the current
 	// scope as a signal.
       if (name) {
-	    assert(!array);
 	    if (obj) vpip_attach_to_current_scope(obj);
             if (!vpip_peek_current_scope()->is_automatic) {
 		  vvp_vector4_t tmp;
@@ -138,21 +136,9 @@ static void __compile_var(char*label, char*name,
 	          schedule_init_vector(vvp_net_ptr_t(net,0), tmp);
 	    }
       }
-	// If this is an array word, then it does not have a name, and
-	// it is attached to the addressed array.
-      if (array) {
-	    assert(!name);
-	    if (obj) array_attach_word(array, array_addr, obj);
-      }
+
       free(label);
       delete[] name;
-}
-
-void compile_variable(char*label, char*name,
-		      int msb, int lsb, int vpi_type_code,
-		      bool signed_flag, bool local_flag)
-{
-      __compile_var(label, name, 0, 0, msb, lsb, vpi_type_code, signed_flag, local_flag);
 }
 
 vvp_net_t* create_constant_node(const char*val_str)

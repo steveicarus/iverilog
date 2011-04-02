@@ -924,6 +924,20 @@ static const struct __vpirt vpip_byte_rt = {
       0
 };
 
+static const struct __vpirt vpip_bitvar_rt = {
+      vpiBitVar,
+      signal_get,
+      signal_get_str,
+      signal_get_value,
+      signal_put_value,
+      signal_get_handle,
+      signal_iterate,
+      0,
+      0,
+      0,
+      0
+};
+
 static const struct __vpirt vpip_shortint_rt = {
       vpiShortIntVar,
       signal_get,
@@ -979,6 +993,9 @@ vpiHandle vpip_make_int4(const char*name, int msb, int lsb, vvp_net_t*vec)
       return obj;
 }
 
+/*
+ * Construct a vpi
+ */
 vpiHandle vpip_make_int2(const char*name, int msb, int lsb, vvp_net_t*vec)
 {
       vpiHandle obj = vpip_make_net4(name, msb,lsb, true, vec);
@@ -998,7 +1015,10 @@ vpiHandle vpip_make_int2(const char*name, int msb, int lsb, vvp_net_t*vec)
 	    obj->vpi_type = &vpip_longint_rt;
 	    break;
 	  default:
-	    assert(0);
+	      // Every other type of bit vector is a vpiBitVar with
+	      // array dimensions.
+	    obj->vpi_type = &vpip_bitvar_rt;
+	    break;
       }
 
       return obj;
