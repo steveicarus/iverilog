@@ -92,6 +92,9 @@ static map<perm_string, ComponentBase*> block_components;
 
       named_expr_t*named_expr;
       std::list<named_expr_t*>*named_expr_list;
+      entity_aspect_t* entity_aspect;
+      instant_list_t* instantiation_list;
+      std::pair<instant_list_t*, ExpName*>* component_specification;
 
       const VType* vtype;
 
@@ -141,6 +144,10 @@ static map<perm_string, ComponentBase*> block_components;
 %type <interface_list> interface_element interface_list entity_header
 %type <interface_list> port_clause port_clause_opt
 %type <port_mode>  mode
+
+%type <entity_aspect> entity_aspect entity_aspect_opt binding_indication binding_indication_semicolon_opt
+%type <instantiation_list> instantiation_list
+%type <component_specification> component_specification
 
 %type <arch_statement> concurrent_statement component_instantiation_statement concurrent_signal_assignment_statement
 %type <arch_statement_list> architecture_statement_part
@@ -240,16 +247,18 @@ association_list
       }
   ;
 
-//TODO: this list is only a sketch
 binding_indication
   : K_use entity_aspect_opt
    port_map_aspect_opt
    generic_map_aspect_opt
+      { //TODO: do sth with generic map aspect
+   $$ = $2;
+      }
   ;
 
 binding_indication_semicolon_opt
-  : binding_indication ';'
-  |
+  : binding_indication ';' { $$ = $1; }
+  | { $$ = 0; }
   ;
 
 block_configuration
@@ -330,6 +339,16 @@ component_configuration
     binding_indication_semicolon_opt
     block_configuration_opt
     K_end K_for ';'
+      {
+    sorrymsg(@1, "Component configuration in not yet supported");
+    if($3) delete $3;
+    delete $2;
+      }
+  | K_for component_specification error K_end K_for
+      {
+    errormsg(@1, "Error in component configuration statement.\n");
+    delete $2;
+      }
   ;
 
 component_instantiation_statement
@@ -351,27 +370,11 @@ component_instantiation_statement
   ;
 
 component_specification
-  : instantiation_list ':' IDENTIFIER
-      { sorrymsg(@1, "Component specifications are not supported.\n");
-    delete[] $3
-      }
-  ;
-
-configuration_declaration
-  : K_configuration IDENTIFIER K_of IDENTIFIER K_is
-  configuration_declarative_part
-  block_configuration
-  K_end K_configuration_opt identifier_opt ';'
-     {
-  if(design_entities.find(lex_strings.make($4)) == design_entities.end())
-      errormsg(@4, "Couldn't find entity %s used in configuration declaration", $4);
-  //choose_architecture_for_entity();
-  sorrymsg(@1, "Configuration declaration is not yet supported.\n");
-     }
-  | K_configuration error K_end K_configuration_opt identifier_opt ';'
-      { errormsg(@2, "Too many errors, giving up on configuration declaration.\n");
-    if($5) delete $5;
-    yyerrok;
+  : instantiation_list ':' name
+      {
+    ExpName* name = dynamic_cast<ExpName*>($3);
+    std::pair<instant_list_t*, ExpName*>* tmp = new std::pair<instant_list_t*, ExpName*>($1, name);
+    $$ = tmp;
       }
   ;
 
@@ -396,6 +399,24 @@ concurrent_signal_assignment_statement
 concurrent_statement
   : component_instantiation_statement
   | concurrent_signal_assignment_statement
+  ;
+
+configuration_declaration
+  : K_configuration IDENTIFIER K_of IDENTIFIER K_is
+  configuration_declarative_part
+  block_configuration
+  K_end K_configuration_opt identifier_opt ';'
+     {
+  if(design_entities.find(lex_strings.make($4)) == design_entities.end())
+      errormsg(@4, "Couldn't find entity %s used in configuration declaration", $4);
+  //choose_architecture_for_entity();
+  sorrymsg(@1, "Configuration declaration is not yet supported.\n");
+     }
+  | K_configuration error K_end K_configuration_opt identifier_opt ';'
+      { errormsg(@2, "Too many errors, giving up on configuration declaration.\n");
+    if($5) delete $5;
+    yyerrok;
+      }
   ;
 //TODO: this list is only a sketch. It must be filled out later
 configuration_declarative_item
@@ -455,14 +476,28 @@ direction : K_to { $$ = false; } | K_downto { $$ = true; } ;
 
   /* As an entity is declared, add it to the map of design entities. */
 entity_aspect
-  : K_entity name {sorrymsg(@1, "Entity aspect not yet supported.\n"); delete $2;}
-  | K_configuration name {sorrymsg(@1, "Entity aspect not yet supported.\n"); delete $2;}
+  : K_entity name
+      {
+    ExpName* name = dynamic_cast<ExpName*>($2);
+    entity_aspect_t* tmp = new entity_aspect_t(entity_aspect_t::ENTITY, name);
+    $$ = tmp;
+      }
+  | K_configuration name
+      {
+    ExpName* name = dynamic_cast<ExpName*>($2);
+    entity_aspect_t* tmp = new entity_aspect_t(entity_aspect_t::CONFIGURATION, name);
+    $$ = tmp;
+      }
   | K_open
+      {
+    entity_aspect_t* tmp = new entity_aspect_t(entity_aspect_t::OPEN, 0);
+    $$ = tmp;
+      }
   ;
 
 entity_aspect_opt
-  : entity_aspect
-  |
+  : entity_aspect { $$ = $1; }
+  | { $$ = 0; }
   ;
 
 entity_declaration
@@ -624,6 +659,9 @@ generic_map_aspect_opt
 
 generic_map_aspect
   : K_generic K_map '(' association_list ')'
+      {
+    sorrymsg(@1, "Generic map aspect not yet supported.\n");
+      }
   ;
 
 identifier_list
@@ -646,14 +684,19 @@ identifier_opt : IDENTIFIER { $$ = $1; } |  { $$ = 0; } ;
 
 instantiation_list
   : identifier_list
-   {
-    sorrymsg(@1, "Instatiation lists not yet supported");
-    delete $1;
-   }
+     {
+  instant_list_t* tmp = new instant_list_t(instant_list_t::NONE, $1);
+  $$ = tmp;
+     }
   | K_others
+     {
+  instant_list_t* tmp = new instant_list_t(instant_list_t::OTHERS, 0);
+  $$ = tmp;
+     }
   | K_all
    {
-      sorrymsg(@1, "Instatiation lists not yet supported");
+  instant_list_t* tmp = new instant_list_t(instant_list_t::ALL, 0);
+  $$ = tmp;
    }
   ;
 
@@ -755,7 +798,7 @@ package_declaration
     }
     delete $2;
       }
-  | K_package error K_end K_package_opt identifier_opt ';'
+  | K_package IDENTIFIER K_is error K_end K_package_opt identifier_opt ';'
         { errormsg(@2, "Syntax error in package clause.\n");
           yyerrok;
         }
@@ -796,8 +839,16 @@ package_body
     package_body_declarative_part_opt
     K_end K_package_opt identifier_opt ';'
       {
+    sorrymsg(@1, "Package body is not yet supported.\n");
     delete[] $3;
     if($8) delete[] $8;
+      }
+
+  | K_package K_body IDENTIFIER K_is
+    error
+    K_end K_package_opt identifier_opt ';'
+      {
+    errormsg(@1, "Errors in package body.\n");
       }
   ;
 
@@ -816,6 +867,10 @@ port_clause_opt : port_clause {$$ = $1;} | {$$ = 0;} ;
 port_map_aspect
   : K_port K_map '(' association_list ')'
       { $$ = $4; }
+  | K_port K_map '(' error ')'
+      {
+    errormsg(@1, "Syntax error in port map aspect.\n");
+      }
   ;
 
 port_map_aspect_opt
@@ -941,6 +996,10 @@ subtype_indication
       { const VType*tmp = calculate_subtype($1, $3, $4, $5);
 	delete[]$1;
 	$$ = tmp;
+      }
+  | IDENTIFIER '(' error ')'
+      {
+    errormsg(@1, "Syntax error in subtype indication.\n");
       }
   ;
 
