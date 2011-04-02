@@ -1172,14 +1172,19 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 
       bool need_const = NEED_CONST & flags;
 
+      unsigned parm_errors = 0;
       unsigned missing_parms = 0;
       for (unsigned idx = 0 ;  idx < nparms ;  idx += 1) {
 	    PExpr*expr = parms_[idx];
 	    if (expr) {
 		  NetExpr*tmp = elab_sys_task_arg(des, scope, name, idx,
                                                   expr, need_const);
-		  fun->parm(idx, tmp);
-
+                  if (tmp) {
+                        fun->parm(idx, tmp);
+                  } else {
+                        parm_errors += 1;
+                        fun->parm(idx, 0);
+                  }
 	    } else {
 		  missing_parms += 1;
 		  fun->parm(idx, 0);
@@ -1193,6 +1198,9 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 		 << "passing empty parameters to functions." << endl;
 	    des->errors += 1;
       }
+
+      if (missing_parms || parm_errors)
+            return 0;
 
       NetExpr*tmp = pad_to_width(fun, expr_wid, *this);
       tmp->cast_signed(signed_flag_);
@@ -1312,6 +1320,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 
       bool need_const = NEED_CONST & flags;
 
+      unsigned parm_errors = 0;
       unsigned missing_parms = 0;
       for (unsigned idx = 0 ;  idx < parms.count() ;  idx += 1) {
 	    PExpr*tmp = parms_[idx];
@@ -1320,6 +1329,10 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 						   def->port(idx)->data_type(),
 						   (unsigned)def->port(idx)->vector_width(),
 						   tmp, need_const);
+                  if (parms[idx] == 0) {
+                        parm_errors += 1;
+                        continue;   
+                  }   
 		  if (NetEEvent*evt = dynamic_cast<NetEEvent*> (parms[idx])) {
 			cerr << evt->get_fileline() << ": error: An event '"
 			     << evt->event()->name() << "' can not be a user "
@@ -1347,6 +1360,8 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	    des->errors += 1;
       }
 
+      if (missing_parms || parm_errors)
+            return 0;
 
 	/* Look for the return value signal for the called
 	   function. This return value is a magic signal in the scope
