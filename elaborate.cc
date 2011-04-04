@@ -263,8 +263,8 @@ unsigned PGBuiltin::calculate_array_count_(Design*des, NetScope*scope,
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: PGBuiltin: Make array "
-		       << "[" << high << ":" << low << "]"
-		       << " of " << count << " gates for " << get_name() << endl;
+		       << "[" << high << ":" << low << "]" << " of "
+		       << count << " gates for " << get_name() << endl;
 	    }
       }
 
@@ -684,8 +684,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
       unsigned instance_width = 1;
       perm_string name = get_name();
 
-      if (name == "")
-	    name = scope->local_symbol();
+      if (name == "") name = scope->local_symbol();
 
 	/* Calculate the array bounds and instance count for the gate,
 	   as described in the Verilog source. If there is none, then
@@ -693,8 +692,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
       long low=0, high=0;
       unsigned array_count = calculate_array_count_(des, scope, high, low);
-      if (array_count == 0)
-	    return;
+      if (array_count == 0) return;
 
       unsigned output_count = calculate_output_count_();
 
@@ -1771,6 +1769,64 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 }
 
+unsigned PGModule::calculate_instance_count_(Design*des, NetScope*scope,
+                                             long&high, long&low,
+                                             perm_string name) const
+{
+      unsigned count = 1;
+      high = 0;
+      low = 0;
+
+	/* If the Verilog source has a range specification for the UDP, then
+	 * I am expected to make more than one gate. Figure out how many are
+	 * desired. */
+      if (msb_) {
+	    need_constant_expr = true;
+	    NetExpr*msb_exp = elab_and_eval(des, scope, msb_, -1);
+	    NetExpr*lsb_exp = elab_and_eval(des, scope, lsb_, -1);
+	    need_constant_expr = false;
+
+	    NetEConst*msb_con = dynamic_cast<NetEConst*>(msb_exp);
+	    NetEConst*lsb_con = dynamic_cast<NetEConst*>(lsb_exp);
+
+	    if (msb_con == 0) {
+		  cerr << get_fileline() << ": error: Unable to evaluate "
+			"expression " << *msb_ << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    if (lsb_con == 0) {
+		  cerr << get_fileline() << ": error: Unable to evaluate "
+			"expression " << *lsb_ << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    verinum msb = msb_con->value();
+	    verinum lsb = lsb_con->value();
+
+	    delete msb_exp;
+	    delete lsb_exp;
+
+	    if (msb.as_long() > lsb.as_long())
+		  count = msb.as_long() - lsb.as_long() + 1;
+	    else
+		  count = lsb.as_long() - msb.as_long() + 1;
+
+	    low = lsb.as_long();
+	    high = msb.as_long();
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: PGModule: Make range "
+		       << "[" << high << ":" << low << "]" << " of "
+		       << count << " UDPs for " << name << endl;
+	    }
+      }
+
+      return count;
+}
+
 /*
  * From a UDP definition in the source, make a NetUDP
  * object. Elaborate the pin expressions as netlists, then connect
@@ -1799,6 +1855,19 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 		  tmp_del.eval_delays(des, scope, rise_expr, fall_expr,
 		                      decay_expr);
 	    }
+      }
+
+      long low = 0, high = 0;
+      unsigned inst_count = calculate_instance_count_(des, scope, high, low,
+                                                      my_name);
+      if (inst_count == 0) return;
+
+      if (inst_count != 1) {
+	    cerr << get_fileline() << ": sorry: UDPs with a range ("
+	         << my_name << " [" << high << ":" << low << "]) are "
+	         << "not supported." << endl;
+	    des->errors += 1;
+	    return;
       }
 
       assert(udp);

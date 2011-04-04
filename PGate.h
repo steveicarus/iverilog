@@ -1,7 +1,7 @@
 #ifndef __PGate_H
 #define __PGate_H
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -238,6 +238,9 @@ class PGModule  : public PGate {
       friend class delayed_elaborate_scope_mod_instances;
       void elaborate_mod_(Design*, Module*mod, NetScope*scope) const;
       void elaborate_udp_(Design*, PUdp  *udp, NetScope*scope) const;
+      unsigned calculate_instance_count_(Design*, NetScope*,
+                                         long&high, long&low,
+                                         perm_string name) const;
       void elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const;
       void elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*sc) const;
       bool elaborate_sig_mod_(Design*des, NetScope*scope, Module*mod) const;
