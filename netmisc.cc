@@ -819,8 +819,11 @@ void collapse_partselect_pv_to_concat(Design*des, NetNet*sig)
 	    if (obj_pin != 1)
 		  continue;
 
+	      // Don't support overrun selects here.
+	    if (ps_obj->base()+ps_obj->width() > ps_map.size())
+		  continue;
+
 	    ivl_assert(*ps_obj, ps_obj->base() < ps_map.size());
-	    ivl_assert(*ps_obj, ps_obj->base()+ps_obj->width() <= ps_map.size());
 	    ps_map[ps_obj->base()] = ps_obj;
       }
 
