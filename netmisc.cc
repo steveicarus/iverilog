@@ -791,3 +791,79 @@ uint64_t get_scaled_time_from_real(Design*des, NetScope*scope, NetECReal*val)
 
       return delay;
 }
+
+/*
+ * This function looks at the NetNet signal to see if there are any
+ * NetPartSelect::PV nodes driving this signal. If so, See if they can
+ * be collapsed into a single concatenation.
+ */
+void collapse_partselect_pv_to_concat(Design*des, NetNet*sig)
+{
+      NetScope*scope = sig->scope();
+      vector<NetPartSelect*> ps_map (sig->vector_width());
+
+      Nexus*nex = sig->pin(0).nexus();
+
+      for (Link*cur = nex->first_nlink(); cur ; cur = cur->next_nlink()) {
+	    NetPins*obj;
+	    unsigned obj_pin;
+	    cur->cur_link(obj, obj_pin);
+
+	      // Look for NetPartSelect devices, where this signal is
+	      // connected to pin 1 of a NetPartSelect::PV.
+	    NetPartSelect*ps_obj = dynamic_cast<NetPartSelect*> (obj);
+	    if (ps_obj == 0)
+		  continue;
+	    if (ps_obj->dir() != NetPartSelect::PV)
+		  continue;
+	    if (obj_pin != 1)
+		  continue;
+
+	    ivl_assert(*ps_obj, ps_obj->base() < ps_map.size());
+	    ivl_assert(*ps_obj, ps_obj->base()+ps_obj->width() <= ps_map.size());
+	    ps_map[ps_obj->base()] = ps_obj;
+      }
+
+	// Check the collected NetPartSelect::PV objects to see if
+	// they cover the vector.
+      unsigned idx = 0;
+      unsigned device_count = 0;
+      while (idx < ps_map.size()) {
+	    NetPartSelect*ps_obj = ps_map[idx];
+	    if (ps_obj == 0)
+		  return;
+
+	    idx += ps_obj->width();
+	    device_count += 1;
+      }
+
+      ivl_assert(*sig, idx == ps_map.size());
+
+	// Ah HAH! The NetPartSelect::PV objects exactly cover the
+	// target signal. We can replace all of them with a single
+	// concatenation.
+
+      if (debug_elaborate) {
+	    cerr << sig->get_fileline() << ": debug: "
+		 << "Collapse " << device_count
+		 << " NetPartSelect::PV devices into a concatenation." << endl;
+      }
+
+      NetConcat*cat = new NetConcat(scope, scope->local_symbol(),
+				    ps_map.size(), device_count);
+      des->add_node(cat);
+      cat->set_line(*sig);
+
+      connect(cat->pin(0), sig->pin(0));
+
+      idx = 0;
+      unsigned concat_position = 1;
+      while (idx < ps_map.size()) {
+	    assert(ps_map[idx]);
+	    NetPartSelect*ps_obj = ps_map[idx];
+	    connect(cat->pin(concat_position), ps_obj->pin(0));
+	    concat_position += 1;
+	    idx += ps_obj->width();
+	    delete ps_obj;
+      }
+}

@@ -241,4 +241,6 @@ extern uint64_t get_scaled_time_from_real(Design*des,
                                           NetScope*scope,
                                           NetECReal*val);
 
+extern void collapse_partselect_pv_to_concat(Design*des, NetNet*sig);
+
 #endif
