@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -81,6 +81,7 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		case vpiShortIntVar:
 		case vpiIntVar:
 		case vpiByteVar:
+		case vpiBitVar:
 		  signal_delete((scope->intern)[idx]);
 		  break;
 		case vpiParameter:
