@@ -616,6 +616,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  des->add_node(sub);
 		  sub->set_line(*this);
 		  connect(sub->pin(0), subsig->pin(0));
+		  collapse_partselect_pv_to_concat(des, sig);
 	    }
 	    sig = subsig;
       }
