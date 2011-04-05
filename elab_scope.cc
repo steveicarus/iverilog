@@ -1362,6 +1362,14 @@ void PFunction::elaborate_scope(Design*des, NetScope*scope) const
 {
       assert(scope->type() == NetScope::FUNC);
 
+        // Save a reference to the pform representation of the function
+        // in case we need to perform early elaboration.
+      scope->set_func_pform(this);
+
+        // Assume the function is a constant function until we
+        // find otherwise.
+      scope->is_const_func(true);
+
 	// Scan the parameters in the function, and store the information
         // needed to evaluate the parameter expressions.
 

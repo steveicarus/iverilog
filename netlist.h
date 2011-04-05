@@ -73,6 +73,7 @@ class NetTaskDef;
 class NetEvTrig;
 class NetEvWait;
 class PExpr;
+class PFunction;
 class netenum_t;
 
 struct target;
@@ -790,6 +791,29 @@ class NetScope : public Attrib {
       unsigned get_def_lineno() const { return def_lineno_; };
 
       bool in_func() const;
+
+	/* Provide a link back to the pform to allow early elaboration of
+           constant functions. */
+      void set_func_pform(const PFunction*pfunc) { func_pform_ = pfunc; };
+      const PFunction*func_pform() const { return func_pform_; };
+
+        /* Allow tracking of elaboration stages. The three stages are:
+             1 - scope elaboration
+             2 - signal elaboration
+             3 - statement elaboration
+           This is only used for functions, to support early elaboration.
+        */
+      void set_elab_stage(unsigned stage) { elab_stage_ = stage; };
+      unsigned elab_stage() const { return elab_stage_; };
+
+	/* Is this a function called in a constant expression. */
+      void need_const_func(bool need_const) { need_const_func_ = need_const; };
+      bool need_const_func() const { return need_const_func_; };
+
+	/* Is this a constant function. */
+      void is_const_func(bool is_const) { is_const_func_ = is_const; };
+      bool is_const_func() const { return is_const_func_; };
+
 	/* Is the task or function automatic. */
       void is_auto(bool is_auto__) { is_auto_ = is_auto__; };
       bool is_auto() const { return is_auto_; };
@@ -904,7 +928,6 @@ class NetScope : public Attrib {
 
       param_ref_t find_parameter(perm_string name);
 
-
       struct spec_val_t {
 	    ivl_variable_type_t type;
 	    union {
@@ -954,6 +977,8 @@ class NetScope : public Attrib {
 	    NetTaskDef*task_;
 	    NetFuncDef*func_;
       };
+      const PFunction*func_pform_;
+      unsigned elab_stage_;
 
 	// Enumerations. The enum_sets_ is a list of all the
 	// enumerations present in this scope. The enum_names_ is a
@@ -966,7 +991,7 @@ class NetScope : public Attrib {
       map<hname_t,NetScope*> children_;
 
       unsigned lcounter_;
-      bool is_auto_, is_cell_;
+      bool need_const_func_, is_const_func_, is_auto_, is_cell_;
 };
 
 /*
@@ -3095,7 +3120,7 @@ class NetTaskDef {
 class NetEUFunc  : public NetExpr {
 
     public:
-      NetEUFunc(NetScope*, NetScope*, NetESignal*, svector<NetExpr*>&);
+      NetEUFunc(NetScope*, NetScope*, NetESignal*, svector<NetExpr*>&, bool);
       ~NetEUFunc();
 
       const NetESignal*result_sig() const;
@@ -3119,6 +3144,7 @@ class NetEUFunc  : public NetExpr {
       NetScope*func_;
       NetESignal*result_sig_;
       svector<NetExpr*> parms_;
+      bool need_const_;
 
     private: // not implemented
       NetEUFunc(const NetEUFunc&);

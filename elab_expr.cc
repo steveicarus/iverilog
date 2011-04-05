@@ -1286,16 +1286,9 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 		  return elaborate_access_func_(des, scope, access_nature,
                                                 expr_wid);
 
-	      // We do not currently support constant user function and
-	      // this is where things fail because of that, though we
-	      // don't know for sure so we need to display both messages.
-	    if (NEED_CONST & flags) {
-		  cerr << get_fileline() << ": sorry: constant user "
-		          "functions are not currently supported: "
-		       << path_ << "()." << endl << "    or" << endl;
-	    }
-	    cerr << get_fileline() << ": error: No function " << path_
-	         << " in this context (" << scope_path(scope) << ")." << endl;
+	    cerr << get_fileline() << ": error: No function named `" << path_
+	         << "' found in this context (" << scope_path(scope) << ")."
+                 << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -1303,6 +1296,29 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 
       NetScope*dscope = def->scope();
       ivl_assert(*this, dscope);
+
+      bool need_const = NEED_CONST & flags;
+
+        // It is possible to get here before the called function has been
+        // fully elaborated. If this is the case, elaborate it now. This
+        // ensures we know whether or not it is a constant function.
+      if (dscope->elab_stage() < 3) {
+            dscope->need_const_func(need_const);
+            const PFunction*pfunc = dscope->func_pform();
+            ivl_assert(*this, pfunc);
+            pfunc->elaborate(des, dscope);
+      }
+
+      if (dscope->parent() != scope->parent() || !dscope->is_const_func()) {
+            if (scope->need_const_func()) {
+	          cerr << get_fileline() << ": error: A function invoked by "
+                          "a constant function must be a constant function "
+                          "local to the current module." << endl;
+                  des->errors += 1;
+                  return 0;
+            }
+            scope->is_const_func(false);
+      }
 
       if (! check_call_matches_definition_(des, dscope))
 	    return 0;
@@ -1318,8 +1334,6 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	   of the function being called. The scope of the called
 	   function is elaborated when the definition is elaborated. */
 
-      bool need_const = NEED_CONST & flags;
-
       unsigned parm_errors = 0;
       unsigned missing_parms = 0;
       for (unsigned idx = 0 ;  idx < parms.count() ;  idx += 1) {
@@ -1331,8 +1345,8 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 						   tmp, need_const);
                   if (parms[idx] == 0) {
                         parm_errors += 1;
-                        continue;   
-                  }   
+                        continue;
+                  }
 		  if (NetEEvent*evt = dynamic_cast<NetEEvent*> (parms[idx])) {
 			cerr << evt->get_fileline() << ": error: An event '"
 			     << evt->event()->name() << "' can not be a user "
@@ -1360,6 +1374,26 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	    des->errors += 1;
       }
 
+      if (need_const && !dscope->is_const_func()) {
+
+              // If this is the first time the function has been called in
+              // a constant context, force the function to be re-elaborated.
+              // This will generate the necessary error messages to allow
+              // the user to diagnose the fault.
+            if (!dscope->need_const_func()) {
+                  dscope->set_elab_stage(2);
+                  dscope->need_const_func(true);
+                  const PFunction*pfunc = dscope->func_pform();
+                  ivl_assert(*this, pfunc);
+                  pfunc->elaborate(des, dscope);
+            }
+
+            cerr << get_fileline() << ": error: `" << dscope->basename()
+                 << "' is not a constant function." << endl;
+            des->errors += 1;
+            return 0;
+      }
+
       if (missing_parms || parm_errors)
             return 0;
 
@@ -1373,7 +1407,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 
       if (NetNet*res = dscope->find_signal(dscope->basename())) {
 	    NetESignal*eres = new NetESignal(res);
-	    NetEUFunc*func = new NetEUFunc(scope, dscope, eres, parms);
+	    NetEUFunc*func = new NetEUFunc(scope, dscope, eres, parms, need_const);
 	    func->set_line(*this);
 
             NetExpr*tmp = pad_to_width(func, expr_wid, *this);
@@ -1866,12 +1900,22 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
       const NetExpr*ex1, *ex2;
 
-      if ((NEED_CONST & flags) && (path_.size() > 1)) {
-	    cerr << get_fileline() << ": error: A hierarchical reference ('"
-                 << path_ << "') is not allowed in a constant expression."
-	         << endl;
-	    des->errors += 1;
-	    return 0;
+      if (path_.size() > 1) {
+            if (NEED_CONST & flags) {
+                  cerr << get_fileline() << ": error: A hierarchical reference"
+                          " (`" << path_ << "') is not allowed in a constant"
+                          " expression." << endl;
+                  des->errors += 1;
+                  return 0;
+            }
+            if (scope->need_const_func()) {
+                  cerr << get_fileline() << ": error: A hierarchical reference"
+                          " (`" << path_ << "') is not allowed in a constant"
+                          " function." << endl;
+                  des->errors += 1;
+                  return 0;
+            }
+            scope->is_const_func(false);
       }
 
       NetScope*found_in = symbol_search(this, des, scope, path_,
@@ -1897,10 +1941,20 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       if (net != 0) {
             if (NEED_CONST & flags) {
                   cerr << get_fileline() << ": error: A reference to a wire "
-                          "or register ('" << path_ << "') is not allowed in "
+                          "or reg (`" << path_ << "') is not allowed in "
                           "a constant expression." << endl;
 	          des->errors += 1;
                   return 0;
+            }
+            if (net->scope() != scope) {
+                  if (scope->need_const_func()) {
+                        cerr << get_fileline() << ": error: A reference to a "
+                                "non-local wire or reg (`" << path_ << "') is "
+                                "not allowed in a constant function." << endl;
+                        des->errors += 1;
+                        return 0;
+                  }
+                  scope->is_const_func(false);
             }
 
 	    NetExpr*tmp = elaborate_expr_net(des, scope, net, found_in,
@@ -1919,10 +1973,20 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       if (eve != 0) {
             if (NEED_CONST & flags) {
                   cerr << get_fileline() << ": error: A reference to a named "
-                          "event ('" << path_ << "') is not allowed in a "
+                          "event (`" << path_ << "') is not allowed in a "
                           "constant expression." << endl;
 	          des->errors += 1;
                   return 0;
+            }
+            if (eve->scope() != scope) {
+                  if (scope->need_const_func()) {
+                        cerr << get_fileline() << ": error: A reference to a "
+                                "non-local named event (`" << path_ << "') is "
+                                "not allowed in a constant function." << endl;
+                        des->errors += 1;
+                        return 0;
+                  }
+                  scope->is_const_func(false);
             }
 
 	    NetEEvent*tmp = new NetEEvent(eve);
@@ -2061,6 +2125,11 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
                  << (NEED_CONST & flags ? "parameter" : "wire/reg/memory")
                  << " `" << path_ << "' in `" << scope_path(scope) << "'"
                  << endl;
+            if (scope->need_const_func()) {
+                  cerr << get_fileline() << ":      : `" << scope->basename()
+                       << "' is being used as a constant function, so may "
+                          "only reference local variables." << endl;
+            }
 	    des->errors += 1;
 	    return 0;
       }

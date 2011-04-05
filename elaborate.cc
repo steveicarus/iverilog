@@ -3801,6 +3801,11 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 
 void PFunction::elaborate(Design*des, NetScope*scope) const
 {
+      if (scope->elab_stage() > 2)
+            return;
+
+      scope->set_elab_stage(3);
+
       NetFuncDef*def = scope->func_def();
       if (def == 0) {
 	    cerr << get_fileline() << ": internal error: "
@@ -3816,6 +3821,7 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
       if (st == 0) {
 	    cerr << statement_->get_fileline() << ": error: Unable to elaborate "
 		  "statement in function " << scope->basename() << "." << endl;
+            scope->is_const_func(true); // error recovery
 	    des->errors += 1;
 	    return;
       }

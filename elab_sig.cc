@@ -437,6 +437,11 @@ bool PGenerate::elaborate_sig_(Design*des, NetScope*scope) const
  */
 void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 {
+      if (scope->elab_stage() > 1)
+            return;
+
+      scope->set_elab_stage(2);
+
       perm_string fname = scope->basename();
       assert(scope->type() == NetScope::FUNC);
 

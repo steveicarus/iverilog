@@ -33,6 +33,7 @@
 # include  "compiler.h"
 # include  "netmisc.h"
 # include  "PExpr.h"
+# include  "PTask.h"
 # include  <sstream>
 # include  "ivl_assert.h"
 
@@ -720,9 +721,18 @@ NetFuncDef* Design::find_function(NetScope*scope, const pform_name_t&name)
 
       std::list<hname_t> eval_path = eval_scope_path(this, scope, name);
       NetScope*func = find_scope(scope, eval_path, NetScope::FUNC);
-      if (func && (func->type() == NetScope::FUNC))
+      if (func && (func->type() == NetScope::FUNC)) {
+              // If a function is used in a parameter definition or in
+              // a signal declaration, it is possible to get here before
+              // the function's signals have been elaborated. If this is
+              // the case, elaborate them now.
+            if (func->elab_stage() < 2) {
+                  const PFunction*pfunc = func->func_pform();
+                  assert(pfunc);
+                  pfunc->elaborate_sig(this, func);
+            }
 	    return func->func_def();
-
+      }
       return 0;
 }
 

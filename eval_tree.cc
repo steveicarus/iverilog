@@ -1946,5 +1946,29 @@ NetExpr* NetESFunc::eval_tree()
 
 NetExpr* NetEUFunc::eval_tree()
 {
+        // If we know the function cannot be evaluated as a constant,
+        // give up now.
+      if (!func()->is_const_func())
+            return 0;
+
+        // Variables inside static functions can be accessed from outside
+        // the function, so we can't be sure they are constant unless the
+        // function was called in a constant context.
+      if (!func()->is_auto() && !need_const_)
+            return 0;
+
+        // Run through the input parameters to check they are constants.
+      for (unsigned idx = 0; idx < parm_count(); idx += 1) {
+            if (dynamic_cast<const NetEConst*> (parm(idx)))
+                  continue;
+            if (dynamic_cast<const NetECReal*> (parm(idx)))
+                  continue;
+            return 0;
+      }
+
+      if (need_const_) {
+            cerr << get_fileline() << ": sorry: Constant user functions are "
+                    "not yet supported." << endl;
+      }
       return 0;
 }
