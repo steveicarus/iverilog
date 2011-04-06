@@ -1424,6 +1424,36 @@ extern "C" unsigned ivl_lpm_size(ivl_lpm_t net)
 	    return net->u_.repeat.count;
 	  case IVL_LPM_CONCAT:
 	    return net->u_.concat.inputs;
+	  case IVL_LPM_ABS:
+	  case IVL_LPM_CAST_INT:
+	  case IVL_LPM_CAST_INT2:
+	  case IVL_LPM_CAST_REAL:
+	  case IVL_LPM_RE_AND:
+	  case IVL_LPM_RE_OR:
+	  case IVL_LPM_RE_XOR:
+	  case IVL_LPM_RE_NAND:
+	  case IVL_LPM_RE_NOR:
+	  case IVL_LPM_RE_XNOR:
+	  case IVL_LPM_SIGN_EXT:
+	  case IVL_LPM_FF:
+	    return 1;
+	  case IVL_LPM_ADD:
+	  case IVL_LPM_CMP_EEQ:
+	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_GE:
+	  case IVL_LPM_CMP_GT:
+	  case IVL_LPM_CMP_NE:
+	  case IVL_LPM_CMP_NEE:
+	  case IVL_LPM_DIVIDE:
+	  case IVL_LPM_MOD:
+	  case IVL_LPM_MULT:
+	  case IVL_LPM_POW:
+	  case IVL_LPM_SUB:
+	  case IVL_LPM_SHIFTL:
+	  case IVL_LPM_SHIFTR:
+	  case IVL_LPM_PART_VP:
+	  case IVL_LPM_PART_PV:
+	    return 2;
 	  default:
 	    assert(0);
 	    return 0;
