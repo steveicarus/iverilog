@@ -271,7 +271,7 @@ static vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
    case IVL_LPM_RE_XOR:
       return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_XOR, false);
    case IVL_LPM_RE_XNOR:
-      return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_XOR, true);
+      return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_XNOR, true);
    case IVL_LPM_SIGN_EXT:
       return sign_extend_lpm_to_expr(scope, lpm);
    case IVL_LPM_ARRAY:
