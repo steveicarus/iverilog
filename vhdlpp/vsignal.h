@@ -34,7 +34,7 @@ class Signal : public LineInfo {
 
       int emit(ostream&out, Entity*ent, Architecture*arc);
 
-      void dump(ostream&out) const;
+      void dump(ostream&out, int indent = 0) const;
 
     private:
       perm_string name_;

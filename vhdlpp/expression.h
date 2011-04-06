@@ -56,7 +56,7 @@ class Expression : public LineInfo {
       virtual bool is_primary(void) const;
 
 	// Debug dump of the expression.
-      virtual void dump(ostream&out, int indent) const =0;
+      virtual void dump(ostream&out, int indent = 0) const =0;
 
     private:
 
@@ -73,7 +73,7 @@ class ExpUnary : public Expression {
 
     protected:
       int emit_operand1(ostream&out, Entity*ent, Architecture*arc);
-      void dump_operand1(ostream&out, int indent) const;
+      void dump_operand1(ostream&out, int indent = 0) const;
 
     private:
       Expression*operand1_;
@@ -94,7 +94,7 @@ class ExpBinary : public Expression {
       int emit_operand1(ostream&out, Entity*ent, Architecture*arc);
       int emit_operand2(ostream&out, Entity*ent, Architecture*arc);
 
-      void dump_operands(ostream&out, int indent) const;
+      void dump_operands(ostream&out, int indent = 0) const;
 
     private:
       Expression*operand1_;
@@ -111,7 +111,7 @@ class ExpArithmetic : public ExpBinary {
       ~ExpArithmetic();
 
       int emit(ostream&out, Entity*ent, Architecture*arc);
-      void dump(ostream&out, int indent) const;
+      void dump(ostream&out, int indent = 0) const;
 
     private:
       fun_t fun_;
@@ -126,7 +126,7 @@ class ExpInteger : public Expression {
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
       bool evaluate(int64_t&val) const;
-      void dump(ostream&out, int indent) const;
+      void dump(ostream&out, int indent = 0) const;
 
     private:
       int64_t value_;
@@ -142,7 +142,7 @@ class ExpLogical : public ExpBinary {
       ~ExpLogical();
 
       int emit(ostream&out, Entity*ent, Architecture*arc);
-      void dump(ostream&out, int indent) const;
+      void dump(ostream&out, int indent = 0) const;
 
     private:
       fun_t fun_;
@@ -162,7 +162,7 @@ class ExpName : public Expression {
     public: // Base methods
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
-      void dump(ostream&out, int indent) const;
+      void dump(ostream&out, int indent = 0) const;
       const char* name() const;
 
     private:
@@ -177,7 +177,7 @@ class ExpUAbs : public ExpUnary {
       ~ExpUAbs();
 
       int emit(ostream&out, Entity*ent, Architecture*arc);
-      void dump(ostream&out, int indent) const;
+      void dump(ostream&out, int indent = 0) const;
 };
 
 class ExpUNot : public ExpUnary {
@@ -187,7 +187,7 @@ class ExpUNot : public ExpUnary {
       ~ExpUNot();
 
       int emit(ostream&out, Entity*ent, Architecture*arc);
-      void dump(ostream&out, int indent) const;
+      void dump(ostream&out, int indent = 0) const;
 };
 
 #endif

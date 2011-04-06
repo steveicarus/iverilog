@@ -48,7 +48,7 @@ class Architecture : public LineInfo {
 	    virtual ~Statement() =0;
 
 	    virtual int emit(ostream&out, Entity*ent, Architecture*arc);
-	    virtual void dump(ostream&out) const;
+	    virtual void dump(ostream&out, int indent = 0) const;
 
 	  private:
 
@@ -75,7 +75,7 @@ class Architecture : public LineInfo {
       int emit(ostream&out, Entity*entity);
 
 	// The dump method writes a debug display to the given output.
-      void dump(ostream&out, perm_string of_entity) const;
+      void dump(ostream&out, perm_string of_entity, int indent = 0) const;
 
     private:
       perm_string name_;
@@ -100,7 +100,7 @@ class SignalAssignment  : public Architecture::Statement {
       ~SignalAssignment();
 
       int emit(ostream&out, Entity*entity, Architecture*arc);
-      virtual void dump(ostream&out) const;
+      virtual void dump(ostream&out, int indent = 0) const;
 
     private:
       ExpName*lval_;
@@ -115,7 +115,7 @@ class ComponentInstantiation  : public Architecture::Statement {
       ~ComponentInstantiation();
 
       int emit(ostream&out, Entity*entity, Architecture*arc);
-      virtual void dump(ostream&out) const;
+      virtual void dump(ostream&out, int indent = 0) const;
 
     private:
       perm_string iname_;
