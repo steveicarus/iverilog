@@ -42,6 +42,16 @@ void ComponentBase::set_interface(std::list<InterfacePort*>*ports)
 	}
 }
 
+const InterfacePort* ComponentBase::find_port(perm_string my_name) const
+{
+      for (size_t idx = 0 ; idx < ports_.size() ; idx += 1) {
+	    if (ports_[idx]->name == my_name)
+		  return ports_[idx];
+      }
+
+      return 0;
+}
+
 Entity::Entity(perm_string name)
 : ComponentBase(name)
 {

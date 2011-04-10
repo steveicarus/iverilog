@@ -54,6 +54,7 @@ class ComponentBase : public LineInfo {
 
 	// Entities have names.
       perm_string get_name() const { return name_; }
+      const InterfacePort* find_port(perm_string by_name) const;
 
 	// Declare the ports for the entity. The parser calls this
 	// method with a list of interface elements that were parsed

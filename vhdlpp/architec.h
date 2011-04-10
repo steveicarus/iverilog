@@ -47,6 +47,7 @@ class Architecture : public LineInfo {
 	    Statement();
 	    virtual ~Statement() =0;
 
+	    virtual int elaborate(Entity*ent, Architecture*arc);
 	    virtual int emit(ostream&out, Entity*ent, Architecture*arc);
 	    virtual void dump(ostream&out) const;
 
@@ -64,6 +65,7 @@ class Architecture : public LineInfo {
       ~Architecture();
 
       perm_string get_name() const { return name_; }
+      const ComponentBase* find_component(perm_string by_name);
 
 	// Elaborate this architecture in the context of the given entity.
       int elaborate(Entity*entity);
@@ -99,7 +101,7 @@ class SignalAssignment  : public Architecture::Statement {
       SignalAssignment(ExpName*target, std::list<Expression*>&rval);
       ~SignalAssignment();
 
-      int emit(ostream&out, Entity*entity, Architecture*arc);
+      virtual int emit(ostream&out, Entity*entity, Architecture*arc);
       virtual void dump(ostream&out) const;
 
     private:
@@ -114,7 +116,8 @@ class ComponentInstantiation  : public Architecture::Statement {
 			     std::list<named_expr_t*>*ports);
       ~ComponentInstantiation();
 
-      int emit(ostream&out, Entity*entity, Architecture*arc);
+      virtual int elaborate(Entity*ent, Architecture*arc);
+      virtual int emit(ostream&out, Entity*entity, Architecture*arc);
       virtual void dump(ostream&out) const;
 
     private:

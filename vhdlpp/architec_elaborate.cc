@@ -25,5 +25,46 @@
 
 int Architecture::elaborate(Entity*entity)
 {
+      int errors = 0;
+
+      for (list<Architecture::Statement*>::iterator cur = statements_.begin()
+		 ; cur != statements_.end() ; ++cur) {
+
+	    errors += (*cur)->elaborate(entity, this);
+      }
+
+       return errors;
+}
+
+int Architecture::Statement::elaborate(Entity*, Architecture*)
+{
       return 0;
+}
+
+int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      const ComponentBase*base = arc->find_component(cname_);
+      if (base == 0) {
+	    cerr << get_fileline() << ": error: No component declaration"
+		 << " for instance " << iname_
+		 << " of " << cname_ << "." << endl;
+	    return 1;
+      }
+
+      map<perm_string,const InterfacePort*> port_match;
+
+      for (map<perm_string,Expression*>::iterator cur = port_map_.begin()
+		 ; cur != port_map_.end() ; ++cur) {
+	    const InterfacePort*iport = base->find_port(cur->first);
+	    if (iport == 0) {
+		  cerr << get_fileline() << ": error: No port " << cur->first
+		       << " in component " << cname_ << "." << endl;
+		  errors += 1;
+		  continue;
+	    }
+      }
+
+      return errors;
 }

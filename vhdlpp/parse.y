@@ -286,22 +286,7 @@ block_declarative_item
 	delete $2;
       }
 
-  | K_component IDENTIFIER K_is_opt
-    port_clause_opt
-    K_end K_component identifier_opt ';'
-      { perm_string name = lex_strings.make($2);
-	if($7) {
-      if (name != $7)
-	      errormsg(@7, "Identifier %s doesn't match component name %s.\n",
-		       $7, name.str());
-	  delete[] $7;
-    }
-
-	ComponentBase*comp = new ComponentBase(name);
-	if ($4) comp->set_interface($4);
-	block_components[name] = comp;
-	delete[]$2;
-      }
+  | component_declaration
 
       /* Various error handling rules for block_declarative_item... */
 
@@ -310,13 +295,6 @@ block_declarative_item
   | error ';'
       { errormsg(@1, "Syntax error in block declarations.\n"); yyerrok; }
 
-  | K_component IDENTIFIER K_is_opt error K_end K_component identifier_opt ';'
-      { errormsg(@4, "Syntax error in component declaration.\n");
-      delete[] $2;
-      if($7) {
-          delete[] $7;
-      }
-      yyerrok; }
   ;
 
 /*
@@ -348,6 +326,31 @@ component_configuration
       {
     errormsg(@1, "Error in component configuration statement.\n");
     delete $2;
+      }
+  ;
+
+component_declaration
+  : K_component IDENTIFIER K_is_opt
+    port_clause_opt
+    K_end K_component identifier_opt ';'
+      { perm_string name = lex_strings.make($2);
+	if($7 && name != $7) {
+	      errormsg(@7, "Identifier %s doesn't match component name %s.\n",
+		       $7, name.str());
+	}
+
+	ComponentBase*comp = new ComponentBase(name);
+	if ($4) comp->set_interface($4);
+	block_components[name] = comp;
+	delete[]$2;
+	if ($7) delete[] $7;
+      }
+
+  | K_component IDENTIFIER K_is_opt error K_end K_component identifier_opt ';'
+      { errormsg(@4, "Syntax error in component declaration.\n");
+	delete[] $2;
+	if($7) delete[] $7;
+	yyerrok;
       }
   ;
 
@@ -788,20 +791,20 @@ package_declaration
   : K_package IDENTIFIER K_is
     package_declarative_part_opt
     K_end K_package_opt identifier_opt ';'
-      { sorrymsg(@4, "Package declaration not supported yet.\n");
-    if($7) {
-        if($2 != $7) {
-            errormsg(@1, "Syntax error in package clause. Closing name doesn't match.\n");
-            yyerrok;
+      { perm_string name = lex_strings.make($2);
+	if($7 && name != $7) {
+	      errormsg(@1, "Identifier %s doesn't match package name %s.\n",
+		       $7, name.str());
         }
-        delete $7;
-    }
-    delete $2;
+	delete[]$2;
+        if ($7) delete[]$7;
+	sorrymsg(@1, "Package declarations not supported yet.\n");
+	block_components.clear();
       }
   | K_package IDENTIFIER K_is error K_end K_package_opt identifier_opt ';'
-        { errormsg(@2, "Syntax error in package clause.\n");
-          yyerrok;
-        }
+    { errormsg(@4, "Syntax error in package clause.\n");
+      yyerrok;
+    }
   ;
 
 /* TODO: this list must be extended in the future
@@ -819,11 +822,11 @@ package_body_declarative_part_opt
   |
   ;
 
-/* TODO: this list is only a sketch
-   it must be extended in the future */
 package_declarative_item
-  : use_clause
+  : component_declaration
+  | use_clause
   ;
+
 package_declarative_items
   : package_declarative_items package_declarative_item
   | package_declarative_item

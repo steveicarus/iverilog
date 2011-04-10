@@ -37,6 +37,15 @@ Architecture::~Architecture()
 {
 }
 
+const ComponentBase* Architecture::find_component(perm_string by_name)
+{
+      map<perm_string,ComponentBase*>::const_iterator cur = components_.find(by_name);
+      if (cur == components_.end())
+	    return 0;
+      else
+	    return cur->second;
+}
+
 Architecture::Statement::Statement()
 {
 }
