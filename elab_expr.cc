@@ -625,7 +625,7 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
             long r_val = LONG_MAX;
             if (r_width < sizeof(long)*8) {
                   r_val = (1L << r_width) - 1L;
-                  if (right_->has_sign())
+                  if ((op_ == 'p') && right_->has_sign())
                         r_val >>= 1;
             }
 
