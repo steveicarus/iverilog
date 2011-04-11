@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -3989,10 +3989,13 @@ bool of_POW_S(vthread_t thr, vvp_code_t cp)
       }
 
         /* Calculate the result using the double pow() function. */
-      double xd, yd;
+      double xd, yd, resd;
       vector4_to_value(xv, xd, true);
       vector4_to_value(yv, yd, true);
-      vvp_vector4_t res = vvp_vector4_t(wid, pow(xd, yd));
+	/* 2**-1 and -2**-1 are defined to be zero. */
+      if ((yd == -1.0) && (fabs(xd) == 2.0)) resd = 0.0;
+      else resd = pow(xd, yd);
+      vvp_vector4_t res = vvp_vector4_t(wid, resd);
 
         /* Copy the result. */
       for (unsigned jdx = 0;  jdx < wid;  jdx += 1)
