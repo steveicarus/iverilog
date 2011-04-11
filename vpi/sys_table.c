@@ -29,6 +29,7 @@ extern void sys_finish_register();
 extern void sys_deposit_register();
 extern void sys_display_register();
 extern void sys_plusargs_register();
+extern void sys_queue_register();
 extern void sys_random_register();
 extern void sys_random_mti_register();
 extern void sys_readmem_register();
@@ -198,6 +199,7 @@ void (*vlog_startup_routines[])() = {
       sys_deposit_register,
       sys_display_register,
       sys_plusargs_register,
+      sys_queue_register,
       sys_random_register,
       sys_random_mti_register,
       sys_readmem_register,
