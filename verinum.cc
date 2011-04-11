@@ -1089,15 +1089,17 @@ verinum pow(const verinum&left, const verinum&right)
       long pow_count = right.as_long();
 
 	// We need positive and negative one in a few places.
-      verinum one (verinum::V0, left.len(), left.has_len());
+      unsigned len = left.len();
+	// Positive one must be at least two bits wide!
+      verinum one (verinum::V0, (len<2) ? 2 : len, left.has_len());
       one.has_sign(left.has_sign());
       one.set(0, verinum::V1);
-      verinum m_one (verinum::V1, left.len(), left.has_len());
+      verinum m_one (verinum::V1, len, left.has_len());
       m_one.has_sign(true);
 
 	// If either the right or left values are undefined we return 'bx.
       if (!right.is_defined() || !left.is_defined()) {
-	    result = verinum(verinum::Vx, left.len(), left.has_len());
+	    result = verinum(verinum::Vx, len, left.has_len());
 	    result.has_sign(left.has_sign());
 	// If the right value is zero we need to set the result to 1.
       } else if (pow_count == 0)  {
@@ -1105,7 +1107,7 @@ verinum pow(const verinum&left, const verinum&right)
       } else if (pow_count < 0) {
 	      // 0 ** <negative> is 'bx.
 	    if (left.is_zero()) {
-		  result = verinum(verinum::Vx, left.len(), left.has_len());
+		  result = verinum(verinum::Vx, len, left.has_len());
 		  result.has_sign(left.has_sign());
 	      // 1 ** <negative> is 1.
 	    } else if (left == one) {
@@ -1119,7 +1121,7 @@ verinum pow(const verinum&left, const verinum&right)
 		  }
 	      // Everything else is 0.
 	    } else {
-		  result = verinum(verinum::V0, left.len(), left.has_len());
+		  result = verinum(verinum::V0, len, left.has_len());
 		  result.has_sign(left.has_sign());
 	    }
       }
