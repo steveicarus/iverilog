@@ -70,6 +70,10 @@ typedef struct t_ivl_queue_elem {
  */
 typedef struct t_ivl_queue_base {
       uint64_t shortest_wait_time;
+      uint64_t first_add_time;
+      uint64_t latest_add_time;
+      uint64_t number_of_adds;
+// HERE: Still need information for the average wait time statistic.
       p_ivl_queue_elem queue;
       PLI_INT32 id;
       PLI_INT32 length;
@@ -78,7 +82,6 @@ typedef struct t_ivl_queue_base {
       PLI_INT32 elems;
       PLI_INT32 max_len;
       PLI_INT32 have_statistics;
-// HERE: Still need information for the other statistical routines.
 } s_ivl_queue_base, *p_ivl_queue_base;
 
 /*
@@ -141,6 +144,9 @@ static unsigned create_queue(PLI_INT32 id, PLI_INT32 type, PLI_INT32 length)
       base[base_len-1].elems = 0;
       base[base_len-1].max_len = 0;
       base[base_len-1].shortest_wait_time = UINT64_MAX;
+      base[base_len-1].first_add_time = 0U;
+      base[base_len-1].latest_add_time = 0U;
+      base[base_len-1].number_of_adds = 0U;
       base[base_len-1].have_statistics = 0;
       return 0;
 }
@@ -202,6 +208,12 @@ static unsigned add_to_queue(int64_t idx, p_vpi_vecval job,
 
 	/* Increment the maximum length if needed. */
       if (base[idx].max_len == elems) base[idx].max_len += 1;
+
+	/* Update the inter-arrivial statistics. */
+      assert(base[idx].number_of_adds < UINT64_MAX);
+      base[idx].number_of_adds += 1;
+      if (base[idx].number_of_adds == 1) base[idx].first_add_time = time;
+      base[idx].latest_add_time = time;
 
       return 0;
 }
@@ -305,21 +317,29 @@ static uint64_t get_longest_queue_time(int64_t idx)
 /*
  * Check to see if there are statistics.
  */
-static PLI_INT32 have_statistics(int64_t idx)
+static unsigned have_statistics(int64_t idx)
 {
-      return base[idx].have_statistics;
+      return (base[idx].have_statistics != 0);
 }
 
 /*
- * Return the mean inter-arrival time for the queue.
+ * Check to see if we have inter-arrival statistics.
  */
-#if 0
+static unsigned have_interarrival_statistic(int64_t idx)
+{
+      return (base[idx].number_of_adds >= 2U);
+}
+
+/*
+ * Return the mean inter-arrival time for the queue. This is just the
+ * latest add time minus the first add time divided be the number of time
+ * deltas (the number of adds - 1).
+ */
 static uint64_t get_mean_interarrival_time(int64_t idx)
 {
-// HERE: Need to save the information and calculate the mean interarrival time.
-      return 0;
+      return ((base[idx].latest_add_time - base[idx].first_add_time) /
+               (base[idx].number_of_adds - 1U));
 }
-#endif
 
 /*
  * Return the shortest amount of time an element has waited in the queue.
@@ -1202,30 +1222,29 @@ static PLI_INT32 sys_q_exam_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 
 	/* Calculate the requested queue information. */
       switch (code) {
+	  /* The current queue length. */
 	case IVL_QUEUE_LENGTH:
 	    val.format = vpiIntVal;
 	    val.value.integer = get_current_queue_length(idx);
 	    vpi_put_value(value, &val, 0, vpiNoDelay);
 	    break;
+	  /* The mean inter-arrival time. */
 	case IVL_QUEUE_MEAN:
-	    if (have_statistics(idx) == 0) {
+	    if (have_interarrival_statistic(idx) == 0) {
 		  fill_variable_with_x(value);
 		  rtn = IVL_QUEUE_NO_STATISTICS;
 	    } else {
-// HERE: For now this is not supported. The get routine always returns 0.
-#if 0
 		  uint64_t time = get_mean_interarrival_time(idx);
 		  rtn = fill_variable_with_scaled_time(value, time);
-#endif
-		  fill_variable_with_x(value);
-		  rtn = IVL_QUEUE_NO_STATISTICS;
 	    }
 	    break;
+	  /* The maximum queue length. */
 	case IVL_QUEUE_MAX_LENGTH:
 	    val.format = vpiIntVal;
 	    val.value.integer = get_maximum_queue_length(idx);
 	    vpi_put_value(value, &val, 0, vpiNoDelay);
 	    break;
+	  /* The shortest queue wait time ever. */
 	case IVL_QUEUE_SHORTEST:
 	    if (have_statistics(idx) == 0) {
 		  fill_variable_with_x(value);
@@ -1235,6 +1254,7 @@ static PLI_INT32 sys_q_exam_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 		  rtn = fill_variable_with_scaled_time(value, time);
 	    }
 	    break;
+	  /* The longest wait time for elements still in the queue. */
 	case IVL_QUEUE_LONGEST:
 	    if (get_current_queue_length(idx) == 0) {
 		  fill_variable_with_x(value);
@@ -1244,6 +1264,7 @@ static PLI_INT32 sys_q_exam_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 		  rtn = fill_variable_with_scaled_time(value, time);
 	    }
 	    break;
+	  /* The average queue wait time. */
 	case IVL_QUEUE_AVERAGE:
 	    if (have_statistics(idx) == 0) {
 		  fill_variable_with_x(value);
