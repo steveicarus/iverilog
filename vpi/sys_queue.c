@@ -54,6 +54,57 @@
 #define IVL_QUEUE_NO_STATISTICS 10
 
 /*
+ * Routine to add the given time to the the total time (high/low).
+ */
+void add_to_wait_time(uint64_t *high, uint64_t *low, uint64_t time)
+{ 
+      uint64_t carry = 0U;
+
+      if ((UINT64_MAX - *low) < time) carry = 1U;
+      *low += time;
+      assert((carry == 0U) || (*high < UINT64_MAX));
+      *high += carry;
+}
+
+/*
+ * Routine to divide the given total time (high/low) by the number of
+ * items to get the average.
+ */
+uint64_t calc_average_wait_time(uint64_t high, uint64_t low, uint64_t total)
+{
+      int bit = 64;
+      uint64_t result = 0U;
+      assert(total != 0U);
+      if (high == 0U) return (low/total);
+
+	/* This is true by design, but since we can only return 64 bits
+	 * make sure nothing went wrong. */
+      assert(high < total);
+
+	/* It's a big value so calculate the average the long way. */
+      do {
+	      /* Copy bits from low to high until we have a bit to place
+	       * in the result or there are no bits left. */
+	    while ((bit >= 0) && (high < total)) {
+		  high <<= 1;
+		  high |= (low & 0x8000000000000000) != 0;
+		  low <<= 1;
+		  bit -= 1;
+	    }
+
+	      /* If this is a valid bit, set the appropriate bit in the
+	       * result and subtract the total from the current value. */
+	    if (bit >= 0) {
+		  result |=  UINT64_C(1) << bit;
+		  high = high - total;
+	    }
+	/* Loop until there are no bits left. */
+      } while (bit > 0);
+
+      return result;
+}
+
+/*
  * The data structure used for an individual queue element. It hold four
  * state result for the jobs and inform fields along with the time that
  * the element was added in base time units.
@@ -72,8 +123,9 @@ typedef struct t_ivl_queue_base {
       uint64_t shortest_wait_time;
       uint64_t first_add_time;
       uint64_t latest_add_time;
+      uint64_t wait_time_high;
+      uint64_t wait_time_low;
       uint64_t number_of_adds;
-// HERE: Still need information for the average wait time statistic.
       p_ivl_queue_elem queue;
       PLI_INT32 id;
       PLI_INT32 length;
@@ -81,7 +133,7 @@ typedef struct t_ivl_queue_base {
       PLI_INT32 head;
       PLI_INT32 elems;
       PLI_INT32 max_len;
-      PLI_INT32 have_statistics;
+      PLI_INT32 have_shortest_statistic;
 } s_ivl_queue_base, *p_ivl_queue_base;
 
 /*
@@ -146,8 +198,10 @@ static unsigned create_queue(PLI_INT32 id, PLI_INT32 type, PLI_INT32 length)
       base[base_len-1].shortest_wait_time = UINT64_MAX;
       base[base_len-1].first_add_time = 0U;
       base[base_len-1].latest_add_time = 0U;
+      base[base_len-1].wait_time_high = 0U;
+      base[base_len-1].wait_time_low = 0U;
       base[base_len-1].number_of_adds = 0U;
-      base[base_len-1].have_statistics = 0;
+      base[base_len-1].have_shortest_statistic = 0;
       return 0;
 }
 
@@ -209,7 +263,7 @@ static unsigned add_to_queue(int64_t idx, p_vpi_vecval job,
 	/* Increment the maximum length if needed. */
       if (base[idx].max_len == elems) base[idx].max_len += 1;
 
-	/* Update the inter-arrivial statistics. */
+	/* Update the inter-arrival statistics. */
       assert(base[idx].number_of_adds < UINT64_MAX);
       base[idx].number_of_adds += 1;
       if (base[idx].number_of_adds == 1) base[idx].first_add_time = time;
@@ -269,7 +323,11 @@ static unsigned remove_from_queue(int64_t idx, p_vpi_vecval job,
       if (time < base[idx].shortest_wait_time) {
 	    base[idx].shortest_wait_time = time;
       }
-      base[idx].have_statistics = 1;
+      base[idx].have_shortest_statistic = 1;
+
+	/* Add the current element wait time to the total wait time. */
+      add_to_wait_time(&(base[idx].wait_time_high), &(base[idx].wait_time_low),
+                       time);
 
       return 0;
 }
@@ -315,15 +373,7 @@ static uint64_t get_longest_queue_time(int64_t idx)
 }
 
 /*
- * Check to see if there are statistics.
- */
-static unsigned have_statistics(int64_t idx)
-{
-      return (base[idx].have_statistics != 0);
-}
-
-/*
- * Check to see if we have inter-arrival statistics.
+ * Check to see if there are inter-arrival time statistics.
  */
 static unsigned have_interarrival_statistic(int64_t idx)
 {
@@ -342,6 +392,14 @@ static uint64_t get_mean_interarrival_time(int64_t idx)
 }
 
 /*
+ * Check to see if there are shortest wait time statistics.
+ */
+static unsigned have_shortest_wait_statistic(int64_t idx)
+{
+      return (base[idx].have_shortest_statistic != 0);
+}
+
+/*
  * Return the shortest amount of time an element has waited in the queue.
  */
 static uint64_t get_shortest_wait_time(int64_t idx)
@@ -350,15 +408,49 @@ static uint64_t get_shortest_wait_time(int64_t idx)
 }
 
 /*
+ * Check to see if we have an average wait time statistics.
+ */
+static unsigned have_average_wait_statistic(int64_t idx)
+{
+      return (base[idx].number_of_adds >= 1U);
+}
+
+/*
  * Return the average wait time in the queue.
  */
-#if 0
 static uint64_t get_average_wait_time(int64_t idx)
 {
-// HERE: Need to save the information and calculate the average wait time.
-      return 0;
+      PLI_INT32 length = base[idx].length;
+      PLI_INT32 loc = base[idx].head;
+      PLI_INT32 elems = base[idx].elems;
+      PLI_INT32 count;
+	/* Initialize the high and low time with the current total time. */
+      uint64_t high = base[idx].wait_time_high;
+      uint64_t low = base[idx].wait_time_low;
+      s_vpi_time cur_time;
+      uint64_t time, add_time;
+
+	/* Get the current simulation time. */
+      cur_time.type = vpiSimTime;
+      vpi_get_time(NULL, &cur_time);
+      time = cur_time.high;
+      time <<= 32;
+      time |= cur_time.low;
+
+	/* For each element still in the queue, add its wait time to the
+	 * total wait time. */
+      for (count = 0; count < elems; count += 1) {
+	    add_time = base[idx].queue[loc].time;
+	    add_to_wait_time(&high, &low, time-add_time);
+
+	      /* Move to the next element. */
+	    loc += 1;
+	    if (loc == length) loc = 0;
+      }
+
+	/* Return the average wait time. */
+      return calc_average_wait_time(high, low, base[idx].number_of_adds);
 }
-#endif
 
 /*
  * Check to see if the given id already exists. Return the index for the
@@ -440,7 +532,7 @@ static void check_var_arg_32(vpiHandle arg, vpiHandle callh,
 }
 
 /*
- * Check to see if the argument is a variable of atleast 32 bits.
+ * Check to see if the argument is a variable of at least 32 bits.
  */
 static void check_var_arg_large(vpiHandle arg, vpiHandle callh,
                                 const char *name, const char *desc)
@@ -651,7 +743,7 @@ static PLI_INT32 fill_variable_with_scaled_time(vpiHandle var, uint64_t time)
 		  }
 		  val_ptr[0].bval = 0x00000000;
 	      /* For two words the lower word is filled with 1 and the top
-	       * word has a size dependet fill if signed. */
+	       * word has a size dependent fill if signed. */
 	    } else {
 		  assert(words == 2);
 		  val_ptr[0].aval = 0xffffffff;
@@ -1246,7 +1338,7 @@ static PLI_INT32 sys_q_exam_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    break;
 	  /* The shortest queue wait time ever. */
 	case IVL_QUEUE_SHORTEST:
-	    if (have_statistics(idx) == 0) {
+	    if (have_shortest_wait_statistic(idx) == 0) {
 		  fill_variable_with_x(value);
 		  rtn = IVL_QUEUE_NO_STATISTICS;
 	    } else {
@@ -1266,17 +1358,12 @@ static PLI_INT32 sys_q_exam_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    break;
 	  /* The average queue wait time. */
 	case IVL_QUEUE_AVERAGE:
-	    if (have_statistics(idx) == 0) {
+	    if (have_average_wait_statistic(idx) == 0) {
 		  fill_variable_with_x(value);
 		  rtn = IVL_QUEUE_NO_STATISTICS;
 	    } else {
-// HERE: For now this is not supported. The get routine always returns 0.
-#if 0
 		  uint64_t time = get_average_wait_time(idx);
 		  rtn = fill_variable_with_scaled_time(value, time);
-#endif
-		  fill_variable_with_x(value);
-		  rtn = IVL_QUEUE_NO_STATISTICS;
 	    }
 	    break;
 	default:
