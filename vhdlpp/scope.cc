@@ -1,5 +1,3 @@
-#ifndef __parse_misc_H
-#define __parse_misc_H
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
  *
@@ -19,33 +17,24 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "parse_api.h"
+# include  "scope.h"
 
-class Architecture;
-class Expression;
-class Package;
-class VType;
+using namespace std;
 
-extern void bind_architecture_to_entity(const char*ename, Architecture*arch);
+Scope::Scope(map<perm_string,ComponentBase*>&comps)
+{
+      components_ = comps;
+}
 
-extern const VType* calculate_subtype(const char*base_name,
-				      Expression*array_left,
-				      bool downto,
-				      Expression*array_right);
+Scope::~Scope()
+{
+}
 
-extern void library_save_package(const char*libname, Package*pack);
-
-extern void library_import(const YYLTYPE&loc, const std::list<perm_string>*names);
-
-struct library_results {
-      std::list<ComponentBase*> components;
-      std::list<const VType*> types;
-
-      void clear() {
-	    components.clear();
-	    types.clear();
-      }
-};
-
-extern void library_use(const YYLTYPE&loc, struct library_results&res, const char*libname, const char*pack, const char*ident);
-#endif
+ComponentBase* Scope::find_component(perm_string by_name)
+{
+      map<perm_string,ComponentBase*>::const_iterator cur = components_.find(by_name);
+      if (cur == components_.end())
+	    return 0;
+      else
+	    return cur->second;
+}

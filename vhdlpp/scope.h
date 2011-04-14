@@ -1,5 +1,5 @@
-#ifndef __parse_misc_H
-#define __parse_misc_H
+#ifndef __scope_H
+#define __scope_H
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
  *
@@ -19,33 +19,27 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "parse_api.h"
+# include  <map>
+# include  "StringHeap.h"
 
-class Architecture;
-class Expression;
-class Package;
+class ComponentBase;
 class VType;
 
-extern void bind_architecture_to_entity(const char*ename, Architecture*arch);
+class Scope {
 
-extern const VType* calculate_subtype(const char*base_name,
-				      Expression*array_left,
-				      bool downto,
-				      Expression*array_right);
+    public:
+      Scope(std::map<perm_string,ComponentBase*>&comps);
+      ~Scope();
 
-extern void library_save_package(const char*libname, Package*pack);
+      ComponentBase* find_component(perm_string by_name);
 
-extern void library_import(const YYLTYPE&loc, const std::list<perm_string>*names);
+      void dump_scope(ostream&out) const;
 
-struct library_results {
-      std::list<ComponentBase*> components;
-      std::list<const VType*> types;
-
-      void clear() {
-	    components.clear();
-	    types.clear();
-      }
+    private:
+      	// Component declarations...
+      std::map<perm_string,ComponentBase*> components_;
+	// Type declarations...
+      std::map<perm_string,const VType*> types_;
 };
 
-extern void library_use(const YYLTYPE&loc, struct library_results&res, const char*libname, const char*pack, const char*ident);
 #endif

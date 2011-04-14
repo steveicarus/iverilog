@@ -26,24 +26,14 @@ using namespace std;
 Architecture::Architecture(perm_string name, map<perm_string,Signal*>&sigs,
 			   map<perm_string,ComponentBase*>&comps,
 			   list<Architecture::Statement*>&s)
-: name_(name)
+: Scope(comps), name_(name)
 {
       signals_ = sigs;
-      components_ = comps;
       statements_.splice(statements_.end(), s);
 }
 
 Architecture::~Architecture()
 {
-}
-
-const ComponentBase* Architecture::find_component(perm_string by_name)
-{
-      map<perm_string,ComponentBase*>::const_iterator cur = components_.find(by_name);
-      if (cur == components_.end())
-	    return 0;
-      else
-	    return cur->second;
 }
 
 Architecture::Statement::Statement()

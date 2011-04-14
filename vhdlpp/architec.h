@@ -21,6 +21,7 @@
 
 # include  "StringHeap.h"
 # include  "LineInfo.h"
+# include  "scope.h"
 # include  <list>
 # include  <map>
 
@@ -36,7 +37,7 @@ class named_expr_t;
  * etc.) of a parsed VHDL architecture. These objects are ultimately
  * put into entities.
  */
-class Architecture : public LineInfo {
+class Architecture : public Scope, public LineInfo {
 
     public:
 	// Architectures contain concurrent statements, that are
@@ -65,7 +66,6 @@ class Architecture : public LineInfo {
       ~Architecture();
 
       perm_string get_name() const { return name_; }
-      const ComponentBase* find_component(perm_string by_name);
 
 	// Elaborate this architecture in the context of the given entity.
       int elaborate(Entity*entity);
@@ -83,8 +83,6 @@ class Architecture : public LineInfo {
       perm_string name_;
 	// Signals declared local to this architecture
       std::map<perm_string,Signal*> signals_;
-	// Component declarations...
-      std::map<perm_string,ComponentBase*> components_;
 	// Concurrent statements local to this architecture
       std::list<Architecture::Statement*> statements_;
 

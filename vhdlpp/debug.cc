@@ -76,6 +76,17 @@ void ComponentBase::dump_ports(ostream&out) const
       }
 }
 
+void Scope::dump_scope(ostream&out) const
+{
+	// Dump component declarations
+      for (map<perm_string,ComponentBase*>::const_iterator cur = components_.begin()
+		 ; cur != components_.end() ; ++cur) {
+	    out << "   component " << cur->first << " is" << endl;
+	    cur->second->dump_ports(out);
+	    out << "   end component " << cur->first << endl;
+      }
+}
+
 void Entity::dump(ostream&out) const
 {
       out << "entity " << get_name()
@@ -100,13 +111,7 @@ void Architecture::dump(ostream&out, perm_string of_entity) const
 	    cur->second->dump(out);
       }
 
-	// Dump component declarations
-      for (map<perm_string,ComponentBase*>::const_iterator cur = components_.begin()
-		 ; cur != components_.end() ; ++cur) {
-	    out << "   component " << cur->first << " is" << endl;
-	    cur->second->dump_ports(out);
-	    out << "   end component " << cur->first << endl;
-      }
+      dump_scope(out);
 
       for (list<Architecture::Statement*>::const_iterator cur = statements_.begin()
 		 ; cur != statements_.end() ; ++cur) {

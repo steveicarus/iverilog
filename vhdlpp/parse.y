@@ -27,6 +27,7 @@
 # include "parse_misc.h"
 # include "architec.h"
 # include "expression.h"
+# include  "package.h"
 # include "vsignal.h"
 # include "vtype.h"
 # include  <cstdarg>
@@ -68,9 +69,25 @@ int parse_sorrys = 0;
 static map<perm_string, Signal*> block_signals;
 
 /*
- * This map accumulates component declarations.
+ * This map accumulates component declarations. This variable is used
+ * by rules that build up package, architectures, whatever objects
+ * can contain component declarations.
  */
 static map<perm_string, ComponentBase*> block_components;
+
+/*
+ * Calls to library_use return a collections of declation objects that
+ * belong in the scope that is being worked on. This is a convenience
+ * function for collecting those results into the parser variables.
+ */
+static void collect_library_results(struct library_results&res)
+{
+      for (list<ComponentBase*>::iterator cur = res.components.begin()
+		 ; cur != res.components.end() ; ++cur) {
+	    block_components[(*cur)->get_name()] = *cur;
+      }
+}
+
 %}
 
 
@@ -287,6 +304,8 @@ block_declarative_item
       }
 
   | component_declaration
+
+  | use_clause_lib
 
       /* Various error handling rules for block_declarative_item... */
 
@@ -796,10 +815,13 @@ package_declaration
 	      errormsg(@1, "Identifier %s doesn't match package name %s.\n",
 		       $7, name.str());
         }
+	Package*tmp = new Package(name, block_components);
+	FILE_NAME(tmp, @1);
 	delete[]$2;
         if ($7) delete[]$7;
-	sorrymsg(@1, "Package declarations not supported yet.\n");
 	block_components.clear();
+	  /* Put this package into the work library. */
+	library_save_package(0, tmp);
       }
   | K_package IDENTIFIER K_is error K_end K_package_opt identifier_opt ';'
     { errormsg(@4, "Syntax error in package clause.\n");
@@ -952,18 +974,29 @@ selected_names
     $$ = tmp;
       }
   ;
+
   /* The *_use variant of selected_name is used by the "use"
      clause. It is syntactically identical to other selected_name
      rules, but is a convenient place to attach use_clause actions. */
 selected_name_use
   : IDENTIFIER '.' K_all
-      { library_use(@1, 0, $1, 0);
+      { struct library_results res;
+	library_use(@1, res, 0, $1, 0);
 	delete[]$1;
       }
   | IDENTIFIER '.' IDENTIFIER '.' K_all
-      { library_use(@1, $1, $3, 0);
+      { struct library_results res;
+	library_use(@1, res, $1, $3, 0);
 	delete[]$1;
 	delete[]$3;
+      }
+  | IDENTIFIER '.' IDENTIFIER '.' IDENTIFIER
+      { struct library_results res;
+	library_use(@1, res, $1, $3, $5);
+	collect_library_results(res);
+	delete[]$1;
+	delete[]$3;
+	delete[]$5;
       }
   ;
 
