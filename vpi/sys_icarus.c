@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2010  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2011  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -166,26 +166,6 @@ void sys_special_register(void)
 
       tf_data.tfname      = "$sync$nor$plane";
       tf_data.user_data   = "$sync$nor$plane";
-      vpi_register_systf(&tf_data);
-
-      tf_data.tfname      = "$q_initialize";
-      tf_data.user_data   = "$q_initialize";
-      vpi_register_systf(&tf_data);
-
-      tf_data.tfname      = "$q_add";
-      tf_data.user_data   = "$q_add";
-      vpi_register_systf(&tf_data);
-
-      tf_data.tfname      = "$q_remove";
-      tf_data.user_data   = "$q_remove";
-      vpi_register_systf(&tf_data);
-
-      tf_data.tfname      = "$q_full";
-      tf_data.user_data   = "$q_full";
-      vpi_register_systf(&tf_data);
-
-      tf_data.tfname      = "$q_exam";
-      tf_data.user_data   = "$q_exam";
       vpi_register_systf(&tf_data);
 
       tf_data.tfname      = "$dumpports";

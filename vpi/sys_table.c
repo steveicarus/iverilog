@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -29,6 +29,7 @@ extern void sys_finish_register();
 extern void sys_deposit_register();
 extern void sys_display_register();
 extern void sys_plusargs_register();
+extern void sys_queue_register();
 extern void sys_random_register();
 extern void sys_random_mti_register();
 extern void sys_readmem_register();
@@ -198,6 +199,7 @@ void (*vlog_startup_routines[])() = {
       sys_deposit_register,
       sys_display_register,
       sys_plusargs_register,
+      sys_queue_register,
       sys_random_register,
       sys_random_mti_register,
       sys_readmem_register,
