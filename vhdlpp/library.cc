@@ -91,7 +91,7 @@ void library_use(const YYLTYPE&loc, struct library_results&res,
 	// results into the "res" members.
 
       if (use_name == "all") {
-	    sorrymsg(loc, "Don't support all from package\n");
+	    pack->collect_components(res.components);
 	    return;
       }
 

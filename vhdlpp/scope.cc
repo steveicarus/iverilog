@@ -38,3 +38,13 @@ ComponentBase* Scope::find_component(perm_string by_name)
       else
 	    return cur->second;
 }
+
+void Scope::collect_components(list<ComponentBase*>&res)
+{
+      for (map<perm_string,ComponentBase*>::const_iterator cur = components_.begin()
+		 ; cur != components_.end() ; ++cur) {
+	    if (cur->second == 0)
+		  continue;
+	    res.push_back(cur->second);
+      }
+}

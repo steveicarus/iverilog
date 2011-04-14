@@ -19,6 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+# include  <list>
 # include  <map>
 # include  "StringHeap.h"
 
@@ -32,6 +33,8 @@ class Scope {
       ~Scope();
 
       ComponentBase* find_component(perm_string by_name);
+
+      void collect_components(std::list<ComponentBase*>&res);
 
       void dump_scope(ostream&out) const;
 

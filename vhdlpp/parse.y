@@ -982,11 +982,13 @@ selected_name_use
   : IDENTIFIER '.' K_all
       { struct library_results res;
 	library_use(@1, res, 0, $1, 0);
+	collect_library_results(res);
 	delete[]$1;
       }
   | IDENTIFIER '.' IDENTIFIER '.' K_all
       { struct library_results res;
 	library_use(@1, res, $1, $3, 0);
+	collect_library_results(res);
 	delete[]$1;
 	delete[]$3;
       }
