@@ -320,6 +320,19 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
    int rwidth = rhs->get_type()->get_width();
    int result_width = ivl_expr_width(e);
 
+   // There's a funny corner-case where both the LHS and RHS are constant
+   // single bit numbers and the VHDL compiler can't decide between the
+   // std_ulogic and bit overloads of various operators
+   const bool lnumber = ivl_expr_type(ivl_expr_oper1(e)) == IVL_EX_NUMBER;
+   const bool rnumber = ivl_expr_type(ivl_expr_oper2(e)) == IVL_EX_NUMBER;
+   if (lwidth == 1 && rwidth == 1 && lnumber && rnumber) {
+      // It's sufficient to qualify only one side
+      vhdl_fcall *lqual = new vhdl_fcall("std_logic'", lhs->get_type());
+      lqual->add_expr(lhs);
+
+      lhs = lqual;
+   }
+
    // For === and !== we need to compare std_logic_vectors
    // rather than signeds
    vhdl_type std_logic_vector(VHDL_TYPE_STD_LOGIC_VECTOR, result_width-1, 0);

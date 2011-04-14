@@ -33,6 +33,7 @@
 # include  "compiler.h"
 # include  "netmisc.h"
 # include  "PExpr.h"
+# include  "PTask.h"
 # include  <sstream>
 # include  "ivl_assert.h"
 
@@ -332,7 +333,7 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	/* Evaluate the msb expression, if it is present. */
       PExpr*msb_expr = (*cur).second.msb_expr;
       if (msb_expr) {
-            (*cur).second.msb = elab_and_eval(des, this, msb_expr, -1);
+            (*cur).second.msb = elab_and_eval(des, this, msb_expr, -1, true);
 	    if (! eval_as_long(msb, (*cur).second.msb)) {
 		  cerr << (*cur).second.val->get_fileline()
 		       << ": error: Unable to evaluate msb expression "
@@ -348,7 +349,7 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	/* Evaluate the lsb expression, if it is present. */
       PExpr*lsb_expr = (*cur).second.lsb_expr;
       if (lsb_expr) {
-            (*cur).second.lsb = elab_and_eval(des, this, lsb_expr, -1);
+            (*cur).second.lsb = elab_and_eval(des, this, lsb_expr, -1, true);
 	    if (! eval_as_long(lsb, (*cur).second.lsb)) {
 		  cerr << (*cur).second.val->get_fileline()
 		       << ": error: Unable to evaluate lsb expression "
@@ -369,7 +370,7 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
       if (range_flag)
 	    lv_width = (msb >= lsb) ? 1 + msb - lsb : 1 + lsb - msb;
 
-      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, lv_width);
+      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, lv_width, true);
       if (! expr)
             return;
 
@@ -488,7 +489,7 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
       PExpr*val_expr = (*cur).second.val_expr;
       NetScope*val_scope = (*cur).second.val_scope;
 
-      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, -1);
+      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, -1, true);
       if (! expr)
             return;
 
@@ -631,14 +632,6 @@ void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
       cur->second.val_expr = 0;
 }
 
-/*
- * Set the following to true when evaluating the parameter expressions.
- * This causes PEIdent::elaborate_expr() to report an error if an
- * identifier in an expression is anything other than a non-hierarchical
- * parameter name.
- */
-bool is_param_expr = false;
-
 void NetScope::evaluate_parameters(Design*des)
 {
       for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
@@ -649,13 +642,11 @@ void NetScope::evaluate_parameters(Design*des)
 	    cerr << ":0" << ": debug: "
 		 << "Evaluate parameters in " << scope_path(this) << endl;
 
-      is_param_expr = true;
       for (param_ref_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  ++ cur) {
 
             evaluate_parameter_(des, cur);
       }
-      is_param_expr = false;
 }
 
 void Design::residual_defparams()
@@ -730,9 +721,18 @@ NetFuncDef* Design::find_function(NetScope*scope, const pform_name_t&name)
 
       std::list<hname_t> eval_path = eval_scope_path(this, scope, name);
       NetScope*func = find_scope(scope, eval_path, NetScope::FUNC);
-      if (func && (func->type() == NetScope::FUNC))
+      if (func && (func->type() == NetScope::FUNC)) {
+              // If a function is used in a parameter definition or in
+              // a signal declaration, it is possible to get here before
+              // the function's signals have been elaborated. If this is
+              // the case, elaborate them now.
+            if (func->elab_stage() < 2) {
+                  const PFunction*pfunc = func->func_pform();
+                  assert(pfunc);
+                  pfunc->elaborate_sig(this, func);
+            }
 	    return func->func_def();
-
+      }
       return 0;
 }
 

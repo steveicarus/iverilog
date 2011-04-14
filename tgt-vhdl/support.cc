@@ -144,7 +144,7 @@ void support_function::emit(std::ostream &of, int level) const
       emit_reduction(of, level, "and", '1');
       break;
    case SF_REDUCE_XOR:
-      emit_reduction(of, level, "xnor", '0');
+      emit_reduction(of, level, "xor", '0');
       break;
    case SF_REDUCE_XNOR:
       emit_reduction(of, level, "xnor", '0');

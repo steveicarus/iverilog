@@ -940,6 +940,11 @@ void vhdl_binop_expr::add_expr(vhdl_expr *e)
    operands_.push_back(e);
 }
 
+void vhdl_binop_expr::add_expr_front(vhdl_expr *e)
+{
+   operands_.push_front(e);
+}
+
 void vhdl_binop_expr::find_vars(vhdl_var_set_t& read)
 {
    for (list<vhdl_expr*>::const_iterator it = operands_.begin();

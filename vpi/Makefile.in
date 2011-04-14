@@ -53,10 +53,10 @@ LDFLAGS = @LDFLAGS@
 
 # Object files for system.vpi
 O = sys_table.o sys_convert.o sys_deposit.o sys_display.o sys_fileio.o \
-    sys_finish.o sys_icarus.o sys_plusargs.o sys_random.o sys_random_mti.o \
-    sys_readmem.o sys_readmem_lex.o sys_scanf.o sys_sdf.o sys_time.o \
-    sys_vcd.o sys_vcdoff.o vcd_priv.o  mt19937int.o sys_priv.o sdf_lexor.o \
-    sdf_parse.o stringheap.o vams_simparam.o
+    sys_finish.o sys_icarus.o sys_plusargs.o sys_queue.o sys_random.o \
+    sys_random_mti.o sys_readmem.o sys_readmem_lex.o sys_scanf.o sys_sdf.o \
+    sys_time.o sys_vcd.o sys_vcdoff.o vcd_priv.o  mt19937int.o sys_priv.o \
+    sdf_lexor.o sdf_parse.o stringheap.o vams_simparam.o
 OPP = vcd_priv2.o
 
 ifeq (@HAVE_LIBZ@,yes)
@@ -118,12 +118,12 @@ system.vpi: $O $(OPP) ../vvp/libvpi.a
 	$(CXX) @shared@ -o $@ $O $(OPP) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
 sys_readmem_lex.c: sys_readmem_lex.lex
-	flex -t -Preadmem $(srcdir)/sys_readmem_lex.lex > sys_readmem_lex.c
+	$(LEX) -t -Preadmem $(srcdir)/sys_readmem_lex.lex > sys_readmem_lex.c
 
 sdf_lexor.o: sdf_lexor.c sdf_parse.h
 
 sdf_lexor.c: sdf_lexor.lex
-	flex -t -Psdf $(srcdir)/sdf_lexor.lex > sdf_lexor.c
+	$(LEX) -t -Psdf $(srcdir)/sdf_lexor.lex > sdf_lexor.c
 
 sdf_parse.c sdf_parse.h: $(srcdir)/sdf_parse.y
 	$(YACC) --verbose -d -p sdf -o sdf_parse.c $(srcdir)/sdf_parse.y

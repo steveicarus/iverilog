@@ -126,6 +126,7 @@ public:
    ~vhdl_binop_expr();
 
    void add_expr(vhdl_expr *e);
+   void add_expr_front(vhdl_expr *e);
    void emit(std::ostream &of, int level) const;
    void find_vars(vhdl_var_set_t& read);
 private:

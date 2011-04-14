@@ -41,26 +41,6 @@ static vhdl_expr *part_select_base(vhdl_scope *scope, ivl_lpm_t lpm)
    return off->cast(&integer);
 }
 
-static vhdl_expr *concat_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
-{
-   vhdl_type *result_type =
-      vhdl_type::type_for(ivl_lpm_width(lpm), ivl_lpm_signed(lpm) != 0);
-   vhdl_binop_expr *expr =
-      new vhdl_binop_expr(VHDL_BINOP_CONCAT, result_type);
-
-   for (int i = ivl_lpm_size(lpm) - 1; i >= 0; i--) {
-      vhdl_expr *e = readable_ref(scope, ivl_lpm_data(lpm, i));
-      if (NULL == e) {
-         delete expr;
-         return NULL;
-      }
-
-      expr->add_expr(e);
-   }
-
-   return expr;
-}
-
 static vhdl_expr *binop_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop_t op)
 {
    unsigned out_width = ivl_lpm_width(lpm);
@@ -68,14 +48,21 @@ static vhdl_expr *binop_lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm, vhdl_binop
       vhdl_type::type_for(out_width, ivl_lpm_signed(lpm) != 0);
    vhdl_binop_expr *expr = new vhdl_binop_expr(op, result_type);
 
-   for (int i = 0; i < 2; i++) {
+   for (unsigned i = 0; i < ivl_lpm_size(lpm); i++) {
       vhdl_expr *e = readable_ref(scope, ivl_lpm_data(lpm, i));
-      if (NULL == e) {
-         delete expr;
+      if (NULL == e)
          return NULL;
-      }
 
-      expr->add_expr(e->cast(result_type));
+      // It's possible that the inputs are a mixture of signed and unsigned
+      // in which case we must cast them to the output type
+      e = e->cast(vhdl_type::type_for(e->get_type()->get_width(),
+                                      ivl_lpm_signed(lpm) != 0));
+
+      // Bit of a hack: the LPM inputs are in the wrong order for concatenation
+      if (op == VHDL_BINOP_CONCAT)
+         expr->add_expr_front(e);
+      else
+         expr->add_expr(e);
    }
 
    if (op == VHDL_BINOP_MULT) {
@@ -256,7 +243,7 @@ static vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
    case IVL_LPM_MOD:
       return binop_lpm_to_expr(scope, lpm, VHDL_BINOP_MOD);
    case IVL_LPM_CONCAT:
-      return concat_lpm_to_expr(scope, lpm);
+      return binop_lpm_to_expr(scope, lpm, VHDL_BINOP_CONCAT);
    case IVL_LPM_CMP_GE:
       return rel_lpm_to_expr(scope, lpm, VHDL_BINOP_GEQ);
    case IVL_LPM_CMP_GT:
@@ -284,7 +271,7 @@ static vhdl_expr *lpm_to_expr(vhdl_scope *scope, ivl_lpm_t lpm)
    case IVL_LPM_RE_XOR:
       return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_XOR, false);
    case IVL_LPM_RE_XNOR:
-      return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_XOR, true);
+      return reduction_lpm_to_expr(scope, lpm, SF_REDUCE_XNOR, true);
    case IVL_LPM_SIGN_EXT:
       return sign_extend_lpm_to_expr(scope, lpm);
    case IVL_LPM_ARRAY:

@@ -38,6 +38,8 @@ CC = @CC@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
+LEX = @LEX@
+YACC = @YACC@
 MAN = @MAN@
 PS2PDF = @PS2PDF@
 
@@ -78,10 +80,10 @@ iverilog@EXEEXT@: $O
 	$(CC) $(LDFLAGS) $O -o iverilog@EXEEXT@ @EXTRALIBS@
 
 cflexor.c: cflexor.lex
-	flex -s -Pcf -ocflexor.c $(srcdir)/cflexor.lex
+	$(LEX) -s -Pcf -ocflexor.c $(srcdir)/cflexor.lex
 
 cfparse.h cfparse.c: cfparse.y
-	bison --verbose -t -d -o cfparse.c --name-prefix=cf $(srcdir)/cfparse.y
+	$(YACC) --verbose -t -d -o cfparse.c --name-prefix=cf $(srcdir)/cfparse.y
 
 %.o: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o

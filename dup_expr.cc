@@ -239,7 +239,8 @@ NetEUFunc* NetEUFunc::dup_expr() const
 	    tmp_parms[idx] = parms_[idx]->dup_expr();
       }
 
-      tmp = new NetEUFunc(scope_, func_, result_sig_->dup_expr(), tmp_parms);
+      tmp = new NetEUFunc(scope_, func_, result_sig_->dup_expr(), tmp_parms,
+                          need_const_);
 
       ivl_assert(*this, tmp);
       tmp->set_line(*this);

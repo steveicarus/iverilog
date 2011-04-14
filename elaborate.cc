@@ -227,10 +227,8 @@ unsigned PGBuiltin::calculate_array_count_(Design*des, NetScope*scope,
 	   gates, then I am expected to make more than one
 	   gate. Figure out how many are desired. */
       if (msb_) {
-	    need_constant_expr = true;
-	    NetExpr*msb_exp = elab_and_eval(des, scope, msb_, -1);
-	    NetExpr*lsb_exp = elab_and_eval(des, scope, lsb_, -1);
-	    need_constant_expr = false;
+	    NetExpr*msb_exp = elab_and_eval(des, scope, msb_, -1, true);
+	    NetExpr*lsb_exp = elab_and_eval(des, scope, lsb_, -1, true);
 
 	    NetEConst*msb_con = dynamic_cast<NetEConst*>(msb_exp);
 	    NetEConst*lsb_con = dynamic_cast<NetEConst*>(lsb_exp);
@@ -265,8 +263,8 @@ unsigned PGBuiltin::calculate_array_count_(Design*des, NetScope*scope,
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: PGBuiltin: Make array "
-		       << "[" << high << ":" << low << "]"
-		       << " of " << count << " gates for " << get_name() << endl;
+		       << "[" << high << ":" << low << "]" << " of "
+		       << count << " gates for " << get_name() << endl;
 	    }
       }
 
@@ -686,8 +684,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
       unsigned instance_width = 1;
       perm_string name = get_name();
 
-      if (name == "")
-	    name = scope->local_symbol();
+      if (name == "") name = scope->local_symbol();
 
 	/* Calculate the array bounds and instance count for the gate,
 	   as described in the Verilog source. If there is none, then
@@ -695,8 +692,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
       long low=0, high=0;
       unsigned array_count = calculate_array_count_(des, scope, high, low);
-      if (array_count == 0)
-	    return;
+      if (array_count == 0) return;
 
       unsigned output_count = calculate_output_count_();
 
@@ -1773,6 +1769,62 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 }
 
+unsigned PGModule::calculate_instance_count_(Design*des, NetScope*scope,
+                                             long&high, long&low,
+                                             perm_string name) const
+{
+      unsigned count = 1;
+      high = 0;
+      low = 0;
+
+	/* If the Verilog source has a range specification for the UDP, then
+	 * I am expected to make more than one gate. Figure out how many are
+	 * desired. */
+      if (msb_) {
+	    NetExpr*msb_exp = elab_and_eval(des, scope, msb_, -1, true);
+	    NetExpr*lsb_exp = elab_and_eval(des, scope, lsb_, -1, true);
+
+	    NetEConst*msb_con = dynamic_cast<NetEConst*>(msb_exp);
+	    NetEConst*lsb_con = dynamic_cast<NetEConst*>(lsb_exp);
+
+	    if (msb_con == 0) {
+		  cerr << get_fileline() << ": error: Unable to evaluate "
+			"expression " << *msb_ << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    if (lsb_con == 0) {
+		  cerr << get_fileline() << ": error: Unable to evaluate "
+			"expression " << *lsb_ << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    verinum msb = msb_con->value();
+	    verinum lsb = lsb_con->value();
+
+	    delete msb_exp;
+	    delete lsb_exp;
+
+	    if (msb.as_long() > lsb.as_long())
+		  count = msb.as_long() - lsb.as_long() + 1;
+	    else
+		  count = lsb.as_long() - msb.as_long() + 1;
+
+	    low = lsb.as_long();
+	    high = msb.as_long();
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: PGModule: Make range "
+		       << "[" << high << ":" << low << "]" << " of "
+		       << count << " UDPs for " << name << endl;
+	    }
+      }
+
+      return count;
+}
+
 /*
  * From a UDP definition in the source, make a NetUDP
  * object. Elaborate the pin expressions as netlists, then connect
@@ -1801,6 +1853,19 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 		  tmp_del.eval_delays(des, scope, rise_expr, fall_expr,
 		                      decay_expr);
 	    }
+      }
+
+      long low = 0, high = 0;
+      unsigned inst_count = calculate_instance_count_(des, scope, high, low,
+                                                      my_name);
+      if (inst_count == 0) return;
+
+      if (inst_count != 1) {
+	    cerr << get_fileline() << ": sorry: UDPs with a range ("
+	         << my_name << " [" << high << ":" << low << "]) are "
+	         << "not supported." << endl;
+	    des->errors += 1;
+	    return;
       }
 
       assert(udp);
@@ -2057,9 +2122,8 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 {
       ivl_assert(*this, rval_);
 
-      need_constant_expr = is_constant_;
-      NetExpr*rv = elaborate_rval_expr(des, scope, lv_type, lv_width, rval());
-      need_constant_expr = false;
+      NetExpr*rv = elaborate_rval_expr(des, scope, lv_type, lv_width, rval(),
+                                       is_constant_);
 
       if (!is_constant_ || !rv) return rv;
 
@@ -3376,7 +3440,8 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 
       PExpr::width_mode_t mode;
       pe->test_width(des, scope, mode);
-      NetExpr*expr = pe->elaborate_expr(des, scope, pe->expr_width(), false);
+      NetExpr*expr = pe->elaborate_expr(des, scope, pe->expr_width(),
+                                        PExpr::NO_FLAGS);
       if (expr == 0) {
 	    cerr << get_fileline() << ": error: Unable to elaborate"
 		  " wait condition expression." << endl;
@@ -3736,6 +3801,11 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 
 void PFunction::elaborate(Design*des, NetScope*scope) const
 {
+      if (scope->elab_stage() > 2)
+            return;
+
+      scope->set_elab_stage(3);
+
       NetFuncDef*def = scope->func_def();
       if (def == 0) {
 	    cerr << get_fileline() << ": internal error: "
@@ -3751,6 +3821,7 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
       if (st == 0) {
 	    cerr << statement_->get_fileline() << ": error: Unable to elaborate "
 		  "statement in function " << scope->basename() << "." << endl;
+            scope->is_const_func(true); // error recovery
 	    des->errors += 1;
 	    return;
       }
@@ -4204,9 +4275,8 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	    for (specparam_it_t cur = specparams.begin()
 		       ; cur != specparams.end() ; ++ cur ) {
 
-		  need_constant_expr = true;
-		  NetExpr*val = elab_and_eval(des, scope, (*cur).second, -1);
-		  need_constant_expr = false;
+		  NetExpr*val = elab_and_eval(des, scope, (*cur).second, -1,
+                                              true);
 		  NetScope::spec_val_t value;
 
 		  if (NetECReal*val_cr = dynamic_cast<NetECReal*> (val)) {

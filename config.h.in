@@ -42,6 +42,7 @@
 # undef HAVE_LIBREADLINE
 # undef HAVE_LIBZ
 # undef HAVE_LIBBZ2
+# undef HAVE_LROUND
 # undef HAVE_SYS_WAIT_H
 # undef WORDS_BIGENDIAN
 

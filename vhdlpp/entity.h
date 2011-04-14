@@ -63,7 +63,7 @@ class ComponentBase : public LineInfo {
       void set_interface(std::list<InterfacePort*>*ports);
 
     public:
-      void dump_ports(ostream&out) const;
+      void dump_ports(ostream&out, int indent = 0) const;
 
     protected:
 	// This is really only used by the Entity derived class.
@@ -94,7 +94,7 @@ class Entity : public ComponentBase {
       int elaborate();
       int emit(ostream&out);
 
-      void dump(ostream&out) const;
+      void dump(ostream&out, int indent = 0) const;
 
     private:
       std::map<perm_string,Architecture*>arch_;

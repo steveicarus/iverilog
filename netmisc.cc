@@ -470,7 +470,8 @@ static const char*width_mode_name(PExpr::width_mode_t mode)
       }
 }
 
-NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe, int context_width)
+NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
+                       int context_width, bool need_const)
 {
       PExpr::width_mode_t mode = PExpr::SIZED;
       if ((context_width == -2) && !gn_strict_expr_width_flag)
@@ -510,7 +511,11 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe, int context_width)
             }
       }
 
-      NetExpr*tmp = pe->elaborate_expr(des, scope, expr_width, false);
+      unsigned flags = PExpr::NO_FLAGS;
+      if (need_const)
+            flags |= PExpr::NEED_CONST;
+
+      NetExpr*tmp = pe->elaborate_expr(des, scope, expr_width, flags);
       if (tmp == 0) return 0;
 
       eval_expr(tmp, context_width);
@@ -524,7 +529,7 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe, int context_width)
 }
 
 NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
-                           unsigned arg_idx, PExpr*pe)
+                           unsigned arg_idx, PExpr*pe, bool need_const)
 {
       PExpr::width_mode_t mode = PExpr::SIZED;
       pe->test_width(des, scope, mode);
@@ -539,7 +544,11 @@ NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
                  << ", mode=" << width_mode_name(mode) << endl;
       }
 
-      NetExpr*tmp = pe->elaborate_expr(des, scope, pe->expr_width(), true);
+      unsigned flags = PExpr::SYS_TASK_ARG;
+      if (need_const)
+            flags |= PExpr::NEED_CONST;
+
+      NetExpr*tmp = pe->elaborate_expr(des, scope, pe->expr_width(), flags);
       if (tmp == 0) return 0;
 
       eval_expr(tmp, -1);

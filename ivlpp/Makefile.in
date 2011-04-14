@@ -36,6 +36,7 @@ CC = @CC@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
+LEX = @LEX@
 
 ifeq (@srcdir@,.)
 INCLUDE_PATH = -I. -I..
@@ -69,7 +70,7 @@ ivlpp@EXEEXT@: $O
 	$(CC) $(LDFLAGS) $O -o ivlpp@EXEEXT@ @EXTRALIBS@
 
 lexor.c: lexor.lex
-	flex -olexor.c $(srcdir)/lexor.lex
+	$(LEX) -olexor.c $(srcdir)/lexor.lex
 
 install: all installdirs $(libdir)/ivl$(suffix)/ivlpp@EXEEXT@
 

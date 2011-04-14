@@ -239,7 +239,16 @@ void draw_nexus(ivl_nexus_t nexus)
             vhdl_type *type = vhdl_type::type_for(lpm_temp_width,
                                                   ivl_lpm_signed(lpm) != 0);
             ostringstream ss;
-            ss << "LPM" << ivl_lpm_basename(lpm);
+            ss << "LPM";
+            if (nexus == ivl_lpm_q(lpm))
+               ss << "_q";
+            else {
+               for (unsigned d = 0; d < ivl_lpm_size(lpm); d++) {
+                  if (nexus == ivl_lpm_data(lpm, d))
+                     ss << "_d" << d;
+               }
+            }
+            ss << ivl_lpm_basename(lpm);
 
             if (!vhdl_scope->have_declared(ss.str()))
                vhdl_scope->add_decl(new vhdl_signal_decl(ss.str().c_str(), type));

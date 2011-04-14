@@ -43,6 +43,8 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t)
 {
       events_ = 0;
       lcounter_ = 0;
+      need_const_func_ = false;
+      is_const_func_ = false;
       is_auto_ = false;
       is_cell_ = false;
 
@@ -72,6 +74,8 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t)
 	  default:  /* BEGIN_END and FORK_JOIN, do nothing */
 	    break;
       }
+      func_pform_ = 0;
+      elab_stage_ = 1;
       lineno_ = 0;
       def_lineno_ = 0;
       genvar_tmp_val = 0;

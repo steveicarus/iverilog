@@ -45,6 +45,11 @@ class PExpr : public LineInfo {
     public:
       enum width_mode_t { SIZED, EXPAND, LOSSLESS, UNSIZED };
 
+        // Flag values that can be passed to elaborate_expr.
+      static const unsigned NO_FLAGS     = 0x0;
+      static const unsigned NEED_CONST   = 0x1;
+      static const unsigned SYS_TASK_ARG = 0x2;
+
       PExpr();
       virtual ~PExpr();
 
@@ -122,7 +127,7 @@ class PExpr : public LineInfo {
 	// be incomplete.
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     unsigned expr_wid,
-                                     bool sys_task_arg) const;
+                                     unsigned flags) const;
 
 	// This method elaborates the expression as gates, but
 	// restricted for use as l-values of continuous assignments.
@@ -195,7 +200,7 @@ class PEConcat : public PExpr {
       virtual NetNet* elaborate_bi_net(Design*des, NetScope*scope) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     unsigned expr_wid,
-                                     bool sys_task_arg) const;
+                                     unsigned flags) const;
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
 					 bool is_force) const;
@@ -261,7 +266,7 @@ class PEFNumber : public PExpr {
 				  width_mode_t&mode);
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     unsigned expr_wid,
-                                     bool sys_task_arg) const;
+                                     unsigned flags) const;
 
       virtual void dump(ostream&) const;
 
@@ -301,7 +306,7 @@ class PEIdent : public PExpr {
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     unsigned expr_wid,
-                                     bool sys_task_arg) const;
+                                     unsigned flags) const;
 
 	// Elaborate the PEIdent as a port to a module. This method
 	// only applies to Ident expressions.
@@ -330,7 +335,7 @@ class PEIdent : public PExpr {
 	// invalid bits (xz) in either expression, then the defined
 	// flag is set to *false*.
       bool calculate_parts_(Design*, NetScope*, long&msb, long&lsb, bool&defined) const;
-      NetExpr* calculate_up_do_base_(Design*, NetScope*) const;
+      NetExpr* calculate_up_do_base_(Design*, NetScope*, bool need_const) const;
       bool calculate_param_range_(Design*, NetScope*,
 				  const NetExpr*msb_ex, long&msb,
 				  const NetExpr*lsb_ex, long&lsb,
@@ -352,7 +357,8 @@ class PEIdent : public PExpr {
 				    NetScope*found,
 				    const NetExpr*par_msb,
 				    const NetExpr*par_lsb,
-				    unsigned expr_wid) const;
+				    unsigned expr_wid,
+                                    unsigned flags) const;
       NetExpr*elaborate_expr_param_part_(Design*des,
 					 NetScope*scope,
 					 const NetExpr*par,
@@ -365,25 +371,27 @@ class PEIdent : public PExpr {
 					   const NetExpr*par,
 					   NetScope*found,
 					   const NetExpr*par_msb,
-					   const NetExpr*par_lsb) const;
+					   const NetExpr*par_lsb,
+                                           bool need_const) const;
       NetExpr*elaborate_expr_param_idx_do_(Design*des,
 					   NetScope*scope,
 					   const NetExpr*par,
 					   NetScope*found,
 					   const NetExpr*par_msb,
-					   const NetExpr*par_lsb) const;
+					   const NetExpr*par_lsb,
+                                           bool need_const) const;
       NetExpr*elaborate_expr_net(Design*des,
 				 NetScope*scope,
 				 NetNet*net,
 				 NetScope*found,
 				 unsigned expr_wid,
-				 bool sys_task_arg) const;
+				 unsigned flags) const;
       NetExpr*elaborate_expr_net_word_(Design*des,
 				       NetScope*scope,
 				       NetNet*net,
 				       NetScope*found,
 				       unsigned expr_wid,
-				       bool sys_task_arg) const;
+				       unsigned flags) const;
       NetExpr*elaborate_expr_net_part_(Design*des,
 				       NetScope*scope,
 				       NetESignal*net,
@@ -392,15 +400,18 @@ class PEIdent : public PExpr {
       NetExpr*elaborate_expr_net_idx_up_(Design*des,
 				         NetScope*scope,
 				         NetESignal*net,
-				         NetScope*found) const;
+				         NetScope*found,
+                                         bool need_const) const;
       NetExpr*elaborate_expr_net_idx_do_(Design*des,
 				         NetScope*scope,
 				         NetESignal*net,
-				         NetScope*found) const;
+				         NetScope*found,
+                                         bool need_const) const;
       NetExpr*elaborate_expr_net_bit_(Design*des,
 				      NetScope*scope,
 				      NetESignal*net,
-				      NetScope*found) const;
+				      NetScope*found,
+                                      bool need_const) const;
 
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
@@ -423,7 +434,7 @@ class PENumber : public PExpr {
 				  width_mode_t&mode);
 
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
-				       unsigned expr_wid, bool) const;
+				       unsigned expr_wid, unsigned) const;
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
 					 bool is_force) const;
@@ -456,7 +467,7 @@ class PEString : public PExpr {
 				  width_mode_t&mode);
 
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
-				       unsigned expr_wid, bool) const;
+				       unsigned expr_wid, unsigned) const;
       verinum* eval_const(Design*, NetScope*) const;
 
     private:
@@ -480,7 +491,7 @@ class PEUnary : public PExpr {
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     unsigned expr_wid,
-                                     bool sys_task_arg) const;
+                                     unsigned flags) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
     private:
@@ -508,7 +519,7 @@ class PEBinary : public PExpr {
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     unsigned expr_wid,
-                                     bool sys_task_arg) const;
+                                     unsigned flags) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
     protected:
@@ -546,7 +557,7 @@ class PEBComp  : public PEBinary {
 				  width_mode_t&mode);
 
       NetExpr* elaborate_expr(Design*des, NetScope*scope,
-			      unsigned expr_wid, bool sys_task_arg) const;
+			      unsigned expr_wid, unsigned flags) const;
 
     private:
       unsigned l_width_;
@@ -566,7 +577,7 @@ class PEBLogic  : public PEBinary {
 				  width_mode_t&mode);
 
       NetExpr* elaborate_expr(Design*des, NetScope*scope,
-			      unsigned expr_wid, bool sys_task_arg) const;
+			      unsigned expr_wid, unsigned flags) const;
 };
 
 /*
@@ -589,7 +600,7 @@ class PEBLeftWidth  : public PEBinary {
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     unsigned expr_wid,
-                                     bool sys_task_arg) const;
+                                     unsigned flags) const;
 };
 
 class PEBPower  : public PEBLeftWidth {
@@ -633,12 +644,13 @@ class PETernary : public PExpr {
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 		                     unsigned expr_wid,
-                                     bool sys_task_arg) const;
+                                     unsigned flags) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
     private:
       NetExpr* elab_and_eval_alternative_(Design*des, NetScope*scope,
-					  PExpr*expr, unsigned expr_wid) const;
+					  PExpr*expr, unsigned expr_wid,
+                                          unsigned flags) const;
 
     private:
       PExpr*expr_;
@@ -672,7 +684,7 @@ class PECallFunction : public PExpr {
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     unsigned expr_wid,
-                                     bool sys_task_arg) const;
+                                     unsigned flags) const;
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
@@ -686,7 +698,8 @@ class PECallFunction : public PExpr {
       NetExpr* cast_to_width_(NetExpr*expr, unsigned wid) const;
 
       NetExpr* elaborate_sfunc_(Design*des, NetScope*scope,
-                                unsigned expr_wid) const;
+                                unsigned expr_wid,
+                                unsigned flags) const;
       NetExpr* elaborate_access_func_(Design*des, NetScope*scope, ivl_nature_t,
                                       unsigned expr_wid) const;
       unsigned test_width_sfunc_(Design*des, NetScope*scope,
@@ -705,7 +718,7 @@ class PEVoid : public PExpr {
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     unsigned expr_wid,
-                                     bool sys_task_arg) const;
+                                     unsigned flags) const;
 };
 
 #endif

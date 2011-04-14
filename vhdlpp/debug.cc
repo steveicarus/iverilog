@@ -55,16 +55,16 @@ void dump_design_entities(const char*path)
       }
 }
 
-void ComponentBase::dump_ports(ostream&out) const
+void ComponentBase::dump_ports(ostream&out, int indent) const
 {
       if (ports_.size() == 0) {
-	    out << "    No ports" << endl;
+	    out << setw(indent) << "" << "No ports" << endl;
       } else {
-	    out << "    PORTS:" << endl;
+	    out << setw(indent) << "" << "PORTS:" << endl;
 	    for (vector<InterfacePort*>::const_iterator cur = ports_.begin()
 		       ; cur != ports_.end() ; ++cur) {
 		  InterfacePort*item = *cur;
-		  out << setw(6) << "" << item->name
+		  out << setw(indent+2) << "" << item->name
 		      << " : " << item->mode
 		      << ", type=";
 		  if (item->type)
@@ -87,68 +87,68 @@ void Scope::dump_scope(ostream&out) const
       }
 }
 
-void Entity::dump(ostream&out) const
+void Entity::dump(ostream&out, int indent) const
 {
-      out << "entity " << get_name()
+      out << setw(indent) << "" << "entity " << get_name()
 	  << " file=" << get_fileline() << endl;
-      dump_ports(out);
+      dump_ports(out, indent+2);
 
       for (map<perm_string,Architecture*>::const_iterator cur = arch_.begin()
 		 ; cur != arch_.end() ; ++cur) {
-	    cur->second->dump(out, get_name());
+	    cur->second->dump(out, get_name(), indent);
       }
 }
 
-void Architecture::dump(ostream&out, perm_string of_entity) const
+void Architecture::dump(ostream&out, perm_string of_entity, int indent) const
 {
-      out << "architecture " << name_
+      out << setw(indent) << "" << "architecture " << name_
 	  << " of entity " << of_entity
 	  << " file=" << get_fileline() << endl;
 
 	// Dump signal declarations
       for (map<perm_string,Signal*>::const_iterator cur = signals_.begin()
 		 ; cur != signals_.end() ; ++cur) {
-	    cur->second->dump(out);
+	    cur->second->dump(out, indent+3);
       }
 
       dump_scope(out);
 
       for (list<Architecture::Statement*>::const_iterator cur = statements_.begin()
 		 ; cur != statements_.end() ; ++cur) {
-	    (*cur)->dump(out);
+	    (*cur)->dump(out, indent+3);
       }
 }
 
-void Architecture::Statement::dump(ostream&out) const
+void Architecture::Statement::dump(ostream&out, int indent) const
 {
-      out << "   Architecture::Statement at file=" << get_fileline() << endl;
+      out << setw(indent) << "" << "Architecture::Statement at file=" << get_fileline() << endl;
 }
 
-void Signal::dump(ostream&out) const
+void Signal::dump(ostream&out, int indent) const
 {
-      out << "   signal " << name_ << " is " << *type_ << endl;
+      out << setw(indent) << "" << "signal " << name_ << " is " << *type_ << endl;
 }
 
-void SignalAssignment::dump(ostream&out) const
+void SignalAssignment::dump(ostream&out, int indent) const
 {
-      out << "   SignalAssignment file=" << get_fileline() << endl;
-      lval_->dump(out, 4);
-      out << "     <= <expr>..." << endl;
+      out << setw(indent) << "" << "SignalAssignment file=" << get_fileline() << endl;
+      lval_->dump(out, indent+1);
+      out << setw(indent+2) << "" << "<= <expr>..." << endl;
 
       for (list<Expression*>::const_iterator cur = rval_.begin()
 		 ; cur != rval_.end() ; ++cur) {
-	    (*cur)->dump(out, 5);
+	    (*cur)->dump(out, indent+2);
       }
 }
 
-void ComponentInstantiation::dump(ostream&out) const
+void ComponentInstantiation::dump(ostream&out, int indent) const
 {
-      out << "   Component Instantiation file=" << get_fileline() << endl;
+      out << setw(indent) << "" << "Component Instantiation file=" << get_fileline() << endl;
 
       for (map<perm_string,Expression*>::const_iterator cur = port_map_.begin()
 		 ; cur != port_map_.end() ; ++cur) {
-	    out << "      " << cur->first << " => ..." << endl;
-	    cur->second->dump(out, 10);
+	    out << setw(indent+2) <<""<< cur->first << " => ..." << endl;
+	    cur->second->dump(out, indent+6);
       }
 
 }

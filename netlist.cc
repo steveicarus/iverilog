@@ -1988,8 +1988,8 @@ const NetExpr* NetSTask::parm(unsigned idx) const
 }
 
 NetEUFunc::NetEUFunc(NetScope*scope, NetScope*def, NetESignal*res,
-                     svector<NetExpr*>&p)
-: scope_(scope), func_(def), result_sig_(res), parms_(p)
+                     svector<NetExpr*>&p, bool nc)
+: scope_(scope), func_(def), result_sig_(res), parms_(p), need_const_(nc)
 {
       expr_width(result_sig_->expr_width());
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -460,11 +460,14 @@ void vvp_arith_pow::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 		  return;
 	    }
 
-	    double ad, bd;
+	    double ad, bd, resd;
 	    vector4_to_value(op_a_, ad, true);
 	    vector4_to_value(op_b_, bd, true);
+	      /* 2**-1 and -2**-1 are defined to be zero. */
+	    if ((bd == -1) && (fabs(ad) == 2.0)) resd = 0.0;
+	    else resd = pow(ad, bd);
 
-	    res4 = vvp_vector4_t(wid_, pow(ad, bd));
+	    res4 = vvp_vector4_t(wid_, resd);
       } else {
 	    vvp_vector2_t a2 (op_a_);
 	    vvp_vector2_t b2 (op_b_);

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2010  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2011  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -187,31 +187,6 @@ void sys_special_register(void)
 
       tf_data.tfname      = "$sync$nor$plane";
       tf_data.user_data   = "$sync$nor$plane";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$q_initialize";
-      tf_data.user_data   = "$q_initialize";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$q_add";
-      tf_data.user_data   = "$q_add";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$q_remove";
-      tf_data.user_data   = "$q_remove";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$q_full";
-      tf_data.user_data   = "$q_full";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$q_exam";
-      tf_data.user_data   = "$q_exam";
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
