@@ -62,7 +62,7 @@ vhdlint::vhdlint(const char* text)
         }
     }
     *new_ptr = 0;
-    
+
     istringstream str(new_text);
     delete[] new_text;
 

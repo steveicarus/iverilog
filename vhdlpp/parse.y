@@ -163,7 +163,7 @@ const VType*parse_type_by_name(perm_string name)
 %token K_xnor K_xor
  /* Identifiers that are not keywords are identifiers. */
 %token <text> IDENTIFIER
-%token <uni_integer> INT_LITERAL 
+%token <uni_integer> INT_LITERAL
 %token <uni_real> REAL_LITERAL
 %token <text> STRING_LITERAL CHARACTER_LITERAL
  /* compound symbols */

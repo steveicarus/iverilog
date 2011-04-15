@@ -226,7 +226,7 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 NetExpr* PEBinary::elaborate_expr(Design*des, NetScope*scope,
 				  unsigned expr_wid, unsigned flags) const
 {
-      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag 
+      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
 
       ivl_assert(*this, left_);
       ivl_assert(*this, right_);
@@ -509,7 +509,7 @@ unsigned PEBComp::test_width(Design*des, NetScope*scope, width_mode_t&)
 NetExpr* PEBComp::elaborate_expr(Design*des, NetScope*scope,
 				 unsigned expr_wid, unsigned flags) const
 {
-      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag 
+      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
 
       ivl_assert(*this, left_);
       ivl_assert(*this, right_);
@@ -714,7 +714,7 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 NetExpr*PEBLeftWidth::elaborate_expr(Design*des, NetScope*scope,
 				     unsigned expr_wid, unsigned flags) const
 {
-      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag 
+      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
 
       ivl_assert(*this, left_);
 
@@ -851,7 +851,7 @@ NetExpr*PEBShift::elaborate_expr_leaf(Design*des, NetExpr*lp, NetExpr*rp,
 	    }
 
 	      // Special case: the shift is at least the size of the entire
-	      // left operand, and the shift is a signed right shift. 
+	      // left operand, and the shift is a signed right shift.
               // Elaborate as a replication of the top bit of the left
               // expression.
 	    if ((op_=='R' && signed_flag_) && (shift >= expr_wid)) {
@@ -1271,7 +1271,7 @@ NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					unsigned expr_wid, unsigned flags) const
 {
-      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag 
+      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
 
       if (peek_tail_name(path_)[0] == '$')
 	    return elaborate_sfunc_(des, scope, expr_wid, flags);
@@ -1490,7 +1490,7 @@ static int concat_depth = 0;
 NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 				  unsigned expr_wid, unsigned flags) const
 {
-      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag 
+      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
 
       concat_depth += 1;
 
@@ -3421,7 +3421,7 @@ bool NetETernary::test_operand_compat(ivl_variable_type_t l,
 NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 				  unsigned expr_wid, unsigned flags) const
 {
-      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag 
+      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
 
       ivl_assert(*this, expr_);
       ivl_assert(*this, tru_);
@@ -3567,7 +3567,7 @@ unsigned PEUnary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 				 unsigned expr_wid, unsigned flags) const
 {
-      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag 
+      flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
 
       unsigned sub_width = expr_wid;
       switch (op_) {

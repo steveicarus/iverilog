@@ -325,7 +325,7 @@ void emit_string(const char* string)
       char *cptr = buffer;
       fprintf(vlog_out, "\"");
 	/* Prune any leading escaped NULL bytes. */
-      while ((cptr[0] == '\\') && (cptr[1] == '0') && 
+      while ((cptr[0] == '\\') && (cptr[1] == '0') &&
              (cptr[2] == '0') && (cptr[3] == '0')) cptr += 4;
       if (*cptr) fprintf(vlog_out, "%s", cptr);
       free(buffer);

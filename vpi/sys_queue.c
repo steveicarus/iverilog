@@ -57,7 +57,7 @@
  * Routine to add the given time to the the total time (high/low).
  */
 void add_to_wait_time(uint64_t *high, uint64_t *low, uint64_t time)
-{ 
+{
       uint64_t carry = 0U;
 
       if ((UINT64_MAX - *low) < time) carry = 1U;

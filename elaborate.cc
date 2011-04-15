@@ -4725,7 +4725,7 @@ Design* elaborate(list<perm_string>roots)
 	    for (unsigned idx = 0; idx < rmod->port_count(); idx += 1) {
 		  vector<PEIdent*> mport = rmod->get_port(idx);
 		  for (unsigned pin = 0; pin < mport.size(); pin += 1) {
-			  // This really does more than we need and adds extra 
+			  // This really does more than we need and adds extra
 			  // stuff to the design that should be cleaned later.
 			(void) mport[pin]->elaborate_port(des, scope);
 		  }
