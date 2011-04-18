@@ -56,7 +56,8 @@ O = sys_table.o sys_convert.o sys_deposit.o sys_display.o sys_fileio.o \
     sys_finish.o sys_icarus.o sys_plusargs.o sys_queue.o sys_random.o \
     sys_random_mti.o sys_readmem.o sys_readmem_lex.o sys_scanf.o sys_sdf.o \
     sys_time.o sys_vcd.o sys_vcdoff.o vcd_priv.o mt19937int.o sys_priv.o \
-    sdf_lexor.o sdf_parse.o stringheap.o vams_simparam.o
+    sdf_lexor.o sdf_parse.o stringheap.o vams_simparam.o \
+    table_mod.o table_mod_lexor.o table_mod_parse.o
 OPP = vcd_priv2.o
 
 ifeq (@HAVE_LIBZ@,yes)
@@ -82,6 +83,8 @@ check: all
 clean:
 	rm -rf *.o sys_readmem_lex.c dep system.vpi
 	rm -f sdf_lexor.c sdf_parse.c sdf_parse.output sdf_parse.h
+	rm -f table_mod_parse.c table_mod_parse.h table_mod_parse.output
+	rm -f table_mod_lexor.c
 	rm -f va_math.vpi v2005_math.vpi v2009.vpi
 
 distclean: clean
@@ -127,6 +130,14 @@ sdf_lexor.c: sdf_lexor.lex
 
 sdf_parse.c sdf_parse.h: $(srcdir)/sdf_parse.y
 	$(YACC) --verbose -d -p sdf -o sdf_parse.c $(srcdir)/sdf_parse.y
+
+table_mod_lexor.o: table_mod_lexor.c table_mod_parse.h
+
+table_mod_lexor.c: $(srcdir)/table_mod_lexor.lex
+	$(LEX) -t -Ptblmod $< > $@
+
+table_mod_parse.c table_mod_parse.h: $(srcdir)/table_mod_parse.y
+	$(YACC) --verbose -d -p tblmod -o table_mod_parse.c $<
 
 v2005_math.vpi: $M ../vvp/libvpi.a
 	$(CC) @shared@ -o $@ $M -L../vvp $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)

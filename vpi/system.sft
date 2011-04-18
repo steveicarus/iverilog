@@ -20,3 +20,4 @@ $q_full            vpiSysFuncInt
 $abstime       vpiSysFuncReal
 $simparam      vpiSysFuncReal
 $simparam$str  vpiSysFuncSized 1024 unsigned
+$table_model   vpiSysFuncReal

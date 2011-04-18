@@ -39,6 +39,7 @@ extern void sys_time_register();
 extern void sys_vcd_register();
 extern void sys_vcdoff_register();
 extern void sys_special_register();
+extern void table_model_register();
 extern void vams_simparam_register();
 
 #ifdef HAVE_LIBZ
@@ -208,6 +209,7 @@ void (*vlog_startup_routines[])() = {
       sys_lxt_or_vcd_register,
       sys_sdf_register,
       sys_special_register,
+      table_model_register,
       vams_simparam_register,
       0
 };
