@@ -23,12 +23,10 @@
 
 using namespace std;
 
-Architecture::Architecture(perm_string name, map<perm_string,Signal*>&sigs,
-			   map<perm_string,ComponentBase*>&comps,
+Architecture::Architecture(perm_string name, const ScopeBase&ref,
 			   list<Architecture::Statement*>&s)
-: Scope(comps), name_(name)
+: Scope(ref), name_(name)
 {
-      signals_ = sigs;
       statements_.splice(statements_.end(), s);
 }
 

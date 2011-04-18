@@ -20,9 +20,9 @@
  */
 
 # include  <iostream>
-# include  <map>
 # include  <vector>
 # include  <climits>
+# include  <inttypes.h>
 # include  "StringHeap.h"
 
 /*
@@ -58,17 +58,7 @@ inline std::ostream&operator << (std::ostream&out, const VType&item)
       return out;
 }
 
-/*
- * The global_types variable maps type names to a type
- * definition. This is after the "use" statements bring in the types
- * in included packages.
- */
-extern std::map<perm_string, const VType*> global_types;
-
 extern void preload_global_types(void);
-
-extern void import_ieee(void);
-extern void import_ieee_use(perm_string package, perm_string name);
 
 /*
  * This class represents the primative types that are available to the
@@ -141,6 +131,19 @@ class VTypeArray : public VType {
 
       std::vector<range_t> ranges_;
       bool signed_flag_;
+};
+
+class VTypeRange : public VType {
+
+    public:
+      VTypeRange(const VType*base, int64_t max_val, int64_t min_val);
+      ~VTypeRange();
+
+      virtual void elaborate(decl_t&decl) const;
+
+    private:
+      const VType*base_;
+      int64_t max_, min_;
 };
 
 #endif

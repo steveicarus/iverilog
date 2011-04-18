@@ -25,6 +25,7 @@
 
 class Entity;
 class Architecture;
+class ScopeBase;
 
 /*
  * The Expression class represents parsed expressions from the parsed
@@ -46,7 +47,7 @@ class Expression : public LineInfo {
 	// to constant literal values. Return true and set the val
 	// argument if the evaluation works, or return false if it
 	// cannot be done.
-      virtual bool evaluate(int64_t&val) const;
+      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
 
 	// This method returns true if the drawn Verilog for this
 	// expression is a primary. A containing expression can use
@@ -94,6 +95,9 @@ class ExpBinary : public Expression {
       int emit_operand1(ostream&out, Entity*ent, Architecture*arc);
       int emit_operand2(ostream&out, Entity*ent, Architecture*arc);
 
+      bool eval_operand1(ScopeBase*scope, int64_t&val) const;
+      bool eval_operand2(ScopeBase*scope, int64_t&val) const;
+
       void dump_operands(ostream&out, int indent = 0) const;
 
     private:
@@ -111,6 +115,7 @@ class ExpArithmetic : public ExpBinary {
       ~ExpArithmetic();
 
       int emit(ostream&out, Entity*ent, Architecture*arc);
+      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
 
     private:
@@ -125,7 +130,7 @@ class ExpInteger : public Expression {
 
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
-      bool evaluate(int64_t&val) const;
+      bool evaluate(ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
 
     private:
@@ -162,6 +167,7 @@ class ExpName : public Expression {
     public: // Base methods
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
+      bool evaluate(ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
       const char* name() const;
 

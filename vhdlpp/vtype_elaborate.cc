@@ -58,3 +58,8 @@ void VTypePrimitive::elaborate(VType::decl_t&decl) const
 	    break;
       }
 }
+
+void VTypeRange::elaborate(VType::decl_t&decl) const
+{
+      base_->elaborate(decl);
+}

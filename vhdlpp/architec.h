@@ -60,8 +60,7 @@ class Architecture : public Scope, public LineInfo {
     public:
 	// Create an architecture from its name and its statements.
 	// NOTE: The statement list passed in is emptied.
-      Architecture(perm_string name, std::map<perm_string,Signal*>&sigs,
-		   std::map<perm_string,ComponentBase*>&comps,
+      Architecture(perm_string name, const ScopeBase&ref,
 		   std::list<Architecture::Statement*>&s);
       ~Architecture();
 
@@ -81,8 +80,6 @@ class Architecture : public Scope, public LineInfo {
 
     private:
       perm_string name_;
-	// Signals declared local to this architecture
-      std::map<perm_string,Signal*> signals_;
 	// Concurrent statements local to this architecture
       std::list<Architecture::Statement*> statements_;
 

@@ -23,26 +23,86 @@
 # include  <map>
 # include  "StringHeap.h"
 
+class Architecture;
 class ComponentBase;
+class Entity;
+class Expression;
+class Signal;
 class VType;
 
-class Scope {
+class ScopeBase {
 
     public:
-      Scope(std::map<perm_string,ComponentBase*>&comps);
-      ~Scope();
+      ScopeBase() { }
+      explicit ScopeBase(const ScopeBase&ref);
+      virtual ~ScopeBase() =0;
 
-      ComponentBase* find_component(perm_string by_name);
-
-      void collect_components(std::list<ComponentBase*>&res);
-
-      void dump_scope(ostream&out) const;
-
-    private:
+      const VType* find_type(perm_string by_name);
+      bool find_constant(perm_string by_name, const VType*&typ, Expression*&exp);
+    protected:
+	// Signal declarations...
+      std::map<perm_string,Signal*> signals_;
       	// Component declarations...
       std::map<perm_string,ComponentBase*> components_;
 	// Type declarations...
       std::map<perm_string,const VType*> types_;
+	// Constant declarations...
+      struct const_t {
+	    const VType*typ;
+	    Expression*val;
+      };
+      std::map<perm_string, struct const_t> constants_;
+
+      void do_use_from(const ScopeBase*that);
+};
+
+class Scope : public ScopeBase {
+
+    public:
+      Scope(const ScopeBase&ref);
+      ~Scope();
+
+      ComponentBase* find_component(perm_string by_name);
+
+    public:
+      void dump_scope(ostream&out) const;
+
+    protected:
+	// Helper method for emitting signals in the scope.
+      int emit_signals(ostream&out, Entity*ent, Architecture*arc);
+};
+
+/*
+ * The active_scope object accumulates declarations for the scope that
+ * is in the process of being parsed. When the declarations are over,
+ * they are transferred over to the specific scope. The ActiveScope is
+ * used by the parser to build up scopes.
+ */
+class ActiveScope : public ScopeBase {
+
+    public:
+      ActiveScope() { }
+      ActiveScope(ActiveScope*par) : ScopeBase(*par) { }
+      
+      ~ActiveScope() { }
+
+      void use_from(const ScopeBase*that) { do_use_from(that); }
+
+      void bind_name(perm_string name, Signal*obj)
+      { signals_[name] = obj; }
+
+      void bind_name(perm_string name, ComponentBase*obj)
+      { components_[name] = obj; }
+
+      void bind_name(perm_string name, const VType*obj)
+      { types_[name] = obj; }
+
+      void bind_name(perm_string name, const VType*obj, Expression*val)
+      {
+	    const_t&tmp = constants_[name];
+	    tmp.typ = obj;
+	    tmp.val = val;
+      }
 };
 
 #endif

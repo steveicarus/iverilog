@@ -19,8 +19,8 @@
 
 # include  "package.h"
 
-Package::Package(perm_string n, map<perm_string,ComponentBase*>&comps)
-: Scope(comps), name_(n)
+Package::Package(perm_string n, const ScopeBase&ref)
+: Scope(ref), name_(n)
 {
 }
 

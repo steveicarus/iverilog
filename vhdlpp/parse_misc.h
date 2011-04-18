@@ -21,31 +21,38 @@
 
 # include  "parse_api.h"
 
+class ActiveScope;
 class Architecture;
 class Expression;
 class Package;
+class ScopeBase;
 class VType;
 
 extern void bind_architecture_to_entity(const char*ename, Architecture*arch);
 
-extern const VType* calculate_subtype(const char*base_name,
-				      Expression*array_left,
-				      bool downto,
-				      Expression*array_right);
+extern const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
+					    ScopeBase*scope,
+					    Expression*array_left,
+					    bool downto,
+					    Expression*array_right);
+extern const VType* calculate_subtype_range(const YYLTYPE&loc, const char*base_name,
+					    ScopeBase*scope,
+					    Expression*range_left,
+					    bool downto,
+					    Expression*range_right);
+
+/*
+ * This function searches the currently active scope, or the global
+ * scope, for the named type.
+ */
+extern const VType* parse_type_by_name(perm_string name);
 
 extern void library_save_package(const char*libname, Package*pack);
 
 extern void library_import(const YYLTYPE&loc, const std::list<perm_string>*names);
 
-struct library_results {
-      std::list<ComponentBase*> components;
-      std::list<const VType*> types;
+extern void library_use(const YYLTYPE&loc, ActiveScope*res, const char*libname, const char*pack, const char*ident);
 
-      void clear() {
-	    components.clear();
-	    types.clear();
-      }
-};
+extern void generate_global_types(ActiveScope*res);
 
-extern void library_use(const YYLTYPE&loc, struct library_results&res, const char*libname, const char*pack, const char*ident);
 #endif

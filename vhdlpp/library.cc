@@ -24,12 +24,37 @@
 
 using namespace std;
 
-
 struct library_contents {
       map<perm_string,Package*> packages;
 };
 
+static void import_ieee(void);
+static void import_ieee_use(ActiveScope*res, perm_string package, perm_string name);
+
 static map<perm_string,struct library_contents> libraries;
+
+static void dump_library_package(ostream&file, perm_string lname, perm_string pname, Package*pack)
+{
+      file << "package " << lname << "." << pname << endl;
+      pack->dump_scope(file);
+      file << "end package " << lname << "." << pname << endl;
+}
+
+static void dump_library_packages(ostream&file, perm_string lname, map<perm_string,Package*>packages)
+{
+      for (map<perm_string,Package*>::iterator cur = packages.begin()
+		 ; cur != packages.end() ;  ++cur) {
+	    dump_library_package(file, lname, cur->first, cur->second);
+      }
+}
+
+void dump_libraries(ostream&file)
+{
+      for (map<perm_string,struct library_contents>::iterator cur = libraries.begin()
+		 ; cur != libraries.end() ;  ++cur) {
+	    dump_library_packages(file, cur->first, cur->second.packages);
+      }
+}
 
 /*
  * This function saves a package into the named library. Create the
@@ -60,7 +85,7 @@ void library_import(const YYLTYPE&loc, const std::list<perm_string>*names)
       }
 }
 
-void library_use(const YYLTYPE&loc, struct library_results&res,
+void library_use(const YYLTYPE&loc, ActiveScope*res,
 		 const char*libname, const char*package, const char*name)
 {
       if (libname == 0) {
@@ -74,7 +99,7 @@ void library_use(const YYLTYPE&loc, struct library_results&res,
 
 	// Special case handling for the IEEE library.
       if (use_library == "ieee") {
-	    import_ieee_use(use_package, use_name);
+	    import_ieee_use(res, use_package, use_name);
 	    return;
       }
 
@@ -91,15 +116,98 @@ void library_use(const YYLTYPE&loc, struct library_results&res,
 	// results into the "res" members.
 
       if (use_name == "all") {
-	    pack->collect_components(res.components);
+	    res->use_from(pack);
 	    return;
       }
 
       if (ComponentBase*cur = pack->find_component(use_name)) {
-	    res.components.push_back(cur);
+	    res->bind_name(use_name, cur);
 	    return;
       }
 
       errormsg(loc, "No such name %s in package %s\n",
 	       use_name.str(), pack->name().str());
+}
+
+static void import_ieee(void)
+{
+}
+
+static void import_ieee_use_std_logic_1164(ActiveScope*res, perm_string name)
+{
+      bool all_flag = name=="all";
+
+      if (all_flag || name == "std_logic_vector") {
+	    vector<VTypeArray::range_t> dims (1);
+	    res->bind_name(perm_string::literal("std_logic_vector"),
+			   new VTypeArray(&primitive_STDLOGIC, dims, false));
+      }
+}
+
+static void import_ieee_use_numeric_bit(ActiveScope*res, perm_string name)
+{
+      bool all_flag = name=="all";
+
+      if (all_flag || name == "signed") {
+	    vector<VTypeArray::range_t> dims (1);
+	    res->bind_name(perm_string::literal("signed"),
+			   new VTypeArray(&primitive_STDLOGIC, dims, true));
+      }
+      if (all_flag || name == "unsigned") {
+	    vector<VTypeArray::range_t> dims (1);
+	    res->bind_name(perm_string::literal("unsigned"),
+			   new VTypeArray(&primitive_BIT, dims, false));
+      }
+}
+
+static void import_ieee_use_numeric_std(ActiveScope*res, perm_string name)
+{
+      bool all_flag = name=="all";
+
+      if (all_flag || name == "signed") {
+	    vector<VTypeArray::range_t> dims (1);
+	    res->bind_name(perm_string::literal("signed"),
+			   new VTypeArray(&primitive_STDLOGIC, dims, true));
+      }
+      if (all_flag || name == "unsigned") {
+	    vector<VTypeArray::range_t> dims (1);
+	    res->bind_name(perm_string::literal("unsigned"),
+			   new VTypeArray(&primitive_STDLOGIC, dims, false));
+      }
+}
+
+static void import_ieee_use(ActiveScope*res, perm_string package, perm_string name)
+{
+      if (package == "std_logic_1164") {
+	    import_ieee_use_std_logic_1164(res, name);
+	    return;
+      }
+
+      if (package == "numeric_bit") {
+	    import_ieee_use_numeric_bit(res, name);
+	    return;
+      }
+
+      if (package == "numeric_std") {
+	    import_ieee_use_numeric_std(res, name);
+	    return;
+      }
+}
+
+
+const VTypePrimitive primitive_BOOLEAN (VTypePrimitive::BOOLEAN);
+const VTypePrimitive primitive_BIT     (VTypePrimitive::BIT);
+const VTypePrimitive primitive_INTEGER (VTypePrimitive::INTEGER);
+const VTypePrimitive primitive_STDLOGIC(VTypePrimitive::STDLOGIC);
+
+const VTypeArray primitive_BIT_VECTOR(&primitive_BIT,      vector<VTypeArray::range_t> (1));
+const VTypeArray primitive_BOOL_VECTOR(&primitive_BOOLEAN, vector<VTypeArray::range_t> (1));
+
+void generate_global_types(ActiveScope*res)
+{
+      res->bind_name(perm_string::literal("boolean"),   &primitive_BOOLEAN);
+      res->bind_name(perm_string::literal("bit"),       &primitive_BIT);
+      res->bind_name(perm_string::literal("integer"),   &primitive_INTEGER);
+      res->bind_name(perm_string::literal("std_logic"), &primitive_STDLOGIC);
+      res->bind_name(perm_string::literal("bit_vector"),&primitive_BOOL_VECTOR);
 }

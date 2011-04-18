@@ -18,88 +18,11 @@
  */
 
 # include  "vtype.h"
+# include  <map>
 # include  <typeinfo>
 
 using namespace std;
 
-std::map<perm_string, const VType*> global_types;
-
-const VTypePrimitive primitive_BOOLEAN (VTypePrimitive::BOOLEAN);
-const VTypePrimitive primitive_BIT     (VTypePrimitive::BIT);;
-const VTypePrimitive primitive_INTEGER (VTypePrimitive::INTEGER);;
-const VTypePrimitive primitive_STDLOGIC(VTypePrimitive::STDLOGIC);;
-
-const VTypeArray primitive_BIT_VECTOR(&primitive_BIT,      vector<VTypeArray::range_t> (1));
-const VTypeArray primitive_BOOL_VECTOR(&primitive_BOOLEAN, vector<VTypeArray::range_t> (1));
-
-void preload_global_types(void)
-{
-      global_types[perm_string::literal("boolean")]   = &primitive_BOOLEAN;
-      global_types[perm_string::literal("bit")]       = &primitive_BIT;
-      global_types[perm_string::literal("integer")]   = &primitive_INTEGER;
-      global_types[perm_string::literal("std_logic")] = &primitive_STDLOGIC;
-      global_types[perm_string::literal("bit_vector")]= &primitive_BOOL_VECTOR;
-}
-
-void import_ieee(void)
-{
-}
-
-static void import_ieee_use_std_logic_1164(perm_string name)
-{
-      bool all_flag = name=="all";
-
-      if (all_flag || name == "std_logic_vector") {
-	    vector<VTypeArray::range_t> dims (1);
-	    global_types[perm_string::literal("std_logic_vector")] = new VTypeArray(&primitive_STDLOGIC, dims, false);
-      }
-}
-
-static void import_ieee_use_numeric_bit(perm_string name)
-{
-      bool all_flag = name=="all";
-
-      if (all_flag || name == "signed") {
-	    vector<VTypeArray::range_t> dims (1);
-	    global_types[perm_string::literal("signed")] = new VTypeArray(&primitive_STDLOGIC, dims, true);
-      }
-      if (all_flag || name == "unsigned") {
-	    vector<VTypeArray::range_t> dims (1);
-	    global_types[perm_string::literal("unsigned")] = new VTypeArray(&primitive_BIT, dims, false);
-      }
-}
-
-static void import_ieee_use_numeric_std(perm_string name)
-{
-      bool all_flag = name=="all";
-
-      if (all_flag || name == "signed") {
-	    vector<VTypeArray::range_t> dims (1);
-	    global_types[perm_string::literal("signed")] = new VTypeArray(&primitive_STDLOGIC, dims, true);
-      }
-      if (all_flag || name == "unsigned") {
-	    vector<VTypeArray::range_t> dims (1);
-	    global_types[perm_string::literal("unsigned")] = new VTypeArray(&primitive_STDLOGIC, dims, false);
-      }
-}
-
-void import_ieee_use(perm_string package, perm_string name)
-{
-      if (package == "std_logic_1164") {
-	    import_ieee_use_std_logic_1164(name);
-	    return;
-      }
-
-      if (package == "numeric_bit") {
-	    import_ieee_use_numeric_bit(name);
-	    return;
-      }
-
-      if (package == "numeric_std") {
-	    import_ieee_use_numeric_std(name);
-	    return;
-      }
-}
 
 VType::~VType()
 {
@@ -170,4 +93,15 @@ void VTypeArray::show(ostream&out) const
 	    etype_->show(out);
       else
 	    out << "<nil>";
+}
+
+VTypeRange::VTypeRange(const VType*base, int64_t max_val, int64_t min_val)
+: base_(base)
+{
+      max_ = max_val;
+      min_ = min_val;
+}
+
+VTypeRange::~VTypeRange()
+{
 }

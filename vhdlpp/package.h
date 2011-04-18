@@ -25,7 +25,7 @@
 class Package : public Scope, public LineInfo {
 
     public:
-      Package(perm_string name, std::map<perm_string,ComponentBase*>&comps);
+      Package(perm_string name, const ScopeBase&ref);
       ~Package();
 
       perm_string name() const { return name_; }

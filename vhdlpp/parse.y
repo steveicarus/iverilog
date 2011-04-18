@@ -61,31 +61,46 @@ static void yyerror(const char*msg);
 int parse_errors = 0;
 int parse_sorrys = 0;
 
-/*
- * This map accumulates signals that are matched in the declarations
- * section of a block. When the declarations are over, these are
- * transferred to a map for the block proper.
- */
-static map<perm_string, Signal*> block_signals;
 
 /*
- * This map accumulates component declarations. This variable is used
- * by rules that build up package, architectures, whatever objects
- * can contain component declarations.
+ * Create an initial scope that collects all the global
+ * declarations. Also save a stack of previous scopes, as a way to
+ * manage lexical scopes.
  */
-static map<perm_string, ComponentBase*> block_components;
+static ActiveScope*active_scope = new ActiveScope;
+static list<ActiveScope*> scope_stack;
 
 /*
- * Calls to library_use return a collections of declation objects that
- * belong in the scope that is being worked on. This is a convenience
- * function for collecting those results into the parser variables.
+ * When a scope boundary starts, call the push_scope function to push
+ * a scope context. Preload this scope context with the contents of
+ * the parent scope, then make this the current scope. When the scope
+ * is done, the pop_scope function pops the scope off the stack and
+ * resumes the scope that was the parent.
  */
-static void collect_library_results(struct library_results&res)
+static void push_scope(void)
 {
-      for (list<ComponentBase*>::iterator cur = res.components.begin()
-		 ; cur != res.components.end() ; ++cur) {
-	    block_components[(*cur)->get_name()] = *cur;
-      }
+      assert(active_scope);
+      scope_stack.push_front(active_scope);
+      active_scope = new ActiveScope (active_scope);
+}
+
+static void pop_scope(void)
+{
+      delete active_scope;
+      assert(scope_stack.size() > 0);
+      active_scope = scope_stack.front();
+      scope_stack.pop_front();
+}
+
+
+void preload_global_types(void)
+{
+      generate_global_types(active_scope);
+}
+
+const VType*parse_type_by_name(perm_string name)
+{
+      return active_scope->find_type(name);
 }
 
 %}
@@ -182,6 +197,7 @@ static void collect_library_results(struct library_results&res)
 
 %type <vtype> subtype_indication
 
+%type <text> architecture_body_start package_declaration_start
 %type <text> identifier_opt logical_name suffix
 %type <name_list> logical_name_list identifier_list
 %type <compound_name> prefix selected_name
@@ -193,33 +209,38 @@ static void collect_library_results(struct library_results&res)
 design_file : design_units ;
 
 architecture_body
-  : K_architecture IDENTIFIER
+  : architecture_body_start
     K_of IDENTIFIER
     K_is block_declarative_items_opt
     K_begin architecture_statement_part K_end K_architecture_opt identifier_opt ';'
-      { Architecture*tmp = new Architecture(lex_strings.make($2),
-					    block_signals,
-					    block_components, *$8);
+      { Architecture*tmp = new Architecture(lex_strings.make($1),
+					    *active_scope, *$7);
 	FILE_NAME(tmp, @1);
-	bind_architecture_to_entity($4, tmp);
-	if ($11 && tmp->get_name() != $11)
-	      errormsg(@2, "Architecture name doesn't match closing name.\n");
-	delete[]$2;
-	delete[]$4;
-	delete $8;
-	block_signals.clear();
-	block_components.clear();
-	if ($11) delete[]$11;
+	bind_architecture_to_entity($3, tmp);
+	if ($10 && tmp->get_name() != $10)
+	      errormsg(@1, "Architecture name doesn't match closing name.\n");
+	delete[]$1;
+	delete[]$3;
+	delete $7;
+	pop_scope();
+	if ($10) delete[]$10;
       }
-  | K_architecture IDENTIFIER
+  | architecture_body_start
     K_of IDENTIFIER
     K_is block_declarative_items_opt
     K_begin error K_end K_architecture_opt identifier_opt ';'
-      { errormsg(@8, "Errors in architecture statements.\n"); yyerrok; }
-  | K_architecture error ';'
-      { errormsg(@2, "Errors in architecture body.\n"); yyerrok; }
+      { errormsg(@8, "Errors in architecture statements.\n");
+	yyerrok;
+	pop_scope();
+      }
   ;
 
+architecture_body_start
+  : K_architecture IDENTIFIER
+      { $$ = $2;
+	push_scope();
+      }
+  ;
 /*
  * The architecture_statement_part is a list of concurrent
  * statements.
@@ -298,13 +319,15 @@ block_declarative_item
 		   ; cur != $2->end() ; ++cur) {
 	      Signal*sig = new Signal(*cur, $4);
 	      FILE_NAME(sig, @1);
-	      block_signals[*cur] = sig;
+	      active_scope->bind_name(*cur, sig);
 	}
 	delete $2;
       }
 
   | component_declaration
 
+  | constant_declaration
+      { sorrymsg(@1, "constant declarations not supported here.\n"); }
   | use_clause_lib
 
       /* Various error handling rules for block_declarative_item... */
@@ -360,7 +383,7 @@ component_declaration
 
 	ComponentBase*comp = new ComponentBase(name);
 	if ($4) comp->set_interface($4);
-	block_components[name] = comp;
+	active_scope->bind_name(name, comp);
 	delete[]$2;
 	if ($7) delete[] $7;
       }
@@ -468,6 +491,21 @@ configuration_items
 configuration_items_opt
   : configuration_items
   |
+  ;
+
+constant_declaration
+  : K_constant identifier_list ':' subtype_indication VASSIGN expression ';'
+      { // The syntax allows mutliple names to have the same type/value.
+	for (std::list<perm_string>::iterator cur = $2->begin()
+		   ; cur != $2->end() ; ++cur) {
+	      active_scope->bind_name(*cur, $4, $6);
+	}
+	delete $2;
+      }
+  | K_constant identifier_list ':' subtype_indication ';'
+      { sorrymsg(@1, "Deferred constant declarations not supported\n");
+	delete $2;
+      }
   ;
 
 context_clause : context_items | ;
@@ -807,26 +845,34 @@ name
   ;
 
 package_declaration
-  : K_package IDENTIFIER K_is
+  : package_declaration_start K_is
     package_declarative_part_opt
     K_end K_package_opt identifier_opt ';'
-      { perm_string name = lex_strings.make($2);
-	if($7 && name != $7) {
+      { perm_string name = lex_strings.make($1);
+	if($6 && name != $6) {
 	      errormsg(@1, "Identifier %s doesn't match package name %s.\n",
-		       $7, name.str());
+		       $6, name.str());
         }
-	Package*tmp = new Package(name, block_components);
+	Package*tmp = new Package(name, *active_scope);
 	FILE_NAME(tmp, @1);
-	delete[]$2;
-        if ($7) delete[]$7;
-	block_components.clear();
+	delete[]$1;
+        if ($6) delete[]$6;
+	pop_scope();
 	  /* Put this package into the work library. */
 	library_save_package(0, tmp);
       }
-  | K_package IDENTIFIER K_is error K_end K_package_opt identifier_opt ';'
-    { errormsg(@4, "Syntax error in package clause.\n");
+  | package_declaration_start K_is error K_end K_package_opt identifier_opt ';'
+    { errormsg(@3, "Syntax error in package clause.\n");
       yyerrok;
+      pop_scope();
     }
+  ;
+
+package_declaration_start
+  : K_package IDENTIFIER
+      { push_scope();
+	$$ = $2;
+      }
   ;
 
 /* TODO: this list must be extended in the future
@@ -846,6 +892,8 @@ package_body_declarative_part_opt
 
 package_declarative_item
   : component_declaration
+  | constant_declaration
+  | subtype_declaration
   | use_clause
   ;
 
@@ -980,22 +1028,16 @@ selected_names
      rules, but is a convenient place to attach use_clause actions. */
 selected_name_use
   : IDENTIFIER '.' K_all
-      { struct library_results res;
-	library_use(@1, res, 0, $1, 0);
-	collect_library_results(res);
+      { library_use(@1, active_scope, 0, $1, 0);
 	delete[]$1;
       }
   | IDENTIFIER '.' IDENTIFIER '.' K_all
-      { struct library_results res;
-	library_use(@1, res, $1, $3, 0);
-	collect_library_results(res);
+      { library_use(@1, active_scope, $1, $3, 0);
 	delete[]$1;
 	delete[]$3;
       }
   | IDENTIFIER '.' IDENTIFIER '.' IDENTIFIER
-      { struct library_results res;
-	library_use(@1, res, $1, $3, $5);
-	collect_library_results(res);
+      { library_use(@1, active_scope, $1, $3, $5);
 	delete[]$1;
 	delete[]$3;
 	delete[]$5;
@@ -1024,14 +1066,36 @@ simple_expression
       }
   ;
 
+subtype_declaration
+  : K_subtype IDENTIFIER K_is subtype_indication ';'
+      { perm_string name = lex_strings.make($2);
+	if ($4 == 0) {
+	      errormsg(@1, "Failed to declare type name %s.\n", name.str());
+	} else {
+	      active_scope->bind_name(name, $4);
+	}
+      }
+  ;
+
 subtype_indication
   : IDENTIFIER
-      { const VType*tmp = global_types[lex_strings.make($1)];
+      { const VType*tmp = parse_type_by_name(lex_strings.make($1));
 	delete[]$1;
 	$$ = tmp;
       }
   | IDENTIFIER '(' simple_expression direction simple_expression ')'
-      { const VType*tmp = calculate_subtype($1, $3, $4, $5);
+      { const VType*tmp = calculate_subtype_array(@1, $1, active_scope, $3, $4, $5);
+	if (tmp == 0) {
+	      errormsg(@1, "Unable to calculate bounds for array of %s.\n", $1);
+	}
+	delete[]$1;
+	$$ = tmp;
+      }
+  | IDENTIFIER K_range simple_expression direction simple_expression
+      { const VType*tmp = calculate_subtype_range(@1, $1, active_scope, $3, $4, $5);
+	if (tmp == 0) {
+	      errormsg(@1, "Unable to calculate bounds for range of %s.\n", $1);
+	}
 	delete[]$1;
 	$$ = tmp;
       }

@@ -17,7 +17,11 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include "expression.h"
+# include  "expression.h"
+# include  "scope.h"
+# include  <iostream>
+
+using namespace std;
 
 Expression::Expression()
 {
@@ -27,7 +31,7 @@ Expression::~Expression()
 {
 }
 
-bool Expression::evaluate(int64_t&) const
+bool Expression::evaluate(ScopeBase*, int64_t&) const
 {
       return false;
 }
@@ -41,6 +45,16 @@ ExpBinary::~ExpBinary()
 {
       delete operand1_;
       delete operand2_;
+}
+
+bool ExpBinary::eval_operand1(ScopeBase*scope, int64_t&val) const
+{
+      return operand1_->evaluate(scope, val);
+}
+
+bool ExpBinary::eval_operand2(ScopeBase*scope, int64_t&val) const
+{
+      return operand2_->evaluate(scope, val);
 }
 
 ExpUnary::ExpUnary(Expression*op1)
@@ -62,6 +76,48 @@ ExpArithmetic::~ExpArithmetic()
 {
 }
 
+bool ExpArithmetic::evaluate(ScopeBase*scope, int64_t&val) const
+{
+      int64_t val1, val2;
+      bool rc;
+
+      rc = eval_operand1(scope, val1);
+      if (rc == false)
+	    return false;
+
+      rc = eval_operand2(scope, val2);
+      if (rc == false)
+	    return false;
+
+      switch (fun_) {
+	  case PLUS:
+	    val = val1 + val2;
+	    break;
+	  case MINUS:
+	    val = val1 - val2;
+	    break;
+	  case MULT:
+	    val = val1 * val2;
+	    break;
+	  case DIV:
+	    if (val2 == 0)
+		  return false;
+	    val = val1 / val2;
+	    break;
+	  case MOD:
+	    if (val2 == 0)
+		  return false;
+	    val = val1 % val2;
+	    break;
+	  case REM:
+	    return false;
+	  case POW:
+	    return false;
+      }
+
+      return true;
+}
+
 ExpInteger::ExpInteger(int64_t val)
 : value_(val)
 {
@@ -71,7 +127,7 @@ ExpInteger::~ExpInteger()
 {
 }
 
-bool ExpInteger::evaluate(int64_t&val) const
+bool ExpInteger::evaluate(ScopeBase*, int64_t&val) const
 {
       val = value_;
       return true;
@@ -104,6 +160,20 @@ ExpName::~ExpName()
 const char* ExpName::name() const
 {
       return name_;
+}
+
+bool ExpName::evaluate(ScopeBase*scope, int64_t&val) const
+{
+      const VType*type;
+      Expression*exp;
+
+      bool rc = scope->find_constant(name_, type, exp);
+      if (rc == false) {
+	    cerr << "XXXX Unable to evaluate name " << name_ << "." << endl;
+	    return false;
+      }
+
+      return exp->evaluate(scope, val);
 }
 
 ExpUAbs::ExpUAbs(Expression*op1)

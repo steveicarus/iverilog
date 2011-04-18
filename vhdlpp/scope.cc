@@ -18,12 +18,67 @@
  */
 
 # include  "scope.h"
+# include  <iostream>
 
 using namespace std;
 
-Scope::Scope(map<perm_string,ComponentBase*>&comps)
+ScopeBase::ScopeBase(const ScopeBase&ref)
 {
-      components_ = comps;
+      constants_ = ref.constants_;
+      signals_ = ref.signals_;
+      components_ = ref.components_;
+      types_ = ref.types_;
+}
+
+ScopeBase::~ScopeBase()
+{
+}
+
+const VType*ScopeBase::find_type(perm_string by_name)
+{
+      map<perm_string,const VType*>::const_iterator cur = types_.find(by_name);
+      if (cur == types_.end())
+	    return 0;
+      else
+	    return cur->second;
+}
+
+bool ScopeBase::find_constant(perm_string by_name, const VType*&typ, Expression*&exp)
+{
+      map<perm_string,const_t>::const_iterator cur = constants_.find(by_name);
+      if (cur == constants_.end())
+	    return false;
+
+      typ = cur->second.typ;
+      exp = cur->second.val;
+      return true;
+}
+
+void ScopeBase::do_use_from(const ScopeBase*that)
+{
+      for (map<perm_string,ComponentBase*>::const_iterator cur = that->components_.begin()
+		 ; cur != that->components_.end() ; ++ cur) {
+	    if (cur->second == 0)
+		  continue;
+	    components_[cur->first] = cur->second;
+      }
+
+      for (map<perm_string,const VType*>::const_iterator cur = that->types_.begin()
+		 ; cur != that->types_.end() ; ++ cur) {
+	    if (cur->second == 0)
+		  continue;
+	    types_[cur->first] = cur->second;
+      }
+
+      for (map<perm_string,const_t>::const_iterator cur = that->constants_.begin()
+		 ; cur != that->constants_.end() ; ++ cur) {
+	    constants_[cur->first] = cur->second;
+      }
+}
+
+Scope::Scope(const ScopeBase&ref)
+: ScopeBase(ref)
+{
 }
 
 Scope::~Scope()
@@ -37,14 +92,4 @@ ComponentBase* Scope::find_component(perm_string by_name)
 	    return 0;
       else
 	    return cur->second;
-}
-
-void Scope::collect_components(list<ComponentBase*>&res)
-{
-      for (map<perm_string,ComponentBase*>::const_iterator cur = components_.begin()
-		 ; cur != components_.end() ; ++cur) {
-	    if (cur->second == 0)
-		  continue;
-	    res.push_back(cur->second);
-      }
 }

@@ -22,6 +22,7 @@
 # include  <map>
 # include  <list>
 # include  <vector>
+# include  <iostream>
 # include  "StringHeap.h"
 # include  "LineInfo.h"
 # include  "vtype.h"
@@ -123,6 +124,6 @@ extern int emit_entities(void);
  * Use this function to dump a description of the design entities to a
  * file. This is for debug, not for any useful purpose.
  */
-extern void dump_design_entities(const char*path);
+extern void dump_design_entities(ostream&file);
 
 #endif

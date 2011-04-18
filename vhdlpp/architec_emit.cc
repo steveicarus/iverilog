@@ -25,15 +25,32 @@
 # include  <typeinfo>
 # include  <cassert>
 
-int Architecture::emit(ostream&out, Entity*entity)
+int Scope::emit_signals(ostream&out, Entity*entity, Architecture*arc)
 {
       int errors = 0;
 
       for (map<perm_string,Signal*>::iterator cur = signals_.begin()
 		 ; cur != signals_.end() ; ++cur) {
 
-	    errors += cur->second->emit(out, entity, this);
+	    errors += cur->second->emit(out, entity, arc);
       }
+
+      return errors;
+}
+
+int Architecture::emit(ostream&out, Entity*entity)
+{
+      int errors = 0;
+
+      for (map<perm_string,struct const_t>::iterator cur = constants_.begin()
+		 ; cur != constants_.end() ; ++cur) {
+
+	    out << "localparam " << cur->first 	<< " = ";
+	    errors += cur->second.val->emit(out, entity, this);
+	    out << ";" << endl;
+      }
+
+      errors += emit_signals(out, entity, this);
 
       for (list<Architecture::Statement*>::iterator cur = statements_.begin()
 		 ; cur != statements_.end() ; ++cur) {

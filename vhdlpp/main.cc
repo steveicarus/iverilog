@@ -41,6 +41,7 @@ const char NOTICE[] =
 # include  "compiler.h"
 # include  "parse_api.h"
 # include  "vtype.h"
+# include  <fstream>
 # include  <cstdio>
 # include  <cstdlib>
 # include  <cstring>
@@ -52,6 +53,9 @@ const char NOTICE[] =
 bool verbose_flag = false;
   // Where to dump design entities
 const char*dump_design_entities_path = 0;
+const char*dump_libraries_path = 0;
+
+extern void dump_libraries(ostream&file);
 
 static void process_debug_token(const char*word)
 {
@@ -61,6 +65,8 @@ static void process_debug_token(const char*word)
 	    yydebug = 0;
       } else if (strncmp(word, "entities=", 9) == 0) {
 	    dump_design_entities_path = strdup(word+9);
+      } else if (strncmp(word, "libraries=", 10) == 0) {
+	    dump_libraries_path = strdup(word+10);
       }
 }
 
@@ -125,8 +131,15 @@ int main(int argc, char*argv[])
 	    }
       }
 
-      if (dump_design_entities_path)
-	    dump_design_entities(dump_design_entities_path);
+      if (dump_libraries_path) {
+	    ofstream file(dump_libraries_path);
+	    dump_libraries(file);
+      }
+
+      if (dump_design_entities_path) {
+	    ofstream file(dump_design_entities_path);
+	    dump_design_entities(file);
+      }
 
       if (errors > 0)
 	    return 2;

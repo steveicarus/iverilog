@@ -46,9 +46,8 @@ static ostream& operator << (ostream&out, port_mode_t that)
       return out;
 }
 
-void dump_design_entities(const char*path)
+void dump_design_entities(ostream&file)
 {
-      ofstream file (path);
       for (map<perm_string,Entity*>::iterator cur = design_entities.begin()
 		 ; cur != design_entities.end() ; ++cur) {
 	    cur->second->dump(file);
@@ -78,6 +77,30 @@ void ComponentBase::dump_ports(ostream&out, int indent) const
 
 void Scope::dump_scope(ostream&out) const
 {
+	// Dump types
+      for (map<perm_string,const VType*>::const_iterator cur = types_.begin()
+		 ; cur != types_.end() ; ++cur) {
+	    out << "   " << cur->first << ": ";
+	    cur->second->show(out);
+	    out << endl;
+      }
+
+	// Dump constants
+      for (map<perm_string,const_t>::const_iterator cur = constants_.begin()
+		 ; cur != constants_.end() ; ++cur) {
+	    out << "   constant " << cur->first << " = ";
+	    out << endl;
+      }
+
+	// Dump signal declarations
+      for (map<perm_string,Signal*>::const_iterator cur = signals_.begin()
+		 ; cur != signals_.end() ; ++cur) {
+	    if (cur->second)
+		  cur->second->dump(out, 3);
+	    else
+		  out << "   signal " << cur->first.str() << ": ???" << endl;
+      }
+
 	// Dump component declarations
       for (map<perm_string,ComponentBase*>::const_iterator cur = components_.begin()
 		 ; cur != components_.end() ; ++cur) {
@@ -105,12 +128,6 @@ void Architecture::dump(ostream&out, perm_string of_entity, int indent) const
 	  << " of entity " << of_entity
 	  << " file=" << get_fileline() << endl;
 
-	// Dump signal declarations
-      for (map<perm_string,Signal*>::const_iterator cur = signals_.begin()
-		 ; cur != signals_.end() ; ++cur) {
-	    cur->second->dump(out, indent+3);
-      }
-
       dump_scope(out);
 
       for (list<Architecture::Statement*>::const_iterator cur = statements_.begin()
@@ -126,7 +143,12 @@ void Architecture::Statement::dump(ostream&out, int indent) const
 
 void Signal::dump(ostream&out, int indent) const
 {
-      out << setw(indent) << "" << "signal " << name_ << " is " << *type_ << endl;
+      out << setw(indent) << "" << "signal " << name_ << " is ";
+      if (type_)
+	    out << *type_;
+      else
+	    out << "?NO TYPE?";
+      out << endl;
 }
 
 void SignalAssignment::dump(ostream&out, int indent) const

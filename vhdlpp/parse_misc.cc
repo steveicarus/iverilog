@@ -54,12 +54,18 @@ void bind_architecture_to_entity(const char*ename, Architecture*arch)
       }
 }
 
-const VType* calculate_subtype(const char*base_name,
-			       Expression*array_left,
-			       bool downto,
-			       Expression*array_right)
+const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
+				     ScopeBase*scope,
+				     Expression*array_left,
+				     bool downto,
+				     Expression*array_right)
 {
-      const VType*base_type = global_types[lex_strings.make(base_name)];
+      const VType*base_type = parse_type_by_name(lex_strings.make(base_name));
+
+      if (base_type == 0) {
+	    errormsg(loc, "Unable to find base type %s of array.\n", base_name);
+	    return 0;
+      }
 
       assert(array_left==0 || array_right!=0);
 
@@ -74,11 +80,13 @@ const VType* calculate_subtype(const char*base_name,
 
 	    int64_t left_val;
 	    int64_t right_val;
-	    bool rc = array_left->evaluate(left_val);
-	    assert(rc);
+	    bool rc = array_left->evaluate(scope, left_val);
+	    if (rc == false)
+		  return 0;
 
-	    rc = array_right->evaluate(right_val);
-	    assert(rc);
+	    rc = array_right->evaluate(scope, right_val);
+	    if (rc == false)
+		  return 0;
 
 	    range[0] = VTypeArray::range_t(left_val, right_val);
 
@@ -87,4 +95,33 @@ const VType* calculate_subtype(const char*base_name,
       }
 
       return base_type;
+}
+
+const VType* calculate_subtype_range(const YYLTYPE&loc, const char*base_name,
+				     ScopeBase*scope,
+				     Expression*range_left,
+				     bool downto,
+				     Expression*range_right)
+{
+      const VType*base_type = parse_type_by_name(lex_strings.make(base_name));
+
+      if (base_type == 0) {
+	    errormsg(loc, "Unable to find base type %s of range.\n", base_name);
+	    return 0;
+      }
+
+      assert(range_left && range_right);
+
+      int64_t left_val, right_val;
+      bool rc = range_left->evaluate(scope, left_val);
+      if (rc == false)
+	    return 0;
+
+      rc = range_right->evaluate(scope, right_val);
+      if (rc == false)
+	    return 0;
+
+      VTypeRange*sub_type = new VTypeRange(base_type, left_val, right_val);
+
+      return sub_type;
 }
