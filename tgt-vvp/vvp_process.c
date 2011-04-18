@@ -2245,6 +2245,7 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
 	/* The pattern matched so this block represents a call to a user
 	 * defined task with arguments. */
       show_stmt_file_line(stmt, "User task call (with arguments).");
+      free(port_exprs);
       return 1;
 }
 

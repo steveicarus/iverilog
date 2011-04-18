@@ -3,14 +3,14 @@
 // problems will not be fixed.
 
 // fstapi.c from GTKWave
-variableScope:fstapi.c:1614
-variableScope:fstapi.c:1731
-variableScope:fstapi.c:1780
-variableScope:fstapi.c:1781
-variableScope:fstapi.c:2472
-variableScope:fstapi.c:2787
-variableScope:fstapi.c:2791
-variableScope:fstapi.c:2792
+variableScope:fstapi.c:1689
+variableScope:fstapi.c:1817
+variableScope:fstapi.c:1911
+variableScope:fstapi.c:1912
+variableScope:fstapi.c:2617
+variableScope:fstapi.c:2937
+variableScope:fstapi.c:2941
+variableScope:fstapi.c:2942
 
 // lxt2_write.c from GTKWave
 variableScope:lxt2_write.c:63

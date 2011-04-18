@@ -2004,7 +2004,7 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 
       bool disabled_myself_flag = false;
 
-      while (scope->threads.size() > 0) {
+      while (! scope->threads.empty()) {
 	    set<vthread_t>::iterator cur = scope->threads.begin();
 
 	      /* If I am disabling myself, that remember that fact so
