@@ -2164,7 +2164,10 @@ bool dll_target::net_const(const NetConst*net)
 
       struct ivl_net_const_s *obj = new struct ivl_net_const_s;
 
-      obj->type = IVL_VT_BOOL;
+      if (net->is_string()) {
+	    obj->type = IVL_VT_STRING;
+	    assert((net->width() % 8) == 0);
+      } else obj->type = IVL_VT_BOOL;
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());
       FILE_NAME(obj, net);
@@ -2197,11 +2200,13 @@ bool dll_target::net_const(const NetConst*net)
 		  if (obj->type == IVL_VT_BOOL)
 			obj->type = IVL_VT_LOGIC;
 		  bits[idx] = 'x';
+		  assert(! net->is_string());
 		  break;
 		case verinum::Vz:
 		  if (obj->type == IVL_VT_BOOL)
 			obj->type = IVL_VT_LOGIC;
 		  bits[idx] = 'z';
+		  assert(! net->is_string());
 		  break;
 	    }
 

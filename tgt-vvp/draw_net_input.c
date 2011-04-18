@@ -385,6 +385,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	    switch (ivl_const_type(cptr)) {
 		case IVL_VT_LOGIC:
 		case IVL_VT_BOOL:
+		case IVL_VT_STRING:
 		  if ((ivl_nexus_ptr_drive0(nptr) == IVL_DR_STRONG)
 		      && (ivl_nexus_ptr_drive1(nptr) == IVL_DR_STRONG)) {
 

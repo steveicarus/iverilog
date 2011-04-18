@@ -1969,6 +1969,7 @@ class NetConst  : public NetNode {
 
       verinum::V value(unsigned idx) const;
       unsigned width() const;
+      bool is_string() const;
 
       virtual bool emit_node(struct target_t*) const;
       virtual void functor_node(Design*, functor_t*);
@@ -1977,6 +1978,7 @@ class NetConst  : public NetNode {
     private:
       unsigned width_;
       verinum::V*value_;
+      bool is_string_;
 };
 
 /*
