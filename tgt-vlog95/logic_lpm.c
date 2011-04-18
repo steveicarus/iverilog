@@ -242,9 +242,9 @@ static void emit_nexus_port_signal(ivl_scope_t scope, ivl_nexus_t nex)
       ivl_signal_t sig = 0;
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
 	    if ((ivl_nexus_ptr_drive1(nex_ptr) != IVL_DR_HiZ) ||
 	        (ivl_nexus_ptr_drive0(nex_ptr) != IVL_DR_HiZ)) assert(0);
-	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
 	    if (t_sig) {
 		  if (scope != ivl_signal_scope(t_sig)) continue;
 		  assert(! sig);
@@ -256,6 +256,9 @@ static void emit_nexus_port_signal(ivl_scope_t scope, ivl_nexus_t nex)
       else fprintf(vlog_out, "/* Empty */");
 }
 
+/*
+ * Emit the input port driving expression.
+ */
 void emit_nexus_port_driver_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 {
       unsigned idx, count = ivl_nexus_ptrs(nex);
@@ -265,12 +268,12 @@ void emit_nexus_port_driver_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
       ivl_signal_t sig = 0;
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
-	    if ((ivl_nexus_ptr_drive1(nex_ptr) == IVL_DR_HiZ) &&
-	        (ivl_nexus_ptr_drive0(nex_ptr) == IVL_DR_HiZ)) continue;
 	    ivl_lpm_t t_lpm = ivl_nexus_ptr_lpm(nex_ptr);
 	    ivl_net_const_t t_net_const = ivl_nexus_ptr_con(nex_ptr);
 	    ivl_net_logic_t t_net_logic = ivl_nexus_ptr_log(nex_ptr);
 	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
+	    if ((ivl_nexus_ptr_drive1(nex_ptr) == IVL_DR_HiZ) &&
+	        (ivl_nexus_ptr_drive0(nex_ptr) == IVL_DR_HiZ)) continue;
 	    if (t_lpm) {
 		  assert(! lpm);
 		  lpm = t_lpm;
@@ -325,6 +328,10 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 	    ivl_signal_t sig = 0;
 	    for (idx = 0; idx < count; idx += 1) {
 		  ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+		  ivl_lpm_t t_lpm = ivl_nexus_ptr_lpm(nex_ptr);
+		  ivl_net_const_t t_net_const = ivl_nexus_ptr_con(nex_ptr);
+		  ivl_net_logic_t t_net_logic = ivl_nexus_ptr_log(nex_ptr);
+		  ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
 		  if ((ivl_nexus_ptr_drive1(nex_ptr) == IVL_DR_HiZ) &&
 		      (ivl_nexus_ptr_drive0(nex_ptr) == IVL_DR_HiZ)) {
 			  /* If we only have a single input then we want
@@ -333,10 +340,6 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 			      must_be_sig = 1;
 			} else continue;
 		  }
-		  ivl_lpm_t t_lpm = ivl_nexus_ptr_lpm(nex_ptr);
-		  ivl_net_const_t t_net_const = ivl_nexus_ptr_con(nex_ptr);
-		  ivl_net_logic_t t_net_logic = ivl_nexus_ptr_log(nex_ptr);
-		  ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
 		  if (t_lpm) {
 			assert(! lpm);
 			lpm = t_lpm;
@@ -660,12 +663,13 @@ static void emit_lpm_func(ivl_scope_t scope, ivl_lpm_t lpm)
       unsigned count = ivl_lpm_size(lpm);
       if (count) {
 	    unsigned idx;
+	    count -= 1;
 	    fprintf(vlog_out, "(");
-	    for (idx = count-1; idx > 0; idx -= 1) {
+	    for (idx = 0; idx < count; idx += 1) {
 		  emit_nexus_as_ca(scope, ivl_lpm_data(lpm, idx));
 		  fprintf(vlog_out, ", ");
 	    }
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, count));
 	    fprintf(vlog_out, ")");
       }
 }

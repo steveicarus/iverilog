@@ -484,27 +484,115 @@ static unsigned find_signal_in_nexus(ivl_scope_t scope, ivl_nexus_t nex)
       return 0;
 }
 
-void emit_const_nexus(ivl_scope_t scope, ivl_net_const_t const_net)
+static void emit_number_as_string(ivl_net_const_t net_const)
 {
-      switch (ivl_const_type(const_net)) {
+      const char *bits = ivl_const_bits(net_const);
+      unsigned count = ivl_const_width(net_const);
+      int idx;
+
+      assert((count % 8) == 0);
+      fprintf(vlog_out, "\"");
+      for (idx = (int)count-1; idx >= 0; idx -= 8) {
+	    unsigned bit;
+	    char val = 0;
+	    for (bit = 0; bit < 8; bit += 1) {
+		  val |= (bits[idx-bit] == '1') ?  1 << (7-bit) : 0x00;
+	    }
+
+	      /* Skip any NULL bytes. */
+	    if (val == 0) continue;
+	      /* Print some values that must be escapped. */
+	    if (val == '"') fprintf(vlog_out, "\\\"");
+	    else if (val == '\\') fprintf(vlog_out, "\\\\");
+	      /* Print the printable characters. */
+	    else if (isprint(val)) fprintf(vlog_out, "%c", val);
+	      /* Print the non-printable characters as an octal escape. */
+	    else fprintf(vlog_out, "\\%03o", val);
+      }
+      fprintf(vlog_out, "\"");
+}
+
+static unsigned emit_as_input(ivl_scope_t scope, ivl_net_const_t net_const)
+{
+      ivl_scope_t const_scope = ivl_const_scope(net_const);
+      ivl_scope_t parent = ivl_scope_parent(scope);
+
+	/* Look to see if the constant scope is a parent of this scope. */
+      while (parent) {
+	    if (parent == const_scope) break;
+	    parent = ivl_scope_parent(parent);
+      }
+
+	/* If the constant scope is a parent then look for an input in
+	 * this scope and use that for the name. */
+      if (parent) {
+	    ivl_nexus_t nex = ivl_const_nex(net_const);
+	    unsigned idx, count = ivl_nexus_ptrs(nex);
+	    for (idx = 0; idx < count; idx += 1) {
+		  ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+		  ivl_signal_t sig = ivl_nexus_ptr_sig(nex_ptr);
+		  if (sig && (ivl_signal_port(sig) == IVL_SIP_INPUT)) {
+			emit_id(ivl_signal_basename(sig));
+			return 1;
+		  }
+	    }
+      }
+
+      return 0;
+}
+
+void emit_const_nexus(ivl_scope_t scope, ivl_net_const_t net_const)
+{
+      ivl_scope_t const_scope = ivl_const_scope(net_const);
+      unsigned idx, count, lineno;
+      const char *file;
+      count = ivl_scope_params(const_scope);
+      file = ivl_const_file(net_const);
+      lineno = ivl_const_lineno(net_const);
+	/* Look to see if the constant matches a parameter in its scope. */
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_parameter_t par = ivl_scope_param(const_scope, idx);
+	    if (lineno != ivl_parameter_lineno(par)) continue;
+	    if (strcmp(file, ivl_parameter_file(par)) == 0) {
+		    /* Check that the appropriate expression bits match the
+		     * original parameter bits. */
+// HERE: Verify that the values match and then print the name.
+//       Does this work with out of scope references? Check real parameters.
+		  emit_id(ivl_parameter_basename(par));
+		  return;
+	    }
+      }
+
+	/* If the scopes don't match then we assume this is an empty port. */
+      if (const_scope != scope)  {
+	      /* This constant could really be from an input port. */
+	    if (emit_as_input(scope, net_const)) return;
+	    fprintf(vlog_out, "/* Empty */");
+	    return;
+      }
+
+      switch (ivl_const_type(net_const)) {
 	case IVL_VT_LOGIC:
 	case IVL_VT_BOOL:
-	    emit_number(ivl_const_bits(const_net),
-	                ivl_const_width(const_net),
-	                ivl_const_signed(const_net),
-	                ivl_const_file(const_net),
-	                ivl_const_lineno(const_net));
+	    emit_number(ivl_const_bits(net_const),
+	                ivl_const_width(net_const),
+	                ivl_const_signed(net_const),
+	                ivl_const_file(net_const),
+	                ivl_const_lineno(net_const));
+	    break;
+	case IVL_VT_STRING:
+	    emit_number_as_string(net_const);
 	    break;
 	case IVL_VT_REAL:
-	    emit_real_number(ivl_const_real(const_net));
+	    emit_real_number(ivl_const_real(net_const));
 	    break;
 	default:
 	    fprintf(vlog_out, "<invalid>");
 	    fprintf(stderr, "%s:%u: vlog95 error: Unknown constant type "
 	                    "(%d).\n",
-	                    ivl_const_file(const_net),
-	                    ivl_const_lineno(const_net),
-	                    (int)ivl_const_type(const_net));
+	                    ivl_const_file(net_const),
+	                    ivl_const_lineno(net_const),
+	                    (int)ivl_const_type(net_const));
 	    vlog_errors += 1;
 	    break;
       }
@@ -517,11 +605,11 @@ static unsigned find_const_nexus(ivl_scope_t scope, ivl_nexus_t nex)
       count = ivl_nexus_ptrs(nex);
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
-	    ivl_net_const_t const_net = ivl_nexus_ptr_con(nex_ptr);
+	    ivl_net_const_t net_const = ivl_nexus_ptr_con(nex_ptr);
 // HERE: Do we need to check for duplicates?
-	    if (const_net) {
+	    if (net_const) {
 		  assert(! ivl_nexus_ptr_pin(nex_ptr));
-		  emit_const_nexus(scope, const_net);
+		  emit_const_nexus(scope, net_const);
 		  return 1;
 	    }
       }

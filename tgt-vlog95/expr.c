@@ -244,7 +244,7 @@ static void emit_expr_scope(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 static unsigned emit_param_name_in_scope(ivl_scope_t scope, ivl_expr_t expr)
 {
       unsigned idx, count, lineno;
-      const char* file;
+      const char *file;
       count = ivl_scope_params(scope);
       file = ivl_expr_file(expr);
       lineno = ivl_expr_lineno(expr);
@@ -253,7 +253,7 @@ static unsigned emit_param_name_in_scope(ivl_scope_t scope, ivl_expr_t expr)
 	    if (lineno != ivl_parameter_lineno(par)) continue;
 	    if (strcmp(file, ivl_parameter_file(par)) == 0) {
 		    /* Check that the appropriate expression bits match the
-		     * the original parameter bits. */
+		     * original parameter bits. */
 		  ivl_expr_t pex = ivl_parameter_expr(par);
 		  unsigned wid = ivl_expr_width(expr);
 		  unsigned param_wid = ivl_expr_width(pex);
@@ -271,6 +271,8 @@ static unsigned emit_param_name_in_scope(ivl_scope_t scope, ivl_expr_t expr)
 			      break;
 			}
 		  }
+// HERE: Does this work with an out of scope parameter reference?
+//       What about real parameters?
 		  emit_id(ivl_parameter_basename(par));
 		  return 1;
 	    }

@@ -77,7 +77,7 @@ static void emit_bits(const char *bits, unsigned nbits, unsigned is_signed)
       unsigned has_undef = 0;
 
 	/* Check for an undefined bit. */
-      for (idx = (int)nbits -1; idx >= 0; idx -= 1) {
+      for (idx = (int)nbits-1; idx >= 0; idx -= 1) {
 	    if ((bits[idx] != '0') && (bits[idx] != '1')) {
 		  has_undef = 1;
 		  break;
