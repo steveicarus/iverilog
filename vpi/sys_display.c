@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -171,7 +171,7 @@ static char * format_as_string(int ljust, int plus, int ld_zero, int width,
     size += sprintf(&buf[size], "%d", width);
   if (prec != -1)
     size += sprintf(&buf[size], ".%d", prec);
-  buf[size++] = fmt;
+  if (fmt) buf[size++] = fmt;
   /* The same goes here ">"! */
   buf[size++] = '>';
   buf[size] = '\0';
@@ -276,6 +276,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
   switch (fmt) {
 
     case '%':
+    case '\0':
       if (ljust != 0  || plus != 0 || ld_zero != 0 || width != -1 ||
           prec != -1) {
         vpi_printf("WARNING: %s:%d: invalid format %s%s.\n",
@@ -844,7 +845,7 @@ static unsigned int get_format(char **rtn, char *fmt,
       memcpy(*rtn+size-1, result, cnt);
       free(result);
       size += cnt;
-      cp += 1;
+      if (*cp) cp += 1;
     }
   }
   *(*rtn+size-1) = '\0';
