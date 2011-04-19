@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -50,18 +50,18 @@ void PGenerate::probe_for_direct_nesting_(void)
 	// cannot be direct nested.
       if (scope_name[0] != '$') return;
 
-      if (tasks.size() > 0) return;
-      if (funcs.size() > 0) return;
-      if (gates.size() > 0) return;
-      if (parameters.size() > 0) return;
-      if (localparams.size() > 0) return;
-      if (events.size() > 0) return;
-      if (wires.size() > 0) return;
-      if (genvars.size() > 0) return;
-      if (behaviors.size() > 0) return;
-      if (analog_behaviors.size() > 0) return;
+      if (! tasks.empty()) return;
+      if (! funcs.empty()) return;
+      if (! gates.empty()) return;
+      if (! parameters.empty()) return;
+      if (! localparams.empty()) return;
+      if (! events.empty()) return;
+      if (! wires.empty()) return;
+      if (! genvars.empty()) return;
+      if (! behaviors.empty()) return;
+      if (! analog_behaviors.empty()) return;
 
-      if (generate_schemes.size() == 0) return;
+      if (generate_schemes.empty()) return;
 
       switch (generate_schemes.size()) {
 	  case 1: {

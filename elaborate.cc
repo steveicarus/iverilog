@@ -2307,7 +2307,6 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 			      return 0;
 			}
 			st = event_->elaborate(des, scope);
-			st->set_line(*this);
 			if (st == 0) {
 			      cerr << event_->get_fileline() << ": error: "
 			              "unable to elaborate event expression."
@@ -2315,6 +2314,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 			      des->errors += 1;
 			      return 0;
 			}
+			st->set_line(*this);
 
 			  // If the expression is a constant, handle
 			  // certain special iteration counts.
@@ -2341,7 +2341,6 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 			}
 		  } else {
 			st = event_->elaborate_st(des, scope, a2);
-			st->set_line(*this);
 			if (st == 0) {
 			      cerr << event_->get_fileline() << ": error: "
 			              "unable to elaborate event expression."
@@ -2349,6 +2348,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 			      des->errors += 1;
 			      return 0;
 			}
+			st->set_line(*this);
 		  }
 	    } else {
 		  NetPDelay*de = new NetPDelay(delay, a2);

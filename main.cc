@@ -1164,7 +1164,7 @@ int main(int argc, char*argv[])
       return 0;
 
  errors_summary:
-      if (missing_modules.size() > 0) {
+      if (! missing_modules.empty()) {
 	    cerr << "*** These modules were missing:" << endl;
 
 	    map<perm_string,unsigned>::const_iterator idx;

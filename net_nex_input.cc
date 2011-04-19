@@ -124,7 +124,7 @@ NexusSet* NetESelect::nex_input(bool rem_out)
  */
 NexusSet* NetESFunc::nex_input(bool rem_out)
 {
-      if (parms_.size() == 0)
+      if (parms_.empty())
 	    return new NexusSet;
 
       NexusSet*result;

@@ -355,7 +355,7 @@ void pform_bind_attributes(map<perm_string,PExpr*>&attributes,
       if (attr == 0)
 	    return;
 
-      while (attr->size() > 0) {
+      while (! attr->empty()) {
 	    named_pexpr_t tmp = attr->front();
 	    attr->pop_front();
 	    attributes[tmp.name] = tmp.parm;
@@ -2340,7 +2340,7 @@ extern PSpecPath* pform_assign_path_delay(PSpecPath*path, list<PExpr*>*del)
       if (path == 0)
 	    return 0;
 
-      assert(path->delays.size() == 0);
+      assert(path->delays.empty());
 
       path->delays.resize(del->size());
       for (unsigned idx = 0 ;  idx < path->delays.size() ;  idx += 1) {

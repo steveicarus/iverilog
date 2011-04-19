@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -169,7 +169,7 @@ void PEConcat::dump(ostream&out) const
       if (repeat_)
 	    out << "{" << *repeat_;
 
-      if (parms_.size() == 0) {
+      if (parms_.empty()) {
 	    out << "{}";
 	    return;
       }
@@ -190,7 +190,7 @@ void PECallFunction::dump(ostream &out) const
 {
       out << path_ << "(";
 
-      if (parms_.size() > 0) {
+      if (! parms_.empty()) {
 	    if (parms_[0]) parms_[0]->dump(out);
 	    for (unsigned idx = 1; idx < parms_.size(); ++idx) {
 		  out << ", ";
@@ -478,7 +478,7 @@ void PGModule::dump(ostream&out, unsigned ind) const
       out << setw(ind) << "" << type_ << " ";
 
 	// If parameters are overridden by order, dump them.
-      if (overrides_ && overrides_->size() > 0) {
+      if (overrides_ && (! overrides_->empty())) {
 	    assert(parms_ == 0);
             out << "#(";
 
@@ -602,7 +602,7 @@ void PCallTask::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << path_;
 
-      if (parms_.size() > 0) {
+      if (! parms_.empty()) {
 	    out << "(";
 	    if (parms_[0])
 		  out << *parms_[0];
@@ -638,7 +638,7 @@ void PCase::dump(ostream&out, unsigned ind) const
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
 	    PCase::Item*cur = (*items_)[idx];
 
-	    if (cur->expr.size() == 0) {
+	    if (cur->expr.size()) {
 		  out << setw(ind+2) << "" << "default:";
 
 	    } else {

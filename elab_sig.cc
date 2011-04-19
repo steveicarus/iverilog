@@ -1088,7 +1088,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	// If this is an enumeration, then set the enumeration set for
 	// the new signal. This turns it into an enumeration.
       if (enum_type_) {
-	    ivl_assert(*this, enum_type_->names->size() > 0);
+	    ivl_assert(*this, ! enum_type_->names->empty());
 	    list<named_pexpr_t>::const_iterator sample_name = enum_type_->names->begin();
 	    netenum_t*use_enum = scope->enumeration_for_name(sample_name->name);
 	    sig->set_enumeration(use_enum);

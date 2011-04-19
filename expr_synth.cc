@@ -1346,7 +1346,7 @@ NetNet* NetESFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
       }
 
       NetEvWait*trigger = 0;
-      if (parms_.size() == 0) {
+      if (parms_.empty()) {
             trigger = make_func_trigger(des, scope, root);
       }
 
