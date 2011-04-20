@@ -1194,9 +1194,7 @@ static PLI_INT32 sys_q_full_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 	    val.format = vpiIntVal;
 	    val.value.integer = IVL_QUEUE_UNDEFINED_ID;
 	    vpi_put_value(status, &val, 0, vpiNoDelay);
-	    val.format = vpiIntVal;
-	    val.value.integer = 2;  /* An error value. */
-	    vpi_put_value(callh, &val, 0, vpiNoDelay);
+	    fill_variable_with_x(callh);
 	    return 0;
       }
 
