@@ -18,6 +18,7 @@ ivl_const_bits
 ivl_const_delay
 ivl_const_file
 ivl_const_lineno
+ivl_const_nex
 ivl_const_real
 ivl_const_scope
 ivl_const_signed
