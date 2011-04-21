@@ -57,12 +57,12 @@
 /*
  * Routine to add the given time to the the total time (high/low).
  */
-void add_to_wait_time(uint64_t *high, uint64_t *low, uint64_t time)
+void add_to_wait_time(uint64_t *high, uint64_t *low, uint64_t c_time)
 {
       uint64_t carry = 0U;
 
-      if ((UINT64_MAX - *low) < time) carry = 1U;
-      *low += time;
+      if ((UINT64_MAX - *low) < c_time) carry = 1U;
+      *low += c_time;
       assert((carry == 0U) || (*high < UINT64_MAX));
       *high += carry;
 }
@@ -229,7 +229,7 @@ static unsigned add_to_queue(int64_t idx, p_vpi_vecval job,
       PLI_INT32 elems = base[idx].elems;
       PLI_INT32 loc;
       s_vpi_time cur_time;
-      uint64_t time;
+      uint64_t c_time;
 
       assert(elems <= length);
 
@@ -256,10 +256,10 @@ static unsigned add_to_queue(int64_t idx, p_vpi_vecval job,
 	/* Save the current time with this entry for the statistics. */
       cur_time.type = vpiSimTime;
       vpi_get_time(NULL, &cur_time);
-      time = cur_time.high;
-      time <<= 32;
-      time |= cur_time.low;
-      base[idx].queue[loc].time = time;
+      c_time = cur_time.high;
+      c_time <<= 32;
+      c_time |= cur_time.low;
+      base[idx].queue[loc].time = c_time;
 
 	/* Increment the maximum length if needed. */
       if (base[idx].max_len == elems) base[idx].max_len += 1;
@@ -267,8 +267,8 @@ static unsigned add_to_queue(int64_t idx, p_vpi_vecval job,
 	/* Update the inter-arrival statistics. */
       assert(base[idx].number_of_adds < UINT64_MAX);
       base[idx].number_of_adds += 1;
-      if (base[idx].number_of_adds == 1) base[idx].first_add_time = time;
-      base[idx].latest_add_time = time;
+      if (base[idx].number_of_adds == 1) base[idx].first_add_time = c_time;
+      base[idx].latest_add_time = c_time;
 
       return 0;
 }
@@ -285,7 +285,7 @@ static unsigned remove_from_queue(int64_t idx, p_vpi_vecval job,
       PLI_INT32 elems = base[idx].elems - 1;
       PLI_INT32 loc;
       s_vpi_time cur_time;
-      uint64_t time;
+      uint64_t c_time;
 
       assert(elems >= -1);
 
@@ -314,21 +314,21 @@ static unsigned remove_from_queue(int64_t idx, p_vpi_vecval job,
 	/* Get the current simulation time. */
       cur_time.type = vpiSimTime;
       vpi_get_time(NULL, &cur_time);
-      time = cur_time.high;
-      time <<= 32;
-      time |= cur_time.low;
+      c_time = cur_time.high;
+      c_time <<= 32;
+      c_time |= cur_time.low;
 
 	/* Set the shortest wait time if needed. */
-      assert(time >= base[idx].queue[loc].time);
-      time -= base[idx].queue[loc].time;
-      if (time < base[idx].shortest_wait_time) {
-	    base[idx].shortest_wait_time = time;
+      assert(c_time >= base[idx].queue[loc].time);
+      c_time -= base[idx].queue[loc].time;
+      if (c_time < base[idx].shortest_wait_time) {
+	    base[idx].shortest_wait_time = c_time;
       }
       base[idx].have_shortest_statistic = 1;
 
 	/* Add the current element wait time to the total wait time. */
       add_to_wait_time(&(base[idx].wait_time_high), &(base[idx].wait_time_low),
-                       time);
+                       c_time);
 
       return 0;
 }
@@ -357,20 +357,21 @@ static PLI_INT32 get_maximum_queue_length(int64_t idx)
 static uint64_t get_longest_queue_time(int64_t idx)
 {
       s_vpi_time cur_time;
-      uint64_t time;
+      uint64_t c_time;
 
 	/* Get the current simulation time. */
       cur_time.type = vpiSimTime;
       vpi_get_time(NULL, &cur_time);
-      time = cur_time.high;
-      time <<= 32;
-      time |= cur_time.low;
+      c_time = cur_time.high;
+      c_time <<= 32;
+      c_time |= cur_time.low;
 
 	/* Subtract the element with the longest time (the head) from the
 	 * current time. */
-      time -= base[idx].queue[base[idx].head].time;
+      assert(c_time >= base[idx].queue[base[idx].head].time);
+      c_time -= base[idx].queue[base[idx].head].time;
 
-      return time;
+      return c_time;
 }
 
 /*
@@ -429,20 +430,21 @@ static uint64_t get_average_wait_time(int64_t idx)
       uint64_t high = base[idx].wait_time_high;
       uint64_t low = base[idx].wait_time_low;
       s_vpi_time cur_time;
-      uint64_t time, add_time;
+      uint64_t c_time, add_time;
 
 	/* Get the current simulation time. */
       cur_time.type = vpiSimTime;
       vpi_get_time(NULL, &cur_time);
-      time = cur_time.high;
-      time <<= 32;
-      time |= cur_time.low;
+      c_time = cur_time.high;
+      c_time <<= 32;
+      c_time |= cur_time.low;
 
 	/* For each element still in the queue, add its wait time to the
 	 * total wait time. */
       for (count = 0; count < elems; count += 1) {
 	    add_time = base[idx].queue[loc].time;
-	    add_to_wait_time(&high, &low, time-add_time);
+	    assert(c_time >= add_time);
+	    add_to_wait_time(&high, &low, c_time-add_time);
 
 	      /* Move to the next element. */
 	    loc += 1;
@@ -697,7 +699,7 @@ static void fill_variable_with_x(vpiHandle var)
  * of the normal OK. The value is a time and needs to be scaled to the
  * calling module's timescale.
  */
-static PLI_INT32 fill_variable_with_scaled_time(vpiHandle var, uint64_t time)
+static PLI_INT32 fill_variable_with_scaled_time(vpiHandle var, uint64_t c_time)
 {
       s_vpi_value val;
       PLI_INT32 size = vpi_get(vpiSize, var);
@@ -721,9 +723,9 @@ static PLI_INT32 fill_variable_with_scaled_time(vpiHandle var, uint64_t time)
 	    scale *= 10;
 	    units -= 1;
       }
-      frac = time % scale;
-      time /= scale;
-      if ((scale > 1) && (frac >= scale/2)) time += 1;
+      frac = c_time % scale;
+      c_time /= scale;
+      if ((scale > 1) && (frac >= scale/2)) c_time += 1;
 
 	/* Find the maximum value + 1 that can be put into the variable. */
       if (size < 64) {
@@ -734,7 +736,7 @@ static PLI_INT32 fill_variable_with_scaled_time(vpiHandle var, uint64_t time)
 	/* If the time is too big to fit then return the maximum positive
 	 * value and that the value overflowed. Otherwise, return the time
 	 * and OK. */
-      if (max_val && (time >= max_val)) {
+      if (max_val && (c_time >= max_val)) {
 	      /* For a single word only the MSB is cleared if signed. */
 	    if (words == 1) {
 		  if (is_signed) {
@@ -766,9 +768,9 @@ static PLI_INT32 fill_variable_with_scaled_time(vpiHandle var, uint64_t time)
 	      /* Add the time to the vector. */
 	    switch (words) {
 	      default:
-		  val_ptr[1].aval = (time >> 32) & 0xffffffff;
+		  val_ptr[1].aval = (c_time >> 32) & 0xffffffff;
 	      case 1:
-		  val_ptr[0].aval = time & 0xffffffff;
+		  val_ptr[0].aval = c_time & 0xffffffff;
 	    }
 	    rtn = IVL_QUEUE_OK;
       }
@@ -1325,8 +1327,8 @@ static PLI_INT32 sys_q_exam_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 		  fill_variable_with_x(value);
 		  rtn = IVL_QUEUE_NO_STATISTICS;
 	    } else {
-		  uint64_t time = get_mean_interarrival_time(idx);
-		  rtn = fill_variable_with_scaled_time(value, time);
+		  uint64_t ia_time = get_mean_interarrival_time(idx);
+		  rtn = fill_variable_with_scaled_time(value, ia_time);
 	    }
 	    break;
 	  /* The maximum queue length. */
@@ -1341,8 +1343,8 @@ static PLI_INT32 sys_q_exam_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 		  fill_variable_with_x(value);
 		  rtn = IVL_QUEUE_NO_STATISTICS;
 	    } else {
-		  uint64_t time = get_shortest_wait_time(idx);
-		  rtn = fill_variable_with_scaled_time(value, time);
+		  uint64_t sw_time = get_shortest_wait_time(idx);
+		  rtn = fill_variable_with_scaled_time(value, sw_time);
 	    }
 	    break;
 	  /* The longest wait time for elements still in the queue. */
@@ -1351,8 +1353,8 @@ static PLI_INT32 sys_q_exam_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 		  fill_variable_with_x(value);
 		  rtn = IVL_QUEUE_NO_STATISTICS;
 	    } else {
-		  uint64_t time = get_longest_queue_time(idx);
-		  rtn = fill_variable_with_scaled_time(value, time);
+		  uint64_t lq_time = get_longest_queue_time(idx);
+		  rtn = fill_variable_with_scaled_time(value, lq_time);
 	    }
 	    break;
 	  /* The average queue wait time. */
@@ -1361,8 +1363,8 @@ static PLI_INT32 sys_q_exam_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 		  fill_variable_with_x(value);
 		  rtn = IVL_QUEUE_NO_STATISTICS;
 	    } else {
-		  uint64_t time = get_average_wait_time(idx);
-		  rtn = fill_variable_with_scaled_time(value, time);
+		  uint64_t aw_time = get_average_wait_time(idx);
+		  rtn = fill_variable_with_scaled_time(value, aw_time);
 	    }
 	    break;
 	default:
