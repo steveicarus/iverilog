@@ -16,10 +16,10 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include "sys_priv.h"
 #include <assert.h>
 #include <inttypes.h>
 #include <stdlib.h>
-#include "sys_priv.h"
 #include "ivl_alloc.h"
 
 /*

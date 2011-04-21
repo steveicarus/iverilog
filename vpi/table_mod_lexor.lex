@@ -59,13 +59,13 @@ SCALE [afpnumkKMGT]
   /* Recognize a real value with a Verilog-AMS scale. */
 [+-]?[0-9][0-9_]*(\.[0-9][0-9_]*)?{SCALE} {
 	    yylval.real = get_scaled_real(yytext);
-     	    return REAL;
+	    return REAL;
       }
 
   /* Recognize and other numeric value. */
 [+-]?[0-9][0-9_]*(\.[0-9][0-9_]*)?([eE][+-]?[0-9][0-9_]*)? {
 	    yylval.real = get_real(yytext);
-     	    return REAL;
+	    return REAL;
       }
 
 %%
