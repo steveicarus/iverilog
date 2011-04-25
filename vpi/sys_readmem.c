@@ -56,7 +56,7 @@ static void get_mem_params(vpiHandle argv, vpiHandle callh, const char *name,
 		             "value.\n", name);
 	    }
 
-	    /* Get optional forth parameter (finish address). */
+	    /* Get optional fourth parameter (finish address). */
 	    *stop_item = vpi_scan(argv);
 	    if (*stop_item) {
 		  /* Warn the user if they gave a real value for the finish
@@ -321,7 +321,7 @@ static PLI_INT32 sys_readmem_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
       wwid = vpi_get(vpiSize, vpi_handle_by_index(mitem, min_addr));
 
-      /* variable that will be uses by the lexer to pass values
+      /* variable that will be used by the lexer to pass values
 	 back to this code */
       value.format = vpiVectorVal;
       value.value.vector = calloc((wwid+31)/32, sizeof(s_vpi_vecval));

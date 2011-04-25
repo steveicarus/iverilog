@@ -285,7 +285,7 @@ One might note that the quote from section 4.1.14 says "Unsized
 expressions...", so arguably accepting (15+1) or even (16+0) as an
 operand to a concatenation is not a violation of the letter of the
 law. However, the very next sentence of the quote expresses the
-intent, and accepting (15+1) as having a more defined size taen (16)
+intent, and accepting (15+1) as having a more defined size than (16)
 seems to be a violation of that intent.
 
 Whatever a compiler decides the size is, the user has no way to

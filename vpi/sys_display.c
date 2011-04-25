@@ -608,7 +608,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           /* The 512 (513-1 for EOL) is more than enough for any double
            * value (309 digits plus a decimal point maximum). Because of
            * scaling this could be larger. For decimal values you can
-           * have an arbitraty value so you can overflow the buffer, but
+           * have an arbitrary value so you can overflow the buffer, but
            * for now we will assume the user will use this as intended
            * (pass a time variable or the result of a time function). */
           tbuf = malloc((513+suff_len)*sizeof(char));

@@ -32,7 +32,7 @@ access the design.
 ABOUT SPECIFIC EXPRESSION TYPES
 
 In this section find notes about the various kinds of expression
-nodes. The notes here are in addition to the more generation
+nodes. The notes here are in addition to the more general
 documentation in the ivl_target.h header file.
 
 * IVL_EX_CONCAT

@@ -60,7 +60,7 @@ _BEGIN_DECL
  * around.
  *
  * ivl_array_t
- *    This object represent an array that can be a memory or a net
+ *    This object represents an array that can be a memory or a net
  *    array. (They are the same from the perspective of ivl_target.h.)
  *
  * ivl_branch_t
@@ -82,14 +82,13 @@ _BEGIN_DECL
  *    particular gets the type of the node in the form of an
  *    ivl_expr_type_t enumeration value.
  *
- *    Objects of this type represent expressions in
- *    processes. Structural expressions are instead treated as logic
- *    gates.
+ *    Objects of this type represent expressions in processes.
+ *    Structural expressions are instead treated as logic gates.
  *
  * ivl_island_t
  *    Certain types of objects may belong to islands. The island that
  *    they belong to is represented by the ivl_island_t cookie. To
- *    know if object belong to the same island, it is sufficient to
+ *    know if objects belong to the same island, it is sufficient to
  *    compare island cookies. If a==b, then island a is the same as
  *    island b.
  *
@@ -1475,7 +1474,7 @@ extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);
  *    that are input only, drive0 and drive1 are both IVL_DR_HiZ.
  *
  *    The strength of strength-aware devices (such as nmos devices)
- *    does not really matter, as long at the output is not
+ *    does not really matter, as long as the output is not
  *    IVL_DR_HiZ. Testing for HiZ drivers is how code generators
  *    detect inputs.
  *
@@ -1543,7 +1542,7 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
  *
  * ivl_parameter_file
  * ivl_parameter_lineno
- *    Returns the file and line where this parameter is define
+ *    Returns the file and line where this parameter is defined
  */
 extern const char* ivl_parameter_basename(ivl_parameter_t net);
 extern ivl_scope_t ivl_parameter_scope(ivl_parameter_t net);

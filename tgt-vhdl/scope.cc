@@ -636,7 +636,7 @@ static void declare_one_signal(vhdl_entity *ent, ivl_signal_t sig,
 }
 
 // Declare all signals and ports for a scope.
-// This is done in two phases: first the ports are added then then
+// This is done in two phases: first the ports are added, then
 // internal signals. Making two passes like this ensures ports get
 // first pick of names when there is a collision.
 static void declare_signals(vhdl_entity *ent, ivl_scope_t scope)
