@@ -2106,7 +2106,6 @@ port_declaration
 	port_declaration_context.sign_flag = $5;
 	delete port_declaration_context.range;
 	port_declaration_context.range = $6;
-	delete $1;
 	delete[]$7;
 	$$ = ptmp;
       }
@@ -2125,7 +2124,6 @@ port_declaration
 	port_declaration_context.sign_flag = $4;
 	delete port_declaration_context.range;
 	port_declaration_context.range = use_range;
-	delete $1;
 	delete[]$5;
 	$$ = ptmp;
       }
@@ -2143,7 +2141,6 @@ port_declaration
 	port_declaration_context.sign_flag = $5;
 	delete port_declaration_context.range;
 	port_declaration_context.range = $6;
-	delete $1;
 	delete[]$7;
 	$$ = ptmp;
       }
@@ -2161,7 +2158,6 @@ port_declaration
 	port_declaration_context.sign_flag = $5;
 	delete port_declaration_context.range;
 	port_declaration_context.range = $6;
-	delete $1;
 	delete[]$7;
 	$$ = ptmp;
       }
@@ -2179,7 +2175,6 @@ port_declaration
 	port_declaration_context.sign_flag = $5;
 	delete port_declaration_context.range;
 	port_declaration_context.range = $6;
-	delete $1;
 	delete[]$7;
 	$$ = ptmp;
       }
@@ -2200,7 +2195,6 @@ port_declaration
 
 	pform_make_reginit(@7, name, $9);
 
-	delete $1;
 	delete[]$7;
 	$$ = ptmp;
       }
@@ -2219,7 +2213,6 @@ port_declaration
 	port_declaration_context.sign_flag = $4;
 	delete port_declaration_context.range;
 	port_declaration_context.range = use_range;
-	delete $1;
 	delete[]$5;
 	$$ = ptmp;
       }
