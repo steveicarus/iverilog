@@ -42,7 +42,7 @@ class ScopeBase {
     protected:
 	// Signal declarations...
       std::map<perm_string,Signal*> signals_;
-      	// Component declarations...
+	// Component declarations...
       std::map<perm_string,ComponentBase*> components_;
 	// Type declarations...
       std::map<perm_string,const VType*> types_;
@@ -83,7 +83,7 @@ class ActiveScope : public ScopeBase {
     public:
       ActiveScope() { }
       ActiveScope(ActiveScope*par) : ScopeBase(*par) { }
-      
+
       ~ActiveScope() { }
 
       void use_from(const ScopeBase*that) { do_use_from(that); }

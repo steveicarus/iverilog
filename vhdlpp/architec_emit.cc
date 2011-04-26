@@ -45,7 +45,7 @@ int Architecture::emit(ostream&out, Entity*entity)
       for (map<perm_string,struct const_t>::iterator cur = constants_.begin()
 		 ; cur != constants_.end() ; ++cur) {
 
-	    out << "localparam " << cur->first 	<< " = ";
+	    out << "localparam " << cur->first << " = ";
 	    errors += cur->second.val->emit(out, entity, this);
 	    out << ";" << endl;
       }
