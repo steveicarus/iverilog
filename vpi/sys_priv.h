@@ -1,7 +1,7 @@
 #ifndef __vpi_sys_priv_H
 #define __vpi_sys_priv_H
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -38,8 +38,8 @@ extern PLI_UINT64 timerec_to_time64(const struct t_vpi_time*timerec);
 extern char *as_escaped(char *arg);
 extern char *get_filename(vpiHandle callh, char *name, vpiHandle file);
 
-extern void check_for_extra_args(vpiHandle argv, vpiHandle callh,
-                                 char *name, char *arg_str, unsigned opt);
+extern void check_for_extra_args(vpiHandle argv, vpiHandle callh, char *name,
+                                 const char *arg_str, unsigned opt);
 
 struct timeformat_info_s {
       int units;

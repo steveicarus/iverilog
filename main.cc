@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -524,7 +524,7 @@ static void read_iconfig_file(const char*ipath)
 	    }
 
 	    if (strcmp(buf, "basedir") == 0) {
-		  free((char *)basedir);
+		  free((void *)basedir);
 		  basedir = strdup(cp);
 
 	    } else if (strcmp(buf, "debug") == 0) {
@@ -598,7 +598,7 @@ static void read_iconfig_file(const char*ipath)
 		  flags["VPI_MODULE_LIST"] = vpi_module_list;
 
 	    } else if (strcmp(buf, "out") == 0) {
-		  free((char *)flags["-o"]);
+		  free((void *)flags["-o"]);
 		  flags["-o"] = strdup(cp);
 
 	    } else if (strcmp(buf, "sys_func") == 0) {
@@ -709,17 +709,17 @@ static void EOC_cleanup(void)
 
       for (list<const char*>::iterator suf = library_suff.begin() ;
            suf != library_suff.end() ; suf ++ ) {
-	    free((char *)*suf);
+	    free((void *)*suf);
       }
       library_suff.clear();
 
-      free((char *) basedir);
+      free((void *) basedir);
       free(ivlpp_string);
       free(depfile_name);
 
       for (map<string, const char*>::iterator flg = flags.begin() ;
            flg != flags.end() ; flg ++ ) {
-	    free((char *)flg->second);
+	    free((void *)flg->second);
       }
       flags.clear();
 

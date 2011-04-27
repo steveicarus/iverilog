@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)";
 /*
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -124,12 +124,13 @@ static int flist_read_flags(const char*path)
 
 	    if (strcmp(cp,"D") == 0) {
 		  char*val = strchr(arg, '=');
-		  if (val)
+		  const char *valo = "1";
+		  if (val) {
 			*val++ = 0;
-		  else
-			val = "1";
+			valo = val;
+		  }
 
-		  define_macro(arg, val, 0, 0);
+		  define_macro(arg, valo, 0, 0);
 
 	    } else if (strcmp(cp,"I") == 0) {
 		  include_dir = realloc(include_dir,

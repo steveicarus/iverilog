@@ -60,7 +60,7 @@ static void sys_lxt_or_vcd_register()
       int idx;
       struct t_vpi_vlog_info vlog_info;
 
-      char*dumper;
+      const char*dumper;
 
 	/* Get the dumper of choice from the IVERILOG_DUMPER
 	   environment variable. */

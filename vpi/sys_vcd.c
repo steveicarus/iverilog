@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -710,7 +710,7 @@ static int draw_scope(vpiHandle item, vpiHandle callh)
 {
       int depth;
       const char *name;
-      char *type;
+      const char *type;
 
       vpiHandle scope = vpi_handle(vpiScope, item);
       if (!scope) return 0;

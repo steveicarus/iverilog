@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -102,7 +102,7 @@ char *get_filename(vpiHandle callh, char *name, vpiHandle file)
 }
 
 void check_for_extra_args(vpiHandle argv, vpiHandle callh, char *name,
-                          char *arg_str, unsigned opt)
+                          const char *arg_str, unsigned opt)
 {
 	/* Check that there are no extra arguments. */
       if (vpi_scan(argv) != 0) {

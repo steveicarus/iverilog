@@ -879,6 +879,7 @@ static unsigned int get_numeric(char **rtn, struct strobe_cb_info *info,
 static char *get_display(unsigned int *rtnsz, struct strobe_cb_info *info)
 {
   char *result, *fmt, *rtn, *func_name;
+  const char *cresult;
   s_vpi_value value;
   unsigned int idx, size, width;
   char buf[256];
@@ -999,10 +1000,10 @@ static char *get_display(unsigned int *rtnsz, struct strobe_cb_info *info)
         vpi_printf("WARNING: %s:%d: unknown argument type (%s) given to %s!\n",
                    info->filename, info->lineno, vpi_get_str(vpiType, item),
                    info->name);
-        result = "<?>";
-        width = strlen(result);
+        cresult = "<?>";
+        width = strlen(cresult);
         rtn = realloc(rtn, (size+width)*sizeof(char));
-        memcpy(rtn+size-1, result, width);
+        memcpy(rtn+size-1, cresult, width);
         break;
     }
     size += width;
@@ -1756,9 +1757,9 @@ static PLI_INT32 sys_timeformat_calltf(PLI_BYTE8*xx)
       return 0;
 }
 
-static char *pts_convert(int value)
+static const char *pts_convert(int value)
 {
-      char *string;
+      const char *string;
       switch (value) {
             case   0: string = "1s";    break;
             case  -1: string = "100ms"; break;

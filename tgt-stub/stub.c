@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -35,7 +35,7 @@
 
 static const char*version_string =
 "Icarus Verilog STUB Code Generator " VERSION " (" VERSION_TAG ")\n\n"
-"Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)\n\n"
+"Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)\n\n"
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"
 "  the Free Software Foundation; either version 2 of the License, or\n"
@@ -1525,7 +1525,7 @@ static void show_logic(ivl_net_logic_t net)
 static int show_scope(ivl_scope_t net, void*x)
 {
       unsigned idx;
-      char *is_auto;
+      const char *is_auto;
 
       fprintf(out, "scope: %s (%u parameters, %u signals, %u logic)",
 	      ivl_scope_name(net), ivl_scope_params(net),
