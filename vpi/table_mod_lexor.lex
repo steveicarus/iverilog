@@ -31,8 +31,8 @@
 #include "table_mod_parse.h"
 #include "ivl_alloc.h"
 
-static double get_scaled_real(const char *yytext);
-static double get_real(const char *yytext);
+static double get_scaled_real(const char *text);
+static double get_real(const char *text);
 
 #define yylval tblmodlval
 %}
