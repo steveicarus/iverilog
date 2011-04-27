@@ -39,7 +39,7 @@ extern const char *vcd_names_search(struct vcd_names_list_s*tab,
 
 extern void vcd_names_sort(struct vcd_names_list_s*tab);
 
-extern void vcd_names_delete();
+extern void vcd_names_delete(struct vcd_names_list_s*tab);
 
 extern const char*find_nexus_ident(int nex);
 extern void       set_nexus_ident(int nex, const char *id);

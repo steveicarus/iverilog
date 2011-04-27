@@ -41,7 +41,7 @@ static int   is_defined(const char*name);
 
 static int   macro_needs_args(const char*name);
 static void  macro_start_args();
-static void  macro_add_to_arg();
+static void  macro_add_to_arg(int is_white_space);
 static void  macro_finish_arg();
 static void  do_expand(int use_args);
 static const char* macro_name();
