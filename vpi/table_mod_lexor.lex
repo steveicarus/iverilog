@@ -1,4 +1,4 @@
-
+%option prefix="tblmod"
 %option never-interactive
 %option noinput
 %option nounput

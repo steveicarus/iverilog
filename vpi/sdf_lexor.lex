@@ -1,4 +1,4 @@
-
+%option prefix="sdf"
 %option never-interactive
 %option nounput
 %option noinput

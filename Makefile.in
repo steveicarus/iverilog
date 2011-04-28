@@ -248,7 +248,7 @@ syn-rules.cc: $(srcdir)/syn-rules.y
 	$(YACC) --verbose -p syn_ -o syn-rules.cc $(srcdir)/syn-rules.y
 
 lexor.cc: $(srcdir)/lexor.lex
-	$(LEX) -PVL -s -olexor.cc $(srcdir)/lexor.lex
+	$(LEX) -s -olexor.cc $(srcdir)/lexor.lex
 
 lexor_keyword.o: lexor_keyword.cc parse.h
 

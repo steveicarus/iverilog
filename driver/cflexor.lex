@@ -1,4 +1,4 @@
-
+%option prefix="cf"
 %option nounput
 %option noinput
 

@@ -1,4 +1,4 @@
-
+%option prefix="readmem"
 %option nounput
 %option noinput
 

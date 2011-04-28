@@ -1,4 +1,4 @@
-
+%option prefix="yy"
 %option never-interactive
 %option nounput
 

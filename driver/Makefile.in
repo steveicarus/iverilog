@@ -80,7 +80,7 @@ iverilog@EXEEXT@: $O
 	$(CC) $(LDFLAGS) $O -o iverilog@EXEEXT@ @EXTRALIBS@
 
 cflexor.c: cflexor.lex
-	$(LEX) -s -Pcf -ocflexor.c $(srcdir)/cflexor.lex
+	$(LEX) -s -ocflexor.c $(srcdir)/cflexor.lex
 
 cfparse.h cfparse.c: cfparse.y
 	$(YACC) --verbose -t -d -o cfparse.c --name-prefix=cf $(srcdir)/cfparse.y

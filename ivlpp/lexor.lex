@@ -1,3 +1,4 @@
+%option prefix="yy"
 %{
 /*
  * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
