@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2011  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -79,7 +79,7 @@ void vhdl_element::set_comment(std::string comment)
 void vhdl_element::emit_comment(std::ostream &of, int level,
                                 bool end_of_line) const
 {
-   if (comment_.size() > 0) {
+   if (! comment_.empty()) {
       if (end_of_line)
          of << "  -- " << comment_;
       else {

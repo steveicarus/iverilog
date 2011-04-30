@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for expressions.
  *
- *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2011  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -313,8 +313,10 @@ static vhdl_expr *translate_binary(ivl_expr_t e)
       return NULL;
 
    vhdl_expr *rhs = translate_expr(ivl_expr_oper2(e));
-   if (NULL == rhs)
+   if (NULL == rhs) {
+      delete lhs;
       return NULL;
+   }
 
    int lwidth = lhs->get_type()->get_width();
    int rwidth = rhs->get_type()->get_width();

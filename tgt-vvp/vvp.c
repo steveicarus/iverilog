@@ -59,7 +59,7 @@ __inline__ static void draw_execute_header(ivl_design_t des)
       }
       fprintf(vvp_out, ":ivl_version \"" VERSION "\"");
 	/* I am assuming that a base release will have a blank tag. */
-      if (strcmp(VERSION_TAG, "") != 0) {
+      if (*VERSION_TAG != 0) {
 	    fprintf(vvp_out, " \"(" VERSION_TAG ")\"");
       }
       fprintf(vvp_out, ";\n");

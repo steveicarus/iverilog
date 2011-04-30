@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1440,7 +1440,9 @@ void array_word_change(vvp_array_t array, unsigned long addr)
 class array_resolv_list_t : public resolv_list_s {
 
     public:
-      explicit array_resolv_list_t(char*lab) : resolv_list_s(lab) { }
+      explicit array_resolv_list_t(char*lab) : resolv_list_s(lab) {
+	    array = 0;
+      }
 
       vvp_array_t*array;
       bool resolve(bool mes);

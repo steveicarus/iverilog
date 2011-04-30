@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2652,7 +2652,7 @@ vvp_vector8_t::vvp_vector8_t(const vvp_vector8_t&that)
 {
       size_ = that.size_;
       if (size_ <= sizeof val_) {
-	    ptr_ = that.ptr_;
+	    memcpy(val_, that.val_, sizeof val_);
       } else {
 	    ptr_ = new unsigned char[size_];
 	    memcpy(ptr_, that.ptr_, size_);

@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2011  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -230,7 +230,7 @@ void vhdl_process::emit(std::ostream &of, int level) const
 
    newline(of, level);
    emit_comment(of, level);
-   if (name_.size() > 0)
+   if (! name_.empty())
       of << name_ << ": ";
    of << "process ";
 
@@ -315,7 +315,7 @@ void vhdl_comp_inst::emit(std::ostream &of, int level) const
    of << inst_name_ << ": " << comp_name_;
 
    // If there are no ports or generics we don't need to mention them...
-   if (mapping_.size() > 0) {
+   if (! mapping_.empty()) {
       newline(of, indent(level));
       of << "port map (";
 
@@ -362,7 +362,7 @@ void vhdl_component_decl::emit(std::ostream &of, int level) const
    emit_comment(of, level);
    of << "component " << name_ << " is";
 
-   if (ports_.size() > 0) {
+   if (! ports_.empty()) {
       newline(of, indent(level));
       of << "port (";
       emit_children<vhdl_decl>(of, ports_, indent(level), ";");
@@ -956,7 +956,7 @@ void vhdl_binop_expr::emit(std::ostream &of, int level) const
 {
    open_parens(of);
 
-   assert(operands_.size() > 0);
+   assert(! operands_.empty());
    std::list<vhdl_expr*>::const_iterator it = operands_.begin();
 
    (*it)->emit(of, level);

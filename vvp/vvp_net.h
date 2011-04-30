@@ -1,7 +1,7 @@
 #ifndef __vvp_net_H
 #define __vvp_net_H
 /*
- * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -924,8 +924,7 @@ inline vvp_vector8_t::vvp_vector8_t(unsigned size__)
 : size_(size__)
 {
       if (size_ <= sizeof val_) {
-	      // This should set all the bytes of val_ to 0
-	    ptr_ = 0;
+	    memset(val_, 0, sizeof val_);
       } else {
 	    ptr_ = new unsigned char[size_];
 	    memset(ptr_, 0, size_);

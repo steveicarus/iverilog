@@ -405,7 +405,9 @@ void postpone_functor_input(vvp_net_ptr_t port, char*lab)
  */
 
 struct functor_gen_resolv_list_s: public resolv_list_s {
-      explicit functor_gen_resolv_list_s(char*txt) : resolv_list_s(txt) { }
+      explicit functor_gen_resolv_list_s(char*txt) : resolv_list_s(txt) {
+	    ref = 0;
+      }
       vvp_net_t**ref;
       virtual bool resolve(bool mes);
 };
