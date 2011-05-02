@@ -22,7 +22,7 @@
 #include <vpi_user.h>
 
 extern int parse_table_model(FILE *fp, const char *file_name, vpiHandle callh,
-                             unsigned min_cols);
+                             unsigned indep__cols, unsigned dep_col);
 
 extern int tblmodlex();
 extern void destroy_tblmod_lexor();

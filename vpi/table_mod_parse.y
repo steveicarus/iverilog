@@ -18,13 +18,18 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include "table_mod.h"
+#include "ivl_alloc.h"
 
 static unsigned minimum_columns;
-static unsigned number_of_columns = 0U;
+static unsigned indep_columns;
+static unsigned dep_column;
+static unsigned number_of_columns = 0;
 static unsigned cur_columns;
+static double *values;
 static const char *in_file_name;
 
 extern int tblmodlex(void);
@@ -48,9 +53,17 @@ table : point
 
 point : columns EOL
       {
-  fprintf(stderr, "\n");
+  unsigned idx;
+  fprintf(stderr, "%#g", values[0]);
+  for (idx = 1; idx < indep_columns; idx += 1) {
+    fprintf(stderr, ", %#g", values[idx]);
+  }
+  fprintf(stderr, " => %#g\n", values[indep_columns]);
 	    if (number_of_columns) {
-		  if (cur_columns != number_of_columns) {
+		  if (cur_columns < minimum_columns) {
+			yyerror("Found %u columns, need at least %u.",
+			        cur_columns, minimum_columns);
+		  } else if (cur_columns != number_of_columns) {
 			yyerror("Found %u columns, expected %u.",
 			        cur_columns, number_of_columns);
 		  }
@@ -58,32 +71,39 @@ point : columns EOL
 		  if (cur_columns < minimum_columns) {
 			yyerror("Found %u columns, need at least %u.",
 			        cur_columns, minimum_columns);
-		  }
-		  number_of_columns = cur_columns;
+		  } else number_of_columns = cur_columns;
 	    }
       }
 
 columns : REAL
       {
-  fprintf(stderr, "%#g", $1);
-	    cur_columns = 1U;
+	    values[0] = $1;
+	    cur_columns = 1;
       }
        | columns REAL
       {
-  fprintf(stderr, ", %#g", $2);
-	    cur_columns += 1U;
+	    if (cur_columns < indep_columns) values[cur_columns] = $2;
+	    else if (cur_columns == dep_column) values[indep_columns] = $2;
+	    cur_columns += 1;
       }
 
 %%
 
 int parse_table_model(FILE *fp, const char *file_name, vpiHandle callh,
-                      unsigned min_cols)
+                      unsigned indep_cols, unsigned dep_col)
 {
-      minimum_columns = min_cols;
+      assert(indep_cols > 1);
+      assert(dep_col > 0);
+      indep_columns = indep_cols;
+      minimum_columns = indep_cols + dep_col;
+      dep_column = minimum_columns - 1;
+      values = malloc(sizeof(double)*(indep_cols+1));
+      assert(values);
       in_file_name = file_name;
       init_tblmod_lexor(fp);
       yyparse();
       destroy_tblmod_lexor();
+      free(values);
 // HERE: Need to handle errors.
       return 1;
 }
