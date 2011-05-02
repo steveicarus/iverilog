@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -472,10 +472,11 @@ static PLI_INT32 sys_dumpfile_calltf(PLI_BYTE8*name)
 
         /* $dumpfile must be called before $dumpvars starts! */
       if (dumpvars_status != 0) {
-	    char msg [64];
-	    snprintf(msg, 64, "LXT2 warning: %s:%d:",
+	    char msg[64];
+	    snprintf(msg, sizeof(msg), "LXT2 warning: %s:%d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
+	    msg[sizeof(msg)-1] = 0;
 	    vpi_printf("%s %s called after $dumpvars started,\n", msg, name);
 	    vpi_printf("%*s using existing file (%s).\n",
 	               (int) strlen(msg), " ", dump_path);

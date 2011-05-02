@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -303,7 +303,9 @@ static PLI_INT32 sys_readmem_calltf(PLI_BYTE8*name)
 	    char path[4096];
 
 	    for (idx = 0; idx < sl_count; idx += 1) {
-		  snprintf(path, 4096, "%s/%s", search_list[idx], fname);
+		  snprintf(path, sizeof(path), "%s/%s",
+		           search_list[idx], fname);
+		  path[sizeof(path)-1] = 0;
 		  if ((file = fopen(path, "r"))) break;
 	    }
       }
@@ -448,11 +450,12 @@ static PLI_INT32 sys_readmempath_calltf(PLI_BYTE8*name)
       len = strlen(val.value.str);
       for (idx = 0; idx < len; idx++) {
 	    if (! isprint((int)val.value.str[idx])) {
-		  char msg [64];
+		  char msg[64];
 		  char *esc_path = as_escaped(val.value.str);
-		  snprintf(msg, 64, "WARNING: %s:%d:",
+		  snprintf(msg, sizeof(msg), "WARNING: %s:%d:",
 		           vpi_get_str(vpiFile, callh),
 		           (int)vpi_get(vpiLineNo, callh));
+		  msg[sizeof(msg)-1] = 0;
 		  vpi_printf("%s %s's argument contains non-printable "
 		             "characters.\n", msg, name);
 		  vpi_printf("%*s \"%s\"\n", (int) strlen(msg), " ", esc_path);

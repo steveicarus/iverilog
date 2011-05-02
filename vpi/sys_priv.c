@@ -85,11 +85,12 @@ char *get_filename(vpiHandle callh, char *name, vpiHandle file)
       len = strlen(val.value.str);
       for (idx = 0; idx < len; idx++) {
 	    if (! isprint((int)val.value.str[idx])) {
-		  char msg [64];
+		  char msg[64];
 		  char *esc_fname = as_escaped(val.value.str);
-		  snprintf(msg, 64, "WARNING: %s:%d:",
+		  snprintf(msg, sizeof(msg), "WARNING: %s:%d:",
 		           vpi_get_str(vpiFile, callh),
 		           (int)vpi_get(vpiLineNo, callh));
+		  msg[sizeof(msg)-1] = 0;
 		  vpi_printf("%s %s's file name argument contains non-"
 		             "printable characters.\n", msg, name);
 		  vpi_printf("%*s \"%s\"\n", (int) strlen(msg), " ", esc_fname);
@@ -106,12 +107,13 @@ void check_for_extra_args(vpiHandle argv, vpiHandle callh, char *name,
 {
 	/* Check that there are no extra arguments. */
       if (vpi_scan(argv) != 0) {
-            char msg [64];
+            char msg[64];
             unsigned argc;
 
-            snprintf(msg, 64, "ERROR: %s:%d:",
+            snprintf(msg, sizeof(msg), "ERROR: %s:%d:",
                      vpi_get_str(vpiFile, callh),
                      (int)vpi_get(vpiLineNo, callh));
+	    msg[sizeof(msg)-1] = 0;
 
             argc = 1;
             while (vpi_scan(argv)) argc += 1;
@@ -241,12 +243,13 @@ PLI_INT32 sys_no_arg_compiletf(PLI_BYTE8 *name)
 
       /* Make sure there are no arguments. */
       if (argv != 0) {
-	    char msg [64];
+	    char msg[64];
 	    unsigned argc;
 
-	    snprintf(msg, 64, "ERROR: %s:%d:",
+	    snprintf(msg, sizeof(msg), "ERROR: %s:%d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
+	    msg[sizeof(msg)-1] = 0;
 
 	    argc = 0;
 	    while (vpi_scan(argv)) argc += 1;

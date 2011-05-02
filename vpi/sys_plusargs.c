@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -133,7 +133,7 @@ static PLI_INT32 sys_value_plusargs_calltf(PLI_BYTE8*name)
       s_vpi_vlog_info info;
       s_vpi_value fmt;
       s_vpi_value res;
-      char msg [64];
+      char msg[64];
       char*cp;
       int idx;
       int flag = 0;
@@ -148,9 +148,10 @@ static PLI_INT32 sys_value_plusargs_calltf(PLI_BYTE8*name)
 	/* Check for the start of a format string. */
       cp = strchr(fmt.value.str, '%');
       if (cp == 0) {
-	    snprintf(msg, 64, "ERROR: %s:%d:",
+	    snprintf(msg, sizeof(msg), "ERROR: %s:%d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
+	    msg[sizeof(msg)-1] = 0;
 
 	    vpi_printf("%s %s is missing a format code.\n", msg, name);
 	    vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ", fmt.value.str);
@@ -187,9 +188,10 @@ static PLI_INT32 sys_value_plusargs_calltf(PLI_BYTE8*name)
 	  case 'S':
 	    break;
 	  default:
-	    snprintf(msg, 64, "ERROR: %s:%d:",
+	    snprintf(msg, sizeof(msg), "ERROR: %s:%d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
+	    msg[sizeof(msg)-1] = 0;
 
 	    vpi_printf("%s %s has an invalid format string:\n", msg, name);
 	    vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ", fmt.value.str);
@@ -199,9 +201,10 @@ static PLI_INT32 sys_value_plusargs_calltf(PLI_BYTE8*name)
 
 	/* Warn if there is any trailing garbage. */
       if (*(cp+1) != '\0') {
-	    snprintf(msg, 64, "WARNING: %s:%d:",
+	    snprintf(msg, sizeof(msg), "WARNING: %s:%d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
+	    msg[sizeof(msg)-1] = 0;
 
 	    vpi_printf("%s Skipping trailing garbage in %s's format string:\n",
 	               msg, name);
@@ -244,9 +247,10 @@ static PLI_INT32 sys_value_plusargs_calltf(PLI_BYTE8*name)
 		             *sp == '_' ||
 		             ((tp = strrchr(sp, '-')) && tp != sp)) {
 			res.value.str = "x";
-			snprintf(msg, 64, "WARNING: %s:%d:",
+			snprintf(msg, sizeof(msg), "WARNING: %s:%d:",
 			         vpi_get_str(vpiFile, callh),
 			         (int)vpi_get(vpiLineNo, callh));
+			msg[sizeof(msg)-1] = 0;
 			vpi_printf("%s Invalid decimal value passed to %s:\n",
 			           msg, name);
 			vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ", sp);
@@ -263,9 +267,10 @@ static PLI_INT32 sys_value_plusargs_calltf(PLI_BYTE8*name)
 		  if (sp_len != strspn(sp, "-01234567_xXzZ") ||
 		      *sp == '_' || ((tp = strrchr(sp, '-')) && tp != sp)) {
 			res.value.str = "x";
-			snprintf(msg, 64, "WARNING: %s:%d:",
+			snprintf(msg, sizeof(msg), "WARNING: %s:%d:",
 			         vpi_get_str(vpiFile, callh),
 			         (int)vpi_get(vpiLineNo, callh));
+			msg[sizeof(msg)-1] = 0;
 			vpi_printf("%s Invalid octal value passed to %s:\n",
 			           msg, name);
 			vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ", sp);
@@ -284,9 +289,10 @@ static PLI_INT32 sys_value_plusargs_calltf(PLI_BYTE8*name)
 		  if (sp_len != strspn(sp, "-0123456789aAbBcCdDeEfF_xXzZ") ||
 		      *sp == '_' || ((tp = strrchr(sp, '-')) && tp != sp)) {
 			res.value.str = "x";
-			snprintf(msg, 64, "WARNING: %s:%d:",
+			snprintf(msg, sizeof(msg), "WARNING: %s:%d:",
 			         vpi_get_str(vpiFile, callh),
 			         (int)vpi_get(vpiLineNo, callh));
+			msg[sizeof(msg)-1] = 0;
 			vpi_printf("%s Invalid hex value passed to %s:\n",
 			           msg, name);
 			vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ", sp);
@@ -303,9 +309,10 @@ static PLI_INT32 sys_value_plusargs_calltf(PLI_BYTE8*name)
 		  if (sp_len != strspn(sp, "-01_xXzZ") ||
 		      *sp == '_' || ((tp = strrchr(sp, '-')) && tp != sp)) {
 			res.value.str = "x";
-			snprintf(msg, 64, "WARNING: %s:%d:",
+			snprintf(msg, sizeof(msg), "WARNING: %s:%d:",
 			         vpi_get_str(vpiFile, callh),
 			         (int)vpi_get(vpiLineNo, callh));
+			msg[sizeof(msg)-1] = 0;
 			vpi_printf("%s Invalid binary value passed to %s:\n",
 			           msg, name);
 			vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ", sp);
@@ -325,18 +332,20 @@ static PLI_INT32 sys_value_plusargs_calltf(PLI_BYTE8*name)
 		  if (*end) {
 			  /* We had an invalid value passed. */
 			if (end == sp) {
-			      snprintf(msg, 64, "WARNING: %s:%d:",
+			      snprintf(msg, sizeof(msg), "WARNING: %s:%d:",
 			               vpi_get_str(vpiFile, callh),
 			               (int)vpi_get(vpiLineNo, callh));
+			      msg[sizeof(msg)-1] = 0;
 			      vpi_printf("%s Invalid real value passed to "
 			                 "%s:\n", msg, name);
 			      vpi_printf("%*s \"%s\".\n", (int)strlen(msg), " ",
 			                 sp);
 			  /* We have extra garbage at the end. */
 			} else {
-			      snprintf(msg, 64, "WARNING: %s:%d:",
+			      snprintf(msg, sizeof(msg), "WARNING: %s:%d:",
 			               vpi_get_str(vpiFile, callh),
 			               (int)vpi_get(vpiLineNo, callh));
+			      msg[sizeof(msg)-1] = 0;
 			      vpi_printf("%s Extra character(s) \"%s\" found "
 			                 "in %s's real string:\n",
 			                 msg, end, name);

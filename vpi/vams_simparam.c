@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2010  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2011  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -84,12 +84,13 @@ static PLI_INT32 simparam_compiletf(PLI_BYTE8 *name_ext)
 
 	/* We can have a maximum of two arguments. */
       if (vpi_scan(argv) != 0) {
-	    char msg [64];
+	    char msg[64];
 	    unsigned argc;
 
-	    snprintf(msg, 64, "ERROR: %s:%d:",
+	    snprintf(msg, sizeof(msg), "ERROR: %s:%d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
+	    msg[sizeof(msg)-1] = 0;
 
 	    argc = 1;
 	    while (vpi_scan(argv)) argc += 1;
