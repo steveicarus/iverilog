@@ -414,10 +414,11 @@ static PLI_INT32 sys_dumpfile_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
         /* $dumpfile must be called before $dumpvars starts! */
       if (dumpvars_status != 0) {
-	    char msg [64];
-	    snprintf(msg, 64, "FST warning: %s:%d:",
+	    char msg[64];
+	    snprintf(msg, sizeof(msg), "FST warning: %s:%d:",
 	             vpi_get_str(vpiFile, callh),
 	             (int)vpi_get(vpiLineNo, callh));
+	    msg[sizeof(msg)-1] = 0;
 	    vpi_printf("%s %s called after $dumpvars started,\n", msg, name);
 	    vpi_printf("%*s using existing file (%s).\n",
 	               (int) strlen(msg), " ", dump_path);
