@@ -31,53 +31,6 @@
  */
 static unsigned table_model_debug = 0;
 
-// HERE: Should these just be defines?
-/*
- * Define the allowed interpolation control values.
- */
-typedef enum interp_type_e {
-      IVL_CLOSEST_POINT    = 0, /* D */
-      IVL_LINEAR_INTERP    = 1, /* 1 - Default */
-      IVL_QUADRATIC_INTERP = 2, /* 2 */
-      IVL_CUBIC_INTERP     = 3, /* 3 */
-      IVL_IGNORE_COLUMN    = 4  /* I */
-} interp_type_t;
-
-/*
- * Define the allowed extrapolation control values.
- */
-typedef enum extrap_type_e {
-      IVL_CONSTANT_EXTRAP = 0, /* C */
-      IVL_LINEAR_EXTRAP   = 1, /* L - Default */
-      IVL_ERROR_EXTRAP    = 2  /* E */
-} extrap_type_t;
-
-/*
- * This structure is saved for each table model instance.
- */
-typedef struct t_table_mod {
-      vpiHandle *indep;     /* Independent variable arguments. */
-      double *indep_val;    /* Current independent variable values. */
-      union {               /* Data file or argument to get the data file. */
-	    char *name;
-	    vpiHandle arg;
-      } file;
-      union {               /* Control string argument. */
-	    struct {
-		  char *interp;
-		  char *extrap_low;
-		  char *extrap_high;
-	    } info;
-	    vpiHandle arg;
-      } control;
-// HERE need a pointer to the dependent data and the final table.
-      unsigned dims;        /* The number of independent variables. */
-      unsigned fields;      /* The number of control fields. */
-      unsigned depend;      /* Where the dependent column is located. */
-      char have_fname;      /* Has the file name been allocated? */
-      char have_ctl;        /* Has the file name been allocated? */
-} s_table_mod, *p_table_mod;
-
 static p_table_mod *tables = 0;
 static unsigned table_count = 0;
 
@@ -382,7 +335,7 @@ static unsigned parse_extrap(vpiHandle callh, p_table_mod table, unsigned idx,
 static unsigned initialize_control_fields(vpiHandle callh, p_table_mod table,
                                           char *control)
 {
-      unsigned width, idx;
+      unsigned num_fields, num_ignore, idx;
       char *cp;
 
 	/* If we need to fail these must be defined to zero until memory
@@ -413,7 +366,7 @@ static unsigned initialize_control_fields(vpiHandle callh, p_table_mod table,
 		  vpi_printf("Control string dependent selector is "
 		             "invalid: %s.\n", cp);
 		  vpi_control(vpiFinish, 1);
-		  return 0;
+		  return 1;
 	    }
 	    val = strtoul(cp, &end, 10);
 	    assert(*end == 0);
@@ -424,39 +377,41 @@ static unsigned initialize_control_fields(vpiHandle callh, p_table_mod table,
 		  vpi_printf("Control string dependent value is "
 		             "to large: %lu.\n", val);
 		  vpi_control(vpiFinish, 1);
-		  return 0;
+		  return 1;
 	    }
 	    table->depend = (unsigned) val;
       } else table->depend = 1;
 
 	/* Find the number of interpolation/extrapolation control fields. */
-      width = 1;
+      num_fields = 1;
       cp = control;
       while ((cp = index(cp, ','))) {
 	    cp += 1;
-	    width += 1;
+	    num_fields += 1;
       }
+
 	/* We must have at least as many control fields as dimensions. */
-      if (width < table->dims) {
+      if (num_fields < table->dims) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
 	    vpi_printf("Not enough control field(s) (%u) for the dimension(s) "
-	               "(%u).", width, table->dims);
+	               "(%u).", num_fields, table->dims);
 	    vpi_control(vpiFinish, 1);
-	    return 0;
+	    return 1;
       }
 
 	/* Allocate space for the interpolation/extrapolation values. */
-      table->control.info.interp = (char *) malloc(width);
+      table->control.info.interp = (char *) malloc(num_fields);
       assert(table->control.info.interp);
-      table->control.info.extrap_low = (char *) malloc(width);
+      table->control.info.extrap_low = (char *) malloc(num_fields);
       assert(table->control.info.extrap_low);
-      table->control.info.extrap_high = (char *) malloc(width);
+      table->control.info.extrap_high = (char *) malloc(num_fields);
       assert(table->control.info.extrap_high);
 
 	/* Parse the individual dimension control string. */
+      num_ignore = 0;
       cp = control;
-      for (idx = 0; idx < width; idx += 1) {
+      for (idx = 0; idx < num_fields; idx += 1) {
 	    switch (*cp) {
 		/* Closest point interpolation. */
 	      case 'D':
@@ -485,12 +440,16 @@ static unsigned initialize_control_fields(vpiHandle callh, p_table_mod table,
 		/* Ignore column. No extrapolation codes are allowed. */
 	      case 'I':
 		  table->control.info.interp[idx] = IVL_IGNORE_COLUMN;
+		  table->control.info.extrap_low[idx] = IVL_ERROR_EXTRAP;
+		  table->control.info.extrap_high[idx] = IVL_ERROR_EXTRAP;
+		  cp += 1;
+		  num_ignore += 1;
 		  break;
 
 		/* This field is not specified so use the default values.
 		 * Linear interpolation and extrapolation. */
 	      case 0:
-		  assert(idx == width-1);
+		  assert(idx == num_fields-1);
 	      case ',':
 		  table->control.info.interp[idx] = IVL_LINEAR_INTERP;
 		  table->control.info.extrap_low[idx] = IVL_LINEAR_EXTRAP;
@@ -504,7 +463,7 @@ static unsigned initialize_control_fields(vpiHandle callh, p_table_mod table,
 		  vpi_printf("Unknown interpolation code '%c' for dimension "
 		             "%u: %s\n", *cp, idx+1, control);
 		  vpi_control(vpiFinish, 1);
-		  return 0;
+		  return 1;
 	    }
 
 	      /* Verify that there is no extra junk at the end of the field. */
@@ -514,7 +473,7 @@ static unsigned initialize_control_fields(vpiHandle callh, p_table_mod table,
 		  vpi_printf("Extra control characters found for dimension "
 		             "%u: %s\n", idx+1, control);
 		  vpi_control(vpiFinish, 1);
-		  return 0;
+		  return 1;
 	    }
 
 	      /* Advance to the next field if we are not at the end of the
@@ -522,9 +481,20 @@ static unsigned initialize_control_fields(vpiHandle callh, p_table_mod table,
 	    if (*cp == ',') cp += 1;
       }
 
-	/* Return the number of fields plus the dependent offset as the
-	 * minimum number of fields. */
-      return (width + table->depend);
+	/* We must have a usable control field for each dimensions. */
+      if ((num_fields - num_ignore) != table->dims) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("Usable control field(s) (%u) do not match dimension(s) "
+	               "(%u).", (num_fields - num_ignore), table->dims);
+	    vpi_control(vpiFinish, 1);
+	    return 1;
+      }
+
+	/* Set the number of control fields. */
+      table->fields = num_fields;
+
+      return 0;
 }
 
 /*
@@ -563,7 +533,7 @@ static void dump_diag_info(vpiHandle callh, p_table_mod table)
       unsigned idx;
       char msg[64];
 
-      snprintf(msg, sizeof(msg), "%s:%d: DEBUG:", vpi_get_str(vpiFile, callh),
+      snprintf(msg, sizeof(msg), "DEBUG: %s:%d:", vpi_get_str(vpiFile, callh),
                (int)vpi_get(vpiLineNo, callh));
       msg[sizeof(msg)-1] = 0;
       fprintf(stderr, "%s Building %u variable table using \"%s\" and\n",
@@ -638,11 +608,7 @@ static unsigned initialize_table_model(vpiHandle callh, const char *name,
 	/* Parse the given file and produce the basic data structure. We
 	 * need to have columns for each control string field and for the
 	 * dependent data. */
-// HERE: This is going to return a pointer to the data.
-      if (! parse_table_model(fp, table->file.name, callh,
-                              table->fields, table->depend)) {
-	    return 1;
-      }
+      if (parse_table_model(fp, callh, table)) return 1;
 // HERE: once we are done with the control string should we build a table
 //       of function pointer for the interp/extrap?
 

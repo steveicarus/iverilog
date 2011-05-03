@@ -53,7 +53,7 @@ SCALE [afpnumkKMGT]
 
 {EOL} {
 	    tblmodlloc.first_line += 1;
-	    return EOL;
+	    return END_LINE;
       }
 
   /* Recognize a real value with a Verilog-AMS scale. */

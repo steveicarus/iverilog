@@ -24,13 +24,17 @@
 #include "table_mod.h"
 #include "ivl_alloc.h"
 
+static unsigned errors = 0;
 static unsigned minimum_columns;
+static unsigned indep_values;
 static unsigned indep_columns;
 static unsigned dep_column;
 static unsigned number_of_columns = 0;
 static unsigned cur_columns;
+static unsigned cur_value;
 static double *values;
 static const char *in_file_name;
+static p_table_mod table_def;
 
 extern int tblmodlex(void);
 static void yyerror(const char *fmt, ...);
@@ -43,7 +47,7 @@ static void yyerror(const char *fmt, ...);
       double real;
 };
 
-%token EOL
+%token END_LINE
 %token <real> REAL
 
 %%
@@ -51,14 +55,16 @@ static void yyerror(const char *fmt, ...);
 table : point
       | table point
 
-point : columns EOL
+point : columns END_LINE
       {
-  unsigned idx;
-  fprintf(stderr, "%#g", values[0]);
-  for (idx = 1; idx < indep_columns; idx += 1) {
-    fprintf(stderr, ", %#g", values[idx]);
-  }
-  fprintf(stderr, " => %#g\n", values[indep_columns]);
+  #if 0
+    unsigned idx;
+    fprintf(stderr, "%#g", values[0]);
+    for (idx = 1; idx < indep_values; idx += 1) {
+      fprintf(stderr, ", %#g", values[idx]);
+    }
+    fprintf(stderr, " => %#g\n", values[indep_values]);
+  #endif
 	    if (number_of_columns) {
 		  if (cur_columns < minimum_columns) {
 			yyerror("Found %u columns, need at least %u.",
@@ -77,43 +83,64 @@ point : columns EOL
 
 columns : REAL
       {
-	    values[0] = $1;
+	    if (table_def->control.info.interp[0] != IVL_IGNORE_COLUMN) {
+		  values[0] = $1;
+		  cur_value = 1;
+	    } else cur_value = 0;
 	    cur_columns = 1;
       }
        | columns REAL
       {
-	    if (cur_columns < indep_columns) values[cur_columns] = $2;
-	    else if (cur_columns == dep_column) values[indep_columns] = $2;
+	    if (cur_columns < indep_columns) {
+		  if (table_def->control.info.interp[cur_columns] != 
+		      IVL_IGNORE_COLUMN) {
+			values[cur_value] = $2;
+			cur_value += 1;
+		  }
+	    } else if (cur_columns == dep_column) values[indep_values] = $2;
 	    cur_columns += 1;
       }
 
 %%
 
-int parse_table_model(FILE *fp, const char *file_name, vpiHandle callh,
-                      unsigned indep_cols, unsigned dep_col)
+unsigned parse_table_model(FILE *fp, vpiHandle callh, p_table_mod table)
 {
-      assert(indep_cols > 1);
-      assert(dep_col > 0);
-      indep_columns = indep_cols;
-      minimum_columns = indep_cols + dep_col;
+      unsigned rtn = 0;
+      assert(table);
+      assert(table->fields > 0);
+      assert(table->depend > 0);
+      table_def = table;
+      indep_values = table->dims;
+      indep_columns = table->fields;
+      minimum_columns = table->fields + table->depend;
       dep_column = minimum_columns - 1;
-      values = malloc(sizeof(double)*(indep_cols+1));
+      values = malloc(sizeof(double)*(indep_values+1));
       assert(values);
-      in_file_name = file_name;
+      in_file_name = table->file.name;
       init_tblmod_lexor(fp);
-      yyparse();
+      if (yyparse()) errors += 1;
+      if (errors) {
+	    vpi_printf("ERROR: %s:%u: ", vpi_get_str(vpiFile, callh),
+	               (int) vpi_get(vpiLineNo, callh));
+	    vpi_printf("Had %u error(s) while reading table file.\n", errors);
+	    rtn = 1;
+      }
       destroy_tblmod_lexor();
       free(values);
-// HERE: Need to handle errors.
-      return 1;
+      return rtn;
 }
 
+/*
+ * Because every parse error is reported after the newline subtract one from
+ * the line count.
+ */
 void yyerror(const char *fmt, ...)
 {
       va_list ap;
       va_start(ap, fmt);
-      fprintf(stderr, "%s:%u: TABLE ERROR: ", in_file_name, yylloc.first_line);
+      fprintf(stderr, "%s:%u: TABLE ERROR: ", in_file_name,
+              yylloc.first_line-1);
       vfprintf(stderr, fmt, ap);
       fprintf(stderr, "\n");
-
+      errors += 1;
 }
