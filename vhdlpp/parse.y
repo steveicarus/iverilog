@@ -27,6 +27,7 @@
 # include "parse_misc.h"
 # include "architec.h"
 # include "expression.h"
+# include "sequential.h"
 # include  "package.h"
 # include "vsignal.h"
 # include "vtype.h"
@@ -122,6 +123,9 @@ const VType*parse_type_by_name(perm_string name)
       Expression*expr;
       std::list<Expression*>* expr_list;
 
+      SequentialStmt* sequ;
+      std::list<SequentialStmt*>*sequ_list;
+
       named_expr_t*named_expr;
       std::list<named_expr_t*>*named_expr_list;
       entity_aspect_t* entity_aspect;
@@ -203,6 +207,9 @@ const VType*parse_type_by_name(perm_string name)
 %type <name_list> logical_name_list identifier_list
 %type <compound_name> prefix selected_name
 %type <compound_name_list> selected_names use_clause
+
+%type <sequ_list> sequence_of_statements if_statement_else
+%type <sequ> sequential_statement if_statement signal_assignment_statement
 
 %%
 
@@ -748,28 +755,38 @@ if_statement
   : K_if expression K_then sequence_of_statements
     if_statement_else
     K_end K_if ';'
+      { IfSequential*tmp = new IfSequential($2, $4, $5);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
 
   | K_if error K_then sequence_of_statements
     if_statement_else
     K_end K_if ';'
       { errormsg(@2, "Error in if_statement condition expression.\n");
 	yyerrok;
+	$$ = 0;
+	delete $4;
       }
 
   | K_if expression K_then error K_end K_if ';'
       { errormsg(@2, "Too many errors in sequence within if_statement.\n");
 	yyerrok;
+	$$ = 0;
       }
 
   | K_if error K_end K_if ';'
       { errormsg(@2, "Too many errors in if_statement.\n");
 	yyerrok;
+	$$ = 0;
       }
   ;
 
 if_statement_else
   : K_else sequence_of_statements
+      { $$ = $2; }
   |
+      { $$ = 0; }
   ;
 
 instantiation_list
@@ -1008,13 +1025,14 @@ primary
   : name
       { $$ = $1; }
   | name '\'' IDENTIFIER
-      { sorrymsg(@3, "Identifier attributes not supported.\n");
+      { perm_string name = lex_strings.make($3);
+	ExpName*base = dynamic_cast<ExpName*> ($1);
+	ExpAttribute*tmp = new ExpAttribute(base, name);
 	delete[]$3;
-	$$ = $1;
+	$$ = tmp;
       }
   | CHARACTER_LITERAL
-      { sorrymsg(@1, "Character literals not supported.\n");
-	ExpInteger*tmp = new ExpInteger($1[0]);
+      { ExpCharacter*tmp = new ExpCharacter($1[0]);
 	FILE_NAME(tmp,@1);
 	delete[]$1;
 	$$ = tmp;
@@ -1037,10 +1055,19 @@ primary_unit
 process_statement
   : IDENTIFIER ':' K_postponed_opt K_process
     process_sensitivity_list_opt K_is_opt
-    K_begin process_statement_part
+    K_begin sequence_of_statements
     K_end K_postponed_opt K_process identifier_opt ';'
-      { sorrymsg(@4, "Concurrent processes not implemented yet.\n");
-	$$ = 0;
+      { perm_string iname = lex_strings.make($1);
+	if ($12) {
+	      if (iname != $12)
+		    errormsg(@12, "Process name %s does not match opening name %s.\n",
+			     $12, $1);
+	      delete[]$12;
+	}
+
+	ProcessStatement*tmp = new ProcessStatement(iname);
+	FILE_NAME(tmp, @4);
+	$$ = tmp;
       }
 
   | IDENTIFIER ':' K_postponed_opt K_process
@@ -1051,11 +1078,6 @@ process_statement
 	yyerrok;
 	$$ = 0;
       }
-  ;
-
-process_statement_part
-  : process_statement_part sequential_statement
-  | sequential_statement
   ;
 
 process_sensitivity_list_opt
@@ -1074,34 +1096,34 @@ relation
   : shift_expression
       { $$ = $1; }
   | shift_expression '=' shift_expression
-      { sorrymsg(@2, "Expression operator '=' not implemented.\n");
-	delete $3;
-	$$ = $1;
+      { ExpRelation*tmp = new ExpRelation(ExpRelation::EQ, $1, $3);
+        FILE_NAME(tmp, @2);
+	$$ = tmp;
       }
   | shift_expression '<' shift_expression
-      { sorrymsg(@2, "Expression operator '<' not implemented.\n");
-	delete $3;
-	$$ = $1;
+      { ExpRelation*tmp = new ExpRelation(ExpRelation::LT, $1, $3);
+        FILE_NAME(tmp, @2);
+	$$ = tmp;
       }
   | shift_expression '>' shift_expression
-      { sorrymsg(@2, "Expression operator '>' not implemented.\n");
-	delete $3;
-	$$ = $1;
+      { ExpRelation*tmp = new ExpRelation(ExpRelation::GT, $1, $3);
+        FILE_NAME(tmp, @2);
+	$$ = tmp;
       }
   | shift_expression LEQ shift_expression
-      { sorrymsg(@2, "Expression operator '<=' not implemented.\n");
-	delete $3;
-	$$ = $1;
+      { ExpRelation*tmp = new ExpRelation(ExpRelation::LE, $1, $3);
+        FILE_NAME(tmp, @2);
+	$$ = tmp;
       }
   | shift_expression GEQ shift_expression
-      { sorrymsg(@2, "Expression operator '>=' not implemented.\n");
-	delete $3;
-	$$ = $1;
+      { ExpRelation*tmp = new ExpRelation(ExpRelation::GE, $1, $3);
+        FILE_NAME(tmp, @2);
+	$$ = tmp;
       }
   | shift_expression NE shift_expression
-      { sorrymsg(@2, "Expression operator '/=' not implemented.\n");
-	delete $3;
-	$$ = $1;
+      { ExpRelation*tmp = new ExpRelation(ExpRelation::NEQ, $1, $3);
+        FILE_NAME(tmp, @2);
+	$$ = tmp;
       }
   ;
 
@@ -1165,12 +1187,20 @@ selected_names_use
 
 sequence_of_statements
   : sequence_of_statements sequential_statement
+      { std::list<SequentialStmt*>*tmp = $1;
+	tmp->push_back($2);
+	$$ = tmp;
+      }
   | sequential_statement
+      { std::list<SequentialStmt*>*tmp = new std::list<SequentialStmt*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
   ;
 
 sequential_statement
-  : if_statement
-  | signal_assignment_statement
+  : if_statement                { $$ = $1; }
+  | signal_assignment_statement { $$ = $1; }
   ;
 
 shift_expression : simple_expression { $$ = $1; } ;
@@ -1192,7 +1222,11 @@ simple_expression
 
 signal_assignment_statement
   : name LEQ waveform ';'
-      { sorrymsg(@1, "Signal assignment statements not implemented.\n"); }
+      { SignalSeqAssignment*tmp = new SignalSeqAssignment($1, $3);
+	FILE_NAME(tmp, @1);
+	delete $3;
+	$$ = tmp;
+      }
   ;
 
 subtype_declaration

@@ -213,10 +213,23 @@ void ExpArithmetic::dump(ostream&out, int indent) const
       dump_operands(out, indent+4);
 }
 
+void ExpAttribute::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "Attribute " << name_
+	  << " at " << get_fileline() << endl;
+      base_->dump(out, indent+4);
+}
+
 void ExpBinary::dump_operands(ostream&out, int indent) const
 {
       operand1_->dump(out, indent);
       operand2_->dump(out, indent);
+}
+
+void ExpCharacter::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "Character '" << value_ << "'"
+	  << " at " << get_fileline() << endl;
 }
 
 void ExpInteger::dump(ostream&out, int indent) const
@@ -260,6 +273,33 @@ void ExpName::dump(ostream&out, int indent) const
 	  << " at " << get_fileline() << endl;
       if (index_)
 	    index_->dump(out, indent+6);
+}
+
+void ExpRelation::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "Relation ";
+      switch (fun_) {
+	  case EQ:
+	    out << "=";
+	    break;
+	  case LT:
+	    out << "<";
+	    break;
+	  case GT:
+	    out << ">";
+	    break;
+	  case NEQ:
+	    out << "/=";
+	    break;
+	  case LE:
+	    out << "<=";
+	    break;
+	  case GE:
+	    out << ">=";
+	    break;
+      }
+      out << endl;
+      dump_operands(out, indent+4);
 }
 
 void ExpUAbs::dump(ostream&out, int indent) const

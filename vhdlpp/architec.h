@@ -122,4 +122,15 @@ class ComponentInstantiation  : public Architecture::Statement {
       std::map<perm_string,Expression*> port_map_;
 };
 
+class ProcessStatement : public Architecture::Statement {
+
+    public:
+      ProcessStatement(perm_string iname);
+      ~ProcessStatement();
+
+    private:
+      perm_string iname_;
+
+};
+
 #endif

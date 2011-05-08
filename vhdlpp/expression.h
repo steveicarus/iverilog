@@ -27,6 +27,8 @@ class Entity;
 class Architecture;
 class ScopeBase;
 
+class ExpName;
+
 /*
  * The Expression class represents parsed expressions from the parsed
  * VHDL input. The Expression class is a virtual class that holds more
@@ -122,6 +124,34 @@ class ExpArithmetic : public ExpBinary {
       fun_t fun_;
 };
 
+class ExpAttribute : public Expression {
+
+    public:
+      ExpAttribute(ExpName*base, perm_string name);
+      ~ExpAttribute();
+
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      void dump(ostream&out, int indent = 0) const;
+
+    private:
+      ExpName*base_;
+      perm_string name_;
+};
+
+class ExpCharacter : public Expression {
+
+    public:
+      ExpCharacter(char val);
+      ~ExpCharacter();
+
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      bool is_primary(void) const;
+      void dump(ostream&out, int indent = 0) const;
+
+    private:
+      char value_;
+};
+
 class ExpInteger : public Expression {
 
     public:
@@ -174,6 +204,22 @@ class ExpName : public Expression {
     private:
       perm_string name_;
       Expression*index_;
+};
+
+class ExpRelation : public ExpBinary {
+
+    public:
+      enum fun_t { EQ, LT, GT, NEQ, LE, GE };
+
+    public:
+      ExpRelation(ExpRelation::fun_t ty, Expression*op1, Expression*op2);
+      ~ExpRelation();
+
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      void dump(ostream&out, int indent = 0) const;
+
+    private:
+      fun_t fun_;
 };
 
 class ExpUAbs : public ExpUnary {

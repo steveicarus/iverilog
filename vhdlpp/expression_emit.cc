@@ -63,6 +63,15 @@ int ExpUnary::emit_operand1(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
+int ExpAttribute::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      out << "$ivl_attribute(";
+      errors += base_->emit(out, ent, arc);
+      out << ", \"" << name_ << "\")";
+      return errors;
+}
+
 int ExpArithmetic::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
@@ -96,6 +105,17 @@ int ExpArithmetic::emit(ostream&out, Entity*ent, Architecture*arc)
       errors += emit_operand2(out, ent, arc);
 
       return errors;
+}
+
+int ExpCharacter::emit(ostream&out, Entity*, Architecture*)
+{
+      out << "\"" << value_ << "\"";
+      return 0;
+}
+
+bool ExpCharacter::is_primary(void) const
+{
+      return true;
 }
 
 int ExpInteger::emit(ostream&out, Entity*, Architecture*)
@@ -158,6 +178,36 @@ int ExpName::emit(ostream&out, Entity*ent, Architecture*arc)
 bool ExpName::is_primary(void) const
 {
       return true;
+}
+
+int ExpRelation::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      errors += emit_operand1(out, ent, arc);
+
+      switch (fun_) {
+	  case EQ:
+	    out << " == ";
+	    break;
+	  case LT:
+	    out << " < ";
+	    break;
+	  case GT:
+	    out << " > ";
+	    break;
+	  case NEQ:
+	    out << " != ";
+	    break;
+	  case LE:
+	    out << " <= ";
+	    break;
+	  case GE:
+	    out << " >= ";
+	    break;
+      }
+
+      errors += emit_operand2(out, ent, arc);
+      return errors;
 }
 
 int ExpUAbs::emit(ostream&out, Entity*ent, Architecture*arc)

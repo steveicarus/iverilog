@@ -36,6 +36,16 @@ bool Expression::evaluate(ScopeBase*, int64_t&) const
       return false;
 }
 
+ExpAttribute::ExpAttribute(ExpName*bas, perm_string nam)
+: base_(bas), name_(nam)
+{
+}
+
+ExpAttribute::~ExpAttribute()
+{
+      delete base_;
+}
+
 ExpBinary::ExpBinary(Expression*op1, Expression*op2)
 : operand1_(op1), operand2_(op2)
 {
@@ -118,6 +128,15 @@ bool ExpArithmetic::evaluate(ScopeBase*scope, int64_t&val) const
       return true;
 }
 
+ExpCharacter::ExpCharacter(char val)
+: value_(val)
+{
+}
+
+ExpCharacter::~ExpCharacter()
+{
+}
+
 ExpInteger::ExpInteger(int64_t val)
 : value_(val)
 {
@@ -174,6 +193,15 @@ bool ExpName::evaluate(ScopeBase*scope, int64_t&val) const
       }
 
       return exp->evaluate(scope, val);
+}
+
+ExpRelation::ExpRelation(ExpRelation::fun_t ty, Expression*op1, Expression*op2)
+: ExpBinary(op1, op2), fun_(ty)
+{
+}
+
+ExpRelation::~ExpRelation()
+{
 }
 
 ExpUAbs::ExpUAbs(Expression*op1)

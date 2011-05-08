@@ -1,5 +1,5 @@
-#ifndef __parse_wrap_H
-#define __parse_wrap_H
+#ifndef __sequential_H
+#define __sequential_H
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
  *
@@ -19,22 +19,40 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-/*
- * This header wraps the parse.h header file that is generated from
- * the parse.y source file. This is used to include definitions that
- * are needed by the parse type, etc.
- */
-
+# include  "LineInfo.h"
 # include  <list>
-# include "vhdlint.h"
-# include "vhdlreal.h"
-# include  "architec.h"
-# include  "expression.h"
-# include  "sequential.h"
-# include  "parse_types.h"
 
-class VType;
+class Expression;
 
-# include  "parse.h"
+class SequentialStmt  : public LineInfo {
+
+    public:
+      SequentialStmt();
+      ~SequentialStmt();
+
+};
+
+class IfSequential  : public SequentialStmt {
+
+    public:
+      IfSequential(Expression*cond, std::list<SequentialStmt*>*tr,
+		   std::list<SequentialStmt*>*fa);
+      ~IfSequential();
+
+    private:
+      Expression*cond_;
+      std::list<SequentialStmt*> if_;
+      std::list<SequentialStmt*> else_;
+};
+
+class SignalSeqAssignment  : public SequentialStmt {
+    public:
+      SignalSeqAssignment(Expression*sig, std::list<Expression*>*wav);
+      ~SignalSeqAssignment();
+
+    private:
+      Expression*lval_;
+      std::list<Expression*> waveform_;
+};
 
 #endif

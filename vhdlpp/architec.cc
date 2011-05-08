@@ -70,3 +70,12 @@ ComponentInstantiation::ComponentInstantiation(perm_string i, perm_string c,
 ComponentInstantiation::~ComponentInstantiation()
 {
 }
+
+ProcessStatement::ProcessStatement(perm_string iname)
+    : iname_(iname)
+{
+}
+
+ProcessStatement::~ProcessStatement()
+{
+}
