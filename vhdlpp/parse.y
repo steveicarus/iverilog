@@ -182,6 +182,7 @@ const VType*parse_type_by_name(perm_string name)
 %type <component_specification> component_specification
 
 %type <arch_statement> concurrent_statement component_instantiation_statement concurrent_signal_assignment_statement
+%type <arch_statement> process_statement
 %type <arch_statement_list> architecture_statement_part
 
 %type <expr> expression factor primary relation
@@ -444,6 +445,7 @@ concurrent_signal_assignment_statement
 concurrent_statement
   : component_instantiation_statement
   | concurrent_signal_assignment_statement
+  | process_statement
   ;
 
 configuration_declaration
@@ -742,6 +744,34 @@ identifier_list
 identifier_opt : IDENTIFIER { $$ = $1; } |  { $$ = 0; } ;
 
 
+if_statement
+  : K_if expression K_then sequence_of_statements
+    if_statement_else
+    K_end K_if ';'
+
+  | K_if error K_then sequence_of_statements
+    if_statement_else
+    K_end K_if ';'
+      { errormsg(@2, "Error in if_statement condition expression.\n");
+	yyerrok;
+      }
+
+  | K_if expression K_then error K_end K_if ';'
+      { errormsg(@2, "Too many errors in sequence within if_statement.\n");
+	yyerrok;
+      }
+
+  | K_if error K_end K_if ';'
+      { errormsg(@2, "Too many errors in if_statement.\n");
+	yyerrok;
+      }
+  ;
+
+if_statement_else
+  : K_else sequence_of_statements
+  |
+  ;
+
 instantiation_list
   : identifier_list
      {
@@ -842,6 +872,12 @@ name
 	delete[]$1;
 	$$ = tmp;
       }
+  ;
+
+  /* Handle name lists as lists of expressions. */
+name_list
+  : name_list ',' name
+  | name
   ;
 
 package_declaration
@@ -953,28 +989,36 @@ port_map_aspect_opt
 
 prefix
   : IDENTIFIER
-      {
-    std::vector<perm_string>* tmp = new std::vector<perm_string>();
-    tmp->push_back(lex_strings.make($1));
-    delete[] $1;
-    $$ = tmp;
+      { std::vector<perm_string>* tmp = new std::vector<perm_string>();
+	tmp->push_back(lex_strings.make($1));
+	delete[] $1;
+	$$ = tmp;
       }
   | STRING_LITERAL
-      {
-    std::vector<perm_string>* tmp = new std::vector<perm_string>();
-    tmp->push_back(lex_strings.make($1));
-    delete[] $1;
-    $$ = tmp;
+      { std::vector<perm_string>* tmp = new std::vector<perm_string>();
+	tmp->push_back(lex_strings.make($1));
+	delete[] $1;
+	$$ = tmp;
       }
   | selected_name
-      {
-    $$ = $1;
-      }
+      { $$ = $1; }
   ;
 
 primary
   : name
       { $$ = $1; }
+  | name '\'' IDENTIFIER
+      { sorrymsg(@3, "Identifier attributes not supported.\n");
+	delete[]$3;
+	$$ = $1;
+      }
+  | CHARACTER_LITERAL
+      { sorrymsg(@1, "Character literals not supported.\n");
+	ExpInteger*tmp = new ExpInteger($1[0]);
+	FILE_NAME(tmp,@1);
+	delete[]$1;
+	$$ = tmp;
+      }
   | INT_LITERAL
       { ExpInteger*tmp = new ExpInteger($1);
 	FILE_NAME(tmp, @1);
@@ -990,7 +1034,76 @@ primary_unit
   | package_declaration
   ;
 
-relation : shift_expression { $$ = $1; } ;
+process_statement
+  : IDENTIFIER ':' K_postponed_opt K_process
+    process_sensitivity_list_opt K_is_opt
+    K_begin process_statement_part
+    K_end K_postponed_opt K_process identifier_opt ';'
+      { sorrymsg(@4, "Concurrent processes not implemented yet.\n");
+	$$ = 0;
+      }
+
+  | IDENTIFIER ':' K_postponed_opt K_process
+    process_sensitivity_list_opt K_is_opt
+    K_begin error
+    K_end K_postponed_opt K_process identifier_opt ';'
+      { errormsg(@8, "Too many errors in process sequential statements.\n");
+	yyerrok;
+	$$ = 0;
+      }
+  ;
+
+process_statement_part
+  : process_statement_part sequential_statement
+  | sequential_statement
+  ;
+
+process_sensitivity_list_opt
+  : '(' process_sensitivity_list ')'
+  | '(' error ')'
+      { errormsg(@2, "Error in process sensitivity list\n"); }
+  |
+  ;
+
+process_sensitivity_list
+  : K_all
+  | name_list
+  ;
+
+relation
+  : shift_expression
+      { $$ = $1; }
+  | shift_expression '=' shift_expression
+      { sorrymsg(@2, "Expression operator '=' not implemented.\n");
+	delete $3;
+	$$ = $1;
+      }
+  | shift_expression '<' shift_expression
+      { sorrymsg(@2, "Expression operator '<' not implemented.\n");
+	delete $3;
+	$$ = $1;
+      }
+  | shift_expression '>' shift_expression
+      { sorrymsg(@2, "Expression operator '>' not implemented.\n");
+	delete $3;
+	$$ = $1;
+      }
+  | shift_expression LEQ shift_expression
+      { sorrymsg(@2, "Expression operator '<=' not implemented.\n");
+	delete $3;
+	$$ = $1;
+      }
+  | shift_expression GEQ shift_expression
+      { sorrymsg(@2, "Expression operator '>=' not implemented.\n");
+	delete $3;
+	$$ = $1;
+      }
+  | shift_expression NE shift_expression
+      { sorrymsg(@2, "Expression operator '/=' not implemented.\n");
+	delete $3;
+	$$ = $1;
+      }
+  ;
 
 secondary_unit
   : architecture_body
@@ -1049,6 +1162,17 @@ selected_names_use
   | selected_name_use
   ;
 
+
+sequence_of_statements
+  : sequence_of_statements sequential_statement
+  | sequential_statement
+  ;
+
+sequential_statement
+  : if_statement
+  | signal_assignment_statement
+  ;
+
 shift_expression : simple_expression { $$ = $1; } ;
 
 simple_expression
@@ -1064,6 +1188,11 @@ simple_expression
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
+  ;
+
+signal_assignment_statement
+  : name LEQ waveform ';'
+      { sorrymsg(@1, "Signal assignment statements not implemented.\n"); }
   ;
 
 subtype_declaration
@@ -1205,6 +1334,7 @@ K_component_opt    : K_component    | ;
 K_configuration_opt: K_configuration| ;
 K_entity_opt       : K_entity       | ;
 K_package_opt      : K_package      | ;
+K_postponed_opt    : K_postponed    | ;
 K_is_opt           : K_is           | ;
 %%
 
