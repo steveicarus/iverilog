@@ -348,7 +348,7 @@ static unsigned initialize_control_fields(vpiHandle callh, p_table_mod table,
       table->have_ctl = 1;
 
 	/* Look for the dependent data field. */
-      cp = index(control, ';');
+      cp = strchr(control, ';');
       if (cp) {
 	    size_t len;
 	    unsigned long val;
@@ -385,7 +385,7 @@ static unsigned initialize_control_fields(vpiHandle callh, p_table_mod table,
 	/* Find the number of interpolation/extrapolation control fields. */
       num_fields = 1;
       cp = control;
-      while ((cp = index(cp, ','))) {
+      while ((cp = strchr(cp, ','))) {
 	    cp += 1;
 	    num_fields += 1;
       }
