@@ -22,14 +22,19 @@
 # include  "LineInfo.h"
 # include  <list>
 
+class Architecture;
+class Entity;
 class Expression;
 
 class SequentialStmt  : public LineInfo {
 
     public:
       SequentialStmt();
-      ~SequentialStmt();
+      virtual ~SequentialStmt() =0;
 
+    public:
+      virtual int emit(ostream&out, Entity*entity, Architecture*arc);
+      virtual void dump(ostream&out, int indent) const;
 };
 
 class IfSequential  : public SequentialStmt {
@@ -38,6 +43,10 @@ class IfSequential  : public SequentialStmt {
       IfSequential(Expression*cond, std::list<SequentialStmt*>*tr,
 		   std::list<SequentialStmt*>*fa);
       ~IfSequential();
+
+    public:
+      int emit(ostream&out, Entity*entity, Architecture*arc);
+      void dump(ostream&out, int indent) const;
 
     private:
       Expression*cond_;
@@ -49,6 +58,10 @@ class SignalSeqAssignment  : public SequentialStmt {
     public:
       SignalSeqAssignment(Expression*sig, std::list<Expression*>*wav);
       ~SignalSeqAssignment();
+
+    public:
+      int emit(ostream&out, Entity*entity, Architecture*arc);
+      void dump(ostream&out, int indent) const;
 
     private:
       Expression*lval_;

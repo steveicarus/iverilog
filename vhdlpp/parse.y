@@ -196,6 +196,8 @@ const VType*parse_type_by_name(perm_string name)
 %type <expr> shift_expression simple_expression term waveform_element
 
 %type <expr_list> waveform waveform_elements
+%type <expr_list> name_list
+%type <expr_list> process_sensitivity_list process_sensitivity_list_opt
 
 %type <named_expr> association_element
 %type <named_expr_list> association_list port_map_aspect port_map_aspect_opt
@@ -894,7 +896,15 @@ name
   /* Handle name lists as lists of expressions. */
 name_list
   : name_list ',' name
+      { std::list<Expression*>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
   | name
+      { std::list<Expression*>*tmp = new std::list<Expression*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
   ;
 
 package_declaration
@@ -1028,6 +1038,7 @@ primary
       { perm_string name = lex_strings.make($3);
 	ExpName*base = dynamic_cast<ExpName*> ($1);
 	ExpAttribute*tmp = new ExpAttribute(base, name);
+	FILE_NAME(tmp, @3);
 	delete[]$3;
 	$$ = tmp;
       }
@@ -1065,8 +1076,10 @@ process_statement
 	      delete[]$12;
 	}
 
-	ProcessStatement*tmp = new ProcessStatement(iname);
+	ProcessStatement*tmp = new ProcessStatement(iname, $5, $8);
 	FILE_NAME(tmp, @4);
+	delete $5;
+	delete $8;
 	$$ = tmp;
       }
 
@@ -1080,16 +1093,33 @@ process_statement
       }
   ;
 
+/*
+ * A process_sentitivity_list is:
+ *     <nil>  if the list is not present, or
+ *     or a non-empty list of actual expressions.
+ */
 process_sensitivity_list_opt
   : '(' process_sensitivity_list ')'
+      { $$ = $2; }
   | '(' error ')'
-      { errormsg(@2, "Error in process sensitivity list\n"); }
+      { errormsg(@2, "Error in process sensitivity list\n");
+	yyerrok;
+	$$ = 0;
+      }
   |
+      { $$ = 0; }
   ;
 
 process_sensitivity_list
   : K_all
+      { std::list<Expression*>*tmp = new std::list<Expression*>;
+	ExpName*all = new ExpNameALL;
+	FILE_NAME(all, @1);
+	tmp->push_back(all);
+	$$ = tmp;
+      }
   | name_list
+      { $$ = $1; }
   ;
 
 relation

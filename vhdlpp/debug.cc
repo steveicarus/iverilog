@@ -232,6 +232,11 @@ void ExpName::dump(ostream&out, int indent) const
 	    index_->dump(out, indent+6);
 }
 
+void ExpNameALL::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "ExpNameALL at " << get_fileline() << endl;
+}
+
 void ExpRelation::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "Relation ";

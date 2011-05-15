@@ -1,0 +1,63 @@
+/*
+ * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ *
+ *    This source code is free software; you can redistribute it
+ *    and/or modify it in source code form under the terms of the GNU
+ *    General Public License as published by the Free Software
+ *    Foundation; either version 2 of the License, or (at your option)
+ *    any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ */
+
+# include  "sequential.h"
+# include  "expression.h"
+# include  <fstream>
+# include  <iomanip>
+# include  <typeinfo>
+
+using namespace std;
+
+void SequentialStmt::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "SequentialStmt[" << typeid(*this).name() << "]"
+	  << " at file=" << get_fileline() << endl;
+}
+
+void IfSequential::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "IfSequential at file=" << get_fileline() << endl;
+      out << setw(indent+3) << "" << "Condition:" << endl;
+      cond_->dump(out, indent+4);
+
+      out << setw(indent+3) << "" << "TRUE clause (" << if_.size() << "):" << endl;
+      for (list<SequentialStmt*>::const_iterator cur = if_.begin()
+		 ; cur != if_.end() ; ++cur)
+	    (*cur)->dump(out, indent+4);
+
+      out << setw(indent+3) << "" << "FALSE clause (" << else_.size() << "):" << endl;
+      for (list<SequentialStmt*>::const_iterator cur = else_.begin()
+		 ; cur != else_.end() ; ++cur)
+	    (*cur)->dump(out, indent+4);
+
+}
+
+void SignalSeqAssignment::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "SignalSeqAssignment at file=" << get_fileline() << endl;
+
+      out << setw(indent+3) << "" << "l-value:" << endl;
+      lval_->dump(out, indent+4);
+
+      out << setw(indent+3) << "" << "r-values (" << waveform_.size() << "):" << endl;
+      for (list<Expression*>::const_iterator cur = waveform_.begin()
+		 ; cur != waveform_.end() ; ++cur)
+	    (*cur)->dump(out, indent+4);
+}

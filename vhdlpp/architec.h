@@ -29,6 +29,7 @@ class ComponentBase;
 class Entity;
 class Expression;
 class ExpName;
+class SequentialStmt;
 class Signal;
 class named_expr_t;
 
@@ -125,14 +126,20 @@ class ComponentInstantiation  : public Architecture::Statement {
 class ProcessStatement : public Architecture::Statement {
 
     public:
-      ProcessStatement(perm_string iname);
+      ProcessStatement(perm_string iname,
+		       std::list<Expression*>*sensitivity_list,
+		       std::list<SequentialStmt*>*statement_list);
       ~ProcessStatement();
 
       virtual int elaborate(Entity*ent, Architecture*arc);
+      virtual int emit(ostream&out, Entity*entity, Architecture*arc);
       virtual void dump(ostream&out, int indent =0) const;
 
     private:
       perm_string iname_;
+
+      std::list<Expression*> sensitivity_list_;
+      std::list<SequentialStmt*> statements_list_;
 
 };
 

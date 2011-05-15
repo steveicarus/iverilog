@@ -185,12 +185,13 @@ class ExpLogical : public ExpBinary {
 
 /*
  * The ExpName class represents an expression that is an identifier or
- * other sort of name.
+ * other sort of name. The ExpNameALL is a special case of ExpName
+ * that represents the "all" keyword is contexts that can handle it.
  */
 class ExpName : public Expression {
 
     public:
-      ExpName(perm_string nn);
+      explicit ExpName(perm_string nn);
       ExpName(perm_string nn, Expression*index);
       ~ExpName();
 
@@ -204,6 +205,15 @@ class ExpName : public Expression {
     private:
       perm_string name_;
       Expression*index_;
+};
+
+class ExpNameALL : public ExpName {
+
+    public:
+      ExpNameALL() : ExpName(perm_string()) { }
+
+    public:
+      void dump(ostream&out, int indent =0) const;
 };
 
 class ExpRelation : public ExpBinary {

@@ -20,6 +20,7 @@
 # include  "architec.h"
 # include  "entity.h"
 # include  "expression.h"
+# include  "sequential.h"
 # include  "vsignal.h"
 # include  <iostream>
 # include  <typeinfo>
@@ -103,4 +104,35 @@ int ComponentInstantiation::emit(ostream&out, Entity*ent, Architecture*arc)
       out << ");" << endl;
 
       return errors;
+}
+
+int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      out << "always";
+
+      if (sensitivity_list_.size() > 0) {
+	    out << " @(";
+	    const char*comma = 0;
+	    for (list<Expression*>::iterator cur = sensitivity_list_.begin()
+		       ; cur != sensitivity_list_.end() ; ++cur) {
+
+		  if (comma) out << comma;
+		  errors += (*cur)->emit(out, ent, arc);
+		  comma = ", ";
+	    }
+	    out << ")";
+      }
+
+      out << " begin" << endl;
+
+      for (list<SequentialStmt*>::iterator cur = statements_list_.begin()
+		 ; cur != statements_list_.end() ; ++cur) {
+	    (*cur)->emit(out, ent, arc);
+      }
+
+      out << "end" << endl;
+      return errors;
+
 }

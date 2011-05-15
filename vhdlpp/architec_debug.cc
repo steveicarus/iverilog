@@ -19,9 +19,12 @@
 
 # include  "architec.h"
 # include  "expression.h"
+# include  "sequential.h"
 # include  <fstream>
 # include  <iomanip>
 # include  <typeinfo>
+
+using namespace std;
 
 void Architecture::dump(ostream&out, perm_string of_entity, int indent) const
 {
@@ -70,4 +73,18 @@ void ProcessStatement::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "ProcessStatement name_=" << iname_
 	  << " file=" << get_fileline() << endl;
+
+      out << setw(indent+3) << "" << "Sensitivity_list:" << endl;
+
+      for (list<Expression*>::const_iterator cur = sensitivity_list_.begin()
+		 ; cur != sensitivity_list_.end() ; ++cur) {
+	    (*cur)->dump(out, indent+4);
+      }
+
+      out << setw(indent+3) << "" << "sequence of statements:" << endl;
+
+      for (list<SequentialStmt*>::const_iterator cur = statements_list_.begin()
+		 ; cur != statements_list_.end() ; ++cur) {
+	    (*cur)->dump(out, indent+4);
+      }
 }

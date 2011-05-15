@@ -71,9 +71,15 @@ ComponentInstantiation::~ComponentInstantiation()
 {
 }
 
-ProcessStatement::ProcessStatement(perm_string iname)
-    : iname_(iname)
+ProcessStatement::ProcessStatement(perm_string iname,
+				   std::list<Expression*>*sensitivity_list,
+				   std::list<SequentialStmt*>*statements_list)
+: iname_(iname)
 {
+      if (sensitivity_list)
+	    sensitivity_list_.splice(sensitivity_list_.end(), *sensitivity_list);
+      if (statements_list)
+	    statements_list_.splice(statements_list_.end(), *statements_list);
 }
 
 ProcessStatement::~ProcessStatement()
