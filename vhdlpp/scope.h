@@ -64,6 +64,8 @@ class Scope : public ScopeBase {
 
       ComponentBase* find_component(perm_string by_name);
 
+      Signal* find_signal(perm_string by_name);
+
     public:
       void dump_scope(ostream&out) const;
 

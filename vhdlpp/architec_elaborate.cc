@@ -20,6 +20,7 @@
 # include  "architec.h"
 # include  "entity.h"
 # include  "expression.h"
+# include  "sequential.h"
 # include  <typeinfo>
 # include  <cassert>
 
@@ -45,7 +46,7 @@ int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-      const ComponentBase*base = arc->find_component(cname_);
+      ComponentBase*base = arc->find_component(cname_);
       if (base == 0) {
 	    cerr << get_fileline() << ": error: No component declaration"
 		 << " for instance " << iname_
@@ -71,5 +72,12 @@ int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
 
 int ProcessStatement::elaborate(Entity*ent, Architecture*arc)
 {
-      return 0;
+      int errors = 0;
+
+      for (list<SequentialStmt*>::iterator cur = statements_list_.begin()
+		 ; cur != statements_list_.end() ; ++cur) {
+	    errors += (*cur)->elaborate(ent, arc);
+      }
+
+      return errors;
 }

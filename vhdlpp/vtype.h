@@ -42,9 +42,10 @@ class VType {
       enum vtype_t { VNONE, VBOOL, VLOGIC };
       struct decl_t {
 	  public:
-	    decl_t() : signed_flag(false), type(VNONE), msb(0), lsb(0) { }
+	    decl_t() : reg_flag(false), signed_flag(false), type(VNONE), msb(0), lsb(0) { }
 	    int emit(std::ostream&out, perm_string name) const;
 	  public:
+	    bool reg_flag;
 	    bool signed_flag;
 	    vtype_t type;
 	    long msb, lsb;

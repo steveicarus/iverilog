@@ -20,6 +20,7 @@
 
 # include  "entity.h"
 # include  "architec.h"
+# include  <cassert>
 
 using namespace std;
 
@@ -68,4 +69,11 @@ Architecture* Entity::add_architecture(Architecture*that)
       }
 
       return arch_[that->get_name()] = that;
+}
+
+void Entity::set_declaration_l_value(perm_string nam, bool flag)
+{
+      map<perm_string,VType::decl_t>::iterator cur = declarations_.find(nam);
+      assert(cur != declarations_.end());
+      cur->second.reg_flag = flag;
 }

@@ -40,6 +40,13 @@ class Expression : public LineInfo {
       Expression();
       virtual ~Expression() =0;
 
+	// This virtual method handles the special case of elaborating
+	// an expression that is the l-value of a sequential variable
+	// assignment. This generates an error for most cases, but
+	// expressions that are valid l-values return 0 and set any
+	// flags needed to indicate their status as writable variables.
+      virtual int elaborate_lval(Entity*ent, Architecture*arc);
+
 	// The emit virtual method is called by architecture emit to
 	// output the generated code for the expression. The derived
 	// class fills in the details of what exactly happened.
@@ -196,6 +203,7 @@ class ExpName : public Expression {
       ~ExpName();
 
     public: // Base methods
+      int elaborate_lval(Entity*ent, Architecture*arc);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
       bool evaluate(ScopeBase*scope, int64_t&val) const;
@@ -213,6 +221,7 @@ class ExpNameALL : public ExpName {
       ExpNameALL() : ExpName(perm_string()) { }
 
     public:
+      int elaborate_lval(Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent =0) const;
 };
 

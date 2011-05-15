@@ -33,6 +33,8 @@ class Architecture;
 
 class InterfacePort : public LineInfo {
     public:
+      InterfacePort() { mode = PORT_NONE; type=0; }
+
 	// Port direction from the source code.
       port_mode_t mode;
 	// Name of the port from the source code
@@ -92,7 +94,17 @@ class Entity : public ComponentBase {
 	// returned pointer is the same as the passed pointer.
       Architecture* add_architecture(Architecture*);
 
+	// After the architecture is bound, elaboration calls this
+	// method to elaborate this entity. This method arranges for
+	// elaboration to hapen all the way through the architecture
+	// that is bound to this entity.
       int elaborate();
+
+	// During elaboration, it may be discovered that a port is
+	// used as an l-value in an assignment. This method tweaks the
+	// declaration to allow for that case.
+      void set_declaration_l_value(perm_string by_name, bool flag);
+
       int emit(ostream&out);
 
       void dump(ostream&out, int indent = 0) const;

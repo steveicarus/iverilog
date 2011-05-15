@@ -93,3 +93,12 @@ ComponentBase* Scope::find_component(perm_string by_name)
       else
 	    return cur->second;
 }
+
+Signal* Scope::find_signal(perm_string by_name)
+{
+      map<perm_string,Signal*>::const_iterator cur = signals_.find(by_name);
+      if (cur == signals_.end())
+	    return 0;
+      else
+	    return cur->second;
+}

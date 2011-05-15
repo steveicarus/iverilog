@@ -33,6 +33,7 @@ class SequentialStmt  : public LineInfo {
       virtual ~SequentialStmt() =0;
 
     public:
+      virtual int elaborate(Entity*ent, Architecture*arc);
       virtual int emit(ostream&out, Entity*entity, Architecture*arc);
       virtual void dump(ostream&out, int indent) const;
 };
@@ -45,6 +46,7 @@ class IfSequential  : public SequentialStmt {
       ~IfSequential();
 
     public:
+      int elaborate(Entity*ent, Architecture*arc);
       int emit(ostream&out, Entity*entity, Architecture*arc);
       void dump(ostream&out, int indent) const;
 
@@ -60,6 +62,7 @@ class SignalSeqAssignment  : public SequentialStmt {
       ~SignalSeqAssignment();
 
     public:
+      int elaborate(Entity*ent, Architecture*arc);
       int emit(ostream&out, Entity*entity, Architecture*arc);
       void dump(ostream&out, int indent) const;
 

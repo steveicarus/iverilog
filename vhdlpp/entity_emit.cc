@@ -69,6 +69,8 @@ int Entity::emit(ostream&out)
 			break;
 		      case PORT_OUT:
 			out << "output ";
+			if (decl.reg_flag)
+			      out << "reg ";
 			if (decl.msb != decl.lsb)
 			      out << "[" << decl.msb
 				  << ":" << decl.lsb << "] ";

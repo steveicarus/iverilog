@@ -17,39 +17,36 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+# include  "sequential.h"
+# include  "expression.h"
 
-# include  "vtype.h"
-# include <iostream>
-# include  <typeinfo>
-# include  <cassert>
-
-using namespace std;
-
-int VType::decl_t::emit(ostream&out, perm_string name) const
+int SequentialStmt::elaborate(Entity*, Architecture*)
 {
-      const char*wire = reg_flag? "reg" : "wire";
+      return 0;
+}
 
-      switch (type) {
-	  case VType::VNONE:
-	    out << "// N type for " << name << endl;
-	    break;
-	  case VType::VLOGIC:
-	    out << wire<< " logic ";
-	    if (signed_flag)
-		  out << "signed ";
-	    if (msb != lsb)
-		  out << "[" << msb << ":" << lsb << "] ";
-	    out << name << ";" << endl;
-	    break;
-	  case VType::VBOOL:
-	    out << wire << " bool ";
-	    if (signed_flag)
-		  out << "signed ";
-	    if (msb != lsb)
-		  out << "[" << msb << ":" << lsb << "] ";
-	    out << name << ";" << endl;
-	    break;
+int IfSequential::elaborate(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      for (list<SequentialStmt*>::iterator cur = if_.begin()
+		 ; cur != if_.end() ; ++cur) {
+	    errors += (*cur)->elaborate(ent, arc);
       }
 
-      return 0;
+      for (list<SequentialStmt*>::iterator cur = else_.begin()
+		 ; cur != else_.end() ; ++cur) {
+	    errors += (*cur)->elaborate(ent, arc);
+      }
+
+      return errors;
+}
+
+int SignalSeqAssignment::elaborate(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      errors += lval_->elaborate_lval(ent, arc);
+
+      return errors;
 }

@@ -59,8 +59,10 @@ LIBS = @LIBS@ @EXTRALIBS@
 
 M = StringHeap.o LineInfo.o
 
-O = main.o architec.o architec_elaborate.o compiler.o entity.o entity_elaborate.o \
-    expression.o package.o scope.o sequential.o vsignal.o vtype.o vtype_elaborate.o \
+O = main.o architec.o compiler.o entity.o \
+    expression.o package.o scope.o sequential.o vsignal.o vtype.o \
+    architec_elaborate.o entity_elaborate.o expression_elaborate.o \
+    sequential_elaborate.o vtype_elaborate.o \
     lexor.o lexor_keyword.o parse.o \
     parse_misc.o library.o vhdlreal.o vhdlint.o \
     architec_emit.o entity_emit.o expression_emit.o sequential_emit.o vtype_emit.o \
