@@ -128,6 +128,9 @@ class ProcessStatement : public Architecture::Statement {
       ProcessStatement(perm_string iname);
       ~ProcessStatement();
 
+      virtual int elaborate(Entity*ent, Architecture*arc);
+      virtual void dump(ostream&out, int indent =0) const;
+
     private:
       perm_string iname_;
 

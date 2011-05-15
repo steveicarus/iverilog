@@ -68,3 +68,8 @@ int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
 
       return errors;
 }
+
+int ProcessStatement::elaborate(Entity*ent, Architecture*arc)
+{
+      return 0;
+}

@@ -122,25 +122,6 @@ void Entity::dump(ostream&out, int indent) const
       }
 }
 
-void Architecture::dump(ostream&out, perm_string of_entity, int indent) const
-{
-      out << setw(indent) << "" << "architecture " << name_
-	  << " of entity " << of_entity
-	  << " file=" << get_fileline() << endl;
-
-      dump_scope(out);
-
-      for (list<Architecture::Statement*>::const_iterator cur = statements_.begin()
-		 ; cur != statements_.end() ; ++cur) {
-	    (*cur)->dump(out, indent+3);
-      }
-}
-
-void Architecture::Statement::dump(ostream&out, int indent) const
-{
-      out << setw(indent) << "" << "Architecture::Statement at file=" << get_fileline() << endl;
-}
-
 void Signal::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "signal " << name_ << " is ";
@@ -149,30 +130,6 @@ void Signal::dump(ostream&out, int indent) const
       else
 	    out << "?NO TYPE?";
       out << endl;
-}
-
-void SignalAssignment::dump(ostream&out, int indent) const
-{
-      out << setw(indent) << "" << "SignalAssignment file=" << get_fileline() << endl;
-      lval_->dump(out, indent+1);
-      out << setw(indent+2) << "" << "<= <expr>..." << endl;
-
-      for (list<Expression*>::const_iterator cur = rval_.begin()
-		 ; cur != rval_.end() ; ++cur) {
-	    (*cur)->dump(out, indent+2);
-      }
-}
-
-void ComponentInstantiation::dump(ostream&out, int indent) const
-{
-      out << setw(indent) << "" << "Component Instantiation file=" << get_fileline() << endl;
-
-      for (map<perm_string,Expression*>::const_iterator cur = port_map_.begin()
-		 ; cur != port_map_.end() ; ++cur) {
-	    out << setw(indent+2) <<""<< cur->first << " => ..." << endl;
-	    cur->second->dump(out, indent+6);
-      }
-
 }
 
 void Expression::dump(ostream&out, int indent) const
