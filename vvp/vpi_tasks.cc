@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -606,6 +606,7 @@ void print_vpi_call_errors()
 	    free(vpi_call_error_lst[idx].name);
       }
       free(vpi_call_error_lst);
+      fflush(stderr);
 }
 
 static void cleanup_vpi_call_args(unsigned argc, vpiHandle*argv)
