@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -246,7 +246,7 @@ int main(int argc, char*argv[])
       { char *s;
 	char basepath[4096], tmp[4096];
 	GetModuleFileName(NULL, tmp, sizeof tmp);
-	  /* Convert to a short na,e to remove any embedded spaces. */
+	  /* Convert to a short name to remove any embedded spaces. */
 	GetShortPathName(tmp, basepath, sizeof basepath);
 	s = strrchr(basepath, '\\');
 	if (s) *s = 0;
