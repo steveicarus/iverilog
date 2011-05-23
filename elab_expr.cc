@@ -1868,6 +1868,36 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
             return expr_width_;
       }
 
+	// The width of a specparam is the width of the specparam value
+        // (as evaluated earlier). Note that specparams aren't fully
+        // supported yet, so this code is likely to need rework when
+        // they are.
+      if (gn_specify_blocks_flag) {
+	    map<perm_string,NetScope::spec_val_t>::const_iterator specp;
+	    perm_string key = peek_tail_name(path_);
+	    if (path_.size() == 1
+		&& ((specp = scope->specparams.find(key)) != scope->specparams.end())) {
+		  NetScope::spec_val_t value = (*specp).second;
+		  if (value.type == IVL_VT_REAL) {
+                        expr_type_   = IVL_VT_REAL;
+                        expr_width_  = 1;
+                        min_width_   = 1;
+                        signed_flag_ = true;
+                  } else {
+	                verinum val (value.integer);
+                        expr_type_   = IVL_VT_BOOL;
+                        expr_width_  = val.len();
+                        min_width_   = expr_width_;
+                        signed_flag_ = true;
+
+                        if (mode < LOSSLESS)
+                            mode = LOSSLESS;
+
+		  }
+		  return expr_width_;
+	    }
+      }
+
 	// Not a net, and not a parameter? Give up on the type, but
 	// set the width to 0.
       expr_type_   = IVL_VT_NO_TYPE;

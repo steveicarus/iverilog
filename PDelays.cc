@@ -124,6 +124,9 @@ static NetExpr*calculate_val(Design*des, NetScope*scope, PExpr*expr)
 
 static NetExpr* make_delay_nets(Design*des, NetScope*scope, NetExpr*expr)
 {
+      if (expr == 0)
+            return 0;
+
       if (dynamic_cast<NetESignal*> (expr))
 	    return expr;
 
