@@ -39,6 +39,33 @@ IfSequential::IfSequential(Expression*cond, std::list<SequentialStmt*>*tr,
 IfSequential::~IfSequential()
 {
       delete cond_;
+      while (if_.size() > 0) {
+	    SequentialStmt*cur = if_.front();
+	    if_.pop_front();
+	    delete cur;
+      }
+      while (else_.size() > 0) {
+	    SequentialStmt*cur = else_.front();
+	    else_.pop_front();
+	    delete cur;
+      }
+
+}
+
+void IfSequential::extract_true(std::list<SequentialStmt*>&that)
+{
+      while (if_.size() > 0) {
+	    that.push_back(if_.front());
+	    if_.pop_front();
+      }
+}
+
+void IfSequential::extract_false(std::list<SequentialStmt*>&that)
+{
+      while (else_.size() > 0) {
+	    that.push_back(else_.front());
+	    else_.pop_front();
+      }
 }
 
 SignalSeqAssignment::SignalSeqAssignment(Expression*sig, std::list<Expression*>*wav)

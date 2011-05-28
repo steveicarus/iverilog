@@ -118,6 +118,25 @@ bool ExpCharacter::is_primary(void) const
       return true;
 }
 
+int ExpEdge::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      switch (fun_) {
+	  case NEGEDGE:
+	    out << "negedge ";
+	    break;
+	  case POSEDGE:
+	    out << "posedge ";
+	    break;
+	  default:
+	    out << "INVALIDedge ";
+	    errors += 1;
+	    break;
+      }
+      errors += emit_operand1(out, ent, arc);
+      return errors;
+}
+
 int ExpInteger::emit(ostream&out, Entity*, Architecture*)
 {
       out << value_;

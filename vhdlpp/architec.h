@@ -136,6 +136,9 @@ class ProcessStatement : public Architecture::Statement {
       virtual void dump(ostream&out, int indent =0) const;
 
     private:
+      int rewrite_as_always_edge_(Entity*ent, Architecture*arc);
+
+    private:
       perm_string iname_;
 
       std::list<Expression*> sensitivity_list_;

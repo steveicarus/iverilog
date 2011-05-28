@@ -189,6 +189,23 @@ void ExpCharacter::dump(ostream&out, int indent) const
 	  << " at " << get_fileline() << endl;
 }
 
+void ExpEdge::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "";
+      switch (fun_) {
+	  case NEGEDGE:
+	    out << "negedge ";
+	    break;
+	  case ANYEDGE:
+	    out << "ANYedge ";
+	    break;
+	  case POSEDGE:
+	    out << "posedge ";
+      }
+      out << "at " << get_fileline() << endl;
+      dump_operand1(out, indent+3);
+}
+
 void ExpInteger::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "Integer " << value_

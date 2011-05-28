@@ -50,6 +50,13 @@ class IfSequential  : public SequentialStmt {
       int emit(ostream&out, Entity*entity, Architecture*arc);
       void dump(ostream&out, int indent) const;
 
+      const Expression*peek_condition() const { return cond_; }
+
+	// These method extract (and remove) the sub-statements from
+	// the true or false clause.
+      void extract_true(std::list<SequentialStmt*>&that);
+      void extract_false(std::list<SequentialStmt*>&that);
+
     private:
       Expression*cond_;
       std::list<SequentialStmt*> if_;

@@ -58,6 +58,10 @@ class Expression : public LineInfo {
 	// cannot be done.
       virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
 
+	// The symbolic compare returns true if the two expressions
+	// are equal without actually calculating the value.
+      virtual bool symbolic_compare(const Expression*that) const;
+
 	// This method returns true if the drawn Verilog for this
 	// expression is a primary. A containing expression can use
 	// this method to know if it needs to wrap parentheses. This
@@ -79,7 +83,7 @@ class ExpUnary : public Expression {
 
     public:
       ExpUnary(Expression*op1);
-      ~ExpUnary();
+      virtual ~ExpUnary() =0;
 
     protected:
       int emit_operand1(ostream&out, Entity*ent, Architecture*arc);
@@ -97,7 +101,10 @@ class ExpBinary : public Expression {
 
     public:
       ExpBinary(Expression*op1, Expression*op2);
-      ~ExpBinary();
+      virtual ~ExpBinary() =0;
+
+      const Expression* peek_operand1(void) const { return operand1_; }
+      const Expression* peek_operand2(void) const { return operand2_; }
 
     protected:
 
@@ -137,6 +144,9 @@ class ExpAttribute : public Expression {
       ExpAttribute(ExpName*base, perm_string name);
       ~ExpAttribute();
 
+      inline perm_string peek_attribute() const { return name_; }
+      inline const ExpName* peek_base() const { return base_; }
+
       int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent = 0) const;
 
@@ -155,8 +165,32 @@ class ExpCharacter : public Expression {
       bool is_primary(void) const;
       void dump(ostream&out, int indent = 0) const;
 
+      char value() const { return value_; }
+
     private:
       char value_;
+};
+
+/*
+ * This is a special expression type that represents posedge/negedge
+ * expressions in sensitivity lists.
+ */
+class ExpEdge : public ExpUnary {
+
+    public:
+      enum fun_t { NEGEDGE, ANYEDGE, POSEDGE };
+
+    public:
+      explicit ExpEdge(ExpEdge::fun_t ty, Expression*op);
+      ~ExpEdge();
+
+      inline fun_t edge_fun() const { return fun_; }
+
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      void dump(ostream&out, int indent = 0) const;
+
+    private:
+      fun_t fun_;
 };
 
 class ExpInteger : public Expression {
@@ -183,6 +217,8 @@ class ExpLogical : public ExpBinary {
       ExpLogical(ExpLogical::fun_t ty, Expression*op1, Expression*op2);
       ~ExpLogical();
 
+      inline fun_t logic_fun() const { return fun_; }
+
       int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent = 0) const;
 
@@ -207,6 +243,7 @@ class ExpName : public Expression {
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
       bool evaluate(ScopeBase*scope, int64_t&val) const;
+      bool symbolic_compare(const Expression*that) const;
       void dump(ostream&out, int indent = 0) const;
       const char* name() const;
 
@@ -229,6 +266,8 @@ class ExpRelation : public ExpBinary {
 
     public:
       enum fun_t { EQ, LT, GT, NEQ, LE, GE };
+
+      inline fun_t relation_fun(void) const { return fun_; }
 
     public:
       ExpRelation(ExpRelation::fun_t ty, Expression*op1, Expression*op2);

@@ -20,6 +20,8 @@
 # include  "expression.h"
 # include  "scope.h"
 # include  <iostream>
+# include  <typeinfo>
+# include  <cassert>
 
 using namespace std;
 
@@ -34,6 +36,36 @@ Expression::~Expression()
 bool Expression::evaluate(ScopeBase*, int64_t&) const
 {
       return false;
+}
+
+bool Expression::symbolic_compare(const Expression*) const
+{
+      cerr << get_fileline() << ": internal error: "
+	   << "symbolic_compare() method not implemented "
+	   << "for " << typeid(*this).name() << endl;
+      return false;
+}
+
+bool ExpName::symbolic_compare(const Expression*that) const
+{
+      const ExpName*that_name = dynamic_cast<const ExpName*> (that);
+      if (that_name == 0)
+	    return false;
+
+      if (name_ != that_name->name_)
+	    return false;
+
+      if (that_name->index_ && !index_)
+	    return false;
+      if (index_ && !that_name->index_)
+	    return false;
+
+      if (index_) {
+	    assert(that_name->index_);
+	    return index_->symbolic_compare(that_name->index_);
+      }
+
+      return true;
 }
 
 ExpAttribute::ExpAttribute(ExpName*bas, perm_string nam)
@@ -134,6 +166,15 @@ ExpCharacter::ExpCharacter(char val)
 }
 
 ExpCharacter::~ExpCharacter()
+{
+}
+
+ExpEdge::ExpEdge(ExpEdge::fun_t typ, Expression*op)
+: ExpUnary(op), fun_(typ)
+{
+}
+
+ExpEdge::~ExpEdge()
 {
 }
 
