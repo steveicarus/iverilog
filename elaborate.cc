@@ -737,12 +737,20 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  sig = lval_sigs[idx];
 
 	    } else {
+                    // If this is an array, the port expression is required
+                    // to be the exact width required (this will be checked
+                    // later). But if this is a single instance, consensus
+                    // is that we just take the LSB of the port expression.
 		  unsigned use_width = array_count * instance_width;
 		  ivl_variable_type_t tmp_type = IVL_VT_NO_TYPE;
 		  bool flag = false;
 		  ex->test_width(des, scope, 0, use_width, tmp_type, flag);
-		  NetExpr*tmp = elab_and_eval(des, scope, ex,
-					      use_width, use_width);
+		  NetExpr*tmp = elab_and_eval(des, scope, ex, -1,
+					      msb_ ? -1 : 1);
+                  if (tmp == 0)
+                        continue;
+                  if (msb_ == 0 && tmp->expr_width() != 1)
+                        tmp = new NetESelect(tmp, make_const_0(1), 1);
 		  sig = tmp->synthesize(des, scope, tmp);
 		  delete tmp;
 	    }
