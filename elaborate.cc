@@ -812,7 +812,16 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  sig = lval_sigs[idx];
 
 	    } else {
-		  NetExpr*tmp = elab_and_eval(des, scope, ex, -1);
+                    // If this is an array, the port expression is required
+                    // to be the exact width required (this will be checked
+                    // later). But if this is a single instance, consensus
+                    // is that we just take the LSB of the port expression.
+		  NetExpr*tmp = elab_and_eval(des, scope, ex, msb_ ? -1 : 1);
+                  if (tmp == 0)
+                        continue;
+                  if (msb_ == 0 && tmp->expr_width() != 1)
+                        tmp = new NetESelect(tmp, make_const_0(1), 1,
+                                             IVL_SEL_IDX_UP);
 		  sig = tmp->synthesize(des, scope, tmp);
 		  delete tmp;
 	    }
