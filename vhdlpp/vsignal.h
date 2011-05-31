@@ -32,6 +32,8 @@ class Signal : public LineInfo {
       Signal(perm_string name, const VType*type);
       ~Signal();
 
+      const VType* peek_type(void) const { return type_; }
+
       int emit(ostream&out, Entity*ent, Architecture*arc);
 
       void dump(ostream&out, int indent = 0) const;

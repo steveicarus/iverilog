@@ -26,6 +26,7 @@
 class Entity;
 class Architecture;
 class ScopeBase;
+class VType;
 
 class ExpName;
 
@@ -46,6 +47,22 @@ class Expression : public LineInfo {
 	// expressions that are valid l-values return 0 and set any
 	// flags needed to indicate their status as writable variables.
       virtual int elaborate_lval(Entity*ent, Architecture*arc);
+
+	// This virtual method probes the expression to get the most
+	// constrained type for the expression. For a given instance,
+	// this may be called before the elaborate_expr method.
+      virtual const VType*probe_type(Entity*ent, Architecture*arc) const;
+
+	// This virtual method elaborates an expression. The ltype is
+	// the type of the lvalue expression, if known, and can be
+	// used to calculate the type for the expression being
+	// elaborated.
+      virtual int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+
+	// Return the type that this expression would be if it were an
+	// l-value. This should only be called after elaborate_lval is
+	// called and only if elaborate_lval succeeded.
+      inline const VType*peek_type(void) const { return type_; }
 
 	// The emit virtual method is called by architecture emit to
 	// output the generated code for the expression. The derived
@@ -72,7 +89,11 @@ class Expression : public LineInfo {
 	// Debug dump of the expression.
       virtual void dump(ostream&out, int indent = 0) const =0;
 
+    protected:
+      void set_type(const VType*);
+
     private:
+      const VType*type_;
 
     private: // Not implemented
       Expression(const Expression&);
@@ -108,6 +129,7 @@ class ExpBinary : public Expression {
 
     protected:
 
+      int elaborate_exprs(Entity*, Architecture*, const VType*);
       int emit_operand1(ostream&out, Entity*ent, Architecture*arc);
       int emit_operand2(ostream&out, Entity*ent, Architecture*arc);
 
@@ -161,6 +183,7 @@ class ExpCharacter : public Expression {
       ExpCharacter(char val);
       ~ExpCharacter();
 
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
       void dump(ostream&out, int indent = 0) const;
@@ -240,6 +263,8 @@ class ExpName : public Expression {
 
     public: // Base methods
       int elaborate_lval(Entity*ent, Architecture*arc);
+      const VType* probe_type(Entity*ent, Architecture*arc) const;
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
       bool evaluate(ScopeBase*scope, int64_t&val) const;
@@ -259,6 +284,7 @@ class ExpNameALL : public ExpName {
 
     public:
       int elaborate_lval(Entity*ent, Architecture*arc);
+      const VType* probe_type(Entity*ent, Architecture*arc) const;
       void dump(ostream&out, int indent =0) const;
 };
 
@@ -273,6 +299,8 @@ class ExpRelation : public ExpBinary {
       ExpRelation(ExpRelation::fun_t ty, Expression*op1, Expression*op2);
       ~ExpRelation();
 
+      const VType* probe_type(Entity*ent, Architecture*arc) const;
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent = 0) const;
 

@@ -145,8 +145,6 @@ int ProcessStatement::rewrite_as_always_edge_(Entity*ent, Architecture*arc)
 	// And we can convert it to:
 	//   always @(<N>edge <se>) ...
 
-      cerr << get_fileline() << ": XXXX: Found an always @(posedge) pattern?" << endl;
-
 	// Replace the sensitivity expression with an edge expression.
       ExpEdge*edge = new ExpEdge(op2b->value()=='1'? ExpEdge::POSEDGE : ExpEdge::NEGEDGE, se);
       assert(sensitivity_list_.size() == 1);

@@ -33,6 +33,12 @@ Expression::~Expression()
 {
 }
 
+void Expression::set_type(const VType*typ)
+{
+      assert(type_ == 0);
+      type_ = typ;
+}
+
 bool Expression::evaluate(ScopeBase*, int64_t&) const
 {
       return false;

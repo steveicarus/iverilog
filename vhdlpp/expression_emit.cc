@@ -17,7 +17,8 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include "expression.h"
+# include  "expression.h"
+# include  "vtype.h"
 # include  <typeinfo>
 # include  <iostream>
 
@@ -109,6 +110,37 @@ int ExpArithmetic::emit(ostream&out, Entity*ent, Architecture*arc)
 
 int ExpCharacter::emit(ostream&out, Entity*, Architecture*)
 {
+      const VType*etype = peek_type();
+
+      if (const VTypePrimitive*use_type = dynamic_cast<const VTypePrimitive*>(etype)) {
+	    switch (use_type->type()) {
+		case VTypePrimitive::BOOLEAN:
+		case VTypePrimitive::BIT:
+		  switch (value_) {
+		      case '0':
+		      case '1':
+			out << "1'b" << value_;
+		        return 0;
+		      default:
+			break;
+		  }
+		  break;
+
+		case VTypePrimitive::STDLOGIC:
+		  switch (value_) {
+		      case '0':
+		      case '1':
+			out << "1'b" << value_;
+		        return 0;
+		      default:
+			break;
+		  }
+
+		default:
+		  return 1;
+	    }
+      }
+
       out << "\"" << value_ << "\"";
       return 0;
 }

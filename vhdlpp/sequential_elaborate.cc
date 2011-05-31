@@ -29,6 +29,8 @@ int IfSequential::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
+      errors += cond_->elaborate_expr(ent, arc, 0);
+
       for (list<SequentialStmt*>::iterator cur = if_.begin()
 		 ; cur != if_.end() ; ++cur) {
 	    errors += (*cur)->elaborate(ent, arc);
@@ -46,7 +48,24 @@ int SignalSeqAssignment::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
+	// Elaborate the l-value expression.
       errors += lval_->elaborate_lval(ent, arc);
+
+	// The elaborate_lval should have resolved the type of the
+	// l-value expression. We'll use that type to elaborate the
+	// r-value.
+      const VType*lval_type = lval_->peek_type();
+      if (lval_type == 0) {
+	    if (errors == 0) errors += 1;
+	    return errors;
+      }
+
+	// Elaborate the r-value expressions.
+      for (list<Expression*>::iterator cur = waveform_.begin()
+		 ; cur != waveform_.end() ; ++cur) {
+
+	    errors += (*cur)->elaborate_expr(ent, arc, lval_type);
+      }
 
       return errors;
 }
