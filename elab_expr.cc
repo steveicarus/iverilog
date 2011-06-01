@@ -1872,30 +1872,26 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
         // (as evaluated earlier). Note that specparams aren't fully
         // supported yet, so this code is likely to need rework when
         // they are.
-      if (gn_specify_blocks_flag) {
-	    map<perm_string,NetScope::spec_val_t>::const_iterator specp;
-	    perm_string key = peek_tail_name(path_);
-	    if (path_.size() == 1
-		&& ((specp = scope->specparams.find(key)) != scope->specparams.end())) {
-		  NetScope::spec_val_t value = (*specp).second;
-		  if (value.type == IVL_VT_REAL) {
-                        expr_type_   = IVL_VT_REAL;
-                        expr_width_  = 1;
-                        min_width_   = 1;
-                        signed_flag_ = true;
-                  } else {
-	                verinum val (value.integer);
-                        expr_type_   = IVL_VT_BOOL;
-                        expr_width_  = val.len();
-                        min_width_   = expr_width_;
-                        signed_flag_ = true;
+      map<perm_string,NetScope::spec_val_t>::const_iterator specp;
+      perm_string key = peek_tail_name(path_);
+      if (path_.size() == 1 &&
+          ((specp = scope->specparams.find(key)) != scope->specparams.end())) {
+	    NetScope::spec_val_t value = (*specp).second;
+	    if (value.type == IVL_VT_REAL) {
+		  expr_type_   = IVL_VT_REAL;
+		  expr_width_  = 1;
+		  min_width_   = 1;
+		  signed_flag_ = true;
+	    } else {
+		  verinum val (value.integer);
+		  expr_type_   = IVL_VT_BOOL;
+		  expr_width_  = val.len();
+		  min_width_   = expr_width_;
+		  signed_flag_ = true;
 
-                        if (mode < LOSSLESS)
-                            mode = LOSSLESS;
-
-		  }
-		  return expr_width_;
+		  if (mode < LOSSLESS) mode = LOSSLESS;
 	    }
+	    return expr_width_;
       }
 
 	// Not a net, and not a parameter? Give up on the type, but
@@ -2042,34 +2038,30 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	// A specparam? Look up the name to see if it is a
 	// specparam. If we find it, then turn it into a NetEConst
-	// value and return that. Of course, this does not apply if
-	// specify blocks are disabled.
-
-      if (gn_specify_blocks_flag) {
-	    map<perm_string,NetScope::spec_val_t>::const_iterator specp;
-	    perm_string key = peek_tail_name(path_);
-	    if (path_.size() == 1
-		&& ((specp = scope->specparams.find(key)) != scope->specparams.end())) {
-		  NetScope::spec_val_t value = (*specp).second;
-		  NetExpr*tmp = 0;
-		  switch (value.type) {
-		      case IVL_VT_BOOL:
-			tmp = new NetEConst(verinum(value.integer));
-			break;
-		      case IVL_VT_REAL:
-			tmp = new NetECReal(verireal(value.real_val));
-			break;
-		      default:
-			break;
-		  }
-		  assert(tmp);
-		  tmp->set_line(*this);
-
-		  if (debug_elaborate)
-			cerr << get_fileline() << ": debug: " << path_
-			     << " is a specparam" << endl;
-		  return tmp;
+	// value and return that.
+      map<perm_string,NetScope::spec_val_t>::const_iterator specp;
+      perm_string key = peek_tail_name(path_);
+      if (path_.size() == 1 &&
+          ((specp = scope->specparams.find(key)) != scope->specparams.end())) {
+	    NetScope::spec_val_t value = (*specp).second;
+	    NetExpr*tmp = 0;
+	    switch (value.type) {
+	      case IVL_VT_BOOL:
+		  tmp = new NetEConst(verinum(value.integer));
+		  break;
+	      case IVL_VT_REAL:
+		  tmp = new NetECReal(verireal(value.real_val));
+		  break;
+	      default:
+		  break;
 	    }
+	    assert(tmp);
+	    tmp->set_line(*this);
+
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: " << path_
+		       << " is a specparam" << endl;
+	    return tmp;
       }
 
 	// Maybe this is a method attached to an enumeration name? If

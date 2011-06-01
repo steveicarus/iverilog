@@ -4278,48 +4278,47 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 {
       bool result_flag = true;
 
-      if (gn_specify_blocks_flag) {
 	      // Elaborate specparams
-	    typedef map<perm_string,PExpr*>::const_iterator specparam_it_t;
-	    for (specparam_it_t cur = specparams.begin()
-		       ; cur != specparams.end() ; ++ cur ) {
+      typedef map<perm_string,PExpr*>::const_iterator specparam_it_t;
+      for (specparam_it_t cur = specparams.begin() ;
+           cur != specparams.end() ; ++ cur ) {
 
-		  NetExpr*val = elab_and_eval(des, scope, (*cur).second, -1,
-                                              true);
-		  NetScope::spec_val_t value;
+	    NetExpr*val = elab_and_eval(des, scope, (*cur).second, -1, true);
+	    NetScope::spec_val_t value;
 
-		  if (NetECReal*val_cr = dynamic_cast<NetECReal*> (val)) {
+	    if (NetECReal*val_cr = dynamic_cast<NetECReal*> (val)) {
 
-			value.type     = IVL_VT_REAL;
-			value.real_val = val_cr->value().as_double();
+		  value.type     = IVL_VT_REAL;
+		  value.real_val = val_cr->value().as_double();
 
-			if (debug_elaborate)
-			      cerr << get_fileline() << ": debug: Elaborate "
-				   << "specparam " << (*cur).first
-				   << " value=" << value.real_val << endl;
-
-		  } else if (NetEConst*val_c = dynamic_cast<NetEConst*> (val)) {
-
-			value.type    = IVL_VT_BOOL;
-			value.integer = val_c->value().as_long();
-
-			if (debug_elaborate)
-			      cerr << get_fileline() << ": debug: Elaborate "
-				   << "specparam " << (*cur).first
-				   << " value=" << value.integer << endl;
-
-		  } else {
-			value.type = IVL_VT_NO_TYPE;
-			cerr << (*cur).second->get_fileline() << ": error: "
-			     << "specparam " << (*cur).first << " value"
-			     << " is not constant: " << *val << endl;
-			des->errors += 1;
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": debug: Elaborate "
+			     << "specparam " << (*cur).first
+			     << " value=" << value.real_val << endl;
 		  }
 
-		  assert(val);
-		  delete  val;
-		  scope->specparams[(*cur).first] = value;
+	    } else if (NetEConst*val_c = dynamic_cast<NetEConst*> (val)) {
+
+		  value.type    = IVL_VT_BOOL;
+		  value.integer = val_c->value().as_long();
+
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": debug: Elaborate "
+			     << "specparam " << (*cur).first
+			    << " value=" << value.integer << endl;
+		  }
+
+	    } else {
+		  value.type = IVL_VT_NO_TYPE;
+		  cerr << (*cur).second->get_fileline() << ": error: "
+		       << "specparam " << (*cur).first
+		       << " value is not constant: " << *val << endl;
+		  des->errors += 1;
 	    }
+
+	    assert(val);
+	    delete  val;
+	    scope->specparams[(*cur).first] = value;
       }
 
 	// Elaborate within the generate blocks.
