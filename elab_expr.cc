@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2181,34 +2181,30 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 	// A specparam? Look up the name to see if it is a
 	// specparam. If we find it, then turn it into a NetEConst
-	// value and return that. Of course, this does not apply if
-	// specify blocks are disabled.
-
-      if (gn_specify_blocks_flag) {
-	    map<perm_string,NetScope::spec_val_t>::const_iterator specp;
-	    perm_string key = peek_tail_name(path_);
-	    if (path_.size() == 1
-		&& ((specp = scope->specparams.find(key)) != scope->specparams.end())) {
-		  NetScope::spec_val_t value = (*specp).second;
-		  NetExpr*tmp = 0;
-		  switch (value.type) {
-		      case IVL_VT_BOOL:
-			tmp = new NetEConst(verinum(value.integer));
-			break;
-		      case IVL_VT_REAL:
-			tmp = new NetECReal(verireal(value.real_val));
-			break;
-		      default:
-			break;
-		  }
-		  assert(tmp);
-		  tmp->set_line(*this);
-
-		  if (debug_elaborate)
-			cerr << get_fileline() << ": debug: " << path_
-			     << " is a specparam" << endl;
-		  return tmp;
+	// value and return that.
+      map<perm_string,NetScope::spec_val_t>::const_iterator specp;
+      perm_string key = peek_tail_name(path_);
+      if (path_.size() == 1 &&
+          ((specp = scope->specparams.find(key)) != scope->specparams.end())) {
+	    NetScope::spec_val_t value = (*specp).second;
+	    NetExpr*tmp = 0;
+	    switch (value.type) {
+	      case IVL_VT_BOOL:
+		  tmp = new NetEConst(verinum(value.integer));
+		  break;
+	      case IVL_VT_REAL:
+		  tmp = new NetECReal(verireal(value.real_val));
+		  break;
+	      default:
+		  break;
 	    }
+	    assert(tmp);
+	    tmp->set_line(*this);
+
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: " << path_
+		       << " is a specparam" << endl;
+	    return tmp;
       }
 
       if (error_implicit==false
