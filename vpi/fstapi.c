@@ -3357,6 +3357,7 @@ uint64_t previous_time = UINT64_MAX;
 uint64_t *time_table = NULL;
 uint64_t tsec_nitems;
 int secnum = 0;
+int blocks_skipped = 0;
 off_t blkpos = 0;
 uint64_t seclen, beg_tim, end_tim;
 uint64_t frame_uclen, frame_clen, frame_maxhandle, vc_maxhandle; 
@@ -3419,6 +3420,7 @@ for(;;)
 		{
 		if(beg_tim < xc->limit_range_start)
 			{
+			blocks_skipped++;
 			blkpos += seclen;
 			continue;
 			}
@@ -3506,7 +3508,7 @@ for(;;)
 
 	if(secnum == 0)
 		{
-		if(beg_tim != time_table[0])
+		if((beg_tim != time_table[0]) || (blocks_skipped))
 			{
 			unsigned char *mu = malloc(frame_uclen);
 			uint32_t sig_offs = 0;

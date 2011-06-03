@@ -1,7 +1,7 @@
 #ifndef __ivl_dlfcn_H
 #define __ivl_dlfcn_H
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,7 +33,15 @@ typedef shl_t ivl_dll_t;
 
 #if defined(__MINGW32__)
 inline ivl_dll_t ivl_dlopen(const char *name, bool global_flag)
-{ return (void *)LoadLibrary(name); }
+{
+      static char full_name[4096];
+      unsigned long length = GetFullPathName(name, sizeof(full_name),
+                                             full_name, NULL);
+      if ((length == 0) || (length > sizeof(full_name)))
+            return 0;
+  
+      return (void *)LoadLibrary(full_name);
+}
 
 inline void *ivl_dlsym(ivl_dll_t dll, const char *nm)
 { return (void *)GetProcAddress((HINSTANCE)dll,nm);}

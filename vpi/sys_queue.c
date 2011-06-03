@@ -84,9 +84,12 @@ uint64_t calc_average_wait_time(uint64_t high, uint64_t low, uint64_t total)
 
 	/* It's a big value so calculate the average the long way. */
       do {
+	    unsigned carry = 0U;
 	      /* Copy bits from low to high until we have a bit to place
 	       * in the result or there are no bits left. */
-	    while ((bit >= 0) && (high < total)) {
+	    while ((bit >= 0) && (high < total) && !carry) {
+		    /* If the MSB is set then we will have a carry. */
+		  if (high > (UINT64_MAX >> 1)) carry = 1U;
 		  high <<= 1;
 		  high |= (low & 0x8000000000000000) != 0;
 		  low <<= 1;

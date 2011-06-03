@@ -852,7 +852,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			cerr << get_fileline() << ": error: "
 			     << "Expression width " << sig->vector_width()
 			     << " does not match width " << instance_width
-			     << " of logic gate array port " << idx
+			     << " of logic gate array port " << idx+1
 			     << "." << endl;
 			des->errors += 1;
 		  }
