@@ -62,19 +62,11 @@ int Entity::emit(ostream&out)
 			break;
 		      case PORT_IN:
 			out << "input ";
-			if (decl.msb != decl.lsb)
-			      out << "[" << decl.msb
-				  << ":" << decl.lsb << "] ";
-			out << port->name;
+			decl.emit(out, port->name);
 			break;
 		      case PORT_OUT:
 			out << "output ";
-			if (decl.reg_flag)
-			      out << "reg ";
-			if (decl.msb != decl.lsb)
-			      out << "[" << decl.msb
-				  << ":" << decl.lsb << "] ";
-			out << port->name;
+			decl.emit(out, port->name);
 			break;
 		  }
 	    }
@@ -82,12 +74,6 @@ int Entity::emit(ostream&out)
       }
 
       out << ";" << endl;
-
-      for (map<perm_string,VType::decl_t>::const_iterator cur = declarations_.begin()
-		 ; cur != declarations_.end() ; ++cur) {
-
-	    cur->second.emit(out, cur->first);
-      }
 
       errors += bind_arch_->emit(out, this);
 

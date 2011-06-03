@@ -39,7 +39,7 @@ int VType::decl_t::emit(ostream&out, perm_string name) const
 		  out << "signed ";
 	    if (msb != lsb)
 		  out << "[" << msb << ":" << lsb << "] ";
-	    out << name << ";" << endl;
+	    out << name;
 	    break;
 	  case VType::VBOOL:
 	    out << wire << " bool ";
@@ -47,7 +47,7 @@ int VType::decl_t::emit(ostream&out, perm_string name) const
 		  out << "signed ";
 	    if (msb != lsb)
 		  out << "[" << msb << ":" << lsb << "] ";
-	    out << name << ";" << endl;
+	    out << name;
 	    break;
       }
 

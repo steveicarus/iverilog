@@ -39,5 +39,6 @@ int Signal::emit(ostream&out, Entity*, Architecture*)
       VType::decl_t decl;
       type_->elaborate(decl);
       errors += decl.emit(out, name_);
+      out << ";" << endl;
       return errors;
 }
