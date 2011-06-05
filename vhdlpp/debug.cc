@@ -163,6 +163,9 @@ void ExpArithmetic::dump(ostream&out, int indent) const
 	  case POW:
 	    fun_name = "**";
 	    break;
+	  case CONCAT:
+	    fun_name = "&";
+	    break;
       }
 
       out << setw(indent) << "" << "Arithmetic " << fun_name
@@ -181,6 +184,16 @@ void ExpBinary::dump_operands(ostream&out, int indent) const
 {
       operand1_->dump(out, indent);
       operand2_->dump(out, indent);
+}
+
+void ExpBitstring::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "Bit string " << value_.size()
+	  << "b\"";
+      for (size_t idx = value_.size() ; idx > 0 ; idx -= 1) {
+	    out << value_[idx-1];
+      }
+      out << "\"";
 }
 
 void ExpCharacter::dump(ostream&out, int indent) const

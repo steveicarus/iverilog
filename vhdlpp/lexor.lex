@@ -54,6 +54,7 @@ static char* escape_apostrophe_and_dup(char* text);
 
 static double make_double_from_based(char* text);
 static int64_t make_long_from_based(char* text);
+static char* make_bitstring_literal(const char*text);
 
 static int64_t lpow(int64_t left, int64_t right);
 static unsigned short short_from_hex_char(char ch);
@@ -175,6 +176,10 @@ based_integer		[0-9a-fA-F](_?[0-9a-fA-F])*
     }
 }
 
+{integer}?[sSuU]?[xXbBoOdD]\"[^\"]+\" {
+      yylval.text = make_bitstring_literal(yytext);
+      return BITSTRING_LITERAL;
+}
 
   /* Compound symbols */
 "<=" { return LEQ; }
@@ -379,6 +384,237 @@ static char* escape_apostrophe_and_dup(char* text)
     newstr[0] = text[1];
     newstr[1] = '\0';
     return newstr;
+}
+
+static char*make_bitstring_bin(int width_prefix, bool sflag, bool,
+				  const char*src)
+{
+      int src_len = strlen(src);
+      if (width_prefix < 0)
+	    width_prefix = src_len;
+
+      char*res = new char[width_prefix+1];
+      char*rp = res;
+
+      if (width_prefix > src_len) {
+	    size_t pad = width_prefix - src_len;
+	    for (size_t idx = 0 ; idx < pad ; idx += 1)
+		  *rp++ = sflag? src[0] : '0';
+
+      } else if (src_len > width_prefix) {
+	    src += src_len - width_prefix;
+      }
+
+      while (*src) {
+	    *rp++ = *src++;
+      }
+
+      return res;
+}
+
+static char*make_bitstring_oct(int width_prefix, bool sflag, bool,
+			       const char*src)
+{
+      int src_len = strlen(src);
+      if (width_prefix < 0)
+	    width_prefix = 3*src_len;
+
+      char*res = new char[width_prefix+1];
+      char*rp = res + width_prefix;
+      *rp = 0;
+      rp -= 1;
+
+      for (const char*sp = src + src_len - 1; sp >= src ; sp -= 1) {
+	    int val;
+	    switch (*sp) {
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		  val = *sp - '0';
+		  *rp-- = (val&1)? '1' : '0';
+		  if (rp >= res) *rp-- = (val&2)? '1' : '0';
+		  if (rp >= res) *rp-- = (val&4)? '1' : '0';
+		  break;
+		default:
+		  *rp-- = *sp;
+		  if (rp >= res) *rp-- = *sp;
+		  if (rp >= res) *rp-- = *sp;
+		  break;
+	    }
+	    if (rp < res)
+		  break;
+      }
+
+      if (rp >= res) {
+	    char pad = sflag? src[0] : '0';
+	    while (rp >= res)
+		  *rp-- = pad;
+      }
+
+      return res;
+}
+
+static char*make_bitstring_hex(int width_prefix, bool sflag, bool,
+			       const char*src)
+{
+      int src_len = strlen(src);
+      if (width_prefix <= 0)
+	    width_prefix = 4*src_len;
+
+      char*res = new char[width_prefix+1];
+      char*rp = res + width_prefix;
+      *rp = 0;
+      rp -= 1;
+
+      for (const char*sp = src + src_len - 1; sp >= src ; sp -= 1) {
+	    int val;
+	    switch (*sp) {
+		case '0':
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+		  val = *sp - '0';
+		  *rp-- = (val&1)? '1' : '0';
+		  if (rp >= res) *rp-- = (val&2)? '1' : '0';
+		  if (rp >= res) *rp-- = (val&4)? '1' : '0';
+		  if (rp >= res) *rp-- = (val&8)? '1' : '0';
+		  break;
+		case 'a': case 'A':
+		case 'b': case 'B':
+		case 'c': case 'C':
+		case 'd': case 'D':
+		case 'e': case 'E':
+		case 'f': case 'F':
+		  val = 10 + toupper(*sp) - 'A';
+		  *rp-- = (val&1)? '1' : '0';
+		  if (rp >= res) *rp-- = (val&2)? '1' : '0';
+		  if (rp >= res) *rp-- = (val&4)? '1' : '0';
+		  if (rp >= res) *rp-- = (val&8)? '1' : '0';
+		  break;
+		default:
+		  *rp-- = *sp;
+		  if (rp >= res) *rp-- = *sp;
+		  if (rp >= res) *rp-- = *sp;
+		  break;
+	    }
+	    if (rp < res)
+		  break;
+      }
+
+      if (rp >= res) {
+	    char pad = sflag? src[0] : '0';
+	    while (rp >= res)
+		  *rp-- = pad;
+      }
+
+      return res;
+}
+
+static char*make_bitstring_dec(int, bool, bool, const char*)
+{
+      assert(0);
+      return 0;
+}
+
+static char* make_bitstring_literal(const char*text)
+{
+      int width_prefix = -1;
+      const char*cp = text;
+      bool signed_flag = false;
+      bool unsigned_flag = false;
+      unsigned base = 0;
+
+	// Parse out the explicit width, if present.
+      if (size_t len = strspn(cp, "0123456789")) {
+	    width_prefix = 0;
+	    while (len > 0) {
+		  width_prefix *= 10;
+		  width_prefix += *cp - '0';
+		  cp += 1;
+	    }
+      } else {
+	    width_prefix = -1;
+      }
+
+	// Detect and s/u flags.
+      if (*cp == 's' || *cp == 'S') {
+	    signed_flag = true;
+	    cp += 1;
+      } else if (*cp == 'u' || *cp == 'U') {
+	    unsigned_flag = true;
+	    cp += 1;
+      }
+
+	// Now get the base marker.
+      switch (*cp) {
+	  case 'b':
+	  case 'B':
+	    base = 2;
+	    break;
+	  case 'o':
+	  case 'O':
+	    base = 8;
+	    break;
+	  case 'x':
+	  case 'X':
+	    base = 16;
+	    break;
+	  case 'd':
+	  case 'D':
+	    base = 10;
+	    break;
+	  default:
+	    assert(0);
+      }
+      cp += 1;
+
+      char*simplified = new char [strlen(cp) + 1];
+      char*dp = simplified;
+      assert(*cp == '"');
+      cp += 1;
+
+      while (*cp && *cp != '"') {
+	    if (*cp == '_') {
+		  cp += 1;
+		  continue;
+	    }
+
+	    *dp++ = *cp++;
+      }
+      *dp = 0;
+
+      char*res;
+      switch (base) {
+	  case 2:
+	    res = make_bitstring_bin(width_prefix, signed_flag, unsigned_flag, simplified);
+	    break;
+	  case 8:
+	    res = make_bitstring_oct(width_prefix, signed_flag, unsigned_flag, simplified);
+	    break;
+	  case 10:
+	    res = make_bitstring_dec(width_prefix, signed_flag, unsigned_flag, simplified);
+	    break;
+	  case 16:
+	    res = make_bitstring_hex(width_prefix, signed_flag, unsigned_flag, simplified);
+	    break;
+	  default:
+	    assert(0);
+	    res = 0;
+      }
+
+      delete[]simplified;
+      return res;
 }
 
 /**

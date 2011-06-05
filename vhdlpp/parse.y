@@ -169,7 +169,7 @@ const VType*parse_type_by_name(perm_string name)
 %token <text> IDENTIFIER
 %token <uni_integer> INT_LITERAL
 %token <uni_real> REAL_LITERAL
-%token <text> STRING_LITERAL CHARACTER_LITERAL
+%token <text> STRING_LITERAL CHARACTER_LITERAL BITSTRING_LITERAL
  /* compound symbols */
 %token LEQ GEQ VASSIGN NE BOX EXP ARROW DLT DGT
 
@@ -275,10 +275,19 @@ architecture_statement_part
   ;
 
 association_element
-  : IDENTIFIER ARROW name
+  : IDENTIFIER ARROW expression
       { named_expr_t*tmp = new named_expr_t(lex_strings.make($1), $3);
 	delete[]$1;
 	$$ = tmp;
+	}
+  | IDENTIFIER ARROW K_open
+      { sorrymsg(@3, "Port map \"open\" not supported.\n");
+	$$ = 0;
+      }
+  | IDENTIFIER ARROW error
+      { errormsg(@3, "Invalid target for port map association.\n");
+	yyerrok;
+	$$ = 0;
       }
   ;
 
@@ -442,6 +451,16 @@ concurrent_signal_assignment_statement
 
 	$$ = tmp;
 	delete $3;
+      }
+  | name LEQ waveform K_when expression K_else waveform ';'
+      { ExpName*name = dynamic_cast<ExpName*> ($1);
+	assert(name);
+	SignalAssignment*tmp = new SignalAssignment(name, *$3);
+	FILE_NAME(tmp, @1);
+
+	$$ = tmp;
+	delete $3;
+	sorrymsg(@4, "Conditional signal assignment not supported here.\n");
       }
   | name LEQ error ';'
       { errormsg(@2, "Syntax error in signal assignment waveform.\n");
@@ -755,15 +774,15 @@ identifier_opt : IDENTIFIER { $$ = $1; } |  { $$ = 0; } ;
 
 if_statement
   : K_if expression K_then sequence_of_statements
-    if_statement_else
+    if_statement_elsif_list_opt if_statement_else
     K_end K_if ';'
-      { IfSequential*tmp = new IfSequential($2, $4, $5);
+      { IfSequential*tmp = new IfSequential($2, $4, $6);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
 
   | K_if error K_then sequence_of_statements
-    if_statement_else
+    if_statement_elsif_list_opt if_statement_else
     K_end K_if ';'
       { errormsg(@2, "Error in if_statement condition expression.\n");
 	yyerrok;
@@ -772,7 +791,7 @@ if_statement
       }
 
   | K_if expression K_then error K_end K_if ';'
-      { errormsg(@2, "Too many errors in sequence within if_statement.\n");
+      { errormsg(@4, "Too many errors in sequence within if_statement.\n");
 	yyerrok;
 	$$ = 0;
       }
@@ -784,9 +803,33 @@ if_statement
       }
   ;
 
+if_statement_elsif_list_opt
+  : if_statement_elsif_list
+  |
+  ;
+
+if_statement_elsif_list
+  : if_statement_elsif_list if_statement_elsif
+  | if_statement_elsif
+  ;
+
+if_statement_elsif
+  : K_elsif expression K_then sequence_of_statements
+      { sorrymsg(@1, "elsif sub-statements are not supported.\n"); }
+  | K_elsif expression K_then error
+      { errormsg(@4, "Too many errors in elsif sub-statements.\n");
+	yyerrok;
+      }
+  ;
+
 if_statement_else
   : K_else sequence_of_statements
       { $$ = $2; }
+  | K_else error
+      { errormsg(@2, "Too many errors in else sub-statements.\n");
+	yyerrok;
+	$$ = 0;
+      }
   |
       { $$ = 0; }
   ;
@@ -1004,8 +1047,7 @@ port_map_aspect
   : K_port K_map '(' association_list ')'
       { $$ = $4; }
   | K_port K_map '(' error ')'
-      {
-    errormsg(@1, "Syntax error in port map aspect.\n");
+      { errormsg(@1, "Syntax error in port map aspect.\n");
       }
   ;
 
@@ -1051,6 +1093,12 @@ primary
   | INT_LITERAL
       { ExpInteger*tmp = new ExpInteger($1);
 	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | BITSTRING_LITERAL
+      { ExpBitstring*tmp = new ExpBitstring($1);
+	FILE_NAME(tmp, @1);
+	delete[]$1;
 	$$ = tmp;
       }
   | '(' expression ')'
@@ -1248,6 +1296,11 @@ simple_expression
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
+  | term '&' term
+      { ExpArithmetic*tmp = new ExpArithmetic(ExpArithmetic::CONCAT, $1, $3);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
   ;
 
 signal_assignment_statement
@@ -1255,6 +1308,12 @@ signal_assignment_statement
       { SignalSeqAssignment*tmp = new SignalSeqAssignment($1, $3);
 	FILE_NAME(tmp, @1);
 	delete $3;
+	$$ = tmp;
+      }
+  | name LEQ waveform K_when expression K_else waveform ';'
+      { SignalSeqAssignment*tmp = new SignalSeqAssignment($1, $3);
+	FILE_NAME(tmp, @1);
+	sorrymsg(@4, "Conditional signal assignment not supported.\n");
 	$$ = tmp;
       }
   ;

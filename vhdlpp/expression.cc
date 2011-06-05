@@ -21,6 +21,7 @@
 # include  "scope.h"
 # include  <iostream>
 # include  <typeinfo>
+# include  <cstring>
 # include  <cassert>
 
 using namespace std;
@@ -161,9 +162,25 @@ bool ExpArithmetic::evaluate(ScopeBase*scope, int64_t&val) const
 	    return false;
 	  case POW:
 	    return false;
+	  case CONCAT:
+	    return false;
       }
 
       return true;
+}
+
+/*
+ *  Store bitstrings in little-endian order.
+ */
+ExpBitstring::ExpBitstring(const char*val)
+: value_(strlen(val))
+{
+      for (size_t idx = value_.size() ; idx > 0 ; idx -= 1)
+	    value_[idx-1] = *val++;
+}
+
+ExpBitstring::~ExpBitstring()
+{
 }
 
 ExpCharacter::ExpCharacter(char val)

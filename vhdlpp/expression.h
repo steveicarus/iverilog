@@ -22,6 +22,7 @@
 # include  "StringHeap.h"
 # include  "LineInfo.h"
 # include  <inttypes.h>
+# include  <vector>
 
 class Entity;
 class Architecture;
@@ -146,7 +147,7 @@ class ExpBinary : public Expression {
 class ExpArithmetic : public ExpBinary {
 
     public:
-      enum fun_t { PLUS, MINUS, MULT, DIV, MOD, REM, POW };
+      enum fun_t { PLUS, MINUS, MULT, DIV, MOD, REM, POW, CONCAT };
 
     public:
       ExpArithmetic(ExpArithmetic::fun_t op, Expression*op1, Expression*op2);
@@ -175,6 +176,19 @@ class ExpAttribute : public Expression {
     private:
       ExpName*base_;
       perm_string name_;
+};
+
+class ExpBitstring : public Expression {
+
+    public:
+      explicit ExpBitstring(const char*);
+      ~ExpBitstring();
+
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      void dump(ostream&out, int indent = 0) const;
+
+    private:
+      std::vector<char>value_;
 };
 
 class ExpCharacter : public Expression {

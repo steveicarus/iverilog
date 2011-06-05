@@ -101,10 +101,20 @@ int ExpArithmetic::emit(ostream&out, Entity*ent, Architecture*arc)
 	  case REM:
 	    out << " /* ?remainder? */ ";
 	    break;
+	  case CONCAT:
+	    out << " /* ?concat? */ ";
+	    break;
       }
 
       errors += emit_operand2(out, ent, arc);
 
+      return errors;
+}
+
+int ExpBitstring::emit(ostream&out, Entity*, Architecture*)
+{
+      int errors = 0;
+      errors += 1;
       return errors;
 }
 
