@@ -271,26 +271,35 @@ unsigned PGBuiltin::calculate_array_count_(Design*des, NetScope*scope,
       return count;
 }
 
-unsigned PGBuiltin::calculate_output_count_(void) const
+void PGBuiltin::calculate_gate_and_lval_count_(unsigned&gate_count,
+                                               unsigned&lval_count) const
 {
-      unsigned output_count;
-
       switch (type()) {
 	  case BUF:
 	  case NOT:
-	    if (pin_count() > 2) output_count = pin_count() - 1;
-	    else output_count = 1;
+	    if (pin_count() > 2) gate_count = pin_count() - 1;
+	    else gate_count = 1;
+            lval_count = gate_count;
 	    break;
 	  case PULLDOWN:
 	  case PULLUP:
-	    output_count = pin_count();
+	    gate_count = pin_count();
+            lval_count = gate_count;
+	    break;
+	  case TRAN:
+	  case RTRAN:
+	  case TRANIF0:
+	  case TRANIF1:
+	  case RTRANIF0:
+	  case RTRANIF1:
+	    gate_count = 1;
+            lval_count = 2;
 	    break;
 	  default:
-	    output_count = 1;
+	    gate_count = 1;
+            lval_count = 1;
 	    break;
       }
-
-      return output_count;
 }
 
 NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
@@ -694,22 +703,28 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
       unsigned array_count = calculate_array_count_(des, scope, high, low);
       if (array_count == 0) return;
 
-      unsigned output_count = calculate_output_count_();
+      unsigned gate_count = 0, lval_count = 0;
+      calculate_gate_and_lval_count_(gate_count, lval_count);
 
-	/* Now we have a gate count. Elaborate the output expressions
-	   only. We do it early so that we can see if we can make
-	   wide gates instead of an array of gates. */
+	/* Now we have a gate count. Elaborate the lval (output or
+           bi-directional) expressions only. We do it early so that
+           we can see if we can make wide gates instead of an array
+           of gates. */
 
-      vector<NetNet*>lval_sigs (output_count);
+      vector<NetNet*>lval_sigs (lval_count);
 
-      for (unsigned idx = 0 ; idx < output_count ; idx += 1) {
+      for (unsigned idx = 0 ; idx < lval_count ; idx += 1) {
 	    if (pin(idx) == 0) {
 		  cerr << get_fileline() << ": error: Logic gate port "
 			"expressions are not optional." << endl;
 		  des->errors += 1;
 		  return;
 	    }
-	    lval_sigs[idx] = pin(idx)->elaborate_lnet(des, scope);
+            if (lval_count > gate_count)
+	          lval_sigs[idx] = pin(idx)->elaborate_bi_net(des, scope);
+            else
+	          lval_sigs[idx] = pin(idx)->elaborate_lnet(des, scope);
+
 	      // The only way this should return zero is if an error
 	      // happened, so for that case just return.
 	    if (lval_sigs[idx] == 0) return;
@@ -757,19 +772,19 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 					des, scope);
 
 	/* Allocate all the netlist nodes for the gates. */
-      vector<NetNode*>cur (array_count*output_count);
+      vector<NetNode*>cur (array_count*gate_count);
 
 	/* Now make as many gates as the bit count dictates. Give each
 	   a unique name, and set the delay times. */
 
-      for (unsigned idx = 0 ;  idx < array_count*output_count ;  idx += 1) {
-	    unsigned array_idx = idx/output_count;
-	    unsigned output_idx = idx%output_count;
+      for (unsigned idx = 0 ;  idx < array_count*gate_count ;  idx += 1) {
+	    unsigned array_idx = idx/gate_count;
+	    unsigned gate_idx = idx%gate_count;
 
 	    ostringstream tmp;
 	    unsigned index = (low < high)? (low+array_idx) : (low-array_idx);
 
-	    tmp << name << "<" << index << "." << output_idx << ">";
+	    tmp << name << "<" << index << "." << gate_idx << ">";
 	    perm_string inm = lex_strings.make(tmp.str());
 
 	    cur[idx] = create_gate_for_output_(des, scope, inm, instance_width);
@@ -808,7 +823,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		  return;
 	    }
 	    NetNet*sig = 0;
-	    if (idx < output_count) {
+	    if (idx < lval_count) {
 		  sig = lval_sigs[idx];
 
 	    } else {
@@ -872,11 +887,11 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		    // Although in Verilog proper a multiple
 		    // output gate has only 1 input, this conditional
 		    // handles gates with N outputs and M inputs.
-		  if (idx < output_count) {
+		  if (idx < gate_count) {
 			connect(cur[idx]->pin(0), sig->pin(0));
 		  } else {
-			for (unsigned dev = 0 ; dev < output_count; dev += 1)
-			      connect(cur[dev]->pin(idx-output_count+1), sig->pin(0));
+			for (unsigned dev = 0 ; dev < gate_count; dev += 1)
+			      connect(cur[dev]->pin(idx-gate_count+1), sig->pin(0));
 		  }
 
 	    } else if (sig->vector_width() == 1) {
@@ -886,26 +901,32 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 		       output port, connect it to all array_count
 		       devices that have outputs at this
 		       position. Otherwise, idx is an input to all
-		       array_count*output_count devices. */
+		       array_count*gate_count devices. */
 
-		  if (idx < output_count) {
+		  if (idx < gate_count) {
 			for (unsigned gdx = 0 ; gdx < array_count ; gdx += 1) {
-			      unsigned dev = gdx*output_count;
+			      unsigned dev = gdx*gate_count;
 			      connect(cur[dev+idx]->pin(0), sig->pin(0));
 			}
 		  } else {
-			unsigned use_idx = idx - output_count + 1;
+			unsigned use_idx = idx - gate_count + 1;
 			for (unsigned gdx = 0 ;  gdx < cur.size() ;  gdx += 1)
 			      connect(cur[gdx]->pin(use_idx), sig->pin(0));
 		  }
 
 	    } else if (sig->vector_width() == array_count) {
 
+                    /* Bi-directional switches should get collapsed into
+                       a single wide instance, so should never reach this
+                       point. Check this is so, as the following code
+                       doesn't handle bi-directional connections. */
+                  ivl_assert(*this, lval_count == gate_count);
+
 		    /* Handle the general case that each bit of the
 		       value is connected to a different instance. In
 		       this case, the output is handled slightly
 		       different from the inputs. */
-		  if (idx < output_count) {
+		  if (idx < gate_count) {
 			NetConcat*cc = new NetConcat(scope,
 						     scope->local_symbol(),
 						     sig->vector_width(),
@@ -918,7 +939,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
 			  /* Connect the outputs of the gates to the concat. */
 			for (unsigned gdx = 0 ;  gdx < array_count;  gdx += 1) {
-			      unsigned dev = gdx*output_count;
+			      unsigned dev = gdx*gate_count;
 			      connect(cur[dev+idx]->pin(0), cc->pin(gdx+1));
 
 			      NetNet*tmp2 = new NetNet(scope,
@@ -944,9 +965,9 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			tmp2->local_flag(true);
 			tmp2->data_type(sig->data_type());
 			connect(tmp1->pin(0), tmp2->pin(0));
-			unsigned use_idx = idx - output_count + 1;
-			unsigned dev = gdx*output_count;
-			for (unsigned gdx2 = 0 ; gdx2 < output_count ; gdx2 += 1)
+			unsigned use_idx = idx - gate_count + 1;
+			unsigned dev = gdx*gate_count;
+			for (unsigned gdx2 = 0 ; gdx2 < gate_count ; gdx2 += 1)
 			      connect(cur[dev+gdx2]->pin(use_idx), tmp1->pin(0));
 		  }
 
