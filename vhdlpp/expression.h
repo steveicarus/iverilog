@@ -49,7 +49,8 @@ class Expression : public LineInfo {
 	// assignment. This generates an error for most cases, but
 	// expressions that are valid l-values return 0 and set any
 	// flags needed to indicate their status as writable variables.
-      virtual int elaborate_lval(Entity*ent, Architecture*arc);
+      virtual int elaborate_lval(Entity*ent, Architecture*arc,
+				 bool is_sequ);
 
 	// This virtual method probes the expression to get the most
 	// constrained type for the expression. For a given instance,
@@ -319,7 +320,7 @@ class ExpName : public Expression {
       ~ExpName();
 
     public: // Base methods
-      int elaborate_lval(Entity*ent, Architecture*arc);
+      int elaborate_lval(Entity*ent, Architecture*arc, bool);
       const VType* probe_type(Entity*ent, Architecture*arc) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       int emit(ostream&out, Entity*ent, Architecture*arc);
@@ -340,7 +341,7 @@ class ExpNameALL : public ExpName {
       ExpNameALL() : ExpName(perm_string()) { }
 
     public:
-      int elaborate_lval(Entity*ent, Architecture*arc);
+      int elaborate_lval(Entity*ent, Architecture*arc, bool);
       const VType* probe_type(Entity*ent, Architecture*arc) const;
       void dump(ostream&out, int indent =0) const;
 };

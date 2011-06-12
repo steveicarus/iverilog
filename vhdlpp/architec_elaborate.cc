@@ -215,7 +215,7 @@ int SignalAssignment::elaborate(Entity*ent, Architecture*arc)
       int errors = 0;
 
 	// Elaborate the l-value expression.
-      errors += lval_->elaborate_lval(ent, arc);
+      errors += lval_->elaborate_lval(ent, arc, false);
 
 	// The elaborate_lval should have resolved the type of the
 	// l-value expression. We'll use that type to elaborate the

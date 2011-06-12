@@ -28,7 +28,7 @@
 
 using namespace std;
 
-int Expression::elaborate_lval(Entity*, Architecture*)
+int Expression::elaborate_lval(Entity*, Architecture*, bool)
 {
       cerr << get_fileline() << ": error: Expression is not a valie l-value." << endl;
       return 1;
@@ -39,7 +39,7 @@ const VType* Expression::probe_type(Entity*, Architecture*) const
       return 0;
 }
 
-int ExpName::elaborate_lval(Entity*ent, Architecture*arc)
+int ExpName::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
 {
       int errors = 0;
 
@@ -50,7 +50,9 @@ int ExpName::elaborate_lval(Entity*ent, Architecture*arc)
 		  return errors += 1;
 	    }
 
-	    ent->set_declaration_l_value(name_, true);
+	    if (is_sequ)
+		  ent->set_declaration_l_value(name_, is_sequ);
+
 	    set_type(cur->type);
 	    return errors;
       }
@@ -62,13 +64,16 @@ int ExpName::elaborate_lval(Entity*ent, Architecture*arc)
 	    return errors + 1;
       }
 
+	// Tell the target signal that this may be a sequential l-value.
+      if (is_sequ) sig->count_ref_sequ();
+
       set_type(sig->peek_type());
       return errors;
 }
 
-int ExpNameALL::elaborate_lval(Entity*ent, Architecture*arc)
+int ExpNameALL::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
 {
-      return Expression::elaborate_lval(ent, arc);
+      return Expression::elaborate_lval(ent, arc, is_sequ);
 }
 
 int Expression::elaborate_expr(Entity*, Architecture*, const VType*)

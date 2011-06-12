@@ -34,6 +34,10 @@ class Signal : public LineInfo {
 
       const VType* peek_type(void) const { return type_; }
 
+	// Call this method for each occasion where this signal is the
+	// l-value of a sequential assignment.
+      void count_ref_sequ();
+
       int emit(ostream&out, Entity*ent, Architecture*arc);
 
       void dump(ostream&out, int indent = 0) const;
@@ -42,9 +46,16 @@ class Signal : public LineInfo {
       perm_string name_;
       const VType*type_;
 
+      unsigned refcnt_sequ_;
+
     private: // Not implemented
       Signal(const Signal&);
       Signal& operator = (const Signal&);
 };
+
+inline void Signal::count_ref_sequ()
+{
+      refcnt_sequ_ += 1;
+}
 
 #endif

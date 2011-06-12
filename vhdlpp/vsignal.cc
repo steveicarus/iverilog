@@ -24,7 +24,7 @@
 using namespace std;
 
 Signal::Signal(perm_string nam, const VType*typ)
-: name_(nam), type_(typ)
+: name_(nam), type_(typ), refcnt_sequ_(0)
 {
 }
 
@@ -38,6 +38,8 @@ int Signal::emit(ostream&out, Entity*, Architecture*)
 
       VType::decl_t decl;
       type_->elaborate(decl);
+      if (refcnt_sequ_ > 0)
+	    decl.reg_flag = true;
       errors += decl.emit(out, name_);
       out << ";" << endl;
       return errors;
