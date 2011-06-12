@@ -52,7 +52,10 @@ void ComponentInstantiation::dump(ostream&out, int indent) const
       for (map<perm_string,Expression*>::const_iterator cur = port_map_.begin()
 		 ; cur != port_map_.end() ; ++cur) {
 	    out << setw(indent+2) <<""<< cur->first << " => ..." << endl;
-	    cur->second->dump(out, indent+6);
+	    if (cur->second)
+		  cur->second->dump(out, indent+6);
+	    else
+		  out << setw(indent+6) <<""<< "OPEN" << endl;
       }
 
 }

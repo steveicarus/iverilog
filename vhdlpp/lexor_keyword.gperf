@@ -75,6 +75,7 @@ not,		GN_KEYWORD_2008,	K_not
 null,		GN_KEYWORD_2008,	K_null
 of,		GN_KEYWORD_2008,	K_of
 on,		GN_KEYWORD_2008,	K_on
+open,		GN_KEYWORD_2008,	K_open
 or,		GN_KEYWORD_2008,	K_or
 others,		GN_KEYWORD_2008,	K_others
 out,		GN_KEYWORD_2008,	K_out

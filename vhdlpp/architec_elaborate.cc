@@ -42,7 +42,7 @@ int Architecture::Statement::elaborate(Entity*, Architecture*)
       return 0;
 }
 
-int ComponentInstantiation::elaborate(Entity*, Architecture*arc)
+int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
@@ -65,6 +65,11 @@ int ComponentInstantiation::elaborate(Entity*, Architecture*arc)
 		  errors += 1;
 		  continue;
 	    }
+
+	      /* It is possible for the port to be explicitly
+		 unconnected. In that case, the Expression will be nil */
+	    if (cur->second)
+		  cur->second->elaborate_expr(ent, arc, iport->type);
       }
 
       return errors;

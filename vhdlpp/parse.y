@@ -287,8 +287,9 @@ association_element
 	$$ = tmp;
 	}
   | IDENTIFIER ARROW K_open
-      { sorrymsg(@3, "Port map \"open\" not supported.\n");
-	$$ = 0;
+      { named_expr_t*tmp = new named_expr_t(lex_strings.make($1), 0);
+	delete[]$1;
+	$$ = tmp;
       }
   | IDENTIFIER ARROW error
       { errormsg(@3, "Invalid target for port map association.\n");

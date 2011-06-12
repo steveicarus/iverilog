@@ -96,6 +96,9 @@ int ComponentInstantiation::emit(ostream&out, Entity*ent, Architecture*arc)
       const char*comma = "";
       for (map<perm_string,Expression*>::iterator cur = port_map_.begin()
 		 ; cur != port_map_.end() ; ++cur) {
+	      // Skip unconnected ports
+	    if (cur->second == 0)
+		  continue;
 	    out << comma << "." << cur->first << "(";
 	    errors += cur->second->emit(out, ent, arc);
 	    out << ")";
