@@ -126,6 +126,9 @@ const VType*parse_type_by_name(perm_string name)
       SequentialStmt* sequ;
       std::list<SequentialStmt*>*sequ_list;
 
+      IfSequential::Elsif*elsif;
+      std::list<IfSequential::Elsif*>*elsif_list;
+
       named_expr_t*named_expr;
       std::list<named_expr_t*>*named_expr_list;
       entity_aspect_t* entity_aspect;
@@ -212,6 +215,9 @@ const VType*parse_type_by_name(perm_string name)
 
 %type <sequ_list> sequence_of_statements if_statement_else
 %type <sequ> sequential_statement if_statement signal_assignment_statement
+
+%type <elsif> if_statement_elsif
+%type <elsif_list> if_statement_elsif_list if_statement_elsif_list_opt
 
 %%
 
@@ -346,7 +352,7 @@ block_declarative_item
   | component_declaration
 
   | constant_declaration
-      { sorrymsg(@1, "constant declarations not supported here.\n"); }
+
   | use_clause_lib
 
       /* Various error handling rules for block_declarative_item... */
@@ -453,14 +459,17 @@ concurrent_signal_assignment_statement
 	delete $3;
       }
   | name LEQ waveform K_when expression K_else waveform ';'
-      { ExpName*name = dynamic_cast<ExpName*> ($1);
-	assert(name);
-	SignalAssignment*tmp = new SignalAssignment(name, *$3);
-	FILE_NAME(tmp, @1);
-
-	$$ = tmp;
+      { ExpConditional*tmp = new ExpConditional($5, $3, $7);
+	FILE_NAME(tmp, @3);
 	delete $3;
-	sorrymsg(@4, "Conditional signal assignment not supported here.\n");
+	delete $7;
+
+        ExpName*name = dynamic_cast<ExpName*> ($1);
+	assert(name);
+	SignalAssignment*tmpa = new SignalAssignment(name, tmp);
+	FILE_NAME(tmpa, @1);
+
+	$$ = tmpa;
       }
   | name LEQ error ';'
       { errormsg(@2, "Syntax error in signal assignment waveform.\n");
@@ -776,8 +785,11 @@ if_statement
   : K_if expression K_then sequence_of_statements
     if_statement_elsif_list_opt if_statement_else
     K_end K_if ';'
-      { IfSequential*tmp = new IfSequential($2, $4, $6);
+      { IfSequential*tmp = new IfSequential($2, $4, $5, $6);
 	FILE_NAME(tmp, @1);
+	delete $4;
+	delete $5;
+	delete $6;
 	$$ = tmp;
       }
 
@@ -804,21 +816,34 @@ if_statement
   ;
 
 if_statement_elsif_list_opt
-  : if_statement_elsif_list
-  |
+  : if_statement_elsif_list { $$ = $1; }
+  |                         { $$ = 0;  }
   ;
 
 if_statement_elsif_list
   : if_statement_elsif_list if_statement_elsif
+      { list<IfSequential::Elsif*>*tmp = $1;
+	tmp->push_back($2);
+	$$ = tmp;
+      }
   | if_statement_elsif
+      { list<IfSequential::Elsif*>*tmp = new list<IfSequential::Elsif*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
   ;
 
 if_statement_elsif
   : K_elsif expression K_then sequence_of_statements
-      { sorrymsg(@1, "elsif sub-statements are not supported.\n"); }
+      { IfSequential::Elsif*tmp = new IfSequential::Elsif($2, $4);
+	FILE_NAME(tmp, @1);
+	delete $4;
+	$$ = tmp;
+      }
   | K_elsif expression K_then error
       { errormsg(@4, "Too many errors in elsif sub-statements.\n");
 	yyerrok;
+	$$ = 0;
       }
   ;
 

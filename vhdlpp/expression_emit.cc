@@ -21,6 +21,7 @@
 # include  "vtype.h"
 # include  <typeinfo>
 # include  <iostream>
+# include  <cassert>
 
 using namespace std;
 
@@ -77,6 +78,9 @@ int ExpArithmetic::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
+      if (fun_ == CONCAT)
+	    return emit_concat_(out, ent, arc);
+
       errors += emit_operand1(out, ent, arc);
 
       switch (fun_) {
@@ -111,43 +115,70 @@ int ExpArithmetic::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
-int ExpBitstring::emit(ostream&out, Entity*, Architecture*)
+int ExpArithmetic::emit_concat_(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
-      errors += 1;
+      out << "{";
+      errors += emit_operand1(out, ent, arc);
+      out << ", ";
+      errors += emit_operand2(out, ent, arc);
+      out << "}";
       return errors;
 }
 
-int ExpCharacter::emit(ostream&out, Entity*, Architecture*)
+int ExpBitstring::emit(ostream&out, Entity*, Architecture*)
+{
+      int errors = 0;
+
+      out << value_.size() << "'b";
+      for (size_t idx = 0 ; idx < value_.size() ; idx += 1)
+	    out << value_[value_.size()-idx-1];
+
+      return errors;
+}
+
+int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*ent, Architecture*arc,
+				      const VTypePrimitive*etype)
+{
+      switch (etype->type()) {
+	  case VTypePrimitive::BOOLEAN:
+	  case VTypePrimitive::BIT:
+	    switch (value_) {
+		case '0':
+		case '1':
+		      out << "1'b" << value_;
+		return 0;
+		default:
+		  break;
+	    }
+	    break;
+
+	  case VTypePrimitive::STDLOGIC:
+	    switch (value_) {
+		case '0':
+		case '1':
+		      out << "1'b" << value_;
+		return 0;
+		default:
+		  break;
+	    }
+
+	  default:
+	    return 1;
+      }
+}
+
+int ExpCharacter::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       const VType*etype = peek_type();
 
       if (const VTypePrimitive*use_type = dynamic_cast<const VTypePrimitive*>(etype)) {
-	    switch (use_type->type()) {
-		case VTypePrimitive::BOOLEAN:
-		case VTypePrimitive::BIT:
-		  switch (value_) {
-		      case '0':
-		      case '1':
-			out << "1'b" << value_;
-		        return 0;
-		      default:
-			break;
-		  }
-		  break;
+	    return emit_primitive_bit_(out, ent, arc, use_type);
+      }
 
-		case VTypePrimitive::STDLOGIC:
-		  switch (value_) {
-		      case '0':
-		      case '1':
-			out << "1'b" << value_;
-		        return 0;
-		      default:
-			break;
-		  }
-
-		default:
-		  return 1;
+      if (const VTypeArray*array = dynamic_cast<const VTypeArray*>(etype)) {
+	    if (const VTypePrimitive*use_type = dynamic_cast<const VTypePrimitive*>(array->element_type())) {
+		  return emit_primitive_bit_(out, ent, arc, use_type);
 	    }
       }
 
@@ -160,6 +191,36 @@ bool ExpCharacter::is_primary(void) const
       return true;
 }
 
+int ExpConditional::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      out << "(";
+      errors += cond_->emit(out, ent, arc);
+      out << ")? (";
+
+      if (true_clause_.size() > 1) {
+	    cerr << get_fileline() << ": sorry: Multiple expressions not supported here." << endl;
+	    errors += 1;
+      }
+
+      Expression*tmp = true_clause_.front();
+      errors += tmp->emit(out, ent, arc);
+
+      out << ") : (";
+
+      if (else_clause_.size() > 1) {
+	    cerr << get_fileline() << ": sorry: Multiple expressions not supported here." << endl;
+	    errors += 1;
+      }
+
+      tmp = else_clause_.front();
+      errors += tmp->emit(out, ent, arc);
+
+      out << ")";
+
+      return errors;
+}
+
 int ExpEdge::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
@@ -170,9 +231,7 @@ int ExpEdge::emit(ostream&out, Entity*ent, Architecture*arc)
 	  case POSEDGE:
 	    out << "posedge ";
 	    break;
-	  default:
-	    out << "INVALIDedge ";
-	    errors += 1;
+	  case ANYEDGE:
 	    break;
       }
       errors += emit_operand1(out, ent, arc);

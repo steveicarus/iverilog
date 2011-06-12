@@ -192,6 +192,28 @@ ExpCharacter::~ExpCharacter()
 {
 }
 
+ExpConditional::ExpConditional(Expression*co, list<Expression*>*tru, list<Expression*>*els)
+: cond_(co)
+{
+      if (tru) true_clause_.splice(true_clause_.end(), *tru);
+      if (els) else_clause_.splice(else_clause_.end(), *els);
+}
+
+ExpConditional::~ExpConditional()
+{
+      delete cond_;
+      while (! true_clause_.empty()) {
+	    Expression*tmp = true_clause_.front();
+	    true_clause_.pop_front();
+	    delete tmp;
+      }
+      while (! else_clause_.empty()) {
+	    Expression*tmp = else_clause_.front();
+	    else_clause_.pop_front();
+	    delete tmp;
+      }
+}
+
 ExpEdge::ExpEdge(ExpEdge::fun_t typ, Expression*op)
 : ExpUnary(op), fun_(typ)
 {

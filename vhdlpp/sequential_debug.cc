@@ -42,9 +42,25 @@ void IfSequential::dump(ostream&out, int indent) const
 		 ; cur != if_.end() ; ++cur)
 	    (*cur)->dump(out, indent+4);
 
+      for (list<IfSequential::Elsif*>::const_iterator cur = elsif_.begin()
+		 ; cur != elsif_.end() ; ++cur)
+	    (*cur)->dump(out, indent);
+
       out << setw(indent+3) << "" << "FALSE clause (" << else_.size() << "):" << endl;
       for (list<SequentialStmt*>::const_iterator cur = else_.begin()
 		 ; cur != else_.end() ; ++cur)
+	    (*cur)->dump(out, indent+4);
+
+}
+
+void IfSequential::Elsif::dump(ostream&out, int indent) const
+{
+      out << setw(indent+3) << "" << "Elsif Condition at " << get_fileline() << ":" << endl;
+      cond_->dump(out, indent+4);
+
+      out << setw(indent+3) << "" << "ELSIF TRUE clause (" << if_.size() << "):" << endl;
+      for (list<SequentialStmt*>::const_iterator cur = if_.begin()
+		 ; cur != if_.end() ; ++cur)
 	    (*cur)->dump(out, indent+4);
 
 }

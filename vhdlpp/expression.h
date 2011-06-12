@@ -22,12 +22,14 @@
 # include  "StringHeap.h"
 # include  "LineInfo.h"
 # include  <inttypes.h>
+# include  <list>
 # include  <vector>
 
 class Entity;
 class Architecture;
 class ScopeBase;
 class VType;
+class VTypePrimitive;
 
 class ExpName;
 
@@ -101,6 +103,11 @@ class Expression : public LineInfo {
       Expression& operator = (const Expression&);
 };
 
+static inline void FILE_NAME(Expression*tgt, const LineInfo*src)
+{
+      tgt->set_line(*src);
+}
+
 class ExpUnary : public Expression {
 
     public:
@@ -128,6 +135,8 @@ class ExpBinary : public Expression {
       const Expression* peek_operand1(void) const { return operand1_; }
       const Expression* peek_operand2(void) const { return operand2_; }
 
+      const VType*probe_type(Entity*ent, Architecture*arc) const;
+
     protected:
 
       int elaborate_exprs(Entity*, Architecture*, const VType*);
@@ -153,9 +162,13 @@ class ExpArithmetic : public ExpBinary {
       ExpArithmetic(ExpArithmetic::fun_t op, Expression*op1, Expression*op2);
       ~ExpArithmetic();
 
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
+
+    private:
+      int emit_concat_(ostream&out, Entity*ent, Architecture*arc);
 
     private:
       fun_t fun_;
@@ -170,6 +183,7 @@ class ExpAttribute : public Expression {
       inline perm_string peek_attribute() const { return name_; }
       inline const ExpName* peek_base() const { return base_; }
 
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent = 0) const;
 
@@ -184,6 +198,7 @@ class ExpBitstring : public Expression {
       explicit ExpBitstring(const char*);
       ~ExpBitstring();
 
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent = 0) const;
 
@@ -205,7 +220,34 @@ class ExpCharacter : public Expression {
       char value() const { return value_; }
 
     private:
+      int emit_primitive_bit_(ostream&out, Entity*ent, Architecture*arc,
+			      const VTypePrimitive*etype);
+
+    private:
       char value_;
+};
+
+/*
+ * The conditional expression represents the VHDL when-else
+ * expressions. Note that by the VHDL syntax rules, these cannot show
+ * up other then at the root of an expression.
+ */
+class ExpConditional : public Expression {
+
+    public:
+      ExpConditional(Expression*cond, std::list<Expression*>*tru,
+		     std::list<Expression*>*els);
+      ~ExpConditional();
+
+      const VType*probe_type(Entity*ent, Architecture*arc) const;
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      void dump(ostream&out, int indent = 0) const;
+
+    private:
+      Expression*cond_;
+      std::list<Expression*> true_clause_;
+      std::list<Expression*> else_clause_;
 };
 
 /*
@@ -256,6 +298,7 @@ class ExpLogical : public ExpBinary {
 
       inline fun_t logic_fun() const { return fun_; }
 
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent = 0) const;
 

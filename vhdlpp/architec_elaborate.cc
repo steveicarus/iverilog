@@ -42,7 +42,7 @@ int Architecture::Statement::elaborate(Entity*, Architecture*)
       return 0;
 }
 
-int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
+int ComponentInstantiation::elaborate(Entity*, Architecture*arc)
 {
       int errors = 0;
 
@@ -75,7 +75,7 @@ int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
  * always-@(n-edge <expr>) version of the same statement. This makes
  * for a more natural translation to verilog, if it comes to that.
  */
-int ProcessStatement::rewrite_as_always_edge_(Entity*ent, Architecture*arc)
+int ProcessStatement::rewrite_as_always_edge_(Entity*, Architecture*)
 {
 	// If thare are multiple sensitivity expressions, I give up.
       if (sensitivity_list_.size() != 1)
@@ -91,6 +91,10 @@ int ProcessStatement::rewrite_as_always_edge_(Entity*ent, Architecture*arc)
 	// If the statement is not an if-statement, I give up.
       IfSequential*stmt = dynamic_cast<IfSequential*> (stmt_raw);
       if (stmt == 0)
+	    return -1;
+
+	// If the "if" statement has a false clause, then give up.
+      if (stmt->false_size() != 0)
 	    return -1;
 
       const Expression*ce_raw = stmt->peek_condition();
@@ -145,22 +149,44 @@ int ProcessStatement::rewrite_as_always_edge_(Entity*ent, Architecture*arc)
 	// And we can convert it to:
 	//   always @(<N>edge <se>) ...
 
-	// Replace the sensitivity expression with an edge expression.
+	// Replace the sensitivity expression with an edge
+	// expression. The ExpEdge expression signals that this is an
+	// always-@(edge) statement.
       ExpEdge*edge = new ExpEdge(op2b->value()=='1'? ExpEdge::POSEDGE : ExpEdge::NEGEDGE, se);
       assert(sensitivity_list_.size() == 1);
       sensitivity_list_.pop_front();
       sensitivity_list_.push_front(edge);
 
+	// Replace the statement with the body of the always
+	// statement, which is the true clause of the top "if"
+	// statement. There should be no "else" clause.
       assert(statements_list_.size() == 1);
       statements_list_.pop_front();
 
       stmt->extract_true(statements_list_);
 
-      std::list<SequentialStmt*> tmp;
-      stmt->extract_false(tmp);
-      assert(tmp.size() == 0);
-
       delete stmt;
+
+      return 0;
+}
+
+/*
+ * Change the "process (<expr>) <stmt>" into "always @(<expr>) ..."
+ */
+int ProcessStatement::extract_anyedge_(Entity*, Architecture*)
+{
+
+      vector<Expression*> se;
+      while (! sensitivity_list_.empty()) {
+	    se.push_back(sensitivity_list_.front());
+	    sensitivity_list_.pop_front();
+      }
+
+      for (size_t idx = 0 ; idx < se.size() ; idx += 1) {
+	    ExpEdge*edge = new ExpEdge(ExpEdge::ANYEDGE, se[idx]);
+	    FILE_NAME(edge, se[idx]);
+	    sensitivity_list_.push_back(edge);
+      }
 
       return 0;
 }
@@ -169,11 +195,40 @@ int ProcessStatement::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-      rewrite_as_always_edge_(ent, arc);
+      if (rewrite_as_always_edge_(ent, arc) >= 0) {
+
+      } else if (extract_anyedge_(ent, arc) >= 0) {
+
+      } else {
+      }
 
       for (list<SequentialStmt*>::iterator cur = statements_list_.begin()
 		 ; cur != statements_list_.end() ; ++cur) {
 	    errors += (*cur)->elaborate(ent, arc);
+      }
+
+      return errors;
+}
+
+int SignalAssignment::elaborate(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+	// Elaborate the l-value expression.
+      errors += lval_->elaborate_lval(ent, arc);
+
+	// The elaborate_lval should have resolved the type of the
+	// l-value expression. We'll use that type to elaborate the
+	// r-value.
+      const VType*lval_type = lval_->peek_type();
+      if (lval_type == 0) {
+	    if (errors == 0) errors += 1;
+	    return errors;
+      }
+
+      for (list<Expression*>::const_iterator cur = rval_.begin()
+		 ; cur != rval_.end() ; ++cur) {
+	    (*cur)->elaborate_expr(ent, arc, lval_type);
       }
 
       return errors;

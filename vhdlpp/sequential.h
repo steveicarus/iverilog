@@ -41,7 +41,24 @@ class SequentialStmt  : public LineInfo {
 class IfSequential  : public SequentialStmt {
 
     public:
+      class Elsif : public LineInfo {
+	  public:
+	    Elsif(Expression*cond, std::list<SequentialStmt*>*tr);
+	    ~Elsif();
+
+	    void dump(ostream&out, int indent) const;
+
+	  private:
+	    Expression*cond_;
+	    std::list<SequentialStmt*>if_;
+	  private: // not implemented
+	    Elsif(const Elsif&);
+	    Elsif& operator =(const Elsif&);
+      };
+
+    public:
       IfSequential(Expression*cond, std::list<SequentialStmt*>*tr,
+		   std::list<IfSequential::Elsif*>*elsif,
 		   std::list<SequentialStmt*>*fa);
       ~IfSequential();
 
@@ -52,6 +69,8 @@ class IfSequential  : public SequentialStmt {
 
       const Expression*peek_condition() const { return cond_; }
 
+      size_t false_size() const { return else_.size(); }
+
 	// These method extract (and remove) the sub-statements from
 	// the true or false clause.
       void extract_true(std::list<SequentialStmt*>&that);
@@ -60,6 +79,7 @@ class IfSequential  : public SequentialStmt {
     private:
       Expression*cond_;
       std::list<SequentialStmt*> if_;
+      std::list<IfSequential::Elsif*> elsif_;
       std::list<SequentialStmt*> else_;
 };
 

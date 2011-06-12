@@ -48,6 +48,12 @@ SignalAssignment::SignalAssignment(ExpName*name, list<Expression*>&rv)
       rval_.splice(rval_.end(), rv);
 }
 
+SignalAssignment::SignalAssignment(ExpName*name, Expression*rv)
+: lval_(name)
+{
+      rval_.push_back(rv);
+}
+
 SignalAssignment::~SignalAssignment()
 {
       for (list<Expression*>::iterator cur = rval_.begin()

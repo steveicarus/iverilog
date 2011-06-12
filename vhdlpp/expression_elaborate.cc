@@ -77,6 +77,23 @@ int Expression::elaborate_expr(Entity*, Architecture*, const VType*)
       return 1;
 }
 
+const VType* ExpBinary::probe_type(Entity*ent, Architecture*arc) const
+{
+      const VType*t1 = operand1_->probe_type(ent, arc);
+      const VType*t2 = operand2_->probe_type(ent, arc);
+
+      if (t1 == 0)
+	    return t2;
+      if (t2 == 0)
+	    return t1;
+
+      if (t1 == t2)
+	    return t1;
+
+      cerr << get_fileline() << ": internal error: I don't know how to resolve types of generic binary expressions." << endl;
+      return 0;
+}
+
 int ExpBinary::elaborate_exprs(Entity*ent, Architecture*arc, const VType*ltype)
 {
       int errors = 0;
@@ -86,11 +103,84 @@ int ExpBinary::elaborate_exprs(Entity*ent, Architecture*arc, const VType*ltype)
       return errors;
 }
 
+int ExpArithmetic::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
+{
+      int errors = 0;
+
+      if (ltype == 0) {
+	    ltype = probe_type(ent, arc);
+      }
+
+      assert(ltype != 0);
+      errors += elaborate_exprs(ent, arc, ltype);
+      return errors;
+}
+
+int ExpAttribute::elaborate_expr(Entity*ent, Architecture*arc, const VType*)
+{
+      int errors = 0;
+      const VType*sub_type = base_->probe_type(ent, arc);
+      errors += base_->elaborate_expr(ent, arc, sub_type);
+      return errors;
+}
+
+int ExpBitstring::elaborate_expr(Entity*, Architecture*, const VType*)
+{
+      int errors = 0;
+      return errors;
+}
+
 int ExpCharacter::elaborate_expr(Entity*, Architecture*, const VType*ltype)
 {
       assert(ltype != 0);
       set_type(ltype);
       return 0;
+}
+
+const VType* ExpConditional::probe_type(Entity*, Architecture*) const
+{
+      return 0;
+}
+
+int ExpConditional::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
+{
+      int errors = 0;
+
+      if (ltype == 0)
+	    ltype = probe_type(ent, arc);
+
+      assert(ltype);
+
+      set_type(ltype);
+
+	/* Note that the type for the condition expression need not
+	   have anything to do with the type of this expression. */
+      errors += cond_->elaborate_expr(ent, arc, 0);
+
+      for (list<Expression*>::const_iterator cur = true_clause_.begin()
+		 ; cur != true_clause_.end() ; ++cur) {
+	    errors += (*cur)->elaborate_expr(ent, arc, ltype);
+      }
+
+      for (list<Expression*>::const_iterator cur = else_clause_.begin()
+		 ; cur != else_clause_.end() ; ++cur) {
+	    errors += (*cur)->elaborate_expr(ent, arc, ltype);
+      }
+
+      return errors;
+}
+
+int ExpLogical::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
+{
+      int errors = 0;
+
+      if (ltype == 0) {
+	    ltype = probe_type(ent, arc);
+      }
+
+      assert(ltype != 0);
+      errors += elaborate_exprs(ent, arc, ltype);
+      return errors;
 }
 
 const VType* ExpName::probe_type(Entity*ent, Architecture*arc) const

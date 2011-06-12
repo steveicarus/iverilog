@@ -29,10 +29,12 @@ SequentialStmt::~SequentialStmt()
 }
 
 IfSequential::IfSequential(Expression*cond, std::list<SequentialStmt*>*tr,
+			   std::list<IfSequential::Elsif*>*el,
 			   std::list<SequentialStmt*>*fa)
 {
       cond_ = cond;
       if (tr) if_.splice(if_.end(), *tr);
+      if (el) elsif_.splice(elsif_.end(), *el);
       if (fa) else_.splice(else_.end(), *fa);
 }
 
@@ -42,6 +44,11 @@ IfSequential::~IfSequential()
       while (if_.size() > 0) {
 	    SequentialStmt*cur = if_.front();
 	    if_.pop_front();
+	    delete cur;
+      }
+      while (elsif_.size() > 0) {
+	    IfSequential::Elsif*cur = elsif_.front();
+	    elsif_.pop_front();
 	    delete cur;
       }
       while (else_.size() > 0) {
@@ -65,6 +72,22 @@ void IfSequential::extract_false(std::list<SequentialStmt*>&that)
       while (else_.size() > 0) {
 	    that.push_back(else_.front());
 	    else_.pop_front();
+      }
+}
+
+IfSequential::Elsif::Elsif(Expression*cond, std::list<SequentialStmt*>*tr)
+: cond_(cond)
+{
+      if (tr) if_.splice(if_.end(), *tr);
+}
+
+IfSequential::Elsif::~Elsif()
+{
+      delete cond_;
+      while (if_.size() > 0) {
+	    SequentialStmt*cur = if_.front();
+	    if_.pop_front();
+	    delete cur;
       }
 }
 

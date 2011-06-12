@@ -95,8 +95,10 @@ class SignalAssignment  : public Architecture::Statement {
 
     public:
       SignalAssignment(ExpName*target, std::list<Expression*>&rval);
+      SignalAssignment(ExpName*target, Expression*rval);
       ~SignalAssignment();
 
+      virtual int elaborate(Entity*ent, Architecture*arc);
       virtual int emit(ostream&out, Entity*entity, Architecture*arc);
       virtual void dump(ostream&out, int ident =0) const;
 
@@ -137,6 +139,7 @@ class ProcessStatement : public Architecture::Statement {
 
     private:
       int rewrite_as_always_edge_(Entity*ent, Architecture*arc);
+      int extract_anyedge_(Entity*ent, Architecture*arc);;
 
     private:
       perm_string iname_;
