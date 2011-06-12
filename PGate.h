@@ -161,7 +161,8 @@ class PGBuiltin  : public PGate {
       unsigned calculate_array_count_(Design*, NetScope*,
 				      long&high, long&low) const;
 
-      unsigned calculate_output_count_(void) const;
+      void calculate_gate_and_lval_count_(unsigned&gate_count,
+                                          unsigned&lval_count) const;
 
       NetNode* create_gate_for_output_(Design*, NetScope*,
 				       perm_string gate_name,
