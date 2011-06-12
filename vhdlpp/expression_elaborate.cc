@@ -191,6 +191,11 @@ const VType* ExpName::probe_type(Entity*ent, Architecture*arc) const
       if (Signal*sig = arc->find_signal(name_))
 	    return sig->peek_type();
 
+      const VType*ctype = 0;
+      Expression*cval = 0;
+      if (arc->find_constant(name_, ctype, cval))
+	    return ctype;
+
       cerr << get_fileline() << ": error: Signal/variable " << name_
 	   << " not found in this context." << endl;
       return 0;
@@ -221,6 +226,13 @@ const VType* ExpRelation::probe_type(Entity*ent, Architecture*arc) const
 
       if (type2 && !type1)
 	    return type2;
+
+      const VTypeArray*type1a = dynamic_cast<const VTypeArray*>(type1);
+      const VTypeArray*type2a = dynamic_cast<const VTypeArray*>(type2);
+
+      if (type1a && type2a && type1a->element_type()==type2a->element_type()) {
+	    return type1a->element_type();
+      }
 
       cerr << get_fileline() << ": error: Type mismatch in relation expression." << endl;
       return type1;
