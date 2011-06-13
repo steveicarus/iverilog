@@ -171,7 +171,7 @@ columns : REAL
        | columns REAL
       {
 	    if (cur_columns < indep_columns) {
-		  if (table_def->control.info.interp[cur_columns] != 
+		  if (table_def->control.info.interp[cur_columns] !=
 		      IVL_IGNORE_COLUMN) {
 			values[cur_value] = $2;
 			cur_value += 1;

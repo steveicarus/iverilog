@@ -228,7 +228,7 @@ void vvp_island_branch_tran::run_resolution()
 	    island_collect_node(connections, a_side);
 
 	    port->value = island_get_value(a);
-            if (port->value.size() != 0) 
+            if (port->value.size() != 0)
 	          push_value_through_branches(port->value, connections);
 
             connections.clear();
@@ -243,7 +243,7 @@ void vvp_island_branch_tran::run_resolution()
 	    island_collect_node(connections, b_side);
 
 	    port->value = island_get_value(b);
-	    if (port->value.size() != 0) 
+	    if (port->value.size() != 0)
 	          push_value_through_branches(port->value, connections);
 
             connections.clear();
