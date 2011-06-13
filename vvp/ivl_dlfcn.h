@@ -39,7 +39,7 @@ inline ivl_dll_t ivl_dlopen(const char *name, bool global_flag)
                                              full_name, NULL);
       if ((length == 0) || (length > sizeof(full_name)))
             return 0;
-  
+
       return (void *)LoadLibrary(full_name);
 }
 

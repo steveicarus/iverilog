@@ -578,10 +578,10 @@ NetExpr* PEBinary::elaborate_expr_base_lshift_(Design*des,
             if (!rpc->value().is_defined()) {
 
                   if (debug_elaborate)
-                        cerr << get_fileline() << ": debug: " 
+                        cerr << get_fileline() << ": debug: "
                              << "Shift by undefined value. "
                              << "Elaborate as constant 'x'." << endl;
-      
+
                   tmp = make_const_x(expr_wid);
                   tmp->set_line(*this);
                   return tmp;
@@ -680,10 +680,10 @@ NetExpr* PEBinary::elaborate_expr_base_rshift_(Design*des,
             if (!rpc->value().is_defined()) {
 
                   if (debug_elaborate)
-                        cerr << get_fileline() << ": debug: " 
+                        cerr << get_fileline() << ": debug: "
                              << "Shift by undefined value. "
                              << "Elaborate as constant 'x'." << endl;
-      
+
                   tmp = make_const_x(expr_wid);
                   tmp->set_line(*this);
                   return tmp;
