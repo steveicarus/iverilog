@@ -1,7 +1,7 @@
 #ifndef __vvp_island_H
 #define __vvp_island_H
 /*
- * Copyright (c) 2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008,2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -139,6 +139,7 @@ class vvp_island_port  : public vvp_net_fun_t {
     public:
       vvp_vector8_t invalue;
       vvp_vector8_t outvalue;
+      vvp_vector8_t value;
 
     private:
       vvp_island*island_;
