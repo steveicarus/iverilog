@@ -27,6 +27,7 @@
 using namespace std;
 
 Expression::Expression()
+: type_(0)
 {
 }
 
