@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -245,7 +245,7 @@ void show_unary_expression(ivl_expr_t net, unsigned ind)
 	    break;
       }
 
-      if (ivl_expr_opcode(net) == '!' && ivl_expr_type(net)==IVL_VT_REAL) {
+      if (ivl_expr_opcode(net) == '!' && ivl_expr_value(net) == IVL_VT_REAL) {
 	    fprintf(out, "%*sERROR: Real argument to unary ! !?\n", ind,"");
 	    stub_errors += 1;
       }
