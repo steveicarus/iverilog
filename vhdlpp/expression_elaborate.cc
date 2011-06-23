@@ -175,6 +175,19 @@ int ExpConditional::elaborate_expr(Entity*ent, Architecture*arc, const VType*lty
       return errors;
 }
 
+int ExpInteger::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
+{
+      int errors = 0;
+
+      if (ltype == 0) {
+	    ltype = probe_type(ent, arc);
+      }
+
+      assert(ltype != 0);
+
+      return errors;
+}
+
 int ExpLogical::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
 {
       int errors = 0;

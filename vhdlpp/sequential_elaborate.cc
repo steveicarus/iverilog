@@ -36,8 +36,27 @@ int IfSequential::elaborate(Entity*ent, Architecture*arc)
 	    errors += (*cur)->elaborate(ent, arc);
       }
 
+      for (list<IfSequential::Elsif*>::iterator cur = elsif_.begin()
+		 ; cur != elsif_.end() ; ++cur) {
+	    errors += (*cur)->elaborate(ent, arc);
+      }
+
       for (list<SequentialStmt*>::iterator cur = else_.begin()
 		 ; cur != else_.end() ; ++cur) {
+	    errors += (*cur)->elaborate(ent, arc);
+      }
+
+      return errors;
+}
+
+int IfSequential::Elsif::elaborate(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      errors += cond_->elaborate_expr(ent, arc, 0);
+
+      for (list<SequentialStmt*>::iterator cur = if_.begin()
+		 ; cur != if_.end() ; ++cur) {
 	    errors += (*cur)->elaborate(ent, arc);
       }
 

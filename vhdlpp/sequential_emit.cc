@@ -22,7 +22,7 @@
 # include  <iostream>
 # include  <typeinfo>
 
-int SequentialStmt::emit(ostream&out, Entity*ent, Architecture*arc)
+int SequentialStmt::emit(ostream&out, Entity*, Architecture*)
 {
       out << " // " << get_fileline() << ": internal error: "
 	  << "I don't know how to emit this sequential statement! "
@@ -39,20 +39,45 @@ int IfSequential::emit(ostream&out, Entity*ent, Architecture*arc)
 
       for (list<SequentialStmt*>::iterator cur = if_.begin()
 		 ; cur != if_.end() ; ++cur)
-	    (*cur)->emit(out, ent, arc);
+	    errors += (*cur)->emit(out, ent, arc);
+
+      for (list<IfSequential::Elsif*>::iterator cur = elsif_.begin()
+		 ; cur != elsif_.end() ; ++cur) {
+	    out << "end else if (";
+	    errors += (*cur)->condition_emit(out, ent, arc);
+	    out << ") begin" << endl;
+	    errors += (*cur)->statement_emit(out, ent, arc);
+      }
 
       if (else_.size() > 0) {
 	    out << "end else begin" << endl;
 
 	    for (list<SequentialStmt*>::iterator cur = else_.begin()
 		       ; cur != else_.end() ; ++cur)
-		  (*cur)->emit(out, ent, arc);
+		  errors += (*cur)->emit(out, ent, arc);
 
       }
 
       out << "end" << endl;
       return errors;
 }
+
+int IfSequential::Elsif::condition_emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      return cond_->emit(out, ent, arc);
+}
+
+int IfSequential::Elsif::statement_emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      for (list<SequentialStmt*>::iterator cur = if_.begin()
+		 ; cur != if_.end() ; ++cur)
+	    errors += (*cur)->emit(out, ent, arc);
+
+      return errors;
+}
+
 
 int SignalSeqAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
 {
