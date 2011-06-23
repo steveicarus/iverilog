@@ -1366,10 +1366,6 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // even multiple of the instance count.
 	    assert(prts_vector_width % instance.size() == 0);
 
-	    unsigned desired_vector_width = prts_vector_width;
-	    if (instance.size() != 1)
-		  desired_vector_width = 0;
-
 	    if (!prts.empty() && (prts[0]->port_type() == NetNet::PINPUT)
                 && prts[0]->pin(0).nexus()->drivers_present()
                 && pins[idx]->is_collapsible_net(des, scope)) {
@@ -1705,7 +1701,6 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // an array of signals to be connected to the sig.
 
 	    NetConcat*ctmp;
-	    unsigned spin = 0;
 
 	    if (prts.size() == 1) {
 
@@ -1755,7 +1750,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			     << (idx+1) << "." << endl;
 		  }
 
-		  for (unsigned ldx = 0 ;  ldx < prts.size() ;  ldx += 1) {
+		  for (unsigned ldx = 0, spin = 0 ;
+		       ldx < prts.size() ;  ldx += 1) {
 			NetNet*sp = prts[prts.size()-ldx-1];
 			NetPartSelect*ptmp = new NetPartSelect(sig, spin,
 							   sp->vector_width(),
@@ -1768,7 +1764,8 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  break;
 
 		case NetNet::PINOUT:
-		  for (unsigned ldx = 0 ;  ldx < prts.size() ;  ldx += 1) {
+		  for (unsigned ldx = 0, spin = 0 ;
+		       ldx < prts.size() ;  ldx += 1) {
 			NetNet*sp = prts[prts.size()-ldx-1];
 			NetTran*ttmp = new NetTran(scope,
 			                           scope->local_symbol(),
