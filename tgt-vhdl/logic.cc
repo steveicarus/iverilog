@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for logic devices.
  *
- *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2011  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -247,6 +247,7 @@ static vhdl_expr *translate_logic_inputs(vhdl_scope *scope, ivl_net_logic_t log)
    case IVL_LO_XNOR:
       return inputs_to_expr(scope, VHDL_BINOP_XNOR, log);
    case IVL_LO_BUF:
+   case IVL_LO_BUFT:
    case IVL_LO_BUFZ:
       return nexus_to_var_ref(scope, ivl_logic_pin(log, 1));
    case IVL_LO_PULLUP:
