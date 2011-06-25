@@ -76,7 +76,9 @@ V = va_math.o
 
 V2009 = v2009_table.o v2009_enum.o
 
-all: dep system.vpi va_math.vpi v2005_math.vpi v2009.vpi $(ALL32)
+VHDL_SYS = vhdl_table.o
+
+all: dep system.vpi va_math.vpi v2005_math.vpi v2009.vpi vhdl_sys.vpi $(ALL32)
 
 check: all
 
@@ -148,6 +150,9 @@ v2009.vpi: $(V2009) ../vvp/libvpi.a
 va_math.vpi: $V ../vvp/libvpi.a
 	$(CC) @shared@ -o $@ $V -L../vvp $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
 
+vhdl_sys.vpi: $(VHDL_SYS) ../vvp/libvpi.a
+	$(CXX) @shared@ -o $@ $(VHDL_SYS) -L ../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_FLAGS)
+
 stamp-vpi_config-h: $(srcdir)/vpi_config.h.in ../config.status
 	@rm -f $@
 	cd ..; ./config.status --header=vpi/vpi_config.h
@@ -158,6 +163,7 @@ install: all installdirs \
     $(vpidir)/va_math.vpi $(vpidir)/va_math.sft \
     $(vpidir)/v2005_math.vpi $(vpidir)/v2005_math.sft \
     $(vpidir)/v2009.vpi $(vpidir)/v2009.sft \
+    $(vpidir)/vhdl_sys.vpi $(vpidir)/vhdl_sys.sft
 
 $(vpidir)/system.vpi: ./system.vpi
 	$(INSTALL_PROGRAM) ./system.vpi "$(DESTDIR)$(vpidir)/system.vpi"
@@ -183,6 +189,12 @@ $(vpidir)/v2009.vpi: ./v2009.vpi
 $(vpidir)/v2009.sft: v2009.sft
 	$(INSTALL_DATA) $< "$(DESTDIR)$@"
 
+$(vpidir)/vhdl_sys.vpi: ./vhdl_sys.vpi
+	$(INSTALL_PROGRAM) ./vhdl_sys.vpi "$(DESTDIR)$(vpidir)/vhdl_sys.vpi"
+
+$(vpidir)/vhdl_sys.sft: vhdl_sys.sft
+	$(INSTALL_DATA) $< "$(DESTDIR)$@"
+
 installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)" "$(DESTDIR)$(vpidir)"
 
@@ -195,6 +207,8 @@ uninstall:
 	rm -f "$(DESTDIR)$(vpidir)/v2005_math.sft"
 	rm -f "$(DESTDIR)$(vpidir)/v2009.vpi"
 	rm -f "$(DESTDIR)$(vpidir)/v2009.sft"
+	rm -f "$(DESTDIR)$(vpidir)/vhdl_sys.vpi"
+	rm -f "$(DESTDIR)$(vpidir)/vhdl_sys.sft"
 
 -include $(patsubst %.o, dep/%.d, $O)
 -include $(patsubst %.o, dep/%.d, $(OPP))

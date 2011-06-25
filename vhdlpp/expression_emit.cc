@@ -68,6 +68,14 @@ int ExpUnary::emit_operand1(ostream&out, Entity*ent, Architecture*arc)
 int ExpAttribute::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
+
+      if (name_ == "event") {
+	    out << "$ivlh_attribute_event(";
+	    errors += base_->emit(out, ent, arc);
+	    out << ")";
+	    return errors;
+      }
+
       out << "$ivl_attribute(";
       errors += base_->emit(out, ent, arc);
       out << ", \"" << name_ << "\")";
@@ -166,6 +174,7 @@ int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*ent, Architecture*arc,
 	  default:
 	    return 1;
       }
+      return 1;
 }
 
 int ExpCharacter::emit(ostream&out, Entity*ent, Architecture*arc)
