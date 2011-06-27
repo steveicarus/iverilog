@@ -501,6 +501,7 @@ static char*make_bitstring_hex(int width_prefix, bool sflag, bool,
 		  *rp-- = *sp;
 		  if (rp >= res) *rp-- = *sp;
 		  if (rp >= res) *rp-- = *sp;
+		  if (rp >= res) *rp-- = *sp;
 		  break;
 	    }
 	    if (rp < res)
@@ -537,6 +538,7 @@ static char* make_bitstring_literal(const char*text)
 		  width_prefix *= 10;
 		  width_prefix += *cp - '0';
 		  cp += 1;
+          --len;
 	    }
       } else {
 	    width_prefix = -1;
