@@ -191,18 +191,13 @@ based_integer		[0-9a-fA-F](_?[0-9a-fA-F])*
 "=>" { return ARROW; }
 "<<" { return DLT; }
 ">>" { return DGT; }
-    /*
-    Here comes a list of symbols that are more than strange,
-    at least for the time being.
-
-"??" { return K_CC; }
-"?=" {}
-"?/=" {}
-"?<" {}
-"?<=" {}
-"?>" {}
-"?>=" {}
-*/
+"??" { return CC; }
+"?=" { return M_EQ;}
+"?/=" { return M_NE;}
+"?<" { return M_LT; }
+"?<=" { return M_LEQ;}
+"?>" { return M_GT; }
+"?>=" {return M_GEQ; }
 
 . { return yytext[0]; }
 

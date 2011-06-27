@@ -174,7 +174,7 @@ const VType*parse_type_by_name(perm_string name)
 %token <uni_real> REAL_LITERAL
 %token <text> STRING_LITERAL CHARACTER_LITERAL BITSTRING_LITERAL
  /* compound symbols */
-%token LEQ GEQ VASSIGN NE BOX EXP ARROW DLT DGT
+%token LEQ GEQ VASSIGN NE BOX EXP ARROW DLT DGT CC M_EQ M_NE M_LT M_LEQ M_GT M_GEQ
 
  /* The rules may have types. */
 
