@@ -4,6 +4,16 @@
 #
 # The following files will be ignored by git.
 
+# Normal editor rules
+*.swp
+*~
+
+# Top level generic files
+tags
+TAGS
+cscope.*
+*.patch
+
 # Object files and libraries
 *.[oa]
 
