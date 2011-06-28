@@ -515,6 +515,7 @@ struct __vpiSignal* vpip_signal_from_handle(vpiHandle ref)
 	  case vpiShortIntVar:
 	  case vpiIntVar:
 	  case vpiLongIntVar:
+	  case vpiBitVar:
 	    return (struct __vpiSignal*)ref;
 
 	  default:

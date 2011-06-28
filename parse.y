@@ -605,6 +605,12 @@ block_item_decl
 		  if ($1) delete $1;
 		}
 
+	| attribute_list_opt K_bit unsigned_signed_opt range_opt
+	  register_variable_list ';'
+		{
+			pform_set_net_range($5, $4, $3, IVL_VT_BOOL);
+			if ($1) delete $1;
+		}
   /* Integer atom declarations are simpler in that they do not have
      all the trappings of a general variable declaration. All of that
      is implicit in the "integer" of the declaration. */
