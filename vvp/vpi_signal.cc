@@ -510,6 +510,7 @@ struct __vpiSignal* vpip_signal_from_handle(vpiHandle ref)
       switch (ref->vpi_type->type_code) {
 	  case vpiNet:
 	  case vpiReg:
+		/* This handles both reg and logic */
 	  case vpiIntegerVar:
 	  case vpiByteVar:
 	  case vpiShortIntVar:
