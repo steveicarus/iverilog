@@ -3509,6 +3509,16 @@ function_range_or_type_opt
   : range            { $$.range = make_range_vector($1); $$.type = PTF_REG; }
   | K_signed range   { $$.range = make_range_vector($2); $$.type = PTF_REG_S; }
   | K_unsigned range { $$.range = make_range_vector($2); $$.type = PTF_REG; }
+  | K_reg unsigned_signed_opt range_opt
+			{
+				/* the default type is reg unsigned and no range */
+				$$.type = PTF_REG;
+				$$.range = 0;
+				if ($2)
+					$$.type = PTF_REG_S;
+				if ($3)
+					$$.range = make_range_vector($3);
+			}
   | K_integer  { $$.range = 0;  $$.type = PTF_INTEGER; }
   | K_real     { $$.range = 0;  $$.type = PTF_REAL; }
   | K_realtime { $$.range = 0;  $$.type = PTF_REALTIME; }
