@@ -77,3 +77,25 @@ void SignalSeqAssignment::dump(ostream&out, int indent) const
 		 ; cur != waveform_.end() ; ++cur)
 	    (*cur)->dump(out, indent+4);
 }
+
+void CaseSeqStmt::dump(ostream& out, int indent) const
+{
+	out << setw(indent) << "" << "CaseSeqStmt at file=" << get_fileline() << endl;
+
+	out << setw(indent+3) << "" << "Case: " << endl;
+	cond_->dump(out, indent+4);
+
+	for (list<CaseSeqStmt::CaseStmtAlternative*>::const_iterator cur = alt_.begin()
+		; cur != alt_.end() ; ++cur)
+		(*cur)->dump(out, indent+4);
+}
+
+void CaseSeqStmt::CaseStmtAlternative::dump(ostream& out, int indent) const
+{
+    out << setw(indent) << "" << "CaseStmtAlternative at file=" << get_fileline() << endl;
+    out << setw(indent) << "" << "when ";
+    exp_->dump(out, 0);
+    for (std::list<SequentialStmt*>::const_iterator cur = stmts_.begin()
+        ; cur != stmts_.end(); ++cur)
+        (*cur)->dump(out, indent+1);
+}

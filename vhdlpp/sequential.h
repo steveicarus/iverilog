@@ -102,4 +102,36 @@ class SignalSeqAssignment  : public SequentialStmt {
       std::list<Expression*> waveform_;
 };
 
+class CaseSeqStmt : public SequentialStmt {
+    public:
+      class CaseStmtAlternative : public LineInfo {
+        public:
+            CaseStmtAlternative(Expression* exp, list<SequentialStmt*>* stmts);
+            ~CaseStmtAlternative();
+            void dump(ostream& out, int indent) const;
+            
+            //TODO: implement the following:
+            //int elaborate(Entity*ent, Architecture*arc);
+            //int emit(ostream&out, Entity*entity, Architecture*arc);
+        private:
+            Expression* exp_;
+            list<SequentialStmt*> stmts_;
+        private: // not implemented
+            CaseStmtAlternative(const CaseStmtAlternative&);
+            CaseStmtAlternative& operator =(const CaseStmtAlternative&);
+      };
+      CaseSeqStmt(Expression*cond,
+                       list<CaseStmtAlternative*>*sp);
+      ~CaseSeqStmt();
+
+    public:
+      void dump(ostream&out, int indent) const;
+      //TODO: implement the following:
+      //int elaborate(Entity*ent, Architecture*arc);
+      //int emit(ostream&out, Entity*entity, Architecture*arc);
+
+    private:
+      Expression* cond_;
+      std::list<CaseStmtAlternative*> alt_;
+};
 #endif

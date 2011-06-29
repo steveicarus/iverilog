@@ -128,6 +128,9 @@ const VType*parse_type_by_name(perm_string name)
 
       IfSequential::Elsif*elsif;
       std::list<IfSequential::Elsif*>*elsif_list;
+      
+      CaseSeqStmt::CaseStmtAlternative* case_alt;
+      std::list<CaseSeqStmt::CaseStmtAlternative*>* case_alt_list;
 
       named_expr_t*named_expr;
       std::list<named_expr_t*>*named_expr_list;
@@ -192,10 +195,10 @@ const VType*parse_type_by_name(perm_string name)
 %type <arch_statement> process_statement
 %type <arch_statement_list> architecture_statement_part
 
-%type <expr> expression factor primary relation
+%type <expr> choice expression factor primary relation
 %type <expr> expression_logical expression_logical_and expression_logical_or
 %type <expr> expression_logical_xnor expression_logical_xor
-%type <expr> name
+%type <expr> name 
 %type <expr> shift_expression simple_expression term waveform_element
 
 %type <expr_list> waveform waveform_elements
@@ -215,6 +218,10 @@ const VType*parse_type_by_name(perm_string name)
 
 %type <sequ_list> sequence_of_statements if_statement_else
 %type <sequ> sequential_statement if_statement signal_assignment_statement
+%type <sequ> case_statement
+
+%type <case_alt> case_statement_alternative
+%type <case_alt_list> case_statement_alternative_list
 
 %type <elsif> if_statement_elsif
 %type <elsif_list> if_statement_elsif_list if_statement_elsif_list_opt
@@ -378,6 +385,50 @@ block_declarative_items
 block_declarative_items_opt
   : block_declarative_items
   |
+  ;
+case_statement
+  : K_case expression K_is
+    case_statement_alternative_list
+    K_end K_case
+      {
+    sorrymsg(@1, "Case statement is not yet supported");
+    CaseSeqStmt* tmp = new CaseSeqStmt($2, $4);
+    FILE_NAME(tmp, @1);
+    delete $4;
+    $$ = tmp;
+      }
+    ;
+case_statement_alternative_list
+  : case_statement_alternative_list case_statement_alternative
+      { std::list<CaseSeqStmt::CaseStmtAlternative*>* tmp = $1;
+    tmp->push_back($2);
+    $$ = tmp;
+      }
+  | case_statement_alternative
+      {
+    std::list<CaseSeqStmt::CaseStmtAlternative*>*tmp = 
+        new std::list<CaseSeqStmt::CaseStmtAlternative*>();
+    tmp->push_back($1);
+    $$ = tmp;
+      }
+   ;
+
+case_statement_alternative
+  : K_when choice ARROW sequence_of_statements
+      {
+    CaseSeqStmt::CaseStmtAlternative* tmp = 
+        new CaseSeqStmt::CaseStmtAlternative($2, $4);
+    FILE_NAME(tmp, @1);
+    delete $4;
+    $$ = tmp;
+      }
+   ;
+
+choice
+  : expression
+      { $$ = $1;}
+  | K_others
+      { $$ = 0; }
   ;
 
 component_configuration
@@ -1305,6 +1356,7 @@ sequence_of_statements
 sequential_statement
   : if_statement                { $$ = $1; }
   | signal_assignment_statement { $$ = $1; }
+  | case_statement { $$ = $1; }
   ;
 
 shift_expression : simple_expression { $$ = $1; } ;

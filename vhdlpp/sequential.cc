@@ -101,3 +101,35 @@ SignalSeqAssignment::~SignalSeqAssignment()
 {
       delete lval_;
 }
+
+CaseSeqStmt::CaseSeqStmt(Expression*cond,	list<CaseSeqStmt::CaseStmtAlternative*>* ap)
+    : cond_(cond)
+{
+
+	if (ap) alt_.splice(alt_.end(), *ap);
+}
+
+CaseSeqStmt::~CaseSeqStmt()
+{
+	delete cond_;
+	while(alt_.size() > 0) {
+		CaseSeqStmt::CaseStmtAlternative* cur = alt_.front();
+		alt_.pop_front();
+		delete cur;
+	}
+}
+
+CaseSeqStmt::CaseStmtAlternative::~CaseStmtAlternative() {
+    delete exp_;
+    while(stmts_.size() > 0) {
+        SequentialStmt* cur = stmts_.front();
+        stmts_.pop_front();
+        delete cur;
+    }
+}
+
+CaseSeqStmt::CaseStmtAlternative::CaseStmtAlternative(Expression* exp, list<SequentialStmt*>* stmts)
+    : exp_(exp)
+{
+      if (stmts) stmts_.splice(stmts_.end(), *stmts);
+}
