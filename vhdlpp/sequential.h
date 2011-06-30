@@ -46,6 +46,10 @@ class IfSequential  : public SequentialStmt {
 	    Elsif(Expression*cond, std::list<SequentialStmt*>*tr);
 	    ~Elsif();
 
+	    int elaborate(Entity*entity, Architecture*arc);
+	    int condition_emit(ostream&out, Entity*entity, Architecture*arc);
+	    int statement_emit(ostream&out, Entity*entity, Architecture*arc);
+
 	    void dump(ostream&out, int indent) const;
 
 	  private:

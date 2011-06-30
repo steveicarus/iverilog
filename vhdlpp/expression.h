@@ -279,6 +279,7 @@ class ExpInteger : public Expression {
       ExpInteger(int64_t val);
       ~ExpInteger();
 
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
       bool evaluate(ScopeBase*scope, int64_t&val) const;
