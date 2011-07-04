@@ -32,7 +32,12 @@ struct monitor_data {
       struct t_vpi_time last_event;
 };
 
-extern "C" PLI_INT32 monitor_events(struct t_cb_data*cb)
+/*
+ * All the following are called from C so define them for C linkage.
+ */
+extern "C" {
+
+static PLI_INT32 monitor_events(struct t_cb_data*cb)
 {
       struct monitor_data*mon = reinterpret_cast<monitor_data*> (cb->user_data);
 
@@ -43,7 +48,7 @@ extern "C" PLI_INT32 monitor_events(struct t_cb_data*cb)
       return 0;
 }
 
-extern "C" PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*)
+static PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*)
 {
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
@@ -85,7 +90,7 @@ extern "C" PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*)
       return 0;
 }
 
-extern "C" PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*)
+static PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*)
 {
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
 
@@ -114,7 +119,7 @@ extern "C" PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*)
       return 0;
 }
 
-extern "C" void vhdl_register(void)
+static void vhdl_register(void)
 {
       s_vpi_systf_data tf_data;
 
@@ -127,7 +132,9 @@ extern "C" void vhdl_register(void)
       vpi_register_systf(&tf_data);
 }
 
-extern "C" void (*vlog_startup_routines[])() = {
+void (*vlog_startup_routines[])() = {
       vhdl_register,
       0
 };
+
+} /* extern "C" */
