@@ -1,7 +1,7 @@
 #ifndef __architec_H
 #define __architec_H
 /*
- * Copyright (c) 2011Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -139,7 +139,7 @@ class ProcessStatement : public Architecture::Statement {
 
     private:
       int rewrite_as_always_edge_(Entity*ent, Architecture*arc);
-      int extract_anyedge_(Entity*ent, Architecture*arc);;
+      int extract_anyedge_(Entity*ent, Architecture*arc);
 
     private:
       perm_string iname_;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -99,7 +99,7 @@ static pthread_cond_t  work_queue_notempty_sig = PTHREAD_COND_INITIALIZER;
 static pthread_cond_t  work_queue_minfree_sig = PTHREAD_COND_INITIALIZER;
 
 
-struct vcd_work_item_s* vcd_work_thread_peek(void)
+extern "C" struct vcd_work_item_s* vcd_work_thread_peek(void)
 {
 	// There must always only be 1 vcd work thread, and only the
 	// work thread decreases the fill, so if the work_queue_fill
@@ -116,7 +116,7 @@ struct vcd_work_item_s* vcd_work_thread_peek(void)
       return work_queue + work_queue_next;
 }
 
-void vcd_work_thread_pop(void)
+extern "C" void vcd_work_thread_pop(void)
 {
       pthread_mutex_lock(&work_queue_mutex);
 
@@ -217,7 +217,7 @@ static inline void unlock_item(bool flush_batch =false)
 	    end_batch();
 }
 
-void vcd_work_sync(void)
+extern "C" void vcd_work_sync(void)
 {
       if (current_batch_alloc > 0)
 	    end_batch();
@@ -230,33 +230,33 @@ void vcd_work_sync(void)
       }
 }
 
-void vcd_work_flush(void)
+extern "C" extern "C" void vcd_work_flush(void)
 {
       struct vcd_work_item_s*cell = grab_item();
       cell->type = WT_FLUSH;
       unlock_item(true);
 }
 
-void vcd_work_dumpon(void)
+extern "C" void vcd_work_dumpon(void)
 {
       struct vcd_work_item_s*cell = grab_item();
       cell->type = WT_DUMPON;
       unlock_item();
 }
 
-void vcd_work_dumpoff(void)
+extern "C" void vcd_work_dumpoff(void)
 {
       struct vcd_work_item_s*cell = grab_item();
       cell->type = WT_DUMPOFF;
       unlock_item();
 }
 
-void vcd_work_set_time(uint64_t val)
+extern "C" void vcd_work_set_time(uint64_t val)
 {
       work_queue_next_time = val;
 }
 
-void vcd_work_emit_double(struct lxt2_wr_symbol*sym, double val)
+extern "C" void vcd_work_emit_double(struct lxt2_wr_symbol*sym, double val)
 {
       struct vcd_work_item_s*cell = grab_item();
       cell->type = WT_EMIT_DOUBLE;
@@ -265,7 +265,7 @@ void vcd_work_emit_double(struct lxt2_wr_symbol*sym, double val)
       unlock_item();
 }
 
-void vcd_work_emit_bits(struct lxt2_wr_symbol*sym, const char* val)
+extern "C" void vcd_work_emit_bits(struct lxt2_wr_symbol*sym, const char* val)
 {
 
       struct vcd_work_item_s*cell = grab_item();
@@ -276,7 +276,7 @@ void vcd_work_emit_bits(struct lxt2_wr_symbol*sym, const char* val)
       unlock_item();
 }
 
-void vcd_work_terminate(void)
+extern "C" void vcd_work_terminate(void)
 {
       struct vcd_work_item_s*cell = grab_item();
       cell->type = WT_TERMINATE;

@@ -32,7 +32,7 @@ struct monitor_data {
       struct t_vpi_time last_event;
 };
 
-static PLI_INT32 monitor_events(struct t_cb_data*cb)
+extern "C" PLI_INT32 monitor_events(struct t_cb_data*cb)
 {
       struct monitor_data*mon = reinterpret_cast<monitor_data*> (cb->user_data);
 
@@ -43,7 +43,7 @@ static PLI_INT32 monitor_events(struct t_cb_data*cb)
       return 0;
 }
 
-static PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*)
+extern "C" PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*)
 {
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, sys);
@@ -85,7 +85,7 @@ static PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*)
       return 0;
 }
 
-static PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*)
+extern "C" PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*)
 {
       vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
 
@@ -114,7 +114,7 @@ static PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*)
       return 0;
 }
 
-static void vhdl_register(void)
+extern "C" void vhdl_register(void)
 {
       s_vpi_systf_data tf_data;
 
@@ -123,11 +123,11 @@ static void vhdl_register(void)
       tf_data.calltf    = ivlh_attribute_event_calltf;
       tf_data.compiletf = ivlh_attribute_event_compiletf;
       tf_data.sizetf    = 0;
-      tf_data.user_data = "$ivlh_attribute_event";
+      tf_data.user_data = (PLI_BYTE8 *) "$ivlh_attribute_event";
       vpi_register_systf(&tf_data);
 }
 
-void (*vlog_startup_routines[])() = {
+extern "C" void (*vlog_startup_routines[])() = {
       vhdl_register,
       0
 };
