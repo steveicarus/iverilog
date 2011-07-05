@@ -389,7 +389,7 @@ block_declarative_items_opt
 case_statement
   : K_case expression K_is
     case_statement_alternative_list
-    K_end K_case
+    K_end K_case ';'
       {
     sorrymsg(@1, "Case statement is not yet supported");
     CaseSeqStmt* tmp = new CaseSeqStmt($2, $4);
@@ -425,7 +425,7 @@ case_statement_alternative
    ;
 
 choice
-  : expression
+  : simple_expression
       { $$ = $1;}
   | K_others
       { $$ = 0; }
