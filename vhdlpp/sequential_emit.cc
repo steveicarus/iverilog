@@ -98,3 +98,11 @@ int SignalSeqAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
 
       return errors;
 }
+
+int ProcedureCall::emit(ostream&out, Entity*, Architecture*)
+{
+      out << " // " << get_fileline() << ": internal error: "
+      << "I don't know how to emit this sequential statement! "
+      << "type=" << typeid(*this).name() << endl;
+      return 1;
+}

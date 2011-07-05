@@ -99,3 +99,13 @@ void CaseSeqStmt::CaseStmtAlternative::dump(ostream& out, int indent) const
         ; cur != stmts_.end(); ++cur)
         (*cur)->dump(out, indent+1);
 }
+
+void ProcedureCall::dump(ostream& out, int indent) const
+{
+    out << setw(indent) << "" << "ProcedureCall at file=" << get_fileline() << endl;
+    out << setw(indent+2) << "" << name_ << "(";
+    for(list<named_expr_t*>::const_iterator it = param_list_->begin();
+        it != param_list_->end(); ++it)
+        (*it)->dump(out, indent);
+    out << ")" << endl;
+}

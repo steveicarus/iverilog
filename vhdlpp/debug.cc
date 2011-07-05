@@ -21,6 +21,7 @@
 # include  "entity.h"
 # include  "architec.h"
 # include  "expression.h"
+# include  "parse_types.h"
 # include  "vsignal.h"
 # include  "vtype.h"
 # include  <fstream>
@@ -338,4 +339,10 @@ void ExpUNot::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "not() at " << get_fileline() << endl;
       dump_operand1(out, indent+4);
+}
+
+void named_expr_t::dump(ostream&out, int indent) const
+{
+    out << setw(indent) << "" << name_ << "=>";
+    expr_->dump(out, indent);
 }

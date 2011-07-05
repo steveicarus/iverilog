@@ -218,7 +218,7 @@ const VType*parse_type_by_name(perm_string name)
 
 %type <sequ_list> sequence_of_statements if_statement_else
 %type <sequ> sequential_statement if_statement signal_assignment_statement
-%type <sequ> case_statement
+%type <sequ> case_statement procedure_call procedure_call_statement
 
 %type <case_alt> case_statement_alternative
 %type <case_alt_list> case_statement_alternative_list
@@ -1194,6 +1194,32 @@ primary_unit
   | package_declaration
   ;
 
+procedure_call
+  : IDENTIFIER
+      {
+    ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1));
+    sorrymsg(@1, "Procedure calls are not supported.\n");
+    $$ = tmp;
+      }
+  | IDENTIFIER '(' association_list ')'
+      {
+    ProcedureCall* tmp = new ProcedureCall(lex_strings.make($1), $3);
+    sorrymsg(@1, "Procedure calls are not supported.\n");
+    $$ = tmp;
+      }
+  | IDENTIFIER '(' error ')'
+      {
+    errormsg(@1, "Errors in procedure call.\n");
+    yyerrok;
+    delete[]$1;
+    $$ = 0;
+      };
+
+procedure_call_statement
+  : IDENTIFIER ':' procedure_call { $$ = $3; }
+  | procedure_call { $$ = $1; }
+  ;
+
 process_statement
   : IDENTIFIER ':' K_postponed_opt K_process
     process_sensitivity_list_opt K_is_opt
@@ -1363,6 +1389,7 @@ sequential_statement
   : if_statement                { $$ = $1; }
   | signal_assignment_statement { $$ = $1; }
   | case_statement { $$ = $1; }
+  | procedure_call_statement { $$ = $1; }
   ;
 
 shift_expression : simple_expression { $$ = $1; } ;

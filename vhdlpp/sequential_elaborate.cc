@@ -88,3 +88,8 @@ int SignalSeqAssignment::elaborate(Entity*ent, Architecture*arc)
 
       return errors;
 }
+
+int ProcedureCall::elaborate(Entity*, Architecture*)
+{
+      return 0;
+}

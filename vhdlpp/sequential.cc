@@ -133,3 +133,22 @@ CaseSeqStmt::CaseStmtAlternative::CaseStmtAlternative(Expression* exp, list<Sequ
 {
       if (stmts) stmts_.splice(stmts_.end(), *stmts);
 }
+
+ProcedureCall::ProcedureCall(perm_string name)
+: name_(name), param_list_(0)
+{
+}
+
+ProcedureCall::ProcedureCall(perm_string name, std::list<named_expr_t*>* param_list)
+: name_(name), param_list_(param_list)
+{
+}
+
+ProcedureCall::~ProcedureCall()
+{
+    while(param_list_->size() > 0) {
+        named_expr_t* cur = param_list_->front();
+        param_list_->pop_front();
+        delete cur;
+    }
+}
