@@ -502,6 +502,44 @@ void pform_set_timescale(int unit, int prec,
       }
 }
 
+bool get_time_unit(const char*cp, int &unit)
+{
+	const char *c;
+	bool        rc = true;
+
+	if (strchr(cp, '_')) {
+		VLerror(yylloc, "Invalid timeunit constant ('_' is not "
+				"supported).");
+		return false;
+	}
+
+	c = strpbrk(cp, "munpfs");
+	if (!c)
+		return false;
+
+	if (*c == 's')
+		unit = 0;
+	else if (!strncmp(c, "ms", 2))
+		unit = -3;
+	else if (!strncmp(c, "us", 2))
+		unit = -6;
+	else if (!strncmp(c, "ns", 2))
+		unit = -9;
+	else if (!strncmp(c, "ps", 2))
+		unit = -12;
+	else if (!strncmp(c, "fs", 2))
+		unit = -15;
+	else {
+		rc = false;
+
+		ostringstream msg;
+		msg << "Invalid timeunit scale '" << cp << "'.";
+		VLerror(msg.str().c_str());
+	}
+
+	return rc;
+}
+
 /*
  * Get a timeunit or timeprecision value from a string.  This is
  * similar to the code in lexor.lex for the `timescale directive.
@@ -609,6 +647,11 @@ void pform_set_timeunit(const char*txt, bool in_module, bool only_check)
 	    tu_global_flag = true;
 	    pform_time_unit = val;
       }
+}
+
+int pform_get_timeunit()
+{
+	return pform_cur_module->time_unit;
 }
 
 void pform_set_timeprecision(const char*txt, bool in_module, bool only_check)

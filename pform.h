@@ -434,6 +434,8 @@ extern void parm_to_defparam_list(const string&param);
 /*
  * Tasks to set the timeunit or timeprecision for SystemVerilog.
  */
+extern bool get_time_unit(const char*cp, int &unit);
+extern int  pform_get_timeunit();
 extern void pform_set_timeunit(const char*txt, bool in_module, bool only_check);
 extern void pform_set_timeprecision(const char*txt, bool in_module,
                                     bool only_check);
