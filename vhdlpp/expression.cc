@@ -291,6 +291,17 @@ ExpRelation::~ExpRelation()
 {
 }
 
+ExpString::ExpString(const char* value)
+: value_(strlen(value))
+{
+    for(unsigned i=0; i<strlen(value); ++i)
+        value_.push_back(value[i]);
+}
+
+ExpString::~ExpString()
+{
+}
+
 ExpUAbs::ExpUAbs(Expression*op1)
 : ExpUnary(op1)
 {

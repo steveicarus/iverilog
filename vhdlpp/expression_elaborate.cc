@@ -268,3 +268,10 @@ int ExpRelation::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
       errors += elaborate_exprs(ent, arc, ltype);
       return errors;
 }
+
+int ExpString::elaborate_expr(Entity*, Architecture*, const VType*ltype)
+{
+      assert(ltype != 0);
+      set_type(ltype);
+      return 0;
+}

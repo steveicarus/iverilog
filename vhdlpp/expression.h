@@ -367,6 +367,20 @@ class ExpRelation : public ExpBinary {
       fun_t fun_;
 };
 
+class ExpString : public Expression {
+
+    public:
+      explicit ExpString(const char*);
+      ~ExpString();
+
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      void dump(ostream&out, int indent = 0) const;
+
+    private:
+      std::vector<char> value_;
+};
+
 class ExpUAbs : public ExpUnary {
 
     public:

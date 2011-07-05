@@ -339,6 +339,16 @@ int ExpRelation::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
+int ExpString::emit(ostream& out, Entity*ent, Architecture*arc)
+{
+    out << "\"";
+    for(vector<char>::const_iterator it = value_.begin();
+        it != value_.end(); ++it)
+        out << *it;
+    out << "\"";
+    return 0;
+}
+
 int ExpUAbs::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;

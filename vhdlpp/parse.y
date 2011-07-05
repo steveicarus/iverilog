@@ -1172,6 +1172,12 @@ primary
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  | STRING_LITERAL
+      { ExpString*tmp = new ExpString($1);
+    FILE_NAME(tmp,@1);
+    delete[]$1;
+    $$ = tmp;
+      }
   | BITSTRING_LITERAL
       { ExpBitstring*tmp = new ExpBitstring($1);
 	FILE_NAME(tmp, @1);
