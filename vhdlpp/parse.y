@@ -1375,12 +1375,14 @@ selected_names_use
 sequence_of_statements
   : sequence_of_statements sequential_statement
       { std::list<SequentialStmt*>*tmp = $1;
-	tmp->push_back($2);
+    if($2)
+        tmp->push_back($2);
 	$$ = tmp;
       }
   | sequential_statement
       { std::list<SequentialStmt*>*tmp = new std::list<SequentialStmt*>;
-	tmp->push_back($1);
+    if($1)
+        tmp->push_back($1);
 	$$ = tmp;
       }
   ;
@@ -1390,6 +1392,7 @@ sequential_statement
   | signal_assignment_statement { $$ = $1; }
   | case_statement { $$ = $1; }
   | procedure_call_statement { $$ = $1; }
+  | K_null ';' { $$ = 0; }
   ;
 
 shift_expression : simple_expression { $$ = $1; } ;
