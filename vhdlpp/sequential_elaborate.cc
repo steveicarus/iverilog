@@ -93,3 +93,19 @@ int ProcedureCall::elaborate(Entity*, Architecture*)
 {
       return 0;
 }
+
+int ForLoopStatement::elaborate(Entity*entity, Architecture*arc)
+{
+    return 0;
+}
+
+int WhileLoopStatement::elaborate(Entity*entity, Architecture*arc)
+{
+    //TODO:check whether there is any wait statement in the statements (there should be)
+    return 0;
+}
+
+int BasicLoopStatement::elaborate(Entity*entity, Architecture*arc)
+{
+    return 0;
+}

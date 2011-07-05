@@ -145,8 +145,60 @@ class ProcedureCall : public SequentialStmt {
       int elaborate(Entity*ent, Architecture*arc);
       int emit(ostream&out, Entity*entity, Architecture*arc);
       void dump(ostream&out, int indent) const;
+
     private:
       perm_string name_;
       std::list<named_expr_t*>* param_list_;
+};
+
+class LoopStatement : public SequentialStmt {
+    public:
+       LoopStatement(list<SequentialStmt*>*);
+       virtual ~LoopStatement();
+
+       int elaborate(Entity*ent, Architecture*arc) = 0;
+       int emit(ostream&out, Entity*entity, Architecture*arc);
+       void dump(ostream&out, int indent)  const;
+
+    protected:
+       std::list<SequentialStmt*> stmts_;
+};
+
+class WhileLoopStatement : public LoopStatement {
+    public:
+      WhileLoopStatement(ExpLogical*, list<SequentialStmt*>*);
+      ~WhileLoopStatement();
+
+      int elaborate(Entity*ent, Architecture*arc);
+      int emit(ostream&out, Entity*entity, Architecture*arc);
+      void dump(ostream&out, int indent) const;
+
+    private:
+      ExpLogical* cond_;
+};
+
+class ForLoopStatement : public LoopStatement {
+    public:
+      ForLoopStatement(perm_string, range_t*, list<SequentialStmt*>*);
+      ~ForLoopStatement();
+
+      int elaborate(Entity*ent, Architecture*arc);
+      int emit(ostream&out, Entity*entity, Architecture*arc);
+      void dump(ostream&out, int indent) const;
+
+    private:
+      perm_string it_;
+      range_t* range_;
+};
+
+class BasicLoopStatement : public LoopStatement {
+    public:
+       BasicLoopStatement(list<SequentialStmt*>*);
+       ~BasicLoopStatement();
+
+      int elaborate(Entity*ent, Architecture*arc);
+      int emit(ostream&out, Entity*entity, Architecture*arc);
+      void dump(ostream&out, int indent) const;
+
 };
 #endif

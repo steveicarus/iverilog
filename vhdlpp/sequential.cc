@@ -152,3 +152,46 @@ ProcedureCall::~ProcedureCall()
         delete cur;
     }
 }
+
+LoopStatement::LoopStatement(list<SequentialStmt*>* stmts)
+{
+    if (stmts) stmts_.splice(stmts_.end(), *stmts);
+}
+
+LoopStatement::~LoopStatement()
+{
+    while(stmts_.size() > 0) {
+        SequentialStmt* cur = stmts_.front();
+        stmts_.pop_front();
+        delete cur;
+    }
+}
+
+ForLoopStatement::ForLoopStatement(perm_string it, range_t* range, list<SequentialStmt*>* stmts)
+: LoopStatement(stmts), it_(it), range_(range)
+{ 
+}
+
+ForLoopStatement::~ForLoopStatement()
+{
+    delete range_;
+}
+
+WhileLoopStatement::WhileLoopStatement(ExpLogical* cond, list<SequentialStmt*>* stmts)
+: LoopStatement(stmts), cond_(cond)
+{
+}
+
+WhileLoopStatement::~WhileLoopStatement()
+{
+    delete cond_;
+}
+
+BasicLoopStatement::BasicLoopStatement(list<SequentialStmt*>* stmts)
+: LoopStatement(stmts)
+{
+}
+
+BasicLoopStatement::~BasicLoopStatement()
+{
+}

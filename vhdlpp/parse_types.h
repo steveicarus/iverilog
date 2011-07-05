@@ -66,4 +66,19 @@ class instant_list_t {
       application_domain_t domain_;
       std::list<perm_string>* labels_;
 };
+
+class range_t {
+    public:
+      range_t(Expression* left, Expression* right, bool dir)
+        : left_(left), right_(right), direction_(dir) {}
+      ~range_t() { delete left_; delete right_; }
+      void dump(ostream&out, int indent) const;
+
+    private:
+      Expression *left_, *right_;
+      bool direction_;
+    private: //not implemented
+      range_t(const range_t&);
+      range_t operator=(const range_t&);    
+};
 #endif

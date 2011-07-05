@@ -106,3 +106,35 @@ int ProcedureCall::emit(ostream&out, Entity*, Architecture*)
       << "type=" << typeid(*this).name() << endl;
       return 1;
 }
+
+int LoopStatement::emit(ostream&out, Entity*entity, Architecture*arc)
+{
+    out << " // " << get_fileline() << ": internal error: "
+    << "I don't know how to emit this sequential statement! "
+    << "type=" << typeid(*this).name() << endl;
+    return 1;
+}
+
+int ForLoopStatement::emit(ostream&out, Entity*entity, Architecture*arc)
+{
+    out << " // " << get_fileline() << ": internal error: "
+    << "I don't know how to emit this sequential statement! "
+    << "type=" << typeid(*this).name() << endl;
+    return 1;
+}
+
+int WhileLoopStatement::emit(ostream&out, Entity*entity, Architecture*arc)
+{
+    out << " // " << get_fileline() << ": internal error: "
+    << "I don't know how to emit this sequential statement! "
+    << "type=" << typeid(*this).name() << endl;
+    return 1;
+}
+
+int BasicLoopStatement::emit(ostream&out, Entity*entity, Architecture*arc)
+{
+    out << " // " << get_fileline() << ": internal error: "
+    << "I don't know how to emit this sequential statement! "
+    << "type=" << typeid(*this).name() << endl;
+    return 1;
+}

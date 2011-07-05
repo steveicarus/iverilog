@@ -346,3 +346,10 @@ void named_expr_t::dump(ostream&out, int indent) const
     out << setw(indent) << "" << name_ << "=>";
     expr_->dump(out, indent);
 }
+
+void range_t::dump(ostream&out, int indent) const
+{
+    left_->dump(out, indent);
+    out << setw(indent) << "" << (direction_ ? "downto" : "to");
+    right_->dump(out, indent);
+}

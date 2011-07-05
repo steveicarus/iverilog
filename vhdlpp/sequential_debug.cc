@@ -109,3 +109,32 @@ void ProcedureCall::dump(ostream& out, int indent) const
         (*it)->dump(out, indent);
     out << ")" << endl;
 }
+
+void LoopStatement::dump(ostream&out, int indent) const
+{
+    for(list<SequentialStmt*>::const_iterator it = stmts_.begin();
+        it != stmts_.end(); ++it)
+        (*it)->dump(out, indent);
+}
+
+void ForLoopStatement::dump(ostream&out, int indent) const
+{
+    out << setw(indent) << "" << "ForLoopStatement at file=" << get_fileline() << endl;
+    out << setw(indent) << "" << it_ << " in ";
+    range_->dump(out, indent);
+    LoopStatement::dump(out, indent+2);
+}
+
+void WhileLoopStatement::dump(ostream&out, int indent) const
+{
+    out << setw(indent) << "" << "WhileLoopStatement at file=" << get_fileline() << endl;
+    out << setw(indent) << "" << "condition: ";
+    cond_->dump(out, indent);
+    LoopStatement::dump(out, indent+2);
+}
+
+void BasicLoopStatement::dump(ostream&out, int indent) const
+{
+    out << setw(indent) << "" << "BasicLoopStatement at file=" << get_fileline() << endl;
+    LoopStatement::dump(out, indent+2);
+}

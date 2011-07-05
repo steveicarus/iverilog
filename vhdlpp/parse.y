@@ -140,6 +140,8 @@ const VType*parse_type_by_name(perm_string name)
 
       const VType* vtype;
 
+      range_t* range;
+
       std::list<InterfacePort*>* interface_list;
 
       Architecture::Statement* arch_statement;
@@ -211,7 +213,7 @@ const VType*parse_type_by_name(perm_string name)
 %type <vtype> subtype_indication
 
 %type <text> architecture_body_start package_declaration_start
-%type <text> identifier_opt logical_name suffix
+%type <text> identifier_opt identifier_colon_opt logical_name suffix
 %type <name_list> logical_name_list identifier_list
 %type <compound_name> prefix selected_name
 %type <compound_name_list> selected_names use_clause
@@ -219,6 +221,9 @@ const VType*parse_type_by_name(perm_string name)
 %type <sequ_list> sequence_of_statements if_statement_else
 %type <sequ> sequential_statement if_statement signal_assignment_statement
 %type <sequ> case_statement procedure_call procedure_call_statement
+%type <sequ> loop_statement
+
+%type <range> range
 
 %type <case_alt> case_statement_alternative
 %type <case_alt_list> case_statement_alternative_list
@@ -832,6 +837,7 @@ identifier_list
 
 identifier_opt : IDENTIFIER { $$ = $1; } |  { $$ = 0; } ;
 
+identifier_colon_opt : IDENTIFIER ':' { $$ = $1; } | { $$ = 0; };
 
 if_statement
   : K_if expression K_then sequence_of_statements
@@ -993,6 +999,60 @@ logical_name_list
       }
   ;
 
+loop_statement
+  : identifier_colon_opt
+    K_while expression_logical K_loop
+    sequence_of_statements
+    K_end K_loop identifier_opt ';'
+      {
+    if($1 && strcmp($1, $8))
+            errormsg(@1, "Loop statement name doesn't match closing name.\n");
+    if($1) delete[]$1;
+    if($8) delete[]$8;
+
+    ExpLogical* cond = dynamic_cast<ExpLogical*>($3);
+    if(!cond) {
+        errormsg(@3, "Iteration condition is not a correct logical expression");
+    }
+    WhileLoopStatement* tmp = new WhileLoopStatement(cond, $5);
+    FILE_NAME(tmp, @1);
+
+    sorrymsg(@1, "Loop statements are not supported");
+    $$ = tmp;
+      }
+  | identifier_colon_opt K_for
+    IDENTIFIER K_in range K_loop
+    sequence_of_statements
+    K_end K_loop identifier_opt ';'
+      {
+    if($1 && strcmp($1, $10))
+        errormsg(@1, "Loop statement name doesn't match closing name.\n");
+    if($1)  delete[] $1;
+    if($10) delete[] $10;
+
+    ForLoopStatement* tmp = new ForLoopStatement(lex_strings.make($3), $5, $7);
+    delete[]$3;
+    FILE_NAME(tmp, @1);
+
+    sorrymsg(@1, "Loop statements are not supported");
+    $$ = tmp;
+      }
+  | identifier_colon_opt K_loop
+    sequence_of_statements
+    K_end K_loop identifier_opt ';'
+      {
+    if($1 && strcmp($1, $6))
+        errormsg(@1, "Loop statement name doesn't match closing name.\n");
+    if($1) delete[]$1;
+    if($6) delete[]$6;
+
+    BasicLoopStatement* tmp = new BasicLoopStatement($3);
+    FILE_NAME(tmp, @1);
+
+    sorrymsg(@1, "Loop statements are not supported");
+    $$ = tmp;
+      };
+      
 mode
   : K_in  { $$ = PORT_IN; }
   | K_out { $$ = PORT_OUT; }
@@ -1278,6 +1338,13 @@ process_sensitivity_list
   | name_list
       { $$ = $1; }
   ;
+range
+  : simple_expression direction simple_expression
+      {
+    range_t* tmp = new range_t($1, $3, $2);
+    $$ = tmp;
+      }
+  ;
 
 relation
   : shift_expression
@@ -1392,6 +1459,7 @@ sequential_statement
   | signal_assignment_statement { $$ = $1; }
   | case_statement { $$ = $1; }
   | procedure_call_statement { $$ = $1; }
+  | loop_statement { $$ = $1; }
   | K_null ';' { $$ = 0; }
   ;
 
