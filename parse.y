@@ -448,7 +448,7 @@ static list<named_pexpr_t>* make_named_number(perm_string name, PExpr*val =0)
 %type <nettype>  net_type var_type net_type_opt
 %type <gatetype> gatetype switchtype
 %type <porttype> port_type
-%type <datatype> primitive_type primitive_type_opt
+%type <datatype> primitive_type primitive_type_opt bit_logic
 %type <parmvalue> parameter_value_opt
 
 %type <function_type> function_range_or_type_opt
@@ -2949,6 +2949,11 @@ primitive_type
   | K_real  { $$ = IVL_VT_REAL; }
 ;
 
+bit_logic
+  : K_logic { $$ = IVL_VT_LOGIC; }
+  | K_bit   { $$ = IVL_VT_BOOL; /* IEEE1800 / IEEE1364-2009 */}
+  ;
+
 primitive_type_opt : primitive_type { $$ = $1; } | { $$ = IVL_VT_NO_TYPE; } ;
 
 net_type
@@ -4542,6 +4547,48 @@ task_port_decl
 						$4, list_from_identifier($5),
 						@1.text, @1.first_line);
 		  $$ = tmp;
+		}
+
+	| K_input bit_logic unsigned_signed_opt range_opt IDENTIFIER
+		{
+			port_declaration_context.port_type = NetNet::PINPUT;
+			port_declaration_context.var_type  = $2;
+			port_declaration_context.sign_flag = $3;
+			delete port_declaration_context.range;
+			port_declaration_context.range     = copy_range($4);
+			svector<PWire*>*tmp =
+				pform_make_task_ports(NetNet::PINPUT, $2, $3,
+						$4, list_from_identifier($5),
+						@1.text, @1.first_line);
+			$$ = tmp;
+		}
+
+	| K_output bit_logic unsigned_signed_opt range_opt IDENTIFIER
+		{
+			port_declaration_context.port_type = NetNet::POUTPUT;
+			port_declaration_context.var_type  = $2;
+			port_declaration_context.sign_flag = $3;
+			delete port_declaration_context.range;
+			port_declaration_context.range     = copy_range($4);
+			svector<PWire*>*tmp =
+				pform_make_task_ports(NetNet::POUTPUT, $2, $3,
+						$4, list_from_identifier($5),
+						@1.text, @1.first_line);
+			$$ = tmp;
+		}
+
+	| K_inout bit_logic unsigned_signed_opt range_opt IDENTIFIER
+		{
+			port_declaration_context.port_type = NetNet::PINOUT;
+			port_declaration_context.var_type  = $2;
+			port_declaration_context.sign_flag = $3;
+			delete port_declaration_context.range;
+			port_declaration_context.range = copy_range($4);
+			svector<PWire*>*tmp =
+				pform_make_task_ports(NetNet::PINOUT, $2, $3,
+						$4, list_from_identifier($5),
+						@1.text, @1.first_line);
+			$$ = tmp;
 		}
 
   /* Ports can be integer with a width of [31:0]. */
