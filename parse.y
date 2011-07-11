@@ -2251,6 +2251,28 @@ port_declaration
 	delete[]$5;
 	$$ = ptmp;
       }
+  | attribute_list_opt K_output atom2_type signed_unsigned_opt IDENTIFIER '=' expression
+      { Module::port_t*ptmp;
+	perm_string name = lex_strings.make($5);
+	list<PExpr*>*use_range = make_range_from_width($3);
+	ptmp = pform_module_port_reference(name, @2.text,
+					   @2.first_line);
+	pform_module_define_port(@2, name, NetNet::POUTPUT,
+				 NetNet::IMPLICIT_REG, IVL_VT_BOOL,
+				 $4, use_range, $1);
+	port_declaration_context.port_type = NetNet::POUTPUT;
+	port_declaration_context.port_net_type = NetNet::IMPLICIT_REG;
+	port_declaration_context.var_type = IVL_VT_BOOL;
+	port_declaration_context.sign_flag = $4;
+	delete port_declaration_context.range;
+	port_declaration_context.range = use_range;
+
+	pform_make_reginit(@5, name, $7);
+
+	delete[]$5;
+	$$ = ptmp;
+      }
+
   ;
 
 
