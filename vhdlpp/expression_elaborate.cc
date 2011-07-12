@@ -71,13 +71,32 @@ int ExpName::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
       return errors;
 }
 
-int ExpName::elaborate_rval(Entity*ent, Architecture*arc)
+int ExpName::elaborate_rval(Entity*ent, Architecture*arc, const InterfacePort*lval)
 {
       int errors = 0;
 
       if (const InterfacePort*cur = ent->find_port(name_)) {
-	      /* OK */
-
+        /* IEEE 1076-2008, p.80:
+        * For a formal port IN, associated port should be IN, OUT, INOUT or BUFFER
+        * For a formal port OUT, associated port should be OUT, INOUT or BUFFER
+        * For a formal port INOUT, associated prot should be OUT, INOUT or BUFFER
+        * For a formal port BUFFER, associated port should be OUT, INOUT or BUFFER
+        */
+        switch(lval->mode) {
+              case PORT_OUT:
+              //case PORT_INOUT:
+                  if (cur->mode == PORT_IN) {
+                      cerr << get_fileline() << ": error: Connecting "
+                      "formal output port " << lval->name << " to actual input port "
+                      << name_ << "." << endl;
+                      errors += 1;
+                  }
+                  break;
+              case PORT_IN:
+              case PORT_NONE:
+              default:
+                break;
+        }
       } else if (Signal* fs = arc->find_signal(name_)) {
 	      /* OK */
 

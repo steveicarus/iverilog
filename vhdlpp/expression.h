@@ -21,6 +21,7 @@
 
 # include  "StringHeap.h"
 # include  "LineInfo.h"
+# include  "entity.h"
 # include  <inttypes.h>
 # include  <list>
 # include  <vector>
@@ -322,7 +323,7 @@ class ExpName : public Expression {
 
     public: // Base methods
       int elaborate_lval(Entity*ent, Architecture*arc, bool);
-      int elaborate_rval(Entity*ent, Architecture*arc);
+      int elaborate_rval(Entity*ent, Architecture*arc, const InterfacePort*);
       const VType* probe_type(Entity*ent, Architecture*arc) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       int emit(ostream&out, Entity*ent, Architecture*arc);

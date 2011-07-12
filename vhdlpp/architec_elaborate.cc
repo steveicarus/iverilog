@@ -54,10 +54,12 @@ int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
 	    return 1;
       }
 
-      map<perm_string,const InterfacePort*> port_match;
 
       for (multimap<perm_string,Expression*>::const_iterator cur = port_map_.begin()
 		 ; cur != port_map_.end() ; ++cur) {
+        /* check if a port from component instantiation
+           exists in the component declaration
+        */
 	    const InterfacePort*iport = base->find_port(cur->first);
 	    if (iport == 0) {
 		  cerr << get_fileline() << ": error: No port " << cur->first
@@ -68,9 +70,10 @@ int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
 
         ExpName* tmp;
         if (cur->second && (tmp = dynamic_cast<ExpName*>(cur->second)))
-            errors += tmp->elaborate_rval(ent, arc);
+            errors += tmp->elaborate_rval(ent, arc, iport);
 	      /* It is possible for the port to be explicitly
 		 unconnected. In that case, the Expression will be nil */
+
 	    if (cur->second)
 		  cur->second->elaborate_expr(ent, arc, iport->type);
       }
