@@ -71,7 +71,7 @@ ComponentInstantiation::ComponentInstantiation(perm_string i, perm_string c,
       while (! ports->empty()) {
 	    named_expr_t*cur = ports->front();
 	    ports->pop_front();
-	    port_map_[cur->name()] = cur->expr();
+	    port_map_.insert(make_pair(cur->name(), cur->expr()));
       }
 }
 

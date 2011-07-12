@@ -122,7 +122,7 @@ class ComponentInstantiation  : public Architecture::Statement {
       perm_string iname_;
       perm_string cname_;
 
-      std::map<perm_string,Expression*> port_map_;
+      std::multimap<perm_string,Expression*> port_map_;
 };
 
 class ProcessStatement : public Architecture::Statement {

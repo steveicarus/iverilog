@@ -56,7 +56,7 @@ int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
 
       map<perm_string,const InterfacePort*> port_match;
 
-      for (map<perm_string,Expression*>::iterator cur = port_map_.begin()
+      for (multimap<perm_string,Expression*>::const_iterator cur = port_map_.begin()
 		 ; cur != port_map_.end() ; ++cur) {
 	    const InterfacePort*iport = base->find_port(cur->first);
 	    if (iport == 0) {
@@ -75,6 +75,15 @@ int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
 		  cur->second->elaborate_expr(ent, arc, iport->type);
       }
 
+      //each formal (component's) port should be associated at most once
+      for(multimap<perm_string,Expression*>::const_iterator cur = port_map_.begin()
+          ; cur != port_map_.end() ; ++cur)
+        if(port_map_.count(cur->first) != 1) {
+          //at least one port is associated twice or more
+          cerr << cur->second->get_fileline() << ": error: At least one port is associated"
+          << " twice or more in a single component instantiation." << endl;
+          errors += 1;
+      }
       return errors;
 }
 
