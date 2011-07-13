@@ -2161,12 +2161,17 @@ port_declaration
     K_output net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($7);
+	NetNet::Type t   = $3;
+
+	if ($4 != IVL_VT_NO_TYPE && t == NetNet::IMPLICIT)
+		t = NetNet::IMPLICIT_REG;
+
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 $3, $4, $5, $6, $1);
+				 t, $4, $5, $6, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = $3;
+	port_declaration_context.port_net_type = t;
 	port_declaration_context.var_type = $4;
 	port_declaration_context.sign_flag = $5;
 	delete port_declaration_context.range;
@@ -2215,7 +2220,10 @@ port_declaration
     K_output net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER '=' expression
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($7);
-	NetNet::Type t   = ($3 == NetNet::IMPLICIT) ? NetNet::IMPLICIT_REG : $3;
+	NetNet::Type t   = $3;
+
+	if ($4 != IVL_VT_NO_TYPE && t == NetNet::IMPLICIT)
+		t = NetNet::IMPLICIT_REG;
 
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
