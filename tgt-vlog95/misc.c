@@ -641,6 +641,7 @@ void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 	/* It is possible that the nexus does not have a name. For this
 	 * case do not print an actual name. */
       fprintf(vlog_out, "/* Empty */");
+      dump_nexus_information(scope, nex);
 }
 
 /*
