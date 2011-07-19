@@ -768,7 +768,8 @@ verinum::V operator <= (const verinum&left, const verinum&right)
 {
       verinum::V left_pad = verinum::V0;
       verinum::V right_pad = verinum::V0;
-      if (left.has_sign() && right.has_sign()) {
+      bool signed_calc = left.has_sign() && right.has_sign();
+      if (signed_calc) {
 	    left_pad = left.get(left.len()-1);
 	    right_pad = right.get(right.len()-1);
 
@@ -780,11 +781,23 @@ verinum::V operator <= (const verinum&left, const verinum&right)
 
       unsigned idx;
       for (idx = left.len() ; idx > right.len() ;  idx -= 1) {
-	    if (left[idx-1] != right_pad) return verinum::V0;
+	    if (left[idx-1] != right_pad) {
+		      // A change of padding for a negative left argument
+		      // denotes the left value is less than the right.
+		   return (signed_calc &&
+		           (left_pad == verinum::V1)) ? verinum::V1 :
+		                                        verinum::V0;
+	    }
       }
 
       for (idx = right.len() ; idx > left.len() ;  idx -= 1) {
-	    if (right[idx-1] != left_pad) return verinum::V1;
+	    if (right[idx-1] != left_pad) {
+		      // A change of padding for a negative right argument
+		      // denotes the left value is not less than the right.
+		   return (signed_calc &&
+		           (right_pad == verinum::V1)) ? verinum::V0 :
+		                                         verinum::V1;
+	    }
       }
 
       idx = right.len();
@@ -807,7 +820,8 @@ verinum::V operator < (const verinum&left, const verinum&right)
 {
       verinum::V left_pad = verinum::V0;
       verinum::V right_pad = verinum::V0;
-      if (left.has_sign() && right.has_sign()) {
+      bool signed_calc = left.has_sign() && right.has_sign();
+      if (signed_calc) {
 	    left_pad = left.get(left.len()-1);
 	    right_pad = right.get(right.len()-1);
 
@@ -819,11 +833,23 @@ verinum::V operator < (const verinum&left, const verinum&right)
 
       unsigned idx;
       for (idx = left.len() ; idx > right.len() ;  idx -= 1) {
-	    if (left[idx-1] != right_pad) return verinum::V0;
+	    if (left[idx-1] != right_pad) {
+		      // A change of padding for a negative left argument
+		      // denotes the left value is less than the right.
+		   return (signed_calc &&
+		           (left_pad == verinum::V1)) ? verinum::V1 :
+		                                        verinum::V0;
+	    }
       }
 
       for (idx = right.len() ; idx > left.len() ;  idx -= 1) {
-	    if (right[idx-1] != left_pad) return verinum::V1;
+	    if (right[idx-1] != left_pad) {
+		      // A change of padding for a negative right argument
+		      // denotes the left value is not less than the right.
+		   return (signed_calc &&
+		           (right_pad == verinum::V1)) ? verinum::V0 :
+		                                         verinum::V1;
+	    }
       }
 
       while (idx > 0) {
