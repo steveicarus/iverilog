@@ -505,7 +505,7 @@ static void emit_number_as_string(ivl_net_const_t net_const)
 	    if (val == '"') fprintf(vlog_out, "\\\"");
 	    else if (val == '\\') fprintf(vlog_out, "\\\\");
 	      /* Print the printable characters. */
-	    else if (isprint(val)) fprintf(vlog_out, "%c", val);
+	    else if (isprint((int)val)) fprintf(vlog_out, "%c", val);
 	      /* Print the non-printable characters as an octal escape. */
 	    else fprintf(vlog_out, "\\%03o", val);
       }
