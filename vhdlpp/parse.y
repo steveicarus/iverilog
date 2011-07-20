@@ -34,6 +34,7 @@
 # include  <cstdarg>
 # include  <cstring>
 # include  <list>
+# include  <stack>
 # include  <map>
 # include  <vector>
 # include  "parse_types.h"
@@ -69,7 +70,7 @@ int parse_sorrys = 0;
  * manage lexical scopes.
  */
 static ActiveScope*active_scope = new ActiveScope;
-static list<ActiveScope*> scope_stack;
+static stack<ActiveScope*> scope_stack;
 
 /*
  * When a scope boundary starts, call the push_scope function to push
@@ -81,7 +82,7 @@ static list<ActiveScope*> scope_stack;
 static void push_scope(void)
 {
       assert(active_scope);
-      scope_stack.push_front(active_scope);
+      scope_stack.push(active_scope);
       active_scope = new ActiveScope (active_scope);
 }
 
@@ -89,8 +90,8 @@ static void pop_scope(void)
 {
       delete active_scope;
       assert(scope_stack.size() > 0);
-      active_scope = scope_stack.front();
-      scope_stack.pop_front();
+      active_scope = scope_stack.top();
+      scope_stack.pop();
 }
 
 
