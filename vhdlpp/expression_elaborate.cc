@@ -71,6 +71,25 @@ int ExpName::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
       return errors;
 }
 
+int ExpName::elaborate_rval(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      if (const InterfacePort*cur = ent->find_port(name_)) {
+	      /* OK */
+
+      } else if (Signal* fs = arc->find_signal(name_)) {
+	      /* OK */
+
+      } else {
+            cerr << get_fileline() << ": error: No port or signal " << name_
+		 << " to be used as r-value." << endl;
+            errors += 1;
+      }
+
+      return errors;
+}
+
 int ExpNameALL::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
 {
       return Expression::elaborate_lval(ent, arc, is_sequ);

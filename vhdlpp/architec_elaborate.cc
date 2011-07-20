@@ -66,6 +66,9 @@ int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
 		  continue;
 	    }
 
+        ExpName* tmp;
+        if (cur->second && (tmp = dynamic_cast<ExpName*>(cur->second)))
+            errors += tmp->elaborate_rval(ent, arc);
 	      /* It is possible for the port to be explicitly
 		 unconnected. In that case, the Expression will be nil */
 	    if (cur->second)

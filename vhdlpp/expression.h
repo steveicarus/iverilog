@@ -322,6 +322,7 @@ class ExpName : public Expression {
 
     public: // Base methods
       int elaborate_lval(Entity*ent, Architecture*arc, bool);
+      int elaborate_rval(Entity*ent, Architecture*arc);
       const VType* probe_type(Entity*ent, Architecture*arc) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       int emit(ostream&out, Entity*ent, Architecture*arc);
