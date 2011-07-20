@@ -464,7 +464,10 @@ component_declaration
 	}
 
 	ComponentBase*comp = new ComponentBase(name);
-	if ($4) comp->set_interface($4);
+	if ($4) {
+        comp->set_interface($4);
+        delete $4;
+    }
 	active_scope->bind_name(name, comp);
 	delete[]$2;
 	if ($7) delete[] $7;
@@ -483,6 +486,7 @@ component_instantiation_statement
       { perm_string iname = lex_strings.make($1);
 	perm_string cname = lex_strings.make($4);
 	ComponentInstantiation*tmp = new ComponentInstantiation(iname, cname, $5);
+    delete $5;
 	FILE_NAME(tmp, @1);
 	delete[]$1;
 	delete[]$4;
@@ -672,7 +676,7 @@ entity_declaration
             errormsg(@1, "Syntax error in entity clause. Closing name doesn't match.\n");
             yyerrok;
         }
-        delete $7;
+        delete[]$7;
     }
       }
   | K_entity error K_end K_entity_opt identifier_opt ';'
