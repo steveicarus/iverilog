@@ -32,6 +32,8 @@ Architecture::Architecture(perm_string name, const ScopeBase&ref,
 
 Architecture::~Architecture()
 {
+    delete_all(statements_);
+    ScopeBase::cleanup();
 }
 
 Architecture::Statement::Statement()
@@ -75,6 +77,9 @@ ComponentInstantiation::ComponentInstantiation(perm_string i, perm_string c,
 
 ComponentInstantiation::~ComponentInstantiation()
 {
+    for(map<perm_string, Expression*>::iterator it = port_map_.begin()
+        ; it != port_map_.end(); ++it)
+        delete it->second;
 }
 
 ProcessStatement::ProcessStatement(perm_string iname,

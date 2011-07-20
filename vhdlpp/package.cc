@@ -26,4 +26,5 @@ Package::Package(perm_string n, const ScopeBase&ref)
 
 Package::~Package()
 {
+    ScopeBase::cleanup();
 }
