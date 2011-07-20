@@ -100,6 +100,31 @@ void preload_global_types(void)
       generate_global_types(active_scope);
 }
 
+//Remove the scope created at the beginning of parser's work.
+//After the parsing active_scope should keep it's address
+
+static void delete_global_scope(void)
+{
+    active_scope->destroy_global_scope();
+    delete active_scope;
+}
+
+//delete global entities that were gathered over the parsing process 
+static void delete_design_entities(void)
+{
+      for(map<perm_string,Entity*>::iterator cur = design_entities.begin()
+      ; cur != design_entities.end(); ++cur)
+        delete cur->second;
+}
+
+//clean the mess caused by the parser
+void parser_cleanup(void)
+{
+    delete_design_entities();
+    delete_global_scope();
+    lex_strings.cleanup();
+}
+
 const VType*parse_type_by_name(perm_string name)
 {
       return active_scope->find_type(name);

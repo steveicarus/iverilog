@@ -56,6 +56,7 @@ const char*dump_design_entities_path = 0;
 const char*dump_libraries_path = 0;
 
 extern void dump_libraries(ostream&file);
+extern void parser_cleanup();
 
 static void process_debug_token(const char*word)
 {
@@ -141,21 +142,25 @@ int main(int argc, char*argv[])
 	    dump_design_entities(file);
       }
 
-      if (errors > 0)
+      if (errors > 0) {
+        parser_cleanup();
 	    return 2;
+      }
 
       errors = elaborate_entities();
       if (errors > 0) {
 	    fprintf(stderr, "%d errors elaborating design.\n", errors);
+        parser_cleanup();
 	    return 3;
       }
 
       errors = emit_entities();
       if (errors > 0) {
 	    fprintf(stderr, "%d errors emitting design.\n", errors);
+        parser_cleanup();
 	    return 4;
       }
 
-      lex_strings.cleanup();
+      parser_cleanup();
       return 0;
 }
