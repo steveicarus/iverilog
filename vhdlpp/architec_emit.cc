@@ -30,12 +30,16 @@ int Scope::emit_signals(ostream&out, Entity*entity, Architecture*arc)
 {
       int errors = 0;
 
-      for (map<perm_string,Signal*>::iterator cur = signals_.begin()
-		 ; cur != signals_.end() ; ++cur) {
+      for (map<perm_string,Signal*>::iterator cur = old_signals_.begin()
+		 ; cur != old_signals_.end() ; ++cur) {
 
 	    errors += cur->second->emit(out, entity, arc);
       }
+      for (map<perm_string,Signal*>::iterator cur = new_signals_.begin()
+         ; cur != new_signals_.end() ; ++cur) {
 
+        errors += cur->second->emit(out, entity, arc);
+      }
       return errors;
 }
 
@@ -43,12 +47,19 @@ int Architecture::emit(ostream&out, Entity*entity)
 {
       int errors = 0;
 
-      for (map<perm_string,struct const_t>::iterator cur = constants_.begin()
-		 ; cur != constants_.end() ; ++cur) {
+      for (map<perm_string,struct const_t*>::iterator cur = old_constants_.begin()
+         ; cur != old_constants_.end() ; ++cur) {
 
-	    out << "localparam " << cur->first << " = ";
-	    errors += cur->second.val->emit(out, entity, this);
-	    out << ";" << endl;
+        out << "localparam " << cur->first << " = ";
+        errors += cur->second->val->emit(out, entity, this);
+        out << ";" << endl;
+      }
+      for (map<perm_string,struct const_t*>::iterator cur = new_constants_.begin()
+         ; cur != new_constants_.end() ; ++cur) {
+
+        out << "localparam " << cur->first << " = ";
+        errors += cur->second->val->emit(out, entity, this);
+        out << ";" << endl;
       }
 
       errors += emit_signals(out, entity, this);
