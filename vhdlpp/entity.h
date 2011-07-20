@@ -65,8 +65,11 @@ class ComponentBase : public LineInfo {
 	// empties the list in the process.
       void set_interface(std::list<InterfacePort*>*ports);
 
+
+      void write_to_stream(std::ostream&fd) const;
+
     public:
-      void dump_ports(ostream&out, int indent = 0) const;
+      void dump_ports(std::ostream&out, int indent = 0) const;
 
     protected:
 	// This is really only used by the Entity derived class.

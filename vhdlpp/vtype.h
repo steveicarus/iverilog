@@ -36,6 +36,11 @@ class VType {
       VType() { }
       virtual ~VType() =0;
 
+	// This virtual method writes a VHDL-accurate representation
+	// of this type to the designated stream. This is used for
+	// writing parsed types to library files.
+      virtual void write_to_stream(std::ostream&fd) const;
+
       virtual void show(std::ostream&) const;
 
     public:
@@ -74,6 +79,7 @@ class VTypePrimitive : public VType {
       VTypePrimitive(type_t);
       ~VTypePrimitive();
 
+      void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
       void elaborate(decl_t&decl) const;
 
@@ -116,6 +122,7 @@ class VTypeArray : public VType {
       VTypeArray(const VType*etype, const std::vector<range_t>&r, bool signed_vector =false);
       ~VTypeArray();
 
+      void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
       void elaborate(decl_t&decl) const;
 

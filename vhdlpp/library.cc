@@ -20,9 +20,15 @@
 # include  "parse_misc.h"
 # include  "compiler.h"
 # include  "package.h"
+# include  <fstream>
 # include  <map>
+# include  <string>
+# include  <cassert>
 
 using namespace std;
+
+static const char*library_work_path = 0;
+static void store_package_in_work(const Package*pack);
 
 struct library_contents {
       map<perm_string,Package*> packages;
@@ -69,6 +75,9 @@ void library_save_package(const char*libname, Package*pack)
       struct library_contents&lib = libraries[use_libname];
 
       lib.packages[pack->name()] = pack;
+
+      if (use_libname == "work")
+	    store_package_in_work(pack);
 }
 
 void library_import(const YYLTYPE&loc, const std::list<perm_string>*names)
@@ -210,4 +219,19 @@ void generate_global_types(ActiveScope*res)
       res->bind_name(perm_string::literal("integer"),   &primitive_INTEGER);
       res->bind_name(perm_string::literal("std_logic"), &primitive_STDLOGIC);
       res->bind_name(perm_string::literal("bit_vector"),&primitive_BOOL_VECTOR);
+}
+
+void library_set_work_path(const char*path)
+{
+      assert(library_work_path == 0);
+      library_work_path = path;
+}
+
+static void store_package_in_work(const Package*pack)
+{
+      string path = string(library_work_path).append("/").append(pack->name()).append(".pkg");
+
+      ofstream file (path.c_str(), ios_base::out|ios_base::app);
+
+      pack->write_to_stream(file);
 }

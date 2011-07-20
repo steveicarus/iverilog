@@ -1,5 +1,3 @@
-#ifndef __compiler_H
-#define __compiler_H
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
  *
@@ -19,17 +17,41 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "StringHeap.h"
+# include  "entity.h"
 
-const int GN_KEYWORD_2008  = 0x0001;
+using namespace std;
 
-// TRUE if processing is supposed to dump progress to stderr.
-extern bool verbose_flag;
+void ComponentBase::write_to_stream(ostream&fd) const
+{
+      fd << "  component " << name_ << " is" << endl;
+      fd << "   port(" << endl;
 
-extern StringHeapLex lex_strings;
+      vector<InterfacePort*>::const_iterator cur = ports_.begin();
+      while (cur != ports_.end()) {
+	    InterfacePort*item = *cur;
+	    ++cur;
 
-extern StringHeapLex filename_strings;
+	    fd << "     " << item->name << " : ";
+	    switch (item->mode) {
+		case PORT_NONE:
+		  fd << "???? ";
+		  break;
+		case PORT_IN:
+		  fd << "in ";
+		  break;
+		case PORT_OUT:
+		  fd << "out ";
+		  break;
+	    }
 
-extern void library_set_work_path(const char*work_path);
+	    item->type->write_to_stream(fd);
 
-#endif
+	    if (cur != ports_.end())
+		  fd << ";" << endl;
+	    else
+		  fd << endl;
+      }
+
+      fd << "   );" << endl;
+      fd << "  end component;" << endl;
+}

@@ -1,5 +1,3 @@
-#ifndef __compiler_H
-#define __compiler_H
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
  *
@@ -19,17 +17,42 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "StringHeap.h"
+# include  "vtype.h"
+# include  <typeinfo>
+# include  <cassert>
 
-const int GN_KEYWORD_2008  = 0x0001;
+using namespace std;
 
-// TRUE if processing is supposed to dump progress to stderr.
-extern bool verbose_flag;
+void VType::write_to_stream(ostream&fd) const
+{
+      fd << "/* UNKNOWN TYPE: " << typeid(*this).name() << " */";
+}
 
-extern StringHeapLex lex_strings;
+void VTypeArray::write_to_stream(ostream&fd) const
+{
+      fd << "array ";
+      if (ranges_.size() > 0) {
+	    assert(ranges_.size() < 2);
+	    fd << "(" << ranges_[0].msb()
+	       << " downto " << ranges_[0].lsb() << ") ";
+      }
 
-extern StringHeapLex filename_strings;
+      fd << "of ";
+      etype_->write_to_stream(fd);
+}
 
-extern void library_set_work_path(const char*work_path);
-
-#endif
+void VTypePrimitive::write_to_stream(ostream&fd) const
+{
+      switch (type_) {
+	  case INTEGER:
+	    fd << "integer";
+	    break;
+	  case STDLOGIC:
+	    fd << "std_logic";
+	    break;
+	  default:
+	    assert(0);
+	    fd << "/* PRIMITIVE: " << type_ << " */";
+	    break;
+      }
+}

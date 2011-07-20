@@ -21,6 +21,7 @@
 
 # include  "scope.h"
 # include  "LineInfo.h"
+# include  <iostream>
 
 class Package : public Scope, public LineInfo {
 
@@ -29,6 +30,9 @@ class Package : public Scope, public LineInfo {
       ~Package();
 
       perm_string name() const { return name_; }
+
+	// This method writes a package header to a library file.
+      void write_to_stream(std::ostream&fd) const;
 
     private:
       perm_string name_;

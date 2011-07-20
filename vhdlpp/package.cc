@@ -18,6 +18,7 @@
  */
 
 # include  "package.h"
+# include  "entity.h"
 
 Package::Package(perm_string n, const ScopeBase&ref)
 : Scope(ref), name_(n)
@@ -26,4 +27,17 @@ Package::Package(perm_string n, const ScopeBase&ref)
 
 Package::~Package()
 {
+}
+
+void Package::write_to_stream(ostream&fd) const
+{
+      fd << "package " << name_ << " is" << endl;
+
+      for (map<perm_string,ComponentBase*>::const_iterator cur = components_.begin()
+		 ; cur != components_.end() ; ++cur) {
+
+	    cur->second->write_to_stream(fd);
+      }
+
+      fd << "end package " << name_ << ";" << endl;
 }

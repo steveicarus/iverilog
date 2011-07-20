@@ -45,15 +45,18 @@ const char NOTICE[] =
 # include  <cstdio>
 # include  <cstdlib>
 # include  <cstring>
+# include  <cerrno>
 #if defined(HAVE_GETOPT_H)
 # include  <getopt.h>
 #endif
+# include  <sys/stat.h>
 
 
 bool verbose_flag = false;
   // Where to dump design entities
 const char*dump_design_entities_path = 0;
 const char*dump_libraries_path = 0;
+
 
 extern void dump_libraries(ostream&file);
 
@@ -74,8 +77,9 @@ int main(int argc, char*argv[])
 {
       int opt;
       int rc;
+      const char*work_path = "ivl_vhdl_work";
 
-      while ( (opt=getopt(argc, argv, "D:vV")) != EOF) switch (opt) {
+      while ( (opt=getopt(argc, argv, "D:vVw:")) != EOF) switch (opt) {
 
 	  case 'D':
 	    process_debug_token(optarg);
@@ -96,7 +100,26 @@ int main(int argc, char*argv[])
 	    fputs(NOTICE, stdout);
 	    break;
 
+	  case 'w':
+	    work_path = optarg;
+	    break;
       }
+
+      if ( (rc = mkdir(work_path, 0777)) < 0 ) {
+	    if (errno != EEXIST) {
+		  fprintf(stderr, "Icarus Verilog VHDL unable to create work directory %s, errno=%d\n", work_path, errno);
+		  return -1;
+	    }
+	    struct stat stat_buf;
+	    rc = stat(work_path, &stat_buf);
+
+	    if (!S_ISDIR(stat_buf.st_mode)) {
+		  fprintf(stderr, "Icarus Verilog VHDL work path `%s' is not a directory.\n", work_path);
+		  return -1;
+	    }
+      }
+
+      library_set_work_path(work_path);
 
       preload_global_types();
       int errors = 0;
