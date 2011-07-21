@@ -184,7 +184,15 @@ NetNet* cast_to_real(Design*des, NetScope*scope, NetNet*src)
 
 NetExpr* cast_to_int2(NetExpr*expr)
 {
-      NetECast*cast = new NetECast('2', expr, expr->expr_width(),
+	// Special case: The expression is alreadt BOOL
+      if (expr->expr_type() == IVL_VT_BOOL)
+	    return expr;
+
+      unsigned use_width = expr->expr_width();
+      if (expr->expr_type() == IVL_VT_REAL)
+	    use_width = 64;
+
+      NetECast*cast = new NetECast('2', expr, use_width,
                                    expr->has_sign());
       cast->set_line(*expr);
       return cast;
