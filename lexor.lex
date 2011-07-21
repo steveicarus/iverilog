@@ -145,6 +145,20 @@ TU [munpf]
 "<=" { return K_LE; }
 ">=" { return K_GE; }
 "=>" { return K_EG; }
+"+=>"|"-=>" 	{
+			/*
+			 * Resolve the ambiguity between the += assignment
+			 * operator and +=> polarity edge path operator
+			 * 
+			 * +=> should be treated as two separate tokens '+' and 
+			 * '=>' (K_EG), therefore we only consume the first
+			 * character of the matched pattern i.e. either + or -
+			 * and push back the rest of the matches text (=>) in
+			 * the input stream.
+			 */
+			yyless(1);
+			return yytext[0];
+		}
 "*>" { return K_SG; }
 "==" { return K_EQ; }
 "!=" { return K_NE; }
@@ -161,6 +175,19 @@ TU [munpf]
 "+:" { return K_PO_POS; }
 "-:" { return K_PO_NEG; }
 "<+" { return K_CONTRIBUTE; }
+"+=" { return K_PLUS_EQ; }
+"-=" { return K_MINUS_EQ; }
+"*=" { return K_MUL_EQ; }
+"/=" { return K_DIV_EQ; }
+"%=" { return K_MOD_EQ; }
+"&=" { return K_AND_EQ; }
+"|=" { return K_OR_EQ; }
+"^=" { return K_XOR_EQ; }
+"<<=" { return K_LS_EQ; }
+">>=" { return K_RS_EQ; }
+"<<<=" { return K_LS_EQ; }
+">>>=" { return K_RSS_EQ; }
+
 
   /* Watch out for the tricky case of (*). Cannot parse this as "(*"
      and ")", but since I know that this is really ( * ), replace it

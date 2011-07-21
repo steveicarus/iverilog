@@ -296,6 +296,7 @@ static list<named_pexpr_t>* make_named_number(perm_string name, PExpr*val =0)
 %token <text>   PATHPULSE_IDENTIFIER
 %token <number> BASED_NUMBER DEC_NUMBER
 %token <realtime> REALTIME
+%token K_PLUS_EQ K_MINUS_EQ 
 %token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LS K_RS K_RSS K_SG
  /* K_CONTRIBUTE is <+, the contribution assign. */
 %token K_CONTRIBUTE
@@ -455,7 +456,7 @@ static list<named_pexpr_t>* make_named_number(perm_string name, PExpr*val =0)
 %type <event_expr> event_expression_list
 %type <event_expr> event_expression
 %type <event_statement> event_control
-%type <statement> statement statement_or_null
+%type <statement> statement statement_or_null compressed_statement
 %type <statement_list> statement_list
 
 %type <statement> analog_statement
@@ -469,6 +470,8 @@ static list<named_pexpr_t>* make_named_number(perm_string name, PExpr*val =0)
 %type <int_val> atom2_type
 
 %token K_TAND
+%right K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
+%right K_XOR_EQ K_LS_EQ K_RS_EQ K_RSS_EQ
 %right '?' ':'
 %left K_LOR
 %left K_LAND
@@ -4278,6 +4281,8 @@ statement
 		{ $$ = 0;
 		  yyerror(@1, "error: Error in while loop condition.");
 		}
+	| compressed_statement ';'
+		{ $$ = $1; }
 	| delay1 statement_or_null
                 { PExpr*del = $1->front();
 		  assert($1->size() == 1);
@@ -4418,6 +4423,86 @@ statement
 		{ yyerror(@2, "error: malformed statement");
 		  yyerrok;
 		  $$ = new PNoop;
+		}
+	;
+
+compressed_statement
+	: lpvalue K_PLUS_EQ expression
+		{
+			PEBinary *t  = new PEBinary('+', $1, $3);
+			PAssign  *tmp = new PAssign($1, t);
+			FILE_NAME(tmp, @1);
+			$$ = tmp;
+		}
+	| lpvalue K_MINUS_EQ expression
+		{
+			PEBinary *t  = new PEBinary('-', $1, $3);
+			PAssign  *tmp = new PAssign($1, t);
+			FILE_NAME(tmp, @1);
+			$$ = tmp;
+		}
+	| lpvalue K_MUL_EQ expression
+		{
+			PEBinary *t  = new PEBinary('*', $1, $3);
+			PAssign  *tmp = new PAssign($1, t);
+			FILE_NAME(tmp, @1);
+			$$ = tmp;
+		}
+	| lpvalue K_DIV_EQ expression
+		{
+			PEBinary *t  = new PEBinary('/', $1, $3);
+			PAssign  *tmp = new PAssign($1, t);
+			FILE_NAME(tmp, @1);
+			$$ = tmp;
+		}
+	| lpvalue K_MOD_EQ expression
+		{
+			PEBinary *t  = new PEBinary('%', $1, $3);
+			PAssign  *tmp = new PAssign($1, t);
+			FILE_NAME(tmp, @1);
+			$$ = tmp;
+		}
+	| lpvalue K_AND_EQ expression
+		{
+			PEBinary *t  = new PEBinary('&', $1, $3);
+			PAssign  *tmp = new PAssign($1, t);
+			FILE_NAME(tmp, @1);
+			$$ = tmp;
+		}
+	| lpvalue K_OR_EQ expression
+		{
+			PEBinary *t  = new PEBinary('|', $1, $3);
+			PAssign  *tmp = new PAssign($1, t);
+			FILE_NAME(tmp, @1);
+			$$ = tmp;
+		}
+	| lpvalue K_XOR_EQ expression
+		{
+			PEBinary *t  = new PEBinary('^', $1, $3);
+			PAssign  *tmp = new PAssign($1, t);
+			FILE_NAME(tmp, @1);
+			$$ = tmp;
+		}
+	| lpvalue K_LS_EQ expression
+		{
+			PEBShift *t  = new PEBShift('l', $1, $3);
+			PAssign  *tmp = new PAssign($1, t);
+			FILE_NAME(tmp, @1);
+			$$ = tmp;
+		}
+	| lpvalue K_RS_EQ expression
+		{
+			PEBShift *t  = new PEBShift('r', $1, $3);
+			PAssign  *tmp = new PAssign($1, t);
+			FILE_NAME(tmp, @1);
+			$$ = tmp;
+		}
+	| lpvalue K_RSS_EQ expression
+		{
+			PEBShift *t  = new PEBShift('R', $1, $3);
+			PAssign  *tmp = new PAssign($1, t);
+			FILE_NAME(tmp, @1);
+			$$ = tmp;
 		}
 	;
 
