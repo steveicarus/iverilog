@@ -19,6 +19,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+# include  <algorithm>
 # include  <list>
 # include  <map>
 # include  "StringHeap.h"
@@ -29,6 +30,16 @@
 class Architecture;
 class ComponentBase;
 class VType;
+
+template<typename T>
+struct delete_object{
+    void operator()(T* item) { delete item; }
+};
+
+template<typename T>
+struct delete_pair_second{
+    void operator()(pair<perm_string, T*> item){ delete item.second; }
+};
 
 class ScopeBase {
 
@@ -41,6 +52,16 @@ class ScopeBase {
       bool find_constant(perm_string by_name, const VType*&typ, Expression*&exp);
     protected:
       void cleanup();
+
+      //containers' cleaning helper functions
+      template<typename T> void delete_all(list<T*>& c)
+      {
+          for_each(c.begin(), c.end(), ::delete_object<T>());
+      }
+      template<typename T> void delete_all(map<perm_string, T*>& c)
+      {
+          for_each(c.begin(), c.end(), ::delete_pair_second<T>());
+      }
 
 	// Signal declarations...
       std::map<perm_string,Signal*> old_signals_; //previous scopes

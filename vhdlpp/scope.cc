@@ -61,18 +61,10 @@ void ScopeBase::cleanup()
      * objects that were defined in this scope, leaving
      * objects from the other scopes untouched.
      */
-    for(map<perm_string, Signal*>::iterator it = new_signals_.begin()
-        ; it != new_signals_.end(); ++it)
-        delete it->second;
-    for(map<perm_string, ComponentBase*>::iterator it = new_components_.begin()
-        ; it != new_components_.end(); ++it)
-        delete it->second;
-    for(map<perm_string, const VType*>::iterator it = new_types_.begin()
-        ; it != new_types_.end(); ++it)
-        delete it->second;
-    for(map<perm_string, const_t*>::iterator it = new_constants_.begin()
-        ; it != new_constants_.end(); ++it)
-        delete it->second;
+    delete_all(new_signals_);
+    delete_all(new_components_);
+    delete_all(new_types_);
+    delete_all(new_constants_);
 }
 
 const VType*ScopeBase::find_type(perm_string by_name)
