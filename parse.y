@@ -197,14 +197,26 @@ static list<named_pexpr_t>* make_named_numbers(perm_string name, long first, lon
 {
       list<named_pexpr_t>*lst = new list<named_pexpr_t>;
       named_pexpr_t tmp;
-      assert(first <= last);
-      for (long idx = first ; idx <= last ; idx += 1) {
-	    ostringstream buf;
-	    buf << name.str() << idx << ends;
-	    tmp.name = lex_strings.make(buf.str());
-	    tmp.parm = val;
-	    val = 0;
-	    lst->push_back(tmp);
+	// We are counting up.
+      if (first <= last) {
+	    for (long idx = first ; idx <= last ; idx += 1) {
+		  ostringstream buf;
+		  buf << name.str() << idx << ends;
+		  tmp.name = lex_strings.make(buf.str());
+		  tmp.parm = val;
+		  val = 0;
+		  lst->push_back(tmp);
+	    }
+	// We are counting down.
+      } else {
+	    for (long idx = first ; idx >= last ; idx -= 1) {
+		  ostringstream buf;
+		  buf << name.str() << idx << ends;
+		  tmp.name = lex_strings.make(buf.str());
+		  tmp.parm = val;
+		  val = 0;
+		  lst->push_back(tmp);
+	    }
       }
       return lst;
 }
@@ -217,6 +229,28 @@ static list<named_pexpr_t>* make_named_number(perm_string name, PExpr*val =0)
       tmp.parm = val;
       lst->push_back(tmp);
       return lst;
+}
+
+static long check_enum_seq_value(const YYLTYPE&loc, verinum *arg, bool zero_ok)
+{
+      long value = 1;
+	// We can never have an undefined value in an enumeration name
+	// declaration sequence.
+      if (! arg->is_defined()) {
+	    yyerror(loc, "error: undefined value used in enum name sequence.");
+	// We can never have a negative value in an enumeration name
+	// declaration sequence.
+      } else if (arg->is_negative()) {
+	    yyerror(loc, "error: negative value used in enum name sequence.");
+      } else {
+	    value = arg->as_ulong();
+	      // We cannot have a zero enumeration name declaration count.
+	    if (! zero_ok && (value == 0)) {
+		  yyerror(loc, "error: zero count used in enum name sequence.");
+		  value = 1;
+	    }
+      }
+      return value;
 }
 
 %}
@@ -388,7 +422,7 @@ static list<named_pexpr_t>* make_named_number(perm_string name, PExpr*val =0)
 %token K_zi_nd K_zi_np K_zi_zd K_zi_zp
 
 %type <flag>    from_exclude
-%type <number>  number
+%type <number>  number pos_neg_number
 %type <flag>    unsigned_signed_opt signed_unsigned_opt reg_opt
 %type <flag>    udp_reg_opt edge_operator automatic_opt
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
@@ -777,22 +811,34 @@ enum_name_list
       }
   ;
 
+pos_neg_number
+  : number
+      { $$ = $1;
+      }
+  | '-' number
+      { verinum tmp = v_not(*($2)) + verinum(1);
+	*($2) = tmp;
+	$$ = $2;
+      }
+  ;
+
 enum_name
   : IDENTIFIER
       { perm_string name = lex_strings.make($1);
 	delete[]$1;
 	$$ = make_named_number(name);
       }
-  | IDENTIFIER '[' DEC_NUMBER ']'
+  | IDENTIFIER '[' pos_neg_number ']'
       { perm_string name = lex_strings.make($1);
-	long count = $3->as_ulong();
+	long count = check_enum_seq_value(@1, $3, false);
 	delete[]$1;
 	$$ = make_named_numbers(name, 0, count-1);
 	delete $3;
       }
-  | IDENTIFIER '[' DEC_NUMBER ':' DEC_NUMBER ']'
+  | IDENTIFIER '[' pos_neg_number ':' pos_neg_number ']'
       { perm_string name = lex_strings.make($1);
-	$$ = make_named_numbers(name, $3->as_long(), $5->as_long());
+	$$ = make_named_numbers(name, check_enum_seq_value(@1, $3, true),
+	                              check_enum_seq_value(@1, $5, true));
 	delete[]$1;
 	delete $3;
 	delete $5;
@@ -802,16 +848,17 @@ enum_name
 	delete[]$1;
 	$$ = make_named_number(name, $3);
       }
-  | IDENTIFIER '[' DEC_NUMBER ']' '=' expression
+  | IDENTIFIER '[' pos_neg_number ']' '=' expression
       { perm_string name = lex_strings.make($1);
-	long count = $3->as_ulong();
+	long count = check_enum_seq_value(@1, $3, false);
 	$$ = make_named_numbers(name, 0, count-1, $6);
 	delete[]$1;
 	delete $3;
       }
-  | IDENTIFIER '[' DEC_NUMBER ':' DEC_NUMBER ']' '=' expression
+  | IDENTIFIER '[' pos_neg_number ':' pos_neg_number ']' '=' expression
       { perm_string name = lex_strings.make($1);
-	$$ = make_named_numbers(name, $3->as_long(), $5->as_long(), $8);
+	$$ = make_named_numbers(name, check_enum_seq_value(@1, $3, true),
+	                              check_enum_seq_value(@1, $5, true), $8);
 	delete[]$1;
 	delete $3;
 	delete $5;
