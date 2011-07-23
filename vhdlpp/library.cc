@@ -30,6 +30,12 @@ using namespace std;
 static const char*library_work_path = 0;
 static void store_package_in_work(const Package*pack);
 
+static string make_work_package_path(const char*name)
+{
+      return string(library_work_path).append("/").append(name).append(".pkg");
+}
+
+
 struct library_contents {
       map<perm_string,Package*> packages;
 };
@@ -66,7 +72,7 @@ void dump_libraries(ostream&file)
  * This function saves a package into the named library. Create the
  * library if necessary.
  */
-void library_save_package(const char*libname, Package*pack)
+void library_save_package(const char*libname, Package*pack, bool parse_work)
 {
       if (libname == 0)
 	    libname = "work";
@@ -76,7 +82,9 @@ void library_save_package(const char*libname, Package*pack)
 
       lib.packages[pack->name()] = pack;
 
-      if (use_libname == "work")
+	// If this is a work package, and we are NOT parsing the work
+	// library right now, then store it in the work library.
+      if (use_libname == "work" && !parse_work)
 	    store_package_in_work(pack);
 }
 
@@ -114,6 +122,14 @@ void library_use(const YYLTYPE&loc, ActiveScope*res,
 
       struct library_contents&lib = libraries[use_library];
       Package*pack = lib.packages[use_package];
+	// If the package is not found in the work library already
+	// parsed, then see if it exists unparsed.
+      if (use_library=="work" && pack == 0) {
+	    string path = make_work_package_path(use_package.str());
+	    parse_source_file(path.c_str(), true);
+	    pack = lib.packages[use_package];
+      }
+	// If the package is still not found, then error.
       if (pack == 0) {
 	    errormsg(loc, "No package %s in library %s\n",
 		     use_package.str(), use_library.str());
@@ -229,7 +245,7 @@ void library_set_work_path(const char*path)
 
 static void store_package_in_work(const Package*pack)
 {
-      string path = string(library_work_path).append("/").append(pack->name()).append(".pkg");
+      string path = make_work_package_path(pack->name());
 
       ofstream file (path.c_str(), ios_base::out|ios_base::app);
 

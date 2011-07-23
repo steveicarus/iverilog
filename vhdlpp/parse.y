@@ -1,8 +1,9 @@
 
 %pure-parser
-%parse-param {yyscan_t yyscanner}
 %lex-param { yyscan_t yyscanner }
+%parse-param {yyscan_t yyscanner  }
 %parse-param {const char*file_path}
+%parse-param {bool parsing_work   }
 %{
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
@@ -58,7 +59,7 @@ inline void FILE_NAME(LineInfo*tmp, const struct yyltype&where)
   (Current).first_line   = (Rhs)[1].first_line;      \
   (Current).text         = file_path; /*(Rhs)[1].text;*/   } while (0)
 
-static void yyerror(YYLTYPE*yyllocp,yyscan_t yyscanner,const char*file_path, const char*msg);
+static void yyerror(YYLTYPE*yyllocp,yyscan_t yyscanner,const char*file_path,bool, const char*msg);
 
 int parse_errors = 0;
 int parse_sorrys = 0;
@@ -1110,7 +1111,7 @@ package_declaration
         if ($6) delete[]$6;
 	pop_scope();
 	  /* Put this package into the work library. */
-	library_save_package(0, tmp);
+	library_save_package(0, tmp, parsing_work);
       }
   | package_declaration_start K_is error K_end K_package_opt identifier_opt ';'
     { errormsg(@3, "Syntax error in package clause.\n");
@@ -1651,7 +1652,7 @@ K_postponed_opt    : K_postponed    | ;
 K_is_opt           : K_is           | ;
 %%
 
-static void yyerror(YYLTYPE*, yyscan_t, const char*, const char* /*msg*/)
+static void yyerror(YYLTYPE*, yyscan_t, const char*, bool, const char* /*msg*/)
 {
 	//fprintf(stderr, "%s\n", msg);
       parse_errors += 1;
@@ -1677,4 +1678,28 @@ void sorrymsg(const YYLTYPE&loc, const char*fmt, ...)
       vfprintf(stderr, fmt, ap);
       va_end(ap);
       parse_sorrys += 1;
+}
+
+
+/*
+ * The reset_lexor function takes the fd and makes it the input file
+ * for the lexor. The path argument is used in lexor/parser error messages.
+ */
+extern yyscan_t prepare_lexor(FILE*fd);
+extern void destroy_lexor(yyscan_t scanner);
+
+int parse_source_file(const char*file_path, bool work_library_flag)
+{
+      FILE*fd = fopen(file_path, "r");
+      if (fd == 0) {
+	    perror(file_path);
+	    return -1;
+      }
+
+      yyscan_t scanner = prepare_lexor(fd);
+      int rc = yyparse(scanner, file_path, work_library_flag);
+      fclose(fd);
+      destroy_lexor(scanner);
+
+      return rc;
 }

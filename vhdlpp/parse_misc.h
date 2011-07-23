@@ -47,7 +47,7 @@ extern const VType* calculate_subtype_range(const YYLTYPE&loc, const char*base_n
  */
 extern const VType* parse_type_by_name(perm_string name);
 
-extern void library_save_package(const char*libname, Package*pack);
+extern void library_save_package(const char*libname, Package*pack, bool parse_work);
 
 extern void library_import(const YYLTYPE&loc, const std::list<perm_string>*names);
 

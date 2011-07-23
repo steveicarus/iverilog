@@ -127,19 +127,12 @@ int main(int argc, char*argv[])
       for (int idx = optind ; idx < argc ; idx += 1) {
 	    parse_errors = 0;
 	    parse_sorrys = 0;
-	    FILE*fd = fopen(argv[idx], "r");
-	    if (fd == 0) {
-		  perror(argv[idx]);
+	    rc = parse_source_file(argv[idx], false);
+	    if (rc < 0)
 		  return 1;
-	    }
-
-	    yyscan_t scanner = prepare_lexor(fd);
-	    rc = yyparse(scanner, argv[idx]);
-	    fclose(fd);
-	    destroy_lexor(scanner);
 
 	    if (verbose_flag)
-		  fprintf(stderr, "yyparse() returns %d, parse_errors=%d, parse_sorrys=%d\n", rc, parse_errors, parse_sorrys);
+		  fprintf(stderr, "parse_source_file() returns %d, parse_errors=%d, parse_sorrys=%d\n", rc, parse_errors, parse_sorrys);
 
 	    if (parse_errors > 0) {
 		  fprintf(stderr, "Encountered %d errors parsing %s\n", parse_errors, argv[idx]);

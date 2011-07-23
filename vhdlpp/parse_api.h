@@ -37,16 +37,10 @@ struct yyltype {
 # define YYLTYPE struct yyltype
 
 /*
- * The reset_lexor function takes the fd and makes it the input file
- * for the lexor. The path argument is used in lexor/parser error messages.
+ * This calls the bison-generated parser with the given file path as
+ * the input stream. If the file cannot be opened, this returns -1.
  */
-extern yyscan_t prepare_lexor(FILE*fd);
-extern void destroy_lexor(yyscan_t scanner);
-
-/*
- * This is the bison-generated parser.
- */
-extern int yyparse(yyscan_t scanner, const char*file_path);
+extern int parse_source_file(const char*file_path, bool parse_work_library);
 
 /*
  * Use this function during parse to generate error messages. The "loc"
