@@ -22,6 +22,8 @@
 # include  <cstdio>
 # include  "entity.h"
 
+typedef void*yyscan_t;
+
 /*
  * The vlltype supports the passing of detailed source file location
  * information between the lexical analyzer and the parser. Defining
@@ -29,10 +31,8 @@
  */
 struct yyltype {
       unsigned first_line;
-      unsigned first_column;
-      unsigned last_line;
-      unsigned last_column;
       const char*text;
+      yyltype() { first_line = 1; text = ""; }
 };
 # define YYLTYPE struct yyltype
 
@@ -40,18 +40,13 @@ struct yyltype {
  * The reset_lexor function takes the fd and makes it the input file
  * for the lexor. The path argument is used in lexor/parser error messages.
  */
-extern void reset_lexor(FILE*fd, const char*path);
-
-/*
- * The parser calls yylex to get the next lexical token. It is only
- * called by the bison-generated parser.
- */
-extern int yylex(void);
+extern yyscan_t prepare_lexor(FILE*fd);
+extern void destroy_lexor(yyscan_t scanner);
 
 /*
  * This is the bison-generated parser.
  */
-extern int yyparse(void);
+extern int yyparse(yyscan_t scanner, const char*file_path);
 
 /*
  * Use this function during parse to generate error messages. The "loc"

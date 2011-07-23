@@ -133,8 +133,11 @@ int main(int argc, char*argv[])
 		  return 1;
 	    }
 
-	    reset_lexor(fd, argv[idx]);
-	    rc = yyparse();
+	    yyscan_t scanner = prepare_lexor(fd);
+	    rc = yyparse(scanner, argv[idx]);
+	    fclose(fd);
+	    destroy_lexor(scanner);
+
 	    if (verbose_flag)
 		  fprintf(stderr, "yyparse() returns %d, parse_errors=%d, parse_sorrys=%d\n", rc, parse_errors, parse_sorrys);
 
@@ -144,8 +147,6 @@ int main(int argc, char*argv[])
 	    if (parse_sorrys > 0) {
 		  fprintf(stderr, "Encountered %d unsupported constructs parsing %s\n", parse_sorrys, argv[idx]);
 	    }
-
-	    fclose(fd);
 
 	    if (parse_errors || parse_sorrys) {
 		  errors += parse_errors;

@@ -1,4 +1,8 @@
 
+%pure-parser
+%parse-param {yyscan_t yyscanner}
+%lex-param { yyscan_t yyscanner }
+%parse-param {const char*file_path}
 %{
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
@@ -52,15 +56,18 @@ inline void FILE_NAME(LineInfo*tmp, const struct yyltype&where)
    text field, that otherwise won't be copied. */
 # define YYLLOC_DEFAULT(Current, Rhs, N)  do {       \
   (Current).first_line   = (Rhs)[1].first_line;      \
-  (Current).first_column = (Rhs)[1].first_column;    \
-  (Current).last_line    = (Rhs)[N].last_line;       \
-  (Current).last_column  = (Rhs)[N].last_column;     \
-  (Current).text         = (Rhs)[1].text;   } while (0)
+  (Current).text         = file_path; /*(Rhs)[1].text;*/   } while (0)
 
-static void yyerror(const char*msg);
+static void yyerror(YYLTYPE*yyllocp,yyscan_t yyscanner,const char*file_path, const char*msg);
 
 int parse_errors = 0;
 int parse_sorrys = 0;
+
+/*
+ * The parser calls yylex to get the next lexical token. It is only
+ * called by the bison-generated parser.
+ */
+extern int yylex(union YYSTYPE*yylvalp,YYLTYPE*yyllocp,yyscan_t yyscanner);
 
 
 /*
@@ -233,8 +240,9 @@ const VType*parse_type_by_name(perm_string name)
 
 %%
 
- /* The design_file is the root for the VHDL parse. */
-design_file : design_units ;
+ /* The design_file is the root for the VHDL parse. This rule is also
+    where I put some run-time initializations. */
+design_file : { yylloc.text = file_path; } design_units ;
 
 architecture_body
   : architecture_body_start
@@ -1643,20 +1651,18 @@ K_postponed_opt    : K_postponed    | ;
 K_is_opt           : K_is           | ;
 %%
 
-static void yyerror(const char* /*msg*/)
+static void yyerror(YYLTYPE*, yyscan_t, const char*, const char* /*msg*/)
 {
 	//fprintf(stderr, "%s\n", msg);
       parse_errors += 1;
 }
-
-static const char*file_path = "";
 
 void errormsg(const YYLTYPE&loc, const char*fmt, ...)
 {
       va_list ap;
       va_start(ap, fmt);
 
-      fprintf(stderr, "%s:%d: error: ", file_path, loc.first_line);
+      fprintf(stderr, "%s:%d: error: ", loc.text, loc.first_line);
       vfprintf(stderr, fmt, ap);
       va_end(ap);
       parse_errors += 1;
@@ -1667,17 +1673,8 @@ void sorrymsg(const YYLTYPE&loc, const char*fmt, ...)
       va_list ap;
       va_start(ap, fmt);
 
-      fprintf(stderr, "%s:%d: sorry: ", file_path, loc.first_line);
+      fprintf(stderr, "%s:%d: sorry: ", loc.text, loc.first_line);
       vfprintf(stderr, fmt, ap);
       va_end(ap);
       parse_sorrys += 1;
-}
-
-/*
- * This is used only by the lexor, to set the file path used in error
- * messages.
- */
-void yyparse_set_filepath(const char*path)
-{
-      file_path = path;
 }

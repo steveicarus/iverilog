@@ -1,6 +1,8 @@
 %option prefix="yy"
 %option never-interactive
 %option nounput
+%option reentrant
+%option noyywrap
 
 %{
 /*
@@ -33,6 +35,7 @@
 # include  <iostream>
 # include  <set>
 
+# define YY_DECL int yylex(YYSTYPE*yylvalp, YYLTYPE*yyllocp, yyscan_t yyscanner)
 //class vhdlnum;
 //class vhdlreal;
 
@@ -45,7 +48,8 @@ extern int lexor_keyword_code (const char*str, unsigned len);
  * the name as it exists in the list (and delete the passed string.)
  * If the name is new, it will be added to the list.
  */
-extern YYLTYPE yylloc;
+#define yylloc (*yyllocp)
+#define yylval (*yylvalp)
 
 static bool are_underscores_correct(char* text);
 static bool is_based_correct(char* text);
@@ -735,16 +739,15 @@ static int64_t lpow(int64_t left, int64_t right) {
         return left*lpow(left, right - 1);
 }
 
-void reset_lexor(FILE*fd, const char*path)
+yyscan_t prepare_lexor(FILE*fd)
 {
-      yylloc.text = path;
-      yylloc.first_line = 1;
-      yyrestart(fd);
-
-      yyparse_set_filepath(path);
+      yyscan_t scanner;
+      yylex_init(&scanner);
+      yyrestart(fd, scanner);
+      return scanner;
 }
 
-int yywrap()
+void destroy_lexor(yyscan_t scanner)
 {
-      return 1;
+      yylex_destroy(scanner);
 }
