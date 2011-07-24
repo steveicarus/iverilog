@@ -24,6 +24,8 @@
   /* This is the integer-width argument that will be passed to ivl. */
 extern unsigned integer_width;
 
+extern const char*vhdlpp_work;
+
   /* Perform variable substitutions on the string. */
 extern char* substitutions(const char*str);
 

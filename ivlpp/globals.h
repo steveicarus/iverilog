@@ -35,6 +35,8 @@ extern char**include_dir;
 extern unsigned include_cnt;
 /* Program to use for VHDL processing. */
 extern char*vhdlpp_path;
+/* vhdlpp work directory */
+extern char*vhdlpp_work;
 
 extern int relative_include;
 

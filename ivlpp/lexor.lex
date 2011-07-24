@@ -1790,7 +1790,7 @@ static void open_input_file(struct include_stack_t*isp)
       cmdlen += 32;
 
       char*cmd = malloc(cmdlen);
-      snprintf(cmd, cmdlen, "%s %s", vhdlpp_path, isp->path);
+      snprintf(cmd, cmdlen, "%s -w'%s' %s", vhdlpp_path, vhdlpp_work, isp->path);
 
       isp->file = popen(cmd, "r");
       isp->file_close = pclose;

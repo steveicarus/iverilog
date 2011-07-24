@@ -59,6 +59,8 @@ char *dep_path = NULL;
 char dep_mode = 'a';
 /* Path to vhdlpp */
 char *vhdlpp_path = 0;
+/* vhdlpp work directory */
+char *vhdlpp_work = 0;
 
 /*
  * Keep in source_list an array of pointers to file names. The array
@@ -172,6 +174,13 @@ static int flist_read_flags(const char*path)
 			fprintf(stderr, "Ignore multiple vhdlpp flags\n");
 		  } else {
 			vhdlpp_path = strdup(arg);
+		  }
+
+	    } else if (strcmp(cp,"vhdlpp-work") == 0) {
+		  if (vhdlpp_work) {
+			fprintf(stderr, "Ignore duplicate vhdlpp-work flags\n");
+		  } else {
+			vhdlpp_work = strdup(arg);
 		  }
 
 	    } else {
@@ -401,6 +410,10 @@ int main(int argc, char*argv[])
 	    if (depend_file) fclose(depend_file);
 	    if (precomp_out) fclose(precomp_out);
 	    return 1;
+      }
+
+      if (vhdlpp_work == 0) {
+	    vhdlpp_work = strdup("ivl_vhdl_work");
       }
 
 	/* Pass to the lexical analyzer the list of input file, and

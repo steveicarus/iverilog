@@ -88,6 +88,8 @@ int cmdfile_stack_ptr = 0;
 
 "+timescale+" { BEGIN(PLUS_ARGS); return TOK_TIMESCALE; }
 
+"+vhdl-work+" { BEGIN(PLUS_ARGS); return TOK_VHDL_WORK; }
+
   /* If it is not any known plus-flag, return the generic form. */
 "+"[^\n \t\b\f\r+]* {
       cflval.text = strdup(yytext);

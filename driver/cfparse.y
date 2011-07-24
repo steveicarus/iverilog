@@ -59,7 +59,7 @@ static void translate_file_name(char*text)
 
 %token TOK_Da TOK_Dc TOK_Dv TOK_Dy
 %token TOK_DEFINE TOK_INCDIR TOK_INTEGER_WIDTH TOK_LIBDIR TOK_LIBDIR_NOCASE
-%token TOK_LIBEXT TOK_PARAMETER TOK_TIMESCALE
+%token TOK_LIBEXT TOK_PARAMETER TOK_TIMESCALE TOK_VHDL_WORK
 %token <text> TOK_PLUSARG TOK_PLUSWORD TOK_STRING
 
 %%
@@ -154,6 +154,12 @@ item
 
 	| TOK_DEFINE TOK_PLUSARG
 		{ process_define($2);
+		  free($2);
+		}
+
+        | TOK_VHDL_WORK TOK_PLUSARG
+	        { char*tmp = substitutions($2);
+	          vhdlpp_work = tmp;
 		  free($2);
 		}
 

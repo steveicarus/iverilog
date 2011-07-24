@@ -108,6 +108,7 @@ extern void cfreset(FILE*fd, const char*path);
 const char*base = 0;
 const char*ivlpp_dir = 0;
 const char*vhdlpp_dir= 0;
+const char*vhdlpp_work = 0;
 const char*mtm  = 0;
 const char*opath = "a.out";
 const char*npath = 0;
@@ -1026,8 +1027,6 @@ int main(int argc, char **argv)
       snprintf(iconfig_common_path, sizeof iconfig_common_path, "%s%c%s%s.conf",
 	      base, sep, targ, synth_flag? "-s" : "");
 
-      fprintf(defines_file, "vhdlpp:%s%cvhdlpp\n", vhdlpp_dir, sep);
-
 	/* Write values to the iconfig file. */
       fprintf(iconfig_file, "basedir:%s\n", base);
 
@@ -1101,6 +1100,11 @@ int main(int argc, char **argv)
       if (depfile) {
 	    fprintf(defines_file, "M%c:%s\n", depmode, depfile);
       }
+
+      if (vhdlpp_work == 0)
+	    vhdlpp_work = "ivl_vhdl_work";
+      fprintf(defines_file, "vhdlpp:%s%cvhdlpp\n", vhdlpp_dir, sep);
+      fprintf(defines_file, "vhdlpp-work:%s\n", vhdlpp_work);
 
     /* Process parameter definition from command line. The last
        defined would override previous ones. */
