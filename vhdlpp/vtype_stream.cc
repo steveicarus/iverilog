@@ -55,6 +55,9 @@ void VTypeArray::write_to_stream(ostream&fd) const
 void VTypePrimitive::write_to_stream(ostream&fd) const
 {
       switch (type_) {
+	  case BIT:
+	    fd << "bit";
+	    break;
 	  case INTEGER:
 	    fd << "integer";
 	    break;
