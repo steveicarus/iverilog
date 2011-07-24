@@ -122,4 +122,9 @@ extern uint64_t get_uint64_from_number(ivl_expr_t expr, int *return_type);
  */
 extern void free_emitted_scope_list();
 
+/*
+ * Debug routine to dump the various pieces of nexus information.
+*/
+extern void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex);
+
 #endif /* __vlog95_priv_H */

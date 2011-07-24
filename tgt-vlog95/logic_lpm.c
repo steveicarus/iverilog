@@ -1542,3 +1542,128 @@ void emit_signal_net_const_as_ca(ivl_scope_t scope, ivl_signal_t sig)
       assert(0);
 
 }
+
+static void dump_drive(ivl_drive_t drive)
+{
+      switch (drive) {
+	case IVL_DR_HiZ:    fprintf(stderr, "highz"); break;
+	case IVL_DR_SMALL:  fprintf(stderr, "small"); break;
+	case IVL_DR_MEDIUM: fprintf(stderr, "medium"); break;
+	case IVL_DR_WEAK:   fprintf(stderr, "weak"); break;
+	case IVL_DR_LARGE:  fprintf(stderr, "large"); break;
+	case IVL_DR_PULL:   fprintf(stderr, "pull"); break;
+	case IVL_DR_STRONG: fprintf(stderr, "strong"); break;
+	case IVL_DR_SUPPLY: fprintf(stderr, "supply"); break;
+      }
+}
+
+/*
+ * Routine to dump the nexus information.
+ */
+void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
+{
+      unsigned idx, count = ivl_nexus_ptrs(nex);
+      fprintf(stderr, "Dumping nexus from scope: %s\n",
+              ivl_scope_name(scope));
+      for (idx = 0; idx < count; idx += 1) {
+            ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+            ivl_lpm_t lpm = ivl_nexus_ptr_lpm(nex_ptr);
+            ivl_net_const_t net_const = ivl_nexus_ptr_con(nex_ptr);
+            ivl_net_logic_t net_logic = ivl_nexus_ptr_log(nex_ptr);
+            ivl_signal_t sig = ivl_nexus_ptr_sig(nex_ptr);
+            fprintf(stderr, "  %u (", idx);
+	    dump_drive(ivl_nexus_ptr_drive1(nex_ptr));
+            fprintf(stderr, "1 ,");
+	    dump_drive(ivl_nexus_ptr_drive0(nex_ptr));
+            fprintf(stderr, "0) ");
+	    if (lpm) {
+		  ivl_scope_t lpm_scope = ivl_lpm_scope(lpm);
+		  assert(! net_const);
+		  assert(! net_logic);
+		  assert(! sig);
+		  fprintf(stderr, "LPM: ");
+		  fprintf(stderr, "%s:%d ", ivl_lpm_file(lpm),
+		          ivl_lpm_lineno(lpm));
+		  if (scope != lpm_scope) fprintf(stderr, "%s ",
+		                                  ivl_scope_name(lpm_scope));
+		  switch (ivl_lpm_type(lpm)) {
+		      case IVL_LPM_ABS:       fprintf(stderr, "abs"); break;
+		      case IVL_LPM_ADD:       fprintf(stderr, "add"); break;
+		      case IVL_LPM_ARRAY:     fprintf(stderr, "array"); break;
+		      case IVL_LPM_CAST_INT:  fprintf(stderr, "<int>"); break;
+		      case IVL_LPM_CAST_INT2: fprintf(stderr, "<int2>"); break;
+		      case IVL_LPM_CAST_REAL: fprintf(stderr, "<real>"); break;
+		      case IVL_LPM_CONCAT:    fprintf(stderr, "concat"); break;
+		      case IVL_LPM_CMP_EEQ:   fprintf(stderr, "eeq"); break;
+		      case IVL_LPM_CMP_EQ:    fprintf(stderr, "eq"); break;
+		      case IVL_LPM_CMP_GE:    fprintf(stderr, "ge"); break;
+		      case IVL_LPM_CMP_GT:    fprintf(stderr, "gt"); break;
+		      case IVL_LPM_CMP_NE:    fprintf(stderr, "ne"); break;
+		      case IVL_LPM_CMP_NEE:   fprintf(stderr, "nee"); break;
+		      case IVL_LPM_DIVIDE:    fprintf(stderr, "divide"); break;
+		      case IVL_LPM_FF:        fprintf(stderr, "dff"); break;
+		      case IVL_LPM_MOD:       fprintf(stderr, "mod"); break;
+		      case IVL_LPM_MULT:      fprintf(stderr, "mult"); break;
+		      case IVL_LPM_MUX:       fprintf(stderr, "mux"); break;
+		      case IVL_LPM_PART_VP:   fprintf(stderr, "part-VP"); break;
+		      case IVL_LPM_PART_PV:   fprintf(stderr, "part-PV"); break;
+		      case IVL_LPM_POW:       fprintf(stderr, "pow"); break;
+		      case IVL_LPM_RE_AND:    fprintf(stderr, "R-AND"); break;
+		      case IVL_LPM_RE_NAND:   fprintf(stderr, "R-NAND"); break;
+		      case IVL_LPM_RE_OR:     fprintf(stderr, "R-OR"); break;
+		      case IVL_LPM_RE_NOR:    fprintf(stderr, "R-NOR"); break;
+		      case IVL_LPM_RE_XNOR:   fprintf(stderr, "R-XNOR"); break;
+		      case IVL_LPM_RE_XOR:    fprintf(stderr, "R-XOR"); break;
+		      case IVL_LPM_REPEAT:    fprintf(stderr, "repeat"); break;
+		      case IVL_LPM_SFUNC:     fprintf(stderr, "S-func"); break;
+		      case IVL_LPM_SHIFTL:    fprintf(stderr, "shiftl"); break;
+		      case IVL_LPM_SHIFTR:    fprintf(stderr, "shiftr"); break;
+		      case IVL_LPM_SIGN_EXT:  fprintf(stderr, "sign"); break;
+		      case IVL_LPM_SUB:       fprintf(stderr, "sub"); break;
+		      case IVL_LPM_UFUNC:     fprintf(stderr, "U-func"); break;
+		  }
+	    } else if (net_const) {
+		  assert(! net_logic);
+		  assert(! sig);
+		  fprintf(stderr, "Const: ");
+	    } else if (net_logic) {
+		  assert(! sig);
+		  fprintf(stderr, "Logic: ");
+	    } else if (sig) {
+		  ivl_scope_t sig_scope = ivl_signal_scope(sig);
+		  fprintf(stderr, "Signal: ");
+		  if (scope != sig_scope) fprintf(stderr, "%s.",
+		                                  ivl_scope_name(sig_scope));
+		  fprintf(stderr, "%s", ivl_signal_basename(sig));
+// HERE: Do we need to add support for an array word or is that an LPM.
+		  if (ivl_signal_local(sig)) fprintf(stderr, " (local)");
+		  switch (ivl_signal_port(sig)) {
+		      case IVL_SIP_INPUT:  fprintf(stderr, " input"); break;
+		      case IVL_SIP_OUTPUT: fprintf(stderr, " output"); break;
+		      case IVL_SIP_INOUT:  fprintf(stderr, " inout"); break;
+		      case IVL_SIP_NONE: break;
+		  }
+		  switch (ivl_signal_type(sig)) {
+		      case IVL_SIT_NONE:   fprintf(stderr, " <no type>"); break;
+		      case IVL_SIT_REG:    fprintf(stderr, " reg"); break;
+		      case IVL_SIT_TRI:    fprintf(stderr, " tri"); break;
+		      case IVL_SIT_TRI0:   fprintf(stderr, " tri0"); break;
+		      case IVL_SIT_TRI1:   fprintf(stderr, " tri1"); break;
+		      case IVL_SIT_TRIAND: fprintf(stderr, " triand"); break;
+		      case IVL_SIT_TRIOR:  fprintf(stderr, " trior"); break;
+		      case IVL_SIT_UWIRE:  fprintf(stderr, " uwire"); break;
+		  }
+		  switch (ivl_signal_data_type(sig)) {
+		      case IVL_VT_VOID:    fprintf(stderr, " <void>"); break;
+		      case IVL_VT_NO_TYPE: fprintf(stderr, " <no type>"); break;
+		      case IVL_VT_REAL:    fprintf(stderr, " real"); break;
+		      case IVL_VT_BOOL:    fprintf(stderr, " bool"); break;
+		      case IVL_VT_LOGIC:   fprintf(stderr, " logic"); break;
+		      case IVL_VT_STRING:  fprintf(stderr, " string"); break;
+		  }
+	    } else {
+		  fprintf(stderr, "Error: No/missing information!");
+	    }
+	    fprintf(stderr, " (%u)\n", ivl_nexus_ptr_pin(nex_ptr));
+      }
+}

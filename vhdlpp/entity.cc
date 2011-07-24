@@ -33,6 +33,9 @@ ComponentBase::ComponentBase(perm_string name)
 
 ComponentBase::~ComponentBase()
 {
+    for(std::vector<InterfacePort*>::iterator it = ports_.begin()
+        ; it != ports_.end(); ++it)
+        delete *it;
 }
 
 void ComponentBase::set_interface(std::list<InterfacePort*>*ports)
@@ -60,6 +63,9 @@ Entity::Entity(perm_string name)
 
 Entity::~Entity()
 {
+    for(map<perm_string,Architecture*>::reverse_iterator it = arch_.rbegin()
+        ; it != arch_.rend(); ++it)
+       delete it->second;
 }
 
 Architecture* Entity::add_architecture(Architecture*that)

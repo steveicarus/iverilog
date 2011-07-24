@@ -39,6 +39,7 @@
 # include  <cstdarg>
 # include  <cstring>
 # include  <list>
+# include  <stack>
 # include  <map>
 # include  <vector>
 # include  "parse_types.h"
@@ -77,7 +78,7 @@ extern int yylex(union YYSTYPE*yylvalp,YYLTYPE*yyllocp,yyscan_t yyscanner);
  * manage lexical scopes.
  */
 static ActiveScope*active_scope = new ActiveScope;
-static list<ActiveScope*> scope_stack;
+static stack<ActiveScope*> scope_stack;
 
 /*
  * When a scope boundary starts, call the push_scope function to push
@@ -89,7 +90,7 @@ static list<ActiveScope*> scope_stack;
 static void push_scope(void)
 {
       assert(active_scope);
-      scope_stack.push_front(active_scope);
+      scope_stack.push(active_scope);
       active_scope = new ActiveScope (active_scope);
 }
 
@@ -97,14 +98,39 @@ static void pop_scope(void)
 {
       delete active_scope;
       assert(scope_stack.size() > 0);
-      active_scope = scope_stack.front();
-      scope_stack.pop_front();
+      active_scope = scope_stack.top();
+      scope_stack.pop();
 }
 
 
 void preload_global_types(void)
 {
       generate_global_types(active_scope);
+}
+
+//Remove the scope created at the beginning of parser's work.
+//After the parsing active_scope should keep it's address
+
+static void delete_global_scope(void)
+{
+    active_scope->destroy_global_scope();
+    delete active_scope;
+}
+
+//delete global entities that were gathered over the parsing process 
+static void delete_design_entities(void)
+{
+      for(map<perm_string,Entity*>::iterator cur = design_entities.begin()
+      ; cur != design_entities.end(); ++cur)
+        delete cur->second;
+}
+
+//clean the mess caused by the parser
+void parser_cleanup(void)
+{
+    delete_design_entities();
+    delete_global_scope();
+    lex_strings.cleanup();
 }
 
 const VType*parse_type_by_name(perm_string name)
@@ -473,7 +499,10 @@ component_declaration
 	}
 
 	ComponentBase*comp = new ComponentBase(name);
-	if ($4) comp->set_interface($4);
+	if ($4) {
+        comp->set_interface($4);
+        delete $4;
+    }
 	active_scope->bind_name(name, comp);
 	delete[]$2;
 	if ($7) delete[] $7;
@@ -492,6 +521,7 @@ component_instantiation_statement
       { perm_string iname = lex_strings.make($1);
 	perm_string cname = lex_strings.make($4);
 	ComponentInstantiation*tmp = new ComponentInstantiation(iname, cname, $5);
+    delete $5;
 	FILE_NAME(tmp, @1);
 	delete[]$1;
 	delete[]$4;
@@ -681,7 +711,7 @@ entity_declaration
             errormsg(@1, "Syntax error in entity clause. Closing name doesn't match.\n");
             yyerrok;
         }
-        delete $7;
+        delete[]$7;
     }
       }
   | K_entity error K_end K_entity_opt identifier_opt ';'

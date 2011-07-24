@@ -505,7 +505,7 @@ static void emit_number_as_string(ivl_net_const_t net_const)
 	    if (val == '"') fprintf(vlog_out, "\\\"");
 	    else if (val == '\\') fprintf(vlog_out, "\\\\");
 	      /* Print the printable characters. */
-	    else if (isprint(val)) fprintf(vlog_out, "%c", val);
+	    else if (isprint((int)val)) fprintf(vlog_out, "%c", val);
 	      /* Print the non-printable characters as an octal escape. */
 	    else fprintf(vlog_out, "\\%03o", val);
       }
@@ -641,6 +641,7 @@ void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 	/* It is possible that the nexus does not have a name. For this
 	 * case do not print an actual name. */
       fprintf(vlog_out, "/* Empty */");
+      dump_nexus_information(scope, nex);
 }
 
 /*

@@ -79,35 +79,57 @@ void ComponentBase::dump_ports(ostream&out, int indent) const
 void Scope::dump_scope(ostream&out) const
 {
 	// Dump types
-      for (map<perm_string,const VType*>::const_iterator cur = types_.begin()
-		 ; cur != types_.end() ; ++cur) {
+      for (map<perm_string,const VType*>::const_iterator cur = old_types_.begin()
+		 ; cur != old_types_.end() ; ++cur) {
 	    out << "   " << cur->first << ": ";
 	    cur->second->show(out);
 	    out << endl;
       }
+      for (map<perm_string,const VType*>::const_iterator cur = new_types_.begin()
+         ; cur != new_types_.end() ; ++cur) {
+        out << "   " << cur->first << ": ";
+        cur->second->show(out);
+        out << endl;
+      }
 
 	// Dump constants
-      for (map<perm_string,const_t>::const_iterator cur = constants_.begin()
-		 ; cur != constants_.end() ; ++cur) {
+      for (map<perm_string,const_t*>::const_iterator cur = old_constants_.begin()
+		 ; cur != old_constants_.end() ; ++cur) {
 	    out << "   constant " << cur->first << " = ";
 	    out << endl;
       }
-
-	// Dump signal declarations
-      for (map<perm_string,Signal*>::const_iterator cur = signals_.begin()
-		 ; cur != signals_.end() ; ++cur) {
-	    if (cur->second)
-		  cur->second->dump(out, 3);
-	    else
-		  out << "   signal " << cur->first.str() << ": ???" << endl;
+      for (map<perm_string,const_t*>::const_iterator cur = new_constants_.begin()
+         ; cur != new_constants_.end() ; ++cur) {
+        out << "   constant " << cur->first << " = ";
+        out << endl;
       }
-
+	// Dump signal declarations
+      for (map<perm_string,Signal*>::const_iterator cur = old_signals_.begin()
+         ; cur != old_signals_.end() ; ++cur) {
+        if (cur->second)
+          cur->second->dump(out, 3);
+        else
+          out << "   signal " << cur->first.str() << ": ???" << endl;
+      }
+      for (map<perm_string,Signal*>::const_iterator cur = new_signals_.begin()
+         ; cur != new_signals_.end() ; ++cur) {
+        if (cur->second)
+          cur->second->dump(out, 3);
+        else
+          out << "   signal " << cur->first.str() << ": ???" << endl;
+      }
 	// Dump component declarations
-      for (map<perm_string,ComponentBase*>::const_iterator cur = components_.begin()
-		 ; cur != components_.end() ; ++cur) {
+      for (map<perm_string,ComponentBase*>::const_iterator cur = old_components_.begin()
+		 ; cur != old_components_.end() ; ++cur) {
 	    out << "   component " << cur->first << " is" << endl;
 	    cur->second->dump_ports(out);
 	    out << "   end component " << cur->first << endl;
+      }
+      for (map<perm_string,ComponentBase*>::const_iterator cur = new_components_.begin()
+         ; cur != new_components_.end() ; ++cur) {
+        out << "   component " << cur->first << " is" << endl;
+        cur->second->dump_ports(out);
+        out << "   end component " << cur->first << endl;
       }
 }
 

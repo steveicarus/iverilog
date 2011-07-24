@@ -27,14 +27,20 @@ Package::Package(perm_string n, const ScopeBase&ref)
 
 Package::~Package()
 {
+    ScopeBase::cleanup();
 }
 
 void Package::write_to_stream(ostream&fd) const
 {
       fd << "package " << name_ << " is" << endl;
 
-      for (map<perm_string,ComponentBase*>::const_iterator cur = components_.begin()
-		 ; cur != components_.end() ; ++cur) {
+      for (map<perm_string,ComponentBase*>::const_iterator cur = old_components_.begin()
+		 ; cur != old_components_.end() ; ++cur) {
+
+	    cur->second->write_to_stream(fd);
+      }
+      for (map<perm_string,ComponentBase*>::const_iterator cur = new_components_.begin()
+		 ; cur != new_components_.end() ; ++cur) {
 
 	    cur->second->write_to_stream(fd);
       }
