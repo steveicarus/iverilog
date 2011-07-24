@@ -246,7 +246,7 @@ static void store_package_in_work(const Package*pack)
 {
       string path = make_work_package_path(pack->name());
 
-      ofstream file (path.c_str(), ios_base::out|ios_base::app);
+      ofstream file (path.c_str(), ios_base::out);
 
       pack->write_to_stream(file);
 }
