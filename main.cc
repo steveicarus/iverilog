@@ -118,6 +118,22 @@ ivl_sfunc_as_task_t def_sfunc_as_task = IVL_SFUNC_AS_TASK_ERROR;
 
 map<string,const char*> flags;
 char*vpi_module_list = 0;
+void add_vpi_module(const char*name)
+{
+      if (vpi_module_list == 0) {
+	    vpi_module_list = strdup(name);
+
+      } else {
+	    char*tmp = (char*)realloc(vpi_module_list,
+				      strlen(vpi_module_list)
+				      + strlen(name)
+				      + 2);
+	    strcat(tmp, ",");
+	    strcat(tmp, name);
+	    vpi_module_list = tmp;
+      }
+      flags["VPI_MODULE_LIST"] = vpi_module_list;
+}
 
 map<perm_string,unsigned> missing_modules;
 map<perm_string,bool> library_file_map;
@@ -615,19 +631,7 @@ static void read_iconfig_file(const char*ipath)
 		  library_file_map[path] = true;
 
 	    } else if (strcmp(buf,"module") == 0) {
-		  if (vpi_module_list == 0) {
-			vpi_module_list = strdup(cp);
-
-		  } else {
-			char*tmp = (char*)realloc(vpi_module_list,
-						  strlen(vpi_module_list)
-						  + strlen(cp)
-						  + 2);
-			strcat(tmp, ",");
-			strcat(tmp, cp);
-			vpi_module_list = tmp;
-		  }
-		  flags["VPI_MODULE_LIST"] = vpi_module_list;
+		  add_vpi_module(cp);
 
 	    } else if (strcmp(buf, "out") == 0) {
 		  free((void *)flags["-o"]);
@@ -779,8 +783,10 @@ int main(int argc, char*argv[])
 
       library_suff.push_back(strdup(".v"));
 
-      vpi_module_list = strdup("system");
-      flags["VPI_MODULE_LIST"] = vpi_module_list;
+	// Start the module list with the base system module.
+      add_vpi_module("system");
+      add_vpi_module("vhdl_sys");
+
       flags["-o"] = strdup("a.out");
       min_typ_max_flag = TYP;
       min_typ_max_warn = 10;

@@ -1035,6 +1035,7 @@ int main(int argc, char **argv)
 	   describes the system functions so that elaboration knows
 	   how to handle them. */
       fprintf(iconfig_file, "sys_func:%s%csystem.sft\n", base, sep);
+      fprintf(iconfig_file, "sys_func:%s%cvhdl_sys.sft\n", base, sep);
 
 	/* If verilog-2005/9 is enabled or icarus-misc or verilog-ams,
 	 * then include the v2005_math library. */
