@@ -119,17 +119,25 @@ static PLI_INT32 ivlh_attribute_event_calltf(ICARUS_VPI_CONST PLI_BYTE8*)
       return 0;
 }
 
+static PLI_INT32 ivlh_attribute_event_sizetf(ICARUS_VPI_CONST PLI_BYTE8*)
+{
+      return 1;
+}
+
 static void vhdl_register(void)
 {
       s_vpi_systf_data tf_data;
+      vpiHandle res;
 
-      tf_data.type      = vpiSysFunc;
-      tf_data.tfname    = "$ivlh_attribute_event";
-      tf_data.calltf    = ivlh_attribute_event_calltf;
-      tf_data.compiletf = ivlh_attribute_event_compiletf;
-      tf_data.sizetf    = 0;
-      tf_data.user_data = (PLI_BYTE8 *) "$ivlh_attribute_event";
-      vpi_register_systf(&tf_data);
+      tf_data.type         = vpiSysFunc;
+      tf_data.sysfunctype  = vpiSizedFunc;
+      tf_data.calltf       = ivlh_attribute_event_calltf;
+      tf_data.compiletf    = ivlh_attribute_event_compiletf;
+      tf_data.sizetf       = ivlh_attribute_event_sizetf;
+      tf_data.tfname       = "$ivlh_attribute_event";
+      tf_data.user_data    = (PLI_BYTE8 *) "$ivlh_attribute_event";
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 }
 
 void (*vlog_startup_routines[])() = {
