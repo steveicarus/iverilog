@@ -79,6 +79,6 @@ class range_t {
       bool direction_;
     private: //not implemented
       range_t(const range_t&);
-      range_t operator=(const range_t&);    
+      range_t operator=(const range_t&);
 };
 #endif

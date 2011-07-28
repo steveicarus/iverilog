@@ -3143,7 +3143,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 		  res.base = allocate_vector(wid);
 		  res.wid = wid;
 		  fprintf(vvp_out, "    %%cvt/vr %d, %d, %u;\n", res.base, word, wid);
-		  clr_word(word);		  
+		  clr_word(word);
 		  break;
 
 		default:

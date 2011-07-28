@@ -154,7 +154,7 @@ class ActiveScope : public ScopeBase {
             old_constants_.erase(it);
         new_constants_[name] = new const_t(obj, val);
       }
-          
+
       void destroy_global_scope()
       {
           cleanup();

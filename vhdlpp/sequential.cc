@@ -169,7 +169,7 @@ LoopStatement::~LoopStatement()
 
 ForLoopStatement::ForLoopStatement(perm_string it, range_t* range, list<SequentialStmt*>* stmts)
 : LoopStatement(stmts), it_(it), range_(range)
-{ 
+{
 }
 
 ForLoopStatement::~ForLoopStatement()

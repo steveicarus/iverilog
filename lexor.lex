@@ -145,12 +145,12 @@ TU [munpf]
 "<=" { return K_LE; }
 ">=" { return K_GE; }
 "=>" { return K_EG; }
-"+=>"|"-=>" 	{
+"+=>"|"-=>"	{
 			/*
 			 * Resolve the ambiguity between the += assignment
 			 * operator and +=> polarity edge path operator
-			 * 
-			 * +=> should be treated as two separate tokens '+' and 
+			 *
+			 * +=> should be treated as two separate tokens '+' and
 			 * '=>' (K_EG), therefore we only consume the first
 			 * character of the matched pattern i.e. either + or -
 			 * and push back the rest of the matches text (=>) in

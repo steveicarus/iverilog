@@ -110,7 +110,7 @@ class CaseSeqStmt : public SequentialStmt {
             CaseStmtAlternative(Expression* exp, list<SequentialStmt*>* stmts);
             ~CaseStmtAlternative();
             void dump(ostream& out, int indent) const;
-            
+
             //TODO: implement the following:
             //int elaborate(Entity*ent, Architecture*arc);
             //int emit(ostream&out, Entity*entity, Architecture*arc);

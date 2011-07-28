@@ -117,7 +117,7 @@ static void delete_global_scope(void)
     delete active_scope;
 }
 
-//delete global entities that were gathered over the parsing process 
+//delete global entities that were gathered over the parsing process
 static void delete_design_entities(void)
 {
       for(map<perm_string,Entity*>::iterator cur = design_entities.begin()
@@ -162,7 +162,7 @@ const VType*parse_type_by_name(perm_string name)
 
       IfSequential::Elsif*elsif;
       std::list<IfSequential::Elsif*>*elsif_list;
-      
+
       CaseSeqStmt::CaseStmtAlternative* case_alt;
       std::list<CaseSeqStmt::CaseStmtAlternative*>* case_alt_list;
 
@@ -234,7 +234,7 @@ const VType*parse_type_by_name(perm_string name)
 %type <expr> choice expression factor primary relation
 %type <expr> expression_logical expression_logical_and expression_logical_or
 %type <expr> expression_logical_xnor expression_logical_xor
-%type <expr> name 
+%type <expr> name
 %type <expr> shift_expression simple_expression term waveform_element
 
 %type <expr_list> waveform waveform_elements
@@ -446,7 +446,7 @@ case_statement_alternative_list
       }
   | case_statement_alternative
       {
-    std::list<CaseSeqStmt::CaseStmtAlternative*>*tmp = 
+    std::list<CaseSeqStmt::CaseStmtAlternative*>*tmp =
         new std::list<CaseSeqStmt::CaseStmtAlternative*>();
     tmp->push_back($1);
     $$ = tmp;
@@ -456,7 +456,7 @@ case_statement_alternative_list
 case_statement_alternative
   : K_when choice ARROW sequence_of_statements
       {
-    CaseSeqStmt::CaseStmtAlternative* tmp = 
+    CaseSeqStmt::CaseStmtAlternative* tmp =
         new CaseSeqStmt::CaseStmtAlternative($2, $4);
     FILE_NAME(tmp, @1);
     delete $4;
@@ -1091,7 +1091,7 @@ loop_statement
     sorrymsg(@1, "Loop statements are not supported");
     $$ = tmp;
       };
-      
+
 mode
   : K_in  { $$ = PORT_IN; }
   | K_out { $$ = PORT_OUT; }

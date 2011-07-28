@@ -330,7 +330,7 @@ static long check_enum_seq_value(const YYLTYPE&loc, verinum *arg, bool zero_ok)
 %token <text>   PATHPULSE_IDENTIFIER
 %token <number> BASED_NUMBER DEC_NUMBER
 %token <realtime> REALTIME
-%token K_PLUS_EQ K_MINUS_EQ 
+%token K_PLUS_EQ K_MINUS_EQ
 %token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LS K_RS K_RSS K_SG
  /* K_CONTRIBUTE is <+, the contribution assign. */
 %token K_CONTRIBUTE
