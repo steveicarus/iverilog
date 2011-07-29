@@ -49,7 +49,7 @@ int Entity::elaborate()
       if (verbose_flag)
 	    cerr << "Elaborate entity " << get_name() << "..." << endl;
 
-      if (arch_.size() == 0) {
+      if (arch_.empty()) {
 	    cerr << get_fileline() << ": error: "
 		 << "No architectures to choose from for entity " << get_name()
 		 << "." << endl;

@@ -40,7 +40,7 @@ ComponentBase::~ComponentBase()
 
 void ComponentBase::set_interface(std::list<InterfacePort*>*ports)
 {
-	while (ports->size() > 0) {
+	while (! ports->empty()) {
 	      ports_.push_back(ports->front());
 	      ports->pop_front();
 	}
@@ -59,6 +59,7 @@ const InterfacePort* ComponentBase::find_port(perm_string my_name) const
 Entity::Entity(perm_string name)
 : ComponentBase(name)
 {
+      bind_arch_ = 0;
 }
 
 Entity::~Entity()

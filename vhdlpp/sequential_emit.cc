@@ -49,7 +49,7 @@ int IfSequential::emit(ostream&out, Entity*ent, Architecture*arc)
 	    errors += (*cur)->statement_emit(out, ent, arc);
       }
 
-      if (else_.size() > 0) {
+      if (! else_.empty()) {
 	    out << "end else begin" << endl;
 
 	    for (list<SequentialStmt*>::iterator cur = else_.begin()

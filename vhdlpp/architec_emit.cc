@@ -126,7 +126,7 @@ int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 
       out << "always";
 
-      if (sensitivity_list_.size() > 0) {
+      if (! sensitivity_list_.empty()) {
 	    out << " @(";
 	    const char*comma = 0;
 	    for (list<Expression*>::iterator cur = sensitivity_list_.begin()

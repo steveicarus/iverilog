@@ -97,7 +97,7 @@ static void push_scope(void)
 static void pop_scope(void)
 {
       delete active_scope;
-      assert(scope_stack.size() > 0);
+      assert(! scope_stack.empty());
       active_scope = scope_stack.top();
       scope_stack.pop();
 }

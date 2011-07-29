@@ -57,7 +57,7 @@ void dump_design_entities(ostream&file)
 
 void ComponentBase::dump_ports(ostream&out, int indent) const
 {
-      if (ports_.size() == 0) {
+      if (ports_.empty()) {
 	    out << setw(indent) << "" << "No ports" << endl;
       } else {
 	    out << setw(indent) << "" << "PORTS:" << endl;

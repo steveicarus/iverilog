@@ -73,7 +73,7 @@ class ComponentBase : public LineInfo {
 
     protected:
 	// This is really only used by the Entity derived class.
-      const std::vector<InterfacePort*>&get_ports() { return ports_; }
+      const std::vector<InterfacePort*>&get_ports() const { return ports_; }
 
     private:
       perm_string name_;

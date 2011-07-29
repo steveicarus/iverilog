@@ -33,7 +33,7 @@ void VTypeArray::write_to_stream(ostream&fd) const
 	// Special case: std_logic_vector
       if (etype_ == primitive_STDLOGIC) {
 	    fd << "std_logic_vector";
-	    if (ranges_.size() > 0) {
+	    if (! ranges_.empty()) {
 		  assert(ranges_.size() < 2);
 		  fd << " (" << ranges_[0].msb()
 		     << " downto " << ranges_[0].lsb() << ") ";
@@ -42,7 +42,7 @@ void VTypeArray::write_to_stream(ostream&fd) const
       }
 
       fd << "array ";
-      if (ranges_.size() > 0) {
+      if (! ranges_.empty()) {
 	    assert(ranges_.size() < 2);
 	    fd << "(" << ranges_[0].msb()
 	       << " downto " << ranges_[0].lsb() << ") ";
