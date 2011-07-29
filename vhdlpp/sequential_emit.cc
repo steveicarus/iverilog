@@ -107,7 +107,7 @@ int ProcedureCall::emit(ostream&out, Entity*, Architecture*)
       return 1;
 }
 
-int LoopStatement::emit(ostream&out, Entity*entity, Architecture*arc)
+int LoopStatement::emit(ostream&out, Entity*, Architecture*)
 {
     out << " // " << get_fileline() << ": internal error: "
     << "I don't know how to emit this sequential statement! "
@@ -115,7 +115,7 @@ int LoopStatement::emit(ostream&out, Entity*entity, Architecture*arc)
     return 1;
 }
 
-int ForLoopStatement::emit(ostream&out, Entity*entity, Architecture*arc)
+int ForLoopStatement::emit(ostream&out, Entity*, Architecture*)
 {
     out << " // " << get_fileline() << ": internal error: "
     << "I don't know how to emit this sequential statement! "
@@ -123,7 +123,7 @@ int ForLoopStatement::emit(ostream&out, Entity*entity, Architecture*arc)
     return 1;
 }
 
-int WhileLoopStatement::emit(ostream&out, Entity*entity, Architecture*arc)
+int WhileLoopStatement::emit(ostream&out, Entity*, Architecture*)
 {
     out << " // " << get_fileline() << ": internal error: "
     << "I don't know how to emit this sequential statement! "
@@ -131,7 +131,7 @@ int WhileLoopStatement::emit(ostream&out, Entity*entity, Architecture*arc)
     return 1;
 }
 
-int BasicLoopStatement::emit(ostream&out, Entity*entity, Architecture*arc)
+int BasicLoopStatement::emit(ostream&out, Entity*, Architecture*)
 {
     out << " // " << get_fileline() << ": internal error: "
     << "I don't know how to emit this sequential statement! "

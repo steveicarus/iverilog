@@ -97,7 +97,7 @@ int ExpName::elaborate_rval(Entity*ent, Architecture*arc, const InterfacePort*lv
               default:
                 break;
         }
-      } else if (Signal* fs = arc->find_signal(name_)) {
+      } else if (arc->find_signal(name_)) {
 	      /* OK */
 
       } else {

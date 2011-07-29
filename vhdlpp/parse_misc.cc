@@ -57,7 +57,7 @@ void bind_architecture_to_entity(const char*ename, Architecture*arch)
 const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
 				     ScopeBase*scope,
 				     Expression*array_left,
-				     bool downto,
+				     bool /* downto*/ ,
 				     Expression*array_right)
 {
       const VType*base_type = parse_type_by_name(lex_strings.make(base_name));
@@ -100,7 +100,7 @@ const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
 const VType* calculate_subtype_range(const YYLTYPE&loc, const char*base_name,
 				     ScopeBase*scope,
 				     Expression*range_left,
-				     bool downto,
+				     bool /* downto*/ ,
 				     Expression*range_right)
 {
       const VType*base_type = parse_type_by_name(lex_strings.make(base_name));

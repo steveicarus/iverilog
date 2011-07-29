@@ -145,7 +145,7 @@ int ExpBitstring::emit(ostream&out, Entity*, Architecture*)
       return errors;
 }
 
-int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*ent, Architecture*arc,
+int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*, Architecture*,
 				      const VTypePrimitive*etype)
 {
       switch (etype->type()) {
@@ -339,7 +339,7 @@ int ExpRelation::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
-int ExpString::emit(ostream& out, Entity*ent, Architecture*arc)
+int ExpString::emit(ostream& out, Entity*, Architecture*)
 {
     out << "\"";
     for(vector<char>::const_iterator it = value_.begin();
