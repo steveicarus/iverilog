@@ -47,7 +47,14 @@ extern const VType* calculate_subtype_range(const YYLTYPE&loc, const char*base_n
  */
 extern const VType* parse_type_by_name(perm_string name);
 
-extern void library_save_package(const char*libname, Package*pack, bool parse_work);
+/*
+ * The parser calls the library_save_package function when it parses a
+ * package. The library_parse_name is the name of the library that is
+ * currently being processed (by a recursive call to the parser to
+ * load a package from a library) or a nil name to indicate that this
+ * is from the live parser.
+ */
+extern void library_save_package(perm_string library_parse_name, Package*pack);
 
 extern void library_import(const YYLTYPE&loc, const std::list<perm_string>*names);
 

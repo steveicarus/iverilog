@@ -21,34 +21,81 @@
 # include  "compiler.h"
 # include  "package.h"
 # include  <fstream>
+# include  <list>
 # include  <map>
 # include  <string>
+# include  <sys/stat.h>
 # include  <cassert>
 
 using namespace std;
 
+/*
+ * The library_work_path is the path to the work directory.
+ */
 static const char*library_work_path = 0;
-static void store_package_in_work(const Package*pack);
 
+/*
+ * The library_search_path is a list of directory names to search to
+ * find a named library. The library name is the name given to the
+ * "import" statement.
+ */
+static list<string> library_search_path;
+
+/*
+ * The "import" statement causes me to build a map of a library name
+ * to a library directory.
+ */
+static map<perm_string,string> library_dir;
+
+/*
+ * The "libraries" table maps library name to a set of packages. This
+ * map is filled in by "use" statements.
+ */
+struct library_contents {
+      map<perm_string,Package*> packages;
+};
+static map<perm_string,struct library_contents> libraries;
+
+void library_add_directory(const char*directory)
+{
+	// Make sure the directory path really is a directory. Ignore
+	// it if it is not.
+      struct stat stat_buf;
+      int rc = stat(directory, &stat_buf);
+      if (rc < 0 || !S_ISDIR(stat_buf.st_mode)) {
+	    return;
+      }
+
+      library_search_path .push_front(directory);
+}
+
+static void store_package_in_work(const Package*pack);
 static string make_work_package_path(const char*name)
 {
       return string(library_work_path).append("/").append(name).append(".pkg");
 }
 
+static string make_library_package_path(perm_string lib_name, perm_string name)
+{
+      string path = library_dir[lib_name];
+      if (path == "")
+	    return "";
 
-struct library_contents {
-      map<perm_string,Package*> packages;
-};
+      path = path.append("/").append(name).append(".pkg");
+      return path;
+}
 
 static void import_ieee(void);
 static void import_ieee_use(ActiveScope*res, perm_string package, perm_string name);
 
-static map<perm_string,struct library_contents> libraries;
-
 static void dump_library_package(ostream&file, perm_string lname, perm_string pname, Package*pack)
 {
       file << "package " << lname << "." << pname << endl;
-      pack->dump_scope(file);
+      if (pack) {
+	    pack->dump_scope(file);
+      } else {
+	    file << "   <missing>" << endl;
+      }
       file << "end package " << lname << "." << pname << endl;
 }
 
@@ -72,20 +119,43 @@ void dump_libraries(ostream&file)
  * This function saves a package into the named library. Create the
  * library if necessary.
  */
-void library_save_package(const char*libname, Package*pack, bool parse_work)
+void library_save_package(perm_string parse_library_name, Package*pack)
 {
-      if (libname == 0)
-	    libname = "work";
-
-      perm_string use_libname = lex_strings.make(libname);
+      perm_string use_libname = parse_library_name.str()
+	    ? parse_library_name
+	    : perm_string::literal("work");
       struct library_contents&lib = libraries[use_libname];
 
       lib.packages[pack->name()] = pack;
 
 	// If this is a work package, and we are NOT parsing the work
 	// library right now, then store it in the work library.
-      if (use_libname == "work" && !parse_work)
+      if (parse_library_name.str() == 0)
 	    store_package_in_work(pack);
+}
+
+static void import_library_name(const YYLTYPE&loc, perm_string name)
+{
+      if (library_dir[name] != string())
+	    return;
+
+      for (list<string>::const_iterator cur = library_search_path.begin()
+		 ; cur != library_search_path.end() ; ++cur) {
+	    string curdir = *cur;
+	    string try_path = curdir.append("/").append(name);
+
+	    struct stat stat_buf;
+	    int rc = stat(try_path.c_str(), &stat_buf);
+	    if (rc < 0)
+		  continue;
+	    if (!S_ISDIR(stat_buf.st_mode))
+		  continue;
+
+	    library_dir[name] = try_path;
+	    return;
+      }
+
+      errormsg(loc, "library import cannot find library %s\n", name.str());
 }
 
 void library_import(const YYLTYPE&loc, const std::list<perm_string>*names)
@@ -96,8 +166,12 @@ void library_import(const YYLTYPE&loc, const std::list<perm_string>*names)
 		    // The ieee library is special and handled by an
 		    // internal function.
 		  import_ieee();
+	    } else if (*cur == "work") {
+		    // The work library is always implicitly imported.
+
 	    } else {
-		  sorrymsg(loc, "library import (%s) not implemented.\n", cur->str());
+		    // Otherwise, do a generic library import
+		  import_library_name(loc, *cur);
 	    }
       }
 }
@@ -126,9 +200,23 @@ void library_use(const YYLTYPE&loc, ActiveScope*res,
 	// parsed, then see if it exists unparsed.
       if (use_library=="work" && pack == 0) {
 	    string path = make_work_package_path(use_package.str());
-	    parse_source_file(path.c_str(), true);
+	    parse_source_file(path.c_str(), use_library);
 	    pack = lib.packages[use_package];
+      } else if (use_library != "ieee" && pack == 0) {
+	    string path = make_library_package_path(use_library, use_package);
+	    if (path == "") {
+		  errormsg(loc, "Unable to find library %s\n", use_library.str());
+		  return;
+	    }
+	    int rc = parse_source_file(path.c_str(), use_library);
+	    if (rc < 0)
+		  errormsg(loc, "Unable to open library file %s\n", path.c_str());
+	    else if (rc > 0)
+		  errormsg(loc, "Errors in library file %s\n", path.c_str());
+	    else
+		  pack = lib.packages[use_package];
       }
+
 	// If the package is still not found, then error.
       if (pack == 0) {
 	    errormsg(loc, "No package %s in library %s\n",

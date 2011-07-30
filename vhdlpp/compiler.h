@@ -31,5 +31,6 @@ extern StringHeapLex lex_strings;
 extern StringHeapLex filename_strings;
 
 extern void library_set_work_path(const char*work_path);
+extern void library_add_directory(const char*directory);
 
 #endif

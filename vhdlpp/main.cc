@@ -111,10 +111,14 @@ int main(int argc, char*argv[])
       int rc;
       const char*work_path = "ivl_vhdl_work";
 
-      while ( (opt=getopt(argc, argv, "D:vVw:")) != EOF) switch (opt) {
+      while ( (opt=getopt(argc, argv, "D:L:vVw:")) != EOF) switch (opt) {
 
 	  case 'D':
 	    process_debug_token(optarg);
+	    break;
+
+	  case 'L':
+	    library_add_directory(optarg);
 	    break;
 
 	  case 'v':
@@ -159,7 +163,7 @@ int main(int argc, char*argv[])
       for (int idx = optind ; idx < argc ; idx += 1) {
 	    parse_errors = 0;
 	    parse_sorrys = 0;
-	    rc = parse_source_file(argv[idx], false);
+	    rc = parse_source_file(argv[idx], perm_string());
 	    if (rc < 0)
 		  return 1;
 

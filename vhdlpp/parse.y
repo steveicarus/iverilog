@@ -3,7 +3,7 @@
 %lex-param { yyscan_t yyscanner }
 %parse-param {yyscan_t yyscanner  }
 %parse-param {const char*file_path}
-%parse-param {bool parsing_work   }
+%parse-param {perm_string parse_library_name}
 %{
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
@@ -1140,8 +1140,10 @@ package_declaration
 	delete[]$1;
         if ($6) delete[]$6;
 	pop_scope();
-	  /* Put this package into the work library. */
-	library_save_package(0, tmp, parsing_work);
+	  /* Put this package into the work library, or the currently
+	     parsed library. Note that parse_library_name is an
+	     argument to the parser. */
+	library_save_package(parse_library_name, tmp);
       }
   | package_declaration_start K_is error K_end K_package_opt identifier_opt ';'
     { errormsg(@3, "Syntax error in package clause.\n");
@@ -1718,7 +1720,7 @@ void sorrymsg(const YYLTYPE&loc, const char*fmt, ...)
 extern yyscan_t prepare_lexor(FILE*fd);
 extern void destroy_lexor(yyscan_t scanner);
 
-int parse_source_file(const char*file_path, bool work_library_flag)
+int parse_source_file(const char*file_path, perm_string parse_library_name)
 {
       FILE*fd = fopen(file_path, "r");
       if (fd == 0) {
@@ -1727,7 +1729,7 @@ int parse_source_file(const char*file_path, bool work_library_flag)
       }
 
       yyscan_t scanner = prepare_lexor(fd);
-      int rc = yyparse(scanner, file_path, work_library_flag);
+      int rc = yyparse(scanner, file_path, parse_library_name);
       fclose(fd);
       destroy_lexor(scanner);
 

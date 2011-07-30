@@ -39,8 +39,11 @@ struct yyltype {
 /*
  * This calls the bison-generated parser with the given file path as
  * the input stream. If the file cannot be opened, this returns -1.
+ * The "library_name" argument is the name of the library that is
+ * being parsed. If this is a regular source file, then this name is
+ * nil. Note that the "work" library is handled specially.
  */
-extern int parse_source_file(const char*file_path, bool parse_work_library);
+extern int parse_source_file(const char*file_path, perm_string library_name);
 
 /*
  * Use this function during parse to generate error messages. The "loc"
