@@ -59,7 +59,7 @@ static void translate_file_name(char*text)
 
 %token TOK_Da TOK_Dc TOK_Dv TOK_Dy
 %token TOK_DEFINE TOK_INCDIR TOK_INTEGER_WIDTH TOK_LIBDIR TOK_LIBDIR_NOCASE
-%token TOK_LIBEXT TOK_PARAMETER TOK_TIMESCALE TOK_VHDL_WORK
+%token TOK_LIBEXT TOK_PARAMETER TOK_TIMESCALE TOK_VHDL_WORK TOK_VHDL_LIBDIR
 %token <text> TOK_PLUSARG TOK_PLUSWORD TOK_STRING
 
 %%
@@ -160,6 +160,14 @@ item
         | TOK_VHDL_WORK TOK_PLUSARG
 	        { char*tmp = substitutions($2);
 	          vhdlpp_work = tmp;
+		  free($2);
+		}
+
+        | TOK_VHDL_LIBDIR TOK_PLUSARG
+	        { char*tmp = substitutions($2);
+		  vhdlpp_libdir = realloc(vhdlpp_libdir, (vhdlpp_libdir_cnt+1)*sizeof(char*));
+	          vhdlpp_libdir[vhdlpp_libdir_cnt] = tmp;
+		  vhdlpp_libdir_cnt += 1;
 		  free($2);
 		}
 

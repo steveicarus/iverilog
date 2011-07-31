@@ -115,6 +115,9 @@ const char*npath = 0;
 const char*targ  = "vvp";
 const char*depfile = 0;
 
+const char**vhdlpp_libdir = 0;
+unsigned vhdlpp_libdir_cnt = 0;
+
 char depmode = 'a';
 
 const char*generation = "2005";
@@ -1105,6 +1108,8 @@ int main(int argc, char **argv)
 	    vhdlpp_work = "ivl_vhdl_work";
       fprintf(defines_file, "vhdlpp:%s%cvhdlpp\n", vhdlpp_dir, sep);
       fprintf(defines_file, "vhdlpp-work:%s\n", vhdlpp_work);
+      for (idx = 0 ; idx < vhdlpp_libdir_cnt ; idx += 1)
+	    fprintf(defines_file, "vhdlpp-libdir:%s\n", vhdlpp_libdir[idx]);
 
     /* Process parameter definition from command line. The last
        defined would override previous ones. */

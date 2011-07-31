@@ -1764,6 +1764,7 @@ static void open_input_file(struct include_stack_t*isp)
 {
       char*cp;
       int is_vhdl = 0;
+      unsigned idx;
 
       isp->file = 0;
 
@@ -1787,14 +1788,29 @@ static void open_input_file(struct include_stack_t*isp)
 
       size_t cmdlen = strlen(vhdlpp_path);
       cmdlen += strlen(isp->path);
-      cmdlen += 32;
+      cmdlen += 8+strlen(vhdlpp_work);
+
+      size_t liblen = 1;
+      char*libs = strdup("");
+      for (idx = 0 ; idx < vhdlpp_libdir_cnt ; idx += 1) {
+	    size_t next_len = 6 + strlen(vhdlpp_libdir[idx]);
+	    libs = realloc(libs, liblen+next_len);
+	    snprintf(libs+liblen-1, next_len, " -L'%s'", vhdlpp_libdir[idx]);
+	    liblen = strlen(libs) + 1;
+      }
+
+      cmdlen += liblen;
 
       char*cmd = malloc(cmdlen);
-      snprintf(cmd, cmdlen, "%s -w'%s' %s", vhdlpp_path, vhdlpp_work, isp->path);
+      snprintf(cmd, cmdlen, "%s -w'%s'%s %s", vhdlpp_path, vhdlpp_work, libs, isp->path);
+
+      if (verbose_flag)
+	    fprintf(stderr, "Invoke vhdlpp: %s\n", cmd);
 
       isp->file = popen(cmd, "r");
       isp->file_close = pclose;
 
+      free(libs);
       free(cmd);
       return;
 }

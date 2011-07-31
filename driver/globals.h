@@ -25,6 +25,8 @@
 extern unsigned integer_width;
 
 extern const char*vhdlpp_work;
+extern const char**vhdlpp_libdir;
+extern unsigned vhdlpp_libdir_cnt;
 
   /* Perform variable substitutions on the string. */
 extern char* substitutions(const char*str);

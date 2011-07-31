@@ -90,6 +90,8 @@ int cmdfile_stack_ptr = 0;
 
 "+vhdl-work+" { BEGIN(PLUS_ARGS); return TOK_VHDL_WORK; }
 
+"+vhdl-libdir+" { BEGIN(PLUS_ARGS); return TOK_VHDL_LIBDIR; }
+
   /* If it is not any known plus-flag, return the generic form. */
 "+"[^\n \t\b\f\r+]* {
       cflval.text = strdup(yytext);

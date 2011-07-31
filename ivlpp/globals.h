@@ -38,6 +38,9 @@ extern char*vhdlpp_path;
 /* vhdlpp work directory */
 extern char*vhdlpp_work;
 
+extern char**vhdlpp_libdir;
+extern unsigned vhdlpp_libdir_cnt;
+
 extern int relative_include;
 
 /* This flag is true if #line directives are to be generated. */
@@ -47,6 +50,8 @@ extern unsigned error_count;
 
 extern FILE *depend_file;
 extern char dep_mode;
+
+extern int verbose_flag;
 
 /* This is the entry to the lexer. */
 extern int yylex();

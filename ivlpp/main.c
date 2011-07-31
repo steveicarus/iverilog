@@ -57,11 +57,15 @@ extern const char*optarg;
 char *dep_path = NULL;
 /* Dependency file output mode */
 char dep_mode = 'a';
+/* verbose flag */
+int verbose_flag = 0;
 /* Path to vhdlpp */
 char *vhdlpp_path = 0;
 /* vhdlpp work directory */
 char *vhdlpp_work = 0;
 
+char**vhdlpp_libdir = 0;
+unsigned vhdlpp_libdir_cnt = 0;
 /*
  * Keep in source_list an array of pointers to file names. The array
  * is terminated by a pointer to null.
@@ -182,6 +186,12 @@ static int flist_read_flags(const char*path)
 		  } else {
 			vhdlpp_work = strdup(arg);
 		  }
+
+	    } else if (strcmp(cp,"vhdlpp-libdir") == 0) {
+		  vhdlpp_libdir = realloc(vhdlpp_libdir,
+					  (vhdlpp_libdir_cnt+1)*sizeof(char*));
+		  vhdlpp_libdir[vhdlpp_libdir_cnt] = strdup(arg);
+		  vhdlpp_libdir_cnt += 1;
 
 	    } else {
 		  fprintf(stderr, "%s: Invalid keyword %s\n", path, cp);
@@ -331,6 +341,7 @@ int main(int argc, char*argv[])
 		    VERSION " (" VERSION_TAG ")\n\n");
 	    fprintf(stderr, "%s\n\n", COPYRIGHT);
 	    fputs(NOTICE, stderr);
+	    verbose_flag = 1;
 	    break;
 
 	  case 'V':
