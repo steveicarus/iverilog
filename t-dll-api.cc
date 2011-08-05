@@ -2167,6 +2167,11 @@ extern "C" int ivl_signal_signed(ivl_signal_t net)
       return net->signed_;
 }
 
+extern "C" unsigned ivl_signal_forced_net(ivl_signal_t net)
+{
+      return net->forced_net_;
+}
+
 extern "C" const char* ivl_signal_file(ivl_signal_t net)
 {
       assert(net);

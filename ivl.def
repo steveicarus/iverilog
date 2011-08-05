@@ -218,6 +218,7 @@ ivl_signal_data_type
 ivl_signal_dimensions
 ivl_signal_discipline
 ivl_signal_file
+ivl_signal_forced_net
 ivl_signal_integer
 ivl_signal_lineno
 ivl_signal_local

@@ -296,7 +296,7 @@ static unsigned is_netlist_signal(ivl_net_logic_t net, ivl_nexus_t nex)
  */
 int can_elide_bufz(ivl_net_logic_t net, ivl_nexus_ptr_t nptr)
 {
-      ivl_nexus_t in_n;
+      ivl_nexus_t in_n, out_n;
       unsigned idx;
 
 	/* These are the drives we expect. */
@@ -338,6 +338,17 @@ int can_elide_bufz(ivl_net_logic_t net, ivl_nexus_ptr_t nptr)
 	   resolution. */
       if (drive_count != 1)
 	    return 0;
+
+	/* If the BUFZ output is connected to a net that is subject
+	   to a force statement, we need to keep the BUFZ to prevent
+	   back-flow of the forced value. */
+      out_n = ivl_logic_pin(net, 0);
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(out_n) ;  idx += 1) {
+	    ivl_nexus_ptr_t out_np = ivl_nexus_ptr(out_n, idx);
+	    ivl_signal_t out_sig = ivl_nexus_ptr_sig(out_np);
+	    if (out_sig && ivl_signal_forced_net(out_sig))
+		  return 0;
+      }
 
 	/* If both the input and output are netlist signal then we cannot
 	   elide a BUFZ since it represents a continuous assignment. */

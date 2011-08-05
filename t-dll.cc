@@ -2405,6 +2405,8 @@ void dll_target::signal(const NetNet*net)
       obj->lsb_dist  = net->msb() >= net->lsb() ? 1 : -1;
       obj->isint_ = false;
       obj->local_ = net->local_flag()? 1 : 0;
+      obj->forced_net_ = (net->type() != NetNet::REG) &&
+                         (net->peek_lref() > 0) ? 1 : 0;
       obj->discipline = net->get_discipline();
 
       obj->array_dimensions_ = net->array_dimensions();

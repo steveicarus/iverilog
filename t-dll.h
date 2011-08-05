@@ -682,6 +682,8 @@ struct ivl_signal_s {
       unsigned isint_  : 1;
       unsigned local_  : 1;
 
+      unsigned forced_net_ : 1;
+
 	/* For now, support only 0 or 1 array dimensions. */
       unsigned array_dimensions_ : 1;
       unsigned array_addr_swapped : 1;
