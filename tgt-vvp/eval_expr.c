@@ -3151,7 +3151,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 	    }
 	    break;
 
-	  case 'i': /* Cast a real value to an integer. */
+	  case 'v': /* Cast a real value to an integer. */
 	    assert(ivl_expr_value(sub) == IVL_VT_REAL);
 	    word = draw_eval_real(sub);
 	    res.base = allocate_vector(wid);

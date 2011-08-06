@@ -2231,7 +2231,7 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
 	    dex->set_line(*expr);
 
 	      // Cast this part of the expression to an integer.
-	    dex = new NetECast('i', dex, 64, false);
+	    dex = new NetECast('v', dex, 64, false);
 	    dex->set_line(*expr);
 
 	      // Now scale the integer value.

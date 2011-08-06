@@ -240,7 +240,7 @@ void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
 			   * integer cast. */
 			tmp_expr = ivl_expr_oper1(expr);
 			if ((ivl_expr_type(tmp_expr) != IVL_EX_UNARY) ||
-		            (ivl_expr_opcode(tmp_expr) != 'i')) {
+		            (ivl_expr_opcode(tmp_expr) != 'v')) {
 			      fprintf(vlog_out, "<invalid>");
 			      fprintf(stderr, "%s:%u: vlog95 error: Real time "
 			                      "value does not have a cast to "

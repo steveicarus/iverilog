@@ -2431,7 +2431,7 @@ ivl_variable_type_t NetECast::expr_type() const
 {
       ivl_variable_type_t ret;
       switch (op_) {
-	  case 'i':
+	  case 'v':
 	    ret = IVL_VT_LOGIC;
 	    break;
 	  case 'r':

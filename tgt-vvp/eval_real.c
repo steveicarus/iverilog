@@ -488,7 +488,7 @@ static int draw_unary_real(ivl_expr_t expr)
 	    return sub;
       }
 
-      if (ivl_expr_opcode(expr) == 'i') { /* Handled in eval_expr.c. */
+      if (ivl_expr_opcode(expr) == 'v') { /* Handled in eval_expr.c. */
             fprintf(stderr, "vvp.tgt error: real -> integer cast in real "
                             "context.\n");
 	    assert(0);
