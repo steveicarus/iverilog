@@ -3590,6 +3590,7 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 				 unsigned expr_wid, unsigned flags) const
 {
       flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
+      ivl_variable_type_t t;
 
       unsigned sub_width = expr_wid;
       switch (op_) {
@@ -3617,6 +3618,46 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
       NetExpr*tmp;
       switch (op_) {
+	  case 'i':
+	  case 'I':
+	  case 'D':
+	  case 'd':
+		t = ip->expr_type();
+		if (expr_wid != expr_->expr_width()) {
+			/*
+			 * TODO: Need to modify draw_unary_expr() to support
+			 * increment/decrement operations on slice of vector.
+			 */
+			cerr << get_fileline() << ": sorry: "
+				<< human_readable_op(op_, true)
+				<< " operation is not yet supported on "
+				<< "vector slice." << endl;
+			des->errors += 1;
+			return 0;
+		} else if (t == IVL_VT_REAL) {
+			/*
+			 * TODO: Need to modify draw_unary_real() to support
+			 * operations on real variables
+			 */
+			cerr << get_fileline() << ": sorry: "
+				<< human_readable_op(op_, true)
+				<< " operation is not yet supported on "
+				<< "reals." << endl;
+			des->errors += 1;
+			return 0;
+		} else if (t == IVL_VT_LOGIC || t == IVL_VT_BOOL) {
+			tmp = new NetEUnary(op_, ip, expr_wid, signed_flag_);
+			tmp->set_line(*this);
+		} else {
+			cerr << get_fileline() << ": error: "
+				<< "inappropriate use of "
+				<< human_readable_op(op_, true)
+				<< " operator." << endl;
+			des->errors += 1;
+			return 0;
+		}
+		break;
+
 	  default:
 	    tmp = new NetEUnary(op_, ip, expr_wid, signed_flag_);
 	    tmp->set_line(*this);

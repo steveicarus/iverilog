@@ -330,7 +330,7 @@ static long check_enum_seq_value(const YYLTYPE&loc, verinum *arg, bool zero_ok)
 %token <text>   PATHPULSE_IDENTIFIER
 %token <number> BASED_NUMBER DEC_NUMBER
 %token <realtime> REALTIME
-%token K_PLUS_EQ K_MINUS_EQ
+%token K_PLUS_EQ K_MINUS_EQ K_INCR K_DECR
 %token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LS K_RS K_RSS K_SG
  /* K_CONTRIBUTE is <+, the contribution assign. */
 %token K_CONTRIBUTE
@@ -1288,6 +1288,30 @@ expression
 		{ $$ = $1; }
 	| '+' expr_primary %prec UNARY_PREC
 		{ $$ = $2; }
+	| K_INCR expr_primary %prec UNARY_PREC
+		{
+			PEUnary*tmp = new PEUnary('I', $2);
+			FILE_NAME(tmp, @2);
+			$$ = tmp;
+		}
+	| expr_primary K_INCR %prec UNARY_PREC
+		{
+			PEUnary*tmp = new PEUnary('i', $1);
+			FILE_NAME(tmp, @1);
+			$$ = tmp;
+		}
+	| K_DECR expr_primary %prec UNARY_PREC
+		{
+			PEUnary*tmp = new PEUnary('D', $2);
+			FILE_NAME(tmp, @2);
+			$$ = tmp;
+		}
+	| expr_primary K_DECR %prec UNARY_PREC
+		{
+			PEUnary*tmp = new PEUnary('d', $1);
+			FILE_NAME(tmp, @1);
+			$$ = tmp;
+		}
 	| '-' expr_primary %prec UNARY_PREC
 		{ PEUnary*tmp = new PEUnary('-', $2);
 		  FILE_NAME(tmp, @2);

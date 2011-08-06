@@ -746,6 +746,12 @@ const char *human_readable_op(const char op, bool unary)
 	    case 'R': type = ">>>";   break;  // Arithmetic right shift
 
 	    case 'p': type = "**"; break; // Power
+
+	    case 'i':
+	    case 'I': type = "++"; break; /* increment */
+	    case 'd':
+	    case 'D': type = "--"; break; /* decrement */
+
 	    default:
 	      type = "???";
 	      assert(0);

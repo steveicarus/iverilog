@@ -21,6 +21,7 @@
 # include  <string.h>
 # include  <stdlib.h>
 # include  <assert.h>
+# include  <stdbool.h>
 # include  "ivl_alloc.h"
 
 static void draw_eval_expr_dest(ivl_expr_t expr, struct vector_info dest,
@@ -2921,6 +2922,158 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t expr, unsigned wid)
       return res;
 }
 
+static struct vector_info increment(ivl_expr_t e, unsigned wid, bool pre)
+{
+	ivl_signal_t		s;
+	unsigned		w;
+	struct vector_info	r;
+	struct vector_info	rc;
+
+	switch (ivl_expr_type(e)) {
+		case IVL_EX_SELECT: {
+			ivl_expr_t e1 = ivl_expr_oper1(e);
+			s = ivl_expr_signal(e1);
+
+			/* select expression: calculate the width */
+			w = ivl_expr_width(e1);
+			break;
+		}
+
+		case IVL_EX_SIGNAL: {
+			s = ivl_expr_signal(e);
+			w = wid;
+			break;
+		}
+
+		default: {
+			assert(0);
+			break;
+		}
+	}
+
+	r  = draw_eval_expr_wid(e, wid, STUFF_OK_XZ);
+	rc = r;
+	switch (r.base) {
+		case 0:
+			r.base = 1;
+			break;
+
+		case 1:
+			r.base = 0;
+			break;
+
+		case 2:
+		case 3:
+			r.base = 2;
+			break;
+
+		default:
+			if (!pre) {
+				/*
+				 * post-increment must return the non-incremented
+				 * value. Therefore, copy the current value in a
+				 * new vector and return it.
+				 */
+				rc.base = allocate_vector(r.wid);
+				rc.wid  = r.wid;
+				fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+						rc.base, r.base, rc.wid);
+			}
+
+			fprintf(vvp_out, "    %%addi %u, 1, %u;\n", r.base, w);
+			fprintf(vvp_out, "    %%set/v v%p_0, %u, %u;\n", s,
+					r.base, w);
+			break;
+	}
+	return rc;
+}
+
+static inline struct vector_info pre_increment(ivl_expr_t e, unsigned wid)
+{
+	return increment(e, wid, true);
+}
+
+static inline struct vector_info post_increment(ivl_expr_t e, unsigned wid)
+{
+	return increment(e, wid, false);
+}
+
+static struct vector_info decrement(ivl_expr_t e, unsigned wid, bool pre)
+{
+	ivl_signal_t		s;
+	unsigned		w;
+	struct vector_info	r;
+	struct vector_info	rc;
+
+	switch (ivl_expr_type(e)) {
+		case IVL_EX_SELECT: {
+			ivl_expr_t e1 = ivl_expr_oper1(e);
+			s = ivl_expr_signal(e1);
+
+			/* select expression: calculate the width */
+			w = ivl_expr_width(e1);
+			break;
+		}
+
+		case IVL_EX_SIGNAL: {
+			s = ivl_expr_signal(e);
+			w = wid;
+			break;
+		}
+
+		default: {
+			assert(0);
+			break;
+		}
+	}
+
+	r  = draw_eval_expr_wid(e, wid, STUFF_OK_XZ);
+	rc = r;
+	switch (r.base) {
+		case 0:
+			r.base = 1;
+			break;
+
+		case 1:
+			r.base = 0;
+			break;
+
+		case 2:
+		case 3:
+			r.base = 2;
+			break;
+
+		default:
+			if (!pre) {
+				/*
+				 * post-decrement must return the non-decremented
+				 * value. Therefore, copy the current value in a
+				 * new vector and return it.
+				 */
+				rc.base = allocate_vector(r.wid);
+				rc.wid  = r.wid;
+				fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
+						rc.base, r.base, rc.wid);
+			}
+
+			fprintf(vvp_out, "    %%subi %u, 1, %u;\n", r.base, w);
+			fprintf(vvp_out, "    %%set/v v%p_0, %u, %u;\n", s,
+					r.base, w);
+			break;
+	}
+	return rc;
+}
+
+static inline struct vector_info pre_decrement(ivl_expr_t e, unsigned wid)
+{
+	return decrement(e, wid, true);
+}
+
+static inline struct vector_info post_decrement(ivl_expr_t e, unsigned wid)
+{
+	return decrement(e, wid, false);
+}
+
 static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 {
       struct vector_info res;
@@ -2956,6 +3109,22 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 		  break;
 	    }
 	    break;
+
+	  case 'D':
+		res = pre_decrement(sub, wid);
+		break;
+
+	  case 'd':
+		res = post_decrement(sub, wid);
+		break;
+
+	  case 'I':
+		res = pre_increment(sub, wid);
+		break;
+
+	  case 'i':
+		res = post_increment(sub, wid);
+		break;
 
 	  case '-':
 	      /* Unary minus is implemented by generating the 2's

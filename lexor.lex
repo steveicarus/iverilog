@@ -187,6 +187,8 @@ TU [munpf]
 ">>=" { return K_RS_EQ; }
 "<<<=" { return K_LS_EQ; }
 ">>>=" { return K_RSS_EQ; }
+"++" { return K_INCR; }
+"--" {return K_DECR; }
 
 
   /* Watch out for the tricky case of (*). Cannot parse this as "(*"
