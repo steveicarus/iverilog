@@ -3818,9 +3818,13 @@ class NetETernary  : public NetExpr {
  *   N  -- Reduction NOR (~|)
  *   X  -- Reduction NXOR (~^ or ^~)
  *   m  -- abs(x)  (i.e. "magnitude")
- *   i  -- Cast from real to integer (vector)
+ *   v  -- Cast from real to integer (vector)
  *   2  -- Cast from real or logic (vector) to bool (vector)
  *   r  -- Cast from integer (vector) to real
+ *   i  -- post-increment
+ *   I  -- pre-increment
+ *   d  -- post-decrement
+ *   D  -- pre-decrement
  */
 class NetEUnary  : public NetExpr {
 

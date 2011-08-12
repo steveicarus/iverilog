@@ -1543,6 +1543,15 @@ void NetEUnary::dump(ostream&o) const
 	  case 'X':
 	    o << "~^";
 	    break;
+          case 'I':
+	    o << "++";
+	    break;
+          case 'D':
+	    o << "--";
+	    break;
+          case 'i':
+          case 'd':
+	    break;
 	  default:
 	    o << op_;
 	    break;
@@ -1550,6 +1559,14 @@ void NetEUnary::dump(ostream&o) const
       o << "(";
       expr_->dump(o);
       o << ")";
+      switch (op_) {
+          case 'i':
+	    o << "++";
+	    break;
+          case 'd':
+	    o << "--";
+	    break;
+      }
 }
 
 void Design::dump(ostream&o) const
