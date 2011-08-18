@@ -294,8 +294,8 @@ ExpRelation::~ExpRelation()
 ExpString::ExpString(const char* value)
 : value_(strlen(value))
 {
-    for(unsigned i=0; i<strlen(value); ++i)
-        value_.push_back(value[i]);
+      for(size_t idx = 0; idx < value_.size(); idx += 1)
+	    value_[idx] = value[idx];
 }
 
 ExpString::~ExpString()
