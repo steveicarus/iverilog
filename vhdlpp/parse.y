@@ -255,7 +255,7 @@ const VType*parse_type_by_name(perm_string name)
 %type <sequ_list> sequence_of_statements if_statement_else
 %type <sequ> sequential_statement if_statement signal_assignment_statement
 %type <sequ> case_statement procedure_call procedure_call_statement
-%type <sequ> loop_statement
+%type <sequ> loop_statement variable_assignment_statement
 
 %type <range> range
 
@@ -1321,28 +1321,53 @@ procedure_call_statement
   | procedure_call { $$ = $1; }
   ;
 
+process_declarative_item
+  : K_variable identifier_list ':' subtype_indication ';'
+      { /* Save the signal declaration in the block_signals map. */
+	for (std::list<perm_string>::iterator cur = $2->begin()
+		   ; cur != $2->end() ; ++cur) {
+	      Variable*sig = new Variable(*cur, $4);
+	      FILE_NAME(sig, @1);
+	      active_scope->bind_name(*cur, sig);
+	}
+	delete $2;
+      }
+  ;
+
+process_declarative_part
+  : process_declarative_part process_declarative_item
+  | process_declarative_item
+  ;
+
+process_declarative_part_opt
+  : process_declarative_part
+  |
+  ;
+
 process_statement
   : IDENTIFIER ':' K_postponed_opt K_process
     process_sensitivity_list_opt K_is_opt
+    process_declarative_part_opt
     K_begin sequence_of_statements
     K_end K_postponed_opt K_process identifier_opt ';'
       { perm_string iname = lex_strings.make($1);
-	if ($12) {
-	      if (iname != $12)
-		    errormsg(@12, "Process name %s does not match opening name %s.\n",
-			     $12, $1);
-	      delete[]$12;
+	if ($13) {
+	      if (iname != $13)
+		    errormsg(@13, "Process name %s does not match opening name %s.\n",
+			     $13, $1);
+	      delete[]$13;
 	}
 
-	ProcessStatement*tmp = new ProcessStatement(iname, $5, $8);
+	ProcessStatement*tmp = new ProcessStatement(iname, $5, $9);
 	FILE_NAME(tmp, @4);
 	delete $5;
-	delete $8;
+	delete $9;
 	$$ = tmp;
       }
 
   | IDENTIFIER ':' K_postponed_opt K_process
     process_sensitivity_list_opt K_is_opt
+    process_declarative_part_opt
     K_begin error
     K_end K_postponed_opt K_process identifier_opt ';'
       { errormsg(@8, "Too many errors in process sequential statements.\n");
@@ -1498,10 +1523,16 @@ sequence_of_statements
 sequential_statement
   : if_statement                { $$ = $1; }
   | signal_assignment_statement { $$ = $1; }
+  | variable_assignment_statement { $$ = $1; }
   | case_statement { $$ = $1; }
   | procedure_call_statement { $$ = $1; }
   | loop_statement { $$ = $1; }
   | K_null ';' { $$ = 0; }
+  | error ';'
+      { errormsg(@1, "Syntax error in sequential statement.\n");
+	$$ = 0;
+	yyerrok;
+      }
   ;
 
 shift_expression : simple_expression { $$ = $1; } ;
@@ -1644,6 +1675,14 @@ use_clauses
 use_clauses_opt
   : use_clauses
   |
+  ;
+
+variable_assignment_statement
+  : name VASSIGN expression ';'
+      { VariableSeqAssignment*tmp = new VariableSeqAssignment($1, $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
   ;
 
 waveform

@@ -21,16 +21,16 @@
 
 # include  "StringHeap.h"
 # include  "LineInfo.h"
+# include  "vtype.h"
 
 class Architecture;
 class Entity;
-class VType;
 
-class Signal : public LineInfo {
+class SigVarBase : public LineInfo {
 
     public:
-      Signal(perm_string name, const VType*type);
-      ~Signal();
+      SigVarBase(perm_string name, const VType*type);
+      virtual ~SigVarBase();
 
       const VType* peek_type(void) const { return type_; }
 
@@ -38,9 +38,13 @@ class Signal : public LineInfo {
 	// l-value of a sequential assignment.
       void count_ref_sequ();
 
-      int emit(ostream&out, Entity*ent, Architecture*arc);
-
       void dump(ostream&out, int indent = 0) const;
+
+    protected:
+      perm_string peek_name_() const { return name_; }
+      unsigned peek_refcnt_sequ_() const { return refcnt_sequ_; }
+
+      void type_elaborate_(VType::decl_t&decl);
 
     private:
       perm_string name_;
@@ -49,13 +53,39 @@ class Signal : public LineInfo {
       unsigned refcnt_sequ_;
 
     private: // Not implemented
-      Signal(const Signal&);
-      Signal& operator = (const Signal&);
+      SigVarBase(const SigVarBase&);
+      SigVarBase& operator = (const SigVarBase&);
 };
 
-inline void Signal::count_ref_sequ()
+class Signal : public SigVarBase {
+
+    public:
+      Signal(perm_string name, const VType*type);
+
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+};
+
+class Variable : public SigVarBase {
+
+    public:
+      Variable(perm_string name, const VType*type);
+
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+};
+
+inline void SigVarBase::count_ref_sequ()
 {
       refcnt_sequ_ += 1;
+}
+
+inline Signal::Signal(perm_string name, const VType*type)
+: SigVarBase(name, type)
+{
+}
+
+inline Variable::Variable(perm_string name, const VType*type)
+: SigVarBase(name, type)
+{
 }
 
 #endif

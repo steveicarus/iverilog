@@ -164,6 +164,21 @@ class LoopStatement : public SequentialStmt {
        std::list<SequentialStmt*> stmts_;
 };
 
+class VariableSeqAssignment  : public SequentialStmt {
+    public:
+      VariableSeqAssignment(Expression*sig, Expression*rval);
+      ~VariableSeqAssignment();
+
+    public:
+      int elaborate(Entity*ent, Architecture*arc);
+      int emit(ostream&out, Entity*entity, Architecture*arc);
+      void dump(ostream&out, int indent) const;
+
+    private:
+      Expression*lval_;
+      Expression*rval_;
+};
+
 class WhileLoopStatement : public LoopStatement {
     public:
       WhileLoopStatement(ExpLogical*, list<SequentialStmt*>*);

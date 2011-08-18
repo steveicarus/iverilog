@@ -99,6 +99,19 @@ int SignalSeqAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
+int VariableSeqAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      errors += lval_->emit(out, ent, arc);
+
+      out << " = ";
+      rval_->emit(out, ent, arc);
+      out << ";" << endl;
+
+      return errors;
+}
+
 int ProcedureCall::emit(ostream&out, Entity*, Architecture*)
 {
       out << " // " << get_fileline() << ": internal error: "

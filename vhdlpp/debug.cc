@@ -145,9 +145,9 @@ void Entity::dump(ostream&out, int indent) const
       }
 }
 
-void Signal::dump(ostream&out, int indent) const
+void SigVarBase::dump(ostream&out, int indent) const
 {
-      out << setw(indent) << "" << "signal " << name_ << " is ";
+      out << setw(indent) << "" << "signal/variable " << name_ << " is ";
       if (type_)
 	    out << *type_;
       else

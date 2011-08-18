@@ -36,6 +36,11 @@ ScopeBase::ScopeBase(const ScopeBase&ref)
           insert_iterator<map<perm_string, Signal*> >(
               old_signals_, old_signals_.end())
     );
+    merge(ref.old_variables_.begin(), ref.old_variables_.end(),
+          ref.new_variables_.begin(), ref.new_variables_.end(),
+          insert_iterator<map<perm_string, Variable*> >(
+              old_variables_, old_variables_.end())
+    );
     merge(ref.old_components_.begin(), ref.old_components_.end(),
           ref.new_components_.begin(), ref.new_components_.end(),
           insert_iterator<map<perm_string, ComponentBase*> >(
@@ -168,6 +173,20 @@ Signal* Scope::find_signal(perm_string by_name)
             return 0;
         else
             return cur->second;
+      } else {
+	    return cur->second;
+      }
+}
+
+Variable* Scope::find_variable(perm_string by_name)
+{
+      map<perm_string,Variable*>::const_iterator cur = new_variables_.find(by_name);
+      if (cur == new_variables_.end()) {
+	    cur = old_variables_.find(by_name);
+	    if (cur == old_variables_.end())
+		  return 0;
+	    else
+		  return cur->second;
       } else {
 	    return cur->second;
       }

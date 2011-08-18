@@ -57,18 +57,25 @@ int ExpName::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
 	    return errors;
       }
 
-      Signal*sig = arc->find_signal(name_);
-      if (sig == 0) {
-	    cerr << get_fileline() << ": error: Signal/variable " << name_
-		 << " not found in this context." << endl;
-	    return errors + 1;
+      if (Signal*sig = arc->find_signal(name_)) {
+	      // Tell the target signal that this may be a sequential l-value.
+	    if (is_sequ) sig->count_ref_sequ();
+
+	    set_type(sig->peek_type());
+	    return errors;
       }
 
-	// Tell the target signal that this may be a sequential l-value.
-      if (is_sequ) sig->count_ref_sequ();
+      if (Variable*sig = arc->find_variable(name_)) {
+	      // Tell the target signal that this may be a sequential l-value.
+	    if (is_sequ) sig->count_ref_sequ();
 
-      set_type(sig->peek_type());
-      return errors;
+	    set_type(sig->peek_type());
+	    return errors;
+      }
+
+      cerr << get_fileline() << ": error: Signal/variable " << name_
+	   << " not found in this context." << endl;
+      return errors + 1;
 }
 
 int ExpName::elaborate_rval(Entity*ent, Architecture*arc, const InterfacePort*lval)

@@ -125,6 +125,17 @@ void ForLoopStatement::dump(ostream&out, int indent) const
     LoopStatement::dump(out, indent+2);
 }
 
+void VariableSeqAssignment::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "VariableSeqAssignment at file=" << get_fileline() << endl;
+
+      out << setw(indent+3) << "" << "l-value:" << endl;
+      lval_->dump(out, indent+4);
+
+      out << setw(indent+3) << "" << "r-value:" << endl;
+      rval_->dump(out, indent+4);
+}
+
 void WhileLoopStatement::dump(ostream&out, int indent) const
 {
     out << setw(indent) << "" << "WhileLoopStatement at file=" << get_fileline() << endl;

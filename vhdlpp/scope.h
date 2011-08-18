@@ -66,6 +66,9 @@ class ScopeBase {
 	// Signal declarations...
       std::map<perm_string,Signal*> old_signals_; //previous scopes
       std::map<perm_string,Signal*> new_signals_; //current scope
+	// Variable declarations...
+      std::map<perm_string,Variable*> old_variables_; //previous scopes
+      std::map<perm_string,Variable*> new_variables_; //current scope
 	// Component declarations...
       std::map<perm_string,ComponentBase*> old_components_; //previous scopes
       std::map<perm_string,ComponentBase*> new_components_; //current scope
@@ -95,6 +98,7 @@ class Scope : public ScopeBase {
       ComponentBase* find_component(perm_string by_name);
 
       Signal* find_signal(perm_string by_name);
+      Variable* find_variable(perm_string by_name);
 
     public:
       void dump_scope(ostream&out) const;
@@ -102,6 +106,7 @@ class Scope : public ScopeBase {
     protected:
 	// Helper method for emitting signals in the scope.
       int emit_signals(ostream&out, Entity*ent, Architecture*arc);
+      int emit_variables(ostream&out, Entity*ent, Architecture*arc);
 };
 
 /*
@@ -132,6 +137,13 @@ class ActiveScope : public ScopeBase {
         if((it = old_signals_.find(name)) != old_signals_.end() )
             old_signals_.erase(it);
         new_signals_[name] = obj;
+      }
+
+      void bind_name(perm_string name, Variable*obj)
+      { map<perm_string, Variable*>::iterator it;
+        if((it = old_variables_.find(name)) != old_variables_.end() )
+            old_variables_.erase(it);
+        new_variables_[name] = obj;
       }
 
       void bind_name(perm_string name, ComponentBase*obj)

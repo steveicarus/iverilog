@@ -43,6 +43,23 @@ int Scope::emit_signals(ostream&out, Entity*entity, Architecture*arc)
       return errors;
 }
 
+int Scope::emit_variables(ostream&out, Entity*entity, Architecture*arc)
+{
+      int errors = 0;
+
+      for (map<perm_string,Variable*>::iterator cur = old_variables_.begin()
+		 ; cur != old_variables_.end() ; ++cur) {
+
+	    errors += cur->second->emit(out, entity, arc);
+      }
+      for (map<perm_string,Variable*>::iterator cur = new_variables_.begin()
+         ; cur != new_variables_.end() ; ++cur) {
+
+        errors += cur->second->emit(out, entity, arc);
+      }
+      return errors;
+}
+
 int Architecture::emit(ostream&out, Entity*entity)
 {
       int errors = 0;
@@ -63,6 +80,7 @@ int Architecture::emit(ostream&out, Entity*entity)
       }
 
       errors += emit_signals(out, entity, this);
+      errors += emit_variables(out, entity, this);
 
       for (list<Architecture::Statement*>::iterator cur = statements_.begin()
 		 ; cur != statements_.end() ; ++cur) {

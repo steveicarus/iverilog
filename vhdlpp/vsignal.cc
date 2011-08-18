@@ -23,13 +23,18 @@
 
 using namespace std;
 
-Signal::Signal(perm_string nam, const VType*typ)
+SigVarBase::SigVarBase(perm_string nam, const VType*typ)
 : name_(nam), type_(typ), refcnt_sequ_(0)
 {
 }
 
-Signal::~Signal()
+SigVarBase::~SigVarBase()
 {
+}
+
+void SigVarBase::type_elaborate_(VType::decl_t&decl)
+{
+      type_->elaborate(decl);
 }
 
 int Signal::emit(ostream&out, Entity*, Architecture*)
@@ -37,10 +42,23 @@ int Signal::emit(ostream&out, Entity*, Architecture*)
       int errors = 0;
 
       VType::decl_t decl;
-      type_->elaborate(decl);
-      if (refcnt_sequ_ > 0)
+      type_elaborate_(decl);
+      if (peek_refcnt_sequ_() > 0)
 	    decl.reg_flag = true;
-      errors += decl.emit(out, name_);
+      errors += decl.emit(out, peek_name_());
+      out << ";" << endl;
+      return errors;
+}
+
+int Variable::emit(ostream&out, Entity*, Architecture*)
+{
+      int errors = 0;
+
+      VType::decl_t decl;
+      type_elaborate_(decl);
+      if (peek_refcnt_sequ_() > 0)
+	    decl.reg_flag = true;
+      errors += decl.emit(out, peek_name_());
       out << ";" << endl;
       return errors;
 }

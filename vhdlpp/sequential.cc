@@ -177,6 +177,17 @@ ForLoopStatement::~ForLoopStatement()
     delete range_;
 }
 
+VariableSeqAssignment::VariableSeqAssignment(Expression*lval, Expression*rval)
+: lval_(lval), rval_(rval)
+{
+}
+
+VariableSeqAssignment::~VariableSeqAssignment()
+{
+      delete lval_;
+      delete rval_;
+}
+
 WhileLoopStatement::WhileLoopStatement(ExpLogical* cond, list<SequentialStmt*>* stmts)
 : LoopStatement(stmts), cond_(cond)
 {
