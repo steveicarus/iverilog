@@ -3646,6 +3646,16 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 			des->errors += 1;
 			return 0;
 		} else if (t == IVL_VT_LOGIC || t == IVL_VT_BOOL) {
+			if (dynamic_cast<NetEConst *> (ip)) {
+				/* invalid operand: operand is a constant number */
+				cerr << get_fileline() << ": error: "
+					<< "inappropriate use of "
+					<< human_readable_op(op_, true)
+					<< " operator." << endl;
+				des->errors += 1;
+				return 0;
+			}
+
 			tmp = new NetEUnary(op_, ip, expr_wid, signed_flag_);
 			tmp->set_line(*this);
 		} else {
