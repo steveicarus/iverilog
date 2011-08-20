@@ -339,14 +339,58 @@ int ExpRelation::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
-int ExpString::emit(ostream& out, Entity*, Architecture*)
+bool ExpString::is_primary(void) const
 {
-    out << "\"";
-    for(vector<char>::const_iterator it = value_.begin();
-        it != value_.end(); ++it)
-        out << *it;
-    out << "\"";
-    return 0;
+      return true;
+}
+
+int ExpString::emit(ostream& out, Entity*ent, Architecture*arc)
+{
+      const VType*type = peek_type();
+      assert(type != 0);
+
+      if (const VTypeArray*arr = dynamic_cast<const VTypeArray*>(type)) {
+	    return emit_as_array_(out, ent, arc, arr);
+      }
+
+      out << "\"";
+      for(vector<char>::const_iterator it = value_.begin()
+	  ; it != value_.end(); ++it)
+	    out << *it;
+      out << "\"";
+      return 0;
+}
+
+int ExpString::emit_as_array_(ostream& out, Entity*, Architecture*, const VTypeArray*arr)
+{
+      int errors = 0;
+      assert(arr->dimensions() == 1);
+
+      const VTypePrimitive*etype = dynamic_cast<const VTypePrimitive*> (arr->element_type());
+      assert(etype);
+
+      assert(etype->type() != VTypePrimitive::INTEGER);
+      out << value_.size() << "'b";
+      for (size_t idx = 0 ; idx < value_.size() ; idx += 1) {
+	    switch (value_[idx]) {
+		case '0':
+		  out << "0";
+		  break;
+		case '1':
+		  out << "1";
+		  break;
+		case 'z': case 'Z':
+		  assert(etype->type() == VTypePrimitive::STDLOGIC);
+		  out << "z";
+		  break;
+		default:
+		  assert(etype->type() == VTypePrimitive::STDLOGIC);
+		  out << "x";
+		  break;
+	    }
+      }
+
+      return errors;
 }
 
 int ExpUAbs::emit(ostream&out, Entity*ent, Architecture*arc)

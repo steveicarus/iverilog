@@ -30,6 +30,7 @@ class Entity;
 class Architecture;
 class ScopeBase;
 class VType;
+class VTypeArray;
 class VTypePrimitive;
 
 class ExpName;
@@ -377,7 +378,11 @@ class ExpString : public Expression {
 
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       int emit(ostream&out, Entity*ent, Architecture*arc);
+      bool is_primary(void) const;
       void dump(ostream&out, int indent = 0) const;
+
+    private:
+      int emit_as_array_(ostream&out, Entity*ent, Architecture*arc, const VTypeArray*arr);
 
     private:
       std::vector<char> value_;
