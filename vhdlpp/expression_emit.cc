@@ -294,7 +294,7 @@ int ExpName::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-      out << name_;
+      out << "\\" << name_ << " ";
       if (index_) {
 	    out << "[";
 	    errors += index_->emit(out, ent, arc);
