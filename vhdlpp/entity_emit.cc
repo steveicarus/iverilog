@@ -62,11 +62,11 @@ int Entity::emit(ostream&out)
 			break;
 		      case PORT_IN:
 			out << "input ";
-			decl.emit(out, port->name);
+			errors += decl.emit(out, port->name);
 			break;
 		      case PORT_OUT:
 			out << "output ";
-			decl.emit(out, port->name);
+			errors += decl.emit(out, port->name);
 			break;
 		  }
 	    }

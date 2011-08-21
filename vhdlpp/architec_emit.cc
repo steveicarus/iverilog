@@ -161,7 +161,7 @@ int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 
       for (list<SequentialStmt*>::iterator cur = statements_list_.begin()
 		 ; cur != statements_list_.end() ; ++cur) {
-	    (*cur)->emit(out, ent, arc);
+	    errors += (*cur)->emit(out, ent, arc);
       }
 
       out << "end" << endl;

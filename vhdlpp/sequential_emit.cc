@@ -92,7 +92,7 @@ int SignalSeqAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
       } else {
 	    Expression*tmp = waveform_.front();
 	    out << " <= ";
-	    tmp->emit(out, ent, arc);
+	    errors += tmp->emit(out, ent, arc);
 	    out << ";" << endl;
       }
 
@@ -106,7 +106,7 @@ int VariableSeqAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
       errors += lval_->emit(out, ent, arc);
 
       out << " = ";
-      rval_->emit(out, ent, arc);
+      errors += rval_->emit(out, ent, arc);
       out << ";" << endl;
 
       return errors;
