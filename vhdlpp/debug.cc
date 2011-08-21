@@ -219,6 +219,13 @@ void ExpBitstring::dump(ostream&out, int indent) const
       out << "\"" << endl;
 }
 
+void ExpCast::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "Cast to " << *res_type_
+	  << " at " << get_fileline() << endl;
+      arg_->dump(out, indent+4);
+}
+
 void ExpCharacter::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "Character '" << value_ << "'"
@@ -302,6 +309,8 @@ void ExpName::dump(ostream&out, int indent) const
 	  << " at " << get_fileline() << endl;
       if (index_)
 	    index_->dump(out, indent+6);
+      if (lsb_)
+	    lsb_->dump(out, indent+6);
 }
 
 void ExpNameALL::dump(ostream&out, int indent) const

@@ -74,6 +74,9 @@ class range_t {
       ~range_t() { delete left_; delete right_; }
       void dump(ostream&out, int indent) const;
 
+      Expression*msb() { return direction_? left_ : right_; }
+      Expression*lsb() { return direction_? right_: left_;  }
+
     private:
       Expression *left_, *right_;
       bool direction_;

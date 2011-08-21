@@ -145,6 +145,17 @@ int ExpBitstring::emit(ostream&out, Entity*, Architecture*)
       return errors;
 }
 
+int ExpCast::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      cerr << get_fileline() << ": sorry: I do not know how to emit cast expressions yet." << endl;
+      errors += 1;
+
+      out << "/* Cast to type=" << *res_type_ << " */ ";
+      errors += arg_->emit(out, ent, arc);
+      return errors;
+}
+
 int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*, Architecture*,
 				      const VTypePrimitive*etype)
 {
@@ -298,6 +309,11 @@ int ExpName::emit(ostream&out, Entity*ent, Architecture*arc)
       if (index_) {
 	    out << "[";
 	    errors += index_->emit(out, ent, arc);
+
+	    if (lsb_) {
+		  out << ":";
+		  errors += lsb_->emit(out, ent, arc);
+	    }
 	    out << "]";
       }
 

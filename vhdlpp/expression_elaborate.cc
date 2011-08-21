@@ -180,6 +180,19 @@ int ExpBitstring::elaborate_expr(Entity*, Architecture*, const VType*)
       return errors;
 }
 
+const VType* ExpCast::probe_type(Entity*, Architecture*) const
+{
+      return res_type_;
+}
+
+int ExpCast::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
+{
+      int errors = 0;
+      const VType*sub_type = arg_->probe_type(ent, arc);
+      errors += arg_->elaborate_expr(ent, arc, sub_type);
+      return errors;
+}
+
 int ExpCharacter::elaborate_expr(Entity*, Architecture*, const VType*ltype)
 {
       assert(ltype != 0);
@@ -253,6 +266,9 @@ const VType* ExpName::probe_type(Entity*ent, Architecture*arc) const
 
       if (Signal*sig = arc->find_signal(name_))
 	    return sig->peek_type();
+
+      if (Variable*var = arc->find_variable(name_))
+	    return var->peek_type();
 
       const VType*ctype = 0;
       Expression*cval = 0;

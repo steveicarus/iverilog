@@ -184,6 +184,15 @@ ExpBitstring::~ExpBitstring()
 {
 }
 
+ExpCast::ExpCast(const VType*typ, Expression*arg)
+: res_type_(typ), arg_(arg)
+{
+}
+
+ExpCast::~ExpCast()
+{
+}
+
 ExpCharacter::ExpCharacter(char val)
 : value_(val)
 {
@@ -249,12 +258,17 @@ ExpLogical::~ExpLogical()
 }
 
 ExpName::ExpName(perm_string nn)
-: name_(nn), index_(0)
+: name_(nn), index_(0), lsb_(0)
 {
 }
 
 ExpName::ExpName(perm_string nn, Expression*ix)
-: name_(nn), index_(ix)
+: name_(nn), index_(ix), lsb_(0)
+{
+}
+
+ExpName::ExpName(perm_string nn, Expression*msb, Expression*lsb)
+: name_(nn), index_(msb), lsb_(lsb)
 {
 }
 

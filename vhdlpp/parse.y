@@ -471,6 +471,11 @@ choice
       { $$ = 0; }
   ;
 
+choices
+  : choices '|' choice
+  | choice
+  ;
+
 component_configuration
   : K_for component_specification
     binding_indication_semicolon_opt
@@ -573,6 +578,12 @@ concurrent_signal_assignment_statement
 	$$ = 0;
 	yyerrok;
       }
+  | error LEQ waveform ';'
+      { errormsg(@1, "Syntax error in l-value of signal assignment.\n");
+	yyerrok;
+	delete $3;
+	$$ = 0;
+      }
   ;
 
 concurrent_statement
@@ -668,6 +679,15 @@ design_units
 
   /* Indicate the direction as a flag, with "downto" being TRUE. */
 direction : K_to { $$ = false; } | K_downto { $$ = true; } ;
+
+element_association
+  : choices ARROW expression
+  ;
+
+element_association_list
+  : element_association_list ',' element_association
+  | element_association
+  ;
 
   /* As an entity is declared, add it to the map of design entities. */
 entity_aspect
@@ -1104,8 +1124,24 @@ name
 	delete[]$1;
 	$$ = tmp;
       }
+  /* Note that this rule can match array element selects and various
+     function calls. The only way we can tell the difference is from
+     left context, namely whether the name is a type name or function
+     name. If none of the above, treat it as a array element select. */
   | IDENTIFIER '('  expression ')'
-      { ExpName*tmp = new ExpName(lex_strings.make($1), $3);
+      { perm_string name = lex_strings.make($1);
+	delete[]$1;
+	if (const VType*type = active_scope->find_type(name)) {
+	      ExpCast*tmp = new ExpCast(type, $3);
+	      $$ = tmp;
+	} else {
+	      ExpName*tmp = new ExpName(name, $3);
+	      $$ = tmp;
+	}
+	FILE_NAME($$, @1);
+      }
+  | IDENTIFIER '('  range ')'
+      { ExpName*tmp = new ExpName(lex_strings.make($1), $3->msb(), $3->lsb());
 	FILE_NAME(tmp, @1);
 	delete[]$1;
 	$$ = tmp;
@@ -1275,9 +1311,9 @@ primary
       }
   | STRING_LITERAL
       { ExpString*tmp = new ExpString($1);
-    FILE_NAME(tmp,@1);
-    delete[]$1;
-    $$ = tmp;
+	FILE_NAME(tmp,@1);
+	delete[]$1;
+	$$ = tmp;
       }
   | BITSTRING_LITERAL
       { ExpBitstring*tmp = new ExpBitstring($1);
@@ -1285,8 +1321,22 @@ primary
 	delete[]$1;
 	$$ = tmp;
       }
+
+  /* This catches function calls that use association lists for the
+     argument list. The position argument list is discovered elsewhere
+     and must be discovered by elaboration (thanks to the ambiguity of
+     VHDL syntax). */
+  | IDENTIFIER '(' association_list ')'
+      { sorrymsg(@1, "Function calls not supported\n");
+	$$ = 0;
+      }
+
   | '(' expression ')'
       { $$ = $2; }
+  | '(' element_association_list ')'
+      { sorrymsg(@1, "Aggregate expressions not supported\n");
+	$$ = 0;
+      }
   ;
 
 primary_unit
@@ -1404,11 +1454,11 @@ process_sensitivity_list
   | name_list
       { $$ = $1; }
   ;
+
 range
   : simple_expression direction simple_expression
-      {
-    range_t* tmp = new range_t($1, $3, $2);
-    $$ = tmp;
+      { range_t* tmp = new range_t($1, $3, $2);
+	$$ = tmp;
       }
   ;
 
@@ -1682,6 +1732,18 @@ variable_assignment_statement
       { VariableSeqAssignment*tmp = new VariableSeqAssignment($1, $3);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
+      }
+  | name VASSIGN error ';'
+      { errormsg(@3, "Syntax error in r-value expression of assignment.\n");
+	yyerrok;
+	delete $1;
+	$$ = 0;
+      }
+  | error VASSIGN expression ';'
+      { errormsg(@1, "Syntax error in l-value expression of assignment.\n");
+	yyerrok;
+	delete $3;
+	$$ = 0;
       }
   ;
 
