@@ -3634,20 +3634,15 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 				<< "vector slice." << endl;
 			des->errors += 1;
 			return 0;
-		} else if (t == IVL_VT_REAL) {
-			/*
-			 * TODO: Need to modify draw_unary_real() to support
-			 * operations on real variables
-			 */
-			cerr << get_fileline() << ": sorry: "
-				<< human_readable_op(op_, true)
-				<< " operation is not yet supported on "
-				<< "reals." << endl;
-			des->errors += 1;
-			return 0;
-		} else if (t == IVL_VT_LOGIC || t == IVL_VT_BOOL) {
-			if (dynamic_cast<NetEConst *> (ip)) {
-				/* invalid operand: operand is a constant number */
+		} else if (t == IVL_VT_LOGIC || t == IVL_VT_BOOL ||
+				t == IVL_VT_REAL) {
+
+			if (dynamic_cast<NetEConst *> (ip) ||
+				dynamic_cast<NetECReal*> (ip)) {
+				/*
+				 * invalid operand: operand is a constant
+				 * or real number
+				 */
 				cerr << get_fileline() << ": error: "
 					<< "inappropriate use of "
 					<< human_readable_op(op_, true)
@@ -3656,6 +3651,12 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 				return 0;
 			}
 
+			/*
+			 * **** Valid use of operator ***
+			 * For REAL variables draw_unary_real() is ivoked during
+			 * evaluation and for LOGIC/BOOLEAN draw_unary_expr()
+			 * is called for evaluation.
+			 */
 			tmp = new NetEUnary(op_, ip, expr_wid, signed_flag_);
 			tmp->set_line(*this);
 		} else {
