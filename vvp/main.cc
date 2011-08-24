@@ -243,18 +243,25 @@ int main(int argc, char*argv[])
 	   so we chop the file name and the last directory by
 	   turning the last two \ characters to null. Then we append
 	   the lib\ivl$(suffix) to finish. */
-      { char *s;
-	char basepath[4096], tmp[4096];
-	GetModuleFileName(NULL, tmp, sizeof tmp);
-	  /* Convert to a short name to remove any embedded spaces. */
-	GetShortPathName(tmp, basepath, sizeof basepath);
-	s = strrchr(basepath, '\\');
-	if (s) *s = 0;
-	s = strrchr(basepath, '\\');
-	if (s) *s = 0;
-	strcat(s, "\\lib\\ivl" IVL_SUFFIX);
-	vpip_module_path[0] = strdup(basepath);
+      char *s;
+      char basepath[4096], tmp[4096];
+      GetModuleFileName(NULL, tmp, sizeof tmp);
+	/* Convert to a short name to remove any embedded spaces. */
+      GetShortPathName(tmp, basepath, sizeof basepath);
+      s = strrchr(basepath, '\\');
+      if (s) *s = 0;
+      else {
+	    fprintf(stderr, "%s: Missing first \\ in exe path!\n", argv[0]);
+	    exit(1);
       }
+      s = strrchr(basepath, '\\');
+      if (s) *s = 0;
+      else {
+	    fprintf(stderr, "%s: Missing second \\ in exe path!\n", argv[0]);
+	    exit(1);
+      }
+      strcat(s, "\\lib\\ivl" IVL_SUFFIX);
+      vpip_module_path[0] = strdup(basepath);
 #endif
 
         /* For non-interactive runs we do not want to run the interactive
