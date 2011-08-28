@@ -104,6 +104,34 @@ bool ScopeBase::find_constant(perm_string by_name, const VType*&typ, Expression*
       }
 }
 
+Signal* ScopeBase::find_signal(perm_string by_name) const
+{
+      map<perm_string,Signal*>::const_iterator cur = new_signals_.find(by_name);
+      if (cur == new_signals_.end()) {
+        cur = old_signals_.find(by_name);
+        if (cur == old_signals_.end())
+            return 0;
+        else
+            return cur->second;
+      } else {
+	    return cur->second;
+      }
+}
+
+Variable* ScopeBase::find_variable(perm_string by_name) const
+{
+      map<perm_string,Variable*>::const_iterator cur = new_variables_.find(by_name);
+      if (cur == new_variables_.end()) {
+	    cur = old_variables_.find(by_name);
+	    if (cur == old_variables_.end())
+		  return 0;
+	    else
+		  return cur->second;
+      } else {
+	    return cur->second;
+      }
+}
+
 void ScopeBase::do_use_from(const ScopeBase*that)
 {
       for (map<perm_string,ComponentBase*>::const_iterator cur = that->old_components_.begin()
@@ -142,6 +170,16 @@ void ScopeBase::do_use_from(const ScopeBase*that)
       }
 }
 
+bool ActiveScope::is_vector_name(perm_string name) const
+{
+      if (find_signal(name))
+	    return true;
+      if (find_variable(name))
+	    return true;
+
+      return false;
+}
+
 Scope::Scope(const ScopeBase&ref)
 : ScopeBase(ref)
 {
@@ -162,32 +200,4 @@ ComponentBase* Scope::find_component(perm_string by_name)
             return cur->second;
       } else
 	    return cur->second;
-}
-
-Signal* Scope::find_signal(perm_string by_name)
-{
-      map<perm_string,Signal*>::const_iterator cur = new_signals_.find(by_name);
-      if (cur == new_signals_.end()) {
-        cur = old_signals_.find(by_name);
-        if (cur == old_signals_.end())
-            return 0;
-        else
-            return cur->second;
-      } else {
-	    return cur->second;
-      }
-}
-
-Variable* Scope::find_variable(perm_string by_name)
-{
-      map<perm_string,Variable*>::const_iterator cur = new_variables_.find(by_name);
-      if (cur == new_variables_.end()) {
-	    cur = old_variables_.find(by_name);
-	    if (cur == old_variables_.end())
-		  return 0;
-	    else
-		  return cur->second;
-      } else {
-	    return cur->second;
-      }
 }

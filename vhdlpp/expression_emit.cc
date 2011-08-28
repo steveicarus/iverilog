@@ -145,17 +145,6 @@ int ExpBitstring::emit(ostream&out, Entity*, Architecture*)
       return errors;
 }
 
-int ExpCast::emit(ostream&out, Entity*ent, Architecture*arc)
-{
-      int errors = 0;
-      cerr << get_fileline() << ": sorry: I do not know how to emit cast expressions yet." << endl;
-      errors += 1;
-
-      out << "/* Cast to type=" << *res_type_ << " */ ";
-      errors += arg_->emit(out, ent, arc);
-      return errors;
-}
-
 int ExpCharacter::emit_primitive_bit_(ostream&out, Entity*, Architecture*,
 				      const VTypePrimitive*etype)
 {
@@ -255,6 +244,34 @@ int ExpEdge::emit(ostream&out, Entity*ent, Architecture*arc)
 	    break;
       }
       errors += emit_operand1(out, ent, arc);
+      return errors;
+}
+
+int ExpFunc::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      if (name_ == "unsigned" && argv_.size()==1) {
+	      // Handle the special case that this is a cast to
+	      // unsigned. This function is brought in as part of the
+	      // std numeric library, but we interpret it as the same
+	      // as the $unsigned function.
+	    out << "$unsigned(";
+	    errors += argv_[0]->emit(out, ent, arc);
+	    out << ")";
+
+      } else if (name_ == "std_logic_vector" && argv_.size() == 1) {
+	      // Special case: The std_logic_vector function casts its
+	      // argument to std_logic_vector. Internally, we don't
+	      // have to do anything for that to work.
+	    out << "(";
+	    errors += argv_[0]->emit(out, ent, arc);
+	    out << ")";
+      } else {
+	    cerr << get_fileline() << ": sorry: Don't know how to emit function '" << name_ << "'" << endl;
+	    errors += 1;
+      }
+
       return errors;
 }
 

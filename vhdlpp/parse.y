@@ -1131,11 +1131,11 @@ name
   | IDENTIFIER '('  expression ')'
       { perm_string name = lex_strings.make($1);
 	delete[]$1;
-	if (const VType*type = active_scope->find_type(name)) {
-	      ExpCast*tmp = new ExpCast(type, $3);
+	if (active_scope->is_vector_name(name)) {
+	      ExpName*tmp = new ExpName(name, $3);
 	      $$ = tmp;
 	} else {
-	      ExpName*tmp = new ExpName(name, $3);
+	      ExpFunc*tmp = new ExpFunc(name, $3);
 	      $$ = tmp;
 	}
 	FILE_NAME($$, @1);

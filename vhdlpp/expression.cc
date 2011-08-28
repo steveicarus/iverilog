@@ -184,15 +184,6 @@ ExpBitstring::~ExpBitstring()
 {
 }
 
-ExpCast::ExpCast(const VType*typ, Expression*arg)
-: res_type_(typ), arg_(arg)
-{
-}
-
-ExpCast::~ExpCast()
-{
-}
-
 ExpCharacter::ExpCharacter(char val)
 : value_(val)
 {
@@ -231,6 +222,23 @@ ExpEdge::ExpEdge(ExpEdge::fun_t typ, Expression*op)
 
 ExpEdge::~ExpEdge()
 {
+}
+
+ExpFunc::ExpFunc(perm_string nn)
+: name_(nn), argv_(0)
+{
+}
+
+ExpFunc::ExpFunc(perm_string nn, Expression*arg)
+: name_(nn), argv_(1)
+{
+      argv_[0] = arg;
+}
+
+ExpFunc::~ExpFunc()
+{
+      for (size_t idx = 0 ; idx < argv_.size() ; idx += 1)
+	    delete argv_[idx];
 }
 
 ExpInteger::ExpInteger(int64_t val)

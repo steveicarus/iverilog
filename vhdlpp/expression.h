@@ -209,23 +209,6 @@ class ExpBitstring : public Expression {
       std::vector<char>value_;
 };
 
-class ExpCast : public Expression {
-
-    public:
-      ExpCast(const VType*typ, Expression*arg);
-      ~ExpCast();
-
-      const VType*probe_type(Entity*ent, Architecture*arc) const;
-      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
-      int emit(ostream&out, Entity*ent, Architecture*arc);
-      void dump(ostream&out, int indent = 0) const;
-
-    private:
-	// This is the target, result type to cast to.
-      const VType*res_type_;
-	// This is the expression being cast.
-      Expression*arg_;
-};
 
 class ExpCharacter : public Expression {
 
@@ -291,6 +274,22 @@ class ExpEdge : public ExpUnary {
 
     private:
       fun_t fun_;
+};
+class ExpFunc : public Expression {
+
+    public:
+      explicit ExpFunc(perm_string nn);
+      ExpFunc(perm_string nn, Expression*arg);
+      ~ExpFunc();
+
+    public: // Base methods
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      void dump(ostream&out, int indent = 0) const;
+
+    private:
+      perm_string name_;
+      std::vector<Expression*> argv_;
 };
 
 class ExpInteger : public Expression {

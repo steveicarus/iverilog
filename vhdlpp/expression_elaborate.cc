@@ -180,19 +180,6 @@ int ExpBitstring::elaborate_expr(Entity*, Architecture*, const VType*)
       return errors;
 }
 
-const VType* ExpCast::probe_type(Entity*, Architecture*) const
-{
-      return res_type_;
-}
-
-int ExpCast::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
-{
-      int errors = 0;
-      const VType*sub_type = arg_->probe_type(ent, arc);
-      errors += arg_->elaborate_expr(ent, arc, sub_type);
-      return errors;
-}
-
 int ExpCharacter::elaborate_expr(Entity*, Architecture*, const VType*ltype)
 {
       assert(ltype != 0);
@@ -228,6 +215,18 @@ int ExpConditional::elaborate_expr(Entity*ent, Architecture*arc, const VType*lty
       for (list<Expression*>::const_iterator cur = else_clause_.begin()
 		 ; cur != else_clause_.end() ; ++cur) {
 	    errors += (*cur)->elaborate_expr(ent, arc, ltype);
+      }
+
+      return errors;
+}
+
+int ExpFunc::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
+{
+      int errors = 0;
+
+      for (size_t idx = 0 ; idx < argv_.size() ; idx += 1) {
+	    const VType*tmp = argv_[idx]->probe_type(ent, arc);
+	    errors += argv_[idx]->elaborate_expr(ent, arc, tmp);
       }
 
       return errors;

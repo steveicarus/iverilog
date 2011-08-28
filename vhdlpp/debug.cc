@@ -219,13 +219,6 @@ void ExpBitstring::dump(ostream&out, int indent) const
       out << "\"" << endl;
 }
 
-void ExpCast::dump(ostream&out, int indent) const
-{
-      out << setw(indent) << "" << "Cast to " << *res_type_
-	  << " at " << get_fileline() << endl;
-      arg_->dump(out, indent+4);
-}
-
 void ExpCharacter::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "Character '" << value_ << "'"
@@ -266,6 +259,15 @@ void ExpEdge::dump(ostream&out, int indent) const
       }
       out << "at " << get_fileline() << endl;
       dump_operand1(out, indent+3);
+}
+
+void ExpFunc::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "function " << name_
+	  << " has " << argv_.size() << " arguments:" << endl;
+      for (size_t idx = 0 ; idx < argv_.size() ; idx += 1) {
+	    argv_[idx]->dump(out, indent+2);
+      }
 }
 
 void ExpInteger::dump(ostream&out, int indent) const

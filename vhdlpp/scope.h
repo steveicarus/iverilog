@@ -50,6 +50,9 @@ class ScopeBase {
 
       const VType* find_type(perm_string by_name);
       bool find_constant(perm_string by_name, const VType*&typ, Expression*&exp);
+      Signal* find_signal(perm_string by_name) const;
+      Variable* find_variable(perm_string by_name) const;
+
     protected:
       void cleanup();
 
@@ -97,9 +100,6 @@ class Scope : public ScopeBase {
 
       ComponentBase* find_component(perm_string by_name);
 
-      Signal* find_signal(perm_string by_name);
-      Variable* find_variable(perm_string by_name);
-
     public:
       void dump_scope(ostream&out) const;
 
@@ -125,6 +125,10 @@ class ActiveScope : public ScopeBase {
 
       void use_from(const ScopeBase*that) { do_use_from(that); }
 
+	// This function returns true if the name is a vectorable
+	// name. The parser uses this to distinguish between function
+	// calls and array index operations.
+      bool is_vector_name(perm_string name) const;
 
       /* All bind_name function check if the given name was present
        * in previous scopes. If it is found, it is erased (but the pointer
