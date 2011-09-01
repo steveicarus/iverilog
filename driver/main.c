@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -731,20 +731,28 @@ int main(int argc, char **argv)
 	   so we chop the file name and the last directory by
 	   turning the last two \ characters to null. Then we append
 	   the lib\ivl$(suffix) to finish. */
-      { char *s;
-	char basepath[4096], tmppath[4096];
-	GetModuleFileName(NULL, tmppath, sizeof tmppath);
-	  /* Convert to a short name to remove any embedded spaces. */
-	GetShortPathName(tmppath, basepath, sizeof basepath);
-	strncpy(ivl_root, basepath, MAXSIZE);
-	s = strrchr(ivl_root, sep);
-	if (s) *s = 0;
-	s = strrchr(ivl_root, sep);
-	if (s) *s = 0;
-	strcat(ivl_root, "\\lib\\ivl" IVL_SUFFIX);
-
-	base = ivl_root;
+      char *s;
+      char tmppath[MAXSIZE];
+      GetModuleFileName(NULL, tmppath, sizeof tmppath);
+	/* Convert to a short name to remove any embedded spaces. */
+      GetShortPathName(tmppath, ivl_root, sizeof ivl_root);
+      s = strrchr(ivl_root, sep);
+      if (s) *s = 0;
+      else {
+	    fprintf(stderr, "%s: Missing first %c in exe path!\n",
+	                    argv[0], sep);
+	    exit(1);
       }
+      s = strrchr(ivl_root, sep);
+      if (s) *s = 0;
+      else {
+	    fprintf(stderr, "%s: Missing second %c in exe path!\n",
+	                    argv[0], sep);
+	    exit(1);
+      }
+      strcat(ivl_root, "\\lib\\ivl" IVL_SUFFIX);
+
+      base = ivl_root;
 
 #else
         /* In a UNIX environment, the IVL_ROOT from the Makefile is
