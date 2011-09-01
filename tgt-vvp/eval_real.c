@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -457,7 +457,7 @@ static int increment(ivl_expr_t e, int s, bool pre)
 	fprintf(vvp_out, "    %%loadi/wr %d, 1, 0x1000; load 1.0\n", one);
 
 	if (!pre) {
-		/* 
+		/*
 		 * post-increment must return the non-incremented value.
 		 * Therefore, copy the current value in a new word and return
 		 * it.
@@ -496,7 +496,7 @@ static int decrement(ivl_expr_t e, int s, bool pre)
 	fprintf(vvp_out, "    %%loadi/wr %d, 1, 0x1000; load 1.0\n", one);
 
 	if (!pre) {
-		/* 
+		/*
 		 * post-decrement must return the non-incremented value.
 		 * Therefore, copy the current value in a new word and return
 		 * it.
