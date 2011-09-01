@@ -1,7 +1,7 @@
 #ifndef __pform_types_H
 #define __pform_types_H
 /*
- * Copyright (c) 2007-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,6 +21,7 @@
 
 // This for the perm_string type.
 # include  "StringHeap.h"
+# include  "LineInfo.h"
 # include  "verinum.h"
 # include  "named.h"
 # include  "ivl_target.h"
@@ -67,6 +68,7 @@ struct enum_type_t {
       bool signed_flag;
       std::auto_ptr< list<PExpr*> > range;
       std::auto_ptr< list<named_pexpr_t> > names;
+      LineInfo li;
 };
 
 

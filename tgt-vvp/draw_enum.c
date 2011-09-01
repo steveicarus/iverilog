@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,13 +23,36 @@
 # include  <string.h>
 # include  <assert.h>
 
+// HERE: This still needs work! Fall back to <width>'<signed>b format for
+//       very large constants. This should also be int64_t sized values.
+//       The run time still needs to be modified to work with signed values
+//       and we also need to pass the file and line information.
 static void draw_enum2_value(ivl_enumtype_t enumtype, unsigned idx)
 {
-      long val = 0;
-      long mask = 1;
+      long val, mask;
       const char*bits = ivl_enum_bits(enumtype, idx);
       const char*bit;
-      for (bit = bits, mask = 1 ; bit[0] != 0 ; bit += 1, mask <<= 1) {
+      unsigned len = strlen(bits);
+	/* Sign extend if needed. */
+      if (ivl_enum_signed(enumtype)) {
+	    assert(len <= sizeof(long)*8);
+	    if ((bits[len-1] == '1') && (len < sizeof(long)*8)) {
+		  val = -1L & ~((1L << len) - 1L);
+// HERE: Remove once vvp has been updated.
+		  if (ivl_enum_signed(enumtype)) {
+			fprintf(stderr, "%s:%u: tgt-vvp sorry: signed "
+			        "enumerations with negative values are not "
+			        "currently supported by vvp.\n",
+			        ivl_enum_file(enumtype),
+			        ivl_enum_lineno(enumtype));
+			vvp_errors += 1;
+		  }
+	    } else val = 0;
+      } else {
+	    assert(len < sizeof(long)*8);
+	    val = 0;
+      }
+      for (bit = bits, mask = 1 ; *bit != 0 ; bit += 1, mask <<= 1) {
 	    if (*bit == '1')
 		  val |= mask;
       }
@@ -42,7 +65,8 @@ static void draw_enum4_value(ivl_enumtype_t enumtype, unsigned idx)
       const char*bits = ivl_enum_bits(enumtype, idx);
       const char*bit;
 
-      fprintf(vvp_out, "%u'b", ivl_enum_width(enumtype));
+      fprintf(vvp_out, "%u'%sb", ivl_enum_width(enumtype),
+                                 ivl_enum_signed(enumtype) ? "s" : "");
 
       for (bit = bits+strlen(bits) ; bit > bits ; bit -= 1)
 	    fputc(bit[-1], vvp_out);

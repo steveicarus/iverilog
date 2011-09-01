@@ -1,7 +1,7 @@
 #ifndef __netenum_H
 #define __netenum_H
 /*
- * Copyright (c) 2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,12 +22,13 @@
 # include  "ivl_target.h"
 # include  "verinum.h"
 # include  "StringHeap.h"
+# include  "LineInfo.h"
 # include  <vector>
 # include  <map>
 
 class NetScope;
 
-class netenum_t {
+class netenum_t : public LineInfo {
 
     public:
       explicit netenum_t(ivl_variable_type_t base_type, bool signed_flag,
@@ -36,6 +37,7 @@ class netenum_t {
 
       ivl_variable_type_t base_type() const;
       unsigned base_width() const;
+      bool has_sign() const;
 
 	// The size() is the number of enumeration literals.
       size_t size() const;
@@ -78,5 +80,7 @@ inline unsigned netenum_t::base_width() const
 }
 
 inline size_t netenum_t::size() const { return names_.size(); }
+
+inline bool netenum_t::has_sign() const { return signed_flag_; }
 
 #endif

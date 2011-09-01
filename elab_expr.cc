@@ -1833,8 +1833,8 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
 	    expr_type_   = use_enum->base_type();
 	    expr_width_  = use_enum->base_width();
-            min_width_   = expr_width_;
-            signed_flag_ = false;
+	    min_width_   = expr_width_;
+	    signed_flag_ = par_enum->has_sign();
 
 	    return expr_width_;
       }

@@ -262,6 +262,24 @@ extern "C" unsigned ivl_enum_width(ivl_enumtype_t net)
       return net->base_width();
 }
 
+extern "C" int ivl_enum_signed(ivl_enumtype_t net)
+{
+      assert(net);
+      return net->has_sign();
+}
+
+extern "C" const char*ivl_enum_file(ivl_enumtype_t net)
+{
+      assert(net);
+      return net->get_file().str();
+}
+
+extern "C" unsigned ivl_enum_lineno(ivl_enumtype_t net)
+{
+      assert(net);
+      return net->get_lineno();
+}
+
 extern "C" const char* ivl_event_name(ivl_event_t net)
 {
       static char*name_buffer = 0;
@@ -290,7 +308,6 @@ extern "C" const char* ivl_event_basename(ivl_event_t net)
 {
       return net->name;
 }
-
 
 extern "C" const char*ivl_event_file(ivl_event_t net)
 {

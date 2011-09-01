@@ -30,9 +30,12 @@ ivl_discipline_flow
 ivl_discipline_name
 ivl_discipline_potential
 
+ivl_enum_bits
+ivl_enum_file
+ivl_enum_lineno
 ivl_enum_name
 ivl_enum_names
-ivl_enum_bits
+ivl_enum_signed
 ivl_enum_type
 ivl_enum_width
 
