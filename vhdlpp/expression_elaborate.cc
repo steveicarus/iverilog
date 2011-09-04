@@ -43,6 +43,8 @@ int ExpName::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
 {
       int errors = 0;
 
+      const VType*found_type = 0;
+
       if (const InterfacePort*cur = ent->find_port(name_)) {
 	    if (cur->mode != PORT_OUT) {
 		  cerr << get_fileline() << ": error: Assignment to "
@@ -53,29 +55,52 @@ int ExpName::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
 	    if (is_sequ)
 		  ent->set_declaration_l_value(name_, is_sequ);
 
-	    set_type(cur->type);
-	    return errors;
-      }
+	    found_type = cur->type;
 
-      if (Signal*sig = arc->find_signal(name_)) {
+      } else if (Signal*sig = arc->find_signal(name_)) {
 	      // Tell the target signal that this may be a sequential l-value.
 	    if (is_sequ) sig->count_ref_sequ();
 
-	    set_type(sig->peek_type());
-	    return errors;
-      }
+	    found_type = sig->peek_type();
 
-      if (Variable*sig = arc->find_variable(name_)) {
+      } else if (Variable*var = arc->find_variable(name_)) {
 	      // Tell the target signal that this may be a sequential l-value.
-	    if (is_sequ) sig->count_ref_sequ();
+	    if (is_sequ) var->count_ref_sequ();
 
-	    set_type(sig->peek_type());
-	    return errors;
+	    found_type = var->peek_type();
       }
 
-      cerr << get_fileline() << ": error: Signal/variable " << name_
-	   << " not found in this context." << endl;
-      return errors + 1;
+      if (found_type == 0) {
+	    cerr << get_fileline() << ": error: Signal/variable " << name_
+		 << " not found in this context." << endl;
+	    return errors + 1;
+      }
+
+      if (const VTypeArray*array = dynamic_cast<const VTypeArray*>(found_type)) {
+	    if (index_ && !lsb_) {
+		    // If the name is an array or a vector, then an
+		    // indexed name has the type of the element.
+		  found_type = array->element_type();
+
+	    } else if (index_ && lsb_) {
+		    // If the name is an array, then a part select is
+		    // also an array, but with different bounds.
+		  int64_t use_msb, use_lsb;
+		  bool flag;
+
+		  flag = index_->evaluate(arc, use_msb);
+		  assert(flag);
+		  flag = lsb_->evaluate(arc, use_lsb);
+		  assert(flag);
+
+		  vector<VTypeArray::range_t> use_dims (1);
+		  use_dims[0] = VTypeArray::range_t(use_msb, use_lsb);
+		  found_type = new VTypeArray(array->element_type(), use_dims);
+	    }
+      }
+
+      set_type(found_type);
+      return errors;
 }
 
 int ExpName::elaborate_rval(Entity*ent, Architecture*arc, const InterfacePort*lval)
