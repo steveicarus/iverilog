@@ -176,6 +176,11 @@ const VType*parse_type_by_name(perm_string name)
 
       range_t* range;
 
+      ExpAggregate::choice_t*choice;
+      std::list<ExpAggregate::choice_t*>*choice_list;
+      ExpAggregate::element_t*element;
+      std::list<ExpAggregate::element_t*>*element_list;
+
       std::list<InterfacePort*>* interface_list;
 
       Architecture::Statement* arch_statement;
@@ -231,7 +236,12 @@ const VType*parse_type_by_name(perm_string name)
 %type <arch_statement> process_statement
 %type <arch_statement_list> architecture_statement_part
 
-%type <expr> choice expression factor primary relation
+%type <choice> choice
+%type <choice_list> choices
+%type <element> element_association
+%type <element_list> element_association_list
+
+%type <expr> expression factor primary relation
 %type <expr> expression_logical expression_logical_and expression_logical_or
 %type <expr> expression_logical_xnor expression_logical_xor
 %type <expr> name
@@ -453,27 +463,48 @@ case_statement_alternative_list
       }
    ;
 
+/*
+ * The case_statement_alternative uses the "choice" rule to select the
+ * reference expression, but that rule is shared with the aggregate
+ * expression. So convert the ExpAggregate::choice_t to a case
+ * statement alternative and pass that up instead.
+ */
 case_statement_alternative
   : K_when choice ARROW sequence_of_statements
-      {
-    CaseSeqStmt::CaseStmtAlternative* tmp =
-        new CaseSeqStmt::CaseStmtAlternative($2, $4);
-    FILE_NAME(tmp, @1);
-    delete $4;
-    $$ = tmp;
+      { CaseSeqStmt::CaseStmtAlternative* tmp;
+        if ($2->others()) {
+	      tmp = new CaseSeqStmt::CaseStmtAlternative(0, $4);
+	} else if (Expression*ex = $2->simple_expression()) {
+	      tmp = new CaseSeqStmt::CaseStmtAlternative(ex, $4);
+	} else {
+	      errormsg(@2, "I don't know what to make of the case choice\n");
+	      tmp = 0;
+	}
+	if (tmp) FILE_NAME(tmp, @1);
+	delete $2;
+	delete $4;
+	$$ = tmp;
       }
    ;
 
 choice
   : simple_expression
-      { $$ = $1;}
+      { $$ = new ExpAggregate::choice_t($1);}
   | K_others
-      { $$ = 0; }
+      { $$ = new ExpAggregate::choice_t; }
   ;
 
 choices
   : choices '|' choice
+      { std::list<ExpAggregate::choice_t*>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
   | choice
+      { std::list<ExpAggregate::choice_t*>*tmp = new std::list<ExpAggregate::choice_t*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
   ;
 
 component_configuration
@@ -682,11 +713,22 @@ direction : K_to { $$ = false; } | K_downto { $$ = true; } ;
 
 element_association
   : choices ARROW expression
+      { ExpAggregate::element_t*tmp = new ExpAggregate::element_t($1, $3);
+	$$ = tmp;
+      }
   ;
 
 element_association_list
   : element_association_list ',' element_association
+      { std::list<ExpAggregate::element_t*>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
   | element_association
+      { std::list<ExpAggregate::element_t*>*tmp = new std::list<ExpAggregate::element_t*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
   ;
 
   /* As an entity is declared, add it to the map of design entities. */
@@ -1334,8 +1376,9 @@ primary
   | '(' expression ')'
       { $$ = $2; }
   | '(' element_association_list ')'
-      { sorrymsg(@1, "Aggregate expressions not supported\n");
-	$$ = 0;
+      { ExpAggregate*tmp = new ExpAggregate($2);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
       }
   ;
 

@@ -21,6 +21,7 @@
 # include  "vtype.h"
 # include  <typeinfo>
 # include  <iostream>
+# include  <cstdlib>
 # include  <cassert>
 
 using namespace std;
@@ -63,6 +64,30 @@ int ExpUnary::emit_operand1(ostream&out, Entity*ent, Architecture*arc)
       int errors = 0;
       errors += operand1_->emit(out, ent, arc);
       return errors;
+}
+
+int ExpAggregate::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+	// Special case: The aggregate is a single "others" item.
+      if (aggregate_.size() == 1 && aggregate_[0].choice->others()) {
+	    const VTypeArray*atype = dynamic_cast<const VTypeArray*> (peek_type());
+	    assert(atype);
+	    assert(atype->dimensions() == 1);
+
+	    const VTypeArray::range_t&rang = atype->dimension(0);
+	    assert(! rang.is_box());
+
+	    int asize = abs(rang.msb() - rang.lsb()) + 1;
+
+	    out << "{" << asize << "{";
+	    errors += aggregate_[0].expr->emit(out, ent, arc);
+	    out << "}}";
+	    return errors;
+      }
+
+      return Expression::emit(out, ent, arc);
 }
 
 int ExpAttribute::emit(ostream&out, Entity*ent, Architecture*arc)

@@ -117,6 +117,73 @@ ExpUnary::~ExpUnary()
       delete operand1_;
 }
 
+ExpAggregate::ExpAggregate(std::list<element_t*>*el)
+: elements_(el? el->size() : 0)
+{
+      assert(el);
+      size_t idx = 0;
+      while (! el->empty()) {
+	    assert(idx < elements_.size());
+	    elements_[idx++] = el->front();
+	    el->pop_front();
+      }
+}
+
+ExpAggregate::~ExpAggregate()
+{
+      for (size_t idx = 0 ; idx < elements_.size() ; idx += 1)
+	    delete elements_[idx];
+}
+
+ExpAggregate::choice_t::choice_t(Expression*exp)
+: expr_(exp)
+{
+}
+
+ExpAggregate::choice_t::choice_t()
+: expr_(0)
+{
+}
+
+ExpAggregate::choice_t::~choice_t()
+{
+      if (expr_) delete expr_;
+}
+
+bool ExpAggregate::choice_t::others() const
+{
+      return expr_ == 0;
+}
+
+Expression*ExpAggregate::choice_t::simple_expression(bool detach_flag)
+{
+      Expression*res = expr_;
+      if (detach_flag)
+	    expr_ = 0;
+      return res;
+}
+
+ExpAggregate::element_t::element_t(list<choice_t*>*fields, Expression*val)
+: fields_(fields? fields->size() : 0), val_(val)
+{
+      size_t idx = 0;
+      if (fields) {
+	    while (! fields->empty()) {
+		  assert(idx < fields_.size());
+		  fields_[idx++] = fields->front();
+		  fields->pop_front();
+	    }
+      }
+}
+
+ExpAggregate::element_t::~element_t()
+{
+      for (size_t idx = 0 ; idx < fields_.size() ; idx += 1)
+	    delete fields_[idx];
+
+      delete val_;
+}
+
 ExpArithmetic::ExpArithmetic(ExpArithmetic::fun_t op, Expression*op1, Expression*op2)
 : ExpBinary(op1, op2), fun_(op)
 {

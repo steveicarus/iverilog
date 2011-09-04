@@ -161,6 +161,39 @@ void Expression::dump(ostream&out, int indent) const
 	  << " at " << get_fileline()<< endl;
 }
 
+void ExpAggregate::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "Aggregate expression at " << get_fileline() << endl;
+
+      for (size_t idx = 0 ; idx < elements_.size() ; idx += 1)
+	    elements_[idx]->dump(out, indent+2);
+}
+
+void ExpAggregate::element_t::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "choices:" << endl;
+      for (size_t idx = 0 ; idx < fields_.size() ; idx += 1)
+	    fields_[idx]->dump(out, indent+4);
+
+      out << setw(indent) << "" << "expression:" << endl;
+      val_->dump(out, indent+4);
+}
+
+void ExpAggregate::choice_t::dump(ostream&out, int indent) const
+{
+      if (others()) {
+	    out << setw(indent) << "" << "=> others" << endl;
+	    return;
+      }
+
+      if (expr_) {
+	    expr_->dump(out, indent);
+	    return;
+      }
+
+      out << setw(indent) << "" << "?choice_t?" << endl;
+}
+
 void ExpArithmetic::dump(ostream&out, int indent) const
 {
       const char*fun_name = "?";

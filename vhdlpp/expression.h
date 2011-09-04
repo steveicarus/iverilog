@@ -156,6 +156,77 @@ class ExpBinary : public Expression {
       Expression*operand2_;
 };
 
+class ExpAggregate : public Expression {
+
+    public:
+      class choice_t {
+	  public:
+	      // Create an "others" choice
+	    choice_t();
+	      // Create a simple_expression choice
+	    explicit choice_t(Expression*exp);
+	      // Create a named choice
+	    explicit choice_t(perm_string name);
+	    ~choice_t();
+
+	      // true if this represents an "others" choice
+	    bool others() const;
+	      // Return expression if this reprents simple_expression.
+	    Expression*simple_expression(bool detach_flag =true);
+
+	    void dump(ostream&out, int indent) const;
+
+	  private:
+	    Expression*expr_;
+	  private: // not implemented
+	    choice_t(const choice_t&);
+	    choice_t& operator= (const choice_t&);
+      };
+
+      struct choice_element {
+	    choice_t*choice;
+	    Expression*expr;
+	    bool alias_flag;
+      };
+
+      class element_t {
+	  public:
+	    explicit element_t(std::list<choice_t*>*fields, Expression*val);
+	    ~element_t();
+
+	    size_t count_choices() const { return fields_.size(); }
+	    void map_choices(choice_element*dst);
+
+	    void dump(ostream&out, int indent) const;
+
+	  private:
+	    std::vector<choice_t*>fields_;
+	    Expression*val_;
+	  private: // not implemented
+	    element_t(const element_t&);
+	    element_t& operator = (const element_t&);
+      };
+
+    public:
+      ExpAggregate(std::list<element_t*>*el);
+      ~ExpAggregate();
+
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      void dump(ostream&out, int indent = 0) const;
+
+    private:
+      int elaborate_expr_array_(Entity*ent, Architecture*arc, const VTypeArray*ltype);
+
+    private:
+	// This is the elements as directly parsed.
+      std::vector<element_t*> elements_;
+
+	// These are the elements after elaboration. This form is
+	// easier to check and emit.
+      std::vector<choice_element> aggregate_;
+};
+
 class ExpArithmetic : public ExpBinary {
 
     public:

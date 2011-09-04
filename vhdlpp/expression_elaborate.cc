@@ -153,6 +153,71 @@ int ExpBinary::elaborate_exprs(Entity*ent, Architecture*arc, const VType*ltype)
       return errors;
 }
 
+int ExpAggregate::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
+{
+      if (ltype == 0) {
+	    cerr << get_fileline() << ": error: Elaboration of aggregate types needs wel known type context?" << endl;
+	    return 1;
+      }
+
+      set_type(ltype);
+
+      if (const VTypeArray*larray = dynamic_cast<const VTypeArray*>(ltype)) {
+	    return elaborate_expr_array_(ent, arc, larray);
+      }
+
+      cerr << get_fileline() << ": internal error: I don't know how to elaborate aggregate expressions. type=" << typeid(*ltype).name() << endl;
+      return 1;
+}
+
+/*
+ * Elaboration of array aggregates is elaboration of the element
+ * expressions using the element type as the ltype for the
+ * subexpression.
+ */
+int ExpAggregate::elaborate_expr_array_(Entity*ent, Architecture*arc, const VTypeArray*ltype)
+{
+      const VType*element_type = ltype->element_type();
+      int errors = 0;
+      size_t choice_count = 0;
+
+      for (size_t edx = 0 ; edx < elements_.size() ; edx += 1) {
+	    element_t*ecur = elements_[edx];
+	    choice_count += ecur->count_choices();
+      }
+
+      aggregate_.resize(choice_count);
+
+      size_t cdx = 0;
+      for (size_t edx = 0 ; edx < elements_.size() ; edx += 1) {
+	    element_t*ecur = elements_[edx];
+	    ecur->map_choices(&aggregate_[cdx]);
+	    cdx += ecur->count_choices();
+      }
+
+      assert(cdx == choice_count);
+
+      for (size_t idx = 0 ; idx < aggregate_.size() ; idx += 1) {
+	    if (aggregate_[idx].alias_flag)
+		  continue;
+
+	    errors += aggregate_[idx].expr->elaborate_expr(ent, arc, element_type);
+      }
+
+      elements_.clear();
+      return errors;
+}
+
+void ExpAggregate::element_t::map_choices(ExpAggregate::choice_element*dst)
+{
+      for (size_t idx = 0 ; idx < fields_.size() ; idx += 1) {
+	    dst->choice = fields_[idx];
+	    dst->expr = val_;
+	    dst->alias_flag = (idx != 0);
+	    dst += 1;
+      }
+}
+
 int ExpArithmetic::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
 {
       int errors = 0;
