@@ -916,6 +916,11 @@ static char *get_display(unsigned int *rtnsz, const struct strobe_cb_info *info)
 
       case vpiNet:
       case vpiReg:
+      case vpiBitVar:
+      case vpiByteVar:
+      case vpiShortIntVar:
+      case vpiIntVar:
+      case vpiLongIntVar:
       case vpiIntegerVar:
       case vpiMemoryWord:
       case vpiPartSelect:
@@ -1438,6 +1443,11 @@ static PLI_INT32 sys_monitor_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 		case vpiNet:
 		case vpiReg:
 		case vpiIntegerVar:
+		case vpiBitVar:
+		case vpiByteVar:
+		case vpiShortIntVar:
+		case vpiIntVar:
+		case vpiLongIntVar:
 		case vpiRealVar:
 		case vpiPartSelect:
 		    /* Monitoring reg and net values involves setting
