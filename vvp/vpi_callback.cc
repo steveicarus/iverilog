@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -148,6 +148,11 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	  case vpiReg:
 	  case vpiNet:
 	  case vpiIntegerVar:
+	  case vpiBitVar:
+	  case vpiByteVar:
+	  case vpiShortIntVar:
+	  case vpiIntVar:
+	  case vpiLongIntVar:
 	      /* Attach the callback to the vvp_fun_signal node by
 		 putting it in the vpi_callbacks list. */
 	    struct __vpiSignal*sig;
