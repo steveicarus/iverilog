@@ -682,10 +682,10 @@ statement
   | T_LABEL K_VAR_I local_flag T_STRING ',' T_NUMBER T_NUMBER ';'
       { compile_variable($1, $4, $6, $7, vpiIntegerVar, true, $3); }
 
-  | T_LABEL K_VAR_2S local_flag T_STRING ',' T_NUMBER T_NUMBER ';'
+  | T_LABEL K_VAR_2S local_flag T_STRING ',' signed_t_number signed_t_number ';'
       { compile_variable($1, $4, $6, $7, vpiIntVar, true, $3); }
 
-  | T_LABEL K_VAR_2U local_flag T_STRING ',' T_NUMBER T_NUMBER ';'
+  | T_LABEL K_VAR_2U local_flag T_STRING ',' signed_t_number signed_t_number ';'
       { compile_variable($1, $4, $6, $7, vpiIntVar, false, $3); }
 
   | T_LABEL K_VAR_R T_STRING ',' signed_t_number signed_t_number ';'
