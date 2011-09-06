@@ -1808,6 +1808,11 @@ static PLI_INT32 sys_printtimescale_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    switch (vpi_get(vpiType, arg)) {
 		case vpiFunction:
 		case vpiIntegerVar:
+		case vpiBitVar:
+		case vpiByteVar:
+		case vpiShortIntVar:
+		case vpiIntVar:
+		case vpiLongIntVar:
 		case vpiMemory:
 		case vpiMemoryWord:
 		case vpiModule:

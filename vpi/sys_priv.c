@@ -169,6 +169,11 @@ unsigned is_numeric_obj(vpiHandle obj)
 
 	/* These can have a valid numeric value. */
       case vpiIntegerVar:
+      case vpiBitVar:
+      case vpiByteVar:
+      case vpiShortIntVar:
+      case vpiIntVar:
+      case vpiLongIntVar:
       case vpiMemoryWord:
       case vpiNet:
       case vpiPartSelect:
@@ -204,6 +209,11 @@ unsigned is_string_obj(vpiHandle obj)
 
 	/* These can have a valid string value. */
       case vpiIntegerVar:
+      case vpiBitVar:
+      case vpiByteVar:
+      case vpiShortIntVar:
+      case vpiIntVar:
+      case vpiLongIntVar:
       case vpiMemoryWord:
       case vpiNet:
       case vpiPartSelect:

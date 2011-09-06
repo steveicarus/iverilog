@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -552,6 +552,11 @@ static int is_assignable_obj(vpiHandle obj)
 	case vpiPartSelect:
 	    if (! is_assignable_obj(vpi_handle(vpiParent, obj))) break;
 	case vpiIntegerVar:
+	case vpiBitVar:
+	case vpiByteVar:
+	case vpiShortIntVar:
+	case vpiIntVar:
+	case vpiLongIntVar:
 	case vpiRealVar:
 	case vpiReg:
 	case vpiTimeVar:
