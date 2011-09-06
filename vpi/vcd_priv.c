@@ -189,6 +189,11 @@ PLI_INT32 sys_dumpvars_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
           case vpiNet:
           case vpiReg:
           case vpiIntegerVar:
+          case vpiBitVar:
+          case vpiByteVar:
+          case vpiShortIntVar:
+          case vpiIntVar:
+          case vpiLongIntVar:
           case vpiTimeVar:
           case vpiRealVar:
           case vpiNamedEvent:

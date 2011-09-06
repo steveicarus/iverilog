@@ -503,11 +503,16 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       item_type = vpi_get(vpiType, item);
       switch (item_type) {
 	  case vpiNamedEvent: type = FST_VT_VCD_EVENT; break;
+	  case vpiIntVar:
 	  case vpiIntegerVar: type = FST_VT_VCD_INTEGER; break;
 	  case vpiParameter:  type = FST_VT_VCD_PARAMETER; break;
 	    /* Icarus converts realtime to real. */
 	  case vpiRealVar:    type = FST_VT_VCD_REAL; break;
 	  case vpiMemoryWord:
+	  case vpiBitVar:
+	  case vpiByteVar:
+	  case vpiShortIntVar:
+	  case vpiLongIntVar:
 	  case vpiReg:        type = FST_VT_VCD_REG; break;
 	    /* Icarus converts a time to a plain register. */
 	  case vpiTimeVar:    type = FST_VT_VCD_TIME; break;
@@ -572,6 +577,11 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	  case vpiNamedEvent:
 	  case vpiIntegerVar:
+	  case vpiBitVar:
+	  case vpiByteVar:
+	  case vpiShortIntVar:
+	  case vpiIntVar:
+	  case vpiLongIntVar:
 	  case vpiRealVar:
 	  case vpiMemoryWord:
 	  case vpiReg:
@@ -791,6 +801,11 @@ static PLI_INT32 sys_dumpvars_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	       * been included. */
 	    switch (item_type) {
 	        case vpiIntegerVar:
+		case vpiBitVar:
+		case vpiByteVar:
+		case vpiShortIntVar:
+		case vpiIntVar:
+		case vpiLongIntVar:
 	        case vpiMemoryWord:
 	        case vpiNamedEvent:
 	        case vpiNet:

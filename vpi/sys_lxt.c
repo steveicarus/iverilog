@@ -557,6 +557,11 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 		  item = vpi_handle_by_index(array, idx);
 	    }
 	  case vpiIntegerVar:
+	  case vpiBitVar:
+	  case vpiByteVar:
+	  case vpiShortIntVar:
+	  case vpiIntVar:
+	  case vpiLongIntVar:
 	  case vpiTimeVar:
 	  case vpiReg:  type = "reg";    }
 
