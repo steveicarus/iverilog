@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -374,8 +374,21 @@ static unsigned is_seed_obj(vpiHandle obj, vpiHandle callh, const char *name)
       switch (vpi_get(vpiType, obj)) {
 	    case vpiTimeVar:
 	    case vpiIntegerVar:
-	    case vpiReg:
+	    case vpiIntVar:
+	    case vpiLongIntVar:
 		  rtn = 1;
+		  break;
+	    case vpiBitVar:
+	    case vpiReg:
+		  if (vpi_get(vpiSize, obj) < 32) {
+			vpi_printf("Error: %s:%d: ",
+			           vpi_get_str(vpiFile, callh),
+			           (int)vpi_get(vpiLineNo, callh));
+			vpi_printf("%s's seed variable is less than 32 bits "
+			           " (%d).\n", name,
+			           (int)vpi_get(vpiSize, obj));
+			vpi_control(vpiFinish, 1);
+		  } else rtn = 1;
 		  break;
 	    default:
 		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
