@@ -20,6 +20,7 @@
 #include <math.h>
 #include <string.h>
 #include "vpi_user.h"
+#include "sv_vpi_user.h"
 
 /*
  * This routine returns 1 if the argument supports has a numeric value,
@@ -42,6 +43,11 @@ static unsigned is_numeric_obj(vpiHandle obj)
 
 	/* These can have a valid numeric value. */
       case vpiIntegerVar:
+      case vpiBitVar:
+      case vpiByteVar:
+      case vpiShortIntVar:
+      case vpiIntVar:
+      case vpiLongIntVar:
       case vpiMemoryWord:
       case vpiNet:
       case vpiPartSelect:
