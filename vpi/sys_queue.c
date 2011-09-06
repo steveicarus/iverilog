@@ -493,6 +493,10 @@ static unsigned is_32_or_smaller_obj(vpiHandle obj)
 
 	  /* These can have valid 32 bit or smaller numeric values. */
 	case vpiIntegerVar:
+	case vpiBitVar:
+	case vpiByteVar:
+	case vpiShortIntVar:
+	case vpiIntVar:
 	case vpiMemoryWord:
 	case vpiNet:
 	case vpiPartSelect:
@@ -518,6 +522,7 @@ static void check_var_arg_32(vpiHandle arg, vpiHandle callh,
       switch (vpi_get(vpiType, arg)) {
 	case vpiMemoryWord:
 	case vpiPartSelect:
+	case vpiBitVar:
 	case vpiReg: // Check that we have exactly 32 bits.
 	    if (vpi_get(vpiSize, arg) != 32) {
 		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
@@ -527,6 +532,7 @@ static void check_var_arg_32(vpiHandle arg, vpiHandle callh,
 		  vpi_control(vpiFinish, 1);
 	    }
 	case vpiIntegerVar:
+	case vpiIntVar:
 	    break;
 	default:
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
@@ -548,6 +554,7 @@ static void check_var_arg_large(vpiHandle arg, vpiHandle callh,
       switch (vpi_get(vpiType, arg)) {
 	case vpiMemoryWord:
 	case vpiPartSelect:
+	case vpiBitVar:
 	case vpiReg: // Check that we have at least 32 bits.
 	    if (vpi_get(vpiSize, arg) < 32) {
 		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
@@ -557,6 +564,8 @@ static void check_var_arg_large(vpiHandle arg, vpiHandle callh,
 		  vpi_control(vpiFinish, 1);
 	    }
 	case vpiIntegerVar:
+	case vpiIntVar:
+	case vpiLongIntVar:
 	case vpiTimeVar:
 	    break;
 	default:
