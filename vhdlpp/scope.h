@@ -119,7 +119,7 @@ class ActiveScope : public ScopeBase {
 
     public:
       ActiveScope() { }
-      ActiveScope(ActiveScope*par) : ScopeBase(*par) { }
+      ActiveScope(ActiveScope*par) : ScopeBase(*par), context_entity_(0) { }
 
       ~ActiveScope() { }
 
@@ -171,10 +171,16 @@ class ActiveScope : public ScopeBase {
         new_constants_[name] = new const_t(obj, val);
       }
 
+      void bind(Entity*ent)
+      { context_entity_ = ent; }
+
       void destroy_global_scope()
       {
           cleanup();
       }
+
+    private:
+      Entity*context_entity_;
 };
 
 #endif

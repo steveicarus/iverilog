@@ -177,6 +177,9 @@ bool ActiveScope::is_vector_name(perm_string name) const
       if (find_variable(name))
 	    return true;
 
+      if (context_entity_ && context_entity_->find_port(name))
+	    return true;
+
       return false;
 }
 

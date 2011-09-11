@@ -284,27 +284,20 @@ design_file : { yylloc.text = file_path; } design_units ;
 architecture_body
   : architecture_body_start
     K_of IDENTIFIER
+      { bind_entity_to_active_scope($3, active_scope) }
     K_is block_declarative_items_opt
     K_begin architecture_statement_part K_end K_architecture_opt identifier_opt ';'
       { Architecture*tmp = new Architecture(lex_strings.make($1),
-					    *active_scope, *$7);
+					    *active_scope, *$8);
 	FILE_NAME(tmp, @1);
 	bind_architecture_to_entity($3, tmp);
-	if ($10 && tmp->get_name() != $10)
+	if ($11 && tmp->get_name() != $11)
 	      errormsg(@1, "Architecture name doesn't match closing name.\n");
 	delete[]$1;
 	delete[]$3;
-	delete $7;
+	delete $8;
 	pop_scope();
-	if ($10) delete[]$10;
-      }
-  | architecture_body_start
-    K_of IDENTIFIER
-    K_is block_declarative_items_opt
-    K_begin error K_end K_architecture_opt identifier_opt ';'
-      { errormsg(@8, "Errors in architecture statements.\n");
-	yyerrok;
-	pop_scope();
+	if ($11) delete[]$11;
       }
   ;
 

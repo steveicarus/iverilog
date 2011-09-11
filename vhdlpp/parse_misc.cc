@@ -30,6 +30,17 @@
 
 using namespace std;
 
+void bind_entity_to_active_scope(const char*ename, ActiveScope*scope)
+{
+      perm_string ekey = lex_strings.make(ename);
+      std::map<perm_string,Entity*>::const_iterator idx = design_entities.find(ekey);
+      if (idx == design_entities.end()) {
+	    return;
+      }
+
+      scope->bind(idx->second);
+}
+
 void bind_architecture_to_entity(const char*ename, Architecture*arch)
 {
       perm_string ekey = lex_strings.make(ename);

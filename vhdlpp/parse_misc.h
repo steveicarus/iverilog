@@ -28,6 +28,7 @@ class Package;
 class ScopeBase;
 class VType;
 
+extern void bind_entity_to_active_scope(const char*ename, ActiveScope*scope);
 extern void bind_architecture_to_entity(const char*ename, Architecture*arch);
 
 extern const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,

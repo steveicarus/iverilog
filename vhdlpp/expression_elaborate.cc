@@ -24,7 +24,7 @@
 # include  "vsignal.h"
 # include  <iostream>
 # include  <typeinfo>
-# include  <cassert>
+# include  "ivl_assert.h"
 
 using namespace std;
 
@@ -89,9 +89,9 @@ int ExpName::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
 		  bool flag;
 
 		  flag = index_->evaluate(arc, use_msb);
-		  assert(flag);
+		  ivl_assert(*this, flag);
 		  flag = lsb_->evaluate(arc, use_lsb);
-		  assert(flag);
+		  ivl_assert(*this, flag);
 
 		  vector<VTypeArray::range_t> use_dims (1);
 		  use_dims[0] = VTypeArray::range_t(use_msb, use_lsb);
@@ -220,7 +220,7 @@ int ExpAggregate::elaborate_expr_array_(Entity*ent, Architecture*arc, const VTyp
 	    cdx += ecur->count_choices();
       }
 
-      assert(cdx == choice_count);
+      ivl_assert(*this, cdx == choice_count);
 
       for (size_t idx = 0 ; idx < aggregate_.size() ; idx += 1) {
 	    if (aggregate_[idx].alias_flag)
@@ -251,7 +251,7 @@ int ExpArithmetic::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltyp
 	    ltype = probe_type(ent, arc);
       }
 
-      assert(ltype != 0);
+      ivl_assert(*this, ltype != 0);
       errors += elaborate_exprs(ent, arc, ltype);
       return errors;
 }
@@ -272,7 +272,7 @@ int ExpBitstring::elaborate_expr(Entity*, Architecture*, const VType*)
 
 int ExpCharacter::elaborate_expr(Entity*, Architecture*, const VType*ltype)
 {
-      assert(ltype != 0);
+      ivl_assert(*this, ltype != 0);
       set_type(ltype);
       return 0;
 }
@@ -289,7 +289,7 @@ int ExpConditional::elaborate_expr(Entity*ent, Architecture*arc, const VType*lty
       if (ltype == 0)
 	    ltype = probe_type(ent, arc);
 
-      assert(ltype);
+      ivl_assert(*this, ltype);
 
       set_type(ltype);
 
@@ -322,6 +322,11 @@ int ExpFunc::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
       return errors;
 }
 
+const VType* ExpInteger::probe_type(Entity*, Architecture*) const
+{
+      return primitive_INTEGER;
+}
+
 int ExpInteger::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
 {
       int errors = 0;
@@ -330,7 +335,7 @@ int ExpInteger::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
 	    ltype = probe_type(ent, arc);
       }
 
-      assert(ltype != 0);
+      ivl_assert(*this, ltype != 0);
 
       return errors;
 }
@@ -343,7 +348,7 @@ int ExpLogical::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
 	    ltype = probe_type(ent, arc);
       }
 
-      assert(ltype != 0);
+      ivl_assert(*this, ltype != 0);
       errors += elaborate_exprs(ent, arc, ltype);
       return errors;
 }
@@ -371,7 +376,7 @@ const VType* ExpName::probe_type(Entity*ent, Architecture*arc) const
 
 int ExpName::elaborate_expr(Entity*, Architecture*, const VType*ltype)
 {
-      assert(ltype != 0);
+      ivl_assert(*this, ltype != 0);
 
       return 0;
 }
@@ -414,14 +419,14 @@ int ExpRelation::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
 	    ltype = probe_type(ent, arc);
       }
 
-      assert(ltype != 0);
+      ivl_assert(*this, ltype != 0);
       errors += elaborate_exprs(ent, arc, ltype);
       return errors;
 }
 
 int ExpString::elaborate_expr(Entity*, Architecture*, const VType*ltype)
 {
-      assert(ltype != 0);
+      ivl_assert(*this, ltype != 0);
       set_type(ltype);
       return 0;
 }
