@@ -217,6 +217,7 @@ class ExpAggregate : public Expression {
 
     private:
       int elaborate_expr_array_(Entity*ent, Architecture*arc, const VTypeArray*ltype);
+      int emit_array_(ostream&out, Entity*ent, Architecture*arc, const VTypeArray*ltype);
 
     private:
 	// This is the elements as directly parsed.

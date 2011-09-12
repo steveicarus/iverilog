@@ -19,9 +19,11 @@
 
 # include  "expression.h"
 # include  "vtype.h"
+# include  "architec.h"
 # include  <typeinfo>
 # include  <iostream>
 # include  <cstdlib>
+# include  "ivl_assert.h"
 # include  <cassert>
 
 using namespace std;
@@ -68,12 +70,18 @@ int ExpUnary::emit_operand1(ostream&out, Entity*ent, Architecture*arc)
 
 int ExpAggregate::emit(ostream&out, Entity*ent, Architecture*arc)
 {
+      if (const VTypeArray*atype = dynamic_cast<const VTypeArray*> (peek_type()))
+	    return emit_array_(out, ent, arc, atype);
+
+      return Expression::emit(out, ent, arc);
+}
+
+int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const VTypeArray*atype)
+{
       int errors = 0;
 
 	// Special case: The aggregate is a single "others" item.
       if (aggregate_.size() == 1 && aggregate_[0].choice->others()) {
-	    const VTypeArray*atype = dynamic_cast<const VTypeArray*> (peek_type());
-	    assert(atype);
 	    assert(atype->dimensions() == 1);
 
 	    const VTypeArray::range_t&rang = atype->dimension(0);
@@ -87,7 +95,46 @@ int ExpAggregate::emit(ostream&out, Entity*ent, Architecture*arc)
 	    return errors;
       }
 
-      return Expression::emit(out, ent, arc);
+      const VTypeArray::range_t&rang = atype->dimension(0);
+      assert(! rang.is_box());
+
+      map<int64_t,choice_element*> element_map;
+      choice_element*element_other = 0;
+
+      for (size_t idx = 0 ; idx < aggregate_.size() ; idx += 1) {
+	    if (aggregate_[idx].choice->others()) {
+		  ivl_assert(*this, element_other == 0);
+		  element_other = &aggregate_[idx];
+		  continue;
+	    }
+
+	    Expression*tmp = aggregate_[idx].choice->simple_expression(false);
+	    int64_t tmp_val;
+	    if (! tmp->evaluate(arc, tmp_val)) {
+		  cerr << tmp->get_fileline() << ": error: Unable to evaluate aggregate choice expression." << endl;
+		  errors += 1;
+		  continue;
+	    }
+
+	    element_map[tmp_val] = &aggregate_[idx];
+      }
+
+      ivl_assert(*this, rang.msb() >= rang.lsb());
+
+      out << "{";
+      for (int idx = rang.msb() ; idx >= rang.lsb() ; idx -= 1) {
+	    choice_element*cur = element_map[idx];
+	    if (cur == 0)
+		  cur = element_other;
+	    ivl_assert(*this, cur != 0);
+
+	    if (idx < rang.msb())
+		  out << ", ";
+	    errors += cur->expr->emit(out, ent, arc);
+      }
+      out << "}";
+
+      return errors;
 }
 
 int ExpAttribute::emit(ostream&out, Entity*ent, Architecture*arc)
