@@ -1956,7 +1956,7 @@ static unsigned long divide2words(unsigned long a, unsigned long b,
 	    remain += 1;
 	    if (remain >= b) {
 		  remain -= b;
-		  result += 1;
+		  tmp_result += 1;
 	    }
 
 	      // Now 0x1_0...0 = b*tmp_result + remain
@@ -1972,7 +1972,9 @@ static unsigned long divide2words(unsigned long a, unsigned long b,
 
 	      // The new iteration starts with high*remain + a.
 	    remain = multiply_with_carry(high, remain, high);
-	    a = add_with_carry(a, remain, high);
+	    a += remain;
+            if(a < remain)
+              high += 1;
 
 	      // Now result*b + {high,a} == the input {high,a}. It is
 	      // possible that the new high >= 1. If so, it will
