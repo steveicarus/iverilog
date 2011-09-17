@@ -105,11 +105,11 @@ PBlock::PBlock(BL_TYPE t)
 
 PBlock::~PBlock()
 {
-      for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < list_.size() ;  idx += 1)
 	    delete list_[idx];
 }
 
-void PBlock::set_statement(const svector<Statement*>&st)
+void PBlock::set_statement(const vector<Statement*>&st)
 {
       list_ = st;
 }

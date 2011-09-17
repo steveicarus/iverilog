@@ -310,7 +310,7 @@ static long check_enum_seq_value(const YYLTYPE&loc, verinum *arg, bool zero_ok)
 
       PEventStatement*event_statement;
       Statement*statement;
-      svector<Statement*>*statement_list;
+      vector<Statement*>*statement_list;
 
       PTaskFuncArg function_type;
 
@@ -454,7 +454,7 @@ static long check_enum_seq_value(const YYLTYPE&loc, verinum *arg, bool zero_ok)
 %type <enum_type> enum_data_type
 
 %type <wires> task_item task_item_list task_item_list_opt
-%type <wires> task_port_item task_port_decl task_port_decl_list
+%type <wires> task_port_item task_port_decl task_port_decl_list task_port_decl_list_opt
 %type <wires> function_item function_item_list
 
 %type <named_pexpr> port_name parameter_value_byname
@@ -1650,6 +1650,16 @@ expr_primary
 	FILE_NAME(tmp, @1);
 	delete[]$1;
 	$$ = tmp;
+      }
+  | hierarchy_identifier '(' ')'
+      { const vector<PExpr*> empty;
+	PECallFunction*tmp = new PECallFunction(*$1, empty);
+	FILE_NAME(tmp, @1);
+	delete $1;
+	$$ = tmp;
+	if (!gn_system_verilog()) {
+	      yyerror(@1, "error: Empty function argument list requires SystemVerilog.");
+	}
       }
 
   /* Many of the VAMS built-in functions are available as builtin
@@ -2854,11 +2864,24 @@ module_item
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
-    function_item_list statement
+    function_item_list statement_list
     K_endfunction
       { current_function->set_ports($7);
-	current_function->set_statement($8);
 	current_function->set_return($3);
+	assert($8 && $8->size() > 0);
+	if ($8->size() == 1) {
+	      current_function->set_statement((*$8)[0]);
+	      delete $8;
+	} else {
+	      PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+	      FILE_NAME(tmp, @8);
+	      tmp->set_statement( *$8 );
+	      current_function->set_statement(tmp);
+	      delete $8;
+	      if (!gn_system_verilog()) {
+		    yyerror(@8, "error: Function body with multiple statements requres SystemVerilog.");
+	      }
+	}
 	pform_pop_scope();
 	current_function = 0;
 	delete[]$4;
@@ -2868,20 +2891,42 @@ module_item
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
-    '(' task_port_decl_list ')' ';'
+    '(' task_port_decl_list_opt ')' ';'
     block_item_decls_opt
-    statement
+    statement_list
     K_endfunction
       { current_function->set_ports($7);
-	current_function->set_statement($11);
 	current_function->set_return($3);
+	assert($11 && $11->size() > 0);
+	if ($11->size() == 1) {
+	      current_function->set_statement((*$11)[0]);
+	      delete $11;
+	} else {
+	      PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+	      FILE_NAME(tmp, @11);
+	      tmp->set_statement( *$11 );
+	      current_function->set_statement(tmp);
+	      delete $11;
+	      if (!gn_system_verilog()) {
+		    yyerror(@11, "error: Function body with multiple statements requres SystemVerilog.");
+	      }
+	}
 	pform_pop_scope();
 	current_function = 0;
 	delete[]$4;
+	if ($7==0 && !gn_system_verilog()) {
+	      yyerror(@7, "error: Empty parenthesis syntax requires SystemVerilog.");
+	}
       }
   | K_function automatic_opt function_range_or_type_opt IDENTIFIER error K_endfunction
-      {
+      { /* */
+	if (current_function) {
+	      pform_pop_scope();
+	      current_function = 0;
+	}
 	assert(current_function == 0);
+	yyerror(@1, "error: Syntax error defining function.");
+	yyerrok;
 	delete[]$4;
       }
 
@@ -4582,17 +4627,17 @@ compressed_statement
 	;
 
 statement_list
-	: statement_list statement
-		{ svector<Statement*>*tmp = new svector<Statement*>(*$1, $2);
-		  delete $1;
-		  $$ = tmp;
-		}
-	| statement
-		{ svector<Statement*>*tmp = new svector<Statement*>(1);
-		  (*tmp)[0] = $1;
-		  $$ = tmp;
-		}
-	;
+  : statement_list statement
+      { vector<Statement*>*tmp = $1;
+	tmp->push_back($2);
+	$$ = tmp;
+      }
+  | statement
+      { vector<Statement*>*tmp = new vector<Statement*>(1);
+	tmp->at(0) = $1;
+	$$ = tmp;
+      }
+  ;
 
 statement_or_null
   : statement
@@ -5006,6 +5051,11 @@ task_port_decl
        $$ = tmp;
      }
 ;
+
+task_port_decl_list_opt
+  : task_port_decl_list { $$ = $1; }
+  |                     { $$ = 0; }
+  ;
 
 task_port_decl_list
 	: task_port_decl_list ',' task_port_decl

@@ -1513,7 +1513,7 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
             elaborate_scope_events_(des, my_scope, events);
       }
 
-      for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < list_.size() ;  idx += 1)
 	    list_[idx] -> elaborate_scope(des, my_scope);
 }
 

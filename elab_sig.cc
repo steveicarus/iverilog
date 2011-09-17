@@ -450,7 +450,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	/* Make sure the function has at least one input port. If it
 	   fails this test, print an error message. Keep going so we
 	   can find more errors. */
-      if (ports_ == 0) {
+      if (ports_ == 0 && !gn_system_verilog()) {
 	    cerr << get_fileline() << ": error: Function " << fname
 		 << " has no ports." << endl;
 	    cerr << get_fileline() << ":      : Functions must have"
@@ -721,7 +721,7 @@ void PBlock::elaborate_sig(Design*des, NetScope*scope) const
 
 	// elaborate_sig in the statements included in the
 	// block. There may be named blocks in there.
-      for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < list_.size() ;  idx += 1)
 	    list_[idx] -> elaborate_sig(des, my_scope);
 }
 

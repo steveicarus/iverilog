@@ -20,6 +20,7 @@
  */
 
 # include  <string>
+# include  <vector>
 # include  <list>
 # include  "ivl_target.h"
 # include  "svector.h"
@@ -167,7 +168,7 @@ class PBlock  : public PScope, public Statement {
 
       BL_TYPE bl_type() const { return bl_type_; }
 
-      void set_statement(const svector<Statement*>&st);
+      void set_statement(const std::vector<Statement*>&st);
 
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
@@ -176,7 +177,7 @@ class PBlock  : public PScope, public Statement {
 
     private:
       const BL_TYPE bl_type_;
-      svector<Statement*>list_;
+      std::vector<Statement*>list_;
 };
 
 class PCallTask  : public Statement {

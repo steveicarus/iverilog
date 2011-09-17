@@ -2562,13 +2562,13 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	// statement. There is no need to keep the block node. Also,
 	// don't elide named blocks, because they might be referenced
 	// elsewhere.
-      if ((list_.count() == 1) && (pscope_name() == 0)) {
+      if ((list_.size() == 1) && (pscope_name() == 0)) {
 	    assert(list_[0]);
 	    NetProc*tmp = list_[0]->elaborate(des, nscope);
 	    return tmp;
       }
 
-      for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < list_.size() ;  idx += 1) {
 	    assert(list_[idx]);
 	    NetProc*tmp = list_[idx]->elaborate(des, nscope);
 	      // If the statement fails to elaborate, then simply
@@ -3879,6 +3879,7 @@ void PFunction::elaborate(Design*des, NetScope*scope) const
 
       assert(def);
 
+      ivl_assert(*this, statement_);
       NetProc*st = statement_->elaborate(des, scope);
       if (st == 0) {
 	    cerr << statement_->get_fileline() << ": error: Unable to elaborate "

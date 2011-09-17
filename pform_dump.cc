@@ -591,7 +591,7 @@ void PBlock::dump(ostream&out, unsigned ind) const
 	    dump_wires_(out, ind+2);
       }
 
-      for (unsigned idx = 0 ;  idx < list_.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < list_.size() ;  idx += 1) {
 	    if (list_[idx])
 		  list_[idx]->dump(out, ind+2);
 	    else

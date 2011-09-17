@@ -24,6 +24,7 @@
 # include  "svector.h"
 # include  "StringHeap.h"
 # include  <string>
+# include  <vector>
 # include  <list>
 class Design;
 class NetScope;
