@@ -1106,12 +1106,12 @@ loop_statement
 
     ExpLogical* cond = dynamic_cast<ExpLogical*>($3);
     if(!cond) {
-        errormsg(@3, "Iteration condition is not a correct logical expression");
+        errormsg(@3, "Iteration condition is not a correct logical expression.\n");
     }
     WhileLoopStatement* tmp = new WhileLoopStatement(cond, $5);
     FILE_NAME(tmp, @1);
 
-    sorrymsg(@1, "Loop statements are not supported");
+    sorrymsg(@1, "Loop statements are not supported.\n");
     $$ = tmp;
       }
   | identifier_colon_opt K_for
@@ -1128,7 +1128,7 @@ loop_statement
     delete[]$3;
     FILE_NAME(tmp, @1);
 
-    sorrymsg(@1, "Loop statements are not supported");
+    sorrymsg(@1, "Loop statements are not supported.\n");
     $$ = tmp;
       }
   | identifier_colon_opt K_loop
@@ -1143,7 +1143,7 @@ loop_statement
     BasicLoopStatement* tmp = new BasicLoopStatement($3);
     FILE_NAME(tmp, @1);
 
-    sorrymsg(@1, "Loop statements are not supported");
+    sorrymsg(@1, "Loop statements are not supported.\n");
     $$ = tmp;
       };
 
@@ -1431,32 +1431,36 @@ process_declarative_part_opt
   ;
 
 process_statement
-  : IDENTIFIER ':' K_postponed_opt K_process
+  : identifier_colon_opt K_postponed_opt K_process
     process_sensitivity_list_opt K_is_opt
     process_declarative_part_opt
     K_begin sequence_of_statements
     K_end K_postponed_opt K_process identifier_opt ';'
-      { perm_string iname = lex_strings.make($1);
-	if ($13) {
-	      if (iname != $13)
-		    errormsg(@13, "Process name %s does not match opening name %s.\n",
-			     $13, $1);
-	      delete[]$13;
+      { perm_string iname = $1? lex_strings.make($1) : perm_string();
+	if ($1) delete[]$1;
+	if ($12) {
+	      if (iname.nil()) {
+		    errormsg(@12, "Process end name %s for un-named processes.\n", $12);
+	      } else if (iname != $12) {
+		    errormsg(@12, "Process name %s does not match opening name %s.\n",
+			     $12, $1);
+	      }
+	      delete[]$12;
 	}
 
-	ProcessStatement*tmp = new ProcessStatement(iname, $5, $9);
-	FILE_NAME(tmp, @4);
-	delete $5;
-	delete $9;
+	ProcessStatement*tmp = new ProcessStatement(iname, $4, $8);
+	FILE_NAME(tmp, @3);
+	delete $4;
+	delete $8;
 	$$ = tmp;
       }
 
-  | IDENTIFIER ':' K_postponed_opt K_process
+  | identifier_colon_opt K_postponed_opt K_process
     process_sensitivity_list_opt K_is_opt
     process_declarative_part_opt
     K_begin error
     K_end K_postponed_opt K_process identifier_opt ';'
-      { errormsg(@8, "Too many errors in process sequential statements.\n");
+      { errormsg(@7, "Too many errors in process sequential statements.\n");
 	yyerrok;
 	$$ = 0;
       }

@@ -30,6 +30,8 @@ class perm_string {
       perm_string(const perm_string&that) : text_(that.text_) { }
       ~perm_string() { }
 
+      inline bool nil() const { return text_ == 0; }
+
       perm_string& operator = (const perm_string&that)
       { text_ = that.text_; return *this; }
 
