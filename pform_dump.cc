@@ -53,12 +53,6 @@ ostream& operator << (ostream&o, const PDelays&d)
       return o;
 }
 
-ostream& operator<< (ostream&out, perm_string that)
-{
-      out << that.str();
-      return out;
-}
-
 ostream& operator<< (ostream&out, const index_component_t&that)
 {
       out << "[";

@@ -18,6 +18,7 @@
  */
 
 # include  "StringHeap.h"
+# include  <iostream>
 # include  <cstdlib>
 # include  <cstring>
 # include  <cassert>
@@ -198,4 +199,13 @@ bool operator < (perm_string a, perm_string b)
 	    return true;
 
       return false;
+}
+
+ostream& operator << (ostream&out, perm_string that)
+{
+      if (that.nil())
+	    out << "<nil>";
+      else
+	    out << that.str();
+      return out;
 }

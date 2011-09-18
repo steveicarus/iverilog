@@ -60,6 +60,7 @@ extern bool operator >  (perm_string a, perm_string b);
 extern bool operator <  (perm_string a, perm_string b);
 extern bool operator >= (perm_string a, perm_string b);
 extern bool operator <= (perm_string a, perm_string b);
+extern ostream& operator << (ostream&out, perm_string that);
 
 /*
  * The string heap is a way to permanently allocate strings
