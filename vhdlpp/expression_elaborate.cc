@@ -310,7 +310,7 @@ int ExpConditional::elaborate_expr(Entity*ent, Architecture*arc, const VType*lty
       return errors;
 }
 
-int ExpFunc::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
+int ExpFunc::elaborate_expr(Entity*ent, Architecture*arc, const VType*)
 {
       int errors = 0;
 
@@ -425,6 +425,13 @@ int ExpRelation::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
 }
 
 int ExpString::elaborate_expr(Entity*, Architecture*, const VType*ltype)
+{
+      ivl_assert(*this, ltype != 0);
+      set_type(ltype);
+      return 0;
+}
+
+int ExpUNot::elaborate_expr(Entity*, Architecture*, const VType*ltype)
 {
       ivl_assert(*this, ltype != 0);
       set_type(ltype);

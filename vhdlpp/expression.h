@@ -496,6 +496,7 @@ class ExpUNot : public ExpUnary {
       ExpUNot(Expression*op1);
       ~ExpUNot();
 
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent = 0) const;
 };
