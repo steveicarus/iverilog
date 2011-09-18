@@ -25,6 +25,25 @@ int SequentialStmt::elaborate(Entity*, Architecture*)
       return 0;
 }
 
+int LoopStatement::elaborate_substatements(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      for (list<SequentialStmt*>::iterator cur = stmts_.begin()
+		 ; cur != stmts_.end() ; ++cur) {
+	    errors += (*cur)->elaborate(ent, arc);
+      }
+
+      return errors;
+}
+
+int ForLoopStatement::elaborate(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      errors += elaborate_substatements(ent, arc);
+      return errors;
+}
+
 int IfSequential::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;
@@ -92,11 +111,6 @@ int SignalSeqAssignment::elaborate(Entity*ent, Architecture*arc)
 int ProcedureCall::elaborate(Entity*, Architecture*)
 {
       return 0;
-}
-
-int ForLoopStatement::elaborate(Entity*, Architecture*)
-{
-    return 0;
 }
 
 int VariableSeqAssignment::elaborate(Entity*ent, Architecture*arc)

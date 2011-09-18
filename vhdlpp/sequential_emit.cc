@@ -19,8 +19,12 @@
 
 # include  "sequential.h"
 # include  "expression.h"
+# include  "architec.h"
+# include  "compiler.h"
 # include  <iostream>
+# include  <cstdio>
 # include  <typeinfo>
+# include  <ivl_assert.h>
 
 int SequentialStmt::emit(ostream&out, Entity*, Architecture*)
 {
@@ -120,20 +124,69 @@ int ProcedureCall::emit(ostream&out, Entity*, Architecture*)
       return 1;
 }
 
-int LoopStatement::emit(ostream&out, Entity*, Architecture*)
+int LoopStatement::emit_substatements(ostream&out, Entity*ent, Architecture*arc)
 {
-    out << " // " << get_fileline() << ": internal error: "
-    << "I don't know how to emit this sequential statement! "
-    << "type=" << typeid(*this).name() << endl;
-    return 1;
+      int errors = 0;
+      for (list<SequentialStmt*>::iterator cur = stmts_.begin()
+		 ; cur != stmts_.end() ; ++cur) {
+	    SequentialStmt*tmp = *cur;
+	    errors += tmp->emit(out, ent, arc);
+      }
+      return errors;
 }
 
-int ForLoopStatement::emit(ostream&out, Entity*, Architecture*)
+int ForLoopStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 {
-    out << " // " << get_fileline() << ": internal error: "
-    << "I don't know how to emit this sequential statement! "
-    << "type=" << typeid(*this).name() << endl;
-    return 1;
+      int errors = 0;
+      ivl_assert(*this, range_);
+
+      int64_t start_val;
+      bool start_rc = range_->msb()->evaluate(arc, start_val);
+
+      int64_t finish_val;
+      bool finish_rc = range_->lsb()->evaluate(arc, finish_val);
+
+      ivl_assert(*this, start_rc);
+      ivl_assert(*this, finish_rc);
+
+      if (range_->is_downto() && start_val < finish_val) {
+	    out << "begin /* Degenerate loop at " << get_fileline() << " */ end" << endl;
+	    return errors;
+      }
+
+      if (!range_->is_downto() && start_val > finish_val) {
+	    out << "begin /* Degenerate loop at " << get_fileline() << " */ end" << endl;
+	    return errors;
+      }
+
+      perm_string scope_name = loop_name();
+      if (scope_name.nil()) {
+	    char buf[80];
+	    snprintf(buf, sizeof buf, "__%p", this);
+	    scope_name = lex_strings.make(buf);
+      }
+
+      out << "begin : " << scope_name << endl;
+      out << "longint \\" << it_ << " ;" << endl;
+      out << "for (\\" << it_ << " = " << start_val << " ; ";
+      if (range_->is_downto())
+	    out << "\\" << it_ << " >= " << finish_val;
+      else
+	    out << "\\" << it_ << " <= " << finish_val;
+      out << "; \\" << it_ << " = \\" << it_;
+      if (range_->is_downto())
+	    out << " - 1";
+      else
+	    out << " + 1";
+
+      out << ") begin" << endl;
+
+      errors += emit_substatements(out, ent, arc);
+
+      out << "end" << endl;
+      out << "end /* " << scope_name << " */" << endl;
+
+      return errors;
 }
 
 int WhileLoopStatement::emit(ostream&out, Entity*, Architecture*)

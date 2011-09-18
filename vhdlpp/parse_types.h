@@ -77,9 +77,12 @@ class range_t {
       Expression*msb() { return direction_? left_ : right_; }
       Expression*lsb() { return direction_? right_: left_;  }
 
+      inline bool is_downto() const { return direction_; }
+
     private:
       Expression *left_, *right_;
       bool direction_;
+
     private: //not implemented
       range_t(const range_t&);
       range_t operator=(const range_t&);

@@ -39,6 +39,28 @@ class SequentialStmt  : public LineInfo {
       virtual void dump(ostream&out, int indent) const;
 };
 
+/*
+ * The LoopStatement is an abstract base class for the various loop
+ * statements.
+ */
+class LoopStatement : public SequentialStmt {
+    public:
+      LoopStatement(perm_string block_name, list<SequentialStmt*>*);
+      virtual ~LoopStatement();
+
+      inline perm_string loop_name() const { return name_; }
+
+      void dump(ostream&out, int indent)  const;
+
+    protected:
+      int elaborate_substatements(Entity*ent, Architecture*arc);
+      int emit_substatements(std::ostream&out, Entity*ent, Architecture*arc);
+
+    private:
+      perm_string name_;
+      std::list<SequentialStmt*> stmts_;
+};
+
 class IfSequential  : public SequentialStmt {
 
     public:
@@ -151,19 +173,6 @@ class ProcedureCall : public SequentialStmt {
       std::list<named_expr_t*>* param_list_;
 };
 
-class LoopStatement : public SequentialStmt {
-    public:
-       LoopStatement(list<SequentialStmt*>*);
-       virtual ~LoopStatement();
-
-       int elaborate(Entity*ent, Architecture*arc) = 0;
-       int emit(ostream&out, Entity*entity, Architecture*arc);
-       void dump(ostream&out, int indent)  const;
-
-    protected:
-       std::list<SequentialStmt*> stmts_;
-};
-
 class VariableSeqAssignment  : public SequentialStmt {
     public:
       VariableSeqAssignment(Expression*sig, Expression*rval);
@@ -181,7 +190,8 @@ class VariableSeqAssignment  : public SequentialStmt {
 
 class WhileLoopStatement : public LoopStatement {
     public:
-      WhileLoopStatement(ExpLogical*, list<SequentialStmt*>*);
+      WhileLoopStatement(perm_string loop_name,
+			 ExpLogical*, list<SequentialStmt*>*);
       ~WhileLoopStatement();
 
       int elaborate(Entity*ent, Architecture*arc);
@@ -194,7 +204,8 @@ class WhileLoopStatement : public LoopStatement {
 
 class ForLoopStatement : public LoopStatement {
     public:
-      ForLoopStatement(perm_string, range_t*, list<SequentialStmt*>*);
+      ForLoopStatement(perm_string loop_name,
+		       perm_string index, range_t*, list<SequentialStmt*>*);
       ~ForLoopStatement();
 
       int elaborate(Entity*ent, Architecture*arc);
@@ -208,12 +219,11 @@ class ForLoopStatement : public LoopStatement {
 
 class BasicLoopStatement : public LoopStatement {
     public:
-       BasicLoopStatement(list<SequentialStmt*>*);
-       ~BasicLoopStatement();
+      BasicLoopStatement(perm_string lname, list<SequentialStmt*>*);
+      ~BasicLoopStatement();
 
       int elaborate(Entity*ent, Architecture*arc);
       int emit(ostream&out, Entity*entity, Architecture*arc);
       void dump(ostream&out, int indent) const;
-
 };
 #endif

@@ -153,7 +153,8 @@ ProcedureCall::~ProcedureCall()
     }
 }
 
-LoopStatement::LoopStatement(list<SequentialStmt*>* stmts)
+LoopStatement::LoopStatement(perm_string name, list<SequentialStmt*>* stmts)
+: name_(name)
 {
     if (stmts) stmts_.splice(stmts_.end(), *stmts);
 }
@@ -167,8 +168,8 @@ LoopStatement::~LoopStatement()
     }
 }
 
-ForLoopStatement::ForLoopStatement(perm_string it, range_t* range, list<SequentialStmt*>* stmts)
-: LoopStatement(stmts), it_(it), range_(range)
+ForLoopStatement::ForLoopStatement(perm_string scope_name, perm_string it, range_t* range, list<SequentialStmt*>* stmts)
+: LoopStatement(scope_name, stmts), it_(it), range_(range)
 {
 }
 
@@ -188,8 +189,8 @@ VariableSeqAssignment::~VariableSeqAssignment()
       delete rval_;
 }
 
-WhileLoopStatement::WhileLoopStatement(ExpLogical* cond, list<SequentialStmt*>* stmts)
-: LoopStatement(stmts), cond_(cond)
+WhileLoopStatement::WhileLoopStatement(perm_string lname, ExpLogical* cond, list<SequentialStmt*>* stmts)
+: LoopStatement(lname, stmts), cond_(cond)
 {
 }
 
@@ -198,8 +199,8 @@ WhileLoopStatement::~WhileLoopStatement()
     delete cond_;
 }
 
-BasicLoopStatement::BasicLoopStatement(list<SequentialStmt*>* stmts)
-: LoopStatement(stmts)
+BasicLoopStatement::BasicLoopStatement(perm_string lname, list<SequentialStmt*>* stmts)
+: LoopStatement(lname, stmts)
 {
 }
 

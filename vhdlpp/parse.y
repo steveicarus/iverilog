@@ -1098,53 +1098,61 @@ loop_statement
     K_while expression_logical K_loop
     sequence_of_statements
     K_end K_loop identifier_opt ';'
-      {
-    if($1 && strcmp($1, $8))
-            errormsg(@1, "Loop statement name doesn't match closing name.\n");
-    if($1) delete[]$1;
-    if($8) delete[]$8;
+      { perm_string loop_name = $1? lex_strings.make($1) : perm_string() ;
+	if ($8 && !$1) {
+	      errormsg(@8, "Loop statement closing name %s for un-named statement\n", $8);
+	} else if($8 && loop_name != $8) {
+	      errormsg(@1, "Loop statement name %s doesn't match closing name %s.\n", loop_name.str(), $8);
+	}
+	if($1) delete[]$1;
+	if($8) delete[]$8;
 
-    ExpLogical* cond = dynamic_cast<ExpLogical*>($3);
-    if(!cond) {
-        errormsg(@3, "Iteration condition is not a correct logical expression.\n");
-    }
-    WhileLoopStatement* tmp = new WhileLoopStatement(cond, $5);
-    FILE_NAME(tmp, @1);
+	ExpLogical* cond = dynamic_cast<ExpLogical*>($3);
+	if(!cond) {
+	      errormsg(@3, "Iteration condition is not a correct logical expression.\n");
+	}
+	WhileLoopStatement* tmp = new WhileLoopStatement(loop_name, cond, $5);
+	FILE_NAME(tmp, @1);
 
-    sorrymsg(@1, "Loop statements are not supported.\n");
-    $$ = tmp;
+	sorrymsg(@1, "Loop statements are not supported.\n");
+	$$ = tmp;
       }
-  | identifier_colon_opt K_for
-    IDENTIFIER K_in range K_loop
-    sequence_of_statements
-    K_end K_loop identifier_opt ';'
-      {
-    if($1 && strcmp($1, $10))
-        errormsg(@1, "Loop statement name doesn't match closing name.\n");
-    if($1)  delete[] $1;
-    if($10) delete[] $10;
 
-    ForLoopStatement* tmp = new ForLoopStatement(lex_strings.make($3), $5, $7);
-    delete[]$3;
-    FILE_NAME(tmp, @1);
+  | identifier_colon_opt
+    K_for IDENTIFIER K_in range
+    K_loop sequence_of_statements K_end K_loop identifier_opt ';'
+      { perm_string loop_name = $1? lex_strings.make($1) : perm_string() ;
+	perm_string index_name = lex_strings.make($3);
+	if ($10 && !$1) {
+	      errormsg(@10, "Loop statement closing name %s for un-named statement\n", $10);
+	} else if($10 && loop_name != $10) {
+	      errormsg(@1, "Loop statement name %s doesn't match closing name %s.\n", loop_name.str(), $10);
+	}
+	if($1)  delete[] $1;
+	delete[] $3;
+	if($10) delete[] $10;
 
-    sorrymsg(@1, "Loop statements are not supported.\n");
-    $$ = tmp;
+	ForLoopStatement* tmp = new ForLoopStatement(loop_name, index_name, $5, $7);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
-  | identifier_colon_opt K_loop
-    sequence_of_statements
-    K_end K_loop identifier_opt ';'
-      {
-    if($1 && strcmp($1, $6))
-        errormsg(@1, "Loop statement name doesn't match closing name.\n");
-    if($1) delete[]$1;
-    if($6) delete[]$6;
 
-    BasicLoopStatement* tmp = new BasicLoopStatement($3);
-    FILE_NAME(tmp, @1);
+  | identifier_colon_opt
+    K_loop sequence_of_statements K_end K_loop identifier_opt ';'
+      { perm_string loop_name = $1? lex_strings.make($1) : perm_string() ;
+	if ($6 && !$1) {
+	      errormsg(@6, "Loop statement closing name %s for un-named statement\n", $6);
+	} else if($6 && loop_name != $6) {
+	      errormsg(@1, "Loop statement name %s doesn't match closing name %s.\n", loop_name.str(), $6);
+	}
+	if($1) delete[]$1;
+	if($6) delete[]$6;
 
-    sorrymsg(@1, "Loop statements are not supported.\n");
-    $$ = tmp;
+	BasicLoopStatement* tmp = new BasicLoopStatement(loop_name, $3);
+	FILE_NAME(tmp, @2);
+
+	sorrymsg(@1, "Loop statements are not supported.\n");
+	$$ = tmp;
       };
 
 mode
