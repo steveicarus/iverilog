@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -117,7 +117,7 @@ void compile_variable(char*label, char*name,
 		  obj = vpip_make_int4(name, msb, lsb, net);
 		  break;
 		case vpiIntVar: // This handles all the atom2 int types
-		  obj = vpip_make_int2(name, msb, lsb, net);
+		  obj = vpip_make_int2(name, msb, lsb, signed_flag, net);
 		  break;
 		default:
 		  fprintf(stderr, "internal error: %s: vpi_type_code=%d\n", name, vpi_type_code);

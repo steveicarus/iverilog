@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -256,6 +256,8 @@ static const char* vpi_type_values(PLI_INT32 code)
 {
       static char buf[32];
       switch (code) {
+	  case vpiBitVar:
+	    return "vpiBitVar";
 	  case vpiByteVar:
 	    return "vpiByteVar";
 	  case vpiConstant:

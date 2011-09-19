@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -996,31 +996,39 @@ vpiHandle vpip_make_int4(const char*name, int msb, int lsb, vvp_net_t*vec)
 }
 
 /*
- * Construct a vpi
+ * Construct the two-state SystemVerilog variables.
  */
-vpiHandle vpip_make_int2(const char*name, int msb, int lsb, vvp_net_t*vec)
+vpiHandle vpip_make_int2(const char*name, int msb, int lsb, bool signed_flag,
+                         vvp_net_t*vec)
 {
-      vpiHandle obj = vpip_make_net4(name, msb,lsb, true, vec);
+      vpiHandle obj = vpip_make_net4(name, msb, lsb, signed_flag, vec);
 
-      assert(lsb == 0);
-      switch (msb) {
-	  case 7:
-	    obj->vpi_type = &vpip_byte_rt;
-	    break;
-	  case 15:
-	    obj->vpi_type = &vpip_shortint_rt;
-	    break;
-	  case 31:
-	    obj->vpi_type = &vpip_int_rt;
-	    break;
-	  case 63:
-	    obj->vpi_type = &vpip_longint_rt;
-	    break;
-	  default:
-	      // Every other type of bit vector is a vpiBitVar with
-	      // array dimensions.
+	// All unsigned 2-state variables are a vpiBitVar. All 2-state
+	// variables with a non-zero lsb are also a vpiBitVar.
+      if ((! signed_flag) || (lsb != 0) ) {
 	    obj->vpi_type = &vpip_bitvar_rt;
-	    break;
+      } else {
+	      // These could also be bit declarations with matching
+	      // information, but for now they get the apparent type.
+	    switch (msb) {
+		case 7:
+		  obj->vpi_type = &vpip_byte_rt;
+		  break;
+		case 15:
+		  obj->vpi_type = &vpip_shortint_rt;
+		  break;
+		case 31:
+		  obj->vpi_type = &vpip_int_rt;
+		  break;
+		case 63:
+		  obj->vpi_type = &vpip_longint_rt;
+		  break;
+		default:
+		    // Every other type of bit vector is a vpiBitVar with
+		    // array dimensions.
+		  obj->vpi_type = &vpip_bitvar_rt;
+		  break;
+	    }
       }
 
       return obj;

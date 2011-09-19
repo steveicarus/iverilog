@@ -1853,8 +1853,8 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
 	    expr_type_   = use_enum->base_type();
 	    expr_width_  = use_enum->base_width();
-            min_width_   = expr_width_;
-            signed_flag_ = false;
+	    min_width_   = expr_width_;
+	    signed_flag_ = par_enum->has_sign();
 
 	    return expr_width_;
       }
@@ -3654,18 +3654,29 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 				<< "vector slice." << endl;
 			des->errors += 1;
 			return 0;
-		} else if (t == IVL_VT_REAL) {
+		} else if (t == IVL_VT_LOGIC || t == IVL_VT_BOOL ||
+				t == IVL_VT_REAL) {
+
+			if (dynamic_cast<NetEConst *> (ip) ||
+				dynamic_cast<NetECReal*> (ip)) {
+				/*
+				 * invalid operand: operand is a constant
+				 * or real number
+				 */
+				cerr << get_fileline() << ": error: "
+					<< "inappropriate use of "
+					<< human_readable_op(op_, true)
+					<< " operator." << endl;
+				des->errors += 1;
+				return 0;
+			}
+
 			/*
-			 * TODO: Need to modify draw_unary_real() to support
-			 * operations on real variables
+			 * **** Valid use of operator ***
+			 * For REAL variables draw_unary_real() is ivoked during
+			 * evaluation and for LOGIC/BOOLEAN draw_unary_expr()
+			 * is called for evaluation.
 			 */
-			cerr << get_fileline() << ": sorry: "
-				<< human_readable_op(op_, true)
-				<< " operation is not yet supported on "
-				<< "reals." << endl;
-			des->errors += 1;
-			return 0;
-		} else if (t == IVL_VT_LOGIC || t == IVL_VT_BOOL) {
 			tmp = new NetEUnary(op_, ip, expr_wid, signed_flag_);
 			tmp->set_line(*this);
 		} else {

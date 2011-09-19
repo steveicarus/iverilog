@@ -652,6 +652,9 @@ extern const char* ivl_nature_name(ivl_nature_t net);
  *    of the enumeration should match the length of this string. Every
  *    name also has bits that make up the value.
  *
+ * ivl_enum_signed
+ *    Is the base type for the enum signed?
+ *
  * ivl_enum_type
  *    Get the data-type for the base type that the enum uses. This
  *    will be either IVL_VT_BOOL or IVL_VT_LOGIC
@@ -664,8 +667,12 @@ extern const char* ivl_nature_name(ivl_nature_t net);
 extern unsigned ivl_enum_names(ivl_enumtype_t net);
 extern const char*ivl_enum_name(ivl_enumtype_t net, unsigned idx);
 extern const char*ivl_enum_bits(ivl_enumtype_t net, unsigned idx);
+extern int ivl_enum_signed(ivl_enumtype_t net);
 extern ivl_variable_type_t ivl_enum_type(ivl_enumtype_t net);
 extern unsigned ivl_enum_width(ivl_enumtype_t net);
+
+extern const char*ivl_enum_file(ivl_enumtype_t net);
+extern unsigned ivl_enum_lineno(ivl_enumtype_t net);
 
 /* EVENTS
  *

@@ -263,7 +263,7 @@ extern unsigned vpip_size(__vpiSignal *sig);
 extern struct __vpiScope* vpip_scope(__vpiSignal*sig);
 
 extern vpiHandle vpip_make_int2(const char*name, int msb, int lsb,
-			       vvp_net_t*vec);
+			       bool signed_flag, vvp_net_t*vec);
 extern vpiHandle vpip_make_int4(const char*name, int msb, int lsb,
 			       vvp_net_t*vec);
 extern vpiHandle vpip_make_var4(const char*name, int msb, int lsb,

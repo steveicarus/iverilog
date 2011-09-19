@@ -767,6 +767,11 @@ static bool draw_synthesisable_wait(vhdl_process *proc, stmt_container *containe
    set<ivl_nexus_t> test_nexuses;
    get_nexuses_from_expr(ivl_stmt_cond_expr(sub_stmt), test_nexuses);
 
+   // If the test is not a simple function of one variable then this
+   // template will not work
+   if (test_nexuses.size() != 1)
+      return false;
+
    // Now subtracting this set from the set of edge triggered events
    // should leave just one nexus, which is hopefully the clock.
    // If not, then we fall back on the default draw_wait

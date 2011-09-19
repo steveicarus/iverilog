@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,6 +25,7 @@
 # include  <stdlib.h>
 # include  <math.h>
 # include  <assert.h>
+# include  <stdbool.h>
 
 static unsigned long word_alloc_mask = 0x0f;
 
@@ -442,6 +443,84 @@ static int draw_ternary_real(ivl_expr_t expr)
       return res;
 }
 
+static int increment(ivl_expr_t e, int s, bool pre)
+{
+	ivl_signal_t	sig;
+	int		r;
+	int		one;
+
+	sig = ivl_expr_signal(e);
+	r   = s;
+
+	/* create a temporary word to hold value 1.0 */
+	one = allocate_word();
+	fprintf(vvp_out, "    %%loadi/wr %d, 1, 0x1000; load 1.0\n", one);
+
+	if (!pre) {
+		/*
+		 * post-increment must return the non-incremented value.
+		 * Therefore, copy the current value in a new word and return
+		 * it.
+		 */
+		r = allocate_word();
+		fprintf(vvp_out, "    %%mov/wr %d, %d;\n", r, s);
+	}
+
+	fprintf(vvp_out, "    %%add/wr %d, %d;\n", s, one);
+	fprintf(vvp_out, "    %%set/wr v%p_0, %d;\n", sig, s);
+
+	return r;
+}
+
+static inline int pre_increment(ivl_expr_t e, int s)
+{
+	return increment(e, s, true);
+}
+
+static inline int post_increment(ivl_expr_t e, int s)
+{
+	return increment(e, s, false);
+}
+
+static int decrement(ivl_expr_t e, int s, bool pre)
+{
+	ivl_signal_t	sig;
+	int		r;
+	int		one;
+
+	sig = ivl_expr_signal(e);
+	r   = s;
+
+	/* create a temporary word to hold value 1.0 */
+	one = allocate_word();
+	fprintf(vvp_out, "    %%loadi/wr %d, 1, 0x1000; load 1.0\n", one);
+
+	if (!pre) {
+		/*
+		 * post-decrement must return the non-incremented value.
+		 * Therefore, copy the current value in a new word and return
+		 * it.
+		 */
+		r = allocate_word();
+		fprintf(vvp_out, "    %%mov/wr %d, %d;\n", r, s);
+	}
+
+	fprintf(vvp_out, "    %%sub/wr %d, %d;\n", s, one);
+	fprintf(vvp_out, "    %%set/wr v%p_0, %d;\n", sig, s);
+
+	return r;
+}
+
+static inline int pre_decrement(ivl_expr_t e, int s)
+{
+	return decrement(e, s, true);
+}
+
+static inline int post_decrement(ivl_expr_t e, int s)
+{
+	return decrement(e, s, false);
+}
+
 static int draw_unary_real(ivl_expr_t expr)
 {
       ivl_expr_t sube;
@@ -493,6 +572,20 @@ static int draw_unary_real(ivl_expr_t expr)
                             "context.\n");
 	    assert(0);
       }
+
+	switch (ivl_expr_opcode(expr)) {
+		case 'I':
+			return pre_increment(sube, sub);
+
+		case 'i':
+			return post_increment(sube, sub);
+
+		case 'D':
+			return pre_decrement(sube, sub);
+
+		case 'd':
+			return post_decrement(sube, sub);
+	}
 
       fprintf(stderr, "vvp.tgt error: unhandled real unary operator: %c.\n",
               ivl_expr_opcode(expr));

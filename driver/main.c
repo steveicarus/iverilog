@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -705,10 +705,11 @@ int process_generation(const char*name)
 	    fprintf(stderr, "Unknown/Unsupported Language generation "
 		    "%s\n\n", name);
 	    fprintf(stderr, "Supported generations are:\n");
-	    fprintf(stderr, "    1995 -- IEEE1364-1995\n"
-		            "    2001 -- IEEE1364-2001\n"
-		            "    2005 -- IEEE1364-2005\n"
-		            "    2009 -- IEEE1800-2009\n"
+	    fprintf(stderr, "    1995    -- IEEE1364-1995\n"
+		            "    2001    -- IEEE1364-2001\n"
+		            "    2005    -- IEEE1364-2005\n"
+		            "    2005-sv -- IEEE1800-2005\n"
+		            "    2009    -- IEEE1800-2009\n"
 		            "Other generation flags:\n"
 		            "    specify | no-specify\n"
 		            "    verilog-ams | no-verilog-ams\n"
@@ -792,21 +793,28 @@ int main(int argc, char **argv)
 	   so we chop the file name and the last directory by
 	   turning the last two \ characters to null. Then we append
 	   the lib\ivl$(suffix) to finish. */
-      { char *s;
-	char basepath[4096], tmppath[4096];
-	GetModuleFileName(NULL, tmppath, sizeof tmppath);
-	  /* Convert to a short name to remove any embedded spaces. */
-	GetShortPathName(tmppath, basepath, sizeof basepath);
-	strncpy(ivl_root, basepath, MAXSIZE);
-	ivl_root[MAXSIZE-1] = 0;
-	s = strrchr(ivl_root, sep);
-	if (s) *s = 0;
-	s = strrchr(ivl_root, sep);
-	if (s) *s = 0;
-	strcat(ivl_root, "\\lib\\ivl" IVL_SUFFIX);
-
-	base = ivl_root;
+      char *s;
+      char tmppath[MAXSIZE];
+      GetModuleFileName(NULL, tmppath, sizeof tmppath);
+	/* Convert to a short name to remove any embedded spaces. */
+      GetShortPathName(tmppath, ivl_root, sizeof ivl_root);
+      s = strrchr(ivl_root, sep);
+      if (s) *s = 0;
+      else {
+	    fprintf(stderr, "%s: Missing first %c in exe path!\n",
+	                    argv[0], sep);
+	    exit(1);
       }
+      s = strrchr(ivl_root, sep);
+      if (s) *s = 0;
+      else {
+	    fprintf(stderr, "%s: Missing second %c in exe path!\n",
+	                    argv[0], sep);
+	    exit(1);
+      }
+      strcat(ivl_root, "\\lib\\ivl" IVL_SUFFIX);
+
+      base = ivl_root;
 
 #else
         /* In a UNIX environment, the IVL_ROOT from the Makefile is

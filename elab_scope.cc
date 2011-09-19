@@ -147,6 +147,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       netenum_t*use_enum = new netenum_t(enum_type->base_type, enum_type->signed_flag,
 					 msb, lsb, enum_type->names->size());
 
+      use_enum->set_line(enum_type->li);
       scope->add_enumeration_set(use_enum);
 
       verinum cur_value (0);
@@ -177,7 +178,8 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 		  NetExpr*val = elab_and_eval(des, scope, cur->parm, -1);
 		  NetEConst*val_const = dynamic_cast<NetEConst*> (val);
 		  if (val_const == 0) {
-			cerr << "<>:0: error: Enumeration expression is not "
+			cerr << use_enum->get_fileline()
+			     << ": error: Enumeration expression is not "
 			        "constant." << endl;
 			des->errors += 1;
 			continue;
@@ -186,14 +188,16 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 
 		  if (enum_type->base_type==IVL_VT_BOOL &&
 		      ! cur_value.is_defined()) {
-			cerr << "<>:0: error: Enumeration name " << cur->name
+			cerr << use_enum->get_fileline()
+			     << ": error: Enumeration name " << cur->name
 			     << " cannot have an undefined value." << endl;
 			des->errors += 1;
 			continue;
 		  }
 
 	    } else if (! cur_value.is_defined()) {
-		  cerr << "<>:0: error: Enumeration name " << cur->name
+		  cerr << use_enum->get_fileline()
+		       << ": error: Enumeration name " << cur->name
 		       << " cannot have an undefined inferred value." << endl;
 		  des->errors += 1;
 		  continue;
@@ -202,7 +206,8 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	      // The enumeration value must fit into the enumeration bits.
 	    if ((cur_value > max_value) ||
                 (cur_value.has_sign() && (cur_value < min_value))) {
-		  cerr << "<>:0: error: Enumeration name " << cur->name
+		  cerr << use_enum->get_fileline()
+		       << ": error: Enumeration name " << cur->name
 		       << " cannot have a value equal to " << cur_value
 		       << "." << endl;
 		  des->errors += 1;
@@ -226,7 +231,8 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	    rc_flag = use_enum->insert_name(name_idx, cur->name, tmp_val);
 	    rc_flag &= scope->add_enumeration_name(use_enum, cur->name);
 	    if (! rc_flag) {
-		  cerr << "<>:0: error: Duplicate enumeration name "
+		  cerr << use_enum->get_fileline()
+		       << ": error: Duplicate enumeration name "
 		       << cur->name << endl;
 		  des->errors += 1;
 	    }

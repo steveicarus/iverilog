@@ -2508,6 +2508,9 @@ void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_st
       assert(enum_type->range.get() != 0);
       assert(enum_type->range->size() == 2);
 
+	// Add the file and line information to the enumeration type.
+      FILE_NAME(&(enum_type->li), li);
+
 	// Attach the enumeration to the current scope.
       pform_put_enum_type_in_scope(enum_type);
 

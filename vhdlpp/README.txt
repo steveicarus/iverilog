@@ -47,6 +47,6 @@ in your VHDL code, access packages like this:
     use bar.test3.all;
 
 The *.pkg files are just VHDL code containing only the package with
-the same name. When Icarus Verilog encounters the "use <lib>.<name>.*;" 
+the same name. When Icarus Verilog encounters the "use <lib>.<name>.*;"
 statement, it looks for the <name>.pkg file in the <lib> library and
 parses that file to get the package header declared therin.

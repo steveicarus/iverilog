@@ -87,7 +87,7 @@ clean:
 	rm -f sdf_lexor.c sdf_parse.c sdf_parse.output sdf_parse.h
 	rm -f table_mod_parse.c table_mod_parse.h table_mod_parse.output
 	rm -f table_mod_lexor.c
-	rm -f va_math.vpi v2005_math.vpi v2009.vpi
+	rm -f va_math.vpi v2005_math.vpi v2009.vpi vhdl_sys.vpi
 
 distclean: clean
 	rm -f Makefile config.log
