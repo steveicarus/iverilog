@@ -248,7 +248,7 @@ const VType*parse_type_by_name(perm_string name)
 %type <expr> shift_expression simple_expression term waveform_element
 
 %type <expr_list> waveform waveform_elements
-%type <expr_list> name_list
+%type <expr_list> name_list expression_list
 %type <expr_list> process_sensitivity_list process_sensitivity_list_opt
 
 %type <named_expr> association_element
@@ -781,6 +781,19 @@ entity_header
       { $$ = $1; }
   ;
 
+expression_list
+  : expression_list ',' expression
+      { list<Expression*>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
+  | expression
+      { list<Expression*>*tmp = new list<Expression*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
+  ;
+
 expression
   : expression_logical
       { $$ = $1; }
@@ -1171,7 +1184,7 @@ name
      function calls. The only way we can tell the difference is from
      left context, namely whether the name is a type name or function
      name. If none of the above, treat it as a array element select. */
-  | IDENTIFIER '('  expression ')'
+  | IDENTIFIER '('  expression_list ')'
       { perm_string name = lex_strings.make($1);
 	delete[]$1;
 	if (active_scope->is_vector_name(name)) {

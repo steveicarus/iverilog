@@ -22,6 +22,7 @@
 # include  <iostream>
 # include  <typeinfo>
 # include  <cstring>
+# include  <ivl_assert.h>
 # include  <cassert>
 
 using namespace std;
@@ -84,6 +85,40 @@ ExpAttribute::ExpAttribute(ExpName*bas, perm_string nam)
 ExpAttribute::~ExpAttribute()
 {
       delete base_;
+}
+
+bool ExpAttribute::evaluate(ScopeBase*, int64_t&val) const
+{
+	/* Special Case: The length attribute can be calculated all
+	   the down to a literal integer at compile time, and all it
+	   needs is the type of the base expression. (The base
+	   expression doesn't even need to be evaluated.) */
+      if (name_ == "length") {
+	    const VType*base_type = base_->peek_type();
+	      //if (base_type == 0)
+	      //	  base_type = base_->probe_type(ent,arc);
+
+	    ivl_assert(*this, base_type);
+
+	    const VTypeArray*arr = dynamic_cast<const VTypeArray*>(base_type);
+	    if (arr == 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "Cannot apply the 'length attribute to non-array objects"
+		       << endl;
+		  return false;
+	    }
+
+	    int64_t size = 1;
+	    for (size_t idx = 0 ; idx < arr->dimensions() ; idx += 1) {
+		  const VTypeArray::range_t&dim = arr->dimension(idx);
+		  ivl_assert(*this, ! dim.is_box());
+		  size *= 1 + labs(dim.msb() - dim.lsb());
+	    }
+	    val = size;
+	    return true;
+      }
+
+      return false;
 }
 
 ExpBinary::ExpBinary(Expression*op1, Expression*op2)
@@ -296,10 +331,15 @@ ExpFunc::ExpFunc(perm_string nn)
 {
 }
 
-ExpFunc::ExpFunc(perm_string nn, Expression*arg)
-: name_(nn), argv_(1)
+ExpFunc::ExpFunc(perm_string nn, list<Expression*>*args)
+: name_(nn), argv_(args->size())
 {
-      argv_[0] = arg;
+      for (size_t idx = 0; idx < argv_.size() ; idx += 1) {
+	    ivl_assert(*this, !args->empty());
+	    argv_[idx] = args->front();
+	    args->pop_front();
+      }
+      ivl_assert(*this, args->empty());
 }
 
 ExpFunc::~ExpFunc()
@@ -337,9 +377,14 @@ ExpName::ExpName(perm_string nn)
 {
 }
 
-ExpName::ExpName(perm_string nn, Expression*ix)
-: name_(nn), index_(ix), lsb_(0)
+ExpName::ExpName(perm_string nn, list<Expression*>*indices)
+: name_(nn), index_(0), lsb_(0)
 {
+	/* For now, assume a single index. */
+      ivl_assert(*this, indices->size() == 1);
+
+      index_ = indices->front();
+      indices->pop_front();
 }
 
 ExpName::ExpName(perm_string nn, Expression*msb, Expression*lsb)

@@ -354,6 +354,15 @@ int ExpFunc::emit(ostream&out, Entity*ent, Architecture*arc)
 	    errors += argv_[0]->emit(out, ent, arc);
 	    out << ")";
 
+      } else if (name_ == "to_unsigned" && argv_.size() == 2) {
+	    int64_t use_size;
+	    bool rc = argv_[1]->evaluate(arc, use_size);
+	    ivl_assert(*this, rc);
+
+	    out << "$unsigned(" << use_size << "'(";
+	    errors += argv_[0]->emit(out, ent, arc);
+	    out << "))";
+
       } else {
 	    out << "\\" << name_ << " (";
 	    for (size_t idx = 0; idx < argv_.size() ; idx += 1) {

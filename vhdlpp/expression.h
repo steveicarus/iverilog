@@ -96,6 +96,9 @@ class Expression : public LineInfo {
       virtual void dump(ostream&out, int indent = 0) const =0;
 
     protected:
+	// This function is called by the derived class during
+	// elaboration to set the type of the current expression that
+	// elaboration assigns to this expression.
       void set_type(const VType*);
 
     private:
@@ -258,8 +261,11 @@ class ExpAttribute : public Expression {
       inline perm_string peek_attribute() const { return name_; }
       inline const ExpName* peek_base() const { return base_; }
 
+      const VType*probe_type(Entity*ent, Architecture*arc) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       int emit(ostream&out, Entity*ent, Architecture*arc);
+	// Some attributes can be evaluated at compile time
+      bool evaluate(ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
 
     private:
@@ -351,7 +357,7 @@ class ExpFunc : public Expression {
 
     public:
       explicit ExpFunc(perm_string nn);
-      ExpFunc(perm_string nn, Expression*arg);
+      ExpFunc(perm_string nn, std::list<Expression*>*args);
       ~ExpFunc();
 
     public: // Base methods
@@ -409,7 +415,7 @@ class ExpName : public Expression {
 
     public:
       explicit ExpName(perm_string nn);
-      ExpName(perm_string nn, Expression*index);
+      ExpName(perm_string nn, std::list<Expression*>*indices);
       ExpName(perm_string nn, Expression*msb, Expression*lsb);
       ~ExpName();
 
