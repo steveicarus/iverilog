@@ -256,6 +256,17 @@ int ExpArithmetic::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltyp
       return errors;
 }
 
+const VType* ExpAttribute::probe_type(Entity*ent, Architecture*arc) const
+{
+      base_->probe_type(ent, arc);
+
+      if (name_ == "length") {
+	    return primitive_INTEGER;
+      }
+
+      return 0;
+}
+
 int ExpAttribute::elaborate_expr(Entity*ent, Architecture*arc, const VType*)
 {
       int errors = 0;
@@ -377,6 +388,7 @@ const VType* ExpName::probe_type(Entity*ent, Architecture*arc) const
 int ExpName::elaborate_expr(Entity*, Architecture*, const VType*ltype)
 {
       ivl_assert(*this, ltype != 0);
+      set_type(ltype);
 
       return 0;
 }

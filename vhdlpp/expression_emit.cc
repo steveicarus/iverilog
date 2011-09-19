@@ -148,6 +148,20 @@ int ExpAttribute::emit(ostream&out, Entity*ent, Architecture*arc)
 	    return errors;
       }
 
+	/* Special Case: The length attribute can be calculated all
+	   the down to a literal integer at compile time, and all it
+	   needs is the type of the base expression. (The base
+	   expression doesn't even need to be evaluated.) */
+      if (name_ == "length") {
+	    int64_t val;
+	    bool rc = evaluate(arc, val);
+	    out << val;
+	    if (rc)
+		  return errors;
+	    else
+		  return errors + 1;
+      }
+
       out << "$ivl_attribute(";
       errors += base_->emit(out, ent, arc);
       out << ", \"" << name_ << "\")";
@@ -339,9 +353,14 @@ int ExpFunc::emit(ostream&out, Entity*ent, Architecture*arc)
 	    out << "(";
 	    errors += argv_[0]->emit(out, ent, arc);
 	    out << ")";
+
       } else {
-	    cerr << get_fileline() << ": sorry: Don't know how to emit function '" << name_ << "'" << endl;
-	    errors += 1;
+	    out << "\\" << name_ << " (";
+	    for (size_t idx = 0; idx < argv_.size() ; idx += 1) {
+		  if (idx > 0) out << ", ";
+		  errors += argv_[idx]->emit(out, ent, arc);
+	    }
+	    out << ")";
       }
 
       return errors;
