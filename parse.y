@@ -1600,29 +1600,29 @@ expression_list_proper
   ;
 
 expr_primary
-	: number
-		{ assert($1);
-		  PENumber*tmp = new PENumber($1);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| REALTIME
-		{ PEFNumber*tmp = new PEFNumber($1);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| STRING
-		{ PEString*tmp = new PEString($1);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| SYSTEM_IDENTIFIER
-                { perm_string tn = lex_strings.make($1);
-		  PECallFunction*tmp = new PECallFunction(tn);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		  delete[]$1;
-		}
+  : number
+      { assert($1);
+	PENumber*tmp = new PENumber($1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | REALTIME
+      { PEFNumber*tmp = new PEFNumber($1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | STRING
+      { PEString*tmp = new PEString($1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | SYSTEM_IDENTIFIER
+      { perm_string tn = lex_strings.make($1);
+	PECallFunction*tmp = new PECallFunction(tn);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	delete[]$1;
+      }
 
   /* The hierarchy_identifier rule matches simple identifiers as well as
      indexed arrays and part selects */
@@ -1836,35 +1836,50 @@ expr_primary
 
   /* Parenthesized expressions are primaries. */
 
-	| '(' expr_mintypmax ')'
-		{ $$ = $2; }
+  | '(' expr_mintypmax ')'
+      { $$ = $2; }
 
   /* Various kinds of concatenation expressions. */
 
-	| '{' expression_list_proper '}'
-		{ PEConcat*tmp = new PEConcat(*$2);
-		  FILE_NAME(tmp, @1);
-		  delete $2;
-		  $$ = tmp;
-		}
-	| '{' expression '{' expression_list_proper '}' '}'
-		{ PExpr*rep = $2;
-		  PEConcat*tmp = new PEConcat(*$4, rep);
-		  FILE_NAME(tmp, @1);
-		  delete $4;
-		  $$ = tmp;
-		}
-	| '{' expression '{' expression_list_proper '}' error '}'
-		{ PExpr*rep = $2;
-		  PEConcat*tmp = new PEConcat(*$4, rep);
-		  FILE_NAME(tmp, @1);
-		  delete $4;
-		  $$ = tmp;
-		  yyerror(@5, "error: Syntax error between internal '}' "
-			  "and closing '}' of repeat concatenation.");
-		  yyerrok;
-		}
-	;
+  | '{' expression_list_proper '}'
+      { PEConcat*tmp = new PEConcat(*$2);
+	FILE_NAME(tmp, @1);
+	delete $2;
+	$$ = tmp;
+      }
+  | '{' expression '{' expression_list_proper '}' '}'
+      { PExpr*rep = $2;
+	PEConcat*tmp = new PEConcat(*$4, rep);
+	FILE_NAME(tmp, @1);
+	delete $4;
+	$$ = tmp;
+      }
+  | '{' expression '{' expression_list_proper '}' error '}'
+      { PExpr*rep = $2;
+	PEConcat*tmp = new PEConcat(*$4, rep);
+	FILE_NAME(tmp, @1);
+	delete $4;
+	$$ = tmp;
+	yyerror(@5, "error: Syntax error between internal '}' "
+		"and closing '}' of repeat concatenation.");
+	yyerrok;
+      }
+
+  /* Cast expressions are primaries */
+
+  | DEC_NUMBER '\'' '(' expression ')'
+      { PExpr*base = $4;
+	if (gn_system_verilog()) {
+	      PECastSize*tmp = new PECastSize($1->as_ulong(), base);
+	      FILE_NAME(tmp, @1);
+	      delete $1;
+	      $$ = tmp;
+	} else {
+	      yyerror(@1, "error: Size cast requires SystemVerilog.");
+	      $$ = base;
+	}
+      }
+  ;
 
   /* A function_item_list borrows the task_port_item run to match
      declarations of ports. We check later to make sure there are no

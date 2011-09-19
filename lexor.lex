@@ -688,6 +688,8 @@ TU [munpf]
 	    << endl;
        error_count += 1; }
 
+. { return yytext[0]; }
+
   /* Final catchall. something got lost or mishandled. */
   /* XXX Should we tell the user something about the lexical state? */
 

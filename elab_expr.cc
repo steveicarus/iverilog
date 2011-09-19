@@ -1423,6 +1423,26 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
       return 0;
 }
 
+unsigned PECastSize::test_width(Design*des, NetScope*scope, width_mode_t&)
+{
+      expr_width_ = size_;
+
+      width_mode_t tmp_mode = PExpr::SIZED;
+      base_->test_width(des, scope, tmp_mode);
+
+      return size_;
+}
+
+NetExpr* PECastSize::elaborate_expr(Design*des, NetScope*scope,
+				    unsigned, unsigned) const
+{
+      NetExpr*sub = base_->elaborate_expr(des, scope, base_->expr_width(), NO_FLAGS);
+      NetESelect*sel = new NetESelect(sub, 0, size_);
+      sel->set_line(*this);
+
+      return sel;
+}
+
 unsigned PEConcat::test_width(Design*des, NetScope*scope, width_mode_t&)
 {
       expr_width_ = 0;

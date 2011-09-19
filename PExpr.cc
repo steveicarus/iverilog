@@ -98,6 +98,15 @@ bool PEBinary::has_aa_term(Design*des, NetScope*scope) const
       return left_->has_aa_term(des, scope) || right_->has_aa_term(des, scope);
 }
 
+PECastSize::PECastSize(unsigned si, PExpr*b)
+: size_(si), base_(b)
+{
+}
+
+PECastSize::~PECastSize()
+{
+}
+
 PEBComp::PEBComp(char op, PExpr*l, PExpr*r)
 : PEBinary(op, l, r)
 {

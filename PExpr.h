@@ -707,6 +707,29 @@ class PECallFunction : public PExpr {
 };
 
 /*
+ * Support the SystemVerilog cast to size.
+ */
+class PECastSize  : public PExpr {
+
+    public:
+      explicit PECastSize(unsigned expr_wid, PExpr*base);
+      ~PECastSize();
+
+      void dump(ostream &out) const;
+
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     unsigned expr_wid,
+                                     unsigned flags) const;
+
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  width_mode_t&mode);
+
+    private:
+      unsigned size_;
+      PExpr* base_;
+};
+
+/*
  * This class is used for error recovery. All methods do nothing and return
  * null or default values.
  */

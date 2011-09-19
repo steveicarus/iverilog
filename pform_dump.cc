@@ -197,6 +197,13 @@ void PECallFunction::dump(ostream &out) const
       out << ")";
 }
 
+void PECastSize::dump(ostream &out) const
+{
+      out << size_ << "'(";
+      base_->dump(out);
+      out << ")";
+}
+
 void PEEvent::dump(ostream&out) const
 {
       switch (type_) {
