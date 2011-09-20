@@ -202,9 +202,9 @@ extern void compile_dff(char*label,
 			struct symb_s arg_e,
 			struct symb_s arg_a);
 
-extern void compile_enum2_type(char*label, long width,
+extern void compile_enum2_type(char*label, long width, bool signed_flag,
 			      std::list<struct enum_name_s>*names);
-extern void compile_enum4_type(char*label, long width,
+extern void compile_enum4_type(char*label, long width, bool signed_flag,
 			      std::list<struct enum_name_s>*names);
 
 class __vpiModPath;

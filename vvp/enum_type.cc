@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,6 +40,7 @@ static struct enumconst_s* enumconst_from_handle(vpiHandle obj)
 struct __vpiEnumTypespec {
       struct __vpiHandle base;
       std::vector<enumconst_s> names;
+      bool is_signed;
 };
 
 static struct __vpiEnumTypespec* vpip_enum_typespec_from_handle(vpiHandle obj)
@@ -58,6 +59,10 @@ static int enum_type_get(int code, vpiHandle obj)
       switch (code) {
 	  case vpiSize:
 	    return ref->names.size();
+
+	  case vpiSigned:
+	    return ref->is_signed;
+
 	  default:
 	    fprintf(stderr, "vvp error: get %d not supported "
 		    "by __vpiEnumTypespec\n", code);
@@ -148,11 +153,13 @@ static const struct __vpirt enum_name_rt = {
       0, //enum_name_put_delays
 };
 
-void compile_enum2_type(char*label, long width, std::list<struct enum_name_s>*names)
+void compile_enum2_type(char*label, long width, bool signed_flag,
+                        std::list<struct enum_name_s>*names)
 {
       struct __vpiEnumTypespec*spec = new struct __vpiEnumTypespec;
       spec->base.vpi_type = &enum_type_rt;
       spec->names = std::vector<enumconst_s> (names->size());
+      spec->is_signed = signed_flag;
 
       size_t idx = 0;
       for (list<struct enum_name_s>::iterator cur = names->begin()
@@ -170,11 +177,13 @@ void compile_enum2_type(char*label, long width, std::list<struct enum_name_s>*na
       delete names;
 }
 
-void compile_enum4_type(char*label, long width, std::list<struct enum_name_s>*names)
+void compile_enum4_type(char*label, long width, bool signed_flag,
+                        std::list<struct enum_name_s>*names)
 {
       struct __vpiEnumTypespec*spec = new struct __vpiEnumTypespec;
       spec->base.vpi_type = &enum_type_rt;
       spec->names = std::vector<enumconst_s> (names->size());
+      spec->is_signed = signed_flag;
 
       size_t idx = 0;
       for (list<struct enum_name_s>::iterator cur = names->begin()

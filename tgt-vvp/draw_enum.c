@@ -22,42 +22,33 @@
 # include  <stdlib.h>
 # include  <string.h>
 # include  <assert.h>
+# include  <inttypes.h>
 
-// HERE: This still needs work! Fall back to <width>'<signed>b format for
-//       very large constants. This should also be int64_t sized values.
-//       The run time still needs to be modified to work with signed values
-//       and we also need to pass the file and line information.
+// HERE: This still needs work! Fall back to <width>'b format for
+//       very large constants. We also should pass the file and
+//       line number information for the enum type and the MSB and
+//       LSB should be used instead of the width.
+/*
+ * If it fits we always print this as a uint64_t the run time will turn
+ * it back into a signed value when needed.
+ */
 static void draw_enum2_value(ivl_enumtype_t enumtype, unsigned idx)
 {
-      long val, mask;
+      uint64_t val, mask;
       const char*bits = ivl_enum_bits(enumtype, idx);
       const char*bit;
       unsigned len = strlen(bits);
-	/* Sign extend if needed. */
-      if (ivl_enum_signed(enumtype)) {
-	    assert(len <= sizeof(long)*8);
-	    if ((bits[len-1] == '1') && (len < sizeof(long)*8)) {
-		  val = -1L & ~((1L << len) - 1L);
-// HERE: Remove once vvp has been updated.
-		  if (ivl_enum_signed(enumtype)) {
-			fprintf(stderr, "%s:%u: tgt-vvp sorry: signed "
-			        "enumerations with negative values are not "
-			        "currently supported by vvp.\n",
-			        ivl_enum_file(enumtype),
-			        ivl_enum_lineno(enumtype));
-			vvp_errors += 1;
-		  }
-	    } else val = 0;
-      } else {
-	    assert(len < sizeof(long)*8);
-	    val = 0;
-      }
+
+// HERE: If this doesn't fit then write it as a enum4 and modify the run
+//       time to deal with the conversion.
+      assert(len <= sizeof(uint64_t)*8);
+      val = 0;
       for (bit = bits, mask = 1 ; *bit != 0 ; bit += 1, mask <<= 1) {
 	    if (*bit == '1')
 		  val |= mask;
       }
 
-      fprintf(vvp_out, "%ld", val);
+      fprintf(vvp_out, "%" PRIu64, val);
 }
 
 static void draw_enum4_value(ivl_enumtype_t enumtype, unsigned idx)
@@ -65,8 +56,7 @@ static void draw_enum4_value(ivl_enumtype_t enumtype, unsigned idx)
       const char*bits = ivl_enum_bits(enumtype, idx);
       const char*bit;
 
-      fprintf(vvp_out, "%u'%sb", ivl_enum_width(enumtype),
-                                 ivl_enum_signed(enumtype) ? "s" : "");
+      fprintf(vvp_out, "%u'b", ivl_enum_width(enumtype));
 
       for (bit = bits+strlen(bits) ; bit > bits ; bit -= 1)
 	    fputc(bit[-1], vvp_out);
@@ -78,9 +68,10 @@ void draw_enumeration_in_scope(ivl_enumtype_t enumtype)
       unsigned idx;
       unsigned name_count = ivl_enum_names(enumtype);
       const char*dtype = ivl_enum_type(enumtype)==IVL_VT_BOOL? "2" : "4";
+      const char*stype = ivl_enum_signed(enumtype) ? "/s" : "";
 
-      fprintf(vvp_out, "enum%p .enum%s (%u)\n", enumtype,
-	      dtype, ivl_enum_width(enumtype));
+      fprintf(vvp_out, "enum%p .enum%s%s (%u)\n", enumtype, dtype, stype,
+                       ivl_enum_width(enumtype));
 
       for (idx = 0 ; idx < name_count ; idx += 1) {
 	    fprintf(vvp_out, "   \"%s\" ", ivl_enum_name(enumtype, idx));

@@ -143,7 +143,9 @@ static char* strdupnew(char const *str)
 ".delay"    { return K_DELAY; }
 ".dff"      { return K_DFF; }
 ".enum2"    { return K_ENUM2; }
+".enum2/s"  { return K_ENUM2_S; }
 ".enum4"    { return K_ENUM4; }
+".enum4/s"  { return K_ENUM4_S; }
 ".event"    { return K_EVENT; }
 ".event/or" { return K_EVENT_OR; }
 ".export"   { return K_EXPORT; }

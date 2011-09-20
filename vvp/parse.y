@@ -80,9 +80,8 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_CMP_EEQ K_CMP_EQ K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
 %token K_CMP_GE K_CMP_GE_R K_CMP_GE_S K_CMP_GT K_CMP_GT_R K_CMP_GT_S
 %token K_CONCAT K_DEBUG K_DELAY K_DFF
-%token K_ENUM2 K_ENUM4 K_EVENT K_EVENT_OR K_EXPORT K_EXTEND_S K_FUNCTOR
-%token K_IMPORT K_ISLAND
-%token K_MODPATH
+%token K_ENUM2 K_ENUM2_S K_ENUM4 K_ENUM4_S K_EVENT K_EVENT_OR
+%token K_EXPORT K_EXTEND_S K_FUNCTOR K_IMPORT K_ISLAND K_MODPATH
 %token K_NET K_NET_S K_NET_R K_NET_2S K_NET_2U K_NET8 K_NET8_S
 %token K_PARAM_STR K_PARAM_L K_PARAM_REAL K_PART K_PART_PV
 %token K_PART_V K_PART_V_S K_PORT K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
@@ -810,9 +809,13 @@ statement
   /* Enumeration types */
 enum_type
   : T_LABEL K_ENUM2 '(' T_NUMBER ')' enum_type_names ';'
-      { compile_enum2_type($1, $4, $6); }
+      { compile_enum2_type($1, $4, false, $6); }
+  | T_LABEL K_ENUM2_S '(' T_NUMBER ')' enum_type_names ';'
+      { compile_enum2_type($1, $4, true, $6); }
   | T_LABEL K_ENUM4 '(' T_NUMBER ')' enum_type_names ';'
-      { compile_enum4_type($1, $4, $6); }
+      { compile_enum4_type($1, $4, false, $6); }
+  | T_LABEL K_ENUM4_S '(' T_NUMBER ')' enum_type_names ';'
+      { compile_enum4_type($1, $4, true, $6); }
   ;
 
 enum_type_names
