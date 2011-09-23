@@ -1,7 +1,7 @@
 #ifndef __ivl_target_H
 #define __ivl_target_H
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -158,7 +158,15 @@ typedef struct ivl_array_s    *ivl_array_t;
 typedef struct ivl_branch_s   *ivl_branch_t;
 typedef struct ivl_delaypath_s*ivl_delaypath_t;
 typedef struct ivl_design_s   *ivl_design_t;
+/* clang++ wants this to be class to match the definition, but clang
+ * (the C) compiler needs it to be a struct since class is not defined
+ * in C. They are effecively both pointers to an object so everything
+ * works out. */
+#ifdef __cplusplus
+typedef class  ivl_discipline_s*ivl_discipline_t;
+#else
 typedef struct ivl_discipline_s*ivl_discipline_t;
+#endif
 typedef struct ivl_event_s    *ivl_event_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
 typedef struct ivl_island_s   *ivl_island_t;
@@ -167,7 +175,12 @@ typedef struct ivl_lval_s     *ivl_lval_t;
 typedef struct ivl_net_const_s*ivl_net_const_t;
 typedef struct ivl_net_logic_s*ivl_net_logic_t;
 typedef struct ivl_udp_s      *ivl_udp_t;
+/* See the comments above. */
+#ifdef __cplusplus
+typedef class  ivl_nature_s   *ivl_nature_t;
+#else
 typedef struct ivl_nature_s   *ivl_nature_t;
+#endif
 typedef struct ivl_net_probe_s*ivl_net_probe_t;
 typedef struct ivl_nexus_s    *ivl_nexus_t;
 typedef struct ivl_nexus_ptr_s*ivl_nexus_ptr_t;

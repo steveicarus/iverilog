@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -325,14 +325,14 @@ vvp_net_t* vvp_net_lookup(const char*label)
  * this call is its last chance. If it cannot complete the operation,
  * it must print an error message and return false.
  */
-static struct resolv_list_s*resolv_list = 0;
+static class resolv_list_s*resolv_list = 0;
 
 resolv_list_s::~resolv_list_s()
 {
       free(label_);
 }
 
-void resolv_submit(struct resolv_list_s*cur)
+void resolv_submit(class resolv_list_s*cur)
 {
       if (cur->resolve()) {
 	    delete cur;
@@ -613,13 +613,13 @@ void compile_cleanup(void)
       }
 
       do {
-	    struct resolv_list_s *res = resolv_list;
+	    class resolv_list_s *res = resolv_list;
 	    resolv_list = 0x0;
 	    last = nerrs == lnerrs;
 	    lnerrs = nerrs;
 	    nerrs = 0;
 	    while (res) {
-		  struct resolv_list_s *cur = res;
+		  class resolv_list_s *cur = res;
 		  res = res->next;
 		  if (cur->resolve(last))
 			delete cur;

@@ -1,7 +1,7 @@
 #ifndef __vvp_net_H
 #define __vvp_net_H
 /*
- * Copyright (c) 2004-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,7 +40,7 @@ using namespace std;
 class  vvp_scalar_t;
 
 /* Basic netlist types. */
-class  vvp_net_t;
+struct vvp_net_t;
 class  vvp_net_fun_t;
 
 /* Core net function types. */
@@ -1220,10 +1220,10 @@ class vvp_vpi_callback_wordable : public vvp_vpi_callback {
       ~vvp_vpi_callback_wordable();
 
       void run_vpi_callbacks();
-      void attach_as_word(class __vpiArray* arr, unsigned long addr);
+      void attach_as_word(struct __vpiArray* arr, unsigned long addr);
 
     private:
-      class __vpiArray* array_;
+      struct __vpiArray* array_;
       unsigned long array_word_;
 };
 

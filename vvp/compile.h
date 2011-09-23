@@ -1,7 +1,7 @@
 #ifndef __compile_H
 #define __compile_H
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -196,7 +196,7 @@ extern void compile_dff(char*label,
 			struct symb_s arg_e,
 			struct symb_s arg_a);
 
-class __vpiModPath;
+struct __vpiModPath;
 extern __vpiModPath* compile_modpath(char*label,
 				     struct symb_s drv,
 				     struct symb_s dest);
@@ -277,11 +277,11 @@ class resolv_list_s {
       const char*label() const { return label_; }
 
     private:
-      friend void resolv_submit(struct resolv_list_s*cur);
+      friend void resolv_submit(class resolv_list_s*cur);
       friend void compile_cleanup(void);
 
       char*label_;
-      struct resolv_list_s*next;
+      class resolv_list_s*next;
 };
 
 /*

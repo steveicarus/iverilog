@@ -634,7 +634,7 @@ static void cleanup_vpi_call_args(unsigned argc, vpiHandle*argv)
  * vbit is also a non-zero value, the address in thread space of the result.
  */
 vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
-			      class vvp_net_t*fnet,
+			      struct vvp_net_t*fnet,
 			      unsigned argc, vpiHandle*argv,
 			      long file_idx, long lineno)
 {

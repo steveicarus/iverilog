@@ -1,7 +1,7 @@
 #ifndef __codes_H
 #define __codes_H
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -184,7 +184,7 @@ struct vvp_code_s {
 	    uint32_t    bit_idx[2];
 	    vvp_net_t   *net2;
 	    vvp_code_t   cptr2;
-	    struct ufunc_core*ufunc_core_ptr;
+	    class ufunc_core*ufunc_core_ptr;
       };
 };
 

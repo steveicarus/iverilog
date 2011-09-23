@@ -1,7 +1,7 @@
 #ifndef __vpi_priv_H
 #define __vpi_priv_H
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -425,7 +425,7 @@ struct __vpiSysTaskCall {
 	/* These represent where in the vthread to put the return value. */
       unsigned vbit;
       signed   vwid;
-      class vvp_net_t*fnet;
+      struct   vvp_net_t*fnet;
       unsigned file_idx;
       unsigned lineno;
       bool put_value;
@@ -528,7 +528,7 @@ extern unsigned vpip_module_path_cnt;
  */
 extern vpiHandle vpip_build_vpi_call(const char*name,
 				     unsigned vbit, int vwid,
-				     class vvp_net_t*fnet,
+				     struct vvp_net_t*fnet,
 				     unsigned argc,
 				     vpiHandle*argv,
 				     long file_idx,

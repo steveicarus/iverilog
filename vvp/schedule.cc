@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -163,9 +163,9 @@ inline void* assign_vector4_event_s::operator new(size_t size)
       return assign4_heap.alloc_slab();
 }
 
-void assign_vector4_event_s::operator delete(void*ptr)
+void assign_vector4_event_s::operator delete(void*dptr)
 {
-      assign4_heap.free_slab(ptr);
+      assign4_heap.free_slab(dptr);
 }
 
 unsigned long count_assign4_pool(void) { return assign4_heap.pool; }
@@ -194,9 +194,9 @@ inline void* assign_vector8_event_s::operator new(size_t size)
       return assign8_heap.alloc_slab();
 }
 
-void assign_vector8_event_s::operator delete(void*ptr)
+void assign_vector8_event_s::operator delete(void*dptr)
 {
-      assign8_heap.free_slab(ptr);
+      assign8_heap.free_slab(dptr);
 }
 
 unsigned long count_assign8_pool() { return assign8_heap.pool; }
@@ -225,9 +225,9 @@ inline void* assign_real_event_s::operator new (size_t size)
       return assignr_heap.alloc_slab();
 }
 
-void assign_real_event_s::operator delete(void*ptr)
+void assign_real_event_s::operator delete(void*dptr)
 {
-      assignr_heap.free_slab(ptr);
+      assignr_heap.free_slab(dptr);
 }
 
 unsigned long count_assign_real_pool(void) { return assignr_heap.pool; }
