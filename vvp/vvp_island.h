@@ -1,7 +1,7 @@
 #ifndef __vvp_island_H
 #define __vvp_island_H
 /*
- * Copyright (c) 2008,2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -54,7 +54,7 @@
 * branches of analog within the island.
 */
 
-class vvp_island_branch;
+struct vvp_island_branch;
 class vvp_island_node;
 
 class vvp_island  : private vvp_gen_event_s {

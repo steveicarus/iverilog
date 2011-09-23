@@ -1,7 +1,7 @@
 #ifndef __vvp_net_sig_H
 #define __vvp_net_sig_H
 /*
- * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -78,7 +78,7 @@ class vvp_fun_signal_base : public vvp_net_fun_t {
 	/* The %cassign/link instruction needs a place to write the
 	   source node of the force, so that subsequent %cassign and
 	   %deassign instructions can undo the link as needed. */
-      struct vvp_net_t*cassign_link;
+      class vvp_net_t*cassign_link;
 
     protected:
       bool continuous_assign_active_;

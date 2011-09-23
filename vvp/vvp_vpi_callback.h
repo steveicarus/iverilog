@@ -1,7 +1,7 @@
 #ifndef __vvp_vpi_callback_H
 #define __vvp_vpi_callback_H
 /*
- * Copyright (c) 2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2009-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,7 +36,7 @@ class vvp_vpi_callback {
       vvp_vpi_callback();
       virtual ~vvp_vpi_callback();
 
-      void attach_as_word(class __vpiArray* arr, unsigned long addr);
+      void attach_as_word(struct __vpiArray* arr, unsigned long addr);
 
       void add_vpi_callback(struct __vpiCallback*);
 #ifdef CHECK_WITH_VALGRIND
@@ -55,7 +55,7 @@ class vvp_vpi_callback {
 
     private:
       struct __vpiCallback*vpi_callbacks_;
-      class __vpiArray* array_;
+      struct __vpiArray* array_;
       unsigned long array_word_;
 };
 

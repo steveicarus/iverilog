@@ -21,8 +21,6 @@
 
 #include <stdint.h>
 
-using namespace std;
-
 class vhdlint
 {
     public:

@@ -23,6 +23,8 @@
 #include <cstdlib>
 #include <sstream>
 
+using namespace std;
+
 bool vhdlint::is_negative() const
 {
     return value_ < 0L;

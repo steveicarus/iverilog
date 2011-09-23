@@ -448,7 +448,7 @@ struct __vpiSysTaskCall {
 	/* These represent where in the vthread to put the return value. */
       unsigned vbit;
       signed   vwid;
-      class vvp_net_t*fnet;
+      class    vvp_net_t*fnet;
       unsigned file_idx;
       unsigned lineno;
       bool put_value;

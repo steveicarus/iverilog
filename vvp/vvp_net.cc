@@ -438,7 +438,7 @@ int edge(vvp_bit4_t from, vvp_bit4_t to)
 
 void vvp_send_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&val)
 {
-      while (struct vvp_net_t*cur = ptr.ptr()) {
+      while (class vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
 	    if (cur->fun)
@@ -450,7 +450,7 @@ void vvp_send_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&val)
 
 void vvp_send_real(vvp_net_ptr_t ptr, double val, vvp_context_t context)
 {
-      while (struct vvp_net_t*cur = ptr.ptr()) {
+      while (class vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
 	    if (cur->fun)
@@ -462,7 +462,7 @@ void vvp_send_real(vvp_net_ptr_t ptr, double val, vvp_context_t context)
 
 void vvp_send_long(vvp_net_ptr_t ptr, long val)
 {
-      while (struct vvp_net_t*cur = ptr.ptr()) {
+      while (class vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
 	    if (cur->fun)
@@ -475,7 +475,7 @@ void vvp_send_long(vvp_net_ptr_t ptr, long val)
 void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
                       unsigned base, unsigned wid)
 {
-      while (struct vvp_net_t*cur = ptr.ptr()) {
+      while (class vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
 	    if (cur->fun)

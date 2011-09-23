@@ -193,7 +193,7 @@ struct vvp_code_s {
 	    uint32_t    bit_idx[2];
 	    vvp_net_t   *net2;
 	    vvp_code_t   cptr2;
-	    struct ufunc_core*ufunc_core_ptr;
+	    class ufunc_core*ufunc_core_ptr;
       };
 };
 

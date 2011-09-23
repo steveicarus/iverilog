@@ -1291,7 +1291,7 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
 	// the forced value to get through.
       bool force_propagate_;
 	// force link back.
-      struct vvp_net_t*force_link_;
+      class vvp_net_t*force_link_;
 };
 
 /* **** Some core net functions **** */
@@ -1496,7 +1496,7 @@ class vvp_wide_fun_t : public vvp_net_fun_t {
 
 inline void vvp_send_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&val, vvp_context_t context)
 {
-      while (struct vvp_net_t*cur = ptr.ptr()) {
+      while (class vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
 	    if (cur->fun)
@@ -1536,7 +1536,7 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
 			     unsigned base, unsigned wid, unsigned vwid,
 			     vvp_context_t context)
 {
-      while (struct vvp_net_t*cur = ptr.ptr()) {
+      while (class vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
 	    if (cur->fun)
@@ -1550,7 +1550,7 @@ inline void vvp_net_t::send_vec8_pv(const vvp_vector8_t&val,
 				    unsigned base, unsigned wid, unsigned vwid)
 {
       vvp_net_ptr_t ptr = out_;
-      while (struct vvp_net_t*cur = ptr.ptr()) {
+      while (class vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
 	    if (cur->fun)
