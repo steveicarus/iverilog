@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2009,2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -27,6 +27,8 @@
 # include  "parse.h"
 # include  <cstring>
 # include  <cassert>
+
+# define YY_NO_INPUT
 
 static char* strdupnew(char const *str)
 {
