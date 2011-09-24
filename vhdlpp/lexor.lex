@@ -35,6 +35,8 @@
 # include  <iostream>
 # include  <set>
 
+# define YY_NO_INPUT
+
 # define YY_DECL int yylex(YYSTYPE*yylvalp, YYLTYPE*yyllocp, yyscan_t yyscanner)
 //class vhdlnum;
 //class vhdlreal;

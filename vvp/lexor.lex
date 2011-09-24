@@ -29,6 +29,8 @@
 # include  <cassert>
 # include  "ivl_alloc.h"
 
+# define YY_NO_INPUT
+
 static char* strdupnew(char const *str)
 {
       return str ? strcpy(new char [strlen(str)+1], str) : 0;
