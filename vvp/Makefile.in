@@ -99,7 +99,8 @@ distclean: clean
 	rm -f stamp-config-h config.h
 
 cppcheck: $(O:.o=.cc) libvpi.c draw_tt.c
-	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+	cppcheck --enable=all -f --suppressions $(srcdir)/cppcheck.sup \
+	         $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in
 	cd ..; ./config.status --file=vvp/$@
