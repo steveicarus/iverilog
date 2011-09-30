@@ -312,19 +312,3 @@ int 			lxt2_wr_emit_value_bit_string(struct lxt2_wr_trace *lt, struct lxt2_wr_sy
 
 #endif
 
-/*
- * $Id: lxt2_write.h,v 1.3 2010/04/27 23:10:56 gtkwave Exp $
- * $Log: lxt2_write.h,v $
- * Revision 1.3  2010/04/27 23:10:56  gtkwave
- * made inttype.h inclusion conditional
- *
- * Revision 1.2  2010/02/18 17:27:07  gtkwave
- * extern "C" headers / version bump
- *
- * Revision 1.1.1.1  2007/05/30 04:28:25  gtkwave
- * Imported sources
- *
- * Revision 1.2  2007/04/20 02:08:18  gtkwave
- * initial release
- *
- */
