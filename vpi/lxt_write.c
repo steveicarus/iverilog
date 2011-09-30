@@ -2808,28 +2808,3 @@ if((lt)&&(lt->dumpoff_active))
 	}
 }
 
-/*
- * $Id: lxt_write.c,v 1.6 2010/05/13 06:03:40 gtkwave Exp $
- * $Log: lxt_write.c,v $
- * Revision 1.6  2010/05/13 06:03:40  gtkwave
- * compiler warning fix for lt_optimask on Open Solaris
- *
- * Revision 1.5  2010/05/03 20:11:03  gtkwave
- * cppcheck warning fixes
- *
- * Revision 1.4  2009/03/29 00:50:00  gtkwave
- * update lt_close() to zero out written section offset/size.
- *
- * Revision 1.3  2009/03/29 00:05:23  gtkwave
- * fixed & to && in if() comparison
- *
- * Revision 1.2  2008/12/20 05:08:26  gtkwave
- * -Wshadow warning cleanups
- *
- * Revision 1.1.1.1  2007/05/30 04:28:14  gtkwave
- * Imported sources
- *
- * Revision 1.2  2007/04/20 02:08:18  gtkwave
- * initial release
- *
- */
