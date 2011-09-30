@@ -55,6 +55,22 @@ netenum_t::iterator netenum_t::find_name(perm_string name) const
       return names_map_.find(name);
 }
 
+/*
+ * Check to see if the given value is already in the enumeration mapping.
+ */
+perm_string netenum_t::find_value(const verinum&val) const
+{
+      perm_string res;
+      for(netenum_t::iterator cur = names_map_.begin();
+          cur != names_map_.end(); cur++) {
+	    if (cur->second == val) {
+		  res = cur->first;
+		  break;
+	    }
+      }
+      return res;
+}
+
 netenum_t::iterator netenum_t::end_name() const
 {
       return names_map_.end();

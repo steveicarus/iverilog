@@ -50,6 +50,7 @@ class netenum_t : public LineInfo {
       typedef std::map<perm_string,verinum>::const_iterator iterator;
       iterator find_name(perm_string name) const;
       iterator end_name() const;
+      perm_string find_value(const verinum&val) const;
 
 	// These methods roughly match the .first() and .last() methods.
       iterator first_name() const;

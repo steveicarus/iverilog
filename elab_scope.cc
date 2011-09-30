@@ -213,6 +213,16 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
+	    // The enumeration value must be unique.
+	    perm_string dup_name = use_enum->find_value(cur_value);
+	    if (dup_name) {
+		  cerr << use_enum->get_fileline()
+		       << ": error: Enumeration name "
+		       << cur->name << " and " << dup_name
+		       << " have the same value: " << cur_value << endl;
+		  des->errors += 1;
+	    }
+
 	      // The values are explicitly sized to the width of the
 	      // base type of the enumeration.
 	    verinum tmp_val (0);

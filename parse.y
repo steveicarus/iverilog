@@ -117,7 +117,7 @@ static list<PExpr*>* make_range_from_width(uint64_t wid)
 }
 
 /*
- * Make a rqange vector from an existing pair of expressions.
+ * Make a range vector from an existing pair of expressions.
  */
 static vector<PExpr*>* make_range_vector(list<PExpr*>*that)
 {
