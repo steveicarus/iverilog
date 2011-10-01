@@ -37,6 +37,50 @@ int LoopStatement::elaborate_substatements(Entity*ent, Architecture*arc)
       return errors;
 }
 
+int CaseSeqStmt::elaborate(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      const VType*ctype = cond_->probe_type(ent, arc);
+      errors += cond_->elaborate_expr(ent, arc, ctype);
+
+      for (list<CaseStmtAlternative*>::iterator cur = alt_.begin()
+		 ; cur != alt_.end() ; ++cur) {
+	    CaseStmtAlternative*curp = *cur;
+	    errors += curp->elaborate_expr(ent, arc, ctype);
+	    errors += curp->elaborate(ent, arc);
+      }
+
+      return errors;
+}
+
+/*
+ * This method elaborates the case expression for the alternative. The
+ * ltype is the probed type for the main case condition. The
+ * expression needs to elaborate itself in that context.
+ */
+int CaseSeqStmt::CaseStmtAlternative::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
+{
+      int errors = 0;
+      if (exp_)
+	    errors += exp_->elaborate_expr(ent, arc, ltype);
+      return errors;
+}
+
+int CaseSeqStmt::CaseStmtAlternative::elaborate(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      for (list<SequentialStmt*>::iterator cur = stmts_.begin()
+		 ; cur != stmts_.end() ; ++cur) {
+	    SequentialStmt*curp = *cur;
+	    errors += curp->elaborate(ent, arc);
+      }
+
+      return errors;
+}
+
+
 int ForLoopStatement::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;

@@ -92,12 +92,17 @@ void CaseSeqStmt::dump(ostream& out, int indent) const
 
 void CaseSeqStmt::CaseStmtAlternative::dump(ostream& out, int indent) const
 {
-    out << setw(indent) << "" << "CaseStmtAlternative at file=" << get_fileline() << endl;
-    out << setw(indent) << "" << "when ";
-    exp_->dump(out, 0);
-    for (std::list<SequentialStmt*>::const_iterator cur = stmts_.begin()
-        ; cur != stmts_.end(); ++cur)
-        (*cur)->dump(out, indent+1);
+      out << setw(indent) << "" << "CaseStmtAlternative at file=" << get_fileline() << endl;
+
+      out << setw(indent) << "" << "when ";
+      if (exp_)
+	    exp_->dump(out, 0);
+      else
+	    out << "others" << endl;
+
+      for (list<SequentialStmt*>::const_iterator cur = stmts_.begin()
+		 ; cur != stmts_.end(); ++cur)
+	    (*cur)->dump(out, indent+1);
 }
 
 void ProcedureCall::dump(ostream& out, int indent) const

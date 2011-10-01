@@ -429,30 +429,29 @@ block_declarative_items_opt
   : block_declarative_items
   |
   ;
+
 case_statement
   : K_case expression K_is
     case_statement_alternative_list
     K_end K_case ';'
-      {
-    sorrymsg(@1, "Case statement is not yet supported");
-    CaseSeqStmt* tmp = new CaseSeqStmt($2, $4);
-    FILE_NAME(tmp, @1);
-    delete $4;
-    $$ = tmp;
+      { CaseSeqStmt* tmp = new CaseSeqStmt($2, $4);
+	FILE_NAME(tmp, @1);
+	delete $4;
+	$$ = tmp;
       }
     ;
+
 case_statement_alternative_list
   : case_statement_alternative_list case_statement_alternative
       { std::list<CaseSeqStmt::CaseStmtAlternative*>* tmp = $1;
-    tmp->push_back($2);
-    $$ = tmp;
+	tmp->push_back($2);
+	$$ = tmp;
       }
   | case_statement_alternative
-      {
-    std::list<CaseSeqStmt::CaseStmtAlternative*>*tmp =
-        new std::list<CaseSeqStmt::CaseStmtAlternative*>();
-    tmp->push_back($1);
-    $$ = tmp;
+      { std::list<CaseSeqStmt::CaseStmtAlternative*>*tmp
+		  = new std::list<CaseSeqStmt::CaseStmtAlternative*>();
+	tmp->push_back($1);
+	$$ = tmp;
       }
    ;
 

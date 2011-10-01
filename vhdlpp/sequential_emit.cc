@@ -135,6 +135,60 @@ int LoopStatement::emit_substatements(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
+int CaseSeqStmt::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      out << "case (";
+      errors += cond_->emit(out, ent, arc);
+      out << ")" << endl;
+
+      for (list<CaseStmtAlternative*>::iterator cur = alt_.begin()
+		 ; cur != alt_.end() ; ++cur) {
+	    CaseStmtAlternative*curp = *cur;
+	    errors += curp ->emit(out, ent, arc);
+      }
+
+      out << "endcase" << endl;
+
+      return errors;
+}
+
+int CaseSeqStmt::CaseStmtAlternative::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+
+      if (exp_) {
+	    errors += exp_->emit(out, ent, arc);
+	    out << ":" << endl;
+      } else {
+	    out << "default:" << endl;
+      }
+
+      SequentialStmt*curp;
+
+      switch (stmts_.size()) {
+	  case 0:
+	    out << "/* no op */;" << endl;
+	    break;
+	  case 1:
+	    curp = stmts_.front();
+	    errors += curp->emit(out, ent, arc);
+	    break;
+	  default:
+	    out << "begin" << endl;
+	    for (list<SequentialStmt*>::iterator cur = stmts_.begin()
+		       ; cur != stmts_.end() ; ++cur) {
+		  curp = *cur;
+		  errors += curp->emit(out, ent, arc);
+	    }
+	    out << "end" << endl;
+	    break;
+      }
+
+      return errors;
+}
+
 int ForLoopStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;

@@ -129,29 +129,29 @@ class CaseSeqStmt : public SequentialStmt {
     public:
       class CaseStmtAlternative : public LineInfo {
         public:
-            CaseStmtAlternative(Expression* exp, list<SequentialStmt*>* stmts);
+            CaseStmtAlternative(Expression* exp, std::list<SequentialStmt*>* stmts);
             ~CaseStmtAlternative();
-            void dump(ostream& out, int indent) const;
+            void dump(std::ostream& out, int indent) const;
+	    int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+	    int elaborate(Entity*ent, Architecture*arc);
+	    int emit(ostream&out, Entity*entity, Architecture*arc);
 
-            //TODO: implement the following:
-            //int elaborate(Entity*ent, Architecture*arc);
-            //int emit(ostream&out, Entity*entity, Architecture*arc);
         private:
             Expression* exp_;
-            list<SequentialStmt*> stmts_;
+	    std::list<SequentialStmt*> stmts_;
         private: // not implemented
             CaseStmtAlternative(const CaseStmtAlternative&);
             CaseStmtAlternative& operator =(const CaseStmtAlternative&);
       };
-      CaseSeqStmt(Expression*cond,
-                       list<CaseStmtAlternative*>*sp);
+
+    public:
+      CaseSeqStmt(Expression*cond, std::list<CaseStmtAlternative*>*sp);
       ~CaseSeqStmt();
 
     public:
       void dump(ostream&out, int indent) const;
-      //TODO: implement the following:
-      //int elaborate(Entity*ent, Architecture*arc);
-      //int emit(ostream&out, Entity*entity, Architecture*arc);
+      int elaborate(Entity*ent, Architecture*arc);
+      int emit(ostream&out, Entity*entity, Architecture*arc);
 
     private:
       Expression* cond_;
@@ -226,4 +226,5 @@ class BasicLoopStatement : public LoopStatement {
       int emit(ostream&out, Entity*entity, Architecture*arc);
       void dump(ostream&out, int indent) const;
 };
+
 #endif
