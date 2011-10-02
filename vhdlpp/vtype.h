@@ -20,6 +20,7 @@
  */
 
 # include  <iostream>
+# include  <list>
 # include  <vector>
 # include  <climits>
 # include  <inttypes.h>
@@ -41,6 +42,9 @@ class VType {
 	// writing parsed types to library files.
       virtual void write_to_stream(std::ostream&fd) const;
 
+	// This virtual method writes a human-readable version of the
+	// type to a given file for debug purposes. (Question: is this
+	// really necessary given the write_to_stream method?)
       virtual void show(std::ostream&) const;
 
     public:
@@ -152,6 +156,18 @@ class VTypeRange : public VType {
     private:
       const VType*base_;
       int64_t max_, min_;
+};
+
+class VTypeEnum : public VType {
+
+    public:
+      VTypeEnum(const std::list<perm_string>*names);
+      ~VTypeEnum();
+
+      virtual void elaborate(decl_t&decl) const;
+
+    private:
+      std::vector<perm_string>names_;
 };
 
 #endif

@@ -63,3 +63,7 @@ void VTypeRange::elaborate(VType::decl_t&decl) const
 {
       base_->elaborate(decl);
 }
+
+void VTypeEnum::elaborate(decl_t&) const
+{
+}

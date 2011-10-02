@@ -254,11 +254,12 @@ const VType*parse_type_by_name(perm_string name)
 %type <named_expr> association_element
 %type <named_expr_list> association_list port_map_aspect port_map_aspect_opt
 
-%type <vtype> subtype_indication
+%type <vtype> subtype_indication type_definition
 
 %type <text> architecture_body_start package_declaration_start
 %type <text> identifier_opt identifier_colon_opt logical_name suffix
 %type <name_list> logical_name_list identifier_list
+%type <name_list> enumeration_literal_list enumeration_literal
 %type <compound_name> prefix selected_name
 %type <compound_name_list> selected_names use_clause
 
@@ -403,6 +404,8 @@ block_declarative_item
   | component_declaration
 
   | constant_declaration
+
+  | type_declaration
 
   | use_clause_lib
 
@@ -778,6 +781,31 @@ entity_declaration
 entity_header
   : port_clause
       { $$ = $1; }
+  ;
+
+enumeration_literal
+  : IDENTIFIER
+      { list<perm_string>*tmp = new list<perm_string>;
+	tmp->push_back(lex_strings.make($1));
+	delete[]$1;
+	$$ = tmp;
+      }
+  ;
+
+enumeration_literal_list
+  : enumeration_literal_list ',' enumeration_literal
+      { list<perm_string>*tmp = $1;
+	list<perm_string>*tmp3 = $3;
+	if (tmp3) {
+	      tmp->splice(tmp->end(), *tmp3);
+	      delete tmp3;
+	}
+	$$ = tmp;
+      }
+  | enumeration_literal
+      { list<perm_string>*tmp = $1;
+	$$ = tmp;
+      }
   ;
 
 expression_list
@@ -1758,6 +1786,19 @@ term
   | factor K_rem factor
       { ExpArithmetic*tmp = new ExpArithmetic(ExpArithmetic::REM, $1, $3);
 	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  ;
+
+type_declaration
+  : K_type IDENTIFIER K_is type_definition ';'
+      { sorrymsg(@1, "type_declaration not supported.\n"); }
+  ;
+
+type_definition
+  : '(' enumeration_literal_list ')'
+      { VTypeEnum*tmp = new VTypeEnum($2);
+	delete $2;
 	$$ = tmp;
       }
   ;

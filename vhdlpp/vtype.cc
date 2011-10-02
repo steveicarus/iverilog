@@ -105,3 +105,18 @@ VTypeRange::VTypeRange(const VType*base, int64_t max_val, int64_t min_val)
 VTypeRange::~VTypeRange()
 {
 }
+
+VTypeEnum::VTypeEnum(const std::list<perm_string>*names)
+: names_(names->size())
+{
+      size_t idx = 0;
+
+      for (list<perm_string>::const_iterator cur = names->begin()
+		 ; cur != names->end() ; ++cur, ++idx) {
+	    names_[idx] = *cur;
+      }
+}
+
+VTypeEnum::~VTypeEnum()
+{
+}
