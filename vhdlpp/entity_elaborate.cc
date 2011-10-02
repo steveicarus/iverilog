@@ -93,7 +93,6 @@ int Entity::elaborate_ports_(void)
 		 ; cur != ports.end() ; ++cur) {
 
 	    InterfacePort*cur_port = *cur;
-	    VType::decl_t cur_decl;
 
 	    const VType*type = cur_port->type;
 	    if (type == 0) {
@@ -104,8 +103,8 @@ int Entity::elaborate_ports_(void)
 		  continue;
 	    }
 
-	    type->elaborate(cur_decl);
-
+	    VType::decl_t cur_decl;
+	    cur_decl.type = type;
 	    declarations_[cur_port->name] = cur_decl;
       }
 

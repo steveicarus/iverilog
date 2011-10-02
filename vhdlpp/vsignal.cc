@@ -34,7 +34,7 @@ SigVarBase::~SigVarBase()
 
 void SigVarBase::type_elaborate_(VType::decl_t&decl)
 {
-      type_->elaborate(decl);
+      decl.type = type_;
 }
 
 int Signal::emit(ostream&out, Entity*, Architecture*)

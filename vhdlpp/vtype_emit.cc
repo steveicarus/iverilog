@@ -25,31 +25,82 @@
 
 using namespace std;
 
+
 int VType::decl_t::emit(ostream&out, perm_string name) const
 {
-      const char*wire = reg_flag? "reg" : "wire";
+      return type->emit(out, name, reg_flag);
+}
 
-      switch (type) {
-	  case VType::VNONE:
-	    out << "// N type for " << name << endl;
+
+int VTypeArray::emit(ostream&out, perm_string name, bool reg_flag) const
+{
+      int errors = 0;
+      const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*> (etype_);
+      assert(base != 0);
+      assert(dimensions() == 1);
+
+      if (reg_flag)
+	    out << "reg ";
+      else
+	    out << "wire ";
+
+      base->emit_primitive_type(out);
+      if (signed_flag_)
+	    out << "signed ";
+
+      out << "[" << dimension(0).msb() << ":" << dimension(0).lsb() << "] ";
+
+      out << "\\" << name << " ";
+
+      return errors;
+}
+
+int VTypeEnum::emit(ostream&out, perm_string name, bool reg_flag) const
+{
+      int errors = 0;
+      assert(0);
+      return errors;
+}
+
+int VTypePrimitive::emit_primitive_type(ostream&out) const
+{
+      int errors = 0;
+      switch (type_) {
+	  case BOOLEAN:
+	  case BIT:
+	    out << "bool ";
 	    break;
-	  case VType::VLOGIC:
-	    out << wire<< " logic ";
-	    if (signed_flag)
-		  out << "signed ";
-	    if (msb != lsb)
-		  out << "[" << msb << ":" << lsb << "] ";
-	    out << "\\" << name << " ";
+	  case STDLOGIC:
+	    out << "logic ";
 	    break;
-	  case VType::VBOOL:
-	    out << wire << " bool ";
-	    if (signed_flag)
-		  out << "signed ";
-	    if (msb != lsb)
-		  out << "[" << msb << ":" << lsb << "] ";
-	    out << "\\" << name << " ";
+	  case INTEGER:
+	    out << "bool [31:0] ";
+	    break;
+	  default:
+	    assert(0);
 	    break;
       }
+      return errors;
+}
 
-      return 0;
+int VTypePrimitive::emit(ostream&out, perm_string name, bool reg_flag) const
+{
+      int errors = 0;
+      if (reg_flag)
+	    out << "reg ";
+      else
+	    out << "wire ";
+
+      errors += emit_primitive_type(out);
+
+      out << "\\" << name << " ";
+
+      return errors;
+}
+
+int VTypeRange::emit(ostream&out, perm_string name, bool reg_flag) const
+{
+      int errors = 0;
+      assert(0);
+      return errors;
 }

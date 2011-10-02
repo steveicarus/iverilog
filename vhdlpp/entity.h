@@ -23,9 +23,9 @@
 # include  <list>
 # include  <vector>
 # include  <iostream>
+# include  "vtype.h"
 # include  "StringHeap.h"
 # include  "LineInfo.h"
-# include  "vtype.h"
 
 typedef enum { PORT_NONE=0, PORT_IN, PORT_OUT } port_mode_t;
 

@@ -48,18 +48,21 @@ class VType {
       virtual void show(std::ostream&) const;
 
     public:
-      enum vtype_t { VNONE, VBOOL, VLOGIC };
+	// A couple places use the VType along with a few
+	// per-declaration details, so provide a common structure for
+	// holding that stuff together.
       struct decl_t {
-	  public:
-	    decl_t() : reg_flag(false), signed_flag(false), type(VNONE), msb(0), lsb(0) { }
+	    decl_t() : type(0), reg_flag(false) { }
 	    int emit(std::ostream&out, perm_string name) const;
-	  public:
+
+	    const VType*type;
 	    bool reg_flag;
-	    bool signed_flag;
-	    vtype_t type;
-	    long msb, lsb;
       };
-      virtual void elaborate(decl_t&decl) const =0;
+
+    private:
+      friend class decl_t;
+	// This virtual method is called to emit the declaration.
+      virtual int emit(std::ostream&out, perm_string name, bool reg_flag) const =0;
 };
 
 inline std::ostream&operator << (std::ostream&out, const VType&item)
@@ -85,9 +88,13 @@ class VTypePrimitive : public VType {
 
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
-      void elaborate(decl_t&decl) const;
 
       type_t type() const { return type_; }
+
+      int emit_primitive_type(std::ostream&fd) const;
+
+    private:
+      int emit(std::ostream&out, perm_string name, bool reg_flag) const;
 
     private:
       type_t type_;
@@ -128,7 +135,6 @@ class VTypeArray : public VType {
 
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
-      void elaborate(decl_t&decl) const;
 
       size_t dimensions() const;
       const range_t&dimension(size_t idx) const
@@ -137,6 +143,9 @@ class VTypeArray : public VType {
       bool signed_vector() const { return signed_flag_; }
 
       const VType* element_type() const;
+
+    private:
+      int emit(std::ostream&out, perm_string name, bool reg_flag) const;
 
     private:
       const VType*etype_;
@@ -151,7 +160,8 @@ class VTypeRange : public VType {
       VTypeRange(const VType*base, int64_t max_val, int64_t min_val);
       ~VTypeRange();
 
-      virtual void elaborate(decl_t&decl) const;
+    private:
+      int emit(std::ostream&out, perm_string name, bool reg_flag) const;
 
     private:
       const VType*base_;
@@ -164,7 +174,8 @@ class VTypeEnum : public VType {
       VTypeEnum(const std::list<perm_string>*names);
       ~VTypeEnum();
 
-      virtual void elaborate(decl_t&decl) const;
+    private:
+      int emit(std::ostream&out, perm_string name, bool reg_flag) const;
 
     private:
       std::vector<perm_string>names_;
