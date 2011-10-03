@@ -700,7 +700,7 @@ static double cycles_diff(struct tms *a, struct tms *b)
 // Provide dummies
 struct tms { int x; };
 inline static void times(struct tms *) { }
-inline static double cycles_diff(struct tms *a, struct tms *b) { return 0; }
+inline static double cycles_diff(struct tms *, struct tms *) { return 0; }
 #endif // ! defined(HAVE_TIMES)
 
 static void EOC_cleanup(void)
