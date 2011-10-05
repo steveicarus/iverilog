@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)";
 /*
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -456,6 +456,14 @@ int main(int argc, char*argv[])
 	    free(include_dir[lp]);
       }
       free(include_dir);
+
+	/* Free the VHDL library directories, the path and work directory. */
+      for (lp = 0; lp < vhdlpp_libdir_cnt; lp += 1) {
+	    free(vhdlpp_libdir[lp]);
+      }
+      free(vhdlpp_libdir);
+      free(vhdlpp_path);
+      free(vhdlpp_work);
 
       free_macros();
 
