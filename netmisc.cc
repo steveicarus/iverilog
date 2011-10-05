@@ -589,8 +589,7 @@ void eval_expr(NetExpr*&expr, int context_width)
         // The expression is a constant, so resize it if needed.
       if (ce->expr_width() < (unsigned)context_width) {
             expr = pad_to_width(expr, context_width, *expr);
-      }
-      if (ce->expr_width() > (unsigned)context_width) {
+      } else if (ce->expr_width() > (unsigned)context_width) {
             verinum value(ce->value(), context_width);
             ce = new NetEConst(value);
             ce->set_line(*expr);
