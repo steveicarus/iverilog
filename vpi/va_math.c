@@ -2,7 +2,7 @@
  *  Verilog-A math library for Icarus Verilog
  *  http://www.icarus.com/eda/verilog/
  *
- *  Copyright (C) 2007-2010  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2007-2011  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -218,6 +218,7 @@ static PLI_INT32 va_single_argument_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *ud)
     arg = vpi_scan(argv);
     if (arg != 0) {
         va_error_message(callh, "%s takes only one argument.\n", name);
+        vpi_free_object(argv);
     }
 
     /* Get the function that is to be used by the calltf routine. */
@@ -301,6 +302,7 @@ static PLI_INT32 va_double_argument_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *ud)
     arg = vpi_scan(argv);
     if (arg != 0) {
         va_error_message(callh, "%s takes only two arguments.\n", name);
+        vpi_free_object(argv);
     }
 
     /* Get the function that is to be used by the calltf routine. */
