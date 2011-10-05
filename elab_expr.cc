@@ -1268,6 +1268,153 @@ NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
       return tmp;
 }
 
+/*
+ * Routine to look for and build enumeration method calls.
+ */
+static NetExpr* check_for_enum_methods(const LineInfo*li,
+                                       Design*des, NetScope*scope,
+                                       netenum_t*netenum,
+                                       pform_name_t use_path,
+                                       perm_string method_name,
+                                       NetExpr*expr,
+                                       PExpr*parg, unsigned args)
+{
+	// The "num()" method returns the number of elements.
+      if (method_name == "num") {
+	    if (args != 0) {
+		  cerr << li->get_fileline() << ": error: enumeration "
+		          "method " << use_path << ".num() does not "
+		          "take an argument." << endl;
+		  des->errors += 1;
+	    }
+	    NetEConst*tmp = make_const_val(netenum->size());
+	    tmp->set_line(*li);
+	    delete expr; // The elaborated enum variable is not needed.
+	    return tmp;
+      }
+
+	// The "first()" method returns the first enumeration value.
+      if (method_name == "first") {
+	    if (args != 0) {
+		  cerr << li->get_fileline() << ": error: enumeration "
+		          "method " << use_path << ".first() does not "
+		          "take an argument." << endl;
+		  des->errors += 1;
+	    }
+	    netenum_t::iterator item = netenum->first_name();
+	    NetEConstEnum*tmp = new NetEConstEnum(scope, item->first,
+	                                          netenum, item->second);
+	    tmp->set_line(*li);
+	    delete expr; // The elaborated enum variable is not needed.
+	    return tmp;
+      }
+
+	// The "last()" method returns the first enumeration value.
+      if (method_name == "last") {
+	    if (args != 0) {
+		  cerr << li->get_fileline() << ": error: enumeration "
+		          "method " << use_path << ".last() does not "
+		          "take an argument." << endl;
+		  des->errors += 1;
+	    }
+	    netenum_t::iterator item = netenum->last_name();
+	    NetEConstEnum*tmp = new NetEConstEnum(scope, item->first,
+	                                          netenum, item->second);
+	    tmp->set_line(*li);
+	    delete expr; // The elaborated enum variable is not needed.
+	    return tmp;
+      }
+
+      NetESFunc*sys_expr;
+
+	// Process the method argument if it is available.
+      NetExpr* count = 0;
+      if (args != 0 && parg) {
+	    count = elaborate_rval_expr(des, scope, IVL_VT_BOOL, 32, parg);
+	    if (count == 0) {
+		  cerr << li->get_fileline() << ": error: unable to elaborate "
+		          "enumeration method argument " << use_path << "."
+		       << method_name << "(" << parg << ")." << endl;
+		  args = 0;
+		  des->errors += 1;
+	    } else if (NetEEvent*evt = dynamic_cast<NetEEvent*> (count)) {
+		  cerr << evt->get_fileline() << ": error: An event '"
+		       << evt->event()->name() << "' cannot be an enumeration "
+		          "method argument." << endl;
+		  args = 0;
+		  des->errors += 1;
+	    }
+      }
+
+	// The "name()" method returns the name of the current
+	// enumeration value.
+      if (method_name == "name") {
+	    if (args != 0) {
+		  cerr << li->get_fileline() << ": error: enumeration "
+		          "method " << use_path << ".name() does not "
+		          "take an argument." << endl;
+		  des->errors += 1;
+	    }
+	    sys_expr = new NetESFunc("$ivl_method$name", IVL_VT_STRING, 0, 1);
+	    sys_expr->parm(0, expr);
+
+	// The "next()" method returns the next enumeration value.
+      } else if (method_name == "next") {
+	    if (args > 1) {
+		  cerr << li->get_fileline() << ": error: enumeration "
+		          "method " << use_path << ".next() take at "
+		          "most one argument." << endl;
+		  des->errors += 1;
+	    }
+	    sys_expr = new NetESFunc("$ivl_method$next", netenum,
+	                             2 + (args != 0));
+	    sys_expr->parm(0, new NetENetenum(netenum));
+	    sys_expr->parm(1, expr);
+	    if (args != 0) sys_expr->parm(2, count);
+if (args != 0) {
+      cerr << li->get_fileline() << ": sorry: enumeration method "
+           << use_path << ".next() cannot currently take an argument." << endl;
+      des->errors += 1;
+}
+
+	// The "prev()" method returns the previous enumeration value.
+      } else if (method_name == "prev") {
+	    if (args > 1) {
+		  cerr << li->get_fileline() << ": error: enumeration "
+		          "method " << use_path << ".prev() take at "
+		          "most one argument." << endl;
+		  des->errors += 1;
+	    }
+	    sys_expr = new NetESFunc("$ivl_method$prev", netenum,
+	                             2 + (args != 0));
+	    sys_expr->parm(0, new NetENetenum(netenum));
+	    sys_expr->parm(1, expr);
+	    if (args != 0) sys_expr->parm(2, count);
+if (args != 0) {
+      cerr << li->get_fileline() << ": sorry: enumeration method "
+           << use_path << ".prev() cannot currently take an argument." << endl;
+      des->errors += 1;
+}
+
+	// This is an unknown enumeration method.
+      } else {
+	    cerr << li->get_fileline() << ": error: Unknown enumeration "
+	            "method " << use_path << "." << method_name << "()."
+	         << endl;
+	    des->errors += 1;
+	    return expr;
+      }
+
+      sys_expr->set_line(*li);
+
+      if (debug_elaborate) {
+	    cerr << li->get_fileline() << ": debug: Generate "
+	         << sys_expr->name() << "(" << use_path << ")" << endl;
+      }
+
+      return sys_expr;
+}
+
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					unsigned expr_wid, unsigned flags) const
 {
@@ -1286,6 +1433,46 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 		  return elaborate_access_func_(des, scope, access_nature,
                                                 expr_wid);
 
+	      // Maybe this is a method attached to an enumeration name? If
+	      // this is system verilog, then test to see if the name is
+	      // really a method attached to an object.
+	    if (gn_system_verilog() && path_.size() >= 2) {
+		  pform_name_t use_path = path_;
+		  perm_string method_name = peek_tail_name(use_path);
+		  use_path.pop_back();
+
+		  NetNet *net;
+		  const NetExpr *par;
+		  NetEvent *eve;
+		  const NetExpr *ex1, *ex2;
+
+		  symbol_search(this, des, scope, use_path,
+		                net, par, eve, ex1, ex2);
+
+		    // Check to see if we have a net and if so is it an
+		    // enumeration? If so then check to see if this is an
+		    // enumeration method call.
+		  if (net != 0) {
+			netenum_t*netenum = net->enumeration();
+			if (netenum) {
+				// We may need the elaborated version of the
+				// enumeration variable so elaborate it now.
+			      PEIdent pexpr(use_path);
+			      NetExpr*expr = pexpr.elaborate_expr(des, scope, 
+			                                          expr_wid,
+			                                          NO_FLAGS);
+			      assert(expr);
+
+			      PExpr*tmp = parms_.size() ? parms_[0] : 0;
+			      return check_for_enum_methods(this, des, scope,
+			                                    netenum, use_path,
+			                                    method_name, expr,
+			                                    tmp, parms_.size());
+			}
+		  }
+	    }
+
+	      // Nothing was found so report this as an error.
 	    cerr << get_fileline() << ": error: No function named `" << path_
 	         << "' found in this context (" << scope_path(scope) << ")."
                  << endl;
@@ -2087,73 +2274,32 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	// Maybe this is a method attached to an enumeration name? If
 	// this is system verilog, then test to see if the name is
 	// really a method attached to an object.
-
       if (gn_system_verilog() && found_in==0 && path_.size() >= 2) {
 	    pform_name_t use_path = path_;
 	    perm_string method_name = peek_tail_name(use_path);
 	    use_path.pop_back();
 
 	    found_in = symbol_search(this, des, scope, use_path,
-				     net, par, eve, ex1, ex2);
+	                             net, par, eve, ex1, ex2);
 
+	      // Check to see if we have a net and if so is it an
+	      // enumeration? If so then check to see if this is an
+	      // enumeration method call.
 	    if (net != 0) {
-		    // Special case: The net is an enum, and the
-		    // method name is "num".
 		  netenum_t*netenum = net->enumeration();
-		  if (netenum && method_name == "num") {
-			NetEConst*tmp = make_const_val(netenum->size());
-			tmp->set_line(*this);
-			return tmp;
+		  if (netenum) {
+			  // We may need the elaborated version of the
+			  // enumeration variable so elaborate it now.
+			NetExpr*expr = elaborate_expr_net(des, scope, net,
+			                                  found_in, expr_wid,
+			                                  NO_FLAGS);
+			assert(expr);
+
+			return check_for_enum_methods(this, des, scope,
+			                              netenum,
+			                              use_path, method_name,
+			                              expr, NULL, 0);
 		  }
-
-		    // Special case: The net is an enum, and the
-		    // method name is "first" or "last". These
-		    // evaluate to constant values.
-		  if (netenum && method_name == "first") {
-			netenum_t::iterator item = netenum->first_name();
-			NetEConstEnum*tmp = new NetEConstEnum(scope,  item->first,
-							      netenum, item->second);
-			tmp->set_line(*this);
-			return tmp;
-		  }
-		  if (netenum && method_name == "last") {
-			netenum_t::iterator item = netenum->last_name();
-			NetEConstEnum*tmp = new NetEConstEnum(scope,  item->first,
-							      netenum, item->second);
-			tmp->set_line(*this);
-			return tmp;
-		  }
-
-		  NetExpr*expr = elaborate_expr_net(des, scope, net, found_in,
-                                                    expr_wid, NO_FLAGS);
-		  NetESFunc*sys_expr = 0;
-
-		  if (method_name == "name") {
-			sys_expr = new NetESFunc("$ivl_method$name", IVL_VT_STRING,0, 1);
-			sys_expr->parm(0, expr);
-		  } else if (method_name == "next") {
-			sys_expr = new NetESFunc("$ivl_method$next", netenum, 2);
-			sys_expr->parm(0, new NetENetenum(netenum));
-			sys_expr->parm(1, expr);
-		  } else if (method_name == "prev") {
-			sys_expr = new NetESFunc("$ivl_method$prev", netenum, 2);
-			sys_expr->parm(0, new NetENetenum(netenum));
-			sys_expr->parm(1, expr);
-		  } else {
-			cerr << get_fileline() << ": error: "
-			     << "Unknown method name `" << method_name << "'"
-			     << " attached to " << use_path << "." << endl;
-			des->errors += 1;
-			return elaborate_expr_net(des, scope, net, found_in,
-                                                  expr_wid, NO_FLAGS);
-		  }
-
-		  sys_expr->set_line(*this);
-
-		  if (debug_elaborate)
-			cerr << get_fileline() << ": debug: Generate "
-			     << sys_expr->name() << "(" << use_path << ")" << endl;
-		  return sys_expr;
 	    }
       }
 
