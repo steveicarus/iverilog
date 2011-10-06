@@ -151,7 +151,7 @@ va_math.vpi: $V ../vvp/libvpi.a
 	$(CC) @shared@ -o $@ $V -L../vvp $(LDFLAGS) -lvpi $(VA_MATH_VPI_LDFLAGS)
 
 vhdl_sys.vpi: $(VHDL_SYS) ../vvp/libvpi.a
-	$(CXX) @shared@ -o $@ $(VHDL_SYS) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
+	$(CC) @shared@ -o $@ $(VHDL_SYS) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
 stamp-vpi_config-h: $(srcdir)/vpi_config.h.in ../config.status
 	@rm -f $@
