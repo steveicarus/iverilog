@@ -1792,7 +1792,15 @@ term
 
 type_declaration
   : K_type IDENTIFIER K_is type_definition ';'
-      { sorrymsg(@1, "type_declaration not supported.\n"); }
+      { perm_string name = lex_strings.make($2);
+	if ($4 == 0) {
+	      errormsg(@1, "Failed to declare type name %s.\n", name.str());
+	} else {
+		//VTypeDef*tmp = new VTypeDef(name, $4);
+		//active_scope->bind_name(name, tmp);
+	      active_scope->bind_name(name, $4);
+	}
+      }
   ;
 
 type_definition

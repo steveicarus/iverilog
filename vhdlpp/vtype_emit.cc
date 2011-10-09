@@ -28,21 +28,16 @@ using namespace std;
 
 int VType::decl_t::emit(ostream&out, perm_string name) const
 {
-      return type->emit(out, name, reg_flag);
+      return type->emit_decl(out, name, reg_flag);
 }
 
 
-int VTypeArray::emit(ostream&out, perm_string name, bool reg_flag) const
+int VTypeArray::emit_def(ostream&out, perm_string name) const
 {
       int errors = 0;
       const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*> (etype_);
       assert(base != 0);
       assert(dimensions() == 1);
-
-      if (reg_flag)
-	    out << "reg ";
-      else
-	    out << "wire ";
 
       base->emit_primitive_type(out);
       if (signed_flag_)
@@ -55,10 +50,41 @@ int VTypeArray::emit(ostream&out, perm_string name, bool reg_flag) const
       return errors;
 }
 
-int VTypeEnum::emit(ostream&out, perm_string name, bool reg_flag) const
+int VTypeArray::emit_decl(ostream&out, perm_string name, bool reg_flag) const
 {
       int errors = 0;
-      assert(0);
+      const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*> (etype_);
+      assert(base != 0);
+      assert(dimensions() == 1);
+
+      if (reg_flag)
+	    out << "reg ";
+      else
+	    out << "wire ";
+
+      errors += emit_def(out, name);
+
+      return errors;
+}
+
+int VTypeEnum::emit_def(ostream&out, perm_string name) const
+{
+      int errors = 0;
+      out << "enum {";
+      assert(names_.size() >= 1);
+      out << "\\" << names_[0] << " ";
+      for (size_t idx = 1 ; idx < names_.size() ; idx += 1)
+	    out << ", \\" << names_[idx] << " ";
+
+      out << "} \\" << name << " ";
+
+      return errors;
+}
+
+int VTypeEnum::emit_decl(ostream&out, perm_string name, bool reg_flag) const
+{
+      int errors = 0;
+      errors += emit_def(out, name);
       return errors;
 }
 
@@ -83,7 +109,15 @@ int VTypePrimitive::emit_primitive_type(ostream&out) const
       return errors;
 }
 
-int VTypePrimitive::emit(ostream&out, perm_string name, bool reg_flag) const
+int VTypePrimitive::emit_def(ostream&out, perm_string name) const
+{
+      int errors = 0;
+      errors += emit_primitive_type(out);
+      out << "\\" << name << " ";
+      return errors;
+}
+
+int VTypePrimitive::emit_decl(ostream&out, perm_string name, bool reg_flag) const
 {
       int errors = 0;
       if (reg_flag)
@@ -91,16 +125,49 @@ int VTypePrimitive::emit(ostream&out, perm_string name, bool reg_flag) const
       else
 	    out << "wire ";
 
-      errors += emit_primitive_type(out);
-
-      out << "\\" << name << " ";
+      errors += emit_def(out, name);
 
       return errors;
 }
 
-int VTypeRange::emit(ostream&out, perm_string name, bool reg_flag) const
+int VTypeRange::emit_def(ostream&out, perm_string name) const
 {
       int errors = 0;
       assert(0);
+      return errors;
+}
+
+int VTypeRange::emit_decl(ostream&out, perm_string name, bool reg_flag) const
+{
+      int errors = 0;
+      assert(0);
+      return errors;
+}
+
+int VTypeDef::emit_def(ostream&out, perm_string name) const
+{
+      int errors = 0;
+      assert(0);
+      return errors;
+}
+
+int VTypeDef::emit_decl(ostream&out, perm_string name, bool reg_flag) const
+{
+      int errors = 0;
+      if (reg_flag)
+	    out << "reg ";
+      else
+	    out << "wire ";
+
+      out << "\\" << name_ << " \\" << name << " ";
+      return errors;
+}
+
+int VTypeDef::emit_typedef(ostream&out) const
+{
+      int errors = 0;
+      out << "typedef ";
+      errors += type_->emit_def(out, name_);
+      out << ";" << endl;
       return errors;
 }

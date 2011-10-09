@@ -120,3 +120,22 @@ VTypeEnum::VTypeEnum(const std::list<perm_string>*names)
 VTypeEnum::~VTypeEnum()
 {
 }
+
+void VTypeEnum::show(ostream&out) const
+{
+      out << "(";
+      if (names_.size() >= 1)
+	    out << names_[0];
+      for (size_t idx = 1 ; idx < names_.size() ; idx += 1)
+	    out << ", " << names_[idx];
+      out << ")";
+}
+
+VTypeDef::VTypeDef(perm_string nam, const VType*typ)
+: name_(nam), type_(typ)
+{
+}
+
+VTypeDef::~VTypeDef()
+{
+}

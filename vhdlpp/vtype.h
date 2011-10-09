@@ -47,6 +47,16 @@ class VType {
 	// really necessary given the write_to_stream method?)
       virtual void show(std::ostream&) const;
 
+	// This virtual method emits a definition for the specific
+	// type. It is used to emit typedef's.
+      virtual int emit_def(std::ostream&out, perm_string name) const =0;
+
+    private:
+      friend class decl_t;
+	// This virtual method is called to emit the declaration. This
+	// is used by the decl_t object to emit variable/wire/port declarations.
+      virtual int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const =0;
+
     public:
 	// A couple places use the VType along with a few
 	// per-declaration details, so provide a common structure for
@@ -59,10 +69,6 @@ class VType {
 	    bool reg_flag;
       };
 
-    private:
-      friend class decl_t;
-	// This virtual method is called to emit the declaration.
-      virtual int emit(std::ostream&out, perm_string name, bool reg_flag) const =0;
 };
 
 inline std::ostream&operator << (std::ostream&out, const VType&item)
@@ -93,8 +99,9 @@ class VTypePrimitive : public VType {
 
       int emit_primitive_type(std::ostream&fd) const;
 
+      int emit_def(std::ostream&out, perm_string name) const;
     private:
-      int emit(std::ostream&out, perm_string name, bool reg_flag) const;
+      int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 
     private:
       type_t type_;
@@ -144,8 +151,10 @@ class VTypeArray : public VType {
 
       const VType* element_type() const;
 
+      int emit_def(std::ostream&out, perm_string name) const;
+
     private:
-      int emit(std::ostream&out, perm_string name, bool reg_flag) const;
+      int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 
     private:
       const VType*etype_;
@@ -160,8 +169,9 @@ class VTypeRange : public VType {
       VTypeRange(const VType*base, int64_t max_val, int64_t min_val);
       ~VTypeRange();
 
+      int emit_def(std::ostream&out, perm_string name) const;
     private:
-      int emit(std::ostream&out, perm_string name, bool reg_flag) const;
+      int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 
     private:
       const VType*base_;
@@ -174,11 +184,31 @@ class VTypeEnum : public VType {
       VTypeEnum(const std::list<perm_string>*names);
       ~VTypeEnum();
 
+      void show(std::ostream&) const;
+
+      int emit_def(std::ostream&out, perm_string name) const;
     private:
-      int emit(std::ostream&out, perm_string name, bool reg_flag) const;
+      int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 
     private:
       std::vector<perm_string>names_;
+};
+
+class VTypeDef : public VType {
+
+    public:
+      VTypeDef(perm_string name, const VType*is);
+      ~VTypeDef();
+
+      int emit_typedef(std::ostream&out) const;
+
+      int emit_def(std::ostream&out, perm_string name) const;
+    private:
+      int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
+
+    private:
+      perm_string name_;
+      const VType*type_;
 };
 
 #endif
