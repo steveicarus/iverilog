@@ -90,6 +90,9 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		case vpiRealVar:
 		  real_delete((scope->intern)[idx]);
 		  break;
+		case vpiEnumTypespec:
+		  enum_delete((scope->intern)[idx]);
+		  break;
 		default:
 		  fprintf(stderr, "Need support for type: %d\n",
 		          scope->intern[idx]->vpi_type->type_code);

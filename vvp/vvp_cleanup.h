@@ -1,7 +1,7 @@
 #ifndef __vvp_cleanup_H
 #define __vvp_cleanup_H
 /*
- * Copyright (c) 2009 Cary R. (cygcary@yahoo.com)
+ * Copyright (c) 2009-2011 Cary R. (cygcary@yahoo.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -43,6 +43,7 @@ extern void A_delete(struct __vpiHandle *item);
 extern void PV_delete(struct __vpiHandle *item);
 extern void constant_delete(struct __vpiHandle *item);
 extern void contexts_delete(struct __vpiScope *scope);
+extern void enum_delete(struct __vpiHandle *item);
 extern void memory_delete(struct __vpiHandle *item);
 extern void named_event_delete(struct __vpiHandle *item);
 extern void parameter_delete(struct __vpiHandle *item);

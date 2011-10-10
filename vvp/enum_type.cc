@@ -19,6 +19,9 @@
 
 # include  "compile.h"
 # include  "enum_type.h"
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+#endif
 # include  <iostream>
 # include  <cassert>
 
@@ -172,6 +175,7 @@ void compile_enum2_type(char*label, long width, bool signed_flag,
 
       assert(idx == spec->names.size());
       compile_vpi_symbol(label, vpi_handle(spec));
+      vpip_attach_to_current_scope(vpi_handle(spec));
 
       free(label);
       delete names;
@@ -198,7 +202,22 @@ void compile_enum4_type(char*label, long width, bool signed_flag,
 
       assert(idx == spec->names.size());
       compile_vpi_symbol(label, vpi_handle(spec));
+      vpip_attach_to_current_scope(vpi_handle(spec));
 
       free(label);
       delete names;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void enum_delete(vpiHandle item)
+{
+      struct __vpiEnumTypespec*obj = (struct __vpiEnumTypespec*) item;
+
+      for (vector<enumconst_s>::iterator iter = obj->names.begin();
+           iter != obj->names.end(); ++ iter ) {
+	    delete [] iter->name;
+      }
+
+      delete obj;
+}
+#endif
