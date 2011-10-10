@@ -444,7 +444,9 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           strcpy(cpb+pad, cp);
 
           /* If a width was not given, use the default, unless we have a
-           * leading zero (width of zero). */
+           * leading zero (width of zero). Because the width of a real in
+           * Icarus is 1 the string length will set the width of a real
+           * displayed using %d. */
           if (width == -1) {
             width = (ld_zero == 1) ? 0 : vpi_get_dec_size(info->items[*idx]);
           }
@@ -856,7 +858,7 @@ static unsigned int get_format(char **rtn, char *fmt,
 static unsigned int get_numeric(char **rtn, const struct strobe_cb_info *info,
                                 vpiHandle item)
 {
-  int size;
+  int size, min;
   s_vpi_value val;
 
   val.format = info->default_format;
@@ -865,6 +867,11 @@ static unsigned int get_numeric(char **rtn, const struct strobe_cb_info *info,
   switch(info->default_format){
     case vpiDecStrVal:
       size = vpi_get_dec_size(item);
+	/* -1 can be represented as a one bit signed value. This returns	
+	 * a size of 1 which is too small for the -1 string value so make
+	 * the string width the minimum display width. */
+      min = strlen(val.value.str);
+      if (size < min) size = min;
       *rtn = malloc((size+1)*sizeof(char));
       sprintf(*rtn, "%*s", size, val.value.str);
       break;
