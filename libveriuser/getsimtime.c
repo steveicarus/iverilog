@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2011 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -83,9 +83,21 @@ PLI_INT32 tf_getlongtime(PLI_INT32 *high)
       return tf_igetlongtime(high, 0);
 }
 
-/* Alias for commercial simulators */
-PLI_INT32 tf_getlongsimtime(PLI_INT32 *high) \
-      __attribute__ ((weak, alias ("tf_getlongtime")));
+/*
+ * This function is not defined in the IEE standard, but is provided for
+ * compatibility with other simulators. Make it a weak symbol just in
+ * case the user has defined their own function for this.
+ */
+PLI_INT32 tf_getlongsimtime(PLI_INT32 *high) __attribute__ ((weak));
+PLI_INT32 tf_getlongsimtime(PLI_INT32 *high)
+{
+      s_vpi_time timerec;
+      timerec.type = vpiSimTime;
+      vpi_get_time (0, &timerec);
+
+      *high = timerec.high;
+      return timerec.low;
+}
 
 void tf_scale_longdelay(void*obj, PLI_INT32 low, PLI_INT32 high,
 			PLI_INT32 *alow, PLI_INT32 *ahigh)
