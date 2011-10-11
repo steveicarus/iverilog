@@ -262,6 +262,8 @@ static const char* vpi_type_values(PLI_INT32 code)
 	    return "vpiByteVar";
 	  case vpiConstant:
 	    return "vpiConstant";
+	  case vpiEnumTypespec:
+	    return "vpiEnumTypespec";
 	  case vpiFunction:
 	    return "vpiFunction";
 	  case vpiIntVar:
@@ -1047,6 +1049,13 @@ vpiHandle vpi_handle(PLI_INT32 type, vpiHandle ref)
       return res;
 }
 
+static vpiHandle vpip_make_udp_iterator()
+{
+// HERE: Add support for iterating over UDP definitions.
+//       See 26.6.16 (page 400 in 1364-2005).
+      return 0;
+}
+
 /*
  * This function asks the object to return an iterator for
  * the specified reference. It is up to the iterate_ method to
@@ -1057,6 +1066,9 @@ static vpiHandle vpi_iterate_global(int type)
       switch (type) {
 	  case vpiModule:
 	    return vpip_make_root_iterator();
+
+	  case vpiUdpDefn:
+	    return vpip_make_udp_iterator();
 
 	  case vpiUserSystf:
 	    return vpip_make_systf_iterator();
