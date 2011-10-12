@@ -20,6 +20,7 @@
 # include <string.h>
 # include "config.h"
 # include "vlog95_priv.h"
+# include "ivl_alloc.h"
 
 static void emit_entry(ivl_udp_t udp, char entry, unsigned *rerun)
 {
