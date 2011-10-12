@@ -1277,6 +1277,7 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
                                        pform_name_t use_path,
                                        perm_string method_name,
                                        NetExpr*expr,
+                                       unsigned rtn_wid,
                                        PExpr*parg, unsigned args)
 {
 	// The "num()" method returns the number of elements.
@@ -1355,9 +1356,20 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 		          "take an argument." << endl;
 		  des->errors += 1;
 	    }
-	    sys_expr = new NetESFunc("$ivl_enum_method$name", IVL_VT_STRING, 0, 2);
+	    sys_expr = new NetESFunc("$ivl_enum_method$name", IVL_VT_STRING,
+	                             rtn_wid, 2);
 	    sys_expr->parm(0, new NetENetenum(netenum));
 	    sys_expr->parm(1, expr);
+
+	      /* The compiler/code generators need to be fixed to support a
+	       * string return value. In some contexts we could use the
+	       * expression width, but that doesn't always work. */
+	    if (rtn_wid == 0) {
+		  cerr << li->get_fileline() << ": sorry: Enumeration method "
+		          "name() is not currently supported in this context "
+		          "(self-determined)." << endl;
+		  des->errors += 1;
+	    }
 
 	// The "next()" method returns the next enumeration value.
       } else if (method_name == "next") {
@@ -1457,7 +1469,8 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 			      return check_for_enum_methods(this, des, scope,
 			                                    netenum, use_path,
 			                                    method_name, expr,
-			                                    tmp, parms_.size());
+			                                    expr_wid, tmp,
+			                                    parms_.size());
 			}
 		  }
 	    }
@@ -2288,7 +2301,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			return check_for_enum_methods(this, des, scope,
 			                              netenum,
 			                              use_path, method_name,
-			                              expr, NULL, 0);
+			                              expr, expr_wid, NULL, 0);
 		  }
 	    }
       }

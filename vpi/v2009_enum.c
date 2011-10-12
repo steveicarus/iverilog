@@ -296,8 +296,7 @@ static PLI_INT32 ivl_enum_method_next_prev_calltf(PLI_BYTE8*name)
 	/* If the variable is a vector then free the copy we created above. */
       if (var_val.format == vpiVectorVal) free(var_val.value.vector);
 
-	/* The current value was not found in the list so return X. This
-	 * gives 0 for two-state variables. */
+	/* The current value was not found in the list so return X/0. */
       if (cur == 0) {
 	      /* This only works correctly since we don't really define the
 	       * the correct base typespec. */
@@ -420,11 +419,6 @@ static PLI_INT32 ivl_enum_method_name_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_control(vpiFinish, 1);
       }
 
-      vpi_printf("%s:%d: sorry: ", vpi_get_str(vpiFile, sys),
-                (int) vpi_get(vpiLineNo,sys));
-      vpi_printf("enum method %s is not currently supported.\n", name);
-      vpi_control(vpiFinish, 1);
-
       return 0;
 }
 
@@ -433,7 +427,66 @@ static PLI_INT32 ivl_enum_method_name_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
  */
 static PLI_INT32 ivl_enum_method_name_calltf(PLI_BYTE8*name)
 {
-      assert(0);
+      vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv = vpi_iterate(vpiArgument, sys);
+      vpiHandle arg_enum = vpi_scan(argv);
+      vpiHandle arg_var = vpi_scan(argv);
+
+      vpiHandle enum_list;
+      vpiHandle cur;
+      PLI_INT32 var_width = vpi_get(vpiSize, arg_var);
+
+      s_vpi_value cur_val, var_val;
+
+	/* Free the argument iterator. */
+      vpi_free_object(argv);
+
+	/* Get the current value. */
+      var_val.format = vpiObjTypeVal;
+      vpi_get_value(arg_var, &var_val);
+
+	/* If the current value is a vector, then make a safe copy of
+	   it so that other vpi_get_value() calls don't trash the value. */
+      if (var_val.format == vpiVectorVal) {
+	    PLI_INT32 idx;
+	    PLI_INT32 words = (var_width - 1)/32 + 1;
+	    p_vpi_vecval nvec = malloc(words*sizeof(s_vpi_vecval));
+	    for (idx = 0 ; idx < words ; idx += 1) {
+		  nvec[idx].aval = var_val.value.vector[idx].aval;
+		  nvec[idx].bval = var_val.value.vector[idx].bval;
+	    }
+	    var_val.value.vector = nvec;
+      }
+
+	/* Search for the current value in the enumeration list. */
+      enum_list = vpi_iterate(vpiEnumConst, arg_enum);
+      assert(enum_list);
+      do {
+	    cur = vpi_scan(enum_list);
+	    if (cur == 0) break;
+
+	    cur_val.format = vpiObjTypeVal;
+	    vpi_get_value(cur, &cur_val);
+	    assert(var_width == vpi_get(vpiSize, cur));
+      } while (! compare_value_eequal(&cur_val, &var_val, var_width));
+
+	/* If the variable is a vector then free the copy we created above. */
+      if (var_val.format == vpiVectorVal) free(var_val.value.vector);
+
+	/* The current value was not found in the list so return an empty
+	 * string. */
+      cur_val.format = vpiStringVal;
+      if (cur == 0) {
+	    cur_val.value.str = "";
+      } else {
+	    cur_val.value.str = vpi_get_str(vpiName, cur);
+
+	      /* Free the iterator. */
+	    vpi_free_object(enum_list);
+      }
+
+	/* Return the appropriate string value. */
+      vpi_put_value(sys, &cur_val, 0, vpiNoDelay);
       return 0;
 }
 
