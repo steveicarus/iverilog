@@ -43,6 +43,7 @@ static struct enumconst_s* enumconst_from_handle(vpiHandle obj)
 struct __vpiEnumTypespec {
       struct __vpiHandle base;
       std::vector<enumconst_s> names;
+      int base_type_code;
       bool is_signed;
 };
 
@@ -62,6 +63,13 @@ static int enum_type_get(int code, vpiHandle obj)
       switch (code) {
 	  case vpiSize:
 	    return ref->names.size();
+
+	    /* This is not currently set correctly. We always use vpiReg for
+	     * four state variables and vpiBitVar for two state variables.
+	     * This minimal functionality is needed to get the next() and
+	     * prev() methods to work correctly with invalid values. */
+	  case vpiBaseTypespec:
+	    return ref->base_type_code;
 
 	  case vpiSigned:
 	    return ref->is_signed;
@@ -163,6 +171,7 @@ void compile_enum2_type(char*label, long width, bool signed_flag,
       spec->base.vpi_type = &enum_type_rt;
       spec->names = std::vector<enumconst_s> (names->size());
       spec->is_signed = signed_flag;
+      spec->base_type_code = vpiBitVar;
 
       size_t idx = 0;
       for (list<struct enum_name_s>::iterator cur = names->begin()
@@ -188,6 +197,7 @@ void compile_enum4_type(char*label, long width, bool signed_flag,
       spec->base.vpi_type = &enum_type_rt;
       spec->names = std::vector<enumconst_s> (names->size());
       spec->is_signed = signed_flag;
+      spec->base_type_code = vpiReg;
 
       size_t idx = 0;
       for (list<struct enum_name_s>::iterator cur = names->begin()
