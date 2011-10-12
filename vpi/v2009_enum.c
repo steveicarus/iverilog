@@ -281,7 +281,7 @@ static PLI_INT32 ivl_enum_method_next_prev_calltf(PLI_BYTE8*name)
       }
 
 	/* Search for the current value in the enumeration list. */
-      enum_list = vpi_iterate(vpiMember, arg_enum);
+      enum_list = vpi_iterate(vpiEnumConst, arg_enum);
       assert(enum_list);
       do {
 	    cur = vpi_scan(enum_list);
@@ -307,7 +307,7 @@ static PLI_INT32 ivl_enum_method_next_prev_calltf(PLI_BYTE8*name)
 	    if (strcmp(name, "$ivl_enum_method$next") == 0) {
 		    /* Check to see if we need to wrap to the beginning. */
 		  if (loc + count > enum_size) {
-			enum_list = vpi_iterate(vpiMember, arg_enum);
+			enum_list = vpi_iterate(vpiEnumConst, arg_enum);
 			assert(enum_list);
 			count -= (enum_size - loc);
 		  }
@@ -321,7 +321,7 @@ static PLI_INT32 ivl_enum_method_next_prev_calltf(PLI_BYTE8*name)
 		  } else {
 			  /* The element we want is before the current
 			   * element (at the beginning of the list). */
-			enum_list = vpi_iterate(vpiMember, arg_enum);
+			enum_list = vpi_iterate(vpiEnumConst, arg_enum);
 			assert(enum_list);
 			count = loc - count;
 		  }

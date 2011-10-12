@@ -87,7 +87,7 @@ static vpiHandle enum_type_iterate(int code, vpiHandle obj)
       struct __vpiEnumTypespec*ref = vpip_enum_typespec_from_handle(obj);
       assert(ref);
 
-      if (code == vpiMember) {
+      if (code == vpiEnumConst) {
 	    vpiHandle*args = (vpiHandle*)
 		  calloc(ref->names.size(), sizeof(vpiHandle*));
 	    for (size_t idx = 0 ; idx < ref->names.size() ; idx += 1)
