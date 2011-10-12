@@ -1355,8 +1355,9 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 		          "take an argument." << endl;
 		  des->errors += 1;
 	    }
-	    sys_expr = new NetESFunc("$ivl_method$name", IVL_VT_STRING, 0, 1);
-	    sys_expr->parm(0, expr);
+	    sys_expr = new NetESFunc("$ivl_enum_method$name", IVL_VT_STRING, 0, 2);
+	    sys_expr->parm(0, new NetENetenum(netenum));
+	    sys_expr->parm(1, expr);
 
 	// The "next()" method returns the next enumeration value.
       } else if (method_name == "next") {
@@ -1366,16 +1367,11 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 		          "most one argument." << endl;
 		  des->errors += 1;
 	    }
-	    sys_expr = new NetESFunc("$ivl_method$next", netenum,
+	    sys_expr = new NetESFunc("$ivl_enum_method$next", netenum,
 	                             2 + (args != 0));
 	    sys_expr->parm(0, new NetENetenum(netenum));
 	    sys_expr->parm(1, expr);
 	    if (args != 0) sys_expr->parm(2, count);
-if (args != 0) {
-      cerr << li->get_fileline() << ": sorry: enumeration method "
-           << use_path << ".next() cannot currently take an argument." << endl;
-      des->errors += 1;
-}
 
 	// The "prev()" method returns the previous enumeration value.
       } else if (method_name == "prev") {
@@ -1385,16 +1381,11 @@ if (args != 0) {
 		          "most one argument." << endl;
 		  des->errors += 1;
 	    }
-	    sys_expr = new NetESFunc("$ivl_method$prev", netenum,
+	    sys_expr = new NetESFunc("$ivl_enum_method$prev", netenum,
 	                             2 + (args != 0));
 	    sys_expr->parm(0, new NetENetenum(netenum));
 	    sys_expr->parm(1, expr);
 	    if (args != 0) sys_expr->parm(2, count);
-if (args != 0) {
-      cerr << li->get_fileline() << ": sorry: enumeration method "
-           << use_path << ".prev() cannot currently take an argument." << endl;
-      des->errors += 1;
-}
 
 	// This is an unknown enumeration method.
       } else {
@@ -1455,13 +1446,12 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 		  if (net != 0) {
 			netenum_t*netenum = net->enumeration();
 			if (netenum) {
-				// We may need the elaborated version of the
-				// enumeration variable so elaborate it now.
-			      PEIdent pexpr(use_path);
-			      NetExpr*expr = pexpr.elaborate_expr(des, scope, 
-			                                          expr_wid,
-			                                          NO_FLAGS);
-			      assert(expr);
+				// We may need the net expression for the
+				// enumeration variable so get it.
+			      NetESignal*expr = new NetESignal(net);
+			      expr->set_line(*this);
+				// This expression cannot be a select!
+			      assert(use_path.back().index.empty());
 
 			      PExpr*tmp = parms_.size() ? parms_[0] : 0;
 			      return check_for_enum_methods(this, des, scope,
@@ -2288,12 +2278,12 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    if (net != 0) {
 		  netenum_t*netenum = net->enumeration();
 		  if (netenum) {
-			  // We may need the elaborated version of the
-			  // enumeration variable so elaborate it now.
-			NetExpr*expr = elaborate_expr_net(des, scope, net,
-			                                  found_in, expr_wid,
-			                                  NO_FLAGS);
-			assert(expr);
+			  // We may need the net expression for the
+			  // enumeration variable so get it.
+			NetESignal*expr = new NetESignal(net);
+			expr->set_line(*this);
+			  // This expression cannot be a select!
+			assert(use_path.back().index.empty());
 
 			return check_for_enum_methods(this, des, scope,
 			                              netenum,
