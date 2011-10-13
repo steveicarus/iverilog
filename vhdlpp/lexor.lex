@@ -278,7 +278,7 @@ static bool is_based_correct(char* text)
         if(base == 0)
             return 0;
     }
-    bool point = 0;
+    bool point = false;
     set<char> allowed_chars;
 
     unsigned c;
@@ -299,12 +299,12 @@ static bool is_based_correct(char* text)
         if(*ptr == '.')
         {
             //we found a dot and another one was already found
-            if(point == 1)
+            if(point)
                 return 0;
             else
             {
                 //notice the fact of finding a point and continue, without increasing the length
-                point = 1;
+                point = true;
                 continue;
             }
         }
