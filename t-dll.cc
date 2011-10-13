@@ -1045,6 +1045,7 @@ bool dll_target::ureduce(const NetUReduce*net)
       switch (net->type()) {
 	  case NetUReduce::NONE:
 	    assert(0);
+	    delete obj;
 	    return false;
 	  case NetUReduce::AND:
 	    obj->type = IVL_LPM_RE_AND;
