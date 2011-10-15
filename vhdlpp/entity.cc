@@ -38,12 +38,19 @@ ComponentBase::~ComponentBase()
         delete *it;
 }
 
-void ComponentBase::set_interface(std::list<InterfacePort*>*ports)
+void ComponentBase::set_interface(std::list<InterfacePort*>*parms,
+				  std::list<InterfacePort*>*ports)
 {
-	while (! ports->empty()) {
-	      ports_.push_back(ports->front());
-	      ports->pop_front();
-	}
+      if (parms) {
+	    while (! parms->empty()) {
+		  parms_.push_back(parms->front());
+		  parms->pop_front();
+	    }
+      }
+      while (! ports->empty()) {
+	    ports_.push_back(ports->front());
+	    ports->pop_front();
+      }
 }
 
 const InterfacePort* ComponentBase::find_port(perm_string my_name) const

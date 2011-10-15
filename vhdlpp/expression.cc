@@ -408,10 +408,8 @@ bool ExpName::evaluate(ScopeBase*scope, int64_t&val) const
       Expression*exp;
 
       bool rc = scope->find_constant(name_, type, exp);
-      if (rc == false) {
-	    cerr << "XXXX Unable to evaluate name " << name_ << "." << endl;
+      if (rc == false)
 	    return false;
-      }
 
       return exp->evaluate(scope, val);
 }

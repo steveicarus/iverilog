@@ -30,10 +30,11 @@
 typedef enum { PORT_NONE=0, PORT_IN, PORT_OUT } port_mode_t;
 
 class Architecture;
+class Expression;
 
 class InterfacePort : public LineInfo {
     public:
-      InterfacePort() { mode = PORT_NONE; type=0; }
+      InterfacePort() { mode = PORT_NONE; type=0; expr=0; }
 
 	// Port direction from the source code.
       port_mode_t mode;
@@ -41,6 +42,8 @@ class InterfacePort : public LineInfo {
       perm_string name;
 	// Name of interface type as given in the source code.
       const VType*type;
+	// Default value expression (or nil)
+      Expression*expr;
 };
 
 /*
@@ -63,7 +66,8 @@ class ComponentBase : public LineInfo {
 	// method with a list of interface elements that were parsed
 	// for the entity. This method collects those entities, and
 	// empties the list in the process.
-      void set_interface(std::list<InterfacePort*>*ports);
+      void set_interface(std::list<InterfacePort*>*parms,
+			 std::list<InterfacePort*>*ports);
 
 
       void write_to_stream(std::ostream&fd) const;
@@ -77,6 +81,7 @@ class ComponentBase : public LineInfo {
 
     private:
       perm_string name_;
+      std::vector<InterfacePort*> parms_;
       std::vector<InterfacePort*> ports_;
 };
 

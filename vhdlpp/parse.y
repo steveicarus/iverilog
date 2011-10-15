@@ -224,9 +224,10 @@ const VType*parse_type_by_name(perm_string name)
 
 %type <flag> direction
 
-%type <interface_list> interface_element interface_list entity_header
+%type <interface_list> interface_element interface_list
 %type <interface_list> port_clause port_clause_opt
-%type <port_mode>  mode
+%type <interface_list> generic_clause generic_clause_opt
+%type <port_mode>  mode mode_opt
 
 %type <entity_aspect> entity_aspect entity_aspect_opt binding_indication binding_indication_semicolon_opt
 %type <instantiation_list> instantiation_list
@@ -246,6 +247,7 @@ const VType*parse_type_by_name(perm_string name)
 %type <expr> expression_logical_xnor expression_logical_xor
 %type <expr> name
 %type <expr> shift_expression simple_expression term waveform_element
+%type <expr> interface_element_expression
 
 %type <expr_list> waveform waveform_elements
 %type <expr_list> name_list expression_list
@@ -531,7 +533,7 @@ component_declaration
 
 	ComponentBase*comp = new ComponentBase(name);
 	if ($4) {
-        comp->set_interface($4);
+	      comp->set_interface(0, $4);
         delete $4;
     }
 	active_scope->bind_name(name, comp);
@@ -753,34 +755,28 @@ entity_aspect_opt
   ;
 
 entity_declaration
-  : K_entity IDENTIFIER K_is entity_header K_end K_entity_opt identifier_opt';'
+  : K_entity IDENTIFIER
+    K_is generic_clause_opt port_clause_opt
+    K_end K_entity_opt identifier_opt';'
       { Entity*tmp = new Entity(lex_strings.make($2));
 	FILE_NAME(tmp, @1);
 	  // Transfer the ports
-	std::list<InterfacePort*>*ports = $4;
-	tmp->set_interface(ports);
-	delete ports;
+	tmp->set_interface($4, $5);
+	delete $4;
+	delete $5;
 	  // Save the entity in the entity map.
 	design_entities[tmp->get_name()] = tmp;
 	delete[]$2;
-    if($7) {
-        if(tmp->get_name() != $7) {
-            errormsg(@1, "Syntax error in entity clause. Closing name doesn't match.\n");
-            yyerrok;
+	if($8 && tmp->get_name() != $8) {
+	      errormsg(@1, "Syntax error in entity clause. Closing name doesn't match.\n");
         }
-        delete[]$7;
-    }
+        delete[]$8;
       }
   | K_entity error K_end K_entity_opt identifier_opt ';'
       { errormsg(@1, "Too many errors, giving up on entity declaration.\n");
 	yyerrok;
 	if ($5) delete[]$5;
       }
-  ;
-
-entity_header
-  : port_clause
-      { $$ = $1; }
   ;
 
 enumeration_literal
@@ -942,6 +938,24 @@ factor
 	$$ = tmp;
       }
   ;
+
+generic_clause_opt
+  : generic_clause
+      { $$ = $1;}
+  |
+      { $$ = 0; }
+  ;
+
+generic_clause
+  : K_generic '(' interface_list ')' ';'
+      { $$ = $3; }
+  | K_generic '(' error ')' ';'
+      { errormsg(@3, "Error in interface list for generic.\n");
+	yyerrok;
+	$$ = 0;
+      }
+  ;
+
 generic_map_aspect_opt
   : generic_map_aspect
   |
@@ -1071,7 +1085,7 @@ instantiation_list
 
   /* The interface_element is also an interface_declaration */
 interface_element
-  : identifier_list ':' mode subtype_indication
+  : identifier_list ':' mode_opt subtype_indication interface_element_expression
       { std::list<InterfacePort*>*tmp = new std::list<InterfacePort*>;
 	for (std::list<perm_string>::iterator cur = $1->begin()
 		   ; cur != $1->end() ; ++cur) {
@@ -1080,11 +1094,17 @@ interface_element
 	      port->mode = $3;
 	      port->name = *(cur);
 	      port->type = $4;
+	      port->expr = $5;
 	      tmp->push_back(port);
 	}
 	delete $1;
 	$$ = tmp;
       }
+  ;
+
+interface_element_expression
+  : VASSIGN expression { $$ = $2; }
+  |                    { $$ = 0; }
   ;
 
 interface_list
@@ -1199,6 +1219,8 @@ mode
   : K_in  { $$ = PORT_IN; }
   | K_out { $$ = PORT_OUT; }
   ;
+
+mode_opt : mode {$$ = $1;} | {$$ = PORT_NONE;} ;
 
 name
   : IDENTIFIER
