@@ -42,11 +42,6 @@ void Expression::set_type(const VType*typ)
       type_ = typ;
 }
 
-bool Expression::evaluate(ScopeBase*, int64_t&) const
-{
-      return false;
-}
-
 bool Expression::symbolic_compare(const Expression*) const
 {
       cerr << get_fileline() << ": internal error: "
@@ -85,40 +80,6 @@ ExpAttribute::ExpAttribute(ExpName*bas, perm_string nam)
 ExpAttribute::~ExpAttribute()
 {
       delete base_;
-}
-
-bool ExpAttribute::evaluate(ScopeBase*, int64_t&val) const
-{
-	/* Special Case: The length attribute can be calculated all
-	   the down to a literal integer at compile time, and all it
-	   needs is the type of the base expression. (The base
-	   expression doesn't even need to be evaluated.) */
-      if (name_ == "length") {
-	    const VType*base_type = base_->peek_type();
-	      //if (base_type == 0)
-	      //	  base_type = base_->probe_type(ent,arc);
-
-	    ivl_assert(*this, base_type);
-
-	    const VTypeArray*arr = dynamic_cast<const VTypeArray*>(base_type);
-	    if (arr == 0) {
-		  cerr << get_fileline() << ": error: "
-		       << "Cannot apply the 'length attribute to non-array objects"
-		       << endl;
-		  return false;
-	    }
-
-	    int64_t size = 1;
-	    for (size_t idx = 0 ; idx < arr->dimensions() ; idx += 1) {
-		  const VTypeArray::range_t&dim = arr->dimension(idx);
-		  ivl_assert(*this, ! dim.is_box());
-		  size *= 1 + labs(dim.msb() - dim.lsb());
-	    }
-	    val = size;
-	    return true;
-      }
-
-      return false;
 }
 
 ExpBinary::ExpBinary(Expression*op1, Expression*op2)
@@ -400,18 +361,6 @@ ExpName::~ExpName()
 const char* ExpName::name() const
 {
       return name_;
-}
-
-bool ExpName::evaluate(ScopeBase*scope, int64_t&val) const
-{
-      const VType*type;
-      Expression*exp;
-
-      bool rc = scope->find_constant(name_, type, exp);
-      if (rc == false)
-	    return false;
-
-      return exp->evaluate(scope, val);
 }
 
 ExpRelation::ExpRelation(ExpRelation::fun_t ty, Expression*op1, Expression*op2)

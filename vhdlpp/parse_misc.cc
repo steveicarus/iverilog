@@ -66,7 +66,7 @@ void bind_architecture_to_entity(const char*ename, Architecture*arch)
 }
 
 const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
-				     ScopeBase*scope,
+				     ScopeBase* /* scope */,
 				     Expression*array_left,
 				     bool /* downto*/ ,
 				     Expression*array_right)
@@ -89,17 +89,7 @@ const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
 	      // For now, I only know how to handle 1 dimension
 	    assert(base_array->dimensions() == 1);
 
-	    int64_t left_val;
-	    int64_t right_val;
-	    bool rc = array_left->evaluate(scope, left_val);
-	    if (rc == false)
-		  return 0;
-
-	    rc = array_right->evaluate(scope, right_val);
-	    if (rc == false)
-		  return 0;
-
-	    range[0] = VTypeArray::range_t(left_val, right_val);
+	    range[0] = VTypeArray::range_t(array_left, array_right);
 
 	    VTypeArray*subtype = new VTypeArray(base_array->element_type(), range, base_array->signed_vector());
 	    return subtype;

@@ -63,6 +63,16 @@ const InterfacePort* ComponentBase::find_port(perm_string my_name) const
       return 0;
 }
 
+const InterfacePort* ComponentBase::find_generic(perm_string my_name) const
+{
+      for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
+	    if (parms_[idx]->name == my_name)
+		  return parms_[idx];
+      }
+
+      return 0;
+}
+
 Entity::Entity(perm_string name)
 : ComponentBase(name)
 {

@@ -87,10 +87,8 @@ int Entity::elaborate()
 int Entity::elaborate_ports_(void)
 {
       int errors = 0;
-      const std::vector<InterfacePort*>&ports = get_ports();
-
-      for (std::vector<InterfacePort*>::const_iterator cur = ports.begin()
-		 ; cur != ports.end() ; ++cur) {
+      for (std::vector<InterfacePort*>::const_iterator cur = ports_.begin()
+		 ; cur != ports_.end() ; ++cur) {
 
 	    InterfacePort*cur_port = *cur;
 

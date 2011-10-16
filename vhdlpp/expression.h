@@ -80,6 +80,8 @@ class Expression : public LineInfo {
 	// argument if the evaluation works, or return false if it
 	// cannot be done.
       virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
+      virtual bool evaluate(Entity*ent, Architecture*arc, int64_t&val) const;
+
 
 	// The symbolic compare returns true if the two expressions
 	// are equal without actually calculating the value.
@@ -266,6 +268,7 @@ class ExpAttribute : public Expression {
       int emit(ostream&out, Entity*ent, Architecture*arc);
 	// Some attributes can be evaluated at compile time
       bool evaluate(ScopeBase*scope, int64_t&val) const;
+      bool evaluate(Entity*ent, Architecture*arc, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
 
     private:
@@ -427,6 +430,7 @@ class ExpName : public Expression {
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
       bool evaluate(ScopeBase*scope, int64_t&val) const;
+      bool evaluate(Entity*ent, Architecture*arc, int64_t&val) const;
       bool symbolic_compare(const Expression*that) const;
       void dump(ostream&out, int indent = 0) const;
       const char* name() const;

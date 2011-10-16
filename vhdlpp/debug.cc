@@ -55,6 +55,27 @@ void dump_design_entities(ostream&file)
       }
 }
 
+void ComponentBase::dump_generics(ostream&out, int indent) const
+{
+      if (parms_.empty()) {
+	    out << setw(indent) << "" << "No generics" << endl;
+      } else {
+	    out << setw(indent) << "" << "GENERICS:" << endl;
+	    for (vector<InterfacePort*>::const_iterator cur = parms_.begin()
+		       ; cur != parms_.end() ; ++cur) {
+		  InterfacePort*item = *cur;
+		  out << setw(indent+2) << "" << item->name
+		      << " : " << item->mode
+		      << ", type=";
+		  if (item->type)
+			item->type->show(out);
+		  else
+			out << "<nil>";
+		  out << ", file=" << item->get_fileline() << endl;
+	    }
+      }
+}
+
 void ComponentBase::dump_ports(ostream&out, int indent) const
 {
       if (ports_.empty()) {
@@ -122,6 +143,7 @@ void Scope::dump_scope(ostream&out) const
       for (map<perm_string,ComponentBase*>::const_iterator cur = old_components_.begin()
 		 ; cur != old_components_.end() ; ++cur) {
 	    out << "   component " << cur->first << " is" << endl;
+	    cur->second->dump_generics(out);
 	    cur->second->dump_ports(out);
 	    out << "   end component " << cur->first << endl;
       }

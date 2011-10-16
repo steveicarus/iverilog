@@ -17,6 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+# define __STDC_LIMIT_MACROS
 # include  "parse_misc.h"
 # include  "compiler.h"
 # include  "package.h"
@@ -24,6 +25,7 @@
 # include  <list>
 # include  <map>
 # include  <string>
+# include  <stdint.h>
 # include  <sys/stat.h>
 # include  <cassert>
 
@@ -312,6 +314,8 @@ const VTypePrimitive* primitive_BIT      = new VTypePrimitive(VTypePrimitive::BI
 const VTypePrimitive* primitive_INTEGER  = new VTypePrimitive(VTypePrimitive::INTEGER);
 const VTypePrimitive* primitive_STDLOGIC = new VTypePrimitive(VTypePrimitive::STDLOGIC);
 
+const VTypeRange* primitive_NATURAL = new VTypeRange(primitive_INTEGER, INT64_MAX, 0);
+
 const VTypeArray* primitive_BIT_VECTOR  = new VTypeArray(primitive_BIT,      vector<VTypeArray::range_t> (1));
 const VTypeArray* primitive_BOOL_VECTOR = new VTypeArray(primitive_BOOLEAN, vector<VTypeArray::range_t> (1));
 
@@ -322,6 +326,7 @@ void generate_global_types(ActiveScope*res)
       res->bind_name(perm_string::literal("integer"),   primitive_INTEGER);
       res->bind_name(perm_string::literal("std_logic"), primitive_STDLOGIC);
       res->bind_name(perm_string::literal("bit_vector"),primitive_BOOL_VECTOR);
+      res->bind_name(perm_string::literal("natural"),   primitive_NATURAL);
 }
 
 void library_set_work_path(const char*path)

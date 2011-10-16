@@ -30,7 +30,7 @@ using namespace std;
 
 int Expression::elaborate_lval(Entity*, Architecture*, bool)
 {
-      cerr << get_fileline() << ": error: Expression is not a valie l-value." << endl;
+      cerr << get_fileline() << ": error: Expression is not a valid l-value." << endl;
       return 1;
 }
 
@@ -56,6 +56,13 @@ int ExpName::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
 		  ent->set_declaration_l_value(name_, is_sequ);
 
 	    found_type = cur->type;
+
+      } else if (ent->find_generic(name_)) {
+
+	    cerr << get_fileline() << ": error: Assignment to generic "
+		 << name_ << " from entity "
+		 << ent->get_name() << "." << endl;
+	    return 1;
 
       } else if (Signal*sig = arc->find_signal(name_)) {
 	      // Tell the target signal that this may be a sequential l-value.
@@ -93,8 +100,10 @@ int ExpName::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
 		  flag = lsb_->evaluate(arc, use_lsb);
 		  ivl_assert(*this, flag);
 
+		  Expression*exp_msb = new ExpInteger(use_msb);
+		  Expression*exp_lsb = new ExpInteger(use_lsb);
 		  vector<VTypeArray::range_t> use_dims (1);
-		  use_dims[0] = VTypeArray::range_t(use_msb, use_lsb);
+		  use_dims[0] = VTypeArray::range_t(exp_msb, exp_lsb);
 		  found_type = new VTypeArray(array->element_type(), use_dims);
 	    }
       }
@@ -366,8 +375,15 @@ int ExpLogical::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
 
 const VType* ExpName::probe_type(Entity*ent, Architecture*arc) const
 {
-      if (const InterfacePort*cur = ent->find_port(name_))
+      if (const InterfacePort*cur = ent->find_port(name_)) {
+	    ivl_assert(*this, cur->type);
 	    return cur->type;
+      }
+
+      if (const InterfacePort*cur = ent->find_generic(name_)) {
+	    ivl_assert(*this, cur->type);
+	    return cur->type;
+      }
 
       if (Signal*sig = arc->find_signal(name_))
 	    return sig->peek_type();

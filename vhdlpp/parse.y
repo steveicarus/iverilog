@@ -43,6 +43,7 @@
 # include  <map>
 # include  <vector>
 # include  "parse_types.h"
+# include  <ivl_assert.h>
 # include  <assert.h>
 
 inline void FILE_NAME(LineInfo*tmp, const struct yyltype&where)
@@ -1095,6 +1096,7 @@ interface_element
 	      port->name = *(cur);
 	      port->type = $4;
 	      port->expr = $5;
+	      ivl_assert(*port, port->type);
 	      tmp->push_back(port);
 	}
 	delete $1;
@@ -1746,6 +1748,9 @@ subtype_declaration
 subtype_indication
   : IDENTIFIER
       { const VType*tmp = parse_type_by_name(lex_strings.make($1));
+	if (tmp == 0) {
+	      errormsg(@1, "Can't find type name `%s'\n", $1);
+	}
 	delete[]$1;
 	$$ = tmp;
       }

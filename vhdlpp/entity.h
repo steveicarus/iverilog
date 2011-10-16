@@ -60,7 +60,9 @@ class ComponentBase : public LineInfo {
 
 	// Entities have names.
       perm_string get_name() const { return name_; }
+
       const InterfacePort* find_port(perm_string by_name) const;
+      const InterfacePort* find_generic(perm_string by_name) const;
 
 	// Declare the ports for the entity. The parser calls this
 	// method with a list of interface elements that were parsed
@@ -73,14 +75,12 @@ class ComponentBase : public LineInfo {
       void write_to_stream(std::ostream&fd) const;
 
     public:
+      void dump_generics(std::ostream&out, int indent =0) const;
       void dump_ports(std::ostream&out, int indent = 0) const;
-
-    protected:
-	// This is really only used by the Entity derived class.
-      const std::vector<InterfacePort*>&get_ports() const { return ports_; }
 
     private:
       perm_string name_;
+    protected:
       std::vector<InterfacePort*> parms_;
       std::vector<InterfacePort*> ports_;
 };

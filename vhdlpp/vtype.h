@@ -26,6 +26,8 @@
 # include  <inttypes.h>
 # include  "StringHeap.h"
 
+class Expression;
+
 /*
  * A description of a VHDL type consists of a graph of VType
  * objects. Derived types are specific kinds of types, and those that
@@ -123,17 +125,17 @@ class VTypeArray : public VType {
     public:
       class range_t {
 	  public:
-	    range_t()             : msb_(INT_MAX), lsb_(INT_MIN) { }
-	    range_t(int m, int l) : msb_(m),       lsb_(l)       { }
+	    range_t() : msb_(0), lsb_(0) { }
+	    range_t(Expression*m, Expression*l) : msb_(m), lsb_(l) { }
 
-	    bool is_box() const { return msb_==INT_MAX && lsb_==INT_MIN; }
+	    bool is_box() const { return msb_==0 && lsb_==0; }
 
-	    int msb() const { return msb_; }
-	    int lsb() const { return lsb_; }
+	    Expression* msb() const { return msb_; }
+	    Expression* lsb() const { return lsb_; }
 
 	  private:
-	    int msb_;
-	    int lsb_;
+	    Expression* msb_;
+	    Expression* lsb_;
       };
 
     public:

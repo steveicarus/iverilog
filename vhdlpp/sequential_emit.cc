@@ -195,10 +195,10 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, Architecture*arc)
       ivl_assert(*this, range_);
 
       int64_t start_val;
-      bool start_rc = range_->msb()->evaluate(arc, start_val);
+      bool start_rc = range_->msb()->evaluate(ent, arc, start_val);
 
       int64_t finish_val;
-      bool finish_rc = range_->lsb()->evaluate(arc, finish_val);
+      bool finish_rc = range_->lsb()->evaluate(ent, arc, finish_val);
 
       ivl_assert(*this, start_rc);
       ivl_assert(*this, finish_rc);

@@ -19,7 +19,8 @@
 
 
 # include  "vtype.h"
-# include <iostream>
+# include  "expression.h"
+# include  <iostream>
 # include  <typeinfo>
 # include  <cassert>
 
@@ -43,7 +44,11 @@ int VTypeArray::emit_def(ostream&out, perm_string name) const
       if (signed_flag_)
 	    out << "signed ";
 
-      out << "[" << dimension(0).msb() << ":" << dimension(0).lsb() << "] ";
+      out << "[";
+      errors += dimension(0).msb()->emit(out, 0, 0);
+      out << ":";
+      errors += dimension(0).lsb()->emit(out, 0, 0);
+      out << "] ";
 
       out << "\\" << name << " ";
 

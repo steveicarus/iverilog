@@ -87,11 +87,38 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
 	    const VTypeArray::range_t&rang = atype->dimension(0);
 	    assert(! rang.is_box());
 
-	    int asize = abs(rang.msb() - rang.lsb()) + 1;
+	    int64_t use_msb;
+	    int64_t use_lsb;
+	    bool rc_msb, rc_lsb;
+	    rc_msb = rang.msb()->evaluate(ent, arc, use_msb);
+	    rc_lsb = rang.lsb()->evaluate(ent, arc, use_lsb);
 
-	    out << "{" << asize << "{";
-	    errors += aggregate_[0].expr->emit(out, ent, arc);
-	    out << "}}";
+	    if (rc_msb && rc_lsb) {
+		  int asize = abs(use_msb - use_lsb) + 1;
+		  out << "{" << asize << "{";
+		  errors += aggregate_[0].expr->emit(out, ent, arc);
+		  out << "}}";
+	    } else {
+		  out << "{(";
+		  if (rc_msb) {
+			out << use_msb;
+		  } else {
+			out << "(";
+			errors += rang.msb()->emit(out, ent, arc);
+			out << ")";
+		  }
+		  if (rc_lsb && use_lsb==0) {
+		  } else if (rc_lsb) {
+			out << "-" << use_lsb;
+		  } else {
+			out << "-(";
+			errors += rang.lsb()->emit(out, ent, arc);
+			out << ")";
+		  }
+		  out << "+1){";
+		  errors += aggregate_[0].expr->emit(out, ent, arc);
+		  out << "}}";
+	    }
 	    return errors;
       }
 
@@ -110,7 +137,7 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
 
 	    Expression*tmp = aggregate_[idx].choice->simple_expression(false);
 	    int64_t tmp_val;
-	    if (! tmp->evaluate(arc, tmp_val)) {
+	    if (! tmp->evaluate(ent, arc, tmp_val)) {
 		  cerr << tmp->get_fileline() << ": error: Unable to evaluate aggregate choice expression." << endl;
 		  errors += 1;
 		  continue;
@@ -119,16 +146,22 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
 	    element_map[tmp_val] = &aggregate_[idx];
       }
 
-      ivl_assert(*this, rang.msb() >= rang.lsb());
+      int64_t use_msb, use_lsb;
+      bool rc;
+      rc = rang.msb()->evaluate(ent, arc, use_msb);
+      ivl_assert(*this, rc);
+      rc = rang.lsb()->evaluate(ent, arc, use_lsb);
+      ivl_assert(*this, rc);
+      ivl_assert(*this, use_msb >= use_lsb);
 
       out << "{";
-      for (int idx = rang.msb() ; idx >= rang.lsb() ; idx -= 1) {
+      for (int64_t idx = use_msb ; idx >= use_lsb ; idx -= 1) {
 	    choice_element*cur = element_map[idx];
 	    if (cur == 0)
 		  cur = element_other;
 	    ivl_assert(*this, cur != 0);
 
-	    if (idx < rang.msb())
+	    if (idx < use_msb)
 		  out << ", ";
 	    errors += cur->expr->emit(out, ent, arc);
       }
@@ -154,7 +187,7 @@ int ExpAttribute::emit(ostream&out, Entity*ent, Architecture*arc)
 	   expression doesn't even need to be evaluated.) */
       if (name_ == "length") {
 	    int64_t val;
-	    bool rc = evaluate(arc, val);
+	    bool rc = evaluate(ent, arc, val);
 	    out << val;
 	    if (rc)
 		  return errors;
@@ -356,7 +389,7 @@ int ExpFunc::emit(ostream&out, Entity*ent, Architecture*arc)
 
       } else if (name_ == "to_unsigned" && argv_.size() == 2) {
 	    int64_t use_size;
-	    bool rc = argv_[1]->evaluate(arc, use_size);
+	    bool rc = argv_[1]->evaluate(ent, arc, use_size);
 	    ivl_assert(*this, rc);
 
 	    out << "$unsigned(" << use_size << "'(";

@@ -22,6 +22,7 @@
 # include  <iostream>
 # include  <fstream>
 # include  <iomanip>
+# include  <ivl_assert.h>
 
 int emit_entities(void)
 {
@@ -39,16 +40,30 @@ int Entity::emit(ostream&out)
 {
       int errors = 0;
 
-      const std::vector<InterfacePort*>&ports = get_ports();
+      out << "module ";
+	// If there are generics, emit them
+      if (parms_.size() > 0) {
+	    out << "#(";
+	    for (vector<InterfacePort*>::const_iterator cur = parms_.begin()
+		       ; cur != parms_.end() ; ++cur) {
+		  const InterfacePort*curp = *cur;
+		  if (cur != parms_.begin())
+			out << ", ";
+		  out << "parameter \\" << curp->name << " = ";
+		  ivl_assert(*this, curp->expr);
+		  errors += curp->expr->emit(out, this, 0);
+	    }
+	    out << ") ";
+      }
 
-      out << "module " << get_name();
+      out << get_name();
 
 	// If there are ports, emit them.
-      if (ports.size() > 0) {
+      if (ports_.size() > 0) {
 	    out << "(";
 	    const char*sep = 0;
-	    for (vector<InterfacePort*>::const_iterator cur = ports.begin()
-		       ; cur != ports.end() ; ++cur) {
+	    for (vector<InterfacePort*>::const_iterator cur = ports_.begin()
+		       ; cur != ports_.end() ; ++cur) {
 		  InterfacePort*port = *cur;
 
 		  VType::decl_t&decl = declarations_[port->name];
