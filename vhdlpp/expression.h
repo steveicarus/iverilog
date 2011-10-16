@@ -70,6 +70,11 @@ class Expression : public LineInfo {
 	// called and only if elaborate_lval succeeded.
       inline const VType*peek_type(void) const { return type_; }
 
+	// This virtual method writes a VHDL-accurate representation
+	// of this expression to the designated stream. This is used
+	// for writing parsed types to library files.
+      virtual void write_to_stream(std::ostream&fd) =0;
+
 	// The emit virtual method is called by architecture emit to
 	// output the generated code for the expression. The derived
 	// class fills in the details of what exactly happened.
@@ -123,6 +128,9 @@ class ExpUnary : public Expression {
       virtual ~ExpUnary() =0;
 
     protected:
+      inline void write_to_stream_operand1(std::ostream&fd)
+      { operand1_->write_to_stream(fd); }
+
       int emit_operand1(ostream&out, Entity*ent, Architecture*arc);
       void dump_operand1(ostream&out, int indent = 0) const;
 
@@ -217,6 +225,7 @@ class ExpAggregate : public Expression {
       ~ExpAggregate();
 
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent = 0) const;
 
@@ -243,6 +252,7 @@ class ExpArithmetic : public ExpBinary {
       ~ExpArithmetic();
 
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
@@ -265,6 +275,7 @@ class ExpAttribute : public Expression {
 
       const VType*probe_type(Entity*ent, Architecture*arc) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
 	// Some attributes can be evaluated at compile time
       bool evaluate(ScopeBase*scope, int64_t&val) const;
@@ -283,6 +294,7 @@ class ExpBitstring : public Expression {
       ~ExpBitstring();
 
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent = 0) const;
 
@@ -298,6 +310,7 @@ class ExpCharacter : public Expression {
       ~ExpCharacter();
 
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
       void dump(ostream&out, int indent = 0) const;
@@ -326,6 +339,7 @@ class ExpConditional : public Expression {
 
       const VType*probe_type(Entity*ent, Architecture*arc) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent = 0) const;
 
@@ -350,6 +364,7 @@ class ExpEdge : public ExpUnary {
 
       inline fun_t edge_fun() const { return fun_; }
 
+      void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent = 0) const;
 
@@ -365,6 +380,7 @@ class ExpFunc : public Expression {
 
     public: // Base methods
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent = 0) const;
 
@@ -381,6 +397,7 @@ class ExpInteger : public Expression {
 
       const VType*probe_type(Entity*ent, Architecture*arc) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
       bool evaluate(ScopeBase*scope, int64_t&val) const;
@@ -402,6 +419,7 @@ class ExpLogical : public ExpBinary {
       inline fun_t logic_fun() const { return fun_; }
 
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent = 0) const;
 
@@ -427,6 +445,7 @@ class ExpName : public Expression {
       int elaborate_rval(Entity*ent, Architecture*arc, const InterfacePort*);
       const VType* probe_type(Entity*ent, Architecture*arc) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
       bool evaluate(ScopeBase*scope, int64_t&val) const;
@@ -465,6 +484,7 @@ class ExpRelation : public ExpBinary {
 
       const VType* probe_type(Entity*ent, Architecture*arc) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent = 0) const;
 
@@ -479,6 +499,7 @@ class ExpString : public Expression {
       ~ExpString();
 
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
       void dump(ostream&out, int indent = 0) const;
@@ -496,6 +517,7 @@ class ExpUAbs : public ExpUnary {
       ExpUAbs(Expression*op1);
       ~ExpUAbs();
 
+      void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent = 0) const;
 };
@@ -507,6 +529,7 @@ class ExpUNot : public ExpUnary {
       ~ExpUNot();
 
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
       void dump(ostream&out, int indent = 0) const;
 };

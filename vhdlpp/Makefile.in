@@ -62,8 +62,9 @@ M = StringHeap.o LineInfo.o
 O = main.o architec.o compiler.o entity.o \
     expression.o package.o scope.o sequential.o vsignal.o vtype.o \
     architec_elaborate.o entity_elaborate.o expression_elaborate.o \
+    expression_evaluate.o \
     sequential_elaborate.o \
-    entity_stream.o vtype_stream.o \
+    entity_stream.o expression_stream.o vtype_stream.o \
     lexor.o lexor_keyword.o parse.o \
     parse_misc.o library.o vhdlreal.o vhdlint.o \
     architec_emit.o entity_emit.o expression_emit.o sequential_emit.o vtype_emit.o \

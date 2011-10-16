@@ -18,6 +18,7 @@
  */
 
 # include  "vtype.h"
+# include  "expression.h"
 # include  <typeinfo>
 # include  <cassert>
 
@@ -35,8 +36,11 @@ void VTypeArray::write_to_stream(ostream&fd) const
 	    fd << "std_logic_vector";
 	    if (! ranges_.empty()) {
 		  assert(ranges_.size() < 2);
-		  fd << " (" << ranges_[0].msb()
-		     << " downto " << ranges_[0].lsb() << ") ";
+		  fd << " (";
+		  ranges_[0].msb()->write_to_stream(fd);
+		  fd << " downto ";
+		  ranges_[0].lsb()->write_to_stream(fd);
+		  fd << ") ";
 	    }
 	    return;
       }
@@ -44,8 +48,11 @@ void VTypeArray::write_to_stream(ostream&fd) const
       fd << "array ";
       if (! ranges_.empty()) {
 	    assert(ranges_.size() < 2);
-	    fd << "(" << ranges_[0].msb()
-	       << " downto " << ranges_[0].lsb() << ") ";
+	    fd << "(";
+	    ranges_[0].msb()->write_to_stream(fd);
+	    fd << " downto ";
+	    ranges_[0].lsb()->write_to_stream(fd);
+	    fd << ") ";
       }
 
       fd << "of ";
