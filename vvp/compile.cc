@@ -1512,7 +1512,6 @@ void compile_udp_def(int sequ, char *label, char *name,
 	    u->compile_table(table);
       }
       free(label);
-      delete[] name;
 }
 
 char **compile_udp_table(char **table, char *row)

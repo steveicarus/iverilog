@@ -82,8 +82,9 @@ ostream& operator <<(ostream&o, const struct udp_levels_table&table)
       return o;
 }
 
-vvp_udp_s::vvp_udp_s(char*label, unsigned ports, vvp_bit4_t init, bool type)
-: ports_(ports), init_(init), seq_(type)
+vvp_udp_s::vvp_udp_s(char*label, char*name__, unsigned ports,
+                     vvp_bit4_t init, bool type)
+: name_(name__), ports_(ports), init_(init), seq_(type)
 {
       if (!udp_table)
 	    udp_table = new_symbol_table();
@@ -104,6 +105,7 @@ vvp_udp_s::vvp_udp_s(char*label, unsigned ports, vvp_bit4_t init, bool type)
 
 vvp_udp_s::~vvp_udp_s()
 {
+      delete[] name_;
 }
 
 unsigned vvp_udp_s::port_count() const
@@ -116,10 +118,9 @@ vvp_bit4_t vvp_udp_s::get_init() const
       return init_;
 }
 
-vvp_udp_comb_s::vvp_udp_comb_s(char*label, char*name, unsigned ports)
-: vvp_udp_s(label, ports, BIT4_X, false)
+vvp_udp_comb_s::vvp_udp_comb_s(char*label, char*name__, unsigned ports)
+: vvp_udp_s(label, name__, ports, BIT4_X, false)
 {
-      name_ = name;
       levels0_ = 0;
       levels1_ = 0;
       nlevels0_ = 0;
@@ -295,11 +296,10 @@ void vvp_udp_comb_s::compile_table(char**tab)
       assert(nrows1 == nlevels1_);
 }
 
-vvp_udp_seq_s::vvp_udp_seq_s(char*label, char*name,
+vvp_udp_seq_s::vvp_udp_seq_s(char*label, char*name__,
 			     unsigned ports, vvp_bit4_t init)
-: vvp_udp_s(label, ports, init, true)
+: vvp_udp_s(label, name__, ports, init, true)
 {
-      name_ = name;
       levels0_ = 0;
       levels1_ = 0;
       levelsx_ = 0;

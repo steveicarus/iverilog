@@ -1,7 +1,7 @@
 #ifndef __udp_H
 #define __udp_H
 /*
- * Copyright (c) 2005-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2011 Stephen Williams (steve@icarus.com)
  *
  * (This is a rewrite of code that was ...
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>)
@@ -30,15 +30,16 @@ struct udp_levels_table;
 struct vvp_udp_s {
 
     public:
-      explicit vvp_udp_s(char*label, unsigned ports, vvp_bit4_t init,
-                         bool type);
+      explicit vvp_udp_s(char*label, char*name, unsigned ports,
+                         vvp_bit4_t init, bool type);
       virtual ~vvp_udp_s();
 
 	// Return the number of input ports for the defined UDP. This
 	// does *not* include the current output value for a
 	// sequential UDP.
       unsigned port_count() const;
-      bool is_sequential() const {return seq_;};
+      bool is_sequential() const { return seq_; };
+      char *name() { return name_; }
 
 	// Return the initial output value.
       vvp_bit4_t get_init() const;
@@ -48,6 +49,7 @@ struct vvp_udp_s {
 					  vvp_bit4_t cur_out) =0;
 
     private:
+      char *name_;
       unsigned ports_;
       vvp_bit4_t init_;
       bool seq_;
@@ -112,7 +114,7 @@ extern ostream& operator<< (ostream&o, const struct udp_levels_table&t);
 class vvp_udp_comb_s : public vvp_udp_s {
 
     public:
-      vvp_udp_comb_s(char*label, char*name, unsigned ports);
+      vvp_udp_comb_s(char*label, char*name__, unsigned ports);
       ~vvp_udp_comb_s();
       void compile_table(char**tab);
 
@@ -125,8 +127,6 @@ class vvp_udp_comb_s : public vvp_udp_s {
 				  vvp_bit4_t cur_out);
 
     private:
-      char*name_;
-
 	// Level sensitive rows of the device.
       struct udp_levels_table*levels0_;
       struct udp_levels_table*levels1_;
@@ -180,7 +180,7 @@ struct udp_edges_table {
 class vvp_udp_seq_s : public vvp_udp_s {
 
     public:
-      vvp_udp_seq_s(char*label, char*name, unsigned ports, vvp_bit4_t init);
+      vvp_udp_seq_s(char*label, char*name__, unsigned ports, vvp_bit4_t init);
       ~vvp_udp_seq_s();
 
       void compile_table(char**tab);
@@ -190,8 +190,6 @@ class vvp_udp_seq_s : public vvp_udp_s {
 				  vvp_bit4_t cur_out);
 
     private:
-      char*name_;
-
       vvp_bit4_t test_levels_(const udp_levels_table&cur);
 
 	// Level sensitive rows of the device.
