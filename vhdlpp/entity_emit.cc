@@ -40,7 +40,8 @@ int Entity::emit(ostream&out)
 {
       int errors = 0;
 
-      out << "module ";
+      out << "module \\" << get_name() << " ";
+
 	// If there are generics, emit them
       if (parms_.size() > 0) {
 	    out << "#(";
@@ -55,8 +56,6 @@ int Entity::emit(ostream&out)
 	    }
 	    out << ") ";
       }
-
-      out << get_name();
 
 	// If there are ports, emit them.
       if (ports_.size() > 0) {
