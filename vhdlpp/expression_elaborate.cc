@@ -419,24 +419,7 @@ const VType* ExpRelation::probe_type(Entity*ent, Architecture*arc) const
       const VType*type1 = peek_operand1()->probe_type(ent, arc);
       const VType*type2 = peek_operand2()->probe_type(ent, arc);
 
-      if (type1 == type2)
-	    return type1;
-
-      if (type1 && !type2)
-	    return type1;
-
-      if (type2 && !type1)
-	    return type2;
-
-      const VTypeArray*type1a = dynamic_cast<const VTypeArray*>(type1);
-      const VTypeArray*type2a = dynamic_cast<const VTypeArray*>(type2);
-
-      if (type1a && type2a && type1a->element_type()==type2a->element_type()) {
-	    return type1a->element_type();
-      }
-
-      cerr << get_fileline() << ": error: Type mismatch in relation expression." << endl;
-      return type1;
+      return primitive_BOOLEAN;
 }
 
 int ExpRelation::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
