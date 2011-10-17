@@ -306,6 +306,9 @@ static PLI_INT32 ivl_enum_method_next_prev_calltf(PLI_BYTE8*name)
 	    if (strcmp(name, "$ivl_enum_method$next") == 0) {
 		    /* Check to see if we need to wrap to the beginning. */
 		  if (loc + count > enum_size) {
+			  /* Free the current iterator before creating a new
+			   * one that is at the beginning of the list. */
+			vpi_free_object(enum_list);
 			enum_list = vpi_iterate(vpiEnumConst, arg_enum);
 			assert(enum_list);
 			count -= (enum_size - loc);
@@ -319,7 +322,10 @@ static PLI_INT32 ivl_enum_method_next_prev_calltf(PLI_BYTE8*name)
 			count = enum_size - count;
 		  } else {
 			  /* The element we want is before the current
-			   * element (at the beginning of the list). */
+			   * element (at the beginning of the list). Free
+			   * the current iterator before creating a new
+			   * one that is at the beginning of the list. */
+			vpi_free_object(enum_list);
 			enum_list = vpi_iterate(vpiEnumConst, arg_enum);
 			assert(enum_list);
 			count = loc - count;
