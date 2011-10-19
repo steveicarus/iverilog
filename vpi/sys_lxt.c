@@ -524,7 +524,6 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       struct t_cb_data cb;
       struct vcd_info* info;
 
-      const char* type;
       const char* name;
       const char* ident;
       int nexus_id;
@@ -547,7 +546,6 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
       switch (vpi_get(vpiType, item)) {
 
-	  case vpiNet:  type = "wire";    if(0){
 	  case vpiMemoryWord:
 	    if (vpi_get(vpiConstantSelect, item) == 0) {
 		    /* Turn a non-constant array word select into a
@@ -563,7 +561,8 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	  case vpiIntVar:
 	  case vpiLongIntVar:
 	  case vpiTimeVar:
-	  case vpiReg:  type = "reg";    }
+	  case vpiReg:
+	  case vpiNet:
 
 	      /* An array word is implicitly escaped so look for an
 	       * escaped identifier that this could conflict with. */
@@ -656,11 +655,11 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 	    break;
 
-	  case vpiModule:      type = "module";      if(0){
-	  case vpiNamedBegin:  type = "begin";      }if(0){
-	  case vpiTask:        type = "task";       }if(0){
-	  case vpiFunction:    type = "function";   }if(0){
-	  case vpiNamedFork:   type = "fork";       }
+	  case vpiModule:
+	  case vpiNamedBegin:
+	  case vpiTask:
+	  case vpiFunction:
+	  case vpiNamedFork:
 
 	    if (depth > 0) {
 		  int nskip;
@@ -683,7 +682,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 		  name = vpi_get_str(vpiName, item);
 
-                  push_scope(name);	/* keep in type info determination for possible future usage */
+                  push_scope(name);
 
 		  for (i=0; types[i]>0; i++) {
 			vpiHandle hand;
