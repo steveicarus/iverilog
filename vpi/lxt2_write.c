@@ -1144,7 +1144,7 @@ unsigned int total_chgs;
 unsigned int partial_length;
 
 total_chgs = 0;
-partial_length = 0;
+/* partial_length = 0; */ /* scan-build : never read */
 
 iter_hi = iter + partial_iter;
 if(iter_hi > lt->numfacs) iter_hi = lt->numfacs;
@@ -1491,8 +1491,6 @@ if(lt)
 
 	if( (!lt->timepos) && (!lt->timegranule) && ((!lt->numblock)||(!lt->no_checkpoint)) )
 	        {
-	        struct lxt2_wr_symbol *s = lt->symchain;
-
 		/* fprintf(stderr, "initial value burst timepos==0, timegranule==0\n"); */
 		if(lt->blackout)
 			{
@@ -1501,7 +1499,7 @@ if(lt)
 			}
 		else
 			{
-			s = lt->symchain;
+			struct lxt2_wr_symbol *s = lt->symchain;
 		        while(s)
 		                {
 		                if((!(s->flags&LXT2_WR_SYM_F_ALIAS))&&(s->rows<2))

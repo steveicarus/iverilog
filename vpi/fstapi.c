@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2010 Tony Bybell.
+ * Copyright (c) 2009-2011 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1409,7 +1409,7 @@ for(i=0;i<xc->maxhandle;i++)
 JudyHSFreeArray(&PJHSArray, NULL);
 #endif
 
-free(packmem); packmem = NULL; packmemlen = 0;
+free(packmem); packmem = NULL; /* packmemlen = 0; */ /* scan-build */
 
 prevpos = 0; zerocnt = 0;
 free(scratchpad); scratchpad = NULL;
@@ -1449,7 +1449,7 @@ for(i=0;i<xc->maxhandle;i++)
 	}
 if(zerocnt)
 	{
-	fpos += fstWriterVarint(f, (zerocnt << 1));
+	/* fpos += */ fstWriterVarint(f, (zerocnt << 1)); /* scan-build */
 	}
 #ifdef FST_DEBUG
 printf("value chains: %d\n", cnt);
@@ -3359,7 +3359,10 @@ uint64_t tsec_nitems;
 int secnum = 0;
 int blocks_skipped = 0;
 off_t blkpos = 0;
-uint64_t seclen, beg_tim, end_tim;
+uint64_t seclen, beg_tim;
+#ifdef FST_DEBUG
+uint64_t end_tim;
+#endif
 uint64_t frame_uclen, frame_clen, frame_maxhandle, vc_maxhandle; 
 off_t vc_start;
 off_t indx_pntr, indx_pos;
@@ -3414,7 +3417,10 @@ for(;;)
 	if(!seclen) break;
 
 	beg_tim = fstReaderUint64(xc->f);
-	end_tim = fstReaderUint64(xc->f);
+#ifdef FST_DEBUG
+	end_tim = 
+#endif
+	fstReaderUint64(xc->f);
 
 	if(xc->limit_range_valid)
 		{
@@ -3443,8 +3449,8 @@ for(;;)
 	{
 	unsigned char *ucdata;
 	unsigned char *cdata;
-	unsigned long destlen = tsec_uclen;
-	unsigned long sourcelen = tsec_clen;
+	unsigned long destlen /* = tsec_uclen */; /* scan-build */
+	unsigned long sourcelen /*= tsec_clen */; /* scan-build */
 	int rc;
 	unsigned char *tpnt;
 	uint64_t tpval;
@@ -3896,12 +3902,12 @@ for(;;)
 					unsigned char val;
 					if(!(vli & 1))
 						{
-						tdelta = vli >> 2;
+						/* tdelta = vli >> 2; */ /* scan-build */
 						val = ((vli >> 1) & 1) | '0'; 
 						}
 						else
 						{
-						tdelta = vli >> 4;
+						/* tdelta = vli >> 4; */ /* scan-build */
 						val = FST_RCV_STR[((vli >> 1) & 7)];
 						}
 
@@ -3946,7 +3952,7 @@ for(;;)
 
 					vli = fstGetVarint32(mem_for_traversal + headptr[idx], &skiplen);
 					len = fstGetVarint32(mem_for_traversal + headptr[idx] + skiplen, &skiplen2);
-					tdelta = vli >> 1;
+					/* tdelta = vli >> 1; */ /* scan-build */
 					skiplen += skiplen2;
 					vdata = mem_for_traversal + headptr[idx] + skiplen;
 
@@ -4002,7 +4008,7 @@ for(;;)
 				unsigned char *vdata;
 
 				vli = fstGetVarint32(mem_for_traversal + headptr[idx], &skiplen);
-				tdelta = vli >> 1;
+				/* tdelta = vli >> 1; */ /* scan-build */
 				vdata = mem_for_traversal + headptr[idx] + skiplen;
 
 				if(xc->signal_typs[idx] != FST_VT_VCD_REAL)
@@ -4058,7 +4064,7 @@ for(;;)
 					else
 					{
 					double d;
-					unsigned char *clone_d = (unsigned char *)&d;
+					unsigned char *clone_d /*= (unsigned char *)&d */; /* scan-build */
 					unsigned char buf[8];
 					unsigned char *srcdata;
 
@@ -4261,7 +4267,9 @@ uint64_t seclen;
 uint64_t tsec_uclen = 0, tsec_clen = 0;
 uint64_t tsec_nitems;
 uint64_t frame_uclen, frame_clen;
+#ifdef FST_DEBUG
 uint64_t mem_required_for_traversal;
+#endif
 off_t indx_pntr, indx_pos;
 long chain_clen;
 unsigned char *chain_cmem;
@@ -4352,7 +4360,11 @@ for(;;)
 xc->rvat_beg_tim = beg_tim;
 xc->rvat_end_tim = end_tim;
 
-mem_required_for_traversal = fstReaderUint64(xc->f);
+#ifdef FST_DEBUG
+mem_required_for_traversal = 
+#endif
+	fstReaderUint64(xc->f);
+
 #ifdef FST_DEBUG
 printf("rvat sec: %d seclen: %d begtim: %d endtim: %d\n",
 	secnum, (int)seclen, (int)beg_tim, (int)end_tim);
@@ -4363,8 +4375,8 @@ printf("\tmem_required_for_traversal: %d\n", (int)mem_required_for_traversal);
 {
 unsigned char *ucdata;
 unsigned char *cdata;
-unsigned long destlen = tsec_uclen;
-unsigned long sourcelen = tsec_clen;
+unsigned long destlen /* = tsec_uclen */; /* scan-build */
+unsigned long sourcelen /* = tsec_clen */; /* scan-build */
 int rc;
 unsigned char *tpnt;
 uint64_t tpval;
@@ -4628,7 +4640,7 @@ if(xc->signal_lens[facidx] == 1)
 			iprev = i;
 			pvli = vli;
 			ptidx = tidx;
-			pskip = skiplen;
+			/* pskip = skiplen; */ /* scan-build */
 
 			tidx += tdelta;
 			i+=skiplen;
