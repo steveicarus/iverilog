@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2008-2011 Stephen Williams <steve@icarus.com>
  * Copyright (c) 2002 Larry Doolittle (larry@doolittle.boa.org)
  *
  *    This source code is free software; you can redistribute it
@@ -120,7 +120,7 @@ unsigned vpip_vec4_to_dec_str(const vvp_vector4_t&vec4,
 			      char *buf, unsigned int nbuf,
 			      int signed_flag)
 {
-      unsigned int idx, len, vlen;
+      unsigned int idx, vlen;
       unsigned int mbits=vec4.size();   /* number of non-sign bits */
       unsigned count_x = 0, count_z = 0;
 
@@ -187,19 +187,15 @@ unsigned vpip_vec4_to_dec_str(const vvp_vector4_t&vec4,
       }
 
 	if (count_x == vec4.size()) {
-	      len = 1;
 	      buf[0] = 'x';
 	      buf[1] = 0;
 	} else if (count_x > 0) {
-	      len = 1;
 	      buf[0] = 'X';
 	      buf[1] = 0;
 	} else if (count_z == vec4.size()) {
-	      len = 1;
 	      buf[0] = 'z';
 	      buf[1] = 0;
 	} else if (count_z > 0) {
-	      len = 1;
 	      buf[0] = 'Z';
 	      buf[1] = 0;
 	} else {

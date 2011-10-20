@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1309,7 +1309,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // passed. It is built up by the ordered overrides or named
 	      // overrides.
 
-	    typedef map<perm_string,PExpr*>::const_iterator mparm_it_t;
+	    typedef map<perm_string,PExpr*>::const_iterator mparm_itr_t;
 	    map<perm_string,PExpr*> replace;
 
 
@@ -1352,7 +1352,7 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // the expression in my context, then replace the sub-scope
 	      // parameter value with the new expression.
 
-	    for (mparm_it_t cur = replace.begin()
+	    for (mparm_itr_t cur = replace.begin()
 		       ; cur != replace.end() ;  cur ++ ) {
 
 		  PExpr*tmp = (*cur).second;
