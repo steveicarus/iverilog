@@ -1015,7 +1015,6 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
 	    emit_nexus_as_ca(scope, nex);
 	    if (have_data | have_sset) fprintf(vlog_out, " & ");
 	    if (have_data & have_sset) fprintf(vlog_out, "(");
-	    emitted = 1;
       }
       nex = ivl_lpm_sync_set(lpm);
       if (nex) {
