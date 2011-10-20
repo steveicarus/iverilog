@@ -567,6 +567,7 @@ static PLI_INT32 sys_urandom_range_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 
       /* Check that there are at least two arguments. */
       arg = vpi_scan(argv);  /* This should never be zero. */
+      assert(arg);
       arg = vpi_scan(argv);
       if (arg == 0) {
             vpi_printf("ERROR: %s requires two arguments.\n", name);
