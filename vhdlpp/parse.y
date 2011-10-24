@@ -177,6 +177,8 @@ const VType*parse_type_by_name(perm_string name)
 
       range_t* range;
 
+      ExpArithmetic::fun_t arithmetic_op;
+
       ExpAggregate::choice_t*choice;
       std::list<ExpAggregate::choice_t*>*choice_list;
       ExpAggregate::element_t*element;
@@ -224,6 +226,8 @@ const VType*parse_type_by_name(perm_string name)
  /* The rules may have types. */
 
 %type <flag> direction
+
+%type <arithmetic_op> adding_operator
 
 %type <interface_list> interface_element interface_list
 %type <interface_list> port_clause port_clause_opt
@@ -285,6 +289,12 @@ const VType*parse_type_by_name(perm_string name)
  /* The design_file is the root for the VHDL parse. This rule is also
     where I put some run-time initializations. */
 design_file : { yylloc.text = file_path; } design_units ;
+
+adding_operator
+  : '+' { $$ = ExpArithmetic::PLUS; }
+  | '-' { $$ = ExpArithmetic::MINUS; }
+  | '&' { $$ = ExpArithmetic::CONCAT; }
+  ;
 
 architecture_body
   : architecture_body_start
@@ -1705,21 +1715,21 @@ sequential_statement
 
 shift_expression : simple_expression { $$ = $1; } ;
 
+/*
+ * The LRM rule for simple_expression is:
+ *   simple_expression ::= [sign] term { adding_operator term }
+ *
+ * This is functionally a list of terms, with the adding_operator used
+ * as a list element separator instead of a ','. The LRM rule,
+ * however, is right-recursive, which is not to nice is real LALR
+ * parsers. The solution is to rewrite it as below, to make it
+ * left-recursive. This is must more effecient use of the parse stack.
+ */
 simple_expression
   : term
       { $$ = $1; }
-  | term '+' term
-      { ExpArithmetic*tmp = new ExpArithmetic(ExpArithmetic::PLUS, $1, $3);
-	FILE_NAME(tmp, @2);
-	$$ = tmp;
-      }
-  | term '-' term
-      { ExpArithmetic*tmp = new ExpArithmetic(ExpArithmetic::MINUS, $1, $3);
-	FILE_NAME(tmp, @2);
-	$$ = tmp;
-      }
-  | term '&' term
-      { ExpArithmetic*tmp = new ExpArithmetic(ExpArithmetic::CONCAT, $1, $3);
+  | simple_expression adding_operator term
+      { ExpArithmetic*tmp = new ExpArithmetic($2, $1, $3);
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
