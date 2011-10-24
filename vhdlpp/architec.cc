@@ -20,6 +20,8 @@
 # include  "architec.h"
 # include  "expression.h"
 # include  "parse_types.h"
+// Need this for parse_errors?
+# include  "parse_api.h"
 
 using namespace std;
 
@@ -66,22 +68,45 @@ SignalAssignment::~SignalAssignment()
 }
 
 ComponentInstantiation::ComponentInstantiation(perm_string i, perm_string c,
+					       list<named_expr_t*>*parms,
 					       list<named_expr_t*>*ports)
 : iname_(i), cname_(c)
 {
-      while (! ports->empty()) {
+      typedef pair<map<perm_string,Expression*>::iterator,bool> insert_rc;
+
+      while (parms && ! parms->empty()) {
+	    named_expr_t*cur = parms->front();
+	    parms->pop_front();
+	    insert_rc rc = generic_map_.insert(make_pair(cur->name(), cur->expr()));
+	    if (! rc.second) {
+		  cerr << "?:?: error: Duplicate map of generic " << cur->name()
+		       << " ignored." << endl;
+		  parse_errors += 1;
+	    }
+      }
+
+      while (ports && ! ports->empty()) {
 	    named_expr_t*cur = ports->front();
 	    ports->pop_front();
-	    port_map_.insert(make_pair(cur->name(), cur->expr()));
+	    insert_rc rc = port_map_.insert(make_pair(cur->name(), cur->expr()));
+	    if (! rc.second) {
+		  cerr << "?:?: error: Duplicate map of port " << cur->name()
+		       << " ignored." << endl;
+		  parse_errors += 1;
+	    }
       }
 }
 
 ComponentInstantiation::~ComponentInstantiation()
 {
-    for(multimap<perm_string, Expression*>::iterator it = port_map_.begin()
-        ; it != port_map_.end(); ++it) {
-        delete it->second;
-    }
+      for (map<perm_string,Expression*>::iterator it = generic_map_.begin()
+		 ; it != generic_map_.end() ; ++it) {
+	    delete it->second;
+      }
+      for (map<perm_string,Expression*>::iterator it = port_map_.begin()
+		; it != port_map_.end(); ++it) {
+	    delete it->second;
+      }
 }
 
 ProcessStatement::ProcessStatement(perm_string iname,

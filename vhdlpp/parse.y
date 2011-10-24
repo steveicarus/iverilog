@@ -256,6 +256,7 @@ const VType*parse_type_by_name(perm_string name)
 
 %type <named_expr> association_element
 %type <named_expr_list> association_list port_map_aspect port_map_aspect_opt
+%type <named_expr_list> generic_map_aspect generic_map_aspect_opt
 
 %type <vtype> subtype_indication type_definition
 
@@ -366,11 +367,12 @@ association_list
   ;
 
 binding_indication
-  : K_use entity_aspect_opt
-   port_map_aspect_opt
-   generic_map_aspect_opt
-      { //TODO: do sth with generic map aspect
-   $$ = $2;
+  : K_use entity_aspect_opt port_map_aspect_opt generic_map_aspect_opt
+      { $$ = $2;
+	if ($3) sorrymsg(@3, "Port map aspect not supported here. (binding_indication)\n");
+	if ($4) sorrymsg(@4, "Generic map aspect not supported here. (binding_indication)\n");
+	delete $3;
+	delete $4;
       }
   ;
 
@@ -524,22 +526,22 @@ component_configuration
 
 component_declaration
   : K_component IDENTIFIER K_is_opt
-    port_clause_opt
+    generic_clause_opt port_clause_opt
     K_end K_component identifier_opt ';'
       { perm_string name = lex_strings.make($2);
-	if($7 && name != $7) {
-	      errormsg(@7, "Identifier %s doesn't match component name %s.\n",
-		       $7, name.str());
+	if($8 && name != $8) {
+	      errormsg(@8, "Identifier %s doesn't match component name %s.\n",
+		       $8, name.str());
 	}
 
 	ComponentBase*comp = new ComponentBase(name);
-	if ($4) {
-	      comp->set_interface(0, $4);
-        delete $4;
-    }
+	comp->set_interface($4, $5);
+	if ($4) delete $4;
+	if ($5) delete $5;
+
 	active_scope->bind_name(name, comp);
 	delete[]$2;
-	if ($7) delete[] $7;
+	if ($8) delete[] $8;
       }
 
   | K_component IDENTIFIER K_is_opt error K_end K_component identifier_opt ';'
@@ -551,11 +553,12 @@ component_declaration
   ;
 
 component_instantiation_statement
-  : IDENTIFIER ':' K_component_opt IDENTIFIER port_map_aspect_opt ';'
+  : IDENTIFIER ':' K_component_opt IDENTIFIER generic_map_aspect_opt port_map_aspect_opt ';'
       { perm_string iname = lex_strings.make($1);
 	perm_string cname = lex_strings.make($4);
-	ComponentInstantiation*tmp = new ComponentInstantiation(iname, cname, $5);
-    delete $5;
+	ComponentInstantiation*tmp = new ComponentInstantiation(iname, cname, $5, $6);
+	delete $5;
+	delete $6;
 	FILE_NAME(tmp, @1);
 	delete[]$1;
 	delete[]$4;
@@ -958,14 +961,17 @@ generic_clause
   ;
 
 generic_map_aspect_opt
-  : generic_map_aspect
-  |
+  : generic_map_aspect { $$ = $1; }
+  |                    { $$ = 0; }
   ;
 
 generic_map_aspect
   : K_generic K_map '(' association_list ')'
-      {
-    sorrymsg(@1, "Generic map aspect not yet supported.\n");
+      { $$ = $4; }
+  | K_generic K_map '(' error ')'
+      { errormsg(@4, "Error in association list for generic map.\n");
+	yyerrok;
+	$$ = 0;
       }
   ;
 

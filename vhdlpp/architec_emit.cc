@@ -24,7 +24,7 @@
 # include  "vsignal.h"
 # include  <iostream>
 # include  <typeinfo>
-# include  <cassert>
+# include  <ivl_assert.h>
 
 int Scope::emit_signals(ostream&out, Entity*entity, Architecture*arc)
 {
@@ -116,7 +116,7 @@ int SignalAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-      assert(rval_.size() == 1);
+      ivl_assert(*this, rval_.size() == 1);
       Expression*rval = rval_.front();
 
       out << "// " << get_fileline() << endl;
@@ -132,16 +132,32 @@ int SignalAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
 
 int ComponentInstantiation::emit(ostream&out, Entity*ent, Architecture*arc)
 {
+      const char*comma = "";
       int errors = 0;
 
-      out << cname_ << " " << iname_ << "(";
-      const char*comma = "";
-      for (multimap<perm_string,Expression*>::iterator cur = port_map_.begin()
+      out << cname_;
+      if (generic_map_.size() > 0) {
+	    out << " #(";
+	    comma = "";
+	    for (map<perm_string,Expression*>::iterator cur = generic_map_.begin()
+		       ; cur != generic_map_.end() ; ++cur) {
+		  ivl_assert(*this, cur->second);
+		  out << comma << ".\\" << cur->first << " (";
+		  errors += cur->second->emit(out, ent, arc);
+		  out << ")";
+		  comma = ", ";
+	    }
+	    out << ")";
+      }
+
+      out << " \\" << iname_ << " (";
+      comma = "";
+      for (map<perm_string,Expression*>::iterator cur = port_map_.begin()
 		 ; cur != port_map_.end() ; ++cur) {
 	      // Skip unconnected ports
 	    if (cur->second == 0)
 		  continue;
-	    out << comma << "." << cur->first << "(";
+	    out << comma << ".\\" << cur->first << " (";
 	    errors += cur->second->emit(out, ent, arc);
 	    out << ")";
 	    comma = ", ";

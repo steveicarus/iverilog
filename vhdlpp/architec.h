@@ -111,6 +111,7 @@ class ComponentInstantiation  : public Architecture::Statement {
 
     public:
       ComponentInstantiation(perm_string iname, perm_string cname,
+			     std::list<named_expr_t*>*parms,
 			     std::list<named_expr_t*>*ports);
       ~ComponentInstantiation();
 
@@ -122,7 +123,8 @@ class ComponentInstantiation  : public Architecture::Statement {
       perm_string iname_;
       perm_string cname_;
 
-      std::multimap<perm_string,Expression*> port_map_;
+      std::map<perm_string,Expression*> generic_map_;
+      std::map<perm_string,Expression*> port_map_;
 };
 
 class ProcessStatement : public Architecture::Statement {
