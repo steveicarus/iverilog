@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for statements.
  *
- *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2011  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1161,6 +1161,15 @@ static bool process_signal(vhdl_binop_expr *all, vhdl_var_ref *test,
    }
 
    unsigned ewid = ivl_expr_width(expr);
+   if (sizeof(unsigned) >= sizeof(long)) {
+      // Since we will be casting i (constrained by swid) to a long make sure
+      // it will fit into a long. This is actually off by one, but this is the
+      // best we can do since on 32 bit machines an unsigned and long are the
+      // same size.
+      assert(swid <= static_cast<unsigned>(numeric_limits<long>::max()));
+      // We are also going to cast ewid to long so check it as well.
+      assert(ewid <= static_cast<unsigned>(numeric_limits<long>::max()));
+   }
    for (unsigned i = 0; i < swid; i++) {
       // Generate a comparison for this bit position
       vhdl_binop_expr *cmp;
@@ -1170,7 +1179,8 @@ static bool process_signal(vhdl_binop_expr *all, vhdl_var_ref *test,
       // Check if this is an out of bounds access. If this is a casez
       // then check against a constant 'x' for the out of bound bits
       // otherwise skip the check (casex).
-      if (i + sbase >= ewid || i + sbase < 0) {
+      if (static_cast<long>(i) + sbase >= static_cast<long>(ewid) ||
+          static_cast<long>(i) + sbase < 0) {
          if (is_casez) {
             // Get the current test bit.
             type = vhdl_type::nunsigned(width);
