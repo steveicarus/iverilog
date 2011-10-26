@@ -1201,10 +1201,33 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
       }
       if (ivl_signal_width(lsig) > ivl_signal_width(rsig) ||
           (part_off_ex && get_number_immediate(part_off_ex) != 0)) {
-	    fprintf(stderr, "%s:%u: tgt-vvp sorry: cannot %s signal to "
-	            "a bit/part select.\n", ivl_expr_file(rval),
-	            ivl_expr_lineno(rval), command_name);
-	    exit(1);
+	      /* Normalize the bit/part select. */
+	    long real_msb = ivl_signal_msb(lsig);
+	    long real_lsb = ivl_signal_lsb(lsig);
+	    long use_wid = ivl_signal_width(rsig);
+	    long use_lsb, use_msb;
+	    if (real_msb >= real_lsb) {
+		  use_lsb = get_number_immediate(part_off_ex);
+		  use_lsb += real_lsb;
+		  use_msb = use_lsb + use_wid - 1;
+	    } else {
+		  use_lsb = real_lsb;
+		  use_lsb -= get_number_immediate(part_off_ex);
+		  use_msb = use_lsb;
+		  use_msb -= use_wid - 1;
+	    }
+	      /* This is technically the wrong file/line object. It should
+	       * be the statement. */
+	    fprintf(stderr, "%s:%u: tgt-vvp sorry: cannot %s signal to a ",
+	            ivl_expr_file(rval), ivl_expr_lineno(rval), command_name);
+	    if (use_wid > 1) {
+		  fprintf(stderr, "part select (%s[%lu:%lu]).\n",
+		          ivl_signal_basename(lsig), use_msb, use_lsb);
+	    } else {
+		  fprintf(stderr, "bit select (%s[%lu]).\n",
+		          ivl_signal_basename(lsig), use_lsb);
+	    }
+	    vvp_errors += 1;
       }
 
 	/* At least for now, only handle force to fixed words of an array. */
@@ -1212,16 +1235,43 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 	    assert(number_is_immediate(lword_idx, IMM_WID, 0));
 	    assert(! number_is_unknown(lword_idx));
 	    use_lword = get_number_immediate(lword_idx);
+	      /* We do not currently support using a word from a variable
+	       * array as the L-value (Icarus extension). */
+	    if (ivl_signal_type(lsig) == IVL_SIT_REG) {
+		    /* Normalize the array access. */
+		  long real_word = use_lword;
+		  real_word += ivl_signal_array_base(lsig);
+		    /* This is technically the wrong file/line object. It
+		     * should be the statement. */
+		  fprintf(stderr, "%s:%u: tgt-vvp sorry: cannot %s to the "
+		          "word of a variable array (%s[%ld]).\n",
+		          ivl_expr_file(rval), ivl_expr_lineno(rval),
+		          command_name, ivl_signal_basename(lsig), real_word);
+		  vvp_errors += 1;
+	    }
       }
 
       if ((rword_idx = ivl_expr_oper1(rval)) != 0) {
+	    assert(ivl_signal_dimensions(rsig) != 0);
 	    assert(number_is_immediate(rword_idx, IMM_WID, 0));
 	    assert(! number_is_unknown(rword_idx));
 	    use_rword = get_number_immediate(rword_idx);
+	      /* We do not currently support using a word from a variable
+	       * array as the R-value. */
+	    if (ivl_signal_type(rsig) == IVL_SIT_REG) {
+		    /* Normalize the array access. */
+		  long real_word = use_rword;
+		  real_word += ivl_signal_array_base(rsig);
+		  fprintf(stderr, "%s:%u: tgt-vvp sorry: cannot %s from the "
+		          "word of a variable array (%s[%ld]).\n",
+		          ivl_expr_file(rval), ivl_expr_lineno(rval),
+		          command_name, ivl_signal_basename(rsig), real_word);
+		  vvp_errors += 1;
+	    }
+      } else {
+	    assert(ivl_signal_dimensions(rsig) == 0);
+	    use_rword = 0;
       }
-
-      assert(ivl_signal_dimensions(rsig) == 0);
-      use_rword = 0;
 
       fprintf(vvp_out, "    %s/link", command_name);
       fprintf(vvp_out, " v%p_%lu", lsig, use_lword);
