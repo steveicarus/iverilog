@@ -64,7 +64,7 @@ fi
 # AX_WIN32
 # --------
 # Combined check for several flavors of Microsoft Windows so
-# their "issues" can be dealt with
+ # their "issues" can be dealt with
 AC_DEFUN([AX_WIN32],
 [AC_MSG_CHECKING([for Microsoft Windows])
 AC_REQUIRE([AC_CANONICAL_HOST]) []dnl
@@ -229,6 +229,17 @@ case "${host}" in
         ;;
 esac
 ])# AX_CPP_PRECOMP
+
+# AX_C99_STRTOD
+# -------------
+AC_DEFUN([AX_C99_STRTOD],
+[# On MinGW we need to jump through hoops to get a C99 compliant strtod().
+case "${host}" in
+    *-*-mingw*)
+        LDFLAGS="-Wl,--undefined=___strtod,--wrap,strtod,--defsym,___wrap_strtod=___strtod"
+        ;;
+esac
+])# AX_C99_STRTOD
 
 # When config.status generates a header, we must update the stamp-h file.
 # This file resides in the same directory as the config header
