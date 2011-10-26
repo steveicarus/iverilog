@@ -85,10 +85,13 @@ PLI_INT32 tf_getlongtime(PLI_INT32 *high)
 
 /*
  * This function is not defined in the IEE standard, but is provided for
- * compatibility with other simulators. Make it a weak symbol just in
- * case the user has defined their own function for this.
+ * compatibility with other simulators. On platforms that support this,
+ * make it a weak symbol just in case the user has defined their own
+ * function for this.
  */
+#if !defined(__CYGWIN__) && !defined(__MINGW32__)
 PLI_INT32 tf_getlongsimtime(PLI_INT32 *high) __attribute__ ((weak));
+#endif
 PLI_INT32 tf_getlongsimtime(PLI_INT32 *high)
 {
       s_vpi_time timerec;
