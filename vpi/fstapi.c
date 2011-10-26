@@ -505,6 +505,7 @@ unsigned repack_on_close : 1;
 unsigned skip_writing_section_hdr : 1;
 unsigned size_limit_locked : 1;
 unsigned section_header_only : 1;
+unsigned flush_context_pending : 1;
 
 /* should really be semaphores, but are bytes to cut down on read-modify-write window size */
 unsigned char already_in_flush; /* in case control-c handlers interrupt */
@@ -758,272 +759,6 @@ return(xc);
 }
 
 
-void fstWriterClose(void *ctx)
-{
-struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
-if(xc && !xc->already_in_close && !xc->already_in_flush)
-	{
-	unsigned char *tmem;
-	off_t fixup_offs, tlen, hlen;
-
-	xc->already_in_close = 1; /* never need to zero this out as it is freed at bottom */
-
-	if(xc->section_header_only && xc->section_header_truncpos && (xc->vchg_siz <= 1) && (!xc->is_initial_time))
-		{
-		fstFtruncate(fileno(xc->handle), xc->section_header_truncpos);
-		fseeko(xc->handle, xc->section_header_truncpos, SEEK_SET);
-		xc->section_header_only = 0;
-		}
-		else
-		{
-		xc->skip_writing_section_hdr = 1;
-		if(!xc->size_limit_locked)
-			{
-			if(xc->is_initial_time) /* simulation time never advanced so mock up the changes as time zero ones */
-				{
-				fstHandle dupe_idx;
-	
-				fstWriterEmitTimeChange(xc, 0); /* emit some time change just to have one */
-				for(dupe_idx = 0; dupe_idx < xc->maxhandle; dupe_idx++) /* now clone the values */
-					{
-					fstWriterEmitValueChange(xc, dupe_idx+1, xc->curval_mem + xc->valpos_mem[4*dupe_idx]);
-					}
-				}
-			fstWriterFlushContext(xc);
-			}
-		}
-	fstDestroyMmaps(xc, 1);
-
-	/* write out geom section */
-	fflush(xc->geom_handle);
-	tlen = ftello(xc->geom_handle);
-	tmem = fstMmap(NULL, tlen, PROT_READ|PROT_WRITE, MAP_SHARED, fileno(xc->geom_handle), 0);
-	if(tmem)
-		{
-		unsigned long destlen = tlen;
-		unsigned char *dmem = malloc(destlen);
-	        int rc = compress2(dmem, &destlen, tmem, tlen, 9);
-
-		if((rc != Z_OK) || (destlen > tlen))
-			{
-			destlen = tlen;
-			}
-
-		fixup_offs = ftello(xc->handle);
-		fputc(FST_BL_SKIP, xc->handle);			/* temporary tag */
-		fstWriterUint64(xc->handle, destlen + 24);	/* section length */
-		fstWriterUint64(xc->handle, tlen);		/* uncompressed */
-								/* compressed len is section length - 24 */
-		fstWriterUint64(xc->handle, xc->maxhandle);	/* maxhandle */
-		fstFwrite((destlen != tlen) ? dmem : tmem, destlen, 1, xc->handle);
-		fflush(xc->handle);
-
-		fseeko(xc->handle, fixup_offs, SEEK_SET);
-		fputc(FST_BL_GEOM, xc->handle);			/* actual tag */
-
-		fseeko(xc->handle, 0, SEEK_END);		/* move file pointer to end for any section adds */
-		fflush(xc->handle);
-
-		free(dmem);
-		fstMunmap(tmem, tlen);
-		}
-
-	if(xc->num_blackouts)
-		{
-		uint64_t cur_bl = 0;
-		off_t bpos, eos;
-		uint32_t i;
-
-		fixup_offs = ftello(xc->handle);
-		fputc(FST_BL_SKIP, xc->handle);			/* temporary tag */
-		bpos = fixup_offs + 1;
-		fstWriterUint64(xc->handle, 0);			/* section length */
-		fstWriterVarint(xc->handle, xc->num_blackouts);
-
-		for(i=0;i<xc->num_blackouts;i++)
-			{
-			fputc(xc->blackout_head->active, xc->handle);
-			fstWriterVarint(xc->handle, xc->blackout_head->tim - cur_bl);
-			cur_bl = xc->blackout_head->tim;
-			xc->blackout_curr = xc->blackout_head->next;
-			free(xc->blackout_head);
-			xc->blackout_head = xc->blackout_curr;	
-			}
-
-		eos = ftello(xc->handle);
-		fseeko(xc->handle, bpos, SEEK_SET);
-		fstWriterUint64(xc->handle, eos - bpos);		
-		fflush(xc->handle);
-
-		fseeko(xc->handle, fixup_offs, SEEK_SET);
-		fputc(FST_BL_BLACKOUT, xc->handle);	/* actual tag */
-
-		fseeko(xc->handle, 0, SEEK_END);	/* move file pointer to end for any section adds */
-		fflush(xc->handle);
-		}
-
-	if(xc->compress_hier)
-		{
-		unsigned char *mem = malloc(FST_GZIO_LEN);
-		off_t hl, eos;
-		gzFile zhandle;
-		int zfd;
-#ifndef __MINGW32__
-		char *fnam = malloc(strlen(xc->filename) + 5 + 1);
-#endif
-
-		fixup_offs = ftello(xc->handle);
-		fputc(FST_BL_SKIP, xc->handle);			/* temporary tag */
-		hlen = ftello(xc->handle);
-		fstWriterUint64(xc->handle, 0);			/* section length */
-		fstWriterUint64(xc->handle, xc->hier_file_len);	/* uncompressed length */
-		
-		fflush(xc->handle);
-		zfd = dup(fileno(xc->handle));
-		zhandle = gzdopen(zfd, "wb4");
-		if(zhandle)
-			{
-			fseeko(xc->hier_handle, 0, SEEK_SET);
-			for(hl = 0; hl < xc->hier_file_len; hl += FST_GZIO_LEN)
-				{
-				unsigned len = ((xc->hier_file_len - hl) > FST_GZIO_LEN) ? FST_GZIO_LEN : (xc->hier_file_len - hl);
-				fstFread(mem, len, 1, xc->hier_handle);
-				gzwrite(zhandle, mem, len);
-				}
-			gzclose(zhandle);
-			}
-			else
-			{
-			close(zfd);
-			}
-		free(mem);
-
-		fseeko(xc->handle, 0, SEEK_END);
-		eos = ftello(xc->handle);
-		fseeko(xc->handle, hlen, SEEK_SET);
-		fstWriterUint64(xc->handle, eos - hlen);
-		fflush(xc->handle);
-
-		fseeko(xc->handle, fixup_offs, SEEK_SET);
-		fputc(FST_BL_HIER, xc->handle);		/* actual tag */
-
-		fseeko(xc->handle, 0, SEEK_END);	/* move file pointer to end for any section adds */
-		fflush(xc->handle);
-
-#ifndef __MINGW32__
-		sprintf(fnam, "%s.hier", xc->filename);
-		unlink(fnam);
-		free(fnam);
-#endif
-		}
-
-	/* finalize out header */
-	fseeko(xc->handle, FST_HDR_OFFS_START_TIME, SEEK_SET);
-	fstWriterUint64(xc->handle, xc->firsttime);
-	fstWriterUint64(xc->handle, xc->curtime);
-	fseeko(xc->handle, FST_HDR_OFFS_NUM_SCOPES, SEEK_SET);
-	fstWriterUint64(xc->handle, xc->numscopes);
-	fstWriterUint64(xc->handle, xc->numsigs);
-	fstWriterUint64(xc->handle, xc->maxhandle);
-	fstWriterUint64(xc->handle, xc->secnum);
-	fflush(xc->handle);
-	
-	if(xc->tchn_handle) { fclose(xc->tchn_handle); xc->tchn_handle = NULL; }
-	free(xc->vchg_mem); xc->vchg_mem = NULL;
-	if(xc->curval_handle) { fclose(xc->curval_handle); xc->curval_handle = NULL; }
-	if(xc->valpos_handle) { fclose(xc->valpos_handle); xc->valpos_handle = NULL; }
-	if(xc->geom_handle) { fclose(xc->geom_handle); xc->geom_handle = NULL; }
-	if(xc->hier_handle) { fclose(xc->hier_handle); xc->hier_handle = NULL; }
-	if(xc->handle) 
-		{ 
-		if(xc->repack_on_close)
-			{
-			FILE *fp;
-			off_t offpnt, uclen;
-			int flen = strlen(xc->filename);
-			char *hf = calloc(1, flen + 5);
-
-			strcpy(hf, xc->filename);
-			strcpy(hf+flen, ".pak");
-			fp = fopen(hf, "wb");
-
-			if(fp)
-				{
-				void *dsth;
-				int zfd;
-				char gz_membuf[FST_GZIO_LEN];
-
-				fseeko(xc->handle, 0, SEEK_END);
-				uclen = ftello(xc->handle);
-
-				fputc(FST_BL_ZWRAPPER, fp);
-				fstWriterUint64(fp, 0);
-				fstWriterUint64(fp, uclen);
-				fflush(fp);
-
-				fseeko(xc->handle, 0, SEEK_SET);
-				zfd = dup(fileno(fp));
-				dsth = gzdopen(zfd, "wb4");
-				if(dsth)
-					{
-					for(offpnt = 0; offpnt < uclen; offpnt += FST_GZIO_LEN)
-						{
-						size_t this_len = ((uclen - offpnt) > FST_GZIO_LEN) ? FST_GZIO_LEN : (uclen - offpnt);
-						fstFread(gz_membuf, this_len, 1, xc->handle);
-						gzwrite(dsth, gz_membuf, this_len);
-						}
-					gzclose(dsth);
-					}
-					else
-					{
-					close(zfd);
-					}
-				fseeko(fp, 0, SEEK_END);
-				offpnt = ftello(fp);
-				fseeko(fp, 1, SEEK_SET);
-				fstWriterUint64(fp, offpnt - 1);
-				fclose(fp);
-				fclose(xc->handle); xc->handle = NULL; 
-
-				unlink(xc->filename);
-				rename(hf, xc->filename);
-				}
-				else
-				{
-				xc->repack_on_close = 0;
-				fclose(xc->handle); xc->handle = NULL; 
-				}
-
-			free(hf);
-			}
-			else
-			{
-			fclose(xc->handle); xc->handle = NULL; 
-			}
-		}
-
-#ifdef __MINGW32__ 
-	{
-	int flen = strlen(xc->filename);
-	char *hf = calloc(1, flen + 6);
-	strcpy(hf, xc->filename);
-
-	if(xc->compress_hier)
-		{
-		strcpy(hf + flen, ".hier");
-		unlink(hf); /* no longer needed as a section now exists for this */
-		}
-
-	free(hf);
-	}
-#endif
-
-	free(xc->filename); xc->filename = NULL;
-	free(xc);
-	}
-}
-
-
 /*
  * generation and writing out of value change data sections
  */
@@ -1074,7 +809,11 @@ if(xc)
 }
 
 
-void fstWriterFlushContext(void *ctx)
+/*
+ * only to be called directly by fst code...otherwise must
+ * be synced up with time changes
+ */
+static void fstWriterFlushContextPrivate(void *ctx)
 {
 #ifdef FST_DEBUG
 int cnt = 0;
@@ -1539,6 +1278,291 @@ xc->already_in_flush = 0;
 
 
 /*
+ * queues up a flush context operation
+ */
+void fstWriterFlushContext(void *ctx)
+{
+struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+if(xc)
+        {
+	if(xc->tchn_idx > 1)
+		{
+		xc->flush_context_pending = 1;
+		}
+	}
+}
+
+
+/*
+ * close out FST file
+ */
+void fstWriterClose(void *ctx)
+{
+struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+if(xc && !xc->already_in_close && !xc->already_in_flush)
+	{
+	unsigned char *tmem;
+	off_t fixup_offs, tlen, hlen;
+
+	xc->already_in_close = 1; /* never need to zero this out as it is freed at bottom */
+
+	if(xc->section_header_only && xc->section_header_truncpos && (xc->vchg_siz <= 1) && (!xc->is_initial_time))
+		{
+		fstFtruncate(fileno(xc->handle), xc->section_header_truncpos);
+		fseeko(xc->handle, xc->section_header_truncpos, SEEK_SET);
+		xc->section_header_only = 0;
+		}
+		else
+		{
+		xc->skip_writing_section_hdr = 1;
+		if(!xc->size_limit_locked)
+			{
+			if(xc->is_initial_time) /* simulation time never advanced so mock up the changes as time zero ones */
+				{
+				fstHandle dupe_idx;
+	
+				fstWriterEmitTimeChange(xc, 0); /* emit some time change just to have one */
+				for(dupe_idx = 0; dupe_idx < xc->maxhandle; dupe_idx++) /* now clone the values */
+					{
+					fstWriterEmitValueChange(xc, dupe_idx+1, xc->curval_mem + xc->valpos_mem[4*dupe_idx]);
+					}
+				}
+			fstWriterFlushContextPrivate(xc);
+			}
+		}
+	fstDestroyMmaps(xc, 1);
+
+	/* write out geom section */
+	fflush(xc->geom_handle);
+	tlen = ftello(xc->geom_handle);
+	tmem = fstMmap(NULL, tlen, PROT_READ|PROT_WRITE, MAP_SHARED, fileno(xc->geom_handle), 0);
+	if(tmem)
+		{
+		unsigned long destlen = tlen;
+		unsigned char *dmem = malloc(destlen);
+	        int rc = compress2(dmem, &destlen, tmem, tlen, 9);
+
+		if((rc != Z_OK) || (destlen > tlen))
+			{
+			destlen = tlen;
+			}
+
+		fixup_offs = ftello(xc->handle);
+		fputc(FST_BL_SKIP, xc->handle);			/* temporary tag */
+		fstWriterUint64(xc->handle, destlen + 24);	/* section length */
+		fstWriterUint64(xc->handle, tlen);		/* uncompressed */
+								/* compressed len is section length - 24 */
+		fstWriterUint64(xc->handle, xc->maxhandle);	/* maxhandle */
+		fstFwrite((destlen != tlen) ? dmem : tmem, destlen, 1, xc->handle);
+		fflush(xc->handle);
+
+		fseeko(xc->handle, fixup_offs, SEEK_SET);
+		fputc(FST_BL_GEOM, xc->handle);			/* actual tag */
+
+		fseeko(xc->handle, 0, SEEK_END);		/* move file pointer to end for any section adds */
+		fflush(xc->handle);
+
+		free(dmem);
+		fstMunmap(tmem, tlen);
+		}
+
+	if(xc->num_blackouts)
+		{
+		uint64_t cur_bl = 0;
+		off_t bpos, eos;
+		uint32_t i;
+
+		fixup_offs = ftello(xc->handle);
+		fputc(FST_BL_SKIP, xc->handle);			/* temporary tag */
+		bpos = fixup_offs + 1;
+		fstWriterUint64(xc->handle, 0);			/* section length */
+		fstWriterVarint(xc->handle, xc->num_blackouts);
+
+		for(i=0;i<xc->num_blackouts;i++)
+			{
+			fputc(xc->blackout_head->active, xc->handle);
+			fstWriterVarint(xc->handle, xc->blackout_head->tim - cur_bl);
+			cur_bl = xc->blackout_head->tim;
+			xc->blackout_curr = xc->blackout_head->next;
+			free(xc->blackout_head);
+			xc->blackout_head = xc->blackout_curr;	
+			}
+
+		eos = ftello(xc->handle);
+		fseeko(xc->handle, bpos, SEEK_SET);
+		fstWriterUint64(xc->handle, eos - bpos);		
+		fflush(xc->handle);
+
+		fseeko(xc->handle, fixup_offs, SEEK_SET);
+		fputc(FST_BL_BLACKOUT, xc->handle);	/* actual tag */
+
+		fseeko(xc->handle, 0, SEEK_END);	/* move file pointer to end for any section adds */
+		fflush(xc->handle);
+		}
+
+	if(xc->compress_hier)
+		{
+		unsigned char *mem = malloc(FST_GZIO_LEN);
+		off_t hl, eos;
+		gzFile zhandle;
+		int zfd;
+#ifndef __MINGW32__
+		char *fnam = malloc(strlen(xc->filename) + 5 + 1);
+#endif
+
+		fixup_offs = ftello(xc->handle);
+		fputc(FST_BL_SKIP, xc->handle);			/* temporary tag */
+		hlen = ftello(xc->handle);
+		fstWriterUint64(xc->handle, 0);			/* section length */
+		fstWriterUint64(xc->handle, xc->hier_file_len);	/* uncompressed length */
+		
+		fflush(xc->handle);
+		zfd = dup(fileno(xc->handle));
+		zhandle = gzdopen(zfd, "wb4");
+		if(zhandle)
+			{
+			fseeko(xc->hier_handle, 0, SEEK_SET);
+			for(hl = 0; hl < xc->hier_file_len; hl += FST_GZIO_LEN)
+				{
+				unsigned len = ((xc->hier_file_len - hl) > FST_GZIO_LEN) ? FST_GZIO_LEN : (xc->hier_file_len - hl);
+				fstFread(mem, len, 1, xc->hier_handle);
+				gzwrite(zhandle, mem, len);
+				}
+			gzclose(zhandle);
+			}
+			else
+			{
+			close(zfd);
+			}
+		free(mem);
+
+		fseeko(xc->handle, 0, SEEK_END);
+		eos = ftello(xc->handle);
+		fseeko(xc->handle, hlen, SEEK_SET);
+		fstWriterUint64(xc->handle, eos - hlen);
+		fflush(xc->handle);
+
+		fseeko(xc->handle, fixup_offs, SEEK_SET);
+		fputc(FST_BL_HIER, xc->handle);		/* actual tag */
+
+		fseeko(xc->handle, 0, SEEK_END);	/* move file pointer to end for any section adds */
+		fflush(xc->handle);
+
+#ifndef __MINGW32__
+		sprintf(fnam, "%s.hier", xc->filename);
+		unlink(fnam);
+		free(fnam);
+#endif
+		}
+
+	/* finalize out header */
+	fseeko(xc->handle, FST_HDR_OFFS_START_TIME, SEEK_SET);
+	fstWriterUint64(xc->handle, xc->firsttime);
+	fstWriterUint64(xc->handle, xc->curtime);
+	fseeko(xc->handle, FST_HDR_OFFS_NUM_SCOPES, SEEK_SET);
+	fstWriterUint64(xc->handle, xc->numscopes);
+	fstWriterUint64(xc->handle, xc->numsigs);
+	fstWriterUint64(xc->handle, xc->maxhandle);
+	fstWriterUint64(xc->handle, xc->secnum);
+	fflush(xc->handle);
+	
+	if(xc->tchn_handle) { fclose(xc->tchn_handle); xc->tchn_handle = NULL; }
+	free(xc->vchg_mem); xc->vchg_mem = NULL;
+	if(xc->curval_handle) { fclose(xc->curval_handle); xc->curval_handle = NULL; }
+	if(xc->valpos_handle) { fclose(xc->valpos_handle); xc->valpos_handle = NULL; }
+	if(xc->geom_handle) { fclose(xc->geom_handle); xc->geom_handle = NULL; }
+	if(xc->hier_handle) { fclose(xc->hier_handle); xc->hier_handle = NULL; }
+	if(xc->handle) 
+		{ 
+		if(xc->repack_on_close)
+			{
+			FILE *fp;
+			off_t offpnt, uclen;
+			int flen = strlen(xc->filename);
+			char *hf = calloc(1, flen + 5);
+
+			strcpy(hf, xc->filename);
+			strcpy(hf+flen, ".pak");
+			fp = fopen(hf, "wb");
+
+			if(fp)
+				{
+				void *dsth;
+				int zfd;
+				char gz_membuf[FST_GZIO_LEN];
+
+				fseeko(xc->handle, 0, SEEK_END);
+				uclen = ftello(xc->handle);
+
+				fputc(FST_BL_ZWRAPPER, fp);
+				fstWriterUint64(fp, 0);
+				fstWriterUint64(fp, uclen);
+				fflush(fp);
+
+				fseeko(xc->handle, 0, SEEK_SET);
+				zfd = dup(fileno(fp));
+				dsth = gzdopen(zfd, "wb4");
+				if(dsth)
+					{
+					for(offpnt = 0; offpnt < uclen; offpnt += FST_GZIO_LEN)
+						{
+						size_t this_len = ((uclen - offpnt) > FST_GZIO_LEN) ? FST_GZIO_LEN : (uclen - offpnt);
+						fstFread(gz_membuf, this_len, 1, xc->handle);
+						gzwrite(dsth, gz_membuf, this_len);
+						}
+					gzclose(dsth);
+					}
+					else
+					{
+					close(zfd);
+					}
+				fseeko(fp, 0, SEEK_END);
+				offpnt = ftello(fp);
+				fseeko(fp, 1, SEEK_SET);
+				fstWriterUint64(fp, offpnt - 1);
+				fclose(fp);
+				fclose(xc->handle); xc->handle = NULL; 
+
+				unlink(xc->filename);
+				rename(hf, xc->filename);
+				}
+				else
+				{
+				xc->repack_on_close = 0;
+				fclose(xc->handle); xc->handle = NULL; 
+				}
+
+			free(hf);
+			}
+			else
+			{
+			fclose(xc->handle); xc->handle = NULL; 
+			}
+		}
+
+#ifdef __MINGW32__ 
+	{
+	int flen = strlen(xc->filename);
+	char *hf = calloc(1, flen + 6);
+	strcpy(hf, xc->filename);
+
+	if(xc->compress_hier)
+		{
+		strcpy(hf + flen, ".hier");
+		unlink(hf); /* no longer needed as a section now exists for this */
+		}
+
+	free(hf);
+	}
+#endif
+
+	free(xc->filename); xc->filename = NULL;
+	free(xc);
+	}
+}
+
+
+/*
  * functions to set miscellaneous header/block information
  */
 void fstWriterSetDate(void *ctx, const char *dat)
@@ -1940,9 +1964,10 @@ if(xc)
 		}
 		else
 		{
-		if(xc->vchg_siz >= FST_BREAK_SIZE)
+		if((xc->vchg_siz >= FST_BREAK_SIZE) || (xc->flush_context_pending))
 			{
-			fstWriterFlushContext(xc);
+			xc->flush_context_pending = 0;
+			fstWriterFlushContextPrivate(xc);
 			xc->tchn_cnt++;
 			fstWriterVarint(xc->tchn_handle, xc->curtime);
 			}
