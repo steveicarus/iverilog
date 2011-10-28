@@ -236,7 +236,7 @@ AC_DEFUN([AX_C99_STRTOD],
 [# On MinGW we need to jump through hoops to get a C99 compliant strtod().
 case "${host}" in
     *-*-mingw*)
-        LDFLAGS="-Wl,--undefined=___strtod,--wrap,strtod,--defsym,___wrap_strtod=___strtod"
+        LDFLAGS+=" -Wl,--undefined=___strtod,--wrap,strtod,--defsym,___wrap_strtod=___strtod"
         ;;
 esac
 ])# AX_C99_STRTOD
