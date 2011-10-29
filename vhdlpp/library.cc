@@ -259,6 +259,10 @@ static void import_ieee_use_std_logic_1164(ActiveScope*res, perm_string name)
       }
 }
 
+static void import_ieee_use_std_logic_arith(ActiveScope*, perm_string)
+{
+}
+
 static void import_ieee_use_numeric_bit(ActiveScope*res, perm_string name)
 {
       bool all_flag = name=="all";
@@ -295,6 +299,11 @@ static void import_ieee_use(ActiveScope*res, perm_string package, perm_string na
 {
       if (package == "std_logic_1164") {
 	    import_ieee_use_std_logic_1164(res, name);
+	    return;
+      }
+
+      if (package == "std_logic_arith") {
+	    import_ieee_use_std_logic_arith(res, name);
 	    return;
       }
 
