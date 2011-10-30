@@ -123,6 +123,7 @@ class Entity : public ComponentBase {
 
       map<perm_string,VType::decl_t> declarations_;
 
+      int elaborate_generic_exprs_(void);
       int elaborate_ports_(void);
 };
 

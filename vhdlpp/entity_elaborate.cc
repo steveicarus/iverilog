@@ -77,10 +77,22 @@ int Entity::elaborate()
 		 << ", choosing architecture " << bind_arch_->get_name()
 		 << "." << endl;
 
+      errors += elaborate_generic_exprs_();
       errors += elaborate_ports_();
 
       errors += bind_arch_->elaborate(this);
 
+      return errors;
+}
+
+int Entity::elaborate_generic_exprs_()
+{
+      int errors = 0;
+      for (vector<InterfacePort*>::const_iterator cur = parms_.begin()
+		 ; cur != parms_.end() ; ++cur) {
+	    InterfacePort*curp = *cur;
+	    curp->expr->elaborate_expr(this, 0, curp->type);
+      }
       return errors;
 }
 
