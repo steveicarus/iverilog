@@ -18,13 +18,14 @@
  */
 
 # include  "vsignal.h"
+# include  "expression.h"
 # include  "vtype.h"
 # include  <iostream>
 
 using namespace std;
 
-SigVarBase::SigVarBase(perm_string nam, const VType*typ)
-: name_(nam), type_(typ), refcnt_sequ_(0)
+SigVarBase::SigVarBase(perm_string nam, const VType*typ, Expression*exp)
+: name_(nam), type_(typ), init_expr_(exp), refcnt_sequ_(0)
 {
 }
 
@@ -37,7 +38,7 @@ void SigVarBase::type_elaborate_(VType::decl_t&decl)
       decl.type = type_;
 }
 
-int Signal::emit(ostream&out, Entity*, Architecture*)
+int Signal::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
@@ -46,6 +47,12 @@ int Signal::emit(ostream&out, Entity*, Architecture*)
       if (peek_refcnt_sequ_() > 0)
 	    decl.reg_flag = true;
       errors += decl.emit(out, peek_name_());
+
+      Expression*init_expr = peek_init_expr();
+      if (init_expr) {
+	    out << " = ";
+	    init_expr->emit(out, ent, arc);
+      }
       out << ";" << endl;
       return errors;
 }

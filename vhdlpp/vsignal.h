@@ -25,11 +25,12 @@
 
 class Architecture;
 class Entity;
+class Expression;
 
 class SigVarBase : public LineInfo {
 
     public:
-      SigVarBase(perm_string name, const VType*type);
+      SigVarBase(perm_string name, const VType*type, Expression*init_expr);
       virtual ~SigVarBase();
 
       const VType* peek_type(void) const { return type_; }
@@ -46,9 +47,12 @@ class SigVarBase : public LineInfo {
 
       void type_elaborate_(VType::decl_t&decl);
 
+      Expression* peek_init_expr() const { return init_expr_; }
+
     private:
       perm_string name_;
       const VType*type_;
+      Expression*init_expr_;
 
       unsigned refcnt_sequ_;
 
@@ -60,7 +64,7 @@ class SigVarBase : public LineInfo {
 class Signal : public SigVarBase {
 
     public:
-      Signal(perm_string name, const VType*type);
+      Signal(perm_string name, const VType*type, Expression*init_expr);
 
       int emit(ostream&out, Entity*ent, Architecture*arc);
 };
@@ -78,13 +82,13 @@ inline void SigVarBase::count_ref_sequ()
       refcnt_sequ_ += 1;
 }
 
-inline Signal::Signal(perm_string name, const VType*type)
-: SigVarBase(name, type)
+inline Signal::Signal(perm_string name, const VType*type, Expression*init_expr)
+: SigVarBase(name, type, init_expr)
 {
 }
 
 inline Variable::Variable(perm_string name, const VType*type)
-: SigVarBase(name, type)
+: SigVarBase(name, type, 0)
 {
 }
 

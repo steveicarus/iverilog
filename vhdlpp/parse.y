@@ -251,7 +251,8 @@ const VType*parse_type_by_name(perm_string name)
 %type <expr> expression_logical expression_logical_and expression_logical_or
 %type <expr> expression_logical_xnor expression_logical_xor
 %type <expr> name
-%type <expr> shift_expression simple_expression term waveform_element
+%type <expr> shift_expression signal_declaration_assign_opt
+%type <expr> simple_expression term waveform_element
 %type <expr> interface_element_expression
 
 %type <expr_list> waveform waveform_elements
@@ -405,11 +406,12 @@ block_configuration_opt
   ;
 
 block_declarative_item
-  : K_signal identifier_list ':' subtype_indication ';'
+  : K_signal identifier_list ':' subtype_indication
+    signal_declaration_assign_opt ';'
       { /* Save the signal declaration in the block_signals map. */
 	for (std::list<perm_string>::iterator cur = $2->begin()
 		   ; cur != $2->end() ; ++cur) {
-	      Signal*sig = new Signal(*cur, $4);
+	      Signal*sig = new Signal(*cur, $4, $5);
 	      FILE_NAME(sig, @1);
 	      active_scope->bind_name(*cur, sig);
 	}
@@ -1714,6 +1716,11 @@ sequential_statement
   ;
 
 shift_expression : simple_expression { $$ = $1; } ;
+
+signal_declaration_assign_opt
+  : VASSIGN expression { $$ = $2; }
+  |                    { $$ = 0;  }
+  ;
 
 /*
  * The LRM rule for simple_expression is:
