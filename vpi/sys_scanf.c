@@ -803,7 +803,6 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv,
 		     * parse it generically first. */
 
 		  unsigned suppress_flag = 0;
-// HERE: should this be MAX_UINT?
 		  unsigned max_width = -1;
 		  int code = 0;
 
