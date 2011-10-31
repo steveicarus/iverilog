@@ -28,6 +28,7 @@
 # include  <stdio.h>
 # include  <stdlib.h>
 # include  <math.h>
+# include  <limits.h>
 # include  <assert.h>
 # include  "ivl_alloc.h"
 
@@ -803,7 +804,7 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv,
 		     * parse it generically first. */
 
 		  unsigned suppress_flag = 0;
-		  unsigned max_width = -1;
+		  unsigned max_width = UINT_MAX;
 		  int code = 0;
 
 		    /* Look for the suppression character '*'. */
