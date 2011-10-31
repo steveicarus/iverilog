@@ -239,8 +239,8 @@ const VType*parse_type_by_name(perm_string name)
 %type <component_specification> component_specification
 
 %type <arch_statement> concurrent_statement component_instantiation_statement concurrent_signal_assignment_statement
-%type <arch_statement> process_statement
-%type <arch_statement_list> architecture_statement_part
+%type <arch_statement> for_generate_statement process_statement
+%type <arch_statement_list> architecture_statement_part generate_statement_body
 
 %type <choice> choice
 %type <choice_list> choices
@@ -633,6 +633,7 @@ concurrent_signal_assignment_statement
 concurrent_statement
   : component_instantiation_statement
   | concurrent_signal_assignment_statement
+  | for_generate_statement
   | process_statement
   ;
 
@@ -953,6 +954,31 @@ factor
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  ;
+
+for_generate_statement
+  : IDENTIFIER ':' K_for IDENTIFIER K_in range
+    K_generate generate_statement_body
+    K_end K_generate identifier_opt ';'
+      { perm_string name = lex_strings.make($1);
+	perm_string gvar = lex_strings.make($4);
+	ForGenerate*tmp = new ForGenerate(name, gvar, $6, *$8);
+	FILE_NAME(tmp, @1);
+
+	if ($11 && name != $11) {
+	      errormsg(@1, "for-generate name %s does not match closing name %s\n",
+		       name.str(), $11);
+	}
+	delete $1;
+	delete $4;
+	delete $8;
+	delete $11;
+	$$ = tmp;
+      }
+  ;
+
+generate_statement_body
+  : architecture_statement_part { $$ = $1; }
   ;
 
 generic_clause_opt

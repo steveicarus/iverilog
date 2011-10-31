@@ -167,6 +167,35 @@ int ComponentInstantiation::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
+int GenerateStatement::emit_statements(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      for (list<Architecture::Statement*>::iterator cur = statements_.begin()
+		 ; cur != statements_.end() ; ++cur) {
+	    Architecture::Statement*curp = *cur;
+	    errors += curp->emit(out, ent, arc);
+      }
+      return errors;
+}
+
+int ForGenerate::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      out << "generate genvar \\" << genvar_ << " ;" << endl;
+      out << "for (\\" << genvar_ << " = ";
+      errors += lsb_->emit(out, ent, arc);
+      out << "; \\" << genvar_ << " <= ";
+      errors += msb_->emit(out, ent, arc);
+      out << "; \\" << genvar_ << " = \\" << genvar_ << " + 1)"
+	  << " begin : \\" << get_name() << endl;
+
+      errors += emit_statements(out, ent, arc);
+
+      out << "end" << endl;
+      out << "endgenerate" << endl;
+      return errors;
+}
+
 int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;

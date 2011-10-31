@@ -32,6 +32,7 @@ class ExpName;
 class SequentialStmt;
 class Signal;
 class named_expr_t;
+class range_t;
 
 /*
  * The Architecture class carries the contents (name, statements,
@@ -86,6 +87,46 @@ class Architecture : public Scope, public LineInfo {
 
     private: // Not implemented
 };
+
+/*
+ * This is a base class for various generate statement types. It holds
+ * the generate statement name, and a list of substatements.
+ */
+class GenerateStatement : public Architecture::Statement {
+
+    public:
+      GenerateStatement(perm_string gname, std::list<Architecture::Statement*>&s);
+      ~GenerateStatement();
+
+    protected:
+      inline perm_string get_name() { return name_; }
+
+      int elaborate_statements(Entity*ent, Architecture*arc);
+      int emit_statements(ostream&out, Entity*ent, Architecture*arc);
+      void dump_statements(ostream&out, int indent) const;
+
+    private:
+      perm_string name_;
+      std::list<Architecture::Statement*> statements_;
+};
+
+class ForGenerate : public GenerateStatement {
+
+    public:
+      ForGenerate(perm_string gname, perm_string genvar,
+		  range_t*rang, std::list<Architecture::Statement*>&s);
+      ~ForGenerate();
+
+      int elaborate(Entity*ent, Architecture*arc);
+      int emit(ostream&out, Entity*entity, Architecture*arc);
+      void dump(ostream&out, int ident =0) const;
+
+    private:
+      perm_string genvar_;
+      Expression*lsb_;
+      Expression*msb_;
+};
+
 
 /*
  * The SignalAssignment class represents the

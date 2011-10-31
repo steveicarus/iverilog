@@ -46,6 +46,29 @@ Architecture::Statement::~Statement()
 {
 }
 
+GenerateStatement::GenerateStatement(perm_string gname,
+				     std::list<Architecture::Statement*>&s)
+: name_(gname)
+{
+      statements_.splice(statements_.end(), s);
+}
+
+GenerateStatement::~GenerateStatement()
+{
+      for_each(statements_.begin(), statements_.end(), ::delete_object<Architecture::Statement>());
+}
+
+ForGenerate::ForGenerate(perm_string gname, perm_string genvar,
+			 range_t*rang, std::list<Architecture::Statement*>&s)
+: GenerateStatement(gname, s), genvar_(genvar),
+  lsb_(rang->lsb()), msb_(rang->msb())
+{
+}
+
+ForGenerate::~ForGenerate()
+{
+}
+
 SignalAssignment::SignalAssignment(ExpName*name, list<Expression*>&rv)
 : lval_(name)
 {

@@ -99,6 +99,24 @@ int ComponentInstantiation::elaborate(Entity*ent, Architecture*arc)
       return errors;
 }
 
+int GenerateStatement::elaborate_statements(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      for (list<Architecture::Statement*>::iterator cur = statements_.begin()
+		 ; cur != statements_.end() ; ++cur) {
+	    Architecture::Statement*curp = *cur;
+	    errors += curp->elaborate(ent, arc);
+      }
+      return errors;
+}
+
+int ForGenerate::elaborate(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      errors += elaborate_statements(ent, arc);
+      return errors;
+}
+
 /*
  * This method attempts to rewrite the process content as an
  * always-@(n-edge <expr>) version of the same statement. This makes

@@ -47,7 +47,10 @@ void Architecture::Statement::dump(ostream&out, int indent) const
 
 void ComponentInstantiation::dump(ostream&out, int indent) const
 {
-      out << setw(indent) << "" << "Component Instantiation file=" << get_fileline() << endl;
+      out << setw(indent) << "" << "Component Instantiation "
+	  << "instance=" << iname_
+	  << " of component=" << cname_
+	  << ", file=" << get_fileline() << endl;
 
       for (map<perm_string,Expression*>::const_iterator cur = port_map_.begin()
 		 ; cur != port_map_.end() ; ++cur) {
@@ -58,6 +61,26 @@ void ComponentInstantiation::dump(ostream&out, int indent) const
 		  out << setw(indent+6) <<""<< "OPEN" << endl;
       }
 
+}
+
+void GenerateStatement::dump_statements(ostream&out, int indent) const
+{
+      for (list<Architecture::Statement*>::const_iterator cur = statements_.begin()
+		 ; cur != statements_.end() ; ++cur) {
+	    Statement*curp = *cur;
+	    curp->dump(out, indent);
+      }
+}
+
+void ForGenerate::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "for " << genvar_
+	  << " in" << endl;
+      msb_->dump(out, indent+4);
+      lsb_->dump(out, indent+4);
+      out << setw(indent) << "" << "generate" << endl;
+      dump_statements(out, indent+4);
+      out << setw(indent) << "" << "end generate" << endl;
 }
 
 void SignalAssignment::dump(ostream&out, int indent) const
