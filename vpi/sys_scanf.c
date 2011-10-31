@@ -17,7 +17,7 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-  /* round() is ISO C99 from math.h. This define should enable it. */
+/* round() is ISO C99 from math.h. This define should enable it. */
 # define _ISOC99_SOURCE 1
 # define _SVID_SOURCE 1
 
@@ -31,29 +31,41 @@
 # include  <assert.h>
 # include  "ivl_alloc.h"
 
+/*
+ * The wrapper routines below get a value from either a string or a file.
+ * This structure is used to determine which one is used. The unused one
+ * must be assigned a zero value.
+ */
 struct byte_source {
-      const char*str;
-      FILE*fd;
+      const char *str;
+      FILE *fd;
 };
 
-static int byte_getc(struct byte_source*byte)
+/*
+ * Wrapper routine to get a byte from either a string or a file descriptor.
+ */
+static int byte_getc(struct byte_source *src)
 {
-      int ch;
-      if (byte->str) {
-	    if (byte->str[0] == 0) return EOF;
+      if (src->str) {
+	    assert(! src->fd);
+	    if (src->str[0] == 0) return EOF;
 
-	    return *(byte->str)++;
+	    return *(src->str)++;
       }
 
-      ch = fgetc(byte->fd);
-      return ch;
+      assert(src->fd);
+      return fgetc(src->fd);
 }
 
-static void byte_ungetc(struct byte_source*src, int ch)
+/*
+ * Wrapper routine to unget a byte to either a string or a file descriptor.
+ */
+static void byte_ungetc(struct byte_source *src, int ch)
 {
       if (ch == EOF) return;
 
       if (src->str) {
+	    assert(! src->fd);
 	    src->str -= 1;
 	    return;
       }
@@ -67,154 +79,642 @@ static void byte_ungetc(struct byte_source*src, int ch)
  * This function matches the input characters of a floating point
  * number and generates a floating point (double) from that string.
  *
- * Need support for +-Inf and NaN. Look at the $plusargs code.
+ * Do we need support for +-Inf and NaN? It's not in the standard.
+ *
+ * The match variable is set to 1 for a match or 0 for no match.
  */
-static double float_string(struct byte_source*src)
+static double get_float(struct byte_source *src, unsigned width, int *match)
 {
+      char *endptr;
+      char *strval = malloc(1);
+      unsigned len = 0;
+      double result;
       int ch;
-      char*str = 0;
-      size_t len;
-      double sign_flag = 1.0;
 
+	/* Skip any leading space. */
       ch = byte_getc(src);
-	/* Skip leading space. */
       while (isspace(ch)) ch = byte_getc(src);
 
-      if (ch == '+') {
-	    sign_flag = 1.0;
-	    ch = byte_getc(src);
-      } else if (ch == '-') {
-	    sign_flag = -1.0;
+	/* If we are being asked for no digits then return a match fail. */
+      if (width == 0) {
+	    byte_ungetc(src, ch);
+	    free(strval);
+	    *match = 0;
+	    return 0.0;
+      }
+
+	/* Look for the optional sign. */
+      if ((ch == '+') || (ch == '-')) {
+	      /* If we have a sign then the width must not be
+	       * one since we need a sign and a digit. */
+	    if (width == 1) {
+		  byte_ungetc(src, ch);
+		  free(strval);
+		  *match = 0;
+		  return 0.0;
+	    }
+	    strval = realloc(strval, len+2);
+	    strval[len++] = ch;
 	    ch = byte_getc(src);
       }
 
-      str = malloc(1);
-      len = 0;
-      *str = 0;
-
-      while (isdigit(ch)) {
-	    str = realloc(str, len+2);
-	    str[len++] = ch;
+	/* Get any digits before the optional decimal point, but no more
+	 * than width. */
+      while (isdigit(ch) && (len < width)) {
+	    strval = realloc(strval, len+2);
+	    strval[len++] = ch;
 	    ch = byte_getc(src);
       }
 
-      if (ch == '.') {
-	    str = realloc(str, len+2);
-	    str[len++] = ch;
+	/* Get the optional decimal point and any following digits, but
+	 * no more than width total characters are copied. */
+      if ((ch == '.') && (len < width)) {
+	    strval = realloc(strval, len+2);
+	    strval[len++] = ch;
 	    ch = byte_getc(src);
-	    while (isdigit(ch)) {
-		  str = realloc(str, len+2);
-		  str[len++] = ch;
+	      /* Get any trailing digits. */
+	    while (isdigit(ch) && (len < width)) {
+		  strval = realloc(strval, len+2);
+		  strval[len++] = ch;
 		  ch = byte_getc(src);
 	    }
       }
 
-      if (ch == 'e' || ch == 'E') {
-	    str = realloc(str, len+2);
-	    str[len++] = ch;
+	/* No leading digits were matched. */
+      if ((len == 0) ||
+          ((len == 1) && ((strval[0] == '+') || (strval[0] == '-')))) {
+	    byte_ungetc(src, ch);
+	    free(strval);
+	    *match = 0;
+	    return 0.0;
+      }
+
+	/* Match an exponent. */
+      if (((ch == 'e') || (ch == 'E')) && (len < width)) {
+	    strval = realloc(strval, len+2);
+	    strval[len++] = ch;
 	    ch = byte_getc(src);
 
-	    if (ch == '-' || ch == '+') {
-		  str = realloc(str, len+2);
-		  str[len++] = ch;
-		  ch = byte_getc(src);
+	      /* We must have enough space for at least one digit after
+	       * the exponent. */
+	    if (len == width) {
+		  byte_ungetc(src, ch);
+		  free(strval);
+		  *match = 0;
+		  return 0.0;
 	    }
 
-	    while (isdigit(ch)) {
-		  str = realloc(str, len+2);
-		  str[len++] = ch;
+	      /* Check to see if the exponent has a sign. */
+	    if ((ch == '-') || (ch == '+')) {
+		  strval = realloc(strval, len+2);
+		  strval[len++] = ch;
+		  ch = byte_getc(src);
+		    /* We must have enough space for at least one digit
+		     * after the exponent sign. */
+		  if (len == width) {
+			byte_ungetc(src, ch);
+			free(strval);
+			*match = 0;
+			return 0.0;
+		  }
+	    }
+
+	      /* We must have at least one digit after the exponent/sign. */
+	    if (! isdigit(ch)) {
+		  byte_ungetc(src, ch);
+		  free(strval);
+		  *match = 0;
+		  return 0.0;
+	    }
+
+	      /* Get the exponent digits, but no more than width total
+	       * characters are copied. */
+	    while (isdigit(ch) && (len < width)) {
+		  strval = realloc(strval, len+2);
+		  strval[len++] = ch;
 		  ch = byte_getc(src);
 	    }
       }
+      strval[len] = 0;
 
-      str[len] = 0;
+	/* Put the last character back. */
+      byte_ungetc(src, ch);
 
-      sign_flag *= strtod(str, 0);
-      free(str);
-
-      if (ch != EOF) byte_ungetc(src, ch);
-
-      return sign_flag;
+	/* Calculate and return the result. */
+      result = strtod(strval, &endptr);
+	/* If this asserts then there is a bug in the code above.*/
+      assert(*endptr == 0);
+      free(strval);
+      *match = 1;
+      return result;
 }
 
-static int scan_format_float(struct byte_source*src,
-			     vpiHandle arg)
+/*
+ * Routine to return a floating point value (implements %e, %f and %g).
+ *
+ * Return: 1 for a match, 0 for no match/variable and -1 for a
+ *         suppressed match. No variable is fatal.
+ */
+static int scan_format_float(vpiHandle callh, vpiHandle argv,
+                             struct byte_source *src, unsigned width,
+                             unsigned suppress_flag, PLI_BYTE8 *name,
+                             char code)
 {
+      vpiHandle arg;
+      int match;
       s_vpi_value val;
+      double result;
 
+	/* Get the real value. */
+      result = get_float(src, width, &match);
+
+	/* Nothing was matched. */
+      if (match == 0) return 0;
+
+	/* If this match is being suppressed then return after consuming
+	 * the digits and report that no arguments were used. */
+      if (suppress_flag) return -1;
+
+	/* We must have a variable to put the double value into. */
+      arg = vpi_scan(argv);
+      if (! arg) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s() ran out of variables for %%%c format code",
+	               name, code);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+	/* Put the value into the variable. */
       val.format = vpiRealVal;
-      val.value.real = float_string(src);
+      val.value.real = result;
       vpi_put_value(arg, &val, 0, vpiNoDelay);
 
-      return 1;
-}
-
-static int scan_format_float_time(vpiHandle callh,
-				  struct byte_source*src,
-				  vpiHandle arg)
-{
-      vpiHandle scope = vpi_handle(vpiScope, callh);
-      int time_units = vpi_get(vpiTimeUnit, scope);
-      double scale;
-
-      s_vpi_value val;
-
-      val.format = vpiRealVal;
-      val.value.real = float_string(src);
-
-	/* Round the value to the specified precision. Handle this bit
-	   by shifting the decimal point to the precision where we
-	   want to round, do the rounding, then shift the point back */
-      scale = pow(10.0, timeformat_info.prec);
-      val.value.real = round(val.value.real*scale) / scale;
-
-	/* Change the units from the timeformat to the timescale. */
-      scale = pow(10.0, timeformat_info.units - time_units);
-      val.value.real *= scale;
-      vpi_put_value(arg, &val, 0, vpiNoDelay);
-
+	/* We always consume one variable if it is available. */
       return 1;
 }
 
 /*
- * Match the %s format by loading a string of non-space characters.
+ * Routine to return a floating point value scaled and rounded to the
+ * current time scale and precision (implements %t).
+ *
+ * Return: 1 for a match, 0 for no match/variable and -1 for a
+ *         suppressed match. No variable is fatal.
  */
-static int scan_format_string(struct byte_source*src, vpiHandle arg)
+static int scan_format_float_time(vpiHandle callh, vpiHandle argv,
+				  struct byte_source*src, unsigned width,
+                                  unsigned suppress_flag, PLI_BYTE8 *name)
 {
-      char*tmp = malloc(1);
-      size_t len = 0;
+      vpiHandle scope = vpi_handle(vpiScope, callh);
+      int time_units = vpi_get(vpiTimeUnit, scope);
+      vpiHandle arg;
+      int match;
       s_vpi_value val;
-      int ch;
+      double result;
+      double scale;
 
-      *tmp = 0;
+	/* Get the raw real value. */
+      result = get_float(src, width, &match);
 
-      ch = byte_getc(src);
-	/* Skip leading space. */
-      while (isspace(ch)) ch = byte_getc(src);
+	/* Nothing was matched. */
+      if (match == 0) return 0;
 
-      while (!isspace(ch)) {
-	    if (ch == EOF) break;
+	/* If this match is being suppressed then return after consuming
+	 * the digits and report that no arguments were used. */
+      if (suppress_flag) return -1;
 
-	    tmp = realloc(tmp, len+2);
-	    tmp[len++] = ch;
+	/* Round the raw value to the specified precision. Handle this
+	   by shifting the decimal point to the precision where we want
+	   to round, do the rounding, then shift the decimal point back */
+      scale = pow(10.0, timeformat_info.prec);
+      result = round(result*scale) / scale;
 
-	    ch = byte_getc(src);
+	/* Scale the value from the timeformat units to the current
+	 * timescale units. To minimize the error keep the scale an
+	 * integer value. */
+      if (timeformat_info.units >= time_units) {
+	    scale = pow(10.0, timeformat_info.units - time_units);
+	    result *= scale;
+      } else {
+	    scale = pow(10.0, time_units - timeformat_info.units);
+	    result /= scale;
       }
 
-      if (ch == EOF && len == 0) return 0;
+	/* We must have a variable to put the double value into. */
+      arg = vpi_scan(argv);
+      if (! arg) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s() ran out of variables for %%t format code", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
 
-      if (ch != EOF) byte_ungetc(src, ch);
-
-      tmp[len] = 0;
-      val.format = vpiStringVal;
-      val.value.str = tmp;
+	/* Put the value into the variable. */
+      val.format = vpiRealVal;
+      val.value.real = result;
       vpi_put_value(arg, &val, 0, vpiNoDelay);
 
-      free(tmp);
-
+	/* We always consume one variable if it is available. */
       return 1;
 }
 
+/*
+ * Base routine for getting binary, octal and hex values.
+ * 
+ * Return: 1 for a match, 0 for no match/variable and -1 for a
+ *         suppressed match. No variable is fatal.
+ */
+static int scan_format_base(vpiHandle callh, vpiHandle argv,
+                            struct byte_source *src, unsigned width,
+                            unsigned suppress_flag, PLI_BYTE8 *name,
+                            const char *match, char code,
+                            PLI_INT32 type)
+{
+      vpiHandle arg;
+      char *strval = malloc(1);
+      unsigned len = 0;
+      s_vpi_value val;
+      int ch;
+
+	/* Skip any leading space. */
+      ch = byte_getc(src);
+      while (isspace(ch)) ch = byte_getc(src);
+
+	/* If we are being asked for no digits or the first character is
+	 * an underscore then return a match fail. */
+      if ((width == 0) || (ch == '_')) {
+	    byte_ungetc(src, ch);
+	    free(strval);
+	    return 0;
+      }
+
+	/* Get all the digits, but no more than width. */
+      while (strchr(match , ch) && (len < width)) {
+	    if (ch == '?') ch = 'x';
+
+	    strval = realloc(strval, len+2);
+	    strval[len++] = ch;
+
+	    ch = byte_getc(src);
+      }
+      strval[len] = 0;
+
+	/* Put the last character back. */
+      byte_ungetc(src, ch);
+
+	/* Nothing was matched. */
+      if (len == 0) {
+	    free(strval);
+	    return 0;
+      }
+
+	/* If this match is being suppressed then return after consuming
+	 * the digits and report that no arguments were used. */
+      if (suppress_flag) {
+	    free(strval);
+	    return -1;
+      }
+
+	/* We must have a variable to put the binary value into. */
+      arg = vpi_scan(argv);
+      if (! arg) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s() ran out of variables for %%%c format code",
+	               name, code);
+	    vpi_control(vpiFinish, 1);
+	    free(strval);
+	    return 0;
+      }
+
+	/* Put the value into the variable. */
+      val.format = type;
+      val.value.str = strval;
+      vpi_put_value(arg, &val, 0, vpiNoDelay);
+      free(strval);
+
+	/* We always consume one variable if it is available. */
+      return 1;
+}
+
+/*
+ * Routine to return a binary value (implements %b).
+ */
+static int scan_format_binary(vpiHandle callh, vpiHandle argv,
+                              struct byte_source *src, int width,
+                              unsigned suppress_flag, PLI_BYTE8 *name)
+{
+      return scan_format_base(callh, argv, src, width, suppress_flag, name,
+                              "01xzXZ?_", 'b', vpiBinStrVal);
+}
+
+/*
+ * Routine to return a character value (implements %c).
+ * 
+ * Return: 1 for a match, 0 for no match/variable and -1 for a
+ *         suppressed match. No variable is fatal.
+ */
+static int scan_format_char(vpiHandle callh, vpiHandle argv,
+                            struct byte_source *src, unsigned width,
+                            unsigned suppress_flag, PLI_BYTE8 *name)
+{
+      vpiHandle arg;
+      s_vpi_value val;
+      int ch;
+
+	/* If we are being asked for no digits then return a match fail. */
+      if (width == 0) return 0;
+
+	/* Get the character to return. */
+      ch = byte_getc(src);
+
+	/* Nothing was matched. */
+      if (ch == EOF) return 0;
+
+	/* If this match is being suppressed then return after consuming
+	 * the character and report that no arguments were used. */
+      if (suppress_flag) return -1;
+
+	/* We must have a variable to put the character value into. */
+      arg = vpi_scan(argv);
+      if (! arg) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s() ran out of variables for %%c format code", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+	/* Put the character into the variable. */
+      val.format = vpiIntVal;
+      val.value.integer = ch;
+      vpi_put_value(arg, &val, 0, vpiNoDelay);
+
+	/* We always consume one variable if it is available. */
+      return 1;
+}
+
+/*
+ * Routine to return a decimal value (implements %d).
+ * 
+ * Return: 1 for a match, 0 for no match/variable and -1 for a
+ *         suppressed match. No variable is fatal.
+ */
+static int scan_format_decimal(vpiHandle callh, vpiHandle argv,
+                               struct byte_source *src, unsigned width,
+                               unsigned suppress_flag, PLI_BYTE8 *name)
+{
+      vpiHandle arg;
+      char *strval = malloc(1);
+      unsigned len = 0;
+      s_vpi_value val;
+      int ch;
+
+	/* Skip any leading space. */
+      ch = byte_getc(src);
+      while (isspace(ch)) ch = byte_getc(src);
+
+	/* If we are being asked for no digits or the first character is
+	 * an underscore then return a match fail. */
+      if ((width == 0) || (ch == '_')) {
+	    byte_ungetc(src, ch);
+	    free(strval);
+	    return 0;
+      }
+
+	/* A decimal can match a single x/X, ? or z/Z character. */
+      if (strchr("xX?", ch)) {
+	    strval = realloc(strval, 2);
+	    strval[0] = 'x';
+	    strval[1] = 0;
+      } else if (strchr("zZ", ch)) {
+	    strval = realloc(strval, 2);
+	    strval[0] = 'z';
+	    strval[1] = 0;
+      } else {
+
+	      /* To match a + or - we must have a digit after it. */
+	    if (ch == '+') {
+		    /* If we have a '+' sign then the width must not be
+		     * one since we need a sign and a digit. */
+		  if (width == 1) {
+			free(strval);
+			return 0;
+		  }
+
+		  ch = byte_getc(src);
+		  if (! isdigit(ch)) {
+			byte_ungetc(src, ch);
+			free(strval);
+			return 0;
+		  }
+		    /* The '+' used up a character. */
+		  width -= 1;
+	    } else if (ch == '-') {
+		    /* If we have a '-' sign then the width must not be
+		     * one since we need a sign and a digit. */
+		  if (width == 1) {
+			free(strval);
+			return 0;
+		  }
+
+		  ch = byte_getc(src);
+		  if (isdigit(ch)) {
+			strval = realloc(strval, len+2);
+			strval[len++] = '-';
+		  } else {
+			byte_ungetc(src, ch);
+			free(strval);
+			return 0;
+		  }
+	    }
+
+	      /* Get all the characters, but no more than width. */
+	    while ((isdigit(ch) || ch == '_') && (len < width)) {
+		  strval = realloc(strval, len+2);
+		  strval[len++] = ch;
+
+		  ch = byte_getc(src);
+	    }
+	    strval[len] = 0;
+
+	      /* Put the last character back. */
+	    byte_ungetc(src, ch);
+
+	      /* Nothing was matched. */
+	    if (len == 0) {
+		  free(strval);
+		  return 0;
+	    }
+      }
+
+	/* If this match is being suppressed then return after consuming
+	 * the digits and report that no arguments were used. */
+      if (suppress_flag) {
+	    free(strval);
+	    return -1;
+      }
+
+	/* We must have a variable to put the decimal value into. */
+      arg = vpi_scan(argv);
+      if (! arg) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s() ran out of variables for %%d format code", name);
+	    vpi_control(vpiFinish, 1);
+	    free(strval);
+	    return 0;
+      }
+
+	/* Put the decimal value into the variable. */
+      val.format = vpiDecStrVal;
+      val.value.str = strval;
+      vpi_put_value(arg, &val, 0, vpiNoDelay);
+      free(strval);
+
+	/* We always consume one variable if it is available. */
+      return 1;
+}
+
+/*
+ * Routine to return a hex value (implements %h).
+ */
+static int scan_format_hex(vpiHandle callh, vpiHandle argv,
+                           struct byte_source *src, unsigned width,
+                           unsigned suppress_flag, PLI_BYTE8 *name)
+{
+      return scan_format_base(callh, argv, src, width, suppress_flag, name,
+                              "0123456789abcdefxzABCDEFXZ?_", 'h',
+                              vpiHexStrVal);
+}
+
+/*
+ * Routine to return an octal value (implements %o).
+ */
+static int scan_format_octal(vpiHandle callh, vpiHandle argv,
+                             struct byte_source *src, unsigned width,
+                             unsigned suppress_flag, PLI_BYTE8 *name)
+{
+      return scan_format_base(callh, argv, src, width, suppress_flag, name,
+                              "01234567xzXZ?_", 'o', vpiOctStrVal);
+}
+
+
+/*
+ * Routine to return the current hierarchical path (implements %m).
+ */
+static int scan_format_module_path(vpiHandle callh, vpiHandle argv,
+                                   unsigned suppress_flag, PLI_BYTE8 *name)
+{
+      vpiHandle scope, arg;
+      char *module_path;
+      s_vpi_value val;
+
+	/* If this format code is being suppressed then just return that no
+	 * arguments were used. */
+      if (suppress_flag) return -1;
+
+	/* We must have a variable to put the hierarchical path into. */
+      arg = vpi_scan(argv);
+      if (! arg) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s() ran out of variables for %%m format code", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+	/* Get the current hierarchical path. */
+      scope = vpi_handle(vpiScope, callh);
+      assert(scope);
+      module_path = vpi_get_str(vpiFullName, scope);
+
+	/* Put the hierarchical path into the variable. */
+      val.format = vpiStringVal;
+      val.value.str = module_path;
+      vpi_put_value(arg, &val, 0, vpiNoDelay);
+
+	/* We always consume one variable if it is available. */
+      return 1;
+}
+
+/*
+ * Routine to return a string value (implements %s).
+ * 
+ * Return: 1 for a match, 0 for no match/variable and -1 for a
+ *         suppressed match. No variable is fatal.
+ */
+static int scan_format_string(vpiHandle callh, vpiHandle argv,
+                              struct byte_source *src, unsigned width,
+                              unsigned suppress_flag, PLI_BYTE8 *name)
+{
+      vpiHandle arg;
+      char *strval = malloc(1);
+      unsigned len = 0;
+      s_vpi_value val;
+      int ch;
+
+	/* Skip any leading space. */
+      ch = byte_getc(src);
+      while (isspace(ch)) ch = byte_getc(src);
+
+	/* If we are being asked for no digits then return a match fail. */
+      if (width == 0) {
+	    byte_ungetc(src, ch);
+	    free(strval);
+	    return 0;
+      }
+
+	/* Get all the non-space characters, but no more than width. */
+      while (! isspace(ch) && (len < width)) {
+	    if (ch == EOF) break;
+
+	    strval = realloc(strval, len+2);
+	    strval[len++] = ch;
+
+	    ch = byte_getc(src);
+      }
+      strval[len] = 0;
+
+	/* Nothing was matched (this can only happen at EOF). */
+      if (len == 0) {
+	    assert(ch == EOF);
+	    free(strval);
+	    return 0;
+      }
+
+	/* Put the last character back. */
+      byte_ungetc(src, ch);
+
+	/* If this match is being suppressed then return after consuming
+	 * the string and report that no arguments were used. */
+      if (suppress_flag) {
+	    free(strval);
+	    return -1;
+      }
+
+	/* We must have a variable to put the string into. */
+      arg = vpi_scan(argv);
+      if (! arg) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s() ran out of variables for %%s format code", name);
+	    vpi_control(vpiFinish, 1);
+	    free(strval);
+	    return 0;
+      }
+
+	/* Put the string into the variable. */
+      val.format = vpiStringVal;
+      val.value.str = strval;
+      vpi_put_value(arg, &val, 0, vpiNoDelay);
+      free(strval);
+
+	/* We always consume one variable if it is available. */
+      return 1;
+}
 
 /*
  * The $fscanf and $sscanf functions are the same except for the first
@@ -222,21 +722,45 @@ static int scan_format_string(struct byte_source*src, vpiHandle arg)
  * the first argument and make a byte_source object that then gets
  * passed to this function, which processes the rest of the function.
  */
-static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv)
+static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv,
+                       PLI_BYTE8 *name)
 {
       s_vpi_value val;
       vpiHandle item;
+      PLI_INT32 len, words, idx, mask;
 
-      char*fmt, *fmtp;
+      char *fmt, *fmtp;
       int rc = 0;
       int ch;
 
-      int match_fail = 0;
+      int match = 1;
 
 	/* Get the format string. */
       item = vpi_scan(argv);
       assert(item);
+	/* Look for an undefined bit (X/Z) in the format string. If one is
+	 * found just return EOF. */
+      len = vpi_get(vpiSize, item);
+      words = ((len + 31) / 32) - 1;
+	/* The mask is defined to be 32 bits. */
+      mask = 0xffffffff >> (32 - ((len - 1) % 32 + 1));
+      val.format = vpiVectorVal;
+      vpi_get_value(item, &val);
+	/* Check the full words for an undefined bit. */
+      for (idx = 0; idx < words; idx += 1) {
+	    if (val.value.vector[idx].bval) {
+		  match = 0;
+		  rc = EOF;
+		  break;
+	    }
+      }
+	/* Check the top word for an undefined bit. */
+      if (match && (val.value.vector[words].bval & mask)) {
+	    match = 0;
+	    rc = EOF;
+      }
 
+	/* Now get the format as a string. */
       val.format = vpiStringVal;
       vpi_get_value(item, &val);
       fmtp = fmt = strdup(val.value.str);
@@ -245,23 +769,22 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv)
       ch = byte_getc(src);
       if (ch == EOF) {
 	    rc = EOF;
-	    match_fail = 1;
+	    match = 0;
       }
       byte_ungetc(src, ch);
 
-      while ( fmtp && *fmtp != 0 && !match_fail) {
+      while ( fmtp && *fmtp != 0 && match) {
 
 	    if (isspace((int)*fmtp)) {
-		    /* White space matches a string of white space in
-		       the input. The number of spaces is not
-		       relevant, and the match may be 0 or more
-		       spaces. */
+		    /* White space matches a string of white space in the
+		     * input. The number of spaces is not relevant, and
+		     * the match may be 0 or more spaces. */
 		  while (*fmtp && isspace((int)*fmtp)) fmtp += 1;
 
 		  ch = byte_getc(src);
 		  while (isspace(ch)) ch = byte_getc(src);
 
-		  if (ch != EOF) byte_ungetc(src, ch);
+		  byte_ungetc(src, ch);
 
 	    } else if (*fmtp != '%') {
 		    /* Characters other than % match themselves. */
@@ -276,260 +799,144 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv)
 	    } else {
 
 		    /* We are at a pattern character. The pattern has
-		       the format %<N>x no matter what the x code, so
-		       parse it generically first. */
+		     * the format %<N>x no matter what the x code, so
+		     * parse it generically first. */
 
-		  int suppress_flag = 0;
-		  int length_field = -1;
+		  unsigned suppress_flag = 0;
+// HERE: should this be MAX_UINT?
+		  unsigned max_width = -1;
 		  int code = 0;
-		  PLI_INT32 value;
 
-		  char*tmp;
-
+		    /* Look for the suppression character '*'. */
 		  fmtp += 1;
 		  if (*fmtp == '*') {
 			suppress_flag = 1;
 			fmtp += 1;
 		  }
+		    /* Look for the maximum match width. */
 		  if (isdigit((int)*fmtp)) {
-			length_field = 0;
+			max_width = 0;
 			while (isdigit((int)*fmtp)) {
-			      length_field *= 10;
-			      length_field += *fmtp - '0';
+			      max_width *= 10;
+			      max_width += *fmtp - '0';
 			      fmtp += 1;
 			}
 		  }
 
+		    /* Get the format character. */
 		  code = *fmtp;
 		  fmtp += 1;
 
 		    /* The format string is parsed:
-		       - length_field is the length,
-		       - code is the format code character,
-		       - suppress_flag is true if the length is an arg.
-		       Now we interpret the code. */
+		     *   - max_width is the width,
+		     *   - code is the format code character,
+		     *   - suppress_flag is true if the match is to be ignored.
+		     * Now interpret the code. */
 		  switch (code) {
 
 			  /* Read a '%' character from the input. */
 		      case '%':
+			assert(max_width == -1);
+			assert(suppress_flag == 0);
 			ch = byte_getc(src);
 			if (ch != '%') {
 			      byte_ungetc(src, ch);
-			      fmtp = 0;
+			      match = 0;
 			}
 			break;
 
-			/* Read a binary integer. If there is a match,
-			   store that integer in the next argument and
-			   increment the completion count. */
 		      case 'b':
-			  /* binary integer */
-			tmp = malloc(2);
-			value = 0;
-			tmp[0] = 0;
-			match_fail = 1;
-
-			ch = byte_getc(src);
-			  /* Skip leading space. */
-			while (isspace(ch)) ch = byte_getc(src);
-
-			while (strchr("01xXzZ?_", ch)) {
-			      match_fail = 0;
-			      if (ch == '?') ch = 'x';
-			      if (ch != '_') {
-				    ch = tolower(ch);
-				    tmp[value++] = ch;
-				    tmp = realloc(tmp, value+1);
-				    tmp[value] = 0;
-			      }
-			      ch = byte_getc(src);
-			}
-			byte_ungetc(src, ch);
-
-			if (match_fail) {
-			      free(tmp);
-			      break;
-			}
-
-			  /* Matched a binary value, put it to an argument. */
-			item = vpi_scan(argv);
-			assert(item);
-
-			val.format = vpiBinStrVal;
-			val.value.str = tmp;
-			vpi_put_value(item, &val, 0, vpiNoDelay);
-
-			free(tmp);
-			rc += 1;
+			match = scan_format_binary(callh, argv, src, max_width,
+			                           suppress_flag, name);
+			if (match == 1) rc += 1;
 			break;
 
 		      case 'c':
-			ch = byte_getc(src);
-			item = vpi_scan(argv);
-			assert(item);
-
-			val.format = vpiIntVal;
-			val.value.integer = ch;
-			vpi_put_value(item, &val, 0, vpiNoDelay);
-			rc += 1;
+			match = scan_format_char(callh, argv, src, max_width,
+			                       suppress_flag, name);
+			if (match == 1) rc += 1;
 			break;
 
 		      case 'd':
-			  /* decimal integer */
-			tmp = malloc(2);
-			value = 0;
-			tmp[0] = 0;
-			match_fail = 1;
-
-			ch = byte_getc(src);
-			  /* Skip leading space. */
-			while (isspace(ch)) ch = byte_getc(src);
-
-			while (isdigit(ch) || ch == '_' || (value == 0 && ch == '-')) {
-			      match_fail = 0;
-			      if (ch != '_') {
-			            tmp[value++] = ch;
-			            tmp = realloc(tmp, value+1);
-			            tmp[value] = 0;
-			            ch = byte_getc(src);
-			      }
-			}
-			byte_ungetc(src, ch);
-
-			if (match_fail) {
-			      free(tmp);
-			      break;
-			}
-
-			  /* Matched a decimal value, put it to an argument. */
-			item = vpi_scan(argv);
-			assert(item);
-
-			val.format = vpiDecStrVal;
-			val.value.str = tmp;
-			vpi_put_value(item, &val, 0, vpiNoDelay);
-
-			free(tmp);
-			rc += 1;
+			match = scan_format_decimal(callh, argv, src, max_width,
+			                            suppress_flag, name);
+			if (match == 1) rc += 1;
 			break;
 
 		      case 'e':
 		      case 'f':
 		      case 'g':
-			item = vpi_scan(argv);
-			assert(item);
-			rc += scan_format_float(src, item);
+			match = scan_format_float(callh, argv, src, max_width,
+			                          suppress_flag, name, code);
+			if (match == 1) rc += 1;
 			break;
 
 		      case 'h':
 		      case 'x':
-			match_fail = 1;
+			match = scan_format_hex(callh, argv, src, max_width,
+			                        suppress_flag, name);
+			if (match == 1) rc += 1;
+			break;
 
-			  /* Hex integer */
-			tmp = malloc(2);
-			value = 0;
-			tmp[0] = 0;
-
-			ch = byte_getc(src);
-			  /* Skip leading space. */
-			while (isspace(ch)) ch = byte_getc(src);
-
-			while (strchr("0123456789abcdefABCDEFxXzZ?_", ch)) {
-			      match_fail = 0;
-			      if (ch == '?') ch = 'x';
-			      if (ch != '_') {
-				    ch = tolower(ch);
-				    tmp[value++] = ch;
-				    tmp = realloc(tmp, value+1);
-				    tmp[value] = 0;
-			      }
-			      ch = byte_getc(src);
-			}
-			byte_ungetc(src, ch);
-
-			if (match_fail) {
-			      free(tmp);
-			      break;
-			}
-
-			item = vpi_scan(argv);
-			assert(item);
-
-			val.format = vpiHexStrVal;
-			val.value.str = tmp;
-			vpi_put_value(item, &val, 0, vpiNoDelay);
-			free(tmp);
-			rc += 1;
+		      case 'm':
+			  /* Since this code does not consume any characters
+			   * the width makes no difference. */
+			match = scan_format_module_path(callh, argv,
+			                                suppress_flag, name);
+			if (match == 1) rc += 1;
 			break;
 
 		      case 'o':
-			match_fail = 1;
-			  /* binary integer */
-			tmp = malloc(2);
-			value = 0;
-			tmp[0] = 0;
-
-			ch = byte_getc(src);
-			  /* Skip leading space. */
-			while (isspace(ch)) ch = byte_getc(src);
-
-			while (strchr("01234567xXzZ?_", ch)) {
-			      match_fail = 0;
-			      if (ch == '?') ch = 'x';
-			      if (ch != '_') {
-				    ch = tolower(ch);
-				    tmp[value++] = ch;
-				    tmp = realloc(tmp, value+1);
-				    tmp[value] = 0;
-			      }
-			      ch = byte_getc(src);
-			}
-			byte_ungetc(src, ch);
-
-			if (match_fail) {
-			      free(tmp);
-			      break;
-			}
-
-			item = vpi_scan(argv);
-			assert(item);
-
-			val.format = vpiOctStrVal;
-			val.value.str = tmp;
-			vpi_put_value(item, &val, 0, vpiNoDelay);
-			free(tmp);
-			rc += 1;
+			match = scan_format_octal(callh, argv, src, max_width,
+			                          suppress_flag, name);
+			if (match == 1) rc += 1;
 			break;
 
 		      case 's':
-			item = vpi_scan(argv);
-			assert(item);
-			rc += scan_format_string(src, item);
+			match = scan_format_string(callh, argv, src, max_width,
+			                           suppress_flag, name);
+			if (match == 1) rc += 1;
 			break;
 
 		      case 't':
-			item = vpi_scan(argv);
-			assert(item);
-			rc += scan_format_float_time(callh, src, item);
+			match = scan_format_float_time(callh, argv, src,
+			                               max_width,
+			                               suppress_flag, name);
+			if (match == 1) rc += 1;
+			break;
+
+		      case 'u':
+		      case 'v':
+		      case 'z':
+			vpi_printf("SORRY: %s:%d: ",
+			           vpi_get_str(vpiFile, callh),
+			           (int)vpi_get(vpiLineNo, callh));
+			vpi_printf("%s() format code '%%%c' is not "
+			           "currently supported.\n", name, code);
+			vpi_control(vpiFinish, 1);
 			break;
 
 		      default:
 			vpi_printf("ERROR: %s:%d: ",
 			           vpi_get_str(vpiFile, callh),
 			           (int)vpi_get(vpiLineNo, callh));
-			vpi_printf("$scanf: Unknown format code: %c\n", code);
+			vpi_printf("%s() was given an invalid format code: "
+			           "%%%c\n", name, code);
+			vpi_control(vpiFinish, 1);
 			break;
 		  }
 	    }
       }
 
+	/* Clean up the allocated memory. */
       free(fmt);
-
       vpi_free_object(argv);
 
+	/* Return the number of successful matches. */
       val.format = vpiIntVal;
       val.value.integer = rc;
       vpi_put_value(callh, &val, 0, vpiNoDelay);
+
       return 0;
 }
 
@@ -611,7 +1018,7 @@ static int sys_check_args(vpiHandle callh, vpiHandle argv, const PLI_BYTE8 *name
       return rtn;
 }
 
-static PLI_INT32 sys_fscanf_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
+static PLI_INT32 sys_fscanf_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -639,7 +1046,7 @@ static PLI_INT32 sys_fscanf_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_fscanf_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
+static PLI_INT32 sys_fscanf_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -666,12 +1073,12 @@ static PLI_INT32 sys_fscanf_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
       src.str = 0;
       src.fd = fd;
-      scan_format(callh, &src, argv);
+      scan_format(callh, &src, argv, name);
 
       return 0;
 }
 
-static PLI_INT32 sys_sscanf_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
+static PLI_INT32 sys_sscanf_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -709,7 +1116,7 @@ static PLI_INT32 sys_sscanf_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_sscanf_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
+static PLI_INT32 sys_sscanf_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
@@ -723,7 +1130,7 @@ static PLI_INT32 sys_sscanf_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       str = strdup(val.value.str);
       src.str = str;
       src.fd = 0;
-      scan_format(callh, &src, argv);
+      scan_format(callh, &src, argv, name);
       free(str);
 
       return 0;
