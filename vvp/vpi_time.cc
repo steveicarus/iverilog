@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -55,14 +55,12 @@ vvp_time64_t vpip_timestruct_to_time(const struct t_vpi_time*ts)
 
 double vpip_time_to_scaled_real(vvp_time64_t ti, struct __vpiScope*scope)
 {
-      int units;
-      if (scope)
-	    units = scope->time_units;
-      else
-	    units = vpi_time_precision;
+      double val;
+      int scale = 0;
+      if (scope) scale = vpi_time_precision - scope->time_units;
 
-      double val = pow(10.0L, vpi_time_precision - units);
-      val *= ti;
+      if (scale >= 0) val = (double)ti * pow(10.0, scale);
+      else val = (double)ti / pow(10.0, -scale);
 
       return val;
 }

@@ -248,9 +248,11 @@ static void get_time(char *rtn, const char *value, int prec,
 static void get_time_real(char *rtn, double value, int prec,
                           PLI_INT32 time_units)
 {
-  /* Scale the value if its time units differ from the format units. */
-  if (time_units != timeformat_info.units) {
+  /* Scale the value from its time units to the format time units. */
+  if (time_units >= timeformat_info.units) {
     value *= pow(10.0, time_units - timeformat_info.units);
+  } else {
+    value /= pow(10.0, timeformat_info.units - time_units);
   }
   sprintf(rtn, "%0.*f%s", prec, value, timeformat_info.suff);
 }
