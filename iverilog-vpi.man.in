@@ -48,7 +48,7 @@ modules, then exit. It is a convenience for makefiles or automated
 plug-in installers.
 
 .TP 8
-.B --cflags, --ldflags and -ldlibs
+.B --cflags, --ldflags and --ldlibs
 These flags provide compile time information.
 
 .SH "PC-ONLY OPTIONS"
