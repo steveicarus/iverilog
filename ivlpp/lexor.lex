@@ -1795,14 +1795,14 @@ static void open_input_file(struct include_stack_t*isp)
       for (idx = 0 ; idx < vhdlpp_libdir_cnt ; idx += 1) {
 	    size_t next_len = 6 + strlen(vhdlpp_libdir[idx]);
 	    libs = realloc(libs, liblen+next_len);
-	    snprintf(libs+liblen-1, next_len, " -L'%s'", vhdlpp_libdir[idx]);
+	    snprintf(libs+liblen-1, next_len, " -L\"%s\"", vhdlpp_libdir[idx]);
 	    liblen = strlen(libs) + 1;
       }
 
       cmdlen += liblen;
 
       char*cmd = malloc(cmdlen);
-      snprintf(cmd, cmdlen, "%s -w'%s'%s %s", vhdlpp_path, vhdlpp_work, libs, isp->path);
+      snprintf(cmd, cmdlen, "%s -w\"%s\"%s %s", vhdlpp_path, vhdlpp_work, libs, isp->path);
 
       if (verbose_flag)
 	    fprintf(stderr, "Invoke vhdlpp: %s\n", cmd);
