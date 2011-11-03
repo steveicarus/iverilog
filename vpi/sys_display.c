@@ -868,7 +868,7 @@ static unsigned int get_numeric(char **rtn, const struct strobe_cb_info *info,
   switch(info->default_format){
     case vpiDecStrVal:
       size = vpi_get_dec_size(item);
-	/* -1 can be represented as a one bit signed value. This returns	
+	/* -1 can be represented as a one bit signed value. This returns
 	 * a size of 1 which is too small for the -1 string value so make
 	 * the string width the minimum display width. */
       min = strlen(val.value.str);

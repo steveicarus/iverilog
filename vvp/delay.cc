@@ -753,7 +753,7 @@ static vpiHandle modpath_src_get_handle(int code, vpiHandle ref)
 	    // the vpi_iterate and vpi_scan functions. Continue to allow
 	    // them to be obtained here for backwards compatibility with
 	    // older versions of Icarus Verilog.
-	    
+
 	  case vpiModPathIn:
 	    return vpi_handle(&rfp->path_term_in);
 
