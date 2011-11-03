@@ -323,7 +323,7 @@ static int scan_format_float_time(vpiHandle callh, vpiHandle argv,
 
 /*
  * Base routine for getting binary, octal and hex values.
- * 
+ *
  * Return: 1 for a match, 0 for no match/variable and -1 for a
  *         suppressed match. No variable is fatal.
  */
@@ -413,7 +413,7 @@ static int scan_format_binary(vpiHandle callh, vpiHandle argv,
 
 /*
  * Routine to return a character value (implements %c).
- * 
+ *
  * Return: 1 for a match, 0 for no match/variable and -1 for a
  *         suppressed match. No variable is fatal.
  */
@@ -459,7 +459,7 @@ static int scan_format_char(vpiHandle callh, vpiHandle argv,
 
 /*
  * Routine to return a decimal value (implements %d).
- * 
+ *
  * Return: 1 for a match, 0 for no match/variable and -1 for a
  *         suppressed match. No variable is fatal.
  */
@@ -643,7 +643,7 @@ static int scan_format_module_path(vpiHandle callh, vpiHandle argv,
 
 /*
  * Routine to return a string value (implements %s).
- * 
+ *
  * Return: 1 for a match, 0 for no match/variable and -1 for a
  *         suppressed match. No variable is fatal.
  */
