@@ -162,6 +162,11 @@ class ExpBinary : public Expression {
       bool eval_operand1(ScopeBase*scope, int64_t&val) const;
       bool eval_operand2(ScopeBase*scope, int64_t&val) const;
 
+      inline void write_to_stream_operand1(std::ostream&out)
+          { operand1_->write_to_stream(out); }
+      inline void write_to_stream_operand2(std::ostream&out)
+          { operand2_->write_to_stream(out); }
+
       void dump_operands(ostream&out, int indent = 0) const;
 
     private:

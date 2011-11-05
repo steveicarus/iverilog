@@ -28,9 +28,42 @@ void ExpAggregate::write_to_stream(ostream&)
       ivl_assert(*this, !"Not supported");
 }
 
-void ExpArithmetic::write_to_stream(ostream&)
+void ExpArithmetic::write_to_stream(ostream&out)
 {
-      ivl_assert(*this, !"Not supported");
+      out << "(";
+      write_to_stream_operand1(out);
+      out << ")";
+
+      switch (fun_) {
+	  case PLUS:
+	    out << "+";
+	    break;
+	  case MINUS:
+	    out << "-";
+	    break;
+	  case MULT:
+	    out << "*";
+	    break;
+	  case DIV:
+	    out << "/";
+	    break;
+	  case MOD:
+	    out << "mod";
+	    break;
+	  case REM:
+	    out << "rem";
+	    break;
+	  case POW:
+	    out << "**";
+	    break;
+	  case CONCAT:
+	    out << "&";
+	    break;
+      }
+
+      out << "(";
+      write_to_stream_operand2(out);
+      out << ")";
 }
 
 void ExpAttribute::write_to_stream(ostream&)
@@ -92,7 +125,7 @@ void ExpRelation::write_to_stream(ostream&)
       ivl_assert(*this, !"Not supported");
 }
 
-void ExpString::write_to_stream(ostream&fd)
+void ExpString::write_to_stream(ostream&)
 {
       ivl_assert(*this, !"Not supported");
 }
