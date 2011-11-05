@@ -59,7 +59,7 @@ GenerateStatement::~GenerateStatement()
 }
 
 ForGenerate::ForGenerate(perm_string gname, perm_string genvar,
-			 range_t*rang, std::list<Architecture::Statement*>&s)
+			 prange_t*rang, std::list<Architecture::Statement*>&s)
 : GenerateStatement(gname, s), genvar_(genvar),
   lsb_(rang->lsb()), msb_(rang->msb())
 {

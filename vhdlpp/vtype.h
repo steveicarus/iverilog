@@ -27,6 +27,7 @@
 # include  "StringHeap.h"
 
 class Expression;
+class prange_t;
 
 /*
  * A description of a VHDL type consists of a graph of VType
@@ -140,6 +141,7 @@ class VTypeArray : public VType {
 
     public:
       VTypeArray(const VType*etype, const std::vector<range_t>&r, bool signed_vector =false);
+      VTypeArray(const VType*etype, std::list<prange_t*>*r, bool signed_vector =false);
       ~VTypeArray();
 
       void write_to_stream(std::ostream&fd) const;

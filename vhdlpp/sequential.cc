@@ -168,7 +168,7 @@ LoopStatement::~LoopStatement()
     }
 }
 
-ForLoopStatement::ForLoopStatement(perm_string scope_name, perm_string it, range_t* range, list<SequentialStmt*>* stmts)
+ForLoopStatement::ForLoopStatement(perm_string scope_name, perm_string it, prange_t* range, list<SequentialStmt*>* stmts)
 : LoopStatement(scope_name, stmts), it_(it), range_(range)
 {
 }

@@ -32,7 +32,7 @@ class ExpName;
 class SequentialStmt;
 class Signal;
 class named_expr_t;
-class range_t;
+class prange_t;
 
 /*
  * The Architecture class carries the contents (name, statements,
@@ -114,7 +114,7 @@ class ForGenerate : public GenerateStatement {
 
     public:
       ForGenerate(perm_string gname, perm_string genvar,
-		  range_t*rang, std::list<Architecture::Statement*>&s);
+		  prange_t*rang, std::list<Architecture::Statement*>&s);
       ~ForGenerate();
 
       int elaborate(Entity*ent, Architecture*arc);

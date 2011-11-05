@@ -67,11 +67,11 @@ class instant_list_t {
       std::list<perm_string>* labels_;
 };
 
-class range_t {
+class prange_t {
     public:
-      range_t(Expression* left, Expression* right, bool dir)
+      prange_t(Expression* left, Expression* right, bool dir)
         : left_(left), right_(right), direction_(dir) {}
-      ~range_t() { delete left_; delete right_; }
+      ~prange_t() { delete left_; delete right_; }
       void dump(ostream&out, int indent) const;
 
       Expression*msb() { return direction_? left_ : right_; }
@@ -84,7 +84,7 @@ class range_t {
       bool direction_;
 
     private: //not implemented
-      range_t(const range_t&);
-      range_t operator=(const range_t&);
+      prange_t(const prange_t&);
+      prange_t operator=(const prange_t&);
 };
 #endif

@@ -205,7 +205,7 @@ class WhileLoopStatement : public LoopStatement {
 class ForLoopStatement : public LoopStatement {
     public:
       ForLoopStatement(perm_string loop_name,
-		       perm_string index, range_t*, list<SequentialStmt*>*);
+		       perm_string index, prange_t*, list<SequentialStmt*>*);
       ~ForLoopStatement();
 
       int elaborate(Entity*ent, Architecture*arc);
@@ -214,7 +214,7 @@ class ForLoopStatement : public LoopStatement {
 
     private:
       perm_string it_;
-      range_t* range_;
+      prange_t* range_;
 };
 
 class BasicLoopStatement : public LoopStatement {

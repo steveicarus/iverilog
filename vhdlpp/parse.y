@@ -175,7 +175,8 @@ const VType*parse_type_by_name(perm_string name)
 
       const VType* vtype;
 
-      range_t* range;
+      prange_t* range;
+      std::list<prange_t*>*range_list;
 
       ExpArithmetic::fun_t arithmetic_op;
 
@@ -278,6 +279,7 @@ const VType*parse_type_by_name(perm_string name)
 %type <sequ> loop_statement variable_assignment_statement
 
 %type <range> range
+%type <range_list> range_list index_constraint
 
 %type <case_alt> case_statement_alternative
 %type <case_alt_list> case_statement_alternative_list
@@ -1110,6 +1112,11 @@ if_statement_else
       { $$ = 0; }
   ;
 
+index_constraint
+  : '(' range_list ')'
+      { $$ = $2; }
+  ;
+
 instantiation_list
   : identifier_list
      {
@@ -1613,7 +1620,20 @@ process_sensitivity_list
 
 range
   : simple_expression direction simple_expression
-      { range_t* tmp = new range_t($1, $3, $2);
+      { prange_t* tmp = new prange_t($1, $3, $2);
+	$$ = tmp;
+      }
+  ;
+
+range_list
+  : range
+      { list<prange_t*>*tmp = new list<prange_t*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
+  | range_list ',' range
+      { list<prange_t*>*tmp = $1;
+	tmp->push_back($3);
 	$$ = tmp;
       }
   ;
@@ -1876,12 +1896,24 @@ type_declaration
 		//active_scope->bind_name(name, tmp);
 	      active_scope->bind_name(name, $4);
 	}
+	delete[]$2;
+      }
+  | K_type IDENTIFIER K_is error ';'
+      { errormsg(@4, "Error in type definition for %s\n", $2);
+	yyerrok;
+	delete[]$2;
       }
   ;
 
 type_definition
   : '(' enumeration_literal_list ')'
       { VTypeEnum*tmp = new VTypeEnum($2);
+	delete $2;
+	$$ = tmp;
+      }
+  /* constrained_array_definition */
+  | K_array index_constraint K_of subtype_indication
+      { VTypeArray*tmp = new VTypeArray($4, $2);
 	delete $2;
 	$$ = tmp;
       }

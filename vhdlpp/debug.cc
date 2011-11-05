@@ -435,7 +435,7 @@ void named_expr_t::dump(ostream&out, int indent) const
     expr_->dump(out, indent);
 }
 
-void range_t::dump(ostream&out, int indent) const
+void prange_t::dump(ostream&out, int indent) const
 {
     left_->dump(out, indent);
     out << setw(indent) << "" << (direction_ ? "downto" : "to");
