@@ -3500,7 +3500,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	/* Elaborate wait expression. Don't eval yet, we will do that
 	   shortly, after we apply a reduction or. */
 
-      PExpr::width_mode_t mode;
+      PExpr::width_mode_t mode = PExpr::SIZED;
       pe->test_width(des, scope, mode);
       NetExpr*expr = pe->elaborate_expr(des, scope, pe->expr_width(),
                                         PExpr::NO_FLAGS);

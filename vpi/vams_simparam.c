@@ -214,8 +214,7 @@ static PLI_INT32 simparam_str_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name_ext)
 	    char path [MAX_STRING_RESULT];
 	    char *ptr = getcwd(path, MAX_STRING_RESULT);
 	    if (ptr == NULL) {
-		  ptr = strcpy(path, "<error getting the cwd, "
-		                     "is it too long?>");
+		  strcpy(path, "<error getting the cwd, is it too long?>");
 	    }
 	    retval = strdup(path);
       } else if (strcmp(param, "module") == 0) {

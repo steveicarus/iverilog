@@ -45,7 +45,7 @@ static PLI_INT32 task_not_implemented_compiletf(ICARUS_VPI_CONST PLI_BYTE8* name
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
 
-      vpi_printf("%s:%d: SORRY: task %s() is not currently implemented.\n",
+      vpi_printf("SORRY: %s:%d: task %s() is not currently implemented.\n",
                  vpi_get_str(vpiFile, callh), (int)vpi_get(vpiLineNo, callh),
                  name);
       vpi_control(vpiFinish, 1);
@@ -60,7 +60,7 @@ static PLI_INT32 missing_optional_compiletf(ICARUS_VPI_CONST PLI_BYTE8* name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
 
-      vpi_printf("%s:%d: SORRY: %s() is not available in Icarus verilog.\n",
+      vpi_printf("SORRY: %s:%d: %s() is not available in Icarus verilog.\n",
                  vpi_get_str(vpiFile, callh), (int)vpi_get(vpiLineNo, callh),
                  name);
       vpi_control(vpiFinish, 1);

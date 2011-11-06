@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2010 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2005-2011 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -771,11 +771,40 @@ static vpiHandle modpath_src_get_handle(int code, vpiHandle ref)
 		return vpi_handle(scope);
 	      }
 
+	    // Handles to path term objects should really be obtained via
+	    // the vpi_iterate and vpi_scan functions. Continue to allow
+	    // them to be obtained here for backwards compatibility with
+	    // older versions of Icarus Verilog.
+
 	  case vpiModPathIn:
 	    return vpi_handle(&rfp->path_term_in);
 
 	  case vpiModPathOut:
 	    return vpi_handle(&rfp->dest->path_term_out);
+      }
+      return 0;
+}
+
+static vpiHandle modpath_src_iterate(int code, vpiHandle ref)
+{
+      struct __vpiModPathSrc*rfp = vpip_modpath_src_from_handle(ref);
+      assert(rfp);
+
+	// Module paths with multiple sources or destinations are
+	// currently represented by a separate modpath object for
+	// each source/destination combination, so there is only
+	// ever one input path term and one output path term.
+      switch (code) {
+	  case vpiModPathIn: {
+	    vpiHandle*args = (vpiHandle*)calloc(1, sizeof(vpiHandle*));
+	    args[0] = vpi_handle(&rfp->path_term_in);
+	    return vpip_make_iterator(1, args, true);
+	  }
+	  case vpiModPathOut: {
+	    vpiHandle*args = (vpiHandle*)calloc(1, sizeof(vpiHandle*));
+	    args[0] = vpi_handle(&rfp->dest->path_term_out);
+	    return vpip_make_iterator(1, args, true);
+	  }
       }
       return 0;
 }
@@ -946,7 +975,7 @@ static const struct __vpirt vpip_modpath_src_rt = {
       modpath_src_get_value,
       modpath_src_put_value,
       modpath_src_get_handle,
-      0, /* modpath_src_iterate,*/
+      modpath_src_iterate,
       modpath_src_index,
       modpath_src_free_object,
       modpath_src_get_delays,

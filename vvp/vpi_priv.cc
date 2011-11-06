@@ -262,6 +262,8 @@ static const char* vpi_type_values(PLI_INT32 code)
 	    return "vpiByteVar";
 	  case vpiConstant:
 	    return "vpiConstant";
+	  case vpiEnumTypespec:
+	    return "vpiEnumTypespec";
 	  case vpiFunction:
 	    return "vpiFunction";
 	  case vpiIntVar:
@@ -473,7 +475,7 @@ int vpip_time_precision_from_handle(vpiHandle obj)
 
 void vpi_get_time(vpiHandle obj, s_vpi_time*vp)
 {
-      int units;
+      int scale;
       vvp_time64_t time;
 
       assert(vp);
@@ -487,9 +489,10 @@ void vpi_get_time(vpiHandle obj, s_vpi_time*vp)
 	    break;
 
           case vpiScaledRealTime:
-	    units = vpip_time_units_from_handle(obj);
-            vp->real = pow(10.0L, vpip_get_time_precision() - units);
-            vp->real *= time;
+	    scale = vpip_get_time_precision() -
+	            vpip_time_units_from_handle(obj);
+	    if (scale >= 0) vp->real = (double)time * pow(10.0, scale);
+	    else vp->real = (double)time / pow(10.0, -scale);
 	    break;
 
           default:
@@ -951,6 +954,7 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 
       if (flags!=vpiNoDelay && flags!=vpiForceFlag && flags!=vpiReleaseFlag) {
 	    vvp_time64_t dly;
+	    int scale;
 
             if (vpi_get(vpiAutomatic, obj)) {
                   fprintf(stderr, "vpi error: cannot put a value with "
@@ -964,10 +968,13 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 
 	    switch (when->type) {
 		case vpiScaledRealTime:
-		  dly = (vvp_time64_t)(when->real *
-				       (pow(10.0L,
-					    vpip_time_units_from_handle(obj) -
-					    vpip_get_time_precision())));
+		  scale = vpip_time_units_from_handle(obj) -
+		          vpip_get_time_precision();
+		  if (scale >= 0) {
+			dly = (vvp_time64_t)(when->real * pow(10.0, scale));
+		  } else {
+			dly = (vvp_time64_t)(when->real / pow(10.0, -scale));
+		  }
 		  break;
 		case vpiSimTime:
 		  dly = vpip_timestruct_to_time(when);
@@ -1047,6 +1054,13 @@ vpiHandle vpi_handle(PLI_INT32 type, vpiHandle ref)
       return res;
 }
 
+static vpiHandle vpip_make_udp_iterator()
+{
+// HERE: Add support for iterating over UDP definitions.
+//       See 26.6.16 (page 400 in 1364-2005).
+      return 0;
+}
+
 /*
  * This function asks the object to return an iterator for
  * the specified reference. It is up to the iterate_ method to
@@ -1057,6 +1071,9 @@ static vpiHandle vpi_iterate_global(int type)
       switch (type) {
 	  case vpiModule:
 	    return vpip_make_root_iterator();
+
+	  case vpiUdpDefn:
+	    return vpip_make_udp_iterator();
 
 	  case vpiUserSystf:
 	    return vpip_make_systf_iterator();

@@ -364,7 +364,6 @@ NetEConst* NetEBComp::eval_leeq_()
           left_->expr_type() == IVL_VT_REAL)
 	    return eval_leeq_real_(left_, right_, true);
 //      assert(expr_type() == IVL_VT_LOGIC);
-// HERE
 
       NetEConst*r = dynamic_cast<NetEConst*>(right_);
       if (r == 0) return 0;
@@ -1090,7 +1089,6 @@ NetEConst* NetEBShift::eval_tree()
 
 NetEConst* NetEConcat::eval_tree()
 {
-// HERE
       unsigned repeat_val = repeat();
       unsigned local_errors = 0;
 
@@ -1182,7 +1180,6 @@ NetEConst* NetEConcat::eval_tree()
 
 NetEConst* NetESelect::eval_tree()
 {
-// HERE
       if (debug_eval_tree) {
 	    cerr << get_fileline() << ": debug: Evaluating expression:"
 	         << *this << endl;
@@ -1846,7 +1843,6 @@ static NetExpr* evaluate_min_max(NetExpr*&arg0_, NetExpr*&arg1_,
 
 NetExpr* NetESFunc::eval_tree()
 {
-// HERE
 	/* If we are not targeting at least Verilog-2005, Verilog-AMS
 	 * or using the Icarus misc flag then we do not support these
 	 * functions as constant. */

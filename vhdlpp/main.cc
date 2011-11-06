@@ -81,6 +81,10 @@ const char NOTICE[] =
 # include  <getopt.h>
 #endif
 # include  <sys/stat.h>
+#if defined(__MINGW32__)
+# include <io.h>
+# define mkdir(path, mode) _mkdir(path)
+#endif
 
 
 bool verbose_flag = false;

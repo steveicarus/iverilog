@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -62,7 +62,7 @@ perm_string netenum_t::find_value(const verinum&val) const
 {
       perm_string res;
       for(netenum_t::iterator cur = names_map_.begin();
-          cur != names_map_.end(); cur++) {
+          cur != names_map_.end(); ++ cur) {
 	    if (cur->second == val) {
 		  res = cur->first;
 		  break;

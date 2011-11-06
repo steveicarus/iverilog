@@ -229,7 +229,7 @@ static void show_lpm_arithmetic_pins(ivl_lpm_t net)
 {
       ivl_nexus_t nex;
       nex = ivl_lpm_q(net);
-      fprintf(out, "    Q: %p\n", ivl_lpm_q(net));
+      fprintf(out, "    Q: %p\n", nex);
 
       nex = ivl_lpm_data(net, 0);
       fprintf(out, "    DataA: %p\n", nex);
@@ -247,7 +247,7 @@ static void show_lpm_abs(ivl_lpm_t net)
 	      ivl_lpm_basename(net), width);
 
       nex = ivl_lpm_q(net);
-      fprintf(out, "    Q: %p\n", ivl_lpm_q(net));
+      fprintf(out, "    Q: %p\n", nex);
 
       nex = ivl_lpm_data(net, 0);
       fprintf(out, "    D: %p\n", nex);
@@ -690,6 +690,7 @@ static void show_lpm_re(ivl_lpm_t net)
 	    break;
 	  case IVL_LPM_RE_NOR:
 	    type = "NOR";
+	    break;
 	  case IVL_LPM_RE_XOR:
 	    type = "XOR";
 	    break;

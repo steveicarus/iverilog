@@ -1,7 +1,7 @@
 #ifndef __sv_vpi_user_H
 #define __sv_vpi_user_H
 /*
- * Copyright (c) 2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -53,6 +53,9 @@ EXTERN_C_START
 /********* TYPESPECS *************/
 #define vpiEnumTypespec     633
 #define vpiEnumConst        634
+
+/********* One-to-One ***********/
+#define vpiBaseTypespec     703
 
 /********* Many-to-One ***********/
 #define vpiMember           742

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -95,7 +95,9 @@ static PLI_INT32 sys_realtime_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 	/* For $abstime() we return the time in second. */
       if (strcmp(name, "$abstime") == 0) {
-	    now.real *= pow(10.0, vpi_get(vpiTimeUnit, mod));
+	    PLI_INT32 scale = vpi_get(vpiTimeUnit, mod);
+	    if (scale >= 0) now.real *= pow(10.0, scale);
+	    else now.real /= pow(10.0, -scale);
       }
 
       val.format = vpiRealVal;

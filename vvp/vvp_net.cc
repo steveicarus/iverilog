@@ -34,6 +34,7 @@
 # include  <valgrind/memcheck.h>
 # include  <map>
 # include  "sfunc.h"
+# include  "udp.h"
 # include  "ivl_alloc.h"
 #endif
 
@@ -85,6 +86,7 @@ void* vvp_net_t::operator new (size_t size)
 #ifdef CHECK_WITH_VALGRIND
 static map<vvp_net_t*, bool> vvp_net_map;
 static map<sfunc_core*, bool> sfunc_map;
+static map<vvp_udp_fun_core*, bool> udp_map;
 static vvp_net_t **local_net_pool = 0;
 static unsigned local_net_pool_count = 0;
 
@@ -101,6 +103,9 @@ void vvp_net_delete(vvp_net_t *item)
       vvp_net_map[item] = true;
       if (sfunc_core*tmp = dynamic_cast<sfunc_core*> (item->fun)) {
 	    sfunc_map[tmp] = true;
+      }
+      if (vvp_udp_fun_core*tmp = dynamic_cast<vvp_udp_fun_core*> (item->fun)) {
+	    udp_map[tmp] = true;
       }
 }
 
@@ -127,6 +132,12 @@ void vvp_net_pool_delete()
 	    delete siter->first;
       }
       sfunc_map.clear();
+
+      map<vvp_udp_fun_core*, bool>::iterator uiter;
+      for (uiter = udp_map.begin(); uiter != udp_map.end(); ++ uiter ) {
+	    delete uiter->first;
+      }
+      udp_map.clear();
 
       if (RUNNING_ON_VALGRIND && (vvp_nets_del != count_vvp_nets)) {
 	    fflush(NULL);

@@ -118,7 +118,7 @@ class Scope : public ScopeBase {
 class ActiveScope : public ScopeBase {
 
     public:
-      ActiveScope() { }
+      ActiveScope() : context_entity_(0) { }
       ActiveScope(ActiveScope*par) : ScopeBase(*par), context_entity_(0) { }
 
       ~ActiveScope() { }

@@ -101,6 +101,12 @@ void codespace_delete(void)
 {
       vvp_code_t cur = first_chunk;
 
+	/* If there are no opcodes then just delete the code space. */
+      if (count_opcodes == 0) {
+	    delete [] cur;
+	    return;
+      }
+
       do {
 	    vvp_code_t next = cur[code_chunk_size-1].cptr;
 	    for (unsigned idx = 0 ; idx < code_chunk_size; idx += 1) {

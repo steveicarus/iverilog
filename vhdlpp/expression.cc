@@ -162,8 +162,8 @@ Expression*ExpAggregate::choice_t::simple_expression(bool detach_flag)
 ExpAggregate::element_t::element_t(list<choice_t*>*fields, Expression*val)
 : fields_(fields? fields->size() : 0), val_(val)
 {
-      size_t idx = 0;
       if (fields) {
+	    size_t idx = 0;
 	    while (! fields->empty()) {
 		  assert(idx < fields_.size());
 		  fields_[idx++] = fields->front();
