@@ -1661,6 +1661,17 @@ expr_primary
 	      yyerror(@1, "error: Empty function argument list requires SystemVerilog.");
 	}
       }
+  | SYSTEM_IDENTIFIER '('  ')'
+      { perm_string tn = lex_strings.make($1);
+	const vector<PExpr*>empty;
+	PECallFunction*tmp = new PECallFunction(tn, empty);
+	FILE_NAME(tmp, @1);
+	delete[]$1;
+	$$ = tmp;
+	if (!gn_system_verilog()) {
+	      yyerror(@1, "error: Empty function argument list requires SystemVerilog.");
+	}
+      }
 
   /* Many of the VAMS built-in functions are available as builtin
      functions with $system_function equivalents. */
