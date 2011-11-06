@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -734,6 +734,28 @@ static void draw_udp_def(ivl_udp_t udp)
   fprintf(vvp_out, ";\n");
 }
 
+/* Check to see if the output of the UDP is connected with a modpath. */
+static int udp_has_modpath_output(ivl_net_logic_t lptr)
+{
+	/* The first pin is the output connection (nexus). */
+      ivl_nexus_t nex = ivl_logic_pin(lptr, 0);
+      ivl_scope_t scope = ivl_logic_scope(lptr);
+      unsigned idx;
+
+	/* Check to see if there is a signal connected to the output. */
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
+	    if (sig == 0) continue;
+	      /* The modpath will be connected to the UDP output. */
+	    if ((ivl_signal_scope(sig) == scope) &&
+	        (ivl_signal_port(sig) == IVL_SIP_OUTPUT) &&
+	        (ivl_signal_npath(sig))) return 1;
+      }
+
+      return 0;
+}
+
 static void draw_udp_in_scope(ivl_net_logic_t lptr)
 {
       unsigned pdx;
@@ -780,8 +802,23 @@ static void draw_udp_in_scope(ivl_net_logic_t lptr)
 	    }
       }
 
+	/* Because vvp uses a wide functor for the output of a UDP we need
+	 * to define the output delay net when needed, otherwise it will
+	 * not be cleaned up correctly (gives a valgrind warning). */
+      if (need_delay_flag) {
+	    fprintf(vvp_out, "v%p_0 .net *\"_d%p\", 0 0, L_%p/d;\n", lptr,
+	            lptr, lptr);
+      }
+	/* The same situation exists if a modpath is used to connect the UDP
+	 * output to the true output signal. For this case the modpath is
+	 * the only thing connected to the UDP output. */
+      if (udp_has_modpath_output(lptr)) {
+	    fprintf(vvp_out, "v%p_0 .net *\"_m%p\", 0 0, L_%p;\n", lptr,
+	            lptr, lptr);
+      }
+
 	/* Generate the UDP call. */
-      fprintf(vvp_out, "L_%p%s .udp UDP_%s", lptr, need_delay_flag? "/d" : "",
+      fprintf(vvp_out, "L_%p%s .udp UDP_%s", lptr, need_delay_flag ? "/d" : "",
                        vvp_mangle_id(ivl_udp_name(udp)));
 
       for (pdx = 0 ;  pdx < ninp ;  pdx += 1) {
@@ -1676,12 +1713,72 @@ static void draw_type_string_of_nex(ivl_nexus_t nex)
       }
 }
 
+/* Check to see if the output of the system function is connected with
+ * a modpath. */
+static int sfunc_has_modpath_output(ivl_lpm_t lptr)
+{
+	/* The q port is the output connection (nexus). */
+      ivl_nexus_t nex = ivl_lpm_q(lptr);
+      ivl_scope_t scope = ivl_lpm_scope(lptr);
+      unsigned idx;
+
+	/* Check to see if there is a signal connected to the output. */
+      for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
+	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
+	    if (sig == 0) continue;
+	      /* The modpath will be connected to the system function
+	       * output. */
+	    if ((ivl_signal_scope(sig) == scope) &&
+	        (ivl_signal_port(sig) == IVL_SIP_OUTPUT) &&
+	        (ivl_signal_npath(sig))) return 1;
+      }
+
+      return 0;
+}
+
+/* Emit a definition for a net that has a delay or modpath. */
+static void draw_sfunc_output_def(ivl_lpm_t net, char type)
+{
+      ivl_nexus_t nex = ivl_lpm_q(net);
+      char *suf = (type == 'd') ? "/d" : "";
+
+      switch (data_type_of_nexus(nex)) {
+	case IVL_VT_REAL:
+	    fprintf(vvp_out, "v%p_0 .net/real *\"_%c%p\", 0 0, L_%p%s;\n",
+	            net, type, net, net, suf);
+	    break;
+	case IVL_VT_LOGIC:
+	case IVL_VT_BOOL:
+	    fprintf(vvp_out, "v%p_0 .net *\"_%c%p\", %u 0, L_%p%s;\n",
+	            net, type, net, width_of_nexus(nex)-1, net, suf);
+	    break;
+	default:
+	    assert(0);
+	    break;
+      }
+}
+
 static void draw_lpm_sfunc(ivl_lpm_t net)
 {
       unsigned idx;
 
       ivl_variable_type_t dt = data_type_of_nexus(ivl_lpm_q(net));
       const char*dly = draw_lpm_output_delay(net, dt);
+
+	/* Because vvp uses a wide functor for the output of a system
+	 * function we need to define the output delay net when needed,
+	 * otherwise it will not be cleaned up correctly (gives a
+	 * valgrind warning). */
+      if (*dly != 0) {
+	    draw_sfunc_output_def(net, 'd');
+      }
+	/* The same situation exists if a modpath is used to connect the
+	 * system function output to the true output signal. For this case
+	 * the modpath is the only thing connected to the UDP output. */
+      if (sfunc_has_modpath_output(net)) {
+	    draw_sfunc_output_def(net, 'm');
+      }
 
       if (ivl_lpm_trigger(net))
             fprintf(vvp_out, "L_%p%s .sfunc/e %u %u \"%s\", E_%p", net, dly,
