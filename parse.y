@@ -253,6 +253,19 @@ static long check_enum_seq_value(const YYLTYPE&loc, verinum *arg, bool zero_ok)
       return value;
 }
 
+static void current_task_set_statement(vector<Statement*>*s)
+{
+      assert(s && s->size() > 0);
+      if (s->size() == 1) {
+	    current_task->set_statement((*s)[0]);
+	    return;
+      }
+
+      PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+      tmp->set_statement(*s);
+      current_task->set_statement(tmp);
+}
+
 %}
 
 %union {
@@ -491,7 +504,7 @@ static long check_enum_seq_value(const YYLTYPE&loc, verinum *arg, bool zero_ok)
 %type <event_expr> event_expression
 %type <event_statement> event_control
 %type <statement> statement statement_or_null compressed_statement
-%type <statement_list> statement_list
+%type <statement_list> statement_list statement_or_null_list
 
 %type <statement> analog_statement
 
@@ -2835,13 +2848,17 @@ module_item
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
     task_item_list_opt
-    statement_or_null
+    statement_or_null_list
     K_endtask
       { current_task->set_ports($6);
-	current_task->set_statement($7);
+	current_task_set_statement($7);
 	pform_pop_scope();
 	current_task = 0;
 	delete[]$3;
+	if ($7->size() > 1 && !gn_system_verilog()) {
+	      yyerror(@7, "error: Task body with multiple statements requres SystemVerilog.");
+	}
+	delete $7;
       }
 
   | K_task automatic_opt IDENTIFIER '('
@@ -2850,13 +2867,17 @@ module_item
       }
     task_port_decl_list ')' ';'
     block_item_decls_opt
-    statement_or_null
+    statement_or_null_list
     K_endtask
       { current_task->set_ports($6);
-	current_task->set_statement($10);
+	current_task_set_statement($10);
 	pform_pop_scope();
 	current_task = 0;
 	delete[]$3;
+	if ($10->size() > 1 && !gn_system_verilog()) {
+	      yyerror(@10, "error: Task body with multiple statements requres SystemVerilog.");
+	}
+	delete $10;
       }
 
   | K_task automatic_opt IDENTIFIER '(' ')' ';'
@@ -2864,15 +2885,19 @@ module_item
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
     block_item_decls_opt
-    statement_or_null
+    statement_or_null_list
     K_endtask
       { current_task->set_ports(0);
-	current_task->set_statement($9);
+	current_task_set_statement($9);
 	pform_pop_scope();
 	current_task = 0;
 	cerr << @3 << ": warning: task definition for \"" << $3
 	     << "\" has an empty port declaration list!" << endl;
 	delete[]$3;
+	if ($9->size() > 1 && !gn_system_verilog()) {
+	      yyerror(@9, "error: Task body with multiple statements requres SystemVerilog.");
+	}
+	delete $9;
       }
 
   | K_task automatic_opt IDENTIFIER error K_endtask
@@ -4670,6 +4695,19 @@ statement_or_null
       { $$ = $1; }
   | ';'
       { $$ = 0; }
+  ;
+
+statement_or_null_list
+  : statement_or_null_list statement_or_null
+      { vector<Statement*>*tmp = $1;
+	tmp->push_back($2);
+	$$ = tmp;
+      }
+  | statement_or_null
+      { vector<Statement*>*tmp = new vector<Statement*>(1);
+	tmp->at(0) = $1;
+	$$ = tmp;
+      }
   ;
 
 analog_statement
