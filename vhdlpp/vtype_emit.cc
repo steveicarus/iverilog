@@ -36,6 +36,18 @@ int VType::decl_t::emit(ostream&out, perm_string name) const
 int VTypeArray::emit_def(ostream&out, perm_string name) const
 {
       int errors = 0;
+
+      if (const VTypeArray*sub = dynamic_cast<const VTypeArray*> (etype_)) {
+	    sub->emit_def(out, name);
+	    assert(dimensions() == 1);
+	    out << "[";
+	    errors += dimension(0).msb()->emit(out, 0, 0);
+	    out << ":";
+	    errors += dimension(0).lsb()->emit(out, 0, 0);
+	    out << "] ";
+	    return errors;
+      }
+
       const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*> (etype_);
       assert(base != 0);
       assert(dimensions() == 1);
@@ -58,8 +70,6 @@ int VTypeArray::emit_def(ostream&out, perm_string name) const
 int VTypeArray::emit_decl(ostream&out, perm_string name, bool reg_flag) const
 {
       int errors = 0;
-      const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*> (etype_);
-      assert(base != 0);
       assert(dimensions() == 1);
 
       if (reg_flag)

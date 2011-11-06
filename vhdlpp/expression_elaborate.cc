@@ -141,6 +141,9 @@ int ExpName::elaborate_rval(Entity*ent, Architecture*arc, const InterfacePort*lv
       } else if (arc->find_signal(name_)) {
 	      /* OK */
 
+      } else if (ent->find_generic(name_)) {
+	      /* OK */
+
       } else {
             cerr << get_fileline() << ": error: No port or signal " << name_
 		 << " to be used as r-value." << endl;
