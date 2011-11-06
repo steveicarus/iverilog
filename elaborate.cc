@@ -4040,6 +4040,8 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 		  continue;
 	    }
 
+	    unsigned long dst_wid = dst_sig->vector_width();
+
 	    if (dst_sig->port_type() != NetNet::POUTPUT
 		&& dst_sig->port_type() != NetNet::PINOUT) {
 
@@ -4107,6 +4109,20 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 			des->errors += 1;
 		  }
 
+		    // For a parallel connection the source and destination
+		    // must be the same width.
+		  if (! full_flag) {
+			unsigned long src_wid = src_sig->vector_width();
+			if (src_wid != dst_wid) {
+			      cerr << get_fileline() << ": error: For a "
+			              "parallel connection the "
+			              "source/destination width must match "
+			              "found (" << src_wid << "/" << dst_wid
+			           << ")." << endl;
+			      des->errors += 1;
+			}
+		  }
+
 		  connect(src_sig->pin(0), path->pin(idx));
 		  idx += 1;
 	    }
@@ -4119,7 +4135,6 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 
 	    dst_sig->add_delay_path(path);
       }
-
 }
 
 static void elaborate_functions(Design*des, NetScope*scope,

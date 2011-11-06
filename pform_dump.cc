@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -951,7 +951,10 @@ void PSpecPath::dump(std::ostream&out, unsigned ind) const
 	    out << src[idx];
       }
 
-      out << " => ";
+      out << " ";
+      if (polarity) out << polarity;
+      if (full_flag) out << "*> ";
+      else out << "=> ";
 
       if (data_source_expression)
 	    out << "(";
