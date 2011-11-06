@@ -944,7 +944,10 @@ void PSpecPath::dump(std::ostream&out, unsigned ind) const
 	    out << src[idx];
       }
 
-      out << " => ";
+      out << " ";
+      if (polarity) out << polarity;
+      if (full_flag) out << "*> ";
+      else out << "=> ";
 
       if (data_source_expression)
 	    out << "(";

@@ -1,7 +1,7 @@
 #ifndef __PSpec_H
 #define __PSpec_H
 /*
- * Copyright (c) 2006 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2006-2011 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,6 +46,12 @@ class PExpr;
 *
 * If data_source_expression != nil, then the path is edge sensitive
 * and the edge might not be 0.
+*
+* The full flag is used to verify that only vectors of the same size
+* are used in a parallel connection. Icarus always creates a full
+* connection between the source and destination. The polarity is for
+* informational (display) purposes only. The polarity is either '+',
+* '-' or 0.
 */
 class PSpecPath  : public LineInfo {
 
@@ -63,6 +69,10 @@ class PSpecPath  : public LineInfo {
       class PExpr* condition;
 	// Edge specification (-1==negedge, 0 = no edge, 1==posedge)
       int edge;
+	// Is this a full connection.
+      bool full_flag;
+	// What is the polarity of the connection.
+      char polarity;
 	// Ordered set of source nodes of a path
       std::vector<perm_string> src;
 	// Ordered set of destination nodes of a path
