@@ -279,6 +279,7 @@ void vvp_fun_delay::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	   bits (the order the bits are changed is not deterministic). */
       if (initial_) {
 	    type_ = VEC4_DELAY;
+            cur_vec8_ = vvp_vector8_t(vvp_vector4_t(0, BIT4_X), 6, 6);
 	    vvp_bit4_t cur_val = cur_vec4_.value(0);
 	    use_delay = delay_.get_delay(cur_val, bit.value(0));
 	    for (unsigned idx = 1 ;  idx < bit.size() ;  idx += 1) {
@@ -341,6 +342,7 @@ void vvp_fun_delay::recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit)
 	   bits (the order the bits are changed is not deterministic). */
       if (initial_) {
 	    type_ = VEC8_DELAY;
+            cur_vec4_ = vvp_vector4_t(0, BIT4_X);
 	    vvp_bit4_t cur_val = cur_vec8_.value(0).value();
 	    use_delay = delay_.get_delay(cur_val, bit.value(0).value());
 	    for (unsigned idx = 1 ;  idx < bit.size() ;  idx += 1) {
@@ -426,8 +428,11 @@ void vvp_fun_delay::recv_real(vvp_net_ptr_t port, double bit,
 	    return;
       }
 
-      if (initial_) type_ = REAL_DELAY;
-      else assert(type_ == REAL_DELAY);
+      if (initial_) {
+	    type_ = REAL_DELAY;
+            cur_vec4_ = vvp_vector4_t(0, BIT4_X);
+            cur_vec8_ = vvp_vector8_t(cur_vec4_, 6, 6);
+      } else assert(type_ == REAL_DELAY);
 
       vvp_time64_t use_delay;
       use_delay = delay_.get_min_delay();
