@@ -105,7 +105,17 @@ void VTypeArray::show(ostream&out) const
       out << "array ";
       for (vector<range_t>::const_iterator cur = ranges_.begin()
 		 ; cur != ranges_.end() ; ++cur) {
-	    out << "(" << cur->msb() << " downto " << cur->lsb() << ")";
+	    out << "(";
+	    if (cur->msb())
+		  cur->msb()->write_to_stream(out);
+	    else
+		  out << "<>";
+	    out << " downto ";
+	    if (cur->lsb())
+		  cur->lsb()->write_to_stream(out);
+	    else
+		  out << "<>";
+	    out << ")";
       }
       out << " of ";
       if (signed_flag_)
