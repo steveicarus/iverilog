@@ -4018,6 +4018,38 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	    ivl_assert(*condition, condit_sig);
       }
 
+	/* A parallel connection does not support more than a one to one
+	   connection (source/destination). */
+      if (! full_flag && ((src.size() != 1) || (dst.size() != 1))) {
+	    /* To be compatible with NC-Verilog we allow a parallel connection
+	     * with multiple sources/destinations if all the paths are only a
+	     * single bit wide (a scalar or a one bit vector). */
+	    bool all_single = true;
+	    typedef std::vector<perm_string>::const_iterator str_vec_iter;
+	    for (str_vec_iter cur = src.begin();
+		 ( cur != src.end() && all_single); ++ cur) {
+		  NetNet *psig = scope->find_signal(*cur);
+		    /* We will report a missing signal as invalid later. For
+		     * now assume it's a single bit. */
+		  if (psig == 0) continue;
+		  if (psig->vector_width() != 1) all_single = false;
+	    }
+	    for (str_vec_iter cur = dst.begin();
+		 ( cur != dst.end() && all_single); ++ cur) {
+		  NetNet *psig = scope->find_signal(*cur);
+		    /* The same as above for source paths. */
+		  if (psig == 0) continue;
+		  if (psig->vector_width() != 1) all_single = false;
+	    }
+
+	    if (! all_single) {
+		  cerr << get_fileline() << ": error: Parallel connections "
+		          "only support one source/destination path found ("
+		       << src.size() << "/" << dst.size() << ")." << endl;
+		  des->errors += 1;
+	    }
+      }
+
 	/* Create all the various paths from the path specifier. */
       typedef std::vector<perm_string>::const_iterator str_vector_iter;
       for (str_vector_iter cur = dst.begin()
@@ -4034,8 +4066,8 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 
 	    NetNet*dst_sig = scope->find_signal(*cur);
 	    if (dst_sig == 0) {
-		  cerr << get_fileline() << ": error: No such wire "
-		       << *cur << " in this module." << endl;
+		  cerr << get_fileline() << ": error: No wire '"
+		       << *cur << "' in this module." << endl;
 		  des->errors += 1;
 		  continue;
 	    }
@@ -4093,7 +4125,12 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 	    for (str_vector_iter cur_src = src.begin()
 		       ; cur_src != src.end() ;  cur_src ++) {
 		  NetNet*src_sig = scope->find_signal(*cur_src);
-		  assert(src_sig);
+		  if (src_sig == 0) {
+			cerr << get_fileline() << ": error: No wire '"
+			     << *cur_src << "' in this module." << endl;
+			des->errors += 1;
+			continue;
+		  }
 
 		  if (debug_elaborate) {
 			if (cur_src != src.begin()) cerr << " and ";
