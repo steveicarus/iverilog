@@ -94,7 +94,8 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
 	    rc_lsb = rang.lsb()->evaluate(ent, arc, use_lsb);
 
 	    if (rc_msb && rc_lsb) {
-		  int asize = abs(use_msb - use_lsb) + 1;
+		  int asize = (use_msb >= use_lsb) ? (use_msb - use_lsb) + 1 :
+		                                     (use_lsb - use_msb) + 1;
 		  out << "{" << asize << "{";
 		  errors += aggregate_[0].expr->emit(out, ent, arc);
 		  out << "}}";
