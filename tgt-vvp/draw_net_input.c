@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -533,7 +533,7 @@ char* draw_net_input_x(ivl_nexus_t nex,
       int level;
       unsigned ndrivers = 0;
 
-      const char*resolv_type;
+      const char*resolv_type, *branch_type;
 
       char*nex_private = 0;
 
@@ -544,25 +544,31 @@ char* draw_net_input_x(ivl_nexus_t nex,
       switch (res) {
 	  case IVL_SIT_TRI:
 	    resolv_type = "tri";
+	    branch_type = "tri";
 	    break;
 	  case IVL_SIT_TRI0:
 	    resolv_type = "tri0";
+	    branch_type = "tri";
 	    nex_flags |= VVP_NEXUS_DATA_STR;
 	    break;
 	  case IVL_SIT_TRI1:
 	    resolv_type = "tri1";
+	    branch_type = "tri";
 	    nex_flags |= VVP_NEXUS_DATA_STR;
 	    break;
 	  case IVL_SIT_TRIAND:
 	    resolv_type = "triand";
+	    branch_type = "triand";
 	    break;
 	  case IVL_SIT_TRIOR:
 	    resolv_type = "trior";
+	    branch_type = "trior";
 	    break;
 	  default:
 	    fprintf(stderr, "vvp.tgt: Unsupported signal type: %u\n", res);
 	    assert(0);
 	    resolv_type = "tri";
+	    branch_type = "tri";
 	    break;
       }
 
@@ -688,8 +694,8 @@ char* draw_net_input_x(ivl_nexus_t nex,
 	    unsigned int inst;
 	    for (inst = 0; inst < ndrivers; inst += 4) {
 		  if (ndrivers > 4)
-			fprintf(vvp_out, "RS_%p/%d/%d .resolv tri",
-				nex, level, inst);
+			fprintf(vvp_out, "RS_%p/%d/%d .resolv %s",
+				nex, level, inst, branch_type);
 		  else
 			fprintf(vvp_out, "RS_%p .resolv %s",
 				nex, resolv_type);
