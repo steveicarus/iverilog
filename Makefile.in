@@ -261,7 +261,7 @@ endif
 version_tag.h version:
 	@if $(GIT_PRESENT) && test -d $(srcdir)/.git; then \
 	    echo "Using git-describe for VERSION_TAG"; \
-	    tag=`$(GIT) --git-dir $(srcdir)/.git describe`; \
+	    tag=`$(GIT) --git-dir $(srcdir)/.git describe --always --dirty`; \
 	    tmp=`printf "#ifndef VERSION_TAG\n#define VERSION_TAG \"$$tag\"\n#endif\n"`; \
 	    echo "$$tmp" | diff - version_tag.h > /dev/null 2>&1 || echo "$$tmp" > version_tag.h || exit 1; \
 	elif test -r $(srcdir)/version_tag.h; then \
