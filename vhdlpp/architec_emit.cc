@@ -136,7 +136,7 @@ int ComponentInstantiation::emit(ostream&out, Entity*ent, Architecture*arc)
       int errors = 0;
 
       out << cname_;
-      if (generic_map_.size() > 0) {
+      if (! generic_map_.empty()) {
 	    out << " #(";
 	    comma = "";
 	    for (map<perm_string,Expression*>::iterator cur = generic_map_.begin()

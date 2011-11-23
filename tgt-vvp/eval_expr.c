@@ -3299,7 +3299,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 		    /* Handle special case that value is 0 or 1. */
 		  if (res.base == 0 || res.base == 1)
 			break;
-		  if (res.base == 2 || res.base == 2) {
+		  if (res.base == 2 || res.base == 3) {
 			res.base = 0;
 			break;
 		  }

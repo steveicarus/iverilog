@@ -65,7 +65,7 @@ static int draw_stask_finish(vhdl_procedural *proc, stmt_container *container,
 static char parse_octal(const char *p)
 {
    assert(*p && *(p+1) && *(p+2));
-   assert(isdigit(*p) && isdigit(*(p+1)) && isdigit(*(p+1)));
+   assert(isdigit(*p) && isdigit(*(p+1)) && isdigit(*(p+2)));
 
    return (*p - '0') * 64
       + (*(p+1) - '0') * 8
