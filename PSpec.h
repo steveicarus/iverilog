@@ -56,7 +56,8 @@ class PExpr;
 class PSpecPath  : public LineInfo {
 
     public:
-      PSpecPath(unsigned src_cnt, unsigned dst_cnt);
+      PSpecPath(unsigned src_cnt, unsigned dst_cnt, char polarity,
+                bool full_flag);
       ~PSpecPath();
 
       void elaborate(class Design*des, class NetScope*scope) const;
@@ -70,9 +71,9 @@ class PSpecPath  : public LineInfo {
 	// Edge specification (-1==negedge, 0 = no edge, 1==posedge)
       int edge;
 	// Is this a full connection.
-      bool full_flag;
+      bool full_flag_;
 	// What is the polarity of the connection.
-      char polarity;
+      char polarity_;
 	// Ordered set of source nodes of a path
       std::vector<perm_string> src;
 	// Ordered set of destination nodes of a path

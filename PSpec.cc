@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2006-2011 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,11 +19,14 @@
 
 # include  "PSpec.h"
 
-PSpecPath::PSpecPath(unsigned src_cnt, unsigned dst_cnt)
+PSpecPath::PSpecPath(unsigned src_cnt, unsigned dst_cnt, char polarity,
+                     bool full_flag)
 : conditional(false), condition(0), edge(0),
   src(src_cnt), dst(dst_cnt),
   data_source_expression(0)
 {
+      full_flag_ = full_flag;
+      polarity_ = polarity;
 }
 
 PSpecPath::~PSpecPath()

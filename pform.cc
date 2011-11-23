@@ -2344,10 +2344,8 @@ extern PSpecPath* pform_make_specify_path(const struct vlltype&li,
 					  list<perm_string>*src, char pol,
 					  bool full_flag, list<perm_string>*dst)
 {
-      PSpecPath*path = new PSpecPath(src->size(), dst->size());
+      PSpecPath*path = new PSpecPath(src->size(), dst->size(), pol, full_flag);
       FILE_NAME(path, li.text, li.first_line);
-      path->polarity = pol;
-      path->full_flag = full_flag;
 
       unsigned idx;
       list<perm_string>::const_iterator cur;

@@ -4196,7 +4196,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 
 	/* A parallel connection does not support more than a one to one
 	   connection (source/destination). */
-      if (! full_flag && ((src.size() != 1) || (dst.size() != 1))) {
+      if (! full_flag_ && ((src.size() != 1) || (dst.size() != 1))) {
 	    /* To be compatible with NC-Verilog we allow a parallel connection
 	     * with multiple sources/destinations if all the paths are only a
 	     * single bit wide (a scalar or a one bit vector). */
@@ -4324,7 +4324,7 @@ void PSpecPath::elaborate(Design*des, NetScope*scope) const
 
 		    // For a parallel connection the source and destination
 		    // must be the same width.
-		  if (! full_flag) {
+		  if (! full_flag_) {
 			unsigned long src_wid = src_sig->vector_width();
 			if (src_wid != dst_wid) {
 			      cerr << get_fileline() << ": error: For a "
