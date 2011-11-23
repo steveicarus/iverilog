@@ -354,6 +354,7 @@ static PECallFunction*make_call_function(perm_string tn, PExpr*arg1, PExpr*arg2)
 %type <event_statement> event_control
 %type <statement> statement statement_or_null
 %type <statement_list> statement_list
+%type <statement_list> statement_list_or_null
 
 %type <statement> analog_statement
 
@@ -3638,6 +3639,11 @@ statement
      name. These are handled by pushing the scope name then matching
      the declarations. The scope is popped at the end of the block. */
 
+  | K_begin K_end
+      { PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
   | K_begin statement_list K_end
       { PBlock*tmp = new PBlock(PBlock::BL_SEQ);
 	FILE_NAME(tmp, @1);
@@ -3651,25 +3657,14 @@ statement
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
-    statement_list K_end
+    statement_list_or_null K_end
       { pform_pop_scope();
 	assert(! current_block_stack.empty());
 	PBlock*tmp = current_block_stack.top();
 	current_block_stack.pop();
-	tmp->set_statement(*$6);
+	if ($6) tmp->set_statement(*$6);
 	delete[]$3;
 	delete $6;
-	$$ = tmp;
-      }
-  | K_begin K_end
-      { PBlock*tmp = new PBlock(PBlock::BL_SEQ);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | K_begin ':' IDENTIFIER K_end
-      { PBlock*tmp = new PBlock(PBlock::BL_SEQ);
-	FILE_NAME(tmp, @1);
-	delete[]$3;
 	$$ = tmp;
       }
   | K_begin error K_end
@@ -3680,33 +3675,36 @@ statement
      need to do is remember that this is a parallel block so that the
      code generator can do the right thing. */
 
+  | K_fork K_join
+      { PBlock*tmp = new PBlock(PBlock::BL_PAR);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_fork statement_list K_join
+      { PBlock*tmp = new PBlock(PBlock::BL_PAR);
+	FILE_NAME(tmp, @1);
+	tmp->set_statement(*$2);
+	delete $2;
+	$$ = tmp;
+      }
   | K_fork ':' IDENTIFIER
       { PBlock*tmp = pform_push_block_scope($3, PBlock::BL_PAR);
 	FILE_NAME(tmp, @1);
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
-    statement_list K_join
+    statement_list_or_null K_join
       { pform_pop_scope();
         assert(! current_block_stack.empty());
 	PBlock*tmp = current_block_stack.top();
 	current_block_stack.pop();
-	tmp->set_statement(*$6);
+	if ($6) tmp->set_statement(*$6);
 	delete[]$3;
 	delete $6;
 	$$ = tmp;
       }
-  | K_fork K_join
-      { PBlock*tmp = new PBlock(PBlock::BL_PAR);
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | K_fork ':' IDENTIFIER K_join
-      { PBlock*tmp = new PBlock(PBlock::BL_PAR);
-	FILE_NAME(tmp, @1);
-	delete[]$3;
-	$$ = tmp;
-      }
+  | K_fork error K_join
+      { yyerrok; }
 
 	| K_disable hierarchy_identifier ';'
 		{ PDisable*tmp = new PDisable(*$2);
@@ -3723,13 +3721,6 @@ statement
 	| K_forever statement
 		{ PForever*tmp = new PForever($2);
 		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_fork statement_list K_join
-		{ PBlock*tmp = new PBlock(PBlock::BL_PAR);
-		  FILE_NAME(tmp, @1);
-		  tmp->set_statement(*$2);
-		  delete $2;
 		  $$ = tmp;
 		}
 	| K_repeat '(' expression ')' statement
@@ -3946,6 +3937,22 @@ statement
 		  $$ = new PNoop;
 		}
 	;
+
+statement_list_or_null
+  : statement_list_or_null statement
+      { svector<Statement*>*tmp = $1;
+	if (tmp) {
+	      tmp = new svector<Statement*>(*$1, $2);
+	      delete $1;
+	} else {
+	      tmp = new svector<Statement*>(1);
+	      (*tmp)[0] = $2;
+	}
+	$$ = tmp;
+      }
+  |
+      { $$ = 0; }
+  ;
 
 statement_list
 	: statement_list statement
