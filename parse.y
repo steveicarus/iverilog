@@ -2263,7 +2263,8 @@ port_declaration
 	delete[]$7;
 	$$ = ptmp;
       }
-  | attribute_list_opt K_input atom2_type signed_unsigned_opt IDENTIFIER
+  | attribute_list_opt
+    K_input atom2_type signed_unsigned_opt IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	list<PExpr*>*use_range = make_range_from_width($3);
@@ -2282,7 +2283,24 @@ port_declaration
 	$$ = ptmp;
       }
   | attribute_list_opt
-    K_inout  net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER
+    K_input K_wreal IDENTIFIER
+      { Module::port_t*ptmp;
+	perm_string name = lex_strings.make($4);
+	ptmp = pform_module_port_reference(name, @2.text,
+					   @2.first_line);
+	pform_module_define_port(@2, name, NetNet::PINPUT,
+				 NetNet::WIRE, IVL_VT_REAL, true, 0, $1);
+	port_declaration_context.port_type = NetNet::PINPUT;
+	port_declaration_context.port_net_type = NetNet::WIRE;
+	port_declaration_context.var_type = IVL_VT_REAL;
+	port_declaration_context.sign_flag = true;
+	delete port_declaration_context.range;
+	port_declaration_context.range = 0;
+	delete[]$4;
+	$$ = ptmp;
+      }
+  | attribute_list_opt
+    K_inout net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($7);
 	ptmp = pform_module_port_reference(name, @2.text,
@@ -2296,6 +2314,23 @@ port_declaration
 	delete port_declaration_context.range;
 	port_declaration_context.range = $6;
 	delete[]$7;
+	$$ = ptmp;
+      }
+  | attribute_list_opt
+    K_inout K_wreal IDENTIFIER
+      { Module::port_t*ptmp;
+	perm_string name = lex_strings.make($4);
+	ptmp = pform_module_port_reference(name, @2.text,
+					   @2.first_line);
+	pform_module_define_port(@2, name, NetNet::PINOUT,
+				 NetNet::WIRE, IVL_VT_REAL, true, 0, $1);
+	port_declaration_context.port_type = NetNet::PINOUT;
+	port_declaration_context.port_net_type = NetNet::WIRE;
+	port_declaration_context.var_type = IVL_VT_REAL;
+	port_declaration_context.sign_flag = true;
+	delete port_declaration_context.range;
+	port_declaration_context.range = 0;
+	delete[]$4;
 	$$ = ptmp;
       }
   | attribute_list_opt
@@ -2382,7 +2417,8 @@ port_declaration
 	delete[]$7;
 	$$ = ptmp;
       }
-  | attribute_list_opt K_output atom2_type signed_unsigned_opt IDENTIFIER
+  | attribute_list_opt
+    K_output atom2_type signed_unsigned_opt IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	list<PExpr*>*use_range = make_range_from_width($3);
@@ -2400,7 +2436,8 @@ port_declaration
 	delete[]$5;
 	$$ = ptmp;
       }
-  | attribute_list_opt K_output atom2_type signed_unsigned_opt IDENTIFIER '=' expression
+  | attribute_list_opt
+    K_output atom2_type signed_unsigned_opt IDENTIFIER '=' expression
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	list<PExpr*>*use_range = make_range_from_width($3);
@@ -2421,7 +2458,23 @@ port_declaration
 	delete[]$5;
 	$$ = ptmp;
       }
-
+  | attribute_list_opt
+    K_output K_wreal IDENTIFIER
+      { Module::port_t*ptmp;
+	perm_string name = lex_strings.make($4);
+	ptmp = pform_module_port_reference(name, @2.text,
+					   @2.first_line);
+	pform_module_define_port(@2, name, NetNet::POUTPUT,
+				 NetNet::WIRE, IVL_VT_REAL, true, 0, $1);
+	port_declaration_context.port_type = NetNet::POUTPUT;
+	port_declaration_context.port_net_type = NetNet::WIRE;
+	port_declaration_context.var_type = IVL_VT_REAL;
+	port_declaration_context.sign_flag = true;
+	delete port_declaration_context.range;
+	port_declaration_context.range = 0;
+	delete[]$4;
+	$$ = ptmp;
+      }
   ;
 
 
@@ -2612,7 +2665,22 @@ module_item
 			yyerror(@6, "sorry: net delays not supported.");
 			delete $6;
 		  }
-		  if ($1) delete $1;
+		  delete $1;
+		}
+
+	| attribute_list_opt K_wreal delay3 net_variable_list ';'
+		{ pform_makewire(@2, 0, true, $4, NetNet::WIRE,
+				 NetNet::NOT_A_PORT, IVL_VT_REAL, $1);
+		  if ($3 != 0) {
+			yyerror(@3, "sorry: net delays not supported.");
+			delete $3;
+		  }
+		  delete $1;
+		}
+	| attribute_list_opt K_wreal net_variable_list ';'
+		{ pform_makewire(@2, 0, true, $3, NetNet::WIRE,
+				 NetNet::NOT_A_PORT, IVL_VT_REAL, $1);
+		  delete $1;
 		}
 
   /* Very similar to the rule above, but this takes a list of
@@ -2646,6 +2714,15 @@ module_item
 		  if (dtype == IVL_VT_NO_TYPE)
 			dtype = IVL_VT_LOGIC;
 		  pform_makewire(@2, 0, $4, 0, $5, $6, $2, dtype);
+		  if ($1) {
+			yyerror(@2, "sorry: Attributes not supported "
+				"on net declaration assignments.");
+			delete $1;
+		  }
+		}
+	| attribute_list_opt K_wreal net_decl_assigns ';'
+		{ pform_makewire(@2, 0, true, 0, str_strength, $3,
+		                 NetNet::WIRE, IVL_VT_REAL);
 		  if ($1) {
 			yyerror(@2, "sorry: Attributes not supported "
 				"on net declaration assignments.");
@@ -2686,6 +2763,11 @@ module_item
 			}
 		  }
 		  delete $5;
+		}
+
+	| port_type K_wreal list_of_identifiers ';'
+		{ pform_makewire(@1, 0, true, $3, NetNet::WIRE, $1,
+		                 IVL_VT_REAL, 0, SR_BOTH);
 		}
 
   /* var_type declaration (reg variables) cannot be input or output,
