@@ -3317,10 +3317,20 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 	    }
 
 	    if (nset->count() == 0) {
-		  cerr << get_fileline() << ": error: No inputs to statement."
-		       << " The @* cannot execute." << endl;
-		  des->errors += 1;
-		  return enet;
+		  cerr << get_fileline() << ": warning: @* found no "
+		          "sensitivities so it will never trigger."
+		       << endl;
+		    /* Add the currently unreferenced event to the scope. */
+		  scope->add_event(ev);
+		    /* Delete the current wait, create a new one with no
+		     * statement and add the event to it. This creates a
+		     * perpetual wait since nothing will ever trigger the
+		     * unreferenced event. */
+		  delete wa;
+		  wa = new NetEvWait(0);
+		  wa->set_line(*this);
+		  wa->add_event(ev);
+		  return wa;
 	    }
 
 	    NetEvProbe*pr = new NetEvProbe(scope, scope->local_symbol(),
