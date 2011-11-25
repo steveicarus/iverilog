@@ -344,7 +344,8 @@ within,			GN_KEYWORDS_1800_2005,		K_within
 # This is the name originally proposed for uwire and is deprecated!
 wone,			GN_KEYWORDS_1364_2005,		K_wone
 wor,			GN_KEYWORDS_1364_1995,		K_wor
-wreal,			GN_KEYWORDS_VAMS_2_3,		K_wreal
+# This is defined by Verilog-AMS 2.3 and as an Icarus extension.
+wreal,	GN_KEYWORDS_VAMS_2_3|GN_KEYWORDS_ICARUS,	K_wreal
 xnor,			GN_KEYWORDS_1364_1995,		K_xnor
 xor,			GN_KEYWORDS_1364_1995,		K_xor
 zi_nd,			GN_KEYWORDS_VAMS_2_3,		K_zi_nd
