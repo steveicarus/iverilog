@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,6 +41,7 @@ NetAssign_::NetAssign_(NetNet*s)
       lwid_ = sig_->vector_width();
       sig_->incr_lref();
       more = 0;
+      turn_sig_to_wire_on_release_ = false;
 }
 
 NetAssign_::~NetAssign_()
