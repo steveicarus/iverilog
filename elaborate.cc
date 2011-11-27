@@ -2259,9 +2259,32 @@ static NetExpr*elaborate_delay_expr(PExpr*expr, Design*des, NetScope*scope)
       return dex;
 }
 
+NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
+{
+      ivl_assert(*this, ! delay_);
+      ivl_assert(*this, ! count_);
+      ivl_assert(*this, ! event_);
+
+      NetAssign_*lv = elaborate_lval(des, scope);
+      if (lv == 0) return 0;
+
+      NetExpr*rv = elaborate_rval_(des, scope, count_lval_width(lv), lv->expr_type());
+      if (rv == 0) return 0;
+
+      NetAssign*cur = new NetAssign(lv, rv);
+      cur->set_line(*this);
+
+      return cur;
+}
+
 NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
+
+	/* If this is a compressed assignment, then handle the
+	   elaboration in a specialized function. */
+      if (op_ != 0)
+	    return elaborate_compressed_(des, scope);
 
 	/* elaborate the lval. This detects any part selects and mux
 	   expressions that might exist. */

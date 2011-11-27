@@ -4552,11 +4552,11 @@ statement
 	tmp->set_statement($6);
 	$$ = tmp;
       }
-	| lpvalue '=' expression ';'
-		{ PAssign*tmp = new PAssign($1,$3);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
+  | lpvalue '=' expression ';'
+      { PAssign*tmp = new PAssign($1,$3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
 	| error '=' expression ';'
                 { yyerror(@2, "Syntax in assignment statement l-value.");
 		  yyerrok;
@@ -4663,83 +4663,61 @@ statement
 	;
 
 compressed_statement
-	: lpvalue K_PLUS_EQ expression
-		{
-			PEBinary *t  = new PEBinary('+', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_MINUS_EQ expression
-		{
-			PEBinary *t  = new PEBinary('-', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_MUL_EQ expression
-		{
-			PEBinary *t  = new PEBinary('*', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_DIV_EQ expression
-		{
-			PEBinary *t  = new PEBinary('/', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_MOD_EQ expression
-		{
-			PEBinary *t  = new PEBinary('%', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_AND_EQ expression
-		{
-			PEBinary *t  = new PEBinary('&', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_OR_EQ expression
-		{
-			PEBinary *t  = new PEBinary('|', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_XOR_EQ expression
-		{
-			PEBinary *t  = new PEBinary('^', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_LS_EQ expression
-		{
-			PEBShift *t  = new PEBShift('l', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_RS_EQ expression
-		{
-			PEBShift *t  = new PEBShift('r', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_RSS_EQ expression
-		{
-			PEBShift *t  = new PEBShift('R', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
+  : lpvalue K_PLUS_EQ expression
+      { PAssign*tmp = new PAssign($1, '+', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_MINUS_EQ expression
+      { PAssign*tmp = new PAssign($1, '-', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_MUL_EQ expression
+      { PAssign*tmp = new PAssign($1, '*', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_DIV_EQ expression
+      { PAssign*tmp = new PAssign($1, '/', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_MOD_EQ expression
+      { PAssign*tmp = new PAssign($1, '%', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_AND_EQ expression
+      { PAssign*tmp = new PAssign($1, '&', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_OR_EQ expression
+      { PAssign*tmp = new PAssign($1, '|', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_XOR_EQ expression
+      { PAssign*tmp = new PAssign($1, '^', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_LS_EQ expression
+      { PAssign  *tmp = new PAssign($1, 'l', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_RS_EQ expression
+      { PAssign*tmp = new PAssign($1, 'r', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_RSS_EQ expression
+      { PAssign  *tmp = new PAssign($1, 'R', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
 	;
 
 statement_list_or_null

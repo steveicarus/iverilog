@@ -51,22 +51,27 @@ PAssign_::~PAssign_()
 }
 
 PAssign::PAssign(PExpr*lval__, PExpr*ex)
-: PAssign_(lval__, ex, false)
+: PAssign_(lval__, ex, false), op_(0)
+{
+}
+
+PAssign::PAssign(PExpr*lval__, char op, PExpr*ex)
+: PAssign_(lval__, ex, false), op_(op)
 {
 }
 
 PAssign::PAssign(PExpr*lval__, PExpr*d, PExpr*ex)
-: PAssign_(lval__, d, ex)
+: PAssign_(lval__, d, ex), op_(0)
 {
 }
 
 PAssign::PAssign(PExpr*lval__, PExpr*cnt, PEventStatement*d, PExpr*ex)
-: PAssign_(lval__, cnt, d, ex)
+: PAssign_(lval__, cnt, d, ex), op_(0)
 {
 }
 
 PAssign::PAssign(PExpr*lval__, PExpr*ex, bool is_constant)
-: PAssign_(lval__, ex, is_constant)
+: PAssign_(lval__, ex, is_constant), op_(0)
 {
 }
 
