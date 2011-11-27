@@ -15,6 +15,8 @@
 #
 # The complete steps to make a snapshot YYYYMMDD generally are:
 #
+#   edit the verilog.spec to set the rev_date to YYYYMMDD
+#
 #   git tag -a sYYYYMMDD
 #                 (Make the tag in the local git repository.)
 #
