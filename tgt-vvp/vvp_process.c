@@ -565,6 +565,7 @@ static int show_stmt_alloc(ivl_statement_t net)
 static int show_stmt_assign_vector(ivl_statement_t net)
 {
       ivl_expr_t rval = ivl_stmt_rval(net);
+      struct vector_info res;
 
 	/* Handle the special case that the expression is a real
 	   value. Evaluate the real expression, then convert the
@@ -576,12 +577,10 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 		 assignment. */
 	    unsigned wid = ivl_stmt_lwidth(net);
 
-	    struct vector_info vec;
+	    res.base = allocate_vector(wid);
+	    res.wid = wid;
 
-	    vec.base = allocate_vector(wid);
-	    vec.wid = wid;
-
-	    if (vec.base == 0) {
+	    if (res.base == 0) {
 		  fprintf(stderr, "%s:%u: vvp.tgt error: "
 			  "Unable to allocate %u thread bits for "
 			  "r-value expression.\n", ivl_expr_file(rval),
@@ -590,22 +589,20 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	    }
 
 	    fprintf(vvp_out, "    %%cvt/vr %u, %d, %u;\n",
-		    vec.base, word, vec.wid);
+		    res.base, word, res.wid);
 
 	    clr_word(word);
 
-	    set_vec_to_lval(net, vec);
-
-	    clr_vector(vec);
-	    return 0;
+      } else {
+	    res = draw_eval_expr(rval, 0);
       }
 
+      if (ivl_stmt_opcode(net) != 0)
+	    fprintf(vvp_out, "; UNSUPPORTED ASSIGNMENT OPCODE: %c\n", ivl_stmt_opcode(net));
 
-      { struct vector_info res = draw_eval_expr(rval, 0);
-        set_vec_to_lval(net, res);
-	if (res.base > 3)
-	      clr_vector(res);
-      }
+      set_vec_to_lval(net, res);
+      if (res.base > 3)
+	    clr_vector(res);
 
 
       return 0;

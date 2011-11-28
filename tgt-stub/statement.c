@@ -179,6 +179,7 @@ void show_stmt_wait(ivl_statement_t net, unsigned ind)
 void show_statement(ivl_statement_t net, unsigned ind)
 {
       unsigned idx;
+      char opcode = 0;
       const ivl_statement_type_t code = ivl_statement_type(net);
 
       switch (code) {
@@ -188,8 +189,11 @@ void show_statement(ivl_statement_t net, unsigned ind)
             break;
 
 	  case IVL_ST_ASSIGN:
-	    fprintf(out, "%*sASSIGN <lwidth=%u>\n", ind, "",
-		    ivl_stmt_lwidth(net));
+	    opcode = ivl_stmt_opcode(net);
+	    if (opcode == 0)
+		  opcode = ' ';
+	    fprintf(out, "%*sASSIGN <lwidth=%u> opcode=%c\n", ind, "",
+		    ivl_stmt_lwidth(net), opcode);
 
 	    for (idx = 0 ;  idx < ivl_stmt_lvals(net) ;  idx += 1)
 		  show_assign_lval(ivl_stmt_lval(net, idx), ind+4);

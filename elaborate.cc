@@ -2271,7 +2271,7 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
       NetExpr*rv = elaborate_rval_(des, scope, count_lval_width(lv), lv->expr_type());
       if (rv == 0) return 0;
 
-      NetAssign*cur = new NetAssign(lv, rv);
+      NetAssign*cur = new NetAssign(lv, op_, rv);
       cur->set_line(*this);
 
       return cur;

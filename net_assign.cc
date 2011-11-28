@@ -233,7 +233,12 @@ const NetExpr* NetAssignBase::get_delay() const
 }
 
 NetAssign::NetAssign(NetAssign_*lv, NetExpr*rv)
-: NetAssignBase(lv, rv)
+: NetAssignBase(lv, rv), op_(0)
+{
+}
+
+NetAssign::NetAssign(NetAssign_*lv, char op, NetExpr*rv)
+: NetAssignBase(lv, rv), op_(op)
 {
 }
 

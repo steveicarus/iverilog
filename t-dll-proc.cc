@@ -210,6 +210,7 @@ bool dll_target::proc_assign(const NetAssign*net)
 	/* Make the lval fields. */
       make_assign_lvals_(net);
 
+      stmt_cur_->u_.assign_.oper = net->assign_operator();
       assert(expr_ == 0);
       net->rval()->expr_scan(this);
       stmt_cur_->u_.assign_.rval_ = expr_;

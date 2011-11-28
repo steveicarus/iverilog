@@ -824,7 +824,10 @@ void NetAssign::dump(ostream&o, unsigned ind) const
       o << setw(ind) << "";
       dump_lval(o);
 
-      o << " = ";
+      if (op_)
+	    o << " " << op_ << "= ";
+      else
+	    o << " = ";
 
       if (const NetExpr*de = get_delay())
 	    o << "#(" << *de << ") ";
