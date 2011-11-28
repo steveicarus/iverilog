@@ -131,6 +131,7 @@ extern bool of_MOD_S(vthread_t thr, vvp_code_t code);
 extern bool of_MOD_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MOV(vthread_t thr, vvp_code_t code);
 extern bool of_MOV_WR(vthread_t thr, vvp_code_t code);
+extern bool of_MOV_WU(vthread_t thr, vvp_code_t code);
 extern bool of_MOVI(vthread_t thr, vvp_code_t code);
 extern bool of_MUL(vthread_t thr, vvp_code_t code);
 extern bool of_MUL_WR(vthread_t thr, vvp_code_t code);
