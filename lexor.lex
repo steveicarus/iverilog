@@ -516,7 +516,7 @@ TU [munpf]
 
 ^{W}?`begin_keywords{W}? { BEGIN(PPBEGIN_KEYWORDS); }
 
-<PPBEGIN_KEYWORDS>\"[a-zA-Z0-9 -]*\".* {
+<PPBEGIN_KEYWORDS>\"[a-zA-Z0-9 -\.]*\".* {
       keyword_mask_stack.push_front(lexor_keyword_mask);
 
       char*word = yytext+1;
