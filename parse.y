@@ -3312,6 +3312,16 @@ parameter_assign_decl
 	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
+  | K_signed
+      { param_active_range = 0;
+	param_active_signed = true;
+	param_active_type = IVL_VT_LOGIC;
+      }
+    parameter_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
   | K_signed range
       { param_active_range = $2;
 	param_active_signed = true;
@@ -3425,6 +3435,16 @@ localparam_assign_decl
     localparam_assign_list
       { param_active_range = 0;
         param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
+  | K_signed
+      { param_active_range = 0;
+	param_active_signed = true;
+	param_active_type = IVL_VT_LOGIC;
+      }
+    localparam_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
   | K_signed range

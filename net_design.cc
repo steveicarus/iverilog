@@ -405,11 +405,11 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
       }
       (*cur).second.val = expr;
 
-	/* If the parameter has range information, then make
-	   sure the type is set right. Note that if the
-	   parameter doesn't have an explicit range, then it
-	   will get the signedness from the expression itself. */
-      if (range_flag) {
+	/* If the parameter has type or range information, then make
+	   sure the type is set right. Note that if the parameter
+	   doesn't have an explicit type or range, then it will get
+	   the signedness from the expression itself. */
+      if ((*cur).second.signed_flag || range_flag) {
 	    /* If we have a real value convert it to an integer. */
 	    if(NetECReal*tmp = dynamic_cast<NetECReal*>(expr)) {
 		  verinum nval(tmp->value().as_long64(), (unsigned)lv_width);
