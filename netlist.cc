@@ -450,7 +450,8 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
 : NetObj(s, n, 1),
     type_(t), port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE),
     signed_(false), isint_(false), is_scalar_(false), local_flag_(false),
-    enumeration_(0), discipline_(0), msb_(npins-1), lsb_(0), dimensions_(0),
+    enumeration_(0), struct_type_(0), discipline_(0),
+    msb_(npins-1), lsb_(0), dimensions_(0),
     s0_(0), e0_(0), eref_count_(0), lref_count_(0)
 {
       assert(s);
@@ -496,7 +497,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 : NetObj(s, n, 1), type_(t),
     port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE), signed_(false),
     isint_(false), is_scalar_(false), local_flag_(false),
-    enumeration_(0), discipline_(0),
+    enumeration_(0), struct_type_(0), discipline_(0),
     msb_(ms), lsb_(ls),
     dimensions_(0), s0_(0), e0_(0),
     eref_count_(0), lref_count_(0)
@@ -544,7 +545,8 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 : NetObj(s, n, calculate_count(array_s, array_e)),
     type_(t), port_type_(NOT_A_PORT),
     data_type_(IVL_VT_NO_TYPE), signed_(false), isint_(false),
-    is_scalar_(false), local_flag_(false), enumeration_(0), discipline_(0),
+    is_scalar_(false), local_flag_(false), enumeration_(0), struct_type_(0),
+    discipline_(0),
     msb_(ms), lsb_(ls),
     dimensions_(1), s0_(array_s), e0_(array_e),
     eref_count_(0), lref_count_(0)
@@ -692,8 +694,21 @@ netenum_t*NetNet::enumeration(void) const
 
 void NetNet::set_enumeration(netenum_t*es)
 {
+      ivl_assert(*this, struct_type_ == 0);
       ivl_assert(*this, enumeration_ == 0);
       enumeration_ = es;
+}
+
+netstruct_t*NetNet::struct_type(void) const
+{
+      return struct_type_;
+}
+
+void NetNet::set_struct_type(netstruct_t*type)
+{
+      ivl_assert(*this, struct_type_ == 0);
+      ivl_assert(*this, enumeration_ == 0);
+      struct_type_ = type;
 }
 
 ivl_discipline_t NetNet::get_discipline() const

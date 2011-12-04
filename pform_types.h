@@ -57,6 +57,12 @@ struct name_component_t {
       std::list<index_component_t>index;
 };
 
+struct decl_assignment_t {
+      perm_string name;
+      std::list<index_component_t>index;
+      std::auto_ptr<PExpr> expr;
+};
+
 /*
  * The enum_type_t holds the parsed declaration to represent an
  * enumeration. Since this is in the pform, it represents the type
@@ -71,6 +77,16 @@ struct enum_type_t {
       LineInfo li;
 };
 
+struct struct_member_t : public LineInfo {
+      ivl_variable_type_t type;
+      std::auto_ptr< list<PExpr*> > range;
+      std::auto_ptr< list<decl_assignment_t*> > names;
+};
+
+struct struct_type_t : public LineInfo {
+      bool packed_flag;
+      std::auto_ptr< list<struct_member_t*> > members;
+};
 
 /*
  * The pform_name_t is the general form for a hierarchical

@@ -1418,6 +1418,15 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
       return sys_expr;
 }
 
+static NetExpr* check_for_struct_members(const LineInfo*li,
+					 Design*des, NetScope*scope,
+					 NetNet*net, perm_string method_name)
+{
+      cerr << li->get_fileline() << ": sorry: structures not supported here." << endl;
+      des->errors += 1;
+      return 0;
+}
+
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					unsigned expr_wid, unsigned flags) const
 {
@@ -1456,8 +1465,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 		    // enumeration? If so then check to see if this is an
 		    // enumeration method call.
 		  if (net != 0) {
-			netenum_t*netenum = net->enumeration();
-			if (netenum) {
+			if (netenum_t*netenum = net->enumeration()) {
 				// We may need the net expression for the
 				// enumeration variable so get it.
 			      NetESignal*expr = new NetESignal(net);
@@ -1472,6 +1480,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 			                                    expr_wid, tmp,
 			                                    parms_.size());
 			}
+
 		  }
 	    }
 
@@ -2289,8 +2298,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	      // enumeration? If so then check to see if this is an
 	      // enumeration method call.
 	    if (net != 0) {
-		  netenum_t*netenum = net->enumeration();
-		  if (netenum) {
+		    // If this net is actually an enum, the method may
+		    // be an enumeration method.
+		  if (netenum_t*netenum = net->enumeration()) {
 			  // We may need the net expression for the
 			  // enumeration variable so get it.
 			NetESignal*expr = new NetESignal(net);
@@ -2303,6 +2313,16 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			                              use_path, method_name,
 			                              expr, expr_wid, NULL, 0);
 		  }
+
+		    // If this net is a struct, the method name may be
+		    // a struct member.
+		  if (net->struct_type() != 0) {
+			ivl_assert(*this, use_path.back().index.empty());
+
+			return check_for_struct_members(this, des, scope,
+							net, method_name);
+		  }
+
 	    }
       }
 

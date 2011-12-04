@@ -135,6 +135,8 @@ extern void pform_set_default_nettype(NetNet::Type net,
  */
 extern PWire* pform_get_wire_in_scope(perm_string name);
 
+extern PWire* pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_type, NetNet::PortType port_type, ivl_variable_type_t vt_type);
+
 /*
  * The parser uses startmodule and endmodule together to build up a
  * module as it parses it. The startmodule tells the pform code that a
@@ -279,6 +281,8 @@ extern void pform_set_reg_time(list<perm_string>*names);
 extern void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>*names);
 
 extern void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_string>*names);
+
+extern void pform_set_struct_type(struct_type_t*struct_type, list<perm_string>*names);
 
   /* pform_set_attrib and pform_set_type_attrib exist to support the
      $attribute syntax, which can only set string values to

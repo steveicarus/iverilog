@@ -75,6 +75,7 @@ class NetEvWait;
 class PExpr;
 class PFunction;
 class netenum_t;
+class netstruct_t;
 
 struct target;
 struct functor_t;
@@ -603,6 +604,9 @@ class NetNet  : public NetObj {
       void set_enumeration(netenum_t*enum_set);
       netenum_t*enumeration(void) const;
 
+      void set_struct_type(netstruct_t*type);
+      netstruct_t*struct_type(void) const;
+
 	/* Attach a discipline to the net. */
       ivl_discipline_t get_discipline() const;
       void set_discipline(ivl_discipline_t dis);
@@ -676,6 +680,7 @@ class NetNet  : public NetObj {
       bool is_scalar_ : 1;
       bool local_flag_: 1;
       netenum_t*enumeration_;
+      netstruct_t*struct_type_;
       ivl_discipline_t discipline_;
 
       long msb_, lsb_;

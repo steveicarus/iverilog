@@ -32,6 +32,7 @@
 # include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "netstruct.h"
 # include  "util.h"
 # include  "ivl_assert.h"
 
@@ -1092,6 +1093,11 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    list<named_pexpr_t>::const_iterator sample_name = enum_type_->names->begin();
 	    netenum_t*use_enum = scope->enumeration_for_name(sample_name->name);
 	    sig->set_enumeration(use_enum);
+      }
+
+      if (struct_type_) {
+	    netstruct_t*use_type = new netstruct_t;
+	    sig->set_struct_type(use_type);
       }
 
       if (wtype == NetNet::WIRE) sig->devirtualize_pins();

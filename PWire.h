@@ -80,6 +80,7 @@ class PWire : public LineInfo {
       void set_memory_idx(PExpr*ldx, PExpr*rdx);
 
       void set_enumeration(enum_type_t*enum_type);
+      void set_struct_type(struct_type_t*type);
 
       void set_discipline(ivl_discipline_t);
       ivl_discipline_t get_discipline(void) const;
@@ -116,6 +117,7 @@ class PWire : public LineInfo {
       PExpr*ridx_;
 
       enum_type_t*enum_type_;
+      struct_type_t*struct_type_;
 
       ivl_discipline_t discipline_;
 

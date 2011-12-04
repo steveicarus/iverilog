@@ -30,7 +30,8 @@ PWire::PWire(perm_string n,
   signed_(false), isint_(false),
   port_msb_(0), port_lsb_(0), port_set_(false),
   net_msb_(0), net_lsb_(0), net_set_(false), is_scalar_(false),
-  error_cnt_(0), lidx_(0), ridx_(0), enum_type_(0), discipline_(0)
+  error_cnt_(0), lidx_(0), ridx_(0), enum_type_(0), struct_type_(0),
+  discipline_(0)
 {
       if (t == NetNet::INTEGER) {
 	    type_ = NetNet::REG;
@@ -217,7 +218,15 @@ void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
 void PWire::set_enumeration(enum_type_t*enum_type)
 {
       assert(enum_type_ == 0);
+      assert(struct_type_ == 0);
       enum_type_ = enum_type;
+}
+
+void PWire::set_struct_type(struct_type_t*type)
+{
+      assert(enum_type_ == 0);
+      assert(struct_type_ == 0);
+      struct_type_ = type;
 }
 
 void PWire::set_discipline(ivl_discipline_t d)

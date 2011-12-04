@@ -330,6 +330,13 @@ static void current_task_set_statement(vector<Statement*>*s)
       net_decl_assign_t*net_decl_assign;
       enum_type_t*enum_type;
 
+      decl_assignment_t*decl_assignment;
+      list<decl_assignment_t*>*decl_assignments;
+
+      struct_member_t*struct_member;
+      list<struct_member_t*>*struct_members;
+      struct_type_t*struct_type;
+
       verinum* number;
 
       verireal* realtime;
@@ -436,7 +443,8 @@ static void current_task_set_statement(vector<Statement*>*s)
 
 %type <flag>    from_exclude
 %type <number>  number pos_neg_number
-%type <flag>    unsigned_signed_opt signed_unsigned_opt reg_opt
+%type <flag>    unsigned_signed_opt signed_unsigned_opt
+%type <flag>    K_packed_opt K_reg_opt
 %type <flag>    udp_reg_opt edge_operator automatic_opt
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
@@ -490,6 +498,13 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <exprs> delay1 delay3 delay3_opt delay_value_list
 %type <exprs> expression_list_with_nuls expression_list_proper
 %type <exprs> cont_assign cont_assign_list
+
+%type <decl_assignment> variable_decl_assignment
+%type <decl_assignments> list_of_variable_decl_assignments
+
+%type <struct_member>  struct_union_member
+%type <struct_members> struct_union_member_list
+%type <struct_type>    struct_data_type
 
 %type <exprs> range range_opt
 %type <dimensions> dimensions_opt dimensions
@@ -695,6 +710,13 @@ block_item_decl
 	if ($1) delete $1;
       }
 
+  /* struct data type declarations */
+
+  | attribute_list_opt struct_data_type register_variable_list ';'
+      { pform_set_struct_type($2, $3);
+	if ($1) delete $1;
+      }
+
   /* real declarations are fairly simple as there is no range of
      signed flag in the declaration. Create the real as a NetNet::REG
      with real value. Note that real and realtime are interchangeable
@@ -876,6 +898,63 @@ enum_name
 	delete[]$1;
 	delete $3;
 	delete $5;
+      }
+  ;
+
+struct_data_type
+  : K_struct K_packed_opt '{' struct_union_member_list '}'
+      { struct_type_t*tmp = new struct_type_t;
+	FILE_NAME(tmp, @1);
+	tmp->packed_flag = $2;
+	tmp->members .reset($4);
+	$$ = tmp;
+      }
+  | K_struct K_packed_opt '{' error '}'
+      { yyerror(@4, "error: Errors in struct/union member list.");
+	yyerrok;
+	struct_type_t*tmp = new struct_type_t;
+	FILE_NAME(tmp, @1);
+	tmp->packed_flag = $2;
+	$$ = tmp;
+      }
+  ;
+
+struct_union_member_list
+  : struct_union_member_list struct_union_member
+      { list<struct_member_t*>*tmp = $1;
+	tmp->push_back($2);
+	$$ = tmp;
+      }
+  | struct_union_member
+      { list<struct_member_t*>*tmp = new list<struct_member_t*>;
+	$$ = tmp;
+      }
+  ;
+
+struct_union_member
+  : attribute_list_opt K_bit range_opt list_of_variable_decl_assignments ';'
+      { struct_member_t*tmp = new struct_member_t;
+	FILE_NAME(tmp, @2);
+	tmp->type = IVL_VT_BOOL;
+	tmp->range .reset($3);
+	tmp->names .reset($4);
+	$$ = tmp;
+      }
+  | attribute_list_opt K_logic range_opt list_of_variable_decl_assignments ';'
+      { struct_member_t*tmp = new struct_member_t;
+	FILE_NAME(tmp, @2);
+	tmp->type = IVL_VT_LOGIC;
+	tmp->range .reset($3);
+	tmp->names .reset($4);
+	$$ = tmp;
+      }
+  | attribute_list_opt atom2_type list_of_variable_decl_assignments ';'
+      { struct_member_t*tmp = new struct_member_t;
+	FILE_NAME(tmp, @2);
+	tmp->type = IVL_VT_BOOL;
+	tmp->range .reset( make_range_from_width($2) );
+	tmp->names .reset($3);
+	$$ = tmp;
       }
   ;
 
@@ -3954,6 +4033,40 @@ register_variable_list
 		}
 	;
 
+/* TODO: Replace register_variable_list with list_of_variable_decl_assignments. */
+list_of_variable_decl_assignments
+  : variable_decl_assignment
+      { list<decl_assignment_t*>*tmp = new list<decl_assignment_t*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
+  | list_of_variable_decl_assignments ',' variable_decl_assignment
+      { list<decl_assignment_t*>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
+  ;
+
+variable_decl_assignment
+  : IDENTIFIER dimensions_opt
+      { decl_assignment_t*tmp = new decl_assignment_t;
+	tmp->name = lex_strings.make($1);
+	if ($2) {
+	      tmp->index = *$2;
+	      delete $2;
+	}
+	delete[]$1;
+	$$ = tmp;
+      }
+  | IDENTIFIER '=' expression
+      { decl_assignment_t*tmp = new decl_assignment_t;
+	tmp->name = lex_strings.make($1);
+	tmp->expr .reset($3);
+	delete[]$1;
+	$$ = tmp;
+      }
+  ;
+
 real_variable
   : IDENTIFIER dimensions_opt
       { perm_string name = lex_strings.make($1);
@@ -4820,13 +4933,8 @@ task_item
         | task_port_item   { $$ = $1; }
         ;
 
-reg_opt
-	: K_reg { $$ = true; }
-	| { $$ = false; }
-	;
-
 task_port_item
-  : K_input reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
+  : K_input K_reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
       { svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINPUT,
 						$2 ? IVL_VT_LOGIC :
 						     IVL_VT_NO_TYPE,
@@ -4834,7 +4942,7 @@ task_port_item
 						@1.text, @1.first_line);
 	$$ = tmp;
       }
-  | K_output reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
+  | K_output K_reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
       { svector<PWire*>*tmp = pform_make_task_ports(NetNet::POUTPUT,
 						$2 ? IVL_VT_LOGIC :
 						     IVL_VT_NO_TYPE,
@@ -4842,7 +4950,7 @@ task_port_item
 						@1.text, @1.first_line);
 	$$ = tmp;
       }
-  | K_inout reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
+  | K_inout K_reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
       { svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINOUT,
 						$2 ? IVL_VT_LOGIC :
 						     IVL_VT_NO_TYPE,
@@ -4954,7 +5062,7 @@ task_item_list_opt
 
 task_port_decl
 
-	: K_input reg_opt unsigned_signed_opt range_opt IDENTIFIER
+	: K_input K_reg_opt unsigned_signed_opt range_opt IDENTIFIER
 		{ port_declaration_context.port_type = NetNet::PINPUT;
 		  port_declaration_context.var_type = IVL_VT_LOGIC;
 		  port_declaration_context.sign_flag = $3;
@@ -4968,7 +5076,7 @@ task_port_decl
 		  $$ = tmp;
 		}
 
-	| K_output reg_opt unsigned_signed_opt range_opt IDENTIFIER
+	| K_output K_reg_opt unsigned_signed_opt range_opt IDENTIFIER
 		{ port_declaration_context.port_type = NetNet::POUTPUT;
 		  port_declaration_context.var_type = IVL_VT_LOGIC;
 		  port_declaration_context.sign_flag = $3;
@@ -4981,7 +5089,7 @@ task_port_decl
 						@1.text, @1.first_line);
 		  $$ = tmp;
 		}
-	| K_inout reg_opt unsigned_signed_opt range_opt IDENTIFIER
+	| K_inout K_reg_opt unsigned_signed_opt range_opt IDENTIFIER
 		{ port_declaration_context.port_type = NetNet::PINOUT;
 		  port_declaration_context.var_type = IVL_VT_LOGIC;
 		  port_declaration_context.sign_flag = $3;
@@ -5504,3 +5612,6 @@ udp_primitive
 		  delete[]$6;
 		}
 	;
+
+K_packed_opt : K_packed { $$ = true; } | { $$ = false; } ;
+K_reg_opt    : K_reg { $$ = true; }    | { $$ = false; } ;

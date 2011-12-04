@@ -385,7 +385,7 @@ static void pform_put_enum_type_in_scope(enum_type_t*enum_set)
       lexical_scope->enum_sets.push_back(enum_set);
 }
 
-static PWire*pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_type, NetNet::PortType port_type, ivl_variable_type_t vt_type)
+PWire*pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_type, NetNet::PortType port_type, ivl_variable_type_t vt_type)
 {
       PWire*cur = pform_get_wire_in_scope(name);
       if (cur == 0) {
