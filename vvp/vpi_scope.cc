@@ -155,7 +155,7 @@ static int scope_get(int code, vpiHandle obj)
 	    return (int) ref->is_automatic;
       }
 
-      return 0;
+      return vpiUndefined;
 }
 
 static void construct_scope_fullname(struct __vpiScope*ref, char*buf)
@@ -182,8 +182,8 @@ static const char* scope_get_type(int code)
           case vpiNamedFork:
             return "vpiNamedFork";
           default:
-            fprintf(stderr, "ERROR: invalid code %d.", code);
-            assert(0);
+            fprintf(stderr, "VPI error: invalid scope type code %d.\n", code);
+            return NULL;
       }
 }
 
@@ -223,9 +223,8 @@ static char* scope_get_str(int code, vpiHandle obj)
 	    break;
 
 	  default:
-	    fprintf(stderr, "ERROR: invalid code %d.", code);
-	    assert(0);
-	    return 0;
+	    fprintf(stderr, "VPI error: invalid scope string code %d.\n", code);
+	    return NULL;
       }
       return simple_set_rbuf_str(p);
 }
