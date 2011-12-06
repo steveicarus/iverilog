@@ -597,7 +597,6 @@ static char* signal_get_str(int code, vpiHandle ref)
 
       if ((code != vpiName) && (code != vpiFullName)) return NULL;
 
-// HERE: vpiFullName is just vpiName!
       char *nm, *ixs;
       if (rfp->is_netarray) {
 	    nm = strdup(vpi_get_str(vpiName, rfp->within.parent));
@@ -610,6 +609,7 @@ static char* signal_get_str(int code, vpiHandle ref)
 	    ixs = NULL;
       }
 
+	/* The scope information is added here for vpiFullName. */
       char *rbuf = generic_get_str(code, &(vpip_scope(rfp)->base), nm, ixs);
       free(nm);
       return rbuf;
