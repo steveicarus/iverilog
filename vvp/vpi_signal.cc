@@ -595,8 +595,9 @@ static char* signal_get_str(int code, vpiHandle ref)
 	    return simple_set_rbuf_str(file_names[0]);
       }
 
-      if (code != vpiName) return NULL;
+      if ((code != vpiName) && (code != vpiFullName)) return NULL;
 
+// HERE: vpiFullName is just vpiName!
       char *nm, *ixs;
       if (rfp->is_netarray) {
 	    nm = strdup(vpi_get_str(vpiName, rfp->within.parent));
