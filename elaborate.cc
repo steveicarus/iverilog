@@ -2790,11 +2790,15 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 		  des->errors += 1;
 		  continue;
 	    }
-	    if (wid > rv->expr_width()) {
-		  rv->set_width(wid);
-		  rv = pad_to_width(rv, wid, *this);
+	      /* Don't pad real values, they will be converted in the
+	       * assignment below. */
+	    if (rv->expr_type() != IVL_VT_REAL) {
+		  if (wid > rv->expr_width()) {
+			rv->set_width(wid);
+			rv = pad_to_width(rv, wid, *this);
+		  }
+		  ivl_assert(*this, rv->expr_width() >= wid);
 	    }
-	    ivl_assert(*this, rv->expr_width() >= wid);
 
 	    NetAssign*pr = new NetAssign(lv, rv);
 	    block->append(pr);
