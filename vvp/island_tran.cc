@@ -152,9 +152,24 @@ static void push_value_through_branch(const vvp_vector8_t&val,
       if (dst_port->value.size() == 0)
             dst_port->value = island_get_value(dst_net);
 
-        // If we don't yet have an initial value for the port, skip.
-      if (dst_port->value.size() == 0)
+	// If we don't yet have an initial value for this port, simply
+	// derive the port value from the pushed value. This does not
+	// need to be pushed back into the network.
+      if (dst_port->value.size() == 0) {
+	    if (branch->width == 0) {
+		    // There are no part selects.
+		  dst_port->value = val;
+	    } else if (dst_ab == 1) {
+		    // The other side is a strict subset (part select)
+		    // of this side.
+		  dst_port->value = val.subvalue(branch->offset, branch->part);
+	    } else {
+		   // The other side is a superset of this side.
+		  dst_port->value = part_expand(val, branch->width,
+					        branch->offset);
+	    }
             return;
+      }
 
         // Now resolve the pushed value with whatever values we have
         // previously collected (and resolved) for the port.
