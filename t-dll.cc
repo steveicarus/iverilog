@@ -2503,7 +2503,7 @@ void dll_target::signal(const NetNet*net)
       obj->array_words = net->array_count();
       obj->array_addr_swapped = net->array_addr_swapped() ? 1 : 0;
 
-      assert(obj->array_words == net->pin_count());
+      ivl_assert(*net, obj->array_words == net->pin_count());
       if (debug_optimizer && obj->array_words > 1000) cerr << "debug: "
 	    "t-dll creating nexus array " << obj->array_words << " long" << endl;
       if (obj->array_words > 1 && net->pins_are_virtual()) {

@@ -20,15 +20,51 @@
  */
 
 # include  "LineInfo.h"
+# include <vector>
+# include  "ivl_target.h"
 
 class netstruct_t : public LineInfo {
+
+    public:
+      struct member_t {
+	    perm_string name;
+	    ivl_variable_type_t type;
+	    long msb;
+	    long lsb;
+	    long width() const;
+      };
 
     public:
       netstruct_t();
       ~netstruct_t();
 
+      void packed(bool flag);
+      bool packed(void) const;
+
+      void append_member(const member_t&);
+
+	// Given the name of a member, return a pointer to the member
+	// description, and set the off value to be the offset into
+	// the packed value where the member begins.
+      const struct member_t* packed_member(perm_string name, unsigned long&off) const;
+
+	// Return the width (in bits) of the packed record, or -1 if
+	// the record is not packed.
+      long packed_width() const;
+
     private:
       bool packed_;
+      std::vector<member_t>members_;
 };
+
+inline bool netstruct_t::packed(void) const { return packed_; }
+
+inline long netstruct_t::member_t::width() const
+{
+      if (msb >= lsb)
+	    return msb - lsb + 1;
+      else
+	    return lsb - msb + 1;
+}
 
 #endif

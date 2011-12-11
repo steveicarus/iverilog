@@ -27,6 +27,7 @@
 # include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "netstruct.h"
 # include  "ivl_assert.h"
 
 
@@ -579,6 +580,51 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
       s->add_signal(this);
 }
 
+static unsigned calculate_count(netstruct_t*type)
+{
+      long wid = type->packed_width();
+      if (wid >= 0)
+	    return wid;
+      else
+	    return 1;
+}
+
+/*
+ * When we create a netnet for a packed struct, create a single
+ * vector with the msb_/lsb_ chosen to name enough bits for the entire
+ * packed structure.
+ */
+NetNet::NetNet(NetScope*s, perm_string n, Type t, netstruct_t*ty)
+: NetObj(s, n, 1),
+    type_(t), port_type_(NOT_A_PORT),
+    data_type_(IVL_VT_NO_TYPE), signed_(false), isint_(false),
+    is_scalar_(false), local_flag_(false), enumeration_(0), struct_type_(ty),
+    discipline_(0), msb_(calculate_count(ty)-1), lsb_(0),
+    dimensions_(0), s0_(0), e0_(0),
+    eref_count_(0), lref_count_(0)
+{
+      Link::DIR dir = Link::PASSIVE;
+
+      switch (t) {
+	  case REG:
+	  case IMPLICIT_REG:
+	    dir = Link::OUTPUT;
+	    break;
+	  case SUPPLY0:
+	    dir = Link::OUTPUT;
+	    break;
+	  case SUPPLY1:
+	    dir = Link::OUTPUT;
+	    break;
+	  default:
+	    break;
+      }
+
+      initialize_dir_(dir);
+
+      s->add_signal(this);
+}
+
 NetNet::~NetNet()
 {
       if (eref_count_ > 0) {
@@ -702,13 +748,6 @@ void NetNet::set_enumeration(netenum_t*es)
 netstruct_t*NetNet::struct_type(void) const
 {
       return struct_type_;
-}
-
-void NetNet::set_struct_type(netstruct_t*type)
-{
-      ivl_assert(*this, struct_type_ == 0);
-      ivl_assert(*this, enumeration_ == 0);
-      struct_type_ = type;
 }
 
 ivl_discipline_t NetNet::get_discipline() const

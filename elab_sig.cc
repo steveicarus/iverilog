@@ -781,6 +781,51 @@ void PWhile::elaborate_sig(Design*des, NetScope*scope) const
 	    statement_->elaborate_sig(des, scope);
 }
 
+static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
+					  struct_type_t*struct_type)
+{
+      netstruct_t*res = new netstruct_t;
+
+      res->packed(struct_type->packed_flag);
+
+      for (list<struct_member_t*>::iterator cur = struct_type->members->begin()
+		 ; cur != struct_type->members->end() ; ++ cur) {
+
+	    struct_member_t*curp = *cur;
+	    long use_msb = 0;
+	    long use_lsb = 0;
+	    if (! curp->range->empty()) {
+		  ivl_assert(*curp, curp->range->size() == 2);
+		  PExpr*msb_pex = curp->range->front();
+		  PExpr*lsb_pex = curp->range->back();
+
+		  NetExpr*tmp = elab_and_eval(des, scope, msb_pex, -2, true);
+		  ivl_assert(*curp, tmp);
+		  bool rc = eval_as_long(use_msb, tmp);
+		  ivl_assert(*curp, rc);
+
+		  tmp = elab_and_eval(des, scope, lsb_pex, -2, true);
+		  ivl_assert(*curp, tmp);
+		  rc = eval_as_long(use_lsb, tmp);
+		  ivl_assert(*curp, rc);
+	    }
+
+	    for (list<decl_assignment_t*>::iterator name = curp->names->begin()
+		       ; name != curp->names->end() ;  ++ name) {
+		  decl_assignment_t*namep = *name;
+
+		  netstruct_t::member_t memb;
+		  memb.name = namep->name;
+		  memb.type = curp->type;
+		  memb.msb = use_msb;
+		  memb.lsb = use_lsb;
+		  res->append_member(memb);
+	    }
+      }
+
+      return res;
+}
+
 /*
  * Elaborate a source wire. The "wire" is the declaration of wires,
  * registers, ports and memories. The parser has already merged the
@@ -1069,35 +1114,51 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    }
       }
 
-      if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: Create signal " << wtype;
-	    if (!get_scalar()) {
-		  cerr << " ["<<msb<<":"<<lsb<<"]";
+
+      NetNet*sig = 0;
+
+	// If this is a struct type, then build the net with the
+	// struct type.
+      if (struct_type_) {
+	    netstruct_t*use_type = elaborate_struct_type(des, scope, struct_type_);
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: Create signal " << wtype;
+		  if (use_type->packed())
+			cerr << " " << use_type->packed_width() << " bit packed struct ";
+		  else
+			cerr << " struct <> ";
+		  cerr << name_;
+		  cerr << " in scope " << scope_path(scope) << endl;
 	    }
-	    cerr << " " << name_;
-	    if (array_dimensions > 0) {
-		  cerr << " [" << array_s0 << ":" << array_e0 << "]" << endl;
+
+	    sig = new NetNet(scope, name_, wtype, use_type);
+
+      } else {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: Create signal " << wtype;
+		  if (!get_scalar()) {
+			cerr << " ["<<msb<<":"<<lsb<<"]";
+		  }
+		  cerr << " " << name_;
+		  if (array_dimensions > 0) {
+			cerr << " [" << array_s0 << ":" << array_e0 << "]" << endl;
+		  }
+		  cerr << " in scope " << scope_path(scope) << endl;
 	    }
-	    cerr << " in scope " << scope_path(scope) << endl;
+
+	    sig = array_dimensions > 0
+		  ? new NetNet(scope, name_, wtype, msb, lsb, array_s0, array_e0)
+		  : new NetNet(scope, name_, wtype, msb, lsb);
       }
-
-
-      NetNet*sig = array_dimensions > 0
-	    ? new NetNet(scope, name_, wtype, msb, lsb, array_s0, array_e0)
-	    : new NetNet(scope, name_, wtype, msb, lsb);
 
 	// If this is an enumeration, then set the enumeration set for
 	// the new signal. This turns it into an enumeration.
       if (enum_type_) {
+	    ivl_assert(*this, struct_type_ == 0);
 	    ivl_assert(*this, ! enum_type_->names->empty());
 	    list<named_pexpr_t>::const_iterator sample_name = enum_type_->names->begin();
 	    netenum_t*use_enum = scope->enumeration_for_name(sample_name->name);
 	    sig->set_enumeration(use_enum);
-      }
-
-      if (struct_type_) {
-	    netstruct_t*use_type = new netstruct_t;
-	    sig->set_struct_type(use_type);
       }
 
       if (wtype == NetNet::WIRE) sig->devirtualize_pins();

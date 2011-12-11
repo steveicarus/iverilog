@@ -577,6 +577,9 @@ class NetNet  : public NetObj {
       explicit NetNet(NetScope*s, perm_string n, Type t,
 		      long ms, long ls, long s0, long e0);
 
+	// This form builds a NetNet from its record definition.
+      explicit NetNet(NetScope*s, perm_string n, Type t, netstruct_t*type);
+
       virtual ~NetNet();
 
       Type type() const;
@@ -604,7 +607,6 @@ class NetNet  : public NetObj {
       void set_enumeration(netenum_t*enum_set);
       netenum_t*enumeration(void) const;
 
-      void set_struct_type(netstruct_t*type);
       netstruct_t*struct_type(void) const;
 
 	/* Attach a discipline to the net. */

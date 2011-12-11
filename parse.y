@@ -927,6 +927,7 @@ struct_union_member_list
       }
   | struct_union_member
       { list<struct_member_t*>*tmp = new list<struct_member_t*>;
+	tmp->push_back($1);
 	$$ = tmp;
       }
   ;

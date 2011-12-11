@@ -18,6 +18,9 @@
  */
 
 # include  "netstruct.h"
+# include  <iostream>
+
+using namespace std;
 
 netstruct_t::netstruct_t()
 : packed_(false)
@@ -26,4 +29,40 @@ netstruct_t::netstruct_t()
 
 netstruct_t::~netstruct_t()
 {
+}
+
+void netstruct_t::packed(bool flag)
+{
+      packed_ = flag;
+}
+
+void netstruct_t::append_member(const netstruct_t::member_t&val)
+{
+      members_.push_back(val);
+}
+
+const netstruct_t::member_t* netstruct_t::packed_member(perm_string name, unsigned long&off) const
+{
+      unsigned long count_off = 0;
+      for (size_t idx = members_.size() ; idx > 0 ; idx -= 1) {
+	    if (members_[idx-1].name == name) {
+		  off = count_off;
+		  return &members_[idx-1];
+	    }
+	    count_off += members_[idx-1].width();
+      }
+
+      return 0;
+}
+
+long netstruct_t::packed_width(void) const
+{
+      if (! packed_)
+	    return -1;
+
+      long res = 0;
+      for (size_t idx = 0 ; idx < members_.size() ; idx += 1)
+	    res += members_[idx].width();
+
+      return res;
 }

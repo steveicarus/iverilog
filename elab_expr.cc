@@ -29,6 +29,7 @@
 # include  "netenum.h"
 # include  "discipline.h"
 # include  "netmisc.h"
+# include  "netstruct.h"
 # include  "util.h"
 # include  "ivl_assert.h"
 
@@ -1422,9 +1423,30 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 					 Design*des, NetScope*scope,
 					 NetNet*net, perm_string method_name)
 {
-      cerr << li->get_fileline() << ": sorry: structures not supported here." << endl;
-      des->errors += 1;
-      return 0;
+      netstruct_t*type = net->struct_type();
+      ivl_assert(*li, type);
+
+      if (! type->packed()) {
+	    cerr << li->get_fileline() << ": sorry: unpacked structures not supported here. "
+		 << "Method=" << method_name << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      unsigned long off;
+      const netstruct_t::member_t*mem = type->packed_member(method_name, off);
+      if (mem == 0)
+	    return 0;
+
+      if (debug_elaborate) {
+	    cerr << li->get_fileline() << ": debug: Found struct member " <<mem->name
+		 << " At offset " << off << endl;
+      }
+
+      NetESignal*sig = new NetESignal(net);
+      NetEConst*base = make_const_val(off);
+      NetESelect*sel = new NetESelect(sig, base, mem->width());
+      return sel;
 }
 
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
