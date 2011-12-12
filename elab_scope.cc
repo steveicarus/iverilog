@@ -150,19 +150,6 @@ static void elaborate_parm_item_(perm_string name,
 	    return;
       }
 
-      if (signed_flag) {
-	      /* If explicitly signed, then say so. */
-	    val->cast_signed(true);
-      } else if (cur.msb) {
-	      /* If there is a range, then the signedness comes
-		 from the type and not the expression. */
-	    val->cast_signed(signed_flag);
-      } else {
-	      /* otherwise, let the expression describe
-		 itself. */
-	    signed_flag = val->has_sign();
-      }
-
       val = scope->set_parameter(name, val, cur.type, msb, lsb, signed_flag,
                                  range_list, cur);
       delete val;

@@ -389,10 +389,10 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	    return;
       }
 
-	/* If the parameter has range information, then make
-	sure the value is set right. Note that if the
-	parameter doesn't have an explicit range, then it
-	will get the signedness from the expression itself. */
+	/* If the parameter has type or range information, then make
+	   sure the type is set right. Note that if the parameter
+	   doesn't have an explicit type or range, then it will get
+	   the signedness from the expression itself. */
       if (range_flag) {
 	    unsigned long wid = (msb >= lsb)? msb - lsb : lsb - msb;
 	    wid += 1;
@@ -420,6 +420,8 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 		  val = new NetEConst(tmp);
 		  (*cur).second.expr = expr = val;
 	    }
+      } else if ((*cur).second.signed_flag) {
+            (*cur).second.expr->cast_signed(true);
       }
 
 	// If there are no value ranges to test the value against,
