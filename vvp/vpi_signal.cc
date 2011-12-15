@@ -573,14 +573,15 @@ static int signal_get(int code, vpiHandle ref)
           case vpiAutomatic:
             return (int) vpip_scope(rfp)->is_automatic;
 
+	    // This private property must return zero when undefined.
 	  case _vpiNexusId:
 	    if (rfp->msb == rfp->lsb)
 		  return (int) (unsigned long) rfp->node;
 	    else
-		  return vpiUndefined;
+		  return 0;
 
 	  default:
-	    fprintf(stderr, "VPI error: unknow signal_get property %d.\n",
+	    fprintf(stderr, "VPI error: unknown signal_get property %d.\n",
 	            code);
 	    return vpiUndefined;
       }
