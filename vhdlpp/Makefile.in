@@ -128,7 +128,7 @@ installdirs: $(srcdir)/../mkinstalldirs
 	$(srcdir)/../mkinstalldirs "$(DESTDIR)$(libdir)/ivl$(suffix)"
 
 uninstall:
-	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/ivhdlpp@EXEEXT@"
+	rm -f "$(DESTDIR)$(libdir)/ivl$(suffix)/vhdlpp@EXEEXT@"
 
 stamp-vhdlpp_config-h: $(srcdir)/vhdlpp_config.h.in ../config.status
 	@rm -f $@
