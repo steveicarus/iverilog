@@ -70,6 +70,7 @@ dllib=@DLLIB@
 CC = @CC@
 HOSTCC = @CC@
 CXX = @CXX@
+DLLTOOL = @DLLTOOL@
 INSTALL = @INSTALL@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -120,7 +121,7 @@ all: dep config.h _pli_types.h version_tag.h ivl@EXEEXT@ version.exe iverilog-vp
 ifeq (@MINGW32@,yes)
 all: dosify.exe
 dosify.exe: $(srcdir)/dosify.c
-	$(CC) -o dosify.exe $(srcdir)/dosify.c
+	$(HOSTCC) -o dosify.exe $(srcdir)/dosify.c
 endif
 
 # This rule rules the compiler in the trivial hello.vl program to make
@@ -203,7 +204,7 @@ ifeq (@WIN32@,yes)
 # that really exports the things that the import library imports.
 ivl@EXEEXT@: $O $(srcdir)/ivl.def
 	$(CXX) -o ivl@EXEEXT@ $O $(dllib) @EXTRALIBS@
-	dlltool --dllname ivl@EXEEXT@ --def $(srcdir)/ivl.def \
+	$(DLLTOOL) --dllname ivl@EXEEXT@ --def $(srcdir)/ivl.def \
 		--output-lib libivl.a --output-exp ivl.exp
 	$(CXX) $(LDFLAGS) -o ivl@EXEEXT@ ivl.exp $O $(dllib) @EXTRALIBS@
 else
