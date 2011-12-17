@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2011 Michael Ruff (mruff at chiaro.com)
  *                         Michael Runyan (mrunyan at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
@@ -402,7 +402,7 @@ PLI_INT32 tf_isetrealdelay(double dly, void*obj)
 
       /* Scale delay to SimTime */
       ivl_u64_t delay = ((dly
-			 * pow(10, tf_gettimeprecision() - tf_gettimeunit()))
+			 / pow(10, tf_gettimeunit() - tf_gettimeprecision()))
 			 + 0.5);
       ti.high = delay >> 32 & 0xffffffff;
       ti.low = delay & 0xffffffff;
