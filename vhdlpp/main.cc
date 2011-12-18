@@ -81,9 +81,12 @@ const char NOTICE[] =
 # include  <getopt.h>
 #endif
 # include  <sys/stat.h>
+// MinGW only supports mkdir() with a path. If this stops working because
+// we need to use _mkdir() for mingw-w32 and mkdir() for mingw-w64 look
+// at using the autoconf AX_FUNC_MKDIR macro to figure this all out.
 #if defined(__MINGW32__)
 # include <io.h>
-# define mkdir(path, mode) _mkdir(path)
+# define mkdir(path, mode) mkdir(path)
 #endif
 
 
