@@ -119,7 +119,7 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 
 	    slice->type = SLICE_SIMPLE_VECTOR;
 	    slice->u_.simple_vector.use_word = use_word;
-	    fprintf(vvp_out, "   %%load/v %u, v%p_%lu, %u;\n",
+	    fprintf(vvp_out, "    %%load/v %u, v%p_%lu, %u;\n",
 		    bit, sig, use_word, wid);
 
       } else if (ivl_signal_dimensions(sig)==0 && part_off_ex==0 && word_ix==0) {
@@ -129,8 +129,8 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	    slice->type = SLICE_PART_SELECT_STATIC;
 	    slice->u_.part_select_static.part_off = part_off;
 
-	    fprintf(vvp_out, "   %%ix/load 1, %lu, 0;\n", part_off);
-	    fprintf(vvp_out, "   %%load/x1p %u, v%p_0, %u;\n", bit, sig, wid);
+	    fprintf(vvp_out, "    %%ix/load 1, %lu, 0;\n", part_off);
+	    fprintf(vvp_out, "    %%load/x1p %u, v%p_0, %u;\n", bit, sig, wid);
 
       } else if (ivl_signal_dimensions(sig)==0 && part_off_ex!=0 && word_ix==0) {
 
@@ -147,16 +147,16 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	    slice->u_.part_select_dynamic.word_idx_reg = allocate_word();
 	    slice->u_.part_select_dynamic.x_flag = allocate_vector(1);
 
-	    fprintf(vvp_out, "   %%mov %u, %u, 1;\n",
+	    fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
 		    slice->u_.part_select_dynamic.x_flag, 4);
-	    fprintf(vvp_out, "   %%mov/wu %d, %d;\n",
+	    fprintf(vvp_out, "    %%mov/wu %d, %d;\n",
 		    slice->u_.part_select_dynamic.word_idx_reg, 1);
 
-	    fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
-	    fprintf(vvp_out, "   %%load/x1p %u, v%p_0, %u;\n", bit, sig, wid);
-	    fprintf(vvp_out, "   %%jmp t_%u;\n", out_set);
+	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+	    fprintf(vvp_out, "    %%load/x1p %u, v%p_0, %u;\n", bit, sig, wid);
+	    fprintf(vvp_out, "    %%jmp t_%u;\n", out_set);
 	    fprintf(vvp_out, "t_%u ;\n", skip_set);
-	    fprintf(vvp_out, "   %%mov %u, 2, %u;\n", bit, wid);
+	    fprintf(vvp_out, "    %%mov %u, 2, %u;\n", bit, wid);
 	    fprintf(vvp_out, "t_%u ;\n", out_set);
 
       } else if (ivl_signal_dimensions(sig) > 0 && word_ix == 0) {
@@ -164,12 +164,12 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	    slice->type = SLICE_MEMORY_WORD_STATIC;
 	    slice->u_.memory_word_static.use_word = use_word;
 	    if (use_word < ivl_signal_array_count(sig)) {
-		  fprintf(vvp_out, "   %%ix/load 3, %lu, 0;\n",
+		  fprintf(vvp_out, "    %%ix/load 3, %lu, 0;\n",
 			  use_word);
-		  fprintf(vvp_out, "   %%load/av %u, v%p, %u;\n",
+		  fprintf(vvp_out, "    %%load/av %u, v%p, %u;\n",
 			  bit, sig, wid);
 	    } else {
-		  fprintf(vvp_out, "   %%mov %u, 2, %u; OUT OF BOUNDS\n",
+		  fprintf(vvp_out, "    %%mov %u, 2, %u; OUT OF BOUNDS\n",
 			  bit, wid);
 	    }
 
@@ -182,18 +182,18 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	    draw_eval_expr_into_integer(word_ix, 3);
 	    slice->u_.memory_word_dynamic.word_idx_reg = allocate_word();
 	    slice->u_.memory_word_dynamic.x_flag = allocate_vector(1);
-	    fprintf(vvp_out, "   %%mov/wu %d, 3;\n",
+	    fprintf(vvp_out, "    %%mov/wu %d, 3;\n",
 		    slice->u_.memory_word_dynamic.x_flag);
-	    fprintf(vvp_out, "   %%mov %u, 4, 1;\n",
+	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n",
 		    slice->u_.memory_word_dynamic.x_flag);
 
-	    fprintf(vvp_out, "   %%jmp/1 t_%u, 4;\n", skip_set);
-	    fprintf(vvp_out, "   %%ix/load 1, 0, 0;\n");
-	    fprintf(vvp_out, "   %%load/av %u, v%p, %u;\n",
+	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+	    fprintf(vvp_out, "    %%ix/load 1, 0, 0;\n");
+	    fprintf(vvp_out, "    %%load/av %u, v%p, %u;\n",
 		    bit, sig, wid);
-	    fprintf(vvp_out, "   %%jmp t_%u;\n", out_set);
+	    fprintf(vvp_out, "    %%jmp t_%u;\n", out_set);
 	    fprintf(vvp_out, "t_%u ;\n", skip_set);
-	    fprintf(vvp_out, "   %%mov %u, 2, %u;\n", bit, wid);
+	    fprintf(vvp_out, "    %%mov %u, 2, %u;\n", bit, wid);
 	    fprintf(vvp_out, "t_%u ;\n", out_set);
 
       } else {
@@ -251,40 +251,40 @@ static void put_vec_to_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
 	    break;
 
 	  case SLICE_SIMPLE_VECTOR:
-	    fprintf(vvp_out, "   %%set/v v%p_%lu, %u, %u;\n",
+	    fprintf(vvp_out, "    %%set/v v%p_%lu, %u, %u;\n",
 		    sig, slice->u_.simple_vector.use_word, bit, wid);
 	    break;
 
 	  case SLICE_PART_SELECT_STATIC:
-	    fprintf(vvp_out, "   %%ix/load 0, %lu, 0;\n",
+	    fprintf(vvp_out, "    %%ix/load 0, %lu, 0;\n",
 		    slice->u_.part_select_static.part_off);
-	    fprintf(vvp_out, "   %%set/x0 v%p_0, %u, %u;\n", sig, bit, wid);
+	    fprintf(vvp_out, "    %%set/x0 v%p_0, %u, %u;\n", sig, bit, wid);
 	    break;
 
 	  case SLICE_PART_SELECT_DYNAMIC:
-	    fprintf(vvp_out, "   %%jmp/1 t_%u, %u;\n", skip_set,
+	    fprintf(vvp_out, "    %%jmp/1 t_%u, %u;\n", skip_set,
 		    slice->u_.part_select_dynamic.x_flag);
-	    fprintf(vvp_out, "   %%mov/wu 0, %d;\n",
+	    fprintf(vvp_out, "    %%mov/wu 0, %d;\n",
 		    slice->u_.part_select_dynamic.word_idx_reg);
-	    fprintf(vvp_out, "   %%set/x0 v%p_0, %u, %u;\n", sig, bit, wid);
+	    fprintf(vvp_out, "    %%set/x0 v%p_0, %u, %u;\n", sig, bit, wid);
 	    fprintf(vvp_out, "t_%u ;\n", skip_set);
 	    break;
 
 	  case SLICE_MEMORY_WORD_STATIC:
 	    if (slice->u_.simple_vector.use_word >= ivl_signal_array_count(sig))
 		  break;
-	    fprintf(vvp_out, "   %%ix/load 3, %lu, 0;\n",
+	    fprintf(vvp_out, "    %%ix/load 3, %lu, 0;\n",
 		    slice->u_.simple_vector.use_word);
-	    fprintf(vvp_out, "   %%set/av v%p, %u, %u;\n",
+	    fprintf(vvp_out, "    %%set/av v%p, %u, %u;\n",
 		    sig, bit, wid);
 	    break;
 
 	  case SLICE_MEMORY_WORD_DYNAMIC:
-	    fprintf(vvp_out, "   %%jmp/1 t_%u, %u;\n", skip_set,
+	    fprintf(vvp_out, "    %%jmp/1 t_%u, %u;\n", skip_set,
 		    slice->u_.memory_word_dynamic.x_flag);
-	    fprintf(vvp_out, "   %%mov/wu 3, %d;\n",
+	    fprintf(vvp_out, "    %%mov/wu 3, %d;\n",
 		    slice->u_.memory_word_dynamic.word_idx_reg);
-	    fprintf(vvp_out, "   %%set/av v%p, %u, %u;\n",
+	    fprintf(vvp_out, "    %%set/av v%p, %u, %u;\n",
 		    ivl_lval_sig(lval), bit, wid);
 	    fprintf(vvp_out, "t_%u ;\n", skip_set);
 
@@ -562,11 +562,11 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 
 	  case '+':
 	    if (res.base > 3) {
-		  fprintf(vvp_out, "   %%add %u, %u, %u;\n",
+		  fprintf(vvp_out, "    %%add %u, %u, %u;\n",
 			  res.base, lres.base, res.wid);
 		  clr_vector(lres);
 	    } else {
-		  fprintf(vvp_out, "   %%add %u, %u, %u;\n",
+		  fprintf(vvp_out, "    %%add %u, %u, %u;\n",
 			  lres.base, res.base, res.wid);
 		  res.base = lres.base;
 	    }
@@ -574,9 +574,9 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	    break;
 
 	  case '-':
-	    fprintf(vvp_out, "   %%sub %u, %u, %u;\n",
+	    fprintf(vvp_out, "    %%sub %u, %u, %u;\n",
 		    lres.base, res.base, res.wid);
-	    fprintf(vvp_out, "   %%mov %u, %u, %u;\n",
+	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 		    res.base, lres.base, res.wid);
 	    clr_vector(lres);
 	    put_vec_to_lval(net, slices, res);
@@ -584,11 +584,11 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 
 	  case '*':
 	    if (res.base > 3) {
-		  fprintf(vvp_out, "   %%mul %u, %u, %u;\n",
+		  fprintf(vvp_out, "    %%mul %u, %u, %u;\n",
 			  res.base, lres.base, res.wid);
 		  clr_vector(lres);
 	    } else {
-		  fprintf(vvp_out, "   %%mul %u, %u, %u;\n",
+		  fprintf(vvp_out, "    %%mul %u, %u, %u;\n",
 			  lres.base, res.base, res.wid);
 		  res.base = lres.base;
 	    }
@@ -596,20 +596,20 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	    break;
 
 	  case '/':
-	    fprintf(vvp_out, "   %%div%s %u, %u, %u;\n",
+	    fprintf(vvp_out, "    %%div%s %u, %u, %u;\n",
 		    ivl_expr_signed(rval)? "/s" : "",
 		    lres.base, res.base, res.wid);
-	    fprintf(vvp_out, "   %%mov %u, %u, %u;\n",
+	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 		    res.base, lres.base, res.wid);
 	    clr_vector(lres);
 	    put_vec_to_lval(net, slices, res);
 	    break;
 
 	  case '%':
-	    fprintf(vvp_out, "   %%mod%s %u, %u, %u;\n",
+	    fprintf(vvp_out, "    %%mod%s %u, %u, %u;\n",
 		    ivl_expr_signed(rval)? "/s" : "",
 		    lres.base, res.base, res.wid);
-	    fprintf(vvp_out, "   %%mov %u, %u, %u;\n",
+	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 		    res.base, lres.base, res.wid);
 	    clr_vector(lres);
 	    put_vec_to_lval(net, slices, res);
@@ -617,11 +617,11 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 
 	  case '&':
 	    if (res.base > 3) {
-		  fprintf(vvp_out, "   %%and %u, %u, %u;\n",
+		  fprintf(vvp_out, "    %%and %u, %u, %u;\n",
 			  res.base, lres.base, res.wid);
 		  clr_vector(lres);
 	    } else {
-		  fprintf(vvp_out, "   %%and %u, %u, %u;\n",
+		  fprintf(vvp_out, "    %%and %u, %u, %u;\n",
 			  lres.base, res.base, res.wid);
 		  res.base = lres.base;
 	    }
@@ -630,11 +630,11 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 
 	  case '|':
 	    if (res.base > 3) {
-		  fprintf(vvp_out, "   %%or %u, %u, %u;\n",
+		  fprintf(vvp_out, "    %%or %u, %u, %u;\n",
 			  res.base, lres.base, res.wid);
 		  clr_vector(lres);
 	    } else {
-		  fprintf(vvp_out, "   %%or %u, %u, %u;\n",
+		  fprintf(vvp_out, "    %%or %u, %u, %u;\n",
 			  lres.base, res.base, res.wid);
 		  res.base = lres.base;
 	    }
@@ -643,11 +643,11 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 
 	  case '^':
 	    if (res.base > 3) {
-		  fprintf(vvp_out, "   %%xor %u, %u, %u;\n",
+		  fprintf(vvp_out, "    %%xor %u, %u, %u;\n",
 			  res.base, lres.base, res.wid);
 		  clr_vector(lres);
 	    } else {
-		  fprintf(vvp_out, "   %%xor %u, %u, %u;\n",
+		  fprintf(vvp_out, "    %%xor %u, %u, %u;\n",
 			  lres.base, res.base, res.wid);
 		  res.base = lres.base;
 	    }
@@ -655,23 +655,23 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	    break;
 
 	  case 'l': /* lres <<= res */
-	    fprintf(vvp_out, "   %%ix/get 0, %u, %u;\n", res.base, res.wid);
-	    fprintf(vvp_out, "   %%shiftl/i0 %u, %u;\n", lres.base, res.wid);
-	    fprintf(vvp_out, "   %%mov %u, %u, %u;\n",
+	    fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", res.base, res.wid);
+	    fprintf(vvp_out, "    %%shiftl/i0 %u, %u;\n", lres.base, res.wid);
+	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 		    res.base, lres.base, res.wid);
 	    break;
 
 	  case 'r': /* lres >>= res */
-	    fprintf(vvp_out, "   %%ix/get 0, %u, %u;\n", res.base, res.wid);
-	    fprintf(vvp_out, "   %%shiftr/i0 %u, %u;\n", lres.base, res.wid);
-	    fprintf(vvp_out, "   %%mov %u, %u, %u;\n",
+	    fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", res.base, res.wid);
+	    fprintf(vvp_out, "    %%shiftr/i0 %u, %u;\n", lres.base, res.wid);
+	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 		    res.base, lres.base, res.wid);
 	    break;
 
 	  case 'R': /* lres >>>= res */
-	    fprintf(vvp_out, "   %%ix/get 0, %u, %u;\n", res.base, res.wid);
-	    fprintf(vvp_out, "   %%shiftr/s/i0 %u, %u;\n", lres.base, res.wid);
-	    fprintf(vvp_out, "   %%mov %u, %u, %u;\n",
+	    fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", res.base, res.wid);
+	    fprintf(vvp_out, "    %%shiftr/s/i0 %u, %u;\n", lres.base, res.wid);
+	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 		    res.base, lres.base, res.wid);
 	    break;
 
