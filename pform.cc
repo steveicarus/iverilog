@@ -1898,6 +1898,36 @@ void pform_module_define_port(const struct vlltype&li,
  * function is called for every declaration.
  */
 
+static PWire* pform_get_or_make_wire(const vlltype&li, perm_string name,
+			      NetNet::Type type, NetNet::PortType ptype,
+			      ivl_variable_type_t dtype)
+{
+      PWire*cur = pform_get_wire_in_scope(name);
+      if (cur) {
+	      // If this is not implicit ("implicit" meaning we don't
+	      // know what the type is yet) then set the type now.
+	    if (type != NetNet::IMPLICIT) {
+		  bool rc = cur->set_wire_type(type);
+		  if (rc == false) {
+			ostringstream msg;
+			msg << name << " " << type
+			    << " definition conflicts with " << cur->get_wire_type()
+			    << " definition at " << cur->get_fileline()
+			    << ".";
+			VLerror(msg.str().c_str());
+		  }
+		  FILE_NAME(cur, li.text, li.first_line);
+	    }
+	    return cur;
+      }
+
+      cur = new PWire(name, type, ptype, dtype);
+      FILE_NAME(cur, li.text, li.first_line);
+
+      pform_put_wire_in_scope(name, cur);
+      return cur;
+}
+
 /*
  * this is the basic form of pform_makewire. This takes a single simple
  * name, port type, net type, data type, and attributes, and creates
@@ -1909,22 +1939,7 @@ void pform_makewire(const vlltype&li, perm_string name,
 		    ivl_variable_type_t dt,
 		    list<named_pexpr_t>*attr)
 {
-      PWire*cur = pform_get_wire_in_scope(name);
-
-	// If this is not implicit ("implicit" meaning we don't know
-	// what the type is yet) then set the type now.
-      if (cur && type != NetNet::IMPLICIT) {
-	    bool rc = cur->set_wire_type(type);
-	    if (rc == false) {
-		  ostringstream msg;
-		  msg << name << " " << type
-		      << " definition conflicts with " << cur->get_wire_type()
-		      << " definition at " << cur->get_fileline()
-		      << ".";
-		  VLerror(msg.str().c_str());
-	    }
-
-      }
+      PWire*cur = pform_get_or_make_wire(li, name, type, pt, dt);
 
       bool new_wire_flag = false;
       if (! cur) {
@@ -1932,9 +1947,6 @@ void pform_makewire(const vlltype&li, perm_string name,
 	    cur = new PWire(name, type, pt, dt);
 	    FILE_NAME(cur, li.text, li.first_line);
       }
-
-      if (type != NetNet::IMPLICIT)
-	    FILE_NAME(cur, li.text, li.first_line);
 
       bool flag;
       switch (dt) {
@@ -1960,9 +1972,6 @@ void pform_makewire(const vlltype&li, perm_string name,
 		  cur->attributes[attr_cur->name] = attr_cur->parm;
 	    }
       }
-
-      if (new_wire_flag)
-	    pform_put_wire_in_scope(name, cur);
 }
 
 /*

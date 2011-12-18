@@ -2775,6 +2775,19 @@ module_item
 		  }
 		}
 
+  /* Allow struct nets. */
+
+  | attribute_list_opt net_type struct_data_type net_variable_list ';'
+
+      { pform_makewire(@2, $3, NetNet::NOT_A_PORT, $4, $1);
+	delete $1;
+      }
+
+  | attribute_list_opt net_type struct_data_type error ';'
+
+      { yyerror(@5, "error: Errors in net variable list.");
+      }
+
   /* This form doesn't have the range, but does have strengths. This
      gives strength to the assignment drivers. */
 
