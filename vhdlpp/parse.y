@@ -971,10 +971,10 @@ for_generate_statement
 	      errormsg(@1, "for-generate name %s does not match closing name %s\n",
 		       name.str(), $11);
 	}
-	delete $1;
-	delete $4;
+	delete[]$1;
+	delete[]$4;
 	delete $8;
-	delete $11;
+	delete[]$11;
 	$$ = tmp;
       }
   ;
