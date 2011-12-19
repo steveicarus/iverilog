@@ -183,7 +183,7 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	    slice->u_.memory_word_dynamic.word_idx_reg = allocate_word();
 	    slice->u_.memory_word_dynamic.x_flag = allocate_vector(1);
 	    fprintf(vvp_out, "    %%mov/wu %d, 3;\n",
-		    slice->u_.memory_word_dynamic.x_flag);
+		    slice->u_.memory_word_dynamic.word_idx_reg);
 	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n",
 		    slice->u_.memory_word_dynamic.x_flag);
 
