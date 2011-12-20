@@ -8,6 +8,7 @@ AC_CONFIG_HEADER(vpi/vpi_config.h)
 AC_CONFIG_HEADER(libveriuser/config.h)
 AC_CONFIG_HEADER(tgt-vvp/vvp_config.h)
 AC_CONFIG_HEADER(tgt-vhdl/vhdl_config.h)
+AC_CONFIG_HEADER(tgt-pcb/pcb_config.h)
 
 AC_CANONICAL_HOST
 dnl Checks for programs.
@@ -299,4 +300,4 @@ AC_MSG_RESULT(ok)
 
 # XXX disable tgt-fpga for the moment
 
-AC_OUTPUT(Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile)
+AC_OUTPUT(Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile tgt-pcb/Makefile)
