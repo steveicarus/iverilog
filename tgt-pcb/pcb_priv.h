@@ -22,11 +22,16 @@
 # include  <string>
 # include  <set>
 # include  <list>
-# include  <cstdio>
+# include  <map>
 # include  <ivl_target.h>
 
 extern int scan_scope(ivl_scope_t scope);
 
+/*
+ * This nexus_list is a list of all the nets that the scan_scope
+ * collects, wrapped up into a list. The show_netlist dumps that list
+ * as a netlist.
+ */
 struct nexus_data {
       std::string name;
       std::set<std::string> pins;
@@ -34,6 +39,21 @@ struct nexus_data {
 
 extern std::list<struct nexus_data*> nexus_list;
 
-extern void show_netlist(FILE*fnet);
+/*
+ * The element_list is a collection of all the elements that were
+ * located by the scope scan. The key is the refdes for the element,
+ * and the value is the element_data_t structure that describes that
+ * element.
+ */
+struct element_data_t {
+      std::string description;
+      std::string value;
+};
+
+extern std::map <std::string, element_data_t*> element_list;
+
+extern void show_netlist(const char*net_path);
+
+extern void show_pcb(const char*pcb_path);
 
 #endif

@@ -45,7 +45,7 @@ CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
-O = pcb.o scope.o show_netlist.o
+O = pcb.o scope.o show_netlist.o show_pcb.o
 
 all: dep pcb.tgt
 

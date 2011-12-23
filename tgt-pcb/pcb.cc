@@ -25,7 +25,6 @@
 # include "version_tag.h"
 # include "pcb_config.h"
 # include  <string.h>
-# include  <stdio.h>
 # include  "pcb_priv.h"
 # include  "ivl_target.h"
 
@@ -53,18 +52,8 @@ int target_design(ivl_design_t des)
       ivl_scope_t*root_scopes;
       unsigned nroot;
       unsigned idx;
-      FILE*fnet;
       int rc = 0;
-      const char*path = ivl_design_flag(des, "-o");
-      if (path == 0) {
-	    return -1;
-      }
-
-      fnet = fopen(path, "w");
-      if (fnet == 0) {
-	    perror (path);
-	    return -2;
-      }
+      const char*pcb_path = ivl_design_flag(des, "-o");
 
       ivl_design_roots(des, &root_scopes, &nroot);
       for (idx = 0 ; idx < nroot ; idx += 1) {
@@ -75,9 +64,15 @@ int target_design(ivl_design_t des)
 	    }
       }
 
-      show_netlist(fnet);
+      assert(pcb_path);
+      show_pcb(pcb_path);
 
-      fclose(fnet);
+      const char*net_path = ivl_design_flag(des, "netlist");
+      if (net_path != 0) {
+	    printf("Send netlist to %s\n", net_path);
+	    show_netlist(net_path);
+      }
+
       return rc;
 }
 
