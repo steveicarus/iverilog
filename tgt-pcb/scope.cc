@@ -21,6 +21,7 @@
 # include <map>
 # include <string>
 # include <cassert>
+# include <cstdio>
 
 using namespace std;
 

@@ -19,6 +19,8 @@
 
 # include  "pcb_config.h"
 # include  "pcb_priv.h"
+# include  <cassert>
+# include  <cstdio>
 
 using namespace std;
 
