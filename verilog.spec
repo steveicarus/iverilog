@@ -1,6 +1,6 @@
 #norootforbuild
 #
-%define rev_date 20090923
+%define rev_date 20111127
 # Normally, the suff-ix is %nil, meaning the suffix is to not be used.
 # But if the builder wants to make a suffixed package, he may set this
 # to a value (i.e. -test) to cause suffixes to be put in all the right
@@ -67,6 +67,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) %{_bindir}/vvp%{suff}
 %attr(-,root,root) %{_libdir}/ivl%{suff}/ivl
 %attr(-,root,root) %{_libdir}/ivl%{suff}/ivlpp
+%attr(-,root,root) %{_libdir}/ivl%{suff}/vhdlpp
 %attr(-,root,root) %{_libdir}/ivl%{suff}/null.tgt
 %attr(-,root,root) %{_libdir}/ivl%{suff}/null.conf
 %attr(-,root,root) %{_libdir}/ivl%{suff}/null-s.conf
@@ -79,12 +80,20 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) %{_libdir}/ivl%{suff}/vhdl.tgt
 %attr(-,root,root) %{_libdir}/ivl%{suff}/vhdl.conf
 %attr(-,root,root) %{_libdir}/ivl%{suff}/vhdl-s.conf
+%attr(-,root,root) %{_libdir}/ivl%{suff}/vlog95.tgt
+%attr(-,root,root) %{_libdir}/ivl%{suff}/vlog95.conf
+%attr(-,root,root) %{_libdir}/ivl%{suff}/vlog95-s.conf
 %attr(-,root,root) %{_libdir}/ivl%{suff}/system.sft
 %attr(-,root,root) %{_libdir}/ivl%{suff}/system.vpi
 %attr(-,root,root) %{_libdir}/ivl%{suff}/va_math.sft
 %attr(-,root,root) %{_libdir}/ivl%{suff}/va_math.vpi
 %attr(-,root,root) %{_libdir}/ivl%{suff}/v2005_math.sft
 %attr(-,root,root) %{_libdir}/ivl%{suff}/v2005_math.vpi
+%attr(-,root,root) %{_libdir}/ivl%{suff}/v2009.sft
+%attr(-,root,root) %{_libdir}/ivl%{suff}/v2009.vpi
+%attr(-,root,root) %{_libdir}/ivl%{suff}/vhdl_sys.sft
+%attr(-,root,root) %{_libdir}/ivl%{suff}/vhdl_sys.vpi
+%attr(-,root,root) %{_libdir}/ivl%{suff}/vpi_debug.vpi
 %attr(-,root,root) %{_libdir}/ivl%{suff}/cadpli.vpl
 %attr(-,root,root) %{_libdir}/libvpi%{suff}.a
 %attr(-,root,root) %{_libdir}/libveriuser%{suff}.a
@@ -92,6 +101,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) %{_libdir}/ivl%{suff}/include/disciplines.vams
 %attr(-,root,root) /usr/include/iverilog%{suff}/ivl_target.h
 %attr(-,root,root) /usr/include/iverilog%{suff}/vpi_user.h
+%attr(-,root,root) /usr/include/iverilog%{suff}/sv_vpi_user.h
 %attr(-,root,root) /usr/include/iverilog%{suff}/acc_user.h
 %attr(-,root,root) /usr/include/iverilog%{suff}/veriuser.h
 %attr(-,root,root) /usr/include/iverilog%{suff}/_pli_types.h

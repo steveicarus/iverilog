@@ -549,7 +549,7 @@ static int signal_get(int code, vpiHandle ref)
 		  vpi_get_value(rfp->id.index, &vp);
 		  return vp.value.integer;
 	    } else {
-		  return 0;
+		  return vpiUndefined;
 	    }
 
 	  case vpiSize:
@@ -562,7 +562,7 @@ static int signal_get(int code, vpiHandle ref)
 	    if (ref->vpi_type->type_code==vpiNet)
 		  return vpiWire;
 	    else
-		  return 0;
+		  return vpiUndefined;
 
 	  case vpiLeftRange:
             return rfp->msb;
@@ -573,6 +573,7 @@ static int signal_get(int code, vpiHandle ref)
           case vpiAutomatic:
             return (int) vpip_scope(rfp)->is_automatic;
 
+	    // This private property must return zero when undefined.
 	  case _vpiNexusId:
 	    if (rfp->msb == rfp->lsb)
 		  return (int) (unsigned long) rfp->node;
@@ -580,8 +581,9 @@ static int signal_get(int code, vpiHandle ref)
 		  return 0;
 
 	  default:
-	    fprintf(stderr, "signal_get: property %d is unknown\n", code);
-	    return 0;
+	    fprintf(stderr, "VPI error: unknown signal_get property %d.\n",
+	            code);
+	    return vpiUndefined;
       }
 }
 
@@ -594,18 +596,21 @@ static char* signal_get_str(int code, vpiHandle ref)
 	    return simple_set_rbuf_str(file_names[0]);
       }
 
+      if ((code != vpiName) && (code != vpiFullName)) return NULL;
+
       char *nm, *ixs;
       if (rfp->is_netarray) {
 	    nm = strdup(vpi_get_str(vpiName, rfp->within.parent));
 	    s_vpi_value vp;
 	    vp.format = vpiDecStrVal;
 	    vpi_get_value(rfp->id.index, &vp);
-            ixs = vp.value.str;  /* do I need to strdup() this? */
+	    ixs = vp.value.str;  /* do I need to strdup() this? */
       } else {
 	    nm = strdup(rfp->id.name);
 	    ixs = NULL;
       }
 
+	/* The scope information is added here for vpiFullName. */
       char *rbuf = generic_get_str(code, &(vpip_scope(rfp)->base), nm, ixs);
       free(nm);
       return rbuf;

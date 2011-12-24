@@ -1995,6 +1995,13 @@ extern unsigned ivl_stmt_lineno(ivl_statement_t net);
  * the statement.) The ivl_stmt_delay_expr function returns the
  * expression for the delay, or nil if there is no delay expression.
  *
+ * The blocking assignment (IVL_ST_ASSIGN) may have an associated
+ * opcode, that can be extracted from ivl_stmt_opcode(). This opcode
+ * is the compressed operator used it statements like this:
+ *      foo += <expr>
+ * The ivl_stmt_opcode() returns null (0) if this is not a compressed
+ * assignment statment.
+ *
  * - IVL_ST_CASSIGN
  * This reflects a procedural continuous assignment to an l-value. The
  * l-value is the same as any other assignment (use ivl_stmt_lval).
@@ -2088,6 +2095,8 @@ extern unsigned ivl_stmt_lvals(ivl_statement_t net);
 extern unsigned ivl_stmt_lwidth(ivl_statement_t net);
   /* IVL_ST_STASK */
 extern const char* ivl_stmt_name(ivl_statement_t net);
+  /* IVL_ST_ASSIGN */
+extern char ivl_stmt_opcode(ivl_statement_t net);
   /* IVL_ST_STASK */
 extern ivl_expr_t ivl_stmt_parm(ivl_statement_t net, unsigned idx);
   /* IVL_ST_STASK */

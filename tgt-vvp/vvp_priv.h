@@ -39,6 +39,8 @@ extern FILE* vvp_out;
  */
 extern int vvp_errors;
 
+extern unsigned transient_id;
+
 /*
  * Set to non-zero when the user wants to display file and line number
  * information for procedural statements.
@@ -310,6 +312,9 @@ extern int draw_eval_real(ivl_expr_t ex);
  * be such that it fits in a 64bit word.
  */
 extern int draw_eval_bool64(ivl_expr_t ex);
+
+extern int show_stmt_assign(ivl_statement_t net);
+extern void show_stmt_file_line(ivl_statement_t net, const char*desc);
 
 /*
  * These functions manage word register allocation.

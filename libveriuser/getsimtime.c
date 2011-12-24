@@ -36,8 +36,8 @@ scale(int high, int low, void*obj) {
 
       scaled = high;
       scaled = (scaled << 32) | low;
-      scaled *= pow(10, vpi_get(vpiTimePrecision,0) -
-			vpi_get(vpiTimeUnit,obj ? (vpiHandle)obj : hand));
+      scaled /= pow(10, vpi_get(vpiTimeUnit,obj ? (vpiHandle)obj : hand) -
+                        vpi_get(vpiTimePrecision,0));
 
       return scaled;
 }
@@ -129,8 +129,8 @@ void tf_scale_realdelay(void*obj, double real, double *areal)
 {
       vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
 
-      *areal = real * pow(10, vpi_get(vpiTimePrecision, 0) -
-			      vpi_get(vpiTimeUnit, hand));
+      *areal = real / pow(10, vpi_get(vpiTimeUnit, hand) -
+			      vpi_get(vpiTimePrecision, 0));
 }
 
 void tf_unscale_realdelay(void*obj, double real, double *areal)

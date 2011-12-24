@@ -272,6 +272,7 @@ ivl_stmt_lvals
 ivl_stmt_lwidth
 ivl_stmt_name
 ivl_stmt_nevent
+ivl_stmt_opcode
 ivl_stmt_parm
 ivl_stmt_parm_count
 ivl_stmt_rval

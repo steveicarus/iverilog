@@ -729,6 +729,7 @@ struct ivl_statement_s {
 			IVL_ST_CASSIGN, IVL_ST_DEASSIGN */
 		  unsigned lvals_;
 		  struct ivl_lval_s*lval_;
+		  char oper; // Operator if this is a compressed assignment.
 		  ivl_expr_t rval_;
 		  ivl_expr_t delay;
 		    // The following are only for NB event control.

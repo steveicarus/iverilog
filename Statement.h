@@ -120,7 +120,12 @@ class PAssign_  : public Statement {
 class PAssign  : public PAssign_ {
 
     public:
+	// lval  - assignment l-value
+	// ex    - assignment r-value
+	// op    - compressed assignment operator (i.e. '+', '-', ...)
+	// de    - delayed assignment delay expression
       explicit PAssign(PExpr*lval, PExpr*ex);
+      explicit PAssign(PExpr*lval, char op, PExpr*ex);
       explicit PAssign(PExpr*lval, PExpr*de, PExpr*ex);
       explicit PAssign(PExpr*lval, PExpr*cnt, PEventStatement*de, PExpr*ex);
       explicit PAssign(PExpr*lval, PExpr*ex, bool is_constant);
@@ -130,6 +135,8 @@ class PAssign  : public PAssign_ {
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
 
     private:
+      NetProc* elaborate_compressed_(Design*des, NetScope*scope) const;
+      char op_;
 };
 
 class PAssignNB  : public PAssign_ {

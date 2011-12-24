@@ -37,6 +37,7 @@ mandir = @mandir@
 dllib=@DLLIB@
 
 CC = @CC@
+WINDRES = @WINDRES@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
@@ -88,7 +89,7 @@ res.rc: $(srcdir)/res.rc.in ../version.exe
 	$(srcdir)/res.rc.in > $@
 
 res.o: res.rc
-	windres -i res.rc -o res.o
+	$(WINDRES) -i res.rc -o res.o
 #
 
 install: all installdirs $(bindir)/iverilog-vpi$(suffix)@EXEEXT@

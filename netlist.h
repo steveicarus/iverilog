@@ -2406,15 +2406,19 @@ class NetAssign : public NetAssignBase {
 
     public:
       explicit NetAssign(NetAssign_*lv, NetExpr*rv);
+      explicit NetAssign(NetAssign_*lv, char op, NetExpr*rv);
       ~NetAssign();
 
       bool is_asynchronous();
+
+      inline char assign_operator(void) const { return op_; }
 
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
 
     private:
+      char op_;
 };
 
 class NetAssignNB  : public NetAssignBase {

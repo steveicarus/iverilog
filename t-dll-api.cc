@@ -2547,6 +2547,17 @@ extern "C" const char* ivl_stmt_name(ivl_statement_t net)
       return 0;
 }
 
+extern "C" char ivl_stmt_opcode(ivl_statement_t net)
+{
+      switch (net->type_) {
+	  case IVL_ST_ASSIGN:
+	    return net->u_.assign_.oper;
+	  default:
+	    assert(0);
+      }
+      return 0;
+}
+
 extern "C" ivl_expr_t ivl_stmt_parm(ivl_statement_t net, unsigned idx)
 {
       switch (net->type_) {

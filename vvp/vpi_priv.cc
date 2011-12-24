@@ -1016,7 +1016,11 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 vpiHandle vpi_handle(PLI_INT32 type, vpiHandle ref)
 {
       if (type == vpiSysTfCall) {
-	    assert(ref == 0);
+	    if (ref != 0) {
+		  fprintf(stderr, "VPI error: vpi_handle(vpiSysTfCall, "
+		                  "ref!=0).\n");
+		  return 0;
+	    }
 
 	    if (vpi_trace) {
 		  fprintf(vpi_trace, "vpi_handle(vpiSysTfCall, 0) "
@@ -1028,10 +1032,10 @@ vpiHandle vpi_handle(PLI_INT32 type, vpiHandle ref)
       }
 
       if (ref == 0) {
-	    fprintf(stderr, "internal error: vpi_handle(type=%d, ref=0)\n",
+	    fprintf(stderr, "VPI error: vpi_handle(type=%d, ref=0).\n",
 		    (int)type);
+	    return 0;
       }
-      assert(ref);
 
       if (ref->vpi_type->handle_ == 0) {
 

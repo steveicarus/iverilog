@@ -2337,17 +2337,12 @@ port_declaration
     K_output net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($7);
-	NetNet::Type t   = $3;
-
-	if ($4 != IVL_VT_NO_TYPE && t == NetNet::IMPLICIT)
-		t = NetNet::IMPLICIT_REG;
-
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 t, $4, $5, $6, $1);
+				 $3, $4, $5, $6, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = t;
+	port_declaration_context.port_net_type = $3;
 	port_declaration_context.var_type = $4;
 	port_declaration_context.sign_flag = $5;
 	delete port_declaration_context.range;
@@ -2396,10 +2391,7 @@ port_declaration
     K_output net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER '=' expression
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($7);
-	NetNet::Type t   = $3;
-
-	if ($4 != IVL_VT_NO_TYPE && t == NetNet::IMPLICIT)
-		t = NetNet::IMPLICIT_REG;
+	NetNet::Type t   = ($3 == NetNet::IMPLICIT) ? NetNet::IMPLICIT_REG : $3;
 
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
@@ -3320,6 +3312,16 @@ parameter_assign_decl
 	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
+  | K_signed
+      { param_active_range = 0;
+	param_active_signed = true;
+	param_active_type = IVL_VT_LOGIC;
+      }
+    parameter_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
   | K_signed range
       { param_active_range = $2;
 	param_active_signed = true;
@@ -3433,6 +3435,16 @@ localparam_assign_decl
     localparam_assign_list
       { param_active_range = 0;
         param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
+  | K_signed
+      { param_active_range = 0;
+	param_active_signed = true;
+	param_active_type = IVL_VT_LOGIC;
+      }
+    localparam_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
   | K_signed range
@@ -4560,11 +4572,11 @@ statement
 	tmp->set_statement($6);
 	$$ = tmp;
       }
-	| lpvalue '=' expression ';'
-		{ PAssign*tmp = new PAssign($1,$3);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
+  | lpvalue '=' expression ';'
+      { PAssign*tmp = new PAssign($1,$3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
 	| error '=' expression ';'
                 { yyerror(@2, "Syntax in assignment statement l-value.");
 		  yyerrok;
@@ -4671,83 +4683,61 @@ statement
 	;
 
 compressed_statement
-	: lpvalue K_PLUS_EQ expression
-		{
-			PEBinary *t  = new PEBinary('+', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_MINUS_EQ expression
-		{
-			PEBinary *t  = new PEBinary('-', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_MUL_EQ expression
-		{
-			PEBinary *t  = new PEBinary('*', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_DIV_EQ expression
-		{
-			PEBinary *t  = new PEBinary('/', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_MOD_EQ expression
-		{
-			PEBinary *t  = new PEBinary('%', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_AND_EQ expression
-		{
-			PEBinary *t  = new PEBinary('&', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_OR_EQ expression
-		{
-			PEBinary *t  = new PEBinary('|', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_XOR_EQ expression
-		{
-			PEBinary *t  = new PEBinary('^', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_LS_EQ expression
-		{
-			PEBShift *t  = new PEBShift('l', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_RS_EQ expression
-		{
-			PEBShift *t  = new PEBShift('r', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| lpvalue K_RSS_EQ expression
-		{
-			PEBShift *t  = new PEBShift('R', $1, $3);
-			PAssign  *tmp = new PAssign($1, t);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
+  : lpvalue K_PLUS_EQ expression
+      { PAssign*tmp = new PAssign($1, '+', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_MINUS_EQ expression
+      { PAssign*tmp = new PAssign($1, '-', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_MUL_EQ expression
+      { PAssign*tmp = new PAssign($1, '*', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_DIV_EQ expression
+      { PAssign*tmp = new PAssign($1, '/', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_MOD_EQ expression
+      { PAssign*tmp = new PAssign($1, '%', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_AND_EQ expression
+      { PAssign*tmp = new PAssign($1, '&', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_OR_EQ expression
+      { PAssign*tmp = new PAssign($1, '|', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_XOR_EQ expression
+      { PAssign*tmp = new PAssign($1, '^', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_LS_EQ expression
+      { PAssign  *tmp = new PAssign($1, 'l', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_RS_EQ expression
+      { PAssign*tmp = new PAssign($1, 'r', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_RSS_EQ expression
+      { PAssign  *tmp = new PAssign($1, 'R', $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
 	;
 
 statement_list_or_null

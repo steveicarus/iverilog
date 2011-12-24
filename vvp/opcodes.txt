@@ -631,6 +631,7 @@ This opcode is the real-valued modulus of the two real values.
 
 * %mov <dst>, <src>, <wid>
 * %mov/wr <dst>, <src>
+* %mov/wu <dst>, <src>
 * %movi <dst>, <value>, <wid>
 
 This instruction copies a vector from one place in register space to
