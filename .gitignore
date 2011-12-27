@@ -29,6 +29,10 @@ Makefile
 /_pli_types.h
 config.h
 /tgt-pcb/pcb_config.h
+/tgt-pcb/fp.cc
+/tgt-pcb/fp.h
+/tgt-pcb/fp.output
+/tgt-pcb/fp_lex.cc
 /tgt-vvp/vvp_config.h
 /tgt-vhdl/vhdl_config.h
 /vpi/vpi_config.h

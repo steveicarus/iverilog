@@ -28,6 +28,7 @@ static void show_pcb_header(FILE*fpcb)
       fprintf(fpcb, "Grid[100.0 0 0 1]\n");
 }
 
+static void show_pcb_element(FILE*fpcb, const string&refdes, element_data_t*elem);
 
 void show_pcb(const char*pcb_path)
 {
@@ -44,9 +45,17 @@ void show_pcb(const char*pcb_path)
       for (map<string,element_data_t*>::const_iterator cur = element_list.begin()
 		 ; cur != element_list.end() ; ++ cur) {
 
-	    const string&refdes = cur->first;
-	    const string&descr  = cur->second->description;
-	    const string&value  = cur->second->value;
+	    show_pcb_element(fpcb, cur->first, cur->second);
+      }
+
+      fclose(fpcb);
+}
+
+static void show_pcb_element(FILE*fpcb, const string&refdes, element_data_t*elem)
+{
+      string descr  = elem->description;
+      const string&value  = elem->value;
+      if (elem->footprint == "") {
 	    fprintf(fpcb, "Element[\"\" \"%s\" \"%s\" \"%s\"",
 		    descr.c_str(), refdes.c_str(), value.c_str());
 
@@ -60,7 +69,35 @@ void show_pcb(const char*pcb_path)
 	      // from a library.
 	    fprintf(fpcb, "(\n");
 	    fprintf(fpcb, ")\n");
+	    return;
       }
 
-      fclose(fpcb);
+      fp_element_t&foot = footprints[elem->footprint];
+      if (descr == "")
+	    descr = foot.description;
+      fprintf(fpcb, "Element[0x%lx \"%s\" \"%s\" \"%s\"",
+	      foot.nflags, descr.c_str(), refdes.c_str(), value.c_str());
+
+      fprintf(fpcb, " %ld %ld", foot.mx, foot.my);
+      fprintf(fpcb, " %ld %ld %d %d \"%s\"", foot.tx, foot.ty, foot.tdir,
+	      foot.tscale, foot.tsflags.c_str());
+
+      fprintf(fpcb, "]\n(\n");
+
+      for (map<string,fp_pad_t>::const_iterator cur = foot.pads.begin()
+		 ; cur != foot.pads.end() ; ++ cur) {
+	    fprintf(fpcb, "Pad[%ld %ld %ld %ld %d %d %d \"%s\" \"%s\" \"%s\"]\n",
+		    cur->second.rx1,
+		    cur->second.ry1,
+		    cur->second.rx2,
+		    cur->second.ry2,
+		    cur->second.thickness,
+		    cur->second.clearance,
+		    cur->second.mask,
+		    cur->second.name.c_str(),
+		    cur->second.number.c_str(),
+		    cur->second.sflags.c_str());
+      }
+
+      fprintf(fpcb, ")\n");
 }

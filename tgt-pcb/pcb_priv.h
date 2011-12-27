@@ -48,9 +48,39 @@ extern std::list<struct nexus_data*> nexus_list;
 struct element_data_t {
       std::string description;
       std::string value;
+      std::string footprint;
 };
 
 extern std::map <std::string, element_data_t*> element_list;
+
+extern int load_footprints(void);
+
+struct fp_pad_t {
+      long rx1, ry1;
+      long rx2, ry2;
+      int thickness;
+      int clearance;
+      int mask;
+      std::string name;
+      std::string number;
+      std::string sflags;
+};
+
+struct fp_element_t {
+      long nflags;
+      std::string description;
+      std::string name;
+      std::string value;
+      long mx, my;
+      long tx, ty;
+      int tdir;
+      int tscale;
+      std::string tsflags;
+
+      std::map<std::string,fp_pad_t> pads;
+};
+
+extern std::map<std::string,fp_element_t> footprints;
 
 extern void show_netlist(const char*net_path);
 

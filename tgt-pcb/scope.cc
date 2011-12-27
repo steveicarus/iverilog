@@ -162,6 +162,16 @@ static void black_box(ivl_scope_t scope, const map<string,attr_value>&attrs)
 		      default:
 			assert(0);
 		  }
+
+	    } else if (name == "footprint") {
+		  ivl_expr_t exp = ivl_parameter_expr(par);
+		  switch (ivl_expr_type(exp)) {
+		      case IVL_EX_STRING:
+			elem_data->footprint = ivl_expr_string(exp);
+			break;
+		      default:
+			assert(0);
+		  }
 	    }
       }
 

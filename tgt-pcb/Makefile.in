@@ -34,6 +34,8 @@ CXX = @CXX@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
+LEX = @LEX@
+YACC = @YACC@
 
 ifeq (@srcdir@,.)
 INCLUDE_PATH = -I. -I..
@@ -45,7 +47,7 @@ CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
-O = pcb.o scope.o show_netlist.o show_pcb.o
+O = pcb.o scope.o show_netlist.o show_pcb.o footprint.o fp.o fp_lex.o
 
 all: dep pcb.tgt
 
@@ -73,6 +75,13 @@ dep:
 %.o: %.cc
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep
+
+fp_lex.cc: $(srcdir)/fp.lex
+	$(LEX) -s -ofp_lex.cc $(srcdir)/fp.lex
+
+fp.cc fp.h: $(srcdir)/fp.y
+	$(YACC) --verbose -t -d -o fp.cc $(srcdir)/fp.y
+	mv fp.cc.h fp.h 2>/dev/null || mv fp.hh fp.h
 
 ifeq (@WIN32@,yes)
   TGTLDFLAGS=-L.. -livl

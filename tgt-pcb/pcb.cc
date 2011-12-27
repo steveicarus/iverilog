@@ -64,6 +64,8 @@ int target_design(ivl_design_t des)
 	    }
       }
 
+      load_footprints();
+
       assert(pcb_path);
       show_pcb(pcb_path);
 
