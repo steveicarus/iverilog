@@ -22,6 +22,7 @@
 # include  "PExpr.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "netstruct.h"
 # include  "compiler.h"
 
 # include  <cstdlib>
@@ -405,6 +406,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       NetNet*       sig = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
+      perm_string method_name;
 
       symbol_search(this, des, scope, path_, sig, par, eve);
 
@@ -414,6 +416,17 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		 << "assignments." << endl;
 	    des->errors += 1;
 	    return 0;
+      }
+
+	/* If the signal is not found, check to see if this is a
+	   member of a struct. Take the name of the form "a.b.member",
+	   remove the member and store it into method_name, and retry
+	   the search with "a.b". */
+      if (sig == 0 && path_.size() >= 2) {
+	    pform_name_t use_path = path_;
+	    method_name = peek_tail_name(use_path);
+	    use_path.pop_back();
+	    symbol_search(this, des, scope, use_path, sig, par, eve);
       }
 
       if (sig == 0) {
@@ -460,7 +473,26 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 
       const name_component_t&name_tail = path_.back();
 
-      if (sig->array_dimensions() > 0) {
+      netstruct_t*struct_type = 0;
+      if ((struct_type = sig->struct_type()) && !method_name.nil()) {
+
+	      // Detect the variable is a structure and there was a
+	      // methos name detected.
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "Signal " << sig->name() << " is a structure, "
+		       << "try to match member " << method_name << endl;
+
+	    unsigned long member_off = 0;
+	    const struct netstruct_t::member_t*member = struct_type->packed_member(method_name, member_off);
+	    ivl_assert(*this, member);
+
+	      // Rewrite a member select of a packed structure as a
+	      // part select of the base variable.
+	    lidx = member_off;
+	    midx = lidx + member->width() - 1;
+
+      } else if (sig->array_dimensions() > 0) {
 
 	    if (name_tail.index.empty()) {
 		  cerr << get_fileline() << ": error: array " << sig->name()
