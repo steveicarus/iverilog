@@ -2540,7 +2540,7 @@ static void warn_param_ob(long par_msv, long par_lsv, bool defined,
 
 NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 					       const NetExpr*par,
-					       NetScope*,
+					       NetScope*found_in,
 					       const NetExpr*par_msb,
 					       const NetExpr*par_lsb,
                                                bool need_const) const
@@ -2613,6 +2613,12 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
       base = normalize_variable_base(base, par_msv, par_lsv, wid, true);
 
       NetExpr*tmp = par->dup_expr();
+      if (!tmp) return 0;
+
+	/* The numeric parameter value needs to have the file and line
+	 * information for the actual parameter not the expression. */
+      NetScope::param_ref_t pref = found_in->find_parameter(peek_tail_name(path_));
+      tmp->set_line((*pref).second);
       tmp = new NetESelect(tmp, base, wid, IVL_SEL_IDX_UP);
       tmp->set_line(*this);
       return tmp;
@@ -2620,7 +2626,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 
 NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 					       const NetExpr*par,
-					       NetScope*,
+					       NetScope*found_in,
 					       const NetExpr*par_msb,
 					       const NetExpr*par_lsb,
                                                bool need_const) const
@@ -2694,6 +2700,12 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
       base = normalize_variable_base(base, par_msv, par_lsv, wid, false);
 
       NetExpr*tmp = par->dup_expr();
+      if (!tmp) return 0;
+
+	/* The numeric parameter value needs to have the file and line
+	 * information for the actual parameter not the expression. */
+      NetScope::param_ref_t pref = found_in->find_parameter(peek_tail_name(path_));
+      tmp->set_line((*pref).second);
       tmp = new NetESelect(tmp, base, wid, IVL_SEL_IDX_DOWN);
       tmp->set_line(*this);
       return tmp;
@@ -2748,8 +2760,14 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 	// rewritten in the above format, as I get to it.
 
       NetExpr*tmp = par->dup_expr();
-      if (!tmp)
-            return 0;
+      if (!tmp) return 0;
+
+	/* The numeric parameter value needs to have the file and line
+	 * information for the actual parameter not the expression. */
+      if (! dynamic_cast<NetEConstEnum*>(tmp)) {
+	    NetScope::param_ref_t pref = found_in->find_parameter(peek_tail_name(path_));
+	    tmp->set_line((*pref).second);
+      }
 
       if (use_sel == index_component_t::SEL_BIT) {
 	    ivl_assert(*this, !name_tail.index.empty());
@@ -2846,6 +2864,7 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 
 
 		  NetEConst*re2 = new NetEConst(verinum(rb, 1));
+		  re2->set_line(*this);
 		  delete tmp;
 		  delete mtmp;
 		  tmp = re2;
@@ -2911,7 +2930,6 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 	    }
       }
 
-      tmp->set_line(*this);
       return tmp;
 }
 

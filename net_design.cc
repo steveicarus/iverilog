@@ -641,8 +641,8 @@ void NetScope::evaluate_parameters(Design*des)
 	    cur->second->evaluate_parameters(des);
 
       if (debug_scopes)
-	    cerr << ":0" << ": debug: "
-		 << "Evaluate parameters in " << scope_path(this) << endl;
+	    cerr << "debug: "
+		 << "Evaluating parameters in " << scope_path(this) << endl;
 
       for (param_ref_t cur = parameters.begin()
 		 ; cur != parameters.end() ;  ++ cur) {
