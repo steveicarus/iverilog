@@ -124,12 +124,12 @@ endif
 system.vpi: $O $(OPP) ../vvp/libvpi.a
 	$(CXX) @shared@ -o $@ $O $(OPP) -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
-sys_readmem_lex.c: sys_readmem_lex.lex
+sys_readmem_lex.c: $(srcdir)/sys_readmem_lex.lex
 	$(LEX) -t $(srcdir)/sys_readmem_lex.lex > sys_readmem_lex.c
 
 sdf_lexor.o: sdf_lexor.c sdf_parse.h
 
-sdf_lexor.c: sdf_lexor.lex
+sdf_lexor.c: $(srcdir)/sdf_lexor.lex
 	$(LEX) -t $(srcdir)/sdf_lexor.lex > sdf_lexor.c
 
 sdf_parse.c sdf_parse.h: $(srcdir)/sdf_parse.y

@@ -129,7 +129,7 @@ vvp@EXEEXT@ libvpi.a: $O $(srcdir)/vvp.def
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ vvp.exp $(LDFLAGS) $O $(dllib) $(LIBS)
 else
 libvpi.a: libvpi.c
-	$(CC) $(CFLAGS) -c $<
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $<
 	rm -f libvpi.a
 	$(AR) cqv libvpi.a libvpi.o
 	$(RANLIB) libvpi.a

@@ -85,7 +85,7 @@ else
 endif
 
 vvp.tgt: $O $(TGTDEPLIBS)
-	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
+	$(CC) @shared@ $(LDFLAGS) -o $@ $O $(TGTLDFLAGS)
 
 vvp.conf: $(srcdir)/vvp.conf.in Makefile
 	echo 'flag:VVP_EXECUTABLE=$(bindir)/vvp$(suffix)' | cat $(srcdir)/vvp.conf.in - > vvp.conf

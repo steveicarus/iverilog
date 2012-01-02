@@ -69,7 +69,7 @@ Makefile: $(srcdir)/Makefile.in ../config.status
 ivlpp@EXEEXT@: $O
 	$(CC) $(LDFLAGS) $O -o ivlpp@EXEEXT@ @EXTRALIBS@
 
-lexor.c: lexor.lex
+lexor.c: $(srcdir)/lexor.lex
 	$(LEX) -olexor.c $(srcdir)/lexor.lex
 
 install: all installdirs $(libdir)/ivl$(suffix)/ivlpp@EXEEXT@

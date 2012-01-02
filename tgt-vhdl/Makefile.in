@@ -82,7 +82,7 @@ else
 endif
 
 vhdl.tgt: $O $(TGTDEPLIBS)
-	$(CXX) @shared@ -o $@ $O $(TGTLDFLAGS)
+	$(CXX) @shared@ $(LDFLAGS) -o $@ $O $(TGTLDFLAGS)
 
 stamp-vhdl_config-h: $(srcdir)/vhdl_config.h.in ../config.status
 	@rm -f $@

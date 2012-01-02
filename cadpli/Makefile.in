@@ -47,8 +47,6 @@ CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
-SHARED = @shared@
-
 O = cadpli.o
 
 all: dep cadpli.vpl $(ALL32)
@@ -80,7 +78,7 @@ ifeq (@MINGW32@,yes)
 endif
 
 cadpli.vpl: $O ../vvp/libvpi.a ../libveriuser/libveriuser.o
-	$(CC) @shared@ -o $@ $O ../libveriuser/libveriuser.o $(SYSTEM_VPI_LDFLAGS)
+	$(CC) @shared@ $(LDFLAGS) -o $@ $O ../libveriuser/libveriuser.o $(SYSTEM_VPI_LDFLAGS)
 
 install: all installdirs $(vpidir)/cadpli.vpl
 
