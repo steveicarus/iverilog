@@ -204,7 +204,7 @@ void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
 	                    ivl_signal_lineno(sig), ivl_signal_basename(sig));
 	    vlog_errors += 1;
       } else {
-	    switch(ivl_signal_type(sig)) {
+	    switch (ivl_signal_type(sig)) {
 	      case IVL_SIT_TRI:
 	      case IVL_SIT_UWIRE:
 // HERE: Need to add support for supply nets. Probably supply strength
@@ -363,19 +363,21 @@ static void emit_module_ports(ivl_scope_t scope)
       if (count == 0) return;
 
       fprintf(vlog_out, "(");
-      emit_nexus_as_ca(scope, ivl_scope_mod_port(scope, 0));
+      emit_nexus_as_ca(scope, ivl_scope_mod_port(scope, 0), 0);
       for (idx = 1; idx < count; idx += 1) {
 	    fprintf(vlog_out, ", ");
-	    emit_nexus_as_ca(scope, ivl_scope_mod_port(scope, idx));
+	    emit_nexus_as_ca(scope, ivl_scope_mod_port(scope, idx), 0);
       }
       fprintf(vlog_out, ")");
 }
 
-static ivl_signal_t get_port_from_nexus(ivl_scope_t scope, ivl_nexus_t nex)
+static ivl_signal_t get_port_from_nexus(ivl_scope_t scope, ivl_nexus_t nex,
+	                                unsigned *word)
 {
       assert(nex);
       unsigned idx, count = ivl_nexus_ptrs(nex);
       ivl_signal_t sig = 0;
+      *word = 0;
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
 	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
@@ -383,6 +385,7 @@ static ivl_signal_t get_port_from_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 		  if (ivl_signal_scope(t_sig) != scope) continue;
 		  assert(! sig);
 		  sig = t_sig;
+		  *word = ivl_nexus_ptr_pin(nex_ptr);
 	    }
       }
       return sig;
@@ -475,7 +478,12 @@ static void emit_port(ivl_signal_t port)
       }
       emit_sig_type(port);
       fprintf(vlog_out, " ");
-      emit_id(ivl_signal_basename(port));
+	/* Split port (arg[7:4],arg[3:0]) are generated using local signals. */
+      if (ivl_signal_local(port)) {
+	    fprintf(vlog_out, "ivlog%s", ivl_signal_basename(port));
+      } else {
+	    emit_id(ivl_signal_basename(port));
+      }
       fprintf(vlog_out, ";");
       emit_sig_file_line(port);
       fprintf(vlog_out, "\n");
@@ -483,10 +491,11 @@ static void emit_port(ivl_signal_t port)
 
 static void emit_module_port_defs(ivl_scope_t scope)
 {
-      unsigned idx, count = ivl_scope_ports(scope);
+      unsigned word, idx, count = ivl_scope_ports(scope);
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_t nex = ivl_scope_mod_port(scope, idx);
-	    ivl_signal_t port = get_port_from_nexus(scope, nex);
+	    ivl_signal_t port = get_port_from_nexus(scope, nex, &word);
+// HERE: Do we need to use word?
 	    if (port) emit_port(port);
 	    else {
 		  fprintf(vlog_out, "<missing>");
@@ -502,15 +511,17 @@ static void emit_module_port_defs(ivl_scope_t scope)
 
 static void emit_module_call_expr(ivl_scope_t scope, unsigned idx)
 {
+      unsigned word;
       ivl_nexus_t nex = ivl_scope_mod_port(scope, idx);
-      ivl_signal_t port = get_port_from_nexus(scope, nex);
+      ivl_signal_t port = get_port_from_nexus(scope, nex, &word);
 	/* For an input port we need to emit the driving expression. */
       if (ivl_signal_port(port) == IVL_SIP_INPUT) {
 	    emit_nexus_port_driver_as_ca(ivl_scope_parent(scope),
-	                                 ivl_signal_nex(port, 0));
+	                                 ivl_signal_nex(port, word));
 	/* For an output we need to emit the signal the output is driving. */
       } else {
-	    emit_nexus_as_ca(ivl_scope_parent(scope), ivl_signal_nex(port, 0));
+	    emit_nexus_as_ca(ivl_scope_parent(scope),
+	                     ivl_signal_nex(port, word), 0);
       }
 }
 
@@ -534,6 +545,70 @@ static void emit_task_func_port_defs(ivl_scope_t scope)
 	    emit_port(port);
       }
       if (count) fprintf(vlog_out, "\n");
+}
+
+/*
+ * Look at all the processes to see if we can find one with the expected
+ * scope. If we don't find one then we can assume the block only has
+ * variable definitions and needs to be emitted here in the scope code.
+ */
+static int no_stmts_in_process(ivl_process_t proc, ivl_scope_t scope)
+{
+      ivl_statement_t stmt = ivl_process_stmt(proc);
+      switch (ivl_statement_type(stmt)) {
+	case IVL_ST_BLOCK:
+	case IVL_ST_FORK:
+	    if (ivl_stmt_block_scope(stmt) == scope) return 1;
+	default: /* Do nothing. */ ;
+      }
+      return 0;
+}
+
+/*
+ * If a named block has no statements then we may need to emit it here if
+ * there are variable definitions in the scope. We translate all this to
+ * an initial and named begin since that is enough to hold the variables.
+ */
+static void emit_named_block_scope(ivl_scope_t scope)
+{
+      unsigned idx, count = ivl_scope_events(scope);
+      unsigned named_ev = 0;
+
+	/* If there are no parameters, signals or named events then skip
+	 * this block. */
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_event_t event = ivl_scope_event(scope, idx);
+	      /* If this event has any type of edge sensitivity then it is
+	       * not a named event. */
+	    if (ivl_event_nany(event)) continue;
+	    if (ivl_event_npos(event)) continue;
+	    if (ivl_event_nneg(event)) continue;
+	    named_ev = 1;
+	    break;
+      }
+      if ((ivl_scope_params(scope) == 0) && (ivl_scope_sigs(scope) == 0) &&
+	  (named_ev == 0)) return;
+	/* Currently we only need to emit a named block for the variables
+	 * if the parent scope is a module. This gets much more complicated
+	 * if this is not true. */
+      if (ivl_scope_type(ivl_scope_parent(scope)) != IVL_SCT_MODULE) return;
+	/* Scan all the processes looking for one that matches this scope.
+	 * If a match is found then this named block was already emitted by
+	 * the process code. */
+      if (ivl_design_process(design, (ivl_process_f)no_stmts_in_process,
+                             scope)) return;
+	/* A match was not found so emit the named block here to get the
+	 * variable definitions. */
+      fprintf(vlog_out, "\n%*cinitial begin: ", indent, ' ');
+      emit_id(ivl_scope_tname(scope));
+      emit_scope_file_line(scope);
+      fprintf(vlog_out, "\n");
+      indent += indent_incr;
+      emit_scope_variables(scope);
+      indent -= indent_incr;
+      fprintf(vlog_out, "%*cend  /* ", indent, ' ');
+      emit_id(ivl_scope_tname(scope));
+      fprintf(vlog_out, " */\n");
 }
 
 /*
@@ -652,6 +727,7 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	case IVL_SCT_BEGIN:
 	case IVL_SCT_FORK:
 	    assert(indent != 0);
+	    emit_named_block_scope(scope);
 	    return 0; /* A named begin/fork is handled in line. */
 	default:
 	    fprintf(stderr, "%s:%u: vlog95 error: Unsupported scope type "

@@ -61,6 +61,8 @@ static int32_t get_int32_from_bits(const char *bits, unsigned nbits,
 	    }
       }
 	/* Sign extend as needed. */
+// HERE: Need to emit 1 instead of -1 for some of the constants.
+//      if (is_signed && (nbits > 1) && (msb == '1') && (trim_wid < 32U)) {
       if (is_signed && (msb == '1') && (trim_wid < 32U)) {
 	    value |= ~(((int32_t)1 << trim_wid) - (int32_t)1);
       }

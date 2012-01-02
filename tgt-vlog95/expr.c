@@ -79,7 +79,7 @@ static void emit_expr_array(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       char *oper = "<invalid>";
-      switch(ivl_expr_opcode(expr)) {
+      switch (ivl_expr_opcode(expr)) {
 	case '+': oper = "+"; break;
 	case '-': oper = "-"; break;
 	case '*': oper = "*"; break;
@@ -108,7 +108,7 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       }
 
       fprintf(vlog_out, "(");
-      switch(ivl_expr_opcode(expr)) {
+      switch (ivl_expr_opcode(expr)) {
 	case '%':
 	    if (ivl_expr_value(expr) == IVL_VT_REAL) {
 		  fprintf(stderr, "%s:%u: vlog95 error: Real modulus operator "
@@ -427,6 +427,18 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       } else {
 // HERE: Should this sign extend if the expression is signed?
 	    emit_expr(scope, sig_expr, wid);
+	      /* Select part of a signal when needed. */
+	    if ((ivl_expr_type(sig_expr) == IVL_EX_SIGNAL) &&
+	        (ivl_expr_width(expr) < ivl_expr_width(sig_expr))) {
+		  ivl_signal_t sig = ivl_expr_signal(sig_expr);
+		  int msb = ivl_signal_msb(sig);
+		  int lsb = ivl_signal_lsb(sig);
+		  int64_t value = lsb;
+		  unsigned e_wid = ivl_expr_width(expr) - 1;
+		  if (msb >= lsb) value += e_wid;
+		  else value -= e_wid;
+		  fprintf(vlog_out, "[%"PRId64":%u]", value, lsb);
+	    }
       }
 }
 
@@ -508,6 +520,46 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    /* A cast is a noop. */
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
 	    break;
+	case 'I':
+	    fprintf(vlog_out, "(++");
+	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    fprintf(vlog_out, ")");
+	    fprintf(stderr, "%s:%u: vlog95 sorry: Pre-increment "
+	                    "operator is not currently translated.\n",
+	                    ivl_expr_file(expr),
+	                    ivl_expr_lineno(expr));
+	    vlog_errors += 1;
+	    break;
+	case 'i':
+	    fprintf(vlog_out, "(");
+	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    fprintf(vlog_out, "++)");
+	    fprintf(stderr, "%s:%u: vlog95 sorry: Pre-increment "
+	                    "operator is not currently translated.\n",
+	                    ivl_expr_file(expr),
+	                    ivl_expr_lineno(expr));
+	    vlog_errors += 1;
+	    break;
+	case 'D':
+	    fprintf(vlog_out, "(--");
+	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    fprintf(vlog_out, ")");
+	    fprintf(stderr, "%s:%u: vlog95 sorry: Pre-decrement "
+	                    "operator is not currently translated.\n",
+	                    ivl_expr_file(expr),
+	                    ivl_expr_lineno(expr));
+	    vlog_errors += 1;
+	    break;
+	case 'd':
+	    fprintf(vlog_out, "(");
+	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    fprintf(vlog_out, "--)");
+	    fprintf(stderr, "%s:%u: vlog95 sorry: Pre-decrement "
+	                    "operator is not currently translated.\n",
+	                    ivl_expr_file(expr),
+	                    ivl_expr_lineno(expr));
+	    vlog_errors += 1;
+	    break;
 	default:
 	    fprintf(vlog_out, "<unknown>");
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
@@ -516,13 +568,14 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	                    ivl_expr_file(expr),
 	                    ivl_expr_lineno(expr),
 	                    ivl_expr_opcode(expr));
+	    vlog_errors += 1;
 	    break;
       }
 }
 
 void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
-      switch(ivl_expr_type(expr)) {
+      switch (ivl_expr_type(expr)) {
 	case IVL_EX_ARRAY:
 	    emit_expr_array(scope, expr, wid);
 	    break;
@@ -534,6 +587,14 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    break;
 	case IVL_EX_DELAY:
 	    emit_expr_delay(scope, expr, wid);
+	    break;
+	case IVL_EX_ENUMTYPE:
+	    fprintf(vlog_out, "<enum>");
+	    fprintf(stderr, "%s:%u: vlog95 error: Enum expressions "
+	                    "are not supported.\n",
+	                    ivl_expr_file(expr),
+	                    ivl_expr_lineno(expr));
+	    vlog_errors += 1;
 	    break;
 	case IVL_EX_EVENT:
 	    emit_expr_event(scope, expr, wid);

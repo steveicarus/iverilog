@@ -780,7 +780,7 @@ static void emit_stmt_case(ivl_scope_t scope, ivl_statement_t stmt)
 {
       char *case_type;
       unsigned idx, default_case, count = ivl_stmt_case_count(stmt);
-      switch(ivl_statement_type(stmt)) {
+      switch (ivl_statement_type(stmt)) {
 	case IVL_ST_CASE:
 	case IVL_ST_CASER:
 	    case_type = "case";
@@ -1047,7 +1047,7 @@ static void emit_stmt_while(ivl_scope_t scope, ivl_statement_t stmt)
 
 void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 {
-      switch(ivl_statement_type(stmt)) {
+      switch (ivl_statement_type(stmt)) {
 	case IVL_ST_NOOP:
 	      /* If this is a statement termination then just finish the
 	       * statement, otherwise print an empty begin/end pair. */
@@ -1159,7 +1159,8 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 
 void emit_process(ivl_scope_t scope, ivl_process_t proc)
 {
-      ivl_statement_t stmt;
+      ivl_statement_t stmt = ivl_process_stmt(proc);
+      if (ivl_statement_type(stmt) == IVL_ST_NOOP) return;
       fprintf(vlog_out, "\n%*c", get_indent(), ' ');
       switch (ivl_process_type(proc)) {
         case IVL_PR_INITIAL:
@@ -1181,7 +1182,6 @@ void emit_process(ivl_scope_t scope, ivl_process_t proc)
 	                      ivl_process_file(proc),
 	                      ivl_process_lineno(proc));
       }
-      stmt = ivl_process_stmt(proc);
       if (ivl_statement_type(stmt) == IVL_ST_NOOP) {
             fprintf(vlog_out, " begin\n%*cend\n", get_indent(), ' ');
       } else {

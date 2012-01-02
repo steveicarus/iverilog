@@ -70,7 +70,7 @@ static void emit_delay(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
 	    ivl_signal_t sig = ivl_expr_signal(expr);
 	    if (ivl_signal_local(sig)) {
 		  assert(! is_stmt);
-		  emit_nexus_as_ca(scope, ivl_signal_nex(sig, 0));
+		  emit_nexus_as_ca(scope, ivl_signal_nex(sig, 0), 0);
 		  return;
 	    }
       }
@@ -412,9 +412,8 @@ static unsigned find_signal_in_nexus(ivl_scope_t scope, ivl_nexus_t nex)
       unsigned is_driver = 0;
       unsigned is_array = 0;
       int64_t array_idx = 0;
-      unsigned idx, count;
+      unsigned idx, count = ivl_nexus_ptrs(nex);
 
-      count = ivl_nexus_ptrs(nex);
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
 	    ivl_signal_t sig = ivl_nexus_ptr_sig(nex_ptr);
@@ -501,7 +500,7 @@ static void emit_number_as_string(ivl_net_const_t net_const)
 
 	      /* Skip any NULL bytes. */
 	    if (val == 0) continue;
-	      /* Print some values that must be escapped. */
+	      /* Print some values that must be escaped. */
 	    if (val == '"') fprintf(vlog_out, "\\\"");
 	    else if (val == '\\') fprintf(vlog_out, "\\\\");
 	      /* Print the printable characters. */
@@ -616,8 +615,84 @@ static unsigned find_const_nexus(ivl_scope_t scope, ivl_nexus_t nex)
       return 0;
 }
 
+static unsigned find_driving_signal(ivl_scope_t scope, ivl_nexus_t nex)
+{
+      ivl_signal_t sig = 0;
+      unsigned is_array = 0;
+      int64_t array_idx = 0;
+      unsigned idx, count = ivl_nexus_ptrs(nex);
+
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
+	    if (! t_sig) continue;
+	    if (ivl_signal_local(t_sig)) continue;
+	      /* An output can be used if it is driven by this nexus. */
+	    if ((ivl_nexus_ptr_drive1(nex_ptr) == IVL_DR_HiZ) &&
+	        (ivl_nexus_ptr_drive0(nex_ptr) == IVL_DR_HiZ) &&
+	        (ivl_signal_port(t_sig) != IVL_SIP_OUTPUT)) {
+		  continue;
+	    }
+	      /* We have a signal that can be used to find the name. */
+	    if (sig) {
+// HERE: Which one should we use? For now it's the first one found.
+//       I believe this needs to be solved (see above).
+		  fprintf(stderr, "%s:%u: vlog95 warning: Duplicate name (%s",
+		          ivl_signal_file(t_sig), ivl_signal_lineno(t_sig),
+		          ivl_signal_basename(t_sig));
+		  if (ivl_signal_dimensions(t_sig) > 0) {
+			int64_t tmp_idx = ivl_nexus_ptr_pin(nex_ptr);
+			tmp_idx += ivl_signal_array_base(t_sig);
+			fprintf(stderr, "[%"PRId64"]", tmp_idx);
+		  }
+		  fprintf(stderr, ") found for nexus (%s",
+		          ivl_signal_basename(sig));
+		  if (is_array) fprintf(stderr, "[%"PRId64"]", array_idx);
+		  fprintf(stderr, ")\n");
+	    } else {
+		  sig = t_sig;
+		  if (ivl_signal_dimensions(sig) > 0) {
+			is_array = 1;
+			array_idx = ivl_nexus_ptr_pin(nex_ptr);
+			array_idx += ivl_signal_array_base(sig);
+		  }
+	    }
+      }
+
+      if (sig) {
+	    emit_scope_call_path(scope, ivl_signal_scope(sig));
+	    emit_id(ivl_signal_basename(sig));
+	    if (is_array) fprintf(vlog_out, "[%"PRId64"]", array_idx);
+	    return 1;
+      }
+
+      return 0;
+}
+
+static unsigned is_local_input(ivl_scope_t scope, ivl_nexus_t nex)
+{
+      ivl_signal_t sig = 0;
+      unsigned idx, count = ivl_nexus_ptrs(nex);
+
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
+	    if (! t_sig) continue;
+	    if (! ivl_signal_local(t_sig)) continue;
+	    if (ivl_signal_port(t_sig) != IVL_SIP_INPUT) continue;
+	    assert(! sig);
+	    assert(ivl_signal_dimensions(t_sig) == 0);
+	    sig = t_sig;
+      }
+      if (sig) {
+	    fprintf(vlog_out, "ivlog%s", ivl_signal_basename(sig));
+	    return 1;
+      }
+      return 0;
+}
+
 // HERE: Does this work correctly with an array reference created from @*?
-void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex)
+void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex, unsigned allow_UD)
 {
       ivl_scope_t mod_scope;
 	/* First look in the local scope for the nexus name. */
@@ -630,8 +705,15 @@ void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 	    if (find_signal_in_nexus(mod_scope, nex)) return;
       }
 
+	/* Look to see if this is a up/down reference. */
+      if (allow_UD && find_driving_signal(scope, nex)) return;
+
 	/* If there is no signals driving this then look for a constant. */
       if (find_const_nexus(scope, nex)) return;
+
+	/* Module inputs that are split (arg[7:4], arg[3:0]) need to use
+	 * the local signal names. */
+      if (is_local_input(scope, nex)) return;
 
 // HERE: Need to check arr[var]? Can this be rebuilt?
 //       Then look for down scopes and then any scope. For all this warn if
@@ -641,7 +723,7 @@ void emit_name_of_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 	/* It is possible that the nexus does not have a name. For this
 	 * case do not print an actual name. */
       fprintf(vlog_out, "/* Empty */");
-      dump_nexus_information(scope, nex);
+//      dump_nexus_information(scope, nex);
 }
 
 /*
@@ -758,6 +840,10 @@ static unsigned is_escaped(const char *id)
 			return 1;
 		  }
 	    }
+	      /* Any Verilog keyword should also be escaped. */
+// HERE: Create a keyword.gperf file to do this check.
+	    if ((strcmp(id, "input") == 0)  ||
+	        (strcmp(id, "output") == 0) ) return 1;
 	      /* We looked at all the digits, so this is a normal id. */
 	    return 0;
       }

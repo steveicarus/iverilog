@@ -157,23 +157,33 @@ static void emit_delay(ivl_scope_t scope, ivl_expr_t rise, ivl_expr_t fall,
 static unsigned is_local_nexus(ivl_scope_t scope, ivl_nexus_t nex)
 {
       unsigned idx, count = ivl_nexus_ptrs(nex);
-      unsigned is_local = 0;
+      unsigned is_local = 1;
+      unsigned has_output_driver = 0;
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
 	    ivl_signal_t sig = ivl_nexus_ptr_sig(nex_ptr);
 	    if (! sig) continue;
+	      /* Check to see if there is an output port driving into
+	       * the local scope. */
+	    if ((scope == ivl_scope_parent(ivl_signal_scope(sig))) &&
+	        (ivl_signal_port(sig) == IVL_SIP_OUTPUT)) {
+		  has_output_driver = 1;
+		  continue;
+	    }
 	    if (scope != ivl_signal_scope(sig)) continue;
 	    if ((ivl_nexus_ptr_drive1(nex_ptr) != IVL_DR_HiZ) ||
 	        (ivl_nexus_ptr_drive0(nex_ptr) != IVL_DR_HiZ)) continue;
 	    if (ivl_signal_local(sig)) {
-//		  assert(! is_local);
 		  is_local = 1;
 	    } else {
 		  is_local = 0;
 		  break;
 	    }
       }
-      return is_local;
+	/* We return is_local=true only if there is not an output driving
+	 * into this scope. This is needed since some module outputs are
+	 * combined with a concatenation. */
+      return is_local && !has_output_driver;
 }
 
 /*
@@ -252,8 +262,28 @@ static void emit_nexus_port_signal(ivl_scope_t scope, ivl_nexus_t nex)
 	    }
       }
 	/* There will not be a signal for an empty port. */
-      if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, 0));
+      if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, 0), 0);
       else fprintf(vlog_out, "/* Empty */");
+}
+
+static ivl_signal_t find_local_signal(ivl_scope_t scope, ivl_nexus_t nex,
+                                      unsigned *word)
+{
+      unsigned idx, count = ivl_nexus_ptrs(nex);
+      ivl_signal_t sig = 0;
+      *word = 0;
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
+	    if (!t_sig) continue;
+	    if (ivl_signal_local(t_sig) &&
+	        (ivl_signal_port(t_sig) != IVL_SIP_INPUT)) continue;
+	    if (ivl_signal_scope(t_sig) != scope) continue;
+	    assert(! sig);
+	    sig = t_sig;
+	    *word = ivl_nexus_ptr_pin(nex_ptr);
+      }
+      return sig;
 }
 
 /*
@@ -264,13 +294,15 @@ void emit_nexus_port_driver_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
       unsigned idx, count = ivl_nexus_ptrs(nex);
       ivl_lpm_t lpm = 0;
       ivl_net_const_t net_const = 0;
-      ivl_net_logic_t net_logic = 0;
+      ivl_net_logic_t nlogic = 0;
       ivl_signal_t sig = 0;
+      unsigned word = 0;
+	/* Look for the nexus driver. */
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
 	    ivl_lpm_t t_lpm = ivl_nexus_ptr_lpm(nex_ptr);
 	    ivl_net_const_t t_net_const = ivl_nexus_ptr_con(nex_ptr);
-	    ivl_net_logic_t t_net_logic = ivl_nexus_ptr_log(nex_ptr);
+	    ivl_net_logic_t t_nlogic = ivl_nexus_ptr_log(nex_ptr);
 	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
 	    if ((ivl_nexus_ptr_drive1(nex_ptr) == IVL_DR_HiZ) &&
 	        (ivl_nexus_ptr_drive0(nex_ptr) == IVL_DR_HiZ)) continue;
@@ -282,29 +314,46 @@ void emit_nexus_port_driver_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 		  assert(! net_const);
 		  net_const = t_net_const;
 	    }
-	    if (t_net_logic) {
-		  assert(! net_logic);
-		  net_logic = t_net_logic;
+	    if (t_nlogic) {
+		  assert(! nlogic);
+		  nlogic = t_nlogic;
 	    }
 	    if (t_sig) {
 		  assert(! sig);
 		  sig = t_sig;
+		  word = ivl_nexus_ptr_pin(nex_ptr);
 	    }
       }
+	/* An LPM is driving the nexus. */
       if (lpm) {
 	    assert(! net_const);
-	    assert(! net_logic);
+	    assert(! nlogic);
 	    assert(! sig);
-	    emit_lpm_as_ca(scope, lpm);
+	      /* If there is a signal in this scope that is also driven by
+	       * the LPM then use the signal instead. */
+	    sig = find_local_signal(scope, ivl_lpm_q(lpm), &word);
+	    if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0);
+	    else emit_lpm_as_ca(scope, lpm);
+	/* A constant is driving the nexus. */
       } else if (net_const) {
-	    assert( !net_logic);
+	    assert( !nlogic);
 	    assert(! sig);
-	    emit_const_nexus(scope, net_const);
-      } else if (net_logic) {
+	      /* If there is a signal in this scope that is also driven by
+	       * the constant then use the signal instead. */
+	    sig = find_local_signal(scope, ivl_const_nex(net_const), &word);
+	    if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0);
+	    else emit_const_nexus(scope, net_const);
+	/* A logic gate is driving the nexus. */
+      } else if (nlogic) {
 	    assert(! sig);
-	    emit_logic_as_ca(scope, net_logic);
+	      /* If there is a signal in this scope that is also driven by
+	       * the logic then use the signal instead. */
+	    sig = find_local_signal(scope, ivl_logic_pin(nlogic, 0), &word);
+	    if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0);
+	    else emit_logic_as_ca(scope, nlogic);
+	/* A signal is driving the nexus. */
       } else if (sig) {
-	    emit_nexus_as_ca(scope, ivl_signal_nex(sig, 0));
+	    emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0);
 	/* If there is no driver then look for a single signal that is
 	 * driven by this nexus that has the correct scope. This is needed
 	 * to translate top level ports. */
@@ -313,7 +362,7 @@ void emit_nexus_port_driver_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
       }
 }
 
-void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
+void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex, unsigned allow_UD)
 {
 	/* If there is no nexus then there is nothing to print. */
       if (! nex) return;
@@ -324,13 +373,14 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 	    unsigned out_of_scope_drive = 0;
 	    ivl_lpm_t lpm = 0;
 	    ivl_net_const_t net_const = 0;
-	    ivl_net_logic_t net_logic = 0;
+	    ivl_net_logic_t nlogic = 0;
 	    ivl_signal_t sig = 0;
+	    unsigned word = 0;
 	    for (idx = 0; idx < count; idx += 1) {
 		  ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
 		  ivl_lpm_t t_lpm = ivl_nexus_ptr_lpm(nex_ptr);
 		  ivl_net_const_t t_net_const = ivl_nexus_ptr_con(nex_ptr);
-		  ivl_net_logic_t t_net_logic = ivl_nexus_ptr_log(nex_ptr);
+		  ivl_net_logic_t t_nlogic = ivl_nexus_ptr_log(nex_ptr);
 		  ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
 		  if ((ivl_nexus_ptr_drive1(nex_ptr) == IVL_DR_HiZ) &&
 		      (ivl_nexus_ptr_drive0(nex_ptr) == IVL_DR_HiZ)) {
@@ -352,23 +402,32 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 			assert(! net_const);
 			net_const = t_net_const;
 		  }
-		  if (t_net_logic) {
-			assert(! net_logic);
-			net_logic = t_net_logic;
+		  if (t_nlogic) {
+			assert(! nlogic);
+			nlogic = t_nlogic;
 		  }
 		  if (t_sig) {
 			assert(! sig);
 			sig = t_sig;
+			word = ivl_nexus_ptr_pin(nex_ptr);
 		  }
 	    }
 	    if (lpm) {
 		  assert(! net_const);
-		  assert(! net_logic);
+		  assert(! nlogic);
 		  assert(! sig);
 		  assert(! must_be_sig);
+// HERE: I think we need special input code like the following.
+#if 0
+	      /* If these is a signal in this scope that is also driven by
+	       * the LPM then use the signal instead. */
+	    sig = find_local_signal(scope, ivl_lpm_q(lpm), &word);
+	    if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0);
+	    else emit_lpm_as_ca(scope, lpm);
+#endif
 		  emit_lpm_as_ca(scope, lpm);
 	    } else if (net_const) {
-		  assert( !net_logic);
+		  assert( !nlogic);
 		  assert(! sig);
 		  assert(! must_be_sig);
 		  if (out_of_scope_drive) {
@@ -380,14 +439,15 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 // For now report this as missing.
 			fprintf(vlog_out, "<missing>");
 		  } else emit_const_nexus(scope, net_const);
-	    } else if (net_logic) {
+	    } else if (nlogic) {
 		  assert(! sig);
 		  assert(! must_be_sig);
-		  emit_logic_as_ca(scope, net_logic);
+		  emit_logic_as_ca(scope, nlogic);
 	    } else if (sig) {
+// HERE: should these be allow_UD?
 		  if (must_be_sig) {
-			emit_nexus_as_ca(scope, ivl_signal_nex(sig, 0));
-		  } else emit_name_of_nexus(scope, nex);
+			emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0);
+		  } else emit_name_of_nexus(scope, nex, 0);
 // HERE: The assert causes pr1703959 to fail.
 //	    } else assert(0);
 	    } else {
@@ -397,7 +457,7 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 		  fprintf(vlog_out, "<missing>");
 	    }
       } else {
-	    emit_name_of_nexus(scope, nex);
+	    emit_name_of_nexus(scope, nex, allow_UD);
       }
 }
 
@@ -408,61 +468,61 @@ static void emit_logic_as_ca(ivl_scope_t scope, ivl_net_logic_t nlogic)
 	case IVL_LO_AND:
 	    assert(inputs == 2);
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
 	    fprintf(vlog_out, " & ");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LO_BUF:
-//	case IVL_LO_BUFT:
+	case IVL_LO_BUFT:
 	case IVL_LO_BUFZ:
 	    assert(inputs == 1);
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
 	    break;
 	case IVL_LO_NAND:
 	    assert(inputs == 2);
 	    fprintf(vlog_out, "~(");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
 	    fprintf(vlog_out, " & ");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LO_NOR:
 	    assert(inputs == 2);
 	    fprintf(vlog_out, "~(");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
 	    fprintf(vlog_out, " | ");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LO_NOT:
 	    assert(inputs == 1);
 	    fprintf(vlog_out, "(~ ");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LO_OR:
 	    assert(inputs == 2);
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
 	    fprintf(vlog_out, " | ");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LO_XNOR:
 	    assert(inputs == 2);
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
 	    fprintf(vlog_out, " ~^ ");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LO_XOR:
 	    assert(inputs == 2);
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
 	    fprintf(vlog_out, " ^ ");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	default:
@@ -482,7 +542,7 @@ static void emit_lpm_array(ivl_scope_t scope, ivl_lpm_t lpm)
       emit_id(ivl_signal_basename(sig));
       fprintf(vlog_out, "[");
 // HERE: Need to remove the scale to match array base instead of adding it back.
-      emit_nexus_as_ca(scope, ivl_lpm_select(lpm));
+      emit_nexus_as_ca(scope, ivl_lpm_select(lpm), 0);
       fprintf(vlog_out, " + %d]", ivl_signal_array_base(sig));
 }
 
@@ -500,56 +560,92 @@ static void emit_lpm_concat(ivl_scope_t scope, ivl_lpm_t lpm)
 	/* If all the nexus match then we have a repeat. */
       if ((idx == count) && (count > 1)) {
 	    fprintf(vlog_out, "%u{", count);
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, "}");
+	/* Icarus uses a concat to combine the output from multiple devices
+	 * into a single vector, because of this we need to also look for
+	 * the nexus driver outside the scope. emit_nexus_as_ca( , , 1) */
       } else {
 	    for (idx = count-1; idx > 0; idx -= 1) {
-		  emit_nexus_as_ca(scope, ivl_lpm_data(lpm, idx));
+		  emit_nexus_as_ca(scope, ivl_lpm_data(lpm, idx), 1);
 		  fprintf(vlog_out, ", ");
 	    }
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 1);
       }
       fprintf(vlog_out, "}");
 }
 
+/*
+ * Look for an output signal in the nexus that is driving into this scope.
+ */
+static ivl_signal_t find_output_signal(ivl_scope_t scope, ivl_nexus_t nex,
+                                       unsigned*array_word)
+{
+      unsigned idx, count = ivl_nexus_ptrs(nex);
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
+	    if (! t_sig) continue;
+	      /* The signal must not be a driver. */
+	    if ((ivl_nexus_ptr_drive1(nex_ptr) != IVL_DR_HiZ) ||
+	        (ivl_nexus_ptr_drive0(nex_ptr) != IVL_DR_HiZ)) continue;
+	      /* The signal must be an output. */
+	    if (ivl_signal_port(t_sig) != IVL_SIP_OUTPUT) continue;
+	      /* The signal must be driving into this scope. */
+	    if (ivl_scope_parent(ivl_signal_scope(t_sig)) == scope) {
+		  return t_sig;
+	    }
+      }
+      return 0;
+}
+
 static ivl_signal_t nexus_is_signal(ivl_scope_t scope, ivl_nexus_t nex,
-                                    int*base, int*array_word)
+                                    int*base, unsigned*array_word)
 {
       unsigned idx, count = ivl_nexus_ptrs(nex);
       ivl_lpm_t lpm = 0;
       ivl_net_const_t net_const = 0;
-      ivl_net_logic_t net_logic = 0;
+      ivl_net_logic_t nlogic = 0;
       ivl_signal_t sig = 0;
+	/* Look for a signal in the local scope first. */
+      sig = find_local_signal(scope, nex, array_word);
+      if (sig) return sig;
+	/* Now look for an output signal driving into the local scope. */
+      sig = find_output_signal(scope, nex, array_word);
+      if (sig) return sig;
+	/* Now scan the nexus looking for a driver. */
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
-	    if ((ivl_nexus_ptr_drive1(nex_ptr) == IVL_DR_HiZ) &&
-	        (ivl_nexus_ptr_drive0(nex_ptr) == IVL_DR_HiZ)) continue;
 	    ivl_lpm_t t_lpm = ivl_nexus_ptr_lpm(nex_ptr);
 	    ivl_net_const_t t_net_const = ivl_nexus_ptr_con(nex_ptr);
-	    ivl_net_logic_t t_net_logic = ivl_nexus_ptr_log(nex_ptr);
+	    ivl_net_logic_t t_nlogic = ivl_nexus_ptr_log(nex_ptr);
 	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
+	    if ((ivl_nexus_ptr_drive1(nex_ptr) == IVL_DR_HiZ) &&
+	        (ivl_nexus_ptr_drive0(nex_ptr) == IVL_DR_HiZ)) continue;
 	    if (t_lpm) {
 		  assert(! lpm);
 		    /* The real signal could be hidden behind a select. */
 		  if (ivl_lpm_type(t_lpm) == IVL_LPM_PART_VP) {
 			t_sig = nexus_is_signal(scope, ivl_lpm_data(t_lpm, 0),
 			                        base, array_word);
-			if (t_sig) *base += ivl_lpm_base(t_lpm);
-		  } else lpm = t_lpm;
+		  }
+
+		  if (t_sig) *base += ivl_lpm_base(t_lpm);
+		  else lpm = t_lpm;
 	    }
 	    if (t_net_const) {
 		  assert(! net_const);
 		  net_const = t_net_const;
 	    }
-	    if (t_net_logic) {
-		  assert(! net_logic);
+	    if (t_nlogic) {
+		  assert(! nlogic);
 		    /* The real signal could be hidden behind a BUFZ gate. */
-		  if (ivl_logic_type(t_net_logic) == IVL_LO_BUFZ) {
-			assert(ivl_logic_pins(t_net_logic) == 2);
+		  if (ivl_logic_type(t_nlogic) == IVL_LO_BUFZ) {
+			assert(ivl_logic_pins(t_nlogic) == 2);
 			t_sig = nexus_is_signal(scope,
-			                        ivl_logic_pin(t_net_logic, 1),
+			                        ivl_logic_pin(t_nlogic, 1),
 			                        base, array_word);
-		  } else net_logic = t_net_logic;
+		  } else nlogic = t_nlogic;
 	    }
 	    if (t_sig) {
 		  assert(! sig);
@@ -558,18 +654,13 @@ static ivl_signal_t nexus_is_signal(ivl_scope_t scope, ivl_nexus_t nex,
 		  *array_word = ivl_nexus_ptr_pin(nex_ptr);
 	    }
       }
-      if (sig) {
-	    assert(! lpm);
-	    assert(! net_const);
-	    assert(! net_logic);
-      }
       return sig;
 }
 
 static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm)
 {
       unsigned width = ivl_lpm_width(lpm);
-      int array_word = 0;
+      unsigned array_word = 0;
       int base = ivl_lpm_base(lpm);
       int msb, lsb;
       ivl_signal_t sig = nexus_is_signal(scope, ivl_lpm_data(lpm, 0),
@@ -587,7 +678,7 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm)
 	      /* Check if the compiler used a select for a shift. */
 	    assert(base >= 0);
 	    if (base) fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    if (base) {
 		  fprintf(vlog_out, " ");
 		  if (sign_extend) fprintf(vlog_out, ">");
@@ -598,6 +689,7 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm)
       }
 
       if (sign_extend) fprintf(vlog_out, "(");
+      emit_scope_call_path(scope, ivl_signal_scope(sig));
       emit_id(ivl_signal_basename(sig));
       if (ivl_signal_dimensions(sig)) {
 	    array_word += ivl_signal_array_base(sig);
@@ -615,13 +707,13 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm)
 	    return;
       }
 
-      fprintf(vlog_out, "[");
       if (width == 1) {
 	    ivl_nexus_t sel = ivl_lpm_data(lpm, 1);
 	    if (sel) {
+		  fprintf(vlog_out, "[");
 // HERE: Need to scale the select nexus.
 		  if ((msb >= lsb) && (lsb == 0)) {
-			emit_nexus_as_ca(scope, sel);
+			emit_nexus_as_ca(scope, sel, 0);
 		  } else {
 			fprintf(stderr, "%s:%u: vlog95 sorry: Non-zero based "
 			                "variable part selects are not "
@@ -631,11 +723,15 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm)
 			fprintf(vlog_out, "<missing>");
 		  }
 	    } else {
+		    /* Skip a select of the entire bit. */
+		  if ((msb == lsb) && (lsb == base)) return;
+		  fprintf(vlog_out, "[");
 		  if (msb >= lsb) base += lsb;
 		  else base = lsb - base;
 		  fprintf(vlog_out, "%d", base);
 	    }
       } else {
+	    fprintf(vlog_out, "[");
 // HERE: No support for an indexed part select.
 	    ivl_nexus_t sel = ivl_lpm_data(lpm, 1);
 	    if (sel) {
@@ -666,10 +762,10 @@ static void emit_lpm_func(ivl_scope_t scope, ivl_lpm_t lpm)
 	    count -= 1;
 	    fprintf(vlog_out, "(");
 	    for (idx = 0; idx < count; idx += 1) {
-		  emit_nexus_as_ca(scope, ivl_lpm_data(lpm, idx));
+		  emit_nexus_as_ca(scope, ivl_lpm_data(lpm, idx), 0);
 		  fprintf(vlog_out, ", ");
 	    }
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, count));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, count), 0);
 	    fprintf(vlog_out, ")");
       }
 }
@@ -679,9 +775,9 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
       switch (ivl_lpm_type(lpm)) {
 	case IVL_LPM_ADD:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, " + ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_ARRAY:
@@ -690,48 +786,48 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	case IVL_LPM_CAST_INT:
 	case IVL_LPM_CAST_INT2:
 	case IVL_LPM_CAST_REAL:
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    break;
 	case IVL_LPM_CMP_EEQ:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, " === ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_CMP_EQ:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, " == ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_CMP_GE:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, " >= ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_CMP_GT:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, " > ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_CMP_NE:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, " != ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_CMP_NEE:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, " !== ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_CONCAT:
@@ -739,9 +835,9 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	    break;
 	case IVL_LPM_DIVIDE:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, " / ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_MOD:
@@ -753,66 +849,66 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 		  vlog_errors += 1;
 	    }
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, " %% ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_MULT:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, " * ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_MUX:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_select(lpm));
+	    emit_nexus_as_ca(scope, ivl_lpm_select(lpm), 0);
 	    fprintf(vlog_out, " ? ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, " : ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_PART_PV:
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 1);
 	    break;
 	case IVL_LPM_PART_VP:
 	    emit_lpm_part_select(scope, lpm);
 	    break;
 	case IVL_LPM_RE_AND:
 	    fprintf(vlog_out, "(&");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_RE_NAND:
 	    fprintf(vlog_out, "(~&");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_RE_NOR:
 	    fprintf(vlog_out, "(~|");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_RE_OR:
 	    fprintf(vlog_out, "(|");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_RE_XOR:
 	    fprintf(vlog_out, "(^");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_RE_XNOR:
 	    fprintf(vlog_out, "(~^");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_REPEAT:
 	    fprintf(vlog_out, "{%u{", ivl_lpm_size(lpm));
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, "}}");
 	    break;
 	case IVL_LPM_SFUNC:
@@ -821,30 +917,30 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	    break;
 	case IVL_LPM_SHIFTL:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, " << ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_SHIFTR:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, " ");
 	    assert(! sign_extend);
 	    fprintf(vlog_out, " >> ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_SIGN_EXT:
 //	    assert(! sign_extend);
 	    sign_extend = 1;
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    break;
 	case IVL_LPM_SUB:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, " - ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1));
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_UFUNC:
@@ -980,29 +1076,29 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
       }
       fprintf(vlog_out, " (");
 	/* Emit the q pin. */
-      emit_name_of_nexus(scope, ivl_lpm_q(lpm));
+      emit_name_of_nexus(scope, ivl_lpm_q(lpm), 0);
       fprintf(vlog_out, ", ");
 	/* Emit the clock pin. */
-      emit_nexus_as_ca(scope, ivl_lpm_clk(lpm));
+      emit_nexus_as_ca(scope, ivl_lpm_clk(lpm), 0);
       fprintf(vlog_out, ", ");
 	/* Emit the enable pin expression(s) if needed. */
       emitted = 0;
       nex = ivl_lpm_enable(lpm);
       if (nex) {
-	    emit_nexus_as_ca(scope, nex);
+	    emit_nexus_as_ca(scope, nex, 0);
 	    emitted = 1;
       }
       nex = ivl_lpm_sync_clr(lpm);
       if (nex) {
 	    if (emitted) fprintf(vlog_out, " | ");
-	    emit_nexus_as_ca(scope, nex);
+	    emit_nexus_as_ca(scope, nex, 0);
 	    emitted = 1;
       }
       have_sset = 0;
       nex = ivl_lpm_sync_set(lpm);
       if (nex) {
 	    if (emitted) fprintf(vlog_out, " | ");
-	    emit_nexus_as_ca(scope, nex);
+	    emit_nexus_as_ca(scope, nex, 0);
 	    emitted = 1;
 	    have_sset = 1;
       }
@@ -1012,37 +1108,37 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
       have_data = ivl_lpm_data(lpm, 0) != 0;
       nex = ivl_lpm_sync_clr(lpm);
       if (nex) {
-	    emit_nexus_as_ca(scope, nex);
+	    emit_nexus_as_ca(scope, nex, 0);
 	    if (have_data | have_sset) fprintf(vlog_out, " & ");
 	    if (have_data & have_sset) fprintf(vlog_out, "(");
       }
       nex = ivl_lpm_sync_set(lpm);
       if (nex) {
 	    if (! sset_bits || (sset_bits && (sset_bits[0] == '1'))) {
-		  emit_nexus_as_ca(scope, nex);
+		  emit_nexus_as_ca(scope, nex, 0);
 		  if (have_data) fprintf(vlog_out, " | ");
 	    } else {
 		  fprintf(vlog_out, "~");
-		  emit_nexus_as_ca(scope, nex);
+		  emit_nexus_as_ca(scope, nex, 0);
 		  if (have_data) fprintf(vlog_out, " & ");
 	    }
       }
       nex = ivl_lpm_data(lpm, 0);
-      if (nex) emit_nexus_as_ca(scope, nex);
+      if (nex) emit_nexus_as_ca(scope, nex, 0);
       if (have_data & have_sset) fprintf(vlog_out, ")");
       fprintf(vlog_out, ", ");
 	/* Emit the clear pin expression(s) if needed. */
       emitted = 0;
       nex = ivl_lpm_async_clr(lpm);
       if (nex) {
-	    emit_nexus_as_ca(scope, nex);
+	    emit_nexus_as_ca(scope, nex, 0);
 	    emitted = 1;
       }
       nex = ivl_lpm_async_set(lpm);
       if (aset_bits && (aset_bits[0] != '0')) nex = 0;
       if (nex) {
 	    if (emitted) fprintf(vlog_out, " | ");
-	    emit_nexus_as_ca(scope, nex);
+	    emit_nexus_as_ca(scope, nex, 0);
 	    emitted = 1;
       }
       if (!emitted) fprintf(vlog_out, "1'b0");
@@ -1050,7 +1146,7 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
 	/* Emit the set pin expression(s) if needed. */
       nex = ivl_lpm_async_set(lpm);
       if (aset_bits && (aset_bits[0] != '1')) nex = 0;
-      if (nex) emit_nexus_as_ca(scope, nex);
+      if (nex) emit_nexus_as_ca(scope, nex, 0);
       else fprintf(vlog_out, "1'b0");
       fprintf(vlog_out, ");\n");
 	/* We need to emit a primitive for this instance. */
@@ -1145,6 +1241,31 @@ static void emit_lpm_part_pv(ivl_scope_t scope, ivl_lpm_t lpm)
       fprintf(vlog_out, "]");
 }
 
+unsigned  output_is_module_instantiation_input(ivl_scope_t scope,
+                                               ivl_nexus_t nex)
+{
+      unsigned idx, count = ivl_nexus_ptrs(nex);
+      unsigned rtn = 0;
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	      /* Skip drivers. */
+	    if ((ivl_nexus_ptr_drive1(nex_ptr) != IVL_DR_HiZ) ||
+	        (ivl_nexus_ptr_drive0(nex_ptr) != IVL_DR_HiZ)) continue;
+	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
+	      /* If the nexus is driving other things or signals that are
+	       * not a module instantiation input then return false. */
+// HERE: debug this to see if the output can drive other things local to the
+//       module that is being called.
+//	    if (! t_sig) return 0;
+	    if (! t_sig) continue;
+	    if (ivl_signal_port(t_sig) != IVL_SIP_INPUT) return 0;
+	    if (ivl_scope_parent(ivl_signal_scope(t_sig)) != scope) return 0;
+	    if (rtn) return 0;
+	    rtn = 1;
+      }
+      return rtn;
+}
+
 void emit_lpm(ivl_scope_t scope, ivl_lpm_t lpm)
 {
       ivl_nexus_t output = get_lpm_output(scope, lpm);
@@ -1156,6 +1277,9 @@ void emit_lpm(ivl_scope_t scope, ivl_lpm_t lpm)
 	    emit_lpm_ff(scope, lpm);
 	    return;
       }
+// HERE: Look for a select passed to a pull device (pr2019553).
+	/* Skip assignments to a module instantiation input. */
+      if (output_is_module_instantiation_input(scope, output)) return;
       fprintf(vlog_out, "%*cassign", indent, ' ');
       emit_lpm_strength(lpm);
       emit_delay(scope,
@@ -1165,7 +1289,7 @@ void emit_lpm(ivl_scope_t scope, ivl_lpm_t lpm)
                  3);
       fprintf(vlog_out, " ");
       if (type == IVL_LPM_PART_PV) emit_lpm_part_pv(scope, lpm);
-      else emit_name_of_nexus(scope, output);
+      else emit_name_of_nexus(scope, output, 0);
       fprintf(vlog_out, " = ");
       emit_lpm_as_ca(scope, lpm);
       fprintf(vlog_out, ";");
@@ -1200,9 +1324,9 @@ static void emit_bufz(ivl_scope_t scope, ivl_net_logic_t nlogic)
                  ivl_logic_delay(nlogic, 2),
                  3);
       fprintf(vlog_out, " ");
-      emit_name_of_nexus(scope, ivl_logic_pin(nlogic, 0));
+      emit_name_of_nexus(scope, ivl_logic_pin(nlogic, 0), 0);
       fprintf(vlog_out, " = ");
-      emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1));
+      emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
       fprintf(vlog_out, ";");
       emit_logic_file_line(nlogic);
       fprintf(vlog_out, "\n");
@@ -1219,7 +1343,7 @@ static void emit_name_of_logic_nexus(ivl_scope_t scope, ivl_net_logic_t nlogic,
                                      ivl_nexus_t nex)
 {
       if (nex) {
-	    emit_name_of_nexus(scope, nex);
+	    emit_name_of_nexus(scope, nex, 0);
       } else {
 	    if (ivl_logic_type(nlogic) != IVL_LO_UDP) {
 		  fprintf(stderr, "%s:%u: vlog95 warning: Missing logic pin "
@@ -1242,7 +1366,6 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 //       short circuit. Verify input count.
       unsigned idx, count, dly_count, strength_type = 2;
       unsigned outputs = 1;
-      unsigned width = ivl_logic_width(nlogic);
       const char *name;
 	/* Skip gates that have a local nexus as the output since they are
 	 * part of a continuous assignment. */
@@ -1262,7 +1385,7 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 	               ivl_logic_delay(nlogic, 2),
 	               3);
 	    fprintf(vlog_out, " ");
-	    emit_name_of_nexus(scope, ivl_logic_pin(nlogic, 0));
+	    emit_name_of_nexus(scope, ivl_logic_pin(nlogic, 0), 0);
 	    fprintf(vlog_out, " = ");
 	    emit_logic_as_ca(scope, nlogic);
 	    fprintf(vlog_out, ";");
@@ -1390,6 +1513,7 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
       if (name && *name) {
 	    char *fixed_name = strdup(name);
 	    unsigned lp = strlen(name) - 1;
+	    unsigned width = ivl_logic_width(nlogic);
 	    if (fixed_name[lp] == '>') {
 		  while (fixed_name[lp] != '<') {
 			assert(lp > 0);
@@ -1413,11 +1537,11 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 	    fprintf(vlog_out, ", ");
       }
       for (/* None */; idx < count; idx += 1) {
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, idx));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, idx), 0);
 	    fprintf(vlog_out, ", ");
       }
       if (strength_type == 2) {
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, idx));
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, idx), 0);
       } else {
 	      /* A pull gate only has a single output connection. */
 	    assert(count == 0);
@@ -1431,6 +1555,7 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 void emit_tran(ivl_scope_t scope, ivl_switch_t tran)
 {
       unsigned dly_count, pins;
+      const char *name;
       fprintf(vlog_out, "%*c", indent, ' ');
       switch (ivl_switch_type(tran)) {
 	case IVL_SW_RTRAN:
@@ -1482,14 +1607,32 @@ void emit_tran(ivl_scope_t scope, ivl_switch_t tran)
                                 dly_count);
       assert(pins == 2 || pins == 3);
 // The same problem here as for the gates above.
-//      fprintf(vlog_out, " %s(", ivl_switch_basename(tran));
+      name = ivl_switch_basename(tran);
+      if (name && *name) {
+	    char *fixed_name = strdup(name);
+	    unsigned lp = strlen(name) - 1;
+	    unsigned width = ivl_switch_width(tran);
+	    if (fixed_name[lp] == '>') {
+		  while (fixed_name[lp] != '<') {
+			assert(lp > 0);
+			lp -= 1;
+		  }
+		  fixed_name[lp] = 0;
+	    }
+	    fprintf(vlog_out, " ");
+	    emit_id(fixed_name);
+	    free(fixed_name);
+	    if (width > 1) {
+		  fprintf(vlog_out, " [%u:0]", width-1);
+	    }
+      }
       fprintf(vlog_out, " (");
-      emit_name_of_nexus(scope, ivl_switch_a(tran));
+      emit_name_of_nexus(scope, ivl_switch_a(tran), 0);
       fprintf(vlog_out, ", ");
-      emit_name_of_nexus(scope, ivl_switch_b(tran));
+      emit_name_of_nexus(scope, ivl_switch_b(tran), 0);
       if (pins == 3) {
 	    fprintf(vlog_out, ", ");
-	    emit_nexus_as_ca(scope, ivl_switch_enable(tran));
+	    emit_nexus_as_ca(scope, ivl_switch_enable(tran), 0);
       }
       fprintf(vlog_out, ");");
       if (emit_file_line) {
@@ -1561,14 +1704,16 @@ static void dump_drive(ivl_drive_t drive)
  */
 void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 {
-      unsigned idx, count = ivl_nexus_ptrs(nex);
-      fprintf(stderr, "Dumping nexus from scope: %s\n",
+      unsigned idx, count;
+      if ((scope == 0) || (nex == 0)) return;
+      count = ivl_nexus_ptrs(nex);
+      fprintf(stderr, "Dumping nexus %p from scope: %s\n", nex,
               ivl_scope_name(scope));
       for (idx = 0; idx < count; idx += 1) {
             ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
             ivl_lpm_t lpm = ivl_nexus_ptr_lpm(nex_ptr);
             ivl_net_const_t net_const = ivl_nexus_ptr_con(nex_ptr);
-            ivl_net_logic_t net_logic = ivl_nexus_ptr_log(nex_ptr);
+            ivl_net_logic_t nlogic = ivl_nexus_ptr_log(nex_ptr);
             ivl_signal_t sig = ivl_nexus_ptr_sig(nex_ptr);
             fprintf(stderr, "  %u (", idx);
 	    dump_drive(ivl_nexus_ptr_drive1(nex_ptr));
@@ -1578,12 +1723,12 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 	    if (lpm) {
 		  ivl_scope_t lpm_scope = ivl_lpm_scope(lpm);
 		  assert(! net_const);
-		  assert(! net_logic);
+		  assert(! nlogic);
 		  assert(! sig);
 		  fprintf(stderr, "LPM: ");
-		  fprintf(stderr, "%s:%d ", ivl_lpm_file(lpm),
+		  fprintf(stderr, "{%s:%d} ", ivl_lpm_file(lpm),
 		          ivl_lpm_lineno(lpm));
-		  if (scope != lpm_scope) fprintf(stderr, "%s ",
+		  if (scope != lpm_scope) fprintf(stderr, "(%s) ",
 		                                  ivl_scope_name(lpm_scope));
 		  switch (ivl_lpm_type(lpm)) {
 		      case IVL_LPM_ABS:       fprintf(stderr, "abs"); break;
@@ -1604,7 +1749,9 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		      case IVL_LPM_MOD:       fprintf(stderr, "mod"); break;
 		      case IVL_LPM_MULT:      fprintf(stderr, "mult"); break;
 		      case IVL_LPM_MUX:       fprintf(stderr, "mux"); break;
-		      case IVL_LPM_PART_VP:   fprintf(stderr, "part-VP"); break;
+		      case IVL_LPM_PART_VP:   fprintf(stderr, "part-VP");
+			fprintf(stderr, "(%u+%u)", ivl_lpm_base(lpm),
+			        ivl_lpm_width(lpm)); break;
 		      case IVL_LPM_PART_PV:   fprintf(stderr, "part-PV"); break;
 		      case IVL_LPM_POW:       fprintf(stderr, "pow"); break;
 		      case IVL_LPM_RE_AND:    fprintf(stderr, "R-AND"); break;
@@ -1620,22 +1767,69 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		      case IVL_LPM_SIGN_EXT:  fprintf(stderr, "sign"); break;
 		      case IVL_LPM_SUB:       fprintf(stderr, "sub"); break;
 		      case IVL_LPM_UFUNC:     fprintf(stderr, "U-func"); break;
+		      default: fprintf(stderr, "<%d>", ivl_lpm_type(lpm));
 		  }
 	    } else if (net_const) {
-		  assert(! net_logic);
+		  ivl_scope_t const_scope = ivl_const_scope(net_const);
+		  assert(! nlogic);
 		  assert(! sig);
 		  fprintf(stderr, "Const: ");
-	    } else if (net_logic) {
+		  if (scope != const_scope) fprintf(stderr, "(%s) ",
+		                                  ivl_scope_name(const_scope));
+	    } else if (nlogic) {
+		  ivl_scope_t logic_scope = ivl_logic_scope(nlogic);
 		  assert(! sig);
 		  fprintf(stderr, "Logic: ");
+		  fprintf(stderr, "{%s:%d} ", ivl_logic_file(nlogic),
+		          ivl_logic_lineno(nlogic));
+		  if (scope != logic_scope) fprintf(stderr, "(%s) ",
+		                                  ivl_scope_name(logic_scope));
+		  switch (ivl_logic_type(nlogic)) {
+		      case IVL_LO_AND:      fprintf(stderr, "and"); break;
+		      case IVL_LO_BUF:      fprintf(stderr, "buf"); break;
+		      case IVL_LO_BUFIF0:   fprintf(stderr, "bufif0"); break;
+		      case IVL_LO_BUFIF1:   fprintf(stderr, "bufif1"); break;
+		      case IVL_LO_BUFT:     fprintf(stderr, "buft"); break;
+		      case IVL_LO_BUFZ:     fprintf(stderr, "bufz"); break;
+		      case IVL_LO_CMOS:     fprintf(stderr, "cmos"); break;
+		      case IVL_LO_NAND:     fprintf(stderr, "nand"); break;
+		      case IVL_LO_NMOS:     fprintf(stderr, "nmos"); break;
+		      case IVL_LO_NOR:      fprintf(stderr, "nor"); break;
+		      case IVL_LO_NOT:      fprintf(stderr, "not"); break;
+		      case IVL_LO_NOTIF0:   fprintf(stderr, "notif0"); break;
+		      case IVL_LO_NOTIF1:   fprintf(stderr, "notif1"); break;
+		      case IVL_LO_OR:       fprintf(stderr, "or"); break;
+		      case IVL_LO_PMOS:     fprintf(stderr, "pmos"); break;
+		      case IVL_LO_PULLDOWN: fprintf(stderr, "pulldown"); break;
+		      case IVL_LO_PULLUP:   fprintf(stderr, "pullup"); break;
+		      case IVL_LO_RCMOS:    fprintf(stderr, "rcmos"); break;
+		      case IVL_LO_RNMOS:    fprintf(stderr, "rnmos"); break;
+		      case IVL_LO_RPMOS:    fprintf(stderr, "rpmos"); break;
+		      case IVL_LO_UDP: {
+			ivl_udp_t udp = ivl_logic_udp(nlogic);
+			assert(udp);
+			fprintf(stderr, "UDP %s", ivl_udp_name(udp));
+			break;
+		      }
+		      case IVL_LO_XNOR:     fprintf(stderr, "xnor"); break;
+		      case IVL_LO_XOR:      fprintf(stderr, "xor"); break;
+		      default: fprintf(stderr, "<%d>", ivl_logic_type(nlogic));
+		  }
+		  fprintf(stderr, "(%u inputs)", ivl_logic_pins(nlogic) - 1);
 	    } else if (sig) {
 		  ivl_scope_t sig_scope = ivl_signal_scope(sig);
-		  fprintf(stderr, "Signal: ");
+		  fprintf(stderr, "Signal: \"");
 		  if (scope != sig_scope) fprintf(stderr, "%s.",
 		                                  ivl_scope_name(sig_scope));
 		  fprintf(stderr, "%s", ivl_signal_basename(sig));
+		  if (ivl_signal_dimensions(sig) > 0) {
+			fprintf(stderr, "[]");
+		  }
+		  fprintf(stderr, "\"");
 // HERE: Do we need to add support for an array word or is that an LPM.
-		  if (ivl_signal_local(sig)) fprintf(stderr, " (local)");
+		  if (ivl_signal_local(sig)) fprintf(stderr, " {local}");
+		  else fprintf(stderr, " {%s:%d}", ivl_signal_file(sig),
+		               ivl_signal_lineno(sig));
 		  switch (ivl_signal_port(sig)) {
 		      case IVL_SIP_INPUT:  fprintf(stderr, " input"); break;
 		      case IVL_SIP_OUTPUT: fprintf(stderr, " output"); break;
