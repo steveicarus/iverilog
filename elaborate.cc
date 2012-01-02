@@ -524,7 +524,8 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 		       << "tran device." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetTran(scope, inst_name, IVL_SW_TRAN);
+		  gate = new NetTran(scope, inst_name, IVL_SW_TRAN,
+		                     instance_width);
 	    }
 	    break;
 
@@ -534,7 +535,8 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 		       << "rtran device." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetTran(scope, inst_name, IVL_SW_RTRAN);
+		  gate = new NetTran(scope, inst_name, IVL_SW_RTRAN,
+		                     instance_width);
 	    }
 	    break;
 
@@ -544,7 +546,8 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 		       << "tranif0 device." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetTran(scope, inst_name, IVL_SW_TRANIF0);
+		  gate = new NetTran(scope, inst_name, IVL_SW_TRANIF0,
+		                     instance_width);
 	    }
 	    break;
 
@@ -554,7 +557,8 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 		       << "rtranif0 device." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetTran(scope, inst_name, IVL_SW_RTRANIF0);
+		  gate = new NetTran(scope, inst_name, IVL_SW_RTRANIF0,
+		                     instance_width);
 	    }
 	    break;
 
@@ -564,7 +568,8 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 		       << "tranif1 device." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetTran(scope, inst_name, IVL_SW_TRANIF1);
+		  gate = new NetTran(scope, inst_name, IVL_SW_TRANIF1,
+		                     instance_width);
 	    }
 	    break;
 
@@ -574,7 +579,8 @@ NetNode* PGBuiltin::create_gate_for_output_(Design*des, NetScope*scope,
 		       << "rtranif1 device." << endl;
 		  des->errors += 1;
 	    } else {
-		  gate = new NetTran(scope, inst_name, IVL_SW_RTRANIF1);
+		  gate = new NetTran(scope, inst_name, IVL_SW_RTRANIF1,
+		                     instance_width);
 	    }
 	    break;
 

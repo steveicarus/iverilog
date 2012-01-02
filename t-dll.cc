@@ -963,7 +963,7 @@ bool dll_target::tran(const NetTran*net)
 {
       struct ivl_switch_s*obj = new struct ivl_switch_s;
       obj->type = net->type();
-      obj->width = 0;
+      obj->width = net->vector_width();
       obj->part = 0;
       obj->offset = 0;
       obj->name = net->name();
@@ -996,7 +996,6 @@ bool dll_target::tran(const NetTran*net)
       }
 
       if (obj->type == IVL_SW_TRAN_VP) {
-	    obj->width = net->vector_width();
 	    obj->part  = net->part_width();
 	    obj->offset= net->part_offset();
       }
