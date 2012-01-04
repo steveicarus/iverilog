@@ -65,7 +65,7 @@ cppcheck: $(O:.o=.c)
 	cppcheck --enable=all -f $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status
-	cd ..; ./config.status --file=tgt-fpga$@
+	cd ..; ./config.status --file=tgt-fpga/$@
 
 dep:
 	mkdir dep
