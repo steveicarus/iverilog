@@ -56,6 +56,7 @@ clean:
 
 distclean: clean
 	rm -f Makefile config.log
+	rm -f stamp-pcb_config-h pcb_config.h
 
 cppcheck: $(O:.o=.c)
 	cppcheck --enable=all -f $(INCLUDE_PATH) $^
@@ -65,6 +66,11 @@ Makefile: $(srcdir)/Makefile.in ../config.status
 
 dep:
 	mkdir dep
+
+stamp-pcb_config-h: $(srcdir)/pcb_config.h.in ../config.status
+	@rm -f $@
+	cd ..; ./config.status --header=tgt-pcb/pcb_config.h
+pcb_config.h: stamp-pcb_config-h
 
 %.o: %.cc
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
