@@ -427,6 +427,12 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    method_name = peek_tail_name(use_path);
 	    use_path.pop_back();
 	    symbol_search(this, des, scope, use_path, sig, par, eve);
+
+	      // Whoops, not a struct signal, so give up on this avenue.
+	    if (sig && sig->struct_type() == 0) {
+		  method_name = perm_string();
+		  sig = 0;
+	    }
       }
 
       if (sig == 0) {

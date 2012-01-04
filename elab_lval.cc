@@ -22,6 +22,7 @@
 # include  "PExpr.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "netstruct.h"
 # include  "compiler.h"
 # include  <cstdlib>
 # include  <iostream>
@@ -152,8 +153,26 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       NetNet*       reg = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
+      perm_string   method_name;
 
       symbol_search(this, des, scope, path_, reg, par, eve);
+
+	/* If the signal is not found, check to see if this is a
+	   member of a struct. Take the name of the form "a.b.member",
+	   remove the member and store it into method_name, and retry
+	   the search with "a.b". */
+      if (reg == 0 && path_.size() >= 2) {
+	    pform_name_t use_path = path_;
+	    method_name = peek_tail_name(use_path);
+	    use_path.pop_back();
+	    symbol_search(this, des, scope, use_path, reg, par, eve);
+
+	    if (reg && reg->struct_type() == 0) {
+		  method_name = perm_string();
+		  reg = 0;
+	    }
+      }
+
       if (reg == 0) {
 	    cerr << get_fileline() << ": error: Could not find variable ``"
 		 << path_ << "'' in ``" << scope_path(scope) <<
@@ -191,6 +210,12 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 		  " is declared here as " << reg->type() << "." << endl;
 	    des->errors += 1;
 	    return 0;
+      }
+
+      if (reg->struct_type() && !method_name.nil()) {
+	    NetAssign_*lv = new NetAssign_(reg);
+	    elaborate_lval_net_packed_member_(des, scope, lv, method_name);
+	    return lv;
       }
 
       if (reg->array_dimensions() > 0)
@@ -530,6 +555,38 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 
       lv->set_part(base, wid, sel_type);
 
+      return true;
+}
+
+bool PEIdent::elaborate_lval_net_packed_member_(Design*des,
+						NetScope*scope,
+						NetAssign_*lv,
+						const perm_string&member_name) const
+{
+      NetNet*reg = lv->sig();
+      ivl_assert(*this, reg);
+
+      netstruct_t*struct_type = reg->struct_type();
+      ivl_assert(*this, struct_type);
+
+      if (! struct_type->packed()) {
+	    cerr << get_fileline() << ": sorry: Only packed structures "
+		 << "are supported in l-value." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      unsigned long off;
+      const netstruct_t::member_t* member = struct_type->packed_member(member_name, off);
+
+      if (member == 0) {
+	    cerr << get_fileline() << ": error: Member " << member_name
+		 << " is not a member of variable " << reg->name() << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      lv->set_part(new NetEConst(verinum(off)), member->width());
       return true;
 }
 
