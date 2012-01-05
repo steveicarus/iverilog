@@ -118,8 +118,8 @@ endif
 clean:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 	rm -f *.o parse.cc parse.h lexor.cc
-	rm -f ivl.exp iverilog-vpi.man iverilog-vpi.pdf iverilog-vpi.ps parse.output
-	rm -f syn-rules.output dosify.exe ivl@EXEEXT@ check.vvp
+	rm -f ivl.exp iverilog-vpi.man iverilog-vpi.pdf iverilog-vpi.ps
+	rm -f parse.output syn-rules.output dosify.exe ivl@EXEEXT@ check.vvp
 	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc
 	rm -rf dep
 	rm -f version.exe
@@ -223,15 +223,17 @@ lexor.o: lexor.cc parse.h
 
 parse.o: parse.cc
 
-parse.cc parse.h: $(srcdir)/parse.y
-	$(YACC) --verbose -t -p VL -d -o parse.cc $(srcdir)/parse.y
+# Build this in two steps to avoid parallel build issues (see pr3462585)
+parse.cc: $(srcdir)/parse.y
+	$(YACC) --verbose -t -p VL -d -o $@ $<
+parse.h: parse.cc
 	mv parse.cc.h parse.h 2>/dev/null || mv parse.hh parse.h
 
 syn-rules.cc: $(srcdir)/syn-rules.y
-	$(YACC) --verbose -p syn_ -o syn-rules.cc $(srcdir)/syn-rules.y
+	$(YACC) --verbose -t -p syn_ -o $@ $<
 
 lexor.cc: $(srcdir)/lexor.lex
-	$(LEX) -PVL -s -olexor.cc $(srcdir)/lexor.lex
+	$(LEX) -PVL -s -t $< > $@
 
 lexor_keyword.o: lexor_keyword.cc parse.h
 

@@ -68,10 +68,12 @@ iverilog@EXEEXT@: $O
 	$(CC) $(LDFLAGS) $O -o iverilog@EXEEXT@ @EXTRALIBS@
 
 cflexor.c: cflexor.lex
-	$(LEX) -s -Pcf -ocflexor.c $(srcdir)/cflexor.lex
+	$(LEX) -Pcf -s -t $< > $@
 
-cfparse.h cfparse.c: cfparse.y
-	$(YACC) --verbose -t -d -o cfparse.c --name-prefix=cf $(srcdir)/cfparse.y
+# Build this in two steps to avoid parallel build issues (see pr3462585)
+cfparse.c: cfparse.y
+	$(YACC) --verbose -t -p cf -d -o $@ $<
+cfparse.h: cfparse.c
 
 dep:
 	mkdir dep

@@ -61,7 +61,7 @@ ivlpp@EXEEXT@: $O
 	$(CC) $(LDFLAGS) $O -o ivlpp@EXEEXT@ @EXTRALIBS@
 
 lexor.c: lexor.lex
-	$(LEX) -olexor.c $(srcdir)/lexor.lex
+	$(LEX) -s -t $< > $@
 
 install: all installdirs $(libdir)/ivl$(suffix)/ivlpp@EXEEXT@
 
