@@ -1,7 +1,7 @@
 /*
  *  Helper functions for VHDL syntax elements.
  *
- *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2012  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -64,6 +64,7 @@ static inline char vl_to_vhdl_bit(char bit)
       return '-';
    }
    assert(false);
+   return 0;
 }
 
 #endif

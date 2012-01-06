@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2011-2012  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -587,7 +587,7 @@ static unsigned check_numeric_args(vpiHandle argv, unsigned count,
 	/* Check that the first count arguments are numeric. Currently
 	 * only three are needed/supported. */
       for (idx = 0; idx < count; idx += 1) {
-	    char *loc;
+	    char *loc = NULL;
 	    vpiHandle arg = vpi_scan(argv);
 
 	      /* Get the name for this argument. */

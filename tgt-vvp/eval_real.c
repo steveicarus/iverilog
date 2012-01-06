@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -590,6 +590,7 @@ static int draw_unary_real(ivl_expr_t expr)
       fprintf(stderr, "vvp.tgt error: unhandled real unary operator: %c.\n",
               ivl_expr_opcode(expr));
       assert(0);
+      return 0;
 }
 
 int draw_eval_real(ivl_expr_t expr)

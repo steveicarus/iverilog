@@ -1,7 +1,7 @@
 /*
  *  Generate code to convert between VHDL types.
  *
- *  Copyright (C) 2008-2009  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2012  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -219,6 +219,7 @@ vhdl_expr *vhdl_expr::to_std_ulogic()
    }
    else
       assert(false);
+   return NULL;
 }
 
 /*

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2429,7 +2429,7 @@ NetECast::~NetECast()
 
 ivl_variable_type_t NetECast::expr_type() const
 {
-      ivl_variable_type_t ret;
+      ivl_variable_type_t ret = IVL_VT_NO_TYPE;
       switch (op_) {
 	  case 'v':
 	    ret = IVL_VT_LOGIC;
