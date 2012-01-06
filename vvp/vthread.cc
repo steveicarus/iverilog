@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -3573,8 +3573,6 @@ bool of_PAD(vthread_t thr, vvp_code_t cp)
       thr_check_addr(thr, cp->bit_idx[0]+cp->number-1);
       vvp_vector4_t tmp (cp->number, pad_bit);
       thr->bits4.set_vec(cp->bit_idx[0], tmp);
-      return true;
-
       return true;
 }
 

@@ -58,7 +58,7 @@ distclean: clean
 	rm -f Makefile config.log
 	rm -f stamp-pcb_config-h pcb_config.h
 
-cppcheck: $(O:.o=.c)
+cppcheck: $(O:.o=.cc)
 	cppcheck --enable=all -f $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status
