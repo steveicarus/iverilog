@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -500,9 +500,11 @@ static void emit_number_as_string(ivl_net_const_t net_const)
 
 	      /* Skip any NULL bytes. */
 	    if (val == 0) continue;
-	      /* Print some values that must be escaped. */
+	      /* Print some values that can be escaped. */
 	    if (val == '"') fprintf(vlog_out, "\\\"");
 	    else if (val == '\\') fprintf(vlog_out, "\\\\");
+	    else if (val == '\n') fprintf(vlog_out, "\\n");
+	    else if (val == '\t') fprintf(vlog_out, "\\t");
 	      /* Print the printable characters. */
 	    else if (isprint((int)val)) fprintf(vlog_out, "%c", val);
 	      /* Print the non-printable characters as an octal escape. */

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -318,18 +318,59 @@ int32_t get_int32_from_number(ivl_expr_t expr, int *result_type)
 }
 
 /*
+ * Routine to remove two characters starting at the given address.
+ */
+static void remove_two_chars(char* str)
+{
+      for (; str[2]; str += 1) {
+	    str[0] = str[2];
+      }
+      str[0] = 0;
+}
+
+/*
  * Routine to print a string value as a string after removing any leading
  * escaped NULL bytes.
  */
 void emit_string(const char* string)
 {
       char *buffer = strdup(string);
-      char *cptr = buffer;
+      char *bptr = buffer;
+      char *cptr;
       fprintf(vlog_out, "\"");
 	/* Prune any leading escaped NULL bytes. */
-      while ((cptr[0] == '\\') && (cptr[1] == '0') &&
-             (cptr[2] == '0') && (cptr[3] == '0')) cptr += 4;
-      if (*cptr) fprintf(vlog_out, "%s", cptr);
+      while ((bptr[0] == '\\') && (bptr[1] == '0') &&
+             (bptr[2] == '0') && (bptr[3] == '0')) bptr += 4;
+      for (cptr = bptr; *cptr; cptr += 1) {
+	    if (*cptr == '\\') {
+		    /* Replace any \011 with \t */
+		  if ((cptr[1] == '0') && (cptr[2] == '1') &&
+		      (cptr[3] == '1')) {
+			cptr[1] = 't';
+			remove_two_chars(cptr+2);
+			cptr += 1;
+		    /* Replace any \012 with \n */
+		  } else if ((cptr[1] == '0') && (cptr[2] == '1') &&
+		             (cptr[3] == '2')) {
+			cptr[1] = 'n';
+			remove_two_chars(cptr+2);
+			cptr += 1;
+		    /* Replace any \042 with \" */
+		  } else if ((cptr[1] == '0') && (cptr[2] == '4') &&
+		             (cptr[3] == '2')) {
+			cptr[1] = '"';
+			remove_two_chars(cptr+2);
+			cptr += 1;
+		    /* Replace any \134 with \\ */
+		  } else if ((cptr[1] == '1') && (cptr[2] == '3') &&
+		             (cptr[3] == '4')) {
+			cptr[1] = '\\';
+			remove_two_chars(cptr+2);
+			cptr += 1;
+		  } else cptr += 3;
+	    }
+      }
+      if (*bptr) fprintf(vlog_out, "%s", bptr);
       free(buffer);
       fprintf(vlog_out, "\"");
 }
