@@ -64,12 +64,21 @@ struct decl_assignment_t {
 };
 
 /*
+ * This is the base class for data types that are matched by the
+ * "data_type" rule in the parse rule. We make the type virtual so
+ * that dynamic types will work.
+ */
+struct data_type_t : public LineInfo {
+      virtual ~data_type_t() = 0;
+};
+
+/*
  * The enum_type_t holds the parsed declaration to represent an
  * enumeration. Since this is in the pform, it represents the type
  * before elaboration to the range, for example, man not be complete
  * until it is elaborated in a scope.
  */
-struct enum_type_t {
+struct enum_type_t : public data_type_t {
       ivl_variable_type_t base_type;
       bool signed_flag;
       std::auto_ptr< list<PExpr*> > range;
@@ -83,7 +92,7 @@ struct struct_member_t : public LineInfo {
       std::auto_ptr< list<decl_assignment_t*> > names;
 };
 
-struct struct_type_t : public LineInfo {
+struct struct_type_t : public data_type_t {
       bool packed_flag;
       std::auto_ptr< list<struct_member_t*> > members;
 };

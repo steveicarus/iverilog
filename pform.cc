@@ -2493,6 +2493,25 @@ void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>
       delete names;
 }
 
+/*
+ * This function detects the derived class for the given type and
+ * dispatches the type to the proper subtype function.
+ */
+void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<perm_string>*names)
+{
+      if (struct_type_t*struct_type = dynamic_cast<struct_type_t*> (data_type)) {
+	    pform_set_struct_type(struct_type, names);
+	    return;
+      }
+
+      if (enum_type_t*enum_type = dynamic_cast<enum_type_t*> (data_type)) {
+	    pform_set_enum(li, enum_type, names);
+	    return;
+      }
+
+      assert(0);
+}
+
 static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
 			   perm_string name)
 {

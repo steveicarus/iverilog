@@ -337,6 +337,8 @@ static void current_task_set_statement(vector<Statement*>*s)
       list<struct_member_t*>*struct_members;
       struct_type_t*struct_type;
 
+      data_type_t*data_type;
+
       verinum* number;
 
       verireal* realtime;
@@ -502,6 +504,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <decl_assignment> variable_decl_assignment
 %type <decl_assignments> list_of_variable_decl_assignments
 
+%type <data_type>  data_type
 %type <struct_member>  struct_union_member
 %type <struct_members> struct_union_member_list
 %type <struct_type>    struct_data_type
@@ -703,17 +706,10 @@ block_item_decl
        if ($1) delete $1;
      }
 
-  /* Enum data types are possible here. */
+  /* variable declarations */
 
-  | attribute_list_opt enum_data_type register_variable_list ';'
-      { pform_set_enum(@2, $2, $3);
-	if ($1) delete $1;
-      }
-
-  /* struct data type declarations */
-
-  | attribute_list_opt struct_data_type register_variable_list ';'
-      { pform_set_struct_type($2, $3);
+  | attribute_list_opt data_type register_variable_list ';'
+      { pform_set_data_type(@2, $2, $3);
 	if ($1) delete $1;
       }
 
@@ -733,6 +729,10 @@ block_item_decl
 
 	| K_parameter parameter_assign_decl ';'
 	| K_localparam localparam_assign_decl ';'
+
+  /* Blocks can have type declarations. */
+
+  | type_declaration
 
   /* Recover from errors that happen within variable lists. Use the
      trailing semi-colon to resync the parser. */
@@ -779,6 +779,18 @@ block_item_decls_opt
 	|
 	;
 
+data_type
+  : struct_data_type
+      { $$ = $1; }
+  | enum_data_type
+      { $$ = $1; }
+  ;
+
+type_declaration
+  : K_typedef data_type IDENTIFIER ';'
+      { yyerror(@1, "sorry: typedef not yet supported."); }
+  ;
+
   /* The structure for an enumeration data type is the keyword "enum",
      followed by the enumeration values in curly braces. Also allow
      for an optional base type. The default base type is "int", but it
@@ -787,6 +799,7 @@ block_item_decls_opt
 enum_data_type
   : K_enum '{' enum_name_list '}'
       { enum_type_t*enum_type = new enum_type_t;
+	FILE_NAME(enum_type, @1);
 	enum_type->names .reset($3);
 	enum_type->base_type = IVL_VT_BOOL;
 	enum_type->signed_flag = true;
@@ -795,6 +808,7 @@ enum_data_type
       }
   | K_enum atom2_type signed_unsigned_opt '{' enum_name_list '}'
       { enum_type_t*enum_type = new enum_type_t;
+	FILE_NAME(enum_type, @1);
 	enum_type->names .reset($5);
 	enum_type->base_type = IVL_VT_BOOL;
 	enum_type->signed_flag = $3;
@@ -803,6 +817,7 @@ enum_data_type
       }
   | K_enum K_integer signed_unsigned_opt '{' enum_name_list '}'
       { enum_type_t*enum_type = new enum_type_t;
+	FILE_NAME(enum_type, @1);
 	enum_type->names .reset($5);
 	enum_type->base_type = IVL_VT_LOGIC;
 	enum_type->signed_flag = $3;
@@ -811,6 +826,7 @@ enum_data_type
       }
   | K_enum K_logic unsigned_signed_opt range '{' enum_name_list '}'
       { enum_type_t*enum_type = new enum_type_t;
+	FILE_NAME(enum_type, @1);
 	enum_type->names .reset($6);
 	enum_type->base_type = IVL_VT_LOGIC;
 	enum_type->signed_flag = $3;
@@ -819,6 +835,7 @@ enum_data_type
       }
   | K_enum K_reg unsigned_signed_opt range '{' enum_name_list '}'
       { enum_type_t*enum_type = new enum_type_t;
+	FILE_NAME(enum_type, @1);
 	enum_type->names .reset($6);
 	enum_type->base_type = IVL_VT_LOGIC;
 	enum_type->signed_flag = $3;
@@ -827,6 +844,7 @@ enum_data_type
       }
   | K_enum K_bit unsigned_signed_opt range '{' enum_name_list '}'
       { enum_type_t*enum_type = new enum_type_t;
+	FILE_NAME(enum_type, @1);
 	enum_type->names .reset($6);
 	enum_type->base_type = IVL_VT_BOOL;
 	enum_type->signed_flag = $3;

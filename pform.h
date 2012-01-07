@@ -293,6 +293,8 @@ extern void pform_set_reg_time(list<perm_string>*names);
 
 extern void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>*names);
 
+extern void pform_set_data_type(const struct vlltype&li, data_type_t*, list<perm_string>*names);
+
 extern void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_string>*names);
 
 extern void pform_set_struct_type(struct_type_t*struct_type, list<perm_string>*names);
