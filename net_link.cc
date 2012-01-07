@@ -278,7 +278,7 @@ bool Nexus::assign_lval() const
 	    if (net == 0)
 		  continue;
 
-	    if (net->peek_lref())
+	    if (net->peek_lref() > 0)
 		  return true;
       }
 
