@@ -1546,10 +1546,9 @@ inline void vvp_send_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&val,
       }
 }
 
-inline void vvp_net_t::send_vec8_pv(const vvp_vector8_t&val,
-				    unsigned base, unsigned wid, unsigned vwid)
+inline void vvp_send_vec8_pv(vvp_net_ptr_t ptr, const vvp_vector8_t&val,
+			     unsigned base, unsigned wid, unsigned vwid)
 {
-      vvp_net_ptr_t ptr = out_;
       while (class vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
@@ -1619,6 +1618,28 @@ inline void vvp_net_t::send_vec8(const vvp_vector8_t&val)
 	    break;
 	  case vvp_net_fil_t::REPL:
 	    vvp_send_vec8(out_, rep);
+	    break;
+      }
+}
+
+inline void vvp_net_t::send_vec8_pv(const vvp_vector8_t&val,
+				    unsigned base, unsigned wid, unsigned vwid)
+{
+      if (fil == 0) {
+	    vvp_send_vec8_pv(out_, val, base, wid, vwid);
+	    return;
+      }
+
+      assert(val.size() == wid);
+      vvp_vector8_t rep;
+      switch (fil->filter_vec8(val, rep, base, vwid)) {
+	  case vvp_net_fil_t::STOP:
+	    break;
+	  case vvp_net_fil_t::PROP:
+	    vvp_send_vec8_pv(out_, val, base, wid, vwid);
+	    break;
+	  case vvp_net_fil_t::REPL:
+	    vvp_send_vec8_pv(out_, rep, base, wid, vwid);
 	    break;
       }
 }
