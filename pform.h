@@ -224,6 +224,8 @@ extern void pform_endgenerate();
  */
 extern PGenerate* pform_parent_generate(void);
 
+extern void pform_set_typedef(perm_string name, data_type_t*data_type);
+
 /*
  * The makewire functions announce to the pform code new wires. These
  * go into a module that is currently opened.

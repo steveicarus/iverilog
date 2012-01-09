@@ -347,7 +347,7 @@ static void current_task_set_statement(vector<Statement*>*s)
       list<index_component_t> *dimensions;
 };
 
-%token <text>   IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
+%token <text>   IDENTIFIER SYSTEM_IDENTIFIER TYPE_IDENTIFIER STRING TIME_LITERAL
 %token <discipline> DISCIPLINE_IDENTIFIER
 %token <text>   PATHPULSE_IDENTIFIER
 %token <number> BASED_NUMBER DEC_NUMBER
@@ -706,10 +706,11 @@ block_item_decl
        if ($1) delete $1;
      }
 
-  /* variable declarations */
+  /* variable declarations. Note that data_type can be 0 if we are
+     recovering from an error. */
 
   | attribute_list_opt data_type register_variable_list ';'
-      { pform_set_data_type(@2, $2, $3);
+      { if ($2) pform_set_data_type(@2, $2, $3);
 	if ($1) delete $1;
       }
 
@@ -784,11 +785,18 @@ data_type
       { $$ = $1; }
   | enum_data_type
       { $$ = $1; }
+  | TYPE_IDENTIFIER
+      { yyerror(@1, "sorry: Named types not supported here");
+	$$ = 0;
+      }
   ;
 
 type_declaration
   : K_typedef data_type IDENTIFIER ';'
-      { yyerror(@1, "sorry: typedef not yet supported."); }
+      { perm_string name = lex_strings.make($3);
+	pform_set_typedef(name, $2);
+	delete[]$3;
+      }
   ;
 
   /* The structure for an enumeration data type is the keyword "enum",

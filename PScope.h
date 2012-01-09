@@ -83,6 +83,9 @@ class LexicalScope {
       map<perm_string,param_expr_t>parameters;
       map<perm_string,param_expr_t>localparams;
 
+	// Defined types in the scope.
+      map<perm_string,data_type_t*>typedefs;
+
 	// Named events in the scope.
       map<perm_string,PEvent*>events;
 
@@ -105,6 +108,8 @@ class LexicalScope {
       LexicalScope* parent_scope() const { return parent_; }
 
     protected:
+      void dump_typedefs_(ostream&out, unsigned indent) const;
+
       void dump_parameters_(ostream&out, unsigned indent) const;
 
       void dump_localparams_(ostream&out, unsigned indent) const;

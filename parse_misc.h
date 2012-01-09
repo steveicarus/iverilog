@@ -78,6 +78,14 @@ extern bool have_timeunit_decl;
 extern bool have_timeprec_decl;
 
 /*
+ * Test if this identifier is a type identifier in the current
+ * context. The pform code needs to help the lexor here because the
+ * parser detects typedefs and marks the typedef'ed identifiers as
+ * type names.
+ */
+extern bool pform_test_type_identifier(const char*txt);
+
+/*
  * Export these functions because we have to generate PENumber class
  * in pform.cc for user defparam definition from command file.
  */

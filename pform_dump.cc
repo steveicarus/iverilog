@@ -141,6 +141,11 @@ std::ostream& operator << (std::ostream&out, ivl_dis_domain_t dom)
       return out;
 }
 
+void data_type_t::pform_dump(ostream&out, unsigned indent) const
+{
+      out << setw(indent) << "" << typeid(*this).name() << endl;
+}
+
 static void dump_attributes_map(ostream&out,
 				const map<perm_string,PExpr*>&attributes,
 				int ind)
@@ -1050,6 +1055,15 @@ void PGenerate::dump(ostream&out, unsigned indent) const
       }
 }
 
+void LexicalScope::dump_typedefs_(ostream&out, unsigned indent) const
+{
+      typedef map<perm_string,data_type_t*>::const_iterator iter_t;
+      for (iter_t cur = typedefs.begin() ; cur != typedefs.end() ; ++ cur) {
+	    out << setw(indent) << "" << "typedef of " << cur->first << ":" << endl;
+	    cur->second->pform_dump(out, indent+4);
+      }
+}
+
 void LexicalScope::dump_parameters_(ostream&out, unsigned indent) const
 {
       typedef map<perm_string,param_expr_t>::const_iterator parm_iter_t;
@@ -1188,6 +1202,8 @@ void Module::dump(ostream&out) const
 
 	    out << ")" << endl;
       }
+
+      dump_typedefs_(out, 4);
 
       dump_parameters_(out, 4);
 

@@ -70,6 +70,9 @@ struct decl_assignment_t {
  */
 struct data_type_t : public LineInfo {
       virtual ~data_type_t() = 0;
+
+	// This method is used by the pform dumper to diagnostic dump.
+      virtual void pform_dump(std::ostream&out, unsigned indent) const;
 };
 
 /*
