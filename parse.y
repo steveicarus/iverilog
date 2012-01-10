@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1318,6 +1318,16 @@ expr_primary
 	delete[]$1;
 	$$ = tmp;
       }
+  | hierarchy_identifier '(' ')'
+      { yyerror(@1, "error: function calls must have at least one "
+			  "input argument.");
+		  yyerrok;
+      }
+  | SYSTEM_IDENTIFIER '(' ')'
+      { yyerror(@1, "error: system function calls must have at least one "
+			  "input argument.");
+		  yyerrok;
+      }
 
   /* Many of the VAMS built-in functions are available as builtin
      functions with $system_function equivalents. */
@@ -2396,7 +2406,10 @@ module_item
       }
   | K_function automatic_opt function_range_or_type_opt IDENTIFIER error K_endfunction
       {
-	assert(current_function == 0);
+	if (current_function != 0) {
+	      pform_pop_scope();
+	      current_function = 0;
+	}
 	delete[]$4;
       }
 
