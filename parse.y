@@ -3041,7 +3041,7 @@ module_item
 	current_function = 0;
 	delete[]$4;
 	if ($7==0 && !gn_system_verilog()) {
-	      yyerror(@7, "error: Empty parenthesis syntax requires SystemVerilog.");
+	      yyerror(@4, "error: Empty parenthesis syntax requires SystemVerilog.");
 	}
       }
   | K_function automatic_opt function_range_or_type_opt IDENTIFIER error K_endfunction
