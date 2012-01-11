@@ -127,10 +127,10 @@ struct __vpirt {
  * "base" that is a __vpiHandle object. This template can convert any
  * of those structures into a vpiHandle object.
  */
-template <class T> vpiHandle vpi_handle(T obj)
+template <class T> inline vpiHandle vpi_handle(T obj)
 { return &obj->base; }
 
-template <class T> char*vpip_get_str(int code, T obj)
+template <class T> inline char*vpip_get_str(int code, T obj)
 { return obj->base.vpi_type->vpi_get_str_(code, vpi_handle(obj)); }
 
 /*
@@ -519,6 +519,7 @@ vpiHandle vpip_make_vthr_A(char*label, char*symbol);
 vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid,
                            char*is_signed);
 vpiHandle vpip_make_vthr_A(char*label, vpiHandle handle);
+vpiHandle vpip_make_vthr_APV(char*label, unsigned index, unsigned bit, unsigned wid);
 
 /*
  * This function is called before any compilation to load VPI

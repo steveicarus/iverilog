@@ -182,6 +182,15 @@ struct __vpiArrayVthrA {
       }
 };
 
+
+struct __vpiArrayVthrAPV {
+      struct __vpiHandle base;
+      struct __vpiArray*array;
+      unsigned word_sel;
+      unsigned part_bit;
+      unsigned part_wid;
+};
+
 /* Get the array word size. */
 unsigned get_array_word_size(vvp_array_t array)
 {
@@ -270,6 +279,10 @@ static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value vp);
 static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int);
 static vpiHandle vpi_array_vthr_A_get_handle(int code, vpiHandle ref);
 
+static int vpi_array_vthr_APV_get(int code, vpiHandle);
+static char*vpi_array_vthr_APV_get_str(int code, vpiHandle);
+static void vpi_array_vthr_APV_get_value(vpiHandle ref, p_vpi_value vp);
+
 static const struct __vpirt vpip_arraymem_rt = {
       vpiMemory,
       vpi_array_get,
@@ -357,6 +370,20 @@ static const struct __vpirt vpip_array_vthr_A_rt = {
       0
 };
 
+static const struct __vpirt vpip_array_vthr_APV_rt = {
+      vpiMemoryWord,
+      &vpi_array_vthr_APV_get,
+      &vpi_array_vthr_APV_get_str,
+      &vpi_array_vthr_APV_get_value,
+      0, //&vpi_array_vthr_A_put_value,
+      0, //&vpi_array_vthr_A_get_handle,
+      0,
+      0,
+      0,
+      0,
+      0
+};
+
 # define ARRAY_HANDLE(ref) (assert(ref->vpi_type->type_code==vpiMemory), \
 			    (struct __vpiArray*)ref)
 
@@ -388,6 +415,16 @@ static struct __vpiArrayVthrA* array_vthr_a_from_handle(vpiHandle ref)
 	    return 0;
 
       return (struct __vpiArrayVthrA*) ref;
+}
+
+static struct __vpiArrayVthrAPV* array_vthr_apv_from_handle(vpiHandle ref)
+{
+      if (ref == 0)
+	    return 0;
+      if (ref->vpi_type != &vpip_array_vthr_APV_rt)
+	    return 0;
+
+      return (struct __vpiArrayVthrAPV*) ref;
 }
 
 static void array_make_vals_words(struct __vpiArray*parent)
@@ -862,6 +899,72 @@ static vpiHandle vpi_array_vthr_A_get_handle(int code, vpiHandle ref)
       return 0;
 }
 
+static int vpi_array_vthr_APV_get(int code, vpiHandle ref)
+{
+      struct __vpiArrayVthrAPV*obj = array_vthr_apv_from_handle(ref);
+      struct __vpiArray*parent = obj->array;
+
+      switch (code) {
+	  case vpiLineNo:
+	    return 0; // Not implemented for now!
+
+	  case vpiSize:
+	    return obj->part_wid;
+
+	  case vpiLeftRange:
+	    return parent->msb.value;
+
+	  case vpiRightRange:
+	    return parent->lsb.value;
+
+	  case vpiIndex:
+	    return (int)obj->word_sel;
+
+	  case vpiAutomatic:
+	    return (int) parent->scope->is_automatic;
+
+	  case vpiConstantSelect:
+	    return 1;
+
+	  default:
+	    return 0;
+      }
+}
+
+static char*vpi_array_vthr_APV_get_str(int code, vpiHandle ref)
+{
+      struct __vpiArrayVthrAPV*obj = array_vthr_apv_from_handle(ref);
+      assert(obj);
+      struct __vpiArray*parent = obj->array;
+
+      if (code == vpiFile) {  // Not implemented for now!
+            return simple_set_rbuf_str(file_names[0]);
+      }
+
+      char sidx [64];
+      snprintf(sidx, 63, "%u", obj->word_sel + parent->first_addr.value);
+      return generic_get_str(code, &parent->scope->base, parent->name, sidx);
+}
+
+static void vpi_array_vthr_APV_get_value(vpiHandle ref, p_vpi_value vp)
+{
+      struct __vpiArrayVthrAPV*obj = array_vthr_apv_from_handle(ref);
+      assert(obj);
+      struct __vpiArray*parent = obj->array;
+
+      assert(parent);
+
+      unsigned index = obj->word_sel;
+      if (vpi_array_is_real(parent)) {
+	    double tmp = array_get_word_r(parent, index);
+	    vpip_real_get_value(tmp, vp);
+      } else {
+	    vvp_vector4_t tmp = array_get_word(parent, index);
+	    tmp = tmp.subvalue(obj->part_bit, obj->part_wid);
+	    vpip_vec4_get_value(tmp, obj->part_wid, parent->signed_flag, vp);
+      }
+}
+  
 void array_set_word(vvp_array_t arr,
 		    unsigned address,
 		    unsigned part_off,
@@ -1517,6 +1620,10 @@ void vpip_array_word_change(struct __vpiCallback*cb, vpiHandle obj)
       } else if (struct __vpiArrayVthrA*tword = array_vthr_a_from_handle(obj)) {
 	    parent = tword->array;
 	    cb->extra_data = tword->address;
+
+      } else if (struct __vpiArrayVthrAPV*apvword = array_vthr_apv_from_handle(obj)) {
+	    parent = apvword->array;
+	    cb->extra_data = apvword->word_sel;
       }
 
       assert(parent);
@@ -1592,14 +1699,20 @@ void compile_array_alias(char*label, char*name, char*src)
       assert(!array_find(label));
       array_table->sym_set_value(label, obj);
 
-      compile_vpi_symbol(label, &obj->base);
-      vpip_attach_to_current_scope(&obj->base);
+      compile_vpi_symbol(label, vpi_handle(obj));
+      vpip_attach_to_current_scope(vpi_handle(obj));
 
       free(label);
       free(name);
       free(src);
 }
 
+/*
+ * &A<label,addr>
+ * This represents a VPI handle for an addressed array. This comes
+ * from expressions like "label[addr]" where "label" is the array and
+ * "addr" is the canonical address of the desired word.
+ */
 vpiHandle vpip_make_vthr_A(char*label, unsigned addr)
 {
       struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*)
@@ -1617,9 +1730,16 @@ vpiHandle vpip_make_vthr_A(char*label, unsigned addr)
       obj->address = addr;
       obj->wid = 0;
 
-      return &(obj->base);
+      return vpi_handle(obj);
 }
 
+/*
+ * &A<label,tbase,twid,s>
+ * This represents a VPI handle for an addressed word, where the word
+ * address in thread vector space. The tbase/twod/is_signed variables
+ * are the location and interpretation of the bits. This comes from
+ * source expressions that look like label[<expr>].
+ */
 vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid,
                            char*is_signed)
 {
@@ -1641,9 +1761,15 @@ vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid,
 
       delete [] is_signed;
 
-      return &(obj->base);
+      return vpi_handle(obj);
 }
 
+/*
+ * &A<label,symbol>
+ * This represents a VPI handle for an addressed word, where the
+ * word address is calculated from the VPI object that symbol
+ * represents. The expression that leads to this looks like label[symbol].
+ */
 vpiHandle vpip_make_vthr_A(char*label, char*symbol)
 {
       struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*)
@@ -1662,8 +1788,9 @@ vpiHandle vpip_make_vthr_A(char*label, char*symbol)
       obj->address = 0;
       obj->wid = 0;
 
-      return &(obj->base);
+      return vpi_handle(obj);
 }
+
 vpiHandle vpip_make_vthr_A(char*label, vpiHandle handle)
 {
       struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*)
@@ -1681,7 +1808,27 @@ vpiHandle vpip_make_vthr_A(char*label, vpiHandle handle)
       obj->address = 0;
       obj->wid = 0;
 
-      return &(obj->base);
+      return vpi_handle(obj);
+}
+
+vpiHandle vpip_make_vthr_APV(char*label, unsigned index, unsigned bit, unsigned wid)
+{
+      struct __vpiArrayVthrAPV*obj = (struct __vpiArrayVthrAPV*)
+	    malloc(sizeof (struct __vpiArrayVthrAPV));
+
+      obj->base.vpi_type = &vpip_array_vthr_APV_rt;
+
+      array_resolv_list_t*resolv_mem
+	    = new array_resolv_list_t(label);
+
+      resolv_mem->array = &obj->array;
+      resolv_submit(resolv_mem);
+
+      obj->word_sel = index;
+      obj->part_bit = bit;
+      obj->part_wid = wid;
+
+      return vpi_handle(obj);
 }
 
 void compile_array_cleanup(void)

@@ -170,6 +170,7 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 	  case IVL_EX_SELECT: {
 	    ivl_expr_t vexpr = ivl_expr_oper1(expr);
 	    ivl_expr_t bexpr;
+	    ivl_expr_t wexpr;
 
 	    assert(vexpr);
 
@@ -179,20 +180,38 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 
 	      /* The signal is part of an array. */
 	      /* Add &APV<> code here when it is finished. */
-	    if (ivl_expr_oper1(vexpr)) return 0;
-
 	    bexpr = ivl_expr_oper2(expr);
 
               /* This is a pad operation. */
 	    if (!bexpr) return 0;
 
+	    wexpr = ivl_expr_oper1(vexpr);
+
+	      /* If vexpr has an operand, then that operand is a word
+		 index and we are taking a select from an array
+		 word. This would come up in expressions like
+		 "array[<word>][<part>]" where wexpr is <word> */
+	    if (wexpr && number_is_immediate(wexpr, 64, 1)
+		&& number_is_immediate(bexpr, 64, 1)) {
+		  assert(! number_is_unknown(bexpr));
+		  assert(! number_is_unknown(wexpr));
+		  snprintf(buffer, sizeof buffer, "&APV<v%p, %ld, %ld, %u>",
+			   ivl_expr_signal(vexpr),
+			   get_number_immediate(wexpr),
+			   get_number_immediate(bexpr),
+			   ivl_expr_width(expr));
+
+	    } else if (wexpr) {
+		  return 0;
+
 	      /* This is a constant bit/part select. */
-	    if (number_is_immediate(bexpr, 64, 1)) {
+	    } else if (number_is_immediate(bexpr, 64, 1)) {
 		  assert(! number_is_unknown(bexpr));
 		  snprintf(buffer, sizeof buffer, "&PV<v%p_0, %ld, %u>",
 		           ivl_expr_signal(vexpr),
 		           get_number_immediate(bexpr),
 		           ivl_expr_width(expr));
+
 	      /* This is an indexed bit/part select. */
 	    } else if (ivl_expr_type(bexpr) == IVL_EX_SIGNAL ||
 	               ivl_expr_type(bexpr) == IVL_EX_SELECT) {
