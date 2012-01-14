@@ -1023,9 +1023,10 @@ void vvp_vector4_t::setarray(unsigned adr, unsigned wid, const unsigned long*val
  * into the addressed part of this vector. Use bit masking and word
  * copies to go as fast as reasonably possible.
  */
-void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
+bool vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 {
       assert(adr+that.size_  <= size_);
+      bool diff_flag = false;
 
       if (size_ <= BITS_PER_WORD) {
 
@@ -1046,12 +1047,16 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 		  hmask = (1UL << (adr+that.size_)) - 1;
 	    unsigned long mask = hmask & ~lmask;
 
-	    abits_val_ =
-		  (abits_val_ & ~mask)
-		  | ((that.abits_val_<<adr) & mask);
-	    bbits_val_ =
-		  (bbits_val_ & ~mask)
-		  | ((that.bbits_val_<<adr) & mask);
+	    unsigned long tmp = (that.abits_val_<<adr)&mask;
+	    if ((abits_val_&mask) != tmp) {
+		  diff_flag = true;
+		  abits_val_ = (abits_val_ & ~mask) | tmp;
+	    }
+	    tmp = (that.bbits_val_<<adr) & mask;
+	    if ((bbits_val_&mask) != tmp) {
+		  diff_flag = true;
+		  bbits_val_ = (bbits_val_ & ~mask) | tmp;
+	    }
 
       } else if (that.size_ <= BITS_PER_WORD) {
 
@@ -1071,25 +1076,34 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 		  hmask = (1UL << hshift) - 1UL;
 
 	    unsigned long mask = hmask & ~lmask;
+	    unsigned long tmp;
 
-	    abits_ptr_[dptr] =
-		  (abits_ptr_[dptr] & ~mask)
-		  | ((that.abits_val_ << doff) & mask);
-	    bbits_ptr_[dptr] =
-		  (bbits_ptr_[dptr] & ~mask)
-		  | ((that.bbits_val_ << doff) & mask);
+	    tmp = (that.abits_val_ << doff) & mask;
+	    if ((abits_ptr_[dptr] & mask) != tmp) {
+		  diff_flag = true;
+		  abits_ptr_[dptr] = (abits_ptr_[dptr] & ~mask) | tmp;
+	    }
+	    tmp = (that.bbits_val_ << doff) & mask;
+	    if ((bbits_ptr_[dptr] & mask) != tmp) {
+		  diff_flag = true;
+		  bbits_ptr_[dptr] = (bbits_ptr_[dptr] & ~mask) | tmp;
+	    }
 
 	    if ((doff + that.size_) > BITS_PER_WORD) {
 		  unsigned tail = doff + that.size_ - BITS_PER_WORD;
 		  mask = (1UL << tail) - 1;
 
 		  dptr += 1;
-		  abits_ptr_[dptr] =
-			(abits_ptr_[dptr] & ~mask)
-			| ((that.abits_val_ >> (that.size_-tail)) & mask);
-		  bbits_ptr_[dptr] =
-			(bbits_ptr_[dptr] & ~mask)
-			| ((that.bbits_val_ >> (that.size_-tail)) & mask);
+		  tmp = (that.abits_val_ >> (that.size_-tail)) & mask;
+		  if ((abits_ptr_[dptr] & mask) != tmp) {
+			diff_flag = true;
+			abits_ptr_[dptr] = (abits_ptr_[dptr] & ~mask) | tmp;
+		  }
+		  tmp = (that.bbits_val_ >> (that.size_-tail)) & mask;
+		  if ((bbits_ptr_[dptr] & mask) != tmp) {
+			diff_flag = true;
+			bbits_ptr_[dptr] = (bbits_ptr_[dptr] & ~mask) | tmp;
+		  }
 	    }
 
       } else if (adr%BITS_PER_WORD == 0) {
@@ -1102,8 +1116,14 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 	    unsigned sptr = 0;
 	    unsigned dptr = adr / BITS_PER_WORD;
 	    while (remain >= BITS_PER_WORD) {
-		  abits_ptr_[dptr] = that.abits_ptr_[sptr];
-		  bbits_ptr_[dptr] = that.bbits_ptr_[sptr];
+		  if (abits_ptr_[dptr] != that.abits_ptr_[sptr]) {
+			diff_flag = true;
+			abits_ptr_[dptr] = that.abits_ptr_[sptr];
+		  }
+		  if (bbits_ptr_[dptr] != that.bbits_ptr_[sptr]) {
+			diff_flag = true;
+			bbits_ptr_[dptr] = that.bbits_ptr_[sptr];
+		  }
 		  dptr += 1;
 		  sptr += 1;
 		  remain -= BITS_PER_WORD;
@@ -1111,12 +1131,18 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 
 	    if (remain > 0) {
 		  unsigned long mask = (1UL << remain) - 1;
-		  abits_ptr_[dptr] =
-			(abits_ptr_[dptr] & ~mask)
-			| (that.abits_ptr_[sptr] & mask);
-		  bbits_ptr_[dptr] =
-			(bbits_ptr_[dptr] & ~mask)
-			| (that.bbits_ptr_[sptr] & mask);
+		  unsigned long tmp;
+
+		  tmp = that.abits_ptr_[sptr] & mask;
+		  if ((abits_ptr_[dptr] & mask) != tmp) {
+			diff_flag = true;
+			abits_ptr_[dptr] = (abits_ptr_[dptr] & ~mask) | tmp;
+		  }
+		  tmp = that.bbits_ptr_[sptr] & mask;
+		  if ((bbits_ptr_[dptr] & mask) != tmp) {
+			diff_flag = true;
+			bbits_ptr_[dptr] = (bbits_ptr_[dptr] & ~mask) | tmp;
+		  }
 	    }
 
       } else {
@@ -1131,20 +1157,30 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 	    unsigned long lmask = (1UL << doff) - 1;
 	    unsigned ndoff = BITS_PER_WORD - doff;
 	    while (remain >= BITS_PER_WORD) {
-		  abits_ptr_[dptr] =
-			(abits_ptr_[dptr] & lmask)
-			| ((that.abits_ptr_[sptr] << doff) & ~lmask);
-		  bbits_ptr_[dptr] =
-			(bbits_ptr_[dptr] & lmask)
-			| ((that.bbits_ptr_[sptr] << doff) & ~lmask);
+		  unsigned long tmp;
+
+		  tmp = (that.abits_ptr_[sptr] << doff) & ~lmask;
+		  if ((abits_ptr_[dptr] & ~lmask) != tmp) {
+			diff_flag = true;
+			abits_ptr_[dptr] = (abits_ptr_[dptr] & lmask) | tmp;
+		  }
+		  tmp = (that.bbits_ptr_[sptr] << doff) & ~lmask;
+		  if ((bbits_ptr_[dptr] & ~lmask) != tmp) {
+			diff_flag = true;
+			bbits_ptr_[dptr] = (bbits_ptr_[dptr] & lmask) | tmp;
+		  }
 		  dptr += 1;
 
-		  abits_ptr_[dptr] =
-			(abits_ptr_[dptr] & ~lmask)
-			| ((that.abits_ptr_[sptr] >> ndoff) & lmask);
-		  bbits_ptr_[dptr] =
-			(bbits_ptr_[dptr] & ~lmask)
-			| ((that.bbits_ptr_[sptr] >> ndoff) & lmask);
+		  tmp = (that.abits_ptr_[sptr] >> ndoff) & lmask;
+		  if ((abits_ptr_[dptr] & lmask) != tmp) {
+			diff_flag = true;
+			abits_ptr_[dptr] = (abits_ptr_[dptr] & ~lmask) | tmp;
+		  }
+		  tmp = (that.bbits_ptr_[sptr] >> ndoff) & lmask;
+		  if ((bbits_ptr_[dptr] & lmask) != tmp) {
+			diff_flag = true;
+			bbits_ptr_[dptr] = (bbits_ptr_[dptr] & ~lmask) | tmp;
+		  }
 
 		  remain -= BITS_PER_WORD;
 		  sptr += 1;
@@ -1159,11 +1195,18 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 			hmask = (1UL << (doff+remain)) - 1;
 
 		  unsigned long mask = hmask & ~lmask;
+		  unsigned long tmp;
 
-		  abits_ptr_[dptr] = (abits_ptr_[dptr] & ~mask)
-		        | ((that.abits_ptr_[sptr] << doff) & mask);
-		  bbits_ptr_[dptr] = (bbits_ptr_[dptr] & ~mask)
-		        | ((that.bbits_ptr_[sptr] << doff) & mask);
+		  tmp = (that.abits_ptr_[sptr] << doff) & mask;
+		  if ((abits_ptr_[dptr] & mask) != tmp) {
+			diff_flag = true;
+			abits_ptr_[dptr] = (abits_ptr_[dptr] & ~mask) | tmp;
+		  }
+		  tmp = (that.bbits_ptr_[sptr] << doff) & mask;
+		  if ((bbits_ptr_[dptr] & mask) != tmp) {
+			diff_flag = true;
+			bbits_ptr_[dptr] = (bbits_ptr_[dptr] & ~mask) | tmp;
+		  }
 
 		  if ((doff + remain) > BITS_PER_WORD) {
 			unsigned tail = doff + remain - BITS_PER_WORD;
@@ -1173,14 +1216,22 @@ void vvp_vector4_t::set_vec(unsigned adr, const vvp_vector4_t&that)
 			      mask = (1UL << tail) - 1;
 
 			dptr += 1;
-			abits_ptr_[dptr] = (abits_ptr_[dptr] & ~mask) |
-			      ((that.abits_ptr_[sptr] >> (remain-tail))&mask);
-			bbits_ptr_[dptr] = (bbits_ptr_[dptr] & ~mask) |
-			      ((that.bbits_ptr_[sptr] >> (remain-tail))&mask);
+
+			tmp = (that.abits_ptr_[sptr] >> (remain-tail))&mask;
+			if ((abits_ptr_[dptr] & mask) != tmp) {
+			      diff_flag = true;
+			      abits_ptr_[dptr] = (abits_ptr_[dptr] & ~mask) | tmp;
+			}
+			tmp = (that.bbits_ptr_[sptr] >> (remain-tail))&mask;
+			if ((bbits_ptr_[dptr] & mask) != tmp) {
+			      diff_flag = true;
+			      bbits_ptr_[dptr] = (bbits_ptr_[dptr] & ~mask) | tmp;
+			}
 		  }
 	    }
       }
 
+      return diff_flag;
 }
 
 void vvp_vector4_t::mov(unsigned dst, unsigned src, unsigned cnt)

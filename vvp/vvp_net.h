@@ -234,8 +234,10 @@ class vvp_vector4_t {
       unsigned long*subarray(unsigned idx, unsigned size) const;
       void setarray(unsigned idx, unsigned size, const unsigned long*val);
 
+	// Set a 4-value bit or subvector into the vector. Return true
+	// if any bits of the vector change as a result of this operation.
       void set_bit(unsigned idx, vvp_bit4_t val);
-      void set_vec(unsigned idx, const vvp_vector4_t&that);
+      bool set_vec(unsigned idx, const vvp_vector4_t&that);
 
         // Get the bits from another vector, but keep my size.
       void copy_bits(const vvp_vector4_t&that);
@@ -1188,11 +1190,10 @@ class vvp_net_fun_t {
 
 /*
  * A vvp_net_fil_t is a filter object that filters an output from a
- * vvp_net_t. The send_*() methods of the vvp_net_t object call the
+ * vvp_net_t. The send_*() methods of the vvp_net_t object invoke the
  * filter of the output being transmitted. The filter function will
- * decide if this value is to be propagated, and return true or
- * false. If false, then send_*() continues as usual. If false, output
- * propagation is stopped.
+ * decide if this value is to be propagated, and how, and return a
+ * prop_t enumeration to reflect the choice.
  *
  * The filter object also provides an implementation hooks for
  * force/release.
