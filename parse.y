@@ -3362,6 +3362,16 @@ parameter_assign_decl
 	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
+  | atom2_type
+      { param_active_range = make_range_from_width($1);
+	param_active_signed = true;
+	param_active_type = IVL_VT_BOOL;
+      }
+  parameter_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
   ;
 
 parameter_assign_list
@@ -3483,6 +3493,16 @@ localparam_assign_decl
 	param_active_type = IVL_VT_REAL;
       }
     localparam_assign_list
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
+  | atom2_type
+      { param_active_range = make_range_from_width($1);
+	param_active_signed = true;
+	param_active_type = IVL_VT_BOOL;
+      }
+  localparam_assign_list
       { param_active_range = 0;
 	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
