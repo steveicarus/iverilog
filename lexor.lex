@@ -303,6 +303,7 @@ TU [munpf]
 	    perm_string tmp = lex_strings.make(yylval.text);
 	    map<perm_string,ivl_discipline_t>::iterator cur = disciplines.find(tmp);
 	    if (cur != disciplines.end()) {
+		  delete[]yylval.text;
 		  yylval.discipline = (*cur).second;
 		  rc = DISCIPLINE_IDENTIFIER;
 	    }
@@ -311,8 +312,11 @@ TU [munpf]
 	/* If this identifer names a previously declared type, then
 	   return this as a TYPE_IDENTIFIER instead. */
       if (rc == IDENTIFIER && gn_system_verilog()) {
-	    if (pform_test_type_identifier(yylval.text))
+	    if (data_type_t*type = pform_test_type_identifier(yylval.text)) {
+		  delete[]yylval.text;
+		  yylval.data_type = type;
 		  rc = TYPE_IDENTIFIER;
+	    }
       }
 
       return rc;

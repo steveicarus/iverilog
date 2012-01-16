@@ -347,7 +347,8 @@ static void current_task_set_statement(vector<Statement*>*s)
       list<index_component_t> *dimensions;
 };
 
-%token <text>   IDENTIFIER SYSTEM_IDENTIFIER TYPE_IDENTIFIER STRING TIME_LITERAL
+%token <text>   IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
+%token <data_type> TYPE_IDENTIFIER
 %token <discipline> DISCIPLINE_IDENTIFIER
 %token <text>   PATHPULSE_IDENTIFIER
 %token <number> BASED_NUMBER DEC_NUMBER
@@ -786,9 +787,7 @@ data_type
   | enum_data_type
       { $$ = $1; }
   | TYPE_IDENTIFIER
-      { yyerror(@1, "sorry: Named types not supported here");
-	$$ = 0;
-      }
+      { $$ = $1; }
   ;
 
 type_declaration

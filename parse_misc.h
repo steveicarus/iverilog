@@ -83,7 +83,7 @@ extern bool have_timeprec_decl;
  * parser detects typedefs and marks the typedef'ed identifiers as
  * type names.
  */
-extern bool pform_test_type_identifier(const char*txt);
+extern data_type_t* pform_test_type_identifier(const char*txt);
 
 /*
  * Export these functions because we have to generate PENumber class

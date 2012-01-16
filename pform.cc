@@ -408,7 +408,7 @@ void pform_set_typedef(perm_string name, data_type_t*data_type)
       ref = data_type;
 }
 
-bool pform_test_type_identifier(const char*txt)
+data_type_t* pform_test_type_identifier(const char*txt)
 {
 	// If there is no lexical_scope yet, then there is NO WAY the
 	// identifier can be a type_identifier.
@@ -418,9 +418,9 @@ bool pform_test_type_identifier(const char*txt)
       perm_string name = lex_strings.make(txt);
       map<perm_string,data_type_t*>::iterator cur = lexical_scope->typedefs.find(name);
       if (cur != lexical_scope->typedefs.end())
-	    return true;
+	    return cur->second;
       else
-	    return false;
+	    return 0;
 }
 
 static void pform_put_behavior_in_scope(PProcess*pp)
