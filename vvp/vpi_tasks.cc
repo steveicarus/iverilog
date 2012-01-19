@@ -54,6 +54,10 @@ inline __vpiUserSystf::__vpiUserSystf()
 {
 }
 
+int __vpiUserSystf::get_type_code(void) const
+{ return vpiUserSystf; }
+
+
 static vpiHandle systask_handle(int type, vpiHandle ref)
 {
       struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
@@ -163,6 +167,10 @@ static const struct __vpirt vpip_systask_rt = {
       0,
       0
 };
+struct systask_def : public __vpiSysTaskCall {
+      inline systask_def() : __vpiSysTaskCall(&vpip_systask_rt) { }
+      int get_type_code(void) const { return vpiSysTaskCall; }
+};
 
 /*
  * A value *can* be put to a vpiSysFuncCall object. This is how the
@@ -173,6 +181,7 @@ static const struct __vpirt vpip_systask_rt = {
 static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp, int)
 {
       struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
+      assert(rfp);
 
       rfp->put_value = true;
 
@@ -456,7 +465,6 @@ static vpiHandle sysfunc_put_no_value(vpiHandle, p_vpi_value, int)
       return 0;
 }
 
-
 static const struct __vpirt vpip_sysfunc_rt = {
       vpiSysFuncCall,
       sysfunc_get,
@@ -469,6 +477,10 @@ static const struct __vpirt vpip_sysfunc_rt = {
       0,
       0,
       0
+};
+struct sysfunc_def : public __vpiSysTaskCall {
+      inline sysfunc_def() : __vpiSysTaskCall(&vpip_sysfunc_rt) { }
+      int get_type_code(void) const { return vpiSysFuncCall; }
 };
 
 static const struct __vpirt vpip_sysfunc_real_rt = {
@@ -484,6 +496,10 @@ static const struct __vpirt vpip_sysfunc_real_rt = {
       0,
       0
 };
+struct sysfunc_real : public __vpiSysTaskCall {
+      inline sysfunc_real() : __vpiSysTaskCall(&vpip_sysfunc_real_rt) { }
+      int get_type_code(void) const { return vpiSysFuncCall; }
+};
 
 static const struct __vpirt vpip_sysfunc_4net_rt = {
       vpiSysFuncCall,
@@ -497,6 +513,10 @@ static const struct __vpirt vpip_sysfunc_4net_rt = {
       0,
       0,
       0
+};
+struct sysfunc_4net : public __vpiSysTaskCall {
+      inline sysfunc_4net() : __vpiSysTaskCall(&vpip_sysfunc_4net_rt) { }
+      int get_type_code(void) const { return vpiSysFuncCall; }
 };
 
 static const struct __vpirt vpip_sysfunc_rnet_rt = {
@@ -512,6 +532,10 @@ static const struct __vpirt vpip_sysfunc_rnet_rt = {
       0,
       0
 };
+struct sysfunc_rnet : public __vpiSysTaskCall {
+      inline sysfunc_rnet() : __vpiSysTaskCall(&vpip_sysfunc_rnet_rt) { }
+      int get_type_code(void) const { return vpiSysFuncCall; }
+};
 
 static const struct __vpirt vpip_sysfunc_no_rt = {
       vpiSysFuncCall,
@@ -525,6 +549,10 @@ static const struct __vpirt vpip_sysfunc_no_rt = {
       0,
       0,
       0
+};
+struct sysfunc_no : public __vpiSysTaskCall {
+      inline sysfunc_no() : __vpiSysTaskCall(&vpip_sysfunc_no_rt) { }
+      int get_type_code(void) const { return vpiSysFuncCall; }
 };
 
   /* **** Manipulate the internal data structures. **** */
@@ -574,6 +602,8 @@ void def_table_delete(void)
 
 struct __vpiSystfIterator : public __vpiHandle {
       __vpiSystfIterator();
+      int get_type_code(void) const;
+
       unsigned next;
 };
 
@@ -623,6 +653,9 @@ inline __vpiSystfIterator::__vpiSystfIterator()
 : __vpiHandle(&vpip_systf_iterator_rt)
 {
 }
+
+int __vpiSystfIterator::get_type_code(void) const
+{ return vpiIterator; }
 
 vpiHandle vpip_make_systf_iterator(void)
 {
@@ -812,24 +845,24 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 
       switch (defn->info.type) {
 	  case vpiSysTask:
-	    obj = new __vpiSysTaskCall(&vpip_systask_rt);
+	    obj = new systask_def;
 	    break;
 
 	  case vpiSysFunc:
 	    if (fnet && vwid == -vpiRealConst) {
-		  obj = new __vpiSysTaskCall(&vpip_sysfunc_rnet_rt);
+		  obj = new sysfunc_rnet;
 
 	    } else if (fnet && vwid > 0) {
-		  obj = new __vpiSysTaskCall(&vpip_sysfunc_4net_rt);
+		  obj = new sysfunc_4net;
 
 	    } else if (vwid == -vpiRealConst) {
-		  obj = new __vpiSysTaskCall(&vpip_sysfunc_real_rt);
+		  obj = new sysfunc_real;
 
 	    } else if (vwid > 0) {
-		  obj = new __vpiSysTaskCall(&vpip_sysfunc_rt);
+		  obj = new sysfunc_def;
 
            } else if (vwid == 0 && fnet == 0) {
-		  obj = new __vpiSysTaskCall(&vpip_sysfunc_no_rt);
+		  obj = new sysfunc_no;
 
 	    } else {
 		  assert(0);
@@ -857,7 +890,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 #ifdef CHECK_WITH_VALGRIND
 void vpi_call_delete(vpiHandle item)
 {
-      struct __vpiSysTaskCall*obj = (struct __vpiSysTaskCall *) item;
+      struct __vpiSysTaskCall*obj = dynamic_cast<__vpiSysTaskCall*>(item);
 	/* The object can be NULL if there was an error. */
       if (!obj) return;
       for (unsigned arg = 0; arg < obj->nargs; arg += 1) {

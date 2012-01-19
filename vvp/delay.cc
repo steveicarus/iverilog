@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2011 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2005-2012 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -990,6 +990,9 @@ inline __vpiModPathSrc::__vpiModPathSrc()
 {
 }
 
+int __vpiModPathSrc::get_type_code(void) const
+{ return vpiModPath; }
+
 static const struct __vpirt vpip_modpath_term_rt = {
       vpiPathTerm,
       pathterm_get,
@@ -1008,6 +1011,9 @@ inline __vpiModPathTerm::__vpiModPathTerm()
 : __vpiHandle(&vpip_modpath_term_rt)
 {
 }
+
+int __vpiModPathTerm::get_type_code(void) const
+{ return vpiPathTerm; }
 
 static void initialize_path_term(struct __vpiModPathTerm&obj)
 {

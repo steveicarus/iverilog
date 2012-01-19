@@ -85,6 +85,10 @@ inline __vpiNamedEvent::__vpiNamedEvent()
 {
 }
 
+int __vpiNamedEvent::get_type_code(void) const
+{ return vpiNamedEvent; }
+
+
 vpiHandle vpip_make_named_event(const char*name, vvp_net_t*funct)
 {
       struct __vpiNamedEvent*obj = new __vpiNamedEvent;

@@ -258,7 +258,7 @@ static void do_compile_net(vvp_net_t*node, vvp_array_t array,
       vpiHandle obj = 0;
       if (! local_flag) {
 	      /* Make the vpiHandle for the reg. */
-	    obj = vpip_make_net4(name, 0, msb, lsb, signed_flag, node);
+	    obj = vpip_make_net4(name, msb, lsb, signed_flag, node);
 	      /* This attaches the label to the vpiHandle */
 	    compile_vpi_symbol(my_label, obj);
       }

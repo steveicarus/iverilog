@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 
 struct __vpiFileLine : public __vpiHandle {
       __vpiFileLine();
+      int get_type_code(void) const;
 
       const char *description;
       unsigned file_idx;
@@ -78,6 +79,9 @@ inline __vpiFileLine::__vpiFileLine()
 : __vpiHandle(&vpip_file_line_rt)
 {
 }
+
+int __vpiFileLine::get_type_code(void) const
+{ return _vpiFileLine; }
 
 vpiHandle vpip_build_file_line(char*description, long file_idx, long lineno)
 {

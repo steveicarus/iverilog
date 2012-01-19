@@ -320,6 +320,11 @@ static const struct __vpirt vpip_scope_module_rt = {
       0
 };
 
+struct vpiScopeModule  : public __vpiScope {
+      inline vpiScopeModule() : __vpiScope(&vpip_scope_module_rt) { }
+      int get_type_code(void) const { return vpiModule; }
+};
+
 static const struct __vpirt vpip_scope_task_rt = {
       vpiTask,
       scope_get,
@@ -332,6 +337,11 @@ static const struct __vpirt vpip_scope_task_rt = {
       0,
       0,
       0
+};
+
+struct vpiScopeTask  : public __vpiScope {
+      inline vpiScopeTask() : __vpiScope(&vpip_scope_task_rt) { }
+      int get_type_code(void) const { return vpiTask; }
 };
 
 static const struct __vpirt vpip_scope_function_rt = {
@@ -348,6 +358,11 @@ static const struct __vpirt vpip_scope_function_rt = {
       0
 };
 
+struct vpiScopeFunction  : public __vpiScope {
+      inline vpiScopeFunction() : __vpiScope(&vpip_scope_function_rt) { }
+      int get_type_code(void) const { return vpiFunction; }
+};
+
 static const struct __vpirt vpip_scope_begin_rt = {
       vpiNamedBegin,
       scope_get,
@@ -362,6 +377,11 @@ static const struct __vpirt vpip_scope_begin_rt = {
       0
 };
 
+struct vpiScopeBegin  : public __vpiScope {
+      inline vpiScopeBegin() : __vpiScope(&vpip_scope_begin_rt) { }
+      int get_type_code(void) const { return vpiNamedBegin; }
+};
+
 static const struct __vpirt vpip_scope_fork_rt = {
       vpiNamedFork,
       scope_get,
@@ -374,6 +394,11 @@ static const struct __vpirt vpip_scope_fork_rt = {
       0,
       0,
       0
+};
+
+struct vpiScopeFork  : public __vpiScope {
+      inline vpiScopeFork() : __vpiScope(&vpip_scope_fork_rt) { }
+      int get_type_code(void) const { return vpiNamedFork; }
 };
 
 /*
@@ -423,19 +448,19 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
 
       struct __vpiScope*scope;
       if (strcmp(base_type,"module") == 0) {
-	    scope = new __vpiScope(&vpip_scope_module_rt);
+	    scope = new vpiScopeModule;
       } else if (strcmp(base_type,"function") == 0) {
-	    scope = new __vpiScope(&vpip_scope_function_rt);
+	    scope = new vpiScopeFunction;
       } else if (strcmp(base_type,"task") == 0) {
-	    scope = new __vpiScope(&vpip_scope_task_rt);
+	    scope = new vpiScopeTask;
       } else if (strcmp(base_type,"fork") == 0) {
-	    scope = new __vpiScope(&vpip_scope_fork_rt);
+	    scope = new vpiScopeFork;
       } else if (strcmp(base_type,"begin") == 0) {
-	    scope = new __vpiScope(&vpip_scope_begin_rt);
+	    scope = new vpiScopeBegin;
       } else if (strcmp(base_type,"generate") == 0) {
-	    scope = new __vpiScope(&vpip_scope_begin_rt);
+	    scope = new vpiScopeBegin;
       } else {
-	    scope = new __vpiScope(&vpip_scope_module_rt);
+	    scope = new vpiScopeModule;
 	    assert(0);
       }
 

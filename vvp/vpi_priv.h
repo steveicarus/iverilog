@@ -89,7 +89,7 @@ extern vpi_mode_t vpi_mode_flag;
  * pointer to an instance of this structure.
  */
 struct __vpirt {
-      int type_code;
+      int type_code_X;
 
 	/* These methods extract information from the handle. */
       int   (*vpi_get_)(int, vpiHandle);
@@ -124,7 +124,7 @@ class __vpiHandle {
 	// The descructor is virtual so that dynamic types will work.
       virtual ~__vpiHandle() { }
 
-      inline int get_type_code(void) const { return vpi_type_->type_code; }
+      virtual int get_type_code(void) const =0;
 
       inline int vpi_get(int code)
       { return vpi_type_->vpi_get_? vpi_type_->vpi_get_(code,this) : vpiUndefined; }
@@ -178,6 +178,8 @@ class __vpiHandle {
  */
 struct __vpiIterator : public __vpiHandle {
       __vpiIterator();
+      int get_type_code(void) const;
+
       vpiHandle *args;
       unsigned  nargs;
       unsigned  next;
@@ -194,6 +196,7 @@ extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
  */
 struct __vpiCallback : public __vpiHandle {
       __vpiCallback();
+      int get_type_code(void) const;
 
 	// user supplied callback data
       struct t_cb_data cb_data;
@@ -216,6 +219,8 @@ extern void callback_execute(struct __vpiCallback*cur);
 
 struct __vpiSystemTime : public __vpiHandle {
       __vpiSystemTime();
+      int get_type_code(void) const;
+
       struct __vpiScope*scope;
     protected:
       inline __vpiSystemTime(const struct __vpirt*rt) : __vpiHandle(rt) { }
@@ -238,8 +243,6 @@ struct __vpiScopedRealtime : public __vpiSystemTime {
  * scope.
  */
 struct __vpiScope : public __vpiHandle {
-      __vpiScope(const struct __vpirt*rt) : __vpiHandle(rt) { }
-
       struct __vpiScope *scope;
 	/* The scope has a name. */
       const char*name;
@@ -268,6 +271,10 @@ struct __vpiScope : public __vpiHandle {
       std::set<vthread_t> threads;
       signed int time_units :8;
       signed int time_precision :8;
+
+    protected:
+      __vpiScope(const struct __vpirt*rt) : __vpiHandle(rt) { }
+
 };
 
 extern struct __vpiScope* vpip_peek_current_scope(void);
@@ -286,7 +293,7 @@ extern void vpip_make_root_iterator(struct __vpiHandle**&table,
  * a declared name and declaration indices.
  */
 struct __vpiSignal : public __vpiHandle {
-      inline __vpiSignal(const struct __vpirt*rt) : __vpiHandle(rt) { }
+
 #ifdef CHECK_WITH_VALGRIND
       struct __vpiSignal *pool;
 #endif
@@ -309,6 +316,8 @@ struct __vpiSignal : public __vpiHandle {
     public:
       static void*operator new(std::size_t size);
       static void operator delete(void*); // not implemented
+    protected:
+      inline __vpiSignal(const struct __vpirt*rt) : __vpiHandle(rt) { }
     private: // Not implemented
       static void*operator new[] (std::size_t size);
       static void operator delete[](void*);
@@ -322,8 +331,8 @@ extern vpiHandle vpip_make_int4(const char*name, int msb, int lsb,
 			       vvp_net_t*vec);
 extern vpiHandle vpip_make_var4(const char*name, int msb, int lsb,
 			       bool signed_flag, vvp_net_t*net);
-extern vpiHandle vpip_make_net4(const char*name, const struct __vpirt*rt,
-				int msb, int lsb, bool signed_flag, vvp_net_t*node);
+extern vpiHandle vpip_make_net4(const char*name, int msb, int lsb,
+				bool signed_flag, vvp_net_t*node);
 
 /*
  * This is used by system calls to represent a bit/part select of
@@ -331,6 +340,8 @@ extern vpiHandle vpip_make_net4(const char*name, const struct __vpirt*rt,
  */
 struct __vpiPV : public __vpiHandle {
       __vpiPV();
+      int get_type_code(void) const;
+
       vpiHandle parent;
       vvp_net_t*net;
       vpiHandle sbase;
@@ -349,6 +360,8 @@ extern void vpip_part_select_value_change(struct __vpiCallback*cbh, vpiHandle ob
 
 struct __vpiModPathTerm : public __vpiHandle {
       __vpiModPathTerm();
+      int get_type_code(void) const;
+
       vpiHandle expr;
 	/* The value returned by vpi_get(vpiEdge, ...); */
       int edge;
@@ -356,6 +369,8 @@ struct __vpiModPathTerm : public __vpiHandle {
 
 struct __vpiModPathSrc : public __vpiHandle {
       __vpiModPathSrc();
+      int get_type_code(void) const;
+
       struct __vpiModPath *dest;
       int   type;
 
@@ -405,6 +420,7 @@ extern struct __vpiModPath* vpip_make_modpath(vvp_net_t *net) ;
  */
 struct __vpiNamedEvent : public __vpiHandle {
       __vpiNamedEvent();
+      int get_type_code(void) const;
 
 	/* base name of the event object */
       const char*name;
@@ -435,6 +451,8 @@ extern bool is_net_array(vpiHandle obj);
  */
 struct __vpiRealVar : public __vpiHandle {
       __vpiRealVar();
+      int get_type_code(void) const;
+
       union { // The scope or parent array that contains me.
 	    vpiHandle parent;
 	    struct __vpiScope* scope;
@@ -472,6 +490,8 @@ extern vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net);
  */
 struct __vpiUserSystf : public __vpiHandle {
       __vpiUserSystf();
+      int get_type_code(void) const;
+
       s_vpi_systf_data info;
       bool is_user_defn;
 };
@@ -483,6 +503,7 @@ extern struct __vpiUserSystf* vpip_find_systf(const char*name);
 
 struct __vpiSysTaskCall : public __vpiHandle {
       __vpiSysTaskCall(const struct __vpirt*rt) : __vpiHandle(rt) { }
+
       struct __vpiScope* scope;
       struct __vpiUserSystf*defn;
       unsigned nargs;
@@ -510,6 +531,7 @@ extern struct __vpiSysTaskCall*vpip_cur_task;
  */
 struct __vpiStringConst : public __vpiHandle {
       __vpiStringConst();
+      int get_type_code(void) const;
 
       char*value;
       size_t value_len;
@@ -523,6 +545,8 @@ vpiHandle vpip_make_string_param(char*name, char*value,
 
 struct __vpiBinaryConst : public __vpiHandle {
       __vpiBinaryConst();
+      int get_type_code(void) const;
+
       vvp_vector4_t bits;
 	/* TRUE if this constant is signed. */
       int signed_flag :1;
@@ -539,11 +563,15 @@ vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
 
 struct __vpiDecConst : public __vpiHandle {
       __vpiDecConst(int val =0);
+      int get_type_code(void) const;
+
       int value;
 };
 
 struct __vpiRealConst : public __vpiHandle {
       __vpiRealConst();
+      int get_type_code(void) const;
+
       double value;
     protected:
       inline __vpiRealConst(const struct __vpirt*rt) : __vpiHandle(rt) { }

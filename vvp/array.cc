@@ -82,6 +82,8 @@ vvp_array_t array_find(const char*label)
 */
 struct __vpiArray : public __vpiHandle {
       __vpiArray();
+      int get_type_code(void) const;
+
       struct __vpiScope*scope;
       const char*name; /* Permanently allocated string */
       unsigned array_count;
@@ -105,6 +107,7 @@ struct __vpiArray : public __vpiHandle {
 
 struct __vpiArrayIterator : public __vpiHandle {
       __vpiArrayIterator();
+      int get_type_code(void) const;
 
       struct __vpiArray*array;
       unsigned next;
@@ -112,6 +115,8 @@ struct __vpiArrayIterator : public __vpiHandle {
 
 struct __vpiArrayIndex : public __vpiHandle {
       __vpiArrayIndex();
+      int get_type_code(void) const;
+
       struct __vpiDecConst *index;
       unsigned done;
 };
@@ -119,6 +124,7 @@ struct __vpiArrayIndex : public __vpiHandle {
 struct __vpiArrayVthrA : public __vpiHandle {
 
       __vpiArrayVthrA();
+      int get_type_code(void) const;
 
       struct __vpiArray*array;
 	// If this is set, then use it to get the index value.
@@ -188,6 +194,8 @@ struct __vpiArrayVthrA : public __vpiHandle {
 
 struct __vpiArrayVthrAPV : public __vpiHandle {
       __vpiArrayVthrAPV();
+      int get_type_code(void) const;
+
       struct __vpiArray*array;
       unsigned word_sel;
       unsigned part_bit;
@@ -250,10 +258,12 @@ bool is_net_array(vpiHandle obj)
 struct __vpiArrayWord {
       struct as_word_t : public __vpiHandle {
 	    as_word_t();
+	    int get_type_code(void) const;
       } as_word;
 
       struct as_index_t : public __vpiHandle {
 	    as_index_t();
+	    int get_type_code(void) const;
       } as_index;
 
       union {
@@ -311,6 +321,8 @@ inline __vpiArray::__vpiArray()
 {
 }
 
+int __vpiArray::get_type_code(void) const
+{ return vpiMemory; }
 
 static const struct __vpirt vpip_array_iterator_rt = {
       vpiIterator,
@@ -330,6 +342,9 @@ inline __vpiArrayIterator::__vpiArrayIterator()
 : __vpiHandle(&vpip_array_iterator_rt)
 {
 }
+
+int __vpiArrayIterator::get_type_code(void) const
+{ return vpiIterator; }
 
 
 /* This should look a bit odd since it provides a fake iteration on
@@ -354,6 +369,9 @@ inline __vpiArrayIndex::__vpiArrayIndex()
 {
 }
 
+int __vpiArrayIndex::get_type_code(void) const
+{ return vpiIterator; }
+
 static const struct __vpirt vpip_array_var_word_rt = {
       vpiMemoryWord,
       &vpi_array_var_word_get,
@@ -372,6 +390,9 @@ inline __vpiArrayWord::as_word_t::as_word_t()
 {
 }
 
+int __vpiArrayWord::as_word_t::get_type_code(void) const
+{ return vpiMemoryWord; }
+
 static const struct __vpirt vpip_array_var_index_rt = {
       vpiIndex,
       0,
@@ -389,6 +410,9 @@ inline __vpiArrayWord::as_index_t::as_index_t()
 : __vpiHandle(&vpip_array_var_index_rt)
 {
 }
+
+int __vpiArrayWord::as_index_t::get_type_code(void) const
+{ return vpiIndex; }
 
 static const struct __vpirt vpip_array_vthr_A_rt = {
       vpiMemoryWord,
@@ -409,6 +433,9 @@ inline __vpiArrayVthrA::__vpiArrayVthrA()
 {
 }
 
+int __vpiArrayVthrA::get_type_code(void) const
+{ return vpiMemoryWord; }
+
 static const struct __vpirt vpip_array_vthr_APV_rt = {
       vpiMemoryWord,
       &vpi_array_vthr_APV_get,
@@ -427,6 +454,9 @@ inline __vpiArrayVthrAPV::__vpiArrayVthrAPV()
 : __vpiHandle(&vpip_array_vthr_APV_rt)
 {
 }
+
+int __vpiArrayVthrAPV::get_type_code(void) const
+{ return vpiMemoryWord; }
 
 static struct __vpiArrayWord* array_var_word_from_handle(vpiHandle ref)
 {

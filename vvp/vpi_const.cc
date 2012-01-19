@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -184,6 +184,9 @@ inline __vpiStringConst::__vpiStringConst()
 {
 }
 
+int __vpiStringConst::get_type_code(void) const
+{ return vpiConstant; }
+
 struct __vpiStringConstTEMP : public __vpiStringConst {
       __vpiStringConstTEMP();
 };
@@ -262,6 +265,8 @@ vpiHandle vpip_make_string_const(char*text, bool persistent_flag)
 
 struct __vpiStringParam  : public __vpiStringConst {
       __vpiStringParam();
+      int get_type_code(void) const;
+
       const char*basename;
       struct __vpiScope* scope;
       unsigned file_idx;
@@ -328,6 +333,8 @@ inline __vpiStringParam::__vpiStringParam()
 {
 }
 
+int __vpiStringParam::get_type_code(void) const
+{ return vpiParameter; }
 
 vpiHandle vpip_make_string_param(char*name, char*text,
                                  long file_idx, long lineno)
@@ -426,6 +433,9 @@ inline __vpiBinaryConst::__vpiBinaryConst()
 {
 }
 
+int __vpiBinaryConst::get_type_code(void) const
+{ return vpiConstant; }
+
 /*
  * Make a VPI constant from a vector string. The string is normally a
  * ASCII string, with each letter a 4-value bit. The first character
@@ -478,6 +488,8 @@ vvp_vector4_t vector4_from_text(const char*bits, unsigned wid)
 
 struct __vpiBinaryParam  : public __vpiBinaryConst {
       __vpiBinaryParam();
+      int get_type_code(void) const;
+
       const char*basename;
       struct __vpiScope*scope;
       unsigned file_idx;
@@ -539,6 +551,9 @@ inline __vpiBinaryParam::__vpiBinaryParam()
 : __vpiBinaryConst(&vpip_binary_param_rt)
 {
 }
+
+int __vpiBinaryParam::get_type_code(void) const
+{ return vpiParameter; }
 
 vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
 				 bool signed_flag,
@@ -656,6 +671,9 @@ __vpiDecConst::__vpiDecConst(int val)
       value = val;
 }
 
+int __vpiDecConst::get_type_code(void) const
+{ return vpiConstant; }
+
 static int real_get(int code, vpiHandle)
 {
 
@@ -712,6 +730,10 @@ inline __vpiRealConst::__vpiRealConst()
 {
 }
 
+int __vpiRealConst::get_type_code(void) const
+{ return vpiConstant; }
+
+
 vpiHandle vpip_make_real_const(double value)
 {
       struct __vpiRealConst*obj = new __vpiRealConst;
@@ -721,6 +743,8 @@ vpiHandle vpip_make_real_const(double value)
 
 struct __vpiRealParam  : public __vpiRealConst {
       __vpiRealParam();
+      int get_type_code(void) const;
+
       const char*basename;
       struct __vpiScope* scope;
       unsigned file_idx;
@@ -782,6 +806,9 @@ inline __vpiRealParam::__vpiRealParam()
 : __vpiRealConst(&vpip_real_param_rt)
 {
 }
+
+int __vpiRealParam::get_type_code(void) const
+{ return vpiParameter; }
 
 
 vpiHandle vpip_make_real_param(char*name, double value,

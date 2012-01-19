@@ -56,6 +56,9 @@ inline __vpiIterator::__vpiIterator()
 {
 }
 
+int __vpiIterator::get_type_code(void) const
+{ return vpiIterator; }
+
 vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
 			     bool free_args_flag)
 {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -130,6 +130,10 @@ char *generic_get_str(int code, vpiHandle ref, const char *name, const char *ind
       }
       return res;
 }
+
+static vpiHandle fill_in_net4(struct __vpiSignal*obj,
+			      const char*name, int msb, int lsb,
+			      bool signed_flag, vvp_net_t*node);
 
 /*
  * The standard formating/conversion routines.
@@ -869,6 +873,10 @@ static const struct __vpirt vpip_reg_rt = {
       0,
       0
 };
+struct signal_reg : public __vpiSignal {
+      inline signal_reg() : __vpiSignal(&vpip_reg_rt) { }
+      int get_type_code(void) const { return vpiReg; }
+};
 
 static const struct __vpirt vpip_integer_rt = {
       vpiIntegerVar,
@@ -882,6 +890,10 @@ static const struct __vpirt vpip_integer_rt = {
       0,
       0,
       0
+};
+struct signal_integer : public __vpiSignal {
+      inline signal_integer() : __vpiSignal(&vpip_integer_rt) { }
+      int get_type_code(void) const { return vpiIntegerVar; }
 };
 
 static const struct __vpirt vpip_net_rt = {
@@ -897,6 +909,10 @@ static const struct __vpirt vpip_net_rt = {
       0,
       0
 };
+struct signal_net : public __vpiSignal {
+      inline signal_net() : __vpiSignal(&vpip_net_rt) { }
+      int get_type_code(void) const { return vpiNet; }
+};
 
 static const struct __vpirt vpip_byte_rt = {
       vpiByteVar,
@@ -910,6 +926,10 @@ static const struct __vpirt vpip_byte_rt = {
       0,
       0,
       0
+};
+struct signal_byte : public __vpiSignal {
+      inline signal_byte() : __vpiSignal(&vpip_byte_rt) { }
+      int get_type_code(void) const { return vpiByteVar; }
 };
 
 static const struct __vpirt vpip_bitvar_rt = {
@@ -925,6 +945,10 @@ static const struct __vpirt vpip_bitvar_rt = {
       0,
       0
 };
+struct signal_bitvar : public __vpiSignal {
+      inline signal_bitvar() : __vpiSignal(&vpip_bitvar_rt) { }
+      int get_type_code(void) const { return vpiBitVar; }
+};
 
 static const struct __vpirt vpip_shortint_rt = {
       vpiShortIntVar,
@@ -938,6 +962,10 @@ static const struct __vpirt vpip_shortint_rt = {
       0,
       0,
       0
+};
+struct signal_shortint : public __vpiSignal {
+      inline signal_shortint() : __vpiSignal(&vpip_shortint_rt) { }
+      int get_type_code(void) const { return vpiShortIntVar; }
 };
 
 static const struct __vpirt vpip_int_rt = {
@@ -953,6 +981,10 @@ static const struct __vpirt vpip_int_rt = {
       0,
       0
 };
+struct signal_int : public __vpiSignal {
+      inline signal_int() : __vpiSignal(&vpip_int_rt) { }
+      int get_type_code(void) const { return vpiIntVar; }
+};
 
 static const struct __vpirt vpip_longint_rt = {
       vpiLongIntVar,
@@ -967,6 +999,10 @@ static const struct __vpirt vpip_longint_rt = {
       0,
       0
 };
+struct signal_longint : public __vpiSignal {
+      inline signal_longint() : __vpiSignal(&vpip_longint_rt) { }
+      int get_type_code(void) const { return vpiLongIntVar; }
+};
 
 
 /*
@@ -976,9 +1012,8 @@ static const struct __vpirt vpip_longint_rt = {
  */
 vpiHandle vpip_make_int4(const char*name, int msb, int lsb, vvp_net_t*vec)
 {
-      vpiHandle obj = vpip_make_net4(name, &vpip_integer_rt,
-				     msb,lsb, true, vec);
-      return obj;
+      __vpiSignal*obj = new signal_integer;
+      return fill_in_net4(obj, name, msb, lsb, true, vec);
 }
 
 /*
@@ -987,37 +1022,37 @@ vpiHandle vpip_make_int4(const char*name, int msb, int lsb, vvp_net_t*vec)
 vpiHandle vpip_make_int2(const char*name, int msb, int lsb, bool signed_flag,
                          vvp_net_t*vec)
 {
-      const struct __vpirt*vpi_type;
+      __vpiSignal*obj;
 
 	// All unsigned 2-state variables are a vpiBitVar. All 2-state
 	// variables with a non-zero lsb are also a vpiBitVar.
       if ((! signed_flag) || (lsb != 0) ) {
-	    vpi_type = &vpip_bitvar_rt;
+	    obj = new signal_bitvar;
       } else {
 	      // These could also be bit declarations with matching
 	      // information, but for now they get the apparent type.
 	    switch (msb) {
 		case 7:
-		  vpi_type = &vpip_byte_rt;
+		  obj = new signal_byte;
 		  break;
 		case 15:
-		  vpi_type = &vpip_shortint_rt;
+		  obj = new signal_shortint;
 		  break;
 		case 31:
-		  vpi_type = &vpip_int_rt;
+		  obj = new signal_int;
 		  break;
 		case 63:
-		  vpi_type = &vpip_longint_rt;
+		  obj = new signal_longint;
 		  break;
 		default:
 		    // Every other type of bit vector is a vpiBitVar with
 		    // array dimensions.
-		  vpi_type = &vpip_bitvar_rt;
+		  obj = new signal_bitvar;
 		  break;
 	    }
       }
 
-      return vpip_make_net4(name, vpi_type, msb, lsb, signed_flag, vec);
+      return fill_in_net4(obj, name, msb, lsb, signed_flag, vec);
 }
 
 /*
@@ -1026,7 +1061,8 @@ vpiHandle vpip_make_int2(const char*name, int msb, int lsb, bool signed_flag,
 vpiHandle vpip_make_var4(const char*name, int msb, int lsb,
 			bool signed_flag, vvp_net_t*vec)
 {
-      return vpip_make_net4(name, &vpip_reg_rt, msb,lsb, signed_flag, vec);
+      __vpiSignal*obj = new signal_reg;
+      return fill_in_net4(obj, name, msb, lsb, signed_flag, vec);
 }
 
 #ifdef CHECK_WITH_VALGRIND
@@ -1072,7 +1108,7 @@ void* __vpiSignal::operator new(size_t siz)
       return cur;
 }
 
-void __vpiSignal::operator delete(void*ptr)
+void __vpiSignal::operator delete(void*)
 {
       assert(0);
 }
@@ -1114,11 +1150,10 @@ void signal_pool_delete()
  * The name is the PLI name for the object. If it is an array it is
  * <name>[<index>].
  */
-vpiHandle vpip_make_net4(const char*name, const struct __vpirt*rt,
-			 int msb, int lsb, bool signed_flag, vvp_net_t*node)
+static vpiHandle fill_in_net4(struct __vpiSignal*obj,
+			      const char*name, int msb, int lsb,
+			      bool signed_flag, vvp_net_t*node)
 {
-      if (rt == 0) rt = &vpip_net_rt;
-      struct __vpiSignal*obj = new __vpiSignal(rt);
       obj->id.name = name? vpip_name_string(name) : 0;
       obj->msb = msb;
       obj->lsb = lsb;
@@ -1134,6 +1169,13 @@ vpiHandle vpip_make_net4(const char*name, const struct __vpirt*rt,
       count_vpi_nets += 1;
 
       return obj;
+}
+
+vpiHandle vpip_make_net4(const char*name, int msb, int lsb,
+			 bool signed_flag, vvp_net_t*node)
+{
+      struct __vpiSignal*obj = new signal_net;
+      return fill_in_net4(obj, name, msb, lsb, signed_flag, node);
 }
 
 static int PV_get_base(struct __vpiPV*rfp)
@@ -1402,6 +1444,9 @@ inline __vpiPV::__vpiPV()
 : __vpiHandle(&vpip_PV_rt)
 {
 }
+
+int __vpiPV::get_type_code(void) const
+{ return vpiPartSelect; }
 
 vpiHandle vpip_make_PV(char*var, int base, int width)
 {

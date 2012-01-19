@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -27,6 +27,7 @@
 
 struct enumconst_s : public __vpiHandle {
       enumconst_s();
+      int get_type_code(void) const;
 
       const char*name;
       vvp_vector2_t val2;
@@ -35,6 +36,7 @@ struct enumconst_s : public __vpiHandle {
 
 struct __vpiEnumTypespec : public __vpiHandle {
       __vpiEnumTypespec();
+      int get_type_code(void) const;
 
       std::vector<enumconst_s> names;
       int base_type_code;
@@ -104,6 +106,9 @@ inline __vpiEnumTypespec::__vpiEnumTypespec()
 {
 }
 
+int __vpiEnumTypespec::get_type_code(void) const
+{ return vpiEnumTypespec; }
+
 static int enum_name_get(int code, vpiHandle obj)
 {
       struct enumconst_s*ref = dynamic_cast<enumconst_s*>(obj);
@@ -159,6 +164,9 @@ inline enumconst_s::enumconst_s()
 : __vpiHandle(&enum_name_rt)
 {
 }
+
+int enumconst_s::get_type_code(void) const
+{ return vpiEnumConst; }
 
 void compile_enum2_type(char*label, long width, bool signed_flag,
                         std::list<struct enum_name_s>*names)

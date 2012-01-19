@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -364,6 +364,11 @@ __vpiSystemTime::__vpiSystemTime()
 : __vpiHandle(&vpip_system_simtime_rt)
 {
       scope = 0;
+}
+
+int __vpiSystemTime::get_type_code(void) const
+{
+      return vpiSysFuncCall;
 }
 
 static const struct __vpirt vpip_system_realtime_rt = {

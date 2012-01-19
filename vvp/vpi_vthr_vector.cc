@@ -37,6 +37,8 @@
 
 struct __vpiVThrVec : public __vpiHandle {
       __vpiVThrVec();
+      int get_type_code(void) const;
+
       unsigned bas;
       unsigned wid;
       unsigned signed_flag : 1;
@@ -445,10 +447,13 @@ static const struct __vpirt vpip_vthr_const_rt = {
       0,
       0
 };
-__vpiVThrVec::__vpiVThrVec()
+inline __vpiVThrVec::__vpiVThrVec()
 : __vpiHandle(&vpip_vthr_const_rt)
 {
 }
+
+int __vpiVThrVec::get_type_code(void) const
+{ return vpiConstant; }
 
 
 /*
@@ -485,6 +490,8 @@ static void thread_vthr_delete_real(vpiHandle item)
 
 struct __vpiVThrWord : public __vpiHandle {
       __vpiVThrWord();
+      int get_type_code(void) const;
+
       const char* name;
       int subtype;
       unsigned index;
@@ -596,6 +603,9 @@ inline __vpiVThrWord::__vpiVThrWord()
 : __vpiHandle(&vpip_vthr_const_real_rt)
 {
 }
+
+int __vpiVThrWord::get_type_code(void) const
+{ return vpiConstant; }
 
 vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 {

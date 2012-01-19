@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -154,6 +154,9 @@ inline __vpiRealVar::__vpiRealVar()
 : __vpiHandle(&vpip_real_var_rt)
 {
 }
+
+int __vpiRealVar::get_type_code(void) const
+{ return vpiRealVar; }
 
 
 void vpip_real_value_change(struct __vpiCallback*cbh,
