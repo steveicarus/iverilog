@@ -505,31 +505,12 @@ static void format_vpiVectorVal(vvp_signal_value*sig, int base, unsigned wid,
       }
 }
 
-struct __vpiSignal* vpip_signal_from_handle(vpiHandle ref)
-{
-      switch (ref->vpi_type->type_code) {
-	  case vpiNet:
-	  case vpiReg:
-		/* This handles both reg and logic */
-	  case vpiIntegerVar:
-	  case vpiByteVar:
-	  case vpiShortIntVar:
-	  case vpiIntVar:
-	  case vpiLongIntVar:
-	  case vpiBitVar:
-	    return (struct __vpiSignal*)ref;
-
-	  default:
-	    return 0;
-      }
-}
-
 /*
  * implement vpi_get for vpiReg objects.
  */
 static int signal_get(int code, vpiHandle ref)
 {
-      struct __vpiSignal*rfp = vpip_signal_from_handle(ref);
+      struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
       assert(rfp);
 
       switch (code) {
@@ -559,7 +540,7 @@ static int signal_get(int code, vpiHandle ref)
 		  return rfp->lsb - rfp->msb + 1;
 
 	  case vpiNetType:
-	    if (ref->vpi_type->type_code==vpiNet)
+	    if (ref->get_type_code()==vpiNet)
 		  return vpiWire;
 	    else
 		  return vpiUndefined;
@@ -589,7 +570,7 @@ static int signal_get(int code, vpiHandle ref)
 
 static char* signal_get_str(int code, vpiHandle ref)
 {
-      struct __vpiSignal*rfp = vpip_signal_from_handle(ref);
+      struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
       assert(rfp);
 
       if (code == vpiFile) {  // Not implemented for now!
@@ -611,14 +592,14 @@ static char* signal_get_str(int code, vpiHandle ref)
       }
 
 	/* The scope information is added here for vpiFullName. */
-      char *rbuf = generic_get_str(code, &(vpip_scope(rfp)->base), nm, ixs);
+      char *rbuf = generic_get_str(code, vpip_scope(rfp), nm, ixs);
       free(nm);
       return rbuf;
 }
 
 static vpiHandle signal_get_handle(int code, vpiHandle ref)
 {
-      struct __vpiSignal*rfp = vpip_signal_from_handle(ref);
+      struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
       assert(rfp);
 
       switch (code) {
@@ -630,7 +611,7 @@ static vpiHandle signal_get_handle(int code, vpiHandle ref)
 	    return rfp->is_netarray? rfp->id.index : 0;
 
 	  case vpiScope:
-	    return &(vpip_scope(rfp)->base);
+	    return vpip_scope(rfp);
 
 	  case vpiModule:
 	    return vpip_module(vpip_scope(rfp));
@@ -641,7 +622,7 @@ static vpiHandle signal_get_handle(int code, vpiHandle ref)
 
 static vpiHandle signal_iterate(int code, vpiHandle ref)
 {
-      struct __vpiSignal*rfp = vpip_signal_from_handle(ref);
+      struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
       assert(rfp);
 
       if (code == vpiIndex) {
@@ -667,7 +648,7 @@ static unsigned signal_width(const struct __vpiSignal*rfp)
  */
 static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
 {
-      struct __vpiSignal*rfp = vpip_signal_from_handle(ref);
+      struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
       assert(rfp);
 
       unsigned wid = signal_width(rfp);
@@ -773,7 +754,7 @@ static vvp_vector4_t from_stringval(const char*str, unsigned wid)
 static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 {
       unsigned wid;
-      struct __vpiSignal*rfp = vpip_signal_from_handle(ref);
+      struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
       assert(rfp);
 
 	/* If this is a release, then we are not really putting a
@@ -995,8 +976,8 @@ static const struct __vpirt vpip_longint_rt = {
  */
 vpiHandle vpip_make_int4(const char*name, int msb, int lsb, vvp_net_t*vec)
 {
-      vpiHandle obj = vpip_make_net4(name, msb,lsb, true, vec);
-      obj->vpi_type = &vpip_integer_rt;
+      vpiHandle obj = vpip_make_net4(name, &vpip_integer_rt,
+				     msb,lsb, true, vec);
       return obj;
 }
 
@@ -1006,37 +987,37 @@ vpiHandle vpip_make_int4(const char*name, int msb, int lsb, vvp_net_t*vec)
 vpiHandle vpip_make_int2(const char*name, int msb, int lsb, bool signed_flag,
                          vvp_net_t*vec)
 {
-      vpiHandle obj = vpip_make_net4(name, msb, lsb, signed_flag, vec);
+      const struct __vpirt*vpi_type;
 
 	// All unsigned 2-state variables are a vpiBitVar. All 2-state
 	// variables with a non-zero lsb are also a vpiBitVar.
       if ((! signed_flag) || (lsb != 0) ) {
-	    obj->vpi_type = &vpip_bitvar_rt;
+	    vpi_type = &vpip_bitvar_rt;
       } else {
 	      // These could also be bit declarations with matching
 	      // information, but for now they get the apparent type.
 	    switch (msb) {
 		case 7:
-		  obj->vpi_type = &vpip_byte_rt;
+		  vpi_type = &vpip_byte_rt;
 		  break;
 		case 15:
-		  obj->vpi_type = &vpip_shortint_rt;
+		  vpi_type = &vpip_shortint_rt;
 		  break;
 		case 31:
-		  obj->vpi_type = &vpip_int_rt;
+		  vpi_type = &vpip_int_rt;
 		  break;
 		case 63:
-		  obj->vpi_type = &vpip_longint_rt;
+		  vpi_type = &vpip_longint_rt;
 		  break;
 		default:
 		    // Every other type of bit vector is a vpiBitVar with
 		    // array dimensions.
-		  obj->vpi_type = &vpip_bitvar_rt;
+		  vpi_type = &vpip_bitvar_rt;
 		  break;
 	    }
       }
 
-      return obj;
+      return vpip_make_net4(name, vpi_type, msb, lsb, signed_flag, vec);
 }
 
 /*
@@ -1045,9 +1026,7 @@ vpiHandle vpip_make_int2(const char*name, int msb, int lsb, bool signed_flag,
 vpiHandle vpip_make_var4(const char*name, int msb, int lsb,
 			bool signed_flag, vvp_net_t*vec)
 {
-      vpiHandle obj = vpip_make_net4(name, msb,lsb, signed_flag, vec);
-      obj->vpi_type = &vpip_reg_rt;
-      return obj;
+      return vpip_make_net4(name, &vpip_reg_rt, msb,lsb, signed_flag, vec);
 }
 
 #ifdef CHECK_WITH_VALGRIND
@@ -1057,35 +1036,45 @@ static unsigned long signal_count = 0;
 static unsigned long signal_dels = 0;
 #endif
 
-static struct __vpiSignal* allocate_vpiSignal(void)
+struct vpiSignal_plug {
+      unsigned char space[sizeof (struct __vpiSignal)];
+};
+
+void* __vpiSignal::operator new(size_t siz)
 {
-      static struct __vpiSignal*alloc_array = 0;
+      assert(siz == sizeof(struct vpiSignal_plug));
+      static struct vpiSignal_plug*alloc_array = 0;
       static unsigned alloc_index = 0;
       const unsigned alloc_count = 512;
 
       if ((alloc_array == 0) || (alloc_index == alloc_count)) {
-	    alloc_array = (struct __vpiSignal*)
-		  calloc(alloc_count, sizeof(struct __vpiSignal));
+	    alloc_array = (struct vpiSignal_plug*)
+		  calloc(alloc_count, sizeof(struct vpiSignal_plug));
 	    alloc_index = 0;
 #ifdef CHECK_WITH_VALGRIND
 	    VALGRIND_MAKE_MEM_NOACCESS(alloc_array, alloc_count *
-	                                            sizeof(struct __vpiSignal));
+	                                            sizeof(struct vpiSignal_plug));
 	    VALGRIND_CREATE_MEMPOOL(alloc_array, 0, 1);
 	    signal_pool_count += 1;
-	    signal_pool = (__vpiSignal **) realloc(signal_pool,
-	                  signal_pool_count*sizeof(__vpiSignal **));
+	    signal_pool = (vpiSignal_plug **) realloc(signal_pool,
+	                  signal_pool_count*sizeof(vpiSignal_plug **));
 	    signal_pool[signal_pool_count-1] = alloc_array;
 #endif
       }
 
-      struct __vpiSignal*cur = alloc_array + alloc_index;
+      struct vpiSignal_plug*cur = alloc_array + alloc_index;
 #ifdef CHECK_WITH_VALGRIND
-      VALGRIND_MEMPOOL_ALLOC(alloc_array, cur, sizeof(struct __vpiSignal));
+      VALGRIND_MEMPOOL_ALLOC(alloc_array, cur, sizeof(struct vpiSignal_plug));
       cur->pool = alloc_array;
       signal_count += 1;
 #endif
       alloc_index += 1;
       return cur;
+}
+
+void __vpiSignal::operator delete(void*ptr)
+{
+      assert(0);
 }
 
 #ifdef CHECK_WITH_VALGRIND
@@ -1125,11 +1114,11 @@ void signal_pool_delete()
  * The name is the PLI name for the object. If it is an array it is
  * <name>[<index>].
  */
-vpiHandle vpip_make_net4(const char*name, int msb, int lsb,
-			bool signed_flag, vvp_net_t*node)
+vpiHandle vpip_make_net4(const char*name, const struct __vpirt*rt,
+			 int msb, int lsb, bool signed_flag, vvp_net_t*node)
 {
-      struct __vpiSignal*obj = allocate_vpiSignal();
-      obj->base.vpi_type = &vpip_net_rt;
+      if (rt == 0) rt = &vpip_net_rt;
+      struct __vpiSignal*obj = new __vpiSignal(rt);
       obj->id.name = name? vpip_name_string(name) : 0;
       obj->msb = msb;
       obj->lsb = lsb;
@@ -1144,7 +1133,7 @@ vpiHandle vpip_make_net4(const char*name, int msb, int lsb,
 
       count_vpi_nets += 1;
 
-      return &obj->base;
+      return obj;
 }
 
 static int PV_get_base(struct __vpiPV*rfp)
@@ -1205,8 +1194,8 @@ static int PV_get_base(struct __vpiPV*rfp)
 
 static int PV_get(int code, vpiHandle ref)
 {
-      assert(ref->vpi_type->type_code == vpiPartSelect);
-      struct __vpiPV*rfp = (struct __vpiPV*)ref;
+      struct __vpiPV*rfp = dynamic_cast<__vpiPV*>(ref);
+      assert(rfp);
 
       int rval = 0;
       switch (code) {
@@ -1246,8 +1235,8 @@ static int PV_get(int code, vpiHandle ref)
 
 static char* PV_get_str(int code, vpiHandle ref)
 {
-      assert(ref->vpi_type->type_code == vpiPartSelect);
-      struct __vpiPV*rfp = (struct __vpiPV*)ref;
+      struct __vpiPV*rfp = dynamic_cast<__vpiPV*>(ref);
+      assert(rfp);
 
       switch (code) {
 	case vpiFile:  // Not implemented for now!
@@ -1276,8 +1265,8 @@ static char* PV_get_str(int code, vpiHandle ref)
 
 static void PV_get_value(vpiHandle ref, p_vpi_value vp)
 {
-      assert(ref->vpi_type->type_code == vpiPartSelect);
-      struct __vpiPV*rfp = (struct __vpiPV*)ref;
+      struct __vpiPV*rfp = dynamic_cast<__vpiPV*>(ref);
+      assert(rfp);
 
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*>(rfp->net->fil);
       assert(sig);
@@ -1334,8 +1323,8 @@ static void PV_get_value(vpiHandle ref, p_vpi_value vp)
 
 static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int)
 {
-      assert(ref->vpi_type->type_code == vpiPartSelect);
-      struct __vpiPV*rfp = (struct __vpiPV*)ref;
+      struct __vpiPV*rfp = dynamic_cast<__vpiPV*>(ref);
+      assert(rfp);
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*>(rfp->net->fil);
       assert(sig);
 
@@ -1382,8 +1371,8 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int)
 
 static vpiHandle PV_get_handle(int code, vpiHandle ref)
 {
-      assert(ref->vpi_type->type_code==vpiPartSelect);
-      struct __vpiPV*rfp = (struct __vpiPV*)ref;
+      struct __vpiPV*rfp = dynamic_cast<__vpiPV*>(ref);
+      assert(rfp);
 
       switch (code) {
 	  case vpiParent:
@@ -1409,19 +1398,14 @@ static const struct __vpirt vpip_PV_rt = {
       0,
       0
 };
-
-struct __vpiPV* vpip_PV_from_handle(vpiHandle obj)
+inline __vpiPV::__vpiPV()
+: __vpiHandle(&vpip_PV_rt)
 {
-      if (obj->vpi_type->type_code == vpiPartSelect)
-	    return (__vpiPV*) obj;
-      else
-	    return 0;
 }
 
 vpiHandle vpip_make_PV(char*var, int base, int width)
 {
-      struct __vpiPV*obj = (struct __vpiPV*) malloc(sizeof(struct __vpiPV));
-      obj->base.vpi_type = &vpip_PV_rt;
+      struct __vpiPV*obj = new __vpiPV;
       obj->parent = vvp_lookup_handle(var);
       obj->sbase = 0;
       obj->tbase = base;
@@ -1430,13 +1414,12 @@ vpiHandle vpip_make_PV(char*var, int base, int width)
       obj->net = 0;
       functor_ref_lookup(&obj->net, var);
 
-      return &obj->base;
+      return obj;
 }
 
 vpiHandle vpip_make_PV(char*var, char*symbol, int width)
 {
-      struct __vpiPV*obj = (struct __vpiPV*) malloc(sizeof(struct __vpiPV));
-      obj->base.vpi_type = &vpip_PV_rt;
+      struct __vpiPV*obj = new __vpiPV;
       obj->parent = vvp_lookup_handle(var);
       compile_vpi_lookup(&obj->sbase, symbol);
       obj->tbase = 0;
@@ -1445,13 +1428,12 @@ vpiHandle vpip_make_PV(char*var, char*symbol, int width)
       obj->net = 0;
       functor_ref_lookup(&obj->net, var);
 
-      return &obj->base;
+      return obj;
 }
 
 vpiHandle vpip_make_PV(char*var, vpiHandle handle, int width)
 {
-      struct __vpiPV*obj = (struct __vpiPV*) malloc(sizeof(struct __vpiPV));
-      obj->base.vpi_type = &vpip_PV_rt;
+      struct __vpiPV*obj = new __vpiPV;
       obj->parent = vvp_lookup_handle(var);
       obj->sbase = handle;
       obj->tbase = 0;
@@ -1460,13 +1442,12 @@ vpiHandle vpip_make_PV(char*var, vpiHandle handle, int width)
       obj->net = 0;
       functor_ref_lookup(&obj->net, var);
 
-      return &obj->base;
+      return obj;
 }
 
 vpiHandle vpip_make_PV(char*var, int tbase, int twid, char*is_signed, int width)
 {
-      struct __vpiPV*obj = (struct __vpiPV*) malloc(sizeof(struct __vpiPV));
-      obj->base.vpi_type = &vpip_PV_rt;
+      struct __vpiPV*obj = new __vpiPV;
       obj->parent = vvp_lookup_handle(var);
       obj->sbase = 0;
       obj->tbase = tbase;
@@ -1478,12 +1459,18 @@ vpiHandle vpip_make_PV(char*var, int tbase, int twid, char*is_signed, int width)
 
       delete [] is_signed;
 
-      return &obj->base;
+      return obj;
 }
 
+/*
+ * Attach the __vpiCallback to the object that this part select
+ * selects from. The part select itself is not a vvp_vpi_callback
+ * object, but it refers to a net that is a vvp_vpi_callback, so
+ * add the callback to that object.
+ */
 void vpip_part_select_value_change(struct __vpiCallback*cbh, vpiHandle ref)
 {
-      struct __vpiPV*obj = vpip_PV_from_handle(ref);
+      struct __vpiPV*obj = dynamic_cast<__vpiPV*>(ref);
       assert(obj);
 
       vvp_vpi_callback*sig_fil;
@@ -1497,7 +1484,7 @@ void vpip_part_select_value_change(struct __vpiCallback*cbh, vpiHandle ref)
 #ifdef CHECK_WITH_VALGRIND
 void PV_delete(vpiHandle item)
 {
-      struct __vpiPV *obj = (__vpiPV *) item;
+      struct __vpiPV *obj = dynamic_cast<__vpiPV*>(item);
       if (obj->sbase) {
 	    switch (obj->sbase->vpi_type->type_code) {
 		case vpiMemoryWord:
@@ -1513,6 +1500,6 @@ void PV_delete(vpiHandle item)
       }
       assert(obj->net->fil);
       obj->net->fil->clear_all_callbacks();
-      free(obj);
+      delete obj;
 }
 #endif

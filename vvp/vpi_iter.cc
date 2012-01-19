@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,8 +28,8 @@
 
 static int iterator_free_object(vpiHandle ref)
 {
-      struct __vpiIterator*hp = (struct __vpiIterator*)ref;
-      assert(ref->vpi_type->type_code == vpiIterator);
+      struct __vpiIterator*hp = dynamic_cast<__vpiIterator*>(ref);
+      assert(hp);
 
       if (hp->free_args_flag)
 	    free(hp->args);
@@ -51,20 +51,22 @@ static const struct __vpirt vpip_iterator_rt = {
       0, // vpi_get_delay
       0  // vpi_put_delay
 };
+inline __vpiIterator::__vpiIterator()
+: __vpiHandle(&vpip_iterator_rt)
+{
+}
 
 vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
 			     bool free_args_flag)
 {
-      struct __vpiIterator*res = (struct __vpiIterator*)
-	    calloc(1, sizeof(struct __vpiIterator));
-      res->base.vpi_type = &vpip_iterator_rt;
+      struct __vpiIterator*res = new __vpiIterator;
       res->args = args;
       res->nargs = nargs;
       res->next  = 0;
 
       res->free_args_flag = free_args_flag;
 
-      return &(res->base);
+      return res;
 }
 
 /*
@@ -79,25 +81,14 @@ vpiHandle vpi_scan(vpiHandle ref)
 	    return 0;
       }
 
-      if (ref->vpi_type->type_code != vpiIterator) {
-	    fprintf(stderr, "ERROR: vpi_scan argument is "
-		    "inappropriate vpiType code %d\n",
-		    ref->vpi_type->type_code);
-	    assert(0);
-	    return 0;
+      if (struct __vpiIterator*hp = dynamic_cast<__vpiIterator*>(ref)) {
+	    if (hp->next == hp->nargs) {
+		  vpi_free_object(ref);
+		  return 0;
+	    }
+
+	    return hp->args[hp->next++];
       }
 
-      struct __vpiIterator*hp = (struct __vpiIterator*)ref;
-      assert(ref);
-      assert(ref->vpi_type->type_code == vpiIterator);
-
-      if (ref->vpi_type->index_)
-	    return (ref->vpi_type->index_(ref, 0));
-
-      if (hp->next == hp->nargs) {
-	    vpi_free_object(ref);
-	    return 0;
-      }
-
-      return hp->args[hp->next++];
+      return ref->vpi_index(0);
 }

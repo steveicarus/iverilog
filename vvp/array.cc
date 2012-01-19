@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -80,8 +80,8 @@ vvp_array_t array_find(const char*label)
 * array of double variables. This is very much line the way the
 * vector4 array works.
 */
-struct __vpiArray {
-      struct __vpiHandle base;
+struct __vpiArray : public __vpiHandle {
+      __vpiArray();
       struct __vpiScope*scope;
       const char*name; /* Permanently allocated string */
       unsigned array_count;
@@ -103,20 +103,23 @@ struct __vpiArray {
       bool swap_addr;
 };
 
-struct __vpiArrayIterator {
-      struct __vpiHandle base;
+struct __vpiArrayIterator : public __vpiHandle {
+      __vpiArrayIterator();
+
       struct __vpiArray*array;
       unsigned next;
 };
 
-struct __vpiArrayIndex {
-      struct __vpiHandle base;
+struct __vpiArrayIndex : public __vpiHandle {
+      __vpiArrayIndex();
       struct __vpiDecConst *index;
       unsigned done;
 };
 
-struct __vpiArrayVthrA {
-      struct __vpiHandle base;
+struct __vpiArrayVthrA : public __vpiHandle {
+
+      __vpiArrayVthrA();
+
       struct __vpiArray*array;
 	// If this is set, then use it to get the index value.
       vpiHandle address_handle;
@@ -133,15 +136,15 @@ struct __vpiArrayVthrA {
 		  s_vpi_value vp;
 		    /* Check to see if the value is defined. */
 		  vp.format = vpiVectorVal;
-		  vpi_get_value(address_handle, &vp);
-		  int words = (vpi_get(vpiSize, address_handle)-1)/32 + 1;
+		  address_handle->vpi_get_value(&vp);
+		  int words = (address_handle->vpi_get(vpiSize)-1)/32 + 1;
 		  for(int idx = 0; idx < words; idx += 1) {
 			  /* Return UINT_MAX to indicate an X base. */
 			if (vp.value.vector[idx].bval != 0) return UINT_MAX;
 		  }
 		    /* The value is defined so get and return it. */
 		  vp.format = vpiIntVal;
-		  vpi_get_value(address_handle, &vp);
+		  address_handle->vpi_get_value(&vp);
 		  return vp.value.integer;
 	    }
 
@@ -183,8 +186,8 @@ struct __vpiArrayVthrA {
 };
 
 
-struct __vpiArrayVthrAPV {
-      struct __vpiHandle base;
+struct __vpiArrayVthrAPV : public __vpiHandle {
+      __vpiArrayVthrAPV();
       struct __vpiArray*array;
       unsigned word_sel;
       unsigned part_bit;
@@ -200,7 +203,7 @@ unsigned get_array_word_size(vvp_array_t array)
 	/* For a net array we need to get the width from the first element. */
       if (array->nets) {
 	    assert(array->vals4 == 0 && array->valsr == 0);
-	    struct __vpiSignal*vsig = vpip_signal_from_handle(array->nets[0]);
+	    struct __vpiSignal*vsig = dynamic_cast<__vpiSignal*>(array->nets[0]);
 	    assert(vsig);
 	    width = vpip_size(vsig);
 	/* For a variable array we can get the width from vals_width. */
@@ -214,9 +217,9 @@ unsigned get_array_word_size(vvp_array_t array)
 
 bool is_net_array(vpiHandle obj)
 {
-      assert(obj->vpi_type->type_code == vpiMemory);
+      struct __vpiArray*rfp = dynamic_cast<__vpiArray*> (obj);
+      assert(rfp);
 
-      struct __vpiArray*rfp = (struct __vpiArray*) obj;
       if (rfp->nets != 0) return true;
       return false;
 }
@@ -242,15 +245,22 @@ bool is_net_array(vpiHandle obj)
  * of vpi functions is bound to the same structure. All the details
  * for the word also apply when treating this as an index.
  */
+
+
 struct __vpiArrayWord {
-      struct __vpiHandle as_word;
-      struct __vpiHandle as_index;
+      struct as_word_t : public __vpiHandle {
+	    as_word_t();
+      } as_word;
+
+      struct as_index_t : public __vpiHandle {
+	    as_index_t();
+      } as_index;
+
       union {
 	    struct __vpiArray*parent;
 	    struct __vpiArrayWord*word0;
       };
 };
-
 
 static int vpi_array_get(int code, vpiHandle ref);
 static char*vpi_array_get_str(int code, vpiHandle ref);
@@ -296,6 +306,11 @@ static const struct __vpirt vpip_arraymem_rt = {
       0,
       0
 };
+inline __vpiArray::__vpiArray()
+: __vpiHandle(&vpip_arraymem_rt)
+{
+}
+
 
 static const struct __vpirt vpip_array_iterator_rt = {
       vpiIterator,
@@ -310,6 +325,12 @@ static const struct __vpirt vpip_array_iterator_rt = {
       0,
       0
 };
+
+inline __vpiArrayIterator::__vpiArrayIterator()
+: __vpiHandle(&vpip_array_iterator_rt)
+{
+}
+
 
 /* This should look a bit odd since it provides a fake iteration on
  * this object. This trickery is used to implement the two forms of
@@ -328,6 +349,11 @@ static const struct __vpirt vpip_array_index_rt = {
       0
 };
 
+inline __vpiArrayIndex::__vpiArrayIndex()
+: __vpiHandle(&vpip_array_index_rt)
+{
+}
+
 static const struct __vpirt vpip_array_var_word_rt = {
       vpiMemoryWord,
       &vpi_array_var_word_get,
@@ -341,6 +367,10 @@ static const struct __vpirt vpip_array_var_word_rt = {
       0,
       0
 };
+inline __vpiArrayWord::as_word_t::as_word_t()
+: __vpiHandle(&vpip_array_var_word_rt)
+{
+}
 
 static const struct __vpirt vpip_array_var_index_rt = {
       vpiIndex,
@@ -355,6 +385,10 @@ static const struct __vpirt vpip_array_var_index_rt = {
       0,
       0
 };
+inline __vpiArrayWord::as_index_t::as_index_t()
+: __vpiHandle(&vpip_array_var_index_rt)
+{
+}
 
 static const struct __vpirt vpip_array_vthr_A_rt = {
       vpiMemoryWord,
@@ -370,6 +404,11 @@ static const struct __vpirt vpip_array_vthr_A_rt = {
       0
 };
 
+inline __vpiArrayVthrA::__vpiArrayVthrA()
+: __vpiHandle(&vpip_array_vthr_A_rt)
+{
+}
+
 static const struct __vpirt vpip_array_vthr_APV_rt = {
       vpiMemoryWord,
       &vpi_array_vthr_APV_get,
@@ -384,14 +423,17 @@ static const struct __vpirt vpip_array_vthr_APV_rt = {
       0
 };
 
-# define ARRAY_HANDLE(ref) (assert(ref->vpi_type->type_code==vpiMemory), \
-			    (struct __vpiArray*)ref)
+inline __vpiArrayVthrAPV::__vpiArrayVthrAPV()
+: __vpiHandle(&vpip_array_vthr_APV_rt)
+{
+}
 
 static struct __vpiArrayWord* array_var_word_from_handle(vpiHandle ref)
 {
       if (ref == 0)
 	    return 0;
-      if (ref->vpi_type != &vpip_array_var_word_rt)
+      __vpiArrayWord::as_word_t*ptr = dynamic_cast<__vpiArrayWord::as_word_t*> (ref);
+      if (ptr == 0)
 	    return 0;
 
       return (struct __vpiArrayWord*) ref;
@@ -401,30 +443,13 @@ static struct __vpiArrayWord* array_var_index_from_handle(vpiHandle ref)
 {
       if (ref == 0)
 	    return 0;
-      if (ref->vpi_type != &vpip_array_var_index_rt)
+      __vpiArrayWord::as_index_t*ptr = dynamic_cast<__vpiArrayWord::as_index_t*> (ref);
+      if (ptr == 0)
 	    return 0;
 
+      assert(sizeof(__vpiHandle) == sizeof(__vpiArrayWord::as_index_t));
+      assert(sizeof(__vpiHandle) == sizeof(__vpiArrayWord::as_word_t));
       return (struct __vpiArrayWord*) (ref-1);
-}
-
-static struct __vpiArrayVthrA* array_vthr_a_from_handle(vpiHandle ref)
-{
-      if (ref == 0)
-	    return 0;
-      if (ref->vpi_type != &vpip_array_vthr_A_rt)
-	    return 0;
-
-      return (struct __vpiArrayVthrA*) ref;
-}
-
-static struct __vpiArrayVthrAPV* array_vthr_apv_from_handle(vpiHandle ref)
-{
-      if (ref == 0)
-	    return 0;
-      if (ref->vpi_type != &vpip_array_vthr_APV_rt)
-	    return 0;
-
-      return (struct __vpiArrayVthrAPV*) ref;
 }
 
 static void array_make_vals_words(struct __vpiArray*parent)
@@ -439,8 +464,6 @@ static void array_make_vals_words(struct __vpiArray*parent)
 
       struct __vpiArrayWord*words = parent->vals_words;
       for (unsigned idx = 0 ; idx < parent->array_count ; idx += 1) {
-	    words[idx].as_word.vpi_type = &vpip_array_var_word_rt;
-	    words[idx].as_index.vpi_type = &vpip_array_var_index_rt;
 	    words[idx].word0 = words;
       }
 }
@@ -455,7 +478,7 @@ static unsigned decode_array_word_pointer(struct __vpiArrayWord*word,
 
 static int vpi_array_get(int code, vpiHandle ref)
 {
-      struct __vpiArray*obj = ARRAY_HANDLE(ref);
+      struct __vpiArray*obj = dynamic_cast<__vpiArray*> (ref);
 
       switch (code) {
 	  case vpiLineNo:
@@ -474,31 +497,31 @@ static int vpi_array_get(int code, vpiHandle ref)
 
 static char*vpi_array_get_str(int code, vpiHandle ref)
 {
-      struct __vpiArray*obj = ARRAY_HANDLE(ref);
+      struct __vpiArray*obj = dynamic_cast<__vpiArray*>(ref);
 
       if (code == vpiFile) {  // Not implemented for now!
             return simple_set_rbuf_str(file_names[0]);
       }
 
-      return generic_get_str(code, &obj->scope->base, obj->name, NULL);
+      return generic_get_str(code, obj->scope, obj->name, NULL);
 }
 
 static vpiHandle vpi_array_get_handle(int code, vpiHandle ref)
 {
-      struct __vpiArray*obj = ARRAY_HANDLE(ref);
+      struct __vpiArray*obj = dynamic_cast<__vpiArray*>(ref);
 
       switch (code) {
 
 	  case vpiLeftRange:
-	    if (obj->swap_addr) return &(obj->last_addr.base);
-	    else return &(obj->first_addr.base);
+	    if (obj->swap_addr) return &(obj->last_addr);
+	    else return &(obj->first_addr);
 
 	  case vpiRightRange:
-	    if (obj->swap_addr) return &(obj->first_addr.base);
-	    else return &(obj->last_addr.base);
+	    if (obj->swap_addr) return &(obj->first_addr);
+	    else return &(obj->last_addr);
 
 	  case vpiScope:
-	    return &obj->scope->base;
+	    return obj->scope;
 
 	  case vpiModule:
 	    return vpip_module(obj->scope);
@@ -509,17 +532,16 @@ static vpiHandle vpi_array_get_handle(int code, vpiHandle ref)
 
 static vpiHandle vpi_array_iterate(int code, vpiHandle ref)
 {
-      struct __vpiArray*obj = ARRAY_HANDLE(ref);
+      struct __vpiArray*obj = dynamic_cast<__vpiArray*>(ref);
 
       switch (code) {
 
 	  case vpiMemoryWord: {
 		struct __vpiArrayIterator*res;
-		res = (struct __vpiArrayIterator*) calloc(1, sizeof (*res));
-		res->base.vpi_type = &vpip_array_iterator_rt;
+		res = new __vpiArrayIterator;
 		res->array = obj;
 		res->next = 0;
-		return &res->base;
+		return res;
 	  }
 
       }
@@ -533,7 +555,7 @@ static vpiHandle vpi_array_iterate(int code, vpiHandle ref)
 */
 static vpiHandle vpi_array_index(vpiHandle ref, int index)
 {
-      struct __vpiArray*obj = ARRAY_HANDLE(ref);
+      struct __vpiArray*obj = dynamic_cast<__vpiArray*>(ref);
 
       index -= obj->first_addr.value;
       if (index >= (long)obj->array_count)
@@ -606,7 +628,7 @@ static char*vpi_array_var_word_get_str(int code, vpiHandle ref)
 
       char sidx [64];
       snprintf(sidx, 63, "%d", (int)index + parent->first_addr.value);
-      return generic_get_str(code, &parent->scope->base, parent->name, sidx);
+      return generic_get_str(code, parent->scope, parent->name, sidx);
 }
 
 static void vpi_array_var_word_get_value(vpiHandle ref, p_vpi_value vp)
@@ -649,16 +671,16 @@ static vpiHandle vpi_array_var_word_get_handle(int code, vpiHandle ref)
 	    return &(obj->as_index);
 
 	  case vpiLeftRange:
-	    return &parent->msb.base;
+	    return &parent->msb;
 
 	  case vpiRightRange:
-	    return &parent->lsb.base;
+	    return &parent->lsb;
 
 	  case vpiParent:
-	    return &parent->base;
+	    return parent;
 
 	  case vpiScope:
-	    return &parent->scope->base;
+	    return parent->scope;
 
 	  case vpiModule:
 	    return vpip_module(parent->scope);
@@ -679,12 +701,9 @@ static void vpi_array_var_index_get_value(vpiHandle ref, p_vpi_value vp)
       vp->value.integer = index;
 }
 
-# define ARRAY_ITERATOR(ref) (assert(ref->vpi_type->type_code==vpiIterator), \
-			      (struct __vpiArrayIterator*)ref)
-
 static vpiHandle array_iterator_scan(vpiHandle ref, int)
 {
-      struct __vpiArrayIterator*obj = ARRAY_ITERATOR(ref);
+      struct __vpiArrayIterator*obj = dynamic_cast<__vpiArrayIterator*>(ref);
 
       if (obj->next >= obj->array->array_count) {
 	    vpi_free_object(ref);
@@ -705,37 +724,33 @@ static vpiHandle array_iterator_scan(vpiHandle ref, int)
 
 static int array_iterator_free_object(vpiHandle ref)
 {
-      struct __vpiArrayIterator*obj = ARRAY_ITERATOR(ref);
+      struct __vpiArrayIterator*obj = dynamic_cast<__vpiArrayIterator*>(ref);
       free(obj);
       return 1;
 }
 
-# define ARRAY_INDEX(ref) (assert(ref->vpi_type->type_code==vpiIterator), \
-			   (struct __vpiArrayIndex*)ref)
-
 vpiHandle array_index_iterate(int code, vpiHandle ref)
 {
-      assert(ref->vpi_type->type_code == vpiConstant);
-      struct __vpiDecConst*obj = (struct __vpiDecConst*)ref;
+      struct __vpiDecConst*obj = dynamic_cast<__vpiDecConst*>(ref);
+      assert(obj);
 
       if (code == vpiIndex) {
 	    struct __vpiArrayIndex*res;
-	    res = (struct __vpiArrayIndex*) calloc(1, sizeof (*res));
-	    res->base.vpi_type = &vpip_array_index_rt;
+	    res = new __vpiArrayIndex;
 	    res->index = obj;
 	    res->done = 0;
-	    return &res->base;
+	    return res;
       }
       return 0;
 }
 
 static vpiHandle array_index_scan(vpiHandle ref, int)
 {
-      struct __vpiArrayIndex*obj = ARRAY_INDEX(ref);
+      struct __vpiArrayIndex*obj = dynamic_cast<__vpiArrayIndex*>(ref);
 
       if (obj->done == 0) {
             obj->done = 1;
-            return &obj->index->base;
+            return obj->index;
       }
 
       vpi_free_object(ref);
@@ -744,14 +759,14 @@ static vpiHandle array_index_scan(vpiHandle ref, int)
 
 static int array_index_free_object(vpiHandle ref)
 {
-      struct __vpiArrayIndex*obj = ARRAY_INDEX(ref);
+      struct __vpiArrayIndex*obj = dynamic_cast<__vpiArrayIndex*>(ref);
       free(obj);
       return 1;
 }
 
 static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 {
-      struct __vpiArrayVthrA*obj = array_vthr_a_from_handle(ref);
+      struct __vpiArrayVthrA*obj = dynamic_cast<__vpiArrayVthrA*>(ref);
       assert(obj);
       struct __vpiArray*parent = obj->array;
 
@@ -794,7 +809,7 @@ static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 
 static char*vpi_array_vthr_A_get_str(int code, vpiHandle ref)
 {
-      struct __vpiArrayVthrA*obj = array_vthr_a_from_handle(ref);
+      struct __vpiArrayVthrA*obj = dynamic_cast<__vpiArrayVthrA*>(ref);
       assert(obj);
       struct __vpiArray*parent = obj->array;
 
@@ -804,7 +819,7 @@ static char*vpi_array_vthr_A_get_str(int code, vpiHandle ref)
 
       char sidx [64];
       snprintf(sidx, 63, "%d", (int)obj->get_address() + parent->first_addr.value);
-      return generic_get_str(code, &parent->scope->base, parent->name, sidx);
+      return generic_get_str(code, parent->scope, parent->name, sidx);
 }
 
 // This function return true if the underlying array words are real.
@@ -817,10 +832,8 @@ static unsigned vpi_array_is_real(vvp_array_t arr)
 	// This must be a net array so look at element 0 to find the type.
       assert(arr->nets != 0);
       assert(arr->array_count > 0);
-      struct __vpiRealVar*rsig = vpip_realvar_from_handle(arr->nets[0]);
+      struct __vpiRealVar*rsig = dynamic_cast<__vpiRealVar*>(arr->nets[0]);
       if (rsig) {
-	    struct __vpiSignal*vsig = vpip_signal_from_handle(arr->nets[0]);
-	    assert(vsig == 0);
 	    return 1U;
       }
 
@@ -829,7 +842,7 @@ static unsigned vpi_array_is_real(vvp_array_t arr)
 
 static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value vp)
 {
-      struct __vpiArrayVthrA*obj = array_vthr_a_from_handle(ref);
+      struct __vpiArrayVthrA*obj = dynamic_cast<__vpiArrayVthrA*>(ref);
       assert(obj);
       struct __vpiArray*parent = obj->array;
 
@@ -848,7 +861,7 @@ static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value vp)
 
 static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int)
 {
-      struct __vpiArrayVthrA*obj = array_vthr_a_from_handle(ref);
+      struct __vpiArrayVthrA*obj = dynamic_cast<__vpiArrayVthrA*>(ref);
       assert(obj);
       struct __vpiArray*parent = obj->array;
 
@@ -871,7 +884,7 @@ static vpiHandle vpi_array_vthr_A_put_value(vpiHandle ref, p_vpi_value vp, int)
 
 static vpiHandle vpi_array_vthr_A_get_handle(int code, vpiHandle ref)
 {
-      struct __vpiArrayVthrA*obj = array_vthr_a_from_handle(ref);
+      struct __vpiArrayVthrA*obj = dynamic_cast<__vpiArrayVthrA*>(ref);
       assert(obj);
       struct __vpiArray*parent = obj->array;
 
@@ -881,16 +894,16 @@ static vpiHandle vpi_array_vthr_A_get_handle(int code, vpiHandle ref)
 	    break;  // Not implemented!
 
 	  case vpiLeftRange:
-	    return &parent->msb.base;
+	    return &parent->msb;
 
 	  case vpiRightRange:
-	    return &parent->lsb.base;
+	    return &parent->lsb;
 
 	  case vpiParent:
-	    return &parent->base;
+	    return parent;
 
 	  case vpiScope:
-	    return &parent->scope->base;
+	    return parent->scope;
 
 	  case vpiModule:
 	    return vpip_module(parent->scope);
@@ -901,7 +914,7 @@ static vpiHandle vpi_array_vthr_A_get_handle(int code, vpiHandle ref)
 
 static int vpi_array_vthr_APV_get(int code, vpiHandle ref)
 {
-      struct __vpiArrayVthrAPV*obj = array_vthr_apv_from_handle(ref);
+      struct __vpiArrayVthrAPV*obj = dynamic_cast<__vpiArrayVthrAPV*>(ref);
       struct __vpiArray*parent = obj->array;
 
       switch (code) {
@@ -933,7 +946,7 @@ static int vpi_array_vthr_APV_get(int code, vpiHandle ref)
 
 static char*vpi_array_vthr_APV_get_str(int code, vpiHandle ref)
 {
-      struct __vpiArrayVthrAPV*obj = array_vthr_apv_from_handle(ref);
+      struct __vpiArrayVthrAPV*obj = dynamic_cast<__vpiArrayVthrAPV*>(ref);
       assert(obj);
       struct __vpiArray*parent = obj->array;
 
@@ -943,12 +956,12 @@ static char*vpi_array_vthr_APV_get_str(int code, vpiHandle ref)
 
       char sidx [64];
       snprintf(sidx, 63, "%u", obj->word_sel + parent->first_addr.value);
-      return generic_get_str(code, &parent->scope->base, parent->name, sidx);
+      return generic_get_str(code, parent->scope, parent->name, sidx);
 }
 
 static void vpi_array_vthr_APV_get_value(vpiHandle ref, p_vpi_value vp)
 {
-      struct __vpiArrayVthrAPV*obj = array_vthr_apv_from_handle(ref);
+      struct __vpiArrayVthrAPV*obj = dynamic_cast<__vpiArrayVthrAPV*>(ref);
       assert(obj);
       struct __vpiArray*parent = obj->array;
 
@@ -997,7 +1010,7 @@ void array_set_word(vvp_array_t arr,
 
 	// Select the word of the array that we affect.
       vpiHandle word = arr->nets[address];
-      struct __vpiSignal*vsig = vpip_signal_from_handle(word);
+      struct __vpiSignal*vsig = dynamic_cast<__vpiSignal*>(word);
       assert(vsig);
 
       vsig->node->send_vec4_pv(val, part_off, val.size(), vpip_size(vsig), 0);
@@ -1031,7 +1044,7 @@ vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
 	    assert(arr->array_count > 0);
 	    vpiHandle word = arr->nets[0];
 	    assert(word);
-	    struct __vpiSignal*vsig = vpip_signal_from_handle(word);
+	    struct __vpiSignal*vsig = dynamic_cast<__vpiSignal*>(word);
 	    assert(vsig);
 	    vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (vsig->node->fil);
 	    assert(sig);
@@ -1039,7 +1052,7 @@ vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
       }
 
       vpiHandle word = arr->nets[address];
-      struct __vpiSignal*vsig = vpip_signal_from_handle(word);
+      struct __vpiSignal*vsig = dynamic_cast<__vpiSignal*>(word);
       assert(vsig);
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (vsig->node->fil);
       assert(sig);
@@ -1059,7 +1072,7 @@ double array_get_word_r(vvp_array_t arr, unsigned address)
 
       assert(arr->nets);
       vpiHandle word = arr->nets[address];
-      struct __vpiRealVar*vsig = vpip_realvar_from_handle(word);
+      struct __vpiRealVar*vsig = dynamic_cast<__vpiRealVar*>(word);
       assert(vsig);
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (vsig->net->fil);
       assert(sig);
@@ -1073,8 +1086,7 @@ static vpiHandle vpip_make_array(char*label, const char*name,
 				 int first_addr, int last_addr,
 				 bool signed_flag)
 {
-      struct __vpiArray*obj = (struct __vpiArray*)
-	    malloc(sizeof(struct __vpiArray));
+      struct __vpiArray*obj = new __vpiArray;
 
       obj->signed_flag = signed_flag;
 
@@ -1092,21 +1104,18 @@ static vpiHandle vpip_make_array(char*label, const char*name,
 
 	// For now, treat all arrays as memories. This is not quite
 	// correct, as arrays are arrays with memories a special case.
-      obj->base.vpi_type = &vpip_arraymem_rt;
       obj->scope = vpip_peek_current_scope();
       obj->name  = vpip_name_string(name);
       obj->array_count = array_count;
 
-      vpip_make_dec_const(&obj->first_addr, first_addr);
-      vpip_make_dec_const(&obj->last_addr, last_addr);
+      obj->first_addr.value = first_addr;
+      obj->last_addr.value = last_addr;
 
 	// Start off now knowing if we are nets or variables.
       obj->nets = 0;
       obj->vals4 = 0;
       obj->valsr = 0;
       obj->vals_width = 0;
-      vpip_make_dec_const(&obj->msb, 0);
-      vpip_make_dec_const(&obj->lsb, 0);
       obj->vals_words = 0;
 
 	// Initialize (clear) the read-ports list.
@@ -1123,12 +1132,12 @@ static vpiHandle vpip_make_array(char*label, const char*name,
 	/* Add this into the table of VPI objects. This is used for
 	   contexts that try to look up VPI objects in
 	   general. (i.e. arguments to vpi_task calls.) */
-      compile_vpi_symbol(label, &(obj->base));
+      compile_vpi_symbol(label, obj);
 
 	/* Blindly attach to the scope as an object. */
-      vpip_attach_to_current_scope(&(obj->base));
+      vpip_attach_to_current_scope(obj);
 
-      return &(obj->base);
+      return obj;
 }
 
 void array_alias_word(vvp_array_t array, unsigned long addr, vpiHandle word,
@@ -1147,27 +1156,27 @@ void array_attach_word(vvp_array_t array, unsigned addr, vpiHandle word)
       assert(array->nets);
       array->nets[addr] = word;
 
-      if (struct __vpiSignal*sig = vpip_signal_from_handle(word)) {
+      if (struct __vpiSignal*sig = dynamic_cast<__vpiSignal*>(word)) {
 	    vvp_net_t*net = sig->node;
 	    assert(net);
 	    vvp_vpi_callback*fun = dynamic_cast<vvp_vpi_callback*>(net->fil);
 	    assert(fun);
 	    fun->attach_as_word(array, addr);
 	    sig->is_netarray = 1;
-	    sig->within.parent = &array->base;
-	    sig->id.index = vpip_make_dec_const(addr + array->first_addr.value);
+	    sig->within.parent = array;
+	    sig->id.index = new __vpiDecConst(addr + array->first_addr.value);
 	    return;
       }
 
-      if (struct __vpiRealVar*sig = (struct __vpiRealVar*)word) {
+      if (struct __vpiRealVar*sig = dynamic_cast<__vpiRealVar*>(word)) {
 	    vvp_net_t*net = sig->net;
 	    assert(net);
 	    vvp_vpi_callback*fun = dynamic_cast<vvp_vpi_callback*>(net->fil);
 	    assert(fun);
 	    fun->attach_as_word(array, addr);
 	    sig->is_netarray = 1;
-	    sig->within.parent = &array->base;
-	    sig->id.index = vpip_make_dec_const(addr + array->first_addr.value);
+	    sig->within.parent = array;
+	    sig->id.index = new __vpiDecConst(addr + array->first_addr.value);
 	    return;
       }
 }
@@ -1178,7 +1187,7 @@ void compile_var_array(char*label, char*name, int last, int first,
       vpiHandle obj = vpip_make_array(label, name, first, last,
                                       signed_flag != 0);
 
-      struct __vpiArray*arr = ARRAY_HANDLE(obj);
+      struct __vpiArray*arr = dynamic_cast<__vpiArray*>(obj);
 
 	/* Make the words. */
       arr->vals_width = labs(msb-lsb) + 1;
@@ -1189,8 +1198,8 @@ void compile_var_array(char*label, char*name, int last, int first,
             arr->vals4 = new vvp_vector4array_sa(arr->vals_width,
 						 arr->array_count);
       }
-      vpip_make_dec_const(&arr->msb, msb);
-      vpip_make_dec_const(&arr->lsb, lsb);
+      arr->msb.value = msb;
+      arr->lsb.value = lsb;
 
       count_var_arrays += 1;
       count_var_array_words += arr->array_count;
@@ -1204,7 +1213,7 @@ void compile_real_array(char*label, char*name, int last, int first,
 {
       vpiHandle obj = vpip_make_array(label, name, first, last, true);
 
-      struct __vpiArray*arr = ARRAY_HANDLE(obj);
+      struct __vpiArray*arr = dynamic_cast<__vpiArray*>(obj);
 
 	/* Make the words. */
       arr->valsr = new vvp_realarray_t(arr->array_count);
@@ -1224,7 +1233,7 @@ void compile_net_array(char*label, char*name, int last, int first)
 {
       vpiHandle obj = vpip_make_array(label, name, first, last, false);
 
-      struct __vpiArray*arr = ARRAY_HANDLE(obj);
+      struct __vpiArray*arr = dynamic_cast<__vpiArray*>(obj);
       arr->nets = (vpiHandle*)calloc(arr->array_count, sizeof(vpiHandle));
 
       count_net_arrays += 1;
@@ -1617,11 +1626,11 @@ void vpip_array_word_change(struct __vpiCallback*cb, vpiHandle obj)
 	    unsigned addr = decode_array_word_pointer(word, parent);
 	    cb->extra_data = addr;
 
-      } else if (struct __vpiArrayVthrA*tword = array_vthr_a_from_handle(obj)) {
+      } else if (struct __vpiArrayVthrA*tword = dynamic_cast<__vpiArrayVthrA*>(obj)) {
 	    parent = tword->array;
 	    cb->extra_data = tword->address;
 
-      } else if (struct __vpiArrayVthrAPV*apvword = array_vthr_apv_from_handle(obj)) {
+      } else if (struct __vpiArrayVthrAPV*apvword = dynamic_cast<__vpiArrayVthrAPV*>(obj)) {
 	    parent = apvword->array;
 	    cb->extra_data = apvword->word_sel;
       }
@@ -1633,7 +1642,7 @@ void vpip_array_word_change(struct __vpiCallback*cb, vpiHandle obj)
 
 void vpip_array_change(struct __vpiCallback*cb, vpiHandle obj)
 {
-      struct __vpiArray*arr = ARRAY_HANDLE(obj);
+      struct __vpiArray*arr = dynamic_cast<__vpiArray*>(obj);
       cb->extra_data = -1; // This is a callback for every element.
       cb->next = arr->vpi_callbacks;
       arr->vpi_callbacks = cb;
@@ -1668,22 +1677,20 @@ void compile_array_alias(char*label, char*name, char*src)
       vvp_array_t mem = array_find(src);
       assert(mem);
 
-      struct __vpiArray*obj = (struct __vpiArray*)
-	    malloc(sizeof (struct __vpiArray));
+      struct __vpiArray*obj = new __vpiArray;
 
-      obj->base.vpi_type = &vpip_arraymem_rt;
       obj->scope = vpip_peek_current_scope();
       obj->name  = vpip_name_string(name);
       obj->array_count = mem->array_count;
       obj->signed_flag = mem->signed_flag;
 
 	// Need to set an accurate range of addresses.
-      vpip_make_dec_const(&obj->first_addr, mem->first_addr.value);
-      vpip_make_dec_const(&obj->last_addr, mem->last_addr.value);
+      obj->first_addr.value = mem->first_addr.value;
+      obj->last_addr.value  = mem->last_addr.value;
       obj->swap_addr = mem->swap_addr;
 
-      vpip_make_dec_const(&obj->msb, mem->msb.value);
-      vpip_make_dec_const(&obj->lsb, mem->lsb.value);
+      obj->msb.value = mem->msb.value;
+      obj->lsb.value = mem->lsb.value;
 
 	// Share the words with the source array.
       obj->nets = mem->nets;
@@ -1699,8 +1706,8 @@ void compile_array_alias(char*label, char*name, char*src)
       assert(!array_find(label));
       array_table->sym_set_value(label, obj);
 
-      compile_vpi_symbol(label, vpi_handle(obj));
-      vpip_attach_to_current_scope(vpi_handle(obj));
+      compile_vpi_symbol(label, obj);
+      vpip_attach_to_current_scope(obj);
 
       free(label);
       free(name);
@@ -1715,10 +1722,7 @@ void compile_array_alias(char*label, char*name, char*src)
  */
 vpiHandle vpip_make_vthr_A(char*label, unsigned addr)
 {
-      struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*)
-	    malloc(sizeof (struct __vpiArrayVthrA));
-
-      obj->base.vpi_type = &vpip_array_vthr_A_rt;
+      struct __vpiArrayVthrA*obj = new __vpiArrayVthrA;
 
       array_resolv_list_t*resolv_mem
 	    = new array_resolv_list_t(label);
@@ -1730,7 +1734,7 @@ vpiHandle vpip_make_vthr_A(char*label, unsigned addr)
       obj->address = addr;
       obj->wid = 0;
 
-      return vpi_handle(obj);
+      return obj;
 }
 
 /*
@@ -1743,10 +1747,7 @@ vpiHandle vpip_make_vthr_A(char*label, unsigned addr)
 vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid,
                            char*is_signed)
 {
-      struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*)
-	    malloc(sizeof (struct __vpiArrayVthrA));
-
-      obj->base.vpi_type = &vpip_array_vthr_A_rt;
+      struct __vpiArrayVthrA*obj = new __vpiArrayVthrA;
 
       array_resolv_list_t*resolv_mem
 	    = new array_resolv_list_t(label);
@@ -1761,7 +1762,7 @@ vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid,
 
       delete [] is_signed;
 
-      return vpi_handle(obj);
+      return obj;
 }
 
 /*
@@ -1772,10 +1773,7 @@ vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid,
  */
 vpiHandle vpip_make_vthr_A(char*label, char*symbol)
 {
-      struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*)
-	    malloc(sizeof (struct __vpiArrayVthrA));
-
-      obj->base.vpi_type = &vpip_array_vthr_A_rt;
+      struct __vpiArrayVthrA*obj = new __vpiArrayVthrA;
 
       array_resolv_list_t*resolv_mem
 	    = new array_resolv_list_t(label);
@@ -1788,15 +1786,12 @@ vpiHandle vpip_make_vthr_A(char*label, char*symbol)
       obj->address = 0;
       obj->wid = 0;
 
-      return vpi_handle(obj);
+      return obj;
 }
 
 vpiHandle vpip_make_vthr_A(char*label, vpiHandle handle)
 {
-      struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*)
-	    malloc(sizeof (struct __vpiArrayVthrA));
-
-      obj->base.vpi_type = &vpip_array_vthr_A_rt;
+      struct __vpiArrayVthrA*obj = new __vpiArrayVthrA;
 
       array_resolv_list_t*resolv_mem
 	    = new array_resolv_list_t(label);
@@ -1808,15 +1803,12 @@ vpiHandle vpip_make_vthr_A(char*label, vpiHandle handle)
       obj->address = 0;
       obj->wid = 0;
 
-      return vpi_handle(obj);
+      return obj;
 }
 
 vpiHandle vpip_make_vthr_APV(char*label, unsigned index, unsigned bit, unsigned wid)
 {
-      struct __vpiArrayVthrAPV*obj = (struct __vpiArrayVthrAPV*)
-	    malloc(sizeof (struct __vpiArrayVthrAPV));
-
-      obj->base.vpi_type = &vpip_array_vthr_APV_rt;
+      struct __vpiArrayVthrAPV*obj = new __vpiArrayVthrAPV;
 
       array_resolv_list_t*resolv_mem
 	    = new array_resolv_list_t(label);
@@ -1828,7 +1820,7 @@ vpiHandle vpip_make_vthr_APV(char*label, unsigned index, unsigned bit, unsigned 
       obj->part_bit = bit;
       obj->part_wid = wid;
 
-      return vpi_handle(obj);
+      return obj;
 }
 
 void compile_array_cleanup(void)
@@ -1856,7 +1848,7 @@ void memory_delete(vpiHandle item)
       if (arr->nets) {
 	    for (unsigned idx = 0; idx < arr->array_count; idx += 1) {
 		  if (struct __vpiSignal*sig =
-		      vpip_signal_from_handle(arr->nets[idx])) {
+		      dynamic_cast<__vpiSignal*>(arr->nets[idx])) {
 // Delete the individual words?
 			constant_delete(sig->id.index);
 		    /* These should only be the real words. */

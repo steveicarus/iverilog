@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -49,20 +49,23 @@ static const struct __vpirt vpip_systf_def_rt = {
       0
 };
 
+inline __vpiUserSystf::__vpiUserSystf()
+: __vpiHandle(&vpip_systf_def_rt)
+{
+}
+
 static vpiHandle systask_handle(int type, vpiHandle ref)
 {
-      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
-      assert((ref->vpi_type->type_code == vpiSysTaskCall)
-	     || (ref->vpi_type->type_code == vpiSysFuncCall));
+      struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
 
       switch (type) {
 	  case vpiScope:
-	    return &rfp->scope->base;
+	    return rfp->scope;
 
 	  case vpiUserSystf:
 	      /* Assert that vpiUserDefn is true! */
 	    assert(rfp->defn->is_user_defn);
-	    return &rfp->defn->base;
+	    return rfp->defn;
 
 	  default:
 	    return 0;
@@ -71,10 +74,7 @@ static vpiHandle systask_handle(int type, vpiHandle ref)
 
 static int systask_get(int type, vpiHandle ref)
 {
-      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
-
-      assert((ref->vpi_type->type_code == vpiSysTaskCall)
-	     || (ref->vpi_type->type_code == vpiSysFuncCall));
+      struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
 
       switch (type) {
 	    /* This is not the correct way to get this information, but
@@ -99,9 +99,7 @@ static int systask_get(int type, vpiHandle ref)
 // support getting vpiSize for a system function call
 static int sysfunc_get(int type, vpiHandle ref)
 {
-      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
-
-      assert(ref->vpi_type->type_code == vpiSysFuncCall);
+      struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
 
       switch (type) {
 	  case vpiSize:
@@ -124,10 +122,7 @@ static int sysfunc_get(int type, vpiHandle ref)
 
 static char *systask_get_str(int type, vpiHandle ref)
 {
-      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
-
-      assert((ref->vpi_type->type_code == vpiSysTaskCall)
-	     || (ref->vpi_type->type_code == vpiSysFuncCall));
+      struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
 
       switch (type) {
           case vpiFile:
@@ -147,9 +142,7 @@ static char *systask_get_str(int type, vpiHandle ref)
  */
 static vpiHandle systask_iter(int, vpiHandle ref)
 {
-      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
-      assert((ref->vpi_type->type_code == vpiSysTaskCall)
-	     || (ref->vpi_type->type_code == vpiSysFuncCall));
+      struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
 
       if (rfp->nargs == 0)
 	    return 0;
@@ -171,7 +164,6 @@ static const struct __vpirt vpip_systask_rt = {
       0
 };
 
-
 /*
  * A value *can* be put to a vpiSysFuncCall object. This is how the
  * return value is set. The value that is given should be converted to
@@ -180,9 +172,7 @@ static const struct __vpirt vpip_systask_rt = {
  */
 static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp, int)
 {
-      assert(ref->vpi_type->type_code == vpiSysFuncCall);
-
-      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+      struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
 
       rfp->put_value = true;
 
@@ -310,9 +300,7 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp, int)
 
 static vpiHandle sysfunc_put_real_value(vpiHandle ref, p_vpi_value vp, int)
 {
-      assert(ref->vpi_type->type_code == vpiSysFuncCall);
-
-      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+      struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
 
       rfp->put_value = true;
 
@@ -338,9 +326,7 @@ static vpiHandle sysfunc_put_real_value(vpiHandle ref, p_vpi_value vp, int)
 
 static vpiHandle sysfunc_put_4net_value(vpiHandle ref, p_vpi_value vp, int)
 {
-      assert(ref->vpi_type->type_code == vpiSysFuncCall);
-
-      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+      struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
 
       rfp->put_value = true;
 
@@ -443,9 +429,7 @@ static vpiHandle sysfunc_put_4net_value(vpiHandle ref, p_vpi_value vp, int)
 
 static vpiHandle sysfunc_put_rnet_value(vpiHandle ref, p_vpi_value vp, int)
 {
-      assert(ref->vpi_type->type_code == vpiSysFuncCall);
-
-      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
+      struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
 
       rfp->put_value = true;
 
@@ -467,10 +451,8 @@ static vpiHandle sysfunc_put_rnet_value(vpiHandle ref, p_vpi_value vp, int)
       return 0;
 }
 
-static vpiHandle sysfunc_put_no_value(vpiHandle ref, p_vpi_value, int)
+static vpiHandle sysfunc_put_no_value(vpiHandle, p_vpi_value, int)
 {
-      assert(ref->vpi_type->type_code == vpiSysFuncCall);
-
       return 0;
 }
 
@@ -547,6 +529,13 @@ static const struct __vpirt vpip_sysfunc_no_rt = {
 
   /* **** Manipulate the internal data structures. **** */
 
+/*
+ * We keep a table of all the __vpiUserSystf objects that are created
+ * so that the user can iterate over them. The def_table is an array
+ * of pointers to __vpiUserSystf objects. This table can be searched
+ * by name using the vpi_find_systf function, and they can be
+ * collected into an iterator using the vpip_make_systf_iterator function.
+ */
 static struct __vpiUserSystf**def_table = 0;
 static unsigned def_count = 0;
 
@@ -556,8 +545,7 @@ static struct __vpiUserSystf* allocate_def(void)
 	    def_table = (struct __vpiUserSystf**)
 		  malloc(sizeof (struct __vpiUserSystf*));
 
-	    def_table[0] = (struct __vpiUserSystf*)
-		  calloc(1, sizeof(struct __vpiUserSystf));
+	    def_table[0] = new __vpiUserSystf;
 
 	    def_count = 1;
 	    return def_table[0];
@@ -566,8 +554,7 @@ static struct __vpiUserSystf* allocate_def(void)
       def_table = (struct __vpiUserSystf**)
 	    realloc(def_table, (def_count+1)*sizeof (struct __vpiUserSystf*));
 
-      def_table[def_count] = (struct __vpiUserSystf*)
-	    calloc(1, sizeof(struct __vpiUserSystf));
+      def_table[def_count] = new __vpiUserSystf;
 
       return def_table[def_count++];
 }
@@ -577,7 +564,7 @@ void def_table_delete(void)
 {
       for (unsigned idx = 0; idx < def_count; idx += 1) {
 	    free(const_cast<char *>(def_table[idx]->info.tfname));
-	    free(def_table[idx]);
+	    delete def_table[idx];
       }
       free(def_table);
       def_table = 0;
@@ -585,15 +572,14 @@ void def_table_delete(void)
 }
 #endif
 
-struct __vpiSystfIterator {
-      struct __vpiHandle base;
+struct __vpiSystfIterator : public __vpiHandle {
+      __vpiSystfIterator();
       unsigned next;
 };
 
 static vpiHandle systf_iterator_scan(vpiHandle ref, int)
 {
-      assert(ref->vpi_type->type_code == vpiIterator);
-      struct __vpiSystfIterator*obj = (struct __vpiSystfIterator*) ref;
+      struct __vpiSystfIterator*obj = dynamic_cast<__vpiSystfIterator*>(ref);
 
       if (obj->next >= def_count) {
 	    vpi_free_object(ref);
@@ -610,14 +596,13 @@ static vpiHandle systf_iterator_scan(vpiHandle ref, int)
 	    }
       }
       obj->next += 1;
-      return &(def_table[use_index])->base;
+      return def_table[use_index];
 }
 
 static int systf_iterator_free_object(vpiHandle ref)
 {
-      assert(ref->vpi_type->type_code == vpiIterator);
-      struct __vpiSystfIterator*obj = (struct __vpiSystfIterator*) ref;
-      free(obj);
+      struct __vpiSystfIterator*obj = dynamic_cast<__vpiSystfIterator*>(ref);
+      delete obj;
       return 1;
 }
 
@@ -634,6 +619,10 @@ static const struct __vpirt vpip_systf_iterator_rt = {
       0,
       0
 };
+inline __vpiSystfIterator::__vpiSystfIterator()
+: __vpiHandle(&vpip_systf_iterator_rt)
+{
+}
 
 vpiHandle vpip_make_systf_iterator(void)
 {
@@ -648,11 +637,9 @@ vpiHandle vpip_make_systf_iterator(void)
       }
       if (!have_user_defn) return 0;
 
-      struct __vpiSystfIterator*res;
-      res = (struct __vpiSystfIterator*) calloc(1, sizeof (*res));
-      res->base.vpi_type = &vpip_systf_iterator_rt;
+      struct __vpiSystfIterator*res = new __vpiSystfIterator;
       res->next = idx;
-      return &res->base;
+      return res;
 }
 
 struct __vpiUserSystf* vpip_find_systf(const char*name)
@@ -667,8 +654,8 @@ struct __vpiUserSystf* vpip_find_systf(const char*name)
 void vpip_make_systf_system_defined(vpiHandle ref)
 {
       assert(ref);
-      assert(ref->vpi_type->type_code == vpiUserSystf);
-      struct __vpiUserSystf*obj = (__vpiUserSystf*) ref;
+      struct __vpiUserSystf*obj = dynamic_cast<__vpiUserSystf*>(ref);
+      assert(obj);
       obj->is_user_defn = false;
 }
 
@@ -821,28 +808,28 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 	    assert(0);
       }
 
-      struct __vpiSysTaskCall*obj = new struct __vpiSysTaskCall;
+      struct __vpiSysTaskCall*obj = 0;
 
       switch (defn->info.type) {
 	  case vpiSysTask:
-	    obj->base.vpi_type = &vpip_systask_rt;
+	    obj = new __vpiSysTaskCall(&vpip_systask_rt);
 	    break;
 
 	  case vpiSysFunc:
 	    if (fnet && vwid == -vpiRealConst) {
-		  obj->base.vpi_type = &vpip_sysfunc_rnet_rt;
+		  obj = new __vpiSysTaskCall(&vpip_sysfunc_rnet_rt);
 
 	    } else if (fnet && vwid > 0) {
-		  obj->base.vpi_type = &vpip_sysfunc_4net_rt;
+		  obj = new __vpiSysTaskCall(&vpip_sysfunc_4net_rt);
 
 	    } else if (vwid == -vpiRealConst) {
-		  obj->base.vpi_type = &vpip_sysfunc_real_rt;
+		  obj = new __vpiSysTaskCall(&vpip_sysfunc_real_rt);
 
 	    } else if (vwid > 0) {
-		  obj->base.vpi_type = &vpip_sysfunc_rt;
+		  obj = new __vpiSysTaskCall(&vpip_sysfunc_rt);
 
            } else if (vwid == 0 && fnet == 0) {
-                 obj->base.vpi_type = &vpip_sysfunc_no_rt;
+		  obj = new __vpiSysTaskCall(&vpip_sysfunc_no_rt);
 
 	    } else {
 		  assert(0);
@@ -864,7 +851,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 
       compile_compiletf(obj);
 
-      return &obj->base;
+      return obj;
 }
 
 #ifdef CHECK_WITH_VALGRIND
@@ -918,10 +905,7 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
 {
       vpip_current_vthread = thr;
 
-      assert((ref->vpi_type->type_code == vpiSysTaskCall)
-	     || (ref->vpi_type->type_code == vpiSysFuncCall));
-
-      vpip_cur_task = (struct __vpiSysTaskCall*)ref;
+      vpip_cur_task = dynamic_cast<__vpiSysTaskCall*>(ref);
 
       if (vpip_cur_task->defn->info.calltf) {
 	    assert(vpi_mode_flag == VPI_MODE_NONE);
@@ -931,7 +915,7 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
 	    vpi_mode_flag = VPI_MODE_NONE;
 	      /* If the function call did not set a value then put a
 	       * default value (0). */
-	    if (ref->vpi_type->type_code == vpiSysFuncCall &&
+	    if (ref->get_type_code() == vpiSysFuncCall &&
 	        !vpip_cur_task->put_value) {
 		  s_vpi_value val;
 		  if (vpip_cur_task->vwid == -vpiRealConst) {
@@ -959,7 +943,6 @@ vpiHandle vpi_register_systf(const struct t_vpi_systf_data*ss)
       switch (ss->type) {
 	  case vpiSysTask:
 	  case vpiSysFunc:
-	    cur->base.vpi_type = &vpip_systf_def_rt;
 	    break;
 	  default:
 	    fprintf(stderr, "Unsupported type %d.\n", (int)ss->type);
@@ -970,16 +953,14 @@ vpiHandle vpi_register_systf(const struct t_vpi_systf_data*ss)
       cur->info.tfname = strdup(ss->tfname);
       cur->is_user_defn = true;
 
-      return &cur->base;
+      return cur;
 }
 
 PLI_INT32 vpi_put_userdata(vpiHandle ref, void*data)
 {
-      if (ref->vpi_type->type_code != vpiSysTaskCall
-	  && ref->vpi_type->type_code != vpiSysFuncCall)
+      struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
+      if (rfp == 0)
 	    return 0;
-
-      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
 
       rfp->userdata = data;
       return 1;
@@ -987,9 +968,8 @@ PLI_INT32 vpi_put_userdata(vpiHandle ref, void*data)
 
 void* vpi_get_userdata(vpiHandle ref)
 {
-      struct __vpiSysTaskCall*rfp = (struct __vpiSysTaskCall*)ref;
-      assert((ref->vpi_type->type_code == vpiSysTaskCall)
-	     || (ref->vpi_type->type_code == vpiSysFuncCall));
+      struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
+      assert(rfp);
 
       return rfp->userdata;
 }

@@ -60,6 +60,11 @@ const struct __vpirt callback_rt = {
       0,
       0
 };
+inline __vpiCallback::__vpiCallback()
+: __vpiHandle(&callback_rt)
+{
+}
+
 
 /*
  * Callback handles are created when the VPI function registers a
@@ -85,14 +90,12 @@ struct sync_cb  : public vvp_gen_event_s {
       virtual void run_run();
 };
 
-
 struct __vpiCallback* new_vpi_callback()
 {
       struct __vpiCallback* obj;
 
       obj = new __vpiCallback;
 
-      obj->base.vpi_type = &callback_rt;
       obj->cb_sync = 0;
       obj->next    = 0;
       return obj;
@@ -101,8 +104,6 @@ struct __vpiCallback* new_vpi_callback()
 void delete_vpi_callback(struct __vpiCallback* ref)
 {
       assert(ref);
-      assert(ref->base.vpi_type);
-      assert(ref->base.vpi_type->type_code == vpiCallback);
       delete ref->cb_sync;
       delete ref;
 }
@@ -141,9 +142,8 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
       obj->cb_data.value = &obj->cb_value;
 
       assert(data->obj);
-      assert(data->obj->vpi_type);
 
-      switch (data->obj->vpi_type->type_code) {
+      switch (data->obj->get_type_code()) {
 
 	  case vpiReg:
 	  case vpiNet:
@@ -156,7 +156,7 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	      /* Attach the callback to the vvp_fun_signal node by
 		 putting it in the vpi_callbacks list. */
 	    struct __vpiSignal*sig;
-	    sig = reinterpret_cast<__vpiSignal*>(data->obj);
+	    sig = dynamic_cast<__vpiSignal*>(data->obj);
 
 	    vvp_net_fil_t*sig_fil;
 	    sig_fil = dynamic_cast<vvp_net_fil_t*>(sig->node->fil);
@@ -172,7 +172,7 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 
 	  case vpiNamedEvent:
 	    struct __vpiNamedEvent*nev;
-	    nev = reinterpret_cast<__vpiNamedEvent*>(data->obj);
+	    nev = dynamic_cast<__vpiNamedEvent*>(data->obj);
 	    obj->next = nev->callbacks;
 	    nev->callbacks = obj;
 	    break;
@@ -199,7 +199,7 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	  default:
 	    fprintf(stderr, "make_value_change: sorry: I cannot callback "
 		    "values on type code=%d\n",
-		    data->obj->vpi_type->type_code);
+		    data->obj->get_type_code());
 	    delete obj;
 	    return 0;
       }
@@ -473,7 +473,7 @@ vpiHandle vpi_register_cb(p_cb_data data)
 	    break;
       }
 
-      return obj? &obj->base : 0;
+      return obj;
 }
 
 /*
@@ -483,11 +483,8 @@ vpiHandle vpi_register_cb(p_cb_data data)
  */
 PLI_INT32 vpi_remove_cb(vpiHandle ref)
 {
-      assert(ref);
-      assert(ref->vpi_type);
-      assert(ref->vpi_type->type_code == vpiCallback);
-
-      struct __vpiCallback*obj = (struct __vpiCallback*)ref;
+      struct __vpiCallback*obj = dynamic_cast<__vpiCallback*>(ref);
+      assert(obj);
       obj->cb_data.cb_rtn = 0;
 
       return 1;

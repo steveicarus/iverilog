@@ -35,13 +35,8 @@ static int string_get(int code, vpiHandle ref)
 
       switch (code) {
           case vpiSize:
-	      rfp = (struct __vpiStringConst*)ref;
-
-	      assert((ref->vpi_type->type_code == vpiConstant)
-		     || ((ref->vpi_type->type_code == vpiParameter)));
-
-	      //fprintf(stderr, "String:|%s|, Length: %d\n", rfp->value, strlen(rfp->value));
-	      return strlen(rfp->value)*8;
+	    rfp = dynamic_cast<__vpiStringConst*>(ref);
+	    return strlen(rfp->value)*8;
 
           case vpiSigned:
 	      return 0;
@@ -69,13 +64,10 @@ static void string_value(vpiHandle ref, p_vpi_value vp)
 {
       unsigned uint_value;
       p_vpi_vecval vecp;
-      struct __vpiStringConst*rfp = (struct __vpiStringConst*)ref;
+      struct __vpiStringConst*rfp = dynamic_cast<__vpiStringConst*>(ref);
       int size = strlen(rfp->value);
       char*rbuf = 0;
       char*cp;
-
-      assert((ref->vpi_type->type_code == vpiConstant)
-	     || ((ref->vpi_type->type_code == vpiParameter)));
 
       switch (vp->format) {
 	  case vpiObjTypeVal:
@@ -187,11 +179,18 @@ static const struct __vpirt vpip_string_rt = {
       0,
       0
 };
+inline __vpiStringConst::__vpiStringConst()
+: __vpiHandle(&vpip_string_rt)
+{
+}
+
+struct __vpiStringConstTEMP : public __vpiStringConst {
+      __vpiStringConstTEMP();
+};
 
 static int free_temp_string(vpiHandle obj)
 {
-      struct __vpiStringConst*rfp = (struct __vpiStringConst*)obj;
-      assert(obj->vpi_type->type_code == vpiConstant);
+      struct __vpiStringConstTEMP*rfp = dynamic_cast<__vpiStringConstTEMP*>(obj);
 
       delete [] rfp->value;
       free(rfp);
@@ -211,6 +210,11 @@ static const struct __vpirt vpip_string_temp_rt = {
       0,
       0
 };
+
+inline __vpiStringConstTEMP::__vpiStringConstTEMP()
+: __vpiStringConst(&vpip_string_temp_rt)
+{
+}
 
 /*
  * Strings are described at the level of the vvp source as a string
@@ -247,20 +251,17 @@ vpiHandle vpip_make_string_const(char*text, bool persistent_flag)
 {
       struct __vpiStringConst*obj;
 
-      obj = (struct __vpiStringConst*)
-	    malloc(sizeof (struct __vpiStringConst));
-      obj->base.vpi_type = persistent_flag
-	    ? &vpip_string_rt
-	    : &vpip_string_temp_rt;
+      obj = persistent_flag? new __vpiStringConst : new __vpiStringConstTEMP;
       obj->value = text;
       obj->value_len = 0;
       vpip_process_string(obj);
 
-      return &obj->base;
+      return obj;
 }
 
 
 struct __vpiStringParam  : public __vpiStringConst {
+      __vpiStringParam();
       const char*basename;
       struct __vpiScope* scope;
       unsigned file_idx;
@@ -269,9 +270,8 @@ struct __vpiStringParam  : public __vpiStringConst {
 
 static int string_param_get(int code, vpiHandle ref)
 {
-      struct __vpiStringParam*rfp = (struct __vpiStringParam*)ref;
-
-      assert(ref->vpi_type->type_code == vpiParameter);
+      struct __vpiStringParam*rfp = dynamic_cast<__vpiStringParam*>(ref);
+      assert(ref);
 
       if (code == vpiLineNo) {
 	    return rfp->lineno;
@@ -282,26 +282,24 @@ static int string_param_get(int code, vpiHandle ref)
 
 static char* string_param_get_str(int code, vpiHandle obj)
 {
-      struct __vpiStringParam*rfp = (struct __vpiStringParam*)obj;
-
-      assert(obj->vpi_type->type_code == vpiParameter);
+      struct __vpiStringParam*rfp = dynamic_cast<__vpiStringParam*>(obj);
+      assert(rfp);
 
       if (code == vpiFile) {
 	    return simple_set_rbuf_str(file_names[rfp->file_idx]);
       }
 
-      return generic_get_str(code, &rfp->scope->base, rfp->basename, NULL);
+      return generic_get_str(code, rfp->scope, rfp->basename, NULL);
 }
 
 static vpiHandle string_param_handle(int code, vpiHandle obj)
 {
-      struct __vpiStringParam*rfp = (struct __vpiStringParam*)obj;
-
-      assert(obj->vpi_type->type_code == vpiParameter);
+      struct __vpiStringParam*rfp = dynamic_cast<__vpiStringParam*>(obj);
+      assert(rfp);
 
       switch (code) {
 	  case vpiScope:
-	    return &rfp->scope->base;
+	    return rfp->scope;
 
 	  case vpiModule:
 	    return vpip_module(rfp->scope);
@@ -325,15 +323,16 @@ static const struct __vpirt vpip_string_param_rt = {
       0
 };
 
+inline __vpiStringParam::__vpiStringParam()
+: __vpiStringConst(&vpip_string_param_rt)
+{
+}
+
 
 vpiHandle vpip_make_string_param(char*name, char*text,
                                  long file_idx, long lineno)
 {
-      struct __vpiStringParam*obj;
-
-      obj = (struct __vpiStringParam*)
-	    malloc(sizeof (struct __vpiStringParam));
-      obj->base.vpi_type = &vpip_string_param_rt;
+      struct __vpiStringParam*obj = new __vpiStringParam;
       obj->value = text;
       obj->value_len = 0;
       obj->basename = name;
@@ -343,14 +342,12 @@ vpiHandle vpip_make_string_param(char*name, char*text,
 
       vpip_process_string(obj);
 
-      return &obj->base;
+      return obj;
 }
 
 static int binary_get(int code, vpiHandle ref)
 {
-      struct __vpiBinaryConst*rfp = (struct __vpiBinaryConst*)ref;
-      assert(ref->vpi_type->type_code == vpiConstant
-	     || ref->vpi_type->type_code == vpiParameter);
+      struct __vpiBinaryConst*rfp = dynamic_cast<__vpiBinaryConst*>(ref);
 
       switch (code) {
 	  case vpiConstType:
@@ -384,11 +381,7 @@ static int binary_get(int code, vpiHandle ref)
 
 static void binary_value(vpiHandle ref, p_vpi_value vp)
 {
-      assert(ref->vpi_type->type_code == vpiConstant
-	     || ref->vpi_type->type_code == vpiParameter);
-
-      struct __vpiBinaryConst*rfp = (struct __vpiBinaryConst*)ref;
-
+      struct __vpiBinaryConst*rfp = dynamic_cast<__vpiBinaryConst*>(ref);
 
       switch (vp->format) {
 
@@ -428,6 +421,11 @@ static const struct __vpirt vpip_binary_rt = {
       0
 };
 
+inline __vpiBinaryConst::__vpiBinaryConst()
+: __vpiHandle(&vpip_binary_rt)
+{
+}
+
 /*
  * Make a VPI constant from a vector string. The string is normally a
  * ASCII string, with each letter a 4-value bit. The first character
@@ -435,10 +433,7 @@ static const struct __vpirt vpip_binary_rt = {
  */
 vpiHandle vpip_make_binary_const(unsigned wid, const char*bits)
 {
-      struct __vpiBinaryConst*obj;
-
-      obj = new __vpiBinaryConst;
-      obj->base.vpi_type = &vpip_binary_rt;
+      struct __vpiBinaryConst*obj = new __vpiBinaryConst;
 
       obj->signed_flag = 0;
       obj->sized_flag = 0;
@@ -451,7 +446,7 @@ vpiHandle vpip_make_binary_const(unsigned wid, const char*bits)
 
       obj->bits = vector4_from_text(bp, wid);
 
-      return &(obj->base);
+      return obj;
 }
 
 vvp_vector4_t vector4_from_text(const char*bits, unsigned wid)
@@ -482,6 +477,7 @@ vvp_vector4_t vector4_from_text(const char*bits, unsigned wid)
 }
 
 struct __vpiBinaryParam  : public __vpiBinaryConst {
+      __vpiBinaryParam();
       const char*basename;
       struct __vpiScope*scope;
       unsigned file_idx;
@@ -490,9 +486,7 @@ struct __vpiBinaryParam  : public __vpiBinaryConst {
 
 static int binary_param_get(int code, vpiHandle ref)
 {
-      struct __vpiBinaryParam*rfp = (struct __vpiBinaryParam*)ref;
-
-      assert(ref->vpi_type->type_code == vpiParameter);
+      struct __vpiBinaryParam*rfp = dynamic_cast<__vpiBinaryParam*>(ref);
 
       if (code == vpiLineNo) {
 	    return rfp->lineno;
@@ -503,26 +497,22 @@ static int binary_param_get(int code, vpiHandle ref)
 
 static char* binary_param_get_str(int code, vpiHandle obj)
 {
-      struct __vpiBinaryParam*rfp = (struct __vpiBinaryParam*)obj;
-
-      assert(obj->vpi_type->type_code == vpiParameter);
+      struct __vpiBinaryParam*rfp = dynamic_cast<__vpiBinaryParam*>(obj);
 
       if (code == vpiFile) {
 	    return simple_set_rbuf_str(file_names[rfp->file_idx]);
       }
 
-      return generic_get_str(code, &rfp->scope->base, rfp->basename, NULL);
+      return generic_get_str(code, rfp->scope, rfp->basename, NULL);
 }
 
 static vpiHandle binary_param_handle(int code, vpiHandle obj)
 {
-      struct __vpiBinaryParam*rfp = (struct __vpiBinaryParam*)obj;
-
-      assert(obj->vpi_type->type_code == vpiParameter);
+      struct __vpiBinaryParam*rfp = dynamic_cast<__vpiBinaryParam*>(obj);
 
       switch (code) {
 	  case vpiScope:
-	    return &rfp->scope->base;
+	    return rfp->scope;
 
 	  case vpiModule:
 	    return vpip_module(rfp->scope);
@@ -545,6 +535,10 @@ static const struct __vpirt vpip_binary_param_rt = {
       0,
       0
 };
+inline __vpiBinaryParam::__vpiBinaryParam()
+: __vpiBinaryConst(&vpip_binary_param_rt)
+{
+}
 
 vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
 				 bool signed_flag,
@@ -552,7 +546,6 @@ vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
 {
       struct __vpiBinaryParam*obj = new __vpiBinaryParam;
 
-      obj->base.vpi_type = &vpip_binary_param_rt;
       obj->bits = bits;
       obj->signed_flag = signed_flag? 1 : 0;
       obj->sized_flag = 0;
@@ -561,7 +554,7 @@ vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
       obj->file_idx = (unsigned) file_idx;
       obj->lineno = (unsigned) lineno;
 
-      return &obj->base;
+      return obj;
 }
 
 
@@ -597,8 +590,7 @@ static int dec_get(int code, vpiHandle)
 
 static void dec_value(vpiHandle ref, p_vpi_value vp)
 {
-      struct __vpiDecConst*rfp = (struct __vpiDecConst*)ref;
-      assert(ref->vpi_type->type_code == vpiConstant);
+      struct __vpiDecConst*rfp = dynamic_cast<__vpiDecConst*>(ref);
       char*rbuf = need_result_buf(64 + 1, RBUF_VAL);
       char*cp = rbuf;
 
@@ -658,24 +650,11 @@ static const struct __vpirt vpip_dec_rt = {
       0,
       0
 };
-
-vpiHandle vpip_make_dec_const(struct __vpiDecConst*obj, int value)
+__vpiDecConst::__vpiDecConst(int val)
+: __vpiHandle(&vpip_dec_rt)
 {
-      obj->base.vpi_type = &vpip_dec_rt;
-      obj->value = value;
-
-      return &(obj->base);
+      value = val;
 }
-
-vpiHandle vpip_make_dec_const(int value)
-{
-      struct __vpiDecConst*obj;
-
-      obj = (struct __vpiDecConst*)
-	    malloc(sizeof (struct __vpiDecConst));
-      return vpip_make_dec_const(obj, value);
-}
-
 
 static int real_get(int code, vpiHandle)
 {
@@ -711,10 +690,7 @@ static int real_get(int code, vpiHandle)
 
 static void real_value(vpiHandle ref, p_vpi_value vp)
 {
-      struct __vpiRealConst*rfp = (struct __vpiRealConst*)ref;
-      assert((ref->vpi_type->type_code == vpiConstant) ||
-             (ref->vpi_type->type_code == vpiParameter));
-
+      struct __vpiRealConst*rfp = dynamic_cast<__vpiRealConst*>(ref);
        vpip_real_get_value(rfp->value, vp);
 }
 
@@ -731,22 +707,20 @@ static const struct __vpirt vpip_real_rt = {
       0,
       0
 };
-
-vpiHandle vpip_make_real_const(struct __vpiRealConst*obj, double value)
+inline __vpiRealConst::__vpiRealConst()
+: __vpiHandle(&vpip_real_rt)
 {
-      obj->base.vpi_type = &vpip_real_rt;
-      obj->value = value;
-      return &(obj->base);
 }
 
 vpiHandle vpip_make_real_const(double value)
 {
-      struct __vpiRealConst*obj;
-      obj =(struct __vpiRealConst*) malloc(sizeof (struct __vpiRealConst));
-      return vpip_make_real_const(obj, value);
+      struct __vpiRealConst*obj = new __vpiRealConst;
+      obj->value = value;
+      return obj;
 }
 
 struct __vpiRealParam  : public __vpiRealConst {
+      __vpiRealParam();
       const char*basename;
       struct __vpiScope* scope;
       unsigned file_idx;
@@ -755,9 +729,7 @@ struct __vpiRealParam  : public __vpiRealConst {
 
 static int real_param_get(int code, vpiHandle ref)
 {
-      struct __vpiRealParam*rfp = (struct __vpiRealParam*)ref;
-
-      assert(ref->vpi_type->type_code == vpiParameter);
+      struct __vpiRealParam*rfp = dynamic_cast<__vpiRealParam*>(ref);
 
       if (code == vpiLineNo) {
 	    return rfp->lineno;
@@ -768,26 +740,22 @@ static int real_param_get(int code, vpiHandle ref)
 
 static char* real_param_get_str(int code, vpiHandle obj)
 {
-      struct __vpiRealParam*rfp = (struct __vpiRealParam*)obj;
-
-      assert(obj->vpi_type->type_code == vpiParameter);
+      struct __vpiRealParam*rfp = dynamic_cast<__vpiRealParam*>(obj);
 
       if (code == vpiFile) {
             return simple_set_rbuf_str(file_names[rfp->file_idx]);
       }
 
-      return generic_get_str(code, &rfp->scope->base, rfp->basename, NULL);
+      return generic_get_str(code, rfp->scope, rfp->basename, NULL);
 }
 
 static vpiHandle real_param_handle(int code, vpiHandle obj)
 {
-      struct __vpiRealParam*rfp = (struct __vpiRealParam*)obj;
-
-      assert(obj->vpi_type->type_code == vpiParameter);
+      struct __vpiRealParam*rfp = dynamic_cast<__vpiRealParam*>(obj);
 
       switch (code) {
           case vpiScope:
-            return &rfp->scope->base;
+            return rfp->scope;
 
 	  case vpiModule:
 	    return vpip_module(rfp->scope);
@@ -810,22 +778,24 @@ static const struct __vpirt vpip_real_param_rt = {
       0,
       0
 };
+inline __vpiRealParam::__vpiRealParam()
+: __vpiRealConst(&vpip_real_param_rt)
+{
+}
+
 
 vpiHandle vpip_make_real_param(char*name, double value,
                                long file_idx, long lineno)
 {
-      struct __vpiRealParam*obj;
+      struct __vpiRealParam*obj = new __vpiRealParam;
 
-      obj = (struct __vpiRealParam*)
-            malloc(sizeof (struct __vpiRealParam));
-      obj->base.vpi_type = &vpip_real_param_rt;
       obj->value = value;
       obj->basename = name;
       obj->scope = vpip_peek_current_scope();
       obj->file_idx = (unsigned) file_idx;
       obj->lineno = (unsigned) lineno;
 
-      return &obj->base;
+      return obj;
 }
 
 #ifdef CHECK_WITH_VALGRIND
@@ -834,20 +804,20 @@ void constant_delete(vpiHandle item)
       assert(item->vpi_type->type_code == vpiConstant);
       switch(vpi_get(vpiConstType, item)) {
 	  case vpiStringConst: {
-	    struct __vpiStringConst*rfp = (struct __vpiStringConst*)item;
+	    struct __vpiStringConst*rfp = dynamic_cast<__vpiStringConst*>(item);
 	    delete [] rfp->value;
 	    free(rfp);
 	    break; }
 	  case vpiDecConst: {
-	    struct __vpiDecConst*rfp = (struct __vpiDecConst*)item;
+	    struct __vpiDecConst*rfp = dynamic_cast<__vpiDecConst*>(item);
 	    free(rfp);
 	    break; }
 	  case vpiBinaryConst: {
-	    struct __vpiBinaryConst*rfp = (struct __vpiBinaryConst*)item;
+	    struct __vpiBinaryConst*rfp = dynamic_cast<__vpiBinaryConst*>(item);
 	    delete rfp;
 	    break; }
 	  case vpiRealConst: {
-	    struct __vpiRealConst*rfp = (struct __vpiRealConst*)item;
+	    struct __vpiRealConst*rfp = dynamic_cast<__vpiRealConst*>(item);
 	    free(rfp);
 	    break; }
 	  default:
@@ -859,18 +829,18 @@ void parameter_delete(vpiHandle item)
 {
       switch(vpi_get(vpiConstType, item)) {
 	  case vpiStringConst: {
-	    struct __vpiStringParam*rfp = (struct __vpiStringParam*)item;
+	    struct __vpiStringParam*rfp = dynamic_cast<__vpiStringParam*>(item);
 	    delete [] rfp->basename;
 	    delete [] rfp->value;
 	    free(rfp);
 	    break; }
 	  case vpiBinaryConst: {
-	    struct __vpiBinaryParam*rfp = (struct __vpiBinaryParam*)item;
+	    struct __vpiBinaryParam*rfp = dynamic_cast<__vpiBinaryParam*>(item);
 	    delete [] rfp->basename;
 	    delete rfp;
 	    break; }
 	  case vpiRealConst: {
-	    struct __vpiRealParam*rfp = (struct __vpiRealParam*)item;
+	    struct __vpiRealParam*rfp = dynamic_cast<__vpiRealParam*>(item);
 	    delete [] rfp->basename;
 	    free(rfp);
 	    break; }

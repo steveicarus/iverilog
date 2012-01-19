@@ -199,12 +199,11 @@ static int timevar_realtime_get(int code, vpiHandle)
 
 static vpiHandle timevar_handle(int code, vpiHandle ref)
 {
-      struct __vpiSystemTime*rfp
-	    = reinterpret_cast<struct __vpiSystemTime*>(ref);
+      struct __vpiSystemTime*rfp = dynamic_cast<__vpiSystemTime*>(ref);
 
       switch (code) {
 	  case vpiScope:
-	    return &rfp->scope->base;
+	    return rfp->scope;
 	  default:
 	    return 0;
       }
@@ -217,8 +216,7 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func,
 	   the caller. */
       static struct t_vpi_time time_value;
 
-      struct __vpiSystemTime*rfp
-	    = reinterpret_cast<struct __vpiSystemTime*>(ref);
+      struct __vpiSystemTime*rfp = dynamic_cast<__vpiSystemTime*>(ref);
       unsigned long num_bits;
       vvp_time64_t x, simtime = schedule_simtime();
       int units = rfp->scope? rfp->scope->time_units : vpi_time_precision;
@@ -326,6 +324,10 @@ static const struct __vpirt vpip_system_time_rt = {
       0,
       0
 };
+__vpiScopedTime::__vpiScopedTime()
+: __vpiSystemTime(&vpip_system_time_rt)
+{
+}
 
 static const struct __vpirt vpip_system_stime_rt = {
       vpiSysFuncCall,
@@ -340,6 +342,10 @@ static const struct __vpirt vpip_system_stime_rt = {
       0,
       0
 };
+__vpiScopedSTime::__vpiScopedSTime()
+: __vpiSystemTime(&vpip_system_stime_rt)
+{
+}
 
 static const struct __vpirt vpip_system_simtime_rt = {
       vpiSysFuncCall,
@@ -354,6 +360,11 @@ static const struct __vpirt vpip_system_simtime_rt = {
       0,
       0
 };
+__vpiSystemTime::__vpiSystemTime()
+: __vpiHandle(&vpip_system_simtime_rt)
+{
+      scope = 0;
+}
 
 static const struct __vpirt vpip_system_realtime_rt = {
       vpiSysFuncCall,
@@ -368,6 +379,11 @@ static const struct __vpirt vpip_system_realtime_rt = {
       0,
       0
 };
+__vpiScopedRealtime::__vpiScopedRealtime()
+: __vpiSystemTime(&vpip_system_realtime_rt)
+{
+}
+
 
 /*
  * Create a handle to represent a call to $time/$stime/$simtime. The
@@ -378,26 +394,21 @@ vpiHandle vpip_sim_time(struct __vpiScope*scope, bool is_stime)
 {
       if (scope) {
 	    if (is_stime) {
-		  scope->scoped_stime.base.vpi_type = &vpip_system_stime_rt;
 		  scope->scoped_stime.scope = scope;
-		  return &scope->scoped_stime.base;
+		  return &scope->scoped_stime;
 	    } else {
-		  scope->scoped_time.base.vpi_type = &vpip_system_time_rt;
 		  scope->scoped_time.scope = scope;
-		  return &scope->scoped_time.base;
+		  return &scope->scoped_time;
 	    }
       } else {
-	    global_simtime.base.vpi_type = &vpip_system_simtime_rt;
-	    global_simtime.scope = 0;
-	    return &global_simtime.base;
+	    return &global_simtime;
       }
 }
 
 vpiHandle vpip_sim_realtime(struct __vpiScope*scope)
 {
-      scope->scoped_realtime.base.vpi_type = &vpip_system_realtime_rt;
       scope->scoped_realtime.scope = scope;
-      return &scope->scoped_realtime.base;
+      return &scope->scoped_realtime;
 }
 
 int vpip_get_time_precision(void)

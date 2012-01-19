@@ -287,7 +287,7 @@ vvp_net_t* vvp_net_lookup(const char*label)
       symbol_value_t val = sym_get_value(sym_vpi, label);
       if (val.ptr) {
 	    vpiHandle vpi = (vpiHandle) val.ptr;
-	    switch (vpi->vpi_type->type_code) {
+	    switch (vpi->get_type_code()) {
 		case vpiNet:
 		case vpiReg:
 		case vpiBitVar:
@@ -312,7 +312,7 @@ vvp_net_t* vvp_net_lookup(const char*label)
 
 		default:
 		  fprintf(stderr, "Unsupported type %d.\n",
-		          vpi->vpi_type->type_code);
+		          vpi->get_type_code());
 		  assert(0);
 	    }
       }
@@ -1397,7 +1397,7 @@ static struct __vpiModPathSrc*make_modpath_src(struct __vpiModPath*path,
 
       vvp_net_t*net = new vvp_net_t;
       struct __vpiModPathSrc* srcobj = vpip_make_modpath_src(path, net) ;
-      vpip_attach_to_current_scope(vpi_handle(srcobj));
+      vpip_attach_to_current_scope(srcobj);
       net->fun = obj;
 
 	/* Save the vpiEdge directory into the input path term. */

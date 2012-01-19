@@ -25,39 +25,25 @@
 # include  <iostream>
 # include  <cassert>
 
-struct enumconst_s {
-      struct __vpiHandle base;
+struct enumconst_s : public __vpiHandle {
+      enumconst_s();
+
       const char*name;
       vvp_vector2_t val2;
       vvp_vector4_t val4;
 };
 
-static struct enumconst_s* enumconst_from_handle(vpiHandle obj)
-{
-      if (obj->vpi_type->type_code == vpiEnumConst)
-	    return (struct enumconst_s*) obj;
-      else
-	    return 0;
-}
+struct __vpiEnumTypespec : public __vpiHandle {
+      __vpiEnumTypespec();
 
-struct __vpiEnumTypespec {
-      struct __vpiHandle base;
       std::vector<enumconst_s> names;
       int base_type_code;
       bool is_signed;
 };
 
-static struct __vpiEnumTypespec* vpip_enum_typespec_from_handle(vpiHandle obj)
-{
-      if (obj->vpi_type->type_code == vpiEnumTypespec)
-	    return (struct __vpiEnumTypespec*) obj;
-
-      return 0;
-}
-
 static int enum_type_get(int code, vpiHandle obj)
 {
-      struct __vpiEnumTypespec*ref = vpip_enum_typespec_from_handle(obj);
+      struct __vpiEnumTypespec*ref = dynamic_cast<__vpiEnumTypespec*>(obj);
       assert(ref);
 
       switch (code) {
@@ -84,14 +70,14 @@ static int enum_type_get(int code, vpiHandle obj)
 
 static vpiHandle enum_type_iterate(int code, vpiHandle obj)
 {
-      struct __vpiEnumTypespec*ref = vpip_enum_typespec_from_handle(obj);
+      struct __vpiEnumTypespec*ref = dynamic_cast<__vpiEnumTypespec*>(obj);
       assert(ref);
 
       if (code == vpiEnumConst) {
 	    vpiHandle*args = (vpiHandle*)
 		  calloc(ref->names.size(), sizeof(vpiHandle*));
 	    for (size_t idx = 0 ; idx < ref->names.size() ; idx += 1)
-		  args[idx] = vpi_handle(&ref->names[idx]);
+		  args[idx] = &ref->names[idx];
 
 	    return vpip_make_iterator(ref->names.size(), args, true);
       }
@@ -113,9 +99,14 @@ static const struct __vpirt enum_type_rt = {
       0, //enum_type_put_delays
 };
 
+inline __vpiEnumTypespec::__vpiEnumTypespec()
+: __vpiHandle(&enum_type_rt)
+{
+}
+
 static int enum_name_get(int code, vpiHandle obj)
 {
-      struct enumconst_s*ref = enumconst_from_handle(obj);
+      struct enumconst_s*ref = dynamic_cast<enumconst_s*>(obj);
       assert(ref);
 
       switch (code) {
@@ -128,7 +119,7 @@ static int enum_name_get(int code, vpiHandle obj)
 
 static char* enum_name_get_str(int code, vpiHandle obj)
 {
-      struct enumconst_s*ref = enumconst_from_handle(obj);
+      struct enumconst_s*ref = dynamic_cast<enumconst_s*>(obj);
       assert(ref);
 
       switch (code) {
@@ -141,7 +132,7 @@ static char* enum_name_get_str(int code, vpiHandle obj)
 
 static void enum_name_get_value(vpiHandle obj, p_vpi_value value)
 {
-      struct enumconst_s*ref = enumconst_from_handle(obj);
+      struct enumconst_s*ref = dynamic_cast<enumconst_s*>(obj);
       assert(ref);
 
       if (ref->val4.size() > 0)
@@ -164,11 +155,15 @@ static const struct __vpirt enum_name_rt = {
       0, //enum_name_put_delays
 };
 
+inline enumconst_s::enumconst_s()
+: __vpiHandle(&enum_name_rt)
+{
+}
+
 void compile_enum2_type(char*label, long width, bool signed_flag,
                         std::list<struct enum_name_s>*names)
 {
       struct __vpiEnumTypespec*spec = new struct __vpiEnumTypespec;
-      spec->base.vpi_type = &enum_type_rt;
       spec->names = std::vector<enumconst_s> (names->size());
       spec->is_signed = signed_flag;
       spec->base_type_code = vpiBitVar;
@@ -177,14 +172,13 @@ void compile_enum2_type(char*label, long width, bool signed_flag,
       for (list<struct enum_name_s>::iterator cur = names->begin()
 		 ; cur != names->end() ;  ++cur, ++idx) {
 	    assert(cur->val4 == 0);
-	    spec->names[idx].base.vpi_type = &enum_name_rt;
 	    spec->names[idx].name = cur->text;
 	    spec->names[idx].val2 = vvp_vector2_t(cur->val2, width);
       }
 
       assert(idx == spec->names.size());
-      compile_vpi_symbol(label, vpi_handle(spec));
-      vpip_attach_to_current_scope(vpi_handle(spec));
+      compile_vpi_symbol(label, spec);
+      vpip_attach_to_current_scope(spec);
 
       free(label);
       delete names;
@@ -194,7 +188,6 @@ void compile_enum4_type(char*label, long width, bool signed_flag,
                         std::list<struct enum_name_s>*names)
 {
       struct __vpiEnumTypespec*spec = new struct __vpiEnumTypespec;
-      spec->base.vpi_type = &enum_type_rt;
       spec->names = std::vector<enumconst_s> (names->size());
       spec->is_signed = signed_flag;
       spec->base_type_code = vpiReg;
@@ -202,7 +195,6 @@ void compile_enum4_type(char*label, long width, bool signed_flag,
       size_t idx = 0;
       for (list<struct enum_name_s>::iterator cur = names->begin()
 		 ; cur != names->end() ;  ++cur, ++idx) {
-	    spec->names[idx].base.vpi_type = &enum_name_rt;
 	    spec->names[idx].name = cur->text;
 	    assert(cur->val4);
 	    spec->names[idx].val4 = vector4_from_text(cur->val4, width);
@@ -211,8 +203,8 @@ void compile_enum4_type(char*label, long width, bool signed_flag,
       }
 
       assert(idx == spec->names.size());
-      compile_vpi_symbol(label, vpi_handle(spec));
-      vpip_attach_to_current_scope(vpi_handle(spec));
+      compile_vpi_symbol(label, spec);
+      vpip_attach_to_current_scope(spec);
 
       free(label);
       delete names;
@@ -221,7 +213,7 @@ void compile_enum4_type(char*label, long width, bool signed_flag,
 #ifdef CHECK_WITH_VALGRIND
 void enum_delete(vpiHandle item)
 {
-      struct __vpiEnumTypespec*obj = (struct __vpiEnumTypespec*) item;
+      struct __vpiEnumTypespec*obj = dynamic_cast<__vpiEnumTypespec*>(item);
 
       for (vector<enumconst_s>::iterator iter = obj->names.begin();
            iter != obj->names.end(); ++ iter ) {

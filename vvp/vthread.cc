@@ -2549,7 +2549,7 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
 
 	/* If the new child was created to evaluate a function,
 	   run it immediately, then return to this thread. */
-      if (cp->scope->base.vpi_type->type_code == vpiFunction) {
+      if (cp->scope->get_type_code() == vpiFunction) {
 	    child->is_scheduled = 1;
 	    vthread_run(child);
             running_thread = thr;
