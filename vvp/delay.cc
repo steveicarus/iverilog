@@ -973,16 +973,16 @@ static vpiHandle pathterm_get_handle(int code, vpiHandle ref)
 */
 static const struct __vpirt vpip_modpath_src_rt = {
       vpiModPath,
-      modpath_src_get,
+      0, //modpath_src_get,
       0, /* vpi_get_str */
-      modpath_src_get_value,
-      modpath_src_put_value,
-      modpath_src_get_handle,
-      modpath_src_iterate,
-      modpath_src_index,
+      0, //modpath_src_get_value,
+      0, //modpath_src_put_value,
+      0, //modpath_src_get_handle,
+      0, //modpath_src_iterate,
+      0, //modpath_src_index,
       modpath_src_free_object,
-      modpath_src_get_delays,
-      modpath_src_put_delays
+      0, //modpath_src_get_delays,
+      0, //modpath_src_put_delays
 };
 
 inline __vpiModPathSrc::__vpiModPathSrc()
@@ -993,13 +993,38 @@ inline __vpiModPathSrc::__vpiModPathSrc()
 int __vpiModPathSrc::get_type_code(void) const
 { return vpiModPath; }
 
+int __vpiModPathSrc::vpi_get(int code)
+{ return modpath_src_get(code, this); }
+
+void __vpiModPathSrc::vpi_get_value(p_vpi_value val)
+{ modpath_src_get_value(this, val); }
+
+vpiHandle __vpiModPathSrc::vpi_put_value(p_vpi_value val, int flags)
+{ return modpath_src_put_value(this, val, flags); }
+
+vpiHandle __vpiModPathSrc::vpi_handle(int code)
+{ return modpath_src_get_handle(code, this); }
+
+vpiHandle __vpiModPathSrc::vpi_iterate(int code)
+{ return modpath_src_iterate(code, this); }
+
+vpiHandle __vpiModPathSrc:: vpi_index(int idx)
+{ return modpath_src_index(this, idx); }
+
+void __vpiModPathSrc::vpi_get_delays(p_vpi_delay del)
+{ modpath_src_get_delays(this, del); }
+
+void __vpiModPathSrc::vpi_put_delays(p_vpi_delay del)
+{ modpath_src_put_delays(this, del); }
+
+
 static const struct __vpirt vpip_modpath_term_rt = {
       vpiPathTerm,
-      pathterm_get,
+      0,
       0, // vpi_get_str
       0, // vpi_get_value,
       0, // vpi_put_value,
-      pathterm_get_handle,
+      0, //pathterm_get_handle,
       0, // vpi_iterate,
       0, // vpi_index,
       0, // vpi_free_object,
@@ -1014,6 +1039,12 @@ inline __vpiModPathTerm::__vpiModPathTerm()
 
 int __vpiModPathTerm::get_type_code(void) const
 { return vpiPathTerm; }
+
+int __vpiModPathTerm::vpi_get(int code)
+{ return pathterm_get(code, this); }
+
+vpiHandle __vpiModPathTerm::vpi_handle(int code)
+{ return pathterm_get_handle(code, this); }
 
 static void initialize_path_term(struct __vpiModPathTerm&obj)
 {

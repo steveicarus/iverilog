@@ -69,11 +69,11 @@ static vpiHandle named_event_get_handle(int code, vpiHandle ref)
 static const struct __vpirt vpip_named_event_rt = {
       vpiNamedEvent,
 
-      named_event_get,
-      named_event_get_str,
+      0, //named_event_get,
+      0, //named_event_get_str,
       0,
       0,
-      named_event_get_handle,
+      0, //named_event_get_handle,
       0,
       0,
       0,
@@ -88,6 +88,14 @@ inline __vpiNamedEvent::__vpiNamedEvent()
 int __vpiNamedEvent::get_type_code(void) const
 { return vpiNamedEvent; }
 
+int __vpiNamedEvent::vpi_get(int code)
+{ return named_event_get(code, this); }
+
+char* __vpiNamedEvent::vpi_get_str(int code)
+{ return named_event_get_str(code, this); }
+
+vpiHandle __vpiNamedEvent::vpi_handle(int code)
+{ return named_event_get_handle(code, this); }
 
 vpiHandle vpip_make_named_event(const char*name, vvp_net_t*funct)
 {

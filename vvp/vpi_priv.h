@@ -122,43 +122,22 @@ class __vpiHandle {
     public:
       inline __vpiHandle(const struct __vpirt *tp) : vpi_type_(tp) { }
 	// The descructor is virtual so that dynamic types will work.
-      virtual ~__vpiHandle() { }
+      virtual ~__vpiHandle();
 
       virtual int get_type_code(void) const =0;
+      virtual int vpi_get(int code);
+      virtual char* vpi_get_str(int code);
 
-      inline int vpi_get(int code)
-      { return vpi_type_->vpi_get_? vpi_type_->vpi_get_(code,this) : vpiUndefined; }
-
-      inline char* vpi_get_str(int code)
-      { return vpi_type_->vpi_get_str_? vpi_type_->vpi_get_str_(code, this) : 0; }
-
-      inline void vpi_get_value(p_vpi_value val)
-      { if (vpi_type_->vpi_get_value_) vpi_type_->vpi_get_value_(this, val);
-	else val->format = vpiSuppressVal;
-      }
-
-      inline bool can_put_value() const { return vpi_type_->vpi_put_value_ != 0; }
-
-      inline vpiHandle vpi_put_value(p_vpi_value val, int flags)
-      { return vpi_type_->vpi_put_value_? vpi_type_->vpi_put_value_(this, val, flags) : 0; }
-
-      inline vpiHandle vpi_handle(int code)
-      { return vpi_type_->handle_? vpi_type_->handle_(code, this) : 0; }
-
-      inline vpiHandle vpi_iterate(int code)
-      { return vpi_type_->iterate_? vpi_type_->iterate_(code, this) : 0; }
-
-      inline vpiHandle vpi_index(int idx)
-      { return vpi_type_->index_? vpi_type_->index_(this, idx) : 0; }
+      virtual void vpi_get_value(p_vpi_value val);
+      virtual vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      virtual vpiHandle vpi_handle(int code);
+      virtual vpiHandle vpi_iterate(int code);
+      virtual vpiHandle vpi_index(int idx);
+      virtual void vpi_get_delays(p_vpi_delay del);
+      virtual void vpi_put_delays(p_vpi_delay del);
 
       static inline int vpi_free_object(vpiHandle ref)
       { return ref->vpi_type_->vpi_free_object_? ref->vpi_type_->vpi_free_object_(ref) : 1; }
-
-      inline void vpi_get_delays(p_vpi_delay del)
-      { if (vpi_type_->vpi_get_delays_) vpi_type_->vpi_get_delays_(this, del); }
-
-      inline void vpi_put_delays(p_vpi_delay del)
-      { if (vpi_type_->vpi_put_delays_) vpi_type_->vpi_put_delays_(this, del); }
 
     private:
       const struct __vpirt *vpi_type_;
@@ -220,6 +199,15 @@ extern void callback_execute(struct __vpiCallback*cur);
 struct __vpiSystemTime : public __vpiHandle {
       __vpiSystemTime();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char*vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code);
+      vpiHandle vpi_iterate(int code);
+      vpiHandle vpi_index(int idx);
+      void vpi_get_delays(p_vpi_delay del);
+      void vpi_put_delays(p_vpi_delay del);
 
       struct __vpiScope*scope;
     protected:
@@ -228,12 +216,21 @@ struct __vpiSystemTime : public __vpiHandle {
 
 struct __vpiScopedTime : public __vpiSystemTime {
       __vpiScopedTime();
+      int vpi_get(int code);
+      char*vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
 };
 struct __vpiScopedSTime : public __vpiSystemTime {
       __vpiScopedSTime();
+      int vpi_get(int code);
+      char*vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
 };
 struct __vpiScopedRealtime : public __vpiSystemTime {
       __vpiScopedRealtime();
+      int vpi_get(int code);
+      char*vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
 };
 
 
@@ -243,6 +240,11 @@ struct __vpiScopedRealtime : public __vpiSystemTime {
  * scope.
  */
 struct __vpiScope : public __vpiHandle {
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      vpiHandle vpi_handle(int code);
+      vpiHandle vpi_iterate(int code);
+
       struct __vpiScope *scope;
 	/* The scope has a name. */
       const char*name;
@@ -293,6 +295,12 @@ extern void vpip_make_root_iterator(struct __vpiHandle**&table,
  * a declared name and declaration indices.
  */
 struct __vpiSignal : public __vpiHandle {
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code);
+      vpiHandle vpi_iterate(int code);
 
 #ifdef CHECK_WITH_VALGRIND
       struct __vpiSignal *pool;
@@ -341,6 +349,11 @@ extern vpiHandle vpip_make_net4(const char*name, int msb, int lsb,
 struct __vpiPV : public __vpiHandle {
       __vpiPV();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code);
 
       vpiHandle parent;
       vvp_net_t*net;
@@ -361,6 +374,8 @@ extern void vpip_part_select_value_change(struct __vpiCallback*cbh, vpiHandle ob
 struct __vpiModPathTerm : public __vpiHandle {
       __vpiModPathTerm();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      vpiHandle vpi_handle(int code);
 
       vpiHandle expr;
 	/* The value returned by vpi_get(vpiEdge, ...); */
@@ -370,6 +385,14 @@ struct __vpiModPathTerm : public __vpiHandle {
 struct __vpiModPathSrc : public __vpiHandle {
       __vpiModPathSrc();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code);
+      vpiHandle vpi_iterate(int code);
+      vpiHandle vpi_index(int idx);
+      void vpi_get_delays(p_vpi_delay del);
+      void vpi_put_delays(p_vpi_delay del);
 
       struct __vpiModPath *dest;
       int   type;
@@ -421,6 +444,9 @@ extern struct __vpiModPath* vpip_make_modpath(vvp_net_t *net) ;
 struct __vpiNamedEvent : public __vpiHandle {
       __vpiNamedEvent();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      vpiHandle vpi_handle(int code);
 
 	/* base name of the event object */
       const char*name;
@@ -452,6 +478,12 @@ extern bool is_net_array(vpiHandle obj);
 struct __vpiRealVar : public __vpiHandle {
       __vpiRealVar();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code);
+      vpiHandle vpi_iterate(int code);
 
       union { // The scope or parent array that contains me.
 	    vpiHandle parent;
@@ -532,6 +564,15 @@ extern struct __vpiSysTaskCall*vpip_cur_task;
 struct __vpiStringConst : public __vpiHandle {
       __vpiStringConst();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char*vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code);
+      vpiHandle vpi_iterate(int code);
+      vpiHandle vpi_index(int idx);
+      void vpi_get_delays(p_vpi_delay del);
+      void vpi_put_delays(p_vpi_delay del);
 
       char*value;
       size_t value_len;
@@ -546,6 +587,15 @@ vpiHandle vpip_make_string_param(char*name, char*value,
 struct __vpiBinaryConst : public __vpiHandle {
       __vpiBinaryConst();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char*vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code);
+      vpiHandle vpi_iterate(int code);
+      vpiHandle vpi_index(int idx);
+      void vpi_get_delays(p_vpi_delay del);
+      void vpi_put_delays(p_vpi_delay del);
 
       vvp_vector4_t bits;
 	/* TRUE if this constant is signed. */
@@ -564,6 +614,15 @@ vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
 struct __vpiDecConst : public __vpiHandle {
       __vpiDecConst(int val =0);
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code);
+      vpiHandle vpi_iterate(int code);
+      vpiHandle vpi_index(int idx);
+      void vpi_get_delays(p_vpi_delay del);
+      void vpi_put_delays(p_vpi_delay del);
 
       int value;
 };
@@ -571,6 +630,15 @@ struct __vpiDecConst : public __vpiHandle {
 struct __vpiRealConst : public __vpiHandle {
       __vpiRealConst();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char*vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code);
+      vpiHandle vpi_iterate(int code);
+      vpiHandle vpi_index(int idx);
+      void vpi_get_delays(p_vpi_delay del);
+      void vpi_put_delays(p_vpi_delay del);
 
       double value;
     protected:

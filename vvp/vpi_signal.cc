@@ -860,14 +860,32 @@ vvp_vector4_t vec4_from_vpi_value(s_vpi_value*vp, unsigned wid)
       return val;
 }
 
+int __vpiSignal::vpi_get(int code)
+{ return signal_get(code, this); }
+
+char* __vpiSignal::vpi_get_str(int code)
+{ return signal_get_str(code, this); }
+
+void __vpiSignal::vpi_get_value(p_vpi_value val)
+{ signal_get_value(this, val); }
+
+vpiHandle __vpiSignal::vpi_put_value(p_vpi_value val, int flags)
+{ return signal_put_value(this, val, flags); }
+
+vpiHandle __vpiSignal::vpi_handle(int code)
+{ return signal_get_handle(code, this); }
+
+vpiHandle __vpiSignal::vpi_iterate(int code)
+{ return signal_iterate(code, this); }
+
 static const struct __vpirt vpip_reg_rt = {
       vpiReg,
-      signal_get,
-      signal_get_str,
-      signal_get_value,
-      signal_put_value,
-      signal_get_handle,
-      signal_iterate,
+      0, //Inherit from __vpiSignal: signal_get,
+      0, //Inherit from __vpiSignal: signal_get_str,
+      0, //Inherit from __vpiSignal: signal_get_value,
+      0, //Inherit from __vpiSignal: signal_put_value,
+      0, //Inherit from __vpiSignal: signal_get_handle,
+      0, //Inherit from __vpiSignal: signal_iterate,
       0,
       0,
       0,
@@ -880,12 +898,12 @@ struct signal_reg : public __vpiSignal {
 
 static const struct __vpirt vpip_integer_rt = {
       vpiIntegerVar,
-      signal_get,
-      signal_get_str,
-      signal_get_value,
-      signal_put_value,
-      signal_get_handle,
-      signal_iterate,
+      0, //Inherit from __vpiSignal: signal_get,
+      0, //Inherit from __vpiSignal: signal_get_str,
+      0, //Inherit from __vpiSignal: signal_get_value,
+      0, //Inherit from __vpiSignal: signal_put_value,
+      0, //Inherit from __vpiSignal: signal_get_handle,
+      0, //Inherit from __vpiSignal: signal_iterate,
       0,
       0,
       0,
@@ -898,12 +916,12 @@ struct signal_integer : public __vpiSignal {
 
 static const struct __vpirt vpip_net_rt = {
       vpiNet,
-      signal_get,
-      signal_get_str,
-      signal_get_value,
-      signal_put_value,
-      signal_get_handle,
-      signal_iterate,
+      0, //Inherit from __vpiSignal: signal_get,
+      0, //Inherit from __vpiSignal: signal_get_str,
+      0, //Inherit from __vpiSignal: signal_get_value,
+      0, //Inherit from __vpiSignal: signal_put_value,
+      0, //Inherit from __vpiSignal: signal_get_handle,
+      0, //Inherit from __vpiSignal: signal_iterate,
       0,
       0,
       0,
@@ -916,12 +934,12 @@ struct signal_net : public __vpiSignal {
 
 static const struct __vpirt vpip_byte_rt = {
       vpiByteVar,
-      signal_get,
-      signal_get_str,
-      signal_get_value,
-      signal_put_value,
-      signal_get_handle,
-      signal_iterate,
+      0, //Inherit from __vpiSignal: signal_get,
+      0, //Inherit from __vpiSignal: signal_get_str,
+      0, //Inherit from __vpiSignal: signal_get_value,
+      0, //Inherit from __vpiSignal: signal_put_value,
+      0, //Inherit from __vpiSignal: signal_get_handle,
+      0, //Inherit from __vpiSignal: signal_iterate,
       0,
       0,
       0,
@@ -934,12 +952,12 @@ struct signal_byte : public __vpiSignal {
 
 static const struct __vpirt vpip_bitvar_rt = {
       vpiBitVar,
-      signal_get,
-      signal_get_str,
-      signal_get_value,
-      signal_put_value,
-      signal_get_handle,
-      signal_iterate,
+      0, //Inherit from __vpiSignal: signal_get,
+      0, //Inherit from __vpiSignal: signal_get_str,
+      0, //Inherit from __vpiSignal: signal_get_value,
+      0, //Inherit from __vpiSignal: signal_put_value,
+      0, //Inherit from __vpiSignal: signal_get_handle,
+      0, //Inherit from __vpiSignal: signal_iterate,
       0,
       0,
       0,
@@ -952,12 +970,12 @@ struct signal_bitvar : public __vpiSignal {
 
 static const struct __vpirt vpip_shortint_rt = {
       vpiShortIntVar,
-      signal_get,
-      signal_get_str,
-      signal_get_value,
-      signal_put_value,
-      signal_get_handle,
-      signal_iterate,
+      0, //Inherit from __vpiSignal: signal_get,
+      0, //Inherit from __vpiSignal: signal_get_str,
+      0, //Inherit from __vpiSignal: signal_get_value,
+      0, //Inherit from __vpiSignal: signal_put_value,
+      0, //Inherit from __vpiSignal: signal_get_handle,
+      0, //Inherit from __vpiSignal: signal_iterate,
       0,
       0,
       0,
@@ -970,12 +988,12 @@ struct signal_shortint : public __vpiSignal {
 
 static const struct __vpirt vpip_int_rt = {
       vpiIntVar,
-      signal_get,
-      signal_get_str,
-      signal_get_value,
-      signal_put_value,
-      signal_get_handle,
-      signal_iterate,
+      0, //Inherit from __vpiSignal: signal_get,
+      0, //Inherit from __vpiSignal: signal_get_str,
+      0, //Inherit from __vpiSignal: signal_get_value,
+      0, //Inherit from __vpiSignal: signal_put_value,
+      0, //Inherit from __vpiSignal: signal_get_handle,
+      0, //Inherit from __vpiSignal: signal_iterate,
       0,
       0,
       0,
@@ -988,12 +1006,12 @@ struct signal_int : public __vpiSignal {
 
 static const struct __vpirt vpip_longint_rt = {
       vpiLongIntVar,
-      signal_get,
-      signal_get_str,
-      signal_get_value,
-      signal_put_value,
-      signal_get_handle,
-      signal_iterate,
+      0, //Inherit from __vpiSignal: signal_get,
+      0, //Inherit from __vpiSignal: signal_get_str,
+      0, //Inherit from __vpiSignal: signal_get_value,
+      0, //Inherit from __vpiSignal: signal_put_value,
+      0, //Inherit from __vpiSignal: signal_get_handle,
+      0, //Inherit from __vpiSignal: signal_iterate,
       0,
       0,
       0,
@@ -1378,6 +1396,7 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int)
 
       vvp_vector4_t val = vec4_from_vpi_value(vp, width);
 
+      fprintf(stderr, "XXXX PV_put_value(..)\n");
 	/*
 	 * If the base is less than zero then trim off any unneeded
 	 * lower bits.
@@ -1429,11 +1448,11 @@ static vpiHandle PV_get_handle(int code, vpiHandle ref)
 
 static const struct __vpirt vpip_PV_rt = {
       vpiPartSelect,
-      PV_get,
-      PV_get_str,
-      PV_get_value,
-      PV_put_value,
-      PV_get_handle,
+      0, //PV_get,
+      0, //PV_get_str,
+      0, //PV_get_value,
+      0, //PV_put_value,
+      0, //PV_get_handle,
       0,
       0,
       0,
@@ -1447,6 +1466,21 @@ inline __vpiPV::__vpiPV()
 
 int __vpiPV::get_type_code(void) const
 { return vpiPartSelect; }
+
+int __vpiPV::vpi_get(int code)
+{ return PV_get(code, this); }
+
+char* __vpiPV::vpi_get_str(int code)
+{ return PV_get_str(code, this); }
+
+void __vpiPV::vpi_get_value(p_vpi_value val)
+{ PV_get_value(this, val); }
+
+vpiHandle __vpiPV::vpi_put_value(p_vpi_value val, int flags)
+{ return PV_put_value(this, val, flags); }
+
+vpiHandle __vpiPV::vpi_handle(int code)
+{ return PV_get_handle(code, this); }
 
 vpiHandle vpip_make_PV(char*var, int base, int width)
 {

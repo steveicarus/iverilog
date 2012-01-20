@@ -28,6 +28,9 @@
 struct enumconst_s : public __vpiHandle {
       enumconst_s();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
 
       const char*name;
       vvp_vector2_t val2;
@@ -37,6 +40,9 @@ struct enumconst_s : public __vpiHandle {
 struct __vpiEnumTypespec : public __vpiHandle {
       __vpiEnumTypespec();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char*vpi_get_str(int code);
+      vpiHandle vpi_iterate(int code);
 
       std::vector<enumconst_s> names;
       int base_type_code;
@@ -89,12 +95,12 @@ static vpiHandle enum_type_iterate(int code, vpiHandle obj)
 
 static const struct __vpirt enum_type_rt = {
       vpiEnumTypespec,
-      enum_type_get,
+      0, //enum_type_get,
       0, //enum_type_get_str,
       0, //enum_type_get_value,
       0, //enum_type_put_value,
       0, //enum_type_handle,
-      enum_type_iterate,
+      0, //enum_type_iterate,
       0, //enum_type_index,
       0, //enum_type_free_object,
       0, //enum_type_get_delays,
@@ -108,6 +114,15 @@ inline __vpiEnumTypespec::__vpiEnumTypespec()
 
 int __vpiEnumTypespec::get_type_code(void) const
 { return vpiEnumTypespec; }
+
+int __vpiEnumTypespec::vpi_get(int code)
+{ return enum_type_get(code, this); }
+
+char* __vpiEnumTypespec::vpi_get_str(int)
+{ return 0; }
+
+vpiHandle __vpiEnumTypespec::vpi_iterate(int code)
+{ return enum_type_iterate(code, this); }
 
 static int enum_name_get(int code, vpiHandle obj)
 {
@@ -148,9 +163,9 @@ static void enum_name_get_value(vpiHandle obj, p_vpi_value value)
 
 static const struct __vpirt enum_name_rt = {
       vpiEnumConst,
-      enum_name_get,
-      enum_name_get_str,
-      enum_name_get_value,
+      0, //enum_name_get,
+      0, //enum_name_get_str,
+      0, //enum_name_get_value,
       0, //enum_name_put_value,
       0, //enum_name_handle,
       0, //enum_name_iterate,
@@ -167,6 +182,15 @@ inline enumconst_s::enumconst_s()
 
 int enumconst_s::get_type_code(void) const
 { return vpiEnumConst; }
+
+int enumconst_s::vpi_get(int code)
+{ return enum_name_get(code, this); }
+
+char* enumconst_s::vpi_get_str(int code)
+{ return enum_name_get_str(code, this); }
+
+void enumconst_s::vpi_get_value(p_vpi_value val)
+{ enum_name_get_value(this, val); }
 
 void compile_enum2_type(char*label, long width, bool signed_flag,
                         std::list<struct enum_name_s>*names)

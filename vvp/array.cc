@@ -83,6 +83,11 @@ vvp_array_t array_find(const char*label)
 struct __vpiArray : public __vpiHandle {
       __vpiArray();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      vpiHandle vpi_handle(int code);
+      vpiHandle vpi_iterate(int code);
+      vpiHandle vpi_index(int idx);
 
       struct __vpiScope*scope;
       const char*name; /* Permanently allocated string */
@@ -108,6 +113,9 @@ struct __vpiArray : public __vpiHandle {
 struct __vpiArrayIterator : public __vpiHandle {
       __vpiArrayIterator();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      vpiHandle vpi_index(int idx);
 
       struct __vpiArray*array;
       unsigned next;
@@ -116,6 +124,10 @@ struct __vpiArrayIterator : public __vpiHandle {
 struct __vpiArrayIndex : public __vpiHandle {
       __vpiArrayIndex();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      vpiHandle vpi_iterate(int code);
+      vpiHandle vpi_index(int idx);
 
       struct __vpiDecConst *index;
       unsigned done;
@@ -125,6 +137,11 @@ struct __vpiArrayVthrA : public __vpiHandle {
 
       __vpiArrayVthrA();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code);
 
       struct __vpiArray*array;
 	// If this is set, then use it to get the index value.
@@ -195,6 +212,9 @@ struct __vpiArrayVthrA : public __vpiHandle {
 struct __vpiArrayVthrAPV : public __vpiHandle {
       __vpiArrayVthrAPV();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
 
       struct __vpiArray*array;
       unsigned word_sel;
@@ -259,11 +279,19 @@ struct __vpiArrayWord {
       struct as_word_t : public __vpiHandle {
 	    as_word_t();
 	    int get_type_code(void) const;
+	    int vpi_get(int code);
+	    char*vpi_get_str(int code);
+	    void vpi_get_value(p_vpi_value val);
+	    vpiHandle vpi_put_value(p_vpi_value val, int flags);
+	    vpiHandle vpi_handle(int code);
       } as_word;
 
       struct as_index_t : public __vpiHandle {
 	    as_index_t();
 	    int get_type_code(void) const;
+	    int vpi_get(int code);
+	    char*vpi_get_str(int code);
+	    void vpi_get_value(p_vpi_value val);
       } as_index;
 
       union {
@@ -305,13 +333,13 @@ static void vpi_array_vthr_APV_get_value(vpiHandle ref, p_vpi_value vp);
 
 static const struct __vpirt vpip_arraymem_rt = {
       vpiMemory,
-      vpi_array_get,
-      vpi_array_get_str,
+      0, //vpi_array_get,
+      0, //vpi_array_get_str,
       0,
       0,
-      vpi_array_get_handle,
-      vpi_array_iterate,
-      vpi_array_index,
+      0, //vpi_array_get_handle,
+      0, //vpi_array_iterate,
+      0, //vpi_array_index,
       0,
       0,
       0
@@ -324,6 +352,21 @@ inline __vpiArray::__vpiArray()
 int __vpiArray::get_type_code(void) const
 { return vpiMemory; }
 
+int __vpiArray::vpi_get(int code)
+{ return vpi_array_get(code, this); }
+
+char* __vpiArray::vpi_get_str(int code)
+{ return vpi_array_get_str(code, this); }
+
+vpiHandle __vpiArray::vpi_handle(int code)
+{ return vpi_array_get_handle(code, this); }
+
+vpiHandle __vpiArray::vpi_iterate(int code)
+{ return vpi_array_iterate(code, this); }
+
+vpiHandle __vpiArray::vpi_index(int idx)
+{ return vpi_array_index(this, idx); }
+
 static const struct __vpirt vpip_array_iterator_rt = {
       vpiIterator,
       0,
@@ -332,7 +375,7 @@ static const struct __vpirt vpip_array_iterator_rt = {
       0,
       0,
       0,
-      array_iterator_scan,
+      0, //array_iterator_scan,
       &array_iterator_free_object,
       0,
       0
@@ -346,6 +389,14 @@ inline __vpiArrayIterator::__vpiArrayIterator()
 int __vpiArrayIterator::get_type_code(void) const
 { return vpiIterator; }
 
+int __vpiArrayIterator::vpi_get(int)
+{ return vpiUndefined; }
+
+char* __vpiArrayIterator::vpi_get_str(int)
+{ return 0; }
+
+vpiHandle __vpiArrayIterator::vpi_index(int code)
+{ return array_iterator_scan(this, code); }
 
 /* This should look a bit odd since it provides a fake iteration on
  * this object. This trickery is used to implement the two forms of
@@ -357,8 +408,8 @@ static const struct __vpirt vpip_array_index_rt = {
       0,
       0,
       0,
-      array_index_iterate,
-      array_index_scan,
+      0, //array_index_iterate,
+      0, //array_index_scan,
       array_index_free_object,
       0,
       0
@@ -372,13 +423,25 @@ inline __vpiArrayIndex::__vpiArrayIndex()
 int __vpiArrayIndex::get_type_code(void) const
 { return vpiIterator; }
 
+int __vpiArrayIndex::vpi_get(int)
+{ return vpiUndefined; }
+
+char* __vpiArrayIndex::vpi_get_str(int)
+{ return 0; }
+
+vpiHandle __vpiArrayIndex::vpi_iterate(int code)
+{ return array_index_iterate(code, this); }
+
+vpiHandle __vpiArrayIndex::vpi_index(int idx)
+{ return array_index_scan(this, idx); }
+
 static const struct __vpirt vpip_array_var_word_rt = {
       vpiMemoryWord,
-      &vpi_array_var_word_get,
-      &vpi_array_var_word_get_str,
-      &vpi_array_var_word_get_value,
-      &vpi_array_var_word_put_value,
-      &vpi_array_var_word_get_handle,
+      0, //&vpi_array_var_word_get,
+      0, //&vpi_array_var_word_get_str,
+      0, //&vpi_array_var_word_get_value,
+      0, //&vpi_array_var_word_put_value,
+      0, //&vpi_array_var_word_get_handle,
       0,
       0,
       0,
@@ -392,6 +455,21 @@ inline __vpiArrayWord::as_word_t::as_word_t()
 
 int __vpiArrayWord::as_word_t::get_type_code(void) const
 { return vpiMemoryWord; }
+
+int __vpiArrayWord::as_word_t::vpi_get(int code)
+{ return vpi_array_var_word_get(code, this); }
+
+char* __vpiArrayWord::as_word_t::vpi_get_str(int code)
+{ return vpi_array_var_word_get_str(code, this); }
+
+void __vpiArrayWord::as_word_t::vpi_get_value(p_vpi_value val)
+{ vpi_array_var_word_get_value(this, val); }
+
+vpiHandle __vpiArrayWord::as_word_t::vpi_put_value(p_vpi_value val, int flags)
+{ return vpi_array_var_word_put_value(this, val, flags); }
+
+vpiHandle __vpiArrayWord::as_word_t::vpi_handle(int code)
+{ return vpi_array_var_word_get_handle(code, this); }
 
 static const struct __vpirt vpip_array_var_index_rt = {
       vpiIndex,
@@ -414,13 +492,22 @@ inline __vpiArrayWord::as_index_t::as_index_t()
 int __vpiArrayWord::as_index_t::get_type_code(void) const
 { return vpiIndex; }
 
+int __vpiArrayWord::as_index_t::vpi_get(int)
+{ return vpiUndefined; }
+
+char* __vpiArrayWord::as_index_t::vpi_get_str(int)
+{ return 0; }
+
+void __vpiArrayWord::as_index_t::vpi_get_value(p_vpi_value val)
+{ vpi_array_var_index_get_value(this, val); }
+
 static const struct __vpirt vpip_array_vthr_A_rt = {
       vpiMemoryWord,
-      &vpi_array_vthr_A_get,
-      &vpi_array_vthr_A_get_str,
-      &vpi_array_vthr_A_get_value,
-      &vpi_array_vthr_A_put_value,
-      &vpi_array_vthr_A_get_handle,
+      0, //&vpi_array_vthr_A_get,
+      0, //&vpi_array_vthr_A_get_str,
+      0, //&vpi_array_vthr_A_get_value,
+      0, //&vpi_array_vthr_A_put_value,
+      0, //&vpi_array_vthr_A_get_handle,
       0,
       0,
       0,
@@ -436,11 +523,26 @@ inline __vpiArrayVthrA::__vpiArrayVthrA()
 int __vpiArrayVthrA::get_type_code(void) const
 { return vpiMemoryWord; }
 
+int __vpiArrayVthrA::vpi_get(int code)
+{ return vpi_array_vthr_A_get(code, this); }
+
+char* __vpiArrayVthrA::vpi_get_str(int code)
+{ return vpi_array_vthr_A_get_str(code, this); }
+
+void __vpiArrayVthrA::vpi_get_value(p_vpi_value val)
+{ vpi_array_vthr_A_get_value(this, val); }
+
+vpiHandle __vpiArrayVthrA::vpi_put_value(p_vpi_value val, int flags)
+{ return vpi_array_vthr_A_put_value(this, val, flags); }
+
+vpiHandle __vpiArrayVthrA::vpi_handle(int code)
+{ return vpi_array_vthr_A_get_handle(code, this); }
+
 static const struct __vpirt vpip_array_vthr_APV_rt = {
       vpiMemoryWord,
-      &vpi_array_vthr_APV_get,
-      &vpi_array_vthr_APV_get_str,
-      &vpi_array_vthr_APV_get_value,
+      0, //&vpi_array_vthr_APV_get,
+      0, //&vpi_array_vthr_APV_get_str,
+      0, //&vpi_array_vthr_APV_get_value,
       0, //&vpi_array_vthr_A_put_value,
       0, //&vpi_array_vthr_A_get_handle,
       0,
@@ -457,6 +559,15 @@ inline __vpiArrayVthrAPV::__vpiArrayVthrAPV()
 
 int __vpiArrayVthrAPV::get_type_code(void) const
 { return vpiMemoryWord; }
+
+int __vpiArrayVthrAPV::vpi_get(int code)
+{ return vpi_array_vthr_APV_get(code, this); }
+
+char* __vpiArrayVthrAPV::vpi_get_str(int code)
+{ return vpi_array_vthr_APV_get_str(code, this); }
+
+void __vpiArrayVthrAPV::vpi_get_value(p_vpi_value val)
+{ vpi_array_vthr_APV_get_value(this, val); }
 
 static struct __vpiArrayWord* array_var_word_from_handle(vpiHandle ref)
 {

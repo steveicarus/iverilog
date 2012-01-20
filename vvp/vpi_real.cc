@@ -138,13 +138,13 @@ static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp, int)
 static const struct __vpirt vpip_real_var_rt = {
       vpiRealVar,
 
-      real_var_get,
-      real_var_get_str,
-      real_var_get_value,
-      real_var_put_value,
+      0, //real_var_get,
+      0, //real_var_get_str,
+      0, //real_var_get_value,
+      0, //real_var_put_value,
 
-      real_var_get_handle,
-      real_var_iterate,
+      0, //real_var_get_handle,
+      0, //real_var_iterate,
       0,
       0,
       0,
@@ -158,6 +158,23 @@ inline __vpiRealVar::__vpiRealVar()
 int __vpiRealVar::get_type_code(void) const
 { return vpiRealVar; }
 
+int __vpiRealVar::vpi_get(int code)
+{ return real_var_get(code, this); }
+
+char* __vpiRealVar::vpi_get_str(int code)
+{ return real_var_get_str(code, this); }
+
+void __vpiRealVar::vpi_get_value(p_vpi_value val)
+{ real_var_get_value(this, val); }
+
+vpiHandle __vpiRealVar::vpi_put_value(p_vpi_value val, int flags)
+{ return real_var_put_value(this, val, flags); }
+
+vpiHandle __vpiRealVar::vpi_handle(int code)
+{ return real_var_get_handle(code, this); }
+
+vpiHandle __vpiRealVar::vpi_iterate(int code)
+{ return real_var_iterate(code, this); }
 
 void vpip_real_value_change(struct __vpiCallback*cbh,
 			     vpiHandle ref)

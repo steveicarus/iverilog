@@ -34,6 +34,37 @@ FILE*vpi_trace = 0;
 static s_vpi_vlog_info  vpi_vlog_info;
 static s_vpi_error_info vpip_last_error = { 0, 0, 0, 0, 0, 0, 0 };
 
+__vpiHandle::~__vpiHandle()
+{ }
+
+int __vpiHandle::vpi_get(int)
+{ return vpiUndefined; }
+
+char* __vpiHandle::vpi_get_str(int)
+{ return 0; }
+
+void __vpiHandle::vpi_get_value(p_vpi_value)
+{ }
+
+vpiHandle __vpiHandle::vpi_put_value(p_vpi_value, int)
+{ return 0; }
+
+vpiHandle __vpiHandle::vpi_handle(int)
+{ return 0; }
+
+vpiHandle __vpiHandle::vpi_iterate(int)
+{ return 0; }
+
+vpiHandle __vpiHandle::vpi_index(int)
+{ return 0; }
+
+void __vpiHandle::vpi_get_delays(p_vpi_delay)
+{ }
+
+void __vpiHandle::vpi_put_delays(p_vpi_delay)
+{ }
+
+
 /*
  * The vpip_string function creates a constant string from the pass
  * input. This constant string is permanently allocated from an
@@ -918,9 +949,6 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 			s_vpi_time*when, PLI_INT32 flags)
 {
       assert(obj);
-
-      if (! obj->can_put_value())
-	    return 0;
 
       flags &= ~vpiReturnEvent;
 

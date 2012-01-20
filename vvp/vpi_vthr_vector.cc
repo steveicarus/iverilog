@@ -38,6 +38,10 @@
 struct __vpiVThrVec : public __vpiHandle {
       __vpiVThrVec();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
 
       unsigned bas;
       unsigned wid;
@@ -436,10 +440,10 @@ static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp, int)
 
 static const struct __vpirt vpip_vthr_const_rt = {
       vpiConstant,
-      vthr_vec_get,
-      vthr_vec_get_str,
-      vthr_vec_get_value,
-      vthr_vec_put_value,
+      0, //vthr_vec_get,
+      0, //vthr_vec_get_str,
+      0, //vthr_vec_get_value,
+      0, //vthr_vec_put_value,
       0,
       0,
       0,
@@ -455,6 +459,17 @@ inline __vpiVThrVec::__vpiVThrVec()
 int __vpiVThrVec::get_type_code(void) const
 { return vpiConstant; }
 
+int __vpiVThrVec::vpi_get(int code)
+{ return vthr_vec_get(code, this); }
+
+char* __vpiVThrVec::vpi_get_str(int code)
+{ return vthr_vec_get_str(code, this); }
+
+void __vpiVThrVec::vpi_get_value(p_vpi_value val)
+{ vthr_vec_get_value(this, val); }
+
+vpiHandle __vpiVThrVec::vpi_put_value(p_vpi_value val, int flags)
+{ return vthr_vec_put_value(this, val, flags); }
 
 /*
  * Construct a vpiReg object. Give the object specified dimensions,
@@ -491,6 +506,8 @@ static void thread_vthr_delete_real(vpiHandle item)
 struct __vpiVThrWord : public __vpiHandle {
       __vpiVThrWord();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
 
       const char* name;
       int subtype;
@@ -588,9 +605,9 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 
 static const struct __vpirt vpip_vthr_const_real_rt = {
       vpiConstant,
-      vthr_word_get,
+      0, //vthr_word_get,
       0,
-      vthr_real_get_value,
+      0, //vthr_real_get_value,
       0,
       0,
       0,
@@ -606,6 +623,12 @@ inline __vpiVThrWord::__vpiVThrWord()
 
 int __vpiVThrWord::get_type_code(void) const
 { return vpiConstant; }
+
+int __vpiVThrWord::vpi_get(int code)
+{ return vthr_word_get(code, this); }
+
+void __vpiVThrWord::vpi_get_value(p_vpi_value val)
+{ vthr_real_get_value(this, val); }
 
 vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 {

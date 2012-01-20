@@ -156,12 +156,12 @@ static vpiHandle systask_iter(int, vpiHandle ref)
 
 static const struct __vpirt vpip_systask_rt = {
       vpiSysTaskCall,
-      systask_get,
-      systask_get_str,
+      0, //systask_get,
+      0, //systask_get_str,
       0,
       0,
-      systask_handle,
-      systask_iter,
+      0, //systask_handle,
+      0, //systask_iter,
       0,
       0,
       0,
@@ -170,6 +170,10 @@ static const struct __vpirt vpip_systask_rt = {
 struct systask_def : public __vpiSysTaskCall {
       inline systask_def() : __vpiSysTaskCall(&vpip_systask_rt) { }
       int get_type_code(void) const { return vpiSysTaskCall; }
+      int vpi_get(int code)         { return systask_get(code, this); }
+      char*vpi_get_str(int code)    { return systask_get_str(code, this); }
+      vpiHandle vpi_handle(int code) { return systask_handle(code, this); }
+      vpiHandle vpi_iterate(int code){ return systask_iter(code, this); }
 };
 
 /*
@@ -467,12 +471,12 @@ static vpiHandle sysfunc_put_no_value(vpiHandle, p_vpi_value, int)
 
 static const struct __vpirt vpip_sysfunc_rt = {
       vpiSysFuncCall,
-      sysfunc_get,
-      systask_get_str,
+      0, //sysfunc_get,
+      0, //systask_get_str,
       0,
-      sysfunc_put_value,
-      systask_handle,
-      systask_iter,
+      0, //sysfunc_put_value,
+      0, //systask_handle,
+      0, //systask_iter,
       0,
       0,
       0,
@@ -481,16 +485,24 @@ static const struct __vpirt vpip_sysfunc_rt = {
 struct sysfunc_def : public __vpiSysTaskCall {
       inline sysfunc_def() : __vpiSysTaskCall(&vpip_sysfunc_rt) { }
       int get_type_code(void) const { return vpiSysFuncCall; }
+      int vpi_get(int code)         { return sysfunc_get(code, this); }
+      char* vpi_get_str(int code)   { return systask_get_str(code, this); }
+      vpiHandle vpi_put_value(p_vpi_value val, int flags)
+            { return sysfunc_put_value(this, val, flags); }
+      vpiHandle vpi_handle(int code)
+            { return systask_handle(code, this); }
+      vpiHandle vpi_iterate(int code)
+            { return systask_iter(code, this); }
 };
 
 static const struct __vpirt vpip_sysfunc_real_rt = {
       vpiSysFuncCall,
-      sysfunc_get,
-      systask_get_str,
+      0, //sysfunc_get,
+      0, //systask_get_str,
       0,
-      sysfunc_put_real_value,
-      systask_handle,
-      systask_iter,
+      0, //sysfunc_put_real_value,
+      0, //systask_handle,
+      0, //systask_iter,
       0,
       0,
       0,
@@ -499,16 +511,24 @@ static const struct __vpirt vpip_sysfunc_real_rt = {
 struct sysfunc_real : public __vpiSysTaskCall {
       inline sysfunc_real() : __vpiSysTaskCall(&vpip_sysfunc_real_rt) { }
       int get_type_code(void) const { return vpiSysFuncCall; }
+      int vpi_get(int code)         { return sysfunc_get(code, this); }
+      char* vpi_get_str(int code)   { return systask_get_str(code, this); }
+      vpiHandle vpi_put_value(p_vpi_value val, int flags)
+            { return sysfunc_put_real_value(this, val, flags); }
+      vpiHandle vpi_handle(int code)
+            { return systask_handle(code, this); }
+      vpiHandle vpi_iterate(int code)
+            { return systask_iter(code, this); }
 };
 
 static const struct __vpirt vpip_sysfunc_4net_rt = {
       vpiSysFuncCall,
-      sysfunc_get,
-      systask_get_str,
+      0, //sysfunc_get,
+      0, //systask_get_str,
       0,
-      sysfunc_put_4net_value,
-      systask_handle,
-      systask_iter,
+      0, //sysfunc_put_4net_value,
+      0, //systask_handle,
+      0, //systask_iter,
       0,
       0,
       0,
@@ -517,16 +537,24 @@ static const struct __vpirt vpip_sysfunc_4net_rt = {
 struct sysfunc_4net : public __vpiSysTaskCall {
       inline sysfunc_4net() : __vpiSysTaskCall(&vpip_sysfunc_4net_rt) { }
       int get_type_code(void) const { return vpiSysFuncCall; }
+      int vpi_get(int code)         { return sysfunc_get(code, this); }
+      char* vpi_get_str(int code)   { return systask_get_str(code, this); }
+      vpiHandle vpi_put_value(p_vpi_value val, int flags)
+            { return sysfunc_put_4net_value(this, val, flags); }
+      vpiHandle vpi_handle(int code)
+            { return systask_handle(code, this); }
+      vpiHandle vpi_iterate(int code)
+            { return systask_iter(code, this); }
 };
 
 static const struct __vpirt vpip_sysfunc_rnet_rt = {
       vpiSysFuncCall,
-      sysfunc_get,
-      systask_get_str,
+      0, //sysfunc_get,
+      0, //systask_get_str,
       0,
-      sysfunc_put_rnet_value,
-      systask_handle,
-      systask_iter,
+      0, //sysfunc_put_rnet_value,
+      0, //systask_handle,
+      0, //systask_iter,
       0,
       0,
       0,
@@ -535,12 +563,20 @@ static const struct __vpirt vpip_sysfunc_rnet_rt = {
 struct sysfunc_rnet : public __vpiSysTaskCall {
       inline sysfunc_rnet() : __vpiSysTaskCall(&vpip_sysfunc_rnet_rt) { }
       int get_type_code(void) const { return vpiSysFuncCall; }
+      int vpi_get(int code)         { return sysfunc_get(code, this); }
+      char* vpi_get_str(int code)   { return systask_get_str(code, this); }
+      vpiHandle vpi_put_value(p_vpi_value val, int flags)
+            { return sysfunc_put_rnet_value(this, val, flags); }
+      vpiHandle vpi_handle(int code)
+            { return systask_handle(code, this); }
+      vpiHandle vpi_iterate(int code)
+            { return systask_iter(code, this); }
 };
 
 static const struct __vpirt vpip_sysfunc_no_rt = {
       vpiSysFuncCall,
-      sysfunc_get,
-      systask_get_str,
+      0, //sysfunc_get,
+      0, //systask_get_str,
       0,
       sysfunc_put_no_value,
       systask_handle,
@@ -553,6 +589,14 @@ static const struct __vpirt vpip_sysfunc_no_rt = {
 struct sysfunc_no : public __vpiSysTaskCall {
       inline sysfunc_no() : __vpiSysTaskCall(&vpip_sysfunc_no_rt) { }
       int get_type_code(void) const { return vpiSysFuncCall; }
+      int vpi_get(int code)         { return sysfunc_get(code, this); }
+      char* vpi_get_str(int code)   { return systask_get_str(code, this); }
+      vpiHandle vpi_put_value(p_vpi_value val, int flags)
+            { return sysfunc_put_no_value(this, val, flags); }
+      vpiHandle vpi_handle(int code)
+            { return systask_handle(code, this); }
+      vpiHandle vpi_iterate(int code)
+            { return systask_iter(code, this); }
 };
 
   /* **** Manipulate the internal data structures. **** */
@@ -603,6 +647,7 @@ void def_table_delete(void)
 struct __vpiSystfIterator : public __vpiHandle {
       __vpiSystfIterator();
       int get_type_code(void) const;
+      vpiHandle vpi_index(int idx);
 
       unsigned next;
 };
@@ -644,7 +689,7 @@ static const struct __vpirt vpip_systf_iterator_rt = {
       0,
       0,
       0,
-      systf_iterator_scan,
+      0, //systf_iterator_scan,
       systf_iterator_free_object,
       0,
       0
@@ -656,6 +701,9 @@ inline __vpiSystfIterator::__vpiSystfIterator()
 
 int __vpiSystfIterator::get_type_code(void) const
 { return vpiIterator; }
+
+vpiHandle __vpiSystfIterator::vpi_index(int idx)
+{ return systf_iterator_scan(this, idx); }
 
 vpiHandle vpip_make_systf_iterator(void)
 {

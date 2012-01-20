@@ -22,6 +22,8 @@
 struct __vpiFileLine : public __vpiHandle {
       __vpiFileLine();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
 
       const char *description;
       unsigned file_idx;
@@ -63,8 +65,8 @@ static char *file_line_get_str(int type, vpiHandle ref)
 
 static const struct __vpirt vpip_file_line_rt = {
        _vpiFileLine,
-       file_line_get,
-       file_line_get_str,
+       0, //file_line_get,
+       0, //file_line_get_str,
        0,
        0,
        0,
@@ -82,6 +84,13 @@ inline __vpiFileLine::__vpiFileLine()
 
 int __vpiFileLine::get_type_code(void) const
 { return _vpiFileLine; }
+
+int __vpiFileLine::vpi_get(int code)
+{ return file_line_get(code, this); }
+
+char* __vpiFileLine::vpi_get_str(int code)
+{ return file_line_get_str(code, this); }
+
 
 vpiHandle vpip_build_file_line(char*description, long file_idx, long lineno)
 {

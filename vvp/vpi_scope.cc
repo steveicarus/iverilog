@@ -306,14 +306,26 @@ static vpiHandle module_iter(int code, vpiHandle obj)
 }
 
 
+int __vpiScope::vpi_get(int code)
+{ return scope_get(code, this); }
+
+char*__vpiScope::vpi_get_str(int code)
+{ return scope_get_str(code, this); }
+
+vpiHandle __vpiScope::vpi_handle(int code)
+{ return scope_get_handle(code, this); }
+
+vpiHandle __vpiScope::vpi_iterate(int code)
+{ return module_iter(code, this); }
+
 static const struct __vpirt vpip_scope_module_rt = {
       vpiModule,
-      scope_get,
-      scope_get_str,
+      0, // Inherit from__vpiScope: scope_get,
+      0, // Inherit from __vpiScope: scope_get_str,
       0,
       0,
-      scope_get_handle,
-      module_iter,
+      0, // Inherit from__vpiScope: scope_get_handle,
+      0, // Inherit from__vpiScope: module_iter,
       0,
       0,
       0,
@@ -327,12 +339,12 @@ struct vpiScopeModule  : public __vpiScope {
 
 static const struct __vpirt vpip_scope_task_rt = {
       vpiTask,
-      scope_get,
-      scope_get_str,
+      0, // Inherit from__vpiScope: scope_get,
+      0, // Inherit from __vpiScope: scope_get_str,
       0,
       0,
-      scope_get_handle,
-      module_iter,
+      0, // Inherit from__vpiScope: scope_get_handle,
+      0, // Inherit from__vpiScope: module_iter,
       0,
       0,
       0,
@@ -346,12 +358,12 @@ struct vpiScopeTask  : public __vpiScope {
 
 static const struct __vpirt vpip_scope_function_rt = {
       vpiFunction,
-      scope_get,
-      scope_get_str,
+      0, // Inherit from__vpiScope: scope_get,
+      0, // Inherit from __vpiScope: scope_get_str,
       0,
       0,
-      scope_get_handle,
-      module_iter,
+      0, // Inherit from__vpiScope: scope_get_handle,
+      0, // Inherit from__vpiScope: module_iter,
       0,
       0,
       0,
@@ -365,12 +377,12 @@ struct vpiScopeFunction  : public __vpiScope {
 
 static const struct __vpirt vpip_scope_begin_rt = {
       vpiNamedBegin,
-      scope_get,
-      scope_get_str,
+      0, // Inherit from__vpiScope: scope_get,
+      0, // Inherit from __vpiScope: scope_get_str,
       0,
       0,
-      scope_get_handle,
-      module_iter,
+      0, // Inherit from__vpiScope: scope_get_handle,
+      0, // Inherit from__vpiScope: module_iter,
       0,
       0,
       0,
@@ -384,12 +396,12 @@ struct vpiScopeBegin  : public __vpiScope {
 
 static const struct __vpirt vpip_scope_fork_rt = {
       vpiNamedFork,
-      scope_get,
-      scope_get_str,
+      0, // Inherit from__vpiScope: scope_get,
+      0, // Inherit from __vpiScope: scope_get_str,
       0,
       0,
-      scope_get_handle,
-      module_iter,
+      0, // Inherit from__vpiScope: scope_get_handle,
+      0, // Inherit from__vpiScope: module_iter,
       0,
       0,
       0,

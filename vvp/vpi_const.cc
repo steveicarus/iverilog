@@ -168,9 +168,9 @@ static void string_value(vpiHandle ref, p_vpi_value vp)
 
 static const struct __vpirt vpip_string_rt = {
       vpiConstant,
-      string_get,
       0,
-      string_value,
+      0,
+      0, //string_value,
       0,
       0,
       0,
@@ -187,6 +187,33 @@ inline __vpiStringConst::__vpiStringConst()
 int __vpiStringConst::get_type_code(void) const
 { return vpiConstant; }
 
+int __vpiStringConst::vpi_get(int code)
+{ return string_get(code, this); }
+
+char*__vpiStringConst::vpi_get_str(int)
+{ return 0; }
+
+void __vpiStringConst::vpi_get_value(p_vpi_value val)
+{ string_value(this, val); }
+
+vpiHandle __vpiStringConst::vpi_put_value(p_vpi_value, int)
+{ return 0; }
+
+vpiHandle __vpiStringConst::vpi_handle(int)
+{ return 0; }
+
+vpiHandle __vpiStringConst::vpi_iterate(int)
+{ return 0; }
+
+vpiHandle __vpiStringConst::vpi_index(int)
+{ return 0; }
+
+void __vpiStringConst::vpi_get_delays(p_vpi_delay)
+{ }
+
+void __vpiStringConst::vpi_put_delays(p_vpi_delay)
+{ }
+
 struct __vpiStringConstTEMP : public __vpiStringConst {
       __vpiStringConstTEMP();
 };
@@ -201,10 +228,10 @@ static int free_temp_string(vpiHandle obj)
 }
 
 static const struct __vpirt vpip_string_temp_rt = {
-      vpiConstant,
-      string_get,
-      0,
-      string_value,
+      vpiConstant, // Inherit from __vpiStringConst
+      0, // Inherit from __vpiStringConst
+      0, // Inherit from __vpiStringConst
+      0, // Inherit from __vpiStringConst: string_value,
       0,
       0,
       0,
@@ -266,6 +293,9 @@ vpiHandle vpip_make_string_const(char*text, bool persistent_flag)
 struct __vpiStringParam  : public __vpiStringConst {
       __vpiStringParam();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char*vpi_get_str(int code);
+      vpiHandle vpi_handle(int code);
 
       const char*basename;
       struct __vpiScope* scope;
@@ -316,11 +346,11 @@ static vpiHandle string_param_handle(int code, vpiHandle obj)
 
 static const struct __vpirt vpip_string_param_rt = {
       vpiParameter,
-      string_param_get,
-      string_param_get_str,
-      string_value,
       0,
-      string_param_handle,
+      0,
+      0, // Inherit from __vpiStringConst string_value,
+      0,
+      0, //string_param_handle,
       0,
       0,
       0,
@@ -335,6 +365,15 @@ inline __vpiStringParam::__vpiStringParam()
 
 int __vpiStringParam::get_type_code(void) const
 { return vpiParameter; }
+
+int __vpiStringParam::vpi_get(int code)
+{ return string_param_get(code, this); }
+
+char*__vpiStringParam::vpi_get_str(int code)
+{ return string_param_get_str(code, this); }
+
+vpiHandle __vpiStringParam::vpi_handle(int code)
+{ return string_param_handle(code, this); }
 
 vpiHandle vpip_make_string_param(char*name, char*text,
                                  long file_idx, long lineno)
@@ -416,9 +455,9 @@ static void binary_value(vpiHandle ref, p_vpi_value vp)
 
 static const struct __vpirt vpip_binary_rt = {
       vpiConstant,
-      binary_get,
       0,
-      binary_value,
+      0,
+      0, //binary_value,
       0,
       0,
       0,
@@ -435,6 +474,33 @@ inline __vpiBinaryConst::__vpiBinaryConst()
 
 int __vpiBinaryConst::get_type_code(void) const
 { return vpiConstant; }
+
+int __vpiBinaryConst::vpi_get(int code)
+{ return binary_get(code, this); }
+
+char* __vpiBinaryConst::vpi_get_str(int)
+{ return 0; }
+
+void __vpiBinaryConst::vpi_get_value(p_vpi_value val)
+{ binary_value(this, val); }
+
+vpiHandle __vpiBinaryConst::vpi_put_value(p_vpi_value, int)
+{ return 0; }
+
+vpiHandle __vpiBinaryConst::vpi_handle(int)
+{ return 0; }
+
+vpiHandle __vpiBinaryConst::vpi_iterate(int)
+{ return 0; }
+
+vpiHandle __vpiBinaryConst::vpi_index(int)
+{ return 0; }
+
+void __vpiBinaryConst::vpi_get_delays(p_vpi_delay)
+{ }
+
+void __vpiBinaryConst::vpi_put_delays(p_vpi_delay)
+{ }
 
 /*
  * Make a VPI constant from a vector string. The string is normally a
@@ -489,6 +555,9 @@ vvp_vector4_t vector4_from_text(const char*bits, unsigned wid)
 struct __vpiBinaryParam  : public __vpiBinaryConst {
       __vpiBinaryParam();
       int get_type_code(void) const;
+      int vpi_get(int code);
+      char*vpi_get_str(int code);
+      vpiHandle vpi_handle(int code);
 
       const char*basename;
       struct __vpiScope*scope;
@@ -536,11 +605,11 @@ static vpiHandle binary_param_handle(int code, vpiHandle obj)
 
 static const struct __vpirt vpip_binary_param_rt = {
       vpiParameter,
-      binary_param_get,
-      binary_param_get_str,
-      binary_value,
       0,
-      binary_param_handle,
+      0,
+      0, //Inherit from __vpiBinaryConst: binary_value,
+      0,
+      0, //binary_param_handle,
       0,
       0,
       0,
@@ -554,6 +623,15 @@ inline __vpiBinaryParam::__vpiBinaryParam()
 
 int __vpiBinaryParam::get_type_code(void) const
 { return vpiParameter; }
+
+int __vpiBinaryParam::vpi_get(int code)
+{ return binary_param_get(code, this); }
+
+char*__vpiBinaryParam::vpi_get_str(int code)
+{ return binary_param_get_str(code, this); }
+
+vpiHandle __vpiBinaryParam::vpi_handle(int code)
+{ return binary_param_handle(code, this); }
 
 vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
 				 bool signed_flag,
@@ -654,9 +732,9 @@ static void dec_value(vpiHandle ref, p_vpi_value vp)
 
 static const struct __vpirt vpip_dec_rt = {
       vpiConstant,
-      dec_get,
       0,
-      dec_value,
+      0,
+      0, //dec_value,
       0,
       0,
       0,
@@ -673,6 +751,33 @@ __vpiDecConst::__vpiDecConst(int val)
 
 int __vpiDecConst::get_type_code(void) const
 { return vpiConstant; }
+
+int __vpiDecConst::vpi_get(int code)
+{ return dec_get(code, this); }
+
+char* __vpiDecConst::vpi_get_str(int)
+{ return 0; }
+
+void __vpiDecConst::vpi_get_value(p_vpi_value val)
+{ dec_value(this, val); }
+
+vpiHandle __vpiDecConst::vpi_put_value(p_vpi_value, int)
+{ return 0; }
+
+vpiHandle __vpiDecConst::vpi_handle(int)
+{ return 0; }
+
+vpiHandle __vpiDecConst::vpi_iterate(int)
+{ return 0; }
+
+vpiHandle __vpiDecConst::vpi_index(int)
+{ return 0; }
+
+void __vpiDecConst::vpi_get_delays(p_vpi_delay)
+{ }
+
+void __vpiDecConst::vpi_put_delays(p_vpi_delay)
+{ }
 
 static int real_get(int code, vpiHandle)
 {
@@ -714,9 +819,9 @@ static void real_value(vpiHandle ref, p_vpi_value vp)
 
 static const struct __vpirt vpip_real_rt = {
       vpiConstant,
-      real_get,
       0,
-      real_value,
+      0,
+      0, //real_value,
       0,
       0,
       0,
@@ -733,6 +838,32 @@ inline __vpiRealConst::__vpiRealConst()
 int __vpiRealConst::get_type_code(void) const
 { return vpiConstant; }
 
+int __vpiRealConst::vpi_get(int code)
+{ return real_get(code, this); }
+
+char* __vpiRealConst::vpi_get_str(int)
+{ return 0; }
+
+void __vpiRealConst::vpi_get_value(p_vpi_value val)
+{ real_value(this, val); }
+
+vpiHandle __vpiRealConst::vpi_put_value(p_vpi_value, int)
+{ return 0; }
+
+vpiHandle __vpiRealConst::vpi_handle(int)
+{ return 0; }
+
+vpiHandle __vpiRealConst::vpi_iterate(int)
+{ return 0; }
+
+vpiHandle __vpiRealConst::vpi_index(int)
+{ return 0; }
+
+void __vpiRealConst::vpi_get_delays(p_vpi_delay)
+{ }
+
+void __vpiRealConst::vpi_put_delays(p_vpi_delay)
+{ }
 
 vpiHandle vpip_make_real_const(double value)
 {
@@ -744,7 +875,10 @@ vpiHandle vpip_make_real_const(double value)
 struct __vpiRealParam  : public __vpiRealConst {
       __vpiRealParam();
       int get_type_code(void) const;
-
+      int vpi_get(int code);
+      char*vpi_get_str(int code);
+      vpiHandle vpi_handle(int code);
+ 
       const char*basename;
       struct __vpiScope* scope;
       unsigned file_idx;
@@ -791,11 +925,11 @@ static vpiHandle real_param_handle(int code, vpiHandle obj)
 
 static const struct __vpirt vpip_real_param_rt = {
       vpiParameter,
-      real_param_get,
-      real_param_get_str,
-      real_value,
       0,
-      real_param_handle,
+      0,
+      0, //Inherited from __vpiRealConst: real_value,
+      0,
+      0, //real_param_handle,
       0,
       0,
       0,
@@ -810,6 +944,15 @@ inline __vpiRealParam::__vpiRealParam()
 int __vpiRealParam::get_type_code(void) const
 { return vpiParameter; }
 
+int __vpiRealParam::vpi_get(int code)
+{ return real_param_get(code, this); }
+
+char* __vpiRealParam::vpi_get_str(int code)
+{ return real_param_get_str(code, this); }
+
+vpiHandle __vpiRealParam::vpi_handle(int code)
+{ return real_param_handle(code, this); }
+ 
 
 vpiHandle vpip_make_real_param(char*name, double value,
                                long file_idx, long lineno)
