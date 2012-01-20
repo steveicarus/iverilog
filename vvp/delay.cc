@@ -971,24 +971,8 @@ static vpiHandle pathterm_get_handle(int code, vpiHandle ref)
 * vpiModPath object. The __vpiModPath structure contains items that
 * are common to a bunch of modpaths, including the destination term.
 */
-static const struct __vpirt vpip_modpath_src_rt = {
-      vpiModPath,
-      0, //modpath_src_get,
-      0, /* vpi_get_str */
-      0, //modpath_src_get_value,
-      0, //modpath_src_put_value,
-      0, //modpath_src_get_handle,
-      0, //modpath_src_iterate,
-      0, //modpath_src_index,
-      modpath_src_free_object,
-      0, //modpath_src_get_delays,
-      0, //modpath_src_put_delays
-};
-
 inline __vpiModPathSrc::__vpiModPathSrc()
-: __vpiHandle(&vpip_modpath_src_rt)
-{
-}
+{ }
 
 int __vpiModPathSrc::get_type_code(void) const
 { return vpiModPath; }
@@ -1017,25 +1001,12 @@ void __vpiModPathSrc::vpi_get_delays(p_vpi_delay del)
 void __vpiModPathSrc::vpi_put_delays(p_vpi_delay del)
 { modpath_src_put_delays(this, del); }
 
+__vpiHandle::free_object_fun_t __vpiModPathSrc::free_object_fun(void)
+{ return &modpath_src_free_object; }
 
-static const struct __vpirt vpip_modpath_term_rt = {
-      vpiPathTerm,
-      0,
-      0, // vpi_get_str
-      0, // vpi_get_value,
-      0, // vpi_put_value,
-      0, //pathterm_get_handle,
-      0, // vpi_iterate,
-      0, // vpi_index,
-      0, // vpi_free_object,
-      0, // vpi_get_delays,
-      0  // vpi_put_delays
-};
 
 inline __vpiModPathTerm::__vpiModPathTerm()
-: __vpiHandle(&vpip_modpath_term_rt)
-{
-}
+{ }
 
 int __vpiModPathTerm::get_type_code(void) const
 { return vpiPathTerm; }

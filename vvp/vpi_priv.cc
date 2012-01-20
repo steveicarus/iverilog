@@ -64,6 +64,8 @@ void __vpiHandle::vpi_get_delays(p_vpi_delay)
 void __vpiHandle::vpi_put_delays(p_vpi_delay)
 { }
 
+__vpiHandle::free_object_fun_t __vpiHandle::free_object_fun(void)
+{ return 0; }
 
 /*
  * The vpip_string function creates a constant string from the pass
@@ -231,7 +233,11 @@ PLI_INT32 vpi_free_object(vpiHandle ref)
       }
 
       assert(ref);
-      rtn = __vpiHandle::vpi_free_object(ref);
+      __vpiHandle::free_object_fun_t fun = ref->free_object_fun();
+      if (fun)
+	    rtn = fun (ref);
+      else
+	    rtn = 1;
 
       if (vpi_trace)
 	    fprintf(vpi_trace, " --> %d\n", rtn);

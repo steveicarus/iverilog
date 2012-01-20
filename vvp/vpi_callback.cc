@@ -47,26 +47,14 @@ static int free_simple_callback(vpiHandle)
       return 1;
 }
 
-const struct __vpirt callback_rt = {
-      vpiCallback,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      &free_simple_callback,
-      0,
-      0
-};
 inline __vpiCallback::__vpiCallback()
-: __vpiHandle(&callback_rt)
-{
-}
+{ }
 
 int __vpiCallback::get_type_code(void) const
 { return vpiCallback; }
+
+__vpiHandle::free_object_fun_t __vpiCallback::free_object_fun(void)
+{ return &free_simple_callback; }
 
 
 /*

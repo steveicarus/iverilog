@@ -135,25 +135,8 @@ static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp, int)
       return 0;
 }
 
-static const struct __vpirt vpip_real_var_rt = {
-      vpiRealVar,
-
-      0, //real_var_get,
-      0, //real_var_get_str,
-      0, //real_var_get_value,
-      0, //real_var_put_value,
-
-      0, //real_var_get_handle,
-      0, //real_var_iterate,
-      0,
-      0,
-      0,
-      0
-};
 inline __vpiRealVar::__vpiRealVar()
-: __vpiHandle(&vpip_real_var_rt)
-{
-}
+{ }
 
 int __vpiRealVar::get_type_code(void) const
 { return vpiRealVar; }

@@ -438,23 +438,8 @@ static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp, int)
 // The code fully supports vpiReg, vpi_Net, but we do not
 // create such things, yet.  Lacking a name, for example.
 
-static const struct __vpirt vpip_vthr_const_rt = {
-      vpiConstant,
-      0, //vthr_vec_get,
-      0, //vthr_vec_get_str,
-      0, //vthr_vec_get_value,
-      0, //vthr_vec_put_value,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-};
 inline __vpiVThrVec::__vpiVThrVec()
-: __vpiHandle(&vpip_vthr_const_rt)
-{
-}
+{ }
 
 int __vpiVThrVec::get_type_code(void) const
 { return vpiConstant; }
@@ -603,23 +588,8 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
       }
 }
 
-static const struct __vpirt vpip_vthr_const_real_rt = {
-      vpiConstant,
-      0, //vthr_word_get,
-      0,
-      0, //vthr_real_get_value,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-};
 inline __vpiVThrWord::__vpiVThrWord()
-: __vpiHandle(&vpip_vthr_const_real_rt)
-{
-}
+{ }
 
 int __vpiVThrWord::get_type_code(void) const
 { return vpiConstant; }

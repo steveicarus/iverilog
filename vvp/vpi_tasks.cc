@@ -35,24 +35,8 @@
 # include  <cassert>
 # include  "ivl_alloc.h"
 
-static const struct __vpirt vpip_systf_def_rt = {
-      vpiUserSystf,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-};
-
 inline __vpiUserSystf::__vpiUserSystf()
-: __vpiHandle(&vpip_systf_def_rt)
-{
-}
+{ }
 
 int __vpiUserSystf::get_type_code(void) const
 { return vpiUserSystf; }
@@ -154,21 +138,8 @@ static vpiHandle systask_iter(int, vpiHandle ref)
       return vpip_make_iterator(rfp->nargs, rfp->args, false);
 }
 
-static const struct __vpirt vpip_systask_rt = {
-      vpiSysTaskCall,
-      0, //systask_get,
-      0, //systask_get_str,
-      0,
-      0,
-      0, //systask_handle,
-      0, //systask_iter,
-      0,
-      0,
-      0,
-      0
-};
 struct systask_def : public __vpiSysTaskCall {
-      inline systask_def() : __vpiSysTaskCall(&vpip_systask_rt) { }
+      inline systask_def() { }
       int get_type_code(void) const { return vpiSysTaskCall; }
       int vpi_get(int code)         { return systask_get(code, this); }
       char*vpi_get_str(int code)    { return systask_get_str(code, this); }
@@ -469,21 +440,8 @@ static vpiHandle sysfunc_put_no_value(vpiHandle, p_vpi_value, int)
       return 0;
 }
 
-static const struct __vpirt vpip_sysfunc_rt = {
-      vpiSysFuncCall,
-      0, //sysfunc_get,
-      0, //systask_get_str,
-      0,
-      0, //sysfunc_put_value,
-      0, //systask_handle,
-      0, //systask_iter,
-      0,
-      0,
-      0,
-      0
-};
 struct sysfunc_def : public __vpiSysTaskCall {
-      inline sysfunc_def() : __vpiSysTaskCall(&vpip_sysfunc_rt) { }
+      inline sysfunc_def() { }
       int get_type_code(void) const { return vpiSysFuncCall; }
       int vpi_get(int code)         { return sysfunc_get(code, this); }
       char* vpi_get_str(int code)   { return systask_get_str(code, this); }
@@ -495,21 +453,8 @@ struct sysfunc_def : public __vpiSysTaskCall {
             { return systask_iter(code, this); }
 };
 
-static const struct __vpirt vpip_sysfunc_real_rt = {
-      vpiSysFuncCall,
-      0, //sysfunc_get,
-      0, //systask_get_str,
-      0,
-      0, //sysfunc_put_real_value,
-      0, //systask_handle,
-      0, //systask_iter,
-      0,
-      0,
-      0,
-      0
-};
 struct sysfunc_real : public __vpiSysTaskCall {
-      inline sysfunc_real() : __vpiSysTaskCall(&vpip_sysfunc_real_rt) { }
+      inline sysfunc_real() { }
       int get_type_code(void) const { return vpiSysFuncCall; }
       int vpi_get(int code)         { return sysfunc_get(code, this); }
       char* vpi_get_str(int code)   { return systask_get_str(code, this); }
@@ -521,21 +466,8 @@ struct sysfunc_real : public __vpiSysTaskCall {
             { return systask_iter(code, this); }
 };
 
-static const struct __vpirt vpip_sysfunc_4net_rt = {
-      vpiSysFuncCall,
-      0, //sysfunc_get,
-      0, //systask_get_str,
-      0,
-      0, //sysfunc_put_4net_value,
-      0, //systask_handle,
-      0, //systask_iter,
-      0,
-      0,
-      0,
-      0
-};
 struct sysfunc_4net : public __vpiSysTaskCall {
-      inline sysfunc_4net() : __vpiSysTaskCall(&vpip_sysfunc_4net_rt) { }
+      inline sysfunc_4net() { }
       int get_type_code(void) const { return vpiSysFuncCall; }
       int vpi_get(int code)         { return sysfunc_get(code, this); }
       char* vpi_get_str(int code)   { return systask_get_str(code, this); }
@@ -547,21 +479,8 @@ struct sysfunc_4net : public __vpiSysTaskCall {
             { return systask_iter(code, this); }
 };
 
-static const struct __vpirt vpip_sysfunc_rnet_rt = {
-      vpiSysFuncCall,
-      0, //sysfunc_get,
-      0, //systask_get_str,
-      0,
-      0, //sysfunc_put_rnet_value,
-      0, //systask_handle,
-      0, //systask_iter,
-      0,
-      0,
-      0,
-      0
-};
 struct sysfunc_rnet : public __vpiSysTaskCall {
-      inline sysfunc_rnet() : __vpiSysTaskCall(&vpip_sysfunc_rnet_rt) { }
+      inline sysfunc_rnet() { }
       int get_type_code(void) const { return vpiSysFuncCall; }
       int vpi_get(int code)         { return sysfunc_get(code, this); }
       char* vpi_get_str(int code)   { return systask_get_str(code, this); }
@@ -573,21 +492,8 @@ struct sysfunc_rnet : public __vpiSysTaskCall {
             { return systask_iter(code, this); }
 };
 
-static const struct __vpirt vpip_sysfunc_no_rt = {
-      vpiSysFuncCall,
-      0, //sysfunc_get,
-      0, //systask_get_str,
-      0,
-      sysfunc_put_no_value,
-      systask_handle,
-      systask_iter,
-      0,
-      0,
-      0,
-      0
-};
 struct sysfunc_no : public __vpiSysTaskCall {
-      inline sysfunc_no() : __vpiSysTaskCall(&vpip_sysfunc_no_rt) { }
+      inline sysfunc_no() { }
       int get_type_code(void) const { return vpiSysFuncCall; }
       int vpi_get(int code)         { return sysfunc_get(code, this); }
       char* vpi_get_str(int code)   { return systask_get_str(code, this); }
@@ -648,6 +554,7 @@ struct __vpiSystfIterator : public __vpiHandle {
       __vpiSystfIterator();
       int get_type_code(void) const;
       vpiHandle vpi_index(int idx);
+      free_object_fun_t free_object_fun(void);
 
       unsigned next;
 };
@@ -681,29 +588,17 @@ static int systf_iterator_free_object(vpiHandle ref)
       return 1;
 }
 
-static const struct __vpirt vpip_systf_iterator_rt = {
-      vpiIterator,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0, //systf_iterator_scan,
-      systf_iterator_free_object,
-      0,
-      0
-};
 inline __vpiSystfIterator::__vpiSystfIterator()
-: __vpiHandle(&vpip_systf_iterator_rt)
-{
-}
+{ }
 
 int __vpiSystfIterator::get_type_code(void) const
 { return vpiIterator; }
 
 vpiHandle __vpiSystfIterator::vpi_index(int idx)
 { return systf_iterator_scan(this, idx); }
+
+__vpiHandle::free_object_fun_t __vpiSystfIterator::free_object_fun(void)
+{ return &systf_iterator_free_object; }
 
 vpiHandle vpip_make_systf_iterator(void)
 {

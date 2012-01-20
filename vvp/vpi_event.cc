@@ -66,24 +66,8 @@ static vpiHandle named_event_get_handle(int code, vpiHandle ref)
       return 0;
 }
 
-static const struct __vpirt vpip_named_event_rt = {
-      vpiNamedEvent,
-
-      0, //named_event_get,
-      0, //named_event_get_str,
-      0,
-      0,
-      0, //named_event_get_handle,
-      0,
-      0,
-      0,
-      0,
-      0
-};
 inline __vpiNamedEvent::__vpiNamedEvent()
-: __vpiHandle(&vpip_named_event_rt)
-{
-}
+{ }
 
 int __vpiNamedEvent::get_type_code(void) const
 { return vpiNamedEvent; }

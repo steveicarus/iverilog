@@ -84,44 +84,14 @@ enum vpi_mode_t {
 extern vpi_mode_t vpi_mode_flag;
 
 /*
- * Objects with this structure are used to represent a type of
- * vpiHandle. A specific object becomes of this type by holding a
- * pointer to an instance of this structure.
- */
-struct __vpirt {
-      int type_code_X;
-
-	/* These methods extract information from the handle. */
-      int   (*vpi_get_)(int, vpiHandle);
-      char* (*vpi_get_str_)(int, vpiHandle);
-      void  (*vpi_get_value_)(vpiHandle, p_vpi_value);
-      vpiHandle (*vpi_put_value_)(vpiHandle, p_vpi_value, int flags);
-
-	/* These methods follow references. */
-      vpiHandle (*handle_)(int, vpiHandle);
-      vpiHandle (*iterate_)(int, vpiHandle);
-      vpiHandle (*index_)(vpiHandle, int);
-
-	/* This implements the vpi_free_object method. */
-      int (*vpi_free_object_)(vpiHandle);
-
-       /*
-	 These two methods are used to read/write delay
-	 values from/into modpath records
-       */
-      void  (*vpi_get_delays_)(vpiHandle, p_vpi_delay);
-      void  (*vpi_put_delays_)(vpiHandle, p_vpi_delay);
-};
-
-/*
  * This structure is the very base of a vpiHandle. Every handle
  * structure is derived from this class so that the library can
  * internally pass the derived types as pointers to one of these.
  */
 class __vpiHandle {
     public:
-      inline __vpiHandle(const struct __vpirt *tp) : vpi_type_(tp) { }
-	// The descructor is virtual so that dynamic types will work.
+      inline __vpiHandle() { }
+	// The destructor is virtual so that dynamic types will work.
       virtual ~__vpiHandle();
 
       virtual int get_type_code(void) const =0;
@@ -136,11 +106,12 @@ class __vpiHandle {
       virtual void vpi_get_delays(p_vpi_delay del);
       virtual void vpi_put_delays(p_vpi_delay del);
 
-      static inline int vpi_free_object(vpiHandle ref)
-      { return ref->vpi_type_->vpi_free_object_? ref->vpi_type_->vpi_free_object_(ref) : 1; }
-
-    private:
-      const struct __vpirt *vpi_type_;
+	// Objects may have destroyer functions of their own. If so,
+	// then this virtual method will return a POINTER to that
+	// function. The pointer is used to "delete" the object, which
+	// is why the function itself cannot be a method.
+      typedef int (*free_object_fun_t)(vpiHandle);
+      virtual free_object_fun_t free_object_fun(void);
 };
 
 
@@ -158,6 +129,7 @@ class __vpiHandle {
 struct __vpiIterator : public __vpiHandle {
       __vpiIterator();
       int get_type_code(void) const;
+      free_object_fun_t free_object_fun(void);
 
       vpiHandle *args;
       unsigned  nargs;
@@ -176,6 +148,7 @@ extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
 struct __vpiCallback : public __vpiHandle {
       __vpiCallback();
       int get_type_code(void) const;
+      free_object_fun_t free_object_fun(void);
 
 	// user supplied callback data
       struct t_cb_data cb_data;
@@ -210,8 +183,6 @@ struct __vpiSystemTime : public __vpiHandle {
       void vpi_put_delays(p_vpi_delay del);
 
       struct __vpiScope*scope;
-    protected:
-      inline __vpiSystemTime(const struct __vpirt*rt) : __vpiHandle(rt) { }
 };
 
 struct __vpiScopedTime : public __vpiSystemTime {
@@ -275,8 +246,7 @@ struct __vpiScope : public __vpiHandle {
       signed int time_precision :8;
 
     protected:
-      __vpiScope(const struct __vpirt*rt) : __vpiHandle(rt) { }
-
+      inline __vpiScope() { }
 };
 
 extern struct __vpiScope* vpip_peek_current_scope(void);
@@ -325,7 +295,7 @@ struct __vpiSignal : public __vpiHandle {
       static void*operator new(std::size_t size);
       static void operator delete(void*); // not implemented
     protected:
-      inline __vpiSignal(const struct __vpirt*rt) : __vpiHandle(rt) { }
+      inline __vpiSignal() { }
     private: // Not implemented
       static void*operator new[] (std::size_t size);
       static void operator delete[](void*);
@@ -393,6 +363,7 @@ struct __vpiModPathSrc : public __vpiHandle {
       vpiHandle vpi_index(int idx);
       void vpi_get_delays(p_vpi_delay del);
       void vpi_put_delays(p_vpi_delay del);
+      free_object_fun_t free_object_fun(void);
 
       struct __vpiModPath *dest;
       int   type;
@@ -534,7 +505,6 @@ extern struct __vpiUserSystf* vpip_find_systf(const char*name);
 
 
 struct __vpiSysTaskCall : public __vpiHandle {
-      __vpiSysTaskCall(const struct __vpirt*rt) : __vpiHandle(rt) { }
 
       struct __vpiScope* scope;
       struct __vpiUserSystf*defn;
@@ -549,6 +519,8 @@ struct __vpiSysTaskCall : public __vpiHandle {
       unsigned file_idx;
       unsigned lineno;
       bool put_value;
+    protected:
+      inline __vpiSysTaskCall() { }
 };
 
 extern struct __vpiSysTaskCall*vpip_cur_task;
@@ -576,8 +548,6 @@ struct __vpiStringConst : public __vpiHandle {
 
       char*value;
       size_t value_len;
-    protected:
-      inline __vpiStringConst(const struct __vpirt*rt) : __vpiHandle(rt) { }
 };
 
 vpiHandle vpip_make_string_const(char*text, bool persistent =true);
@@ -602,8 +572,6 @@ struct __vpiBinaryConst : public __vpiHandle {
       int signed_flag :1;
 	/* TRUE if this constant has an explicit size (i.e. 19'h0 vs. 'h0) */
       int sized_flag   :1;
-    protected:
-      inline __vpiBinaryConst(const struct __vpirt*rt) : __vpiHandle(rt) { }
 };
 
 vpiHandle vpip_make_binary_const(unsigned wid, const char*bits);
@@ -615,14 +583,7 @@ struct __vpiDecConst : public __vpiHandle {
       __vpiDecConst(int val =0);
       int get_type_code(void) const;
       int vpi_get(int code);
-      char* vpi_get_str(int code);
       void vpi_get_value(p_vpi_value val);
-      vpiHandle vpi_put_value(p_vpi_value val, int flags);
-      vpiHandle vpi_handle(int code);
-      vpiHandle vpi_iterate(int code);
-      vpiHandle vpi_index(int idx);
-      void vpi_get_delays(p_vpi_delay del);
-      void vpi_put_delays(p_vpi_delay del);
 
       int value;
 };
@@ -631,18 +592,9 @@ struct __vpiRealConst : public __vpiHandle {
       __vpiRealConst();
       int get_type_code(void) const;
       int vpi_get(int code);
-      char*vpi_get_str(int code);
       void vpi_get_value(p_vpi_value val);
-      vpiHandle vpi_put_value(p_vpi_value val, int flags);
-      vpiHandle vpi_handle(int code);
-      vpiHandle vpi_iterate(int code);
-      vpiHandle vpi_index(int idx);
-      void vpi_get_delays(p_vpi_delay del);
-      void vpi_put_delays(p_vpi_delay del);
 
       double value;
-    protected:
-      inline __vpiRealConst(const struct __vpirt*rt) : __vpiHandle(rt) { }
 };
 
 vpiHandle vpip_make_real_const(double value);

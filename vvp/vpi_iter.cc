@@ -38,26 +38,14 @@ static int iterator_free_object(vpiHandle ref)
       return 1;
 }
 
-static const struct __vpirt vpip_iterator_rt = {
-      vpiIterator,
-      0, // vpi_get_
-      0, // vpi_get_str_
-      0, // vpi_get_value_
-      0, // vpi_put_value_
-      0, // handle_
-      0, // iterate_
-      0, // index_
-      &iterator_free_object,
-      0, // vpi_get_delay
-      0  // vpi_put_delay
-};
 inline __vpiIterator::__vpiIterator()
-: __vpiHandle(&vpip_iterator_rt)
-{
-}
+{ }
 
 int __vpiIterator::get_type_code(void) const
 { return vpiIterator; }
+
+__vpiHandle::free_object_fun_t __vpiIterator::free_object_fun(void)
+{ return &iterator_free_object; }
 
 vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
 			     bool free_args_flag)

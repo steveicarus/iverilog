@@ -63,24 +63,8 @@ static char *file_line_get_str(int type, vpiHandle ref)
       }
 }
 
-static const struct __vpirt vpip_file_line_rt = {
-       _vpiFileLine,
-       0, //file_line_get,
-       0, //file_line_get_str,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0
-};
-
 inline __vpiFileLine::__vpiFileLine()
-: __vpiHandle(&vpip_file_line_rt)
-{
-}
+{ }
 
 int __vpiFileLine::get_type_code(void) const
 { return _vpiFileLine; }

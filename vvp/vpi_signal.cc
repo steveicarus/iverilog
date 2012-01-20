@@ -878,147 +878,43 @@ vpiHandle __vpiSignal::vpi_handle(int code)
 vpiHandle __vpiSignal::vpi_iterate(int code)
 { return signal_iterate(code, this); }
 
-static const struct __vpirt vpip_reg_rt = {
-      vpiReg,
-      0, //Inherit from __vpiSignal: signal_get,
-      0, //Inherit from __vpiSignal: signal_get_str,
-      0, //Inherit from __vpiSignal: signal_get_value,
-      0, //Inherit from __vpiSignal: signal_put_value,
-      0, //Inherit from __vpiSignal: signal_get_handle,
-      0, //Inherit from __vpiSignal: signal_iterate,
-      0,
-      0,
-      0,
-      0
-};
 struct signal_reg : public __vpiSignal {
-      inline signal_reg() : __vpiSignal(&vpip_reg_rt) { }
+      inline signal_reg() { }
       int get_type_code(void) const { return vpiReg; }
 };
 
-static const struct __vpirt vpip_integer_rt = {
-      vpiIntegerVar,
-      0, //Inherit from __vpiSignal: signal_get,
-      0, //Inherit from __vpiSignal: signal_get_str,
-      0, //Inherit from __vpiSignal: signal_get_value,
-      0, //Inherit from __vpiSignal: signal_put_value,
-      0, //Inherit from __vpiSignal: signal_get_handle,
-      0, //Inherit from __vpiSignal: signal_iterate,
-      0,
-      0,
-      0,
-      0
-};
 struct signal_integer : public __vpiSignal {
-      inline signal_integer() : __vpiSignal(&vpip_integer_rt) { }
+      inline signal_integer() { }
       int get_type_code(void) const { return vpiIntegerVar; }
 };
 
-static const struct __vpirt vpip_net_rt = {
-      vpiNet,
-      0, //Inherit from __vpiSignal: signal_get,
-      0, //Inherit from __vpiSignal: signal_get_str,
-      0, //Inherit from __vpiSignal: signal_get_value,
-      0, //Inherit from __vpiSignal: signal_put_value,
-      0, //Inherit from __vpiSignal: signal_get_handle,
-      0, //Inherit from __vpiSignal: signal_iterate,
-      0,
-      0,
-      0,
-      0
-};
 struct signal_net : public __vpiSignal {
-      inline signal_net() : __vpiSignal(&vpip_net_rt) { }
+      inline signal_net() { }
       int get_type_code(void) const { return vpiNet; }
 };
 
-static const struct __vpirt vpip_byte_rt = {
-      vpiByteVar,
-      0, //Inherit from __vpiSignal: signal_get,
-      0, //Inherit from __vpiSignal: signal_get_str,
-      0, //Inherit from __vpiSignal: signal_get_value,
-      0, //Inherit from __vpiSignal: signal_put_value,
-      0, //Inherit from __vpiSignal: signal_get_handle,
-      0, //Inherit from __vpiSignal: signal_iterate,
-      0,
-      0,
-      0,
-      0
-};
 struct signal_byte : public __vpiSignal {
-      inline signal_byte() : __vpiSignal(&vpip_byte_rt) { }
+      inline signal_byte() { }
       int get_type_code(void) const { return vpiByteVar; }
 };
 
-static const struct __vpirt vpip_bitvar_rt = {
-      vpiBitVar,
-      0, //Inherit from __vpiSignal: signal_get,
-      0, //Inherit from __vpiSignal: signal_get_str,
-      0, //Inherit from __vpiSignal: signal_get_value,
-      0, //Inherit from __vpiSignal: signal_put_value,
-      0, //Inherit from __vpiSignal: signal_get_handle,
-      0, //Inherit from __vpiSignal: signal_iterate,
-      0,
-      0,
-      0,
-      0
-};
 struct signal_bitvar : public __vpiSignal {
-      inline signal_bitvar() : __vpiSignal(&vpip_bitvar_rt) { }
+      inline signal_bitvar() { }
       int get_type_code(void) const { return vpiBitVar; }
 };
 
-static const struct __vpirt vpip_shortint_rt = {
-      vpiShortIntVar,
-      0, //Inherit from __vpiSignal: signal_get,
-      0, //Inherit from __vpiSignal: signal_get_str,
-      0, //Inherit from __vpiSignal: signal_get_value,
-      0, //Inherit from __vpiSignal: signal_put_value,
-      0, //Inherit from __vpiSignal: signal_get_handle,
-      0, //Inherit from __vpiSignal: signal_iterate,
-      0,
-      0,
-      0,
-      0
-};
 struct signal_shortint : public __vpiSignal {
-      inline signal_shortint() : __vpiSignal(&vpip_shortint_rt) { }
+      inline signal_shortint() { }
       int get_type_code(void) const { return vpiShortIntVar; }
 };
 
-static const struct __vpirt vpip_int_rt = {
-      vpiIntVar,
-      0, //Inherit from __vpiSignal: signal_get,
-      0, //Inherit from __vpiSignal: signal_get_str,
-      0, //Inherit from __vpiSignal: signal_get_value,
-      0, //Inherit from __vpiSignal: signal_put_value,
-      0, //Inherit from __vpiSignal: signal_get_handle,
-      0, //Inherit from __vpiSignal: signal_iterate,
-      0,
-      0,
-      0,
-      0
-};
 struct signal_int : public __vpiSignal {
-      inline signal_int() : __vpiSignal(&vpip_int_rt) { }
+      inline signal_int() { }
       int get_type_code(void) const { return vpiIntVar; }
 };
 
-static const struct __vpirt vpip_longint_rt = {
-      vpiLongIntVar,
-      0, //Inherit from __vpiSignal: signal_get,
-      0, //Inherit from __vpiSignal: signal_get_str,
-      0, //Inherit from __vpiSignal: signal_get_value,
-      0, //Inherit from __vpiSignal: signal_put_value,
-      0, //Inherit from __vpiSignal: signal_get_handle,
-      0, //Inherit from __vpiSignal: signal_iterate,
-      0,
-      0,
-      0,
-      0
-};
 struct signal_longint : public __vpiSignal {
-      inline signal_longint() : __vpiSignal(&vpip_longint_rt) { }
+      inline signal_longint() { }
       int get_type_code(void) const { return vpiLongIntVar; }
 };
 
@@ -1446,23 +1342,8 @@ static vpiHandle PV_get_handle(int code, vpiHandle ref)
       return 0;
 }
 
-static const struct __vpirt vpip_PV_rt = {
-      vpiPartSelect,
-      0, //PV_get,
-      0, //PV_get_str,
-      0, //PV_get_value,
-      0, //PV_put_value,
-      0, //PV_get_handle,
-      0,
-      0,
-      0,
-      0,
-      0
-};
 inline __vpiPV::__vpiPV()
-: __vpiHandle(&vpip_PV_rt)
-{
-}
+{ }
 
 int __vpiPV::get_type_code(void) const
 { return vpiPartSelect; }

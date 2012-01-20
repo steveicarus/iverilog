@@ -318,98 +318,29 @@ vpiHandle __vpiScope::vpi_handle(int code)
 vpiHandle __vpiScope::vpi_iterate(int code)
 { return module_iter(code, this); }
 
-static const struct __vpirt vpip_scope_module_rt = {
-      vpiModule,
-      0, // Inherit from__vpiScope: scope_get,
-      0, // Inherit from __vpiScope: scope_get_str,
-      0,
-      0,
-      0, // Inherit from__vpiScope: scope_get_handle,
-      0, // Inherit from__vpiScope: module_iter,
-      0,
-      0,
-      0,
-      0
-};
 
 struct vpiScopeModule  : public __vpiScope {
-      inline vpiScopeModule() : __vpiScope(&vpip_scope_module_rt) { }
+      inline vpiScopeModule() { }
       int get_type_code(void) const { return vpiModule; }
 };
 
-static const struct __vpirt vpip_scope_task_rt = {
-      vpiTask,
-      0, // Inherit from__vpiScope: scope_get,
-      0, // Inherit from __vpiScope: scope_get_str,
-      0,
-      0,
-      0, // Inherit from__vpiScope: scope_get_handle,
-      0, // Inherit from__vpiScope: module_iter,
-      0,
-      0,
-      0,
-      0
-};
-
 struct vpiScopeTask  : public __vpiScope {
-      inline vpiScopeTask() : __vpiScope(&vpip_scope_task_rt) { }
+      inline vpiScopeTask() { }
       int get_type_code(void) const { return vpiTask; }
 };
 
-static const struct __vpirt vpip_scope_function_rt = {
-      vpiFunction,
-      0, // Inherit from__vpiScope: scope_get,
-      0, // Inherit from __vpiScope: scope_get_str,
-      0,
-      0,
-      0, // Inherit from__vpiScope: scope_get_handle,
-      0, // Inherit from__vpiScope: module_iter,
-      0,
-      0,
-      0,
-      0
-};
-
 struct vpiScopeFunction  : public __vpiScope {
-      inline vpiScopeFunction() : __vpiScope(&vpip_scope_function_rt) { }
+      inline vpiScopeFunction() { }
       int get_type_code(void) const { return vpiFunction; }
 };
 
-static const struct __vpirt vpip_scope_begin_rt = {
-      vpiNamedBegin,
-      0, // Inherit from__vpiScope: scope_get,
-      0, // Inherit from __vpiScope: scope_get_str,
-      0,
-      0,
-      0, // Inherit from__vpiScope: scope_get_handle,
-      0, // Inherit from__vpiScope: module_iter,
-      0,
-      0,
-      0,
-      0
-};
-
 struct vpiScopeBegin  : public __vpiScope {
-      inline vpiScopeBegin() : __vpiScope(&vpip_scope_begin_rt) { }
+      inline vpiScopeBegin() { }
       int get_type_code(void) const { return vpiNamedBegin; }
 };
 
-static const struct __vpirt vpip_scope_fork_rt = {
-      vpiNamedFork,
-      0, // Inherit from__vpiScope: scope_get,
-      0, // Inherit from __vpiScope: scope_get_str,
-      0,
-      0,
-      0, // Inherit from__vpiScope: scope_get_handle,
-      0, // Inherit from__vpiScope: module_iter,
-      0,
-      0,
-      0,
-      0
-};
-
 struct vpiScopeFork  : public __vpiScope {
-      inline vpiScopeFork() : __vpiScope(&vpip_scope_fork_rt) { }
+      inline vpiScopeFork() { }
       int get_type_code(void) const { return vpiNamedFork; }
 };
 

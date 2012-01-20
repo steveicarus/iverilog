@@ -311,23 +311,8 @@ static void timevar_get_rvalue(vpiHandle ref, s_vpi_value*vp)
       timevar_get_value(ref, vp, false, false);
 }
 
-static const struct __vpirt vpip_system_time_rt = {
-      vpiSysFuncCall,
-      0,
-      0, //timevar_time_get_str,
-      0, //timevar_get_ivalue,
-      0,
-      0, //Inherit from __vpiSystemTime: timevar_handle,
-      0,
-      0,
-      0,
-      0,
-      0
-};
 __vpiScopedTime::__vpiScopedTime()
-: __vpiSystemTime(&vpip_system_time_rt)
-{
-}
+{ }
 
 int __vpiScopedTime::vpi_get(int code)
 { return timevar_time_get(code, this); }
@@ -338,23 +323,9 @@ char* __vpiScopedTime::vpi_get_str(int code)
 void __vpiScopedTime::vpi_get_value(p_vpi_value val)
 { timevar_get_ivalue(this, val); }
 
-static const struct __vpirt vpip_system_stime_rt = {
-      vpiSysFuncCall,
-      0,
-      0,
-      0, //timevar_get_svalue,
-      0,
-      0, //Inherit from __vpiSystemTime: timevar_handle,
-      0,
-      0,
-      0,
-      0,
-      0
-};
+
 __vpiScopedSTime::__vpiScopedSTime()
-: __vpiSystemTime(&vpip_system_stime_rt)
-{
-}
+{ }
 
 int __vpiScopedSTime::vpi_get(int code)
 { return timevar_stime_get(code, this); }
@@ -365,21 +336,7 @@ char* __vpiScopedSTime::vpi_get_str(int code)
 void __vpiScopedSTime::vpi_get_value(p_vpi_value val)
 { timevar_get_svalue(this, val); }
 
-static const struct __vpirt vpip_system_simtime_rt = {
-      vpiSysFuncCall,
-      0,
-      0,
-      0, //timevar_get_ivalue,
-      0,
-      0, //timevar_handle,
-      0,
-      0,
-      0,
-      0,
-      0
-};
 __vpiSystemTime::__vpiSystemTime()
-: __vpiHandle(&vpip_system_simtime_rt)
 {
       scope = 0;
 }
@@ -414,23 +371,8 @@ void __vpiSystemTime::vpi_get_delays(p_vpi_delay)
 void  __vpiSystemTime::vpi_put_delays(p_vpi_delay)
 { }
 
-static const struct __vpirt vpip_system_realtime_rt = {
-      vpiSysFuncCall,
-      0,
-      0,
-      0, //timevar_get_rvalue,
-      0,
-      0, //Inherit from __vpiSystemTime: timevar_handle,
-      0,
-      0,
-      0,
-      0,
-      0
-};
 __vpiScopedRealtime::__vpiScopedRealtime()
-: __vpiSystemTime(&vpip_system_realtime_rt)
-{
-}
+{ }
 
 int __vpiScopedRealtime::vpi_get(int code)
 { return timevar_realtime_get(code, this); }

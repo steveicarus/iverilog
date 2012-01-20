@@ -41,7 +41,6 @@ struct __vpiEnumTypespec : public __vpiHandle {
       __vpiEnumTypespec();
       int get_type_code(void) const;
       int vpi_get(int code);
-      char*vpi_get_str(int code);
       vpiHandle vpi_iterate(int code);
 
       std::vector<enumconst_s> names;
@@ -93,33 +92,15 @@ static vpiHandle enum_type_iterate(int code, vpiHandle obj)
       return 0;
 }
 
-static const struct __vpirt enum_type_rt = {
-      vpiEnumTypespec,
-      0, //enum_type_get,
-      0, //enum_type_get_str,
-      0, //enum_type_get_value,
-      0, //enum_type_put_value,
-      0, //enum_type_handle,
-      0, //enum_type_iterate,
-      0, //enum_type_index,
-      0, //enum_type_free_object,
-      0, //enum_type_get_delays,
-      0, //enum_type_put_delays
-};
 
 inline __vpiEnumTypespec::__vpiEnumTypespec()
-: __vpiHandle(&enum_type_rt)
-{
-}
+{ }
 
 int __vpiEnumTypespec::get_type_code(void) const
 { return vpiEnumTypespec; }
 
 int __vpiEnumTypespec::vpi_get(int code)
 { return enum_type_get(code, this); }
-
-char* __vpiEnumTypespec::vpi_get_str(int)
-{ return 0; }
 
 vpiHandle __vpiEnumTypespec::vpi_iterate(int code)
 { return enum_type_iterate(code, this); }
@@ -161,24 +142,8 @@ static void enum_name_get_value(vpiHandle obj, p_vpi_value value)
 	    vpip_vec2_get_value(ref->val2, ref->val2.size(), false, value);
 }
 
-static const struct __vpirt enum_name_rt = {
-      vpiEnumConst,
-      0, //enum_name_get,
-      0, //enum_name_get_str,
-      0, //enum_name_get_value,
-      0, //enum_name_put_value,
-      0, //enum_name_handle,
-      0, //enum_name_iterate,
-      0, //enum_name_index,
-      0, //enum_name_free_object,
-      0, //enum_name_get_delays,
-      0, //enum_name_put_delays
-};
-
 inline enumconst_s::enumconst_s()
-: __vpiHandle(&enum_name_rt)
-{
-}
+{ }
 
 int enumconst_s::get_type_code(void) const
 { return vpiEnumConst; }

@@ -116,6 +116,7 @@ struct __vpiArrayIterator : public __vpiHandle {
       int vpi_get(int code);
       char* vpi_get_str(int code);
       vpiHandle vpi_index(int idx);
+      free_object_fun_t free_object_fun(void);
 
       struct __vpiArray*array;
       unsigned next;
@@ -128,6 +129,7 @@ struct __vpiArrayIndex : public __vpiHandle {
       char* vpi_get_str(int code);
       vpiHandle vpi_iterate(int code);
       vpiHandle vpi_index(int idx);
+      free_object_fun_t free_object_fun(void);
 
       struct __vpiDecConst *index;
       unsigned done;
@@ -289,8 +291,6 @@ struct __vpiArrayWord {
       struct as_index_t : public __vpiHandle {
 	    as_index_t();
 	    int get_type_code(void) const;
-	    int vpi_get(int code);
-	    char*vpi_get_str(int code);
 	    void vpi_get_value(p_vpi_value val);
       } as_index;
 
@@ -331,23 +331,8 @@ static int vpi_array_vthr_APV_get(int code, vpiHandle);
 static char*vpi_array_vthr_APV_get_str(int code, vpiHandle);
 static void vpi_array_vthr_APV_get_value(vpiHandle ref, p_vpi_value vp);
 
-static const struct __vpirt vpip_arraymem_rt = {
-      vpiMemory,
-      0, //vpi_array_get,
-      0, //vpi_array_get_str,
-      0,
-      0,
-      0, //vpi_array_get_handle,
-      0, //vpi_array_iterate,
-      0, //vpi_array_index,
-      0,
-      0,
-      0
-};
 inline __vpiArray::__vpiArray()
-: __vpiHandle(&vpip_arraymem_rt)
-{
-}
+{ }
 
 int __vpiArray::get_type_code(void) const
 { return vpiMemory; }
@@ -367,24 +352,8 @@ vpiHandle __vpiArray::vpi_iterate(int code)
 vpiHandle __vpiArray::vpi_index(int idx)
 { return vpi_array_index(this, idx); }
 
-static const struct __vpirt vpip_array_iterator_rt = {
-      vpiIterator,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0, //array_iterator_scan,
-      &array_iterator_free_object,
-      0,
-      0
-};
-
 inline __vpiArrayIterator::__vpiArrayIterator()
-: __vpiHandle(&vpip_array_iterator_rt)
-{
-}
+{ }
 
 int __vpiArrayIterator::get_type_code(void) const
 { return vpiIterator; }
@@ -398,27 +367,11 @@ char* __vpiArrayIterator::vpi_get_str(int)
 vpiHandle __vpiArrayIterator::vpi_index(int code)
 { return array_iterator_scan(this, code); }
 
-/* This should look a bit odd since it provides a fake iteration on
- * this object. This trickery is used to implement the two forms of
- * index access, simple handle access and iteration access. */
-static const struct __vpirt vpip_array_index_rt = {
-      vpiIterator,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0, //array_index_iterate,
-      0, //array_index_scan,
-      array_index_free_object,
-      0,
-      0
-};
+__vpiHandle::free_object_fun_t __vpiArrayIterator::free_object_fun(void)
+{ return &array_iterator_free_object; }
 
 inline __vpiArrayIndex::__vpiArrayIndex()
-: __vpiHandle(&vpip_array_index_rt)
-{
-}
+{ }
 
 int __vpiArrayIndex::get_type_code(void) const
 { return vpiIterator; }
@@ -435,23 +388,11 @@ vpiHandle __vpiArrayIndex::vpi_iterate(int code)
 vpiHandle __vpiArrayIndex::vpi_index(int idx)
 { return array_index_scan(this, idx); }
 
-static const struct __vpirt vpip_array_var_word_rt = {
-      vpiMemoryWord,
-      0, //&vpi_array_var_word_get,
-      0, //&vpi_array_var_word_get_str,
-      0, //&vpi_array_var_word_get_value,
-      0, //&vpi_array_var_word_put_value,
-      0, //&vpi_array_var_word_get_handle,
-      0,
-      0,
-      0,
-      0,
-      0
-};
+__vpiHandle::free_object_fun_t __vpiArrayIndex::free_object_fun(void)
+{ return &array_index_free_object; }
+
 inline __vpiArrayWord::as_word_t::as_word_t()
-: __vpiHandle(&vpip_array_var_word_rt)
-{
-}
+{ }
 
 int __vpiArrayWord::as_word_t::get_type_code(void) const
 { return vpiMemoryWord; }
@@ -471,54 +412,17 @@ vpiHandle __vpiArrayWord::as_word_t::vpi_put_value(p_vpi_value val, int flags)
 vpiHandle __vpiArrayWord::as_word_t::vpi_handle(int code)
 { return vpi_array_var_word_get_handle(code, this); }
 
-static const struct __vpirt vpip_array_var_index_rt = {
-      vpiIndex,
-      0,
-      0,
-      &vpi_array_var_index_get_value,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-};
 inline __vpiArrayWord::as_index_t::as_index_t()
-: __vpiHandle(&vpip_array_var_index_rt)
-{
-}
+{ }
 
 int __vpiArrayWord::as_index_t::get_type_code(void) const
 { return vpiIndex; }
 
-int __vpiArrayWord::as_index_t::vpi_get(int)
-{ return vpiUndefined; }
-
-char* __vpiArrayWord::as_index_t::vpi_get_str(int)
-{ return 0; }
-
 void __vpiArrayWord::as_index_t::vpi_get_value(p_vpi_value val)
 { vpi_array_var_index_get_value(this, val); }
 
-static const struct __vpirt vpip_array_vthr_A_rt = {
-      vpiMemoryWord,
-      0, //&vpi_array_vthr_A_get,
-      0, //&vpi_array_vthr_A_get_str,
-      0, //&vpi_array_vthr_A_get_value,
-      0, //&vpi_array_vthr_A_put_value,
-      0, //&vpi_array_vthr_A_get_handle,
-      0,
-      0,
-      0,
-      0,
-      0
-};
-
 inline __vpiArrayVthrA::__vpiArrayVthrA()
-: __vpiHandle(&vpip_array_vthr_A_rt)
-{
-}
+{ }
 
 int __vpiArrayVthrA::get_type_code(void) const
 { return vpiMemoryWord; }
@@ -538,24 +442,9 @@ vpiHandle __vpiArrayVthrA::vpi_put_value(p_vpi_value val, int flags)
 vpiHandle __vpiArrayVthrA::vpi_handle(int code)
 { return vpi_array_vthr_A_get_handle(code, this); }
 
-static const struct __vpirt vpip_array_vthr_APV_rt = {
-      vpiMemoryWord,
-      0, //&vpi_array_vthr_APV_get,
-      0, //&vpi_array_vthr_APV_get_str,
-      0, //&vpi_array_vthr_APV_get_value,
-      0, //&vpi_array_vthr_A_put_value,
-      0, //&vpi_array_vthr_A_get_handle,
-      0,
-      0,
-      0,
-      0,
-      0
-};
 
 inline __vpiArrayVthrAPV::__vpiArrayVthrAPV()
-: __vpiHandle(&vpip_array_vthr_APV_rt)
-{
-}
+{ }
 
 int __vpiArrayVthrAPV::get_type_code(void) const
 { return vpiMemoryWord; }
