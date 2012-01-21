@@ -297,7 +297,6 @@ struct __vpiArrayWord {
 };
 
 static void array_make_vals_words(struct __vpiArray*parent);
-static vpiHandle array_iterator_scan(vpiHandle ref, int);
 
 static vpiHandle array_index_scan(vpiHandle ref, int);
 
