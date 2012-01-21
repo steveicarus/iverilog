@@ -1173,7 +1173,7 @@ bool of_ASSIGN_WR(vthread_t thr, vvp_code_t cp)
       del.type = vpiSimTime;
       vpip_time_to_timestruct(&del, delay);
 
-      struct __vpiHandle*tmp = cp->handle;
+      class __vpiHandle*tmp = cp->handle;
 
       t_vpi_value val;
       val.format = vpiRealVal;
@@ -1192,7 +1192,7 @@ bool of_ASSIGN_WRD(vthread_t thr, vvp_code_t cp)
       del.type = vpiSimTime;
       vpip_time_to_timestruct(&del, delay);
 
-      struct __vpiHandle*tmp = cp->handle;
+      class __vpiHandle*tmp = cp->handle;
 
       t_vpi_value val;
       val.format = vpiRealVal;
@@ -1206,7 +1206,7 @@ bool of_ASSIGN_WRE(vthread_t thr, vvp_code_t cp)
 {
       assert(thr->event != 0);
       unsigned index = cp->bit_idx[0];
-      struct __vpiHandle*tmp = cp->handle;
+      class __vpiHandle*tmp = cp->handle;
 
 	// If the count is zero then just put the value.
       if (thr->ecount == 0) {
@@ -3184,7 +3184,7 @@ bool of_LOAD_VP0_S(vthread_t thr, vvp_code_t cp)
 
 bool of_LOAD_WR(vthread_t thr, vvp_code_t cp)
 {
-      struct __vpiHandle*tmp = cp->handle;
+      class __vpiHandle*tmp = cp->handle;
       t_vpi_value val;
 
       val.format = vpiRealVal;

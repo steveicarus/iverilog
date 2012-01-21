@@ -224,7 +224,7 @@ struct __vpiScope : public __vpiHandle {
       struct __vpiScopedSTime scoped_stime;
       struct __vpiScopedRealtime scoped_realtime;
 	/* Keep an array of internal scope items. */
-      struct __vpiHandle**intern;
+      class __vpiHandle**intern;
       unsigned nintern;
         /* Keep an array of items to be automatically allocated */
       struct automatic_hooks_s**item;
@@ -249,7 +249,7 @@ extern struct __vpiScope* vpip_peek_context_scope(void);
 extern unsigned vpip_add_item_to_context(automatic_hooks_s*item,
                                          struct __vpiScope*scope);
 extern vpiHandle vpip_make_root_iterator(void);
-extern void vpip_make_root_iterator(struct __vpiHandle**&table,
+extern void vpip_make_root_iterator(class __vpiHandle**&table,
 				    unsigned&ntable);
 
 /*

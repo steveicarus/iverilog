@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -74,7 +74,7 @@ static bool interact_flag = true;
 
 static void cmd_call(unsigned argc, char*argv[])
 {
-      struct __vpiHandle**table;
+      class __vpiHandle**table;
       unsigned ntable;
 
       if (stop_current_scope == 0) {
@@ -212,7 +212,7 @@ static void cmd_help(unsigned, char*[]);
 
 static void cmd_list(unsigned, char*[])
 {
-      struct __vpiHandle**table;
+      class __vpiHandle**table;
       unsigned ntable;
 
       if (stop_current_scope == 0) {
@@ -314,7 +314,7 @@ static void cmd_push(unsigned argc, char* argv[])
 {
 
       for (unsigned idx = 1 ;  idx < argc ;  idx += 1) {
-	    struct __vpiHandle**table;
+	    class __vpiHandle**table;
 	    unsigned ntable;
 
 	    struct __vpiScope*child = 0;

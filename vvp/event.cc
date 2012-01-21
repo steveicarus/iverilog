@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -71,7 +71,7 @@ bool evctl::dec_and_run()
       return ecount_ == 0;
 }
 
-evctl_real::evctl_real(struct __vpiHandle*handle, double value,
+evctl_real::evctl_real(class __vpiHandle*handle, double value,
                        unsigned long ecount)
 :evctl(ecount)
 {
@@ -88,7 +88,7 @@ void evctl_real::run_run()
       vpi_put_value(handle_, &val, 0, vpiNoDelay);
 }
 
-void schedule_evctl(struct __vpiHandle*handle, double value,
+void schedule_evctl(class __vpiHandle*handle, double value,
                     vvp_net_t*event, unsigned long ecount)
 {
 	// Get the functor we are going to wait on.
@@ -655,7 +655,7 @@ void vvp_fun_event_or_aa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       }
 }
 
-vvp_named_event::vvp_named_event(struct __vpiHandle*h)
+vvp_named_event::vvp_named_event(class __vpiHandle*h)
 {
       handle_ = h;
 }
@@ -664,7 +664,7 @@ vvp_named_event::~vvp_named_event()
 {
 }
 
-vvp_named_event_sa::vvp_named_event_sa(struct __vpiHandle*h)
+vvp_named_event_sa::vvp_named_event_sa(class __vpiHandle*h)
 : vvp_named_event(h), threads_(0)
 {
 }
@@ -691,7 +691,7 @@ void vvp_named_event_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       vpip_run_named_event_callbacks(handle_);
 }
 
-vvp_named_event_aa::vvp_named_event_aa(struct __vpiHandle*h)
+vvp_named_event_aa::vvp_named_event_aa(class __vpiHandle*h)
 : vvp_named_event(h)
 {
       context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
@@ -851,7 +851,7 @@ void compile_named_event(char*label, char*name)
 }
 
 #ifdef CHECK_WITH_VALGRIND
-void named_event_delete(struct __vpiHandle*handle)
+void named_event_delete(class __vpiHandle*handle)
 {
       struct __vpiNamedEvent *obj = (struct __vpiNamedEvent *) handle;
 
