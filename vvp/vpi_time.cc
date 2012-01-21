@@ -94,121 +94,6 @@ vvp_time64_t vpip_scaled_real_to_time64(double val, struct __vpiScope*scope)
       return delay;
 }
 
-static int timevar_time_get(int code, vpiHandle)
-{
-      switch (code) {
-          case vpiSize:
-	    return 64;
-
-          case vpiSigned:
-	    return 0;
-
-	  case vpiFuncType:
-	    return vpiTimeFunc;
-
-          case vpiAutomatic:
-	    return 0;
-
-	  default:
-	    fprintf(stderr, "Code: %d\n", code);
-	    assert(0);
-	    return 0;
-      }
-}
-
-static int timevar_stime_get(int code, vpiHandle ref)
-{
-      switch (code) {
-          case vpiSize:
-	    return 32;
-
-	  default:
-	    return timevar_time_get(code, ref);
-      }
-}
-
-static char* timevar_time_get_str(int code, vpiHandle)
-{
-      switch (code) {
-	  case vpiName:
-	    return simple_set_rbuf_str("$time");
-	  default:
-	    fprintf(stderr, "Code: %d\n", code);
-	    assert(0);
-	    return 0;
-      }
-}
-
-static char* timevar_stime_get_str(int code, vpiHandle)
-{
-      switch (code) {
-	  case vpiName:
-	    return simple_set_rbuf_str("$stime");
-	  default:
-	    fprintf(stderr, "Code: %d\n", code);
-	    assert(0);
-	    return 0;
-      }
-}
-
-static char* timevar_simtime_get_str(int code, vpiHandle)
-{
-      switch (code) {
-	  case vpiName:
-	    return simple_set_rbuf_str("$simtime");
-	  default:
-	    fprintf(stderr, "Code: %d\n", code);
-	    assert(0);
-	    return 0;
-      }
-}
-
-static char* timevar_realtime_get_str(int code, vpiHandle)
-{
-      switch (code) {
-	  case vpiName:
-	    return simple_set_rbuf_str("$realtime");
-	  default:
-	    fprintf(stderr, "Code: %d\n", code);
-	    assert(0);
-	    return 0;
-      }
-}
-
-static int timevar_realtime_get(int code, vpiHandle)
-{
-      switch (code) {
-          case vpiSize:
-	    return 1;
-
-          case vpiSigned:
-	    return 0;
-
-	  case vpiFuncType:
-	    return vpiRealFunc;
-
-          case vpiAutomatic:
-	    return 0;
-
-	  default:
-	    fprintf(stderr, "Code: %d\n", code);
-	    assert(0);
-	    return 0;
-      }
-}
-
-static vpiHandle timevar_handle(int code, vpiHandle ref)
-{
-      struct __vpiSystemTime*rfp = dynamic_cast<__vpiSystemTime*>(ref);
-
-      switch (code) {
-	  case vpiScope:
-	    return rfp->scope;
-	  default:
-	    return 0;
-      }
-}
-
 static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func,
                               bool is_stime)
 {
@@ -314,11 +199,18 @@ static void timevar_get_rvalue(vpiHandle ref, s_vpi_value*vp)
 __vpiScopedTime::__vpiScopedTime()
 { }
 
-int __vpiScopedTime::vpi_get(int code)
-{ return timevar_time_get(code, this); }
-
 char* __vpiScopedTime::vpi_get_str(int code)
-{ return timevar_time_get_str(code, this); }
+{
+      switch (code) {
+	  case vpiName:
+	    return simple_set_rbuf_str("$time");
+	  default:
+	    fprintf(stderr, "Code: %d\n", code);
+	    assert(0);
+	    return 0;
+      }
+}
+
 
 void __vpiScopedTime::vpi_get_value(p_vpi_value val)
 { timevar_get_ivalue(this, val); }
@@ -328,10 +220,29 @@ __vpiScopedSTime::__vpiScopedSTime()
 { }
 
 int __vpiScopedSTime::vpi_get(int code)
-{ return timevar_stime_get(code, this); }
+{
+      switch (code) {
+          case vpiSize:
+	    return 32;
+
+	  default:
+	    return __vpiSystemTime::vpi_get(code);
+      }
+}
+
 
 char* __vpiScopedSTime::vpi_get_str(int code)
-{ return timevar_stime_get_str(code, this); }
+{
+      switch (code) {
+	  case vpiName:
+	    return simple_set_rbuf_str("$stime");
+	  default:
+	    fprintf(stderr, "Code: %d\n", code);
+	    assert(0);
+	    return 0;
+      }
+}
+
 
 void __vpiScopedSTime::vpi_get_value(p_vpi_value val)
 { timevar_get_svalue(this, val); }
@@ -345,40 +256,93 @@ int __vpiSystemTime::get_type_code(void) const
 { return vpiSysFuncCall; }
 
 int __vpiSystemTime::vpi_get(int code)
-{ return timevar_time_get(code, this); }
+{
+      switch (code) {
+          case vpiSize:
+	    return 64;
+
+          case vpiSigned:
+	    return 0;
+
+	  case vpiFuncType:
+	    return vpiTimeFunc;
+
+          case vpiAutomatic:
+	    return 0;
+
+	  default:
+	    fprintf(stderr, "Code: %d\n", code);
+	    assert(0);
+	    return 0;
+      }
+}
+
 
 char* __vpiSystemTime::vpi_get_str(int code)
-{ return timevar_simtime_get_str(code, this); }
+{
+      switch (code) {
+	  case vpiName:
+	    return simple_set_rbuf_str("$simtime");
+	  default:
+	    fprintf(stderr, "Code: %d\n", code);
+	    assert(0);
+	    return 0;
+      }
+}
+
 
 void __vpiSystemTime::vpi_get_value(p_vpi_value val)
 { timevar_get_ivalue(this, val); }
 
-vpiHandle __vpiSystemTime::vpi_put_value(p_vpi_value, int)
-{ return 0; }
-
 vpiHandle __vpiSystemTime::vpi_handle(int code)
-{ return timevar_handle(code, this); }
+{
+      switch (code) {
+	  case vpiScope:
+	    return scope;
+	  default:
+	    return 0;
+      }
+}
 
-vpiHandle __vpiSystemTime::vpi_iterate(int)
-{ return 0; }
-
-vpiHandle __vpiSystemTime::vpi_index(int)
-{ return 0; }
-
-void __vpiSystemTime::vpi_get_delays(p_vpi_delay)
-{ }
-
-void  __vpiSystemTime::vpi_put_delays(p_vpi_delay)
-{ }
 
 __vpiScopedRealtime::__vpiScopedRealtime()
 { }
 
 int __vpiScopedRealtime::vpi_get(int code)
-{ return timevar_realtime_get(code, this); }
+{
+      switch (code) {
+          case vpiSize:
+	    return 1;
+
+          case vpiSigned:
+	    return 0;
+
+	  case vpiFuncType:
+	    return vpiRealFunc;
+
+          case vpiAutomatic:
+	    return 0;
+
+	  default:
+	    fprintf(stderr, "Code: %d\n", code);
+	    assert(0);
+	    return 0;
+      }
+}
+
 
 char* __vpiScopedRealtime::vpi_get_str(int code)
-{ return timevar_realtime_get_str(code, this); }
+{
+      switch (code) {
+	  case vpiName:
+	    return simple_set_rbuf_str("$realtime");
+	  default:
+	    fprintf(stderr, "Code: %d\n", code);
+	    assert(0);
+	    return 0;
+      }
+}
+
 
 void __vpiScopedRealtime::vpi_get_value(p_vpi_value val)
 { timevar_get_rvalue(this, val); }

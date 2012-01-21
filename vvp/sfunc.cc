@@ -62,10 +62,8 @@ void sfunc_core::recv_vec4(vvp_net_ptr_t, const vvp_vector4_t&/*bit*/,
 void sfunc_core::recv_vec4_from_inputs(unsigned port)
 {
       vpiHandle vpi = argv_[port];
-      assert(vpi_get(vpiConstType,vpi) == vpiBinaryConst);
-
-      struct __vpiBinaryConst*obj
-	    = (struct __vpiBinaryConst*)vpi;
+      struct __vpiBinaryConst*obj = dynamic_cast<__vpiBinaryConst*>(vpi);
+      assert(obj);
 
       obj->bits = value(port);
 
@@ -76,10 +74,8 @@ void sfunc_core::recv_vec4_from_inputs(unsigned port)
 void sfunc_core::recv_real_from_inputs(unsigned port)
 {
       vpiHandle vpi = argv_[port];
-      assert(vpi_get(vpiConstType,vpi) == vpiRealConst);
-
-      struct __vpiRealConst*obj
-	    = (struct __vpiRealConst*)vpi;
+      struct __vpiRealConst*obj = dynamic_cast<__vpiRealConst*>(vpi);
+      assert(obj);
 
       obj->value = value_r(port);
 

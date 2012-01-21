@@ -48,24 +48,28 @@ struct __vpiEnumTypespec : public __vpiHandle {
       bool is_signed;
 };
 
-static int enum_type_get(int code, vpiHandle obj)
-{
-      struct __vpiEnumTypespec*ref = dynamic_cast<__vpiEnumTypespec*>(obj);
-      assert(ref);
 
+inline __vpiEnumTypespec::__vpiEnumTypespec()
+{ }
+
+int __vpiEnumTypespec::get_type_code(void) const
+{ return vpiEnumTypespec; }
+
+int __vpiEnumTypespec::vpi_get(int code)
+{
       switch (code) {
 	  case vpiSize:
-	    return ref->names.size();
+	    return names.size();
 
 	    /* This is not currently set correctly. We always use vpiReg for
 	     * four state variables and vpiBitVar for two state variables.
 	     * This minimal functionality is needed to get the next() and
 	     * prev() methods to work correctly with invalid values. */
 	  case vpiBaseTypespec:
-	    return ref->base_type_code;
+	    return base_type_code;
 
 	  case vpiSigned:
-	    return ref->is_signed;
+	    return is_signed;
 
 	  default:
 	    fprintf(stderr, "vvp error: get %d not supported "
@@ -75,72 +79,21 @@ static int enum_type_get(int code, vpiHandle obj)
       }
 }
 
-static vpiHandle enum_type_iterate(int code, vpiHandle obj)
-{
-      struct __vpiEnumTypespec*ref = dynamic_cast<__vpiEnumTypespec*>(obj);
-      assert(ref);
 
+vpiHandle __vpiEnumTypespec::vpi_iterate(int code)
+{
       if (code == vpiEnumConst) {
 	    vpiHandle*args = (vpiHandle*)
-		  calloc(ref->names.size(), sizeof(vpiHandle*));
-	    for (size_t idx = 0 ; idx < ref->names.size() ; idx += 1)
-		  args[idx] = &ref->names[idx];
+		  calloc(names.size(), sizeof(vpiHandle*));
+	    for (size_t idx = 0 ; idx < names.size() ; idx += 1)
+		  args[idx] = &names[idx];
 
-	    return vpip_make_iterator(ref->names.size(), args, true);
+	    return vpip_make_iterator(names.size(), args, true);
       }
 
       return 0;
 }
 
-
-inline __vpiEnumTypespec::__vpiEnumTypespec()
-{ }
-
-int __vpiEnumTypespec::get_type_code(void) const
-{ return vpiEnumTypespec; }
-
-int __vpiEnumTypespec::vpi_get(int code)
-{ return enum_type_get(code, this); }
-
-vpiHandle __vpiEnumTypespec::vpi_iterate(int code)
-{ return enum_type_iterate(code, this); }
-
-static int enum_name_get(int code, vpiHandle obj)
-{
-      struct enumconst_s*ref = dynamic_cast<enumconst_s*>(obj);
-      assert(ref);
-
-      switch (code) {
-	  case vpiSize:
-	    return ref->val4.size()? ref->val4.size() : ref->val2.size();
-	  default:
-	    return 0;
-      }
-}
-
-static char* enum_name_get_str(int code, vpiHandle obj)
-{
-      struct enumconst_s*ref = dynamic_cast<enumconst_s*>(obj);
-      assert(ref);
-
-      switch (code) {
-	  case vpiName:
-	    return const_cast<char*> (ref->name);
-	  default:
-	    return 0;
-      }
-}
-
-static void enum_name_get_value(vpiHandle obj, p_vpi_value value)
-{
-      struct enumconst_s*ref = dynamic_cast<enumconst_s*>(obj);
-      assert(ref);
-
-      if (ref->val4.size() > 0)
-	    vpip_vec4_get_value(ref->val4, ref->val4.size(), false, value);
-      else
-	    vpip_vec2_get_value(ref->val2, ref->val2.size(), false, value);
-}
 
 inline enumconst_s::enumconst_s()
 { }
@@ -149,13 +102,35 @@ int enumconst_s::get_type_code(void) const
 { return vpiEnumConst; }
 
 int enumconst_s::vpi_get(int code)
-{ return enum_name_get(code, this); }
+{
+      switch (code) {
+	  case vpiSize:
+	    return val4.size()? val4.size() : val2.size();
+	  default:
+	    return 0;
+      }
+}
+
 
 char* enumconst_s::vpi_get_str(int code)
-{ return enum_name_get_str(code, this); }
+{
+      switch (code) {
+	  case vpiName:
+	    return const_cast<char*> (name);
+	  default:
+	    return 0;
+      }
+}
+
 
 void enumconst_s::vpi_get_value(p_vpi_value val)
-{ enum_name_get_value(this, val); }
+{
+      if (val4.size() > 0)
+	    vpip_vec4_get_value(val4, val4.size(), false, val);
+      else
+	    vpip_vec2_get_value(val2, val2.size(), false, val);
+}
+
 
 void compile_enum2_type(char*label, long width, bool signed_flag,
                         std::list<struct enum_name_s>*names)

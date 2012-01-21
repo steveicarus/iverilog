@@ -25,47 +25,6 @@
 # include  <cassert>
 # include  "ivl_alloc.h"
 
-static int named_event_get(int code, vpiHandle ref)
-{
-      struct __vpiNamedEvent*obj = dynamic_cast<__vpiNamedEvent*>(ref);
-      assert(obj);
-
-      switch (code) {
-
-	  case vpiAutomatic:
-	    return (int) obj->scope->is_automatic;
-      }
-
-      return 0;
-}
-
-static char* named_event_get_str(int code, vpiHandle ref)
-{
-      struct __vpiNamedEvent*obj = dynamic_cast<__vpiNamedEvent*>(ref);
-      assert(obj);
-
-      if (code == vpiFile) {  // Not implemented for now!
-	    return simple_set_rbuf_str(file_names[0]);
-      }
-      return generic_get_str(code, obj->scope, obj->name, NULL);
-}
-
-static vpiHandle named_event_get_handle(int code, vpiHandle ref)
-{
-      struct __vpiNamedEvent*obj = dynamic_cast<__vpiNamedEvent*>(ref);
-      assert(obj);
-
-      switch (code) {
-	  case vpiScope:
-	    return obj->scope;
-
-	  case vpiModule:
-	    return vpip_module(obj->scope);
-      }
-
-      return 0;
-}
-
 inline __vpiNamedEvent::__vpiNamedEvent()
 { }
 
@@ -73,13 +32,38 @@ int __vpiNamedEvent::get_type_code(void) const
 { return vpiNamedEvent; }
 
 int __vpiNamedEvent::vpi_get(int code)
-{ return named_event_get(code, this); }
+{
+      switch (code) {
+
+	  case vpiAutomatic:
+	    return (int) scope->is_automatic;
+      }
+
+      return 0;
+}
 
 char* __vpiNamedEvent::vpi_get_str(int code)
-{ return named_event_get_str(code, this); }
+{
+      if (code == vpiFile) {  // Not implemented for now!
+	    return simple_set_rbuf_str(file_names[0]);
+      }
+      return generic_get_str(code, scope, name, NULL);
+}
+
 
 vpiHandle __vpiNamedEvent::vpi_handle(int code)
-{ return named_event_get_handle(code, this); }
+{
+      switch (code) {
+	  case vpiScope:
+	    return scope;
+
+	  case vpiModule:
+	    return vpip_module(scope);
+      }
+
+      return 0;
+}
+
 
 vpiHandle vpip_make_named_event(const char*name, vvp_net_t*funct)
 {

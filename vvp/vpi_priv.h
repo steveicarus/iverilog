@@ -175,19 +175,13 @@ struct __vpiSystemTime : public __vpiHandle {
       int vpi_get(int code);
       char*vpi_get_str(int code);
       void vpi_get_value(p_vpi_value val);
-      vpiHandle vpi_put_value(p_vpi_value val, int flags);
       vpiHandle vpi_handle(int code);
-      vpiHandle vpi_iterate(int code);
-      vpiHandle vpi_index(int idx);
-      void vpi_get_delays(p_vpi_delay del);
-      void vpi_put_delays(p_vpi_delay del);
 
       struct __vpiScope*scope;
 };
 
 struct __vpiScopedTime : public __vpiSystemTime {
       __vpiScopedTime();
-      int vpi_get(int code);
       char*vpi_get_str(int code);
       void vpi_get_value(p_vpi_value val);
 };
@@ -537,14 +531,7 @@ struct __vpiStringConst : public __vpiHandle {
       __vpiStringConst();
       int get_type_code(void) const;
       int vpi_get(int code);
-      char*vpi_get_str(int code);
       void vpi_get_value(p_vpi_value val);
-      vpiHandle vpi_put_value(p_vpi_value val, int flags);
-      vpiHandle vpi_handle(int code);
-      vpiHandle vpi_iterate(int code);
-      vpiHandle vpi_index(int idx);
-      void vpi_get_delays(p_vpi_delay del);
-      void vpi_put_delays(p_vpi_delay del);
 
       char*value;
       size_t value_len;
@@ -558,14 +545,7 @@ struct __vpiBinaryConst : public __vpiHandle {
       __vpiBinaryConst();
       int get_type_code(void) const;
       int vpi_get(int code);
-      char*vpi_get_str(int code);
       void vpi_get_value(p_vpi_value val);
-      vpiHandle vpi_put_value(p_vpi_value val, int flags);
-      vpiHandle vpi_handle(int code);
-      vpiHandle vpi_iterate(int code);
-      vpiHandle vpi_index(int idx);
-      void vpi_get_delays(p_vpi_delay del);
-      void vpi_put_delays(p_vpi_delay del);
 
       vvp_vector4_t bits;
 	/* TRUE if this constant is signed. */

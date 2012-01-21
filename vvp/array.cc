@@ -113,8 +113,6 @@ struct __vpiArray : public __vpiHandle {
 struct __vpiArrayIterator : public __vpiHandle {
       __vpiArrayIterator();
       int get_type_code(void) const;
-      int vpi_get(int code);
-      char* vpi_get_str(int code);
       vpiHandle vpi_index(int idx);
       free_object_fun_t free_object_fun(void);
 
@@ -125,8 +123,6 @@ struct __vpiArrayIterator : public __vpiHandle {
 struct __vpiArrayIndex : public __vpiHandle {
       __vpiArrayIndex();
       int get_type_code(void) const;
-      int vpi_get(int code);
-      char* vpi_get_str(int code);
       vpiHandle vpi_iterate(int code);
       vpiHandle vpi_index(int idx);
       free_object_fun_t free_object_fun(void);
@@ -300,12 +296,7 @@ struct __vpiArrayWord {
       };
 };
 
-static int vpi_array_get(int code, vpiHandle ref);
-static char*vpi_array_get_str(int code, vpiHandle ref);
-static vpiHandle vpi_array_get_handle(int code, vpiHandle ref);
-static vpiHandle vpi_array_iterate(int code, vpiHandle ref);
-static vpiHandle vpi_array_index(vpiHandle ref, int index);
-
+static void array_make_vals_words(struct __vpiArray*parent);
 static vpiHandle array_iterator_scan(vpiHandle ref, int);
 static int array_iterator_free_object(vpiHandle ref);
 
@@ -338,19 +329,92 @@ int __vpiArray::get_type_code(void) const
 { return vpiMemory; }
 
 int __vpiArray::vpi_get(int code)
-{ return vpi_array_get(code, this); }
+{
+      switch (code) {
+	  case vpiLineNo:
+	    return 0; // Not implemented for now!
+
+	  case vpiSize:
+	    return (int) array_count;
+
+	  case vpiAutomatic:
+	    return (int) scope->is_automatic;
+
+	  default:
+	    return 0;
+      }
+}
 
 char* __vpiArray::vpi_get_str(int code)
-{ return vpi_array_get_str(code, this); }
+{
+      if (code == vpiFile) {  // Not implemented for now!
+            return simple_set_rbuf_str(file_names[0]);
+      }
+
+      return generic_get_str(code, scope, name, NULL);
+}
 
 vpiHandle __vpiArray::vpi_handle(int code)
-{ return vpi_array_get_handle(code, this); }
+{
+      switch (code) {
+
+	  case vpiLeftRange:
+	    if (swap_addr) return &last_addr;
+	    else return &first_addr;
+
+	  case vpiRightRange:
+	    if (swap_addr) return &first_addr;
+	    else return &last_addr;
+
+	  case vpiScope:
+	    return scope;
+
+	  case vpiModule:
+	    return vpip_module(scope);
+      }
+
+      return 0;
+}
 
 vpiHandle __vpiArray::vpi_iterate(int code)
-{ return vpi_array_iterate(code, this); }
+{
+      switch (code) {
 
-vpiHandle __vpiArray::vpi_index(int idx)
-{ return vpi_array_index(this, idx); }
+	  case vpiMemoryWord: {
+		struct __vpiArrayIterator*res;
+		res = new __vpiArrayIterator;
+		res->array = this;
+		res->next = 0;
+		return res;
+	  }
+
+      }
+
+      return 0;
+}
+
+/*
+* VPI code passes indices that are not yet converted to canonical
+* form, so this index function does it here.
+*/
+vpiHandle __vpiArray::vpi_index(int index)
+{
+      index -= first_addr.value;
+      if (index >= (long)array_count)
+	    return 0;
+      if (index < 0)
+	    return 0;
+
+      if (nets != 0) {
+	    return nets[index];
+      }
+
+      if (vals_words == 0)
+	    array_make_vals_words(this);
+
+      return &(vals_words[index].as_word);
+}
+
 
 inline __vpiArrayIterator::__vpiArrayIterator()
 { }
@@ -358,14 +422,25 @@ inline __vpiArrayIterator::__vpiArrayIterator()
 int __vpiArrayIterator::get_type_code(void) const
 { return vpiIterator; }
 
-int __vpiArrayIterator::vpi_get(int)
-{ return vpiUndefined; }
+vpiHandle __vpiArrayIterator::vpi_index(int)
+{
+      if (next >= array->array_count) {
+	    vpi_free_object(this);
+	    return 0;
+      }
 
-char* __vpiArrayIterator::vpi_get_str(int)
-{ return 0; }
+      unsigned use_index = next;
+      next += 1;
 
-vpiHandle __vpiArrayIterator::vpi_index(int code)
-{ return array_iterator_scan(this, code); }
+      if (array->nets) return array->nets[use_index];
+
+      assert(array->vals4 || array->valsr);
+
+      if (array->vals_words == 0) array_make_vals_words(array);
+
+      return &(array->vals_words[use_index].as_word);
+}
+
 
 __vpiHandle::free_object_fun_t __vpiArrayIterator::free_object_fun(void)
 { return &array_iterator_free_object; }
@@ -375,12 +450,6 @@ inline __vpiArrayIndex::__vpiArrayIndex()
 
 int __vpiArrayIndex::get_type_code(void) const
 { return vpiIterator; }
-
-int __vpiArrayIndex::vpi_get(int)
-{ return vpiUndefined; }
-
-char* __vpiArrayIndex::vpi_get_str(int)
-{ return 0; }
 
 vpiHandle __vpiArrayIndex::vpi_iterate(int code)
 { return array_index_iterate(code, this); }
@@ -504,103 +573,6 @@ static unsigned decode_array_word_pointer(struct __vpiArrayWord*word,
       struct __vpiArrayWord*word0 = word->word0;
       parent = (word0 - 1) -> parent;
       return word - word0;
-}
-
-static int vpi_array_get(int code, vpiHandle ref)
-{
-      struct __vpiArray*obj = dynamic_cast<__vpiArray*> (ref);
-
-      switch (code) {
-	  case vpiLineNo:
-	    return 0; // Not implemented for now!
-
-	  case vpiSize:
-	    return (int) obj->array_count;
-
-	  case vpiAutomatic:
-	    return (int) obj->scope->is_automatic;
-
-	  default:
-	    return 0;
-      }
-}
-
-static char*vpi_array_get_str(int code, vpiHandle ref)
-{
-      struct __vpiArray*obj = dynamic_cast<__vpiArray*>(ref);
-
-      if (code == vpiFile) {  // Not implemented for now!
-            return simple_set_rbuf_str(file_names[0]);
-      }
-
-      return generic_get_str(code, obj->scope, obj->name, NULL);
-}
-
-static vpiHandle vpi_array_get_handle(int code, vpiHandle ref)
-{
-      struct __vpiArray*obj = dynamic_cast<__vpiArray*>(ref);
-
-      switch (code) {
-
-	  case vpiLeftRange:
-	    if (obj->swap_addr) return &(obj->last_addr);
-	    else return &(obj->first_addr);
-
-	  case vpiRightRange:
-	    if (obj->swap_addr) return &(obj->first_addr);
-	    else return &(obj->last_addr);
-
-	  case vpiScope:
-	    return obj->scope;
-
-	  case vpiModule:
-	    return vpip_module(obj->scope);
-      }
-
-      return 0;
-}
-
-static vpiHandle vpi_array_iterate(int code, vpiHandle ref)
-{
-      struct __vpiArray*obj = dynamic_cast<__vpiArray*>(ref);
-
-      switch (code) {
-
-	  case vpiMemoryWord: {
-		struct __vpiArrayIterator*res;
-		res = new __vpiArrayIterator;
-		res->array = obj;
-		res->next = 0;
-		return res;
-	  }
-
-      }
-
-      return 0;
-}
-
-/*
-* VPI code passes indices that are not yet converted to canonical
-* form, so this index function does it here.
-*/
-static vpiHandle vpi_array_index(vpiHandle ref, int index)
-{
-      struct __vpiArray*obj = dynamic_cast<__vpiArray*>(ref);
-
-      index -= obj->first_addr.value;
-      if (index >= (long)obj->array_count)
-	    return 0;
-      if (index < 0)
-	    return 0;
-
-      if (obj->nets != 0) {
-	    return obj->nets[index];
-      }
-
-      if (obj->vals_words == 0)
-	    array_make_vals_words(obj);
-
-      return &(obj->vals_words[index].as_word);
 }
 
 static int vpi_array_var_word_get(int code, vpiHandle ref)
@@ -729,27 +701,6 @@ static void vpi_array_var_index_get_value(vpiHandle ref, p_vpi_value vp)
 
       assert(vp->format == vpiIntVal);
       vp->value.integer = index;
-}
-
-static vpiHandle array_iterator_scan(vpiHandle ref, int)
-{
-      struct __vpiArrayIterator*obj = dynamic_cast<__vpiArrayIterator*>(ref);
-
-      if (obj->next >= obj->array->array_count) {
-	    vpi_free_object(ref);
-	    return 0;
-      }
-
-      unsigned use_index = obj->next;
-      obj->next += 1;
-
-      if (obj->array->nets) return obj->array->nets[use_index];
-
-      assert(obj->array->vals4 || obj->array->valsr);
-
-      if (obj->array->vals_words == 0) array_make_vals_words(obj->array);
-
-      return &(obj->array->vals_words[use_index].as_word);
 }
 
 static int array_iterator_free_object(vpiHandle ref)
