@@ -35,26 +35,12 @@
 # include  <cassert>
 # include  <cstdlib>
 
-/*
-* The vpi_free_object() call to a callback doesn't actually delete
-* anything, we instead allow the object to run its course and delete
-* itself. The semantics of vpi_free_object for a callback is that it
-* deletes the *handle*, and not the object itself, so given the vvp
-* implementation, there is nothing to do here.
-*/
-static int free_simple_callback(vpiHandle)
-{
-      return 1;
-}
 
 inline __vpiCallback::__vpiCallback()
 { }
 
 int __vpiCallback::get_type_code(void) const
 { return vpiCallback; }
-
-__vpiHandle::free_object_fun_t __vpiCallback::free_object_fun(void)
-{ return &free_simple_callback; }
 
 
 /*

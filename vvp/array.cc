@@ -298,10 +298,8 @@ struct __vpiArrayWord {
 
 static void array_make_vals_words(struct __vpiArray*parent);
 static vpiHandle array_iterator_scan(vpiHandle ref, int);
-static int array_iterator_free_object(vpiHandle ref);
 
 static vpiHandle array_index_scan(vpiHandle ref, int);
-static int array_index_free_object(vpiHandle ref);
 
 static int vpi_array_var_word_get(int code, vpiHandle);
 static char*vpi_array_var_word_get_str(int code, vpiHandle);
@@ -442,6 +440,13 @@ vpiHandle __vpiArrayIterator::vpi_index(int)
 }
 
 
+static int array_iterator_free_object(vpiHandle ref)
+{
+      struct __vpiArrayIterator*obj = dynamic_cast<__vpiArrayIterator*>(ref);
+      delete obj;
+      return 1;
+}
+
 __vpiHandle::free_object_fun_t __vpiArrayIterator::free_object_fun(void)
 { return &array_iterator_free_object; }
 
@@ -456,6 +461,13 @@ vpiHandle __vpiArrayIndex::vpi_iterate(int code)
 
 vpiHandle __vpiArrayIndex::vpi_index(int idx)
 { return array_index_scan(this, idx); }
+
+static int array_index_free_object(vpiHandle ref)
+{
+      struct __vpiArrayIndex*obj = dynamic_cast<__vpiArrayIndex*>(ref);
+      delete obj;
+      return 1;
+}
 
 __vpiHandle::free_object_fun_t __vpiArrayIndex::free_object_fun(void)
 { return &array_index_free_object; }
@@ -703,13 +715,6 @@ static void vpi_array_var_index_get_value(vpiHandle ref, p_vpi_value vp)
       vp->value.integer = index;
 }
 
-static int array_iterator_free_object(vpiHandle ref)
-{
-      struct __vpiArrayIterator*obj = dynamic_cast<__vpiArrayIterator*>(ref);
-      free(obj);
-      return 1;
-}
-
 vpiHandle array_index_iterate(int code, vpiHandle ref)
 {
       struct __vpiDecConst*obj = dynamic_cast<__vpiDecConst*>(ref);
@@ -736,13 +741,6 @@ static vpiHandle array_index_scan(vpiHandle ref, int)
 
       vpi_free_object(ref);
       return 0;
-}
-
-static int array_index_free_object(vpiHandle ref)
-{
-      struct __vpiArrayIndex*obj = dynamic_cast<__vpiArrayIndex*>(ref);
-      free(obj);
-      return 1;
 }
 
 static int vpi_array_vthr_A_get(int code, vpiHandle ref)

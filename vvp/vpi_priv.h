@@ -148,7 +148,6 @@ extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
 struct __vpiCallback : public __vpiHandle {
       __vpiCallback();
       int get_type_code(void) const;
-      free_object_fun_t free_object_fun(void);
 
 	// user supplied callback data
       struct t_cb_data cb_data;
@@ -520,22 +519,13 @@ struct __vpiSysTaskCall : public __vpiHandle {
 extern struct __vpiSysTaskCall*vpip_cur_task;
 
 /*
- * These are implemented in vpi_const.cc. These are vpiHandles for
- * constants.
- *
  * The persistent flag to vpip_make_string_const causes the created
  * handle to be persistent. This is necessary for cases where the
  * string handle may be reused, which is the normal case.
+ *
+ * When constructing with a string, the class takes possession of the
+ * text value string, and will delete it in the constructor.
  */
-struct __vpiStringConst : public __vpiHandle {
-      __vpiStringConst();
-      int get_type_code(void) const;
-      int vpi_get(int code);
-      void vpi_get_value(p_vpi_value val);
-
-      char*value;
-      size_t value_len;
-};
 
 vpiHandle vpip_make_string_const(char*text, bool persistent =true);
 vpiHandle vpip_make_string_param(char*name, char*value,
@@ -568,12 +558,13 @@ struct __vpiDecConst : public __vpiHandle {
       int value;
 };
 
-struct __vpiRealConst : public __vpiHandle {
-      __vpiRealConst();
+class __vpiRealConst : public __vpiHandle {
+    public:
+      __vpiRealConst(double);
       int get_type_code(void) const;
       int vpi_get(int code);
       void vpi_get_value(p_vpi_value val);
-
+    public:
       double value;
 };
 

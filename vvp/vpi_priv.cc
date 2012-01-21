@@ -64,8 +64,17 @@ void __vpiHandle::vpi_get_delays(p_vpi_delay)
 void __vpiHandle::vpi_put_delays(p_vpi_delay)
 { }
 
+/*
+ * The default behavior for the vpi_free_object to an object is to
+ * suppress the actual operation. This is because handles are
+ * generally allocated semi-permanently within vvp context. Dynamic
+ * objects will override the free_object_fun method to return an
+ * appropriately effective function.
+ */
+static int suppress_free(vpiHandle)
+{ return 1; }
 __vpiHandle::free_object_fun_t __vpiHandle::free_object_fun(void)
-{ return 0; }
+{ return &suppress_free; }
 
 /*
  * The vpip_string function creates a constant string from the pass
@@ -234,10 +243,7 @@ PLI_INT32 vpi_free_object(vpiHandle ref)
 
       assert(ref);
       __vpiHandle::free_object_fun_t fun = ref->free_object_fun();
-      if (fun)
-	    rtn = fun (ref);
-      else
-	    rtn = 1;
+      rtn = fun (ref);
 
       if (vpi_trace)
 	    fprintf(vpi_trace, " --> %d\n", rtn);

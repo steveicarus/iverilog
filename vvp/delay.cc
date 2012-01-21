@@ -819,13 +819,6 @@ static vpiHandle modpath_src_index ( vpiHandle ref, int)
 }
 
 
-static int modpath_src_free_object( vpiHandle ref )
-{
-      assert( ref->get_type_code() == vpiModPathIn );
-      free ( ref ) ;
-      return 1 ;
-}
-
 /*
  * This routine will put specific dimension of delay[] values
  * into a vpiHandle. In this case, we will put
@@ -1000,6 +993,12 @@ void __vpiModPathSrc::vpi_get_delays(p_vpi_delay del)
 
 void __vpiModPathSrc::vpi_put_delays(p_vpi_delay del)
 { modpath_src_put_delays(this, del); }
+
+static int modpath_src_free_object( vpiHandle ref )
+{
+      delete ref;
+      return 1 ;
+}
 
 __vpiHandle::free_object_fun_t __vpiModPathSrc::free_object_fun(void)
 { return &modpath_src_free_object; }

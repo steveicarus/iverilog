@@ -1822,6 +1822,7 @@ void compile_param_logic(char*label, char*name, char*value, bool signed_flag,
 void compile_param_string(char*label, char*name, char*value,
                           long file_idx, long lineno)
 {
+	// name and value become owned bi vpip_make_string_param
       vpiHandle obj = vpip_make_string_param(name, value, file_idx, lineno);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
