@@ -296,17 +296,17 @@ vvp_net_t* vvp_net_lookup(const char*label)
 		case vpiIntVar:
 		case vpiLongIntVar:
 		case vpiIntegerVar: {
-		      __vpiSignal*sig = (__vpiSignal*)vpi;
+		      __vpiSignal*sig = dynamic_cast<__vpiSignal*>(vpi);
 		      return sig->node;
 		}
 
 		case vpiRealVar: {
-		      __vpiRealVar*sig = (__vpiRealVar*)vpi;
+		      __vpiRealVar*sig = dynamic_cast<__vpiRealVar*>(vpi);
 		      return sig->net;
 		}
 
 		case vpiNamedEvent: {
-		      __vpiNamedEvent*tmp = (__vpiNamedEvent*)vpi;
+		      __vpiNamedEvent*tmp = dynamic_cast<__vpiNamedEvent*>(vpi);
 		      return tmp->funct;
 		}
 

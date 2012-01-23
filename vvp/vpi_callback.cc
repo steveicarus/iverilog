@@ -34,15 +34,6 @@
 # include  <cstdio>
 # include  <cassert>
 # include  <cstdlib>
-
-
-inline __vpiCallback::__vpiCallback()
-{ }
-
-int __vpiCallback::get_type_code(void) const
-{ return vpiCallback; }
-
-
 /*
  * Callback handles are created when the VPI function registers a
  * callback. The handle is stored by the run time, and it triggered
@@ -67,23 +58,19 @@ struct sync_cb  : public vvp_gen_event_s {
       virtual void run_run();
 };
 
-struct __vpiCallback* new_vpi_callback()
+inline __vpiCallback::__vpiCallback()
 {
-      struct __vpiCallback* obj;
-
-      obj = new __vpiCallback;
-
-      obj->cb_sync = 0;
-      obj->next    = 0;
-      return obj;
+      cb_sync = 0;
+      next = 0;
 }
 
-void delete_vpi_callback(struct __vpiCallback* ref)
+__vpiCallback::~__vpiCallback()
 {
-      assert(ref);
-      delete ref->cb_sync;
-      delete ref;
+      delete cb_sync;
 }
+
+int __vpiCallback::get_type_code(void) const
+{ return vpiCallback; }
 
 
 /*
@@ -103,7 +90,7 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
             return 0;
       }
 
-      struct __vpiCallback*obj = new_vpi_callback();
+      struct __vpiCallback*obj = new __vpiCallback;
       obj->cb_data = *data;
       if (data->time) {
 	    obj->cb_time = *(data->time);
@@ -150,8 +137,7 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	  case vpiNamedEvent:
 	    struct __vpiNamedEvent*nev;
 	    nev = dynamic_cast<__vpiNamedEvent*>(data->obj);
-	    obj->next = nev->callbacks;
-	    nev->callbacks = obj;
+	    nev->add_vpi_callback(obj);
 	    break;
 
 	  case vpiMemoryWord:
@@ -203,18 +189,16 @@ void sync_cb::run_run()
 	    vpi_mode_flag = VPI_MODE_NONE;
       }
 
-      delete_vpi_callback(cur);
+      delete cur;
 }
 
 static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
 {
-      struct __vpiCallback*obj = new_vpi_callback();
+      struct __vpiCallback*obj = new __vpiCallback;
       obj->cb_data = *data;
       assert(data->time);
       obj->cb_time = *(data->time);
       obj->cb_data.time = &obj->cb_time;
-
-      obj->next = 0;
 
       struct sync_cb*cb = new sync_cb;
       cb->sync_flag = readonly_flag? true : false;
@@ -248,14 +232,11 @@ static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
 
 static struct __vpiCallback* make_afterdelay(p_cb_data data, bool simtime_flag)
 {
-      struct __vpiCallback*obj = new_vpi_callback();
+      struct __vpiCallback*obj = new __vpiCallback;
       obj->cb_data = *data;
       assert(data->time);
       obj->cb_time = *(data->time);
       obj->cb_data.time = &obj->cb_time;
-
-      obj->next = 0;
-
       struct sync_cb*cb = new sync_cb;
       cb->sync_flag = false;
       cb->handle = obj;
@@ -317,7 +298,7 @@ void vpiEndOfCompile(void) {
 	    cur = EndOfCompile;
 	    EndOfCompile = cur->next;
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    delete_vpi_callback(cur);
+	    delete cur;
       }
 
       vpi_mode_flag = VPI_MODE_NONE;
@@ -337,7 +318,7 @@ void vpiStartOfSim(void) {
 	    cur = StartOfSimulation;
 	    StartOfSimulation = cur->next;
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    delete_vpi_callback(cur);
+	    delete cur;
       }
 
       vpi_mode_flag = VPI_MODE_NONE;
@@ -359,7 +340,7 @@ void vpiPostsim(void) {
 	    if (cur->cb_data.time)
 	          vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    delete_vpi_callback(cur);
+	    delete cur;
       }
 
       vpi_mode_flag = VPI_MODE_NONE;
@@ -377,14 +358,14 @@ void vpiNextSimTime(void)
 	    cur = NextSimTime;
 	    NextSimTime = cur->next;
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    delete_vpi_callback(cur);
+	    delete cur;
       }
 
 }
 
 static struct __vpiCallback* make_prepost(p_cb_data data)
 {
-      struct __vpiCallback*obj = new_vpi_callback();
+      struct __vpiCallback*obj = new __vpiCallback;
       obj->cb_data = *data;
 
       /* Insert at head of list */
@@ -562,13 +543,13 @@ void vvp_vpi_callback::run_vpi_callbacks()
 
 		  vpi_callbacks_ = next;
 		  cur->next = 0;
-		  delete_vpi_callback(cur);
+		  delete cur;
 
 	    } else {
 		  assert(prev->next == cur);
 		  prev->next = next;
 		  cur->next = 0;
-		  delete_vpi_callback(cur);
+		  delete cur;
 	    }
       }
 }

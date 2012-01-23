@@ -147,6 +147,7 @@ extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
  */
 struct __vpiCallback : public __vpiHandle {
       __vpiCallback();
+      ~__vpiCallback();
       int get_type_code(void) const;
 
 	// user supplied callback data
@@ -164,8 +165,6 @@ struct __vpiCallback : public __vpiHandle {
       struct __vpiCallback*next;
 };
 
-extern struct __vpiCallback* new_vpi_callback();
-extern void delete_vpi_callback(struct __vpiCallback* ref);
 extern void callback_execute(struct __vpiCallback*cur);
 
 struct __vpiSystemTime : public __vpiHandle {
@@ -405,25 +404,34 @@ extern struct __vpiModPath* vpip_make_modpath(vvp_net_t *net) ;
  * passed in will be saved, so the caller must allocate it (or not
  * free it) after it is handed to this function.
  */
-struct __vpiNamedEvent : public __vpiHandle {
-      __vpiNamedEvent();
+class __vpiNamedEvent : public __vpiHandle {
+    public:
+      __vpiNamedEvent(__vpiScope*scope, const char*name);
       int get_type_code(void) const;
       int vpi_get(int code);
       char* vpi_get_str(int code);
       vpiHandle vpi_handle(int code);
 
-	/* base name of the event object */
-      const char*name;
-	/* Parent scope of this object. */
-      struct __vpiScope*scope;
+      inline void add_vpi_callback(__vpiCallback*cb)
+      { cb->next = callbacks_;
+	callbacks_ = cb;
+      }
+
+      void run_vpi_callbacks(void);
+
 	/* The functor, used for %set operations. */
       vvp_net_t*funct;
+
+    private:
+	/* base name of the event object */
+      const char*name_;
+	/* Parent scope of this object. */
+      struct __vpiScope*scope_;
 	/* List of callbacks interested in this event. */
-      struct __vpiCallback*callbacks;
+      struct __vpiCallback*callbacks_;
 };
 
 extern vpiHandle vpip_make_named_event(const char*name, vvp_net_t*f);
-extern void vpip_run_named_event_callbacks(vpiHandle ref);
 extern void vpip_real_value_change(struct __vpiCallback*cbh,
 				   vpiHandle ref);
 

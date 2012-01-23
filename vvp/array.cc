@@ -1516,13 +1516,13 @@ void array_word_change(vvp_array_t array, unsigned long addr)
 
 		  array->vpi_callbacks = next;
 		  cur->next = 0;
-		  delete_vpi_callback(cur);
+		  delete cur;
 
 	    } else {
 		  assert(prev->next == cur);
 		  prev->next = next;
 		  cur->next = 0;
-		  delete_vpi_callback(cur);
+		  delete cur;
 	    }
       }
 }

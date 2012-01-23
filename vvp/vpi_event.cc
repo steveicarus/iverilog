@@ -25,8 +25,12 @@
 # include  <cassert>
 # include  "ivl_alloc.h"
 
-inline __vpiNamedEvent::__vpiNamedEvent()
-{ }
+inline __vpiNamedEvent::__vpiNamedEvent(__vpiScope*sc, const char*nam)
+{
+      scope_ = sc;
+      name_ = vpip_name_string(nam);
+      callbacks_ = 0;
+}
 
 int __vpiNamedEvent::get_type_code(void) const
 { return vpiNamedEvent; }
@@ -36,7 +40,7 @@ int __vpiNamedEvent::vpi_get(int code)
       switch (code) {
 
 	  case vpiAutomatic:
-	    return (int) scope->is_automatic;
+	    return (int) scope_->is_automatic;
       }
 
       return 0;
@@ -47,7 +51,7 @@ char* __vpiNamedEvent::vpi_get_str(int code)
       if (code == vpiFile) {  // Not implemented for now!
 	    return simple_set_rbuf_str(file_names[0]);
       }
-      return generic_get_str(code, scope, name, NULL);
+      return generic_get_str(code, scope_, name_, NULL);
 }
 
 
@@ -55,10 +59,10 @@ vpiHandle __vpiNamedEvent::vpi_handle(int code)
 {
       switch (code) {
 	  case vpiScope:
-	    return scope;
+	    return scope_;
 
 	  case vpiModule:
-	    return vpip_module(scope);
+	    return vpip_module(scope_);
       }
 
       return 0;
@@ -67,12 +71,9 @@ vpiHandle __vpiNamedEvent::vpi_handle(int code)
 
 vpiHandle vpip_make_named_event(const char*name, vvp_net_t*funct)
 {
-      struct __vpiNamedEvent*obj = new __vpiNamedEvent;
+      struct __vpiNamedEvent*obj = new __vpiNamedEvent(vpip_peek_current_scope(), name);
 
-      obj->name = vpip_name_string(name);
-      obj->scope = vpip_peek_current_scope();
       obj->funct = funct;
-      obj->callbacks = 0;
 
       return obj;
 }
@@ -90,11 +91,9 @@ vpiHandle vpip_make_named_event(const char*name, vvp_net_t*funct)
  * We can not use vpi_free_object() here since it does not really
  * delete the callback.
  */
-void vpip_run_named_event_callbacks(vpiHandle ref)
+void __vpiNamedEvent::run_vpi_callbacks()
 {
-      struct __vpiNamedEvent*obj = dynamic_cast<__vpiNamedEvent*>(ref);
-
-      struct __vpiCallback*next = obj->callbacks;
+      struct __vpiCallback*next = callbacks_;
       struct __vpiCallback*prev = 0;
       while (next) {
 	    struct __vpiCallback*cur = next;
@@ -105,7 +104,7 @@ void vpip_run_named_event_callbacks(vpiHandle ref)
 		  prev = cur;
 
 	    } else if (prev == 0) {
-		  obj->callbacks = next;
+		  callbacks_ = next;
 		  cur->next = 0;
 		  delete cur;
 

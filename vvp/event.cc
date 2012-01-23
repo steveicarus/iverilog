@@ -688,7 +688,9 @@ void vvp_named_event_sa::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       vvp_net_t*net = port.ptr();
       net->send_vec4(bit, 0);
 
-      vpip_run_named_event_callbacks(handle_);
+      __vpiNamedEvent*obj = dynamic_cast<__vpiNamedEvent*>(handle_);
+      assert(obj);
+      obj->run_vpi_callbacks();
 }
 
 vvp_named_event_aa::vvp_named_event_aa(class __vpiHandle*h)
