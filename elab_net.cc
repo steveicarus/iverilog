@@ -453,13 +453,6 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    sig->type(NetNet::UNRESOLVED_WIRE);
       }
 
-      if (sig->type() == NetNet::UNRESOLVED_WIRE && sig->pin(0).is_linked()) {
-	    cerr << get_fileline() << ": error: Unresolved net/uwire "
-	         << sig->name() << " cannot have multiple drivers." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
 	/* Don't allow registers as assign l-values. */
       if (sig->type() == NetNet::REG) {
 	    cerr << get_fileline() << ": error: reg " << sig->name()
@@ -590,6 +583,14 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       }
 
       unsigned subnet_wid = midx-lidx+1;
+
+	/* Check if the l-value bits are double-driven. */
+      if (sig->type() == NetNet::UNRESOLVED_WIRE && sig->test_part_lref(midx,lidx)) {
+	    cerr << get_fileline() << ": error: Unresolved net/uwire "
+	         << sig->name() << " cannot have multiple drivers." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       if (sig->pin_count() > 1) {
 	    if (widx < 0 || widx >= (long) sig->pin_count()) {

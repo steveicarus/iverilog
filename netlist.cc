@@ -856,6 +856,26 @@ unsigned NetNet::peek_eref() const
       return eref_count_;
 }
 
+/*
+ * Test each of the bits in the range, and set them. If any bits are
+ * already set then return true.
+ */
+bool NetNet::test_part_lref(unsigned msb, unsigned lsb)
+{
+      if (lref_mask_.size() == 0)
+	    lref_mask_.resize(vector_width());
+
+      bool rc = false;
+      for (unsigned idx = lsb ; idx <= msb ; idx += 1) {
+	    if (lref_mask_[idx])
+		  rc = true;
+	    else
+		  lref_mask_[idx] = true;
+      }
+
+      return rc;
+}
+
 void NetNet::incr_lref()
 {
       lref_count_ += 1;

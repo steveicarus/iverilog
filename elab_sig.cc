@@ -794,7 +794,7 @@ static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
 	    struct_member_t*curp = *cur;
 	    long use_msb = 0;
 	    long use_lsb = 0;
-	    if (! curp->range->empty()) {
+	    if (curp->range.get() && ! curp->range->empty()) {
 		  ivl_assert(*curp, curp->range->size() == 2);
 		  PExpr*msb_pex = curp->range->front();
 		  PExpr*lsb_pex = curp->range->back();

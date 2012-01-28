@@ -660,6 +660,7 @@ class NetNet  : public NetObj {
       void incr_lref();
       void decr_lref();
       unsigned peek_lref() const { return lref_count_; }
+      bool test_part_lref(unsigned msb, unsigned lsb);
 
       unsigned get_refs() const;
 
@@ -691,6 +692,10 @@ class NetNet  : public NetObj {
 
       unsigned eref_count_;
       unsigned lref_count_;
+	// When the signal is an unresolved wire, we need more detail
+	// which bits are assigned. This mask is true for each bit
+	// that is known to be driven.
+      std::vector<bool> lref_mask_;
 
       vector<class NetDelaySrc*> delay_paths_;
 };
