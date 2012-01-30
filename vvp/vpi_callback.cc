@@ -50,7 +50,7 @@
  */
 
 struct sync_cb  : public vvp_gen_event_s {
-      struct __vpiCallback*handle;
+      class sync_callback*handle;
       bool sync_flag;
 
       ~sync_cb () { }
@@ -60,18 +60,43 @@ struct sync_cb  : public vvp_gen_event_s {
 
 inline __vpiCallback::__vpiCallback()
 {
-      cb_sync = 0;
       next = 0;
 }
 
 __vpiCallback::~__vpiCallback()
 {
-      delete cb_sync;
 }
 
 int __vpiCallback::get_type_code(void) const
 { return vpiCallback; }
 
+
+class value_callback : public __vpiCallback {
+    public:
+      explicit value_callback(p_cb_data data);
+
+    public:
+	// user supplied callback data
+      struct t_vpi_time cb_time;
+      struct t_vpi_value cb_value;
+};
+
+inline value_callback::value_callback(p_cb_data data)
+{
+      cb_data = *data;
+      if (data->time) {
+	    cb_time = *(data->time);
+      } else {
+	    cb_time.type = vpiSuppressTime;
+      }
+      cb_data.time = &cb_time;
+      if (data->value) {
+	    cb_value = *(data->value);
+      } else {
+	    cb_value.format = vpiSuppressVal;
+      }
+      cb_data.value = &cb_value;
+}
 
 /*
  * A value change callback is tripped when a bit of a signal
@@ -80,7 +105,7 @@ int __vpiCallback::get_type_code(void) const
  * does not already have them, create some callback functors to do the
  * actual value change detection.
  */
-static struct __vpiCallback* make_value_change(p_cb_data data)
+static value_callback* make_value_change(p_cb_data data)
 {
       if (vpi_get(vpiAutomatic, data->obj)) {
             fprintf(stderr, "vpi error: cannot place value change "
@@ -90,23 +115,9 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
             return 0;
       }
 
-      struct __vpiCallback*obj = new __vpiCallback;
-      obj->cb_data = *data;
-      if (data->time) {
-	    obj->cb_time = *(data->time);
-      } else {
-	    obj->cb_time.type = vpiSuppressTime;
-      }
-      obj->cb_data.time = &obj->cb_time;
-      if (data->value) {
-	    obj->cb_value = *(data->value);
-      } else {
-	    obj->cb_value.format = vpiSuppressVal;
-      }
-      obj->cb_data.value = &obj->cb_value;
+      value_callback*obj = new value_callback(data);
 
       assert(data->obj);
-
       switch (data->obj->get_type_code()) {
 
 	  case vpiReg:
@@ -170,12 +181,41 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
       return obj;
 }
 
+class sync_callback : public __vpiCallback {
+    public:
+      explicit sync_callback(p_cb_data data);
+      ~sync_callback();
+
+    public:
+	// scheduled event
+      struct sync_cb* cb_sync;
+	// user supplied callback data
+      struct t_vpi_time cb_time;
+
+    private:
+};
+
+inline sync_callback::sync_callback(p_cb_data data)
+{
+      cb_sync = 0;
+
+      cb_data = *data;
+      assert(data->time);
+      cb_time = *(data->time);
+      cb_data.time = &cb_time;
+}
+
+sync_callback::~sync_callback()
+{
+      delete cb_sync;
+}
+
 void sync_cb::run_run()
 {
       if (handle == 0)
 	    return;
 
-      struct __vpiCallback*cur = handle;
+      sync_callback*cur = handle;
       cur->cb_data.time->type = vpiSimTime;
       vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
 
@@ -192,13 +232,9 @@ void sync_cb::run_run()
       delete cur;
 }
 
-static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
+static sync_callback* make_sync(p_cb_data data, bool readonly_flag)
 {
-      struct __vpiCallback*obj = new __vpiCallback;
-      obj->cb_data = *data;
-      assert(data->time);
-      obj->cb_time = *(data->time);
-      obj->cb_data.time = &obj->cb_time;
+      sync_callback*obj = new sync_callback(data);
 
       struct sync_cb*cb = new sync_cb;
       cb->sync_flag = readonly_flag? true : false;
@@ -232,11 +268,7 @@ static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
 
 static struct __vpiCallback* make_afterdelay(p_cb_data data, bool simtime_flag)
 {
-      struct __vpiCallback*obj = new __vpiCallback;
-      obj->cb_data = *data;
-      assert(data->time);
-      obj->cb_time = *(data->time);
-      obj->cb_data.time = &obj->cb_time;
+      sync_callback*obj = new sync_callback(data);
       struct sync_cb*cb = new sync_cb;
       cb->sync_flag = false;
       cb->handle = obj;
@@ -279,13 +311,21 @@ static struct __vpiCallback* make_afterdelay(p_cb_data data, bool simtime_flag)
  * callbacks.
  */
 
-static struct __vpiCallback*NextSimTime = 0;
-static struct __vpiCallback*EndOfCompile = NULL;
-static struct __vpiCallback*StartOfSimulation = NULL;
-static struct __vpiCallback*EndOfSimulation = NULL;
+class simulator_callback : public __vpiCallback {
+    public:
+      inline explicit simulator_callback(struct t_cb_data*data)
+      { cb_data = *data; }
+
+    public:
+};
+
+static simulator_callback*NextSimTime = 0;
+static simulator_callback*EndOfCompile = 0;
+static simulator_callback*StartOfSimulation = 0;
+static simulator_callback*EndOfSimulation = 0;
 
 void vpiEndOfCompile(void) {
-      struct __vpiCallback* cur;
+      simulator_callback* cur;
 
       /*
        * Walk the list of register callbacks, executing them and
@@ -296,7 +336,7 @@ void vpiEndOfCompile(void) {
 
       while (EndOfCompile) {
 	    cur = EndOfCompile;
-	    EndOfCompile = cur->next;
+	    EndOfCompile = dynamic_cast<simulator_callback*>(cur->next);
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
 	    delete cur;
       }
@@ -305,7 +345,7 @@ void vpiEndOfCompile(void) {
 }
 
 void vpiStartOfSim(void) {
-      struct __vpiCallback* cur;
+      simulator_callback* cur;
 
       /*
        * Walk the list of register callbacks, executing them and
@@ -316,7 +356,7 @@ void vpiStartOfSim(void) {
 
       while (StartOfSimulation) {
 	    cur = StartOfSimulation;
-	    StartOfSimulation = cur->next;
+	    StartOfSimulation = dynamic_cast<simulator_callback*>(cur->next);
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
 	    delete cur;
       }
@@ -325,7 +365,7 @@ void vpiStartOfSim(void) {
 }
 
 void vpiPostsim(void) {
-      struct __vpiCallback* cur;
+      simulator_callback* cur;
 
       /*
        * Walk the list of register callbacks
@@ -335,7 +375,7 @@ void vpiPostsim(void) {
 
       while (EndOfSimulation) {
 	    cur = EndOfSimulation;
-	    EndOfSimulation = cur->next;
+	    EndOfSimulation = dynamic_cast<simulator_callback*>(cur->next);
 	      /* Only set the time if it is not NULL. */
 	    if (cur->cb_data.time)
 	          vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
@@ -352,21 +392,20 @@ void vpiPostsim(void) {
  */
 void vpiNextSimTime(void)
 {
-      struct __vpiCallback* cur;
+      simulator_callback* cur;
 
       while (NextSimTime) {
 	    cur = NextSimTime;
-	    NextSimTime = cur->next;
+	    NextSimTime = dynamic_cast<simulator_callback*>(cur->next);
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
 	    delete cur;
       }
 
 }
 
-static struct __vpiCallback* make_prepost(p_cb_data data)
+static simulator_callback* make_prepost(p_cb_data data)
 {
-      struct __vpiCallback*obj = new __vpiCallback;
-      obj->cb_data = *data;
+      simulator_callback*obj = new simulator_callback(data);
 
       /* Insert at head of list */
       switch (data->reason) {

@@ -150,19 +150,14 @@ struct __vpiCallback : public __vpiHandle {
       ~__vpiCallback();
       int get_type_code(void) const;
 
+	// Used for listing callbacks.
+      struct __vpiCallback*next;
+
 	// user supplied callback data
       struct t_cb_data cb_data;
-      struct t_vpi_time cb_time;
-      struct t_vpi_value cb_value;
-
-	// scheduled event
-      struct sync_cb* cb_sync;
 
 	// The callback holder may use this for various purposes.
       long extra_data;
-
-	// Used for listing callbacks.
-      struct __vpiCallback*next;
 };
 
 extern void callback_execute(struct __vpiCallback*cur);
@@ -405,6 +400,7 @@ extern struct __vpiModPath* vpip_make_modpath(vvp_net_t *net) ;
  * free it) after it is handed to this function.
  */
 class __vpiNamedEvent : public __vpiHandle {
+
     public:
       __vpiNamedEvent(__vpiScope*scope, const char*name);
       int get_type_code(void) const;
@@ -428,7 +424,7 @@ class __vpiNamedEvent : public __vpiHandle {
 	/* Parent scope of this object. */
       struct __vpiScope*scope_;
 	/* List of callbacks interested in this event. */
-      struct __vpiCallback*callbacks_;
+      __vpiCallback*callbacks_;
 };
 
 extern vpiHandle vpip_make_named_event(const char*name, vvp_net_t*f);
