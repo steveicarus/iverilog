@@ -74,6 +74,8 @@ int __vpiCallback::get_type_code(void) const
 class value_callback : public __vpiCallback {
     public:
       explicit value_callback(p_cb_data data);
+	// Return true if the callback really is ready to be called
+      virtual bool test_value_callback_ready(void);
 
     public:
 	// user supplied callback data
@@ -81,7 +83,7 @@ class value_callback : public __vpiCallback {
       struct t_vpi_value cb_value;
 };
 
-inline value_callback::value_callback(p_cb_data data)
+value_callback::value_callback(p_cb_data data)
 {
       cb_data = *data;
       if (data->time) {
@@ -96,6 +98,104 @@ inline value_callback::value_callback(p_cb_data data)
 	    cb_value.format = vpiSuppressVal;
       }
       cb_data.value = &cb_value;
+}
+
+/*
+ * Normally, any assign to a value triggers a value change callback,
+ * so return a constant true here. This is a stub.
+ */
+bool value_callback::test_value_callback_ready(void)
+{
+      return true;
+}
+
+static void vpip_real_value_change(value_callback*cbh, vpiHandle ref)
+{
+      struct __vpiRealVar*rfp = dynamic_cast<__vpiRealVar*>(ref);
+      assert(rfp);
+      vvp_vpi_callback*obj = dynamic_cast<vvp_vpi_callback*>(rfp->net->fil);
+      assert(obj);
+
+      obj->add_vpi_callback(cbh);
+}
+
+class value_part_callback : public value_callback {
+    public:
+      explicit value_part_callback(p_cb_data data);
+      ~value_part_callback();
+
+      bool test_value_callback_ready(void);
+
+    private:
+      char*value_bits_;
+      size_t value_off_;
+};
+
+inline value_part_callback::value_part_callback(p_cb_data data)
+: value_callback(data)
+{
+      struct __vpiPV*pobj = dynamic_cast<__vpiPV*>(data->obj);
+      assert(pobj);
+
+      vvp_vpi_callback*sig_fil;
+      sig_fil = dynamic_cast<vvp_vpi_callback*>(pobj->net->fil);
+      assert(sig_fil);
+
+      sig_fil->add_vpi_callback(this);
+	// Get a reference value that can be used to compare with an
+	// updated value. Use the filter get_value to get the value,
+	// and get it in BinStr form so that compares are easy. Note
+	// that the vpiBinStr format has the MSB first, but the tbase
+	// is lsb first.
+      s_vpi_value tmp_value;
+      tmp_value.format = vpiBinStrVal;
+      sig_fil->get_value(&tmp_value);
+
+      value_bits_ = new char[pobj->width+1];
+      value_off_ = pobj->parent->vpi_get(vpiSize) - pobj->width - pobj->tbase;
+
+      memcpy(value_bits_, tmp_value.value.str + value_off_, pobj->width);
+      value_bits_[pobj->width] = 0;
+}
+
+value_part_callback::~value_part_callback()
+{
+      delete[]value_bits_;
+}
+
+bool value_part_callback::test_value_callback_ready(void)
+{
+      struct __vpiPV*pobj = dynamic_cast<__vpiPV*>(cb_data.obj);
+      assert(pobj);
+
+      vvp_vpi_callback*sig_fil;
+      sig_fil = dynamic_cast<vvp_vpi_callback*>(pobj->net->fil);
+      assert(sig_fil);
+
+	// Get a reference value that can be used to compare with an
+	// updated value.
+      s_vpi_value tmp_value;
+      tmp_value.format = vpiBinStrVal;
+      sig_fil->get_value(&tmp_value);
+
+      if (memcmp(value_bits_, tmp_value.value.str + value_off_, pobj->width) == 0)
+	    return false;
+
+      memcpy(value_bits_, tmp_value.value.str + value_off_, pobj->width);
+      return true;
+}
+
+/*
+ * Attach the __vpiCallback to the object that this part select
+ * selects from. The part select itself is not a vvp_vpi_callback
+ * object, but it refers to a net that is a vvp_vpi_callback, so
+ * add the callback to that object.
+ */
+static value_callback*make_value_change_part(p_cb_data data)
+{
+	/* Attach the __vpiCallback object to the signal. */
+      value_callback*cbh = new value_part_callback(data);
+      return cbh;
 }
 
 /*
@@ -114,6 +214,10 @@ static value_callback* make_value_change(p_cb_data data)
                             vpi_get_str(vpiName, data->obj));
             return 0;
       }
+
+	// Special case: the target object is a vpiPartSelect
+      if (data->obj->get_type_code() == vpiPartSelect)
+	    return make_value_change_part(data);
 
       value_callback*obj = new value_callback(data);
 
@@ -157,10 +261,6 @@ static value_callback* make_value_change(p_cb_data data)
 
 	  case vpiMemory:
 	    vpip_array_change(obj, data->obj);
-	    break;
-
-	  case vpiPartSelect:
-	    vpip_part_select_value_change(obj, data->obj);
 	    break;
 
 	  case vpiModule:
@@ -537,7 +637,7 @@ void vvp_vpi_callback::attach_as_word(vvp_array_t arr, unsigned long addr)
       array_word_ = addr;
 }
 
-void vvp_vpi_callback::add_vpi_callback(__vpiCallback*cb)
+void vvp_vpi_callback::add_vpi_callback(value_callback*cb)
 {
       cb->next = vpi_callbacks_;
       vpi_callbacks_ = cb;
@@ -564,18 +664,20 @@ void vvp_vpi_callback::run_vpi_callbacks()
 {
       if (array_) array_word_change(array_, array_word_);
 
-      struct __vpiCallback *next = vpi_callbacks_;
-      struct __vpiCallback *prev = 0;
+      value_callback *next = vpi_callbacks_;
+      value_callback *prev = 0;
 
       while (next) {
-	    struct __vpiCallback*cur = next;
-	    next = cur->next;
+	    value_callback*cur = next;
+	    next = dynamic_cast<value_callback*>(cur->next);
 
 	    if (cur->cb_data.cb_rtn != 0) {
-		  if (cur->cb_data.value)
-			get_value(cur->cb_data.value);
+		  if (cur->test_value_callback_ready()) {
+			if (cur->cb_data.value)
+			      get_value(cur->cb_data.value);
 
-		  callback_execute(cur);
+			callback_execute(cur);
+		  }
 		  prev = cur;
 
 	    } else if (prev == 0) {

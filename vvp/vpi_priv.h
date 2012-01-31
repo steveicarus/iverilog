@@ -325,9 +325,6 @@ extern vpiHandle vpip_make_PV(char*name, vpiHandle handle, int width);
 extern vpiHandle vpip_make_PV(char*name, int tbase, int twid, char*is_signed,
                               int width);
 
-extern void vpip_part_select_value_change(struct __vpiCallback*cbh, vpiHandle obj);
-
-
 struct __vpiModPathTerm : public __vpiHandle {
       __vpiModPathTerm();
       int get_type_code(void) const;
@@ -428,8 +425,6 @@ class __vpiNamedEvent : public __vpiHandle {
 };
 
 extern vpiHandle vpip_make_named_event(const char*name, vvp_net_t*f);
-extern void vpip_real_value_change(struct __vpiCallback*cbh,
-				   vpiHandle ref);
 
 /*
  * Memory is an array of bits that is accessible in N-bit chunks, with

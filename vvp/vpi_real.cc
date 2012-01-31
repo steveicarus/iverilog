@@ -159,17 +159,6 @@ vpiHandle __vpiRealVar::vpi_handle(int code)
 vpiHandle __vpiRealVar::vpi_iterate(int code)
 { return real_var_iterate(code, this); }
 
-void vpip_real_value_change(struct __vpiCallback*cbh,
-			     vpiHandle ref)
-{
-      struct __vpiRealVar*rfp = dynamic_cast<__vpiRealVar*>(ref);
-      assert(rfp);
-      vvp_vpi_callback*obj = dynamic_cast<vvp_vpi_callback*>(rfp->net->fil);
-      assert(obj);
-
-      obj->add_vpi_callback(cbh);
-}
-
 vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)
 {
       struct __vpiRealVar*obj = new __vpiRealVar;

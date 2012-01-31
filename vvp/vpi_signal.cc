@@ -1422,25 +1422,6 @@ vpiHandle vpip_make_PV(char*var, int tbase, int twid, char*is_signed, int width)
       return obj;
 }
 
-/*
- * Attach the __vpiCallback to the object that this part select
- * selects from. The part select itself is not a vvp_vpi_callback
- * object, but it refers to a net that is a vvp_vpi_callback, so
- * add the callback to that object.
- */
-void vpip_part_select_value_change(struct __vpiCallback*cbh, vpiHandle ref)
-{
-      struct __vpiPV*obj = dynamic_cast<__vpiPV*>(ref);
-      assert(obj);
-
-      vvp_vpi_callback*sig_fil;
-      sig_fil = dynamic_cast<vvp_vpi_callback*>(obj->net->fil);
-      assert(sig_fil);
-
-	/* Attach the __vpiCallback object to the signal. */
-      sig_fil->add_vpi_callback(cbh);
-}
-
 #ifdef CHECK_WITH_VALGRIND
 void PV_delete(vpiHandle item)
 {
