@@ -155,9 +155,18 @@ struct __vpiCallback : public __vpiHandle {
 
 	// user supplied callback data
       struct t_cb_data cb_data;
+};
 
-	// The callback holder may use this for various purposes.
-      long extra_data;
+class value_callback : public __vpiCallback {
+    public:
+      explicit value_callback(p_cb_data data);
+	// Return true if the callback really is ready to be called
+      virtual bool test_value_callback_ready(void);
+
+    public:
+	// user supplied callback data
+      struct t_vpi_time cb_time;
+      struct t_vpi_value cb_value;
 };
 
 extern void callback_execute(struct __vpiCallback*cur);

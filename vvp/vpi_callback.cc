@@ -71,18 +71,6 @@ int __vpiCallback::get_type_code(void) const
 { return vpiCallback; }
 
 
-class value_callback : public __vpiCallback {
-    public:
-      explicit value_callback(p_cb_data data);
-	// Return true if the callback really is ready to be called
-      virtual bool test_value_callback_ready(void);
-
-    public:
-	// user supplied callback data
-      struct t_vpi_time cb_time;
-      struct t_vpi_value cb_value;
-};
-
 value_callback::value_callback(p_cb_data data)
 {
       cb_data = *data;
@@ -219,6 +207,12 @@ static value_callback* make_value_change(p_cb_data data)
       if (data->obj->get_type_code() == vpiPartSelect)
 	    return make_value_change_part(data);
 
+      if (data->obj->get_type_code() == vpiMemoryWord)
+	    return vpip_array_word_change(data);
+
+      if (data->obj->get_type_code() == vpiMemory)
+	    return vpip_array_change(data);
+
       value_callback*obj = new value_callback(data);
 
       assert(data->obj);
@@ -253,14 +247,6 @@ static value_callback* make_value_change(p_cb_data data)
 	    struct __vpiNamedEvent*nev;
 	    nev = dynamic_cast<__vpiNamedEvent*>(data->obj);
 	    nev->add_vpi_callback(obj);
-	    break;
-
-	  case vpiMemoryWord:
-	    vpip_array_word_change(obj, data->obj);
-	    break;
-
-	  case vpiMemory:
-	    vpip_array_change(obj, data->obj);
 	    break;
 
 	  case vpiModule:

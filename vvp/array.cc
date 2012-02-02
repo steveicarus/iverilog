@@ -1471,6 +1471,16 @@ static void array_attach_port(vvp_array_t array, vvp_fun_arrayport*fun)
       }
 }
 
+class array_word_value_callback : public value_callback {
+    public:
+      inline explicit array_word_value_callback(p_cb_data data)
+      : value_callback(data)
+      { }
+
+    public:
+      long word_addr;
+};
+
 void array_word_change(vvp_array_t array, unsigned long addr)
 {
       for (vvp_fun_arrayport*cur = array->ports_; cur; cur = cur->next_)
@@ -1481,35 +1491,38 @@ void array_word_change(vvp_array_t array, unsigned long addr)
       struct __vpiCallback *prev = 0;
 
       while (next) {
-	    struct __vpiCallback*cur = next;
+	    array_word_value_callback*cur = dynamic_cast<array_word_value_callback*>(next);
 	    next = cur->next;
 
 	      // Skip callbacks that are not for me. -1 is for every element.
-	    if (cur->extra_data != (long)addr && cur->extra_data != -1) {
+	    if (cur->word_addr != (long)addr && cur->word_addr != -1) {
 		  prev = cur;
 		  continue;
 	    }
 
 	      // For whole array callbacks we need to set the index.
-	    if (cur->extra_data == -1) {
+	    if (cur->word_addr == -1) {
 		  cur->cb_data.index = (PLI_INT32) ((int)addr +
 		                       array->first_addr.value);
 	    }
 
 	    if (cur->cb_data.cb_rtn != 0) {
-		  if (cur->cb_data.value) {
-			if (vpi_array_is_real(array)) {
-			      vpip_real_get_value(array->valsr->get_word(addr),
-			                          cur->cb_data.value);
-			} else {
-			      vpip_vec4_get_value(array->vals4->get_word(addr),
-			                          array->vals_width,
-			                          array->signed_flag,
-			                          cur->cb_data.value);
+		  if (cur->test_value_callback_ready()) {
+			if (cur->cb_data.value) {
+			      if (vpi_array_is_real(array)) {
+				    vpip_real_get_value(array->valsr->get_word(addr),
+							cur->cb_data.value);
+			      } else {
+				    vpip_vec4_get_value(array->vals4->get_word(addr),
+							array->vals_width,
+							array->signed_flag,
+							cur->cb_data.value);
+			      }
 			}
+
+			callback_execute(cur);
 		  }
 
-		  callback_execute(cur);
 		  prev = cur;
 
 	    } else if (prev == 0) {
@@ -1597,33 +1610,94 @@ bool array_port_resolv_list_t::resolve(bool mes)
       return true;
 }
 
-void vpip_array_word_change(struct __vpiCallback*cb, vpiHandle obj)
+class array_word_part_callback : public array_word_value_callback {
+    public:
+      explicit array_word_part_callback(p_cb_data data);
+      ~array_word_part_callback();
+
+      bool test_value_callback_ready(void);
+
+    private:
+      char*value_bits_;
+};
+
+array_word_part_callback::array_word_part_callback(p_cb_data data)
+: array_word_value_callback(data)
 {
-      struct __vpiArray*parent = 0;
-      if (struct __vpiArrayWord*word = array_var_word_from_handle(obj)) {
-	    unsigned addr = decode_array_word_pointer(word, parent);
-	    cb->extra_data = addr;
+	// Get the initial value of the part, to use as a reference.
+      struct __vpiArrayVthrAPV*apvword = dynamic_cast<__vpiArrayVthrAPV*>(data->obj);
+      s_vpi_value tmp_value;
+      tmp_value.format = vpiBinStrVal;
+      apvword->vpi_get_value(&tmp_value);
 
-      } else if (struct __vpiArrayVthrA*tword = dynamic_cast<__vpiArrayVthrA*>(obj)) {
-	    parent = tword->array;
-	    cb->extra_data = tword->address;
+      value_bits_ = new char[apvword->part_wid+1];
 
-      } else if (struct __vpiArrayVthrAPV*apvword = dynamic_cast<__vpiArrayVthrAPV*>(obj)) {
-	    parent = apvword->array;
-	    cb->extra_data = apvword->word_sel;
-      }
-
-      assert(parent);
-      cb->next = parent->vpi_callbacks;
-      parent->vpi_callbacks = cb;
+      memcpy(value_bits_, tmp_value.value.str, apvword->part_wid);
+      value_bits_[apvword->part_wid] = 0;
 }
 
-void vpip_array_change(struct __vpiCallback*cb, vpiHandle obj)
+array_word_part_callback::~array_word_part_callback()
 {
-      struct __vpiArray*arr = dynamic_cast<__vpiArray*>(obj);
-      cb->extra_data = -1; // This is a callback for every element.
-      cb->next = arr->vpi_callbacks;
-      arr->vpi_callbacks = cb;
+      delete[]value_bits_;
+}
+
+bool array_word_part_callback::test_value_callback_ready(void)
+{
+      struct __vpiArrayVthrAPV*apvword = dynamic_cast<__vpiArrayVthrAPV*>(cb_data.obj);
+      assert(apvword);
+
+	// Get a reference value that can be used to compare with an
+	// updated value.
+      s_vpi_value tmp_value;
+      tmp_value.format = vpiBinStrVal;
+      apvword->vpi_get_value(&tmp_value);
+
+      if (memcmp(value_bits_, tmp_value.value.str, apvword->part_wid) == 0)
+	    return false;
+
+      memcpy(value_bits_, tmp_value.value.str, apvword->part_wid);
+      return true;
+
+}
+
+value_callback*vpip_array_word_change(p_cb_data data)
+{
+      struct __vpiArray*parent = 0;
+      array_word_value_callback*cbh = 0;
+      if (struct __vpiArrayWord*word = array_var_word_from_handle(data->obj)) {
+	    unsigned addr = decode_array_word_pointer(word, parent);
+	    cbh = new array_word_value_callback(data);
+	    cbh->word_addr = addr;
+
+      } else if (struct __vpiArrayVthrA*tword = dynamic_cast<__vpiArrayVthrA*>(data->obj)) {
+	    parent = tword->array;
+	    cbh = new array_word_value_callback(data);
+	    cbh->word_addr = tword->address;
+
+      } else if (struct __vpiArrayVthrAPV*apvword = dynamic_cast<__vpiArrayVthrAPV*>(data->obj)) {
+	    parent = apvword->array;
+	    cbh = new array_word_part_callback(data);
+	    cbh->word_addr = apvword->word_sel;
+      }
+
+      assert(cbh);
+      assert(parent);
+      cbh->next = parent->vpi_callbacks;
+      parent->vpi_callbacks = cbh;
+
+      return cbh;
+}
+
+value_callback* vpip_array_change(p_cb_data data)
+{
+      array_word_value_callback*cbh = new array_word_value_callback(data);
+      assert(data->obj);
+
+      struct __vpiArray*arr = dynamic_cast<__vpiArray*>(data->obj);
+      cbh->word_addr = -1; // This is a callback for every element.
+      cbh->next = arr->vpi_callbacks;
+      arr->vpi_callbacks = cbh;
+      return cbh;
 }
 
 void compile_array_port(char*label, char*array, char*addr)
