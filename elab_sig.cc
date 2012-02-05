@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -890,29 +890,31 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    long pmsb = 0, plsb = 0, nmsb = 0, nlsb = 0;
             bool bad_lsb = false, bad_msb = false;
 	    /* If they exist get the port definition MSB and LSB */
-	    if (port_set_ && port_msb_ != 0) {
-		  NetExpr*texpr = elab_and_eval(des, scope, port_msb_, -1, true);
+	    if (port_set_ && !port_.empty()) {
+		  assert(port_.size() == 1);
+		  PWire::range_t rng = port_.front();
+		  NetExpr*texpr = elab_and_eval(des, scope, rng.msb, -1, true);
 
 		  if (! eval_as_long(pmsb, texpr)) {
-			cerr << port_msb_->get_fileline() << ": error: "
+			cerr << rng.msb->get_fileline() << ": error: "
 			      "Range expressions must be constant." << endl;
-			cerr << port_msb_->get_fileline() << "       : "
+			cerr << rng.msb->get_fileline() << "       : "
 			      "This MSB expression violates the rule: "
-                             << *port_msb_ << endl;
+                             << *rng.msb << endl;
 			des->errors += 1;
                         bad_msb = true;
 		  }
 
 		  delete texpr;
 
-		  texpr = elab_and_eval(des, scope, port_lsb_, -1, true);
+		  texpr = elab_and_eval(des, scope, rng.lsb, -1, true);
 
 		  if (! eval_as_long(plsb, texpr)) {
-			cerr << port_lsb_->get_fileline() << ": error: "
+			cerr << rng.lsb->get_fileline() << ": error: "
 			      "Range expressions must be constant." << endl;
-			cerr << port_lsb_->get_fileline() << "       : "
+			cerr << rng.lsb->get_fileline() << "       : "
 			      "This LSB expression violates the rule: "
-                             << *port_lsb_ << endl;
+                             << *rng.lsb << endl;
 			des->errors += 1;
                         bad_lsb = true;
 		  }
@@ -923,49 +925,53 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		    /* An implicit port can have a range so note that here. */
 		  is_implicit_scalar = false;
 	    }
-            if (!port_set_) assert(port_msb_ == 0 && port_lsb_ == 0);
-            if (port_msb_ == 0) assert(port_lsb_ == 0);
-            if (port_lsb_ == 0) assert(port_msb_ == 0);
+            if (!port_set_) assert(port_.empty());
+
+	    if (net_.size() > 1) {
+		  cerr << net_.back().msb->get_fileline() << ": sorry: "
+		       << "Multi-dimension packed arrays not supported."
+		       << endl;
+		  des->errors += 1;
+	    }
 
 	    /* If they exist get the net/etc. definition MSB and LSB */
-	    if (net_set_ && net_msb_ != 0 && !bad_msb && !bad_lsb) {
-		  NetExpr*texpr = elab_and_eval(des, scope, net_msb_, -1, true);
+	    if (net_set_ && !net_.empty() && !bad_msb && !bad_lsb) {
+		  PWire::range_t rng = net_.front();
+		  NetExpr*texpr = elab_and_eval(des, scope, rng.msb, -1, true);
 
 		  if (! eval_as_long(nmsb, texpr)) {
-			cerr << net_msb_->get_fileline() << ": error: "
+			cerr << rng.msb->get_fileline() << ": error: "
 			      "Range expressions must be constant." << endl;
-			cerr << net_msb_->get_fileline() << "       : "
+			cerr << rng.msb->get_fileline() << "       : "
 			      "This MSB expression violates the rule: "
-                             << *net_msb_ << endl;
+                             << *rng.msb << endl;
 			des->errors += 1;
                         bad_msb = true;
 		  }
 
 		  delete texpr;
 
-		  texpr = elab_and_eval(des, scope, net_lsb_, -1, true);
+		  texpr = elab_and_eval(des, scope, rng.lsb, -1, true);
 
 		  if (! eval_as_long(nlsb, texpr)) {
-			cerr << net_lsb_->get_fileline() << ": error: "
+			cerr << rng.lsb->get_fileline() << ": error: "
 			      "Range expressions must be constant." << endl;
-			cerr << net_lsb_->get_fileline() << "       : "
+			cerr << rng.lsb->get_fileline() << "       : "
 			      "This LSB expression violates the rule: "
-                             << *net_lsb_ << endl;
+                             << *rng.lsb << endl;
 			des->errors += 1;
                         bad_lsb = true;
 		  }
 
 		  delete texpr;
 	    }
-            if (!net_set_) assert(net_msb_ == 0 && net_lsb_ == 0);
-            if (net_msb_ == 0) assert(net_lsb_ == 0);
-            if (net_lsb_ == 0) assert(net_msb_ == 0);
+            if (!net_set_) assert(net_.empty());
 
 	    /* We have a port size error */
             if (port_set_ && net_set_ && (pmsb != nmsb || plsb != nlsb)) {
 
 		  /* Scalar port with a vector net/etc. definition */
-		  if (port_msb_ == 0) {
+		  if (port_.empty()) {
 			if (!gn_io_range_error_flag) {
 			      cerr << get_fileline()
 			           << ": warning: Scalar port ``" << name_
@@ -982,8 +988,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  }
 
 		  /* Vectored port with a scalar net/etc. definition */
-		  if (net_msb_ == 0) {
-			cerr << port_msb_->get_fileline()
+		  if (net_.empty()) {
+			cerr << port_.front().msb->get_fileline()
 			     << ": error: Vectored port ``"
 			     << name_ << "'' [" << pmsb << ":" << plsb
 			     << "] has a scalar net declaration at "
@@ -993,12 +999,12 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  }
 
 		  /* Both vectored, but they have different ranges. */
-		  if (port_msb_ != 0 && net_msb_ != 0) {
-			cerr << port_msb_->get_fileline()
+		  if (!port_.empty() && !net_.empty()) {
+			cerr << port_.front().msb->get_fileline()
 			     << ": error: Vectored port ``"
 			     << name_ << "'' [" << pmsb << ":" << plsb
 			     << "] has a net declaration [" << nmsb << ":"
-			     << nlsb << "] at " << net_msb_->get_fileline()
+			     << nlsb << "] at " << net_.front().msb->get_fileline()
 			     << " that does not match." << endl;
 			des->errors += 1;
 			return 0;

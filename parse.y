@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -3931,12 +3931,19 @@ range
 	tmp->push_back($4);
 	$$ = tmp;
       }
+  | range '[' expression ':' expression ']'
+      { list<PExpr*>*tmp = $1;
+	tmp->push_back($3);
+	tmp->push_back($5);
+	$$ = tmp;
+      }
   ;
 
 range_opt
-	: range
-	| { $$ = 0; }
-	;
+  : range
+  | { $$ = 0; }
+  ;
+
 dimensions_opt
 	: { $$ = 0; }
 	| dimensions { $$ = $1; }

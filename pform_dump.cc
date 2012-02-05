@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -351,17 +351,23 @@ void PWire::dump(ostream&out, unsigned ind) const
       }
 
       if (port_set_) {
-	    if (port_msb_ == 0) {
+	    if (port_.empty()) {
 		  out << " port<scalar>";
 	    } else {
-		  out << " port[" << *port_msb_ << ":" << *port_lsb_ << "]";
+		  out << " port";
+		  for (list<PWire::range_t>::const_iterator cur = port_.begin()
+			     ; cur != port_.end() ; ++cur)
+			out << "[" << *cur->msb << ":" << *cur->lsb << "]";
 	    }
       }
       if (net_set_) {
-	    if (net_msb_ == 0) {
+	    if (net_.empty()) {
 		  out << " net<scalar>";
 	    } else {
-		  out << " net[" << *net_msb_ << ":" << *net_lsb_ << "]";
+		  out << " net";
+		  for (list<PWire::range_t>::const_iterator cur = net_.begin()
+			     ; cur != net_.end() ; ++cur)
+			out << "[" << *cur->msb << ":" << *cur->lsb << "]";
 	    }
       }
 

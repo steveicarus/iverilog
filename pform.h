@@ -1,7 +1,7 @@
 #ifndef __pform_H
 #define __pform_H
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -287,8 +287,7 @@ extern void pform_set_port_type(perm_string nm, NetNet::PortType pt,
 extern void pform_set_net_range(list<perm_string>*names,
 				list<PExpr*>*,
 				bool signed_flag,
-				ivl_variable_type_t,
-				PWSRType rt = SR_NET);
+				ivl_variable_type_t);
 extern void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r);
 extern void pform_set_reg_integer(list<perm_string>*names);
 extern void pform_set_reg_time(list<perm_string>*names);

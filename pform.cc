@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1480,6 +1480,20 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
       delete init_expr;
 }
 
+static void ranges_from_list(list<PWire::range_t>&rlist, const list<PExpr*>*range)
+{
+	// There must be an even number of expressions in the
+	// range. The parser will assure that for us.
+      assert(range->size()%2 == 0);
+      list<PExpr*>::const_iterator rcur = range->begin();
+      while (rcur != range->end()) {
+	    PWire::range_t rng;
+	    rng.msb = *rcur; ++rcur;
+	    rng.lsb = *rcur; ++rcur;
+	    rlist.push_back(rng);
+      }
+}
+
 /*
  * This function attaches a range to a given name. The function is
  * only called by the parser within the scope of the net declaration,
@@ -1500,11 +1514,12 @@ static void pform_set_net_range(perm_string name,
       if (range == 0) {
 	      /* This is the special case that we really mean a
 		 scalar. Set a fake range. */
-	    cur->set_range(0, 0, rt, true);
+	    cur->set_range_scalar(rt);
 
       } else {
-	    assert(range->size() == 2);
-	    cur->set_range(range->front(), range->back(), rt, false);
+	    list<PWire::range_t> rlist;
+	    ranges_from_list(rlist, range);
+	    cur->set_range(rlist, rt);
       }
       cur->set_signed(signed_flag);
 
@@ -1515,15 +1530,14 @@ static void pform_set_net_range(perm_string name,
 void pform_set_net_range(list<perm_string>*names,
 			 list<PExpr*>*range,
 			 bool signed_flag,
-			 ivl_variable_type_t dt,
-			 PWSRType rt)
+			 ivl_variable_type_t dt)
 {
-      assert((range == 0) || (range->size() == 2));
+      assert((range == 0) || (range->size()%2 == 0));
 
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
-	    pform_set_net_range(txt, range, signed_flag, dt, rt);
+	    pform_set_net_range(txt, range, signed_flag, dt, SR_NET);
       }
 
       delete names;
@@ -1884,17 +1898,12 @@ void pform_module_define_port(const struct vlltype&li,
       cur->set_signed(signed_flag);
 
       if (range == 0) {
-	    cur->set_range(0, 0, (type == NetNet::IMPLICIT) ? SR_PORT :
-	                                                      SR_BOTH,
-	                   true);
+	    cur->set_range_scalar((type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
 
       } else {
-	    assert(range->size() == 2);
-	    assert(range->front());
-	    assert(range->back());
-	    cur->set_range(range->front(), range->back(),
-	                   (type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH,
-	                   false);
+	    list<PWire::range_t> rlist;
+	    ranges_from_list(rlist, range);
+	    cur->set_range(rlist, (type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
       }
 
       pform_bind_attributes(cur->attributes, attr);
@@ -1981,7 +1990,7 @@ void pform_makewire(const vlltype&li, perm_string name,
 		       << " to " << dt << "." << endl;
 	    }
 	    ivl_assert(*cur, flag);
-	    cur->set_range(0, 0, SR_NET, true);
+	    cur->set_range_scalar(SR_NET);
 	    cur->set_signed(true);
 	    break;
 	  default:
@@ -2168,8 +2177,9 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 
 	      /* If there is a range involved, it needs to be set. */
 	    if (range) {
-		  assert(range->size() == 2);
-		  curw->set_range(range->front(), range->back(), SR_PORT, false);
+		  list<PWire::range_t> rlist;
+		  ranges_from_list(rlist, range);
+		  curw->set_range(rlist, SR_PORT);
 	    }
 
 	    svector<PWire*>*tmp = new svector<PWire*>(*res, curw);
@@ -2458,9 +2468,12 @@ static void pform_set_reg_integer(perm_string name)
       PWire*cur = pform_get_make_wire_in_scope(name, NetNet::INTEGER, NetNet::NOT_A_PORT, IVL_VT_LOGIC);
       assert(cur);
 
-      cur->set_range(new PENumber(new verinum(integer_width-1, integer_width)),
-		     new PENumber(new verinum((uint64_t)0, integer_width)),
-		     SR_NET, false);
+      PWire::range_t rng;
+      rng.msb = new PENumber(new verinum(integer_width-1, integer_width));
+      rng.lsb = new PENumber(new verinum((uint64_t)0, integer_width));
+      list<PWire::range_t>rlist;
+      rlist.push_back(rng);
+      cur->set_range(rlist, SR_NET);
       cur->set_signed(true);
 }
 
@@ -2479,9 +2492,12 @@ static void pform_set_reg_time(perm_string name)
       PWire*cur = pform_get_make_wire_in_scope(name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_LOGIC);
       assert(cur);
 
-      cur->set_range(new PENumber(new verinum(TIME_WIDTH-1, integer_width)),
-		     new PENumber(new verinum((uint64_t)0, integer_width)),
-		     SR_NET, false);
+      PWire::range_t rng;
+      rng.msb = new PENumber(new verinum(TIME_WIDTH-1, integer_width));
+      rng.lsb = new PENumber(new verinum((uint64_t)0, integer_width));
+      list<PWire::range_t>rlist;
+      rlist.push_back(rng);
+      cur->set_range(rlist, SR_NET);
 }
 
 void pform_set_reg_time(list<perm_string>*names)
@@ -2500,9 +2516,13 @@ static void pform_set_integer_2atom(uint64_t width, bool signed_flag, perm_strin
       assert(cur);
 
       cur->set_signed(signed_flag);
-      cur->set_range(new PENumber(new verinum(width-1, integer_width)),
-		     new PENumber(new verinum((uint64_t)0, integer_width)),
-		     SR_NET, false);
+
+      PWire::range_t rng;
+      rng.msb = new PENumber(new verinum(width-1, integer_width));
+      rng.lsb = new PENumber(new verinum((uint64_t)0, integer_width));
+      list<PWire::range_t>rlist;
+      rlist.push_back(rng);
+      cur->set_range(rlist, SR_NET);
 }
 
 void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>*names)
@@ -2545,7 +2565,9 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
 
       assert(enum_type->range.get() != 0);
       assert(enum_type->range->size() == 2);
-      cur->set_range(enum_type->range->front(), enum_type->range->back(), SR_NET, false);
+      list<PWire::range_t>rlist;
+      ranges_from_list(rlist, enum_type->range.get());
+      cur->set_range(rlist, SR_NET);
       cur->set_enumeration(enum_type);
 }
 
