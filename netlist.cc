@@ -860,13 +860,13 @@ unsigned NetNet::peek_eref() const
  * Test each of the bits in the range, and set them. If any bits are
  * already set then return true.
  */
-bool NetNet::test_part_lref(unsigned msb, unsigned lsb)
+bool NetNet::test_part_lref(unsigned pmsb, unsigned plsb)
 {
       if (lref_mask_.size() == 0)
 	    lref_mask_.resize(vector_width());
 
       bool rc = false;
-      for (unsigned idx = lsb ; idx <= msb ; idx += 1) {
+      for (unsigned idx = plsb ; idx <= pmsb ; idx += 1) {
 	    if (lref_mask_[idx])
 		  rc = true;
 	    else

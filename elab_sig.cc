@@ -826,6 +826,93 @@ static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
       return res;
 }
 
+static bool evaluate_ranges(Design*des, NetScope*scope,
+			    list<NetNet::range_t>&llist,
+			    const list<PWire::range_t>&rlist)
+{
+      bool bad_msb = false, bad_lsb = false;
+
+      for (list<PWire::range_t>::const_iterator cur = rlist.begin()
+		 ; cur != rlist.end() ; ++cur) {
+	    NetNet::range_t lrng;
+
+	    NetExpr*texpr = elab_and_eval(des, scope, cur->msb, -1, true);
+	    if (! eval_as_long(lrng.msb, texpr)) {
+		  cerr << cur->msb->get_fileline() << ": error: "
+			"Range expressions must be constant." << endl;
+		  cerr << cur->msb->get_fileline() << "       : "
+			"This MSB expression violates the rule: "
+		       << *cur->msb << endl;
+		  des->errors += 1;
+		  bad_msb = true;
+	    }
+
+	    delete texpr;
+
+	    texpr = elab_and_eval(des, scope, cur->lsb, -1, true);
+	    if (! eval_as_long(lrng.lsb, texpr)) {
+		  cerr << cur->lsb->get_fileline() << ": error: "
+			"Range expressions must be constant." << endl;
+		  cerr << cur->lsb->get_fileline() << "       : "
+			"This LSB expression violates the rule: "
+		       << *cur->lsb << endl;
+		  des->errors += 1;
+		  bad_lsb = true;
+	    }
+
+	    delete texpr;
+
+	    llist.push_back(lrng);
+      }
+
+      return bad_msb | bad_lsb;
+}
+
+bool test_ranges_eeq(const list<NetNet::range_t>&lef, const list<NetNet::range_t>&rig)
+{
+      if (lef.size() != rig.size())
+	    return false;
+
+      list<NetNet::range_t>::const_iterator lcur = lef.begin();
+      list<NetNet::range_t>::const_iterator rcur = rig.begin();
+      while (lcur != lef.end()) {
+	    if (lcur->msb != rcur->msb)
+		  return false;
+	    if (lcur->lsb != rcur->lsb)
+		  return false;
+
+	    ++ lcur;
+	    ++ rcur;
+      }
+
+      return true;
+}
+
+static unsigned packed_ranges_to_wid(const list<NetNet::range_t>&packed)
+{
+      unsigned wid = 1;
+      for (list<NetNet::range_t>::const_iterator cur = packed.begin()
+		 ; cur != packed.begin() ; ++cur) {
+	    unsigned use_wid;
+	    if (cur->msb >= cur->lsb)
+		  use_wid = cur->msb - cur->lsb + 1;
+	    else
+		  use_wid = cur->lsb - cur->msb + 1;
+	    wid *= use_wid;
+      }
+
+      return wid;
+}
+
+static ostream&operator<<(ostream&out, const list<NetNet::range_t>&rlist)
+{
+      for (list<NetNet::range_t>::const_iterator cur = rlist.begin()
+		 ; cur != rlist.end() ; ++cur) {
+	    out << "[" << cur->msb << ":" << cur->lsb << "]";
+      }
+      return out;
+}
+
 /*
  * Elaborate a source wire. The "wire" is the declaration of wires,
  * registers, ports and memories. The parser has already merged the
@@ -847,7 +934,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       }
 
       unsigned wid = 1;
-      long lsb = 0, msb = 0;
+      list<NetNet::range_t>packed_dimensions;
 
       des->errors += error_cnt_;
 
@@ -887,101 +974,43 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       }
 
       if (port_set_ || net_set_) {
-	    long pmsb = 0, plsb = 0, nmsb = 0, nlsb = 0;
-            bool bad_lsb = false, bad_msb = false;
+	    bool bad_range = false;
+	    list<NetNet::range_t> plist, nlist;
 	    /* If they exist get the port definition MSB and LSB */
 	    if (port_set_ && !port_.empty()) {
-		  assert(port_.size() == 1);
-		  PWire::range_t rng = port_.front();
-		  NetExpr*texpr = elab_and_eval(des, scope, rng.msb, -1, true);
-
-		  if (! eval_as_long(pmsb, texpr)) {
-			cerr << rng.msb->get_fileline() << ": error: "
-			      "Range expressions must be constant." << endl;
-			cerr << rng.msb->get_fileline() << "       : "
-			      "This MSB expression violates the rule: "
-                             << *rng.msb << endl;
-			des->errors += 1;
-                        bad_msb = true;
-		  }
-
-		  delete texpr;
-
-		  texpr = elab_and_eval(des, scope, rng.lsb, -1, true);
-
-		  if (! eval_as_long(plsb, texpr)) {
-			cerr << rng.lsb->get_fileline() << ": error: "
-			      "Range expressions must be constant." << endl;
-			cerr << rng.lsb->get_fileline() << "       : "
-			      "This LSB expression violates the rule: "
-                             << *rng.lsb << endl;
-			des->errors += 1;
-                        bad_lsb = true;
-		  }
-
-		  delete texpr;
-		  nmsb = pmsb;
-		  nlsb = plsb;
+		  bad_range |= evaluate_ranges(des, scope, plist, port_);
+		  nlist = plist;
 		    /* An implicit port can have a range so note that here. */
 		  is_implicit_scalar = false;
 	    }
-            if (!port_set_) assert(port_.empty());
-
-	    if (net_.size() > 1) {
-		  cerr << net_.back().msb->get_fileline() << ": sorry: "
-		       << "Multi-dimension packed arrays not supported."
-		       << endl;
-		  des->errors += 1;
-	    }
+            assert(port_set_ || port_.empty());
 
 	    /* If they exist get the net/etc. definition MSB and LSB */
-	    if (net_set_ && !net_.empty() && !bad_msb && !bad_lsb) {
-		  PWire::range_t rng = net_.front();
-		  NetExpr*texpr = elab_and_eval(des, scope, rng.msb, -1, true);
-
-		  if (! eval_as_long(nmsb, texpr)) {
-			cerr << rng.msb->get_fileline() << ": error: "
-			      "Range expressions must be constant." << endl;
-			cerr << rng.msb->get_fileline() << "       : "
-			      "This MSB expression violates the rule: "
-                             << *rng.msb << endl;
-			des->errors += 1;
-                        bad_msb = true;
-		  }
-
-		  delete texpr;
-
-		  texpr = elab_and_eval(des, scope, rng.lsb, -1, true);
-
-		  if (! eval_as_long(nlsb, texpr)) {
-			cerr << rng.lsb->get_fileline() << ": error: "
-			      "Range expressions must be constant." << endl;
-			cerr << rng.lsb->get_fileline() << "       : "
-			      "This LSB expression violates the rule: "
-                             << *rng.lsb << endl;
-			des->errors += 1;
-                        bad_lsb = true;
-		  }
-
-		  delete texpr;
+	    if (net_set_ && !net_.empty() && !bad_range) {
+		  nlist.clear();
+		  bad_range |= evaluate_ranges(des, scope, nlist, net_);
 	    }
-            if (!net_set_) assert(net_.empty());
+            assert(net_set_ || net_.empty());
+
+	    /* If we find errors here, then give up on this signal. */
+	    if (bad_range)
+		  return 0;
 
 	    /* We have a port size error */
-            if (port_set_ && net_set_ && (pmsb != nmsb || plsb != nlsb)) {
+            if (port_set_ && net_set_ && !test_ranges_eeq(plist, nlist)) {
 
 		  /* Scalar port with a vector net/etc. definition */
 		  if (port_.empty()) {
 			if (!gn_io_range_error_flag) {
 			      cerr << get_fileline()
 			           << ": warning: Scalar port ``" << name_
-			           << "'' has a vectored net declaration ["
-			           << nmsb << ":" << nlsb << "]." << endl;
+			           << "'' has a vectored net declaration "
+				   << nlist << "." << endl;
 			} else {
 			      cerr << get_fileline()
 			           << ": error: Scalar port ``" << name_
-			           << "'' has a vectored net declaration ["
-			           << nmsb << ":" << nlsb << "]." << endl;
+			           << "'' has a vectored net declaration "
+				   << nlist << "." << endl;
 			      des->errors += 1;
 			      return 0;
 			}
@@ -991,8 +1020,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  if (net_.empty()) {
 			cerr << port_.front().msb->get_fileline()
 			     << ": error: Vectored port ``"
-			     << name_ << "'' [" << pmsb << ":" << plsb
-			     << "] has a scalar net declaration at "
+			     << name_ << "'' " << plist
+			     << " has a scalar net declaration at "
 			     << get_fileline() << "." << endl;
 			des->errors += 1;
 			return 0;
@@ -1002,26 +1031,17 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  if (!port_.empty() && !net_.empty()) {
 			cerr << port_.front().msb->get_fileline()
 			     << ": error: Vectored port ``"
-			     << name_ << "'' [" << pmsb << ":" << plsb
-			     << "] has a net declaration [" << nmsb << ":"
-			     << nlsb << "] at " << net_.front().msb->get_fileline()
+			     << name_ << "'' " << plist
+			     << " has a net declaration " << nlist
+			     << " at " << net_.front().msb->get_fileline()
 			     << " that does not match." << endl;
 			des->errors += 1;
 			return 0;
 		  }
             }
 
-              /* Attempt to recover from errors. */
-            if (bad_lsb) nlsb = 0;
-            if (bad_msb) nmsb = nlsb;
-
-	    lsb = nlsb;
-	    msb = nmsb;
-	    if (nmsb > nlsb)
-		  wid = nmsb - nlsb + 1;
-	    else
-		  wid = nlsb - nmsb + 1;
-
+	    packed_dimensions = nlist;
+	    wid = packed_ranges_to_wid(packed_dimensions);
 
       }
 
@@ -1073,13 +1093,13 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    array_dimensions = 1;
       }
 
-      if (data_type_ == IVL_VT_REAL && (msb != 0 || lsb != 0)) {
+      if (data_type_ == IVL_VT_REAL && !packed_dimensions.empty()) {
 	    cerr << get_fileline() << ": error: real ";
 	    if (wtype == NetNet::REG) cerr << "variable";
 	    else cerr << "net";
 	    cerr << " '" << name_
-	         << "' cannot be declared as a vector, found a range ["
-	         << msb << ":" << lsb << "]." << endl;
+	         << "' cannot be declared as a vector, found a range "
+		 << packed_dimensions << "." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -1143,7 +1163,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype;
 		  if (!get_scalar()) {
-			cerr << " ["<<msb<<":"<<lsb<<"]";
+			cerr << " " << packed_dimensions;
 		  }
 		  cerr << " " << name_;
 		  if (array_dimensions > 0) {
@@ -1152,6 +1172,16 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  cerr << " in scope " << scope_path(scope) << endl;
 	    }
 
+	    if (packed_dimensions.size() > 1) {
+		  cerr << get_fileline() << ": sorry: Multi-dimension "
+		       << "packed arrays not supported." << endl;
+		  des->errors += 1;
+	    }
+	    long msb = 0, lsb = 0;
+	    if (packed_dimensions.size() >= 1) {
+		  msb = packed_dimensions.front().msb;
+		  lsb = packed_dimensions.front().lsb;
+	    }
 	    sig = array_dimensions > 0
 		  ? new NetNet(scope, name_, wtype, msb, lsb, array_s0, array_e0)
 		  : new NetNet(scope, name_, wtype, msb, lsb);

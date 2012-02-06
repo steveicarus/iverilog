@@ -1,7 +1,7 @@
 #ifndef __netlist_H
 #define __netlist_H
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -563,6 +563,12 @@ class NetNet  : public NetObj {
 
       enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
 
+      struct range_t {
+	    long msb;
+	    long lsb;
+      };
+
+    public:
 	// The width in this case is a shorthand for ms=width-1 and
 	// ls=0. Only one pin is created, the width is of the vector
 	// that passed through.
