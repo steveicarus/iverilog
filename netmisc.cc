@@ -27,55 +27,6 @@
 # include  "compiler.h"
 # include  "ivl_assert.h"
 
-// This routines is not currently used!
-#if 0
-NetNet* add_to_net(Design*des, NetNet*sig, long val)
-{
-      if (val == 0)
-	    return sig;
-      cerr << sig->get_fileline() << ": XXXX: Forgot how to implement add_to_net" << endl;
-      return 0;
-      NetScope*scope = sig->scope();
-      unsigned long abs_val = (val >= 0)? val : (-val);
-      unsigned width = sig->pin_count();
-
-      verinum val_v (abs_val, width);
-
-      NetConst*val_c = new NetConst(scope, scope->local_symbol(), val_v);
-
-      NetNet*val_s = new NetNet(scope, scope->local_symbol(),
-			      NetNet::IMPLICIT, width);
-      val_s->local_flag(true);
-
-      NetNet*res = new NetNet(scope, scope->local_symbol(),
-			      NetNet::IMPLICIT, width);
-      res->local_flag(true);
-
-      NetAddSub*add = new NetAddSub(scope, scope->local_symbol(), width);
-
-      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
-	    connect(sig->pin(idx), add->pin_DataA(idx));
-
-      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
-	    connect(val_c->pin(idx), add->pin_DataB(idx));
-
-      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
-	    connect(val_s->pin(idx), add->pin_DataB(idx));
-
-      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
-	    connect(res->pin(idx), add->pin_Result(idx));
-
-      if (val < 0)
-	    add->attribute(perm_string::literal("LPM_Direction"), verinum("SUB"));
-      else
-	    add->attribute(perm_string::literal("LPM_Direction"), verinum("ADD"));
-
-      des->add_node(add);
-      des->add_node(val_c);
-
-      return res;
-}
-#endif
 
 NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
 {
@@ -342,6 +293,21 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
       }
 
       return base;
+}
+
+/*
+ * This method is how indices should work except that the base should
+ * be a vector of expressions that matches the size of the dims list,
+ * so that we can generate an expression based on the entire packed
+ * vector. For now, we assert that there is only one set of dimensions.
+ */
+NetExpr *normalize_variable_base(NetExpr *base,
+				 const list<NetNet::range_t>&dims,
+				 unsigned long wid, bool is_up)
+{
+      ivl_assert(*base, dims.size() == 1);
+      const NetNet::range_t&rng = dims.back();
+      return normalize_variable_base(base, rng.msb, rng.lsb, wid, is_up);
 }
 
 /*

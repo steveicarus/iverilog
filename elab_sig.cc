@@ -494,7 +494,9 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 			des->errors += 1;
 		  }
 
-		  ret_sig = new NetNet(scope, fname, NetNet::REG, mnum, lnum);
+		  list<NetNet::range_t> packed;
+		  packed.push_back(NetNet::range_t(mnum, lnum));
+		  ret_sig = new NetNet(scope, fname, NetNet::REG, packed);
 		  ret_sig->set_scalar(false);
 
 	    } else {
@@ -888,31 +890,6 @@ bool test_ranges_eeq(const list<NetNet::range_t>&lef, const list<NetNet::range_t
       return true;
 }
 
-static unsigned packed_ranges_to_wid(const list<NetNet::range_t>&packed)
-{
-      unsigned wid = 1;
-      for (list<NetNet::range_t>::const_iterator cur = packed.begin()
-		 ; cur != packed.begin() ; ++cur) {
-	    unsigned use_wid;
-	    if (cur->msb >= cur->lsb)
-		  use_wid = cur->msb - cur->lsb + 1;
-	    else
-		  use_wid = cur->lsb - cur->msb + 1;
-	    wid *= use_wid;
-      }
-
-      return wid;
-}
-
-static ostream&operator<<(ostream&out, const list<NetNet::range_t>&rlist)
-{
-      for (list<NetNet::range_t>::const_iterator cur = rlist.begin()
-		 ; cur != rlist.end() ; ++cur) {
-	    out << "[" << cur->msb << ":" << cur->lsb << "]";
-      }
-      return out;
-}
-
 /*
  * Elaborate a source wire. The "wire" is the declaration of wires,
  * registers, ports and memories. The parser has already merged the
@@ -1041,7 +1018,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
             }
 
 	    packed_dimensions = nlist;
-	    wid = packed_ranges_to_wid(packed_dimensions);
+	    wid = NetNet::vector_width(packed_dimensions);
 
       }
 
@@ -1177,14 +1154,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		       << "packed arrays not supported." << endl;
 		  des->errors += 1;
 	    }
-	    long msb = 0, lsb = 0;
-	    if (packed_dimensions.size() >= 1) {
-		  msb = packed_dimensions.front().msb;
-		  lsb = packed_dimensions.front().lsb;
-	    }
+
 	    sig = array_dimensions > 0
-		  ? new NetNet(scope, name_, wtype, msb, lsb, array_s0, array_e0)
-		  : new NetNet(scope, name_, wtype, msb, lsb);
+		  ? new NetNet(scope, name_, wtype, packed_dimensions, array_s0, array_e0)
+		  : new NetNet(scope, name_, wtype, packed_dimensions);
       }
 
 	// If this is an enumeration, then set the enumeration set for

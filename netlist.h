@@ -564,6 +564,13 @@ class NetNet  : public NetObj {
       enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
 
       struct range_t {
+	    inline range_t() : msb(0), lsb(0) { }
+	    inline range_t(long m, long l) : msb(m), lsb(l) { }
+	    inline range_t(const range_t&that)
+	    : msb(that.msb), lsb(that.lsb) { }
+	    inline range_t& operator = (const range_t&that)
+	    { msb = that.msb; lsb = that.lsb; return *this; }
+
 	    long msb;
 	    long lsb;
       };
@@ -579,9 +586,9 @@ class NetNet  : public NetObj {
 	// dimensions. If s0==e0, then this is not an array after
 	// all.
       explicit NetNet(NetScope*s, perm_string n, Type t,
-		      long ms, long ls);
+		      const std::list<range_t>&packed);
       explicit NetNet(NetScope*s, perm_string n, Type t,
-		      long ms, long ls, long s0, long e0);
+		      const std::list<range_t>&packed, long s0, long e0);
 
 	// This form builds a NetNet from its record definition.
       explicit NetNet(NetScope*s, perm_string n, Type t, netstruct_t*type);
@@ -619,13 +626,18 @@ class NetNet  : public NetObj {
       ivl_discipline_t get_discipline() const;
       void set_discipline(ivl_discipline_t dis);
 
-	/* These methods return the msb and lsb indices for the most
-	   significant and least significant bits. These are signed
-	   longs, and may be different from pin numbers. For example,
-	   reg [1:8] has 8 bits, msb==1 and lsb==8. */
-      long msb() const;
-      long lsb() const;
-      unsigned long vector_width() const;
+	/* This method returns a reference to the packed dimensions
+	   for the vector. These are arranged as a list where the
+	   first range in the list (front) is the left-most range in
+	   the verilog declaration. */
+      const std::list<range_t>& packed_dims() const { return packed_dims_; }
+
+	/* The vector_width returns the bit width of the packed array,
+	   vector or scaler that is this NetNet object. The static
+	   method is also a convenient way to convert a range list to
+	   a vector width. */
+      static unsigned long vector_width(const std::list<NetNet::range_t>&);
+      unsigned long vector_width() const { return vector_width(packed_dims_); }
 
 	/* This method converts a signed index (the type that might be
 	   found in the Verilog source) to a pin number. It accounts
@@ -692,7 +704,7 @@ class NetNet  : public NetObj {
       netstruct_t*struct_type_;
       ivl_discipline_t discipline_;
 
-      long msb_, lsb_;
+      std::list<range_t> packed_dims_;
       const unsigned dimensions_;
       long s0_, e0_;
 
@@ -705,6 +717,8 @@ class NetNet  : public NetObj {
 
       vector<class NetDelaySrc*> delay_paths_;
 };
+
+extern std::ostream&operator << (std::ostream&out, const std::list<NetNet::range_t>&rlist);
 
 /*
  * This object type is used to contain a logical scope within a

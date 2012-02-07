@@ -365,14 +365,20 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 	    mux = 0;
       }
 
+	// For now, we only understand 1-dim packed arrays.
+      const list<NetNet::range_t>&packed = reg->packed_dims();
+      ivl_assert(*this, packed.size() == 1);
+      const NetNet::range_t rng = packed.back();
+
       if (mux) {
 	      // Non-constant bit mux. Correct the mux for the range
-	      // of the vector, then set the l-value part select expression.
-	    mux = normalize_variable_base(mux, reg->msb(), reg->lsb(), 1, true);
+	      // of the vector, then set the l-value part select
+	      // expression.
+	    mux = normalize_variable_base(mux, reg->packed_dims(), 1, true);
 
 	    lv->set_part(mux, 1);
 
-      } else if (lsb == reg->msb() && lsb == reg->lsb()) {
+      } else if (lsb == rng.msb && lsb == rng.lsb) {
 	      // Constant bit mux that happens to select the only bit
 	      // of the l-value. Don't bother with any select at all.
 
@@ -410,9 +416,13 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
       ivl_assert(*this, parts_defined_flag);
 
       NetNet*reg = lv->sig();
-      assert(reg);
+      ivl_assert(*this, reg);
 
-      if (msb == reg->msb() && lsb == reg->lsb()) {
+      const list<NetNet::range_t>&packed = reg->packed_dims();
+      ivl_assert(*this, packed.size() == 1);
+      const NetNet::range_t&rng = packed.back();
+
+      if (msb == rng.msb && lsb == rng.lsb) {
 
 	      /* Part select covers the entire vector. Simplest case. */
 
@@ -487,9 +497,14 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 	    if (base_c->value().is_defined()) {
 		  long lsv = base_c->value().as_long();
 		  long offset = 0;
-		  if (((reg->msb() < reg->lsb()) &&
+		    // This is a work-around for limited dimenions support.
+		  const list<NetNet::range_t>&packed = reg->packed_dims();
+		  ivl_assert(*this, packed.size() == 1);
+		  const NetNet::range_t&rng = packed.back();
+
+		  if (((rng.msb < rng.lsb) &&
                        use_sel == index_component_t::SEL_IDX_UP) ||
-		      ((reg->msb() > reg->lsb()) &&
+		      ((rng.msb > rng.lsb) &&
 		       use_sel == index_component_t::SEL_IDX_DO)) {
 			offset = -wid + 1;
 		  }
@@ -538,12 +553,12 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       } else {
 	      /* Correct the mux for the range of the vector. */
 	    if (use_sel == index_component_t::SEL_IDX_UP) {
-		  base = normalize_variable_base(base, reg->msb(), reg->lsb(),
+		  base = normalize_variable_base(base, reg->packed_dims(),
 		                                 wid, true);
 		  sel_type = IVL_SEL_IDX_UP;
 	    } else {
 		    // This is assumed to be a SEL_IDX_DO.
-		  base = normalize_variable_base(base, reg->msb(), reg->lsb(),
+		  base = normalize_variable_base(base, reg->packed_dims(),
 		                                 wid, false);
 		  sel_type = IVL_SEL_IDX_DOWN;
 	    }

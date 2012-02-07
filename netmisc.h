@@ -100,6 +100,9 @@ extern NetNet*crop_to_width(Design*des, NetNet*n, unsigned w);
  */
 extern NetExpr*normalize_variable_base(NetExpr *base, long msb, long lsb,
                                        unsigned long wid, bool is_up);
+extern NetExpr*normalize_variable_base(NetExpr *base,
+				       const list<NetNet::range_t>&dims,
+				       unsigned long wid, bool is_up);
 extern NetExpr*normalize_variable_array_base(NetExpr *base, long offset,
                                              unsigned count);
 

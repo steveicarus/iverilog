@@ -3435,8 +3435,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 			else cerr << "vector ";
 			cerr << net->name();
 			if (net->word_index()) cerr << "[]";
-			cerr  << "[" << net->sig()->msb() << ":"
-			      << net->sig()->lsb() << "]." << endl;
+			cerr  << net->sig()->packed_dims() << "." << endl;
 			cerr << get_fileline() << ":        : "
 			     << "Replacing select with a constant 1'bx."
 			     << endl;
@@ -3470,8 +3469,9 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	// complicated task because we need to generate
 	// expressions to convert calculated bit select
 	// values to canonical values that are used internally.
-      ex = normalize_variable_base(ex, net->sig()->msb(), net->sig()->lsb(),
-                                   1, true);
+      const list<NetNet::range_t>& sig_packed = net->sig()->packed_dims();
+      assert(sig_packed.size() == 1);
+      ex = normalize_variable_base(ex, sig_packed, 1, true);
 
       NetESelect*ss = new NetESelect(net, ex, 1);
       ss->set_line(*this);
