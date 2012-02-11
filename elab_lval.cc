@@ -456,41 +456,46 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
       ivl_assert(*this, reg);
 
       const list<NetNet::range_t>&packed = reg->packed_dims();
-      ivl_assert(*this, packed.size() == 1);
-      const NetNet::range_t&rng = packed.back();
 
-      if (msb == rng.msb && lsb == rng.lsb) {
-
-	      /* Part select covers the entire vector. Simplest case. */
-
-      } else {
-
-	      /* Get the canonical offsets into the vector. */
-	    long loff = reg->sb_to_idx(prefix_indices,lsb);
-	    long moff = reg->sb_to_idx(prefix_indices,msb);
-	    long wid = moff - loff + 1;
-
-	    if (moff < loff) {
-		  cerr << get_fileline() << ": error: part select "
-		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
-		       << " is reversed." << endl;
-		  des->errors += 1;
-		  return false;
-	    }
-
-	      /* If the part select extends beyond the extremes of the
-		 variable, then report an error. Note that loff is
-		 converted to normalized form so is relative the
-		 variable pins. */
-
-	    if (loff < 0 || moff >= (signed)reg->vector_width()) {
-		  cerr << get_fileline() << ": warning: Part select "
-		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
-		       << " is out of range." << endl;
-	    }
-
-	    lv->set_part(new NetEConst(verinum(loff)), wid);
+	// Part selects cannot select slices. So there must be enough
+	// prefix_indices to get all the way to the final dimension.
+      if (prefix_indices.size()+1 < packed.size()) {
+	    cerr << get_fileline() << ": error: Cannot select a range "
+		 << "of slices from a packed array." << endl;
+	    des->errors += 1;
+	    return false;
       }
+
+      long loff = reg->sb_to_idx(prefix_indices,lsb);
+      long moff = reg->sb_to_idx(prefix_indices,msb);
+      long wid = moff - loff + 1;
+
+      if (moff < loff) {
+	    cerr << get_fileline() << ": error: part select "
+		 << reg->name() << "[" << msb<<":"<<lsb<<"]"
+		 << " is reversed." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+	// Special case: The range winds up selecting the entire
+	// vector. Treat this as no part select at all.
+      if (loff == 0 && moff == (reg->vector_width()-1)) {
+	    return true;
+      }
+
+	/* If the part select extends beyond the extremes of the
+	   variable, then report an error. Note that loff is
+	   converted to normalized form so is relative the
+	   variable pins. */
+
+      if (loff < 0 || moff >= (signed)reg->vector_width()) {
+	    cerr << get_fileline() << ": warning: Part select "
+		 << reg->name() << "[" << msb<<":"<<lsb<<"]"
+		 << " is out of range." << endl;
+      }
+
+      lv->set_part(new NetEConst(verinum(loff)), wid);
 
       return true;
 }

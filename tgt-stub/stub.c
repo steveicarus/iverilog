@@ -1288,11 +1288,14 @@ static void show_signal(ivl_signal_t net)
       for (idx = 0 ;  idx < ivl_signal_array_count(net) ; idx += 1) {
 
 	    ivl_nexus_t nex = ivl_signal_nex(net, idx);
+	    unsigned dim;
 
-	    fprintf(out, "  %s %s %s%s[%d:%d] %s[word=%u, adr=%d]  "
-		               "<width=%u%s> <discipline=%s> ",
-		    type, sign, port, data_type,
-		    ivl_signal_msb(net), ivl_signal_lsb(net),
+	    fprintf(out, "  %s %s %s%s", type, sign, port, data_type);
+	    for (dim = 0 ; dim < ivl_signal_packed_dimensions(net) ; dim += 1) {
+		  fprintf(out, "[%d:%d]", ivl_signal_packed_msb(net,dim),
+			  ivl_signal_packed_lsb(net,dim));
+	    }
+	    fprintf(out, " %s[word=%u, adr=%d]  <width=%u%s> <discipline=%s> ",
 		    ivl_signal_basename(net),
 		    idx, ivl_signal_array_base(net)+idx,
 		    ivl_signal_width(net),

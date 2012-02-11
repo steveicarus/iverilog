@@ -794,12 +794,39 @@ bool NetNet::sb_is_valid(const list<long>&indices, long sb) const
 long NetNet::sb_to_idx(const list<long>&indices, long sb) const
 {
       ivl_assert(*this, indices.size()+1 == packed_dims_.size());
-      assert(packed_dims_.size() == 1);
-      const range_t&rng = packed_dims_.back();
-      if (rng.msb >= rng.lsb)
-	    return sb - rng.lsb;
+
+      list<range_t>::const_iterator pcur = packed_dims_.end();
+      -- pcur;
+
+      long acc_off;
+      long acc_wid = pcur->width();
+      if (pcur->msb >= pcur->lsb)
+	    acc_off = sb - pcur->lsb;
       else
-	    return rng.lsb - sb;
+	    acc_off = pcur->lsb - sb;
+
+	// The acc_off is the possition within the innermost
+	// dimension. If this is a multi-dimension packed array then
+	// we need to add in the canonical address of the current slice.
+      if (indices.size() >= 1) {
+	    list<long>::const_iterator icur = indices.end();
+	    do {
+		  -- icur;
+		  -- pcur;
+
+		  long tmp_off;
+		  if (pcur->msb >= pcur->lsb)
+			tmp_off = *icur - pcur->lsb;
+		  else
+			tmp_off = pcur->lsb - *icur;
+
+		  acc_off += tmp_off * acc_wid;
+		  acc_wid *= pcur->width();
+
+	    } while (icur != indices.begin());
+      }
+
+      return acc_off;
 }
 
 bool NetNet::sb_to_slice(const list<long>&indices, long sb, long&loff, unsigned long&lwid) const

@@ -653,7 +653,7 @@ class NetNet  : public NetObj {
 	   reg/wire/whatever. Note that a canonical index of a
 	   multi-dimensioned packed array is a single dimension. For
 	   example, "reg [4:1][3:0]..." has the canonical dimension
-	   [15:0] and the sb_to_idx) method will convert [2][2] to
+	   [15:0] and the sb_to_idx() method will convert [2][2] to
 	   the canonical index [6]. */
       long sb_to_idx(const std::list<long>&prefix, long sb) const;
 
