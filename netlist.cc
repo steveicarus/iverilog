@@ -780,8 +780,9 @@ unsigned long NetNet::vector_width(const list<NetNet::range_t>&packed)
       return wid;
 }
 
-bool NetNet::sb_is_valid(long sb) const
+bool NetNet::sb_is_valid(const list<long>&indices, long sb) const
 {
+      ivl_assert(*this, indices.size()+1 == packed_dims_.size());
       assert(packed_dims_.size() == 1);
       const range_t&rng = packed_dims_.back();
       if (rng.msb >= rng.lsb)
@@ -790,8 +791,9 @@ bool NetNet::sb_is_valid(long sb) const
 	    return (sb <= rng.lsb) && (sb >= rng.msb);
 }
 
-long NetNet::sb_to_idx(long sb) const
+long NetNet::sb_to_idx(const list<long>&indices, long sb) const
 {
+      ivl_assert(*this, indices.size()+1 == packed_dims_.size());
       assert(packed_dims_.size() == 1);
       const range_t&rng = packed_dims_.back();
       if (rng.msb >= rng.lsb)
@@ -799,6 +801,56 @@ long NetNet::sb_to_idx(long sb) const
       else
 	    return rng.lsb - sb;
 }
+
+bool NetNet::sb_to_slice(const list<long>&indices, long sb, long&loff, unsigned long&lwid) const
+{
+      ivl_assert(*this, indices.size() < packed_dims_.size());
+
+      size_t acc_wid = 1;
+      list<range_t>::const_iterator pcur = packed_dims_.end();
+      for (size_t idx = indices.size()+1 ; idx < packed_dims_.size() ; idx += 1) {
+	    -- pcur;
+	    acc_wid *= pcur->width();
+      }
+
+      lwid = acc_wid;
+
+      -- pcur;
+      if (sb < pcur->msb && sb < pcur->lsb)
+	    return false;
+      if (sb > pcur->msb && sb > pcur->lsb)
+	    return false;
+
+      long acc_off = 0;
+      if (pcur->msb >= pcur->lsb)
+	    acc_off += (sb - pcur->lsb) * acc_wid;
+      else
+	    acc_off += (sb - pcur->msb) * acc_wid;
+
+      if (indices.size() == 0) {
+	    loff = acc_off;
+	    return true;
+      }
+
+      lwid *= pcur->width();
+
+      list<long>::const_iterator icur = indices.end();
+      do {
+	    -- pcur;
+	    -- icur;
+	    acc_wid *= pcur->width();
+	    if (pcur->msb >= pcur->lsb)
+		  acc_off += (*icur - pcur->lsb) * acc_wid;
+	    else
+		  acc_off += (*icur - pcur->msb) * acc_wid;
+
+      } while (icur != indices.begin());
+
+      loff = acc_off;
+
+      return true;
+}
+
 
 unsigned NetNet::array_dimensions() const
 {

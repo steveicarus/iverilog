@@ -183,16 +183,26 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       }
 
       ivl_assert(*this, reg);
-
+	// We are processing the tail of a string of names. For
+	// example, the verilog may be "a.b.c", so we are processing
+	// "c" at this point.
       const name_component_t&name_tail = path_.back();
 
+	// Use the last index to determine what kind of select
+	// (bit/part/etc) we are processing. For example, the verilog
+	// may be "a.b.c[1][2][<index>]". All but the last index must
+	// be simple expressions, only the <index> may be a part
+	// select etc., so look at it to determine how we will be
+	// proceeding.
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
       if (!name_tail.index.empty())
 	    use_sel = name_tail.index.back().sel;
 
-	// This is the special case that the l-value is an entire
-	// memory. This is, in fact, an error.
-      if (reg->array_dimensions() > 0 && name_tail.index.empty()) {
+	// Special case: The l-value is an entire memory, or array
+	// slice. This is, in fact, an error in l-values. Detect the
+	// situation by noting if the index count is less then the
+	// array dimensions (unpacked).
+      if (reg->array_dimensions() > name_tail.index.size()) {
 	    cerr << get_fileline() << ": error: Cannot assign to array "
 		 << path_ << ". Did you forget a word index?" << endl;
 	    des->errors += 1;
@@ -200,7 +210,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       }
 
 	/* Get the signal referenced by the identifier, and make sure
-	   it is a register. Wires are not allows in this context,
+	   it is a register. Wires are not allowed in this context,
 	   unless this is the l-value of a force. */
       if ((reg->type() != NetNet::REG) && !is_force) {
 	    cerr << get_fileline() << ": error: " << path_ <<
@@ -347,7 +357,13 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 				      NetScope*scope,
 				      NetAssign_*lv) const
 {
+      list<long>prefix_indices;
+      bool rc = calculate_packed_indices_(des, scope, lv->sig(), prefix_indices);
+      ivl_assert(*this, rc);
+
       const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, !name_tail.index.empty());
+
       const index_component_t&index_tail = name_tail.index.back();
       ivl_assert(*this, index_tail.msb != 0);
       ivl_assert(*this, index_tail.lsb == 0);
@@ -365,26 +381,43 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 	    mux = 0;
       }
 
-	// For now, we only understand 1-dim packed arrays.
-      const list<NetNet::range_t>&packed = reg->packed_dims();
-      ivl_assert(*this, packed.size() == 1);
-      const NetNet::range_t rng = packed.back();
 
-      if (mux) {
+      if (prefix_indices.size()+2 <= reg->packed_dims().size()) {
+	      // Special case: this is a slice of a multi-dimensional
+	      // packed array. For example:
+	      //   reg [3:0][7:0] x;
+	      //   x[2] = ...
+	      // This shows up as the prefix_indices being too short
+	      // for the packed dimensions of the vector. What we do
+	      // here is convert to a "slice" of the vector.
+	    if (mux == 0) {
+		  long loff;
+		  unsigned long lwid;
+		  bool rcl = reg->sb_to_slice(prefix_indices, lsb, loff, lwid);
+		  ivl_assert(*this, rcl);
+
+		  lv->set_part(new NetEConst(verinum(loff)), lwid);
+	    } else {
+		  unsigned long lwid;
+		  mux = normalize_variable_slice_base(prefix_indices, mux,
+						      reg, lwid);
+		  lv->set_part(mux, lwid);
+	    }
+
+      } else if (mux) {
 	      // Non-constant bit mux. Correct the mux for the range
 	      // of the vector, then set the l-value part select
 	      // expression.
 	    mux = normalize_variable_base(mux, reg->packed_dims(), 1, true);
-
 	    lv->set_part(mux, 1);
 
-      } else if (lsb == rng.msb && lsb == rng.lsb) {
+      } else if (reg->vector_width() == 1 && reg->sb_is_valid(prefix_indices,lsb)) {
 	      // Constant bit mux that happens to select the only bit
 	      // of the l-value. Don't bother with any select at all.
 
       } else {
 	      // Constant bit select that does something useful.
-	    long loff = reg->sb_to_idx(lsb);
+	    long loff = reg->sb_to_idx(prefix_indices,lsb);
 
 	    if (loff < 0 || loff >= (long)reg->vector_width()) {
 		  cerr << get_fileline() << ": error: bit select "
@@ -404,6 +437,10 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 				       NetScope*scope,
 				       NetAssign_*lv) const
 {
+      list<long> prefix_indices;
+      bool rc = calculate_packed_indices_(des, scope, lv->sig(), prefix_indices);
+      ivl_assert(*this, rc);
+
 	// The range expressions of a part select must be
 	// constant. The calculate_parts_ function calculates the
 	// values into msb and lsb.
@@ -429,8 +466,8 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
       } else {
 
 	      /* Get the canonical offsets into the vector. */
-	    long loff = reg->sb_to_idx(lsb);
-	    long moff = reg->sb_to_idx(msb);
+	    long loff = reg->sb_to_idx(prefix_indices,lsb);
+	    long moff = reg->sb_to_idx(prefix_indices,msb);
 	    long wid = moff - loff + 1;
 
 	    if (moff < loff) {
@@ -463,6 +500,10 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 				      NetAssign_*lv,
 				      index_component_t::ctype_t use_sel) const
 {
+      list<long>prefix_indices;
+      bool rc = calculate_packed_indices_(des, scope, lv->sig(), prefix_indices);
+      ivl_assert(*this, rc);
+
       const name_component_t&name_tail = path_.back();;
       ivl_assert(*this, !name_tail.index.empty());
 
@@ -509,7 +550,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 			offset = -wid + 1;
 		  }
 		  delete base;
-		  long rel_base = reg->sb_to_idx(lsv) + offset;
+		  long rel_base = reg->sb_to_idx(prefix_indices,lsv) + offset;
 		    /* If we cover the entire lvalue just skip the select. */
 		  if (rel_base == 0 && wid == reg->vector_width()) return true;
 		  base = new NetEConst(verinum(rel_base));

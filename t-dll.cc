@@ -2399,16 +2399,17 @@ void dll_target::signal(const NetNet*net)
 	/* Save the primitive properties of the signal in the
 	   ivl_signal_t object. */
 
-	// FIX ME: This is a temporary workaround until the ivl_target
-	// API gets a way to represent multiple packed dimensions.
-      const list<NetNet::range_t>&packed = net->packed_dims();
-      ivl_assert(*net, packed.size() <= 1);
-      const NetNet::range_t rng = packed.empty()? NetNet::range_t(0,0) : packed.back();
+      { size_t idx = 0;
+	list<NetNet::range_t>::const_iterator cur;
+	obj->packed_dims.resize(net->packed_dims().size());
+	for (cur = net->packed_dims().begin(), idx = 0
+		   ; cur != net->packed_dims().end() ; ++cur, idx += 1) {
+	    obj->packed_dims[idx] = *cur;
+	}
+      }
 
       obj->width_ = net->vector_width();
       obj->signed_= net->get_signed()? 1 : 0;
-      obj->lsb_index = rng.lsb;
-      obj->lsb_dist  = rng.msb >= rng.lsb ? 1 : -1;
       obj->isint_ = false;
       obj->local_ = net->local_flag()? 1 : 0;
       obj->forced_net_ = (net->type() != NetNet::REG) &&

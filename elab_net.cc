@@ -200,6 +200,10 @@ bool PEConcat::is_collapsible_net(Design*des, NetScope*scope) const
 bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 				long&midx, long&lidx) const
 {
+      list<long> prefix_indices;
+      bool rc = calculate_packed_indices_(des, scope, sig, prefix_indices);
+      ivl_assert(*this, rc);
+
       const name_component_t&name_tail = path_.back();
 	// Only treat as part/bit selects any index that is beyond the
 	// word selects for an array. This is not an array, then
@@ -258,13 +262,13 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		}
 
 		long midx_val = tmp->value().as_long();
-		midx = sig->sb_to_idx(midx_val);
+		midx = sig->sb_to_idx(prefix_indices, midx_val);
 		delete tmp_ex;
 
 		if (index_tail.sel == index_component_t::SEL_IDX_UP)
-		      lidx = sig->sb_to_idx(midx_val+wid-1);
+		      lidx = sig->sb_to_idx(prefix_indices, midx_val+wid-1);
 		else
-		      lidx = sig->sb_to_idx(midx_val-wid+1);
+		      lidx = sig->sb_to_idx(prefix_indices, midx_val-wid+1);
 
 		if (midx < lidx) {
 		      long tmpx = midx;
@@ -313,8 +317,8 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		/* bool flag = */ calculate_parts_(des, scope, msb, lsb, part_defined_flag);
 		ivl_assert(*this, part_defined_flag);
 
-		long lidx_tmp = sig->sb_to_idx(lsb);
-		long midx_tmp = sig->sb_to_idx(msb);
+		long lidx_tmp = sig->sb_to_idx(prefix_indices, lsb);
+		long midx_tmp = sig->sb_to_idx(prefix_indices, msb);
 		  /* Detect reversed indices of a part select. */
 		if (lidx_tmp > midx_tmp) {
 		      cerr << get_fileline() << ": error: Part select "
@@ -370,7 +374,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		  }
 		  assert(mval);
 
-		  midx = sig->sb_to_idx(mval->as_long());
+		  midx = sig->sb_to_idx(prefix_indices, mval->as_long());
 		  if (midx >= (long)sig->vector_width()) {
 			cerr << get_fileline() << ": error: Index " << sig->name()
 			     << "[" << mval->as_long() << "] is out of range."

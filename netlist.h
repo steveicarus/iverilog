@@ -550,7 +550,7 @@ class NetDelaySrc  : public NetObj {
  *
  * NetNet objects are located by searching NetScope objects.
  *
- * The pin of a NetNet object are PASSIVE: they do not drive
+ * The pins of a NetNet object are PASSIVE: they do not drive
  * anything and they are not a data sink, per se. The pins follow the
  * values on the nexus.
  */
@@ -573,6 +573,9 @@ class NetNet  : public NetObj {
 
 	    long msb;
 	    long lsb;
+
+	    inline unsigned long width()const
+	    { if (msb >= lsb) return msb-lsb+1; else return lsb-msb+1; }
       };
 
     public:
@@ -639,15 +642,30 @@ class NetNet  : public NetObj {
       static unsigned long vector_width(const std::list<NetNet::range_t>&);
       unsigned long vector_width() const { return vector_width(packed_dims_); }
 
+	/* Given a prefix of indices, figure out how wide the
+	   resulting slice would be. This is a generalization of the
+	   vector_width(), where the depth would be 0. */
+      unsigned long slice_width(size_t depth) const;
+
 	/* This method converts a signed index (the type that might be
-	   found in the Verilog source) to a pin number. It accounts
-	   for variation in the definition of the reg/wire/whatever. */
-      long sb_to_idx(long sb) const;
+	   found in the Verilog source) to canonical. It accounts
+	   for variation in the definition of the
+	   reg/wire/whatever. Note that a canonical index of a
+	   multi-dimensioned packed array is a single dimension. For
+	   example, "reg [4:1][3:0]..." has the canonical dimension
+	   [15:0] and the sb_to_idx) method will convert [2][2] to
+	   the canonical index [6]. */
+      long sb_to_idx(const std::list<long>&prefix, long sb) const;
+
+	/* This method converts a partial packed indices list and a
+	   tail index, and generates a canonical slice offset and
+	   width. */
+      bool sb_to_slice(const std::list<long>&prefix, long sb, long&off, unsigned long&wid) const;
 
 	/* This method checks that the signed index is valid for this
 	   signal. If it is, the above sb_to_idx can be used to get
 	   the pin# from the index. */
-      bool sb_is_valid(long sb) const;
+      bool sb_is_valid(const std::list<long>&prefix, long sb) const;
 
 	/* This method returns 0 for scalars and vectors, and greater
 	   for arrays. The value is the number of array
@@ -2348,6 +2366,8 @@ class NetAssign_ {
       ivl_select_type_t select_type() const;
 
       void set_word(NetExpr*);
+	// Set a part select expression for the l-value vector. Note
+	// that the expression calculates a CANONICAL bit address.
       void set_part(NetExpr* loff, unsigned wid,
                     ivl_select_type_t = IVL_SEL_OTHER);
 

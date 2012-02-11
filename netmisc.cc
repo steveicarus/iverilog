@@ -198,6 +198,21 @@ static NetExpr* make_sub_expr(long val, NetExpr*expr)
       return res;
 }
 
+static NetExpr* make_mult_expr(NetExpr*expr, unsigned long val)
+{
+      verinum val_v (val, expr->expr_width());
+      val_v.has_sign(true);
+
+      NetEConst*val_c = new NetEConst(val_v);
+      val_c->set_line(*expr);
+
+      NetEBMult*res = new NetEBMult('*', expr, val_c, expr->expr_width(),
+                                  expr->has_sign());
+      res->set_line(*expr);
+
+      return res;
+}
+
 /*
  * This routine is used to calculate the number of bits needed to
  * contain the given number.
@@ -308,6 +323,31 @@ NetExpr *normalize_variable_base(NetExpr *base,
       ivl_assert(*base, dims.size() == 1);
       const NetNet::range_t&rng = dims.back();
       return normalize_variable_base(base, rng.msb, rng.lsb, wid, is_up);
+}
+
+NetExpr *normalize_variable_slice_base(const list<long>&indices, NetExpr*base,
+				       const NetNet*reg, unsigned long&lwid)
+{
+      const list<NetNet::range_t>&packed_dims = reg->packed_dims();
+      ivl_assert(*base, indices.size() < packed_dims.size());
+
+      list<NetNet::range_t>::const_iterator pcur = packed_dims.end();
+      for (size_t idx = indices.size() ; idx < packed_dims.size(); idx += 1) {
+	    -- pcur;
+      }
+
+      long sb;
+      if (pcur->msb >= pcur->lsb)
+	    sb = pcur->lsb;
+      else
+	    sb = pcur->msb;
+
+      long loff;
+      reg->sb_to_slice(indices, sb, loff, lwid);
+
+      base = make_mult_expr(base, lwid);
+      base = make_add_expr(base, loff);
+      return base;
 }
 
 /*
@@ -857,4 +897,40 @@ void collapse_partselect_pv_to_concat(Design*des, NetNet*sig)
 	    idx += ps_obj->width();
 	    delete ps_obj;
       }
+}
+
+/*
+ * Evaluate the prefix indices. All but the final index in a
+ * chain of indices must be a single value and must evaluate
+ * to constants at compile time. For example:
+ *    [x]          - OK
+ *    [1][2][x]    - OK
+ *    [1][x:y]     - OK
+ *    [2:0][x]     - BAD
+ *    [y][x]       - BAD
+ * Leave the last index for special handling.
+ */
+bool evaluate_index_prefix(Design*des, NetScope*scope,
+			   list<long>&prefix_indices,
+			   const list<index_component_t>&indices)
+{
+      list<index_component_t>::const_iterator icur = indices.begin();
+      for (size_t idx = 0 ; (idx+1) < indices.size() ; idx += 1, ++icur) {
+	    assert(icur != indices.end());
+	    assert(icur->sel == index_component_t::SEL_BIT);
+	    NetExpr*texpr = elab_and_eval(des, scope, icur->msb, -1, true);
+	    ivl_assert(*icur->msb, texpr);
+	    long tmp;
+	    if (!eval_as_long(tmp, texpr)) {
+		  cerr << icur->msb->get_fileline() << ": error: "
+			"Array index expressions must be constant." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    prefix_indices .push_back(tmp);
+	    delete texpr;
+      }
+
+      return true;
 }

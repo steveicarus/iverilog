@@ -103,6 +103,8 @@ extern NetExpr*normalize_variable_base(NetExpr *base, long msb, long lsb,
 extern NetExpr*normalize_variable_base(NetExpr *base,
 				       const list<NetNet::range_t>&dims,
 				       unsigned long wid, bool is_up);
+extern NetExpr*normalize_variable_slice_base(const list<long>&indices, NetExpr *base,
+					     const NetNet*reg, unsigned long&lwid);
 extern NetExpr*normalize_variable_array_base(NetExpr *base, long offset,
                                              unsigned count);
 
@@ -238,4 +240,7 @@ extern uint64_t get_scaled_time_from_real(Design*des,
 
 extern void collapse_partselect_pv_to_concat(Design*des, NetNet*sig);
 
+extern bool evaluate_index_prefix(Design*des, NetScope*scope,
+				  list<long>&prefix_indices,
+				  const list<index_component_t>&indices);
 #endif

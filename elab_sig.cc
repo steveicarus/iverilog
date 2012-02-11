@@ -1149,12 +1149,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  cerr << " in scope " << scope_path(scope) << endl;
 	    }
 
-	    if (packed_dimensions.size() > 1) {
-		  cerr << get_fileline() << ": sorry: Multi-dimension "
-		       << "packed arrays not supported." << endl;
-		  des->errors += 1;
-	    }
-
 	    sig = array_dimensions > 0
 		  ? new NetNet(scope, name_, wtype, packed_dimensions, array_s0, array_e0)
 		  : new NetNet(scope, name_, wtype, packed_dimensions);

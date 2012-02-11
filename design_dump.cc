@@ -1518,7 +1518,7 @@ void NetESignal::dump(ostream&o) const
 	    o << "+";
       o << name();
       if (word_) o << "[word=" << *word_ << "]";
-      o << "[" << msi()<<":"<<lsi() << "]";
+      o << sig()->packed_dims();
 }
 
 void NetETernary::dump(ostream&o) const

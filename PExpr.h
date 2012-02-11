@@ -343,6 +343,18 @@ class PEIdent : public PExpr {
 
       bool calculate_up_do_width_(Design*, NetScope*, unsigned long&wid) const;
 
+	// Evaluate the prefix indices. All but the final index in a
+	// chain of indices must be a single value and must evaluate
+	// to constants at compile time. For example:
+	//    [x]          - OK
+	//    [1][2][x]    - OK
+	//    [1][x:y]     - OK
+	//    [2:0][x]     - BAD
+	//    [y][x]       - BAD
+	// Leave the last index for special handling.
+      bool calculate_packed_indices_(Design*des, NetScope*scope, NetNet*net,
+				     std::list<long>&prefix_indices) const;
+
     private:
       NetAssign_*elaborate_lval_net_word_(Design*, NetScope*, NetNet*) const;
       bool elaborate_lval_net_bit_(Design*, NetScope*, NetAssign_*) const;

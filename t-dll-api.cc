@@ -2147,15 +2147,39 @@ extern "C" ivl_nexus_t ivl_signal_nex(ivl_signal_t net, unsigned word)
       }
 }
 
+extern "C" unsigned ivl_signal_packed_dimensions(ivl_signal_t net)
+{
+      return net->packed_dims.size();
+}
+
+extern "C" int ivl_signal_packed_msb(ivl_signal_t net, unsigned dim)
+{
+      assert(dim < net->packed_dims.size());
+      return net->packed_dims[dim].msb;
+}
+
+extern "C" int ivl_signal_packed_lsb(ivl_signal_t net, unsigned dim)
+{
+      assert(dim < net->packed_dims.size());
+      return net->packed_dims[dim].lsb;
+}
+
 extern "C" int ivl_signal_msb(ivl_signal_t net)
 {
-      assert(net->lsb_dist == 1 || net->lsb_dist == -1);
-      return net->lsb_index + net->lsb_dist * (net->width_ - 1);
+      if (net->packed_dims.size() == 0)
+	    return 0;
+
+      assert(net->packed_dims.size() == 1);
+      return net->packed_dims[0].msb;
 }
 
 extern "C" int ivl_signal_lsb(ivl_signal_t net)
 {
-      return net->lsb_index;
+      if (net->packed_dims.size() == 0)
+	    return 0;
+
+      assert(net->packed_dims.size() == 1);
+      return net->packed_dims[0].lsb;
 }
 
 extern "C" ivl_scope_t ivl_signal_scope(ivl_signal_t net)

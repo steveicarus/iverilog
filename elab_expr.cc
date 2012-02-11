@@ -1854,6 +1854,17 @@ NetExpr* PEFNumber::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const
       return tmp;
 }
 
+bool PEIdent::calculate_packed_indices_(Design*des, NetScope*scope, NetNet*net,
+					list<long>&prefix_indices) const
+{
+      list<index_component_t> index;
+      index = path_.back().index;
+      for (size_t idx = 0 ; idx < net->array_dimensions() ; idx += 1)
+	    index.pop_front();
+
+      return evaluate_index_prefix(des, scope, prefix_indices, index);
+}
+
 /*
  * Given that the msb_ and lsb_ are part select expressions, this
  * function calculates their values. Note that this method does *not*
@@ -3101,6 +3112,10 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 				           NetESignal*net, NetScope*,
                                            unsigned expr_wid) const
 {
+      list<long> prefix_indices;
+      bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
+      ivl_assert(*this, rc);
+
       long msv, lsv;
       bool parts_defined_flag;
       bool flag = calculate_parts_(des, scope, msv, lsv, parts_defined_flag);
@@ -3133,9 +3148,8 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	    tmp->set_line(*this);
 	    return tmp;
       }
-
-      long sb_lsb = net->sig()->sb_to_idx(lsv);
-      long sb_msb = net->sig()->sb_to_idx(msv);
+      long sb_lsb = net->sig()->sb_to_idx(prefix_indices, lsv);
+      long sb_msb = net->sig()->sb_to_idx(prefix_indices, msv);
 
       if (sb_msb < sb_lsb) {
 	    cerr << get_fileline() << ": error: part select " << net->name();
@@ -3207,6 +3221,10 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 				             NetESignal*net, NetScope*,
                                              bool need_const) const
 {
+      list<long>prefix_indices;
+      bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
+      ivl_assert(*this, rc);
+
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
 
       unsigned long wid = 0;
@@ -3224,7 +3242,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 		    // If the part select covers exactly the entire
 		    // vector, then do not bother with it. Return the
 		    // signal itself.
-		  if (net->sig()->sb_to_idx(lsv) == 0 &&
+		  if (net->sig()->sb_to_idx(prefix_indices, lsv) == 0 &&
 		      wid == net->vector_width()) {
 			delete base;
 			net->cast_signed(false);
@@ -3237,10 +3255,9 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 		  }
 		    // Otherwise, make a part select that covers the right
 		    // range.
-		  ex = new NetEConst(verinum(net->sig()->sb_to_idx(lsv) +
-		                             offset));
+		  ex = new NetEConst(verinum(net->sig()->sb_to_idx(prefix_indices,lsv) + offset));
 		  if (warn_ob_select) {
-			long rel_base = net->sig()->sb_to_idx(lsv) + offset;
+			long rel_base = net->sig()->sb_to_idx(prefix_indices,lsv) + offset;
 			if (rel_base < 0) {
 			      cerr << get_fileline() << ": warning: "
 			           << net->name();
@@ -3296,6 +3313,10 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 					     NetESignal*net, NetScope*,
                                              bool need_const) const
 {
+      list<long>prefix_indices;
+      bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
+      ivl_assert(*this, rc);
+
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
 
       unsigned long wid = 0;
@@ -3312,7 +3333,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 		    // If the part select covers exactly the entire
 		    // vector, then do not bother with it. Return the
 		    // signal itself.
-		  if (net->sig()->sb_to_idx(lsv) == (signed) (wid-1) &&
+		  if (net->sig()->sb_to_idx(prefix_indices,lsv) == (signed) (wid-1) &&
 		      wid == net->vector_width()) {
 			delete base;
 			net->cast_signed(false);
@@ -3325,10 +3346,9 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 		  }
 		    // Otherwise, make a part select that covers the right
 		    // range.
-		  ex = new NetEConst(verinum(net->sig()->sb_to_idx(lsv) +
-		                             offset));
+		  ex = new NetEConst(verinum(net->sig()->sb_to_idx(prefix_indices,lsv) + offset));
 		  if (warn_ob_select) {
-			long rel_base = net->sig()->sb_to_idx(lsv) + offset;
+			long rel_base = net->sig()->sb_to_idx(prefix_indices,lsv) + offset;
 			if (rel_base < 0) {
 			      cerr << get_fileline() << ": warning: "
 			           << net->name();
@@ -3381,6 +3401,10 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 				          NetESignal*net, NetScope*,
                                           bool need_const) const
 {
+      list<long>prefix_indices;
+      bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
+      ivl_assert(*this, rc);
+
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
 
@@ -3388,12 +3412,12 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
       ivl_assert(*this, index_tail.msb != 0);
       ivl_assert(*this, index_tail.lsb == 0);
 
-      NetExpr*ex = elab_and_eval(des, scope, index_tail.msb, -1, need_const);
+      NetExpr*mux = elab_and_eval(des, scope, index_tail.msb, -1, need_const);
 
 	// If the bit select is constant, then treat it similar
 	// to the part select, so that I save the effort of
 	// making a mux part in the netlist.
-      if (NetEConst*msc = dynamic_cast<NetEConst*> (ex)) {
+      if (NetEConst*msc = dynamic_cast<NetEConst*> (mux)) {
 
 	      // Special case: The bit select expression is constant
 	      // x/z. The result of the expression is 1'bx.
@@ -3414,12 +3438,12 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 
 		  NetEConst*tmp = make_const_x(1);
 		  tmp->set_line(*this);
-		  delete ex;
+		  delete mux;
 		  return tmp;
 	    }
 
 	    long msv = msc->value().as_long();
-	    long idx = net->sig()->sb_to_idx(msv);
+	    long idx = net->sig()->sb_to_idx(prefix_indices,msv);
 
 	    if (idx >= (long)net->vector_width() || idx < 0) {
 		    /* The bit select is out of range of the
@@ -3444,7 +3468,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 		  NetEConst*tmp = make_const_x(1);
 		  tmp->set_line(*this);
 
-		  delete ex;
+		  delete mux;
 		  return tmp;
 	    }
 
@@ -3464,16 +3488,36 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	    return res;
       }
 
+      const list<NetNet::range_t>& sig_packed = net->sig()->packed_dims();
+      if (prefix_indices.size()+2 <= sig_packed.size()) {
+	      // Special case: this is a slice of a multi-dimensional
+	      // packed array. For example:
+	      //   reg [3:0][7:0] x;
+	      //   x[2] = ...
+	      // This shows up as the prefix_indices being too short
+	      // for the packed dimensions of the vector. What we do
+	      // here is convert to a "slice" of the vector.
+	    unsigned long lwid;
+	    mux = normalize_variable_slice_base(prefix_indices, mux,
+						net->sig(), lwid);
+	    mux->set_line(*net);
+
+	      // Make a PART select with the canonical index
+	    NetESelect*res = new NetESelect(net, mux, lwid);
+	    res->set_line(*net);
+
+	    return res;
+      }
+
 	// Non-constant bit select? punt and make a subsignal
 	// device to mux the bit in the net. This is a fairly
 	// complicated task because we need to generate
 	// expressions to convert calculated bit select
 	// values to canonical values that are used internally.
-      const list<NetNet::range_t>& sig_packed = net->sig()->packed_dims();
       assert(sig_packed.size() == 1);
-      ex = normalize_variable_base(ex, sig_packed, 1, true);
+      mux = normalize_variable_base(mux, sig_packed, 1, true);
 
-      NetESelect*ss = new NetESelect(net, ex, 1);
+      NetESelect*ss = new NetESelect(net, mux, 1);
       ss->set_line(*this);
       return ss;
 }
@@ -3505,6 +3549,10 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    return 0;
       }
+
+      list<long> prefix_indices;
+      bool rc = evaluate_index_prefix(des, scope, prefix_indices, path_.back().index);
+      ivl_assert(*this, rc);
 
 	// If this is a part select of a signal, then make a new
 	// temporary signal that is connected to just the

@@ -688,10 +688,9 @@ struct ivl_signal_s {
       unsigned array_dimensions_ : 1;
       unsigned array_addr_swapped : 1;
 
-	/* These encode the run-time index for the least significant
-	   bit, and the distance to the second bit. */
-      signed lsb_index;
-      signed lsb_dist;
+	/* These encode the declared packed dimensions for the
+	   signal, in case they are needed by the run-time */
+      std::vector<NetNet::range_t> packed_dims;
 
       perm_string name_;
       ivl_scope_t scope_;

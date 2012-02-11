@@ -1785,13 +1785,23 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  *    If the signal has been declared with a domain (Verilog-AMS) then
  *    this function will return a non-nil ivl_discipline_t.
  *
- * ivl_signal_msb
- * ivl_signal_lsb
+ * ivl_signal_msb (deprecated)
+ * ivl_signal_lsb (deprecated)
+ * ivl_signal_packed_dimensions
+ * ivl_signal_packed_msb
+ * ivl_signal_packed_lsb
  * ivl_signal_width
- *    These functions return the left and right indices, respectively,
- *    of the signal. If the signal is a scalar, both return 0. However,
- *    it doesn't mean that the signal is a scalar if both return 0, one
- *    can have a vector with 0 as both indices.
+ *    These functions return the msb and lsb packed indices. The
+ *    packed dimensions are declared differently from array
+ *    dimensions, like so:
+ *       reg [4:1][7:0] sig...
+ *    which has two packed dimensions. The [4:1] dimension is the
+ *    first, and so forth. If the signal is a scalar, it has 0
+ *    dimension.
+ *
+ *    The ivl_signal_msb/ivl_signal_lsb functions are deprecated
+ *    versions that only work with variables that have less then two
+ *    dimensions. They will return msb==lsb==0 for scalars.
  *
  * ivl_signal_port
  *    If the signal is a port to a module, this function returns the
@@ -1859,8 +1869,11 @@ extern unsigned    ivl_signal_array_count(ivl_signal_t net);
 extern unsigned    ivl_signal_array_addr_swapped(ivl_signal_t net);
 extern unsigned    ivl_signal_dimensions(ivl_signal_t net);
 extern ivl_discipline_t ivl_signal_discipline(ivl_signal_t net);
-extern int         ivl_signal_msb(ivl_signal_t net);
-extern int         ivl_signal_lsb(ivl_signal_t net);
+extern unsigned    ivl_signal_packed_dimensions(ivl_signal_t net);
+extern int         ivl_signal_packed_msb(ivl_signal_t net, unsigned dim);
+extern int         ivl_signal_packed_lsb(ivl_signal_t net, unsigned dim);
+extern int         ivl_signal_msb(ivl_signal_t net) __attribute__((deprecated));
+extern int         ivl_signal_lsb(ivl_signal_t net) __attribute__((deprecated));
 extern unsigned    ivl_signal_width(ivl_signal_t net);
 extern ivl_signal_port_t ivl_signal_port(ivl_signal_t net);
 extern int         ivl_signal_signed(ivl_signal_t net);
