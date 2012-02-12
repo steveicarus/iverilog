@@ -3293,6 +3293,12 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 	    return ss;
       }
 
+      if (net->sig()->packed_dims().size() > 1) {
+	    cerr << get_fileline() << ": sorry: Indexed part select of packed arrays not supported here." << endl;
+	    des->errors += 1;
+	    return net;
+      }
+
       base = normalize_variable_base(base, net->msi(), net->lsi(), wid, true);
 
       NetESelect*ss = new NetESelect(net, base, wid, IVL_SEL_IDX_UP);
@@ -3551,7 +3557,7 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
 
       list<long> prefix_indices;
       bool rc = evaluate_index_prefix(des, scope, prefix_indices, path_.back().index);
-      ivl_assert(*this, rc);
+      if (!rc) return 0;
 
 	// If this is a part select of a signal, then make a new
 	// temporary signal that is connected to just the

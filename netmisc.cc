@@ -937,13 +937,13 @@ bool evaluate_index_prefix(Design*des, NetScope*scope,
 	    assert(icur != indices.end());
 	    assert(icur->sel == index_component_t::SEL_BIT);
 	    NetExpr*texpr = elab_and_eval(des, scope, icur->msb, -1, true);
-	    ivl_assert(*icur->msb, texpr);
+
 	    long tmp;
-	    if (!eval_as_long(tmp, texpr)) {
+	    if (texpr == 0 || !eval_as_long(tmp, texpr)) {
 		  cerr << icur->msb->get_fileline() << ": error: "
-			"Array index expressions must be constant." << endl;
+			"Array index expressions must be constant here." << endl;
 		  des->errors += 1;
-		  return 0;
+		  return false;
 	    }
 
 	    prefix_indices .push_back(tmp);

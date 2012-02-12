@@ -359,7 +359,7 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 {
       list<long>prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, lv->sig(), prefix_indices);
-      ivl_assert(*this, rc);
+      if (!rc) return false;
 
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
@@ -597,6 +597,13 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 		  }
 	    }
       } else {
+	    if (reg->packed_dims().size() > 1) {
+		  cerr << get_fileline() << ": sorry: "
+		       << "Indexed part select of packed arrays not supported nere." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+
 	      /* Correct the mux for the range of the vector. */
 	    if (use_sel == index_component_t::SEL_IDX_UP) {
 		  base = normalize_variable_base(base, reg->packed_dims(),
