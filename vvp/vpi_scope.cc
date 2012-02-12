@@ -41,7 +41,7 @@ vpiHandle vpip_make_root_iterator(void)
 				vpip_root_table_ptr, false);
 }
 
-void vpip_make_root_iterator(class __vpiHandle**&table, unsigned&ntable)
+void vpip_make_root_iterator(__vpiHandle**&table, unsigned&ntable)
 {
       table = vpip_root_table_ptr;
       ntable = vpip_root_table_cnt;

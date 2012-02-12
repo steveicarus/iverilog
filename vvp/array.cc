@@ -104,7 +104,7 @@ struct __vpiArray : public __vpiHandle {
       vvp_realarray_t      *valsr;
       struct __vpiArrayWord*vals_words;
 
-      class vvp_fun_arrayport*ports_;
+      vvp_fun_arrayport*ports_;
       struct __vpiCallback *vpi_callbacks;
       bool signed_flag;
       bool swap_addr;

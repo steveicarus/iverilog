@@ -74,7 +74,7 @@ void sfunc_core::recv_vec4_from_inputs(unsigned port)
 void sfunc_core::recv_real_from_inputs(unsigned port)
 {
       vpiHandle vpi = argv_[port];
-      class __vpiRealConst*obj = dynamic_cast<__vpiRealConst*>(vpi);
+      __vpiRealConst*obj = dynamic_cast<__vpiRealConst*>(vpi);
       assert(obj);
 
       obj->value = value_r(port);
