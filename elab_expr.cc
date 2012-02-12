@@ -3514,8 +3514,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	// complicated task because we need to generate
 	// expressions to convert calculated bit select
 	// values to canonical values that are used internally.
-      assert(sig_packed.size() == 1);
-      mux = normalize_variable_base(mux, sig_packed, 1, true);
+      mux = normalize_variable_bit_base(prefix_indices, mux, net->sig());
 
       NetESelect*ss = new NetESelect(net, mux, 1);
       ss->set_line(*this);

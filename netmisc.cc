@@ -239,10 +239,13 @@ static unsigned num_bits(long arg)
 
 /*
  * This routine generates the normalization expression needed for a variable
- * bit select or a variable base expression for an indexed part select.
+ * bit select or a variable base expression for an indexed part
+ * select. This function doesn't actually look at the variable
+ * dimensions, it just does the final calculation using msb/lsb of the
+ * last slice, and the off of the slice in the variable.
  */
 NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
-                                 unsigned long wid, bool is_up)
+				 unsigned long wid, bool is_up, long soff)
 {
       long offset = lsb;
 
@@ -275,13 +278,13 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
                   base = tmp;
 	    }
 	      /* Normalize the expression. */
-	    base = make_sub_expr(offset, base);
+	    base = make_sub_expr(offset+soff, base);
       } else {
 	      /* Correct the offset if needed. */
 	    if (!is_up) offset += wid - 1;
 	      /* If the offset is zero then just return the base (index)
 	       * expression. */
-	    if (offset == 0) return base;
+	    if ((soff-offset) == 0) return base;
 	      /* Calculate the space needed for the offset. */
 	    unsigned min_wid = num_bits(-offset);
 	      /* We need enough space for the larger of the offset or the
@@ -304,7 +307,7 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
                   base = tmp;
 	    }
 	      /* Normalize the expression. */
-	    base = make_add_expr(base, -offset);
+	    base = make_add_expr(base, soff-offset);
       }
 
       return base;
@@ -323,6 +326,21 @@ NetExpr *normalize_variable_base(NetExpr *base,
       ivl_assert(*base, dims.size() == 1);
       const NetNet::range_t&rng = dims.back();
       return normalize_variable_base(base, rng.msb, rng.lsb, wid, is_up);
+}
+
+NetExpr *normalize_variable_bit_base(const list<long>&indices, NetExpr*base,
+				     const NetNet*reg)
+{
+      const list<NetNet::range_t>&packed_dims = reg->packed_dims();
+      ivl_assert(*base, indices.size()+1 == packed_dims.size());
+
+	// Get the canonical offset of the slice within which we are
+	// addressing. We need that address as a slice offset to
+	// calculate the proper complete address
+      const NetNet::range_t&rng = packed_dims.back();
+      long slice_off = reg->sb_to_idx(indices, rng.lsb);
+
+      return normalize_variable_base(base, rng.msb, rng.lsb, 1, true, slice_off);
 }
 
 NetExpr *normalize_variable_slice_base(const list<long>&indices, NetExpr*base,

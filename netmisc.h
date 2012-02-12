@@ -99,10 +99,15 @@ extern NetNet*crop_to_width(Design*des, NetNet*n, unsigned w);
  * the provided vector/array information.
  */
 extern NetExpr*normalize_variable_base(NetExpr *base, long msb, long lsb,
-                                       unsigned long wid, bool is_up);
+                                       unsigned long wid, bool is_up,
+				       long slice_off =0);
 extern NetExpr*normalize_variable_base(NetExpr *base,
 				       const list<NetNet::range_t>&dims,
 				       unsigned long wid, bool is_up);
+
+extern NetExpr*normalize_variable_bit_base(const list<long>&indices, NetExpr *base,
+					   const NetNet*reg);
+
 extern NetExpr*normalize_variable_slice_base(const list<long>&indices, NetExpr *base,
 					     const NetNet*reg, unsigned long&lwid);
 extern NetExpr*normalize_variable_array_base(NetExpr *base, long offset,

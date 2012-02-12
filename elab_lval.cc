@@ -408,7 +408,7 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 	      // Non-constant bit mux. Correct the mux for the range
 	      // of the vector, then set the l-value part select
 	      // expression.
-	    mux = normalize_variable_base(mux, reg->packed_dims(), 1, true);
+	    mux = normalize_variable_bit_base(prefix_indices, mux, reg);
 	    lv->set_part(mux, 1);
 
       } else if (reg->vector_width() == 1 && reg->sb_is_valid(prefix_indices,lsb)) {
