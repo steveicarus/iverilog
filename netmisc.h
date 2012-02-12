@@ -105,11 +105,43 @@ extern NetExpr*normalize_variable_base(NetExpr *base,
 				       const list<NetNet::range_t>&dims,
 				       unsigned long wid, bool is_up);
 
+/*
+ * Calculate a canonicalizing expression for a bit select, when the
+ * base expression is the last index of an otherwise complete bit
+ * select. For example:
+ *   reg [3:0][7:0] foo;
+ *   ... foo[1][x] ...
+ * base is (x) and the generated expression will be (x+8).
+ */
 extern NetExpr*normalize_variable_bit_base(const list<long>&indices, NetExpr *base,
 					   const NetNet*reg);
 
+/*
+ * This is similar to normalize_variable_bit_base, but the tail index
+ * it a base and width, instead of a bit. This is used for handling
+ * indexed part selects:
+ *   reg [3:0][7:0] foo;
+ *   ... foo[1][x +: 2]
+ * base is (x), wid input is (2), and is_up is (true). The output
+ * expression is (x+8).
+ */
+extern NetExpr *normalize_variable_part_base(const list<long>&indices, NetExpr*base,
+					     const NetNet*reg,
+					     unsigned long wid, bool is_up);
+/*
+ * Calculate a canonicalizing expression for a slice select. The
+ * indices array is less then needed to fully address a bit, so the
+ * result is a slice of the packed array. The return value is an
+ * expression that gets to the base of the slice, and (lwid) becomes
+ * the width of the slice, in bits. For example:
+ *   reg [4:1][7:0] foo
+ *   ...foo[x]...
+ * base is (x) and the generated expression will be (x*8 - 8), with
+ * lwid set to (8).
+ */
 extern NetExpr*normalize_variable_slice_base(const list<long>&indices, NetExpr *base,
 					     const NetNet*reg, unsigned long&lwid);
+
 extern NetExpr*normalize_variable_array_base(NetExpr *base, long offset,
                                              unsigned count);
 

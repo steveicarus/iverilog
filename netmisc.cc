@@ -343,6 +343,22 @@ NetExpr *normalize_variable_bit_base(const list<long>&indices, NetExpr*base,
       return normalize_variable_base(base, rng.msb, rng.lsb, 1, true, slice_off);
 }
 
+NetExpr *normalize_variable_part_base(const list<long>&indices, NetExpr*base,
+				      const NetNet*reg,
+				      unsigned long wid, bool is_up)
+{
+      const list<NetNet::range_t>&packed_dims = reg->packed_dims();
+      ivl_assert(*base, indices.size()+1 == packed_dims.size());
+
+	// Get the canonical offset of the slice within which we are
+	// addressing. We need that address as a slice offset to
+	// calculate the proper complete address
+      const NetNet::range_t&rng = packed_dims.back();
+      long slice_off = reg->sb_to_idx(indices, rng.lsb);
+
+      return normalize_variable_base(base, rng.msb, rng.lsb, wid, is_up, slice_off);
+}
+
 NetExpr *normalize_variable_slice_base(const list<long>&indices, NetExpr*base,
 				       const NetNet*reg, unsigned long&lwid)
 {

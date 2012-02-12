@@ -3299,13 +3299,12 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 	    return ss;
       }
 
-      if (net->sig()->packed_dims().size() > 1) {
-	    cerr << get_fileline() << ": sorry: Indexed part select of packed arrays not supported here." << endl;
-	    des->errors += 1;
-	    return net;
-      }
 
-      base = normalize_variable_base(base, net->msi(), net->lsi(), wid, true);
+      ivl_assert(*this, prefix_indices.size()+1 == net->sig()->packed_dims().size());
+
+	// Convert the non-constant part select index expression into
+	// an expression that returns a canonical base.
+      base = normalize_variable_part_base(prefix_indices, base, net->sig(), wid, true);
 
       NetESelect*ss = new NetESelect(net, base, wid, IVL_SEL_IDX_UP);
       ss->set_line(*this);

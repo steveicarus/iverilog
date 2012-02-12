@@ -598,22 +598,16 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 		  }
 	    }
       } else {
-	    if (reg->packed_dims().size() > 1) {
-		  cerr << get_fileline() << ": sorry: "
-		       << "Indexed part select of packed arrays not supported nere." << endl;
-		  des->errors += 1;
-		  return false;
-	    }
-
+	    ivl_assert(*this, prefix_indices.size()+1 == reg->packed_dims().size());
 	      /* Correct the mux for the range of the vector. */
 	    if (use_sel == index_component_t::SEL_IDX_UP) {
-		  base = normalize_variable_base(base, reg->packed_dims(),
-		                                 wid, true);
+		  base = normalize_variable_part_base(prefix_indices, base,
+						      reg, wid, true);
 		  sel_type = IVL_SEL_IDX_UP;
 	    } else {
 		    // This is assumed to be a SEL_IDX_DO.
-		  base = normalize_variable_base(base, reg->packed_dims(),
-		                                 wid, false);
+		  base = normalize_variable_part_base(prefix_indices, base,
+						      reg, wid, false);
 		  sel_type = IVL_SEL_IDX_DOWN;
 	    }
       }
