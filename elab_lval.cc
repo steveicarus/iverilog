@@ -543,11 +543,12 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 	    if (base_c->value().is_defined()) {
 		  long lsv = base_c->value().as_long();
 		  long offset = 0;
-		    // This is a work-around for limited dimenions support.
+		    // Get the signal range.
 		  const list<NetNet::range_t>&packed = reg->packed_dims();
-		  ivl_assert(*this, packed.size() == 1);
-		  const NetNet::range_t&rng = packed.back();
+		  ivl_assert(*this, packed.size() == prefix_indices.size()+1);
 
+		    // We want the last range, which is where we work.
+		  const NetNet::range_t&rng = packed.back();
 		  if (((rng.msb < rng.lsb) &&
                        use_sel == index_component_t::SEL_IDX_UP) ||
 		      ((rng.msb > rng.lsb) &&

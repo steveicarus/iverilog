@@ -3238,26 +3238,32 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 	    NetExpr*ex;
 	    if (base_c->value().is_defined()) {
 		  long lsv = base_c->value().as_long();
+		  long offset = 0;
+		    // Get the signal range.
+		  const list<NetNet::range_t>&packed = net->sig()->packed_dims();
+		  ivl_assert(*this, packed.size() == prefix_indices.size()+1);
+
+		    // We want the last range, which is where we work.
+		  const NetNet::range_t&rng = packed.back();
+		  if (rng.msb < rng.lsb) {
+			offset = -wid + 1;
+		  }
+
+		  long rel_base = net->sig()->sb_to_idx(prefix_indices, lsv);
 
 		    // If the part select covers exactly the entire
 		    // vector, then do not bother with it. Return the
 		    // signal itself.
-		  if (net->sig()->sb_to_idx(prefix_indices, lsv) == 0 &&
-		      wid == net->vector_width()) {
+		  if (rel_base == 0 && wid == net->vector_width()) {
 			delete base;
 			net->cast_signed(false);
 			return net;
 		  }
 
-		  long offset = 0;
-		  if (net->msi() < net->lsi()) {
-			offset = -wid + 1;
-		  }
 		    // Otherwise, make a part select that covers the right
 		    // range.
-		  ex = new NetEConst(verinum(net->sig()->sb_to_idx(prefix_indices,lsv) + offset));
+		  ex = new NetEConst(verinum(rel_base + offset));
 		  if (warn_ob_select) {
-			long rel_base = net->sig()->sb_to_idx(prefix_indices,lsv) + offset;
 			if (rel_base < 0) {
 			      cerr << get_fileline() << ": warning: "
 			           << net->name();
