@@ -3454,6 +3454,29 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	    }
 
 	    long msv = msc->value().as_long();
+
+	    const list<NetNet::range_t>& sig_packed = net->sig()->packed_dims();
+	    if (prefix_indices.size()+2 <= sig_packed.size()) {
+		    // Special case: this is a slice of a multi-dimensional
+		    // packed array. For example:
+		    //   reg [3:0][7:0] x;
+		    //   ... x[2] ...
+		    // This shows up as the prefix_indices being too short
+		    // for the packed dimensions of the vector. What we do
+		    // here is convert to a "slice" of the vector.
+		  unsigned long lwid;
+		  long idx;
+		  rc = net->sig()->sb_to_slice(prefix_indices, msv, idx, lwid);
+
+		    // Make an expression out of the index
+		  NetEConst*idx_c = new NetEConst(verinum(idx));
+		  idx_c->set_line(*net);
+
+		  NetESelect*res = new NetESelect(net, idx_c, lwid);
+		  res->set_line(*net);
+		  return res;
+	    }
+
 	    long idx = net->sig()->sb_to_idx(prefix_indices,msv);
 
 	    if (idx >= (long)net->vector_width() || idx < 0) {
