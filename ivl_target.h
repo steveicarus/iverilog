@@ -2013,7 +2013,7 @@ extern unsigned ivl_stmt_lineno(ivl_statement_t net);
  * is the compressed operator used it statements like this:
  *      foo += <expr>
  * The ivl_stmt_opcode() returns null (0) if this is not a compressed
- * assignment statment.
+ * assignment statement.
  *
  * - IVL_ST_CASSIGN
  * This reflects a procedural continuous assignment to an l-value. The

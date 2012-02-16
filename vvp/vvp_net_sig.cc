@@ -46,7 +46,7 @@ template <class T> vvp_net_fil_t::prop_t vvp_net_fil_t::filter_mask_(const T&val
       if (!test_force_mask_is_zero()) {
 	      // Some bits are being forced. Go through the
 	      // force_mask_ and force value to see which bits are
-	      // propogated and which are kept from the forced
+	      // propagated and which are kept from the forced
 	      // value. Update the filter with the filtered result and
 	      // return REPL to indicate that some bits have changed,
 	      // or STOP if no bits change.

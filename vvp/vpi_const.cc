@@ -660,7 +660,7 @@ struct __vpiRealParam  : public __vpiRealConst {
       int vpi_get(int code);
       char*vpi_get_str(int code);
       vpiHandle vpi_handle(int code);
- 
+
       struct __vpiScope* scope;
       unsigned file_idx;
       unsigned lineno;
@@ -713,7 +713,7 @@ vpiHandle __vpiRealParam::vpi_handle(int code)
             return 0;
       }
 }
- 
+
 
 vpiHandle vpip_make_real_param(char*name, double value,
                                long file_idx, long lineno)

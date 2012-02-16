@@ -955,7 +955,7 @@ static void vpi_array_vthr_APV_get_value(vpiHandle ref, p_vpi_value vp)
 	    vpip_vec4_get_value(tmp, obj->part_wid, parent->signed_flag, vp);
       }
 }
-  
+
 void array_set_word(vvp_array_t arr,
 		    unsigned address,
 		    unsigned part_off,
