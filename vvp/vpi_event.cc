@@ -71,7 +71,7 @@ vpiHandle __vpiNamedEvent::vpi_handle(int code)
 
 vpiHandle vpip_make_named_event(const char*name, vvp_net_t*funct)
 {
-      struct __vpiNamedEvent*obj = new __vpiNamedEvent(vpip_peek_current_scope(), name);
+      __vpiNamedEvent*obj = new __vpiNamedEvent(vpip_peek_current_scope(), name);
 
       obj->funct = funct;
 

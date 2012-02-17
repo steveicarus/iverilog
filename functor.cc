@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,71 +28,71 @@ functor_t::~functor_t()
 {
 }
 
-void functor_t::event(class Design*, class NetEvent*)
+void functor_t::event(Design*, NetEvent*)
 {
 }
 
-void functor_t::signal(class Design*, class NetNet*)
+void functor_t::signal(Design*, NetNet*)
 {
 }
 
-void functor_t::process(class Design*, class NetProcTop*)
+void functor_t::process(Design*, NetProcTop*)
 {
 }
 
-void functor_t::lpm_abs(class Design*, class NetAbs*)
+void functor_t::lpm_abs(Design*, NetAbs*)
 {
 }
 
-void functor_t::lpm_add_sub(class Design*, class NetAddSub*)
+void functor_t::lpm_add_sub(Design*, NetAddSub*)
 {
 }
 
-void functor_t::lpm_compare(class Design*, class NetCompare*)
+void functor_t::lpm_compare(Design*, NetCompare*)
 {
 }
 
-void functor_t::lpm_const(class Design*, class NetConst*)
+void functor_t::lpm_const(Design*, NetConst*)
 {
 }
 
-void functor_t::lpm_divide(class Design*, class NetDivide*)
+void functor_t::lpm_divide(Design*, NetDivide*)
 {
 }
 
-void functor_t::lpm_literal(class Design*, class NetLiteral*)
+void functor_t::lpm_literal(Design*, NetLiteral*)
 {
 }
 
-void functor_t::lpm_modulo(class Design*, class NetModulo*)
+void functor_t::lpm_modulo(Design*, NetModulo*)
 {
 }
 
-void functor_t::lpm_ff(class Design*, class NetFF*)
+void functor_t::lpm_ff(Design*, NetFF*)
 {
 }
 
-void functor_t::lpm_logic(class Design*, class NetLogic*)
+void functor_t::lpm_logic(Design*, NetLogic*)
 {
 }
 
-void functor_t::lpm_mult(class Design*, class NetMult*)
+void functor_t::lpm_mult(Design*, NetMult*)
 {
 }
 
-void functor_t::lpm_mux(class Design*, class NetMux*)
+void functor_t::lpm_mux(Design*, NetMux*)
 {
 }
 
-void functor_t::lpm_pow(class Design*, class NetPow*)
+void functor_t::lpm_pow(Design*, NetPow*)
 {
 }
 
-void functor_t::sign_extend(class Design*, class NetSignExtend*)
+void functor_t::sign_extend(Design*, NetSignExtend*)
 {
 }
 
-void functor_t::lpm_ureduce(class Design*, class NetUReduce*)
+void functor_t::lpm_ureduce(Design*, NetUReduce*)
 {
 }
 

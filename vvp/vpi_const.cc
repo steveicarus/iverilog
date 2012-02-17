@@ -240,7 +240,7 @@ __vpiHandle::free_object_fun_t __vpiStringConstTEMP::free_object_fun(void)
 
 vpiHandle vpip_make_string_const(char*text, bool persistent_flag)
 {
-      class __vpiStringConst*obj;
+      __vpiStringConst*obj;
 
       obj = persistent_flag? new __vpiStringConst(text) : new __vpiStringConstTEMP(text);
 
@@ -314,7 +314,7 @@ vpiHandle __vpiStringParam::vpi_handle(int code)
 vpiHandle vpip_make_string_param(char*name, char*text,
                                  long file_idx, long lineno)
 {
-      class __vpiStringParam*obj = new __vpiStringParam(text, name);
+      __vpiStringParam*obj = new __vpiStringParam(text, name);
       obj->scope = vpip_peek_current_scope();
       obj->file_idx = (unsigned) file_idx;
       obj->lineno = (unsigned) lineno;
@@ -649,7 +649,7 @@ void __vpiRealConst::vpi_get_value(p_vpi_value val)
 
 vpiHandle vpip_make_real_const(double value)
 {
-      class __vpiRealConst*obj = new __vpiRealConst(value);
+      __vpiRealConst*obj = new __vpiRealConst(value);
       return obj;
 }
 

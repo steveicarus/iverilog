@@ -74,7 +74,7 @@ static bool interact_flag = true;
 
 static void cmd_call(unsigned argc, char*argv[])
 {
-      class __vpiHandle**table;
+      __vpiHandle**table;
       unsigned ntable;
 
       if (stop_current_scope == 0) {
@@ -212,7 +212,7 @@ static void cmd_help(unsigned, char*[]);
 
 static void cmd_list(unsigned, char*[])
 {
-      class __vpiHandle**table;
+      __vpiHandle**table;
       unsigned ntable;
 
       if (stop_current_scope == 0) {
@@ -314,7 +314,7 @@ static void cmd_push(unsigned argc, char* argv[])
 {
 
       for (unsigned idx = 1 ;  idx < argc ;  idx += 1) {
-	    class __vpiHandle**table;
+	    __vpiHandle**table;
 	    unsigned ntable;
 
 	    struct __vpiScope*child = 0;

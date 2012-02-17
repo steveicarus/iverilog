@@ -49,8 +49,10 @@
  * event. This member is only used for things like cbReadOnlySync.
  */
 
+class sync_callback;
+
 struct sync_cb  : public vvp_gen_event_s {
-      class sync_callback*handle;
+      sync_callback*handle;
       bool sync_flag;
 
       ~sync_cb () { }
@@ -244,7 +246,7 @@ static value_callback* make_value_change(p_cb_data data)
 	    break;
 
 	  case vpiNamedEvent:
-	    struct __vpiNamedEvent*nev;
+	    __vpiNamedEvent*nev;
 	    nev = dynamic_cast<__vpiNamedEvent*>(data->obj);
 	    nev->add_vpi_callback(obj);
 	    break;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -114,12 +114,12 @@ class synth_f  : public functor_t {
 
     public:
       synth_f() { top_ = NULL; }
-      void process(class Design*, class NetProcTop*);
+      void process(Design*, NetProcTop*);
 
     private:
-      void proc_always_(class Design*);
-      void proc_initial_(class Design*);
-      void proc_final_(class Design*);
+      void proc_always_(Design*);
+      void proc_initial_(Design*);
+      void proc_final_(Design*);
 
       NetProcTop*top_;
 };
@@ -129,7 +129,7 @@ class synth_f  : public functor_t {
  * Look at a process, and divide the problem into always and initial
  * threads.
  */
-void synth_f::process(class Design*des, class NetProcTop*top)
+void synth_f::process(Design*des, NetProcTop*top)
 {
       top_ = top;
       switch (top->type()) {
@@ -145,19 +145,19 @@ void synth_f::process(class Design*des, class NetProcTop*top)
       }
 }
 
-void synth_f::proc_always_(class Design*des)
+void synth_f::proc_always_(Design*des)
 {
       do_expr expr_pat(des, top_->scope());
       top_->statement()->match_proc(&expr_pat);
 }
 
-void synth_f::proc_initial_(class Design*des)
+void synth_f::proc_initial_(Design*des)
 {
       do_expr expr_pat(des, top_->scope());
       top_->statement()->match_proc(&expr_pat);
 }
 
-void synth_f::proc_final_(class Design*des)
+void synth_f::proc_final_(Design*des)
 {
       do_expr expr_pat(des, top_->scope());
       top_->statement()->match_proc(&expr_pat);

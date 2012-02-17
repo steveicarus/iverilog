@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -449,7 +449,7 @@ int edge(vvp_bit4_t from, vvp_bit4_t to)
 
 void vvp_send_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&val)
 {
-      while (class vvp_net_t*cur = ptr.ptr()) {
+      while (vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
 	    if (cur->fun)
@@ -461,7 +461,7 @@ void vvp_send_vec8(vvp_net_ptr_t ptr, const vvp_vector8_t&val)
 
 void vvp_send_real(vvp_net_ptr_t ptr, double val, vvp_context_t context)
 {
-      while (class vvp_net_t*cur = ptr.ptr()) {
+      while (vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
 	    if (cur->fun)
@@ -473,7 +473,7 @@ void vvp_send_real(vvp_net_ptr_t ptr, double val, vvp_context_t context)
 
 void vvp_send_long(vvp_net_ptr_t ptr, long val)
 {
-      while (class vvp_net_t*cur = ptr.ptr()) {
+      while (vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
 	    if (cur->fun)
@@ -486,7 +486,7 @@ void vvp_send_long(vvp_net_ptr_t ptr, long val)
 void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
                       unsigned base, unsigned wid)
 {
-      while (class vvp_net_t*cur = ptr.ptr()) {
+      while (vvp_net_t*cur = ptr.ptr()) {
 	    vvp_net_ptr_t next = cur->port[ptr.port()];
 
 	    if (cur->fun)
