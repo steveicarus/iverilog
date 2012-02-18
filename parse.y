@@ -460,7 +460,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <statement> udp_initial udp_init_opt
 %type <expr>    udp_initial_expr_opt
 
-%type <text> register_variable net_variable real_variable
+%type <text> register_variable net_variable real_variable endname_opt
 %type <perm_strings> register_variable_list net_variable_list
 %type <perm_strings> real_variable_list list_of_identifiers
 %type <port_list> list_of_port_identifiers
@@ -535,6 +535,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <specpath> specify_edge_path specify_edge_path_decl
 
 %type <int_val> atom2_type
+%type <int_val> module_start module_end
 
 %token K_TAND
 %right K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
@@ -2680,40 +2681,83 @@ local_timeunit_prec_decl
      section, with optional ports, then an optional list of module
      items, and finally an end marker. */
 
-module  : attribute_list_opt module_start IDENTIFIER
-		{ pform_startmodule($3, @2.text, @2.first_line, $1); }
-          module_parameter_port_list_opt
-	  module_port_list_opt
-	  module_attribute_foreign ';'
-		{ pform_module_set_ports($6); }
-          local_timeunit_prec_decl_opt
-		{ have_timeunit_decl = true; // Every thing past here is
-		  have_timeprec_decl = true; // a check!
-		  pform_check_timeunit_prec();
-		}
-          module_item_list_opt
-	  K_endmodule
-		{ Module::UCDriveType ucd;
-		  switch (uc_drive) {
-		      case UCD_NONE:
-		      default:
-			ucd = Module::UCD_NONE;
-			break;
-		      case UCD_PULL0:
-			ucd = Module::UCD_PULL0;
-			break;
-		      case UCD_PULL1:
-			ucd = Module::UCD_PULL1;
-			break;
-		  }
-		  pform_endmodule($3, in_celldefine, ucd);
-		  delete[]$3;
-		  have_timeunit_decl = false; // We will allow decls again.
-		  have_timeprec_decl = false;
-		}
-	;
+module
+  : attribute_list_opt module_start IDENTIFIER
+      { pform_startmodule($3, @2.text, @2.first_line, $1); }
+    module_parameter_port_list_opt
+    module_port_list_opt
+    module_attribute_foreign ';'
+      { pform_module_set_ports($6); }
+    local_timeunit_prec_decl_opt
+      { have_timeunit_decl = true; // Every thing past here is
+	have_timeprec_decl = true; // a check!
+	pform_check_timeunit_prec();
+      }
+    module_item_list_opt
+    module_end endname_opt
+      { Module::UCDriveType ucd;
+	  // The lexor detected `unconnected_drive directives and
+	  // marked what it found in the uc_drive variable. Use that
+	  // to generate a UCD flag for the module.
+	switch (uc_drive) {
+	    case UCD_NONE:
+	    default:
+	      ucd = Module::UCD_NONE;
+	      break;
+	    case UCD_PULL0:
+	      ucd = Module::UCD_PULL0;
+	      break;
+	    case UCD_PULL1:
+	      ucd = Module::UCD_PULL1;
+	      break;
+	}
+	  // Check that program/endprogram and module/endmodule
+	  // keywords match.
+	if ($2 != $13) {
+	      switch ($2) {
+		  case K_module:
+		    yyerror(@13, "error: module not closed by endmodule.");
+		    break;
+		  case K_program:
+		    yyerror(@13, "error: program not closed by endprogram.");
+		    break;
+		  default:
+		    break;
+	      }
+	}
+	if ($14 && (strcmp($3,$14) != 0)) {
+	      yyerror(@14, "error: End name doesn't match module/program name");
+	}
+	if ($2 == K_program) {
+	      yyerror(@2, "sorry: Program blocks not supported yet.");
+	}
+	pform_endmodule($3, in_celldefine, ucd);
+	delete[]$3;
+	if ($14) delete[]$14;
+	have_timeunit_decl = false; // We will allow decls again.
+	have_timeprec_decl = false;
+      }
+  ;
 
-module_start : K_module | K_macromodule ;
+  /* Modules start with module/macromodule or program keyword, and end
+     with the endmodule or endprogram keyword. The syntax for modules
+     and programs is almost identical, so let semantics sort out the
+     differences. */
+module_start
+  : K_module      { $$ = K_module; }
+  | K_macromodule { $$ = K_module; }
+  | K_program     { $$ = K_program; }
+  ;
+
+module_end
+  : K_endmodule   { $$ = K_module; }
+  | K_endprogram  { $$ = K_program; }
+  ;
+
+endname_opt
+  : ':' IDENTIFIER { $$ = $2; }
+  |                { $$ = 0; }
+  ;
 
 module_attribute_foreign
 	: K_PSTAR IDENTIFIER K_integer IDENTIFIER '=' STRING ';' K_STARP { $$ = 0; }
