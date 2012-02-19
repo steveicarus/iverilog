@@ -2193,6 +2193,22 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
       return res;
 }
 
+svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
+				      NetNet::PortType pt,
+				      data_type_t*vtype,
+				      list<perm_string>*names)
+{
+      atom2_type_t*atype = dynamic_cast<atom2_type_t*> (vtype);
+      if (atype == 0) {
+	    VLerror(loc, "sorry: Given type not supported here.");
+	    return 0;
+      }
+
+      list<PExpr*>*range_tmp = make_range_from_width(atype->type_code);
+      return pform_make_task_ports(pt, IVL_VT_BOOL, atype->signed_flag,
+				   range_tmp, names, loc.text, loc.first_line);
+}
+
 void pform_set_attrib(perm_string name, perm_string key, char*value)
 {
       if (PWire*cur = lexical_scope->wires_find(name)) {
@@ -2541,6 +2557,11 @@ void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>
  */
 void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<perm_string>*names)
 {
+      if (atom2_type_t*atom2_type = dynamic_cast<atom2_type_t*> (data_type)) {
+	    pform_set_integer_2atom(atom2_type->type_code, atom2_type->signed_flag, names);
+	    return;
+      }
+
       if (struct_type_t*struct_type = dynamic_cast<struct_type_t*> (data_type)) {
 	    pform_set_struct_type(struct_type, names);
 	    return;

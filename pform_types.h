@@ -100,6 +100,13 @@ struct struct_type_t : public data_type_t {
       std::auto_ptr< list<struct_member_t*> > members;
 };
 
+struct atom2_type_t : public data_type_t {
+      inline explicit atom2_type_t(int tc, bool flag)
+      : type_code(tc), signed_flag(flag) { }
+      int type_code;
+      bool signed_flag;
+};
+
 /*
  * The pform_name_t is the general form for a hierarchical
  * identifier. It is an ordered list of name components. Each name

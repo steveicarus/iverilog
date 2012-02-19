@@ -20,6 +20,8 @@
 # include "config.h"
 
 # include  "parse_misc.h"
+# include  <cstdarg>
+# include  <cstdio>
 # include  <iostream>
 
 extern const char*vl_file;
@@ -42,10 +44,16 @@ void VLerror(const char*msg)
       cerr << yylloc.text << ":" << yylloc.first_line << ": " << msg << endl;
 }
 
-void VLerror(const YYLTYPE&loc, const char*msg)
+void VLerror(const YYLTYPE&loc, const char*msg, ...)
 {
+      va_list ap;
+      va_start(ap, msg);
+
+      fprintf(stderr, "%s:%d: ", loc.text, loc.first_line);
+      vfprintf(stderr, msg, ap);
+      fprintf(stderr, "\n");
+
       error_count += 1;
-      cerr << loc << ": " << msg << endl;
       based_size = 0; /* Clear the base information if we have an error. */
 }
 

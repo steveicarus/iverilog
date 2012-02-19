@@ -49,8 +49,9 @@ static struct {
       ivl_variable_type_t var_type;
       bool sign_flag;
       list<PExpr*>* range;
+      data_type_t* data_type;
 } port_declaration_context = {NetNet::NONE, NetNet::NOT_A_PORT,
-                              IVL_VT_NO_TYPE, false, 0};
+                              IVL_VT_NO_TYPE, false, 0, 0};
 
 /* The task and function rules need to briefly hold the pointer to the
    task/function that is currently in progress. */
@@ -106,7 +107,7 @@ static list<pair<perm_string,PExpr*> >* make_port_list(list<pair<perm_string,
       return tmp;
 }
 
-static list<PExpr*>* make_range_from_width(uint64_t wid)
+list<PExpr*>* make_range_from_width(uint64_t wid)
 {
       list<PExpr*>*range = new list<PExpr*>;
 
@@ -447,8 +448,8 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <flag>    from_exclude
 %type <number>  number pos_neg_number
 %type <flag>    unsigned_signed_opt signed_unsigned_opt
-%type <flag>    K_packed_opt K_reg_opt
-%type <flag>    udp_reg_opt edge_operator automatic_opt
+%type <flag>    K_automatic_opt K_packed_opt K_reg_opt K_virtual_opt
+%type <flag>    udp_reg_opt edge_operator
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
 %type <text>    udp_input_list udp_sequ_entry udp_comb_entry
@@ -472,7 +473,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <mports> list_of_ports module_port_list_opt list_of_port_declarations module_attribute_foreign
 %type <value_range> parameter_value_range parameter_value_ranges
 %type <value_range> parameter_value_ranges_opt
-%type <expr> value_range_expression
+%type <expr> task_port_decl_expr_opt value_range_expression
 
 %type <named_pexprs> enum_name_list enum_name
 %type <enum_type> enum_data_type
@@ -514,7 +515,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <dimensions> dimensions_opt dimensions
 %type <nettype>  net_type var_type net_type_opt
 %type <gatetype> gatetype switchtype
-%type <porttype> port_type
+%type <porttype> port_direction port_direction_opt
 %type <datatype> primitive_type primitive_type_opt bit_logic
 %type <parmvalue> parameter_value_opt
 
@@ -572,6 +573,73 @@ source_file
 	: description
 	| source_file description
 	;
+
+class_declaration /* IEEE1800-2005: A.1.2 */
+  : K_virtual_opt K_class IDENTIFIER ';'
+    class_items_opt K_endclass endname_opt
+      { // Process a class
+	if ($7 && strcmp($3,$7)!=0) {
+	      yyerror(@7, "error: Class end name doesn't match class name.");
+	      delete[]$7;
+	}
+	yyerror(@2, "sorry: Class declarations not supported yet.");
+      }
+  ;
+
+class_items_opt
+  : class_items
+  |
+  ;
+
+class_items
+  : class_items class_item
+  | class_item
+  ;
+
+class_item /* IEEE1800-2005: A.1.8 */
+
+    /* class_constructor_declaration */
+  : K_function K_new '(' task_port_decl_list_opt ')' ';'
+    K_endfunction endnew_opt
+
+    /* Class properties... */
+
+  | data_type list_of_variable_decl_assignments ';'
+
+    /* Here are some error matching rules to help recover from various
+       syntax errors within a class declaration. */
+
+  | K_function K_new error K_endfunction endnew_opt
+      { yyerror(@1, "error: I give up on this class constructor declaration.");
+	yyerrok;
+      }
+
+  ;
+
+data_type /* IEEE1800-2005: A.2.2.1 */
+  : struct_data_type
+      { $$ = $1; }
+  | enum_data_type
+      { $$ = $1; }
+  | atom2_type signed_unsigned_opt
+      { atom2_type_t*tmp = new atom2_type_t($1, $2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | TYPE_IDENTIFIER
+      { $$ = $1; }
+  | K_string
+      { yyerror(@1, "sorry: String data type not supported.");
+	$$ = 0;
+      }
+  ;
+
+endnew_opt : ':' K_new | ;
+
+implicit_class_handle /* IEEE1800-2005: A.8.4 */
+  : K_this
+  | K_super
+  ;
 
 number  : BASED_NUMBER
 	     { $$ = $1; based_size = 0;}
@@ -703,11 +771,6 @@ block_item_decl
        if ($1) delete $1;
      }
 
-  | attribute_list_opt atom2_type signed_unsigned_opt register_variable_list ';'
-     { pform_set_integer_2atom($2, $3, $4);
-       if ($1) delete $1;
-     }
-
   /* variable declarations. Note that data_type can be 0 if we are
      recovering from an error. */
 
@@ -782,21 +845,27 @@ block_item_decls_opt
 	|
 	;
 
-data_type
-  : struct_data_type
-      { $$ = $1; }
-  | enum_data_type
-      { $$ = $1; }
-  | TYPE_IDENTIFIER
-      { $$ = $1; }
-  ;
-
+  /* Type declarations are parsed here. The rule actions call pform
+     functions that add the declaration to the current lexical scope. */
 type_declaration
   : K_typedef data_type IDENTIFIER ';'
       { perm_string name = lex_strings.make($3);
 	pform_set_typedef(name, $2);
 	delete[]$3;
       }
+
+  /* These are forward declarations... */
+
+  | K_typedef K_class  IDENTIFIER ';'
+      { yyerror(@1, "sorry: Class forward declarations not supported yet.") }
+  | K_typedef K_enum   IDENTIFIER ';'
+      { yyerror(@1, "sorry: Enum forward declarations not supported yet.") }
+  | K_typedef K_struct IDENTIFIER ';'
+      { yyerror(@1, "sorry: Struct forward declarations not supported yet.") }
+  | K_typedef K_union  IDENTIFIER ';'
+      { yyerror(@1, "sorry: Union forward declarations not supported yet.") }
+  | K_typedef          IDENTIFIER ';'
+      { yyerror(@1, "sorry: Class forward declarations not supported yet.") }
   ;
 
   /* The structure for an enumeration data type is the keyword "enum",
@@ -2620,19 +2689,28 @@ atom2_type
      assignments. It is more limited than the general expr_primary
      rule to reflect the rules for assignment l-values. */
 lpvalue
-    : hierarchy_identifier
-        { PEIdent*tmp = new PEIdent(*$1);
-	  FILE_NAME(tmp, @1);
-	  $$ = tmp;
-	  delete $1;
-	}
-    | '{' expression_list_proper '}'
-	{ PEConcat*tmp = new PEConcat(*$2);
-	  FILE_NAME(tmp, @1);
-	  delete $2;
-	  $$ = tmp;
-	}
-    ;
+  : hierarchy_identifier
+      { PEIdent*tmp = new PEIdent(*$1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	delete $1;
+      }
+
+  | implicit_class_handle '.' hierarchy_identifier
+      { yyerror(@1, "sorry: implicit class handles (this/super) not supported.");
+	PEIdent*tmp = new PEIdent(*$3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	delete $3;
+      }
+
+  | '{' expression_list_proper '}'
+      { PEConcat*tmp = new PEConcat(*$2);
+	FILE_NAME(tmp, @1);
+	delete $2;
+	$$ = tmp;
+      }
+  ;
 
 
   /* Continuous assignments have a list of individual assignments. */
@@ -2694,7 +2772,7 @@ module
 	pform_check_timeunit_prec();
       }
     module_item_list_opt
-    module_end endname_opt
+    module_end
       { Module::UCDriveType ucd;
 	  // The lexor detected `unconnected_drive directives and
 	  // marked what it found in the uc_drive variable. Use that
@@ -2725,17 +2803,24 @@ module
 		    break;
 	      }
 	}
-	if ($14 && (strcmp($3,$14) != 0)) {
-	      yyerror(@14, "error: End name doesn't match module/program name");
-	}
 	if ($2 == K_program) {
 	      yyerror(@2, "sorry: Program blocks not supported yet.");
 	}
 	pform_endmodule($3, in_celldefine, ucd);
 	delete[]$3;
-	if ($14) delete[]$14;
 	have_timeunit_decl = false; // We will allow decls again.
 	have_timeprec_decl = false;
+      }
+    endname_opt
+      { // Last step: check any closing name. This is done late so
+	// that the parser can look ahead to detect the present
+	// endname_opt but still have the pform_endmodule() called
+	// early enough that the lexor can know we are outside the
+	// module.
+	if ($15 && (strcmp($3,$15) != 0)) {
+	      yyerror(@15, "error: End name doesn't match module/program name");
+	}
+	if ($15) delete[]$15;
       }
   ;
 
@@ -2890,7 +2975,7 @@ module_item
 		  delete $4;
 		}
 
-	| port_type unsigned_signed_opt range_opt delay3_opt list_of_identifiers ';'
+	| port_direction unsigned_signed_opt range_opt delay3_opt list_of_identifiers ';'
 		{ pform_set_port_type(@1, $5, $3, $2, $1);
 		}
 
@@ -2898,7 +2983,7 @@ module_item
        input wire signed [h:l] <list>;
      This creates the wire and sets the port type all at once. */
 
-	| port_type net_type unsigned_signed_opt range_opt list_of_identifiers ';'
+	| port_direction net_type unsigned_signed_opt range_opt list_of_identifiers ';'
 		{ pform_makewire(@1, $4, $3, $5, $2, $1, IVL_VT_NO_TYPE, 0,
 		                 SR_BOTH);
 		}
@@ -2919,7 +3004,7 @@ module_item
 		  delete $5;
 		}
 
-	| port_type K_wreal list_of_identifiers ';'
+	| port_direction K_wreal list_of_identifiers ';'
 		{ pform_makewire(@1, 0, true, $3, NetNet::WIRE, $1,
 		                 IVL_VT_REAL, 0, SR_BOTH);
 		}
@@ -2940,7 +3025,7 @@ module_item
 		  yyerror(@2, "error: reg variables cannot be inouts.");
 		}
 
-	| port_type unsigned_signed_opt range_opt delay3_opt error ';'
+	| port_direction unsigned_signed_opt range_opt delay3_opt error ';'
 		{ yyerror(@1, "error: Invalid variable list"
 			  " in port declaration.");
 		  if ($3) delete $3;
@@ -3072,6 +3157,8 @@ module_item
   | attribute_list_opt K_analog analog_statement
       { pform_make_analog_behavior(@2, IVL_PR_ALWAYS, $3); }
 
+  | class_declaration
+
   /* The task declaration rule matches the task declaration
      header, then pushes the function scope. This causes the
      definitions in the task_body to take on the scope of the task
@@ -3080,7 +3167,7 @@ module_item
      statements in the task body. But we continue to accept it as an
      extension. */
 
-  | K_task automatic_opt IDENTIFIER ';'
+  | K_task K_automatic_opt IDENTIFIER ';'
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
@@ -3098,7 +3185,7 @@ module_item
 	delete $7;
       }
 
-  | K_task automatic_opt IDENTIFIER '('
+  | K_task K_automatic_opt IDENTIFIER '('
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
@@ -3117,7 +3204,7 @@ module_item
 	delete $10;
       }
 
-  | K_task automatic_opt IDENTIFIER '(' ')' ';'
+  | K_task K_automatic_opt IDENTIFIER '(' ')' ';'
       { assert(current_task == 0);
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
@@ -3137,7 +3224,7 @@ module_item
 	delete $9;
       }
 
-  | K_task automatic_opt IDENTIFIER error K_endtask
+  | K_task K_automatic_opt IDENTIFIER error K_endtask
       {
 	assert(current_task == 0);
 	delete[]$3;
@@ -3148,7 +3235,7 @@ module_item
      definitions in the func_body to take on the scope of the function
      instead of the module. */
 
-  | K_function automatic_opt function_range_or_type_opt IDENTIFIER ';'
+  | K_function K_automatic_opt function_range_or_type_opt IDENTIFIER ';'
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
@@ -3175,7 +3262,7 @@ module_item
 	delete[]$4;
       }
 
-  | K_function automatic_opt function_range_or_type_opt IDENTIFIER
+  | K_function K_automatic_opt function_range_or_type_opt IDENTIFIER
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
@@ -3206,7 +3293,7 @@ module_item
 	      yyerror(@4, "error: Empty parenthesis syntax requires SystemVerilog.");
 	}
       }
-  | K_function automatic_opt function_range_or_type_opt IDENTIFIER error K_endfunction
+  | K_function K_automatic_opt function_range_or_type_opt IDENTIFIER error K_endfunction
       { /* */
 	if (current_function) {
 	      pform_pop_scope();
@@ -3345,11 +3432,6 @@ module_item
 		{ pform_set_timeunit($2, true, true); }
 	| K_timeprecision_check TIME_LITERAL ';'
 		{ pform_set_timeprecision($2, true, true); }
-	;
-
-automatic_opt
-	: K_automatic { $$ = true; }
-	| { $$ = false;}
 	;
 
 generate_if : K_if '(' expression ')' { pform_start_generate_if(@1, $3); }
@@ -3962,11 +4044,16 @@ port_reference_list
 		}
 	;
 
-port_type
-	: K_input { $$ = NetNet::PINPUT; }
-	| K_output { $$ = NetNet::POUTPUT; }
-	| K_inout { $$ = NetNet::PINOUT; }
-	;
+port_direction /* IEEE1800-2005 A.1.3 */
+  : K_input  { $$ = NetNet::PINPUT; }
+  | K_output { $$ = NetNet::POUTPUT; }
+  | K_inout  { $$ = NetNet::PINOUT; }
+  ;
+
+port_direction_opt
+  : port_direction { $$ = $1; }
+  |                { $$ = NetNet::PINPUT; }
+  ;
 
 range
   : '[' expression ':' expression ']'
@@ -5024,24 +5111,8 @@ task_item
         ;
 
 task_port_item
-  : K_input K_reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
-      { svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINPUT,
-						$2 ? IVL_VT_LOGIC :
-						     IVL_VT_NO_TYPE,
-						$3, $4, $5,
-						@1.text, @1.first_line);
-	$$ = tmp;
-      }
-  | K_output K_reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
-      { svector<PWire*>*tmp = pform_make_task_ports(NetNet::POUTPUT,
-						$2 ? IVL_VT_LOGIC :
-						     IVL_VT_NO_TYPE,
-						$3, $4, $5,
-						@1.text, @1.first_line);
-	$$ = tmp;
-      }
-  | K_inout K_reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
-      { svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINOUT,
+  : port_direction K_reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
+      { svector<PWire*>*tmp = pform_make_task_ports($1,
 						$2 ? IVL_VT_LOGIC :
 						     IVL_VT_NO_TYPE,
 						$3, $4, $5,
@@ -5052,26 +5123,9 @@ task_port_item
   /* When the port is an integer, infer a signed vector of the integer
      shape. Generate a range ([31:0]) to make it work. */
 
-  | K_input K_integer list_of_identifiers ';'
+  | port_direction K_integer list_of_identifiers ';'
       { list<PExpr*>*range_stub = make_range_from_width(integer_width);
-	svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_LOGIC, true,
-						range_stub, $3,
-						@1.text, @1.first_line, true);
-	$$ = tmp;
-      }
-  | K_output K_integer list_of_identifiers ';'
-      { list<PExpr*>*range_stub = make_range_from_width(integer_width);
-	svector<PWire*>*tmp = pform_make_task_ports(NetNet::POUTPUT,
-						IVL_VT_LOGIC, true,
-						range_stub, $3,
-						@1.text, @1.first_line, true);
-	$$ = tmp;
-      }
-  | K_inout K_integer list_of_identifiers ';'
-      { list<PExpr*>*range_stub = make_range_from_width(integer_width);
-	svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINOUT,
-						IVL_VT_LOGIC, true,
+	svector<PWire*>*tmp = pform_make_task_ports($1, IVL_VT_LOGIC, true,
 						range_stub, $3,
 						@1.text, @1.first_line, true);
 	$$ = tmp;
@@ -5079,26 +5133,9 @@ task_port_item
 
   /* Ports can be time with a width of [63:0] (unsigned). */
 
-  | K_input K_time list_of_identifiers ';'
+  | port_direction K_time list_of_identifiers ';'
       { list<PExpr*>*range_stub = make_range_from_width(64);
-	svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_LOGIC, false,
-						range_stub, $3,
-						@1.text, @1.first_line);
-	$$ = tmp;
-      }
-  | K_output K_time list_of_identifiers ';'
-      { list<PExpr*>*range_stub = make_range_from_width(64);
-	svector<PWire*>*tmp = pform_make_task_ports(NetNet::POUTPUT,
-						IVL_VT_LOGIC, false,
-						range_stub, $3,
-						@1.text, @1.first_line);
-	$$ = tmp;
-      }
-  | K_inout K_time list_of_identifiers ';'
-      { list<PExpr*>*range_stub = make_range_from_width(64);
-	svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINOUT,
-						IVL_VT_LOGIC, false,
+	svector<PWire*>*tmp = pform_make_task_ports($1, IVL_VT_LOGIC, false,
 						range_stub, $3,
 						@1.text, @1.first_line);
 	$$ = tmp;
@@ -5106,31 +5143,13 @@ task_port_item
 
   /* Ports can be real or realtime. */
 
-	| K_input real_or_realtime list_of_identifiers ';'
-		{ svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_REAL, false,
-						0, $3,
-						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-	| K_output real_or_realtime list_of_identifiers ';'
-		{ svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::POUTPUT,
-						IVL_VT_REAL, true,
-						0, $3,
-						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-	| K_inout real_or_realtime list_of_identifiers ';'
-		{ svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINOUT,
-						IVL_VT_REAL, true,
-						0, $3,
-						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-	;
+  | port_direction real_or_realtime list_of_identifiers ';'
+      { svector<PWire*>*tmp = pform_make_task_ports($1, IVL_VT_REAL, false,
+						    0, $3, @1.text, @1.first_line);
+	$$ = tmp;
+      }
+
+  ;
 
 task_item_list
 	: task_item_list task_item
@@ -5152,173 +5171,56 @@ task_item_list_opt
 
 task_port_decl
 
-	: K_input K_reg_opt unsigned_signed_opt range_opt IDENTIFIER
-		{ port_declaration_context.port_type = NetNet::PINPUT;
-		  port_declaration_context.var_type = IVL_VT_LOGIC;
-		  port_declaration_context.sign_flag = $3;
-		  delete port_declaration_context.range;
-		  port_declaration_context.range = copy_range($4);
-		  svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_LOGIC, $3,
-						$4, list_from_identifier($5),
-						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
+  : port_direction K_reg_opt unsigned_signed_opt range_opt IDENTIFIER
+      { port_declaration_context.port_type = $1;
+	port_declaration_context.var_type = IVL_VT_LOGIC;
+	port_declaration_context.sign_flag = $3;
+	delete port_declaration_context.range;
+	port_declaration_context.range = copy_range($4);
+	svector<PWire*>*tmp = pform_make_task_ports($1, IVL_VT_LOGIC, $3,
+						    $4, list_from_identifier($5),
+						    @1.text, @1.first_line);
+	$$ = tmp;
+      }
 
-	| K_output K_reg_opt unsigned_signed_opt range_opt IDENTIFIER
-		{ port_declaration_context.port_type = NetNet::POUTPUT;
-		  port_declaration_context.var_type = IVL_VT_LOGIC;
-		  port_declaration_context.sign_flag = $3;
-		  delete port_declaration_context.range;
-		  port_declaration_context.range = copy_range($4);
-		  svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::POUTPUT,
-						IVL_VT_LOGIC, $3,
-						$4, list_from_identifier($5),
-						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-	| K_inout K_reg_opt unsigned_signed_opt range_opt IDENTIFIER
-		{ port_declaration_context.port_type = NetNet::PINOUT;
-		  port_declaration_context.var_type = IVL_VT_LOGIC;
-		  port_declaration_context.sign_flag = $3;
-		  delete port_declaration_context.range;
-		  port_declaration_context.range = copy_range($4);
-		  svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINOUT,
-						IVL_VT_LOGIC, $3,
-						$4, list_from_identifier($5),
-						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-
-	| K_input bit_logic unsigned_signed_opt range_opt IDENTIFIER
-		{
-			port_declaration_context.port_type = NetNet::PINPUT;
-			port_declaration_context.var_type  = $2;
-			port_declaration_context.sign_flag = $3;
-			delete port_declaration_context.range;
-			port_declaration_context.range     = copy_range($4);
-			svector<PWire*>*tmp =
-				pform_make_task_ports(NetNet::PINPUT, $2, $3,
-						$4, list_from_identifier($5),
-						@1.text, @1.first_line);
-			$$ = tmp;
-		}
-
-	| K_output bit_logic unsigned_signed_opt range_opt IDENTIFIER
-		{
-			port_declaration_context.port_type = NetNet::POUTPUT;
-			port_declaration_context.var_type  = $2;
-			port_declaration_context.sign_flag = $3;
-			delete port_declaration_context.range;
-			port_declaration_context.range     = copy_range($4);
-			svector<PWire*>*tmp =
-				pform_make_task_ports(NetNet::POUTPUT, $2, $3,
-						$4, list_from_identifier($5),
-						@1.text, @1.first_line);
-			$$ = tmp;
-		}
-
-	| K_inout bit_logic unsigned_signed_opt range_opt IDENTIFIER
-		{
-			port_declaration_context.port_type = NetNet::PINOUT;
-			port_declaration_context.var_type  = $2;
-			port_declaration_context.sign_flag = $3;
-			delete port_declaration_context.range;
-			port_declaration_context.range = copy_range($4);
-			svector<PWire*>*tmp =
-				pform_make_task_ports(NetNet::PINOUT, $2, $3,
-						$4, list_from_identifier($5),
-						@1.text, @1.first_line);
-			$$ = tmp;
-		}
+  | port_direction_opt bit_logic unsigned_signed_opt range_opt IDENTIFIER
+      { port_declaration_context.port_type = $1;
+	port_declaration_context.var_type  = $2;
+	port_declaration_context.sign_flag = $3;
+	delete port_declaration_context.range;
+	port_declaration_context.range     = copy_range($4);
+	svector<PWire*>*tmp = pform_make_task_ports($1, $2, $3,
+						    $4, list_from_identifier($5),
+						    @1.text, @1.first_line);
+	$$ = tmp;
+      }
 
   /* Ports can be integer with a width of [31:0]. */
 
-  | K_input K_integer IDENTIFIER
+  | port_direction_opt K_integer IDENTIFIER
       { list<PExpr*>*range_stub = make_range_from_width(integer_width);
-	port_declaration_context.port_type = NetNet::PINPUT;
+	port_declaration_context.port_type = $1;
 	port_declaration_context.var_type = IVL_VT_LOGIC;
 	port_declaration_context.sign_flag = true;
 	delete port_declaration_context.range;
 	port_declaration_context.range = copy_range(range_stub);
-	svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_LOGIC, true,
-						range_stub,
-						list_from_identifier($3),
-						@1.text, @1.first_line, true);
-	$$ = tmp;
-      }
-  | K_output K_integer IDENTIFIER
-      { list<PExpr*>*range_stub = make_range_from_width(integer_width);
-	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.var_type = IVL_VT_LOGIC;
-	port_declaration_context.sign_flag = true;
-	delete port_declaration_context.range;
-	port_declaration_context.range = copy_range(range_stub);
-	svector<PWire*>*tmp = pform_make_task_ports(NetNet::POUTPUT,
-						IVL_VT_LOGIC, true,
-						range_stub,
-						list_from_identifier($3),
-						@1.text, @1.first_line, true);
-	$$ = tmp;
-      }
-  | K_inout K_integer IDENTIFIER
-      { list<PExpr*>*range_stub = make_range_from_width(integer_width);
-	port_declaration_context.port_type = NetNet::PINOUT;
-	port_declaration_context.var_type = IVL_VT_LOGIC;
-	port_declaration_context.sign_flag = true;
-	delete port_declaration_context.range;
-	port_declaration_context.range = copy_range(range_stub);
-	svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINOUT,
-						IVL_VT_LOGIC, true,
-						range_stub,
-						list_from_identifier($3),
-						@1.text, @1.first_line, true);
+	svector<PWire*>*tmp = pform_make_task_ports($1, IVL_VT_LOGIC, true,
+						    range_stub,
+						    list_from_identifier($3),
+						    @1.text, @1.first_line, true);
 	$$ = tmp;
       }
 
   /* Ports can be time with a width of [63:0] (unsigned). */
 
-  | K_input K_time IDENTIFIER
+  | port_direction_opt K_time IDENTIFIER
      { list<PExpr*>*range_stub = make_range_from_width(64);
-       port_declaration_context.port_type = NetNet::PINPUT;
+       port_declaration_context.port_type = $1;
        port_declaration_context.var_type = IVL_VT_LOGIC;
        port_declaration_context.sign_flag = false;
        delete port_declaration_context.range;
        port_declaration_context.range = copy_range(range_stub);
-       svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINPUT,
-						   IVL_VT_LOGIC, false,
-						   range_stub,
-						   list_from_identifier($3),
-						   @1.text, @1.first_line);
-       $$ = tmp;
-     }
-  | K_output K_time IDENTIFIER
-     { list<PExpr*>*range_stub = make_range_from_width(64);
-       port_declaration_context.port_type = NetNet::POUTPUT;
-       port_declaration_context.var_type = IVL_VT_LOGIC;
-       port_declaration_context.sign_flag = false;
-       delete port_declaration_context.range;
-       port_declaration_context.range = copy_range(range_stub);
-       svector<PWire*>*tmp = pform_make_task_ports(NetNet::POUTPUT,
-						   IVL_VT_LOGIC, false,
-						   range_stub,
-						   list_from_identifier($3),
-						   @1.text, @1.first_line);
-       $$ = tmp;
-     }
-  | K_inout K_time IDENTIFIER
-     { list<PExpr*>*range_stub = make_range_from_width(64);
-       port_declaration_context.port_type = NetNet::PINOUT;
-       port_declaration_context.var_type = IVL_VT_LOGIC;
-       port_declaration_context.sign_flag = false;
-       delete port_declaration_context.range;
-       port_declaration_context.range = copy_range(range_stub);
-       svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINOUT,
-						   IVL_VT_LOGIC, false,
+       svector<PWire*>*tmp = pform_make_task_ports($1, IVL_VT_LOGIC, false,
 						   range_stub,
 						   list_from_identifier($3),
 						   @1.text, @1.first_line);
@@ -5327,90 +5229,40 @@ task_port_decl
 
   /* Ports can be real or realtime. */
 
-	| K_input real_or_realtime IDENTIFIER
-		{ port_declaration_context.port_type = NetNet::PINPUT;
-		  port_declaration_context.var_type = IVL_VT_REAL;
-		  port_declaration_context.sign_flag = false;
-		  delete port_declaration_context.range;
-		  port_declaration_context.range = 0;
-		  svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINPUT,
-						IVL_VT_REAL, false,
-						0, list_from_identifier($3),
-						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-	| K_output real_or_realtime IDENTIFIER
-		{ port_declaration_context.port_type = NetNet::POUTPUT;
-		  port_declaration_context.var_type = IVL_VT_REAL;
-		  port_declaration_context.sign_flag = false;
-		  delete port_declaration_context.range;
-		  port_declaration_context.range = 0;
-		  svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::POUTPUT,
-						IVL_VT_REAL, false,
-						0, list_from_identifier($3),
-						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
-	| K_inout real_or_realtime IDENTIFIER
-		{ port_declaration_context.port_type = NetNet::PINOUT;
-		  port_declaration_context.var_type = IVL_VT_REAL;
-		  port_declaration_context.sign_flag = false;
-		  delete port_declaration_context.range;
-		  port_declaration_context.range = 0;
-		  svector<PWire*>*tmp
-			= pform_make_task_ports(NetNet::PINOUT,
-						IVL_VT_REAL, false,
-						0, list_from_identifier($3),
-						@1.text, @1.first_line);
-		  $$ = tmp;
-		}
+  | port_direction_opt real_or_realtime IDENTIFIER
+      { port_declaration_context.port_type = $1;
+	port_declaration_context.var_type = IVL_VT_REAL;
+	port_declaration_context.sign_flag = false;
+	delete port_declaration_context.range;
+	port_declaration_context.range = 0;
+	svector<PWire*>*tmp = pform_make_task_ports($1, IVL_VT_REAL, false,
+						    0, list_from_identifier($3),
+						    @1.text, @1.first_line);
+	$$ = tmp;
+      }
 
-  /* Ports can be 2-value atom types. */
-
-  | K_input atom2_type signed_unsigned_opt IDENTIFIER
-     { list<PExpr*>*range_stub = make_range_from_width($2);
-       port_declaration_context.port_type = NetNet::PINPUT;
-       port_declaration_context.var_type = IVL_VT_BOOL;
-       port_declaration_context.sign_flag = $3;
+  | port_direction_opt data_type IDENTIFIER task_port_decl_expr_opt
+     { port_declaration_context.port_type = $1;
+       port_declaration_context.var_type = IVL_VT_NO_TYPE;
+       port_declaration_context.sign_flag = false;
        delete port_declaration_context.range;
-       port_declaration_context.range = copy_range(range_stub);
-       svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINPUT,
-						   IVL_VT_BOOL, $3,
-						   range_stub, list_from_identifier($4),
-						   @1.text, @1.first_line);
+       port_declaration_context.range = 0;
+       port_declaration_context.data_type = $2;
+       svector<PWire*>*tmp = pform_make_task_ports(@1, $1, $2,
+						   list_from_identifier($3));
        $$ = tmp;
+       if ($4) {
+	     yyerror(@4, "sorry: Port default expressions not supported yet.");
+	     delete $4;
+       }
      }
 
-  | K_output atom2_type signed_unsigned_opt IDENTIFIER
-     { list<PExpr*>*range_stub = make_range_from_width($2);
-       port_declaration_context.port_type = NetNet::POUTPUT;
-       port_declaration_context.var_type = IVL_VT_BOOL;
-       port_declaration_context.sign_flag = $3;
-       delete port_declaration_context.range;
-       port_declaration_context.range = copy_range(range_stub);
-       svector<PWire*>*tmp = pform_make_task_ports(NetNet::POUTPUT,
-					   IVL_VT_BOOL, $3,
-					   range_stub, list_from_identifier($4),
-					   @1.text, @1.first_line);
-       $$ = tmp;
-     }
+  ;
 
-  | K_inout atom2_type signed_unsigned_opt IDENTIFIER
-     { list<PExpr*>*range_stub = make_range_from_width($2);
-       port_declaration_context.port_type = NetNet::PINOUT;
-       port_declaration_context.var_type = IVL_VT_BOOL;
-       port_declaration_context.sign_flag = $3;
-       delete port_declaration_context.range;
-       port_declaration_context.range = copy_range(range_stub);
-       svector<PWire*>*tmp = pform_make_task_ports(NetNet::PINOUT,
-						   IVL_VT_BOOL, $3,
-						   range_stub, list_from_identifier($4),
-						   @1.text, @1.first_line);
-       $$ = tmp;
-     }
-;
+task_port_decl_expr_opt
+  : '=' expression { $$ = $2; }
+  |                { $$ = 0; }
+  ;
 
 task_port_decl_list_opt
   : task_port_decl_list { $$ = $1; }
@@ -5418,40 +5270,40 @@ task_port_decl_list_opt
   ;
 
 task_port_decl_list
-	: task_port_decl_list ',' task_port_decl
-		{ svector<PWire*>*tmp = new svector<PWire*>(*$1, *$3);
-		  delete $1;
-		  delete $3;
-		  $$ = tmp;
-		}
-	| task_port_decl
-		{ $$ = $1; }
-	| task_port_decl_list ',' IDENTIFIER
-		{ svector<PWire*>*new_decl
-			= pform_make_task_ports(
-				port_declaration_context.port_type,
-				port_declaration_context.var_type,
-				port_declaration_context.sign_flag,
-				copy_range(port_declaration_context.range),
-				list_from_identifier($3),
-				@3.text, @3.first_line);
-		  svector<PWire*>*tmp = new svector<PWire*>(*$1, *new_decl);
-		  delete $1;
-		  delete new_decl;
-		  $$ = tmp;
-		}
-	| task_port_decl_list ','
-		{
-		  yyerror(@2, "error: NULL port declarations are not "
-		              "allowed.");
-		}
-	| task_port_decl_list ';'
-		{
-		  yyerror(@2, "error: ';' is an invalid port declaration "
-		              "separator.");
-		}
-        ;
-	;
+  : task_port_decl_list ',' task_port_decl
+      { svector<PWire*>*tmp = new svector<PWire*>(*$1, *$3);
+	delete $1;
+	delete $3;
+	$$ = tmp;
+      }
+  | task_port_decl
+      { $$ = $1; }
+  | task_port_decl_list ',' IDENTIFIER
+      { // The declaration is already parsed, apply it to IDENTIFIER
+	    svector<PWire*>*new_decl;
+	if (port_declaration_context.var_type == IVL_VT_NO_TYPE) {
+	      assert(port_declaration_context.data_type);
+	      new_decl = pform_make_task_ports(@3, port_declaration_context.port_type,
+					       port_declaration_context.data_type,
+					       list_from_identifier($3));
+	} else {
+	      new_decl = pform_make_task_ports(port_declaration_context.port_type,
+					       port_declaration_context.var_type,
+					       port_declaration_context.sign_flag,
+					       copy_range(port_declaration_context.range),
+					       list_from_identifier($3),
+					       @3.text, @3.first_line);
+	}
+	svector<PWire*>*tmp = new svector<PWire*>(*$1, *new_decl);
+	delete $1;
+	delete new_decl;
+	$$ = tmp;
+      }
+  | task_port_decl_list ','
+      { yyerror(@2, "error: NULL port declarations are not allowed."); }
+  | task_port_decl_list ';'
+      { yyerror(@2, "error: ';' is an invalid port declaration separator."); }
+  ;
 
 udp_body
 	: K_table { lex_start_table(); }
@@ -5703,5 +5555,11 @@ udp_primitive
 		}
 	;
 
-K_packed_opt : K_packed { $$ = true; } | { $$ = false; } ;
-K_reg_opt    : K_reg { $$ = true; }    | { $$ = false; } ;
+  /* Many keywords can be optional in the syntax, although their
+     presence is significant. This is a fairly common pattern so
+     collect those rules here. */
+
+K_automatic_opt: K_automatic { $$ = true; } | { $$ = false;} ;
+K_packed_opt   : K_packed    { $$ = true; } | { $$ = false; } ;
+K_reg_opt      : K_reg       { $$ = true; } | { $$ = false; } ;
+K_virtual_opt  : K_virtual   { $$ = true; } | { $$ = false; } ;

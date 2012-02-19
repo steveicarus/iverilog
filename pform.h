@@ -117,6 +117,8 @@ struct lgate {
       unsigned lineno;
 };
 
+extern std::list<PExpr*>* make_range_from_width(uint64_t wid);
+
   /* Use this function to transform the parted form of the attribute
      list to the attribute map that is used later. */
 extern void pform_bind_attributes(map<perm_string,PExpr*>&attributes,
@@ -391,6 +393,11 @@ extern svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 					     const char* file,
 					     unsigned lineno,
 					     bool isint = false);
+
+extern svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
+					     NetNet::PortType pt,
+					     data_type_t*vtype,
+					     list<perm_string>*names);
 
 
 /*
