@@ -2145,13 +2145,12 @@ void pform_set_port_type(perm_string name, NetNet::PortType pt,
  * constraints as those of tasks, so this works fine. Functions have
  * no output or inout ports.
  */
-svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
+svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
+				      NetNet::PortType pt,
 				      ivl_variable_type_t vtype,
 				      bool signed_flag,
 				      list<PExpr*>*range,
 				      list<perm_string>*names,
-				      const char* file,
-				      unsigned lineno,
 				      bool isint)
 {
       assert(names);
@@ -2168,7 +2167,7 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 		  curw->set_port_type(pt);
 	    } else {
 		  curw = new PWire(name, NetNet::IMPLICIT_REG, pt, vtype);
-		  FILE_NAME(curw, file, lineno);
+		  FILE_NAME(curw, loc);
 		  pform_put_wire_in_scope(name, curw);
 	    }
 
@@ -2205,8 +2204,8 @@ svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
       }
 
       list<PExpr*>*range_tmp = make_range_from_width(atype->type_code);
-      return pform_make_task_ports(pt, IVL_VT_BOOL, atype->signed_flag,
-				   range_tmp, names, loc.text, loc.first_line);
+      return pform_make_task_ports(loc, pt, IVL_VT_BOOL, atype->signed_flag,
+				   range_tmp, names);
 }
 
 void pform_set_attrib(perm_string name, perm_string key, char*value)

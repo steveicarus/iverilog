@@ -191,7 +191,7 @@ TU [munpf]
 ">>>=" { return K_RSS_EQ; }
 "++" { return K_INCR; }
 "--" {return K_DECR; }
-
+"'{" { return K_LP; }
 
   /* Watch out for the tricky case of (*). Cannot parse this as "(*"
      and ")", but since I know that this is really ( * ), replace it

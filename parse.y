@@ -355,7 +355,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 %token <number> BASED_NUMBER DEC_NUMBER
 %token <realtime> REALTIME
 %token K_PLUS_EQ K_MINUS_EQ K_INCR K_DECR
-%token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LS K_RS K_RSS K_SG
+%token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LP K_LS K_RS K_RSS K_SG
  /* K_CONTRIBUTE is <+, the contribution assign. */
 %token K_CONTRIBUTE
 %token K_PO_POS K_PO_NEG K_POW
@@ -473,13 +473,13 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <mports> list_of_ports module_port_list_opt list_of_port_declarations module_attribute_foreign
 %type <value_range> parameter_value_range parameter_value_ranges
 %type <value_range> parameter_value_ranges_opt
-%type <expr> task_port_decl_expr_opt value_range_expression
+%type <expr> tf_port_item_expr_opt value_range_expression
 
 %type <named_pexprs> enum_name_list enum_name
 %type <enum_type> enum_data_type
 
 %type <wires> task_item task_item_list task_item_list_opt
-%type <wires> task_port_item task_port_decl task_port_decl_list task_port_decl_list_opt
+%type <wires> task_port_item tf_port_item tf_port_list tf_port_list_opt
 %type <wires> function_item function_item_list
 
 %type <named_pexpr> port_name parameter_value_byname
@@ -495,7 +495,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <gates> gate_instance_list
 
 %type <pform_name> hierarchy_identifier
-%type <expr>  expression expr_primary expr_mintypmax
+%type <expr>  assignment_pattern expression expr_primary expr_mintypmax
 %type <expr>  lpvalue
 %type <expr>  branch_probe_expression
 %type <expr>  delay_value delay_value_simple
@@ -511,7 +511,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <struct_members> struct_union_member_list
 %type <struct_type>    struct_data_type
 
-%type <exprs> range range_opt
+%type <exprs> range range_opt variable_dimension
 %type <dimensions> dimensions_opt dimensions
 %type <nettype>  net_type var_type net_type_opt
 %type <gatetype> gatetype switchtype
@@ -574,6 +574,21 @@ source_file
 	| source_file description
 	;
 
+assignment_pattern /* IEEE1800-2005: A.6.7.1 */
+  : K_LP expression_list_proper '}'
+      { PEVoid*tmp = new PEVoid;
+	FILE_NAME(tmp, @1);
+	yyerror(@1, "sorry: Assignment patterns (array literals) not supported.");
+	$$ = tmp;
+      }
+  | K_LP '}'
+      { PEVoid*tmp = new PEVoid;
+	FILE_NAME(tmp, @1);
+	yyerror(@1, "sorry: Assignment patterns (array literals) not supported.");
+	$$ = tmp;
+      }
+  ;
+
 class_declaration /* IEEE1800-2005: A.1.2 */
   : K_virtual_opt K_class IDENTIFIER ';'
     class_items_opt K_endclass endname_opt
@@ -599,12 +614,21 @@ class_items
 class_item /* IEEE1800-2005: A.1.8 */
 
     /* class_constructor_declaration */
-  : K_function K_new '(' task_port_decl_list_opt ')' ';'
+  : K_function K_new '(' tf_port_list_opt ')' ';'
+    statement_list_or_null
     K_endfunction endnew_opt
+      { yyerror(@1, "sorry: Class constructors not supported yet.");
+	yyerrok;
+      }
 
     /* Class properties... */
 
   | data_type list_of_variable_decl_assignments ';'
+
+
+    /* Class methods... */
+
+  | task_declaration
 
     /* Here are some error matching rules to help recover from various
        syntax errors within a class declaration. */
@@ -656,6 +680,297 @@ real_or_realtime
 	: K_real
 	| K_realtime
 	;
+
+  /* The task declaration rule matches the task declaration
+     header, then pushes the function scope. This causes the
+     definitions in the task_body to take on the scope of the task
+     instead of the module. */
+
+task_declaration /* IEEE1800-2005: A.2.7 */
+
+  : K_task K_automatic_opt IDENTIFIER ';'
+      { assert(current_task == 0);
+	current_task = pform_push_task_scope(@1, $3, $2);
+      }
+    task_item_list_opt
+    statement_or_null_list
+    K_endtask
+      { current_task->set_ports($6);
+	current_task_set_statement($7);
+	pform_pop_scope();
+	current_task = 0;
+	delete[]$3;
+	if ($7->size() > 1 && !gn_system_verilog()) {
+	      yyerror(@7, "error: Task body with multiple statements requres SystemVerilog.");
+	}
+	delete $7;
+      }
+
+  | K_task K_automatic_opt IDENTIFIER '('
+      { assert(current_task == 0);
+	current_task = pform_push_task_scope(@1, $3, $2);
+      }
+    tf_port_list ')' ';'
+    block_item_decls_opt
+    statement_or_null_list
+    K_endtask
+      { current_task->set_ports($6);
+	current_task_set_statement($10);
+	pform_pop_scope();
+	current_task = 0;
+	delete[]$3;
+	if ($10->size() > 1 && !gn_system_verilog()) {
+	      yyerror(@10, "error: Task body with multiple statements requres SystemVerilog.");
+	}
+	delete $10;
+      }
+
+  | K_task K_automatic_opt IDENTIFIER '(' ')' ';'
+      { assert(current_task == 0);
+	current_task = pform_push_task_scope(@1, $3, $2);
+      }
+    block_item_decls_opt
+    statement_or_null_list
+    K_endtask
+      { current_task->set_ports(0);
+	current_task_set_statement($9);
+	pform_pop_scope();
+	current_task = 0;
+	cerr << @3 << ": warning: task definition for \"" << $3
+	     << "\" has an empty port declaration list!" << endl;
+	delete[]$3;
+	if ($9->size() > 1 && !gn_system_verilog()) {
+	      yyerror(@9, "error: Task body with multiple statements requres SystemVerilog.");
+	}
+	delete $9;
+      }
+
+  | K_task K_automatic_opt IDENTIFIER error K_endtask
+      {
+	assert(current_task == 0);
+	delete[]$3;
+      }
+
+  ;
+
+
+  /* These rules for tf_port_item are slightly expanded from the
+     strict rules in the LRM to help with LALR parsing.
+
+     NOTE: Some of these rules should be folded into the "data_type"
+     variant which uses the data_type rule to match data type
+     declarations. That some rules do not use the data_type production
+     is a consequence of legacy. */
+
+tf_port_item /* IEEE1800-2005: A.2.7 */
+
+  : port_direction K_reg_opt unsigned_signed_opt range_opt IDENTIFIER range_opt tf_port_item_expr_opt
+      { port_declaration_context.port_type = $1;
+	port_declaration_context.var_type = IVL_VT_LOGIC;
+	port_declaration_context.sign_flag = $3;
+	delete port_declaration_context.range;
+	port_declaration_context.range = copy_range($4);
+	svector<PWire*>*tmp = pform_make_task_ports(@5, $1, IVL_VT_LOGIC, $3,
+						    $4, list_from_identifier($5));
+	$$ = tmp;
+	if ($6) {
+	      yyerror(@6, "sorry: Port variable dimensions not supported yet.");
+	      delete $6;
+	}
+	if ($7) {
+	      yyerror(@7, "sorry: Port default expressions not supported yet.");
+	      delete $7;
+	}
+      }
+
+  | port_direction_opt bit_logic unsigned_signed_opt range_opt IDENTIFIER range_opt tf_port_item_expr_opt
+      { port_declaration_context.port_type = $1;
+	port_declaration_context.var_type  = $2;
+	port_declaration_context.sign_flag = $3;
+	delete port_declaration_context.range;
+	port_declaration_context.range     = copy_range($4);
+	svector<PWire*>*tmp = pform_make_task_ports(@5, $1, $2, $3,
+						    $4, list_from_identifier($5));
+	$$ = tmp;
+	if ($6) {
+	      yyerror(@6, "sorry: Port variable dimensions not supported yet.");
+	      delete $6;
+	}
+	if ($7) {
+	      yyerror(@7, "sorry: Port default expressions not supported yet.");
+	      delete $7;
+	}
+      }
+
+  /* Ports can be integer with a width of [31:0]. */
+
+  | port_direction_opt K_integer IDENTIFIER range_opt tf_port_item_expr_opt
+      { list<PExpr*>*range_stub = make_range_from_width(integer_width);
+	port_declaration_context.port_type = $1;
+	port_declaration_context.var_type = IVL_VT_LOGIC;
+	port_declaration_context.sign_flag = true;
+	delete port_declaration_context.range;
+	port_declaration_context.range = copy_range(range_stub);
+	svector<PWire*>*tmp = pform_make_task_ports(@3, $1, IVL_VT_LOGIC, true,
+						    range_stub,
+						    list_from_identifier($3), true);
+	$$ = tmp;
+	if ($4) {
+	      yyerror(@4, "sorry: Port variable dimensions not supported yet.");
+	      delete $4;
+	}
+	if ($5) {
+	      yyerror(@5, "sorry: Port default expressions not supported yet.");
+	      delete $5;
+	}
+      }
+
+  /* Ports can be time with a width of [63:0] (unsigned). */
+
+  | port_direction_opt K_time IDENTIFIER range_opt tf_port_item_expr_opt
+      { list<PExpr*>*range_stub = make_range_from_width(64);
+	port_declaration_context.port_type = $1;
+	port_declaration_context.var_type = IVL_VT_LOGIC;
+	port_declaration_context.sign_flag = false;
+	delete port_declaration_context.range;
+	port_declaration_context.range = copy_range(range_stub);
+	svector<PWire*>*tmp = pform_make_task_ports(@3, $1, IVL_VT_LOGIC, false,
+						    range_stub,
+						    list_from_identifier($3));
+	$$ = tmp;
+	if ($4) {
+	      yyerror(@4, "sorry: Port variable dimensions not supported yet.");
+	      delete $4;
+	}
+	if ($5) {
+	      yyerror(@5, "sorry: Port default expressions not supported yet.");
+	      delete $5;
+	}
+      }
+
+  /* Ports can be real or realtime. */
+
+  | port_direction_opt real_or_realtime IDENTIFIER range_opt tf_port_item_expr_opt
+      { port_declaration_context.port_type = $1;
+	port_declaration_context.var_type = IVL_VT_REAL;
+	port_declaration_context.sign_flag = false;
+	delete port_declaration_context.range;
+	port_declaration_context.range = 0;
+	svector<PWire*>*tmp = pform_make_task_ports(@3, $1, IVL_VT_REAL, false,
+						    0, list_from_identifier($3));
+	$$ = tmp;
+	if ($4) {
+	      yyerror(@4, "sorry: Port variable dimensions not supported yet.");
+	      delete $4;
+	}
+	if ($5) {
+	      yyerror(@5, "sorry: Port default expressions not supported yet.");
+	      delete $5;
+	}
+      }
+
+  | port_direction_opt data_type IDENTIFIER range_opt tf_port_item_expr_opt
+      { port_declaration_context.port_type = $1;
+	port_declaration_context.var_type = IVL_VT_NO_TYPE;
+	port_declaration_context.sign_flag = false;
+	delete port_declaration_context.range;
+	port_declaration_context.range = 0;
+	port_declaration_context.data_type = $2;
+	svector<PWire*>*tmp = pform_make_task_ports(@3, $1, $2,
+						    list_from_identifier($3));
+	$$ = tmp;
+	if ($4) {
+	      yyerror(@4, "sorry: Port variable dimensions not supported yet.");
+	      delete $4;
+	}
+	if ($5) {
+	      yyerror(@5, "sorry: Port default expressions not supported yet.");
+	      delete $5;
+	}
+     }
+
+  ;
+
+  /* This rule matches the [ = <expression> ] part of the tf_port_item rules. */
+
+tf_port_item_expr_opt
+  : '=' expression { $$ = $2; }
+  |                { $$ = 0; }
+  ;
+
+tf_port_list /* IEEE1800-2005: A.2.7 */
+
+  : tf_port_list ',' tf_port_item
+      { svector<PWire*>*tmp;
+	if ($3) {
+	      tmp = new svector<PWire*>(*$1, *$3);
+	      delete $1;
+	      delete $3;
+	} else {
+	      tmp = $1;
+	}
+	$$ = tmp;
+      }
+
+  | tf_port_item
+      { $$ = $1; }
+
+  /* This rule handles the special case of a set of port items leading
+     an undecorated identifier. Undeconated identifiers in this case
+     pick up the details from the list to its lift. */
+
+  | tf_port_list ',' IDENTIFIER
+      { // The declaration is already parsed, apply it to IDENTIFIER
+	    svector<PWire*>*new_decl;
+	if (port_declaration_context.var_type == IVL_VT_NO_TYPE) {
+	      assert(port_declaration_context.data_type);
+	      new_decl = pform_make_task_ports(@3, port_declaration_context.port_type,
+					       port_declaration_context.data_type,
+					       list_from_identifier($3));
+	} else {
+	      new_decl = pform_make_task_ports(@3, port_declaration_context.port_type,
+					       port_declaration_context.var_type,
+					       port_declaration_context.sign_flag,
+					       copy_range(port_declaration_context.range),
+					       list_from_identifier($3));
+	}
+	svector<PWire*>*tmp = new svector<PWire*>(*$1, *new_decl);
+	delete $1;
+	delete new_decl;
+	$$ = tmp;
+      }
+
+  /* Rules to handle some errors in tf_port_list items. */
+
+  | error ',' tf_port_item
+      { yyerror(@2, "error: Syntax error in task/function port declaration.");
+	$$ = $3;
+      }
+  | tf_port_list ','
+      { yyerror(@2, "error: NULL port declarations are not allowed.");
+	$$ = $1;
+      }
+  | tf_port_list ';'
+      { yyerror(@2, "error: ';' is an invalid port declaration separator.");
+	$$ = $1;
+      }
+  ;
+
+
+variable_dimension /* IEEE1800-2005: A.2.5 */
+  : '[' expression ':' expression ']'
+      { list<PExpr*>*tmp = new list<PExpr*>;
+	tmp->push_back($2);
+	tmp->push_back($4);
+	$$ = tmp;
+      }
+  | '[' ']'
+      { list<PExpr*>*tmp = new list<PExpr*>;
+	tmp->push_back(0);
+	tmp->push_back(0);
+	$$ = tmp;
+      }
+;
 
   /* Verilog-2001 supports attribute lists, which can be attached to a
      variety of different objects. The syntax inside the (* *) is a
@@ -2079,6 +2394,12 @@ expr_primary
 	      $$ = base;
 	}
       }
+
+  /* Aggregate literals are primaries. */
+
+  | assignment_pattern
+      { $$ = $1; }
+
   ;
 
   /* A function_item_list borrows the task_port_item run to match
@@ -3159,76 +3480,7 @@ module_item
 
   | class_declaration
 
-  /* The task declaration rule matches the task declaration
-     header, then pushes the function scope. This causes the
-     definitions in the task_body to take on the scope of the task
-     instead of the module. Note that these runs accept for the task
-     body statement_or_null, although the standard does not allow null
-     statements in the task body. But we continue to accept it as an
-     extension. */
-
-  | K_task K_automatic_opt IDENTIFIER ';'
-      { assert(current_task == 0);
-	current_task = pform_push_task_scope(@1, $3, $2);
-      }
-    task_item_list_opt
-    statement_or_null_list
-    K_endtask
-      { current_task->set_ports($6);
-	current_task_set_statement($7);
-	pform_pop_scope();
-	current_task = 0;
-	delete[]$3;
-	if ($7->size() > 1 && !gn_system_verilog()) {
-	      yyerror(@7, "error: Task body with multiple statements requres SystemVerilog.");
-	}
-	delete $7;
-      }
-
-  | K_task K_automatic_opt IDENTIFIER '('
-      { assert(current_task == 0);
-	current_task = pform_push_task_scope(@1, $3, $2);
-      }
-    task_port_decl_list ')' ';'
-    block_item_decls_opt
-    statement_or_null_list
-    K_endtask
-      { current_task->set_ports($6);
-	current_task_set_statement($10);
-	pform_pop_scope();
-	current_task = 0;
-	delete[]$3;
-	if ($10->size() > 1 && !gn_system_verilog()) {
-	      yyerror(@10, "error: Task body with multiple statements requres SystemVerilog.");
-	}
-	delete $10;
-      }
-
-  | K_task K_automatic_opt IDENTIFIER '(' ')' ';'
-      { assert(current_task == 0);
-	current_task = pform_push_task_scope(@1, $3, $2);
-      }
-    block_item_decls_opt
-    statement_or_null_list
-    K_endtask
-      { current_task->set_ports(0);
-	current_task_set_statement($9);
-	pform_pop_scope();
-	current_task = 0;
-	cerr << @3 << ": warning: task definition for \"" << $3
-	     << "\" has an empty port declaration list!" << endl;
-	delete[]$3;
-	if ($9->size() > 1 && !gn_system_verilog()) {
-	      yyerror(@9, "error: Task body with multiple statements requres SystemVerilog.");
-	}
-	delete $9;
-      }
-
-  | K_task K_automatic_opt IDENTIFIER error K_endtask
-      {
-	assert(current_task == 0);
-	delete[]$3;
-      }
+  | task_declaration
 
   /* The function declaration rule matches the function declaration
      header, then pushes the function scope. This causes the
@@ -3266,7 +3518,7 @@ module_item
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
-    '(' task_port_decl_list_opt ')' ';'
+    '(' tf_port_list_opt ')' ';'
     block_item_decls_opt
     statement_list
     K_endfunction
@@ -4055,17 +4307,12 @@ port_direction_opt
   |                { $$ = NetNet::PINPUT; }
   ;
 
+  /* The range is a list of variable dimensions. */
 range
-  : '[' expression ':' expression ']'
-      { list<PExpr*>*tmp = new list<PExpr*>;
-	tmp->push_back($2);
-	tmp->push_back($4);
-	$$ = tmp;
-      }
-  | range '[' expression ':' expression ']'
+  : variable_dimension
+  | range variable_dimension
       { list<PExpr*>*tmp = $1;
-	tmp->push_back($3);
-	tmp->push_back($5);
+	if ($2) tmp->splice(tmp->end(), *$2);
 	$$ = tmp;
       }
   ;
@@ -5112,11 +5359,10 @@ task_item
 
 task_port_item
   : port_direction K_reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
-      { svector<PWire*>*tmp = pform_make_task_ports($1,
+      { svector<PWire*>*tmp = pform_make_task_ports(@1, $1,
 						$2 ? IVL_VT_LOGIC :
 						     IVL_VT_NO_TYPE,
-						$3, $4, $5,
-						@1.text, @1.first_line);
+						$3, $4, $5);
 	$$ = tmp;
       }
 
@@ -5125,9 +5371,8 @@ task_port_item
 
   | port_direction K_integer list_of_identifiers ';'
       { list<PExpr*>*range_stub = make_range_from_width(integer_width);
-	svector<PWire*>*tmp = pform_make_task_ports($1, IVL_VT_LOGIC, true,
-						range_stub, $3,
-						@1.text, @1.first_line, true);
+	svector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, true,
+						    range_stub, $3, true);
 	$$ = tmp;
       }
 
@@ -5135,17 +5380,16 @@ task_port_item
 
   | port_direction K_time list_of_identifiers ';'
       { list<PExpr*>*range_stub = make_range_from_width(64);
-	svector<PWire*>*tmp = pform_make_task_ports($1, IVL_VT_LOGIC, false,
-						range_stub, $3,
-						@1.text, @1.first_line);
+	svector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, false,
+						    range_stub, $3);
 	$$ = tmp;
       }
 
   /* Ports can be real or realtime. */
 
   | port_direction real_or_realtime list_of_identifiers ';'
-      { svector<PWire*>*tmp = pform_make_task_ports($1, IVL_VT_REAL, false,
-						    0, $3, @1.text, @1.first_line);
+      { svector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_REAL, false,
+						    0, $3);
 	$$ = tmp;
       }
 
@@ -5169,140 +5413,9 @@ task_item_list_opt
 		{ $$ = 0; }
 	;
 
-task_port_decl
-
-  : port_direction K_reg_opt unsigned_signed_opt range_opt IDENTIFIER
-      { port_declaration_context.port_type = $1;
-	port_declaration_context.var_type = IVL_VT_LOGIC;
-	port_declaration_context.sign_flag = $3;
-	delete port_declaration_context.range;
-	port_declaration_context.range = copy_range($4);
-	svector<PWire*>*tmp = pform_make_task_ports($1, IVL_VT_LOGIC, $3,
-						    $4, list_from_identifier($5),
-						    @1.text, @1.first_line);
-	$$ = tmp;
-      }
-
-  | port_direction_opt bit_logic unsigned_signed_opt range_opt IDENTIFIER
-      { port_declaration_context.port_type = $1;
-	port_declaration_context.var_type  = $2;
-	port_declaration_context.sign_flag = $3;
-	delete port_declaration_context.range;
-	port_declaration_context.range     = copy_range($4);
-	svector<PWire*>*tmp = pform_make_task_ports($1, $2, $3,
-						    $4, list_from_identifier($5),
-						    @1.text, @1.first_line);
-	$$ = tmp;
-      }
-
-  /* Ports can be integer with a width of [31:0]. */
-
-  | port_direction_opt K_integer IDENTIFIER
-      { list<PExpr*>*range_stub = make_range_from_width(integer_width);
-	port_declaration_context.port_type = $1;
-	port_declaration_context.var_type = IVL_VT_LOGIC;
-	port_declaration_context.sign_flag = true;
-	delete port_declaration_context.range;
-	port_declaration_context.range = copy_range(range_stub);
-	svector<PWire*>*tmp = pform_make_task_ports($1, IVL_VT_LOGIC, true,
-						    range_stub,
-						    list_from_identifier($3),
-						    @1.text, @1.first_line, true);
-	$$ = tmp;
-      }
-
-  /* Ports can be time with a width of [63:0] (unsigned). */
-
-  | port_direction_opt K_time IDENTIFIER
-     { list<PExpr*>*range_stub = make_range_from_width(64);
-       port_declaration_context.port_type = $1;
-       port_declaration_context.var_type = IVL_VT_LOGIC;
-       port_declaration_context.sign_flag = false;
-       delete port_declaration_context.range;
-       port_declaration_context.range = copy_range(range_stub);
-       svector<PWire*>*tmp = pform_make_task_ports($1, IVL_VT_LOGIC, false,
-						   range_stub,
-						   list_from_identifier($3),
-						   @1.text, @1.first_line);
-       $$ = tmp;
-     }
-
-  /* Ports can be real or realtime. */
-
-  | port_direction_opt real_or_realtime IDENTIFIER
-      { port_declaration_context.port_type = $1;
-	port_declaration_context.var_type = IVL_VT_REAL;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
-	svector<PWire*>*tmp = pform_make_task_ports($1, IVL_VT_REAL, false,
-						    0, list_from_identifier($3),
-						    @1.text, @1.first_line);
-	$$ = tmp;
-      }
-
-  | port_direction_opt data_type IDENTIFIER task_port_decl_expr_opt
-     { port_declaration_context.port_type = $1;
-       port_declaration_context.var_type = IVL_VT_NO_TYPE;
-       port_declaration_context.sign_flag = false;
-       delete port_declaration_context.range;
-       port_declaration_context.range = 0;
-       port_declaration_context.data_type = $2;
-       svector<PWire*>*tmp = pform_make_task_ports(@1, $1, $2,
-						   list_from_identifier($3));
-       $$ = tmp;
-       if ($4) {
-	     yyerror(@4, "sorry: Port default expressions not supported yet.");
-	     delete $4;
-       }
-     }
-
-  ;
-
-task_port_decl_expr_opt
-  : '=' expression { $$ = $2; }
-  |                { $$ = 0; }
-  ;
-
-task_port_decl_list_opt
-  : task_port_decl_list { $$ = $1; }
+tf_port_list_opt
+  : tf_port_list { $$ = $1; }
   |                     { $$ = 0; }
-  ;
-
-task_port_decl_list
-  : task_port_decl_list ',' task_port_decl
-      { svector<PWire*>*tmp = new svector<PWire*>(*$1, *$3);
-	delete $1;
-	delete $3;
-	$$ = tmp;
-      }
-  | task_port_decl
-      { $$ = $1; }
-  | task_port_decl_list ',' IDENTIFIER
-      { // The declaration is already parsed, apply it to IDENTIFIER
-	    svector<PWire*>*new_decl;
-	if (port_declaration_context.var_type == IVL_VT_NO_TYPE) {
-	      assert(port_declaration_context.data_type);
-	      new_decl = pform_make_task_ports(@3, port_declaration_context.port_type,
-					       port_declaration_context.data_type,
-					       list_from_identifier($3));
-	} else {
-	      new_decl = pform_make_task_ports(port_declaration_context.port_type,
-					       port_declaration_context.var_type,
-					       port_declaration_context.sign_flag,
-					       copy_range(port_declaration_context.range),
-					       list_from_identifier($3),
-					       @3.text, @3.first_line);
-	}
-	svector<PWire*>*tmp = new svector<PWire*>(*$1, *new_decl);
-	delete $1;
-	delete new_decl;
-	$$ = tmp;
-      }
-  | task_port_decl_list ','
-      { yyerror(@2, "error: NULL port declarations are not allowed."); }
-  | task_port_decl_list ';'
-      { yyerror(@2, "error: ';' is an invalid port declaration separator."); }
   ;
 
 udp_body

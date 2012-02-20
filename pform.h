@@ -385,13 +385,12 @@ extern void pform_make_pgassign_list(list<PExpr*>*alist,
 
 /* Given a port type and a list of names, make a list of wires that
    can be used as task port information. */
-extern svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
+extern svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
+					     NetNet::PortType pt,
 					     ivl_variable_type_t vtype,
 					     bool signed_flag,
 					     list<PExpr*>*range,
 					     list<perm_string>*names,
-					     const char* file,
-					     unsigned lineno,
 					     bool isint = false);
 
 extern svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,

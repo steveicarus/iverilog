@@ -860,6 +860,10 @@ void PTask::dump(ostream&out, unsigned ind) const
       out << pscope_name() << ";" << endl;
       if (ports_)
 	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
+		  if ((*ports_)[idx] == 0) {
+			out << setw(ind) << "" << "ERROR PORT" << endl;
+			continue;
+		  }
 		  out << setw(ind) << "";
 		  switch ((*ports_)[idx]->get_port_type()) {
 		      case NetNet::PINPUT:
@@ -870,6 +874,12 @@ void PTask::dump(ostream&out, unsigned ind) const
 			break;
 		      case NetNet::PINOUT:
 			out << "inout ";
+			break;
+		      case NetNet::PIMPLICIT:
+			out << "PIMPLICIT";
+			break;
+		      case NetNet::NOT_A_PORT:
+			out << "NOT_A_PORT";
 			break;
 		      default:
 			assert(0);
