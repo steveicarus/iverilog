@@ -398,6 +398,13 @@ extern svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 					     data_type_t*vtype,
 					     list<perm_string>*names);
 
+/*
+ * The parser uses this function to convert a unary
+ * increment/decrement expression to the equivilent compressed
+ * assignment statement.
+ */
+extern PAssign* pform_compressed_assign_from_inc_dec(const struct vlltype&loc,
+						     PExpr*exp);
 
 /*
  * These are functions that the outside-the-parser code uses the do

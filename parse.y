@@ -496,7 +496,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 
 %type <pform_name> hierarchy_identifier
 %type <expr>  assignment_pattern expression expr_primary expr_mintypmax
-%type <expr>  lpvalue
+%type <expr>  inc_or_dec_expression lpvalue
 %type <expr>  branch_probe_expression
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt delay_value_list
@@ -663,6 +663,35 @@ endnew_opt : ':' K_new | ;
 implicit_class_handle /* IEEE1800-2005: A.8.4 */
   : K_this
   | K_super
+  ;
+
+  /* SystemVerilog adds support for the increment/decrement
+     expressions, which look like a++, --a, etc. These are primaries
+     but are in their own rules because they can also be
+     statements. Note that the operator can only take l-value
+     expressions. */
+
+inc_or_dec_expression /* IEEE1800-2005: A.4.3 */
+  : K_INCR lpvalue %prec UNARY_PREC
+      { PEUnary*tmp = new PEUnary('I', $2);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | lpvalue K_INCR %prec UNARY_PREC
+      { PEUnary*tmp = new PEUnary('i', $1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_DECR lpvalue %prec UNARY_PREC
+      { PEUnary*tmp = new PEUnary('D', $2);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | lpvalue K_DECR %prec UNARY_PREC
+      { PEUnary*tmp = new PEUnary('d', $1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
   ;
 
 number  : BASED_NUMBER
@@ -1790,32 +1819,10 @@ branch_probe_expression
 expression
 	: expr_primary
 		{ $$ = $1; }
+        | inc_or_dec_expression
+	        { $$ = $1; }
 	| '+' expr_primary %prec UNARY_PREC
 		{ $$ = $2; }
-	| K_INCR expr_primary %prec UNARY_PREC
-		{
-			PEUnary*tmp = new PEUnary('I', $2);
-			FILE_NAME(tmp, @2);
-			$$ = tmp;
-		}
-	| expr_primary K_INCR %prec UNARY_PREC
-		{
-			PEUnary*tmp = new PEUnary('i', $1);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
-	| K_DECR expr_primary %prec UNARY_PREC
-		{
-			PEUnary*tmp = new PEUnary('D', $2);
-			FILE_NAME(tmp, @2);
-			$$ = tmp;
-		}
-	| expr_primary K_DECR %prec UNARY_PREC
-		{
-			PEUnary*tmp = new PEUnary('d', $1);
-			FILE_NAME(tmp, @1);
-			$$ = tmp;
-		}
 	| '-' expr_primary %prec UNARY_PREC
 		{ PEUnary*tmp = new PEUnary('-', $2);
 		  FILE_NAME(tmp, @2);
@@ -4897,7 +4904,7 @@ spec_notifier
 	;
 
 
-statement
+statement /* This is roughly statement_item in the LRM */
 
   /* assign and deassign statements are procedural code to do
      structural assignments, and to turn that structural assignment
@@ -5094,16 +5101,29 @@ statement
 		{ $$ = 0;
 		  yyerror(@1, "error: Error in while loop condition.");
 		}
-	| compressed_statement ';'
-		{ $$ = $1; }
-	| delay1 statement_or_null
-                { PExpr*del = $1->front();
-		  assert($1->size() == 1);
-		  delete $1;
-		  PDelayStatement*tmp = new PDelayStatement(del, $2);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
+
+  /* SytemVerilog adds the compressed_statement */
+
+  | compressed_statement ';'
+      { $$ = $1; }
+
+  /* increment/decrement expressions can also be statements. When used
+     as statements, we can rewrite a++ as a += 1, and so on. */
+
+  | inc_or_dec_expression ';'
+      { $$ = pform_compressed_assign_from_inc_dec(@1, $1); }
+
+  /* */
+
+  | delay1 statement_or_null
+      { PExpr*del = $1->front();
+	assert($1->size() == 1);
+	delete $1;
+	PDelayStatement*tmp = new PDelayStatement(del, $2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+
   | event_control attribute_list_opt statement_or_null
       { PEventStatement*tmp = $1;
 	if (tmp == 0) {
@@ -5129,6 +5149,9 @@ statement
 	tmp->set_statement($6);
 	$$ = tmp;
       }
+
+  /* Various assignment statements */
+
   | lpvalue '=' expression ';'
       { PAssign*tmp = new PAssign($1,$3);
 	FILE_NAME(tmp, @1);
@@ -5184,6 +5207,8 @@ statement
 		  FILE_NAME(tmp, @1);
 		  $$ = tmp;
 		}
+
+
 	| K_wait '(' expression ')' statement_or_null
 		{ PEventStatement*tmp;
 		  PEEvent*etmp = new PEEvent(PEEvent::POSITIVE, $3);
