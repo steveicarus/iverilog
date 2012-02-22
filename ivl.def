@@ -230,6 +230,9 @@ ivl_signal_msb
 ivl_signal_name
 ivl_signal_nex
 ivl_signal_npath
+ivl_signal_packed_dimensions
+ivl_signal_packed_lsb
+ivl_signal_packed_msb
 ivl_signal_path
 ivl_signal_port
 ivl_signal_scope

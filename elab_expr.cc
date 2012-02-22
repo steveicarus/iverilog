@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1420,7 +1420,7 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 }
 
 static NetExpr* check_for_struct_members(const LineInfo*li,
-					 Design*des, NetScope*scope,
+					 Design*des, NetScope*,
 					 NetNet*net, perm_string method_name)
 {
       netstruct_t*type = net->struct_type();

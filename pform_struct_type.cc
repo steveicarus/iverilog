@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -79,7 +79,7 @@ static void pform_makewire(const struct vlltype&li,
 			   struct_type_t*struct_type,
 			   NetNet::PortType ptype,
 			   perm_string name,
-			   list<named_pexpr_t>*attr)
+			   list<named_pexpr_t>*)
 {
       ivl_variable_type_t base_type = figure_struct_base_type(struct_type);
 

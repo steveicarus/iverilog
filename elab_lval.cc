@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -622,7 +622,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 }
 
 bool PEIdent::elaborate_lval_net_packed_member_(Design*des,
-						NetScope*scope,
+						NetScope*,
 						NetAssign_*lv,
 						const perm_string&member_name) const
 {
