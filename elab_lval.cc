@@ -480,7 +480,7 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 
 	// Special case: The range winds up selecting the entire
 	// vector. Treat this as no part select at all.
-      if (loff == 0 && moff == (reg->vector_width()-1)) {
+      if (loff == 0 && moff == (long)(reg->vector_width()-1)) {
 	    return true;
       }
 
@@ -489,7 +489,7 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 	   converted to normalized form so is relative the
 	   variable pins. */
 
-      if (loff < 0 || moff >= (signed)reg->vector_width()) {
+      if (loff < 0 || moff >= (long)reg->vector_width()) {
 	    cerr << get_fileline() << ": warning: Part select "
 		 << reg->name() << "[" << msb<<":"<<lsb<<"]"
 		 << " is out of range." << endl;
