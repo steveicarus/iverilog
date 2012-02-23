@@ -413,7 +413,7 @@ data_type_t* pform_test_type_identifier(const char*txt)
 	// If there is no lexical_scope yet, then there is NO WAY the
 	// identifier can be a type_identifier.
       if (lexical_scope == 0)
-	    return false;
+	    return 0;
 
       perm_string name = lex_strings.make(txt);
       map<perm_string,data_type_t*>::iterator cur = lexical_scope->typedefs.find(name);
@@ -1972,9 +1972,7 @@ void pform_makewire(const vlltype&li, perm_string name,
 {
       PWire*cur = pform_get_or_make_wire(li, name, type, pt, dt);
 
-      bool new_wire_flag = false;
       if (! cur) {
-	    new_wire_flag = true;
 	    cur = new PWire(name, type, pt, dt);
 	    FILE_NAME(cur, li.text, li.first_line);
       }
