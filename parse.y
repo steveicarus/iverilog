@@ -728,11 +728,25 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	current_task_set_statement($7);
 	pform_pop_scope();
 	current_task = 0;
-	delete[]$3;
 	if ($7->size() > 1 && !gn_system_verilog()) {
 	      yyerror(@7, "error: Task body with multiple statements requres SystemVerilog.");
 	}
 	delete $7;
+      }
+    endname_opt
+      { // Last step: check any closing name. This is done late so
+	// that the parser can look ahead to detect the present
+	// endname_opt but still have the pform_endmodule() called
+	// early enough that the lexor can know we are outside the
+	// module.
+	if ($10 && (strcmp($3,$10) != 0)) {
+	      yyerror(@10, "error: End name doesn't match module/program name");
+	}
+	if ($10 && !gn_system_verilog()) {
+	      yyerror(@10, "error: Task end names require System Verilog.");
+	}
+	delete[]$3;
+	if ($10) delete[]$10;
       }
 
   | K_task K_automatic_opt IDENTIFIER '('
@@ -747,11 +761,25 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	current_task_set_statement($10);
 	pform_pop_scope();
 	current_task = 0;
-	delete[]$3;
 	if ($10->size() > 1 && !gn_system_verilog()) {
 	      yyerror(@10, "error: Task body with multiple statements requres SystemVerilog.");
 	}
 	delete $10;
+      }
+    endname_opt
+      { // Last step: check any closing name. This is done late so
+	// that the parser can look ahead to detect the present
+	// endname_opt but still have the pform_endmodule() called
+	// early enough that the lexor can know we are outside the
+	// module.
+	if ($13 && (strcmp($3,$13) != 0)) {
+	      yyerror(@13, "error: End name doesn't match module/program name");
+	}
+	if ($13 && !gn_system_verilog()) {
+	      yyerror(@13, "error: Task end names require System Verilog.");
+	}
+	delete[]$3;
+	if ($13) delete[]$13;
       }
 
   | K_task K_automatic_opt IDENTIFIER '(' ')' ';'
@@ -767,17 +795,45 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	current_task = 0;
 	cerr << @3 << ": warning: task definition for \"" << $3
 	     << "\" has an empty port declaration list!" << endl;
-	delete[]$3;
 	if ($9->size() > 1 && !gn_system_verilog()) {
 	      yyerror(@9, "error: Task body with multiple statements requres SystemVerilog.");
 	}
 	delete $9;
       }
+    endname_opt
+      { // Last step: check any closing name. This is done late so
+	// that the parser can look ahead to detect the present
+	// endname_opt but still have the pform_endmodule() called
+	// early enough that the lexor can know we are outside the
+	// module.
+	if ($12 && (strcmp($3,$12) != 0)) {
+	      yyerror(@12, "error: End name doesn't match module/program name");
+	}
+	if ($12 && !gn_system_verilog()) {
+	      yyerror(@12, "error: Task end names require System Verilog.");
+	}
+	delete[]$3;
+	if ($12) delete[]$12;
+      }
 
   | K_task K_automatic_opt IDENTIFIER error K_endtask
       {
 	assert(current_task == 0);
+      }
+    endname_opt
+      { // Last step: check any closing name. This is done late so
+	// that the parser can look ahead to detect the present
+	// endname_opt but still have the pform_endmodule() called
+	// early enough that the lexor can know we are outside the
+	// module.
+	if ($7 && (strcmp($3,$7) != 0)) {
+	      yyerror(@7, "error: End name doesn't match module/program name");
+	}
+	if ($7 && !gn_system_verilog()) {
+	      yyerror(@7, "error: Task end names require System Verilog.");
+	}
 	delete[]$3;
+	if ($7) delete[]$7;
       }
 
   ;
