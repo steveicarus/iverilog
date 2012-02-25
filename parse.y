@@ -524,6 +524,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <event_expr> event_expression
 %type <event_statement> event_control
 %type <statement> statement statement_or_null compressed_statement
+%type <statement> loop_statement for_step
 %type <statement_list> statement_list statement_or_null_list
 %type <statement_list> statement_list_or_null
 
@@ -660,6 +661,19 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 
 endnew_opt : ':' K_new | ;
 
+for_step /* IEEE1800-2005: A.6.8 */
+  : lpvalue '=' expression
+      { PAssign*tmp = new PAssign($1,$3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | inc_or_dec_expression
+      { $$ = pform_compressed_assign_from_inc_dec(@1, $1); }
+  | compressed_statement
+      { $$ = $1; }
+  ;
+
+
 implicit_class_handle /* IEEE1800-2005: A.8.4 */
   : K_this
   | K_super
@@ -694,6 +708,66 @@ inc_or_dec_expression /* IEEE1800-2005: A.4.3 */
       }
   ;
 
+  /* Loop statements are kinds of statements. */
+
+loop_statement /* IEEE1800-2005: A.6.8 */
+  : K_for '(' lpvalue '=' expression ';' expression ';' for_step ')'
+    statement_or_null
+      { PForStatement*tmp = new PForStatement($3, $5, $7, $9, $11);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+
+  | K_for '(' data_type IDENTIFIER '=' expression ';' expression ';' for_step ')'
+    statement_or_null
+      { $$ = 0;
+	yyerror(@3, "sorry: for_variable_declaration not supported");
+      }
+
+  | K_forever statement_or_null
+      { PForever*tmp = new PForever($2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+
+  | K_repeat '(' expression ')' statement_or_null
+      { PRepeat*tmp = new PRepeat($3, $5);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+
+  | K_while '(' expression ')' statement_or_null
+      { PWhile*tmp = new PWhile($3, $5);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+
+  /* Error forms for loop statements. */
+
+  | K_for '(' lpvalue '=' expression ';' expression ';' error ')'
+    statement_or_null
+      { $$ = 0;
+	yyerror(@1, "error: Error in for loop step assignment.");
+      }
+
+  | K_for '(' lpvalue '=' expression ';' error ';' for_step ')'
+    statement_or_null
+      { $$ = 0;
+	yyerror(@1, "error: Error in for loop condition expression.");
+      }
+
+  | K_for '(' error ')' statement_or_null
+      { $$ = 0;
+	yyerror(@1, "error: Incomprehensible for loop.");
+      }
+
+  | K_while '(' error ')' statement_or_null
+      { $$ = 0;
+	yyerror(@1, "error: Error in while loop condition.");
+      }
+
+  ;
+
 number  : BASED_NUMBER
 	     { $$ = $1; based_size = 0;}
         | DEC_NUMBER
@@ -709,6 +783,16 @@ real_or_realtime
 	: K_real
 	| K_realtime
 	;
+
+  /* Many places where statements are allowed can actually take a
+     statement or a null statement marked with a naked semi-colon. */
+
+statement_or_null /* IEEE1800-2005: A.6.4 */
+  : statement
+      { $$ = $1; }
+  | ';'
+      { $$ = 0; }
+  ;
 
   /* The task declaration rule matches the task declaration
      header, then pushes the function scope. This causes the
@@ -5079,16 +5163,9 @@ statement /* This is roughly statement_item in the LRM */
 		  delete $2;
 		  $$ = tmp;
 		}
-	| K_forever statement
-		{ PForever*tmp = new PForever($2);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_repeat '(' expression ')' statement
-		{ PRepeat*tmp = new PRepeat($3, $5);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
+
+  | loop_statement { $$ = $1; }
+
 	| K_case '(' expression ')' case_items K_endcase
 		{ PCase*tmp = new PCase(NetCase::EQ, $3, $5);
 		  FILE_NAME(tmp, @1);
@@ -5128,36 +5205,6 @@ statement /* This is roughly statement_item in the LRM */
 		{ yyerror(@1, "error: Malformed conditional expression.");
 		  $$ = $5;
 		}
-	| K_for '(' lpvalue '=' expression ';' expression ';'
-	  lpvalue '=' expression ')' statement
-		{ PForStatement*tmp = new PForStatement($3, $5, $7, $9, $11, $13);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_for '(' lpvalue '=' expression ';' expression ';'
-	  error ')' statement
-		{ $$ = 0;
-		  yyerror(@1, "error: Error in for loop step assignment.");
-		}
-	| K_for '(' lpvalue '=' expression ';' error ';'
-	  lpvalue '=' expression ')' statement
-		{ $$ = 0;
-		  yyerror(@1, "error: Error in for loop condition expression.");
-		}
-	| K_for '(' error ')' statement
-		{ $$ = 0;
-		  yyerror(@1, "error: Incomprehensible for loop.");
-		}
-	| K_while '(' expression ')' statement
-		{ PWhile*tmp = new PWhile($3, $5);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| K_while '(' error ')' statement
-		{ $$ = 0;
-		  yyerror(@1, "error: Error in while loop condition.");
-		}
-
   /* SytemVerilog adds the compressed_statement */
 
   | compressed_statement ';'
@@ -5404,13 +5451,6 @@ statement_list
 	tmp->at(0) = $1;
 	$$ = tmp;
       }
-  ;
-
-statement_or_null
-  : statement
-      { $$ = $1; }
-  | ';'
-      { $$ = 0; }
   ;
 
 statement_or_null_list

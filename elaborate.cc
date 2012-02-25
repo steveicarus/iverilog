@@ -3780,8 +3780,6 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 
       const PEIdent*id1 = dynamic_cast<const PEIdent*>(name1_);
       assert(id1);
-      const PEIdent*id2 = dynamic_cast<const PEIdent*>(name2_);
-      assert(id2);
 
       NetBlock*top = new NetBlock(NetBlock::SEQU, 0);
       top->set_line(*this);
@@ -3826,32 +3824,15 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	    body->append(tmp);
 
 
-	/* Elaborate the increment assignment statement at the end of
-	   the for loop. This is also a very specific assignment
-	   statement. Put this into the "body" block. */
-      sig = des->find_signal(scope, id2->path());
-      if (sig == 0) {
-	    cerr << get_fileline() << ": error: Unable to find variable "
-		 << id2->path() << " in for-loop increment expression." << endl;
-	    des->errors += 1;
-	    return body;
-      }
-
-      assert(sig);
-      lv = new NetAssign_(sig);
-
-	/* Make the r-value of the increment assignment, and size it
-	   properly. Then use it to build the assignment statement. */
-      etmp = elaborate_rval_expr(des, scope, lv->expr_type(), lv->lwidth(),
-                                 expr2_);
-
+	/* Now elaborate the for_step statement. I really should do
+	   some error checking here to make sure the step statement
+	   really does step the variable. */
       if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: FOR increment assign: "
+	    cerr << get_fileline() << ": debug: Elaborate for_step statement "
 		 << sig->name() << " = " << *etmp << endl;
       }
 
-      NetAssign*step = new NetAssign(lv, etmp);
-      step->set_line(*this);
+      NetProc*step = step_->elaborate(des, scope);
 
       body->append(step);
 

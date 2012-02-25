@@ -403,7 +403,7 @@ class PForStatement  : public Statement {
 
     public:
       PForStatement(PExpr*n1, PExpr*e1, PExpr*cond,
-		    PExpr*n2, PExpr*e2, Statement*st);
+		    Statement*step, Statement*body);
       ~PForStatement();
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
@@ -417,8 +417,7 @@ class PForStatement  : public Statement {
 
       PExpr*cond_;
 
-      PExpr* name2_;
-      PExpr* expr2_;
+      Statement*step_;
 
       Statement*statement_;
 };
