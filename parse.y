@@ -777,6 +777,27 @@ number  : BASED_NUMBER
 	       based_size = 0; }
 	;
 
+port_direction /* IEEE1800-2005 A.1.3 */
+  : K_input  { $$ = NetNet::PINPUT; }
+  | K_output { $$ = NetNet::POUTPUT; }
+  | K_inout  { $$ = NetNet::PINOUT; }
+  | K_ref
+      { $$ = NetNet::PREF;
+        if (!gn_system_verilog()) {
+	      yyerror(@1, "error: Reference ports (ref) require SystemVerilog.");
+	      $$ = NetNet::PINPUT;
+	}
+      }
+  ;
+
+  /* port_direction_opt is used in places where the prot direction is
+     option, and defaults to input. */
+
+port_direction_opt
+  : port_direction { $$ = $1; }
+  |                { $$ = NetNet::PINPUT; }
+  ;
+
   /* real and realtime are exactly the same so save some code
    * with a common matching rule. */
 real_or_realtime
@@ -4442,17 +4463,6 @@ port_reference_list
 		  $$ = tmp;
 		}
 	;
-
-port_direction /* IEEE1800-2005 A.1.3 */
-  : K_input  { $$ = NetNet::PINPUT; }
-  | K_output { $$ = NetNet::POUTPUT; }
-  | K_inout  { $$ = NetNet::PINOUT; }
-  ;
-
-port_direction_opt
-  : port_direction { $$ = $1; }
-  |                { $$ = NetNet::PINPUT; }
-  ;
 
   /* The range is a list of variable dimensions. */
 range

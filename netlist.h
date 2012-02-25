@@ -561,7 +561,7 @@ class NetNet  : public NetObj {
 		  SUPPLY0, SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG,
 		  UNRESOLVED_WIRE };
 
-      enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
+      enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT, PREF };
 
       struct range_t {
 	    inline range_t() : msb(0), lsb(0) { }

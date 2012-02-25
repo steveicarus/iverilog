@@ -85,6 +85,14 @@ bool PScope::elaborate_sig_wires_(Design*des, NetScope*scope) const
 	    PWire*cur = (*wt).second;
 	    NetNet*sig = cur->elaborate_sig(des, scope);
 
+	    if (sig && (sig->scope() == scope)
+		&& (sig->port_type() == NetNet::PREF)) {
+
+		  cerr << cur->get_fileline() << ": sorry: "
+		       << "Reference ports not supported yet." << endl;
+		  des->errors += 1;
+	    }
+
 
 	      /* If the signal is an input and is also declared as a
 		 reg, then report an error. */

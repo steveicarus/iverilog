@@ -336,6 +336,9 @@ void PWire::dump(ostream&out, unsigned ind) const
 	  case NetNet::PINOUT:
 	    out << " inout";
 	    break;
+	  case NetNet::PREF:
+	    out << " ref";
+	    break;
 	  case NetNet::NOT_A_PORT:
 	    break;
       }

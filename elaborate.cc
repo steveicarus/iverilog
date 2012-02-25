@@ -1069,6 +1069,10 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
 	    ivl_assert(*this, 0);
 	    break;
 
+	  case NetNet::PREF:
+	    ivl_assert(*this, 0);
+	    break;
+
 	  default:
 	    ivl_assert(*this, 0);
       }
@@ -1506,6 +1510,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    } else {
 
 		    /* Port type must be OUTPUT here. */
+		  ivl_assert(*this, prts[0]->port_type() == NetNet::POUTPUT);
 
 		    /* Output from module. Elaborate the port
 		       expression as the l-value of a continuous
@@ -1639,6 +1644,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    case NetNet::PINOUT:
 			  /* This may not be correct! */
 			as_signed = prts[0]->get_signed() && sig->get_signed();
+			break;
+		      case NetNet::PREF:
+			ivl_assert(*this, 0);
 			break;
 		    default:
 			ivl_assert(*this, 0);
@@ -1784,6 +1792,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			connect(ttmp->pin(1), sp->pin(0));
 			spin += sp->vector_width();
 		  }
+		  break;
+
+		case NetNet::PREF:
+		  cerr << get_fileline() << ": sorry: "
+		       << "Reference ports not supported yet." << endl;
+		  des->errors += 1;
 		  break;
 
 		case NetNet::PIMPLICIT:
