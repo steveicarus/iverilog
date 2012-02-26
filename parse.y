@@ -447,7 +447,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 
 %type <flag>    from_exclude
 %type <number>  number pos_neg_number
-%type <flag>    unsigned_signed_opt signed_unsigned_opt
+%type <flag>    signing unsigned_signed_opt signed_unsigned_opt
 %type <flag>    K_automatic_opt K_packed_opt K_reg_opt K_virtual_opt
 %type <flag>    udp_reg_opt edge_operator
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
@@ -670,17 +670,33 @@ data_type /* IEEE1800-2005: A.2.2.1 */
       }
   ;
 
+  /* The data_type_or_implicit rule is a little more complex then the
+     rule documented in the IEEE format syntax in order to allow for
+     signaling the special case that the data_type is completely
+     absent. The context may need that information to decide to resort
+     to left context. */
+
 data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
   : data_type
       { $$ = $1; }
-  | unsigned_signed_opt range_opt
+  | signing range_opt
       { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $1, $2);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  | range
+      { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, false, $1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  |
+      { $$ = 0; }
   ;
 
+   /* This implements the [ : INDENTIFIER ] part of the constructure
+      rule documented in IEEE1800-2005: A.1.8 */
 endnew_opt : ':' K_new | ;
+
 
 for_step /* IEEE1800-2005: A.6.8 */
   : lpvalue '=' expression
@@ -824,12 +840,13 @@ port_direction /* IEEE1800-2005 A.1.3 */
       }
   ;
 
-  /* port_direction_opt is used in places where the prot direction is
-     option, and defaults to input. */
+  /* port_direction_opt is used in places where the port direction is
+     optional. The default direction is selected by the context,
+     which needs to notice the PIMPLICIT direction. */
 
 port_direction_opt
   : port_direction { $$ = $1; }
-  |                { $$ = NetNet::PINPUT; }
+  |                { $$ = NetNet::PIMPLICIT; }
   ;
 
   /* real and realtime are exactly the same so save some code
@@ -838,6 +855,11 @@ real_or_realtime
 	: K_real
 	| K_realtime
 	;
+
+signing /* IEEE1800-2005: A.2.2.1 */
+  : K_signed   { $$ = true; }
+  | K_unsigned { $$ = false; }
+  ;
 
   /* Many places where statements are allowed can actually take a
      statement or a null statement marked with a naked semi-colon. */
@@ -992,7 +1014,9 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 
   : port_direction_opt K_integer IDENTIFIER range_opt tf_port_item_expr_opt
       { list<PExpr*>*range_stub = make_range_from_width(integer_width);
-	port_declaration_context.port_type = $1;
+	NetNet::PortType use_port_type = $1==NetNet::PIMPLICIT? NetNet::PINPUT : $1;
+
+	port_declaration_context.port_type = use_port_type;
 	port_declaration_context.var_type = IVL_VT_LOGIC;
 	port_declaration_context.sign_flag = true;
 	delete port_declaration_context.range;
@@ -1015,13 +1039,15 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 
   | port_direction_opt K_time IDENTIFIER range_opt tf_port_item_expr_opt
       { list<PExpr*>*range_stub = make_range_from_width(64);
-	port_declaration_context.port_type = $1;
+	NetNet::PortType use_port_type = $1==NetNet::PIMPLICIT? NetNet::PINPUT : $1;
+
+	port_declaration_context.port_type = use_port_type;
 	port_declaration_context.var_type = IVL_VT_LOGIC;
 	port_declaration_context.sign_flag = false;
 	delete port_declaration_context.range;
 	port_declaration_context.range = copy_range(range_stub);
-	svector<PWire*>*tmp = pform_make_task_ports(@3, $1, IVL_VT_LOGIC, false,
-						    range_stub,
+	svector<PWire*>*tmp = pform_make_task_ports(@3, use_port_type, IVL_VT_LOGIC,
+						    false, range_stub,
 						    list_from_identifier($3));
 	$$ = tmp;
 	if ($4) {
@@ -1034,15 +1060,43 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	}
       }
 
-  | port_direction data_type_or_implicit IDENTIFIER range_opt tf_port_item_expr_opt
-      { port_declaration_context.port_type = $1;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
-	port_declaration_context.data_type = $2;
-	svector<PWire*>*tmp = pform_make_task_ports(@3, $1, $2,
-						    list_from_identifier($3));
+  | port_direction_opt data_type_or_implicit IDENTIFIER range_opt tf_port_item_expr_opt
+      { svector<PWire*>*tmp;
+	NetNet::PortType use_port_type = $1==NetNet::PIMPLICIT? NetNet::PINPUT : $1;
+	list<perm_string>* ilist = list_from_identifier($3);
+
+	if (($2 == 0) && ($1==NetNet::PIMPLICIT)) {
+		// Detect special case this is an undecorated
+		// identifier and we need to get the declaration from
+		// left context.
+	      if (port_declaration_context.var_type == IVL_VT_NO_TYPE) {
+		    tmp = pform_make_task_ports(@3, use_port_type,
+					 port_declaration_context.data_type,
+					 ilist);
+	      } else {
+		    tmp = pform_make_task_ports(@3, use_port_type,
+					 port_declaration_context.var_type,
+					 port_declaration_context.sign_flag,
+					 copy_range(port_declaration_context.range),
+					 ilist);
+	      }
+
+	} else {
+		// Otherwise, the decorations for this identifier
+		// indicate the type. Save the type for any right
+		// context thta may come later.
+	      port_declaration_context.port_type = use_port_type;
+	      port_declaration_context.var_type = IVL_VT_NO_TYPE;
+	      port_declaration_context.sign_flag = false;
+	      delete port_declaration_context.range;
+	      port_declaration_context.range = 0;
+	      if ($2 == 0) {
+		    $2 = new vector_type_t(IVL_VT_LOGIC, false, 0);
+		    FILE_NAME($2, @3);
+	      }
+	      port_declaration_context.data_type = $2;
+	      tmp = pform_make_task_ports(@3, $1, $2, ilist);
+	}
 	$$ = tmp;
 	if ($4) {
 	      yyerror(@4, "sorry: Port variable dimensions not supported yet.");
@@ -1067,43 +1121,20 @@ tf_port_list /* IEEE1800-2005: A.2.7 */
 
   : tf_port_list ',' tf_port_item
       { svector<PWire*>*tmp;
-	if ($3) {
+	if ($1 && $3) {
 	      tmp = new svector<PWire*>(*$1, *$3);
 	      delete $1;
 	      delete $3;
-	} else {
+	} else if ($1) {
 	      tmp = $1;
+	} else {
+	      tmp = $3;
 	}
 	$$ = tmp;
       }
 
   | tf_port_item
       { $$ = $1; }
-
-  /* This rule handles the special case of a set of port items leading
-     an undecorated identifier. Undeconated identifiers in this case
-     pick up the details from the list to its lift. */
-
-  | tf_port_list ',' IDENTIFIER
-      { // The declaration is already parsed, apply it to IDENTIFIER
-	svector<PWire*>*new_decl;
-	if (port_declaration_context.var_type == IVL_VT_NO_TYPE) {
-	      assert(port_declaration_context.data_type);
-	      new_decl = pform_make_task_ports(@3, port_declaration_context.port_type,
-					       port_declaration_context.data_type,
-					       list_from_identifier($3));
-	} else {
-	      new_decl = pform_make_task_ports(@3, port_declaration_context.port_type,
-					       port_declaration_context.var_type,
-					       port_declaration_context.sign_flag,
-					       copy_range(port_declaration_context.range),
-					       list_from_identifier($3));
-	}
-	svector<PWire*>*tmp = new svector<PWire*>(*$1, *new_decl);
-	delete $1;
-	delete new_decl;
-	$$ = tmp;
-      }
 
   /* Rules to handle some errors in tf_port_list items. */
 
