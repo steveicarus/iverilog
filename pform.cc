@@ -1527,10 +1527,10 @@ static void pform_set_net_range(perm_string name,
 	    cur->set_data_type(dt);
 }
 
-void pform_set_net_range(list<perm_string>*names,
-			 list<PExpr*>*range,
-			 bool signed_flag,
-			 ivl_variable_type_t dt)
+static void pform_set_net_range(list<perm_string>*names,
+				list<PExpr*>*range,
+				bool signed_flag,
+				ivl_variable_type_t dt)
 {
       assert((range == 0) || (range->size()%2 == 0));
 
@@ -2197,15 +2197,27 @@ svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 				      data_type_t*vtype,
 				      list<perm_string>*names)
 {
-      atom2_type_t*atype = dynamic_cast<atom2_type_t*> (vtype);
-      if (atype == 0) {
-	    VLerror(loc, "sorry: Given type not supported here.");
-	    return 0;
+      if (atom2_type_t*atype = dynamic_cast<atom2_type_t*> (vtype)) {
+	    list<PExpr*>*range_tmp = make_range_from_width(atype->type_code);
+	    return pform_make_task_ports(loc, pt, IVL_VT_BOOL,
+					 atype->signed_flag,
+					 range_tmp, names);
       }
 
-      list<PExpr*>*range_tmp = make_range_from_width(atype->type_code);
-      return pform_make_task_ports(loc, pt, IVL_VT_BOOL, atype->signed_flag,
-				   range_tmp, names);
+      if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype)) {
+	    return pform_make_task_ports(loc, pt, vec_type->base_type,
+					 vec_type->signed_flag,
+					 copy_range(vec_type->pdims.get()),
+					 names);
+      }
+
+      if (real_type_t*real_type = dynamic_cast<real_type_t*> (vtype)) {
+	    return pform_make_task_ports(loc, pt, IVL_VT_REAL,
+					 true, 0, names);
+      }
+
+      VLerror(loc, "sorry: Given type not supported here.");
+      return 0;
 }
 
 /*
@@ -2605,6 +2617,18 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
 
       if (enum_type_t*enum_type = dynamic_cast<enum_type_t*> (data_type)) {
 	    pform_set_enum(li, enum_type, names);
+	    return;
+      }
+
+      if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (data_type)) {
+	    pform_set_net_range(names, vec_type->pdims.get(),
+				vec_type->signed_flag,
+				vec_type->base_type);
+	    return;
+      }
+
+      if (real_type_t*real_type = dynamic_cast<real_type_t*> (data_type)) {
+	    pform_set_net_range(names, 0, true, IVL_VT_REAL);
 	    return;
       }
 

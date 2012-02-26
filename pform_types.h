@@ -107,6 +107,19 @@ struct atom2_type_t : public data_type_t {
       bool signed_flag;
 };
 
+struct vector_type_t : public data_type_t {
+      inline explicit vector_type_t(ivl_variable_type_t bt, bool sf, list<PExpr*>*pd)
+      : base_type(bt), signed_flag(sf), pdims(pd) { }
+      ivl_variable_type_t base_type;
+      bool signed_flag;
+      std::auto_ptr< list<PExpr*> > pdims;
+};
+
+struct real_type_t : public data_type_t {
+      inline explicit real_type_t(int tc) : type_code(tc) { }
+      int type_code;
+};
+
 /*
  * The pform_name_t is the general form for a hierarchical
  * identifier. It is an ordered list of name components. Each name

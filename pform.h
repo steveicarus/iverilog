@@ -118,6 +118,7 @@ struct lgate {
 };
 
 extern std::list<PExpr*>* make_range_from_width(uint64_t wid);
+extern list<PExpr*>* copy_range(list<PExpr*>* orig);
 
   /* Use this function to transform the parted form of the attribute
      list to the attribute map that is used later. */
@@ -286,10 +287,6 @@ extern void pform_set_port_type(const struct vlltype&li,
 extern void pform_set_port_type(perm_string nm, NetNet::PortType pt,
 				const char*file, unsigned lineno);
 
-extern void pform_set_net_range(list<perm_string>*names,
-				list<PExpr*>*,
-				bool signed_flag,
-				ivl_variable_type_t);
 extern void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r);
 extern void pform_set_reg_integer(list<perm_string>*names);
 extern void pform_set_reg_time(list<perm_string>*names);

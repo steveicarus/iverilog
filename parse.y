@@ -157,7 +157,7 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
       return tmp;
 }
 
-static list<PExpr*>* copy_range(list<PExpr*>* orig)
+list<PExpr*>* copy_range(list<PExpr*>* orig)
 {
       list<PExpr*>*copy = 0;
 
@@ -317,7 +317,7 @@ static void current_task_set_statement(vector<Statement*>*s)
       NetNet::Type nettype;
       PGBuiltin::Type gatetype;
       NetNet::PortType porttype;
-      ivl_variable_type_t datatype;
+      ivl_variable_type_t vartype;
 
       PWire*wire;
       svector<PWire*>*wires;
@@ -461,9 +461,9 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <statement> udp_initial udp_init_opt
 %type <expr>    udp_initial_expr_opt
 
-%type <text> register_variable net_variable real_variable endname_opt
+%type <text> register_variable net_variable endname_opt
 %type <perm_strings> register_variable_list net_variable_list
-%type <perm_strings> real_variable_list list_of_identifiers
+%type <perm_strings> list_of_identifiers
 %type <port_list> list_of_port_identifiers
 
 %type <net_decl_assign> net_decl_assign net_decl_assigns
@@ -506,7 +506,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <decl_assignment> variable_decl_assignment
 %type <decl_assignments> list_of_variable_decl_assignments
 
-%type <data_type>  data_type
+%type <data_type>  data_type data_type_or_implicit
 %type <struct_member>  struct_union_member
 %type <struct_members> struct_union_member_list
 %type <struct_type>    struct_data_type
@@ -516,7 +516,8 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <nettype>  net_type var_type net_type_opt
 %type <gatetype> gatetype switchtype
 %type <porttype> port_direction port_direction_opt
-%type <datatype> primitive_type primitive_type_opt bit_logic
+%type <vartype> primitive_type primitive_type_opt bit_logic
+%type <vartype> integer_vector_type
 %type <parmvalue> parameter_value_opt
 
 %type <function_type> function_range_or_type_opt
@@ -536,7 +537,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <specpath> specify_simple_path specify_simple_path_decl
 %type <specpath> specify_edge_path specify_edge_path_decl
 
-%type <int_val> atom2_type
+%type <int_val> atom2_type non_integer_type
 %type <int_val> module_start module_end
 
 %token K_TAND
@@ -642,7 +643,17 @@ class_item /* IEEE1800-2005: A.1.8 */
   ;
 
 data_type /* IEEE1800-2005: A.2.2.1 */
-  : struct_data_type
+  : integer_vector_type unsigned_signed_opt range_opt
+      { vector_type_t*tmp = new vector_type_t($1, $2, $3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | non_integer_type
+      { real_type_t*tmp = new real_type_t($1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | struct_data_type
       { $$ = $1; }
   | enum_data_type
       { $$ = $1; }
@@ -656,6 +667,16 @@ data_type /* IEEE1800-2005: A.2.2.1 */
   | K_string
       { yyerror(@1, "sorry: String data type not supported.");
 	$$ = 0;
+      }
+  ;
+
+data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
+  : data_type
+      { $$ = $1; }
+  | unsigned_signed_opt range_opt
+      { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $1, $2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
   ;
 
@@ -706,6 +727,13 @@ inc_or_dec_expression /* IEEE1800-2005: A.4.3 */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  ;
+
+integer_vector_type /* IEEE1800-2005: A.2.2.1 */
+  : K_reg   { $$ = IVL_VT_LOGIC; }
+  | K_bit   { $$ = IVL_VT_BOOL; }
+  | K_logic { $$ = IVL_VT_LOGIC; }
+  | K_bool  { $$ = IVL_VT_BOOL; } /* Icarus Verilog xtypes extension */
   ;
 
   /* Loop statements are kinds of statements. */
@@ -766,6 +794,12 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	yyerror(@1, "error: Error in while loop condition.");
       }
 
+  ;
+
+non_integer_type /* IEEE1800-2005: A.2.2.1 */
+  : K_real { $$ = K_real; }
+  | K_realtime { $$ = K_real; }
+  | K_shortreal { $$ = K_shortreal; }
   ;
 
 number  : BASED_NUMBER
@@ -954,47 +988,9 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 
 tf_port_item /* IEEE1800-2005: A.2.7 */
 
-  : port_direction K_reg_opt unsigned_signed_opt range_opt IDENTIFIER range_opt tf_port_item_expr_opt
-      { port_declaration_context.port_type = $1;
-	port_declaration_context.var_type = IVL_VT_LOGIC;
-	port_declaration_context.sign_flag = $3;
-	delete port_declaration_context.range;
-	port_declaration_context.range = copy_range($4);
-	svector<PWire*>*tmp = pform_make_task_ports(@5, $1, IVL_VT_LOGIC, $3,
-						    $4, list_from_identifier($5));
-	$$ = tmp;
-	if ($6) {
-	      yyerror(@6, "sorry: Port variable dimensions not supported yet.");
-	      delete $6;
-	}
-	if ($7) {
-	      yyerror(@7, "sorry: Port default expressions not supported yet.");
-	      delete $7;
-	}
-      }
-
-  | port_direction_opt bit_logic unsigned_signed_opt range_opt IDENTIFIER range_opt tf_port_item_expr_opt
-      { port_declaration_context.port_type = $1;
-	port_declaration_context.var_type  = $2;
-	port_declaration_context.sign_flag = $3;
-	delete port_declaration_context.range;
-	port_declaration_context.range     = copy_range($4);
-	svector<PWire*>*tmp = pform_make_task_ports(@5, $1, $2, $3,
-						    $4, list_from_identifier($5));
-	$$ = tmp;
-	if ($6) {
-	      yyerror(@6, "sorry: Port variable dimensions not supported yet.");
-	      delete $6;
-	}
-	if ($7) {
-	      yyerror(@7, "sorry: Port default expressions not supported yet.");
-	      delete $7;
-	}
-      }
-
   /* Ports can be integer with a width of [31:0]. */
 
-  | port_direction_opt K_integer IDENTIFIER range_opt tf_port_item_expr_opt
+  : port_direction_opt K_integer IDENTIFIER range_opt tf_port_item_expr_opt
       { list<PExpr*>*range_stub = make_range_from_width(integer_width);
 	port_declaration_context.port_type = $1;
 	port_declaration_context.var_type = IVL_VT_LOGIC;
@@ -1038,28 +1034,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	}
       }
 
-  /* Ports can be real or realtime. */
-
-  | port_direction_opt real_or_realtime IDENTIFIER range_opt tf_port_item_expr_opt
-      { port_declaration_context.port_type = $1;
-	port_declaration_context.var_type = IVL_VT_REAL;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
-	svector<PWire*>*tmp = pform_make_task_ports(@3, $1, IVL_VT_REAL, false,
-						    0, list_from_identifier($3));
-	$$ = tmp;
-	if ($4) {
-	      yyerror(@4, "sorry: Port variable dimensions not supported yet.");
-	      delete $4;
-	}
-	if ($5) {
-	      yyerror(@5, "sorry: Port default expressions not supported yet.");
-	      delete $5;
-	}
-      }
-
-  | port_direction_opt data_type IDENTIFIER range_opt tf_port_item_expr_opt
+  | port_direction data_type_or_implicit IDENTIFIER range_opt tf_port_item_expr_opt
       { port_declaration_context.port_type = $1;
 	port_declaration_context.var_type = IVL_VT_NO_TYPE;
 	port_declaration_context.sign_flag = false;
@@ -1111,7 +1086,7 @@ tf_port_list /* IEEE1800-2005: A.2.7 */
 
   | tf_port_list ',' IDENTIFIER
       { // The declaration is already parsed, apply it to IDENTIFIER
-	    svector<PWire*>*new_decl;
+	svector<PWire*>*new_decl;
 	if (port_declaration_context.var_type == IVL_VT_NO_TYPE) {
 	      assert(port_declaration_context.data_type);
 	      new_decl = pform_make_task_ports(@3, port_declaration_context.port_type,
@@ -1226,47 +1201,12 @@ attribute
      rule has presumably set up the scope. */
 
 block_item_decl
-	: attribute_list_opt K_reg
-          primitive_type_opt unsigned_signed_opt range
-          register_variable_list ';'
-		{ ivl_variable_type_t dtype = $3;
-		  if (dtype == IVL_VT_NO_TYPE)
-			dtype = IVL_VT_LOGIC;
-		  pform_set_net_range($6, $5, $4, dtype);
-		  if ($1) delete $1;
-		}
 
-  /* This differs from the above pattern only in the absence of the
-     range. This is the rule for a scalar. */
-
-	| attribute_list_opt K_reg
-          primitive_type_opt unsigned_signed_opt
-          register_variable_list ';'
-		{ ivl_variable_type_t dtype = $3;
-		  if (dtype == IVL_VT_NO_TYPE)
-			dtype = IVL_VT_LOGIC;
-		  pform_set_net_range($5, 0, $4, dtype);
-		  if ($1) delete $1;
-		}
-
-	| attribute_list_opt K_bit unsigned_signed_opt range_opt
-	  register_variable_list ';'
-		{
-			pform_set_net_range($5, $4, $3, IVL_VT_BOOL);
-			if ($1) delete $1;
-		}
-
-	| attribute_list_opt K_logic unsigned_signed_opt range_opt
-	  register_variable_list ';'
-		{
-			pform_set_net_range($5, $4, $3, IVL_VT_LOGIC);
-			if ($1) delete $1;
-		}
   /* Integer atom declarations are simpler in that they do not have
      all the trappings of a general variable declaration. All of that
      is implicit in the "integer" of the declaration. */
 
-  | attribute_list_opt K_integer signed_unsigned_opt register_variable_list ';'
+  : attribute_list_opt K_integer signed_unsigned_opt register_variable_list ';'
      { pform_set_reg_integer($4);
        if ($1) delete $1;
      }
@@ -1284,15 +1224,10 @@ block_item_decl
 	if ($1) delete $1;
       }
 
-  /* real declarations are fairly simple as there is no range of
-     signed flag in the declaration. Create the real as a NetNet::REG
-     with real value. Note that real and realtime are interchangeable
-     in this context. */
-
-        | attribute_list_opt K_real real_variable_list ';'
-                { delete $3; }
-        | attribute_list_opt K_realtime real_variable_list ';'
-                { delete $3; }
+  | attribute_list_opt K_reg data_type register_variable_list ';'
+      { if ($3) pform_set_data_type(@3, $3, $4);
+	if ($1) delete $1;
+      }
 
 	| K_event list_of_identifiers ';'
 		{ pform_make_events($2, @1.text, @1.first_line);
@@ -1307,12 +1242,6 @@ block_item_decl
 
   /* Recover from errors that happen within variable lists. Use the
      trailing semi-colon to resync the parser. */
-
-	| attribute_list_opt K_reg error ';'
-		{ yyerror(@2, "error: syntax error in reg variable list.");
-		  yyerrok;
-		  if ($1) delete $1;
-		}
 	| attribute_list_opt K_integer error ';'
 		{ yyerror(@2, "error: syntax error in integer variable list.");
 		  yyerrok;
@@ -1322,14 +1251,7 @@ block_item_decl
 		{ yyerror(@2, "error: syntax error in time variable list.");
 		  yyerrok;
 		}
-	| attribute_list_opt K_real error ';'
-		{ yyerror(@2, "error: syntax error in real variable list.");
-		  yyerrok;
-		}
-	| attribute_list_opt K_realtime error ';'
-		{ yyerror(@2, "error: syntax error in realtime variable list.");
-		  yyerrok;
-		}
+
 	| K_parameter error ';'
 		{ yyerror(@1, "error: syntax error in parameter list.");
 		  yyerrok;
@@ -3531,7 +3453,7 @@ module_item
   /* block_item_decl rule is shared with task blocks and named
      begin/end. */
 
-	| block_item_decl
+  | block_item_decl
 
   /* */
 
@@ -4645,45 +4567,6 @@ variable_decl_assignment
 	tmp->expr .reset($3);
 	delete[]$1;
 	$$ = tmp;
-      }
-  ;
-
-real_variable
-  : IDENTIFIER dimensions_opt
-      { perm_string name = lex_strings.make($1);
-        pform_makewire(@1, name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_REAL, 0);
-        if ($2 != 0) {
-	      index_component_t index;
-	      if ($2->size() > 1) {
-		    yyerror(@2, "sorry: only 1 dimensional arrays "
-			    "are currently supported.");
-	      }
-	      index = $2->front();
-	      pform_set_reg_idx(name, index.msb, index.lsb);
-	      delete $2;
-        }
-	$$ = $1;
-      }
-  | IDENTIFIER '=' expression
-      { perm_string name = lex_strings.make($1);
-	pform_makewire(@1, name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_REAL, 0);
-	pform_make_reginit(@1, name, $3);
-	$$ = $1;
-      }
-  ;
-
-real_variable_list
-  : real_variable
-      { list<perm_string>*tmp = new list<perm_string>;
-	tmp->push_back(lex_strings.make($1));
-	$$ = tmp;
-	delete[]$1;
-      }
-  | real_variable_list ',' real_variable
-      { list<perm_string>*tmp = $1;
-	tmp->push_back(lex_strings.make($3));
-	$$ = tmp;
-	delete[]$3;
       }
   ;
 
