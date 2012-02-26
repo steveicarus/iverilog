@@ -463,7 +463,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 
 %type <text> register_variable net_variable endname_opt
 %type <perm_strings> register_variable_list net_variable_list
-%type <perm_strings> list_of_identifiers
+%type <perm_strings> list_of_identifiers loop_variables
 %type <port_list> list_of_port_identifiers
 
 %type <net_decl_assign> net_decl_assign net_decl_assigns
@@ -786,6 +786,14 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	$$ = tmp;
       }
 
+  | K_foreach '(' IDENTIFIER '[' loop_variables ']' ')' statement_or_null
+      { yyerror(@1, "sorry: foreach loops not supported");
+	delete[]$3;
+	delete $5;
+	delete $8;
+	$$ = 0;
+      }
+
   /* Error forms for loop statements. */
 
   | K_for '(' lpvalue '=' expression ';' expression ';' error ')'
@@ -810,6 +818,25 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	yyerror(@1, "error: Error in while loop condition.");
       }
 
+  | K_foreach '(' IDENTIFIER '[' error ']' ')' statement_or_null
+      { $$ = 0;
+        yyerror(@4, "error: Errors in foreach loop variables list.");
+      }
+  ;
+
+loop_variables /* IEEE1800-2005: A.6.8 */
+  : loop_variables ',' IDENTIFIER
+      { list<perm_string>*tmp = $1;
+	tmp->push_back(lex_strings.make($3));
+	delete[]$3;
+	$$ = tmp;
+      }
+  | IDENTIFIER
+      { list<perm_string>*tmp = new list<perm_string>;
+	tmp->push_back(lex_strings.make($1));
+	delete[]$1;
+	$$ = tmp;
+      }
   ;
 
 non_integer_type /* IEEE1800-2005: A.2.2.1 */
