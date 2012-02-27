@@ -496,7 +496,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 
 %type <pform_name> hierarchy_identifier
 %type <expr>  assignment_pattern expression expr_primary expr_mintypmax
-%type <expr>  inc_or_dec_expression lpvalue
+%type <expr>  dynamic_array_new inc_or_dec_expression lpvalue
 %type <expr>  branch_probe_expression
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt delay_value_list
@@ -697,6 +697,19 @@ data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
       rule documented in IEEE1800-2005: A.1.8 */
 endnew_opt : ':' K_new | ;
 
+  /* The dynamic_array_new rule is kinda like an expression, but it is
+     treated differently by rules that use this "expression". Watch out! */
+
+dynamic_array_new /* IEEE1800-2005: A.2.4 */
+  : K_new '[' expression ']'
+      { yyerror(@1, "sorry: Dynamic array new expression not supported.");
+	$$ = 0;
+      }
+  | K_new '[' expression ']' '(' expression ')'
+      { yyerror(@1, "sorry: Dynamic array new expression not supported.");
+	$$ = 0;
+      }
+  ;
 
 for_step /* IEEE1800-2005: A.6.8 */
   : lpvalue '=' expression
@@ -5262,6 +5275,16 @@ statement /* This is roughly statement_item in the LRM */
 		  $$ = tmp;
 		}
 
+  /* The IEEE1800 standard defines dynamic_array_new assignment as a
+     different rule from regular assignment. That implies that the
+     dynamic_array_new is not an expression in general, which makes
+     some sense. Elaboration should make sure the lpvalue is an array name. */
+
+  | lpvalue '=' dynamic_array_new ';'
+      { PAssign*tmp = new PAssign($1,$3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
 
 	| K_wait '(' expression ')' statement_or_null
 		{ PEventStatement*tmp;
