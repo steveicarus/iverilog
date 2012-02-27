@@ -632,6 +632,8 @@ class_item /* IEEE1800-2005: A.1.8 */
 
   | task_declaration
 
+  | function_declaration
+
     /* Here are some error matching rules to help recover from various
        syntax errors within a class declaration. */
 
@@ -723,6 +725,116 @@ for_step /* IEEE1800-2005: A.6.8 */
       { $$ = $1; }
   ;
 
+
+  /* The function declaration rule matches the function declaration
+     header, then pushes the function scope. This causes the
+     definitions in the func_body to take on the scope of the function
+     instead of the module. */
+function_declaration /* IEEE1800-2005: A.2.6 */
+  : K_function K_automatic_opt function_range_or_type_opt IDENTIFIER ';'
+      { assert(current_function == 0);
+	current_function = pform_push_function_scope(@1, $4, $2);
+      }
+    function_item_list statement_list
+    K_endfunction
+      { current_function->set_ports($7);
+	current_function->set_return($3);
+	assert($8 && $8->size() > 0);
+	if ($8->size() == 1) {
+	      current_function->set_statement((*$8)[0]);
+	      delete $8;
+	} else {
+	      PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+	      FILE_NAME(tmp, @8);
+	      tmp->set_statement( *$8 );
+	      current_function->set_statement(tmp);
+	      delete $8;
+	      if (!gn_system_verilog()) {
+		    yyerror(@8, "error: Function body with multiple statements requres SystemVerilog.");
+	      }
+	}
+	pform_pop_scope();
+	current_function = 0;
+      }
+    endname_opt
+      { // Last step: check any closing name.
+	if ($11 && (strcmp($4,$11) != 0)) {
+	      yyerror(@11, "error: End name doesn't match function name");
+	}
+	if ($11 && !gn_system_verilog()) {
+	      yyerror(@11, "error: Function end names require System Verilog.");
+	}
+	delete[]$4;
+	if ($11) delete[]$11;
+      }
+
+  | K_function K_automatic_opt function_range_or_type_opt IDENTIFIER
+      { assert(current_function == 0);
+	current_function = pform_push_function_scope(@1, $4, $2);
+      }
+    '(' tf_port_list_opt ')' ';'
+    block_item_decls_opt
+    statement_list
+    K_endfunction
+      { current_function->set_ports($7);
+	current_function->set_return($3);
+	assert($11 && $11->size() > 0);
+	if ($11->size() == 1) {
+	      current_function->set_statement((*$11)[0]);
+	      delete $11;
+	} else {
+	      PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+	      FILE_NAME(tmp, @11);
+	      tmp->set_statement( *$11 );
+	      current_function->set_statement(tmp);
+	      delete $11;
+	      if (!gn_system_verilog()) {
+		    yyerror(@11, "error: Function body with multiple statements requres SystemVerilog.");
+	      }
+	}
+	pform_pop_scope();
+	current_function = 0;
+	if ($7==0 && !gn_system_verilog()) {
+	      yyerror(@4, "error: Empty parenthesis syntax requires SystemVerilog.");
+	}
+      }
+    endname_opt
+      { // Last step: check any closing name.
+	if ($14 && (strcmp($4,$14) != 0)) {
+	      yyerror(@14, "error: End name doesn't match function name");
+	}
+	if ($14 && !gn_system_verilog()) {
+	      yyerror(@14, "error: Function end names require System Verilog.");
+	}
+	delete[]$4;
+	if ($14) delete[]$14;
+      }
+
+  /* Detect and recover from some errors. */
+
+  | K_function K_automatic_opt function_range_or_type_opt IDENTIFIER error K_endfunction
+      { /* */
+	if (current_function) {
+	      pform_pop_scope();
+	      current_function = 0;
+	}
+	assert(current_function == 0);
+	yyerror(@1, "error: Syntax error defining function.");
+	yyerrok;
+      }
+    endname_opt
+      { // Last step: check any closing name.
+	if ($8 && (strcmp($4,$8) != 0)) {
+	      yyerror(@4, "error: End name doesn't match function name");
+	}
+	if ($8 && !gn_system_verilog()) {
+	      yyerror(@8, "error: Function end names require System Verilog.");
+	}
+	delete[]$4;
+	if ($8) delete[]$8;
+      }
+
+  ;
 
 implicit_class_handle /* IEEE1800-2005: A.8.4 */
   : K_this
@@ -3643,80 +3755,7 @@ module_item
 
   | task_declaration
 
-  /* The function declaration rule matches the function declaration
-     header, then pushes the function scope. This causes the
-     definitions in the func_body to take on the scope of the function
-     instead of the module. */
-
-  | K_function K_automatic_opt function_range_or_type_opt IDENTIFIER ';'
-      { assert(current_function == 0);
-	current_function = pform_push_function_scope(@1, $4, $2);
-      }
-    function_item_list statement_list
-    K_endfunction
-      { current_function->set_ports($7);
-	current_function->set_return($3);
-	assert($8 && $8->size() > 0);
-	if ($8->size() == 1) {
-	      current_function->set_statement((*$8)[0]);
-	      delete $8;
-	} else {
-	      PBlock*tmp = new PBlock(PBlock::BL_SEQ);
-	      FILE_NAME(tmp, @8);
-	      tmp->set_statement( *$8 );
-	      current_function->set_statement(tmp);
-	      delete $8;
-	      if (!gn_system_verilog()) {
-		    yyerror(@8, "error: Function body with multiple statements requres SystemVerilog.");
-	      }
-	}
-	pform_pop_scope();
-	current_function = 0;
-	delete[]$4;
-      }
-
-  | K_function K_automatic_opt function_range_or_type_opt IDENTIFIER
-      { assert(current_function == 0);
-	current_function = pform_push_function_scope(@1, $4, $2);
-      }
-    '(' tf_port_list_opt ')' ';'
-    block_item_decls_opt
-    statement_list
-    K_endfunction
-      { current_function->set_ports($7);
-	current_function->set_return($3);
-	assert($11 && $11->size() > 0);
-	if ($11->size() == 1) {
-	      current_function->set_statement((*$11)[0]);
-	      delete $11;
-	} else {
-	      PBlock*tmp = new PBlock(PBlock::BL_SEQ);
-	      FILE_NAME(tmp, @11);
-	      tmp->set_statement( *$11 );
-	      current_function->set_statement(tmp);
-	      delete $11;
-	      if (!gn_system_verilog()) {
-		    yyerror(@11, "error: Function body with multiple statements requres SystemVerilog.");
-	      }
-	}
-	pform_pop_scope();
-	current_function = 0;
-	delete[]$4;
-	if ($7==0 && !gn_system_verilog()) {
-	      yyerror(@4, "error: Empty parenthesis syntax requires SystemVerilog.");
-	}
-      }
-  | K_function K_automatic_opt function_range_or_type_opt IDENTIFIER error K_endfunction
-      { /* */
-	if (current_function) {
-	      pform_pop_scope();
-	      current_function = 0;
-	}
-	assert(current_function == 0);
-	yyerror(@1, "error: Syntax error defining function.");
-	yyerrok;
-	delete[]$4;
-      }
+  | function_declaration
 
   /* A generate region can contain further module items. Actually, it
      is supposed to be limited to certain kinds of module items, but
