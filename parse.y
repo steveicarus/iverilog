@@ -982,6 +982,56 @@ loop_statement /* IEEE1800-2005: A.6.8 */
       }
   ;
 
+
+/* TODO: Replace register_variable_list with list_of_variable_decl_assignments. */
+list_of_variable_decl_assignments /* IEEE1800-2005 A.2.3 */
+  : variable_decl_assignment
+      { list<decl_assignment_t*>*tmp = new list<decl_assignment_t*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
+  | list_of_variable_decl_assignments ',' variable_decl_assignment
+      { list<decl_assignment_t*>*tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
+      }
+  ;
+
+variable_decl_assignment /* IEEE1800-2005 A.2.3 */
+  : IDENTIFIER dimensions_opt
+      { decl_assignment_t*tmp = new decl_assignment_t;
+	tmp->name = lex_strings.make($1);
+	if ($2) {
+	      tmp->index = *$2;
+	      delete $2;
+	}
+	delete[]$1;
+	$$ = tmp;
+      }
+  | IDENTIFIER '=' expression
+      { decl_assignment_t*tmp = new decl_assignment_t;
+	tmp->name = lex_strings.make($1);
+	tmp->expr .reset($3);
+	delete[]$1;
+	$$ = tmp;
+      }
+  | IDENTIFIER '[' ']'
+      { decl_assignment_t*tmp = new decl_assignment_t;
+	tmp->name = lex_strings.make($1);
+	yyerror("sorry: Dynamic arrays not yet supported here.");
+	delete[]$1;
+	$$ = tmp;
+      }
+  | IDENTIFIER '[' '$' ']'
+      { decl_assignment_t*tmp = new decl_assignment_t;
+	tmp->name = lex_strings.make($1);
+	yyerror("sorry: Queue dimensions not yet supported here.");
+	delete[]$1;
+	$$ = tmp;
+      }
+  ;
+
+
 loop_variables /* IEEE1800-2005: A.6.8 */
   : loop_variables ',' IDENTIFIER
       { list<perm_string>*tmp = $1;
@@ -4702,40 +4752,6 @@ register_variable_list
 		  delete[]$3;
 		}
 	;
-
-/* TODO: Replace register_variable_list with list_of_variable_decl_assignments. */
-list_of_variable_decl_assignments
-  : variable_decl_assignment
-      { list<decl_assignment_t*>*tmp = new list<decl_assignment_t*>;
-	tmp->push_back($1);
-	$$ = tmp;
-      }
-  | list_of_variable_decl_assignments ',' variable_decl_assignment
-      { list<decl_assignment_t*>*tmp = $1;
-	tmp->push_back($3);
-	$$ = tmp;
-      }
-  ;
-
-variable_decl_assignment
-  : IDENTIFIER dimensions_opt
-      { decl_assignment_t*tmp = new decl_assignment_t;
-	tmp->name = lex_strings.make($1);
-	if ($2) {
-	      tmp->index = *$2;
-	      delete $2;
-	}
-	delete[]$1;
-	$$ = tmp;
-      }
-  | IDENTIFIER '=' expression
-      { decl_assignment_t*tmp = new decl_assignment_t;
-	tmp->name = lex_strings.make($1);
-	tmp->expr .reset($3);
-	delete[]$1;
-	$$ = tmp;
-      }
-  ;
 
 net_variable
   : IDENTIFIER dimensions_opt
