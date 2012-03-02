@@ -462,6 +462,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <expr>    udp_initial_expr_opt
 
 %type <text> register_variable net_variable endname_opt
+%type <text> class_declaration_extends_opt
 %type <perm_strings> register_variable_list net_variable_list
 %type <perm_strings> list_of_identifiers loop_variables
 %type <port_list> list_of_port_identifiers
@@ -592,23 +593,44 @@ assignment_pattern /* IEEE1800-2005: A.6.7.1 */
   ;
 
 class_declaration /* IEEE1800-2005: A.1.2 */
-  : K_virtual_opt K_class IDENTIFIER ';'
-    class_items_opt K_endclass endname_opt
+  : K_virtual_opt K_class IDENTIFIER class_declaration_extends_opt ';'
+    class_items_opt K_endclass
       { // Process a class
-	if ($7 && strcmp($3,$7)!=0) {
-	      yyerror(@7, "error: Class end name doesn't match class name.");
-	      delete[]$7;
+	if ($4) {
+	      yyerror(@4, "sorry: Class extends not supported yet.");
+	      delete[]$4;
 	}
 	yyerror(@2, "sorry: Class declarations not supported yet.");
       }
+    endname_opt
+      {
+	if ($9 && strcmp($3,$9)!=0) {
+	      yyerror(@9, "error: Class end name doesn't match class name.");
+	      delete[]$9;
+	}
+	delete[]$3;
+      }
   ;
 
-class_items_opt
+  /* This rule implements [ extends class_type ] in the
+     class_declaration. It is not a rule of its own in the LRM. */
+
+class_declaration_extends_opt /* IEEE1800-2005: A.1.2 */
+  : K_extends IDENTIFIER
+      { $$ = $2; }
+  |
+      { $$ = 0; }
+  ;
+
+  /* The class_items_opt and class_items rules together implement the
+     rule snippet { class_item } (zero or more class_item) of the
+     class_declaration. */
+class_items_opt /* IEEE1800-2005: A.1.2 */
   : class_items
   |
   ;
 
-class_items
+class_items /* IEEE1800-2005: A.1.2 */
   : class_items class_item
   | class_item
   ;
@@ -625,7 +647,7 @@ class_item /* IEEE1800-2005: A.1.8 */
 
     /* Class properties... */
 
-  | data_type list_of_variable_decl_assignments ';'
+  | property_qualifier_opt data_type list_of_variable_decl_assignments ';'
 
 
     /* Class methods... */
@@ -642,6 +664,17 @@ class_item /* IEEE1800-2005: A.1.8 */
 	yyerrok;
       }
 
+  | error ';'
+      { yyerror(@2, "error: invalid class item.");
+	yyerrok;
+      }
+
+  ;
+
+class_item_qualifier /* IEEE1800-2005 A.1.8 */
+  : K_static
+  | K_protected
+  | K_local
   ;
 
 data_type /* IEEE1800-2005: A.2.2.1 */
@@ -999,6 +1032,30 @@ port_direction /* IEEE1800-2005 A.1.3 */
 port_direction_opt
   : port_direction { $$ = $1; }
   |                { $$ = NetNet::PIMPLICIT; }
+  ;
+
+  /* The property_qualifier rule is as literally described in the LRM,
+     but the use is usually as { property_qualifier }, which is
+     implemented bt the property_qualifier_opt rule below. */
+
+property_qualifier /* IEEE1800-2005 A.1.8 */
+  : class_item_qualifier
+  | random_qualifier
+  ;
+
+property_qualifier_opt /* IEEE1800-2005 A.1.8: ... { property_qualifier } */
+  : property_qualifier_list
+  |
+  ;
+
+property_qualifier_list /* IEEE1800-2005 A.1.8 */
+  : property_qualifier_list property_qualifier
+  | property_qualifier
+  ;
+
+random_qualifier /* IEEE1800-2005 A.1.8 */
+  : K_rand
+  | K_randc
   ;
 
   /* real and realtime are exactly the same so save some code
