@@ -38,7 +38,7 @@ extern void lex_end_table();
 bool have_timeunit_decl = false;
 bool have_timeprec_decl = false;
 
-static list<PExpr*>* param_active_range = 0;
+static list<index_component_t>* param_active_range = 0;
 static bool param_active_signed = false;
 static ivl_variable_type_t param_active_type = IVL_VT_LOGIC;
 
@@ -48,7 +48,7 @@ static struct {
       NetNet::PortType port_type;
       ivl_variable_type_t var_type;
       bool sign_flag;
-      list<PExpr*>* range;
+      list<index_component_t>* range;
       data_type_t* data_type;
 } port_declaration_context = {NetNet::NONE, NetNet::NOT_A_PORT,
                               IVL_VT_NO_TYPE, false, 0, 0};
@@ -98,8 +98,7 @@ static list<pair<perm_string,PExpr*> >* make_port_list(char*id, PExpr*expr)
       delete[]id;
       return tmp;
 }
-static list<pair<perm_string,PExpr*> >* make_port_list(list<pair<perm_string,
-                                                                 PExpr*> >*tmp,
+static list<pair<perm_string,PExpr*> >* make_port_list(list<pair<perm_string, PExpr*> >*tmp,
                                                        char*id, PExpr*expr)
 {
       tmp->push_back(make_pair(lex_strings.make(id), expr));
@@ -107,16 +106,19 @@ static list<pair<perm_string,PExpr*> >* make_port_list(list<pair<perm_string,
       return tmp;
 }
 
-list<PExpr*>* make_range_from_width(uint64_t wid)
+list<index_component_t>* make_range_from_width(uint64_t wid)
 {
-      list<PExpr*>*range = new list<PExpr*>;
+      list<index_component_t>*range = new list<index_component_t>;
 
-      range->push_back(new PENumber(new verinum(wid-1, integer_width)));
-      range->push_back(new PENumber(new verinum((uint64_t)0, integer_width)));
+      index_component_t tmp;
+      tmp.msb = new PENumber(new verinum(wid-1, integer_width));
+      tmp.lsb = new PENumber(new verinum((uint64_t)0, integer_width));
+      range->push_back(tmp);
 
       return range;
 }
 
+#if 0
 /*
  * Make a range vector from an existing pair of expressions.
  */
@@ -129,7 +131,8 @@ static vector<PExpr*>* make_range_vector(list<PExpr*>*that)
       delete that;
       return tmp;
 }
-
+#endif
+#if 0
 /*
  * Make a range vector from a width. Generate the msb and lsb
  * expressions to get the canonical range for the given width.
@@ -141,7 +144,7 @@ static vector<PExpr*>* make_range_vector(uint64_t wid)
       tmp->at(1) = new PENumber(new verinum((uint64_t)0, integer_width));
       return tmp;
 }
-
+#endif
 static list<perm_string>* list_from_identifier(char*id)
 {
       list<perm_string>*tmp = new list<perm_string>;
@@ -157,12 +160,12 @@ static list<perm_string>* list_from_identifier(list<perm_string>*tmp, char*id)
       return tmp;
 }
 
-list<PExpr*>* copy_range(list<PExpr*>* orig)
+list<index_component_t>* copy_range(list<index_component_t>* orig)
 {
-      list<PExpr*>*copy = 0;
+      list<index_component_t>*copy = 0;
 
       if (orig)
-	    copy = new list<PExpr*> (*orig);
+	    copy = new list<index_component_t> (*orig);
 
       return copy;
 }
@@ -512,8 +515,8 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <struct_members> struct_union_member_list
 %type <struct_type>    struct_data_type
 
-%type <exprs> range range_opt variable_dimension
-%type <dimensions> dimensions_opt dimensions
+%type <dimensions> range range_opt
+%type <dimensions> dimensions_opt dimensions variable_dimension
 %type <nettype>  net_type var_type net_type_opt
 %type <gatetype> gatetype switchtype
 %type <porttype> port_direction port_direction_opt
@@ -1015,13 +1018,6 @@ variable_decl_assignment /* IEEE1800-2005 A.2.3 */
 	delete[]$1;
 	$$ = tmp;
       }
-  | IDENTIFIER '[' ']'
-      { decl_assignment_t*tmp = new decl_assignment_t;
-	tmp->name = lex_strings.make($1);
-	yyerror("sorry: Dynamic arrays not yet supported here.");
-	delete[]$1;
-	$$ = tmp;
-      }
   | IDENTIFIER '[' '$' ']'
       { decl_assignment_t*tmp = new decl_assignment_t;
 	tmp->name = lex_strings.make($1);
@@ -1272,7 +1268,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
   /* Ports can be integer with a width of [31:0]. */
 
   : port_direction_opt K_integer IDENTIFIER range_opt tf_port_item_expr_opt
-      { list<PExpr*>*range_stub = make_range_from_width(integer_width);
+      { list<index_component_t>*range_stub = make_range_from_width(integer_width);
 	NetNet::PortType use_port_type = $1==NetNet::PIMPLICIT? NetNet::PINPUT : $1;
 
 	port_declaration_context.port_type = use_port_type;
@@ -1297,7 +1293,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
   /* Ports can be time with a width of [63:0] (unsigned). */
 
   | port_direction_opt K_time IDENTIFIER range_opt tf_port_item_expr_opt
-      { list<PExpr*>*range_stub = make_range_from_width(64);
+      { list<index_component_t>*range_stub = make_range_from_width(64);
 	NetNet::PortType use_port_type = $1==NetNet::PIMPLICIT? NetNet::PINPUT : $1;
 
 	port_declaration_context.port_type = use_port_type;
@@ -1414,18 +1410,39 @@ tf_port_list /* IEEE1800-2005: A.2.7 */
 
 variable_dimension /* IEEE1800-2005: A.2.5 */
   : '[' expression ':' expression ']'
-      { list<PExpr*>*tmp = new list<PExpr*>;
-	tmp->push_back($2);
-	tmp->push_back($4);
+      { list<index_component_t> *tmp = new list<index_component_t>;
+	index_component_t index;
+	index.sel = index_component_t::SEL_PART;
+	index.msb = $2;
+	index.lsb = $4;
+	tmp->push_back(index);
+	$$ = tmp;
+      }
+  | '[' expression ']'
+      { // SystemVerilog canonical range
+	if (generation_flag < GN_VER2005_SV) {
+	      warn_count += 1;
+	      cerr << @2 << ": warning: Use of SystemVerilog [size] dimension. "
+		   << "Use at least -g2005-sv to remove this warning." << endl;
+	}
+	list<index_component_t> *tmp = new list<index_component_t>;
+	index_component_t index;
+	index.sel = index_component_t::SEL_PART;
+	index.lsb = new PENumber(new verinum((uint64_t)0, integer_width));
+	index.msb = new PEBinary('-', $2, new PENumber(new verinum((uint64_t)1, integer_width)));
+	tmp->push_back(index);
 	$$ = tmp;
       }
   | '[' ']'
-      { list<PExpr*>*tmp = new list<PExpr*>;
-	tmp->push_back(0);
-	tmp->push_back(0);
+      { list<index_component_t> *tmp = new list<index_component_t>;
+	index_component_t index;
+	index.msb = 0;
+	index.lsb = 0;
+	yyerror("sorry: Dynamic array ranges not supported.");
+	tmp->push_back(index);
 	$$ = tmp;
       }
-;
+  ;
 
   /* Verilog-2001 supports attribute lists, which can be attached to a
      variety of different objects. The syntax inside the (* *) is a
@@ -2822,20 +2839,21 @@ gate_instance
 		  $$ = tmp;
 		}
 
-	| IDENTIFIER range '(' expression_list_with_nuls ')'
-		{ lgate*tmp = new lgate;
-		  list<PExpr*>*rng = $2;
-		  tmp->name = $1;
-		  tmp->parms = $4;
-		  tmp->range[0] = rng->front(); rng->pop_front();
-		  tmp->range[1] = rng->front(); rng->pop_front();
-		  assert(rng->empty());
-		  tmp->file  = @1.text;
-		  tmp->lineno = @1.first_line;
-		  delete[]$1;
-		  delete rng;
-		  $$ = tmp;
-		}
+  | IDENTIFIER range '(' expression_list_with_nuls ')'
+      { lgate*tmp = new lgate;
+	list<index_component_t>*rng = $2;
+	tmp->name = $1;
+	tmp->parms = $4;
+	tmp->range = rng->front();
+	rng->pop_front();
+	assert(rng->empty());
+	tmp->file  = @1.text;
+	tmp->lineno = @1.first_line;
+	delete[]$1;
+	delete rng;
+	$$ = tmp;
+      }
+
 	| '(' expression_list_with_nuls ')'
 		{ lgate*tmp = new lgate;
 		  tmp->name = "";
@@ -2847,50 +2865,50 @@ gate_instance
 
   /* Degenerate modules can have no ports. */
 
-	| IDENTIFIER range
-		{ lgate*tmp = new lgate;
-		  list<PExpr*>*rng = $2;
-		  tmp->name = $1;
-		  tmp->parms = 0;
-		  tmp->parms_by_name = 0;
-		  tmp->range[0] = rng->front(); rng->pop_front();
-		  tmp->range[1] = rng->front(); rng->pop_front();
-		  assert(rng->empty());
-		  tmp->file  = @1.text;
-		  tmp->lineno = @1.first_line;
-		  delete[]$1;
-		  delete rng;
-		  $$ = tmp;
-		}
+  | IDENTIFIER range
+      { lgate*tmp = new lgate;
+	list<index_component_t>*rng = $2;
+	tmp->name = $1;
+	tmp->parms = 0;
+	tmp->parms_by_name = 0;
+	tmp->range = rng->front();
+	rng->pop_front();
+	assert(rng->empty());
+	tmp->file  = @1.text;
+	tmp->lineno = @1.first_line;
+	delete[]$1;
+	delete rng;
+	$$ = tmp;
+      }
 
   /* Modules can also take ports by port-name expressions. */
 
-	| IDENTIFIER '(' port_name_list ')'
-		{ lgate*tmp = new lgate;
-		  tmp->name = $1;
-		  tmp->parms = 0;
-		  tmp->parms_by_name = $3;
-		  tmp->file  = @1.text;
-		  tmp->lineno = @1.first_line;
-		  delete[]$1;
-		  $$ = tmp;
-		}
+  | IDENTIFIER '(' port_name_list ')'
+      { lgate*tmp = new lgate;
+	tmp->name = $1;
+	tmp->parms = 0;
+	tmp->parms_by_name = $3;
+	tmp->file  = @1.text;
+	tmp->lineno = @1.first_line;
+	delete[]$1;
+	$$ = tmp;
+      }
 
-	| IDENTIFIER range '(' port_name_list ')'
-		{ lgate*tmp = new lgate;
-		  list<PExpr*>*rng = $2;
-		  tmp->name = $1;
-		  tmp->parms = 0;
-		  tmp->parms_by_name = $4;
-		  tmp->range[0] = rng->front(); rng->pop_front();
-		  tmp->range[1] = rng->front(); rng->pop_front();
-		  assert(rng->empty());
-		  tmp->file  = @1.text;
-		  tmp->lineno = @1.first_line;
-		  delete[]$1;
-		  delete rng;
-		  $$ = tmp;
-		}
+  | IDENTIFIER range '(' port_name_list ')'
+      { lgate*tmp = new lgate;
+	list<index_component_t>*rng = $2;
+	tmp->name = $1;
+	tmp->parms = 0;
+	tmp->parms_by_name = $4;
+	tmp->range = rng->front();
+	rng->pop_front();
+	assert(rng->empty());
+	tmp->file  = @1.text;
+	tmp->lineno = @1.first_line;
+	delete[]$1;
+	delete rng;
+	$$ = tmp;
+      }
 
 	| IDENTIFIER '(' error ')'
 		{ lgate*tmp = new lgate;
@@ -3143,7 +3161,7 @@ port_declaration
     K_input atom2_type signed_unsigned_opt IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
-	list<PExpr*>*use_range = make_range_from_width($3);
+	list<index_component_t>*use_range = make_range_from_width($3);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::PINPUT,
@@ -3289,7 +3307,7 @@ port_declaration
     K_output atom2_type signed_unsigned_opt IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
-	list<PExpr*>*use_range = make_range_from_width($3);
+	list<index_component_t>*use_range = make_range_from_width($3);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
@@ -3308,7 +3326,7 @@ port_declaration
     K_output atom2_type signed_unsigned_opt IDENTIFIER '=' expression
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
-	list<PExpr*>*use_range = make_range_from_width($3);
+	list<index_component_t>*use_range = make_range_from_width($3);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
@@ -4606,9 +4624,13 @@ port_reference_list
   /* The range is a list of variable dimensions. */
 range
   : variable_dimension
+      { $$ = $1; }
   | range variable_dimension
-      { list<PExpr*>*tmp = $1;
-	if ($2) tmp->splice(tmp->end(), *$2);
+      { list<index_component_t>*tmp = $1;
+	if ($2) {
+	      tmp->splice(tmp->end(), *$2);
+	      delete $2;
+	}
 	$$ = tmp;
       }
   ;
@@ -4623,88 +4645,54 @@ dimensions_opt
 	| dimensions { $$ = $1; }
 
 dimensions
-	: '[' expression ':' expression ']'
-		{ list<index_component_t> *tmp = new list<index_component_t>;
-		  index_component_t index;
-		  index.msb = $2;
-		  index.lsb = $4;
-		  tmp->push_back(index);
-		  $$ = tmp;
-		}
-        | '[' expression ']'
-		{ if (generation_flag < GN_VER2005_SV) {
-			warn_count += 1;
-			cerr << @2 << ": warning: Use of SystemVerilog [size] dimension. "
-			     << "Use at least -g2005-sv to remove this warning." << endl;
-		  }
-		  list<index_component_t> *tmp = new list<index_component_t>;
-		  index_component_t index;
-		  index.msb = new PENumber(new verinum((uint64_t)0, integer_width));
-		  index.lsb = new PEBinary('-', $2, new PENumber(new verinum((uint64_t)1, integer_width)));
-		  tmp->push_back(index);
-		  $$ = tmp;
-		}
-	| dimensions '[' expression ':' expression ']'
-		{ list<index_component_t> *tmp = $1;
-		  index_component_t index;
-		  index.msb = $3;
-		  index.lsb = $5;
-		  tmp->push_back(index);
-		  $$ = tmp;
-		}
-        | dimensions '[' expression ']'
-		{ if (generation_flag < GN_VER2005_SV) {
-			warn_count += 1;
-			cerr << @2 << ": warning: Use of SystemVerilog [size] dimension. "
-			     << "Use at least -g2005-sv to remove this warning." << endl;
-		  }
-		  list<index_component_t> *tmp = $1;
-		  index_component_t index;
-		  index.msb = new PENumber(new verinum((uint64_t)0, integer_width));
-		  index.lsb = new PEBinary('-', $3, new PENumber(new verinum((uint64_t)1, integer_width)));
-		  tmp->push_back(index);
-		  $$ = tmp;
-		}
+  : variable_dimension
+      { $$ = $1; }
+  | dimensions variable_dimension
+      { list<index_component_t> *tmp = $1;
+	if ($2) {
+	      tmp->splice(tmp->end(), *$2);
+	      delete $2;
+	}
+	$$ = tmp;
+      }
+  ;
 
   /* This is used to express the return type of a function. */
 function_range_or_type_opt
   : unsigned_signed_opt range_opt
-				{
-				/* the default type is reg unsigned and no range */
-				$$.type = PTF_REG;
-				$$.range = 0;
-				if ($1)
-					$$.type = PTF_REG_S;
-				if ($2)
-					$$.range = make_range_vector($2);
-			}
+      { /* the default type is reg unsigned and no range */
+	$$.type = PTF_REG;
+	$$.range = 0;
+	if ($1)
+	      $$.type = PTF_REG_S;
+	if ($2)
+	      $$.range = $2;
+      }
   | K_reg unsigned_signed_opt range_opt
-			{
-				/* the default type is reg unsigned and no range */
-				$$.type = PTF_REG;
-				$$.range = 0;
-				if ($2)
-					$$.type = PTF_REG_S;
-				if ($3)
-					$$.range = make_range_vector($3);
-			}
+      { /* the default type is reg unsigned and no range */
+	$$.type = PTF_REG;
+	$$.range = 0;
+	if ($2)
+	      $$.type = PTF_REG_S;
+	if ($3)
+	      $$.range = $3;
+      }
   | bit_logic unsigned_signed_opt range_opt
-			{
-				/* the default type is bit/logic unsigned and no range */
-				$$.type  = PTF_REG;
-				$$.range = 0;
-				if ($2)
-					$$.type = PTF_REG_S;
-				if ($3)
-					$$.range = make_range_vector($3);
-			}
+      { /* the default type is bit/logic unsigned and no range */
+	$$.type  = PTF_REG;
+	$$.range = 0;
+	if ($2)
+	      $$.type = PTF_REG_S;
+	if ($3)
+	      $$.range = $3;
+      }
   | K_integer  { $$.range = 0;  $$.type = PTF_INTEGER; }
   | K_real     { $$.range = 0;  $$.type = PTF_REAL; }
   | K_realtime { $$.range = 0;  $$.type = PTF_REALTIME; }
   | K_time     { $$.range = 0;  $$.type = PTF_TIME; }
-  | atom2_type { $$.range = make_range_vector($1); $$.type = PTF_ATOM2_S; }
-  | atom2_type K_signed  { $$.range = make_range_vector($1); $$.type = PTF_ATOM2_S; }
-  | atom2_type K_unsigned { $$.range = make_range_vector($1); $$.type = PTF_ATOM2; }
+  | atom2_type { $$.range = make_range_from_width($1); $$.type = PTF_ATOM2_S; }
+  | atom2_type K_signed  { $$.range = make_range_from_width($1); $$.type = PTF_ATOM2_S; }
+  | atom2_type K_unsigned { $$.range = make_range_from_width($1); $$.type = PTF_ATOM2; }
   ;
 
   /* The register_variable rule is matched only when I am parsing
@@ -5577,7 +5565,7 @@ task_port_item
      shape. Generate a range ([31:0]) to make it work. */
 
   | port_direction K_integer list_of_identifiers ';'
-      { list<PExpr*>*range_stub = make_range_from_width(integer_width);
+      { list<index_component_t>*range_stub = make_range_from_width(integer_width);
 	svector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, true,
 						    range_stub, $3, true);
 	$$ = tmp;
@@ -5586,7 +5574,7 @@ task_port_item
   /* Ports can be time with a width of [63:0] (unsigned). */
 
   | port_direction K_time list_of_identifiers ';'
-      { list<PExpr*>*range_stub = make_range_from_width(64);
+      { list<index_component_t>*range_stub = make_range_from_width(64);
 	svector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, false,
 						    range_stub, $3);
 	$$ = tmp;

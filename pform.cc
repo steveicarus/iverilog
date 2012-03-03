@@ -1480,16 +1480,15 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
       delete init_expr;
 }
 
-static void ranges_from_list(list<PWire::range_t>&rlist, const list<PExpr*>*range)
+static void ranges_from_list(list<PWire::range_t>&rlist,
+			     const list<index_component_t>*range)
 {
-	// There must be an even number of expressions in the
-	// range. The parser will assure that for us.
-      assert(range->size()%2 == 0);
-      list<PExpr*>::const_iterator rcur = range->begin();
-      while (rcur != range->end()) {
+	// Convert a list of index_component_t to PWire::range_t.
+      for (list<index_component_t>::const_iterator rcur = range->begin()
+		 ; rcur != range->end() ; ++rcur) {
 	    PWire::range_t rng;
-	    rng.msb = *rcur; ++rcur;
-	    rng.lsb = *rcur; ++rcur;
+	    rng.msb = rcur->msb;
+	    rng.lsb = rcur->lsb;
 	    rlist.push_back(rng);
       }
 }
@@ -1500,7 +1499,7 @@ static void ranges_from_list(list<PWire::range_t>&rlist, const list<PExpr*>*rang
  * and the name that I receive only has the tail component.
  */
 static void pform_set_net_range(perm_string name,
-				const list<PExpr*>*range,
+				const list<index_component_t>*range,
 				bool signed_flag,
 				ivl_variable_type_t dt,
 				PWSRType rt)
@@ -1528,12 +1527,10 @@ static void pform_set_net_range(perm_string name,
 }
 
 static void pform_set_net_range(list<perm_string>*names,
-				list<PExpr*>*range,
+				list<index_component_t>*range,
 				bool signed_flag,
 				ivl_variable_type_t dt)
 {
-      assert((range == 0) || (range->size()%2 == 0));
-
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
@@ -1601,8 +1598,8 @@ static void pform_makegate(PGBuiltin::Type type,
 
       perm_string dev_name = lex_strings.make(info.name);
       PGBuiltin*cur = new PGBuiltin(type, dev_name, info.parms, delay);
-      if (info.range[0])
-	    cur->set_range(info.range[0], info.range[1]);
+      if (info.range.msb)
+	    cur->set_range(info.range.msb, info.range.lsb);
 
 	// The pform_makegates() that calls me will take care of
 	// deleting the attr pointer, so tell the
@@ -1741,7 +1738,7 @@ void pform_make_modgates(perm_string type,
 	    if (cur.parms_by_name) {
 		  pform_make_modgate(type, cur_name, overrides,
 				     cur.parms_by_name,
-				     cur.range[0], cur.range[1],
+				     cur.range.msb, cur.range.lsb,
 				     cur.file, cur.lineno);
 
 	    } else if (cur.parms) {
@@ -1755,14 +1752,14 @@ void pform_make_modgates(perm_string type,
 		  }
 		  pform_make_modgate(type, cur_name, overrides,
 				     cur.parms,
-				     cur.range[0], cur.range[1],
+				     cur.range.msb, cur.range.lsb,
 				     cur.file, cur.lineno);
 
 	    } else {
 		  list<PExpr*>*wires = new list<PExpr*>;
 		  pform_make_modgate(type, cur_name, overrides,
 				     wires,
-				     cur.range[0], cur.range[1],
+				     cur.range.msb, cur.range.lsb,
 				     cur.file, cur.lineno);
 	    }
       }
@@ -1875,7 +1872,7 @@ void pform_module_define_port(const struct vlltype&li,
 			      NetNet::Type type,
 			      ivl_variable_type_t data_type,
 			      bool signed_flag,
-			      list<PExpr*>*range,
+			      list<index_component_t>*range,
 			      list<named_pexpr_t>*attr)
 {
       PWire*cur = pform_get_wire_in_scope(name);
@@ -2011,7 +2008,7 @@ void pform_makewire(const vlltype&li, perm_string name,
  * pform_makewire above.
  */
 void pform_makewire(const vlltype&li,
-		    list<PExpr*>*range,
+		    list<index_component_t>*range,
 		    bool signed_flag,
 		    list<perm_string>*names,
 		    NetNet::Type type,
@@ -2038,7 +2035,7 @@ void pform_makewire(const vlltype&li,
  * This form makes nets with delays and continuous assignments.
  */
 void pform_makewire(const vlltype&li,
-		    list<PExpr*>*range,
+		    list<index_component_t>*range,
 		    bool signed_flag,
 		    list<PExpr*>*delay,
 		    str_pair_t str,
@@ -2149,7 +2146,7 @@ svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 				      NetNet::PortType pt,
 				      ivl_variable_type_t vtype,
 				      bool signed_flag,
-				      list<PExpr*>*range,
+				      list<index_component_t>*range,
 				      list<perm_string>*names,
 				      bool isint)
 {
@@ -2198,7 +2195,7 @@ svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 				      list<perm_string>*names)
 {
       if (atom2_type_t*atype = dynamic_cast<atom2_type_t*> (vtype)) {
-	    list<PExpr*>*range_tmp = make_range_from_width(atype->type_code);
+	    list<index_component_t>*range_tmp = make_range_from_width(atype->type_code);
 	    return pform_make_task_ports(loc, pt, IVL_VT_BOOL,
 					 atype->signed_flag,
 					 range_tmp, names);
@@ -2211,7 +2208,7 @@ svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 					 names);
       }
 
-      if (real_type_t*real_type = dynamic_cast<real_type_t*> (vtype)) {
+      if (/*real_type_t*real_type = */ dynamic_cast<real_type_t*> (vtype)) {
 	    return pform_make_task_ports(loc, pt, IVL_VT_REAL,
 					 true, 0, names);
       }
@@ -2325,7 +2322,7 @@ LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,
 
 void pform_set_parameter(const struct vlltype&loc,
 			 perm_string name, ivl_variable_type_t type,
-			 bool signed_flag, list<PExpr*>*range, PExpr*expr,
+			 bool signed_flag, list<index_component_t>*range, PExpr*expr,
 			 LexicalScope::range_t*value_range)
 {
       LexicalScope*scope = lexical_scope;
@@ -2360,11 +2357,12 @@ void pform_set_parameter(const struct vlltype&loc,
 
       parm.type = type;
       if (range) {
-	    assert(range->size() == 2);
-	    assert(range->front());
-	    assert(range->back());
-	    parm.msb = range->front();
-	    parm.lsb = range->back();
+	    assert(range->size() == 1);
+	    index_component_t index = range->front();
+	    assert(index.msb);
+	    assert(index.lsb);
+	    parm.msb = index.msb;
+	    parm.lsb = index.lsb;
       } else {
 	    parm.msb = 0;
 	    parm.lsb = 0;
@@ -2378,7 +2376,7 @@ void pform_set_parameter(const struct vlltype&loc,
 
 void pform_set_localparam(const struct vlltype&loc,
 			  perm_string name, ivl_variable_type_t type,
-			  bool signed_flag, list<PExpr*>*range, PExpr*expr)
+			  bool signed_flag, list<index_component_t>*range, PExpr*expr)
 {
       LexicalScope*scope = lexical_scope;
 
@@ -2408,11 +2406,12 @@ void pform_set_localparam(const struct vlltype&loc,
 
       parm.type = type;
       if (range) {
-	    assert(range->size() == 2);
-	    assert(range->front());
-	    assert(range->back());
-	    parm.msb = range->front();
-	    parm.lsb = range->back();
+	    assert(range->size() == 1);
+	    index_component_t index = range->front();
+	    assert(index.msb);
+	    assert(index.lsb);
+	    parm.msb = index.msb;
+	    parm.lsb = index.lsb;
       } else {
 	    parm.msb  = 0;
 	    parm.lsb  = 0;
@@ -2511,7 +2510,7 @@ extern void pform_module_specify_path(PSpecPath*obj)
 
 void pform_set_port_type(const struct vlltype&li,
 			 list<perm_string>*names,
-			 list<PExpr*>*range,
+			 list<index_component_t>*range,
 			 bool signed_flag,
 			 NetNet::PortType pt)
 {
@@ -2627,7 +2626,7 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
 	    return;
       }
 
-      if (real_type_t*real_type = dynamic_cast<real_type_t*> (data_type)) {
+      if (/*real_type_t*real_type =*/ dynamic_cast<real_type_t*> (data_type)) {
 	    pform_set_net_range(names, 0, true, IVL_VT_REAL);
 	    return;
       }
@@ -2645,7 +2644,7 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
       cur->set_signed(enum_type->signed_flag);
 
       assert(enum_type->range.get() != 0);
-      assert(enum_type->range->size() == 2);
+      assert(enum_type->range->size() == 1);
       list<PWire::range_t>rlist;
       ranges_from_list(rlist, enum_type->range.get());
       cur->set_range(rlist, SR_NET);
@@ -2659,7 +2658,7 @@ void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_st
       assert(enum_type->base_type==IVL_VT_LOGIC || enum_type->base_type==IVL_VT_BOOL);
 
       assert(enum_type->range.get() != 0);
-      assert(enum_type->range->size() == 2);
+      assert(enum_type->range->size() == 1);
 
 	// Add the file and line information to the enumeration type.
       FILE_NAME(&(enum_type->li), li);
