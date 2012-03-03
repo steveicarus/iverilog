@@ -118,33 +118,6 @@ list<index_component_t>* make_range_from_width(uint64_t wid)
       return range;
 }
 
-#if 0
-/*
- * Make a range vector from an existing pair of expressions.
- */
-static vector<PExpr*>* make_range_vector(list<PExpr*>*that)
-{
-      assert(that->size() == 2);
-      vector<PExpr*>*tmp = new vector<PExpr*> (2);
-      tmp->at(0) = that->front();
-      tmp->at(1) = that->back();
-      delete that;
-      return tmp;
-}
-#endif
-#if 0
-/*
- * Make a range vector from a width. Generate the msb and lsb
- * expressions to get the canonical range for the given width.
- */
-static vector<PExpr*>* make_range_vector(uint64_t wid)
-{
-      vector<PExpr*>*tmp = new vector<PExpr*> (2);
-      tmp->at(0) = new PENumber(new verinum(wid-1, integer_width));
-      tmp->at(1) = new PENumber(new verinum((uint64_t)0, integer_width));
-      return tmp;
-}
-#endif
 static list<perm_string>* list_from_identifier(char*id)
 {
       list<perm_string>*tmp = new list<perm_string>;
@@ -342,6 +315,7 @@ static void current_task_set_statement(vector<Statement*>*s)
       struct_type_t*struct_type;
 
       data_type_t*data_type;
+      class_type_t*class_type;
 
       verinum* number;
 
@@ -464,8 +438,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <statement> udp_initial udp_init_opt
 %type <expr>    udp_initial_expr_opt
 
-%type <text> register_variable net_variable endname_opt
-%type <text> class_declaration_extends_opt
+%type <text> register_variable net_variable endname_opt class_declaration_endname_opt
 %type <perm_strings> register_variable_list net_variable_list
 %type <perm_strings> list_of_identifiers loop_variables
 %type <port_list> list_of_port_identifiers
@@ -511,6 +484,8 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <decl_assignments> list_of_variable_decl_assignments
 
 %type <data_type>  data_type data_type_or_implicit
+%type <data_type>  class_declaration_extends_opt
+%type <class_type> class_identifier
 %type <struct_member>  struct_union_member
 %type <struct_members> struct_union_member_list
 %type <struct_type>    struct_data_type
@@ -596,30 +571,71 @@ assignment_pattern /* IEEE1800-2005: A.6.7.1 */
   ;
 
 class_declaration /* IEEE1800-2005: A.1.2 */
-  : K_virtual_opt K_class IDENTIFIER class_declaration_extends_opt ';'
+  : K_virtual_opt K_class class_identifier class_declaration_extends_opt ';'
     class_items_opt K_endclass
-      { // Process a class
+      { // Process a class.
 	if ($4) {
 	      yyerror(@4, "sorry: Class extends not supported yet.");
-	      delete[]$4;
 	}
 	yyerror(@2, "sorry: Class declarations not supported yet.");
       }
-    endname_opt
-      {
-	if ($9 && strcmp($3,$9)!=0) {
+    class_declaration_endname_opt
+      { // Wrap up the class.
+	if ($9 && $3 && $3->name != $9) {
 	      yyerror(@9, "error: Class end name doesn't match class name.");
 	      delete[]$9;
 	}
-	delete[]$3;
       }
   ;
 
+class_identifier
+  : IDENTIFIER
+      { // Create a synthetic typedef for the class name so that the
+	// lexor detects the name as a type.
+	perm_string name = lex_strings.make($1);
+	class_type_t*tmp = new class_type_t(name);
+	pform_set_typedef(name, tmp);
+	delete[]$1;
+	$$ = tmp;
+      }
+  | TYPE_IDENTIFIER
+      { class_type_t*tmp = dynamic_cast<class_type_t*>($1);
+	if (tmp == 0) {
+	      yyerror(@1, "Type name is not a predeclared class name.");
+	}
+	$$ = tmp;
+      }
+  ;
+
+  /* The endname after a class declaration is a little tricky because
+     the class name is detected by the lexor as a TYPE_IDENTIFER if it
+     does indeed match a name. */
+class_declaration_endname_opt
+  : ':' TYPE_IDENTIFIER
+      { class_type_t*tmp = dynamic_cast<class_type_t*> ($2);
+	if (tmp == 0) {
+	      yyerror(@2, "error: class declaration endname is not a class name\n");
+	      $$ = 0;
+	} else {
+	      $$ = strdupnew(tmp->name.str());
+	}
+      }
+  | ':' IDENTIFIER
+      { $$ = $2; }
+  |
+      { $$ = 0; }
+  ;
+
   /* This rule implements [ extends class_type ] in the
-     class_declaration. It is not a rule of its own in the LRM. */
+     class_declaration. It is not a rule of its own in the LRM.
+
+     Note that for this to be correct, the identifier after the
+     extends keyword must be a class name. Therefore, match
+     TYPE_IDENTIFIER instead of IDENTIFIER, and this rule will return
+     a data_type. */
 
 class_declaration_extends_opt /* IEEE1800-2005: A.1.2 */
-  : K_extends IDENTIFIER
+  : K_extends TYPE_IDENTIFIER
       { $$ = $2; }
   |
       { $$ = 0; }
@@ -661,6 +677,16 @@ class_item /* IEEE1800-2005: A.1.8 */
 
     /* Here are some error matching rules to help recover from various
        syntax errors within a class declaration. */
+
+  | property_qualifier_opt data_type error ';'
+      { yyerror(@3, "error: Errors in variable names after data type.");
+	yyerrok;
+      }
+
+  | property_qualifier_opt IDENTIFIER error ';'
+      { yyerror(@3, "error: %s doesn't name a type.", $2);
+	yyerrok;
+      }
 
   | K_function K_new error K_endfunction endnew_opt
       { yyerror(@1, "error: I give up on this class constructor declaration.");
@@ -1591,7 +1617,13 @@ type_declaration
   /* These are forward declarations... */
 
   | K_typedef K_class  IDENTIFIER ';'
-      { yyerror(@1, "sorry: Class forward declarations not supported yet.") }
+      { // Create a synthetic typedef for the class name so that the
+	// lexor detects the name as a type.
+	perm_string name = lex_strings.make($3);
+	class_type_t*tmp = new class_type_t(name);
+	pform_set_typedef(name, tmp);
+	delete[]$3;
+      }
   | K_typedef K_enum   IDENTIFIER ';'
       { yyerror(@1, "sorry: Enum forward declarations not supported yet.") }
   | K_typedef K_struct IDENTIFIER ';'
@@ -1599,7 +1631,13 @@ type_declaration
   | K_typedef K_union  IDENTIFIER ';'
       { yyerror(@1, "sorry: Union forward declarations not supported yet.") }
   | K_typedef          IDENTIFIER ';'
-      { yyerror(@1, "sorry: Class forward declarations not supported yet.") }
+      { // Create a synthetic typedef for the class name so that the
+	// lexor detects the name as a type.
+	perm_string name = lex_strings.make($2);
+	class_type_t*tmp = new class_type_t(name);
+	pform_set_typedef(name, tmp);
+	delete[]$2;
+      }
   ;
 
   /* The structure for an enumeration data type is the keyword "enum",

@@ -121,6 +121,13 @@ struct real_type_t : public data_type_t {
       int type_code;
 };
 
+struct class_type_t : public data_type_t {
+      inline explicit class_type_t(perm_string n)
+      : name(n) { }
+
+      perm_string name;
+};
+
 /*
  * The pform_name_t is the general form for a hierarchical
  * identifier. It is an ordered list of name components. Each name

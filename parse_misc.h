@@ -95,4 +95,6 @@ extern verinum*make_unsized_binary(const char*txt);
 extern verinum*make_unsized_octal(const char*txt);
 extern verinum*make_unsized_hex(const char*txt);
 
+extern char* strdupnew(char const *str);
+
 #endif

@@ -51,7 +51,7 @@
  */
 extern YYLTYPE yylloc;
 
-static char* strdupnew(char const *str)
+char* strdupnew(char const *str)
 {
        return str ? strcpy(new char [strlen(str)+1], str) : 0;
 }
