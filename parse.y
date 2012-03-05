@@ -230,15 +230,37 @@ static long check_enum_seq_value(const YYLTYPE&loc, verinum *arg, bool zero_ok)
       return value;
 }
 
-static void current_task_set_statement(vector<Statement*>*s)
+static void current_task_set_statement(const YYLTYPE&loc, vector<Statement*>*s)
 {
+      if (s == 0) {
+	      /* if the statement list is null, then the parser
+		 detected the case that there are no statements in the
+		 task. If this is System Verilog, handle it as an
+		 an empty block. */
+	    if (!gn_system_verilog()) {
+		  yyerror(loc, "error: Support for empty tasks requires SystemVerilog.");
+	    }
+	    PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+	    FILE_NAME(tmp, loc);
+	    current_task->set_statement(tmp);
+	    return;
+      }
+
+	/* The parser assures that there is a non-empty vector. */
       assert(s && !s->empty());
+
+	/* A vector of 1 is handled as a simple statement. */
       if (s->size() == 1) {
 	    current_task->set_statement((*s)[0]);
 	    return;
       }
 
+      if (!gn_system_verilog()) {
+	    yyerror(loc, "error: Task body with multiple statements requires SystemVerilog.");
+      }
+
       PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+      FILE_NAME(tmp, loc);
       tmp->set_statement(*s);
       current_task->set_statement(tmp);
 }
@@ -1193,10 +1215,10 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	current_task = pform_push_task_scope(@1, $3, $2);
       }
     task_item_list_opt
-    statement_or_null_list
+    statement_or_null_list_opt
     K_endtask
       { current_task->set_ports($6);
-	current_task_set_statement($7);
+	current_task_set_statement(@3, $7);
 	pform_pop_scope();
 	current_task = 0;
 	if ($7->size() > 1 && !gn_system_verilog()) {
@@ -1226,16 +1248,13 @@ task_declaration /* IEEE1800-2005: A.2.7 */
       }
     tf_port_list ')' ';'
     block_item_decls_opt
-    statement_or_null_list
+    statement_or_null_list_opt
     K_endtask
       { current_task->set_ports($6);
-	current_task_set_statement($10);
+	current_task_set_statement(@3, $10);
 	pform_pop_scope();
 	current_task = 0;
-	if ($10->size() > 1 && !gn_system_verilog()) {
-	      yyerror(@10, "error: Task body with multiple statements requres SystemVerilog.");
-	}
-	delete $10;
+	if ($10) delete $10;
       }
     endname_opt
       { // Last step: check any closing name. This is done late so
@@ -1261,7 +1280,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
     statement_or_null_list
     K_endtask
       { current_task->set_ports(0);
-	current_task_set_statement($9);
+	current_task_set_statement(@3, $9);
 	pform_pop_scope();
 	current_task = 0;
 	cerr << @3 << ": warning: task definition for \"" << $3
