@@ -41,7 +41,9 @@ enum PTaskFuncEnum {
       PTF_REALTIME,
       PTF_TIME,
       PTF_ATOM2,
-      PTF_ATOM2_S
+      PTF_ATOM2_S,
+      PTF_STRING,
+      PTF_VOID
 };
 
 struct PTaskFuncArg {

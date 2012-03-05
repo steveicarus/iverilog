@@ -582,6 +582,15 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    ret_sig->data_type(IVL_VT_BOOL);
 	    break;
 
+	  case PTF_STRING:
+	    cerr << get_fileline() << ": sorry: String functions are not supported yet" << endl;
+	    break;
+
+	  case PTF_VOID:
+	      // Void functions have no return value, so there is no
+	      // signal to create here.
+	    break;
+
 	  default:
 	    if (ports_) {
 		  cerr << get_fileline() << ": internal error: I don't know "

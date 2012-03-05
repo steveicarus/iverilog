@@ -416,11 +416,16 @@ data_type_t* pform_test_type_identifier(const char*txt)
 	    return false;
 
       perm_string name = lex_strings.make(txt);
-      map<perm_string,data_type_t*>::iterator cur = lexical_scope->typedefs.find(name);
-      if (cur != lexical_scope->typedefs.end())
-	    return cur->second;
-      else
-	    return 0;
+      map<perm_string,data_type_t*>::iterator cur;
+      LexicalScope*cur_scope = lexical_scope;
+      do {
+	    cur = cur_scope->typedefs.find(name);
+	    if (cur != cur_scope->typedefs.end())
+		  return cur->second;
+ 
+	    cur_scope = cur_scope->parent_scope();
+      } while (cur_scope);
+      return 0;
 }
 
 static void pform_put_behavior_in_scope(PProcess*pp)

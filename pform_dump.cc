@@ -812,7 +812,13 @@ void PFunction::dump(ostream&out, unsigned ind) const
 	    out << "int unsigned ";
 	    break;
 	  case PTF_ATOM2_S:
-	    cout << "int signed ";
+	    out << "int signed ";
+	    break;
+	  case PTF_STRING:
+	    out << "string ";
+	    break;
+	  case PTF_VOID:
+	    out << "void ";
 	    break;
       }
 

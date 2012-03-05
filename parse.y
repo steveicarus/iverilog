@@ -505,8 +505,7 @@ static void current_task_set_statement(vector<Statement*>*s)
 %type <event_statement> event_control
 %type <statement> statement statement_or_null compressed_statement
 %type <statement> loop_statement for_step
-%type <statement_list> statement_list statement_or_null_list
-%type <statement_list> statement_list_or_null
+%type <statement_list> statement_or_null_list statement_or_null_list_opt
 
 %type <statement> analog_statement
 
@@ -656,11 +655,23 @@ class_items /* IEEE1800-2005: A.1.2 */
 
 class_item /* IEEE1800-2005: A.1.8 */
 
-    /* class_constructor_declaration */
-  : K_function K_new '(' tf_port_list_opt ')' ';'
-    statement_list_or_null
+    /* IEEE1800 A.1.8: class_constructor_declaration */
+  : method_qualifier_opt K_function K_new '(' tf_port_list_opt ')' ';'
+    statement_or_null_list_opt
     K_endfunction endnew_opt
-      { yyerror(@1, "sorry: Class constructors not supported yet.");
+      { yyerror(@3, "sorry: Class constructors not supported yet.");
+	yyerrok;
+      }
+
+    /* IEEE1800 A.1.8: class_constructor_declaration with a call to
+       parent constructor. Note that the implicit_class_handle must
+       be K_super ("this.new" makes little sense) but that would
+       cause a conflict. */
+  | method_qualifier_opt K_function K_new '(' tf_port_list_opt ')' ';'
+    implicit_class_handle '.' K_new '(' ')'
+    statement_or_null_list_opt
+    K_endfunction endnew_opt
+      { yyerror(@3, "sorry: Class constructors not supported yet.");
 	yyerrok;
       }
 
@@ -671,9 +682,9 @@ class_item /* IEEE1800-2005: A.1.8 */
 
     /* Class methods... */
 
-  | task_declaration
+  | method_qualifier_opt task_declaration
 
-  | function_declaration
+  | method_qualifier_opt function_declaration
 
     /* Here are some error matching rules to help recover from various
        syntax errors within a class declaration. */
@@ -688,7 +699,7 @@ class_item /* IEEE1800-2005: A.1.8 */
 	yyerrok;
       }
 
-  | K_function K_new error K_endfunction endnew_opt
+  | method_qualifier_opt K_function K_new error K_endfunction endnew_opt
       { yyerror(@1, "error: I give up on this class constructor declaration.");
 	yyerrok;
       }
@@ -797,7 +808,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
-    function_item_list statement_list
+    function_item_list statement_or_null_list
     K_endfunction
       { current_function->set_ports($7);
 	current_function->set_return($3);
@@ -836,7 +847,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
       }
     '(' tf_port_list_opt ')' ';'
     block_item_decls_opt
-    statement_list
+    statement_or_null_list
     K_endfunction
       { current_function->set_ports($7);
 	current_function->set_return($3);
@@ -1044,6 +1055,13 @@ variable_decl_assignment /* IEEE1800-2005 A.2.3 */
 	delete[]$1;
 	$$ = tmp;
       }
+  | IDENTIFIER '=' K_new '(' ')'
+      { decl_assignment_t*tmp = new decl_assignment_t;
+	tmp->name = lex_strings.make($1);
+	yyerror("sorry: Class initialization assignment not supported here.");
+	delete[]$1;
+	$$ = tmp;
+      }
   | IDENTIFIER '[' '$' ']'
       { decl_assignment_t*tmp = new decl_assignment_t;
 	tmp->name = lex_strings.make($1);
@@ -1068,6 +1086,17 @@ loop_variables /* IEEE1800-2005: A.6.8 */
 	$$ = tmp;
       }
   ;
+
+method_qualifier /* IEEE1800-2005: A.1.8 */
+  : K_virtual
+  | class_item_qualifier
+  ;
+
+method_qualifier_opt
+  : method_qualifier
+  |
+  ;
+
 
 non_integer_type /* IEEE1800-2005: A.2.2.1 */
   : K_real { $$ = K_real; }
@@ -1389,6 +1418,19 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	}
      }
 
+  | port_direction_opt data_type_or_implicit IDENTIFIER '[' '$' ']'
+      { yyerror(@5, "sorry: Queues not supported here.");
+	delete[]$3;
+	$$ = 0;
+      }
+
+  /* Rules to match error cases... */
+
+  | port_direction_opt data_type_or_implicit IDENTIFIER error
+      { yyerror(@3, "error: Error in task/function port item after port name %s.", $3);
+	yyerrok;
+	$$ = 0;
+      }
   ;
 
   /* This rule matches the [ = <expression> ] part of the tf_port_item rules. */
@@ -2610,6 +2652,11 @@ expr_primary
 	if (!gn_system_verilog()) {
 	      yyerror(@1, "error: Empty function argument list requires SystemVerilog.");
 	}
+      }
+
+  | implicit_class_handle
+      { yyerror(@1, "sorry: Implicit class handles (this/super) are not supported.");
+	$$ = 0;
       }
 
   /* Many of the VAMS built-in functions are available as builtin
@@ -4695,7 +4742,9 @@ dimensions
       }
   ;
 
-  /* This is used to express the return type of a function. */
+  /* This is used to express the return type of a function. This is
+     not quite right, and should be replaced with a variant that uses
+     the data_type rule. This will get us by for now. */
 function_range_or_type_opt
   : unsigned_signed_opt range_opt
       { /* the default type is reg unsigned and no range */
@@ -4727,7 +4776,9 @@ function_range_or_type_opt
   | K_integer  { $$.range = 0;  $$.type = PTF_INTEGER; }
   | K_real     { $$.range = 0;  $$.type = PTF_REAL; }
   | K_realtime { $$.range = 0;  $$.type = PTF_REALTIME; }
+  | K_string   { $$.range = 0;  $$.type = PTF_STRING; }
   | K_time     { $$.range = 0;  $$.type = PTF_TIME; }
+  | K_void     { $$.range = 0;  $$.type = PTF_VOID; }
   | atom2_type { $$.range = make_range_from_width($1); $$.type = PTF_ATOM2_S; }
   | atom2_type K_signed  { $$.range = make_range_from_width($1); $$.type = PTF_ATOM2_S; }
   | atom2_type K_unsigned { $$.range = make_range_from_width($1); $$.type = PTF_ATOM2; }
@@ -5191,7 +5242,7 @@ statement /* This is roughly statement_item in the LRM */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | K_begin statement_list K_end
+  | K_begin statement_or_null_list K_end
       { PBlock*tmp = new PBlock(PBlock::BL_SEQ);
 	FILE_NAME(tmp, @1);
 	tmp->set_statement(*$2);
@@ -5204,7 +5255,7 @@ statement /* This is roughly statement_item in the LRM */
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
-    statement_list_or_null K_end
+    statement_or_null_list_opt K_end
       { pform_pop_scope();
 	assert(! current_block_stack.empty());
 	PBlock*tmp = current_block_stack.top();
@@ -5227,7 +5278,7 @@ statement /* This is roughly statement_item in the LRM */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | K_fork statement_list K_join
+  | K_fork statement_or_null_list K_join
       { PBlock*tmp = new PBlock(PBlock::BL_PAR);
 	FILE_NAME(tmp, @1);
 	tmp->set_statement(*$2);
@@ -5240,7 +5291,7 @@ statement /* This is roughly statement_item in the LRM */
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
-    statement_list_or_null K_join
+    statement_or_null_list_opt K_join
       { pform_pop_scope();
         assert(! current_block_stack.empty());
 	PBlock*tmp = current_block_stack.top();
@@ -5362,6 +5413,7 @@ statement /* This is roughly statement_item in the LRM */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+
 	| error '=' expression ';'
                 { yyerror(@2, "Syntax in assignment statement l-value.");
 		  yyerrok;
@@ -5446,25 +5498,46 @@ statement /* This is roughly statement_item in the LRM */
 		  delete[]$1;
 		  $$ = tmp;
 		}
-	| hierarchy_identifier '(' expression_list_proper ')' ';'
-		{ PCallTask*tmp = new PCallTask(*$1, *$3);
-		  FILE_NAME(tmp, @1);
-		  delete $1;
-		  delete $3;
-		  $$ = tmp;
-		}
+
+  | hierarchy_identifier '(' expression_list_proper ')' ';'
+      { PCallTask*tmp = new PCallTask(*$1, *$3);
+	FILE_NAME(tmp, @1);
+	delete $1;
+	delete $3;
+	$$ = tmp;
+      }
+
+  | implicit_class_handle '.' hierarchy_identifier '(' expression_list_proper ')' ';'
+      { PCallTask*tmp = new PCallTask(*$3, *$5);
+	yyerror(@1, "sorry: Implicit class handle not supported in front of task names.");
+	FILE_NAME(tmp, @1);
+	delete $3;
+	delete $5;
+	$$ = tmp;
+      }
 
   /* NOTE: The standard doesn't really support an empty argument list
      between parentheses, but it seems natural, and people commonly
      want it. So accept it explicitly. */
 
-	| hierarchy_identifier '(' ')' ';'
-		{ list<PExpr*>pt;
-		  PCallTask*tmp = new PCallTask(*$1, pt);
-		  FILE_NAME(tmp, @1);
-		  delete $1;
-		  $$ = tmp;
-		}
+  | hierarchy_identifier '(' ')' ';'
+      { list<PExpr*>pt;
+	PCallTask*tmp = new PCallTask(*$1, pt);
+	FILE_NAME(tmp, @1);
+	delete $1;
+	$$ = tmp;
+      }
+
+
+  | implicit_class_handle '.' hierarchy_identifier '(' ')' ';'
+      { list<PExpr*>pt;
+	yyerror(@1, "sorry: Implicit class handle not supported in front of task names.");
+	PCallTask*tmp = new PCallTask(*$3, pt);
+	FILE_NAME(tmp, @3);
+	delete $3;
+	$$ = tmp;
+      }
+
 	| hierarchy_identifier ';'
 		{ list<PExpr*>pt;
 		  PCallTask*tmp = new PCallTask(*$1, pt);
@@ -5537,32 +5610,12 @@ compressed_statement
       }
 	;
 
-statement_list_or_null
-  : statement_list_or_null statement
-      { vector<Statement*>*tmp = $1;
-	if (tmp) {
-	      tmp->push_back($2);
-	} else {
-	      tmp = new vector<Statement*>(1);
-	      tmp->at(0) = $2;
-	}
-	$$ = tmp;
-      }
+
+statement_or_null_list_opt
+  : statement_or_null_list
+      { $$ = $1; }
   |
       { $$ = 0; }
-  ;
-
-statement_list
-  : statement_list statement
-      { vector<Statement*>*tmp = $1;
-	tmp->push_back($2);
-	$$ = tmp;
-      }
-  | statement
-      { vector<Statement*>*tmp = new vector<Statement*>(1);
-	tmp->at(0) = $1;
-	$$ = tmp;
-      }
   ;
 
 statement_or_null_list
