@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2010,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -38,7 +38,6 @@ void draw_switch_in_scope(ivl_switch_t sw)
       ivl_expr_t fall_exp = ivl_switch_delay(sw, 1);
       ivl_expr_t decay_exp= ivl_switch_delay(sw, 2);
 
-	/* We do not support tran delays. */
       if ((rise_exp || fall_exp || decay_exp) &&
           (!number_is_immediate(rise_exp, 64, 0) ||
            number_is_unknown(rise_exp) ||
@@ -76,15 +75,16 @@ void draw_switch_in_scope(ivl_switch_t sw)
 		 processing doesn't have to deal with it. */
 	    const char*raw = draw_net_input(enable);
 
+	    snprintf(str_e_buf, sizeof str_e_buf, "p%p", sw);
+	    str_e = str_e_buf;
+
 	    fprintf(vvp_out, "%s/d .delay 1 "
 		    "(%" PRIu64 ",%" PRIu64 ",%" PRIu64 ") %s;\n",
-		    raw, get_number_immediate64(rise_exp),
+		    str_e, get_number_immediate64(rise_exp),
 		    get_number_immediate64(fall_exp),
 		    get_number_immediate64(decay_exp), raw);
 
-	    fprintf(vvp_out, "p%p .import I%p, %s/d;\n", enable, island, raw);
-	    snprintf(str_e_buf, sizeof str_e_buf, "p%p", enable);
-	    str_e = str_e_buf;
+	    fprintf(vvp_out, "%s .import I%p, %s/d;\n", str_e, island, str_e);
 
       } else if (enable) {
 	    str_e = draw_island_net_input(island, enable);

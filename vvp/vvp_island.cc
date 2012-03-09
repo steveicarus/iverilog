@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2010,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -93,6 +93,9 @@ void vvp_island::add_port(const char*key, vvp_net_t*net)
 {
       if (ports_ == 0)
 	    ports_ = new symbol_map_s<vvp_net_t>;
+
+	// each port should have a unique label
+      assert(ports_->sym_get_value(key) == 0);
 
       ports_->sym_set_value(key, net);
 }
