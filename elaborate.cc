@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -726,6 +726,10 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 
 		  log->pin(0).drive0(drive_type(strength0()));
 		  log->pin(0).drive1(drive_type(strength1()));
+	    } else if (rise_time || fall_time || decay_time) {
+		  cerr << get_fileline() << ": sorry: bi-directional pass "
+		       << "switch delays are not supported in V0.9." << endl;
+		  des->errors += 1;
 	    }
 
 	    cur[idx]->set_line(*this);
