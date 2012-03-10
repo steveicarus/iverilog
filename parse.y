@@ -5757,6 +5757,23 @@ statement /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
 
+  | hierarchy_identifier K_with '{' constraint_block_item_list_opt '}' ';'
+      { /* ....randomize with { <constraints> } */
+	if ($1 && peek_tail_name(*$1) == "randomize") {
+	      if (!gn_system_verilog())
+		    yyerror(@2, "error: Randomize with constraint requires SystemVerilog.");
+	      else
+		    yyerror(@2, "sorry: Randomize with constraint not supported.");
+	} else {
+	      yyerror(@2, "error: Constraint block can only be applied to randomize method.");
+	}
+	list<PExpr*>pt;
+	PCallTask*tmp = new PCallTask(*$1, pt);
+	FILE_NAME(tmp, @1);
+	delete $1;
+	$$ = tmp;
+      }
+
   | implicit_class_handle '.' hierarchy_identifier '(' expression_list_with_nuls ')' ';'
       { PCallTask*tmp = new PCallTask(*$3, *$5);
 	yyerror(@1, "sorry: Implicit class handle not supported in front of task names.");
