@@ -513,8 +513,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <enum_type> enum_data_type
 
 %type <wires> task_item task_item_list task_item_list_opt
-%type <wires> task_port_item tf_port_item tf_port_list tf_port_list_opt
-%type <wires> function_item function_item_list
+%type <wires> tf_port_declaration tf_port_item tf_port_list tf_port_list_opt
+%type <wires> function_item function_item_list function_item_list_opt
 
 %type <named_pexpr> port_name parameter_value_byname
 %type <named_pexprs> port_name_list parameter_value_byname_list
@@ -719,6 +719,7 @@ class_item /* IEEE1800-2005: A.1.8 */
 
     /* IEEE1800 A.1.8: class_constructor_declaration */
   : method_qualifier_opt K_function K_new '(' tf_port_list_opt ')' ';'
+    function_item_list_opt
     statement_or_null_list_opt
     K_endfunction endnew_opt
       { yyerror(@3, "sorry: Class constructors not supported yet.");
@@ -730,6 +731,7 @@ class_item /* IEEE1800-2005: A.1.8 */
        be K_super ("this.new" makes little sense) but that would
        cause a conflict. */
   | method_qualifier_opt K_function K_new '(' tf_port_list_opt ')' ';'
+    function_item_list_opt
     implicit_class_handle '.' K_new '(' expression_list_with_nuls ')'
     statement_or_null_list_opt
     K_endfunction endnew_opt
@@ -1449,6 +1451,45 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	}
 	delete[]$3;
 	if ($7) delete[]$7;
+      }
+
+  ;
+
+
+tf_port_declaration /* IEEE1800-2005: A.2.7 */
+  : port_direction K_reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
+      { svector<PWire*>*tmp = pform_make_task_ports(@1, $1,
+						$2 ? IVL_VT_LOGIC :
+						     IVL_VT_NO_TYPE,
+						$3, $4, $5);
+	$$ = tmp;
+      }
+
+  /* When the port is an integer, infer a signed vector of the integer
+     shape. Generate a range ([31:0]) to make it work. */
+
+  | port_direction K_integer list_of_identifiers ';'
+      { list<index_component_t>*range_stub = make_range_from_width(integer_width);
+	svector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, true,
+						    range_stub, $3, true);
+	$$ = tmp;
+      }
+
+  /* Ports can be time with a width of [63:0] (unsigned). */
+
+  | port_direction K_time list_of_identifiers ';'
+      { list<index_component_t>*range_stub = make_range_from_width(64);
+	svector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, false,
+						    range_stub, $3);
+	$$ = tmp;
+      }
+
+  /* Ports can be real or realtime. */
+
+  | port_direction real_or_realtime list_of_identifiers ';'
+      { svector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_REAL, false,
+						    0, $3);
+	$$ = tmp;
       }
 
   ;
@@ -3071,26 +3112,34 @@ expr_primary
 
   /* A function_item_list borrows the task_port_item run to match
      declarations of ports. We check later to make sure there are no
-     output or inout ports actually used. */
+     output or inout ports actually used.
+
+     The function_item is the same as tf_item_declaration. */
+function_item_list_opt
+  : function_item_list { $$ = $1; }
+  |                    { $$ = 0; }
+  ;
+
 function_item_list
-	: function_item
-                { $$ = $1; }
-	| function_item_list function_item
-		{ if ($1 && $2) {
-		        svector<PWire*>*tmp = new svector<PWire*>(*$1, *$2);
-			delete $1;
-			delete $2;
-			$$ = tmp;
-		  } else if ($1) {
-			$$ = $1;
-		  } else {
-			$$ = $2;
-		  }
-		}
-	;
+  : function_item
+      { $$ = $1; }
+  | function_item_list function_item
+      { /* */
+	if ($1 && $2) {
+	      svector<PWire*>*tmp = new svector<PWire*>(*$1, *$2);
+	      delete $1;
+	      delete $2;
+	      $$ = tmp;
+	} else if ($1) {
+	      $$ = $1;
+	} else {
+	      $$ = $2;
+	}
+      }
+ ;
 
 function_item
-  : task_port_item
+  : tf_port_declaration
       { $$ = $1; }
   | block_item_decl
       { $$ = 0; }
@@ -5700,7 +5749,7 @@ statement /* This is roughly statement_item in the LRM */
 		  $$ = tmp;
 		}
 
-  | hierarchy_identifier '(' expression_list_proper ')' ';'
+  | hierarchy_identifier '(' expression_list_with_nuls ')' ';'
       { PCallTask*tmp = new PCallTask(*$1, *$3);
 	FILE_NAME(tmp, @1);
 	delete $1;
@@ -5708,7 +5757,7 @@ statement /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
 
-  | implicit_class_handle '.' hierarchy_identifier '(' expression_list_proper ')' ';'
+  | implicit_class_handle '.' hierarchy_identifier '(' expression_list_with_nuls ')' ';'
       { PCallTask*tmp = new PCallTask(*$3, *$5);
 	yyerror(@1, "sorry: Implicit class handle not supported in front of task names.");
 	FILE_NAME(tmp, @1);
@@ -5717,11 +5766,7 @@ statement /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
 
-  /* NOTE: The standard doesn't really support an empty argument list
-     between parentheses, but it seems natural, and people commonly
-     want it. So accept it explicitly. */
-
-  | hierarchy_identifier '(' ')' ';'
+  | hierarchy_identifier ';'
       { list<PExpr*>pt;
 	PCallTask*tmp = new PCallTask(*$1, pt);
 	FILE_NAME(tmp, @1);
@@ -5729,29 +5774,22 @@ statement /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
 
-
-  | implicit_class_handle '.' hierarchy_identifier '(' ')' ';'
-      { list<PExpr*>pt;
-	yyerror(@1, "sorry: Implicit class handle not supported in front of task names.");
-	PCallTask*tmp = new PCallTask(*$3, pt);
-	FILE_NAME(tmp, @3);
-	delete $3;
+  | hierarchy_identifier '(' error ')' ';'
+      { yyerror(@3, "error: Syntax error in task arguments.");
+	list<PExpr*>pt;
+	PCallTask*tmp = new PCallTask(*$1, pt);
+	FILE_NAME(tmp, @1);
+	delete $1;
 	$$ = tmp;
       }
 
-	| hierarchy_identifier ';'
-		{ list<PExpr*>pt;
-		  PCallTask*tmp = new PCallTask(*$1, pt);
-		  FILE_NAME(tmp, @1);
-		  delete $1;
-		  $$ = tmp;
-		}
-	| error ';'
-		{ yyerror(@2, "error: malformed statement");
-		  yyerrok;
-		  $$ = new PNoop;
-		}
-	;
+  | error ';'
+      { yyerror(@2, "error: malformed statement");
+	yyerrok;
+	$$ = new PNoop;
+      }
+
+  ;
 
 compressed_statement
   : lpvalue K_PLUS_EQ expression
@@ -5841,46 +5879,8 @@ analog_statement
      other block items. */
 task_item
         : block_item_decl  { $$ = new svector<PWire*>(0); }
-        | task_port_item   { $$ = $1; }
+        | tf_port_declaration   { $$ = $1; }
         ;
-
-task_port_item
-  : port_direction K_reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
-      { svector<PWire*>*tmp = pform_make_task_ports(@1, $1,
-						$2 ? IVL_VT_LOGIC :
-						     IVL_VT_NO_TYPE,
-						$3, $4, $5);
-	$$ = tmp;
-      }
-
-  /* When the port is an integer, infer a signed vector of the integer
-     shape. Generate a range ([31:0]) to make it work. */
-
-  | port_direction K_integer list_of_identifiers ';'
-      { list<index_component_t>*range_stub = make_range_from_width(integer_width);
-	svector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, true,
-						    range_stub, $3, true);
-	$$ = tmp;
-      }
-
-  /* Ports can be time with a width of [63:0] (unsigned). */
-
-  | port_direction K_time list_of_identifiers ';'
-      { list<index_component_t>*range_stub = make_range_from_width(64);
-	svector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, false,
-						    range_stub, $3);
-	$$ = tmp;
-      }
-
-  /* Ports can be real or realtime. */
-
-  | port_direction real_or_realtime list_of_identifiers ';'
-      { svector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_REAL, false,
-						    0, $3);
-	$$ = tmp;
-      }
-
-  ;
 
 task_item_list
 	: task_item_list task_item

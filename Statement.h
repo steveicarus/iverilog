@@ -196,18 +196,6 @@ class PCallTask  : public Statement {
 
       const pform_name_t& path() const;
 
-      unsigned nparms() const { return parms_.size(); }
-
-      PExpr*&parm(unsigned idx)
-	    { assert(idx < parms_.size());
-	      return parms_[idx];
-	    }
-
-      PExpr* parm(unsigned idx) const
-	    { assert(idx < parms_.size());
-	      return parms_[idx];
-	    }
-
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
 

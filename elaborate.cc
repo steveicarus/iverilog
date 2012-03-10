@@ -2825,12 +2825,12 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 	    des->errors += 1;
       }
 
-      unsigned parm_count = nparms();
+      unsigned parm_count = parms_.size();
 
 	/* Catch the special case that the system task has no
 	   parameters. The "()" string will be parsed as a single
 	   empty parameter, when we really mean no parameters at all. */
-      if ((nparms() == 1) && (parm(0) == 0))
+      if ((parm_count== 1) && (parms_[0] == 0))
 	    parm_count = 0;
 
       svector<NetExpr*>eparms (parm_count);
@@ -2838,7 +2838,7 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
       perm_string name = peek_tail_name(path_);
 
       for (unsigned idx = 0 ;  idx < parm_count ;  idx += 1) {
-	    PExpr*ex = parm(idx);
+	    PExpr*ex = parms_[idx];
 	    if (ex != 0) {
 		  eparms[idx] = elab_sys_task_arg(des, scope, name, idx, ex);
 	    } else {
@@ -2930,9 +2930,20 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       }
       assert(def);
 
-      if (nparms() != def->port_count()) {
+
+      unsigned parm_count = parms_.size();
+
+	// Handle special case that the definition has no arguments
+	// but the parser found a simgle nul argument. This is an
+	// argument of the parser allowing for the possibility of
+	// default values for argumets: The parser cannot tell the
+	// difference between "func()" and "func(<default>)".
+      if (def->port_count() == 0 && parm_count == 1 && parms_[0] == 0)
+	    parm_count = 0;
+
+      if (parm_count != def->port_count()) {
 	    cerr << get_fileline() << ": error: Port count mismatch in call to ``"
-		 << path_ << "''. Got " << nparms()
+		 << path_ << "''. Got " << parm_count
 		 << " ports, expecting " << def->port_count() << " ports." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -2942,7 +2953,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
 	/* Handle non-automatic tasks with no parameters specially. There is
            no need to make a sequential block to hold the generated code. */
-      if ((nparms() == 0) && !task->is_auto()) {
+      if ((parm_count == 0) && !task->is_auto()) {
 	    cur = new NetUTask(task);
 	    cur->set_line(*this);
 	    return cur;
@@ -2974,7 +2985,23 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	   expression the r-value. We know by definition that the port
 	   is a reg type, so this elaboration is pretty obvious. */
 
-      for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < parm_count ;  idx += 1) {
+
+	    if (parms_[idx] == 0 && !gn_system_verilog()) {
+		  cerr << get_fileline() << ": error: "
+		       << "Missing argument " << (idx+1)
+		       << " of call to task." << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
+	    if (parms_[idx] == 0) {
+		  cerr << get_fileline() << ": sorry: "
+		       << "Implicit arguments (arg " << (idx+1)
+		       << ") not supported." << endl;
+		  des->errors += 1;
+		  continue;
+	    }
 
 	    NetNet*port = def->port(idx);
 	    assert(port->port_type() != NetNet::NOT_A_PORT);
@@ -2985,7 +3012,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    unsigned wid = count_lval_width(lv);
 	    ivl_variable_type_t lv_type = lv->expr_type();
 
-	    NetExpr*rv = elaborate_rval_expr(des, scope, lv_type, wid, parms_[idx]);
+	    NetExpr*rv = elaborate_rval_expr(des, scope, lv_type, wid, parms_ [idx]);
 	    if (NetEEvent*evt = dynamic_cast<NetEEvent*> (rv)) {
 		  cerr << evt->get_fileline() << ": error: An event '"
 		       << evt->event()->name() << "' can not be a user "
@@ -3015,7 +3042,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	   expression that can be a target to a procedural
 	   assignment, including a memory word. */
 
-      for (unsigned idx = 0 ;  idx < nparms() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < parm_count ;  idx += 1) {
 
 	    NetNet*port = def->port(idx);
 
