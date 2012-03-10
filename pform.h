@@ -282,8 +282,7 @@ extern void pform_set_port_type(const struct vlltype&li,
 				list<index_component_t>*range,
 				bool signed_flag,
 				NetNet::PortType);
-extern void pform_set_port_type(perm_string nm, NetNet::PortType pt,
-				const char*file, unsigned lineno);
+
 
 extern void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r);
 extern void pform_set_reg_integer(list<perm_string>*names);

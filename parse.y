@@ -265,6 +265,41 @@ static void current_task_set_statement(const YYLTYPE&loc, vector<Statement*>*s)
       current_task->set_statement(tmp);
 }
 
+static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>*s)
+{
+      if (s == 0) {
+	      /* if the statement list is null, then the parser
+		 detected the case that there are no statements in the
+		 task. If this is System Verilog, handle it as an
+		 an empty block. */
+	    if (!gn_system_verilog()) {
+		  yyerror(loc, "error: Support for empty functions requires SystemVerilog.");
+	    }
+	    PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+	    FILE_NAME(tmp, loc);
+	    current_function->set_statement(tmp);
+	    return;
+      }
+
+	/* The parser assures that there is a non-empty vector. */
+      assert(s && !s->empty());
+
+	/* A vector of 1 is handled as a simple statement. */
+      if (s->size() == 1) {
+	    current_function->set_statement((*s)[0]);
+	    return;
+      }
+
+      if (!gn_system_verilog()) {
+	    yyerror(loc, "error: Function body with multiple statements requires SystemVerilog.");
+      }
+
+      PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+      FILE_NAME(tmp, loc);
+      tmp->set_statement(*s);
+      current_function->set_statement(tmp);
+}
+
 %}
 
 %union {
@@ -447,7 +482,7 @@ static void current_task_set_statement(const YYLTYPE&loc, vector<Statement*>*s)
 %type <flag>    from_exclude
 %type <number>  number pos_neg_number
 %type <flag>    signing unsigned_signed_opt signed_unsigned_opt
-%type <flag>    K_automatic_opt K_packed_opt K_reg_opt K_virtual_opt
+%type <flag>    K_automatic_opt K_packed_opt K_reg_opt K_static_opt K_virtual_opt
 %type <flag>    udp_reg_opt edge_operator
 %type <drive>   drive_strength drive_strength_opt dr_strength0 dr_strength1
 %type <letter>  udp_input_sym udp_output_sym
@@ -495,8 +530,8 @@ static void current_task_set_statement(const YYLTYPE&loc, vector<Statement*>*s)
 
 %type <pform_name> hierarchy_identifier
 %type <expr>  assignment_pattern expression expr_primary expr_mintypmax
-%type <expr>  dynamic_array_new inc_or_dec_expression lpvalue
-%type <expr>  branch_probe_expression
+%type <expr>  class_new dynamic_array_new inc_or_dec_expression inside_expression lpvalue
+%type <expr>  branch_probe_expression streaming_concatenation
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt delay_value_list
 %type <exprs> expression_list_with_nuls expression_list_proper
@@ -526,7 +561,7 @@ static void current_task_set_statement(const YYLTYPE&loc, vector<Statement*>*s)
 %type <event_expr> event_expression
 %type <event_statement> event_control
 %type <statement> statement statement_or_null compressed_statement
-%type <statement> loop_statement for_step
+%type <statement> loop_statement for_step jump_statement
 %type <statement_list> statement_or_null_list statement_or_null_list_opt
 
 %type <statement> analog_statement
@@ -543,7 +578,7 @@ static void current_task_set_statement(const YYLTYPE&loc, vector<Statement*>*s)
 %token K_TAND
 %right K_PLUS_EQ K_MINUS_EQ K_MUL_EQ K_DIV_EQ K_MOD_EQ K_AND_EQ K_OR_EQ
 %right K_XOR_EQ K_LS_EQ K_RS_EQ K_RSS_EQ
-%right '?' ':'
+%right '?' ':' K_inside
 %left K_LOR
 %left K_LAND
 %left '|'
@@ -607,6 +642,11 @@ class_declaration /* IEEE1800-2005: A.1.2 */
 	      delete[]$9;
 	}
       }
+  ;
+
+class_constraint /* IEEE1800-2005: A.1.8 */
+  : constraint_prototype
+  | constraint_declaration
   ;
 
 class_identifier
@@ -690,7 +730,7 @@ class_item /* IEEE1800-2005: A.1.8 */
        be K_super ("this.new" makes little sense) but that would
        cause a conflict. */
   | method_qualifier_opt K_function K_new '(' tf_port_list_opt ')' ';'
-    implicit_class_handle '.' K_new '(' ')'
+    implicit_class_handle '.' K_new '(' expression_list_with_nuls ')'
     statement_or_null_list_opt
     K_endfunction endnew_opt
       { yyerror(@3, "sorry: Class constructors not supported yet.");
@@ -707,6 +747,11 @@ class_item /* IEEE1800-2005: A.1.8 */
   | method_qualifier_opt task_declaration
 
   | method_qualifier_opt function_declaration
+
+
+    /* Class constraints... */
+
+  | class_constraint
 
     /* Here are some error matching rules to help recover from various
        syntax errors within a class declaration. */
@@ -737,6 +782,65 @@ class_item_qualifier /* IEEE1800-2005 A.1.8 */
   : K_static
   | K_protected
   | K_local
+  ;
+
+class_new /* IEEE1800-2005 A.2.4 */
+  : K_new '(' ')'
+      { yyerror(@1, "sorry: class_new not implemented yet.");
+	$$ = 0;
+      }
+  | K_new '(' expression_list_proper ')'
+      { yyerror(@1, "sorry: class_new not implemented yet.");
+	$$ = 0;
+      }
+  ;
+
+constraint_block_item /* IEEE1800-2005 A.1.9 */
+  : constraint_expression
+  ;
+
+constraint_block_item_list
+  : constraint_block_item_list constraint_block_item
+  | constraint_block_item
+  ;
+
+constraint_block_item_list_opt
+  :
+  | constraint_block_item_list
+  ;
+
+constraint_declaration /* IEEE1800-2005: A.1.9 */
+  : K_static_opt K_constraint IDENTIFIER '{' constraint_block_item_list_opt '}'
+      { yyerror(@2, "sorry: Constraint declarations not supported.") }
+
+  /* Error handling rules... */
+
+  | K_static_opt K_constraint IDENTIFIER '{' error '}'
+      { yyerror(@4, "error: Errors in the constraint block item list."); }
+  ;
+
+constraint_expression /* IEEE1800-2005 A.1.9 */
+  : expression ';'
+  | expression K_dist '{' '}' ';'
+  | expression K_TRIGGER constraint_set
+  | K_if '(' expression ')' constraint_set %prec less_than_K_else
+  | K_if '(' expression ')' constraint_set K_else constraint_set
+  | K_foreach '(' IDENTIFIER '[' loop_variables ']' ')' constraint_set
+  ;
+
+constraint_expression_list /* */
+  : constraint_expression_list constraint_expression
+  | constraint_expression
+  ;
+
+constraint_prototype /* IEEE1800-2005: A.1.9 */
+  : K_static_opt K_constraint IDENTIFIER ';'
+      { yyerror(@2, "sorry: Constraint prototypes not supported.") }
+  ;
+
+constraint_set /* IEEE1800-2005 A.1.9 */
+  : constraint_expression
+  | '{' constraint_expression_list '}'
   ;
 
 data_type /* IEEE1800-2005: A.2.2.1 */
@@ -830,24 +934,11 @@ function_declaration /* IEEE1800-2005: A.2.6 */
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
-    function_item_list statement_or_null_list
+    function_item_list statement_or_null_list_opt
     K_endfunction
       { current_function->set_ports($7);
 	current_function->set_return($3);
-	assert($8 && $8->size() > 0);
-	if ($8->size() == 1) {
-	      current_function->set_statement((*$8)[0]);
-	      delete $8;
-	} else {
-	      PBlock*tmp = new PBlock(PBlock::BL_SEQ);
-	      FILE_NAME(tmp, @8);
-	      tmp->set_statement( *$8 );
-	      current_function->set_statement(tmp);
-	      delete $8;
-	      if (!gn_system_verilog()) {
-		    yyerror(@8, "error: Function body with multiple statements requres SystemVerilog.");
-	      }
-	}
+	current_function_set_statement($8? @8 : @4, $8);
 	pform_pop_scope();
 	current_function = 0;
       }
@@ -869,24 +960,11 @@ function_declaration /* IEEE1800-2005: A.2.6 */
       }
     '(' tf_port_list_opt ')' ';'
     block_item_decls_opt
-    statement_or_null_list
+    statement_or_null_list_opt
     K_endfunction
       { current_function->set_ports($7);
 	current_function->set_return($3);
-	assert($11 && $11->size() > 0);
-	if ($11->size() == 1) {
-	      current_function->set_statement((*$11)[0]);
-	      delete $11;
-	} else {
-	      PBlock*tmp = new PBlock(PBlock::BL_SEQ);
-	      FILE_NAME(tmp, @11);
-	      tmp->set_statement( *$11 );
-	      current_function->set_statement(tmp);
-	      delete $11;
-	      if (!gn_system_verilog()) {
-		    yyerror(@11, "error: Function body with multiple statements requres SystemVerilog.");
-	      }
-	}
+	current_function_set_statement($11? @11 : @4, $11);
 	pform_pop_scope();
 	current_function = 0;
 	if ($7==0 && !gn_system_verilog()) {
@@ -965,11 +1043,33 @@ inc_or_dec_expression /* IEEE1800-2005: A.4.3 */
       }
   ;
 
+inside_expression /* IEEE1800-2005 A.8.3 */
+  : expression K_inside '{' open_range_list '}'
+      { yyerror(@2, "sorry: \"inside\" expressions not supported yet.");
+	$$ = 0;
+      }
+  ;
+
 integer_vector_type /* IEEE1800-2005: A.2.2.1 */
   : K_reg   { $$ = IVL_VT_LOGIC; }
   | K_bit   { $$ = IVL_VT_BOOL; }
   | K_logic { $$ = IVL_VT_LOGIC; }
   | K_bool  { $$ = IVL_VT_BOOL; } /* Icarus Verilog xtypes extension */
+  ;
+
+jump_statement /* IEEE1800-2005: A.6.5 */
+  : K_break ';'
+      { yyerror(@1, "sorry: break statements not supported.");
+	$$ = 0;
+      }
+  | K_return ';'
+      { yyerror(@1, "sorry: return statements not supported.");
+	$$ = 0;
+      }
+  | K_return expression ';'
+      { yyerror(@1, "sorry: return statements not supported.");
+	$$ = 0;
+      }
   ;
 
   /* Loop statements are kinds of statements. */
@@ -1084,13 +1184,6 @@ variable_decl_assignment /* IEEE1800-2005 A.2.3 */
 	delete[]$1;
 	$$ = tmp;
       }
-  | IDENTIFIER '[' '$' ']'
-      { decl_assignment_t*tmp = new decl_assignment_t;
-	tmp->name = lex_strings.make($1);
-	yyerror("sorry: Queue dimensions not yet supported here.");
-	delete[]$1;
-	$$ = tmp;
-      }
   ;
 
 
@@ -1134,6 +1227,11 @@ number  : BASED_NUMBER
 	     { $$ = pform_verinum_with_size($1,$2, @2.text, @2.first_line);
 	       based_size = 0; }
 	;
+
+open_range_list /* IEEE1800-2005 A.2.11 */
+  : open_range_list ',' value_range
+  | value_range
+  ;
 
 port_direction /* IEEE1800-2005 A.1.3 */
   : K_input  { $$ = NetNet::PINPUT; }
@@ -1201,6 +1299,33 @@ statement_or_null /* IEEE1800-2005: A.6.4 */
       { $$ = $1; }
   | ';'
       { $$ = 0; }
+  ;
+
+stream_expression
+  : expression
+  ;
+
+stream_expression_list
+  : stream_expression_list ',' stream_expression
+  | stream_expression
+  ;
+
+stream_operator
+  : K_LS
+  | K_RS
+  ;
+
+streaming_concatenation /* IEEE1800-2005: A.8.1 */
+  : '{' stream_operator '{' stream_expression_list '}' '}'
+      { /* streaming concatenation is a SystemVerilog thing. */
+	if (gn_system_verilog()) {
+	      yyerror(@2, "sorry: Streaming concatenation not supported.");
+	      $$ = 0;
+	} else {
+	      yyerror(@2, "error: Streaming concatenation requires SystemVerilog");
+	      $$ = 0;
+	}
+      }
   ;
 
   /* The task declaration rule matches the task declaration
@@ -1350,7 +1475,8 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	port_declaration_context.sign_flag = true;
 	delete port_declaration_context.range;
 	port_declaration_context.range = copy_range(range_stub);
-	svector<PWire*>*tmp = pform_make_task_ports(@3, $1, IVL_VT_LOGIC, true,
+	svector<PWire*>*tmp = pform_make_task_ports(@3, use_port_type,
+						    IVL_VT_LOGIC, true,
 						    range_stub,
 						    list_from_identifier($3), true);
 	$$ = tmp;
@@ -1424,7 +1550,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 		    FILE_NAME($2, @3);
 	      }
 	      port_declaration_context.data_type = $2;
-	      tmp = pform_make_task_ports(@3, $1, $2, ilist);
+	      tmp = pform_make_task_ports(@3, use_port_type, $2, ilist);
 	}
 	$$ = tmp;
 	if ($4) {
@@ -1436,12 +1562,6 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	      delete $5;
 	}
      }
-
-  | port_direction_opt data_type_or_implicit IDENTIFIER '[' '$' ']'
-      { yyerror(@5, "sorry: Queues not supported here.");
-	delete[]$3;
-	$$ = 0;
-      }
 
   /* Rules to match error cases... */
 
@@ -1495,6 +1615,13 @@ tf_port_list /* IEEE1800-2005: A.2.7 */
   ;
 
 
+value_range /* IEEE1800-2005: A.8.3 */
+  : expression
+      { }
+  | '[' expression ':' expression ']'
+      { }
+  ;
+
 variable_dimension /* IEEE1800-2005: A.2.5 */
   : '[' expression ':' expression ']'
       { list<index_component_t> *tmp = new list<index_component_t>;
@@ -1526,6 +1653,20 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
 	index.msb = 0;
 	index.lsb = 0;
 	yyerror("sorry: Dynamic array ranges not supported.");
+	tmp->push_back(index);
+	$$ = tmp;
+      }
+  | '[' '$' ']'
+      { // SystemVerilog queue
+	list<index_component_t> *tmp = new list<index_component_t>;
+	index_component_t index;
+	index.msb = 0;
+	index.lsb = 0;
+	if (gn_system_verilog()) {
+	      yyerror("sorry: Dynamic array ranges not supported.");
+	} else {
+	      yyerror("error: Queue declarations require System Verilog.");
+	}
 	tmp->push_back(index);
 	$$ = tmp;
       }
@@ -2306,10 +2447,12 @@ branch_probe_expression
   ;
 
 expression
-	: expr_primary
-		{ $$ = $1; }
-        | inc_or_dec_expression
-	        { $$ = $1; }
+  : expr_primary
+      { $$ = $1; }
+  | inc_or_dec_expression
+      { $$ = $1; }
+  | inside_expression
+      { $$ = $1; }
 	| '+' expr_primary %prec UNARY_PREC
 		{ $$ = $2; }
 	| '-' expr_primary %prec UNARY_PREC
@@ -2678,6 +2821,11 @@ expr_primary
 	$$ = 0;
       }
 
+  | implicit_class_handle '.' hierarchy_identifier
+      { yyerror(@1, "sorry: Implicit class handles (this/super) are not supported.");
+	$$ = 0;
+      }
+
   /* Many of the VAMS built-in functions are available as builtin
      functions with $system_function equivalents. */
 
@@ -2881,6 +3029,16 @@ expr_primary
 	yyerrok;
       }
 
+  | '{' '}'
+      { // This is the empty queue syntax.
+	if (gn_system_verilog()) {
+	      yyerror(@1, "sorry: Expty queue expressions not supported.");
+	} else {
+	      yyerror(@1, "error: Concatenations are not allowed to be empty.");
+	}
+	$$ = 0;
+      }
+
   /* Cast expressions are primaries */
 
   | DEC_NUMBER '\'' '(' expression ')'
@@ -2901,6 +3059,14 @@ expr_primary
   | assignment_pattern
       { $$ = $1; }
 
+  /* SystemVerilog supports streaming concatenation */
+  | streaming_concatenation
+      { $$ = $1; }
+
+  | K_null
+      { yyerror("sorry: null expressions not supported yet.");
+	$$ = 0;
+      }
   ;
 
   /* A function_item_list borrows the task_port_item run to match
@@ -3532,6 +3698,11 @@ lpvalue
 	FILE_NAME(tmp, @1);
 	delete $2;
 	$$ = tmp;
+      }
+
+  | streaming_concatenation
+      { yyerror(@1, "sorry: streaming concatenation not supported in l-values.");
+	$$ = 0;
       }
   ;
 
@@ -5338,6 +5509,8 @@ statement /* This is roughly statement_item in the LRM */
 
   | loop_statement { $$ = $1; }
 
+  | jump_statement { $$ = $1; }
+
 	| K_case '(' expression ')' case_items K_endcase
 		{ PCase*tmp = new PCase(NetCase::EQ, $3, $5);
 		  FILE_NAME(tmp, @1);
@@ -5490,6 +5663,15 @@ statement /* This is roughly statement_item in the LRM */
      some sense. Elaboration should make sure the lpvalue is an array name. */
 
   | lpvalue '=' dynamic_array_new ';'
+      { PAssign*tmp = new PAssign($1,$3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+
+  /* The class new and dynamic array new expressions are special, so
+     sit in rules of their own. */
+
+  | lpvalue '=' class_new ';'
       { PAssign*tmp = new PAssign($1,$3);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
@@ -5980,4 +6162,5 @@ udp_primitive
 K_automatic_opt: K_automatic { $$ = true; } | { $$ = false;} ;
 K_packed_opt   : K_packed    { $$ = true; } | { $$ = false; } ;
 K_reg_opt      : K_reg       { $$ = true; } | { $$ = false; } ;
+K_static_opt   : K_static    { $$ = true; } | { $$ = false; } ;
 K_virtual_opt  : K_virtual   { $$ = true; } | { $$ = false; } ;

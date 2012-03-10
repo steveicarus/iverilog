@@ -577,7 +577,10 @@ void PAssign::dump(ostream&out, unsigned ind) const
       if (delay_) out << "#" << *delay_ << " ";
       if (count_) out << "repeat(" << *count_ << ") ";
       if (event_) out << *event_ << " ";
-      out << *rval() << ";" << "  /* " << get_fileline() << " */" << endl;
+      PExpr*rexpr = rval();
+      if (rexpr) out << *rval() << ";";
+      else out << "<no rval>;";
+      out << "  /* " << get_fileline() << " */" << endl;
 }
 
 void PAssignNB::dump(ostream&out, unsigned ind) const

@@ -2075,39 +2075,6 @@ void pform_makewire(const vlltype&li,
       }
 }
 
-void pform_set_port_type(perm_string name, NetNet::PortType pt,
-			 const char*file, unsigned lineno)
-{
-      PWire*cur = pform_get_wire_in_scope(name);
-      if (cur == 0) {
-	    cur = new PWire(name, NetNet::IMPLICIT, NetNet::PIMPLICIT, IVL_VT_NO_TYPE);
-	    FILE_NAME(cur, file, lineno);
-	    pform_put_wire_in_scope(name, cur);
-      }
-
-      switch (cur->get_port_type()) {
-	  case NetNet::PIMPLICIT:
-	    if (! cur->set_port_type(pt))
-		  VLerror("error setting port direction.");
-	    break;
-
-	  case NetNet::NOT_A_PORT:
-	    cerr << file << ":" << lineno << ": error: "
-		 << "port " << name << " is not in the port list."
-		 << endl;
-	    error_count += 1;
-	    break;
-
-	  default:
-	    cerr << file << ":" << lineno << ": error: "
-		 << "port " << name << " already has a port declaration."
-		 << endl;
-	    error_count += 1;
-	    break;
-      }
-
-}
-
 /*
  * This function is called by the parser to create task ports. The
  * resulting wire (which should be a register) is put into a list to
@@ -2155,6 +2122,7 @@ svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 				      list<perm_string>*names,
 				      bool isint)
 {
+      assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
       assert(names);
       svector<PWire*>*res = new svector<PWire*>(0);
       for (list<perm_string>::iterator cur = names->begin()
@@ -2513,12 +2481,48 @@ extern void pform_module_specify_path(PSpecPath*obj)
       pform_cur_module->specify_paths.push_back(obj);
 }
 
+
+static void pform_set_port_type(perm_string name, NetNet::PortType pt,
+				const char*file, unsigned lineno)
+{
+      PWire*cur = pform_get_wire_in_scope(name);
+      if (cur == 0) {
+	    cur = new PWire(name, NetNet::IMPLICIT, NetNet::PIMPLICIT, IVL_VT_NO_TYPE);
+	    FILE_NAME(cur, file, lineno);
+	    pform_put_wire_in_scope(name, cur);
+      }
+
+      switch (cur->get_port_type()) {
+	  case NetNet::PIMPLICIT:
+	    if (! cur->set_port_type(pt))
+		  VLerror("error setting port direction.");
+	    break;
+
+	  case NetNet::NOT_A_PORT:
+	    cerr << file << ":" << lineno << ": error: "
+		 << "port " << name << " is not in the port list."
+		 << endl;
+	    error_count += 1;
+	    break;
+
+	  default:
+	    cerr << file << ":" << lineno << ": error: "
+		 << "port " << name << " already has a port declaration."
+		 << endl;
+	    error_count += 1;
+	    break;
+      }
+
+}
+
 void pform_set_port_type(const struct vlltype&li,
 			 list<perm_string>*names,
 			 list<index_component_t>*range,
 			 bool signed_flag,
 			 NetNet::PortType pt)
 {
+      assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
+
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
@@ -2633,6 +2637,11 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
 
       if (/*real_type_t*real_type =*/ dynamic_cast<real_type_t*> (data_type)) {
 	    pform_set_net_range(names, 0, true, IVL_VT_REAL);
+	    return;
+      }
+
+      if (class_type_t*class_type = dynamic_cast<class_type_t*> (data_type)) {
+	    VLerror(li, "sorry: Class types not supported.");
 	    return;
       }
 
