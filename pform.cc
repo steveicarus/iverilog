@@ -1864,8 +1864,8 @@ void pform_make_pgassign_list(list<PExpr*>*alist,
 void pform_make_reginit(const struct vlltype&li,
 			perm_string name, PExpr*expr)
 {
-      if (! pform_at_module_level()) {
-	    VLerror(li, "variable declaration assignments are only "
+      if (! pform_at_module_level() && !gn_system_verilog()) {
+	    VLerror(li, "error: variable declaration assignments are only "
                         "allowed at the module level.");
 	    delete expr;
 	    return;
