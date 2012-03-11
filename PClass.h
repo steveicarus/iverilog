@@ -1,5 +1,7 @@
+#ifndef __PClass_H
+#define __PClass_H
 /*
- * Copyright (c) 2008,2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,41 +20,21 @@
  */
 
 # include  "PScope.h"
+# include  "LineInfo.h"
+# include  "StringHeap.h"
 
-PScope::PScope(perm_string n, LexicalScope*parent)
-: LexicalScope(parent), name_(n)
-{
-}
+/*
+ * SystemVerilog supports class declarations with their own lexical
+ * scope, etc. The parser arranges for these to be created and
+ * collected.
+ */
 
-PScope::PScope(perm_string n)
-: LexicalScope(0), name_(n)
-{
-}
+class PClass : public PScopeExtra, public LineInfo {
 
-PScope::~PScope()
-{
-}
+    public:
+      explicit PClass (perm_string name, LexicalScope*parent);
+      ~PClass();
 
-PWire* LexicalScope::wires_find(perm_string name)
-{
-      map<perm_string,PWire*>::const_iterator cur = wires.find(name);
-      if (cur == wires.end())
-	    return 0;
-      else
-	    return (*cur).second;
-}
+};
 
-PScopeExtra::PScopeExtra(perm_string n, LexicalScope*parent)
-: PScope(n, parent)
-{
-}
-
-PScopeExtra::PScopeExtra(perm_string n)
-: PScope(n)
-{
-}
-
-PScopeExtra::~PScopeExtra()
-{
-}
-
+#endif

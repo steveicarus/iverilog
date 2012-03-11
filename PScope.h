@@ -27,8 +27,10 @@
 
 class PEvent;
 class PExpr;
+class PFunction;
 class AProcess;
 class PProcess;
+class PTask;
 class PWire;
 
 class Design;
@@ -148,6 +150,23 @@ class PScope : public LexicalScope {
 
     private:
       perm_string name_;
+};
+
+/*
+ * Some scopes can carry definitions. These include Modules and PClass
+ * scopes. These derive from PScopeExtra so that they hold the maps of
+ * extra definitions.
+ */
+class PScopeExtra : public PScope {
+
+    public:
+      PScopeExtra(perm_string, LexicalScope*parent);
+      PScopeExtra(perm_string);
+      ~PScopeExtra();
+
+	/* Task definitions within this module */
+      map<perm_string,PTask*> tasks;
+      map<perm_string,PFunction*> funcs;
 };
 
 #endif

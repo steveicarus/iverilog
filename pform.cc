@@ -23,6 +23,7 @@
 # include  "pform.h"
 # include  "parse_misc.h"
 # include  "parse_api.h"
+# include  "PClass.h"
 # include  "PEvent.h"
 # include  "PUdp.h"
 # include  "PGenerate.h"
@@ -267,12 +268,30 @@ void pform_pop_scope()
       lexical_scope = lexical_scope->parent_scope();
 }
 
+PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
+{
+      PClass*class_scope = new PClass(name, lexical_scope);
+      FILE_NAME(class_scope, loc);
+
+      lexical_scope = class_scope;
+      return class_scope;
+}
+
 PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 {
       perm_string task_name = lex_strings.make(name);
 
       PTask*task = new PTask(task_name, lexical_scope, is_auto);
       FILE_NAME(task, loc);
+
+      LexicalScope*scope = lexical_scope;
+      PScopeExtra*scopex = dynamic_cast<PScopeExtra*> (scope);
+      while (scope && !scopex) {
+	    scope = scope->parent_scope();
+	    scopex = dynamic_cast<PScopeExtra*> (scope);
+      }
+      assert(scopex);
+
       if (pform_cur_generate) {
 	      // Check if the task is already in the dictionary.
 	    if (pform_cur_generate->tasks.find(task->pscope_name()) !=
@@ -286,15 +305,15 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 	    pform_cur_generate->tasks[task->pscope_name()] = task;
       } else {
 	      // Check if the task is already in the dictionary.
-	    if (pform_cur_module->tasks.find(task->pscope_name()) !=
-	        pform_cur_module->tasks.end()) {
+	    if (scopex->tasks.find(task->pscope_name()) != scopex->tasks.end()) {
 		  cerr << task->get_fileline() << ": error: duplicate "
 		          "definition for task '" << name << "' in '"
-		       << pform_cur_module->mod_name() << "'." << endl;
+		       << scopex->pscope_name() << "'." << endl;
 		  error_count += 1;
 	    }
-	    pform_cur_module->tasks[task->pscope_name()] = task;
+	    scopex->tasks[task->pscope_name()] = task;
       }
+
       lexical_scope = task;
 
       return task;
@@ -307,6 +326,15 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, char*name,
 
       PFunction*func = new PFunction(func_name, lexical_scope, is_auto);
       FILE_NAME(func, loc);
+
+      LexicalScope*scope = lexical_scope;
+      PScopeExtra*scopex = dynamic_cast<PScopeExtra*> (scope);
+      while (scope && !scopex) {
+	    scope = scope->parent_scope();
+	    scopex = dynamic_cast<PScopeExtra*> (scope);
+      }
+      assert(scopex);
+
       if (pform_cur_generate) {
 	      // Check if the function is already in the dictionary.
 	    if (pform_cur_generate->funcs.find(func->pscope_name()) !=
@@ -320,14 +348,13 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, char*name,
 	    pform_cur_generate->funcs[func->pscope_name()] = func;
       } else {
 	      // Check if the function is already in the dictionary.
-	    if (pform_cur_module->funcs.find(func->pscope_name()) !=
-	        pform_cur_module->funcs.end()) {
+	    if (scopex->funcs.find(func->pscope_name()) != scopex->funcs.end()) {
 		  cerr << func->get_fileline() << ": error: duplicate "
 		          "definition for function '" << name << "' in '"
-		       << pform_cur_module->mod_name() << "'." << endl;
+		       << scopex->pscope_name() << "'." << endl;
 		  error_count += 1;
 	    }
-	    pform_cur_module->funcs[func->pscope_name()] = func;
+	    scopex->funcs[func->pscope_name()] = func;
       }
       lexical_scope = func;
 
@@ -2640,7 +2667,7 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
 	    return;
       }
 
-      if (class_type_t*class_type = dynamic_cast<class_type_t*> (data_type)) {
+      if (/*class_type_t*class_type =*/ dynamic_cast<class_type_t*> (data_type)) {
 	    VLerror(li, "sorry: Class types not supported.");
 	    return;
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,42 +17,21 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "PScope.h"
+# include  "pform.h"
+# include  "PClass.h"
 
-PScope::PScope(perm_string n, LexicalScope*parent)
-: LexicalScope(parent), name_(n)
+static PClass*pform_cur_class = 0;
+
+void pform_start_class_declaration(const struct vlltype&loc, class_type_t*type)
 {
+      PClass*class_scope = pform_push_class_scope(loc, type->name);
+      assert(pform_cur_class == 0);
+      pform_cur_class = class_scope;
 }
 
-PScope::PScope(perm_string n)
-: LexicalScope(0), name_(n)
+void pform_end_class_declaration(void)
 {
+      assert(pform_cur_class);
+      pform_cur_class = 0;
+      pform_pop_scope();
 }
-
-PScope::~PScope()
-{
-}
-
-PWire* LexicalScope::wires_find(perm_string name)
-{
-      map<perm_string,PWire*>::const_iterator cur = wires.find(name);
-      if (cur == wires.end())
-	    return 0;
-      else
-	    return (*cur).second;
-}
-
-PScopeExtra::PScopeExtra(perm_string n, LexicalScope*parent)
-: PScope(n, parent)
-{
-}
-
-PScopeExtra::PScopeExtra(perm_string n)
-: PScope(n)
-{
-}
-
-PScopeExtra::~PScopeExtra()
-{
-}
-

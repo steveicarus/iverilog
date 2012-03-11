@@ -58,6 +58,7 @@
 class PGate;
 class PExpr;
 class PSpecPath;
+class PClass;
 struct vlltype;
 
 /*
@@ -168,6 +169,10 @@ extern Module::port_t* pform_module_port_reference(perm_string name,
 extern void pform_endmodule(const char*, bool inside_celldefine,
                             Module::UCDriveType uc_drive_def);
 
+extern void pform_start_class_declaration(const struct vlltype&loc,
+					  class_type_t*type);
+extern void pform_end_class_declaration(void);
+
 extern void pform_make_udp(perm_string name, list<perm_string>*parms,
 			   svector<PWire*>*decl, list<string>*table,
 			   Statement*init,
@@ -187,6 +192,7 @@ extern void pform_make_udp(perm_string name,
  */
 extern void pform_pop_scope();
 
+extern PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name);
 extern PTask*pform_push_task_scope(const struct vlltype&loc, char*name,
                                    bool is_auto);
 extern PFunction*pform_push_function_scope(const struct vlltype&loc, char*name,

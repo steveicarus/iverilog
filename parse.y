@@ -628,18 +628,21 @@ assignment_pattern /* IEEE1800-2005: A.6.7.1 */
 
 class_declaration /* IEEE1800-2005: A.1.2 */
   : K_virtual_opt K_class class_identifier class_declaration_extends_opt ';'
-    class_items_opt K_endclass
-      { // Process a class.
+      { pform_start_class_declaration(@2, $3);
 	if ($4) {
 	      yyerror(@4, "sorry: Class extends not supported yet.");
 	}
+      }
+    class_items_opt K_endclass
+      { // Process a class.
+	pform_end_class_declaration();
 	yyerror(@2, "sorry: Class declarations not supported yet.");
       }
     class_declaration_endname_opt
       { // Wrap up the class.
-	if ($9 && $3 && $3->name != $9) {
-	      yyerror(@9, "error: Class end name doesn't match class name.");
-	      delete[]$9;
+	if ($10 && $3 && $3->name != $10) {
+	      yyerror(@10, "error: Class end name doesn't match class name.");
+	      delete[]$10;
 	}
       }
   ;
@@ -1348,7 +1351,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	current_task_set_statement(@3, $7);
 	pform_pop_scope();
 	current_task = 0;
-	if ($7->size() > 1 && !gn_system_verilog()) {
+	if ($7 && $7->size() > 1 && !gn_system_verilog()) {
 	      yyerror(@7, "error: Task body with multiple statements requres SystemVerilog.");
 	}
 	delete $7;
