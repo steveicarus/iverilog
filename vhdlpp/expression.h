@@ -215,6 +215,8 @@ class ExpAggregate : public Expression {
 	    size_t count_choices() const { return fields_.size(); }
 	    void map_choices(choice_element*dst);
 
+	    inline Expression* extract_expression() { return val_; }
+
 	    void dump(ostream&out, int indent) const;
 
 	  private:

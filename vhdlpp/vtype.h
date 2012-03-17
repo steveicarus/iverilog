@@ -198,6 +198,38 @@ class VTypeEnum : public VType {
       std::vector<perm_string>names_;
 };
 
+class VTypeRecord : public VType {
+
+    public:
+      class element_t {
+	  public:
+	    element_t(perm_string name, const VType*type);
+
+	    void show(std::ostream&) const;
+
+	  private:
+	    perm_string name_;
+	    const VType*type_;
+
+	  private:// Not implement
+	    element_t(const element_t&);
+	    element_t& operator= (const element_t);
+      };
+
+    public:
+      explicit VTypeRecord(std::list<element_t*>*elements);
+      ~VTypeRecord();
+
+      void show(std::ostream&) const;
+
+      int emit_def(std::ostream&out, perm_string name) const;
+    private:
+      int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
+
+    private:
+      std::vector<element_t*> elements_;
+};
+
 class VTypeDef : public VType {
 
     public:

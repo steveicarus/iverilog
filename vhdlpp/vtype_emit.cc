@@ -159,6 +159,20 @@ int VTypeRange::emit_decl(ostream&out, perm_string name, bool reg_flag) const
       return errors;
 }
 
+int VTypeRecord::emit_def(ostream&out, perm_string name) const
+{
+      int errors = 0;
+      assert(0);
+      return errors;
+}
+
+int VTypeRecord::emit_decl(ostream&out, perm_string name, bool reg_flag) const
+{
+      int errors = 0;
+      assert(0);
+      return errors;
+}
+
 int VTypeDef::emit_def(ostream&out, perm_string name) const
 {
       int errors = 0;

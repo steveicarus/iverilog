@@ -162,6 +162,43 @@ void VTypeEnum::show(ostream&out) const
       out << ")";
 }
 
+VTypeRecord::VTypeRecord(std::list<element_t*>*elements)
+: elements_(elements->size())
+{
+      for (size_t idx = 0 ; idx < elements_.size() ; idx += 1) {
+	    elements_[idx] = elements->front();
+	    elements->pop_front();
+      }
+      delete elements;
+}
+
+VTypeRecord::~VTypeRecord()
+{
+      for (size_t idx = 0 ; idx < elements_.size() ; idx += 1)
+	    delete elements_[idx];
+}
+
+void VTypeRecord::show(ostream&out) const
+{
+      out << "record ";
+      for (size_t idx = 0 ; idx < elements_.size() ; idx += 1) {
+	    elements_[idx]->show(out);
+	    out << "; ";
+      }
+      out << "endrecord";
+}
+
+VTypeRecord::element_t::element_t(perm_string name, const VType*typ)
+: name_(name), type_(typ)
+{
+}
+
+void VTypeRecord::element_t::show(ostream&out) const
+{
+      out << name_ << ":";
+      type_->show(out);
+}
+
 VTypeDef::VTypeDef(perm_string nam, const VType*typ)
 : name_(nam), type_(typ)
 {

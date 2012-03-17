@@ -139,6 +139,47 @@ const VType*parse_type_by_name(perm_string name)
       return active_scope->find_type(name);
 }
 
+// This funciton is called when an aggregate expression is detected by
+// the parser. It makes the ExpAggregate. It also tries to detect the
+// special case that the aggregate is really a primary. The problem is
+// that this:
+//   ( <expression> )
+// also matches the pattern:
+//   ( [ choices => ] <expression> ... )
+// so try to assume that a single expression in parentheses is a
+// primary and fix the parse by returning an Expression instead of an
+// ExpAggregate.
+static Expression*aggregate_or_primary(const YYLTYPE&loc, std::list<ExpAggregate::element_t*>*el)
+{
+      if (el->size() != 1) {
+	    ExpAggregate*tmp = new ExpAggregate(el);
+	    FILE_NAME(tmp,loc);
+	    return tmp;
+      }
+
+      ExpAggregate::element_t*el1 = el->front();
+      if (el1->count_choices() > 0) {
+	    ExpAggregate*tmp = new ExpAggregate(el);
+	    FILE_NAME(tmp,loc);
+	    return tmp;
+      }
+
+      return el1->extract_expression();
+}
+
+static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
+						      const VType*type)
+{
+      list<VTypeRecord::element_t*>*res = new list<VTypeRecord::element_t*>;
+
+      for (list<perm_string>::iterator cur = names->begin()
+		 ; cur != names->end() ; ++cur) {
+	    res->push_back(new VTypeRecord::element_t(*cur, type));
+      }
+
+      return res;
+}
+
 %}
 
 
@@ -184,6 +225,8 @@ const VType*parse_type_by_name(perm_string name)
       std::list<ExpAggregate::choice_t*>*choice_list;
       ExpAggregate::element_t*element;
       std::list<ExpAggregate::element_t*>*element_list;
+
+      std::list<VTypeRecord::element_t*>*record_elements;
 
       std::list<InterfacePort*>* interface_list;
 
@@ -264,7 +307,10 @@ const VType*parse_type_by_name(perm_string name)
 %type <named_expr_list> association_list port_map_aspect port_map_aspect_opt
 %type <named_expr_list> generic_map_aspect generic_map_aspect_opt
 
+%type <vtype> composite_type_definition record_type_definition
 %type <vtype> subtype_indication type_definition
+
+%type <record_elements> element_declaration element_declaration_list
 
 %type <text> architecture_body_start package_declaration_start
 %type <text> identifier_opt identifier_colon_opt logical_name suffix
@@ -595,6 +641,17 @@ component_specification
       }
   ;
 
+composite_type_definition
+  /* constrained_array_definition */
+  : K_array index_constraint K_of subtype_indication
+      { VTypeArray*tmp = new VTypeArray($4, $2);
+	delete $2;
+	$$ = tmp;
+      }
+  | record_type_definition
+      { $$ = $1; }
+  ;
+
 concurrent_signal_assignment_statement
   : name LEQ waveform ';'
       { ExpName*name = dynamic_cast<ExpName*> ($1);
@@ -699,6 +756,19 @@ constant_declaration
       { sorrymsg(@1, "Deferred constant declarations not supported\n");
 	delete $2;
       }
+
+  /* Some error handling... */
+
+  | K_constant identifier_list ':' subtype_indication VASSIGN error ';'
+      { // The syntax allows mutliple names to have the same type/value.
+	errormsg(@6, "Error in value expression for constants.\n");
+	yyerrok;
+	for (std::list<perm_string>::iterator cur = $2->begin()
+		   ; cur != $2->end() ; ++cur) {
+	      active_scope->bind_name(*cur, $4, 0);
+	}
+	delete $2;
+      }
   ;
 
 context_clause : context_items | ;
@@ -732,6 +802,10 @@ element_association
       { ExpAggregate::element_t*tmp = new ExpAggregate::element_t($1, $3);
 	$$ = tmp;
       }
+  | expression
+      { ExpAggregate::element_t*tmp = new ExpAggregate::element_t(0, $1);
+	$$ = tmp;
+      }
   ;
 
 element_association_list
@@ -745,6 +819,21 @@ element_association_list
 	tmp->push_back($1);
 	$$ = tmp;
       }
+  ;
+
+element_declaration
+  : identifier_list ':' subtype_indication ';'
+      { $$ = record_elements($1, $3); }
+  ;
+
+element_declaration_list
+  : element_declaration_list element_declaration
+      { $$ = $1;
+	$$->splice($$->end(), *$2);
+	delete $2;
+      }
+  | element_declaration
+      { $$ = $1; }
   ;
 
   /* As an entity is declared, add it to the map of design entities. */
@@ -1372,7 +1461,12 @@ package_declarative_item
   : component_declaration
   | constant_declaration
   | subtype_declaration
+  | type_declaration
   | use_clause
+  | error ';'
+      { errormsg(@1, "Syntax error in package declarative item.\n");
+	yyerrok;
+      }
   ;
 
 package_declarative_items
@@ -1479,7 +1573,10 @@ primary
 	delete[]$1;
 	$$ = tmp;
       }
-
+/*XXXX Caught up in element_association_list?
+  | '(' expression ')'
+      { $$ = $2; }
+*/
   /* This catches function calls that use association lists for the
      argument list. The position argument list is discovered elsewhere
      and must be discovered by elaboration (thanks to the ambiguity of
@@ -1489,11 +1586,10 @@ primary
 	$$ = 0;
       }
 
-  | '(' expression ')'
-      { $$ = $2; }
+  /* Aggregates */
+
   | '(' element_association_list ')'
-      { ExpAggregate*tmp = new ExpAggregate($2);
-	FILE_NAME(tmp,@1);
+      { Expression*tmp = aggregate_or_primary(@1, $2);
 	$$ = tmp;
       }
   ;
@@ -1634,6 +1730,13 @@ range_list
   | range_list ',' range
       { list<prange_t*>*tmp = $1;
 	tmp->push_back($3);
+	$$ = tmp;
+      }
+  ;
+
+record_type_definition
+  : K_record element_declaration_list K_end K_record
+      { VTypeRecord*tmp = new VTypeRecord($2);
 	$$ = tmp;
       }
   ;
@@ -1911,12 +2014,9 @@ type_definition
 	delete $2;
 	$$ = tmp;
       }
-  /* constrained_array_definition */
-  | K_array index_constraint K_of subtype_indication
-      { VTypeArray*tmp = new VTypeArray($4, $2);
-	delete $2;
-	$$ = tmp;
-      }
+  | composite_type_definition
+      { $$ = $1; }
+
   ;
 
 use_clause
