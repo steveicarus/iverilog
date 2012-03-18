@@ -338,6 +338,17 @@ void generate_global_types(ActiveScope*res)
       res->bind_name(perm_string::literal("natural"),   primitive_NATURAL);
 }
 
+bool is_global_type(perm_string name)
+{
+      if (name == "boolean") return true;
+      if (name == "bit") return true;
+      if (name == "integer") return true;
+      if (name == "std_logic") return true;
+      if (name == "bit_vector") return true;
+      if (name == "natural") return true;
+      return false;
+}
+
 void library_set_work_path(const char*path)
 {
       assert(library_work_path == 0);

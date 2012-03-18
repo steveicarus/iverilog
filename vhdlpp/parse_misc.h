@@ -63,4 +63,6 @@ extern void library_use(const YYLTYPE&loc, ActiveScope*res, const char*libname, 
 
 extern void generate_global_types(ActiveScope*res);
 
+extern bool is_global_type(perm_string type_name);
+
 #endif

@@ -1,7 +1,7 @@
 #ifndef __scope_H
 #define __scope_H
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -95,7 +95,7 @@ class ScopeBase {
 class Scope : public ScopeBase {
 
     public:
-      Scope(const ScopeBase&ref);
+      explicit Scope(const ScopeBase&ref);
       ~Scope();
 
       ComponentBase* find_component(perm_string by_name);

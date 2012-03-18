@@ -34,7 +34,7 @@ void VTypeArray::write_to_stream(ostream&fd) const
 	// Special case: std_logic_vector
       if (etype_ == primitive_STDLOGIC) {
 	    fd << "std_logic_vector";
-	    if (! ranges_.empty()) {
+	    if (! ranges_.empty() && ! ranges_[0].is_box()) {
 		  assert(ranges_.size() < 2);
 		  fd << " (";
 		  if (ranges_[0].msb())

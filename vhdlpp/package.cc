@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,6 +19,7 @@
 
 # include  "package.h"
 # include  "entity.h"
+# include  "parse_misc.h"
 
 Package::Package(perm_string n, const ScopeBase&ref)
 : Scope(ref), name_(n)
@@ -30,9 +31,41 @@ Package::~Package()
     ScopeBase::cleanup();
 }
 
+/*
+ * The Package::write_to_stream is used to write the package to the
+ * work space (or library) so writes proper VHDL that the library
+ * parser can bring back in as needed.
+ */
 void Package::write_to_stream(ostream&fd) const
 {
       fd << "package " << name_ << " is" << endl;
+
+      for (map<perm_string,const VType*>::const_iterator cur = old_types_.begin()
+		 ; cur != old_types_.end() ; ++cur) {
+
+	      // Do not include global types in types dump
+	    if (is_global_type(cur->first))
+		  continue;
+	    if (cur->first == "std_logic_vector")
+		  continue;
+
+	    fd << cur->first << ": ";
+	    cur->second->write_to_stream(fd);
+	    fd << ";" << endl;
+      }
+      for (map<perm_string,const VType*>::const_iterator cur = new_types_.begin()
+		 ; cur != new_types_.end() ; ++cur) {
+
+	      // Do not include primitive types in type dump
+	    if (is_global_type(cur->first))
+		  continue;
+	    if (cur->first == "std_logic_vector")
+		  continue;
+
+	    fd << cur->first << ": ";
+	    cur->second->write_to_stream(fd);
+	    fd << ";" << endl;
+      }
 
       for (map<perm_string,ComponentBase*>::const_iterator cur = old_components_.begin()
 		 ; cur != old_components_.end() ; ++cur) {
