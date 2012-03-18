@@ -180,23 +180,12 @@ VTypeRecord::~VTypeRecord()
 
 void VTypeRecord::show(ostream&out) const
 {
-      out << "record ";
-      for (size_t idx = 0 ; idx < elements_.size() ; idx += 1) {
-	    elements_[idx]->show(out);
-	    out << "; ";
-      }
-      out << "endrecord";
+      write_to_stream(out);
 }
 
 VTypeRecord::element_t::element_t(perm_string name, const VType*typ)
 : name_(name), type_(typ)
 {
-}
-
-void VTypeRecord::element_t::show(ostream&out) const
-{
-      out << name_ << ":";
-      type_->show(out);
 }
 
 VTypeDef::VTypeDef(perm_string nam, const VType*typ)

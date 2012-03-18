@@ -37,9 +37,15 @@ void VTypeArray::write_to_stream(ostream&fd) const
 	    if (! ranges_.empty()) {
 		  assert(ranges_.size() < 2);
 		  fd << " (";
-		  ranges_[0].msb()->write_to_stream(fd);
+		  if (ranges_[0].msb())
+			ranges_[0].msb()->write_to_stream(fd);
+		  else
+			fd << "<>";
 		  fd << " downto ";
-		  ranges_[0].lsb()->write_to_stream(fd);
+		  if (ranges_[0].lsb())
+			ranges_[0].lsb()->write_to_stream(fd);
+		  else
+			fd << "<>";
 		  fd << ") ";
 	    }
 	    return;
@@ -48,11 +54,22 @@ void VTypeArray::write_to_stream(ostream&fd) const
       fd << "array ";
       if (! ranges_.empty()) {
 	    assert(ranges_.size() < 2);
-	    fd << "(";
-	    ranges_[0].msb()->write_to_stream(fd);
-	    fd << " downto ";
-	    ranges_[0].lsb()->write_to_stream(fd);
-	    fd << ") ";
+	    if (ranges_[0].is_box()) {
+		  fd << "(INTEGER range <>) ";
+	    } else {
+		  assert(ranges_[0].msb() && ranges_[0].lsb());
+		  fd << "(";
+		  if (ranges_[0].msb())
+			ranges_[0].msb()->write_to_stream(fd);
+		  else
+			fd << "<>";
+		  fd << " downto ";
+		  if (ranges_[0].lsb())
+			ranges_[0].lsb()->write_to_stream(fd);
+		  else
+			fd << "<>";
+		  fd << ") ";
+	    }
       }
 
       fd << "of ";
@@ -71,9 +88,33 @@ void VTypePrimitive::write_to_stream(ostream&fd) const
 	  case STDLOGIC:
 	    fd << "std_logic";
 	    break;
+	  case BOOLEAN:
+	    fd << "boolean";
+	    break;
 	  default:
 	    assert(0);
 	    fd << "/* PRIMITIVE: " << type_ << " */";
 	    break;
       }
+}
+
+void VTypeRange::write_to_stream(ostream&fd) const
+{
+      fd << "range " << min_ << " to " << max_;
+}
+
+void VTypeRecord::write_to_stream(ostream&fd) const
+{
+      fd << "record ";
+      for (size_t idx = 0 ; idx < elements_.size() ; idx += 1) {
+	    elements_[idx]->write_to_stream(fd);
+	    fd << "; ";
+      }
+      fd << "endrecord";
+}
+
+void VTypeRecord::element_t::write_to_stream(ostream&fd) const
+{
+      fd << name_ << ":";
+      type_->write_to_stream(fd);
 }

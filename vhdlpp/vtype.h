@@ -173,6 +173,8 @@ class VTypeRange : public VType {
       VTypeRange(const VType*base, int64_t max_val, int64_t min_val);
       ~VTypeRange();
 
+      void write_to_stream(std::ostream&fd) const;
+
       int emit_def(std::ostream&out, perm_string name) const;
     private:
       int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
@@ -205,7 +207,7 @@ class VTypeRecord : public VType {
 	  public:
 	    element_t(perm_string name, const VType*type);
 
-	    void show(std::ostream&) const;
+	    void write_to_stream(std::ostream&) const;
 
 	  private:
 	    perm_string name_;
@@ -220,6 +222,7 @@ class VTypeRecord : public VType {
       explicit VTypeRecord(std::list<element_t*>*elements);
       ~VTypeRecord();
 
+      void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
 
       int emit_def(std::ostream&out, perm_string name) const;
