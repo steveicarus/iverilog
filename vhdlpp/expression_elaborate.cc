@@ -177,7 +177,12 @@ const VType* ExpBinary::probe_type(Entity*ent, Architecture*arc) const
       if (t1 == t2)
 	    return t1;
 
+	// FIXME: I should at this point try harder to find an
+	// operator that has the proper argument list and use this
+	// here, but for now we leave it for the back-end to figure out.
+#if 0
       cerr << get_fileline() << ": internal error: I don't know how to resolve types of generic binary expressions." << endl;
+#endif
       return 0;
 }
 
@@ -406,8 +411,10 @@ const VType* ExpName::probe_type(Entity*ent, Architecture*arc) const
 
 int ExpName::elaborate_expr(Entity*, Architecture*, const VType*ltype)
 {
-      ivl_assert(*this, ltype != 0);
-      set_type(ltype);
+      if (ltype) {
+	    ivl_assert(*this, ltype != 0);
+	    set_type(ltype);
+      }
 
       return 0;
 }
@@ -434,7 +441,13 @@ int ExpRelation::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
       }
 
       ivl_assert(*this, ltype != 0);
-      errors += elaborate_exprs(ent, arc, ltype);
+
+	// The type of the operands must match, but need not match the
+	// type for the ExpRelation itself. So get the operand type
+	// separately.
+      const VType*otype = ExpBinary::probe_type(ent, arc);
+      errors += elaborate_exprs(ent, arc, otype);
+
       return errors;
 }
 
