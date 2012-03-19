@@ -127,6 +127,19 @@ class ForGenerate : public GenerateStatement {
       Expression*msb_;
 };
 
+class IfGenerate : public GenerateStatement {
+
+    public:
+      IfGenerate(perm_string gname, Expression*cond,
+		 std::list<Architecture::Statement*>&s);
+      ~IfGenerate();
+
+      int elaborate(Entity*ent, Architecture*arc);
+      int emit(ostream&out, Entity*entity, Architecture*arc);
+
+    private:
+      Expression*cond_;
+};
 
 /*
  * The SignalAssignment class represents the

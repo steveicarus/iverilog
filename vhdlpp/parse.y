@@ -283,7 +283,8 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 %type <component_specification> component_specification
 
 %type <arch_statement> concurrent_statement component_instantiation_statement concurrent_signal_assignment_statement
-%type <arch_statement> for_generate_statement process_statement
+%type <arch_statement> for_generate_statement generate_statement if_generate_statement
+%type <arch_statement> process_statement
 %type <arch_statement_list> architecture_statement_part generate_statement_body
 
 %type <choice> choice
@@ -692,7 +693,7 @@ concurrent_signal_assignment_statement
 concurrent_statement
   : component_instantiation_statement
   | concurrent_signal_assignment_statement
-  | for_generate_statement
+  | generate_statement
   | process_statement
   ;
 
@@ -1068,6 +1069,11 @@ for_generate_statement
       }
   ;
 
+generate_statement /* IEEE 1076-2008 P11.8 */
+  : if_generate_statement
+  | for_generate_statement
+  ;
+
 generate_statement_body
   : architecture_statement_part { $$ = $1; }
   ;
@@ -1122,6 +1128,29 @@ identifier_list
 identifier_opt : IDENTIFIER { $$ = $1; } |  { $$ = 0; } ;
 
 identifier_colon_opt : IDENTIFIER ':' { $$ = $1; } | { $$ = 0; };
+
+  /* The if_generate_statement rule describes the if_generate syntax.
+
+     NOTE: This does not yet implement the elsif and else parts of the
+     syntax. This shouldn't be hard, but is simply not done yet. */
+if_generate_statement /* IEEE 1076-2008 P11.8 */
+  : IDENTIFIER ':' K_if expression
+    K_generate generate_statement_body
+    K_end K_generate identifier_opt ';'
+      { perm_string name = lex_strings.make($1);
+	IfGenerate*tmp = new IfGenerate(name, $4, *$6);
+	FILE_NAME(tmp, @3);
+
+	if ($9 && name != $9) {
+	      errormsg(@1, "if-generate name %s does not match closing name %s\n",
+		       name.str(), $9);
+	}
+	delete[]$1;
+	delete  $6;
+	delete[]$9;
+	$$ = tmp;
+      }
+  ;
 
 if_statement
   : K_if expression K_then sequence_of_statements

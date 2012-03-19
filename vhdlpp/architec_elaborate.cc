@@ -117,6 +117,13 @@ int ForGenerate::elaborate(Entity*ent, Architecture*arc)
       return errors;
 }
 
+int IfGenerate::elaborate(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      errors += elaborate_statements(ent, arc);
+      return errors;
+}
+
 /*
  * This method attempts to rewrite the process content as an
  * always-@(n-edge <expr>) version of the same statement. This makes

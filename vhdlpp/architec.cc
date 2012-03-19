@@ -69,6 +69,16 @@ ForGenerate::~ForGenerate()
 {
 }
 
+IfGenerate::IfGenerate(perm_string gname, Expression*cond,
+		       std::list<Architecture::Statement*>&s)
+: GenerateStatement(gname, s), cond_(cond)
+{
+}
+
+IfGenerate::~IfGenerate()
+{
+}
+
 SignalAssignment::SignalAssignment(ExpName*name, list<Expression*>&rv)
 : lval_(name)
 {

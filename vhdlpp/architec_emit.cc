@@ -181,7 +181,7 @@ int GenerateStatement::emit_statements(ostream&out, Entity*ent, Architecture*arc
 int ForGenerate::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
-      out << "generate genvar \\" << genvar_ << " ;" << endl;
+      out << "genvar \\" << genvar_ << " ;" << endl;
       out << "for (\\" << genvar_ << " = ";
       errors += lsb_->emit(out, ent, arc);
       out << "; \\" << genvar_ << " <= ";
@@ -192,7 +192,21 @@ int ForGenerate::emit(ostream&out, Entity*ent, Architecture*arc)
       errors += emit_statements(out, ent, arc);
 
       out << "end" << endl;
-      out << "endgenerate" << endl;
+
+      return errors;
+}
+
+int IfGenerate::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      out << "if (";
+      cond_->emit(out, ent, arc);
+      out << ") begin : \\" << get_name() << endl;
+
+      errors += emit_statements(out, ent, arc);
+
+      out << "end" << endl;
+
       return errors;
 }
 
