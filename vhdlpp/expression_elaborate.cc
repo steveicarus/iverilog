@@ -330,8 +330,23 @@ int ExpConditional::elaborate_expr(Entity*ent, Architecture*arc, const VType*lty
 	    errors += (*cur)->elaborate_expr(ent, arc, ltype);
       }
 
-      for (list<Expression*>::const_iterator cur = else_clause_.begin()
+      for (list<else_t*>::const_iterator cur = else_clause_.begin()
 		 ; cur != else_clause_.end() ; ++cur) {
+	    errors += (*cur)->elaborate_expr(ent, arc, ltype);
+      }
+
+      return errors;
+}
+
+int ExpConditional::else_t::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
+{
+      int errors = 0;
+
+      if (cond_)
+	    errors += cond_->elaborate_expr(ent, arc, 0);
+
+      for (list<Expression*>::const_iterator cur = true_clause_.begin()
+		 ; cur != true_clause_.end() ; ++cur) {
 	    errors += (*cur)->elaborate_expr(ent, arc, ltype);
       }
 

@@ -328,7 +328,7 @@ int ExpConditional::emit(ostream&out, Entity*ent, Architecture*arc)
       out << ")? (";
 
       if (true_clause_.size() > 1) {
-	    cerr << get_fileline() << ": sorry: Multiple expressions not supported here." << endl;
+	    cerr << get_fileline() << ": sorry: Multiple expression waveforms not supported here." << endl;
 	    errors += 1;
       }
 
@@ -337,15 +337,66 @@ int ExpConditional::emit(ostream&out, Entity*ent, Architecture*arc)
 
       out << ") : (";
 
+	// Draw out any when-else expressions. These are all the else_
+	// clauses besides the last.
       if (else_clause_.size() > 1) {
-	    cerr << get_fileline() << ": sorry: Multiple expressions not supported here." << endl;
+	    list<else_t*>::iterator last = else_clause_.end();
+	    -- last;
+
+	    for (list<else_t*>::iterator cur = else_clause_.begin()
+		       ; cur != last ; ++cur) {
+		  errors += (*cur) ->emit_when_else(out, ent, arc);
+	    }
+     }
+
+      errors += else_clause_.back()->emit_else(out, ent, arc);
+      out << ")";
+
+	// The emit_when_else() functions do not close the last
+	// parentheses so that the following expression can be
+	// nested. But that means come the end, we have some
+	// expressions to close.
+      for (size_t idx = 1 ; idx < else_clause_.size() ; idx += 1)
+	    out << ")";
+ 
+      return errors;
+}
+
+int ExpConditional::else_t::emit_when_else(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      assert(cond_ != 0);
+
+      out << "(";
+      errors += cond_->emit(out, ent, arc);
+      out << ")? (";
+
+      if (true_clause_.size() > 1) {
+	    cerr << get_fileline() << ": sorry: Multiple expression waveforms not supported here." << endl;
 	    errors += 1;
       }
 
-      tmp = else_clause_.front();
+      Expression*tmp = true_clause_.front();
       errors += tmp->emit(out, ent, arc);
 
-      out << ")";
+      out << ") : (";
+
+      return errors;
+}
+
+int ExpConditional::else_t::emit_else(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+	// Trailing else must have no condition.
+      assert(cond_ == 0);
+
+      if (true_clause_.size() > 1) {
+	    cerr << get_fileline() << ": sorry: Multiple expression waveforms not supported here." << endl;
+	    errors += 1;
+      }
+
+      Expression*tmp = true_clause_.front();
+      errors += tmp->emit(out, ent, arc);
 
       return errors;
 }

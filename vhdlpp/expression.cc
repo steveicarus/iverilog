@@ -256,11 +256,12 @@ ExpCharacter::~ExpCharacter()
 {
 }
 
-ExpConditional::ExpConditional(Expression*co, list<Expression*>*tru, list<Expression*>*els)
+ExpConditional::ExpConditional(Expression*co, list<Expression*>*tru,
+			       list<ExpConditional::else_t*>*fal)
 : cond_(co)
 {
       if (tru) true_clause_.splice(true_clause_.end(), *tru);
-      if (els) else_clause_.splice(else_clause_.end(), *els);
+      if (fal) else_clause_.splice(else_clause_.end(), *fal);
 }
 
 ExpConditional::~ExpConditional()
@@ -272,11 +273,28 @@ ExpConditional::~ExpConditional()
 	    delete tmp;
       }
       while (! else_clause_.empty()) {
-	    Expression*tmp = else_clause_.front();
+	    else_t*tmp = else_clause_.front();
 	    else_clause_.pop_front();
 	    delete tmp;
       }
 }
+
+ExpConditional::else_t::else_t(Expression*cond, std::list<Expression*>*tru)
+: cond_(cond)
+{
+      if (tru) true_clause_.splice(true_clause_.end(), *tru);
+}
+
+ExpConditional::else_t::~else_t()
+{
+      delete cond_;
+      while (! true_clause_.empty()) {
+	    Expression*tmp = true_clause_.front();
+	    true_clause_.pop_front();
+	    delete tmp;
+      }
+}
+
 
 ExpEdge::ExpEdge(ExpEdge::fun_t typ, Expression*op)
 : ExpUnary(op), fun_(typ)

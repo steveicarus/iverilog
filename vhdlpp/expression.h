@@ -340,8 +340,24 @@ class ExpCharacter : public Expression {
 class ExpConditional : public Expression {
 
     public:
+      class else_t : public LineInfo {
+	  public:
+	    else_t(Expression*cond, std::list<Expression*>*tru);
+	    ~else_t();
+
+	    int elaborate_expr(Entity*ent, Architecture*arc, const VType*lt);
+	    int emit_when_else(ostream&out, Entity*ent, Architecture*arc);
+	    int emit_else(ostream&out, Entity*ent, Architecture*arc);
+	    void dump(ostream&out, int indent = 0) const;
+
+	  private:
+	    Expression*cond_;
+	    std::list<Expression*> true_clause_;
+      };
+
+    public:
       ExpConditional(Expression*cond, std::list<Expression*>*tru,
-		     std::list<Expression*>*els);
+		     std::list<else_t*>*fal);
       ~ExpConditional();
 
       const VType*probe_type(Entity*ent, Architecture*arc) const;
@@ -353,7 +369,7 @@ class ExpConditional : public Expression {
     private:
       Expression*cond_;
       std::list<Expression*> true_clause_;
-      std::list<Expression*> else_clause_;
+      std::list<else_t*> else_clause_;
 };
 
 /*

@@ -205,6 +205,9 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
       IfSequential::Elsif*elsif;
       std::list<IfSequential::Elsif*>*elsif_list;
 
+      ExpConditional::else_t*exp_else;
+      std::list<ExpConditional::else_t*>*exp_else_list;
+
       CaseSeqStmt::CaseStmtAlternative* case_alt;
       std::list<CaseSeqStmt::CaseStmtAlternative*>* case_alt_list;
 
@@ -282,7 +285,9 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 %type <instantiation_list> instantiation_list
 %type <component_specification> component_specification
 
-%type <arch_statement> concurrent_statement component_instantiation_statement concurrent_signal_assignment_statement
+%type <arch_statement> concurrent_statement component_instantiation_statement
+%type <arch_statement> concurrent_conditional_signal_assignment
+%type <arch_statement> concurrent_signal_assignment_statement
 %type <arch_statement> for_generate_statement generate_statement if_generate_statement
 %type <arch_statement> process_statement
 %type <arch_statement_list> architecture_statement_part generate_statement_body
@@ -333,6 +338,9 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 
 %type <elsif> if_statement_elsif
 %type <elsif_list> if_statement_elsif_list if_statement_elsif_list_opt
+
+%type <exp_else> else_when_waveform
+%type <exp_else_list> else_when_waveforms
 
 %%
 
@@ -653,7 +661,54 @@ composite_type_definition
       { $$ = $1; }
   ;
 
-concurrent_signal_assignment_statement
+
+  /* The when...else..when...else syntax is not a general expression
+     in VHDL but a specific sort of assignment statement model. We
+     create Exppression objects for it, but the parser will only
+     recognize it it in specific situations. */
+concurrent_conditional_signal_assignment /* IEEE 1076-2008 P11.6 */
+  : name LEQ waveform K_when expression else_when_waveforms ';'
+      { ExpConditional*tmp = new ExpConditional($5, $3, $6);
+	FILE_NAME(tmp, @3);
+	delete $3;
+	delete $6;
+
+        ExpName*name = dynamic_cast<ExpName*> ($1);
+	assert(name);
+	SignalAssignment*tmpa = new SignalAssignment(name, tmp);
+	FILE_NAME(tmpa, @1);
+
+	$$ = tmpa;
+      }
+  ;
+
+else_when_waveforms
+  : else_when_waveforms else_when_waveform
+      { list<ExpConditional::else_t*>*tmp = $1;
+	tmp ->push_back($2);
+	$$ = tmp;
+      }
+  | else_when_waveform
+      { list<ExpConditional::else_t*>*tmp = new list<ExpConditional::else_t*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
+  ;
+
+else_when_waveform
+  : K_else waveform K_when expression
+      { ExpConditional::else_t*tmp = new ExpConditional::else_t($4, $2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_else waveform
+      { ExpConditional::else_t*tmp = new ExpConditional::else_t(0,  $2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  ;
+
+concurrent_signal_assignment_statement /* IEEE 1076-2008 P11.6 */
   : name LEQ waveform ';'
       { ExpName*name = dynamic_cast<ExpName*> ($1);
 	assert(name);
@@ -663,19 +718,9 @@ concurrent_signal_assignment_statement
 	$$ = tmp;
 	delete $3;
       }
-  | name LEQ waveform K_when expression K_else waveform ';'
-      { ExpConditional*tmp = new ExpConditional($5, $3, $7);
-	FILE_NAME(tmp, @3);
-	delete $3;
-	delete $7;
 
-        ExpName*name = dynamic_cast<ExpName*> ($1);
-	assert(name);
-	SignalAssignment*tmpa = new SignalAssignment(name, tmp);
-	FILE_NAME(tmpa, @1);
+  | concurrent_conditional_signal_assignment
 
-	$$ = tmpa;
-      }
   | name LEQ error ';'
       { errormsg(@2, "Syntax error in signal assignment waveform.\n");
 	delete $1;

@@ -292,11 +292,22 @@ void ExpConditional::dump(ostream&out, int indent) const
 	    (*cur)->dump(out, indent+4);
       }
 
-      out << setw(indent) << "" << "  else:" << endl;
-      for (list<Expression*>::const_iterator cur = else_clause_.begin()
+      for (list<else_t*>::const_iterator cur = else_clause_.begin()
 		 ; cur != else_clause_.end() ; ++cur) {
+	    (*cur)->dump(out, indent);
+      }
+}
+
+void ExpConditional::else_t::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "when:" << endl;
+      if (cond_) cond_->dump(out, indent+4);
+      out << setw(indent) << "" << "do:" << endl;
+      for (list<Expression*>::const_iterator cur = true_clause_.begin()
+		 ; cur != true_clause_.end() ; ++cur) {
 	    (*cur)->dump(out, indent+4);
       }
+
 }
 
 void ExpEdge::dump(ostream&out, int indent) const
