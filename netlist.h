@@ -35,6 +35,7 @@
 # include  "ivl_target_priv.h"
 # include  "pform_types.h"
 # include  "config.h"
+# include  "nettypes.h"
 # include  "verinum.h"
 # include  "verireal.h"
 # include  "StringHeap.h"
@@ -563,21 +564,6 @@ class NetNet  : public NetObj {
 
       enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT, PREF };
 
-      struct range_t {
-	    inline range_t() : msb(0), lsb(0) { }
-	    inline range_t(long m, long l) : msb(m), lsb(l) { }
-	    inline range_t(const range_t&that)
-	    : msb(that.msb), lsb(that.lsb) { }
-	    inline range_t& operator = (const range_t&that)
-	    { msb = that.msb; lsb = that.lsb; return *this; }
-
-	    long msb;
-	    long lsb;
-
-	    inline unsigned long width()const
-	    { if (msb >= lsb) return msb-lsb+1; else return lsb-msb+1; }
-      };
-
     public:
 	// The width in this case is a shorthand for ms=width-1 and
 	// ls=0. Only one pin is created, the width is of the vector
@@ -589,9 +575,9 @@ class NetNet  : public NetObj {
 	// dimensions. If s0==e0, then this is not an array after
 	// all.
       explicit NetNet(NetScope*s, perm_string n, Type t,
-		      const std::list<range_t>&packed);
+		      const std::list<netrange_t>&packed);
       explicit NetNet(NetScope*s, perm_string n, Type t,
-		      const std::list<range_t>&packed, long s0, long e0);
+		      const std::list<netrange_t>&packed, long s0, long e0);
 
 	// This form builds a NetNet from its record definition.
       explicit NetNet(NetScope*s, perm_string n, Type t, netstruct_t*type);
@@ -633,14 +619,11 @@ class NetNet  : public NetObj {
 	   for the vector. These are arranged as a list where the
 	   first range in the list (front) is the left-most range in
 	   the verilog declaration. */
-      const std::list<range_t>& packed_dims() const { return packed_dims_; }
+      const std::list<netrange_t>& packed_dims() const { return packed_dims_; }
 
 	/* The vector_width returns the bit width of the packed array,
-	   vector or scaler that is this NetNet object. The static
-	   method is also a convenient way to convert a range list to
-	   a vector width. */
-      static unsigned long vector_width(const std::list<NetNet::range_t>&);
-      unsigned long vector_width() const { return vector_width(packed_dims_); }
+	   vector or scaler that is this NetNet object.  */
+      unsigned long vector_width() const { return netrange_width(packed_dims_); }
 
 	/* Given a prefix of indices, figure out how wide the
 	   resulting slice would be. This is a generalization of the
@@ -722,7 +705,7 @@ class NetNet  : public NetObj {
       netstruct_t*struct_type_;
       ivl_discipline_t discipline_;
 
-      std::list<range_t> packed_dims_;
+      std::list<netrange_t> packed_dims_;
       const unsigned dimensions_;
       long s0_, e0_;
 
@@ -736,7 +719,7 @@ class NetNet  : public NetObj {
       vector<class NetDelaySrc*> delay_paths_;
 };
 
-extern std::ostream&operator << (std::ostream&out, const std::list<NetNet::range_t>&rlist);
+extern std::ostream&operator << (std::ostream&out, const std::list<netrange_t>&rlist);
 
 /*
  * This object type is used to contain a logical scope within a

@@ -1442,24 +1442,59 @@ static const netstruct_t::member_t*get_struct_member(const LineInfo*li,
 
       return type->packed_member(method_name, off);
 }
-
+/*
+ * Test if the tail name (method_name argument) is a member name and
+ * the net is a struct. If that turns out to be the case, and the
+ * struct is packed, then return a NetExpr that selects the member out
+ * of the variable.
+ */
 static NetExpr* check_for_struct_members(const LineInfo*li,
-					 Design*des, NetScope*,
-					 NetNet*net, perm_string method_name)
+					 Design*des, NetScope*scope,
+					 NetNet*net, const name_component_t&comp)
 {
       unsigned long off;
       const netstruct_t::member_t*mem = get_struct_member(li, des, 0, net,
-                                                          method_name, off);
+                                                          comp.name, off);
       if (mem == 0) return 0;
 
       if (debug_elaborate) {
-	    cerr << li->get_fileline() << ": debug: Found struct member " <<mem->name
+	    cerr << li->get_fileline() << ": debug: Found struct member " << mem->name
 		 << " At offset " << off << endl;
+      }
+
+      unsigned use_width = mem->width();
+
+      if ( ! comp.index.empty() ) {
+	      // Evaluate all but the last index expression, into prefix_indices.
+	    list<long>prefix_indices;
+	    bool rc = evaluate_index_prefix(des, scope, prefix_indices, comp.index);
+	    ivl_assert(*li, rc);
+
+	      // Evaluate the last index expression into a constant long.
+	    NetExpr*texpr = elab_and_eval(des, scope, comp.index.back().msb, -1, true);
+	    long tmp;
+	    if (texpr == 0 || !eval_as_long(tmp, texpr)) {
+		  cerr << li->get_fileline() << ": error: "
+			"Array index expressions must be constant here." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+
+	    delete texpr;
+
+	      // Now use the prefix_to_slice function to calculate the
+	      // offset and width of the addressed slice of the member.
+	    long loff;
+	    unsigned long lwid;
+	    prefix_to_slice(mem->packed_dims, prefix_indices, tmp, loff, lwid);
+
+	    off += loff;
+	    use_width = lwid;
       }
 
       NetESignal*sig = new NetESignal(net);
       NetEConst*base = make_const_val(off);
-      NetESelect*sel = new NetESelect(sig, base, mem->width());
+      NetESelect*sel = new NetESelect(sig, base, use_width);
       return sel;
 }
 
@@ -2350,7 +2385,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	// really a method attached to an object.
       if (gn_system_verilog() && found_in==0 && path_.size() >= 2) {
 	    pform_name_t use_path = path_;
-	    perm_string method_name = peek_tail_name(use_path);
+	    name_component_t member_comp = use_path.back();
 	    use_path.pop_back();
 
 	    found_in = symbol_search(this, des, scope, use_path,
@@ -2372,7 +2407,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 
 			return check_for_enum_methods(this, des, scope,
 			                              netenum,
-			                              use_path, method_name,
+			                              use_path, member_comp.name,
 			                              expr, expr_wid, NULL, 0);
 		  }
 
@@ -2382,7 +2417,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			ivl_assert(*this, use_path.back().index.empty());
 
 			return check_for_struct_members(this, des, scope,
-							net, method_name);
+							net, member_comp);
 		  }
 
 	    }
@@ -3279,11 +3314,11 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 		  long lsv = base_c->value().as_long();
 		  long offset = 0;
 		    // Get the signal range.
-		  const list<NetNet::range_t>&packed = net->sig()->packed_dims();
+		  const list<netrange_t>&packed = net->sig()->packed_dims();
 		  ivl_assert(*this, packed.size() == prefix_indices.size()+1);
 
 		    // We want the last range, which is where we work.
-		  const NetNet::range_t&rng = packed.back();
+		  const netrange_t&rng = packed.back();
 		  if (rng.msb < rng.lsb) {
 			offset = -wid + 1;
 		  }
@@ -3494,7 +3529,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 
 	    long msv = msc->value().as_long();
 
-	    const list<NetNet::range_t>& sig_packed = net->sig()->packed_dims();
+	    const list<netrange_t>& sig_packed = net->sig()->packed_dims();
 	    if (prefix_indices.size()+2 <= sig_packed.size()) {
 		    // Special case: this is a slice of a multi-dimensional
 		    // packed array. For example:
@@ -3561,7 +3596,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	    return res;
       }
 
-      const list<NetNet::range_t>& sig_packed = net->sig()->packed_dims();
+      const list<netrange_t>& sig_packed = net->sig()->packed_dims();
       if (prefix_indices.size()+2 <= sig_packed.size()) {
 	      // Special case: this is a slice of a multi-dimensional
 	      // packed array. For example:

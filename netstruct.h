@@ -22,6 +22,7 @@
 # include  "LineInfo.h"
 # include <vector>
 # include  "ivl_target.h"
+# include  "nettypes.h"
 
 class netstruct_t : public LineInfo {
 
@@ -29,8 +30,7 @@ class netstruct_t : public LineInfo {
       struct member_t {
 	    perm_string name;
 	    ivl_variable_type_t type;
-	    long msb;
-	    long lsb;
+	    list<netrange_t> packed_dims;
 	    long width() const;
 	    ivl_variable_type_t data_type() const { return type; };
 	      // We need to keep the individual element sign information.
@@ -63,11 +63,6 @@ class netstruct_t : public LineInfo {
 inline bool netstruct_t::packed(void) const { return packed_; }
 
 inline long netstruct_t::member_t::width() const
-{
-      if (msb >= lsb)
-	    return msb - lsb + 1;
-      else
-	    return lsb - msb + 1;
-}
+{ return netrange_width(packed_dims); }
 
 #endif

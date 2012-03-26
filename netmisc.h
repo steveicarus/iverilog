@@ -102,7 +102,7 @@ extern NetExpr*normalize_variable_base(NetExpr *base, long msb, long lsb,
                                        unsigned long wid, bool is_up,
 				       long slice_off =0);
 extern NetExpr*normalize_variable_base(NetExpr *base,
-				       const list<NetNet::range_t>&dims,
+				       const list<netrange_t>&dims,
 				       unsigned long wid, bool is_up);
 
 /*

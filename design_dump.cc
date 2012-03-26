@@ -187,9 +187,9 @@ void NetDelaySrc::dump(ostream&o, unsigned ind) const
       dump_node_pins(o, ind+4);
 }
 
-ostream&operator<<(ostream&out, const list<NetNet::range_t>&rlist)
+ostream&operator<<(ostream&out, const list<netrange_t>&rlist)
 {
-      for (list<NetNet::range_t>::const_iterator cur = rlist.begin()
+      for (list<netrange_t>::const_iterator cur = rlist.begin()
 		 ; cur != rlist.end() ; ++cur) {
 	    out << "[" << cur->msb << ":" << cur->lsb << "]";
       }

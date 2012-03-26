@@ -458,7 +458,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
       assert(npins>0);
 
 	// Synthesize a single range to describe this canonical vector.
-      packed_dims_.push_back(NetNet::range_t(npins-1, 0));
+      packed_dims_.push_back(netrange_t(npins-1, 0));
 
       Link::DIR dir = Link::PASSIVE;
 
@@ -496,7 +496,7 @@ void NetNet::initialize_dir_(Link::DIR dir)
 }
 
 NetNet::NetNet(NetScope*s, perm_string n, Type t,
-	       const list<NetNet::range_t>&packed)
+	       const list<netrange_t>&packed)
 : NetObj(s, n, 1), type_(t),
     port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE), signed_(false),
     isint_(false), is_scalar_(false), local_flag_(false),
@@ -544,7 +544,7 @@ static unsigned calculate_count(long s, long e)
 }
 
 NetNet::NetNet(NetScope*s, perm_string n, Type t,
-	       const list<NetNet::range_t>&packed, long array_s, long array_e)
+	       const list<netrange_t>&packed, long array_s, long array_e)
 : NetObj(s, n, calculate_count(array_s, array_e)),
     type_(t), port_type_(NOT_A_PORT),
     data_type_(IVL_VT_NO_TYPE), signed_(false), isint_(false),
@@ -605,7 +605,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, netstruct_t*ty)
     dimensions_(0), s0_(0), e0_(0),
     eref_count_(0), lref_count_(0)
 {
-      packed_dims_.push_back(range_t(calculate_count(ty)-1, 0));
+      packed_dims_.push_back(netrange_t(calculate_count(ty)-1, 0));
       Link::DIR dir = Link::PASSIVE;
 
       switch (t) {
@@ -764,27 +764,11 @@ void NetNet::set_discipline(ivl_discipline_t dis)
       discipline_ = dis;
 }
 
-unsigned long NetNet::vector_width(const list<NetNet::range_t>&packed)
-{
-      unsigned wid = 1;
-      for (list<NetNet::range_t>::const_iterator cur = packed.begin()
-		 ; cur != packed.end() ; ++cur) {
-	    unsigned use_wid;
-	    if (cur->msb >= cur->lsb)
-		  use_wid = cur->msb - cur->lsb + 1;
-	    else
-		  use_wid = cur->lsb - cur->msb + 1;
-	    wid *= use_wid;
-      }
-
-      return wid;
-}
-
 bool NetNet::sb_is_valid(const list<long>&indices, long sb) const
 {
       ivl_assert(*this, indices.size()+1 == packed_dims_.size());
       assert(packed_dims_.size() == 1);
-      const range_t&rng = packed_dims_.back();
+      const netrange_t&rng = packed_dims_.back();
       if (rng.msb >= rng.lsb)
 	    return (sb <= rng.msb) && (sb >= rng.lsb);
       else
@@ -795,7 +779,7 @@ long NetNet::sb_to_idx(const list<long>&indices, long sb) const
 {
       ivl_assert(*this, indices.size()+1 == packed_dims_.size());
 
-      list<range_t>::const_iterator pcur = packed_dims_.end();
+      list<netrange_t>::const_iterator pcur = packed_dims_.end();
       -- pcur;
 
       long acc_off;
@@ -832,50 +816,7 @@ long NetNet::sb_to_idx(const list<long>&indices, long sb) const
 bool NetNet::sb_to_slice(const list<long>&indices, long sb, long&loff, unsigned long&lwid) const
 {
       ivl_assert(*this, indices.size() < packed_dims_.size());
-
-      size_t acc_wid = 1;
-      list<range_t>::const_iterator pcur = packed_dims_.end();
-      for (size_t idx = indices.size()+1 ; idx < packed_dims_.size() ; idx += 1) {
-	    -- pcur;
-	    acc_wid *= pcur->width();
-      }
-
-      lwid = acc_wid;
-
-      -- pcur;
-      if (sb < pcur->msb && sb < pcur->lsb)
-	    return false;
-      if (sb > pcur->msb && sb > pcur->lsb)
-	    return false;
-
-      long acc_off = 0;
-      if (pcur->msb >= pcur->lsb)
-	    acc_off += (sb - pcur->lsb) * acc_wid;
-      else
-	    acc_off += (sb - pcur->msb) * acc_wid;
-
-      if (indices.size() == 0) {
-	    loff = acc_off;
-	    return true;
-      }
-
-      lwid *= pcur->width();
-
-      list<long>::const_iterator icur = indices.end();
-      do {
-	    -- pcur;
-	    -- icur;
-	    acc_wid *= pcur->width();
-	    if (pcur->msb >= pcur->lsb)
-		  acc_off += (*icur - pcur->lsb) * acc_wid;
-	    else
-		  acc_off += (*icur - pcur->msb) * acc_wid;
-
-      } while (icur != indices.begin());
-
-      loff = acc_off;
-
-      return true;
+      return prefix_to_slice(packed_dims_, indices, sb, loff, lwid);
 }
 
 
@@ -2461,14 +2402,14 @@ NetNet* NetESignal::sig()
  */
 long NetESignal::lsi() const
 {
-      const list<NetNet::range_t>&packed = net_->packed_dims();
+      const list<netrange_t>&packed = net_->packed_dims();
       ivl_assert(*this, packed.size() == 1);
       return packed.back().lsb;
 }
 
 long NetESignal::msi() const
 {
-      const list<NetNet::range_t>&packed = net_->packed_dims();
+      const list<netrange_t>&packed = net_->packed_dims();
       ivl_assert(*this, packed.size() == 1);
       return packed.back().msb;
 }

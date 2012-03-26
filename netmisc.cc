@@ -320,24 +320,24 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
  * vector. For now, we assert that there is only one set of dimensions.
  */
 NetExpr *normalize_variable_base(NetExpr *base,
-				 const list<NetNet::range_t>&dims,
+				 const list<netrange_t>&dims,
 				 unsigned long wid, bool is_up)
 {
       ivl_assert(*base, dims.size() == 1);
-      const NetNet::range_t&rng = dims.back();
+      const netrange_t&rng = dims.back();
       return normalize_variable_base(base, rng.msb, rng.lsb, wid, is_up);
 }
 
 NetExpr *normalize_variable_bit_base(const list<long>&indices, NetExpr*base,
 				     const NetNet*reg)
 {
-      const list<NetNet::range_t>&packed_dims = reg->packed_dims();
+      const list<netrange_t>&packed_dims = reg->packed_dims();
       ivl_assert(*base, indices.size()+1 == packed_dims.size());
 
 	// Get the canonical offset of the slice within which we are
 	// addressing. We need that address as a slice offset to
 	// calculate the proper complete address
-      const NetNet::range_t&rng = packed_dims.back();
+      const netrange_t&rng = packed_dims.back();
       long slice_off = reg->sb_to_idx(indices, rng.lsb);
 
       return normalize_variable_base(base, rng.msb, rng.lsb, 1, true, slice_off);
@@ -347,13 +347,13 @@ NetExpr *normalize_variable_part_base(const list<long>&indices, NetExpr*base,
 				      const NetNet*reg,
 				      unsigned long wid, bool is_up)
 {
-      const list<NetNet::range_t>&packed_dims = reg->packed_dims();
+      const list<netrange_t>&packed_dims = reg->packed_dims();
       ivl_assert(*base, indices.size()+1 == packed_dims.size());
 
 	// Get the canonical offset of the slice within which we are
 	// addressing. We need that address as a slice offset to
 	// calculate the proper complete address
-      const NetNet::range_t&rng = packed_dims.back();
+      const netrange_t&rng = packed_dims.back();
       long slice_off = reg->sb_to_idx(indices, rng.lsb);
 
       return normalize_variable_base(base, rng.msb, rng.lsb, wid, is_up, slice_off);
@@ -362,10 +362,10 @@ NetExpr *normalize_variable_part_base(const list<long>&indices, NetExpr*base,
 NetExpr *normalize_variable_slice_base(const list<long>&indices, NetExpr*base,
 				       const NetNet*reg, unsigned long&lwid)
 {
-      const list<NetNet::range_t>&packed_dims = reg->packed_dims();
+      const list<netrange_t>&packed_dims = reg->packed_dims();
       ivl_assert(*base, indices.size() < packed_dims.size());
 
-      list<NetNet::range_t>::const_iterator pcur = packed_dims.end();
+      list<netrange_t>::const_iterator pcur = packed_dims.end();
       for (size_t idx = indices.size() ; idx < packed_dims.size(); idx += 1) {
 	    -- pcur;
       }

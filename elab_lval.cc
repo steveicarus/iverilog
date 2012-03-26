@@ -455,7 +455,7 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
       NetNet*reg = lv->sig();
       ivl_assert(*this, reg);
 
-      const list<NetNet::range_t>&packed = reg->packed_dims();
+      const list<netrange_t>&packed = reg->packed_dims();
 
 	// Part selects cannot select slices. So there must be enough
 	// prefix_indices to get all the way to the final dimension.
@@ -544,11 +544,11 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 		  long lsv = base_c->value().as_long();
 		  long offset = 0;
 		    // Get the signal range.
-		  const list<NetNet::range_t>&packed = reg->packed_dims();
+		  const list<netrange_t>&packed = reg->packed_dims();
 		  ivl_assert(*this, packed.size() == prefix_indices.size()+1);
 
 		    // We want the last range, which is where we work.
-		  const NetNet::range_t&rng = packed.back();
+		  const netrange_t&rng = packed.back();
 		  if (((rng.msb < rng.lsb) &&
                        use_sel == index_component_t::SEL_IDX_UP) ||
 		      ((rng.msb > rng.lsb) &&
@@ -621,8 +621,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       return true;
 }
 
-bool PEIdent::elaborate_lval_net_packed_member_(Design*des,
-						NetScope*,
+bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 						NetAssign_*lv,
 						const perm_string&member_name) const
 {
@@ -649,7 +648,57 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des,
 	    return false;
       }
 
-      lv->set_part(new NetEConst(verinum(off)), member->width());
+      unsigned long use_width = member->width();
+
+	// We are processing the tail of a string of names. For
+	// example, the verilog may be "a.b.c", so we are processing
+	// "c" at this point. Of course, "c" is the name of the member
+	// we are working on and "a.b" is the name of reg.
+      const name_component_t&name_tail = path_.back();
+
+      if (name_tail.index.size() > member->packed_dims.size()) {
+	    cerr << get_fileline() << ": error: Too make index expressions for member." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+	// Get the index component type. At this point, we only
+	// support bit select or none.
+      index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
+      if (!name_tail.index.empty())
+	    use_sel = name_tail.index.back().sel;
+
+      ivl_assert(*this, use_sel == index_component_t::SEL_NONE || use_sel == index_component_t::SEL_BIT);
+
+      if (name_tail.index.size() > 0) {
+	      // Evaluate all but the last index expression, into prefix_indices.
+	    list<long>prefix_indices;
+	    bool rc = evaluate_index_prefix(des, scope, prefix_indices, name_tail.index);
+	    ivl_assert(*this, rc);
+
+	      // Evaluate the last index expression into a constant long.
+	    NetExpr*texpr = elab_and_eval(des, scope, name_tail.index.back().msb, -1, true);
+	    long tmp;
+	    if (texpr == 0 || !eval_as_long(tmp, texpr)) {
+		  cerr << get_fileline() << ": error: "
+			"Array index expressions must be constant here." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+
+	    delete texpr;
+
+	      // Now use the prefix_to_slice function to calculate the
+	      // offset and width of the addressed slice of the member.
+	    long loff;
+	    unsigned long lwid;
+	    prefix_to_slice(member->packed_dims, prefix_indices, tmp, loff, lwid);
+
+	    off += loff;
+	    use_width = lwid;
+      }
+
+      lv->set_part(new NetEConst(verinum(off)), use_width);
       return true;
 }
 

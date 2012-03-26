@@ -514,8 +514,8 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 			des->errors += 1;
 		  }
 
-		  list<NetNet::range_t> packed;
-		  packed.push_back(NetNet::range_t(mnum, lnum));
+		  list<netrange_t> packed;
+		  packed.push_back(netrange_t(mnum, lnum));
 		  ret_sig = new NetNet(scope, fname, NetNet::REG, packed);
 		  ret_sig->set_scalar(false);
 
@@ -813,61 +813,15 @@ void PWhile::elaborate_sig(Design*des, NetScope*scope) const
 	    statement_->elaborate_sig(des, scope);
 }
 
-static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
-					  struct_type_t*struct_type)
-{
-      netstruct_t*res = new netstruct_t;
-
-      res->packed(struct_type->packed_flag);
-
-      for (list<struct_member_t*>::iterator cur = struct_type->members->begin()
-		 ; cur != struct_type->members->end() ; ++ cur) {
-
-	    struct_member_t*curp = *cur;
-	    long use_msb = 0;
-	    long use_lsb = 0;
-	    if (curp->range.get() && ! curp->range->empty()) {
-		  ivl_assert(*curp, curp->range->size() == 1);
-		  pform_range_t&rangep = curp->range->front();
-		  PExpr*msb_pex = rangep.first;
-		  PExpr*lsb_pex = rangep.second;
-
-		  NetExpr*tmp = elab_and_eval(des, scope, msb_pex, -2, true);
-		  ivl_assert(*curp, tmp);
-		  bool rc = eval_as_long(use_msb, tmp);
-		  ivl_assert(*curp, rc);
-
-		  tmp = elab_and_eval(des, scope, lsb_pex, -2, true);
-		  ivl_assert(*curp, tmp);
-		  rc = eval_as_long(use_lsb, tmp);
-		  ivl_assert(*curp, rc);
-	    }
-
-	    for (list<decl_assignment_t*>::iterator name = curp->names->begin()
-		       ; name != curp->names->end() ;  ++ name) {
-		  decl_assignment_t*namep = *name;
-
-		  netstruct_t::member_t memb;
-		  memb.name = namep->name;
-		  memb.type = curp->type;
-		  memb.msb = use_msb;
-		  memb.lsb = use_lsb;
-		  res->append_member(memb);
-	    }
-      }
-
-      return res;
-}
-
 static bool evaluate_ranges(Design*des, NetScope*scope,
-			    list<NetNet::range_t>&llist,
+			    list<netrange_t>&llist,
 			    const list<pform_range_t>&rlist)
 {
       bool bad_msb = false, bad_lsb = false;
 
       for (list<pform_range_t>::const_iterator cur = rlist.begin()
 		 ; cur != rlist.end() ; ++cur) {
-	    NetNet::range_t lrng;
+	    netrange_t lrng;
 
 	    NetExpr*texpr = elab_and_eval(des, scope, cur->first, -1, true);
 	    if (! eval_as_long(lrng.msb, texpr)) {
@@ -901,13 +855,49 @@ static bool evaluate_ranges(Design*des, NetScope*scope,
       return bad_msb | bad_lsb;
 }
 
-bool test_ranges_eeq(const list<NetNet::range_t>&lef, const list<NetNet::range_t>&rig)
+static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
+					  struct_type_t*struct_type)
+{
+      netstruct_t*res = new netstruct_t;
+
+      res->packed(struct_type->packed_flag);
+
+      for (list<struct_member_t*>::iterator cur = struct_type->members->begin()
+		 ; cur != struct_type->members->end() ; ++ cur) {
+
+	    list<netrange_t>packed_dimensions;
+
+	    struct_member_t*curp = *cur;
+	    if (curp->range.get() && ! curp->range->empty()) {
+		  bool bad_range;
+		  bad_range = evaluate_ranges(des, scope, packed_dimensions, *curp->range);
+		  ivl_assert(*curp, !bad_range);
+	    } else {
+		  packed_dimensions.push_back(netrange_t(0,0));
+	    }
+
+	    for (list<decl_assignment_t*>::iterator name = curp->names->begin()
+		       ; name != curp->names->end() ;  ++ name) {
+		  decl_assignment_t*namep = *name;
+
+		  netstruct_t::member_t memb;
+		  memb.name = namep->name;
+		  memb.type = curp->type;
+		  memb.packed_dims = packed_dimensions;
+		  res->append_member(memb);
+	    }
+      }
+
+      return res;
+}
+
+bool test_ranges_eeq(const list<netrange_t>&lef, const list<netrange_t>&rig)
 {
       if (lef.size() != rig.size())
 	    return false;
 
-      list<NetNet::range_t>::const_iterator lcur = lef.begin();
-      list<NetNet::range_t>::const_iterator rcur = rig.begin();
+      list<netrange_t>::const_iterator lcur = lef.begin();
+      list<netrange_t>::const_iterator rcur = rig.begin();
       while (lcur != lef.end()) {
 	    if (lcur->msb != rcur->msb)
 		  return false;
@@ -942,7 +932,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       }
 
       unsigned wid = 1;
-      list<NetNet::range_t>packed_dimensions;
+      list<netrange_t>packed_dimensions;
 
       des->errors += error_cnt_;
 
@@ -983,7 +973,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       if (port_set_ || net_set_) {
 	    bool bad_range = false;
-	    list<NetNet::range_t> plist, nlist;
+	    list<netrange_t> plist, nlist;
 	    /* If they exist get the port definition MSB and LSB */
 	    if (port_set_ && !port_.empty()) {
 		  bad_range |= evaluate_ranges(des, scope, plist, port_);
@@ -1049,7 +1039,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
             }
 
 	    packed_dimensions = nlist;
-	    wid = NetNet::vector_width(packed_dimensions);
+	    wid = netrange_width(packed_dimensions);
 
       }
 
