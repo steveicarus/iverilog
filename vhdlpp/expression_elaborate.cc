@@ -43,6 +43,13 @@ int ExpName::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
 {
       int errors = 0;
 
+      if (prefix_.get()) {
+	    cerr << get_fileline() << ": sorry: I don't know how to elaborate "
+		 << "ExpName prefix of " << name_
+		 << " in l-value expressions." << endl;
+	    errors += 1;
+      }
+
       const VType*found_type = 0;
 
       if (const InterfacePort*cur = ent->find_port(name_)) {
@@ -115,6 +122,12 @@ int ExpName::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
 int ExpName::elaborate_rval(Entity*ent, Architecture*arc, const InterfacePort*lval)
 {
       int errors = 0;
+
+      if (prefix_.get()) {
+	    cerr << get_fileline() << ": sorry: I don't know how to elaborate "
+		 << "ExpName prefix parts in r-value expressions." << endl;
+	    errors += 1;
+      }
 
       if (const InterfacePort*cur = ent->find_port(name_)) {
         /* IEEE 1076-2008, p.80:
@@ -398,6 +411,12 @@ int ExpLogical::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
 
 const VType* ExpName::probe_type(Entity*ent, Architecture*arc) const
 {
+      if (prefix_.get()) {
+	    cerr << get_fileline() << ": sorry: I don't know how to probe type "
+		 << "of " << name_ << " with prefix parts." << endl;
+	    return 0;
+      }
+
       if (const InterfacePort*cur = ent->find_port(name_)) {
 	    ivl_assert(*this, cur->type);
 	    return cur->type;

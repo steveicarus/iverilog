@@ -167,6 +167,37 @@ static Expression*aggregate_or_primary(const YYLTYPE&loc, std::list<ExpAggregate
       return el1->extract_expression();
 }
 
+static ExpName*make_name_from_prefix(const YYLTYPE&loc, const vector<perm_string>*names)
+{
+      ExpName*cur = new ExpName(names->at(0));
+      FILE_NAME(cur, loc);
+
+      for (size_t idx = 1 ; idx < names->size() ; idx += 1) {
+	    ExpName*tmp = new ExpName(cur, names->at(idx));
+	    FILE_NAME(tmp, loc);
+	    cur = tmp;
+      }
+
+      return cur;
+}
+
+static ExpName*make_name_from_prefix(const YYLTYPE&loc, const vector<perm_string>*names, Expression*msb, Expression*lsb)
+{
+      ExpName*cur = new ExpName(names->at(0));
+      FILE_NAME(cur, loc);
+
+      for (size_t idx = 1 ; idx < (names->size()-1) ; idx += 1) {
+	    ExpName*tmp = new ExpName(cur, names->at(idx));
+	    FILE_NAME(tmp, loc);
+	    cur = tmp;
+      }
+
+      ExpName*result = new ExpName(cur, names->back(), msb, lsb);
+      FILE_NAME(result, loc);
+
+      return result;
+}
+
 static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 						      const VType*type)
 {
@@ -561,6 +592,8 @@ choice
       { $$ = new ExpAggregate::choice_t($1);}
   | K_others
       { $$ = new ExpAggregate::choice_t; }
+  | range /* discrete_range: range */
+      { $$ = new ExpAggregate::choice_t($1); }
   ;
 
 choices
@@ -671,6 +704,22 @@ concurrent_conditional_signal_assignment /* IEEE 1076-2008 P11.6 */
       { ExpConditional*tmp = new ExpConditional($5, $3, $6);
 	FILE_NAME(tmp, @3);
 	delete $3;
+	delete $6;
+
+        ExpName*name = dynamic_cast<ExpName*> ($1);
+	assert(name);
+	SignalAssignment*tmpa = new SignalAssignment(name, tmp);
+	FILE_NAME(tmpa, @1);
+
+	$$ = tmpa;
+      }
+
+  /* Error recovery rules. */
+
+  | name LEQ error K_when expression else_when_waveforms ';'
+      { errormsg(@3, "Syntax error in waveform of conditional signal assignment.\n");
+	ExpConditional*tmp = new ExpConditional($5, 0, $6);
+	FILE_NAME(tmp, @3);
 	delete $6;
 
         ExpName*name = dynamic_cast<ExpName*> ($1);
@@ -1445,6 +1494,13 @@ name
 	delete[]$1;
 	$$ = tmp;
       }
+
+  | selected_name
+      { ExpName*tmp = make_name_from_prefix(@1, $1);
+	delete $1;
+	$$ = tmp;
+      }
+
   /* Note that this rule can match array element selects and various
      function calls. The only way we can tell the difference is from
      left context, namely whether the name is a type name or function
@@ -1465,6 +1521,11 @@ name
       { ExpName*tmp = new ExpName(lex_strings.make($1), $3->msb(), $3->lsb());
 	FILE_NAME(tmp, @1);
 	delete[]$1;
+	$$ = tmp;
+      }
+  | selected_name '('  range ')'
+      { ExpName*tmp = make_name_from_prefix(@1, $1, $3->msb(), $3->lsb());
+	delete $1;
 	$$ = tmp;
       }
   ;
@@ -1857,12 +1918,10 @@ secondary_unit
 
 selected_name
   : prefix '.' suffix
-      {
-    std::vector<perm_string>* tmp = $1;
-    tmp->push_back(lex_strings.make($3));
-    delete[] $3;
-
-    $$ = tmp;
+      {  std::vector<perm_string>* tmp = $1;
+	 tmp->push_back(lex_strings.make($3));
+	 delete[] $3;
+	 $$ = tmp;
       }
   ;
 

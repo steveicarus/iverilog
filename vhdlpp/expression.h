@@ -24,8 +24,10 @@
 # include  "entity.h"
 # include  <inttypes.h>
 # include  <list>
+# include  <memory>
 # include  <vector>
 
+class prange_t;
 class Entity;
 class Architecture;
 class ScopeBase;
@@ -185,6 +187,8 @@ class ExpAggregate : public Expression {
 	    explicit choice_t(Expression*exp);
 	      // Create a named choice
 	    explicit choice_t(perm_string name);
+	      // discreate_range choice
+	    explicit choice_t(prange_t*ran);
 	    ~choice_t();
 
 	      // true if this represents an "others" choice
@@ -195,7 +199,8 @@ class ExpAggregate : public Expression {
 	    void dump(ostream&out, int indent) const;
 
 	  private:
-	    Expression*expr_;
+	    std::auto_ptr<Expression>expr_;
+	    std::auto_ptr<prange_t>  range_;
 	  private: // not implemented
 	    choice_t(const choice_t&);
 	    choice_t& operator= (const choice_t&);
@@ -461,6 +466,8 @@ class ExpName : public Expression {
       explicit ExpName(perm_string nn);
       ExpName(perm_string nn, std::list<Expression*>*indices);
       ExpName(perm_string nn, Expression*msb, Expression*lsb);
+      ExpName(ExpName*prefix, perm_string nn);
+      ExpName(ExpName*prefix, perm_string nn, Expression*msb, Expression*lsb);
       ~ExpName();
 
     public: // Base methods
@@ -478,6 +485,7 @@ class ExpName : public Expression {
       const char* name() const;
 
     private:
+      std::auto_ptr<ExpName> prefix_;
       perm_string name_;
       Expression*index_;
       Expression*lsb_;

@@ -515,6 +515,11 @@ int ExpName::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
+      if (prefix_.get()) {
+	    cerr << get_fileline() << ": sorry: I don't know how to emit ExpName prefix parts." << endl;
+	    errors += 1;
+      }
+
       out << "\\" << name_ << " ";
       if (index_) {
 	    out << "[";

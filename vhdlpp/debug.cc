@@ -208,8 +208,13 @@ void ExpAggregate::choice_t::dump(ostream&out, int indent) const
 	    return;
       }
 
-      if (expr_) {
+      if (expr_.get()) {
 	    expr_->dump(out, indent);
+	    return;
+      }
+
+      if (range_.get()) {
+	    range_->dump(out, indent);
 	    return;
       }
 
@@ -375,6 +380,8 @@ void ExpName::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "ExpName(\"" << name_ << "\")"
 	  << " at " << get_fileline() << endl;
+      if (prefix_.get())
+	    prefix_->dump(out, indent+8);
       if (index_)
 	    index_->dump(out, indent+6);
       if (lsb_)

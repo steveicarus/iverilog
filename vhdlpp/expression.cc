@@ -137,25 +137,26 @@ ExpAggregate::choice_t::choice_t(Expression*exp)
 }
 
 ExpAggregate::choice_t::choice_t()
-: expr_(0)
+{
+}
+
+ExpAggregate::choice_t::choice_t(prange_t*rang)
+: range_(rang)
 {
 }
 
 ExpAggregate::choice_t::~choice_t()
 {
-      if (expr_) delete expr_;
 }
 
 bool ExpAggregate::choice_t::others() const
 {
-      return expr_ == 0;
+      return expr_.get() == 0 && range_.get() == 0;
 }
 
 Expression*ExpAggregate::choice_t::simple_expression(bool detach_flag)
 {
-      Expression*res = expr_;
-      if (detach_flag)
-	    expr_ = 0;
+      Expression*res = detach_flag? expr_.release() : expr_.get();
       return res;
 }
 
@@ -368,6 +369,16 @@ ExpName::ExpName(perm_string nn, list<Expression*>*indices)
 
 ExpName::ExpName(perm_string nn, Expression*msb, Expression*lsb)
 : name_(nn), index_(msb), lsb_(lsb)
+{
+}
+
+ExpName::ExpName(ExpName*prefix, perm_string nn)
+: prefix_(prefix), name_(nn), index_(0), lsb_(0)
+{
+}
+
+ExpName::ExpName(ExpName*prefix, perm_string nn, Expression*msb, Expression*lsb)
+: prefix_(prefix), name_(nn), index_(msb), lsb_(lsb)
 {
 }
 

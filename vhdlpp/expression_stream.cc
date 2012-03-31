@@ -108,6 +108,11 @@ void ExpLogical::write_to_stream(ostream&)
 
 void ExpName::write_to_stream(ostream&fd)
 {
+      if (prefix_.get()) {
+	    prefix_->write_to_stream(fd);
+	    fd << ".";
+      }
+
       fd << name_;
       if (index_) {
 	    fd << "(";

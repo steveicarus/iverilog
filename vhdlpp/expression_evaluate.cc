@@ -76,6 +76,11 @@ bool ExpName::evaluate(ScopeBase*scope, int64_t&val) const
       const VType*type;
       Expression*exp;
 
+      if (prefix_.get()) {
+	    cerr << get_fileline() << ": sorry: I don't know how to evaluate ExpName prefix parts." << endl;
+	    return false;
+      }
+
       bool rc = scope->find_constant(name_, type, exp);
       if (rc == false)
 	    return false;
@@ -85,6 +90,11 @@ bool ExpName::evaluate(ScopeBase*scope, int64_t&val) const
 
 bool ExpName::evaluate(Entity*ent, Architecture*arc, int64_t&val) const
 {
+      if (prefix_.get()) {
+	    cerr << get_fileline() << ": sorry: I don't know how to evaluate ExpName prefix parts." << endl;
+	    return false;
+      }
+
       const InterfacePort*gen = ent->find_generic(name_);
       if (gen) {
 	    cerr << get_fileline() << ": sorry: I don't necessarily handle generic overrides." << endl;
