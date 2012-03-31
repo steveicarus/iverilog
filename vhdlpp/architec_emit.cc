@@ -210,14 +210,27 @@ int IfGenerate::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
+/*
+ * Emit a process statement using "always" syntax.
+ *
+ * Note that VHDL is different from Verilog, in that the sensitivity
+ * list goes at the END of the statement list, not at the
+ * beginning. In VHDL, all the statements are initially executed once
+ * before blocking in the first wait on the sensitivity list.
+ */
 int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-      out << "always";
+      out << "always begin" << endl;
+
+      for (list<SequentialStmt*>::iterator cur = statements_list_.begin()
+		 ; cur != statements_list_.end() ; ++cur) {
+	    errors += (*cur)->emit(out, ent, arc);
+      }
 
       if (! sensitivity_list_.empty()) {
-	    out << " @(";
+	    out << "@(";
 	    const char*comma = 0;
 	    for (list<Expression*>::iterator cur = sensitivity_list_.begin()
 		       ; cur != sensitivity_list_.end() ; ++cur) {
@@ -226,14 +239,7 @@ int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 		  errors += (*cur)->emit(out, ent, arc);
 		  comma = ", ";
 	    }
-	    out << ")";
-      }
-
-      out << " begin" << endl;
-
-      for (list<SequentialStmt*>::iterator cur = statements_list_.begin()
-		 ; cur != statements_list_.end() ; ++cur) {
-	    errors += (*cur)->emit(out, ent, arc);
+	    out << ") /* sensitivity list for process */;" << endl;
       }
 
       out << "end" << endl;
