@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -680,7 +680,8 @@ static PLI_INT32 sys_fread_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_free_object(argv);
       }
 
-      words = (width+31)/32;
+      assert(width > 0);
+      words = (width - 1)/32 + 1;
       vector = calloc(words, sizeof(s_vpi_vecval));
       bpe = (width+7)/8;
 

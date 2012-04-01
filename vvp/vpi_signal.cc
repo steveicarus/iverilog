@@ -467,7 +467,7 @@ static void format_vpiVectorVal(vvp_signal_value*sig, int base, unsigned wid,
 {
       long end = base + (signed)wid;
       unsigned int obit = 0;
-      unsigned hwid = (wid - 1)/32 + 1;
+      unsigned hwid = (wid + 31)/32;
 
       s_vpi_vecval *op = (p_vpi_vecval)
                          need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
