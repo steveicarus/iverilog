@@ -209,6 +209,9 @@ class VTypeRecord : public VType {
 
 	    void write_to_stream(std::ostream&) const;
 
+	    inline perm_string peek_name() const { return name_; }
+	    inline const VType* peek_type() const { return type_; }
+
 	  private:
 	    perm_string name_;
 	    const VType*type_;
@@ -226,6 +229,9 @@ class VTypeRecord : public VType {
       void show(std::ostream&) const;
 
       int emit_def(std::ostream&out, perm_string name) const;
+
+      const element_t* element_by_name(perm_string name) const;
+
     private:
       int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 

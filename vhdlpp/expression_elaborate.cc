@@ -409,13 +409,53 @@ int ExpLogical::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
       return errors;
 }
 
-const VType* ExpName::probe_type(Entity*ent, Architecture*arc) const
+const VType* ExpName::probe_prefix_type_(Entity*ent, Architecture*arc) const
 {
       if (prefix_.get()) {
-	    cerr << get_fileline() << ": sorry: I don't know how to probe type "
-		 << "of " << name_ << " with prefix parts." << endl;
+	    cerr << get_fileline() << ": sorry: I do not know how to support nested prefix parts." << endl;
 	    return 0;
       }
+
+      const VType*type = probe_type(ent, arc);
+      return type;
+}
+
+/*
+ * This method is the probe_type() imlementation for ExpName objects
+ * that have prefix parts. In this case we try to get the type of the
+ * prefix and interpret the name in that context.
+ */
+const VType* ExpName::probe_prefixed_type_(Entity*ent, Architecture*arc) const
+{
+	// First, get the type of the prefix.
+      const VType*prefix_type = prefix_->probe_prefix_type_(ent, arc);
+      if (prefix_type == 0) {
+	    return 0;
+      }
+
+	// If the prefix type is a record, then the current name is
+	// the name of a member.
+      if (const VTypeRecord*pref_record = dynamic_cast<const VTypeRecord*> (prefix_type)) {
+	    const VTypeRecord::element_t*element = pref_record->element_by_name(name_);
+	    ivl_assert(*this, element);
+
+	    const VType*element_type = element->peek_type();
+	    ivl_assert(*this, element_type);
+
+	    return element_type;
+      }
+
+      cerr << get_fileline() << ": sorry: I don't know how to probe "
+	   << "prefix type " << typeid(*prefix_type).name()
+	   << " of " << name_ << "." << endl;
+
+      return 0;
+}
+
+const VType* ExpName::probe_type(Entity*ent, Architecture*arc) const
+{
+      if (prefix_.get())
+	    return probe_prefixed_type_(ent, arc);
 
       if (const InterfacePort*cur = ent->find_port(name_)) {
 	    ivl_assert(*this, cur->type);

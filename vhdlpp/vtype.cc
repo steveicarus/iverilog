@@ -183,6 +183,18 @@ void VTypeRecord::show(ostream&out) const
       write_to_stream(out);
 }
 
+const VTypeRecord::element_t* VTypeRecord::element_by_name(perm_string name) const
+{
+      for (vector<element_t*>::const_iterator cur = elements_.begin()
+		 ; cur != elements_.end() ; ++cur) {
+	    element_t*curp = *cur;
+	    if (curp->peek_name() == name)
+		  return curp;
+      }
+
+      return 0;
+}
+
 VTypeRecord::element_t::element_t(perm_string name, const VType*typ)
 : name_(name), type_(typ)
 {

@@ -485,6 +485,10 @@ class ExpName : public Expression {
       const char* name() const;
 
     private:
+      const VType* probe_prefix_type_(Entity*ent, Architecture*arc) const;
+      const VType* probe_prefixed_type_(Entity*ent, Architecture*arc) const;
+
+    private:
       std::auto_ptr<ExpName> prefix_;
       perm_string name_;
       Expression*index_;
