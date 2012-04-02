@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -820,13 +820,52 @@ void vpip_put_value_event::run_run()
 	  case vpiStringVal:
 	    free(value.value.str);
 	    break;
-	    /* If these are every copied then free them too. */
+	    /* Free the copied time structure. */
 	  case vpiTimeVal:
+	    free(value.value.time);
+	    break;
+	    /* Free the copied vector structure. */
 	  case vpiVectorVal:
+	    free(value.value.vector);
+	    break;
+	    /* Free the copied strength structure. */
 	  case vpiStrengthVal:
+	    free(value.value.strength);
+	    break;
+	    /* Everything else is static in the structure. */
 	  default:
 	    break;
       }
+}
+
+/* Make a copy of a pointer to a time structure. */
+static t_vpi_time *timedup(t_vpi_time *val)
+{
+      t_vpi_time *rtn;
+      rtn = (t_vpi_time *) malloc(sizeof(t_vpi_time));
+      *rtn = *val;
+      return rtn;
+}
+
+/* Make a copy of a pointer to a vector value structure. */
+static t_vpi_vecval *vectordup(t_vpi_vecval *val, PLI_INT32 size)
+{
+      unsigned num_bytes;
+      t_vpi_vecval *rtn;
+      assert(size > 0);
+      num_bytes = ((size + 31)/32)*sizeof(t_vpi_vecval);
+      rtn = (t_vpi_vecval *) malloc(num_bytes);
+      memcpy(rtn, val, num_bytes);
+      return rtn;
+}
+
+/* Make a copy of a pointer to a strength structure. */
+static t_vpi_strengthval *strengthdup(t_vpi_strengthval *val)
+{
+      t_vpi_strengthval *rtn;
+      rtn = (t_vpi_strengthval *) malloc(sizeof(t_vpi_strengthval));
+      *rtn = *val;
+      return rtn;
 }
 
 vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
@@ -874,8 +913,10 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 	    vpip_put_value_event*put = new vpip_put_value_event;
 	    put->handle = obj;
 	    put->value = *vp;
+	      /* Since this is a scheduled put event we must copy any pointer
+	       * data to keep it available until the event is actually run. */
 	    switch (put->value.format) {
-		  /* If this is scheduled make a copy of the string. */
+		  /* Copy the string items. */
 		case vpiBinStrVal:
 		case vpiOctStrVal:
 		case vpiDecStrVal:
@@ -883,10 +924,21 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 		case vpiStringVal:
 		  put->value.value.str = strdup(put->value.value.str);
 		  break;
-		  /* Do these also need to be copied? */
+		  /* Copy a time pointer item. */
 		case vpiTimeVal:
+		  put->value.value.time = timedup(put->value.value.time);
+		  break;
+		  /* Copy a vector pointer item. */
 		case vpiVectorVal:
+		  put->value.value.vector = vectordup(put->value.value.vector,
+		                                      vpi_get(vpiSize, obj));
+		  break;
+		  /* Copy a strength pointer item. */
 		case vpiStrengthVal:
+		  put->value.value.strength =
+		      strengthdup(put->value.value.strength);
+		  break;
+		  /* Everything thing else is already in the structure. */
 		default:
 		  break;
 	    }
