@@ -121,7 +121,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 {
       unsigned uint_value;
       p_vpi_vecval vecp;
-      int size = strlen(value_);
+      unsigned size = strlen(value_);
       char*rbuf = 0;
       char*cp;
 
@@ -145,7 +145,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 	      }
 	      rbuf = need_result_buf(size + 1, RBUF_VAL);
 	      uint_value = 0;
-	      for(int i=0; i<size;i ++){
+	      for(unsigned i=0; i<size; i += 1){
 		  uint_value <<=8;
 		  uint_value += (unsigned char)(value_[i]);
 	      }
@@ -156,8 +156,8 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
           case vpiBinStrVal:
 	      rbuf = need_result_buf(8 * size + 1, RBUF_VAL);
 	      cp = rbuf;
-	      for(int i=0; i<size;i ++){
-		  for(int bit=7;bit>=0; bit--){
+	      for(unsigned i=0; i<size; i += 1){
+		  for(int bit=7; bit>=0; bit -= 1){
 		      *cp++ = "01"[ (value_[i]>>bit)&1 ];
 		  }
 	      }
@@ -168,8 +168,8 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
           case vpiHexStrVal:
 	      rbuf = need_result_buf(2 * size + 1, RBUF_VAL);
 	      cp = rbuf;
-	      for(int i=0; i<size;i++){
-		  for(int nibble=1;nibble>=0; nibble--){
+	      for(unsigned i=0; i<size; i += 1){
+		  for(int nibble=1; nibble>=0; nibble -= 1){
 		      *cp++ = "0123456789abcdef"[ (value_[i]>>(nibble*4))&15 ];
 		  }
 	      }
@@ -184,8 +184,8 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 
           case vpiIntVal:
 	      vp->value.integer = 0;
-	      for(int i=0; i<size;i ++){
-		  for(int bit=7;bit>=0; bit--){
+	      for(unsigned i=0; i<size; i += 1){
+		  for(int bit=7; bit>=0; bit -= 1){
 		      vp->value.integer <<= 1;
 		      vp->value.integer += (value_[i]>>bit)&1;
 		  }
@@ -200,7 +200,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
               uint_value = 0;
               vecp = vp->value.vector;
               vecp->aval = vecp->bval = 0;
-	      for(int i=0; i<size;i ++){
+	      for(unsigned i=0; i<size; i += 1){
 		  vecp->aval |= value_[i] << uint_value*8;
 		  uint_value += 1;
 		  if (uint_value > 3) {
