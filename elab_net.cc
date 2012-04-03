@@ -702,6 +702,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 	  case NetNet::PINPUT:
 	  case NetNet::POUTPUT:
 	  case NetNet::PINOUT:
+	  case NetNet::PREF:
 	    break;
 
 	      /* If the name matches, but the signal is not a port,
@@ -769,6 +770,9 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 	    sig = tmp;
 	    break;
 
+	  case NetNet::PREF:
+	      // For the purposes of module ports, treat ref ports
+	      // just like inout ports.
 	  case NetNet::PINOUT:
 	    ps = new NetTran(scope, scope->local_symbol(), sig->vector_width(),
 			     swid, lidx);

@@ -23,6 +23,7 @@
 # include  "pform.h"
 # include  "parse_misc.h"
 # include  "parse_api.h"
+# include  "PClass.h"
 # include  "PEvent.h"
 # include  "PUdp.h"
 # include  "PGenerate.h"
@@ -267,12 +268,30 @@ void pform_pop_scope()
       lexical_scope = lexical_scope->parent_scope();
 }
 
+PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
+{
+      PClass*class_scope = new PClass(name, lexical_scope);
+      FILE_NAME(class_scope, loc);
+
+      lexical_scope = class_scope;
+      return class_scope;
+}
+
 PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 {
       perm_string task_name = lex_strings.make(name);
 
       PTask*task = new PTask(task_name, lexical_scope, is_auto);
       FILE_NAME(task, loc);
+
+      LexicalScope*scope = lexical_scope;
+      PScopeExtra*scopex = dynamic_cast<PScopeExtra*> (scope);
+      while (scope && !scopex) {
+	    scope = scope->parent_scope();
+	    scopex = dynamic_cast<PScopeExtra*> (scope);
+      }
+      assert(scopex);
+
       if (pform_cur_generate) {
 	      // Check if the task is already in the dictionary.
 	    if (pform_cur_generate->tasks.find(task->pscope_name()) !=
@@ -286,15 +305,15 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 	    pform_cur_generate->tasks[task->pscope_name()] = task;
       } else {
 	      // Check if the task is already in the dictionary.
-	    if (pform_cur_module->tasks.find(task->pscope_name()) !=
-	        pform_cur_module->tasks.end()) {
+	    if (scopex->tasks.find(task->pscope_name()) != scopex->tasks.end()) {
 		  cerr << task->get_fileline() << ": error: duplicate "
 		          "definition for task '" << name << "' in '"
-		       << pform_cur_module->mod_name() << "'." << endl;
+		       << scopex->pscope_name() << "'." << endl;
 		  error_count += 1;
 	    }
-	    pform_cur_module->tasks[task->pscope_name()] = task;
+	    scopex->tasks[task->pscope_name()] = task;
       }
+
       lexical_scope = task;
 
       return task;
@@ -307,6 +326,15 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, char*name,
 
       PFunction*func = new PFunction(func_name, lexical_scope, is_auto);
       FILE_NAME(func, loc);
+
+      LexicalScope*scope = lexical_scope;
+      PScopeExtra*scopex = dynamic_cast<PScopeExtra*> (scope);
+      while (scope && !scopex) {
+	    scope = scope->parent_scope();
+	    scopex = dynamic_cast<PScopeExtra*> (scope);
+      }
+      assert(scopex);
+
       if (pform_cur_generate) {
 	      // Check if the function is already in the dictionary.
 	    if (pform_cur_generate->funcs.find(func->pscope_name()) !=
@@ -320,14 +348,13 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, char*name,
 	    pform_cur_generate->funcs[func->pscope_name()] = func;
       } else {
 	      // Check if the function is already in the dictionary.
-	    if (pform_cur_module->funcs.find(func->pscope_name()) !=
-	        pform_cur_module->funcs.end()) {
+	    if (scopex->funcs.find(func->pscope_name()) != scopex->funcs.end()) {
 		  cerr << func->get_fileline() << ": error: duplicate "
 		          "definition for function '" << name << "' in '"
-		       << pform_cur_module->mod_name() << "'." << endl;
+		       << scopex->pscope_name() << "'." << endl;
 		  error_count += 1;
 	    }
-	    pform_cur_module->funcs[func->pscope_name()] = func;
+	    scopex->funcs[func->pscope_name()] = func;
       }
       lexical_scope = func;
 
@@ -416,11 +443,16 @@ data_type_t* pform_test_type_identifier(const char*txt)
 	    return 0;
 
       perm_string name = lex_strings.make(txt);
-      map<perm_string,data_type_t*>::iterator cur = lexical_scope->typedefs.find(name);
-      if (cur != lexical_scope->typedefs.end())
-	    return cur->second;
-      else
-	    return 0;
+      map<perm_string,data_type_t*>::iterator cur;
+      LexicalScope*cur_scope = lexical_scope;
+      do {
+	    cur = cur_scope->typedefs.find(name);
+	    if (cur != cur_scope->typedefs.end())
+		  return cur->second;
+ 
+	    cur_scope = cur_scope->parent_scope();
+      } while (cur_scope);
+      return 0;
 }
 
 static void pform_put_behavior_in_scope(PProcess*pp)
@@ -1480,16 +1512,15 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
       delete init_expr;
 }
 
-static void ranges_from_list(list<PWire::range_t>&rlist, const list<PExpr*>*range)
+static void ranges_from_list(list<PWire::range_t>&rlist,
+			     const list<index_component_t>*range)
 {
-	// There must be an even number of expressions in the
-	// range. The parser will assure that for us.
-      assert(range->size()%2 == 0);
-      list<PExpr*>::const_iterator rcur = range->begin();
-      while (rcur != range->end()) {
+	// Convert a list of index_component_t to PWire::range_t.
+      for (list<index_component_t>::const_iterator rcur = range->begin()
+		 ; rcur != range->end() ; ++rcur) {
 	    PWire::range_t rng;
-	    rng.msb = *rcur; ++rcur;
-	    rng.lsb = *rcur; ++rcur;
+	    rng.msb = rcur->msb;
+	    rng.lsb = rcur->lsb;
 	    rlist.push_back(rng);
       }
 }
@@ -1500,7 +1531,7 @@ static void ranges_from_list(list<PWire::range_t>&rlist, const list<PExpr*>*rang
  * and the name that I receive only has the tail component.
  */
 static void pform_set_net_range(perm_string name,
-				const list<PExpr*>*range,
+				const list<index_component_t>*range,
 				bool signed_flag,
 				ivl_variable_type_t dt,
 				PWSRType rt)
@@ -1527,13 +1558,11 @@ static void pform_set_net_range(perm_string name,
 	    cur->set_data_type(dt);
 }
 
-void pform_set_net_range(list<perm_string>*names,
-			 list<PExpr*>*range,
-			 bool signed_flag,
-			 ivl_variable_type_t dt)
+static void pform_set_net_range(list<perm_string>*names,
+				list<index_component_t>*range,
+				bool signed_flag,
+				ivl_variable_type_t dt)
 {
-      assert((range == 0) || (range->size()%2 == 0));
-
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
@@ -1601,8 +1630,8 @@ static void pform_makegate(PGBuiltin::Type type,
 
       perm_string dev_name = lex_strings.make(info.name);
       PGBuiltin*cur = new PGBuiltin(type, dev_name, info.parms, delay);
-      if (info.range[0])
-	    cur->set_range(info.range[0], info.range[1]);
+      if (info.range.msb)
+	    cur->set_range(info.range.msb, info.range.lsb);
 
 	// The pform_makegates() that calls me will take care of
 	// deleting the attr pointer, so tell the
@@ -1741,7 +1770,7 @@ void pform_make_modgates(perm_string type,
 	    if (cur.parms_by_name) {
 		  pform_make_modgate(type, cur_name, overrides,
 				     cur.parms_by_name,
-				     cur.range[0], cur.range[1],
+				     cur.range.msb, cur.range.lsb,
 				     cur.file, cur.lineno);
 
 	    } else if (cur.parms) {
@@ -1755,14 +1784,14 @@ void pform_make_modgates(perm_string type,
 		  }
 		  pform_make_modgate(type, cur_name, overrides,
 				     cur.parms,
-				     cur.range[0], cur.range[1],
+				     cur.range.msb, cur.range.lsb,
 				     cur.file, cur.lineno);
 
 	    } else {
 		  list<PExpr*>*wires = new list<PExpr*>;
 		  pform_make_modgate(type, cur_name, overrides,
 				     wires,
-				     cur.range[0], cur.range[1],
+				     cur.range.msb, cur.range.lsb,
 				     cur.file, cur.lineno);
 	    }
       }
@@ -1835,8 +1864,8 @@ void pform_make_pgassign_list(list<PExpr*>*alist,
 void pform_make_reginit(const struct vlltype&li,
 			perm_string name, PExpr*expr)
 {
-      if (! pform_at_module_level()) {
-	    VLerror(li, "variable declaration assignments are only "
+      if (! pform_at_module_level() && !gn_system_verilog()) {
+	    VLerror(li, "error: variable declaration assignments are only "
                         "allowed at the module level.");
 	    delete expr;
 	    return;
@@ -1875,7 +1904,7 @@ void pform_module_define_port(const struct vlltype&li,
 			      NetNet::Type type,
 			      ivl_variable_type_t data_type,
 			      bool signed_flag,
-			      list<PExpr*>*range,
+			      list<index_component_t>*range,
 			      list<named_pexpr_t>*attr)
 {
       PWire*cur = pform_get_wire_in_scope(name);
@@ -2009,7 +2038,7 @@ void pform_makewire(const vlltype&li, perm_string name,
  * pform_makewire above.
  */
 void pform_makewire(const vlltype&li,
-		    list<PExpr*>*range,
+		    list<index_component_t>*range,
 		    bool signed_flag,
 		    list<perm_string>*names,
 		    NetNet::Type type,
@@ -2036,7 +2065,7 @@ void pform_makewire(const vlltype&li,
  * This form makes nets with delays and continuous assignments.
  */
 void pform_makewire(const vlltype&li,
-		    list<PExpr*>*range,
+		    list<index_component_t>*range,
 		    bool signed_flag,
 		    list<PExpr*>*delay,
 		    str_pair_t str,
@@ -2069,39 +2098,6 @@ void pform_makewire(const vlltype&li,
 	    delete first;
 	    first = next;
       }
-}
-
-void pform_set_port_type(perm_string name, NetNet::PortType pt,
-			 const char*file, unsigned lineno)
-{
-      PWire*cur = pform_get_wire_in_scope(name);
-      if (cur == 0) {
-	    cur = new PWire(name, NetNet::IMPLICIT, NetNet::PIMPLICIT, IVL_VT_NO_TYPE);
-	    FILE_NAME(cur, file, lineno);
-	    pform_put_wire_in_scope(name, cur);
-      }
-
-      switch (cur->get_port_type()) {
-	  case NetNet::PIMPLICIT:
-	    if (! cur->set_port_type(pt))
-		  VLerror("error setting port direction.");
-	    break;
-
-	  case NetNet::NOT_A_PORT:
-	    cerr << file << ":" << lineno << ": error: "
-		 << "port " << name << " is not in the port list."
-		 << endl;
-	    error_count += 1;
-	    break;
-
-	  default:
-	    cerr << file << ":" << lineno << ": error: "
-		 << "port " << name << " already has a port declaration."
-		 << endl;
-	    error_count += 1;
-	    break;
-      }
-
 }
 
 /*
@@ -2143,15 +2139,15 @@ void pform_set_port_type(perm_string name, NetNet::PortType pt,
  * constraints as those of tasks, so this works fine. Functions have
  * no output or inout ports.
  */
-svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
+svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
+				      NetNet::PortType pt,
 				      ivl_variable_type_t vtype,
 				      bool signed_flag,
-				      list<PExpr*>*range,
+				      list<index_component_t>*range,
 				      list<perm_string>*names,
-				      const char* file,
-				      unsigned lineno,
 				      bool isint)
 {
+      assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
       assert(names);
       svector<PWire*>*res = new svector<PWire*>(0);
       for (list<perm_string>::iterator cur = names->begin()
@@ -2166,7 +2162,7 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
 		  curw->set_port_type(pt);
 	    } else {
 		  curw = new PWire(name, NetNet::IMPLICIT_REG, pt, vtype);
-		  FILE_NAME(curw, file, lineno);
+		  FILE_NAME(curw, loc);
 		  pform_put_wire_in_scope(name, curw);
 	    }
 
@@ -2189,6 +2185,71 @@ svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
       delete range;
       delete names;
       return res;
+}
+
+svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
+				      NetNet::PortType pt,
+				      data_type_t*vtype,
+				      list<perm_string>*names)
+{
+      if (atom2_type_t*atype = dynamic_cast<atom2_type_t*> (vtype)) {
+	    list<index_component_t>*range_tmp = make_range_from_width(atype->type_code);
+	    return pform_make_task_ports(loc, pt, IVL_VT_BOOL,
+					 atype->signed_flag,
+					 range_tmp, names);
+      }
+
+      if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype)) {
+	    return pform_make_task_ports(loc, pt, vec_type->base_type,
+					 vec_type->signed_flag,
+					 copy_range(vec_type->pdims.get()),
+					 names);
+      }
+
+      if (/*real_type_t*real_type = */ dynamic_cast<real_type_t*> (vtype)) {
+	    return pform_make_task_ports(loc, pt, IVL_VT_REAL,
+					 true, 0, names);
+      }
+
+      VLerror(loc, "sorry: Given type not supported here.");
+      return 0;
+}
+
+/*
+ * The parser calls this in the rule that matches increment/decrement
+ * statements. The rule that does the matching creates a PEUnary with
+ * all the information we need, but here we convert that expression to
+ * a compressed assignment statement.
+ */
+PAssign* pform_compressed_assign_from_inc_dec(const struct vlltype&loc, PExpr*exp)
+{
+      PEUnary*expu = dynamic_cast<PEUnary*> (exp);
+      ivl_assert(*exp, expu != 0);
+
+      char use_op = 0;
+      switch (expu->get_op()) {
+	  case 'i':
+	  case 'I':
+	    use_op = '+';
+	    break;
+	  case 'd':
+	  case 'D':
+	    use_op = '-';
+	    break;
+	  default:
+	    ivl_assert(*exp, 0);
+	    break;
+      }
+
+      PExpr*lval = expu->get_expr();
+      PExpr*rval = new PENumber(new verinum((uint64_t)1, 1));
+      FILE_NAME(rval, loc);
+
+      PAssign*tmp = new PAssign(lval, use_op, rval);
+      FILE_NAME(tmp, loc);
+
+      delete exp;
+      return tmp;
 }
 
 void pform_set_attrib(perm_string name, perm_string key, char*value)
@@ -2259,7 +2320,7 @@ LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,
 
 void pform_set_parameter(const struct vlltype&loc,
 			 perm_string name, ivl_variable_type_t type,
-			 bool signed_flag, list<PExpr*>*range, PExpr*expr,
+			 bool signed_flag, list<index_component_t>*range, PExpr*expr,
 			 LexicalScope::range_t*value_range)
 {
       LexicalScope*scope = lexical_scope;
@@ -2294,11 +2355,12 @@ void pform_set_parameter(const struct vlltype&loc,
 
       parm.type = type;
       if (range) {
-	    assert(range->size() == 2);
-	    assert(range->front());
-	    assert(range->back());
-	    parm.msb = range->front();
-	    parm.lsb = range->back();
+	    assert(range->size() == 1);
+	    index_component_t index = range->front();
+	    assert(index.msb);
+	    assert(index.lsb);
+	    parm.msb = index.msb;
+	    parm.lsb = index.lsb;
       } else {
 	    parm.msb = 0;
 	    parm.lsb = 0;
@@ -2312,7 +2374,7 @@ void pform_set_parameter(const struct vlltype&loc,
 
 void pform_set_localparam(const struct vlltype&loc,
 			  perm_string name, ivl_variable_type_t type,
-			  bool signed_flag, list<PExpr*>*range, PExpr*expr)
+			  bool signed_flag, list<index_component_t>*range, PExpr*expr)
 {
       LexicalScope*scope = lexical_scope;
 
@@ -2342,11 +2404,12 @@ void pform_set_localparam(const struct vlltype&loc,
 
       parm.type = type;
       if (range) {
-	    assert(range->size() == 2);
-	    assert(range->front());
-	    assert(range->back());
-	    parm.msb = range->front();
-	    parm.lsb = range->back();
+	    assert(range->size() == 1);
+	    index_component_t index = range->front();
+	    assert(index.msb);
+	    assert(index.lsb);
+	    parm.msb = index.msb;
+	    parm.lsb = index.lsb;
       } else {
 	    parm.msb  = 0;
 	    parm.lsb  = 0;
@@ -2443,12 +2506,48 @@ extern void pform_module_specify_path(PSpecPath*obj)
       pform_cur_module->specify_paths.push_back(obj);
 }
 
+
+static void pform_set_port_type(perm_string name, NetNet::PortType pt,
+				const char*file, unsigned lineno)
+{
+      PWire*cur = pform_get_wire_in_scope(name);
+      if (cur == 0) {
+	    cur = new PWire(name, NetNet::IMPLICIT, NetNet::PIMPLICIT, IVL_VT_NO_TYPE);
+	    FILE_NAME(cur, file, lineno);
+	    pform_put_wire_in_scope(name, cur);
+      }
+
+      switch (cur->get_port_type()) {
+	  case NetNet::PIMPLICIT:
+	    if (! cur->set_port_type(pt))
+		  VLerror("error setting port direction.");
+	    break;
+
+	  case NetNet::NOT_A_PORT:
+	    cerr << file << ":" << lineno << ": error: "
+		 << "port " << name << " is not in the port list."
+		 << endl;
+	    error_count += 1;
+	    break;
+
+	  default:
+	    cerr << file << ":" << lineno << ": error: "
+		 << "port " << name << " already has a port declaration."
+		 << endl;
+	    error_count += 1;
+	    break;
+      }
+
+}
+
 void pform_set_port_type(const struct vlltype&li,
 			 list<perm_string>*names,
-			 list<PExpr*>*range,
+			 list<index_component_t>*range,
 			 bool signed_flag,
 			 NetNet::PortType pt)
 {
+      assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
+
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
@@ -2539,6 +2638,11 @@ void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>
  */
 void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<perm_string>*names)
 {
+      if (atom2_type_t*atom2_type = dynamic_cast<atom2_type_t*> (data_type)) {
+	    pform_set_integer_2atom(atom2_type->type_code, atom2_type->signed_flag, names);
+	    return;
+      }
+
       if (struct_type_t*struct_type = dynamic_cast<struct_type_t*> (data_type)) {
 	    pform_set_struct_type(struct_type, names);
 	    return;
@@ -2546,6 +2650,23 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
 
       if (enum_type_t*enum_type = dynamic_cast<enum_type_t*> (data_type)) {
 	    pform_set_enum(li, enum_type, names);
+	    return;
+      }
+
+      if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (data_type)) {
+	    pform_set_net_range(names, vec_type->pdims.get(),
+				vec_type->signed_flag,
+				vec_type->base_type);
+	    return;
+      }
+
+      if (/*real_type_t*real_type =*/ dynamic_cast<real_type_t*> (data_type)) {
+	    pform_set_net_range(names, 0, true, IVL_VT_REAL);
+	    return;
+      }
+
+      if (/*class_type_t*class_type =*/ dynamic_cast<class_type_t*> (data_type)) {
+	    VLerror(li, "sorry: Class types not supported.");
 	    return;
       }
 
@@ -2562,7 +2683,7 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
       cur->set_signed(enum_type->signed_flag);
 
       assert(enum_type->range.get() != 0);
-      assert(enum_type->range->size() == 2);
+      assert(enum_type->range->size() == 1);
       list<PWire::range_t>rlist;
       ranges_from_list(rlist, enum_type->range.get());
       cur->set_range(rlist, SR_NET);
@@ -2576,7 +2697,7 @@ void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_st
       assert(enum_type->base_type==IVL_VT_LOGIC || enum_type->base_type==IVL_VT_BOOL);
 
       assert(enum_type->range.get() != 0);
-      assert(enum_type->range->size() == 2);
+      assert(enum_type->range->size() == 1);
 
 	// Add the file and line information to the enumeration type.
       FILE_NAME(&(enum_type->li), li);

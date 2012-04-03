@@ -509,6 +509,10 @@ class PEUnary : public PExpr {
                                      unsigned flags) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
 
+    public:
+      inline char get_op() const { return op_; }
+      inline PExpr*get_expr() const { return expr_; }
+
     private:
       NetExpr* elaborate_expr_bits_(NetExpr*operand, unsigned expr_wid) const;
 

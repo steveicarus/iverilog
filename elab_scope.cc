@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -133,9 +133,10 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 					enum_type_t*enum_type)
 {
       bool rc_flag;
-      assert(enum_type->range->size() == 2);
-      NetExpr*msb_ex = elab_and_eval(des, scope, enum_type->range->front(), -1);
-      NetExpr*lsb_ex = elab_and_eval(des, scope, enum_type->range->back(),  -1);
+      assert(enum_type->range->size() == 1);
+      index_component_t index = enum_type->range->front();
+      NetExpr*msb_ex = elab_and_eval(des, scope, index.msb, -1);
+      NetExpr*lsb_ex = elab_and_eval(des, scope, index.lsb,  -1);
 
       long msb = 0;
       rc_flag = eval_as_long(msb, msb_ex);

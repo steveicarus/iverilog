@@ -85,6 +85,14 @@ bool PScope::elaborate_sig_wires_(Design*des, NetScope*scope) const
 	    PWire*cur = (*wt).second;
 	    NetNet*sig = cur->elaborate_sig(des, scope);
 
+	    if (sig && (sig->scope() == scope)
+		&& (sig->port_type() == NetNet::PREF)) {
+
+		  cerr << cur->get_fileline() << ": sorry: "
+		       << "Reference ports not supported yet." << endl;
+		  des->errors += 1;
+	    }
+
 
 	      /* If the signal is an input and is also declared as a
 		 reg, then report an error. */
@@ -468,15 +476,12 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	  case PTF_REG:
 	  case PTF_REG_S:
 	    if (return_type_.range) {
-		  ivl_assert(*this, return_type_.range->size() == 2);
+		  ivl_assert(*this, return_type_.range->size() == 1);
+		  index_component_t index = return_type_.range->front();
 
-		  NetExpr*me = elab_and_eval(des, scope,
-					     return_type_.range->at(0), -1,
-                                             true);
+		  NetExpr*me = elab_and_eval(des, scope, index.msb, -1, true);
 		  assert(me);
-		  NetExpr*le = elab_and_eval(des, scope,
-					     return_type_.range->at(1), -1,
-                                             true);
+		  NetExpr*le = elab_and_eval(des, scope, index.lsb, -1, true);
 		  assert(le);
 
 		  long mnum = 0, lnum = 0;
@@ -542,17 +547,14 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 
 	  case PTF_ATOM2:
 	  case PTF_ATOM2_S:
-	    ivl_assert(*this, return_type_.range != 0);
 	    long use_wid;
 	    {
-		  NetExpr*me = elab_and_eval(des, scope,
-					     (*return_type_.range)[0], -1,
-                                             true);
-		  assert(me);
-		  NetExpr*le = elab_and_eval(des, scope,
-					     (*return_type_.range)[1], -1,
-                                             true);
-		  assert(le);
+		  ivl_assert(*this, return_type_.range->size() == 1);
+		  index_component_t index = return_type_.range->front();
+		  NetExpr*me = elab_and_eval(des, scope, index.msb, -1, true);
+		  ivl_assert(*this, me);
+		  NetExpr*le = elab_and_eval(des, scope, index.lsb, -1, true);
+		  ivl_assert(*this, le);
 
 		  long mnum = 0, lnum = 0;
 		  if ( ! get_const_argument(me, mnum) ) {
@@ -578,6 +580,15 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    ret_sig->set_scalar(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
 	    ret_sig->data_type(IVL_VT_BOOL);
+	    break;
+
+	  case PTF_STRING:
+	    cerr << get_fileline() << ": sorry: String functions are not supported yet" << endl;
+	    break;
+
+	  case PTF_VOID:
+	      // Void functions have no return value, so there is no
+	      // signal to create here.
 	    break;
 
 	  default:
@@ -797,9 +808,10 @@ static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
 	    long use_msb = 0;
 	    long use_lsb = 0;
 	    if (curp->range.get() && ! curp->range->empty()) {
-		  ivl_assert(*curp, curp->range->size() == 2);
-		  PExpr*msb_pex = curp->range->front();
-		  PExpr*lsb_pex = curp->range->back();
+		  ivl_assert(*curp, curp->range->size() == 1);
+		  index_component_t index = curp->range->front();
+		  PExpr*msb_pex = index.msb;
+		  PExpr*lsb_pex = index.lsb;
 
 		  NetExpr*tmp = elab_and_eval(des, scope, msb_pex, -2, true);
 		  ivl_assert(*curp, tmp);

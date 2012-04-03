@@ -1,7 +1,7 @@
 #ifndef __PTask_H
 #define __PTask_H
 /*
- * Copyright (c) 1999-2008,2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008,2010,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,12 +41,14 @@ enum PTaskFuncEnum {
       PTF_REALTIME,
       PTF_TIME,
       PTF_ATOM2,
-      PTF_ATOM2_S
+      PTF_ATOM2_S,
+      PTF_STRING,
+      PTF_VOID
 };
 
 struct PTaskFuncArg {
       PTaskFuncEnum type;
-      vector<PExpr*>*range;
+      std::list<index_component_t>*range;
 };
 
 /*

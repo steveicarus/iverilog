@@ -58,6 +58,7 @@
 class PGate;
 class PExpr;
 class PSpecPath;
+class PClass;
 struct vlltype;
 
 /*
@@ -101,21 +102,22 @@ struct net_decl_assign_t {
 
 /* The lgate is gate instantiation information. */
 struct lgate {
-      lgate(int =0)
+      inline lgate(int =0)
       : parms(0), parms_by_name(0), file(NULL), lineno(0)
-      { range[0] = 0;
-        range[1] = 0;
-      }
+      { }
 
       string name;
       list<PExpr*>*parms;
       list<named_pexpr_t>*parms_by_name;
 
-      PExpr*range[2];
+      index_component_t range;
 
       const char* file;
       unsigned lineno;
 };
+
+extern std::list<index_component_t>* make_range_from_width(uint64_t wid);
+extern std::list<index_component_t>* copy_range(std::list<index_component_t>* orig);
 
   /* Use this function to transform the parted form of the attribute
      list to the attribute map that is used later. */
@@ -158,7 +160,7 @@ extern void pform_module_define_port(const struct vlltype&li,
 				     NetNet::Type type,
 				     ivl_variable_type_t data_type,
 				     bool signed_flag,
-				     list<PExpr*>*range,
+				     list<index_component_t>*range,
 				     list<named_pexpr_t>*attr);
 
 extern Module::port_t* pform_module_port_reference(perm_string name,
@@ -166,6 +168,10 @@ extern Module::port_t* pform_module_port_reference(perm_string name,
 						   unsigned lineno);
 extern void pform_endmodule(const char*, bool inside_celldefine,
                             Module::UCDriveType uc_drive_def);
+
+extern void pform_start_class_declaration(const struct vlltype&loc,
+					  class_type_t*type);
+extern void pform_end_class_declaration(void);
 
 extern void pform_make_udp(perm_string name, list<perm_string>*parms,
 			   svector<PWire*>*decl, list<string>*table,
@@ -186,6 +192,7 @@ extern void pform_make_udp(perm_string name,
  */
 extern void pform_pop_scope();
 
+extern PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name);
 extern PTask*pform_push_task_scope(const struct vlltype&loc, char*name,
                                    bool is_auto);
 extern PFunction*pform_push_function_scope(const struct vlltype&loc, char*name,
@@ -238,7 +245,7 @@ extern void pform_makewire(const struct vlltype&li, perm_string name,
 
 /* This form handles simple declarations */
 extern void pform_makewire(const struct vlltype&li,
-			   list<PExpr*>*range,
+			   list<index_component_t>*range,
 			   bool signed_flag,
 			   list<perm_string>*names,
 			   NetNet::Type type,
@@ -255,7 +262,7 @@ extern void pform_makewire(const struct vlltype&li,
 
 /* This form handles assignment declarations. */
 extern void pform_makewire(const struct vlltype&li,
-			   list<PExpr*>*range,
+			   list<index_component_t>*range,
 			   bool signed_flag,
 			   list<PExpr*>*delay,
 			   str_pair_t str,
@@ -278,16 +285,11 @@ extern void pform_make_reginit(const struct vlltype&li,
      it. The second form takes a single name. */
 extern void pform_set_port_type(const struct vlltype&li,
 				list<perm_string>*names,
-				list<PExpr*>*range,
+				list<index_component_t>*range,
 				bool signed_flag,
 				NetNet::PortType);
-extern void pform_set_port_type(perm_string nm, NetNet::PortType pt,
-				const char*file, unsigned lineno);
 
-extern void pform_set_net_range(list<perm_string>*names,
-				list<PExpr*>*,
-				bool signed_flag,
-				ivl_variable_type_t);
+
 extern void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r);
 extern void pform_set_reg_integer(list<perm_string>*names);
 extern void pform_set_reg_time(list<perm_string>*names);
@@ -317,13 +319,13 @@ extern void pform_set_parameter(const struct vlltype&loc,
 				perm_string name,
 				ivl_variable_type_t type,
 				bool signed_flag,
-				list<PExpr*>*range,
+				list<index_component_t>*range,
 				PExpr*expr, LexicalScope::range_t*value_range);
 extern void pform_set_localparam(const struct vlltype&loc,
 				 perm_string name,
 				 ivl_variable_type_t type,
 				 bool signed_flag,
-				 list<PExpr*>*range,
+				 list<index_component_t>*range,
 				 PExpr*expr);
 extern void pform_set_defparam(const pform_name_t&name, PExpr*expr);
 
@@ -383,15 +385,26 @@ extern void pform_make_pgassign_list(list<PExpr*>*alist,
 
 /* Given a port type and a list of names, make a list of wires that
    can be used as task port information. */
-extern svector<PWire*>*pform_make_task_ports(NetNet::PortType pt,
+extern svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
+					     NetNet::PortType pt,
 					     ivl_variable_type_t vtype,
 					     bool signed_flag,
-					     list<PExpr*>*range,
+					     list<index_component_t>*range,
 					     list<perm_string>*names,
-					     const char* file,
-					     unsigned lineno,
 					     bool isint = false);
 
+extern svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
+					     NetNet::PortType pt,
+					     data_type_t*vtype,
+					     list<perm_string>*names);
+
+/*
+ * The parser uses this function to convert a unary
+ * increment/decrement expression to the equivilent compressed
+ * assignment statement.
+ */
+extern PAssign* pform_compressed_assign_from_inc_dec(const struct vlltype&loc,
+						     PExpr*exp);
 
 /*
  * These are functions that the outside-the-parser code uses the do

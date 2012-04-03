@@ -221,6 +221,9 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	  case NetNet::PINOUT:
 	    o << " inout";
 	    break;
+	  case NetNet::PREF:
+	    o <<" ref";
+	    break;
       }
 
       if (ivl_discipline_t dis = get_discipline())

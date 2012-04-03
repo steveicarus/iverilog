@@ -56,7 +56,7 @@ extern YYLTYPE yylloc;
  */
 extern int  VLlex();
 extern void VLerror(const char*msg);
-extern void VLerror(const YYLTYPE&loc, const char*msg);
+extern void VLerror(const YYLTYPE&loc, const char*msg, ...) __attribute__((format(printf,2,3)));
 #define yywarn VLwarn
 extern void VLwarn(const YYLTYPE&loc, const char*msg);
 
@@ -94,5 +94,7 @@ extern verinum*make_undef_highz_dec(const char*txt);
 extern verinum*make_unsized_binary(const char*txt);
 extern verinum*make_unsized_octal(const char*txt);
 extern verinum*make_unsized_hex(const char*txt);
+
+extern char* strdupnew(char const *str);
 
 #endif

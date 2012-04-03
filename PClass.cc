@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,42 +17,14 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "PScope.h"
+# include  "PClass.h"
 
-PScope::PScope(perm_string n, LexicalScope*parent)
-: LexicalScope(parent), name_(n)
+PClass::PClass(perm_string name, LexicalScope*parent)
+: PScopeExtra(name, parent)
 {
 }
 
-PScope::PScope(perm_string n)
-: LexicalScope(0), name_(n)
+
+PClass::~PClass()
 {
 }
-
-PScope::~PScope()
-{
-}
-
-PWire* LexicalScope::wires_find(perm_string name)
-{
-      map<perm_string,PWire*>::const_iterator cur = wires.find(name);
-      if (cur == wires.end())
-	    return 0;
-      else
-	    return (*cur).second;
-}
-
-PScopeExtra::PScopeExtra(perm_string n, LexicalScope*parent)
-: PScope(n, parent)
-{
-}
-
-PScopeExtra::PScopeExtra(perm_string n)
-: PScope(n)
-{
-}
-
-PScopeExtra::~PScopeExtra()
-{
-}
-

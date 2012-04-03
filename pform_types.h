@@ -1,7 +1,7 @@
 #ifndef __pform_types_H
 #define __pform_types_H
 /*
- * Copyright (c) 2007-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -84,20 +84,48 @@ struct data_type_t : public LineInfo {
 struct enum_type_t : public data_type_t {
       ivl_variable_type_t base_type;
       bool signed_flag;
-      std::auto_ptr< list<PExpr*> > range;
+      std::auto_ptr< list<index_component_t> > range;
       std::auto_ptr< list<named_pexpr_t> > names;
       LineInfo li;
 };
 
 struct struct_member_t : public LineInfo {
       ivl_variable_type_t type;
-      std::auto_ptr< list<PExpr*> > range;
+      std::auto_ptr< list<index_component_t> > range;
       std::auto_ptr< list<decl_assignment_t*> > names;
 };
 
 struct struct_type_t : public data_type_t {
       bool packed_flag;
       std::auto_ptr< list<struct_member_t*> > members;
+};
+
+struct atom2_type_t : public data_type_t {
+      inline explicit atom2_type_t(int tc, bool flag)
+      : type_code(tc), signed_flag(flag) { }
+      int type_code;
+      bool signed_flag;
+};
+
+struct vector_type_t : public data_type_t {
+      inline explicit vector_type_t(ivl_variable_type_t bt, bool sf,
+				    std::list<index_component_t>*pd)
+      : base_type(bt), signed_flag(sf), pdims(pd) { }
+      ivl_variable_type_t base_type;
+      bool signed_flag;
+      std::auto_ptr< list<index_component_t> > pdims;
+};
+
+struct real_type_t : public data_type_t {
+      inline explicit real_type_t(int tc) : type_code(tc) { }
+      int type_code;
+};
+
+struct class_type_t : public data_type_t {
+      inline explicit class_type_t(perm_string n)
+      : name(n) { }
+
+      perm_string name;
 };
 
 /*

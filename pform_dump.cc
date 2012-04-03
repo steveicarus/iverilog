@@ -336,6 +336,9 @@ void PWire::dump(ostream&out, unsigned ind) const
 	  case NetNet::PINOUT:
 	    out << " inout";
 	    break;
+	  case NetNet::PREF:
+	    out << " ref";
+	    break;
 	  case NetNet::NOT_A_PORT:
 	    break;
       }
@@ -574,7 +577,10 @@ void PAssign::dump(ostream&out, unsigned ind) const
       if (delay_) out << "#" << *delay_ << " ";
       if (count_) out << "repeat(" << *count_ << ") ";
       if (event_) out << *event_ << " ";
-      out << *rval() << ";" << "  /* " << get_fileline() << " */" << endl;
+      PExpr*rexpr = rval();
+      if (rexpr) out << *rval() << ";";
+      else out << "<no rval>;";
+      out << "  /* " << get_fileline() << " */" << endl;
 }
 
 void PAssignNB::dump(ostream&out, unsigned ind) const
@@ -774,8 +780,8 @@ void PForever::dump(ostream&out, unsigned ind) const
 void PForStatement::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "for (" << *name1_ << " = " << *expr1_
-	  << "; " << *cond_ << "; " << *name2_ << " = " << *expr2_ <<
-	    ")" << endl;
+	  << "; " << *cond_ << "; <for_step>)" << endl;
+      step_->dump(out, ind+6);
       statement_->dump(out, ind+3);
 }
 
@@ -809,7 +815,13 @@ void PFunction::dump(ostream&out, unsigned ind) const
 	    out << "int unsigned ";
 	    break;
 	  case PTF_ATOM2_S:
-	    cout << "int signed ";
+	    out << "int signed ";
+	    break;
+	  case PTF_STRING:
+	    out << "string ";
+	    break;
+	  case PTF_VOID:
+	    out << "void ";
 	    break;
       }
 
@@ -860,6 +872,10 @@ void PTask::dump(ostream&out, unsigned ind) const
       out << pscope_name() << ";" << endl;
       if (ports_)
 	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
+		  if ((*ports_)[idx] == 0) {
+			out << setw(ind) << "" << "ERROR PORT" << endl;
+			continue;
+		  }
 		  out << setw(ind) << "";
 		  switch ((*ports_)[idx]->get_port_type()) {
 		      case NetNet::PINPUT:
@@ -870,6 +886,12 @@ void PTask::dump(ostream&out, unsigned ind) const
 			break;
 		      case NetNet::PINOUT:
 			out << "inout ";
+			break;
+		      case NetNet::PIMPLICIT:
+			out << "PIMPLICIT";
+			break;
+		      case NetNet::NOT_A_PORT:
+			out << "NOT_A_PORT";
 			break;
 		      default:
 			assert(0);
