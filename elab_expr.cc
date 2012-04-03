@@ -1419,24 +1419,38 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
       return sys_expr;
 }
 
-static NetExpr* check_for_struct_members(const LineInfo*li,
-					 Design*des, NetScope*,
-					 NetNet*net, perm_string method_name)
+/*
+ * If the method matches a structure member then return the member otherwise
+ * return 0. Also return the offset of the member.
+ */
+static const netstruct_t::member_t*get_struct_member(const LineInfo*li,
+                                                     Design*des, NetScope*,
+                                                     NetNet*net,
+                                                     perm_string method_name,
+                                                     unsigned long&off)
 {
       netstruct_t*type = net->struct_type();
       ivl_assert(*li, type);
 
       if (! type->packed()) {
-	    cerr << li->get_fileline() << ": sorry: unpacked structures not supported here. "
+	    cerr << li->get_fileline()
+	         << ": sorry: unpacked structures not supported here. "
 		 << "Method=" << method_name << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
+      return type->packed_member(method_name, off);
+}
+
+static NetExpr* check_for_struct_members(const LineInfo*li,
+					 Design*des, NetScope*,
+					 NetNet*net, perm_string method_name)
+{
       unsigned long off;
-      const netstruct_t::member_t*mem = type->packed_member(method_name, off);
-      if (mem == 0)
-	    return 0;
+      const netstruct_t::member_t*mem = get_struct_member(li, des, 0, net,
+                                                          method_name, off);
+      if (mem == 0) return 0;
 
       if (debug_elaborate) {
 	    cerr << li->get_fileline() << ": debug: Found struct member " <<mem->name
@@ -2010,7 +2024,8 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
       const NetExpr*ex1, *ex2;
 
-      symbol_search(0, des, scope, path_, net, par, eve, ex1, ex2);
+      NetScope*found_in = symbol_search(0, des, scope, path_, net, par, eve,
+                                        ex1, ex2);
 
 	// If there is a part/bit select expression, then process it
 	// here. This constrains the results no matter what kind the
@@ -2144,6 +2159,37 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 		  if (mode < LOSSLESS) mode = LOSSLESS;
 	    }
 	    return expr_width_;
+      }
+
+	// If this is SystemVerilog then maybe this is a structure element.
+      if (gn_system_verilog() && found_in==0 && path_.size() >= 2) {
+	    pform_name_t use_path = path_;
+	    perm_string method_name = peek_tail_name(use_path);
+	    use_path.pop_back();
+
+	    found_in = symbol_search(this, des, scope, use_path,
+	                             net, par, eve, ex1, ex2);
+
+	      // Check to see if we have a net and if so is it a structure?
+	    if (net != 0) {
+		    // If this net is a struct, the method name may be
+		    // a struct member.
+		  if (net->struct_type() != 0) {
+			ivl_assert(*this, use_path.back().index.empty());
+
+			const netstruct_t::member_t*mem;
+			unsigned long unused;
+			mem = get_struct_member(this, des, scope, net,
+			                        method_name, unused);
+			if (mem) {
+			      expr_type_   = mem->data_type();
+			      expr_width_  = mem->width();
+			      min_width_   = expr_width_;
+			      signed_flag_ = mem->get_signed();
+			      return expr_width_;
+			}
+		  }
+	    }
       }
 
 	// Not a net, and not a parameter? Give up on the type, but
