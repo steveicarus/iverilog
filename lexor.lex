@@ -309,7 +309,7 @@ TU [munpf]
 	    }
       }
 
-	/* If this identifer names a previously declared type, then
+	/* If this identifier names a previously declared type, then
 	   return this as a TYPE_IDENTIFIER instead. */
       if (rc == IDENTIFIER && gn_system_verilog()) {
 	    if (data_type_t*type = pform_test_type_identifier(yylval.text)) {

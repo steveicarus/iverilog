@@ -672,7 +672,7 @@ class_identifier
   ;
 
   /* The endname after a class declaration is a little tricky because
-     the class name is detected by the lexor as a TYPE_IDENTIFER if it
+     the class name is detected by the lexor as a TYPE_IDENTIFIER if it
      does indeed match a name. */
 class_declaration_endname_opt
   : ':' TYPE_IDENTIFIER

@@ -130,7 +130,7 @@ extern NetExpr *normalize_variable_part_base(const list<long>&indices, NetExpr*b
 					     unsigned long wid, bool is_up);
 /*
  * Calculate a canonicalizing expression for a slice select. The
- * indices array is less then needed to fully address a bit, so the
+ * indices array is less than needed to fully address a bit, so the
  * result is a slice of the packed array. The return value is an
  * expression that gets to the base of the slice, and (lwid) becomes
  * the width of the slice, in bits. For example:
