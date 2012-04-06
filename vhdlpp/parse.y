@@ -864,6 +864,16 @@ constant_declaration
 	}
 	delete $2;
       }
+  | K_constant identifier_list ':' error ';'
+      { errormsg(@4, "Syntax error in constant declaration type.\n");
+	yyerrok;
+	delete $2;
+      }
+  | K_constant error ';'
+      { errormsg(@2, "Syntax error in constant declaration.\n");
+	yyerrok;
+      }
+
   ;
 
 context_clause : context_items | ;
@@ -1595,6 +1605,7 @@ package_body_declarative_part_opt
 package_declarative_item
   : component_declaration
   | constant_declaration
+  | type_declaration
   | subtype_declaration
   | type_declaration
   | use_clause
@@ -2138,6 +2149,10 @@ type_declaration
       { errormsg(@4, "Error in type definition for %s\n", $2);
 	yyerrok;
 	delete[]$2;
+      }
+  | K_type error ';'
+      { errormsg(@1, "Error in type definition\n");
+	yyerrok;
       }
   ;
 
