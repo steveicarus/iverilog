@@ -482,6 +482,9 @@ void vpiNextSimTime(void)
 {
       simulator_callback* cur;
 
+      assert(vpi_mode_flag == VPI_MODE_NONE);
+      vpi_mode_flag = VPI_MODE_RWSYNC;
+
       while (NextSimTime) {
 	    cur = NextSimTime;
 	    NextSimTime = dynamic_cast<simulator_callback*>(cur->next);
@@ -489,6 +492,7 @@ void vpiNextSimTime(void)
 	    delete cur;
       }
 
+      vpi_mode_flag = VPI_MODE_NONE;
 }
 
 static simulator_callback* make_prepost(p_cb_data data)
