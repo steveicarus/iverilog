@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,10 +31,12 @@ int Architecture::elaborate(Entity*entity)
       for (list<Architecture::Statement*>::iterator cur = statements_.begin()
 		 ; cur != statements_.end() ; ++cur) {
 
-	    errors += (*cur)->elaborate(entity, this);
+	    int cur_errors = (*cur)->elaborate(entity, this);
+	    errors += cur_errors;
       }
 
-       return errors;
+      cerr << errors << " errors in " << name_ << " architecture of " << entity->get_name() << "." << endl;
+      return errors;
 }
 
 int Architecture::Statement::elaborate(Entity*, Architecture*)
@@ -276,7 +278,10 @@ int SignalAssignment::elaborate(Entity*ent, Architecture*arc)
 	// r-value.
       const VType*lval_type = lval_->peek_type();
       if (lval_type == 0) {
-	    if (errors == 0) errors += 1;
+	    if (errors == 0) {
+		  errors += 1;
+		  cerr << get_fileline() << ": error: Unable to calculate type for l-value expression." << endl;
+	    }
 	    return errors;
       }
 

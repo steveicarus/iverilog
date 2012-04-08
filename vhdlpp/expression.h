@@ -1,7 +1,7 @@
 #ifndef __expression_H
 #define __expression_H
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -485,6 +485,9 @@ class ExpName : public Expression {
       const char* name() const;
 
     private:
+      const VType* elaborate_adjust_type_with_range_(Entity*ent, Architecture*arc, const VType*type);
+
+      int elaborate_lval_(Entity*ent, Architecture*arc, bool, ExpName*suffix);
       const VType* probe_prefix_type_(Entity*ent, Architecture*arc) const;
       const VType* probe_prefixed_type_(Entity*ent, Architecture*arc) const;
 

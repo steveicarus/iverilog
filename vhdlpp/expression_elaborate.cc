@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -39,7 +39,38 @@ const VType* Expression::probe_type(Entity*, Architecture*) const
       return 0;
 }
 
-int ExpName::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
+const VType*ExpName::elaborate_adjust_type_with_range_(Entity*, Architecture*arc, const VType*type)
+{
+
+      if (const VTypeArray*array = dynamic_cast<const VTypeArray*>(type)) {
+	    if (index_ && !lsb_) {
+		    // If the name is an array or a vector, then an
+		    // indexed name has the type of the element.
+		  type = array->element_type();
+
+	    } else if (index_ && lsb_) {
+		    // If the name is an array, then a part select is
+		    // also an array, but with different bounds.
+		  int64_t use_msb, use_lsb;
+		  bool flag;
+
+		  flag = index_->evaluate(arc, use_msb);
+		  ivl_assert(*this, flag);
+		  flag = lsb_->evaluate(arc, use_lsb);
+		  ivl_assert(*this, flag);
+
+		  Expression*exp_msb = new ExpInteger(use_msb);
+		  Expression*exp_lsb = new ExpInteger(use_lsb);
+		  vector<VTypeArray::range_t> use_dims (1);
+		  use_dims[0] = VTypeArray::range_t(exp_msb, exp_lsb);
+		  type = new VTypeArray(array->element_type(), use_dims);
+	    }
+      }
+
+      return type;
+}
+
+int ExpName::elaborate_lval_(Entity*ent, Architecture*arc, bool is_sequ, ExpName*suffix)
 {
       int errors = 0;
 
@@ -48,6 +79,77 @@ int ExpName::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
 		 << "ExpName prefix of " << name_
 		 << " in l-value expressions." << endl;
 	    errors += 1;
+      }
+
+      const VType*found_type = 0;
+
+      if (const InterfacePort*cur = ent->find_port(name_)) {
+	    if (cur->mode != PORT_OUT) {
+		  cerr << get_fileline() << ": error: Assignment to "
+			"input port " << name_ << "." << endl;
+		  return errors + 1;
+	    }
+
+	    if (is_sequ)
+		  ent->set_declaration_l_value(name_, is_sequ);
+
+	    found_type = cur->type;
+
+      } else if (ent->find_generic(name_)) {
+
+	    cerr << get_fileline() << ": error: Assignment to generic "
+		 << name_ << " from entity "
+		 << ent->get_name() << "." << endl;
+	    return errors + 1;
+
+      } else if (Signal*sig = arc->find_signal(name_)) {
+	      // Tell the target signal that this may be a sequential l-value.
+	    if (is_sequ) sig->count_ref_sequ();
+
+	    found_type = sig->peek_type();
+
+      } else if (Variable*var = arc->find_variable(name_)) {
+	      // Tell the target signal that this may be a sequential l-value.
+	    if (is_sequ) var->count_ref_sequ();
+
+	    found_type = var->peek_type();
+      }
+
+      ivl_assert(*this, found_type);
+
+      const VType*suffix_type = 0;
+
+      if (const VTypeRecord*record = dynamic_cast<const VTypeRecord*> (found_type)) {
+	    const VTypeRecord::element_t*element = record->element_by_name(suffix->name_);
+	    ivl_assert(*this, element);
+
+	    const VType*element_type = element->peek_type();
+	    ivl_assert(*this, element_type);
+
+	    suffix_type = element_type;
+      }
+
+      if (suffix_type == 0) {
+	    cerr << get_fileline() << ": error: I don't know how to handle prefix " << name_
+		 << " with suffix " << suffix->name_ << endl;
+	    errors += 1;
+	    return errors;
+      }
+
+      suffix_type = suffix->elaborate_adjust_type_with_range_(ent, arc, suffix_type);
+
+      ivl_assert(*this, suffix_type);
+      suffix->set_type(suffix_type);
+
+      return errors;
+}
+
+int ExpName::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
+{
+      int errors = 0;
+
+      if (prefix_.get()) {
+	    return prefix_->elaborate_lval_(ent, arc, is_sequ, this);
       }
 
       const VType*found_type = 0;
@@ -90,30 +192,7 @@ int ExpName::elaborate_lval(Entity*ent, Architecture*arc, bool is_sequ)
 	    return errors + 1;
       }
 
-      if (const VTypeArray*array = dynamic_cast<const VTypeArray*>(found_type)) {
-	    if (index_ && !lsb_) {
-		    // If the name is an array or a vector, then an
-		    // indexed name has the type of the element.
-		  found_type = array->element_type();
-
-	    } else if (index_ && lsb_) {
-		    // If the name is an array, then a part select is
-		    // also an array, but with different bounds.
-		  int64_t use_msb, use_lsb;
-		  bool flag;
-
-		  flag = index_->evaluate(arc, use_msb);
-		  ivl_assert(*this, flag);
-		  flag = lsb_->evaluate(arc, use_lsb);
-		  ivl_assert(*this, flag);
-
-		  Expression*exp_msb = new ExpInteger(use_msb);
-		  Expression*exp_lsb = new ExpInteger(use_lsb);
-		  vector<VTypeArray::range_t> use_dims (1);
-		  use_dims[0] = VTypeArray::range_t(exp_msb, exp_lsb);
-		  found_type = new VTypeArray(array->element_type(), use_dims);
-	    }
-      }
+      found_type = elaborate_adjust_type_with_range_(ent, arc, found_type);
 
       set_type(found_type);
       return errors;
