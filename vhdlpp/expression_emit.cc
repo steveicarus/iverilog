@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -70,10 +70,19 @@ int ExpUnary::emit_operand1(ostream&out, Entity*ent, Architecture*arc)
 
 int ExpAggregate::emit(ostream&out, Entity*ent, Architecture*arc)
 {
+      if (peek_type() == 0) {
+	    out << "/* " << get_fileline() << ": internal error: "
+		<< "Aggregate literal needs well defined type." << endl;
+	    return 1;
+      }
+
       if (const VTypeArray*atype = dynamic_cast<const VTypeArray*> (peek_type()))
 	    return emit_array_(out, ent, arc, atype);
 
-      return Expression::emit(out, ent, arc);
+      out << "/* " << get_fileline() << ": internal error: "
+	  << "I don't know how to elaborate aggregate in " << typeid(peek_type()).name()
+	  << " type context. */";
+      return 1;
 }
 
 int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const VTypeArray*atype)
@@ -126,27 +135,7 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
       const VTypeArray::range_t&rang = atype->dimension(0);
       assert(! rang.is_box());
 
-      map<int64_t,choice_element*> element_map;
-      choice_element*element_other = 0;
-
-      for (size_t idx = 0 ; idx < aggregate_.size() ; idx += 1) {
-	    if (aggregate_[idx].choice->others()) {
-		  ivl_assert(*this, element_other == 0);
-		  element_other = &aggregate_[idx];
-		  continue;
-	    }
-
-	    Expression*tmp = aggregate_[idx].choice->simple_expression(false);
-	    int64_t tmp_val;
-	    if (! tmp->evaluate(ent, arc, tmp_val)) {
-		  cerr << tmp->get_fileline() << ": error: Unable to evaluate aggregate choice expression." << endl;
-		  errors += 1;
-		  continue;
-	    }
-
-	    element_map[tmp_val] = &aggregate_[idx];
-      }
-
+	// Fully calculate the range numbers.
       int64_t use_msb, use_lsb;
       bool rc;
       rc = rang.msb()->evaluate(ent, arc, use_msb);
@@ -155,16 +144,68 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
       ivl_assert(*this, rc);
       ivl_assert(*this, use_msb >= use_lsb);
 
+      map<int64_t,choice_element*> element_map;
+      choice_element*element_other = 0;
+
+      bool positional_section = true;
+      int64_t positional_idx = use_msb;
+
+      for (size_t idx = 0 ; idx < aggregate_.size() ; idx += 1) {
+
+	    if (aggregate_[idx].choice == 0) {
+		    // positional association!
+		  if (!positional_section) {
+			cerr << get_fileline() << ": error: "
+			     << "All positional associations must be before"
+			     << " any named associations." << endl;
+			errors += 1;
+		  }
+		  element_map[positional_idx] = &aggregate_[idx];
+		  positional_idx -= 1;
+		  continue;
+	    }
+
+	    if (aggregate_[idx].choice->others()) {
+		  ivl_assert(*this, element_other == 0);
+		  element_other = &aggregate_[idx];
+		  continue;
+	    }
+
+	    int64_t tmp_val;
+	    Expression*tmp = aggregate_[idx].choice->simple_expression(false);
+
+	      // Named aggregate element. Once we see one of
+	      // these, we can no longer accept positional
+	      // elements so disable further positional
+	      // processing.
+	    positional_section = false;
+	    if (! tmp->evaluate(ent, arc, tmp_val)) {
+		  cerr << tmp->get_fileline() << ": error: "
+		       << "Unable to evaluate aggregate choice expression." << endl;
+		  errors += 1;
+		  continue;
+	    }
+
+	    element_map[tmp_val] = &aggregate_[idx];
+      }
+
+	// Emit the elements as a concatenation. This works great for
+	// vectors of bits. We implement VHDL arrays as packed arrays,
+	// so this should be generally correct.
       out << "{";
       for (int64_t idx = use_msb ; idx >= use_lsb ; idx -= 1) {
 	    choice_element*cur = element_map[idx];
 	    if (cur == 0)
 		  cur = element_other;
-	    ivl_assert(*this, cur != 0);
 
 	    if (idx < use_msb)
 		  out << ", ";
-	    errors += cur->expr->emit(out, ent, arc);
+	    if (cur == 0) {
+		  out << "/* Missing element " << idx << " */";
+		  errors += 1;
+	    } else {
+		  errors += cur->expr->emit(out, ent, arc);
+	    }
       }
       out << "}";
 
@@ -511,13 +552,25 @@ int ExpLogical::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
+int ExpName::emit_as_prefix_(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      if (prefix_.get()) {
+	    errors += prefix_->emit_as_prefix_(out, ent, arc);
+      }
+
+      out << "\\" << name_ << " ";
+      ivl_assert(*this, index_ == 0);
+      out << ".";
+      return errors;
+}
+
 int ExpName::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
       if (prefix_.get()) {
-	    cerr << get_fileline() << ": sorry: I don't know how to emit ExpName prefix parts." << endl;
-	    errors += 1;
+	    errors += prefix_->emit_as_prefix_(out, ent, arc);
       }
 
       out << "\\" << name_ << " ";

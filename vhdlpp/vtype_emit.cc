@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -162,14 +162,24 @@ int VTypeRange::emit_decl(ostream&out, perm_string name, bool reg_flag) const
 int VTypeRecord::emit_def(ostream&out, perm_string name) const
 {
       int errors = 0;
-      assert(0);
+      out << "struct packed {";
+
+      for (vector<element_t*>::const_iterator cur = elements_.begin()
+		 ; cur != elements_.end() ; ++cur) {
+	    perm_string element_name = (*cur)->peek_name();
+	    const VType*element_type = (*cur)->peek_type();
+	    element_type->emit_def(out, element_name);
+	    out << "; ";
+      }
+
+      out << "} ";
       return errors;
 }
 
 int VTypeRecord::emit_decl(ostream&out, perm_string name, bool reg_flag) const
 {
       int errors = 0;
-      assert(0);
+      errors += emit_def(out, name);
       return errors;
 }
 

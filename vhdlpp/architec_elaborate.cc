@@ -28,6 +28,19 @@ int Architecture::elaborate(Entity*entity)
 {
       int errors = 0;
 
+	// Constant assignments in the architecture get their types
+	// from the constant declaration itself. Elaborate the value
+	// expression with the declared type.
+
+      for (map<perm_string,struct const_t*>::iterator cur = old_constants_.begin()
+		 ; cur != old_constants_.end() ; ++cur) {
+	    cur->second->val->elaborate_expr(entity, this, cur->second->typ);
+      }
+      for (map<perm_string,struct const_t*>::iterator cur = new_constants_.begin()
+		 ; cur != new_constants_.end() ; ++cur) {
+	    cur->second->val->elaborate_expr(entity, this, cur->second->typ);
+      }
+
       for (list<Architecture::Statement*>::iterator cur = statements_.begin()
 		 ; cur != statements_.end() ; ++cur) {
 
@@ -35,7 +48,12 @@ int Architecture::elaborate(Entity*entity)
 	    errors += cur_errors;
       }
 
-      cerr << errors << " errors in " << name_ << " architecture of " << entity->get_name() << "." << endl;
+      if (errors > 0) {
+	    cerr << errors << " errors in "
+		 << name_ << " architecture of "
+		 << entity->get_name() << "." << endl;
+      }
+
       return errors;
 }
 

@@ -491,6 +491,8 @@ class ExpName : public Expression {
       const VType* probe_prefix_type_(Entity*ent, Architecture*arc) const;
       const VType* probe_prefixed_type_(Entity*ent, Architecture*arc) const;
 
+      int emit_as_prefix_(ostream&out, Entity*ent, Architecture*arc);
+
     private:
       std::auto_ptr<ExpName> prefix_;
       perm_string name_;

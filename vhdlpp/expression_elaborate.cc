@@ -306,8 +306,8 @@ int ExpAggregate::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype
 
 /*
  * Elaboration of array aggregates is elaboration of the element
- * expressions using the element type as the ltype for the
- * subexpression.
+ * expressions (the elements_ member) using the element type as the
+ * ltype for the subexpression.
  */
 int ExpAggregate::elaborate_expr_array_(Entity*ent, Architecture*arc, const VTypeArray*ltype)
 {
@@ -315,22 +315,42 @@ int ExpAggregate::elaborate_expr_array_(Entity*ent, Architecture*arc, const VTyp
       int errors = 0;
       size_t choice_count = 0;
 
+	// Figure out how many total elements we have here. Note that
+	// each parsed element may be bound to multiple choices, so
+	// account for that.
       for (size_t edx = 0 ; edx < elements_.size() ; edx += 1) {
 	    element_t*ecur = elements_[edx];
-	    choice_count += ecur->count_choices();
+	    if (ecur->count_choices() == 0)
+		  choice_count += 1;
+	    else
+		  choice_count += ecur->count_choices();
       }
 
       aggregate_.resize(choice_count);
 
+	// Translate the elements_ array to the aggregate_ array. In
+	// the target array, each expression is attached to a single
+	// choice.
       size_t cdx = 0;
       for (size_t edx = 0 ; edx < elements_.size() ; edx += 1) {
 	    element_t*ecur = elements_[edx];
-	    ecur->map_choices(&aggregate_[cdx]);
-	    cdx += ecur->count_choices();
+	    if (ecur->count_choices() == 0) {
+		    // positional associations have no "choice"
+		    // associated with them.
+		  aggregate_[cdx].choice = 0;
+		  aggregate_[cdx].expr = ecur->extract_expression();
+		  aggregate_[cdx].alias_flag;
+		  cdx += 1;
+	    } else {
+		  ecur->map_choices(&aggregate_[cdx]);
+		  cdx += ecur->count_choices();
+	    }
       }
 
       ivl_assert(*this, cdx == choice_count);
 
+	// Now run through the more convenient mapping and elaborate
+	// all the expressions that I find.
       for (size_t idx = 0 ; idx < aggregate_.size() ; idx += 1) {
 	    if (aggregate_[idx].alias_flag)
 		  continue;
@@ -338,7 +358,9 @@ int ExpAggregate::elaborate_expr_array_(Entity*ent, Architecture*arc, const VTyp
 	    errors += aggregate_[idx].expr->elaborate_expr(ent, arc, element_type);
       }
 
+	// done with the obsolete elements_ vector.
       elements_.clear();
+
       return errors;
 }
 
