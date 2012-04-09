@@ -386,7 +386,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %token <data_type> TYPE_IDENTIFIER
 %token <discipline> DISCIPLINE_IDENTIFIER
 %token <text>   PATHPULSE_IDENTIFIER
-%token <number> BASED_NUMBER DEC_NUMBER
+%token <number> BASED_NUMBER DEC_NUMBER UNBASED_NUMBER
 %token <realtime> REALTIME
 %token K_PLUS_EQ K_MINUS_EQ K_INCR K_DECR
 %token K_LE K_GE K_EG K_EQ K_NE K_CEQ K_CNE K_LP K_LS K_RS K_RSS K_SG
@@ -1231,6 +1231,12 @@ number  : BASED_NUMBER
         | DEC_NUMBER BASED_NUMBER
 	     { $$ = pform_verinum_with_size($1,$2, @2.text, @2.first_line);
 	       based_size = 0; }
+        | UNBASED_NUMBER
+	     { $$ = $1; based_size = 0;}
+        | DEC_NUMBER UNBASED_NUMBER
+	     { yyerror(@1, "error: Unbased SystemVerilog literal cannot have "
+	                   "a size.");
+	       $$ = $1; based_size = 0;}
 	;
 
 open_range_list /* IEEE1800-2005 A.2.11 */
