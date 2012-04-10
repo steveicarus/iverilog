@@ -134,9 +134,9 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 {
       bool rc_flag;
       assert(enum_type->range->size() == 1);
-      index_component_t index = enum_type->range->front();
-      NetExpr*msb_ex = elab_and_eval(des, scope, index.msb, -1);
-      NetExpr*lsb_ex = elab_and_eval(des, scope, index.lsb,  -1);
+      pform_range_t&range = enum_type->range->front();
+      NetExpr*msb_ex = elab_and_eval(des, scope, range.first, -1);
+      NetExpr*lsb_ex = elab_and_eval(des, scope, range.second,  -1);
 
       long msb = 0;
       rc_flag = eval_as_long(msb, msb_ex);

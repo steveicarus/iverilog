@@ -358,9 +358,9 @@ void PWire::dump(ostream&out, unsigned ind) const
 		  out << " port<scalar>";
 	    } else {
 		  out << " port";
-		  for (list<PWire::range_t>::const_iterator cur = port_.begin()
+		  for (list<pform_range_t>::const_iterator cur = port_.begin()
 			     ; cur != port_.end() ; ++cur)
-			out << "[" << *cur->msb << ":" << *cur->lsb << "]";
+			out << "[" << *cur->first << ":" << *cur->second << "]";
 	    }
       }
       if (net_set_) {
@@ -368,9 +368,9 @@ void PWire::dump(ostream&out, unsigned ind) const
 		  out << " net<scalar>";
 	    } else {
 		  out << " net";
-		  for (list<PWire::range_t>::const_iterator cur = net_.begin()
+		  for (list<pform_range_t>::const_iterator cur = net_.begin()
 			     ; cur != net_.end() ; ++cur)
-			out << "[" << *cur->msb << ":" << *cur->lsb << "]";
+			out << "[" << *cur->first << ":" << *cur->second << "]";
 	    }
       }
 

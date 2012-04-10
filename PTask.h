@@ -48,7 +48,7 @@ enum PTaskFuncEnum {
 
 struct PTaskFuncArg {
       PTaskFuncEnum type;
-      std::list<index_component_t>*range;
+      std::list<pform_range_t>*range;
 };
 
 /*

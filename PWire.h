@@ -51,11 +51,6 @@ enum PWSRType {SR_PORT, SR_NET, SR_BOTH};
  * the wire name.
  */
 class PWire : public LineInfo {
-    public:
-      struct range_t {
-	    PExpr*msb;
-	    PExpr*lsb;
-      };
 
     public:
       PWire(perm_string name,
@@ -81,7 +76,7 @@ class PWire : public LineInfo {
       ivl_variable_type_t get_data_type() const;
 
       void set_range_scalar(PWSRType type);
-      void set_range(const std::list<range_t>&ranges, PWSRType type);
+      void set_range(const std::list<pform_range_t>&ranges, PWSRType type);
 
       void set_memory_idx(PExpr*ldx, PExpr*rdx);
 
@@ -112,9 +107,9 @@ class PWire : public LineInfo {
 	// bit. The first item in the list is the first range, and so
 	// on. For example "reg [3:0][7:0] ..." will contains the
 	// range_t object for [3:0] first and [7:0] last.
-      std::list<range_t>port_;
+      std::list<pform_range_t>port_;
       bool port_set_;
-      std::list<range_t>net_;
+      std::list<pform_range_t>net_;
       bool net_set_;
       bool is_scalar_;
       unsigned error_cnt_;

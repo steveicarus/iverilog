@@ -192,7 +192,7 @@ void PWire::set_range_scalar(PWSRType type)
       }
 }
 
-void PWire::set_range(const list<PWire::range_t>&rlist, PWSRType type)
+void PWire::set_range(const list<pform_range_t>&rlist, PWSRType type)
 {
       switch (type) {
 	  case SR_PORT:
