@@ -1800,7 +1800,7 @@ extern int          ivl_scope_time_units(ivl_scope_t net);
  *    dimension.
  *
  *    The ivl_signal_msb/ivl_signal_lsb functions are deprecated
- *    versions that only work with variables that have less then two
+ *    versions that only work with variables that have less than two
  *    dimensions. They will return msb==lsb==0 for scalars.
  *
  * ivl_signal_port
