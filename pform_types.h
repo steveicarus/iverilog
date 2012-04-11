@@ -37,6 +37,7 @@
 class PExpr;
 typedef named<verinum> named_number_t;
 typedef named<PExpr*> named_pexpr_t;
+typedef std::pair<PExpr*,PExpr*> pform_range_t;
 
 struct index_component_t {
       enum ctype_t { SEL_NONE, SEL_BIT, SEL_PART, SEL_IDX_UP, SEL_IDX_DO };
@@ -59,7 +60,7 @@ struct name_component_t {
 
 struct decl_assignment_t {
       perm_string name;
-      std::list<index_component_t>index;
+      std::list<pform_range_t>index;
       std::auto_ptr<PExpr> expr;
 };
 
@@ -84,14 +85,14 @@ struct data_type_t : public LineInfo {
 struct enum_type_t : public data_type_t {
       ivl_variable_type_t base_type;
       bool signed_flag;
-      std::auto_ptr< list<index_component_t> > range;
+      std::auto_ptr< list<pform_range_t> > range;
       std::auto_ptr< list<named_pexpr_t> > names;
       LineInfo li;
 };
 
 struct struct_member_t : public LineInfo {
       ivl_variable_type_t type;
-      std::auto_ptr< list<index_component_t> > range;
+      std::auto_ptr< list<pform_range_t> > range;
       std::auto_ptr< list<decl_assignment_t*> > names;
 };
 
@@ -109,11 +110,11 @@ struct atom2_type_t : public data_type_t {
 
 struct vector_type_t : public data_type_t {
       inline explicit vector_type_t(ivl_variable_type_t bt, bool sf,
-				    std::list<index_component_t>*pd)
+				    std::list<pform_range_t>*pd)
       : base_type(bt), signed_flag(sf), pdims(pd) { }
       ivl_variable_type_t base_type;
       bool signed_flag;
-      std::auto_ptr< list<index_component_t> > pdims;
+      std::auto_ptr< list<pform_range_t> > pdims;
 };
 
 struct real_type_t : public data_type_t {

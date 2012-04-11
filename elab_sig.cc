@@ -477,11 +477,15 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	  case PTF_REG_S:
 	    if (return_type_.range) {
 		  ivl_assert(*this, return_type_.range->size() == 1);
-		  index_component_t index = return_type_.range->front();
+		  pform_range_t&return_range = return_type_.range->front();
 
-		  NetExpr*me = elab_and_eval(des, scope, index.msb, -1, true);
+		  NetExpr*me = elab_and_eval(des, scope,
+					     return_range.first, -1,
+                                             true);
 		  assert(me);
-		  NetExpr*le = elab_and_eval(des, scope, index.lsb, -1, true);
+		  NetExpr*le = elab_and_eval(des, scope,
+					     return_range.second, -1,
+                                             true);
 		  assert(le);
 
 		  long mnum = 0, lnum = 0;
@@ -550,10 +554,14 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    long use_wid;
 	    {
 		  ivl_assert(*this, return_type_.range->size() == 1);
-		  index_component_t index = return_type_.range->front();
-		  NetExpr*me = elab_and_eval(des, scope, index.msb, -1, true);
+		  pform_range_t&return_range = return_type_.range->front();
+		  NetExpr*me = elab_and_eval(des, scope,
+					     return_range.first, -1,
+                                             true);
 		  ivl_assert(*this, me);
-		  NetExpr*le = elab_and_eval(des, scope, index.lsb, -1, true);
+		  NetExpr*le = elab_and_eval(des, scope,
+					     return_range.second, -1,
+                                             true);
 		  ivl_assert(*this, le);
 
 		  long mnum = 0, lnum = 0;
@@ -809,9 +817,9 @@ static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
 	    long use_lsb = 0;
 	    if (curp->range.get() && ! curp->range->empty()) {
 		  ivl_assert(*curp, curp->range->size() == 1);
-		  index_component_t index = curp->range->front();
-		  PExpr*msb_pex = index.msb;
-		  PExpr*lsb_pex = index.lsb;
+		  pform_range_t&rangep = curp->range->front();
+		  PExpr*msb_pex = rangep.first;
+		  PExpr*lsb_pex = rangep.second;
 
 		  NetExpr*tmp = elab_and_eval(des, scope, msb_pex, -2, true);
 		  ivl_assert(*curp, tmp);
@@ -842,34 +850,34 @@ static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
 
 static bool evaluate_ranges(Design*des, NetScope*scope,
 			    list<NetNet::range_t>&llist,
-			    const list<PWire::range_t>&rlist)
+			    const list<pform_range_t>&rlist)
 {
       bool bad_msb = false, bad_lsb = false;
 
-      for (list<PWire::range_t>::const_iterator cur = rlist.begin()
+      for (list<pform_range_t>::const_iterator cur = rlist.begin()
 		 ; cur != rlist.end() ; ++cur) {
 	    NetNet::range_t lrng;
 
-	    NetExpr*texpr = elab_and_eval(des, scope, cur->msb, -1, true);
+	    NetExpr*texpr = elab_and_eval(des, scope, cur->first, -1, true);
 	    if (! eval_as_long(lrng.msb, texpr)) {
-		  cerr << cur->msb->get_fileline() << ": error: "
+		  cerr << cur->first->get_fileline() << ": error: "
 			"Range expressions must be constant." << endl;
-		  cerr << cur->msb->get_fileline() << "       : "
+		  cerr << cur->first->get_fileline() << "       : "
 			"This MSB expression violates the rule: "
-		       << *cur->msb << endl;
+		       << *cur->first << endl;
 		  des->errors += 1;
 		  bad_msb = true;
 	    }
 
 	    delete texpr;
 
-	    texpr = elab_and_eval(des, scope, cur->lsb, -1, true);
+	    texpr = elab_and_eval(des, scope, cur->second, -1, true);
 	    if (! eval_as_long(lrng.lsb, texpr)) {
-		  cerr << cur->lsb->get_fileline() << ": error: "
+		  cerr << cur->second->get_fileline() << ": error: "
 			"Range expressions must be constant." << endl;
-		  cerr << cur->lsb->get_fileline() << "       : "
+		  cerr << cur->second->get_fileline() << "       : "
 			"This LSB expression violates the rule: "
-		       << *cur->lsb << endl;
+		       << *cur->second << endl;
 		  des->errors += 1;
 		  bad_lsb = true;
 	    }
@@ -1007,7 +1015,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 		  /* Vectored port with a scalar net/etc. definition */
 		  if (net_.empty()) {
-			cerr << port_.front().msb->get_fileline()
+			cerr << port_.front().first->get_fileline()
 			     << ": error: Vectored port ``"
 			     << name_ << "'' " << plist
 			     << " has a scalar net declaration at "
@@ -1018,11 +1026,11 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 		  /* Both vectored, but they have different ranges. */
 		  if (!port_.empty() && !net_.empty()) {
-			cerr << port_.front().msb->get_fileline()
+			cerr << port_.front().first->get_fileline()
 			     << ": error: Vectored port ``"
 			     << name_ << "'' " << plist
 			     << " has a net declaration " << nlist
-			     << " at " << net_.front().msb->get_fileline()
+			     << " at " << net_.front().first->get_fileline()
 			     << " that does not match." << endl;
 			des->errors += 1;
 			return 0;

@@ -1512,26 +1512,13 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
       delete init_expr;
 }
 
-static void ranges_from_list(list<PWire::range_t>&rlist,
-			     const list<index_component_t>*range)
-{
-	// Convert a list of index_component_t to PWire::range_t.
-      for (list<index_component_t>::const_iterator rcur = range->begin()
-		 ; rcur != range->end() ; ++rcur) {
-	    PWire::range_t rng;
-	    rng.msb = rcur->msb;
-	    rng.lsb = rcur->lsb;
-	    rlist.push_back(rng);
-      }
-}
-
 /*
  * This function attaches a range to a given name. The function is
  * only called by the parser within the scope of the net declaration,
  * and the name that I receive only has the tail component.
  */
 static void pform_set_net_range(perm_string name,
-				const list<index_component_t>*range,
+				const list<pform_range_t>*range,
 				bool signed_flag,
 				ivl_variable_type_t dt,
 				PWSRType rt)
@@ -1548,9 +1535,7 @@ static void pform_set_net_range(perm_string name,
 	    cur->set_range_scalar(rt);
 
       } else {
-	    list<PWire::range_t> rlist;
-	    ranges_from_list(rlist, range);
-	    cur->set_range(rlist, rt);
+	    cur->set_range(*range, rt);
       }
       cur->set_signed(signed_flag);
 
@@ -1558,10 +1543,10 @@ static void pform_set_net_range(perm_string name,
 	    cur->set_data_type(dt);
 }
 
-static void pform_set_net_range(list<perm_string>*names,
-				list<index_component_t>*range,
-				bool signed_flag,
-				ivl_variable_type_t dt)
+void pform_set_net_range(list<perm_string>*names,
+			 list<pform_range_t>*range,
+			 bool signed_flag,
+			 ivl_variable_type_t dt)
 {
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
@@ -1630,8 +1615,8 @@ static void pform_makegate(PGBuiltin::Type type,
 
       perm_string dev_name = lex_strings.make(info.name);
       PGBuiltin*cur = new PGBuiltin(type, dev_name, info.parms, delay);
-      if (info.range.msb)
-	    cur->set_range(info.range.msb, info.range.lsb);
+      if (info.range.first)
+	    cur->set_range(info.range.first, info.range.second);
 
 	// The pform_makegates() that calls me will take care of
 	// deleting the attr pointer, so tell the
@@ -1770,7 +1755,7 @@ void pform_make_modgates(perm_string type,
 	    if (cur.parms_by_name) {
 		  pform_make_modgate(type, cur_name, overrides,
 				     cur.parms_by_name,
-				     cur.range.msb, cur.range.lsb,
+				     cur.range.first, cur.range.second,
 				     cur.file, cur.lineno);
 
 	    } else if (cur.parms) {
@@ -1784,14 +1769,14 @@ void pform_make_modgates(perm_string type,
 		  }
 		  pform_make_modgate(type, cur_name, overrides,
 				     cur.parms,
-				     cur.range.msb, cur.range.lsb,
+				     cur.range.first, cur.range.second,
 				     cur.file, cur.lineno);
 
 	    } else {
 		  list<PExpr*>*wires = new list<PExpr*>;
 		  pform_make_modgate(type, cur_name, overrides,
 				     wires,
-				     cur.range.msb, cur.range.lsb,
+				     cur.range.first, cur.range.second,
 				     cur.file, cur.lineno);
 	    }
       }
@@ -1904,7 +1889,7 @@ void pform_module_define_port(const struct vlltype&li,
 			      NetNet::Type type,
 			      ivl_variable_type_t data_type,
 			      bool signed_flag,
-			      list<index_component_t>*range,
+			      list<pform_range_t>*range,
 			      list<named_pexpr_t>*attr)
 {
       PWire*cur = pform_get_wire_in_scope(name);
@@ -1930,9 +1915,7 @@ void pform_module_define_port(const struct vlltype&li,
 	    cur->set_range_scalar((type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
 
       } else {
-	    list<PWire::range_t> rlist;
-	    ranges_from_list(rlist, range);
-	    cur->set_range(rlist, (type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
+	    cur->set_range(*range, (type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
       }
 
       pform_bind_attributes(cur->attributes, attr);
@@ -2038,7 +2021,7 @@ void pform_makewire(const vlltype&li, perm_string name,
  * pform_makewire above.
  */
 void pform_makewire(const vlltype&li,
-		    list<index_component_t>*range,
+		    list<pform_range_t>*range,
 		    bool signed_flag,
 		    list<perm_string>*names,
 		    NetNet::Type type,
@@ -2065,7 +2048,7 @@ void pform_makewire(const vlltype&li,
  * This form makes nets with delays and continuous assignments.
  */
 void pform_makewire(const vlltype&li,
-		    list<index_component_t>*range,
+		    list<pform_range_t>*range,
 		    bool signed_flag,
 		    list<PExpr*>*delay,
 		    str_pair_t str,
@@ -2143,7 +2126,7 @@ svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 				      NetNet::PortType pt,
 				      ivl_variable_type_t vtype,
 				      bool signed_flag,
-				      list<index_component_t>*range,
+				      list<pform_range_t>*range,
 				      list<perm_string>*names,
 				      bool isint)
 {
@@ -2171,9 +2154,7 @@ svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 
 	      /* If there is a range involved, it needs to be set. */
 	    if (range) {
-		  list<PWire::range_t> rlist;
-		  ranges_from_list(rlist, range);
-		  curw->set_range(rlist, SR_PORT);
+		  curw->set_range(*range, SR_PORT);
 	    }
 
 	    svector<PWire*>*tmp = new svector<PWire*>(*res, curw);
@@ -2193,7 +2174,7 @@ svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 				      list<perm_string>*names)
 {
       if (atom2_type_t*atype = dynamic_cast<atom2_type_t*> (vtype)) {
-	    list<index_component_t>*range_tmp = make_range_from_width(atype->type_code);
+	    list<pform_range_t>*range_tmp = make_range_from_width(atype->type_code);
 	    return pform_make_task_ports(loc, pt, IVL_VT_BOOL,
 					 atype->signed_flag,
 					 range_tmp, names);
@@ -2320,7 +2301,7 @@ LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,
 
 void pform_set_parameter(const struct vlltype&loc,
 			 perm_string name, ivl_variable_type_t type,
-			 bool signed_flag, list<index_component_t>*range, PExpr*expr,
+			 bool signed_flag, list<pform_range_t>*range, PExpr*expr,
 			 LexicalScope::range_t*value_range)
 {
       LexicalScope*scope = lexical_scope;
@@ -2356,11 +2337,11 @@ void pform_set_parameter(const struct vlltype&loc,
       parm.type = type;
       if (range) {
 	    assert(range->size() == 1);
-	    index_component_t index = range->front();
-	    assert(index.msb);
-	    assert(index.lsb);
-	    parm.msb = index.msb;
-	    parm.lsb = index.lsb;
+	    pform_range_t&rng = range->front();
+	    assert(rng.first);
+	    assert(rng.second);
+	    parm.msb = rng.first;
+	    parm.lsb = rng.second;
       } else {
 	    parm.msb = 0;
 	    parm.lsb = 0;
@@ -2374,7 +2355,7 @@ void pform_set_parameter(const struct vlltype&loc,
 
 void pform_set_localparam(const struct vlltype&loc,
 			  perm_string name, ivl_variable_type_t type,
-			  bool signed_flag, list<index_component_t>*range, PExpr*expr)
+			  bool signed_flag, list<pform_range_t>*range, PExpr*expr)
 {
       LexicalScope*scope = lexical_scope;
 
@@ -2405,11 +2386,11 @@ void pform_set_localparam(const struct vlltype&loc,
       parm.type = type;
       if (range) {
 	    assert(range->size() == 1);
-	    index_component_t index = range->front();
-	    assert(index.msb);
-	    assert(index.lsb);
-	    parm.msb = index.msb;
-	    parm.lsb = index.lsb;
+	    pform_range_t&rng = range->front();
+	    assert(rng.first);
+	    assert(rng.second);
+	    parm.msb = rng.first;
+	    parm.lsb = rng.second;
       } else {
 	    parm.msb  = 0;
 	    parm.lsb  = 0;
@@ -2542,7 +2523,7 @@ static void pform_set_port_type(perm_string name, NetNet::PortType pt,
 
 void pform_set_port_type(const struct vlltype&li,
 			 list<perm_string>*names,
-			 list<index_component_t>*range,
+			 list<pform_range_t>*range,
 			 bool signed_flag,
 			 NetNet::PortType pt)
 {
@@ -2565,10 +2546,10 @@ static void pform_set_reg_integer(perm_string name)
       PWire*cur = pform_get_make_wire_in_scope(name, NetNet::INTEGER, NetNet::NOT_A_PORT, IVL_VT_LOGIC);
       assert(cur);
 
-      PWire::range_t rng;
-      rng.msb = new PENumber(new verinum(integer_width-1, integer_width));
-      rng.lsb = new PENumber(new verinum((uint64_t)0, integer_width));
-      list<PWire::range_t>rlist;
+      pform_range_t rng;
+      rng.first = new PENumber(new verinum(integer_width-1, integer_width));
+      rng.second = new PENumber(new verinum((uint64_t)0, integer_width));
+      list<pform_range_t>rlist;
       rlist.push_back(rng);
       cur->set_range(rlist, SR_NET);
       cur->set_signed(true);
@@ -2589,10 +2570,10 @@ static void pform_set_reg_time(perm_string name)
       PWire*cur = pform_get_make_wire_in_scope(name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_LOGIC);
       assert(cur);
 
-      PWire::range_t rng;
-      rng.msb = new PENumber(new verinum(TIME_WIDTH-1, integer_width));
-      rng.lsb = new PENumber(new verinum((uint64_t)0, integer_width));
-      list<PWire::range_t>rlist;
+      pform_range_t rng;
+      rng.first = new PENumber(new verinum(TIME_WIDTH-1, integer_width));
+      rng.second = new PENumber(new verinum((uint64_t)0, integer_width));
+      list<pform_range_t>rlist;
       rlist.push_back(rng);
       cur->set_range(rlist, SR_NET);
 }
@@ -2614,10 +2595,10 @@ static void pform_set_integer_2atom(uint64_t width, bool signed_flag, perm_strin
 
       cur->set_signed(signed_flag);
 
-      PWire::range_t rng;
-      rng.msb = new PENumber(new verinum(width-1, integer_width));
-      rng.lsb = new PENumber(new verinum((uint64_t)0, integer_width));
-      list<PWire::range_t>rlist;
+      pform_range_t rng;
+      rng.first = new PENumber(new verinum(width-1, integer_width));
+      rng.second = new PENumber(new verinum((uint64_t)0, integer_width));
+      list<pform_range_t>rlist;
       rlist.push_back(rng);
       cur->set_range(rlist, SR_NET);
 }
@@ -2684,9 +2665,7 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
 
       assert(enum_type->range.get() != 0);
       assert(enum_type->range->size() == 1);
-      list<PWire::range_t>rlist;
-      ranges_from_list(rlist, enum_type->range.get());
-      cur->set_range(rlist, SR_NET);
+      cur->set_range(*enum_type->range, SR_NET);
       cur->set_enumeration(enum_type);
 }
 
