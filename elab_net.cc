@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -480,7 +480,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       if ((struct_type = sig->struct_type()) && !method_name.nil()) {
 
 	      // Detect the variable is a structure and there was a
-	      // methos name detected.
+	      // method name detected.
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: "
 		       << "Signal " << sig->name() << " is a structure, "
