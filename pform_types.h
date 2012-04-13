@@ -118,8 +118,9 @@ struct vector_type_t : public data_type_t {
 };
 
 struct real_type_t : public data_type_t {
-      inline explicit real_type_t(int tc) : type_code(tc) { }
-      int type_code;
+      enum type_t { REAL, SHORTREAL };
+      inline explicit real_type_t(type_t tc) : type_code(tc) { }
+      type_t type_code;
 };
 
 struct class_type_t : public data_type_t {

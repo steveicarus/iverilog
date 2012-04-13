@@ -122,19 +122,6 @@ list<pform_range_t>* make_range_from_width(uint64_t wid)
       return rlist;
 }
 
-static list<pform_range_t>* make_range_from_pair(list<PExpr*>*rpair)
-{
-      pform_range_t range;
-      assert(rpair && rpair->size() == 2);
-      range.first  = rpair->front();
-      range.second = rpair->back();
-      delete rpair;
-
-      list<pform_range_t>*rlist = new list<pform_range_t>;
-      rlist->push_back(range);
-      return rlist;
-}
-
 static list<perm_string>* list_from_identifier(char*id)
 {
       list<perm_string>*tmp = new list<perm_string>;
@@ -391,6 +378,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
       data_type_t*data_type;
       class_type_t*class_type;
+      real_type_t::type_t real_type;
 
       verinum* number;
 
@@ -592,7 +580,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <specpath> specify_simple_path specify_simple_path_decl
 %type <specpath> specify_edge_path specify_edge_path_decl
 
-%type <int_val> atom2_type non_integer_type
+%type <real_type> non_integer_type
+%type <int_val> atom2_type
 %type <int_val> module_start module_end
 
 %token K_TAND
@@ -1239,9 +1228,9 @@ method_qualifier_opt
 
 
 non_integer_type /* IEEE1800-2005: A.2.2.1 */
-  : K_real { $$ = K_real; }
-  | K_realtime { $$ = K_real; }
-  | K_shortreal { $$ = K_shortreal; }
+  : K_real { $$ = real_type_t::REAL; }
+  | K_realtime { $$ = real_type_t::REAL; }
+  | K_shortreal { $$ = real_type_t::SHORTREAL; }
   ;
 
 number  : BASED_NUMBER
@@ -3467,6 +3456,7 @@ list_of_port_declarations
 					port_declaration_context.port_net_type,
 					port_declaration_context.var_type,
 					port_declaration_context.sign_flag,
+					port_declaration_context.data_type,
 					port_declaration_context.range, 0);
 		  delete[]$3;
 		  $$ = tmp;
@@ -3484,39 +3474,19 @@ list_of_port_declarations
         ;
 
 port_declaration
-  : attribute_list_opt
-    K_input net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($7);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	pform_module_define_port(@2, name, NetNet::PINPUT,
-				 $3, $4, $5, $6, $1);
-	port_declaration_context.port_type = NetNet::PINPUT;
-	port_declaration_context.port_net_type = $3;
-	port_declaration_context.var_type = $4;
-	port_declaration_context.sign_flag = $5;
-	delete port_declaration_context.range;
-	port_declaration_context.range = $6;
-	delete[]$7;
-	$$ = ptmp;
-      }
-  | attribute_list_opt
-    K_input atom2_type signed_unsigned_opt IDENTIFIER
+  : attribute_list_opt K_input net_type_opt data_type_or_implicit IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
-	list<pform_range_t>* use_range = make_range_from_width($3);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	pform_module_define_port(@2, name, NetNet::PINPUT,
-				 NetNet::UNRESOLVED_WIRE, IVL_VT_BOOL,
-				 $4, use_range, $1);
+	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
+	pform_module_define_port(@2, name, NetNet::PINPUT, $3, IVL_VT_NO_TYPE,
+				false, $4, 0, $1);
 	port_declaration_context.port_type = NetNet::PINPUT;
-	port_declaration_context.port_net_type = NetNet::UNRESOLVED_WIRE;
-	port_declaration_context.var_type = IVL_VT_BOOL;
-	port_declaration_context.sign_flag = $4;
+	port_declaration_context.port_net_type = $3;
+	port_declaration_context.var_type = IVL_VT_NO_TYPE;
+	port_declaration_context.sign_flag = false;
 	delete port_declaration_context.range;
-	port_declaration_context.range = use_range;
+	port_declaration_context.range = 0;
+	port_declaration_context.data_type = $4;
 	delete[]$5;
 	$$ = ptmp;
       }
@@ -3527,31 +3497,31 @@ port_declaration
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::PINPUT,
-				 NetNet::WIRE, IVL_VT_REAL, true, 0, $1);
+				 NetNet::WIRE, IVL_VT_REAL, true, 0, 0, $1);
 	port_declaration_context.port_type = NetNet::PINPUT;
 	port_declaration_context.port_net_type = NetNet::WIRE;
 	port_declaration_context.var_type = IVL_VT_REAL;
 	port_declaration_context.sign_flag = true;
 	delete port_declaration_context.range;
 	port_declaration_context.range = 0;
+	port_declaration_context.data_type = 0;
 	delete[]$4;
 	$$ = ptmp;
       }
-  | attribute_list_opt
-    K_inout net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER
+  | attribute_list_opt K_inout net_type_opt data_type_or_implicit IDENTIFIER
       { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($7);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	pform_module_define_port(@2, name, NetNet::PINOUT,
-				 $3, $4, $5, $6, $1);
+	perm_string name = lex_strings.make($5);
+	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
+	pform_module_define_port(@2, name, NetNet::PINOUT, $3, IVL_VT_NO_TYPE,
+				false, $4, 0, $1);
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = $3;
-	port_declaration_context.var_type = $4;
-	port_declaration_context.sign_flag = $5;
+	port_declaration_context.var_type = IVL_VT_NO_TYPE;
+	port_declaration_context.sign_flag = false;
 	delete port_declaration_context.range;
-	port_declaration_context.range = $6;
-	delete[]$7;
+	port_declaration_context.range = 0;
+	port_declaration_context.data_type = $4;
+	delete[]$5;
 	$$ = ptmp;
       }
   | attribute_list_opt
@@ -3561,13 +3531,14 @@ port_declaration
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::PINOUT,
-				 NetNet::WIRE, IVL_VT_REAL, true, 0, $1);
+				 NetNet::WIRE, IVL_VT_REAL, true, 0, 0, $1);
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = NetNet::WIRE;
 	port_declaration_context.var_type = IVL_VT_REAL;
 	port_declaration_context.sign_flag = true;
 	delete port_declaration_context.range;
 	port_declaration_context.range = 0;
+	port_declaration_context.data_type = 0;
 	delete[]$4;
 	$$ = ptmp;
       }
@@ -3578,13 +3549,14 @@ port_declaration
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 $3, $4, $5, $6, $1);
+				 $3, $4, $5, 0, $6, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = $3;
 	port_declaration_context.var_type = $4;
 	port_declaration_context.sign_flag = $5;
 	delete port_declaration_context.range;
 	port_declaration_context.range = $6;
+	port_declaration_context.data_type = 0;
 	delete[]$7;
 	$$ = ptmp;
       }
@@ -3595,13 +3567,14 @@ port_declaration
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 $3, $4, $5, $6, $1);
+				 $3, $4, $5, 0, $6, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = $3;
 	port_declaration_context.var_type = $4;
 	port_declaration_context.sign_flag = $5;
 	delete port_declaration_context.range;
 	port_declaration_context.range = $6;
+	port_declaration_context.data_type = 0;
 	delete[]$7;
 	$$ = ptmp;
       }
@@ -3612,13 +3585,14 @@ port_declaration
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 $3, $4, $5, $6, $1);
+				 $3, $4, $5, 0, $6, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = $3;
 	port_declaration_context.var_type = $4;
 	port_declaration_context.sign_flag = $5;
 	delete port_declaration_context.range;
 	port_declaration_context.range = $6;
+	port_declaration_context.data_type = 0;
 
 	pform_make_reginit(@7, name, $9);
 
@@ -3634,13 +3608,14 @@ port_declaration
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 t, $4, $5, $6, $1);
+				 t, $4, $5, 0, $6, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = t;
 	port_declaration_context.var_type = $4;
 	port_declaration_context.sign_flag = $5;
 	delete port_declaration_context.range;
 	port_declaration_context.range = $6;
+	port_declaration_context.data_type = 0;
 
 	pform_make_reginit(@7, name, $9);
 
@@ -3656,13 +3631,14 @@ port_declaration
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
 				 NetNet::IMPLICIT_REG, IVL_VT_BOOL,
-				 $4, use_range, $1);
+				 $4, 0, use_range, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = NetNet::IMPLICIT_REG;
 	port_declaration_context.var_type = IVL_VT_BOOL;
 	port_declaration_context.sign_flag = $4;
 	delete port_declaration_context.range;
 	port_declaration_context.range = use_range;
+	port_declaration_context.data_type = 0;
 	delete[]$5;
 	$$ = ptmp;
       }
@@ -3675,13 +3651,14 @@ port_declaration
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
 				 NetNet::IMPLICIT_REG, IVL_VT_BOOL,
-				 $4, use_range, $1);
+				 $4, 0, use_range, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = NetNet::IMPLICIT_REG;
 	port_declaration_context.var_type = IVL_VT_BOOL;
 	port_declaration_context.sign_flag = $4;
 	delete port_declaration_context.range;
 	port_declaration_context.range = use_range;
+	port_declaration_context.data_type = 0;
 
 	pform_make_reginit(@5, name, $7);
 
@@ -3695,13 +3672,14 @@ port_declaration
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 NetNet::WIRE, IVL_VT_REAL, true, 0, $1);
+				 NetNet::WIRE, IVL_VT_REAL, true, 0, 0, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = NetNet::WIRE;
 	port_declaration_context.var_type = IVL_VT_REAL;
 	port_declaration_context.sign_flag = true;
 	delete port_declaration_context.range;
 	port_declaration_context.range = 0;
+	port_declaration_context.data_type = 0;
 	delete[]$4;
 	$$ = ptmp;
       }

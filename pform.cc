@@ -45,6 +45,15 @@ map<perm_string,Module*> pform_modules;
 map<perm_string,PUdp*> pform_primitives;
 
 
+std::string vlltype::get_fileline() const
+{
+      ostringstream buf;
+      buf << (text? text : "") << ":" << first_line;
+      string res = buf.str();
+      return res;
+
+}
+
 /*
  * Parse configuration file with format <key>=<value>, where key
  * is the hierarchical name of a valid parameter name, and value
@@ -1893,6 +1902,7 @@ void pform_module_define_port(const struct vlltype&li,
 			      NetNet::Type type,
 			      ivl_variable_type_t data_type,
 			      bool signed_flag,
+			      data_type_t*vtype,
 			      list<pform_range_t>*range,
 			      list<named_pexpr_t>*attr)
 {
@@ -1905,6 +1915,37 @@ void pform_module_define_port(const struct vlltype&li,
 	    VLerror(msg.str().c_str());
 	    return;
       }
+
+      if (vtype) {
+	    ivl_assert(li, data_type == IVL_VT_NO_TYPE);
+	    ivl_assert(li, range == 0);
+      }
+
+      if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype)) {
+	    data_type = vec_type->base_type;
+	    signed_flag = vec_type->signed_flag;
+	    range = vec_type->pdims.get();
+
+      } else if (atom2_type_t*atype = dynamic_cast<atom2_type_t*>(vtype)) {
+	    data_type = IVL_VT_BOOL;
+	    signed_flag = atype->signed_flag;
+	    range = make_range_from_width(atype->type_code);
+
+      } else if (real_type_t*rtype = dynamic_cast<real_type_t*>(vtype)) {
+	    data_type = IVL_VT_REAL;
+	    signed_flag = true;
+	    range = 0;
+
+	    if (rtype->type_code != real_type_t::REAL) {
+		  VLerror(li, "sorry: Only real (not shortreal) supported here (%s:%d).",
+			  __FILE__, __LINE__);
+	    }
+
+      } else if (vtype) {
+	    VLerror(li, "sorry: Given type %s not supported here (%s:%d).",
+		    typeid(*vtype).name(), __FILE__, __LINE__);
+      }
+
 
 	// The default type for all flavor of ports is LOGIC.
       if (data_type == IVL_VT_NO_TYPE)

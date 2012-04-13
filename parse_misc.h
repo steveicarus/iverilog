@@ -35,6 +35,7 @@ struct vlltype {
       unsigned last_line;
       unsigned last_column;
       const char*text;
+      std::string get_fileline() const;
 };
 # define YYLTYPE struct vlltype
 

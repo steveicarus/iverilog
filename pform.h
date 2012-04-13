@@ -160,6 +160,7 @@ extern void pform_module_define_port(const struct vlltype&li,
 				     NetNet::Type type,
 				     ivl_variable_type_t data_type,
 				     bool signed_flag,
+				     data_type_t*vtype,
 				     list<pform_range_t>*range,
 				     list<named_pexpr_t>*attr);
 
