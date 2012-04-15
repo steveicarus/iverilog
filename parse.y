@@ -3896,10 +3896,15 @@ module_attribute_foreign
 	;
 
 module_port_list_opt
-	: '(' list_of_ports ')' { $$ = $2; }
-	| '(' list_of_port_declarations ')' { $$ = $2; }
-	|                       { $$ = 0; }
-	;
+  : '(' list_of_ports ')' { $$ = $2; }
+  | '(' list_of_port_declarations ')' { $$ = $2; }
+  |                       { $$ = 0; }
+  | '(' error ')'
+      { yyerror(@2, "Errors in port declarations.");
+	yyerrok;
+	$$ = 0;
+      }
+  ;
 
   /* Module declarations include optional ANSI style module parameter
      ports. These are simply advance ways to declare parameters, so

@@ -172,7 +172,7 @@ int VTypeRecord::emit_def(ostream&out, perm_string name) const
 	    out << "; ";
       }
 
-      out << "} ";
+      out << "} \\" << name << " ";
       return errors;
 }
 

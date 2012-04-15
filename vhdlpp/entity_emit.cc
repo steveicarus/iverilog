@@ -67,7 +67,7 @@ int Entity::emit(ostream&out)
 
 		  VType::decl_t&decl = declarations_[port->name];
 
-		  if (sep) out << sep;
+		  if (sep) out << sep << endl;
 		  else sep = ", ";
 
 		  switch (port->mode) {
