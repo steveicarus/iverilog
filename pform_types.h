@@ -111,9 +111,10 @@ struct atom2_type_t : public data_type_t {
 struct vector_type_t : public data_type_t {
       inline explicit vector_type_t(ivl_variable_type_t bt, bool sf,
 				    std::list<pform_range_t>*pd)
-      : base_type(bt), signed_flag(sf), pdims(pd) { }
+      : base_type(bt), signed_flag(sf), reg_flag(false), pdims(pd) { }
       ivl_variable_type_t base_type;
       bool signed_flag;
+      bool reg_flag;
       std::auto_ptr< list<pform_range_t> > pdims;
 };
 
