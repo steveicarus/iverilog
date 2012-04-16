@@ -903,11 +903,13 @@ data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
       { $$ = $1; }
   | signing range_opt
       { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $1, $2);
+	tmp->implicit_flag = true;
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   | range
       { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, false, $1);
+	tmp->implicit_flag = true;
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
@@ -3549,62 +3551,32 @@ port_declaration
 	delete[]$4;
 	$$ = ptmp;
       }
-  | attribute_list_opt
-    K_output net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($7);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	vector_type_t*tmp = new vector_type_t($4, $5, $6);
-	pform_module_define_port(@2, name, NetNet::POUTPUT, $3, IVL_VT_NO_TYPE,
-				 false, tmp, 0, $1);
-	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = $3;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
-	port_declaration_context.data_type = tmp;
-	delete[]$7;
-	$$ = ptmp;
-      }
-  | attribute_list_opt
-    K_output K_reg primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($7);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	vector_type_t*tmp = new vector_type_t($4, $5, $6);
-	tmp->reg_flag = true;
-	pform_module_define_port(@2, name, NetNet::POUTPUT, NetNet::REG, IVL_VT_NO_TYPE,
-				 false, tmp, 0, $1);
-	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = NetNet::REG;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
-	port_declaration_context.data_type = tmp;
-	delete[]$7;
-	$$ = ptmp;
-      }
-  | attribute_list_opt
-    K_output atom2_type signed_unsigned_opt IDENTIFIER
+  | attribute_list_opt K_output net_type_opt data_type_or_implicit IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	atom2_type_t*tmp = new atom2_type_t($3, $4);
-	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 NetNet::IMPLICIT_REG, IVL_VT_NO_TYPE,
-				 false, tmp, 0, $1);
+	NetNet::Type use_type = $3;
+	if (use_type == NetNet::IMPLICIT) {
+	      if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($4)) {
+		    if (dtype->reg_flag)
+			  use_type = NetNet::REG;
+		    else if (dtype->implicit_flag)
+			  use_type = NetNet::IMPLICIT;
+		    else
+			  use_type = NetNet::IMPLICIT_REG;
+	      } else if (dynamic_cast<atom2_type_t*> ($4)) {
+		    use_type = NetNet::IMPLICIT_REG;
+	      }
+	}
+	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
+	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, IVL_VT_NO_TYPE,
+				false, $4, 0, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = NetNet::IMPLICIT_REG;
+	port_declaration_context.port_net_type = use_type;
 	port_declaration_context.var_type = IVL_VT_NO_TYPE;
 	port_declaration_context.sign_flag = false;
 	delete port_declaration_context.range;
 	port_declaration_context.range = 0;
-	port_declaration_context.data_type = tmp;
+	port_declaration_context.data_type = $4;
 	delete[]$5;
 	$$ = ptmp;
       }
@@ -3626,68 +3598,30 @@ port_declaration
 	delete[]$4;
 	$$ = ptmp;
       }
-  | attribute_list_opt
-    K_output K_reg primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER '=' expression
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($7);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	vector_type_t*tmp = new vector_type_t($4, $5, $6);
-	pform_module_define_port(@2, name, NetNet::POUTPUT, NetNet::REG, IVL_VT_NO_TYPE,
-				 false, tmp, 0, $1);
-	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = NetNet::REG;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
-	port_declaration_context.data_type = tmp;
-
-	pform_make_reginit(@7, name, $9);
-
-	delete[]$7;
-	$$ = ptmp;
-      }
-  | attribute_list_opt
-    K_output net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER '=' expression
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($7);
-	NetNet::Type t   = ($3 == NetNet::IMPLICIT) ? NetNet::IMPLICIT_REG : $3;
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	vector_type_t*tmp = new vector_type_t($4, $5, $6);
-	pform_module_define_port(@2, name, NetNet::POUTPUT, t, IVL_VT_NO_TYPE,
-				 false, tmp, 0, $1);
-	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = t;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
-	port_declaration_context.data_type = tmp;
-
-	pform_make_reginit(@7, name, $9);
-
-	delete[]$7;
-	$$ = ptmp;
-      }
-  | attribute_list_opt
-    K_output atom2_type signed_unsigned_opt IDENTIFIER '=' expression
+  | attribute_list_opt K_output net_type_opt data_type_or_implicit IDENTIFIER '=' expression
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	atom2_type_t*tmp = new atom2_type_t($3, $4);
-	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 NetNet::IMPLICIT_REG, IVL_VT_NO_TYPE,
-				 false, tmp, 0, $1);
-	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = NetNet::IMPLICIT_REG;
+	NetNet::Type use_type = $3;
+	if (use_type == NetNet::IMPLICIT) {
+	      if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($4)) {
+		    if (dtype->reg_flag)
+			  use_type = NetNet::REG;
+		    else
+			  use_type = NetNet::IMPLICIT_REG;
+	      } else {
+		    use_type = NetNet::IMPLICIT_REG;
+	      }
+	}
+	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
+	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, IVL_VT_NO_TYPE,
+				false, $4, 0, $1);
+	port_declaration_context.port_type = NetNet::PINOUT;
+	port_declaration_context.port_net_type = use_type;
 	port_declaration_context.var_type = IVL_VT_NO_TYPE;
 	port_declaration_context.sign_flag = false;
 	delete port_declaration_context.range;
 	port_declaration_context.range = 0;
-	port_declaration_context.data_type = tmp;
+	port_declaration_context.data_type = $4;
 
 	pform_make_reginit(@5, name, $7);
 

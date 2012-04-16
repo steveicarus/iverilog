@@ -72,9 +72,7 @@ int VTypeArray::emit_decl(ostream&out, perm_string name, bool reg_flag) const
       int errors = 0;
       assert(dimensions() == 1);
 
-      if (reg_flag)
-	    out << "reg ";
-      else
+      if (!reg_flag)
 	    out << "wire ";
 
       errors += emit_def(out, name);
@@ -135,9 +133,7 @@ int VTypePrimitive::emit_def(ostream&out, perm_string name) const
 int VTypePrimitive::emit_decl(ostream&out, perm_string name, bool reg_flag) const
 {
       int errors = 0;
-      if (reg_flag)
-	    out << "reg ";
-      else
+      if (!reg_flag)
 	    out << "wire ";
 
       errors += emit_def(out, name);

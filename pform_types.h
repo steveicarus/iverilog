@@ -108,13 +108,33 @@ struct atom2_type_t : public data_type_t {
       bool signed_flag;
 };
 
+/*
+ * The vector_type_t class represents types in the old Verilog
+ * way. Some typical examples:
+ *
+ *   logic signed [7:0] foo
+ *   bit unsigned foo
+ *   reg foo
+ *
+ * There are a few special cases:
+ *
+ * For the most part, Verilog treats "logic" and "reg" as synonyms,
+ * but there are a few cases where the parser needs to know the
+ * difference. So "reg_flag" is set to true if the IVL_VT_LOGIC type
+ * is due to the "reg" keyword.
+ *
+ * If there are no reg/logic/bit/bool keywords, then Verilog will
+ * assume the type is logic, but the context may need to know about
+ * this case, so the implicit_flag member is set to true in that case.
+ */
 struct vector_type_t : public data_type_t {
       inline explicit vector_type_t(ivl_variable_type_t bt, bool sf,
 				    std::list<pform_range_t>*pd)
-      : base_type(bt), signed_flag(sf), reg_flag(false), pdims(pd) { }
+      : base_type(bt), signed_flag(sf), reg_flag(false), implicit_flag(false), pdims(pd) { }
       ivl_variable_type_t base_type;
       bool signed_flag;
-      bool reg_flag;
+      bool reg_flag; // True if "reg" was used
+      bool implicit_flag; // True if this type is implicitly logic/reg
       std::auto_ptr< list<pform_range_t> > pdims;
 };
 
