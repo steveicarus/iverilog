@@ -443,7 +443,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	   wire. */
       if (gn_var_can_be_uwire()
 	  && (sig->type() == NetNet::REG)
-	  && (sig->peek_eref() == 0) ) {
+	  && (sig->peek_lref() == 0) ) {
 	    sig->type(NetNet::UNRESOLVED_WIRE);
       }
 
