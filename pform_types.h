@@ -100,6 +100,7 @@ struct struct_type_t : public data_type_t {
       bool packed_flag;
       std::auto_ptr< list<struct_member_t*> > members;
 };
+extern ivl_variable_type_t figure_struct_base_type(struct_type_t*struct_type);
 
 struct atom2_type_t : public data_type_t {
       inline explicit atom2_type_t(int tc, bool flag)

@@ -21,7 +21,7 @@
 # include  "parse_misc.h"
 # include  "ivl_assert.h"
 
-static ivl_variable_type_t figure_struct_base_type(struct_type_t*struct_type)
+ivl_variable_type_t figure_struct_base_type(struct_type_t*struct_type)
 {
       ivl_variable_type_t base_type = IVL_VT_BOOL;
 

@@ -1906,6 +1906,8 @@ void pform_module_define_port(const struct vlltype&li,
 			      list<pform_range_t>*range,
 			      list<named_pexpr_t>*attr)
 {
+      struct_type_t*struct_type = 0;
+
       PWire*cur = pform_get_wire_in_scope(name);
       if (cur) {
 	    ostringstream msg;
@@ -1943,6 +1945,11 @@ void pform_module_define_port(const struct vlltype&li,
 			  __FILE__, __LINE__);
 	    }
 
+      } else if (struct_type = dynamic_cast<struct_type_t*>(vtype)) {
+	    data_type = figure_struct_base_type(struct_type);
+	    signed_flag = false;
+	    range = 0;
+
       } else if (vtype) {
 	    VLerror(li, "sorry: Given type %s not supported here (%s:%d).",
 		    typeid(*vtype).name(), __FILE__, __LINE__);
@@ -1958,7 +1965,10 @@ void pform_module_define_port(const struct vlltype&li,
 
       cur->set_signed(signed_flag);
 
-      if (range == 0) {
+      if (struct_type) {
+	    cur->set_struct_type(struct_type);
+
+      } else if (range == 0) {
 	    cur->set_range_scalar((type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
 
       } else {
