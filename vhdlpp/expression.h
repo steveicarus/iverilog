@@ -61,6 +61,14 @@ class Expression : public LineInfo {
 	// this may be called before the elaborate_expr method.
       virtual const VType*probe_type(Entity*ent, Architecture*arc) const;
 
+	// The fit_type virtual method is used by the ExpConcat class
+	// to probe the type of operands. The atype argument is the
+	// type of the ExpConcat expression itself. This expression
+	// returns its type as interpreted in this context. Really,
+	// this is mostly about helping aggregate expressions within
+	// concatenations to figure out their type.
+      virtual const VType*fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const;
+
 	// This virtual method elaborates an expression. The ltype is
 	// the type of the lvalue expression, if known, and can be
 	// used to calculate the type for the expression being
@@ -129,6 +137,8 @@ class ExpUnary : public Expression {
       ExpUnary(Expression*op1);
       virtual ~ExpUnary() =0;
 
+      const VType*fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const;
+
     protected:
       inline void write_to_stream_operand1(std::ostream&fd)
       { operand1_->write_to_stream(fd); }
@@ -179,6 +189,10 @@ class ExpBinary : public Expression {
 class ExpAggregate : public Expression {
 
     public:
+	// A "choice" is only part of an element. It is the thing that
+	// is used to identify an element of the aggregate. It can
+	// represent the index (or range) of an array, or the name of
+	// a record member.
       class choice_t {
 	  public:
 	      // Create an "others" choice
@@ -195,6 +209,8 @@ class ExpAggregate : public Expression {
 	    bool others() const;
 	      // Return expression if this represents a simple_expression.
 	    Expression*simple_expression(bool detach_flag =true);
+	      // Return prange_t if this represents a range_expression
+	    prange_t*range_expressions(void);
 
 	    void dump(ostream&out, int indent) const;
 
@@ -212,6 +228,9 @@ class ExpAggregate : public Expression {
 	    bool alias_flag;
       };
 
+	// Elements are the syntactic items in an aggregate
+	// expression. Each element expressions a bunch of fields
+	// (choices) and binds them to a single expression
       class element_t {
 	  public:
 	    explicit element_t(std::list<choice_t*>*fields, Expression*val);
@@ -236,6 +255,9 @@ class ExpAggregate : public Expression {
       ExpAggregate(std::list<element_t*>*el);
       ~ExpAggregate();
 
+
+      const VType*probe_type(Entity*ent, Architecture*arc) const;
+      const VType*fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
@@ -257,7 +279,7 @@ class ExpAggregate : public Expression {
 class ExpArithmetic : public ExpBinary {
 
     public:
-      enum fun_t { PLUS, MINUS, MULT, DIV, MOD, REM, POW, CONCAT };
+      enum fun_t { PLUS, MINUS, MULT, DIV, MOD, REM, POW, xCONCAT };
 
     public:
       ExpArithmetic(ExpArithmetic::fun_t op, Expression*op1, Expression*op2);
@@ -268,9 +290,6 @@ class ExpArithmetic : public ExpBinary {
       int emit(ostream&out, Entity*ent, Architecture*arc);
       virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
-
-    private:
-      int emit_concat_(ostream&out, Entity*ent, Architecture*arc);
 
     private:
       fun_t fun_;
@@ -305,6 +324,7 @@ class ExpBitstring : public Expression {
       explicit ExpBitstring(const char*);
       ~ExpBitstring();
 
+      const VType*fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
@@ -321,6 +341,7 @@ class ExpCharacter : public Expression {
       ExpCharacter(char val);
       ~ExpCharacter();
 
+      const VType*fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
@@ -335,6 +356,28 @@ class ExpCharacter : public Expression {
 
     private:
       char value_;
+};
+
+class ExpConcat : public Expression {
+
+    public:
+      ExpConcat(Expression*op1, Expression*op2);
+      ~ExpConcat();
+
+      const VType*probe_type(Entity*ent, Architecture*arc) const;
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
+      bool is_primary(void) const;
+      void dump(ostream&out, int indent = 0) const;
+
+    private:
+      int elaborate_expr_array_(Entity*ent, Architecture*arc, const VTypeArray*ltype);
+
+    private:
+      Expression*operand1_;
+      Expression*operand2_;
 };
 
 /*
@@ -474,6 +517,7 @@ class ExpName : public Expression {
       int elaborate_lval(Entity*ent, Architecture*arc, bool);
       int elaborate_rval(Entity*ent, Architecture*arc, const InterfacePort*);
       const VType* probe_type(Entity*ent, Architecture*arc) const;
+      const VType* fit_type(Entity*ent, Architecture*arc, const VTypeArray*host) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
@@ -538,6 +582,7 @@ class ExpString : public Expression {
       explicit ExpString(const char*);
       ~ExpString();
 
+      const VType*fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);

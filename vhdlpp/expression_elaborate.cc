@@ -24,6 +24,7 @@
 # include  "vsignal.h"
 # include  <iostream>
 # include  <typeinfo>
+# include  "parse_types.h"
 # include  "ivl_assert.h"
 
 using namespace std;
@@ -37,6 +38,18 @@ int Expression::elaborate_lval(Entity*, Architecture*, bool)
 const VType* Expression::probe_type(Entity*, Architecture*) const
 {
       return 0;
+}
+
+const VType* Expression::fit_type(Entity*ent, Architecture*arc, const VTypeArray*) const
+{
+      const VType*res = probe_type(ent,arc);
+      if (res == 0) {
+	    cerr << get_fileline() << ": internal error: "
+		 << "fit_type for " << typeid(*this).name()
+		 << " is not implemented." << endl;
+      }
+
+      return res;
 }
 
 const VType*ExpName::elaborate_adjust_type_with_range_(Entity*, Architecture*arc, const VType*type)
@@ -287,6 +300,47 @@ int ExpBinary::elaborate_exprs(Entity*ent, Architecture*arc, const VType*ltype)
       return errors;
 }
 
+/*
+ * the default fit_type method for unary operator expressions is to
+ * return the fit_type for the operand. The assumption is that the
+ * operator doesn't change the type.
+ */
+const VType*ExpUnary::fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const
+{
+      return operand1_->fit_type(ent, arc, atype);
+}
+
+const VType*ExpAggregate::probe_type(Entity*ent, Architecture*arc) const
+{
+      return Expression::probe_type(ent, arc);
+}
+
+const VType*ExpAggregate::fit_type(Entity*, Architecture*, const VTypeArray*host) const
+{
+      ivl_assert(*this, elements_.size() == 1);
+      size_t choice_count = elements_[0]->count_choices();
+
+      ivl_assert(*this, choice_count > 0);
+      vector<choice_element> ce (choice_count);
+      elements_[0]->map_choices(&ce[0]);
+
+      ivl_assert(*this, ce.size() == 1);
+      prange_t*prange = ce[0].choice->range_expressions();
+      ivl_assert(*this, prange);
+
+      Expression*use_msb = prange->msb();
+      Expression*use_lsb = prange->lsb();
+
+      ivl_assert(*this, host->dimensions() == 1);
+      vector<VTypeArray::range_t> range (1);
+
+      range[0] = VTypeArray::range_t(use_msb, use_lsb);
+
+      const VTypeArray*res = new VTypeArray(host->element_type(), range);
+
+      return res;
+}
+
 int ExpAggregate::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
 {
       if (ltype == 0) {
@@ -406,10 +460,24 @@ int ExpAttribute::elaborate_expr(Entity*ent, Architecture*arc, const VType*)
       return errors;
 }
 
+const VType*ExpBitstring::fit_type(Entity*, Architecture*, const VTypeArray*atype) const
+{
+	// Really should check that this string can work with the
+	// array element type?
+      return atype->element_type();
+}
+
 int ExpBitstring::elaborate_expr(Entity*, Architecture*, const VType*)
 {
       int errors = 0;
       return errors;
+}
+
+const VType*ExpCharacter::fit_type(Entity*, Architecture*, const VTypeArray*atype) const
+{
+	// Really should check that this character can work with the
+	// array element type?
+      return atype->element_type();
 }
 
 int ExpCharacter::elaborate_expr(Entity*, Architecture*, const VType*ltype)
@@ -417,6 +485,54 @@ int ExpCharacter::elaborate_expr(Entity*, Architecture*, const VType*ltype)
       ivl_assert(*this, ltype != 0);
       set_type(ltype);
       return 0;
+}
+
+/*
+ * I don't know how to probe the type of a concatenation, quite yet.
+ */
+const VType*ExpConcat::probe_type(Entity*, Architecture*) const
+{
+      ivl_assert(*this, 0);
+      return 0;
+}
+
+int ExpConcat::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
+{
+      int errors = 0;
+
+      if (ltype == 0) {
+	    ltype = probe_type(ent, arc);
+      }
+
+      ivl_assert(*this, ltype != 0);
+
+      if (const VTypeArray*atype = dynamic_cast<const VTypeArray*>(ltype)) {
+	    errors += elaborate_expr_array_(ent, arc, atype);
+      } else {
+	    errors += operand1_->elaborate_expr(ent, arc, ltype);
+	    errors += operand2_->elaborate_expr(ent, arc, ltype);
+      }
+
+      return errors;
+}
+
+int ExpConcat::elaborate_expr_array_(Entity*ent, Architecture*arc, const VTypeArray*atype)
+{
+      int errors = 0;
+
+	// For now, only support single-dimension arrays here.
+      ivl_assert(*this, atype->dimensions() == 1);
+
+      const VType*type1 = operand1_->fit_type(ent, arc, atype);
+      ivl_assert(*this, type1);
+
+      const VType*type2 = operand2_->fit_type(ent, arc, atype);
+      ivl_assert(*this, type2);
+
+      errors += operand1_->elaborate_expr(ent, arc, type1);
+      errors += operand2_->elaborate_expr(ent, arc, type2);
+
+      return errors;
 }
 
 const VType* ExpConditional::probe_type(Entity*, Architecture*) const
@@ -584,6 +700,11 @@ const VType* ExpName::probe_type(Entity*ent, Architecture*arc) const
       return 0;
 }
 
+const VType* ExpName::fit_type(Entity*ent, Architecture*arc, const VTypeArray*)const
+{
+      return probe_type(ent, arc);
+}
+
 int ExpName::elaborate_expr(Entity*, Architecture*, const VType*ltype)
 {
       if (ltype) {
@@ -601,8 +722,8 @@ const VType* ExpNameALL::probe_type(Entity*, Architecture*) const
 
 const VType* ExpRelation::probe_type(Entity*ent, Architecture*arc) const
 {
-      const VType*type1 = peek_operand1()->probe_type(ent, arc);
-      const VType*type2 = peek_operand2()->probe_type(ent, arc);
+      /* const VType*type1 = */ peek_operand1()->probe_type(ent, arc);
+      /* const VType*type2 = */ peek_operand2()->probe_type(ent, arc);
 
       return primitive_BOOLEAN;
 }
@@ -624,6 +745,27 @@ int ExpRelation::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
       errors += elaborate_exprs(ent, arc, otype);
 
       return errors;
+}
+
+/*
+ * When a string appears in a concatenation, then the type of the
+ * string is an array with the same element type of the concatenation,
+ * but with elements for each character of the string.
+ */
+const VType*ExpString::fit_type(Entity*, Architecture*, const VTypeArray*atype) const
+{
+      vector<VTypeArray::range_t> range (atype->dimensions());
+
+	// Generate an array range for this string
+      ivl_assert(*this, range.size() == 1);
+      ExpInteger*use_msb = new ExpInteger(value_.size());
+      ExpInteger*use_lsb = new ExpInteger(0);
+      FILE_NAME(use_msb, this);
+      FILE_NAME(use_lsb, this);
+      range[0] = VTypeArray::range_t(use_msb, use_lsb);
+
+      VTypeArray*type = new VTypeArray(atype->element_type(), range);
+      return type;
 }
 
 int ExpString::elaborate_expr(Entity*, Architecture*, const VType*ltype)

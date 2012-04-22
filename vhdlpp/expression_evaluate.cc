@@ -32,6 +32,50 @@ bool Expression::evaluate(Entity*, Architecture*arc, int64_t&val) const
 }
 
 
+bool ExpArithmetic::evaluate(ScopeBase*scope, int64_t&val) const
+{
+      int64_t val1, val2;
+      bool rc;
+
+      rc = eval_operand1(scope, val1);
+      if (rc == false)
+	    return false;
+
+      rc = eval_operand2(scope, val2);
+      if (rc == false)
+	    return false;
+
+      switch (fun_) {
+	  case PLUS:
+	    val = val1 + val2;
+	    break;
+	  case MINUS:
+	    val = val1 - val2;
+	    break;
+	  case MULT:
+	    val = val1 * val2;
+	    break;
+	  case DIV:
+	    if (val2 == 0)
+		  return false;
+	    val = val1 / val2;
+	    break;
+	  case MOD:
+	    if (val2 == 0)
+		  return false;
+	    val = val1 % val2;
+	    break;
+	  case REM:
+	    return false;
+	  case POW:
+	    return false;
+	  case xCONCAT: // not possible
+	    return false;
+      }
+
+      return true;
+}
+
 bool ExpAttribute::evaluate(ScopeBase*, int64_t&val) const
 {
 	/* Special Case: The length attribute can be calculated all
@@ -69,6 +113,15 @@ bool ExpAttribute::evaluate(ScopeBase*, int64_t&val) const
 bool ExpAttribute::evaluate(Entity*, Architecture*arc, int64_t&val) const
 {
       return evaluate(arc, val);
+}
+
+/*
+ * I don't yet know how to evaluate concatenations. It is not likely
+ * to come up anyhow.
+ */
+bool ExpConcat::evaluate(ScopeBase*scope, int64_t&val) const
+{
+      return false;
 }
 
 bool ExpName::evaluate(ScopeBase*scope, int64_t&val) const

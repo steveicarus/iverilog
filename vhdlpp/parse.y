@@ -382,7 +382,7 @@ design_file : { yylloc.text = file_path; } design_units ;
 adding_operator
   : '+' { $$ = ExpArithmetic::PLUS; }
   | '-' { $$ = ExpArithmetic::MINUS; }
-  | '&' { $$ = ExpArithmetic::CONCAT; }
+  | '&' { $$ = ExpArithmetic::xCONCAT; }
   ;
 
 architecture_body
@@ -2024,12 +2024,21 @@ signal_declaration_assign_opt
  * however, is right-recursive, which is not to nice is real LALR
  * parsers. The solution is to rewrite it as below, to make it
  * left-recursive. This is must more effecient use of the parse stack.
+ *
+ * Note that although the concatenation operator '&' is syntactically
+ * an addition operator, it is handled differently during elaboration
+ * so detect it and create a different expression type.
  */
 simple_expression
   : term
       { $$ = $1; }
   | simple_expression adding_operator term
-      { ExpArithmetic*tmp = new ExpArithmetic($2, $1, $3);
+      { Expression*tmp;
+	if ($2 == ExpArithmetic::xCONCAT) {
+	      tmp = new ExpConcat($1, $3);
+	} else {
+	      tmp = new ExpArithmetic($2, $1, $3);
+	}
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }

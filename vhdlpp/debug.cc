@@ -221,41 +221,6 @@ void ExpAggregate::choice_t::dump(ostream&out, int indent) const
       out << setw(indent) << "" << "?choice_t?" << endl;
 }
 
-void ExpArithmetic::dump(ostream&out, int indent) const
-{
-      const char*fun_name = "?";
-      switch (fun_) {
-	  case PLUS:
-	    fun_name = "+";
-	    break;
-	  case MINUS:
-	    fun_name = "-";
-	    break;
-	  case MULT:
-	    fun_name = "*";
-	    break;
-	  case DIV:
-	    fun_name = "/";
-	    break;
-	  case MOD:
-	    fun_name = "mod";
-	    break;
-	  case REM:
-	    fun_name = "rem";
-	    break;
-	  case POW:
-	    fun_name = "**";
-	    break;
-	  case CONCAT:
-	    fun_name = "&";
-	    break;
-      }
-
-      out << setw(indent) << "" << "Arithmetic " << fun_name
-	  << " at " << get_fileline() << endl;
-      dump_operands(out, indent+4);
-}
-
 void ExpAttribute::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "Attribute " << name_

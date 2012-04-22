@@ -20,6 +20,7 @@
 # include  "expression.h"
 # include  "vtype.h"
 # include  "architec.h"
+# include  "parse_types.h"
 # include  <typeinfo>
 # include  <iostream>
 # include  <cstdlib>
@@ -171,8 +172,43 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
 		  continue;
 	    }
 
+	      // If this is a range choice, then calculate the bounds
+	      // of the range and scan through the values, mapping the
+	      // value to the aggregate_[idx] element.
+	    if (prange_t*range = aggregate_[idx].choice->range_expressions()) {
+		  int64_t begin_val, end_val;
+
+		  if (! range->msb()->evaluate(ent, arc, begin_val)) {
+			cerr << range->msb()->get_fileline() << ": error: "
+			     << "Unable to evaluate aggregate choice expression." << endl;
+			errors += 1;
+			continue;
+		  }
+
+		  if (! range->lsb()->evaluate(ent, arc, end_val)) {
+			cerr << range->msb()->get_fileline() << ": error: "
+			     << "Unable to evaluate aggregate choice expression." << endl;
+			errors += 1;
+			continue;
+		  }
+
+		  if (begin_val < end_val) {
+			int64_t tmp = begin_val;
+			begin_val = end_val;
+			end_val = tmp;
+		  }
+
+		  while (begin_val >= end_val) {
+			element_map[begin_val] = &aggregate_[idx];
+			begin_val -= 1;
+		  }
+
+		  continue;
+	    }
+
 	    int64_t tmp_val;
 	    Expression*tmp = aggregate_[idx].choice->simple_expression(false);
+	    ivl_assert(*this, tmp);
 
 	      // Named aggregate element. Once we see one of
 	      // these, we can no longer accept positional
@@ -202,6 +238,8 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
 		  out << ", ";
 	    if (cur == 0) {
 		  out << "/* Missing element " << idx << " */";
+		  cerr << get_fileline() << ": error: "
+		       << "Missing element " << idx << "." << endl;
 		  errors += 1;
 	    } else {
 		  errors += cur->expr->emit(out, ent, arc);
@@ -247,9 +285,6 @@ int ExpArithmetic::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-      if (fun_ == CONCAT)
-	    return emit_concat_(out, ent, arc);
-
       errors += emit_operand1(out, ent, arc);
 
       switch (fun_) {
@@ -274,24 +309,14 @@ int ExpArithmetic::emit(ostream&out, Entity*ent, Architecture*arc)
 	  case REM:
 	    out << " /* ?remainder? */ ";
 	    break;
-	  case CONCAT:
+	  case xCONCAT:
+	    ivl_assert(*this, 0);
 	    out << " /* ?concat? */ ";
 	    break;
       }
 
       errors += emit_operand2(out, ent, arc);
 
-      return errors;
-}
-
-int ExpArithmetic::emit_concat_(ostream&out, Entity*ent, Architecture*arc)
-{
-      int errors = 0;
-      out << "{";
-      errors += emit_operand1(out, ent, arc);
-      out << ", ";
-      errors += emit_operand2(out, ent, arc);
-      out << "}";
       return errors;
 }
 
@@ -359,6 +384,26 @@ int ExpCharacter::emit(ostream&out, Entity*ent, Architecture*arc)
 bool ExpCharacter::is_primary(void) const
 {
       return true;
+}
+
+/*
+ * This is not exactly a "primary", but it is wrapped in its own
+ * parentheses (braces) so we return true here.
+ */
+bool ExpConcat::is_primary(void) const
+{
+      return true;
+}
+
+int ExpConcat::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      out << "{";
+      errors += operand1_->emit(out, ent, arc);
+      out << ", ";
+      errors += operand2_->emit(out, ent, arc);
+      out << "}";
+      return errors;
 }
 
 int ExpConditional::emit(ostream&out, Entity*ent, Architecture*arc)

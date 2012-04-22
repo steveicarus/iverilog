@@ -56,8 +56,8 @@ void ExpArithmetic::write_to_stream(ostream&out)
 	  case POW:
 	    out << "**";
 	    break;
-	  case CONCAT:
-	    out << "&";
+	  case xCONCAT:
+	    ivl_assert(*this, 0);
 	    break;
       }
 
@@ -79,6 +79,15 @@ void ExpBitstring::write_to_stream(ostream&)
 void ExpCharacter::write_to_stream(ostream&)
 {
       ivl_assert(*this, !"Not supported");
+}
+
+void ExpConcat::write_to_stream(ostream&fd)
+{
+      fd << "(";
+      operand1_->write_to_stream(fd);
+      fd << ")&(";
+      operand2_->write_to_stream(fd);
+      fd << ")";
 }
 
 void ExpConditional::write_to_stream(ostream&)

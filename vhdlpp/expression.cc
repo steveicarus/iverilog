@@ -160,6 +160,11 @@ Expression*ExpAggregate::choice_t::simple_expression(bool detach_flag)
       return res;
 }
 
+prange_t*ExpAggregate::choice_t::range_expressions(void)
+{
+      return range_.get();
+}
+
 ExpAggregate::element_t::element_t(list<choice_t*>*fields, Expression*val)
 : fields_(fields? fields->size() : 0), val_(val)
 {
@@ -184,54 +189,12 @@ ExpAggregate::element_t::~element_t()
 ExpArithmetic::ExpArithmetic(ExpArithmetic::fun_t op, Expression*op1, Expression*op2)
 : ExpBinary(op1, op2), fun_(op)
 {
+	// The xCONCAT type is not actually used.
+      assert(op != xCONCAT);
 }
 
 ExpArithmetic::~ExpArithmetic()
 {
-}
-
-bool ExpArithmetic::evaluate(ScopeBase*scope, int64_t&val) const
-{
-      int64_t val1, val2;
-      bool rc;
-
-      rc = eval_operand1(scope, val1);
-      if (rc == false)
-	    return false;
-
-      rc = eval_operand2(scope, val2);
-      if (rc == false)
-	    return false;
-
-      switch (fun_) {
-	  case PLUS:
-	    val = val1 + val2;
-	    break;
-	  case MINUS:
-	    val = val1 - val2;
-	    break;
-	  case MULT:
-	    val = val1 * val2;
-	    break;
-	  case DIV:
-	    if (val2 == 0)
-		  return false;
-	    val = val1 / val2;
-	    break;
-	  case MOD:
-	    if (val2 == 0)
-		  return false;
-	    val = val1 % val2;
-	    break;
-	  case REM:
-	    return false;
-	  case POW:
-	    return false;
-	  case CONCAT:
-	    return false;
-      }
-
-      return true;
 }
 
 /*
@@ -255,6 +218,17 @@ ExpCharacter::ExpCharacter(char val)
 
 ExpCharacter::~ExpCharacter()
 {
+}
+
+ExpConcat::ExpConcat(Expression*op1, Expression*op2)
+: operand1_(op1), operand2_(op2)
+{
+}
+
+ExpConcat::~ExpConcat()
+{
+      delete operand1_;
+      delete operand2_;
 }
 
 ExpConditional::ExpConditional(Expression*co, list<Expression*>*tru,
