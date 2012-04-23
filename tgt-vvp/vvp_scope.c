@@ -427,14 +427,19 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 {
       int msb;
       int lsb;
-      if (ivl_signal_packed_dimensions(sig) > 1) {
-	      // FIX ME: Improve this when vvp becomes aware of packed
-	      // arrays.
+      switch (ivl_signal_packed_dimensions(sig)) {
+	  case 0:
+	    msb = 0;
+	    lsb = 0;
+	    break;
+	  case 1:
+	    msb = ivl_signal_packed_msb(sig, 0);
+	    lsb = ivl_signal_packed_lsb(sig, 0);
+	    break;
+	  default:
 	    msb = ivl_signal_width(sig) - 1;
 	    lsb = 0;
-      } else {
-	    msb = ivl_signal_msb(sig);
-	    lsb = ivl_signal_lsb(sig);
+	    break;
       }
 
       const char*datatype_flag = ivl_signal_integer(sig) ? "/i" :
@@ -483,8 +488,22 @@ static void draw_reg_in_scope(ivl_signal_t sig)
  */
 static void draw_net_in_scope(ivl_signal_t sig)
 {
-      int msb = ivl_signal_msb(sig);
-      int lsb = ivl_signal_lsb(sig);
+      int msb;
+      int lsb;
+      switch (ivl_signal_packed_dimensions(sig)) {
+	  case 0:
+	    msb = 0;
+	    lsb = 0;
+	    break;
+	  case 1:
+	    msb = ivl_signal_packed_msb(sig, 0);
+	    lsb = ivl_signal_packed_lsb(sig, 0);
+	    break;
+	  default:
+	    msb = ivl_signal_width(sig) - 1;
+	    lsb = 0;
+	    break;
+      }
 
       const char*datatype_flag = ivl_signal_signed(sig)? "/s" : "";
       const char*local_flag = ivl_signal_local(sig)? "*" : "";

@@ -364,15 +364,26 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		  bool bit_defined_flag;
 		  /* bool flag = */ calculate_bits_(des, scope, msb, bit_defined_flag);
 		  ivl_assert(*this, bit_defined_flag);
-		  midx = sig->sb_to_idx(prefix_indices, msb);
-		  if (midx >= (long)sig->vector_width()) {
-			cerr << get_fileline() << ": error: Index " << sig->name()
-			     << "[" << msb << "] is out of range."
-			     << endl;
-			des->errors += 1;
-			midx = 0;
+
+		  if (prefix_indices.size()+2 <= sig->packed_dims().size()) {
+			long tmp_loff;
+			unsigned long tmp_lwid;
+			bool rcl = sig->sb_to_slice(prefix_indices, msb,
+						    tmp_loff, tmp_lwid);
+			ivl_assert(*this, rcl);
+			midx = tmp_loff + tmp_lwid - 1;
+			lidx = tmp_loff;
+		  } else {
+			midx = sig->sb_to_idx(prefix_indices, msb);
+			if (midx >= (long)sig->vector_width()) {
+			      cerr << get_fileline() << ": error: Index " << sig->name()
+				   << "[" << msb << "] is out of range."
+				   << endl;
+			      des->errors += 1;
+			      midx = 0;
+			}
+			lidx = midx;
 		  }
-		  lidx = midx;
 
 	    } else {
 		  cerr << get_fileline() << ": internal error: "
