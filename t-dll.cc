@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -963,7 +963,7 @@ bool dll_target::tran(const NetTran*net)
 {
       struct ivl_switch_s*obj = new struct ivl_switch_s;
       obj->type = net->type();
-      obj->width = 0;
+      obj->width = net->vector_width();
       obj->part = 0;
       obj->offset = 0;
       obj->name = net->name();
@@ -996,7 +996,6 @@ bool dll_target::tran(const NetTran*net)
       }
 
       if (obj->type == IVL_SW_TRAN_VP) {
-	    obj->width = net->vector_width();
 	    obj->part  = net->part_width();
 	    obj->offset= net->part_offset();
       }
@@ -2400,10 +2399,17 @@ void dll_target::signal(const NetNet*net)
 	/* Save the primitive properties of the signal in the
 	   ivl_signal_t object. */
 
+      { size_t idx = 0;
+	list<NetNet::range_t>::const_iterator cur;
+	obj->packed_dims.resize(net->packed_dims().size());
+	for (cur = net->packed_dims().begin(), idx = 0
+		   ; cur != net->packed_dims().end() ; ++cur, idx += 1) {
+	    obj->packed_dims[idx] = *cur;
+	}
+      }
+
       obj->width_ = net->vector_width();
       obj->signed_= net->get_signed()? 1 : 0;
-      obj->lsb_index = net->lsb();
-      obj->lsb_dist  = net->msb() >= net->lsb() ? 1 : -1;
       obj->isint_ = false;
       obj->local_ = net->local_flag()? 1 : 0;
       obj->forced_net_ = (net->type() != NetNet::REG) &&
@@ -2504,7 +2510,7 @@ void dll_target::signal(const NetNet*net)
       obj->array_words = net->array_count();
       obj->array_addr_swapped = net->array_addr_swapped() ? 1 : 0;
 
-      assert(obj->array_words == net->pin_count());
+      ivl_assert(*net, obj->array_words == net->pin_count());
       if (debug_optimizer && obj->array_words > 1000) cerr << "debug: "
 	    "t-dll creating nexus array " << obj->array_words << " long" << endl;
       if (obj->array_words > 1 && net->pins_are_virtual()) {

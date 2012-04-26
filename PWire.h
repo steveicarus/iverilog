@@ -1,7 +1,7 @@
 #ifndef __PWire_H
 #define __PWire_H
 /*
- * Copyright (c) 1998-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2009,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,8 +21,8 @@
 
 # include  "netlist.h"
 # include  "LineInfo.h"
+# include  <list>
 # include  <map>
-# include  "svector.h"
 # include  "StringHeap.h"
 
 #ifdef HAVE_IOSFWD
@@ -75,11 +75,13 @@ class PWire : public LineInfo {
       bool set_data_type(ivl_variable_type_t dt);
       ivl_variable_type_t get_data_type() const;
 
-      void set_range(PExpr*msb, PExpr*lsb, PWSRType type, bool is_scalar);
+      void set_range_scalar(PWSRType type);
+      void set_range(const std::list<pform_range_t>&ranges, PWSRType type);
 
       void set_memory_idx(PExpr*ldx, PExpr*rdx);
 
       void set_enumeration(enum_type_t*enum_type);
+      void set_struct_type(struct_type_t*type);
 
       void set_discipline(ivl_discipline_t);
       ivl_discipline_t get_discipline(void) const;
@@ -100,12 +102,14 @@ class PWire : public LineInfo {
       bool isint_;		// original type of integer
 
 	// These members hold expressions for the bit width of the
-	// wire. If they do not exist, the wire is 1 bit wide.
-      PExpr*port_msb_;
-      PExpr*port_lsb_;
+	// wire. If they do not exist, the wire is 1 bit wide. If they
+	// do exist, they represent the packed dimensions of the
+	// bit. The first item in the list is the first range, and so
+	// on. For example "reg [3:0][7:0] ..." will contains the
+	// range_t object for [3:0] first and [7:0] last.
+      std::list<pform_range_t>port_;
       bool port_set_;
-      PExpr*net_msb_;
-      PExpr*net_lsb_;
+      std::list<pform_range_t>net_;
       bool net_set_;
       bool is_scalar_;
       unsigned error_cnt_;
@@ -116,6 +120,7 @@ class PWire : public LineInfo {
       PExpr*ridx_;
 
       enum_type_t*enum_type_;
+      struct_type_t*struct_type_;
 
       ivl_discipline_t discipline_;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -187,6 +187,15 @@ void NetDelaySrc::dump(ostream&o, unsigned ind) const
       dump_node_pins(o, ind+4);
 }
 
+ostream&operator<<(ostream&out, const list<NetNet::range_t>&rlist)
+{
+      for (list<NetNet::range_t>::const_iterator cur = rlist.begin()
+		 ; cur != rlist.end() ; ++cur) {
+	    out << "[" << cur->msb << ":" << cur->lsb << "]";
+      }
+      return out;
+}
+
 /* Dump a net. This can be a wire or register. */
 void NetNet::dump_net(ostream&o, unsigned ind) const
 {
@@ -212,10 +221,15 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 	  case NetNet::PINOUT:
 	    o << " inout";
 	    break;
+	  case NetNet::PREF:
+	    o <<" ref";
+	    break;
       }
 
       if (ivl_discipline_t dis = get_discipline())
 	    o << " discipline=" << dis->name();
+
+      o << " packed dims: " << packed_dims_;
 
       o << " (eref=" << peek_eref() << ", lref=" << peek_lref() << ")";
       if (scope())
@@ -1045,8 +1059,7 @@ void NetFuncDef::dump(ostream&o, unsigned ind) const
       if (result_sig_) {
 	    o << setw(ind+2) << "" << "Return signal: ";
 	    if (result_sig_->get_signed()) o << "+";
-	    o << result_sig_->name() << "[" << result_sig_->msb() << ":"
-	      << result_sig_->lsb() << "]" << endl;
+	    o << result_sig_->name() << result_sig_->packed_dims() << endl;
       }
       o << setw(ind+2) << "" << "Arguments: ";
       if (port_count() == 0) o << "<none>";
@@ -1068,8 +1081,7 @@ void NetFuncDef::dump(ostream&o, unsigned ind) const
 		  break;
 	    }
 	    if (port(idx)->get_signed()) o << "+";
-	    o << port(idx)->name() << "[" << port(idx)->msb() << ":"
-	      << port(idx)->lsb() << "]" << endl;
+	    o << port(idx)->name() << port(idx)->packed_dims() << endl;
       }
       if (statement_)
 	    statement_->dump(o, ind+2);
@@ -1509,7 +1521,7 @@ void NetESignal::dump(ostream&o) const
 	    o << "+";
       o << name();
       if (word_) o << "[word=" << *word_ << "]";
-      o << "[" << msi()<<":"<<lsi() << "]";
+      o << sig()->packed_dims();
 }
 
 void NetETernary::dump(ostream&o) const

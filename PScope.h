@@ -27,8 +27,10 @@
 
 class PEvent;
 class PExpr;
+class PFunction;
 class AProcess;
 class PProcess;
+class PTask;
 class PWire;
 
 class Design;
@@ -83,6 +85,9 @@ class LexicalScope {
       map<perm_string,param_expr_t>parameters;
       map<perm_string,param_expr_t>localparams;
 
+	// Defined types in the scope.
+      map<perm_string,data_type_t*>typedefs;
+
 	// Named events in the scope.
       map<perm_string,PEvent*>events;
 
@@ -105,6 +110,8 @@ class LexicalScope {
       LexicalScope* parent_scope() const { return parent_; }
 
     protected:
+      void dump_typedefs_(ostream&out, unsigned indent) const;
+
       void dump_parameters_(ostream&out, unsigned indent) const;
 
       void dump_localparams_(ostream&out, unsigned indent) const;
@@ -143,6 +150,23 @@ class PScope : public LexicalScope {
 
     private:
       perm_string name_;
+};
+
+/*
+ * Some scopes can carry definitions. These include Modules and PClass
+ * scopes. These derive from PScopeExtra so that they hold the maps of
+ * extra definitions.
+ */
+class PScopeExtra : public PScope {
+
+    public:
+      PScopeExtra(perm_string, LexicalScope*parent);
+      PScopeExtra(perm_string);
+      ~PScopeExtra();
+
+	/* Task definitions within this module */
+      map<perm_string,PTask*> tasks;
+      map<perm_string,PFunction*> funcs;
 };
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,7 +41,7 @@ vpiHandle vpip_make_root_iterator(void)
 				vpip_root_table_ptr, false);
 }
 
-void vpip_make_root_iterator(struct __vpiHandle**&table, unsigned&ntable)
+void vpip_make_root_iterator(__vpiHandle**&table, unsigned&ntable)
 {
       table = vpip_root_table_ptr;
       ntable = vpip_root_table_cnt;
@@ -117,20 +117,10 @@ void root_table_delete(void)
 }
 #endif
 
-static bool handle_is_scope(vpiHandle obj)
-{
-      return (obj->vpi_type->type_code == vpiModule)
-	    || (obj->vpi_type->type_code == vpiFunction)
-	    || (obj->vpi_type->type_code == vpiTask)
-	    || (obj->vpi_type->type_code == vpiNamedBegin)
-	    || (obj->vpi_type->type_code == vpiNamedFork);
-}
-
 static int scope_get(int code, vpiHandle obj)
 {
-      struct __vpiScope*ref = (struct __vpiScope*)obj;
-
-      assert(handle_is_scope(obj));
+      struct __vpiScope*ref = dynamic_cast<__vpiScope*>(obj);
+      assert(obj);
 
       switch (code) {
 	  case vpiCellInstance:
@@ -189,9 +179,8 @@ static const char* scope_get_type(int code)
 
 static char* scope_get_str(int code, vpiHandle obj)
 {
-      struct __vpiScope*ref = (struct __vpiScope*)obj;
-
-      assert(handle_is_scope(obj));
+      struct __vpiScope*ref = dynamic_cast<__vpiScope*>(obj);
+      assert(ref);
 
       char buf[4096];  // XXX is a fixed buffer size really reliable?
       const char *p=0;
@@ -231,21 +220,16 @@ static char* scope_get_str(int code, vpiHandle obj)
 
 static vpiHandle scope_get_handle(int code, vpiHandle obj)
 {
-      assert((obj->vpi_type->type_code == vpiModule)
-	     || (obj->vpi_type->type_code == vpiFunction)
-	     || (obj->vpi_type->type_code == vpiTask)
-	     || (obj->vpi_type->type_code == vpiNamedBegin)
-	     || (obj->vpi_type->type_code == vpiNamedFork));
-
-      struct __vpiScope*rfp = (struct __vpiScope*)obj;
+      struct __vpiScope*rfp = dynamic_cast<__vpiScope*>(obj);
+      assert(rfp);
 
       switch (code) {
 
 	  case vpiScope:
-	    return &rfp->scope->base;
+	    return rfp->scope;
 
 	  case vpiModule:
-	    return &rfp->scope->base;
+	    return rfp->scope;
       }
 
       return 0;
@@ -291,7 +275,7 @@ static vpiHandle module_iter_subset(int code, struct __vpiScope*ref)
       vpiHandle*args;
 
       for (unsigned idx = 0 ;  idx < ref->nintern ;  idx += 1)
-	    if (compare_types(code, ref->intern[idx]->vpi_type->type_code))
+	    if (compare_types(code, ref->intern[idx]->get_type_code()))
 		  mcnt += 1;
 
       if (mcnt == 0)
@@ -299,7 +283,7 @@ static vpiHandle module_iter_subset(int code, struct __vpiScope*ref)
 
       args = (vpiHandle*)calloc(mcnt, sizeof(vpiHandle));
       for (unsigned idx = 0 ;  idx < ref->nintern ;  idx += 1)
-	    if (compare_types(code, ref->intern[idx]->vpi_type->type_code))
+	    if (compare_types(code, ref->intern[idx]->get_type_code()))
 		  args[ncnt++] = ref->intern[idx];
 
       assert(ncnt == mcnt);
@@ -315,85 +299,49 @@ static vpiHandle module_iter_subset(int code, struct __vpiScope*ref)
  */
 static vpiHandle module_iter(int code, vpiHandle obj)
 {
-      struct __vpiScope*ref = (struct __vpiScope*)obj;
-      assert((obj->vpi_type->type_code == vpiModule)
-	     || (obj->vpi_type->type_code == vpiFunction)
-	     || (obj->vpi_type->type_code == vpiTask)
-	     || (obj->vpi_type->type_code == vpiNamedBegin)
-	     || (obj->vpi_type->type_code == vpiNamedFork));
+      struct __vpiScope*ref = dynamic_cast<__vpiScope*>(obj);
+      assert(ref);
 
       return module_iter_subset(code, ref);
 }
 
 
-static const struct __vpirt vpip_scope_module_rt = {
-      vpiModule,
-      scope_get,
-      scope_get_str,
-      0,
-      0,
-      scope_get_handle,
-      module_iter,
-      0,
-      0,
-      0,
-      0
+int __vpiScope::vpi_get(int code)
+{ return scope_get(code, this); }
+
+char*__vpiScope::vpi_get_str(int code)
+{ return scope_get_str(code, this); }
+
+vpiHandle __vpiScope::vpi_handle(int code)
+{ return scope_get_handle(code, this); }
+
+vpiHandle __vpiScope::vpi_iterate(int code)
+{ return module_iter(code, this); }
+
+
+struct vpiScopeModule  : public __vpiScope {
+      inline vpiScopeModule() { }
+      int get_type_code(void) const { return vpiModule; }
 };
 
-static const struct __vpirt vpip_scope_task_rt = {
-      vpiTask,
-      scope_get,
-      scope_get_str,
-      0,
-      0,
-      scope_get_handle,
-      module_iter,
-      0,
-      0,
-      0,
-      0
+struct vpiScopeTask  : public __vpiScope {
+      inline vpiScopeTask() { }
+      int get_type_code(void) const { return vpiTask; }
 };
 
-static const struct __vpirt vpip_scope_function_rt = {
-      vpiFunction,
-      scope_get,
-      scope_get_str,
-      0,
-      0,
-      scope_get_handle,
-      module_iter,
-      0,
-      0,
-      0,
-      0
+struct vpiScopeFunction  : public __vpiScope {
+      inline vpiScopeFunction() { }
+      int get_type_code(void) const { return vpiFunction; }
 };
 
-static const struct __vpirt vpip_scope_begin_rt = {
-      vpiNamedBegin,
-      scope_get,
-      scope_get_str,
-      0,
-      0,
-      scope_get_handle,
-      module_iter,
-      0,
-      0,
-      0,
-      0
+struct vpiScopeBegin  : public __vpiScope {
+      inline vpiScopeBegin() { }
+      int get_type_code(void) const { return vpiNamedBegin; }
 };
 
-static const struct __vpirt vpip_scope_fork_rt = {
-      vpiNamedFork,
-      scope_get,
-      scope_get_str,
-      0,
-      0,
-      scope_get_handle,
-      module_iter,
-      0,
-      0,
-      0,
-      0
+struct vpiScopeFork  : public __vpiScope {
+      inline vpiScopeFork() { }
+      int get_type_code(void) const { return vpiNamedFork; }
 };
 
 /*
@@ -429,39 +377,35 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
                    char*parent, long file_idx, long lineno,
                    long def_file_idx, long def_lineno, long is_cell)
 {
-      struct __vpiScope*scope = new struct __vpiScope;
       count_vpi_scopes += 1;
 
-      char*base_type = 0;
+      char*base_type;
+      bool is_automatic;
       if (strncmp(type,"auto",4) == 0) {
-	    scope->is_automatic = true;
+	    is_automatic = true;
             base_type = &type[4];
       } else {
-	    scope->is_automatic = false;
+	    is_automatic = false;
             base_type = &type[0];
       }
 
-      if (is_cell) scope->is_cell = true;
-      else scope->is_cell = false;
-
+      struct __vpiScope*scope;
       if (strcmp(base_type,"module") == 0) {
-	    scope->base.vpi_type = &vpip_scope_module_rt;
+	    scope = new vpiScopeModule;
       } else if (strcmp(base_type,"function") == 0) {
-	    scope->base.vpi_type = &vpip_scope_function_rt;
+	    scope = new vpiScopeFunction;
       } else if (strcmp(base_type,"task") == 0) {
-	    scope->base.vpi_type = &vpip_scope_task_rt;
+	    scope = new vpiScopeTask;
       } else if (strcmp(base_type,"fork") == 0) {
-	    scope->base.vpi_type = &vpip_scope_fork_rt;
+	    scope = new vpiScopeFork;
       } else if (strcmp(base_type,"begin") == 0) {
-	    scope->base.vpi_type = &vpip_scope_begin_rt;
+	    scope = new vpiScopeBegin;
       } else if (strcmp(base_type,"generate") == 0) {
-	    scope->base.vpi_type = &vpip_scope_begin_rt;
+	    scope = new vpiScopeBegin;
       } else {
-	    scope->base.vpi_type = &vpip_scope_module_rt;
+	    scope = new vpiScopeModule;
 	    assert(0);
       }
-
-      assert(scope->base.vpi_type);
 
       scope->name = vpip_name_string(name);
       if (tname) scope->tname = vpip_name_string(tname);
@@ -470,6 +414,7 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
       scope->lineno  = (unsigned) lineno;
       scope->def_file_idx = (unsigned) def_file_idx;
       scope->def_lineno  = (unsigned) def_lineno;
+      scope->is_automatic = is_automatic;
       scope->intern = 0;
       scope->nintern = 0;
       scope->item = 0;
@@ -477,9 +422,12 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
       scope->live_contexts = 0;
       scope->free_contexts = 0;
 
+      if (is_cell) scope->is_cell = true;
+      else scope->is_cell = false;
+
       current_scope = scope;
 
-      compile_vpi_symbol(label, &scope->base);
+      compile_vpi_symbol(label, scope);
 
       free(label);
       free(type);
@@ -490,9 +438,9 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
 	    static vpiHandle obj;
 	    compile_vpi_lookup(&obj, parent);
 	    assert(obj);
-	    struct __vpiScope*sp = (struct __vpiScope*) obj;
-	    vpip_attach_to_scope(sp, &scope->base);
-	    scope->scope = (struct __vpiScope*)obj;
+	    struct __vpiScope*sp = dynamic_cast<__vpiScope*>(obj);
+	    vpip_attach_to_scope(sp, scope);
+	    scope->scope = dynamic_cast<__vpiScope*>(obj);
 
 	      /* Inherit time units and precision from the parent scope. */
 	    scope->time_units = sp->time_units;
@@ -504,7 +452,7 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
 	    unsigned cnt = vpip_root_table_cnt + 1;
 	    vpip_root_table_ptr = (vpiHandle*)
 		  realloc(vpip_root_table_ptr, cnt * sizeof(vpiHandle));
-	    vpip_root_table_ptr[vpip_root_table_cnt] = &scope->base;
+	    vpip_root_table_ptr[vpip_root_table_cnt] = scope;
 	    vpip_root_table_cnt = cnt;
 
 	      /* Root scopes inherit time_units and precision from the

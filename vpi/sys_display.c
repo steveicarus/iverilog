@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -182,7 +182,6 @@ static char * format_as_string(int ljust, int plus, int ld_zero, int width,
 static void get_time(char *rtn, const char *value, int prec,
                      PLI_INT32 time_units)
 {
-  int head, tail;
   int shift = time_units - timeformat_info.units;
 
   /* Strip any leading zeros, but leave a single zero. */
@@ -203,7 +202,9 @@ static void get_time(char *rtn, const char *value, int prec,
 
   /* We need to scale the number down. */
   } else {
-    head = strlen(value) + shift;
+    int len = strlen(value);
+    int head = len + shift;
+    int tail;
     /* We have digits to the left of the decimal point. */
     if (head > 0) {
       strncpy(rtn, value, head);
@@ -222,18 +223,18 @@ static void get_time(char *rtn, const char *value, int prec,
       strcpy(rtn, "0");
       if (prec > 0) strcat(rtn, ".");
       /* Add leading zeros as needed. */
-      head = -shift - 1;
+      head = -head;
       if (head > prec) head = prec;
       while (head > 0) {
         strcat(rtn, "0");
         head -= 1;
       }
       /* Add digits from the value if they fit. */
-      tail = prec + shift + 1;
+      tail = prec + len + shift;
       if (tail > 0) {
         strncat(rtn, value, tail);
         /* Add trailing zeros to fill out the precision. */
-        tail = prec + shift + 1 - strlen(value);
+        tail = prec + shift + 1 - len;
         while (tail > 0) {
           strcat(rtn, "0");
           tail -= 1;

@@ -25,7 +25,7 @@
 static void emit_entry(ivl_udp_t udp, char entry, unsigned *rerun)
 {
       const char *value = 0;
-      switch(entry) {
+      switch (entry) {
 	case '0':
 	    value = "  0 ";
 	    break;

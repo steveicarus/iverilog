@@ -1,7 +1,7 @@
 #ifndef __vvp_cleanup_H
 #define __vvp_cleanup_H
 /*
- * Copyright (c) 2009-2011 Cary R. (cygcary@yahoo.com)
+ * Copyright (c) 2009-2012 Cary R. (cygcary@yahoo.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -39,19 +39,19 @@ extern void vpi_handle_delete(void);
 extern void vvp_net_pool_delete(void);
 extern void ufunc_pool_delete(void);
 
-extern void A_delete(struct __vpiHandle *item);
-extern void PV_delete(struct __vpiHandle *item);
-extern void constant_delete(struct __vpiHandle *item);
+extern void A_delete(class __vpiHandle *item);
+extern void PV_delete(class __vpiHandle *item);
+extern void constant_delete(class __vpiHandle *item);
 extern void contexts_delete(struct __vpiScope *scope);
-extern void enum_delete(struct __vpiHandle *item);
-extern void memory_delete(struct __vpiHandle *item);
-extern void named_event_delete(struct __vpiHandle *item);
-extern void parameter_delete(struct __vpiHandle *item);
-extern void signal_delete(struct __vpiHandle *item);
-extern void real_delete(struct __vpiHandle *item);
-extern void thread_vthr_delete(struct __vpiHandle *item);
-extern void thread_word_delete(struct __vpiHandle *item);
-extern void vpi_call_delete(struct __vpiHandle *item);
+extern void enum_delete(class __vpiHandle *item);
+extern void memory_delete(class __vpiHandle *item);
+extern void named_event_delete(class __vpiHandle *item);
+extern void parameter_delete(class __vpiHandle *item);
+extern void signal_delete(class __vpiHandle *item);
+extern void real_delete(class __vpiHandle *item);
+extern void thread_vthr_delete(class __vpiHandle *item);
+extern void thread_word_delete(class __vpiHandle *item);
+extern void vpi_call_delete(class __vpiHandle *item);
 extern void exec_ufunc_delete(vvp_code_t euf_code);
 extern void vthreads_delete(struct __vpiScope*scope);
 extern void vvp_net_delete(vvp_net_t *item);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -104,6 +104,7 @@ void sys_register()
       tf_data.sizetf    = 0;
       tf_data.user_data = "$vpi_tree";
       res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
 }
 
 void (*vlog_startup_routines[])() = {

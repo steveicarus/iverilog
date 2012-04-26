@@ -63,10 +63,11 @@ void vvp_fun_boolean_::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       assert(bit.size() == wid);
       assert(base + wid <= vwid);
 
-      if (input_[port].subvalue(base, wid) .eeq( bit ))
+	// Set the part for the input. If nothing changes, then break.
+      bool flag = input_[port] .set_vec(base, bit);
+      if (flag == false)
 	    return;
 
-      input_[port] .set_vec(base, bit);
       if (net_ == 0) {
 	    net_ = ptr.ptr();
 	    schedule_functor(this);
@@ -151,10 +152,11 @@ void vvp_fun_buf::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       assert(bit.size() == wid);
       assert(base + wid <= vwid);
 
-      if (input_.subvalue(base, wid) .eeq( bit ))
+	// Set the input part. If nothing changes, then break.
+      bool flag = input_.set_vec(base, bit);
+      if (flag == false)
 	    return;
 
-      input_.set_vec(base, bit);
       if (net_ == 0) {
 	    net_ = ptr.ptr();
 	    schedule_functor(this);
@@ -370,16 +372,17 @@ void vvp_fun_muxz::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 {
       assert(bit.size() == wid);
       assert(base + wid <= vwid);
+      bool flag;
 
       switch (ptr.port()) {
 	  case 0:
-	    if (a_.subvalue(base, wid) .eeq(bit) && has_run_) return;
-	    a_.set_vec(base, bit);
+	    flag = a_.set_vec(base, bit);
+	    if (flag == false && has_run_) return;
 	    if (select_ == SEL_PORT1) return; // The other port is selected.
 	    break;
 	  case 1:
-	    if (b_.subvalue(base, wid) .eeq(bit) && has_run_) return;
-	    b_.set_vec(base, bit);
+	    flag = b_.set_vec(base, bit);
+	    if (flag == false && has_run_) return;
 	    if (select_ == SEL_PORT0) return; // The other port is selected.
 	    break;
 	  case 2:
@@ -475,10 +478,11 @@ void vvp_fun_not::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
       assert(bit.size() == wid);
       assert(base + wid <= vwid);
 
-      if (input_.subvalue(base, wid) .eeq( bit ))
+	// Set the part value. If nothing changes, then break.
+      bool flag = input_.set_vec(base, bit);
+      if (flag == false)
 	    return;
 
-      input_.set_vec(base, bit);
       if (net_ == 0) {
 	    net_ = ptr.ptr();
 	    schedule_functor(this);

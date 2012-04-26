@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,33 +34,6 @@
 # include  <cstdio>
 # include  <cassert>
 # include  <cstdlib>
-
-/*
-* The vpi_free_object() call to a callback doesn't actually delete
-* anything, we instead allow the object to run its course and delete
-* itself. The semantics of vpi_free_object for a callback is that it
-* deletes the *handle*, and not the object itself, so given the vvp
-* implementation, there is nothing to do here.
-*/
-static int free_simple_callback(vpiHandle)
-{
-      return 1;
-}
-
-const struct __vpirt callback_rt = {
-      vpiCallback,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      &free_simple_callback,
-      0,
-      0
-};
-
 /*
  * Callback handles are created when the VPI function registers a
  * callback. The handle is stored by the run time, and it triggered
@@ -76,8 +49,10 @@ const struct __vpirt callback_rt = {
  * event. This member is only used for things like cbReadOnlySync.
  */
 
+class sync_callback;
+
 struct sync_cb  : public vvp_gen_event_s {
-      struct __vpiCallback*handle;
+      sync_callback*handle;
       bool sync_flag;
 
       ~sync_cb () { }
@@ -85,28 +60,133 @@ struct sync_cb  : public vvp_gen_event_s {
       virtual void run_run();
 };
 
-
-struct __vpiCallback* new_vpi_callback()
+inline __vpiCallback::__vpiCallback()
 {
-      struct __vpiCallback* obj;
-
-      obj = new __vpiCallback;
-
-      obj->base.vpi_type = &callback_rt;
-      obj->cb_sync = 0;
-      obj->next    = 0;
-      return obj;
+      next = 0;
 }
 
-void delete_vpi_callback(struct __vpiCallback* ref)
+__vpiCallback::~__vpiCallback()
 {
-      assert(ref);
-      assert(ref->base.vpi_type);
-      assert(ref->base.vpi_type->type_code == vpiCallback);
-      delete ref->cb_sync;
-      delete ref;
 }
 
+int __vpiCallback::get_type_code(void) const
+{ return vpiCallback; }
+
+
+value_callback::value_callback(p_cb_data data)
+{
+      cb_data = *data;
+      if (data->time) {
+	    cb_time = *(data->time);
+      } else {
+	    cb_time.type = vpiSuppressTime;
+      }
+      cb_data.time = &cb_time;
+      if (data->value) {
+	    cb_value = *(data->value);
+      } else {
+	    cb_value.format = vpiSuppressVal;
+      }
+      cb_data.value = &cb_value;
+}
+
+/*
+ * Normally, any assign to a value triggers a value change callback,
+ * so return a constant true here. This is a stub.
+ */
+bool value_callback::test_value_callback_ready(void)
+{
+      return true;
+}
+
+static void vpip_real_value_change(value_callback*cbh, vpiHandle ref)
+{
+      struct __vpiRealVar*rfp = dynamic_cast<__vpiRealVar*>(ref);
+      assert(rfp);
+      vvp_vpi_callback*obj = dynamic_cast<vvp_vpi_callback*>(rfp->net->fil);
+      assert(obj);
+
+      obj->add_vpi_callback(cbh);
+}
+
+class value_part_callback : public value_callback {
+    public:
+      explicit value_part_callback(p_cb_data data);
+      ~value_part_callback();
+
+      bool test_value_callback_ready(void);
+
+    private:
+      char*value_bits_;
+      size_t value_off_;
+};
+
+inline value_part_callback::value_part_callback(p_cb_data data)
+: value_callback(data)
+{
+      struct __vpiPV*pobj = dynamic_cast<__vpiPV*>(data->obj);
+      assert(pobj);
+
+      vvp_vpi_callback*sig_fil;
+      sig_fil = dynamic_cast<vvp_vpi_callback*>(pobj->net->fil);
+      assert(sig_fil);
+
+      sig_fil->add_vpi_callback(this);
+	// Get a reference value that can be used to compare with an
+	// updated value. Use the filter get_value to get the value,
+	// and get it in BinStr form so that compares are easy. Note
+	// that the vpiBinStr format has the MSB first, but the tbase
+	// is lsb first.
+      s_vpi_value tmp_value;
+      tmp_value.format = vpiBinStrVal;
+      sig_fil->get_value(&tmp_value);
+
+      value_bits_ = new char[pobj->width+1];
+      value_off_ = pobj->parent->vpi_get(vpiSize) - pobj->width - pobj->tbase;
+
+      memcpy(value_bits_, tmp_value.value.str + value_off_, pobj->width);
+      value_bits_[pobj->width] = 0;
+}
+
+value_part_callback::~value_part_callback()
+{
+      delete[]value_bits_;
+}
+
+bool value_part_callback::test_value_callback_ready(void)
+{
+      struct __vpiPV*pobj = dynamic_cast<__vpiPV*>(cb_data.obj);
+      assert(pobj);
+
+      vvp_vpi_callback*sig_fil;
+      sig_fil = dynamic_cast<vvp_vpi_callback*>(pobj->net->fil);
+      assert(sig_fil);
+
+	// Get a reference value that can be used to compare with an
+	// updated value.
+      s_vpi_value tmp_value;
+      tmp_value.format = vpiBinStrVal;
+      sig_fil->get_value(&tmp_value);
+
+      if (memcmp(value_bits_, tmp_value.value.str + value_off_, pobj->width) == 0)
+	    return false;
+
+      memcpy(value_bits_, tmp_value.value.str + value_off_, pobj->width);
+      return true;
+}
+
+/*
+ * Attach the __vpiCallback to the object that this part select
+ * selects from. The part select itself is not a vvp_vpi_callback
+ * object, but it refers to a net that is a vvp_vpi_callback, so
+ * add the callback to that object.
+ */
+static value_callback*make_value_change_part(p_cb_data data)
+{
+	/* Attach the __vpiCallback object to the signal. */
+      value_callback*cbh = new value_part_callback(data);
+      return cbh;
+}
 
 /*
  * A value change callback is tripped when a bit of a signal
@@ -115,7 +195,7 @@ void delete_vpi_callback(struct __vpiCallback* ref)
  * does not already have them, create some callback functors to do the
  * actual value change detection.
  */
-static struct __vpiCallback* make_value_change(p_cb_data data)
+static value_callback* make_value_change(p_cb_data data)
 {
       if (vpi_get(vpiAutomatic, data->obj)) {
             fprintf(stderr, "vpi error: cannot place value change "
@@ -125,25 +205,20 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
             return 0;
       }
 
-      struct __vpiCallback*obj = new_vpi_callback();
-      obj->cb_data = *data;
-      if (data->time) {
-	    obj->cb_time = *(data->time);
-      } else {
-	    obj->cb_time.type = vpiSuppressTime;
-      }
-      obj->cb_data.time = &obj->cb_time;
-      if (data->value) {
-	    obj->cb_value = *(data->value);
-      } else {
-	    obj->cb_value.format = vpiSuppressVal;
-      }
-      obj->cb_data.value = &obj->cb_value;
+	// Special case: the target object is a vpiPartSelect
+      if (data->obj->get_type_code() == vpiPartSelect)
+	    return make_value_change_part(data);
+
+      if (data->obj->get_type_code() == vpiMemoryWord)
+	    return vpip_array_word_change(data);
+
+      if (data->obj->get_type_code() == vpiMemory)
+	    return vpip_array_change(data);
+
+      value_callback*obj = new value_callback(data);
 
       assert(data->obj);
-      assert(data->obj->vpi_type);
-
-      switch (data->obj->vpi_type->type_code) {
+      switch (data->obj->get_type_code()) {
 
 	  case vpiReg:
 	  case vpiNet:
@@ -156,7 +231,7 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	      /* Attach the callback to the vvp_fun_signal node by
 		 putting it in the vpi_callbacks list. */
 	    struct __vpiSignal*sig;
-	    sig = reinterpret_cast<__vpiSignal*>(data->obj);
+	    sig = dynamic_cast<__vpiSignal*>(data->obj);
 
 	    vvp_net_fil_t*sig_fil;
 	    sig_fil = dynamic_cast<vvp_net_fil_t*>(sig->node->fil);
@@ -171,22 +246,9 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	    break;
 
 	  case vpiNamedEvent:
-	    struct __vpiNamedEvent*nev;
-	    nev = reinterpret_cast<__vpiNamedEvent*>(data->obj);
-	    obj->next = nev->callbacks;
-	    nev->callbacks = obj;
-	    break;
-
-	  case vpiMemoryWord:
-	    vpip_array_word_change(obj, data->obj);
-	    break;
-
-	  case vpiMemory:
-	    vpip_array_change(obj, data->obj);
-	    break;
-
-	  case vpiPartSelect:
-	    vpip_part_select_value_change(obj, data->obj);
+	    __vpiNamedEvent*nev;
+	    nev = dynamic_cast<__vpiNamedEvent*>(data->obj);
+	    nev->add_vpi_callback(obj);
 	    break;
 
 	  case vpiModule:
@@ -199,7 +261,7 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
 	  default:
 	    fprintf(stderr, "make_value_change: sorry: I cannot callback "
 		    "values on type code=%d\n",
-		    data->obj->vpi_type->type_code);
+		    data->obj->get_type_code());
 	    delete obj;
 	    return 0;
       }
@@ -207,12 +269,41 @@ static struct __vpiCallback* make_value_change(p_cb_data data)
       return obj;
 }
 
+class sync_callback : public __vpiCallback {
+    public:
+      explicit sync_callback(p_cb_data data);
+      ~sync_callback();
+
+    public:
+	// scheduled event
+      struct sync_cb* cb_sync;
+	// user supplied callback data
+      struct t_vpi_time cb_time;
+
+    private:
+};
+
+inline sync_callback::sync_callback(p_cb_data data)
+{
+      cb_sync = 0;
+
+      cb_data = *data;
+      assert(data->time);
+      cb_time = *(data->time);
+      cb_data.time = &cb_time;
+}
+
+sync_callback::~sync_callback()
+{
+      delete cb_sync;
+}
+
 void sync_cb::run_run()
 {
       if (handle == 0)
 	    return;
 
-      struct __vpiCallback*cur = handle;
+      sync_callback*cur = handle;
       cur->cb_data.time->type = vpiSimTime;
       vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
 
@@ -226,18 +317,12 @@ void sync_cb::run_run()
 	    vpi_mode_flag = VPI_MODE_NONE;
       }
 
-      delete_vpi_callback(cur);
+      delete cur;
 }
 
-static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
+static sync_callback* make_sync(p_cb_data data, bool readonly_flag)
 {
-      struct __vpiCallback*obj = new_vpi_callback();
-      obj->cb_data = *data;
-      assert(data->time);
-      obj->cb_time = *(data->time);
-      obj->cb_data.time = &obj->cb_time;
-
-      obj->next = 0;
+      sync_callback*obj = new sync_callback(data);
 
       struct sync_cb*cb = new sync_cb;
       cb->sync_flag = readonly_flag? true : false;
@@ -271,14 +356,7 @@ static struct __vpiCallback* make_sync(p_cb_data data, bool readonly_flag)
 
 static struct __vpiCallback* make_afterdelay(p_cb_data data, bool simtime_flag)
 {
-      struct __vpiCallback*obj = new_vpi_callback();
-      obj->cb_data = *data;
-      assert(data->time);
-      obj->cb_time = *(data->time);
-      obj->cb_data.time = &obj->cb_time;
-
-      obj->next = 0;
-
+      sync_callback*obj = new sync_callback(data);
       struct sync_cb*cb = new sync_cb;
       cb->sync_flag = false;
       cb->handle = obj;
@@ -321,13 +399,21 @@ static struct __vpiCallback* make_afterdelay(p_cb_data data, bool simtime_flag)
  * callbacks.
  */
 
-static struct __vpiCallback*NextSimTime = 0;
-static struct __vpiCallback*EndOfCompile = NULL;
-static struct __vpiCallback*StartOfSimulation = NULL;
-static struct __vpiCallback*EndOfSimulation = NULL;
+class simulator_callback : public __vpiCallback {
+    public:
+      inline explicit simulator_callback(struct t_cb_data*data)
+      { cb_data = *data; }
+
+    public:
+};
+
+static simulator_callback*NextSimTime = 0;
+static simulator_callback*EndOfCompile = 0;
+static simulator_callback*StartOfSimulation = 0;
+static simulator_callback*EndOfSimulation = 0;
 
 void vpiEndOfCompile(void) {
-      struct __vpiCallback* cur;
+      simulator_callback* cur;
 
       /*
        * Walk the list of register callbacks, executing them and
@@ -338,16 +424,16 @@ void vpiEndOfCompile(void) {
 
       while (EndOfCompile) {
 	    cur = EndOfCompile;
-	    EndOfCompile = cur->next;
+	    EndOfCompile = dynamic_cast<simulator_callback*>(cur->next);
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    delete_vpi_callback(cur);
+	    delete cur;
       }
 
       vpi_mode_flag = VPI_MODE_NONE;
 }
 
 void vpiStartOfSim(void) {
-      struct __vpiCallback* cur;
+      simulator_callback* cur;
 
       /*
        * Walk the list of register callbacks, executing them and
@@ -358,16 +444,16 @@ void vpiStartOfSim(void) {
 
       while (StartOfSimulation) {
 	    cur = StartOfSimulation;
-	    StartOfSimulation = cur->next;
+	    StartOfSimulation = dynamic_cast<simulator_callback*>(cur->next);
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    delete_vpi_callback(cur);
+	    delete cur;
       }
 
       vpi_mode_flag = VPI_MODE_NONE;
 }
 
 void vpiPostsim(void) {
-      struct __vpiCallback* cur;
+      simulator_callback* cur;
 
       /*
        * Walk the list of register callbacks
@@ -377,12 +463,12 @@ void vpiPostsim(void) {
 
       while (EndOfSimulation) {
 	    cur = EndOfSimulation;
-	    EndOfSimulation = cur->next;
+	    EndOfSimulation = dynamic_cast<simulator_callback*>(cur->next);
 	      /* Only set the time if it is not NULL. */
 	    if (cur->cb_data.time)
 	          vpip_time_to_timestruct(cur->cb_data.time, schedule_simtime());
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    delete_vpi_callback(cur);
+	    delete cur;
       }
 
       vpi_mode_flag = VPI_MODE_NONE;
@@ -394,21 +480,20 @@ void vpiPostsim(void) {
  */
 void vpiNextSimTime(void)
 {
-      struct __vpiCallback* cur;
+      simulator_callback* cur;
 
       while (NextSimTime) {
 	    cur = NextSimTime;
-	    NextSimTime = cur->next;
+	    NextSimTime = dynamic_cast<simulator_callback*>(cur->next);
 	    (cur->cb_data.cb_rtn)(&cur->cb_data);
-	    delete_vpi_callback(cur);
+	    delete cur;
       }
 
 }
 
-static struct __vpiCallback* make_prepost(p_cb_data data)
+static simulator_callback* make_prepost(p_cb_data data)
 {
-      struct __vpiCallback*obj = new_vpi_callback();
-      obj->cb_data = *data;
+      simulator_callback*obj = new simulator_callback(data);
 
       /* Insert at head of list */
       switch (data->reason) {
@@ -473,7 +558,7 @@ vpiHandle vpi_register_cb(p_cb_data data)
 	    break;
       }
 
-      return obj? &obj->base : 0;
+      return obj;
 }
 
 /*
@@ -483,11 +568,8 @@ vpiHandle vpi_register_cb(p_cb_data data)
  */
 PLI_INT32 vpi_remove_cb(vpiHandle ref)
 {
-      assert(ref);
-      assert(ref->vpi_type);
-      assert(ref->vpi_type->type_code == vpiCallback);
-
-      struct __vpiCallback*obj = (struct __vpiCallback*)ref;
+      struct __vpiCallback*obj = dynamic_cast<__vpiCallback*>(ref);
+      assert(obj);
       obj->cb_data.cb_rtn = 0;
 
       return 1;
@@ -543,7 +625,7 @@ void vvp_vpi_callback::attach_as_word(vvp_array_t arr, unsigned long addr)
       array_word_ = addr;
 }
 
-void vvp_vpi_callback::add_vpi_callback(__vpiCallback*cb)
+void vvp_vpi_callback::add_vpi_callback(value_callback*cb)
 {
       cb->next = vpi_callbacks_;
       vpi_callbacks_ = cb;
@@ -570,31 +652,33 @@ void vvp_vpi_callback::run_vpi_callbacks()
 {
       if (array_) array_word_change(array_, array_word_);
 
-      struct __vpiCallback *next = vpi_callbacks_;
-      struct __vpiCallback *prev = 0;
+      value_callback *next = vpi_callbacks_;
+      value_callback *prev = 0;
 
       while (next) {
-	    struct __vpiCallback*cur = next;
-	    next = cur->next;
+	    value_callback*cur = next;
+	    next = dynamic_cast<value_callback*>(cur->next);
 
 	    if (cur->cb_data.cb_rtn != 0) {
-		  if (cur->cb_data.value)
-			get_value(cur->cb_data.value);
+		  if (cur->test_value_callback_ready()) {
+			if (cur->cb_data.value)
+			      get_value(cur->cb_data.value);
 
-		  callback_execute(cur);
+			callback_execute(cur);
+		  }
 		  prev = cur;
 
 	    } else if (prev == 0) {
 
 		  vpi_callbacks_ = next;
 		  cur->next = 0;
-		  delete_vpi_callback(cur);
+		  delete cur;
 
 	    } else {
 		  assert(prev->next == cur);
 		  prev->next = next;
 		  cur->next = 0;
-		  delete_vpi_callback(cur);
+		  delete cur;
 	    }
       }
 }

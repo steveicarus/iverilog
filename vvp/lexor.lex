@@ -220,6 +220,7 @@ static char* strdupnew(char const *str)
   /* Handle the specialized variable access functions. */
 
 "&A" { return K_A; }
+"&APV" { return K_APV; }
 "&PV" { return K_PV; }
 
 "%"[.$_/a-zA-Z0-9]+ {

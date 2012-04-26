@@ -23,6 +23,7 @@
 #include "vpi_user.h"
 
 typedef struct __vpiArray* vvp_array_t;
+class value_callback;
 
 /*
  * This function tries to find the array (by label) in the global
@@ -48,8 +49,8 @@ extern double array_get_word_r(vvp_array_t array, unsigned address);
 
 /* VPI hooks */
 
-extern void vpip_array_word_change(struct __vpiCallback*cb, vpiHandle word);
-extern void vpip_array_change(struct __vpiCallback*cb, vpiHandle word);
+extern value_callback* vpip_array_word_change(p_cb_data data);
+extern value_callback* vpip_array_change(p_cb_data data);
 
 /* Compile hooks */
 extern void compile_varw_real(char*label, vvp_array_t array,

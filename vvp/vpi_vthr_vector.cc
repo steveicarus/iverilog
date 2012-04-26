@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -35,8 +35,14 @@
 # include  <cassert>
 # include  "ivl_alloc.h"
 
-struct __vpiVThrVec {
-      struct __vpiHandle base;
+struct __vpiVThrVec : public __vpiHandle {
+      __vpiVThrVec();
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+
       unsigned bas;
       unsigned wid;
       unsigned signed_flag : 1;
@@ -77,11 +83,8 @@ extern const char oct_digits[64];
  */
 static int vthr_vec_get(int code, vpiHandle ref)
 {
-      assert((ref->vpi_type->type_code==vpiNet)
-	     || (ref->vpi_type->type_code==vpiReg)
-	     || (ref->vpi_type->type_code==vpiConstant));
-
-      struct __vpiVThrVec*rfp = (struct __vpiVThrVec*)ref;
+      struct __vpiVThrVec*rfp = dynamic_cast<__vpiVThrVec*>(ref);
+      assert(rfp);
 
       switch (code) {
 
@@ -106,11 +109,8 @@ static int vthr_vec_get(int code, vpiHandle ref)
 
 static char* vthr_vec_get_str(int code, vpiHandle ref)
 {
-      assert((ref->vpi_type->type_code==vpiNet)
-	     || (ref->vpi_type->type_code==vpiReg)
-	     || (ref->vpi_type->type_code==vpiConstant));
-
-      struct __vpiVThrVec*rfp = (struct __vpiVThrVec*)ref;
+      struct __vpiVThrVec*rfp = dynamic_cast<__vpiVThrVec*>(ref);
+      assert(rfp);
 
       switch (code) {
 
@@ -177,11 +177,8 @@ static void vthr_vec_StringVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
  */
 static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 {
-      assert((ref->vpi_type->type_code==vpiNet)
-	     || (ref->vpi_type->type_code==vpiReg)
-	     || (ref->vpi_type->type_code==vpiConstant));
-
-      struct __vpiVThrVec*rfp = (struct __vpiVThrVec*)ref;
+      struct __vpiVThrVec*rfp = dynamic_cast<__vpiVThrVec*>(ref);
+      assert(rfp);
       char *rbuf;
 
       unsigned wid = rfp->wid;
@@ -363,10 +360,8 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
  */
 static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp, int)
 {
-      assert((ref->vpi_type->type_code==vpiNet)
-	     || (ref->vpi_type->type_code==vpiReg));
-
-      struct __vpiVThrVec*rfp = (struct __vpiVThrVec*)ref;
+      struct __vpiVThrVec*rfp = dynamic_cast<__vpiVThrVec*>(ref);
+      assert(rfp);
 
       unsigned wid = rfp->wid;
 
@@ -443,19 +438,23 @@ static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp, int)
 // The code fully supports vpiReg, vpi_Net, but we do not
 // create such things, yet.  Lacking a name, for example.
 
-static const struct __vpirt vpip_vthr_const_rt = {
-      vpiConstant,
-      vthr_vec_get,
-      vthr_vec_get_str,
-      vthr_vec_get_value,
-      vthr_vec_put_value,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-};
+inline __vpiVThrVec::__vpiVThrVec()
+{ }
+
+int __vpiVThrVec::get_type_code(void) const
+{ return vpiConstant; }
+
+int __vpiVThrVec::vpi_get(int code)
+{ return vthr_vec_get(code, this); }
+
+char* __vpiVThrVec::vpi_get_str(int code)
+{ return vthr_vec_get_str(code, this); }
+
+void __vpiVThrVec::vpi_get_value(p_vpi_value val)
+{ vthr_vec_get_value(this, val); }
+
+vpiHandle __vpiVThrVec::vpi_put_value(p_vpi_value val, int flags)
+{ return vthr_vec_put_value(this, val, flags); }
 
 /*
  * Construct a vpiReg object. Give the object specified dimensions,
@@ -463,9 +462,7 @@ static const struct __vpirt vpip_vthr_const_rt = {
  */
 vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag)
 {
-      struct __vpiVThrVec*obj = (struct __vpiVThrVec*)
-	    malloc(sizeof(struct __vpiVThrVec));
-      obj->base.vpi_type = &vpip_vthr_const_rt;
+      struct __vpiVThrVec*obj = new __vpiVThrVec;
       assert(base < 65536);
       obj->bas = base;
       assert(wid < 65536);
@@ -473,7 +470,7 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag)
       obj->signed_flag = signed_flag? 1 : 0;
       obj->name = vpip_name_string("T<>");
 
-      return &obj->base;
+      return obj;
 }
 
 #ifdef CHECK_WITH_VALGRIND
@@ -486,13 +483,17 @@ void thread_vthr_delete(vpiHandle item)
 
 static void thread_vthr_delete_real(vpiHandle item)
 {
-      struct __vpiVThrVec*obj = (struct __vpiVThrVec*)item;
-      free (obj);
+      struct __vpiVThrVec*obj = dynamic_cast<__vpiVThrVec*>(item);
+      delete obj;
 }
 #endif
 
-struct __vpiVThrWord {
-      struct __vpiHandle base;
+struct __vpiVThrWord : public __vpiHandle {
+      __vpiVThrWord();
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+
       const char* name;
       int subtype;
       unsigned index;
@@ -500,9 +501,7 @@ struct __vpiVThrWord {
 
 static int vthr_word_get(int code, vpiHandle ref)
 {
-      assert(ref->vpi_type->type_code==vpiConstant);
-
-      struct __vpiVThrWord*rfp = (struct __vpiVThrWord*)ref;
+      struct __vpiVThrWord*rfp = dynamic_cast<__vpiVThrWord*>(ref);
 
       switch (code) {
 
@@ -521,9 +520,7 @@ static int vthr_word_get(int code, vpiHandle ref)
 
 static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 {
-      assert(ref->vpi_type->type_code==vpiConstant);
-
-      struct __vpiVThrWord*obj = (struct __vpiVThrWord*)ref;
+      struct __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(ref);
       char *rbuf = need_result_buf(66, RBUF_VAL);
 
       double val = 0.0;
@@ -591,34 +588,30 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
       }
 }
 
-static const struct __vpirt vpip_vthr_const_real_rt = {
-      vpiConstant,
-      vthr_word_get,
-      0,
-      vthr_real_get_value,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-};
+inline __vpiVThrWord::__vpiVThrWord()
+{ }
+
+int __vpiVThrWord::get_type_code(void) const
+{ return vpiConstant; }
+
+int __vpiVThrWord::vpi_get(int code)
+{ return vthr_word_get(code, this); }
+
+void __vpiVThrWord::vpi_get_value(p_vpi_value val)
+{ vthr_real_get_value(this, val); }
 
 vpiHandle vpip_make_vthr_word(unsigned base, const char*type)
 {
-      struct __vpiVThrWord*obj = (struct __vpiVThrWord*)
-	    malloc(sizeof(struct __vpiVThrWord));
+      struct __vpiVThrWord*obj = new __vpiVThrWord;
 
       assert(type[0] == 'r');
 
-      obj->base.vpi_type = &vpip_vthr_const_real_rt;
       obj->name = vpip_name_string("W<>");
       obj->subtype = vpiRealConst;
       assert(base < 65536);
       obj->index = base;
 
-      return &obj->base;
+      return obj;
 }
 
 #ifdef CHECK_WITH_VALGRIND
@@ -629,8 +622,8 @@ void thread_word_delete(vpiHandle item)
 
 static void thread_word_delete_real(vpiHandle item)
 {
-      struct __vpiVThrWord*obj = (struct __vpiVThrWord*)item;
-      free(obj);
+      struct __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(item);
+      delete obj;
 }
 
 void vpi_handle_delete()

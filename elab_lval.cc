@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,6 +22,7 @@
 # include  "PExpr.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "netstruct.h"
 # include  "compiler.h"
 # include  <cstdlib>
 # include  <iostream>
@@ -152,8 +153,26 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       NetNet*       reg = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
+      perm_string   method_name;
 
       symbol_search(this, des, scope, path_, reg, par, eve);
+
+	/* If the signal is not found, check to see if this is a
+	   member of a struct. Take the name of the form "a.b.member",
+	   remove the member and store it into method_name, and retry
+	   the search with "a.b". */
+      if (reg == 0 && path_.size() >= 2) {
+	    pform_name_t use_path = path_;
+	    method_name = peek_tail_name(use_path);
+	    use_path.pop_back();
+	    symbol_search(this, des, scope, use_path, reg, par, eve);
+
+	    if (reg && reg->struct_type() == 0) {
+		  method_name = perm_string();
+		  reg = 0;
+	    }
+      }
+
       if (reg == 0) {
 	    cerr << get_fileline() << ": error: Could not find variable ``"
 		 << path_ << "'' in ``" << scope_path(scope) <<
@@ -164,16 +183,26 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       }
 
       ivl_assert(*this, reg);
-
+	// We are processing the tail of a string of names. For
+	// example, the verilog may be "a.b.c", so we are processing
+	// "c" at this point.
       const name_component_t&name_tail = path_.back();
 
+	// Use the last index to determine what kind of select
+	// (bit/part/etc) we are processing. For example, the verilog
+	// may be "a.b.c[1][2][<index>]". All but the last index must
+	// be simple expressions, only the <index> may be a part
+	// select etc., so look at it to determine how we will be
+	// proceeding.
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
       if (!name_tail.index.empty())
 	    use_sel = name_tail.index.back().sel;
 
-	// This is the special case that the l-value is an entire
-	// memory. This is, in fact, an error.
-      if (reg->array_dimensions() > 0 && name_tail.index.empty()) {
+	// Special case: The l-value is an entire memory, or array
+	// slice. This is, in fact, an error in l-values. Detect the
+	// situation by noting if the index count is less than the
+	// array dimensions (unpacked).
+      if (reg->array_dimensions() > name_tail.index.size()) {
 	    cerr << get_fileline() << ": error: Cannot assign to array "
 		 << path_ << ". Did you forget a word index?" << endl;
 	    des->errors += 1;
@@ -181,7 +210,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       }
 
 	/* Get the signal referenced by the identifier, and make sure
-	   it is a register. Wires are not allows in this context,
+	   it is a register. Wires are not allowed in this context,
 	   unless this is the l-value of a force. */
       if ((reg->type() != NetNet::REG) && !is_force) {
 	    cerr << get_fileline() << ": error: " << path_ <<
@@ -191,6 +220,12 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 		  " is declared here as " << reg->type() << "." << endl;
 	    des->errors += 1;
 	    return 0;
+      }
+
+      if (reg->struct_type() && !method_name.nil()) {
+	    NetAssign_*lv = new NetAssign_(reg);
+	    elaborate_lval_net_packed_member_(des, scope, lv, method_name);
+	    return lv;
       }
 
       if (reg->array_dimensions() > 0)
@@ -322,7 +357,13 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 				      NetScope*scope,
 				      NetAssign_*lv) const
 {
+      list<long>prefix_indices;
+      bool rc = calculate_packed_indices_(des, scope, lv->sig(), prefix_indices);
+      if (!rc) return false;
+
       const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, !name_tail.index.empty());
+
       const index_component_t&index_tail = name_tail.index.back();
       ivl_assert(*this, index_tail.msb != 0);
       ivl_assert(*this, index_tail.lsb == 0);
@@ -340,20 +381,43 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 	    mux = 0;
       }
 
-      if (mux) {
-	      // Non-constant bit mux. Correct the mux for the range
-	      // of the vector, then set the l-value part select expression.
-	    mux = normalize_variable_base(mux, reg->msb(), reg->lsb(), 1, true);
 
+      if (prefix_indices.size()+2 <= reg->packed_dims().size()) {
+	      // Special case: this is a slice of a multi-dimensional
+	      // packed array. For example:
+	      //   reg [3:0][7:0] x;
+	      //   x[2] = ...
+	      // This shows up as the prefix_indices being too short
+	      // for the packed dimensions of the vector. What we do
+	      // here is convert to a "slice" of the vector.
+	    if (mux == 0) {
+		  long loff;
+		  unsigned long lwid;
+		  bool rcl = reg->sb_to_slice(prefix_indices, lsb, loff, lwid);
+		  ivl_assert(*this, rcl);
+
+		  lv->set_part(new NetEConst(verinum(loff)), lwid);
+	    } else {
+		  unsigned long lwid;
+		  mux = normalize_variable_slice_base(prefix_indices, mux,
+						      reg, lwid);
+		  lv->set_part(mux, lwid);
+	    }
+
+      } else if (mux) {
+	      // Non-constant bit mux. Correct the mux for the range
+	      // of the vector, then set the l-value part select
+	      // expression.
+	    mux = normalize_variable_bit_base(prefix_indices, mux, reg);
 	    lv->set_part(mux, 1);
 
-      } else if (lsb == reg->msb() && lsb == reg->lsb()) {
+      } else if (reg->vector_width() == 1 && reg->sb_is_valid(prefix_indices,lsb)) {
 	      // Constant bit mux that happens to select the only bit
 	      // of the l-value. Don't bother with any select at all.
 
       } else {
 	      // Constant bit select that does something useful.
-	    long loff = reg->sb_to_idx(lsb);
+	    long loff = reg->sb_to_idx(prefix_indices,lsb);
 
 	    if (loff < 0 || loff >= (long)reg->vector_width()) {
 		  cerr << get_fileline() << ": error: bit select "
@@ -373,6 +437,10 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 				       NetScope*scope,
 				       NetAssign_*lv) const
 {
+      list<long> prefix_indices;
+      bool rc = calculate_packed_indices_(des, scope, lv->sig(), prefix_indices);
+      ivl_assert(*this, rc);
+
 	// The range expressions of a part select must be
 	// constant. The calculate_parts_ function calculates the
 	// values into msb and lsb.
@@ -385,40 +453,49 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
       ivl_assert(*this, parts_defined_flag);
 
       NetNet*reg = lv->sig();
-      assert(reg);
+      ivl_assert(*this, reg);
 
-      if (msb == reg->msb() && lsb == reg->lsb()) {
+      const list<NetNet::range_t>&packed = reg->packed_dims();
 
-	      /* Part select covers the entire vector. Simplest case. */
-
-      } else {
-
-	      /* Get the canonical offsets into the vector. */
-	    long loff = reg->sb_to_idx(lsb);
-	    long moff = reg->sb_to_idx(msb);
-	    long wid = moff - loff + 1;
-
-	    if (moff < loff) {
-		  cerr << get_fileline() << ": error: part select "
-		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
-		       << " is reversed." << endl;
-		  des->errors += 1;
-		  return false;
-	    }
-
-	      /* If the part select extends beyond the extremes of the
-		 variable, then report an error. Note that loff is
-		 converted to normalized form so is relative the
-		 variable pins. */
-
-	    if (loff < 0 || moff >= (signed)reg->vector_width()) {
-		  cerr << get_fileline() << ": warning: Part select "
-		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
-		       << " is out of range." << endl;
-	    }
-
-	    lv->set_part(new NetEConst(verinum(loff)), wid);
+	// Part selects cannot select slices. So there must be enough
+	// prefix_indices to get all the way to the final dimension.
+      if (prefix_indices.size()+1 < packed.size()) {
+	    cerr << get_fileline() << ": error: Cannot select a range "
+		 << "of slices from a packed array." << endl;
+	    des->errors += 1;
+	    return false;
       }
+
+      long loff = reg->sb_to_idx(prefix_indices,lsb);
+      long moff = reg->sb_to_idx(prefix_indices,msb);
+      long wid = moff - loff + 1;
+
+      if (moff < loff) {
+	    cerr << get_fileline() << ": error: part select "
+		 << reg->name() << "[" << msb<<":"<<lsb<<"]"
+		 << " is reversed." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+	// Special case: The range winds up selecting the entire
+	// vector. Treat this as no part select at all.
+      if (loff == 0 && moff == (long)(reg->vector_width()-1)) {
+	    return true;
+      }
+
+	/* If the part select extends beyond the extremes of the
+	   variable, then report an error. Note that loff is
+	   converted to normalized form so is relative the
+	   variable pins. */
+
+      if (loff < 0 || moff >= (long)reg->vector_width()) {
+	    cerr << get_fileline() << ": warning: Part select "
+		 << reg->name() << "[" << msb<<":"<<lsb<<"]"
+		 << " is out of range." << endl;
+      }
+
+      lv->set_part(new NetEConst(verinum(loff)), wid);
 
       return true;
 }
@@ -428,6 +505,10 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 				      NetAssign_*lv,
 				      index_component_t::ctype_t use_sel) const
 {
+      list<long>prefix_indices;
+      bool rc = calculate_packed_indices_(des, scope, lv->sig(), prefix_indices);
+      ivl_assert(*this, rc);
+
       const name_component_t&name_tail = path_.back();;
       ivl_assert(*this, !name_tail.index.empty());
 
@@ -462,14 +543,20 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 	    if (base_c->value().is_defined()) {
 		  long lsv = base_c->value().as_long();
 		  long offset = 0;
-		  if (((reg->msb() < reg->lsb()) &&
+		    // Get the signal range.
+		  const list<NetNet::range_t>&packed = reg->packed_dims();
+		  ivl_assert(*this, packed.size() == prefix_indices.size()+1);
+
+		    // We want the last range, which is where we work.
+		  const NetNet::range_t&rng = packed.back();
+		  if (((rng.msb < rng.lsb) &&
                        use_sel == index_component_t::SEL_IDX_UP) ||
-		      ((reg->msb() > reg->lsb()) &&
+		      ((rng.msb > rng.lsb) &&
 		       use_sel == index_component_t::SEL_IDX_DO)) {
 			offset = -wid + 1;
 		  }
 		  delete base;
-		  long rel_base = reg->sb_to_idx(lsv) + offset;
+		  long rel_base = reg->sb_to_idx(prefix_indices,lsv) + offset;
 		    /* If we cover the entire lvalue just skip the select. */
 		  if (rel_base == 0 && wid == reg->vector_width()) return true;
 		  base = new NetEConst(verinum(rel_base));
@@ -511,15 +598,16 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 		  }
 	    }
       } else {
+	    ivl_assert(*this, prefix_indices.size()+1 == reg->packed_dims().size());
 	      /* Correct the mux for the range of the vector. */
 	    if (use_sel == index_component_t::SEL_IDX_UP) {
-		  base = normalize_variable_base(base, reg->msb(), reg->lsb(),
-		                                 wid, true);
+		  base = normalize_variable_part_base(prefix_indices, base,
+						      reg, wid, true);
 		  sel_type = IVL_SEL_IDX_UP;
 	    } else {
 		    // This is assumed to be a SEL_IDX_DO.
-		  base = normalize_variable_base(base, reg->msb(), reg->lsb(),
-		                                 wid, false);
+		  base = normalize_variable_part_base(prefix_indices, base,
+						      reg, wid, false);
 		  sel_type = IVL_SEL_IDX_DOWN;
 	    }
       }
@@ -530,6 +618,38 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 
       lv->set_part(base, wid, sel_type);
 
+      return true;
+}
+
+bool PEIdent::elaborate_lval_net_packed_member_(Design*des,
+						NetScope*,
+						NetAssign_*lv,
+						const perm_string&member_name) const
+{
+      NetNet*reg = lv->sig();
+      ivl_assert(*this, reg);
+
+      netstruct_t*struct_type = reg->struct_type();
+      ivl_assert(*this, struct_type);
+
+      if (! struct_type->packed()) {
+	    cerr << get_fileline() << ": sorry: Only packed structures "
+		 << "are supported in l-value." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      unsigned long off;
+      const netstruct_t::member_t* member = struct_type->packed_member(member_name, off);
+
+      if (member == 0) {
+	    cerr << get_fileline() << ": error: Member " << member_name
+		 << " is not a member of variable " << reg->name() << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      lv->set_part(new NetEConst(verinum(off)), member->width());
       return true;
 }
 

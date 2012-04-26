@@ -22,6 +22,8 @@
 # include  "config.h"
 # include  "vpi_user.h"
 
+class value_callback;
+
 /*
  * Things derived from vvp_vpi_callback may have callbacks
  * attached. This is how vpi callbacks are attached to the vvp
@@ -38,7 +40,7 @@ class vvp_vpi_callback {
 
       void attach_as_word(struct __vpiArray* arr, unsigned long addr);
 
-      void add_vpi_callback(struct __vpiCallback*);
+      void add_vpi_callback(value_callback*);
 #ifdef CHECK_WITH_VALGRIND
 	/* This has only been tested at EOS. */
       void clear_all_callbacks(void);
@@ -54,7 +56,7 @@ class vvp_vpi_callback {
       void run_vpi_callbacks();
 
     private:
-      struct __vpiCallback*vpi_callbacks_;
+      value_callback*vpi_callbacks_;
       struct __vpiArray* array_;
       unsigned long array_word_;
 };

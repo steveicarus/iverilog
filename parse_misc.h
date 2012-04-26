@@ -56,7 +56,7 @@ extern YYLTYPE yylloc;
  */
 extern int  VLlex();
 extern void VLerror(const char*msg);
-extern void VLerror(const YYLTYPE&loc, const char*msg);
+extern void VLerror(const YYLTYPE&loc, const char*msg, ...) __attribute__((format(printf,2,3)));
 #define yywarn VLwarn
 extern void VLwarn(const YYLTYPE&loc, const char*msg);
 
@@ -78,6 +78,14 @@ extern bool have_timeunit_decl;
 extern bool have_timeprec_decl;
 
 /*
+ * Test if this identifier is a type identifier in the current
+ * context. The pform code needs to help the lexor here because the
+ * parser detects typedefs and marks the typedef'ed identifiers as
+ * type names.
+ */
+extern data_type_t* pform_test_type_identifier(const char*txt);
+
+/*
  * Export these functions because we have to generate PENumber class
  * in pform.cc for user defparam definition from command file.
  */
@@ -86,5 +94,7 @@ extern verinum*make_undef_highz_dec(const char*txt);
 extern verinum*make_unsized_binary(const char*txt);
 extern verinum*make_unsized_octal(const char*txt);
 extern verinum*make_unsized_hex(const char*txt);
+
+extern char* strdupnew(char const *str);
 
 #endif

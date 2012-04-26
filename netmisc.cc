@@ -27,55 +27,6 @@
 # include  "compiler.h"
 # include  "ivl_assert.h"
 
-// This routines is not currently used!
-#if 0
-NetNet* add_to_net(Design*des, NetNet*sig, long val)
-{
-      if (val == 0)
-	    return sig;
-      cerr << sig->get_fileline() << ": XXXX: Forgot how to implement add_to_net" << endl;
-      return 0;
-      NetScope*scope = sig->scope();
-      unsigned long abs_val = (val >= 0)? val : (-val);
-      unsigned width = sig->pin_count();
-
-      verinum val_v (abs_val, width);
-
-      NetConst*val_c = new NetConst(scope, scope->local_symbol(), val_v);
-
-      NetNet*val_s = new NetNet(scope, scope->local_symbol(),
-			      NetNet::IMPLICIT, width);
-      val_s->local_flag(true);
-
-      NetNet*res = new NetNet(scope, scope->local_symbol(),
-			      NetNet::IMPLICIT, width);
-      res->local_flag(true);
-
-      NetAddSub*add = new NetAddSub(scope, scope->local_symbol(), width);
-
-      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
-	    connect(sig->pin(idx), add->pin_DataA(idx));
-
-      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
-	    connect(val_c->pin(idx), add->pin_DataB(idx));
-
-      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
-	    connect(val_s->pin(idx), add->pin_DataB(idx));
-
-      for (unsigned idx = 0 ;  idx < width ;  idx += 1)
-	    connect(res->pin(idx), add->pin_Result(idx));
-
-      if (val < 0)
-	    add->attribute(perm_string::literal("LPM_Direction"), verinum("SUB"));
-      else
-	    add->attribute(perm_string::literal("LPM_Direction"), verinum("ADD"));
-
-      des->add_node(add);
-      des->add_node(val_c);
-
-      return res;
-}
-#endif
 
 NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
 {
@@ -247,6 +198,21 @@ static NetExpr* make_sub_expr(long val, NetExpr*expr)
       return res;
 }
 
+static NetExpr* make_mult_expr(NetExpr*expr, unsigned long val)
+{
+      verinum val_v (val, expr->expr_width());
+      val_v.has_sign(true);
+
+      NetEConst*val_c = new NetEConst(val_v);
+      val_c->set_line(*expr);
+
+      NetEBMult*res = new NetEBMult('*', expr, val_c, expr->expr_width(),
+                                  expr->has_sign());
+      res->set_line(*expr);
+
+      return res;
+}
+
 /*
  * This routine is used to calculate the number of bits needed to
  * contain the given number.
@@ -273,10 +239,13 @@ static unsigned num_bits(long arg)
 
 /*
  * This routine generates the normalization expression needed for a variable
- * bit select or a variable base expression for an indexed part select.
+ * bit select or a variable base expression for an indexed part
+ * select. This function doesn't actually look at the variable
+ * dimensions, it just does the final calculation using msb/lsb of the
+ * last slice, and the off of the slice in the variable.
  */
 NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
-                                 unsigned long wid, bool is_up)
+				 unsigned long wid, bool is_up, long soff)
 {
       long offset = lsb;
 
@@ -309,13 +278,13 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
                   base = tmp;
 	    }
 	      /* Normalize the expression. */
-	    base = make_sub_expr(offset, base);
+	    base = make_sub_expr(offset+soff, base);
       } else {
 	      /* Correct the offset if needed. */
 	    if (!is_up) offset += wid - 1;
 	      /* If the offset is zero then just return the base (index)
 	       * expression. */
-	    if (offset == 0) return base;
+	    if ((soff-offset) == 0) return base;
 	      /* Calculate the space needed for the offset. */
 	    unsigned min_wid = num_bits(-offset);
 	      /* We need enough space for the larger of the offset or the
@@ -338,9 +307,80 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
                   base = tmp;
 	    }
 	      /* Normalize the expression. */
-	    base = make_add_expr(base, -offset);
+	    base = make_add_expr(base, soff-offset);
       }
 
+      return base;
+}
+
+/*
+ * This method is how indices should work except that the base should
+ * be a vector of expressions that matches the size of the dims list,
+ * so that we can generate an expression based on the entire packed
+ * vector. For now, we assert that there is only one set of dimensions.
+ */
+NetExpr *normalize_variable_base(NetExpr *base,
+				 const list<NetNet::range_t>&dims,
+				 unsigned long wid, bool is_up)
+{
+      ivl_assert(*base, dims.size() == 1);
+      const NetNet::range_t&rng = dims.back();
+      return normalize_variable_base(base, rng.msb, rng.lsb, wid, is_up);
+}
+
+NetExpr *normalize_variable_bit_base(const list<long>&indices, NetExpr*base,
+				     const NetNet*reg)
+{
+      const list<NetNet::range_t>&packed_dims = reg->packed_dims();
+      ivl_assert(*base, indices.size()+1 == packed_dims.size());
+
+	// Get the canonical offset of the slice within which we are
+	// addressing. We need that address as a slice offset to
+	// calculate the proper complete address
+      const NetNet::range_t&rng = packed_dims.back();
+      long slice_off = reg->sb_to_idx(indices, rng.lsb);
+
+      return normalize_variable_base(base, rng.msb, rng.lsb, 1, true, slice_off);
+}
+
+NetExpr *normalize_variable_part_base(const list<long>&indices, NetExpr*base,
+				      const NetNet*reg,
+				      unsigned long wid, bool is_up)
+{
+      const list<NetNet::range_t>&packed_dims = reg->packed_dims();
+      ivl_assert(*base, indices.size()+1 == packed_dims.size());
+
+	// Get the canonical offset of the slice within which we are
+	// addressing. We need that address as a slice offset to
+	// calculate the proper complete address
+      const NetNet::range_t&rng = packed_dims.back();
+      long slice_off = reg->sb_to_idx(indices, rng.lsb);
+
+      return normalize_variable_base(base, rng.msb, rng.lsb, wid, is_up, slice_off);
+}
+
+NetExpr *normalize_variable_slice_base(const list<long>&indices, NetExpr*base,
+				       const NetNet*reg, unsigned long&lwid)
+{
+      const list<NetNet::range_t>&packed_dims = reg->packed_dims();
+      ivl_assert(*base, indices.size() < packed_dims.size());
+
+      list<NetNet::range_t>::const_iterator pcur = packed_dims.end();
+      for (size_t idx = indices.size() ; idx < packed_dims.size(); idx += 1) {
+	    -- pcur;
+      }
+
+      long sb;
+      if (pcur->msb >= pcur->lsb)
+	    sb = pcur->lsb;
+      else
+	    sb = pcur->msb;
+
+      long loff;
+      reg->sb_to_slice(indices, sb, loff, lwid);
+
+      base = make_mult_expr(base, lwid);
+      base = make_add_expr(base, loff);
       return base;
 }
 
@@ -891,4 +931,40 @@ void collapse_partselect_pv_to_concat(Design*des, NetNet*sig)
 	    idx += ps_obj->width();
 	    delete ps_obj;
       }
+}
+
+/*
+ * Evaluate the prefix indices. All but the final index in a
+ * chain of indices must be a single value and must evaluate
+ * to constants at compile time. For example:
+ *    [x]          - OK
+ *    [1][2][x]    - OK
+ *    [1][x:y]     - OK
+ *    [2:0][x]     - BAD
+ *    [y][x]       - BAD
+ * Leave the last index for special handling.
+ */
+bool evaluate_index_prefix(Design*des, NetScope*scope,
+			   list<long>&prefix_indices,
+			   const list<index_component_t>&indices)
+{
+      list<index_component_t>::const_iterator icur = indices.begin();
+      for (size_t idx = 0 ; (idx+1) < indices.size() ; idx += 1, ++icur) {
+	    assert(icur != indices.end());
+	    assert(icur->sel == index_component_t::SEL_BIT);
+	    NetExpr*texpr = elab_and_eval(des, scope, icur->msb, -1, true);
+
+	    long tmp;
+	    if (texpr == 0 || !eval_as_long(tmp, texpr)) {
+		  cerr << icur->msb->get_fileline() << ": error: "
+			"Array index expressions must be constant here." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+
+	    prefix_indices .push_back(tmp);
+	    delete texpr;
+      }
+
+      return true;
 }

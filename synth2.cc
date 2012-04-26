@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -900,7 +900,7 @@ bool NetProcTop::synth_sync(Design*des)
 class synth2_f  : public functor_t {
 
     public:
-      void process(class Design*, class NetProcTop*);
+      void process(Design*, NetProcTop*);
 
     private:
 };
@@ -910,7 +910,7 @@ class synth2_f  : public functor_t {
  * Look at a process. If it is asynchronous, then synthesize it as an
  * asynchronous process and delete the process itself for its gates.
  */
-void synth2_f::process(class Design*des, class NetProcTop*top)
+void synth2_f::process(Design*des, NetProcTop*top)
 {
       if (top->attribute(perm_string::literal("ivl_synthesis_off")).as_ulong() != 0)
 	    return;

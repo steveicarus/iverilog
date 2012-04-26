@@ -49,7 +49,7 @@ class NetScope;
  * therefore the handle for grasping the described circuit.
  */
 
-class Module : public PScope, public LineInfo {
+class Module : public PScopeExtra, public LineInfo {
 
 	/* The module ports are in general a vector of port_t
 	   objects. Each port has a name and an ordered list of
@@ -111,10 +111,6 @@ class Module : public PScope, public LineInfo {
       int time_unit, time_precision;
       bool time_from_timescale;
       bool timescale_warn_done;
-
-	/* Task definitions within this module */
-      map<perm_string,PTask*> tasks;
-      map<perm_string,PFunction*> funcs;
 
 	/* The module has a list of generate schemes that appear in
 	   the module definition. These are used at elaboration time. */

@@ -19,3 +19,7 @@
 
 
 # include  "pform_types.h"
+
+data_type_t::~data_type_t()
+{
+}

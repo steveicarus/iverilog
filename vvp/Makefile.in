@@ -129,7 +129,7 @@ vvp@EXEEXT@ libvpi.a: $O $(srcdir)/vvp.def
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ vvp.exp $(LDFLAGS) $O $(dllib) $(LIBS)
 else
 libvpi.a: libvpi.c
-	$(CC) $(CFLAGS) -c $<
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $<
 	rm -f libvpi.a
 	$(AR) cqv libvpi.a libvpi.o
 	$(RANLIB) libvpi.a
@@ -157,11 +157,11 @@ parse.o: parse.cc
 
 tables.o: tables.cc
 
+# Build this in two steps to avoid parallel build issues (see pr3462585)
 parse.cc: $(srcdir)/parse.y
-	$(YACC) --verbose -t -d -o parse.cc $(srcdir)/parse.y
-
+	$(YACC) --verbose -t -d -o $@ $<
 parse.h: parse.cc
-	mv parse.cc.h parse.h 2>/dev/null || mv parse.hh parse.h
+	mv parse.cc.h $@ 2>/dev/null || mv parse.hh $@
 
 lexor.cc: $(srcdir)/lexor.lex
 	$(LEX) -s -olexor.cc $(srcdir)/lexor.lex

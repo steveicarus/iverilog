@@ -1,7 +1,7 @@
 #ifndef __vpi_user_H
 #define __vpi_user_H
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,7 +46,11 @@ EXTERN_C_START
 # include  "_pli_types.h"
 
 #define ICARUS_VPI_CONST
+#ifdef __cplusplus
+typedef class __vpiHandle *vpiHandle;
+#else
 typedef struct __vpiHandle *vpiHandle;
+#endif
 
 /*
  * This structure is created by the VPI application to provide hooks

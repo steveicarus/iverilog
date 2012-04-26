@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2012 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 
 static const char*version_string =
 "Icarus Verilog VLOG95 Code Generator " VERSION " (" VERSION_TAG ")\n\n"
-"Copyright (C) 2010-2011 Cary R. (cygcary@yahoo.com)\n\n"
+"Copyright (C) 2010-2012 Cary R. (cygcary@yahoo.com)\n\n"
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"
 "  the Free Software Foundation; either version 2 of the License, or\n"
@@ -194,6 +194,10 @@ int target_design(ivl_design_t des)
       emit_icarus_generated_udps();
 
       fclose(vlog_out);
+
+	/* A do nothing call to prevent warnings about this routine not
+	 * being used. */
+      dump_nexus_information(0, 0);
 
       return vlog_errors;
 }

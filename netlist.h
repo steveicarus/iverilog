@@ -1,7 +1,7 @@
 #ifndef __netlist_H
 #define __netlist_H
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -75,6 +75,7 @@ class NetEvWait;
 class PExpr;
 class PFunction;
 class netenum_t;
+class netstruct_t;
 
 struct target;
 struct functor_t;
@@ -549,7 +550,7 @@ class NetDelaySrc  : public NetObj {
  *
  * NetNet objects are located by searching NetScope objects.
  *
- * The pin of a NetNet object are PASSIVE: they do not drive
+ * The pins of a NetNet object are PASSIVE: they do not drive
  * anything and they are not a data sink, per se. The pins follow the
  * values on the nexus.
  */
@@ -560,8 +561,24 @@ class NetNet  : public NetObj {
 		  SUPPLY0, SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG,
 		  UNRESOLVED_WIRE };
 
-      enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT };
+      enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT, PREF };
 
+      struct range_t {
+	    inline range_t() : msb(0), lsb(0) { }
+	    inline range_t(long m, long l) : msb(m), lsb(l) { }
+	    inline range_t(const range_t&that)
+	    : msb(that.msb), lsb(that.lsb) { }
+	    inline range_t& operator = (const range_t&that)
+	    { msb = that.msb; lsb = that.lsb; return *this; }
+
+	    long msb;
+	    long lsb;
+
+	    inline unsigned long width()const
+	    { if (msb >= lsb) return msb-lsb+1; else return lsb-msb+1; }
+      };
+
+    public:
 	// The width in this case is a shorthand for ms=width-1 and
 	// ls=0. Only one pin is created, the width is of the vector
 	// that passed through.
@@ -572,9 +589,12 @@ class NetNet  : public NetObj {
 	// dimensions. If s0==e0, then this is not an array after
 	// all.
       explicit NetNet(NetScope*s, perm_string n, Type t,
-		      long ms, long ls);
+		      const std::list<range_t>&packed);
       explicit NetNet(NetScope*s, perm_string n, Type t,
-		      long ms, long ls, long s0, long e0);
+		      const std::list<range_t>&packed, long s0, long e0);
+
+	// This form builds a NetNet from its record definition.
+      explicit NetNet(NetScope*s, perm_string n, Type t, netstruct_t*type);
 
       virtual ~NetNet();
 
@@ -603,27 +623,49 @@ class NetNet  : public NetObj {
       void set_enumeration(netenum_t*enum_set);
       netenum_t*enumeration(void) const;
 
+      netstruct_t*struct_type(void) const;
+
 	/* Attach a discipline to the net. */
       ivl_discipline_t get_discipline() const;
       void set_discipline(ivl_discipline_t dis);
 
-	/* These methods return the msb and lsb indices for the most
-	   significant and least significant bits. These are signed
-	   longs, and may be different from pin numbers. For example,
-	   reg [1:8] has 8 bits, msb==1 and lsb==8. */
-      long msb() const;
-      long lsb() const;
-      unsigned long vector_width() const;
+	/* This method returns a reference to the packed dimensions
+	   for the vector. These are arranged as a list where the
+	   first range in the list (front) is the left-most range in
+	   the verilog declaration. */
+      const std::list<range_t>& packed_dims() const { return packed_dims_; }
+
+	/* The vector_width returns the bit width of the packed array,
+	   vector or scaler that is this NetNet object. The static
+	   method is also a convenient way to convert a range list to
+	   a vector width. */
+      static unsigned long vector_width(const std::list<NetNet::range_t>&);
+      unsigned long vector_width() const { return vector_width(packed_dims_); }
+
+	/* Given a prefix of indices, figure out how wide the
+	   resulting slice would be. This is a generalization of the
+	   vector_width(), where the depth would be 0. */
+      unsigned long slice_width(size_t depth) const;
 
 	/* This method converts a signed index (the type that might be
-	   found in the Verilog source) to a pin number. It accounts
-	   for variation in the definition of the reg/wire/whatever. */
-      long sb_to_idx(long sb) const;
+	   found in the Verilog source) to canonical. It accounts
+	   for variation in the definition of the
+	   reg/wire/whatever. Note that a canonical index of a
+	   multi-dimensioned packed array is a single dimension. For
+	   example, "reg [4:1][3:0]..." has the canonical dimension
+	   [15:0] and the sb_to_idx() method will convert [2][2] to
+	   the canonical index [6]. */
+      long sb_to_idx(const std::list<long>&prefix, long sb) const;
+
+	/* This method converts a partial packed indices list and a
+	   tail index, and generates a canonical slice offset and
+	   width. */
+      bool sb_to_slice(const std::list<long>&prefix, long sb, long&off, unsigned long&wid) const;
 
 	/* This method checks that the signed index is valid for this
 	   signal. If it is, the above sb_to_idx can be used to get
 	   the pin# from the index. */
-      bool sb_is_valid(long sb) const;
+      bool sb_is_valid(const std::list<long>&prefix, long sb) const;
 
 	/* This method returns 0 for scalars and vectors, and greater
 	   for arrays. The value is the number of array
@@ -654,6 +696,7 @@ class NetNet  : public NetObj {
       void incr_lref();
       void decr_lref();
       unsigned peek_lref() const { return lref_count_; }
+      bool test_part_lref(unsigned msb, unsigned lsb);
 
       unsigned get_refs() const;
 
@@ -676,17 +719,24 @@ class NetNet  : public NetObj {
       bool is_scalar_ : 1;
       bool local_flag_: 1;
       netenum_t*enumeration_;
+      netstruct_t*struct_type_;
       ivl_discipline_t discipline_;
 
-      long msb_, lsb_;
+      std::list<range_t> packed_dims_;
       const unsigned dimensions_;
       long s0_, e0_;
 
       unsigned eref_count_;
       unsigned lref_count_;
+	// When the signal is an unresolved wire, we need more detail
+	// which bits are assigned. This mask is true for each bit
+	// that is known to be driven.
+      std::vector<bool> lref_mask_;
 
       vector<class NetDelaySrc*> delay_paths_;
 };
+
+extern std::ostream&operator << (std::ostream&out, const std::list<NetNet::range_t>&rlist);
 
 /*
  * This object type is used to contain a logical scope within a
@@ -1613,7 +1663,8 @@ class NetTran  : public NetNode, public IslandBranch {
 
     public:
 	// Tran devices other than TRAN_VP
-      NetTran(NetScope*scope, perm_string n, ivl_switch_type_t type);
+      NetTran(NetScope*scope, perm_string n, ivl_switch_type_t type,
+              unsigned wid);
 	// Create a TRAN_VP
       NetTran(NetScope*scope, perm_string n, unsigned wid,
 	      unsigned part, unsigned off);
@@ -2315,6 +2366,8 @@ class NetAssign_ {
       ivl_select_type_t select_type() const;
 
       void set_word(NetExpr*);
+	// Set a part select expression for the l-value vector. Note
+	// that the expression calculates a CANONICAL bit address.
       void set_part(NetExpr* loff, unsigned wid,
                     ivl_select_type_t = IVL_SEL_OTHER);
 

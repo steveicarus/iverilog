@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -51,7 +51,7 @@
  */
 extern YYLTYPE yylloc;
 
-static char* strdupnew(char const *str)
+char* strdupnew(char const *str)
 {
        return str ? strcpy(new char [strlen(str)+1], str) : 0;
 }
@@ -191,7 +191,7 @@ TU [munpf]
 ">>>=" { return K_RSS_EQ; }
 "++" { return K_INCR; }
 "--" {return K_DECR; }
-
+"'{" { return K_LP; }
 
   /* Watch out for the tricky case of (*). Cannot parse this as "(*"
      and ")", but since I know that this is really ( * ), replace it
@@ -303,8 +303,19 @@ TU [munpf]
 	    perm_string tmp = lex_strings.make(yylval.text);
 	    map<perm_string,ivl_discipline_t>::iterator cur = disciplines.find(tmp);
 	    if (cur != disciplines.end()) {
+		  delete[]yylval.text;
 		  yylval.discipline = (*cur).second;
 		  rc = DISCIPLINE_IDENTIFIER;
+	    }
+      }
+
+	/* If this identifier names a previously declared type, then
+	   return this as a TYPE_IDENTIFIER instead. */
+      if (rc == IDENTIFIER && gn_system_verilog()) {
+	    if (data_type_t*type = pform_test_type_identifier(yylval.text)) {
+		  delete[]yylval.text;
+		  yylval.data_type = type;
+		  rc = TYPE_IDENTIFIER;
 	    }
       }
 
@@ -366,8 +377,11 @@ TU [munpf]
 		 << "Using SystemVerilog 'N bit vector.  Use at least "
 		 << "-g2005-sv to remove this warning." << endl;
       }
+      generation_t generation_save = generation_flag;
+      generation_flag = GN_VER2005_SV;
       yylval.number = make_unsized_binary(yytext);
-      return BASED_NUMBER; }
+      generation_flag = generation_save;
+      return UNBASED_NUMBER; }
 
 [0-9][0-9_]* {
       yylval.number = make_unsized_dec(yytext);

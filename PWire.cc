@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,9 +28,9 @@ PWire::PWire(perm_string n,
 	     ivl_variable_type_t dt)
 : name_(n), type_(t), port_type_(pt), data_type_(dt),
   signed_(false), isint_(false),
-  port_msb_(0), port_lsb_(0), port_set_(false),
-  net_msb_(0), net_lsb_(0), net_set_(false), is_scalar_(false),
-  error_cnt_(0), lidx_(0), ridx_(0), enum_type_(0), discipline_(0)
+  port_set_(false), net_set_(false), is_scalar_(false),
+  error_cnt_(0), lidx_(0), ridx_(0), enum_type_(0), struct_type_(0),
+  discipline_(0)
 {
       if (t == NetNet::INTEGER) {
 	    type_ = NetNet::REG;
@@ -148,8 +148,9 @@ bool PWire::get_scalar() const
       return is_scalar_;
 }
 
-void PWire::set_range(PExpr*m, PExpr*l, PWSRType type, bool is_scalar)
+void PWire::set_range_scalar(PWSRType type)
 {
+      is_scalar_ = true;
       switch (type) {
 	  case SR_PORT:
 	    if (port_set_) {
@@ -157,10 +158,7 @@ void PWire::set_range(PExpr*m, PExpr*l, PWSRType type, bool is_scalar)
 		       << "'' has already been declared a port." << endl;
 		  error_cnt_ += 1;
 	    } else {
-		  port_msb_ = m;
-		  port_lsb_ = l;
 		  port_set_ = true;
-		  is_scalar_ = is_scalar;
 	    }
 	    return;
 
@@ -170,10 +168,7 @@ void PWire::set_range(PExpr*m, PExpr*l, PWSRType type, bool is_scalar)
 		       << "'' has already been declared." << endl;
 		  error_cnt_ += 1;
 	    } else {
-		  net_msb_ = m;
-		  net_lsb_ = l;
 		  net_set_ = true;
-		  is_scalar_ = is_scalar;
 	    }
 	    return;
 
@@ -190,13 +185,58 @@ void PWire::set_range(PExpr*m, PExpr*l, PWSRType type, bool is_scalar)
 		        error_cnt_ += 1;
 		  }
 	    } else {
-		  port_msb_ = m;
-		  port_lsb_ = l;
 		  port_set_ = true;
-		  net_msb_ = m;
-		  net_lsb_ = l;
 		  net_set_ = true;
-		  is_scalar_ = is_scalar;
+	    }
+	    return;
+      }
+}
+
+void PWire::set_range(const list<pform_range_t>&rlist, PWSRType type)
+{
+      switch (type) {
+	  case SR_PORT:
+	    if (port_set_) {
+		  cerr << get_fileline() << ": error: Port ``" << name_
+		       << "'' has already been declared a port." << endl;
+		  error_cnt_ += 1;
+	    } else {
+		  port_ = rlist;
+		  port_set_ = true;
+		  is_scalar_ = false;
+	    }
+	    return;
+
+	  case SR_NET:
+	    if (net_set_) {
+		  cerr << get_fileline() << ": error: Net ``" << name_
+		       << "'' has already been declared." << endl;
+		  error_cnt_ += 1;
+	    } else {
+		  net_ = rlist;
+		  net_set_ = true;
+		  is_scalar_ = false;
+	    }
+	    return;
+
+	  case SR_BOTH:
+	    if (port_set_ || net_set_) {
+		  if (port_set_) {
+		        cerr << get_fileline() << ": error: Port ``" << name_
+		             << "'' has already been declared a port." << endl;
+		        error_cnt_ += 1;
+		  }
+		  if (net_set_) {
+		        cerr << get_fileline() << ": error: Net ``" << name_
+		             << "'' has already been declared." << endl;
+		        error_cnt_ += 1;
+		  }
+	    } else {
+		  port_ = rlist;
+		  port_set_ = true;
+		  net_ = rlist;
+		  net_set_ = true;
+		  is_scalar_ = false;
 	    }
 	    return;
       }
@@ -217,7 +257,15 @@ void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
 void PWire::set_enumeration(enum_type_t*enum_type)
 {
       assert(enum_type_ == 0);
+      assert(struct_type_ == 0);
       enum_type_ = enum_type;
+}
+
+void PWire::set_struct_type(struct_type_t*type)
+{
+      assert(enum_type_ == 0);
+      assert(struct_type_ == 0);
+      struct_type_ = type;
 }
 
 void PWire::set_discipline(ivl_discipline_t d)

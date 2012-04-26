@@ -78,7 +78,7 @@ else
 endif
 
 null.tgt: $O $(TGTDEPLIBS)
-	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
+	$(CC) @shared@ $(LDFLAGS) -o $@ $O $(TGTLDFLAGS)
 
 install: all installdirs $(libdir)/ivl$(suffix)/null.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/null.conf $(libdir)/ivl$(suffix)/null-s.conf
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -139,6 +139,11 @@ std::ostream& operator << (std::ostream&out, ivl_dis_domain_t dom)
 	    break;
       }
       return out;
+}
+
+void data_type_t::pform_dump(ostream&out, unsigned indent) const
+{
+      out << setw(indent) << "" << typeid(*this).name() << endl;
 }
 
 static void dump_attributes_map(ostream&out,
@@ -331,6 +336,9 @@ void PWire::dump(ostream&out, unsigned ind) const
 	  case NetNet::PINOUT:
 	    out << " inout";
 	    break;
+	  case NetNet::PREF:
+	    out << " ref";
+	    break;
 	  case NetNet::NOT_A_PORT:
 	    break;
       }
@@ -346,17 +354,23 @@ void PWire::dump(ostream&out, unsigned ind) const
       }
 
       if (port_set_) {
-	    if (port_msb_ == 0) {
+	    if (port_.empty()) {
 		  out << " port<scalar>";
 	    } else {
-		  out << " port[" << *port_msb_ << ":" << *port_lsb_ << "]";
+		  out << " port";
+		  for (list<pform_range_t>::const_iterator cur = port_.begin()
+			     ; cur != port_.end() ; ++cur)
+			out << "[" << *cur->first << ":" << *cur->second << "]";
 	    }
       }
       if (net_set_) {
-	    if (net_msb_ == 0) {
+	    if (net_.empty()) {
 		  out << " net<scalar>";
 	    } else {
-		  out << " net[" << *net_msb_ << ":" << *net_lsb_ << "]";
+		  out << " net";
+		  for (list<pform_range_t>::const_iterator cur = net_.begin()
+			     ; cur != net_.end() ; ++cur)
+			out << "[" << *cur->first << ":" << *cur->second << "]";
 	    }
       }
 
@@ -563,7 +577,10 @@ void PAssign::dump(ostream&out, unsigned ind) const
       if (delay_) out << "#" << *delay_ << " ";
       if (count_) out << "repeat(" << *count_ << ") ";
       if (event_) out << *event_ << " ";
-      out << *rval() << ";" << "  /* " << get_fileline() << " */" << endl;
+      PExpr*rexpr = rval();
+      if (rexpr) out << *rval() << ";";
+      else out << "<no rval>;";
+      out << "  /* " << get_fileline() << " */" << endl;
 }
 
 void PAssignNB::dump(ostream&out, unsigned ind) const
@@ -763,8 +780,8 @@ void PForever::dump(ostream&out, unsigned ind) const
 void PForStatement::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "for (" << *name1_ << " = " << *expr1_
-	  << "; " << *cond_ << "; " << *name2_ << " = " << *expr2_ <<
-	    ")" << endl;
+	  << "; " << *cond_ << "; <for_step>)" << endl;
+      step_->dump(out, ind+6);
       statement_->dump(out, ind+3);
 }
 
@@ -798,7 +815,13 @@ void PFunction::dump(ostream&out, unsigned ind) const
 	    out << "int unsigned ";
 	    break;
 	  case PTF_ATOM2_S:
-	    cout << "int signed ";
+	    out << "int signed ";
+	    break;
+	  case PTF_STRING:
+	    out << "string ";
+	    break;
+	  case PTF_VOID:
+	    out << "void ";
 	    break;
       }
 
@@ -849,6 +872,10 @@ void PTask::dump(ostream&out, unsigned ind) const
       out << pscope_name() << ";" << endl;
       if (ports_)
 	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
+		  if ((*ports_)[idx] == 0) {
+			out << setw(ind) << "" << "ERROR PORT" << endl;
+			continue;
+		  }
 		  out << setw(ind) << "";
 		  switch ((*ports_)[idx]->get_port_type()) {
 		      case NetNet::PINPUT:
@@ -859,6 +886,12 @@ void PTask::dump(ostream&out, unsigned ind) const
 			break;
 		      case NetNet::PINOUT:
 			out << "inout ";
+			break;
+		      case NetNet::PIMPLICIT:
+			out << "PIMPLICIT";
+			break;
+		      case NetNet::NOT_A_PORT:
+			out << "NOT_A_PORT";
 			break;
 		      default:
 			assert(0);
@@ -1050,6 +1083,15 @@ void PGenerate::dump(ostream&out, unsigned indent) const
       }
 }
 
+void LexicalScope::dump_typedefs_(ostream&out, unsigned indent) const
+{
+      typedef map<perm_string,data_type_t*>::const_iterator iter_t;
+      for (iter_t cur = typedefs.begin() ; cur != typedefs.end() ; ++ cur) {
+	    out << setw(indent) << "" << "typedef of " << cur->first << ":" << endl;
+	    cur->second->pform_dump(out, indent+4);
+      }
+}
+
 void LexicalScope::dump_parameters_(ostream&out, unsigned indent) const
 {
       typedef map<perm_string,param_expr_t>::const_iterator parm_iter_t;
@@ -1188,6 +1230,8 @@ void Module::dump(ostream&out) const
 
 	    out << ")" << endl;
       }
+
+      dump_typedefs_(out, 4);
 
       dump_parameters_(out, 4);
 

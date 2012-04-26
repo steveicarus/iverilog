@@ -77,7 +77,7 @@ else
 endif
 
 pal.tgt: $O $(TGTDEPLIBS)
-	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS) $(LDFLAGS) -lipal
+	$(CC) @shared@ $(LDFLAGS)-o $@ $O $(TGTLDFLAGS) $(LDFLAGS) -lipal
 
 install: all installdirs $(libdir)/ivl/pal.tgt
 

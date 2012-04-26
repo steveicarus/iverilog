@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,77 +25,57 @@
 # include  <cassert>
 # include  "ivl_alloc.h"
 
-static int named_event_get(int code, vpiHandle ref)
+inline __vpiNamedEvent::__vpiNamedEvent(__vpiScope*sc, const char*nam)
 {
-      assert((ref->vpi_type->type_code==vpiNamedEvent));
+      scope_ = sc;
+      name_ = vpip_name_string(nam);
+      callbacks_ = 0;
+}
 
-      struct __vpiNamedEvent*obj = (struct __vpiNamedEvent*)ref;
+int __vpiNamedEvent::get_type_code(void) const
+{ return vpiNamedEvent; }
 
+int __vpiNamedEvent::vpi_get(int code)
+{
       switch (code) {
 
 	  case vpiAutomatic:
-	    return (int) obj->scope->is_automatic;
+	    return (int) scope_->is_automatic;
       }
 
       return 0;
 }
 
-static char* named_event_get_str(int code, vpiHandle ref)
+char* __vpiNamedEvent::vpi_get_str(int code)
 {
-      assert((ref->vpi_type->type_code==vpiNamedEvent));
-
-      struct __vpiNamedEvent*obj = (struct __vpiNamedEvent*)ref;
-
       if (code == vpiFile) {  // Not implemented for now!
 	    return simple_set_rbuf_str(file_names[0]);
       }
-      return generic_get_str(code, &obj->scope->base, obj->name, NULL);
+      return generic_get_str(code, scope_, name_, NULL);
 }
 
-static vpiHandle named_event_get_handle(int code, vpiHandle ref)
+
+vpiHandle __vpiNamedEvent::vpi_handle(int code)
 {
-      assert((ref->vpi_type->type_code==vpiNamedEvent));
-
-      struct __vpiNamedEvent*obj = (struct __vpiNamedEvent*)ref;
-
       switch (code) {
 	  case vpiScope:
-	    return &obj->scope->base;
+	    return scope_;
 
 	  case vpiModule:
-	    return vpip_module(obj->scope);
+	    return vpip_module(scope_);
       }
 
       return 0;
 }
 
-static const struct __vpirt vpip_named_event_rt = {
-      vpiNamedEvent,
-
-      named_event_get,
-      named_event_get_str,
-      0,
-      0,
-      named_event_get_handle,
-      0,
-      0,
-      0,
-      0,
-      0
-};
 
 vpiHandle vpip_make_named_event(const char*name, vvp_net_t*funct)
 {
-      struct __vpiNamedEvent*obj = (struct __vpiNamedEvent*)
-	    malloc(sizeof(struct __vpiNamedEvent));
+      __vpiNamedEvent*obj = new __vpiNamedEvent(vpip_peek_current_scope(), name);
 
-      obj->base.vpi_type = &vpip_named_event_rt;
-      obj->name = vpip_name_string(name);
-      obj->scope = vpip_peek_current_scope();
       obj->funct = funct;
-      obj->callbacks = 0;
 
-      return &obj->base;
+      return obj;
 }
 
 /*
@@ -111,13 +91,9 @@ vpiHandle vpip_make_named_event(const char*name, vvp_net_t*funct)
  * We can not use vpi_free_object() here since it does not really
  * delete the callback.
  */
-void vpip_run_named_event_callbacks(vpiHandle ref)
+void __vpiNamedEvent::run_vpi_callbacks()
 {
-      assert((ref->vpi_type->type_code==vpiNamedEvent));
-
-      struct __vpiNamedEvent*obj = (struct __vpiNamedEvent*)ref;
-
-      struct __vpiCallback*next = obj->callbacks;
+      struct __vpiCallback*next = callbacks_;
       struct __vpiCallback*prev = 0;
       while (next) {
 	    struct __vpiCallback*cur = next;
@@ -128,7 +104,7 @@ void vpip_run_named_event_callbacks(vpiHandle ref)
 		  prev = cur;
 
 	    } else if (prev == 0) {
-		  obj->callbacks = next;
+		  callbacks_ = next;
 		  cur->next = 0;
 		  delete cur;
 

@@ -58,8 +58,9 @@ clean:
 
 distclean: clean
 	rm -f Makefile config.log
+	rm -f stamp-pcb_config-h pcb_config.h
 
-cppcheck: $(O:.o=.c)
+cppcheck: $(O:.o=.cc)
 	cppcheck --enable=all -f $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status
@@ -68,9 +69,10 @@ Makefile: $(srcdir)/Makefile.in ../config.status
 dep:
 	mkdir dep
 
-%.o: %.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
-	mv $*.d dep
+stamp-pcb_config-h: $(srcdir)/pcb_config.h.in ../config.status
+	@rm -f $@
+	cd ..; ./config.status --header=tgt-pcb/pcb_config.h
+pcb_config.h: stamp-pcb_config-h
 
 %.o: %.cc
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
@@ -92,7 +94,7 @@ else
 endif
 
 pcb.tgt: $O $(TGTDEPLIBS)
-	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
+	$(CXX) @shared@ -o $@ $O $(TGTLDFLAGS)
 
 install: all installdirs $(libdir)/ivl$(suffix)/pcb.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/pcb.conf $(libdir)/ivl$(suffix)/pcb-s.conf
 

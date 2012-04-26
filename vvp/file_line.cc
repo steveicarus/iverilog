@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,8 +19,12 @@
 # include "compile.h"
 # include "vpi_priv.h"
 
-struct __vpiFileLine {
-      struct __vpiHandle base;
+struct __vpiFileLine : public __vpiHandle {
+      __vpiFileLine();
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+
       const char *description;
       unsigned file_idx;
       unsigned lineno;
@@ -31,9 +35,8 @@ bool code_is_instrumented = false;
 
 static int file_line_get(int type, vpiHandle ref)
 {
-      struct __vpiFileLine*rfp = (struct __vpiFileLine*)ref;
-
-      assert(ref->vpi_type->type_code == _vpiFileLine);
+      struct __vpiFileLine*rfp = dynamic_cast<__vpiFileLine*>(ref);
+      assert(rfp);
 
       switch (type) {
 	case vpiLineNo:
@@ -45,9 +48,8 @@ static int file_line_get(int type, vpiHandle ref)
 
 static char *file_line_get_str(int type, vpiHandle ref)
 {
-      struct __vpiFileLine*rfp = (struct __vpiFileLine*)ref;
-
-      assert(ref->vpi_type->type_code == _vpiFileLine);
+      struct __vpiFileLine*rfp = dynamic_cast<__vpiFileLine*>(ref);
+      assert(rfp);
 
       switch (type) {
 	case vpiFile:
@@ -61,19 +63,18 @@ static char *file_line_get_str(int type, vpiHandle ref)
       }
 }
 
-static const struct __vpirt vpip_file_line_rt = {
-       _vpiFileLine,
-       file_line_get,
-       file_line_get_str,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0,
-       0
-};
+inline __vpiFileLine::__vpiFileLine()
+{ }
+
+int __vpiFileLine::get_type_code(void) const
+{ return _vpiFileLine; }
+
+int __vpiFileLine::vpi_get(int code)
+{ return file_line_get(code, this); }
+
+char* __vpiFileLine::vpi_get_str(int code)
+{ return file_line_get_str(code, this); }
+
 
 vpiHandle vpip_build_file_line(char*description, long file_idx, long lineno)
 {
@@ -83,11 +84,10 @@ vpiHandle vpip_build_file_line(char*description, long file_idx, long lineno)
       show_file_line = true;
       code_is_instrumented = true;
 
-      obj->base.vpi_type = &vpip_file_line_rt;
       if (description) obj->description = vpip_name_string(description);
       else obj->description = 0;
       obj->file_idx = (unsigned) file_idx;
       obj->lineno = (unsigned) lineno;
 
-      return &obj->base;
+      return obj;
 }

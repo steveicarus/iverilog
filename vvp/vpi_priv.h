@@ -1,7 +1,7 @@
 #ifndef __vpi_priv_H
 #define __vpi_priv_H
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -85,53 +85,35 @@ extern vpi_mode_t vpi_mode_flag;
 
 /*
  * This structure is the very base of a vpiHandle. Every handle
- * structure starts with this structure, so that the library can
+ * structure is derived from this class so that the library can
  * internally pass the derived types as pointers to one of these.
  */
-struct __vpiHandle {
-      const struct __vpirt *vpi_type;
+class __vpiHandle {
+    public:
+      inline __vpiHandle() { }
+	// The destructor is virtual so that dynamic types will work.
+      virtual ~__vpiHandle();
+
+      virtual int get_type_code(void) const =0;
+      virtual int vpi_get(int code);
+      virtual char* vpi_get_str(int code);
+
+      virtual void vpi_get_value(p_vpi_value val);
+      virtual vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      virtual vpiHandle vpi_handle(int code);
+      virtual vpiHandle vpi_iterate(int code);
+      virtual vpiHandle vpi_index(int idx);
+      virtual void vpi_get_delays(p_vpi_delay del);
+      virtual void vpi_put_delays(p_vpi_delay del);
+
+	// Objects may have destroyer functions of their own. If so,
+	// then this virtual method will return a POINTER to that
+	// function. The pointer is used to "delete" the object, which
+	// is why the function itself cannot be a method.
+      typedef int (*free_object_fun_t)(vpiHandle);
+      virtual free_object_fun_t free_object_fun(void);
 };
 
-/*
- * Objects with this structure are used to represent a type of
- * vpiHandle. A specific object becomes of this type by holding a
- * pointer to an instance of this structure.
- */
-struct __vpirt {
-      int type_code;
-
-	/* These methods extract information from the handle. */
-      int   (*vpi_get_)(int, vpiHandle);
-      char* (*vpi_get_str_)(int, vpiHandle);
-      void  (*vpi_get_value_)(vpiHandle, p_vpi_value);
-      vpiHandle (*vpi_put_value_)(vpiHandle, p_vpi_value, int flags);
-
-	/* These methods follow references. */
-      vpiHandle (*handle_)(int, vpiHandle);
-      vpiHandle (*iterate_)(int, vpiHandle);
-      vpiHandle (*index_)(vpiHandle, int);
-
-	/* This implements the vpi_free_object method. */
-      int (*vpi_free_object_)(vpiHandle);
-
-       /*
-	 These two methods are used to read/write delay
-	 values from/into modpath records
-       */
-      void  (*vpi_get_delays_)(vpiHandle, p_vpi_delay);
-      void  (*vpi_put_delays_)(vpiHandle, p_vpi_delay);
-};
-
-/*
- * In general a vpi object is a structure that contains the member
- * "base" that is a __vpiHandle object. This template can convert any
- * of those structures into a vpiHandle object.
- */
-template <class T> vpiHandle vpi_handle(T obj)
-{ return &obj->base; }
-
-template <class T> char*vpip_get_str(int code, T obj)
-{ return obj->base.vpi_type->vpi_get_str_(code, vpi_handle(obj)); }
 
 /*
  * The vpiHandle for an iterator has this structure. The definition of
@@ -144,8 +126,11 @@ template <class T> char*vpip_get_str(int code, T obj)
  * The free_args_flag member is true if when this iterator object is
  * released it must also free the args array.
  */
-struct __vpiIterator {
-      struct __vpiHandle base;
+struct __vpiIterator : public __vpiHandle {
+      __vpiIterator();
+      int get_type_code(void) const;
+      free_object_fun_t free_object_fun(void);
+
       vpiHandle *args;
       unsigned  nargs;
       unsigned  next;
@@ -157,42 +142,76 @@ extern vpiHandle vpip_make_iterator(unsigned nargs, vpiHandle*args,
 
 /*
  * This represents callback handles. There are some private types that
- * are defined and used in vpi_callback.cc.
+ * are defined and used in vpi_callback.cc. The __vpiCallback are
+ * always used in association with vvp_vpi_callback objects.
  */
-struct __vpiCallback {
-      struct __vpiHandle base;
-
-	// user supplied callback data
-      struct t_cb_data cb_data;
-      struct t_vpi_time cb_time;
-      struct t_vpi_value cb_value;
-
-	// scheduled event
-      struct sync_cb* cb_sync;
-
-	// The callback holder may use this for various purposes.
-      long extra_data;
+struct __vpiCallback : public __vpiHandle {
+      __vpiCallback();
+      ~__vpiCallback();
+      int get_type_code(void) const;
 
 	// Used for listing callbacks.
       struct __vpiCallback*next;
+
+	// user supplied callback data
+      struct t_cb_data cb_data;
 };
 
-extern struct __vpiCallback* new_vpi_callback();
-extern void delete_vpi_callback(struct __vpiCallback* ref);
+class value_callback : public __vpiCallback {
+    public:
+      explicit value_callback(p_cb_data data);
+	// Return true if the callback really is ready to be called
+      virtual bool test_value_callback_ready(void);
+
+    public:
+	// user supplied callback data
+      struct t_vpi_time cb_time;
+      struct t_vpi_value cb_value;
+};
+
 extern void callback_execute(struct __vpiCallback*cur);
 
-struct __vpiSystemTime {
-      struct __vpiHandle base;
-      struct __vpiScope *scope;
+struct __vpiSystemTime : public __vpiHandle {
+      __vpiSystemTime();
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      char*vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_handle(int code);
+
+      struct __vpiScope*scope;
 };
+
+struct __vpiScopedTime : public __vpiSystemTime {
+      __vpiScopedTime();
+      char*vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+};
+struct __vpiScopedSTime : public __vpiSystemTime {
+      __vpiScopedSTime();
+      int vpi_get(int code);
+      char*vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+};
+struct __vpiScopedRealtime : public __vpiSystemTime {
+      __vpiScopedRealtime();
+      int vpi_get(int code);
+      char*vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+};
+
 
 /*
  * Scopes are created by .scope statements in the source. These
  * objects hold the items and properties that are knowingly bound to a
  * scope.
  */
-struct __vpiScope {
-      struct __vpiHandle base;
+struct __vpiScope : public __vpiHandle {
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      vpiHandle vpi_handle(int code);
+      vpiHandle vpi_iterate(int code);
+
       struct __vpiScope *scope;
 	/* The scope has a name. */
       const char*name;
@@ -204,11 +223,11 @@ struct __vpiScope {
       bool is_automatic;
       bool is_cell;
 	/* The scope has a system time of its own. */
-      struct __vpiSystemTime scoped_time;
-      struct __vpiSystemTime scoped_stime;
-      struct __vpiSystemTime scoped_realtime;
+      struct __vpiScopedTime scoped_time;
+      struct __vpiScopedSTime scoped_stime;
+      struct __vpiScopedRealtime scoped_realtime;
 	/* Keep an array of internal scope items. */
-      struct __vpiHandle**intern;
+      class __vpiHandle**intern;
       unsigned nintern;
         /* Keep an array of items to be automatically allocated */
       struct automatic_hooks_s**item;
@@ -221,6 +240,9 @@ struct __vpiScope {
       std::set<vthread_t> threads;
       signed int time_units :8;
       signed int time_precision :8;
+
+    protected:
+      inline __vpiScope() { }
 };
 
 extern struct __vpiScope* vpip_peek_current_scope(void);
@@ -230,7 +252,7 @@ extern struct __vpiScope* vpip_peek_context_scope(void);
 extern unsigned vpip_add_item_to_context(automatic_hooks_s*item,
                                          struct __vpiScope*scope);
 extern vpiHandle vpip_make_root_iterator(void);
-extern void vpip_make_root_iterator(struct __vpiHandle**&table,
+extern void vpip_make_root_iterator(class __vpiHandle**&table,
 				    unsigned&ntable);
 
 /*
@@ -238,8 +260,14 @@ extern void vpip_make_root_iterator(struct __vpiHandle**&table,
  * distinguished by the vpiType code. They also have a parent scope,
  * a declared name and declaration indices.
  */
-struct __vpiSignal {
-      struct __vpiHandle base;
+struct __vpiSignal : public __vpiHandle {
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code);
+      vpiHandle vpi_iterate(int code);
+
 #ifdef CHECK_WITH_VALGRIND
       struct __vpiSignal *pool;
 #endif
@@ -258,6 +286,15 @@ struct __vpiSignal {
       unsigned is_netarray  : 1; // This is word of a net array
 	/* The represented value is here. */
       vvp_net_t*node;
+
+    public:
+      static void*operator new(std::size_t size);
+      static void operator delete(void*); // not implemented
+    protected:
+      inline __vpiSignal() { }
+    private: // Not implemented
+      static void*operator new[] (std::size_t size);
+      static void operator delete[](void*);
 };
 extern unsigned vpip_size(__vpiSignal *sig);
 extern struct __vpiScope* vpip_scope(__vpiSignal*sig);
@@ -275,8 +312,15 @@ extern vpiHandle vpip_make_net4(const char*name, int msb, int lsb,
  * This is used by system calls to represent a bit/part select of
  * a simple variable or constant array word.
  */
-struct __vpiPV {
-      struct __vpiHandle base;
+struct __vpiPV : public __vpiHandle {
+      __vpiPV();
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code);
+
       vpiHandle parent;
       vvp_net_t*net;
       vpiHandle sbase;
@@ -290,26 +334,30 @@ extern vpiHandle vpip_make_PV(char*name, vpiHandle handle, int width);
 extern vpiHandle vpip_make_PV(char*name, int tbase, int twid, char*is_signed,
                               int width);
 
-extern struct __vpiPV* vpip_PV_from_handle(vpiHandle obj);
-extern void vpip_part_select_value_change(struct __vpiCallback*cbh, vpiHandle obj);
+struct __vpiModPathTerm : public __vpiHandle {
+      __vpiModPathTerm();
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      vpiHandle vpi_handle(int code);
 
-
-/*
- * This function safely converts a vpiHandle back to a
- * __vpiSignal. Return a nil if the type is not appropriate.
- */
-extern __vpiSignal* vpip_signal_from_handle(vpiHandle obj);
-
-
-struct __vpiModPathTerm {
-      struct __vpiHandle base;
       vpiHandle expr;
 	/* The value returned by vpi_get(vpiEdge, ...); */
       int edge;
 };
 
-struct __vpiModPathSrc {
-      struct __vpiHandle   base;
+struct __vpiModPathSrc : public __vpiHandle {
+      __vpiModPathSrc();
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code);
+      vpiHandle vpi_iterate(int code);
+      vpiHandle vpi_index(int idx);
+      void vpi_get_delays(p_vpi_delay del);
+      void vpi_put_delays(p_vpi_delay del);
+      free_object_fun_t free_object_fun(void);
+
       struct __vpiModPath *dest;
       int   type;
 
@@ -340,9 +388,6 @@ struct __vpiModPath {
       vvp_net_t *input_net  ;
 };
 
-extern struct __vpiModPathTerm* vpip_modpath_term_from_handle(vpiHandle ref);
-extern struct __vpiModPathSrc* vpip_modpath_src_from_handle(vpiHandle ref);
-
 
 /*
  * The Function is used to create the vpiHandle
@@ -360,22 +405,35 @@ extern struct __vpiModPath* vpip_make_modpath(vvp_net_t *net) ;
  * passed in will be saved, so the caller must allocate it (or not
  * free it) after it is handed to this function.
  */
-struct __vpiNamedEvent {
-      struct __vpiHandle base;
-	/* base name of the event object */
-      const char*name;
-	/* Parent scope of this object. */
-      struct __vpiScope*scope;
+class __vpiNamedEvent : public __vpiHandle {
+
+    public:
+      __vpiNamedEvent(__vpiScope*scope, const char*name);
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      vpiHandle vpi_handle(int code);
+
+      inline void add_vpi_callback(__vpiCallback*cb)
+      { cb->next = callbacks_;
+	callbacks_ = cb;
+      }
+
+      void run_vpi_callbacks(void);
+
 	/* The functor, used for %set operations. */
       vvp_net_t*funct;
+
+    private:
+	/* base name of the event object */
+      const char*name_;
+	/* Parent scope of this object. */
+      struct __vpiScope*scope_;
 	/* List of callbacks interested in this event. */
-      struct __vpiCallback*callbacks;
+      __vpiCallback*callbacks_;
 };
 
 extern vpiHandle vpip_make_named_event(const char*name, vvp_net_t*f);
-extern void vpip_run_named_event_callbacks(vpiHandle ref);
-extern void vpip_real_value_change(struct __vpiCallback*cbh,
-				   vpiHandle ref);
 
 /*
  * Memory is an array of bits that is accessible in N-bit chunks, with
@@ -389,8 +447,16 @@ extern bool is_net_array(vpiHandle obj);
 /*
  * These are the various variable types.
  */
-struct __vpiRealVar {
-      struct __vpiHandle base;
+struct __vpiRealVar : public __vpiHandle {
+      __vpiRealVar();
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code);
+      vpiHandle vpi_iterate(int code);
+
       union { // The scope or parent array that contains me.
 	    vpiHandle parent;
 	    struct __vpiScope* scope;
@@ -406,7 +472,7 @@ struct __vpiRealVar {
 
 extern struct __vpiScope* vpip_scope(__vpiRealVar*sig);
 extern vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net);
-extern struct __vpiRealVar* vpip_realvar_from_handle(vpiHandle obj);
+
 
 /*
  * When a loaded VPI module announces a system task/function, one
@@ -426,8 +492,10 @@ extern struct __vpiRealVar* vpip_realvar_from_handle(vpiHandle obj);
  * additional part is the vbit/vwid that is used by the put of the
  * system function call to place the values in the vthread bit space.
  */
-struct __vpiUserSystf {
-      struct __vpiHandle base;
+struct __vpiUserSystf : public __vpiHandle {
+      __vpiUserSystf();
+      int get_type_code(void) const;
+
       s_vpi_systf_data info;
       bool is_user_defn;
 };
@@ -437,8 +505,8 @@ extern vpiHandle vpip_make_systf_iterator(void);
 extern struct __vpiUserSystf* vpip_find_systf(const char*name);
 
 
-struct __vpiSysTaskCall {
-      struct __vpiHandle base;
+struct __vpiSysTaskCall : public __vpiHandle {
+
       struct __vpiScope* scope;
       struct __vpiUserSystf*defn;
       unsigned nargs;
@@ -452,30 +520,31 @@ struct __vpiSysTaskCall {
       unsigned file_idx;
       unsigned lineno;
       bool put_value;
+    protected:
+      inline __vpiSysTaskCall() { }
 };
 
 extern struct __vpiSysTaskCall*vpip_cur_task;
 
 /*
- * These are implemented in vpi_const.cc. These are vpiHandles for
- * constants.
- *
  * The persistent flag to vpip_make_string_const causes the created
  * handle to be persistent. This is necessary for cases where the
  * string handle may be reused, which is the normal case.
+ *
+ * When constructing with a string, the class takes possession of the
+ * text value string, and will delete it in the constructor.
  */
-struct __vpiStringConst {
-      struct __vpiHandle base;
-      char*value;
-      size_t value_len;
-};
 
 vpiHandle vpip_make_string_const(char*text, bool persistent =true);
 vpiHandle vpip_make_string_param(char*name, char*value,
                                  long file_idx, long lineno);
 
-struct __vpiBinaryConst {
-      struct __vpiHandle base;
+struct __vpiBinaryConst : public __vpiHandle {
+      __vpiBinaryConst();
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+
       vvp_vector4_t bits;
 	/* TRUE if this constant is signed. */
       int signed_flag :1;
@@ -488,16 +557,22 @@ vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
 				 bool signed_flag,
 				 long file_idx, long lineno);
 
-struct __vpiDecConst {
-      struct __vpiHandle base;
+struct __vpiDecConst : public __vpiHandle {
+      __vpiDecConst(int val =0);
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+
       int value;
 };
 
-vpiHandle vpip_make_dec_const(int value);
-vpiHandle vpip_make_dec_const(struct __vpiDecConst*obj, int value);
-
-struct __vpiRealConst {
-      struct __vpiHandle base;
+class __vpiRealConst : public __vpiHandle {
+    public:
+      __vpiRealConst(double);
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+    public:
       double value;
 };
 
@@ -519,6 +594,7 @@ vpiHandle vpip_make_vthr_A(char*label, char*symbol);
 vpiHandle vpip_make_vthr_A(char*label, unsigned tbase, unsigned twid,
                            char*is_signed);
 vpiHandle vpip_make_vthr_A(char*label, vpiHandle handle);
+vpiHandle vpip_make_vthr_APV(char*label, unsigned index, unsigned bit, unsigned wid);
 
 /*
  * This function is called before any compilation to load VPI

@@ -107,12 +107,13 @@ O = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o \
     elab_scope.o elab_sig.o elab_sig_analog.o emit.o eval.o eval_attrib.o \
     eval_tree.o expr_synth.o functor.o lexor.o lexor_keyword.o link_const.o \
     load_module.o netlist.o netmisc.o net_analog.o net_assign.o net_design.o \
-    netenum.o net_event.o net_expr.o net_func.o net_link.o net_modulo.o \
+    netenum.o netstruct.o net_event.o net_expr.o net_func.o net_link.o net_modulo.o \
     net_nex_input.o net_nex_output.o net_proc.o net_scope.o net_tran.o \
     net_udp.o pad_to_width.o parse.o parse_misc.o pform.o pform_analog.o \
-    pform_disciplines.o pform_dump.o pform_types.o \
+    pform_disciplines.o pform_dump.o pform_pclass.o pform_struct_type.o \
+    pform_types.o \
     symbol_search.o sync.o sys_funcs.o verinum.o verireal.o target.o \
-    Attrib.o HName.o Module.o PDelays.o PEvent.o PExpr.o PGate.o \
+    Attrib.o HName.o Module.o PClass.o PDelays.o PEvent.o PExpr.o PGate.o \
     PGenerate.o PScope.o PSpec.o PTask.o PUdp.o PFunction.o PWire.o \
     Statement.o AStatement.o $M $(FF) $(TT)
 
@@ -150,8 +151,8 @@ endif
 clean:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) $@ && ) true
 	rm -f *.o parse.cc parse.h lexor.cc
-	rm -f ivl.exp iverilog-vpi.man iverilog-vpi.pdf iverilog-vpi.ps parse.output
-	rm -f syn-rules.output dosify.exe ivl@EXEEXT@ check.vvp
+	rm -f ivl.exp iverilog-vpi.man iverilog-vpi.pdf iverilog-vpi.ps
+	rm -f parse.output syn-rules.output dosify.exe ivl@EXEEXT@ check.vvp
 	rm -f lexor_keyword.cc libivl.a libvpi.a iverilog-vpi syn-rules.cc
 	rm -rf dep
 	rm -f version.exe
@@ -244,15 +245,17 @@ lexor.o: lexor.cc parse.h
 
 parse.o: parse.cc
 
-parse.cc parse.h: $(srcdir)/parse.y
-	$(YACC) --verbose -t -p VL -d -o parse.cc $(srcdir)/parse.y
-	mv parse.cc.h parse.h 2>/dev/null || mv parse.hh parse.h
+# Build this in two steps to avoid parallel build issues (see pr3462585)
+parse.cc: $(srcdir)/parse.y
+	$(YACC) --verbose -t -p VL -d -o $@ $<
+parse.h: parse.cc
+	mv parse.cc.h $@ 2>/dev/null || mv parse.hh $@
 
 syn-rules.cc: $(srcdir)/syn-rules.y
-	$(YACC) --verbose -p syn_ -o syn-rules.cc $(srcdir)/syn-rules.y
+	$(YACC) --verbose -t -p syn_ -o $@ $<
 
 lexor.cc: $(srcdir)/lexor.lex
-	$(LEX) -s -olexor.cc $(srcdir)/lexor.lex
+	$(LEX) -s -t $< > $@
 
 lexor_keyword.o: lexor_keyword.cc parse.h
 

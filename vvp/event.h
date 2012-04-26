@@ -1,7 +1,7 @@
 #ifndef __event_H
 #define __event_H
 /*
- * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,13 +40,13 @@ class evctl {
 class evctl_real : public evctl {
 
     public:
-      explicit evctl_real(struct __vpiHandle*handle, double value,
+      explicit evctl_real(class __vpiHandle*handle, double value,
                           unsigned long ecount);
       virtual ~evctl_real() {}
       void run_run();
 
     private:
-      __vpiHandle*handle_;
+      class __vpiHandle*handle_;
       double value_;
 };
 
@@ -95,7 +95,7 @@ class evctl_array_r : public evctl {
       double value_;
 };
 
-extern void schedule_evctl(struct __vpiHandle*handle, double value,
+extern void schedule_evctl(class __vpiHandle*handle, double value,
                            vvp_net_t*event, unsigned long ecount);
 
 extern void schedule_evctl(vvp_net_ptr_t ptr, const vvp_vector4_t&value,
@@ -357,11 +357,11 @@ class vvp_fun_event_or_aa : public vvp_fun_event_or, public automatic_hooks_s {
 class vvp_named_event : public vvp_net_fun_t, public waitable_hooks_s {
 
     public:
-      explicit vvp_named_event(struct __vpiHandle*eh);
+      explicit vvp_named_event(class __vpiHandle*eh);
       ~vvp_named_event();
 
     protected:
-      struct __vpiHandle*handle_;
+      class __vpiHandle*handle_;
 };
 
 /*
@@ -370,7 +370,7 @@ class vvp_named_event : public vvp_net_fun_t, public waitable_hooks_s {
 class vvp_named_event_sa : public vvp_named_event {
 
     public:
-      explicit vvp_named_event_sa(struct __vpiHandle*eh);
+      explicit vvp_named_event_sa(class __vpiHandle*eh);
       ~vvp_named_event_sa();
 
       vthread_t add_waiting_thread(vthread_t thread);
@@ -388,7 +388,7 @@ class vvp_named_event_sa : public vvp_named_event {
 class vvp_named_event_aa : public vvp_named_event, public automatic_hooks_s {
 
     public:
-      explicit vvp_named_event_aa(struct __vpiHandle*eh);
+      explicit vvp_named_event_aa(class __vpiHandle*eh);
       ~vvp_named_event_aa();
 
       void alloc_instance(vvp_context_t context);

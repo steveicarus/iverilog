@@ -23,7 +23,7 @@
 # include  <set>
 # include  <list>
 # include  <map>
-# include  <ivl_target.h>
+# include  "ivl_target.h"
 
 extern int scan_scope(ivl_scope_t scope);
 

@@ -343,18 +343,33 @@ class PEIdent : public PExpr {
 
       bool calculate_up_do_width_(Design*, NetScope*, unsigned long&wid) const;
 
+	// Evaluate the prefix indices. All but the final index in a
+	// chain of indices must be a single value and must evaluate
+	// to constants at compile time. For example:
+	//    [x]          - OK
+	//    [1][2][x]    - OK
+	//    [1][x:y]     - OK
+	//    [2:0][x]     - BAD
+	//    [y][x]       - BAD
+	// Leave the last index for special handling.
+      bool calculate_packed_indices_(Design*des, NetScope*scope, NetNet*net,
+				     std::list<long>&prefix_indices) const;
+
     private:
       NetAssign_*elaborate_lval_net_word_(Design*, NetScope*, NetNet*) const;
       bool elaborate_lval_net_bit_(Design*, NetScope*, NetAssign_*) const;
       bool elaborate_lval_net_part_(Design*, NetScope*, NetAssign_*) const;
       bool elaborate_lval_net_idx_(Design*, NetScope*, NetAssign_*,
                                    index_component_t::ctype_t) const;
+      bool elaborate_lval_net_packed_member_(Design*, NetScope*,
+					     NetAssign_*,
+					     const perm_string&) const;
 
     private:
       NetExpr*elaborate_expr_param_(Design*des,
 				    NetScope*scope,
 				    const NetExpr*par,
-				    NetScope*found,
+				    NetScope*found_in,
 				    const NetExpr*par_msb,
 				    const NetExpr*par_lsb,
 				    unsigned expr_wid,
@@ -362,21 +377,21 @@ class PEIdent : public PExpr {
       NetExpr*elaborate_expr_param_part_(Design*des,
 					 NetScope*scope,
 					 const NetExpr*par,
-					 NetScope*found,
+					 NetScope*found_in,
 					 const NetExpr*par_msb,
 					 const NetExpr*par_lsb,
 				         unsigned expr_wid) const;
       NetExpr*elaborate_expr_param_idx_up_(Design*des,
 					   NetScope*scope,
 					   const NetExpr*par,
-					   NetScope*found,
+					   NetScope*found_in,
 					   const NetExpr*par_msb,
 					   const NetExpr*par_lsb,
                                            bool need_const) const;
       NetExpr*elaborate_expr_param_idx_do_(Design*des,
 					   NetScope*scope,
 					   const NetExpr*par,
-					   NetScope*found,
+					   NetScope*found_in,
 					   const NetExpr*par_msb,
 					   const NetExpr*par_lsb,
                                            bool need_const) const;
@@ -493,6 +508,10 @@ class PEUnary : public PExpr {
 				     unsigned expr_wid,
                                      unsigned flags) const;
       virtual verinum* eval_const(Design*des, NetScope*sc) const;
+
+    public:
+      inline char get_op() const { return op_; }
+      inline PExpr*get_expr() const { return expr_; }
 
     private:
       NetExpr* elaborate_expr_bits_(NetExpr*operand, unsigned expr_wid) const;

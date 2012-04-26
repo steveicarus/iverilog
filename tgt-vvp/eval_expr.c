@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2924,8 +2924,8 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t expr, unsigned wid)
 
 static struct vector_info increment(ivl_expr_t e, unsigned wid, bool pre)
 {
-	ivl_signal_t		s;
-	unsigned		w;
+	ivl_signal_t		s = 0;
+	unsigned		w = 0;
 	struct vector_info	r;
 	struct vector_info	rc;
 
@@ -3000,8 +3000,8 @@ static inline struct vector_info post_increment(ivl_expr_t e, unsigned wid)
 
 static struct vector_info decrement(ivl_expr_t e, unsigned wid, bool pre)
 {
-	ivl_signal_t		s;
-	unsigned		w;
+	ivl_signal_t		s = 0;
+	unsigned		w = 0;
 	struct vector_info	r;
 	struct vector_info	rc;
 

@@ -1,7 +1,7 @@
 #ifndef __LineInfo_H
 #define __LineInfo_H
 /*
- * Copyright (c) 1999-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -40,7 +40,7 @@ class LineInfo {
 
 	// Get a fully formatted file/lineno
       string get_fileline() const;
-	// Set the file/line fro another LineInfo object.
+	// Set the file/line from another LineInfo object.
       void set_line(const LineInfo&that);
 
 	// Access parts of LineInfo data

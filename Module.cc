@@ -28,7 +28,7 @@ list<Module::named_expr_t> Module::user_defparms;
 
 /* n is a permallocated string. */
 Module::Module(perm_string n)
-: PScope(n)
+: PScopeExtra(n)
 {
       library_flag = false;
       is_cell = false;

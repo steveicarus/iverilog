@@ -42,15 +42,15 @@ static bool has_enable(ivl_switch_type_t tt)
       }
 }
 
-NetTran::NetTran(NetScope*scope__, perm_string n, ivl_switch_type_t tt)
-: NetNode(scope__, n, has_enable(tt)? 3 : 2), type_(tt)
+NetTran::NetTran(NetScope*scope__, perm_string n, ivl_switch_type_t tt,
+                 unsigned width)
+: NetNode(scope__, n, has_enable(tt)? 3 : 2), type_(tt), wid_(width)
 {
       pin(0).set_dir(Link::PASSIVE);
       pin(1).set_dir(Link::PASSIVE);
       if (pin_count() == 3) {
 	    pin(2).set_dir(Link::INPUT); // Enable
       }
-      wid_ = 0;
       part_ = 0;
       off_ = 0;
 }

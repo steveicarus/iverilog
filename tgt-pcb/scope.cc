@@ -21,6 +21,7 @@
 # include <map>
 # include <string>
 # include <cassert>
+# include <cstdio>
 
 using namespace std;
 
@@ -85,7 +86,7 @@ int scan_scope(ivl_scope_t scope)
       return 0;
 }
 
-static int child_scan_fun(ivl_scope_t scope, void*)
+extern "C" int child_scan_fun(ivl_scope_t scope, void*)
 {
       int rc = scan_scope(scope);
       return 0;

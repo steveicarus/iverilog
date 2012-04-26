@@ -17,32 +17,52 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "pcb_priv.h"
-# include  <cassert>
-# include  <cstdio>
+# include  "netstruct.h"
+# include  <iostream>
 
 using namespace std;
 
-void show_netlist(const char*net_path)
+netstruct_t::netstruct_t()
+: packed_(false)
 {
-      assert(net_path);
-      FILE*fnet = fopen(net_path, "w");
-      if (fnet == 0) {
-	    perror(net_path);
-	    return;
-      }
+}
 
-      for (list<nexus_data*>::iterator cur = nexus_list.begin()
-		 ; cur != nexus_list.end() ; ++ cur) {
+netstruct_t::~netstruct_t()
+{
+}
 
-	    nexus_data*curp = *cur;
-	    fprintf(fnet, "%s", curp->name.c_str());
-	    for (set<string>::const_iterator cp = curp->pins.begin()
-		       ; cp != curp->pins.end() ; ++ cp) {
-		  fprintf(fnet, " %s", cp->c_str());
+void netstruct_t::packed(bool flag)
+{
+      packed_ = flag;
+}
+
+void netstruct_t::append_member(const netstruct_t::member_t&val)
+{
+      members_.push_back(val);
+}
+
+const netstruct_t::member_t* netstruct_t::packed_member(perm_string name, unsigned long&off) const
+{
+      unsigned long count_off = 0;
+      for (size_t idx = members_.size() ; idx > 0 ; idx -= 1) {
+	    if (members_[idx-1].name == name) {
+		  off = count_off;
+		  return &members_[idx-1];
 	    }
-	    fprintf(fnet, "\n");
+	    count_off += members_[idx-1].width();
       }
 
-      fclose(fnet);
+      return 0;
+}
+
+long netstruct_t::packed_width(void) const
+{
+      if (! packed_)
+	    return -1;
+
+      long res = 0;
+      for (size_t idx = 0 ; idx < members_.size() ; idx += 1)
+	    res += members_[idx].width();
+
+      return res;
 }

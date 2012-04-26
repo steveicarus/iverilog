@@ -425,8 +425,17 @@ const char*draw_input_from_net(ivl_nexus_t nex)
  */
 static void draw_reg_in_scope(ivl_signal_t sig)
 {
-      int msb = ivl_signal_msb(sig);
-      int lsb = ivl_signal_lsb(sig);
+      int msb;
+      int lsb;
+      if (ivl_signal_packed_dimensions(sig) > 1) {
+	      // FIX ME: Improve this when vvp becomes aware of packed
+	      // arrays.
+	    msb = ivl_signal_width(sig) - 1;
+	    lsb = 0;
+      } else {
+	    msb = ivl_signal_msb(sig);
+	    lsb = ivl_signal_lsb(sig);
+      }
 
       const char*datatype_flag = ivl_signal_integer(sig) ? "/i" :
 			       ivl_signal_signed(sig)? "/s" : "";

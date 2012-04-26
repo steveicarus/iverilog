@@ -1,7 +1,7 @@
 #ifndef __codes_H
 #define __codes_H
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -186,7 +186,7 @@ struct vvp_code_s {
 	    vvp_net_t    *net;
 	    vvp_code_t   cptr;
 	    vvp_array_t array;
-	    struct __vpiHandle*handle;
+	    class __vpiHandle*handle;
 	    struct __vpiScope*scope;
       };
 

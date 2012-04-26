@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,6 +34,48 @@ FILE*vpi_trace = 0;
 static s_vpi_vlog_info  vpi_vlog_info;
 static s_vpi_error_info vpip_last_error = { 0, 0, 0, 0, 0, 0, 0 };
 
+__vpiHandle::~__vpiHandle()
+{ }
+
+int __vpiHandle::vpi_get(int)
+{ return vpiUndefined; }
+
+char* __vpiHandle::vpi_get_str(int)
+{ return 0; }
+
+void __vpiHandle::vpi_get_value(p_vpi_value)
+{ }
+
+vpiHandle __vpiHandle::vpi_put_value(p_vpi_value, int)
+{ return 0; }
+
+vpiHandle __vpiHandle::vpi_handle(int)
+{ return 0; }
+
+vpiHandle __vpiHandle::vpi_iterate(int)
+{ return 0; }
+
+vpiHandle __vpiHandle::vpi_index(int)
+{ return 0; }
+
+void __vpiHandle::vpi_get_delays(p_vpi_delay)
+{ }
+
+void __vpiHandle::vpi_put_delays(p_vpi_delay)
+{ }
+
+/*
+ * The default behavior for the vpi_free_object to an object is to
+ * suppress the actual operation. This is because handles are
+ * generally allocated semi-permanently within vvp context. Dynamic
+ * objects will override the free_object_fun method to return an
+ * appropriately effective function.
+ */
+static int suppress_free(vpiHandle)
+{ return 1; }
+__vpiHandle::free_object_fun_t __vpiHandle::free_object_fun(void)
+{ return &suppress_free; }
+
 /*
  * The vpip_string function creates a constant string from the pass
  * input. This constant string is permanently allocated from an
@@ -67,11 +109,11 @@ struct __vpiScope* vpip_scope(__vpiRealVar*sig)
 
 vpiHandle vpip_module(struct __vpiScope*scope)
 {
-      while(scope && scope->base.vpi_type->type_code != vpiModule) {
+      while(scope && scope->get_type_code() != vpiModule) {
 	    scope = scope->scope;
       }
       assert(scope);
-      return &scope->base;
+      return scope;
 }
 
 const char *vpip_string(const char*str)
@@ -165,17 +207,13 @@ PLI_INT32 vpi_compare_objects(vpiHandle obj1, vpiHandle obj2)
  */
 void vpi_get_systf_info(vpiHandle ref, p_vpi_systf_data data)
 {
-      assert((ref->vpi_type->type_code == vpiUserSystf) ||
-             (ref->vpi_type->type_code == vpiSysTaskCall) ||
-             (ref->vpi_type->type_code == vpiSysFuncCall));
-
-      struct __vpiUserSystf* rfp;
-      if (ref->vpi_type->type_code == vpiUserSystf) {
-	    rfp = (struct __vpiUserSystf*)ref;
-      } else {
-	    struct __vpiSysTaskCall*call = (struct __vpiSysTaskCall*)ref;
+      struct __vpiUserSystf* rfp = dynamic_cast<__vpiUserSystf*>(ref);
+      if (rfp == 0) {
+	    struct __vpiSysTaskCall*call = dynamic_cast<__vpiSysTaskCall*>(ref);
+	    assert(call);
 	    rfp = call->defn;
       }
+
 	/* Assert that vpiUserDefn is true! */
       assert(rfp->is_user_defn);
 
@@ -204,10 +242,8 @@ PLI_INT32 vpi_free_object(vpiHandle ref)
       }
 
       assert(ref);
-      if (ref->vpi_type->vpi_free_object_ == 0)
-	    rtn = 1;
-      else
-	    rtn = ref->vpi_type->vpi_free_object_(ref);
+      __vpiHandle::free_object_fun_t fun = ref->free_object_fun();
+      rtn = fun (ref);
 
       if (vpi_trace)
 	    fprintf(vpi_trace, " --> %d\n", rtn);
@@ -327,25 +363,16 @@ PLI_INT32 vpi_get(int property, vpiHandle ref)
       if (property == vpiType) {
 	    if (vpi_trace) {
 		  fprintf(vpi_trace, "vpi_get(vpiType, %p) --> %s\n",
-			  ref, vpi_type_values(ref->vpi_type->type_code));
+			  ref, vpi_type_values(ref->get_type_code()));
 	    }
 
-	    if (ref->vpi_type->type_code == vpiMemory && is_net_array(ref))
+	    if (ref->get_type_code() == vpiMemory && is_net_array(ref))
 		  return vpiNetArray;
 	    else
-		  return ref->vpi_type->type_code;
+		  return ref->get_type_code();
       }
 
-      if (ref->vpi_type->vpi_get_ == 0) {
-	    if (vpi_trace) {
-		  fprintf(vpi_trace, "vpi_get(%s, %p) --X\n",
-			  vpi_property_str(property), ref);
-	    }
-
-	    return vpiUndefined;
-      }
-
-      int res = (ref->vpi_type->vpi_get_)(property, ref);
+      int res = ref->vpi_get(property);
 
       if (vpi_trace) {
 	    fprintf(vpi_trace, "vpi_get(%s, %p) --> %d\n",
@@ -380,30 +407,22 @@ char* vpi_get_str(PLI_INT32 property, vpiHandle ref)
       if (property == vpiType) {
 	    if (vpi_trace) {
 		  fprintf(vpi_trace, "vpi_get(vpiType, %p) --> %s\n",
-			  ref, vpi_type_values(ref->vpi_type->type_code));
+			  ref, vpi_type_values(ref->get_type_code()));
 	    }
 
             PLI_INT32 type;
-	    if (ref->vpi_type->type_code == vpiMemory && is_net_array(ref))
+	    if (ref->get_type_code() == vpiMemory && is_net_array(ref))
 		  type = vpiNetArray;
 	    else
-		  type = ref->vpi_type->type_code;
+		  type = ref->get_type_code();
 	    return (char *)vpi_type_values(type);
       }
 
-      if (ref->vpi_type->vpi_get_str_ == 0) {
-	    if (vpi_trace) {
-		  fprintf(vpi_trace, "vpi_get_str(%s, %p) --X\n",
-			  vpi_property_str(property), ref);
-	    }
-	    return 0;
-      }
-
-      char*res = (char*)(ref->vpi_type->vpi_get_str_)(property, ref);
+      char*res = ref->vpi_get_str(property);
 
       if (vpi_trace) {
 	    fprintf(vpi_trace, "vpi_get_str(%s, %p) --> %s\n",
-		    vpi_property_str(property), ref, res);
+		    vpi_property_str(property), ref, res? res : "<NULL>");
       }
 
       return res;
@@ -418,24 +437,24 @@ int vpip_time_units_from_handle(vpiHandle obj)
       if (obj == 0)
 	    return vpip_get_time_precision();
 
-      switch (obj->vpi_type->type_code) {
+      switch (obj->get_type_code()) {
 	  case vpiSysTaskCall:
-	    task = (struct __vpiSysTaskCall*)obj;
+	    task = dynamic_cast<__vpiSysTaskCall*>(obj);
 	    return task->scope->time_units;
 
 	  case vpiModule:
-	    scope = (struct __vpiScope*)obj;
+	    scope = dynamic_cast<__vpiScope*>(obj);
 	    return scope->time_units;
 
 	  case vpiNet:
 	  case vpiReg:
-	    signal = vpip_signal_from_handle(obj);
+	    signal = dynamic_cast<__vpiSignal*>(obj);
 	    scope = vpip_scope(signal);
 	    return scope->time_units;
 
 	  default:
 	    fprintf(stderr, "ERROR: vpip_time_units_from_handle called with "
-		    "object handle type=%u\n", obj->vpi_type->type_code);
+		    "object handle type=%u\n", obj->get_type_code());
 	    assert(0);
 	    return 0;
       }
@@ -450,24 +469,24 @@ int vpip_time_precision_from_handle(vpiHandle obj)
       if (obj == 0)
 	    return vpip_get_time_precision();
 
-      switch (obj->vpi_type->type_code) {
+      switch (obj->get_type_code()) {
 	  case vpiSysTaskCall:
-	    task = (struct __vpiSysTaskCall*)obj;
+	    task = dynamic_cast<__vpiSysTaskCall*>(obj);
 	    return task->scope->time_precision;
 
 	  case vpiModule:
-	    scope = (struct __vpiScope*)obj;
+	    scope = dynamic_cast<__vpiScope*>(obj);
 	    return scope->time_precision;
 
 	  case vpiNet:
 	  case vpiReg:
-	    signal = vpip_signal_from_handle(obj);
+	    signal = dynamic_cast<__vpiSignal*>(obj);
 	    scope = vpip_scope(signal);
 	    return scope->time_precision;
 
 	  default:
 	    fprintf(stderr, "ERROR: vpip_time_precision_from_handle called "
-		    "with object handle type=%u\n", obj->vpi_type->type_code);
+		    "with object handle type=%u\n", obj->get_type_code());
 	    assert(0);
 	    return 0;
       }
@@ -671,7 +690,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 	    vp->format = vpiVectorVal;
 
 	  case vpiVectorVal: {
-		unsigned hwid = (width - 1)/32 + 1;
+		unsigned hwid = (width + 31)/32;
 
 		rbuf = need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
 		s_vpi_vecval *op = (p_vpi_vecval)rbuf;
@@ -736,7 +755,7 @@ void vpip_vec2_get_value(const vvp_vector2_t&word_val, unsigned width,
 	    break;
 
 	  case vpiVectorVal: {
-		unsigned hwid = (width - 1)/32 + 1;
+		unsigned hwid = (width + 31)/32;
 
 		rbuf = need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
 		s_vpi_vecval *op = (p_vpi_vecval)rbuf;
@@ -879,38 +898,34 @@ void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
 {
       assert(expr);
       assert(vp);
-      if (expr->vpi_type->vpi_get_value_) {
-	    (expr->vpi_type->vpi_get_value_)(expr, vp);
 
-	    if (vpi_trace) switch (vp->format) {
+      expr->vpi_get_value(vp);
+
+      if (vpi_trace) switch (vp->format) {
 		case vpiStringVal:
 		  fprintf(vpi_trace,"vpi_get_value(%p=<%d>) -> string=\"%s\"\n",
-			  expr, expr->vpi_type->type_code, vp->value.str);
+			  expr, expr->get_type_code(), vp->value.str);
 		  break;
 
 		case vpiBinStrVal:
 		  fprintf(vpi_trace, "vpi_get_value(<%d>...) -> binstr=%s\n",
-			  expr->vpi_type->type_code, vp->value.str);
+			  expr->get_type_code(), vp->value.str);
 		  break;
 
 		case vpiIntVal:
 		  fprintf(vpi_trace, "vpi_get_value(<%d>...) -> int=%d\n",
-			  expr->vpi_type->type_code, (int)vp->value.integer);
+			  expr->get_type_code(), (int)vp->value.integer);
+		  break;
+
+		case vpiSuppressVal:
+		  fprintf(vpi_trace, "vpi_get_value(<%d>...) -> <suppress>\n",
+			  expr->get_type_code());
 		  break;
 
 		default:
 		  fprintf(vpi_trace, "vpi_get_value(<%d>...) -> <%d>=?\n",
-			  expr->vpi_type->type_code, (int)vp->format);
+			  expr->get_type_code(), (int)vp->format);
 	    }
-	    return;
-      }
-
-      if (vpi_trace) {
-	    fprintf(vpi_trace, "vpi_get_value(<%d>...) -> <suppress>\n",
-		    expr->vpi_type->type_code);
-      }
-
-      vp->format = vpiSuppressVal;
 }
 
 struct vpip_put_value_event : vvp_gen_event_s {
@@ -923,7 +938,7 @@ struct vpip_put_value_event : vvp_gen_event_s {
 
 void vpip_put_value_event::run_run()
 {
-      handle->vpi_type->vpi_put_value_ (handle, &value, flags);
+      handle->vpi_put_value(&value, flags);
       switch (value.format) {
 	    /* Free the copied string. */
 	  case vpiBinStrVal:
@@ -933,22 +948,58 @@ void vpip_put_value_event::run_run()
 	  case vpiStringVal:
 	    free(value.value.str);
 	    break;
-	    /* If these are ever copied then free them too. */
+	    /* Free the copied time structure. */
 	  case vpiTimeVal:
+	    free(value.value.time);
+	    break;
+	    /* Free the copied vector structure. */
 	  case vpiVectorVal:
+	    free(value.value.vector);
+	    break;
+	    /* Free the copied strength structure. */
 	  case vpiStrengthVal:
+	    free(value.value.strength);
+	    break;
+	    /* Everything else is static in the structure. */
 	  default:
 	    break;
       }
+}
+
+/* Make a copy of a pointer to a time structure. */
+static t_vpi_time *timedup(t_vpi_time *val)
+{
+      t_vpi_time *rtn;
+      rtn = (t_vpi_time *) malloc(sizeof(t_vpi_time));
+      *rtn = *val;
+      return rtn;
+}
+
+/* Make a copy of a pointer to a vector value structure. */
+static t_vpi_vecval *vectordup(t_vpi_vecval *val, PLI_INT32 size)
+{
+      unsigned num_bytes;
+      t_vpi_vecval *rtn;
+      assert(size > 0);
+      num_bytes = ((size + 31)/32)*sizeof(t_vpi_vecval);
+      rtn = (t_vpi_vecval *) malloc(num_bytes);
+      memcpy(rtn, val, num_bytes);
+      return rtn;
+}
+
+/* Make a copy of a pointer to a strength structure. */
+static t_vpi_strengthval *strengthdup(t_vpi_strengthval *val)
+{
+      t_vpi_strengthval *rtn;
+      rtn = (t_vpi_strengthval *) malloc(sizeof(t_vpi_strengthval));
+      *rtn = *val;
+      return rtn;
 }
 
 vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 			s_vpi_time*when, PLI_INT32 flags)
 {
       assert(obj);
-
-      if (obj->vpi_type->vpi_put_value_ == 0)
-	    return 0;
 
       flags &= ~vpiReturnEvent;
 
@@ -987,8 +1038,10 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 	    vpip_put_value_event*put = new vpip_put_value_event;
 	    put->handle = obj;
 	    put->value = *vp;
+	      /* Since this is a scheduled put event we must copy any pointer
+	       * data to keep it available until the event is actually run. */
 	    switch (put->value.format) {
-		  /* If this is scheduled make a copy of the string. */
+		  /* Copy the string items. */
 		case vpiBinStrVal:
 		case vpiOctStrVal:
 		case vpiDecStrVal:
@@ -996,10 +1049,21 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 		case vpiStringVal:
 		  put->value.value.str = strdup(put->value.value.str);
 		  break;
-		  /* Do these also need to be copied? */
+		  /* Copy a time pointer item. */
 		case vpiTimeVal:
+		  put->value.value.time = timedup(put->value.value.time);
+		  break;
+		  /* Copy a vector pointer item. */
 		case vpiVectorVal:
+		  put->value.value.vector = vectordup(put->value.value.vector,
+		                                      vpi_get(vpiSize, obj));
+		  break;
+		  /* Copy a strength pointer item. */
 		case vpiStrengthVal:
+		  put->value.value.strength =
+		      strengthdup(put->value.value.strength);
+		  break;
+		  /* Everything thing else is already in the structure. */
 		default:
 		  break;
 	    }
@@ -1008,7 +1072,7 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 	    return 0;
       }
 
-      (obj->vpi_type->vpi_put_value_)(obj, vp, flags);
+      obj->vpi_put_value(vp, flags);
 
       return 0;
 }
@@ -1024,11 +1088,11 @@ vpiHandle vpi_handle(PLI_INT32 type, vpiHandle ref)
 
 	    if (vpi_trace) {
 		  fprintf(vpi_trace, "vpi_handle(vpiSysTfCall, 0) "
-			  "-> %p (%s)\n", &vpip_cur_task->base,
+			  "-> %p (%s)\n", vpip_cur_task,
 			  vpip_cur_task->defn->info.tfname);
 	    }
 
-	    return &vpip_cur_task->base;
+	    return vpip_cur_task;
       }
 
       if (ref == 0) {
@@ -1037,18 +1101,7 @@ vpiHandle vpi_handle(PLI_INT32 type, vpiHandle ref)
 	    return 0;
       }
 
-      if (ref->vpi_type->handle_ == 0) {
-
-	    if (vpi_trace) {
-		  fprintf(vpi_trace, "vpi_handle(%d, %p) -X\n",
-			  (int)type, ref);
-	    }
-
-	    return 0;
-      }
-
-      assert(ref->vpi_type->handle_);
-      vpiHandle res = (ref->vpi_type->handle_)(type, ref);
+      vpiHandle res = ref->vpi_handle(type);
 
       if (vpi_trace) {
 	    fprintf(vpi_trace, "vpi_handle(%d, %p) -> %p\n",
@@ -1099,8 +1152,8 @@ vpiHandle vpi_iterate(PLI_INT32 type, vpiHandle ref)
 
       if (ref == 0)
 	    rtn = vpi_iterate_global(type);
-      else if (ref->vpi_type->iterate_)
-	    rtn = (ref->vpi_type->iterate_)(type, ref);
+      else
+	    rtn = ref->vpi_iterate(type);
 
       if (vpi_trace) {
 	    fprintf(vpi_trace, "vpi_iterate(%d, %p) ->%s\n",
@@ -1113,18 +1166,13 @@ vpiHandle vpi_iterate(PLI_INT32 type, vpiHandle ref)
 vpiHandle vpi_handle_by_index(vpiHandle ref, PLI_INT32 idx)
 {
       assert(ref);
-
-      if (ref->vpi_type->index_ == 0)
-	    return 0;
-
-      assert(ref->vpi_type->index_);
-      return (ref->vpi_type->index_)(ref, idx);
+      return ref->vpi_index(idx);
 }
 
 static vpiHandle find_name(const char *name, vpiHandle handle)
 {
       vpiHandle rtn = 0;
-      struct __vpiScope*ref = (struct __vpiScope*)handle;
+      struct __vpiScope*ref = dynamic_cast<__vpiScope*>(handle);
 
       /* check module names */
       if (!strcmp(name, vpi_get_str(vpiName, handle)))
@@ -1260,16 +1308,12 @@ void vpi_get_delays(vpiHandle expr, p_vpi_delay delays)
       assert(expr);
       assert(delays);
 
-      if (expr->vpi_type->vpi_get_delays_)
-	{
-	  (expr->vpi_type->vpi_get_delays_)(expr, delays);
+      expr->vpi_get_delays(delays);
 
-	  if (vpi_trace)
-	    {
-	      fprintf(vpi_trace,
-		      "vpi_get_delays(%p, %p) -->\n", expr, delays);
-	    }
-	}
+      if (vpi_trace) {
+	    fprintf(vpi_trace,
+		    "vpi_get_delays(%p, %p) -->\n", expr, delays);
+      }
 }
 
 
@@ -1278,16 +1322,12 @@ void vpi_put_delays(vpiHandle expr, p_vpi_delay delays)
       assert(expr  );
       assert(delays );
 
-      if (expr->vpi_type->vpi_put_delays_)
-	{
-	  (expr->vpi_type->vpi_put_delays_)(expr, delays);
+      expr->vpi_put_delays(delays);
 
-	  if (vpi_trace)
-	    {
-	      fprintf(vpi_trace,
-		      "vpi_put_delays(%p, %p) -->\n", expr, delays);
-	    }
-	}
+      if (vpi_trace) {
+	    fprintf(vpi_trace,
+		    "vpi_put_delays(%p, %p) -->\n", expr, delays);
+      }
 }
 
 

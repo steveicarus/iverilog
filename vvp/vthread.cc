@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1173,7 +1173,7 @@ bool of_ASSIGN_WR(vthread_t thr, vvp_code_t cp)
       del.type = vpiSimTime;
       vpip_time_to_timestruct(&del, delay);
 
-      struct __vpiHandle*tmp = cp->handle;
+      __vpiHandle*tmp = cp->handle;
 
       t_vpi_value val;
       val.format = vpiRealVal;
@@ -1192,7 +1192,7 @@ bool of_ASSIGN_WRD(vthread_t thr, vvp_code_t cp)
       del.type = vpiSimTime;
       vpip_time_to_timestruct(&del, delay);
 
-      struct __vpiHandle*tmp = cp->handle;
+      __vpiHandle*tmp = cp->handle;
 
       t_vpi_value val;
       val.format = vpiRealVal;
@@ -1206,7 +1206,7 @@ bool of_ASSIGN_WRE(vthread_t thr, vvp_code_t cp)
 {
       assert(thr->event != 0);
       unsigned index = cp->bit_idx[0];
-      struct __vpiHandle*tmp = cp->handle;
+      __vpiHandle*tmp = cp->handle;
 
 	// If the count is zero then just put the value.
       if (thr->ecount == 0) {
@@ -2549,7 +2549,7 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
 
 	/* If the new child was created to evaluate a function,
 	   run it immediately, then return to this thread. */
-      if (cp->scope->base.vpi_type->type_code == vpiFunction) {
+      if (cp->scope->get_type_code() == vpiFunction) {
 	    child->is_scheduled = 1;
 	    vthread_run(child);
             running_thread = thr;
@@ -3184,7 +3184,7 @@ bool of_LOAD_VP0_S(vthread_t thr, vvp_code_t cp)
 
 bool of_LOAD_WR(vthread_t thr, vvp_code_t cp)
 {
-      struct __vpiHandle*tmp = cp->handle;
+      __vpiHandle*tmp = cp->handle;
       t_vpi_value val;
 
       val.format = vpiRealVal;
@@ -3573,8 +3573,6 @@ bool of_PAD(vthread_t thr, vvp_code_t cp)
       thr_check_addr(thr, cp->bit_idx[0]+cp->number-1);
       vvp_vector4_t tmp (cp->number, pad_bit);
       thr->bits4.set_vec(cp->bit_idx[0], tmp);
-      return true;
-
       return true;
 }
 

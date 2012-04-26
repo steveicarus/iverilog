@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2011 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 2005-2012 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -737,43 +737,41 @@ bool vvp_fun_modpath_edge::test_vec4(const vvp_vector4_t&bit)
  */
 static int modpath_src_get(int, vpiHandle ref)
 {
-      struct __vpiModPathSrc*obj = vpip_modpath_src_from_handle(ref);
+      struct __vpiModPathSrc*obj =dynamic_cast<__vpiModPathSrc*>(ref);
       assert(obj);
       return 0;
 }
 
 static void modpath_src_get_value(vpiHandle ref, p_vpi_value)
 {
-      assert((ref->vpi_type->type_code == vpiModPathIn));
-      struct __vpiModPathSrc* modpathsrc = vpip_modpath_src_from_handle(ref);
+      struct __vpiModPathSrc* modpathsrc = dynamic_cast<__vpiModPathSrc*>(ref);
       assert(modpathsrc);
       return;
 }
 
 static vpiHandle modpath_src_put_value(vpiHandle ref, s_vpi_value *, int )
 {
-      assert((ref->vpi_type->type_code == vpiModPathIn));
-      struct __vpiModPathSrc* modpathsrc = vpip_modpath_src_from_handle(ref);
+      struct __vpiModPathSrc* modpathsrc = dynamic_cast<__vpiModPathSrc*>(ref);
       assert(modpathsrc);
       return 0;
 }
 
 static vpiHandle modpath_src_get_handle(int code, vpiHandle ref)
 {
-      struct __vpiModPathSrc*rfp = vpip_modpath_src_from_handle(ref);
+      struct __vpiModPathSrc*rfp = dynamic_cast<__vpiModPathSrc*>(ref);
       assert(rfp);
 
       switch (code) {
 
 	case vpiScope:
-	  return vpi_handle(rfp->dest->scope);
+	  return rfp->dest->scope;
 
 	  case vpiModule:
 	      { struct __vpiScope*scope = rfp->dest->scope;
-		while (scope && scope->base.vpi_type->type_code != vpiModule)
+		while (scope && scope->get_type_code() != vpiModule)
 		      scope = scope->scope;
 		assert(scope);
-		return vpi_handle(scope);
+		return scope;
 	      }
 
 	    // Handles to path term objects should really be obtained via
@@ -782,17 +780,17 @@ static vpiHandle modpath_src_get_handle(int code, vpiHandle ref)
 	    // older versions of Icarus Verilog.
 
 	  case vpiModPathIn:
-	    return vpi_handle(&rfp->path_term_in);
+	    return &rfp->path_term_in;
 
 	  case vpiModPathOut:
-	    return vpi_handle(&rfp->dest->path_term_out);
+	    return &rfp->dest->path_term_out;
       }
       return 0;
 }
 
 static vpiHandle modpath_src_iterate(int code, vpiHandle ref)
 {
-      struct __vpiModPathSrc*rfp = vpip_modpath_src_from_handle(ref);
+      struct __vpiModPathSrc*rfp = dynamic_cast<__vpiModPathSrc*>(ref);
       assert(rfp);
 
 	// Module paths with multiple sources or destinations are
@@ -802,12 +800,12 @@ static vpiHandle modpath_src_iterate(int code, vpiHandle ref)
       switch (code) {
 	  case vpiModPathIn: {
 	    vpiHandle*args = (vpiHandle*)calloc(1, sizeof(vpiHandle*));
-	    args[0] = vpi_handle(&rfp->path_term_in);
+	    args[0] = &rfp->path_term_in;
 	    return vpip_make_iterator(1, args, true);
 	  }
 	  case vpiModPathOut: {
 	    vpiHandle*args = (vpiHandle*)calloc(1, sizeof(vpiHandle*));
-	    args[0] = vpi_handle(&rfp->dest->path_term_out);
+	    args[0] = &rfp->dest->path_term_out;
 	    return vpip_make_iterator(1, args, true);
 	  }
       }
@@ -816,17 +814,10 @@ static vpiHandle modpath_src_iterate(int code, vpiHandle ref)
 
 static vpiHandle modpath_src_index ( vpiHandle ref, int)
 {
-      assert(ref->vpi_type->type_code == vpiModPathIn);
+      assert(ref->get_type_code() == vpiModPathIn);
       return 0;
 }
 
-
-static int modpath_src_free_object( vpiHandle ref )
-{
-      assert( (ref->vpi_type->type_code == vpiModPathIn ) );
-      free ( ref ) ;
-      return 1 ;
-}
 
 /*
  * This routine will put specific dimension of delay[] values
@@ -838,7 +829,7 @@ static void modpath_src_put_delays (vpiHandle ref, p_vpi_delay delays)
 {
       vvp_time64_t tmp[12];
       int idx;
-      struct __vpiModPathSrc * src = vpip_modpath_src_from_handle( ref) ;
+      struct __vpiModPathSrc * src = dynamic_cast<__vpiModPathSrc*>(ref) ;
       assert(src) ;
 
       vvp_fun_modpath_src *fun = dynamic_cast<vvp_fun_modpath_src*>(src->net->fun);
@@ -908,7 +899,7 @@ static void modpath_src_put_delays (vpiHandle ref, p_vpi_delay delays)
 
 static void modpath_src_get_delays ( vpiHandle ref, p_vpi_delay delays )
 {
-      struct __vpiModPathSrc*src = vpip_modpath_src_from_handle( ref) ;
+      struct __vpiModPathSrc*src = dynamic_cast<__vpiModPathSrc*>(ref) ;
       assert(src);
 
       vvp_fun_modpath_src *fun = dynamic_cast<vvp_fun_modpath_src*>(src->net->fun);
@@ -944,7 +935,7 @@ static void modpath_src_get_delays ( vpiHandle ref, p_vpi_delay delays )
 
 static int pathterm_get(int code, vpiHandle ref)
 {
-      struct __vpiModPathTerm*obj = vpip_modpath_term_from_handle(ref);
+      struct __vpiModPathTerm*obj = dynamic_cast<__vpiModPathTerm*>(ref);
       assert(obj);
 
       switch (code) {
@@ -957,7 +948,7 @@ static int pathterm_get(int code, vpiHandle ref)
 
 static vpiHandle pathterm_get_handle(int code, vpiHandle ref)
 {
-      struct __vpiModPathTerm*obj = vpip_modpath_term_from_handle(ref);
+      struct __vpiModPathTerm*obj = dynamic_cast<__vpiModPathTerm*>(ref);
       assert(obj);
 
       switch (code) {
@@ -973,37 +964,60 @@ static vpiHandle pathterm_get_handle(int code, vpiHandle ref)
 * vpiModPath object. The __vpiModPath structure contains items that
 * are common to a bunch of modpaths, including the destination term.
 */
-static const struct __vpirt vpip_modpath_src_rt = {
-      vpiModPath,
-      modpath_src_get,
-      0, /* vpi_get_str */
-      modpath_src_get_value,
-      modpath_src_put_value,
-      modpath_src_get_handle,
-      modpath_src_iterate,
-      modpath_src_index,
-      modpath_src_free_object,
-      modpath_src_get_delays,
-      modpath_src_put_delays
-};
+inline __vpiModPathSrc::__vpiModPathSrc()
+{ }
 
-static const struct __vpirt vpip_modpath_term_rt = {
-      vpiPathTerm,
-      pathterm_get,
-      0, // vpi_get_str
-      0, // vpi_get_value,
-      0, // vpi_put_value,
-      pathterm_get_handle,
-      0, // vpi_iterate,
-      0, // vpi_index,
-      0, // vpi_free_object,
-      0, // vpi_get_delays,
-      0  // vpi_put_delays
-};
+int __vpiModPathSrc::get_type_code(void) const
+{ return vpiModPath; }
+
+int __vpiModPathSrc::vpi_get(int code)
+{ return modpath_src_get(code, this); }
+
+void __vpiModPathSrc::vpi_get_value(p_vpi_value val)
+{ modpath_src_get_value(this, val); }
+
+vpiHandle __vpiModPathSrc::vpi_put_value(p_vpi_value val, int flags)
+{ return modpath_src_put_value(this, val, flags); }
+
+vpiHandle __vpiModPathSrc::vpi_handle(int code)
+{ return modpath_src_get_handle(code, this); }
+
+vpiHandle __vpiModPathSrc::vpi_iterate(int code)
+{ return modpath_src_iterate(code, this); }
+
+vpiHandle __vpiModPathSrc:: vpi_index(int idx)
+{ return modpath_src_index(this, idx); }
+
+void __vpiModPathSrc::vpi_get_delays(p_vpi_delay del)
+{ modpath_src_get_delays(this, del); }
+
+void __vpiModPathSrc::vpi_put_delays(p_vpi_delay del)
+{ modpath_src_put_delays(this, del); }
+
+static int modpath_src_free_object( vpiHandle ref )
+{
+      delete ref;
+      return 1 ;
+}
+
+__vpiHandle::free_object_fun_t __vpiModPathSrc::free_object_fun(void)
+{ return &modpath_src_free_object; }
+
+
+inline __vpiModPathTerm::__vpiModPathTerm()
+{ }
+
+int __vpiModPathTerm::get_type_code(void) const
+{ return vpiPathTerm; }
+
+int __vpiModPathTerm::vpi_get(int code)
+{ return pathterm_get(code, this); }
+
+vpiHandle __vpiModPathTerm::vpi_handle(int code)
+{ return pathterm_get_handle(code, this); }
 
 static void initialize_path_term(struct __vpiModPathTerm&obj)
 {
-      obj.base.vpi_type = &vpip_modpath_term_rt;
       obj.expr = 0;
       obj.edge = vpiNoEdge;
 }
@@ -1021,7 +1035,7 @@ static unsigned mp_count = 0;
 
 struct __vpiModPath* vpip_make_modpath(vvp_net_t *net)
 {
-      struct __vpiModPath*obj = (struct __vpiModPath *)calloc(1, sizeof ( struct __vpiModPath ) );
+      struct __vpiModPath*obj = new __vpiModPath;
       obj->scope = vpip_peek_current_scope ( );
 
       initialize_path_term(obj->path_term_out);
@@ -1058,40 +1072,12 @@ void modpath_delete()
 struct __vpiModPathSrc* vpip_make_modpath_src(struct __vpiModPath*path,
                                               vvp_net_t *net)
 {
-      struct __vpiModPathSrc *obj = (struct __vpiModPathSrc *) calloc (1, sizeof ( struct __vpiModPathSrc ) ) ;
+      struct __vpiModPathSrc *obj = new __vpiModPathSrc;
 
-      obj->base.vpi_type  = &vpip_modpath_src_rt;
       obj->dest = path;
+      obj->type = 0;
       obj->net = net;
       initialize_path_term(obj->path_term_in);
 
       return obj;
-}
-
-
-/*
-  this routine will safely convert a modpath vpiHandle
-  to a struct __vpiModPath { }
-*/
-
-struct __vpiModPathTerm* vpip_modpath_term_from_handle(vpiHandle ref)
-{
-      if (ref->vpi_type->type_code != vpiPathTerm)
-            return 0;
-
-      return (struct __vpiModPathTerm*) ref;
-}
-
-/*
-  this routine will safely convert a modpathsrc vpiHandle
-  to a struct __vpiModPathSrc { }, This is equivalent to a
-  vpiModPathIn handle
-*/
-
-struct __vpiModPathSrc* vpip_modpath_src_from_handle(vpiHandle ref)
-{
-      if (ref->vpi_type->type_code != vpiModPath)
-            return 0;
-
-      return (struct __vpiModPathSrc *) ref;
 }

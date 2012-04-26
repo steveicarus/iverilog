@@ -77,7 +77,7 @@ else
 endif
 
 verilog.tgt: $O $(TGTDEPLIBS)
-	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
+	$(CC) @shared@ $(LDFLAGS) -o $@ $O $(TGTLDFLAGS)
 
 install: all installdirs $(libdir)/ivl/verilog.tgt \
 	$(includedir)/vpi_user.h

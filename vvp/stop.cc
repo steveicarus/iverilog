@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -74,7 +74,7 @@ static bool interact_flag = true;
 
 static void cmd_call(unsigned argc, char*argv[])
 {
-      struct __vpiHandle**table;
+      __vpiHandle**table;
       unsigned ntable;
 
       if (stop_current_scope == 0) {
@@ -101,7 +101,7 @@ static void cmd_call(unsigned argc, char*argv[])
 		 .(dot) string. This represents the handle for the
 		 current scope. */
 	    if (stop_current_scope && (strcmp(argv[idx+1], ".") == 0))
-		  handle = &stop_current_scope->base;
+		  handle = stop_current_scope;
 
 	      /* Is the argument a quoted string? */
 	    if (handle == 0 && argv[idx+1][0] == '"') {
@@ -119,7 +119,7 @@ static void cmd_call(unsigned argc, char*argv[])
 	      /* Is the argument a decimal constant? */
 	    if (handle == 0
 		&& strspn(argv[idx+1],"0123456789") == strlen(argv[idx+1])) {
-		  handle = vpip_make_dec_const(strtol(argv[idx+1],0,10));
+		  handle = new __vpiDecConst(strtol(argv[idx+1],0,10));
 		  add_to_free_list = true;
 	    }
 
@@ -130,14 +130,14 @@ static void cmd_call(unsigned argc, char*argv[])
 		  struct __vpiScope*scope;
 		  const char*name;
 
-		  switch (table[tmp]->vpi_type->type_code) {
+		  switch (table[tmp]->get_type_code()) {
 
 		      case vpiModule:
 		      case vpiFunction:
 		      case vpiTask:
 		      case vpiNamedBegin:
 		      case vpiNamedFork:
-			scope = (struct __vpiScope*) table[idx];
+			scope = dynamic_cast<__vpiScope*>(table[idx]);
 			if (strcmp(scope->name, argv[idx+1]) == 0)
 			      handle = table[tmp];
 			break;
@@ -212,7 +212,7 @@ static void cmd_help(unsigned, char*[]);
 
 static void cmd_list(unsigned, char*[])
 {
-      struct __vpiHandle**table;
+      __vpiHandle**table;
       unsigned ntable;
 
       if (stop_current_scope == 0) {
@@ -229,29 +229,29 @@ static void cmd_list(unsigned, char*[])
 	    struct __vpiScope*scope;
 	    struct __vpiSignal*sig;
 
-	    switch (table[idx]->vpi_type->type_code) {
+	    switch (table[idx]->get_type_code()) {
 		case vpiModule:
-		  scope = (struct __vpiScope*) table[idx];
+		  scope = dynamic_cast<__vpiScope*>(table[idx]);
 		  printf("module  : %s\n", scope->name);
 		  break;
 
 		case vpiTask:
-		  scope = (struct __vpiScope*) table[idx];
+		  scope = dynamic_cast<__vpiScope*>(table[idx]);
 		  printf("task    : %s\n", scope->name);
 		  break;
 
 		case vpiFunction:
-		  scope = (struct __vpiScope*) table[idx];
+		  scope = dynamic_cast<__vpiScope*>(table[idx]);
 		  printf("function: %s\n", scope->name);
 		  break;
 
 		case vpiNamedBegin:
-		  scope = (struct __vpiScope*) table[idx];
+		  scope = dynamic_cast<__vpiScope*>(table[idx]);
 		  printf("block   : %s\n", scope->name);
 		  break;
 
 		case vpiNamedFork:
-		  scope = (struct __vpiScope*) table[idx];
+		  scope = dynamic_cast<__vpiScope*>(table[idx]);
 		  printf("fork    : %s\n", scope->name);
 		  break;
 
@@ -260,7 +260,7 @@ static void cmd_list(unsigned, char*[])
 		  break;
 
 		case vpiReg:
-		  sig = (struct __vpiSignal*) table[idx];
+		  sig = dynamic_cast<__vpiSignal*>(table[idx]);
 		  if ((sig->msb == 0) && (sig->lsb == 0))
 			printf("reg     : %s%s\n",
 			       vpi_get_str(vpiName, table[idx]),
@@ -273,7 +273,7 @@ static void cmd_list(unsigned, char*[])
 		  break;
 
 		case vpiNet:
-		  sig = (struct __vpiSignal*) table[idx];
+		  sig = dynamic_cast<__vpiSignal*>(table[idx]);
 		  if ((sig->msb == 0) && (sig->lsb == 0))
 			printf("net     : %s%s\n",
 			       vpi_get_str(vpiName, table[idx]),
@@ -287,7 +287,7 @@ static void cmd_list(unsigned, char*[])
 
 		default:
 		  printf("%8d: <vpi handle>\n",
-			 table[idx]->vpi_type->type_code);
+			 table[idx]->get_type_code());
 		  break;
 	    }
 
@@ -314,7 +314,7 @@ static void cmd_push(unsigned argc, char* argv[])
 {
 
       for (unsigned idx = 1 ;  idx < argc ;  idx += 1) {
-	    struct __vpiHandle**table;
+	    __vpiHandle**table;
 	    unsigned ntable;
 
 	    struct __vpiScope*child = 0;
@@ -329,10 +329,10 @@ static void cmd_push(unsigned argc, char* argv[])
 	    child = 0;
 	    unsigned tmp;
 	    for (tmp = 0 ;  tmp < ntable ;  tmp += 1) {
-		  if (table[tmp]->vpi_type->type_code != vpiModule)
+		  if (table[tmp]->get_type_code() != vpiModule)
 			continue;
 
-		  struct __vpiScope*cp = (struct __vpiScope*) table[tmp];
+		  struct __vpiScope*cp = dynamic_cast<__vpiScope*>(table[tmp]);
 
 		    /* This is a scope, and the name matches, then
 		       report that I found the child. */
@@ -392,15 +392,12 @@ static void cmd_where(unsigned, char*[])
       struct __vpiScope*cur = stop_current_scope;
 
       while (cur) {
-	    switch (cur->base.vpi_type->type_code) {
+	    switch (cur->get_type_code()) {
 		case vpiModule:
-		  printf("module %s\n",
-			 cur->name);
+		  printf("module %s\n", cur->name);
 		  break;
 		default:
-		  printf("scope (%d) %s;\n",
-			 cur->base.vpi_type->type_code,
-			 cur->name);
+		  printf("scope (%d) %s;\n", cur->get_type_code(), cur->name);
 		  break;
 	    }
 

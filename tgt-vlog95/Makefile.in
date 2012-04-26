@@ -78,7 +78,7 @@ else
 endif
 
 vlog95.tgt: $O $(TGTDEPLIBS)
-	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
+	$(CC) @shared@ $(LDFLAGS) -o $@ $O $(TGTLDFLAGS)
 
 install: all installdirs $(libdir)/ivl$(suffix)/vlog95.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/vlog95.conf $(libdir)/ivl$(suffix)/vlog95-s.conf
 

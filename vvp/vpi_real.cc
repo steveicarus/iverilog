@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -30,20 +30,10 @@
 # include  <cassert>
 # include  "ivl_alloc.h"
 
-struct __vpiRealVar* vpip_realvar_from_handle(vpiHandle obj)
-{
-      assert(obj);
-      if (obj->vpi_type->type_code == vpiRealVar)
-	    return (struct __vpiRealVar*)obj;
-      else
-	    return 0;
-}
-
 static int real_var_get(int code, vpiHandle ref)
 {
-      assert(ref->vpi_type->type_code == vpiRealVar);
-
-      struct __vpiRealVar*rfp = vpip_realvar_from_handle(ref);
+      struct __vpiRealVar*rfp = dynamic_cast<__vpiRealVar*>(ref);
+      assert(rfp);
 
       switch (code) {
 	case vpiArray:
@@ -64,9 +54,8 @@ static int real_var_get(int code, vpiHandle ref)
 
 static char* real_var_get_str(int code, vpiHandle ref)
 {
-      assert(ref->vpi_type->type_code == vpiRealVar);
-
-      struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
+      struct __vpiRealVar*rfp = dynamic_cast<__vpiRealVar*>(ref);
+      assert(rfp);
 
       if (code == vpiFile) {  // Not implemented for now!
 	    return simple_set_rbuf_str(file_names[0]);
@@ -84,16 +73,15 @@ static char* real_var_get_str(int code, vpiHandle ref)
 	    ixs = NULL;
       }
 
-      char *rbuf = generic_get_str(code, &(vpip_scope(rfp)->base), nm, ixs);
+      char *rbuf = generic_get_str(code, vpip_scope(rfp), nm, ixs);
       free(nm);
       return rbuf;
 }
 
 static vpiHandle real_var_get_handle(int code, vpiHandle ref)
 {
-      assert(ref->vpi_type->type_code == vpiRealVar);
-
-      struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
+      struct __vpiRealVar*rfp = dynamic_cast<__vpiRealVar*>(ref);
+      assert(rfp);
 
       switch (code) {
 
@@ -104,7 +92,7 @@ static vpiHandle real_var_get_handle(int code, vpiHandle ref)
 	    return rfp->is_netarray ? rfp->id.index : 0;
 
 	  case vpiScope:
-	    return &(vpip_scope(rfp)->base);
+	    return vpip_scope(rfp);
 
 	  case vpiModule:
 	    return vpip_module(vpip_scope(rfp));
@@ -115,13 +103,11 @@ static vpiHandle real_var_get_handle(int code, vpiHandle ref)
 
 static vpiHandle real_var_iterate(int code, vpiHandle ref)
 {
-      assert(ref->vpi_type->type_code == vpiRealVar);
-
-      struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
+      struct __vpiRealVar*rfp = dynamic_cast<__vpiRealVar*>(ref);
+      assert(rfp);
 
       if (code == vpiIndex) {
-	    return rfp->is_netarray ? (rfp->id.index->vpi_type->iterate_)
-	                              (code, rfp->id.index) : 0;
+	    return rfp->is_netarray ? rfp->id.index->vpi_iterate(code) : 0;
       }
 
       return 0;
@@ -129,10 +115,9 @@ static vpiHandle real_var_iterate(int code, vpiHandle ref)
 
 static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
 {
-      assert(ref->vpi_type->type_code == vpiRealVar);
+      struct __vpiRealVar*rfp = dynamic_cast<__vpiRealVar*>(ref);
+      assert(rfp);
 
-      struct __vpiRealVar*rfp
-	    = (struct __vpiRealVar*)ref;
       vvp_signal_value*fil
 	    = dynamic_cast<vvp_signal_value*>(rfp->net->fil);
 
@@ -141,67 +126,60 @@ static void real_var_get_value(vpiHandle ref, s_vpi_value*vp)
 
 static vpiHandle real_var_put_value(vpiHandle ref, p_vpi_value vp, int)
 {
-      assert(ref->vpi_type->type_code == vpiRealVar);
-
       double result = real_from_vpi_value(vp);
 
-      struct __vpiRealVar*rfp = (struct __vpiRealVar*)ref;
+      struct __vpiRealVar*rfp = dynamic_cast<__vpiRealVar*>(ref);
       assert(rfp);
       vvp_net_ptr_t destination (rfp->net, 0);
       vvp_send_real(destination, result, vthread_get_wt_context());
       return 0;
 }
 
-static const struct __vpirt vpip_real_var_rt = {
-      vpiRealVar,
+inline __vpiRealVar::__vpiRealVar()
+{ }
 
-      real_var_get,
-      real_var_get_str,
-      real_var_get_value,
-      real_var_put_value,
+int __vpiRealVar::get_type_code(void) const
+{ return vpiRealVar; }
 
-      real_var_get_handle,
-      real_var_iterate,
-      0,
-      0,
-      0,
-      0
-};
+int __vpiRealVar::vpi_get(int code)
+{ return real_var_get(code, this); }
 
-void vpip_real_value_change(struct __vpiCallback*cbh,
-			     vpiHandle ref)
-{
-      struct __vpiRealVar*rfp
-	    = (struct __vpiRealVar*)ref;
-      vvp_vpi_callback*obj = dynamic_cast<vvp_vpi_callback*>(rfp->net->fil);
-      assert(obj);
+char* __vpiRealVar::vpi_get_str(int code)
+{ return real_var_get_str(code, this); }
 
-      obj->add_vpi_callback(cbh);
-}
+void __vpiRealVar::vpi_get_value(p_vpi_value val)
+{ real_var_get_value(this, val); }
+
+vpiHandle __vpiRealVar::vpi_put_value(p_vpi_value val, int flags)
+{ return real_var_put_value(this, val, flags); }
+
+vpiHandle __vpiRealVar::vpi_handle(int code)
+{ return real_var_get_handle(code, this); }
+
+vpiHandle __vpiRealVar::vpi_iterate(int code)
+{ return real_var_iterate(code, this); }
 
 vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net)
 {
-      struct __vpiRealVar*obj = (struct __vpiRealVar*)
-	    malloc(sizeof(struct __vpiRealVar));
+      struct __vpiRealVar*obj = new __vpiRealVar;
 
-      obj->base.vpi_type = &vpip_real_var_rt;
       obj->id.name = name ? vpip_name_string(name) : 0;
       obj->is_netarray = 0;
       obj->net = net;
 
       obj->within.scope = vpip_peek_current_scope();
 
-      return &obj->base;
+      return obj;
 }
 
 #ifdef CHECK_WITH_VALGRIND
 void real_delete(vpiHandle item)
 {
-      struct __vpiRealVar*obj = (struct __vpiRealVar*) item;
+      struct __vpiRealVar*obj = dynamic_cast<__vpiRealVar*>(item);
       assert(obj->net->fil);
       obj->net->fil->clear_all_callbacks();
       vvp_net_delete(obj->net);
 
-      free(obj);
+      delete obj;
 }
 #endif

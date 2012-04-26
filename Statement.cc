@@ -276,9 +276,8 @@ PForever::~PForever()
 }
 
 PForStatement::PForStatement(PExpr*n1, PExpr*e1, PExpr*cond,
-			     PExpr*n2, PExpr*e2, Statement*st)
-: name1_(n1), expr1_(e1), cond_(cond), name2_(n2), expr2_(e2),
-  statement_(st)
+			     Statement*step, Statement*st)
+: name1_(n1), expr1_(e1), cond_(cond), step_(step), statement_(st)
 {
 }
 

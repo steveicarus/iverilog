@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -29,6 +29,7 @@
 # include  "netenum.h"
 # include  "discipline.h"
 # include  "netmisc.h"
+# include  "netstruct.h"
 # include  "util.h"
 # include  "ivl_assert.h"
 
@@ -1418,6 +1419,50 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
       return sys_expr;
 }
 
+/*
+ * If the method matches a structure member then return the member otherwise
+ * return 0. Also return the offset of the member.
+ */
+static const netstruct_t::member_t*get_struct_member(const LineInfo*li,
+                                                     Design*des, NetScope*,
+                                                     NetNet*net,
+                                                     perm_string method_name,
+                                                     unsigned long&off)
+{
+      netstruct_t*type = net->struct_type();
+      ivl_assert(*li, type);
+
+      if (! type->packed()) {
+	    cerr << li->get_fileline()
+	         << ": sorry: unpacked structures not supported here. "
+		 << "Method=" << method_name << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      return type->packed_member(method_name, off);
+}
+
+static NetExpr* check_for_struct_members(const LineInfo*li,
+					 Design*des, NetScope*,
+					 NetNet*net, perm_string method_name)
+{
+      unsigned long off;
+      const netstruct_t::member_t*mem = get_struct_member(li, des, 0, net,
+                                                          method_name, off);
+      if (mem == 0) return 0;
+
+      if (debug_elaborate) {
+	    cerr << li->get_fileline() << ": debug: Found struct member " <<mem->name
+		 << " At offset " << off << endl;
+      }
+
+      NetESignal*sig = new NetESignal(net);
+      NetEConst*base = make_const_val(off);
+      NetESelect*sel = new NetESelect(sig, base, mem->width());
+      return sel;
+}
+
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					unsigned expr_wid, unsigned flags) const
 {
@@ -1456,8 +1501,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 		    // enumeration? If so then check to see if this is an
 		    // enumeration method call.
 		  if (net != 0) {
-			netenum_t*netenum = net->enumeration();
-			if (netenum) {
+			if (netenum_t*netenum = net->enumeration()) {
 				// We may need the net expression for the
 				// enumeration variable so get it.
 			      NetESignal*expr = new NetESignal(net);
@@ -1472,6 +1516,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 			                                    expr_wid, tmp,
 			                                    parms_.size());
 			}
+
 		  }
 	    }
 
@@ -1823,6 +1868,17 @@ NetExpr* PEFNumber::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const
       return tmp;
 }
 
+bool PEIdent::calculate_packed_indices_(Design*des, NetScope*scope, NetNet*net,
+					list<long>&prefix_indices) const
+{
+      list<index_component_t> index;
+      index = path_.back().index;
+      for (size_t idx = 0 ; idx < net->array_dimensions() ; idx += 1)
+	    index.pop_front();
+
+      return evaluate_index_prefix(des, scope, prefix_indices, index);
+}
+
 /*
  * Given that the msb_ and lsb_ are part select expressions, this
  * function calculates their values. Note that this method does *not*
@@ -1968,7 +2024,8 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
       const NetExpr*ex1, *ex2;
 
-      symbol_search(0, des, scope, path_, net, par, eve, ex1, ex2);
+      NetScope*found_in = symbol_search(0, des, scope, path_, net, par, eve,
+                                        ex1, ex2);
 
 	// If there is a part/bit select expression, then process it
 	// here. This constrains the results no matter what kind the
@@ -2102,6 +2159,37 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 		  if (mode < LOSSLESS) mode = LOSSLESS;
 	    }
 	    return expr_width_;
+      }
+
+	// If this is SystemVerilog then maybe this is a structure element.
+      if (gn_system_verilog() && found_in==0 && path_.size() >= 2) {
+	    pform_name_t use_path = path_;
+	    perm_string method_name = peek_tail_name(use_path);
+	    use_path.pop_back();
+
+	    found_in = symbol_search(this, des, scope, use_path,
+	                             net, par, eve, ex1, ex2);
+
+	      // Check to see if we have a net and if so is it a structure?
+	    if (net != 0) {
+		    // If this net is a struct, the method name may be
+		    // a struct member.
+		  if (net->struct_type() != 0) {
+			ivl_assert(*this, use_path.back().index.empty());
+
+			const netstruct_t::member_t*mem;
+			unsigned long unused;
+			mem = get_struct_member(this, des, scope, net,
+			                        method_name, unused);
+			if (mem) {
+			      expr_type_   = mem->data_type();
+			      expr_width_  = mem->width();
+			      min_width_   = expr_width_;
+			      signed_flag_ = mem->get_signed();
+			      return expr_width_;
+			}
+		  }
+	    }
       }
 
 	// Not a net, and not a parameter? Give up on the type, but
@@ -2289,8 +2377,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	      // enumeration? If so then check to see if this is an
 	      // enumeration method call.
 	    if (net != 0) {
-		  netenum_t*netenum = net->enumeration();
-		  if (netenum) {
+		    // If this net is actually an enum, the method may
+		    // be an enumeration method.
+		  if (netenum_t*netenum = net->enumeration()) {
 			  // We may need the net expression for the
 			  // enumeration variable so get it.
 			NetESignal*expr = new NetESignal(net);
@@ -2303,6 +2392,16 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			                              use_path, method_name,
 			                              expr, expr_wid, NULL, 0);
 		  }
+
+		    // If this net is a struct, the method name may be
+		    // a struct member.
+		  if (net->struct_type() != 0) {
+			ivl_assert(*this, use_path.back().index.empty());
+
+			return check_for_struct_members(this, des, scope,
+							net, method_name);
+		  }
+
 	    }
       }
 
@@ -2540,7 +2639,7 @@ static void warn_param_ob(long par_msv, long par_lsv, bool defined,
 
 NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 					       const NetExpr*par,
-					       NetScope*,
+					       NetScope*found_in,
 					       const NetExpr*par_msb,
 					       const NetExpr*par_lsb,
                                                bool need_const) const
@@ -2613,6 +2712,12 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
       base = normalize_variable_base(base, par_msv, par_lsv, wid, true);
 
       NetExpr*tmp = par->dup_expr();
+      if (!tmp) return 0;
+
+	/* The numeric parameter value needs to have the file and line
+	 * information for the actual parameter not the expression. */
+      NetScope::param_ref_t pref = found_in->find_parameter(peek_tail_name(path_));
+      tmp->set_line((*pref).second);
       tmp = new NetESelect(tmp, base, wid, IVL_SEL_IDX_UP);
       tmp->set_line(*this);
       return tmp;
@@ -2620,7 +2725,7 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 
 NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 					       const NetExpr*par,
-					       NetScope*,
+					       NetScope*found_in,
 					       const NetExpr*par_msb,
 					       const NetExpr*par_lsb,
                                                bool need_const) const
@@ -2694,6 +2799,12 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
       base = normalize_variable_base(base, par_msv, par_lsv, wid, false);
 
       NetExpr*tmp = par->dup_expr();
+      if (!tmp) return 0;
+
+	/* The numeric parameter value needs to have the file and line
+	 * information for the actual parameter not the expression. */
+      NetScope::param_ref_t pref = found_in->find_parameter(peek_tail_name(path_));
+      tmp->set_line((*pref).second);
       tmp = new NetESelect(tmp, base, wid, IVL_SEL_IDX_DOWN);
       tmp->set_line(*this);
       return tmp;
@@ -2748,8 +2859,14 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 	// rewritten in the above format, as I get to it.
 
       NetExpr*tmp = par->dup_expr();
-      if (!tmp)
-            return 0;
+      if (!tmp) return 0;
+
+	/* The numeric parameter value needs to have the file and line
+	 * information for the actual parameter not the expression. */
+      if (! dynamic_cast<NetEConstEnum*>(tmp)) {
+	    NetScope::param_ref_t pref = found_in->find_parameter(peek_tail_name(path_));
+	    tmp->set_line((*pref).second);
+      }
 
       if (use_sel == index_component_t::SEL_BIT) {
 	    ivl_assert(*this, !name_tail.index.empty());
@@ -2846,6 +2963,7 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 
 
 		  NetEConst*re2 = new NetEConst(verinum(rb, 1));
+		  re2->set_line(*this);
 		  delete tmp;
 		  delete mtmp;
 		  tmp = re2;
@@ -2911,7 +3029,6 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 	    }
       }
 
-      tmp->set_line(*this);
       return tmp;
 }
 
@@ -3041,6 +3158,10 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 				           NetESignal*net, NetScope*,
                                            unsigned expr_wid) const
 {
+      list<long> prefix_indices;
+      bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
+      ivl_assert(*this, rc);
+
       long msv, lsv;
       bool parts_defined_flag;
       bool flag = calculate_parts_(des, scope, msv, lsv, parts_defined_flag);
@@ -3073,9 +3194,8 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	    tmp->set_line(*this);
 	    return tmp;
       }
-
-      long sb_lsb = net->sig()->sb_to_idx(lsv);
-      long sb_msb = net->sig()->sb_to_idx(msv);
+      long sb_lsb = net->sig()->sb_to_idx(prefix_indices, lsv);
+      long sb_msb = net->sig()->sb_to_idx(prefix_indices, msv);
 
       if (sb_msb < sb_lsb) {
 	    cerr << get_fileline() << ": error: part select " << net->name();
@@ -3147,6 +3267,10 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 				             NetESignal*net, NetScope*,
                                              bool need_const) const
 {
+      list<long>prefix_indices;
+      bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
+      ivl_assert(*this, rc);
+
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
 
       unsigned long wid = 0;
@@ -3160,27 +3284,32 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 	    NetExpr*ex;
 	    if (base_c->value().is_defined()) {
 		  long lsv = base_c->value().as_long();
+		  long offset = 0;
+		    // Get the signal range.
+		  const list<NetNet::range_t>&packed = net->sig()->packed_dims();
+		  ivl_assert(*this, packed.size() == prefix_indices.size()+1);
+
+		    // We want the last range, which is where we work.
+		  const NetNet::range_t&rng = packed.back();
+		  if (rng.msb < rng.lsb) {
+			offset = -wid + 1;
+		  }
+
+		  long rel_base = net->sig()->sb_to_idx(prefix_indices, lsv);
 
 		    // If the part select covers exactly the entire
 		    // vector, then do not bother with it. Return the
 		    // signal itself.
-		  if (net->sig()->sb_to_idx(lsv) == 0 &&
-		      wid == net->vector_width()) {
+		  if (rel_base == 0 && wid == net->vector_width()) {
 			delete base;
 			net->cast_signed(false);
 			return net;
 		  }
 
-		  long offset = 0;
-		  if (net->msi() < net->lsi()) {
-			offset = -wid + 1;
-		  }
 		    // Otherwise, make a part select that covers the right
 		    // range.
-		  ex = new NetEConst(verinum(net->sig()->sb_to_idx(lsv) +
-		                             offset));
+		  ex = new NetEConst(verinum(rel_base + offset));
 		  if (warn_ob_select) {
-			long rel_base = net->sig()->sb_to_idx(lsv) + offset;
 			if (rel_base < 0) {
 			      cerr << get_fileline() << ": warning: "
 			           << net->name();
@@ -3216,7 +3345,12 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 	    return ss;
       }
 
-      base = normalize_variable_base(base, net->msi(), net->lsi(), wid, true);
+
+      ivl_assert(*this, prefix_indices.size()+1 == net->sig()->packed_dims().size());
+
+	// Convert the non-constant part select index expression into
+	// an expression that returns a canonical base.
+      base = normalize_variable_part_base(prefix_indices, base, net->sig(), wid, true);
 
       NetESelect*ss = new NetESelect(net, base, wid, IVL_SEL_IDX_UP);
       ss->set_line(*this);
@@ -3236,6 +3370,10 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 					     NetESignal*net, NetScope*,
                                              bool need_const) const
 {
+      list<long>prefix_indices;
+      bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
+      ivl_assert(*this, rc);
+
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
 
       unsigned long wid = 0;
@@ -3252,7 +3390,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 		    // If the part select covers exactly the entire
 		    // vector, then do not bother with it. Return the
 		    // signal itself.
-		  if (net->sig()->sb_to_idx(lsv) == (signed) (wid-1) &&
+		  if (net->sig()->sb_to_idx(prefix_indices,lsv) == (signed) (wid-1) &&
 		      wid == net->vector_width()) {
 			delete base;
 			net->cast_signed(false);
@@ -3265,10 +3403,9 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 		  }
 		    // Otherwise, make a part select that covers the right
 		    // range.
-		  ex = new NetEConst(verinum(net->sig()->sb_to_idx(lsv) +
-		                             offset));
+		  ex = new NetEConst(verinum(net->sig()->sb_to_idx(prefix_indices,lsv) + offset));
 		  if (warn_ob_select) {
-			long rel_base = net->sig()->sb_to_idx(lsv) + offset;
+			long rel_base = net->sig()->sb_to_idx(prefix_indices,lsv) + offset;
 			if (rel_base < 0) {
 			      cerr << get_fileline() << ": warning: "
 			           << net->name();
@@ -3321,6 +3458,10 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 				          NetESignal*net, NetScope*,
                                           bool need_const) const
 {
+      list<long>prefix_indices;
+      bool rc = calculate_packed_indices_(des, scope, net->sig(), prefix_indices);
+      ivl_assert(*this, rc);
+
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
 
@@ -3328,12 +3469,12 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
       ivl_assert(*this, index_tail.msb != 0);
       ivl_assert(*this, index_tail.lsb == 0);
 
-      NetExpr*ex = elab_and_eval(des, scope, index_tail.msb, -1, need_const);
+      NetExpr*mux = elab_and_eval(des, scope, index_tail.msb, -1, need_const);
 
 	// If the bit select is constant, then treat it similar
 	// to the part select, so that I save the effort of
 	// making a mux part in the netlist.
-      if (NetEConst*msc = dynamic_cast<NetEConst*> (ex)) {
+      if (NetEConst*msc = dynamic_cast<NetEConst*> (mux)) {
 
 	      // Special case: The bit select expression is constant
 	      // x/z. The result of the expression is 1'bx.
@@ -3354,12 +3495,35 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 
 		  NetEConst*tmp = make_const_x(1);
 		  tmp->set_line(*this);
-		  delete ex;
+		  delete mux;
 		  return tmp;
 	    }
 
 	    long msv = msc->value().as_long();
-	    long idx = net->sig()->sb_to_idx(msv);
+
+	    const list<NetNet::range_t>& sig_packed = net->sig()->packed_dims();
+	    if (prefix_indices.size()+2 <= sig_packed.size()) {
+		    // Special case: this is a slice of a multi-dimensional
+		    // packed array. For example:
+		    //   reg [3:0][7:0] x;
+		    //   ... x[2] ...
+		    // This shows up as the prefix_indices being too short
+		    // for the packed dimensions of the vector. What we do
+		    // here is convert to a "slice" of the vector.
+		  unsigned long lwid;
+		  long idx;
+		  rc = net->sig()->sb_to_slice(prefix_indices, msv, idx, lwid);
+
+		    // Make an expression out of the index
+		  NetEConst*idx_c = new NetEConst(verinum(idx));
+		  idx_c->set_line(*net);
+
+		  NetESelect*res = new NetESelect(net, idx_c, lwid);
+		  res->set_line(*net);
+		  return res;
+	    }
+
+	    long idx = net->sig()->sb_to_idx(prefix_indices,msv);
 
 	    if (idx >= (long)net->vector_width() || idx < 0) {
 		    /* The bit select is out of range of the
@@ -3375,8 +3539,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 			else cerr << "vector ";
 			cerr << net->name();
 			if (net->word_index()) cerr << "[]";
-			cerr  << "[" << net->sig()->msb() << ":"
-			      << net->sig()->lsb() << "]." << endl;
+			cerr  << net->sig()->packed_dims() << "." << endl;
 			cerr << get_fileline() << ":        : "
 			     << "Replacing select with a constant 1'bx."
 			     << endl;
@@ -3385,7 +3548,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 		  NetEConst*tmp = make_const_x(1);
 		  tmp->set_line(*this);
 
-		  delete ex;
+		  delete mux;
 		  return tmp;
 	    }
 
@@ -3405,15 +3568,35 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	    return res;
       }
 
+      const list<NetNet::range_t>& sig_packed = net->sig()->packed_dims();
+      if (prefix_indices.size()+2 <= sig_packed.size()) {
+	      // Special case: this is a slice of a multi-dimensional
+	      // packed array. For example:
+	      //   reg [3:0][7:0] x;
+	      //   x[2] = ...
+	      // This shows up as the prefix_indices being too short
+	      // for the packed dimensions of the vector. What we do
+	      // here is convert to a "slice" of the vector.
+	    unsigned long lwid;
+	    mux = normalize_variable_slice_base(prefix_indices, mux,
+						net->sig(), lwid);
+	    mux->set_line(*net);
+
+	      // Make a PART select with the canonical index
+	    NetESelect*res = new NetESelect(net, mux, lwid);
+	    res->set_line(*net);
+
+	    return res;
+      }
+
 	// Non-constant bit select? punt and make a subsignal
 	// device to mux the bit in the net. This is a fairly
 	// complicated task because we need to generate
 	// expressions to convert calculated bit select
 	// values to canonical values that are used internally.
-      ex = normalize_variable_base(ex, net->sig()->msb(), net->sig()->lsb(),
-                                   1, true);
+      mux = normalize_variable_bit_base(prefix_indices, mux, net->sig());
 
-      NetESelect*ss = new NetESelect(net, ex, 1);
+      NetESelect*ss = new NetESelect(net, mux, 1);
       ss->set_line(*this);
       return ss;
 }
@@ -3445,6 +3628,10 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    return 0;
       }
+
+      list<long> prefix_indices;
+      bool rc = evaluate_index_prefix(des, scope, prefix_indices, path_.back().index);
+      if (!rc) return 0;
 
 	// If this is a part select of a signal, then make a new
 	// temporary signal that is connected to just the

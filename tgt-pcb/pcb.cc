@@ -24,7 +24,9 @@
 # include "version_base.h"
 # include "version_tag.h"
 # include "pcb_config.h"
-# include  <string.h>
+# include  <cassert>
+# include  <cstdio>
+# include  <cstring>
 # include  "pcb_priv.h"
 # include  "ivl_target.h"
 

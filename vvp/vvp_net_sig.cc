@@ -30,9 +30,26 @@
 
 # include  <iostream>
 
+/*
+ * The filter_mask_ method takes as an input the value to propagate,
+ * the mask of what is being forced, and returns a propagation
+ * mode. In the process, it may update the filtered output value.
+ *
+ * The input value is the subvector "val" that is placed as "base" in
+ * the output. The val may be shorter then the target vector.
+ *
+ * The "force" vector in the value being force, with the force_mask_
+ * member a bit mask of which parts of the force vector really apply.
+ */
 template <class T> vvp_net_fil_t::prop_t vvp_net_fil_t::filter_mask_(const T&val, const T&force, T&filter, unsigned base)
 {
       if (!test_force_mask_is_zero()) {
+	      // Some bits are being forced. Go through the
+	      // force_mask_ and force value to see which bits are
+	      // propagated and which are kept from the forced
+	      // value. Update the filter with the filtered result and
+	      // return REPL to indicate that some bits have changed,
+	      // or STOP if no bits change.
 	    bool propagate_flag = force_propagate_;
 	    force_propagate_ = false;
 	    assert(force_mask_.size() == force.size());
@@ -639,7 +656,8 @@ vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec4(const vvp_vector4_t&bit, vvp_ve
 	    if (bits4_ .eeq( bit ) && !needs_init_) return STOP;
 	    bits4_ = bit;
       } else {
-	    bits4_.set_vec(base, bit);
+	    bool rc = bits4_.set_vec(base, bit);
+	    if (rc == false && !needs_init_) return STOP;
       }
 
       needs_init_ = false;
@@ -651,12 +669,21 @@ vvp_net_fil_t::prop_t vvp_wire_vec4::filter_vec8(const vvp_vector8_t&bit,
                                                  unsigned base,
                                                  unsigned vwid)
 {
-	// For now there is no support for a non-zero base.
-      assert(0 == base);
       assert(bits4_.size() == vwid);
-      assert(bits4_.size() == bit.size());
-      bits4_ = reduce4(bit);
-      return filter_mask_(bit, vvp_vector8_t(force4_,6,6), rep, 0);
+
+	// Keep track of the value being driven from this net, even if
+	// it is not ultimately what survives the force filter.
+      vvp_vector4_t bit4 (reduce4(bit));
+      if (base==0 && bit4.size()==vwid) {
+	    if (bits4_ .eeq( bit4 ) && !needs_init_) return STOP;
+	    bits4_ = bit4;
+      } else {
+	    bool rc = bits4_.set_vec(base, bit4);
+	    if (rc == false && !needs_init_) return STOP;
+      }
+
+      needs_init_ = false;
+      return filter_mask_(bit, vvp_vector8_t(force4_,6,6), rep, base);
 }
 
 unsigned vvp_wire_vec4::filter_size() const

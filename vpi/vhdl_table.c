@@ -104,7 +104,7 @@ static PLI_INT32 ivlh_attribute_event_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpi_register_cb(&cb);
       vpi_put_userdata(sys, mon);
 
-	/* Check that there are no more then one argument. */
+	/* Check that there is no more than one argument. */
       arg = vpi_scan(argv);
       if (arg != 0) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, sys),

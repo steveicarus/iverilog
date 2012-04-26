@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,6 +22,7 @@
 # include  "PExpr.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "netstruct.h"
 # include  "compiler.h"
 
 # include  <cstdlib>
@@ -199,6 +200,10 @@ bool PEConcat::is_collapsible_net(Design*des, NetScope*scope) const
 bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 				long&midx, long&lidx) const
 {
+      list<long> prefix_indices;
+      bool rc = calculate_packed_indices_(des, scope, sig, prefix_indices);
+      ivl_assert(*this, rc);
+
       const name_component_t&name_tail = path_.back();
 	// Only treat as part/bit selects any index that is beyond the
 	// word selects for an array. This is not an array, then
@@ -257,13 +262,13 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		}
 
 		long midx_val = tmp->value().as_long();
-		midx = sig->sb_to_idx(midx_val);
+		midx = sig->sb_to_idx(prefix_indices, midx_val);
 		delete tmp_ex;
 
 		if (index_tail.sel == index_component_t::SEL_IDX_UP)
-		      lidx = sig->sb_to_idx(midx_val+wid-1);
+		      lidx = sig->sb_to_idx(prefix_indices, midx_val+wid-1);
 		else
-		      lidx = sig->sb_to_idx(midx_val-wid+1);
+		      lidx = sig->sb_to_idx(prefix_indices, midx_val-wid+1);
 
 		if (midx < lidx) {
 		      long tmpx = midx;
@@ -312,8 +317,8 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		/* bool flag = */ calculate_parts_(des, scope, msb, lsb, part_defined_flag);
 		ivl_assert(*this, part_defined_flag);
 
-		long lidx_tmp = sig->sb_to_idx(lsb);
-		long midx_tmp = sig->sb_to_idx(msb);
+		long lidx_tmp = sig->sb_to_idx(prefix_indices, lsb);
+		long midx_tmp = sig->sb_to_idx(prefix_indices, msb);
 		  /* Detect reversed indices of a part select. */
 		if (lidx_tmp > midx_tmp) {
 		      cerr << get_fileline() << ": error: Part select "
@@ -369,7 +374,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		  }
 		  assert(mval);
 
-		  midx = sig->sb_to_idx(mval->as_long());
+		  midx = sig->sb_to_idx(prefix_indices, mval->as_long());
 		  if (midx >= (long)sig->vector_width()) {
 			cerr << get_fileline() << ": error: Index " << sig->name()
 			     << "[" << mval->as_long() << "] is out of range."
@@ -405,6 +410,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       NetNet*       sig = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
+      perm_string method_name;
 
       symbol_search(this, des, scope, path_, sig, par, eve);
 
@@ -414,6 +420,23 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		 << "assignments." << endl;
 	    des->errors += 1;
 	    return 0;
+      }
+
+	/* If the signal is not found, check to see if this is a
+	   member of a struct. Take the name of the form "a.b.member",
+	   remove the member and store it into method_name, and retry
+	   the search with "a.b". */
+      if (sig == 0 && path_.size() >= 2) {
+	    pform_name_t use_path = path_;
+	    method_name = peek_tail_name(use_path);
+	    use_path.pop_back();
+	    symbol_search(this, des, scope, use_path, sig, par, eve);
+
+	      // Whoops, not a struct signal, so give up on this avenue.
+	    if (sig && sig->struct_type() == 0) {
+		  method_name = perm_string();
+		  sig = 0;
+	    }
       }
 
       if (sig == 0) {
@@ -432,13 +455,6 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	  && (sig->type() == NetNet::REG)
 	  && (sig->peek_eref() == 0) ) {
 	    sig->type(NetNet::UNRESOLVED_WIRE);
-      }
-
-      if (sig->type() == NetNet::UNRESOLVED_WIRE && sig->pin(0).is_linked()) {
-	    cerr << get_fileline() << ": error: Unresolved net/uwire "
-	         << sig->name() << " cannot have multiple drivers." << endl;
-	    des->errors += 1;
-	    return 0;
       }
 
 	/* Don't allow registers as assign l-values. */
@@ -460,7 +476,26 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 
       const name_component_t&name_tail = path_.back();
 
-      if (sig->array_dimensions() > 0) {
+      netstruct_t*struct_type = 0;
+      if ((struct_type = sig->struct_type()) && !method_name.nil()) {
+
+	      // Detect the variable is a structure and there was a
+	      // method name detected.
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "Signal " << sig->name() << " is a structure, "
+		       << "try to match member " << method_name << endl;
+
+	    unsigned long member_off = 0;
+	    const struct netstruct_t::member_t*member = struct_type->packed_member(method_name, member_off);
+	    ivl_assert(*this, member);
+
+	      // Rewrite a member select of a packed structure as a
+	      // part select of the base variable.
+	    lidx = member_off;
+	    midx = lidx + member->width() - 1;
+
+      } else if (sig->array_dimensions() > 0) {
 
 	    if (name_tail.index.empty()) {
 		  cerr << get_fileline() << ": error: array " << sig->name()
@@ -552,6 +587,14 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       }
 
       unsigned subnet_wid = midx-lidx+1;
+
+	/* Check if the l-value bits are double-driven. */
+      if (sig->type() == NetNet::UNRESOLVED_WIRE && sig->test_part_lref(midx,lidx)) {
+	    cerr << get_fileline() << ": error: Unresolved net/uwire "
+	         << sig->name() << " cannot have multiple drivers." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
       if (sig->pin_count() > 1) {
 	    if (widx < 0 || widx >= (long) sig->pin_count()) {
@@ -659,6 +702,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 	  case NetNet::PINPUT:
 	  case NetNet::POUTPUT:
 	  case NetNet::PINOUT:
+	  case NetNet::PREF:
 	    break;
 
 	      /* If the name matches, but the signal is not a port,
@@ -726,6 +770,9 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 	    sig = tmp;
 	    break;
 
+	  case NetNet::PREF:
+	      // For the purposes of module ports, treat ref ports
+	      // just like inout ports.
 	  case NetNet::PINOUT:
 	    ps = new NetTran(scope, scope->local_symbol(), sig->vector_width(),
 			     swid, lidx);

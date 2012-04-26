@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2011 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2012 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -346,7 +346,7 @@ void PEIdent::declare_implicit_nets(LexicalScope*scope, NetNet::Type type)
             PWire*net = new PWire(name, type, NetNet::NOT_A_PORT, IVL_VT_LOGIC);
             net->set_file(get_file());
             net->set_lineno(get_lineno());
-            net->set_range(0, 0, SR_NET, true);
+            net->set_range_scalar(SR_NET);
             scope->wires[name] = net;
             if (warn_implicit) {
                   cerr << get_fileline() << ": warning: implicit "
