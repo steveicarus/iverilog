@@ -1442,6 +1442,58 @@ static const netstruct_t::member_t*get_struct_member(const LineInfo*li,
 
       return type->packed_member(method_name, off);
 }
+
+bool calculate_part(const LineInfo*li, Design*des, NetScope*scope,
+		    const index_component_t&index, long&off, unsigned long&wid)
+{
+	// Evaluate the last index expression into a constant long.
+      NetExpr*texpr = elab_and_eval(des, scope, index.msb, -1, true);
+      long msb;
+      if (texpr == 0 || !eval_as_long(msb, texpr)) {
+	    cerr << li->get_fileline() << ": error: "
+		  "Array/part index expressions must be constant here." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      delete texpr;
+
+      long lsb = msb;
+      if (index.lsb) {
+	    texpr = elab_and_eval(des, scope, index.lsb, -1, true);
+	    if (texpr==0 || !eval_as_long(lsb, texpr)) {
+		  cerr << li->get_fileline() << ": error: "
+			"Array/part index expressions must be constant here." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+
+	    delete texpr;
+      }
+
+      switch (index.sel) {
+	  case index_component_t::SEL_BIT:
+	    off = msb;
+	    wid = 1;
+	    return true;
+
+	  case index_component_t::SEL_PART:
+	    if (msb >= lsb) {
+		  off = lsb;
+		  wid = msb - lsb + 1;
+	    } else {
+		  off = msb;
+		  wid = lsb - msb + 1;
+	    }
+	    return true;
+
+	  default:
+	    ivl_assert(*li, 0);
+	    break;
+      }
+      return true;
+}
+
 /*
  * Test if the tail name (method_name argument) is a member name and
  * the net is a struct. If that turns out to be the case, and the
@@ -1457,12 +1509,14 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
                                                           comp.name, off);
       if (mem == 0) return 0;
 
-      if (debug_elaborate) {
-	    cerr << li->get_fileline() << ": debug: Found struct member " << mem->name
-		 << " At offset " << off << endl;
-      }
-
       unsigned use_width = mem->width();
+
+      if (debug_elaborate) {
+	    cerr << li->get_fileline() << ": check_for_struct_members: "
+		 << "Found struct member " << mem->name
+		 << " At offset " << off
+		 << ", member width = " << use_width << endl;
+      }
 
       if ( ! comp.index.empty() ) {
 	      // Evaluate all but the last index expression, into prefix_indices.
@@ -1470,26 +1524,38 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 	    bool rc = evaluate_index_prefix(des, scope, prefix_indices, comp.index);
 	    ivl_assert(*li, rc);
 
-	      // Evaluate the last index expression into a constant long.
-	    NetExpr*texpr = elab_and_eval(des, scope, comp.index.back().msb, -1, true);
-	    long tmp;
-	    if (texpr == 0 || !eval_as_long(tmp, texpr)) {
-		  cerr << li->get_fileline() << ": error: "
-			"Array index expressions must be constant here." << endl;
-		  des->errors += 1;
-		  return false;
-	    }
+	      // Make sure that index values that select array
+	      // elements are in fact like bit selects. The tail may
+	      // be part selects only if we are taking the part-select
+	      // of the word of an array.
+	    ivl_assert(*li, comp.index.size() >= mem->packed_dims.size() || comp.index.back().sel == index_component_t::SEL_BIT);
 
-	    delete texpr;
+	      // Evaluate the part/bit select expressions. This may be
+	      // a bit select or a part select. In any case, assume
+	      // the arguments are constant and generate a part select
+	      // of the appropriate width.
+	    long poff = 0;
+	    unsigned long pwid = 0;
+	    rc = calculate_part(li, des, scope, comp.index.back(), poff, pwid);
+	    ivl_assert(*li, rc);
 
 	      // Now use the prefix_to_slice function to calculate the
 	      // offset and width of the addressed slice of the member.
 	    long loff;
 	    unsigned long lwid;
-	    prefix_to_slice(mem->packed_dims, prefix_indices, tmp, loff, lwid);
+	    prefix_to_slice(mem->packed_dims, prefix_indices, poff, loff, lwid);
+
+	    if (debug_elaborate) {
+		  cerr << li->get_fileline() << ": check_for_struct_members: "
+		       << "Evaluate prefix gives slice loff=" << loff
+		       << ", lwid=" << lwid << ", part select pwid=" << pwid << endl;
+	    }
 
 	    off += loff;
-	    use_width = lwid;
+	    if (comp.index.size() >= mem->packed_dims.size())
+		  use_width = pwid;
+	    else
+		  use_width = lwid;
       }
 
       NetESignal*sig = new NetESignal(net);
@@ -2288,6 +2354,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
             scope->is_const_func(false);
       }
 
+      if (debug_elaborate)
+	    cerr << get_fileline() << ": PEIdent::elaborate_expr: path_=" << path_ << endl;
+
       NetScope*found_in = symbol_search(this, des, scope, path_,
 					net, par, eve,
 					ex1, ex2);
@@ -2387,6 +2456,11 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    pform_name_t use_path = path_;
 	    name_component_t member_comp = use_path.back();
 	    use_path.pop_back();
+
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+		       << "Look for base_path " << use_path
+		       << " for member " << member_comp << "." << endl;
 
 	    found_in = symbol_search(this, des, scope, use_path,
 	                             net, par, eve, ex1, ex2);
