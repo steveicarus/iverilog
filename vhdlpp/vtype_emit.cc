@@ -33,54 +33,54 @@ int VType::decl_t::emit(ostream&out, perm_string name) const
 }
 
 
-int VTypeArray::emit_def(ostream&out, perm_string name) const
+int VType::emit_decl(ostream&out, perm_string name, bool reg_flag) const
 {
       int errors = 0;
 
-      if (const VTypeArray*sub = dynamic_cast<const VTypeArray*> (etype_)) {
-	    sub->emit_def(out, name);
-	    assert(dimensions() == 1);
-	    out << "[";
-	    errors += dimension(0).msb()->emit(out, 0, 0);
-	    out << ":";
-	    errors += dimension(0).lsb()->emit(out, 0, 0);
-	    out << "] ";
-	    return errors;
+      if (!reg_flag)
+	    out << "wire ";
+
+      errors += emit_def(out);
+
+      out << " \\" << name << " ";
+      return errors;
+}
+
+int VTypeArray::emit_def(ostream&out) const
+{
+      int errors = 0;
+
+      list<const VTypeArray*> dims;
+      const VTypeArray*cur = this;
+      while (const VTypeArray*sub = dynamic_cast<const VTypeArray*> (cur->etype_)) {
+	    dims.push_back(cur);
+	    cur = sub;
       }
 
-      const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*> (etype_);
+      const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*> (cur->etype_);
       assert(base != 0);
       assert(dimensions() == 1);
 
       base->emit_primitive_type(out);
       if (signed_flag_)
-	    out << "signed ";
+	    out << " signed";
 
-      out << "[";
-      errors += dimension(0).msb()->emit(out, 0, 0);
-      out << ":";
-      errors += dimension(0).lsb()->emit(out, 0, 0);
-      out << "] ";
+      dims.push_back(cur);
 
-      out << "\\" << name << " ";
-
-      return errors;
-}
-
-int VTypeArray::emit_decl(ostream&out, perm_string name, bool reg_flag) const
-{
-      int errors = 0;
-      assert(dimensions() == 1);
-
-      if (!reg_flag)
-	    out << "wire ";
-
-      errors += emit_def(out, name);
+      while (! dims.empty()) {
+	    cur = dims.front();
+	    dims.pop_front();
+	    out << "[";
+	    errors += cur->dimension(0).msb()->emit(out, 0, 0);
+	    out << ":";
+	    errors += cur->dimension(0).lsb()->emit(out, 0, 0);
+	    out << "]";
+      }
 
       return errors;
 }
 
-int VTypeEnum::emit_def(ostream&out, perm_string name) const
+int VTypeEnum::emit_def(ostream&out) const
 {
       int errors = 0;
       out << "enum {";
@@ -89,15 +89,8 @@ int VTypeEnum::emit_def(ostream&out, perm_string name) const
       for (size_t idx = 1 ; idx < names_.size() ; idx += 1)
 	    out << ", \\" << names_[idx] << " ";
 
-      out << "} \\" << name << " ";
+      out << "}";
 
-      return errors;
-}
-
-int VTypeEnum::emit_decl(ostream&out, perm_string name, bool reg_flag) const
-{
-      int errors = 0;
-      errors += emit_def(out, name);
       return errors;
 }
 
@@ -107,13 +100,13 @@ int VTypePrimitive::emit_primitive_type(ostream&out) const
       switch (type_) {
 	  case BOOLEAN:
 	  case BIT:
-	    out << "bool ";
+	    out << "bool";
 	    break;
 	  case STDLOGIC:
-	    out << "logic ";
+	    out << "logic";
 	    break;
 	  case INTEGER:
-	    out << "bool [31:0] ";
+	    out << "bool [31:0]";
 	    break;
 	  default:
 	    assert(0);
@@ -122,40 +115,22 @@ int VTypePrimitive::emit_primitive_type(ostream&out) const
       return errors;
 }
 
-int VTypePrimitive::emit_def(ostream&out, perm_string name) const
+int VTypePrimitive::emit_def(ostream&out) const
 {
       int errors = 0;
       errors += emit_primitive_type(out);
-      out << "\\" << name << " ";
       return errors;
 }
 
-int VTypePrimitive::emit_decl(ostream&out, perm_string name, bool reg_flag) const
-{
-      int errors = 0;
-      if (!reg_flag)
-	    out << "wire ";
-
-      errors += emit_def(out, name);
-
-      return errors;
-}
-
-int VTypeRange::emit_def(ostream&out, perm_string name) const
+int VTypeRange::emit_def(ostream&out) const
 {
       int errors = 0;
       assert(0);
+      out << "/* Internal error: Don't know how to emit type */";
       return errors;
 }
 
-int VTypeRange::emit_decl(ostream&out, perm_string name, bool reg_flag) const
-{
-      int errors = 0;
-      assert(0);
-      return errors;
-}
-
-int VTypeRecord::emit_def(ostream&out, perm_string name) const
+int VTypeRecord::emit_def(ostream&out) const
 {
       int errors = 0;
       out << "struct packed {";
@@ -164,22 +139,15 @@ int VTypeRecord::emit_def(ostream&out, perm_string name) const
 		 ; cur != elements_.end() ; ++cur) {
 	    perm_string element_name = (*cur)->peek_name();
 	    const VType*element_type = (*cur)->peek_type();
-	    element_type->emit_def(out, element_name);
-	    out << "; ";
+	    element_type->emit_def(out);
+	    out << " \\" << element_name << " ; ";
       }
 
-      out << "} \\" << name << " ";
+      out << "}";
       return errors;
 }
 
-int VTypeRecord::emit_decl(ostream&out, perm_string name, bool reg_flag) const
-{
-      int errors = 0;
-      errors += emit_def(out, name);
-      return errors;
-}
-
-int VTypeDef::emit_def(ostream&out, perm_string name) const
+int VTypeDef::emit_def(ostream&) const
 {
       int errors = 0;
       assert(0);
@@ -202,7 +170,7 @@ int VTypeDef::emit_typedef(ostream&out) const
 {
       int errors = 0;
       out << "typedef ";
-      errors += type_->emit_def(out, name_);
-      out << ";" << endl;
+      errors += type_->emit_def(out);
+      out << " \\" << name_ << " ;" << endl;
       return errors;
 }
