@@ -1879,6 +1879,43 @@ bool PEIdent::calculate_packed_indices_(Design*des, NetScope*scope, NetNet*net,
       return evaluate_index_prefix(des, scope, prefix_indices, index);
 }
 
+
+bool PEIdent::calculate_bits_(Design*des, NetScope*scope,
+			      long&msb, bool&defined) const
+{
+      defined = true;
+      const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, !name_tail.index.empty());
+
+      const index_component_t&index_tail = name_tail.index.back();
+      ivl_assert(*this, index_tail.sel == index_component_t::SEL_BIT);
+      ivl_assert(*this, index_tail.msb && !index_tail.lsb);
+
+	/* This handles bit selects. In this case, there in one
+	   bit select expressions which must be constant. */
+
+      NetExpr*msb_ex = elab_and_eval(des, scope, index_tail.msb, -1, true);
+      NetEConst*msb_c = dynamic_cast<NetEConst*>(msb_ex);
+      if (msb_c == 0) {
+	    cerr << index_tail.msb->get_fileline() << ": error: "
+		  "Bit select expressionsmust be constant."
+		 << endl;
+	    cerr << index_tail.msb->get_fileline() << ":      : "
+                  "This msb expression violates the rule: "
+                 << *index_tail.msb << endl;
+	    des->errors += 1;
+              /* Attempt to recover from error. */
+            msb = 0;
+      } else {
+	    if (! msb_c->value().is_defined())
+		  defined = false;
+            msb = msb_c->value().as_long();
+      }
+
+      delete msb_ex;
+      return true;
+}
+
 /*
  * Given that the msb_ and lsb_ are part select expressions, this
  * function calculates their values. Note that this method does *not*
