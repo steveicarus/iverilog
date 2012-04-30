@@ -158,6 +158,7 @@ bool warn_inf_loop = false;
 bool warn_ob_select = false;
 bool warn_sens_entire_vec = false;
 bool warn_sens_entire_arr = false;
+bool warn_anachronisms = false;
 
 /*
  * Debug message class flags.
@@ -666,6 +667,9 @@ static void read_iconfig_file(const char*ipath)
 			break;
 		      case 'a':
 			warn_sens_entire_arr = true;
+			break;
+		      case 'n':
+			warn_anachronisms = true;
 			break;
 		      default:
 			break;

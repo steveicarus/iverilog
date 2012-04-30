@@ -136,7 +136,7 @@ int gen_std_include = 1;
    of the include list. */
 int gen_relative_include = 0;
 
-char warning_flags[16] = "";
+char warning_flags[16] = "n";
 
 unsigned integer_width = 32;
 
@@ -491,11 +491,15 @@ static int t_compile()
 static void process_warning_switch(const char*name)
 {
       if (strcmp(name,"all") == 0) {
+	    process_warning_switch("anachronisms");
 	    process_warning_switch("implicit");
 	    process_warning_switch("portbind");
 	    process_warning_switch("select-range");
 	    process_warning_switch("timescale");
 	    process_warning_switch("sensitivity-entire-array");
+      } else if (strcmp(name,"anachronisms") == 0) {
+	    if (! strchr(warning_flags, 'n'))
+		  strcat(warning_flags, "n");
       } else if (strcmp(name,"implicit") == 0) {
 	    if (! strchr(warning_flags, 'i'))
 		  strcat(warning_flags, "i");
@@ -519,6 +523,12 @@ static void process_warning_switch(const char*name)
       } else if (strcmp(name,"sensitivity-entire-array") == 0) {
 	    if (! strchr(warning_flags, 'a'))
 		  strcat(warning_flags, "a");
+      } else if (strcmp(name,"no-anachronisms") == 0) {
+	    char*cp = strchr(warning_flags, 'n');
+	    if (cp) while (*cp) {
+		  cp[0] = cp[1];
+		  cp += 1;
+	    }
       } else if (strcmp(name,"no-implicit") == 0) {
 	    char*cp = strchr(warning_flags, 'i');
 	    if (cp) while (*cp) {

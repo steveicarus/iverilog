@@ -4272,7 +4272,7 @@ module_item
   /* Handle some anachronistic syntax cases. */
   | K_generate K_begin module_item_list_opt K_end K_endgenerate
       { /* Detect and warn about anachronistic begin/end use */
-	if (generation_flag > GN_VER2001) {
+	if (generation_flag > GN_VER2001 && warn_anachronisms) {
 	      warn_count += 1;
 	      cerr << @2 << ": warning: Anachronistic use of begin/end to surround generate schemes." << endl;
 	}
@@ -4281,7 +4281,7 @@ module_item
 	pform_start_generate_nblock(@2, $4);
       } module_item_list_opt K_end K_endgenerate
       { /* Detect and warn about anachronistic named begin/end use */
-	if (generation_flag > GN_VER2001) {
+	if (generation_flag > GN_VER2001 && warn_anachronisms) {
 	      warn_count += 1;
 	      cerr << @2 << ": warning: Anachronistic use of named begin/end to surround generate schemes." << endl;
 	}
