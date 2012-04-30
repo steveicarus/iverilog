@@ -387,9 +387,20 @@ bool PGenerate::elaborate_sig_direct_(Design*des, NetScope*container) const
       for (generate_it_t cur = generate_schemes.begin()
 		 ; cur != generate_schemes.end() ; ++ cur ) {
 	    PGenerate*item = *cur;
-	    if (item->direct_nested_ || !item->scope_list_.empty()) {
-		    // Found the item, and it is direct nested.
-		  flag &= item->elaborate_sig(des, container);
+	    if (item->scheme_type == PGenerate::GS_CASE) {
+		  typedef list<PGenerate*>::const_iterator generate_it_t;
+		  for (generate_it_t icur = item->generate_schemes.begin()
+			     ; icur != item->generate_schemes.end() ; ++ icur ) {
+			PGenerate*case_item = *icur;
+			if (case_item->direct_nested_ || !case_item->scope_list_.empty()) {
+			      flag &= case_item->elaborate_sig(des, container);
+			}
+		  }
+	    } else {
+		  if (item->direct_nested_ || !item->scope_list_.empty()) {
+			  // Found the item, and it is direct nested.
+			flag &= item->elaborate_sig(des, container);
+		  }
 	    }
       }
       return flag;
