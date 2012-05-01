@@ -76,6 +76,11 @@ class Module : public PScopeExtra, public LineInfo {
 
       bool is_cell;
 
+	/* This is true if the module represents a program block
+	   instead of a module/cell. Program blocks have content
+	   restrictions and slightly modify scheduling semantics. */
+      bool program_block;
+
       enum UCDriveType { UCD_NONE, UCD_PULL0, UCD_PULL1 };
       UCDriveType uc_drive;
 

@@ -3754,7 +3754,7 @@ local_timeunit_prec_decl
 
 module
   : attribute_list_opt module_start IDENTIFIER
-      { pform_startmodule($3, @2.text, @2.first_line, $1); }
+      { pform_startmodule(@2, $3, $2==K_program, $1); }
     module_parameter_port_list_opt
     module_port_list_opt
     module_attribute_foreign ';'
@@ -3795,9 +3795,6 @@ module
 		  default:
 		    break;
 	      }
-	}
-	if ($2 == K_program) {
-	      yyerror(@2, "sorry: Program blocks not supported yet.");
 	}
 	pform_endmodule($3, in_celldefine, ucd);
 	delete[]$3;

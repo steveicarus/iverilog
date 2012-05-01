@@ -32,6 +32,7 @@ Module::Module(perm_string n)
 {
       library_flag = false;
       is_cell = false;
+      program_block = false;
       uc_drive = UCD_NONE;
       timescale_warn_done = false;
       time_unit = 0;

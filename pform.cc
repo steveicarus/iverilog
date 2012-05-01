@@ -796,13 +796,14 @@ verinum* pform_verinum_with_size(verinum*siz, verinum*val,
       return res;
 }
 
-void pform_startmodule(const char*name, const char*file, unsigned lineno,
-		       list<named_pexpr_t>*attr)
+void pform_startmodule(const struct vlltype&loc, const char*name,
+		       bool program_block, list<named_pexpr_t>*attr)
 {
       assert( pform_cur_module == 0 );
 
       perm_string lex_name = lex_strings.make(name);
       pform_cur_module = new Module(lex_name);
+      pform_cur_module->program_block = program_block;
 	/* Set the local time unit/precision to the global value. */
       pform_cur_module->time_unit = pform_time_unit;
       pform_cur_module->time_precision = pform_time_prec;
@@ -813,7 +814,7 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
 	 * a timescale directive. */
       pform_cur_module->time_from_timescale = pform_timescale_file != 0;
 
-      FILE_NAME(pform_cur_module, file, lineno);
+      FILE_NAME(pform_cur_module, loc);
       pform_cur_module->library_flag = pform_library_flag;
 
       ivl_assert(*pform_cur_module, lexical_scope == 0);
@@ -824,7 +825,7 @@ void pform_startmodule(const char*name, const char*file, unsigned lineno,
       scope_generate_counter = 1;
 
       if (warn_timescale && pform_timescale_file
-	  && (strcmp(pform_timescale_file,file) != 0)) {
+	  && (strcmp(pform_timescale_file,loc.text) != 0)) {
 
 	    cerr << pform_cur_module->get_fileline() << ": warning: "
 		 << "timescale for " << name

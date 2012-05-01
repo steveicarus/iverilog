@@ -145,9 +145,13 @@ extern PWire* pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_ty
  * module has been noticed in the source file and the following events
  * are to apply to the scope of that module. The endmodule causes the
  * pform to close up and finish the named module.
+ *
+ * The program_flag indicates that the module is actually a program
+ * block. This has implications during parse and during
+ * elaboration/code generation.
  */
-extern void pform_startmodule(const char*, const char*file, unsigned lineno,
-			      list<named_pexpr_t>*attr);
+extern void pform_startmodule(const struct vlltype&loc, const char*name,
+			      bool program_block, list<named_pexpr_t>*attr);
 extern void pform_check_timeunit_prec();
 extern void pform_module_set_ports(vector<Module::port_t*>*);
 
