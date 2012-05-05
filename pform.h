@@ -255,12 +255,6 @@ extern void pform_makewire(const struct vlltype&li,
 			   list<named_pexpr_t>*attr,
 			   PWSRType rt = SR_NET);
 
-extern void pform_makewire(const struct vlltype&li,
-			   struct_type_t*struct_type,
-			   list<perm_string>*names,
-			   NetNet::PortType,
-			   list<named_pexpr_t>*attr);
-
 /* This form handles assignment declarations. */
 extern void pform_makewire(const struct vlltype&li,
 			   list<pform_range_t>*range,

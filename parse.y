@@ -3938,6 +3938,9 @@ module_item
       { yyerror(@5, "error: Errors in net variable list.");
       }
 
+  | attribute_list_opt net_type TYPE_IDENTIFIER net_variable_list ';'
+      { yyerror(@2, "sorry: Nets of named types not supported."); }
+
   /* This form doesn't have the range, but does have strengths. This
      gives strength to the assignment drivers. */
 

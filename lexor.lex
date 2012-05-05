@@ -325,7 +325,15 @@ TU [munpf]
 
 \\[^ \t\b\f\r\n]+         {
       yylval.text = strdupnew(yytext+1);
-      return IDENTIFIER; }
+      if (gn_system_verilog()) {
+	    if (data_type_t*type = pform_test_type_identifier(yylval.text)) {
+		  delete[]yylval.text;
+		  yylval.data_type = type;
+		  return TYPE_IDENTIFIER;
+	    }
+      }
+      return IDENTIFIER;
+  }
 
 \$([a-zA-Z0-9$_]+)        {
 	/* The 1364-1995 timing checks. */
