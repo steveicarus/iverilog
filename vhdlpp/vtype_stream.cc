@@ -29,6 +29,11 @@ void VType::write_to_stream(ostream&fd) const
       fd << "/* UNKNOWN TYPE: " << typeid(*this).name() << " */";
 }
 
+void VType::write_type_to_stream(ostream&fd) const
+{
+      write_to_stream(fd);
+}
+
 void VTypeArray::write_to_stream(ostream&fd) const
 {
 	// Special case: std_logic_vector
@@ -76,6 +81,16 @@ void VTypeArray::write_to_stream(ostream&fd) const
       etype_->write_to_stream(fd);
 }
 
+void VTypeDef::write_type_to_stream(ostream&fd) const
+{
+      type_->write_to_stream(fd);
+}
+
+void VTypeDef::write_to_stream(ostream&fd) const
+{
+      fd << name_;
+}
+
 void VTypePrimitive::write_to_stream(ostream&fd) const
 {
       switch (type_) {
@@ -100,7 +115,8 @@ void VTypePrimitive::write_to_stream(ostream&fd) const
 
 void VTypeRange::write_to_stream(ostream&fd) const
 {
-      fd << "range " << min_ << " to " << max_;
+      base_->write_to_stream(fd);
+      fd << " range " << min_ << " to " << max_;
 }
 
 void VTypeRecord::write_to_stream(ostream&fd) const
@@ -110,11 +126,11 @@ void VTypeRecord::write_to_stream(ostream&fd) const
 	    elements_[idx]->write_to_stream(fd);
 	    fd << "; ";
       }
-      fd << "endrecord";
+      fd << "end record";
 }
 
 void VTypeRecord::element_t::write_to_stream(ostream&fd) const
 {
-      fd << name_ << ":";
+      fd << name_ << ": ";
       type_->write_to_stream(fd);
 }

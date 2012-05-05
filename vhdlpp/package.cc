@@ -40,6 +40,43 @@ void Package::write_to_stream(ostream&fd) const
 {
       fd << "package " << name_ << " is" << endl;
 
+	// Start out pre-declaring all the type definitions so that
+	// there is no confusion later in the package between types
+	// and identifiers.
+      for (map<perm_string,const VType*>::const_iterator cur = old_types_.begin()
+		 ; cur != old_types_.end() ; ++cur) {
+	    const VTypeDef*def = dynamic_cast<const VTypeDef*> (cur->second);
+	    if (def == 0)
+		  continue;
+	    fd << "type " << cur->first << ";" << endl;
+      }
+
+      for (map<perm_string,const VType*>::const_iterator cur = new_types_.begin()
+		 ; cur != new_types_.end() ; ++cur) {
+	    const VTypeDef*def = dynamic_cast<const VTypeDef*> (cur->second);
+	    if (def == 0)
+		  continue;
+	    fd << "type " << cur->first << ";" << endl;
+      }
+
+      for (map<perm_string,struct const_t*>::const_iterator cur = old_constants_.begin()
+		 ; cur != old_constants_.end() ; ++ cur) {
+	    fd << "constant " << cur->first << ": ";
+	    cur->second->typ->write_to_stream(fd);
+	    fd << " := ";
+	    cur->second->val->write_to_stream(fd);
+	    fd << ";" << endl;
+      }
+
+      for (map<perm_string,struct const_t*>::const_iterator cur = new_constants_.begin()
+		 ; cur != new_constants_.end() ; ++ cur) {
+	    fd << "constant " << cur->first << ": ";
+	    cur->second->typ->write_to_stream(fd);
+	    fd << " := ";
+	    cur->second->val->write_to_stream(fd);
+	    fd << ";" << endl;
+      }
+
       for (map<perm_string,const VType*>::const_iterator cur = old_types_.begin()
 		 ; cur != old_types_.end() ; ++cur) {
 
@@ -49,8 +86,8 @@ void Package::write_to_stream(ostream&fd) const
 	    if (cur->first == "std_logic_vector")
 		  continue;
 
-	    fd << cur->first << ": ";
-	    cur->second->write_to_stream(fd);
+	    fd << "type " << cur->first << " is ";
+	    cur->second->write_type_to_stream(fd);
 	    fd << ";" << endl;
       }
       for (map<perm_string,const VType*>::const_iterator cur = new_types_.begin()
@@ -62,8 +99,8 @@ void Package::write_to_stream(ostream&fd) const
 	    if (cur->first == "std_logic_vector")
 		  continue;
 
-	    fd << cur->first << ": ";
-	    cur->second->write_to_stream(fd);
+	    fd << "type " << cur->first << " is ";
+	    cur->second->write_type_to_stream(fd);
 	    fd << ";" << endl;
       }
 

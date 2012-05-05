@@ -21,6 +21,7 @@
 # include  "parse_types.h"
 # include  <map>
 # include  <typeinfo>
+# include  <cassert>
 
 using namespace std;
 
@@ -200,6 +201,11 @@ VTypeRecord::element_t::element_t(perm_string name, const VType*typ)
 {
 }
 
+VTypeDef::VTypeDef(perm_string nam)
+: name_(nam), type_(0)
+{
+}
+
 VTypeDef::VTypeDef(perm_string nam, const VType*typ)
 : name_(nam), type_(typ)
 {
@@ -207,4 +213,10 @@ VTypeDef::VTypeDef(perm_string nam, const VType*typ)
 
 VTypeDef::~VTypeDef()
 {
+}
+
+void VTypeDef::set_definition(const VType*typ)
+{
+      assert(type_ == 0);
+      type_ = typ;
 }

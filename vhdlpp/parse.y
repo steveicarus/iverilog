@@ -1605,7 +1605,6 @@ package_body_declarative_part_opt
 package_declarative_item
   : component_declaration
   | constant_declaration
-  | type_declaration
   | subtype_declaration
   | type_declaration
   | use_clause
@@ -2148,10 +2147,24 @@ type_declaration
 	if ($4 == 0) {
 	      errormsg(@1, "Failed to declare type name %s.\n", name.str());
 	} else {
-		//VTypeDef*tmp = new VTypeDef(name, $4);
-		//active_scope->bind_name(name, tmp);
-	      active_scope->bind_name(name, $4);
+	      VTypeDef*tmp;
+	      map<perm_string,VTypeDef*>::iterator cur = active_scope->incomplete_types.find(name);
+	      if (cur == active_scope->incomplete_types.end()) {
+		    tmp = new VTypeDef(name, $4);
+		    active_scope->bind_name(name, tmp);
+	      } else {
+		    tmp = cur->second;
+		    tmp->set_definition($4);
+		    active_scope->incomplete_types.erase(cur);
+	      }
 	}
+	delete[]$2;
+      }
+  | K_type IDENTIFIER ';'
+      { perm_string name = lex_strings.make($2);
+	VTypeDef*tmp = new VTypeDef(name);
+	active_scope->incomplete_types[name] = tmp;
+	active_scope->bind_name(name, tmp);
 	delete[]$2;
       }
   | K_type IDENTIFIER K_is error ';'

@@ -44,6 +44,10 @@ class VType {
 	// of this type to the designated stream. This is used for
 	// writing parsed types to library files.
       virtual void write_to_stream(std::ostream&fd) const;
+	// This is like the above, but is the root function called
+	// directly after the "type <name> is..." when writing type
+	// definitions. Most types accept the default definition of this.
+      virtual void write_type_to_stream(std::ostream&fd) const;
 
 	// This virtual method writes a human-readable version of the
 	// type to a given file for debug purposes. (Question: is this
@@ -226,9 +230,16 @@ class VTypeRecord : public VType {
 class VTypeDef : public VType {
 
     public:
-      VTypeDef(perm_string name, const VType*is);
+      explicit VTypeDef(perm_string name);
+      explicit VTypeDef(perm_string name, const VType*is);
       ~VTypeDef();
 
+	// If the type is not given a definition in the constructor,
+	// then this must be used to set the definition later.
+      void set_definition(const VType*is);
+
+      void write_to_stream(std::ostream&fd) const;
+      void write_type_to_stream(ostream&fd) const;
       int emit_typedef(std::ostream&out) const;
 
       int emit_def(std::ostream&out) const;

@@ -179,6 +179,10 @@ class ActiveScope : public ScopeBase {
           cleanup();
       }
 
+	// Keep track of incomplete types until their proper
+	// definition shows up.
+      std::map<perm_string,VTypeDef*> incomplete_types;
+
     private:
       Entity*context_entity_;
 };
