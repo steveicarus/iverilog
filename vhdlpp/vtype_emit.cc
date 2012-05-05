@@ -57,13 +57,19 @@ int VTypeArray::emit_def(ostream&out) const
 	    cur = sub;
       }
 
-      const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*> (cur->etype_);
-      assert(base != 0);
-      assert(dimensions() == 1);
+      const VType*raw_base = cur->etype_;
 
-      base->emit_primitive_type(out);
-      if (signed_flag_)
-	    out << " signed";
+      const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*> (raw_base);
+
+      if (base) {
+	    assert(dimensions() == 1);
+
+	    base->emit_def(out);
+	    if (signed_flag_)
+		  out << " signed";
+      } else {
+	    raw_base->emit_def(out);
+      }
 
       dims.push_back(cur);
 
@@ -125,8 +131,8 @@ int VTypePrimitive::emit_def(ostream&out) const
 int VTypeRange::emit_def(ostream&out) const
 {
       int errors = 0;
-      assert(0);
-      out << "/* Internal error: Don't know how to emit type */";
+      out << "/* Internal error: Don't know how to emit range */";
+      errors += base_->emit_def(out);
       return errors;
 }
 
@@ -147,10 +153,10 @@ int VTypeRecord::emit_def(ostream&out) const
       return errors;
 }
 
-int VTypeDef::emit_def(ostream&) const
+int VTypeDef::emit_def(ostream&out) const
 {
       int errors = 0;
-      assert(0);
+      errors += type_->emit_def(out);
       return errors;
 }
 
@@ -162,7 +168,8 @@ int VTypeDef::emit_decl(ostream&out, perm_string name, bool reg_flag) const
       else
 	    out << "wire ";
 
-      out << "\\" << name_ << " \\" << name << " ";
+      errors += type_->emit_def(out);
+      out << " \\" << name << " ";
       return errors;
 }
 

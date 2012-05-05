@@ -238,6 +238,10 @@ class VTypeDef : public VType {
 	// then this must be used to set the definition later.
       void set_definition(const VType*is);
 
+	// In some situations, we only need the definition of the
+	// type, and this method gets it for us.
+      inline const VType* peek_definition(void) const { return type_; }
+
       void write_to_stream(std::ostream&fd) const;
       void write_type_to_stream(ostream&fd) const;
       int emit_typedef(std::ostream&out) const;

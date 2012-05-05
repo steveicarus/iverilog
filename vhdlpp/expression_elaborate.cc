@@ -350,6 +350,10 @@ int ExpAggregate::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype
 
       set_type(ltype);
 
+      while (const VTypeDef*cur = dynamic_cast<const VTypeDef*>(ltype)) {
+	    ltype = cur->peek_definition();
+      }
+
       if (const VTypeArray*larray = dynamic_cast<const VTypeArray*>(ltype)) {
 	    return elaborate_expr_array_(ent, arc, larray);
       }
