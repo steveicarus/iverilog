@@ -400,6 +400,15 @@ void pform_bind_attributes(map<perm_string,PExpr*>&attributes,
 	    delete attr;
 }
 
+bool pform_in_program_block()
+{
+      if (pform_cur_module == 0)
+	    return false;
+      if (pform_cur_module->program_block)
+	    return true;
+      return false;
+}
+
 static bool pform_at_module_level()
 {
       return (lexical_scope == pform_cur_module)
@@ -2850,6 +2859,14 @@ PProcess* pform_make_behavior(ivl_process_type_t type, Statement*st,
       pform_bind_attributes(pp->attributes, attr);
 
       pform_put_behavior_in_scope(pp);
+
+      ivl_assert(*st, pform_cur_module);
+      if (pform_cur_module->program_block && type == IVL_PR_ALWAYS) {
+	    cerr << st->get_fileline() << ": error: Always statements not allowed"
+		 << " in program blocks." << endl;
+	    error_count += 1;
+      }
+
       return pp;
 }
 

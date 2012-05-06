@@ -130,6 +130,10 @@ extern void pform_set_default_nettype(NetNet::Type net,
 				     const char*file,
 				     unsigned lineno);
 
+  /* Return true if currently processing a program block. This can be
+     used to reject statements that cannot exist in program blocks. */
+extern bool pform_in_program_block(void);
+
 /*
  * Look for the given wire in the current lexical scope. If the wire
  * (including variables of any type) cannot be found in the current
