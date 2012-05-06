@@ -51,7 +51,8 @@
 typedef map<perm_string,LexicalScope::param_expr_t>::const_iterator mparm_it_t;
 
 static void collect_parm_item_(Design*des, NetScope*scope, perm_string name,
-			       const LexicalScope::param_expr_t&cur)
+			       const LexicalScope::param_expr_t&cur,
+                               bool is_annotatable)
 {
       NetScope::range_t*range_list = 0;
       for (LexicalScope::range_t*range = cur.range ; range ; range = range->next) {
@@ -87,8 +88,8 @@ static void collect_parm_item_(Design*des, NetScope*scope, perm_string name,
 	    range_list = tmp;
       }
 
-      scope->set_parameter(name, cur.expr, cur.type, cur.msb, cur.lsb,
-			   cur.signed_flag, range_list, cur);
+      scope->set_parameter(name, is_annotatable, cur.expr, cur.type, cur.msb,
+			   cur.lsb, cur.signed_flag, range_list, cur);
 }
 
 static void collect_scope_parameters_(Design*des, NetScope*scope,
@@ -106,7 +107,7 @@ static void collect_scope_parameters_(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
-	    collect_parm_item_(des, scope, (*cur).first, (*cur).second);
+	    collect_parm_item_(des, scope, (*cur).first, (*cur).second, false);
       }
 }
 
@@ -125,7 +126,26 @@ static void collect_scope_localparams_(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
-	    collect_parm_item_(des, scope, (*cur).first, (*cur).second);
+	    collect_parm_item_(des, scope, (*cur).first, (*cur).second, false);
+      }
+}
+
+static void collect_scope_specparams_(Design*des, NetScope*scope,
+      const map<perm_string,LexicalScope::param_expr_t>&specparams)
+{
+      for (mparm_it_t cur = specparams.begin()
+		 ; cur != specparams.end() ;  ++ cur ) {
+
+	      // A specparam can not have the same name as a genvar.
+	    if (scope->find_genvar((*cur).first)) {
+		  cerr << cur->second.get_fileline()
+		       << ": error: specparam and genvar in '"
+		       << scope->fullname() << "' have the same name '"
+		       << (*cur).first << "'." << endl;
+		  des->errors += 1;
+	    }
+
+	    collect_parm_item_(des, scope, (*cur).first, (*cur).second, true);
       }
 }
 
@@ -468,6 +488,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       collect_scope_parameters_(des, scope, parameters);
 
       collect_scope_localparams_(des, scope, localparams);
+
+      collect_scope_specparams_(des, scope, specparams);
 
 	// Run parameter replacements that were collected from the
 	// containing scope and meant for me.

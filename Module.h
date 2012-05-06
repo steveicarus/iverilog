@@ -1,7 +1,7 @@
 #ifndef __Module_H
 #define __Module_H
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -79,10 +79,10 @@ class Module : public PScopeExtra, public LineInfo {
       enum UCDriveType { UCD_NONE, UCD_PULL0, UCD_PULL1 };
       UCDriveType uc_drive;
 
-	/* specparams are simpler than other params, in that they have
-	   no type information. They are merely constant
-	   expressions. */
-      map<perm_string,PExpr*>specparams;
+	/* specparams are simpler than other parameters, in that they
+	   can have a range, but not an explicit type. The restrictions
+	   are enforced by the parser. */
+      map<perm_string,param_expr_t>specparams;
 
 	/* The module also has defparam assignments which don't create
 	   new parameters within the module, but may be used to set
@@ -140,6 +140,7 @@ class Module : public PScopeExtra, public LineInfo {
       bool elaborate_sig(Design*, NetScope*scope) const;
 
     private:
+      void dump_specparams_(ostream&out, unsigned indent) const;
       list<PGate*> gates_;
 
     private: // Not implemented

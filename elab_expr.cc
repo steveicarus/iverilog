@@ -2172,32 +2172,6 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
             return expr_width_;
       }
 
-	// The width of a specparam is the width of the specparam value
-        // (as evaluated earlier). Note that specparams aren't fully
-        // supported yet, so this code is likely to need rework when
-        // they are.
-      map<perm_string,NetScope::spec_val_t>::const_iterator specp;
-      perm_string key = peek_tail_name(path_);
-      if (path_.size() == 1 &&
-          ((specp = scope->specparams.find(key)) != scope->specparams.end())) {
-	    NetScope::spec_val_t value = (*specp).second;
-	    if (value.type == IVL_VT_REAL) {
-		  expr_type_   = IVL_VT_REAL;
-		  expr_width_  = 1;
-		  min_width_   = 1;
-		  signed_flag_ = true;
-	    } else {
-		  verinum val (value.integer);
-		  expr_type_   = IVL_VT_BOOL;
-		  expr_width_  = val.len();
-		  min_width_   = expr_width_;
-		  signed_flag_ = true;
-
-		  if (mode < LOSSLESS) mode = LOSSLESS;
-	    }
-	    return expr_width_;
-      }
-
 	// If this is SystemVerilog then maybe this is a structure element.
       if (gn_system_verilog() && found_in==0 && path_.size() >= 2) {
 	    pform_name_t use_path = path_;
@@ -2368,34 +2342,6 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    verinum val (scope->genvar_tmp_val, expr_wid);
 	    NetEConst*tmp = new NetEConst(val);
 	    tmp->set_line(*this);
-	    return tmp;
-      }
-
-	// A specparam? Look up the name to see if it is a
-	// specparam. If we find it, then turn it into a NetEConst
-	// value and return that.
-      map<perm_string,NetScope::spec_val_t>::const_iterator specp;
-      perm_string key = peek_tail_name(path_);
-      if (path_.size() == 1 &&
-          ((specp = scope->specparams.find(key)) != scope->specparams.end())) {
-	    NetScope::spec_val_t value = (*specp).second;
-	    NetExpr*tmp = 0;
-	    switch (value.type) {
-	      case IVL_VT_BOOL:
-		  tmp = new NetEConst(verinum(value.integer));
-		  break;
-	      case IVL_VT_REAL:
-		  tmp = new NetECReal(verireal(value.real_val));
-		  break;
-	      default:
-		  break;
-	    }
-	    assert(tmp);
-	    tmp->set_line(*this);
-
-	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: " << path_
-		       << " is a specparam" << endl;
 	    return tmp;
       }
 
@@ -2861,6 +2807,16 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 					unsigned expr_wid, unsigned flags) const
 {
       bool need_const = NEED_CONST & flags;
+
+      if (need_const && !(ANNOTATABLE & flags)) {
+            perm_string name = peek_tail_name(path_);
+            if (found_in->make_parameter_unannotatable(name)) {
+                  cerr << get_fileline() << ": warning: specparam '" << name
+                       << "' is being used in a constant expression." << endl;
+                  cerr << get_fileline() << ":        : This will prevent it "
+                          "being annotated at run time." << endl;
+            }
+      }
 
       const name_component_t&name_tail = path_.back();
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;

@@ -192,7 +192,8 @@ class PExpr;
 
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 			      PExpr*pe, int context_width,
-                              bool need_const =false);
+                              bool need_const =false,
+                              bool annotatable =false);
 
 /*
  * This function is a variant of elab_and_eval that elaborates and

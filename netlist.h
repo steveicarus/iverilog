@@ -766,8 +766,8 @@ class NetScope : public Attrib {
 	   previous expression, if there was one. */
 
       struct range_t;
-      void set_parameter(perm_string name, PExpr*val,
-			 ivl_variable_type_t type,
+      void set_parameter(perm_string name, bool is_annotatable,
+			 PExpr*val, ivl_variable_type_t type,
 			 PExpr*msb, PExpr*lsb, bool signed_flag,
 			 NetScope::range_t*range_list,
 			 const LineInfo&file_line);
@@ -788,6 +788,13 @@ class NetScope : public Attrib {
 	   range or signed_flag. Return false if the name does not
 	   exist. */
       bool replace_parameter(perm_string name, PExpr*val, NetScope*scope);
+
+	/* This is used to ensure the value of a parameter cannot be
+	   changed at run-time. This is required if a specparam is used
+	   in an expression that must be evaluated at compile-time.
+	   Returns true if the named parameter is a specparam and has
+	   not already been set to be unannotatable. */
+      bool make_parameter_unannotatable(perm_string name);
 
 	/* These methods set or access events that live in this
 	   scope. */
@@ -955,7 +962,8 @@ class NetScope : public Attrib {
 	   access to these things to make up the parameter lists. */
       struct param_expr_t : public LineInfo {
 	    param_expr_t() : msb_expr(0), lsb_expr(0), val_expr(0), val_scope(0),
-                             solving(false), type(IVL_VT_NO_TYPE), signed_flag(false),
+                             solving(false), is_annotatable(false),
+                             type(IVL_VT_NO_TYPE), signed_flag(false),
                              msb(0), lsb(0), range(0), val(0) { }
               // Source expressions
 	    PExpr*msb_expr;
@@ -965,6 +973,8 @@ class NetScope : public Attrib {
             NetScope*val_scope;
 	      // Evaluation status
 	    bool solving;
+	      // specparam status
+	    bool is_annotatable;
 	      // Type information
 	    ivl_variable_type_t type;
 	    bool signed_flag;
@@ -981,15 +991,6 @@ class NetScope : public Attrib {
       typedef map<perm_string,param_expr_t>::iterator param_ref_t;
 
       param_ref_t find_parameter(perm_string name);
-
-      struct spec_val_t {
-	    ivl_variable_type_t type;
-	    union {
-		  double real_val; // type == IVL_VT_REAL
-		  long integer;    // type == IVL_VT_BOOL
-	    };
-      };
-      map<perm_string,spec_val_t>specparams;
 
 	/* Module instance arrays are collected here for access during
 	   the multiple elaboration passes. */

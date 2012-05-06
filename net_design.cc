@@ -370,7 +370,8 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
       if (range_flag)
 	    lv_width = (msb >= lsb) ? 1 + msb - lsb : 1 + lsb - msb;
 
-      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, lv_width, true);
+      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, lv_width, true,
+                                   (*cur).second.is_annotatable);
       if (! expr)
             return;
 
@@ -491,7 +492,8 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
       PExpr*val_expr = (*cur).second.val_expr;
       NetScope*val_scope = (*cur).second.val_scope;
 
-      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, -1, true);
+      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, -1, true,
+                                   (*cur).second.is_annotatable);
       if (! expr)
             return;
 

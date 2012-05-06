@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -4446,49 +4446,6 @@ static void elaborate_tasks(Design*des, NetScope*scope,
 bool Module::elaborate(Design*des, NetScope*scope) const
 {
       bool result_flag = true;
-
-	      // Elaborate specparams
-      typedef map<perm_string,PExpr*>::const_iterator specparam_it_t;
-      for (specparam_it_t cur = specparams.begin() ;
-           cur != specparams.end() ; ++ cur ) {
-
-	    NetExpr*val = elab_and_eval(des, scope, (*cur).second, -1, true);
-	    NetScope::spec_val_t value;
-
-	    if (NetECReal*val_cr = dynamic_cast<NetECReal*> (val)) {
-
-		  value.type     = IVL_VT_REAL;
-		  value.real_val = val_cr->value().as_double();
-
-		  if (debug_elaborate) {
-			cerr << get_fileline() << ": debug: Elaborate "
-			     << "specparam " << (*cur).first
-			     << " value=" << value.real_val << endl;
-		  }
-
-	    } else if (NetEConst*val_c = dynamic_cast<NetEConst*> (val)) {
-
-		  value.type    = IVL_VT_BOOL;
-		  value.integer = val_c->value().as_long();
-
-		  if (debug_elaborate) {
-			cerr << get_fileline() << ": debug: Elaborate "
-			     << "specparam " << (*cur).first
-			    << " value=" << value.integer << endl;
-		  }
-
-	    } else {
-		  value.type = IVL_VT_NO_TYPE;
-		  cerr << (*cur).second->get_fileline() << ": error: "
-		       << "specparam " << (*cur).first
-		       << " value is not constant: " << *val << endl;
-		  des->errors += 1;
-	    }
-
-	    assert(val);
-	    delete  val;
-	    scope->specparams[(*cur).first] = value;
-      }
 
 	// Elaborate within the generate blocks.
       typedef list<PGenerate*>::const_iterator generate_it_t;

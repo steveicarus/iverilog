@@ -2331,6 +2331,15 @@ void pform_set_parameter(const struct vlltype&loc,
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
+      if ((scope == pform_cur_module) &&
+          (pform_cur_module->specparams.find(name) != pform_cur_module->specparams.end())) {
+	    LineInfo tloc;
+	    FILE_NAME(&tloc, loc);
+	    cerr << tloc.get_fileline() << ": error: specparam and "
+	            "parameter in '" << pform_cur_module->mod_name()
+	         << "' have the same name '" << name << "'." << endl;
+	    error_count += 1;
+      }
 
       assert(expr);
       Module::param_expr_t&parm = scope->parameters[name];
@@ -2380,6 +2389,15 @@ void pform_set_localparam(const struct vlltype&loc,
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
+      if ((scope == pform_cur_module) &&
+          (pform_cur_module->specparams.find(name) != pform_cur_module->specparams.end())) {
+	    LineInfo tloc;
+	    FILE_NAME(&tloc, loc);
+	    cerr << tloc.get_fileline() << ": error: specparam and "
+	            "localparam in '" << pform_cur_module->mod_name()
+	         << "' have the same name '" << name << "'." << endl;
+	    error_count += 1;
+      }
 
       assert(expr);
       Module::param_expr_t&parm = scope->localparams[name];
@@ -2403,19 +2421,58 @@ void pform_set_localparam(const struct vlltype&loc,
       parm.range = 0;
 }
 
-void pform_set_specparam(perm_string name, PExpr*expr)
+void pform_set_specparam(const struct vlltype&loc, perm_string name,
+			 list<pform_range_t>*range, PExpr*expr)
 {
+      Module*scope = pform_cur_module;
+      assert(scope == lexical_scope);
+
 	// Check if the specparam name is already in the dictionary.
-      if (pform_cur_module->specparams.find(name) !=
-          pform_cur_module->specparams.end()) {
-	    cerr << expr->get_fileline() << ": error: duplicate definition "
+      if (scope->specparams.find(name) != scope->specparams.end()) {
+	    LineInfo tloc;
+	    FILE_NAME(&tloc, loc);
+	    cerr << tloc.get_fileline() << ": error: duplicate definition "
 	            "for specparam '" << name << "' in '"
 	         << pform_cur_module->mod_name() << "'." << endl;
 	    error_count += 1;
       }
+      if (scope->parameters.find(name) != scope->parameters.end()) {
+	    LineInfo tloc;
+	    FILE_NAME(&tloc, loc);
+	    cerr << tloc.get_fileline() << ": error: parameter and "
+	            "specparam in '" << pform_cur_module->mod_name()
+	         << "' have the same name '" << name << "'." << endl;
+	    error_count += 1;
+      }
+      if (scope->localparams.find(name) != scope->localparams.end()) {
+	    LineInfo tloc;
+	    FILE_NAME(&tloc, loc);
+	    cerr << tloc.get_fileline() << ": error: localparam and "
+	            "specparam in '" << pform_cur_module->mod_name()
+	         << "' have the same name '" << name << "'." << endl;
+	    error_count += 1;
+      }
 
       assert(expr);
-      pform_cur_module->specparams[name] = expr;
+      Module::param_expr_t&parm = scope->specparams[name];
+      FILE_NAME(&parm, loc);
+
+      parm.expr = expr;
+
+      parm.type = IVL_VT_LOGIC;
+      if (range) {
+	    assert(range->size() == 1);
+	    pform_range_t&rng = range->front();
+	    assert(rng.first);
+	    assert(rng.second);
+	    parm.msb = rng.first;
+	    parm.lsb = rng.second;
+      } else {
+	    parm.msb  = 0;
+	    parm.lsb  = 0;
+      }
+      parm.signed_flag = false;
+      parm.range = 0;
 }
 
 void pform_set_defparam(const pform_name_t&name, PExpr*expr)

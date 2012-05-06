@@ -331,13 +331,15 @@ extern void pform_set_localparam(const struct vlltype&loc,
 				 bool signed_flag,
 				 list<pform_range_t>*range,
 				 PExpr*expr);
+extern void pform_set_specparam(const struct vlltype&loc,
+				 perm_string name,
+				 list<pform_range_t>*range,
+				 PExpr*expr);
 extern void pform_set_defparam(const pform_name_t&name, PExpr*expr);
 
 /*
  * Functions related to specify blocks.
  */
-extern void pform_set_specparam(perm_string name, PExpr*expr);
-
 extern PSpecPath*pform_make_specify_path(const struct vlltype&li,
 					 list<perm_string>*src, char pol,
 					 bool full_flag, list<perm_string>*dst);

@@ -1141,7 +1141,10 @@ void NetScope::dump(ostream&o) const
 	    map<perm_string,param_expr_t>::const_iterator pp;
 	    for (pp = parameters.begin()
 		       ; pp != parameters.end() ;  ++ pp ) {
-		  o << "    parameter ";
+		  if ((*pp).second.is_annotatable)
+			o << "    specparam ";
+		  else
+			o << "    parameter ";
 
 		  o << pp->second.type << " ";
 
@@ -1243,27 +1246,6 @@ void NetScope::dump(ostream&o) const
       for (signals_map_iter_t cur = signals_map_.begin()
 		 ; cur != signals_map_.end() ; ++ cur) {
 	    cur->second->dump_net(o, 4);
-      }
-
-	// Dump specparams
-      typedef map<perm_string,spec_val_t>::const_iterator specparam_it_t;
-      for (specparam_it_t cur = specparams.begin()
-		 ; cur != specparams.end() ;  ++ cur ) {
-	    o << "    specparam " << (*cur).first
-	      << " = ";
-	    spec_val_t value = (*cur).second;
-	    switch (value.type) {
-		case IVL_VT_REAL:
-		  o << "R:" << value.real_val;
-		  break;
-		case IVL_VT_BOOL:
-		  o << "I:" << value.integer;
-		  break;
-		default:
-		  o << "<bad type>";
-		  break;
-	    }
-	    o << endl;
       }
 
       switch (type_) {

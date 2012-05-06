@@ -1194,6 +1194,23 @@ void LexicalScope::dump_wires_(ostream&out, unsigned indent) const
       }
 }
 
+void Module::dump_specparams_(ostream&out, unsigned indent) const
+{
+      typedef map<perm_string,param_expr_t>::const_iterator parm_iter_t;
+      for (parm_iter_t cur = specparams.begin()
+		 ; cur != specparams.end() ; ++ cur ) {
+	    out << setw(indent) << "" << "specparam ";
+	    if ((*cur).second.msb)
+		  out << "[" << *(*cur).second.msb << ":"
+		      << *(*cur).second.lsb << "] ";
+	    out << (*cur).first << " = ";
+	    if ((*cur).second.expr)
+		  out << *(*cur).second.expr << ";" << endl;
+	    else
+		  out << "/* ERROR */;" << endl;
+      }
+}
+
 void Module::dump(ostream&out) const
 {
       if (attributes.begin() != attributes.end()) {
@@ -1237,6 +1254,8 @@ void Module::dump(ostream&out) const
 
       dump_localparams_(out, 4);
 
+      dump_specparams_(out, 4);
+
       dump_enumerations_(out, 4);
 
       typedef map<perm_string,LineInfo*>::const_iterator genvar_iter_t;
@@ -1249,13 +1268,6 @@ void Module::dump(ostream&out) const
       for (genscheme_iter_t cur = generate_schemes.begin()
 		 ; cur != generate_schemes.end() ; ++ cur ) {
 	    (*cur)->dump(out, 4);
-      }
-
-      typedef map<perm_string,PExpr*>::const_iterator specparm_iter_t;
-      for (specparm_iter_t cur = specparams.begin()
-		 ; cur != specparams.end() ; ++ cur ) {
-	    out << "    specparam " << (*cur).first << " = "
-		<< *(*cur).second << ";" << endl;
       }
 
       typedef list<Module::named_expr_t>::const_iterator parm_hiter_t;

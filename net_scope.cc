@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -114,13 +114,14 @@ void NetScope::set_line(perm_string file, perm_string def_file,
       def_lineno_ = def_lineno;
 }
 
-void NetScope::set_parameter(perm_string key, PExpr*val,
-			     ivl_variable_type_t type__,
+void NetScope::set_parameter(perm_string key, bool is_annotatable,
+			     PExpr*val, ivl_variable_type_t type__,
 			     PExpr*msb, PExpr*lsb, bool signed_flag,
 			     NetScope::range_t*range_list,
 			     const LineInfo&file_line)
 {
       param_expr_t&ref = parameters[key];
+      ref.is_annotatable = is_annotatable;
       ref.msb_expr = msb;
       ref.lsb_expr = lsb;
       ref.val_expr = val;
@@ -188,6 +189,19 @@ bool NetScope::replace_parameter(perm_string key, PExpr*val, NetScope*scope)
       return flag;
 }
 
+bool NetScope::make_parameter_unannotatable(perm_string key)
+{
+      bool flag = false;
+
+      if (parameters.find(key) != parameters.end()) {
+	    param_expr_t&ref = parameters[key];
+	    flag = ref.is_annotatable;
+	    ref.is_annotatable = false;
+      }
+
+      return flag;
+}
+
 /*
  * This is not really complete (msb, lsb, sign). It is currently only
  * used to add a genvar to the local parameter list.
@@ -197,6 +211,7 @@ NetExpr* NetScope::set_localparam(perm_string key, NetExpr*val,
 {
       param_expr_t&ref = localparams[key];
       NetExpr* res = ref.val;
+      ref.is_annotatable = false;
       ref.msb_expr = 0;
       ref.lsb_expr = 0;
       ref.val_expr = 0;

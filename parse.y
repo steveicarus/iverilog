@@ -4296,6 +4296,10 @@ module_item
 	pform_endgenerate();
       }
 
+  /* 1364-2001 and later allow specparam declarations outside specify blocks. */
+
+  | attribute_list_opt K_specparam specparam_decl ';'
+
   /* specify blocks are parsed but ignored. */
 
 	| K_specify K_endspecify
@@ -5126,7 +5130,7 @@ net_variable_list
 	;
 
 specify_item
-	: K_specparam specparam_list ';'
+	: K_specparam specparam_decl ';'
 	| specify_simple_path_decl ';'
                 { pform_module_specify_path($1);
 		}
@@ -5332,7 +5336,8 @@ specify_path_identifiers
 specparam
 	: IDENTIFIER '=' expression
 		{ PExpr*tmp = $3;
-		  pform_set_specparam(lex_strings.make($1), tmp);
+		  pform_set_specparam(@1, lex_strings.make($1),
+		                      param_active_range, tmp);
 		  delete[]$1;
 		}
 	| IDENTIFIER '=' expression ':' expression ':' expression
@@ -5370,7 +5375,8 @@ specparam
 		        cerr << " expression." << endl;
 		        min_typ_max_warn -= 1;
 		  }
-		  pform_set_specparam(lex_strings.make($1), tmp);
+		  pform_set_specparam(@1, lex_strings.make($1),
+		                      param_active_range, tmp);
 		  delete[]$1;
 		}
 	| PATHPULSE_IDENTIFIER '=' expression
@@ -5385,9 +5391,17 @@ specparam
 	;
 
 specparam_list
-	: specparam
-	| specparam_list ',' specparam
-	;
+  : specparam
+  | specparam_list ',' specparam
+  ;
+
+specparam_decl
+  : specparam_list
+  | range
+      { param_active_range = $1; }
+    specparam_list
+      { param_active_range = 0; }
+  ;
 
 spec_polarity
 	: '+'  { $$ = '+'; }
