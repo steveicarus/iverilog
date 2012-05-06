@@ -836,7 +836,7 @@ constraint_block_item_list_opt
 
 constraint_declaration /* IEEE1800-2005: A.1.9 */
   : K_static_opt K_constraint IDENTIFIER '{' constraint_block_item_list_opt '}'
-      { yyerror(@2, "sorry: Constraint declarations not supported.") }
+      { yyerror(@2, "sorry: Constraint declarations not supported."); }
 
   /* Error handling rules... */
 
@@ -860,7 +860,7 @@ constraint_expression_list /* */
 
 constraint_prototype /* IEEE1800-2005: A.1.9 */
   : K_static_opt K_constraint IDENTIFIER ';'
-      { yyerror(@2, "sorry: Constraint prototypes not supported.") }
+      { yyerror(@2, "sorry: Constraint prototypes not supported."); }
   ;
 
 constraint_set /* IEEE1800-2005 A.1.9 */
@@ -1893,11 +1893,11 @@ type_declaration
 	delete[]$3;
       }
   | K_typedef K_enum   IDENTIFIER ';'
-      { yyerror(@1, "sorry: Enum forward declarations not supported yet.") }
+      { yyerror(@1, "sorry: Enum forward declarations not supported yet."); }
   | K_typedef K_struct IDENTIFIER ';'
-      { yyerror(@1, "sorry: Struct forward declarations not supported yet.") }
+      { yyerror(@1, "sorry: Struct forward declarations not supported yet."); }
   | K_typedef K_union  IDENTIFIER ';'
-      { yyerror(@1, "sorry: Union forward declarations not supported yet.") }
+      { yyerror(@1, "sorry: Union forward declarations not supported yet."); }
   | K_typedef          IDENTIFIER ';'
       { // Create a synthetic typedef for the class name so that the
 	// lexor detects the name as a type.
