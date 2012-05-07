@@ -762,8 +762,7 @@ class NetScope : public Attrib {
 	/* Parameters exist within a scope, and these methods allow
 	   one to manipulate the set. In these cases, the name is the
 	   *simple* name of the parameter, the hierarchy is implicit in
-	   the scope. The return value from set_parameter is the
-	   previous expression, if there was one. */
+	   the scope. */
 
       struct range_t;
       void set_parameter(perm_string name, bool is_annotatable,
@@ -771,8 +770,8 @@ class NetScope : public Attrib {
 			 PExpr*msb, PExpr*lsb, bool signed_flag,
 			 NetScope::range_t*range_list,
 			 const LineInfo&file_line);
-      NetExpr* set_localparam(perm_string name, NetExpr*val,
-			      const LineInfo&file_line);
+      void set_parameter(perm_string name, NetExpr*val,
+			 const LineInfo&file_line);
 
       const NetExpr*get_parameter(Design*des,
 				  const char* name,
@@ -986,7 +985,6 @@ class NetScope : public Attrib {
 	    NetExpr*val;
       };
       map<perm_string,param_expr_t>parameters;
-      map<perm_string,param_expr_t>localparams;
 
       typedef map<perm_string,param_expr_t>::iterator param_ref_t;
 

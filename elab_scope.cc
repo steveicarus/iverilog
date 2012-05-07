@@ -730,7 +730,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 							 genvar_verinum);
 		    // The file and line information should really come
 		    // from the genvar statement, not the for loop.
-		  scope->set_localparam(loop_index, gp, *this);
+		  scope->set_parameter(loop_index, gp, *this);
 		  if (debug_scopes)
 			cerr << get_fileline() << ": debug: "
 			     << "Create implicit localparam "

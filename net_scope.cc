@@ -114,6 +114,11 @@ void NetScope::set_line(perm_string file, perm_string def_file,
       def_lineno_ = def_lineno;
 }
 
+/*
+ * This is the full-featured version of set_parameter. It is used for
+ * adding parameter, localparam, and specparam declarations to the
+ * parameter list.
+ */
 void NetScope::set_parameter(perm_string key, bool is_annotatable,
 			     PExpr*val, ivl_variable_type_t type__,
 			     PExpr*msb, PExpr*lsb, bool signed_flag,
@@ -136,6 +141,28 @@ void NetScope::set_parameter(perm_string key, bool is_annotatable,
       ref.set_line(file_line);
 
       ivl_assert(file_line, type__ != IVL_VT_NO_TYPE);
+}
+
+/*
+ * This is a simplified version of set_parameter, for use when the
+ * parameter value is already known. It is currently only used to
+ * add a genvar to the parameter list.
+ */
+void NetScope::set_parameter(perm_string key, NetExpr*val,
+			     const LineInfo&file_line)
+{
+      param_expr_t&ref = parameters[key];
+      ref.is_annotatable = false;
+      ref.msb_expr = 0;
+      ref.lsb_expr = 0;
+      ref.val_expr = 0;
+      ref.val_scope = this;
+      ref.type = IVL_VT_BOOL;
+      ref.msb = 0;
+      ref.lsb = 0;
+      ref.signed_flag = false;
+      ref.val = val;
+      ref.set_line(file_line);
 }
 
 bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
@@ -203,29 +230,6 @@ bool NetScope::make_parameter_unannotatable(perm_string key)
 }
 
 /*
- * This is not really complete (msb, lsb, sign). It is currently only
- * used to add a genvar to the local parameter list.
- */
-NetExpr* NetScope::set_localparam(perm_string key, NetExpr*val,
-				  const LineInfo&file_line)
-{
-      param_expr_t&ref = localparams[key];
-      NetExpr* res = ref.val;
-      ref.is_annotatable = false;
-      ref.msb_expr = 0;
-      ref.lsb_expr = 0;
-      ref.val_expr = 0;
-      ref.val_scope = this;
-      ref.type = IVL_VT_BOOL;
-      ref.msb = 0;
-      ref.lsb = 0;
-      ref.signed_flag = false;
-      ref.val = val;
-      ref.set_line(file_line);
-      return res;
-}
-
-/*
  * NOTE: This method takes a const char* as a key to lookup a
  * parameter, because we don't save that pointer. However, due to the
  * way the map<> template works, we need to *cheat* and use the
@@ -257,16 +261,6 @@ const NetExpr* NetScope::get_parameter(Design*des,
 	    return idx->second.val;
       }
 
-      idx = localparams.find(key);
-      if (idx != localparams.end()) {
-            if (idx->second.val_expr)
-                  evaluate_parameter_(des, idx);
-
-	    msb = idx->second.msb;
-	    lsb = idx->second.lsb;
-	    return idx->second.val;
-      }
-
       map<perm_string,NetEConstEnum*>::const_iterator eidx;
 
       eidx = enum_names_.find(key);
@@ -285,9 +279,6 @@ NetScope::param_ref_t NetScope::find_parameter(perm_string key)
 
       idx = parameters.find(key);
       if (idx != parameters.end()) return idx;
-
-      idx = localparams.find(perm_string::literal(key));
-      if (idx != localparams.end()) return idx;
 
 	// To get here the parameter must already exist, so we should
 	// never get here.

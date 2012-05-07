@@ -1191,12 +1191,6 @@ void NetScope::dump(ostream&o) const
 
 		  o << ";" << endl;
 	    }
-
-	    for (pp = localparams.begin()
-		       ; pp != localparams.end() ;  ++ pp ) {
-		  o << "    localparam " << (*pp).first << " = "  <<
-			*(*pp).second.val << ";" << endl;
-	    }
       }
 
 	/* Dump the saved defparam assignments here. */

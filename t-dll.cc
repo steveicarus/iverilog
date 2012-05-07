@@ -461,7 +461,7 @@ ivl_parameter_t dll_target::scope_find_param(ivl_scope_t scope,
  */
 void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 {
-      scop->nparam_ = net->parameters.size() + net->localparams.size();
+      scop->nparam_ = net->parameters.size();
       if (scop->nparam_ == 0) {
 	    scop->param_ = 0;
 	    return;
@@ -474,19 +474,6 @@ void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 
       for (pit_t cur_pit = net->parameters.begin()
 		 ; cur_pit != net->parameters.end() ; ++ cur_pit ) {
-
-	    assert(idx < scop->nparam_);
-	    ivl_parameter_t cur_par = scop->param_ + idx;
-	    cur_par->basename = (*cur_pit).first;
-	    cur_par->scope = scop;
-	    FILE_NAME(cur_par, &((*cur_pit).second));
-
-	    NetExpr*etmp = (*cur_pit).second.val;
-	    make_scope_param_expr(cur_par, etmp);
-	    idx += 1;
-      }
-      for (pit_t cur_pit = net->localparams.begin()
-		 ; cur_pit != net->localparams.end() ; ++ cur_pit ) {
 
 	    assert(idx < scop->nparam_);
 	    ivl_parameter_t cur_par = scop->param_ + idx;
