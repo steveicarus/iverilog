@@ -66,6 +66,11 @@ static stack<PBlock*> current_block_stack;
  * simulation issues. */
 static unsigned args_after_notifier;
 
+/* The rules sometimes push attributes into a global context where
+   sub-rules may grab them. This makes parser rules a little easier to
+   write in some cases. */
+static list<named_pexpr_t>*attributes_in_context = 0;
+
 /* Later version of bison (including 1.35) will not compile in stack
    extension if the output is compiled with C++ and either the YYSTYPE
    or YYLTYPE are provided by the source code. However, I can get the
@@ -1806,22 +1811,22 @@ block_item_decl
      is implicit in the "integer" of the declaration. */
 
   : K_integer signed_unsigned_opt register_variable_list ';'
-      { pform_set_reg_integer($3);
+      { pform_set_reg_integer($3, attributes_in_context);
       }
 
   | K_time register_variable_list ';'
-      { pform_set_reg_time($2);
+      { pform_set_reg_time($2, attributes_in_context);
       }
 
   /* variable declarations. Note that data_type can be 0 if we are
      recovering from an error. */
 
   | data_type register_variable_list ';'
-      { if ($1) pform_set_data_type(@1, $1, $2);
+      { if ($1) pform_set_data_type(@1, $1, $2, attributes_in_context);
       }
 
   | K_reg data_type register_variable_list ';'
-      { if ($2) pform_set_data_type(@2, $2, $3);
+      { if ($2) pform_set_data_type(@2, $2, $3, attributes_in_context);
       }
 
   | K_event list_of_identifiers ';'
@@ -4100,12 +4105,15 @@ module_item
      will see the discipline name as an identifier. We match it to the
      discipline or type name semantically. */
   | DISCIPLINE_IDENTIFIER list_of_identifiers ';'
-  { pform_attach_discipline(@1, $1, $2); }
+      { pform_attach_discipline(@1, $1, $2); }
 
   /* block_item_decl rule is shared with task blocks and named
-     begin/end. */
+     begin/end. Careful to pass attributes to the block_item_decl. */
 
-  | block_item_decl
+  | attribute_list_opt { attributes_in_context = $1; } block_item_decl
+      { delete attributes_in_context;
+	attributes_in_context = 0;
+      }
 
   /* */
 
