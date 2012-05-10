@@ -136,6 +136,7 @@ void nodangle_f::signal(Design*, NetNet*sig)
       if ((sig->port_type() != NetNet::NOT_A_PORT) &&
 	  ((sig->scope()->type() == NetScope::TASK) ||
 	   (sig->scope()->type() == NetScope::FUNC) ||
+	   (sig->scope()->type() == NetScope::NESTED_MODULE) ||
 	   (sig->scope()->type() == NetScope::MODULE)))
 	    return;
 

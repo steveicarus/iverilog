@@ -33,6 +33,8 @@ std::ostream& operator << (std::ostream&o, const YYLTYPE&loc)
 {
       if (loc.text)
 	    o << loc.text << ":";
+      else
+	    o << "<>:";
       o << loc.first_line;
       return o;
 }

@@ -41,7 +41,13 @@
 # include  "ivl_assert.h"
 # include  "ivl_alloc.h"
 
+/*
+ * The pform_modules is a map of the modules that have been defined in
+ * the top level. This should not contain nested modules/programs.
+ */
 map<perm_string,Module*> pform_modules;
+/*
+ */
 map<perm_string,PUdp*> pform_primitives;
 
 
@@ -217,7 +223,7 @@ extern int VLparse();
   /* This tracks the current module being processed. There can only be
      exactly one module currently being parsed, since Verilog does not
      allow nested module definitions. */
-static Module*pform_cur_module = 0;
+static list<Module*>pform_cur_module;
 
 bool pform_library_flag = false;
 
@@ -307,7 +313,7 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 	        pform_cur_generate->tasks.end()) {
 		  cerr << task->get_fileline() << ": error: duplicate "
 		          "definition for task '" << name << "' in '"
-		       << pform_cur_module->mod_name() << "' (generate)."
+		       << pform_cur_module.front()->mod_name() << "' (generate)."
 		       << endl;
 		  error_count += 1;
 	    }
@@ -350,7 +356,7 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, char*name,
 	        pform_cur_generate->funcs.end()) {
 		  cerr << func->get_fileline() << ": error: duplicate "
 		          "definition for function '" << name << "' in '"
-		       << pform_cur_module->mod_name() << "' (generate)."
+		       << pform_cur_module.front()->mod_name() << "' (generate)."
 		       << endl;
 		  error_count += 1;
 	    }
@@ -402,16 +408,16 @@ void pform_bind_attributes(map<perm_string,PExpr*>&attributes,
 
 bool pform_in_program_block()
 {
-      if (pform_cur_module == 0)
+      if (pform_cur_module.size() == 0)
 	    return false;
-      if (pform_cur_module->program_block)
+      if (pform_cur_module.front()->program_block)
 	    return true;
       return false;
 }
 
 static bool pform_at_module_level()
 {
-      return (lexical_scope == pform_cur_module)
+      return (lexical_scope == pform_cur_module.front())
           || (lexical_scope == pform_cur_generate);
 }
 
@@ -488,15 +494,15 @@ void pform_set_default_nettype(NetNet::Type type,
 {
       pform_default_nettype = type;
 
-      if (pform_cur_module) {
+      if (pform_cur_module.size() > 0) {
 	    cerr << file<<":"<<lineno << ": error: "
 		 << "`default_nettype directives must appear" << endl;
 	    cerr << file<<":"<<lineno << ":      : "
 		 << "outside module definitions. The containing" << endl;
 	    cerr << file<<":"<<lineno << ":      : "
-		 << "module " << pform_cur_module->mod_name()
+		 << "module " << pform_cur_module.back()->mod_name()
 		 << " starts on line "
-		 << pform_cur_module->get_fileline() << "." << endl;
+		 << pform_cur_module.back()->get_fileline() << "." << endl;
 	    error_count += 1;
       }
 }
@@ -699,14 +705,14 @@ void pform_set_timeunit(const char*txt, bool in_module, bool only_check)
 
       if (in_module) {
 	    if (!only_check) {
-		  pform_cur_module->time_unit = val;
+		  pform_cur_module.front()->time_unit = val;
 		  tu_decl_flag = true;
 		  tu_local_flag = true;
 	    } else if (!tu_decl_flag) {
 		  VLerror(yylloc, "error: repeat timeunit found and the "
 		                  "initial module timeunit is missing.");
 		  return;
-	    } else if (pform_cur_module->time_unit != val) {
+	    } else if (pform_cur_module.front()->time_unit != val) {
 		  VLerror(yylloc, "error: repeat timeunit does not match "
 		                  "the initial module timeunit "
 		                  "declaration.");
@@ -723,7 +729,7 @@ void pform_set_timeunit(const char*txt, bool in_module, bool only_check)
 
 int pform_get_timeunit()
 {
-	return pform_cur_module->time_unit;
+      return pform_cur_module.front()->time_unit;
 }
 
 void pform_set_timeprecision(const char*txt, bool in_module, bool only_check)
@@ -734,14 +740,14 @@ void pform_set_timeprecision(const char*txt, bool in_module, bool only_check)
 
       if (in_module) {
 	    if (!only_check) {
-		  pform_cur_module->time_precision = val;
+		  pform_cur_module.front()->time_precision = val;
 		  tp_decl_flag = true;
 		  tp_local_flag = true;
 	    } else if (!tp_decl_flag) {
 		  VLerror(yylloc, "error: repeat timeprecision found and the "
 		                  "initial module timeprecision is missing.");
 		  return;
-	    } else if (pform_cur_module->time_precision != val) {
+	    } else if (pform_cur_module.front()->time_precision != val) {
 		  VLerror(yylloc, "error: repeat timeprecision does not match "
 		                  "the initial module timeprecision "
 		                  "declaration.");
@@ -808,26 +814,32 @@ verinum* pform_verinum_with_size(verinum*siz, verinum*val,
 void pform_startmodule(const struct vlltype&loc, const char*name,
 		       bool program_block, list<named_pexpr_t>*attr)
 {
-      assert( pform_cur_module == 0 );
+      if (pform_cur_module.size() > 0 && !gn_system_verilog()) {
+	    cerr << loc << ": error: Module definition " << name
+		 << " cannot nest into module " << pform_cur_module.front()->mod_name() << "." << endl;
+	    error_count += 1;
+      }
+
 
       perm_string lex_name = lex_strings.make(name);
-      pform_cur_module = new Module(lex_name);
-      pform_cur_module->program_block = program_block;
+      Module*cur_module = new Module(lexical_scope, lex_name);
+      cur_module->program_block = program_block;
 	/* Set the local time unit/precision to the global value. */
-      pform_cur_module->time_unit = pform_time_unit;
-      pform_cur_module->time_precision = pform_time_prec;
+      cur_module->time_unit = pform_time_unit;
+      cur_module->time_precision = pform_time_prec;
       tu_local_flag = tu_global_flag;
       tp_local_flag = tp_global_flag;
 
 	/* If we have a timescale file then the time information is from
 	 * a timescale directive. */
-      pform_cur_module->time_from_timescale = pform_timescale_file != 0;
+      cur_module->time_from_timescale = pform_timescale_file != 0;
 
-      FILE_NAME(pform_cur_module, loc);
-      pform_cur_module->library_flag = pform_library_flag;
+      FILE_NAME(cur_module, loc);
+      cur_module->library_flag = pform_library_flag;
 
-      ivl_assert(*pform_cur_module, lexical_scope == 0);
-      lexical_scope = pform_cur_module;
+      pform_cur_module.push_front(cur_module);
+
+      lexical_scope = cur_module;
 
 	/* The generate scheme numbering starts with *1*, not
 	   zero. That's just the way it is, thanks to the standard. */
@@ -836,13 +848,13 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
       if (warn_timescale && pform_timescale_file
 	  && (strcmp(pform_timescale_file,loc.text) != 0)) {
 
-	    cerr << pform_cur_module->get_fileline() << ": warning: "
+	    cerr << cur_module->get_fileline() << ": warning: "
 		 << "timescale for " << name
 		 << " inherited from another file." << endl;
 	    cerr << pform_timescale_file << ":" << pform_timescale_line
 		 << ": ...: The inherited timescale is here." << endl;
       }
-      pform_bind_attributes(pform_cur_module->attributes, attr);
+      pform_bind_attributes(cur_module->attributes, attr);
 }
 
 /*
@@ -852,13 +864,12 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
  */
 void pform_check_timeunit_prec()
 {
-      assert(pform_cur_module);
+      assert(pform_cur_module.size() > 0);
       if ((generation_flag & (GN_VER2005_SV | GN_VER2009)) &&
-          (pform_cur_module->time_unit < pform_cur_module->time_precision)) {
-	    VLerror("error: a timeprecision is missing or is too "
-	            "large!");
-      } else assert(pform_cur_module->time_unit >=
-                    pform_cur_module->time_precision);
+          (pform_cur_module.front()->time_unit < pform_cur_module.front()->time_precision)) {
+	    VLerror("error: a timeprecision is missing or is too large!");
+      } else assert(pform_cur_module.front()->time_unit >=
+                    pform_cur_module.front()->time_precision);
 }
 
 /*
@@ -881,7 +892,7 @@ Module::port_t* pform_module_port_reference(perm_string name,
 
 void pform_module_set_ports(vector<Module::port_t*>*ports)
 {
-      assert(pform_cur_module);
+      assert(pform_cur_module.size() > 0);
 
 	/* The parser parses ``module foo()'' as having one
 	   unconnected port, but it is really a module with no
@@ -892,7 +903,7 @@ void pform_module_set_ports(vector<Module::port_t*>*ports)
       }
 
       if (ports != 0) {
-	    pform_cur_module->ports = *ports;
+	    pform_cur_module.front()->ports = *ports;
 	    delete ports;
       }
 }
@@ -900,34 +911,44 @@ void pform_module_set_ports(vector<Module::port_t*>*ports)
 void pform_endmodule(const char*name, bool inside_celldefine,
                      Module::UCDriveType uc_drive_def)
 {
-      assert(pform_cur_module);
-      pform_cur_module->time_from_timescale = (tu_local_flag &&
-                                               tp_local_flag) ||
-                                              (pform_timescale_file != 0);
-      perm_string mod_name = pform_cur_module->mod_name();
+      assert(pform_cur_module.size() > 0);
+      Module*cur_module  = pform_cur_module.front();
+      pform_cur_module.pop_front();
+
+      cur_module->time_from_timescale = (tu_local_flag && tp_local_flag)
+	                             || (pform_timescale_file != 0);
+      perm_string mod_name = cur_module->mod_name();
       assert(strcmp(name, mod_name) == 0);
-      pform_cur_module->is_cell = inside_celldefine;
-      pform_cur_module->uc_drive = uc_drive_def;
+      cur_module->is_cell = inside_celldefine;
+      cur_module->uc_drive = uc_drive_def;
+
+	// If this is a root module, then there is no parent module
+	// and we try to put this newly defined module into the global
+	// root list of modules. Otherwise, this is a nested module
+	// and we put it into the parent module scope to be elaborated
+	// if needed.
+      map<perm_string,Module*>&use_module_map = (pform_cur_module.size() == 0)
+	    ? pform_modules
+	    : pform_cur_module.front()->nested_modules;
 
       map<perm_string,Module*>::const_iterator test =
-	    pform_modules.find(mod_name);
+	    use_module_map.find(mod_name);
 
-      if (test != pform_modules.end()) {
+      if (test != use_module_map.end()) {
 	    ostringstream msg;
 	    msg << "Module " << name << " was already declared here: "
-		<< (*test).second->get_fileline() << endl;
+		<< test->second->get_fileline() << endl;
 	    VLerror(msg.str().c_str());
       } else {
-	    pform_modules[mod_name] = pform_cur_module;
+	    use_module_map[mod_name] = cur_module;
       }
 
 	// The current lexical scope should be this module by now, and
 	// this module should not have a parent lexical scope.
-      ivl_assert(*pform_cur_module, lexical_scope == pform_cur_module);
+      ivl_assert(*cur_module, lexical_scope == cur_module);
       pform_pop_scope();
-      ivl_assert(*pform_cur_module, lexical_scope == 0);
+      ivl_assert(*cur_module, pform_cur_module.size()>0 || lexical_scope == 0);
 
-      pform_cur_module = 0;
       tp_decl_flag = false;
       tu_decl_flag = false;
       tu_local_flag = false;
@@ -958,7 +979,7 @@ void pform_genvars(const struct vlltype&li, list<perm_string>*names)
             if (pform_cur_generate)
                   pform_add_genvar(li, *cur, pform_cur_generate->genvars);
             else
-                  pform_add_genvar(li, *cur, pform_cur_module->genvars);
+                  pform_add_genvar(li, *cur, pform_cur_module.front()->genvars);
       }
 
       delete names;
@@ -1113,7 +1134,7 @@ void pform_generate_block_name(char*name)
 void pform_endgenerate()
 {
       assert(pform_cur_generate != 0);
-      assert(pform_cur_module);
+      assert(pform_cur_module.size() > 0);
 
 	// If there is no explicit block name then generate a temporary
 	// name. This will be replaced by the correct name later, once
@@ -1137,7 +1158,7 @@ void pform_endgenerate()
 	    parent_generate->generate_schemes.push_back(pform_cur_generate);
       } else {
 	    assert(pform_cur_generate->scheme_type != PGenerate::GS_CASE_ITEM);
-	    pform_cur_module->generate_schemes.push_back(pform_cur_generate);
+	    pform_cur_module.front()->generate_schemes.push_back(pform_cur_generate);
       }
       pform_cur_generate = parent_generate;
 }
@@ -1593,7 +1614,7 @@ static void pform_make_event(perm_string name, const char*fn, unsigned ln)
 	    FILE_NAME(&tloc, fn, ln);
 	    cerr << tloc.get_fileline() << ": error: duplicate definition "
 	            "for named event '" << name << "' in '"
-	         << pform_cur_module->mod_name() << "'." << endl;
+	         << pform_cur_module.front()->mod_name() << "'." << endl;
 	    error_count += 1;
       }
 
@@ -1653,7 +1674,7 @@ static void pform_makegate(PGBuiltin::Type type,
       if (pform_cur_generate)
 	    pform_cur_generate->add_gate(cur);
       else
-	    pform_cur_module->add_gate(cur);
+	    pform_cur_module.front()->add_gate(cur);
 }
 
 void pform_makegates(PGBuiltin::Type type,
@@ -1719,7 +1740,7 @@ static void pform_make_modgate(perm_string type,
       if (pform_cur_generate)
 	    pform_cur_generate->add_gate(cur);
       else
-	    pform_cur_module->add_gate(cur);
+	    pform_cur_module.front()->add_gate(cur);
 }
 
 static void pform_make_modgate(perm_string type,
@@ -1763,7 +1784,7 @@ static void pform_make_modgate(perm_string type,
       if (pform_cur_generate)
 	    pform_cur_generate->add_gate(cur);
       else
-	    pform_cur_module->add_gate(cur);
+	    pform_cur_module.front()->add_gate(cur);
 }
 
 void pform_make_modgates(perm_string type,
@@ -1833,7 +1854,7 @@ static PGAssign* pform_make_pgassign(PExpr*lval, PExpr*rval,
       if (pform_cur_generate)
 	    pform_cur_generate->add_gate(cur);
       else
-	    pform_cur_module->add_gate(cur);
+	    pform_cur_module.front()->add_gate(cur);
 
       return cur;
 }
@@ -2305,7 +2326,7 @@ void pform_set_attrib(perm_string name, perm_string key, char*value)
       if (PWire*cur = lexical_scope->wires_find(name)) {
 	    cur->attributes[key] = new PEString(value);
 
-      } else if (PGate*curg = pform_cur_module->get_gate(name)) {
+      } else if (PGate*curg = pform_cur_module.front()->get_gate(name)) {
 	    curg->attributes[key] = new PEString(value);
 
       } else {
@@ -2384,23 +2405,23 @@ void pform_set_parameter(const struct vlltype&loc,
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: duplicate definition "
 	            "for parameter '" << name << "' in '"
-	         << pform_cur_module->mod_name() << "'." << endl;
+	         << pform_cur_module.front()->mod_name() << "'." << endl;
 	    error_count += 1;
       }
       if (scope->localparams.find(name) != scope->localparams.end()) {
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: localparam and "
-	            "parameter in '" << pform_cur_module->mod_name()
+		 << "parameter in '" << pform_cur_module.front()->mod_name()
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
-      if ((scope == pform_cur_module) &&
-          (pform_cur_module->specparams.find(name) != pform_cur_module->specparams.end())) {
+      if ((scope == pform_cur_module.front()) &&
+          (pform_cur_module.front()->specparams.find(name) != pform_cur_module.front()->specparams.end())) {
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: specparam and "
-	            "parameter in '" << pform_cur_module->mod_name()
+		  "parameter in '" << pform_cur_module.front()->mod_name()
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
@@ -2426,8 +2447,8 @@ void pform_set_parameter(const struct vlltype&loc,
       parm.signed_flag = signed_flag;
       parm.range = value_range;
 
-      if (scope == pform_cur_module)
-            pform_cur_module->param_names.push_back(name);
+      if (scope == pform_cur_module.front())
+            pform_cur_module.front()->param_names.push_back(name);
 }
 
 void pform_set_localparam(const struct vlltype&loc,
@@ -2442,23 +2463,23 @@ void pform_set_localparam(const struct vlltype&loc,
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: duplicate definition "
 	            "for localparam '" << name << "' in '"
-	         << pform_cur_module->mod_name() << "'." << endl;
+	         << pform_cur_module.front()->mod_name() << "'." << endl;
 	    error_count += 1;
       }
       if (scope->parameters.find(name) != scope->parameters.end()) {
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: parameter and "
-	            "localparam in '" << pform_cur_module->mod_name()
+		 << "localparam in '" << pform_cur_module.front()->mod_name()
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
-      if ((scope == pform_cur_module) &&
-          (pform_cur_module->specparams.find(name) != pform_cur_module->specparams.end())) {
+      if ((scope == pform_cur_module.front()) &&
+          (pform_cur_module.front()->specparams.find(name) != pform_cur_module.front()->specparams.end())) {
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: specparam and "
-	            "localparam in '" << pform_cur_module->mod_name()
+		  "localparam in '" << pform_cur_module.front()->mod_name()
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
@@ -2488,23 +2509,25 @@ void pform_set_localparam(const struct vlltype&loc,
 void pform_set_specparam(const struct vlltype&loc, perm_string name,
 			 list<pform_range_t>*range, PExpr*expr)
 {
-      Module*scope = pform_cur_module;
+      assert(pform_cur_module.size() > 0);
+      Module*scope = pform_cur_module.front();
       assert(scope == lexical_scope);
 
 	// Check if the specparam name is already in the dictionary.
-      if (scope->specparams.find(name) != scope->specparams.end()) {
+      if (pform_cur_module.front()->specparams.find(name) !=
+          pform_cur_module.front()->specparams.end()) {
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: duplicate definition "
 	            "for specparam '" << name << "' in '"
-	         << pform_cur_module->mod_name() << "'." << endl;
+	         << pform_cur_module.front()->mod_name() << "'." << endl;
 	    error_count += 1;
       }
       if (scope->parameters.find(name) != scope->parameters.end()) {
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: parameter and "
-	            "specparam in '" << pform_cur_module->mod_name()
+		  "specparam in '" << pform_cur_module.front()->mod_name()
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
@@ -2512,13 +2535,14 @@ void pform_set_specparam(const struct vlltype&loc, perm_string name,
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: localparam and "
-	            "specparam in '" << pform_cur_module->mod_name()
+		  "specparam in '" << pform_cur_module.front()->mod_name()
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
 
       assert(expr);
-      Module::param_expr_t&parm = scope->specparams[name];
+
+      Module::param_expr_t&parm = pform_cur_module.front()->specparams[name];
       FILE_NAME(&parm, loc);
 
       parm.expr = expr;
@@ -2542,7 +2566,7 @@ void pform_set_specparam(const struct vlltype&loc, perm_string name,
 void pform_set_defparam(const pform_name_t&name, PExpr*expr)
 {
       assert(expr);
-      pform_cur_module->defparms.push_back(make_pair(name,expr));
+      pform_cur_module.front()->defparms.push_back(make_pair(name,expr));
 }
 
 /*
@@ -2609,7 +2633,7 @@ extern void pform_module_specify_path(PSpecPath*obj)
 {
       if (obj == 0)
 	    return;
-      pform_cur_module->specify_paths.push_back(obj);
+      pform_cur_module.front()->specify_paths.push_back(obj);
 }
 
 
@@ -2860,8 +2884,8 @@ PProcess* pform_make_behavior(ivl_process_type_t type, Statement*st,
 
       pform_put_behavior_in_scope(pp);
 
-      ivl_assert(*st, pform_cur_module);
-      if (pform_cur_module->program_block && type == IVL_PR_ALWAYS) {
+      ivl_assert(*st, pform_cur_module.size() > 0);
+      if (pform_cur_module.front()->program_block && type == IVL_PR_ALWAYS) {
 	    cerr << st->get_fileline() << ": error: Always statements not allowed"
 		 << " in program blocks." << endl;
 	    error_count += 1;
@@ -2907,11 +2931,4 @@ int pform_parse(const char*path, FILE*file)
 
       destroy_lexor();
       return error_count;
-}
-
-void pform_error_nested_modules()
-{
-      assert( pform_cur_module != 0 );
-      cerr << pform_cur_module->get_fileline() << ": error: original module "
-              "(" << pform_cur_module->mod_name() << ") defined here." << endl;
 }

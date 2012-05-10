@@ -302,6 +302,9 @@ void NetScope::print_type(ostream&stream) const
 	case FUNC:
 	    stream << "function";
 	    break;
+	case NESTED_MODULE:
+	    stream << "nested_module <" << (module_name_ ? module_name_.str() : "")
+	           << "> instance";
 	case MODULE:
 	    stream << "module <" << (module_name_ ? module_name_.str() : "")
 	           << "> instance";
@@ -360,31 +363,31 @@ const NetFuncDef* NetScope::func_def() const
 
 void NetScope::set_module_name(perm_string n)
 {
-      assert(type_ == MODULE);
+      assert(type_ == MODULE || type_ == NESTED_MODULE);
       module_name_ = n; /* NOTE: n must have been permallocated. */
 }
 
 perm_string NetScope::module_name() const
 {
-      assert(type_ == MODULE);
+      assert(type_ == MODULE || type_ == NESTED_MODULE);
       return module_name_;
 }
 
 void NetScope::add_module_port(NetNet*port)
 {
-      assert(type_ == MODULE);
+      assert(type_ == MODULE || type_ == NESTED_MODULE);
       ports_.push_back(port);
 }
 
 unsigned NetScope::module_ports() const
 {
-      assert(type_ == MODULE);
+      assert(type_ == MODULE || type_ == NESTED_MODULE);
       return ports_.size();
 }
 
 NetNet* NetScope::module_port(unsigned idx) const
 {
-      assert(type_ == MODULE);
+      assert(type_ == MODULE || type_ == NESTED_MODULE);
       assert(idx < ports_.size());
       return ports_[idx];
 }

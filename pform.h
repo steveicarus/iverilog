@@ -424,12 +424,6 @@ extern PAssign* pform_compressed_assign_from_inc_dec(const struct vlltype&loc,
  */
 extern void pform_dump(ostream&out, Module*mod);
 
-/*
- * Used to report the original module location when a nested module
- * (missing endmodule) is found by the parser.
- */
-extern void pform_error_nested_modules();
-
 /* ** pform_discipline.cc
  * Functions for handling the parse of natures and disciplines. These
  * functions are in pform_disciplines.cc

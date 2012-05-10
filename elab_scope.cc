@@ -541,6 +541,19 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
       elaborate_scope_funcs(des, scope, funcs);
 
+	// Look for implicit modules and implicit gates for them.
+
+      for (map<perm_string,Module*>::iterator cur = nested_modules.begin()
+		 ; cur != nested_modules.end() ; ++cur) {
+	      // Skip modules that must be explicitly instantiated.
+	    if (cur->second->port_count() > 0)
+		  continue;
+
+	    PGModule*nested_gate = new PGModule(cur->second, cur->second->mod_name());
+	    nested_gate->set_line(*cur->second);
+	    gates_.push_back(nested_gate);
+      }
+
 	// Gates include modules, which might introduce new scopes, so
 	// scan all of them to create those scopes.
 
@@ -1212,7 +1225,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 		  continue;
 	    }
 
-	    if (scn->type() != NetScope::MODULE) continue;
+	    if (! scn->type_is_module()) continue;
 
 	    if (strcmp(mod->mod_name(), scn->module_name()) != 0) continue;
 
@@ -1329,8 +1342,10 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 		       << "." << endl;
 	    }
 
-	      // Create the new scope as a MODULE with my name.
-	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE);
+	      // Create the new scope as a MODULE with my name. Note
+	      // that if this is a nested module, mark it thus so that
+	      // scope searches will continue into the parent scope.
+	    NetScope*my_scope = new NetScope(sc, use_name, bound_type_? NetScope::NESTED_MODULE : NetScope::MODULE);
 	    my_scope->set_line(get_file(), mod->get_file(),
 	                       get_lineno(), mod->get_lineno());
 	    my_scope->set_module_name(mod->mod_name());

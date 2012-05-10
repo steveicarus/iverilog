@@ -65,7 +65,7 @@ class Module : public PScopeExtra, public LineInfo {
     public:
 	/* The name passed here is the module name, not the instance
 	   name. This make must be a permallocated string. */
-      explicit Module(perm_string name);
+      explicit Module(LexicalScope*parent, perm_string name);
       ~Module();
 
 	/* Initially false. This is set to true if the module has been
@@ -120,6 +120,10 @@ class Module : public PScopeExtra, public LineInfo {
 	/* The module has a list of generate schemes that appear in
 	   the module definition. These are used at elaboration time. */
       list<PGenerate*> generate_schemes;
+
+	/* Nested modules are placed here, and are not elaborated
+	   unless they are instantiated, implicitly or explicitly. */
+      std::map<perm_string,Module*> nested_modules;
 
       list<PSpecPath*> specify_paths;
 

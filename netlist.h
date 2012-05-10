@@ -724,7 +724,7 @@ extern std::ostream&operator << (std::ostream&out, const std::list<netrange_t>&r
 class NetScope : public Attrib {
 
     public:
-      enum TYPE { MODULE, TASK, FUNC, BEGIN_END, FORK_JOIN, GENBLOCK };
+      enum TYPE { MODULE, NESTED_MODULE, TASK, FUNC, BEGIN_END, FORK_JOIN, GENBLOCK };
 
 	/* Create a new scope, and attach it to the given parent. The
 	   name is expected to have been permallocated. */
@@ -806,6 +806,7 @@ class NetScope : public Attrib {
       const NetScope* child(const hname_t&name) const;
 
       TYPE type() const;
+      bool type_is_module() const { return type()==MODULE || type()==NESTED_MODULE; }
       void print_type(ostream&) const;
 
       void set_task_def(NetTaskDef*);

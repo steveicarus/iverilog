@@ -2068,6 +2068,10 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 
 bool PGModule::elaborate_sig(Design*des, NetScope*scope) const
 {
+      if (bound_type_) {
+	    return elaborate_sig_mod_(des, scope, bound_type_);
+      }
+
 	// Look for the module type
       map<perm_string,Module*>::const_iterator mod = pform_modules.find(type_);
       if (mod != pform_modules.end())
@@ -2087,6 +2091,11 @@ bool PGModule::elaborate_sig(Design*des, NetScope*scope) const
 
 void PGModule::elaborate(Design*des, NetScope*scope) const
 {
+      if (bound_type_) {
+	    elaborate_mod_(des, bound_type_, scope);
+	    return;
+      }
+
 	// Look for the module type
       map<perm_string,Module*>::const_iterator mod = pform_modules.find(type_);
       if (mod != pform_modules.end()) {
@@ -2108,10 +2117,16 @@ void PGModule::elaborate(Design*des, NetScope*scope) const
 
 void PGModule::elaborate_scope(Design*des, NetScope*sc) const
 {
+	// If the module type is known by design, then go right to it.
+      if (bound_type_) {
+	    elaborate_scope_mod_(des, bound_type_, sc);
+	    return;
+      }
+
 	// Look for the module type
       map<perm_string,Module*>::const_iterator mod = pform_modules.find(type_);
       if (mod != pform_modules.end()) {
-	    elaborate_scope_mod_(des, (*mod).second, sc);
+	    elaborate_scope_mod_(des, mod->second, sc);
 	    return;
       }
 
@@ -2128,7 +2143,7 @@ void PGModule::elaborate_scope(Design*des, NetScope*sc) const
 	      // Try again to find the module type
 	    mod = pform_modules.find(type_);
 	    if (mod != pform_modules.end()) {
-		  elaborate_scope_mod_(des, (*mod).second, sc);
+		  elaborate_scope_mod_(des, mod->second, sc);
 		  return;
 	    }
 
@@ -3241,6 +3256,7 @@ NetProc* PDisable::elaborate(Design*des, NetScope*scope) const
 	    return 0;
 
 	  case NetScope::MODULE:
+	  case NetScope::NESTED_MODULE:
 	    cerr << get_fileline() << ": error: Cannot disable modules." << endl;
 	    des->errors += 1;
 	    return 0;

@@ -3866,43 +3866,46 @@ module_parameter_port_list
 
 module_item
 
+  /* Modules can contain further sub-module definitions. */
+  : module
+
   /* This rule detects net declarations that possibly include a
      primitive type, an optional vector range and signed flag. This
      also includes an optional delay set. The values are then applied
      to a list of names. If the primitive type is not specified, then
      resort to the default type LOGIC. */
 
-	: attribute_list_opt net_type
-          primitive_type_opt unsigned_signed_opt range_opt
-          delay3_opt
-          net_variable_list ';'
+  | attribute_list_opt net_type
+    primitive_type_opt unsigned_signed_opt range_opt
+    delay3_opt
+    net_variable_list ';'
 
-		{ ivl_variable_type_t dtype = $3;
-		  if (dtype == IVL_VT_NO_TYPE)
-			dtype = IVL_VT_LOGIC;
-		  pform_makewire(@2, $5, $4, $7, $2,
-				 NetNet::NOT_A_PORT, dtype, $1);
-		  if ($6 != 0) {
-			yyerror(@6, "sorry: net delays not supported.");
-			delete $6;
-		  }
-		  delete $1;
-		}
+      { ivl_variable_type_t dtype = $3;
+	if (dtype == IVL_VT_NO_TYPE)
+	      dtype = IVL_VT_LOGIC;
+	pform_makewire(@2, $5, $4, $7, $2, NetNet::NOT_A_PORT, dtype, $1);
+	if ($6 != 0) {
+	      yyerror(@6, "sorry: net delays not supported.");
+	      delete $6;
+	}
+	delete $1;
+      }
 
-	| attribute_list_opt K_wreal delay3 net_variable_list ';'
-		{ pform_makewire(@2, 0, true, $4, NetNet::WIRE,
-				 NetNet::NOT_A_PORT, IVL_VT_REAL, $1);
-		  if ($3 != 0) {
-			yyerror(@3, "sorry: net delays not supported.");
-			delete $3;
-		  }
-		  delete $1;
-		}
-	| attribute_list_opt K_wreal net_variable_list ';'
-		{ pform_makewire(@2, 0, true, $3, NetNet::WIRE,
-				 NetNet::NOT_A_PORT, IVL_VT_REAL, $1);
-		  delete $1;
-		}
+  | attribute_list_opt K_wreal delay3 net_variable_list ';'
+      { pform_makewire(@2, 0, true, $4, NetNet::WIRE,
+		       NetNet::NOT_A_PORT, IVL_VT_REAL, $1);
+	    if ($3 != 0) {
+		  yyerror(@3, "sorry: net delays not supported.");
+		  delete $3;
+	    }
+	    delete $1;
+      }
+
+  | attribute_list_opt K_wreal net_variable_list ';'
+      { pform_makewire(@2, 0, true, $3, NetNet::WIRE,
+		       NetNet::NOT_A_PORT, IVL_VT_REAL, $1);
+	    delete $1;
+      }
 
   /* Very similar to the rule above, but this takes a list of
      net_decl_assigns, which are <name> = <expr> assignment
@@ -4247,13 +4250,6 @@ module_item
   /* These rules match various errors that the user can type into
      module items. These rules try to catch them at a point where a
      reasonable error message can be produced. */
-
-	| K_module error ';'
-		{ yyerror(@1, "error: missing endmodule or attempt to "
-		              "nest modules.");
-		  pform_error_nested_modules();
-		  yyerrok;
-		}
 
 	| error ';'
 		{ yyerror(@2, "error: invalid module item.");

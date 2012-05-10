@@ -2297,6 +2297,7 @@ void dll_target::scope(const NetScope*net)
 
 	    switch (net->type()) {
 		case NetScope::MODULE:
+		case NetScope::NESTED_MODULE:
 		  scop->type_ = IVL_SCT_MODULE;
 		  scop->tname_ = net->module_name();
 		  scop->ports = net->module_ports();
