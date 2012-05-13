@@ -77,11 +77,16 @@ int ExpAggregate::emit(ostream&out, Entity*ent, Architecture*arc)
 	    return 1;
       }
 
-      if (const VTypeArray*atype = dynamic_cast<const VTypeArray*> (peek_type()))
+      const VType*use_type = peek_type();
+      while (const VTypeDef*def = dynamic_cast<const VTypeDef*> (use_type)) {
+	    use_type = def->peek_definition();
+      }
+
+      if (const VTypeArray*atype = dynamic_cast<const VTypeArray*> (use_type))
 	    return emit_array_(out, ent, arc, atype);
 
       out << "/* " << get_fileline() << ": internal error: "
-	  << "I don't know how to elaborate aggregate in " << typeid(peek_type()).name()
+	  << "I don't know how to elab/emit aggregate in " << typeid(use_type).name()
 	  << " type context. */";
       return 1;
 }

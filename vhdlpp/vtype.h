@@ -21,6 +21,7 @@
 
 # include  <iostream>
 # include  <list>
+# include  <map>
 # include  <vector>
 # include  <climits>
 # include  <inttypes.h>
@@ -28,6 +29,10 @@
 
 class Expression;
 class prange_t;
+class VTypeDef;
+
+typedef enum typedef_topo_e { NONE=0, PENDING, MARKED } typedef_topo_t;
+typedef std::map<const VTypeDef*, typedef_topo_t> typedef_context_t;
 
 /*
  * A description of a VHDL type consists of a graph of VType
@@ -57,6 +62,12 @@ class VType {
 	// This virtual method emits a definition for the specific
 	// type. It is used to emit typedef's.
       virtual int emit_def(std::ostream&out) const =0;
+
+	// This virtual method causes VTypeDef types to emit typedefs
+	// of themselves. The VTypeDef implementation of this method
+	// uses this method recursively to do a depth-first emit of
+	// all the types that it emits.
+      virtual int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
 
     private:
       friend class decl_t;
@@ -157,6 +168,7 @@ class VTypeArray : public VType {
       const VType* element_type() const;
 
       int emit_def(std::ostream&out) const;
+      int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
 
     private:
       const VType*etype_;
@@ -244,7 +256,7 @@ class VTypeDef : public VType {
 
       void write_to_stream(std::ostream&fd) const;
       void write_type_to_stream(ostream&fd) const;
-      int emit_typedef(std::ostream&out) const;
+      int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
 
       int emit_def(std::ostream&out) const;
     private:

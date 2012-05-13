@@ -67,6 +67,8 @@ int Architecture::emit(ostream&out, Entity*entity)
 	// Find typedefs that are present in the architecture body and
 	// emit them, so that following code can use the name instead
 	// of the full definition.
+
+      typedef_context_t typedef_ctx;
       for (map<perm_string,const VType*>::iterator cur = old_types_.begin()
 		 ; cur != old_types_.end() ; ++cur) {
 
@@ -74,7 +76,7 @@ int Architecture::emit(ostream&out, Entity*entity)
 	    if (def == 0)
 		  continue;
 
-	    errors += def->emit_typedef(out);
+	    errors += def->emit_typedef(out, typedef_ctx);
       }
 
       for (map<perm_string,struct const_t*>::iterator cur = old_constants_.begin()

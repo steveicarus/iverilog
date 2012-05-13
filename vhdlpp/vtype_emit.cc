@@ -46,6 +46,11 @@ int VType::emit_decl(ostream&out, perm_string name, bool reg_flag) const
       return errors;
 }
 
+int VType::emit_typedef(std::ostream&, typedef_context_t&) const
+{
+      return 0;
+}
+
 int VTypeArray::emit_def(ostream&out) const
 {
       int errors = 0;
@@ -84,6 +89,11 @@ int VTypeArray::emit_def(ostream&out) const
       }
 
       return errors;
+}
+
+int VTypeArray::emit_typedef(std::ostream&out, typedef_context_t&ctx) const
+{
+      etype_->emit_typedef(out, ctx);
 }
 
 int VTypeEnum::emit_def(ostream&out) const
@@ -153,10 +163,15 @@ int VTypeRecord::emit_def(ostream&out) const
       return errors;
 }
 
+/*
+ * For VTypeDef objects, use the name of the defined type as the
+ * type. (We are defining a variable here, not the type itself.) The
+ * emit_typedef() method was presumably called to define type already.
+ */
 int VTypeDef::emit_def(ostream&out) const
 {
       int errors = 0;
-      errors += type_->emit_def(out);
+      out << "\\" << name_ << " ";
       return errors;
 }
 
@@ -173,9 +188,28 @@ int VTypeDef::emit_decl(ostream&out, perm_string name, bool reg_flag) const
       return errors;
 }
 
-int VTypeDef::emit_typedef(ostream&out) const
+int VTypeDef::emit_typedef(ostream&out, typedef_context_t&ctx) const
 {
-      int errors = 0;
+	// The typedef_context_t is used by me to determine if this
+	// typedef has already been emitted in this architecture. If
+	// it has, then it is MARKED, give up. Otherwise, recurse the
+	// emit_typedef to make sure all sub-types that I use have
+	// been emitted, then emit my typedef.
+      typedef_topo_t&flag = ctx[this];
+      switch (flag) {
+	  case MARKED:
+	    return 0;
+	  case PENDING:
+	    out << "typedef \\" << name_ << " ; /* typedef cycle? */" << endl;
+	    return 0;
+	  case NONE:
+	    break;
+      }
+
+      flag = PENDING;
+      int errors = type_->emit_typedef(out, ctx);
+      flag = MARKED;
+
       out << "typedef ";
       errors += type_->emit_def(out);
       out << " \\" << name_ << " ;" << endl;
