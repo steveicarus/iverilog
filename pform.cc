@@ -2770,6 +2770,11 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
 	    return;
       }
 
+      if (/*array_type_t*array_type = */  dynamic_cast<array_type_t*> (data_type)) {
+	    VLerror(li, "sorry: General array types not supported.");
+	    return;
+      }
+
       assert(0);
 }
 

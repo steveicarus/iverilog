@@ -139,6 +139,17 @@ struct vector_type_t : public data_type_t {
       std::auto_ptr< list<pform_range_t> > pdims;
 };
 
+/*
+ * The array_type_t is a generalization of the vector_type_t in that
+ * the base type is another general data type.
+ */
+struct array_type_t : public data_type_t {
+      inline explicit array_type_t(data_type_t*btype, std::list<pform_range_t>*pd)
+      : base_type(btype), packed_dims(pd) { }
+      data_type_t*base_type;
+      std::auto_ptr< list<pform_range_t> > packed_dims;
+};
+
 struct real_type_t : public data_type_t {
       enum type_t { REAL, SHORTREAL };
       inline explicit real_type_t(type_t tc) : type_code(tc) { }

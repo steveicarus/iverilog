@@ -884,8 +884,10 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | TYPE_IDENTIFIER
-      { $$ = $1; }
+  | TYPE_IDENTIFIER range_opt
+      { if ($2) $$ = new array_type_t($1, $2);
+	else $$ = $1;
+      }
   | K_string
       { yyerror(@1, "sorry: String data type not supported.");
 	$$ = 0;
