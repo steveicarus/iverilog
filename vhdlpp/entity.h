@@ -104,7 +104,7 @@ class Entity : public ComponentBase {
 
 	// After the architecture is bound, elaboration calls this
 	// method to elaborate this entity. This method arranges for
-	// elaboration to hapen all the way through the architecture
+	// elaboration to happen all the way through the architecture
 	// that is bound to this entity.
       int elaborate();
 

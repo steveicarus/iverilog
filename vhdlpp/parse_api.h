@@ -25,7 +25,7 @@
 typedef void*yyscan_t;
 
 /*
- * The vlltype supports the passing of detailed source file location
+ * The yyltype supports the passing of detailed source file location
  * information between the lexical analyzer and the parser. Defining
  * YYLTYPE compels the lexor to use this type and not something other.
  */

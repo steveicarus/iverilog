@@ -83,7 +83,7 @@ inline std::ostream&operator << (std::ostream&out, const VType&item)
 extern void preload_global_types(void);
 
 /*
- * This class represents the primative types that are available to the
+ * This class represents the primitive types that are available to the
  * type subsystem.
  */
 class VTypePrimitive : public VType {

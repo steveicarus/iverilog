@@ -44,10 +44,10 @@
 extern int lexor_keyword_code (const char*str, unsigned len);
 
 /*
- * Lexical location information is passed in the yylloc variable to th
+ * Lexical location information is passed in the yylloc variable to the
  * parser. The file names, strings, are kept in a list so that I can
  * re-use them. The set_file_name function will return a pointer to
- * the name as it exists in the list (and delete the passed string.)
+ * the name as it exists in the list (and delete the passed string).
  * If the name is new, it will be added to the list.
  */
 #define yylloc (*yyllocp)
@@ -89,7 +89,7 @@ based_integer		[0-9a-fA-F](_?[0-9a-fA-F])*
 [ \t\b\f\r] { ; }
 \n { yylloc.first_line += 1; }
 
-  /* Single-line comments start with - - and run to the end of the
+  /* Single-line comments start with -- and run to the end of the
      current line. These are very easy to handle. */
 
 "--".* { comment_enter = YY_START; BEGIN(LCOMMENT); }
@@ -635,7 +635,7 @@ static double make_double_from_based(char* text)
     *first_hash_ptr = '\0';
     *second_hash_ptr = '\0';
 
-    //now lets deduce the base
+    //now let's deduce the base
     unsigned base = (unsigned)strtol(text, 0, 10) ;
 
     double mantissa = 0.0;

@@ -120,7 +120,7 @@ int ExpName::elaborate_rval(Entity*ent, Architecture*arc, const InterfacePort*lv
         /* IEEE 1076-2008, p.80:
         * For a formal port IN, associated port should be IN, OUT, INOUT or BUFFER
         * For a formal port OUT, associated port should be OUT, INOUT or BUFFER
-        * For a formal port INOUT, associated prot should be OUT, INOUT or BUFFER
+        * For a formal port INOUT, associated port should be OUT, INOUT or BUFFER
         * For a formal port BUFFER, associated port should be OUT, INOUT or BUFFER
         */
         switch(lval->mode) {
@@ -193,7 +193,7 @@ int ExpBinary::elaborate_exprs(Entity*ent, Architecture*arc, const VType*ltype)
 int ExpAggregate::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
 {
       if (ltype == 0) {
-	    cerr << get_fileline() << ": error: Elaboration of aggregate types needs wel known type context?" << endl;
+	    cerr << get_fileline() << ": error: Elaboration of aggregate types needs well known type context?" << endl;
 	    return 1;
       }
 

@@ -189,7 +189,7 @@ class ExpAggregate : public Expression {
 
 	      // true if this represents an "others" choice
 	    bool others() const;
-	      // Return expression if this reprents simple_expression.
+	      // Return expression if this represents a simple_expression.
 	    Expression*simple_expression(bool detach_flag =true);
 
 	    void dump(ostream&out, int indent) const;

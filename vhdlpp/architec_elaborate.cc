@@ -120,11 +120,11 @@ int ForGenerate::elaborate(Entity*ent, Architecture*arc)
 /*
  * This method attempts to rewrite the process content as an
  * always-@(n-edge <expr>) version of the same statement. This makes
- * for a more natural translation to verilog, if it comes to that.
+ * for a more natural translation to Verilog, if it comes to that.
  */
 int ProcessStatement::rewrite_as_always_edge_(Entity*, Architecture*)
 {
-	// If thare are multiple sensitivity expressions, I give up.
+	// If there are multiple sensitivity expressions, I give up.
       if (sensitivity_list_.size() != 1)
 	    return -1;
 
