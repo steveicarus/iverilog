@@ -602,7 +602,11 @@ NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
       eval_expr(tmp, -1);
 
       if (NetEConst*ce = dynamic_cast<NetEConst*>(tmp)) {
-            if (mode != PExpr::SIZED)
+              // For lossless/unsized constant expressions, we can now
+              // determine the exact width required to hold the result.
+              // But leave literal numbers exactly as the user supplied
+              // them.
+            if ((mode != PExpr::SIZED) && !dynamic_cast<PENumber*>(pe))
                   ce->trim();
       }
 

@@ -360,24 +360,14 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 
 	  case index_component_t::SEL_BIT:
 	    if (name_tail.index.size() > sig->array_dimensions()) {
-		  verinum*mval = index_tail.msb->eval_const(des, scope);
-		  if (mval == 0) {
-			cerr << get_fileline() << ": error: Index of " << path_ <<
-			      " needs to be constant in this context." <<
-			      endl;
-			cerr << get_fileline() << ":      : Index expression is: "
-			     << *index_tail.msb << endl;
-			cerr << get_fileline() << ":      : Context scope is: "
-			     << scope_path(scope) << endl;
-			des->errors += 1;
-			return false;
-		  }
-		  assert(mval);
-
-		  midx = sig->sb_to_idx(prefix_indices, mval->as_long());
+		  long msb;
+		  bool bit_defined_flag;
+		  /* bool flag = */ calculate_bits_(des, scope, msb, bit_defined_flag);
+		  ivl_assert(*this, bit_defined_flag);
+		  midx = sig->sb_to_idx(prefix_indices, msb);
 		  if (midx >= (long)sig->vector_width()) {
 			cerr << get_fileline() << ": error: Index " << sig->name()
-			     << "[" << mval->as_long() << "] is out of range."
+			     << "[" << msb << "] is out of range."
 			     << endl;
 			des->errors += 1;
 			midx = 0;
@@ -453,7 +443,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	   wire. */
       if (gn_var_can_be_uwire()
 	  && (sig->type() == NetNet::REG)
-	  && (sig->peek_eref() == 0) ) {
+	  && (sig->peek_lref() == 0) ) {
 	    sig->type(NetNet::UNRESOLVED_WIRE);
       }
 

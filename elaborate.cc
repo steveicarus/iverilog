@@ -4539,15 +4539,18 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 
       bool flag = true;
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PGenerate::elaborate: "
+		  "generate " << scheme_type
+		 << " elaborating in scope " << scope_path(container)
+		 << "." << endl;
+      }
+
 	// Handle the special case that this is a CASE scheme. In this
 	// case the PGenerate itself does not have the generated
 	// item. Look instead for the case ITEM that has a scope
 	// generated for it.
       if (scheme_type == PGenerate::GS_CASE) {
-	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: generate case"
-		       << " elaborating in scope "
-		       << scope_path(container) << "." << endl;
 
 	    typedef list<PGenerate*>::const_iterator generate_it_t;
 	    for (generate_it_t cur = generate_schemes.begin()
@@ -4593,23 +4596,50 @@ bool PGenerate::elaborate(Design*des, NetScope*container) const
 
 bool PGenerate::elaborate_direct_(Design*des, NetScope*container) const
 {
-      if (debug_elaborate)
+      bool flag = true;
+
+      if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: "
 		 << "Direct nesting elaborate in scope "
-		 << scope_path(container) << "." << endl;
+		 << scope_path(container)
+		 << ", scheme_type=" << scheme_type << endl;
+      }
 
 	// Elaborate for a direct nested generated scheme knows
 	// that there are only sub_schemes to be elaborated.  There
 	// should be exactly 1 active generate scheme, search for it
 	// using this loop.
-      bool flag = true;
       typedef list<PGenerate*>::const_iterator generate_it_t;
       for (generate_it_t cur = generate_schemes.begin()
 		 ; cur != generate_schemes.end() ; ++ cur ) {
 	    PGenerate*item = *cur;
-	    if (item->direct_nested_ || !item->scope_list_.empty()) {
-		    // Found the item, and it is direct nested.
-		  flag &= item->elaborate(des, container);
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PGenerate::elaborate_direct_: "
+		       << "item->scope_name=" << item->scope_name
+		       << ", item->scheme_type=" << item->scheme_type
+		       << ", item->direct_nested_=" << item->direct_nested_
+		       << ", item->scope_list_.size()=" << item->scope_list_.size()
+		       << "." << endl;
+	    }
+
+	      // Special case: If this is a case generate scheme, then
+	      // the PGenerate object (item) does not acctually
+	      // contain anything. Instead scan the case items, which
+	      // are listed as sub-schemes of the item.
+	    if (item->scheme_type == PGenerate::GS_CASE) {
+		  typedef list<PGenerate*>::const_iterator generate_it_t;
+		  for (generate_it_t icur = item->generate_schemes.begin()
+			     ; icur != item->generate_schemes.end() ; ++ icur ) {
+			PGenerate*case_item = *icur;
+			if (case_item->direct_nested_ || !case_item->scope_list_.empty()) {
+			      flag &= case_item->elaborate(des, container);
+			}
+		  }
+	    } else {
+		  if (item->direct_nested_ || !item->scope_list_.empty()) {
+			  // Found the item, and it is direct nested.
+			flag &= item->elaborate(des, container);
+		  }
 	    }
       }
       return flag;

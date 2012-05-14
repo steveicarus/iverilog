@@ -328,6 +328,8 @@ class PEIdent : public PExpr {
 	// elaborate/calculate, or false if there is some sort of
 	// source error.
 
+      bool calculate_bits_(Design*, NetScope*, long&msb, bool&defined) const;
+
 	// The calculate_parts_ method calculates the range
 	// expressions of a part select for the current object. The
 	// part select expressions are elaborated and evaluated, and

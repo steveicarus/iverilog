@@ -961,6 +961,12 @@ bool PGenerate::generate_scope_case_(Design*des, NetScope*container)
 	    return true;
       }
 
+      if (debug_scopes) {
+	    cerr << get_fileline() << ": PGenerate::generate_scope_case_: "
+		 << "Generate subscope " << use_name
+		 << " and elaborate." << endl;
+      }
+
       NetScope*scope = new NetScope(container, use_name,
 				    NetScope::GENBLOCK);
       scope->set_line(get_file(), get_lineno());
@@ -1030,7 +1036,13 @@ void PGenerate::elaborate_subscope_direct_(Design*des, NetScope*scope)
       typedef list<PGenerate*>::const_iterator generate_it_t;
       for (generate_it_t cur = generate_schemes.begin()
 		 ; cur != generate_schemes.end() ; ++ cur ) {
-	    (*cur) -> generate_scope(des, scope);
+	    PGenerate*curp = *cur;
+	    if (debug_scopes) {
+		  cerr << get_fileline() << ": elaborate_subscope_direct_: "
+		       << "Elaborate direct subscope " << curp->scope_name
+		       << " within scope " << scope_name << endl;
+	    }
+	    curp -> generate_scope(des, scope);
       }
 }
 
@@ -1082,7 +1094,7 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 
       if (debug_scopes)
 	    cerr << get_fileline() << ": debug: Generated scope " << scope_path(scope)
-		 << " by generate block " << scope_name << endl;
+		 << " for generate block " << scope_name << endl;
 
 	// Save the scope that we created, for future use.
       scope_list_.push_back(scope);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,6 +31,12 @@ class vvp_island_tran : public vvp_island {
       void run_island();
 };
 
+enum tran_state_t {
+      tran_disabled,
+      tran_enabled,
+      tran_unknown
+};
+
 struct vvp_island_branch_tran : public vvp_island_branch {
 
       vvp_island_branch_tran(vvp_net_t*en__, bool active_high__,
@@ -43,7 +49,7 @@ struct vvp_island_branch_tran : public vvp_island_branch {
       vvp_net_t*en;
       unsigned width, part, offset;
       bool active_high;
-      bool enabled_flag;
+      tran_state_t state;
 };
 
 vvp_island_branch_tran::vvp_island_branch_tran(vvp_net_t*en__,
@@ -54,7 +60,7 @@ vvp_island_branch_tran::vvp_island_branch_tran(vvp_net_t*en__,
 : en(en__), width(width__), part(part__), offset(offset__),
   active_high(active_high__)
 {
-      enabled_flag = en__ ? false : true;
+      state = en__ ? tran_disabled : tran_enabled;
 }
 
 static inline vvp_island_branch_tran* BRANCH_TRAN(vvp_island_branch*tmp)
@@ -73,7 +79,7 @@ void vvp_island_tran::run_island()
 {
 	// Test to see if any of the branches are enabled. This loop
 	// tests the enabled inputs for all the branches and caches
-	// the results in the enabled_flag for each branch.
+	// the results in the state for each branch.
       bool runnable = false;
       for (vvp_island_branch*cur = branches_ ; cur ; cur = cur->next_branch) {
 	    vvp_island_branch_tran*tmp = dynamic_cast<vvp_island_branch_tran*>(cur);
@@ -103,7 +109,7 @@ bool vvp_island_branch_tran::run_test_enabled()
 	// If there is no ep port (no "enabled" input) then this is a
 	// tran branch. Assume it is always enabled.
       if (ep == 0) {
-	    enabled_flag = true;
+	    state = tran_enabled;
 	    return true;
       }
 
@@ -122,7 +128,6 @@ bool vvp_island_branch_tran::run_test_enabled()
 	//
 	// If the outvalue is nil, then we know that this port is a
 	// .import after all, so just read the invalue.
-      enabled_flag = false;
       vvp_bit4_t enable_val;
       if (ep->outvalue.size() != 0)
 	    enable_val = ep->outvalue.value(0).value();
@@ -131,14 +136,47 @@ bool vvp_island_branch_tran::run_test_enabled()
       else
 	    enable_val = ep->invalue.value(0).value();
 
-      if (active_high==true && enable_val != BIT4_1)
-	    return false;
+      switch (enable_val) {
+	  case BIT4_0:
+	    state = active_high ? tran_disabled : tran_enabled;
+	    break;
+	  case BIT4_1:
+	    state = active_high ? tran_enabled : tran_disabled;
+	    break;
+	  default:
+	    state = tran_unknown;
+	    break;
+      }
+      return (state != tran_disabled);
+}
 
-      if (active_high==false && enable_val != BIT4_0)
-	    return false;
+// The IEEE standard does not specify the behaviour when a tranif control
+// input is 'x' or 'z'. We use the rules that are given for MOS switches.
+inline vvp_vector8_t resolve_ambiguous(const vvp_vector8_t&a,
+                                       const vvp_vector8_t&b,
+                                       tran_state_t state)
+{
+      assert(a.size() == b.size());
+      vvp_vector8_t out (a.size());
 
-      enabled_flag = true;
-      return true;
+      for (unsigned idx = 0 ;  idx < out.size() ;  idx += 1) {
+	    vvp_scalar_t a_bit = a.value(idx);
+	    vvp_scalar_t b_bit = b.value(idx);
+	    if (state == tran_unknown) {
+		  switch (b_bit.value()) {
+		      case BIT4_0:
+			b_bit = vvp_scalar_t(BIT4_X, b_bit.strength0(), 0);
+			break;
+		      case BIT4_1:
+			b_bit = vvp_scalar_t(BIT4_X, 0, b_bit.strength1());
+			break;
+		      default:
+			break;
+		  }
+	    }
+	    out.set_bit(idx, resolve(a_bit, b_bit));
+      }
+      return out;
 }
 
 static void push_value_through_branches(const vvp_vector8_t&val,
@@ -149,8 +187,8 @@ static void push_value_through_branch(const vvp_vector8_t&val,
 {
       vvp_island_branch_tran*branch = BRANCH_TRAN(cur.ptr());
 
-        // If the branch is not enabled, skip.
-      if (! branch->enabled_flag)
+        // If the branch is disabled, skip.
+      if (branch->state == tran_disabled)
             return;
 
       unsigned src_ab = cur.port();
@@ -174,7 +212,8 @@ static void push_value_through_branch(const vvp_vector8_t&val,
         // previously collected (and resolved) for the port.
       if (branch->width == 0) {
               // There are no part selects.
-            dst_port->value = resolve(dst_port->value, val);
+            dst_port->value = resolve_ambiguous(dst_port->value, val,
+                                                branch->state);
 
       } else if (dst_ab == 1) {
               // The other side is a strict subset (part select)

@@ -92,6 +92,9 @@ extern bool warn_inf_loop;
 extern bool warn_sens_entire_vec;
 extern bool warn_sens_entire_arr;
 
+/* Warn about level-appropriate anochronisms. */
+extern bool warn_anachronisms;
+
 /* This is true if verbose output is requested. */
 extern bool verbose_flag;
 

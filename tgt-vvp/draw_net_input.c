@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -703,11 +703,13 @@ static void draw_net_input_x(ivl_nexus_t nex,
 	    if ( (sw = ivl_nexus_ptr_switch(nptr)) ) {
 		  assert(island == 0 || island == ivl_switch_island(sw));
 		  island = ivl_switch_island(sw);
-		  if (nex == ivl_switch_a(sw))
+		  if (nex == ivl_switch_a(sw)) {
+			nex_flags |= VVP_NEXUS_DATA_STR;
 			island_input_flag = 0;
-		  else if (nex == ivl_switch_b(sw))
+		  } else if (nex == ivl_switch_b(sw)) {
+			nex_flags |= VVP_NEXUS_DATA_STR;
 			island_input_flag = 0;
-		  else if (island_input_flag == -1) {
+		  } else if (island_input_flag == -1) {
 			assert(nex == ivl_switch_enable(sw));
 			island_input_flag = 1;
 		  }

@@ -66,6 +66,11 @@ static stack<PBlock*> current_block_stack;
  * simulation issues. */
 static unsigned args_after_notifier;
 
+/* The rules sometimes push attributes into a global context where
+   sub-rules may grab them. This makes parser rules a little easier to
+   write in some cases. */
+static list<named_pexpr_t>*attributes_in_context = 0;
+
 /* Later version of bison (including 1.35) will not compile in stack
    extension if the output is compiled with C++ and either the YYSTYPE
    or YYLTYPE are provided by the source code. However, I can get the
@@ -574,7 +579,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <event_expr> event_expression_list
 %type <event_expr> event_expression
 %type <event_statement> event_control
-%type <statement> statement statement_or_null compressed_statement
+%type <statement> statement statement_item statement_or_null
+%type <statement> compressed_statement
 %type <statement> loop_statement for_step jump_statement
 %type <statement_list> statement_or_null_list statement_or_null_list_opt
 
@@ -749,7 +755,7 @@ class_item /* IEEE1800-2005: A.1.8 */
        cause a conflict. */
   | method_qualifier_opt K_function K_new '(' tf_port_list_opt ')' ';'
     function_item_list_opt
-    implicit_class_handle '.' K_new '(' expression_list_with_nuls ')'
+    attribute_list_opt implicit_class_handle '.' K_new '(' expression_list_with_nuls ')'
     statement_or_null_list_opt
     K_endfunction endnew_opt
       { yyerror(@3, "sorry: Class constructors not supported yet.");
@@ -1316,13 +1322,20 @@ signing /* IEEE1800-2005: A.2.2.1 */
   | K_unsigned { $$ = false; }
   ;
 
+statement /* IEEE1800-2005: A.6.4 */
+  : attribute_list_opt statement_item
+      { pform_bind_attributes($2->attributes, $1);
+	$$ = $2;
+      }
+  ;
+
   /* Many places where statements are allowed can actually take a
      statement or a null statement marked with a naked semi-colon. */
 
 statement_or_null /* IEEE1800-2005: A.6.4 */
   : statement
       { $$ = $1; }
-  | ';'
+  | attribute_list_opt ';'
       { $$ = 0; }
   ;
 
@@ -1797,35 +1810,31 @@ block_item_decl
      all the trappings of a general variable declaration. All of that
      is implicit in the "integer" of the declaration. */
 
-  : attribute_list_opt K_integer signed_unsigned_opt register_variable_list ';'
-     { pform_set_reg_integer($4);
-       if ($1) delete $1;
-     }
+  : K_integer signed_unsigned_opt register_variable_list ';'
+      { pform_set_reg_integer($3, attributes_in_context);
+      }
 
-  | attribute_list_opt K_time register_variable_list ';'
-     { pform_set_reg_time($3);
-       if ($1) delete $1;
-     }
+  | K_time register_variable_list ';'
+      { pform_set_reg_time($2, attributes_in_context);
+      }
 
   /* variable declarations. Note that data_type can be 0 if we are
      recovering from an error. */
 
-  | attribute_list_opt data_type register_variable_list ';'
-      { if ($2) pform_set_data_type(@2, $2, $3);
-	if ($1) delete $1;
+  | data_type register_variable_list ';'
+      { if ($1) pform_set_data_type(@1, $1, $2, attributes_in_context);
       }
 
-  | attribute_list_opt K_reg data_type register_variable_list ';'
-      { if ($3) pform_set_data_type(@3, $3, $4);
-	if ($1) delete $1;
+  | K_reg data_type register_variable_list ';'
+      { if ($2) pform_set_data_type(@2, $2, $3, attributes_in_context);
       }
 
-	| K_event list_of_identifiers ';'
-		{ pform_make_events($2, @1.text, @1.first_line);
-		}
+  | K_event list_of_identifiers ';'
+      { pform_make_events($2, @1.text, @1.first_line);
+      }
 
-	| K_parameter parameter_assign_decl ';'
-	| K_localparam localparam_assign_decl ';'
+  | K_parameter parameter_assign_decl ';'
+  | K_localparam localparam_assign_decl ';'
 
   /* Blocks can have type declarations. */
 
@@ -1833,15 +1842,16 @@ block_item_decl
 
   /* Recover from errors that happen within variable lists. Use the
      trailing semi-colon to resync the parser. */
-	| attribute_list_opt K_integer error ';'
-		{ yyerror(@2, "error: syntax error in integer variable list.");
-		  yyerrok;
-		  if ($1) delete $1;
-		}
-	| attribute_list_opt K_time error ';'
-		{ yyerror(@2, "error: syntax error in time variable list.");
-		  yyerrok;
-		}
+
+  | K_integer error ';'
+      { yyerror(@1, "error: syntax error in integer variable list.");
+	yyerrok;
+      }
+
+  | K_time error ';'
+      { yyerror(@1, "error: syntax error in time variable list.");
+	yyerrok;
+      }
 
 	| K_parameter error ';'
 		{ yyerror(@1, "error: syntax error in parameter list.");
@@ -4095,12 +4105,15 @@ module_item
      will see the discipline name as an identifier. We match it to the
      discipline or type name semantically. */
   | DISCIPLINE_IDENTIFIER list_of_identifiers ';'
-  { pform_attach_discipline(@1, $1, $2); }
+      { pform_attach_discipline(@1, $1, $2); }
 
   /* block_item_decl rule is shared with task blocks and named
-     begin/end. */
+     begin/end. Careful to pass attributes to the block_item_decl. */
 
-  | block_item_decl
+  | attribute_list_opt { attributes_in_context = $1; } block_item_decl
+      { delete attributes_in_context;
+	attributes_in_context = 0;
+      }
 
   /* */
 
@@ -4199,15 +4212,15 @@ module_item
 
   /* Always and initial items are behavioral processes. */
 
-  | attribute_list_opt K_always statement
+  | attribute_list_opt K_always statement_item
       { PProcess*tmp = pform_make_behavior(IVL_PR_ALWAYS, $3, $1);
 	FILE_NAME(tmp, @2);
       }
-  | attribute_list_opt K_initial statement
+  | attribute_list_opt K_initial statement_item
       { PProcess*tmp = pform_make_behavior(IVL_PR_INITIAL, $3, $1);
 	FILE_NAME(tmp, @2);
       }
-  | attribute_list_opt K_final statement
+  | attribute_list_opt K_final statement_item
       { PProcess*tmp = pform_make_behavior(IVL_PR_FINAL, $3, $1);
 	FILE_NAME(tmp, @2);
       }
@@ -4267,7 +4280,7 @@ module_item
   /* Handle some anachronistic syntax cases. */
   | K_generate K_begin module_item_list_opt K_end K_endgenerate
       { /* Detect and warn about anachronistic begin/end use */
-	if (generation_flag > GN_VER2001) {
+	if (generation_flag > GN_VER2001 && warn_anachronisms) {
 	      warn_count += 1;
 	      cerr << @2 << ": warning: Anachronistic use of begin/end to surround generate schemes." << endl;
 	}
@@ -4276,7 +4289,7 @@ module_item
 	pform_start_generate_nblock(@2, $4);
       } module_item_list_opt K_end K_endgenerate
       { /* Detect and warn about anachronistic named begin/end use */
-	if (generation_flag > GN_VER2001) {
+	if (generation_flag > GN_VER2001 && warn_anachronisms) {
 	      warn_count += 1;
 	      cerr << @2 << ": warning: Anachronistic use of named begin/end to surround generate schemes." << endl;
 	}
@@ -5445,7 +5458,7 @@ spec_notifier
 	;
 
 
-statement /* This is roughly statement_item in the LRM */
+statement_item /* This is roughly statement_item in the LRM */
 
   /* assign and deassign statements are procedural code to do
      structural assignments, and to turn that structural assignment
@@ -5513,8 +5526,6 @@ statement /* This is roughly statement_item in the LRM */
 	delete $6;
 	$$ = tmp;
       }
-  | K_begin error K_end
-      { yyerrok; }
 
   /* fork-join blocks are very similar to begin-end blocks. In fact,
      from the parser's perspective there is no real difference. All we
@@ -5549,8 +5560,6 @@ statement /* This is roughly statement_item in the LRM */
 	delete $6;
 	$$ = tmp;
       }
-  | K_fork error K_join
-      { yyerrok; }
 
 	| K_disable hierarchy_identifier ';'
 		{ PDisable*tmp = new PDisable(*$2);
@@ -5630,29 +5639,26 @@ statement /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
 
-  | event_control attribute_list_opt statement_or_null
+  | event_control statement_or_null
       { PEventStatement*tmp = $1;
 	if (tmp == 0) {
 	      yyerror(@1, "error: Invalid event control.");
 	      $$ = 0;
 	} else {
-	      if ($3) pform_bind_attributes($3->attributes,$2);
-	      tmp->set_statement($3);
+	      tmp->set_statement($2);
 	      $$ = tmp;
 	}
       }
-  | '@' '*' attribute_list_opt statement_or_null
+  | '@' '*' statement_or_null
       { PEventStatement*tmp = new PEventStatement;
 	FILE_NAME(tmp, @1);
-	if ($4) pform_bind_attributes($4->attributes,$3);
-	tmp->set_statement($4);
+	tmp->set_statement($3);
 	$$ = tmp;
       }
-  | '@' '(' '*' ')' attribute_list_opt statement_or_null
+  | '@' '(' '*' ')' statement_or_null
       { PEventStatement*tmp = new PEventStatement;
 	FILE_NAME(tmp, @1);
-	if ($6) pform_bind_attributes($6->attributes,$5);
-	tmp->set_statement($6);
+	tmp->set_statement($5);
 	$$ = tmp;
       }
 

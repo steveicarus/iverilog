@@ -292,18 +292,19 @@ extern void pform_set_port_type(const struct vlltype&li,
 extern void pform_set_net_range(list<perm_string>*names,
 				list<pform_range_t>*,
 				bool signed_flag,
-				ivl_variable_type_t);
+				ivl_variable_type_t,
+				std::list<named_pexpr_t>*attr);
 extern void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r);
-extern void pform_set_reg_integer(list<perm_string>*names);
-extern void pform_set_reg_time(list<perm_string>*names);
+extern void pform_set_reg_integer(list<perm_string>*names, list<named_pexpr_t>*attr);
+extern void pform_set_reg_time(list<perm_string>*names, list<named_pexpr_t>*attr);
 
-extern void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>*names);
+//XXXXextern void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>*names);
 
-extern void pform_set_data_type(const struct vlltype&li, data_type_t*, list<perm_string>*names);
+extern void pform_set_data_type(const struct vlltype&li, data_type_t*, list<perm_string>*names, list<named_pexpr_t>*attr);
 
-extern void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_string>*names);
+extern void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_string>*names, std::list<named_pexpr_t>*attr);
 
-extern void pform_set_struct_type(struct_type_t*struct_type, list<perm_string>*names);
+extern void pform_set_struct_type(struct_type_t*struct_type, std::list<perm_string>*names, std::list<named_pexpr_t>*attr);
 
   /* pform_set_attrib and pform_set_type_attrib exist to support the
      $attribute syntax, which can only set string values to
