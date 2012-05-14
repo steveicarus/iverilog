@@ -1136,6 +1136,9 @@ void NetScope::dump(ostream&o) const
       print_type(o);
       if (is_auto()) o << " (automatic)";
       if (is_cell()) o << " (cell)";
+      if (nested_module()) o << " (nested)";
+      if (program_block()) o << " (program)";
+
       o << endl;
 
       for (unsigned idx = 0 ;  idx < attr_cnt() ;  idx += 1)

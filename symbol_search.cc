@@ -79,7 +79,7 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 
 	      /* We can't look up if we are at the enclosing module scope
 	       * or if a hierarchical path was given. */
-	    if ((scope->type() == NetScope::MODULE) || hier_path)
+	    if ((scope->type()==NetScope::MODULE && !scope->nested_module()) || hier_path)
 		  scope = 0;
 	    else
 		  scope = scope->parent();

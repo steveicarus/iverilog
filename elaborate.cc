@@ -2312,6 +2312,18 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
       return cur;
 }
 
+static bool lval_not_program_variable(const NetAssign_*lv)
+{
+      while (lv) {
+	    NetScope*sig_scope = lv->sig()->scope();
+	    if (! sig_scope->program_block())
+		  return true;
+
+	    lv = lv->more;
+      }
+      return false;
+}
+
 NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
@@ -2325,6 +2337,12 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	   expressions that might exist. */
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
+
+      if (scope->program_block() && lval_not_program_variable(lv)) {
+	    cerr << get_fileline() << ": error: Blocking assignments to "
+		 << "non-program variables are not allowed." << endl;
+	    des->errors += 1;
+      }
 
 	/* If there is an internal delay expression, elaborate it. */
       NetExpr*delay = 0;
@@ -2470,6 +2488,22 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 }
 
 /*
+ * Return true if any lvalue parts are in a program block scope.
+ */
+static bool lval_is_program_variable(const NetAssign_*lv)
+{
+      while (lv) {
+	    NetScope*sig_scope = lv->sig()->scope();
+	    if (sig_scope->program_block())
+		  return true;
+
+	    lv = lv->more;
+      }
+
+      return false;
+}
+
+/*
  * Elaborate non-blocking assignments. The statement is of the general
  * form:
  *
@@ -2504,6 +2538,14 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	/* Elaborate the l-value. */
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
+
+      if (scope->program_block() && lval_is_program_variable(lv)) {
+	    cerr << get_fileline() << ": error: Non-blocking assignments to "
+		 << "program variables are not allowed." << endl;
+	    des->errors += 1;
+	      // This is an error, but we can let elaboration continue
+	      // because it would necessarily trigger other errors.
+      }
 
       NetExpr*rv = elaborate_rval_(des, scope, count_lval_width(lv), lv->expr_type());
       if (rv == 0) return 0;
@@ -3256,7 +3298,6 @@ NetProc* PDisable::elaborate(Design*des, NetScope*scope) const
 	    return 0;
 
 	  case NetScope::MODULE:
-	  case NetScope::NESTED_MODULE:
 	    cerr << get_fileline() << ": error: Cannot disable modules." << endl;
 	    des->errors += 1;
 	    return 0;
@@ -4849,7 +4890,7 @@ Design* elaborate(list<perm_string>roots)
 
 	      // Make the root scope. This makes a NetScope object and
 	      // pushes it into the list of root scopes in the Design.
-	    NetScope*scope = des->make_root_scope(*root);
+	    NetScope*scope = des->make_root_scope(*root, rmod->program_block);
 
 	      // Collect some basic properties of this scope from the
 	      // Module definition.

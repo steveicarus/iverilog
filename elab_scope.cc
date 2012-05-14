@@ -1225,7 +1225,7 @@ void PGModule::elaborate_scope_mod_(Design*des, Module*mod, NetScope*sc) const
 		  continue;
 	    }
 
-	    if (! scn->type_is_module()) continue;
+	    if (scn->type() != NetScope::MODULE) continue;
 
 	    if (strcmp(mod->mod_name(), scn->module_name()) != 0) continue;
 
@@ -1345,7 +1345,9 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 	      // Create the new scope as a MODULE with my name. Note
 	      // that if this is a nested module, mark it thus so that
 	      // scope searches will continue into the parent scope.
-	    NetScope*my_scope = new NetScope(sc, use_name, bound_type_? NetScope::NESTED_MODULE : NetScope::MODULE);
+	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE,
+					     bound_type_? true : false,
+					     mod->program_block);
 	    my_scope->set_line(get_file(), mod->get_file(),
 	                       get_lineno(), mod->get_lineno());
 	    my_scope->set_module_name(mod->mod_name());

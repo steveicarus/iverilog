@@ -98,7 +98,7 @@ bool PScope::elaborate_sig_wires_(Design*des, NetScope*scope) const
 		 reg, then report an error. */
 
 	    if (sig && (sig->scope() == scope)
-		&& (scope->type_is_module())
+		&& (scope->type() == NetScope::MODULE)
 		&& (sig->port_type() == NetNet::PINPUT)
 		&& (sig->type() == NetNet::REG)) {
 
@@ -110,7 +110,7 @@ bool PScope::elaborate_sig_wires_(Design*des, NetScope*scope) const
 	    }
 
 	    if (sig && (sig->scope() == scope)
-		&& (scope->type_is_module())
+		&& (scope->type() == NetScope::MODULE)
 		&& (sig->port_type() == NetNet::PINOUT)
 		&& (sig->type() == NetNet::REG)) {
 
@@ -122,7 +122,7 @@ bool PScope::elaborate_sig_wires_(Design*des, NetScope*scope) const
 	    }
 
 	    if (sig && (sig->scope() == scope)
-		&& scope->type_is_module()
+		&& (scope->type() == NetScope::MODULE)
 		&& (sig->port_type() == NetNet::PINOUT)
 		&& (sig->data_type() == IVL_VT_REAL)) {
 

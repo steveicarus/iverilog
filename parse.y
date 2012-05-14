@@ -5489,15 +5489,11 @@ statement_item /* This is roughly statement_item in the LRM */
       { PAssignNB*tmp = new PAssignNB($1,$3);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
-	if (pform_in_program_block())
-	      yyerror(@2, "Non-blocking assignments not permitted in program blocks.");
       }
   | error K_LE expression ';'
       { yyerror(@2, "Syntax in assignment statement l-value.");
 	yyerrok;
 	$$ = new PNoop;
-	if (pform_in_program_block())
-	      yyerror(@2, "Non-blocking assignments not permitted in program blocks.");
       }
   | lpvalue '=' delay1 expression ';'
       { PExpr*del = $3->front(); $3->pop_front();
@@ -5512,8 +5508,6 @@ statement_item /* This is roughly statement_item in the LRM */
 	PAssignNB*tmp = new PAssignNB($1,del,$4);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
-	if (pform_in_program_block())
-	      yyerror(@2, "Non-blocking assignments not permitted in program blocks.");
       }
   | lpvalue '=' event_control expression ';'
       { PAssign*tmp = new PAssign($1,0,$3,$4);
@@ -5530,15 +5524,11 @@ statement_item /* This is roughly statement_item in the LRM */
       { PAssignNB*tmp = new PAssignNB($1,0,$3,$4);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
-	if (pform_in_program_block())
-	      yyerror(@2, "Non-blocking assignments not permitted in program blocks.");
       }
   | lpvalue K_LE K_repeat '(' expression ')' event_control expression ';'
       { PAssignNB*tmp = new PAssignNB($1,$5,$7,$8);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
-	if (pform_in_program_block())
-	      yyerror(@2, "Non-blocking assignments not permitted in program blocks.");
       }
 
   /* The IEEE1800 standard defines dynamic_array_new assignment as a
