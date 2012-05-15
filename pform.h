@@ -377,13 +377,15 @@ extern void pform_make_reals(list<perm_string>*names,
  * The makegate function creates a new gate (which need not have a
  * name) and connects it to the specified wires.
  */
-extern void pform_makegates(PGBuiltin::Type type,
+extern void pform_makegates(const struct vlltype&loc,
+			    PGBuiltin::Type type,
 			    struct str_pair_t str,
 			    list<PExpr*>*delay,
 			    svector<lgate>*gates,
 			    list<named_pexpr_t>*attr);
 
-extern void pform_make_modgates(perm_string type,
+extern void pform_make_modgates(const struct vlltype&loc,
+				perm_string type,
 				struct parmvalue_t*overrides,
 				svector<lgate>*gates);
 

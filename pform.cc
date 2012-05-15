@@ -820,6 +820,10 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
 	    error_count += 1;
       }
 
+      if (gn_system_verilog() && pform_cur_module.size() > 0 && pform_cur_module.front()->program_block) {
+	    cerr << loc << ": error: Program blocks cannot contain nested modules/program blocks." << endl;
+	    error_count += 1;
+      }
 
       perm_string lex_name = lex_strings.make(name);
       Module*cur_module = new Module(lexical_scope, lex_name);
@@ -1677,12 +1681,20 @@ static void pform_makegate(PGBuiltin::Type type,
 	    pform_cur_module.front()->add_gate(cur);
 }
 
-void pform_makegates(PGBuiltin::Type type,
+void pform_makegates(const struct vlltype&loc,
+		     PGBuiltin::Type type,
 		     struct str_pair_t str,
 		     list<PExpr*>*delay,
 		     svector<lgate>*gates,
 		     list<named_pexpr_t>*attr)
 {
+      assert(pform_cur_module.size() > 0);
+      if (pform_cur_module.front()->program_block) {
+	    cerr << loc << ": error: Gates and switches may not be instantiated"
+		 << " in program blocks." << endl;
+	    error_count += 1;
+      }
+
       for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
 	    pform_makegate(type, str, delay, (*gates)[idx], attr);
       }
@@ -1787,10 +1799,17 @@ static void pform_make_modgate(perm_string type,
 	    pform_cur_module.front()->add_gate(cur);
 }
 
-void pform_make_modgates(perm_string type,
+void pform_make_modgates(const struct vlltype&loc,
+			 perm_string type,
 			 struct parmvalue_t*overrides,
 			 svector<lgate>*gates)
 {
+      assert(pform_cur_module.size() > 0);
+      if (pform_cur_module.front()->program_block) {
+	    cerr << loc << ": error: Module instantiations are not allowed"
+		 << " in program blocks." << endl;
+	    error_count += 1;
+      }
 
       for (unsigned idx = 0 ;  idx < gates->count() ;  idx += 1) {
 	    lgate cur = (*gates)[idx];

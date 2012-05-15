@@ -1082,6 +1082,14 @@ integer_vector_type /* IEEE1800-2005: A.2.2.1 */
   | K_bool  { $$ = IVL_VT_BOOL; } /* Icarus Verilog xtypes extension */
   ;
 
+join_keyword /* IEEE1800-2005: A.6.3 */
+  : K_join
+  | K_join_none
+      { yyerror(@1, "sorry: join_none not supported."); }
+  | K_join_any
+      { yyerror(@1, "sorry: join_any not supported."); }
+  ;
+
 jump_statement /* IEEE1800-2005: A.6.5 */
   : K_break ';'
       { yyerror(@1, "sorry: break statements not supported.");
@@ -4056,66 +4064,50 @@ module_item
      two/three-value delay. These rules handle the different cases.
      We check that the actual number of delays is correct later. */
 
-	| attribute_list_opt gatetype gate_instance_list ';'
-		{ pform_makegates($2, str_strength, 0, $3, $1);
-		}
+  | attribute_list_opt gatetype gate_instance_list ';'
+      { pform_makegates(@2, $2, str_strength, 0, $3, $1); }
 
-	| attribute_list_opt gatetype delay3 gate_instance_list ';'
-		{ pform_makegates($2, str_strength, $3, $4, $1);
-		}
+  | attribute_list_opt gatetype delay3 gate_instance_list ';'
+      { pform_makegates(@2, $2, str_strength, $3, $4, $1); }
 
-	| attribute_list_opt gatetype drive_strength gate_instance_list ';'
-		{ pform_makegates($2, $3, 0, $4, $1);
-		}
+  | attribute_list_opt gatetype drive_strength gate_instance_list ';'
+      { pform_makegates(@2, $2, $3, 0, $4, $1); }
 
-	| attribute_list_opt gatetype drive_strength delay3 gate_instance_list ';'
-		{ pform_makegates($2, $3, $4, $5, $1);
-		}
+  | attribute_list_opt gatetype drive_strength delay3 gate_instance_list ';'
+      { pform_makegates(@2, $2, $3, $4, $5, $1); }
 
   /* The switch type gates do not support a strength. */
-	| attribute_list_opt switchtype gate_instance_list ';'
-		{ pform_makegates($2, str_strength, 0, $3, $1);
-		}
+  | attribute_list_opt switchtype gate_instance_list ';'
+      { pform_makegates(@2, $2, str_strength, 0, $3, $1); }
 
-	| attribute_list_opt switchtype delay3 gate_instance_list ';'
-		{ pform_makegates($2, str_strength, $3, $4, $1);
-		}
+  | attribute_list_opt switchtype delay3 gate_instance_list ';'
+      { pform_makegates(@2, $2, str_strength, $3, $4, $1); }
 
   /* Pullup and pulldown devices cannot have delays, and their
      strengths are limited. */
 
-	| K_pullup gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLUP, pull_strength, 0,
-				  $2, 0);
-		}
-	| K_pulldown gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLDOWN, pull_strength,
-				  0, $2, 0);
-		}
+  | K_pullup gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLUP, pull_strength, 0, $2, 0); }
+  | K_pulldown gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLDOWN, pull_strength, 0, $2, 0); }
 
-	| K_pullup '(' dr_strength1 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLUP, $3, 0, $5, 0);
-		}
+  | K_pullup '(' dr_strength1 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLUP, $3, 0, $5, 0); }
 
-	| K_pullup '(' dr_strength1 ',' dr_strength0 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLUP, $3, 0, $7, 0);
-		}
+  | K_pullup '(' dr_strength1 ',' dr_strength0 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLUP, $3, 0, $7, 0); }
 
-	| K_pullup '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLUP, $5, 0, $7, 0);
-		}
+  | K_pullup '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLUP, $5, 0, $7, 0); }
 
-	| K_pulldown '(' dr_strength0 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLDOWN, $3, 0, $5, 0);
-		}
+  | K_pulldown '(' dr_strength0 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLDOWN, $3, 0, $5, 0); }
 
-	| K_pulldown '(' dr_strength1 ',' dr_strength0 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLDOWN, $5, 0, $7, 0);
-		}
+  | K_pulldown '(' dr_strength1 ',' dr_strength0 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLDOWN, $5, 0, $7, 0); }
 
-	| K_pulldown '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLDOWN, $3, 0, $7, 0);
-		}
+  | K_pulldown '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLDOWN, $3, 0, $7, 0); }
 
   /* This rule handles instantiations of modules and user defined
      primitives. These devices to not have delay lists or strengths,
@@ -4124,7 +4116,7 @@ module_item
 	| attribute_list_opt
 	  IDENTIFIER parameter_value_opt gate_instance_list ';'
 		{ perm_string tmp1 = lex_strings.make($2);
-		  pform_make_modgates(tmp1, $3, $4);
+		  pform_make_modgates(@2, tmp1, $3, $4);
 		  delete[]$2;
 		  if ($1) delete $1;
 		}
@@ -5342,12 +5334,12 @@ statement_item /* This is roughly statement_item in the LRM */
      need to do is remember that this is a parallel block so that the
      code generator can do the right thing. */
 
-  | K_fork K_join
+  | K_fork join_keyword
       { PBlock*tmp = new PBlock(PBlock::BL_PAR);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | K_fork statement_or_null_list K_join
+  | K_fork statement_or_null_list join_keyword
       { PBlock*tmp = new PBlock(PBlock::BL_PAR);
 	FILE_NAME(tmp, @1);
 	tmp->set_statement(*$2);
@@ -5360,7 +5352,7 @@ statement_item /* This is roughly statement_item in the LRM */
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
-    statement_or_null_list_opt K_join
+    statement_or_null_list_opt join_keyword
       { pform_pop_scope();
         assert(! current_block_stack.empty());
 	PBlock*tmp = current_block_stack.top();
