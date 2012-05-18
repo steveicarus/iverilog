@@ -303,11 +303,9 @@ void NetScope::run_defparams_later(Design*des)
 	    target_scopes.insert(targ_scope);
       }
 
-	// All the scopes that this defparam set touched should have
-	// their parameters re-evaluated.
-      for (set<NetScope*>::iterator cur = target_scopes.begin()
-		 ; cur != target_scopes.end() ; ++ cur )
-	    (*cur)->evaluate_parameters(des);
+	// The scopes that this defparam set touched will be
+	// re-evaluated later it a top_defparams work item. So do not
+	// do the evaluation now.
 
 	// If there are some scopes that still have missing scopes,
 	// then save them back into the defparams_later list for a

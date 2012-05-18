@@ -4695,6 +4695,9 @@ class top_defparams : public elaborator_work_item_t {
 
       virtual void elaborate_runrun()
       {
+	    if (debug_scopes) {
+		  cerr << "debug: top_defparams::elaborate_runrun()" << endl;
+	    }
 	      // This method recurses through the scopes, looking for
 	      // defparam assignments to apply to the parameters in the
 	      // various scopes. This needs to be done after all the scopes
@@ -4706,6 +4709,10 @@ class top_defparams : public elaborator_work_item_t {
 	      // scopes and evaluate the parameters all the way down to
 	      // constants.
 	    des->evaluate_parameters();
+
+	    if (debug_scopes) {
+		  cerr << "debug: top_defparams::elaborate_runrun() done" << endl;
+	    }
       }
 };
 
@@ -4719,6 +4726,10 @@ class later_defparams : public elaborator_work_item_t {
 
       virtual void elaborate_runrun()
       {
+	    if (debug_scopes) {
+		  cerr << "debug: later_defparams::elaborate_runrun()" << endl;
+	    }
+
 	    list<NetScope*>tmp_list;
 	    for (set<NetScope*>::iterator cur = des->defparams_later.begin()
 		       ; cur != des->defparams_later.end() ; ++ cur )
@@ -4731,7 +4742,13 @@ class later_defparams : public elaborator_work_item_t {
 		  tmp_list.pop_front();
 		  cur->run_defparams_later(des);
 	    }
-	    des->evaluate_parameters();
+
+	      // The overridden parameters will be evaluated later in
+	      // a top_defparams work item.
+
+	    if (debug_scopes) {
+		  cerr << "debuf: later_defparams::elaborate_runrun() done" << endl;
+	    }
       }
 };
 
