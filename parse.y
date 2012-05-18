@@ -528,8 +528,8 @@ block_item_decl
 		{ pform_make_events($2, @1.text, @1.first_line);
 		}
 
-	| K_parameter parameter_assign_decl ';'
-	| K_localparam localparam_assign_decl ';'
+	| K_parameter param_type parameter_assign_list ';'
+	| K_localparam param_type localparam_assign_list ';'
 
   /* Recover from errors that happen within variable lists. Use the
      trailing semi-colon to resync the parser. */
@@ -2064,9 +2064,9 @@ module_parameter_port_list_opt
 	;
 
 module_parameter_port_list
-	: K_parameter parameter_assign
+	: K_parameter param_type parameter_assign
 	| module_parameter_port_list ',' parameter_assign
-	| module_parameter_port_list ',' K_parameter parameter_assign
+	| module_parameter_port_list ',' K_parameter param_type parameter_assign
 	;
 
 module_item
@@ -2633,19 +2633,15 @@ var_type
 	: K_reg { $$ = NetNet::REG; }
 	;
 
-  /* In this rule we have matched the "parameter" keyword. The rule
-     generates a type (optional) and a list of assignments. */
-
-parameter_assign_decl
-  : parameter_assign_list
+param_type
+  : 
+      { param_active_range = 0;
+	param_active_signed = false;
+	param_active_type = IVL_VT_LOGIC;
+      }
   | range
       { param_active_range = $1;
         param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-    parameter_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
   | K_signed
@@ -2653,19 +2649,9 @@ parameter_assign_decl
 	param_active_signed = true;
 	param_active_type = IVL_VT_LOGIC;
       }
-    parameter_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
   | K_signed range
       { param_active_range = $2;
 	param_active_signed = true;
-	param_active_type = IVL_VT_LOGIC;
-      }
-    parameter_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
   | K_integer
@@ -2680,11 +2666,6 @@ parameter_assign_decl
 	param_active_signed = true;
 	param_active_type = IVL_VT_LOGIC;
       }
-    parameter_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
   | K_time
       { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
         PExpr*re;
@@ -2697,33 +2678,42 @@ parameter_assign_decl
 	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
-    parameter_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
   | real_or_realtime
       { param_active_range = 0;
 	param_active_signed = true;
 	param_active_type = IVL_VT_REAL;
       }
-    parameter_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
   ;
 
+  /* parameter and localparam assignment lists are broken into 
+     separate BNF so that I can call slightly different parameter
+     handling code. localparams parse the same as parameters, they
+     just behave differently when someone tries to override them. */
+
 parameter_assign_list
-	: parameter_assign
-	| parameter_assign_list ',' parameter_assign
-	;
+  : parameter_assign
+  | parameter_assign_list ',' parameter_assign
+  ;
+
+localparam_assign_list
+  : localparam_assign
+  | localparam_assign_list ',' localparam_assign
+  ;
 
 parameter_assign
   : IDENTIFIER '=' expression parameter_value_ranges_opt
       { PExpr*tmp = $3;
 	pform_set_parameter(@1, lex_strings.make($1), param_active_type,
 			    param_active_signed, param_active_range, tmp, $4);
+	delete[]$1;
+      }
+  ;
+
+localparam_assign
+  : IDENTIFIER '=' expression
+      { PExpr*tmp = $3;
+	pform_set_localparam(@1, lex_strings.make($1), param_active_type,
+			     param_active_signed, param_active_range, tmp);
 	delete[]$1;
       }
   ;
@@ -2758,107 +2748,6 @@ value_range_expression
   ;
 
 from_exclude : K_from { $$ = false; } | K_exclude { $$ = true; } ;
-
-  /* Localparam assignments and assignment lists are broken into
-     separate BNF so that I can call slightly different parameter
-     handling code. They parse the same as parameters, they just
-     behave differently when someone tries to override them. */
-
-localparam_assign
-  : IDENTIFIER '=' expression
-      { PExpr*tmp = $3;
-	pform_set_localparam(@1, lex_strings.make($1),
-			     param_active_type,
-			     param_active_signed,
-			     param_active_range, tmp);
-	delete[]$1;
-      }
-  ;
-
-localparam_assign_decl
-  : localparam_assign_list
-  | range
-      { param_active_range = $1;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-    localparam_assign_list
-      { param_active_range = 0;
-        param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | K_signed
-      { param_active_range = 0;
-	param_active_signed = true;
-	param_active_type = IVL_VT_LOGIC;
-      }
-    localparam_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | K_signed range
-      { param_active_range = $2;
-	param_active_signed = true;
-	param_active_type = IVL_VT_LOGIC;
-      }
-    localparam_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | K_integer
-      { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
-        PExpr*re;
-        re = new PENumber(new verinum(integer_width-1, integer_width));
-        (*range_stub)[0] = re;
-        re = new PENumber(new verinum((uint64_t)0, integer_width));
-        (*range_stub)[1] = re;
-        /* The default range is [31:0] */
-        param_active_range = range_stub;
-	param_active_signed = true;
-	param_active_type = IVL_VT_LOGIC;
-      }
-    localparam_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | K_time
-      { svector<PExpr*>*range_stub = new svector<PExpr*>(2);
-        PExpr*re;
-        re = new PENumber(new verinum((uint64_t)63, integer_width));
-        (*range_stub)[0] = re;
-        re = new PENumber(new verinum((uint64_t)0, integer_width));
-        (*range_stub)[1] = re;
-        /* The range is [63:0] */
-        param_active_range = range_stub;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-    localparam_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | real_or_realtime
-      { param_active_range = 0;
-	param_active_signed = true;
-	param_active_type = IVL_VT_REAL;
-      }
-    localparam_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  ;
-
-localparam_assign_list
-	: localparam_assign
-	| localparam_assign_list ',' localparam_assign
-	;
-
-
 
   /* The parameters of a module instance can be overridden by writing
      a list of expressions in a syntax much like a delay list. (The
