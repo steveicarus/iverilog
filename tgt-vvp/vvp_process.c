@@ -1314,55 +1314,85 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 {
       unsigned idx;
       int rc = 0;
-      unsigned cnt = ivl_stmt_block_count(net);
+      unsigned join_count = ivl_stmt_block_count(net);
+      unsigned join_detach_count = 0;
       ivl_scope_t scope = ivl_stmt_block_scope(net);
-      unsigned is_named = (scope != 0);
+      int is_named = (scope != 0);
+	/* This is TRUE if it is allowed to embed one of the threads
+	   into this thread. */
+      int is_embeddable = 1;
 
       unsigned out = transient_id++;
       unsigned id_base = transient_id;
+
+	/* Children are certainly not embeddable if they are going
+	   into a new scope. */
+      if (is_named)
+	    is_embeddable = 0;
+
+      switch (ivl_statement_type(net)) {
+	  case IVL_ST_FORK:
+	    break;
+	  case IVL_ST_FORK_JOIN_ANY:
+	    if (join_count < 2)
+		  break;
+	    is_embeddable = 0;
+	    join_detach_count = join_count - 1;
+	    join_count = 1;
+	    break;
+	  case IVL_ST_FORK_JOIN_NONE:
+	    is_embeddable = 0;
+	    join_detach_count = join_count;
+	    join_count = 0;
+	    break;
+	  default:
+	    assert(0);
+      }
 
 	/* cnt is the number of sub-threads. If the fork-join has no
 	   name, then we can put one of the sub-threads in the current
 	   thread, so decrement the count by one and use the current
 	   scope for all the threads. */
-      if (! is_named) {
-	    cnt -= 1;
+      if (is_embeddable)
+	    join_count -= 1;
+      if (scope==0)
 	    scope = sscope;
-      }
 
-      transient_id += cnt;
+      transient_id += join_count;
 
 	/* Draw a fork statement for all but one of the threads of the
 	   fork/join. Send the threads off to a bit of code where they
 	   are implemented. */
-      for (idx = 0 ;  idx < cnt ;  idx += 1) {
+      for (idx = 0 ;  idx < (join_count+join_detach_count) ;  idx += 1) {
 	    fprintf(vvp_out, "    %%fork t_%u, S_%p;\n",
 		    id_base+idx, scope);
       }
 
 	/* If we are putting one sub-thread into the current thread,
 	   then draw its code here. */
-      if (! is_named)
-	    rc += show_statement(ivl_stmt_block_stmt(net, cnt), scope);
+      if (is_embeddable)
+	    rc += show_statement(ivl_stmt_block_stmt(net, join_count), scope);
 
 
 	/* Generate enough joins to collect all the sub-threads. */
-      for (idx = 0 ;  idx < cnt ;  idx += 1) {
+      for (idx = 0 ;  idx < join_count ;  idx += 1)
 	    fprintf(vvp_out, "    %%join;\n");
-      }
+      if (join_detach_count > 0)
+	    fprintf(vvp_out, "    %%join/detach %u;\n", join_detach_count);
+	/* Jump around all the threads that I'm creating. */
       fprintf(vvp_out, "    %%jmp t_%u;\n", out);
 
 	/* Change the compiling scope to be the named forks scope. */
       if (is_named) fprintf(vvp_out, "    .scope S_%p;\n", scope);
 	/* Generate the sub-threads themselves. */
-      for (idx = 0 ;  idx < cnt ;  idx += 1) {
+      for (idx = 0 ;  idx < (join_count + join_detach_count) ;  idx += 1) {
 	    fprintf(vvp_out, "t_%u ;\n", id_base+idx);
 	    clear_expression_lookaside();
 	    rc += show_statement(ivl_stmt_block_stmt(net, idx), scope);
 	    fprintf(vvp_out, "    %%end;\n");
       }
 	/* Return to the previous scope. */
-      if (is_named) fprintf(vvp_out, "    .scope S_%p;\n", sscope);
+      if (sscope) fprintf(vvp_out, "    .scope S_%p;\n", sscope);
 
 	/* This is the label for the out. Use this to branch around
 	   the implementations of all the child threads. */
@@ -2073,6 +2103,8 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 	    break;
 
 	  case IVL_ST_FORK:
+	  case IVL_ST_FORK_JOIN_ANY:
+	  case IVL_ST_FORK_JOIN_NONE:
 	    rc += show_stmt_fork(net, sscope);
 	    break;
 

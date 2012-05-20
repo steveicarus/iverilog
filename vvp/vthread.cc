@@ -2893,6 +2893,44 @@ bool of_JOIN(vthread_t thr, vvp_code_t)
 }
 
 /*
+ * This %join/detach <n> instruction causes the thread to detach
+ * threads that were created by an earlier %fork.
+ */
+bool of_JOIN_DETACH(vthread_t thr, vvp_code_t cp)
+{
+      unsigned long count = cp->number;
+
+      while (count > 0) {
+	    assert(thr->child);
+	    assert(thr->child->parent == thr);
+	    assert(thr->fork_count > 0);
+	    assert(thr->child->wt_context == 0);
+
+	    thr->fork_count -= 1;
+
+	    if (thr->child->i_have_ended) {
+		    /* If the child has already ended, then reap it
+		       instead of pulling it from the list. */
+		  vthread_reap(thr->child);
+	    } else {
+		    /* Pull the child from the parent->child list. */
+		  struct vthread_s*tmp = thr->child;
+		  assert(tmp->fork_count == 0);
+		  thr->child = tmp->child;
+		  if (thr->child)
+			thr->child->parent = thr;
+		    /* set up detach. */
+		  tmp->parent = 0;
+		  tmp->child = 0;
+	    }
+
+	    count -= 1;
+      }
+
+      return true;
+}
+
+/*
  * %load/ar <bit>, <array-label>, <index>;
 */
 bool of_LOAD_AR(vthread_t thr, vvp_code_t cp)

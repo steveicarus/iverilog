@@ -157,6 +157,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%jmp/0xz",of_JMP0XZ, 2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%jmp/1",  of_JMP1,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%join/detach",of_JOIN_DETACH,1,{OA_NUMBER,OA_NONE,  OA_NONE} },
       { "%load/ar",of_LOAD_AR,3,  {OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
       { "%load/av",of_LOAD_AV,3,  {OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
       { "%load/avp0",of_LOAD_AVP0,3,  {OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
