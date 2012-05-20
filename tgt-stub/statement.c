@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2007,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -326,6 +326,28 @@ void show_statement(ivl_statement_t net, unsigned ind)
 		      show_statement(cur, ind+4);
 		}
 		fprintf(out, "%*sjoin\n", ind, "");
+		break;
+	  }
+
+	  case IVL_ST_FORK_JOIN_ANY: {
+		unsigned cnt = ivl_stmt_block_count(net);
+		fprintf(out, "%*sfork\n", ind, "");
+		for (idx = 0 ;  idx < cnt ;  idx += 1) {
+		      ivl_statement_t cur = ivl_stmt_block_stmt(net, idx);
+		      show_statement(cur, ind+4);
+		}
+		fprintf(out, "%*sjoin_any\n", ind, "");
+		break;
+	  }
+
+	  case IVL_ST_FORK_JOIN_NONE: {
+		unsigned cnt = ivl_stmt_block_count(net);
+		fprintf(out, "%*sfork\n", ind, "");
+		for (idx = 0 ;  idx < cnt ;  idx += 1) {
+		      ivl_statement_t cur = ivl_stmt_block_stmt(net, idx);
+		      show_statement(cur, ind+4);
+		}
+		fprintf(out, "%*sjoin_none\n", ind, "");
 		break;
 	  }
 

@@ -40,6 +40,12 @@ static ostream& operator<< (ostream&o, NetBlock::Type t)
 	  case NetBlock::PARA:
 	    o << "fork";
 	    break;
+	  case NetBlock::PARA_JOIN_NONE:
+	    o << "fork-join_none";
+	    break;
+	  case NetBlock::PARA_JOIN_ANY:
+	    o << "fork-join_any";
+	    break;
       }
       return o;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2271,6 +2271,8 @@ extern "C" ivl_scope_t ivl_stmt_block_scope(ivl_statement_t net)
       switch (net->type_) {
 	  case IVL_ST_BLOCK:
 	  case IVL_ST_FORK:
+	  case IVL_ST_FORK_JOIN_ANY:
+	  case IVL_ST_FORK_JOIN_NONE:
 	    return net->u_.block_.scope;
 	  default:
 	    assert(0);
@@ -2283,6 +2285,8 @@ extern "C" unsigned ivl_stmt_block_count(ivl_statement_t net)
       switch (net->type_) {
 	  case IVL_ST_BLOCK:
 	  case IVL_ST_FORK:
+	  case IVL_ST_FORK_JOIN_ANY:
+	  case IVL_ST_FORK_JOIN_NONE:
 	    return net->u_.block_.nstmt_;
 	  default:
 	    assert(0);
@@ -2296,6 +2300,8 @@ extern "C" ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net,
       switch (net->type_) {
 	  case IVL_ST_BLOCK:
 	  case IVL_ST_FORK:
+	  case IVL_ST_FORK_JOIN_ANY:
+	  case IVL_ST_FORK_JOIN_NONE:
 	    return net->u_.block_.stmt_ + i;
 	  default:
 	    assert(0);

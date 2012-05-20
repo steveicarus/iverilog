@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -257,7 +257,7 @@ NexusSet* NetBlock::nex_input(bool rem_out)
       if (last_ == 0)
 	    return new NexusSet;
 
-      if (type_ == PARA) {
+      if (type_ != SEQU) {
 	    cerr << get_fileline() << ": internal error: Sorry, "
 		 << "I don't know how to synthesize fork/join blocks."
 		 << endl;

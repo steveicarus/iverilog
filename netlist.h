@@ -2491,7 +2491,7 @@ class NetAssignNB  : public NetAssignBase {
 class NetBlock  : public NetProc {
 
     public:
-      enum Type { SEQU, PARA };
+      enum Type { SEQU, PARA, PARA_JOIN_ANY, PARA_JOIN_NONE };
 
       NetBlock(Type t, NetScope*subscope);
       ~NetBlock();

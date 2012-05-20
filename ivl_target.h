@@ -1,7 +1,7 @@
 #ifndef __ivl_target_H
 #define __ivl_target_H
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -406,6 +406,8 @@ typedef enum ivl_statement_type_e {
       IVL_ST_FORCE   = 14,
       IVL_ST_FOREVER = 15,
       IVL_ST_FORK    = 16,
+      IVL_ST_FORK_JOIN_ANY  = 28,
+      IVL_ST_FORK_JOIN_NONE = 29,
       IVL_ST_FREE    = 26,
       IVL_ST_RELEASE = 17,
       IVL_ST_REPEAT  = 18,
@@ -2069,11 +2071,11 @@ extern unsigned ivl_stmt_lineno(ivl_statement_t net);
  * triggers. The statement waits even if the sub-statement is nul.
  */
 
-  /* IVL_ST_BLOCK, IVL_ST_FORK */
+  /* IVL_ST_BLOCK, IVL_ST_FORK, IVL_ST_FORK_JOIN_ANY, IVL_ST_FORK_JOIN_NONE */
 extern unsigned ivl_stmt_block_count(ivl_statement_t net);
-  /* IVL_ST_BLOCK, IVL_ST_FORK */
+  /* IVL_ST_BLOCK, IVL_ST_FORK, IVL_ST_FORK_JOIN_ANY, IVL_ST_FORK_JOIN_NONE */
 extern ivl_scope_t ivl_stmt_block_scope(ivl_statement_t net);
-  /* IVL_ST_BLOCK, IVL_ST_FORK */
+  /* IVL_ST_BLOCK, IVL_ST_FORK, IVL_ST_FORK_JOIN_ANY, IVL_ST_FORK_JOIN_NONE */
 extern ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net, unsigned i);
   /* IVL_ST_UTASK IVL_ST_DISABLE */
 extern ivl_scope_t ivl_stmt_call(ivl_statement_t net);

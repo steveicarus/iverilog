@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -386,9 +386,20 @@ bool dll_target::proc_block(const NetBlock*net)
 	   it, so fill in the block fields of the existing statement,
 	   and generate the contents for the statement array. */
 
-      stmt_cur_->type_ = (net->type() == NetBlock::SEQU)
-	    ? IVL_ST_BLOCK
-	    : IVL_ST_FORK;
+      switch (net->type()) {
+	  case NetBlock::SEQU:
+	    stmt_cur_->type_ = IVL_ST_BLOCK;
+	    break;
+	  case NetBlock::PARA:
+	    stmt_cur_->type_ = IVL_ST_FORK;
+	    break;
+	  case NetBlock::PARA_JOIN_ANY:
+	    stmt_cur_->type_ = IVL_ST_FORK_JOIN_ANY;
+	    break;
+	  case NetBlock::PARA_JOIN_NONE:
+	    stmt_cur_->type_ = IVL_ST_FORK_JOIN_NONE;
+	    break;
+      }
       stmt_cur_->u_.block_.nstmt_ = count;
       stmt_cur_->u_.block_.stmt_ = (struct ivl_statement_s*)
 	    calloc(count, sizeof(struct ivl_statement_s));

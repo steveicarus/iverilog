@@ -1564,7 +1564,9 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 		       << "Elaborate block scope " << use_name
 		       << " within " << scope_path(scope) << endl;
 
-	    my_scope = new NetScope(scope, use_name, bl_type_==BL_PAR
+	      // The scope type is begin-end or fork-join. The
+	      // sub-types of fork-join are not interesting to the scope.
+	    my_scope = new NetScope(scope, use_name, bl_type_!=BL_SEQ
 				    ? NetScope::FORK_JOIN
 				    : NetScope::BEGIN_END);
 	    my_scope->set_line(get_file(), get_lineno());

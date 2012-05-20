@@ -356,6 +356,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       PGBuiltin::Type gatetype;
       NetNet::PortType porttype;
       ivl_variable_type_t vartype;
+      PBlock::BL_TYPE join_keyword;
 
       PWire*wire;
       svector<PWire*>*wires;
@@ -573,6 +574,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <statement_list> statement_or_null_list statement_or_null_list_opt
 
 %type <statement> analog_statement
+
+%type <join_keyword> join_keyword
 
 %type <letter> spec_polarity
 %type <perm_strings>  specify_path_identifiers
@@ -1084,10 +1087,11 @@ integer_vector_type /* IEEE1800-2005: A.2.2.1 */
 
 join_keyword /* IEEE1800-2005: A.6.3 */
   : K_join
+      { $$ = PBlock::BL_PAR; }
   | K_join_none
-      { yyerror(@1, "sorry: join_none not supported."); }
+      { $$ = PBlock::BL_JOIN_NONE; }
   | K_join_any
-      { yyerror(@1, "sorry: join_any not supported."); }
+      { $$ = PBlock::BL_JOIN_ANY; }
   ;
 
 jump_statement /* IEEE1800-2005: A.6.5 */
@@ -5335,12 +5339,12 @@ statement_item /* This is roughly statement_item in the LRM */
      code generator can do the right thing. */
 
   | K_fork join_keyword
-      { PBlock*tmp = new PBlock(PBlock::BL_PAR);
+      { PBlock*tmp = new PBlock($2);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   | K_fork statement_or_null_list join_keyword
-      { PBlock*tmp = new PBlock(PBlock::BL_PAR);
+      { PBlock*tmp = new PBlock($3);
 	FILE_NAME(tmp, @1);
 	tmp->set_statement(*$2);
 	delete $2;
@@ -5357,6 +5361,7 @@ statement_item /* This is roughly statement_item in the LRM */
         assert(! current_block_stack.empty());
 	PBlock*tmp = current_block_stack.top();
 	current_block_stack.pop();
+	tmp->set_join_type($7);
 	if ($6) tmp->set_statement(*$6);
 	delete[]$3;
 	delete $6;

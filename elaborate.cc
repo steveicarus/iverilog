@@ -2633,9 +2633,21 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      NetBlock::Type type = (bl_type_==PBlock::BL_PAR)
-	    ? NetBlock::PARA
-	    : NetBlock::SEQU;
+      NetBlock::Type type;
+      switch (bl_type_) {
+	  case PBlock::BL_SEQ:
+	    type = NetBlock::SEQU;
+	    break;
+	  case PBlock::BL_PAR:
+	    type = NetBlock::PARA;
+	    break;
+	  case PBlock::BL_JOIN_NONE:
+	    type = NetBlock::PARA_JOIN_NONE;
+	    break;
+	  case PBlock::BL_JOIN_ANY:
+	    type = NetBlock::PARA_JOIN_ANY;
+	    break;
+      }
 
       NetScope*nscope = 0;
       if (pscope_name() != 0) {
