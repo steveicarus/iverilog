@@ -117,7 +117,7 @@ PBlock::~PBlock()
 void PBlock::set_join_type(PBlock::BL_TYPE type)
 {
       assert(bl_type_ == BL_PAR);
-      assert(type == BL_JOIN_NONE || type==BL_JOIN_ANY);
+      assert(type==BL_PAR || type==BL_JOIN_NONE || type==BL_JOIN_ANY);
       bl_type_ = type;
 }
 
