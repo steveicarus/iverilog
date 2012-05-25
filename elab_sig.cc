@@ -1047,19 +1047,17 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       attrib_list_t*attrib_list = evaluate_attributes(attributes, nattrib,
 						      des, scope);
 
-      long array_s0 = 0;
-      long array_e0 = 0;
-      unsigned array_dimensions = 0;
 
-	/* If the ident has idx expressions, then this is a
-	   memory. It can only have the idx registers after the msb
-	   and lsb expressions are filled. And, if it has one index,
-	   it has both. */
-      if (lidx_ || ridx_) {
-	    assert(lidx_ && ridx_);
+      list<netrange_t>unpacked_dimensions;
 
-	    NetExpr*lexp = elab_and_eval(des, scope, lidx_, -1, true);
-	    NetExpr*rexp = elab_and_eval(des, scope, ridx_, -1, true);
+      for (list<pform_range_t>::const_iterator cur = unpacked_.begin()
+		 ; cur != unpacked_.end() ; ++cur) {
+	    PExpr*use_lidx = cur->first;
+	    PExpr*use_ridx = cur->second;
+	    assert(use_lidx && use_ridx);
+
+	    NetExpr*lexp = elab_and_eval(des, scope, use_lidx, -1, true);
+	    NetExpr*rexp = elab_and_eval(des, scope, use_ridx, -1, true);
 
 	    if ((lexp == 0) || (rexp == 0)) {
 		  cerr << get_fileline() << ": internal error: There is "
@@ -1076,19 +1074,21 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    delete rexp;
 	    delete lexp;
 
-	    if (!const_flag) {
+	    long index_l, index_r;
+	    if (! const_flag) {
 		  cerr << get_fileline() << ": error: The indices "
 		       << "are not constant for array ``"
 		       << name_ << "''." << endl;
 		  des->errors += 1;
                     /* Attempt to recover from error, */
-	          array_s0 = 0;
-	          array_e0 = 0;
+	          index_l = 0;
+	          index_r = 0;
 	    } else {
-	          array_s0 = lval.as_long();
-	          array_e0 = rval.as_long();
-            }
-	    array_dimensions = 1;
+		  index_l = lval.as_long();
+		  index_r = rval.as_long();
+	    }
+
+	    unpacked_dimensions.push_back(netrange_t(index_l, index_r));
       }
 
       if (data_type_ == IVL_VT_REAL && !packed_dimensions.empty()) {
@@ -1163,16 +1163,11 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  if (!get_scalar()) {
 			cerr << " " << packed_dimensions;
 		  }
-		  cerr << " " << name_;
-		  if (array_dimensions > 0) {
-			cerr << " [" << array_s0 << ":" << array_e0 << "]" << endl;
-		  }
+		  cerr << " " << name_ << unpacked_dimensions;
 		  cerr << " in scope " << scope_path(scope) << endl;
 	    }
 
-	    sig = array_dimensions > 0
-		  ? new NetNet(scope, name_, wtype, packed_dimensions, array_s0, array_e0)
-		  : new NetNet(scope, name_, wtype, packed_dimensions);
+	    sig = new NetNet(scope, name_, wtype, packed_dimensions, unpacked_dimensions);
       }
 
 	// If this is an enumeration, then set the enumeration set for

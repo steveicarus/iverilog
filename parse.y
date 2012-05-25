@@ -4880,16 +4880,7 @@ register_variable
       { perm_string ident_name = lex_strings.make($1);
 	pform_makewire(@1, ident_name, NetNet::REG,
 		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
-	if ($2 != 0) {
-	      pform_range_t index;
-	      if ($2->size() > 1) {
-		    yyerror(@2, "sorry: only 1 dimensional arrays "
-			    "are currently supported.");
-	      }
-	      index = $2->front();
-	      pform_set_reg_idx(ident_name, index.first, index.second);
-	      delete $2;
-	}
+	pform_set_reg_idx(ident_name, $2);
 	$$ = $1;
       }
   | IDENTIFIER '=' expression
@@ -4921,16 +4912,7 @@ net_variable
       { perm_string name = lex_strings.make($1);
 	pform_makewire(@1, name, NetNet::IMPLICIT,
 		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
-	if ($2 != 0) {
-	      pform_range_t index;
-	      if ($2->size() > 1) {
-		    yyerror(@2, "sorry: only 1 dimensional arrays "
-			    "are currently supported.");
-	      }
-	      index = $2->front();
-	      pform_set_reg_idx(name, index.first, index.second);
-	      delete $2;
-	}
+	pform_set_reg_idx(name, $2);
 	$$ = $1;
       }
   ;

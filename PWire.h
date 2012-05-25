@@ -78,7 +78,7 @@ class PWire : public LineInfo {
       void set_range_scalar(PWSRType type);
       void set_range(const std::list<pform_range_t>&ranges, PWSRType type);
 
-      void set_memory_idx(PExpr*ldx, PExpr*rdx);
+      void set_unpacked_idx(const std::list<pform_range_t>&ranges);
 
       void set_enumeration(enum_type_t*enum_type);
       void set_struct_type(struct_type_t*type);
@@ -115,9 +115,8 @@ class PWire : public LineInfo {
       unsigned error_cnt_;
 
 	// If this wire is actually a memory, these indices will give
-	// me the size and address range of the memory.
-      PExpr*lidx_;
-      PExpr*ridx_;
+	// me the size and address ranges of the memory.
+      std::list<pform_range_t>unpacked_;
 
       enum_type_t*enum_type_;
       struct_type_t*struct_type_;

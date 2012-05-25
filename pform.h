@@ -289,7 +289,8 @@ extern void pform_set_net_range(list<perm_string>*names,
 				bool signed_flag,
 				ivl_variable_type_t,
 				std::list<named_pexpr_t>*attr);
-extern void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r);
+extern void pform_set_reg_idx(perm_string name,
+			      std::list<pform_range_t>*indices);
 extern void pform_set_reg_integer(list<perm_string>*names, list<named_pexpr_t>*attr);
 extern void pform_set_reg_time(list<perm_string>*names, list<named_pexpr_t>*attr);
 

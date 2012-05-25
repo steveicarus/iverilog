@@ -196,11 +196,20 @@ ostream&operator<<(ostream&out, const list<netrange_t>&rlist)
       return out;
 }
 
+ostream&operator<<(ostream&out, const vector<netrange_t>&rlist)
+{
+      for (vector<netrange_t>::const_iterator cur = rlist.begin()
+		 ; cur != rlist.end() ; ++cur) {
+	    out << "[" << cur->msb << ":" << cur->lsb << "]";
+      }
+      return out;
+}
+
 /* Dump a net. This can be a wire or register. */
 void NetNet::dump_net(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << type() << ": " << name()
-	<< "[" << s0_ << ":" << e0_ << " count=" << pin_count() << "]";
+	<< unpacked_dims_ << " unpacked dims=" << unpacked_dimensions() << " count=" << pin_count();
       if (local_flag_)
 	    o << " (local)";
       o << " " << data_type_;

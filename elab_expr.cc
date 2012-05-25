@@ -1974,7 +1974,7 @@ bool PEIdent::calculate_packed_indices_(Design*des, NetScope*scope, NetNet*net,
 {
       list<index_component_t> index;
       index = path_.back().index;
-      for (size_t idx = 0 ; idx < net->array_dimensions() ; idx += 1)
+      for (size_t idx = 0 ; idx < net->unpacked_dimensions() ; idx += 1)
 	    index.pop_front();
 
       return evaluate_index_prefix(des, scope, prefix_indices, index);
@@ -2174,7 +2174,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       if (!name_tail.index.empty()) {
 	    const index_component_t&index_tail = name_tail.index.back();
 	      // Skip full array word net selects.
-	    if (!net || (name_tail.index.size() > net->array_dimensions())) {
+	    if (!net || (name_tail.index.size() > net->unpacked_dimensions())) {
 		  use_sel = index_tail.sel;
 	    }
       }
@@ -3146,78 +3146,69 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 
       const name_component_t&name_tail = path_.back();
 
-      if (name_tail.index.empty() && !(SYS_TASK_ARG & flags)) {
+	// Special case: This is the entire array, and we are a direct
+	// argument of a system task.
+      if (name_tail.index.empty() && (SYS_TASK_ARG & flags)) {
+	    NetESignal*res = new NetESignal(net, 0);
+	    res->set_line(*this);
+	    return res;
+      }
+
+      if (name_tail.index.empty()) {
 	    cerr << get_fileline() << ": error: Array " << path()
 		 << " Needs an array index here." << endl;
 	    des->errors += 1;
 	    return 0;
       }
 
-      index_component_t index_front;
-      if (! name_tail.index.empty()) {
-	    index_front = name_tail.index.front();
-	    ivl_assert(*this, index_front.sel != index_component_t::SEL_NONE);
-	    if (index_front.sel != index_component_t::SEL_BIT) {
-		  cerr << get_fileline() << ": error: Array " << path_
-		       << " cannot be indexed by a range." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-	    ivl_assert(*this, index_front.msb);
-	    ivl_assert(*this, !index_front.lsb);
-      }
-
-      NetExpr*word_index = 0;
-      if (index_front.sel != index_component_t::SEL_NONE)
-	    word_index = elab_and_eval(des, scope, index_front.msb, -1,
-                                       need_const);
-
-      if (word_index == 0 && !(SYS_TASK_ARG & flags))
+	// Make sure there are enough indices to address an array element.
+      if (name_tail.index.size() < net->unpacked_dimensions()) {
+	    cerr << get_fileline() << ": error: Array " << path()
+		 << " needs " << net->unpacked_dimensions() << " indices,"
+		 << " but got only " << name_tail.index.size() << "." << endl;
+	    des->errors += 1;
 	    return 0;
-
-      if (NetEConst*word_addr = dynamic_cast<NetEConst*>(word_index)) {
-	    long addr = word_addr->value().as_long();
-
-	      // Special case: The index is out of range, so the value
-	      // of this expression is a 'bx vector the width of a word.
-	    if (!net->array_index_is_valid(addr)) {
-		  cerr << get_fileline() << ": warning: returning 'bx for out "
-		          "of bounds array access " << net->name()
-		       << "[" << addr << "]." << endl;
-		  NetEConst*resx = make_const_x(net->vector_width());
-		  resx->set_line(*this);
-		  delete word_index;
-		  return resx;
-	    }
-
-	      // Recalculate the constant address with the adjusted base.
-	    unsigned use_addr = net->array_index_to_address(addr);
-	    if (addr < 0 || use_addr != (unsigned long)addr) {
-		  verinum val ( (uint64_t)use_addr, 8*sizeof(use_addr));
-		  NetEConst*tmp = new NetEConst(val);
-		  tmp->set_line(*this);
-		  delete word_index;
-		  word_index = tmp;
-	    }
-
-      } else if (word_index) {
-              // If there is a non-zero base to the memory, then build an
-              // expression to calculate the canonical address.
-            if (long base = net->array_first()) {
-
-                  word_index = normalize_variable_array_base(
-		                     word_index, base, net->array_count());
-                  eval_expr(word_index);
-            }
       }
 
-      NetESignal*res = new NetESignal(net, word_index);
+	// Evaluate all the index expressions into an
+	// "unpacked_indices" array.
+      list<NetExpr*>unpacked_indices;
+      list<long> unpacked_indices_const;
+      bool flag = indices_to_expressions(des, scope, this,
+					 name_tail.index, net->unpacked_dimensions(),
+					 need_const,
+					 unpacked_indices,
+					 unpacked_indices_const);
+
+      NetExpr*canon_index = 0;
+      if (flag) {
+	    ivl_assert(*this, unpacked_indices_const.size() == net->unpacked_dimensions());
+	    canon_index = normalize_variable_unpacked(net, unpacked_indices_const);
+
+	    if (canon_index == 0) {
+		  cerr << get_fileline() << ": warning: "
+		       << "returning 'bx for out of bounds array access "
+		       << net->name() << as_indices(unpacked_indices_const) << "." << endl;
+	    }
+
+      } else {
+	    ivl_assert(*this, unpacked_indices.size() == net->unpacked_dimensions());
+	    canon_index = normalize_variable_unpacked(net, unpacked_indices);
+      }
+
+      if (canon_index == 0) {
+	    NetEConst*xxx = make_const_x(net->vector_width());
+	    xxx->set_line(*this);
+	    return xxx;
+      }
+
+      NetESignal*res = new NetESignal(net, canon_index);
       res->set_line(*this);
 
 	// Detect that the word has a bit/part select as well.
 
       index_component_t::ctype_t word_sel = index_component_t::SEL_NONE;
-      if (name_tail.index.size() > 1)
+      if (name_tail.index.size() > net->unpacked_dimensions())
 	    word_sel = name_tail.index.back().sel;
 
       if (net->get_scalar() &&
@@ -3226,7 +3217,7 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 	    if (res->expr_type() == IVL_VT_REAL) cerr << "real";
 	    else cerr << "scalar";
 	    cerr << " array word: " << net->name()
-	         <<"[" << *word_index << "]" << endl;
+		 << as_indices(unpacked_indices) << endl;
 	    des->errors += 1;
 	    delete res;
 	    return 0;
@@ -3708,7 +3699,7 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
                                      unsigned expr_wid,
 				     unsigned flags) const
 {
-      if (net->array_dimensions() > 0)
+      if (net->unpacked_dimensions() > 0)
 	    return elaborate_expr_net_word_(des, scope, net, found_in,
                                             expr_wid, flags);
 
