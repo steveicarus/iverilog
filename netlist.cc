@@ -452,7 +452,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
     type_(t), port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE),
     signed_(false), isint_(false), is_scalar_(false), local_flag_(false),
     enumeration_(0), struct_type_(0), discipline_(0),
-    dimensions_(0), s0_(0), e0_(0), eref_count_(0), lref_count_(0)
+    eref_count_(0), lref_count_(0)
 {
       assert(s);
       assert(npins>0);
@@ -501,7 +501,6 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
     port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE), signed_(false),
     isint_(false), is_scalar_(false), local_flag_(false),
     enumeration_(0), struct_type_(0), discipline_(0),
-    dimensions_(0), s0_(0), e0_(0),
     eref_count_(0), lref_count_(0)
 {
       packed_dims_ = packed;
@@ -529,34 +528,41 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
       s->add_signal(this);
 }
 
-static unsigned calculate_count(long s, long e)
+static unsigned calculate_count(const list<NetNet::range_t>&unpacked)
 {
-      unsigned long r;
-      if (s >= e) {
-	    r = s - e;
-      } else {
-	    r = e - s;
+      unsigned long sum = 1;
+      for (list<NetNet::range_t>::const_iterator cur = unpacked.begin()
+		 ; cur != unpacked.end() ; ++cur) {
+	    sum *= cur->width();
       }
-      if (r >= UINT_MAX) {
+
+      if (sum >= UINT_MAX)
 	    return 0;
-      }
-      return r + 1;
+
+      return sum;
 }
 
 NetNet::NetNet(NetScope*s, perm_string n, Type t,
-	       const list<NetNet::range_t>&packed, long array_s, long array_e)
-: NetObj(s, n, calculate_count(array_s, array_e)),
+	       const list<NetNet::range_t>&packed,
+	       const list<NetNet::range_t>&unpacked)
+: NetObj(s, n, calculate_count(unpacked)),
     type_(t), port_type_(NOT_A_PORT),
     data_type_(IVL_VT_NO_TYPE), signed_(false), isint_(false),
     is_scalar_(false), local_flag_(false), enumeration_(0), struct_type_(0),
-    discipline_(0),
-    dimensions_(1), s0_(array_s), e0_(array_e),
+    discipline_(0), unpacked_dims_(unpacked.size()),
     eref_count_(0), lref_count_(0)
 {
       packed_dims_ = packed;
+      size_t idx = 0;
+      for (list<NetNet::range_t>::const_iterator cur = unpacked.begin()
+		 ; cur != unpacked.end() ; ++cur, idx += 1) {
+	    unpacked_dims_[idx] = *cur;
+      }
+      assert(idx == unpacked_dims_.size());
+
       ivl_assert(*this, s);
       if (pin_count() == 0) {
-	    cerr << "Array too big [" << array_s << ":" << array_e << "]" << endl;
+	    cerr << "Array too big " << unpacked << endl;
 	    ivl_assert(*this, 0);
       }
 
@@ -602,7 +608,6 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, netstruct_t*ty)
     data_type_(IVL_VT_NO_TYPE), signed_(false), isint_(false),
     is_scalar_(false), local_flag_(false), enumeration_(0), struct_type_(ty),
     discipline_(0),
-    dimensions_(0), s0_(0), e0_(0),
     eref_count_(0), lref_count_(0)
 {
       packed_dims_.push_back(range_t(calculate_count(ty)-1, 0));
@@ -878,50 +883,14 @@ bool NetNet::sb_to_slice(const list<long>&indices, long sb, long&loff, unsigned 
       return true;
 }
 
-
-unsigned NetNet::array_dimensions() const
+unsigned NetNet::unpacked_count() const
 {
-      return dimensions_;
-}
+      unsigned c = 1;
+      for (size_t idx = 0 ; idx < unpacked_dims_.size() ; idx += 1) {
+	    c *= unpacked_dims_[idx].width();
+      }
 
-long NetNet::array_first() const
-{
-      if (s0_ <= e0_)
-	    return s0_;
-      else
-	    return e0_;
-}
-
-bool NetNet::array_addr_swapped() const
-{
-      if (s0_ <= e0_)
-	     return false;
-      else
-	     return true;
-}
-
-unsigned NetNet::array_count() const
-{
-      unsigned c = calculate_count(s0_, e0_);
-      ivl_assert(*this, c > 0);
       return c;
-}
-
-bool NetNet::array_index_is_valid(long sb) const
-{
-      if (sb < s0_ && sb < e0_)
-	    return false;
-      if (sb > e0_ && sb > s0_)
-	    return false;
-      return true;
-}
-
-unsigned NetNet::array_index_to_address(long sb) const
-{
-      if (s0_ <= e0_)
-	    return sb - s0_;
-      else
-	    return sb - e0_;
 }
 
 void NetNet::incr_eref()

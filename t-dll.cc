@@ -2403,7 +2403,8 @@ void dll_target::signal(const NetNet*net)
                          (net->peek_lref() > 0) ? 1 : 0;
       obj->discipline = net->get_discipline();
 
-      obj->array_dimensions_ = net->array_dimensions();
+      obj->array_dimensions_ = net->unpacked_dimensions();
+      assert(obj->array_dimensions_ == net->unpacked_dimensions());
 
       switch (net->port_type()) {
 
@@ -2493,9 +2494,23 @@ void dll_target::signal(const NetNet*net)
 	   t_cookie of the Nexus object so that I find it again when I
 	   next encounter the nexus. */
 
-      obj->array_base = net->array_first();
-      obj->array_words = net->array_count();
-      obj->array_addr_swapped = net->array_addr_swapped() ? 1 : 0;
+      if (obj->array_dimensions_ == 1) {
+	    const vector<NetNet::range_t>& dims = net->unpacked_dims();
+	    if (dims[0].msb < dims[0].lsb) {
+		  obj->array_base = dims[0].msb;
+		  obj->array_addr_swapped = false;
+	    } else {
+		  obj->array_base = dims[0].lsb;
+		  obj->array_addr_swapped = true;
+	    }
+	    obj->array_words = net->unpacked_count();
+      } else {
+	      // The back-end API doesn't yet support multi-dimension
+	      // unpacked arrays, so just report the canonical dimensions.
+	    obj->array_base = 0;
+	    obj->array_words = net->unpacked_count();
+	    obj->array_addr_swapped = 0;
+      }
 
       ivl_assert(*net, obj->array_words == net->pin_count());
       if (debug_optimizer && obj->array_words > 1000) cerr << "debug: "

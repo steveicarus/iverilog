@@ -2273,7 +2273,7 @@ void pform_set_type_attrib(perm_string name, const string&key,
  * This function attaches a memory index range to an existing
  * register. (The named wire must be a register.
  */
-void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r)
+void pform_set_reg_idx(perm_string name, list<pform_range_t>*indices)
 {
       PWire*cur = lexical_scope->wires_find(name);
       if (cur == 0) {
@@ -2281,7 +2281,8 @@ void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r)
 	    return;
       }
 
-      cur->set_memory_idx(l, r);
+      if (indices && !indices->empty())
+	    cur->set_unpacked_idx(*indices);
 }
 
 LexicalScope::range_t* pform_parameter_value_range(bool exclude_flag,

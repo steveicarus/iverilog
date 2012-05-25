@@ -208,7 +208,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 	// Only treat as part/bit selects any index that is beyond the
 	// word selects for an array. This is not an array, then
 	// dimensions==0 and any index is treated as a select.
-      if (name_tail.index.size() <= sig->array_dimensions()) {
+      if (name_tail.index.size() <= sig->unpacked_dimensions()) {
 	    midx = sig->vector_width()-1;
 	    lidx = 0;
 	    return true;
@@ -247,7 +247,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		      if (warn_ob_select) {
 			    cerr << get_fileline() << ": warning: "
 			         << sig->name();
-			    if (sig->array_dimensions() > 0) cerr << "[]";
+			    if (sig->unpacked_dimensions() > 0) cerr << "[]";
 			    cerr << "['bx";
 			    if (index_tail.sel ==
 			        index_component_t::SEL_IDX_UP) {
@@ -279,7 +279,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		  /* Warn about an indexed part select that is out of range. */
 		if (warn_ob_select && (lidx < 0)) {
 		      cerr << get_fileline() << ": warning: " << sig->name();
-		      if (sig->array_dimensions() > 0) cerr << "[]";
+		      if (sig->unpacked_dimensions() > 0) cerr << "[]";
 		      cerr << "[" << midx_val;
 		      if (index_tail.sel == index_component_t::SEL_IDX_UP) {
 			    cerr << "+:";
@@ -290,7 +290,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		}
 		if (warn_ob_select && (midx >= (long)sig->vector_width())) {
 		      cerr << get_fileline() << ": warning: " << sig->name();
-		      if (sig->array_dimensions() > 0) {
+		      if (sig->unpacked_dimensions() > 0) {
 			    cerr << "[]";
 		      }
 		      cerr << "[" << midx_val;
@@ -337,16 +337,11 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		if (midx_tmp >= (long)sig->vector_width() || lidx_tmp < 0) {
 		      cerr << get_fileline() << ": warning: Part select "
 			   << sig->name();
-		      if (sig->array_dimensions() > 0) {
+		      if (sig->unpacked_dimensions() > 0) {
 			    cerr << "[]";
 		      }
 		      cerr << "[" << msb << ":" << lsb
 			   << "] is out of range." << endl;
-#if 0
-		      midx_tmp = sig->vector_width() - 1;
-		      lidx_tmp = 0;
-		      des->errors += 1;
-#endif
 		}
 		  /* This is completely out side the signal so just skip it. */
 		if (lidx_tmp >= (long)sig->vector_width() || midx_tmp < 0) {
@@ -359,7 +354,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 	  }
 
 	  case index_component_t::SEL_BIT:
-	    if (name_tail.index.size() > sig->array_dimensions()) {
+	    if (name_tail.index.size() > sig->unpacked_dimensions()) {
 		  long msb;
 		  bool bit_defined_flag;
 		  /* bool flag = */ calculate_bits_(des, scope, msb, bit_defined_flag);
@@ -460,11 +455,9 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       unsigned midx = sig->vector_width()-1, lidx = 0;
 	// The default word select is the first.
       long widx = 0;
-	// The widx_val is the word select as entered in the source
-	// code. It's used for error messages.
-      long widx_val = 0;
 
       const name_component_t&name_tail = path_.back();
+      list<long> unpacked_indices_const;
 
       netstruct_t*struct_type = 0;
       if ((struct_type = sig->struct_type()) && !method_name.nil()) {
@@ -485,53 +478,64 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    lidx = member_off;
 	    midx = lidx + member->width() - 1;
 
-      } else if (sig->array_dimensions() > 0) {
+      } else if (sig->unpacked_dimensions() > 0) {
 
-	    if (name_tail.index.empty()) {
-		  cerr << get_fileline() << ": error: array " << sig->name()
-		       << " must be used with an index." << endl;
+	      // Make sure there are enough indices to address an array element.
+	    if (name_tail.index.size() < sig->unpacked_dimensions()) {
+		  cerr << get_fileline() << ": error: Array " << path()
+		       << " needs " << sig->unpacked_dimensions() << " indices,"
+		       << " but got only " << name_tail.index.size() << "." << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
 
-	    const index_component_t&index_head = name_tail.index.front();
-	    if (index_head.sel == index_component_t::SEL_PART) {
-		  cerr << get_fileline() << ": error: cannot perform a part "
-		       << "select on array " << sig->name() << "." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-	    ivl_assert(*this, index_head.sel == index_component_t::SEL_BIT);
-
-	    NetExpr*tmp_ex = elab_and_eval(des, scope, index_head.msb, -1, true);
-	    NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
-	    if (!tmp) {
+	      // Evaluate all the index expressions into an
+	      // "unpacked_indices" array.
+	    list<NetExpr*>unpacked_indices;
+	    bool flag = indices_to_expressions(des, scope, this,
+					       name_tail.index, sig->unpacked_dimensions(),
+					       true,
+					       unpacked_indices,
+					       unpacked_indices_const);
+	      // Note that !flag includes that there were any other
+	      // elaboration errors generating the unpacked_indices list.
+	    if (!flag) {
 		  cerr << get_fileline() << ": error: array " << sig->name()
 		       << " index must be a constant in this context." << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
 
-	    widx_val = tmp->value().as_long();
-	    if (sig->array_index_is_valid(widx_val))
-		  widx = sig->array_index_to_address(widx_val);
-	    else
+	    NetExpr*canon_index = 0;
+	    ivl_assert(*this, unpacked_indices_const.size() == sig->unpacked_dimensions());
+	    canon_index = normalize_variable_unpacked(sig, unpacked_indices_const);
+	    if (canon_index == 0) {
+		    // Normalize detected an out-of-bounds
+		    // index. Indicate that by setting the generated
+		    // widx to -1.
 		  widx = -1;
-	    delete tmp_ex;
+
+	    } else {
+		  NetEConst*canon_const = dynamic_cast<NetEConst*>(canon_index);
+		  ivl_assert(*this, canon_const);
+
+		  widx = canon_const->value().as_long();
+		  delete canon_index;
+	    }
 
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: Use [" << widx << "]"
 		       << " to index l-value array." << endl;
 
 	      /* The array has a part/bit select at the end. */
-	    if (name_tail.index.size() > sig->array_dimensions()) {
+	    if (name_tail.index.size() > sig->unpacked_dimensions()) {
 		  if (sig->get_scalar()) {
 		        cerr << get_fileline() << ": error: "
 		             << "can not select part of ";
 			if (sig->data_type() == IVL_VT_REAL) cerr << "real";
 			else cerr << "scalar";
 			cerr << " array word: " << sig->name()
-			     << "[" << widx_val << "]" << endl;
+			     << as_indices(unpacked_indices_const) << endl;
 		        des->errors += 1;
 		        return 0;
 		  }
@@ -550,6 +554,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  midx = midx_tmp;
 		  lidx = lidx_tmp;
 	    }
+
       } else if (!name_tail.index.empty()) {
 	    if (sig->get_scalar()) {
 		  cerr << get_fileline() << ": error: "
@@ -590,7 +595,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    if (widx < 0 || widx >= (long) sig->pin_count()) {
 		  cerr << get_fileline() << ": warning: ignoring out of "
 		          "bounds l-value array access "
-		       << sig->name() << "[" << widx_val << "]." << endl;
+		       << sig->name() << as_indices(unpacked_indices_const) << "." << endl;
 		  return 0;
 	    }
 

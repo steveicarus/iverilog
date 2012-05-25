@@ -591,7 +591,8 @@ class NetNet  : public NetObj {
       explicit NetNet(NetScope*s, perm_string n, Type t,
 		      const std::list<range_t>&packed);
       explicit NetNet(NetScope*s, perm_string n, Type t,
-		      const std::list<range_t>&packed, long s0, long e0);
+		      const std::list<range_t>&packed,
+		      const std::list<range_t>&unpacked);
 
 	// This form builds a NetNet from its record definition.
       explicit NetNet(NetScope*s, perm_string n, Type t, netstruct_t*type);
@@ -635,6 +636,8 @@ class NetNet  : public NetObj {
 	   the verilog declaration. */
       const std::list<range_t>& packed_dims() const { return packed_dims_; }
 
+      const std::vector<range_t>& unpacked_dims() const { return unpacked_dims_; }
+
 	/* The vector_width returns the bit width of the packed array,
 	   vector or scaler that is this NetNet object. The static
 	   method is also a convenient way to convert a range list to
@@ -670,18 +673,10 @@ class NetNet  : public NetObj {
 	/* This method returns 0 for scalars and vectors, and greater
 	   for arrays. The value is the number of array
 	   indices. (Currently only one array index is supported.) */
-      unsigned array_dimensions() const;
-      long array_first() const;
-      bool array_addr_swapped() const;
+      inline unsigned unpacked_dimensions() const { return unpacked_dims_.size(); }
 
 	// This is the number of array elements.
-      unsigned array_count() const;
-
-	// This method returns a 0 based address of an array entry as
-	// indexed by idx. The Verilog source may give index ranges
-	// that are not zero based.
-      bool array_index_is_valid(long idx) const;
-      unsigned array_index_to_address(long idx) const;
+      unsigned unpacked_count() const;
 
       bool local_flag() const { return local_flag_; }
       void local_flag(bool f) { local_flag_ = f; }
@@ -723,11 +718,11 @@ class NetNet  : public NetObj {
       ivl_discipline_t discipline_;
 
       std::list<range_t> packed_dims_;
-      const unsigned dimensions_;
-      long s0_, e0_;
+      std::vector<range_t> unpacked_dims_;
 
       unsigned eref_count_;
       unsigned lref_count_;
+
 	// When the signal is an unresolved wire, we need more detail
 	// which bits are assigned. This mask is true for each bit
 	// that is known to be driven.

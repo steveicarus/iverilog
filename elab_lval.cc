@@ -202,7 +202,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	// slice. This is, in fact, an error in l-values. Detect the
 	// situation by noting if the index count is less than the
 	// array dimensions (unpacked).
-      if (reg->array_dimensions() > name_tail.index.size()) {
+      if (reg->unpacked_dimensions() > name_tail.index.size()) {
 	    cerr << get_fileline() << ": error: Cannot assign to array "
 		 << path_ << ". Did you forget a word index?" << endl;
 	    des->errors += 1;
@@ -228,7 +228,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    return lv;
       }
 
-      if (reg->array_dimensions() > 0)
+      if (reg->unpacked_dimensions() > 0)
 	    return elaborate_lval_net_word_(des, scope, reg);
 
 	// This must be after the array word elaboration above!
@@ -278,6 +278,15 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
 
+      if (name_tail.index.size() < reg->unpacked_dimensions()) {
+	    cerr << get_fileline() << ": error: Array " << reg->name()
+		 << " needs " << reg->unpacked_dimensions() << " indices,"
+		 << " but got only " << name_tail.index.size() << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+	// Make sure there are enough indices to address an array element.
       const index_component_t&index_head = name_tail.index.front();
       if (index_head.sel == index_component_t::SEL_PART) {
 	    cerr << get_fileline() << ": error: cannot perform a part "
@@ -286,47 +295,47 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 	    return 0;
       }
 
-      ivl_assert(*this, index_head.sel == index_component_t::SEL_BIT);
-      ivl_assert(*this, index_head.msb != 0);
-      ivl_assert(*this, index_head.lsb == 0);
 
-      NetExpr*word = elab_and_eval(des, scope, index_head.msb, -1);
+	// Evaluate all the index expressions into an
+	// "unpacked_indices" array.
+      list<NetExpr*>unpacked_indices;
+      list<long> unpacked_indices_const;
+      bool flag = indices_to_expressions(des, scope, this,
+					 name_tail.index, reg->unpacked_dimensions(),
+					 false,
+					 unpacked_indices,
+					 unpacked_indices_const);
 
-	// If there is a non-zero base to the memory, then build an
-	// expression to calculate the canonical address.
-      if (long base = reg->array_first()) {
-
-	    word = normalize_variable_array_base(word, base,
-	                                         reg->array_count());
-	    eval_expr(word);
+      NetExpr*canon_index = 0;
+      if (flag) {
+	    ivl_assert(*this, unpacked_indices_const.size() == reg->unpacked_dimensions());
+	    canon_index = normalize_variable_unpacked(reg, unpacked_indices_const);
+	    if (canon_index == 0) {
+		  cerr << get_fileline() << ": warning: "
+		       << "ignoring out of bounds l-value array access " << reg->name();
+		  for (list<long>::const_iterator cur = unpacked_indices_const.begin()
+			     ; cur != unpacked_indices_const.end() ; ++cur) {
+			cerr << "[" << *cur << "]";
+		  }
+		  cerr << "." << endl;
+	    }
+      } else {
+	    ivl_assert(*this, unpacked_indices.size() == reg->unpacked_dimensions());
+	    canon_index = normalize_variable_unpacked(reg, unpacked_indices);
       }
+
 
       NetAssign_*lv = new NetAssign_(reg);
-      lv->set_word(word);
+      lv->set_word(canon_index);
 
       if (debug_elaborate)
-	    cerr << get_fileline() << ": debug: Set array word=" << *word << endl;
+	    cerr << get_fileline() << ": debug: Set array word=" << *canon_index << endl;
 
-	// Test for the case that the index is a constant, and is out
-	// of bounds. The "word" expression is the word index already
-	// converted to canonical address, so this just needs to check
-	// that the address is not too big.
-      if (NetEConst*word_const = dynamic_cast<NetEConst*>(word)) {
-	    verinum word_val = word_const->value();
-	    long index = word_val.as_long();
-
-	    if (index < 0 || index >= (long) reg->array_count()) {
-		  cerr << get_fileline() << ": warning: Constant array index "
-		       << (index + reg->array_first())
-		       << " is out of range for array "
-		       << reg->name() << "." << endl;
-	    }
-      }
 
 	/* An array word may also have part selects applied to them. */
 
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
-      if (name_tail.index.size() > 1)
+      if (name_tail.index.size() > reg->unpacked_dimensions())
 	    use_sel = name_tail.index.back().sel;
 
       if (reg->get_scalar() &&
@@ -335,7 +344,7 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 	    if (reg->data_type() == IVL_VT_REAL) cerr << "real";
 	    else cerr << "scalar";
 	    cerr << " array word: " << reg->name()
-	         << "[" << *word << "]" << endl;
+	         << "[" << *canon_index << "]" << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -563,7 +572,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 		  if (warn_ob_select) {
 			if (rel_base < 0) {
 			      cerr << get_fileline() << ": warning: " << reg->name();
-			      if (reg->array_dimensions() > 0) cerr << "[]";
+			      if (reg->unpacked_dimensions() > 0) cerr << "[]";
 			      cerr << "[" << lsv;
 			      if (use_sel == index_component_t::SEL_IDX_UP) {
 				    cerr << "+:";
@@ -574,7 +583,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 			}
 			if (rel_base + wid > reg->vector_width()) {
 			      cerr << get_fileline() << ": warning: " << reg->name();
-			      if (reg->array_dimensions() > 0) cerr << "[]";
+			      if (reg->unpacked_dimensions() > 0) cerr << "[]";
 			      cerr << "[" << lsv;
 			      if (use_sel == index_component_t::SEL_IDX_UP) {
 				    cerr << "+:";
@@ -587,7 +596,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 	    } else {
 		  if (warn_ob_select) {
 			cerr << get_fileline() << ": warning: " << reg->name();
-			if (reg->array_dimensions() > 0) cerr << "[]";
+			if (reg->unpacked_dimensions() > 0) cerr << "[]";
 			cerr << "['bx";
 			if (use_sel == index_component_t::SEL_IDX_UP) {
 			      cerr << "+:";

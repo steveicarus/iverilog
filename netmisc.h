@@ -142,8 +142,37 @@ extern NetExpr *normalize_variable_part_base(const list<long>&indices, NetExpr*b
 extern NetExpr*normalize_variable_slice_base(const list<long>&indices, NetExpr *base,
 					     const NetNet*reg, unsigned long&lwid);
 
-extern NetExpr*normalize_variable_array_base(NetExpr *base, long offset,
-                                             unsigned count);
+/*
+ * The as_indices() manipulator is a convenient way to emit a list of
+ * index values in the form [<>][<>]....
+ */
+template <class TYPE> struct __IndicesManip {
+      inline __IndicesManip(const std::list<TYPE>&v) : val(v) { }
+      const std::list<TYPE>&val;
+};
+template <class TYPE> inline __IndicesManip<TYPE> as_indices(const std::list<TYPE>&indices)
+{ return __IndicesManip<TYPE>(indices); }
+
+extern ostream& operator << (ostream&o, __IndicesManip<long>);
+extern ostream& operator << (ostream&o, __IndicesManip<NetExpr*>);
+
+/*
+ * Given a list of index expressions, generate elaborated expressions
+ * and constant values, if possible.
+ */
+extern bool indices_to_expressions(Design*des, NetScope*scope,
+				     // loc is for error messages.
+				   const LineInfo*loc,
+				     // src is the index list, and count is
+				     // the number of items in the list to use.
+				   const list<index_component_t>&src, unsigned count,
+				     // True if the expression MUST be constant.
+				   bool need_const,
+				     // These are the outputs.
+				   list<NetExpr*>&indices, list<long>&indices_const);
+
+extern NetExpr*normalize_variable_unpacked(const NetNet*net, list<long>&indices);
+extern NetExpr*normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices);
 
 /*
  * This function takes as input a NetNet signal and adds a constant

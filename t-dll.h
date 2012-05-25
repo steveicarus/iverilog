@@ -1,7 +1,7 @@
 #ifndef __t_dll_H
 #define __t_dll_H
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -685,7 +685,7 @@ struct ivl_signal_s {
       unsigned forced_net_ : 1;
 
 	/* For now, support only 0 or 1 array dimensions. */
-      unsigned array_dimensions_ : 1;
+      unsigned array_dimensions_ : 8;
       unsigned array_addr_swapped : 1;
 
 	/* These encode the declared packed dimensions for the

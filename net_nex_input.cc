@@ -159,7 +159,7 @@ NexusSet* NetESignal::nex_input(bool rem_out)
 	    delete tmp;
             if (warn_sens_entire_arr) {
                   cerr << get_fileline() << ": warning: @* is sensitive to all "
-                       << net_->array_count() << " words in array '"
+                       << net_->unpacked_count() << " words in array '"
                        << name() << "'." << endl;
             }
       }

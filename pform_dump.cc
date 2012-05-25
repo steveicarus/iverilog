@@ -376,11 +376,12 @@ void PWire::dump(ostream&out, unsigned ind) const
 
       out << " " << name_;
 
-	// If the wire has indices, dump them.
-      if (lidx_ || ridx_) {
+	// If the wire has unpacked indices, dump them.
+      for (list<pform_range_t>::const_iterator cur = unpacked_.begin()
+		 ; cur != unpacked_.end() ; ++cur) {
 	    out << "[";
-	    if (lidx_) out << *lidx_;
-	    if (ridx_) out << ":" << *ridx_;
+	    if (cur->first) out << *cur->first;
+	    if (cur->second) out << ":" << *cur->second;
 	    out << "]";
       }
 

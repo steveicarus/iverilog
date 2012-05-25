@@ -29,7 +29,7 @@ PWire::PWire(perm_string n,
 : name_(n), type_(t), port_type_(pt), data_type_(dt),
   signed_(false), isint_(false),
   port_set_(false), net_set_(false), is_scalar_(false),
-  error_cnt_(0), lidx_(0), ridx_(0), enum_type_(0), struct_type_(0),
+  error_cnt_(0), enum_type_(0), struct_type_(0),
   discipline_(0)
 {
       if (t == NetNet::INTEGER) {
@@ -242,15 +242,14 @@ void PWire::set_range(const list<pform_range_t>&rlist, PWSRType type)
       }
 }
 
-void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
+void PWire::set_unpacked_idx(const list<pform_range_t>&ranges)
 {
-      if (lidx_ != 0 || ridx_ != 0) {
+      if (! unpacked_.empty()) {
 	    cerr << get_fileline() << ": error: Array ``" << name_
 	         << "'' has already been declared." << endl;
 	    error_cnt_ += 1;
       } else {
-            lidx_ = ldx;
-            ridx_ = rdx;
+	    unpacked_ = ranges;
       }
 }
 
