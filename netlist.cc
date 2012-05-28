@@ -1979,7 +1979,7 @@ bool NetConst::is_string() const
       return is_string_;
 }
 
-NetFuncDef::NetFuncDef(NetScope*s, NetNet*result, const svector<NetNet*>&po)
+NetFuncDef::NetFuncDef(NetScope*s, NetNet*result, const vector<NetNet*>&po)
 : scope_(s), statement_(0), result_sig_(result), ports_(po)
 {
 }
@@ -2012,12 +2012,12 @@ NetScope*NetFuncDef::scope()
 
 unsigned NetFuncDef::port_count() const
 {
-      return ports_.count();
+      return ports_.size();
 }
 
 const NetNet* NetFuncDef::port(unsigned idx) const
 {
-      assert(idx < ports_.count());
+      assert(idx < ports_.size());
       return ports_[idx];
 }
 
@@ -2063,7 +2063,7 @@ const NetExpr* NetSTask::parm(unsigned idx) const
 }
 
 NetEUFunc::NetEUFunc(NetScope*scope, NetScope*def, NetESignal*res,
-                     svector<NetExpr*>&p, bool nc)
+                     vector<NetExpr*>&p, bool nc)
 : scope_(scope), func_(def), result_sig_(res), parms_(p), need_const_(nc)
 {
       expr_width(result_sig_->expr_width());
@@ -2071,7 +2071,7 @@ NetEUFunc::NetEUFunc(NetScope*scope, NetScope*def, NetESignal*res,
 
 NetEUFunc::~NetEUFunc()
 {
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1)
 	    delete parms_[idx];
 }
 #if 0
@@ -2087,12 +2087,12 @@ const NetESignal*NetEUFunc::result_sig() const
 
 unsigned NetEUFunc::parm_count() const
 {
-      return parms_.count();
+      return parms_.size();
 }
 
 const NetExpr* NetEUFunc::parm(unsigned idx) const
 {
-      assert(idx < parms_.count());
+      assert(idx < parms_.size());
       return parms_[idx];
 }
 

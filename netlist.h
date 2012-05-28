@@ -2981,7 +2981,7 @@ class NetFree   : public NetProc {
 class NetFuncDef {
 
     public:
-      NetFuncDef(NetScope*, NetNet*result, const svector<NetNet*>&po);
+      NetFuncDef(NetScope*, NetNet*result, const std::vector<NetNet*>&po);
       ~NetFuncDef();
 
       void set_proc(NetProc*st);
@@ -3002,7 +3002,7 @@ class NetFuncDef {
       NetScope*scope_;
       NetProc*statement_;
       NetNet*result_sig_;
-      svector<NetNet*>ports_;
+      std::vector<NetNet*>ports_;
 };
 
 /*
@@ -3164,7 +3164,7 @@ class NetTaskDef {
 class NetEUFunc  : public NetExpr {
 
     public:
-      NetEUFunc(NetScope*, NetScope*, NetESignal*, svector<NetExpr*>&, bool);
+      NetEUFunc(NetScope*, NetScope*, NetESignal*, std::vector<NetExpr*>&, bool);
       ~NetEUFunc();
 
       const NetESignal*result_sig() const;
@@ -3187,7 +3187,7 @@ class NetEUFunc  : public NetExpr {
       NetScope*scope_;
       NetScope*func_;
       NetESignal*result_sig_;
-      svector<NetExpr*> parms_;
+      std::vector<NetExpr*> parms_;
       bool need_const_;
 
     private: // not implemented

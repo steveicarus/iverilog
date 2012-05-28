@@ -1386,11 +1386,11 @@ NetNet* NetESFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
 NetNet* NetEUFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
 {
-      svector<NetNet*> eparms (parms_.count());
+      vector<NetNet*> eparms (parms_.size());
 
         /* Synthesize the arguments. */
       bool errors = false;
-      for (unsigned idx = 0; idx < eparms.count(); idx += 1) {
+      for (unsigned idx = 0; idx < eparms.size(); idx += 1) {
 	    if (dynamic_cast<NetEEvent*> (parms_[idx])) {
 		  errors = true;
 		  continue;
@@ -1432,7 +1432,7 @@ NetNet* NetEUFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
         /* Connect the pins to the arguments. */
       NetFuncDef*def = func_->func_def();
-      for (unsigned idx = 0; idx < eparms.count(); idx += 1) {
+      for (unsigned idx = 0; idx < eparms.size(); idx += 1) {
 	    unsigned width = def->port(idx)->vector_width();
 	    NetNet*tmp;
 	    if (eparms[idx]->get_signed()) {

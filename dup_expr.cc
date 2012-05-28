@@ -232,9 +232,9 @@ NetETernary* NetETernary::dup_expr() const
 NetEUFunc* NetEUFunc::dup_expr() const
 {
       NetEUFunc*tmp;
-      svector<NetExpr*> tmp_parms (parms_.count());
+      vector<NetExpr*> tmp_parms (parms_.size());
 
-      for (unsigned idx = 0 ;  idx < tmp_parms.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < tmp_parms.size() ;  idx += 1) {
 	    ivl_assert(*this, parms_[idx]);
 	    tmp_parms[idx] = parms_[idx]->dup_expr();
       }

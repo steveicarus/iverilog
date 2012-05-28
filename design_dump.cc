@@ -1518,9 +1518,9 @@ void NetETernary::dump(ostream&o) const
 void NetEUFunc::dump(ostream&o) const
 {
       o << func_->basename() << "(";
-      if (parms_.count() > 0) {
+      if (parms_.size() > 0) {
 	    parms_[0]->dump(o);
-	    for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+	    for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
 		  o << ", ";
 		  parms_[idx]->dump(o);
 	    }

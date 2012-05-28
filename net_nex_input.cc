@@ -188,7 +188,7 @@ NexusSet* NetETernary::nex_input(bool rem_out)
 NexusSet* NetEUFunc::nex_input(bool rem_out)
 {
       NexusSet*result = new NexusSet;
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
 	    NexusSet*tmp = parms_[idx]->nex_input(rem_out);
 	    result->add(*tmp);
 	    delete tmp;

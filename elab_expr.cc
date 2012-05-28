@@ -1663,7 +1663,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
       if ((parms_count == 1) && (parms_[0] == 0))
 	    parms_count = 0;
 
-      svector<NetExpr*> parms (parms_count);
+      vector<NetExpr*> parms (parms_count);
 
 	/* Elaborate the input expressions for the function. This is
 	   done in the scope of the function call, and not the scope
@@ -1672,7 +1672,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 
       unsigned parm_errors = 0;
       unsigned missing_parms = 0;
-      for (unsigned idx = 0 ;  idx < parms.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < parms.size() ;  idx += 1) {
 	    PExpr*tmp = parms_[idx];
 	    if (tmp) {
 		  parms[idx] = elaborate_rval_expr(des, scope,

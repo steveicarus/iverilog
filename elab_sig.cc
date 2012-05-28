@@ -624,7 +624,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    }
       }
 
-      svector<NetNet*>ports (ports_? ports_->count() : 0);
+      vector<NetNet*>ports (ports_? ports_->count() : 0);
 
       if (ports_)
 	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
