@@ -1963,8 +1963,12 @@ NetExpr* NetEUFunc::eval_tree()
       }
 
       if (need_const_) {
-            cerr << get_fileline() << ": sorry: Constant user functions are "
-                    "not yet supported." << endl;
+	    NetFuncDef*def = func_->func_def();
+	    ivl_assert(*this, def);
+
+	    NetExpr*res = def->evaluate_function(*this, parms_);
+	    return res;
       }
+
       return 0;
 }

@@ -28,6 +28,7 @@
 # include  <string>
 # include  <map>
 # include  <list>
+# include  <memory>
 # include  <vector>
 # include  <set>
 # include  <utility>
@@ -1715,6 +1716,14 @@ class NetExpr  : public LineInfo {
 	// any. This is a deep copy operation.
       virtual NetExpr*dup_expr() const =0;
 
+	// Evaluate the expression at compile time, a la within a
+	// constant function. This is used by the constant function
+	// evaluation function code, and the return value is an
+	// allocated constant, or nil if the expression cannot be
+	// evaluated for any reason.
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
+
 	// Get the Nexus that are the input to this
 	// expression. Normally this descends down to the reference to
 	// a signal that reads from its input.
@@ -1775,6 +1784,9 @@ class NetEConst  : public NetExpr {
       virtual NetEConst* dup_expr() const;
       virtual NetNet*synthesize(Design*, NetScope*scope, NetExpr*);
       virtual NexusSet* nex_input(bool rem_out = true);
+
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
 
     private:
       verinum value_;
@@ -2244,6 +2256,15 @@ class NetProc : public virtual LineInfo {
 	// target. The target returns true if OK, false for errors.
       virtual bool emit_proc(struct target_t*) const;
 
+	// This method is used by the NetFuncDef object to evaluate a
+	// constant function at compile time. The loc is the location
+	// of the function call, and is used for error messages. The
+	// ctx is a map of name to expression. This is for mapping
+	// identifiers to values. The function returns true if the
+	// processing succeeds, or false otherwise.
+      virtual bool evaluate_function(const LineInfo&loc,
+				     std::map<perm_string,NetExpr*>&ctx) const;
+
 	// This method is called by functors that want to scan a
 	// process in search of matchable patterns.
       virtual int match_proc(struct proc_match_t*);
@@ -2446,6 +2467,7 @@ class NetAssign : public NetAssignBase {
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
+      virtual bool evaluate_function(const LineInfo&loc, std::map<perm_string,NetExpr*>&context_map) const;
 
     private:
       char op_;
@@ -2495,6 +2517,8 @@ class NetBlock  : public NetProc {
       const NetProc*proc_first() const;
       const NetProc*proc_next(const NetProc*cur) const;
 
+      bool evaluate_function(const LineInfo&loc,
+			     std::map<perm_string,NetExpr*>&ctx) const;
 
 	// synthesize as asynchronous logic, and return true.
       bool synth_async(Design*des, NetScope*scope,
@@ -2995,6 +3019,12 @@ class NetFuncDef {
       const NetNet*port(unsigned idx) const;
 
       const NetNet*return_sig() const;
+
+	// When we want to evaluate the function during compile time,
+	// use this method to pass in the argument and get out a
+	// result. The result should be a constant. If the function
+	// cannot evaluate to a constant, this returns nil.
+      NetExpr* evaluate_function(const LineInfo&loc, const std::vector<NetExpr*>&args) const;
 
       void dump(ostream&, unsigned ind) const;
 
