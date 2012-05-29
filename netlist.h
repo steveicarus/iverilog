@@ -3294,6 +3294,8 @@ class NetWhile  : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type() const;
+      virtual bool evaluate_function(const LineInfo&loc,
+				     map<perm_string,NetExpr*>&ctx) const;
 
     private:
       NetExpr* cond_;
@@ -3451,10 +3453,14 @@ class NetEBAdd : public NetEBinary {
 
       virtual NetEBAdd* dup_expr() const;
       virtual NetExpr* eval_tree();
+      virtual NetExpr* evaluate_function(const LineInfo&loc,
+					 std::map<perm_string,NetExpr*>&ctx) const;
+
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
-      NetECReal* eval_tree_real_();
+      NetExpr  * eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      NetECReal* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
 /*
@@ -3530,19 +3536,23 @@ class NetEBComp : public NetEBinary {
       virtual NetEBComp* dup_expr() const;
       virtual NetEConst* eval_tree();
 
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
+
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
-      NetEConst* must_be_leeq_(NetExpr*le, const verinum&rv, bool eq_flag);
+      NetEConst* must_be_leeq_(const NetExpr*le, const verinum&rv, bool eq_flag) const;
 
-      NetEConst*eval_eqeq_(bool ne_flag);
-      NetEConst*eval_eqeq_real_(bool ne_flag);
-      NetEConst*eval_less_();
-      NetEConst*eval_leeq_();
-      NetEConst*eval_leeq_real_(NetExpr*le, NetExpr*ri, bool eq_flag);
-      NetEConst*eval_gt_();
-      NetEConst*eval_gteq_();
-      NetEConst*eval_eqeqeq_(bool ne_flag);
+      NetEConst*eval_arguments_(const NetExpr*le, const NetExpr*re) const;
+      NetEConst*eval_eqeq_(bool ne_flag, const NetExpr*le, const NetExpr*re) const;
+      NetEConst*eval_eqeq_real_(bool ne_flag, const NetExpr*le, const NetExpr*re) const;
+      NetEConst*eval_less_(const NetExpr*le, const NetExpr*re) const;
+      NetEConst*eval_leeq_(const NetExpr*le, const NetExpr*re) const;
+      NetEConst*eval_leeq_real_(const NetExpr*le, const NetExpr*ri, bool eq_flag) const;
+      NetEConst*eval_gt_(const NetExpr*le, const NetExpr*re) const;
+      NetEConst*eval_gteq_(const NetExpr*le, const NetExpr*re) const;
+      NetEConst*eval_eqeqeq_(bool ne_flag, const NetExpr*le, const NetExpr*re) const;
 };
 
 /*
@@ -3644,9 +3654,13 @@ class NetEBShift : public NetEBinary {
       virtual NetEBShift* dup_expr() const;
       virtual NetEConst* eval_tree();
 
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
+
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
+      NetEConst* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
 };
 
 
@@ -3977,6 +3991,9 @@ class NetESignal  : public NetExpr {
       virtual NetESignal* dup_expr() const;
       NetNet* synthesize(Design*des, NetScope*scope, NetExpr*root);
       NexusSet* nex_input(bool rem_out = true);
+
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
 
 	// This is the expression for selecting an array word, if this
 	// signal refers to an array.

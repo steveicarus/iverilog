@@ -34,11 +34,11 @@ NetExpr* NetExpr::eval_tree()
       return 0;
 }
 
-static bool get_real_arg_(NetExpr*expr, verireal&val)
+static bool get_real_arg_(const NetExpr*expr, verireal&val)
 {
       switch (expr->expr_type()) {
 	  case IVL_VT_REAL: {
-		NetECReal*c = dynamic_cast<NetECReal*> (expr);
+		const NetECReal*c = dynamic_cast<const NetECReal*> (expr);
 		if (c == 0) return false;
 		val = c->value();
 		break;
@@ -46,7 +46,7 @@ static bool get_real_arg_(NetExpr*expr, verireal&val)
 
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC: {
-		NetEConst*c = dynamic_cast<NetEConst*>(expr);
+		const NetEConst*c = dynamic_cast<const NetEConst*>(expr);
 		if (c == 0) return false;
 		verinum tmp = c->value();
 		val = verireal(tmp.as_double());
@@ -60,7 +60,7 @@ static bool get_real_arg_(NetExpr*expr, verireal&val)
       return true;
 }
 
-static bool get_real_arguments(NetExpr*le, NetExpr*re,
+static bool get_real_arguments(const NetExpr*le, const NetExpr*re,
                                double&lval, double&rval)
 {
       verireal val;
@@ -82,15 +82,15 @@ bool NetEBinary::get_real_arguments_(verireal&lval, verireal&rval)
       return true;
 }
 
-NetECReal* NetEBAdd::eval_tree_real_()
+NetECReal* NetEBAdd::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 {
-      verireal lval;
-      verireal rval;
+      double lval;
+      double rval;
 
-      bool flag = get_real_arguments_(lval, rval);
+      bool flag = get_real_arguments(l, r, lval, rval);
       if (!flag) return 0;
 
-      verireal res_val;
+      double res_val;
 
       switch (op()) {
 	  case '+':
@@ -103,7 +103,7 @@ NetECReal* NetEBAdd::eval_tree_real_()
 	    ivl_assert(*this, 0);
       }
 
-      NetECReal*res = new NetECReal( res_val );
+      NetECReal*res = new NetECReal( verireal(res_val) );
       ivl_assert(*this, res);
       res->set_line(*this);
 
@@ -119,52 +119,24 @@ NetExpr* NetEBAdd::eval_tree()
       eval_expr(left_);
       eval_expr(right_);
 
-      if (expr_type() == IVL_VT_REAL)
-	    return eval_tree_real_();
-
-      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
-
-	/* If both operands are constant, then replace the entire
-	   expression with a constant value. */
-      if (lc != 0 && rc != 0) {
-	    verinum lval = lc->value();
-	    verinum rval = rc->value();
-
-            unsigned wid = expr_width();
-            ivl_assert(*this, wid > 0);
-            ivl_assert(*this, lval.len() == wid);
-            ivl_assert(*this, rval.len() == wid);
-
-	    verinum val;
-	    switch (op_) {
-		case '+':
-		  val = verinum(lval + rval, wid);
-		  break;
-		case '-':
-		  val = verinum(lval - rval, wid);
-		  break;
-		default:
-		  return 0;
-	    }
-
-	    NetEConst *res = new NetEConst(val);
-	    ivl_assert(*this, res);
-	    res->set_line(*this);
-
-	    if (debug_eval_tree)
-		  cerr << get_fileline() << ": debug: Evaluated: " << *this
-		  << " --> " << *res << endl;
-
+	// First try to elaborate the expression completely.
+      NetExpr*res = eval_arguments_(left_,right_);
+      if (res != 0)
 	    return res;
-      }
 
-	/* Try to combine a right constant value with the right
-	   constant value of a sub-expression add. For example, the
-	   expression (a + 2) - 1 can be rewritten as a + 1. */
+	// If the expression type is real, then do not attempt the
+	// following alternative processing.
+      if (expr_type() == IVL_VT_REAL)
+	    return 0;
+
+	// The expression has not evaluated to a constant. Let's still
+	// try to optimize by trying to combine a right constant value
+	// with the right constant value of a sub-expression add. For
+	// example, the expression (a + 2) - 1 can be rewritten as a + 1.
 
       NetEBAdd*se = dynamic_cast<NetEBAdd*>(left_);
-      lc = se? dynamic_cast<NetEConst*>(se->right_) : 0;
+      NetEConst*lc = se? dynamic_cast<NetEConst*>(se->right_) : 0;
+      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
 
       if (lc != 0 && rc != 0) {
 	    ivl_assert(*this, se != 0);
@@ -200,10 +172,55 @@ NetExpr* NetEBAdd::eval_tree()
 	    tmp->set_line(*right_);
 	    delete right_;
 	    right_ = tmp;
-	      /* We've changed the subexpression, but the result is
-		 still not constant, so return nil here anyhow. */
-	    return 0;
       }
+
+	// We may have changed the subexpression, but the result is
+	// still not constant, so return nil here anyhow.
+      return 0;
+}
+
+NetExpr* NetEBAdd::eval_arguments_(const NetExpr*l, const NetExpr*r) const
+{
+      if (expr_type() == IVL_VT_REAL)
+	    return eval_tree_real_(l,r);
+
+      const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
+      const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
+
+	/* If both operands are constant, then replace the entire
+	   expression with a constant value. */
+      if (lc != 0 && rc != 0) {
+	    verinum lval = lc->value();
+	    verinum rval = rc->value();
+
+            unsigned wid = expr_width();
+            ivl_assert(*this, wid > 0);
+            ivl_assert(*this, lval.len() == wid);
+            ivl_assert(*this, rval.len() == wid);
+
+	    verinum val;
+	    switch (op_) {
+		case '+':
+		  val = verinum(lval + rval, wid);
+		  break;
+		case '-':
+		  val = verinum(lval - rval, wid);
+		  break;
+		default:
+		  return 0;
+	    }
+
+	    NetEConst *res = new NetEConst(val);
+	    ivl_assert(*this, res);
+	    res->set_line(*this);
+
+	    if (debug_eval_tree)
+		  cerr << get_fileline() << ": debug: Evaluated: " << *this
+		  << " --> " << *res << endl;
+
+	    return res;
+      }
+
 
 	/* Nothing more to be done, the value is not constant. */
       return 0;
@@ -276,13 +293,12 @@ NetEConst* NetEBBits::eval_tree()
       return new NetEConst(res);
 }
 
-NetEConst* NetEBComp::eval_less_()
+NetEConst* NetEBComp::eval_less_(const NetExpr*le, const NetExpr*re) const
 {
-      if (right_->expr_type() == IVL_VT_REAL ||
-          left_->expr_type() == IVL_VT_REAL)
-	    return eval_leeq_real_(left_, right_, false);
+      if (le->expr_type() == IVL_VT_REAL || re->expr_type() == IVL_VT_REAL)
+	    return eval_leeq_real_(le, re, false);
 
-      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      const NetEConst*rc = dynamic_cast<const NetEConst*>(re);
       if (rc == 0) return 0;
 
       verinum rv = rc->value();
@@ -292,12 +308,12 @@ NetEConst* NetEBComp::eval_less_()
 	    return res;
       }
 
-      if (NetEConst*tmp = must_be_leeq_(left_, rv, false)) {
+      if (NetEConst*tmp = must_be_leeq_(le, rv, false)) {
 	    return tmp;
       }
 
 	/* Now go on to the normal test of the values. */
-      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
+      const NetEConst*lc = dynamic_cast<const NetEConst*>(le);
       if (lc == 0) return 0;
 
       verinum lv = lc->value();
@@ -318,7 +334,7 @@ NetEConst* NetEBComp::eval_less_()
       }
 }
 
-NetEConst* NetEBComp::must_be_leeq_(NetExpr*le, const verinum&rv, bool eq_flag)
+NetEConst* NetEBComp::must_be_leeq_(const NetExpr*le, const verinum&rv, bool eq_flag) const
 {
       assert(le->expr_width() > 0);
       verinum lv (verinum::V1, le->expr_width());
@@ -339,7 +355,7 @@ NetEConst* NetEBComp::must_be_leeq_(NetExpr*le, const verinum&rv, bool eq_flag)
       return 0;
 }
 
-NetEConst* NetEBComp::eval_leeq_real_(NetExpr*le, NetExpr*re, bool eq_flag)
+NetEConst* NetEBComp::eval_leeq_real_(const NetExpr*le, const NetExpr*re, bool eq_flag) const
 {
       double lval;
       double rval;
@@ -358,14 +374,13 @@ NetEConst* NetEBComp::eval_leeq_real_(NetExpr*le, NetExpr*re, bool eq_flag)
       return res;
 }
 
-NetEConst* NetEBComp::eval_leeq_()
+NetEConst* NetEBComp::eval_leeq_(const NetExpr*le, const NetExpr*re) const
 {
-      if (right_->expr_type() == IVL_VT_REAL ||
-          left_->expr_type() == IVL_VT_REAL)
-	    return eval_leeq_real_(left_, right_, true);
+      if (le->expr_type() == IVL_VT_REAL || re->expr_type() == IVL_VT_REAL)
+	    return eval_leeq_real_(le, re, true);
 //      assert(expr_type() == IVL_VT_LOGIC);
 
-      NetEConst*r = dynamic_cast<NetEConst*>(right_);
+      const NetEConst*r = dynamic_cast<const NetEConst*>(re);
       if (r == 0) return 0;
 
       verinum rv = r->value();
@@ -375,18 +390,18 @@ NetEConst* NetEBComp::eval_leeq_()
 	    return res;
       }
 
-      if (left_->expr_width() == 0) {
+      if (le->expr_width() == 0) {
 	    cerr << get_fileline() << ": internal error: Something wrong "
 		 << "with the left side width of <= ?" << endl;
 	    cerr << get_fileline() << ":               : " << *this << endl;
       }
 
-      if (NetEConst*tmp = must_be_leeq_(left_, rv, true)) {
+      if (NetEConst*tmp = must_be_leeq_(le, rv, true)) {
 	    return tmp;
       }
 
 	/* Now go on to the normal test of the values. */
-      NetEConst*l = dynamic_cast<NetEConst*>(left_);
+      const NetEConst*l = dynamic_cast<const NetEConst*>(le);
       if (l == 0) return 0;
 
       verinum lv = l->value();
@@ -407,13 +422,12 @@ NetEConst* NetEBComp::eval_leeq_()
       }
 }
 
-NetEConst* NetEBComp::eval_gt_()
+NetEConst* NetEBComp::eval_gt_(const NetExpr*le, const NetExpr*re) const
 {
-      if (right_->expr_type() == IVL_VT_REAL ||
-          left_->expr_type() == IVL_VT_REAL)
-	    return eval_leeq_real_(right_, left_, false);
+      if (le->expr_type() == IVL_VT_REAL || re->expr_type() == IVL_VT_REAL)
+	    return eval_leeq_real_(re, le, false);
 
-      NetEConst*l = dynamic_cast<NetEConst*>(left_);
+      const NetEConst*l = dynamic_cast<const NetEConst*>(le);
       if (l == 0) return 0;
 
       verinum lv = l->value();
@@ -423,12 +437,12 @@ NetEConst* NetEBComp::eval_gt_()
 	    return res;
       }
 
-      if (NetEConst*tmp = must_be_leeq_(right_, lv, false)) {
+      if (NetEConst*tmp = must_be_leeq_(re, lv, false)) {
 	    return tmp;
       }
 
 	/* Now go on to the normal test of the values. */
-      NetEConst*r = dynamic_cast<NetEConst*>(right_);
+      const NetEConst*r = dynamic_cast<const NetEConst*>(re);
       if (r == 0) return 0;
 
       verinum rv = r->value();
@@ -449,13 +463,12 @@ NetEConst* NetEBComp::eval_gt_()
       }
 }
 
-NetEConst* NetEBComp::eval_gteq_()
+NetEConst* NetEBComp::eval_gteq_(const NetExpr*le, const NetExpr*re) const
 {
-      if (right_->expr_type() == IVL_VT_REAL ||
-          left_->expr_type() == IVL_VT_REAL)
-	    return eval_leeq_real_(right_, left_, true);
+      if (le->expr_type() == IVL_VT_REAL || re->expr_type() == IVL_VT_REAL)
+	    return eval_leeq_real_(re, le, true);
 
-      NetEConst*l = dynamic_cast<NetEConst*>(left_);
+      const NetEConst*l = dynamic_cast<const NetEConst*>(left_);
       if (l == 0) return 0;
 
       verinum lv = l->value();
@@ -465,12 +478,12 @@ NetEConst* NetEBComp::eval_gteq_()
 	    return res;
       }
 
-      if (NetEConst*tmp = must_be_leeq_(right_, lv, true)) {
+      if (NetEConst*tmp = must_be_leeq_(re, lv, true)) {
 	    return tmp;
       }
 
 	/* Now go on to the normal test of the values. */
-      NetEConst*r = dynamic_cast<NetEConst*>(right_);
+      const NetEConst*r = dynamic_cast<const NetEConst*>(re);
       if (r == 0) return 0;
 
       verinum rv = r->value();
@@ -498,15 +511,15 @@ NetEConst* NetEBComp::eval_gteq_()
  * are equal, but there are are x/z bits, then the situation is
  * ambiguous so the result is x.
  */
-NetEConst* NetEBComp::eval_eqeq_real_(bool ne_flag)
+NetEConst* NetEBComp::eval_eqeq_real_(bool ne_flag, const NetExpr*le, const NetExpr*re) const
 {
-      verireal lval;
-      verireal rval;
+      double lval;
+      double rval;
 
-      bool flag = get_real_arguments_(lval, rval);
+      bool flag = get_real_arguments(le, re, lval, rval);
       if (! flag) return 0;
 
-      verinum result(((lval.as_double() == rval.as_double()) ^ ne_flag) ?
+      verinum result(((lval == rval) ^ ne_flag) ?
                      verinum::V1 : verinum::V0, 1);
       NetEConst*res = new NetEConst(result);
       ivl_assert(*this, res);
@@ -514,14 +527,14 @@ NetEConst* NetEBComp::eval_eqeq_real_(bool ne_flag)
       return res;
 }
 
-NetEConst* NetEBComp::eval_eqeq_(bool ne_flag)
+NetEConst* NetEBComp::eval_eqeq_(bool ne_flag, const NetExpr*le, const NetExpr*re) const
 {
-      if (left_->expr_type() == IVL_VT_REAL ||
-          right_->expr_type() == IVL_VT_REAL)
-	    return eval_eqeq_real_(ne_flag);
+      if (le->expr_type() == IVL_VT_REAL ||
+          re->expr_type() == IVL_VT_REAL)
+	    return eval_eqeq_real_(ne_flag, le, re);
 
-      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      const NetEConst*lc = dynamic_cast<const NetEConst*>(le);
+      const NetEConst*rc = dynamic_cast<const NetEConst*>(re);
       if (lc == 0 || rc == 0) return 0;
 
       const verinum&lv = lc->value();
@@ -631,10 +644,10 @@ NetEConst* NetEBComp::eval_eqeq_(bool ne_flag)
       return result;
 }
 
-NetEConst* NetEBComp::eval_eqeqeq_(bool ne_flag)
+NetEConst* NetEBComp::eval_eqeqeq_(bool ne_flag, const NetExpr*le, const NetExpr*re) const
 {
-      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      const NetEConst*lc = dynamic_cast<const NetEConst*>(le);
+      const NetEConst*rc = dynamic_cast<const NetEConst*>(re);
       if (lc == 0 || rc == 0) return 0;
 
       const verinum&lv = lc->value();
@@ -687,47 +700,54 @@ NetEConst* NetEBComp::eval_eqeqeq_(bool ne_flag)
       return result;
 }
 
+NetEConst* NetEBComp::eval_arguments_(const NetExpr*l, const NetExpr*r) const
+{
+      NetEConst*res = 0;
+
+      switch (op_) {
+	  case 'E': // Case equality (===)
+	    res = eval_eqeqeq_(false, l, r);
+	    break;
+
+	  case 'e': // Equality (==)
+	    res = eval_eqeq_(false, l, r);
+	    break;
+
+	  case 'G': // >=
+	    res = eval_gteq_(l, r);
+	    break;
+
+	  case 'L': // <=
+	    res = eval_leeq_(l, r);
+	    break;
+
+	  case 'N': // Case inequality (!==)
+	    res = eval_eqeqeq_(true, l, r);
+	    break;
+
+	  case 'n': // not-equal (!=)
+	    res = eval_eqeq_(true, l, r);
+	    break;
+
+	  case '<': // Less than
+	    res = eval_less_(l, r);
+	    break;
+
+	  case '>': // Greater than
+	    res = eval_gt_(l, r);
+	    break;
+
+      }
+
+      return res;
+}
+
 NetEConst* NetEBComp::eval_tree()
 {
       eval_expr(left_);
       eval_expr(right_);
 
-      NetEConst*res = 0;
-
-      switch (op_) {
-	  case 'E': // Case equality (===)
-	    res = eval_eqeqeq_(false);
-	    break;
-
-	  case 'e': // Equality (==)
-	    res = eval_eqeq_(false);
-	    break;
-
-	  case 'G': // >=
-	    res = eval_gteq_();
-	    break;
-
-	  case 'L': // <=
-	    res = eval_leeq_();
-	    break;
-
-	  case 'N': // Case inequality (!==)
-	    res = eval_eqeqeq_(true);
-	    break;
-
-	  case 'n': // not-equal (!=)
-	    res = eval_eqeq_(true);
-	    break;
-
-	  case '<': // Less than
-	    res = eval_less_();
-	    break;
-
-	  case '>': // Greater than
-	    res = eval_gt_();
-	    break;
-
-      }
+      NetEConst*res = eval_arguments_(left_, right_);
       if (res == 0) return 0;
       res->set_line(*this);
 
@@ -1043,9 +1063,13 @@ NetEConst* NetEBShift::eval_tree()
 {
       eval_expr(left_);
       eval_expr(right_);
+      return eval_arguments_(left_,right_);
+}
 
-      NetEConst*le = dynamic_cast<NetEConst*>(left_);
-      NetEConst*re = dynamic_cast<NetEConst*>(right_);
+NetEConst* NetEBShift::eval_arguments_(const NetExpr*l, const NetExpr*r) const
+{
+      const NetEConst*le = dynamic_cast<const NetEConst*>(l);
+      const NetEConst*re = dynamic_cast<const NetEConst*>(r);
       if (le == 0 || re == 0) return 0;
 
       NetEConst*res;

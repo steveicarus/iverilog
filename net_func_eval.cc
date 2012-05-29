@@ -18,6 +18,7 @@
  */
 
 # include  "netlist.h"
+# include  "compiler.h"
 # include  <typeinfo>
 # include  "ivl_assert.h"
 
@@ -29,6 +30,11 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
       map<perm_string,NetExpr*>::iterator ptr;
       map<perm_string,NetExpr*>context_map;
 
+      if (debug_eval_tree) {
+	    cerr << loc.get_fileline() << ": debug: "
+		 << "Evaluate function " << scope_->basename() << endl;
+      }
+
 	// Put the return value into the map...
       context_map[scope_->basename()] = 0;
 	// Load the input ports into the map...
@@ -37,6 +43,11 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 	    NetExpr*tmp = args[idx]->dup_expr();
 	    perm_string aname = ports_[idx]->name();
 	    context_map[aname] = tmp;
+
+	    if (debug_eval_tree) {
+		  cerr << loc.get_fileline() << ": debug: "
+		       << "   input " << aname << " = " << *tmp << endl;
+	    }
       }
 
 	// Perform the evaluation
@@ -100,6 +111,13 @@ bool NetAssign::evaluate_function(const LineInfo&loc,
       map<perm_string,NetExpr*>::iterator ptr = context_map.find(lval->name());
       if (ptr->second)
 	    delete ptr->second;
+
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": debug: "
+		 << "NetAssign::evaluate_function: " << lval->name()
+		 << " = " << *rval_result << endl;
+      }
+
       ptr->second = rval_result;
 
       return true;
@@ -123,6 +141,103 @@ bool NetBlock::evaluate_function(const LineInfo&loc,
       return flag;
 }
 
+bool NetWhile::evaluate_function(const LineInfo&loc,
+				map<perm_string,NetExpr*>&context_map) const
+{
+      bool flag = true;
+
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": debug: NetWhile::evaluate_fuction: "
+		 << "Start loop" << endl;
+      }
+
+      while (flag) {
+	      // Evaluate the condition expression to try and get the
+	      // condition for the loop.
+	    NetExpr*cond = cond_->evaluate_function(loc, context_map);
+	    if (cond == 0) {
+		  flag = false;
+		  break;
+	    }
+
+	    NetEConst*cond_const = dynamic_cast<NetEConst*> (cond);
+	    ivl_assert(loc, cond_const);
+
+	    long val = cond_const->value().as_long();
+	    delete cond;
+
+	      // If the condition is false, then break.
+	    if (val == 0)
+		  break;
+
+	      // The condition is true, so evalutate the statement
+	      // another time.
+	    bool tmp_flag = proc_->evaluate_function(loc, context_map);
+	    if (! tmp_flag)
+		  flag = false;
+      }
+
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": debug: NetWhile::evaluate_fuction: "
+		 << "Done loop" << endl;
+      }
+
+      return flag;
+}
+
+NetExpr* NetEBComp::evaluate_function(const LineInfo&loc,
+				      map<perm_string,NetExpr*>&context_map) const
+{
+      NetExpr*lval = left_->evaluate_function(loc, context_map);
+      NetExpr*rval = right_->evaluate_function(loc, context_map);
+
+      if (lval == 0 || rval == 0) {
+	    delete lval;
+	    delete rval;
+	    return 0;
+      }
+
+      NetEConst*res = eval_arguments_(lval, rval);
+      delete lval;
+      delete rval;
+      return res;
+}
+
+NetExpr* NetEBAdd::evaluate_function(const LineInfo&loc,
+				      map<perm_string,NetExpr*>&context_map) const
+{
+      NetExpr*lval = left_->evaluate_function(loc, context_map);
+      NetExpr*rval = right_->evaluate_function(loc, context_map);
+
+      if (lval == 0 || rval == 0) {
+	    delete lval;
+	    delete rval;
+	    return 0;
+      }
+
+      NetExpr*res = eval_arguments_(lval, rval);
+      delete lval;
+      delete rval;
+      return res;
+}
+
+NetExpr* NetEBShift::evaluate_function(const LineInfo&loc,
+				      map<perm_string,NetExpr*>&context_map) const
+{
+      NetExpr*lval = left_->evaluate_function(loc, context_map);
+      NetExpr*rval = right_->evaluate_function(loc, context_map);
+
+      if (lval == 0 || rval == 0) {
+	    delete lval;
+	    delete rval;
+	    return 0;
+      }
+
+      NetEConst*res = eval_arguments_(lval, rval);
+      delete lval;
+      delete rval;
+      return res;
+}
 
 NetExpr* NetEConst::evaluate_function(const LineInfo&,
 				      map<perm_string,NetExpr*>&) const
@@ -130,4 +245,22 @@ NetExpr* NetEConst::evaluate_function(const LineInfo&,
       NetEConst*res = new NetEConst(value_);
       res->set_line(*this);
       return res;
+}
+
+NetExpr* NetESignal::evaluate_function(const LineInfo&,
+				       map<perm_string,NetExpr*>&context_map) const
+{
+      if (word_) {
+	    cerr << get_fileline() << ": sorry: I don't know how to evaluate signal word selects at compile time." << endl;
+	    return 0;
+      }
+
+      map<perm_string,NetExpr*>::iterator ptr = context_map.find(name());
+      if (ptr == context_map.end()) {
+	    cerr << get_fileline() << ": error: Cannot evaluate " << name()
+		 << " in this context." << endl;
+	    return 0;
+      }
+
+      return ptr->second->dup_expr();
 }
