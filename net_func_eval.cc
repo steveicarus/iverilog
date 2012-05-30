@@ -18,6 +18,7 @@
  */
 
 # include  "netlist.h"
+# include  "netmisc.h"
 # include  "compiler.h"
 # include  <typeinfo>
 # include  "ivl_assert.h"
@@ -37,6 +38,7 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 
 	// Put the return value into the map...
       context_map[scope_->basename()] = 0;
+
 	// Load the input ports into the map...
       ivl_assert(loc, ports_.size() == args.size());
       for (size_t idx = 0 ; idx < ports_.size() ; idx += 1) {
@@ -49,6 +51,10 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 		       << "   input " << aname << " = " << *tmp << endl;
 	    }
       }
+
+	// Ask the scope to collect definitions for local values. This
+	// fills in the context_map with local variables held by the scope.
+      scope_->evaluate_function_find_locals(loc, context_map);
 
 	// Perform the evaluation
       bool flag = statement_->evaluate_function(loc, context_map);
@@ -70,6 +76,26 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 
       delete res;
       return 0;
+}
+
+void NetScope::evaluate_function_find_locals(const LineInfo&loc,
+			         map<perm_string,NetExpr*>&context_map) const
+{
+      for (map<perm_string,NetNet*>::const_iterator cur = signals_map_.begin()
+		 ; cur != signals_map_.end() ; ++cur) {
+
+	    const NetNet*tmp = cur->second;
+	      // Skip ports, which are handled elsewhere.
+	    if (tmp->port_type() != NetNet::NOT_A_PORT)
+		  continue;
+
+	    context_map[tmp->name()] = 0;
+
+	    if (debug_eval_tree) {
+		  cerr << loc.get_fileline() << ": debug: "
+		       << "   (local) " << tmp->name() << endl;
+	    }
+      }
 }
 
 NetExpr* NetExpr::evaluate_function(const LineInfo&,
@@ -101,14 +127,50 @@ bool NetAssign::evaluate_function(const LineInfo&loc,
 
       const NetAssign_*lval = l_val(0);
 
-      ivl_assert(loc, lval->word() == 0);
-      ivl_assert(loc, lval->get_base() == 0);
+      map<perm_string,NetExpr*>::iterator ptr = context_map.find(lval->name());
+      ivl_assert(*this, ptr != context_map.end());
 
+	// Do not support having l-values that are unpacked arrays.
+      ivl_assert(loc, lval->word() == 0);
+
+	// Evaluate the r-value expression.
       NetExpr*rval_result = rval()->evaluate_function(loc, context_map);
       if (rval_result == 0)
 	    return false;
 
-      map<perm_string,NetExpr*>::iterator ptr = context_map.find(lval->name());
+      if (const NetExpr*base_expr = lval->get_base()) {
+	    NetExpr*base_result = base_expr->evaluate_function(loc, context_map);
+	    if (base_result == 0) {
+		  delete rval_result;
+		  return false;
+	    }
+
+	    NetEConst*base_const = dynamic_cast<NetEConst*>(base_result);
+	    ivl_assert(loc, base_const);
+
+	    long base = base_const->value().as_long();
+
+	    list<long>prefix (0);
+	    base = lval->sig()->sb_to_idx(prefix, base);
+
+	    if (ptr->second == 0)
+		  ptr->second = make_const_x(lval->sig()->vector_width());
+
+	    ivl_assert(loc, base + lval->lwidth() <= ptr->second->expr_width());
+
+	    NetEConst*ptr_const = dynamic_cast<NetEConst*>(ptr->second);
+	    verinum lval_v = ptr_const->value();
+	    NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
+	    verinum rval_v = cast_to_width(rval_const->value(), lval->lwidth());
+
+	    for (unsigned idx = 0 ; idx < rval_v.len() ; idx += 1)
+		  lval_v.set(idx+base, rval_v[idx]);
+
+	    delete base_result;
+	    delete rval_result;
+	    rval_result = new NetEConst(lval_v);
+      }
+
       if (ptr->second)
 	    delete ptr->second;
 
@@ -221,6 +283,24 @@ NetExpr* NetEBAdd::evaluate_function(const LineInfo&loc,
       return res;
 }
 
+NetExpr* NetEBMult::evaluate_function(const LineInfo&loc,
+				      map<perm_string,NetExpr*>&context_map) const
+{
+      NetExpr*lval = left_->evaluate_function(loc, context_map);
+      NetExpr*rval = right_->evaluate_function(loc, context_map);
+
+      if (lval == 0 || rval == 0) {
+	    delete lval;
+	    delete rval;
+	    return 0;
+      }
+
+      NetExpr*res = eval_arguments_(lval, rval);
+      delete lval;
+      delete rval;
+      return res;
+}
+
 NetExpr* NetEBShift::evaluate_function(const LineInfo&loc,
 				      map<perm_string,NetExpr*>&context_map) const
 {
@@ -247,6 +327,40 @@ NetExpr* NetEConst::evaluate_function(const LineInfo&,
       return res;
 }
 
+NetExpr* NetESelect::evaluate_function(const LineInfo&loc,
+				    map<perm_string,NetExpr*>&context_map) const
+{
+      NetExpr*sub_exp = expr_->evaluate_function(loc, context_map);
+      ivl_assert(loc, sub_exp);
+
+      NetEConst*sub_const = dynamic_cast<NetEConst*> (sub_exp);
+      ivl_assert(loc, sub_exp);
+
+      verinum sub = sub_const->value();
+      delete sub_exp;
+
+      long base = 0;
+      if (base_) {
+	    NetExpr*base_val = base_->evaluate_function(loc, context_map);
+	    ivl_assert(loc, base_val);
+
+	    NetEConst*base_const = dynamic_cast<NetEConst*>(base_val);
+	    ivl_assert(loc, base_const);
+
+	    base = base_const->value().as_long();
+	    delete base_val;
+      } else {
+	    sub = pad_to_width(sub, expr_width());
+      }
+
+      verinum res (verinum::Vx, expr_width());
+      for (unsigned idx = 0 ; idx < res.len() ; idx += 1)
+	    res.set(idx, sub[base+idx]);
+
+      NetEConst*res_const = new NetEConst(res);
+      return res_const;
+}
+
 NetExpr* NetESignal::evaluate_function(const LineInfo&,
 				       map<perm_string,NetExpr*>&context_map) const
 {
@@ -263,4 +377,31 @@ NetExpr* NetESignal::evaluate_function(const LineInfo&,
       }
 
       return ptr->second->dup_expr();
+}
+
+NetExpr* NetETernary::evaluate_function(const LineInfo&loc,
+				    map<perm_string,NetExpr*>&context_map) const
+{
+      auto_ptr<NetExpr> cval (cond_->evaluate_function(loc, context_map));
+
+      switch (const_logical(cval.get())) {
+
+	  case C_0:
+	    return false_val_->evaluate_function(loc, context_map);
+	  case C_1:
+	    return true_val_->evaluate_function(loc, context_map);
+	  case C_X:
+	    break;
+	  default:
+	    cerr << get_fileline() << ": error: Condition expression is not constant here." << endl;
+	    return 0;
+      }
+
+      NetExpr*tval = true_val_->evaluate_function(loc, context_map);
+      NetExpr*fval = false_val_->evaluate_function(loc, context_map);
+
+      NetExpr*res = blended_arguments_(tval, fval);
+      delete tval;
+      delete fval;
+      return res;
 }

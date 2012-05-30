@@ -954,15 +954,15 @@ NetEConst* NetEBLogic::eval_tree()
 }
 
 
-NetExpr* NetEBMult::eval_tree_real_()
+NetExpr* NetEBMult::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 {
-      verireal lval;
-      verireal rval;
+      double lval;
+      double rval;
 
-      bool flag = get_real_arguments_(lval, rval);
+      bool flag = get_real_arguments(l, r, lval, rval);
       if (! flag) return 0;
 
-      NetECReal*res = new NetECReal(lval * rval);
+      NetECReal*res = new NetECReal( verireal(lval * rval) );
       ivl_assert(*this, res);
       res->set_line(*this);
 
@@ -978,11 +978,16 @@ NetExpr* NetEBMult::eval_tree()
       eval_expr(left_);
       eval_expr(right_);
 
-      if (expr_type() == IVL_VT_REAL) return eval_tree_real_();
+      return eval_arguments_(left_, right_);
+}
+
+NetExpr* NetEBMult::eval_arguments_(const NetExpr*l, const NetExpr*r) const
+{
+      if (expr_type() == IVL_VT_REAL) return eval_tree_real_(l,r);
       assert(expr_type() == IVL_VT_LOGIC);
 
-      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
+      const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
       if (lc == 0 || rc == 0) return 0;
 
       verinum lval = lc->value();
@@ -1338,12 +1343,18 @@ NetExpr* NetETernary::eval_tree()
       eval_expr(true_val_);
       eval_expr(false_val_);
 
-      NetEConst*t = dynamic_cast<NetEConst*>(true_val_);
-      NetEConst*f = dynamic_cast<NetEConst*>(false_val_);
+      return blended_arguments_(true_val_, false_val_);
+}
+
+NetExpr*NetETernary::blended_arguments_(const NetExpr*te, const NetExpr*fe) const
+{
+
+      const NetEConst*t = dynamic_cast<const NetEConst*>(te);
+      const NetEConst*f = dynamic_cast<const NetEConst*>(fe);
       if (t == 0 || f == 0) {
 	    verireal tv, fv;
-	    if (!get_real_arg_(true_val_, tv)) return 0;
-	    if (!get_real_arg_(false_val_, fv)) return 0;
+	    if (!get_real_arg_(te, tv)) return 0;
+	    if (!get_real_arg_(te, fv)) return 0;
 
 	    verireal val = verireal(0.0);
 	    if (tv.as_double() == fv.as_double()) val = tv;

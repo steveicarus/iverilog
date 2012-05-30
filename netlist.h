@@ -816,6 +816,11 @@ class NetScope : public Attrib {
       NetTaskDef* task_def();
       NetFuncDef* func_def();
 
+	// This is used by the evaluate_function setup to collect
+	// local variables from the scope.
+      void evaluate_function_find_locals(const LineInfo&loc,
+					 map<perm_string,NetExpr*>&context_map) const;
+
       void set_line(perm_string file, perm_string def_file,
                     unsigned lineno, unsigned def_lineno);
       void set_line(perm_string file, unsigned lineno);
@@ -3607,10 +3612,13 @@ class NetEBMult : public NetEBinary {
 
       virtual NetEBMult* dup_expr() const;
       virtual NetExpr* eval_tree();
+      virtual NetExpr* evaluate_function(const LineInfo&loc,
+					 std::map<perm_string,NetExpr*>&ctx) const;
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
-      NetExpr* eval_tree_real_();
+      NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      NetExpr* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
 /*
@@ -3729,6 +3737,8 @@ class NetESelect  : public NetExpr {
       virtual bool has_width() const;
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEConst* eval_tree();
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
       virtual NetESelect* dup_expr() const;
       virtual NetNet*synthesize(Design*des, NetScope*scope, NetExpr*root);
       virtual void dump(ostream&) const;
@@ -3866,6 +3876,9 @@ class NetETernary  : public NetExpr {
       virtual NetETernary* dup_expr() const;
       virtual NetExpr* eval_tree();
 
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
+
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -3876,6 +3889,8 @@ class NetETernary  : public NetExpr {
       static bool test_operand_compat(ivl_variable_type_t tru, ivl_variable_type_t fal);
 
     private:
+      NetExpr* blended_arguments_(const NetExpr*t, const NetExpr*f) const;
+
       NetExpr*cond_;
       NetExpr*true_val_;
       NetExpr*false_val_;
