@@ -784,7 +784,13 @@ int main(int argc, char*argv[])
 #if defined(TRAP_SIGINT_FOR_DEBUG)
       signal(SIGINT, &signals_handler);
 #endif
-
+      if( ::getenv("IVL_WAIT_FOR_DEBUGGER") != 0 ) {
+          fprintf( stderr, "Waiting for debugger...\n");
+          bool debugger_release = false;
+          while( !debugger_release )  {
+              sleep(1);
+        }
+      }
       library_suff.push_back(strdup(".v"));
 
 	// Start the module list with the base system module.
@@ -838,6 +844,8 @@ int main(int argc, char*argv[])
 		 << VERSION << " (" << VERSION_TAG << ")" << endl << endl;
 	    cout << COPYRIGHT << endl << endl;
 	    cout << NOTICE << endl;
+
+	    cout << " FLAGS DLL " << flags["DLL"] << endl;
 
 	    dll_target_obj.test_version(flags["DLL"]);
 

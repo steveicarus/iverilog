@@ -254,11 +254,13 @@ extern void compile_vpi_symbol(const char*label, vpiHandle obj);
 extern void compile_vpi_lookup(vpiHandle *objref, char*label);
 
 extern void compile_param_string(char*label, char*name, char*value,
+                                 bool local_flag,
                                  long file_idx, long lineno);
 extern void compile_param_logic(char*label, char*name, char*value,
-				bool signed_flag,
+				bool signed_flag, bool local_flag,
                                 long file_idx, long lineno);
 extern void compile_param_real(char*label, char*name, char*value,
+                               bool local_flag,
                                long file_idx, long lineno);
 
 /*
@@ -455,6 +457,17 @@ extern void compile_variable(char*label, char*name,
 
 extern void compile_var_real(char*label, char*name,
 			     int msb, int lsb);
+
+/*
+ * This function is used to create a scope port
+ * Current ONLY module ports are supported and ports exist purely
+ * as meta-data for VPI queries (i.e. there is NO corresponding net etc)
+ * as elaboration internally eliminates port-nets by directly connecting
+ * nets connected through module ports.
+ */
+
+extern void compile_port_info( unsigned index, int vpi_port_type, unsigned width, const char *name );
+
 
 /*
  * The compile_net function is called to create a .net vector with a

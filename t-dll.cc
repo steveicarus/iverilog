@@ -478,6 +478,7 @@ void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 	    assert(idx < scop->nparam_);
 	    ivl_parameter_t cur_par = scop->param_ + idx;
 	    cur_par->basename = (*cur_pit).first;
+            cur_par->local = cur_pit->second.local_flag;
 	    cur_par->scope = scop;
 	    FILE_NAME(cur_par, &((*cur_pit).second));
 
@@ -550,13 +551,14 @@ void dll_target::add_root(ivl_design_s &des__, const NetScope *s)
       root_->attr  = fill_in_attributes(s);
       root_->is_auto = 0;
       root_->is_cell = s->is_cell();
-      root_->ports = s->module_ports();
+      root_->ports = s->module_port_nets();
       if (root_->ports > 0) {
 	    root_->u_.net = new NetNet*[root_->ports];
 	    for (unsigned idx = 0; idx < root_->ports; idx += 1) {
-		  root_->u_.net[idx] = s->module_port(idx);
+		  root_->u_.net[idx] = s->module_port_net(idx);
 	    }
       }
+      root_->module_ports_info = s->module_port_info();
 
       des__.nroots_++;
       if (des__.roots_)
@@ -2299,14 +2301,16 @@ void dll_target::scope(const NetScope*net)
 		case NetScope::MODULE:
 		  scop->type_ = IVL_SCT_MODULE;
 		  scop->tname_ = net->module_name();
-		  scop->ports = net->module_ports();
+		  scop->ports = net->module_port_nets();
 		  if (scop->ports > 0) {
 			scop->u_.net = new NetNet*[scop->ports];
 			for (unsigned idx = 0; idx < scop->ports; idx += 1) {
-			      scop->u_.net[idx] = net->module_port(idx);
+			      scop->u_.net[idx] = net->module_port_net(idx);
 			}
 		  }
+		  scop->module_ports_info = net->module_port_info();
 		  break;
+
 		case NetScope::TASK: {
 		      const NetTaskDef*def = net->task_def();
 		      if (def == 0) {
@@ -2424,6 +2428,8 @@ void dll_target::signal(const NetNet*net)
 	    obj->port_ = IVL_SIP_NONE;
 	    break;
       }
+
+      obj->module_port_index_ = net->get_module_port_index();
 
       switch (net->type()) {
 

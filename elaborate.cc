@@ -1250,6 +1250,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    get_name() << "..." << endl;
       for (unsigned inst = 0 ;  inst < instance.size() ;  inst += 1) {
 	    rmod->elaborate(des, instance[inst]);
+	    instance[inst]->set_num_ports( rmod->port_count() );
       }
       if (debug_elaborate) cerr << get_fileline() << ": debug: ...done." << endl;
 
@@ -1329,7 +1330,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  unconnected_port = true;
 	    }
 
-	      // Inside the module, the port is zero or more signals
+	      // Inside the module, the port connects zero or more signals
 	      // that were already elaborated. List all those signals
 	      // and the NetNet equivalents, for all the instances.
 	    vector<PEIdent*> mport = rmod->get_port(idx);
@@ -1349,19 +1350,24 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		    // will be assembled in that order as well.
 		  NetScope*inst_scope = instance[instance.size()-inst-1];
 
+		  unsigned int prt_vector_width = 0;
+		  PortType::Enum ptype = PortType::PIMPLICIT;
 		    // Scan the module sub-ports for this instance...
 		  for (unsigned ldx = 0 ;  ldx < mport.size() ;  ldx += 1) {
 			unsigned lbase = inst * mport.size();
 			PEIdent*pport = mport[ldx];
 			assert(pport);
-			prts[lbase + ldx]
-			      = pport->elaborate_port(des, inst_scope);
-			if (prts[lbase + ldx] == 0)
+			NetNet *netnet = pport->elaborate_subport(des, inst_scope);
+			prts[lbase + ldx] = netnet;
+			if (netnet == 0)
 			      continue;
 
-			assert(prts[lbase + ldx]);
-			prts_vector_width += prts[lbase + ldx]->vector_width();
+			assert(netnet);
+			prts_vector_width += netnet->vector_width();
+			prt_vector_width += netnet->vector_width();
+			ptype = PortType::merged(netnet->port_type(), ptype);
 		  }
+		  inst_scope->add_module_port_info(idx, rmod->get_port_name(idx), ptype, prt_vector_width );
 	    }
 
 	      // If I find that the port is unconnected inside the
@@ -4512,6 +4518,7 @@ static void elaborate_tasks(Design*des, NetScope*scope,
  * When a module is instantiated, it creates the scope then uses this
  * method to elaborate the contents of the module.
  */
+
 bool Module::elaborate(Design*des, NetScope*scope) const
 {
       bool result_flag = true;
@@ -4976,10 +4983,22 @@ Design* elaborate(list<perm_string>roots)
 	// creates all the NetNet and NetMemory objects for declared
 	// objects.
       for (i = 0; i < root_elems.count(); i++) {
+
 	    Module *rmod = root_elems[i]->mod;
 	    NetScope *scope = root_elems[i]->scope;
+	    scope->set_num_ports( rmod->port_count() );
+
+              if (debug_elaborate) {
+                    cerr << "<toplevel>" << ": debug: " << rmod->mod_name()
+                         << ": port elaboration root "
+                         << rmod->port_count() << " ports" << endl;
+              }
 
 	    if (! rmod->elaborate_sig(des, scope)) {
+	             if (debug_elaborate) {
+	                    cerr << "<toplevel>" << ": debug: " << rmod->mod_name()
+	                         << ": elaborate_sig failed!!!" << endl;
+	              }
 		  delete des;
 		  return 0;
 	    }
@@ -4988,11 +5007,26 @@ Design* elaborate(list<perm_string>roots)
 	      // defined for the root modules. This code does that.
 	    for (unsigned idx = 0; idx < rmod->port_count(); idx += 1) {
 		  vector<PEIdent*> mport = rmod->get_port(idx);
+                  unsigned int prt_vector_width = 0;
+                  PortType::Enum ptype = PortType::PIMPLICIT;
 		  for (unsigned pin = 0; pin < mport.size(); pin += 1) {
 			  // This really does more than we need and adds extra
 			  // stuff to the design that should be cleaned later.
-			(void) mport[pin]->elaborate_port(des, scope);
+			(void) mport[pin]->elaborate_subport(des, scope);
+			NetNet *netnet = mport[pin]->elaborate_subport(des, scope);
+			if( netnet != 0 )
+			{
+			  // Elaboration may actually fail with erroneous input source
+                          prt_vector_width += netnet->vector_width();
+                          ptype = PortType::merged(netnet->port_type(), ptype);
+			}
 		  }
+                  if (debug_elaborate) {
+                           cerr << "<toplevel>" << ": debug: " << rmod->mod_name()
+                                << ": adding module port "
+                                << rmod->get_port_name(idx) << endl;
+                     }
+		  scope->add_module_port_info(idx, rmod->get_port_name(idx), ptype, prt_vector_width );
 	    }
       }
 
@@ -5018,6 +5052,12 @@ Design* elaborate(list<perm_string>roots)
 	    delete des;
 	    des = 0;
       }
+
+      if (debug_elaborate) {
+               cerr << "<toplevel>" << ": debug: "
+                    << " finishing with "
+                    <<  des->find_root_scopes().size() << " root scopes " << endl;
+         }
 
       return des;
 }

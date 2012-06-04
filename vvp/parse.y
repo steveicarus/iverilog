@@ -68,6 +68,8 @@ static struct __vpiModPath*modpath_dst = 0;
       vpiHandle vpi;
 
       vvp_delay_t*cdelay;
+      
+      int      vpi_enum;
 };
 
 %token K_A K_ALIAS K_ALIAS_R K_APV
@@ -84,7 +86,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_EXPORT K_EXTEND_S K_FUNCTOR K_IMPORT K_ISLAND K_MODPATH
 %token K_NET K_NET_S K_NET_R K_NET_2S K_NET_2U K_NET8 K_NET8_S
 %token K_PARAM_STR K_PARAM_L K_PARAM_REAL K_PART K_PART_PV
-%token K_PART_V K_PART_V_S K_PORT K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
+%token K_PART_V K_PART_V_S K_PORT K_PORT_INFO K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
 %token K_RESOLV K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
@@ -95,6 +97,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_disable K_fork
 %token K_ivl_version K_ivl_delay_selection
 %token K_vpi_module K_vpi_time_precision K_file_names K_file_line
+%token K_PORT_INPUT K_PORT_OUTPUT K_PORT_INOUT K_PORT_MIXED K_PORT_NODIR
 
 %token <text> T_INSTR
 %token <text> T_LABEL
@@ -104,6 +107,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token <vect> T_VECTOR
 
 %type <flag>  local_flag
+%type <vpi_enum> port_type
 %type <numb>  signed_t_number
 %type <symb>  symbol symbol_opt
 %type <symbv> symbols symbols_net
@@ -628,6 +632,7 @@ statement
 	  T_NUMBER T_NUMBER T_NUMBER ',' T_SYMBOL ';'
 		{ compile_scope_decl($1, $3, $5, $6, $14, $7, $8, $10, $11, $12); }
 
+    
   /* Legacy declaration that does not have `celldefine information. */
 
 	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING T_STRING T_NUMBER T_NUMBER ','
@@ -649,6 +654,10 @@ statement
 		{ compile_scope_recall($2); }
 
 
+  /* Port information for scopes... currently this is just meta-data for VPI queries */
+    | K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING
+        { compile_port_info( $2 /* port_index */, $3, $4 /* width */, $5 /*&name */ ); }
+        
 	|         K_TIMESCALE T_NUMBER T_NUMBER';'
 		{ compile_timescale($2, $3); }
 	|         K_TIMESCALE '-' T_NUMBER T_NUMBER';'
@@ -758,17 +767,17 @@ statement
   /* Parameter statements come in a few simple forms. The most basic
      is the string parameter. */
 
-	| T_LABEL K_PARAM_STR T_STRING T_NUMBER T_NUMBER',' T_STRING ';'
-		{ compile_param_string($1, $3, $7, $4, $5); }
+	| T_LABEL K_PARAM_STR T_STRING T_NUMBER T_NUMBER T_NUMBER',' T_STRING ';'
+		{ compile_param_string($1, $3, $8, $4, $5, $6); }
 
-	| T_LABEL K_PARAM_L T_STRING T_NUMBER T_NUMBER',' T_SYMBOL ';'
-		{ compile_param_logic($1, $3, $7, false, $4, $5); }
+	| T_LABEL K_PARAM_L T_STRING T_NUMBER T_NUMBER T_NUMBER',' T_SYMBOL ';'
+		{ compile_param_logic($1, $3, $8, false, $4, $5, $6); }
 
-	| T_LABEL K_PARAM_L T_STRING T_NUMBER T_NUMBER',' '+' T_SYMBOL ';'
-		{ compile_param_logic($1, $3, $8, true, $4, $5); }
+	| T_LABEL K_PARAM_L T_STRING T_NUMBER T_NUMBER T_NUMBER',' '+' T_SYMBOL ';'
+		{ compile_param_logic($1, $3, $9, true, $4, $5, $6 ); }
 
-	| T_LABEL K_PARAM_REAL T_STRING T_NUMBER T_NUMBER',' T_SYMBOL ';'
-		{ compile_param_real($1, $3, $7, $4, $5); }
+	| T_LABEL K_PARAM_REAL T_STRING T_NUMBER T_NUMBER T_NUMBER',' T_SYMBOL ';'
+		{ compile_param_real($1, $3, $8, $4, $5, $6); }
 
   /* Islands */
 
@@ -1047,6 +1056,14 @@ symbol_opt
 modpath_src_list
         : modpath_src
         | modpath_src_list ',' modpath_src
+        ;
+
+port_type
+        : K_PORT_INPUT { $$ = vpiInput; }
+        | K_PORT_OUTPUT { $$ = vpiOutput; }
+        | K_PORT_INOUT  { $$ = vpiInout; }
+        | K_PORT_MIXED  { $$ = vpiMixedIO; }     
+        | K_PORT_NODIR  { $$ = vpiNoDirection; }
         ;
 
 modpath_src

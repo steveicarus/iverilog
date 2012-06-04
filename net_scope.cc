@@ -114,14 +114,10 @@ void NetScope::set_line(perm_string file, perm_string def_file,
       def_lineno_ = def_lineno;
 }
 
-/*
- * This is the full-featured version of set_parameter. It is used for
- * adding parameter, localparam, and specparam declarations to the
- * parameter list.
- */
 void NetScope::set_parameter(perm_string key, bool is_annotatable,
 			     PExpr*val, ivl_variable_type_t type__,
 			     PExpr*msb, PExpr*lsb, bool signed_flag,
+			     bool local_flag,
 			     NetScope::range_t*range_list,
 			     const LineInfo&file_line)
 {
@@ -135,6 +131,7 @@ void NetScope::set_parameter(perm_string key, bool is_annotatable,
       ref.msb = 0;
       ref.lsb = 0;
       ref.signed_flag = signed_flag;
+      ref.local_flag = local_flag;
       ivl_assert(file_line, ref.range == 0);
       ref.range = range_list;
       ref.val = 0;
@@ -370,23 +367,51 @@ perm_string NetScope::module_name() const
       return module_name_;
 }
 
-void NetScope::add_module_port(NetNet*port)
+void NetScope::set_num_ports(unsigned int num_ports)
 {
-      assert(type_ == MODULE);
-      ports_.push_back(port);
+    assert(type_ == MODULE);
+    assert( ports_.size() == 0 );
+    ports_.resize( num_ports );
 }
 
-unsigned NetScope::module_ports() const
+void NetScope::add_module_port_net(NetNet*subport)
 {
       assert(type_ == MODULE);
-      return ports_.size();
+      port_nets.push_back(subport);
 }
 
-NetNet* NetScope::module_port(unsigned idx) const
+
+void NetScope::add_module_port_info( unsigned idx, perm_string name, PortType::Enum ptype,
+                                unsigned long width )
 {
       assert(type_ == MODULE);
-      assert(idx < ports_.size());
-      return ports_[idx];
+      PortInfo &info = ports_[idx];
+      info.name = name;
+      info.type = ptype;
+      info.width = width;
+}
+
+
+unsigned NetScope::module_port_nets() const
+{
+      assert(type_ == MODULE);
+      return port_nets.size();
+}
+
+
+const std::vector<PortInfo> & NetScope::module_port_info() const
+{
+      assert(type_ == MODULE);
+      return ports_;
+}
+
+
+
+NetNet* NetScope::module_port_net(unsigned idx) const
+{
+      assert(type_ == MODULE);
+      assert(idx < port_nets.size());
+      return port_nets[idx];
 }
 
 void NetScope::time_unit(int val)

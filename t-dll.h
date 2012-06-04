@@ -584,6 +584,7 @@ struct ivl_parameter_s {
       perm_string basename;
       ivl_scope_t scope;
       ivl_expr_t  value;
+      bool        local;
       perm_string file;
       unsigned lineno;
 };
@@ -647,6 +648,10 @@ struct ivl_scope_s {
 
       unsigned is_cell;
 
+      // Ports of Module scope (just introspection data for VPI) - actual connections
+      // are nets defined in u_.net (may be > 1 per module port)
+      std::vector<PortInfo>     module_ports_info;
+
       unsigned ports;
       union {
 	    ivl_signal_t*port;
@@ -672,6 +677,7 @@ struct ivl_scope_s {
 struct ivl_signal_s {
       ivl_signal_type_t type_;
       ivl_signal_port_t port_;
+      int module_port_index_;
       ivl_variable_type_t data_type;
       ivl_discipline_t discipline;
       perm_string file;
@@ -708,6 +714,7 @@ struct ivl_signal_s {
       struct ivl_attribute_s*attr;
       unsigned nattr;
 };
+
 
 /*
  * The ivl_statement_t represents any statement. The type of statement

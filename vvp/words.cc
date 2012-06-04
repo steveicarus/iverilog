@@ -141,6 +141,7 @@ void compile_variable(char*label, char*name,
       delete[] name;
 }
 
+
 vvp_net_t* create_constant_node(const char*val_str)
 {
       if (c4string_test(val_str)) {

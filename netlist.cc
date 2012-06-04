@@ -447,12 +447,27 @@ const Link& NetDelaySrc::condit_pin() const
       return pin(pin_count()-1);
 }
 
+PortType::Enum PortType::merged( Enum lhs, Enum rhs )
+{
+    if( lhs == NOT_A_PORT || rhs == NOT_A_PORT )
+        return NOT_A_PORT;
+    if( lhs == PIMPLICIT )
+        return rhs;
+    if( rhs == PIMPLICIT )
+      return lhs;
+    if( lhs == rhs ) {
+        return lhs;
+    }
+    return PINOUT;
+}
+
 NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
 : NetObj(s, n, 1),
     type_(t), port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE),
     signed_(false), isint_(false), is_scalar_(false), local_flag_(false),
     enumeration_(0), struct_type_(0), discipline_(0),
-    eref_count_(0), lref_count_(0)
+    eref_count_(0), lref_count_(0),
+    port_index_(-1)
 {
       assert(s);
       assert(npins>0);
@@ -696,6 +711,17 @@ NetNet::PortType NetNet::port_type() const
 void NetNet::port_type(NetNet::PortType t)
 {
       port_type_ = t;
+}
+
+int NetNet::get_module_port_index() const
+{
+      return port_index_;
+}
+
+void NetNet::set_module_port_index(unsigned idx)
+{
+    port_index_ = idx;
+    assert( port_index_ >= 0 );
 }
 
 ivl_variable_type_t NetNet::data_type() const

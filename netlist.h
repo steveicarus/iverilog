@@ -556,14 +556,42 @@ class NetDelaySrc  : public NetObj {
  * anything and they are not a data sink, per se. The pins follow the
  * values on the nexus.
  */
-class NetNet  : public NetObj {
+
+class PortType
+{
+public:
+    enum Enum { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT, PREF };
+
+    /*
+     * Merge Port types (used to construct a sane combined port-type
+     * for module ports with complex defining expressions).
+     *
+     */
+    static Enum merged( Enum lhs, Enum rhs );
+};
+
+
+  /*
+   * Information on actual ports (rather than port-connected signals) of
+   * module.
+   * N.b. must be POD as passed through a "C" interface in the t-dll-api.
+   */
+struct PortInfo
+{
+    PortType::Enum  type;
+    unsigned long   width;
+    perm_string     name;
+};
+
+
+class NetNet  : public NetObj, public PortType {
 
     public:
       enum Type { NONE, IMPLICIT, IMPLICIT_REG, INTEGER, WIRE, TRI, TRI1,
 		  SUPPLY0, SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG,
 		  UNRESOLVED_WIRE };
 
-      enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT, PREF };
+      typedef PortType::Enum PortType;
 
     public:
 	// The width in this case is a shorthand for ms=width-1 and
@@ -591,6 +619,11 @@ class NetNet  : public NetObj {
 
       PortType port_type() const;
       void port_type(PortType t);
+
+      // If this net net is a port (i.e. a *sub*port net of a module port)
+      // its port index is number of the module it connects through
+      int get_module_port_index() const;                // -1 Not connected to port...
+      void set_module_port_index(unsigned idx);
 
       ivl_variable_type_t data_type() const;
       void data_type(ivl_variable_type_t t);
@@ -713,6 +746,7 @@ class NetNet  : public NetObj {
       std::vector<bool> lref_mask_;
 
       vector<class NetDelaySrc*> delay_paths_;
+      int       port_index_;
 };
 
 extern std::ostream&operator << (std::ostream&out, const std::list<netrange_t>&rlist);
@@ -747,6 +781,7 @@ class NetScope : public Attrib {
       void set_parameter(perm_string name, bool is_annotatable,
 			 PExpr*val, ivl_variable_type_t type,
 			 PExpr*msb, PExpr*lsb, bool signed_flag,
+			 bool local_flag,
 			 NetScope::range_t*range_list,
 			 const LineInfo&file_line);
       void set_parameter(perm_string name, NetExpr*val,
@@ -878,9 +913,18 @@ class NetScope : public Attrib {
       perm_string module_name() const;
 	/* If the scope is a module then it may have ports that we need
 	 * to keep track of. */
-      void add_module_port(NetNet*port);
-      unsigned module_ports() const;
-      NetNet*module_port(unsigned idx) const;
+
+      void set_num_ports(unsigned int num_ports);
+      void add_module_port_net(NetNet*port);
+      unsigned module_port_nets() const;
+      NetNet*module_port_net(unsigned idx) const;
+
+      void add_module_port_info( unsigned idx,
+                            perm_string name,  // May be "" for undeclared port
+                            PortType::Enum type,
+                            unsigned long width );
+
+      const std::vector<PortInfo> &module_port_info() const;
 
 	/* Scopes have their own time units and time precision. The
 	   unit and precision are given as power of 10, i.e., -3 is
@@ -951,6 +995,7 @@ class NetScope : public Attrib {
 	    param_expr_t() : msb_expr(0), lsb_expr(0), val_expr(0), val_scope(0),
                              solving(false), is_annotatable(false),
                              type(IVL_VT_NO_TYPE), signed_flag(false),
+                             local_flag(false),
                              msb(0), lsb(0), range(0), val(0) { }
               // Source expressions
 	    PExpr*msb_expr;
@@ -965,6 +1010,7 @@ class NetScope : public Attrib {
 	      // Type information
 	    ivl_variable_type_t type;
 	    bool signed_flag;
+            bool  local_flag;
 	    NetExpr*msb;
 	    NetExpr*lsb;
 	      // range constraints
@@ -1018,7 +1064,10 @@ class NetScope : public Attrib {
       typedef std::map<perm_string,NetNet*>::const_iterator signals_map_iter_t;
       std::map <perm_string,NetNet*> signals_map_;
       perm_string module_name_;
-      vector<NetNet*>ports_;
+      vector<NetNet*> port_nets;
+
+      vector<PortInfo> ports_;
+
       union {
 	    NetTaskDef*task_;
 	    NetFuncDef*func_;

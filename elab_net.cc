@@ -691,7 +691,7 @@ NetNet* PEIdent::elaborate_bi_net(Design*des, NetScope*scope) const
  * instantiation (PGModule::elaborate_mod_) to get NetNet objects for
  * the port.
  */
-NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
+NetNet* PEIdent::elaborate_subport(Design*des, NetScope*scope) const
 {
       ivl_assert(*this, scope->type() == NetScope::MODULE);
       NetNet*sig = des->find_signal(scope, path_);
@@ -748,7 +748,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 	/* If this is a part select of the entire signal (or no part
 	   select at all) then we're done. */
       if ((lidx == 0) && (midx == (long)sig->vector_width()-1)) {
-	    scope->add_module_port(sig);
+	    scope->add_module_port_net(sig);
 	    return sig;
       }
 
@@ -795,7 +795,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
       ps->set_line(*this);
       des->add_node(ps);
 
-      scope->add_module_port(sig);
+      scope->add_module_port_net(sig);
       return sig;
 }
 

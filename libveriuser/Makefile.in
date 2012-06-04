@@ -44,6 +44,10 @@ else
 INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
 endif
 
+LDRELOCFLAGS = @LDRELOCFLAGS@
+
+LDTARGETFLAGS = @LDTARGETFLAGS@
+
 CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 
@@ -87,7 +91,7 @@ stamp-config-h: $(srcdir)/config.h.in ../config.status
 config.h: stamp-config-h
 
 libveriuser.o: $O
-	$(LD) -r -o $@ $O
+	$(LD) $(LDTARGETFLAGS) -r -o $@ $O
 
 libveriuser.a: libveriuser.o
 	rm -f $@

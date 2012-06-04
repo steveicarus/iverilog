@@ -28,7 +28,7 @@ SUFFIX=@SUFFIX@
 
 # These are used for linking...
 LD=$CC
-LDFLAGS="@SHARED@ -L@LIBDIR@"
+LDFLAGS="@IVCTARGETFLAGS@ @SHARED@ -L@LIBDIR@"
 LDLIBS="-lveriuser$SUFFIX -lvpi$SUFFIX"
 
 CCSRC=

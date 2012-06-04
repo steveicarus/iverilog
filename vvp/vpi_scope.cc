@@ -30,6 +30,7 @@
 # include  <cassert>
 # include  "ivl_alloc.h"
 
+
 static vpiHandle *vpip_root_table_ptr = 0;
 static unsigned   vpip_root_table_cnt = 0;
 
@@ -524,4 +525,97 @@ unsigned vpip_add_item_to_context(automatic_hooks_s*item,
 
         /* Offset the context index by 2 to leave space for the list links. */
       return 2 + idx;
+}
+
+
+struct vpiPortInfo  : public __vpiHandle {
+      vpiPortInfo( __vpiScope *parent,
+                    unsigned index,
+                    int vpi_direction,
+                    unsigned width,
+                    const char *name );
+
+
+      int get_type_code(void) const { return vpiPort; }
+
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      vpiHandle vpi_handle(int code);
+
+protected:
+      __vpiScope *parent_;
+      unsigned  index_;
+      int       direction_;
+      unsigned  width_;
+      const char *name_;
+};
+
+vpiPortInfo::vpiPortInfo( __vpiScope *parent,
+              unsigned index,
+              int vpi_direction,
+              unsigned width,
+              const char *name ) :
+    parent_(parent),
+    index_(index),
+    direction_(vpi_direction),
+    width_(width),
+    name_(name)
+{
+}
+
+int vpiPortInfo::vpi_get(int code)
+{
+      switch( code ) {
+
+        case vpiDirection :
+          return direction_;
+        case vpiPortIndex :
+          return index_;
+        case vpiSize :
+          return width_;
+        default :
+          return vpiUndefined;
+      }
+
+}
+
+
+char *vpiPortInfo::vpi_get_str(int code)
+{
+      switch( code ) {
+        case vpiName :
+          return simple_set_rbuf_str(name_);
+        default :
+          return NULL;
+      }
+
+}
+
+
+vpiHandle vpiPortInfo::vpi_handle(int code)
+{
+
+      switch (code) {
+
+          case vpiParent:
+          case vpiScope:
+          case vpiModule:
+            return parent_;
+          default :
+            break;
+      }
+
+      return 0;
+}
+
+
+/* Port info is meta-data to allow vpi queries of the port signature of modules for
+ * code-generators etc.  There are no actual nets corresponding to instances of module ports
+ * as elaboration directly connects nets connected through module ports.
+ */
+void compile_port_info( unsigned index, int vpi_direction, unsigned width, const char *name )
+{
+    vpiHandle obj = new vpiPortInfo( vpip_peek_current_scope(),
+                                     index, vpi_direction, width, name );
+    vpip_attach_to_current_scope(obj);
 }

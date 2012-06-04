@@ -322,6 +322,10 @@ static const char* vpi_type_values(PLI_INT32 code)
 	    return "vpiNamedEvent";
 	  case vpiNamedFork:
 	    return "vpiNamedFork";
+	  case vpiPathTerm:
+	    return "vpiPathTerm";
+	  case vpiPort:
+	    return "vpiPort";
 	  case vpiNet:
 	    return "vpiNet";
 	  case vpiNetArray:
@@ -541,8 +545,7 @@ void vpi_set_vlog_info(int argc, char** argv)
     vpi_vlog_info.argv    = argv;
 
     static char trace_buf[1024];
-
-    if (const char*path = getenv("VPI_TRACE")) {
+    if (const char*path = getenv("VPI_TRACE"))  {
 	  if (!strcmp(path,"-"))
 		vpi_trace = stdout;
 	  else {

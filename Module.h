@@ -136,6 +136,9 @@ class Module : public PScopeExtra, public LineInfo {
       const vector<PEIdent*>& get_port(unsigned idx) const;
       unsigned find_port(const char*name) const;
 
+      // Return port name ("" for undeclared port)
+      perm_string get_port_name(unsigned idx) const;
+
       PGate* get_gate(perm_string name);
 
       const list<PGate*>& get_gates() const;

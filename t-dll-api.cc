@@ -1681,6 +1681,13 @@ extern "C" const char* ivl_parameter_basename(ivl_parameter_t net)
       return net->basename;
 }
 
+extern "C" int ivl_parameter_local(ivl_parameter_t net)
+{
+      assert(net);
+      return net->local;
+}
+
+
 extern "C" ivl_expr_t ivl_parameter_expr(ivl_parameter_t net)
 {
       assert(net);
@@ -1979,6 +1986,40 @@ extern "C" ivl_scope_t ivl_scope_parent(ivl_scope_t net)
       return net->parent;
 }
 
+
+extern "C" unsigned ivl_scope_mod_module_ports(ivl_scope_t net)
+{
+      assert(net);
+      assert (net->type_ == IVL_SCT_MODULE );
+      return static_cast<unsigned>(net->module_ports_info.size());
+}
+
+extern "C" const char *ivl_scope_mod_module_port_name(ivl_scope_t net, unsigned idx )
+{
+      assert(net);
+      assert (net->type_ == IVL_SCT_MODULE );
+      assert( idx < net->module_ports_info.size());
+
+      return net->module_ports_info[idx].name;
+}
+
+extern "C" ivl_signal_port_t ivl_scope_mod_module_port_type(ivl_scope_t net, unsigned idx )
+{
+      switch( net->module_ports_info[idx].type )
+      {
+      case PortType::PINPUT : return IVL_SIP_INPUT;
+      case PortType::POUTPUT : return IVL_SIP_OUTPUT;
+      case PortType::PINOUT : return IVL_SIP_INOUT;
+      default : return IVL_SIP_NONE;
+      }
+}
+
+extern "C" unsigned ivl_scope_mod_module_port_width(ivl_scope_t net, unsigned idx )
+{
+    return net->module_ports_info[idx].width;
+}
+
+
 extern "C" unsigned ivl_scope_ports(ivl_scope_t net)
 {
       assert(net);
@@ -2196,6 +2237,11 @@ extern "C" unsigned ivl_signal_width(ivl_signal_t net)
 extern "C" ivl_signal_port_t ivl_signal_port(ivl_signal_t net)
 {
       return net->port_;
+}
+
+extern "C" int ivl_signal_module_port_index(ivl_signal_t net)
+{
+      return net->module_port_index_;
 }
 
 extern "C" int ivl_signal_local(ivl_signal_t net)

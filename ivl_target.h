@@ -193,6 +193,7 @@ typedef struct ivl_parameter_s*ivl_parameter_t;
 typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
 typedef struct ivl_signal_s   *ivl_signal_t;
+typedef struct ivl_port_info_s *ivl_port_info_t;
 typedef struct ivl_switch_s   *ivl_switch_t;
 typedef struct ivl_memory_s   *ivl_memory_t; //XXXX __attribute__((deprecated));
 typedef struct ivl_statement_s*ivl_statement_t;
@@ -363,7 +364,7 @@ typedef enum ivl_scope_type_e {
 
 /* Signals (ivl_signal_t) that are ports into the scope that contains
    them have a port type. Otherwise, they are port IVL_SIP_NONE. */
-typedef enum ivl_signal_port_e {
+typedef enum OUT {
       IVL_SIP_NONE  = 0,
       IVL_SIP_INPUT = 1,
       IVL_SIP_OUTPUT= 2,
@@ -1568,6 +1569,10 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
  *    Return the value of the parameter. This should be a simple
  *    constant expression, an IVL_EX_STRING or IVL_EX_NUMBER.
  *
+ * ivl_parameter_local
+ *    Return whether parameter was local (localparam, implicit genvar etc)
+ *    or not.
+ *
  * ivl_parameter_file
  * ivl_parameter_lineno
  *    Returns the file and line where this parameter is defined
@@ -1575,7 +1580,7 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
 extern const char* ivl_parameter_basename(ivl_parameter_t net);
 extern ivl_scope_t ivl_parameter_scope(ivl_parameter_t net);
 extern ivl_expr_t  ivl_parameter_expr(ivl_parameter_t net);
-
+extern int ivl_parameter_local(ivl_parameter_t net);
 extern const char* ivl_parameter_file(ivl_parameter_t net);
 extern unsigned ivl_parameter_lineno(ivl_parameter_t net);
 
@@ -1738,6 +1743,12 @@ extern const char*  ivl_scope_basename(ivl_scope_t net);
 extern unsigned     ivl_scope_params(ivl_scope_t net);
 extern ivl_parameter_t ivl_scope_param(ivl_scope_t net, unsigned idx);
 extern ivl_scope_t  ivl_scope_parent(ivl_scope_t net);
+
+extern unsigned ivl_scope_mod_module_ports(ivl_scope_t net);
+extern const char *ivl_scope_mod_module_port_name(ivl_scope_t net, unsigned idx );
+extern ivl_signal_port_t ivl_scope_mod_module_port_type(ivl_scope_t net, unsigned idx );
+extern unsigned ivl_scope_mod_module_port_width(ivl_scope_t net, unsigned idx );
+
 extern unsigned     ivl_scope_ports(ivl_scope_t net);
 extern ivl_signal_t ivl_scope_port(ivl_scope_t net, unsigned idx);
 extern ivl_nexus_t  ivl_scope_mod_port(ivl_scope_t net, unsigned idx);
@@ -1878,6 +1889,7 @@ extern int         ivl_signal_msb(ivl_signal_t net) __attribute__((deprecated));
 extern int         ivl_signal_lsb(ivl_signal_t net) __attribute__((deprecated));
 extern unsigned    ivl_signal_width(ivl_signal_t net);
 extern ivl_signal_port_t ivl_signal_port(ivl_signal_t net);
+extern int         ivl_signal_module_port_index(ivl_signal_t net);
 extern int         ivl_signal_signed(ivl_signal_t net);
 extern int         ivl_signal_integer(ivl_signal_t net);
 extern int         ivl_signal_local(ivl_signal_t net);

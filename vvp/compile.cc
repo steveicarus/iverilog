@@ -17,6 +17,9 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+
+# include  "config.h"
+# include  "delay.h"
 # include  "arith.h"
 # include  "compile.h"
 # include  "logic.h"
@@ -28,6 +31,7 @@
 # include  "vpi_priv.h"
 # include  "parse_misc.h"
 # include  "statistics.h"
+# include  "schedule.h"
 # include  <iostream>
 # include  <list>
 # include  <cstdlib>
@@ -610,7 +614,7 @@ static void compile_array_lookup(struct vvp_code_s*code, char*label)
       resolv_submit(res);
 }
 
-static list<struct __vpiSysTaskCall*> scheduled_compiletf;
+static std::list<struct __vpiSysTaskCall*> scheduled_compiletf;
 
 void compile_compiletf(struct __vpiSysTaskCall*obj)
 {
@@ -859,7 +863,7 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
 void inputs_connect(vvp_net_t*fdx, unsigned argc, struct symb_s*argv)
 {
       if (argc > 4) {
-	    cerr << "XXXX argv[0] = " << argv[0].text << endl;
+	    std::cerr << "XXXX argv[0] = " << argv[0].text << std::endl;
       }
       assert(argc <= 4);
 
@@ -1808,11 +1812,12 @@ void compile_thread(char*start_sym, char*flag)
 }
 
 void compile_param_logic(char*label, char*name, char*value, bool signed_flag,
+                         bool local_flag,
                          long file_idx, long lineno)
 {
       vvp_vector4_t value4 = c4string_to_vector4(value);
       vpiHandle obj = vpip_make_binary_param(name, value4, signed_flag,
-                                             file_idx, lineno);
+                                              local_flag, file_idx, lineno);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 
@@ -1821,10 +1826,11 @@ void compile_param_logic(char*label, char*name, char*value, bool signed_flag,
 }
 
 void compile_param_string(char*label, char*name, char*value,
+                          bool local_flag,
                           long file_idx, long lineno)
 {
 	// name and value become owned bi vpip_make_string_param
-      vpiHandle obj = vpip_make_string_param(name, value, file_idx, lineno);
+      vpiHandle obj = vpip_make_string_param(name, value, local_flag, file_idx, lineno);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 
@@ -1832,10 +1838,11 @@ void compile_param_string(char*label, char*name, char*value,
 }
 
 void compile_param_real(char*label, char*name, char*value,
+                        bool local_flag,
                         long file_idx, long lineno)
 {
       double dvalue = crstring_to_double(value);
-      vpiHandle obj = vpip_make_real_param(name, dvalue, file_idx, lineno);
+      vpiHandle obj = vpip_make_real_param(name, dvalue, local_flag, file_idx, lineno);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 

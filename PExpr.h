@@ -311,7 +311,7 @@ class PEIdent : public PExpr {
 
 	// Elaborate the PEIdent as a port to a module. This method
 	// only applies to Ident expressions.
-      NetNet* elaborate_port(Design*des, NetScope*sc) const;
+      NetNet* elaborate_subport(Design*des, NetScope*sc) const;
 
       verinum* eval_const(Design*des, NetScope*sc) const;
 

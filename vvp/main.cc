@@ -284,6 +284,16 @@ int main(int argc, char*argv[])
       vpip_module_path[0] = strdup(basepath);
 #endif
 
+
+      if( ::getenv("VVP_WAIT_FOR_DEBUGGER") != 0 ) {
+          fprintf( stderr, "Waiting for debugger...\n");
+          bool debugger_release = false;
+          while( !debugger_release )  {
+              sleep(1);
+        }
+      }
+
+
         /* For non-interactive runs we do not want to run the interactive
          * debugger, so make $stop just execute a $finish. */
       stop_is_finish = false;

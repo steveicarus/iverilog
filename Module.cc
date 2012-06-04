@@ -90,6 +90,22 @@ unsigned Module::find_port(const char*name) const
       return ports.size();
 }
 
+perm_string Module::get_port_name(unsigned idx) const
+{
+
+      assert(idx < ports.size());
+      if (ports[idx] == 0) {
+              /* It is possible to have undeclared ports. These
+                 are ports that are skipped in the declaration,
+                 for example like so: module foo(x ,, y); The
+                 port between x and y is unnamed and thus
+                 inaccessible to binding by name. */
+            return perm_string::literal("");
+      }
+      return ports[idx]->name;
+}
+
+
 
 PGate* Module::get_gate(perm_string name)
 {

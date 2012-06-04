@@ -43,6 +43,7 @@ EXTERN_C_START
 
 # include  <stdarg.h>
 # include  <stdio.h>
+# include  <stdarg.h>
 # include  "_pli_types.h"
 
 #define ICARUS_VPI_CONST
@@ -286,6 +287,7 @@ typedef struct t_vpi_delay  {
 #define vpiParameter   41
 #define vpiPartSelect  42
 #define vpiPathTerm    43
+#define vpiPort        44
 #define vpiRealVar     47
 #define vpiReg         48
 #define vpiSysFuncCall 56
@@ -325,6 +327,14 @@ typedef struct t_vpi_delay  {
 #define vpiTimePrecision 12
 #define vpiDefFile       15
 #define vpiDefLineNo     16
+
+#define vpiDirection 20 /* direction of port: */
+#   define vpiInput 1
+#   define vpiOutput 2
+#   define vpiInout 3
+#   define vpiMixedIO 4 /* Not currently output */
+#   define vpiNoDirection 5
+
 #define vpiNetType       22
 #   define vpiWire         1
 #   define vpiWand         2
@@ -338,6 +348,7 @@ typedef struct t_vpi_delay  {
 #   define vpiSupply1     10
 #   define vpiSupply0     11
 #define vpiArray         28
+#define vpiPortIndex     29
 #define vpiEdge          36
 #   define vpiNoEdge       0x00 /* No edge */
 #   define vpiEdge01       0x01 /* 0 --> 1 */
@@ -371,6 +382,7 @@ typedef struct t_vpi_delay  {
 #define vpiAutomatic      50
 #define vpiConstantSelect 53
 #define vpiSigned         65
+#define vpiLocalParam     70
 /* IVL private properties, also see vvp/vpi_priv.h for other properties */
 #define _vpiNexusId        0x1000000
 /* used in vvp/vpi_priv.h  0x1000001 */

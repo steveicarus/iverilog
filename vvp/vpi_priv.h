@@ -200,6 +200,10 @@ struct __vpiScopedRealtime : public __vpiSystemTime {
       void vpi_get_value(p_vpi_value val);
 };
 
+struct __vpiPortInfo : public __vpiHandle {
+
+};
+
 
 /*
  * Scopes are created by .scope statements in the source. These
@@ -536,7 +540,7 @@ extern struct __vpiSysTaskCall*vpip_cur_task;
  */
 
 vpiHandle vpip_make_string_const(char*text, bool persistent =true);
-vpiHandle vpip_make_string_param(char*name, char*value,
+vpiHandle vpip_make_string_param(char*name, char*value, bool local_flag,
                                  long file_idx, long lineno);
 
 struct __vpiBinaryConst : public __vpiHandle {
@@ -554,7 +558,7 @@ struct __vpiBinaryConst : public __vpiHandle {
 
 vpiHandle vpip_make_binary_const(unsigned wid, const char*bits);
 vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
-				 bool signed_flag,
+				 bool signed_flag, bool local_flag,
 				 long file_idx, long lineno);
 
 struct __vpiDecConst : public __vpiHandle {
@@ -577,7 +581,7 @@ class __vpiRealConst : public __vpiHandle {
 };
 
 vpiHandle vpip_make_real_const(double value);
-vpiHandle vpip_make_real_param(char*name, double value,
+vpiHandle vpip_make_real_param(char*name, double value, bool local_flag,
                                long file_idx, long lineno);
 
 /*

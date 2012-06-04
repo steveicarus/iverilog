@@ -171,6 +171,7 @@ static char* strdupnew(char const *str)
 ".part/v"   { return K_PART_V; }
 ".part/v.s" { return K_PART_V_S; }
 ".port"     { return K_PORT; }
+".port_info"     { return K_PORT_INFO; }
 ".reduce/and" { return K_REDUCE_AND; }
 ".reduce/or"  { return K_REDUCE_OR; }
 ".reduce/xor" { return K_REDUCE_XOR; }
@@ -262,6 +263,12 @@ static char* strdupnew(char const *str)
       yylval.text = strdup(yytext);
       assert(yylval.text);
       return T_SYMBOL; }
+ 
+ "/INPUT"  { return K_PORT_INPUT; }
+ "/OUTPUT" { return K_PORT_OUTPUT; }
+ "/INOUT"  { return K_PORT_INOUT; }
+ "/MIXED"  { return K_PORT_MIXED; }
+ "/NODIR"  { return K_PORT_NODIR; }
 
   /* Symbols are pretty much what is left. They are used to refer to
      labels so the rule must match a string that a label would match. */

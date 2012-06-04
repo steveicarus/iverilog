@@ -63,7 +63,7 @@ struct event_s {
 
 void event_s::single_step_display(void)
 {
-      cerr << "event_s: Step into event " << typeid(*this).name() << endl;
+      std::cerr << "event_s: Step into event " << typeid(*this).name() << std::endl;
 }
 
 struct event_time_s {

@@ -52,7 +52,8 @@ typedef map<perm_string,LexicalScope::param_expr_t>::const_iterator mparm_it_t;
 
 static void collect_parm_item_(Design*des, NetScope*scope, perm_string name,
 			       const LexicalScope::param_expr_t&cur,
-                               bool is_annotatable)
+                               bool is_annotatable,
+                               bool local_flag)
 {
       NetScope::range_t*range_list = 0;
       for (LexicalScope::range_t*range = cur.range ; range ; range = range->next) {
@@ -88,8 +89,9 @@ static void collect_parm_item_(Design*des, NetScope*scope, perm_string name,
 	    range_list = tmp;
       }
 
+
       scope->set_parameter(name, is_annotatable, cur.expr, cur.type, cur.msb,
-			   cur.lsb, cur.signed_flag, range_list, cur);
+			   cur.lsb, cur.signed_flag, local_flag, range_list, cur);
 }
 
 static void collect_scope_parameters_(Design*des, NetScope*scope,
@@ -107,7 +109,7 @@ static void collect_scope_parameters_(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
-	    collect_parm_item_(des, scope, (*cur).first, (*cur).second, false);
+	    collect_parm_item_(des, scope, (*cur).first, (*cur).second, false, false);
       }
 }
 
@@ -126,7 +128,7 @@ static void collect_scope_localparams_(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
-	    collect_parm_item_(des, scope, (*cur).first, (*cur).second, false);
+	    collect_parm_item_(des, scope, (*cur).first, (*cur).second, false, true);
       }
 }
 
@@ -145,7 +147,7 @@ static void collect_scope_specparams_(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
-	    collect_parm_item_(des, scope, (*cur).first, (*cur).second, true);
+	    collect_parm_item_(des, scope, (*cur).first, (*cur).second, true, false);
       }
 }
 

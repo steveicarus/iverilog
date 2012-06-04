@@ -95,6 +95,7 @@ CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 PICFLAGS = @PICFLAG@
 LDFLAGS = @rdynamic@ @LDFLAGS@
+CTARGETFLAGS = @CTARGETFLAGS@
 
 # Source files in the libmisc directory
 M = LineInfo.o StringHeap.o
@@ -228,6 +229,7 @@ iverilog-vpi: $(srcdir)/iverilog-vpi.sh Makefile
 	    -e 's;@IVCXX@;$(CXX);' \
 	    -e 's;@IVCFLAGS@;$(CFLAGS);' \
 	    -e 's;@IVCXXFLAGS@;$(CXXFLAGS);' \
+	    -e 's;@IVCTARGETFLAGS@;$(CTARGETFLAGS);' \
 	    -e 's;@INCLUDEDIR@;$(includedir);' \
 	    -e 's;@LIBDIR@;@libdir@;' $< > $@
 	chmod +x $@
@@ -239,7 +241,7 @@ version.exe: $(srcdir)/version.c $(srcdir)/version_base.h version_tag.h
 %.o: %.cc config.h
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) @DEPENDENCY_FLAG@ -c $< -o $*.o
 	mv $*.d dep/$*.d
-
+	    
 # Here are some explicit dependencies needed to get things going.
 main.o: main.cc version_tag.h
 
