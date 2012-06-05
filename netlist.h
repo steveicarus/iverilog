@@ -2671,6 +2671,8 @@ class NetCondit  : public NetProc {
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type() const;
+      virtual bool evaluate_function(const LineInfo&loc,
+				     map<perm_string,NetExpr*>&ctx) const;
 
     private:
       NetExpr* expr_;
@@ -3225,6 +3227,9 @@ class NetEUFunc  : public NetExpr {
       virtual NetEUFunc*dup_expr() const;
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual NetExpr* eval_tree();
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
+
       virtual NetNet* synthesize(Design*des, NetScope*scope, NetExpr*root);
 
     private:

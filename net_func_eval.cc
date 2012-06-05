@@ -42,13 +42,12 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 	// Load the input ports into the map...
       ivl_assert(loc, ports_.size() == args.size());
       for (size_t idx = 0 ; idx < ports_.size() ; idx += 1) {
-	    NetExpr*tmp = args[idx]->dup_expr();
 	    perm_string aname = ports_[idx]->name();
-	    context_map[aname] = tmp;
+	    context_map[aname] = args[idx];
 
 	    if (debug_eval_tree) {
 		  cerr << loc.get_fileline() << ": debug: "
-		       << "   input " << aname << " = " << *tmp << endl;
+		       << "   input " << aname << " = " << *args[idx] << endl;
 	    }
       }
 
@@ -201,6 +200,27 @@ bool NetBlock::evaluate_function(const LineInfo&loc,
       } while (cur != last_);
 
       return flag;
+}
+
+bool NetCondit::evaluate_function(const LineInfo&loc,
+				  map<perm_string,NetExpr*>&context_map) const
+{
+      NetExpr*cond = expr_->evaluate_function(loc, context_map);
+      if (cond == 0)
+	    return false;
+
+      NetEConst*cond_const = dynamic_cast<NetEConst*> (cond);
+      ivl_assert(loc, cond_const);
+
+      long val = cond_const->value().as_long();
+      delete cond;
+
+      if (val)
+	      // The condition is true, so evaluate the if clause
+	    return (if_ == 0) || if_->evaluate_function(loc, context_map);
+      else
+	      // The condition is false, so evaluate the else clause
+	    return (else_ == 0) || else_->evaluate_function(loc, context_map);
 }
 
 bool NetWhile::evaluate_function(const LineInfo&loc,
@@ -403,5 +423,19 @@ NetExpr* NetETernary::evaluate_function(const LineInfo&loc,
       NetExpr*res = blended_arguments_(tval, fval);
       delete tval;
       delete fval;
+      return res;
+}
+
+NetExpr* NetEUFunc::evaluate_function(const LineInfo&loc,
+				      map<perm_string,NetExpr*>&context_map) const
+{
+      NetFuncDef*def = func_->func_def();
+      ivl_assert(*this, def);
+
+      vector<NetExpr*>args(parms_.size());
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1)
+	    args[idx] = parms_[idx]->evaluate_function(loc, context_map);
+
+      NetExpr*res = def->evaluate_function(*this, args);
       return res;
 }

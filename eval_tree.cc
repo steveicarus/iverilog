@@ -2001,7 +2001,11 @@ NetExpr* NetEUFunc::eval_tree()
 	    NetFuncDef*def = func_->func_def();
 	    ivl_assert(*this, def);
 
-	    NetExpr*res = def->evaluate_function(*this, parms_);
+	    vector<NetExpr*>args(parms_.size());
+	    for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1)
+		  args[idx] = parms_[idx]->dup_expr();
+
+	    NetExpr*res = def->evaluate_function(*this, args);
 	    return res;
       }
 
