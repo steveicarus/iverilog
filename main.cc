@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -788,7 +788,11 @@ int main(int argc, char*argv[])
           fprintf( stderr, "Waiting for debugger...\n");
           bool debugger_release = false;
           while( !debugger_release )  {
+#if defined(__MINGW32__)
+              Sleep(1000);
+#else
               sleep(1);
+#endif
         }
       }
       library_suff.push_back(strdup(".v"));
