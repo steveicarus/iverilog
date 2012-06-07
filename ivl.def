@@ -166,6 +166,7 @@ ivl_parameter_basename
 ivl_parameter_expr
 ivl_parameter_file
 ivl_parameter_lineno
+ivl_parameter_local
 
 ivl_path_condit
 ivl_path_delay
@@ -194,6 +195,10 @@ ivl_scope_logs
 ivl_scope_log
 ivl_scope_lpms
 ivl_scope_lpm
+ivl_scope_mod_module_ports
+ivl_scope_mod_module_port_name
+ivl_scope_mod_module_port_type
+ivl_scope_mod_module_port_width
 ivl_scope_mod_port
 ivl_scope_name
 ivl_scope_param
