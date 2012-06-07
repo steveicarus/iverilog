@@ -2068,6 +2068,10 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 
 bool PGModule::elaborate_sig(Design*des, NetScope*scope) const
 {
+      if (bound_type_) {
+	    return elaborate_sig_mod_(des, scope, bound_type_);
+      }
+
 	// Look for the module type
       map<perm_string,Module*>::const_iterator mod = pform_modules.find(type_);
       if (mod != pform_modules.end())
@@ -2087,6 +2091,11 @@ bool PGModule::elaborate_sig(Design*des, NetScope*scope) const
 
 void PGModule::elaborate(Design*des, NetScope*scope) const
 {
+      if (bound_type_) {
+	    elaborate_mod_(des, bound_type_, scope);
+	    return;
+      }
+
 	// Look for the module type
       map<perm_string,Module*>::const_iterator mod = pform_modules.find(type_);
       if (mod != pform_modules.end()) {
@@ -2108,10 +2117,16 @@ void PGModule::elaborate(Design*des, NetScope*scope) const
 
 void PGModule::elaborate_scope(Design*des, NetScope*sc) const
 {
+	// If the module type is known by design, then go right to it.
+      if (bound_type_) {
+	    elaborate_scope_mod_(des, bound_type_, sc);
+	    return;
+      }
+
 	// Look for the module type
       map<perm_string,Module*>::const_iterator mod = pform_modules.find(type_);
       if (mod != pform_modules.end()) {
-	    elaborate_scope_mod_(des, (*mod).second, sc);
+	    elaborate_scope_mod_(des, mod->second, sc);
 	    return;
       }
 
@@ -2128,7 +2143,7 @@ void PGModule::elaborate_scope(Design*des, NetScope*sc) const
 	      // Try again to find the module type
 	    mod = pform_modules.find(type_);
 	    if (mod != pform_modules.end()) {
-		  elaborate_scope_mod_(des, (*mod).second, sc);
+		  elaborate_scope_mod_(des, mod->second, sc);
 		  return;
 	    }
 
@@ -2297,6 +2312,18 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
       return cur;
 }
 
+static bool lval_not_program_variable(const NetAssign_*lv)
+{
+      while (lv) {
+	    NetScope*sig_scope = lv->sig()->scope();
+	    if (! sig_scope->program_block())
+		  return true;
+
+	    lv = lv->more;
+      }
+      return false;
+}
+
 NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
@@ -2310,6 +2337,12 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	   expressions that might exist. */
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
+
+      if (scope->program_block() && lval_not_program_variable(lv)) {
+	    cerr << get_fileline() << ": error: Blocking assignments to "
+		 << "non-program variables are not allowed." << endl;
+	    des->errors += 1;
+      }
 
 	/* If there is an internal delay expression, elaborate it. */
       NetExpr*delay = 0;
@@ -2455,6 +2488,22 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 }
 
 /*
+ * Return true if any lvalue parts are in a program block scope.
+ */
+static bool lval_is_program_variable(const NetAssign_*lv)
+{
+      while (lv) {
+	    NetScope*sig_scope = lv->sig()->scope();
+	    if (sig_scope->program_block())
+		  return true;
+
+	    lv = lv->more;
+      }
+
+      return false;
+}
+
+/*
  * Elaborate non-blocking assignments. The statement is of the general
  * form:
  *
@@ -2489,6 +2538,14 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	/* Elaborate the l-value. */
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
+
+      if (scope->program_block() && lval_is_program_variable(lv)) {
+	    cerr << get_fileline() << ": error: Non-blocking assignments to "
+		 << "program variables are not allowed." << endl;
+	    des->errors += 1;
+	      // This is an error, but we can let elaboration continue
+	      // because it would necessarily trigger other errors.
+      }
 
       NetExpr*rv = elaborate_rval_(des, scope, count_lval_width(lv), lv->expr_type());
       if (rv == 0) return 0;
@@ -2576,9 +2633,21 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      NetBlock::Type type = (bl_type_==PBlock::BL_PAR)
-	    ? NetBlock::PARA
-	    : NetBlock::SEQU;
+      NetBlock::Type type;
+      switch (bl_type_) {
+	  case PBlock::BL_SEQ:
+	    type = NetBlock::SEQU;
+	    break;
+	  case PBlock::BL_PAR:
+	    type = NetBlock::PARA;
+	    break;
+	  case PBlock::BL_JOIN_NONE:
+	    type = NetBlock::PARA_JOIN_NONE;
+	    break;
+	  case PBlock::BL_JOIN_ANY:
+	    type = NetBlock::PARA_JOIN_ANY;
+	    break;
+      }
 
       NetScope*nscope = 0;
       if (pscope_name() != 0) {
@@ -4833,7 +4902,7 @@ Design* elaborate(list<perm_string>roots)
 
 	      // Make the root scope. This makes a NetScope object and
 	      // pushes it into the list of root scopes in the Design.
-	    NetScope*scope = des->make_root_scope(*root);
+	    NetScope*scope = des->make_root_scope(*root, rmod->program_block);
 
 	      // Collect some basic properties of this scope from the
 	      // Module definition.

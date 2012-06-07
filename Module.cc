@@ -27,11 +27,12 @@
 list<Module::named_expr_t> Module::user_defparms;
 
 /* n is a permallocated string. */
-Module::Module(perm_string n)
-: PScopeExtra(n)
+Module::Module(LexicalScope*parent, perm_string n)
+: PScopeExtra(n, parent)
 {
       library_flag = false;
       is_cell = false;
+      program_block = false;
       uc_drive = UCD_NONE;
       timescale_warn_done = false;
       time_unit = 0;

@@ -1249,6 +1249,11 @@ void Module::dump(ostream&out) const
 	    out << ")" << endl;
       }
 
+      for (map<perm_string,Module*>::const_iterator cur = nested_modules.begin()
+		 ; cur != nested_modules.end() ; ++cur) {
+	    out << setw(4) << "" << "Nested module " << cur->first << ";" << endl;
+      }
+
       dump_typedefs_(out, 4);
 
       dump_parameters_(out, 4);

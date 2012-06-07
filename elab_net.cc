@@ -693,7 +693,7 @@ NetNet* PEIdent::elaborate_bi_net(Design*des, NetScope*scope) const
  */
 NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 {
-      assert(scope->type() == NetScope::MODULE);
+      ivl_assert(*this, scope->type() == NetScope::MODULE);
       NetNet*sig = des->find_signal(scope, path_);
       if (sig == 0) {
 	    cerr << get_fileline() << ": error: no wire/reg " << path_

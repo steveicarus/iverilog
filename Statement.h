@@ -1,7 +1,7 @@
 #ifndef __Statement_H
 #define __Statement_H
 /*
- * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -165,7 +165,7 @@ class PAssignNB  : public PAssign_ {
 class PBlock  : public PScope, public Statement {
 
     public:
-      enum BL_TYPE { BL_SEQ, BL_PAR };
+      enum BL_TYPE { BL_SEQ, BL_PAR, BL_JOIN_NONE, BL_JOIN_ANY };
 
 	// If the block has a name, it is a scope and also has a parent.
       explicit PBlock(perm_string n, LexicalScope*parent, BL_TYPE t);
@@ -175,6 +175,10 @@ class PBlock  : public PScope, public Statement {
 
       BL_TYPE bl_type() const { return bl_type_; }
 
+	// If the bl_type() is BL_PAR, it is possible to replace it
+	// with JOIN_NONE or JOIN_ANY. This is to help the parser.
+      void set_join_type(BL_TYPE);
+
       void set_statement(const std::vector<Statement*>&st);
 
       virtual void dump(ostream&out, unsigned ind) const;
@@ -183,7 +187,7 @@ class PBlock  : public PScope, public Statement {
       virtual void elaborate_sig(Design*des, NetScope*scope) const;
 
     private:
-      const BL_TYPE bl_type_;
+      BL_TYPE bl_type_;
       std::vector<Statement*>list_;
 };
 

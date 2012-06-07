@@ -177,6 +177,11 @@ static inline bool gn_system_verilog(void)
       return false;
 }
 
+static inline bool gn_modules_nest(void)
+{
+      return gn_system_verilog();
+}
+
 /* The bits of these GN_KEYWORDS_* constants define non-intersecting
    sets of keywords. The compiler enables groups of keywords by setting
    lexor_keyword_mask with the OR of the bits for the keywords to be

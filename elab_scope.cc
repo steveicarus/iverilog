@@ -541,6 +541,19 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
       elaborate_scope_funcs(des, scope, funcs);
 
+	// Look for implicit modules and implicit gates for them.
+
+      for (map<perm_string,Module*>::iterator cur = nested_modules.begin()
+		 ; cur != nested_modules.end() ; ++cur) {
+	      // Skip modules that must be explicitly instantiated.
+	    if (cur->second->port_count() > 0)
+		  continue;
+
+	    PGModule*nested_gate = new PGModule(cur->second, cur->second->mod_name());
+	    nested_gate->set_line(*cur->second);
+	    gates_.push_back(nested_gate);
+      }
+
 	// Gates include modules, which might introduce new scopes, so
 	// scan all of them to create those scopes.
 
@@ -1329,8 +1342,12 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 		       << "." << endl;
 	    }
 
-	      // Create the new scope as a MODULE with my name.
-	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE);
+	      // Create the new scope as a MODULE with my name. Note
+	      // that if this is a nested module, mark it thus so that
+	      // scope searches will continue into the parent scope.
+	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE,
+					     bound_type_? true : false,
+					     mod->program_block);
 	    my_scope->set_line(get_file(), mod->get_file(),
 	                       get_lineno(), mod->get_lineno());
 	    my_scope->set_module_name(mod->mod_name());
@@ -1547,7 +1564,9 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 		       << "Elaborate block scope " << use_name
 		       << " within " << scope_path(scope) << endl;
 
-	    my_scope = new NetScope(scope, use_name, bl_type_==BL_PAR
+	      // The scope type is begin-end or fork-join. The
+	      // sub-types of fork-join are not interesting to the scope.
+	    my_scope = new NetScope(scope, use_name, bl_type_!=BL_SEQ
 				    ? NetScope::FORK_JOIN
 				    : NetScope::BEGIN_END);
 	    my_scope->set_line(get_file(), get_lineno());

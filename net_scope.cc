@@ -38,8 +38,8 @@ class PExpr;
  * in question.
  */
 
-NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t)
-: type_(t), name_(n), up_(up)
+NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest, bool prog)
+: type_(t), name_(n), nested_module_(nest), program_block_(prog), up_(up)
 {
       events_ = 0;
       lcounter_ = 0;

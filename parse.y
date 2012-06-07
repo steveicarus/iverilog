@@ -356,6 +356,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       PGBuiltin::Type gatetype;
       NetNet::PortType porttype;
       ivl_variable_type_t vartype;
+      PBlock::BL_TYPE join_keyword;
 
       PWire*wire;
       svector<PWire*>*wires;
@@ -573,6 +574,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <statement_list> statement_or_null_list statement_or_null_list_opt
 
 %type <statement> analog_statement
+
+%type <join_keyword> join_keyword
 
 %type <letter> spec_polarity
 %type <perm_strings>  specify_path_identifiers
@@ -1080,6 +1083,15 @@ integer_vector_type /* IEEE1800-2005: A.2.2.1 */
   | K_bit   { $$ = IVL_VT_BOOL; }
   | K_logic { $$ = IVL_VT_LOGIC; }
   | K_bool  { $$ = IVL_VT_BOOL; } /* Icarus Verilog xtypes extension */
+  ;
+
+join_keyword /* IEEE1800-2005: A.6.3 */
+  : K_join
+      { $$ = PBlock::BL_PAR; }
+  | K_join_none
+      { $$ = PBlock::BL_JOIN_NONE; }
+  | K_join_any
+      { $$ = PBlock::BL_JOIN_ANY; }
   ;
 
 jump_statement /* IEEE1800-2005: A.6.5 */
@@ -3754,7 +3766,7 @@ local_timeunit_prec_decl
 
 module
   : attribute_list_opt module_start IDENTIFIER
-      { pform_startmodule($3, @2.text, @2.first_line, $1); }
+      { pform_startmodule(@2, $3, $2==K_program, $1); }
     module_parameter_port_list_opt
     module_port_list_opt
     module_attribute_foreign ';'
@@ -3795,9 +3807,6 @@ module
 		  default:
 		    break;
 	      }
-	}
-	if ($2 == K_program) {
-	      yyerror(@2, "sorry: Program blocks not supported yet.");
 	}
 	pform_endmodule($3, in_celldefine, ucd);
 	delete[]$3;
@@ -3869,43 +3878,46 @@ module_parameter_port_list
 
 module_item
 
+  /* Modules can contain further sub-module definitions. */
+  : module
+
   /* This rule detects net declarations that possibly include a
      primitive type, an optional vector range and signed flag. This
      also includes an optional delay set. The values are then applied
      to a list of names. If the primitive type is not specified, then
      resort to the default type LOGIC. */
 
-	: attribute_list_opt net_type
-          primitive_type_opt unsigned_signed_opt range_opt
-          delay3_opt
-          net_variable_list ';'
+  | attribute_list_opt net_type
+    primitive_type_opt unsigned_signed_opt range_opt
+    delay3_opt
+    net_variable_list ';'
 
-		{ ivl_variable_type_t dtype = $3;
-		  if (dtype == IVL_VT_NO_TYPE)
-			dtype = IVL_VT_LOGIC;
-		  pform_makewire(@2, $5, $4, $7, $2,
-				 NetNet::NOT_A_PORT, dtype, $1);
-		  if ($6 != 0) {
-			yyerror(@6, "sorry: net delays not supported.");
-			delete $6;
-		  }
-		  delete $1;
-		}
+      { ivl_variable_type_t dtype = $3;
+	if (dtype == IVL_VT_NO_TYPE)
+	      dtype = IVL_VT_LOGIC;
+	pform_makewire(@2, $5, $4, $7, $2, NetNet::NOT_A_PORT, dtype, $1);
+	if ($6 != 0) {
+	      yyerror(@6, "sorry: net delays not supported.");
+	      delete $6;
+	}
+	delete $1;
+      }
 
-	| attribute_list_opt K_wreal delay3 net_variable_list ';'
-		{ pform_makewire(@2, 0, true, $4, NetNet::WIRE,
-				 NetNet::NOT_A_PORT, IVL_VT_REAL, $1);
-		  if ($3 != 0) {
-			yyerror(@3, "sorry: net delays not supported.");
-			delete $3;
-		  }
-		  delete $1;
-		}
-	| attribute_list_opt K_wreal net_variable_list ';'
-		{ pform_makewire(@2, 0, true, $3, NetNet::WIRE,
-				 NetNet::NOT_A_PORT, IVL_VT_REAL, $1);
-		  delete $1;
-		}
+  | attribute_list_opt K_wreal delay3 net_variable_list ';'
+      { pform_makewire(@2, 0, true, $4, NetNet::WIRE,
+		       NetNet::NOT_A_PORT, IVL_VT_REAL, $1);
+	    if ($3 != 0) {
+		  yyerror(@3, "sorry: net delays not supported.");
+		  delete $3;
+	    }
+	    delete $1;
+      }
+
+  | attribute_list_opt K_wreal net_variable_list ';'
+      { pform_makewire(@2, 0, true, $3, NetNet::WIRE,
+		       NetNet::NOT_A_PORT, IVL_VT_REAL, $1);
+	    delete $1;
+      }
 
   /* Very similar to the rule above, but this takes a list of
      net_decl_assigns, which are <name> = <expr> assignment
@@ -4056,66 +4068,50 @@ module_item
      two/three-value delay. These rules handle the different cases.
      We check that the actual number of delays is correct later. */
 
-	| attribute_list_opt gatetype gate_instance_list ';'
-		{ pform_makegates($2, str_strength, 0, $3, $1);
-		}
+  | attribute_list_opt gatetype gate_instance_list ';'
+      { pform_makegates(@2, $2, str_strength, 0, $3, $1); }
 
-	| attribute_list_opt gatetype delay3 gate_instance_list ';'
-		{ pform_makegates($2, str_strength, $3, $4, $1);
-		}
+  | attribute_list_opt gatetype delay3 gate_instance_list ';'
+      { pform_makegates(@2, $2, str_strength, $3, $4, $1); }
 
-	| attribute_list_opt gatetype drive_strength gate_instance_list ';'
-		{ pform_makegates($2, $3, 0, $4, $1);
-		}
+  | attribute_list_opt gatetype drive_strength gate_instance_list ';'
+      { pform_makegates(@2, $2, $3, 0, $4, $1); }
 
-	| attribute_list_opt gatetype drive_strength delay3 gate_instance_list ';'
-		{ pform_makegates($2, $3, $4, $5, $1);
-		}
+  | attribute_list_opt gatetype drive_strength delay3 gate_instance_list ';'
+      { pform_makegates(@2, $2, $3, $4, $5, $1); }
 
   /* The switch type gates do not support a strength. */
-	| attribute_list_opt switchtype gate_instance_list ';'
-		{ pform_makegates($2, str_strength, 0, $3, $1);
-		}
+  | attribute_list_opt switchtype gate_instance_list ';'
+      { pform_makegates(@2, $2, str_strength, 0, $3, $1); }
 
-	| attribute_list_opt switchtype delay3 gate_instance_list ';'
-		{ pform_makegates($2, str_strength, $3, $4, $1);
-		}
+  | attribute_list_opt switchtype delay3 gate_instance_list ';'
+      { pform_makegates(@2, $2, str_strength, $3, $4, $1); }
 
   /* Pullup and pulldown devices cannot have delays, and their
      strengths are limited. */
 
-	| K_pullup gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLUP, pull_strength, 0,
-				  $2, 0);
-		}
-	| K_pulldown gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLDOWN, pull_strength,
-				  0, $2, 0);
-		}
+  | K_pullup gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLUP, pull_strength, 0, $2, 0); }
+  | K_pulldown gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLDOWN, pull_strength, 0, $2, 0); }
 
-	| K_pullup '(' dr_strength1 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLUP, $3, 0, $5, 0);
-		}
+  | K_pullup '(' dr_strength1 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLUP, $3, 0, $5, 0); }
 
-	| K_pullup '(' dr_strength1 ',' dr_strength0 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLUP, $3, 0, $7, 0);
-		}
+  | K_pullup '(' dr_strength1 ',' dr_strength0 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLUP, $3, 0, $7, 0); }
 
-	| K_pullup '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLUP, $5, 0, $7, 0);
-		}
+  | K_pullup '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLUP, $5, 0, $7, 0); }
 
-	| K_pulldown '(' dr_strength0 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLDOWN, $3, 0, $5, 0);
-		}
+  | K_pulldown '(' dr_strength0 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLDOWN, $3, 0, $5, 0); }
 
-	| K_pulldown '(' dr_strength1 ',' dr_strength0 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLDOWN, $5, 0, $7, 0);
-		}
+  | K_pulldown '(' dr_strength1 ',' dr_strength0 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLDOWN, $5, 0, $7, 0); }
 
-	| K_pulldown '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLDOWN, $3, 0, $7, 0);
-		}
+  | K_pulldown '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLDOWN, $3, 0, $7, 0); }
 
   /* This rule handles instantiations of modules and user defined
      primitives. These devices to not have delay lists or strengths,
@@ -4124,7 +4120,7 @@ module_item
 	| attribute_list_opt
 	  IDENTIFIER parameter_value_opt gate_instance_list ';'
 		{ perm_string tmp1 = lex_strings.make($2);
-		  pform_make_modgates(tmp1, $3, $4);
+		  pform_make_modgates(@2, tmp1, $3, $4);
 		  delete[]$2;
 		  if ($1) delete $1;
 		}
@@ -4250,13 +4246,6 @@ module_item
   /* These rules match various errors that the user can type into
      module items. These rules try to catch them at a point where a
      reasonable error message can be produced. */
-
-	| K_module error ';'
-		{ yyerror(@1, "error: missing endmodule or attempt to "
-		              "nest modules.");
-		  pform_error_nested_modules();
-		  yyerrok;
-		}
 
 	| error ';'
 		{ yyerror(@2, "error: invalid module item.");
@@ -5349,13 +5338,13 @@ statement_item /* This is roughly statement_item in the LRM */
      need to do is remember that this is a parallel block so that the
      code generator can do the right thing. */
 
-  | K_fork K_join
-      { PBlock*tmp = new PBlock(PBlock::BL_PAR);
+  | K_fork join_keyword
+      { PBlock*tmp = new PBlock($2);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | K_fork statement_or_null_list K_join
-      { PBlock*tmp = new PBlock(PBlock::BL_PAR);
+  | K_fork statement_or_null_list join_keyword
+      { PBlock*tmp = new PBlock($3);
 	FILE_NAME(tmp, @1);
 	tmp->set_statement(*$2);
 	delete $2;
@@ -5367,11 +5356,12 @@ statement_item /* This is roughly statement_item in the LRM */
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
-    statement_or_null_list_opt K_join
+    statement_or_null_list_opt join_keyword
       { pform_pop_scope();
         assert(! current_block_stack.empty());
 	PBlock*tmp = current_block_stack.top();
 	current_block_stack.pop();
+	tmp->set_join_type($7);
 	if ($6) tmp->set_statement(*$6);
 	delete[]$3;
 	delete $6;
@@ -5487,56 +5477,56 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
 
-	| error '=' expression ';'
-                { yyerror(@2, "Syntax in assignment statement l-value.");
-		  yyerrok;
-		  $$ = new PNoop;
-		}
-	| lpvalue K_LE expression ';'
-		{ PAssignNB*tmp = new PAssignNB($1,$3);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| error K_LE expression ';'
-                { yyerror(@2, "Syntax in assignment statement l-value.");
-		  yyerrok;
-		  $$ = new PNoop;
-		}
-	| lpvalue '=' delay1 expression ';'
-		{ PExpr*del = $3->front(); $3->pop_front();
-		  assert($3->empty());
-		  PAssign*tmp = new PAssign($1,del,$4);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| lpvalue K_LE delay1 expression ';'
-		{ PExpr*del = $3->front(); $3->pop_front();
-		  assert($3->empty());
-		  PAssignNB*tmp = new PAssignNB($1,del,$4);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| lpvalue '=' event_control expression ';'
-		{ PAssign*tmp = new PAssign($1,0,$3,$4);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| lpvalue '=' K_repeat '(' expression ')' event_control expression ';'
-		{ PAssign*tmp = new PAssign($1,$5,$7,$8);
-		  FILE_NAME(tmp,@1);
-		  tmp->set_lineno(@1.first_line);
-		  $$ = tmp;
-		}
-	| lpvalue K_LE event_control expression ';'
-		{ PAssignNB*tmp = new PAssignNB($1,0,$3,$4);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| lpvalue K_LE K_repeat '(' expression ')' event_control expression ';'
-		{ PAssignNB*tmp = new PAssignNB($1,$5,$7,$8);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
+  | error '=' expression ';'
+      { yyerror(@2, "Syntax in assignment statement l-value.");
+	yyerrok;
+	$$ = new PNoop;
+      }
+  | lpvalue K_LE expression ';'
+      { PAssignNB*tmp = new PAssignNB($1,$3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | error K_LE expression ';'
+      { yyerror(@2, "Syntax in assignment statement l-value.");
+	yyerrok;
+	$$ = new PNoop;
+      }
+  | lpvalue '=' delay1 expression ';'
+      { PExpr*del = $3->front(); $3->pop_front();
+	assert($3->empty());
+	PAssign*tmp = new PAssign($1,del,$4);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_LE delay1 expression ';'
+      { PExpr*del = $3->front(); $3->pop_front();
+	assert($3->empty());
+	PAssignNB*tmp = new PAssignNB($1,del,$4);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue '=' event_control expression ';'
+      { PAssign*tmp = new PAssign($1,0,$3,$4);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue '=' K_repeat '(' expression ')' event_control expression ';'
+      { PAssign*tmp = new PAssign($1,$5,$7,$8);
+	FILE_NAME(tmp,@1);
+	tmp->set_lineno(@1.first_line);
+	$$ = tmp;
+      }
+  | lpvalue K_LE event_control expression ';'
+      { PAssignNB*tmp = new PAssignNB($1,0,$3,$4);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_LE K_repeat '(' expression ')' event_control expression ';'
+      { PAssignNB*tmp = new PAssignNB($1,$5,$7,$8);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
 
   /* The IEEE1800 standard defines dynamic_array_new assignment as a
      different rule from regular assignment. That implies that the

@@ -201,6 +201,9 @@ class PGModule  : public PGate {
       explicit PGModule(perm_string type, perm_string name,
 			named<PExpr*>*pins, unsigned npins);
 
+	// If the module type is known by design, then use this
+	// constructor.
+      explicit PGModule(Module*type, perm_string name);
 
       ~PGModule();
 
@@ -223,6 +226,7 @@ class PGModule  : public PGate {
       perm_string get_type() const;
 
     private:
+      Module*bound_type_;
       perm_string type_;
       list<PExpr*>*overrides_;
       named<PExpr*>*pins_;

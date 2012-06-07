@@ -28,7 +28,9 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
+# include  <set>
 # include  <typeinfo>
+# include  <vector>
 # include  <cstdlib>
 # include  <climits>
 # include  <cstring>
@@ -37,6 +39,8 @@
 
 # include  <iostream>
 # include  <cstdio>
+
+using namespace std;
 
 /* This is the size of an unsigned long in bits. This is just a
    convenience macro. */
@@ -51,35 +55,26 @@
  *
  * ** Notes On The Interactions of %fork/%join/%end:
  *
- * The %fork instruction creates a new thread and pushes that onto the
- * stack of children for the thread. This new thread, then, becomes
- * the new direct descendant of the thread. This new thread is
- * therefore also the first thread to be reaped when the parent does a
- * %join.
+ * The %fork instruction creates a new thread and pushes that into a
+ * set of children for the thread. This new thread, then, becomes a
+ * child of the current thread, and the current thread a parent of the
+ * new thread. Any child can be reaped by a %join.
+ *
+ * Children placed into an automatic scope are given special
+ * treatment, which is required to make function/tasks calls that they
+ * represent work correctly. These automatic children are copied into
+ * an automatic_children set to mark them for this handling. %join
+ * operations will guarantee that automatic threads are joined first,
+ * before any non-automatic threads.
  *
  * It is a programming error for a thread that created threads to not
- * %join as many as it created before it %ends. The linear stack for
- * tracking thread relationships will create a mess otherwise. For
- * example, if A creates B then C, the stack is:
+ * %join (or %join/detach) as many as it created before it %ends. The
+ * children set will get messed up otherwise.
  *
- *       A --> C --> B
- *
- * If C then %forks X, the stack is:
- *
- *       A --> C --> X --> B
- *
- * If C %ends without a join, then the stack is:
- *
- *       A --> C(zombie) --> X --> B
- *
- * If A then executes 2 %joins, it will reap C and X (when it ends)
- * leaving B in purgatory. What's worse, A will block on the schedules
- * of X and C instead of C and B, possibly creating incorrect timing.
- *
- * The schedule_parent_on_end flag is used by threads to tell their
- * children that they are waiting for it to end. It is set by a %join
- * instruction if the child is not already done. The thread that
- * executes a %join instruction sets the flag in its child.
+ * the i_am_joining flag is a clue to children that the parent is
+ * blocked in a %join and may need to be scheduled. The %end
+ * instruction will check this flag in the parent to see if it should
+ * notify the parent that something is interesting.
  *
  * The i_have_ended flag, on the other hand, is used by threads to
  * tell their parents that they are already dead. A thread that
@@ -105,14 +100,15 @@ struct vthread_s {
       } words[16];
 
 	/* My parent sets this when it wants me to wake it up. */
-      unsigned schedule_parent_on_end :1;
+      unsigned i_am_joining      :1;
       unsigned i_have_ended      :1;
       unsigned waiting_for_event :1;
       unsigned is_scheduled      :1;
       unsigned delay_delete      :1;
-      unsigned fork_count        :8;
-	/* This points to the sole child of the thread. */
-      struct vthread_s*child;
+	/* This points to the children of the thread. */
+      set<struct vthread_s*>children;
+	/* No more then 1 of the children is automatic. */
+      set<vthread_s*>automatic_children;
 	/* This points to my parent, if I have one. */
       struct vthread_s*parent;
 	/* This points to the containing scope. */
@@ -125,6 +121,9 @@ struct vthread_s {
       vvp_net_t*event;
       uint64_t ecount;
 };
+
+static bool test_joinable(vthread_t thr, vthread_t child);
+static void do_join(vthread_t thr, vthread_t child);
 
 struct __vpiScope* vthread_scope(struct vthread_s*thr)
 {
@@ -400,19 +399,17 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       vthread_t thr = new struct vthread_s;
       thr->pc     = pc;
       thr->bits4  = vvp_vector4_t(32);
-      thr->child  = 0;
       thr->parent = 0;
       thr->parent_scope = scope;
       thr->wait_next = 0;
       thr->wt_context = 0;
       thr->rd_context = 0;
 
-      thr->schedule_parent_on_end = 0;
+      thr->i_am_joining = 0;
       thr->is_scheduled = 0;
       thr->i_have_ended = 0;
       thr->delay_delete = 0;
       thr->waiting_for_event = 0;
-      thr->fork_count   = 0;
       thr->event  = 0;
       thr->ecount = 0;
 
@@ -469,16 +466,19 @@ void vthreads_delete(struct __vpiScope*scope)
  */
 static void vthread_reap(vthread_t thr)
 {
-      if (thr->child) {
-	    assert(thr->child->parent == thr);
-	    thr->child->parent = thr->parent;
+      if (thr->children.size() > 0) {
+	    for (set<vthread_t>::iterator cur = thr->children.begin()
+		       ; cur != thr->children.end() ; ++cur) {
+		  vthread_t curp = *cur;
+		  assert(curp->parent == thr);
+		  curp->parent = thr->parent;
+	    }
       }
       if (thr->parent) {
-	    assert(thr->parent->child == thr);
-	    thr->parent->child = thr->child;
+	      //assert(thr->parent->child == thr);
+	    thr->parent->children.erase(thr);
       }
 
-      thr->child = 0;
       thr->parent = 0;
 
 	// Remove myself from the containing scope.
@@ -490,7 +490,7 @@ static void vthread_reap(vthread_t thr)
 	   it now. Otherwise, let the schedule event (which will
 	   execute the thread at of_ZOMBIE) delete the object. */
       if ((thr->is_scheduled == 0) && (thr->waiting_for_event == 0)) {
-	    assert(thr->fork_count == 0);
+	    assert(thr->children.size() == 0);
 	    assert(thr->wait_next == 0);
 	    if (thr->delay_delete)
 		  schedule_del_thr(thr);
@@ -1956,28 +1956,30 @@ static bool do_disable(vthread_t thr, vthread_t match)
 	/* Turn off all the children of the thread. Simulate a %join
 	   for as many times as needed to clear the results of all the
 	   %forks that this thread has done. */
-      while (thr->fork_count > 0) {
+      while (!thr->children.empty()) {
 
-	    vthread_t tmp = thr->child;
+	    vthread_t tmp = *(thr->children.begin());
 	    assert(tmp);
 	    assert(tmp->parent == thr);
-	    tmp->schedule_parent_on_end = 0;
+	    thr->i_am_joining = 0;
 	    if (do_disable(tmp, match))
 		  flag = true;
-
-	    thr->fork_count -= 1;
 
 	    vthread_reap(tmp);
       }
 
+      if (thr->parent && thr->parent->i_am_joining) {
+	      // If a parent is waiting in a %join, wake it up. Note
+	      // that it is possible to be waiting in a %join yet
+	      // already scheduled if multiple child threads are
+	      // ending. So check if the thread is already scheduled
+	      // before scheduling it again.
+	    vthread_t parent = thr->parent;
+	    parent->i_am_joining = 0;
+	    if (! parent->i_have_ended)
+		  schedule_vthread(parent, 0, true);
 
-      if (thr->schedule_parent_on_end) {
-	      /* If a parent is waiting in a %join, wake it up. */
-	    assert(thr->parent);
-	    assert(thr->parent->fork_count > 0);
-
-	    thr->parent->fork_count -= 1;
-	    schedule_vthread(thr->parent, 0, true);
+	      // Let the parent do the reaping.
 	    vthread_reap(thr);
 
       } else if (thr->parent) {
@@ -2007,7 +2009,7 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
       while (! scope->threads.empty()) {
 	    set<vthread_t>::iterator cur = scope->threads.begin();
 
-	      /* If I am disabling myself, that remember that fact so
+	      /* If I am disabling myself, then remember that fact so
 		 that I can finish this statement differently. */
 	    if (*cur == thr)
 		  disabled_myself_flag = true;
@@ -2350,20 +2352,25 @@ bool of_DIV_WR(vthread_t thr, vvp_code_t cp)
 bool of_END(vthread_t thr, vvp_code_t)
 {
       assert(! thr->waiting_for_event);
-      assert( thr->fork_count == 0 );
       thr->i_have_ended = 1;
       thr->pc = codespace_null();
 
 	/* If I have a parent who is waiting for me, then mark that I
 	   have ended, and schedule that parent. Also, finish the
 	   %join for the parent. */
-      if (thr->schedule_parent_on_end) {
-	    assert(thr->parent);
-	    assert(thr->parent->fork_count > 0);
+      if (thr->parent && thr->parent->i_am_joining) {
+	    vthread_t tmp = thr->parent;
 
-	    thr->parent->fork_count -= 1;
-	    schedule_vthread(thr->parent, 0, true);
-	    vthread_reap(thr);
+	      // Detect that the parent is waiting on an automatic
+	      // thread. Automatic threads must be reaped first. If
+	      // the parent is waiting on an auto (other then me) then
+	      // go into zomple state to be picked up later.
+	    if (!test_joinable(tmp, thr))
+		  return false;
+
+	    tmp->i_am_joining = 0;
+	    schedule_vthread(tmp, 0, true);
+	    do_join(tmp, thr);
 	    return false;
       }
 
@@ -2375,7 +2382,7 @@ bool of_END(vthread_t thr, vvp_code_t)
 	   main thread (there is no other parent) and an error (not
 	   enough %joins) has been detected. */
       if (thr->parent == 0) {
-	    assert(thr->child == 0);
+	    assert(thr->children.empty());
 	    vthread_reap(thr);
 	    return false;
       }
@@ -2523,29 +2530,25 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
 
 /*
  * The %fork instruction causes a new child to be created and pushed
- * in front of any existing child. This causes the new child to be the
- * parent of any previous children, and for me to be the parent of the
+ * in front of any existing child. This causes the new child to be
+ * added to the list of children, and for me to be the parent of the
  * new child.
  */
 bool of_FORK(vthread_t thr, vvp_code_t cp)
 {
       vthread_t child = vthread_new(cp->cptr2, cp->scope);
+
       if (cp->scope->is_automatic) {
               /* The context allocated for this child is the top entry
                  on the write context stack. */
             child->wt_context = thr->wt_context;
             child->rd_context = thr->wt_context;
+
+	    thr->automatic_children.insert(child);
       }
 
-      child->child  = thr->child;
       child->parent = thr;
-      thr->child = child;
-      if (child->child) {
-	    assert(child->child->parent == thr);
-	    child->child->parent = child;
-      }
-
-      thr->fork_count += 1;
+      thr->children.insert(child);
 
 	/* If the new child was created to evaluate a function,
 	   run it immediately, then return to this thread. */
@@ -2854,20 +2857,27 @@ bool of_JMP1(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * The %join instruction causes the thread to wait for the one and
- * only child to die.  If it is already dead (and a zombie) then I
- * reap it and go on. Otherwise, I tell the child that I am ready for
- * it to die, and it will reschedule me when it does.
+ * The %join instruction causes the thread to wait for one child
+ * to die.  If a child is already dead (and a zombie) then I reap
+ * it and go on. Otherwise, I mark myself as waiting in a join so that
+ * children know to wake me when they finish.
  */
-bool of_JOIN(vthread_t thr, vvp_code_t)
+
+static bool test_joinable(vthread_t thr, vthread_t child)
 {
-      assert(thr->child);
-      assert(thr->child->parent == thr);
+      set<vthread_t>::iterator auto_cur = thr->automatic_children.find(child);
+      if (!thr->automatic_children.empty() && auto_cur == thr->automatic_children.end())
+	    return false;
 
-      assert(thr->fork_count > 0);
+      return true;
+}
 
-        /* If the child thread is in an automatic scope... */
-      if (thr->child->wt_context) {
+static void do_join(vthread_t thr, vthread_t child)
+{
+      assert(child->parent == thr);
+
+        /* If the immediate child thread is in an automatic scope... */
+      if (thr->automatic_children.erase(child) != 0) {
               /* and is the top level task/function thread... */
             if (thr->wt_context != thr->rd_context) {
                     /* Pop the child context from the write context stack. */
@@ -2880,16 +2890,64 @@ bool of_JOIN(vthread_t thr, vvp_code_t)
             }
       }
 
-	/* If the child has already ended, reap it now. */
-      if (thr->child->i_have_ended) {
-	    thr->fork_count -= 1;
-	    vthread_reap(thr->child);
+      vthread_reap(child);
+}
+
+bool of_JOIN(vthread_t thr, vvp_code_t)
+{
+      assert( !thr->i_am_joining );
+      assert( !thr->children.empty());
+
+	// Are there any children that have already ended? If so, then
+	// join with that one.
+      for (set<vthread_t>::iterator cur = thr->children.begin()
+		 ; cur != thr->children.end() ; ++cur) {
+	    vthread_t curp = *cur;
+	    if (!curp->i_have_ended)
+		  continue;
+
+	    if (!test_joinable(thr, curp))
+		  continue;
+
+	      // found somenting!
+	    do_join(thr, curp);
 	    return true;
       }
 
-	/* Otherwise, I get to start waiting. */
-      thr->child->schedule_parent_on_end = 1;
+	// Otherwise, tell my children to awaken me when they end,
+	// then pause.
+      thr->i_am_joining = 1;
       return false;
+}
+
+/*
+ * This %join/detach <n> instruction causes the thread to detach
+ * threads that were created by an earlier %fork.
+ */
+bool of_JOIN_DETACH(vthread_t thr, vvp_code_t cp)
+{
+      unsigned long count = cp->number;
+
+      assert(thr->automatic_children.empty());
+      assert(count == thr->children.size());
+
+      while (!thr->children.empty()) {
+	    vthread_t child = *thr->children.begin();
+	    assert(child->parent == thr);
+
+	      // We cannot detach automatic tasks/functions
+	    assert(child->wt_context == 0);
+	    if (child->i_have_ended) {
+		    // If the child has already ended, then reap it.
+		  vthread_reap(child);
+
+	    } else {
+		  thr->children.erase(child);
+		  child->parent = 0;
+	    }
+      }
+
+      return true;
 }
 
 /*
@@ -4608,7 +4666,7 @@ bool of_XOR(vthread_t thr, vvp_code_t cp)
 bool of_ZOMBIE(vthread_t thr, vvp_code_t)
 {
       thr->pc = codespace_null();
-      if ((thr->parent == 0) && (thr->child == 0)) {
+      if ((thr->parent == 0) && (thr->children.empty())) {
 	    if (thr->delay_delete)
 		  schedule_del_thr(thr);
 	    else
@@ -4629,8 +4687,7 @@ bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t cp)
       struct __vpiScope*child_scope = cp->ufunc_core_ptr->func_scope();
       assert(child_scope);
 
-      assert(thr->child == 0);
-      assert(thr->fork_count == 0);
+      assert(thr->children.empty());
 
         /* We can take a number of shortcuts because we know that a
            continuous assignment can only occur in a static scope. */

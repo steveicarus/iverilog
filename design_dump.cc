@@ -40,6 +40,12 @@ static ostream& operator<< (ostream&o, NetBlock::Type t)
 	  case NetBlock::PARA:
 	    o << "fork";
 	    break;
+	  case NetBlock::PARA_JOIN_NONE:
+	    o << "fork-join_none";
+	    break;
+	  case NetBlock::PARA_JOIN_ANY:
+	    o << "fork-join_any";
+	    break;
       }
       return o;
 }
@@ -1136,6 +1142,9 @@ void NetScope::dump(ostream&o) const
       print_type(o);
       if (is_auto()) o << " (automatic)";
       if (is_cell()) o << " (cell)";
+      if (nested_module()) o << " (nested)";
+      if (program_block()) o << " (program)";
+
       o << endl;
 
       for (unsigned idx = 0 ;  idx < attr_cnt() ;  idx += 1)
