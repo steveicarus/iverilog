@@ -1017,6 +1017,14 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 	    scope->add_genvar((*cur).first, (*cur).second);
       }
 
+	// Scan the localparams in this scope, and create stub parameter
+        // entries in the scope for the parameter names.
+      collect_scope_localparams_(scope, localparams);
+
+	// Now scan the localparams again, this time elaborating them
+	// for use as parameter values.
+      elaborate_scope_localparams_(des, scope, localparams);
+
 	// Scan the generated scope for nested generate schemes,
 	// and *generate* new scopes, which is slightly different
 	// from simple elaboration.
@@ -1026,14 +1034,6 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 		 ; cur != generate_schemes.end() ; cur ++ ) {
 	    (*cur) -> generate_scope(des, scope);
       }
-
-	// Scan the localparams in this scope, and create stub parameter
-        // entries in the scope for the parameter names.
-      collect_scope_localparams_(scope, localparams);
-
-	// Now scan the localparams again, this time elaborating them
-	// for use as parameter values.
-      elaborate_scope_localparams_(des, scope, localparams);
 
         // Scan through all the task and function declarations in this
         // scope.
