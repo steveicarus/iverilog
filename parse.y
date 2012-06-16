@@ -249,9 +249,12 @@ static void current_task_set_statement(const YYLTYPE&loc, vector<Statement*>*s)
 	    current_task->set_statement(tmp);
 	    return;
       }
+      assert(s);
 
-	/* The parser assures that there is a non-empty vector. */
-      assert(s && !s->empty());
+        /* An empty vector represents one or more null statements. Handle
+           this as a simple null statement. */
+      if (s->empty())
+            return;
 
 	/* A vector of 1 is handled as a simple statement. */
       if (s->size() == 1) {
@@ -284,9 +287,12 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 	    current_function->set_statement(tmp);
 	    return;
       }
+      assert(s);
 
-	/* The parser assures that there is a non-empty vector. */
-      assert(s && !s->empty());
+        /* An empty vector represents one or more null statements. Handle
+           this as a simple null statement. */
+      if (s->empty())
+            return;
 
 	/* A vector of 1 is handled as a simple statement. */
       if (s->size() == 1) {
@@ -5699,12 +5705,12 @@ statement_or_null_list_opt
 statement_or_null_list
   : statement_or_null_list statement_or_null
       { vector<Statement*>*tmp = $1;
-	tmp->push_back($2);
+	if ($2) tmp->push_back($2);
 	$$ = tmp;
       }
   | statement_or_null
-      { vector<Statement*>*tmp = new vector<Statement*>(1);
-	tmp->at(0) = $1;
+      { vector<Statement*>*tmp = new vector<Statement*>(0);
+	if ($1) tmp->push_back($1);
 	$$ = tmp;
       }
   ;
