@@ -1432,7 +1432,7 @@ void vvp_vector4_t::set_to_x()
       }
 }
 
-char* vvp_vector4_t::as_string(char*buf, size_t buf_len)
+char* vvp_vector4_t::as_string(char*buf, size_t buf_len) const
 {
       char*res = buf;
       *buf++ = 'C';
@@ -2953,6 +2953,13 @@ void vvp_net_fun_t::recv_long_pv(vvp_net_ptr_t, long, unsigned, unsigned)
 {
       fprintf(stderr, "internal error: %s: recv_long_pv not implemented\n",
 	      typeid(*this).name());
+      assert(0);
+}
+
+void vvp_net_fun_t::recv_string(vvp_net_ptr_t, const std::string&bit, vvp_context_t)
+{
+      fprintf(stderr, "internal error: %s: recv_string(%s) not implemented\n",
+	      typeid(*this).name(), bit.c_str());
       assert(0);
 }
 

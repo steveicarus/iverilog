@@ -964,6 +964,16 @@ static char *get_display(unsigned int *rtnsz, const struct strobe_cb_info *info)
         memcpy(rtn+size-1, buf, width);
         break;
 
+       /* Process string variables like string constants: interpret
+	  the contained strings like format strings. */
+      case vpiStringVar:
+	value.format = vpiStringVal;
+	vpi_get_value(item, &value);
+	width = strlen(value.value.str);
+        rtn = realloc(rtn, (size+width)*sizeof(char));
+        memcpy(rtn+size-1, value.value.str, width);
+	break;
+
       case vpiSysFuncCall:
         func_name = vpi_get_str(vpiName, item);
         if (strcmp(func_name, "$time") == 0) {
@@ -1071,6 +1081,7 @@ static int sys_check_args(vpiHandle callh, vpiHandle argv, const PLI_BYTE8*name,
 	      case vpiLongIntVar:
 	      case vpiTimeVar:
 	      case vpiRealVar:
+	      case vpiStringVar:
 	      case vpiSysFuncCall:
 		  break;
 

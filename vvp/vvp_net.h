@@ -261,7 +261,7 @@ class vvp_vector4_t {
       void set_to_x();
 
 	// Display the value into the buf as a string.
-      char*as_string(char*buf, size_t buf_len);
+      char*as_string(char*buf, size_t buf_len) const;
 
       void invert();
       vvp_vector4_t& operator &= (const vvp_vector4_t&that);
@@ -1082,6 +1082,7 @@ class vvp_net_t {
       void send_vec8(const vvp_vector8_t&val);
       void send_real(double val, vvp_context_t context);
       void send_long(long val);
+      void send_string(const std::string&val, vvp_context_t context);
 
       void send_vec4_pv(const vvp_vector4_t&val,
 			unsigned base, unsigned wid, unsigned vwid,
@@ -1156,6 +1157,8 @@ class vvp_net_fun_t {
       virtual void recv_real(vvp_net_ptr_t port, double bit,
                              vvp_context_t context);
       virtual void recv_long(vvp_net_ptr_t port, long bit);
+      virtual void recv_string(vvp_net_ptr_t port, const std::string&bit,
+			       vvp_context_t context);
 
 	// Part select variants of above
       virtual void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
@@ -1514,6 +1517,18 @@ extern void vvp_send_long(vvp_net_ptr_t ptr, long val);
 extern void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
                              unsigned base, unsigned width);
 
+inline void vvp_send_string(vvp_net_ptr_t ptr, const std::string&val, vvp_context_t context)
+{
+      while (vvp_net_t*cur = ptr.ptr()) {
+	    vvp_net_ptr_t next = cur->port[ptr.port()];
+
+	    if (cur->fun)
+		  cur->fun->recv_string(ptr, val, context);
+
+	    ptr = next;
+      }
+}
+
 /*
  * Part-vector versions of above functions. This function uses the
  * corresponding recv_vec4_pv method in the vvp_net_fun_t functor to
@@ -1651,6 +1666,13 @@ inline void vvp_net_t::send_real(double val, vvp_context_t context)
 	    return;
 
       vvp_send_real(out_, val, context);
+}
+
+
+inline void vvp_net_t::send_string(const std::string&val, vvp_context_t context)
+{
+      assert(!fil);
+      vvp_send_string(out_, val, context);
 }
 
 

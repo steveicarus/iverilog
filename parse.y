@@ -898,8 +898,9 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	else $$ = $1;
       }
   | K_string
-      { yyerror(@1, "sorry: String data type not supported.");
-	$$ = 0;
+      { string_type_t*tmp = new string_type_t;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
   ;
 

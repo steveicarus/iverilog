@@ -1274,6 +1274,10 @@ static void show_signal(ivl_signal_t net)
 	    data_type = "real";
 	    break;
 
+	  case IVL_VT_STRING:
+	    data_type = "string";
+	    break;
+
 	  default:
 	    data_type = "?data?";
 	    break;

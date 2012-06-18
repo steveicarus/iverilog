@@ -48,6 +48,7 @@ EXTERN_C_START
 #define vpiIntVar           612
 #define vpiByteVar          614
 #define vpiLogicVar         vpiReg
+#define vpiStringVar        616
 #define vpiBitVar           620
 
 /********* TYPESPECS *************/

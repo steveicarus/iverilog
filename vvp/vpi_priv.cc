@@ -902,6 +902,11 @@ void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
       assert(expr);
       assert(vp);
 
+	// Never bother with suppressed values. All the derived
+	// classes can ignore this type.
+      if (vp->format == vpiSuppressVal)
+	    return;
+
       expr->vpi_get_value(vp);
 
       if (vpi_trace) switch (vp->format) {

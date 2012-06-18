@@ -750,6 +750,9 @@ replaces the left operand.
 This opcode raises <bit-l> (real) to the power of <bit-r> (real). The
 result replaces the left operand.
 
+* %pushv/str <src>, <wid>
+
+Convert a vector to a string and push the string to the string stack.
 
 * %release/net <functor-label>, <base>, <width>
 * %release/reg <functor-label>, <base>, <width>
@@ -848,6 +851,11 @@ shift is done in place.
 top bits. %shiftr/s/i0 is a signed shift, so the value is sign-extended.
 
 For a negative shift %shiftr/i0 will pad the value with 'bx.
+
+* %store/str <var-label>
+
+This pops the top of the string stack and writes it to the string
+varible.
 
 * %sub <bit-l>, <bit-r>, <wid>
 

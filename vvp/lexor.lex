@@ -197,6 +197,7 @@ static char* strdupnew(char const *str)
 ".var"      { return K_VAR; }
 ".var/real" { return K_VAR_R; }
 ".var/s"    { return K_VAR_S; }
+".var/str"  { return K_VAR_STR; }
 ".var/i"    { return K_VAR_I; /* integer */ }
 ".var/2s"    { return K_VAR_2S; /* byte/shortint/int/longint signed */ }
 ".var/2u"    { return K_VAR_2U; /* byte/shortint/int/longint unsigned */ }

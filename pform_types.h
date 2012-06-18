@@ -156,6 +156,11 @@ struct real_type_t : public data_type_t {
       type_t type_code;
 };
 
+struct string_type_t : public data_type_t {
+      inline explicit string_type_t() { }
+      ~string_type_t();
+};
+
 struct class_type_t : public data_type_t {
       inline explicit class_type_t(perm_string n)
       : name(n) { }

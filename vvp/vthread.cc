@@ -99,6 +99,13 @@ struct vthread_s {
 	    double   w_real;
       } words[16];
 
+	/* Strings are operated on using a forth-like operator
+	   set. Items at the top of the stack (back()) are the objects
+	   operated on except for special cases. New objects are
+	   pushed onto the top (back()) and pulled from the top
+	   (back()) only. */
+      vector<string> stack_str;
+
 	/* My parent sets this when it wants me to wake it up. */
       unsigned i_am_joining      :1;
       unsigned i_have_ended      :1;
@@ -4141,6 +4148,41 @@ bool of_POW_WR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_PUSHV_STR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned src = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+      vvp_vector4_t vec = vthread_bits_to_vector(thr, src, wid);
+      size_t slen = (vec.size() + 7)/8;
+      vector<char>buf;
+      buf.reserve(slen);
+
+      for (size_t idx = 0 ; idx < vec.size() ; idx += 8) {
+	    char tmp = 0;
+	    size_t trans = 8;
+	    if (idx+trans > vec.size())
+		  trans = vec.size() - idx;
+
+	    for (size_t bdx = 0 ; bdx < trans ; bdx += 1) {
+		  if (vec.value(idx+bdx) == BIT4_1)
+			tmp |= 1 << bdx;
+	    }
+
+	    if (tmp != 0)
+		  buf.push_back(tmp);
+      }
+
+      string val;
+      for (vector<char>::reverse_iterator cur = buf.rbegin()
+		 ; cur != buf.rend() ; ++cur) {
+	    val.push_back(*cur);
+      }
+
+      thr->stack_str.push_back(val);
+      return true;
+}
+
 /*
  * These implement the %release/net and %release/reg instructions. The
  * %release/net instruction applies to a net kind of functor by
@@ -4477,6 +4519,22 @@ bool of_SHIFTR_S_I0(vthread_t thr, vvp_code_t cp)
       }
       return true;
 }
+
+bool of_STORE_STR(vthread_t thr, vvp_code_t cp)
+{
+	/* set the value into port 0 of the destination. */
+      vvp_net_ptr_t ptr (cp->net, 0);
+
+      assert(!thr->stack_str.empty());
+
+      string val= thr->stack_str.back();
+      thr->stack_str.pop_back();
+
+      vvp_send_string(ptr, val, thr->wt_context);
+
+      return true;
+}
+
 
 bool of_SUB(vthread_t thr, vvp_code_t cp)
 {

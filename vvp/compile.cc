@@ -194,6 +194,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%pow",    of_POW,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%pow/s",  of_POW_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%pow/wr", of_POW_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%pushv/str", of_PUSHV_STR, 2, {OA_BIT1,OA_BIT2,     OA_NONE} },
       { "%release/net",of_RELEASE_NET,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/reg",of_RELEASE_REG,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/wr",of_RELEASE_WR,2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
@@ -205,6 +206,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%shiftl/i0", of_SHIFTL_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
       { "%shiftr/i0", of_SHIFTR_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
       { "%shiftr/s/i0", of_SHIFTR_S_I0,2,{OA_BIT1,OA_NUMBER, OA_NONE} },
+      { "%store/str",of_STORE_STR,1,{OA_FUNC_PTR,OA_NONE,    OA_NONE} },
       { "%sub",    of_SUB,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%sub/wr", of_SUB_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%subi",   of_SUBI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -308,6 +310,11 @@ vvp_net_t* vvp_net_lookup(const char*label)
 		case vpiRealVar: {
 		      __vpiRealVar*sig = dynamic_cast<__vpiRealVar*>(vpi);
 		      return sig->net;
+		}
+
+		case vpiStringVar: {
+		      __vpiStringVar*sig = dynamic_cast<__vpiStringVar*>(vpi);
+		      return sig->get_net();
 		}
 
 		case vpiNamedEvent: {
