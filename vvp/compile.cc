@@ -70,7 +70,9 @@ enum operand_e {
 	/* The operand is a second functor pointer */
       OA_FUNC_PTR2,
 	/* The operand is a VPI handle */
-      OA_VPI_PTR
+      OA_VPI_PTR,
+	/* String */
+      OA_STRING
 };
 
 struct opcode_table_s {
@@ -194,6 +196,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%pow",    of_POW,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%pow/s",  of_POW_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%pow/wr", of_POW_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%pushi/str",of_PUSHI_STR,1,{OA_STRING, OA_NONE,     OA_NONE} },
       { "%pushv/str", of_PUSHV_STR, 2, {OA_BIT1,OA_BIT2,     OA_NONE} },
       { "%release/net",of_RELEASE_NET,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/reg",of_RELEASE_REG,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
@@ -1668,6 +1671,15 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 		  }
 
 		  compile_vpi_lookup(&code->handle, opa->argv[idx].symb.text);
+		  break;
+
+		case OA_STRING:
+		  if (opa->argv[idx].ltype != L_STRING) {
+			yyerror("operand format");
+			break;
+		  }
+
+		  code->text = opa->argv[idx].text;
 		  break;
 	    }
       }

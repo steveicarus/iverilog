@@ -148,6 +148,7 @@ extern bool of_PAD(vthread_t thr, vvp_code_t code);
 extern bool of_POW(vthread_t thr, vvp_code_t code);
 extern bool of_POW_S(vthread_t thr, vvp_code_t code);
 extern bool of_POW_WR(vthread_t thr, vvp_code_t code);
+extern bool of_PUSHI_STR(vthread_t thr, vvp_code_t code);
 extern bool of_PUSHV_STR(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_NET(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_REG(vthread_t thr, vvp_code_t code);
@@ -191,6 +192,7 @@ struct vvp_code_s {
 	    vvp_array_t array;
 	    class __vpiHandle*handle;
 	    struct __vpiScope*scope;
+	    const char*text;
       };
 
       union {

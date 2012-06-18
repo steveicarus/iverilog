@@ -733,7 +733,6 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
 
 static int show_stmt_assign_sig_string(ivl_statement_t net)
 {
-      struct vector_info res;
       ivl_lval_t lval = ivl_stmt_lval(net, 0);
       ivl_expr_t rval = ivl_stmt_rval(net);
       ivl_signal_t var;
@@ -742,20 +741,8 @@ static int show_stmt_assign_sig_string(ivl_statement_t net)
 
       var = ivl_lval_sig(lval);
 
-      switch (ivl_expr_value(rval)) {
-	  case IVL_VT_BOOL:
-	  case IVL_VT_LOGIC:
-	    res = draw_eval_expr(rval, 0);
-	    fprintf(vvp_out, "    %%pushv/str %u, %u;\n",
-		    res.base, res.wid);
-	    fprintf(vvp_out, "    %%store/str v%p_0;\n", var);
-	    if (res.base > 0)
-		  clr_vector(res);
-	    break;
-	  default:
-	    assert(0);
-	    break;
-      }
+      draw_eval_string(rval);
+      fprintf(vvp_out, "    %%store/str v%p_0;\n", var);
 
       return 0;
 }

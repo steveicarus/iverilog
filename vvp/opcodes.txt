@@ -750,6 +750,10 @@ replaces the left operand.
 This opcode raises <bit-l> (real) to the power of <bit-r> (real). The
 result replaces the left operand.
 
+* %pushi/str <text>
+
+Push a literal string to the string stack.
+
 * %pushv/str <src>, <wid>
 
 Convert a vector to a string and push the string to the string stack.

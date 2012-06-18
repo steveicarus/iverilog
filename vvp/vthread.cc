@@ -4148,6 +4148,13 @@ bool of_POW_WR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_PUSHI_STR(vthread_t thr, vvp_code_t cp)
+{
+      const char*text = cp->text;
+      thr->stack_str.push_back(string(text));
+      return true;
+}
+
 bool of_PUSHV_STR(vthread_t thr, vvp_code_t cp)
 {
       unsigned src = cp->bit_idx[0];

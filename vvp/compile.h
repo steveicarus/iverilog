@@ -388,7 +388,7 @@ extern void compile_named_event(char*label, char*type);
  */
 
 #define OPERAND_MAX 3
-enum ltype_e { L_NUMB, L_SYMB };
+enum ltype_e { L_NUMB, L_SYMB, L_STRING };
 
 struct comp_operands_s {
       unsigned argc;
@@ -397,6 +397,7 @@ struct comp_operands_s {
 	    union {
 		  unsigned long numb;
 		  struct symb_s symb;
+		  const char   *text;
 	    };
       } argv[OPERAND_MAX];
 };

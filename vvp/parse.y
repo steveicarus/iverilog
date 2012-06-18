@@ -883,23 +883,31 @@ operands
 	;
 
 operand
-	: symbol
-		{ comp_operands_t opa = (comp_operands_t)
-			calloc(1, sizeof(struct comp_operands_s));
-		  opa->argc = 1;
-		  opa->argv[0].ltype = L_SYMB;
-		  opa->argv[0].symb = $1;
-		  $$ = opa;
-		}
-	| T_NUMBER
-		{ comp_operands_t opa = (comp_operands_t)
-			calloc(1, sizeof(struct comp_operands_s));
-		  opa->argc = 1;
-		  opa->argv[0].ltype = L_NUMB;
-		  opa->argv[0].numb = $1;
-		  $$ = opa;
-		}
-	;
+  : symbol
+      { comp_operands_t opa = (comp_operands_t)
+		  calloc(1, sizeof(struct comp_operands_s));
+	opa->argc = 1;
+	opa->argv[0].ltype = L_SYMB;
+	opa->argv[0].symb = $1;
+	$$ = opa;
+      }
+  | T_NUMBER
+      { comp_operands_t opa = (comp_operands_t)
+		  calloc(1, sizeof(struct comp_operands_s));
+	opa->argc = 1;
+	opa->argv[0].ltype = L_NUMB;
+	opa->argv[0].numb = $1;
+	$$ = opa;
+      }
+  | T_STRING
+      { comp_operands_t opa = (comp_operands_t)
+		  calloc(1, sizeof(struct comp_operands_s));
+	opa->argc = 1;
+	opa->argv[0].ltype = L_STRING;
+	opa->argv[0].text = $1;
+	$$ = opa;
+      }
+  ;
 
 
   /* The argument_list is a list of vpiHandle objects that can be
