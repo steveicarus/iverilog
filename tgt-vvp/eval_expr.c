@@ -459,6 +459,39 @@ static struct vector_info draw_binary_expr_eq_real(ivl_expr_t expr)
       return res;
 }
 
+static struct vector_info draw_binary_expr_eq_string(ivl_expr_t expr)
+{
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+
+      struct vector_info res;
+      res.base = allocate_vector(1);
+      res.wid = 1;
+      assert(res.base);
+
+      draw_eval_string(le);
+      draw_eval_string(re);
+
+      fprintf(vvp_out, "    %%cmp/str;\n");
+
+      switch (ivl_expr_opcode(expr)) {
+
+	  case 'e': /* == */
+	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n", res.base);
+	    break;
+
+	  case 'n': /* != */
+	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n", res.base);
+	    fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+      return res;
+}
+
 static struct vector_info draw_binary_expr_eq(ivl_expr_t expr,
 					      unsigned ewid,
 					      int stuff_ok_flag)
@@ -476,13 +509,30 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t expr,
 	    return draw_binary_expr_eq_real(expr);
       }
 
+      if ((ivl_expr_value(le) == IVL_VT_STRING)
+	  && (ivl_expr_value(re) == IVL_VT_STRING)) {
+	    return draw_binary_expr_eq_string(expr);
+      }
+
+      if ((ivl_expr_value(le) == IVL_VT_STRING)
+	  && (ivl_expr_type(re) == IVL_EX_STRING)) {
+	    return draw_binary_expr_eq_string(expr);
+      }
+
+      if ((ivl_expr_type(le) == IVL_EX_STRING)
+	  && (ivl_expr_value(re) == IVL_VT_STRING)) {
+	    return draw_binary_expr_eq_string(expr);
+      }
+
       if (number_is_immediate(re,16,0) && !number_is_unknown(re))
 	    return draw_eq_immediate(expr, ewid, le, re, stuff_ok_flag);
 
       assert(ivl_expr_value(le) == IVL_VT_LOGIC
-	     || ivl_expr_value(le) == IVL_VT_BOOL);
+	     || ivl_expr_value(le) == IVL_VT_BOOL
+	     || ivl_expr_value(le) == IVL_VT_STRING);
       assert(ivl_expr_value(re) == IVL_VT_LOGIC
-	     || ivl_expr_value(re) == IVL_VT_BOOL);
+	     || ivl_expr_value(re) == IVL_VT_BOOL
+	     || ivl_expr_value(re) == IVL_VT_STRING);
 
       wid = ivl_expr_width(le);
       if (ivl_expr_width(re) > wid)
@@ -825,6 +875,57 @@ static struct vector_info draw_binary_expr_le_real(ivl_expr_t expr)
       return res;
 }
 
+static struct vector_info draw_binary_expr_le_string(ivl_expr_t expr)
+{
+      struct vector_info res;
+
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+
+      res.base = allocate_vector(1);
+      res.wid  = 1;
+
+      assert(res.base);
+
+	/* The %cmp/str function implements < and <= operands. To get
+	   the > and >= results, simply switch the order of the
+	   operands. */
+      switch (ivl_expr_opcode(expr)) {
+	  case '<':
+	  case 'L':
+	    draw_eval_string(le);
+	    draw_eval_string(re);
+	    break;
+	  case '>':
+	  case 'G':
+	    draw_eval_string(re);
+	    draw_eval_string(le);
+	    break;
+	  default:
+	    assert(0);
+      }
+
+      switch (ivl_expr_opcode(expr)) {
+	  case '<':
+	  case '>':
+	    fprintf(vvp_out, "    %%cmp/str;\n");
+	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
+	    break;
+
+	  case 'L': /* <= */
+	  case 'G': /* >= */
+	    fprintf(vvp_out, "    %%cmp/str;\n");
+	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
+	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+      return res;
+}
+
 static struct vector_info draw_binary_expr_le_bool(ivl_expr_t expr,
 						   unsigned wid)
 {
@@ -917,6 +1018,21 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 	  && ivl_expr_value(re) == IVL_VT_BOOL
 	  && owid < 64) {
 	    return draw_binary_expr_le_bool(expr, wid);
+      }
+
+      if ((ivl_expr_value(le) == IVL_VT_STRING)
+	  && (ivl_expr_value(re) == IVL_VT_STRING)) {
+	    return draw_binary_expr_le_string(expr);
+      }
+
+      if ((ivl_expr_value(le) == IVL_VT_STRING)
+	  && (ivl_expr_type(re) == IVL_EX_STRING)) {
+	    return draw_binary_expr_le_string(expr);
+      }
+
+      if ((ivl_expr_type(le) == IVL_EX_STRING)
+	  && (ivl_expr_value(re) == IVL_VT_STRING)) {
+	    return draw_binary_expr_eq_string(expr);
       }
 
       assert(ivl_expr_value(le) == IVL_VT_LOGIC

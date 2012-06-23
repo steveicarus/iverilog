@@ -1491,6 +1491,36 @@ bool of_CMPS(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_CMPSTR(vthread_t thr, vvp_code_t)
+{
+      assert(thr->stack_str.size() >= 2);
+      string re = thr->stack_str.back();
+      thr->stack_str.pop_back();
+      string le = thr->stack_str.back();
+      thr->stack_str.pop_back();
+
+      int rc = strcmp(le.c_str(), re.c_str());
+
+      vvp_bit4_t eq;
+      vvp_bit4_t lt;
+
+      if (rc == 0) {
+	    eq = BIT4_1;
+	    lt = BIT4_0;
+      } else if (rc < 0) {
+	    eq = BIT4_0;
+	    lt = BIT4_1;
+      } else {
+	    eq = BIT4_0;
+	    lt = BIT4_0;
+      }
+
+      thr_put_bit(thr, 4, eq);
+      thr_put_bit(thr, 5, lt);
+
+      return true;
+}
+
 bool of_CMPIS(vthread_t thr, vvp_code_t cp)
 {
       vvp_bit4_t eq  = BIT4_1;
@@ -3153,6 +3183,20 @@ bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_LOAD_STR(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+
+      vvp_fun_signal_string*fun = dynamic_cast<vvp_fun_signal_string*> (net->fun);
+      assert(fun);
+
+      const string&val = fun->get_string();
+      thr->stack_str.push_back(val);
+
+      return true;
+}
+
 /* %load/v <bit>, <label>, <wid>
  *
  * Implement the %load/v instruction. Load the vector value of the
@@ -3177,7 +3221,7 @@ static void load_base(vvp_code_t cp, vvp_vector4_t&dst)
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
       if (sig == 0) {
 	    cerr << "%%load/v error: Net arg not a signal? "
-		 << typeid(*net->fil).name() << endl;
+		 << (net->fil ? typeid(*net->fil).name() : typeid(*net->fun).name()) << endl;
 	    assert(sig);
       }
 

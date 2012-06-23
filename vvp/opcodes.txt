@@ -280,6 +280,13 @@ instruction will also treat x values in either operand as don't care.
 
 Only bit 4 is set by these instructions.
 
+* %cmp/str
+
+This instruction pops the top two strings from the string stack and
+compares them. The results of the comparison go into bits 4 and 5:
+
+	4: eq  (equal)
+	5: lt  (less than)
 
 * %cvt/sr <bit-l>, <bit-r>
 * %cvt/rs <bit-l>, <bit-r>

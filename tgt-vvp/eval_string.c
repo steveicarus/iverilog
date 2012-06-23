@@ -20,32 +20,41 @@
 # include  "vvp_priv.h"
 # include  <assert.h>
 
+static void fallback_eval(ivl_expr_t expr)
+{
+      struct vector_info res = draw_eval_expr(expr, 0);
+      fprintf(vvp_out, "    %%pushv/str %u, %u; Cast BOOL/LOGIC to string\n",
+	      res.base, res.wid);
+      if (res.base > 0)
+	    clr_vector(res);
+}
+
+static void string_ex_signal(ivl_expr_t expr)
+{
+      ivl_signal_t sig = ivl_expr_signal(expr);
+
+      if (ivl_signal_data_type(sig) == IVL_VT_STRING) {
+	    fprintf(vvp_out, "    %%load/str v%p_0;\n", sig);
+	    return;
+      }
+
+      fallback_eval(expr);
+}
 
 void draw_eval_string(ivl_expr_t expr)
 {
-      struct vector_info res;
 
       switch (ivl_expr_type(expr)) {
 	  case IVL_EX_STRING:
 	    fprintf(vvp_out, "    %%pushi/str \"%s\";\n", ivl_expr_string(expr));
 	    break;
 
+	  case IVL_EX_SIGNAL:
+	    string_ex_signal(expr);
+	    break;
+
 	  default:
-	    switch (ivl_expr_value(expr)) {
-
-		case IVL_VT_BOOL:
-		case IVL_VT_LOGIC:
-		  res = draw_eval_expr(expr, 0);
-		  fprintf(vvp_out, "    %%pushv/str %u, %u; Cast BOOL/LOGIC to string\n",
-			  res.base, res.wid);
-		  if (res.base > 0)
-			clr_vector(res);
-		  break;
-
-		default:
-		  assert(0);
-		  break;
-	    }
+	    fallback_eval(expr);
 	    break;
       }
 }
