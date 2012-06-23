@@ -969,9 +969,11 @@ static char *get_display(unsigned int *rtnsz, const struct strobe_cb_info *info)
       case vpiStringVar:
 	value.format = vpiStringVal;
 	vpi_get_value(item, &value);
-	width = strlen(value.value.str);
+	fmt = strdup(value.value.str);
+	width = get_format(&result, fmt, info, &idx);
+	free(fmt);
         rtn = realloc(rtn, (size+width)*sizeof(char));
-        memcpy(rtn+size-1, value.value.str, width);
+        memcpy(rtn+size-1, result, width);
 	break;
 
       case vpiSysFuncCall:
