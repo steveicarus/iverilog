@@ -110,10 +110,10 @@ NetEBShift* NetEBShift::dup_expr() const
 
 NetEConcat* NetEConcat::dup_expr() const
 {
-      NetEConcat*dup = new NetEConcat(parms_.count(), repeat_);
+      NetEConcat*dup = new NetEConcat(parms_.size(), repeat_, expr_type_);
       ivl_assert(*this, dup);
       dup->set_line(*this);
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1)
 	    if (parms_[idx]) {
 		  NetExpr*tmp = parms_[idx]->dup_expr();
                   ivl_assert(*this, tmp);

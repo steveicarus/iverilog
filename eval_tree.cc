@@ -1127,7 +1127,7 @@ NetEConst* NetEConcat::eval_tree()
       }
 
       unsigned gap = 0;
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
 
 	      // Parameter not here? This is an error, but presumably
 	      // already caught and we are here just to catch more.
@@ -1178,7 +1178,7 @@ NetEConst* NetEConcat::eval_tree()
 
       unsigned cur = 0;
       bool is_string_flag = true;
-      for (unsigned idx = parms_.count() ;  idx > 0 ;  idx -= 1) {
+      for (unsigned idx = parms_.size() ;  idx > 0 ;  idx -= 1) {
 	    NetEConst*expr = dynamic_cast<NetEConst*>(parms_[idx-1]);
 	    if (expr == 0)
 		  return 0;

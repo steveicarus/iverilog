@@ -126,6 +126,8 @@ static const struct opcode_table_s opcode_table[] = {
       { "%cmp/z",  of_CMPZ,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmpi/s", of_CMPIS,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmpi/u", of_CMPIU,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%concat/str",of_CONCAT_STR,0,{OA_NONE, OA_NONE,     OA_NONE} },
+      { "%concati/str",of_CONCATI_STR,1,{OA_STRING,OA_NONE,  OA_NONE} },
       { "%cvt/rs", of_CVT_RS, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%cvt/ru", of_CVT_RU, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%cvt/rv", of_CVT_RV, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -195,6 +197,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%or",     of_OR,     3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%or/r",   of_ORR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%pad",    of_PAD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%pop/str",of_POP_STR,1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%pow",    of_POW,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%pow/s",  of_POW_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%pow/wr", of_POW_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
@@ -503,6 +506,12 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 		       && n == strlen(label())) {
 
 		  val.ptr = vpip_make_vthr_word(base, ss);
+		  sym_set_value(sym_vpi, label(), val);
+
+	    } else if (1 == sscanf(label(), "S<%u,str>%n", &base, &n)
+		       && n == strlen(label())) {
+
+		  val.ptr = vpip_make_vthr_str_stack(base);
 		  sym_set_value(sym_vpi, label(), val);
 	    }
 

@@ -21,6 +21,8 @@
 
 # include  "vvp_net.h"
 
+# include  <string>
+
 /*
  * A vthread is a simulation thread that executes instructions when
  * they are scheduled. This structure contains all the thread specific
@@ -116,6 +118,11 @@ extern void vthread_put_bit(struct vthread_s*thr, unsigned addr, vvp_bit4_t bit)
 
 extern double vthread_get_real(struct vthread_s*thr, unsigned addr);
 extern void vthread_put_real(struct vthread_s*thr, unsigned addr, double val);
+
+/* Get the string from the requested position in the vthread string
+   stack. The top of the stack is depth==0, and items below are
+   depth==1, etc. */
+extern std::string vthread_get_str_stack(struct vthread_s*thr, unsigned depth);
 
 /* This is used to actually delete a thread once we are done with it. */
 extern void vthread_delete(vthread_t thr);

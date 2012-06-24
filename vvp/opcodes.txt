@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -12,12 +12,25 @@ operands. In no case are there more than 3 operands. This chapter
 describes the specific behavior of each opcode, in enough detail
 (I hope) that its complete effect can be predicted.
 
-General principles of Arithmetic:
+General Principles of Arithmetic (current plan):
 
 The binary arithmetic instruction in general takes three parameters,
 the left operand, the right operand, and the base. The left operand is
 replaced with the result, which is the same width as the left and
 right operands.
+
+General Principles of Arithmetic (new plan):
+
+For strings, all arithmetic is stack based. That is, there is an
+abstract stack of strings from which operations pull their operands
+and push their results. This is somewhat like FORTH (or an HP calculator
+RPN notation) and spares the need to keep register addresses in
+operands. I may find this leads to a more compact form of instruction
+code, and may lead to more efficient operators overall, and in
+particular I may find improved efficiency overall; so after the
+experience of implementing it for strings, I'll want to change other
+types around to using this method as well. Keep this in mind whenever
+considering adding new instructions to vvp.
 
 * %abs/wr <bit-o>, <bit-i>
 
@@ -287,6 +300,18 @@ compares them. The results of the comparison go into bits 4 and 5:
 
 	4: eq  (equal)
 	5: lt  (less than)
+
+For the purposes of calculating the lt bit, the top string is the
+right operand and the string underneath is the left operand. This
+instruction removes two strings from the stack.
+
+* %concat/str
+* %concati/str <string>
+
+Pop the top string, and concatenate it to the new top string. Or think
+of it as possing the tail, then the head, concatenating them, and
+pushing the result. The stack starts with two strings in the stack,
+and ends with one string in the stack.
 
 * %cvt/sr <bit-l>, <bit-r>
 * %cvt/rs <bit-l>, <bit-r>
@@ -741,6 +766,12 @@ destination vector in register space. The destination may overlap
 the source bit. The <dst> may not be 0-3. This is useful for zero
 or sign extending a vector.
 
+* %pop/str <num>
+
+Pop this many items from the string stack. This is the opposite of the
+%pushX/str opcode which pushes a string to the stack. The %pop/str is
+not normally needed because the %store/str includes an implicit pop,
+but sometimes it is necessary to pop explicitly.
 
 * %pow <bit-l>, <bit-r>, <wid>
 * %pow/s <bit-l>, <bit-r>, <wid>

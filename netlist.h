@@ -3747,16 +3747,17 @@ class NetEBShift : public NetEBinary {
 class NetEConcat  : public NetExpr {
 
     public:
-      NetEConcat(unsigned cnt, unsigned repeat =1);
+      NetEConcat(unsigned cnt, unsigned repeat, ivl_variable_type_t vt);
       ~NetEConcat();
 
 	// Manipulate the parameters.
       void set(unsigned idx, NetExpr*e);
 
       unsigned repeat() const { return repeat_; }
-      unsigned nparms() const { return parms_.count() ; }
+      unsigned nparms() const { return parms_.size() ; }
       NetExpr* parm(unsigned idx) const { return parms_[idx]; }
 
+      virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual bool has_width() const;
       virtual NetEConcat* dup_expr() const;
@@ -3766,8 +3767,9 @@ class NetEConcat  : public NetExpr {
       virtual void dump(ostream&) const;
 
     private:
-      svector<NetExpr*>parms_;
+      std::vector<NetExpr*>parms_;
       unsigned repeat_;
+      ivl_variable_type_t expr_type_;
 };
 
 

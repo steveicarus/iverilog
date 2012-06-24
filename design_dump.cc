@@ -1422,7 +1422,7 @@ void NetEConcat::dump(ostream&o) const
       else
 	    o << "{";
 
-      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
 	    if (parms_[idx])
 		  o << ", " << *parms_[idx];
 	    else

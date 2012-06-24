@@ -255,6 +255,11 @@ static char* strdupnew(char const *str)
       assert(yylval.text);
       return T_SYMBOL; }
 
+"S<"[0-9]*",str>" {
+      yylval.text = strdup(yytext);
+      assert(yylval.text);
+      return T_SYMBOL; }
+
 "T<"[0-9]*","[0-9]*","[us]">" {
       yylval.text = strdup(yytext);
       assert(yylval.text);

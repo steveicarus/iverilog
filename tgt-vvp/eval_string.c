@@ -29,6 +29,36 @@ static void fallback_eval(ivl_expr_t expr)
 	    clr_vector(res);
 }
 
+static void string_ex_concat(ivl_expr_t expr)
+{
+      unsigned repeat;
+
+      assert(ivl_expr_parms(expr) != 0);
+      assert(ivl_expr_repeat(expr) != 0);
+
+	/* Push the first string onto the stack, no matter what. */
+      draw_eval_string(ivl_expr_parm(expr,0));
+
+      for (repeat = 0 ; repeat < ivl_expr_repeat(expr) ; repeat += 1) {
+	    unsigned idx;
+	    for (idx = (repeat==0)? 1 : 0 ; idx < ivl_expr_parms(expr) ; idx += 1) {
+		  ivl_expr_t sub = ivl_expr_parm(expr,idx);
+
+		    /* Special case: If operand is a string literal,
+		       then concat it using the %concati/str
+		       instruction. */
+		  if (ivl_expr_type(sub) == IVL_EX_STRING) {
+			fprintf(vvp_out, "    %%concati/str \"%s\";\n",
+				ivl_expr_string(sub));
+			continue;
+		  }
+
+		  draw_eval_string(sub);
+		  fprintf(vvp_out, "    %%concat/str;\n");
+	    }
+      }
+}
+
 static void string_ex_signal(ivl_expr_t expr)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
@@ -51,6 +81,10 @@ void draw_eval_string(ivl_expr_t expr)
 
 	  case IVL_EX_SIGNAL:
 	    string_ex_signal(expr);
+	    break;
+
+	  case IVL_EX_CONCAT:
+	    string_ex_concat(expr);
 	    break;
 
 	  default:

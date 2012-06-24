@@ -200,7 +200,7 @@ void dll_target::expr_concat(const NetEConcat*net)
       assert(cur);
 
       cur->type_  = IVL_EX_CONCAT;
-      cur->value_ = IVL_VT_VECTOR;
+      cur->value_ = net->expr_type();
       cur->width_ = net->expr_width();
       cur->signed_ = net->has_sign() ? 1 : 0;
       cur->sized_ = 1;

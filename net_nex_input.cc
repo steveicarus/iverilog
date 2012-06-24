@@ -56,7 +56,7 @@ NexusSet* NetEConcat::nex_input(bool rem_out)
 {
       if (parms_[0] == NULL) return NULL;
       NexusSet*result = parms_[0]->nex_input(rem_out);
-      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
 	    if (parms_[idx] == NULL) {
 		  delete result;
 		  return NULL;

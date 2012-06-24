@@ -31,6 +31,9 @@ struct args_info {
       char*text;
       int vec_flag; /* True if the vec must be released. */
       struct vector_info vec;
+	/* String Stack position if this argument is a calculated string. */
+      int str_flag;
+      unsigned str_stack;
       struct args_info *child; /* Arguments can be nested. */
 };
 
@@ -265,6 +268,11 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 
       ivl_parameter_t par;
 
+	/* Keep track of how much string stack this function call is
+	   going to need. We'll need this for making stack references,
+	   and also to clean out the stack when done. */
+      unsigned str_stack_need = 0;
+
 	/* Figure out how many expressions are going to be evaluated
 	   for this task call. I won't need to evaluate expressions
 	   for items that are VPI objects directly. */
@@ -376,7 +384,17 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		           "W<%u,r>", args[idx].vec.base);
 		  break;
 		case IVL_VT_STRING:
-		    /* STRING expressions not supported yet. */
+		    /* Eval the string into the stack, and tell VPI
+		       about the stack position. */
+		  draw_eval_string(expr);
+		  args[idx].vec_flag = 0;
+		  args[idx].vec.base = 0;
+		  args[idx].vec.wid = 0;
+		  args[idx].str_flag = 1;
+		  args[idx].str_stack = str_stack_need;
+		  str_stack_need += 1;
+		  buffer[0] = 0;
+		  break;
 		default:
 		  assert(0);
 	    }
@@ -388,7 +406,16 @@ static void draw_vpi_taskfunc_args(const char*call_string,
       for (idx = 0 ;  idx < parm_count ;  idx += 1) {
 	    struct args_info*ptr;
 
-	    fprintf(vvp_out, ", %s", args[idx].text);
+	    if (args[idx].str_flag) {
+		    /* If this is a string stack reference, then
+		       calculate the stack depth and use that to
+		       generate the completed string. */
+		  unsigned pos = str_stack_need - args[idx].str_stack - 1;
+		  fprintf(vvp_out, ", S<%u,str>",pos);
+	    } else {
+		  fprintf(vvp_out, ", %s", args[idx].text);
+	    }
+
 	    free(args[idx].text);
 	      /* Clear the nested children vectors. */
 	    for (ptr = &args[idx]; ptr != NULL; ptr = ptr->child) {
@@ -409,6 +436,9 @@ static void draw_vpi_taskfunc_args(const char*call_string,
       free(args);
 
       fprintf(vvp_out, ";\n");
+
+      if (str_stack_need > 0)
+	    fprintf(vvp_out, "    %%pop/str %u;\n", str_stack_need);
 }
 
 void draw_vpi_task_call(ivl_statement_t tnet)

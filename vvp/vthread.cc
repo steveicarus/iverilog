@@ -189,6 +189,13 @@ void vthread_put_real(struct vthread_s*thr, unsigned addr, double val)
       thr->words[addr].w_real = val;
 }
 
+string vthread_get_str_stack(struct vthread_s*thr, unsigned depth)
+{
+      assert(depth < thr->stack_str.size());
+      unsigned use_index = thr->stack_str.size()-1-depth;
+      return thr->stack_str[use_index];
+}
+
 template <class T> T coerce_to_width(const T&that, unsigned width)
 {
       if (that.size() == width)
@@ -1814,6 +1821,29 @@ bool of_CMPZ(vthread_t thr, vvp_code_t cp)
 
       thr_put_bit(thr, 4, eq);
 
+      return true;
+}
+
+/*
+ *  %concat/str;
+ */
+bool of_CONCAT_STR(vthread_t thr, vvp_code_t)
+{
+      assert(thr->stack_str.size() >= 1);
+      string text = thr->stack_str.back();
+      thr->stack_str.pop_back();
+      thr->stack_str.back().append(text);
+      return true;
+}
+
+/*
+ *  %concati/str <string>;
+ */
+bool of_CONCATI_STR(vthread_t thr, vvp_code_t cp)
+{
+      const char*text = cp->text;
+      assert(thr->stack_str.size() >= 1);
+      thr->stack_str.back().append(text);
       return true;
 }
 
@@ -4110,6 +4140,21 @@ bool of_NOR(vthread_t thr, vvp_code_t cp)
 	    cp->opcode = &of_NOR_wide;
 
       return cp->opcode(thr, cp);
+}
+
+/*
+ *  %pop/str <number>
+ */
+bool of_POP_STR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned cnt = cp->number;
+      assert(cnt <= thr->stack_str.size());
+
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1) {
+	    thr->stack_str.pop_back();
+      }
+
+      return true;
 }
 
 bool of_POW(vthread_t thr, vvp_code_t cp)
