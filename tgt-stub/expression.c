@@ -165,6 +165,40 @@ static void show_memory_expression(ivl_expr_t net, unsigned ind)
 	      width);
 }
 
+static void show_select_expression(ivl_expr_t net, unsigned ind)
+{
+      unsigned width = ivl_expr_width(net);
+      const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
+      ivl_expr_t oper1 = ivl_expr_oper1(net);
+      ivl_expr_t oper2 = ivl_expr_oper2(net);
+
+      if (ivl_expr_value(oper1) == IVL_VT_STRING) {
+	      /* If the sub-expression is a STRING, then this is a
+		 substring and the code generator will handle it
+		 differently. */
+	    fprintf(out, "%*s<substring: width=%u/8>\n", ind, "", width);
+	    show_expression(oper1, ind+3);
+	    show_expression(oper2, ind+3);
+
+      } else if (oper2) {
+	      /* If oper2 is present, then it is the base of a part
+		 select. The width of the expression defines the range
+		 of the part select. */
+	    fprintf(out, "%*s<select: width=%u, %s>\n", ind, "",
+		    width, sign);
+	    show_expression(oper1, ind+3);
+	    show_expression(oper2, ind+3);
+
+      } else {
+	      /* There is no base expression so this is a pad
+		 operation. The sub-expression is padded (signed or
+		 unsigned as appropriate) to the expression width. */
+	    fprintf(out, "%*s<expr pad: width=%u, %s>\n", ind, "",
+		    width, sign);
+	    show_expression(oper1, ind+3);
+      }
+}
+
 static void show_signal_expression(ivl_expr_t net, unsigned ind)
 {
       unsigned width = ivl_expr_width(net);
@@ -312,18 +346,7 @@ void show_expression(ivl_expr_t net, unsigned ind)
 	  }
 
 	  case IVL_EX_SELECT:
-	      /* The SELECT expression can be used to express part
-		 select, or if the base is null vector extension. */
-	    if (ivl_expr_oper2(net)) {
-		  fprintf(out, "%*s<select: width=%u, %s>\n", ind, "",
-			  width, sign);
-		  show_expression(ivl_expr_oper1(net), ind+3);
-		  show_expression(ivl_expr_oper2(net), ind+3);
-	    } else {
-		  fprintf(out, "%*s<expr pad: width=%u, %s>\n", ind, "",
-			  width, sign);
-		  show_expression(ivl_expr_oper1(net), ind+3);
-	    }
+	    show_select_expression(net, ind);
 	    break;
 
 	  case IVL_EX_STRING:

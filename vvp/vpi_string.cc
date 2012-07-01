@@ -40,6 +40,22 @@ __vpiStringVar::__vpiStringVar(__vpiScope*sc, const char*na, vvp_net_t*ne)
 int __vpiStringVar::get_type_code(void) const
 { return vpiStringVar; }
 
+int __vpiStringVar::vpi_get(int code)
+{
+      vvp_fun_signal_string*fun = dynamic_cast<vvp_fun_signal_string*> (net_->fun);
+      assert(fun);
+      string str = fun->get_string();
+
+      switch (code) {
+	  case vpiSize:
+	      // The vpiSize of a string variable is the number of
+	      // bytes (characters) in that string.
+	    return str.size();
+	  default:
+	    return 0;
+      }
+}
+
 void __vpiStringVar::vpi_get_value(p_vpi_value val)
 {
       vvp_fun_signal_string*fun = dynamic_cast<vvp_fun_signal_string*> (net_->fun);

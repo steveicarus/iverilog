@@ -2762,6 +2762,25 @@ static struct vector_info draw_select_unsized_literal(ivl_expr_t expr,
       return res;
 }
 
+static void draw_select_string_dest(ivl_expr_t expr, struct vector_info res)
+{
+      ivl_expr_t sube  = ivl_expr_oper1(expr);
+      ivl_expr_t shift = ivl_expr_oper2(expr);
+      int shift_i;
+
+      draw_eval_string(sube);
+
+      shift_i = allocate_word();
+      draw_eval_expr_into_integer(shift, shift_i);
+
+      assert(res.wid % 8 == 0);
+
+      clr_word(shift_i);
+
+      fprintf(vvp_out, "    %%substr/v %u, %d, %u;\n", res.base, shift_i, res.wid);
+      fprintf(vvp_out, "    %%pop/str 1;\n");
+}
+
 static struct vector_info draw_select_expr(ivl_expr_t expr, unsigned wid,
 					   int stuff_ok_flag)
 {
@@ -2781,6 +2800,15 @@ static struct vector_info draw_select_expr(ivl_expr_t expr, unsigned wid,
       if ( (res.base = allocate_vector_exp(expr, wid, alloc_exclusive)) != 0) {
 	    fprintf(vvp_out, "; Reuse base=%u wid=%u from lookaside.\n",
 		    res.base, wid);
+	    return res;
+      }
+
+	/* Special case: The sub expression is a string, so do a
+	   string select then a part select from that. */
+      if (ivl_expr_value(sube) == IVL_VT_STRING) {
+	    res.base = allocate_vector(wid);
+	    res.wid  = wid;
+	    draw_select_string_dest(expr, res);
 	    return res;
       }
 
@@ -2885,6 +2913,13 @@ static void draw_select_expr_dest(ivl_expr_t expr, struct vector_info dest,
 
       ivl_expr_t sube = ivl_expr_oper1(expr);
       ivl_expr_t shift= ivl_expr_oper2(expr);
+
+	/* Special case: The sub expression is a string, so do a
+	   string select then a part select from that. */
+      if (ivl_expr_value(sube) == IVL_VT_STRING) {
+	    draw_select_string_dest(expr, dest);
+	    return;
+      }
 
 	/* If the shift expression is not present, then this is really
 	   a pad expression, and that can be handled pretty
@@ -3012,7 +3047,6 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t expr, unsigned wid)
 {
       unsigned parm_count = ivl_expr_parms(expr);
       struct vector_info res;
-
 
 	/* If the function has no parameters, then use this short-form
 	   to draw the statement. */

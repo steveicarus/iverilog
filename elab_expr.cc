@@ -1586,39 +1586,16 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	      // this is system verilog, then test to see if the name is
 	      // really a method attached to an object.
 	    if (gn_system_verilog() && path_.size() >= 2) {
-		  pform_name_t use_path = path_;
-		  perm_string method_name = peek_tail_name(use_path);
-		  use_path.pop_back();
+		  NetExpr*tmp = elaborate_expr_enum_method_(des, scope, expr_wid);
+		  if (tmp) return tmp;
+	    }
 
-		  NetNet *net;
-		  const NetExpr *par;
-		  NetEvent *eve;
-		  const NetExpr *ex1, *ex2;
-
-		  symbol_search(this, des, scope, use_path,
-		                net, par, eve, ex1, ex2);
-
-		    // Check to see if we have a net and if so is it an
-		    // enumeration? If so then check to see if this is an
-		    // enumeration method call.
-		  if (net != 0) {
-			if (netenum_t*netenum = net->enumeration()) {
-				// We may need the net expression for the
-				// enumeration variable so get it.
-			      NetESignal*expr = new NetESignal(net);
-			      expr->set_line(*this);
-				// This expression cannot be a select!
-			      assert(use_path.back().index.empty());
-
-			      PExpr*tmp = parms_.size() ? parms_[0] : 0;
-			      return check_for_enum_methods(this, des, scope,
-			                                    netenum, use_path,
-			                                    method_name, expr,
-			                                    expr_wid, tmp,
-			                                    parms_.size());
-			}
-
-		  }
+	      // Maybe this is a method attached to a string variable?
+	      // If this is System Verilog, then test to see if the
+	      // name is really a method attached to a string object.
+	    if (gn_system_verilog() && path_.size() >= 2) {
+		  NetExpr*tmp = elaborate_expr_string_method_(des, scope);
+		  if (tmp) return tmp;
 	    }
 
 	      // Nothing was found so report this as an error.
@@ -1756,6 +1733,79 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	    "function return value for " << path_
 	   << " in " << dscope->basename() << "." << endl;
       des->errors += 1;
+      return 0;
+}
+
+NetExpr* PECallFunction::elaborate_expr_enum_method_(Design*des, NetScope*scope,
+						     unsigned expr_wid) const
+{
+      pform_name_t use_path = path_;
+      perm_string method_name = peek_tail_name(use_path);
+      use_path.pop_back();
+
+      NetNet *net;
+      const NetExpr *par;
+      NetEvent *eve;
+      const NetExpr *ex1, *ex2;
+
+      symbol_search(this, des, scope, use_path,
+		    net, par, eve, ex1, ex2);
+
+	// Check to see if we have a net and if so is it an
+	// enumeration? If so then check to see if this is an
+	// enumeration method call.
+      if (net != 0) {
+	    if (netenum_t*netenum = net->enumeration()) {
+		    // We may need the net expression for the
+		    // enumeration variable so get it.
+		  NetESignal*expr = new NetESignal(net);
+		  expr->set_line(*this);
+		    // This expression cannot be a select!
+		  assert(use_path.back().index.empty());
+
+		  PExpr*tmp = parms_.size() ? parms_[0] : 0;
+		  return check_for_enum_methods(this, des, scope,
+						netenum, use_path,
+						method_name, expr,
+						expr_wid, tmp,
+						parms_.size());
+	    }
+
+      }
+
+      return 0;
+}
+
+NetExpr* PECallFunction::elaborate_expr_string_method_(Design*des, NetScope*scope) const
+{
+      pform_name_t use_path = path_;
+      perm_string method_name = peek_tail_name(use_path);
+      use_path.pop_back();
+
+      NetNet *net;
+      const NetExpr *par;
+      NetEvent *eve;
+      const NetExpr *ex1, *ex2;
+
+      symbol_search(this, des, scope, use_path,
+		    net, par, eve, ex1, ex2);
+
+	// Check to see if we have a net and if so is it an
+	// enumeration? If so then check to see if this is an
+	// enumeration method call.
+      if (net == 0)
+	    return 0;
+
+      if (net->data_type() != IVL_VT_STRING)
+	    return 0;
+
+      if (method_name == "len") {
+	    NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$len",
+					       IVL_VT_BOOL, 32, 1);
+	    sys_expr->parm(0, new NetESignal(net));
+	    return sys_expr;
+      }
+
       return 0;
 }
 
@@ -3633,6 +3683,32 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 		  idx_c->set_line(*net);
 
 		  NetESelect*res = new NetESelect(net, idx_c, lwid);
+		  res->set_line(*net);
+		  return res;
+	    }
+
+	    if (net->sig()->data_type()==IVL_VT_STRING && (msv < 0)) {
+		    // Special case: This is a constant bit select of
+		    // a string, and the index is < 0. For example:
+		    //   string foo;
+		    //   ... foo[-1] ...
+		    // This is known to be 8'h00.
+		  NetEConst*tmp = make_const_0(8);
+		  tmp->set_line(*this);
+		  delete mux;
+		  return tmp;
+	    }
+
+	    if (net->sig()->data_type()==IVL_VT_STRING) {
+		    // Special case: This is a select of a string
+		    // variable. Generate a NetESelect and attach it
+		    // to the NetESignal. This should be interpreted
+		    // as a character select downstream.
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": debug: "
+			     << "Bit select of string becomes NetESelect." << endl;
+		  }
+		  NetESelect*res = new NetESelect(net, mux, 8);
 		  res->set_line(*net);
 		  return res;
 	    }

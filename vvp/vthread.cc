@@ -4711,6 +4711,40 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %substr/v <bitl>, <index>, <wid>
+ */
+bool of_SUBSTR_V(vthread_t thr, vvp_code_t cp)
+{
+      string&val = thr->stack_str.back();
+      uint32_t bitl = cp->bit_idx[0];
+      uint32_t sel = cp->bit_idx[1];
+      unsigned wid = cp->number;
+
+      thr_check_addr(thr, bitl+wid);
+      assert(bitl >= 4);
+
+      int32_t use_sel = thr->words[sel].w_int;
+
+      vvp_vector4_t tmp (8);
+      unsigned char_count = wid/8;
+      for (unsigned idx = 0 ; idx < char_count ; idx += 1) {
+	    unsigned long byte;
+	    if (use_sel < 0)
+		  byte = 0x00;
+	    else if ((size_t)use_sel >= val.size())
+		  byte = 0x00;
+	    else
+		  byte = val[use_sel];
+
+	    thr->bits4.setarray(bitl, 8, &byte);
+	    bitl += 8;
+	    use_sel += 1;
+      }
+
+      return true;
+}
+
 bool of_FILE_LINE(vthread_t, vvp_code_t cp)
 {
       if (show_file_line) {

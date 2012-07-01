@@ -926,6 +926,16 @@ indexed value is subtracted from the left indexed value, and the
 result placed in the left index.
 
 
+
+* %substr/v <bit-l>, <sel>, <wid>
+
+This instruction extracts the substring of the top string in the string
+stack and delivers the result to vector space. The <bit>,<wid> part is
+the location where the result goes, and <sel> is the index register
+that holds the index. This is the general method for getting string
+values into the vector space. The string value is NOT popped.
+
+
 * %vpi_call <name> [, ...]
 
 This instruction makes a call to a system task that was declared using

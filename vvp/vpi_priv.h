@@ -484,6 +484,7 @@ class __vpiStringVar : public __vpiHandle {
       __vpiStringVar(__vpiScope*scope, const char*name, vvp_net_t*net);
 
       int get_type_code(void) const;
+      int vpi_get(int code);
       void vpi_get_value(p_vpi_value val);
 
       inline vvp_net_t* get_net() const { return net_; }

@@ -717,7 +717,12 @@ class PECallFunction : public PExpr {
 
       bool check_call_matches_definition_(Design*des, NetScope*dscope) const;
 
+
       NetExpr* cast_to_width_(NetExpr*expr, unsigned wid) const;
+
+      NetExpr*elaborate_expr_enum_method_(Design*des, NetScope*scope,
+					  unsigned expr_wid) const;
+      NetExpr*elaborate_expr_string_method_(Design*des, NetScope*scope) const;
 
       NetExpr* elaborate_sfunc_(Design*des, NetScope*scope,
                                 unsigned expr_wid,
