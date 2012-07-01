@@ -735,15 +735,34 @@ static int show_stmt_assign_sig_string(ivl_statement_t net)
 {
       ivl_lval_t lval = ivl_stmt_lval(net, 0);
       ivl_expr_t rval = ivl_stmt_rval(net);
-      ivl_signal_t var;
+      ivl_expr_t part = ivl_lval_part_off(lval);
+      ivl_signal_t var= ivl_lval_sig(lval);
+
       assert(ivl_stmt_lvals(net) == 1);
       assert(ivl_stmt_opcode(net) == 0);
+      assert(ivl_lval_mux(lval) == 0);
 
-      var = ivl_lval_sig(lval);
+	/* Simplest case: no mux. Evaluate the r-value as a string and
+	   store the result into the variable. Note that the
+	   %store/str opcode pops the string result. */
+      if (part == 0) {
+	    draw_eval_string(rval);
+	    fprintf(vvp_out, "    %%store/str v%p_0;\n", var);
+	    return 0;
+      }
 
-      draw_eval_string(rval);
-      fprintf(vvp_out, "    %%store/str v%p_0;\n", var);
+	/* Calculate the character select for the word. */
+      int mux_word = allocate_word();
+      draw_eval_expr_into_integer(part, mux_word);
 
+	/* Evaluate the r-value as a vector. */
+      struct vector_info rvec = draw_eval_expr_wid(rval, 8, STUFF_OK_XZ);
+
+      assert(rvec.wid == 8);
+      fprintf(vvp_out, "    %%putc/str/v v%p_0, %d, %u;\n", var, mux_word, rvec.base);
+
+      clr_vector(rvec);
+      clr_word(mux_word);
       return 0;
 }
 

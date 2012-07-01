@@ -413,6 +413,22 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 		  lv->set_part(mux, lwid);
 	    }
 
+      } else if (reg->data_type() == IVL_VT_STRING) {
+	      // Special case: This is a select of a string
+	      // variable. The target of the assignment is a character
+	      // select of a string. Force the r-value to be an 8bit
+	      // vector and set the "part" to be the character select
+	      // expression. The code generator knows what to do with
+	      // this.
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Bit select of string becomes character select." << endl;
+	    }
+	    if (mux)
+		  lv->set_part(mux, 8);
+	    else
+		  lv->set_part(new NetEConst(verinum(lsb)), 8);
+
       } else if (mux) {
 	      // Non-constant bit mux. Correct the mux for the range
 	      // of the vector, then set the l-value part select

@@ -203,6 +203,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%pow/wr", of_POW_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%pushi/str",of_PUSHI_STR,1,{OA_STRING, OA_NONE,     OA_NONE} },
       { "%pushv/str", of_PUSHV_STR, 2, {OA_BIT1,OA_BIT2,     OA_NONE} },
+      { "%putc/str/v",of_PUTC_STR_V,3,{OA_FUNC_PTR,OA_BIT1,  OA_BIT2} },
       { "%release/net",of_RELEASE_NET,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/reg",of_RELEASE_REG,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/wr",of_RELEASE_WR,2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },

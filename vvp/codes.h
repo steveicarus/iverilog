@@ -155,6 +155,7 @@ extern bool of_POW_S(vthread_t thr, vvp_code_t code);
 extern bool of_POW_WR(vthread_t thr, vvp_code_t code);
 extern bool of_PUSHI_STR(vthread_t thr, vvp_code_t code);
 extern bool of_PUSHV_STR(vthread_t thr, vvp_code_t code);
+extern bool of_PUTC_STR_V(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_NET(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_REG(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_WR(vthread_t thr, vvp_code_t code);

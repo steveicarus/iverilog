@@ -4280,6 +4280,55 @@ bool of_PUSHV_STR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %putc/str/v  <var>, <muxr>, <base>
+ */
+bool of_PUTC_STR_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned muxr = cp->bit_idx[0];
+      unsigned base = cp->bit_idx[1];
+
+	/* The mux is the index into the string. If it is <0, then
+	   this operation cannot possible effect the string, so we are
+	   done. */
+      assert(muxr < 16);
+      int32_t mux = thr->words[muxr].w_int;
+      if (mux < 0)
+	    return true;
+
+	/* Extract the character from the vector space. If that byte
+	   is null (8'hh00) then there is nothing more to do. */
+      unsigned long*tmp = vector_to_array(thr, base, 8);
+      if (tmp == 0)
+	    return true;
+      if (tmp[0] == 0)
+	    return true;
+
+      char tmp_val = tmp[0]&0xff;
+
+	/* Get the existing value of the string. If we find that the
+	   index is too big for the string, then give up. */
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_string*fun = dynamic_cast<vvp_fun_signal_string*> (net->fun);
+      assert(fun);
+
+      string val = fun->get_string();
+      if (val.size() <= (size_t)mux)
+	    return true;
+
+	/* If the value to write is the same as the destination, then
+	   stop now. */
+      if (val[mux] == tmp_val)
+	    return true;
+
+	/* Finally, modify the string and write the new string to the
+	   variable so that the new value propagates. */
+      val[mux] = tmp_val;
+      vvp_send_string(vvp_net_ptr_t(cp->net, 0), val, thr->wt_context);
+
+      return true;
+}
+
+/*
  * These implement the %release/net and %release/reg instructions. The
  * %release/net instruction applies to a net kind of functor by
  * sending the release/net command to the command port. (See vvp_net.h
