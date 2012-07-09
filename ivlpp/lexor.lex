@@ -1,7 +1,7 @@
 %option prefix="yy"
 %{
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -260,6 +260,7 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
   * string.
   */
 \"            { string_enter = YY_START; BEGIN(CSTRING); ECHO; }
+<CSTRING>\\\\ |
 <CSTRING>\\\" |
 <CSTRING>\\`  { ECHO; }
 <CSTRING>\r\n |
