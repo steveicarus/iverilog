@@ -1292,7 +1292,6 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int)
 
       vvp_vector4_t val = vec4_from_vpi_value(vp, width);
 
-      fprintf(stderr, "XXXX PV_put_value(..)\n");
 	/*
 	 * If the base is less than zero then trim off any unneeded
 	 * lower bits.
