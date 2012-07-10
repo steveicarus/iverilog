@@ -1,7 +1,7 @@
 #ifndef __vvp_net_H
 #define __vvp_net_H
 /*
- * Copyright (c) 2004-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -186,6 +186,24 @@ extern ostream& operator<< (ostream&o, vvp_bit4_t a);
   /* Return >0, ==0 or <0 if the from-to transition represents a
      posedge, no edge, or negedge. */
 extern int edge(vvp_bit4_t from, vvp_bit4_t to);
+
+  /* Support for $countdrivers. */
+inline void update_driver_counts(vvp_bit4_t bit, unsigned counts[3])
+{
+      switch (bit) {
+          case BIT4_0:
+            counts[0] += 1;
+            break;
+          case BIT4_1:
+            counts[1] += 1;
+            break;
+          case BIT4_X:
+            counts[2] += 1;
+            break;
+          default:
+            break;
+      }
+}
 
 /*
  * This class represents scalar values collected into vectors. The
@@ -1099,6 +1117,9 @@ class vvp_net_t {
       void force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
       void force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
       void force_real(double val, vvp_vector2_t mask);
+
+    public: // Method to support $countdrivers
+      void count_drivers(unsigned idx, unsigned counts[4]);
 
     private:
       vvp_net_ptr_t out_;

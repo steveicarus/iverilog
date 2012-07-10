@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,6 +24,7 @@
 # include <string.h>
 
 extern void sys_convert_register();
+extern void sys_countdrivers_register();
 extern void sys_fileio_register();
 extern void sys_finish_register();
 extern void sys_deposit_register();
@@ -195,6 +196,7 @@ static void sys_lxt_or_vcd_register()
 
 void (*vlog_startup_routines[])() = {
       sys_convert_register,
+      sys_countdrivers_register,
       sys_fileio_register,
       sys_finish_register,
       sys_deposit_register,

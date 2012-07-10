@@ -23,12 +23,16 @@
 # include  "schedule.h"
 # include  <list>
 
+# include  <iostream>
+
 using namespace std;
 
 class vvp_island_tran : public vvp_island {
 
     public:
       void run_island();
+      void count_drivers(vvp_island_port*port, unsigned bit_idx,
+                         unsigned counts[3]);
 };
 
 enum tran_state_t {
@@ -99,6 +103,18 @@ void vvp_island_tran::run_island()
 	    vvp_island_branch_tran*tmp = dynamic_cast<vvp_island_branch_tran*>(cur);
 	    assert(tmp);
 	    tmp->run_output();
+      }
+}
+
+static bool warn_count_drivers = true;
+
+void vvp_island_tran::count_drivers(vvp_island_port*port, unsigned bit_idx,
+                                    unsigned counts[3])
+{
+      if (warn_count_drivers) {
+            cerr << "sorry: $countdrivers is not yet fully implemented." << endl;
+            cerr << "       Some driver counts will not be correct." << endl;
+            warn_count_drivers = false;
       }
 }
 

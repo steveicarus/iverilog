@@ -178,6 +178,16 @@ void resolv_tri::recv_vec8_(unsigned port, const vvp_vector8_t&bit)
       net_->send_vec8(val_[base]);
 }
 
+void resolv_tri::count_drivers(unsigned bit_idx, unsigned counts[3])
+{
+      for (unsigned idx = 0 ; idx < nports_ ; idx += 1) {
+	    if (val_[idx].size() == 0)
+	          continue;
+
+            update_driver_counts(val_[idx].value(bit_idx).value(), counts);
+      }
+}
+
 
 resolv_wired_logic::resolv_wired_logic(unsigned nports, vvp_net_t*net)
 : resolv_core(nports, net)
@@ -251,6 +261,16 @@ void resolv_wired_logic::recv_vec4_(unsigned port, const vvp_vector4_t&bit)
 void resolv_wired_logic::recv_vec8_(unsigned port, const vvp_vector8_t&bit)
 {
       recv_vec4_(port, reduce4(bit));
+}
+
+void resolv_wired_logic::count_drivers(unsigned bit_idx, unsigned counts[3])
+{
+      for (unsigned idx = 0 ; idx < nports_ ; idx += 1) {
+	    if (val_[idx].size() == 0)
+	          continue;
+
+            update_driver_counts(val_[idx].value(bit_idx), counts);
+      }
 }
 
 

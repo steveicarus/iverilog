@@ -1458,3 +1458,16 @@ extern "C" s_vpi_vecval vpip_calc_clog2(vpiHandle arg)
       rtn.bval = 0;
       return rtn;
 }
+
+/*
+ * This routine provides the information needed to implement $countdrivers.
+ * It is done here for performance reasons - interrogating the drivers
+ * individually via the VPI interface would be much slower.
+ */
+extern "C" void vpip_count_drivers(vpiHandle ref, unsigned idx,
+                                   unsigned counts[4])
+{
+      struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
+      assert(rfp);
+      rfp->node->count_drivers(idx, counts);
+}

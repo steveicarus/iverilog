@@ -19,7 +19,10 @@
 
 # include  "config.h"
 # include  "vvp_net.h"
+# include  "vvp_net_sig.h"
+# include  "vvp_island.h"
 # include  "vpi_priv.h"
+# include  "resolv.h"
 # include  "schedule.h"
 # include  "statistics.h"
 # include  <cstdio>
@@ -207,6 +210,36 @@ void vvp_net_t::unlink(vvp_net_ptr_t dst_ptr)
       }
 
       net->port[net_port] = vvp_net_ptr_t(0,0);
+}
+
+void vvp_net_t::count_drivers(unsigned idx, unsigned counts[4])
+{
+      counts[0] = 0;
+      counts[1] = 0;
+      counts[2] = 0;
+      counts[3] = 0;
+
+        /* $countdrivers can only be used on wires. */
+      vvp_wire_base*wire=dynamic_cast<vvp_wire_base*>(fil);
+      assert(wire);
+
+      if (wire->is_forced(idx))
+            counts[3] = 1;
+
+        /* If the net has multiple drivers, we need to interrogate the
+           resolver network to get the driven values. */
+      if (resolv_core*resolver = dynamic_cast<resolv_core*>(fun)) {
+            resolver->count_drivers(idx, counts);
+            return;
+      }
+      if (vvp_island_port*resolver = dynamic_cast<vvp_island_port*>(fun)) {
+            resolver->count_drivers(idx, counts);
+            return;
+      }
+
+        /* If the functor is not a resolver, there is only one driver, so
+           we can just interrogate the filter to get the driven value. */
+      update_driver_counts(wire->driven_value(idx), counts);
 }
 
 void vvp_net_fun_t::operator delete(void*)

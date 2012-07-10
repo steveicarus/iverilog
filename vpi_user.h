@@ -616,6 +616,17 @@ extern void vpip_set_return_value(int value);
 extern s_vpi_vecval vpip_calc_clog2(vpiHandle arg);
 extern void vpip_make_systf_system_defined(vpiHandle ref);
 
+  /* Return driver information for a net bit. The information is returned
+     in the 'counts' array as follows:
+       counts[0] - number of drivers driving '0' onto the net
+       counts[1] - number of drivers driving '1' onto the net
+       counts[2] - number of drivers driving 'X' onto the net
+       counts[3] - set to 1 if the net is forced, 0 otherwise
+     The 'ref' argument should reference a net. The 'idx' argument selects
+     which bit of the net is examined. */
+extern void vpip_count_drivers(vpiHandle ref, unsigned idx,
+                               unsigned counts[4]);
+
 EXTERN_C_END
 
 #endif

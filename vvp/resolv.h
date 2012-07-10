@@ -52,6 +52,8 @@ class resolv_core : public vvp_net_fun_t {
 			unsigned base, unsigned wid, unsigned vwid)
             { recv_vec8_pv_(port.port(), bit, base, wid, vwid); }
 
+      virtual void count_drivers(unsigned bit_idx, unsigned counts[3]) =0;
+
     private:
       friend class resolv_extend;
       virtual void recv_vec4_(unsigned port, const vvp_vector4_t&bit) =0;
@@ -115,6 +117,8 @@ class resolv_tri : public resolv_core {
                           vvp_scalar_t hiz_value);
       ~resolv_tri();
 
+      void count_drivers(unsigned bit_idx, unsigned counts[3]);
+
     private:
       void recv_vec4_(unsigned port, const vvp_vector4_t&bit);
       void recv_vec8_(unsigned port, const vvp_vector8_t&bit);
@@ -140,6 +144,8 @@ class resolv_wired_logic : public resolv_core {
     public:
       explicit resolv_wired_logic(unsigned nports, vvp_net_t*net);
       virtual ~resolv_wired_logic();
+
+      void count_drivers(unsigned bit_idx, unsigned counts[3]);
 
     protected:
       virtual vvp_vector4_t wired_logic_math_(vvp_vector4_t&a, vvp_vector4_t&b) =0;

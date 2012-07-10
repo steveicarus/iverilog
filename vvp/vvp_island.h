@@ -55,7 +55,7 @@
 */
 
 struct vvp_island_branch;
-class vvp_island_node;
+class vvp_island_port;
 
 class vvp_island  : private vvp_gen_event_s {
 
@@ -73,6 +73,10 @@ class vvp_island  : private vvp_gen_event_s {
 	// whatever happened. The derived island class implements this
 	// method to give the island its character.
       virtual void run_island() =0;
+
+        // Support for $countdrivers.
+      virtual void count_drivers(vvp_island_port*port, unsigned bit_idx,
+                                 unsigned counts[3]) =0;
 
     protected:
 	// The base class collects a list of all the branches in the
@@ -143,6 +147,12 @@ class vvp_island_port  : public vvp_net_fun_t {
 
     private:
       vvp_island*island_;
+
+    public: // Support for $countdrivers.
+      inline void count_drivers(unsigned bit_idx, unsigned counts[3])
+      {
+            island_->count_drivers(this, bit_idx, counts);
+      }
 
     private: // not implemented
       vvp_island_port(const vvp_island_port&);

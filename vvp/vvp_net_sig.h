@@ -1,7 +1,7 @@
 #ifndef __vvp_net_sig_H
 #define __vvp_net_sig_H
 /*
- * Copyright (c) 2004-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -272,6 +272,10 @@ class vvp_wire_base  : public vvp_net_fil_t, public vvp_signal_value {
     public:
       vvp_wire_base();
       ~vvp_wire_base();
+
+        // Support for $countdrivers
+      virtual vvp_bit4_t driven_value(unsigned idx) const;
+      virtual bool is_forced(unsigned idx) const;
 };
 
 class vvp_wire_vec4 : public vvp_wire_base {
@@ -303,6 +307,10 @@ class vvp_wire_vec4 : public vvp_wire_base {
       vvp_bit4_t value(unsigned idx) const;
       vvp_scalar_t scalar_value(unsigned idx) const;
       void vec4_value(vvp_vector4_t&) const;
+
+        // Support for $countdrivers
+      vvp_bit4_t driven_value(unsigned idx) const;
+      bool is_forced(unsigned idx) const;
 
     private:
       vvp_bit4_t filtered_value_(unsigned idx) const;
@@ -346,6 +354,10 @@ class vvp_wire_vec8 : public vvp_wire_base {
       void vec4_value(vvp_vector4_t&) const;
 	// This is new to vvp_wire_vec8
       vvp_vector8_t vec8_value() const;
+
+        // Support for $countdrivers
+      vvp_bit4_t driven_value(unsigned idx) const;
+      bool is_forced(unsigned idx) const;
 
     private:
       vvp_scalar_t filtered_value_(unsigned idx) const;

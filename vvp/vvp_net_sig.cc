@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2010,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -621,6 +621,18 @@ vvp_wire_base::~vvp_wire_base()
 {
 }
 
+vvp_bit4_t vvp_wire_base::driven_value(unsigned) const
+{
+      assert(0);
+      return BIT4_X;
+}
+
+bool vvp_wire_base::is_forced(unsigned) const
+{
+      assert(0);
+      return false;
+}
+
 vvp_wire_vec4::vvp_wire_vec4(unsigned wid, vvp_bit4_t init)
 : bits4_(wid, init)
 {
@@ -795,6 +807,16 @@ void vvp_wire_vec4::vec4_value(vvp_vector4_t&val) const
 	    val.set_bit(idx, filtered_value_(idx));
 }
 
+vvp_bit4_t vvp_wire_vec4::driven_value(unsigned idx) const
+{
+      return bits4_.value(idx);
+}
+
+bool vvp_wire_vec4::is_forced(unsigned idx) const
+{
+      return test_force_mask(idx);
+}
+
 vvp_wire_vec8::vvp_wire_vec8(unsigned wid)
 : bits8_(wid)
 {
@@ -952,6 +974,16 @@ vvp_vector8_t vvp_wire_vec8::vec8_value() const
 void vvp_wire_vec8::vec4_value(vvp_vector4_t&val) const
 {
       val = reduce4(vec8_value());
+}
+
+vvp_bit4_t vvp_wire_vec8::driven_value(unsigned idx) const
+{
+      return bits8_.value(idx).value();
+}
+
+bool vvp_wire_vec8::is_forced(unsigned idx) const
+{
+      return test_force_mask(idx);
 }
 
 vvp_wire_real::vvp_wire_real()
