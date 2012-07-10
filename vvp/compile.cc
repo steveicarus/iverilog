@@ -1462,37 +1462,46 @@ void compile_shiftr(char*label, long wid, bool signed_flag,
 
 void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
 {
-      assert(argc <= 4);
-      vvp_net_fun_t* obj = 0;
+      vvp_net_t*net = new vvp_net_t;
+
+      resolv_core*core = 0;
 
       if (strcmp(type,"tri") == 0) {
-	    obj = new resolv_functor(vvp_scalar_t(BIT4_Z, 0,0));
-
-      } else if (strncmp(type,"tri$",4) == 0) {
-	    obj = new resolv_functor(vvp_scalar_t(BIT4_Z, 0,0), strdup(type+4));
+	    core = new resolv_tri(argc, net, vvp_scalar_t(BIT4_Z, 0,0));
 
       } else if (strcmp(type,"tri0") == 0) {
-	    obj = new resolv_functor(vvp_scalar_t(BIT4_0, 5,5));
+	    core = new resolv_tri(argc, net, vvp_scalar_t(BIT4_0, 5,5));
 
       } else if (strcmp(type,"tri1") == 0) {
-	    obj = new resolv_functor(vvp_scalar_t(BIT4_1, 5,5));
+	    core = new resolv_tri(argc, net, vvp_scalar_t(BIT4_1, 5,5));
 
       } else if (strcmp(type,"triand") == 0) {
-	    obj = new resolv_triand;
+	    core = new resolv_triand(argc, net);
 
       } else if (strcmp(type,"trior") == 0) {
-	    obj = new resolv_trior;
+	    core = new resolv_trior(argc, net);
 
       } else {
 	    fprintf(stderr, "invalid resolver type: %s\n", type);
 	    compile_errors += 1;
+            free(net);
       }
 
-      if (obj) {
-	    vvp_net_t*net = new vvp_net_t;
-	    net->fun = obj;
+      if (core) {
+	    net->fun = core;
 	    define_functor_symbol(label, net);
-	    inputs_connect(net, argc, argv);
+
+            for (unsigned base = 0 ;  base < argc ;  base += 4) {
+	          unsigned nports = argc - base;
+                  if (nports > 4)
+                        nports = 4;
+
+                  if (base > 0) {
+                        net = new vvp_net_t;
+                        net->fun = new resolv_extend(core, base);
+                  }
+                  inputs_connect(net, nports, argv+base);
+            }
       }
       free(type);
       free(label);

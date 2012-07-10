@@ -85,17 +85,6 @@ static ivl_variable_type_t signal_data_type_of_nexus(ivl_nexus_t nex)
       return out;
 }
 
-static void draw_C4_repeated_constant(char bit_char, unsigned width)
-{
-      unsigned idx;
-
-      fprintf(vvp_out, "C4<");
-      for (idx = 0 ;  idx < width ;  idx += 1)
-	    fprintf(vvp_out, "%c", bit_char);
-
-      fprintf(vvp_out, ">");
-}
-
 static char* draw_C4_to_string(ivl_net_const_t cptr)
 {
       const char*bits = ivl_const_bits(cptr);
@@ -648,10 +637,10 @@ static void draw_net_input_x(ivl_nexus_t nex,
       ivl_signal_type_t res;
       char result[512];
       unsigned idx;
-      int level;
+      char**driver_labels;
       unsigned ndrivers = 0;
 
-      const char*resolv_type, *branch_type;
+      const char*resolv_type;
 
       char*nex_private = 0;
 
@@ -663,31 +652,25 @@ static void draw_net_input_x(ivl_nexus_t nex,
 	  case IVL_SIT_TRI:
 	  case IVL_SIT_UWIRE:
 	    resolv_type = "tri";
-	    branch_type = "tri";
 	    break;
 	  case IVL_SIT_TRI0:
 	    resolv_type = "tri0";
-	    branch_type = "tri";
 	    nex_flags |= VVP_NEXUS_DATA_STR;
 	    break;
 	  case IVL_SIT_TRI1:
 	    resolv_type = "tri1";
-	    branch_type = "tri";
 	    nex_flags |= VVP_NEXUS_DATA_STR;
 	    break;
 	  case IVL_SIT_TRIAND:
 	    resolv_type = "triand";
-	    branch_type = "triand";
 	    break;
 	  case IVL_SIT_TRIOR:
 	    resolv_type = "trior";
-	    branch_type = "trior";
 	    break;
 	  default:
 	    fprintf(stderr, "vvp.tgt: Unsupported signal type: %u\n", res);
 	    assert(0);
 	    resolv_type = "tri";
-	    branch_type = "tri";
 	    break;
       }
 
@@ -835,46 +818,17 @@ static void draw_net_input_x(ivl_nexus_t nex,
 	    display_multi_driver_error(nex, ndrivers, MDRV_REAL);
       }
 
-      level = 0;
-      while (ndrivers) {
-	    unsigned int inst;
-	    for (inst = 0; inst < ndrivers; inst += 4) {
-		  char*drive[4];
-		  if (level == 0) {
-			for (idx = inst; idx < ndrivers && idx < inst+4; idx += 1) {
-			      drive[idx-inst] = draw_net_input_drive(nex, drivers[idx]);
-			}
-		  }
-
-		  if (ndrivers > 4)
-			fprintf(vvp_out, "RS_%p/%d/%d .resolv %s",
-				nex, level, inst, branch_type);
-		  else
-			fprintf(vvp_out, "RS_%p .resolv %s",
-				nex, resolv_type);
-
-		  for (idx = inst; idx < ndrivers && idx < inst+4; idx += 1) {
-			if (level) {
-			      fprintf(vvp_out, ", RS_%p/%d/%d",
-				      nex, level - 1, idx*4);
-			} else {
-			      fprintf(vvp_out, ", %s", drive[idx-inst]);
-			      free(drive[idx-inst]);
-			}
-		  }
-		  for ( ;  idx < inst+4 ;  idx += 1) {
-			fprintf(vvp_out, ", ");
-			draw_C4_repeated_constant('z',width_of_nexus(nex));
-		  }
-
-		  fprintf(vvp_out, ";\n");
-	    }
-	    if (ndrivers > 4)
-		  ndrivers = (ndrivers+3) / 4;
-	    else
-		  ndrivers = 0;
-	    level += 1;
+      driver_labels = malloc(ndrivers * sizeof(char*));
+      for (idx = 0; idx < ndrivers; idx += 1) {
+            driver_labels[idx] = draw_net_input_drive(nex, drivers[idx]);
       }
+      fprintf(vvp_out, "RS_%p .resolv %s", nex, resolv_type);
+      for (idx = 0; idx < ndrivers; idx += 1) {
+            fprintf(vvp_out, ", %s", driver_labels[idx]);
+	    free(driver_labels[idx]);
+      }
+      fprintf(vvp_out, ";\n");
+      free(driver_labels);
 
       snprintf(result, sizeof result, "RS_%p", nex);
 
