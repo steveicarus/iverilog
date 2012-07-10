@@ -107,7 +107,7 @@ struct vthread_s {
       unsigned delay_delete      :1;
 	/* This points to the children of the thread. */
       set<struct vthread_s*>children;
-	/* No more then 1 of the children is automatic. */
+	/* No more than 1 of the children are automatic. */
       set<vthread_s*>automatic_children;
 	/* This points to my parent, if I have one. */
       struct vthread_s*parent;
@@ -243,7 +243,7 @@ static vvp_vector4_t vthread_bits_to_vector(struct vthread_s*thr,
 
 /*
  * Some of the instructions do wide addition to arrays of long. They
- * use this add_with_cary function to help.
+ * use this add_with_carry function to help.
  */
 static inline unsigned long add_with_carry(unsigned long a, unsigned long b,
 					   unsigned long&carry)
@@ -1538,7 +1538,7 @@ bool of_CMPIS(vthread_t thr, vvp_code_t cp)
  * in the vector part of the instruction. In this case we know that
  * there is at least 1 xz bit in the left expression (and there are
  * none in the imm value) so the eeq result must be false. Otherwise,
- * the eq result may me 0 or x, and the lt bit is x.
+ * the eq result may be 0 or x, and the lt bit is x.
  */
 static bool of_CMPIU_the_hard_way(vthread_t thr, vvp_code_t cp)
 {
@@ -2363,8 +2363,8 @@ bool of_END(vthread_t thr, vvp_code_t)
 
 	      // Detect that the parent is waiting on an automatic
 	      // thread. Automatic threads must be reaped first. If
-	      // the parent is waiting on an auto (other then me) then
-	      // go into zomple state to be picked up later.
+	      // the parent is waiting on an auto (other than me) then
+	      // go into zombie state to be picked up later.
 	    if (!test_joinable(tmp, thr))
 		  return false;
 
@@ -2909,7 +2909,7 @@ bool of_JOIN(vthread_t thr, vvp_code_t)
 	    if (!test_joinable(thr, curp))
 		  continue;
 
-	      // found somenting!
+	      // found something!
 	    do_join(thr, curp);
 	    return true;
       }

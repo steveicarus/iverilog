@@ -139,7 +139,7 @@ const VType*parse_type_by_name(perm_string name)
       return active_scope->find_type(name);
 }
 
-// This funciton is called when an aggregate expression is detected by
+// This function is called when an aggregate expression is detected by
 // the parser. It makes the ExpAggregate. It also tries to detect the
 // special case that the aggregate is really a primary. The problem is
 // that this:

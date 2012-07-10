@@ -229,7 +229,7 @@ bool NetWhile::evaluate_function(const LineInfo&loc,
       bool flag = true;
 
       if (debug_eval_tree) {
-	    cerr << get_fileline() << ": debug: NetWhile::evaluate_fuction: "
+	    cerr << get_fileline() << ": debug: NetWhile::evaluate_function: "
 		 << "Start loop" << endl;
       }
 
@@ -252,7 +252,7 @@ bool NetWhile::evaluate_function(const LineInfo&loc,
 	    if (val == 0)
 		  break;
 
-	      // The condition is true, so evalutate the statement
+	      // The condition is true, so evaluate the statement
 	      // another time.
 	    bool tmp_flag = proc_->evaluate_function(loc, context_map);
 	    if (! tmp_flag)
@@ -260,7 +260,7 @@ bool NetWhile::evaluate_function(const LineInfo&loc,
       }
 
       if (debug_eval_tree) {
-	    cerr << get_fileline() << ": debug: NetWhile::evaluate_fuction: "
+	    cerr << get_fileline() << ": debug: NetWhile::evaluate_function: "
 		 << "Done loop" << endl;
       }
 

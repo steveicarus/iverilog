@@ -117,7 +117,7 @@ void sheet_box(ivl_scope_t scope, const map<string,attr_value>&attrs)
 }
 
 /*
- * A black box is a component. Do not process the contents, other then
+ * A black box is a component. Do not process the contents, other than
  * to get at the ports that we'll attach to the netlist.
  */
 static void black_box(ivl_scope_t scope, const map<string,attr_value>&attrs)

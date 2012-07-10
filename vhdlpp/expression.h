@@ -383,7 +383,7 @@ class ExpConcat : public Expression {
 /*
  * The conditional expression represents the VHDL when-else
  * expressions. Note that by the VHDL syntax rules, these cannot show
- * up other then at the root of an expression.
+ * up other than at the root of an expression.
  */
 class ExpConditional : public Expression {
 
