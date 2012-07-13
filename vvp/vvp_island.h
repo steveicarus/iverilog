@@ -1,7 +1,7 @@
 #ifndef __vvp_island_H
 #define __vvp_island_H
 /*
- * Copyright (c) 2008-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -182,6 +182,12 @@ inline vvp_vector8_t island_get_value(vvp_net_t*net)
       }
 }
 
+inline vvp_vector8_t island_get_sent_value(vvp_net_t*net)
+{
+      vvp_island_port*fun = dynamic_cast<vvp_island_port*>(net->fun);
+      return fun->outvalue;
+}
+
 extern void island_send_value(vvp_net_t*net, const vvp_vector8_t&val);
 
 /*
@@ -205,6 +211,13 @@ struct vvp_island_branch {
       vvp_net_t*a;
       vvp_net_t*b;
 };
+
+static inline vvp_branch_ptr_t next(vvp_branch_ptr_t cur)
+{
+      vvp_island_branch*ptr = cur.ptr();
+      unsigned ab = cur.port();
+      return ptr->link[ab];
+}
 
 /*
  * This function collects into the conn list all the branch ends

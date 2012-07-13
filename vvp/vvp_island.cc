@@ -226,13 +226,6 @@ vvp_island_branch::~vvp_island_branch()
 {
 }
 
-static vvp_branch_ptr_t next(vvp_branch_ptr_t cur)
-{
-      vvp_island_branch*ptr = cur.ptr();
-      unsigned ab = cur.port();
-      return ptr->link[ab];
-}
-
 void island_collect_node(list<vvp_branch_ptr_t>&conn, vvp_branch_ptr_t cur)
 {
       conn .push_back(cur);
