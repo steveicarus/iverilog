@@ -938,12 +938,13 @@ endnew_opt : ':' K_new | ;
 
 dynamic_array_new /* IEEE1800-2005: A.2.4 */
   : K_new '[' expression ']'
-      { yyerror(@1, "sorry: Dynamic array new expression not supported.");
-	$$ = 0;
+      { //yyerror(@1, "sorry: Dynamic array new expression not supported.");
+	$$ = new PENew($3);
       }
   | K_new '[' expression ']' '(' expression ')'
-      { yyerror(@1, "sorry: Dynamic array new expression not supported.");
-	$$ = 0;
+      { yyerror(@1, "sorry: Dynamic array new expression with initializer not supported.");
+	delete $6;
+	$$ = new PENew($3);
       }
   ;
 
@@ -1742,7 +1743,6 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
   | '[' ']'
       { list<pform_range_t> *tmp = new list<pform_range_t>;
 	pform_range_t index (0,0);
-	yyerror("sorry: Dynamic array ranges not supported.");
 	tmp->push_back(index);
 	$$ = tmp;
       }

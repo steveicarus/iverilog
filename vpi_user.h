@@ -310,6 +310,12 @@ typedef struct t_vpi_delay  {
 #define vpiVariables   100
 #define vpiExpr        102
 
+/********************** object types added with 1364-2001 *********************/
+
+# define vpiRegArray   116
+
+/********************** object types added with 1364-2005 *********************/
+
 #define vpiCallback  1000
 
 /* PROPERTIES */

@@ -2049,13 +2049,13 @@ extern "C" ivl_nexus_t ivl_scope_mod_port(ivl_scope_t net, unsigned idx)
 extern "C" unsigned ivl_scope_sigs(ivl_scope_t net)
 {
       assert(net);
-      return net->nsigs_;
+      return net->sigs_.size();
 }
 
 extern "C" ivl_signal_t ivl_scope_sig(ivl_scope_t net, unsigned idx)
 {
       assert(net);
-      assert(idx < net->nsigs_);
+      assert(idx < net->sigs_.size());
       return net->sigs_[idx];
 }
 
@@ -2196,13 +2196,13 @@ extern "C" unsigned ivl_signal_packed_dimensions(ivl_signal_t net)
 extern "C" int ivl_signal_packed_msb(ivl_signal_t net, unsigned dim)
 {
       assert(dim < net->packed_dims.size());
-      return net->packed_dims[dim].msb;
+      return net->packed_dims[dim].get_msb();
 }
 
 extern "C" int ivl_signal_packed_lsb(ivl_signal_t net, unsigned dim)
 {
       assert(dim < net->packed_dims.size());
-      return net->packed_dims[dim].lsb;
+      return net->packed_dims[dim].get_lsb();
 }
 
 extern "C" int ivl_signal_msb(ivl_signal_t net)
@@ -2211,7 +2211,7 @@ extern "C" int ivl_signal_msb(ivl_signal_t net)
 	    return 0;
 
       assert(net->packed_dims.size() == 1);
-      return net->packed_dims[0].msb;
+      return net->packed_dims[0].get_msb();
 }
 
 extern "C" int ivl_signal_lsb(ivl_signal_t net)
@@ -2220,7 +2220,7 @@ extern "C" int ivl_signal_lsb(ivl_signal_t net)
 	    return 0;
 
       assert(net->packed_dims.size() == 1);
-      return net->packed_dims[0].lsb;
+      return net->packed_dims[0].get_lsb();
 }
 
 extern "C" ivl_scope_t ivl_signal_scope(ivl_signal_t net)

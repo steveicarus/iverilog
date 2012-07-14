@@ -22,16 +22,16 @@
 
 using namespace std;
 
+nettype_base_t::~nettype_base_t()
+{
+}
+
 unsigned long netrange_width(const list<netrange_t>&packed)
 {
       unsigned wid = 1;
       for (list<netrange_t>::const_iterator cur = packed.begin()
 		 ; cur != packed.end() ; ++cur) {
-	    unsigned use_wid;
-	    if (cur->msb >= cur->lsb)
-		  use_wid = cur->msb - cur->lsb + 1;
-	    else
-		  use_wid = cur->lsb - cur->msb + 1;
+	    unsigned use_wid = cur->width();
 	    wid *= use_wid;
       }
 
@@ -60,16 +60,16 @@ bool prefix_to_slice(const std::list<netrange_t>&dims,
       lwid = acc_wid;
 
       -- pcur;
-      if (sb < pcur->msb && sb < pcur->lsb)
+      if (sb < pcur->get_msb() && sb < pcur->get_lsb())
 	    return false;
-      if (sb > pcur->msb && sb > pcur->lsb)
+      if (sb > pcur->get_msb() && sb > pcur->get_lsb())
 	    return false;
 
       long acc_off = 0;
-      if (pcur->msb >= pcur->lsb)
-	    acc_off += (sb - pcur->lsb) * acc_wid;
+      if (pcur->get_msb() >= pcur->get_lsb())
+	    acc_off += (sb - pcur->get_lsb()) * acc_wid;
       else
-	    acc_off += (sb - pcur->msb) * acc_wid;
+	    acc_off += (sb - pcur->get_msb()) * acc_wid;
 
       if (prefix.size() == 0) {
 	    loff = acc_off;
@@ -83,10 +83,10 @@ bool prefix_to_slice(const std::list<netrange_t>&dims,
 	    -- pcur;
 	    -- icur;
 	    acc_wid *= pcur->width();
-	    if (pcur->msb >= pcur->lsb)
-		  acc_off += (*icur - pcur->lsb) * acc_wid;
+	    if (pcur->get_msb() >= pcur->get_lsb())
+		  acc_off += (*icur - pcur->get_lsb()) * acc_wid;
 	    else
-		  acc_off += (*icur - pcur->msb) * acc_wid;
+		  acc_off += (*icur - pcur->get_msb()) * acc_wid;
 
       } while (icur != prefix.begin());
 

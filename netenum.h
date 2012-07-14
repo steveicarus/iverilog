@@ -20,6 +20,7 @@
  */
 
 # include  "ivl_target.h"
+# include  "nettypes.h"
 # include  "verinum.h"
 # include  "StringHeap.h"
 # include  "LineInfo.h"
@@ -28,7 +29,7 @@
 
 class NetScope;
 
-class netenum_t : public LineInfo {
+class netenum_t : public LineInfo, public nettype_base_t {
 
     public:
       explicit netenum_t(ivl_variable_type_t base_type, bool signed_flag,

@@ -665,6 +665,80 @@ void vvp_fun_signal_string_aa::operator delete(void*)
       assert(0);
 }
 
+  /* OBJECT signals */
+
+vvp_fun_signal_object_sa::vvp_fun_signal_object_sa()
+{
+}
+
+void vvp_fun_signal_object_sa::recv_object(vvp_net_ptr_t ptr, vvp_object_t bit,
+					   vvp_context_t)
+{
+      assert(ptr.port() == 0);
+
+      if (needs_init_ || value_ != bit) {
+	    value_ = bit;
+	    needs_init_ = false;
+
+	    ptr.ptr()->send_object(bit, 0);
+      }
+}
+
+vvp_fun_signal_object_aa::vvp_fun_signal_object_aa()
+{
+      context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
+}
+
+vvp_fun_signal_object_aa::~vvp_fun_signal_object_aa()
+{
+      assert(0);
+}
+
+void vvp_fun_signal_object_aa::alloc_instance(vvp_context_t)
+{
+      assert(0);
+}
+
+void vvp_fun_signal_object_aa::reset_instance(vvp_context_t)
+{
+      assert(0);
+}
+
+unsigned vvp_fun_signal_object_aa::value_size() const
+{
+      assert(0);
+      return 1;
+}
+
+vvp_bit4_t vvp_fun_signal_object_aa::value(unsigned) const
+{
+      assert(0);
+      return BIT4_X;
+}
+
+vvp_scalar_t vvp_fun_signal_object_aa::scalar_value(unsigned) const
+{
+      assert(0);
+      return vvp_scalar_t();
+}
+
+void vvp_fun_signal_object_aa::vec4_value(vvp_vector4_t&) const
+{
+      assert(0);
+}
+
+void* vvp_fun_signal_object_aa::operator new(std::size_t size)
+{
+      return vvp_net_fun_t::heap_.alloc(size);
+}
+
+void vvp_fun_signal_object_aa::operator delete(void*)
+{
+      assert(0);
+}
+
+  /* **** */
+
 vvp_fun_force::vvp_fun_force()
 {
 }

@@ -23,6 +23,7 @@
 # include  "vpi_user.h"
 # include  "vvp_vpi_callback.h"
 # include  "permaheap.h"
+# include  "vvp_object.h"
 # include  <cstddef>
 # include  <cstdlib>
 # include  <cstring>
@@ -1083,6 +1084,7 @@ class vvp_net_t {
       void send_real(double val, vvp_context_t context);
       void send_long(long val);
       void send_string(const std::string&val, vvp_context_t context);
+      void send_object(vvp_object_t val, vvp_context_t context);
 
       void send_vec4_pv(const vvp_vector4_t&val,
 			unsigned base, unsigned wid, unsigned vwid,
@@ -1158,6 +1160,8 @@ class vvp_net_fun_t {
                              vvp_context_t context);
       virtual void recv_long(vvp_net_ptr_t port, long bit);
       virtual void recv_string(vvp_net_ptr_t port, const std::string&bit,
+			       vvp_context_t context);
+      virtual void recv_object(vvp_net_ptr_t port, vvp_object_t bit,
 			       vvp_context_t context);
 
 	// Part select variants of above
@@ -1529,6 +1533,18 @@ inline void vvp_send_string(vvp_net_ptr_t ptr, const std::string&val, vvp_contex
       }
 }
 
+inline void vvp_send_object(vvp_net_ptr_t ptr, vvp_object_t val, vvp_context_t context)
+{
+      while (vvp_net_t*cur = ptr.ptr()) {
+	    vvp_net_ptr_t next = cur->port[ptr.port()];
+
+	    if (cur->fun)
+		  cur->fun->recv_object(ptr, val, context);
+
+	    ptr = next;
+      }
+}
+
 /*
  * Part-vector versions of above functions. This function uses the
  * corresponding recv_vec4_pv method in the vvp_net_fun_t functor to
@@ -1673,6 +1689,13 @@ inline void vvp_net_t::send_string(const std::string&val, vvp_context_t context)
 {
       assert(!fil);
       vvp_send_string(out_, val, context);
+}
+
+
+inline void vvp_net_t::send_object(vvp_object_t val, vvp_context_t context)
+{
+      assert(!fil);
+      vvp_send_object(out_, val, context);
 }
 
 

@@ -96,6 +96,7 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 	    break;
 	  case IVL_VT_VOID:
 	  case IVL_VT_NO_TYPE:
+	  case IVL_VT_DARRAY:
 	    ivl_assert(*expr, 0);
 	    break;
       }
@@ -1021,6 +1022,15 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
 		  return expr_width_;
 	    }
 
+	    if (test_width_method_(des, scope, mode)) {
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: test_width "
+			     << "of method returns width " << expr_width_
+			     << ", type=" << expr_type_
+			     << "." << endl;
+		  return expr_width_;
+	    }
+
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: test_width "
 		       << "cannot find definition of " << path_
@@ -1047,6 +1057,46 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
       }
 
       ivl_assert(*this, 0);
+      return 0;
+}
+
+unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
+					    width_mode_t&mode)
+{
+      if (!gn_system_verilog())
+	    return 0;
+
+	// This is only useful if the path is at least 2 elements. For
+	// example, foo.bar() is a method, bar() is not.
+      if (path_.size() < 2)
+	    return 0;
+
+      pform_name_t use_path = path_;
+      perm_string method_name = peek_tail_name(use_path);
+      use_path.pop_back();
+
+      NetNet *net;
+      const NetExpr *par;
+      NetEvent *eve;
+      const NetExpr *ex1, *ex2;
+
+      symbol_search(this, des, scope, use_path,
+		    net, par, eve, ex1, ex2);
+
+      if (net == 0)
+	    return 0;
+
+      netdarray_t*darray = net->darray_type();
+
+	// function int size()
+      if (darray && method_name == "size") {
+	    expr_type_  = IVL_VT_BOOL;
+	    expr_width_ = 32;
+	    min_width_  = expr_width_;
+	    signed_flag_= true;
+	    return expr_width_;
+      }
+
       return 0;
 }
 
@@ -1582,6 +1632,13 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 		  return elaborate_access_func_(des, scope, access_nature,
                                                 expr_wid);
 
+	      // Maybe this is a method attached to a signal? If this
+	      // is SystemVerilog then try that possibility.
+	    if (gn_system_verilog()) {
+		  NetExpr*tmp = elaborate_expr_method_(des, scope, expr_wid);
+		  if (tmp) return tmp;
+	    }
+#if 0
 	      // Maybe this is a method attached to an enumeration name? If
 	      // this is system verilog, then test to see if the name is
 	      // really a method attached to an object.
@@ -1597,7 +1654,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 		  NetExpr*tmp = elaborate_expr_string_method_(des, scope);
 		  if (tmp) return tmp;
 	    }
-
+#endif
 	      // Nothing was found so report this as an error.
 	    cerr << get_fileline() << ": error: No function named `" << path_
 	         << "' found in this context (" << scope_path(scope) << ")."
@@ -1736,6 +1793,64 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
       return 0;
 }
 
+NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
+						unsigned expr_wid) const
+{
+      pform_name_t use_path = path_;
+      perm_string method_name = peek_tail_name(use_path);
+      use_path.pop_back();
+
+      NetNet *net;
+      const NetExpr *par;
+      NetEvent *eve;
+      const NetExpr *ex1, *ex2;
+
+      symbol_search(this, des, scope, use_path,
+		    net, par, eve, ex1, ex2);
+
+      if (net == 0)
+	    return 0;
+
+      if (net->data_type() == IVL_VT_STRING) {
+
+	    if (method_name == "len") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$len",
+						     IVL_VT_BOOL, 32, 1);
+		  sys_expr->parm(0, new NetESignal(net));
+		  return sys_expr;
+	    }
+      }
+
+      if (netenum_t*netenum = net->enumeration()) {
+	      // We may need the net expression for the
+	      // enumeration variable so get it.
+	    NetESignal*expr = new NetESignal(net);
+	    expr->set_line(*this);
+	      // This expression cannot be a select!
+	    assert(use_path.back().index.empty());
+
+	    PExpr*tmp = parms_.size() ? parms_[0] : 0;
+	    return check_for_enum_methods(this, des, scope,
+					  netenum, use_path,
+					  method_name, expr,
+					  expr_wid, tmp,
+					  parms_.size());
+      }
+
+      if (net->darray_type()) {
+
+	    if (method_name == "size") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_darray_method$size",
+						     IVL_VT_BOOL, 32, 1);
+		  sys_expr->parm(0, new NetESignal(net));
+		  sys_expr->set_line(*this);
+		  return sys_expr;
+	    }
+      }
+
+      return 0;
+}
+#if 0
 NetExpr* PECallFunction::elaborate_expr_enum_method_(Design*des, NetScope*scope,
 						     unsigned expr_wid) const
 {
@@ -1775,7 +1890,8 @@ NetExpr* PECallFunction::elaborate_expr_enum_method_(Design*des, NetScope*scope,
 
       return 0;
 }
-
+#endif
+#if 0
 NetExpr* PECallFunction::elaborate_expr_string_method_(Design*des, NetScope*scope) const
 {
       pform_name_t use_path = path_;
@@ -1808,6 +1924,7 @@ NetExpr* PECallFunction::elaborate_expr_string_method_(Design*des, NetScope*scop
 
       return 0;
 }
+#endif
 
 unsigned PECastSize::test_width(Design*des, NetScope*scope, width_mode_t&)
 {
@@ -3455,7 +3572,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 
 		    // We want the last range, which is where we work.
 		  const netrange_t&rng = packed.back();
-		  if (rng.msb < rng.lsb) {
+		  if (rng.get_msb() < rng.get_lsb()) {
 			offset = -wid + 1;
 		  }
 

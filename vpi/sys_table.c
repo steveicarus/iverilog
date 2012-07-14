@@ -24,6 +24,7 @@
 # include <string.h>
 
 extern void sys_convert_register();
+extern void sys_darray_register();
 extern void sys_fileio_register();
 extern void sys_finish_register();
 extern void sys_deposit_register();
@@ -196,6 +197,7 @@ static void sys_lxt_or_vcd_register()
 
 void (*vlog_startup_routines[])() = {
       sys_convert_register,
+      sys_darray_register,
       sys_fileio_register,
       sys_finish_register,
       sys_deposit_register,

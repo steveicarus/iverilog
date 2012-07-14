@@ -50,6 +50,7 @@ EXTERN_C_START
 #define vpiLogicVar         vpiReg
 #define vpiStringVar        616
 #define vpiBitVar           620
+#define vpiArrayVar         vpiRegArray
 
 /********* TYPESPECS *************/
 #define vpiEnumTypespec     633

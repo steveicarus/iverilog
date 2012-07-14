@@ -574,9 +574,9 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 
 		    // We want the last range, which is where we work.
 		  const netrange_t&rng = packed.back();
-		  if (((rng.msb < rng.lsb) &&
+		  if (((rng.get_msb() < rng.get_lsb()) &&
                        use_sel == index_component_t::SEL_IDX_UP) ||
-		      ((rng.msb > rng.lsb) &&
+		      ((rng.get_msb() > rng.get_lsb()) &&
 		       use_sel == index_component_t::SEL_IDX_DO)) {
 			offset = -wid + 1;
 		  }

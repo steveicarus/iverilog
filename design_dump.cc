@@ -28,6 +28,7 @@
 # include  "netlist.h"
 # include  "compiler.h"
 # include  "discipline.h"
+# include  "netdarray.h"
 # include  "ivl_assert.h"
 # include  "PExpr.h"
 
@@ -103,6 +104,9 @@ ostream& operator << (ostream&o, ivl_variable_type_t val)
 	    break;
 	  case IVL_VT_STRING:
 	    o << "string";
+	    break;
+	  case IVL_VT_DARRAY:
+	    o << "darray";
 	    break;
       }
       return o;
@@ -193,11 +197,21 @@ void NetDelaySrc::dump(ostream&o, unsigned ind) const
       dump_node_pins(o, ind+4);
 }
 
+static inline ostream&operator<<(ostream&out, const netrange_t&that)
+{
+      if (that.defined())
+	    out << "[" << that.get_msb() << ":" << that.get_lsb() << "]";
+      else
+	    out << "[]";
+
+      return out;
+}
+
 ostream&operator<<(ostream&out, const list<netrange_t>&rlist)
 {
       for (list<netrange_t>::const_iterator cur = rlist.begin()
 		 ; cur != rlist.end() ; ++cur) {
-	    out << "[" << cur->msb << ":" << cur->lsb << "]";
+	    out << *cur;
       }
       return out;
 }
@@ -206,7 +220,7 @@ ostream&operator<<(ostream&out, const vector<netrange_t>&rlist)
 {
       for (vector<netrange_t>::const_iterator cur = rlist.begin()
 		 ; cur != rlist.end() ; ++cur) {
-	    out << "[" << cur->msb << ":" << cur->lsb << "]";
+	    out << *cur;
       }
       return out;
 }
@@ -244,7 +258,11 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
       if (ivl_discipline_t dis = get_discipline())
 	    o << " discipline=" << dis->name();
 
-      o << " packed dims: " << packed_dims_;
+      if (netdarray_t*darray = darray_type())
+	    o << " dynamic array of " << darray->data_type();
+
+      if (!packed_dims_.empty())
+	    o << " packed dims: " << packed_dims_;
 
       o << " (eref=" << peek_eref() << ", lref=" << peek_lref() << ")";
       if (scope())

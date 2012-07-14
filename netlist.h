@@ -76,6 +76,7 @@ class NetEvTrig;
 class NetEvWait;
 class PExpr;
 class PFunction;
+class netdarray_t;
 class netenum_t;
 class netstruct_t;
 
@@ -607,10 +608,12 @@ class NetNet  : public NetObj, public PortType {
 		      const std::list<netrange_t>&packed);
       explicit NetNet(NetScope*s, perm_string n, Type t,
 		      const std::list<netrange_t>&packed,
-		      const std::list<netrange_t>&unpacked);
+		      const std::list<netrange_t>&unpacked,
+		      nettype_base_t*type =0);
 
-	// This form builds a NetNet from its record definition.
+	// This form builds a NetNet from its record/enum definition.
       explicit NetNet(NetScope*s, perm_string n, Type t, netstruct_t*type);
+      explicit NetNet(NetScope*s, perm_string n, Type t, netdarray_t*type);
 
       virtual ~NetNet();
 
@@ -641,10 +644,9 @@ class NetNet  : public NetObj, public PortType {
       bool get_scalar() const;
       void set_scalar(bool);
 
-      void set_enumeration(netenum_t*enum_set);
       netenum_t*enumeration(void) const;
-
       netstruct_t*struct_type(void) const;
+      netdarray_t*darray_type(void) const;
 
 	/* Attach a discipline to the net. */
       ivl_discipline_t get_discipline() const;
@@ -730,8 +732,7 @@ class NetNet  : public NetObj, public PortType {
       bool isint_     : 1;		// original type of integer
       bool is_scalar_ : 1;
       bool local_flag_: 1;
-      netenum_t*enumeration_;
-      netstruct_t*struct_type_;
+      nettype_base_t*net_type_;
       ivl_discipline_t discipline_;
 
       std::list<netrange_t> packed_dims_;

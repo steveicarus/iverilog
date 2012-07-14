@@ -439,6 +439,18 @@ class PEIdent : public PExpr {
 			     long&midx, long&lidx) const;
 };
 
+class PENew : public PExpr {
+
+    public:
+      explicit PENew (PExpr*s);
+      ~PENew();
+
+      virtual void dump(ostream&) const;
+
+    private:
+      PExpr*size_;
+};
+
 class PENumber : public PExpr {
 
     public:
@@ -720,9 +732,13 @@ class PECallFunction : public PExpr {
 
       NetExpr* cast_to_width_(NetExpr*expr, unsigned wid) const;
 
+      NetExpr*elaborate_expr_method_(Design*des, NetScope*scope,
+				     unsigned expr_wid) const;
+#if 0
+      NetExpr*elaborate_expr_string_method_(Design*des, NetScope*scope) const;
       NetExpr*elaborate_expr_enum_method_(Design*des, NetScope*scope,
 					  unsigned expr_wid) const;
-      NetExpr*elaborate_expr_string_method_(Design*des, NetScope*scope) const;
+#endif
 
       NetExpr* elaborate_sfunc_(Design*des, NetScope*scope,
                                 unsigned expr_wid,
@@ -731,6 +747,8 @@ class PECallFunction : public PExpr {
                                       unsigned expr_wid) const;
       unsigned test_width_sfunc_(Design*des, NetScope*scope,
 			         width_mode_t&mode);
+      unsigned test_width_method_(Design*des, NetScope*scope,
+				  width_mode_t&mode);
 };
 
 /*

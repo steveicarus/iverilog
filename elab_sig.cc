@@ -32,7 +32,9 @@
 # include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "netenum.h"
 # include  "netstruct.h"
+# include  "netdarray.h"
 # include  "util.h"
 # include  "ivl_assert.h"
 
@@ -821,10 +823,10 @@ static bool evaluate_ranges(Design*des, NetScope*scope,
 
       for (list<pform_range_t>::const_iterator cur = rlist.begin()
 		 ; cur != rlist.end() ; ++cur) {
-	    netrange_t lrng;
+	    long use_msb, use_lsb;
 
 	    NetExpr*texpr = elab_and_eval(des, scope, cur->first, -1, true);
-	    if (! eval_as_long(lrng.msb, texpr)) {
+	    if (! eval_as_long(use_msb, texpr)) {
 		  cerr << cur->first->get_fileline() << ": error: "
 			"Range expressions must be constant." << endl;
 		  cerr << cur->first->get_fileline() << "       : "
@@ -837,7 +839,7 @@ static bool evaluate_ranges(Design*des, NetScope*scope,
 	    delete texpr;
 
 	    texpr = elab_and_eval(des, scope, cur->second, -1, true);
-	    if (! eval_as_long(lrng.lsb, texpr)) {
+	    if (! eval_as_long(use_lsb, texpr)) {
 		  cerr << cur->second->get_fileline() << ": error: "
 			"Range expressions must be constant." << endl;
 		  cerr << cur->second->get_fileline() << "       : "
@@ -849,7 +851,7 @@ static bool evaluate_ranges(Design*des, NetScope*scope,
 
 	    delete texpr;
 
-	    llist.push_back(lrng);
+	    llist.push_back(netrange_t(use_msb, use_lsb));
       }
 
       return bad_msb | bad_lsb;
@@ -899,9 +901,9 @@ bool test_ranges_eeq(const list<netrange_t>&lef, const list<netrange_t>&rig)
       list<netrange_t>::const_iterator lcur = lef.begin();
       list<netrange_t>::const_iterator rcur = rig.begin();
       while (lcur != lef.end()) {
-	    if (lcur->msb != rcur->msb)
+	    if (lcur->get_msb() != rcur->get_msb())
 		  return false;
-	    if (lcur->lsb != rcur->lsb)
+	    if (lcur->get_lsb() != rcur->get_lsb())
 		  return false;
 
 	    ++ lcur;
@@ -1049,12 +1051,26 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 
       list<netrange_t>unpacked_dimensions;
+      netdarray_t*netarray = 0;
 
       for (list<pform_range_t>::const_iterator cur = unpacked_.begin()
 		 ; cur != unpacked_.end() ; ++cur) {
 	    PExpr*use_lidx = cur->first;
 	    PExpr*use_ridx = cur->second;
-	    assert(use_lidx && use_ridx);
+
+	      // Special case: If we encounter an undefined
+	      // dimensions, then turn this into a dynamic array and
+	      // put all the packed dimensions there.
+	    if (use_lidx==0 && use_ridx==0) {
+		  ivl_assert(*this, netarray==0);
+		  netarray = new netdarray_t(packed_dimensions, data_type_);
+		  packed_dimensions.clear();
+		  continue;
+	    }
+
+	      // Cannot handle dynamic arrays of arrays yet.
+	    ivl_assert(*this, netarray==0);
+	    ivl_assert(*this, use_lidx && use_ridx);
 
 	    NetExpr*lexp = elab_and_eval(des, scope, use_lidx, -1, true);
 	    NetExpr*rexp = elab_and_eval(des, scope, use_ridx, -1, true);
@@ -1157,6 +1173,34 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    sig = new NetNet(scope, name_, wtype, use_type);
 
+      } else if (enum_type_) {
+	    ivl_assert(*this, struct_type_ == 0);
+	    ivl_assert(*this, ! enum_type_->names->empty());
+	    list<named_pexpr_t>::const_iterator sample_name = enum_type_->names->begin();
+	    netenum_t*use_enum = scope->enumeration_for_name(sample_name->name);
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: Create signal " << wtype
+		       << " enumeration "
+		       << name_ << " in scope " << scope_path(scope) << endl;
+	    }
+
+	    sig = new NetNet(scope, name_, wtype, packed_dimensions, unpacked_dimensions, use_enum);
+
+      } else if (netarray) {
+	    ivl_assert(*this, struct_type_==0);
+	    ivl_assert(*this, enum_type_==0);
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: Create signal " << wtype
+		       << " dynamic array "
+		       << name_ << " in scope " << scope_path(scope) << endl;
+	    }
+
+	    ivl_assert(*this, packed_dimensions.empty());
+	    ivl_assert(*this, unpacked_dimensions.empty());
+	    sig = new NetNet(scope, name_, wtype, netarray);
+
       } else {
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype;
@@ -1168,16 +1212,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    }
 
 	    sig = new NetNet(scope, name_, wtype, packed_dimensions, unpacked_dimensions);
-      }
-
-	// If this is an enumeration, then set the enumeration set for
-	// the new signal. This turns it into an enumeration.
-      if (enum_type_) {
-	    ivl_assert(*this, struct_type_ == 0);
-	    ivl_assert(*this, ! enum_type_->names->empty());
-	    list<named_pexpr_t>::const_iterator sample_name = enum_type_->names->begin();
-	    netenum_t*use_enum = scope->enumeration_for_name(sample_name->name);
-	    sig->set_enumeration(use_enum);
       }
 
       if (wtype == NetNet::WIRE) sig->devirtualize_pins();

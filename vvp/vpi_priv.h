@@ -497,6 +497,8 @@ class __vpiStringVar : public __vpiHandle {
 
 extern vpiHandle vpip_make_string_var(const char*name, vvp_net_t*net);
 
+extern vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net);
+
 /*
  * When a loaded VPI module announces a system task/function, one
  * __vpiUserSystf object is created to hold the definition of that

@@ -2963,6 +2963,13 @@ void vvp_net_fun_t::recv_string(vvp_net_ptr_t, const std::string&bit, vvp_contex
       assert(0);
 }
 
+void vvp_net_fun_t::recv_object(vvp_net_ptr_t, vvp_object_t, vvp_context_t)
+{
+      fprintf(stderr, "internal error: %s: recv_object(...) not implemented\n",
+	      typeid(*this).name());
+      assert(0);
+}
+
 void vvp_net_fun_t::force_flag(void)
 {
 }

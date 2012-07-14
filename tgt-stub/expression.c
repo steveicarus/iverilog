@@ -178,7 +178,7 @@ static void show_select_expression(ivl_expr_t net, unsigned ind)
 		 differently. */
 	    fprintf(out, "%*s<substring: width=%u bits, %u bytes>\n", ind, "", width, width/8);
 	    if (width%8 != 0)
-		  fprintf(out, "%*sERROR: Width should be a multiple of 8 bits.\n", ind, "", width);
+		  fprintf(out, "%*sERROR: Width should be a multiple of 8 bits.\n", ind, "");
 	    show_expression(oper1, ind+3);
 	    show_expression(oper2, ind+3);
 

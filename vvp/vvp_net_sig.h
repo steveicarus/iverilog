@@ -22,6 +22,7 @@
 # include  "config.h"
 # include  "vpi_user.h"
 # include  "vvp_net.h"
+# include  "vvp_object.h"
 # include  <string>
 # include  <cstddef>
 # include  <cstdlib>
@@ -309,6 +310,62 @@ class vvp_fun_signal_string_aa : public vvp_fun_signal_string, public automatic_
       void vec4_value(vvp_vector4_t&) const;
       double real_value() const;
       void get_signal_value(struct t_vpi_value*vp);
+
+    public: // These objects are only permallocated.
+      static void* operator new(std::size_t size);
+      static void operator delete(void*obj);
+
+    private:
+      unsigned context_idx_;
+};
+
+class vvp_fun_signal_object : public vvp_fun_signal_base {
+
+    public:
+      explicit vvp_fun_signal_object() {};
+
+      unsigned size() const { return 1; }
+
+      inline vvp_object_t get_object() const { return value_; }
+
+    protected:
+      vvp_object_t value_;
+};
+
+/*
+ * Statically allocated vvp_fun_signal_string.
+ */
+class vvp_fun_signal_object_sa : public vvp_fun_signal_object {
+
+    public:
+      explicit vvp_fun_signal_object_sa();
+
+      void recv_object(vvp_net_ptr_t port, vvp_object_t bit,
+		    vvp_context_t context);
+};
+
+/*
+ * Automatically allocated vvp_fun_signal_real.
+ */
+class vvp_fun_signal_object_aa : public vvp_fun_signal_object, public automatic_signal_base, public automatic_hooks_s {
+
+    public:
+      explicit vvp_fun_signal_object_aa();
+      ~vvp_fun_signal_object_aa();
+
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
+#ifdef CHECK_WITH_VALGRIND
+      void free_instance(vvp_context_t context);
+#endif
+
+	// Get information about the vector value.
+      unsigned   value_size() const;
+      vvp_bit4_t value(unsigned idx) const;
+      vvp_scalar_t scalar_value(unsigned idx) const;
+      void vec4_value(vvp_vector4_t&) const;
+	//double real_value() const;
+	//void get_signal_value(struct t_vpi_value*vp);
 
     public: // These objects are only permallocated.
       static void* operator new(std::size_t size);
