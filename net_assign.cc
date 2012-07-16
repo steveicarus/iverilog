@@ -89,6 +89,8 @@ unsigned NetAssign_::lwidth() const
 
 ivl_variable_type_t NetAssign_::expr_type() const
 {
+      if (sig_->darray_type())
+	    return IVL_VT_DARRAY;
       return sig_->data_type();
 }
 

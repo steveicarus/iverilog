@@ -446,6 +446,11 @@ class PENew : public PExpr {
       ~PENew();
 
       virtual void dump(ostream&) const;
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  width_mode_t&mode);
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
+				     unsigned expr_wid,
+                                     unsigned flags) const;
 
     private:
       PExpr*size_;

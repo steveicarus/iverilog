@@ -1,5 +1,3 @@
-#ifndef __vvp_object_H
-#define __vvp_object_H
 /*
  * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
  *
@@ -19,26 +17,12 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  <stdlib.h>
+# include  "vvp_object.h"
 
-typedef class vvp_object*vvp_object_t;
+vvp_object::~vvp_object()
+{
+}
 
-class vvp_object {
-    public:
-      inline vvp_object() { }
-      virtual ~vvp_object() =0;
-};
-
-class vvp_darray : public vvp_object {
-
-    public:
-      inline vvp_darray(size_t siz) : size_(siz) { }
-      ~vvp_darray();
-
-      inline size_t get_size(void) const { return size_; }
-
-    private:
-      size_t size_;
-};
-
-#endif
+vvp_darray::~vvp_darray()
+{
+}

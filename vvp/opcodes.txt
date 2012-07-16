@@ -716,6 +716,14 @@ means the following:
 	otherwise   x
 
 
+* %new/darray <idx>
+
+Create a new array (of int objects) with a size. the <idx> is the
+address of an index variable that contains the computed array size to
+use.
+
+  NOTE: For now, assume this is an array of int values.
+
 * %nor <dst>, <src>, <wid>
 
 Perform the bitwise nor of the vectors. Each bit in the <dst> is
@@ -893,6 +901,11 @@ shift is done in place.
 top bits. %shiftr/s/i0 is a signed shift, so the value is sign-extended.
 
 For a negative shift %shiftr/i0 will pad the value with 'bx.
+
+* %store/obj <var-label>
+
+This pops the top of the object stack and writes it to the object
+variable given by the label.
 
 * %store/str <var-label>
 

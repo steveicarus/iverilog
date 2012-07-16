@@ -497,6 +497,23 @@ class __vpiStringVar : public __vpiHandle {
 
 extern vpiHandle vpip_make_string_var(const char*name, vvp_net_t*net);
 
+class __vpiDarrayVar : public __vpiHandle {
+
+    public:
+      __vpiDarrayVar(__vpiScope*scope, const char*name, vvp_net_t*net);
+
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+
+      inline vvp_net_t* get_net() const { return net_; }
+
+    private:
+      struct __vpiScope* scope_;
+      const char*name_;
+      vvp_net_t*net_;
+};
+
 extern vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net);
 
 /*

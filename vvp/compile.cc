@@ -191,6 +191,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%muli",   of_MULI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%nand",   of_NAND,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%nand/r", of_NANDR,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%new/darray",of_NEW_DARRAY,1,{OA_NUMBER,OA_NONE,    OA_NONE} },
       { "%noop",   of_NOOP,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%nor",    of_NOR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%nor/r",  of_NORR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -215,6 +216,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%shiftl/i0", of_SHIFTL_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
       { "%shiftr/i0", of_SHIFTR_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
       { "%shiftr/s/i0", of_SHIFTR_S_I0,2,{OA_BIT1,OA_NUMBER, OA_NONE} },
+      { "%store/obj",of_STORE_OBJ,1,{OA_FUNC_PTR,OA_NONE,    OA_NONE} },
       { "%store/str",of_STORE_STR,1,{OA_FUNC_PTR,OA_NONE,    OA_NONE} },
       { "%sub",    of_SUB,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%sub/wr", of_SUB_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
@@ -330,6 +332,11 @@ vvp_net_t* vvp_net_lookup(const char*label)
 		case vpiNamedEvent: {
 		      __vpiNamedEvent*tmp = dynamic_cast<__vpiNamedEvent*>(vpi);
 		      return tmp->funct;
+		}
+
+		case vpiArrayVar: {
+		      __vpiDarrayVar*tmp = dynamic_cast<__vpiDarrayVar*>(vpi);
+		      return tmp->get_net();
 		}
 
 		default:

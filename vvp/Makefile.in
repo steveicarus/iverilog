@@ -76,7 +76,7 @@ O = main.o parse.o parse_misc.o lexor.o arith.o array.o bufif.o compile.o \
     permaheap.o reduce.o resolv.o \
     sfunc.o stop.o symbols.o ufunc.o codes.o vthread.o schedule.o \
     statistics.o tables.o udp.o vvp_island.o vvp_net.o vvp_net_sig.o \
-    event.o logic.o delay.o words.o island_tran.o $V
+    vvp_object.o event.o logic.o delay.o words.o island_tran.o $V
 
 all: dep vvp@EXEEXT@ libvpi.a vvp.man
 

@@ -766,6 +766,24 @@ static int show_stmt_assign_sig_string(ivl_statement_t net)
       return 0;
 }
 
+static int show_stmt_assign_sig_darray(ivl_statement_t net)
+{
+      int errors = 0;
+      ivl_lval_t lval = ivl_stmt_lval(net, 0);
+      ivl_expr_t rval = ivl_stmt_rval(net);
+      ivl_expr_t part = ivl_lval_part_off(lval);
+      ivl_signal_t var= ivl_lval_sig(lval);
+
+      assert(ivl_stmt_lvals(net) == 1);
+      assert(ivl_stmt_opcode(net) == 0);
+      assert(ivl_lval_mux(lval) == 0);
+      assert(part == 0);
+
+      errors += draw_eval_object(rval);
+      fprintf(vvp_out, "    %%store/obj v%p_0;\n", var);
+      return errors;
+}
+
 int show_stmt_assign(ivl_statement_t net)
 {
       ivl_lval_t lval;
@@ -782,6 +800,10 @@ int show_stmt_assign(ivl_statement_t net)
 
       if (sig && (ivl_signal_data_type(sig) == IVL_VT_STRING)) {
 	    return show_stmt_assign_sig_string(net);
+      }
+
+      if (sig && (ivl_signal_data_type(sig) == IVL_VT_DARRAY)) {
+	    return show_stmt_assign_sig_darray(net);
       }
 
       return show_stmt_assign_vector(net);

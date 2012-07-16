@@ -33,23 +33,6 @@
 
 using namespace std;
 
-class __vpiDarrayVar : public __vpiHandle {
-
-    public:
-      __vpiDarrayVar(__vpiScope*scope, const char*name, vvp_net_t*net);
-
-      int get_type_code(void) const;
-      int vpi_get(int code);
-      void vpi_get_value(p_vpi_value val);
-
-      inline vvp_net_t* get_net() const { return net_; }
-
-    private:
-      struct __vpiScope* scope_;
-      const char*name_;
-      vvp_net_t*net_;
-};
-
 __vpiDarrayVar::__vpiDarrayVar(__vpiScope*sc, const char*na, vvp_net_t*ne)
 : scope_(sc), name_(na), net_(ne)
 {
@@ -64,8 +47,15 @@ int __vpiDarrayVar::vpi_get(int code)
       vvp_fun_signal_object*fun = dynamic_cast<vvp_fun_signal_object*> (net_->fun);
       assert(fun);
       vvp_object_t val = fun->get_object();
+      vvp_darray*aval = dynamic_cast<vvp_darray*> (val);
 
       switch (code) {
+	  case vpiSize:
+	    if (aval == 0)
+		  return 0;
+	    else
+		  return aval->get_size();
+
 	  default:
 	    return 0;
       }

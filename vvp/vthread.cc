@@ -106,6 +106,9 @@ struct vthread_s {
 	   (back()) only. */
       vector<string> stack_str;
 
+	/* Objects are also operated on in a stack. */
+      vector<vvp_object_t> stack_obj;
+
 	/* My parent sets this when it wants me to wake it up. */
       unsigned i_am_joining      :1;
       unsigned i_have_ended      :1;
@@ -3907,6 +3910,17 @@ bool of_NAND(vthread_t thr, vvp_code_t cp)
 }
 
 
+bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
+{
+      size_t size = thr->words[cp->number].w_int;
+
+      vvp_object_t obj = new vvp_darray (size);
+
+      thr->stack_obj.push_back(obj);
+
+      return true;
+}
+
 bool of_NOOP(vthread_t, vvp_code_t)
 {
       return true;
@@ -4664,6 +4678,22 @@ bool of_SHIFTR_S_I0(vthread_t thr, vvp_code_t cp)
       }
       return true;
 }
+
+bool of_STORE_OBJ(vthread_t thr, vvp_code_t cp)
+{
+	/* set the value into port 0 of the destination. */
+      vvp_net_ptr_t ptr (cp->net, 0);
+
+      assert(!thr->stack_obj.empty());
+
+      vvp_object_t val= thr->stack_obj.back();
+      thr->stack_obj.pop_back();
+
+      vvp_send_object(ptr, val, thr->wt_context);
+
+      return true;
+}
+
 
 bool of_STORE_STR(vthread_t thr, vvp_code_t cp)
 {

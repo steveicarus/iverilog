@@ -938,13 +938,14 @@ endnew_opt : ':' K_new | ;
 
 dynamic_array_new /* IEEE1800-2005: A.2.4 */
   : K_new '[' expression ']'
-      { //yyerror(@1, "sorry: Dynamic array new expression not supported.");
-	$$ = new PENew($3);
+      { $$ = new PENew($3);
+	FILE_NAME($$, @1);
       }
   | K_new '[' expression ']' '(' expression ')'
       { yyerror(@1, "sorry: Dynamic array new expression with initializer not supported.");
 	delete $6;
 	$$ = new PENew($3);
+	FILE_NAME($$, @1);
       }
   ;
 
