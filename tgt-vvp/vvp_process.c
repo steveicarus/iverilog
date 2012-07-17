@@ -1646,8 +1646,29 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
       return rc;
 }
 
+static int show_delete_method(ivl_statement_t net)
+{
+      show_stmt_file_line(net, "Delete object");
+
+      unsigned parm_count = ivl_stmt_parm_count(net);
+      if (parm_count < 1)
+	    return 1;
+
+      ivl_expr_t parm = ivl_stmt_parm(net, 0);
+      assert(ivl_expr_type(parm) == IVL_EX_SIGNAL);
+      ivl_signal_t var = ivl_expr_signal(parm);
+
+      fprintf(vvp_out, "    %%delete/obj v%p_0;\n", var);
+      return 0;
+}
+
 static int show_system_task_call(ivl_statement_t net)
 {
+      const char*stmt_name = ivl_stmt_name(net);
+
+      if (strcmp(stmt_name,"$ivl_darray_method$delete") == 0)
+	    return show_delete_method(net);
+
       show_stmt_file_line(net, "System task call.");
 
       draw_vpi_task_call(net);

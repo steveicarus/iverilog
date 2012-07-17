@@ -375,6 +375,11 @@ This is similar to the %delay opcode, except that the parameter
 selects an index register, which contains the actual delay. This
 supports run-time calculated delays.
 
+* %delete/obj <var-label>
+
+Arrange for the dynamic object at the target label to be deleted.
+This has no effect on the object or string stack.
+
 * %disable <scope-label>
 
 This instruction terminates threads that are part of a specific
@@ -720,7 +725,7 @@ means the following:
 
 Create a new array (of int objects) with a size. the <idx> is the
 address of an index variable that contains the computed array size to
-use.
+use. See also %delete/obj
 
   NOTE: For now, assume this is an array of int values.
 

@@ -2089,7 +2089,7 @@ const NetNet* NetFuncDef::return_sig() const
 }
 
 NetSTask::NetSTask(const char*na, ivl_sfunc_as_task_t sfat,
-                   const svector<NetExpr*>&pa)
+                   const vector<NetExpr*>&pa)
 : name_(0), sfunc_as_task_(sfat), parms_(pa)
 {
       name_ = lex_strings.add(na);
@@ -2098,7 +2098,7 @@ NetSTask::NetSTask(const char*na, ivl_sfunc_as_task_t sfat,
 
 NetSTask::~NetSTask()
 {
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1)
 	    delete parms_[idx];
 
 	/* The name_ string is perm-allocated in lex_strings. */
@@ -2116,7 +2116,7 @@ ivl_sfunc_as_task_t NetSTask::sfunc_as_task() const
 
 unsigned NetSTask::nparms() const
 {
-      return parms_.count();
+      return parms_.size();
 }
 
 const NetExpr* NetSTask::parm(unsigned idx) const

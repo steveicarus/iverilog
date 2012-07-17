@@ -3191,7 +3191,7 @@ class NetSTask  : public NetProc {
 
     public:
       NetSTask(const char*na, ivl_sfunc_as_task_t sfat,
-               const svector<NetExpr*>&);
+               const std::vector<NetExpr*>&);
       ~NetSTask();
 
       const char* name() const;
@@ -3209,7 +3209,7 @@ class NetSTask  : public NetProc {
     private:
       const char* name_;
       ivl_sfunc_as_task_t sfunc_as_task_;
-      svector<NetExpr*>parms_;
+      std::vector<NetExpr*>parms_;
 };
 
 /*

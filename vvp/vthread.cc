@@ -2011,6 +2011,21 @@ bool of_DELAYX(vthread_t thr, vvp_code_t cp)
       return false;
 }
 
+/* %delete/obj <label>
+ *
+ * This operator works by assigning a nil to the target object. This
+ * causes any value that might be there to be garbage collected, thus
+ * deleting the object.
+ */
+bool of_DELETE_OBJ(vthread_t thr, vvp_code_t cp)
+{
+	/* set the value into port 0 of the destination. */
+      vvp_net_ptr_t ptr (cp->net, 0);
+      vvp_send_object(ptr, 0, thr->wt_context);
+
+      return true;
+}
+
 static bool do_disable(vthread_t thr, vthread_t match)
 {
       bool flag = false;

@@ -677,6 +677,7 @@ void vvp_fun_signal_object_sa::recv_object(vvp_net_ptr_t ptr, vvp_object_t bit,
       assert(ptr.port() == 0);
 
       if (needs_init_ || value_ != bit) {
+	    if (value_) delete value_;
 	    value_ = bit;
 	    needs_init_ = false;
 

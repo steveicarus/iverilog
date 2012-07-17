@@ -88,6 +88,7 @@ extern bool of_DEASSIGN(vthread_t thr, vvp_code_t code);
 extern bool of_DEASSIGN_WR(vthread_t thr, vvp_code_t code);
 extern bool of_DELAY(vthread_t thr, vvp_code_t code);
 extern bool of_DELAYX(vthread_t thr, vvp_code_t code);
+extern bool of_DELETE_OBJ(vthread_t thr, vvp_code_t code);
 extern bool of_DISABLE(vthread_t thr, vvp_code_t code);
 extern bool of_DIV(vthread_t thr, vvp_code_t code);
 extern bool of_DIV_S(vthread_t thr, vvp_code_t code);

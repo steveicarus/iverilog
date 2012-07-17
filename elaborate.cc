@@ -2908,7 +2908,7 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
       if ((parm_count== 1) && (parms_[0] == 0))
 	    parm_count = 0;
 
-      svector<NetExpr*>eparms (parm_count);
+      vector<NetExpr*>eparms (parm_count);
 
       perm_string name = peek_tail_name(path_);
 
@@ -2987,6 +2987,12 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
       NetScope*task = des->find_task(scope, path_);
       if (task == 0) {
+	      // Maybe this is a method attached to a signal?
+	    if (gn_system_verilog()) {
+		  NetProc*tmp = elaborate_method_(des, scope);
+		  if (tmp) return tmp;
+	    }
+
 	    cerr << get_fileline() << ": error: Enable of unknown task "
 		 << "``" << path_ << "''." << endl;
 	    des->errors += 1;
@@ -3167,6 +3173,39 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       }
 
       return block;
+}
+
+NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope) const
+{
+      pform_name_t use_path = path_;
+      perm_string method_name = peek_tail_name(use_path);
+      use_path.pop_back();
+
+      NetNet *net;
+      const NetExpr *par;
+      NetEvent *eve;
+      const NetExpr *ex1, *ex2;
+
+      symbol_search(this, des, scope, use_path,
+		    net, par, eve, ex1, ex2);
+
+      if (net == 0)
+	    return 0;
+
+	// Is this a delete method for dynamic arrays?
+      if (net->darray_type() && method_name=="delete") {
+	    NetESignal*sig = new NetESignal(net);
+
+	    vector<NetExpr*> argv (1);
+	    argv[0] = sig;
+
+	    NetSTask*sys = new NetSTask("$ivl_darray_method$delete",
+					IVL_SFUNC_AS_TASK_IGNORE, argv);
+	    sys->set_line(*this);
+	    return sys;
+      }
+
+      return 0;
 }
 
 /*
