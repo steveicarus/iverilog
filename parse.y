@@ -2758,7 +2758,9 @@ from_exclude : K_from { $$ = false; } | K_exclude { $$ = true; } ;
      Although the BNF in IEEE1364-1995 implies that parameter value
      lists must be in parentheses, in practice most compilers will
      accept simple expressions outside of parentheses if there is only
-     one value, so I'll accept simple numbers here.
+     one value, so I'll accept simple numbers here. This also catches
+     the case of a UDP with a single delay value, so we need to accept
+     real values as well as decimal ones.
 
      The parameter value by name syntax is OVI enhancement BTF-B06 as
      approved by WG1364 on 6/28/1998. */
@@ -2787,6 +2789,17 @@ parameter_value_opt
 		  lst->by_name = 0;
 		  $$ = lst;
 		  based_size = 0;
+		}
+	| '#' REALTIME
+		{ assert($2);
+		  PEFNumber*tmp = new PEFNumber($2);
+		  FILE_NAME(tmp, @1);
+
+		  struct parmvalue_t*lst = new struct parmvalue_t;
+		  lst->by_order = new svector<PExpr*>(1);
+		  (*lst->by_order)[0] = tmp;
+		  lst->by_name = 0;
+		  $$ = lst;
 		}
 	| '#' error
 		{ yyerror(@1, "error: syntax error in parameter value "
