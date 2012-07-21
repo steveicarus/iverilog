@@ -29,6 +29,7 @@
 # include  "netenum.h"
 # include  "discipline.h"
 # include  "netmisc.h"
+# include  "netdarray.h"
 # include  "netstruct.h"
 # include  "util.h"
 # include  "ivl_assert.h"
@@ -2308,6 +2309,21 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    ivl_assert(*this, 0);
       }
 
+      if (netdarray_t*darray = net? net->darray_type() : 0) {
+	    if (use_sel == index_component_t::SEL_BIT) {
+		  expr_type_   = darray->data_type();
+		  expr_width_  = darray->vector_width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = net->get_signed();
+	    } else {
+		  expr_type_   = net->data_type();
+		  expr_width_  = net->vector_width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = net->get_signed();
+	    }
+	    return expr_width_;
+      }
+
       if (use_width != UINT_MAX) {
 	    expr_type_   = IVL_VT_LOGIC; // Assume bit/parts selects are logic
 	    expr_width_  = use_width;
@@ -2322,8 +2338,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    expr_type_   = net->data_type();
 	    expr_width_  = net->vector_width();
 	    min_width_   = expr_width_;
-            signed_flag_ = net->get_signed();
-
+	    signed_flag_ = net->get_signed();
 	    return expr_width_;
       }
 
@@ -3735,6 +3750,20 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 			     << "Bit select of string becomes NetESelect." << endl;
 		  }
 		  NetESelect*res = new NetESelect(net, mux, 8);
+		  res->set_line(*net);
+		  return res;
+	    }
+
+	    if (netdarray_t*darray = net->sig()->darray_type()) {
+		    // Special case: This is a select of a dynamic
+		    // array. Generate a NetESelect ant attach it to
+		    // the NetESignal. This should be interpreted as
+		    // an array word select downstream.
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": debug: "
+			     << "Bit select of a dynamic array becomes NetESelect." << endl;
+		  }
+		  NetESelect*res = new NetESelect(net, mux, darray->vector_width());
 		  res->set_line(*net);
 		  return res;
 	    }

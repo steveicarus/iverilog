@@ -257,9 +257,15 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
 
       if (use_sel == index_component_t::SEL_BIT) {
-	    NetAssign_*lv = new NetAssign_(reg);
-	    elaborate_lval_net_bit_(des, scope, lv);
-	    return lv;
+	    if (reg->darray_type()) {
+		  NetAssign_*lv = new NetAssign_(reg);
+		  elaborate_lval_darray_bit_(des, scope, lv);
+		  return lv;
+	    } else {
+		  NetAssign_*lv = new NetAssign_(reg);
+		  elaborate_lval_net_bit_(des, scope, lv);
+		  return lv;
+	    }
       }
 
       ivl_assert(*this, use_sel == index_component_t::SEL_NONE);
@@ -454,6 +460,26 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 
 	    lv->set_part(new NetEConst(verinum(loff)), 1);
       }
+
+      return true;
+}
+
+bool PEIdent::elaborate_lval_darray_bit_(Design*des, NetScope*scope, NetAssign_*lv)const
+{
+      const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, !name_tail.index.empty());
+
+	// For now, only support single-dimension dynamic arrays.
+      ivl_assert(*this, name_tail.index.size() == 1);
+
+      const index_component_t&index_tail = name_tail.index.back();
+      ivl_assert(*this, index_tail.msb != 0);
+      ivl_assert(*this, index_tail.lsb == 0);
+
+	// Evaluate the select expression...
+      NetExpr*mux = elab_and_eval(des, scope, index_tail.msb, -1);
+
+      lv->set_word(mux);
 
       return true;
 }

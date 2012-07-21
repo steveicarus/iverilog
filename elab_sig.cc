@@ -1063,7 +1063,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      // put all the packed dimensions there.
 	    if (use_lidx==0 && use_ridx==0) {
 		  ivl_assert(*this, netarray==0);
-		  netarray = new netdarray_t(packed_dimensions, data_type_);
+		  netarray = new netdarray_t(packed_dimensions, data_type_, wid);
 		  packed_dimensions.clear();
 		  continue;
 	    }

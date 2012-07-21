@@ -22,8 +22,8 @@
 using namespace std;
 
 netdarray_t::netdarray_t(const std::list<netrange_t>&packed,
-			 ivl_variable_type_t type)
-: packed_dims_(packed), type_(type)
+			 ivl_variable_type_t type, unsigned long wid)
+: packed_dims_(packed), type_(type), width_(wid)
 {
 }
 

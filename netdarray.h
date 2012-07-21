@@ -27,14 +27,17 @@ class netdarray_t : public nettype_base_t {
 
     public:
       explicit netdarray_t(const std::list<netrange_t>&packed,
-			   ivl_variable_type_t type);
+			   ivl_variable_type_t type,
+			   unsigned long wid);
       ~netdarray_t();
 
-      ivl_variable_type_t data_type() const { return type_; }
+      inline ivl_variable_type_t data_type() const { return type_; }
+      inline unsigned long vector_width(void) const { return width_; }
 
     private:
       std::list<netrange_t> packed_dims_;
       ivl_variable_type_t type_;
+      unsigned long width_;
 };
 
 #endif

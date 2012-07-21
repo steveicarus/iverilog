@@ -367,6 +367,8 @@ class PEIdent : public PExpr {
       bool elaborate_lval_net_packed_member_(Design*, NetScope*,
 					     NetAssign_*,
 					     const perm_string&) const;
+      bool elaborate_lval_darray_bit_(Design*, NetScope*,
+				       NetAssign_*) const;
 
     private:
       NetExpr*elaborate_expr_param_(Design*des,
