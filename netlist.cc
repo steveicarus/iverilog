@@ -2447,7 +2447,10 @@ long NetESignal::msi() const
 
 ivl_variable_type_t NetESignal::expr_type() const
 {
-      return net_->data_type();
+      if (net_->darray_type())
+	    return IVL_VT_DARRAY;
+      else
+	    return net_->data_type();
 }
 
 /*

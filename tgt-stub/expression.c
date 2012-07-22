@@ -209,6 +209,7 @@ static void show_signal_expression(ivl_expr_t net, unsigned ind)
       ivl_expr_t word = ivl_expr_oper1(net);
 
       ivl_signal_t sig = ivl_expr_signal(net);
+      const char*vt_sig = data_type_string(ivl_signal_data_type(sig));
       unsigned dimensions = ivl_signal_dimensions(sig);
       unsigned word_count = ivl_signal_array_count(sig);
 
@@ -218,8 +219,8 @@ static void show_signal_expression(ivl_expr_t net, unsigned ind)
 	    stub_errors += 1;
       }
 
-      fprintf(out, "%*s<signal=%s, words=%u, width=%u, %s type=%s>\n", ind, "",
-	      ivl_expr_name(net), word_count, width, sign, vt);
+      fprintf(out, "%*s<signal=%s, words=%u, width=%u, %s type=%s (%s)>\n", ind, "",
+	      ivl_expr_name(net), word_count, width, sign, vt, vt_sig);
 
       /* If the expression refers to a signal array, then there must
          also be a word select expression, and if the signal is not an

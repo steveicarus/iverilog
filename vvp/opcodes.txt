@@ -597,6 +597,15 @@ bit, and the <index> is the selector for the bit to use. If <index> is
 out of range, then x is loaded. The index value is incremented by one
 if it is defined (bit 4 is not 1).
 
+* %load/dar <bit>, <functor-label>, <wid>
+
+This instruction loads an array word from a dynamic array. The
+<label> refers to the variable object, and the <bit>/<wid> are the
+location in local vector space where the extracted word goes. The
+index is implicitly extracted from index register 3.
+
+(See also %set/dar)
+
 * %load/v <bit>, <functor-label>, <wid>
 
 This instruction loads a vector value from the given functor node into
@@ -721,13 +730,16 @@ means the following:
 	otherwise   x
 
 
-* %new/darray <idx>
+* %new/darray <idx>, "<type>"
 
 Create a new array (of int objects) with a size. the <idx> is the
 address of an index variable that contains the computed array size to
-use. See also %delete/obj
+use. The <type> is a string that expresses the type of the elements of
+the array. See also %delete/obj
 
-  NOTE: For now, assume this is an array of int values.
+The supported types are:
+
+         "sb32"    - signed bool 32bits
 
 * %nor <dst>, <src>, <wid>
 
@@ -831,6 +843,12 @@ Release the force on the real signal that is represented by the functor
 <functor-label>.  The force was previously activated with a %force/wr
 statement. The <type> is 0 for nets and 1 for registers. See the other
 %release commands above.
+
+* %set/dar <var-label>, <bit>, <wid>
+
+This sets a vector to a word of the dynamic array. Index register 3
+contains the word address within the dynamic array, and <bit>,<wid>
+specifies the thread vector to be written.
 
 * %set/v <var-label>, <bit>, <wid>
 

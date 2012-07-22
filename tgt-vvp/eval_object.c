@@ -28,7 +28,8 @@ static int eval_darray_new(ivl_expr_t ex)
       draw_eval_expr_into_integer(size_expr, size_reg);
       clr_word(size_reg);
 
-      fprintf(vvp_out, "    %%new/darray %u;\n", size_reg);
+	// XXXX: Assume elements are 32bit integers.
+      fprintf(vvp_out, "    %%new/darray %u, \"sb32\";\n", size_reg);
 
       return 0;
 }

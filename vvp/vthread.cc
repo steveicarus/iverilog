@@ -3099,6 +3099,32 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %load/dar <bit>, <array-label>, <index>;
+*/
+bool of_LOAD_DAR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+      unsigned adr = thr->words[3].w_int;
+      vvp_net_t*net = cp->net;
+
+      assert(net);
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_darray*darray = dynamic_cast<vvp_darray*>(obj->get_object());
+      assert(darray);
+
+      vvp_vector4_t word;
+      darray->get_word(adr, word);
+      assert(word.size() == wid);
+
+      thr->bits4.set_vec(bit, word);
+
+      return true;
+}
+
+/*
  * %load/vp0, %load/vp0/s, %load/avp0 and %load/avp0/s share this function.
 */
 #if (SIZEOF_UNSIGNED_LONG >= 8)
@@ -3927,9 +3953,15 @@ bool of_NAND(vthread_t thr, vvp_code_t cp)
 
 bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
 {
-      size_t size = thr->words[cp->number].w_int;
+      const char*text = cp->text;
+      size_t size = thr->words[cp->bit_idx[0]].w_int;
 
-      vvp_object_t obj = new vvp_darray (size);
+      vvp_object_t obj;
+      if (strcmp(text,"sb32") == 0) {
+	    obj = new vvp_darray_atom<int32_t>(size);
+      } else {
+	    obj = new vvp_darray (size);
+      }
 
       thr->stack_obj.push_back(obj);
 
@@ -4457,6 +4489,28 @@ bool of_SET_AV(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %set/dar  <label>, <bit>, <wid>
+ */
+bool of_SET_DAR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+      unsigned adr = thr->words[3].w_int;
+
+	/* Make a vector of the desired width. */
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_darray*darray = dynamic_cast<vvp_darray*>(obj->get_object());
+      assert(darray);
+
+      darray->set_word(adr, value);
+      return true;
+}
 
 /*
  * This implements the "%set/v <label>, <bit>, <wid>" instruction.

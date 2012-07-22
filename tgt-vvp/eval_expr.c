@@ -2812,6 +2812,19 @@ static struct vector_info draw_select_expr(ivl_expr_t expr, unsigned wid,
 	    return res;
       }
 
+	/* Special case: The sub-expression is a DARRAY variable, so
+	   do a dynamic array word load. */
+      if (ivl_expr_value(sube) == IVL_VT_DARRAY) {
+	    ivl_signal_t sig = ivl_expr_signal(sube);
+	    assert(sig);
+	    res.base = allocate_vector(wid);
+	    res.wid = wid;
+	    draw_eval_expr_into_integer(shift, 3);
+	    fprintf(vvp_out, "    %%load/dar %u, v%p_0, %u;\n",
+		    res.base, sig, res.wid);
+	    return res;
+      }
+
       if (ivl_expr_type(sube) == IVL_EX_SIGNAL) {
 	    res = draw_select_signal(expr, sube, shift, ivl_expr_width(expr),
 	                             wid);

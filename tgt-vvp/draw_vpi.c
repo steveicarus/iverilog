@@ -187,6 +187,12 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 	    if (ivl_expr_value(vexpr) == IVL_VT_STRING)
 		  return 0;
 
+	      /* If the sub-expression is a DARRAY, then this select
+		 is a dynamic-array word select. Handle that
+		 elsewhere. */
+	    if (ivl_expr_value(vexpr) == IVL_VT_DARRAY)
+		  return 0;
+
 	      /* The signal is part of an array. */
 	      /* Add &APV<> code here when it is finished. */
 	    bexpr = ivl_expr_oper2(expr);

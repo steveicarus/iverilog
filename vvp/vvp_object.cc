@@ -18,6 +18,11 @@
  */
 
 # include  "vvp_object.h"
+# include  "vvp_net.h"
+# include  <iostream>
+# include  <typeinfo>
+
+using namespace std;
 
 vvp_object::~vvp_object()
 {
@@ -25,4 +30,41 @@ vvp_object::~vvp_object()
 
 vvp_darray::~vvp_darray()
 {
+}
+
+void vvp_darray::set_word(unsigned adr, const vvp_vector4_t&)
+{
+      cerr << "XXXX set_word not implemented for " << typeid(*this).name() << endl;
+}
+
+void vvp_darray::get_word(unsigned, vvp_vector4_t&)
+{
+      cerr << "XXXX get_word not implemented for " << typeid(*this).name() << endl;
+}
+
+template <> vvp_darray_atom<int32_t>::~vvp_darray_atom()
+{
+}
+
+template <> void vvp_darray_atom<int32_t>::set_word(unsigned adr, const vvp_vector4_t&value)
+{
+      if (adr >= array_.size())
+	    return;
+      vector4_to_value(value, array_[adr], true, false);
+}
+
+template <> void vvp_darray_atom<int32_t>::get_word(unsigned adr, vvp_vector4_t&value)
+{
+      if (adr >= array_.size()) {
+	    value = vvp_vector4_t(32, BIT4_X);
+	    return;
+      }
+
+      uint32_t word = array_[adr];
+      vvp_vector4_t tmp (32, BIT4_0);
+      for (unsigned idx = 0 ; idx < 32 ; idx += 1) {
+	    if (word&1) tmp.set_bit(idx, BIT4_1);
+	    word >>= 1;
+      }
+      value = tmp;
 }

@@ -3676,6 +3676,20 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 
       NetExpr*mux = elab_and_eval(des, scope, index_tail.msb, -1, need_const);
 
+      if (netdarray_t*darray = net->sig()->darray_type()) {
+	      // Special case: This is a select of a dynamic
+	      // array. Generate a NetESelect and attach it to
+	      // the NetESignal. This should be interpreted as
+	      // an array word select downstream.
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Bit select of a dynamic array becomes NetESelect." << endl;
+	    }
+	    NetESelect*res = new NetESelect(net, mux, darray->vector_width());
+	    res->set_line(*net);
+	    return res;
+      }
+
 	// If the bit select is constant, then treat it similar
 	// to the part select, so that I save the effort of
 	// making a mux part in the netlist.
@@ -3750,20 +3764,6 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 			     << "Bit select of string becomes NetESelect." << endl;
 		  }
 		  NetESelect*res = new NetESelect(net, mux, 8);
-		  res->set_line(*net);
-		  return res;
-	    }
-
-	    if (netdarray_t*darray = net->sig()->darray_type()) {
-		    // Special case: This is a select of a dynamic
-		    // array. Generate a NetESelect ant attach it to
-		    // the NetESignal. This should be interpreted as
-		    // an array word select downstream.
-		  if (debug_elaborate) {
-			cerr << get_fileline() << ": debug: "
-			     << "Bit select of a dynamic array becomes NetESelect." << endl;
-		  }
-		  NetESelect*res = new NetESelect(net, mux, darray->vector_width());
 		  res->set_line(*net);
 		  return res;
 	    }
