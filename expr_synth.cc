@@ -1048,6 +1048,7 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 						  NetPartSelect::VP);
 	    des->add_node(sel);
 
+	    ivl_assert(*this, select_width > 0);
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
 				    NetNet::WIRE, select_width);
 	    tmp->data_type(sub->data_type());
