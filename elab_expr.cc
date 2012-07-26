@@ -2750,8 +2750,8 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
       if (base == 0) return 0;
 
-      unsigned long wid = 0;
-      calculate_up_do_width_(des, scope, wid);
+	// Use the part select width already calculated by test_width().
+      unsigned long wid = min_width_;
 
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: Calculate part select "
@@ -2836,8 +2836,8 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
       if (base == 0) return 0;
 
-      unsigned long wid = 0;
-      calculate_up_do_width_(des, scope, wid);
+	// Use the part select width already calculated by test_width().
+      unsigned long wid = min_width_;
 
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: Calculate part select "
@@ -3369,9 +3369,8 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
 
-      unsigned long wid = 0;
-      calculate_up_do_width_(des, scope, wid);
-
+	// Use the part select width already calculated by test_width().
+      unsigned long wid = min_width_;
 
 	// Handle the special case that the base is constant as
 	// well. In this case it can be converted to a conventional
@@ -3472,8 +3471,8 @@ NetExpr* PEIdent::elaborate_expr_net_idx_do_(Design*des, NetScope*scope,
 
       NetExpr*base = calculate_up_do_base_(des, scope, need_const);
 
-      unsigned long wid = 0;
-      calculate_up_do_width_(des, scope, wid);
+	// Use the part select width already calculated by test_width().
+      unsigned long wid = min_width_;
 
 	// Handle the special case that the base is constant as
 	// well. In this case it can be converted to a conventional
