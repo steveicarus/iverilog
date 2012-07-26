@@ -2095,15 +2095,18 @@ bool PEIdent::calculate_up_do_width_(Design*des, NetScope*scope,
       NetExpr*wid_ex = elab_and_eval(des, scope, index_tail.lsb, -1, true);
       NetEConst*wid_c = dynamic_cast<NetEConst*>(wid_ex);
 
-      if (wid_c == 0) {
-	    cerr << get_fileline() << ": error: Indexed part width must be "
-		 << "constant. Expression in question is..." << endl;
-	    cerr << get_fileline() << ":      : " << *wid_ex << endl;
+      wid = wid_c? wid_c->value().as_ulong() : 0;
+      if (wid == 0) {
+	    cerr << index_tail.lsb->get_fileline() << ": error: "
+		  "Indexed part widths must be constant and greater than zero."
+		 << endl;
+	    cerr << index_tail.lsb->get_fileline() << ":      : "
+		  "This part width expression violates the rule: "
+		 << *index_tail.lsb << endl;
 	    des->errors += 1;
 	    flag = false;
+	    wid = 1;
       }
-
-      wid = wid_c? wid_c->value().as_ulong() : 1;
       delete wid_ex;
 
       return flag;
