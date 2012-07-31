@@ -459,6 +459,39 @@ static struct vector_info draw_binary_expr_eq_real(ivl_expr_t expr)
       return res;
 }
 
+static struct vector_info draw_binary_expr_eq_string(ivl_expr_t expr)
+{
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+
+      struct vector_info res;
+      res.base = allocate_vector(1);
+      res.wid = 1;
+      assert(res.base);
+
+      draw_eval_string(le);
+      draw_eval_string(re);
+
+      fprintf(vvp_out, "    %%cmp/str;\n");
+
+      switch (ivl_expr_opcode(expr)) {
+
+	  case 'e': /* == */
+	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n", res.base);
+	    break;
+
+	  case 'n': /* != */
+	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n", res.base);
+	    fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+      return res;
+}
+
 static struct vector_info draw_binary_expr_eq(ivl_expr_t expr,
 					      unsigned ewid,
 					      int stuff_ok_flag)
@@ -476,13 +509,30 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t expr,
 	    return draw_binary_expr_eq_real(expr);
       }
 
+      if ((ivl_expr_value(le) == IVL_VT_STRING)
+	  && (ivl_expr_value(re) == IVL_VT_STRING)) {
+	    return draw_binary_expr_eq_string(expr);
+      }
+
+      if ((ivl_expr_value(le) == IVL_VT_STRING)
+	  && (ivl_expr_type(re) == IVL_EX_STRING)) {
+	    return draw_binary_expr_eq_string(expr);
+      }
+
+      if ((ivl_expr_type(le) == IVL_EX_STRING)
+	  && (ivl_expr_value(re) == IVL_VT_STRING)) {
+	    return draw_binary_expr_eq_string(expr);
+      }
+
       if (number_is_immediate(re,16,0) && !number_is_unknown(re))
 	    return draw_eq_immediate(expr, ewid, le, re, stuff_ok_flag);
 
       assert(ivl_expr_value(le) == IVL_VT_LOGIC
-	     || ivl_expr_value(le) == IVL_VT_BOOL);
+	     || ivl_expr_value(le) == IVL_VT_BOOL
+	     || ivl_expr_value(le) == IVL_VT_STRING);
       assert(ivl_expr_value(re) == IVL_VT_LOGIC
-	     || ivl_expr_value(re) == IVL_VT_BOOL);
+	     || ivl_expr_value(re) == IVL_VT_BOOL
+	     || ivl_expr_value(re) == IVL_VT_STRING);
 
       wid = ivl_expr_width(le);
       if (ivl_expr_width(re) > wid)
@@ -825,6 +875,57 @@ static struct vector_info draw_binary_expr_le_real(ivl_expr_t expr)
       return res;
 }
 
+static struct vector_info draw_binary_expr_le_string(ivl_expr_t expr)
+{
+      struct vector_info res;
+
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+
+      res.base = allocate_vector(1);
+      res.wid  = 1;
+
+      assert(res.base);
+
+	/* The %cmp/str function implements < and <= operands. To get
+	   the > and >= results, simply switch the order of the
+	   operands. */
+      switch (ivl_expr_opcode(expr)) {
+	  case '<':
+	  case 'L':
+	    draw_eval_string(le);
+	    draw_eval_string(re);
+	    break;
+	  case '>':
+	  case 'G':
+	    draw_eval_string(re);
+	    draw_eval_string(le);
+	    break;
+	  default:
+	    assert(0);
+      }
+
+      switch (ivl_expr_opcode(expr)) {
+	  case '<':
+	  case '>':
+	    fprintf(vvp_out, "    %%cmp/str;\n");
+	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
+	    break;
+
+	  case 'L': /* <= */
+	  case 'G': /* >= */
+	    fprintf(vvp_out, "    %%cmp/str;\n");
+	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
+	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+      return res;
+}
+
 static struct vector_info draw_binary_expr_le_bool(ivl_expr_t expr,
 						   unsigned wid)
 {
@@ -917,6 +1018,21 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 	  && ivl_expr_value(re) == IVL_VT_BOOL
 	  && owid < 64) {
 	    return draw_binary_expr_le_bool(expr, wid);
+      }
+
+      if ((ivl_expr_value(le) == IVL_VT_STRING)
+	  && (ivl_expr_value(re) == IVL_VT_STRING)) {
+	    return draw_binary_expr_le_string(expr);
+      }
+
+      if ((ivl_expr_value(le) == IVL_VT_STRING)
+	  && (ivl_expr_type(re) == IVL_EX_STRING)) {
+	    return draw_binary_expr_le_string(expr);
+      }
+
+      if ((ivl_expr_type(le) == IVL_EX_STRING)
+	  && (ivl_expr_value(re) == IVL_VT_STRING)) {
+	    return draw_binary_expr_eq_string(expr);
       }
 
       assert(ivl_expr_value(le) == IVL_VT_LOGIC
@@ -2646,6 +2762,25 @@ static struct vector_info draw_select_unsized_literal(ivl_expr_t expr,
       return res;
 }
 
+static void draw_select_string_dest(ivl_expr_t expr, struct vector_info res)
+{
+      ivl_expr_t sube  = ivl_expr_oper1(expr);
+      ivl_expr_t shift = ivl_expr_oper2(expr);
+      int shift_i;
+
+      draw_eval_string(sube);
+
+      shift_i = allocate_word();
+      draw_eval_expr_into_integer(shift, shift_i);
+
+      assert(res.wid % 8 == 0);
+
+      clr_word(shift_i);
+
+      fprintf(vvp_out, "    %%substr/v %u, %d, %u;\n", res.base, shift_i, res.wid);
+      fprintf(vvp_out, "    %%pop/str 1;\n");
+}
+
 static struct vector_info draw_select_expr(ivl_expr_t expr, unsigned wid,
 					   int stuff_ok_flag)
 {
@@ -2665,6 +2800,28 @@ static struct vector_info draw_select_expr(ivl_expr_t expr, unsigned wid,
       if ( (res.base = allocate_vector_exp(expr, wid, alloc_exclusive)) != 0) {
 	    fprintf(vvp_out, "; Reuse base=%u wid=%u from lookaside.\n",
 		    res.base, wid);
+	    return res;
+      }
+
+	/* Special case: The sub expression is a string, so do a
+	   string select then a part select from that. */
+      if (ivl_expr_value(sube) == IVL_VT_STRING) {
+	    res.base = allocate_vector(wid);
+	    res.wid  = wid;
+	    draw_select_string_dest(expr, res);
+	    return res;
+      }
+
+	/* Special case: The sub-expression is a DARRAY variable, so
+	   do a dynamic array word load. */
+      if (ivl_expr_value(sube) == IVL_VT_DARRAY) {
+	    ivl_signal_t sig = ivl_expr_signal(sube);
+	    assert(sig);
+	    res.base = allocate_vector(wid);
+	    res.wid = wid;
+	    draw_eval_expr_into_integer(shift, 3);
+	    fprintf(vvp_out, "    %%load/dar %u, v%p_0, %u;\n",
+		    res.base, sig, res.wid);
 	    return res;
       }
 
@@ -2769,6 +2926,13 @@ static void draw_select_expr_dest(ivl_expr_t expr, struct vector_info dest,
 
       ivl_expr_t sube = ivl_expr_oper1(expr);
       ivl_expr_t shift= ivl_expr_oper2(expr);
+
+	/* Special case: The sub expression is a string, so do a
+	   string select then a part select from that. */
+      if (ivl_expr_value(sube) == IVL_VT_STRING) {
+	    draw_select_string_dest(expr, dest);
+	    return;
+      }
 
 	/* If the shift expression is not present, then this is really
 	   a pad expression, and that can be handled pretty
@@ -2896,7 +3060,6 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t expr, unsigned wid)
 {
       unsigned parm_count = ivl_expr_parms(expr);
       struct vector_info res;
-
 
 	/* If the function has no parameters, then use this short-form
 	   to draw the statement. */

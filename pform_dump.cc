@@ -233,6 +233,11 @@ void PEFNumber::dump(ostream &out) const
       out << value();
 }
 
+void PENew::dump(ostream&out) const
+{
+      out << "new [" << *size_ << "]";
+}
+
 void PENumber::dump(ostream&out) const
 {
       out << value();

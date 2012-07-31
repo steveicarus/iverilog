@@ -388,7 +388,7 @@ extern void compile_named_event(char*label, char*type);
  */
 
 #define OPERAND_MAX 3
-enum ltype_e { L_NUMB, L_SYMB };
+enum ltype_e { L_NUMB, L_SYMB, L_STRING };
 
 struct comp_operands_s {
       unsigned argc;
@@ -397,6 +397,7 @@ struct comp_operands_s {
 	    union {
 		  unsigned long numb;
 		  struct symb_s symb;
+		  const char   *text;
 	    };
       } argv[OPERAND_MAX];
 };
@@ -455,8 +456,9 @@ extern void compile_variable(char*label, char*name,
 			     int msb, int lsb, int vpi_type_code,
 			     bool signed_flag, bool local_flag);
 
-extern void compile_var_real(char*label, char*name,
-			     int msb, int lsb);
+extern void compile_var_real(char*label, char*name);
+extern void compile_var_string(char*label, char*name);
+extern void compile_var_darray(char*label, char*name);
 
 /*
  * This function is used to create a scope port

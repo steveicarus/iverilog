@@ -76,6 +76,7 @@ class NetEvTrig;
 class NetEvWait;
 class PExpr;
 class PFunction;
+class netdarray_t;
 class netenum_t;
 class netstruct_t;
 
@@ -607,10 +608,12 @@ class NetNet  : public NetObj, public PortType {
 		      const std::list<netrange_t>&packed);
       explicit NetNet(NetScope*s, perm_string n, Type t,
 		      const std::list<netrange_t>&packed,
-		      const std::list<netrange_t>&unpacked);
+		      const std::list<netrange_t>&unpacked,
+		      nettype_base_t*type =0);
 
-	// This form builds a NetNet from its record definition.
+	// This form builds a NetNet from its record/enum definition.
       explicit NetNet(NetScope*s, perm_string n, Type t, netstruct_t*type);
+      explicit NetNet(NetScope*s, perm_string n, Type t, netdarray_t*type);
 
       virtual ~NetNet();
 
@@ -641,10 +644,9 @@ class NetNet  : public NetObj, public PortType {
       bool get_scalar() const;
       void set_scalar(bool);
 
-      void set_enumeration(netenum_t*enum_set);
       netenum_t*enumeration(void) const;
-
       netstruct_t*struct_type(void) const;
+      netdarray_t*darray_type(void) const;
 
 	/* Attach a discipline to the net. */
       ivl_discipline_t get_discipline() const;
@@ -730,8 +732,7 @@ class NetNet  : public NetObj, public PortType {
       bool isint_     : 1;		// original type of integer
       bool is_scalar_ : 1;
       bool local_flag_: 1;
-      netenum_t*enumeration_;
-      netstruct_t*struct_type_;
+      nettype_base_t*net_type_;
       ivl_discipline_t discipline_;
 
       std::list<netrange_t> packed_dims_;
@@ -3190,7 +3191,7 @@ class NetSTask  : public NetProc {
 
     public:
       NetSTask(const char*na, ivl_sfunc_as_task_t sfat,
-               const svector<NetExpr*>&);
+               const std::vector<NetExpr*>&);
       ~NetSTask();
 
       const char* name() const;
@@ -3208,7 +3209,7 @@ class NetSTask  : public NetProc {
     private:
       const char* name_;
       ivl_sfunc_as_task_t sfunc_as_task_;
-      svector<NetExpr*>parms_;
+      std::vector<NetExpr*>parms_;
 };
 
 /*
@@ -3747,16 +3748,17 @@ class NetEBShift : public NetEBinary {
 class NetEConcat  : public NetExpr {
 
     public:
-      NetEConcat(unsigned cnt, unsigned repeat =1);
+      NetEConcat(unsigned cnt, unsigned repeat, ivl_variable_type_t vt);
       ~NetEConcat();
 
 	// Manipulate the parameters.
       void set(unsigned idx, NetExpr*e);
 
       unsigned repeat() const { return repeat_; }
-      unsigned nparms() const { return parms_.count() ; }
+      unsigned nparms() const { return parms_.size() ; }
       NetExpr* parm(unsigned idx) const { return parms_[idx]; }
 
+      virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual bool has_width() const;
       virtual NetEConcat* dup_expr() const;
@@ -3766,8 +3768,9 @@ class NetEConcat  : public NetExpr {
       virtual void dump(ostream&) const;
 
     private:
-      svector<NetExpr*>parms_;
+      std::vector<NetExpr*>parms_;
       unsigned repeat_;
+      ivl_variable_type_t expr_type_;
 };
 
 

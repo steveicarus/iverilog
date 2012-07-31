@@ -22,6 +22,8 @@
 # include  "config.h"
 # include  "vpi_user.h"
 # include  "vvp_net.h"
+# include  "vvp_object.h"
+# include  <string>
 # include  <cstddef>
 # include  <cstdlib>
 # include  <cstring>
@@ -261,6 +263,119 @@ class vvp_fun_signal_real_aa : public vvp_fun_signal_real, public automatic_sign
 };
 
 
+class vvp_fun_signal_string : public vvp_fun_signal_base {
+
+    public:
+      explicit vvp_fun_signal_string() {};
+
+      unsigned size() const { return 1; }
+
+      inline const std::string& get_string() const { return value_; }
+
+    protected:
+      std::string value_;
+};
+
+/*
+ * Statically allocated vvp_fun_signal_string.
+ */
+class vvp_fun_signal_string_sa : public vvp_fun_signal_string {
+
+    public:
+      explicit vvp_fun_signal_string_sa();
+
+      void recv_string(vvp_net_ptr_t port, const std::string&bit,
+		       vvp_context_t context);
+};
+
+/*
+ * Automatically allocated vvp_fun_signal_real.
+ */
+class vvp_fun_signal_string_aa : public vvp_fun_signal_string, public automatic_signal_base, public automatic_hooks_s {
+
+    public:
+      explicit vvp_fun_signal_string_aa();
+      ~vvp_fun_signal_string_aa();
+
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
+#ifdef CHECK_WITH_VALGRIND
+      void free_instance(vvp_context_t context);
+#endif
+
+	// Get information about the vector value.
+      unsigned   value_size() const;
+      vvp_bit4_t value(unsigned idx) const;
+      vvp_scalar_t scalar_value(unsigned idx) const;
+      void vec4_value(vvp_vector4_t&) const;
+      double real_value() const;
+      void get_signal_value(struct t_vpi_value*vp);
+
+    public: // These objects are only permallocated.
+      static void* operator new(std::size_t size);
+      static void operator delete(void*obj);
+
+    private:
+      unsigned context_idx_;
+};
+
+class vvp_fun_signal_object : public vvp_fun_signal_base {
+
+    public:
+      explicit vvp_fun_signal_object() {};
+
+      unsigned size() const { return 1; }
+
+      inline vvp_object_t get_object() const { return value_; }
+
+    protected:
+      vvp_object_t value_;
+};
+
+/*
+ * Statically allocated vvp_fun_signal_string.
+ */
+class vvp_fun_signal_object_sa : public vvp_fun_signal_object {
+
+    public:
+      explicit vvp_fun_signal_object_sa();
+
+      void recv_object(vvp_net_ptr_t port, vvp_object_t bit,
+		    vvp_context_t context);
+};
+
+/*
+ * Automatically allocated vvp_fun_signal_real.
+ */
+class vvp_fun_signal_object_aa : public vvp_fun_signal_object, public automatic_signal_base, public automatic_hooks_s {
+
+    public:
+      explicit vvp_fun_signal_object_aa();
+      ~vvp_fun_signal_object_aa();
+
+      void alloc_instance(vvp_context_t context);
+      void reset_instance(vvp_context_t context);
+#ifdef CHECK_WITH_VALGRIND
+      void free_instance(vvp_context_t context);
+#endif
+
+	// Get information about the vector value.
+      unsigned   value_size() const;
+      vvp_bit4_t value(unsigned idx) const;
+      vvp_scalar_t scalar_value(unsigned idx) const;
+      void vec4_value(vvp_vector4_t&) const;
+	//double real_value() const;
+	//void get_signal_value(struct t_vpi_value*vp);
+
+    public: // These objects are only permallocated.
+      static void* operator new(std::size_t size);
+      static void operator delete(void*obj);
+
+    private:
+      unsigned context_idx_;
+};
+
+
 /* vvp_wire
  * The vvp_wire is different from vvp_variable objects in that it
  * exists only as a filter. The vvp_wire class tree is for
@@ -399,5 +514,35 @@ class vvp_wire_real : public vvp_wire_base {
       double bit_;
       double force_;
 };
+
+#if 0
+class vvp_wire_string : public vvp_wire_base {
+
+    public:
+      explicit vvp_wire_string(void);
+
+	// Abstract methods from vvp_vpi_callback
+      void get_value(struct t_vpi_value*value);
+	// Abstract methods from vvp_net_fil_t
+      unsigned filter_size() const;
+      void force_fil_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
+      void force_fil_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
+      void force_fil_real(double val, vvp_vector2_t mask);
+      void release(vvp_net_ptr_t ptr, bool net_flag);
+      void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag);
+
+	// Implementation of vvp_signal_value methods
+      unsigned value_size() const;
+      vvp_bit4_t value(unsigned idx) const;
+      vvp_scalar_t scalar_value(unsigned idx) const;
+      void vec4_value(vvp_vector4_t&) const;
+      double real_value() const;
+
+      void get_signal_value(struct t_vpi_value*vp);
+
+    private:
+      std::string value_;
+};
+#endif
 
 #endif

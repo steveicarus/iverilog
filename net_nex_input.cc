@@ -56,7 +56,7 @@ NexusSet* NetEConcat::nex_input(bool rem_out)
 {
       if (parms_[0] == NULL) return NULL;
       NexusSet*result = parms_[0]->nex_input(rem_out);
-      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
 	    if (parms_[idx] == NULL) {
 		  delete result;
 		  return NULL;
@@ -397,13 +397,13 @@ NexusSet* NetRepeat::nex_input(bool rem_out)
  */
 NexusSet* NetSTask::nex_input(bool rem_out)
 {
-      if (parms_.count() == 0)
+      if (parms_.size() == 0)
 	    return new NexusSet;
 
       NexusSet*result;
       if (parms_[0]) result = parms_[0]->nex_input(rem_out);
       else result = new NexusSet;
-      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
 	    if (parms_[idx]) {
 		  NexusSet*tmp = parms_[idx]->nex_input(rem_out);
 		  result->add(*tmp);

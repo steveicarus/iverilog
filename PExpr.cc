@@ -371,6 +371,16 @@ bool PEIdent::has_aa_term(Design*des, NetScope*scope) const
             return false;
 }
 
+PENew::PENew(PExpr*size_expr)
+: size_(size_expr)
+{
+}
+
+PENew::~PENew()
+{
+      delete size_;
+}
+
 PENumber::PENumber(verinum*vp)
 : value_(vp)
 {

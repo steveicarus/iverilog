@@ -99,6 +99,16 @@ struct vthread_s {
 	    double   w_real;
       } words[16];
 
+	/* Strings are operated on using a forth-like operator
+	   set. Items at the top of the stack (back()) are the objects
+	   operated on except for special cases. New objects are
+	   pushed onto the top (back()) and pulled from the top
+	   (back()) only. */
+      vector<string> stack_str;
+
+	/* Objects are also operated on in a stack. */
+      vector<vvp_object_t> stack_obj;
+
 	/* My parent sets this when it wants me to wake it up. */
       unsigned i_am_joining      :1;
       unsigned i_have_ended      :1;
@@ -180,6 +190,13 @@ double vthread_get_real(struct vthread_s*thr, unsigned addr)
 void vthread_put_real(struct vthread_s*thr, unsigned addr, double val)
 {
       thr->words[addr].w_real = val;
+}
+
+string vthread_get_str_stack(struct vthread_s*thr, unsigned depth)
+{
+      assert(depth < thr->stack_str.size());
+      unsigned use_index = thr->stack_str.size()-1-depth;
+      return thr->stack_str[use_index];
 }
 
 template <class T> T coerce_to_width(const T&that, unsigned width)
@@ -1484,6 +1501,36 @@ bool of_CMPS(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_CMPSTR(vthread_t thr, vvp_code_t)
+{
+      assert(thr->stack_str.size() >= 2);
+      string re = thr->stack_str.back();
+      thr->stack_str.pop_back();
+      string le = thr->stack_str.back();
+      thr->stack_str.pop_back();
+
+      int rc = strcmp(le.c_str(), re.c_str());
+
+      vvp_bit4_t eq;
+      vvp_bit4_t lt;
+
+      if (rc == 0) {
+	    eq = BIT4_1;
+	    lt = BIT4_0;
+      } else if (rc < 0) {
+	    eq = BIT4_0;
+	    lt = BIT4_1;
+      } else {
+	    eq = BIT4_0;
+	    lt = BIT4_0;
+      }
+
+      thr_put_bit(thr, 4, eq);
+      thr_put_bit(thr, 5, lt);
+
+      return true;
+}
+
 bool of_CMPIS(vthread_t thr, vvp_code_t cp)
 {
       vvp_bit4_t eq  = BIT4_1;
@@ -1780,6 +1827,29 @@ bool of_CMPZ(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ *  %concat/str;
+ */
+bool of_CONCAT_STR(vthread_t thr, vvp_code_t)
+{
+      assert(thr->stack_str.size() >= 1);
+      string text = thr->stack_str.back();
+      thr->stack_str.pop_back();
+      thr->stack_str.back().append(text);
+      return true;
+}
+
+/*
+ *  %concati/str <string>;
+ */
+bool of_CONCATI_STR(vthread_t thr, vvp_code_t cp)
+{
+      const char*text = cp->text;
+      assert(thr->stack_str.size() >= 1);
+      thr->stack_str.back().append(text);
+      return true;
+}
+
 bool of_CVT_RS(vthread_t thr, vvp_code_t cp)
 {
       int64_t r = thr->words[cp->bit_idx[1]].w_int;
@@ -1939,6 +2009,21 @@ bool of_DELAYX(vthread_t thr, vvp_code_t cp)
       delay = thr->words[cp->number].w_uint;
       schedule_vthread(thr, delay);
       return false;
+}
+
+/* %delete/obj <label>
+ *
+ * This operator works by assigning a nil to the target object. This
+ * causes any value that might be there to be garbage collected, thus
+ * deleting the object.
+ */
+bool of_DELETE_OBJ(vthread_t thr, vvp_code_t cp)
+{
+	/* set the value into port 0 of the destination. */
+      vvp_net_ptr_t ptr (cp->net, 0);
+      vvp_send_object(ptr, 0, thr->wt_context);
+
+      return true;
 }
 
 static bool do_disable(vthread_t thr, vthread_t match)
@@ -3014,6 +3099,32 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %load/dar <bit>, <array-label>, <index>;
+*/
+bool of_LOAD_DAR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+      unsigned adr = thr->words[3].w_int;
+      vvp_net_t*net = cp->net;
+
+      assert(net);
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_darray*darray = dynamic_cast<vvp_darray*>(obj->get_object());
+      assert(darray);
+
+      vvp_vector4_t word;
+      darray->get_word(adr, word);
+      assert(word.size() == wid);
+
+      thr->bits4.set_vec(bit, word);
+
+      return true;
+}
+
+/*
  * %load/vp0, %load/vp0/s, %load/avp0 and %load/avp0/s share this function.
 */
 #if (SIZEOF_UNSIGNED_LONG >= 8)
@@ -3146,6 +3257,20 @@ bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_LOAD_STR(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+
+      vvp_fun_signal_string*fun = dynamic_cast<vvp_fun_signal_string*> (net->fun);
+      assert(fun);
+
+      const string&val = fun->get_string();
+      thr->stack_str.push_back(val);
+
+      return true;
+}
+
 /* %load/v <bit>, <label>, <wid>
  *
  * Implement the %load/v instruction. Load the vector value of the
@@ -3170,7 +3295,7 @@ static void load_base(vvp_code_t cp, vvp_vector4_t&dst)
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
       if (sig == 0) {
 	    cerr << "%%load/v error: Net arg not a signal? "
-		 << typeid(*net->fil).name() << endl;
+		 << (net->fil ? typeid(*net->fil).name() : typeid(*net->fun).name()) << endl;
 	    assert(sig);
       }
 
@@ -3826,6 +3951,23 @@ bool of_NAND(vthread_t thr, vvp_code_t cp)
 }
 
 
+bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
+{
+      const char*text = cp->text;
+      size_t size = thr->words[cp->bit_idx[0]].w_int;
+
+      vvp_object_t obj;
+      if (strcmp(text,"sb32") == 0) {
+	    obj = new vvp_darray_atom<int32_t>(size);
+      } else {
+	    obj = new vvp_darray (size);
+      }
+
+      thr->stack_obj.push_back(obj);
+
+      return true;
+}
+
 bool of_NOOP(vthread_t, vvp_code_t)
 {
       return true;
@@ -4061,6 +4203,21 @@ bool of_NOR(vthread_t thr, vvp_code_t cp)
       return cp->opcode(thr, cp);
 }
 
+/*
+ *  %pop/str <number>
+ */
+bool of_POP_STR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned cnt = cp->number;
+      assert(cnt <= thr->stack_str.size());
+
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1) {
+	    thr->stack_str.pop_back();
+      }
+
+      return true;
+}
+
 bool of_POW(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
@@ -4137,6 +4294,97 @@ bool of_POW_WR(vthread_t thr, vvp_code_t cp)
       double l = thr->words[cp->bit_idx[0]].w_real;
       double r = thr->words[cp->bit_idx[1]].w_real;
       thr->words[cp->bit_idx[0]].w_real = pow(l, r);
+
+      return true;
+}
+
+bool of_PUSHI_STR(vthread_t thr, vvp_code_t cp)
+{
+      const char*text = cp->text;
+      thr->stack_str.push_back(string(text));
+      return true;
+}
+
+bool of_PUSHV_STR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned src = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+      vvp_vector4_t vec = vthread_bits_to_vector(thr, src, wid);
+      size_t slen = (vec.size() + 7)/8;
+      vector<char>buf;
+      buf.reserve(slen);
+
+      for (size_t idx = 0 ; idx < vec.size() ; idx += 8) {
+	    char tmp = 0;
+	    size_t trans = 8;
+	    if (idx+trans > vec.size())
+		  trans = vec.size() - idx;
+
+	    for (size_t bdx = 0 ; bdx < trans ; bdx += 1) {
+		  if (vec.value(idx+bdx) == BIT4_1)
+			tmp |= 1 << bdx;
+	    }
+
+	    if (tmp != 0)
+		  buf.push_back(tmp);
+      }
+
+      string val;
+      for (vector<char>::reverse_iterator cur = buf.rbegin()
+		 ; cur != buf.rend() ; ++cur) {
+	    val.push_back(*cur);
+      }
+
+      thr->stack_str.push_back(val);
+      return true;
+}
+
+/*
+ * %putc/str/v  <var>, <muxr>, <base>
+ */
+bool of_PUTC_STR_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned muxr = cp->bit_idx[0];
+      unsigned base = cp->bit_idx[1];
+
+	/* The mux is the index into the string. If it is <0, then
+	   this operation cannot possible effect the string, so we are
+	   done. */
+      assert(muxr < 16);
+      int32_t mux = thr->words[muxr].w_int;
+      if (mux < 0)
+	    return true;
+
+	/* Extract the character from the vector space. If that byte
+	   is null (8'hh00) then there is nothing more to do. */
+      unsigned long*tmp = vector_to_array(thr, base, 8);
+      if (tmp == 0)
+	    return true;
+      if (tmp[0] == 0)
+	    return true;
+
+      char tmp_val = tmp[0]&0xff;
+
+	/* Get the existing value of the string. If we find that the
+	   index is too big for the string, then give up. */
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_string*fun = dynamic_cast<vvp_fun_signal_string*> (net->fun);
+      assert(fun);
+
+      string val = fun->get_string();
+      if (val.size() <= (size_t)mux)
+	    return true;
+
+	/* If the value to write is the same as the destination, then
+	   stop now. */
+      if (val[mux] == tmp_val)
+	    return true;
+
+	/* Finally, modify the string and write the new string to the
+	   variable so that the new value propagates. */
+      val[mux] = tmp_val;
+      vvp_send_string(vvp_net_ptr_t(cp->net, 0), val, thr->wt_context);
 
       return true;
 }
@@ -4241,6 +4489,28 @@ bool of_SET_AV(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %set/dar  <label>, <bit>, <wid>
+ */
+bool of_SET_DAR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+      unsigned adr = thr->words[3].w_int;
+
+	/* Make a vector of the desired width. */
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_darray*darray = dynamic_cast<vvp_darray*>(obj->get_object());
+      assert(darray);
+
+      darray->set_word(adr, value);
+      return true;
+}
 
 /*
  * This implements the "%set/v <label>, <bit>, <wid>" instruction.
@@ -4478,6 +4748,38 @@ bool of_SHIFTR_S_I0(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_STORE_OBJ(vthread_t thr, vvp_code_t cp)
+{
+	/* set the value into port 0 of the destination. */
+      vvp_net_ptr_t ptr (cp->net, 0);
+
+      assert(!thr->stack_obj.empty());
+
+      vvp_object_t val= thr->stack_obj.back();
+      thr->stack_obj.pop_back();
+
+      vvp_send_object(ptr, val, thr->wt_context);
+
+      return true;
+}
+
+
+bool of_STORE_STR(vthread_t thr, vvp_code_t cp)
+{
+	/* set the value into port 0 of the destination. */
+      vvp_net_ptr_t ptr (cp->net, 0);
+
+      assert(!thr->stack_str.empty());
+
+      string val= thr->stack_str.back();
+      thr->stack_str.pop_back();
+
+      vvp_send_string(ptr, val, thr->wt_context);
+
+      return true;
+}
+
+
 bool of_SUB(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
@@ -4553,6 +4855,40 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t tmp(cp->number, BIT4_X);
       thr->bits4.set_vec(cp->bit_idx[0], tmp);
+
+      return true;
+}
+
+/*
+ * %substr/v <bitl>, <index>, <wid>
+ */
+bool of_SUBSTR_V(vthread_t thr, vvp_code_t cp)
+{
+      string&val = thr->stack_str.back();
+      uint32_t bitl = cp->bit_idx[0];
+      uint32_t sel = cp->bit_idx[1];
+      unsigned wid = cp->number;
+
+      thr_check_addr(thr, bitl+wid);
+      assert(bitl >= 4);
+
+      int32_t use_sel = thr->words[sel].w_int;
+
+      vvp_vector4_t tmp (8);
+      unsigned char_count = wid/8;
+      for (unsigned idx = 0 ; idx < char_count ; idx += 1) {
+	    unsigned long byte;
+	    if (use_sel < 0)
+		  byte = 0x00;
+	    else if ((size_t)use_sel >= val.size())
+		  byte = 0x00;
+	    else
+		  byte = val[use_sel];
+
+	    thr->bits4.setarray(bitl, 8, &byte);
+	    bitl += 8;
+	    use_sel += 1;
+      }
 
       return true;
 }

@@ -169,6 +169,9 @@ const char*data_type_string(ivl_variable_type_t vtype)
 	  case IVL_VT_STRING:
 	    vt = "string";
 	    break;
+	  case IVL_VT_DARRAY:
+	    vt = "darray";
+	    break;
       }
 
       return vt;
@@ -1260,22 +1263,29 @@ static void show_signal(ivl_signal_t net)
 	    break;
       }
 
+      data_type = "?data?";
       switch (ivl_signal_data_type(net)) {
 
+	  case IVL_VT_NO_TYPE:
+	    data_type = "<no-type>";
+	    break;
 	  case IVL_VT_BOOL:
 	    data_type = "bool";
 	    break;
-
 	  case IVL_VT_LOGIC:
 	    data_type = "logic";
 	    break;
-
 	  case IVL_VT_REAL:
 	    data_type = "real";
 	    break;
-
-	  default:
-	    data_type = "?data?";
+	  case IVL_VT_STRING:
+	    data_type = "string";
+	    break;
+	  case IVL_VT_DARRAY:
+	    data_type = "darray";
+	    break;
+	  case IVL_VT_VOID:
+	    data_type = "void";
 	    break;
       }
 
@@ -1358,6 +1368,15 @@ static void show_signal(ivl_signal_t net)
 	    }
       }
 
+      switch (ivl_signal_data_type(net)) {
+	  case IVL_VT_NO_TYPE:
+	  case IVL_VT_VOID:
+	    fprintf(out, "  ERROR: Invalid type for signal: %s\n", data_type);
+	    stub_errors += 1;
+	    break;
+	  default:
+	    break;
+      }
 }
 
 void test_expr_is_delay(ivl_expr_t expr)

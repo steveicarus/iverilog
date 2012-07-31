@@ -1,5 +1,8 @@
+#ifndef __netarray_H
+#define __netarray_H
 /*
- * Copyright (c) 2007-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,13 +20,29 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+# include  "LineInfo.h"
+# include  <vector>
 
-# include  "pform_types.h"
+class netarray_t : public LineInfo {
 
-data_type_t::~data_type_t()
+    public:
+      explicit netarray_t(const std::list<netrange_t>&packed);
+      ~netarray_t();
+
+      unsigned packed_width() const;
+
+    private:
+      std::list<netrange_t> packed_dims_;
+
+};
+
+inline netarray_t::netarray_t(const std::list<netrange_t>&packed)
+: packed_dims_(packed)
 {
 }
 
-string_type_t::~string_type_t()
+netarray_t::~netarray_t()
 {
 }
+
+#endif

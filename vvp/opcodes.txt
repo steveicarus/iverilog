@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -12,12 +12,25 @@ operands. In no case are there more than 3 operands. This chapter
 describes the specific behavior of each opcode, in enough detail
 (I hope) that its complete effect can be predicted.
 
-General principles of Arithmetic:
+General Principles of Arithmetic (current plan):
 
 The binary arithmetic instruction in general takes three parameters,
 the left operand, the right operand, and the base. The left operand is
 replaced with the result, which is the same width as the left and
 right operands.
+
+General Principles of Arithmetic (new plan):
+
+For strings, all arithmetic is stack based. That is, there is an
+abstract stack of strings from which operations pull their operands
+and push their results. This is somewhat like FORTH (or an HP calculator
+RPN notation) and spares the need to keep register addresses in
+operands. I may find this leads to a more compact form of instruction
+code, and may lead to more efficient operators overall, and in
+particular I may find improved efficiency overall; so after the
+experience of implementing it for strings, I'll want to change other
+types around to using this method as well. Keep this in mind whenever
+considering adding new instructions to vvp.
 
 * %abs/wr <bit-o>, <bit-i>
 
@@ -280,6 +293,25 @@ instruction will also treat x values in either operand as don't care.
 
 Only bit 4 is set by these instructions.
 
+* %cmp/str
+
+This instruction pops the top two strings from the string stack and
+compares them. The results of the comparison go into bits 4 and 5:
+
+	4: eq  (equal)
+	5: lt  (less than)
+
+For the purposes of calculating the lt bit, the top string is the
+right operand and the string underneath is the left operand. This
+instruction removes two strings from the stack.
+
+* %concat/str
+* %concati/str <string>
+
+Pop the top string, and concatenate it to the new top string. Or think
+of it as possing the tail, then the head, concatenating them, and
+pushing the result. The stack starts with two strings in the stack,
+and ends with one string in the stack.
 
 * %cvt/sr <bit-l>, <bit-r>
 * %cvt/rs <bit-l>, <bit-r>
@@ -342,6 +374,11 @@ be represented.
 This is similar to the %delay opcode, except that the parameter
 selects an index register, which contains the actual delay. This
 supports run-time calculated delays.
+
+* %delete/obj <var-label>
+
+Arrange for the dynamic object at the target label to be deleted.
+This has no effect on the object or string stack.
 
 * %disable <scope-label>
 
@@ -560,6 +597,15 @@ bit, and the <index> is the selector for the bit to use. If <index> is
 out of range, then x is loaded. The index value is incremented by one
 if it is defined (bit 4 is not 1).
 
+* %load/dar <bit>, <functor-label>, <wid>
+
+This instruction loads an array word from a dynamic array. The
+<label> refers to the variable object, and the <bit>/<wid> are the
+location in local vector space where the extracted word goes. The
+index is implicitly extracted from index register 3.
+
+(See also %set/dar)
+
 * %load/v <bit>, <functor-label>, <wid>
 
 This instruction loads a vector value from the given functor node into
@@ -684,6 +730,17 @@ means the following:
 	otherwise   x
 
 
+* %new/darray <idx>, "<type>"
+
+Create a new array (of int objects) with a size. the <idx> is the
+address of an index variable that contains the computed array size to
+use. The <type> is a string that expresses the type of the elements of
+the array. See also %delete/obj
+
+The supported types are:
+
+         "sb32"    - signed bool 32bits
+
 * %nor <dst>, <src>, <wid>
 
 Perform the bitwise nor of the vectors. Each bit in the <dst> is
@@ -734,6 +791,12 @@ destination vector in register space. The destination may overlap
 the source bit. The <dst> may not be 0-3. This is useful for zero
 or sign extending a vector.
 
+* %pop/str <num>
+
+Pop this many items from the string stack. This is the opposite of the
+%pushX/str opcode which pushes a string to the stack. The %pop/str is
+not normally needed because the %store/str includes an implicit pop,
+but sometimes it is necessary to pop explicitly.
 
 * %pow <bit-l>, <bit-r>, <wid>
 * %pow/s <bit-l>, <bit-r>, <wid>
@@ -750,6 +813,13 @@ replaces the left operand.
 This opcode raises <bit-l> (real) to the power of <bit-r> (real). The
 result replaces the left operand.
 
+* %pushi/str <text>
+
+Push a literal string to the string stack.
+
+* %pushv/str <src>, <wid>
+
+Convert a vector to a string and push the string to the string stack.
 
 * %release/net <functor-label>, <base>, <width>
 * %release/reg <functor-label>, <base>, <width>
@@ -773,6 +843,12 @@ Release the force on the real signal that is represented by the functor
 <functor-label>.  The force was previously activated with a %force/wr
 statement. The <type> is 0 for nets and 1 for registers. See the other
 %release commands above.
+
+* %set/dar <var-label>, <bit>, <wid>
+
+This sets a vector to a word of the dynamic array. Index register 3
+contains the word address within the dynamic array, and <bit>,<wid>
+specifies the thread vector to be written.
 
 * %set/v <var-label>, <bit>, <wid>
 
@@ -849,6 +925,16 @@ top bits. %shiftr/s/i0 is a signed shift, so the value is sign-extended.
 
 For a negative shift %shiftr/i0 will pad the value with 'bx.
 
+* %store/obj <var-label>
+
+This pops the top of the object stack and writes it to the object
+variable given by the label.
+
+* %store/str <var-label>
+
+This pops the top of the string stack and writes it to the string
+varible.
+
 * %sub <bit-l>, <bit-r>, <wid>
 
 This instruction arithmetically subtracts the right vector out of the
@@ -874,6 +960,16 @@ See also the %addi instruction.
 This instruction operates on real values in word registers. The right
 indexed value is subtracted from the left indexed value, and the
 result placed in the left index.
+
+
+
+* %substr/v <bit-l>, <sel>, <wid>
+
+This instruction extracts the substring of the top string in the string
+stack and delivers the result to vector space. The <bit>,<wid> part is
+the location where the result goes, and <sel> is the index register
+that holds the index. This is the general method for getting string
+values into the vector space. The string value is NOT popped.
 
 
 * %vpi_call <name> [, ...]

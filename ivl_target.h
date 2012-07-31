@@ -435,6 +435,7 @@ typedef enum ivl_variable_type_e {
       IVL_VT_BOOL    = 3,
       IVL_VT_LOGIC   = 4,
       IVL_VT_STRING  = 5,
+      IVL_VT_DARRAY  = 6,  /* Array (esp. dynamic array) */
       IVL_VT_VECTOR = IVL_VT_LOGIC /* For compatibility */
 } ivl_variable_type_t;
 
@@ -812,6 +813,14 @@ extern unsigned ivl_event_lineno(ivl_event_t net);
  * is the base of a vector. The compiler has already figured out any
  * conversion from signal units to vector units, so the result of
  * ivl_expr_oper1 should range from 0 to ivl_expr_width().
+ *
+ * This exprsesion is also used to implement string substrings. If the
+ * sub-expression (oper1) is IVL_VT_STRING, then the base expression
+ * (oper2) is a charaster address, with 0 the first address of the
+ * string, 1 the second, and so on. This is OPPOSITE how a part select
+ * of a string cast to a vector works, to be aware. The size of the
+ * expression is an even multiple of 8, and is 8 times the number of
+ * characters to pick.
  *
  * - IVL_EX_SIGNAL
  * This expression references a signal vector. The ivl_expr_signal

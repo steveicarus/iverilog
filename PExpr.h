@@ -367,6 +367,8 @@ class PEIdent : public PExpr {
       bool elaborate_lval_net_packed_member_(Design*, NetScope*,
 					     NetAssign_*,
 					     const perm_string&) const;
+      bool elaborate_lval_darray_bit_(Design*, NetScope*,
+				       NetAssign_*) const;
 
     private:
       NetExpr*elaborate_expr_param_(Design*des,
@@ -437,6 +439,23 @@ class PEIdent : public PExpr {
 
       bool eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 			     long&midx, long&lidx) const;
+};
+
+class PENew : public PExpr {
+
+    public:
+      explicit PENew (PExpr*s);
+      ~PENew();
+
+      virtual void dump(ostream&) const;
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  width_mode_t&mode);
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
+				     unsigned expr_wid,
+                                     unsigned flags) const;
+
+    private:
+      PExpr*size_;
 };
 
 class PENumber : public PExpr {
@@ -717,7 +736,16 @@ class PECallFunction : public PExpr {
 
       bool check_call_matches_definition_(Design*des, NetScope*dscope) const;
 
+
       NetExpr* cast_to_width_(NetExpr*expr, unsigned wid) const;
+
+      NetExpr*elaborate_expr_method_(Design*des, NetScope*scope,
+				     unsigned expr_wid) const;
+#if 0
+      NetExpr*elaborate_expr_string_method_(Design*des, NetScope*scope) const;
+      NetExpr*elaborate_expr_enum_method_(Design*des, NetScope*scope,
+					  unsigned expr_wid) const;
+#endif
 
       NetExpr* elaborate_sfunc_(Design*des, NetScope*scope,
                                 unsigned expr_wid,
@@ -726,6 +754,8 @@ class PECallFunction : public PExpr {
                                       unsigned expr_wid) const;
       unsigned test_width_sfunc_(Design*des, NetScope*scope,
 			         width_mode_t&mode);
+      unsigned test_width_method_(Design*des, NetScope*scope,
+				  width_mode_t&mode);
 };
 
 /*

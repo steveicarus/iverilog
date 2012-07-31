@@ -107,6 +107,9 @@ class PAssign_  : public Statement {
       NetExpr* elaborate_rval_(Design*, NetScope*, unsigned lv_width,
 			       ivl_variable_type_t type) const;
 
+      NetExpr* elaborate_rval_obj_(Design*, NetScope*,
+				   ivl_variable_type_t type) const;
+
       PExpr* delay_;
       PEventStatement*event_;
       PExpr* count_;
@@ -206,6 +209,8 @@ class PCallTask  : public Statement {
     private:
       NetProc* elaborate_sys(Design*des, NetScope*scope) const;
       NetProc* elaborate_usr(Design*des, NetScope*scope) const;
+
+      NetProc*elaborate_method_(Design*des, NetScope*scope) const;
 
       pform_name_t path_;
       vector<PExpr*> parms_;

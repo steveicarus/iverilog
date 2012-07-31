@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,13 +17,21 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+# include  "pform.h"
+# include  "parse_misc.h"
+# include  "ivl_assert.h"
 
-# include  "pform_types.h"
-
-data_type_t::~data_type_t()
+static void pform_set_string_type(string_type_t*string_type, perm_string name, list<named_pexpr_t>*attr)
 {
+      PWire*net = pform_get_make_wire_in_scope(name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_STRING);
+      pform_bind_attributes(net->attributes, attr, true);
 }
 
-string_type_t::~string_type_t()
+void pform_set_string_type(string_type_t*string_type, list<perm_string>*names, list<named_pexpr_t>*attr)
 {
+      for (list<perm_string>::iterator cur = names->begin()
+		 ; cur != names->end() ; ++ cur) {
+	    pform_set_string_type(string_type, *cur, attr);
+      }
 }
+

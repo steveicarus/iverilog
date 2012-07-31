@@ -22,6 +22,7 @@
 # include  "vvp_net_sig.h"
 # include  "statistics.h"
 # include  "vpi_priv.h"
+# include  <vector>
 # include  <cassert>
 #ifdef CHECK_WITH_VALGRIND
 # include  <valgrind/memcheck.h>
@@ -29,6 +30,8 @@
 #endif
 
 # include  <iostream>
+
+using namespace std;
 
 /*
  * The filter_mask_ method takes as an input the value to propagate,
@@ -585,6 +588,158 @@ void vvp_fun_signal_real_aa::operator delete(void*)
       assert(0);
 }
 
+
+vvp_fun_signal_string_sa::vvp_fun_signal_string_sa()
+{
+}
+
+void vvp_fun_signal_string_sa::recv_string(vvp_net_ptr_t ptr, const std::string&bit,
+					   vvp_context_t)
+{
+      assert(ptr.port() == 0);
+
+      if (needs_init_ || value_ != bit) {
+	    value_ = bit;
+	    needs_init_ = false;
+
+	    ptr.ptr()->send_string(bit, 0);
+      }
+}
+
+vvp_fun_signal_string_aa::vvp_fun_signal_string_aa()
+{
+      context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
+}
+
+vvp_fun_signal_string_aa::~vvp_fun_signal_string_aa()
+{
+      assert(0);
+}
+
+void vvp_fun_signal_string_aa::alloc_instance(vvp_context_t)
+{
+      assert(0);
+}
+
+void vvp_fun_signal_string_aa::reset_instance(vvp_context_t)
+{
+      assert(0);
+}
+
+unsigned vvp_fun_signal_string_aa::value_size() const
+{
+      assert(0);
+      return 1;
+}
+
+vvp_bit4_t vvp_fun_signal_string_aa::value(unsigned) const
+{
+      assert(0);
+      return BIT4_X;
+}
+
+vvp_scalar_t vvp_fun_signal_string_aa::scalar_value(unsigned) const
+{
+      assert(0);
+      return vvp_scalar_t();
+}
+
+void vvp_fun_signal_string_aa::vec4_value(vvp_vector4_t&) const
+{
+      assert(0);
+}
+
+double vvp_fun_signal_string_aa::real_value() const
+{
+      assert(0);
+      return 0.0;
+}
+
+void* vvp_fun_signal_string_aa::operator new(std::size_t size)
+{
+      return vvp_net_fun_t::heap_.alloc(size);
+}
+
+void vvp_fun_signal_string_aa::operator delete(void*)
+{
+      assert(0);
+}
+
+  /* OBJECT signals */
+
+vvp_fun_signal_object_sa::vvp_fun_signal_object_sa()
+{
+}
+
+void vvp_fun_signal_object_sa::recv_object(vvp_net_ptr_t ptr, vvp_object_t bit,
+					   vvp_context_t)
+{
+      assert(ptr.port() == 0);
+
+      if (needs_init_ || value_ != bit) {
+	    if (value_) delete value_;
+	    value_ = bit;
+	    needs_init_ = false;
+
+	    ptr.ptr()->send_object(bit, 0);
+      }
+}
+
+vvp_fun_signal_object_aa::vvp_fun_signal_object_aa()
+{
+      context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
+}
+
+vvp_fun_signal_object_aa::~vvp_fun_signal_object_aa()
+{
+      assert(0);
+}
+
+void vvp_fun_signal_object_aa::alloc_instance(vvp_context_t)
+{
+      assert(0);
+}
+
+void vvp_fun_signal_object_aa::reset_instance(vvp_context_t)
+{
+      assert(0);
+}
+
+unsigned vvp_fun_signal_object_aa::value_size() const
+{
+      assert(0);
+      return 1;
+}
+
+vvp_bit4_t vvp_fun_signal_object_aa::value(unsigned) const
+{
+      assert(0);
+      return BIT4_X;
+}
+
+vvp_scalar_t vvp_fun_signal_object_aa::scalar_value(unsigned) const
+{
+      assert(0);
+      return vvp_scalar_t();
+}
+
+void vvp_fun_signal_object_aa::vec4_value(vvp_vector4_t&) const
+{
+      assert(0);
+}
+
+void* vvp_fun_signal_object_aa::operator new(std::size_t size)
+{
+      return vvp_net_fun_t::heap_.alloc(size);
+}
+
+void vvp_fun_signal_object_aa::operator delete(void*)
+{
+      assert(0);
+}
+
+  /* **** */
+
 vvp_fun_force::vvp_fun_force()
 {
 }
@@ -1090,3 +1245,67 @@ double vvp_wire_real::real_value() const
       else
 	    return bit_;
 }
+
+#if 0
+vvp_wire_string::vvp_wire_string()
+{
+}
+
+unsigned vvp_wire_string::filter_size() const
+{
+      assert(0);
+      return 0;
+}
+
+void vvp_wire_string::force_fil_vec4(const vvp_vector4_t&, vvp_vector2_t)
+{
+      assert(0);
+}
+void vvp_wire_string::force_fil_vec8(const vvp_vector8_t&, vvp_vector2_t)
+{
+      assert(0);
+}
+void vvp_wire_string::force_fil_real(double, vvp_vector2_t)
+{
+      assert(0);
+}
+
+void vvp_wire_string::release(vvp_net_ptr_t ptr, bool net_flag)
+{
+      assert(0);
+}
+
+void vvp_wire_string::release_pv(vvp_net_ptr_t, unsigned, unsigned, bool)
+{
+      assert(0);
+}
+
+unsigned vvp_wire_string::value_size() const
+{
+      assert(0);
+      return 1;
+}
+
+vvp_bit4_t vvp_wire_string::value(unsigned) const
+{
+      assert(0);
+      return BIT4_X;
+}
+
+vvp_scalar_t vvp_wire_string::scalar_value(unsigned) const
+{
+      assert(0);
+      return vvp_scalar_t();
+}
+
+void vvp_wire_string::vec4_value(vvp_vector4_t&) const
+{
+      assert(0);
+}
+
+double vvp_wire_string::real_value() const
+{
+      assert(0);
+      return 0.0;
+}
+#endif

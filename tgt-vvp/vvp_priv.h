@@ -313,6 +313,18 @@ extern int draw_eval_real(ivl_expr_t ex);
  */
 extern int draw_eval_bool64(ivl_expr_t ex);
 
+/*
+ * The draw_eval_string functio evaluates the expression as a string,
+ * and pushes the string onto the string stack.
+ */
+extern void draw_eval_string(ivl_expr_t ex);
+
+/*
+ * The draw_eval_string functio evaluates the expression as an object,
+ * and pushes the object onto the object stack.
+ */
+extern int draw_eval_object(ivl_expr_t ex);
+
 extern int show_stmt_assign(ivl_statement_t net);
 extern void show_stmt_file_line(ivl_statement_t net, const char*desc);
 

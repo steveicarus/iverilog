@@ -284,6 +284,7 @@ general syntax of a variable is:
 	<label> .var/2s "name", <msb> <lsb>; Signed bool/bit variable
 	<label> .var/real "name", <msb>, <lsb>; real variable
 	<label> .var/i "name", <msb>, <lsb>; vpiIntegerVar variable
+	<label> .var/str "name"; vpiStringVar variable
 
 The "name" is the declared base name of the original variable, for the
 sake of VPI code that might access it. The variable is placed in the

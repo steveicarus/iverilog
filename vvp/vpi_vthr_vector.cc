@@ -635,3 +635,66 @@ void vpi_handle_delete()
       }
 }
 #endif
+
+class __vpiVThrStrStack : public __vpiHandle {
+    public:
+      __vpiVThrStrStack(unsigned depth);
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+    private:
+      const char* name;
+      unsigned depth_;
+};
+
+__vpiVThrStrStack::__vpiVThrStrStack(unsigned d)
+: depth_(d)
+{
+}
+
+int __vpiVThrStrStack::get_type_code(void) const
+{ return vpiConstant; }
+
+int __vpiVThrStrStack::vpi_get(int code)
+{
+      switch (code) {
+	  case vpiConstType:
+	    return vpiStringConst;
+	  default:
+	    return 0;
+      }
+}
+
+void __vpiVThrStrStack::vpi_get_value(p_vpi_value vp)
+{
+      string val;
+      char*rbuf = 0;
+
+      if (vpip_current_vthread)
+	    val = vthread_get_str_stack(vpip_current_vthread, depth_);
+
+      switch (vp->format) {
+
+	  case vpiObjTypeVal:
+	    vp->format = vpiStringVal;
+	  case vpiStringVal:
+	    rbuf = need_result_buf(val.size()+1, RBUF_VAL);
+	    strcpy(rbuf, val.c_str());
+	    vp->value.str = rbuf;
+	    break;
+
+	  default:
+	    fprintf(stderr, "vvp error: get %d not supported "
+		      "by vpiConstant (String)\n", (int)vp->format);
+
+	    vp->format = vpiSuppressVal;
+	    break;
+      }
+}
+
+
+vpiHandle vpip_make_vthr_str_stack(unsigned depth)
+{
+      struct __vpiVThrStrStack*obj = new __vpiVThrStrStack(depth);
+      return obj;
+}

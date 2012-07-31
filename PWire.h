@@ -33,6 +33,7 @@ class ostream;
 
 class PExpr;
 class Design;
+class netdarray_t;
 
 /*
  * The different type of PWire::set_range() calls.

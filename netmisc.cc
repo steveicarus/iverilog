@@ -325,7 +325,7 @@ NetExpr *normalize_variable_base(NetExpr *base,
 {
       ivl_assert(*base, dims.size() == 1);
       const netrange_t&rng = dims.back();
-      return normalize_variable_base(base, rng.msb, rng.lsb, wid, is_up);
+      return normalize_variable_base(base, rng.get_msb(), rng.get_lsb(), wid, is_up);
 }
 
 NetExpr *normalize_variable_bit_base(const list<long>&indices, NetExpr*base,
@@ -338,9 +338,9 @@ NetExpr *normalize_variable_bit_base(const list<long>&indices, NetExpr*base,
 	// addressing. We need that address as a slice offset to
 	// calculate the proper complete address
       const netrange_t&rng = packed_dims.back();
-      long slice_off = reg->sb_to_idx(indices, rng.lsb);
+      long slice_off = reg->sb_to_idx(indices, rng.get_lsb());
 
-      return normalize_variable_base(base, rng.msb, rng.lsb, 1, true, slice_off);
+      return normalize_variable_base(base, rng.get_msb(), rng.get_lsb(), 1, true, slice_off);
 }
 
 NetExpr *normalize_variable_part_base(const list<long>&indices, NetExpr*base,
@@ -354,9 +354,9 @@ NetExpr *normalize_variable_part_base(const list<long>&indices, NetExpr*base,
 	// addressing. We need that address as a slice offset to
 	// calculate the proper complete address
       const netrange_t&rng = packed_dims.back();
-      long slice_off = reg->sb_to_idx(indices, rng.lsb);
+      long slice_off = reg->sb_to_idx(indices, rng.get_lsb());
 
-      return normalize_variable_base(base, rng.msb, rng.lsb, wid, is_up, slice_off);
+      return normalize_variable_base(base, rng.get_msb(), rng.get_lsb(), wid, is_up, slice_off);
 }
 
 NetExpr *normalize_variable_slice_base(const list<long>&indices, NetExpr*base,
@@ -371,10 +371,10 @@ NetExpr *normalize_variable_slice_base(const list<long>&indices, NetExpr*base,
       }
 
       long sb;
-      if (pcur->msb >= pcur->lsb)
-	    sb = pcur->lsb;
+      if (pcur->get_msb() >= pcur->get_lsb())
+	    sb = pcur->get_lsb();
       else
-	    sb = pcur->msb;
+	    sb = pcur->get_msb();
 
       long loff;
       reg->sb_to_slice(indices, sb, loff, lwid);
@@ -492,10 +492,10 @@ NetExpr* normalize_variable_unpacked(const NetNet*net, list<long>&indices)
 		 ; cur != indices.end() ; ++cur, ++idx) {
 	    long tmp = *cur;
 
-	    if (dims[idx].lsb <= dims[idx].msb)
-		  tmp -= dims[idx].lsb;
+	    if (dims[idx].get_lsb() <= dims[idx].get_msb())
+		  tmp -= dims[idx].get_lsb();
 	    else
-		  tmp -= dims[idx].msb;
+		  tmp -= dims[idx].get_msb();
 
 	      // Notice of this index is out of range.
 	    if (tmp < 0 || tmp >= (long)dims[idx].width()) {
@@ -531,15 +531,17 @@ NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
 		  return 0;
 
 	    int64_t use_base;
-	    if (dims[idx].lsb <= dims[idx].msb)
-		  use_base = dims[idx].lsb;
+	    if (! dims[idx].defined())
+		  use_base = 0;
+	    else if (dims[idx].get_lsb() <= dims[idx].get_msb())
+		  use_base = dims[idx].get_lsb();
 	    else
-		  use_base = dims[idx].msb;
+		  use_base = dims[idx].get_msb();
 
 	    int64_t use_stride = stride[idx];
 
 	      // Account for that we are doing arithmatic and should
-	      // have a proper width to make sure there ar no
+	      // have a proper width to make sure there are no
 	      // losses. So calculate a min_wid width.
 	    unsigned tmp_wid;
 	    unsigned min_wid = tmp->expr_width();

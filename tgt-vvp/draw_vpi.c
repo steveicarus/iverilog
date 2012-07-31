@@ -31,6 +31,9 @@ struct args_info {
       char*text;
       int vec_flag; /* True if the vec must be released. */
       struct vector_info vec;
+	/* String Stack position if this argument is a calculated string. */
+      int str_flag;
+      unsigned str_stack;
       struct args_info *child; /* Arguments can be nested. */
 };
 
@@ -178,6 +181,18 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 	    if (ivl_expr_type(vexpr) != IVL_EX_SIGNAL &&
 	        ivl_expr_type(vexpr) != IVL_EX_SELECT) return 0;
 
+	      /* If the expression is a substring expression, then
+		 the xPV method of passing the argument will not work
+		 and we have to resort to the default method. */
+	    if (ivl_expr_value(vexpr) == IVL_VT_STRING)
+		  return 0;
+
+	      /* If the sub-expression is a DARRAY, then this select
+		 is a dynamic-array word select. Handle that
+		 elsewhere. */
+	    if (ivl_expr_value(vexpr) == IVL_VT_DARRAY)
+		  return 0;
+
 	      /* The signal is part of an array. */
 	      /* Add &APV<> code here when it is finished. */
 	    bexpr = ivl_expr_oper2(expr);
@@ -264,6 +279,11 @@ static void draw_vpi_taskfunc_args(const char*call_string,
       char buffer[4096];
 
       ivl_parameter_t par;
+
+	/* Keep track of how much string stack this function call is
+	   going to need. We'll need this for making stack references,
+	   and also to clean out the stack when done. */
+      unsigned str_stack_need = 0;
 
 	/* Figure out how many expressions are going to be evaluated
 	   for this task call. I won't need to evaluate expressions
@@ -376,7 +396,17 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		           "W<%u,r>", args[idx].vec.base);
 		  break;
 		case IVL_VT_STRING:
-		    /* STRING expressions not supported yet. */
+		    /* Eval the string into the stack, and tell VPI
+		       about the stack position. */
+		  draw_eval_string(expr);
+		  args[idx].vec_flag = 0;
+		  args[idx].vec.base = 0;
+		  args[idx].vec.wid = 0;
+		  args[idx].str_flag = 1;
+		  args[idx].str_stack = str_stack_need;
+		  str_stack_need += 1;
+		  buffer[0] = 0;
+		  break;
 		default:
 		  assert(0);
 	    }
@@ -388,7 +418,16 @@ static void draw_vpi_taskfunc_args(const char*call_string,
       for (idx = 0 ;  idx < parm_count ;  idx += 1) {
 	    struct args_info*ptr;
 
-	    fprintf(vvp_out, ", %s", args[idx].text);
+	    if (args[idx].str_flag) {
+		    /* If this is a string stack reference, then
+		       calculate the stack depth and use that to
+		       generate the completed string. */
+		  unsigned pos = str_stack_need - args[idx].str_stack - 1;
+		  fprintf(vvp_out, ", S<%u,str>",pos);
+	    } else {
+		  fprintf(vvp_out, ", %s", args[idx].text);
+	    }
+
 	    free(args[idx].text);
 	      /* Clear the nested children vectors. */
 	    for (ptr = &args[idx]; ptr != NULL; ptr = ptr->child) {
@@ -409,6 +448,9 @@ static void draw_vpi_taskfunc_args(const char*call_string,
       free(args);
 
       fprintf(vvp_out, ";\n");
+
+      if (str_stack_need > 0)
+	    fprintf(vvp_out, "    %%pop/str %u;\n", str_stack_need);
 }
 
 void draw_vpi_task_call(ivl_statement_t tnet)

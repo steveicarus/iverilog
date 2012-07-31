@@ -257,7 +257,7 @@ ivl_signal_t dll_target::find_signal(ivl_design_s &des, const NetNet*net)
 
       perm_string nname = net->name();
 
-      for (unsigned idx = 0 ;  idx < scope->nsigs_ ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < scope->sigs_.size() ;  idx += 1) {
 	    if (strcmp(scope->sigs_[idx]->name_, nname) == 0)
 		  return scope->sigs_[idx];
       }
@@ -533,8 +533,6 @@ void dll_target::add_root(ivl_design_s &des__, const NetScope *s)
       root_->name_ = name;
       FILE_NAME(root_, s);
       root_->parent = 0;
-      root_->nsigs_ = 0;
-      root_->sigs_ = 0;
       root_->nlog_ = 0;
       root_->log_ = 0;
       root_->nevent_ = 0;
@@ -2280,8 +2278,6 @@ void dll_target::scope(const NetScope*net)
 	    scop->parent = find_scope(des_, net->parent());
 	    assert(scop->parent);
 	    scop->parent->children[net->fullname()] = scop;
-	    scop->nsigs_ = 0;
-	    scop->sigs_ = 0;
 	    scop->nlog_ = 0;
 	    scop->log_ = 0;
 	    scop->nevent_ = 0;
@@ -2371,20 +2367,7 @@ void dll_target::signal(const NetNet*net)
       assert(obj->scope_);
       FILE_NAME(obj, net);
 
-      if (obj->scope_->nsigs_ == 0) {
-	    assert(obj->scope_->sigs_ == 0);
-	    obj->scope_->nsigs_ = 1;
-	    obj->scope_->sigs_ = (ivl_signal_t*)malloc(sizeof(ivl_signal_t));
-
-      } else {
-	    assert(obj->scope_->sigs_);
-	    obj->scope_->nsigs_ += 1;
-	    obj->scope_->sigs_ = (ivl_signal_t*)
-		  realloc(obj->scope_->sigs_,
-			  obj->scope_->nsigs_*sizeof(ivl_signal_t));
-      }
-
-      obj->scope_->sigs_[obj->scope_->nsigs_-1] = obj;
+      obj->scope_->sigs_.push_back(obj);
 
 
 	/* Save the primitive properties of the signal in the
@@ -2490,6 +2473,10 @@ void dll_target::signal(const NetNet*net)
       obj->nattr = net->attr_cnt();
       obj->attr = fill_in_attributes(net);
 
+	/* If this is a dynamic array, then set the type to DARRAY. */
+      if (net->darray_type()) {
+	    obj->data_type = IVL_VT_DARRAY;
+      }
 
 	/* Get the nexus objects for all the pins of the signal. If
 	   the signal has only one pin, then write the single
@@ -2502,11 +2489,11 @@ void dll_target::signal(const NetNet*net)
 
       if (obj->array_dimensions_ == 1) {
 	    const vector<netrange_t>& dims = net->unpacked_dims();
-	    if (dims[0].msb < dims[0].lsb) {
-		  obj->array_base = dims[0].msb;
+	    if (dims[0].get_msb() < dims[0].get_lsb()) {
+		  obj->array_base = dims[0].get_msb();
 		  obj->array_addr_swapped = false;
 	    } else {
-		  obj->array_base = dims[0].lsb;
+		  obj->array_base = dims[0].get_lsb();
 		  obj->array_addr_swapped = true;
 	    }
 	    obj->array_words = net->unpacked_count();

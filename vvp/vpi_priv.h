@@ -24,6 +24,7 @@
 # include  "config.h"
 
 # include  <set>
+# include  <string>
 
 /*
  * Added to use some "vvp_fun_modpath_src"
@@ -477,6 +478,43 @@ struct __vpiRealVar : public __vpiHandle {
 extern struct __vpiScope* vpip_scope(__vpiRealVar*sig);
 extern vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net);
 
+class __vpiStringVar : public __vpiHandle {
+
+    public:
+      __vpiStringVar(__vpiScope*scope, const char*name, vvp_net_t*net);
+
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+
+      inline vvp_net_t* get_net() const { return net_; }
+
+    private:
+      struct __vpiScope* scope_;
+      const char*name_;
+      vvp_net_t*net_;
+};
+
+extern vpiHandle vpip_make_string_var(const char*name, vvp_net_t*net);
+
+class __vpiDarrayVar : public __vpiHandle {
+
+    public:
+      __vpiDarrayVar(__vpiScope*scope, const char*name, vvp_net_t*net);
+
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+
+      inline vvp_net_t* get_net() const { return net_; }
+
+    private:
+      struct __vpiScope* scope_;
+      const char*name_;
+      vvp_net_t*net_;
+};
+
+extern vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net);
 
 /*
  * When a loaded VPI module announces a system task/function, one
@@ -592,6 +630,7 @@ vpiHandle vpip_make_real_param(char*name, double value, bool local_flag,
 vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag);
 
 vpiHandle vpip_make_vthr_word(unsigned base, const char*type);
+vpiHandle vpip_make_vthr_str_stack(unsigned depth);
 
 vpiHandle vpip_make_vthr_A(char*label, unsigned index);
 vpiHandle vpip_make_vthr_A(char*label, char*symbol);

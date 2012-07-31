@@ -731,6 +731,74 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
       return 0;
 }
 
+static int show_stmt_assign_sig_string(ivl_statement_t net)
+{
+      ivl_lval_t lval = ivl_stmt_lval(net, 0);
+      ivl_expr_t rval = ivl_stmt_rval(net);
+      ivl_expr_t part = ivl_lval_part_off(lval);
+      ivl_signal_t var= ivl_lval_sig(lval);
+
+      assert(ivl_stmt_lvals(net) == 1);
+      assert(ivl_stmt_opcode(net) == 0);
+      assert(ivl_lval_mux(lval) == 0);
+
+	/* Simplest case: no mux. Evaluate the r-value as a string and
+	   store the result into the variable. Note that the
+	   %store/str opcode pops the string result. */
+      if (part == 0) {
+	    draw_eval_string(rval);
+	    fprintf(vvp_out, "    %%store/str v%p_0;\n", var);
+	    return 0;
+      }
+
+	/* Calculate the character select for the word. */
+      int mux_word = allocate_word();
+      draw_eval_expr_into_integer(part, mux_word);
+
+	/* Evaluate the r-value as a vector. */
+      struct vector_info rvec = draw_eval_expr_wid(rval, 8, STUFF_OK_XZ);
+
+      assert(rvec.wid == 8);
+      fprintf(vvp_out, "    %%putc/str/v v%p_0, %d, %u;\n", var, mux_word, rvec.base);
+
+      clr_vector(rvec);
+      clr_word(mux_word);
+      return 0;
+}
+
+static int show_stmt_assign_sig_darray(ivl_statement_t net)
+{
+      int errors = 0;
+      ivl_lval_t lval = ivl_stmt_lval(net, 0);
+      ivl_expr_t rval = ivl_stmt_rval(net);
+      ivl_expr_t part = ivl_lval_part_off(lval);
+      ivl_signal_t var= ivl_lval_sig(lval);
+      ivl_expr_t mux  = ivl_lval_idx(lval);
+
+      assert(ivl_stmt_lvals(net) == 1);
+      assert(ivl_stmt_opcode(net) == 0);
+      assert(ivl_lval_mux(lval) == 0);
+      assert(part == 0);
+
+      if (mux) {
+	    struct vector_info rvec = draw_eval_expr_wid(rval, ivl_lval_width(lval),
+							 STUFF_OK_XZ);
+	      /* The %set/dar expects the array index to be in index
+		 register 3. Calculate the index in place. */
+	    draw_eval_expr_into_integer(mux, 3);
+
+	    fprintf(vvp_out, "    %%set/dar v%p_0, %u, %u;\n",
+		    var, rvec.base, rvec.wid);
+
+	    if (rvec.base >= 4) clr_vector(rvec);
+
+      } else {
+	    errors += draw_eval_object(rval);
+	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", var);
+      }
+
+      return errors;
+}
 
 int show_stmt_assign(ivl_statement_t net)
 {
@@ -744,6 +812,14 @@ int show_stmt_assign(ivl_statement_t net)
       sig = ivl_lval_sig(lval);
       if (sig && (ivl_signal_data_type(sig) == IVL_VT_REAL)) {
 	    return show_stmt_assign_sig_real(net);
+      }
+
+      if (sig && (ivl_signal_data_type(sig) == IVL_VT_STRING)) {
+	    return show_stmt_assign_sig_string(net);
+      }
+
+      if (sig && (ivl_signal_data_type(sig) == IVL_VT_DARRAY)) {
+	    return show_stmt_assign_sig_darray(net);
       }
 
       return show_stmt_assign_vector(net);

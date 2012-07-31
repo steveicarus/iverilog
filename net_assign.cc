@@ -20,6 +20,7 @@
 # include "config.h"
 
 # include  "netlist.h"
+# include  "netdarray.h"
 
 /*
  * NetAssign
@@ -84,11 +85,25 @@ ivl_select_type_t NetAssign_::select_type() const
 
 unsigned NetAssign_::lwidth() const
 {
+      if (netdarray_t*darray = sig_->darray_type()) {
+	    if (word_ == 0)
+		  return 1;
+	    else
+		  return darray->vector_width();
+      }
+
       return lwid_;
 }
 
 ivl_variable_type_t NetAssign_::expr_type() const
 {
+      if (netdarray_t*darray = sig_->darray_type()) {
+	    if (word_ == 0)
+		  return IVL_VT_DARRAY;
+	    else
+		  return darray->data_type();
+      }
+
       return sig_->data_type();
 }
 

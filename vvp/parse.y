@@ -91,7 +91,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_RESOLV K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
 %token K_UFUNC K_UFUNC_E K_UDP K_UDP_C K_UDP_S
-%token K_VAR K_VAR_S K_VAR_I K_VAR_R K_VAR_2S K_VAR_2U
+%token K_VAR K_VAR_DARRAY K_VAR_S K_VAR_STR K_VAR_I K_VAR_R K_VAR_2S K_VAR_2U
 %token K_vpi_call K_vpi_call_w K_vpi_call_i
 %token K_vpi_func K_vpi_func_r
 %token K_disable K_fork
@@ -697,7 +697,13 @@ statement
       { compile_variable($1, $4, $6, $7, vpiIntVar, false, $3); }
 
   | T_LABEL K_VAR_R T_STRING ',' signed_t_number signed_t_number ';'
-      { compile_var_real($1, $3, $5, $6); }
+      { compile_var_real($1, $3); }
+
+  | T_LABEL K_VAR_STR T_STRING ';'
+      { compile_var_string($1, $3); }
+
+  | T_LABEL K_VAR_DARRAY T_STRING ';'
+      { compile_var_darray($1, $3); }
 
   /* Net statements are similar to .var statements, except that they
      declare nets, and they have an input list. */
@@ -880,23 +886,31 @@ operands
 	;
 
 operand
-	: symbol
-		{ comp_operands_t opa = (comp_operands_t)
-			calloc(1, sizeof(struct comp_operands_s));
-		  opa->argc = 1;
-		  opa->argv[0].ltype = L_SYMB;
-		  opa->argv[0].symb = $1;
-		  $$ = opa;
-		}
-	| T_NUMBER
-		{ comp_operands_t opa = (comp_operands_t)
-			calloc(1, sizeof(struct comp_operands_s));
-		  opa->argc = 1;
-		  opa->argv[0].ltype = L_NUMB;
-		  opa->argv[0].numb = $1;
-		  $$ = opa;
-		}
-	;
+  : symbol
+      { comp_operands_t opa = (comp_operands_t)
+		  calloc(1, sizeof(struct comp_operands_s));
+	opa->argc = 1;
+	opa->argv[0].ltype = L_SYMB;
+	opa->argv[0].symb = $1;
+	$$ = opa;
+      }
+  | T_NUMBER
+      { comp_operands_t opa = (comp_operands_t)
+		  calloc(1, sizeof(struct comp_operands_s));
+	opa->argc = 1;
+	opa->argv[0].ltype = L_NUMB;
+	opa->argv[0].numb = $1;
+	$$ = opa;
+      }
+  | T_STRING
+      { comp_operands_t opa = (comp_operands_t)
+		  calloc(1, sizeof(struct comp_operands_s));
+	opa->argc = 1;
+	opa->argv[0].ltype = L_STRING;
+	opa->argv[0].text = $1;
+	$$ = opa;
+      }
+  ;
 
 
   /* The argument_list is a list of vpiHandle objects that can be

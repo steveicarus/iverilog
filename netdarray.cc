@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,13 +17,16 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+# include  "netdarray.h"
 
-# include  "pform_types.h"
+using namespace std;
 
-data_type_t::~data_type_t()
+netdarray_t::netdarray_t(const std::list<netrange_t>&packed,
+			 ivl_variable_type_t type, unsigned long wid)
+: packed_dims_(packed), type_(type), width_(wid)
 {
 }
 
-string_type_t::~string_type_t()
+netdarray_t::~netdarray_t()
 {
 }

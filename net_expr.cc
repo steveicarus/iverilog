@@ -184,16 +184,21 @@ bool NetEBShift::has_width() const
       return left_->has_width();
 }
 
-NetEConcat::NetEConcat(unsigned cnt, unsigned r)
-: parms_(cnt), repeat_(r)
+NetEConcat::NetEConcat(unsigned cnt, unsigned r, ivl_variable_type_t vt)
+: parms_(cnt), repeat_(r), expr_type_(vt)
 {
       expr_width(0);
 }
 
 NetEConcat::~NetEConcat()
 {
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1)
 	    delete parms_[idx];
+}
+
+ivl_variable_type_t NetEConcat::expr_type() const
+{
+      return expr_type_;
 }
 
 bool NetEConcat::has_width() const
@@ -203,7 +208,7 @@ bool NetEConcat::has_width() const
 
 void NetEConcat::set(unsigned idx, NetExpr*e)
 {
-      assert(idx < parms_.count());
+      assert(idx < parms_.size());
       assert(parms_[idx] == 0);
       parms_[idx] = e;
       expr_width( expr_width() + repeat_ * e->expr_width() );

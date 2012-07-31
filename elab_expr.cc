@@ -29,6 +29,7 @@
 # include  "netenum.h"
 # include  "discipline.h"
 # include  "netmisc.h"
+# include  "netdarray.h"
 # include  "netstruct.h"
 # include  "util.h"
 # include  "ivl_assert.h"
@@ -89,6 +90,7 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
       switch (lv_type) {
 	  case IVL_VT_REAL:
 	  case IVL_VT_STRING:
+	  case IVL_VT_DARRAY:
 	    break;
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC:
@@ -1021,6 +1023,15 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
 		  return expr_width_;
 	    }
 
+	    if (test_width_method_(des, scope, mode)) {
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug: test_width "
+			     << "of method returns width " << expr_width_
+			     << ", type=" << expr_type_
+			     << "." << endl;
+		  return expr_width_;
+	    }
+
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: test_width "
 		       << "cannot find definition of " << path_
@@ -1047,6 +1058,46 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
       }
 
       ivl_assert(*this, 0);
+      return 0;
+}
+
+unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
+					    width_mode_t&mode)
+{
+      if (!gn_system_verilog())
+	    return 0;
+
+	// This is only useful if the path is at least 2 elements. For
+	// example, foo.bar() is a method, bar() is not.
+      if (path_.size() < 2)
+	    return 0;
+
+      pform_name_t use_path = path_;
+      perm_string method_name = peek_tail_name(use_path);
+      use_path.pop_back();
+
+      NetNet *net;
+      const NetExpr *par;
+      NetEvent *eve;
+      const NetExpr *ex1, *ex2;
+
+      symbol_search(this, des, scope, use_path,
+		    net, par, eve, ex1, ex2);
+
+      if (net == 0)
+	    return 0;
+
+      netdarray_t*darray = net->darray_type();
+
+	// function int size()
+      if (darray && method_name == "size") {
+	    expr_type_  = IVL_VT_BOOL;
+	    expr_width_ = 32;
+	    min_width_  = expr_width_;
+	    signed_flag_= true;
+	    return expr_width_;
+      }
+
       return 0;
 }
 
@@ -1582,43 +1633,11 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 		  return elaborate_access_func_(des, scope, access_nature,
                                                 expr_wid);
 
-	      // Maybe this is a method attached to an enumeration name? If
-	      // this is system verilog, then test to see if the name is
-	      // really a method attached to an object.
-	    if (gn_system_verilog() && path_.size() >= 2) {
-		  pform_name_t use_path = path_;
-		  perm_string method_name = peek_tail_name(use_path);
-		  use_path.pop_back();
-
-		  NetNet *net;
-		  const NetExpr *par;
-		  NetEvent *eve;
-		  const NetExpr *ex1, *ex2;
-
-		  symbol_search(this, des, scope, use_path,
-		                net, par, eve, ex1, ex2);
-
-		    // Check to see if we have a net and if so is it an
-		    // enumeration? If so then check to see if this is an
-		    // enumeration method call.
-		  if (net != 0) {
-			if (netenum_t*netenum = net->enumeration()) {
-				// We may need the net expression for the
-				// enumeration variable so get it.
-			      NetESignal*expr = new NetESignal(net);
-			      expr->set_line(*this);
-				// This expression cannot be a select!
-			      assert(use_path.back().index.empty());
-
-			      PExpr*tmp = parms_.size() ? parms_[0] : 0;
-			      return check_for_enum_methods(this, des, scope,
-			                                    netenum, use_path,
-			                                    method_name, expr,
-			                                    expr_wid, tmp,
-			                                    parms_.size());
-			}
-
-		  }
+	      // Maybe this is a method attached to a signal? If this
+	      // is SystemVerilog then try that possibility.
+	    if (gn_system_verilog()) {
+		  NetExpr*tmp = elaborate_expr_method_(des, scope, expr_wid);
+		  if (tmp) return tmp;
 	    }
 
 	      // Nothing was found so report this as an error.
@@ -1759,6 +1778,64 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
       return 0;
 }
 
+NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
+						unsigned expr_wid) const
+{
+      pform_name_t use_path = path_;
+      perm_string method_name = peek_tail_name(use_path);
+      use_path.pop_back();
+
+      NetNet *net;
+      const NetExpr *par;
+      NetEvent *eve;
+      const NetExpr *ex1, *ex2;
+
+      symbol_search(this, des, scope, use_path,
+		    net, par, eve, ex1, ex2);
+
+      if (net == 0)
+	    return 0;
+
+      if (net->data_type() == IVL_VT_STRING) {
+
+	    if (method_name == "len") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$len",
+						     IVL_VT_BOOL, 32, 1);
+		  sys_expr->parm(0, new NetESignal(net));
+		  return sys_expr;
+	    }
+      }
+
+      if (netenum_t*netenum = net->enumeration()) {
+	      // We may need the net expression for the
+	      // enumeration variable so get it.
+	    NetESignal*expr = new NetESignal(net);
+	    expr->set_line(*this);
+	      // This expression cannot be a select!
+	    assert(use_path.back().index.empty());
+
+	    PExpr*tmp = parms_.size() ? parms_[0] : 0;
+	    return check_for_enum_methods(this, des, scope,
+					  netenum, use_path,
+					  method_name, expr,
+					  expr_wid, tmp,
+					  parms_.size());
+      }
+
+      if (net->darray_type()) {
+
+	    if (method_name == "size") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_darray_method$size",
+						     IVL_VT_BOOL, 32, 1);
+		  sys_expr->parm(0, new NetESignal(net));
+		  sys_expr->set_line(*this);
+		  return sys_expr;
+	    }
+      }
+
+      return 0;
+}
+
 unsigned PECastSize::test_width(Design*des, NetScope*scope, width_mode_t&)
 {
       expr_width_ = size_;
@@ -1782,15 +1859,36 @@ NetExpr* PECastSize::elaborate_expr(Design*des, NetScope*scope,
 unsigned PEConcat::test_width(Design*des, NetScope*scope, width_mode_t&)
 {
       expr_width_ = 0;
+      enum {NO, MAYBE, YES} expr_is_string = MAYBE;
       for (unsigned idx = 0 ; idx < parms_.size() ; idx += 1) {
+	      // Add in the width of this sub-expression.
 	    expr_width_ += parms_[idx]->test_width(des, scope, width_modes_[idx]);
+
+	      // If we already know this is not a string, then move on.
+	    if (expr_is_string == NO)
+		  continue;
+
+	      // If this expression is a string, then the
+	      // concatenation is a string until we find a reason to
+	      // deny it.
+	    if (parms_[idx]->expr_type()==IVL_VT_STRING) {
+		  expr_is_string = YES;
+		  continue;
+	    }
+
+	      // If this is a string literal, then this may yet be a string.
+	    if (dynamic_cast<PEString*> (parms_[idx]))
+		  continue;
+
+	      // Failed to allow a string result.
+	    expr_is_string = NO;
       }
 
-      expr_type_   = IVL_VT_LOGIC;
+      expr_type_   = (expr_is_string==YES)? IVL_VT_STRING : IVL_VT_LOGIC;
       signed_flag_ = false;
 
-	/* If there is a repeat expression, then evaluate the constant
-	   value and set the repeat count. */
+	// If there is a repeat expression, then evaluate the constant
+	// value and set the repeat count.
       if (repeat_ && (scope != tested_scope_)) {
 	    NetExpr*tmp = elab_and_eval(des, scope, repeat_, -1, true);
 	    if (tmp == 0) return 0;
@@ -1919,7 +2017,7 @@ NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
       }
 
 	/* Make the empty concat expression. */
-      NetEConcat*concat = new NetEConcat(parm_cnt, repeat_count_);
+      NetEConcat*concat = new NetEConcat(parm_cnt, repeat_count_, expr_type_);
       concat->set_line(*this);
 
 	/* Remove any zero width constants. */
@@ -2214,6 +2312,21 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    ivl_assert(*this, 0);
       }
 
+      if (netdarray_t*darray = net? net->darray_type() : 0) {
+	    if (use_sel == index_component_t::SEL_BIT) {
+		  expr_type_   = darray->data_type();
+		  expr_width_  = darray->vector_width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = net->get_signed();
+	    } else {
+		  expr_type_   = net->data_type();
+		  expr_width_  = net->vector_width();
+		  min_width_   = expr_width_;
+		  signed_flag_ = net->get_signed();
+	    }
+	    return expr_width_;
+      }
+
       if (use_width != UINT_MAX) {
 	    expr_type_   = IVL_VT_LOGIC; // Assume bit/parts selects are logic
 	    expr_width_  = use_width;
@@ -2228,8 +2341,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    expr_type_   = net->data_type();
 	    expr_width_  = net->vector_width();
 	    min_width_   = expr_width_;
-            signed_flag_ = net->get_signed();
-
+	    signed_flag_ = net->get_signed();
 	    return expr_width_;
       }
 
@@ -3386,7 +3498,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 
 		    // We want the last range, which is where we work.
 		  const netrange_t&rng = packed.back();
-		  if (rng.msb < rng.lsb) {
+		  if (rng.get_msb() < rng.get_lsb()) {
 			offset = -wid + 1;
 		  }
 
@@ -3566,6 +3678,20 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 
       NetExpr*mux = elab_and_eval(des, scope, index_tail.msb, -1, need_const);
 
+      if (netdarray_t*darray = net->sig()->darray_type()) {
+	      // Special case: This is a select of a dynamic
+	      // array. Generate a NetESelect and attach it to
+	      // the NetESignal. This should be interpreted as
+	      // an array word select downstream.
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Bit select of a dynamic array becomes NetESelect." << endl;
+	    }
+	    NetESelect*res = new NetESelect(net, mux, darray->vector_width());
+	    res->set_line(*net);
+	    return res;
+      }
+
 	// If the bit select is constant, then treat it similar
 	// to the part select, so that I save the effort of
 	// making a mux part in the netlist.
@@ -3614,6 +3740,32 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 		  idx_c->set_line(*net);
 
 		  NetESelect*res = new NetESelect(net, idx_c, lwid);
+		  res->set_line(*net);
+		  return res;
+	    }
+
+	    if (net->sig()->data_type()==IVL_VT_STRING && (msv < 0)) {
+		    // Special case: This is a constant bit select of
+		    // a string, and the index is < 0. For example:
+		    //   string foo;
+		    //   ... foo[-1] ...
+		    // This is known to be 8'h00.
+		  NetEConst*tmp = make_const_0(8);
+		  tmp->set_line(*this);
+		  delete mux;
+		  return tmp;
+	    }
+
+	    if (net->sig()->data_type()==IVL_VT_STRING) {
+		    // Special case: This is a select of a string
+		    // variable. Generate a NetESelect and attach it
+		    // to the NetESignal. This should be interpreted
+		    // as a character select downstream.
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": debug: "
+			     << "Bit select of string becomes NetESelect." << endl;
+		  }
+		  NetESelect*res = new NetESelect(net, mux, 8);
 		  res->set_line(*net);
 		  return res;
 	    }
@@ -3754,6 +3906,28 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       assert(use_sel == index_component_t::SEL_NONE);
 
       return node;
+}
+
+unsigned PENew::test_width(Design*des, NetScope*, width_mode_t&)
+{
+      expr_type_  = IVL_VT_DARRAY;
+      expr_width_ = 1;
+      min_width_  = 1;
+      signed_flag_= false;
+      return 1;
+}
+
+NetExpr* PENew::elaborate_expr(Design*des, NetScope*scope,
+				 unsigned, unsigned flags) const
+{
+      width_mode_t mode = LOSSLESS;
+      unsigned use_wid = size_->test_width(des, scope, mode);
+      NetExpr*size = size_->elaborate_expr(des, scope, use_wid, flags);
+      NetESFunc*tmp  = new NetESFunc("$ivl_darray_method$new",
+				     IVL_VT_DARRAY, 1, 1);
+      tmp->set_line(*this);
+      tmp->parm(0, size);
+      return tmp;
 }
 
 unsigned PENumber::test_width(Design*, NetScope*, width_mode_t&mode)

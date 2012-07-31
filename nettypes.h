@@ -20,25 +20,48 @@
  */
 
 # include <list>
+# include <climits>
+# include <cassert>
+
+/*
+ * This is a fully abstract type that is a type that can be attached
+ * to a NetNet object.
+ */
+class nettype_base_t {
+    public:
+      virtual ~nettype_base_t() =0;
+};
 
 class netrange_t {
 
     public:
-      inline netrange_t() : msb(0), lsb(0) { }
-      inline netrange_t(long m, long l) : msb(m), lsb(l) { }
-
+	// Create an undefined range. An undefined range is a range
+	// used to declare dynamic arrays, etc.
+      inline netrange_t() : msb_(LONG_MAX), lsb_(LONG_MAX) { }
+	// Create a properly defined netrange
+      inline netrange_t(long m, long l) : msb_(m), lsb_(l) { }
+	// Copy constructure.
       inline netrange_t(const netrange_t&that)
-      : msb(that.msb), lsb(that.lsb) { }
+      : msb_(that.msb_), lsb_(that.lsb_) { }
 
       inline netrange_t& operator = (const netrange_t&that)
-      { msb = that.msb; lsb = that.lsb; return *this; }
+      { msb_ = that.msb_; lsb_ = that.lsb_; return *this; }
 
-    public:
-      long msb;
-      long lsb;
+      inline bool defined() const
+      { return msb_!=LONG_MAX || msb_!= LONG_MAX; }
 
       inline unsigned long width()const
-      { if (msb >= lsb) return msb-lsb+1; else return lsb-msb+1; }
+      { if (!defined()) return 0;
+	else if (msb_ >= lsb_) return msb_-lsb_+1;
+	else return lsb_-msb_+1;
+      }
+
+      inline long get_msb() const { assert(defined()); return msb_; }
+      inline long get_lsb() const { assert(defined()); return lsb_; }
+
+    private:
+      long msb_;
+      long lsb_;
 };
 
 extern unsigned long netrange_width(const std::list<netrange_t>&dims);

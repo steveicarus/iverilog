@@ -21,10 +21,36 @@
 # include "priv.h"
 # include <assert.h>
 
+/*
+ * If the l-value signal is a darray object, then the ivl_lval_mux()
+ * gets you the array index expression.
+ */
+static unsigned show_assign_lval_darray(ivl_lval_t lval, unsigned ind)
+{
+      ivl_signal_t sig = ivl_lval_sig(lval);
+      assert(sig);
+
+      if (ivl_lval_idx(lval)) {
+	    fprintf(out, "%*sAddress-0 select of dynamic array:\n", ind+4, "");
+	    show_expression(ivl_lval_idx(lval), ind+6);
+      }
+
+      if (ivl_lval_mux(lval)) {
+	    fprintf(out, "%*sERROR: unexpected ivl_lval_mux() expression:\n", ind+4, "");
+	    stub_errors += 1;
+	    show_expression(ivl_lval_mux(lval), ind+6);
+      }
+      if (ivl_lval_part_off(lval)) {
+	    fprintf(out, "%*sERROR: unexpected Part select expression:\n", ind+4, "");
+	    stub_errors += 1;
+	    show_expression(ivl_lval_part_off(lval), ind+8);
+      }
+
+      return ivl_lval_width(lval);
+}
+
 static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
 {
-      unsigned wid = 0;
-
       ivl_signal_t sig = ivl_lval_sig(lval);
       assert(sig);
 
@@ -33,6 +59,10 @@ static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
 	      ivl_signal_name(sig),
 	      ivl_signal_width(sig),
 	      ivl_lval_width(lval));
+
+	/* Special case: target signal is a darray. */
+      if (ivl_signal_data_type(sig) == IVL_VT_DARRAY)
+	    return show_assign_lval_darray(lval, ind);
 
       if (ivl_lval_idx(lval)) {
 	    fprintf(out, "%*sAddress-0 select expression:\n", ind+4, "");
@@ -59,9 +89,7 @@ static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
 	    show_expression(ivl_lval_part_off(lval), ind+8);
       }
 
-      wid = ivl_lval_width(lval);
-
-      return wid;
+      return ivl_lval_width(lval);
 }
 
 static void show_stmt_cassign(ivl_statement_t net, unsigned ind)

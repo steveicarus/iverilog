@@ -2829,6 +2829,11 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
 	    return;
       }
 
+      if (string_type_t*string_type = dynamic_cast<string_type_t*> (data_type)) {
+	    pform_set_string_type(string_type, names, attr);
+	    return;
+      }
+
       assert(0);
 }
 

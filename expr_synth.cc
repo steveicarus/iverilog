@@ -702,11 +702,11 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope, NetExpr*root)
 NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
 {
 	/* First, synthesize the operands. */
-      unsigned num_parms = parms_.count();
-      NetNet**tmp = new NetNet*[parms_.count()];
+      unsigned num_parms = parms_.size();
+      NetNet**tmp = new NetNet*[parms_.size()];
       bool flag = true;
       ivl_variable_type_t data_type = IVL_VT_NO_TYPE;
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
 	    if (parms_[idx]->expr_width() == 0) {
 		    /* We need to synthesize a replication of zero. */
 		  tmp[idx] = parms_[idx]->synthesize(des, scope, root);
@@ -754,8 +754,8 @@ NetNet* NetEConcat::synthesize(Design*des, NetScope*scope, NetExpr*root)
       unsigned count_input_width = 0;
       unsigned cur_pin = 1;
       for (unsigned rpt = 0; rpt < repeat(); rpt += 1) {
-	    for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
-		  unsigned concat_item = parms_.count()-idx-1;
+	    for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
+		  unsigned concat_item = parms_.size()-idx-1;
 		  if (tmp[concat_item] == 0) continue;
 		  connect(concat->pin(cur_pin), tmp[concat_item]->pin(0));
 		  cur_pin += 1;

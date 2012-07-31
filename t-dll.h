@@ -627,8 +627,7 @@ struct ivl_scope_s {
 
       std::vector<ivl_enumtype_t> enumerations_;
 
-      unsigned nsigs_;
-      ivl_signal_t*sigs_;
+      std::vector<ivl_signal_t> sigs_;
 
       unsigned nlog_;
       ivl_net_logic_t*log_;

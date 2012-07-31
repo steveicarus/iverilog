@@ -1,5 +1,7 @@
+#ifndef __netdarray_H
+#define __netdarray_H
 /*
- * Copyright (c) 2007-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,13 +19,25 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+# include  "nettypes.h"
+# include  "ivl_target.h"
+# include  <list>
 
-# include  "pform_types.h"
+class netdarray_t : public nettype_base_t {
 
-data_type_t::~data_type_t()
-{
-}
+    public:
+      explicit netdarray_t(const std::list<netrange_t>&packed,
+			   ivl_variable_type_t type,
+			   unsigned long wid);
+      ~netdarray_t();
 
-string_type_t::~string_type_t()
-{
-}
+      inline ivl_variable_type_t data_type() const { return type_; }
+      inline unsigned long vector_width(void) const { return width_; }
+
+    private:
+      std::list<netrange_t> packed_dims_;
+      ivl_variable_type_t type_;
+      unsigned long width_;
+};
+
+#endif
