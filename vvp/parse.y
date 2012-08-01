@@ -153,6 +153,7 @@ header_line
 footer_lines
 	: K_file_names T_NUMBER ';' { file_names.reserve($2); }
 	  name_strings
+	;
 
 name_strings
 	: T_STRING ';'

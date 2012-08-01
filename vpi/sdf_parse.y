@@ -127,7 +127,7 @@ vendor
 					sdf_parse_path, @2.first_line, $3);
         free($3);
       }
-;
+  ;
 
 program_name
   : '(' K_PROGRAM QSTRING ')'

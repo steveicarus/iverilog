@@ -2398,8 +2398,9 @@ config_rule_statement
   ;
 
 opt_config
-  : /* The use clause takse an optional :config. */
+  : /* The use clause takes an optional :config. */
   | ':' K_config
+  ;
 
 lib_cell_id
   : IDENTIFIER
@@ -2412,6 +2413,7 @@ list_of_libraries
   : /* A NULL library means use the parents cell library. */
   | list_of_libraries IDENTIFIER
       { delete[] $2; }
+  ;
 
 drive_strength
 	: '(' dr_strength0 ',' dr_strength1 ')'
@@ -4297,7 +4299,7 @@ module_item
 		{ pform_set_timeprecision($2, true, true); }
 	;
 
-generate_if : K_if '(' expression ')' { pform_start_generate_if(@1, $3); }
+generate_if : K_if '(' expression ')' { pform_start_generate_if(@1, $3); } ;
 
 generate_case_items
   : generate_case_items generate_case_item
@@ -4828,8 +4830,9 @@ range_opt
   ;
 
 dimensions_opt
-	: { $$ = 0; }
-	| dimensions { $$ = $1; }
+  : { $$ = 0; }
+  | dimensions { $$ = $1; }
+  ;
 
 dimensions
   : variable_dimension
