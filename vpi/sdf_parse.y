@@ -126,7 +126,7 @@ vendor
 					sdf_parse_path, @2.first_line, $3);
         free($3);
       }
-;
+  ;
 
 program_name
   : '(' K_PROGRAM QSTRING ')'
@@ -291,11 +291,15 @@ tchk_def
 
 port_tchk
   : port_instance
+    { }
   /* This must only be an edge. For now we just accept everything. */
   | cond_edge_start port_instance ')'
+    { }
   /* These must only be a cond. For now we just accept everything. */
   | cond_edge_start timing_check_condition port_spec ')'
+    { }
   | cond_edge_start QSTRING timing_check_condition port_spec ')'
+    { }
   ;
 
 cond_edge_start
@@ -316,9 +320,13 @@ cond_edge_identifier
 
 timing_check_condition
   : port_interconnect
+    { }
   | '~' port_interconnect
+    { }
   | '!' port_interconnect
+    { }
   | port_interconnect equality_operator scalar_constant
+    { }
   ;
 
 equality_operator

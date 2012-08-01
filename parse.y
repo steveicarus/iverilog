@@ -839,8 +839,9 @@ config_rule_statement
   ;
 
 opt_config
-  : /* The use clause takse an optional :config. */
+  : /* The use clause takes an optional :config. */
   | ':' K_config
+  ;
 
 lib_cell_id
   : IDENTIFIER
@@ -853,6 +854,7 @@ list_of_libraries
   : /* A NULL library means use the parents cell library. */
   | list_of_libraries IDENTIFIER
       { delete[] $2; }
+  ;
 
 drive_strength
 	: '(' dr_strength0 ',' dr_strength1 ')'
@@ -2532,7 +2534,7 @@ automatic_opt
 	| { $$ = false;}
 	;
 
-generate_if : K_if '(' expression ')' { pform_start_generate_if(@1, $3); }
+generate_if : K_if '(' expression ')' { pform_start_generate_if(@1, $3); } ;
 
 generate_case_items
   : generate_case_items generate_case_item
@@ -3052,6 +3054,7 @@ range_opt
 dimensions_opt
 	: { $$ = 0; }
 	| dimensions { $$ = $1; }
+	;
 
 dimensions
 	: '[' expression ':' expression ']'
@@ -3070,6 +3073,7 @@ dimensions
 		  tmp->push_back(index);
 		  $$ = tmp;
 		}
+	;
 
   /* This is used to express the return type of a function. */
 function_range_or_type_opt
@@ -4343,7 +4347,6 @@ task_port_decl_list
 		  yyerror(@2, "error: ';' is an invalid port declaration "
 		              "separator.");
 		}
-        ;
 	;
 
 udp_body

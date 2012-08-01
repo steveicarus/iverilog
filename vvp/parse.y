@@ -136,6 +136,7 @@ header_line
 footer_lines
 	: K_file_names T_NUMBER ';' { file_names.reserve($2); }
 	  name_strings
+	;
 
 name_strings
 	: T_STRING ';'
@@ -883,6 +884,7 @@ symbol_access
       { $$ = vpip_make_PV($3, $5, $7); }
   | K_PV '<' T_SYMBOL ',' T_NUMBER T_NUMBER ',' T_NUMBER '>'
       { $$ = vpip_make_PV($3, $5, $6, $8); }
+  ;
 
   /* functor operands can only be a list of symbols. */
 symbols
