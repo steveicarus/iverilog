@@ -894,7 +894,7 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	$$ = tmp;
       }
   | TYPE_IDENTIFIER range_opt
-      { if ($2) $$ = new array_type_t($1, $2);
+      { if ($2) $$ = new parray_type_t($1, $2);
 	else $$ = $1;
       }
   | K_string

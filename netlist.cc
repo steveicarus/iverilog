@@ -611,7 +611,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
       s->add_signal(this);
 }
 
-static unsigned calculate_count(netstruct_t*type)
+template <class T> static unsigned calculate_count(T*type)
 {
       long wid = type->packed_width();
       if (wid >= 0)

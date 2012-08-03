@@ -69,9 +69,12 @@ struct decl_assignment_t {
  * "data_type" rule in the parse rule. We make the type virtual so
  * that dynamic types will work.
  */
-struct data_type_t : public LineInfo {
+class data_type_t : public LineInfo {
+    public:
       virtual ~data_type_t() = 0;
-
+	// This method is used to figure out the base type of a packed
+	// compound object. Return IVL_VT_NO_TYPE if the type is not packed.
+      virtual ivl_variable_type_t figure_packed_base_type(void)const;
 	// This method is used by the pform dumper to diagnostic dump.
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
 };
@@ -97,10 +100,10 @@ struct struct_member_t : public LineInfo {
 };
 
 struct struct_type_t : public data_type_t {
+      virtual ivl_variable_type_t figure_packed_base_type(void)const;
       bool packed_flag;
       std::auto_ptr< list<struct_member_t*> > members;
 };
-extern ivl_variable_type_t figure_struct_base_type(struct_type_t*struct_type);
 
 struct atom2_type_t : public data_type_t {
       inline explicit atom2_type_t(int tc, bool flag)
@@ -132,6 +135,8 @@ struct vector_type_t : public data_type_t {
       inline explicit vector_type_t(ivl_variable_type_t bt, bool sf,
 				    std::list<pform_range_t>*pd)
       : base_type(bt), signed_flag(sf), reg_flag(false), implicit_flag(false), pdims(pd) { }
+      virtual ivl_variable_type_t figure_packed_base_type(void)const;
+
       ivl_variable_type_t base_type;
       bool signed_flag;
       bool reg_flag; // True if "reg" was used
@@ -141,11 +146,15 @@ struct vector_type_t : public data_type_t {
 
 /*
  * The array_type_t is a generalization of the vector_type_t in that
- * the base type is another general data type.
+ * the base type is another general data type. Ultimately, the subtype
+ * must also be packed (as this is a packed array) but that may be
+ * worked out during elaboration.
  */
-struct array_type_t : public data_type_t {
-      inline explicit array_type_t(data_type_t*btype, std::list<pform_range_t>*pd)
+struct parray_type_t : public data_type_t {
+      inline explicit parray_type_t(data_type_t*btype, std::list<pform_range_t>*pd)
       : base_type(btype), packed_dims(pd) { }
+      virtual ivl_variable_type_t figure_packed_base_type(void)const;
+
       data_type_t*base_type;
       std::auto_ptr< list<pform_range_t> > packed_dims;
 };

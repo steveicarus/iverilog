@@ -29,7 +29,7 @@ PWire::PWire(perm_string n,
 : name_(n), type_(t), port_type_(pt), data_type_(dt),
   signed_(false), isint_(false),
   port_set_(false), net_set_(false), is_scalar_(false),
-  error_cnt_(0), enum_type_(0), struct_type_(0),
+  error_cnt_(0), set_data_type_(0),
   discipline_(0)
 {
       if (t == NetNet::INTEGER) {
@@ -253,18 +253,10 @@ void PWire::set_unpacked_idx(const list<pform_range_t>&ranges)
       }
 }
 
-void PWire::set_enumeration(enum_type_t*enum_type)
+void PWire::set_packed_type(data_type_t*type)
 {
-      assert(enum_type_ == 0);
-      assert(struct_type_ == 0);
-      enum_type_ = enum_type;
-}
-
-void PWire::set_struct_type(struct_type_t*type)
-{
-      assert(enum_type_ == 0);
-      assert(struct_type_ == 0);
-      struct_type_ = type;
+      assert(set_data_type_ == 0);
+      set_data_type_ = type;
 }
 
 void PWire::set_discipline(ivl_discipline_t d)

@@ -391,6 +391,10 @@ void PWire::dump(ostream&out, unsigned ind) const
       }
 
       out << ";" << endl;
+      if (set_data_type_) {
+	    set_data_type_->pform_dump(out, 8);
+      }
+
       dump_attributes_map(out, attributes, 8);
 }
 

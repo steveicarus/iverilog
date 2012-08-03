@@ -892,6 +892,20 @@ static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
       return res;
 }
 
+static netdarray_t* elaborate_parray_type(Design*des, NetScope*scope,
+					 parray_type_t*data_type)
+{
+
+      list<netrange_t>packed_dimensions;
+      bool bad_range = evaluate_ranges(des, scope, packed_dimensions, * data_type->packed_dims);
+      ivl_assert(*data_type, bad_range);
+
+      netdarray_t*res = new netdarray_t(packed_dimensions, IVL_VT_NO_TYPE, 0);
+	//res->set_line(*data_type);
+
+      return res;
+}
+
 bool test_ranges_eeq(const list<netrange_t>&lef, const list<netrange_t>&rig)
 {
       if (lef.size() != rig.size())
@@ -1158,8 +1172,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	// If this is a struct type, then build the net with the
 	// struct type.
-      if (struct_type_) {
-	    netstruct_t*use_type = elaborate_struct_type(des, scope, struct_type_);
+      if (struct_type_t*struct_type = dynamic_cast<struct_type_t*>(set_data_type_)) {
+	    netstruct_t*use_type = elaborate_struct_type(des, scope, struct_type);
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype;
 		  if (use_type->packed())
@@ -1172,10 +1186,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    sig = new NetNet(scope, name_, wtype, use_type);
 
-      } else if (enum_type_) {
-	    ivl_assert(*this, struct_type_ == 0);
-	    ivl_assert(*this, ! enum_type_->names->empty());
-	    list<named_pexpr_t>::const_iterator sample_name = enum_type_->names->begin();
+      } else if (enum_type_t*enum_type = dynamic_cast<enum_type_t*>(set_data_type_)) {
+	    list<named_pexpr_t>::const_iterator sample_name = enum_type->names->begin();
 	    netenum_t*use_enum = scope->enumeration_for_name(sample_name->name);
 
 	    if (debug_elaborate) {
@@ -1186,9 +1198,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    sig = new NetNet(scope, name_, wtype, packed_dimensions, unpacked_dimensions, use_enum);
 
+
       } else if (netarray) {
-	    ivl_assert(*this, struct_type_==0);
-	    ivl_assert(*this, enum_type_==0);
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype
@@ -1199,6 +1210,15 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    ivl_assert(*this, packed_dimensions.empty());
 	    ivl_assert(*this, unpacked_dimensions.empty());
 	    sig = new NetNet(scope, name_, wtype, netarray);
+
+      } else if (parray_type_t*parray_type = dynamic_cast<parray_type_t*>(set_data_type_)) {
+
+	    netdarray_t*use_type = elaborate_parray_type(des, scope, parray_type);
+	    sig = new NetNet(scope, name_, wtype, use_type);
+#if 0
+	    cerr << get_fileline() << ": sorry: Packed arrays not supported here." << endl;
+	    des->errors += 1;
+#endif
 
       } else {
 	    if (debug_elaborate) {

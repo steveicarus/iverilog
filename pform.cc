@@ -1591,11 +1591,11 @@ static void pform_set_net_range(perm_string name,
       pform_bind_attributes(cur->attributes, attr, true);
 }
 
-void pform_set_net_range(list<perm_string>*names,
-			 list<pform_range_t>*range,
-			 bool signed_flag,
-			 ivl_variable_type_t dt,
-			 std::list<named_pexpr_t>*attr)
+static void pform_set_net_range(list<perm_string>*names,
+				list<pform_range_t>*range,
+				bool signed_flag,
+				ivl_variable_type_t dt,
+				std::list<named_pexpr_t>*attr)
 {
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
@@ -1997,7 +1997,7 @@ void pform_module_define_port(const struct vlltype&li,
 	    }
 
       } else if ((struct_type = dynamic_cast<struct_type_t*>(vtype))) {
-	    data_type = figure_struct_base_type(struct_type);
+	    data_type = struct_type->figure_packed_base_type();
 	    signed_flag = false;
 	    range = 0;
 
@@ -2017,7 +2017,7 @@ void pform_module_define_port(const struct vlltype&li,
       cur->set_signed(signed_flag);
 
       if (struct_type) {
-	    cur->set_struct_type(struct_type);
+	    cur->set_packed_type(struct_type);
 
       } else if (range == 0) {
 	    cur->set_range_scalar((type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
@@ -2790,6 +2790,26 @@ static void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_
       delete names;
 }
 
+template <class T> static void pform_set2_data_type(const struct vlltype&li, T*data_type, perm_string name, list<named_pexpr_t>*attr)
+{
+      ivl_variable_type_t base_type = data_type->figure_packed_base_type();
+      if (base_type == IVL_VT_NO_TYPE) {
+	    VLerror(li, "Compound type is not PACKED in this context.");
+      }
+
+      PWire*net = pform_get_make_wire_in_scope(name, NetNet::REG, NetNet::NOT_A_PORT, base_type);
+      net->set_packed_type(data_type);
+      pform_bind_attributes(net->attributes, attr, true);
+}
+
+template <class T> static void pform_set2_data_type(const struct vlltype&li, T*data_type, list<perm_string>*names, list<named_pexpr_t>*attr)
+{
+      for (list<perm_string>::iterator cur = names->begin()
+		 ; cur != names->end() ; ++ cur) {
+	    pform_set2_data_type(li, data_type, *cur, attr);
+      }
+}
+
 /*
  * This function detects the derived class for the given type and
  * dispatches the type to the proper subtype function.
@@ -2828,8 +2848,8 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
 	    return;
       }
 
-      if (/*array_type_t*array_type = */  dynamic_cast<array_type_t*> (data_type)) {
-	    VLerror(li, "sorry: General array types not supported.");
+      if (parray_type_t*array_type = dynamic_cast<parray_type_t*> (data_type)) {
+	    pform_set2_data_type(li, array_type, names, attr);
 	    return;
       }
 
@@ -2853,7 +2873,7 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
       assert(enum_type->range.get() != 0);
       assert(enum_type->range->size() == 1);
       cur->set_range(*enum_type->range, SR_NET);
-      cur->set_enumeration(enum_type);
+      cur->set_packed_type(enum_type);
       pform_bind_attributes(cur->attributes, attr, true);
 }
 
