@@ -3819,7 +3819,6 @@ module
 	      }
 	}
 	pform_endmodule($3, in_celldefine, ucd);
-	delete[]$3;
 	have_timeunit_decl = false; // We will allow decls again.
 	have_timeprec_decl = false;
       }
@@ -3832,6 +3831,7 @@ module
 	if ($15 && (strcmp($3,$15) != 0)) {
 	      yyerror(@15, "error: End name doesn't match module/program name");
 	}
+	delete[]$3;
 	if ($15) delete[]$15;
       }
   ;
