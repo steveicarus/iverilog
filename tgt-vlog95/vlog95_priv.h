@@ -120,6 +120,11 @@ extern int64_t get_int64_from_number(ivl_expr_t expr, int *return_type);
 extern uint64_t get_uint64_from_number(ivl_expr_t expr, int *return_type);
 
 /*
+ * Get the appropriate MSB and LSB for a signal.
+ */
+extern void get_sig_msb_lsb(ivl_signal_t sig, int *msb, int *lsb);
+
+/*
  * Cleanup functions.
  */
 extern void free_emitted_scope_list();

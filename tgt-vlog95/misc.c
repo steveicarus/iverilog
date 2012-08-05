@@ -857,3 +857,27 @@ void emit_id(const char *id)
       if (is_escaped(id)) fprintf(vlog_out, "\\%s ", id);
       else fprintf(vlog_out, "%s", id);
 }
+
+/*
+ * Get the correct MSB and LSB for a signal.
+ */
+void get_sig_msb_lsb(ivl_signal_t sig, int *msb, int *lsb)
+{
+      switch (ivl_signal_packed_dimensions(sig)) {
+	  /* For a scalar we use zero for both the MSB and LSB. */
+	case 0:
+	    *msb = 0;
+	    *lsb = 0;
+	    break;
+	case 1:
+	  /* For a vector we use the real MSB and LSB. */
+	    *msb = ivl_signal_packed_msb(sig, 0);
+	    *lsb = ivl_signal_packed_lsb(sig, 0);
+	    break;
+	  /* For a packed vector we use the normalized MSB and LSB. */
+	default:
+	    *msb = ivl_signal_width(sig) - 1;
+	    *lsb = 0;
+	    break;
+      }
+}

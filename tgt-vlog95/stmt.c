@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -191,8 +191,7 @@ static void emit_stmt_lval_piece(ivl_scope_t scope, ivl_lval_t lval)
       }
 
 	/* We have some kind of select. */
-      lsb = ivl_signal_lsb(sig);
-      msb = ivl_signal_msb(sig);
+      get_sig_msb_lsb(sig, &msb, &lsb);
       sel_type = ivl_lval_sel_type(lval);
       assert(sel_expr);
 	/* A bit select. */
@@ -1119,6 +1118,20 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 		  emit_stmt_fork(scope, stmt);
 	    }
 	    break;
+	case IVL_ST_FORK_JOIN_ANY:
+	    fprintf(stderr, "%s:%u: vlog95 sorry: fork/join_any is not "
+	                    "currently translated.\n",
+	                    ivl_stmt_file(stmt),
+	                    ivl_stmt_lineno(stmt));
+	    vlog_errors += 1;
+	    break;
+	case IVL_ST_FORK_JOIN_NONE:
+	    fprintf(stderr, "%s:%u: vlog95 sorry: fork/join_none is not "
+	                    "currently translated.\n",
+	                    ivl_stmt_file(stmt),
+	                    ivl_stmt_lineno(stmt));
+	    vlog_errors += 1;
+	    break;
 	case IVL_ST_FREE:
 	      /* This statement is only used with an automatic task so we
 	       * can safely skip it. The automatic task definition will
@@ -1168,6 +1181,13 @@ void emit_process(ivl_scope_t scope, ivl_process_t proc)
             break;
         case IVL_PR_ALWAYS:
             fprintf(vlog_out, "always");
+            break;
+        case IVL_PR_FINAL:
+            fprintf(vlog_out, "final");
+            fprintf(stderr, "%s:%u: vlog95 sorry: final blocks are not "
+	                    "currently translated.\n",
+                            ivl_process_file(proc), ivl_process_lineno(proc));
+            vlog_errors+= 1;
             break;
         default:
             fprintf(vlog_out, "<unknown>");

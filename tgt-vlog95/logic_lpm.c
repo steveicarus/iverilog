@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -696,8 +696,7 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm)
 	    fprintf(vlog_out, "[%d]", array_word);
       }
 
-      msb = ivl_signal_msb(sig);
-      lsb = ivl_signal_lsb(sig);
+      get_sig_msb_lsb(sig, &msb, &lsb);
       if (sign_extend) {
 	    assert(base != lsb);
 	    if (msb >= lsb) base += lsb;
@@ -1222,8 +1221,7 @@ static void emit_lpm_part_pv(ivl_scope_t scope, ivl_lpm_t lpm)
       if (ivl_signal_dimensions(sig)) {
 	    fprintf(vlog_out, "[%"PRId64"]", array_word);
       }
-      msb = ivl_signal_msb(sig);
-      lsb = ivl_signal_lsb(sig);
+      get_sig_msb_lsb(sig, &msb, &lsb);
       fprintf(vlog_out, "[");
       if (width == 1) {
 	    if (msb >= lsb) base += lsb;
