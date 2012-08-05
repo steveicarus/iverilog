@@ -820,6 +820,17 @@ netdarray_t* NetNet::darray_type(void) const
       return dynamic_cast<netdarray_t*> (net_type_);
 }
 
+unsigned long NetNet::vector_width() const
+{
+      unsigned long wid = netrange_width(packed_dims_);
+      if (net_type_) {
+	    long tmp = net_type_->packed_width();
+	    if (tmp > 0) wid *= tmp;
+      }
+
+      return wid;
+}
+
 ivl_discipline_t NetNet::get_discipline() const
 {
       return discipline_;

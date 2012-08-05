@@ -146,6 +146,13 @@ void data_type_t::pform_dump(ostream&out, unsigned indent) const
       out << setw(indent) << "" << typeid(*this).name() << endl;
 }
 
+void parray_type_t::pform_dump(ostream&out, unsigned indent) const
+{
+      out << setw(indent) << "" << "Packed array " << "[...]"
+	  << " of:" << endl;
+      base_type->pform_dump(out, indent+4);
+}
+
 static void dump_attributes_map(ostream&out,
 				const map<perm_string,PExpr*>&attributes,
 				int ind)

@@ -310,4 +310,8 @@ extern void collapse_partselect_pv_to_concat(Design*des, NetNet*sig);
 extern bool evaluate_index_prefix(Design*des, NetScope*scope,
 				  list<long>&prefix_indices,
 				  const list<index_component_t>&indices);
+
+extern NetExpr*collapse_array_indices(Design*des, NetScope*scope, NetNet*net,
+				      const std::list<index_component_t>&indices);
+
 #endif

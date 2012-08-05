@@ -30,6 +30,7 @@
 class nettype_base_t {
     public:
       virtual ~nettype_base_t() =0;
+      virtual long packed_width(void) const;
 };
 
 class netrange_t {

@@ -154,6 +154,7 @@ struct parray_type_t : public data_type_t {
       inline explicit parray_type_t(data_type_t*btype, std::list<pform_range_t>*pd)
       : base_type(btype), packed_dims(pd) { }
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
+      virtual void pform_dump(std::ostream&out, unsigned indent) const;
 
       data_type_t*base_type;
       std::auto_ptr< list<pform_range_t> > packed_dims;

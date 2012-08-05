@@ -77,6 +77,7 @@ class NetEvWait;
 class PExpr;
 class PFunction;
 class netdarray_t;
+class netparray_t;
 class netenum_t;
 class netstruct_t;
 
@@ -614,6 +615,7 @@ class NetNet  : public NetObj, public PortType {
 	// This form builds a NetNet from its record/enum definition.
       explicit NetNet(NetScope*s, perm_string n, Type t, netstruct_t*type);
       explicit NetNet(NetScope*s, perm_string n, Type t, netdarray_t*type);
+	//explicit NetNet(NetScope*s, perm_string n, Type t, netparray_t*type);
 
       virtual ~NetNet();
 
@@ -662,7 +664,7 @@ class NetNet  : public NetObj, public PortType {
 
 	/* The vector_width returns the bit width of the packed array,
 	   vector or scaler that is this NetNet object.  */
-      unsigned long vector_width() const { return netrange_width(packed_dims_); }
+      unsigned long vector_width() const;
 
 	/* Given a prefix of indices, figure out how wide the
 	   resulting slice would be. This is a generalization of the
@@ -693,6 +695,10 @@ class NetNet  : public NetObj, public PortType {
 	   for arrays. The value is the number of array
 	   indices. (Currently only one array index is supported.) */
       inline unsigned unpacked_dimensions() const { return unpacked_dims_.size(); }
+
+	/* This methor returns 0 for scalars, but vectors and other
+	   PACKED arrays have packed dimensions. */
+      inline size_t packed_dimensions() const { return packed_dims_.size(); }
 
 	// This is the number of array elements.
       unsigned unpacked_count() const;

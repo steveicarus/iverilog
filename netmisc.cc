@@ -1127,3 +1127,25 @@ bool evaluate_index_prefix(Design*des, NetScope*scope,
 
       return true;
 }
+
+/*
+ * Given a list of indices, treat them as packed indices and convert
+ * them to an expression that normalizes the list to a single index
+ * expression over a canonical equivilent 1-dimensional array.
+ */
+NetExpr*collapse_array_indices(Design*des, NetScope*scope, NetNet*net,
+			       const list<index_component_t>&indices)
+{
+      list<long>prefix_indices;
+      bool rc = evaluate_index_prefix(des, scope, prefix_indices, indices);
+      assert(rc);
+
+      const index_component_t&back_index = indices.back();
+      assert(back_index.sel == index_component_t::SEL_BIT);
+      assert(back_index.msb && !back_index.lsb);
+
+      NetExpr*base = elab_and_eval(des, scope, back_index.msb, -1, true);
+
+      NetExpr*res = normalize_variable_bit_base(prefix_indices, base, net);
+      return res;
+}
