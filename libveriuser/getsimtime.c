@@ -29,6 +29,15 @@
  * some TF time routines implemented using VPI interface
  */
 
+// On some platforms (e.g. MinGW), pow() may not always generate an
+// exact integer result when supplied with integer operands. Converting
+// the result to an integer before we use it seems to be enough to work
+// round this issue.
+static ivl_u64_t pow10u(PLI_INT32 val)
+{
+      return (ivl_u64_t)pow(10, val);
+}
+
 static ivl_u64_t
 scale(int high, int low, void*obj) {
       vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
@@ -36,8 +45,8 @@ scale(int high, int low, void*obj) {
 
       scaled = high;
       scaled = (scaled << 32) | low;
-      scaled /= pow(10, vpi_get(vpiTimeUnit,obj ? (vpiHandle)obj : hand) -
-                        vpi_get(vpiTimePrecision,0));
+      scaled /= pow10u(vpi_get(vpiTimeUnit,obj ? (vpiHandle)obj : hand) -
+                       vpi_get(vpiTimePrecision,0));
 
       return scaled;
 }
