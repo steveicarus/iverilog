@@ -695,6 +695,6 @@ void __vpiVThrStrStack::vpi_get_value(p_vpi_value vp)
 
 vpiHandle vpip_make_vthr_str_stack(unsigned depth)
 {
-      struct __vpiVThrStrStack*obj = new __vpiVThrStrStack(depth);
+      class __vpiVThrStrStack*obj = new __vpiVThrStrStack(depth);
       return obj;
 }

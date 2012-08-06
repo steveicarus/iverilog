@@ -71,7 +71,7 @@ vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net)
       struct __vpiScope*scope = vpip_peek_current_scope();
       const char*use_name = name ? vpip_name_string(name) : 0;
 
-      struct __vpiDarrayVar*obj = new __vpiDarrayVar(scope, use_name, net);
+      class __vpiDarrayVar*obj = new __vpiDarrayVar(scope, use_name, net);
 
       return obj;
 }

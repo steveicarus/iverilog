@@ -6,7 +6,7 @@
 %parse-param {perm_string parse_library_name}
 %{
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -388,7 +388,7 @@ adding_operator
 architecture_body
   : architecture_body_start
     K_of IDENTIFIER
-      { bind_entity_to_active_scope($3, active_scope) }
+      { bind_entity_to_active_scope($3, active_scope); }
     K_is block_declarative_items_opt
     K_begin architecture_statement_part K_end K_architecture_opt identifier_opt ';'
       { Architecture*tmp = new Architecture(lex_strings.make($1),
