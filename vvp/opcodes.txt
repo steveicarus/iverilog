@@ -565,7 +565,7 @@ ended, then the %join does not block or yield the thread.
 
 * %join/detach <n>
 
-This is also a partner to the %ork. This instruction causes the thread
+This is also a partner to %fork. This instruction causes the thread
 to detach <n> threads from the current thread. The <n> should be ALL
 the children, and none of those children may be automatic. This
 instruction is used to implement join_none and join_any from the
