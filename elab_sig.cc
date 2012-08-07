@@ -390,7 +390,6 @@ bool PGenerate::elaborate_sig_direct_(Design*des, NetScope*container) const
 		 ; cur != generate_schemes.end() ; ++ cur ) {
 	    PGenerate*item = *cur;
 	    if (item->scheme_type == PGenerate::GS_CASE) {
-		  typedef list<PGenerate*>::const_iterator generate_it_t;
 		  for (generate_it_t icur = item->generate_schemes.begin()
 			     ; icur != item->generate_schemes.end() ; ++ icur ) {
 			PGenerate*case_item = *icur;

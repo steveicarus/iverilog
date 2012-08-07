@@ -4699,7 +4699,6 @@ bool PGenerate::elaborate_direct_(Design*des, NetScope*container) const
 	      // contain anything. Instead scan the case items, which
 	      // are listed as sub-schemes of the item.
 	    if (item->scheme_type == PGenerate::GS_CASE) {
-		  typedef list<PGenerate*>::const_iterator generate_it_t;
 		  for (generate_it_t icur = item->generate_schemes.begin()
 			     ; icur != item->generate_schemes.end() ; ++ icur ) {
 			PGenerate*case_item = *icur;
