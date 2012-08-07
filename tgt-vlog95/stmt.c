@@ -319,6 +319,38 @@ static unsigned is_delayed_or_event_assign(ivl_scope_t scope,
 }
 
 /*
+ * Get the string version for the assignment operator prefix.
+ */
+static char * get_assign_oper_string(ivl_statement_t stmt)
+{
+      assert (ivl_statement_type(stmt) == IVL_ST_ASSIGN);
+
+      switch (ivl_stmt_opcode(stmt)) {
+	case  0:  assert(0);  /* There must be an opcode! */
+	case '+': return "+";
+	case '-': return "-";
+	case '*': return "*";
+	case '/': return "/";
+	case '%': return "%";
+	case '&': return "&";
+	case '|': return "|";
+	case '^': return "^";
+	case 'l': return "<<";
+	case 'r': return ">>";
+// HERE: This is only allowed if we are emitting signed information.
+	case 'R': return ">>>";
+	default:
+	    vlog_errors += 1;
+	    fprintf(stderr, "%s:%u: vlog95 error: unknown assignment operator "
+	                    "(%c).\n",
+	                    ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
+	                    ivl_stmt_opcode(stmt));
+      }
+
+      return "<unknown>";
+}
+
+/*
  * Icarus translated for(<assign>; <cond>; <incr_assign>) <body> into
  *
  *   begin
@@ -334,6 +366,7 @@ static unsigned is_delayed_or_event_assign(ivl_scope_t scope,
 static unsigned is_for_loop(ivl_scope_t scope, ivl_statement_t stmt)
 {
       unsigned wid;
+      char opcode;
       ivl_statement_t assign, while_lp, while_blk, body, incr_assign;
 
 	/* We must have two block elements. */
@@ -382,6 +415,14 @@ static unsigned is_for_loop(ivl_scope_t scope, ivl_statement_t stmt)
 //       done this for us.
       wid = emit_stmt_lval(scope, incr_assign);
       fprintf(vlog_out, " = ");
+      opcode = ivl_stmt_opcode(incr_assign);
+      if (opcode) {
+	    fprintf(stderr, "%s:%u: vlog95 sorry: assignment operator %s= is "
+	                    "not currently translated.\n",
+	                    ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
+	                    get_assign_oper_string(incr_assign));
+	    vlog_errors += 1;
+      }
       emit_expr(scope, ivl_stmt_rval(incr_assign), wid);
       fprintf(vlog_out, ")");
       emit_stmt_file_line(stmt);
@@ -728,11 +769,20 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
 static void emit_stmt_assign(ivl_scope_t scope, ivl_statement_t stmt)
 {
       unsigned wid;
+      char opcode;
       fprintf(vlog_out, "%*c", get_indent(), ' ');
 // HERE: Do we need to calculate the width? The compiler should have already
 //       done this for us.
       wid = emit_stmt_lval(scope, stmt);
       fprintf(vlog_out, " = ");
+      opcode = ivl_stmt_opcode(stmt);
+      if (opcode) {
+	    fprintf(stderr, "%s:%u: vlog95 sorry: assignment operator %s= is "
+	                    "not currently translated.\n",
+	                    ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
+	                    get_assign_oper_string(stmt));
+	    vlog_errors += 1;
+      }
       emit_expr(scope, ivl_stmt_rval(stmt), wid);
       fprintf(vlog_out, ";");
       emit_stmt_file_line(stmt);
