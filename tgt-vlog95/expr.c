@@ -532,7 +532,7 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    fprintf(vlog_out, "(");
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
 	    fprintf(vlog_out, "++)");
-	    fprintf(stderr, "%s:%u: vlog95 sorry: Pre-increment "
+	    fprintf(stderr, "%s:%u: vlog95 sorry: Post-increment "
 	                    "operator is not currently translated.\n",
 	                    ivl_expr_file(expr),
 	                    ivl_expr_lineno(expr));
@@ -552,7 +552,7 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    fprintf(vlog_out, "(");
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
 	    fprintf(vlog_out, "--)");
-	    fprintf(stderr, "%s:%u: vlog95 sorry: Pre-decrement "
+	    fprintf(stderr, "%s:%u: vlog95 sorry: Post-decrement "
 	                    "operator is not currently translated.\n",
 	                    ivl_expr_file(expr),
 	                    ivl_expr_lineno(expr));
