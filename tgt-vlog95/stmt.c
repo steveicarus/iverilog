@@ -319,35 +319,65 @@ static unsigned is_delayed_or_event_assign(ivl_scope_t scope,
 }
 
 /*
- * Get the string version for the assignment operator prefix.
+ * A common routine to emit the basic assignment construct. It can also
+ * translate an assignment with an opcode when allowed.
  */
-static char * get_assign_oper_string(ivl_statement_t stmt)
+static void emit_assign_and_opt_opcode(ivl_scope_t scope, ivl_statement_t stmt,
+                                       unsigned allow_opcode)
 {
-      assert (ivl_statement_type(stmt) == IVL_ST_ASSIGN);
+      unsigned wid;
+      char opcode, *opcode_str;
 
-      switch (ivl_stmt_opcode(stmt)) {
-	case  0:  assert(0);  /* There must be an opcode! */
-	case '+': return "+";
-	case '-': return "-";
-	case '*': return "*";
-	case '/': return "/";
-	case '%': return "%";
-	case '&': return "&";
-	case '|': return "|";
-	case '^': return "^";
-	case 'l': return "<<";
-	case 'r': return ">>";
-// HERE: This is only allowed if we are emitting signed information.
-	case 'R': return ">>>";
+      assert (ivl_statement_type(stmt) == IVL_ST_ASSIGN);
+// HERE: Do we need to calculate the width? The compiler should have already
+//       done this for us.
+      wid = emit_stmt_lval(scope, stmt);
+	/* Get the opcode and the string version of the opcode. */
+      opcode = ivl_stmt_opcode(stmt);
+      switch (opcode) {
+	case  0:  opcode_str = ""; break;
+	case '+': opcode_str = "+"; break;
+	case '-': opcode_str = "-"; break;
+	case '*': opcode_str = "*"; break;
+	case '/': opcode_str = "/"; break;
+	case '%': opcode_str = "%"; break;
+	case '&': opcode_str = "&"; break;
+	case '|': opcode_str = "|"; break;
+	case '^': opcode_str = "^"; break;
+	case 'l': opcode_str = "<<"; break;
+	case 'r': opcode_str = ">>"; break;
+	case 'R': opcode_str = ">>>"; break;
 	default:
-	    vlog_errors += 1;
 	    fprintf(stderr, "%s:%u: vlog95 error: unknown assignment operator "
 	                    "(%c).\n",
 	                    ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
-	                    ivl_stmt_opcode(stmt));
+	                    opcode);
+	    vlog_errors += 1;
+	    opcode_str = "<unknown>";
+	    break;
       }
-
-      return "<unknown>";
+      if (opcode && ! allow_opcode) {
+	    fprintf(stderr, "%s:%u: vlog95 error: assignment operator %s= is "
+	                    "not allowed in this context.\n",
+	                    ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
+	                    opcode_str);
+	    vlog_errors += 1;
+      }
+      fprintf(vlog_out, " = ");
+      if (opcode) {
+	    unsigned twid = emit_stmt_lval(scope, stmt);
+	    assert(twid == wid);
+	    fprintf(vlog_out, " %s ", opcode_str);
+	      /* The >>>= assignment operator is only allowed when the allow
+	       * signed flag is true. */
+	    if ((! allow_signed) && (opcode == 'R')) {
+		  fprintf(stderr, "%s:%u: vlog95 error: >>>= operator is not "
+		                  "supported.\n",
+		                  ivl_stmt_file(stmt), ivl_stmt_lineno(stmt));
+		  vlog_errors += 1;
+	    }
+      }
+      emit_expr(scope, ivl_stmt_rval(stmt), wid);
 }
 
 /*
@@ -365,8 +395,6 @@ static char * get_assign_oper_string(ivl_statement_t stmt)
  */
 static unsigned is_for_loop(ivl_scope_t scope, ivl_statement_t stmt)
 {
-      unsigned wid;
-      char opcode;
       ivl_statement_t assign, while_lp, while_blk, body, incr_assign;
 
 	/* We must have two block elements. */
@@ -400,30 +428,14 @@ static unsigned is_for_loop(ivl_scope_t scope, ivl_statement_t stmt)
 
 	/* The pattern matched so generate the appropriate code. */
       fprintf(vlog_out, "%*cfor(", get_indent(), ' ');
-	/* Emit the initialization statement. */
-// HERE: Do we need to calculate the width? The compiler should have already
-//       done this for us.
-      wid = emit_stmt_lval(scope, assign);
-      fprintf(vlog_out, " = ");
-      emit_expr(scope, ivl_stmt_rval(assign), wid);
+	/* Emit the initialization statement (no opcode is allowed). */
+      emit_assign_and_opt_opcode(scope, assign, 0);
       fprintf(vlog_out, "; ");
 	/* Emit the condition. */
       emit_expr(scope, ivl_stmt_cond_expr(while_lp), 0);
       fprintf(vlog_out, "; ");
-	/* Emit in increment statement. */
-// HERE: Do we need to calculate the width? The compiler should have already
-//       done this for us.
-      wid = emit_stmt_lval(scope, incr_assign);
-      fprintf(vlog_out, " = ");
-      opcode = ivl_stmt_opcode(incr_assign);
-      if (opcode) {
-	    fprintf(stderr, "%s:%u: vlog95 sorry: assignment operator %s= is "
-	                    "not currently translated.\n",
-	                    ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
-	                    get_assign_oper_string(incr_assign));
-	    vlog_errors += 1;
-      }
-      emit_expr(scope, ivl_stmt_rval(incr_assign), wid);
+	/* Emit the increment statement (an opcode is allowed). */
+      emit_assign_and_opt_opcode(scope, incr_assign, 1);
       fprintf(vlog_out, ")");
       emit_stmt_file_line(stmt);
 	/* Now emit the body. */
@@ -768,22 +780,9 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
 
 static void emit_stmt_assign(ivl_scope_t scope, ivl_statement_t stmt)
 {
-      unsigned wid;
-      char opcode;
       fprintf(vlog_out, "%*c", get_indent(), ' ');
-// HERE: Do we need to calculate the width? The compiler should have already
-//       done this for us.
-      wid = emit_stmt_lval(scope, stmt);
-      fprintf(vlog_out, " = ");
-      opcode = ivl_stmt_opcode(stmt);
-      if (opcode) {
-	    fprintf(stderr, "%s:%u: vlog95 sorry: assignment operator %s= is "
-	                    "not currently translated.\n",
-	                    ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
-	                    get_assign_oper_string(stmt));
-	    vlog_errors += 1;
-      }
-      emit_expr(scope, ivl_stmt_rval(stmt), wid);
+	/* Emit the basic assignment (an opcode is allowed).*/
+      emit_assign_and_opt_opcode(scope, stmt, 1);
       fprintf(vlog_out, ";");
       emit_stmt_file_line(stmt);
       fprintf(vlog_out, "\n");
