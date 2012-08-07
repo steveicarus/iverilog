@@ -1851,6 +1851,8 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		      case IVL_VT_BOOL:    fprintf(stderr, " bool"); break;
 		      case IVL_VT_LOGIC:   fprintf(stderr, " logic"); break;
 		      case IVL_VT_STRING:  fprintf(stderr, " string"); break;
+		      case IVL_VT_DARRAY:  fprintf(stderr, " dynamic array");
+		                           break;
 		  }
 	    } else {
 		  fprintf(stderr, "Error: No/missing information!");

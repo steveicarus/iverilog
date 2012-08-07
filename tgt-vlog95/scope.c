@@ -108,6 +108,21 @@ void emit_var_def(ivl_signal_t sig)
 		                  ivl_signal_basename(sig));
 		  vlog_errors += 1;
 	    }
+      } else if (ivl_signal_data_type(sig) == IVL_VT_STRING) {
+	    fprintf(vlog_out, "string ");
+	    emit_sig_id(sig);
+	    fprintf(stderr, "%s:%u: vlog95 error: SystemVerilog strings (%s) "
+	                    "are not supported.\n", ivl_signal_file(sig),
+	                    ivl_signal_lineno(sig), ivl_signal_basename(sig));
+	    vlog_errors += 1;
+      } else if (ivl_signal_data_type(sig) == IVL_VT_DARRAY) {
+	    fprintf(vlog_out, "<dynamic array> ");
+	    emit_sig_id(sig);
+	    fprintf(stderr, "%s:%u: vlog95 error: SystemVerilog dynamic "
+	                    "arrays (%s) are not supported.\n",
+	                    ivl_signal_file(sig),
+	                    ivl_signal_lineno(sig), ivl_signal_basename(sig));
+	    vlog_errors += 1;
       } else {
 	    int msb, lsb;
 	    get_sig_msb_lsb(sig, &msb, &lsb);
