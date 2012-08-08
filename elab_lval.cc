@@ -721,7 +721,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 
       ivl_assert(*this, use_sel == index_component_t::SEL_NONE || use_sel == index_component_t::SEL_BIT);
 
-      if (name_tail.index.size() > 0) {
+      if (! name_tail.index.empty()) {
 	      // Evaluate all but the last index expression, into prefix_indices.
 	    list<long>prefix_indices;
 	    bool rc = evaluate_index_prefix(des, scope, prefix_indices, name_tail.index);

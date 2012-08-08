@@ -918,7 +918,7 @@ unsigned NetNet::peek_eref() const
  */
 bool NetNet::test_part_lref(unsigned pmsb, unsigned plsb)
 {
-      if (lref_mask_.size() == 0)
+      if (lref_mask_.empty())
 	    lref_mask_.resize(vector_width());
 
       bool rc = false;

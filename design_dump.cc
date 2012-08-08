@@ -261,7 +261,7 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
       if (netdarray_t*darray = darray_type())
 	    o << " dynamic array of " << darray->data_type();
 
-      if (!packed_dims_.empty())
+      if (! packed_dims_.empty())
 	    o << " packed dims: " << packed_dims_;
 
       o << " (eref=" << peek_eref() << ", lref=" << peek_lref() << ")";
@@ -1305,7 +1305,7 @@ void NetSTask::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << name_;
 
-      if (parms_.size() > 0) {
+      if (! parms_.empty()) {
 	    o << "(";
 	    if (parms_[0])
 		  parms_[0]->dump(o);
@@ -1545,7 +1545,7 @@ void NetETernary::dump(ostream&o) const
 void NetEUFunc::dump(ostream&o) const
 {
       o << func_->basename() << "(";
-      if (parms_.size() > 0) {
+      if (! parms_.empty()) {
 	    parms_[0]->dump(o);
 	    for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
 		  o << ", ";

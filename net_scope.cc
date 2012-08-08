@@ -370,7 +370,7 @@ perm_string NetScope::module_name() const
 void NetScope::set_num_ports(unsigned int num_ports)
 {
     assert(type_ == MODULE);
-    assert( ports_.size() == 0 );
+    assert(ports_.empty());
     ports_.resize( num_ports );
 }
 

@@ -71,7 +71,7 @@ bool prefix_to_slice(const std::list<netrange_t>&dims,
       else
 	    acc_off += (sb - pcur->get_msb()) * acc_wid;
 
-      if (prefix.size() == 0) {
+      if (prefix.empty()) {
 	    loff = acc_off;
 	    return true;
       }

@@ -408,7 +408,7 @@ void pform_bind_attributes(map<perm_string,PExpr*>&attributes,
 
 bool pform_in_program_block()
 {
-      if (pform_cur_module.size() == 0)
+      if (pform_cur_module.empty())
 	    return false;
       if (pform_cur_module.front()->program_block)
 	    return true;
@@ -494,7 +494,7 @@ void pform_set_default_nettype(NetNet::Type type,
 {
       pform_default_nettype = type;
 
-      if (pform_cur_module.size() > 0) {
+      if (! pform_cur_module.empty()) {
 	    cerr << file<<":"<<lineno << ": error: "
 		 << "`default_nettype directives must appear" << endl;
 	    cerr << file<<":"<<lineno << ":      : "
@@ -814,13 +814,14 @@ verinum* pform_verinum_with_size(verinum*siz, verinum*val,
 void pform_startmodule(const struct vlltype&loc, const char*name,
 		       bool program_block, list<named_pexpr_t>*attr)
 {
-      if (pform_cur_module.size() > 0 && !gn_system_verilog()) {
+      if (! pform_cur_module.empty() && !gn_system_verilog()) {
 	    cerr << loc << ": error: Module definition " << name
 		 << " cannot nest into module " << pform_cur_module.front()->mod_name() << "." << endl;
 	    error_count += 1;
       }
 
-      if (gn_system_verilog() && pform_cur_module.size() > 0 && pform_cur_module.front()->program_block) {
+      if (gn_system_verilog() && ! pform_cur_module.empty() &&
+          pform_cur_module.front()->program_block) {
 	    cerr << loc << ": error: Program blocks cannot contain nested modules/program blocks." << endl;
 	    error_count += 1;
       }
@@ -868,7 +869,7 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
  */
 void pform_check_timeunit_prec()
 {
-      assert(pform_cur_module.size() > 0);
+      assert(! pform_cur_module.empty());
       if ((generation_flag & (GN_VER2005_SV | GN_VER2009)) &&
           (pform_cur_module.front()->time_unit < pform_cur_module.front()->time_precision)) {
 	    VLerror("error: a timeprecision is missing or is too large!");
@@ -896,7 +897,7 @@ Module::port_t* pform_module_port_reference(perm_string name,
 
 void pform_module_set_ports(vector<Module::port_t*>*ports)
 {
-      assert(pform_cur_module.size() > 0);
+      assert(! pform_cur_module.empty());
 
 	/* The parser parses ``module foo()'' as having one
 	   unconnected port, but it is really a module with no
@@ -915,7 +916,7 @@ void pform_module_set_ports(vector<Module::port_t*>*ports)
 void pform_endmodule(const char*name, bool inside_celldefine,
                      Module::UCDriveType uc_drive_def)
 {
-      assert(pform_cur_module.size() > 0);
+      assert(! pform_cur_module.empty());
       Module*cur_module  = pform_cur_module.front();
       pform_cur_module.pop_front();
 
@@ -931,7 +932,7 @@ void pform_endmodule(const char*name, bool inside_celldefine,
 	// root list of modules. Otherwise, this is a nested module
 	// and we put it into the parent module scope to be elaborated
 	// if needed.
-      map<perm_string,Module*>&use_module_map = (pform_cur_module.size() == 0)
+      map<perm_string,Module*>&use_module_map = (pform_cur_module.empty())
 	    ? pform_modules
 	    : pform_cur_module.front()->nested_modules;
 
@@ -951,7 +952,7 @@ void pform_endmodule(const char*name, bool inside_celldefine,
 	// this module should not have a parent lexical scope.
       ivl_assert(*cur_module, lexical_scope == cur_module);
       pform_pop_scope();
-      ivl_assert(*cur_module, pform_cur_module.size()>0 || lexical_scope == 0);
+      ivl_assert(*cur_module, ! pform_cur_module.empty() || lexical_scope == 0);
 
       tp_decl_flag = false;
       tu_decl_flag = false;
@@ -1138,7 +1139,7 @@ void pform_generate_block_name(char*name)
 void pform_endgenerate()
 {
       assert(pform_cur_generate != 0);
-      assert(pform_cur_module.size() > 0);
+      assert(! pform_cur_module.empty());
 
 	// If there is no explicit block name then generate a temporary
 	// name. This will be replaced by the correct name later, once
@@ -1688,7 +1689,7 @@ void pform_makegates(const struct vlltype&loc,
 		     svector<lgate>*gates,
 		     list<named_pexpr_t>*attr)
 {
-      assert(pform_cur_module.size() > 0);
+      assert(! pform_cur_module.empty());
       if (pform_cur_module.front()->program_block) {
 	    cerr << loc << ": error: Gates and switches may not be instantiated"
 		 << " in program blocks." << endl;
@@ -1804,7 +1805,7 @@ void pform_make_modgates(const struct vlltype&loc,
 			 struct parmvalue_t*overrides,
 			 svector<lgate>*gates)
 {
-      assert(pform_cur_module.size() > 0);
+      assert(! pform_cur_module.empty());
       if (pform_cur_module.front()->program_block) {
 	    cerr << loc << ": error: Module instantiations are not allowed"
 		 << " in program blocks." << endl;
@@ -2528,7 +2529,7 @@ void pform_set_localparam(const struct vlltype&loc,
 void pform_set_specparam(const struct vlltype&loc, perm_string name,
 			 list<pform_range_t>*range, PExpr*expr)
 {
-      assert(pform_cur_module.size() > 0);
+      assert(! pform_cur_module.empty());
       Module*scope = pform_cur_module.front();
       assert(scope == lexical_scope);
 
@@ -2908,7 +2909,7 @@ PProcess* pform_make_behavior(ivl_process_type_t type, Statement*st,
 
       pform_put_behavior_in_scope(pp);
 
-      ivl_assert(*st, pform_cur_module.size() > 0);
+      ivl_assert(*st, ! pform_cur_module.empty());
       if (pform_cur_module.front()->program_block && type == IVL_PR_ALWAYS) {
 	    cerr << st->get_fileline() << ": error: Always statements not allowed"
 		 << " in program blocks." << endl;

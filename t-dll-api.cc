@@ -2207,7 +2207,7 @@ extern "C" int ivl_signal_packed_lsb(ivl_signal_t net, unsigned dim)
 
 extern "C" int ivl_signal_msb(ivl_signal_t net)
 {
-      if (net->packed_dims.size() == 0)
+      if (net->packed_dims.empty())
 	    return 0;
 
       assert(net->packed_dims.size() == 1);
@@ -2216,7 +2216,7 @@ extern "C" int ivl_signal_msb(ivl_signal_t net)
 
 extern "C" int ivl_signal_lsb(ivl_signal_t net)
 {
-      if (net->packed_dims.size() == 0)
+      if (net->packed_dims.empty())
 	    return 0;
 
       assert(net->packed_dims.size() == 1);

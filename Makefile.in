@@ -87,7 +87,7 @@ GIT = @GIT@
 ifeq (@srcdir@,.)
 INCLUDE_PATH = -I. -Ilibmisc
 else
-INCLUDE_PATH = -I. -Ilibmisc -I$(srcdir) -I$(srcdir)/libmisc
+INCLUDE_PATH = -I. -I$(srcdir) -I$(srcdir)/libmisc
 endif
 
 CPPFLAGS = @DEFS@ $(INCLUDE_PATH) @CPPFLAGS@

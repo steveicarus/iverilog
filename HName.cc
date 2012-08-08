@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,21 +31,19 @@ hname_t::hname_t()
 }
 
 hname_t::hname_t(perm_string text)
+: name_(text)
 {
-      name_ = text;
       number_ = INT_MIN;
 }
 
 hname_t::hname_t(perm_string text, int num)
+: name_(text), number_(num)
 {
-      name_ = text;
-      number_ = num;
 }
 
 hname_t::hname_t(const hname_t&that)
+: name_(that.name_), number_(that.number_)
 {
-      name_ = that.name_;
-      number_ = that.number_;
 }
 
 hname_t& hname_t::operator = (const hname_t&that)
