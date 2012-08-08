@@ -692,8 +692,8 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm)
       emit_scope_call_path(scope, ivl_signal_scope(sig));
       emit_id(ivl_signal_basename(sig));
       if (ivl_signal_dimensions(sig)) {
-	    array_word += ivl_signal_array_base(sig);
-	    fprintf(vlog_out, "[%d]", array_word);
+	    int array_idx = (int) array_word + ivl_signal_array_base(sig);
+	    fprintf(vlog_out, "[%d]", array_idx);
       }
 
       get_sig_msb_lsb(sig, &msb, &lsb);
