@@ -483,7 +483,7 @@ void vthreads_delete(struct __vpiScope*scope)
  */
 static void vthread_reap(vthread_t thr)
 {
-      if (thr->children.size() > 0) {
+      if (! thr->children.empty()) {
 	    for (set<vthread_t>::iterator cur = thr->children.begin()
 		       ; cur != thr->children.end() ; ++cur) {
 		  vthread_t curp = *cur;
@@ -507,7 +507,7 @@ static void vthread_reap(vthread_t thr)
 	   it now. Otherwise, let the schedule event (which will
 	   execute the thread at of_ZOMBIE) delete the object. */
       if ((thr->is_scheduled == 0) && (thr->waiting_for_event == 0)) {
-	    assert(thr->children.size() == 0);
+	    assert(thr->children.empty());
 	    assert(thr->wait_next == 0);
 	    if (thr->delay_delete)
 		  schedule_del_thr(thr);
