@@ -48,7 +48,7 @@ class netrange_t {
       { msb_ = that.msb_; lsb_ = that.lsb_; return *this; }
 
       inline bool defined() const
-      { return msb_!=LONG_MAX || msb_!= LONG_MAX; }
+      { return msb_!=LONG_MAX || lsb_!= LONG_MAX; }
 
       inline unsigned long width()const
       { if (!defined()) return 0;
