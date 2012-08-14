@@ -31,6 +31,9 @@ libdir = @libdir@
 includedir = $(prefix)/include
 
 CC = @CC@
+RANLIB = @RANLIB@
+AR = @AR@
+LD = @LD@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
@@ -38,7 +41,6 @@ INSTALL_DATA = @INSTALL_DATA@
 CPPFLAGS = -I. -I.. -I$(srcdir) -I$(srcdir)/.. @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
-RANLIB = @RANLIB@
 
 A = a_close.o a_compare_handles.o a_configure.o a_fetch_argc.o \
 a_fetch_argv.o a_fetch_dir.o a_fetch_fullname.o a_fetch_location.o \
@@ -72,7 +74,7 @@ libveriuser.o: $O
 
 libveriuser.a: libveriuser.o
 	rm -f $@
-	ar cvq $@ libveriuser.o
+	$(AR) cvq $@ libveriuser.o
 	$(RANLIB) $@
 
 dep:

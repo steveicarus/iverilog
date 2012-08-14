@@ -86,12 +86,12 @@ endif
 system.vpi: $O ../vvp/libvpi.a
 	$(CC) @shared@ -o $@ $O -L../vvp $(LDFLAGS) -lvpi $(SYSTEM_VPI_LDFLAGS)
 
-sys_readmem_lex.c: sys_readmem_lex.lex
+sys_readmem_lex.c: $(srcdir)/sys_readmem_lex.lex
 	$(LEX) -Preadmem -t $< > $@
 
 sdf_lexor.o: sdf_lexor.c sdf_parse.h
 
-sdf_lexor.c: sdf_lexor.lex
+sdf_lexor.c: $(srcdir)/sdf_lexor.lex
 	$(LEX) -Psdf -t $< > $@
 
 # Build this in two steps to avoid parallel build issues (see pr3462585)

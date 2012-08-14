@@ -35,11 +35,13 @@ includedir = @includedir@
 CC = @CC@
 HOSTCC = @CC@
 CXX = @CXX@
+DLLTOOL = @DLLTOOL@
+AR = @AR@
+RANLIB = @RANLIB@
 INSTALL = @INSTALL@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
-RANLIB = @RANLIB@
 LEX = @LEX@
 YACC = @YACC@
 MAN = @MAN@
@@ -102,7 +104,7 @@ ifeq (@WIN32@,yes)
 # executable to build the library.
 vvp@EXEEXT@ libvpi.a: $O $(srcdir)/vvp.def
 	$(CXX) -o vvp$(suffix)@EXEEXT@ $(LDFLAGS) $O $(dllib) $(LIBS)
-	dlltool --dllname vvp$(suffix)@EXEEXT@ --def $(srcdir)/vvp.def \
+	$(DLLTOOL) --dllname vvp$(suffix)@EXEEXT@ --def $(srcdir)/vvp.def \
 		--output-lib libvpi.a --output-exp vvp.exp
 	rm -f vvp$(suffix)@EXEEXT@
 	$(CXX) $(LDFLAGS) -o vvp@EXEEXT@ vvp.exp $(LDFLAGS) $O $(dllib) $(LIBS)
@@ -110,7 +112,7 @@ else
 libvpi.a: libvpi.c
 	$(CC) -c $(srcdir)/libvpi.c
 	rm -f libvpi.a
-	ar cqv libvpi.a libvpi.o
+	$(AR) cqv libvpi.a libvpi.o
 	$(RANLIB) libvpi.a
 
 vvp@EXEEXT@: $O
@@ -129,9 +131,9 @@ dep:
 	mv $*.d dep/$*.d
 
 tables.cc: $(srcdir)/draw_tt.c
-	$(HOSTCC) @WARNING_FLAGS@ -o draw_tt $(srcdir)/draw_tt.c
-	./draw_tt > tables.cc
-	rm draw_tt@EXEEXT@
+	$(HOSTCC) @WARNING_FLAGS@ -o draw_tt.exe $(srcdir)/draw_tt.c
+	./draw_tt.exe > tables.cc
+	rm draw_tt.exe
 
 lexor.o: lexor.cc parse.h
 

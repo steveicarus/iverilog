@@ -32,7 +32,7 @@ typedef shl_t ivl_dll_t;
 #endif
 
 #if defined(__MINGW32__)
-inline ivl_dll_t ivl_dlopen(const char *name, bool global_flag)
+inline ivl_dll_t ivl_dlopen(const char *name, bool)
 {
       static char full_name[4096];
       unsigned long length = GetFullPathName(name, sizeof(full_name),
