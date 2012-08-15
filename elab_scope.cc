@@ -1097,6 +1097,15 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 	// module have been done.
       collect_scope_localparams_(des, scope, localparams);
 
+	// Run through the defparams for this scope and save the result
+	// in a table for later final override.
+
+      typedef list<PGenerate::named_expr_t>::const_iterator defparms_iter_t;
+      for (defparms_iter_t cur = defparms.begin()
+		 ; cur != defparms.end() ; ++ cur ) {
+	    scope->defparams.push_back(make_pair(cur->first, cur->second));
+      }
+
 	// Scan the generated scope for nested generate schemes,
 	// and *generate* new scopes, which is slightly different
 	// from simple elaboration.

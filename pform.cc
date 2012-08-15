@@ -2586,7 +2586,10 @@ void pform_set_specparam(const struct vlltype&loc, perm_string name,
 void pform_set_defparam(const pform_name_t&name, PExpr*expr)
 {
       assert(expr);
-      pform_cur_module.front()->defparms.push_back(make_pair(name,expr));
+      if (pform_cur_generate)
+            pform_cur_generate->defparms.push_back(make_pair(name,expr));
+      else
+            pform_cur_module.front()->defparms.push_back(make_pair(name,expr));
 }
 
 /*

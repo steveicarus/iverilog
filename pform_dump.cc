@@ -1052,6 +1052,16 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 
       dump_localparams_(out, indent+2);
 
+      typedef list<PGenerate::named_expr_t>::const_iterator parm_hiter_t;
+      for (parm_hiter_t cur = defparms.begin()
+		 ; cur != defparms.end() ;  ++ cur ) {
+	    out << setw(indent+2) << "" << "defparam " << (*cur).first << " = ";
+	    if ((*cur).second)
+		  out << *(*cur).second << ";" << endl;
+	    else
+		  out << "/* ERROR */;" << endl;
+      }
+
       dump_events_(out, indent+2);
 
       dump_wires_(out, indent+2);
