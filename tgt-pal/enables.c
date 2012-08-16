@@ -16,15 +16,11 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: enables.c,v 1.6 2002/08/12 01:35:03 steve Exp $"
-#endif
 
 # include "config.h"
 # include  "ivl_target.h"
 # include  <assert.h>
 # include  "priv.h"
-
 
 /*
  * Given a pin index, look at the nexus for a bufif device that is
@@ -76,28 +72,3 @@ void absorb_pad_enables(void)
 	    absorb_pad_enable(idx);
       }
 }
-
-
-/*
- * $Log: enables.c,v $
- * Revision 1.6  2002/08/12 01:35:03  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.5  2002/08/11 23:47:04  steve
- *  Add missing Log and Ident strings.
- *
- * Revision 1.4  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.3  2001/02/07 22:22:00  steve
- *  ivl_target header search path fixes.
- *
- * Revision 1.2  2000/12/09 03:42:52  steve
- *  Stuff registers into macrocells.
- *
- * Revision 1.1  2000/12/09 01:17:38  steve
- *  Add the pal loadable target.
- *
- */
-

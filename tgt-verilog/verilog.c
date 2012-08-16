@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: verilog.c,v 1.29 2007/02/26 19:49:50 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -437,78 +434,3 @@ int target_design(ivl_design_t des)
 
       return 0;
 }
-
-
-
-/*
- * $Log: verilog.c,v $
- * Revision 1.29  2007/02/26 19:49:50  steve
- *  Spelling fixes (larry doolittle)
- *
- * Revision 1.28  2004/02/15 18:03:30  steve
- *  Cleanup of warnings.
- *
- * Revision 1.27  2002/08/12 01:35:03  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.26  2001/12/15 02:13:17  steve
- *  The IVL_SIT_WIRE type does not exist, it is a
- *  synonym for IVL_SIT_TRI.
- *
- * Revision 1.25  2001/09/30 16:45:10  steve
- *  Fix some Cygwin DLL handling. (Venkat Iyer)
- *
- * Revision 1.24  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.23  2001/05/22 02:14:47  steve
- *  Update the mingw build to not require cygwin files.
- *
- * Revision 1.22  2001/05/20 15:09:40  steve
- *  Mingw32 support (Venkat Iyer)
- *
- * Revision 1.21  2001/05/08 23:59:33  steve
- *  Add ivl and vvp.tgt support for memories in
- *  expressions and l-values. (Stephan Boettcher)
- *
- * Revision 1.20  2001/02/07 22:22:00  steve
- *  ivl_target header search path fixes.
- *
- * Revision 1.19  2001/01/15 00:05:39  steve
- *  Add client data pointer for scope and process scanners.
- *
- * Revision 1.18  2000/11/09 05:14:07  steve
- *  show concatenation operators.
- *
- * Revision 1.17  2000/11/07 06:14:06  steve
- *  Display l-values with width.
- *
- * Revision 1.16  2000/10/26 16:42:25  steve
- *  draw proper signal references for the gates.
- *
- * Revision 1.15  2000/10/26 00:32:28  steve
- *  emit declarations of signals and gates.
- *
- * Revision 1.14  2000/10/25 05:41:55  steve
- *  Scan the processes, and get the target signals
- *
- * Revision 1.13  2000/10/21 16:49:45  steve
- *  Reduce the target entry points to the target_design.
- *
- * Revision 1.12  2000/10/15 21:02:09  steve
- *  Makefile patches to support target loading under cygwin.
- *
- * Revision 1.11  2000/10/15 04:46:23  steve
- *  Scopes and processes are accessible randomly from
- *  the design, and signals and logic are accessible
- *  from scopes. Remove the target calls that are no
- *  longer needed.
- *
- *  Add the ivl_nexus_ptr_t and the means to get at
- *  them from nexus objects.
- *
- *  Give names to methods that manipulate the ivl_design_t
- *  type more consistent names.
- */
-

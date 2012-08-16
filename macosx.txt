@@ -37,13 +37,13 @@ quite similar.
   then just make sure the distributed lexor_keyword.cc is newer than
   lexor_keyword.gperf, and use that.
 
-3) If working with a CVS snapshot, you must run autoconf in several
-   directories.  This is aided by the 'autoconf.sh' script at the
+3) If working with source from git, you must run autoconf in the top
+   directory.  This is simplified by the 'autoconf.sh' script at the
    top of the source tree:
 
    sh ./autoconf.sh
 
-   This will also run the gperf command, so make sure you'd completed
+   This will also run the gperf command, so make sure you've completed
    step #2 first.
 
 4)  Configure, build and install the Icarus Verilog sources as normal.

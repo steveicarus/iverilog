@@ -36,7 +36,7 @@ then
 	echo ""
         echo "*** Warning: No suitable gperf found. ***"
 	echo "    The gperf package is essential for building ivl from"
-	echo "    CVS sources, or modifying the parse engine of ivl itself."
+	echo "    git sources, or modifying the parse engine of ivl itself."
 	echo "    You can get away without it when simply building from"
 	echo "    snapshots or major releases."
 	echo ""

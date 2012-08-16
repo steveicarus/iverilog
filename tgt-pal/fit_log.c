@@ -36,7 +36,6 @@
  * objects. An expression is a null terminated array of terms.
  */
 
-
 static void dump_expr(term_t**expr, const char*title)
 {
       unsigned idx;

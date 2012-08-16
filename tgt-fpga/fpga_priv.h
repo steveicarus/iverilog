@@ -47,5 +47,4 @@ extern void xnf_mangle_lpm_name(ivl_lpm_t net, char*buf, size_t nbuf);
 
 extern const char*xnf_mangle_nexus_name(ivl_nexus_t net);
 
-
 #endif

@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: hello_vpi.c,v 1.5 2007/01/17 05:35:48 steve Exp $"
-#endif
 
 /*
  * This file contains an example VPI module to demonstrate the tools
@@ -60,22 +57,3 @@ void (*vlog_startup_routines[])() = {
       my_hello_register,
       0
 };
-/*
- * $Log: hello_vpi.c,v $
- * Revision 1.5  2007/01/17 05:35:48  steve
- *  Fix typo is hello_vpi.c example.
- *
- * Revision 1.4  2006/10/30 22:46:25  steve
- *  Updates for Cygwin portability (pr1585922)
- *
- * Revision 1.3  2002/08/12 01:35:01  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.2  2002/08/11 23:47:04  steve
- *  Add missing Log and Ident strings.
- *
- * Revision 1.1  2002/04/18 03:25:16  steve
- *  More examples.
- *
- */
-
