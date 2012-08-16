@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Tony Bybell.
+ * Copyright (c) 2003-2012 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -60,6 +60,7 @@ extern "C" {
 #define LXT2_WR_SYMPRIME 500009
 
 typedef uint64_t lxttime_t;
+typedef  int64_t lxtstime_t;
 
 
 #ifndef _MSC_VER
@@ -170,6 +171,7 @@ int numsections, numblock;
 off_t facname_offset, facgeometry_offset;
 
 lxttime_t mintime, maxtime;
+lxtstime_t timezero;
 unsigned int timegranule;
 int timescale;
 int timepos;
@@ -291,6 +293,7 @@ void 			lxt2_wr_set_maxgranule(struct lxt2_wr_trace *lt, unsigned int maxgranule
 
 			/* time ops */
 void 			lxt2_wr_set_timescale(struct lxt2_wr_trace *lt, int timescale);
+void 			lxt2_wr_set_timezero(struct lxt2_wr_trace *lt, lxtstime_t timeval);
 int 			lxt2_wr_set_time(struct lxt2_wr_trace *lt, unsigned int timeval);
 int 			lxt2_wr_inc_time_by_delta(struct lxt2_wr_trace *lt, unsigned int timeval);
 int 			lxt2_wr_set_time64(struct lxt2_wr_trace *lt, lxttime_t timeval);

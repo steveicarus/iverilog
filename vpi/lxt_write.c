@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-9 Tony Bybell.
+ * Copyright (c) 2001-2012 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1208,6 +1208,12 @@ if(lt)
 		lt->dumpoffcount = 0;
 		}
 
+	if(lt->timezero)
+		{
+		lt->timezero_offset = lt->position;
+		lt_emit_u64(lt, (int)((lt->timezero)>>32), (int)lt->timezero);
+		}
+
 	/* prefix */
 	lt_emit_u8(lt, LT_SECTION_END);
 
@@ -1236,6 +1242,9 @@ if(lt)
 
 	/* Version 5 adds */
 	if(lt->exclude_offset) { lt_emit_u32(lt, lt->exclude_offset); lt_emit_u8(lt, LT_SECTION_EXCLUDE_TABLE); lt->exclude_offset = 0; }
+
+	/* Version 6 adds */
+	if(lt->timezero_offset) { lt_emit_u32(lt, lt->timezero_offset); lt_emit_u8(lt, LT_SECTION_TIMEZERO); lt->timezero_offset = 0; }
 
 	/* suffix */
 	lt_emit_u8(lt, LT_TRLID);
@@ -2805,6 +2814,14 @@ if((lt)&&(lt->dumpoff_active))
 	lt->dumpoffcurr = ltt;
 
 	lt->dumpoff_active = 0;
+	}
+}
+
+void lt_set_timezero(struct lt_trace *lt, lxtotime_t timeval)
+{
+if(lt)
+	{
+	lt->timezero = timeval;
 	}
 }
 

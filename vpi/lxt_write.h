@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-3 Tony Bybell.
+ * Copyright (c) 2001-2012 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -72,9 +72,11 @@ enum 	lt_zmode_types 	{ LT_ZMODE_NONE, LT_ZMODE_GZIP, LT_ZMODE_BZIP2 };
 #ifndef _MSC_VER
 typedef uint64_t                lxttime_t;
 #define ULLDescriptor(x) x##ULL
+typedef int64_t                 lxtotime_t;
 #else
 typedef unsigned __int64        lxttime_t;
 #define ULLDescriptor(x) x##i64
+typedef          __int64        lxtotime_t;
 #endif
 
 
@@ -108,6 +110,7 @@ unsigned int position;
 #define LT_SECTION_ZDICTIONARY			(17)
 #define LT_SECTION_ZDICTIONARY_SIZE		(18)
 #define LT_SECTION_EXCLUDE_TABLE		(19)
+#define LT_SECTION_TIMEZERO			(20)
 
 struct lt_trace
 {
@@ -164,11 +167,13 @@ unsigned int timescale_offset;
 unsigned int double_test_offset;
 unsigned int dictionary_offset;
 unsigned int exclude_offset;
+unsigned int timezero_offset;
 
 char *compress_fac_str;
 int compress_fac_len;
 
 lxttime_t timeval; 			/* for clock induction, current time */
+lxtotime_t timezero;			/* for allowing negative values */
 
 unsigned dumpoff_active : 1;		/* when set we're not dumping */
 unsigned double_used : 1;
@@ -234,6 +239,7 @@ void 			lt_set_clock_compress(struct lt_trace *lt);
 void			lt_set_dict_compress(struct lt_trace *lt, unsigned int minwidth);
 void 			lt_set_initial_value(struct lt_trace *lt, char value);
 void 			lt_set_timescale(struct lt_trace *lt, int timescale);
+void			lt_set_timezero(struct lt_trace *lt, lxtotime_t timeval);
 
 int 			lt_set_time(struct lt_trace *lt, unsigned int timeval);
 int 			lt_inc_time_by_delta(struct lt_trace *lt, unsigned int timeval);
