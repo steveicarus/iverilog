@@ -92,8 +92,8 @@ fi
 AC_LANG(C++)
 
 AC_ARG_WITH([m32], [AC_HELP_STRING([--with-m32], [Compile 32-bit on x86_64])],
-            [ with_m32=yes ],[ with_m32=no ])        
-             
+            [ with_m32=yes ],[ with_m32=no ])
+
 AS_IF( [test "x$with_m32" = xyes],
     [ AC_MSG_NOTICE([Compiling for 32-bit environment - needs gcc on x86_64])
       LDTARGETFLAGS="-m elf_i386"
@@ -324,12 +324,5 @@ then
 AC_MSG_ERROR(cannot configure white space in libdir: $libdir)
 fi
 AC_MSG_RESULT(ok)
-
-# XXX disable tgt-fpga for the moment
-
-#
-# Ensure compiler target options go in...
-
-
 
 AC_OUTPUT(Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile tgt-pcb/Makefile)

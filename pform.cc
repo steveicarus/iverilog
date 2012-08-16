@@ -473,7 +473,7 @@ data_type_t* pform_test_type_identifier(const char*txt)
 	    cur = cur_scope->typedefs.find(name);
 	    if (cur != cur_scope->typedefs.end())
 		  return cur->second;
- 
+
 	    cur_scope = cur_scope->parent_scope();
       } while (cur_scope);
       return 0;

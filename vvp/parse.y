@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -68,7 +68,7 @@ static struct __vpiModPath*modpath_dst = 0;
       vpiHandle vpi;
 
       vvp_delay_t*cdelay;
-      
+
       int      vpi_enum;
 };
 
@@ -633,7 +633,6 @@ statement
 	  T_NUMBER T_NUMBER T_NUMBER ',' T_SYMBOL ';'
 		{ compile_scope_decl($1, $3, $5, $6, $14, $7, $8, $10, $11, $12); }
 
-    
   /* Legacy declaration that does not have `celldefine information. */
 
 	| T_LABEL K_SCOPE T_SYMBOL ',' T_STRING T_STRING T_NUMBER T_NUMBER ','
@@ -656,9 +655,10 @@ statement
 
 
   /* Port information for scopes... currently this is just meta-data for VPI queries */
-    | K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING
-        { compile_port_info( $2 /* port_index */, $3, $4 /* width */, $5 /*&name */ ); }
-        
+	| K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING
+		{ compile_port_info( $2 /* port_index */, $3, $4 /* width */,
+		                     $5 /*&name */ ); }
+
 	|         K_TIMESCALE T_NUMBER T_NUMBER';'
 		{ compile_timescale($2, $3); }
 	|         K_TIMESCALE '-' T_NUMBER T_NUMBER';'
@@ -1077,7 +1077,7 @@ port_type
         : K_PORT_INPUT { $$ = vpiInput; }
         | K_PORT_OUTPUT { $$ = vpiOutput; }
         | K_PORT_INOUT  { $$ = vpiInout; }
-        | K_PORT_MIXED  { $$ = vpiMixedIO; }     
+        | K_PORT_MIXED  { $$ = vpiMixedIO; }
         | K_PORT_NODIR  { $$ = vpiNoDirection; }
         ;
 

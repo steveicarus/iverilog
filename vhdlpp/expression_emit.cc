@@ -449,7 +449,7 @@ int ExpConditional::emit(ostream&out, Entity*ent, Architecture*arc)
 	// expressions to close.
       for (size_t idx = 1 ; idx < else_clause_.size() ; idx += 1)
 	    out << ")";
- 
+
       return errors;
 }
 

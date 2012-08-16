@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -270,7 +270,7 @@ static char* strdupnew(char const *str)
       yylval.text = strdup(yytext);
       assert(yylval.text);
       return T_SYMBOL; }
- 
+
  "/INPUT"  { return K_PORT_INPUT; }
  "/OUTPUT" { return K_PORT_OUTPUT; }
  "/INOUT"  { return K_PORT_INOUT; }
