@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2010 Tony Bybell.
+ * Copyright (c) 2009-2012 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -148,6 +148,7 @@ fstHandle fstWriterCreateVar(void *ctx, enum fstVarType vt, enum fstVarDir vd,
 
 void fstWriterSetPackType(void *ctx, int typ); 		/* type = 0 (libz), 1 (fastlz) */
 void fstWriterSetRepackOnClose(void *ctx, int enable); 	/* type = 0 (none), 1 (libz) */
+void fstWriterSetParallelMode(void *ctx, int enable);
 void fstWriterSetDumpSizeLimit(void *ctx, uint64_t numbytes);
 int fstWriterGetDumpSizeLimitReached(void *ctx);
 
@@ -157,6 +158,7 @@ void fstWriterSetDate(void *ctx, const char *dat);
 void fstWriterSetVersion(void *ctx, const char *vers);
 void fstWriterSetTimescale(void *ctx, int ts);
 void fstWriterSetTimescaleFromString(void *ctx, const char *s);
+void fstWriterSetTimezero(void *ctx, int64_t tim);
 void fstWriterSetScope(void *ctx, enum fstScopeType scopetype,
                 const char *scopename, const char *scopecomp);
 void fstWriterSetUpscope(void *ctx);
@@ -170,6 +172,7 @@ void fstWriterFlushContext(void *ctx);
  * reader functions
  */
 void *fstReaderOpen(const char *nam);
+void *fstReaderOpenForUtilitiesOnly(void);
 void fstReaderClose(void *ctx);
 
 int fstReaderProcessHier(void *ctx, FILE *vcdhandle);
@@ -184,6 +187,7 @@ void *fstReaderGetCurrentScopeUserInfo(void *ctx);
 int fstReaderGetCurrentScopeLen(void *ctx);
 
 signed char fstReaderGetTimescale(void *ctx);
+int64_t fstReaderGetTimezero(void *ctx);
 uint64_t fstReaderGetStartTime(void *ctx);
 uint64_t fstReaderGetEndTime(void *ctx);
 uint64_t fstReaderGetMemoryUsedByWriter(void *ctx);
