@@ -16,10 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_time.c,v 1.1 2003/03/13 04:35:09 steve Exp $"
-#endif
-
 
 #include  <vpi_user.h>
 #include  <acc_user.h>
@@ -30,11 +26,3 @@ void acc_fetch_timescale_info(handle obj, p_timescale_info info)
       info->precision = vpi_get(vpiTimePrecision, 0);
       info->unit = vpi_get(vpiTimeUnit, obj);
 }
-
-/*
- * $Log: a_fetch_time.c,v $
- * Revision 1.1  2003/03/13 04:35:09  steve
- *  Add a bunch of new acc_ and tf_ functions.
- *
- */
-

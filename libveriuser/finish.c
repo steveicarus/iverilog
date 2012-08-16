@@ -16,13 +16,9 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: finish.c,v 1.2 2002/08/12 01:35:02 steve Exp $"
-#endif
 
 # include  <vpi_user.h>
 # include  <veriuser.h>
-
 
 /*
  * Implement tf_dofinish and tf_dostop using vpi functions.
@@ -38,14 +34,3 @@ int tf_dostop(void)
       vpi_control(vpiStop, 0);
       return 0;
 }
-
-/*
- * $Log: finish.c,v $
- * Revision 1.2  2002/08/12 01:35:02  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.1  2002/05/19 05:21:00  steve
- *  Start the libveriuser library.
- *
- */
-

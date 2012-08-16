@@ -21,7 +21,6 @@
 #include  <vpi_user.h>
 #include  <acc_user.h>
 
-
 const char* acc_fetch_type_str(PLI_INT32 type)
 {
       switch (type) {

@@ -16,9 +16,6 @@
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: exprinfo.c,v 1.1 2003/10/10 02:57:46 steve Exp $"
-#endif
 
 # include  <assert.h>
 # include  <ctype.h>
@@ -41,13 +38,3 @@ struct t_tfexprinfo* tf_exprinfo(PLI_INT32 a, struct t_tfexprinfo*ip)
       }
       return 0;
 }
-
-
-
-/*
- * $Log: exprinfo.c,v $
- * Revision 1.1  2003/10/10 02:57:46  steve
- *  Some PLI1 stubs.
- *
- */
-
