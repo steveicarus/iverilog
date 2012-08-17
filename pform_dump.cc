@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1017,6 +1017,16 @@ void PGenerate::dump(ostream&out, unsigned indent) const
       out << endl;
 
       dump_localparams_(out, indent+2);
+
+      typedef list<PGenerate::named_expr_t>::const_iterator parm_hiter_t;
+      for (parm_hiter_t cur = defparms.begin()
+                ; cur != defparms.end() ;  ++ cur ) {
+           out << setw(indent+2) << "" << "defparam " << (*cur).first << " = ";
+           if ((*cur).second)
+                 out << *(*cur).second << ";" << endl;
+           else
+                 out << "/* ERROR */;" << endl;
+      }
 
       dump_events_(out, indent+2);
 

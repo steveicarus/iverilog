@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1024,6 +1024,29 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 	// Now scan the localparams again, this time elaborating them
 	// for use as parameter values.
       elaborate_scope_localparams_(des, scope, localparams);
+
+	// Run through the defparams for this module, elaborate the
+	// expressions in this context and save the result is a table
+	// for later final override.
+
+	// It is OK to elaborate the expressions of the defparam here
+	// because Verilog requires that the expressions only use
+	// local parameter names. It is *not* OK to do the override
+	// here because the parameter receiving the assignment may be
+	// in a scope not discovered by this pass.
+
+      typedef list<PGenerate::named_expr_t>::const_iterator defparms_iter_t;
+      for (defparms_iter_t cur = defparms.begin()
+		 ; cur != defparms.end() ;  cur ++) {
+
+	    PExpr*ex = cur->second;
+	    assert(ex);
+
+	    NetExpr*val = ex->elaborate_pexpr(des, scope);
+	    if (val == 0) continue;
+
+	    scope->defparams.push_back(make_pair(cur->first, val));
+      }
 
 	// Scan the generated scope for nested generate schemes,
 	// and *generate* new scopes, which is slightly different

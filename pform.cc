@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1967,7 +1967,10 @@ void pform_set_specparam(perm_string name, PExpr*expr)
 void pform_set_defparam(const pform_name_t&name, PExpr*expr)
 {
       assert(expr);
-      pform_cur_module->defparms.push_back(make_pair(name,expr));
+      if (pform_cur_generate)
+            pform_cur_generate->defparms.push_back(make_pair(name,expr));
+      else
+            pform_cur_module->defparms.push_back(make_pair(name,expr));
 }
 
 /*

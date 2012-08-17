@@ -1,7 +1,7 @@
 #ifndef __PGenerate_H
 #define __PGenerate_H
 /*
- * Copyright (c) 2006-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2009,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -79,6 +79,10 @@ class PGenerate : public LineInfo, public LexicalScope {
 	// enough for any on of the guards to match the case statement
 	// test value.
       std::valarray<PExpr*> item_test;
+
+       // defparam assignments found in this scope.
+      typedef pair<pform_name_t,PExpr*> named_expr_t;
+      list<named_expr_t>defparms;
 
       list<PGate*> gates;
       void add_gate(PGate*);
