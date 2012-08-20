@@ -664,7 +664,7 @@ class NetNet  : public NetObj, public PortType {
 
 	/* The vector_width returns the bit width of the packed array,
 	   vector or scaler that is this NetNet object.  */
-      unsigned long vector_width() const;
+      inline unsigned long vector_width() const { return slice_width(0); }
 
 	/* Given a prefix of indices, figure out how wide the
 	   resulting slice would be. This is a generalization of the
@@ -743,6 +743,14 @@ class NetNet  : public NetObj, public PortType {
 
       std::list<netrange_t> packed_dims_;
       std::vector<netrange_t> unpacked_dims_;
+
+	// These are the widths of the various slice depths. There is
+	// one entry in this vector for each packed dimension. The
+	// value at N is the slice width if N indices are provided.
+	//
+	// For example: slice_wids_[0] is vector_width().
+      void calculate_slice_widths_from_packed_dims_(void);
+      std::vector<unsigned long> slice_wids_;
 
       unsigned eref_count_;
       unsigned lref_count_;

@@ -259,7 +259,7 @@ extern "C" ivl_variable_type_t ivl_enum_type(ivl_enumtype_t net)
 extern "C" unsigned ivl_enum_width(ivl_enumtype_t net)
 {
       assert(net);
-      return net->base_width();
+      return net->packed_width();
 }
 
 extern "C" int ivl_enum_signed(ivl_enumtype_t net)

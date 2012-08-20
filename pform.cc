@@ -2872,7 +2872,7 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
 
       assert(enum_type->range.get() != 0);
       assert(enum_type->range->size() == 1);
-      cur->set_range(*enum_type->range, SR_NET);
+	//XXXXcur->set_range(*enum_type->range, SR_NET);
       cur->set_packed_type(enum_type);
       pform_bind_attributes(cur->attributes, attr, true);
 }

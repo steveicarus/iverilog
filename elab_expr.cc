@@ -1553,7 +1553,9 @@ bool calculate_part(const LineInfo*li, Design*des, NetScope*scope,
  */
 static NetExpr* check_for_struct_members(const LineInfo*li,
 					 Design*des, NetScope*scope,
-					 NetNet*net, const name_component_t&comp)
+					 NetNet*net,
+					 const list<index_component_t>&base_index,
+					 const name_component_t&comp)
 {
       unsigned long off;
       const netstruct_t::member_t*mem = get_struct_member(li, des, 0, net,
@@ -1563,12 +1565,14 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
       unsigned use_width = mem->width();
 
       if (debug_elaborate) {
-	    cerr << li->get_fileline() << ": check_for_struct_members: "
+	    cerr << li->get_fileline() << ": debug: check_for_struct_members: "
 		 << "Found struct member " << mem->name
 		 << " At offset " << off
 		 << ", member width = " << use_width << endl;
       }
 
+	// The struct member may be a packed array. Process index
+	// expression that address the member element.
       if ( ! comp.index.empty() ) {
 	      // Evaluate all but the last index expression, into prefix_indices.
 	    list<long>prefix_indices;
@@ -1597,7 +1601,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 	    prefix_to_slice(mem->packed_dims, prefix_indices, poff, loff, lwid);
 
 	    if (debug_elaborate) {
-		  cerr << li->get_fileline() << ": check_for_struct_members: "
+		  cerr << li->get_fileline() << ": debug: check_for_struct_members: "
 		       << "Evaluate prefix gives slice loff=" << loff
 		       << ", lwid=" << lwid << ", part select pwid=" << pwid << endl;
 	    }
@@ -1609,8 +1613,44 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 		  use_width = lwid;
       }
 
+	// If the base symbol has dimensions, then this is a packed
+	// array of structures. Convert an array of indices to a
+	// single part select. For example, "net" is a packed array
+	// of struct, and "mem" is the struct member. In Verilog it
+	// looks something like "net[idx].mem". We've already
+	// converted "mem" to an offset into the packed struct, so now
+	// we just canonicalize "[idx]" and add the ".mem" offset to
+	// get a collapsed index.
+      NetExpr*packed_base = 0;
+      if(net->packed_dimensions() > 1) {
+	    list<index_component_t>tmp_index = base_index;
+	    index_component_t member_select;
+	    member_select.sel = index_component_t::SEL_BIT;
+	    member_select.msb = new PENumber(new verinum(off));
+	    tmp_index.push_back(member_select);
+	    packed_base = collapse_array_exprs(des, scope, li, net, tmp_index);
+	    ivl_assert(*li, packed_base);
+	    if (debug_elaborate) {
+		  cerr << li->get_fileline() << ": debug: check_for_struct_members: "
+		       << "Got collapsed array expr: " << *packed_base << endl;
+	    }
+      }
+
+      long tmp;
+      if (packed_base && eval_as_long(tmp, packed_base)) {
+	    off = tmp;
+	    delete packed_base;
+	    packed_base = 0;
+      }
+
       NetESignal*sig = new NetESignal(net);
-      NetEConst*base = make_const_val(off);
+      NetExpr  *base = packed_base? packed_base : make_const_val(off);
+
+      if (debug_elaborate) {
+	    cerr << li->get_fileline() << ": debug: check_for_struct_members: "
+		 << "Convert packed indices/member select into part select: " << *base << endl;
+      }
+
       NetESelect*sel = new NetESelect(sig, base, use_width);
       return sel;
 }
@@ -2352,7 +2392,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    ivl_assert(*this, use_enum != 0);
 
 	    expr_type_   = use_enum->base_type();
-	    expr_width_  = use_enum->base_width();
+	    expr_width_  = use_enum->packed_width();
 	    min_width_   = expr_width_;
 	    signed_flag_ = par_enum->has_sign();
 
@@ -2400,9 +2440,17 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	      // Check to see if we have a net and if so is it a structure?
 	    if (net != 0) {
 		    // If this net is a struct, the method name may be
-		    // a struct member.
+		    // a struct member. If it is, then we know the
+		    // width of this identifier my knowing the width
+		    // of the member. We don't even need to know
+		    // anything about positions in containing arrays.
 		  if (net->struct_type() != 0) {
-			ivl_assert(*this, use_path.back().index.empty());
+
+			if (debug_elaborate) {
+			      cerr << get_fileline() << ": debug: PEIdent::test_width: "
+				   << "Net " << use_path << " is a struct, "
+				   << "checking width of member " << method_name << endl;
+			}
 
 			const netstruct_t::member_t*mem;
 			unsigned long unused;
@@ -2603,10 +2651,19 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		    // If this net is a struct, the method name may be
 		    // a struct member.
 		  if (net->struct_type() != 0) {
-			ivl_assert(*this, use_path.back().index.empty());
+			if (debug_elaborate) {
+			      cerr << get_fileline() << ": debug: "
+				   << "PEIdent::elaborate_expr: "
+				   << "Ident " << use_path
+				   << " is a struct."
+				   << " Expecting " << net->packed_dims().size()
+				   << "-1 dimensions, "
+				   << "got " << use_path.back().index.size() << "." << endl;
+			}
 
 			return check_for_struct_members(this, des, scope,
-							net, member_comp);
+							net, use_path.back().index,
+							member_comp);
 		  }
 
 	    }

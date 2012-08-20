@@ -713,20 +713,9 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
       ++ name_idx;
       const name_component_t&name_base = *name_idx;
 
-	// The dimenions in the expression must match the packed
-	// dimensions that are declared for the variable. For example,
-	// if foo is a packed array of struct, then this expression
-	// must be "b[n][m]" with the right number of dimensions to
-	// match the declaration of "b".
-      ivl_assert(*this, name_base.index.size() == reg->packed_dimensions());
-
-	// Generate an expression that takes the input array of
-	// expressions and generates a canonical offset into the
-	// packed array.
-      NetExpr*packed_base = 0;
-      if (reg->packed_dimensions() > 0)
-	    packed_base = collapse_array_indices(des, scope, reg, name_base.index);
-
+	// Calculate the offset within the packed structure of the
+	// member, and any indices. We will add in the offset of the
+	// struct into the packed array later.
       unsigned long off;
       const netstruct_t::member_t* member = struct_type->packed_member(member_name, off);
 
@@ -781,9 +770,31 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 	    use_width = lwid;
       }
 
+	// The dimenions in the expression must match the packed
+	// dimensions that are declared for the variable. For example,
+	// if foo is a packed array of struct, then this expression
+	// must be "b[n][m]" with the right number of dimensions to
+	// match the declaration of "b".
+	// Note that one of the packed dimensions is the packed struct
+	// itself.
+      ivl_assert(*this, name_base.index.size()+1 == reg->packed_dimensions());
+
+	// Generate an expression that takes the input array of
+	// expressions and generates a canonical offset into the
+	// packed array.
+      NetExpr*packed_base = 0;
+      if (reg->packed_dimensions() > 1) {
+	    list<index_component_t>tmp_index = name_base.index;
+	    index_component_t member_select;
+	    member_select.sel = index_component_t::SEL_BIT;
+	    member_select.msb = new PENumber(new verinum(off));
+	    tmp_index.push_back(member_select);
+	    packed_base = collapse_array_indices(des, scope, reg, tmp_index);
+      }
+
       long tmp;
-      if (eval_as_long(tmp, packed_base)) {
-	    off += tmp * struct_type->packed_width();
+      if (packed_base && eval_as_long(tmp, packed_base)) {
+	    off = tmp;
 	    delete packed_base;
 	    packed_base = 0;
       }
@@ -793,6 +804,10 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 	    return true;
       }
 
+	// Oops, packed_base is not fully evaluated, so I don't know
+	// yet what to do with it.
+      cerr << get_fileline() << ": internal error: "
+	   << "I don't know how to handle this index expression? " << *packed_base << endl;
       ivl_assert(*this, 0);
       return false;
 }

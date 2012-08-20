@@ -1213,7 +1213,9 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype
 		       << " enumeration "
-		       << name_ << " in scope " << scope_path(scope) << endl;
+		       << name_ << " in scope " << scope_path(scope)
+		       << " with packed_dimensions=" << packed_dimensions
+		       << " and packed_width=" << use_enum->packed_width() << endl;
 	    }
 
 	    sig = new NetNet(scope, name_, wtype, packed_dimensions, unpacked_dimensions, use_enum);

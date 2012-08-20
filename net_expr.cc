@@ -334,7 +334,7 @@ NetESFunc::NetESFunc(const char*n, netenum_t*enum_type, unsigned np)
 : name_(0), type_(enum_type->base_type()), enum_type_(enum_type), parms_(np)
 {
       name_ = lex_strings.add(n);
-      expr_width(enum_type->base_width());
+      expr_width(enum_type->packed_width());
 }
 
 NetESFunc::~NetESFunc()

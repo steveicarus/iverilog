@@ -32,6 +32,14 @@ netenum_t::~netenum_t()
 {
 }
 
+long netenum_t::packed_width() const
+{
+      if (msb_ >= lsb_)
+	    return msb_ - lsb_ + 1;
+      else
+	    return lsb_ - msb_ + 1;
+}
+
 bool netenum_t::insert_name(size_t name_idx, perm_string name, const verinum&val)
 {
       std::pair<std::map<perm_string,verinum>::iterator, bool> res;

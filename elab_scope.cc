@@ -181,12 +181,12 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       verinum max_value (0);
       if (enum_type->signed_flag) {
 	    min_value = v_not((pow(verinum(2),
-	                           verinum(use_enum->base_width()-1)))) +
+	                           verinum(use_enum->packed_width()-1)))) +
 	                one_value;
-	    max_value = pow(verinum(2), verinum(use_enum->base_width()-1)) -
+	    max_value = pow(verinum(2), verinum(use_enum->packed_width()-1)) -
 	                one_value;
       } else {
-	    max_value = pow(verinum(2), verinum(use_enum->base_width())) -
+	    max_value = pow(verinum(2), verinum(use_enum->packed_width())) -
 	                one_value;
       }
       min_value.has_sign(true);
@@ -249,15 +249,15 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	      // The values are explicitly sized to the width of the
 	      // base type of the enumeration.
 	    verinum tmp_val (0);
-	    if (cur_value.len() < use_enum->base_width()) {
+	    if (cur_value.len() < use_enum->packed_width()) {
 		    // Pad the current value if it is narrower than the final
 		    // width of the enum.
-		  tmp_val = pad_to_width (cur_value, use_enum->base_width());
+		  tmp_val = pad_to_width (cur_value, use_enum->packed_width());
 		  tmp_val.has_len(true);
 	    } else {
 		    // Truncate an oversized value. We report out of bound
 		    // values above. This may create duplicates.
-		  tmp_val = verinum(cur_value, use_enum->base_width());
+		  tmp_val = verinum(cur_value, use_enum->packed_width());
 	    }
 	    tmp_val.has_sign(enum_type->signed_flag);
 
