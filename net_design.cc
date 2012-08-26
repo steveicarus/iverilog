@@ -164,6 +164,26 @@ NetScope* Design::find_scope(const std::list<hname_t>&path) const
 }
 
 /*
+ * This method locates a scope in the design, given its rooted
+ * hierarchical name. Each component of the key is used to scan one
+ * more step down the tree until the name runs out or the search
+ * fails.
+ */
+NetScope* Design::find_scope(const hname_t&path) const
+{
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin()
+		 ; scope != root_scopes_.end(); ++ scope ) {
+
+	    NetScope*cur = *scope;
+	    if (path.peek_name() == cur->basename())
+		  return cur;
+
+      }
+
+      return 0;
+}
+
+/*
  * This is a relative lookup of a scope by name. The starting point is
  * the scope parameter within which I start looking for the scope. If
  * I do not find the scope within the passed scope, start looking in
@@ -204,6 +224,43 @@ NetScope* Design::find_scope(NetScope*scope, const std::list<hname_t>&path,
 
 	// Last chance. Look for the name starting at the root.
       return find_scope(path);
+}
+
+/*
+ * This is a relative lookup of a scope by name. The starting point is
+ * the scope parameter within which I start looking for the scope. If
+ * I do not find the scope within the passed scope, start looking in
+ * parent scopes until I find it, or I run out of parent scopes.
+ */
+NetScope* Design::find_scope(NetScope*scope, const hname_t&path,
+                             NetScope::TYPE type) const
+{
+      assert(scope);
+
+      for ( ; scope ;  scope = scope->parent()) {
+
+	    NetScope*cur = scope;
+
+	      /* If we are looking for a module or we are not
+	       * looking at the last path component check for
+	       * a name match (second line). */
+	    if (cur->type() == NetScope::MODULE
+		&& (type == NetScope::MODULE)
+		&& cur->module_name()==path.peek_name()) {
+
+		    /* Up references may match module name */
+
+	    } else {
+		  cur = cur->child( path );
+	    }
+
+	    if (cur) return cur;
+      }
+
+	// Last chance. Look for the name starting at the root.
+      list<hname_t>path_list;
+      path_list.push_back(path);
+      return find_scope(path_list);
 }
 
 /*

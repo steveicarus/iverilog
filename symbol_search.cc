@@ -123,11 +123,9 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 	    if (recurse_flag) {
 		  bool flag = false;
 		  hname_t path_item = eval_path_component(des, start_scope, path_tail, flag);
-		  list<hname_t>path_list;
-		  path_list.push_back(path_item);
 		  if (flag) {
 			cerr << li->get_fileline() << ": XXXXX: Errors evaluating scope index" << endl;
-		  } else if (NetScope*chld = des->find_scope(scope, path_list)) {
+		  } else if (NetScope*chld = des->find_scope(scope, path_item)) {
 			res->scope = chld;
 			return true;
 		  }
@@ -148,9 +146,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 	// scope. This is only possible if there is no prefix.
       if (prefix_scope==false) {
 	    hname_t path_item (path_tail.name);
-	    list<hname_t>path_list;
-	    path_list.push_back(path_item);
-	    scope = des->find_scope(path_list);
+	    scope = des->find_scope(path_item);
 	    if (scope) {
 		  res->scope = scope;
 		  return true;

@@ -4175,6 +4175,12 @@ class Design {
 	   path is taken as an absolute scope name. Otherwise, the
 	   scope is located starting at the passed scope and working
 	   up if needed. */
+      NetScope* find_scope(const hname_t&path) const;
+      NetScope* find_scope(NetScope*, const hname_t&name,
+                           NetScope::TYPE type = NetScope::MODULE) const;
+	// Note: Try to remove these versions of find_scope. Avoid
+	// using these in new code, use the above forms (or
+	// symbol_search) instead.
       NetScope* find_scope(const std::list<hname_t>&path) const;
       NetScope* find_scope(NetScope*, const std::list<hname_t>&path,
                            NetScope::TYPE type = NetScope::MODULE) const;
