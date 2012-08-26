@@ -2303,7 +2303,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
       const NetExpr*ex1, *ex2;
 
-      NetScope*found_in = symbol_search(0, des, scope, path_, net, par, eve,
+      NetScope*found_in = symbol_search(this, des, scope, path_, net, par, eve,
                                         ex1, ex2);
 
 	// If there is a part/bit select expression, then process it

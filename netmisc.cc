@@ -853,9 +853,9 @@ bool eval_as_double(double&value, NetExpr*expr)
  * returns the path component name. It will evaluate the index
  * expression if it is present.
  */
-static hname_t eval_path_component(Design*des, NetScope*scope,
-				   const name_component_t&comp,
-				   bool&error_flag)
+hname_t eval_path_component(Design*des, NetScope*scope,
+			    const name_component_t&comp,
+			    bool&error_flag)
 {
 	// No index expression, so the path component is an undecorated
 	// name, for example "foo".

@@ -363,7 +363,7 @@ bool PEIdent::has_aa_term(Design*des, NetScope*scope) const
 
       const NetExpr*ex1, *ex2;
 
-      scope = symbol_search(0, des, scope, path_, net, par, eve, ex1, ex2);
+      scope = symbol_search(this, des, scope, path_, net, par, eve, ex1, ex2);
 
       if (scope)
             return scope->is_auto();

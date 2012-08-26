@@ -261,6 +261,9 @@ bool eval_as_double(double&value, NetExpr*expr);
  */
 extern std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 					  const pform_name_t&path);
+extern hname_t eval_path_component(Design*des, NetScope*scope,
+				   const name_component_t&comp,
+				   bool&error_flag);
 
 /*
  * Return true if the data type is a type that is normally available
