@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -274,6 +274,7 @@ NetEBMult* NetEBMult::dup_expr() const
 {
       NetEBMult*result = new NetEBMult(op_, left_->dup_expr(),
 				       right_->dup_expr());
+      result->expr_width(expr_width());
       return result;
 }
 
