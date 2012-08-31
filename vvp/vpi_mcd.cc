@@ -182,7 +182,6 @@ vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
       int rc = 0;
       bool need_free = false;
       va_list saved_ap;
-      va_copy(saved_ap, ap);
 
       if (!IS_MCD(mcd)) return 0;
 
@@ -191,15 +190,33 @@ vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
 		    (unsigned int)mcd, fmt);
       }
 
+      va_copy(saved_ap, ap);
 #ifdef __MINGW32__
 	/*
 	 * The MinGW runtime (version 3.14) fixes some things, but breaks
 	 * %f for us, so we have to us the underlying version.
 	 */
       rc = _vsnprintf(buffer, sizeof buffer, fmt, ap);
+	/*
+	 * Windows returns -1 to indicate the result was truncated (thanks for
+	 * following the standard!). Since we don't know how big to make the
+	 * buffer just keep doubling it until it works.
+	 */
+      if (rc == -1) {
+	    size_t buf_size = sizeof buffer;
+	    buf_ptr = NULL;
+	    need_free = true;
+	    while (rc == -1) {
+		  va_list tmp_ap;
+		  va_copy(tmp_ap, saved_ap);
+		  buf_size *= 2;
+		  buf_ptr = (char *)realloc(buf_ptr, buf_size);
+		  rc = vsnprintf(buf_ptr, buf_size, fmt, tmp_ap);
+		  va_end(tmp_ap);
+	    }
+      }
 #else
       rc = vsnprintf(buffer, sizeof buffer, fmt, ap);
-#endif
       assert(rc >= 0);
 	/*
 	 * If rc is greater than sizeof buffer then the result was truncated
@@ -208,12 +225,9 @@ vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
       if ((unsigned) rc >= sizeof buffer) {
 	    buf_ptr = (char *)malloc(rc + 1);
 	    need_free = true;
-#ifdef __MINGW32__
-	    rc = _vsnprintf(buf_ptr, rc+1, fmt, saved_ap);
-#else
 	    rc = vsnprintf(buf_ptr, rc+1, fmt, saved_ap);
-#endif
       }
+#endif
       va_end(saved_ap);
 
       for(int i = 0; i < 31; i++) {
