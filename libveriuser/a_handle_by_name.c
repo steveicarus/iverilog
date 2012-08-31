@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2003-2012 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,12 +28,11 @@
  */
 handle acc_handle_by_name(const char*obj_name, handle scope)
 {
-      vpiHandle sys_h;
       vpiHandle res;
 
       /* if no scope provided, use tasks scope */
       if (!scope) {
-	    sys_h = vpi_handle(vpiSysTfCall, 0 /* NULL */);
+	    vpiHandle sys_h = vpi_handle(vpiSysTfCall, 0 /* NULL */);
 	    scope = vpi_handle(vpiScope, sys_h);
       }
 

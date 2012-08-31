@@ -252,7 +252,6 @@ static PLI_INT32 sys_fflush_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpiHandle arg;
       s_vpi_value val;
       PLI_UINT32 fd_mcd;
-      FILE *fp;
       errno = 0;
 
 	/* If we have no argument then flush all the streams. */
@@ -286,7 +285,7 @@ static PLI_INT32 sys_fflush_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_mcd_flush(fd_mcd);
       } else {
 	      /* If we have a valid file descriptor flush the file. */
-	    fp = vpi_get_file(fd_mcd);
+	    FILE *fp = vpi_get_file(fd_mcd);
 	    if (fp) fflush(fp);
       }
 

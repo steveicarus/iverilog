@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2011 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2012 Michael Ruff (mruff at chiaro.com)
  *                         Michael Runyan (mrunyan at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
@@ -184,7 +184,6 @@ static PLI_INT32 compiletf(char *data)
       p_tfcell tf;
       s_cb_data cb_data;
       vpiHandle call_h, arg_i, arg_h;
-      p_pli_data dp;
       int rtn = 0;
 
       /* cast back from opaque */
@@ -221,7 +220,7 @@ static PLI_INT32 compiletf(char *data)
 	    cb_data.reason = cbValueChange;
 	    while ((arg_h = vpi_scan(arg_i)) != NULL) {
 		  /* replicate user_data for each instance */
-		  dp = calloc(1, sizeof(s_pli_data));
+		  p_pli_data dp = calloc(1, sizeof(s_pli_data));
 		  memcpy(dp, cb_data.user_data, sizeof(s_pli_data));
 		  dp->paramvc = paramvc++;
 		  cb_data.user_data = (char *)dp;

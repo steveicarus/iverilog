@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2012 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,9 +25,11 @@
  */
 handle acc_handle_tfarg(int n)
 {
-      vpiHandle sys_h, sys_i, rtn_h = 0;
+      vpiHandle rtn_h = 0;
 
       if (n > 0) {
+	    vpiHandle sys_h, sys_i;
+
 	    sys_h = vpi_handle(vpiSysTfCall, 0 /* NULL */);
 	    sys_i = vpi_iterate(vpiArgument, sys_h);
 
