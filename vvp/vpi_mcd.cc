@@ -180,8 +180,8 @@ vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
       char *buf_ptr = buffer;
       int rc = 0;
       bool need_free = false;
-      va_list save_ap;
-      va_copy(save_ap, ap);
+      va_list saved_ap;
+      va_copy(saved_ap, ap);
 
       if (!IS_MCD(mcd)) return 0;
 
@@ -208,11 +208,12 @@ vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
 	    buf_ptr = (char *)malloc(rc + 1);
 	    need_free = true;
 #ifdef __MINGW32__
-	    rc = _vsnprintf(buf_ptr, rc+1, fmt, save_ap);
+	    rc = _vsnprintf(buf_ptr, rc+1, fmt, saved_ap);
 #else
-	    rc = vsnprintf(buf_ptr, rc+1, fmt, save_ap);
+	    rc = vsnprintf(buf_ptr, rc+1, fmt, saved_ap);
 #endif
       }
+      va_end(saved_ap);
 
       for(int i = 0; i < 31; i++) {
 	    if((mcd>>i) & 1) {
