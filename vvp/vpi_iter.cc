@@ -34,7 +34,7 @@ static int iterator_free_object(vpiHandle ref)
       if (hp->free_args_flag)
 	    free(hp->args);
 
-      free(hp);
+      delete hp;
       return 1;
 }
 
