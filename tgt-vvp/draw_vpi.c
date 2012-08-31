@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -332,11 +332,14 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		case IVL_EX_STRING:
 		  if (( par = ivl_expr_parameter(expr) )) {
 			snprintf(buffer, sizeof buffer, "P_%p", par);
+			args[idx].text = strdup(buffer);
 
 		  } else {
-			snprintf(buffer, sizeof buffer, "\"%s\"", ivl_expr_string(expr));
+			size_t needed_len = strlen(ivl_expr_string(expr)) + 3;
+			args[idx].text = malloc(needed_len);
+			snprintf(args[idx].text, needed_len, "\"%s\"",
+			         ivl_expr_string(expr));
 		  }
-		  args[idx].text = strdup(buffer);
 		  continue;
 
 		case IVL_EX_REALNUM:

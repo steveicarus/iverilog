@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen G. Tell <steve@telltronics.org>
+ * Copyright (c) 2000-2012 Stephen G. Tell <steve@telltronics.org>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -178,7 +178,9 @@ extern "C" PLI_INT32
 vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
 {
       char buffer[4096];
+      char *buf_ptr = buffer;
       int rc = 0;
+      bool need_free = false;
 
       if (!IS_MCD(mcd)) return 0;
 
@@ -196,19 +198,34 @@ vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
 #else
       rc = vsnprintf(buffer, sizeof buffer, fmt, ap);
 #endif
+      assert(rc >= 0);
+	/*
+	 * If rc is greater than sizeof buffer then the result was truncated
+	 * so the print needs to be redone with a larger buffer (very rare).
+	 */
+      if ((unsigned) rc >= sizeof buffer) {
+	    buf_ptr = (char *)malloc(rc + 1);
+	    need_free = true;
+#ifdef __MINGW32__
+	    rc = _vsnprintf(buf_ptr, rc+1, fmt, ap);
+#else
+	    rc = vsnprintf(buf_ptr, rc+1, fmt, ap);
+#endif
+      }
 
       for(int i = 0; i < 31; i++) {
 	    if((mcd>>i) & 1) {
 		  if(mcd_table[i].fp) {
 			  // echo to logfile
 			if (i == 0 && logfile)
-			      fputs(buffer, logfile);
-			fputs(buffer, mcd_table[i].fp);
+			      fputs(buf_ptr, logfile);
+			fputs(buf_ptr, mcd_table[i].fp);
 		  } else {
 			rc = EOF;
 		  }
 	    }
       }
+      if (need_free) free(buf_ptr);
 
       return rc;
 }
