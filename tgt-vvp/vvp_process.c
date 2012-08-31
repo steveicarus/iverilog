@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -345,7 +345,7 @@ void show_stmt_file_line(ivl_statement_t net, const char* desc)
 	       * should be reported/fixed. */
 	    unsigned lineno = ivl_stmt_lineno(net);
 	    assert(lineno);
-	    fprintf(vvp_out, "    %%file_line %d %d \"%s\";\n",
+	    fprintf(vvp_out, "    %%file_line %d %u \"%s\";\n",
 	            ivl_file_table_index(ivl_stmt_file(net)), lineno, desc);
       }
 }
@@ -410,11 +410,11 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
 	    assert(nevents == 0);
 	    int delay_index = allocate_word();
 	    draw_eval_expr_into_integer(del, delay_index);
-	    fprintf(vvp_out, "    %%assign/wr/d v%p_%lu, %d, %u;\n",
+	    fprintf(vvp_out, "    %%assign/wr/d v%p_%lu, %d, %d;\n",
 	            sig, use_word, delay_index, word);
 	    clr_word(delay_index);
       } else if (nevents) {
-	    fprintf(vvp_out, "    %%assign/wr/e v%p_%lu, %u;\n",
+	    fprintf(vvp_out, "    %%assign/wr/e v%p_%lu, %d;\n",
 	            sig, use_word, word);
       } else {
 	    unsigned long low_d = delay % UINT64_C(0x100000000);
@@ -428,11 +428,11 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
 		  int delay_index = allocate_word();
 		  fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
 		          delay_index, low_d, hig_d);
-		  fprintf(vvp_out, "    %%assign/wr/d v%p_%lu, %d, %u;\n",
+		  fprintf(vvp_out, "    %%assign/wr/d v%p_%lu, %d, %d;\n",
 		          sig, use_word, delay_index, word);
 		  clr_word(delay_index);
 	    } else {
-		  fprintf(vvp_out, "    %%assign/wr v%p_%lu, %lu, %u;\n",
+		  fprintf(vvp_out, "    %%assign/wr v%p_%lu, %lu, %d;\n",
 		          sig, use_word, low_d, word);
 	    }
       }
@@ -595,7 +595,7 @@ static int show_stmt_block(ivl_statement_t net, ivl_scope_t sscope)
 static int show_stmt_block_named(ivl_statement_t net, ivl_scope_t scope)
 {
       int rc;
-      int out_id, sub_id;
+      unsigned out_id, sub_id;
       ivl_scope_t subscope = ivl_stmt_block_scope(net);
 
       out_id = transient_id++;
@@ -665,7 +665,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 
 		  fprintf(vvp_out, "    %%cmpi/u %u, %lu, %u;\n",
 			  cond.base, imm, cond.wid);
-		  fprintf(vvp_out, "    %%jmp/1 T_%d.%d, 6;\n",
+		  fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 6;\n",
 			  thread_count, local_base+idx);
 
 		  continue;
@@ -681,21 +681,21 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 		case IVL_ST_CASE:
 		  fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n",
 			  cond.base, cvec.base, cond.wid);
-		  fprintf(vvp_out, "    %%jmp/1 T_%d.%d, 6;\n",
+		  fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 6;\n",
 			  thread_count, local_base+idx);
 		  break;
 
 		case IVL_ST_CASEX:
 		  fprintf(vvp_out, "    %%cmp/x %u, %u, %u;\n",
 			  cond.base, cvec.base, cond.wid);
-		  fprintf(vvp_out, "    %%jmp/1 T_%d.%d, 4;\n",
+		  fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n",
 			  thread_count, local_base+idx);
 		  break;
 
 		case IVL_ST_CASEZ:
 		  fprintf(vvp_out, "    %%cmp/z %u, %u, %u;\n",
 			  cond.base, cvec.base, cond.wid);
-		  fprintf(vvp_out, "    %%jmp/1 T_%d.%d, 4;\n",
+		  fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n",
 			  thread_count, local_base+idx);
 		  break;
 
@@ -717,7 +717,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
       }
 
 	/* Jump to the out of the case. */
-      fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count,
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count,
 	      local_base+count);
 
       for (idx = 0 ;  idx < count ;  idx += 1) {
@@ -726,18 +726,18 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 	    if (idx == default_case)
 		  continue;
 
-	    fprintf(vvp_out, "T_%d.%d ;\n", thread_count, local_base+idx);
+	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, local_base+idx);
 	    clear_expression_lookaside();
 	    rc += show_statement(cst, sscope);
 
-	    fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count,
+	    fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count,
 		    local_base+count);
 
       }
 
 
 	/* The out of the case. */
-      fprintf(vvp_out, "T_%d.%d ;\n",  thread_count, local_base+count);
+      fprintf(vvp_out, "T_%u.%u ;\n",  thread_count, local_base+count);
       clear_expression_lookaside();
 
       return rc;
@@ -775,7 +775,7 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 	    cvec = draw_eval_real(cex);
 
 	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", cond, cvec);
-	    fprintf(vvp_out, "    %%jmp/1 T_%d.%d, 4;\n",
+	    fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n",
 		    thread_count, local_base+idx);
 
 	      /* Done with the guard expression value. */
@@ -793,7 +793,7 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
       }
 
 	/* Jump to the out of the case. */
-      fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count,
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count,
 	      local_base+count);
 
       for (idx = 0 ;  idx < count ;  idx += 1) {
@@ -802,18 +802,16 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 	    if (idx == default_case)
 		  continue;
 
-	    fprintf(vvp_out, "T_%d.%d ;\n", thread_count, local_base+idx);
+	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, local_base+idx);
 	    clear_expression_lookaside();
 	    rc += show_statement(cst, sscope);
 
-	    fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count,
+	    fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count,
 		    local_base+count);
-
       }
 
-
 	/* The out of the case. */
-      fprintf(vvp_out, "T_%d.%d ;\n",  thread_count, local_base+count);
+      fprintf(vvp_out, "T_%u.%u ;\n",  thread_count, local_base+count);
 
       return rc;
 }
@@ -1149,7 +1147,7 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
       lab_false = local_count++;
       lab_out = local_count++;
 
-      fprintf(vvp_out, "    %%jmp/0xz  T_%d.%d, %u;\n",
+      fprintf(vvp_out, "    %%jmp/0xz  T_%u.%u, %u;\n",
 	      thread_count, lab_false, cond.base);
 
 	/* Done with the condition expression. */
@@ -1161,17 +1159,17 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
 
 
       if (ivl_stmt_cond_false(net)) {
-	    fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_out);
-	    fprintf(vvp_out, "T_%d.%u ;\n", thread_count, lab_false);
+	    fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_out);
+	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_false);
 	    clear_expression_lookaside();
 
 	    rc += show_statement(ivl_stmt_cond_false(net), sscope);
 
-	    fprintf(vvp_out, "T_%d.%u ;\n", thread_count, lab_out);
+	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
 	    clear_expression_lookaside();
 
       } else {
-	    fprintf(vvp_out, "T_%d.%u ;\n", thread_count, lab_false);
+	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_false);
 	    clear_expression_lookaside();
       }
 
@@ -1620,7 +1618,7 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 	/* Start the loop. The top of the loop starts a basic block
 	   because it can be entered from above or from the bottom of
 	   the loop. */
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, top_label);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, top_label);
       clear_expression_lookaside();
 
 	/* Draw the evaluation of the condition expression, and test
@@ -1630,7 +1628,7 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
       if (cvec.wid > 1)
 	    cvec = reduction_or(cvec);
 
-      fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, %u;\n",
+      fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, %u;\n",
 	      thread_count, out_label, cvec.base);
       if (cvec.base >= 8)
 	    clr_vector(cvec);
@@ -1640,8 +1638,8 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 
 	/* This is the bottom of the loop. branch to the top where the
 	   test is repeated, and also draw the out label. */
-      fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, top_label);
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, out_label);
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, top_label);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, out_label);
       clear_expression_lookaside();
       return rc;
 }
@@ -2166,7 +2164,7 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 	    break;
 
 	  default:
-	    fprintf(stderr, "vvp.tgt: Unable to draw statement type %u\n",
+	    fprintf(stderr, "vvp.tgt: Unable to draw statement type %d\n",
 		    code);
 	    rc += 1;
 	    break;
@@ -2211,7 +2209,7 @@ int draw_process(ivl_process_t net, void*x)
 
 	/* Generate the entry label. Just give the thread a number so
 	   that we ar certain the label is unique. */
-      fprintf(vvp_out, "T_%d ;\n", thread_count);
+      fprintf(vvp_out, "T_%u ;\n", thread_count);
       clear_expression_lookaside();
 
 	/* Draw the contents of the thread. */
@@ -2229,7 +2227,7 @@ int draw_process(ivl_process_t net, void*x)
 	    break;
 
 	  case IVL_PR_ALWAYS:
-	    fprintf(vvp_out, "    %%jmp T_%d;\n", thread_count);
+	    fprintf(vvp_out, "    %%jmp T_%u;\n", thread_count);
 	    break;
       }
 
@@ -2240,14 +2238,14 @@ int draw_process(ivl_process_t net, void*x)
 	  case IVL_PR_INITIAL:
 	  case IVL_PR_ALWAYS:
 	    if (push_flag) {
-		  fprintf(vvp_out, "    .thread T_%d, $push;\n", thread_count);
+		  fprintf(vvp_out, "    .thread T_%u, $push;\n", thread_count);
 	    } else {
-		  fprintf(vvp_out, "    .thread T_%d;\n", thread_count);
+		  fprintf(vvp_out, "    .thread T_%u;\n", thread_count);
 	    }
 	    break;
 
 	  case IVL_PR_FINAL:
-	    fprintf(vvp_out, "    .thread T_%d, $final;\n", thread_count);
+	    fprintf(vvp_out, "    .thread T_%u, $final;\n", thread_count);
 	    break;
       }
 

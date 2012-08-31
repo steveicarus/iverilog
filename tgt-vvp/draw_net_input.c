@@ -668,7 +668,7 @@ static void draw_net_input_x(ivl_nexus_t nex,
 	    resolv_type = "trior";
 	    break;
 	  default:
-	    fprintf(stderr, "vvp.tgt: Unsupported signal type: %u\n", res);
+	    fprintf(stderr, "vvp.tgt: Unsupported signal type: %d\n", res);
 	    assert(0);
 	    resolv_type = "tri";
 	    break;

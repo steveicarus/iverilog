@@ -101,46 +101,46 @@ static int draw_binary_real(ivl_expr_t expr)
 	    break;
 
 	  case 'm': { /* min(l,r) */
-		int lab_out = local_count++;
-		int lab_r = local_count++;
+		unsigned lab_out = local_count++;
+		unsigned lab_r = local_count++;
 		  /* If r is NaN, the go out and accept l as result. */
 		fprintf(vvp_out, "    %%cmp/wr %d, %d; Is NaN?\n", r, r);
-		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 4;\n", thread_count,
+		fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 4;\n", thread_count,
 		        lab_out);
 		  /* If l is NaN, the go out and accept r as result. */
 		fprintf(vvp_out, "    %%cmp/wr %d, %d; Is NaN?\n", l, l);
-		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 4;\n", thread_count,
+		fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 4;\n", thread_count,
 		        lab_r);
 		  /* If l <= r then go out. */
 		fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", r, l);
-		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 5;\n", thread_count,
+		fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 5;\n", thread_count,
 		        lab_out);
 		  /* At this point we know we want r as the result. */
-		fprintf(vvp_out, "T_%d.%d %%mov/wr %d, %d;\n", thread_count,
+		fprintf(vvp_out, "T_%u.%u %%mov/wr %d, %d;\n", thread_count,
 		        lab_r, l, r);
-		fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
+		fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
 		break;
 	  }
 
 	  case 'M': { /* max(l,r) */
-		int lab_out = local_count++;
-		int lab_r = local_count++;
+		unsigned lab_out = local_count++;
+		unsigned lab_r = local_count++;
 		  /* If r is NaN, the go out and accept l as result. */
 		fprintf(vvp_out, "    %%cmp/wr %d, %d; Is NaN?\n", r, r);
-		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 4;\n", thread_count,
+		fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 4;\n", thread_count,
 		        lab_out);
 		  /* If l is NaN, the go out and accept r as result. */
 		fprintf(vvp_out, "    %%cmp/wr %d, %d; Is NaN?\n", l, l);
-		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 4;\n", thread_count,
+		fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 4;\n", thread_count,
 		        lab_r);
 		  /* if l >= r then go out. */
 		fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", l, r);
-		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 5;\n", thread_count,
+		fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 5;\n", thread_count,
 		        lab_out);
 
-		fprintf(vvp_out, "T_%d.%d %%mov/wr %d, %d;\n", thread_count,
+		fprintf(vvp_out, "T_%u.%u %%mov/wr %d, %d;\n", thread_count,
 		        lab_r, l, r);
-		fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
+		fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
 		break;
 	  }
 
@@ -407,7 +407,7 @@ static int draw_ternary_real(ivl_expr_t expr)
       }
 
 	/* Evaluate the true expression second. */
-      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, %u;\n",
+      fprintf(vvp_out, "    %%jmp/1  T_%u.%u, %u;\n",
 	      thread_count, lab_true, tst.base);
 
 	/* Evaluate the false expression and copy it to the result word. */
@@ -415,28 +415,28 @@ static int draw_ternary_real(ivl_expr_t expr)
       res = allocate_word();
       fprintf(vvp_out, "    %%mov/wr %d, %d;\n", res, fal);
       clr_word(fal);
-      fprintf(vvp_out, "    %%jmp/0  T_%d.%d, %u; End of false expr.\n",
+      fprintf(vvp_out, "    %%jmp/0  T_%u.%u, %u; End of false expr.\n",
               thread_count, lab_out, tst.base);
 
 	/* Evaluate the true expression. */
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_true);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_true);
       tru = draw_eval_real(true_ex);
-      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, %u; End of true expr.\n",
+      fprintf(vvp_out, "    %%jmp/1  T_%u.%u, %u; End of true expr.\n",
               thread_count, lab_move, tst.base);
 
 	/* If the conditional is undefined then blend the real words. */
       fprintf(vvp_out, "    %%blend/wr %d, %d;\n", res, tru);
-      fprintf(vvp_out, "    %%jmp  T_%d.%d; End of blend\n",
+      fprintf(vvp_out, "    %%jmp  T_%u.%u; End of blend\n",
               thread_count, lab_out);
 
 	/* If we only need the true result then copy it to the result word. */
-      fprintf(vvp_out, "T_%d.%d ; Move true result.\n",
+      fprintf(vvp_out, "T_%u.%u ; Move true result.\n",
               thread_count, lab_move);
       fprintf(vvp_out, "    %%mov/wr %d, %d;\n", res, tru);
       clr_word(tru);
 
 	/* This is the out label. */
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
 
       clr_vector(tst);
 

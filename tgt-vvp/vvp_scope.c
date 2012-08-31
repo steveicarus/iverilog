@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -785,7 +785,7 @@ static void draw_udp_def(ivl_udp_t udp)
 
   if (ivl_udp_sequ(udp))
 	fprintf(vvp_out,
-		"UDP_%s .udp/sequ \"%s\", %d, %d",
+		"UDP_%s .udp/sequ \"%s\", %d, %u",
 		vvp_mangle_id(ivl_udp_name(udp)),
 		vvp_mangle_name(ivl_udp_name(udp)),
 		ivl_udp_nin(udp),
@@ -1061,7 +1061,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    unsigned inst;
 	    for (inst = 0; inst < (unsigned)ninp; inst += 4) {
 		  if (ninp > 4)
-			fprintf(vvp_out, "L_%p/%d/%d .functor %s %u",
+			fprintf(vvp_out, "L_%p/%d/%u .functor %s %u",
 				lptr, level, inst, lcasc, vector_width);
 		  else {
 			fprintf(vvp_out, "L_%p%s .functor %s %u",
@@ -1069,7 +1069,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 				ltype, vector_width);
 
 			if (str0 != IVL_DR_STRONG || str1 != IVL_DR_STRONG)
-			      fprintf(vvp_out, " [%u %u]", str0, str1);
+			      fprintf(vvp_out, " [%d %d]", str0, str1);
 
 		  }
 		  for (pdx = inst; pdx < (unsigned)ninp && pdx < inst+4 ; pdx += 1) {
@@ -2173,7 +2173,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
             unsigned width = ivl_scope_mod_module_port_width(net,idx);
             if( name == 0 )
                 name = "";
-            fprintf( vvp_out, "    .port_info %d %s %u \"%s\"\n",
+            fprintf( vvp_out, "    .port_info %u %s %u \"%s\"\n",
                     idx, vvp_port_info_type_str(ptype), width, name );
         }
       }

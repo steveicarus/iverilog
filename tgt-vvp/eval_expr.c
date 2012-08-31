@@ -288,7 +288,7 @@ void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix)
 
 	  case IVL_VT_REAL:
 	    word = draw_eval_real(expr);
-	    fprintf(vvp_out, "    %%cvt/sr %u, %u;\n", ix, word);
+	    fprintf(vvp_out, "    %%cvt/sr %u, %d;\n", ix, word);
 	    clr_word(word);
 	    break;
 
@@ -945,21 +945,21 @@ static struct vector_info draw_binary_expr_le_bool(ivl_expr_t expr,
 
       switch (ivl_expr_opcode(expr)) {
 	  case 'G':
-	    fprintf(vvp_out, "    %%cmp/w%c %u, %u;\n", s_flag, rw, lw);
+	    fprintf(vvp_out, "    %%cmp/w%c %d, %d;\n", s_flag, rw, lw);
 	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
 	    break;
 
 	  case 'L':
-	    fprintf(vvp_out, "    %%cmp/w%c %u, %u;\n", s_flag, lw, rw);
+	    fprintf(vvp_out, "    %%cmp/w%c %d, %d;\n", s_flag, lw, rw);
 	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
 	    break;
 
 	  case '<':
-	    fprintf(vvp_out, "    %%cmp/w%c %u, %u;\n", s_flag, lw, rw);
+	    fprintf(vvp_out, "    %%cmp/w%c %d, %d;\n", s_flag, lw, rw);
 	    break;
 
 	  case '>':
-	    fprintf(vvp_out, "    %%cmp/w%c %u, %u;\n", s_flag, rw, lw);
+	    fprintf(vvp_out, "    %%cmp/w%c %d, %d;\n", s_flag, rw, lw);
 	    break;
 
 	  default:
@@ -2438,14 +2438,14 @@ static struct vector_info draw_select_array(ivl_expr_t sube,
 	/* We can safely skip the bit index load below if the array word
 	 * index is undefined. We need to do this so that the bit index
 	 * load does not reset bit 4 to zero by loading a defined value. */
-      fprintf(vvp_out, "    %%jmp/1 T_%d.%d, 4;\n", thread_count, label);
+      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n", thread_count, label);
       if (ivl_expr_signed(bit_idx)) {
 	    fprintf(vvp_out, "    %%ix/get/s 0, %u, %u;\n", shiv.base,
 	                                                    shiv.wid);
       } else {
 	    fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", shiv.base, shiv.wid);
       }
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, label);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, label);
       if (shiv.base >= 8)
 	    clr_vector(shiv);
 
@@ -2531,7 +2531,7 @@ static struct vector_info draw_select_signal(ivl_expr_t expr,
       lab_end = local_count++;
 
 	/* If the index is 'bx then we just return 'bx. */
-      fprintf(vvp_out, "    %%jmp/1 T_%d.%d, 4;\n", thread_count, lab_x);
+      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n", thread_count, lab_x);
 
       use_wid = res.wid;
       if (use_wid > bit_wid)
@@ -2543,10 +2543,10 @@ static struct vector_info draw_select_signal(ivl_expr_t expr,
 	   $signed() this may be signed or unsigned (default). */
       pad_expr_in_place(expr, res, use_wid);
 
-      fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_end);
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_x);
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_end);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_x);
       fprintf(vvp_out, "    %%mov %u, 2, %u;\n", res.base, res.wid);
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_end);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_end);
 
       return res;
 }
@@ -2705,7 +2705,7 @@ static struct vector_info draw_select_unsized_literal(ivl_expr_t expr,
       clr_vector(shiv);
 
 	/* If we have an undefined index then just produce a 'bx result. */
-      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, 4;\n", thread_count, lab_x);
+      fprintf(vvp_out, "    %%jmp/1  T_%u.%u, 4;\n", thread_count, lab_x);
 
 	/* If the subv result is a magic constant, then make a copy in
 	   writable vector space and work from there instead. */
@@ -2737,14 +2737,14 @@ static struct vector_info draw_select_unsized_literal(ivl_expr_t expr,
       else
 	    fprintf(vvp_out, "    %%shiftr/i0 %u, %u;\n", subv.base, subv.wid);
 
-      fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_end);
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_end);
 
-      fprintf(vvp_out, "T_%d.%d ; Return 'bx value\n", thread_count, lab_x);
+      fprintf(vvp_out, "T_%u.%u ; Return 'bx value\n", thread_count, lab_x);
       fprintf(vvp_out, "    %%mov %u, 2, %u;\n", subv.base, wid);
-      fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_end);
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_end);
 
 	/* DONE */
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_end);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_end);
 
       if (subv.wid > wid) {
 	    res.base = subv.base;
@@ -2878,24 +2878,24 @@ static struct vector_info draw_select_expr(ivl_expr_t expr, unsigned wid,
       lab_l = local_count++;
       lab_end = local_count++;
 	/* If we have an undefined index then just produce a 'bx result. */
-      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, 4;\n", thread_count, lab_l);
+      fprintf(vvp_out, "    %%jmp/1  T_%u.%u, 4;\n", thread_count, lab_l);
 
       cmp = allocate_word();
       assert(subv.wid >= wid);
 	/* Determine if we need to shift a 'bx into the top. */
-      fprintf(vvp_out, "    %%ix/load %u, %u, 0;\n", cmp, subv.wid - wid);
-      fprintf(vvp_out, "    %%cmp/ws %u, 0;\n", cmp);
+      fprintf(vvp_out, "    %%ix/load %d, %u, 0;\n", cmp, subv.wid - wid);
+      fprintf(vvp_out, "    %%cmp/ws %d, 0;\n", cmp);
       clr_word(cmp);
-      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, 5;\n", thread_count, lab_l);
+      fprintf(vvp_out, "    %%jmp/1  T_%u.%u, 5;\n", thread_count, lab_l);
 	/* Clear the cmp bit if the two values are equal. */
       fprintf(vvp_out, "    %%mov 4, 0, 1;\n");
       fprintf(vvp_out, "    %%shiftr/i0 %u, %u;\n", subv.base, subv.wid);
-      fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_end);
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_l);
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_end);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_l);
 	/* Multiply by -1. */
       fprintf(vvp_out, "    %%ix/mul 0, %u, %u;\n", 0xFFFFFFFF, 0xFFFFFFFF);
       fprintf(vvp_out, "    %%shiftl/i0 %u, %u;\n", subv.base, subv.wid);
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_end);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_end);
 
       if (subv.wid > wid) {
 	    res.base = subv.base;
@@ -3000,7 +3000,7 @@ static struct vector_info draw_ternary_expr(ivl_expr_t expr, unsigned wid)
 	    tst.wid = 1;
       }
 
-      fprintf(vvp_out, "    %%jmp/0  T_%d.%d, %u;\n",
+      fprintf(vvp_out, "    %%jmp/0  T_%u.%u, %u;\n",
 	      thread_count, lab_true, tst.base);
 
       tru = draw_eval_expr_wid(true_ex, wid, 0);
@@ -3017,17 +3017,17 @@ static struct vector_info draw_ternary_expr(ivl_expr_t expr, unsigned wid)
 	    tru = tmp;
       }
 
-      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, %u;\n",
+      fprintf(vvp_out, "    %%jmp/1  T_%u.%u, %u;\n",
 	      thread_count, lab_out, tst.base);
 
       clear_expression_lookaside();
 
-      fprintf(vvp_out, "T_%d.%d ; End of true expr.\n",
+      fprintf(vvp_out, "T_%u.%u ; End of true expr.\n",
 	      thread_count, lab_true);
 
       fal = draw_eval_expr_wid(false_ex, wid, 0);
 
-      fprintf(vvp_out, "    %%jmp/0  T_%d.%d, %u;\n",
+      fprintf(vvp_out, "    %%jmp/0  T_%u.%u, %u;\n",
 	      thread_count, lab_false, tst.base);
 
       fprintf(vvp_out, " ; End of false expr.\n");
@@ -3037,15 +3037,15 @@ static struct vector_info draw_ternary_expr(ivl_expr_t expr, unsigned wid)
 
       fprintf(vvp_out, "    %%blend  %u, %u, %u; Condition unknown.\n",
 	      tru.base, fal.base, wid);
-      fprintf(vvp_out, "    %%jmp  T_%d.%d;\n",
+      fprintf(vvp_out, "    %%jmp  T_%u.%u;\n",
 	      thread_count, lab_out);
 
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_false);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_false);
       fprintf(vvp_out, "    %%mov %u, %u, %u; Return false value\n",
 	      tru.base, fal.base, wid);
 
 	/* This is the out label. */
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
       clear_expression_lookaside();
 
       res = tru;
@@ -3488,7 +3488,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 	    word = draw_eval_real(sub);
 	    res.base = allocate_vector(wid);
 	    res.wid = wid;
-	    fprintf(vvp_out, "    %%cvt/vr %u, %u, %u;\n", res.base, word,
+	    fprintf(vvp_out, "    %%cvt/vr %u, %d, %u;\n", res.base, word,
 	                     res.wid);
 	    clr_word(word);
 	    break;
