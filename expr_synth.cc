@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1006,8 +1006,6 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 
       if (sub == 0) return 0;
 
-      NetNet*off = 0;
-
 	// Detect the special case that there is a base expression and
 	// it is constant. In this case we can generate fixed part selects.
       if (NetEConst*base_const = dynamic_cast<NetEConst*>(base_)) {
@@ -1106,7 +1104,7 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 	// actual part/bit select. Generate a NetPartSelect object to
 	// do the work, and replace "sub" with the selected output.
       if (base_ != 0) {
-	    off = base_->synthesize(des, scope, root);
+	    NetNet*off = base_->synthesize(des, scope, root);
 
 	    NetPartSelect*sel = new NetPartSelect(sub, off, expr_width(),
 	                                          base_->has_sign());

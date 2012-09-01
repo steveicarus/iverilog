@@ -1517,7 +1517,7 @@ void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
       } else {
 	    fprintf(stderr, "invalid resolver type: %s\n", type);
 	    compile_errors += 1;
-            free(net);
+            delete net;
       }
 
       if (core) {

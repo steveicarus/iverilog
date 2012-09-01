@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -35,7 +35,6 @@ bool Nexus::drivers_constant() const
 	    return true;
 
       for (const Link*cur = first_nlink() ; cur  ;  cur = cur->next_nlink()) {
-	    const NetNet*sig;
 	    Link::DIR cur_dir;
 
 	    cur_dir = cur->get_dir();
@@ -56,6 +55,7 @@ bool Nexus::drivers_constant() const
 		 outside world. */
 
 	    if (cur_dir == Link::PASSIVE) {
+		  const NetNet*sig;
 
 		  const NetPins*obj = cur->get_obj();
 		  const NetObj*as_obj = dynamic_cast<const NetObj*>(obj);

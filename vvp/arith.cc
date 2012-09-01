@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,7 +46,7 @@ void vvp_arith_::dispatch_operand_(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 	    op_b_ = bit;
 	    break;
 	  default:
-	    fprintf(stderr, "Unsupported port type %d.\n", port);
+	    fprintf(stderr, "Unsupported port type %u.\n", port);
 	    assert(0);
       }
 }
