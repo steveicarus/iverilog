@@ -50,28 +50,6 @@ bool Expression::symbolic_compare(const Expression*) const
       return false;
 }
 
-bool ExpName::symbolic_compare(const Expression*that) const
-{
-      const ExpName*that_name = dynamic_cast<const ExpName*> (that);
-      if (that_name == 0)
-	    return false;
-
-      if (name_ != that_name->name_)
-	    return false;
-
-      if (that_name->index_ && !index_)
-	    return false;
-      if (index_ && !that_name->index_)
-	    return false;
-
-      if (index_) {
-	    assert(that_name->index_);
-	    return index_->symbolic_compare(that_name->index_);
-      }
-
-      return true;
-}
-
 ExpAttribute::ExpAttribute(ExpName*bas, perm_string nam)
 : base_(bas), name_(nam)
 {
@@ -364,6 +342,36 @@ ExpName::~ExpName()
 const char* ExpName::name() const
 {
       return name_;
+}
+
+bool ExpName::symbolic_compare(const Expression*that) const
+{
+      const ExpName*that_name = dynamic_cast<const ExpName*> (that);
+      if (that_name == 0)
+	    return false;
+
+      if (name_ != that_name->name_)
+	    return false;
+
+      if (that_name->index_ && !index_)
+	    return false;
+      if (index_ && !that_name->index_)
+	    return false;
+
+      if (index_) {
+	    assert(that_name->index_);
+	    return index_->symbolic_compare(that_name->index_);
+      }
+
+      return true;
+}
+
+void ExpName::set_range(Expression*msb, Expression*lsb)
+{
+      assert(index_==0);
+      index_ = msb;
+      assert(lsb_==0);
+      lsb_ = lsb;
 }
 
 ExpRelation::ExpRelation(ExpRelation::fun_t ty, Expression*op1, Expression*op2)

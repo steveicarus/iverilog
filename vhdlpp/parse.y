@@ -7,6 +7,7 @@
 %{
 /*
  * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -167,37 +168,6 @@ static Expression*aggregate_or_primary(const YYLTYPE&loc, std::list<ExpAggregate
       return el1->extract_expression();
 }
 
-static ExpName*make_name_from_prefix(const YYLTYPE&loc, const vector<perm_string>*names)
-{
-      ExpName*cur = new ExpName(names->at(0));
-      FILE_NAME(cur, loc);
-
-      for (size_t idx = 1 ; idx < names->size() ; idx += 1) {
-	    ExpName*tmp = new ExpName(cur, names->at(idx));
-	    FILE_NAME(tmp, loc);
-	    cur = tmp;
-      }
-
-      return cur;
-}
-
-static ExpName*make_name_from_prefix(const YYLTYPE&loc, const vector<perm_string>*names, Expression*msb, Expression*lsb)
-{
-      ExpName*cur = new ExpName(names->at(0));
-      FILE_NAME(cur, loc);
-
-      for (size_t idx = 1 ; idx < (names->size()-1) ; idx += 1) {
-	    ExpName*tmp = new ExpName(cur, names->at(idx));
-	    FILE_NAME(tmp, loc);
-	    cur = tmp;
-      }
-
-      ExpName*result = new ExpName(cur, names->back(), msb, lsb);
-      FILE_NAME(result, loc);
-
-      return result;
-}
-
 static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 						      const VType*type)
 {
@@ -220,8 +190,6 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
       char*text;
 
       std::list<perm_string>* name_list;
-      std::vector<perm_string>* compound_name;
-      std::list<std::vector<perm_string>* >* compound_name_list;
 
       bool flag;
       int64_t uni_integer;
@@ -331,7 +299,7 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 %type <expr> expression factor primary relation
 %type <expr> expression_logical expression_logical_and expression_logical_or
 %type <expr> expression_logical_xnor expression_logical_xor
-%type <expr> name
+%type <expr> name prefix selected_name
 %type <expr> shift_expression signal_declaration_assign_opt
 %type <expr> simple_expression term waveform_element
 %type <expr> interface_element_expression
@@ -339,6 +307,7 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 %type <expr_list> waveform waveform_elements
 %type <expr_list> name_list expression_list
 %type <expr_list> process_sensitivity_list process_sensitivity_list_opt
+%type <expr_list> selected_names use_clause
 
 %type <named_expr> association_element
 %type <named_expr_list> association_list port_map_aspect port_map_aspect_opt
@@ -353,8 +322,6 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 %type <text> identifier_opt identifier_colon_opt logical_name suffix
 %type <name_list> logical_name_list identifier_list
 %type <name_list> enumeration_literal_list enumeration_literal
-%type <compound_name> prefix selected_name
-%type <compound_name_list> selected_names use_clause
 
 %type <sequ_list> sequence_of_statements if_statement_else
 %type <sequ> sequential_statement if_statement signal_assignment_statement
@@ -1497,8 +1464,8 @@ mode
 
 mode_opt : mode {$$ = $1;} | {$$ = PORT_NONE;} ;
 
-name
-  : IDENTIFIER
+name /* IEEE 1076-2008 P8.1 */
+  : IDENTIFIER /* simple_name (IEEE 1076-2008 P8.2) */
       { ExpName*tmp = new ExpName(lex_strings.make($1));
 	FILE_NAME(tmp, @1);
 	delete[]$1;
@@ -1506,16 +1473,13 @@ name
       }
 
   | selected_name
-      { ExpName*tmp = make_name_from_prefix(@1, $1);
-	delete $1;
-	$$ = tmp;
-      }
+      { $$ = $1; }
 
   /* Note that this rule can match array element selects and various
      function calls. The only way we can tell the difference is from
      left context, namely whether the name is a type name or function
      name. If none of the above, treat it as a array element select. */
-  | IDENTIFIER '('  expression_list ')'
+  | IDENTIFIER '(' expression_list ')'
       { perm_string name = lex_strings.make($1);
 	delete[]$1;
 	if (active_scope->is_vector_name(name)) {
@@ -1527,15 +1491,15 @@ name
 	}
 	FILE_NAME($$, @1);
       }
-  | IDENTIFIER '('  range ')'
+  | IDENTIFIER '(' range ')'
       { ExpName*tmp = new ExpName(lex_strings.make($1), $3->msb(), $3->lsb());
 	FILE_NAME(tmp, @1);
 	delete[]$1;
 	$$ = tmp;
       }
   | selected_name '('  range ')'
-      { ExpName*tmp = make_name_from_prefix(@1, $1, $3->msb(), $3->lsb());
-	delete $1;
+      { ExpName*tmp = dynamic_cast<ExpName*> ($1);
+	tmp->set_range($3->msb(), $3->lsb());
 	$$ = tmp;
       }
   ;
@@ -1667,20 +1631,9 @@ port_map_aspect_opt
   |                  { $$ = 0; }
   ;
 
-prefix
-  : IDENTIFIER
-      { std::vector<perm_string>* tmp = new std::vector<perm_string>();
-	tmp->push_back(lex_strings.make($1));
-	delete[] $1;
-	$$ = tmp;
-      }
-  | STRING_LITERAL
-      { std::vector<perm_string>* tmp = new std::vector<perm_string>();
-	tmp->push_back(lex_strings.make($1));
-	delete[] $1;
-	$$ = tmp;
-      }
-  | selected_name
+
+prefix /* IEEE 1076-2008 P8.1 */
+  : name
       { $$ = $1; }
   ;
 
@@ -1926,34 +1879,42 @@ secondary_unit
   | package_body
   ;
 
-selected_name
+selected_name /* IEEE 1076-2008 P8.3 */
   : prefix '.' suffix
-      {  std::vector<perm_string>* tmp = $1;
-	 tmp->push_back(lex_strings.make($3));
-	 delete[] $3;
-	 $$ = tmp;
+      { Expression*pfx = $1;
+	ExpName*pfx1 = dynamic_cast<ExpName*>(pfx);
+	assert(pfx1);
+	perm_string tmp = lex_strings.make($3);
+	$$ = new ExpName(pfx1, tmp);
+	FILE_NAME($$, @3);
+	delete[]$3;
+      }
+  | error '.' suffix
+      { errormsg(@1, "Syntax error in prefix in front of \"%s\".\n", $3);
+        yyerrok;
+	$$ = new ExpName(lex_strings.make($3));
+	FILE_NAME($$, @3);
+	delete[]$3;
       }
   ;
 
 selected_names
   : selected_names ',' selected_name
-      {
-    std::list<std::vector<perm_string>* >* tmp = $1;
-    tmp->push_back($3);
-    $$ = tmp;
+      { std::list<Expression*>* tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
       }
   | selected_name
-      {
-    std::list<std::vector<perm_string>* >* tmp = new std::list<std::vector<perm_string>* >();
-    tmp->push_back($1);
-    $$ = tmp;
+      { std::list<Expression*>* tmp = new std::list<Expression*>();
+	tmp->push_back($1);
+	$$ = tmp;
       }
   ;
 
-  /* The *_use variant of selected_name is used by the "use"
+  /* The *_lib variant of selected_name is used by the "use"
      clause. It is syntactically identical to other selected_name
      rules, but is a convenient place to attach use_clause actions. */
-selected_name_use
+selected_name_lib
   : IDENTIFIER '.' K_all
       { library_use(@1, active_scope, 0, $1, 0);
 	delete[]$1;
@@ -1971,9 +1932,9 @@ selected_name_use
       }
   ;
 
-selected_names_use
-  : selected_names_use ',' selected_name_use
-  | selected_name_use
+selected_names_lib
+  : selected_names_lib ',' selected_name_lib
+  | selected_name_lib
   ;
 
 
@@ -2102,17 +2063,12 @@ subtype_indication
 
 suffix
   : IDENTIFIER
-      {
-    $$ = $1;
-      }
+      { $$ = $1; }
   | CHARACTER_LITERAL
-      {
-   $$ = $1;
-      }
+      { $$ = $1; }
   | K_all
-      {
-  //do not have now better idea than using char constant
-    $$ = strcpy(new char[strlen("all"+1)], "all");
+      { //do not have now better idea than using char constant
+	$$ = strcpy(new char[strlen("all"+1)], "all");
       }
   ;
 
@@ -2191,30 +2147,28 @@ type_definition
 
 use_clause
   : K_use selected_names ';'
-     {
-    $$ = $2;
-     }
+     { $$ = $2; }
   | K_use error ';'
      { errormsg(@1, "Syntax error in use clause.\n"); yyerrok; }
   ;
 
 use_clause_lib
-  : K_use selected_names_use ';'
+  : K_use selected_names_lib ';'
   | K_use error ';'
      { errormsg(@1, "Syntax error in use clause.\n"); yyerrok; }
   ;
 
-use_clauses
-  : use_clauses use_clause
-  | use_clause
+use_clauses_lib
+  : use_clauses_lib use_clause_lib
+  | use_clause_lib
   ;
 
 use_clauses_opt
-  : use_clauses
+  : use_clauses_lib
   |
   ;
 
-variable_assignment_statement
+variable_assignment_statement /* IEEE 1076-2008 P10.6.1 */
   : name VASSIGN expression ';'
       { VariableSeqAssignment*tmp = new VariableSeqAssignment($1, $3);
 	FILE_NAME(tmp, @1);

@@ -528,6 +528,8 @@ class ExpName : public Expression {
       void dump(ostream&out, int indent = 0) const;
       const char* name() const;
 
+      void set_range(Expression*msb, Expression*lsb);
+
     private:
       const VType* elaborate_adjust_type_with_range_(Entity*ent, Architecture*arc, const VType*type);
 
