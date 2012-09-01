@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -567,7 +567,7 @@ static void show_lpm_mux(ivl_lpm_t net)
 	      ivl_lpm_basename(net), width, size);
 
       nex = ivl_lpm_q(net);
-      fprintf(out, "    Q: %p <drive0/1 = %u/%u>\n", nex, drive0, drive1);
+      fprintf(out, "    Q: %p <drive0/1 = %d/%d>\n", nex, drive0, drive1);
       if (width != width_of_nexus(nex)) {
 	    fprintf(out, "    Q: ERROR: Nexus width is %u\n",
 		    width_of_nexus(nex));
@@ -1511,9 +1511,9 @@ static void show_logic(ivl_net_logic_t net)
       for (idx = 0 ;  idx < npins ;  idx += 1) {
 	    ivl_nexus_t nex = ivl_logic_pin(net, idx);
 
-	    fprintf(out, "    %d: %p", idx, nex);
+	    fprintf(out, "    %u: %p", idx, nex);
 	    if (idx == 0)
-		  fprintf(out, " <drive0/1 = %u/%u>", drive0, drive1);
+		  fprintf(out, " <drive0/1 = %d/%d>", drive0, drive1);
 	    fprintf(out, "\n");
 
 	    if (nex == 0) {
@@ -1526,7 +1526,7 @@ static void show_logic(ivl_net_logic_t net)
 	    }
 
 	    if (ivl_logic_width(net) != width_of_nexus(nex)) {
-		  fprintf(out, "    %d: ERROR: Nexus width is %u\n",
+		  fprintf(out, "    %u: ERROR: Nexus width is %u\n",
 			  idx, width_of_nexus(nex));
 		  stub_errors += 1;
 	    }

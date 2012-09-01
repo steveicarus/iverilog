@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -410,7 +410,7 @@ void show_expression(ivl_expr_t net, unsigned ind)
 	      break;
 
 	  default:
-	    fprintf(out, "%*s<expr_type=%u>\n", ind, "", code);
+	    fprintf(out, "%*s<expr_type=%d>\n", ind, "", code);
 	    break;
       }
 }

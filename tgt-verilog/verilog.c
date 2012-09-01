@@ -377,7 +377,7 @@ static void show_statement(ivl_statement_t net, unsigned ind)
 	    break;
 
 	  default:
-	    fprintf(out, "%*sunknown statement type (%u)\n", ind, "", code);
+	    fprintf(out, "%*sunknown statement type (%d)\n", ind, "", code);
       }
 }
 
