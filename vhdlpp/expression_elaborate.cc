@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,6 +26,7 @@
 # include  <iostream>
 # include  <typeinfo>
 # include  "parse_types.h"
+# include  "compiler.h"
 # include  "ivl_assert.h"
 
 using namespace std;
@@ -87,6 +89,17 @@ int ExpName::elaborate_lval_(Entity*ent, Architecture*arc, bool is_sequ, ExpName
 {
       int errors = 0;
 
+      if (debug_elaboration) {
+	    debug_log_file << get_fileline() << ": ExpName::elaborate_lval_: "
+			   << "name_=" << name_
+			   << ", suffix->name()=" << suffix->name();
+	    if (index_)
+		  debug_log_file << ", index_=" << *index_;
+	    if (lsb_)
+		  debug_log_file << ", lsb_=" << *lsb_;
+	    debug_log_file << endl;
+      }
+
       if (prefix_.get()) {
 	    cerr << get_fileline() << ": sorry: I don't know how to elaborate "
 		 << "ExpName prefix of " << name_
@@ -128,7 +141,39 @@ int ExpName::elaborate_lval_(Entity*ent, Architecture*arc, bool is_sequ, ExpName
 	    found_type = var->peek_type();
       }
 
+	// Resolve type definition to get an actual type.
+      while (const VTypeDef*tdef = dynamic_cast<const VTypeDef*> (found_type)) {
+	    found_type = tdef->peek_definition();
+
+	    if (debug_elaboration) {
+		  debug_log_file << get_fileline() << ": ExpName::elaborate_lval_: "
+				 << "Resolve typedef " << tdef->peek_name()
+				 << " to defined type=" << typeid(*found_type).name()
+				 << endl;
+	    }
+      }
+
       ivl_assert(*this, found_type);
+
+	// If the prefix type is an array, then we may actually have a
+	// case of an array of structs. For example:
+	//   foo(n).bar
+	// where foo is an array, (n) is an array index and foo(n) is
+	// something that takes a suffix. For the purpose of our
+	// expression type calculations, we need the element type.
+      if (const VTypeArray*array = dynamic_cast<const VTypeArray*> (found_type)) {
+	    found_type = array->element_type();
+
+	    while (const VTypeDef*tdef = dynamic_cast<const VTypeDef*> (found_type)) {
+		  found_type = tdef->peek_definition();
+	    }
+
+	    if (debug_elaboration) {
+		  debug_log_file << get_fileline() << ": ExpName::elaborate_lval_: "
+				 << "Extract array element type=" << typeid(*found_type).name()
+				 << endl;
+	    }
+      }
 
       const VType*suffix_type = 0;
 
@@ -140,6 +185,7 @@ int ExpName::elaborate_lval_(Entity*ent, Architecture*arc, bool is_sequ, ExpName
 	    ivl_assert(*this, element_type);
 
 	    suffix_type = element_type;
+
       }
 
       if (suffix_type == 0) {

@@ -111,6 +111,7 @@ class Expression : public LineInfo {
 
 	// Debug dump of the expression.
       virtual void dump(ostream&out, int indent = 0) const =0;
+      virtual ostream& dump_inline(ostream&out) const;
 
     protected:
 	// This function is called by the derived class during
@@ -129,6 +130,11 @@ class Expression : public LineInfo {
 static inline void FILE_NAME(Expression*tgt, const LineInfo*src)
 {
       tgt->set_line(*src);
+}
+
+static inline ostream& operator <<(ostream&out, const Expression&exp)
+{
+      return exp.dump_inline(out);
 }
 
 class ExpUnary : public Expression {
@@ -473,6 +479,7 @@ class ExpInteger : public Expression {
       bool is_primary(void) const;
       bool evaluate(ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
+      virtual ostream& dump_inline(ostream&out) const;
 
     private:
       int64_t value_;

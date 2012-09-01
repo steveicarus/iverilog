@@ -246,6 +246,8 @@ class VTypeDef : public VType {
       explicit VTypeDef(perm_string name, const VType*is);
       ~VTypeDef();
 
+      inline perm_string peek_name() const { return name_; }
+
 	// If the type is not given a definition in the constructor,
 	// then this must be used to set the definition later.
       void set_definition(const VType*is);

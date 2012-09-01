@@ -424,3 +424,15 @@ void prange_t::dump(ostream&out, int indent) const
     out << setw(indent) << "" << (direction_ ? "downto" : "to");
     right_->dump(out, indent);
 }
+
+ostream& Expression::dump_inline(ostream&out) const
+{
+      out << typeid(*this).name();
+      return out;
+}
+
+ostream& ExpInteger::dump_inline(ostream&out) const
+{
+      out << value_;
+      return out;
+}

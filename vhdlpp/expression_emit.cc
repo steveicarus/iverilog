@@ -610,7 +610,12 @@ int ExpName::emit_as_prefix_(ostream&out, Entity*ent, Architecture*arc)
       }
 
       out << "\\" << name_ << " ";
-      ivl_assert(*this, index_ == 0);
+      if (index_) {
+	    out << "[";
+	    errors += index_->emit(out, ent, arc);
+	    out << "]";
+	    ivl_assert(*this, lsb_ == 0);
+      }
       out << ".";
       return errors;
 }
