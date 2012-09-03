@@ -1563,6 +1563,7 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
  * and the name that I receive only has the tail component.
  */
 static void pform_set_net_range(perm_string name,
+				NetNet::Type net_type,
 				const list<pform_range_t>*range,
 				bool signed_flag,
 				ivl_variable_type_t dt,
@@ -1573,6 +1574,19 @@ static void pform_set_net_range(perm_string name,
       if (cur == 0) {
 	    VLerror("error: name is not a valid net.");
 	    return;
+      }
+	// If this is not implicit ("implicit" meaning we don't
+	// know what the type is yet) then set the type now.
+      if (net_type != NetNet::IMPLICIT && net_type != NetNet::NONE) {
+	    bool rc = cur->set_wire_type(net_type);
+	    if (rc == false) {
+		  ostringstream msg;
+		  msg << name << " " << net_type
+		      << " definition conflicts with " << cur->get_wire_type()
+		      << " definition at " << cur->get_fileline()
+		      << ".";
+		  VLerror(msg.str().c_str());
+	    }
       }
 
       if (range == 0) {
@@ -1595,12 +1609,13 @@ static void pform_set_net_range(list<perm_string>*names,
 				list<pform_range_t>*range,
 				bool signed_flag,
 				ivl_variable_type_t dt,
+				NetNet::Type net_type,
 				std::list<named_pexpr_t>*attr)
 {
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
-	    pform_set_net_range(txt, range, signed_flag, dt, SR_NET, attr);
+	    pform_set_net_range(txt, net_type, range, signed_flag, dt, SR_NET, attr);
       }
 
       delete names;
@@ -2144,7 +2159,7 @@ void pform_makewire(const vlltype&li,
 	    pform_makewire(li, txt, type, pt, dt, attr);
 	    /* This has already been done for real variables. */
 	    if (dt != IVL_VT_REAL) {
-		  pform_set_net_range(txt, range, signed_flag, dt, rt, 0);
+		  pform_set_net_range(txt, type, range, signed_flag, dt, rt, 0);
 	    }
       }
 
@@ -2156,27 +2171,31 @@ void pform_makewire(const vlltype&li,
  * This form makes nets with delays and continuous assignments.
  */
 void pform_makewire(const vlltype&li,
-		    list<pform_range_t>*range,
-		    bool signed_flag,
 		    list<PExpr*>*delay,
 		    str_pair_t str,
 		    net_decl_assign_t*decls,
 		    NetNet::Type type,
-		    ivl_variable_type_t dt)
+		    data_type_t*data_type)
 {
+	// The decls pointer is a circularly linked list.
       net_decl_assign_t*first = decls->next;
-      decls->next = 0;
 
+      list<perm_string>*names = new list<perm_string>;
+
+	// Go through the circularly linked list non-destructively.
+      do {
+	    pform_makewire(li, first->name, type, NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
+	    names->push_back(first->name);
+	    first = first->next;
+      } while (first != decls->next);
+
+      pform_set_data_type(li, data_type, names, type, 0);
+
+	// This time, go through the list, deleting cells as I'm done.
+      first = decls->next;
+      decls->next = 0;
       while (first) {
 	    net_decl_assign_t*next = first->next;
-
-	    pform_makewire(li, first->name, type, NetNet::NOT_A_PORT, dt, 0);
-	    /* This has already been done for real variables. */
-	    if (dt != IVL_VT_REAL) {
-		  pform_set_net_range(first->name, range, signed_flag, dt,
-		                      SR_NET, 0);
-	    }
-
 	    PWire*cur = pform_get_wire_in_scope(first->name);
 	    if (cur != 0) {
 		  PEIdent*lval = new PEIdent(first->name);
@@ -2705,7 +2724,7 @@ void pform_set_port_type(const struct vlltype&li,
 		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
 	    pform_set_port_type(txt, pt, li.text, li.first_line);
-	    pform_set_net_range(txt, range, signed_flag, IVL_VT_NO_TYPE,
+	    pform_set_net_range(txt, NetNet::NONE, range, signed_flag, IVL_VT_NO_TYPE,
 	                        SR_PORT, 0);
       }
 
@@ -2764,9 +2783,9 @@ void pform_set_reg_time(list<perm_string>*names, list<named_pexpr_t>*attr)
       delete names;
 }
 
-static void pform_set_integer_2atom(uint64_t width, bool signed_flag, perm_string name, list<named_pexpr_t>*attr)
+static void pform_set_integer_2atom(uint64_t width, bool signed_flag, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
-      PWire*cur = pform_get_make_wire_in_scope(name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_BOOL);
+      PWire*cur = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, IVL_VT_BOOL);
       assert(cur);
 
       cur->set_signed(signed_flag);
@@ -2780,92 +2799,42 @@ static void pform_set_integer_2atom(uint64_t width, bool signed_flag, perm_strin
       pform_bind_attributes(cur->attributes, attr, true);
 }
 
-static void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>*names, list<named_pexpr_t>*attr)
+static void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
 	    perm_string txt = *cur;
-	    pform_set_integer_2atom(width, signed_flag, txt, attr);
+	    pform_set_integer_2atom(width, signed_flag, txt, net_type, attr);
       }
       delete names;
 }
 
-template <class T> static void pform_set2_data_type(const struct vlltype&li, T*data_type, perm_string name, list<named_pexpr_t>*attr)
+template <class T> static void pform_set2_data_type(const struct vlltype&li, T*data_type, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
       ivl_variable_type_t base_type = data_type->figure_packed_base_type();
       if (base_type == IVL_VT_NO_TYPE) {
 	    VLerror(li, "Compound type is not PACKED in this context.");
       }
 
-      PWire*net = pform_get_make_wire_in_scope(name, NetNet::REG, NetNet::NOT_A_PORT, base_type);
+      PWire*net = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, base_type);
       net->set_packed_type(data_type);
       pform_bind_attributes(net->attributes, attr, true);
 }
 
-template <class T> static void pform_set2_data_type(const struct vlltype&li, T*data_type, list<perm_string>*names, list<named_pexpr_t>*attr)
+template <class T> static void pform_set2_data_type(const struct vlltype&li, T*data_type, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur) {
-	    pform_set2_data_type(li, data_type, *cur, attr);
+	    pform_set2_data_type(li, data_type, *cur, net_type, attr);
       }
-}
-
-/*
- * This function detects the derived class for the given type and
- * dispatches the type to the proper subtype function.
- */
-void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<perm_string>*names, list<named_pexpr_t>*attr)
-{
-      if (atom2_type_t*atom2_type = dynamic_cast<atom2_type_t*> (data_type)) {
-	    pform_set_integer_2atom(atom2_type->type_code, atom2_type->signed_flag, names, attr);
-	    return;
-      }
-
-      if (struct_type_t*struct_type = dynamic_cast<struct_type_t*> (data_type)) {
-	    pform_set_struct_type(struct_type, names, attr);
-	    return;
-      }
-
-      if (enum_type_t*enum_type = dynamic_cast<enum_type_t*> (data_type)) {
-	    pform_set_enum(li, enum_type, names, attr);
-	    return;
-      }
-
-      if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (data_type)) {
-	    pform_set_net_range(names, vec_type->pdims.get(),
-				vec_type->signed_flag,
-				vec_type->base_type, attr);
-	    return;
-      }
-
-      if (/*real_type_t*real_type =*/ dynamic_cast<real_type_t*> (data_type)) {
-	    pform_set_net_range(names, 0, true, IVL_VT_REAL, attr);
-	    return;
-      }
-
-      if (/*class_type_t*class_type =*/ dynamic_cast<class_type_t*> (data_type)) {
-	    VLerror(li, "sorry: Class types not supported.");
-	    return;
-      }
-
-      if (parray_type_t*array_type = dynamic_cast<parray_type_t*> (data_type)) {
-	    pform_set2_data_type(li, array_type, names, attr);
-	    return;
-      }
-
-      if (string_type_t*string_type = dynamic_cast<string_type_t*> (data_type)) {
-	    pform_set_string_type(string_type, names, attr);
-	    return;
-      }
-
-      assert(0);
 }
 
 static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
-			   perm_string name, std::list<named_pexpr_t>*attr)
+			   perm_string name, NetNet::Type net_type,
+			   std::list<named_pexpr_t>*attr)
 {
       (void) li; // The line information is not currently needed.
-      PWire*cur = pform_get_make_wire_in_scope(name, NetNet::REG, NetNet::NOT_A_PORT, enum_type->base_type);
+      PWire*cur = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, enum_type->base_type);
       assert(cur);
 
       cur->set_signed(enum_type->signed_flag);
@@ -2877,7 +2846,9 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
       pform_bind_attributes(cur->attributes, attr, true);
 }
 
-void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_string>*names, std::list<named_pexpr_t>*attr)
+static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
+			   list<perm_string>*names, NetNet::Type net_type,
+			   std::list<named_pexpr_t>*attr)
 {
 	// By definition, the base type can only be IVL_VT_LOGIC or
 	// IVL_VT_BOOL.
@@ -2897,10 +2868,61 @@ void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_st
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur) {
 	    perm_string txt = *cur;
-	    pform_set_enum(li, enum_type, txt, attr);
+	    pform_set_enum(li, enum_type, txt, net_type, attr);
       }
 
       delete names;
+}
+
+/*
+ * This function detects the derived class for the given type and
+ * dispatches the type to the proper subtype function.
+ */
+void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
+{
+      if (atom2_type_t*atom2_type = dynamic_cast<atom2_type_t*> (data_type)) {
+	    pform_set_integer_2atom(atom2_type->type_code, atom2_type->signed_flag, names, net_type, attr);
+	    return;
+      }
+
+      if (struct_type_t*struct_type = dynamic_cast<struct_type_t*> (data_type)) {
+	    pform_set_struct_type(struct_type, names, net_type, attr);
+	    return;
+      }
+
+      if (enum_type_t*enum_type = dynamic_cast<enum_type_t*> (data_type)) {
+	    pform_set_enum(li, enum_type, names, net_type, attr);
+	    return;
+      }
+
+      if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (data_type)) {
+	    pform_set_net_range(names, vec_type->pdims.get(),
+				vec_type->signed_flag,
+				vec_type->base_type, net_type, attr);
+	    return;
+      }
+
+      if (/*real_type_t*real_type =*/ dynamic_cast<real_type_t*> (data_type)) {
+	    pform_set_net_range(names, 0, true, IVL_VT_REAL, net_type, attr);
+	    return;
+      }
+
+      if (/*class_type_t*class_type =*/ dynamic_cast<class_type_t*> (data_type)) {
+	    VLerror(li, "sorry: Class types not supported.");
+	    return;
+      }
+
+      if (parray_type_t*array_type = dynamic_cast<parray_type_t*> (data_type)) {
+	    pform_set2_data_type(li, array_type, names, net_type, attr);
+	    return;
+      }
+
+      if (string_type_t*string_type = dynamic_cast<string_type_t*> (data_type)) {
+	    pform_set_string_type(string_type, names, net_type, attr);
+	    return;
+      }
+
+      assert(0);
 }
 
 svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)

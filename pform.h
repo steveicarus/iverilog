@@ -265,13 +265,11 @@ extern void pform_makewire(const struct vlltype&li,
 
 /* This form handles assignment declarations. */
 extern void pform_makewire(const struct vlltype&li,
-			   list<pform_range_t>*range,
-			   bool signed_flag,
 			   list<PExpr*>*delay,
 			   str_pair_t str,
 			   net_decl_assign_t*assign_list,
 			   NetNet::Type type,
-			   ivl_variable_type_t);
+			   data_type_t*data_type);
 
 /* This form handles nets declared as structures. (See pform_struct_type.cc) */
 extern void pform_makewire(const struct vlltype&li,
@@ -297,15 +295,11 @@ extern void pform_set_reg_idx(perm_string name,
 extern void pform_set_reg_integer(list<perm_string>*names, list<named_pexpr_t>*attr);
 extern void pform_set_reg_time(list<perm_string>*names, list<named_pexpr_t>*attr);
 
-//XXXXextern void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>*names);
+extern void pform_set_data_type(const struct vlltype&li, data_type_t*, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr);
 
-extern void pform_set_data_type(const struct vlltype&li, data_type_t*, list<perm_string>*names, list<named_pexpr_t>*attr);
+extern void pform_set_struct_type(struct_type_t*struct_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
 
-extern void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_string>*names, std::list<named_pexpr_t>*attr);
-
-extern void pform_set_struct_type(struct_type_t*struct_type, std::list<perm_string>*names, std::list<named_pexpr_t>*attr);
-
-extern void pform_set_string_type(string_type_t*string_type, std::list<perm_string>*names, std::list<named_pexpr_t>*attr);
+extern void pform_set_string_type(string_type_t*string_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
 
   /* pform_set_attrib and pform_set_type_attrib exist to support the
      $attribute syntax, which can only set string values to

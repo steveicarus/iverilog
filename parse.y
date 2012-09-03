@@ -1842,11 +1842,11 @@ block_item_decl
      recovering from an error. */
 
   | data_type register_variable_list ';'
-      { if ($1) pform_set_data_type(@1, $1, $2, attributes_in_context);
+      { if ($1) pform_set_data_type(@1, $1, $2, NetNet::REG, attributes_in_context);
       }
 
   | K_reg data_type register_variable_list ';'
-      { if ($2) pform_set_data_type(@2, $2, $3, attributes_in_context);
+      { if ($2) pform_set_data_type(@2, $2, $3, NetNet::REG, attributes_in_context);
       }
 
   | K_event list_of_identifiers ';'
@@ -3902,10 +3902,8 @@ module_item
     delay3_opt
     net_variable_list ';'
 
-      { ivl_variable_type_t dtype = $3;
-	if (dtype == IVL_VT_NO_TYPE)
-	      dtype = IVL_VT_LOGIC;
-	pform_makewire(@2, $5, $4, $7, $2, NetNet::NOT_A_PORT, dtype, $1);
+      { vector_type_t*tmp = new vector_type_t($3, $4, $5);
+	pform_set_data_type(@2, tmp, $7, $2, $1);
 	if ($6 != 0) {
 	      yyerror(@6, "sorry: net delays not supported.");
 	      delete $6;
@@ -3914,19 +3912,19 @@ module_item
       }
 
   | attribute_list_opt K_wreal delay3 net_variable_list ';'
-      { pform_makewire(@2, 0, true, $4, NetNet::WIRE,
-		       NetNet::NOT_A_PORT, IVL_VT_REAL, $1);
-	    if ($3 != 0) {
-		  yyerror(@3, "sorry: net delays not supported.");
-		  delete $3;
-	    }
-	    delete $1;
+      { real_type_t*tmpt = new real_type_t(real_type_t::REAL);
+	pform_set_data_type(@2, tmpt, $4, NetNet::WIRE, $1);
+	if ($3 != 0) {
+	      yyerror(@3, "sorry: net delays not supported.");
+	      delete $3;
+	}
+	delete $1;
       }
 
   | attribute_list_opt K_wreal net_variable_list ';'
-      { pform_makewire(@2, 0, true, $3, NetNet::WIRE,
-		       NetNet::NOT_A_PORT, IVL_VT_REAL, $1);
-	    delete $1;
+      { real_type_t*tmpt = new real_type_t(real_type_t::REAL);
+	pform_set_data_type(@2, tmpt, $3, NetNet::WIRE, $1);
+	delete $1;
       }
 
   /* Very similar to the rule above, but this takes a list of
@@ -3940,8 +3938,8 @@ module_item
 		{ ivl_variable_type_t dtype = $3;
 		  if (dtype == IVL_VT_NO_TYPE)
 			dtype = IVL_VT_LOGIC;
-		  pform_makewire(@2, $5, $4, $6,
-				 str_strength, $7, $2, dtype);
+		  vector_type_t*data_type = new vector_type_t(dtype, $4, $5);
+		  pform_makewire(@2, $6, str_strength, $7, $2, data_type);
 		  if ($1) {
 			yyerror(@2, "sorry: Attributes not supported "
 				"on net declaration assignments.");
@@ -3953,7 +3951,7 @@ module_item
 
   | attribute_list_opt net_type struct_data_type net_variable_list ';'
 
-      { pform_makewire(@2, $3, NetNet::NOT_A_PORT, $4, $1);
+      { pform_set_data_type(@2, $3, $4, $2, $1);
 	delete $1;
       }
 
@@ -3968,29 +3966,31 @@ module_item
   /* This form doesn't have the range, but does have strengths. This
      gives strength to the assignment drivers. */
 
-	| attribute_list_opt net_type
-          primitive_type_opt unsigned_signed_opt
-          drive_strength net_decl_assigns ';'
+  | attribute_list_opt net_type
+    primitive_type_opt unsigned_signed_opt
+    drive_strength net_decl_assigns ';'
 
-		{ ivl_variable_type_t dtype = $3;
-		  if (dtype == IVL_VT_NO_TYPE)
-			dtype = IVL_VT_LOGIC;
-		  pform_makewire(@2, 0, $4, 0, $5, $6, $2, dtype);
-		  if ($1) {
-			yyerror(@2, "sorry: Attributes not supported "
-				"on net declaration assignments.");
-			delete $1;
-		  }
-		}
-	| attribute_list_opt K_wreal net_decl_assigns ';'
-		{ pform_makewire(@2, 0, true, 0, str_strength, $3,
-		                 NetNet::WIRE, IVL_VT_REAL);
-		  if ($1) {
-			yyerror(@2, "sorry: Attributes not supported "
-				"on net declaration assignments.");
-			delete $1;
-		  }
-		}
+      { ivl_variable_type_t dtype = $3;
+	if (dtype == IVL_VT_NO_TYPE)
+	      dtype = IVL_VT_LOGIC;
+	vector_type_t*data_type = new vector_type_t(dtype, $4, 0);
+	pform_makewire(@2, 0, $5, $6, $2, data_type);
+	if ($1) {
+	      yyerror(@2, "sorry: Attributes not supported "
+		      "on net declaration assignments.");
+	      delete $1;
+	}
+      }
+
+  | attribute_list_opt K_wreal net_decl_assigns ';'
+      { real_type_t*data_type = new real_type_t(real_type_t::REAL);
+        pform_makewire(@2, 0, str_strength, $3, NetNet::WIRE, data_type);
+	if ($1) {
+	      yyerror(@2, "sorry: Attributes not supported "
+		      "on net declaration assignments.");
+	      delete $1;
+	}
+      }
 
 	| K_trireg charge_strength_opt range_opt delay3_opt list_of_identifiers ';'
 		{ yyerror(@1, "sorry: trireg nets not supported.");
@@ -4890,10 +4890,10 @@ function_range_or_type_opt
      so that bit ranges can be assigned. */
 register_variable
   : IDENTIFIER dimensions_opt
-      { perm_string ident_name = lex_strings.make($1);
-	pform_makewire(@1, ident_name, NetNet::REG,
+      { perm_string name = lex_strings.make($1);
+	pform_makewire(@1, name, NetNet::REG,
 		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
-	pform_set_reg_idx(ident_name, $2);
+	pform_set_reg_idx(name, $2);
 	$$ = $1;
       }
   | IDENTIFIER '=' expression
