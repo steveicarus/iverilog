@@ -729,7 +729,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
       unsigned long use_width = member->width();
 
       if (name_tail.index.size() > member->packed_dims.size()) {
-	    cerr << get_fileline() << ": error: Too make index expressions for member." << endl;
+	    cerr << get_fileline() << ": error: Too many index expressions for member." << endl;
 	    des->errors += 1;
 	    return false;
       }
