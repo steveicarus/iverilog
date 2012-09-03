@@ -2880,6 +2880,11 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
  */
 void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
+      if (data_type == 0) {
+	    VLerror(li, "internal error: data_type==0.");
+	    assert(0);
+      }
+
       if (atom2_type_t*atom2_type = dynamic_cast<atom2_type_t*> (data_type)) {
 	    pform_set_integer_2atom(atom2_type->type_code, atom2_type->signed_flag, names, net_type, attr);
 	    return;
@@ -2922,6 +2927,7 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
 	    return;
       }
 
+      VLerror(li, "internal error: Unexpected data_type.");
       assert(0);
 }
 

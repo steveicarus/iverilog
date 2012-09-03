@@ -2,6 +2,7 @@
 %{
 /*
  * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -566,7 +567,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <nettype>  net_type var_type net_type_opt
 %type <gatetype> gatetype switchtype
 %type <porttype> port_direction port_direction_opt
-%type <vartype> primitive_type primitive_type_opt bit_logic
+%type <vartype> bit_logic
 %type <vartype> integer_vector_type
 %type <parmvalue> parameter_value_opt
 
@@ -3891,22 +3892,17 @@ module_item
   /* Modules can contain further sub-module definitions. */
   : module
 
-  /* This rule detects net declarations that possibly include a
-     primitive type, an optional vector range and signed flag. This
-     also includes an optional delay set. The values are then applied
-     to a list of names. If the primitive type is not specified, then
-     resort to the default type LOGIC. */
+  | attribute_list_opt net_type data_type_or_implicit delay3_opt net_variable_list ';'
 
-  | attribute_list_opt net_type
-    primitive_type_opt unsigned_signed_opt range_opt
-    delay3_opt
-    net_variable_list ';'
-
-      { vector_type_t*tmp = new vector_type_t($3, $4, $5);
-	pform_set_data_type(@2, tmp, $7, $2, $1);
-	if ($6 != 0) {
-	      yyerror(@6, "sorry: net delays not supported.");
-	      delete $6;
+      { data_type_t*data_type = $3;
+	if (data_type == 0) {
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
+	      FILE_NAME(data_type, @2);
+	}
+	pform_set_data_type(@2, data_type, $5, $2, $1);
+	if ($4 != 0) {
+	      yyerror(@2, "sorry: net delays not supported.");
+	      delete $4;
 	}
 	delete $1;
       }
@@ -3931,50 +3927,30 @@ module_item
      net_decl_assigns, which are <name> = <expr> assignment
      declarations. */
 
-	| attribute_list_opt net_type
-          primitive_type_opt unsigned_signed_opt range_opt
-          delay3_opt net_decl_assigns ';'
-
-		{ ivl_variable_type_t dtype = $3;
-		  if (dtype == IVL_VT_NO_TYPE)
-			dtype = IVL_VT_LOGIC;
-		  vector_type_t*data_type = new vector_type_t(dtype, $4, $5);
-		  pform_makewire(@2, $6, str_strength, $7, $2, data_type);
-		  if ($1) {
-			yyerror(@2, "sorry: Attributes not supported "
-				"on net declaration assignments.");
-			delete $1;
-		  }
-		}
-
-  /* Allow struct nets. */
-
-  | attribute_list_opt net_type struct_data_type net_variable_list ';'
-
-      { pform_set_data_type(@2, $3, $4, $2, $1);
-	delete $1;
+  | attribute_list_opt net_type data_type_or_implicit delay3_opt net_decl_assigns ';'
+      { data_type_t*data_type = $3;
+	if (data_type == 0) {
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
+	      FILE_NAME(data_type, @2);
+	}
+	pform_makewire(@2, $4, str_strength, $5, $2, data_type);
+	if ($1) {
+	      yyerror(@2, "sorry: Attributes not supported "
+		      "on net declaration assignments.");
+	      delete $1;
+	}
       }
-
-  | attribute_list_opt net_type struct_data_type error ';'
-
-      { yyerror(@5, "error: Errors in net variable list.");
-      }
-
-  | attribute_list_opt net_type TYPE_IDENTIFIER net_variable_list ';'
-      { yyerror(@2, "sorry: Nets of named types not supported."); }
 
   /* This form doesn't have the range, but does have strengths. This
      gives strength to the assignment drivers. */
 
-  | attribute_list_opt net_type
-    primitive_type_opt unsigned_signed_opt
-    drive_strength net_decl_assigns ';'
-
-      { ivl_variable_type_t dtype = $3;
-	if (dtype == IVL_VT_NO_TYPE)
-	      dtype = IVL_VT_LOGIC;
-	vector_type_t*data_type = new vector_type_t(dtype, $4, 0);
-	pform_makewire(@2, 0, $5, $6, $2, data_type);
+  | attribute_list_opt net_type data_type_or_implicit drive_strength net_decl_assigns ';'
+      { data_type_t*data_type = $3;
+	if (data_type == 0) {
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
+	      FILE_NAME(data_type, @2);
+	}
+	pform_makewire(@2, 0, $4, $5, $2, data_type);
 	if ($1) {
 	      yyerror(@2, "sorry: Attributes not supported "
 		      "on net declaration assignments.");
@@ -4369,19 +4345,10 @@ net_decl_assigns
 		}
 	;
 
-primitive_type
-  : K_logic { $$ = IVL_VT_LOGIC; }
-  | K_bool  { $$ = IVL_VT_BOOL; /* Icarus Verilog xtypes */}
-  | K_bit   { $$ = IVL_VT_BOOL; /* IEEE1800 / IEEE1364-2009 */}
-  | K_real  { $$ = IVL_VT_REAL; }
-;
-
 bit_logic
   : K_logic { $$ = IVL_VT_LOGIC; }
   | K_bit   { $$ = IVL_VT_BOOL; /* IEEE1800 / IEEE1364-2009 */}
   ;
-
-primitive_type_opt : primitive_type { $$ = $1; } | { $$ = IVL_VT_NO_TYPE; } ;
 
 net_type
 	: K_wire    { $$ = NetNet::WIRE; }
