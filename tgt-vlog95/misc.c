@@ -171,7 +171,7 @@ void emit_scaled_delayx(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
 	    if (rtype > 0) {
 		  fprintf(vlog_out, "<invalid>");
 		  fprintf(stderr, "%s:%u: vlog95 error: Time value is "
-		                  "greater than 64 bits (%u) and cannot be "
+		                  "greater than 64 bits (%d) and cannot be "
 		                  "safely represented.\n",
 		                  ivl_expr_file(expr), ivl_expr_lineno(expr),
 		                  rtype);

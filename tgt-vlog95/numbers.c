@@ -140,7 +140,7 @@ void emit_number(const char *bits, unsigned nbits, unsigned is_signed,
 	    if (rtype > 0) {
 		  fprintf(vlog_out, "<invalid>");
 		  fprintf(stderr, "%s:%u: vlog95 error: Signed number is "
-		                  "greater than 32 bits (%u) and cannot be "
+		                  "greater than 32 bits (%d) and cannot be "
 		                  "safely represented.\n", file, lineno,
 		                  rtype);
 		  vlog_errors += 1;

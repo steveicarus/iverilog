@@ -606,7 +606,7 @@ static ivl_signal_t nexus_is_signal(ivl_scope_t scope, ivl_nexus_t nex,
       ivl_lpm_t lpm = 0;
       ivl_net_const_t net_const = 0;
       ivl_net_logic_t nlogic = 0;
-      ivl_signal_t sig = 0;
+      ivl_signal_t sig;
 	/* Look for a signal in the local scope first. */
       sig = find_local_signal(scope, nex, array_word);
       if (sig) return sig;
