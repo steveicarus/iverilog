@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -240,7 +240,7 @@ static int scan_format_float(vpiHandle callh, vpiHandle argv,
       if (! arg) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s() ran out of variables for %%%c format code",
+	    vpi_printf("%s() ran out of variables for %%%c format code.",
 	               name, code);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
@@ -306,7 +306,7 @@ static int scan_format_float_time(vpiHandle callh, vpiHandle argv,
       if (! arg) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s() ran out of variables for %%t format code", name);
+	    vpi_printf("%s() ran out of variables for %%t format code.", name);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -382,7 +382,7 @@ static int scan_format_base(vpiHandle callh, vpiHandle argv,
       if (! arg) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s() ran out of variables for %%%c format code",
+	    vpi_printf("%s() ran out of variables for %%%c format code.",
 	               name, code);
 	    vpi_control(vpiFinish, 1);
 	    free(strval);
@@ -442,7 +442,7 @@ static int scan_format_char(vpiHandle callh, vpiHandle argv,
       if (! arg) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s() ran out of variables for %%c format code", name);
+	    vpi_printf("%s() ran out of variables for %%c format code.", name);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -562,7 +562,7 @@ static int scan_format_decimal(vpiHandle callh, vpiHandle argv,
       if (! arg) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s() ran out of variables for %%d format code", name);
+	    vpi_printf("%s() ran out of variables for %%d format code.", name);
 	    vpi_control(vpiFinish, 1);
 	    free(strval);
 	    return 0;
@@ -621,7 +621,7 @@ static int scan_format_module_path(vpiHandle callh, vpiHandle argv,
       if (! arg) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s() ran out of variables for %%m format code", name);
+	    vpi_printf("%s() ran out of variables for %%m format code.", name);
 	    vpi_control(vpiFinish, 1);
 	    return 0;
       }
@@ -700,7 +700,7 @@ static int scan_format_string(vpiHandle callh, vpiHandle argv,
       if (! arg) {
 	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 	               (int)vpi_get(vpiLineNo, callh));
-	    vpi_printf("%s() ran out of variables for %%s format code", name);
+	    vpi_printf("%s() ran out of variables for %%s format code.", name);
 	    vpi_control(vpiFinish, 1);
 	    free(strval);
 	    return 0;
@@ -713,6 +713,147 @@ static int scan_format_string(vpiHandle callh, vpiHandle argv,
       free(strval);
 
 	/* We always consume one variable if it is available. */
+      return 1;
+}
+
+/*
+ * Routine to return a four state value (implements %z).
+ *
+ * Note: Since this is a binary routine it also does not check for leading
+ *       space characters or use space as a boundary character.
+ *
+ * Return: 1 for a match, 0 for no match/variable and -1 for a
+ *         suppressed match. No variable is fatal.
+ */
+static int scan_format_four_state(vpiHandle callh, vpiHandle argv,
+                                  struct byte_source *src, unsigned width,
+                                  unsigned suppress_flag, PLI_BYTE8 *name)
+{
+      vpiHandle arg;
+      p_vpi_vecval val_ptr;
+      s_vpi_value val;
+      unsigned words, word;
+      PLI_INT32 varlen;
+
+	/* If we are being asked for no data then return a match fail. */
+      if (width == 0) return 0;
+
+	/* Since this is a binary format we do not have an ending sequence.
+	 * Consequently we need to use the width to determine how many word
+	 * pairs to remove from the input stream. */
+      if (suppress_flag) {
+	      /* If no width was given then just remove one word pair. */
+	    if (width == UINT_MAX) words = 1;
+	    else words = (width+31)/32;
+	    for (word = 0; word < words; word += 1) {
+		  unsigned byte;
+		    /* For a suppression we do not care about the endian order
+		     * of the bytes. */
+		  for (byte = 0; byte < 8; byte += 1) {
+			int ch = byte_getc(src);
+			  /* See the EOF comments below for more details. */
+			if (ch == EOF) {
+			      vpi_printf("WARNING: %s:%d: ",
+			                 vpi_get_str(vpiFile, callh),
+			                 (int)vpi_get(vpiLineNo, callh));
+			      vpi_printf("%s() only found %u of %u bytes "
+			                 "needed by %%z format code.\n", name,
+			                 word*8U + byte, words*8U);
+			      return 0;
+			}
+		  }
+	    }
+	    return -1;
+      }
+
+	/* We must have a variable to put the bits into. */
+      arg = vpi_scan(argv);
+      if (! arg) {
+	    vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
+	               (int)vpi_get(vpiLineNo, callh));
+	    vpi_printf("%s() ran out of variables for %%z format code.", name);
+	    vpi_control(vpiFinish, 1);
+	    return 0;
+      }
+
+	/* Extract either the given number of word pairs or enough to fill
+	 * the variable. */
+      varlen = (vpi_get(vpiSize, arg)+31)/32;
+      assert(varlen > 0);
+      val_ptr = (p_vpi_vecval) malloc(varlen*sizeof(s_vpi_vecval));
+      if (width == UINT_MAX) words = (unsigned)varlen;
+      else words = (width+31)/32;
+      for (word = 0; word < words; word += 1) {
+	    unsigned elem;
+	    for (elem = 0; elem < 2; elem += 1) {
+		  int byte;
+		  PLI_INT32 bits = 0;
+#ifdef WORDS_BIGENDIAN
+		  for (byte = 3; byte >= 0; byte -= 1) {
+#else
+		  for (byte = 0; byte <= 3; byte += 1) {
+#endif
+			int ch = byte_getc(src);
+			  /* If there is an EOF while reading the bytes then
+			   * treat that as a non-match. It could be argued that
+			   * the bytes should be put back, but that is not
+			   * practical and since a binary read should be
+			   * treated as an atomic operation it's not helpful
+			   * either. An EOF while reading is an error in the
+			   * data stream so print a message to help the user
+			   * debug what is going wrong. The calling routine has
+			   * already verified that there is at least one byte
+			   * available so this message is not printed when an
+			   * EOF occurs at an opcode boundary. Which may not be
+			   * an error in the data stream. */
+			if (ch == EOF) {
+			      vpi_printf("WARNING: %s:%d: ",
+			                 vpi_get_str(vpiFile, callh),
+			                 (int)vpi_get(vpiLineNo, callh));
+			      vpi_printf("%s() only found %d of %u bytes "
+			                 "needed by %%z format code.\n", name,
+			                 word*8 + elem*4 +
+#ifdef WORDS_BIGENDIAN
+			                 (3-byte),
+#else
+			                 byte,
+#endif
+			                 words*8U);
+			      free(val_ptr);
+			      return 0;
+			}
+			bits |= (ch & 0xff) << byte*8;
+		  }
+		    /* Only save the words that are in range. */
+		  if (word < (unsigned)varlen) {
+			*(&val_ptr[word].aval+elem) = bits;
+		  }
+	    }
+      }
+
+	/* Mask the upper bits to match the specified width when required. */
+      if (width != UINT_MAX) {
+	    PLI_INT32 mask = UINT32_MAX >> (32U - ((width - 1U) % 32U + 1U));
+	    val_ptr[words-1].aval &= mask;
+	    val_ptr[words-1].bval &= mask;
+      }
+
+	/* Not enough words were read to fill the variable so zero fill the
+	 * upper words. */
+      if (words < (unsigned)varlen) {
+	    for (word = words; word < varlen ; word += 1) {
+		  val_ptr[word].aval = 0;
+		  val_ptr[word].bval = 0;
+	    }
+      }
+
+	/* Put the four-state value into the variable. */
+      val.format = vpiVectorVal;
+      val.value.vector = val_ptr;
+      vpi_put_value(arg, &val, 0, vpiNoDelay);
+      free(val_ptr);
+
+	/* One variable was consumed. */
       return 1;
 }
 
@@ -906,13 +1047,22 @@ static int scan_format(vpiHandle callh, struct byte_source*src, vpiHandle argv,
 
 		      case 'u':
 		      case 'v':
-		      case 'z':
 			vpi_printf("SORRY: %s:%d: ",
 			           vpi_get_str(vpiFile, callh),
 			           (int)vpi_get(vpiLineNo, callh));
 			vpi_printf("%s() format code '%%%c' is not "
 			           "currently supported.\n", name, code);
 			vpi_control(vpiFinish, 1);
+			break;
+
+		      case 'z':
+			match = scan_format_four_state(callh, argv, src,
+			                               max_width,
+			                               suppress_flag, name);
+			  /* If a binary match fails and it is the first item
+			   * matched then treat that as an EOF. */
+			if ((match == 0) && (rc == 0)) rc = EOF;
+			if (match == 1) rc += 1;
 			break;
 
 		      default:
