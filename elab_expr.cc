@@ -967,7 +967,7 @@ unsigned PEBLogic::test_width(Design*des, NetScope*scope,
 }
 
 NetExpr*PEBLogic::elaborate_expr(Design*des, NetScope*scope,
-				 int expr_width_dummp, bool sys_task_arg) const
+				 int expr_width_dummy, bool sys_task_arg) const
 {
       assert(left_);
       assert(right_);

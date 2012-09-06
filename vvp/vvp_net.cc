@@ -36,7 +36,7 @@
 # include "sfunc.h"
 #endif
 
-// Allocate around 1Megbytes/chunk.
+// Allocate around 1Megabytes/chunk.
 static const size_t VVP_NET_CHUNK = 1024*1024/sizeof(vvp_net_t);
 static vvp_net_t*vvp_net_alloc_table = 0;
 #ifdef CHECK_WITH_VALGRIND

@@ -54,7 +54,7 @@ So, if your program doesn't compile, tell me so, tell me where the
 error occurs, and include a complete Perfectly Valid Test Program(tm).
 You tell me that it fails to compile for you, and I find that it
 compiles for me, then hooray I fixed it. It can happen, you
-know. What's on my disk is more recent then the latest snapshot.
+know. What's on my disk is more recent than the latest snapshot.
 
 If your program does compile, but generates incorrect output, I need
 to know what it says and what you think it should say. From this I can
