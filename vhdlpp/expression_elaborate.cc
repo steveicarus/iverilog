@@ -700,6 +700,10 @@ const VType* ExpName::probe_prefixed_type_(Entity*ent, Architecture*arc) const
 	    return 0;
       }
 
+      while (const VTypeDef*def = dynamic_cast<const VTypeDef*> (prefix_type)) {
+	    prefix_type = def->peek_definition();
+      }
+
 	// If the prefix type is a record, then the current name is
 	// the name of a member.
       if (const VTypeRecord*pref_record = dynamic_cast<const VTypeRecord*> (prefix_type)) {
@@ -744,6 +748,10 @@ const VType* ExpName::probe_type(Entity*ent, Architecture*arc) const
       Expression*cval = 0;
       if (arc->find_constant(name_, ctype, cval))
 	    return ctype;
+
+      if (const VType*gtype = arc->probe_genvar_type(name_)) {
+	    return gtype;
+      }
 
       cerr << get_fileline() << ": error: Signal/variable " << name_
 	   << " not found in this context." << endl;

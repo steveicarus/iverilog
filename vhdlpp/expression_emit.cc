@@ -628,7 +628,12 @@ int ExpName::emit(ostream&out, Entity*ent, Architecture*arc)
 	    errors += prefix_->emit_as_prefix_(out, ent, arc);
       }
 
-      out << "\\" << name_ << " ";
+      const GenerateStatement*gs = 0;
+      if (arc && (gs = arc->probe_genvar_emit(name_)))
+	    out << "\\" << gs->get_name() << ":" << name_ << " ";
+      else
+	    out << "\\" << name_ << " ";
+
       if (index_) {
 	    out << "[";
 	    errors += index_->emit(out, ent, arc);

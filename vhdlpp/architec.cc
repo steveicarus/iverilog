@@ -22,6 +22,7 @@
 # include  "parse_types.h"
 // Need this for parse_errors?
 # include  "parse_api.h"
+# include  <cassert>
 
 using namespace std;
 
@@ -36,6 +37,54 @@ Architecture::~Architecture()
 {
     delete_all(statements_);
     ScopeBase::cleanup();
+}
+
+void Architecture::push_genvar_type(perm_string gname, const VType*gtype)
+{
+      genvar_type_t tmp;
+      tmp.name = gname;
+      tmp.vtype = gtype;
+      genvar_type_stack_.push_back(tmp);
+}
+
+void Architecture::pop_genvar_type(void)
+{
+      assert(! genvar_type_stack_.empty());
+      genvar_type_stack_.pop_back();
+}
+
+const VType* Architecture::probe_genvar_type(perm_string gname)
+{
+      for (std::list<genvar_type_t>::reverse_iterator cur = genvar_type_stack_.rbegin()
+		 ; cur != genvar_type_stack_.rend() ; ++cur) {
+	    if (cur->name == gname)
+		  return cur->vtype;
+      }
+      return 0;
+}
+
+void Architecture::push_genvar_emit(perm_string gname, const GenerateStatement*gen)
+{
+      genvar_emit_t tmp;
+      tmp.name = gname;
+      tmp.gen = gen;
+      genvar_emit_stack_.push_back(tmp);
+}
+
+void Architecture::pop_genvar_emit(void)
+{
+      assert(! genvar_emit_stack_.empty());
+      genvar_emit_stack_.pop_back();
+}
+
+const GenerateStatement* Architecture::probe_genvar_emit(perm_string gname)
+{
+      for (std::list<genvar_emit_t>::reverse_iterator cur = genvar_emit_stack_.rbegin()
+		 ; cur != genvar_emit_stack_.rend() ; ++cur) {
+	    if (cur->name == gname)
+		  return cur->gen;
+      }
+      return 0;
 }
 
 Architecture::Statement::Statement()
