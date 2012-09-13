@@ -3,23 +3,23 @@
 // problems will not be fixed.
 
 // fstapi.c from GTKWave
-variableScope:fstapi.c:1713
-variableScope:fstapi.c:1841
-variableScope:fstapi.c:1935
-variableScope:fstapi.c:1936
-variableScope:fstapi.c:2642
-variableScope:fstapi.c:2962
-variableScope:fstapi.c:2966
-variableScope:fstapi.c:2967
-variableScope:fstapi.c:4641
+variableScope:fstapi.c:1717
+variableScope:fstapi.c:1975
+variableScope:fstapi.c:2119
+variableScope:fstapi.c:2278
+variableScope:fstapi.c:2279
+variableScope:fstapi.c:2986
+variableScope:fstapi.c:3314
+variableScope:fstapi.c:3323
+variableScope:fstapi.c:4990
 
 // lxt2_write.c from GTKWave
 variableScope:lxt2_write.c:63
 variableScope:lxt2_write.c:523
 variableScope:lxt2_write.c:581
 variableScope:lxt2_write.c:587
-variableScope:lxt2_write.c:1600
-variableScope:lxt2_write.c:2047
+variableScope:lxt2_write.c:1613
+variableScope:lxt2_write.c:2060
 
 // lxt_write.c from GTKWave
 variableScope:lxt_write.c:31
@@ -28,11 +28,11 @@ variableScope:lxt_write.c:640
 variableScope:lxt_write.c:1056
 variableScope:lxt_write.c:1057
 variableScope:lxt_write.c:1058
-variableScope:lxt_write.c:1841
-variableScope:lxt_write.c:2586
-variableScope:lxt_write.c:2587
-variableScope:lxt_write.c:2588
-variableScope:lxt_write.c:2589
+variableScope:lxt_write.c:1850
+variableScope:lxt_write.c:2595
+variableScope:lxt_write.c:2596
+variableScope:lxt_write.c:2597
+variableScope:lxt_write.c:2598
 
 // The routines in sys_random.c are exact copies from IEEE1364-2005 and
 // they have scope warnings that we need to ignore.

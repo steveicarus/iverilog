@@ -1,3 +1,3 @@
 // The new() operator is always used to allocate space for this class and
 // pool is defined there.
-uninitVar:vvp_net.cc:164
+uninitVar:vvp_net.cc:167
