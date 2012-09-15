@@ -21,6 +21,7 @@
 
 # include  <cstdlib>
 # include  "netlist.h"
+# include  "netvector.h"
 # include  "netmisc.h"
 # include  "PExpr.h"
 # include  "pform_types.h"
@@ -30,10 +31,11 @@
 
 NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
 {
+      netvector_t*zero_vec = new netvector_t(sig->data_type(),
+					     sig->vector_width()-1, 0);
       NetNet*zero_net = new NetNet(scope, scope->local_symbol(),
-				   NetNet::WIRE, sig->vector_width());
+				   NetNet::WIRE, zero_vec);
       zero_net->set_line(*sig);
-      zero_net->data_type(sig->data_type());
       zero_net->local_flag(true);
 
       if (sig->data_type() == IVL_VT_REAL) {
@@ -62,10 +64,11 @@ NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
       connect(zero_net->pin(0), adder->pin_DataA());
       connect(adder->pin_DataB(), sig->pin(0));
 
+      netvector_t*tmp_vec = new netvector_t(sig->data_type(),
+					    sig->vector_width()-1, 0);
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-			      NetNet::WIRE, sig->vector_width());
+			      NetNet::WIRE, tmp_vec);
       tmp->set_line(*sig);
-      tmp->data_type(sig->data_type());
       tmp->local_flag(true);
 
       connect(adder->pin_Result(), tmp->pin(0));
@@ -78,9 +81,9 @@ NetNet* cast_to_int2(Design*des, NetScope*scope, NetNet*src, unsigned wid)
       if (src->data_type() == IVL_VT_BOOL)
 	    return src;
 
-      NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, wid);
+      netvector_t*tmp_vec = new netvector_t(IVL_VT_BOOL, wid-1, 0);
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, tmp_vec);
       tmp->set_line(*src);
-      tmp->data_type(IVL_VT_BOOL);
       tmp->local_flag(true);
 
       NetCastInt2*cast = new NetCastInt2(scope, scope->local_symbol(), wid);
@@ -98,9 +101,9 @@ NetNet* cast_to_int4(Design*des, NetScope*scope, NetNet*src, unsigned wid)
       if (src->data_type() != IVL_VT_REAL)
 	    return src;
 
-      NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, wid);
+      netvector_t*tmp_vec = new netvector_t(IVL_VT_LOGIC, wid-1, 0);
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, tmp_vec);
       tmp->set_line(*src);
-      tmp->data_type(IVL_VT_LOGIC);
       tmp->local_flag(true);
 
       NetCastInt4*cast = new NetCastInt4(scope, scope->local_symbol(), wid);
@@ -118,9 +121,9 @@ NetNet* cast_to_real(Design*des, NetScope*scope, NetNet*src)
       if (src->data_type() == IVL_VT_REAL)
 	    return src;
 
-      NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
+      netvector_t*tmp_vec = new netvector_t(IVL_VT_REAL);
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, tmp_vec);
       tmp->set_line(*src);
-      tmp->data_type(IVL_VT_REAL);
       tmp->local_flag(true);
 
       NetCastReal*cast = new NetCastReal(scope, scope->local_symbol(), src->get_signed());
@@ -630,9 +633,9 @@ NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid)
       NetConst*res = new NetConst(scope, scope->local_symbol(), xxx);
       des->add_node(res);
 
-      NetNet*sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, wid);
+      netvector_t*sig_vec = new netvector_t(IVL_VT_LOGIC, wid-1, 0);
+      NetNet*sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, sig_vec);
       sig->local_flag(true);
-      sig->data_type(IVL_VT_LOGIC);
 
       connect(sig->pin(0), res->pin(0));
       return sig;

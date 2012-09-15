@@ -21,6 +21,7 @@
 
 # include  "functor.h"
 # include  "netlist.h"
+# include  "netvector.h"
 # include  "netmisc.h"
 # include  "compiler.h"
 # include  <cassert>
@@ -221,10 +222,10 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 		  continue;
 	    }
 
+	    netvector_t*isig_vec = new netvector_t(mux_data_type, mux_width-1, 0);
 	    isig = new NetNet(scope, scope->local_symbol(),
-			      NetNet::TRI, mux_width);
+			      NetNet::TRI, isig_vec);
 	    isig->local_flag(true);
-	    isig->data_type(mux_data_type);
 
 	    connect(mux->pin_Data(idx), isig->pin(0));
 

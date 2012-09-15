@@ -24,6 +24,7 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "netstruct.h"
+# include  "netvector.h"
 # include  "compiler.h"
 
 # include  <cstdlib>
@@ -98,12 +99,12 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 	   concat operator from most significant to least significant,
 	   which is the order they are given in the concat list. */
 
+      netvector_t*tmp2_vec = new netvector_t(nets[0]->data_type(),width-1,0);
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
-			       NetNet::IMPLICIT, width);
+			       NetNet::IMPLICIT, tmp2_vec);
 
 	/* Assume that the data types of the nets are all the same, so
 	   we can take the data type of any, the first will do. */
-      osig->data_type(nets[0]->data_type());
       osig->local_flag(true);
       osig->set_line(*this);
 
@@ -154,8 +155,6 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    assert(width == 0);
       }
 
-      osig->data_type(nets[0]->data_type());
-      osig->local_flag(true);
       return osig;
 }
 
@@ -655,11 +654,12 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  return 0;
 	    }
 
+	    netvector_t*tmp2_vec = new netvector_t(sig->data_type(),
+						   sig->vector_width()-1,0);
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    sig->type(), sig->vector_width());
+				    sig->type(), tmp2_vec);
 	    tmp->set_line(*this);
 	    tmp->local_flag(true);
-	    tmp->data_type( sig->data_type() );
 	    connect(sig->pin(widx), tmp->pin(0));
 	    sig = tmp;
       }
@@ -683,10 +683,11 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		       << " wid=" << subnet_wid <<"]"
 		       << endl;
 
+	    netvector_t*tmp2_vec = new netvector_t(sig->data_type(),
+						   subnet_wid-1,0);
 	    NetNet*subsig = new NetNet(sig->scope(),
 				       sig->scope()->local_symbol(),
-				       NetNet::WIRE, subnet_wid);
-	    subsig->data_type( sig->data_type() );
+				       NetNet::WIRE, tmp2_vec);
 	    subsig->local_flag(true);
 	    subsig->set_line(*this);
 
@@ -800,10 +801,10 @@ NetNet* PEIdent::elaborate_subport(Design*des, NetScope*scope) const
       unsigned swid = abs(midx - lidx) + 1;
       ivl_assert(*this, swid > 0 && swid < sig->vector_width());
 
+      netvector_t*tmp2_vec = new netvector_t(sig->data_type(),swid-1,0);
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-			      NetNet::WIRE, swid);
+			      NetNet::WIRE, tmp2_vec);
       tmp->port_type(sig->port_type());
-      tmp->data_type(sig->data_type());
       tmp->set_line(*this);
       tmp->local_flag(true);
       NetNode*ps = 0;

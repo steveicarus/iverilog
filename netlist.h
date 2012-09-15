@@ -80,6 +80,7 @@ class netdarray_t;
 class netparray_t;
 class netenum_t;
 class netstruct_t;
+class netvector_t;
 
 struct target;
 struct functor_t;
@@ -606,8 +607,6 @@ class NetNet  : public NetObj, public PortType {
 	// dimensions. If s0==e0, then this is not an array after
 	// all.
       explicit NetNet(NetScope*s, perm_string n, Type t,
-		      const std::list<netrange_t>&packed);
-      explicit NetNet(NetScope*s, perm_string n, Type t,
 		      const std::list<netrange_t>&packed,
 		      const std::list<netrange_t>&unpacked,
 		      nettype_base_t*type =0);
@@ -615,7 +614,7 @@ class NetNet  : public NetObj, public PortType {
 	// This form builds a NetNet from its record/enum definition.
       explicit NetNet(NetScope*s, perm_string n, Type t, netstruct_t*type);
       explicit NetNet(NetScope*s, perm_string n, Type t, netdarray_t*type);
-	//explicit NetNet(NetScope*s, perm_string n, Type t, netparray_t*type);
+      explicit NetNet(NetScope*s, perm_string n, Type t, netvector_t*type);
 
       virtual ~NetNet();
 
@@ -631,7 +630,6 @@ class NetNet  : public NetObj, public PortType {
       void set_module_port_index(unsigned idx);
 
       ivl_variable_type_t data_type() const;
-      void data_type(ivl_variable_type_t t);
 
 	/* If a NetNet is signed, then its value is to be treated as
 	   signed. Otherwise, it is unsigned. */
@@ -658,7 +656,7 @@ class NetNet  : public NetObj, public PortType {
 	   for the vector. These are arranged as a list where the
 	   first range in the list (front) is the left-most range in
 	   the verilog declaration. */
-      const std::list<netrange_t>& packed_dims() const { return packed_dims_; }
+      const std::list<netrange_t>& packed_dims() const;
 
       const std::vector<netrange_t>& unpacked_dims() const { return unpacked_dims_; }
 
@@ -733,7 +731,6 @@ class NetNet  : public NetObj, public PortType {
     private:
       Type   type_    : 5;
       PortType port_type_ : 3;
-      ivl_variable_type_t data_type_ : 3;
       bool signed_    : 1;
       bool isint_     : 1;		// original type of integer
       bool is_scalar_ : 1;

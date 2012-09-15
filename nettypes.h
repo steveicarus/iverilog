@@ -19,6 +19,7 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+# include  "ivl_target.h"
 # include <list>
 # include <climits>
 # include <cassert>
@@ -31,6 +32,9 @@ class nettype_base_t {
     public:
       virtual ~nettype_base_t() =0;
       virtual long packed_width(void) const;
+
+	// Some types have a base variable type.
+      virtual ivl_variable_type_t base_type() const;
 };
 
 class netrange_t {

@@ -55,6 +55,10 @@ class netstruct_t : public LineInfo, public nettype_base_t {
 	// the record is not packed.
       long packed_width() const;
 
+	// Return the base type of the packed record, or
+	// IVL_VT_NO_TYPE if the record is not packed.
+      ivl_variable_type_t base_type() const;
+
     private:
       bool packed_;
       std::vector<member_t>members_;

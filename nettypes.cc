@@ -31,6 +31,11 @@ long nettype_base_t::packed_width(void) const
       return 0;
 }
 
+ivl_variable_type_t nettype_base_t::base_type() const
+{
+      return IVL_VT_NO_TYPE;
+}
+
 unsigned long netrange_width(const list<netrange_t>&packed)
 {
       unsigned wid = 1;

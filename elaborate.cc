@@ -35,6 +35,7 @@
 # include  "PGenerate.h"
 # include  "PSpec.h"
 # include  "netlist.h"
+# include  "netvector.h"
 # include  "netmisc.h"
 # include  "util.h"
 # include  "parse_api.h"
@@ -75,8 +76,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: PGAssign: elaborated l-value"
-		 << " width=" << lval->vector_width()
-		 << ", type=" << lval->data_type() << endl;
+		 << " width=" << lval->vector_width() << endl;
       }
 
       NetExpr*rval_expr = elaborate_rval_expr(des, scope, lval->data_type(),
@@ -164,11 +164,12 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 						  NetPartSelect::VP);
 	    des->add_node(tmp);
 	    tmp->set_line(*this);
+	    netvector_t*osig_vec = new netvector_t(rval->data_type(),
+						   lval->vector_width()-1,0);
 	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
-				     NetNet::TRI, lval->vector_width());
+				     NetNet::TRI, osig_vec);
 	    osig->set_line(*this);
 	    osig->local_flag(true);
-	    osig->data_type(rval->data_type());
 	    connect(osig->pin(0), tmp->pin(0));
 	    rval = osig;
 	    need_driver_flag = false;
@@ -190,10 +191,11 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
 	    connect(rval->pin(0), driver->pin(1));
 
+	    netvector_t*tmp_vec = new netvector_t(rval->data_type(),
+						  rval->vector_width()-1,0);
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::WIRE, rval->vector_width());
+				    NetNet::WIRE, tmp_vec);
 	    tmp->set_line(*this);
-	    tmp->data_type(rval->data_type());
 	    tmp->local_flag(true);
 
 	    connect(driver->pin(0), tmp->pin(0));
@@ -868,10 +870,11 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			des->add_node(rep);
 			connect(rep->pin(1), sig->pin(0));
 
+			netvector_t*osig_vec = new netvector_t(IVL_VT_LOGIC,
+							       instance_width-1,0);
 			sig = new NetNet(scope, scope->local_symbol(),
-					 NetNet::WIRE, instance_width);
+					 NetNet::WIRE, osig_vec);
 			sig->set_line(*this);
-			sig->data_type(IVL_VT_LOGIC);
 			sig->local_flag(true);
 			connect(rep->pin(0), sig->pin(0));
 
@@ -948,12 +951,12 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			      unsigned dev = gdx*gate_count;
 			      connect(cur[dev+idx]->pin(0), cc->pin(gdx+1));
 
+			      netvector_t*tmp2_vec = new netvector_t(IVL_VT_LOGIC);
 			      NetNet*tmp2 = new NetNet(scope,
 						       scope->local_symbol(),
-						       NetNet::WIRE, 1);
+						       NetNet::WIRE, tmp2_vec);
 			      tmp2->set_line(*this);
 			      tmp2->local_flag(true);
-			      tmp2->data_type(IVL_VT_LOGIC);
 			      connect(cc->pin(gdx+1), tmp2->pin(0));
 			}
 
@@ -965,11 +968,11 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			tmp1->set_line(*this);
 			des->add_node(tmp1);
 			connect(tmp1->pin(1), sig->pin(0));
+			netvector_t*tmp2_vec = new netvector_t(sig->data_type());
 			NetNet*tmp2 = new NetNet(scope, scope->local_symbol(),
-						 NetNet::WIRE, 1);
+						 NetNet::WIRE, tmp2_vec);
 			tmp2->set_line(*this);
 			tmp2->local_flag(true);
-			tmp2->data_type(sig->data_type());
 			connect(tmp1->pin(0), tmp2->pin(0));
 			unsigned use_idx = idx - gate_count + 1;
 			unsigned dev = gdx*gate_count;
@@ -1432,11 +1435,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			des->add_node(tmp);
 			connect(tmp->pin(1), sig->pin(0));
 
+			netvector_t*tmp2_vec = new netvector_t(sig->data_type(),
+							       sig->vector_width()-1,0);
 			NetNet*tmp2 = new NetNet(scope, scope->local_symbol(),
-						 NetNet::WIRE, sig->vector_width());
+						 NetNet::WIRE, tmp2_vec);
 			tmp2->local_flag(true);
 			tmp2->set_line(*this);
-			tmp2->data_type(sig->data_type());
 			connect(tmp->pin(0), tmp2->pin(0));
 			sig = tmp2;
 		  }
@@ -2382,11 +2386,11 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
       if (delay || event_) {
 	    unsigned wid = count_lval_width(lv);
 
+	    netvector_t*tmp2_vec = new netvector_t(rv->expr_type(),wid-1,0);
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::REG, wid);
+				    NetNet::REG, tmp2_vec);
 	    tmp->local_flag(true);
 	    tmp->set_line(*this);
-	    tmp->data_type(rv->expr_type());
 
 	    NetESignal*sig = new NetESignal(tmp);
 

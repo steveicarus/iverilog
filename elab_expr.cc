@@ -27,6 +27,7 @@
 # include  "pform.h"
 # include  "netlist.h"
 # include  "netenum.h"
+# include  "netvector.h"
 # include  "discipline.h"
 # include  "netmisc.h"
 # include  "netdarray.h"
@@ -2382,6 +2383,10 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    expr_width_  = net->vector_width();
 	    min_width_   = expr_width_;
 	    signed_flag_ = net->get_signed();
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::test_width: "
+		       << net->name() << " is a net, width=" << expr_width_ << endl;
+	    }
 	    return expr_width_;
       }
 
@@ -4503,9 +4508,9 @@ NetNet* Design::find_discipline_reference(ivl_discipline_t dis, NetScope*scope)
       if (gnd) return gnd;
 
       string name = string(dis->name()) + "$gnd";
-      gnd = new NetNet(scope, lex_strings.make(name), NetNet::WIRE, 1);
+      netvector_t*gnd_vec = new netvector_t(IVL_VT_REAL,0,0);
+      gnd = new NetNet(scope, lex_strings.make(name), NetNet::WIRE, gnd_vec);
       gnd->set_discipline(dis);
-      gnd->data_type(IVL_VT_REAL);
       discipline_references_[dis->name()] = gnd;
 
       if (debug_elaborate)

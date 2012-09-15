@@ -29,6 +29,7 @@
 # include  "compiler.h"
 # include  "discipline.h"
 # include  "netdarray.h"
+# include  "netvector.h"
 # include  "ivl_assert.h"
 # include  "PExpr.h"
 
@@ -140,6 +141,12 @@ ostream& operator << (ostream&o, ivl_switch_type_t val)
       return o;
 }
 
+ostream& netvector_t::debug_dump(std::ostream&o) const
+{
+      o << type_ << packed_dims_;
+      return o;
+}
+
 static inline void dump_scope_path(ostream&o, const NetScope*scope)
 {
       const NetScope*parent = scope->parent();
@@ -235,7 +242,6 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
       o << " pin_count=" << pin_count();
       if (local_flag_)
 	    o << " (local)";
-      o << " " << data_type_;
       if (signed_)
 	    o << " signed";
       switch (port_type_) {
@@ -260,6 +266,10 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 
       if (ivl_discipline_t dis = get_discipline())
 	    o << " discipline=" << dis->name();
+
+      if (netvector_t*varray = dynamic_cast<netvector_t*>(net_type_))
+	    o << " vector " << varray->packed_dims()
+	      << " of " << *varray;
 
       if (netdarray_t*darray = darray_type())
 	    o << " dynamic array of " << darray->data_type();

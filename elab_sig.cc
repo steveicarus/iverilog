@@ -36,6 +36,7 @@
 # include  "netmisc.h"
 # include  "netenum.h"
 # include  "netstruct.h"
+# include  "netvector.h"
 # include  "netdarray.h"
 # include  "netparray.h"
 # include  "util.h"
@@ -485,6 +486,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
       }
 
       NetNet*ret_sig = 0;
+      netvector_t*ret_vec = 0;
 
 	/* Create the signals/variables of the return value and write
 	   them into the function scope. */
@@ -522,48 +524,49 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 
 		  list<netrange_t> packed;
 		  packed.push_back(netrange_t(mnum, lnum));
-		  ret_sig = new NetNet(scope, fname, NetNet::REG, packed);
+		  ret_vec = new netvector_t(packed, IVL_VT_LOGIC);
+		  ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 		  ret_sig->set_scalar(false);
 
 	    } else {
-		  ret_sig = new NetNet(scope, fname, NetNet::REG);
+		  ret_vec = new netvector_t(IVL_VT_LOGIC);
+		  ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 		  ret_sig->set_scalar(true);
 	    }
 	    ret_sig->set_line(*this);
 	    ret_sig->set_signed(return_type_.type == PTF_REG_S);
 	    ret_sig->port_type(NetNet::POUTPUT);
-	    ret_sig->data_type(IVL_VT_LOGIC);
 	    break;
 
 	  case PTF_INTEGER:
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, integer_width);
+	    ret_vec = new netvector_t(IVL_VT_LOGIC, integer_width-1,0);
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    ret_sig->set_line(*this);
 	    ret_sig->set_signed(true);
 	    ret_sig->set_isint(true);
 	    ret_sig->set_scalar(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
-	    ret_sig->data_type(IVL_VT_LOGIC);
 	    break;
 
 	  case PTF_TIME:
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, 64);
+	    ret_vec = new netvector_t(IVL_VT_LOGIC, 64-1,0);
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    ret_sig->set_line(*this);
 	    ret_sig->set_signed(false);
 	    ret_sig->set_isint(false);
 	    ret_sig->set_scalar(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
-	    ret_sig->data_type(IVL_VT_LOGIC);
 	    break;
 
 	  case PTF_REAL:
 	  case PTF_REALTIME:
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, 1);
+	    ret_vec = new netvector_t(IVL_VT_REAL);
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    ret_sig->set_line(*this);
 	    ret_sig->set_signed(true);
 	    ret_sig->set_isint(false);
 	    ret_sig->set_scalar(true);
 	    ret_sig->port_type(NetNet::POUTPUT);
-	    ret_sig->data_type(IVL_VT_REAL);
 	    break;
 
 	  case PTF_ATOM2:
@@ -598,13 +601,13 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 
 		  use_wid = mnum - lnum + 1;
 	    }
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, use_wid);
+	    ret_vec = new netvector_t(IVL_VT_BOOL, use_wid-1, 0);
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    ret_sig->set_line(*this);
 	    ret_sig->set_signed(return_type_.type == PTF_ATOM2_S? true : false);
 	    ret_sig->set_isint(true);
 	    ret_sig->set_scalar(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
-	    ret_sig->data_type(IVL_VT_BOOL);
 	    break;
 
 	  case PTF_STRING:
@@ -1272,23 +1275,24 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  cerr << " in scope " << scope_path(scope) << endl;
 	    }
 
-	    sig = new NetNet(scope, name_, wtype, packed_dimensions, unpacked_dimensions);
+	    ivl_variable_type_t use_data_type = data_type_;
+	    if (use_data_type == IVL_VT_NO_TYPE) {
+		  use_data_type = IVL_VT_LOGIC;
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": debug: "
+			     << "Signal " << name_
+			     << " in scope " << scope_path(scope)
+			     << " defaults to data type " << use_data_type << endl;
+		  }
+	    }
+
+	    netvector_t*vec = new netvector_t(packed_dimensions, use_data_type);
+	    packed_dimensions.clear();
+	    sig = new NetNet(scope, name_, wtype, packed_dimensions, unpacked_dimensions, vec);
+
       }
 
       if (wtype == NetNet::WIRE) sig->devirtualize_pins();
-
-      ivl_variable_type_t use_data_type = data_type_;
-      if (use_data_type == IVL_VT_NO_TYPE) {
-	    use_data_type = IVL_VT_LOGIC;
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: "
-		       << "Signal " << name_
-		       << " in scope " << scope_path(scope)
-		       << " defaults to data type " << use_data_type << endl;
-	    }
-      }
-
-      sig->data_type(use_data_type);
       sig->set_line(*this);
       sig->port_type(port_type_);
       sig->set_signed(get_signed());
