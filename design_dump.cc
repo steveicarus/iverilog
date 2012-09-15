@@ -229,7 +229,10 @@ ostream&operator<<(ostream&out, const vector<netrange_t>&rlist)
 void NetNet::dump_net(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << type() << ": " << name()
-	<< unpacked_dims_ << " unpacked dims=" << unpacked_dimensions() << " count=" << pin_count();
+	<< unpacked_dims_ << " unpacked dims=" << unpacked_dimensions();
+      if (!packed_dims_.empty())
+	    o << " packed dims=" << packed_dims_;
+      o << " pin_count=" << pin_count();
       if (local_flag_)
 	    o << " (local)";
       o << " " << data_type_;
@@ -263,6 +266,9 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 
       if (! packed_dims_.empty())
 	    o << " packed dims: " << packed_dims_;
+
+      if (net_type_)
+	    o << " net_type_=" << typeid(*net_type_).name();
 
       o << " (eref=" << peek_eref() << ", lref=" << peek_lref() << ")";
       if (scope())

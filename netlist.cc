@@ -476,6 +476,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
 
 	// Synthesize a single range to describe this canonical vector.
       packed_dims_.push_back(netrange_t(npins-1, 0));
+      calculate_slice_widths_from_packed_dims_();
 
       Link::DIR dir = Link::PASSIVE;
 
@@ -521,6 +522,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
     eref_count_(0), lref_count_(0)
 {
       packed_dims_ = packed;
+      calculate_slice_widths_from_packed_dims_();
       assert(s);
 
       Link::DIR dir = Link::PASSIVE;
@@ -564,6 +566,32 @@ static unsigned calculate_count(const list<netrange_t>&unpacked)
       return sum;
 }
 
+template <class T> static unsigned calculate_count(T*type)
+{
+      long wid = type->packed_width();
+      if (wid >= 0)
+	    return wid;
+      else
+	    return 1;
+}
+
+void NetNet::calculate_slice_widths_from_packed_dims_(void)
+{
+      if (packed_dims_.empty()) {
+	    slice_wids_.clear();
+	    return;
+      }
+
+      slice_wids_.resize(packed_dims_.size());
+
+      slice_wids_[0] = netrange_width(packed_dims_);
+      list<netrange_t>::const_iterator cur = packed_dims_.begin();
+      for (size_t idx = 1 ; idx < slice_wids_.size() ; idx += 1) {
+	    slice_wids_[idx] = slice_wids_[idx-1] / cur->width();
+      }
+
+}
+
 NetNet::NetNet(NetScope*s, perm_string n, Type t,
 	       const list<netrange_t>&packed,
 	       const list<netrange_t>&unpacked,
@@ -576,6 +604,9 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
     eref_count_(0), lref_count_(0)
 {
       packed_dims_ = packed;
+      if (net_type)
+	    packed_dims_.push_back(netrange_t(calculate_count(net_type)-1, 0));
+      calculate_slice_widths_from_packed_dims_();
       size_t idx = 0;
       for (list<netrange_t>::const_iterator cur = unpacked.begin()
 		 ; cur != unpacked.end() ; ++cur, idx += 1) {
@@ -611,15 +642,6 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
       s->add_signal(this);
 }
 
-static unsigned calculate_count(netstruct_t*type)
-{
-      long wid = type->packed_width();
-      if (wid >= 0)
-	    return wid;
-      else
-	    return 1;
-}
-
 /*
  * When we create a netnet for a packed struct, create a single
  * vector with the msb_/lsb_ chosen to name enough bits for the entire
@@ -634,6 +656,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, netstruct_t*ty)
     eref_count_(0), lref_count_(0)
 {
       packed_dims_.push_back(netrange_t(calculate_count(ty)-1, 0));
+      calculate_slice_widths_from_packed_dims_();
       Link::DIR dir = Link::PASSIVE;
 
       switch (t) {
@@ -818,6 +841,25 @@ netstruct_t*NetNet::struct_type(void) const
 netdarray_t* NetNet::darray_type(void) const
 {
       return dynamic_cast<netdarray_t*> (net_type_);
+}
+
+/*
+ * "depth" is the number of index expressions that the user is using
+ * to index this identifer. So consider if Net was declared like so:
+ *
+ *   reg [5:0][3:0] foo;
+ *
+ * In this case, slice_width(2) == 1  (slice_width(N) where N is the
+ * number of dimensions will always be 1.) and represents
+ * $bits(foo[a][b]). Then, slice_width(1)==4 ($bits(foo[a]) and slice_width(0)==24.
+ */
+unsigned long NetNet::slice_width(size_t depth) const
+{
+      if (depth > slice_wids_.size())
+	    return 0;
+      if (depth == slice_wids_.size())
+	    return 1;
+      return slice_wids_[depth];
 }
 
 ivl_discipline_t NetNet::get_discipline() const

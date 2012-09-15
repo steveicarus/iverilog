@@ -77,6 +77,7 @@ class NetEvWait;
 class PExpr;
 class PFunction;
 class netdarray_t;
+class netparray_t;
 class netenum_t;
 class netstruct_t;
 
@@ -614,6 +615,7 @@ class NetNet  : public NetObj, public PortType {
 	// This form builds a NetNet from its record/enum definition.
       explicit NetNet(NetScope*s, perm_string n, Type t, netstruct_t*type);
       explicit NetNet(NetScope*s, perm_string n, Type t, netdarray_t*type);
+	//explicit NetNet(NetScope*s, perm_string n, Type t, netparray_t*type);
 
       virtual ~NetNet();
 
@@ -662,7 +664,7 @@ class NetNet  : public NetObj, public PortType {
 
 	/* The vector_width returns the bit width of the packed array,
 	   vector or scaler that is this NetNet object.  */
-      unsigned long vector_width() const { return netrange_width(packed_dims_); }
+      inline unsigned long vector_width() const { return slice_width(0); }
 
 	/* Given a prefix of indices, figure out how wide the
 	   resulting slice would be. This is a generalization of the
@@ -693,6 +695,10 @@ class NetNet  : public NetObj, public PortType {
 	   for arrays. The value is the number of array
 	   indices. (Currently only one array index is supported.) */
       inline unsigned unpacked_dimensions() const { return unpacked_dims_.size(); }
+
+	/* This methor returns 0 for scalars, but vectors and other
+	   PACKED arrays have packed dimensions. */
+      inline size_t packed_dimensions() const { return packed_dims_.size(); }
 
 	// This is the number of array elements.
       unsigned unpacked_count() const;
@@ -737,6 +743,14 @@ class NetNet  : public NetObj, public PortType {
 
       std::list<netrange_t> packed_dims_;
       std::vector<netrange_t> unpacked_dims_;
+
+	// These are the widths of the various slice depths. There is
+	// one entry in this vector for each packed dimension. The
+	// value at N is the slice width if N indices are provided.
+	//
+	// For example: slice_wids_[0] is vector_width().
+      void calculate_slice_widths_from_packed_dims_(void);
+      std::vector<unsigned long> slice_wids_;
 
       unsigned eref_count_;
       unsigned lref_count_;
@@ -4161,6 +4175,12 @@ class Design {
 	   path is taken as an absolute scope name. Otherwise, the
 	   scope is located starting at the passed scope and working
 	   up if needed. */
+      NetScope* find_scope(const hname_t&path) const;
+      NetScope* find_scope(NetScope*, const hname_t&name,
+                           NetScope::TYPE type = NetScope::MODULE) const;
+	// Note: Try to remove these versions of find_scope. Avoid
+	// using these in new code, use the above forms (or
+	// symbol_search) instead.
       NetScope* find_scope(const std::list<hname_t>&path) const;
       NetScope* find_scope(NetScope*, const std::list<hname_t>&path,
                            NetScope::TYPE type = NetScope::MODULE) const;

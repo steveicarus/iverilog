@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -682,6 +683,11 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
       netstruct_t*struct_type = reg->struct_type();
       ivl_assert(*this, struct_type);
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: elaborate lval packed member: "
+		 << "path_=" << path_ << endl;
+      }
+
       if (! struct_type->packed()) {
 	    cerr << get_fileline() << ": sorry: Only packed structures "
 		 << "are supported in l-value." << endl;
@@ -689,6 +695,27 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 	    return false;
       }
 
+	// Shouldn't be seeing unpacked arrays of packed structs...
+      ivl_assert(*this, reg->unpacked_dimensions() == 0);
+
+	// This is a packed member, so the name is of the form
+	// "a.b[...].c[...]" which means that the path_ must have at
+	// least 2 components. We are processing "c[...]" at that
+	// point (otherwise known as member_name) so we'll save a
+	// reference to it in name_tail. We are also processing "b[]"
+	// so save that as name_base.
+
+      ivl_assert(*this, path_.size() >= 2);
+
+      pform_name_t::const_reverse_iterator name_idx = path_.rbegin();
+      ivl_assert(*this, name_idx->name == member_name);
+      const name_component_t&name_tail = *name_idx;
+      ++ name_idx;
+      const name_component_t&name_base = *name_idx;
+
+	// Calculate the offset within the packed structure of the
+	// member, and any indices. We will add in the offset of the
+	// struct into the packed array later.
       unsigned long off;
       const netstruct_t::member_t* member = struct_type->packed_member(member_name, off);
 
@@ -701,14 +728,8 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 
       unsigned long use_width = member->width();
 
-	// We are processing the tail of a string of names. For
-	// example, the verilog may be "a.b.c", so we are processing
-	// "c" at this point. Of course, "c" is the name of the member
-	// we are working on and "a.b" is the name of reg.
-      const name_component_t&name_tail = path_.back();
-
       if (name_tail.index.size() > member->packed_dims.size()) {
-	    cerr << get_fileline() << ": error: Too make index expressions for member." << endl;
+	    cerr << get_fileline() << ": error: Too many index expressions for member." << endl;
 	    des->errors += 1;
 	    return false;
       }
@@ -749,8 +770,46 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 	    use_width = lwid;
       }
 
-      lv->set_part(new NetEConst(verinum(off)), use_width);
-      return true;
+	// The dimenions in the expression must match the packed
+	// dimensions that are declared for the variable. For example,
+	// if foo is a packed array of struct, then this expression
+	// must be "b[n][m]" with the right number of dimensions to
+	// match the declaration of "b".
+	// Note that one of the packed dimensions is the packed struct
+	// itself.
+      ivl_assert(*this, name_base.index.size()+1 == reg->packed_dimensions());
+
+	// Generate an expression that takes the input array of
+	// expressions and generates a canonical offset into the
+	// packed array.
+      NetExpr*packed_base = 0;
+      if (reg->packed_dimensions() > 1) {
+	    list<index_component_t>tmp_index = name_base.index;
+	    index_component_t member_select;
+	    member_select.sel = index_component_t::SEL_BIT;
+	    member_select.msb = new PENumber(new verinum(off));
+	    tmp_index.push_back(member_select);
+	    packed_base = collapse_array_indices(des, scope, reg, tmp_index);
+      }
+
+      long tmp;
+      if (packed_base && eval_as_long(tmp, packed_base)) {
+	    off = tmp;
+	    delete packed_base;
+	    packed_base = 0;
+      }
+
+      if (packed_base == 0) {
+	    lv->set_part(new NetEConst(verinum(off)), use_width);
+	    return true;
+      }
+
+	// Oops, packed_base is not fully evaluated, so I don't know
+	// yet what to do with it.
+      cerr << get_fileline() << ": internal error: "
+	   << "I don't know how to handle this index expression? " << *packed_base << endl;
+      ivl_assert(*this, 0);
+      return false;
 }
 
 NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const

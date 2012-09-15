@@ -257,17 +257,13 @@ bool eval_as_long(long&value, NetExpr*expr);
 bool eval_as_double(double&value, NetExpr*expr);
 
 /*
- * Evaluate the component of a scope path to get an hname_t value. Do
- * the evaluation in the context of the given scope.
- */
-extern hname_t eval_path_component(Design*des, NetScope*scope,
-				   const name_component_t&comp);
-
-/*
  * Evaluate an entire scope path in the context of the given scope.
  */
 extern std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 					  const pform_name_t&path);
+extern hname_t eval_path_component(Design*des, NetScope*scope,
+				   const name_component_t&comp,
+				   bool&error_flag);
 
 /*
  * Return true if the data type is a type that is normally available
@@ -310,4 +306,12 @@ extern void collapse_partselect_pv_to_concat(Design*des, NetNet*sig);
 extern bool evaluate_index_prefix(Design*des, NetScope*scope,
 				  list<long>&prefix_indices,
 				  const list<index_component_t>&indices);
+
+extern NetExpr*collapse_array_indices(Design*des, NetScope*scope, NetNet*net,
+				      const std::list<index_component_t>&indices);
+
+extern NetExpr*collapse_array_exprs(Design*des, NetScope*scope,
+				    const LineInfo*loc, NetNet*net,
+				    const list<index_component_t>&indices);
+
 #endif

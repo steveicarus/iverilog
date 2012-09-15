@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -418,15 +419,20 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    return 0;
       }
 
+	// Break the path_ into the tail name and the prefix. For
+	// example, a name "a.b.c" is broken into name_tail="c" and
+	// path_prefix="a.b".
+      const name_component_t&path_tail = path_.back();
+      pform_name_t path_prefix = path_;
+      path_prefix.pop_back();
+
 	/* If the signal is not found, check to see if this is a
 	   member of a struct. Take the name of the form "a.b.member",
 	   remove the member and store it into method_name, and retry
 	   the search with "a.b". */
       if (sig == 0 && path_.size() >= 2) {
-	    pform_name_t use_path = path_;
-	    method_name = peek_tail_name(use_path);
-	    use_path.pop_back();
-	    symbol_search(this, des, scope, use_path, sig, par, eve);
+	    method_name = path_tail.name;
+	    symbol_search(this, des, scope, path_prefix, sig, par, eve);
 
 	      // Whoops, not a struct signal, so give up on this avenue.
 	    if (sig && sig->struct_type() == 0) {
@@ -467,14 +473,16 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	// The default word select is the first.
       long widx = 0;
 
-      const name_component_t&name_tail = path_.back();
       list<long> unpacked_indices_const;
 
       netstruct_t*struct_type = 0;
       if ((struct_type = sig->struct_type()) && !method_name.nil()) {
 
 	      // Detect the variable is a structure and there was a
-	      // method name detected.
+	      // method name detected. We've already found that
+	      // the path_ is <>.sig.method_name and signal
+	      // (NetNet). We also know that sig is struct_type(), so
+	      // look for a method named method_name.
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: "
 		       << "Signal " << sig->name() << " is a structure, "
@@ -489,13 +497,50 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    lidx = member_off;
 	    midx = lidx + member->width() - 1;
 
+	      // The dimensions of the tail of the prefix must match
+	      // the dimensions of the signal at this point. (The sig
+	      // has a packed dimension for the packed struct size.)
+	      // For example, if the path_=a[<m>][<n>].member, then
+	      // sig must have 3 packed dimenions: one for the struct
+	      // members and two actual packed dimensions.
+	    ivl_assert(*this, path_prefix.back().index.size()+1 == sig->packed_dimensions());
+
+	      // Elaborate an expression from the packed indices and
+	      // the member offset (into the structure) to get a
+	      // canonical expression into the packed signal vector.
+	    NetExpr*packed_base = 0;
+	    if (sig->packed_dimensions() > 1) {
+		  list<index_component_t>tmp_index = path_prefix.back().index;
+		  index_component_t member_select;
+		  member_select.sel = index_component_t::SEL_BIT;
+		  member_select.msb = new PENumber(new verinum(member_off));
+		  tmp_index.push_back(member_select);
+		  packed_base = collapse_array_indices(des, scope, sig, tmp_index);
+
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": debug: "
+			     << "packed_base expression = " << *packed_base << endl;
+		  }
+	    }
+
+	    long tmp;
+	    if (packed_base && eval_as_long(tmp, packed_base)) {
+		  lidx = tmp;
+		  midx = lidx + member->width() - 1;
+		  delete packed_base;
+		  packed_base = 0;
+	    }
+
+	      // Currently, only support const dimensions here.
+	    ivl_assert(*this, packed_base == 0);
+
       } else if (sig->unpacked_dimensions() > 0) {
 
 	      // Make sure there are enough indices to address an array element.
-	    if (name_tail.index.size() < sig->unpacked_dimensions()) {
+	    if (path_tail.index.size() < sig->unpacked_dimensions()) {
 		  cerr << get_fileline() << ": error: Array " << path()
 		       << " needs " << sig->unpacked_dimensions() << " indices,"
-		       << " but got only " << name_tail.index.size() << "." << endl;
+		       << " but got only " << path_tail.index.size() << "." << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
@@ -504,7 +549,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	      // "unpacked_indices" array.
 	    list<NetExpr*>unpacked_indices;
 	    bool flag = indices_to_expressions(des, scope, this,
-					       name_tail.index, sig->unpacked_dimensions(),
+					       path_tail.index, sig->unpacked_dimensions(),
 					       true,
 					       unpacked_indices,
 					       unpacked_indices_const);
@@ -539,7 +584,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		       << " to index l-value array." << endl;
 
 	      /* The array has a part/bit select at the end. */
-	    if (name_tail.index.size() > sig->unpacked_dimensions()) {
+	    if (path_tail.index.size() > sig->unpacked_dimensions()) {
 		  if (sig->get_scalar()) {
 		        cerr << get_fileline() << ": error: "
 		             << "can not select part of ";
@@ -566,7 +611,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  lidx = lidx_tmp;
 	    }
 
-      } else if (!name_tail.index.empty()) {
+      } else if (!path_tail.index.empty()) {
 	    if (sig->get_scalar()) {
 		  cerr << get_fileline() << ": error: "
 		       << "can not select part of ";

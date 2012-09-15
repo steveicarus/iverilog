@@ -21,17 +21,17 @@
 # include  "parse_misc.h"
 # include  "ivl_assert.h"
 
-static void pform_set_string_type(string_type_t*string_type, perm_string name, list<named_pexpr_t>*attr)
+static void pform_set_string_type(string_type_t*string_type, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
-      PWire*net = pform_get_make_wire_in_scope(name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_STRING);
+      PWire*net = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, IVL_VT_STRING);
       pform_bind_attributes(net->attributes, attr, true);
 }
 
-void pform_set_string_type(string_type_t*string_type, list<perm_string>*names, list<named_pexpr_t>*attr)
+void pform_set_string_type(string_type_t*string_type, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur) {
-	    pform_set_string_type(string_type, *cur, attr);
+	    pform_set_string_type(string_type, *cur, net_type, attr);
       }
 }
 

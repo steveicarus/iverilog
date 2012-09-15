@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,6 +20,7 @@
 
 # include "config.h"
 
+# include  <typeinfo>
 # include  <cstdlib>
 # include  <iostream>
 
@@ -35,8 +37,11 @@
 # include  "netenum.h"
 # include  "netstruct.h"
 # include  "netdarray.h"
+# include  "netparray.h"
 # include  "util.h"
 # include  "ivl_assert.h"
+
+using namespace std;
 
 static bool get_const_argument(NetExpr*exp, verinum&res)
 {
@@ -892,6 +897,35 @@ static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
       return res;
 }
 
+static netparray_t* elaborate_parray_type(Design*des, NetScope*scope,
+					  parray_type_t*data_type)
+{
+
+      list<netrange_t>packed_dimensions;
+      bool bad_range = evaluate_ranges(des, scope, packed_dimensions, * data_type->packed_dims);
+      ivl_assert(*data_type, !bad_range);
+
+      netparray_t*res = new netparray_t(packed_dimensions);
+	//res->set_line(*data_type);
+
+      return res;
+}
+
+static nettype_base_t*elaborate_type(Design*des, NetScope*scope,
+				     data_type_t*pform_type)
+{
+      if (struct_type_t*struct_type = dynamic_cast<struct_type_t*>(pform_type)) {
+	    netstruct_t*use_type = elaborate_struct_type(des, scope, struct_type);
+	    return use_type;
+      }
+
+      cerr << pform_type->get_fileline() << ": sorry: I don't know how to elaborate "
+	   << typeid(*pform_type).name() << " here." << endl;
+      des->errors += 1;
+
+      return 0;
+}
+
 bool test_ranges_eeq(const list<netrange_t>&lef, const list<netrange_t>&rig)
 {
       if (lef.size() != rig.size())
@@ -1158,8 +1192,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	// If this is a struct type, then build the net with the
 	// struct type.
-      if (struct_type_) {
-	    netstruct_t*use_type = elaborate_struct_type(des, scope, struct_type_);
+      if (struct_type_t*struct_type = dynamic_cast<struct_type_t*>(set_data_type_)) {
+	    netstruct_t*use_type = elaborate_struct_type(des, scope, struct_type);
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype;
 		  if (use_type->packed())
@@ -1172,23 +1206,22 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    sig = new NetNet(scope, name_, wtype, use_type);
 
-      } else if (enum_type_) {
-	    ivl_assert(*this, struct_type_ == 0);
-	    ivl_assert(*this, ! enum_type_->names->empty());
-	    list<named_pexpr_t>::const_iterator sample_name = enum_type_->names->begin();
+      } else if (enum_type_t*enum_type = dynamic_cast<enum_type_t*>(set_data_type_)) {
+	    list<named_pexpr_t>::const_iterator sample_name = enum_type->names->begin();
 	    netenum_t*use_enum = scope->enumeration_for_name(sample_name->name);
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype
 		       << " enumeration "
-		       << name_ << " in scope " << scope_path(scope) << endl;
+		       << name_ << " in scope " << scope_path(scope)
+		       << " with packed_dimensions=" << packed_dimensions
+		       << " and packed_width=" << use_enum->packed_width() << endl;
 	    }
 
 	    sig = new NetNet(scope, name_, wtype, packed_dimensions, unpacked_dimensions, use_enum);
 
+
       } else if (netarray) {
-	    ivl_assert(*this, struct_type_==0);
-	    ivl_assert(*this, enum_type_==0);
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype
@@ -1199,6 +1232,35 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    ivl_assert(*this, packed_dimensions.empty());
 	    ivl_assert(*this, unpacked_dimensions.empty());
 	    sig = new NetNet(scope, name_, wtype, netarray);
+
+      } else if (parray_type_t*parray_type = dynamic_cast<parray_type_t*>(set_data_type_)) {
+	      // The pform gives us a parray_type_t for packed arrays
+	      // that show up in type definitions. This can be handled
+	      // a lot like packed dimensions from other means.
+
+	      // The trick here is that the parray type has an
+	      // arbitrary sub-type, and not just a scalar bit...
+	    netparray_t*use_type = elaborate_parray_type(des, scope, parray_type);
+	      // Should not be getting packed dimensions other then
+	      // through the parray type declaration.
+	    ivl_assert(*this, packed_dimensions.empty());
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: Create signal " << wtype
+		       << " parray=" << use_type->packed_dimensions()
+		       << " " << name_ << unpacked_dimensions
+		       << " in scope " << scope_path(scope) << endl;
+	    }
+
+	    nettype_base_t*base_type = elaborate_type(des, scope, parray_type->base_type);
+#if 0
+	    cerr << get_fileline() << ": sorry: Packed array of "
+		 << typeid(*parray_type->base_type).name()
+		 << " not supported." << endl;
+	    des->errors += 1;
+#endif
+	    sig = new NetNet(scope, name_, wtype, use_type->packed_dimensions(), unpacked_dimensions, base_type);
+
 
       } else {
 	    if (debug_elaborate) {

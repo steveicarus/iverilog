@@ -26,6 +26,11 @@ nettype_base_t::~nettype_base_t()
 {
 }
 
+long nettype_base_t::packed_width(void) const
+{
+      return 0;
+}
+
 unsigned long netrange_width(const list<netrange_t>&packed)
 {
       unsigned wid = 1;

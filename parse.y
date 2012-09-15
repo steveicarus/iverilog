@@ -2,6 +2,7 @@
 %{
 /*
  * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -566,7 +567,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <nettype>  net_type var_type net_type_opt
 %type <gatetype> gatetype switchtype
 %type <porttype> port_direction port_direction_opt
-%type <vartype> primitive_type primitive_type_opt bit_logic
+%type <vartype> bit_logic
 %type <vartype> integer_vector_type
 %type <parmvalue> parameter_value_opt
 
@@ -894,7 +895,7 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	$$ = tmp;
       }
   | TYPE_IDENTIFIER range_opt
-      { if ($2) $$ = new array_type_t($1, $2);
+      { if ($2) $$ = new parray_type_t($1, $2);
 	else $$ = $1;
       }
   | K_string
@@ -1842,11 +1843,11 @@ block_item_decl
      recovering from an error. */
 
   | data_type register_variable_list ';'
-      { if ($1) pform_set_data_type(@1, $1, $2, attributes_in_context);
+      { if ($1) pform_set_data_type(@1, $1, $2, NetNet::REG, attributes_in_context);
       }
 
   | K_reg data_type register_variable_list ';'
-      { if ($2) pform_set_data_type(@2, $2, $3, attributes_in_context);
+      { if ($2) pform_set_data_type(@2, $2, $3, NetNet::REG, attributes_in_context);
       }
 
   | K_event list_of_identifiers ';'
@@ -3891,106 +3892,81 @@ module_item
   /* Modules can contain further sub-module definitions. */
   : module
 
-  /* This rule detects net declarations that possibly include a
-     primitive type, an optional vector range and signed flag. This
-     also includes an optional delay set. The values are then applied
-     to a list of names. If the primitive type is not specified, then
-     resort to the default type LOGIC. */
+  | attribute_list_opt net_type data_type_or_implicit delay3_opt net_variable_list ';'
 
-  | attribute_list_opt net_type
-    primitive_type_opt unsigned_signed_opt range_opt
-    delay3_opt
-    net_variable_list ';'
-
-      { ivl_variable_type_t dtype = $3;
-	if (dtype == IVL_VT_NO_TYPE)
-	      dtype = IVL_VT_LOGIC;
-	pform_makewire(@2, $5, $4, $7, $2, NetNet::NOT_A_PORT, dtype, $1);
-	if ($6 != 0) {
-	      yyerror(@6, "sorry: net delays not supported.");
-	      delete $6;
+      { data_type_t*data_type = $3;
+	if (data_type == 0) {
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
+	      FILE_NAME(data_type, @2);
+	}
+	pform_set_data_type(@2, data_type, $5, $2, $1);
+	if ($4 != 0) {
+	      yyerror(@2, "sorry: net delays not supported.");
+	      delete $4;
 	}
 	delete $1;
       }
 
   | attribute_list_opt K_wreal delay3 net_variable_list ';'
-      { pform_makewire(@2, 0, true, $4, NetNet::WIRE,
-		       NetNet::NOT_A_PORT, IVL_VT_REAL, $1);
-	    if ($3 != 0) {
-		  yyerror(@3, "sorry: net delays not supported.");
-		  delete $3;
-	    }
-	    delete $1;
+      { real_type_t*tmpt = new real_type_t(real_type_t::REAL);
+	pform_set_data_type(@2, tmpt, $4, NetNet::WIRE, $1);
+	if ($3 != 0) {
+	      yyerror(@3, "sorry: net delays not supported.");
+	      delete $3;
+	}
+	delete $1;
       }
 
   | attribute_list_opt K_wreal net_variable_list ';'
-      { pform_makewire(@2, 0, true, $3, NetNet::WIRE,
-		       NetNet::NOT_A_PORT, IVL_VT_REAL, $1);
-	    delete $1;
+      { real_type_t*tmpt = new real_type_t(real_type_t::REAL);
+	pform_set_data_type(@2, tmpt, $3, NetNet::WIRE, $1);
+	delete $1;
       }
 
   /* Very similar to the rule above, but this takes a list of
      net_decl_assigns, which are <name> = <expr> assignment
      declarations. */
 
-	| attribute_list_opt net_type
-          primitive_type_opt unsigned_signed_opt range_opt
-          delay3_opt net_decl_assigns ';'
-
-		{ ivl_variable_type_t dtype = $3;
-		  if (dtype == IVL_VT_NO_TYPE)
-			dtype = IVL_VT_LOGIC;
-		  pform_makewire(@2, $5, $4, $6,
-				 str_strength, $7, $2, dtype);
-		  if ($1) {
-			yyerror(@2, "sorry: Attributes not supported "
-				"on net declaration assignments.");
-			delete $1;
-		  }
-		}
-
-  /* Allow struct nets. */
-
-  | attribute_list_opt net_type struct_data_type net_variable_list ';'
-
-      { pform_makewire(@2, $3, NetNet::NOT_A_PORT, $4, $1);
-	delete $1;
+  | attribute_list_opt net_type data_type_or_implicit delay3_opt net_decl_assigns ';'
+      { data_type_t*data_type = $3;
+	if (data_type == 0) {
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
+	      FILE_NAME(data_type, @2);
+	}
+	pform_makewire(@2, $4, str_strength, $5, $2, data_type);
+	if ($1) {
+	      yyerror(@2, "sorry: Attributes not supported "
+		      "on net declaration assignments.");
+	      delete $1;
+	}
       }
-
-  | attribute_list_opt net_type struct_data_type error ';'
-
-      { yyerror(@5, "error: Errors in net variable list.");
-      }
-
-  | attribute_list_opt net_type TYPE_IDENTIFIER net_variable_list ';'
-      { yyerror(@2, "sorry: Nets of named types not supported."); }
 
   /* This form doesn't have the range, but does have strengths. This
      gives strength to the assignment drivers. */
 
-	| attribute_list_opt net_type
-          primitive_type_opt unsigned_signed_opt
-          drive_strength net_decl_assigns ';'
+  | attribute_list_opt net_type data_type_or_implicit drive_strength net_decl_assigns ';'
+      { data_type_t*data_type = $3;
+	if (data_type == 0) {
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
+	      FILE_NAME(data_type, @2);
+	}
+	pform_makewire(@2, 0, $4, $5, $2, data_type);
+	if ($1) {
+	      yyerror(@2, "sorry: Attributes not supported "
+		      "on net declaration assignments.");
+	      delete $1;
+	}
+      }
 
-		{ ivl_variable_type_t dtype = $3;
-		  if (dtype == IVL_VT_NO_TYPE)
-			dtype = IVL_VT_LOGIC;
-		  pform_makewire(@2, 0, $4, 0, $5, $6, $2, dtype);
-		  if ($1) {
-			yyerror(@2, "sorry: Attributes not supported "
-				"on net declaration assignments.");
-			delete $1;
-		  }
-		}
-	| attribute_list_opt K_wreal net_decl_assigns ';'
-		{ pform_makewire(@2, 0, true, 0, str_strength, $3,
-		                 NetNet::WIRE, IVL_VT_REAL);
-		  if ($1) {
-			yyerror(@2, "sorry: Attributes not supported "
-				"on net declaration assignments.");
-			delete $1;
-		  }
-		}
+  | attribute_list_opt K_wreal net_decl_assigns ';'
+      { real_type_t*data_type = new real_type_t(real_type_t::REAL);
+        pform_makewire(@2, 0, str_strength, $3, NetNet::WIRE, data_type);
+	if ($1) {
+	      yyerror(@2, "sorry: Attributes not supported "
+		      "on net declaration assignments.");
+	      delete $1;
+	}
+      }
 
 	| K_trireg charge_strength_opt range_opt delay3_opt list_of_identifiers ';'
 		{ yyerror(@1, "sorry: trireg nets not supported.");
@@ -4369,19 +4345,10 @@ net_decl_assigns
 		}
 	;
 
-primitive_type
-  : K_logic { $$ = IVL_VT_LOGIC; }
-  | K_bool  { $$ = IVL_VT_BOOL; /* Icarus Verilog xtypes */}
-  | K_bit   { $$ = IVL_VT_BOOL; /* IEEE1800 / IEEE1364-2009 */}
-  | K_real  { $$ = IVL_VT_REAL; }
-;
-
 bit_logic
   : K_logic { $$ = IVL_VT_LOGIC; }
   | K_bit   { $$ = IVL_VT_BOOL; /* IEEE1800 / IEEE1364-2009 */}
   ;
-
-primitive_type_opt : primitive_type { $$ = $1; } | { $$ = IVL_VT_NO_TYPE; } ;
 
 net_type
 	: K_wire    { $$ = NetNet::WIRE; }
@@ -4890,10 +4857,10 @@ function_range_or_type_opt
      so that bit ranges can be assigned. */
 register_variable
   : IDENTIFIER dimensions_opt
-      { perm_string ident_name = lex_strings.make($1);
-	pform_makewire(@1, ident_name, NetNet::REG,
+      { perm_string name = lex_strings.make($1);
+	pform_makewire(@1, name, NetNet::REG,
 		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
-	pform_set_reg_idx(ident_name, $2);
+	pform_set_reg_idx(name, $2);
 	$$ = $1;
       }
   | IDENTIFIER '=' expression

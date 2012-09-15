@@ -146,6 +146,13 @@ void data_type_t::pform_dump(ostream&out, unsigned indent) const
       out << setw(indent) << "" << typeid(*this).name() << endl;
 }
 
+void parray_type_t::pform_dump(ostream&out, unsigned indent) const
+{
+      out << setw(indent) << "" << "Packed array " << "[...]"
+	  << " of:" << endl;
+      base_type->pform_dump(out, indent+4);
+}
+
 static void dump_attributes_map(ostream&out,
 				const map<perm_string,PExpr*>&attributes,
 				int ind)
@@ -391,6 +398,10 @@ void PWire::dump(ostream&out, unsigned ind) const
       }
 
       out << ";" << endl;
+      if (set_data_type_) {
+	    set_data_type_->pform_dump(out, 8);
+      }
+
       dump_attributes_map(out, attributes, 8);
 }
 

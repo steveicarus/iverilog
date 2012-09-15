@@ -27,3 +27,18 @@ data_type_t::~data_type_t()
 string_type_t::~string_type_t()
 {
 }
+
+ivl_variable_type_t data_type_t::figure_packed_base_type(void) const
+{
+      return IVL_VT_NO_TYPE;
+}
+
+ivl_variable_type_t parray_type_t::figure_packed_base_type(void) const
+{
+      return base_type->figure_packed_base_type();
+}
+
+ivl_variable_type_t vector_type_t::figure_packed_base_type(void) const
+{
+      return base_type;
+}

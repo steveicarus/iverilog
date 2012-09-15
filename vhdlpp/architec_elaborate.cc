@@ -133,7 +133,9 @@ int GenerateStatement::elaborate_statements(Entity*ent, Architecture*arc)
 int ForGenerate::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;
+      arc->push_genvar_type(genvar_, lsb_->probe_type(ent, arc));
       errors += elaborate_statements(ent, arc);
+      arc->pop_genvar_type();
       return errors;
 }
 

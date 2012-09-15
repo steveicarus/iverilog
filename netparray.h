@@ -17,31 +17,36 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
 # include  "LineInfo.h"
+# include  "nettypes.h"
 # include  <vector>
 
-class netarray_t : public LineInfo {
+/*
+ * Packed arrays.
+ */
+class netparray_t : public nettype_base_t, public LineInfo {
 
     public:
-      explicit netarray_t(const std::list<netrange_t>&packed);
-      ~netarray_t();
+      explicit netparray_t(const std::list<netrange_t>&packed);
+      ~netparray_t();
 
-      unsigned packed_width() const;
+      inline const std::list<netrange_t>& packed_dimensions() const
+      { return packed_dims_; }
 
     private:
       std::list<netrange_t> packed_dims_;
 
 };
 
-inline netarray_t::netarray_t(const std::list<netrange_t>&packed)
+inline netparray_t::netparray_t(const std::list<netrange_t>&packed)
 : packed_dims_(packed)
 {
 }
 
-netarray_t::~netarray_t()
+inline netparray_t::~netparray_t()
 {
 }
 

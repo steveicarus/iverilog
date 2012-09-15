@@ -81,8 +81,7 @@ class PWire : public LineInfo {
 
       void set_unpacked_idx(const std::list<pform_range_t>&ranges);
 
-      void set_enumeration(enum_type_t*enum_type);
-      void set_struct_type(struct_type_t*type);
+      void set_packed_type(data_type_t*type);
 
       void set_discipline(ivl_discipline_t);
       ivl_discipline_t get_discipline(void) const;
@@ -119,8 +118,7 @@ class PWire : public LineInfo {
 	// me the size and address ranges of the memory.
       std::list<pform_range_t>unpacked_;
 
-      enum_type_t*enum_type_;
-      struct_type_t*struct_type_;
+      data_type_t*set_data_type_;
 
       ivl_discipline_t discipline_;
 
