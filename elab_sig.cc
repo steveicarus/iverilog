@@ -1098,9 +1098,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      // dimensions, then turn this into a dynamic array and
 	      // put all the packed dimensions there.
 	    if (use_lidx==0 && use_ridx==0) {
-		  ivl_assert(*this, netarray==0);
-		  netarray = new netdarray_t(packed_dimensions, data_type_, wid);
+		  netvector_t*vec = new netvector_t(packed_dimensions, data_type_);
 		  packed_dimensions.clear();
+		  ivl_assert(*this, netarray==0);
+		  netarray = new netdarray_t(vec);
 		  continue;
 	    }
 

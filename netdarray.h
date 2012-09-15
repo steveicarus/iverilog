@@ -20,24 +20,23 @@
  */
 
 # include  "nettypes.h"
+# include  "netvector.h"
 # include  "ivl_target.h"
 # include  <list>
+
+class netvector_t;
 
 class netdarray_t : public nettype_base_t {
 
     public:
-      explicit netdarray_t(const std::list<netrange_t>&packed,
-			   ivl_variable_type_t type,
-			   unsigned long wid);
+      explicit netdarray_t(netvector_t*vec);
       ~netdarray_t();
 
-      inline ivl_variable_type_t data_type() const { return type_; }
-      inline unsigned long vector_width(void) const { return width_; }
+      inline ivl_variable_type_t data_type() const { return elem_type_->base_type(); }
+      inline unsigned long vector_width(void) const { return elem_type_->packed_width(); }
 
     private:
-      std::list<netrange_t> packed_dims_;
-      ivl_variable_type_t type_;
-      unsigned long width_;
+      netvector_t*elem_type_;
 };
 
 #endif
