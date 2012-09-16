@@ -36,6 +36,11 @@ ivl_variable_type_t nettype_base_t::base_type() const
       return IVL_VT_NO_TYPE;
 }
 
+bool nettype_base_t::get_signed() const
+{
+      return false;
+}
+
 unsigned long netrange_width(const list<netrange_t>&packed)
 {
       unsigned wid = 1;

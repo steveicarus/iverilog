@@ -32,6 +32,11 @@ netenum_t::~netenum_t()
 {
 }
 
+bool netenum_t::get_signed() const
+{
+      return signed_flag_;
+}
+
 long netenum_t::packed_width() const
 {
       if (msb_ >= lsb_)

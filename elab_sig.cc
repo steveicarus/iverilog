@@ -525,47 +525,47 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		  list<netrange_t> packed;
 		  packed.push_back(netrange_t(mnum, lnum));
 		  ret_vec = new netvector_t(packed, IVL_VT_LOGIC);
+		  ret_vec->set_signed(return_type_.type == PTF_REG_S);
+		  ret_vec->set_scalar(false);
 		  ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
-		  ret_sig->set_scalar(false);
 
 	    } else {
 		  ret_vec = new netvector_t(IVL_VT_LOGIC);
+		  ret_vec->set_signed(return_type_.type == PTF_REG_S);
+		  ret_vec->set_scalar(true);
 		  ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
-		  ret_sig->set_scalar(true);
 	    }
 	    ret_sig->set_line(*this);
-	    ret_sig->set_signed(return_type_.type == PTF_REG_S);
 	    ret_sig->port_type(NetNet::POUTPUT);
 	    break;
 
 	  case PTF_INTEGER:
 	    ret_vec = new netvector_t(IVL_VT_LOGIC, integer_width-1,0);
+	    ret_vec->set_signed(true);
+	    ret_vec->set_isint(true);
+	    ret_vec->set_scalar(false);
 	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    ret_sig->set_line(*this);
-	    ret_sig->set_signed(true);
-	    ret_sig->set_isint(true);
-	    ret_sig->set_scalar(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
 	    break;
 
 	  case PTF_TIME:
 	    ret_vec = new netvector_t(IVL_VT_LOGIC, 64-1,0);
+	    ret_vec->set_isint(false);
+	    ret_vec->set_scalar(false);
 	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    ret_sig->set_line(*this);
-	    ret_sig->set_signed(false);
-	    ret_sig->set_isint(false);
-	    ret_sig->set_scalar(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
 	    break;
 
 	  case PTF_REAL:
 	  case PTF_REALTIME:
 	    ret_vec = new netvector_t(IVL_VT_REAL);
+	    ret_vec->set_signed(true);
+	    ret_vec->set_isint(false);
+	    ret_vec->set_scalar(true);
 	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    ret_sig->set_line(*this);
-	    ret_sig->set_signed(true);
-	    ret_sig->set_isint(false);
-	    ret_sig->set_scalar(true);
 	    ret_sig->port_type(NetNet::POUTPUT);
 	    break;
 
@@ -602,11 +602,11 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 		  use_wid = mnum - lnum + 1;
 	    }
 	    ret_vec = new netvector_t(IVL_VT_BOOL, use_wid-1, 0);
+	    ret_vec->set_isint(true);
+	    ret_vec->set_scalar(false);
+	    ret_vec->set_signed(return_type_.type == PTF_ATOM2_S? true : false);
 	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    ret_sig->set_line(*this);
-	    ret_sig->set_signed(return_type_.type == PTF_ATOM2_S? true : false);
-	    ret_sig->set_isint(true);
-	    ret_sig->set_scalar(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
 	    break;
 
@@ -1288,6 +1288,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    }
 
 	    netvector_t*vec = new netvector_t(packed_dimensions, use_data_type);
+	    vec->set_signed(get_signed());
+	    vec->set_isint(get_isint());
+	    if (is_implicit_scalar) vec->set_scalar(true);
+	    else vec->set_scalar(get_scalar());
 	    packed_dimensions.clear();
 	    sig = new NetNet(scope, name_, wtype, packed_dimensions, unpacked_dimensions, vec);
 
@@ -1296,10 +1300,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       if (wtype == NetNet::WIRE) sig->devirtualize_pins();
       sig->set_line(*this);
       sig->port_type(port_type_);
-      sig->set_signed(get_signed());
-      sig->set_isint(get_isint());
-      if (is_implicit_scalar) sig->set_scalar(true);
-      else sig->set_scalar(get_scalar());
 
       if (ivl_discipline_t dis = get_discipline()) {
 	    sig->set_discipline(dis);

@@ -634,15 +634,12 @@ class NetNet  : public NetObj, public PortType {
 	/* If a NetNet is signed, then its value is to be treated as
 	   signed. Otherwise, it is unsigned. */
       bool get_signed() const;
-      void set_signed(bool);
 
 	/* Used to maintain original type of net since integers are
 	   implemented as 'reg signed [31:0]' in Icarus */
       bool get_isint() const;
-      void set_isint(bool);
 
       bool get_scalar() const;
-      void set_scalar(bool);
 
       netenum_t*enumeration(void) const;
       netstruct_t*struct_type(void) const;
@@ -731,9 +728,6 @@ class NetNet  : public NetObj, public PortType {
     private:
       Type   type_    : 5;
       PortType port_type_ : 3;
-      bool signed_    : 1;
-      bool isint_     : 1;		// original type of integer
-      bool is_scalar_ : 1;
       bool local_flag_: 1;
       nettype_base_t*net_type_;
       ivl_discipline_t discipline_;

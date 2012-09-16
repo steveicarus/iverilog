@@ -35,6 +35,8 @@ class netdarray_t : public nettype_base_t {
       inline ivl_variable_type_t data_type() const { return elem_type_->base_type(); }
       inline unsigned long vector_width(void) const { return elem_type_->packed_width(); }
 
+      std::ostream& debug_dump(std::ostream&) const;
+
     private:
       netvector_t*elem_type_;
 };

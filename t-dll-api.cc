@@ -265,7 +265,7 @@ extern "C" unsigned ivl_enum_width(ivl_enumtype_t net)
 extern "C" int ivl_enum_signed(ivl_enumtype_t net)
 {
       assert(net);
-      return net->has_sign();
+      return net->get_signed();
 }
 
 extern "C" const char*ivl_enum_file(ivl_enumtype_t net)

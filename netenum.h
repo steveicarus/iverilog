@@ -38,7 +38,7 @@ class netenum_t : public LineInfo, public nettype_base_t {
 
       ivl_variable_type_t base_type() const;
       long packed_width() const;
-      bool has_sign() const;
+      bool get_signed() const;
 
 	// The size() is the number of enumeration literals.
       size_t size() const;
@@ -74,7 +74,5 @@ inline ivl_variable_type_t netenum_t::base_type() const
 { return base_type_; }
 
 inline size_t netenum_t::size() const { return names_.size(); }
-
-inline bool netenum_t::has_sign() const { return signed_flag_; }
 
 #endif

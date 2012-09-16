@@ -141,9 +141,21 @@ ostream& operator << (ostream&o, ivl_switch_type_t val)
       return o;
 }
 
-ostream& netvector_t::debug_dump(std::ostream&o) const
+ostream& nettype_base_t::debug_dump(ostream&o) const
 {
-      o << type_ << packed_dims_;
+      o << typeid(*this).name();
+      return o;
+}
+
+ostream& netdarray_t::debug_dump(ostream&o) const
+{
+      o << "dynamic array of " << *elem_type_;
+      return o;
+}
+
+ostream& netvector_t::debug_dump(ostream&o) const
+{
+      o << type_ << (signed_? " signed" : " unsigned") << packed_dims_;
       return o;
 }
 
@@ -242,8 +254,6 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
       o << " pin_count=" << pin_count();
       if (local_flag_)
 	    o << " (local)";
-      if (signed_)
-	    o << " signed";
       switch (port_type_) {
 	  case NetNet::NOT_A_PORT:
 	    break;
@@ -267,18 +277,7 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
       if (ivl_discipline_t dis = get_discipline())
 	    o << " discipline=" << dis->name();
 
-      if (netvector_t*varray = dynamic_cast<netvector_t*>(net_type_))
-	    o << " vector " << varray->packed_dims()
-	      << " of " << *varray;
-
-      if (netdarray_t*darray = darray_type())
-	    o << " dynamic array of " << darray->data_type();
-
-      if (! packed_dims_.empty())
-	    o << " packed dims: " << packed_dims_;
-
-      if (net_type_)
-	    o << " net_type_=" << typeid(*net_type_).name();
+      if (net_type_)  o << " " << *net_type_;
 
       o << " (eref=" << peek_eref() << ", lref=" << peek_lref() << ")";
       if (scope())

@@ -467,7 +467,7 @@ PortType::Enum PortType::merged( Enum lhs, Enum rhs )
 NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
 : NetObj(s, n, 1),
     type_(t), port_type_(NOT_A_PORT),
-    signed_(false), isint_(false), is_scalar_(false), local_flag_(false),
+    local_flag_(false),
     net_type_(0), discipline_(0),
     eref_count_(0), lref_count_(0),
     port_index_(-1)
@@ -569,8 +569,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 	       nettype_base_t*net_type)
 : NetObj(s, n, calculate_count(unpacked)),
     type_(t), port_type_(NOT_A_PORT),
-    signed_(false), isint_(false),
-    is_scalar_(false), local_flag_(false), net_type_(net_type),
+    local_flag_(false), net_type_(net_type),
     discipline_(0), unpacked_dims_(unpacked.size()),
     eref_count_(0), lref_count_(0)
 {
@@ -630,8 +629,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 NetNet::NetNet(NetScope*s, perm_string n, Type t, netstruct_t*ty)
 : NetObj(s, n, 1),
     type_(t), port_type_(NOT_A_PORT),
-    signed_(false), isint_(false),
-    is_scalar_(false), local_flag_(false), net_type_(ty),
+    local_flag_(false), net_type_(ty),
     discipline_(0),
     eref_count_(0), lref_count_(0)
 {
@@ -662,8 +660,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, netstruct_t*ty)
 NetNet::NetNet(NetScope*s, perm_string n, Type t, netdarray_t*ty)
 : NetObj(s, n, 1),
     type_(t), port_type_(NOT_A_PORT),
-    signed_(false), isint_(false),
-    is_scalar_(false), local_flag_(false), net_type_(ty),
+    local_flag_(false), net_type_(ty),
     discipline_(0),
     eref_count_(0), lref_count_(0)
 {
@@ -692,8 +689,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, netdarray_t*ty)
 NetNet::NetNet(NetScope*s, perm_string n, Type t, netvector_t*ty)
 : NetObj(s, n, 1),
     type_(t), port_type_(NOT_A_PORT),
-    signed_(false), isint_(false),
-    is_scalar_(false), local_flag_(false), net_type_(ty),
+    local_flag_(false), net_type_(ty),
     discipline_(0),
     eref_count_(0), lref_count_(0)
 {
@@ -816,32 +812,26 @@ ivl_variable_type_t NetNet::data_type() const
 
 bool NetNet::get_signed() const
 {
-      return signed_;
-}
-
-void NetNet::set_signed(bool flag)
-{
-      signed_ = flag;
+      if (net_type_==0)
+	    return false;
+      else
+	    return net_type_->get_signed();
 }
 
 bool NetNet::get_isint() const
 {
-      return isint_;
-}
-
-void NetNet::set_isint(bool flag)
-{
-      isint_ = flag;
+      if (netvector_t*vec = dynamic_cast<netvector_t*> (net_type_))
+	    return vec->get_isint();
+      else
+	    return false;
 }
 
 bool NetNet::get_scalar() const
 {
-      return is_scalar_;
-}
-
-void NetNet::set_scalar(bool flag)
-{
-      is_scalar_ = flag;
+      if (netvector_t*vec = dynamic_cast<netvector_t*> (net_type_))
+	    return vec->get_scalar();
+      else
+	    return false;
 }
 
 netenum_t*NetNet::enumeration(void) const

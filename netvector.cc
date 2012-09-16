@@ -20,13 +20,13 @@
 # include  "netvector.h"
 
 netvector_t::netvector_t(ivl_variable_type_t type, long msb, long lsb)
-: type_(type)
+: type_(type), signed_(false)
 {
       packed_dims_.push_back(netrange_t(msb,lsb));
 }
 
 netvector_t::netvector_t(ivl_variable_type_t type)
-: type_(type)
+: type_(type), signed_(false)
 {
 }
 

@@ -115,7 +115,6 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    cerr << get_fileline() << ": debug: PGAssign: elaborated r-value"
 		 << " width="<< rval->vector_width()
 		 << ", type="<< rval->data_type()
-		 << ", signed="<< rval->get_signed()
 		 << ", expr=" << *rval_expr << endl;
       }
 

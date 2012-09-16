@@ -120,10 +120,10 @@ NetNet* NetEBAdd::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       perm_string path = lsig->scope()->local_symbol();
       netvector_t*osig_vec = new netvector_t(expr_type(), width-1, 0);
+      osig_vec->set_signed(has_sign());
       NetNet*osig = new NetNet(lsig->scope(), path, NetNet::IMPLICIT, osig_vec);
       osig->set_line(*this);
       osig->local_flag(true);
-      osig->set_signed(has_sign());
 
       perm_string oname = osig->scope()->local_symbol();
       NetAddSub *adder = new NetAddSub(lsig->scope(), oname, width);
@@ -392,10 +392,10 @@ NetNet* NetEBPow::synthesize(Design*des, NetScope*scope, NetExpr*root)
       connect(powr->pin_DataB(), rsig->pin(0));
 
       netvector_t*osig_vec = new netvector_t(expr_type(), width-1, 0);
+      osig_vec->set_signed(has_sign());
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, osig_vec);
       osig->set_line(*this);
-      osig->set_signed(has_sign());
       osig->local_flag(true);
 
       connect(powr->pin_Result(), osig->pin(0));
@@ -429,10 +429,10 @@ NetNet* NetEBMult::synthesize(Design*des, NetScope*scope, NetExpr*root)
       connect(mult->pin_DataB(), rsig->pin(0));
 
       netvector_t*osig_vec = new netvector_t(expr_type(), width-1, 0);
+      osig_vec->set_signed(has_sign());
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, osig_vec);
       osig->set_line(*this);
-      osig->set_signed(has_sign());
       osig->local_flag(true);
 
       connect(mult->pin_Result(), osig->pin(0));
@@ -454,10 +454,10 @@ NetNet* NetEBDiv::synthesize(Design*des, NetScope*scope, NetExpr*root)
       else width = expr_width();
 
       netvector_t*osig_vec = new netvector_t(lsig->data_type(), width-1, 0);
+      osig_vec->set_signed(has_sign());
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::IMPLICIT, osig_vec);
       osig->set_line(*this);
-      osig->set_signed(has_sign());
       osig->local_flag(true);
 
       switch (op()) {
@@ -788,10 +788,10 @@ NetNet* NetEConst::synthesize(Design*des, NetScope*scope, NetExpr*)
       }
 
       netvector_t*osig_vec = new netvector_t(expr_type(), width-1, 0);
+      osig_vec->set_signed(has_sign());
       NetNet*osig = new NetNet(scope, path, NetNet::IMPLICIT, osig_vec);
       osig->set_line(*this);
       osig->local_flag(true);
-      osig->set_signed(has_sign());
 
       NetConst*con = new NetConst(scope, scope->local_symbol(), value());
       con->set_line(*this);
@@ -809,10 +809,10 @@ NetNet* NetECReal::synthesize(Design*des, NetScope*scope, NetExpr*)
       perm_string path = scope->local_symbol();
 
       netvector_t*osig_vec = new netvector_t(IVL_VT_REAL);
+      osig_vec->set_signed(has_sign());
       NetNet*osig = new NetNet(scope, path, NetNet::WIRE, osig_vec);
       osig->set_line(*this);
       osig->local_flag(true);
-      osig->set_signed(has_sign());
 
       NetLiteral*con = new NetLiteral(scope, scope->local_symbol(), value_);
       con->set_line(*this);
@@ -1140,6 +1140,7 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 	// of the expression.
 
       netvector_t*net_vec = new netvector_t(expr_type(), expr_width()-1, 0);
+      net_vec->set_signed(has_sign());
       NetNet*net = new NetNet(scope, scope->local_symbol(),
 			      NetNet::IMPLICIT, net_vec);
       net->set_line(*this);
@@ -1153,7 +1154,6 @@ NetNet* NetESelect::synthesize(Design *des, NetScope*scope, NetExpr*root)
 
 	    connect(pad->pin(1), sub->pin(0));
 	    connect(pad->pin(0), net->pin(0));
-	    net->set_signed(true);
 
       } else {
 
@@ -1361,11 +1361,11 @@ NetNet* NetESFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
       des->add_node(net);
 
       netvector_t*osig_vec = new netvector_t(def->type, def->wid-1, 0);
+      osig_vec->set_signed(def->type==IVL_VT_REAL? true : false);
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
 			       NetNet::WIRE, osig_vec);
       osig->set_line(*this);
       osig->local_flag(true);
-      osig->set_signed(def->type==IVL_VT_REAL? true : false);
 
       connect(net->pin(0), osig->pin(0));
 

@@ -22,6 +22,7 @@
 # include  "ivl_target.h"
 # include <list>
 # include <climits>
+# include <ostream>
 # include <cassert>
 
 /*
@@ -35,7 +36,15 @@ class nettype_base_t {
 
 	// Some types have a base variable type.
       virtual ivl_variable_type_t base_type() const;
+      virtual bool get_signed() const;
+
+      virtual std::ostream& debug_dump(std::ostream&) const;
 };
+
+inline static std::ostream& operator << (std::ostream&out, const nettype_base_t&obj)
+{
+      return obj.debug_dump(out);
+}
 
 class netrange_t {
 

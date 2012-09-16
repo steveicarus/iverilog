@@ -112,10 +112,10 @@ NetNet*pad_to_width_signed(Design*des, NetNet*net, unsigned wid,
       des->add_node(se);
 
       netvector_t*tmp_vec = new netvector_t(net->data_type(), wid-1, 0);
+      tmp_vec->set_signed(true);
       NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, tmp_vec);
       tmp->set_line(info);
       tmp->local_flag(true);
-      tmp->set_signed(true);
 
       connect(tmp->pin(0), se->pin(0));
       connect(se->pin(1), net->pin(0));
