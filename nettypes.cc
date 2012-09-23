@@ -22,21 +22,21 @@
 
 using namespace std;
 
-nettype_base_t::~nettype_base_t()
+ivl_type_s::~ivl_type_s()
 {
 }
 
-long nettype_base_t::packed_width(void) const
+long ivl_type_s::packed_width(void) const
 {
-      return 0;
+      return 1;
 }
 
-ivl_variable_type_t nettype_base_t::base_type() const
+ivl_variable_type_t ivl_type_s::base_type() const
 {
       return IVL_VT_NO_TYPE;
 }
 
-bool nettype_base_t::get_signed() const
+bool ivl_type_s::get_signed() const
 {
       return false;
 }

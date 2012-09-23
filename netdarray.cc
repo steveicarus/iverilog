@@ -30,3 +30,8 @@ netdarray_t::~netdarray_t()
 {
       delete elem_type_;
 }
+
+ivl_variable_type_t netdarray_t::base_type(void) const
+{
+      return IVL_VT_DARRAY;
+}

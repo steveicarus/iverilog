@@ -41,5 +41,5 @@ ivl_variable_type_t netvector_t::base_type() const
 
 long netvector_t::packed_width() const
 {
-      netrange_width(packed_dims_);
+      return netrange_width(packed_dims_);
 }

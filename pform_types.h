@@ -97,10 +97,13 @@ struct struct_member_t : public LineInfo {
       ivl_variable_type_t type;
       std::auto_ptr< list<pform_range_t> > range;
       std::auto_ptr< list<decl_assignment_t*> > names;
+      void pform_dump(std::ostream&out, unsigned indent) const;
 };
 
 struct struct_type_t : public data_type_t {
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
+      virtual void pform_dump(std::ostream&out, unsigned indent) const;
+
       bool packed_flag;
       std::auto_ptr< list<struct_member_t*> > members;
 };

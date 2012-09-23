@@ -29,9 +29,9 @@
  * This is a fully abstract type that is a type that can be attached
  * to a NetNet object.
  */
-class nettype_base_t {
+class ivl_type_s {
     public:
-      virtual ~nettype_base_t() =0;
+      virtual ~ivl_type_s() =0;
       virtual long packed_width(void) const;
 
 	// Some types have a base variable type.
@@ -41,7 +41,7 @@ class nettype_base_t {
       virtual std::ostream& debug_dump(std::ostream&) const;
 };
 
-inline static std::ostream& operator << (std::ostream&out, const nettype_base_t&obj)
+inline static std::ostream& operator << (std::ostream&out, const ivl_type_s&obj)
 {
       return obj.debug_dump(out);
 }

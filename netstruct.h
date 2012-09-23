@@ -24,7 +24,7 @@
 # include  "ivl_target.h"
 # include  "nettypes.h"
 
-class netstruct_t : public LineInfo, public nettype_base_t {
+class netstruct_t : public LineInfo, public ivl_type_s {
 
     public:
       struct member_t {

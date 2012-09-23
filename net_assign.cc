@@ -101,7 +101,7 @@ ivl_variable_type_t NetAssign_::expr_type() const
 	    if (word_ == 0)
 		  return IVL_VT_DARRAY;
 	    else
-		  return darray->data_type();
+		  return darray->element_base_type();
       }
 
       return sig_->data_type();

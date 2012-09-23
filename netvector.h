@@ -23,7 +23,7 @@
 # include  "ivl_target.h"
 # include  <vector>
 
-class netvector_t : public nettype_base_t {
+class netvector_t : public ivl_type_s {
 
     public:
       explicit netvector_t(const std::list<netrange_t>&packed,

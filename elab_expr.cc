@@ -2355,7 +2355,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
       if (netdarray_t*darray = net? net->darray_type() : 0) {
 	    if (use_sel == index_component_t::SEL_BIT) {
-		  expr_type_   = darray->data_type();
+		  expr_type_   = darray->element_base_type();
 		  expr_width_  = darray->vector_width();
 		  min_width_   = expr_width_;
 		  signed_flag_ = net->get_signed();
@@ -3970,7 +3970,7 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       return node;
 }
 
-unsigned PENew::test_width(Design*des, NetScope*, width_mode_t&)
+unsigned PENew::test_width(Design*, NetScope*, width_mode_t&)
 {
       expr_type_  = IVL_VT_DARRAY;
       expr_width_ = 1;

@@ -914,8 +914,8 @@ static netparray_t* elaborate_parray_type(Design*des, NetScope*scope,
       return res;
 }
 
-static nettype_base_t*elaborate_type(Design*des, NetScope*scope,
-				     data_type_t*pform_type)
+static ivl_type_s*elaborate_type(Design*des, NetScope*scope,
+				 data_type_t*pform_type)
 {
       if (struct_type_t*struct_type = dynamic_cast<struct_type_t*>(pform_type)) {
 	    netstruct_t*use_type = elaborate_struct_type(des, scope, struct_type);
@@ -1256,7 +1256,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		       << " in scope " << scope_path(scope) << endl;
 	    }
 
-	    nettype_base_t*base_type = elaborate_type(des, scope, parray_type->base_type);
+	    ivl_type_s*base_type = elaborate_type(des, scope, parray_type->base_type);
 #if 0
 	    cerr << get_fileline() << ": sorry: Packed array of "
 		 << typeid(*parray_type->base_type).name()

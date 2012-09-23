@@ -26,13 +26,23 @@
 
 class netvector_t;
 
-class netdarray_t : public nettype_base_t {
+class netdarray_t : public ivl_type_s {
 
     public:
       explicit netdarray_t(netvector_t*vec);
       ~netdarray_t();
 
-      inline ivl_variable_type_t data_type() const { return elem_type_->base_type(); }
+	// This is the "base_type()" virtual method of the
+	// nettype_base_t. The ivl_target api expects this to return
+	// IVL_VT_DARRAY for dynamic arrays?
+      ivl_variable_type_t base_type() const;
+
+	// The ivl_target.h API uses this method to get the type of
+	// the element of the array.
+      inline const ivl_type_s* element_type() const { return elem_type_; }
+
+	// This is the base_type() of the element of the array.
+      inline ivl_variable_type_t element_base_type() const { return elem_type_->base_type(); }
       inline unsigned long vector_width(void) const { return elem_type_->packed_width(); }
 
       std::ostream& debug_dump(std::ostream&) const;

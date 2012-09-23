@@ -677,14 +677,12 @@ struct ivl_signal_s {
       ivl_signal_type_t type_;
       ivl_signal_port_t port_;
       int module_port_index_;
-      ivl_variable_type_t data_type;
       ivl_discipline_t discipline;
       perm_string file;
       unsigned lineno;
 
-      unsigned width_;
-      unsigned signed_ : 1;
-      unsigned isint_  : 1;
+	// This is the type for the signal
+      ivl_type_t net_type;
       unsigned local_  : 1;
 
       unsigned forced_net_ : 1;

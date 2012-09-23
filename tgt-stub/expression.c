@@ -169,6 +169,7 @@ static void show_select_expression(ivl_expr_t net, unsigned ind)
 {
       unsigned width = ivl_expr_width(net);
       const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
+      const char*vt = vt_type_string(net);
       ivl_expr_t oper1 = ivl_expr_oper1(net);
       ivl_expr_t oper2 = ivl_expr_oper2(net);
 
@@ -186,8 +187,8 @@ static void show_select_expression(ivl_expr_t net, unsigned ind)
 	      /* If oper2 is present, then it is the base of a part
 		 select. The width of the expression defines the range
 		 of the part select. */
-	    fprintf(out, "%*s<select: width=%u, %s>\n", ind, "",
-		    width, sign);
+	    fprintf(out, "%*s<select: width=%u, %s, type=%s>\n", ind, "",
+		    width, sign, vt);
 	    show_expression(oper1, ind+3);
 	    show_expression(oper2, ind+3);
 
@@ -231,6 +232,14 @@ static void show_signal_expression(ivl_expr_t net, unsigned ind)
       }
       if (dimensions >= 1 && word == 0) {
 	    fprintf(out, "%*sERROR: Missing word expression\n", ind+2, "");
+	    stub_errors += 1;
+      }
+	/* If this is not an array, then the expression with must
+	   match the signal width. We have IVL_EX_SELECT expressions
+	   for casting signal widths. */
+      if (dimensions == 0 && ivl_signal_width(sig) != width) {
+	    fprintf(out, "%*sERROR: Expression width (%u) doesn't match ivl_signal_width(sig)=%u\n",
+		    ind+2, "", width, ivl_signal_width(sig));
 	    stub_errors += 1;
       }
 

@@ -29,7 +29,7 @@
 
 class NetScope;
 
-class netenum_t : public LineInfo, public nettype_base_t {
+class netenum_t : public LineInfo, public ivl_type_s {
 
     public:
       explicit netenum_t(ivl_variable_type_t base_type, bool signed_flag,

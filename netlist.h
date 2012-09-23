@@ -609,7 +609,7 @@ class NetNet  : public NetObj, public PortType {
       explicit NetNet(NetScope*s, perm_string n, Type t,
 		      const std::list<netrange_t>&packed,
 		      const std::list<netrange_t>&unpacked,
-		      nettype_base_t*type =0);
+		      ivl_type_s*type =0);
 
 	// This form builds a NetNet from its record/enum definition.
       explicit NetNet(NetScope*s, perm_string n, Type t, netstruct_t*type);
@@ -641,6 +641,7 @@ class NetNet  : public NetObj, public PortType {
 
       bool get_scalar() const;
 
+      inline const ivl_type_s* net_type(void) const { return net_type_; }
       netenum_t*enumeration(void) const;
       netstruct_t*struct_type(void) const;
       netdarray_t*darray_type(void) const;
@@ -729,7 +730,7 @@ class NetNet  : public NetObj, public PortType {
       Type   type_    : 5;
       PortType port_type_ : 3;
       bool local_flag_: 1;
-      nettype_base_t*net_type_;
+      ivl_type_s*net_type_;
       ivl_discipline_t discipline_;
 
       std::list<netrange_t> packed_dims_;

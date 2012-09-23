@@ -141,7 +141,7 @@ ostream& operator << (ostream&o, ivl_switch_type_t val)
       return o;
 }
 
-ostream& nettype_base_t::debug_dump(ostream&o) const
+ostream& ivl_type_s::debug_dump(ostream&o) const
 {
       o << typeid(*this).name();
       return o;

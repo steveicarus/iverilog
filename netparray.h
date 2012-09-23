@@ -27,7 +27,7 @@
 /*
  * Packed arrays.
  */
-class netparray_t : public nettype_base_t, public LineInfo {
+class netparray_t : public ivl_type_s, public LineInfo {
 
     public:
       explicit netparray_t(const std::list<netrange_t>&packed);

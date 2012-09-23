@@ -44,7 +44,7 @@ CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
-O = stub.o enumerate.o expression.o statement.o switches.o
+O = stub.o enumerate.o expression.o statement.o switches.o types.o
 
 all: dep stub.tgt
 

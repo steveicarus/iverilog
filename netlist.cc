@@ -566,22 +566,22 @@ void NetNet::calculate_slice_widths_from_packed_dims_(void)
 NetNet::NetNet(NetScope*s, perm_string n, Type t,
 	       const list<netrange_t>&packed,
 	       const list<netrange_t>&unpacked,
-	       nettype_base_t*net_type)
+	       ivl_type_s*use_net_type)
 : NetObj(s, n, calculate_count(unpacked)),
     type_(t), port_type_(NOT_A_PORT),
-    local_flag_(false), net_type_(net_type),
+    local_flag_(false), net_type_(use_net_type),
     discipline_(0), unpacked_dims_(unpacked.size()),
     eref_count_(0), lref_count_(0)
 {
       packed_dims_ = packed;
 	// Special case: This is an enum, so it is its own packed vector.
-      if (netenum_t*et = dynamic_cast<netenum_t*>(net_type)) {
+      if (netenum_t*et = dynamic_cast<netenum_t*>(use_net_type)) {
 	    ivl_assert(*this, packed_dims_.empty());
 	    packed_dims_.push_back(netrange_t(calculate_count(et)-1, 0));
       }
 	// Special case: netstruct types are like another packed
 	// dimension.
-      if (netstruct_t*st = dynamic_cast<netstruct_t*>(net_type)) {
+      if (netstruct_t*st = dynamic_cast<netstruct_t*>(use_net_type)) {
 	    packed_dims_.push_back(netrange_t(calculate_count(st)-1, 0));
       }
 
