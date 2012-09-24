@@ -249,7 +249,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	      // The values are explicitly sized to the width of the
 	      // base type of the enumeration.
 	    verinum tmp_val (0);
-	    if (cur_value.len() < use_enum->packed_width()) {
+	    if (cur_value.len() < (unsigned long)use_enum->packed_width()) {
 		    // Pad the current value if it is narrower than the final
 		    // width of the enum.
 		  tmp_val = pad_to_width (cur_value, use_enum->packed_width());

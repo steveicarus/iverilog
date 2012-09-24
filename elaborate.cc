@@ -2653,6 +2653,12 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	  case PBlock::BL_JOIN_ANY:
 	    type = NetBlock::PARA_JOIN_ANY;
 	    break;
+	    // Added to remove a "type" uninitialized compiler warning.
+	    // This should never be reached since all the PBlock enumeration
+	    // cases are handled above.
+	  default:
+	    type = NetBlock::SEQU;
+	    assert(0);
       }
 
       NetScope*nscope = 0;
