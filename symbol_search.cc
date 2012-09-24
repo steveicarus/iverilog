@@ -43,7 +43,7 @@ struct symbol_search_results {
 	    if (scope) return true;
 	    return false;
       }
-	    
+
 	// Scope where symbol was located. This is set in all cases,
 	// assuming the search succeeded.
       NetScope*scope;
