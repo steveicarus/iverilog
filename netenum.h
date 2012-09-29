@@ -38,6 +38,7 @@ class netenum_t : public LineInfo, public ivl_type_s {
 
       ivl_variable_type_t base_type() const;
       long packed_width() const;
+      std::vector<netrange_t> slice_dimensions() const;
       bool get_signed() const;
 
 	// The size() is the number of enumeration literals.

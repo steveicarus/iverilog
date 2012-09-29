@@ -20,7 +20,7 @@
  */
 
 # include  "LineInfo.h"
-# include <vector>
+# include  <vector>
 # include  "ivl_target.h"
 # include  "nettypes.h"
 
@@ -30,7 +30,7 @@ class netstruct_t : public LineInfo, public ivl_type_s {
       struct member_t {
 	    perm_string name;
 	    ivl_variable_type_t type;
-	    list<netrange_t> packed_dims;
+	    std::vector<netrange_t> packed_dims;
 	    long width() const;
 	    ivl_variable_type_t data_type() const { return type; };
 	      // We need to keep the individual element sign information.
@@ -54,6 +54,7 @@ class netstruct_t : public LineInfo, public ivl_type_s {
 	// Return the width (in bits) of the packed record, or -1 if
 	// the record is not packed.
       long packed_width() const;
+      std::vector<netrange_t> slice_dimensions() const;
 
 	// Return the base type of the packed record, or
 	// IVL_VT_NO_TYPE if the record is not packed.

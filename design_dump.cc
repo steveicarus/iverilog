@@ -249,8 +249,6 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << type() << ": " << name()
 	<< unpacked_dims_ << " unpacked dims=" << unpacked_dimensions();
-      if (!packed_dims_.empty())
-	    o << " packed dims=" << packed_dims_;
       o << " pin_count=" << pin_count();
       if (local_flag_)
 	    o << " (local)";
@@ -1107,7 +1105,7 @@ void NetFuncDef::dump(ostream&o, unsigned ind) const
       if (result_sig_) {
 	    o << setw(ind+2) << "" << "Return signal: ";
 	    if (result_sig_->get_signed()) o << "+";
-	    o << result_sig_->name() << result_sig_->packed_dims() << endl;
+	    o << result_sig_->name() << endl;
       }
       o << setw(ind+2) << "" << "Arguments: ";
       if (port_count() == 0) o << "<none>";
@@ -1129,7 +1127,7 @@ void NetFuncDef::dump(ostream&o, unsigned ind) const
 		  break;
 	    }
 	    if (port(idx)->get_signed()) o << "+";
-	    o << port(idx)->name() << port(idx)->packed_dims() << endl;
+	    o << port(idx)->name() << endl;
       }
       if (statement_)
 	    statement_->dump(o, ind+2);
@@ -1548,7 +1546,8 @@ void NetESignal::dump(ostream&o) const
 	    o << "+";
       o << name();
       if (word_) o << "[word=" << *word_ << "]";
-      o << sig()->packed_dims();
+      vector<netrange_t>tmp = net_->net_type()->slice_dimensions();
+      o << tmp;
 }
 
 void NetETernary::dump(ostream&o) const

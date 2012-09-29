@@ -353,7 +353,7 @@ NetExpr *normalize_variable_base(NetExpr *base,
 NetExpr *normalize_variable_bit_base(const list<long>&indices, NetExpr*base,
 				     const NetNet*reg)
 {
-      const list<netrange_t>&packed_dims = reg->packed_dims();
+      const vector<netrange_t>&packed_dims = reg->packed_dims();
       ivl_assert(*base, indices.size()+1 == packed_dims.size());
 
 	// Get the canonical offset of the slice within which we are
@@ -369,7 +369,7 @@ NetExpr *normalize_variable_part_base(const list<long>&indices, NetExpr*base,
 				      const NetNet*reg,
 				      unsigned long wid, bool is_up)
 {
-      const list<netrange_t>&packed_dims = reg->packed_dims();
+      const vector<netrange_t>&packed_dims = reg->packed_dims();
       ivl_assert(*base, indices.size()+1 == packed_dims.size());
 
 	// Get the canonical offset of the slice within which we are
@@ -384,10 +384,10 @@ NetExpr *normalize_variable_part_base(const list<long>&indices, NetExpr*base,
 NetExpr *normalize_variable_slice_base(const list<long>&indices, NetExpr*base,
 				       const NetNet*reg, unsigned long&lwid)
 {
-      const list<netrange_t>&packed_dims = reg->packed_dims();
+      const vector<netrange_t>&packed_dims = reg->packed_dims();
       ivl_assert(*base, indices.size() < packed_dims.size());
 
-      list<netrange_t>::const_iterator pcur = packed_dims.end();
+      vector<netrange_t>::const_iterator pcur = packed_dims.end();
       for (size_t idx = indices.size() ; idx < packed_dims.size(); idx += 1) {
 	    -- pcur;
       }
@@ -1182,8 +1182,8 @@ NetExpr*collapse_array_exprs(Design*des, NetScope*scope,
 	    return *exprs.begin();
       }
 
-      const std::list<netrange_t>&pdims = net->packed_dims();
-      std::list<netrange_t>::const_iterator pcur = pdims.begin();
+      const std::vector<netrange_t>&pdims = net->packed_dims();
+      std::vector<netrange_t>::const_iterator pcur = pdims.begin();
 
       list<NetExpr*>::iterator ecur = exprs.begin();
       NetExpr* base = 0;

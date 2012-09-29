@@ -29,6 +29,7 @@
 # include  "netmisc.h"
 # include  "netdarray.h"
 # include  "netenum.h"
+# include  "netparray.h"
 # include  "netstruct.h"
 # include  "netvector.h"
 # include  "ivl_assert.h"
@@ -464,44 +465,6 @@ PortType::Enum PortType::merged( Enum lhs, Enum rhs )
     return PINOUT;
 }
 
-NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
-: NetObj(s, n, 1),
-    type_(t), port_type_(NOT_A_PORT),
-    local_flag_(false),
-    net_type_(0), discipline_(0),
-    eref_count_(0), lref_count_(0),
-    port_index_(-1)
-{
-      assert(s);
-      assert(npins>0);
-
-	// Synthesize a single range to describe this canonical vector.
-      packed_dims_.push_back(netrange_t(npins-1, 0));
-      calculate_slice_widths_from_packed_dims_();
-
-      Link::DIR dir = Link::PASSIVE;
-
-      switch (t) {
-	  case REG:
-	  case INTEGER:
-	  case IMPLICIT_REG:
-	    dir = Link::OUTPUT;
-	    break;
-	  case SUPPLY0:
-	    dir = Link::OUTPUT;
-	    break;
-	  case SUPPLY1:
-	    dir = Link::OUTPUT;
-	    break;
-	  default:
-	    break;
-      }
-
-      pin(0).set_dir(dir);
-
-      s->add_signal(this);
-}
-
 void NetNet::initialize_dir_(Link::DIR dir)
 {
       if (pins_are_virtual()) {
@@ -544,47 +507,35 @@ template <class T> static unsigned calculate_count(T*type)
 
 void NetNet::calculate_slice_widths_from_packed_dims_(void)
 {
-      netvector_t*vec = dynamic_cast<netvector_t*> (net_type_);
-      ivl_assert(*this, vec==0 || packed_dims_.empty());
+      ivl_assert(*this, net_type_);
+      slice_dims_ = net_type_->slice_dimensions();
 
-      const std::list<netrange_t>&use_packed = vec? vec->packed_dims() : packed_dims_;
-      if (use_packed.empty()) {
-	    slice_wids_.clear();
+	// Special case: There are no actual packed dimensions, so
+	// build up a fake dimension of "1".
+      if (slice_dims_.size() == 0) {
+	    slice_wids_.resize(1);
+	    slice_wids_[0] = net_type_->packed_width();
 	    return;
       }
 
-      slice_wids_.resize(use_packed.size());
+      slice_wids_.resize(slice_dims_.size());
 
-      slice_wids_[0] = netrange_width(use_packed);
-      list<netrange_t>::const_iterator cur = use_packed.begin();
+      ivl_assert(*this, slice_wids_.size() >= 1);
+      slice_wids_[0] = netrange_width(slice_dims_);
+      vector<netrange_t>::const_iterator cur = slice_dims_.begin();
       for (size_t idx = 1 ; idx < slice_wids_.size() ; idx += 1) {
 	    slice_wids_[idx] = slice_wids_[idx-1] / cur->width();
       }
-
 }
 
 NetNet::NetNet(NetScope*s, perm_string n, Type t,
-	       const list<netrange_t>&packed,
-	       const list<netrange_t>&unpacked,
-	       ivl_type_s*use_net_type)
+	       const list<netrange_t>&unpacked, ivl_type_s*use_net_type)
 : NetObj(s, n, calculate_count(unpacked)),
     type_(t), port_type_(NOT_A_PORT),
     local_flag_(false), net_type_(use_net_type),
     discipline_(0), unpacked_dims_(unpacked.size()),
     eref_count_(0), lref_count_(0)
 {
-      packed_dims_ = packed;
-	// Special case: This is an enum, so it is its own packed vector.
-      if (netenum_t*et = dynamic_cast<netenum_t*>(use_net_type)) {
-	    ivl_assert(*this, packed_dims_.empty());
-	    packed_dims_.push_back(netrange_t(calculate_count(et)-1, 0));
-      }
-	// Special case: netstruct types are like another packed
-	// dimension.
-      if (netstruct_t*st = dynamic_cast<netstruct_t*>(use_net_type)) {
-	    packed_dims_.push_back(netrange_t(calculate_count(st)-1, 0));
-      }
-
       calculate_slice_widths_from_packed_dims_();
       size_t idx = 0;
       for (list<netrange_t>::const_iterator cur = unpacked.begin()
@@ -633,7 +584,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, netstruct_t*ty)
     discipline_(0),
     eref_count_(0), lref_count_(0)
 {
-      packed_dims_.push_back(netrange_t(calculate_count(ty)-1, 0));
+	//XXXX packed_dims_.push_back(netrange_t(calculate_count(ty)-1, 0));
       calculate_slice_widths_from_packed_dims_();
       Link::DIR dir = Link::PASSIVE;
 
@@ -792,16 +743,6 @@ void NetNet::set_module_port_index(unsigned idx)
     assert( port_index_ >= 0 );
 }
 
-const std::list<netrange_t>& NetNet::packed_dims() const
-{
-      if (netvector_t*vec = dynamic_cast<netvector_t*> (net_type_)) {
-	    ivl_assert(*this, packed_dims_.empty());
-	    return vec->packed_dims();
-      }
-
-      return packed_dims_;
-}
-
 ivl_variable_type_t NetNet::data_type() const
 {
       if (net_type_==0)
@@ -839,9 +780,26 @@ netenum_t*NetNet::enumeration(void) const
       return dynamic_cast<netenum_t*> (net_type_);
 }
 
-netstruct_t*NetNet::struct_type(void) const
+const netstruct_t*NetNet::struct_type(void) const
 {
-      return dynamic_cast<netstruct_t*> (net_type_);
+      const ivl_type_s*cur_type = net_type_;
+      while (cur_type) {
+	    if (const netdarray_t*da = dynamic_cast<const netdarray_t*> (cur_type)) {
+		  cur_type = da->element_type();
+		  continue;
+	    }
+	    if (const netparray_t*da = dynamic_cast<const netparray_t*> (cur_type)) {
+		  cur_type = da->element_type();
+		  continue;
+	    }
+	    if (const netstruct_t*st = dynamic_cast<const netstruct_t*> (cur_type))
+		  return st;
+	    else
+		  return 0;
+      }
+
+      assert(0);
+      return 0;
 }
 
 netdarray_t* NetNet::darray_type(void) const
@@ -894,7 +852,7 @@ long NetNet::sb_to_idx(const list<long>&indices, long sb) const
 {
       ivl_assert(*this, indices.size()+1 == packed_dims().size());
 
-      list<netrange_t>::const_iterator pcur = packed_dims().end();
+      vector<netrange_t>::const_iterator pcur = packed_dims().end();
       -- pcur;
 
       long acc_off;
@@ -2486,14 +2444,14 @@ NetNet* NetESignal::sig()
  */
 long NetESignal::lsi() const
 {
-      const list<netrange_t>&packed = net_->packed_dims();
+      const vector<netrange_t>&packed = net_->packed_dims();
       ivl_assert(*this, packed.size() == 1);
       return packed.back().get_lsb();
 }
 
 long NetESignal::msi() const
 {
-      const list<netrange_t>&packed = net_->packed_dims();
+      const vector<netrange_t>&packed = net_->packed_dims();
       ivl_assert(*this, packed.size() == 1);
       return packed.back().get_msb();
 }

@@ -2374,7 +2374,7 @@ void dll_target::signal(const NetNet*net)
 	   ivl_signal_t object. */
 
       { size_t idx = 0;
-	list<netrange_t>::const_iterator cur;
+	vector<netrange_t>::const_iterator cur;
 	obj->packed_dims.resize(net->packed_dims().size());
 	for (cur = net->packed_dims().begin(), idx = 0
 		   ; cur != net->packed_dims().end() ; ++cur, idx += 1) {

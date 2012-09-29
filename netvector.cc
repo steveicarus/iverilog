@@ -19,6 +19,8 @@
 
 # include  "netvector.h"
 
+using namespace std;
+
 netvector_t::netvector_t(ivl_variable_type_t type, long msb, long lsb)
 : type_(type), signed_(false)
 {
@@ -42,4 +44,9 @@ ivl_variable_type_t netvector_t::base_type() const
 long netvector_t::packed_width() const
 {
       return netrange_width(packed_dims_);
+}
+
+vector<netrange_t> netvector_t::slice_dimensions() const
+{
+      return packed_dims_;
 }

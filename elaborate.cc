@@ -998,8 +998,9 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
       ivl_assert(*this, dir != NetNet::NOT_A_PORT);
       ivl_assert(*this, dir != NetNet::PIMPLICIT);
 
+      netvector_t*tmp_type = new netvector_t(IVL_VT_LOGIC, port_wid-1, 0);
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-			      NetNet::WIRE, port_wid);
+			      NetNet::WIRE, tmp_type);
       tmp->local_flag(true);
       tmp->set_line(*this);
 
@@ -1417,6 +1418,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			     << "too complicated for elaboration." << endl;
 			continue;
 		  }
+
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": debug: "
+			     << "Elaborating INPUT port expression: " << *tmp_expr << endl;
+		  }
+
 		  sig = tmp_expr->synthesize(des, scope, tmp_expr);
 		  if (sig == 0) {
 			cerr << pins[idx]->get_fileline()

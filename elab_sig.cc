@@ -522,7 +522,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 			des->errors += 1;
 		  }
 
-		  list<netrange_t> packed;
+		  vector<netrange_t> packed;
 		  packed.push_back(netrange_t(mnum, lnum));
 		  ret_vec = new netvector_t(packed, IVL_VT_LOGIC);
 		  ret_vec->set_signed(return_type_.type == PTF_REG_S);
@@ -823,7 +823,7 @@ void PWhile::elaborate_sig(Design*des, NetScope*scope) const
 }
 
 static bool evaluate_ranges(Design*des, NetScope*scope,
-			    list<netrange_t>&llist,
+			    vector<netrange_t>&llist,
 			    const list<pform_range_t>&rlist)
 {
       bool bad_msb = false, bad_lsb = false;
@@ -874,7 +874,7 @@ static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
       for (list<struct_member_t*>::iterator cur = struct_type->members->begin()
 		 ; cur != struct_type->members->end() ; ++ cur) {
 
-	    list<netrange_t>packed_dimensions;
+	    vector<netrange_t>packed_dimensions;
 
 	    struct_member_t*curp = *cur;
 	    if (curp->range.get() && ! curp->range->empty()) {
@@ -900,20 +900,6 @@ static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
       return res;
 }
 
-static netparray_t* elaborate_parray_type(Design*des, NetScope*scope,
-					  parray_type_t*data_type)
-{
-
-      list<netrange_t>packed_dimensions;
-      bool bad_range = evaluate_ranges(des, scope, packed_dimensions, * data_type->packed_dims);
-      ivl_assert(*data_type, !bad_range);
-
-      netparray_t*res = new netparray_t(packed_dimensions);
-	//res->set_line(*data_type);
-
-      return res;
-}
-
 static ivl_type_s*elaborate_type(Design*des, NetScope*scope,
 				 data_type_t*pform_type)
 {
@@ -929,13 +915,29 @@ static ivl_type_s*elaborate_type(Design*des, NetScope*scope,
       return 0;
 }
 
-bool test_ranges_eeq(const list<netrange_t>&lef, const list<netrange_t>&rig)
+static netparray_t* elaborate_parray_type(Design*des, NetScope*scope,
+					  parray_type_t*data_type)
+{
+
+      vector<netrange_t>packed_dimensions;
+      bool bad_range = evaluate_ranges(des, scope, packed_dimensions, * data_type->packed_dims);
+      ivl_assert(*data_type, !bad_range);
+
+      ivl_type_s*element_type = elaborate_type(des, scope, data_type->base_type);
+
+      netparray_t*res = new netparray_t(packed_dimensions, element_type);
+	//res->set_line(*data_type);
+
+      return res;
+}
+
+bool test_ranges_eeq(const vector<netrange_t>&lef, const vector<netrange_t>&rig)
 {
       if (lef.size() != rig.size())
 	    return false;
 
-      list<netrange_t>::const_iterator lcur = lef.begin();
-      list<netrange_t>::const_iterator rcur = rig.begin();
+      vector<netrange_t>::const_iterator lcur = lef.begin();
+      vector<netrange_t>::const_iterator rcur = rig.begin();
       while (lcur != lef.end()) {
 	    if (lcur->get_msb() != rcur->get_msb())
 		  return false;
@@ -970,7 +972,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       }
 
       unsigned wid = 1;
-      list<netrange_t>packed_dimensions;
+      vector<netrange_t>packed_dimensions;
 
       des->errors += error_cnt_;
 
@@ -1011,7 +1013,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       if (port_set_ || net_set_) {
 	    bool bad_range = false;
-	    list<netrange_t> plist, nlist;
+	    vector<netrange_t> plist, nlist;
 	    /* If they exist get the port definition MSB and LSB */
 	    if (port_set_ && !port_.empty()) {
 		  bad_range |= evaluate_ranges(des, scope, plist, port_);
@@ -1222,7 +1224,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		       << " and packed_width=" << use_enum->packed_width() << endl;
 	    }
 
-	    sig = new NetNet(scope, name_, wtype, packed_dimensions, unpacked_dimensions, use_enum);
+	    ivl_assert(*this, packed_dimensions.empty());
+	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_enum);
 
 
       } else if (netarray) {
@@ -1256,14 +1259,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		       << " in scope " << scope_path(scope) << endl;
 	    }
 
-	    ivl_type_s*base_type = elaborate_type(des, scope, parray_type->base_type);
-#if 0
-	    cerr << get_fileline() << ": sorry: Packed array of "
-		 << typeid(*parray_type->base_type).name()
-		 << " not supported." << endl;
-	    des->errors += 1;
-#endif
-	    sig = new NetNet(scope, name_, wtype, use_type->packed_dimensions(), unpacked_dimensions, base_type);
+	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_type);
 
 
       } else {
@@ -1293,7 +1289,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    if (is_implicit_scalar) vec->set_scalar(true);
 	    else vec->set_scalar(get_scalar());
 	    packed_dimensions.clear();
-	    sig = new NetNet(scope, name_, wtype, packed_dimensions, unpacked_dimensions, vec);
+	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, vec);
 
       }
 

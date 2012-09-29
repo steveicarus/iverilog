@@ -1481,7 +1481,7 @@ static const netstruct_t::member_t*get_struct_member(const LineInfo*li,
                                                      perm_string method_name,
                                                      unsigned long&off)
 {
-      netstruct_t*type = net->struct_type();
+      const netstruct_t*type = net->struct_type();
       ivl_assert(*li, type);
 
       if (! type->packed()) {
@@ -3555,7 +3555,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 		  long lsv = base_c->value().as_long();
 		  long offset = 0;
 		    // Get the signal range.
-		  const list<netrange_t>&packed = net->sig()->packed_dims();
+		  const vector<netrange_t>&packed = net->sig()->packed_dims();
 		  ivl_assert(*this, packed.size() == prefix_indices.size()+1);
 
 		    // We want the last range, which is where we work.
@@ -3784,7 +3784,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 
 	    long msv = msc->value().as_long();
 
-	    const list<netrange_t>& sig_packed = net->sig()->packed_dims();
+	    const vector<netrange_t>& sig_packed = net->sig()->packed_dims();
 	    if (prefix_indices.size()+2 <= sig_packed.size()) {
 		    // Special case: this is a slice of a multi-dimensional
 		    // packed array. For example:
@@ -3877,7 +3877,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	    return res;
       }
 
-      const list<netrange_t>& sig_packed = net->sig()->packed_dims();
+      const vector<netrange_t>& sig_packed = net->sig()->packed_dims();
       if (prefix_indices.size()+2 <= sig_packed.size()) {
 	      // Special case: this is a slice of a multi-dimensional
 	      // packed array. For example:

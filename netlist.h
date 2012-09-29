@@ -597,21 +597,15 @@ class NetNet  : public NetObj, public PortType {
       typedef PortType::Enum PortType;
 
     public:
-	// The width in this case is a shorthand for ms=width-1 and
-	// ls=0. Only one pin is created, the width is of the vector
-	// that passed through.
-      explicit NetNet(NetScope*s, perm_string n, Type t, unsigned width =1);
-
-	// This form supports an array of vectors. The [ms:ls] define
-	// the base vector, and the [s0:e0] define the array
-	// dimensions. If s0==e0, then this is not an array after
-	// all.
+	// This form is the more generic form of the constructor. For
+	// now, the unpacked type is not burried into an ivl_type_s object.
       explicit NetNet(NetScope*s, perm_string n, Type t,
-		      const std::list<netrange_t>&packed,
 		      const std::list<netrange_t>&unpacked,
 		      ivl_type_s*type =0);
 
-	// This form builds a NetNet from its record/enum definition.
+	// This form builds a NetNet from its record/enum/darray
+	// definition. They should probably be replaced with a single
+	// version that takes an ivl_type_s* base.
       explicit NetNet(NetScope*s, perm_string n, Type t, netstruct_t*type);
       explicit NetNet(NetScope*s, perm_string n, Type t, netdarray_t*type);
       explicit NetNet(NetScope*s, perm_string n, Type t, netvector_t*type);
@@ -643,7 +637,7 @@ class NetNet  : public NetObj, public PortType {
 
       inline const ivl_type_s* net_type(void) const { return net_type_; }
       netenum_t*enumeration(void) const;
-      netstruct_t*struct_type(void) const;
+      const netstruct_t*struct_type(void) const;
       netdarray_t*darray_type(void) const;
 
 	/* Attach a discipline to the net. */
@@ -653,8 +647,9 @@ class NetNet  : public NetObj, public PortType {
 	/* This method returns a reference to the packed dimensions
 	   for the vector. These are arranged as a list where the
 	   first range in the list (front) is the left-most range in
-	   the verilog declaration. */
-      const std::list<netrange_t>& packed_dims() const;
+	   the verilog declaration. These packed dims are compressed
+	   to represent the dimensions of all the subtypes. */
+      const std::vector<netrange_t>& packed_dims() const { return slice_dims_; }
 
       const std::vector<netrange_t>& unpacked_dims() const { return unpacked_dims_; }
 
@@ -694,7 +689,7 @@ class NetNet  : public NetObj, public PortType {
 
 	/* This methor returns 0 for scalars, but vectors and other
 	   PACKED arrays have packed dimensions. */
-      inline size_t packed_dimensions() const { return packed_dims_.size(); }
+      inline size_t packed_dimensions() const { return slice_dims_.size(); }
 
 	// This is the number of array elements.
       unsigned unpacked_count() const;
@@ -733,7 +728,6 @@ class NetNet  : public NetObj, public PortType {
       ivl_type_s*net_type_;
       ivl_discipline_t discipline_;
 
-      std::list<netrange_t> packed_dims_;
       std::vector<netrange_t> unpacked_dims_;
 
 	// These are the widths of the various slice depths. There is
@@ -742,6 +736,7 @@ class NetNet  : public NetObj, public PortType {
 	//
 	// For example: slice_wids_[0] is vector_width().
       void calculate_slice_widths_from_packed_dims_(void);
+      std::vector<netrange_t> slice_dims_;
       std::vector<unsigned long> slice_wids_;
 
       unsigned eref_count_;
@@ -756,7 +751,6 @@ class NetNet  : public NetObj, public PortType {
       int       port_index_;
 };
 
-extern std::ostream&operator << (std::ostream&out, const std::list<netrange_t>&rlist);
 
 /*
  * This object type is used to contain a logical scope within a

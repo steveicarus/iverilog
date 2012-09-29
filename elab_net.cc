@@ -430,11 +430,18 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	   remove the member and store it into method_name, and retry
 	   the search with "a.b". */
       if (sig == 0 && path_.size() >= 2) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
+			"Symbol not found, try again with path_prefix=" << path_prefix
+		       << " and method_name=" << path_tail.name << endl;
+	    }
 	    method_name = path_tail.name;
 	    symbol_search(this, des, scope, path_prefix, sig, par, eve);
 
 	      // Whoops, not a struct signal, so give up on this avenue.
 	    if (sig && sig->struct_type() == 0) {
+		  cerr << get_fileline() << ": XXXXX: sig=" << sig->name()
+		       << " is found, but not a struct with member " << method_name << endl;
 		  method_name = perm_string();
 		  sig = 0;
 	    }
@@ -474,7 +481,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 
       list<long> unpacked_indices_const;
 
-      netstruct_t*struct_type = 0;
+      const netstruct_t*struct_type = 0;
       if ((struct_type = sig->struct_type()) && !method_name.nil()) {
 
 	      // Detect the variable is a structure and there was a

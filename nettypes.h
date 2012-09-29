@@ -20,10 +20,13 @@
  */
 
 # include  "ivl_target.h"
-# include <list>
-# include <climits>
-# include <ostream>
-# include <cassert>
+# include  <list>
+# include  <vector>
+# include  <climits>
+# include  <ostream>
+# include  <cassert>
+
+class netrange_t;
 
 /*
  * This is a fully abstract type that is a type that can be attached
@@ -33,6 +36,7 @@ class ivl_type_s {
     public:
       virtual ~ivl_type_s() =0;
       virtual long packed_width(void) const;
+      virtual std::vector<netrange_t> slice_dimensions() const;
 
 	// Some types have a base variable type.
       virtual ivl_variable_type_t base_type() const;
@@ -78,14 +82,17 @@ class netrange_t {
       long lsb_;
 };
 
-extern unsigned long netrange_width(const std::list<netrange_t>&dims);
+extern std::ostream&operator << (std::ostream&out, const std::list<netrange_t>&rlist);
+extern std::ostream&operator << (std::ostream&out, const std::vector<netrange_t>&rlist);
+
+extern unsigned long netrange_width(const std::vector<netrange_t>&dims);
 
 /*
  * Take as input a list of packed dimensions and a list of prefix
  * indices, and calculate the offset/width of the resulting slice into
  * the packed array.
  */
-extern bool prefix_to_slice(const std::list<netrange_t>&dims,
+extern bool prefix_to_slice(const std::vector<netrange_t>&dims,
 			    const std::list<long>&prefix, long sb,
 			    long&loff, unsigned long&lwid);
 

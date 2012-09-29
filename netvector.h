@@ -26,6 +26,12 @@
 class netvector_t : public ivl_type_s {
 
     public:
+      explicit netvector_t(const std::vector<netrange_t>&packed,
+			   ivl_variable_type_t type);
+
+	// This is a variant of the vector form. Some code processes
+	// the list of packed ranges as a list, but we will store them
+	// as a vector in this constructor.
       explicit netvector_t(const std::list<netrange_t>&packed,
 			   ivl_variable_type_t type);
 
@@ -51,27 +57,28 @@ class netvector_t : public ivl_type_s {
       inline bool get_scalar(void) const { return is_scalar_; }
 
       ivl_variable_type_t base_type() const;
-      const std::list<netrange_t>&packed_dims() const;
+      const std::vector<netrange_t>&packed_dims() const;
 
       long packed_width() const;
+      std::vector<netrange_t> slice_dimensions() const;
 
       std::ostream& debug_dump(std::ostream&) const;
 
     private:
-      std::list<netrange_t> packed_dims_;
+      std::vector<netrange_t> packed_dims_;
       ivl_variable_type_t type_;
       bool signed_    : 1;
       bool isint_     : 1;		// original type of integer
       bool is_scalar_ : 1;
 };
 
-inline netvector_t::netvector_t(const std::list<netrange_t>&packed,
+inline netvector_t::netvector_t(const std::vector<netrange_t>&packed,
 				ivl_variable_type_t type)
 : packed_dims_(packed), type_(type), signed_(false)
 {
 }
 
-inline const std::list<netrange_t>& netvector_t::packed_dims() const
+inline const std::vector<netrange_t>& netvector_t::packed_dims() const
 {
       return packed_dims_;
 }
