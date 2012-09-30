@@ -26,7 +26,7 @@
 /*
  * Packed arrays.
  */
-class netparray_t : public ivl_type_s {
+class netparray_t : public netarray_t {
 
     public:
       explicit netparray_t(const std::vector<netrange_t>&packed,
@@ -37,27 +37,19 @@ class netparray_t : public ivl_type_s {
 	// Virtual methods from the ivl_type_s type...
       long packed_width(void) const;
       std::vector<netrange_t> slice_dimensions() const;
-      ivl_variable_type_t base_type() const;
 
     public:
-      inline const ivl_type_s* element_type() const { return element_type_; }
-
       inline const std::vector<netrange_t>& packed_dimensions() const
       { return packed_dims_; }
 
     private:
       std::vector<netrange_t> packed_dims_;
-      ivl_type_t element_type_;
 
 };
 
 inline netparray_t::netparray_t(const std::vector<netrange_t>&packed,
 				ivl_type_t etype)
-: packed_dims_(packed), element_type_(etype)
-{
-}
-
-inline netparray_t::~netparray_t()
+: netarray_t(etype), packed_dims_(packed)
 {
 }
 

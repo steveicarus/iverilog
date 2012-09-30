@@ -2792,9 +2792,29 @@ extern "C" ivl_variable_type_t ivl_type_base(ivl_type_t net)
 
 extern "C" ivl_type_t ivl_type_element(ivl_type_t net)
 {
-      if (const netdarray_t*da = dynamic_cast<const netdarray_t*> (net))
+      if (const netarray_t*da = dynamic_cast<const netarray_t*> (net))
 	    return da->element_type();
 
       assert(0);
       return 0;
+}
+
+extern "C" unsigned ivl_type_packed_dimensions(ivl_type_t net)
+{
+      vector<netrange_t> slice = net->slice_dimensions();
+      return slice.size();
+}
+
+extern "C" int ivl_type_packed_lsb(ivl_type_t net, unsigned dim)
+{
+      vector<netrange_t> slice = net->slice_dimensions();
+      assert(dim < slice.size());
+      return slice[dim].get_lsb();
+}
+
+extern "C" int ivl_type_packed_msb(ivl_type_t net, unsigned dim)
+{
+      vector<netrange_t> slice = net->slice_dimensions();
+      assert(dim < slice.size());
+      return slice[dim].get_msb();
 }

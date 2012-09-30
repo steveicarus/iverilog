@@ -89,7 +89,7 @@ unsigned NetAssign_::lwidth() const
 	    if (word_ == 0)
 		  return 1;
 	    else
-		  return darray->vector_width();
+		  return darray->element_width();
       }
 
       return lwid_;

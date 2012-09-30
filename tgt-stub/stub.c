@@ -1222,7 +1222,6 @@ static void show_signal(ivl_signal_t net)
 
       const char*type = "?";
       const char*port = "";
-      const char*data_type = "?";
       const char*sign = ivl_signal_signed(net)? "signed" : "unsigned";
 
       switch (ivl_signal_type(net)) {
@@ -1260,32 +1259,6 @@ static void show_signal(ivl_signal_t net)
 	    break;
 
 	  case IVL_SIP_NONE:
-	    break;
-      }
-
-      data_type = "?data?";
-      switch (ivl_signal_data_type(net)) {
-
-	  case IVL_VT_NO_TYPE:
-	    data_type = "<no-type>";
-	    break;
-	  case IVL_VT_BOOL:
-	    data_type = "bool";
-	    break;
-	  case IVL_VT_LOGIC:
-	    data_type = "logic";
-	    break;
-	  case IVL_VT_REAL:
-	    data_type = "real";
-	    break;
-	  case IVL_VT_STRING:
-	    data_type = "string";
-	    break;
-	  case IVL_VT_DARRAY:
-	    data_type = "darray";
-	    break;
-	  case IVL_VT_VOID:
-	    data_type = "void";
 	    break;
       }
 
@@ -1367,7 +1340,7 @@ static void show_signal(ivl_signal_t net)
       switch (ivl_signal_data_type(net)) {
 	  case IVL_VT_NO_TYPE:
 	  case IVL_VT_VOID:
-	    fprintf(out, "  ERROR: Invalid type for signal: %s\n", data_type);
+	    fprintf(out, "  ERROR: Invalid type for signal.\n");
 	    stub_errors += 1;
 	    break;
 	  default:

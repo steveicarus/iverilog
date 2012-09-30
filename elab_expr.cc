@@ -2356,7 +2356,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       if (netdarray_t*darray = net? net->darray_type() : 0) {
 	    if (use_sel == index_component_t::SEL_BIT) {
 		  expr_type_   = darray->element_base_type();
-		  expr_width_  = darray->vector_width();
+		  expr_width_  = darray->element_width();
 		  min_width_   = expr_width_;
 		  signed_flag_ = net->get_signed();
 	    } else {
@@ -3749,7 +3749,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": debug: "
 		       << "Bit select of a dynamic array becomes NetESelect." << endl;
 	    }
-	    NetESelect*res = new NetESelect(net, mux, darray->vector_width());
+	    NetESelect*res = new NetESelect(net, mux, darray->element_width());
 	    res->set_line(*net);
 	    return res;
       }

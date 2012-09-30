@@ -22,13 +22,17 @@
 
 using namespace std;
 
+netparray_t::~netparray_t()
+{
+}
+
 /*
  * The packed width of a packed array is the packed width of the
  * element times the dimension width of the array itself.
  */
 long netparray_t::packed_width(void) const
 {
-      long cur_width = element_type_->packed_width();
+      long cur_width = element_type()->packed_width();
 
       for (vector<netrange_t>::const_iterator cur = packed_dims_.begin()
 		 ; cur != packed_dims_.end() ; ++cur) {
@@ -40,7 +44,7 @@ long netparray_t::packed_width(void) const
 
 vector<netrange_t> netparray_t::slice_dimensions() const
 {
-      vector<netrange_t> elem_dims = element_type_->slice_dimensions();
+      vector<netrange_t> elem_dims = element_type()->slice_dimensions();
 
       vector<netrange_t> res (packed_dims_.size() + elem_dims.size());
 
@@ -50,9 +54,4 @@ vector<netrange_t> netparray_t::slice_dimensions() const
 	    res[idx+packed_dims_.size()] = elem_dims[idx];
 
       return res;
-}
-
-ivl_variable_type_t netparray_t::base_type() const
-{
-      return element_type_->base_type();
 }

@@ -60,6 +60,13 @@ static void show_net_type(ivl_type_t net_type)
 	    fprintf(out, "void");
 	    break;
       }
+
+      unsigned packed_dimensions = ivl_type_packed_dimensions(net_type);
+      unsigned idx;
+      for (idx = 0 ; idx < packed_dimensions ; idx += 1) {
+	    fprintf(out, "[%d:%d]", ivl_type_packed_msb(net_type, idx),
+		    ivl_type_packed_lsb(net_type, idx));
+      }
 }
 
 void show_type_of_signal(ivl_signal_t net)

@@ -45,6 +45,27 @@ class ivl_type_s {
       virtual std::ostream& debug_dump(std::ostream&) const;
 };
 
+/*
+ * There are a couple types of array types. This class represents the
+ * common bits of array types.
+ */
+class netarray_t : public ivl_type_s {
+
+    public:
+      inline explicit netarray_t(ivl_type_t etype) : element_type_(etype) { }
+      ~netarray_t();
+
+    public:
+	// Some virtual methods have a common implementation for arrays.
+      ivl_variable_type_t base_type() const;
+
+    public:
+      inline ivl_type_t element_type() const { return element_type_; }
+
+    private:
+      ivl_type_t element_type_;
+};
+
 inline static std::ostream& operator << (std::ostream&out, const ivl_type_s&obj)
 {
       return obj.debug_dump(out);

@@ -21,14 +21,13 @@
 
 using namespace std;
 
-netdarray_t::netdarray_t(netvector_t*vec)
-: elem_type_(vec)
+netdarray_t::netdarray_t(ivl_type_t vec)
+: netarray_t(vec)
 {
 }
 
 netdarray_t::~netdarray_t()
 {
-      delete elem_type_;
 }
 
 ivl_variable_type_t netdarray_t::base_type(void) const

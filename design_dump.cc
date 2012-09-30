@@ -149,7 +149,7 @@ ostream& ivl_type_s::debug_dump(ostream&o) const
 
 ostream& netdarray_t::debug_dump(ostream&o) const
 {
-      o << "dynamic array of " << *elem_type_;
+      o << "dynamic array of " << *element_type();
       return o;
 }
 

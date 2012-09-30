@@ -46,6 +46,15 @@ bool ivl_type_s::get_signed() const
       return false;
 }
 
+netarray_t::~netarray_t()
+{
+}
+
+ivl_variable_type_t netarray_t::base_type() const
+{
+      return element_type_->base_type();
+}
+
 unsigned long netrange_width(const vector<netrange_t>&packed)
 {
       unsigned wid = 1;
