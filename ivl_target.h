@@ -764,6 +764,11 @@ extern unsigned ivl_event_lineno(ivl_event_t net);
  *    Get the data type of the expression node. This uses the variable
  *    type enum to express the type of the expression node.
  *
+ * ivl_expr_net_type
+ *    This is used in some cases to carry more advanced type
+ *    descriptions. Over the long run, all type informatino will be
+ *    moved into the ivl_type_t type description method.
+ *
  * ivl_expr_width
  *    This method returns the bit width of the expression at this
  *    node. It can be applied to any expression node, and returns the
@@ -841,6 +846,7 @@ extern unsigned ivl_event_lineno(ivl_event_t net);
  */
 
 extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
+extern ivl_type_t ivl_expr_net_type(ivl_expr_t net);
 extern ivl_variable_type_t ivl_expr_value(ivl_expr_t net);
 extern const char*ivl_expr_file(ivl_expr_t net);
 extern unsigned ivl_expr_lineno(ivl_expr_t net);

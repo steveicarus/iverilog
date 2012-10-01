@@ -131,6 +131,17 @@ unsigned PExpr::test_width(Design*des, NetScope*, width_mode_t&)
       return 1;
 }
 
+NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, ivl_type_t, unsigned) const
+{
+      cerr << get_fileline() << ": internal error: I do not know how to"
+	   << " elaborate (ivl_type_t) this expression. " << endl;
+      cerr << get_fileline() << ":               : Expression is: " << *this
+	   << endl;
+      des->errors += 1;
+      return 0;
+}
+
+
 NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
 {
       cerr << get_fileline() << ": internal error: I do not know how to"
@@ -3979,6 +3990,23 @@ unsigned PENew::test_width(Design*, NetScope*, width_mode_t&)
       return 1;
 }
 
+NetExpr* PENew::elaborate_expr(Design*des, NetScope*scope,
+			       ivl_type_t ntype, unsigned flags) const
+{
+	// Elaborate the size expression.
+      width_mode_t mode = LOSSLESS;
+      unsigned use_wid = size_->test_width(des, scope, mode);
+      NetExpr*size = size_->elaborate_expr(des, scope, use_wid, flags);
+
+      NetESFunc*tmp = new NetESFunc("$ivl_darray_method$new", ntype, 1);
+      tmp->set_line(*this);
+      tmp->parm(0, size);
+      return tmp;
+}
+
+/*
+ * This method should never actually be called.
+ */
 NetExpr* PENew::elaborate_expr(Design*des, NetScope*scope,
 				 unsigned, unsigned flags) const
 {

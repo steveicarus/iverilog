@@ -3957,7 +3957,17 @@ bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
       size_t size = thr->words[cp->bit_idx[0]].w_int;
 
       vvp_object_t obj;
-      if (strcmp(text,"sb32") == 0) {
+      if (strcmp(text,"b8") == 0) {
+	    obj = new vvp_darray_atom<uint8_t>(size);
+      } else if (strcmp(text,"b16") == 0) {
+	    obj = new vvp_darray_atom<uint16_t>(size);
+      } else if (strcmp(text,"b32") == 0) {
+	    obj = new vvp_darray_atom<uint32_t>(size);
+      } else if (strcmp(text,"sb8") == 0) {
+	    obj = new vvp_darray_atom<int8_t>(size);
+      } else if (strcmp(text,"sb16") == 0) {
+	    obj = new vvp_darray_atom<int16_t>(size);
+      } else if (strcmp(text,"sb32") == 0) {
 	    obj = new vvp_darray_atom<int32_t>(size);
       } else {
 	    obj = new vvp_darray (size);

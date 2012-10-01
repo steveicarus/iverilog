@@ -218,6 +218,7 @@ struct ivl_event_s {
 struct ivl_expr_s {
       ivl_expr_type_t type_;
       ivl_variable_type_t value_;
+      ivl_type_t net_type;
       perm_string file;
       unsigned lineno;
 

@@ -2229,25 +2229,6 @@ const NetScope* NetFree::scope() const
       return scope_;
 }
 
-NetExpr::NetExpr(unsigned w)
-: width_(w), signed_flag_(false)
-{
-}
-
-NetExpr::~NetExpr()
-{
-}
-
-void NetExpr::cast_signed(bool flag)
-{
-      cast_signed_base_(flag);
-}
-
-bool NetExpr::has_width() const
-{
-      return true;
-}
-
 /*
  * Create a bitwise operator node from the opcode and the left and
  * right expressions.

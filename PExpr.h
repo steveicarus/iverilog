@@ -121,6 +121,13 @@ class PExpr : public LineInfo {
         // to be propagated down to any context-dependant operands.
       void cast_signed(bool flag) { signed_flag_ = flag; }
 
+	// This is the more generic form of the elaborate_expr method
+	// below. The plan is to replace the simpler elaborate_expr
+	// method with this version, which can handle more advanced
+	// types. But for now, this is only implemented in special cases.
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     ivl_type_t type, unsigned flags) const;
+
 	// Procedural elaboration of the expression. The expr_width is
 	// the required width of the expression.
 	//
@@ -450,6 +457,8 @@ class PENew : public PExpr {
       virtual void dump(ostream&) const;
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     ivl_type_t type, unsigned flags) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     unsigned expr_wid,
                                      unsigned flags) const;

@@ -32,7 +32,7 @@ vvp_darray::~vvp_darray()
 {
 }
 
-void vvp_darray::set_word(unsigned adr, const vvp_vector4_t&)
+void vvp_darray::set_word(unsigned, const vvp_vector4_t&)
 {
       cerr << "XXXX set_word not implemented for " << typeid(*this).name() << endl;
 }
@@ -42,29 +42,38 @@ void vvp_darray::get_word(unsigned, vvp_vector4_t&)
       cerr << "XXXX get_word not implemented for " << typeid(*this).name() << endl;
 }
 
-template <> vvp_darray_atom<int32_t>::~vvp_darray_atom()
+template <class TYPE> vvp_darray_atom<TYPE>::~vvp_darray_atom()
 {
 }
 
-template <> void vvp_darray_atom<int32_t>::set_word(unsigned adr, const vvp_vector4_t&value)
+template <class TYPE> void vvp_darray_atom<TYPE>::set_word(unsigned adr, const vvp_vector4_t&value)
 {
       if (adr >= array_.size())
 	    return;
-      vector4_to_value(value, array_[adr], true, false);
+      int32_t tmp;
+      vector4_to_value(value, tmp, true, false);
+      array_[adr] = tmp;
 }
 
-template <> void vvp_darray_atom<int32_t>::get_word(unsigned adr, vvp_vector4_t&value)
+template <class TYPE> void vvp_darray_atom<TYPE>::get_word(unsigned adr, vvp_vector4_t&value)
 {
       if (adr >= array_.size()) {
-	    value = vvp_vector4_t(32, BIT4_X);
+	    value = vvp_vector4_t(8*sizeof(TYPE), BIT4_X);
 	    return;
       }
 
-      uint32_t word = array_[adr];
-      vvp_vector4_t tmp (32, BIT4_0);
-      for (unsigned idx = 0 ; idx < 32 ; idx += 1) {
+      TYPE word = array_[adr];
+      vvp_vector4_t tmp (8*sizeof(TYPE), BIT4_0);
+      for (unsigned idx = 0 ; idx < tmp.size() ; idx += 1) {
 	    if (word&1) tmp.set_bit(idx, BIT4_1);
 	    word >>= 1;
       }
       value = tmp;
 }
+
+template class vvp_darray_atom<uint8_t>;
+template class vvp_darray_atom<uint16_t>;
+template class vvp_darray_atom<uint32_t>;
+template class vvp_darray_atom<int8_t>;
+template class vvp_darray_atom<int16_t>;
+template class vvp_darray_atom<int32_t>;

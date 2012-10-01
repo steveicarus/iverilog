@@ -2195,6 +2195,17 @@ NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
 }
 
 NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
+				   ivl_type_t net_type) const
+{
+      ivl_assert(*this, rval_);
+
+      NetExpr*rv = rval_->elaborate_expr(des, scope, net_type, 0);
+
+      ivl_assert(*this, !is_constant_);
+      return rv;
+}
+
+NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 				   unsigned lv_width,
 				   ivl_variable_type_t lv_type) const
 {
@@ -2365,9 +2376,20 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
       if (delay_ != 0)
 	    delay = elaborate_delay_expr(delay_, des, scope);
 
+      NetExpr*rv;
+      if (lv->more==0 && dynamic_cast<const PENew*> (rval())) {
+	      /* Special case: The l-value is a single signal, and the
+		 r-value expression is a "new" expression. The l-value
+		 has a new form of type, and the PENew expression
+		 requires the extra information that it contains. So
+		 handle it with this code instead. */
+	    rv = elaborate_rval_(des, scope, lv->sig()->net_type());
 
-	/* Elaborate the r-value expression, then try to evaluate it. */
-      NetExpr*rv = elaborate_rval_(des, scope, count_lval_width(lv), lv->expr_type());
+      } else {
+	      /* Elaborate the r-value expression, then try to evaluate it. */
+	    rv = elaborate_rval_(des, scope, count_lval_width(lv), lv->expr_type());
+      }
+
       if (rv == 0) return 0;
       assert(rv);
 

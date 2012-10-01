@@ -20,9 +20,40 @@
 # include  "config.h"
 # include  "netlist.h"
 # include  "netenum.h"
+# include  "netdarray.h"
 # include  "compiler.h"
 # include  "netmisc.h"
 # include  <iostream>
+# include  "ivl_assert.h"
+
+NetExpr::NetExpr(unsigned w)
+: net_type_(0), width_(w), signed_flag_(false)
+{
+}
+
+NetExpr::NetExpr(ivl_type_t t)
+: net_type_(t), width_(0), signed_flag_(false)
+{
+}
+
+NetExpr::~NetExpr()
+{
+}
+
+ivl_type_t NetExpr::net_type() const
+{
+      return net_type_;
+}
+
+void NetExpr::cast_signed(bool flag)
+{
+      cast_signed_base_(flag);
+}
+
+bool NetExpr::has_width() const
+{
+      return true;
+}
 
 /*
  * the grand default data type is a logic vector.
@@ -328,6 +359,18 @@ NetESFunc::NetESFunc(const char*n, ivl_variable_type_t t,
 {
       name_ = lex_strings.add(n);
       expr_width(width);
+}
+
+NetESFunc::NetESFunc(const char*n, ivl_type_t rtype, unsigned np)
+: NetExpr(rtype), name_(0), type_(IVL_VT_NO_TYPE), enum_type_(0), parms_(np)
+{
+      name_ = lex_strings.add(n);
+      expr_width(rtype->packed_width());
+	// FIXME: For now, assume that all uses of this constructor
+	// are for the IVL_VT_DARRAY type. Eventually, the type_
+	// member will go away.
+      ivl_assert(*this, dynamic_cast<const netdarray_t*>(rtype));
+      type_ = IVL_VT_DARRAY;
 }
 
 NetESFunc::NetESFunc(const char*n, netenum_t*enum_type, unsigned np)

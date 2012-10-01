@@ -28,8 +28,22 @@ static int eval_darray_new(ivl_expr_t ex)
       draw_eval_expr_into_integer(size_expr, size_reg);
       clr_word(size_reg);
 
-	// XXXX: Assume elements are 32bit integers.
-      fprintf(vvp_out, "    %%new/darray %u, \"sb32\";\n", size_reg);
+	// The new function has a net_type that contains the details
+	// of the type.
+      ivl_type_t net_type = ivl_expr_net_type(ex);
+      assert(net_type);
+
+      ivl_type_t element_type = ivl_type_element(net_type);
+      assert(element_type);
+
+      assert(ivl_type_packed_dimensions(element_type) == 1);
+      int msb = ivl_type_packed_msb(element_type, 0);
+      int lsb = ivl_type_packed_lsb(element_type, 0);
+      int wid = msb>=lsb? msb - lsb : lsb - msb;
+      wid += 1;
+
+	// XXXX: Assume elements are signed integers.
+      fprintf(vvp_out, "    %%new/darray %u, \"sb%d\";\n", size_reg, wid);
 
       return 0;
 }

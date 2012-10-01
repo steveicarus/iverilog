@@ -1739,10 +1739,17 @@ class NetTran  : public NetNode, public IslandBranch {
 class NetExpr  : public LineInfo {
     public:
       explicit NetExpr(unsigned w =0);
+      explicit NetExpr(ivl_type_t t);
       virtual ~NetExpr() =0;
 
       virtual void expr_scan(struct expr_scan_t*) const =0;
       virtual void dump(ostream&) const;
+
+	// This is the advanced description of the type. I think I
+	// want to replace the other type description members with
+	// this single method. The default for this method returns
+	// nil.
+      ivl_type_t net_type() const;
 
 	// Expressions have type.
       virtual ivl_variable_type_t expr_type() const;
@@ -1812,6 +1819,7 @@ class NetExpr  : public LineInfo {
       void cast_signed_base_(bool flag) { signed_flag_ = flag; }
 
     private:
+      ivl_type_t net_type_;
       unsigned width_;
       bool signed_flag_;
 
@@ -3892,6 +3900,7 @@ class NetESFunc  : public NetExpr {
     public:
       NetESFunc(const char*name, ivl_variable_type_t t,
 		unsigned width, unsigned nprms);
+      NetESFunc(const char*name, ivl_type_t rtype, unsigned nprms);
       NetESFunc(const char*name, netenum_t*enum_type, unsigned nprms);
       ~NetESFunc();
 

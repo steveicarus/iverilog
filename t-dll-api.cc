@@ -413,6 +413,11 @@ extern "C" ivl_enumtype_t ivl_expr_enumtype(ivl_expr_t net)
       return net->u_.enumtype_.type;
 }
 
+extern "C" ivl_type_t ivl_expr_net_type(ivl_expr_t net)
+{
+      return net->net_type;
+}
+
 extern "C" const char* ivl_expr_name(ivl_expr_t net)
 {
       switch (net->type_) {

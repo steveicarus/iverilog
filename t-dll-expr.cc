@@ -56,6 +56,7 @@ void dll_target::sub_off_from_expr_(long off)
       ivl_expr_t tmpc = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       tmpc->type_   = IVL_EX_NUMBER;
       tmpc->value_  = IVL_VT_VECTOR;
+      tmpc->net_type= 0;
       tmpc->width_  = expr_->width_;
       tmpc->signed_ = expr_->signed_;
       tmpc->sized_  = 1;
@@ -71,6 +72,7 @@ void dll_target::sub_off_from_expr_(long off)
       ivl_expr_t tmps = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       tmps->type_  = IVL_EX_BINARY;
       tmps->value_ = IVL_VT_VECTOR;
+      tmps->net_type= 0;
       tmps->width_ = tmpc->width_;
       tmps->signed_ = tmpc->signed_;
       tmps->sized_ = 1;
@@ -90,6 +92,7 @@ void dll_target::mul_expr_by_const_(long val)
       ivl_expr_t tmpc = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       tmpc->type_   = IVL_EX_NUMBER;
       tmpc->value_  = IVL_VT_VECTOR;
+      tmpc->net_type= 0;
       tmpc->width_  = expr_->width_;
       tmpc->signed_ = expr_->signed_;
       tmpc->sized_  = 1;
@@ -105,6 +108,7 @@ void dll_target::mul_expr_by_const_(long val)
       ivl_expr_t tmps = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       tmps->type_  = IVL_EX_BINARY;
       tmps->value_ = IVL_VT_VECTOR;
+      tmpc->net_type= 0;
       tmps->width_ = tmpc->width_;
       tmps->signed_ = tmpc->signed_;
       tmps->sized_ = 1;
@@ -124,6 +128,7 @@ ivl_expr_t dll_target::expr_from_value_(const verinum&val)
       char*bits;
       expr->type_ = IVL_EX_NUMBER;
       expr->value_= IVL_VT_VECTOR;
+      expr->net_type=0;
       expr->width_= val.len();
       expr->signed_ = val.has_sign()? 1 : 0;
       expr->sized_= 1;
@@ -158,6 +163,7 @@ void dll_target::expr_access_func(const NetEAccess*net)
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       expr_->type_  = IVL_EX_BACCESS;
       expr_->value_ = IVL_VT_REAL;
+      expr_->net_type=0;
       expr_->width_ = 1;
       expr_->signed_= 1;
       expr_->sized_ = 1;
@@ -182,6 +188,7 @@ void dll_target::expr_binary(const NetEBinary*net)
 
       expr_->type_ = IVL_EX_BINARY;
       expr_->value_= get_expr_type(net);
+      expr_->net_type=0;
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
       expr_->sized_= 1;
@@ -201,6 +208,7 @@ void dll_target::expr_concat(const NetEConcat*net)
 
       cur->type_  = IVL_EX_CONCAT;
       cur->value_ = net->expr_type();
+      cur->net_type=0;
       cur->width_ = net->expr_width();
       cur->signed_ = net->has_sign() ? 1 : 0;
       cur->sized_ = 1;
@@ -226,6 +234,7 @@ void dll_target::expr_const(const NetEConst*net)
 
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       expr_->value_= net->expr_type();
+      expr_->net_type=0;
       FILE_NAME(expr_, net);
 
       if (net->value().is_string()) {
@@ -303,6 +312,7 @@ void dll_target::expr_creal(const NetECReal*net)
       expr_->type_ = IVL_EX_REALNUM;
       FILE_NAME(expr_, net);
       expr_->value_= IVL_VT_REAL;
+      expr_->net_type=0;
       expr_->u_.real_.value = net->value().as_double();
 }
 
@@ -315,6 +325,7 @@ void dll_target::expr_event(const NetEEvent*net)
       expr_->type_ = IVL_EX_EVENT;
       FILE_NAME(expr_, net);
       expr_->value_= IVL_VT_VOID;
+      expr_->net_type=0;
 
         /* Locate the event by name. Save the ivl_event_t in the
            expression so that the generator can find it easily. */
@@ -339,6 +350,7 @@ void dll_target::expr_scope(const NetEScope*net)
       expr_->type_ = IVL_EX_SCOPE;
       FILE_NAME(expr_, net);
       expr_->value_= IVL_VT_VOID;
+      expr_->net_type=0;
       expr_->u_.scope_.scope = lookup_scope_(net->scope());
 }
 
@@ -351,6 +363,7 @@ void dll_target::expr_netenum(const NetENetenum*net)
       expr_->type_ = IVL_EX_ENUMTYPE;
       FILE_NAME(expr_, net);
       expr_->value_= IVL_VT_VOID;
+      expr_->net_type=0;
       expr_->u_.enumtype_.type = net->netenum();
 }
 
@@ -371,6 +384,7 @@ void dll_target::expr_select(const NetESelect*net)
 
       expr_->type_ = IVL_EX_SELECT;
       expr_->value_= IVL_VT_VECTOR;
+      expr_->net_type=0;
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
       expr_->sized_= 1;
@@ -390,6 +404,7 @@ void dll_target::expr_sfunc(const NetESFunc*net)
       expr->type_ = IVL_EX_SFUNC;
       FILE_NAME(expr, net);
       expr->value_= net->expr_type();
+      expr->net_type=net->net_type();
       expr->width_= net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
       expr->sized_= 1;
@@ -420,6 +435,7 @@ void dll_target::expr_ternary(const NetETernary*net)
 
       expr->type_  = IVL_EX_TERNARY;
       expr->value_= net->expr_type();
+      expr->net_type=0;
       expr->width_ = net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
       expr->sized_ = 1;
@@ -461,6 +477,7 @@ void dll_target::expr_signal(const NetESignal*net)
 
       expr_->type_ = IVL_EX_SIGNAL;
       expr_->value_= net->expr_type();
+      expr_->net_type=0;
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
       expr_->sized_= 1;
@@ -488,6 +505,7 @@ void dll_target::expr_ufunc(const NetEUFunc*net)
 
       expr->type_ = IVL_EX_UFUNC;
       expr->value_= net->expr_type();
+      expr->net_type=0;
       expr->width_= net->expr_width();
       expr->signed_ = net->has_sign()? 1 : 0;
       expr->sized_= 1;
@@ -523,6 +541,7 @@ void dll_target::expr_unary(const NetEUnary*net)
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
       expr_->type_ = IVL_EX_UNARY;
       expr_->value_= net->expr_type();
+      expr_->net_type=0;
       expr_->width_ = net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;
       expr_->sized_ = 1;
