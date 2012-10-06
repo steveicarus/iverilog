@@ -3963,12 +3963,16 @@ bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
 	    obj = new vvp_darray_atom<uint16_t>(size);
       } else if (strcmp(text,"b32") == 0) {
 	    obj = new vvp_darray_atom<uint32_t>(size);
+      } else if (strcmp(text,"b64") == 0) {
+	    obj = new vvp_darray_atom<uint64_t>(size);
       } else if (strcmp(text,"sb8") == 0) {
 	    obj = new vvp_darray_atom<int8_t>(size);
       } else if (strcmp(text,"sb16") == 0) {
 	    obj = new vvp_darray_atom<int16_t>(size);
       } else if (strcmp(text,"sb32") == 0) {
 	    obj = new vvp_darray_atom<int32_t>(size);
+      } else if (strcmp(text,"sb64") == 0) {
+	    obj = new vvp_darray_atom<int64_t>(size);
       } else {
 	    obj = new vvp_darray (size);
       }

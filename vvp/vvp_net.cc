@@ -1619,8 +1619,8 @@ ostream& operator<< (ostream&out, const vvp_vector4_t&that)
       return out;
 }
 
-template <class INT>bool do_vector4_to_value(const vvp_vector4_t&vec, INT&val,
-					     bool is_signed, bool is_arithmetic)
+template <class INT>bool vector4_to_value(const vvp_vector4_t&vec, INT&val,
+					  bool is_signed, bool is_arithmetic)
 {
       long res = 0;
       INT  msk = 1;
@@ -1654,22 +1654,27 @@ template <class INT>bool do_vector4_to_value(const vvp_vector4_t&vec, INT&val,
       return rc_flag;
 }
 
-bool vector4_to_value(const vvp_vector4_t&vec, long&val,
-		      bool is_signed, bool is_arithmetic)
-{
-      return do_vector4_to_value(vec, val, is_signed, is_arithmetic);
-}
+template bool vector4_to_value(const vvp_vector4_t&vec, int8_t&val,
+			       bool is_signed, bool is_arithmetic);
+template bool vector4_to_value(const vvp_vector4_t&vec, int16_t&val,
+			       bool is_signed, bool is_arithmetic);
+template bool vector4_to_value(const vvp_vector4_t&vec, int32_t&val,
+			       bool is_signed, bool is_arithmetic);
+template bool vector4_to_value(const vvp_vector4_t&vec, int64_t&val,
+			       bool is_signed, bool is_arithmetic);
+template bool vector4_to_value(const vvp_vector4_t&vec, uint8_t&val,
+			       bool is_signed, bool is_arithmetic);
+template bool vector4_to_value(const vvp_vector4_t&vec, uint16_t&val,
+			       bool is_signed, bool is_arithmetic);
+template bool vector4_to_value(const vvp_vector4_t&vec, uint32_t&val,
+			       bool is_signed, bool is_arithmetic);
+template bool vector4_to_value(const vvp_vector4_t&vec, uint64_t&val,
+			       bool is_signed, bool is_arithmetic);
 
-bool vector4_to_value(const vvp_vector4_t&vec, int32_t&val,
-		      bool is_signed, bool is_arithmetic)
+template <class T> bool vector4_to_value(const vvp_vector4_t&vec, T&val)
 {
-      return do_vector4_to_value(vec, val, is_signed, is_arithmetic);
-}
-
-bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
-{
-      unsigned long res = 0;
-      unsigned long msk = 1;
+      T res = 0;
+      T msk = 1;
 
       unsigned size = vec.size();
       if (size > 8*sizeof(val)) size = 8*sizeof(val);
@@ -1684,44 +1689,16 @@ bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
 		  return false;
 	    }
 
-	    msk <<= 1UL;
+	    msk <<= static_cast<T>(1);
       }
 
       val = res;
       return true;
 }
 
+template bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val);
 #ifndef UL_AND_TIME64_SAME
-bool vector4_to_value(const vvp_vector4_t&vec, int64_t&val,
-		      bool is_signed, bool is_arithmetic)
-{
-      return do_vector4_to_value(vec, val, is_signed, is_arithmetic);
-}
-
-bool vector4_to_value(const vvp_vector4_t&vec, vvp_time64_t&val)
-{
-      vvp_time64_t res = 0;
-      vvp_time64_t msk = 1;
-
-      unsigned size = vec.size();
-      if (size > 8*sizeof(val)) size = 8*sizeof(val);
-      for (unsigned idx = 0 ;  idx < size ;  idx += 1) {
-	    switch (vec.value(idx)) {
-		case BIT4_0:
-		  break;
-		case BIT4_1:
-		  res |= msk;
-		  break;
-		default:
-		  return false;
-	    }
-
-	    msk <<= 1UL;
-      }
-
-      val = res;
-      return true;
-}
+template bool vector4_to_value(const vvp_vector4_t&vec, vvp_time64_t&val);
 #endif
 
 bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)

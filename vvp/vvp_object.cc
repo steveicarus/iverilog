@@ -50,7 +50,7 @@ template <class TYPE> void vvp_darray_atom<TYPE>::set_word(unsigned adr, const v
 {
       if (adr >= array_.size())
 	    return;
-      int32_t tmp;
+      TYPE tmp;
       vector4_to_value(value, tmp, true, false);
       array_[adr] = tmp;
 }
@@ -74,6 +74,8 @@ template <class TYPE> void vvp_darray_atom<TYPE>::get_word(unsigned adr, vvp_vec
 template class vvp_darray_atom<uint8_t>;
 template class vvp_darray_atom<uint16_t>;
 template class vvp_darray_atom<uint32_t>;
+template class vvp_darray_atom<uint64_t>;
 template class vvp_darray_atom<int8_t>;
 template class vvp_darray_atom<int16_t>;
 template class vvp_darray_atom<int32_t>;
+template class vvp_darray_atom<int64_t>;
