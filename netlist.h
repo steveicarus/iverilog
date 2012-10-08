@@ -3807,6 +3807,10 @@ class NetESelect  : public NetExpr {
       const NetExpr*select() const;
       ivl_select_type_t select_type() const;
 
+	// The type of a NetESelect is the base type of the
+	// sub-expression.
+      virtual ivl_variable_type_t expr_type() const;
+
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual bool has_width() const;
       virtual void expr_scan(struct expr_scan_t*) const;

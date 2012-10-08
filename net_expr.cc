@@ -348,6 +348,25 @@ ivl_select_type_t NetESelect::select_type() const
       return sel_type_;
 }
 
+ivl_variable_type_t NetESelect::expr_type() const
+{
+      ivl_variable_type_t type = expr_->expr_type();
+      if (type != IVL_VT_DARRAY)
+	    return type;
+
+      ivl_assert(*this, type == IVL_VT_DARRAY);
+
+	// Special case: If the expression is a DARRAY, then the
+	// sub-expression must be a NetESignal and the type of the
+	// NetESelect expression is the element type of the arrayed signal.
+      NetESignal*sig = dynamic_cast<NetESignal*>(expr_);
+      ivl_assert(*this, sig);
+      const netarray_t*array_type = dynamic_cast<const netarray_t*> (sig->sig()->net_type());
+      ivl_assert(*this, array_type);
+
+      return array_type->element_type()->base_type();
+}
+
 bool NetESelect::has_width() const
 {
       return true;

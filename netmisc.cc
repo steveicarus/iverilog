@@ -152,6 +152,16 @@ NetExpr* cast_to_int2(NetExpr*expr)
       return cast;
 }
 
+NetExpr* cast_to_real(NetExpr*expr)
+{
+      if (expr->expr_type() == IVL_VT_REAL)
+	    return expr;
+
+      NetECast*cast = new NetECast('r', expr, 1, true);
+      cast->set_line(*expr);
+      return cast;
+}
+
 /*
  * Add a signed constant to an existing expression. Generate a new
  * NetEBAdd node that has the input expression and an expression made

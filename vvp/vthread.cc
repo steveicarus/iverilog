@@ -3125,6 +3125,29 @@ bool of_LOAD_DAR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %load/dar/r <dst>, <array-label>;
+ */
+bool of_LOAD_DAR_R(vthread_t thr, vvp_code_t cp)
+{
+      unsigned dst = cp->bit_idx[0];
+      unsigned adr = thr->words[3].w_int;
+      vvp_net_t*net = cp->net;
+
+      assert(net);
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_darray*darray = dynamic_cast<vvp_darray*> (obj->get_object());
+      assert(darray);
+
+      double word;
+      darray->get_word(adr, word);
+
+      thr->words[dst].w_real = word;
+      return true;
+}
+
+/*
  * %load/vp0, %load/vp0/s, %load/avp0 and %load/avp0/s share this function.
 */
 #if (SIZEOF_UNSIGNED_LONG >= 8)
@@ -3973,6 +3996,8 @@ bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
 	    obj = new vvp_darray_atom<int32_t>(size);
       } else if (strcmp(text,"sb64") == 0) {
 	    obj = new vvp_darray_atom<int64_t>(size);
+      } else if (strcmp(text,"r") == 0) {
+	    obj = new vvp_darray_real(size);
       } else {
 	    obj = new vvp_darray (size);
       }
@@ -4514,6 +4539,28 @@ bool of_SET_DAR(vthread_t thr, vvp_code_t cp)
 
 	/* Make a vector of the desired width. */
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_darray*darray = dynamic_cast<vvp_darray*>(obj->get_object());
+      assert(darray);
+
+      darray->set_word(adr, value);
+      return true;
+}
+
+/*
+ * %set/dar/r  <label>, <bit>
+ */
+bool of_SET_DAR_R(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned adr = thr->words[3].w_int;
+
+	/* Make a vector of the desired width. */
+      double value = thr->words[bit].w_real;
 
       vvp_net_t*net = cp->net;
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);

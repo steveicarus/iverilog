@@ -383,7 +383,7 @@ void dll_target::expr_select(const NetESelect*net)
       expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
 
       expr_->type_ = IVL_EX_SELECT;
-      expr_->value_= IVL_VT_VECTOR;
+      expr_->value_= net->expr_type();
       expr_->net_type=0;
       expr_->width_= net->expr_width();
       expr_->signed_ = net->has_sign()? 1 : 0;

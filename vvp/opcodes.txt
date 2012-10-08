@@ -598,11 +598,14 @@ out of range, then x is loaded. The index value is incremented by one
 if it is defined (bit 4 is not 1).
 
 * %load/dar <bit>, <functor-label>, <wid>
+* %load/dar/r <bit>, <functor-label>
 
 This instruction loads an array word from a dynamic array. The
 <label> refers to the variable object, and the <bit>/<wid> are the
 location in local vector space where the extracted word goes. The
 index is implicitly extracted from index register 3.
+
+The dar/r variant reads a real-value into a real-valued register.
 
 (See also %set/dar)
 
@@ -739,7 +742,9 @@ the array. See also %delete/obj
 
 The supported types are:
 
-         "sb32"    - signed bool 32bits
+         "b<N>"     - unsigned bool <N>-bits
+         "sb<N>"    - signed bool <N>-bits
+	 "r"        - real
 
 * %nor <dst>, <src>, <wid>
 

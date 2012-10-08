@@ -79,6 +79,7 @@ extern NetNet*cast_to_int2(Design*des, NetScope*scope, NetNet*src, unsigned wid)
 extern NetNet*cast_to_real(Design*des, NetScope*scope, NetNet*src);
 
 extern NetExpr*cast_to_int2(NetExpr*expr);
+extern NetExpr*cast_to_real(NetExpr*expr);
 
 /*
  * Take the input expression and return a variation that assures that

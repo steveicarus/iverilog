@@ -2509,10 +2509,17 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 
       if (lv->expr_type() == IVL_VT_BOOL && rv->expr_type() != IVL_VT_BOOL) {
 	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: Cast expression to int2" << endl;
+		  cerr << get_fileline() << ": debug: "
+		       << "Cast expression to int2" << endl;
 	    rv = cast_to_int2(rv);
       }
 
+      if (lv->expr_type() == IVL_VT_REAL && rv->expr_type() != IVL_VT_REAL) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "Cast expression to real." << endl;
+	    rv = cast_to_real(rv);
+      }
       if (lv->enumeration() && (lv->enumeration() != rv->enumeration())) {
 	    cerr << get_fileline() << ": error: "
 		 << "Enumeration type mismatch in assignment." << endl;

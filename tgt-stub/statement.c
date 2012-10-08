@@ -31,7 +31,9 @@ static unsigned show_assign_lval_darray(ivl_lval_t lval, unsigned ind)
       assert(sig);
 
       if (ivl_lval_idx(lval)) {
-	    fprintf(out, "%*sAddress-0 select of dynamic array:\n", ind+4, "");
+	    fprintf(out, "%*sAddress-0 select of ", ind+4, "");
+	    show_type_of_signal(sig);
+	    fprintf(out, ":\n");
 	    show_expression(ivl_lval_idx(lval), ind+6);
       }
 

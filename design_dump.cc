@@ -1527,7 +1527,14 @@ void NetESelect::dump(ostream&o) const
       else
 	    o << "(0)";
 
-      o << "+:" << expr_width() << "]>";
+      o << "+:" << expr_width() << "]";
+      if (ivl_type_t nt = net_type()) {
+	    o << " net_type=(" << *nt << ")";
+      } else {
+	    o << " expr_type=" << expr_type();
+      }
+
+      o << ">";
 }
 
 void NetESFunc::dump(ostream&o) const
