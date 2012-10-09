@@ -980,7 +980,7 @@ vpiHandle vpip_make_var4(const char*name, int msb, int lsb,
 }
 
 #ifdef CHECK_WITH_VALGRIND
-static struct __vpiSignal **signal_pool = 0;
+static struct vpiSignal_plug **signal_pool = 0;
 static unsigned signal_pool_count = 0;
 static unsigned long signal_count = 0;
 static unsigned long signal_dels = 0;
@@ -988,11 +988,18 @@ static unsigned long signal_dels = 0;
 
 struct vpiSignal_plug {
       unsigned char space[sizeof (struct __vpiSignal)];
+#ifdef CHECK_WITH_VALGRIND
+      struct vpiSignal_plug *pool;
+#endif
 };
 
 void* __vpiSignal::operator new(size_t siz)
 {
-      assert(siz == sizeof(struct vpiSignal_plug));
+      assert(siz == sizeof(struct vpiSignal_plug)
+#ifdef CHECK_WITH_VALGRIND
+                    - sizeof(struct vpiSignal_plug *)
+#endif
+            );
       static struct vpiSignal_plug*alloc_array = 0;
       static unsigned alloc_index = 0;
       const unsigned alloc_count = 512;
@@ -1035,7 +1042,7 @@ void signal_delete(vpiHandle item)
       obj->node->fil->clear_all_callbacks();
       vvp_net_delete(obj->node);
       signal_dels += 1;
-      VALGRIND_MEMPOOL_FREE(obj->pool, obj);
+      VALGRIND_MEMPOOL_FREE(reinterpret_cast<vpiSignal_plug *>(obj)->pool, obj);
 }
 
 void signal_pool_delete()
@@ -1426,7 +1433,7 @@ void PV_delete(vpiHandle item)
 {
       struct __vpiPV *obj = dynamic_cast<__vpiPV*>(item);
       if (obj->sbase) {
-	    switch (obj->sbase->vpi_type->type_code) {
+	    switch (obj->sbase->get_type_code()) {
 		case vpiMemoryWord:
 		  if (vpi_get(_vpiFromThr, obj->sbase) == _vpi_at_A) {
 			A_delete(obj->sbase);

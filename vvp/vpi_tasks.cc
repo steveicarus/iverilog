@@ -711,12 +711,14 @@ void print_vpi_call_errors()
 #ifdef CHECK_WITH_VALGRIND
 static void cleanup_vpi_call_args(unsigned argc, vpiHandle*argv)
 {
+#if 0
       if (argc) {
 	    struct __vpiSysTaskCall*obj = new struct __vpiSysTaskCall;
 	    obj->nargs = argc;
 	    obj->args  = argv;
 	    vpi_call_delete(&obj->base);
       }
+#endif
 }
 #endif
 
@@ -837,7 +839,7 @@ void vpi_call_delete(vpiHandle item)
 	/* The object can be NULL if there was an error. */
       if (!obj) return;
       for (unsigned arg = 0; arg < obj->nargs; arg += 1) {
-	    switch (obj->args[arg]->vpi_type->type_code) {
+	    switch (obj->args[arg]->get_type_code()) {
 		case vpiConstant:
 		  switch (vpi_get(_vpiFromThr, obj->args[arg])) {
 		      case _vpiNoThr:

@@ -32,6 +32,15 @@ inline __vpiNamedEvent::__vpiNamedEvent(__vpiScope*sc, const char*nam)
       callbacks_ = 0;
 }
 
+__vpiNamedEvent::~__vpiNamedEvent()
+{
+      while (callbacks_) {
+	    struct __vpiCallback *tmp = callbacks_->next;
+	    delete callbacks_;
+	    callbacks_ = tmp;
+      }
+}
+
 int __vpiNamedEvent::get_type_code(void) const
 { return vpiNamedEvent; }
 

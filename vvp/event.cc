@@ -23,9 +23,6 @@
 # include  "schedule.h"
 # include  "vpi_priv.h"
 # include  "config.h"
-#ifdef CHECK_WITH_VALGRIND
-# include  "vvp_cleanup.h"
-#endif
 # include  <cstring>
 # include  <cassert>
 # include  <cstdlib>
@@ -855,14 +852,6 @@ void compile_named_event(char*label, char*name)
 #ifdef CHECK_WITH_VALGRIND
 void named_event_delete(__vpiHandle*handle)
 {
-      __vpiNamedEvent *obj = (__vpiNamedEvent *) handle;
-
-      while (obj->callbacks) {
-	    struct __vpiCallback*tmp = obj->callbacks->next;
-	    delete_vpi_callback(obj->callbacks);
-	    obj->callbacks = tmp;
-      }
-
-      free(obj);
+      delete dynamic_cast<__vpiNamedEvent *>(handle);
 }
 #endif

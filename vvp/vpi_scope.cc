@@ -49,11 +49,13 @@ void vpip_make_root_iterator(__vpiHandle**&table, unsigned&ntable)
 }
 
 #ifdef CHECK_WITH_VALGRIND
+void port_delete(__vpiHandle*handle);
+
 static void delete_sub_scopes(struct __vpiScope *scope)
 {
       for (unsigned idx = 0; idx < scope->nintern; idx += 1) {
 	    struct __vpiScope*lscope = (__vpiScope*)(scope->intern)[idx];
-	    switch(scope->intern[idx]->vpi_type->type_code) {
+	    switch(scope->intern[idx]->get_type_code()) {
 		case vpiFunction:
 		case vpiTask:
 		  contexts_delete(lscope);
@@ -70,7 +72,7 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		  break;
 		case vpiModPath:
 		    /* The destination ModPath is cleaned up later. */
-		  free((scope->intern)[idx]);
+		  delete (scope->intern)[idx];
 		  break;
 		case vpiNamedEvent:
 		  named_event_delete((scope->intern)[idx]);
@@ -94,9 +96,15 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		case vpiEnumTypespec:
 		  enum_delete((scope->intern)[idx]);
 		  break;
+		case vpiPort:
+		  port_delete((scope->intern)[idx]);
+		  break;
+		case vpiStringVar:
+		case vpiRegArray:
+		  break;
 		default:
 		  fprintf(stderr, "Need support for type: %d\n",
-		          scope->intern[idx]->vpi_type->type_code);
+		          scope->intern[idx]->get_type_code());
 		  assert(0);
 		  break;
 	    }
@@ -528,13 +536,14 @@ unsigned vpip_add_item_to_context(automatic_hooks_s*item,
 }
 
 
-struct vpiPortInfo  : public __vpiHandle {
+class vpiPortInfo  : public __vpiHandle {
+    public:
       vpiPortInfo( __vpiScope *parent,
                     unsigned index,
                     int vpi_direction,
                     unsigned width,
                     const char *name );
-
+      ~vpiPortInfo();
 
       int get_type_code(void) const { return vpiPort; }
 
@@ -542,7 +551,7 @@ struct vpiPortInfo  : public __vpiHandle {
       char* vpi_get_str(int code);
       vpiHandle vpi_handle(int code);
 
-protected:
+    private:
       __vpiScope *parent_;
       unsigned  index_;
       int       direction_;
@@ -555,13 +564,25 @@ vpiPortInfo::vpiPortInfo( __vpiScope *parent,
               int vpi_direction,
               unsigned width,
               const char *name ) :
-    parent_(parent),
-    index_(index),
-    direction_(vpi_direction),
-    width_(width),
-    name_(name)
+      parent_(parent),
+      index_(index),
+      direction_(vpi_direction),
+      width_(width),
+      name_(name)
 {
 }
+
+vpiPortInfo::~vpiPortInfo()
+{
+      delete[] name_;
+}
+
+#ifdef CHECK_WITH_VALGRIND
+void port_delete(__vpiHandle *handle)
+{
+      delete dynamic_cast<vpiPortInfo *>(handle);
+}
+#endif
 
 int vpiPortInfo::vpi_get(int code)
 {

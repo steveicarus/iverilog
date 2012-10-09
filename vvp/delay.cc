@@ -1054,7 +1054,7 @@ struct __vpiModPath* vpip_make_modpath(vvp_net_t *net)
 void modpath_delete()
 {
       for (unsigned idx = 0; idx < mp_count; idx += 1) {
-	    free(mp_list[idx]);
+	    delete mp_list[idx];
       }
       free(mp_list);
       mp_list = 0;

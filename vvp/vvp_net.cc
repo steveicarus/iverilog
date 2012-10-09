@@ -150,7 +150,7 @@ void vvp_net_pool_delete()
       }
 
       for (unsigned idx = 0; idx < vvp_net_pool_count; idx += 1) {
-	    VALGRIND_DESTROY_MEMPOOL(vvp_net_pool[idx])
+	    VALGRIND_DESTROY_MEMPOOL(vvp_net_pool[idx]);
 	    ::delete [] vvp_net_pool[idx];
       }
       free(vvp_net_pool);

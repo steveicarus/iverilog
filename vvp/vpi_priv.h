@@ -273,9 +273,6 @@ struct __vpiSignal : public __vpiHandle {
       vpiHandle vpi_handle(int code);
       vpiHandle vpi_iterate(int code);
 
-#ifdef CHECK_WITH_VALGRIND
-      struct __vpiSignal *pool;
-#endif
       union { // The scope or parent array that contains me.
 	    vpiHandle parent;
 	    struct __vpiScope* scope;
@@ -414,6 +411,7 @@ class __vpiNamedEvent : public __vpiHandle {
 
     public:
       __vpiNamedEvent(__vpiScope*scope, const char*name);
+      ~__vpiNamedEvent();
       int get_type_code(void) const;
       int vpi_get(int code);
       char* vpi_get_str(int code);
@@ -599,7 +597,8 @@ vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
 				 bool signed_flag, bool local_flag,
 				 long file_idx, long lineno);
 
-struct __vpiDecConst : public __vpiHandle {
+class __vpiDecConst : public __vpiHandle {
+    public:
       __vpiDecConst(int val =0);
       int get_type_code(void) const;
       int vpi_get(int code);
@@ -614,7 +613,7 @@ class __vpiRealConst : public __vpiHandle {
       int get_type_code(void) const;
       int vpi_get(int code);
       void vpi_get_value(p_vpi_value val);
-    public:
+
       double value;
 };
 

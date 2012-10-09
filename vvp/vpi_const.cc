@@ -83,7 +83,7 @@ void __vpiStringConst::process_string_(void)
 
 __vpiStringConst::~__vpiStringConst()
 {
-      delete[]value_;
+      delete[] value_;
 }
 
 int __vpiStringConst::get_type_code(void) const
@@ -650,7 +650,7 @@ int __vpiRealConst::vpi_get(int code)
 
 	  default:
 	    fprintf(stderr, "vvp error: get %d not supported "
-		    "by vpiDecConst\n", code);
+		    "by vpiRealConst\n", code);
 	    assert(0);
 	    return 0;
       }
@@ -754,25 +754,20 @@ vpiHandle vpip_make_real_param(char*name, double value,
 #ifdef CHECK_WITH_VALGRIND
 void constant_delete(vpiHandle item)
 {
-      assert(item->vpi_type->type_code == vpiConstant);
+      assert(item->get_type_code() == vpiConstant);
       switch(vpi_get(vpiConstType, item)) {
-	  case vpiStringConst: {
-	    struct __vpiStringConst*rfp = dynamic_cast<__vpiStringConst*>(item);
-	    delete [] rfp->value;
-	    free(rfp);
-	    break; }
-	  case vpiDecConst: {
-	    struct __vpiDecConst*rfp = dynamic_cast<__vpiDecConst*>(item);
-	    free(rfp);
-	    break; }
-	  case vpiBinaryConst: {
-	    struct __vpiBinaryConst*rfp = dynamic_cast<__vpiBinaryConst*>(item);
-	    delete rfp;
-	    break; }
-	  case vpiRealConst: {
-	    struct __vpiRealConst*rfp = dynamic_cast<__vpiRealConst*>(item);
-	    free(rfp);
-	    break; }
+	  case vpiStringConst:
+	    delete dynamic_cast<__vpiStringConst*>(item);
+	    break;
+	  case vpiDecConst:
+	    delete dynamic_cast<__vpiDecConst*>(item);
+	    break;
+	  case vpiBinaryConst:
+	    delete dynamic_cast<__vpiBinaryConst*>(item);
+	    break;
+	  case vpiRealConst:
+	    delete dynamic_cast<__vpiRealConst*>(item);
+	    break;
 	  default:
 	    assert(0);
       }

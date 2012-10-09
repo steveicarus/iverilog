@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -105,7 +105,7 @@ static void __compile_var_string(char*label, char*name,
 	    assert(!name);
 	    array_attach_word(array, array_addr, obj);
       }
-      delete[]label;
+      free(label);
       delete[] name;
 }
 
@@ -141,7 +141,7 @@ static void __compile_var_darray(char*label, char*name,
 	    assert(!name);
 	    array_attach_word(array, array_addr, obj);
       }
-      delete[]label;
+      free(label);
       delete[] name;
 }
 

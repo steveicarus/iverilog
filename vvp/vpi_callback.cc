@@ -639,8 +639,9 @@ void vvp_vpi_callback::add_vpi_callback(value_callback*cb)
 void vvp_vpi_callback::clear_all_callbacks()
 {
       while (vpi_callbacks_) {
-	    struct __vpiCallback*tmp = vpi_callbacks_->next;
-	    delete_vpi_callback(vpi_callbacks_);
+	    value_callback *tmp = dynamic_cast<value_callback*>
+	                            (vpi_callbacks_->next);
+	    delete vpi_callbacks_;
 	    vpi_callbacks_ = tmp;
       }
 }
