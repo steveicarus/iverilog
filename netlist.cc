@@ -2423,7 +2423,7 @@ const NetScope* NetEScope::scope() const
 }
 
 NetESignal::NetESignal(NetNet*n)
-: NetExpr(n->vector_width()), net_(n), word_(0)
+: NetExpr(n->vector_width()), net_(n), enum_type_(n->enumeration()), word_(0)
 {
       net_->incr_eref();
       set_line(*n);
@@ -2446,6 +2446,11 @@ NetESignal::~NetESignal()
 perm_string NetESignal::name() const
 {
       return net_->name();
+}
+
+netenum_t* NetESignal::enumeration() const
+{
+      return enum_type_;
 }
 
 const NetExpr* NetESignal::word_index() const

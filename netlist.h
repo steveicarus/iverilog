@@ -4086,6 +4086,7 @@ class NetESignal  : public NetExpr {
       virtual NetESignal* dup_expr() const;
       NetNet* synthesize(Design*des, NetScope*scope, NetExpr*root);
       NexusSet* nex_input(bool rem_out = true);
+      netenum_t*enumeration() const;
 
       virtual NetExpr*evaluate_function(const LineInfo&loc,
 					std::map<perm_string,NetExpr*>&ctx) const;
@@ -4110,6 +4111,7 @@ class NetESignal  : public NetExpr {
 
     private:
       NetNet*net_;
+      netenum_t*enum_type_;
 	// Expression to select a word from the net.
       NetExpr*word_;
 };
