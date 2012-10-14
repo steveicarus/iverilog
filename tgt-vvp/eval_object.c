@@ -42,6 +42,11 @@ static int eval_darray_new(ivl_expr_t ex)
 	    assert(ivl_type_packed_dimensions(element_type) == 0);
 	    fprintf(vvp_out, "    %%new/darray %u, \"r\";\n", size_reg);
 	    break;
+	  case IVL_VT_STRING:
+	      // STRING objects are not packable.
+	    assert(ivl_type_packed_dimensions(element_type) == 0);
+	    fprintf(vvp_out, "    %%new/darray %u, \"S\";\n", size_reg);
+	    break;
 	  case IVL_VT_BOOL:
 	      // bool objects are vectorable, but for now only support
 	      // a single dimensions.

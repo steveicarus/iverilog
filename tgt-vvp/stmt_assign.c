@@ -794,6 +794,17 @@ static int show_stmt_assign_sig_darray(ivl_statement_t net)
 	    fprintf(vvp_out, "    %%set/dar/r v%p_0, %u;\n", var, dst);
 	    clr_word(dst);
 
+      } else if (mux && ivl_type_base(element_type)==IVL_VT_STRING) {
+
+	      /* Evaluate the rval into the top of the string stack. */
+	    draw_eval_string(rval);
+
+	      /* The %store/dar/s expects the array index to me in index
+		 register 3. Calculate the index in place. */
+	    draw_eval_expr_into_integer(mux, 3);
+
+	    fprintf(vvp_out, "    %%store/dar/str v%p_0;\n", var);
+
       } else if (mux) {
 	    struct vector_info rvec = draw_eval_expr_wid(rval, ivl_lval_width(lval),
 							 STUFF_OK_XZ);

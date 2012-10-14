@@ -351,6 +351,13 @@ ivl_select_type_t NetESelect::select_type() const
 ivl_variable_type_t NetESelect::expr_type() const
 {
       ivl_variable_type_t type = expr_->expr_type();
+
+	// Special case: If the sub-expression is an IVL_VT_STRING,
+	// then this node is representing a character select. The
+	// width is the width of a byte, and the data type is BOOL.
+      if (type == IVL_VT_STRING && expr_width()==8)
+	    return IVL_VT_BOOL;
+
       if (type != IVL_VT_DARRAY)
 	    return type;
 

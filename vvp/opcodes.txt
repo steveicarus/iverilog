@@ -609,6 +609,17 @@ The dar/r variant reads a real-value into a real-valued register.
 
 (See also %set/dar)
 
+* %load/str <var-label>
+* %load/dar/str <var-label>
+
+The %load/str instruction gets the string from the string variable and
+pushes in to the string stack. (See also %store/str)
+
+The %load/dar/str is similar, but the variable is a dynamic array of
+strings, and there is an index value in index register 3.
+(See also %store/dar/str)
+
+
 * %load/v <bit>, <functor-label>, <wid>
 
 This instruction loads a vector value from the given functor node into
@@ -745,6 +756,7 @@ The supported types are:
          "b<N>"     - unsigned bool <N>-bits
          "sb<N>"    - signed bool <N>-bits
 	 "r"        - real
+	 "S"        - SystemVerilog string
 
 * %nor <dst>, <src>, <wid>
 
@@ -936,9 +948,13 @@ This pops the top of the object stack and writes it to the object
 variable given by the label.
 
 * %store/str <var-label>
+* %store/dar/str <var-label>
 
-This pops the top of the string stack and writes it to the string
-varible.
+The %store/str instruction pops the top of the string stack and writes
+it to the string variable.
+
+The %store/dar/str is similar, but the target is a dynamic array of
+string string. The index is taken from signed index register 3.
 
 * %sub <bit-l>, <bit-r>, <wid>
 
