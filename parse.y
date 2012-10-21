@@ -409,6 +409,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %token K_PO_POS K_PO_NEG K_POW
 %token K_PSTAR K_STARP K_DOTSTAR
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
+%token K_SCOPE_RES
 %token K_edge_descriptor
 
  /* The base tokens from 1364-1995. */
@@ -1333,6 +1334,22 @@ package_declaration /* IEEE1800-2005 A.1.2 */
 	delete[]$2;
 	if ($8) delete[]$8;
       }
+  ;
+
+package_import_declaration /* IEEE1800-2005 A.2.1.3 */
+  : K_import package_import_item_list ';'
+      { yyerror(@1, "sorry: Package import declarations not supported.");
+      }
+  ;
+
+package_import_item
+  : IDENTIFIER K_SCOPE_RES IDENTIFIER
+  | IDENTIFIER K_SCOPE_RES '*'
+  ;
+
+package_import_item_list
+  : package_import_item_list',' package_import_item
+  | package_import_item
   ;
 
 package_item /* IEEE1800-2005 A.1.10 */
@@ -4266,6 +4283,8 @@ module_item
 	}
 	pform_endgenerate();
       }
+
+  | package_import_declaration
 
   /* 1364-2001 and later allow specparam declarations outside specify blocks. */
 

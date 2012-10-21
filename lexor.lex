@@ -192,6 +192,7 @@ TU [munpf]
 "++" { return K_INCR; }
 "--" {return K_DECR; }
 "'{" { return K_LP; }
+"::" { return K_SCOPE_RES; }
 
   /* Watch out for the tricky case of (*). Cannot parse this as "(*"
      and ")", but since I know that this is really ( * ), replace it
