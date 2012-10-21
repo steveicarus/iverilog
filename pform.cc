@@ -25,6 +25,7 @@
 # include  "parse_api.h"
 # include  "PClass.h"
 # include  "PEvent.h"
+# include  "PPackage.h"
 # include  "PUdp.h"
 # include  "PGenerate.h"
 # include  "PSpec.h"
@@ -290,6 +291,15 @@ PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
 
       lexical_scope = class_scope;
       return class_scope;
+}
+
+PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name)
+{
+      PPackage*pkg_scope = new PPackage(name, lexical_scope);
+      FILE_NAME(pkg_scope, loc);
+
+      lexical_scope = pkg_scope;
+      return pkg_scope;
 }
 
 PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
@@ -2495,6 +2505,7 @@ void pform_set_localparam(const struct vlltype&loc,
 			  bool signed_flag, list<pform_range_t>*range, PExpr*expr)
 {
       LexicalScope*scope = lexical_scope;
+      ivl_assert(loc, scope);
 
 	// Check if the localparam name is already in the dictionary.
       if (scope->localparams.find(name) != scope->localparams.end()) {
@@ -2513,7 +2524,9 @@ void pform_set_localparam(const struct vlltype&loc,
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
-      if ((scope == pform_cur_module.front()) &&
+
+      if ((pform_cur_module.size() > 0) &&
+	  (scope == pform_cur_module.front()) &&
           (pform_cur_module.front()->specparams.find(name) != pform_cur_module.front()->specparams.end())) {
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);

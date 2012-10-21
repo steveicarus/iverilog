@@ -622,13 +622,10 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
 %%
 
-  /* A degenerate source file can be completely empty. */
-main : source_file | ;
 
-source_file
-	: description
-	| source_file description
-	;
+  /* IEEE1800-2005: A.1.2 */
+  /* source_text ::= [ timeunits_declaration ] { description } */
+source_text : description_list | ;
 
 assignment_pattern /* IEEE1800-2005: A.6.7.1 */
   : K_LP expression_list_proper '}'
@@ -929,6 +926,37 @@ data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
   |
       { $$ = 0; }
   ;
+
+
+  /* NOTE 1: We pull the "timeunits_declaration" into the description
+     here in order to be a little more flexible with where timeunits
+     statements may go. This may be a bad idea, but it is legacy now. */
+
+  /* NOTE 2: The "module" rule of the description combines the
+     module_declaration and program_declaration rules from the
+     standard description. */
+
+description /* IEEE1800-2005: A.1.2 */
+  : module
+  | udp_primitive
+  | config_declaration
+  | nature_declaration
+  | package_declaration
+  | discipline_declaration
+  | timeunits_declaration
+  | KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')'
+      { perm_string tmp3 = lex_strings.make($3);
+	pform_set_type_attrib(tmp3, $5, $7);
+	delete[] $3;
+	delete[] $5;
+      }
+  ;
+
+description_list
+  : description
+  | description_list description
+  ;
+
 
    /* This implements the [ : INDENTIFIER ] part of the constructure
       rule documented in IEEE1800-2005: A.1.8 */
@@ -1285,6 +1313,41 @@ open_range_list /* IEEE1800-2005 A.2.11 */
   : open_range_list ',' value_range
   | value_range
   ;
+
+package_declaration /* IEEE1800-2005 A.1.2 */
+  : K_package IDENTIFIER ';'
+      { pform_start_package_declaration(@1, $2);
+      }
+    package_item_list_opt
+    K_endpackage
+      { pform_end_package_declaration(@1); }
+    endname_opt
+      { // Last step: check any closing name. This is done late so
+	// that the parser can look ahead to detect the present
+	// endname_opt but still have the pform_endmodule() called
+	// early enough that the lexor can know we are outside the
+	// module.
+	if ($8 && (strcmp($2,$8) != 0)) {
+	      yyerror(@8, "error: End name doesn't match package name");
+	}
+	delete[]$2;
+	if ($8) delete[]$8;
+      }
+  ;
+
+package_item /* IEEE1800-2005 A.1.10 */
+  : timeunits_declaration
+  | K_localparam param_type localparam_assign_list ';'
+  | type_declaration
+  | function_declaration
+  ;
+
+package_item_list
+  : package_item_list package_item
+  | package_item
+  ;
+
+package_item_list_opt : package_item_list | ;
 
 port_direction /* IEEE1800-2005 A.1.3 */
   : K_input  { $$ = NetNet::PINPUT; }
@@ -1713,6 +1776,17 @@ tf_port_list /* IEEE1800-2005: A.2.7 */
       }
   ;
 
+  /* NOTE: Icarus Verilog is a little more generous with the
+     timeunits declarations by allowing them to happen in multiple
+     places in the file. So the rule is adjusted to be invoked by the
+     "description" rule. This theoretically allows files to be
+     concatenated together and still compile. */
+timeunits_declaration /* IEEE1800-2005: A.1.2 */
+  : K_timeunit TIME_LITERAL ';'
+      { pform_set_timeunit($2, false, false); }
+  | K_timeprecision TIME_LITERAL ';'
+      { pform_set_timeprecision($2, false, false); }
+  ;
 
 value_range /* IEEE1800-2005: A.8.3 */
   : expression
@@ -2293,24 +2367,6 @@ delay_value_simple
 		  }
 		}
 	;
-
-description
-  : module
-  | udp_primitive
-  | config_declaration
-  | nature_declaration
-  | discipline_declaration
-  | KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')'
-      { perm_string tmp3 = lex_strings.make($3);
-	pform_set_type_attrib(tmp3, $5, $7);
-	delete[] $3;
-	delete[] $5;
-      }
-  | K_timeunit  TIME_LITERAL ';'
-      { pform_set_timeunit($2, false, false); }
-  | K_timeprecision TIME_LITERAL ';'
-      { pform_set_timeprecision($2, false, false); }
-  ;
 
   /* The discipline and nature declarations used to take no ';' after
      the identifier. The 2.3 LRM adds the ';', but since there are

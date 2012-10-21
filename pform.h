@@ -59,6 +59,7 @@ class PGate;
 class PExpr;
 class PSpecPath;
 class PClass;
+class PPackage;
 struct vlltype;
 
 /*
@@ -182,6 +183,10 @@ extern void pform_start_class_declaration(const struct vlltype&loc,
 					  class_type_t*type);
 extern void pform_end_class_declaration(void);
 
+extern void pform_start_package_declaration(const struct vlltype&loc,
+					    const char*type);
+extern void pform_end_package_declaration(const struct vlltype&loc);
+
 extern void pform_make_udp(perm_string name, list<perm_string>*parms,
 			   svector<PWire*>*decl, list<string>*table,
 			   Statement*init,
@@ -202,6 +207,7 @@ extern void pform_make_udp(perm_string name,
 extern void pform_pop_scope();
 
 extern PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name);
+extern PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name);
 extern PTask*pform_push_task_scope(const struct vlltype&loc, char*name,
                                    bool is_auto);
 extern PFunction*pform_push_function_scope(const struct vlltype&loc, char*name,
