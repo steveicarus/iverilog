@@ -53,6 +53,9 @@ static bool get_real_arg_(const NetExpr*expr, verireal&val)
 		break;
 	  }
 
+	  case IVL_VT_DARRAY:
+	    return false;
+
 	  default:
 	    assert(0);
       }

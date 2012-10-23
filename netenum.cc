@@ -21,6 +21,8 @@
 # include  "compiler.h"
 # include  <cassert>
 
+using namespace std;
+
 netenum_t::netenum_t(ivl_variable_type_t btype, bool signed_flag,
 		     long msb, long lsb, size_t name_count)
 : base_type_(btype), signed_flag_(signed_flag), msb_(msb), lsb_(lsb),
@@ -32,6 +34,11 @@ netenum_t::~netenum_t()
 {
 }
 
+bool netenum_t::get_signed() const
+{
+      return signed_flag_;
+}
+
 long netenum_t::packed_width() const
 {
       if (msb_ >= lsb_)
@@ -39,6 +46,14 @@ long netenum_t::packed_width() const
       else
 	    return lsb_ - msb_ + 1;
 }
+
+vector<netrange_t> netenum_t::slice_dimensions() const
+{
+      vector<netrange_t> tmp (1);
+      tmp[0] = netrange_t(msb_, lsb_);
+      return tmp;
+}
+
 
 bool netenum_t::insert_name(size_t name_idx, perm_string name, const verinum&val)
 {

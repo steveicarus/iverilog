@@ -2471,6 +2471,17 @@ static struct vector_info draw_select_signal(ivl_expr_t expr,
       unsigned use_word = 0;
       unsigned use_wid, lab_x, lab_end;
 
+	/* Special case: the sub expression is a DARRAY variable, so
+	   do a dynamic array word load. */
+      if (ivl_signal_data_type(sig) == IVL_VT_DARRAY) {
+	    res.base = allocate_vector(wid);
+	    res.wid = wid;
+	    draw_eval_expr_into_integer(bit_idx, 3);
+	    fprintf(vvp_out, "    %%load/dar %u, v%p_0, %u;\n",
+		    res.base, sig, res.wid);
+	    return res;
+      }
+
 	/* If this is an access to an array, try to get the index as a
 	   constant. If it is (and the array is not a reg array then
 	   this reduces to a signal access and we stay here. If it is

@@ -71,6 +71,21 @@ static void string_ex_signal(ivl_expr_t expr)
       fallback_eval(expr);
 }
 
+static void string_ex_select(ivl_expr_t expr)
+{
+	/* The sube references the expression to be selected from. */
+      ivl_expr_t sube = ivl_expr_oper1(expr);
+	/* This is the select expression */
+      ivl_expr_t shift= ivl_expr_oper2(expr);
+
+	/* Assume the sub-expression is a signal */
+      ivl_signal_t sig = ivl_expr_signal(sube);
+      assert(ivl_signal_data_type(sig) == IVL_VT_DARRAY);
+
+      draw_eval_expr_into_integer(shift, 3);
+      fprintf(vvp_out, "    %%load/dar/str v%p_0;\n", sig);
+}
+
 void draw_eval_string(ivl_expr_t expr)
 {
 
@@ -85,6 +100,10 @@ void draw_eval_string(ivl_expr_t expr)
 
 	  case IVL_EX_CONCAT:
 	    string_ex_concat(expr);
+	    break;
+
+	  case IVL_EX_SELECT:
+	    string_ex_select(expr);
 	    break;
 
 	  default:

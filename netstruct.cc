@@ -66,3 +66,23 @@ long netstruct_t::packed_width(void) const
 
       return res;
 }
+
+vector<netrange_t> netstruct_t::slice_dimensions() const
+{
+      vector<netrange_t> tmp;
+      tmp .push_back(netrange_t(packed_width()-1, 0));
+      return tmp;
+}
+
+ivl_variable_type_t netstruct_t::base_type() const
+{
+      if (! packed_)
+	    return IVL_VT_NO_TYPE;
+
+      for (size_t idx = 0 ;  idx < members_.size() ; idx += 1) {
+	    if (members_[idx].data_type() != IVL_VT_BOOL)
+		  return members_[idx].data_type();
+      }
+
+      return IVL_VT_BOOL;
+}

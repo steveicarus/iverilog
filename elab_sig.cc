@@ -36,6 +36,7 @@
 # include  "netmisc.h"
 # include  "netenum.h"
 # include  "netstruct.h"
+# include  "netvector.h"
 # include  "netdarray.h"
 # include  "netparray.h"
 # include  "util.h"
@@ -485,6 +486,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
       }
 
       NetNet*ret_sig = 0;
+      netvector_t*ret_vec = 0;
 
 	/* Create the signals/variables of the return value and write
 	   them into the function scope. */
@@ -520,50 +522,51 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 			des->errors += 1;
 		  }
 
-		  list<netrange_t> packed;
+		  vector<netrange_t> packed;
 		  packed.push_back(netrange_t(mnum, lnum));
-		  ret_sig = new NetNet(scope, fname, NetNet::REG, packed);
-		  ret_sig->set_scalar(false);
+		  ret_vec = new netvector_t(packed, IVL_VT_LOGIC);
+		  ret_vec->set_signed(return_type_.type == PTF_REG_S);
+		  ret_vec->set_scalar(false);
+		  ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 
 	    } else {
-		  ret_sig = new NetNet(scope, fname, NetNet::REG);
-		  ret_sig->set_scalar(true);
+		  ret_vec = new netvector_t(IVL_VT_LOGIC);
+		  ret_vec->set_signed(return_type_.type == PTF_REG_S);
+		  ret_vec->set_scalar(true);
+		  ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    }
 	    ret_sig->set_line(*this);
-	    ret_sig->set_signed(return_type_.type == PTF_REG_S);
 	    ret_sig->port_type(NetNet::POUTPUT);
-	    ret_sig->data_type(IVL_VT_LOGIC);
 	    break;
 
 	  case PTF_INTEGER:
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, integer_width);
+	    ret_vec = new netvector_t(IVL_VT_LOGIC, integer_width-1,0);
+	    ret_vec->set_signed(true);
+	    ret_vec->set_isint(true);
+	    ret_vec->set_scalar(false);
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    ret_sig->set_line(*this);
-	    ret_sig->set_signed(true);
-	    ret_sig->set_isint(true);
-	    ret_sig->set_scalar(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
-	    ret_sig->data_type(IVL_VT_LOGIC);
 	    break;
 
 	  case PTF_TIME:
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, 64);
+	    ret_vec = new netvector_t(IVL_VT_LOGIC, 64-1,0);
+	    ret_vec->set_isint(false);
+	    ret_vec->set_scalar(false);
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    ret_sig->set_line(*this);
-	    ret_sig->set_signed(false);
-	    ret_sig->set_isint(false);
-	    ret_sig->set_scalar(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
-	    ret_sig->data_type(IVL_VT_LOGIC);
 	    break;
 
 	  case PTF_REAL:
 	  case PTF_REALTIME:
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, 1);
+	    ret_vec = new netvector_t(IVL_VT_REAL);
+	    ret_vec->set_signed(true);
+	    ret_vec->set_isint(false);
+	    ret_vec->set_scalar(true);
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    ret_sig->set_line(*this);
-	    ret_sig->set_signed(true);
-	    ret_sig->set_isint(false);
-	    ret_sig->set_scalar(true);
 	    ret_sig->port_type(NetNet::POUTPUT);
-	    ret_sig->data_type(IVL_VT_REAL);
 	    break;
 
 	  case PTF_ATOM2:
@@ -598,13 +601,13 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 
 		  use_wid = mnum - lnum + 1;
 	    }
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, use_wid);
+	    ret_vec = new netvector_t(IVL_VT_BOOL, use_wid-1, 0);
+	    ret_vec->set_isint(true);
+	    ret_vec->set_scalar(false);
+	    ret_vec->set_signed(return_type_.type == PTF_ATOM2_S? true : false);
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    ret_sig->set_line(*this);
-	    ret_sig->set_signed(return_type_.type == PTF_ATOM2_S? true : false);
-	    ret_sig->set_isint(true);
-	    ret_sig->set_scalar(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
-	    ret_sig->data_type(IVL_VT_BOOL);
 	    break;
 
 	  case PTF_STRING:
@@ -820,7 +823,7 @@ void PWhile::elaborate_sig(Design*des, NetScope*scope) const
 }
 
 static bool evaluate_ranges(Design*des, NetScope*scope,
-			    list<netrange_t>&llist,
+			    vector<netrange_t>&llist,
 			    const list<pform_range_t>&rlist)
 {
       bool bad_msb = false, bad_lsb = false;
@@ -871,7 +874,7 @@ static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
       for (list<struct_member_t*>::iterator cur = struct_type->members->begin()
 		 ; cur != struct_type->members->end() ; ++ cur) {
 
-	    list<netrange_t>packed_dimensions;
+	    vector<netrange_t>packed_dimensions;
 
 	    struct_member_t*curp = *cur;
 	    if (curp->range.get() && ! curp->range->empty()) {
@@ -897,22 +900,8 @@ static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
       return res;
 }
 
-static netparray_t* elaborate_parray_type(Design*des, NetScope*scope,
-					  parray_type_t*data_type)
-{
-
-      list<netrange_t>packed_dimensions;
-      bool bad_range = evaluate_ranges(des, scope, packed_dimensions, * data_type->packed_dims);
-      ivl_assert(*data_type, !bad_range);
-
-      netparray_t*res = new netparray_t(packed_dimensions);
-	//res->set_line(*data_type);
-
-      return res;
-}
-
-static nettype_base_t*elaborate_type(Design*des, NetScope*scope,
-				     data_type_t*pform_type)
+static ivl_type_s*elaborate_type(Design*des, NetScope*scope,
+				 data_type_t*pform_type)
 {
       if (struct_type_t*struct_type = dynamic_cast<struct_type_t*>(pform_type)) {
 	    netstruct_t*use_type = elaborate_struct_type(des, scope, struct_type);
@@ -926,13 +915,29 @@ static nettype_base_t*elaborate_type(Design*des, NetScope*scope,
       return 0;
 }
 
-bool test_ranges_eeq(const list<netrange_t>&lef, const list<netrange_t>&rig)
+static netparray_t* elaborate_parray_type(Design*des, NetScope*scope,
+					  parray_type_t*data_type)
+{
+
+      vector<netrange_t>packed_dimensions;
+      bool bad_range = evaluate_ranges(des, scope, packed_dimensions, * data_type->packed_dims);
+      ivl_assert(*data_type, !bad_range);
+
+      ivl_type_s*element_type = elaborate_type(des, scope, data_type->base_type);
+
+      netparray_t*res = new netparray_t(packed_dimensions, element_type);
+	//res->set_line(*data_type);
+
+      return res;
+}
+
+bool test_ranges_eeq(const vector<netrange_t>&lef, const vector<netrange_t>&rig)
 {
       if (lef.size() != rig.size())
 	    return false;
 
-      list<netrange_t>::const_iterator lcur = lef.begin();
-      list<netrange_t>::const_iterator rcur = rig.begin();
+      vector<netrange_t>::const_iterator lcur = lef.begin();
+      vector<netrange_t>::const_iterator rcur = rig.begin();
       while (lcur != lef.end()) {
 	    if (lcur->get_msb() != rcur->get_msb())
 		  return false;
@@ -967,7 +972,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       }
 
       unsigned wid = 1;
-      list<netrange_t>packed_dimensions;
+      vector<netrange_t>packed_dimensions;
 
       des->errors += error_cnt_;
 
@@ -1008,7 +1013,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       if (port_set_ || net_set_) {
 	    bool bad_range = false;
-	    list<netrange_t> plist, nlist;
+	    vector<netrange_t> plist, nlist;
 	    /* If they exist get the port definition MSB and LSB */
 	    if (port_set_ && !port_.empty()) {
 		  bad_range |= evaluate_ranges(des, scope, plist, port_);
@@ -1095,9 +1100,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      // dimensions, then turn this into a dynamic array and
 	      // put all the packed dimensions there.
 	    if (use_lidx==0 && use_ridx==0) {
-		  ivl_assert(*this, netarray==0);
-		  netarray = new netdarray_t(packed_dimensions, data_type_, wid);
+		  netvector_t*vec = new netvector_t(packed_dimensions, data_type_);
 		  packed_dimensions.clear();
+		  ivl_assert(*this, netarray==0);
+		  netarray = new netdarray_t(vec);
 		  continue;
 	    }
 
@@ -1218,7 +1224,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		       << " and packed_width=" << use_enum->packed_width() << endl;
 	    }
 
-	    sig = new NetNet(scope, name_, wtype, packed_dimensions, unpacked_dimensions, use_enum);
+	    ivl_assert(*this, packed_dimensions.empty());
+	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_enum);
 
 
       } else if (netarray) {
@@ -1252,14 +1259,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		       << " in scope " << scope_path(scope) << endl;
 	    }
 
-	    nettype_base_t*base_type = elaborate_type(des, scope, parray_type->base_type);
-#if 0
-	    cerr << get_fileline() << ": sorry: Packed array of "
-		 << typeid(*parray_type->base_type).name()
-		 << " not supported." << endl;
-	    des->errors += 1;
-#endif
-	    sig = new NetNet(scope, name_, wtype, use_type->packed_dimensions(), unpacked_dimensions, base_type);
+	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_type);
 
 
       } else {
@@ -1272,29 +1272,30 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  cerr << " in scope " << scope_path(scope) << endl;
 	    }
 
-	    sig = new NetNet(scope, name_, wtype, packed_dimensions, unpacked_dimensions);
+	    ivl_variable_type_t use_data_type = data_type_;
+	    if (use_data_type == IVL_VT_NO_TYPE) {
+		  use_data_type = IVL_VT_LOGIC;
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": debug: "
+			     << "Signal " << name_
+			     << " in scope " << scope_path(scope)
+			     << " defaults to data type " << use_data_type << endl;
+		  }
+	    }
+
+	    netvector_t*vec = new netvector_t(packed_dimensions, use_data_type);
+	    vec->set_signed(get_signed());
+	    vec->set_isint(get_isint());
+	    if (is_implicit_scalar) vec->set_scalar(true);
+	    else vec->set_scalar(get_scalar());
+	    packed_dimensions.clear();
+	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, vec);
+
       }
 
       if (wtype == NetNet::WIRE) sig->devirtualize_pins();
-
-      ivl_variable_type_t use_data_type = data_type_;
-      if (use_data_type == IVL_VT_NO_TYPE) {
-	    use_data_type = IVL_VT_LOGIC;
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: "
-		       << "Signal " << name_
-		       << " in scope " << scope_path(scope)
-		       << " defaults to data type " << use_data_type << endl;
-	    }
-      }
-
-      sig->data_type(use_data_type);
       sig->set_line(*this);
       sig->port_type(port_type_);
-      sig->set_signed(get_signed());
-      sig->set_isint(get_isint());
-      if (is_implicit_scalar) sig->set_scalar(true);
-      else sig->set_scalar(get_scalar());
 
       if (ivl_discipline_t dis = get_discipline()) {
 	    sig->set_discipline(dis);

@@ -17,20 +17,36 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include  "netdarray.h"
+# include  "netvector.h"
 
 using namespace std;
 
-netdarray_t::netdarray_t(ivl_type_t vec)
-: netarray_t(vec)
+netvector_t::netvector_t(ivl_variable_type_t type, long msb, long lsb)
+: type_(type), signed_(false)
+{
+      packed_dims_.push_back(netrange_t(msb,lsb));
+}
+
+netvector_t::netvector_t(ivl_variable_type_t type)
+: type_(type), signed_(false)
 {
 }
 
-netdarray_t::~netdarray_t()
+netvector_t::~netvector_t()
 {
 }
 
-ivl_variable_type_t netdarray_t::base_type(void) const
+ivl_variable_type_t netvector_t::base_type() const
 {
-      return IVL_VT_DARRAY;
+      return type_;
+}
+
+long netvector_t::packed_width() const
+{
+      return netrange_width(packed_dims_);
+}
+
+vector<netrange_t> netvector_t::slice_dimensions() const
+{
+      return packed_dims_;
 }

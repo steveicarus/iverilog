@@ -256,6 +256,21 @@ static void draw_real_logic_expr(ivl_expr_t expr, int stuff_ok_flag)
       clr_vector(sv);
 }
 
+static void draw_select_real(ivl_expr_t expr)
+{
+	/* The sube references the expression to be selected from. */
+      ivl_expr_t sube = ivl_expr_oper1(expr);
+	/* This is the select expression */
+      ivl_expr_t shift= ivl_expr_oper2(expr);
+
+	/* Assume the sub-expression is a signal */
+      ivl_signal_t sig = ivl_expr_signal(sube);
+      assert(ivl_signal_data_type(sig) == IVL_VT_DARRAY);
+
+      draw_eval_expr_into_integer(shift, 3);
+      fprintf(vvp_out, "    %%load/dar/r v%p_0;\n", sig);
+}
+
 static void draw_sfunc_real(ivl_expr_t expr)
 {
       switch (ivl_expr_value(expr)) {
@@ -490,6 +505,10 @@ void draw_eval_real(ivl_expr_t expr)
 
 	  case IVL_EX_REALNUM:
 	    draw_realnum_real(expr);
+	    break;
+
+	  case IVL_EX_SELECT:
+	    draw_select_real(expr);
 	    break;
 
 	  case IVL_EX_SFUNC:

@@ -507,7 +507,7 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
       NetNet*reg = lv->sig();
       ivl_assert(*this, reg);
 
-      const list<netrange_t>&packed = reg->packed_dims();
+      const vector<netrange_t>&packed = reg->packed_dims();
 
 	// Part selects cannot select slices. So there must be enough
 	// prefix_indices to get all the way to the final dimension.
@@ -596,7 +596,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 		  long lsv = base_c->value().as_long();
 		  long offset = 0;
 		    // Get the signal range.
-		  const list<netrange_t>&packed = reg->packed_dims();
+		  const vector<netrange_t>&packed = reg->packed_dims();
 		  ivl_assert(*this, packed.size() == prefix_indices.size()+1);
 
 		    // We want the last range, which is where we work.
@@ -680,7 +680,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
       NetNet*reg = lv->sig();
       ivl_assert(*this, reg);
 
-      netstruct_t*struct_type = reg->struct_type();
+      const netstruct_t*struct_type = reg->struct_type();
       ivl_assert(*this, struct_type);
 
       if (debug_elaborate) {

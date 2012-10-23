@@ -510,13 +510,12 @@ template <class T> extern T coerce_to_width(const T&that, unsigned width);
  * value will be "false", but the other bits will be transferred. This
  * is what you want if you are doing "vpi_get_value", for example.
  */
-extern bool vector4_to_value(const vvp_vector4_t&a, long&val, bool is_signed, bool is_arithmetic =true);
-extern bool vector4_to_value(const vvp_vector4_t&a, unsigned long&val);
-extern bool vector4_to_value(const vvp_vector4_t&a, int32_t&val, bool is_signed, bool is_arithmetic =true);
-#ifndef UL_AND_TIME64_SAME
-extern bool vector4_to_value(const vvp_vector4_t&a, int64_t&val, bool is_signed, bool is_arithmetic =true);
-extern bool vector4_to_value(const vvp_vector4_t&a, vvp_time64_t&val);
-#endif
+template <class T> extern bool vector4_to_value(const vvp_vector4_t&a, T&val,
+						bool is_signed,
+						bool is_arithmetic =true);
+
+template <class T> extern bool vector4_to_value(const vvp_vector4_t&a, T&val);
+
 extern bool vector4_to_value(const vvp_vector4_t&a, double&val, bool is_signed);
 
 extern bool vector2_to_value(const vvp_vector2_t&a, int32_t&val, bool is_signed);

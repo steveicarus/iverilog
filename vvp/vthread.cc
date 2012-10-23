@@ -3193,8 +3193,49 @@ bool of_LOAD_DAR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %load/dar/r <array-label>;
+ */
+bool of_LOAD_DAR_R(vthread_t thr, vvp_code_t cp)
+{
+      unsigned adr = thr->words[3].w_int;
+      vvp_net_t*net = cp->net;
+
+      assert(net);
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_darray*darray = dynamic_cast<vvp_darray*> (obj->get_object());
+      assert(darray);
+
+      double word;
+      darray->get_word(adr, word);
+
+      thr->push_real(word);
+      return true;
+}
+
+bool of_LOAD_DAR_STR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned adr = thr->words[3].w_int;
+      vvp_net_t*net = cp->net;
+
+      assert(net);
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_darray*darray = dynamic_cast<vvp_darray*> (obj->get_object());
+      assert(darray);
+
+      string word;
+      darray->get_word(adr, word);
+      thr->push_str(word);
+
+      return true;
+}
+
+/*
  * %load/vp0, %load/vp0/s, %load/avp0 and %load/avp0/s share this function.
-*/
+ */
 #if (SIZEOF_UNSIGNED_LONG >= 8)
 # define CPU_WORD_STRIDE CPU_WORD_BITS - 1  // avoid a warning
 #else
@@ -4019,8 +4060,26 @@ bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
       size_t size = thr->words[cp->bit_idx[0]].w_int;
 
       vvp_object_t obj;
-      if (strcmp(text,"sb32") == 0) {
+      if (strcmp(text,"b8") == 0) {
+	    obj = new vvp_darray_atom<uint8_t>(size);
+      } else if (strcmp(text,"b16") == 0) {
+	    obj = new vvp_darray_atom<uint16_t>(size);
+      } else if (strcmp(text,"b32") == 0) {
+	    obj = new vvp_darray_atom<uint32_t>(size);
+      } else if (strcmp(text,"b64") == 0) {
+	    obj = new vvp_darray_atom<uint64_t>(size);
+      } else if (strcmp(text,"sb8") == 0) {
+	    obj = new vvp_darray_atom<int8_t>(size);
+      } else if (strcmp(text,"sb16") == 0) {
+	    obj = new vvp_darray_atom<int16_t>(size);
+      } else if (strcmp(text,"sb32") == 0) {
 	    obj = new vvp_darray_atom<int32_t>(size);
+      } else if (strcmp(text,"sb64") == 0) {
+	    obj = new vvp_darray_atom<int64_t>(size);
+      } else if (strcmp(text,"r") == 0) {
+	    obj = new vvp_darray_real(size);
+      } else if (strcmp(text,"S") == 0) {
+	    obj = new vvp_darray_string(size);
       } else {
 	    obj = new vvp_darray (size);
       }
@@ -4820,6 +4879,48 @@ bool of_SHIFTR_S_I0(vthread_t thr, vvp_code_t cp)
       }
       return true;
 }
+
+bool of_STORE_DAR_R(vthread_t thr, vvp_code_t cp)
+{
+      long adr = thr->words[3].w_int;
+
+	// Pop the real value to be store...
+      double value = thr->pop_real();
+
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_darray*darray = dynamic_cast<vvp_darray*>(obj->get_object());
+      assert(darray);
+
+      darray->set_word(adr, value);
+      return true;
+}
+
+/*
+ * %store/dar/str <var>
+ * In this case, <var> is the name of a dynamic array. Signed index
+ * register 3 contains the index into the dynamic array.
+ */
+bool of_STORE_DAR_STR(vthread_t thr, vvp_code_t cp)
+{
+      long adr = thr->words[3].w_int;
+
+	// Pop the string to be stored...
+      string value = thr->pop_str();
+
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_darray*darray = dynamic_cast<vvp_darray*>(obj->get_object());
+      assert(darray);
+
+      darray->set_word(adr, value);
+      return true;
+}
+
 
 bool of_STORE_OBJ(vthread_t thr, vvp_code_t cp)
 {

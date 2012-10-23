@@ -19,19 +19,57 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include <list>
-# include <climits>
-# include <cassert>
+# include  "ivl_target.h"
+# include  <list>
+# include  <vector>
+# include  <climits>
+# include  <ostream>
+# include  <cassert>
+
+class netrange_t;
 
 /*
  * This is a fully abstract type that is a type that can be attached
  * to a NetNet object.
  */
-class nettype_base_t {
+class ivl_type_s {
     public:
-      virtual ~nettype_base_t() =0;
+      virtual ~ivl_type_s() =0;
       virtual long packed_width(void) const;
+      virtual std::vector<netrange_t> slice_dimensions() const;
+
+	// Some types have a base variable type.
+      virtual ivl_variable_type_t base_type() const;
+      virtual bool get_signed() const;
+
+      virtual std::ostream& debug_dump(std::ostream&) const;
 };
+
+/*
+ * There are a couple types of array types. This class represents the
+ * common bits of array types.
+ */
+class netarray_t : public ivl_type_s {
+
+    public:
+      inline explicit netarray_t(ivl_type_t etype) : element_type_(etype) { }
+      ~netarray_t();
+
+    public:
+	// Some virtual methods have a common implementation for arrays.
+      ivl_variable_type_t base_type() const;
+
+    public:
+      inline ivl_type_t element_type() const { return element_type_; }
+
+    private:
+      ivl_type_t element_type_;
+};
+
+inline static std::ostream& operator << (std::ostream&out, const ivl_type_s&obj)
+{
+      return obj.debug_dump(out);
+}
 
 class netrange_t {
 
@@ -65,14 +103,17 @@ class netrange_t {
       long lsb_;
 };
 
-extern unsigned long netrange_width(const std::list<netrange_t>&dims);
+extern std::ostream&operator << (std::ostream&out, const std::list<netrange_t>&rlist);
+extern std::ostream&operator << (std::ostream&out, const std::vector<netrange_t>&rlist);
+
+extern unsigned long netrange_width(const std::vector<netrange_t>&dims);
 
 /*
  * Take as input a list of packed dimensions and a list of prefix
  * indices, and calculate the offset/width of the resulting slice into
  * the packed array.
  */
-extern bool prefix_to_slice(const std::list<netrange_t>&dims,
+extern bool prefix_to_slice(const std::vector<netrange_t>&dims,
 			    const std::list<long>&prefix, long sb,
 			    long&loff, unsigned long&lwid);
 

@@ -21,12 +21,19 @@
 
 # include  <inttypes.h>
 
+/* Re the _CLASS define: clang++ wants this to be class to match the
+ * definition, but clang (the C) compiler needs it to be a struct
+ * since class is not defined in C. They are effecively both pointers
+ * to an object so everything works out. */
+
 #ifdef __cplusplus
 #define _BEGIN_DECL extern "C" {
 #define _END_DECL }
+#define _CLASS class
 #else
 #define _BEGIN_DECL
 #define _END_DECL
+#define _CLASS struct
 #endif
 
 #ifndef __GNUC__
@@ -157,21 +164,8 @@ typedef struct ivl_array_s    *ivl_array_t;
 typedef struct ivl_branch_s   *ivl_branch_t;
 typedef struct ivl_delaypath_s*ivl_delaypath_t;
 typedef struct ivl_design_s   *ivl_design_t;
-/* clang++ wants this to be class to match the definition, but clang
- * (the C) compiler needs it to be a struct since class is not defined
- * in C. They are effecively both pointers to an object so everything
- * works out. */
-#ifdef __cplusplus
-typedef class  ivl_discipline_s*ivl_discipline_t;
-#else
-typedef struct ivl_discipline_s*ivl_discipline_t;
-#endif
-/* See the comments above. */
-#ifdef __cplusplus
-typedef class  netenum_t      *ivl_enumtype_t;
-#else
-typedef struct netenum_t      *ivl_enumtype_t;
-#endif
+typedef _CLASS ivl_discipline_s*ivl_discipline_t;
+typedef _CLASS netenum_t      *ivl_enumtype_t;
 typedef struct ivl_event_s    *ivl_event_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
 typedef struct ivl_island_s   *ivl_island_t;
@@ -180,12 +174,7 @@ typedef struct ivl_lval_s     *ivl_lval_t;
 typedef struct ivl_net_const_s*ivl_net_const_t;
 typedef struct ivl_net_logic_s*ivl_net_logic_t;
 typedef struct ivl_udp_s      *ivl_udp_t;
-/* See the comments above. */
-#ifdef __cplusplus
-typedef class  ivl_nature_s   *ivl_nature_t;
-#else
-typedef struct ivl_nature_s   *ivl_nature_t;
-#endif
+typedef _CLASS ivl_nature_s   *ivl_nature_t;
 typedef struct ivl_net_probe_s*ivl_net_probe_t;
 typedef struct ivl_nexus_s    *ivl_nexus_t;
 typedef struct ivl_nexus_ptr_s*ivl_nexus_ptr_t;
@@ -193,10 +182,11 @@ typedef struct ivl_parameter_s*ivl_parameter_t;
 typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
 typedef struct ivl_signal_s   *ivl_signal_t;
-typedef struct ivl_port_info_s *ivl_port_info_t;
+typedef struct ivl_port_info_s*ivl_port_info_t;
 typedef struct ivl_switch_s   *ivl_switch_t;
 typedef struct ivl_memory_s   *ivl_memory_t; //XXXX __attribute__((deprecated));
 typedef struct ivl_statement_s*ivl_statement_t;
+typedef const _CLASS ivl_type_s*ivl_type_t;
 
 /*
  * These are types that are defined as enumerations. These have
@@ -774,6 +764,11 @@ extern unsigned ivl_event_lineno(ivl_event_t net);
  *    Get the data type of the expression node. This uses the variable
  *    type enum to express the type of the expression node.
  *
+ * ivl_expr_net_type
+ *    This is used in some cases to carry more advanced type
+ *    descriptions. Over the long run, all type informatino will be
+ *    moved into the ivl_type_t type description method.
+ *
  * ivl_expr_width
  *    This method returns the bit width of the expression at this
  *    node. It can be applied to any expression node, and returns the
@@ -851,6 +846,7 @@ extern unsigned ivl_event_lineno(ivl_event_t net);
  */
 
 extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
+extern ivl_type_t ivl_expr_net_type(ivl_expr_t net);
 extern ivl_variable_type_t ivl_expr_value(ivl_expr_t net);
 extern const char*ivl_expr_file(ivl_expr_t net);
 extern unsigned ivl_expr_lineno(ivl_expr_t net);
@@ -1907,6 +1903,7 @@ extern unsigned    ivl_signal_npath(ivl_signal_t net);
 extern ivl_delaypath_t ivl_signal_path(ivl_signal_t net, unsigned idx);
 extern ivl_signal_type_t ivl_signal_type(ivl_signal_t net);
 extern ivl_variable_type_t ivl_signal_data_type(ivl_signal_t net);
+extern ivl_type_t  ivl_signal_net_type(ivl_signal_t net);
 extern const char* ivl_signal_name(ivl_signal_t net);
 extern const char* ivl_signal_basename(ivl_signal_t net);
 extern const char* ivl_signal_attr(ivl_signal_t net, const char*key);
@@ -1994,7 +1991,7 @@ extern unsigned ivl_stmt_lineno(ivl_statement_t net);
  *    Statements that have event arguments (TRIGGER and WAIT) make
  *    those event objects available through these methods.
  *
- * ivl_stmt_lval
+* ivl_stmt_lval
  * ivl_stmt_lvals
  *    Return the number of l-values for an assignment statement, or
  *    the specific l-value. If there is more than 1 l-value, then the
@@ -2194,6 +2191,25 @@ extern ivl_attribute_t ivl_switch_attr_val(ivl_switch_t net, unsigned idx);
 *** */
 extern const char* ivl_switch_file(ivl_switch_t net);
 extern unsigned ivl_switch_lineno(ivl_switch_t net);
+
+/* TYPES
+ *
+ * ivl_type_base
+ *    This returns the base type for the type. See the
+ *    ivl_variable_type_t definition for the various base types.
+ *
+ * ivl_type_element
+ *    Return the type of the element of an array. This is only valid
+ *    for array types.
+ *
+ * SEMANTIC NOTES
+ */
+extern ivl_variable_type_t ivl_type_base(ivl_type_t net);
+extern ivl_type_t ivl_type_element(ivl_type_t net);
+extern unsigned ivl_type_packed_dimensions(ivl_type_t net);
+extern int ivl_type_packed_lsb(ivl_type_t net, unsigned dim);
+extern int ivl_type_packed_msb(ivl_type_t net, unsigned dim);
+
 
 #if defined(__MINGW32__) || defined (__CYGWIN32__)
 #  define DLLEXPORT __declspec(dllexport)

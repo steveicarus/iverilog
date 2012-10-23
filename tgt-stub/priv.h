@@ -61,6 +61,11 @@ extern void show_expression(ivl_expr_t net, unsigned ind);
  */
 extern void show_statement(ivl_statement_t net, unsigned ind);
 
+/*
+ * Show the type of the signal, in one line.
+ */
+extern void show_type_of_signal(ivl_signal_t);
+
 extern void show_switch(ivl_switch_t net);
 
 /*

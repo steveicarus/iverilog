@@ -21,23 +21,30 @@
 
 # include  "nettypes.h"
 # include  "ivl_target.h"
-# include  <list>
 
-class netdarray_t : public nettype_base_t {
+class netdarray_t : public netarray_t {
 
     public:
-      explicit netdarray_t(const std::list<netrange_t>&packed,
-			   ivl_variable_type_t type,
-			   unsigned long wid);
+      explicit netdarray_t(ivl_type_t vec);
       ~netdarray_t();
 
-      inline ivl_variable_type_t data_type() const { return type_; }
-      inline unsigned long vector_width(void) const { return width_; }
+	// This is the "base_type()" virtual method of the
+	// nettype_base_t. The ivl_target api expects this to return
+	// IVL_VT_DARRAY for dynamic arrays?
+      ivl_variable_type_t base_type() const;
+
+	// This is the base_type() of the element of the array. We
+	// need this in some cases in order to get the base type of
+	// the element, and not the IVL_VT_DARRAY of the array itself.
+      inline ivl_variable_type_t element_base_type() const { return element_type()->base_type(); }
+
+	// This is a convenience function for getting the width of an
+	// element. Strictly speaking it's not necessary.
+      inline unsigned long element_width(void) const { return element_type()->packed_width(); }
+
+      std::ostream& debug_dump(std::ostream&) const;
 
     private:
-      std::list<netrange_t> packed_dims_;
-      ivl_variable_type_t type_;
-      unsigned long width_;
 };
 
 #endif

@@ -27,6 +27,7 @@
 # include  "pform.h"
 # include  "netlist.h"
 # include  "netenum.h"
+# include  "netvector.h"
 # include  "discipline.h"
 # include  "netmisc.h"
 # include  "netdarray.h"
@@ -129,6 +130,17 @@ unsigned PExpr::test_width(Design*des, NetScope*, width_mode_t&)
       des->errors += 1;
       return 1;
 }
+
+NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, ivl_type_t, unsigned) const
+{
+      cerr << get_fileline() << ": internal error: I do not know how to"
+	   << " elaborate (ivl_type_t) this expression. " << endl;
+      cerr << get_fileline() << ":               : Expression is: " << *this
+	   << endl;
+      des->errors += 1;
+      return 0;
+}
+
 
 NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
 {
@@ -1480,7 +1492,7 @@ static const netstruct_t::member_t*get_struct_member(const LineInfo*li,
                                                      perm_string method_name,
                                                      unsigned long&off)
 {
-      netstruct_t*type = net->struct_type();
+      const netstruct_t*type = net->struct_type();
       ivl_assert(*li, type);
 
       if (! type->packed()) {
@@ -2354,8 +2366,8 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
       if (netdarray_t*darray = net? net->darray_type() : 0) {
 	    if (use_sel == index_component_t::SEL_BIT) {
-		  expr_type_   = darray->data_type();
-		  expr_width_  = darray->vector_width();
+		  expr_type_   = darray->element_base_type();
+		  expr_width_  = darray->element_width();
 		  min_width_   = expr_width_;
 		  signed_flag_ = net->get_signed();
 	    } else {
@@ -2382,6 +2394,10 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    expr_width_  = net->vector_width();
 	    min_width_   = expr_width_;
 	    signed_flag_ = net->get_signed();
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::test_width: "
+		       << net->name() << " is a net, width=" << expr_width_ << endl;
+	    }
 	    return expr_width_;
       }
 
@@ -3550,7 +3566,7 @@ NetExpr* PEIdent::elaborate_expr_net_idx_up_(Design*des, NetScope*scope,
 		  long lsv = base_c->value().as_long();
 		  long offset = 0;
 		    // Get the signal range.
-		  const list<netrange_t>&packed = net->sig()->packed_dims();
+		  const vector<netrange_t>&packed = net->sig()->packed_dims();
 		  ivl_assert(*this, packed.size() == prefix_indices.size()+1);
 
 		    // We want the last range, which is where we work.
@@ -3744,7 +3760,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": debug: "
 		       << "Bit select of a dynamic array becomes NetESelect." << endl;
 	    }
-	    NetESelect*res = new NetESelect(net, mux, darray->vector_width());
+	    NetESelect*res = new NetESelect(net, mux, darray->element_width());
 	    res->set_line(*net);
 	    return res;
       }
@@ -3779,7 +3795,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 
 	    long msv = msc->value().as_long();
 
-	    const list<netrange_t>& sig_packed = net->sig()->packed_dims();
+	    const vector<netrange_t>& sig_packed = net->sig()->packed_dims();
 	    if (prefix_indices.size()+2 <= sig_packed.size()) {
 		    // Special case: this is a slice of a multi-dimensional
 		    // packed array. For example:
@@ -3872,7 +3888,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	    return res;
       }
 
-      const list<netrange_t>& sig_packed = net->sig()->packed_dims();
+      const vector<netrange_t>& sig_packed = net->sig()->packed_dims();
       if (prefix_indices.size()+2 <= sig_packed.size()) {
 	      // Special case: this is a slice of a multi-dimensional
 	      // packed array. For example:
@@ -3965,7 +3981,7 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       return node;
 }
 
-unsigned PENew::test_width(Design*des, NetScope*, width_mode_t&)
+unsigned PENew::test_width(Design*, NetScope*, width_mode_t&)
 {
       expr_type_  = IVL_VT_DARRAY;
       expr_width_ = 1;
@@ -3974,6 +3990,23 @@ unsigned PENew::test_width(Design*des, NetScope*, width_mode_t&)
       return 1;
 }
 
+NetExpr* PENew::elaborate_expr(Design*des, NetScope*scope,
+			       ivl_type_t ntype, unsigned flags) const
+{
+	// Elaborate the size expression.
+      width_mode_t mode = LOSSLESS;
+      unsigned use_wid = size_->test_width(des, scope, mode);
+      NetExpr*size = size_->elaborate_expr(des, scope, use_wid, flags);
+
+      NetESFunc*tmp = new NetESFunc("$ivl_darray_method$new", ntype, 1);
+      tmp->set_line(*this);
+      tmp->parm(0, size);
+      return tmp;
+}
+
+/*
+ * This method should never actually be called.
+ */
 NetExpr* PENew::elaborate_expr(Design*des, NetScope*scope,
 				 unsigned, unsigned flags) const
 {
@@ -4503,9 +4536,9 @@ NetNet* Design::find_discipline_reference(ivl_discipline_t dis, NetScope*scope)
       if (gnd) return gnd;
 
       string name = string(dis->name()) + "$gnd";
-      gnd = new NetNet(scope, lex_strings.make(name), NetNet::WIRE, 1);
+      netvector_t*gnd_vec = new netvector_t(IVL_VT_REAL,0,0);
+      gnd = new NetNet(scope, lex_strings.make(name), NetNet::WIRE, gnd_vec);
       gnd->set_discipline(dis);
-      gnd->data_type(IVL_VT_REAL);
       discipline_references_[dis->name()] = gnd;
 
       if (debug_elaborate)

@@ -29,6 +29,7 @@
 # include  "compiler.h"
 # include  "discipline.h"
 # include  "netdarray.h"
+# include  "netvector.h"
 # include  "ivl_assert.h"
 # include  "PExpr.h"
 
@@ -140,6 +141,24 @@ ostream& operator << (ostream&o, ivl_switch_type_t val)
       return o;
 }
 
+ostream& ivl_type_s::debug_dump(ostream&o) const
+{
+      o << typeid(*this).name();
+      return o;
+}
+
+ostream& netdarray_t::debug_dump(ostream&o) const
+{
+      o << "dynamic array of " << *element_type();
+      return o;
+}
+
+ostream& netvector_t::debug_dump(ostream&o) const
+{
+      o << type_ << (signed_? " signed" : " unsigned") << packed_dims_;
+      return o;
+}
+
 static inline void dump_scope_path(ostream&o, const NetScope*scope)
 {
       const NetScope*parent = scope->parent();
@@ -230,14 +249,9 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << type() << ": " << name()
 	<< unpacked_dims_ << " unpacked dims=" << unpacked_dimensions();
-      if (!packed_dims_.empty())
-	    o << " packed dims=" << packed_dims_;
       o << " pin_count=" << pin_count();
       if (local_flag_)
 	    o << " (local)";
-      o << " " << data_type_;
-      if (signed_)
-	    o << " signed";
       switch (port_type_) {
 	  case NetNet::NOT_A_PORT:
 	    break;
@@ -261,14 +275,7 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
       if (ivl_discipline_t dis = get_discipline())
 	    o << " discipline=" << dis->name();
 
-      if (netdarray_t*darray = darray_type())
-	    o << " dynamic array of " << darray->data_type();
-
-      if (! packed_dims_.empty())
-	    o << " packed dims: " << packed_dims_;
-
-      if (net_type_)
-	    o << " net_type_=" << typeid(*net_type_).name();
+      if (net_type_)  o << " " << *net_type_;
 
       o << " (eref=" << peek_eref() << ", lref=" << peek_lref() << ")";
       if (scope())
@@ -1098,7 +1105,7 @@ void NetFuncDef::dump(ostream&o, unsigned ind) const
       if (result_sig_) {
 	    o << setw(ind+2) << "" << "Return signal: ";
 	    if (result_sig_->get_signed()) o << "+";
-	    o << result_sig_->name() << result_sig_->packed_dims() << endl;
+	    o << result_sig_->name() << endl;
       }
       o << setw(ind+2) << "" << "Arguments: ";
       if (port_count() == 0) o << "<none>";
@@ -1120,7 +1127,7 @@ void NetFuncDef::dump(ostream&o, unsigned ind) const
 		  break;
 	    }
 	    if (port(idx)->get_signed()) o << "+";
-	    o << port(idx)->name() << port(idx)->packed_dims() << endl;
+	    o << port(idx)->name() << endl;
       }
       if (statement_)
 	    statement_->dump(o, ind+2);
@@ -1520,7 +1527,14 @@ void NetESelect::dump(ostream&o) const
       else
 	    o << "(0)";
 
-      o << "+:" << expr_width() << "]>";
+      o << "+:" << expr_width() << "]";
+      if (ivl_type_t nt = net_type()) {
+	    o << " net_type=(" << *nt << ")";
+      } else {
+	    o << " expr_type=" << expr_type();
+      }
+
+      o << ">";
 }
 
 void NetESFunc::dump(ostream&o) const
@@ -1539,7 +1553,8 @@ void NetESignal::dump(ostream&o) const
 	    o << "+";
       o << name();
       if (word_) o << "[word=" << *word_ << "]";
-      o << sig()->packed_dims();
+      vector<netrange_t>tmp = net_->net_type()->slice_dimensions();
+      o << tmp;
 }
 
 void NetETernary::dump(ostream&o) const

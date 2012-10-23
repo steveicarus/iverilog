@@ -2374,7 +2374,7 @@ void dll_target::signal(const NetNet*net)
 	   ivl_signal_t object. */
 
       { size_t idx = 0;
-	list<netrange_t>::const_iterator cur;
+	vector<netrange_t>::const_iterator cur;
 	obj->packed_dims.resize(net->packed_dims().size());
 	for (cur = net->packed_dims().begin(), idx = 0
 		   ; cur != net->packed_dims().end() ; ++cur, idx += 1) {
@@ -2382,9 +2382,7 @@ void dll_target::signal(const NetNet*net)
 	}
       }
 
-      obj->width_ = net->vector_width();
-      obj->signed_= net->get_signed()? 1 : 0;
-      obj->isint_ = false;
+      obj->net_type = net->net_type();
       obj->local_ = net->local_flag()? 1 : 0;
       obj->forced_net_ = (net->type() != NetNet::REG) &&
                          (net->peek_lref() > 0) ? 1 : 0;
@@ -2418,7 +2416,6 @@ void dll_target::signal(const NetNet*net)
 
 	  case NetNet::REG:
 	    obj->type_ = IVL_SIT_REG;
-	    obj->isint_ = net->get_isint();
 	    break;
 
 	      /* The SUPPLY0/1 net types are replaced with pulldown/up
@@ -2469,14 +2466,8 @@ void dll_target::signal(const NetNet*net)
       obj->npath = 0;
       obj->path = 0;
 
-      obj->data_type = net->data_type();
       obj->nattr = net->attr_cnt();
       obj->attr = fill_in_attributes(net);
-
-	/* If this is a dynamic array, then set the type to DARRAY. */
-      if (net->darray_type()) {
-	    obj->data_type = IVL_VT_DARRAY;
-      }
 
 	/* Get the nexus objects for all the pins of the signal. If
 	   the signal has only one pin, then write the single

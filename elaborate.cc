@@ -35,6 +35,7 @@
 # include  "PGenerate.h"
 # include  "PSpec.h"
 # include  "netlist.h"
+# include  "netvector.h"
 # include  "netmisc.h"
 # include  "util.h"
 # include  "parse_api.h"
@@ -75,8 +76,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: PGAssign: elaborated l-value"
-		 << " width=" << lval->vector_width()
-		 << ", type=" << lval->data_type() << endl;
+		 << " width=" << lval->vector_width() << endl;
       }
 
       NetExpr*rval_expr = elaborate_rval_expr(des, scope, lval->data_type(),
@@ -115,7 +115,6 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    cerr << get_fileline() << ": debug: PGAssign: elaborated r-value"
 		 << " width="<< rval->vector_width()
 		 << ", type="<< rval->data_type()
-		 << ", signed="<< rval->get_signed()
 		 << ", expr=" << *rval_expr << endl;
       }
 
@@ -164,11 +163,12 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 						  NetPartSelect::VP);
 	    des->add_node(tmp);
 	    tmp->set_line(*this);
+	    netvector_t*osig_vec = new netvector_t(rval->data_type(),
+						   lval->vector_width()-1,0);
 	    NetNet*osig = new NetNet(scope, scope->local_symbol(),
-				     NetNet::TRI, lval->vector_width());
+				     NetNet::TRI, osig_vec);
 	    osig->set_line(*this);
 	    osig->local_flag(true);
-	    osig->data_type(rval->data_type());
 	    connect(osig->pin(0), tmp->pin(0));
 	    rval = osig;
 	    need_driver_flag = false;
@@ -190,10 +190,11 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 
 	    connect(rval->pin(0), driver->pin(1));
 
+	    netvector_t*tmp_vec = new netvector_t(rval->data_type(),
+						  rval->vector_width()-1,0);
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::WIRE, rval->vector_width());
+				    NetNet::WIRE, tmp_vec);
 	    tmp->set_line(*this);
-	    tmp->data_type(rval->data_type());
 	    tmp->local_flag(true);
 
 	    connect(driver->pin(0), tmp->pin(0));
@@ -868,10 +869,11 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			des->add_node(rep);
 			connect(rep->pin(1), sig->pin(0));
 
+			netvector_t*osig_vec = new netvector_t(IVL_VT_LOGIC,
+							       instance_width-1,0);
 			sig = new NetNet(scope, scope->local_symbol(),
-					 NetNet::WIRE, instance_width);
+					 NetNet::WIRE, osig_vec);
 			sig->set_line(*this);
-			sig->data_type(IVL_VT_LOGIC);
 			sig->local_flag(true);
 			connect(rep->pin(0), sig->pin(0));
 
@@ -948,12 +950,12 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			      unsigned dev = gdx*gate_count;
 			      connect(cur[dev+idx]->pin(0), cc->pin(gdx+1));
 
+			      netvector_t*tmp2_vec = new netvector_t(IVL_VT_LOGIC);
 			      NetNet*tmp2 = new NetNet(scope,
 						       scope->local_symbol(),
-						       NetNet::WIRE, 1);
+						       NetNet::WIRE, tmp2_vec);
 			      tmp2->set_line(*this);
 			      tmp2->local_flag(true);
-			      tmp2->data_type(IVL_VT_LOGIC);
 			      connect(cc->pin(gdx+1), tmp2->pin(0));
 			}
 
@@ -965,11 +967,11 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
 			tmp1->set_line(*this);
 			des->add_node(tmp1);
 			connect(tmp1->pin(1), sig->pin(0));
+			netvector_t*tmp2_vec = new netvector_t(sig->data_type());
 			NetNet*tmp2 = new NetNet(scope, scope->local_symbol(),
-						 NetNet::WIRE, 1);
+						 NetNet::WIRE, tmp2_vec);
 			tmp2->set_line(*this);
 			tmp2->local_flag(true);
-			tmp2->data_type(sig->data_type());
 			connect(tmp1->pin(0), tmp2->pin(0));
 			unsigned use_idx = idx - gate_count + 1;
 			unsigned dev = gdx*gate_count;
@@ -996,8 +998,9 @@ NetNet*PGModule::resize_net_to_port_(Design*des, NetScope*scope,
       ivl_assert(*this, dir != NetNet::NOT_A_PORT);
       ivl_assert(*this, dir != NetNet::PIMPLICIT);
 
+      netvector_t*tmp_type = new netvector_t(IVL_VT_LOGIC, port_wid-1, 0);
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-			      NetNet::WIRE, port_wid);
+			      NetNet::WIRE, tmp_type);
       tmp->local_flag(true);
       tmp->set_line(*this);
 
@@ -1415,6 +1418,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			     << "too complicated for elaboration." << endl;
 			continue;
 		  }
+
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": debug: "
+			     << "Elaborating INPUT port expression: " << *tmp_expr << endl;
+		  }
+
 		  sig = tmp_expr->synthesize(des, scope, tmp_expr);
 		  if (sig == 0) {
 			cerr << pins[idx]->get_fileline()
@@ -1432,11 +1441,12 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			des->add_node(tmp);
 			connect(tmp->pin(1), sig->pin(0));
 
+			netvector_t*tmp2_vec = new netvector_t(sig->data_type(),
+							       sig->vector_width()-1,0);
 			NetNet*tmp2 = new NetNet(scope, scope->local_symbol(),
-						 NetNet::WIRE, sig->vector_width());
+						 NetNet::WIRE, tmp2_vec);
 			tmp2->local_flag(true);
 			tmp2->set_line(*this);
-			tmp2->data_type(sig->data_type());
 			connect(tmp->pin(0), tmp2->pin(0));
 			sig = tmp2;
 		  }
@@ -2185,6 +2195,17 @@ NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
 }
 
 NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
+				   ivl_type_t net_type) const
+{
+      ivl_assert(*this, rval_);
+
+      NetExpr*rv = rval_->elaborate_expr(des, scope, net_type, 0);
+
+      ivl_assert(*this, !is_constant_);
+      return rv;
+}
+
+NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 				   unsigned lv_width,
 				   ivl_variable_type_t lv_type) const
 {
@@ -2355,9 +2376,20 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
       if (delay_ != 0)
 	    delay = elaborate_delay_expr(delay_, des, scope);
 
+      NetExpr*rv;
+      if (lv->more==0 && dynamic_cast<const PENew*> (rval())) {
+	      /* Special case: The l-value is a single signal, and the
+		 r-value expression is a "new" expression. The l-value
+		 has a new form of type, and the PENew expression
+		 requires the extra information that it contains. So
+		 handle it with this code instead. */
+	    rv = elaborate_rval_(des, scope, lv->sig()->net_type());
 
-	/* Elaborate the r-value expression, then try to evaluate it. */
-      NetExpr*rv = elaborate_rval_(des, scope, count_lval_width(lv), lv->expr_type());
+      } else {
+	      /* Elaborate the r-value expression, then try to evaluate it. */
+	    rv = elaborate_rval_(des, scope, count_lval_width(lv), lv->expr_type());
+      }
+
       if (rv == 0) return 0;
       assert(rv);
 
@@ -2382,11 +2414,11 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
       if (delay || event_) {
 	    unsigned wid = count_lval_width(lv);
 
+	    netvector_t*tmp2_vec = new netvector_t(rv->expr_type(),wid-1,0);
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::REG, wid);
+				    NetNet::REG, tmp2_vec);
 	    tmp->local_flag(true);
 	    tmp->set_line(*this);
-	    tmp->data_type(rv->expr_type());
 
 	    NetESignal*sig = new NetESignal(tmp);
 
@@ -2477,10 +2509,17 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 
       if (lv->expr_type() == IVL_VT_BOOL && rv->expr_type() != IVL_VT_BOOL) {
 	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: Cast expression to int2" << endl;
+		  cerr << get_fileline() << ": debug: "
+		       << "Cast expression to int2" << endl;
 	    rv = cast_to_int2(rv);
       }
 
+      if (lv->expr_type() == IVL_VT_REAL && rv->expr_type() != IVL_VT_REAL) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": debug: "
+		       << "Cast expression to real." << endl;
+	    rv = cast_to_real(rv);
+      }
       if (lv->enumeration() && (lv->enumeration() != rv->enumeration())) {
 	    cerr << get_fileline() << ": error: "
 		 << "Enumeration type mismatch in assignment." << endl;

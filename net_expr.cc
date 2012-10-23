@@ -20,9 +20,40 @@
 # include  "config.h"
 # include  "netlist.h"
 # include  "netenum.h"
+# include  "netdarray.h"
 # include  "compiler.h"
 # include  "netmisc.h"
 # include  <iostream>
+# include  "ivl_assert.h"
+
+NetExpr::NetExpr(unsigned w)
+: net_type_(0), width_(w), signed_flag_(false)
+{
+}
+
+NetExpr::NetExpr(ivl_type_t t)
+: net_type_(t), width_(0), signed_flag_(false)
+{
+}
+
+NetExpr::~NetExpr()
+{
+}
+
+ivl_type_t NetExpr::net_type() const
+{
+      return net_type_;
+}
+
+void NetExpr::cast_signed(bool flag)
+{
+      cast_signed_base_(flag);
+}
+
+bool NetExpr::has_width() const
+{
+      return true;
+}
 
 /*
  * the grand default data type is a logic vector.
@@ -317,6 +348,32 @@ ivl_select_type_t NetESelect::select_type() const
       return sel_type_;
 }
 
+ivl_variable_type_t NetESelect::expr_type() const
+{
+      ivl_variable_type_t type = expr_->expr_type();
+
+	// Special case: If the sub-expression is an IVL_VT_STRING,
+	// then this node is representing a character select. The
+	// width is the width of a byte, and the data type is BOOL.
+      if (type == IVL_VT_STRING && expr_width()==8)
+	    return IVL_VT_BOOL;
+
+      if (type != IVL_VT_DARRAY)
+	    return type;
+
+      ivl_assert(*this, type == IVL_VT_DARRAY);
+
+	// Special case: If the expression is a DARRAY, then the
+	// sub-expression must be a NetESignal and the type of the
+	// NetESelect expression is the element type of the arrayed signal.
+      NetESignal*sig = dynamic_cast<NetESignal*>(expr_);
+      ivl_assert(*this, sig);
+      const netarray_t*array_type = dynamic_cast<const netarray_t*> (sig->sig()->net_type());
+      ivl_assert(*this, array_type);
+
+      return array_type->element_type()->base_type();
+}
+
 bool NetESelect::has_width() const
 {
       return true;
@@ -328,6 +385,18 @@ NetESFunc::NetESFunc(const char*n, ivl_variable_type_t t,
 {
       name_ = lex_strings.add(n);
       expr_width(width);
+}
+
+NetESFunc::NetESFunc(const char*n, ivl_type_t rtype, unsigned np)
+: NetExpr(rtype), name_(0), type_(IVL_VT_NO_TYPE), enum_type_(0), parms_(np)
+{
+      name_ = lex_strings.add(n);
+      expr_width(rtype->packed_width());
+	// FIXME: For now, assume that all uses of this constructor
+	// are for the IVL_VT_DARRAY type. Eventually, the type_
+	// member will go away.
+      ivl_assert(*this, dynamic_cast<const netdarray_t*>(rtype));
+      type_ = IVL_VT_DARRAY;
 }
 
 NetESFunc::NetESFunc(const char*n, netenum_t*enum_type, unsigned np)

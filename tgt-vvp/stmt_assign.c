@@ -767,6 +767,10 @@ static int show_stmt_assign_sig_darray(ivl_statement_t net)
       ivl_expr_t rval = ivl_stmt_rval(net);
       ivl_expr_t part = ivl_lval_part_off(lval);
       ivl_signal_t var= ivl_lval_sig(lval);
+      ivl_type_t var_type= ivl_signal_net_type(var);
+      assert(ivl_type_base(var_type) == IVL_VT_DARRAY);
+      ivl_type_t element_type = ivl_type_element(var_type);
+
       ivl_expr_t mux  = ivl_lval_idx(lval);
 
       assert(ivl_stmt_lvals(net) == 1);
@@ -774,7 +778,27 @@ static int show_stmt_assign_sig_darray(ivl_statement_t net)
       assert(ivl_lval_mux(lval) == 0);
       assert(part == 0);
 
-      if (mux) {
+      if (mux && (ivl_type_base(element_type)==IVL_VT_REAL)) {
+	    draw_eval_real(rval);
+
+	      /* The %set/dar expects the array index to be in index
+		 register 3. Calculate the index in place. */
+	    draw_eval_expr_into_integer(mux, 3);
+
+	    fprintf(vvp_out, "    %%store/dar/r v%p_0;\n", var);
+
+      } else if (mux && ivl_type_base(element_type)==IVL_VT_STRING) {
+
+	      /* Evaluate the rval into the top of the string stack. */
+	    draw_eval_string(rval);
+
+	      /* The %store/dar/s expects the array index to me in index
+		 register 3. Calculate the index in place. */
+	    draw_eval_expr_into_integer(mux, 3);
+
+	    fprintf(vvp_out, "    %%store/dar/str v%p_0;\n", var);
+
+      } else if (mux) {
 	    struct vector_info rvec = draw_eval_expr_wid(rval, ivl_lval_width(lval),
 							 STUFF_OK_XZ);
 	      /* The %set/dar expects the array index to be in index

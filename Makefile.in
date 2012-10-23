@@ -108,8 +108,8 @@ O = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o \
     eval_tree.o expr_synth.o functor.o lexor.o lexor_keyword.o link_const.o \
     load_module.o netlist.o netmisc.o nettypes.o net_analog.o net_assign.o \
     net_design.o netdarray.o \
-    netenum.o netstruct.o net_event.o net_expr.o net_func.o net_func_eval.o \
-    net_link.o net_modulo.o \
+    netenum.o netparray.o netstruct.o netvector.o net_event.o net_expr.o net_func.o \
+    net_func_eval.o net_link.o net_modulo.o \
     net_nex_input.o net_nex_output.o net_proc.o net_scope.o net_tran.o \
     net_udp.o pad_to_width.o parse.o parse_misc.o pform.o pform_analog.o \
     pform_disciplines.o pform_dump.o pform_package.o pform_pclass.o \

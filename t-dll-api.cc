@@ -21,7 +21,9 @@
 # include  "StringHeap.h"
 # include  "t-dll.h"
 # include  "discipline.h"
+# include  "netdarray.h"
 # include  "netenum.h"
+# include  "netvector.h"
 # include  <cstdlib>
 # include  <cstdio>
 # include  <cstring>
@@ -265,7 +267,7 @@ extern "C" unsigned ivl_enum_width(ivl_enumtype_t net)
 extern "C" int ivl_enum_signed(ivl_enumtype_t net)
 {
       assert(net);
-      return net->has_sign();
+      return net->get_signed();
 }
 
 extern "C" const char*ivl_enum_file(ivl_enumtype_t net)
@@ -409,6 +411,11 @@ extern "C" ivl_enumtype_t ivl_expr_enumtype(ivl_expr_t net)
 {
       assert(net->type_ == IVL_EX_ENUMTYPE);
       return net->u_.enumtype_.type;
+}
+
+extern "C" ivl_type_t ivl_expr_net_type(ivl_expr_t net)
+{
+      return net->net_type;
 }
 
 extern "C" const char* ivl_expr_name(ivl_expr_t net)
@@ -1422,7 +1429,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_REPEAT:
 	    return 0;
 	  case IVL_LPM_ARRAY: // Array ports take the signedness of the array.
-	    return net->u_.array.sig->signed_;
+	    return net->u_.array.sig->net_type->get_signed()? 1 : 0;
 	  default:
 	    assert(0);
 	    return 0;
@@ -2231,7 +2238,7 @@ extern "C" ivl_scope_t ivl_signal_scope(ivl_signal_t net)
 
 extern "C" unsigned ivl_signal_width(ivl_signal_t net)
 {
-      return net->width_;
+      return net->net_type->packed_width();
 }
 
 extern "C" ivl_signal_port_t ivl_signal_port(ivl_signal_t net)
@@ -2251,7 +2258,7 @@ extern "C" int ivl_signal_local(ivl_signal_t net)
 
 extern "C" int ivl_signal_signed(ivl_signal_t net)
 {
-      return net->signed_;
+      return net->net_type->get_signed()? 1 : 0;
 }
 
 extern "C" unsigned ivl_signal_forced_net(ivl_signal_t net)
@@ -2273,12 +2280,20 @@ extern "C" unsigned ivl_signal_lineno(ivl_signal_t net)
 
 extern "C" int ivl_signal_integer(ivl_signal_t net)
 {
-      return net->isint_;
+      if (const netvector_t*vec = dynamic_cast<const netvector_t*> (net->net_type))
+	    return vec->get_isint()? 1 : 0;
+      else
+	    return 0;
 }
 
 extern "C" ivl_variable_type_t ivl_signal_data_type(ivl_signal_t net)
 {
-      return net->data_type;
+      return net->net_type->base_type();
+}
+
+extern "C" ivl_type_t ivl_signal_net_type(ivl_signal_t net)
+{
+      return net->net_type;
 }
 
 extern "C" unsigned ivl_signal_npath(ivl_signal_t net)
@@ -2772,4 +2787,39 @@ extern "C" ivl_island_t ivl_switch_island(ivl_switch_t net)
 extern "C" unsigned ivl_switch_lineno(ivl_switch_t net)
 {
       return net->lineno;
+}
+
+extern "C" ivl_variable_type_t ivl_type_base(ivl_type_t net)
+{
+      if (net == 0) return IVL_VT_NO_TYPE;
+      else return net->base_type();
+}
+
+extern "C" ivl_type_t ivl_type_element(ivl_type_t net)
+{
+      if (const netarray_t*da = dynamic_cast<const netarray_t*> (net))
+	    return da->element_type();
+
+      assert(0);
+      return 0;
+}
+
+extern "C" unsigned ivl_type_packed_dimensions(ivl_type_t net)
+{
+      vector<netrange_t> slice = net->slice_dimensions();
+      return slice.size();
+}
+
+extern "C" int ivl_type_packed_lsb(ivl_type_t net, unsigned dim)
+{
+      vector<netrange_t> slice = net->slice_dimensions();
+      assert(dim < slice.size());
+      return slice[dim].get_lsb();
+}
+
+extern "C" int ivl_type_packed_msb(ivl_type_t net, unsigned dim)
+{
+      vector<netrange_t> slice = net->slice_dimensions();
+      assert(dim < slice.size());
+      return slice[dim].get_msb();
 }

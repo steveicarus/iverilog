@@ -20,33 +20,36 @@
  *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
-# include  "LineInfo.h"
 # include  "nettypes.h"
 # include  <vector>
 
 /*
  * Packed arrays.
  */
-class netparray_t : public nettype_base_t, public LineInfo {
+class netparray_t : public netarray_t {
 
     public:
-      explicit netparray_t(const std::list<netrange_t>&packed);
+      explicit netparray_t(const std::vector<netrange_t>&packed,
+			   ivl_type_t etype);
       ~netparray_t();
 
-      inline const std::list<netrange_t>& packed_dimensions() const
+    public:
+	// Virtual methods from the ivl_type_s type...
+      long packed_width(void) const;
+      std::vector<netrange_t> slice_dimensions() const;
+
+    public:
+      inline const std::vector<netrange_t>& packed_dimensions() const
       { return packed_dims_; }
 
     private:
-      std::list<netrange_t> packed_dims_;
+      std::vector<netrange_t> packed_dims_;
 
 };
 
-inline netparray_t::netparray_t(const std::list<netrange_t>&packed)
-: packed_dims_(packed)
-{
-}
-
-inline netparray_t::~netparray_t()
+inline netparray_t::netparray_t(const std::vector<netrange_t>&packed,
+				ivl_type_t etype)
+: netarray_t(etype), packed_dims_(packed)
 {
 }
 
