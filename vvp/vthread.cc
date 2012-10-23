@@ -96,8 +96,26 @@ struct vthread_s {
       union {
 	    int64_t  w_int;
 	    uint64_t w_uint;
-	    double   w_real;
       } words[16];
+
+    private:
+      vector<double> stack_real_;
+    public:
+      inline double pop_real(void)
+      {
+	    assert(stack_real_.size() > 0);
+	    double val = stack_real_.back();
+	    stack_real_.pop_back();
+	    return val;
+      }
+      inline void push_real(double val)
+      { stack_real_.push_back(val); }
+      inline double peek_real(unsigned depth)
+      {
+	    assert(depth < stack_real_.size());
+	    unsigned use_index = stack_real_.size()-1-depth;
+	    return stack_real_[use_index];
+      }
 
 	/* Strings are operated on using a forth-like operator
 	   set. Items at the top of the stack (back()) are the objects
@@ -182,14 +200,24 @@ void vthread_put_bit(struct vthread_s*thr, unsigned addr, vvp_bit4_t bit)
       thr_put_bit(thr, addr, bit);
 }
 
-double vthread_get_real(struct vthread_s*thr, unsigned addr)
+void vthread_push_real(struct vthread_s*thr, double val)
 {
-      return thr->words[addr].w_real;
+      thr->push_real(val);
 }
 
-void vthread_put_real(struct vthread_s*thr, unsigned addr, double val)
+void vthread_pop_real(struct vthread_s*thr, unsigned depth)
 {
-      thr->words[addr].w_real = val;
+      while (depth > 0) {
+	    (void) thr->pop_real();
+	    depth -= 1;
+      }
+}
+
+void vthread_pop_str(struct vthread_s*thr, unsigned depth)
+{
+      for (unsigned idx = 0 ; idx < depth ; idx += 1) {
+	    thr->stack_str.pop_back();
+      }
 }
 
 string vthread_get_str_stack(struct vthread_s*thr, unsigned depth)
@@ -197,6 +225,11 @@ string vthread_get_str_stack(struct vthread_s*thr, unsigned depth)
       assert(depth < thr->stack_str.size());
       unsigned use_index = thr->stack_str.size()-1-depth;
       return thr->stack_str[use_index];
+}
+
+double vthread_get_real_stack(struct vthread_s*thr, unsigned depth)
+{
+      return thr->peek_real(depth);
 }
 
 template <class T> T coerce_to_width(const T&that, unsigned width)
@@ -624,12 +657,9 @@ vvp_context_item_t vthread_get_rd_context_item(unsigned context_idx)
       return vvp_get_context_item(running_thread->rd_context, context_idx);
 }
 
-bool of_ABS_WR(vthread_t thr, vvp_code_t cp)
+bool of_ABS_WR(vthread_t thr, vvp_code_t)
 {
-      unsigned dst = cp->bit_idx[0];
-      unsigned src = cp->bit_idx[1];
-
-      thr->words[dst].w_real = fabs(thr->words[src].w_real);
+      thr->push_real( fabs(thr->pop_real()) );
       return true;
 }
 
@@ -745,11 +775,11 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_ADD_WR(vthread_t thr, vvp_code_t cp)
+bool of_ADD_WR(vthread_t thr, vvp_code_t)
 {
-      double l = thr->words[cp->bit_idx[0]].w_real;
-      double r = thr->words[cp->bit_idx[1]].w_real;
-      thr->words[cp->bit_idx[0]].w_real = l + r;
+      double r = thr->pop_real();
+      double l = thr->pop_real();
+      thr->push_real(l + r);
       return true;
 }
 
@@ -800,7 +830,7 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-/* %assign/ar <array>, <delay>, <bit>
+/* %assign/ar <array>, <delay>
  * Generate an assignment event to a real array. Index register 3
  * contains the canonical address of the word in the memory. <delay>
  * is the delay in simulation time. <bit> is the index register
@@ -810,7 +840,7 @@ bool of_ASSIGN_AR(vthread_t thr, vvp_code_t cp)
 {
       long adr = thr->words[3].w_int;
       unsigned delay = cp->bit_idx[0];
-      double value = thr->words[cp->bit_idx[1]].w_real;
+      double value = thr->pop_real();
 
       if (adr >= 0) {
 	    schedule_assign_array_word(cp->array, adr, value, delay);
@@ -819,17 +849,16 @@ bool of_ASSIGN_AR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-/* %assign/ar/d <array>, <delay_idx>, <bit>
+/* %assign/ar/d <array>, <delay_idx>
  * Generate an assignment event to a real array. Index register 3
  * contains the canonical address of the word in the memory.
  * <delay_idx> is the integer register that contains the delay value.
- * <bit> is the index register containing the real value.
  */
 bool of_ASSIGN_ARD(vthread_t thr, vvp_code_t cp)
 {
       long adr = thr->words[3].w_int;
       vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_uint;
-      double value = thr->words[cp->bit_idx[1]].w_real;
+      double value = thr->pop_real();
 
       if (adr >= 0) {
 	    schedule_assign_array_word(cp->array, adr, value, delay);
@@ -838,7 +867,7 @@ bool of_ASSIGN_ARD(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-/* %assign/ar/e <array>, <bit>
+/* %assign/ar/e <array>
  * Generate an assignment event to a real array. Index register 3
  * contains the canonical address of the word in the memory. <bit>
  * is the index register containing the real value. The event
@@ -848,7 +877,7 @@ bool of_ASSIGN_ARD(vthread_t thr, vvp_code_t cp)
 bool of_ASSIGN_ARE(vthread_t thr, vvp_code_t cp)
 {
       long adr = thr->words[3].w_int;
-      double value = thr->words[cp->bit_idx[0]].w_real;
+      double value = thr->pop_real();
 
       if (adr >= 0) {
 	    if (thr->ecount == 0) {
@@ -1175,7 +1204,7 @@ bool of_ASSIGN_V0X1E(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * This is %assign/wr <vpi-label>, <delay>, <index>
+ * This is %assign/wr <vpi-label>, <delay>
  *
  * This assigns (after a delay) a value to a real variable. Use the
  * vpi_put_value function to do the assign, with the delay written
@@ -1184,7 +1213,7 @@ bool of_ASSIGN_V0X1E(vthread_t thr, vvp_code_t cp)
 bool of_ASSIGN_WR(vthread_t thr, vvp_code_t cp)
 {
       unsigned delay = cp->bit_idx[0];
-      unsigned index = cp->bit_idx[1];
+      double value = thr->pop_real();
       s_vpi_time del;
 
       del.type = vpiSimTime;
@@ -1194,7 +1223,7 @@ bool of_ASSIGN_WR(vthread_t thr, vvp_code_t cp)
 
       t_vpi_value val;
       val.format = vpiRealVal;
-      val.value.real = thr->words[index].w_real;
+      val.value.real = value;
       vpi_put_value(tmp, &val, &del, vpiTransportDelay);
 
       return true;
@@ -1203,7 +1232,7 @@ bool of_ASSIGN_WR(vthread_t thr, vvp_code_t cp)
 bool of_ASSIGN_WRD(vthread_t thr, vvp_code_t cp)
 {
       vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_uint;
-      unsigned index = cp->bit_idx[1];
+      double value = thr->pop_real();
       s_vpi_time del;
 
       del.type = vpiSimTime;
@@ -1213,7 +1242,7 @@ bool of_ASSIGN_WRD(vthread_t thr, vvp_code_t cp)
 
       t_vpi_value val;
       val.format = vpiRealVal;
-      val.value.real = thr->words[index].w_real;
+      val.value.real = value;
       vpi_put_value(tmp, &val, &del, vpiTransportDelay);
 
       return true;
@@ -1222,7 +1251,7 @@ bool of_ASSIGN_WRD(vthread_t thr, vvp_code_t cp)
 bool of_ASSIGN_WRE(vthread_t thr, vvp_code_t cp)
 {
       assert(thr->event != 0);
-      unsigned index = cp->bit_idx[0];
+      double value = thr->pop_real();
       __vpiHandle*tmp = cp->handle;
 
 	// If the count is zero then just put the value.
@@ -1230,11 +1259,10 @@ bool of_ASSIGN_WRE(vthread_t thr, vvp_code_t cp)
 	    t_vpi_value val;
 
 	    val.format = vpiRealVal;
-	    val.value.real = thr->words[index].w_real;
+	    val.value.real = value;
 	    vpi_put_value(tmp, &val, 0, vpiNoDelay);
       } else {
-	    schedule_evctl(tmp, thr->words[index].w_real, thr->event,
-	                   thr->ecount);
+	    schedule_evctl(tmp, value, thr->event, thr->ecount);
       }
 
       thr->event = 0;
@@ -1277,11 +1305,11 @@ bool of_BLEND(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_BLEND_WR(vthread_t thr, vvp_code_t cp)
+bool of_BLEND_WR(vthread_t thr, vvp_code_t)
 {
-      double t = thr->words[cp->bit_idx[0]].w_real;
-      double f = thr->words[cp->bit_idx[1]].w_real;
-      thr->words[cp->bit_idx[0]].w_real = (t == f) ? t : 0.0;
+      double f = thr->pop_real();
+      double t = thr->pop_real();
+      thr->push_real((t == f) ? t : 0.0);
       return true;
 }
 
@@ -1359,7 +1387,7 @@ bool of_CASSIGN_V(vthread_t thr, vvp_code_t cp)
 bool of_CASSIGN_WR(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net  = cp->net;
-      double value = thr->words[cp->bit_idx[0]].w_real;
+      double value = thr->pop_real();
 
 	/* Set the value into port 1 of the destination. */
       vvp_net_ptr_t ptr (net, 1);
@@ -1760,10 +1788,10 @@ bool of_CMPX(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_CMPWR(vthread_t thr, vvp_code_t cp)
+bool of_CMPWR(vthread_t thr, vvp_code_t)
 {
-      double l = thr->words[cp->bit_idx[0]].w_real;
-      double r = thr->words[cp->bit_idx[1]].w_real;
+      double r = thr->pop_real();
+      double l = thr->pop_real();
 
       vvp_bit4_t eq = (l == r)? BIT4_1 : BIT4_0;
       vvp_bit4_t lt = (l <  r)? BIT4_1 : BIT4_0;
@@ -1852,43 +1880,52 @@ bool of_CONCATI_STR(vthread_t thr, vvp_code_t cp)
 
 bool of_CVT_RS(vthread_t thr, vvp_code_t cp)
 {
-      int64_t r = thr->words[cp->bit_idx[1]].w_int;
-      thr->words[cp->bit_idx[0]].w_real = (double)(r);
+      int64_t r = thr->words[cp->bit_idx[0]].w_int;
+      thr->push_real( (double)(r) );
 
       return true;
 }
 
 bool of_CVT_RU(vthread_t thr, vvp_code_t cp)
 {
-      uint64_t r = thr->words[cp->bit_idx[1]].w_uint;
-      thr->words[cp->bit_idx[0]].w_real = (double)(r);
+      uint64_t r = thr->words[cp->bit_idx[0]].w_uint;
+      thr->push_real( (double)(r) );
 
       return true;
 }
 
 bool of_CVT_RV(vthread_t thr, vvp_code_t cp)
 {
-      unsigned base = cp->bit_idx[1];
-      unsigned wid = cp->number;
+      unsigned base = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
       vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
-      vector4_to_value(vector, thr->words[cp->bit_idx[0]].w_real, false);
+      double val;
+      vector4_to_value(vector, val, false);
+      thr->push_real(val);
 
       return true;
 }
 
 bool of_CVT_RV_S(vthread_t thr, vvp_code_t cp)
 {
-      unsigned base = cp->bit_idx[1];
-      unsigned wid = cp->number;
+      unsigned base = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
       vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
-      vector4_to_value(vector, thr->words[cp->bit_idx[0]].w_real, true);
+      double val;
+      vector4_to_value(vector, val, true);
+      thr->push_real(val);
 
       return true;
 }
 
+/*
+ * %cvt/sr <idx>
+ * Pop the top value from the real stack, convert it to a 64bit signed
+ * and save it to the indexed register.
+ */
 bool of_CVT_SR(vthread_t thr, vvp_code_t cp)
 {
-      double r = thr->words[cp->bit_idx[1]].w_real;
+      double r = thr->pop_real();
       thr->words[cp->bit_idx[0]].w_int = i64round(r);
 
       return true;
@@ -1896,7 +1933,7 @@ bool of_CVT_SR(vthread_t thr, vvp_code_t cp)
 
 bool of_CVT_UR(vthread_t thr, vvp_code_t cp)
 {
-      double r = thr->words[cp->bit_idx[1]].w_real;
+      double r = thr->pop_real();
       if (r >= 0.0)
 	    thr->words[cp->bit_idx[0]].w_uint = (uint64_t)floor(r+0.5);
       else
@@ -1905,12 +1942,16 @@ bool of_CVT_UR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %cvt/vr <bit> <wid>
+ */
 bool of_CVT_VR(vthread_t thr, vvp_code_t cp)
 {
-      double r = thr->words[cp->bit_idx[1]].w_real;
+      double r = thr->pop_real();
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->number;
       vvp_vector4_t tmp(wid, r);
+
 	/* Make sure there is enough space for the new vector. */
       thr_check_addr(thr, base+wid-1);
       thr->bits4.set_vec(base, tmp);
@@ -2387,12 +2428,18 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_DIV_WR(vthread_t thr, vvp_code_t cp)
+bool of_DIV_WR(vthread_t thr, vvp_code_t)
 {
-      double l = thr->words[cp->bit_idx[0]].w_real;
-      double r = thr->words[cp->bit_idx[1]].w_real;
-      thr->words[cp->bit_idx[0]].w_real = l / r;
+      double r = thr->pop_real();
+      double l = thr->pop_real();
+      thr->push_real(l / r);
 
+      return true;
+}
+
+bool of_DUP_REAL(vthread_t thr, vvp_code_t)
+{
+      thr->push_real(thr->peek_real(0));
       return true;
 }
 
@@ -2563,7 +2610,7 @@ bool of_FORCE_V(vthread_t thr, vvp_code_t cp)
 bool of_FORCE_WR(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net  = cp->net;
-      double value = thr->words[cp->bit_idx[0]].w_real;
+      double value = thr->pop_real();
 
       net->force_real(value, vvp_vector2_t(vvp_vector2_t::FILL1, 1));
 
@@ -3036,12 +3083,11 @@ bool of_JOIN_DETACH(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %load/ar <bit>, <array-label>, <index>;
+ * %load/ar <array-label>, <index>;
 */
 bool of_LOAD_AR(vthread_t thr, vvp_code_t cp)
 {
-      unsigned bit = cp->bit_idx[0];
-      unsigned idx = cp->bit_idx[1];
+      unsigned idx = cp->bit_idx[0];
       unsigned adr = thr->words[idx].w_int;
       double word;
 
@@ -3052,7 +3098,7 @@ bool of_LOAD_AR(vthread_t thr, vvp_code_t cp)
 	    word = array_get_word_r(cp->array, adr);
       }
 
-      thr->words[bit].w_real = word;
+      thr->push_real(word);
       return true;
 }
 
@@ -3257,6 +3303,23 @@ bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %load/real <var-label>
+ */
+bool of_LOAD_REAL(vthread_t thr, vvp_code_t cp)
+{
+      __vpiHandle*tmp = cp->handle;
+      t_vpi_value val;
+
+      val.format = vpiRealVal;
+      vpi_get_value(tmp, &val);
+
+      thr->push_real(val.value.real);
+
+      return true;
+}
+
+
 bool of_LOAD_STR(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net = cp->net;
@@ -3365,19 +3428,6 @@ bool of_LOAD_VP0_S(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_LOAD_WR(vthread_t thr, vvp_code_t cp)
-{
-      __vpiHandle*tmp = cp->handle;
-      t_vpi_value val;
-
-      val.format = vpiRealVal;
-      vpi_get_value(tmp, &val);
-
-      thr->words[cp->bit_idx[0]].w_real = val.value.real;
-
-      return true;
-}
-
 /*
  * %load/x16 <bit>, <functor>, <wid>
  *
@@ -3413,37 +3463,6 @@ bool of_LOAD_X1P(vthread_t thr, vvp_code_t cp)
 	    thr_put_bit(thr, bit+idx, val);
       }
 
-      return true;
-}
-
-bool of_LOADI_WR(vthread_t thr, vvp_code_t cp)
-{
-      unsigned idx = cp->bit_idx[0];
-      double mant = cp->number;
-      int exp = cp->bit_idx[1];
-
-	// Detect +infinity
-      if (exp==0x3fff && cp->number==0) {
-	    thr->words[idx].w_real = INFINITY;
-	    return true;
-      }
-	// Detect -infinity
-      if (exp==0x7fff && cp->number==0) {
-	    thr->words[idx].w_real = -INFINITY;
-	    return true;
-      }
-	// Detect NaN
-      if (exp==0x3fff) {
-	    thr->words[idx].w_real = nan("");
-	    return true;
-      }
-
-      double sign = (exp & 0x4000)? -1.0 : 1.0;
-
-      exp &= 0x1fff;
-
-      mant = sign * ldexp(mant, exp - 0x1000);
-      thr->words[idx].w_real = mant;
       return true;
 }
 
@@ -3572,6 +3591,36 @@ static void do_verylong_mod(vthread_t thr, vvp_code_t cp,
       return;
 }
 
+bool of_MAX_WR(vthread_t thr, vvp_code_t)
+{
+      double r = thr->pop_real();
+      double l = thr->pop_real();
+      if (r != r)
+	    thr->push_real(l);
+      else if (l != l)
+	    thr->push_real(r);
+      else if (r < l)
+	    thr->push_real(l);
+      else
+	    thr->push_real(r);
+      return true;
+}
+
+bool of_MIN_WR(vthread_t thr, vvp_code_t)
+{
+      double r = thr->pop_real();
+      double l = thr->pop_real();
+      if (r != r)
+	    thr->push_real(l);
+      else if (l != l)
+	    thr->push_real(r);
+      else if (r < l)
+	    thr->push_real(r);
+      else
+	    thr->push_real(l);
+      return true;
+}
+
 bool of_MOD(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
@@ -3684,13 +3733,13 @@ bool of_MOD_S(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %mod/wr <dest>, <src>
+ * %mod/wr
  */
-bool of_MOD_WR(vthread_t thr, vvp_code_t cp)
+bool of_MOD_WR(vthread_t thr, vvp_code_t)
 {
-      double l = thr->words[cp->bit_idx[0]].w_real;
-      double r = thr->words[cp->bit_idx[1]].w_real;
-      thr->words[cp->bit_idx[0]].w_real = fmod(l,r);
+      double r = thr->pop_real();
+      double l = thr->pop_real();
+      thr->push_real(fmod(l,r));
 
       return true;
 }
@@ -3760,17 +3809,8 @@ bool of_PAD(vthread_t thr, vvp_code_t cp)
 }
 
 /*
-*  %mov/wr <dst>, <src>
+*  %mov/wu <dst>, <src>
 */
-bool of_MOV_WR(vthread_t thr, vvp_code_t cp)
-{
-      unsigned dst = cp->bit_idx[0];
-      unsigned src = cp->bit_idx[1];
-
-      thr->words[dst].w_real = thr->words[src].w_real;
-      return true;
-}
-
 bool of_MOV_WU(vthread_t thr, vvp_code_t cp)
 {
       unsigned dst = cp->bit_idx[0];
@@ -3863,11 +3903,11 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_MUL_WR(vthread_t thr, vvp_code_t cp)
+bool of_MUL_WR(vthread_t thr, vvp_code_t)
 {
-      double l = thr->words[cp->bit_idx[0]].w_real;
-      double r = thr->words[cp->bit_idx[1]].w_real;
-      thr->words[cp->bit_idx[0]].w_real = l * r;
+      double r = thr->pop_real();
+      double l = thr->pop_real();
+      thr->push_real(l * r);
 
       return true;
 }
@@ -4204,6 +4244,18 @@ bool of_NOR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %pop/real <number>
+ */
+bool of_POP_REAL(vthread_t thr, vvp_code_t cp)
+{
+      unsigned cnt = cp->number;
+      for (unsigned idx = 0 ; idx < cnt ; idx += 1) {
+	    (void) thr->pop_real();
+      }
+      return true;
+}
+
+/*
  *  %pop/str <number>
  */
 bool of_POP_STR(vthread_t thr, vvp_code_t cp)
@@ -4289,12 +4341,43 @@ bool of_POW_S(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_POW_WR(vthread_t thr, vvp_code_t cp)
+bool of_POW_WR(vthread_t thr, vvp_code_t)
 {
-      double l = thr->words[cp->bit_idx[0]].w_real;
-      double r = thr->words[cp->bit_idx[1]].w_real;
-      thr->words[cp->bit_idx[0]].w_real = pow(l, r);
+      double r = thr->pop_real();
+      double l = thr->pop_real();
+      thr->push_real(pow(l,r));
 
+      return true;
+}
+
+bool of_PUSHI_REAL(vthread_t thr, vvp_code_t cp)
+{
+      double mant = cp->bit_idx[0];
+      uint32_t imant = cp->bit_idx[0];
+      int exp = cp->bit_idx[1];
+
+	// Detect +infinity
+      if (exp==0x3fff && imant==0) {
+	    thr->push_real(INFINITY);
+	    return true;
+      }
+	// Detect -infinity
+      if (exp==0x7fff && imant==0) {
+	    thr->push_real(-INFINITY);
+	    return true;
+      }
+	// Detect NaN
+      if (exp==0x3fff) {
+	    thr->push_real(nan(""));
+	    return true;
+      }
+
+      double sign = (exp & 0x4000)? -1.0 : 1.0;
+
+      exp &= 0x1fff;
+
+      mant = sign * ldexp(mant, exp - 0x1000);
+      thr->push_real(mant);
       return true;
 }
 
@@ -4453,24 +4536,6 @@ bool of_RELEASE_WR(vthread_t, vvp_code_t cp)
 }
 
 /*
- * %set/av <label>, <index>, <bit>
- *
- * Write the real value in register <bit> to the array indexed by the
- * integer value addressed bin index register <index>.
- */
-bool of_SET_AR(vthread_t thr, vvp_code_t cp)
-{
-      unsigned idx = cp->bit_idx[0];
-      unsigned bit = cp->bit_idx[1];
-      unsigned adr = thr->words[idx].w_int;
-
-      double value = thr->words[bit].w_real;
-      array_set_word(cp->array, adr, value);
-
-      return true;
-}
-
-/*
  * This implements the "%set/av <label>, <bit>, <wid>" instruction. In
  * this case, the <label> is an array label, and the <bit> and <wid>
  * are the thread vector of a value to be written in.
@@ -4538,15 +4603,6 @@ bool of_SET_VEC(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_SET_WORDR(vthread_t thr, vvp_code_t cp)
-{
-	/* set the value into port 0 of the destination. */
-      vvp_net_ptr_t ptr (cp->net, 0);
-
-      vvp_send_real(ptr, thr->words[cp->bit_idx[0]].w_real, thr->wt_context);
-
-      return true;
-}
 
 /*
  * Implement the %set/x instruction:
@@ -4763,6 +4819,29 @@ bool of_STORE_OBJ(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_STORE_REAL(vthread_t thr, vvp_code_t cp)
+{
+      double val = thr->pop_real();
+	/* set the value into port 0 of the destination. */
+      vvp_net_ptr_t ptr (cp->net, 0);
+      vvp_send_real(ptr, val, thr->wt_context);
+
+      return true;
+}
+
+/*
+ * %store/reala <var-label> <index>
+ */
+bool of_STORE_REALA(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx = cp->bit_idx[0];
+      unsigned adr = thr->words[idx].w_int;
+
+      double val = thr->pop_real();
+      array_set_word(cp->array, adr, val);
+
+      return true;
+}
 
 bool of_STORE_STR(vthread_t thr, vvp_code_t cp)
 {
@@ -4815,11 +4894,11 @@ bool of_SUB(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_SUB_WR(vthread_t thr, vvp_code_t cp)
+bool of_SUB_WR(vthread_t thr, vvp_code_t)
 {
-      double l = thr->words[cp->bit_idx[0]].w_real;
-      double r = thr->words[cp->bit_idx[1]].w_real;
-      thr->words[cp->bit_idx[0]].w_real = l - r;
+      double r = thr->pop_real();
+      double l = thr->pop_real();
+      thr->push_real(l - r);
       return true;
 }
 

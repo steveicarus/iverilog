@@ -277,8 +277,6 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
  */
 void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix)
 {
-      int word;
-
       switch (ivl_expr_value(expr)) {
 
 	  case IVL_VT_BOOL:
@@ -287,9 +285,8 @@ void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix)
 	    break;
 
 	  case IVL_VT_REAL:
-	    word = draw_eval_real(expr);
-	    fprintf(vvp_out, "    %%cvt/sr %u, %d;\n", ix, word);
-	    clr_word(word);
+	    draw_eval_real(expr);
+	    fprintf(vvp_out, "    %%cvt/sr %u;\n", ix);
 	    break;
 
 	  default:
@@ -428,19 +425,15 @@ static struct vector_info draw_eq_immediate(ivl_expr_t expr, unsigned ewid,
 static struct vector_info draw_binary_expr_eq_real(ivl_expr_t expr)
 {
       struct vector_info res;
-      int lword, rword;
 
       res.base = allocate_vector(1);
       res.wid  = 1;
       assert(res.base);
 
-      lword = draw_eval_real(ivl_expr_oper1(expr));
-      rword = draw_eval_real(ivl_expr_oper2(expr));
+      draw_eval_real(ivl_expr_oper1(expr));
+      draw_eval_real(ivl_expr_oper2(expr));
 
-      clr_word(lword);
-      clr_word(rword);
-
-      fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", lword, rword);
+      fprintf(vvp_out, "    %%cmp/wr;\n");
       switch (ivl_expr_opcode(expr)) {
 
 	  case 'e':
@@ -834,36 +827,39 @@ static struct vector_info draw_binary_expr_le_real(ivl_expr_t expr)
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
 
-      int lword = draw_eval_real(le);
-      int rword = draw_eval_real(re);
 
       res.base = allocate_vector(1);
       res.wid  = 1;
 
       assert(res.base);
 
-      clr_word(lword);
-      clr_word(rword);
-
       switch (ivl_expr_opcode(expr)) {
 	  case '<':
-	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", lword, rword);
+	    draw_eval_real(le);
+	    draw_eval_real(re);
+	    fprintf(vvp_out, "    %%cmp/wr;\n");
 	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
 	    break;
 
 	  case 'L': /* <= */
-	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", lword, rword);
+	    draw_eval_real(le);
+	    draw_eval_real(re);
+	    fprintf(vvp_out, "    %%cmp/wr;\n");
 	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
 	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
 	    break;
 
 	  case '>':
-	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", rword, lword);
+	    draw_eval_real(re);
+	    draw_eval_real(le);
+	    fprintf(vvp_out, "    %%cmp/wr;\n");
 	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
 	    break;
 
 	  case 'G': /* >= */
-	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", rword, lword);
+	    draw_eval_real(re);
+	    draw_eval_real(le);
+	    fprintf(vvp_out, "    %%cmp/wr;\n");
 	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
 	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
 	    break;
@@ -2353,13 +2349,9 @@ static void draw_signal_dest(ivl_expr_t expr, struct vector_info res,
 
 
       if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
-	    int tmp;
-
 	    assert(add_index < 0);
-	    tmp = allocate_word();
-	    fprintf(vvp_out, "    %%load/wr %d, v%p_%u;\n", tmp, sig, word);
-	    fprintf(vvp_out, "    %%cvt/vr %u, %d, %u;\n", res.base, tmp, res.wid);
-	    clr_word(tmp);
+	    fprintf(vvp_out, "    %%load/real v%p_%u;\n", sig, word);
+	    fprintf(vvp_out, "    %%cvt/vr %u, %u;\n", res.base, res.wid);
 
       } else if (add_index >= 0) {
 
@@ -3069,7 +3061,7 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t expr, unsigned wid)
 	    res.base = allocate_vector(wid);
 	    res.wid  = wid;
 	    assert(res.base);
-	    fprintf(vvp_out, "    %%vpi_func %u %u \"%s\", %u, %u;\n",
+	    fprintf(vvp_out, "    %%vpi_func %u %u \"%s\", %u, %u {0 0};\n",
 		    ivl_file_table_index(ivl_expr_file(expr)),
 		    ivl_expr_lineno(expr), ivl_expr_name(expr),
 		    res.base, res.wid);
@@ -3242,7 +3234,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
       struct vector_info res;
       ivl_expr_t sub = ivl_expr_oper1(expr);
       const char *rop = 0;
-      int word, inv = 0;
+      int inv = 0;
 
       switch (ivl_expr_opcode(expr)) {
 	  case '&': rop = "and";  break;
@@ -3471,11 +3463,10 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 		  break;
 
 		case IVL_VT_REAL:
-		  word = draw_eval_real(sub);
+		  draw_eval_real(sub);
 		  res.base = allocate_vector(wid);
 		  res.wid = wid;
-		  fprintf(vvp_out, "    %%cvt/vr %d, %d, %u;\n", res.base, word, wid);
-		  clr_word(word);
+		  fprintf(vvp_out, "    %%cvt/vr %d, %u;\n", res.base, wid);
 		  break;
 
 		default:
@@ -3485,12 +3476,10 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 
 	  case 'v': /* Cast a real value to an integer. */
 	    assert(ivl_expr_value(sub) == IVL_VT_REAL);
-	    word = draw_eval_real(sub);
+	    draw_eval_real(sub);
 	    res.base = allocate_vector(wid);
 	    res.wid = wid;
-	    fprintf(vvp_out, "    %%cvt/vr %u, %d, %u;\n", res.base, word,
-	                     res.wid);
-	    clr_word(word);
+	    fprintf(vvp_out, "    %%cvt/vr %u, %u;\n", res.base, res.wid);
 	    break;
 
 	  case 'r': /* Handled in eval_real.c. */

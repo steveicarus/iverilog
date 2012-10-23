@@ -147,6 +147,8 @@ void compile_sfunc(char*label, char*name,  char*format_string,
 		   unsigned argc, struct symb_s*argv,
                    char*trigger_label)
 {
+      unsigned real_stack = 0;
+      unsigned string_stack = 0;
       vpiHandle*vpi_argv = new vpiHandle[argc];
       int width_code = make_vpi_argv(argc, vpi_argv, format_string);
       delete[] format_string;
@@ -155,6 +157,7 @@ void compile_sfunc(char*label, char*name,  char*format_string,
 
       vpiHandle sys = vpip_build_vpi_call(name, 0, width_code, ptr,
                                           true, false, argc, vpi_argv,
+					  real_stack, string_stack,
                                           file_idx, lineno);
       assert(sys);
 

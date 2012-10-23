@@ -575,31 +575,34 @@ statement
      after the name, and is used for function calls. */
 
   /* This version does not allow a function to be called as a task. */
-	| label_opt K_vpi_call T_NUMBER T_NUMBER T_STRING argument_opt ';'
-		{ compile_vpi_call($1, $5, true, false, $3, $4,
-		                   $6.argc, $6.argv); }
+  | label_opt K_vpi_call T_NUMBER T_NUMBER T_STRING
+    argument_opt '{' T_NUMBER T_NUMBER '}' ';'
+      { compile_vpi_call($1, $5, true, false, $3, $4,
+			 $6.argc, $6.argv, $8, $9); }
 
   /* This version allows a function to be called as a task, but prints a
    * warning message. */
-	| label_opt K_vpi_call_w T_NUMBER T_NUMBER T_STRING argument_opt ';'
-		{ compile_vpi_call($1, $5, false, true, $3, $4,
-		                   $6.argc, $6.argv); }
+  | label_opt K_vpi_call_w T_NUMBER T_NUMBER T_STRING
+    argument_opt '{' T_NUMBER T_NUMBER '}' ';'
+      { compile_vpi_call($1, $5, false, true, $3, $4,
+			 $6.argc, $6.argv, $8, $9); }
 
   /* This version allows a function to be called as a task and does not
    * print a message. */
-	| label_opt K_vpi_call_i T_NUMBER T_NUMBER T_STRING argument_opt ';'
-		{ compile_vpi_call($1, $5, false, false, $3, $4,
-		                   $6.argc, $6.argv); }
+  | label_opt K_vpi_call_i T_NUMBER T_NUMBER T_STRING
+    argument_opt '{' T_NUMBER T_NUMBER '}' ';'
+      { compile_vpi_call($1, $5, false, false, $3, $4,
+			 $6.argc, $6.argv, $8, $9); }
 
-	| label_opt K_vpi_func T_NUMBER T_NUMBER T_STRING ','
-	  T_NUMBER ',' T_NUMBER argument_opt ';'
-		{ compile_vpi_func_call($1, $5, $7, $9, $3, $4,
-		                        $10.argc, $10.argv); }
+  | label_opt K_vpi_func T_NUMBER T_NUMBER T_STRING ','
+    T_NUMBER ',' T_NUMBER argument_opt  '{' T_NUMBER T_NUMBER '}' ';'
+      { compile_vpi_func_call($1, $5, $7, $9, $3, $4,
+			      $10.argc, $10.argv, $12, $13); }
 
-	| label_opt K_vpi_func_r T_NUMBER T_NUMBER T_STRING ',' T_NUMBER
-	  argument_opt ';'
-		{ compile_vpi_func_call($1, $5, $7, -vpiRealConst, $3, $4,
-					$8.argc, $8.argv); }
+  | label_opt K_vpi_func_r T_NUMBER T_NUMBER T_STRING
+    argument_opt '{' T_NUMBER T_NUMBER '}' ';'
+      { compile_vpi_func_call($1, $5, 0, -vpiRealConst, $3, $4,
+			      $6.argc, $6.argv, $8, $9); }
 
   /* %disable statements are instructions that takes a scope reference
      as an operand. It therefore is parsed uniquely. */

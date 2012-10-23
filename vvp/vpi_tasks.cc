@@ -29,11 +29,14 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
+# include  <iostream>
 # include  <cstdio>
 # include  <cstdlib>
 # include  <cstring>
 # include  <cassert>
 # include  "ivl_alloc.h"
+
+using namespace std;
 
 inline __vpiUserSystf::__vpiUserSystf()
 { }
@@ -282,32 +285,6 @@ static vpiHandle sysfunc_put_value(vpiHandle ref, p_vpi_value vp, int)
       return 0;
 }
 
-static vpiHandle sysfunc_put_real_value(vpiHandle ref, p_vpi_value vp, int)
-{
-      struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
-
-      rfp->put_value = true;
-
-	/* Make sure this is a real valued function. */
-      assert(rfp->vwid == -vpiRealConst);
-
-      double val = 0.0;
-
-      switch (vp->format) {
-
-	  case vpiRealVal:
-	    val = vp->value.real;
-	    break;
-
-	  default:
-	    fprintf(stderr, "Unsupported format %d.\n", (int)vp->format);
-	    assert(0);
-      }
-
-      vthread_put_real(vpip_current_vthread, rfp->vbit, val);
-      return 0;
-}
-
 static vpiHandle sysfunc_put_4net_value(vpiHandle ref, p_vpi_value vp, int)
 {
       struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
@@ -458,13 +435,31 @@ struct sysfunc_real : public __vpiSysTaskCall {
       int get_type_code(void) const { return vpiSysFuncCall; }
       int vpi_get(int code)         { return sysfunc_get(code, this); }
       char* vpi_get_str(int code)   { return systask_get_str(code, this); }
-      vpiHandle vpi_put_value(p_vpi_value val, int flags)
-            { return sysfunc_put_real_value(this, val, flags); }
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
       vpiHandle vpi_handle(int code)
             { return systask_handle(code, this); }
       vpiHandle vpi_iterate(int code)
             { return systask_iter(code, this); }
+
+      double return_value_;
 };
+
+vpiHandle sysfunc_real::vpi_put_value(p_vpi_value vp, int)
+{
+      put_value = true;
+
+      return_value_ = 0.0;
+      switch (vp->format) {
+	  case vpiRealVal:
+	    return_value_ = vp->value.real;
+	    break;
+	  default:
+	    fprintf(stderr, "Unsupported format %d.\n", (int)vp->format);
+	    assert(0);
+      }
+
+      return 0;
+}
 
 struct sysfunc_4net : public __vpiSysTaskCall {
       inline sysfunc_4net() { }
@@ -738,6 +733,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 			      vvp_net_t*fnet,
 			      bool func_as_task_err, bool func_as_task_warn,
 			      unsigned argc, vpiHandle*argv,
+			      unsigned real_stack, unsigned string_stack,
 			      long file_idx, long lineno)
 {
       assert(!(func_as_task_err && func_as_task_warn));
@@ -819,6 +815,8 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
       obj->defn  = defn;
       obj->nargs = argc;
       obj->args  = argv;
+      obj->real_stack = real_stack;
+      obj->string_stack = string_stack;
       obj->vbit  = vbit;
       obj->vwid  = vwid;
       obj->fnet  = fnet;
@@ -904,6 +902,17 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
 			val.value.integer = 0;
 		  }
 		  vpi_put_value(ref, &val, 0, vpiNoDelay);
+	    }
+
+	    if (vpip_cur_task->real_stack > 0)
+		  vthread_pop_real(thr, vpip_cur_task->real_stack);
+	    if (vpip_cur_task->string_stack > 0)
+		  vthread_pop_str(thr, vpip_cur_task->string_stack);
+
+	      /* If the function has a real value, then push the value
+		 to the thread stack. */
+	    if (sysfunc_real*func_real = dynamic_cast<sysfunc_real*>(ref)) {
+		  vthread_push_real(thr, func_real->return_value_);
 	    }
       }
 }

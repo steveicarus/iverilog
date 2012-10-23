@@ -413,7 +413,9 @@ extern void compile_file_line(char*label, long file_idx, long lineno,
 extern void compile_vpi_call(char*label, char*name,
 			     bool func_as_task_err, bool func_as_task_warn,
 			     long file_idx, long lineno,
-			     unsigned argc, vpiHandle*argv);
+			     unsigned argc, vpiHandle*argv,
+			     unsigned real_stack,
+			     unsigned string_stack);
 
 /* Compile a function call. The vbit and vwid encode the return
    type. If the vwid >0, the return type is a vector. If the vwid is
@@ -422,7 +424,9 @@ extern void compile_vpi_call(char*label, char*name,
 extern void compile_vpi_func_call(char*label, char*name,
 				  unsigned vbit, int vwid,
 				  long file_idx, long lineno,
-				  unsigned argc, vpiHandle*argv);
+				  unsigned argc, vpiHandle*argv,
+				  unsigned real_stack,
+				  unsigned string_stack);
 extern void print_vpi_call_errors();
 
 extern void compile_fork(char*label, struct symb_s targ_s,

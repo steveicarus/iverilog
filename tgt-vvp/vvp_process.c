@@ -39,9 +39,10 @@ unsigned transient_id = 0;
  * executable code for the processes.
  */
 
-/* Support a non-blocking assignment to a real array word. */
+/* Support a non-blocking assignment to a real array word. The real
+   value to be written is already in the top of the stack. */
 static void assign_to_array_r_word(ivl_signal_t lsig, ivl_expr_t word_ix,
-                                   unsigned bit, uint64_t delay,
+                                   uint64_t delay,
                                    ivl_expr_t dexp, unsigned nevents)
 {
       unsigned skip_assign = transient_id++;
@@ -62,12 +63,12 @@ static void assign_to_array_r_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	      /* Calculated delay... */
 	    int delay_index = allocate_word();
 	    draw_eval_expr_into_integer(dexp, delay_index);
-	    fprintf(vvp_out, "    %%assign/ar/d v%p, %d, %u;\n", lsig,
-	                     delay_index, bit);
+	    fprintf(vvp_out, "    %%assign/ar/d v%p, %d;\n", lsig,
+	                     delay_index);
 	    clr_word(delay_index);
       } else if (nevents != 0) {
 	      /* Event control delay... */
-	    fprintf(vvp_out, "    %%assign/ar/e v%p, %u;\n", lsig, bit);
+	    fprintf(vvp_out, "    %%assign/ar/e v%p;\n", lsig);
       } else {
 	      /* Constant delay... */
 	    unsigned long low_d = delay % UINT64_C(0x100000000);
@@ -81,12 +82,12 @@ static void assign_to_array_r_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 		  int delay_index = allocate_word();
 		  fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
 		          delay_index, low_d, hig_d);
-		  fprintf(vvp_out, "    %%assign/ar/d v%p, %d, %u;\n", lsig,
-		  delay_index, bit);
+		  fprintf(vvp_out, "    %%assign/ar/d v%p, %d;\n", lsig,
+			  delay_index);
 		  clr_word(delay_index);
 	    } else {
-		  fprintf(vvp_out, "    %%assign/ar v%p, %lu, %u;\n",
-		          lsig, low_d, bit);
+		  fprintf(vvp_out, "    %%assign/ar v%p, %lu;\n",
+		          lsig, low_d);
 	    }
       }
 
@@ -376,8 +377,6 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
       ivl_expr_t del  = ivl_stmt_delay_expr(net);
 	/* variables for the selection of word from an array. */
       unsigned long use_word = 0;
-	/* thread address for a word value. */
-      int word;
       uint64_t delay = 0;
       unsigned nevents = ivl_stmt_nevent(net);
 
@@ -395,13 +394,12 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
       }
 
 	/* Evaluate the r-value */
-      word = draw_eval_real(rval);
+      draw_eval_real(rval);
 
       if (ivl_signal_dimensions(sig) > 0) {
 	    ivl_expr_t word_ix = ivl_lval_idx(lval);
 	    assert(word_ix);
-	    assign_to_array_r_word(sig, word_ix, word, delay, del, nevents);
-	    clr_word(word);
+	    assign_to_array_r_word(sig, word_ix, delay, del, nevents);
 	    return 0;
       }
 
@@ -410,12 +408,12 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
 	    assert(nevents == 0);
 	    int delay_index = allocate_word();
 	    draw_eval_expr_into_integer(del, delay_index);
-	    fprintf(vvp_out, "    %%assign/wr/d v%p_%lu, %d, %d;\n",
-	            sig, use_word, delay_index, word);
+	    fprintf(vvp_out, "    %%assign/wr/d v%p_%lu, %d;\n",
+	            sig, use_word, delay_index);
 	    clr_word(delay_index);
       } else if (nevents) {
-	    fprintf(vvp_out, "    %%assign/wr/e v%p_%lu, %d;\n",
-	            sig, use_word, word);
+	    fprintf(vvp_out, "    %%assign/wr/e v%p_%lu;\n",
+	            sig, use_word);
       } else {
 	    unsigned long low_d = delay % UINT64_C(0x100000000);
 	    unsigned long hig_d = delay / UINT64_C(0x100000000);
@@ -428,16 +426,14 @@ static int show_stmt_assign_nb_real(ivl_statement_t net)
 		  int delay_index = allocate_word();
 		  fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
 		          delay_index, low_d, hig_d);
-		  fprintf(vvp_out, "    %%assign/wr/d v%p_%lu, %d, %d;\n",
-		          sig, use_word, delay_index, word);
+		  fprintf(vvp_out, "    %%assign/wr/d v%p_%lu, %d;\n",
+		          sig, use_word, delay_index);
 		  clr_word(delay_index);
 	    } else {
-		  fprintf(vvp_out, "    %%assign/wr v%p_%lu, %lu, %d;\n",
-		          sig, use_word, low_d, word);
+		  fprintf(vvp_out, "    %%assign/wr v%p_%lu, %lu;\n",
+		          sig, use_word, low_d);
 	    }
       }
-
-      clr_word(word);
 
       return 0;
 }
@@ -525,7 +521,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	     value. Evaluate the real expression, then convert the
 	     result to a vector. */
 	if (ivl_expr_value(rval) == IVL_VT_REAL) {
-	      int word = draw_eval_real(rval);
+	      draw_eval_real(rval);
 	        /* This is the accumulated with of the l-value of the
 		   assignment. */
 	      wid = ivl_stmt_lwidth(net);
@@ -541,10 +537,8 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 		    vvp_errors += 1;
 	      }
 
-	      fprintf(vvp_out, "    %%cvt/vr %u, %d, %u;\n",
-		      res.base, word, res.wid);
-
-	      clr_word(word);
+	      fprintf(vvp_out, "    %%cvt/vr %u, %u;\n",
+		      res.base, res.wid);
 
 	} else {
 	      res = draw_eval_expr(rval, 0);
@@ -747,7 +741,6 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
       ivl_expr_t expr = ivl_stmt_cond_expr(net);
-      int cond = draw_eval_real(expr);
       unsigned count = ivl_stmt_case_count(net);
 
       unsigned local_base = local_count;
@@ -755,6 +748,11 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
       unsigned idx, default_case;
 
       show_stmt_file_line(net, "Case statement.");
+
+	/* Build the reference value into the top of the stack. All
+	   the case comparisons will make duplicates of this value in
+	   order to do their tests. */
+      draw_eval_real(expr);
 
       local_count += count + 1;
 
@@ -765,25 +763,22 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 
       for (idx = 0 ;  idx < count ;  idx += 1) {
 	    ivl_expr_t cex = ivl_stmt_case_expr(net, idx);
-	    int cvec;
 
 	    if (cex == 0) {
 		  default_case = idx;
 		  continue;
 	    }
 
-	    cvec = draw_eval_real(cex);
-
-	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", cond, cvec);
+	      /* The referene value... */
+	    fprintf(vvp_out, "    %%dup/real;\n");
+	      /* The guard value... */
+	    draw_eval_real(cex);
+	      /* The comparison. */
+	    fprintf(vvp_out, "    %%cmp/wr;\n");
 	    fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n",
 		    thread_count, local_base+idx);
 
-	      /* Done with the guard expression value. */
-	    clr_word(cvec);
       }
-
-	/* Done with the case expression. */
-      clr_word(cond);
 
 	/* Emit code for the case default. The above jump table will
 	   fall through to this statement. */
@@ -812,11 +807,15 @@ static int show_stmt_case_r(ivl_statement_t net, ivl_scope_t sscope)
 
 	/* The out of the case. */
       fprintf(vvp_out, "T_%u.%u ;\n",  thread_count, local_base+count);
+      fprintf(vvp_out, "    %%pop/real 1;\n");
 
       return rc;
 }
 
-static void force_real_to_lval(ivl_statement_t net, int res)
+/*
+ * The real value is already pushed to the top of the real value stack.
+ */
+static void force_real_to_lval(ivl_statement_t net)
 {
       const char*command_name;
       ivl_lval_t lval;
@@ -845,7 +844,7 @@ static void force_real_to_lval(ivl_statement_t net, int res)
 	/* L-Value must be a signal: reg or wire */
       assert(lsig != 0);
 
-      fprintf(vvp_out, "    %s v%p_0, %d;\n", command_name, lsig, res);
+      fprintf(vvp_out, "    %s v%p_0;\n", command_name, lsig);
 
 }
 
@@ -1049,12 +1048,10 @@ static int show_stmt_cassign(ivl_statement_t net)
 
       sig = ivl_lval_sig(ivl_stmt_lval(net, 0));
       if (sig && ivl_signal_data_type(sig) == IVL_VT_REAL) {
-	    int res;
 
-	    res = draw_eval_real(ivl_stmt_rval(net));
-	    clr_word(res);
+	    draw_eval_real(ivl_stmt_rval(net));
+	    force_real_to_lval(net);
 
-	    force_real_to_lval(net, res);
       } else {
 	    struct vector_info rvec;
 
@@ -1230,9 +1227,8 @@ static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
 	  }
 
 	  case IVL_VT_REAL: {
-		int word = draw_eval_real(expr);
-		fprintf(vvp_out, "    %%cvt/ur 0, %d;\n", word);
-		clr_word(word);
+		draw_eval_real(expr);
+		fprintf(vvp_out, "    %%cvt/ur 0;\n");
 		break;
 	  }
 
@@ -1272,12 +1268,10 @@ static int show_stmt_force(ivl_statement_t net)
 
       sig = ivl_lval_sig(ivl_stmt_lval(net, 0));
       if (sig && ivl_signal_data_type(sig) == IVL_VT_REAL) {
-            int res;
 
-            res = draw_eval_real(ivl_stmt_rval(net));
-            clr_word(res);
+            draw_eval_real(ivl_stmt_rval(net));
+            force_real_to_lval(net);
 
-            force_real_to_lval(net, res);
       } else {
             struct vector_info rvec;
 

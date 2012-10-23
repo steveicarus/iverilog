@@ -531,7 +531,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	   will not have access to the proper value. Punt and return a
 	   0.0 value instead. */
       if (vpip_current_vthread)
-	    val = vthread_get_real(vpip_current_vthread, obj->index);
+	    val = vthread_get_real_stack(vpip_current_vthread, obj->index);
 
       switch (vp->format) {
 

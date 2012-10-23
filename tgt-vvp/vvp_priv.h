@@ -100,7 +100,7 @@ extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
 extern void draw_lpm_mux(ivl_lpm_t net);
 
 extern struct vector_info draw_ufunc_expr(ivl_expr_t expr, unsigned wid);
-extern int draw_ufunc_real(ivl_expr_t expr);
+extern void draw_ufunc_real(ivl_expr_t expr);
 
 extern void pad_expr_in_place(ivl_expr_t expr, struct vector_info res,
                               unsigned swid);
@@ -129,7 +129,7 @@ extern void draw_vpi_task_call(ivl_statement_t net);
 
 extern struct vector_info draw_vpi_func_call(ivl_expr_t expr,
 					     unsigned wid);
-extern int draw_vpi_rfunc_call(ivl_expr_t expr);
+extern void draw_vpi_rfunc_call(ivl_expr_t expr);
 
 /*
  * Enumeration draw routine.
@@ -298,11 +298,10 @@ extern long get_number_immediate(ivl_expr_t ex);
 extern uint64_t get_number_immediate64(ivl_expr_t ex);
 
 /*
- * draw_eval_real evaluates real value expressions. The return code
- * from the function is the index of the word register that contains
- * the result.
+ * draw_eval_real evaluates real value expressions. The result of the
+ * evaluation is the real result in the top of the real expression stack.
  */
-extern int draw_eval_real(ivl_expr_t ex);
+extern void draw_eval_real(ivl_expr_t ex);
 
 /*
  * draw_eval_bool64 evaluates a bool expression. The return code from

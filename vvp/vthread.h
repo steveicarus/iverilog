@@ -116,13 +116,17 @@ extern vvp_context_item_t vthread_get_rd_context_item(unsigned context_idx);
 extern vvp_bit4_t vthread_get_bit(struct vthread_s*thr, unsigned addr);
 extern void vthread_put_bit(struct vthread_s*thr, unsigned addr, vvp_bit4_t bit);
 
-extern double vthread_get_real(struct vthread_s*thr, unsigned addr);
-extern void vthread_put_real(struct vthread_s*thr, unsigned addr, double val);
+extern void vthread_push_real(struct vthread_s*thr, double val);
+
+extern void vthread_pop_str(struct vthread_s*thr, unsigned count);
+extern void vthread_pop_real(struct vthread_s*thr, unsigned count);
+
 
 /* Get the string from the requested position in the vthread string
    stack. The top of the stack is depth==0, and items below are
    depth==1, etc. */
 extern std::string vthread_get_str_stack(struct vthread_s*thr, unsigned depth);
+extern double vthread_get_real_stack(struct vthread_s*thr, unsigned depth);
 
 /* This is used to actually delete a thread once we are done with it. */
 extern void vthread_delete(vthread_t thr);

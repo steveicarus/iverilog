@@ -551,6 +551,9 @@ struct __vpiSysTaskCall : public __vpiHandle {
       struct __vpiUserSystf*defn;
       unsigned nargs;
       vpiHandle*args;
+	/* Stack consumed by this call */
+      unsigned real_stack;
+      unsigned string_stack;
 	/* Support for vpi_get_userdata. */
       void*userdata;
 	/* These represent where in the vthread to put the return value. */
@@ -561,7 +564,11 @@ struct __vpiSysTaskCall : public __vpiHandle {
       unsigned lineno;
       bool put_value;
     protected:
-      inline __vpiSysTaskCall() { }
+      inline __vpiSysTaskCall()
+      {
+	    real_stack = 0;
+	    string_stack = 0;
+      }
 };
 
 extern struct __vpiSysTaskCall*vpip_cur_task;
@@ -675,6 +682,8 @@ extern vpiHandle vpip_build_vpi_call(const char*name,
 				     bool func_as_task_warn,
 				     unsigned argc,
 				     vpiHandle*argv,
+				     unsigned real_stack,
+				     unsigned string_stack,
 				     long file_idx,
 				     long lineno);
 

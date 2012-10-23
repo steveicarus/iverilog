@@ -46,13 +46,11 @@ static void function_argument_logic(ivl_signal_t port, ivl_expr_t expr)
 
 static void function_argument_real(ivl_signal_t port, ivl_expr_t expr)
 {
-      int res = draw_eval_real(expr);
-
 	/* ports cannot be arrays. */
       assert(ivl_signal_dimensions(port) == 0);
 
-      fprintf(vvp_out, "    %%set/wr v%p_0, %d;\n", port, res);
-      clr_word(res);
+      draw_eval_real(expr);
+      fprintf(vvp_out, "    %%store/real v%p_0;\n", port);
 }
 
 static void function_argument_bool(ivl_signal_t port, ivl_expr_t expr)
@@ -160,11 +158,10 @@ struct vector_info draw_ufunc_expr(ivl_expr_t expr, unsigned wid)
       return res;
 }
 
-int draw_ufunc_real(ivl_expr_t expr)
+void draw_ufunc_real(ivl_expr_t expr)
 {
       ivl_scope_t def = ivl_expr_def(expr);
       ivl_signal_t retval = ivl_scope_port(def, 0);
-      int res = 0;
       unsigned idx;
 
         /* If this is an automatic function, allocate the local storage. */
@@ -188,13 +185,11 @@ int draw_ufunc_real(ivl_expr_t expr)
       assert(ivl_signal_dimensions(retval) == 0);
 
 	/* Load the result into a word. */
-      res = allocate_word();
-      fprintf(vvp_out, "  %%load/wr %d, v%p_0;\n", res, retval);
+      fprintf(vvp_out, "  %%load/real v%p_0;\n", retval);
 
         /* If this is an automatic function, free the local storage. */
       if (ivl_scope_is_auto(def)) {
             fprintf(vvp_out, "    %%free S_%p;\n", def);
       }
 
-      return res;
 }

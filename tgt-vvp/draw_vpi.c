@@ -31,9 +31,12 @@ struct args_info {
       char*text;
       int vec_flag; /* True if the vec must be released. */
       struct vector_info vec;
-	/* String Stack position if this argument is a calculated string. */
-      int str_flag;
-      unsigned str_stack;
+	/* True if this argument is a calculated string. */
+      char str_flag;
+	/* True if this argument is a calculated real. */
+      char real_flag;
+	/* Stack position if this argument is a calculated string. */
+      unsigned stack;
       struct args_info *child; /* Arguments can be nested. */
 };
 
@@ -284,6 +287,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 	   going to need. We'll need this for making stack references,
 	   and also to clean out the stack when done. */
       unsigned str_stack_need = 0;
+      unsigned real_stack_need = 0;
 
 	/* Figure out how many expressions are going to be evaluated
 	   for this task call. I won't need to evaluate expressions
@@ -392,11 +396,14 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			   ivl_expr_signed(expr)? "s" : "u");
 		  break;
 		case IVL_VT_REAL:
-		  args[idx].vec_flag = 1;
-		  args[idx].vec.base = draw_eval_real(expr);
+		  draw_eval_real(expr);
+		  args[idx].vec_flag = 0;
+		  args[idx].vec.base = 0;
 		  args[idx].vec.wid  = 0;
-		  snprintf(buffer, sizeof buffer,
-		           "W<%u,r>", args[idx].vec.base);
+		  args[idx].str_flag = 0;
+		  args[idx].real_flag = 1;
+		  args[idx].stack = real_stack_need;
+		  real_stack_need += 1;
 		  break;
 		case IVL_VT_STRING:
 		    /* Eval the string into the stack, and tell VPI
@@ -406,7 +413,8 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  args[idx].vec.base = 0;
 		  args[idx].vec.wid = 0;
 		  args[idx].str_flag = 1;
-		  args[idx].str_stack = str_stack_need;
+		  args[idx].stack = str_stack_need;
+		  args[idx].real_flag = 0;
 		  str_stack_need += 1;
 		  buffer[0] = 0;
 		  break;
@@ -425,8 +433,11 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		    /* If this is a string stack reference, then
 		       calculate the stack depth and use that to
 		       generate the completed string. */
-		  unsigned pos = str_stack_need - args[idx].str_stack - 1;
+		  unsigned pos = str_stack_need - args[idx].stack - 1;
 		  fprintf(vvp_out, ", S<%u,str>",pos);
+	    } else if (args[idx].real_flag) {
+		  unsigned pos = real_stack_need - args[idx].stack - 1;
+		  fprintf(vvp_out, ", W<%u,r>",pos);
 	    } else {
 		  fprintf(vvp_out, ", %s", args[idx].text);
 	    }
@@ -450,10 +461,8 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 
       free(args);
 
+      fprintf(vvp_out, " {%u %u}", real_stack_need, str_stack_need);
       fprintf(vvp_out, ";\n");
-
-      if (str_stack_need > 0)
-	    fprintf(vvp_out, "    %%pop/str %u;\n", str_stack_need);
 }
 
 void draw_vpi_task_call(ivl_statement_t tnet)
@@ -474,7 +483,7 @@ void draw_vpi_task_call(ivl_statement_t tnet)
       }
 
       if (parm_count == 0) {
-            fprintf(vvp_out, "    %s %u %u \"%s\";\n", command,
+            fprintf(vvp_out, "    %s %u %u \"%s\" {0 0};\n", command,
                     ivl_file_table_index(ivl_stmt_file(tnet)),
                     ivl_stmt_lineno(tnet), ivl_stmt_name(tnet));
       } else {
@@ -509,16 +518,13 @@ struct vector_info draw_vpi_func_call(ivl_expr_t fnet, unsigned wid)
       return res;
 }
 
-int draw_vpi_rfunc_call(ivl_expr_t fnet)
+void draw_vpi_rfunc_call(ivl_expr_t fnet)
 {
       char call_string[1024];
-      int res = allocate_word();
 
-      sprintf(call_string, "    %%vpi_func/r %u %u \"%s\", %d",
+      sprintf(call_string, "    %%vpi_func/r %u %u \"%s\"",
               ivl_file_table_index(ivl_expr_file(fnet)),
-	      ivl_expr_lineno(fnet), ivl_expr_name(fnet), res);
+	      ivl_expr_lineno(fnet), ivl_expr_name(fnet));
 
       draw_vpi_taskfunc_args(call_string, 0, fnet);
-
-      return res;
 }
