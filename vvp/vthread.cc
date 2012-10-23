@@ -109,12 +109,21 @@ struct vthread_s {
 	    return val;
       }
       inline void push_real(double val)
-      { stack_real_.push_back(val); }
+      {
+	    stack_real_.push_back(val);
+      }
       inline double peek_real(unsigned depth)
       {
 	    assert(depth < stack_real_.size());
 	    unsigned use_index = stack_real_.size()-1-depth;
 	    return stack_real_[use_index];
+      }
+      inline void pop_real(unsigned cnt)
+      {
+	    while (cnt > 0) {
+		  stack_real_.pop_back();
+		  cnt -= 1;
+	    }
       }
 
 	/* Strings are operated on using a forth-like operator
@@ -122,8 +131,34 @@ struct vthread_s {
 	   operated on except for special cases. New objects are
 	   pushed onto the top (back()) and pulled from the top
 	   (back()) only. */
-      vector<string> stack_str;
-
+    private:
+      vector<string> stack_str_;
+    public:
+      inline string pop_str(void)
+      {
+	    assert(stack_str_.size() > 0);
+	    string val = stack_str_.back();
+	    stack_str_.pop_back();
+	    return val;
+      }
+      inline void push_str(const string&val)
+      {
+	    stack_str_.push_back(val);
+      }
+      inline string&peek_str(unsigned depth)
+      {
+	    assert(depth<stack_str_.size());
+	    unsigned use_index = stack_str_.size()-1-depth;
+	    return stack_str_[use_index];
+      }
+      inline void pop_str(unsigned cnt)
+      {
+	    while (cnt > 0) {
+		  stack_str_.pop_back();
+		  cnt -= 1;
+	    }
+      }
+      
 	/* Objects are also operated on in a stack. */
       vector<vvp_object_t> stack_obj;
 
@@ -207,24 +242,17 @@ void vthread_push_real(struct vthread_s*thr, double val)
 
 void vthread_pop_real(struct vthread_s*thr, unsigned depth)
 {
-      while (depth > 0) {
-	    (void) thr->pop_real();
-	    depth -= 1;
-      }
+      thr->pop_real(depth);
 }
 
 void vthread_pop_str(struct vthread_s*thr, unsigned depth)
 {
-      for (unsigned idx = 0 ; idx < depth ; idx += 1) {
-	    thr->stack_str.pop_back();
-      }
+      thr->pop_str(depth);
 }
 
-string vthread_get_str_stack(struct vthread_s*thr, unsigned depth)
+const string&vthread_get_str_stack(struct vthread_s*thr, unsigned depth)
 {
-      assert(depth < thr->stack_str.size());
-      unsigned use_index = thr->stack_str.size()-1-depth;
-      return thr->stack_str[use_index];
+      return thr->peek_str(depth);
 }
 
 double vthread_get_real_stack(struct vthread_s*thr, unsigned depth)
@@ -1531,11 +1559,8 @@ bool of_CMPS(vthread_t thr, vvp_code_t cp)
 
 bool of_CMPSTR(vthread_t thr, vvp_code_t)
 {
-      assert(thr->stack_str.size() >= 2);
-      string re = thr->stack_str.back();
-      thr->stack_str.pop_back();
-      string le = thr->stack_str.back();
-      thr->stack_str.pop_back();
+      string re = thr->pop_str();
+      string le = thr->pop_str();
 
       int rc = strcmp(le.c_str(), re.c_str());
 
@@ -1860,10 +1885,8 @@ bool of_CMPZ(vthread_t thr, vvp_code_t cp)
  */
 bool of_CONCAT_STR(vthread_t thr, vvp_code_t)
 {
-      assert(thr->stack_str.size() >= 1);
-      string text = thr->stack_str.back();
-      thr->stack_str.pop_back();
-      thr->stack_str.back().append(text);
+      string text = thr->pop_str();
+      thr->peek_str(0).append(text);
       return true;
 }
 
@@ -1873,8 +1896,7 @@ bool of_CONCAT_STR(vthread_t thr, vvp_code_t)
 bool of_CONCATI_STR(vthread_t thr, vvp_code_t cp)
 {
       const char*text = cp->text;
-      assert(thr->stack_str.size() >= 1);
-      thr->stack_str.back().append(text);
+      thr->peek_str(0).append(text);
       return true;
 }
 
@@ -3329,7 +3351,7 @@ bool of_LOAD_STR(vthread_t thr, vvp_code_t cp)
       assert(fun);
 
       const string&val = fun->get_string();
-      thr->stack_str.push_back(val);
+      thr->push_str(val);
 
       return true;
 }
@@ -4261,12 +4283,7 @@ bool of_POP_REAL(vthread_t thr, vvp_code_t cp)
 bool of_POP_STR(vthread_t thr, vvp_code_t cp)
 {
       unsigned cnt = cp->number;
-      assert(cnt <= thr->stack_str.size());
-
-      for (unsigned idx = 0 ; idx < cnt ; idx += 1) {
-	    thr->stack_str.pop_back();
-      }
-
+      thr->pop_str(cnt);
       return true;
 }
 
@@ -4384,7 +4401,7 @@ bool of_PUSHI_REAL(vthread_t thr, vvp_code_t cp)
 bool of_PUSHI_STR(vthread_t thr, vvp_code_t cp)
 {
       const char*text = cp->text;
-      thr->stack_str.push_back(string(text));
+      thr->push_str(string(text));
       return true;
 }
 
@@ -4419,7 +4436,7 @@ bool of_PUSHV_STR(vthread_t thr, vvp_code_t cp)
 	    val.push_back(*cur);
       }
 
-      thr->stack_str.push_back(val);
+      thr->push_str(val);
       return true;
 }
 
@@ -4848,11 +4865,7 @@ bool of_STORE_STR(vthread_t thr, vvp_code_t cp)
 	/* set the value into port 0 of the destination. */
       vvp_net_ptr_t ptr (cp->net, 0);
 
-      assert(!thr->stack_str.empty());
-
-      string val= thr->stack_str.back();
-      thr->stack_str.pop_back();
-
+      string val = thr->pop_str();
       vvp_send_string(ptr, val, thr->wt_context);
 
       return true;
@@ -4943,7 +4956,7 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
  */
 bool of_SUBSTR_V(vthread_t thr, vvp_code_t cp)
 {
-      string&val = thr->stack_str.back();
+      string&val = thr->peek_str(0);
       uint32_t bitl = cp->bit_idx[0];
       uint32_t sel = cp->bit_idx[1];
       unsigned wid = cp->number;

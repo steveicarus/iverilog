@@ -125,7 +125,7 @@ extern void vthread_pop_real(struct vthread_s*thr, unsigned count);
 /* Get the string from the requested position in the vthread string
    stack. The top of the stack is depth==0, and items below are
    depth==1, etc. */
-extern std::string vthread_get_str_stack(struct vthread_s*thr, unsigned depth);
+extern const std::string&vthread_get_str_stack(struct vthread_s*thr, unsigned depth);
 extern double vthread_get_real_stack(struct vthread_s*thr, unsigned depth);
 
 /* This is used to actually delete a thread once we are done with it. */
