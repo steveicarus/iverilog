@@ -158,7 +158,7 @@ struct vthread_s {
 		  cnt -= 1;
 	    }
       }
-      
+
 	/* Objects are also operated on in a stack. */
       vector<vvp_object_t> stack_obj;
 
