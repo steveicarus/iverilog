@@ -31,7 +31,7 @@
 main	.scope module, "main";
 
 code
-	%vpi_call 0 0 "$display", "Hello, World.";
+	%vpi_call 0 0 "$display", "Hello, World." {0 0};
 	%end;
 	.thread	code;
 :file_names 2;

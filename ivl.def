@@ -63,6 +63,7 @@ ivl_expr_file
 ivl_expr_lineno
 ivl_expr_name
 ivl_expr_nature
+ivl_expr_net_type
 ivl_expr_opcode
 ivl_expr_oper1
 ivl_expr_oper2
@@ -176,6 +177,15 @@ ivl_path_source
 ivl_path_source_negedge
 ivl_path_source_posedge
 
+ivl_process_analog
+ivl_process_attr_cnt
+ivl_process_attr_val
+ivl_process_file
+ivl_process_lineno
+ivl_process_scope
+ivl_process_stmt
+ivl_process_type
+
 ivl_scope_attr_cnt
 ivl_scope_attr_val
 ivl_scope_basename
@@ -233,6 +243,7 @@ ivl_signal_local
 ivl_signal_lsb
 ivl_signal_msb
 ivl_signal_name
+ivl_signal_net_type
 ivl_signal_nex
 ivl_signal_npath
 ivl_signal_packed_dimensions
@@ -244,18 +255,6 @@ ivl_signal_scope
 ivl_signal_signed
 ivl_signal_type
 ivl_signal_width
-
-ivl_path_delay
-ivl_path_source
-
-ivl_process_analog
-ivl_process_attr_cnt
-ivl_process_attr_val
-ivl_process_file
-ivl_process_lineno
-ivl_process_scope
-ivl_process_stmt
-ivl_process_type
 
 ivl_statement_type
 
@@ -300,6 +299,12 @@ ivl_switch_part
 ivl_switch_scope
 ivl_switch_type
 ivl_switch_width
+
+ivl_type_base
+ivl_type_element
+ivl_type_packed_dimensions
+ivl_type_packed_lsb
+ivl_type_packed_msb
 
 ivl_udp_init
 ivl_udp_file
