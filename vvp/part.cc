@@ -17,10 +17,12 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+# define __STDC_LIMIT_MACROS
 # include  "compile.h"
 # include  "part.h"
 # include  <cstdlib>
 # include  <climits>
+# include  <stdint.h>
 # include  <iostream>
 # include  <cassert>
 
@@ -238,7 +240,7 @@ bool vvp_fun_part_var::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                                   int&base, vvp_vector4_t&source,
                                   vvp_vector4_t&ref)
 {
-      long tmp;
+      int32_t tmp;
       switch (port.port()) {
 	  case 0:
 	    source = bit;
@@ -246,9 +248,9 @@ bool vvp_fun_part_var::recv_vec4_(vvp_net_ptr_t port, const vvp_vector4_t&bit,
 	  case 1:
 	      // INT_MIN is before the vector and is used to
 	      // represent a 'bx value on the select input.
-	    tmp = INT_MIN;
+	    tmp = INT32_MIN;
 	    vector4_to_value(bit, tmp, is_signed_);
-	    if ((int)tmp == base) return false;
+	    if (static_cast<int>(tmp) == base) return false;
 	    base = tmp;
 	    break;
 	  default:

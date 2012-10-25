@@ -327,9 +327,21 @@ static void format_vpiIntVal(vvp_signal_value*sig, int base, unsigned wid,
       vvp_vector4_t tmp;
       sig->vec4_value(tmp);
       vvp_vector4_t sub = tmp.subvalue(base, wid);
-      long val = 0;
-      vector4_to_value(sub, val, signed_flag, false);
-      vp->value.integer = val;
+
+	// Normally, we'd be OK with just using long in the call to
+	// vector4_to_value, but some compilers seem to take long as
+	// distinct from int32_t AND int64_t. Since the condition is
+	// constant, the compiler should eliminate the dead code.
+      if (sizeof(vp->value.integer) == sizeof(int32_t)) {
+	    int32_t val = 0;
+	    vector4_to_value(sub, val, signed_flag, false);
+	    vp->value.integer = val;
+      } else {
+	    assert(sizeof(vp->value.integer) == sizeof(int64_t));
+	    int64_t val = 0;
+	    vector4_to_value(sub, val, signed_flag, false);
+	    vp->value.integer = val;
+      }
 }
 
 static void format_vpiRealVal(vvp_signal_value*sig, int base, unsigned wid,

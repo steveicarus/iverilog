@@ -403,24 +403,24 @@ void vvp_arith_mult::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 {
       dispatch_operand_(ptr, bit);
 
-      if (wid_ > 8 * sizeof(long)) {
+      if (wid_ > 8 * sizeof(int64_t)) {
 	    wide_(ptr);
 	    return ;
       }
 
-      long a;
+      int64_t a;
       if (! vector4_to_value(op_a_, a, false, true)) {
 	    ptr.ptr()->send_vec4(x_val_, 0);
 	    return;
       }
 
-      long b;
+      int64_t b;
       if (! vector4_to_value(op_b_, b, false, true)) {
 	    ptr.ptr()->send_vec4(x_val_, 0);
 	    return;
       }
 
-      long val = a * b;
+      int64_t val = a * b;
       assert(wid_ <= 8*sizeof(val));
 
       vvp_vector4_t vval (wid_);
