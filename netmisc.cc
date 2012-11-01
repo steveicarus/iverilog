@@ -572,7 +572,7 @@ NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
 
 	    int64_t use_stride = stride[idx];
 
-	      // Account for that we are doing arithmatic and should
+	      // Account for that we are doing arithmetic and should
 	      // have a proper width to make sure there are no
 	      // losses. So calculate a min_wid width.
 	    unsigned tmp_wid;
@@ -595,6 +595,10 @@ NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
 		  int64_t val = tmp_const->value().as_long();
 		  val -= use_base;
 		  val *= use_stride;
+		    // Very special case: the index is zero, so we can
+		    // skip this iteration
+		  if (val == 0)
+			continue;
 		  tmp_scaled = new NetEConst(verinum(val));
 
 	    } else {
@@ -612,6 +616,11 @@ NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
 						canonical_expr->expr_width()+1, false);
 	    }
       }
+
+	// If we don't have an expression at this point, all the indices were
+	// constant zero. But this variant of normalize_variable_unpacked()
+	// is only used when at least one index is not a constant.
+	ivl_assert(*net, canonical_expr);
 
       return canonical_expr;
 }
