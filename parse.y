@@ -815,6 +815,10 @@ class_new /* IEEE1800-2005 A.2.4 */
       { yyerror(@1, "sorry: class_new not implemented yet.");
 	$$ = 0;
       }
+  | K_new
+      { yyerror(@1, "sorry: class_new not implemented yet.");
+	$$ = 0;
+      }
   ;
 
 constraint_block_item /* IEEE1800-2005 A.1.9 */
