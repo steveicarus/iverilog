@@ -218,6 +218,7 @@ class ExpAggregate : public Expression {
 	      // Return prange_t if this represents a range_expression
 	    prange_t*range_expressions(void);
 
+	    void write_to_stream(std::ostream&fd);
 	    void dump(ostream&out, int indent) const;
 
 	  private:
@@ -246,6 +247,7 @@ class ExpAggregate : public Expression {
 	    void map_choices(choice_element*dst);
 
 	    inline Expression* extract_expression() { return val_; }
+	    void write_to_stream(std::ostream&fd) const;
 
 	    void dump(ostream&out, int indent) const;
 

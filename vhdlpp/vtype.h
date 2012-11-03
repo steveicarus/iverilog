@@ -98,6 +98,14 @@ inline std::ostream&operator << (std::ostream&out, const VType&item)
 extern void preload_global_types(void);
 
 /*
+ * This type is a placeholder for ERROR types.
+ */
+class VTypeERROR : public VType {
+    public:
+      int emit_def(std::ostream&out) const;
+};
+
+/*
  * This class represents the primitive types that are available to the
  * type subsystem.
  */

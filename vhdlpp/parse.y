@@ -1140,6 +1140,10 @@ for_generate_statement
       }
   ;
 
+function_specification /* IEEE 1076-2008 P4.2.1 */
+  : K_function IDENTIFIER '(' interface_list ')' K_return IDENTIFIER
+  ;
+
 generate_statement /* IEEE 1076-2008 P11.8 */
   : if_generate_statement
   | for_generate_statement
@@ -1304,6 +1308,10 @@ if_statement_else
 index_constraint
   : '(' range_list ')'
       { $$ = $2; }
+  | '(' error ')'
+      { errormsg(@2, "Errors in the index constraint.\n");
+	$$ = new list<prange_t*>;
+      }
   ;
 
 instantiation_list
@@ -1336,7 +1344,6 @@ interface_element
 	      port->name = *(cur);
 	      port->type = $4;
 	      port->expr = $5;
-	      ivl_assert(*port, port->type);
 	      tmp->push_back(port);
 	}
 	delete $1;
@@ -1569,6 +1576,7 @@ package_body_declarative_part_opt
 package_declarative_item
   : component_declaration
   | constant_declaration
+  | subprogram_declaration
   | subtype_declaration
   | type_declaration
   | use_clause
@@ -2019,6 +2027,16 @@ signal_assignment_statement
       }
   ;
 
+subprogram_declaration
+  : subprogram_specification ';'
+      { sorrymsg(@1, "Subprogram specifications not supported.\n");
+      }
+  ;
+
+subprogram_specification
+  : function_specification
+  ;
+
 subtype_declaration
   : K_subtype IDENTIFIER K_is subtype_indication ';'
       { perm_string name = lex_strings.make($2);
@@ -2035,6 +2053,7 @@ subtype_indication
       { const VType*tmp = parse_type_by_name(lex_strings.make($1));
 	if (tmp == 0) {
 	      errormsg(@1, "Can't find type name `%s'\n", $1);
+	      tmp = new VTypeERROR;
 	}
 	delete[]$1;
 	$$ = tmp;
@@ -2056,8 +2075,8 @@ subtype_indication
 	$$ = tmp;
       }
   | IDENTIFIER '(' error ')'
-      {
-    errormsg(@1, "Syntax error in subtype indication.\n");
+      { errormsg(@1, "Syntax error in subtype indication.\n");
+	$$ = new VTypeERROR;
       }
   ;
 

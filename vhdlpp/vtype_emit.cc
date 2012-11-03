@@ -51,6 +51,12 @@ int VType::emit_typedef(std::ostream&, typedef_context_t&) const
       return 0;
 }
 
+int VTypeERROR::emit_def(ostream&out) const
+{
+      out << "/* ERROR */";
+      return 1;
+}
+
 int VTypeArray::emit_def(ostream&out) const
 {
       int errors = 0;
@@ -93,7 +99,7 @@ int VTypeArray::emit_def(ostream&out) const
 
 int VTypeArray::emit_typedef(std::ostream&out, typedef_context_t&ctx) const
 {
-      etype_->emit_typedef(out, ctx);
+      return etype_->emit_typedef(out, ctx);
 }
 
 int VTypeEnum::emit_def(ostream&out) const
