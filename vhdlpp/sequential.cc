@@ -153,6 +153,16 @@ ProcedureCall::~ProcedureCall()
     }
 }
 
+ReturnStmt::ReturnStmt(Expression*val)
+: val_(val)
+{
+}
+
+ReturnStmt::~ReturnStmt()
+{
+      delete val_;
+}
+
 LoopStatement::LoopStatement(perm_string name, list<SequentialStmt*>* stmts)
 : name_(name)
 {

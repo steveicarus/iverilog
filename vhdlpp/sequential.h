@@ -110,6 +110,18 @@ class IfSequential  : public SequentialStmt {
       std::list<SequentialStmt*> else_;
 };
 
+class ReturnStmt  : public SequentialStmt {
+    public:
+      ReturnStmt(Expression*val);
+      ~ReturnStmt();
+
+    public:
+      void dump(ostream&out, int indent) const;
+
+    private:
+      Expression*val_;
+};
+
 class SignalSeqAssignment  : public SequentialStmt {
     public:
       SignalSeqAssignment(Expression*sig, std::list<Expression*>*wav);

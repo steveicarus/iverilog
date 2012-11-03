@@ -327,6 +327,7 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 %type <sequ> sequential_statement if_statement signal_assignment_statement
 %type <sequ> case_statement procedure_call procedure_call_statement
 %type <sequ> loop_statement variable_assignment_statement
+%type <sequ> return_statement
 
 %type <range> range
 %type <range_list> range_list index_constraint
@@ -1310,6 +1311,7 @@ index_constraint
       { $$ = $2; }
   | '(' error ')'
       { errormsg(@2, "Errors in the index constraint.\n");
+	yyerrok;
 	$$ = new list<prange_t*>;
       }
   ;
@@ -1560,8 +1562,9 @@ package_declaration_start
 
 /* TODO: this list must be extended in the future
    presently it is only a sketch */
-package_body_declarative_item
+package_body_declarative_item /* IEEE1076-2008 P4.8 */
   : use_clause
+  | subprogram_body
   ;
 
 package_body_declarative_items
@@ -1600,17 +1603,16 @@ package_body
   : K_package K_body IDENTIFIER K_is
     package_body_declarative_part_opt
     K_end K_package_opt identifier_opt ';'
-      {
-    sorrymsg(@1, "Package body is not yet supported.\n");
-    delete[] $3;
-    if($8) delete[] $8;
+      { sorrymsg(@1, "Package body is not yet supported.\n");
+	delete[] $3;
+	if($8) delete[] $8;
       }
 
   | K_package K_body IDENTIFIER K_is
     error
     K_end K_package_opt identifier_opt ';'
-      {
-    errormsg(@1, "Errors in package body.\n");
+      { errormsg(@1, "Errors in package body.\n");
+	yyerrok;
       }
   ;
 
@@ -1631,6 +1633,7 @@ port_map_aspect
       { $$ = $4; }
   | K_port K_map '(' error ')'
       { errormsg(@1, "Syntax error in port map aspect.\n");
+	yyerrok;
       }
   ;
 
@@ -1882,6 +1885,26 @@ relation
       }
   ;
 
+return_statement
+  : K_return expression ';'
+      { ReturnStmt*tmp = new ReturnStmt($2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_return ';'
+      { ReturnStmt*tmp = new ReturnStmt(0);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_return error ';'
+      { ReturnStmt*tmp = new ReturnStmt(0);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	errormsg(@2, "Error in expression in return statement.\n");
+	yyerrok;
+      }
+  ;
+
 secondary_unit
   : architecture_body
   | package_body
@@ -1968,6 +1991,7 @@ sequential_statement
   | case_statement { $$ = $1; }
   | procedure_call_statement { $$ = $1; }
   | loop_statement { $$ = $1; }
+  | return_statement { $$ = $1; }
   | K_null ';' { $$ = 0; }
   | error ';'
       { errormsg(@1, "Syntax error in sequential statement.\n");
@@ -2027,14 +2051,64 @@ signal_assignment_statement
       }
   ;
 
+subprogram_body /* IEEE 1076-2008 P4.3 */
+  : subprogram_specification K_is
+    subprogram_declarative_part
+    K_begin subprogram_statement_part K_end
+    subprogram_kind_opt identifier_opt ';'
+      { sorrymsg(@2, "Subprogram bodies not supported.\n");
+	if ($8) delete[]$8;
+      }
+
+  | subprogram_specification K_is
+    subprogram_declarative_part
+    K_begin error K_end
+    subprogram_kind_opt identifier_opt ';'
+      { errormsg(@2, "Syntax errors in subprogram body.\n");
+	yyerrok;
+	if ($8) delete[]$8;
+      }
+  ;
+
 subprogram_declaration
   : subprogram_specification ';'
       { sorrymsg(@1, "Subprogram specifications not supported.\n");
       }
   ;
 
+subprogram_declarative_item /* IEEE 1079-2008 P4.3 */
+  : variable_declaration
+  ;
+
+subprogram_declarative_item_list
+  : subprogram_declarative_item_list subprogram_declarative_item
+  | subprogram_declarative_item
+  ;
+
+subprogram_declarative_part /* IEEE 1076-2008 P4.3 */
+  : subprogram_declarative_item_list
+  |
+  ;
+
+subprogram_kind /* IEEE 1076-2008 P4.3 */
+  : K_function
+  | K_procedure
+  ;
+
+subprogram_kind_opt : subprogram_kind | ;
+
 subprogram_specification
   : function_specification
+  ;
+
+  /* This is an implementation of the rule:
+     subprogram_statement_part ::= { sequential_statement }
+     where the sequence_of_statements rule is a list of
+     sequential_statement. Also handle the special case of an empty
+     list here. */
+subprogram_statement_part
+  : sequence_of_statements
+  |
   ;
 
 subtype_declaration
@@ -2076,6 +2150,7 @@ subtype_indication
       }
   | IDENTIFIER '(' error ')'
       { errormsg(@1, "Syntax error in subtype indication.\n");
+	yyerrok;
 	$$ = new VTypeERROR;
       }
   ;
@@ -2207,6 +2282,16 @@ variable_assignment_statement /* IEEE 1076-2008 P10.6.1 */
       }
   ;
 
+variable_declaration /* IEEE 1076-2008 P6.4.2.4 */
+  : K_shared_opt K_variable identifier_list ':' subtype_indication ';'
+      { sorrymsg(@2, "variable_declaration not supported.\n"); }
+
+  | K_shared_opt K_variable error ';'
+      { errormsg(@2, "Syntax error in variable declaration.\n");
+	yyerrok;
+      }
+  ;
+
 waveform
   : waveform_elements
       { $$ = $1; }
@@ -2240,9 +2325,10 @@ K_architecture_opt : K_architecture | ;
 K_component_opt    : K_component    | ;
 K_configuration_opt: K_configuration| ;
 K_entity_opt       : K_entity       | ;
+K_is_opt           : K_is           | ;
 K_package_opt      : K_package      | ;
 K_postponed_opt    : K_postponed    | ;
-K_is_opt           : K_is           | ;
+K_shared_opt       : K_shared       | ;
 %%
 
 static void yyerror(YYLTYPE*, yyscan_t, const char*, bool, const char* /*msg*/)

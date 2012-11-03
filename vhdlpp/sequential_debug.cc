@@ -65,6 +65,15 @@ void IfSequential::Elsif::dump(ostream&out, int indent) const
 
 }
 
+void ReturnStmt::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "ReturnStmt at file=" << get_fileline() << endl;
+      if (val_)
+	    val_->dump(out, indent+4);
+      else
+	    out << setw(indent+4) << "" << "()" << endl;
+}
+
 void SignalSeqAssignment::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "SignalSeqAssignment at file=" << get_fileline() << endl;
