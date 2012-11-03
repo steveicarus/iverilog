@@ -62,7 +62,7 @@ endif
 
 
 stub.tgt: $O $(TGTDEPLIBS)
-	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
+	$(CC) @shared@ -o $@ $O $(LDFLAGS) $(TGTLDFLAGS)
 
 clean:
 	rm -rf *.o dep stub.tgt

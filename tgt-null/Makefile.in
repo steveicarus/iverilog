@@ -61,7 +61,7 @@ endif
 
 
 null.tgt: $O $(TGTDEPLIBS)
-	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
+	$(CC) @shared@ -o $@ $O $(LDFLAGS) $(TGTLDFLAGS)
 
 clean:
 	rm -rf *.o dep null.tgt

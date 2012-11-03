@@ -64,7 +64,7 @@ endif
 
 
 fpga.tgt: $O $(TGTDEPLIBS)
-	$(CC) @shared@ -o $@ $O $(TGTLDFLAGS)
+	$(CC) @shared@ -o $@ $O $(LDFLAGS) $(TGTLDFLAGS)
 
 iverilog-fpga.ps: $(srcdir)/iverilog-fpga.man
 	man -t $(srcdir)/iverilog-fpga.man > iverilog-fpga.ps

@@ -61,7 +61,7 @@ else
 endif
 
 vhdl.tgt: $O $(TGTDEPLIBS)
-	$(CXX) @shared@ -o $@ $O $(TGTLDFLAGS)
+	$(CXX) @shared@ -o $@ $O $(LDFLAGS) $(TGTLDFLAGS)
 
 Makefile: $(srcdir)/Makefile.in ../config.status
 	cd ..; ./config.status --file=tgt-vhdl/$@
