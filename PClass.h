@@ -35,6 +35,8 @@ class PClass : public PScopeExtra, public LineInfo {
       explicit PClass (perm_string name, LexicalScope*parent);
       ~PClass();
 
+    public:
+      class_type_t*type;
 };
 
 #endif

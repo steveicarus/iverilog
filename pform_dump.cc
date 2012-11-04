@@ -164,6 +164,17 @@ void struct_type_t::pform_dump(ostream&out, unsigned indent) const
       }
 }
 
+void class_type_t::pform_dump(ostream&out, unsigned indent) const
+{
+      out << setw(indent) << "" << "class " << name << " {";
+
+      for (map<perm_string,data_type_t*>::const_iterator cur = properties.begin()
+		 ; cur != properties.end() ; ++cur) {
+	    out << " " << cur->first;
+      }
+      out << " }" << endl;
+}
+
 void struct_member_t::pform_dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << type;
@@ -265,6 +276,11 @@ void PEFNumber::dump(ostream &out) const
 void PENew::dump(ostream&out) const
 {
       out << "new [" << *size_ << "]";
+}
+
+void PENull::dump(ostream&out) const
+{
+      out << "null";
 }
 
 void PENumber::dump(ostream&out) const

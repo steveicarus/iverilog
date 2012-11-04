@@ -181,6 +181,10 @@ extern void pform_endmodule(const char*, bool inside_celldefine,
 
 extern void pform_start_class_declaration(const struct vlltype&loc,
 					  class_type_t*type);
+extern void pform_class_property(const struct vlltype&loc,
+				 property_qualifier_t pq,
+				 data_type_t*data_type,
+				 std::list<decl_assignment_t*>*decls);
 extern void pform_end_class_declaration(void);
 
 extern void pform_start_package_declaration(const struct vlltype&loc,

@@ -281,6 +281,14 @@ PExpr* PEEvent::expr() const
       return expr_;
 }
 
+PENull::PENull(void)
+{
+}
+
+PENull::~PENull()
+{
+}
+
 PEFNumber::PEFNumber(verireal*v)
 : value_(v)
 {

@@ -387,6 +387,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       data_type_t*data_type;
       class_type_t*class_type;
       real_type_t::type_t real_type;
+      property_qualifier_t property_qualifier;
 
       verinum* number;
 
@@ -561,6 +562,10 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <struct_member>  struct_union_member
 %type <struct_members> struct_union_member_list
 %type <struct_type>    struct_data_type
+
+%type <property_qualifier> class_item_qualifier property_qualifier
+%type <property_qualifier> property_qualifier_list property_qualifier_opt
+%type <property_qualifier> random_qualifier
 
 %type <ranges> range range_opt variable_dimension
 %type <ranges> dimensions_opt dimensions
@@ -762,13 +767,19 @@ class_item /* IEEE1800-2005: A.1.8 */
     /* Class properties... */
 
   | property_qualifier_opt data_type list_of_variable_decl_assignments ';'
-
+      { pform_class_property(@2, $1, $2, $3); }
 
     /* Class methods... */
 
   | method_qualifier_opt task_declaration
+      { yyerror(@2, "sorry: Class methods (tasks) not supported yet.");
+	yyerrok;
+      }
 
   | method_qualifier_opt function_declaration
+      { yyerror(@2, "sorry: Class methods (functions) not supported yet.");
+	yyerrok;
+      }
 
 
     /* Class constraints... */
@@ -801,9 +812,9 @@ class_item /* IEEE1800-2005: A.1.8 */
   ;
 
 class_item_qualifier /* IEEE1800-2005 A.1.8 */
-  : K_static
-  | K_protected
-  | K_local
+  : K_static     { $$ = property_qualifier_t::set_static(); }
+  | K_protected  { $$ = property_qualifier_t::set_protected(); }
+  | K_local      { $$ = property_qualifier_t::set_local(); }
   ;
 
 class_new /* IEEE1800-2005 A.2.4 */
@@ -1402,18 +1413,18 @@ property_qualifier /* IEEE1800-2005 A.1.8 */
   ;
 
 property_qualifier_opt /* IEEE1800-2005 A.1.8: ... { property_qualifier } */
-  : property_qualifier_list
-  |
+  : property_qualifier_list { $$ = $1; }
+  | { $$ = property_qualifier_t::set_none(); }
   ;
 
 property_qualifier_list /* IEEE1800-2005 A.1.8 */
-  : property_qualifier_list property_qualifier
-  | property_qualifier
+  : property_qualifier_list property_qualifier { $$ = $1 | $2; }
+  | property_qualifier { $$ = $1; }
   ;
 
 random_qualifier /* IEEE1800-2005 A.1.8 */
-  : K_rand
-  | K_randc
+  : K_rand { $$ = property_qualifier_t::set_rand(); }
+  | K_randc { $$ = property_qualifier_t::set_randc(); }
   ;
 
   /* real and realtime are exactly the same so save some code
@@ -3230,8 +3241,9 @@ expr_primary
       { $$ = $1; }
 
   | K_null
-      { yyerror("sorry: null expressions not supported yet.");
-	$$ = 0;
+      { PENull*tmp = new PENull;
+	    FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
   ;
 

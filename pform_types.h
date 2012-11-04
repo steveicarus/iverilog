@@ -175,10 +175,47 @@ struct string_type_t : public data_type_t {
 };
 
 struct class_type_t : public data_type_t {
+
       inline explicit class_type_t(perm_string n)
       : name(n) { }
 
+      void pform_dump(std::ostream&out, unsigned indent) const;
+
       perm_string name;
+
+      std::map<perm_string, data_type_t*> properties;
+};
+
+class property_qualifier_t {
+    public:
+      static inline property_qualifier_t set_none()
+      { property_qualifier_t res; res.mask_ = 0; return res; }
+
+      static inline property_qualifier_t set_static()
+      { property_qualifier_t res; res.mask_ = 1; return res; }
+
+      static inline property_qualifier_t set_protected()
+      { property_qualifier_t res; res.mask_ = 2; return res; }
+
+      static inline property_qualifier_t set_local()
+      { property_qualifier_t res; res.mask_ = 4; return res; }
+
+      static inline property_qualifier_t set_rand()
+      { property_qualifier_t res; res.mask_ = 8; return res; }
+
+      static inline property_qualifier_t set_randc()
+      { property_qualifier_t res; res.mask_ = 16; return res; }
+
+      inline property_qualifier_t operator | (property_qualifier_t r)
+      { property_qualifier_t res; res.mask_ = mask_ | r.mask_; return res; }
+
+    public:
+      inline bool test_static() const    { return mask_ & 1; }
+      inline bool test_protected() const { return mask_ & 2; }
+      inline bool test_local() const    { return mask_ & 4; }
+
+    private:
+      int mask_;
 };
 
 /*

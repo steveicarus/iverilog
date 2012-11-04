@@ -467,6 +467,14 @@ class PENew : public PExpr {
       PExpr*size_;
 };
 
+class PENull : public PExpr {
+    public:
+      explicit PENull();
+      ~PENull();
+
+      virtual void dump(ostream&) const;
+};
+
 class PENumber : public PExpr {
 
     public:
