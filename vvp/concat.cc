@@ -64,6 +64,36 @@ void vvp_fun_concat::recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
       vvp_send_vec4(port.ptr()->out, val_, 0);
 }
 
+void vvp_fun_concat::recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                                  unsigned base, unsigned wid, unsigned vwid,
+                                  vvp_context_t)
+{
+      assert(bit.size() == wid);
+
+      unsigned pdx = port.port();
+
+      if (vwid != wid_[pdx]) {
+	    cerr << "internal error: port " << pdx
+		 << " expects wid=" << wid_[pdx]
+		 << ", got wid=" << vwid << endl;
+	    assert(0);
+      }
+
+      unsigned off = 0;
+      for (unsigned idx = 0 ;  idx < pdx ;  idx += 1)
+	    off += wid_[idx];
+
+      unsigned limit = off + wid_[pdx];
+
+      off += base;
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+            if (off+idx >= limit) break;
+	    val_.set_bit(off+idx, bit.value(idx));
+      }
+
+      vvp_send_vec4(port.ptr()->out, val_, 0);
+}
+
 void compile_concat(char*label, unsigned w0, unsigned w1,
 		    unsigned w2, unsigned w3,
 		    unsigned argc, struct symb_s*argv)

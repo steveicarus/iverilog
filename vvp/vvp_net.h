@@ -1067,6 +1067,11 @@ class vvp_fun_concat  : public vvp_net_fun_t {
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t context);
 
+	// Part select variants of above
+      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t);
+
     private:
       unsigned wid_[4];
       vvp_vector4_t val_;
