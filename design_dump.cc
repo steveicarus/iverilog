@@ -109,6 +109,9 @@ ostream& operator << (ostream&o, ivl_variable_type_t val)
 	  case IVL_VT_DARRAY:
 	    o << "darray";
 	    break;
+	  case IVL_VT_CLASS:
+	    o << "class";
+	    break;
       }
       return o;
 }
@@ -1504,6 +1507,11 @@ void NetEEvent::dump(ostream&o) const
 void NetENetenum::dump(ostream&o) const
 {
       o << "<netenum=" << netenum_ << ">";
+}
+
+void NetENull::dump(ostream&o) const
+{
+      o << "<null>";
 }
 
 void NetEScope::dump(ostream&o) const

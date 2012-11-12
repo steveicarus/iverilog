@@ -21,6 +21,9 @@
 # include  "PClass.h"
 # include  "parse_misc.h"
 
+/*
+ * The functions here help the parser put together class type declarations.
+ */
 static PClass*pform_cur_class = 0;
 
 void pform_start_class_declaration(const struct vlltype&loc, class_type_t*type)
@@ -47,14 +50,15 @@ void pform_class_property(const struct vlltype&loc,
 	    return;
       }
 
+	// Add the non-static properties to the class type
+	// object. Unwind the list of names to make a map of name to
+	// type.
       for (list<decl_assignment_t*>::iterator cur = decls->begin()
 		 ; cur != decls->end() ; ++cur) {
 
 	    decl_assignment_t*curp = *cur;
 	    pform_cur_class->type->properties[curp->name] = data_type;
       }
-
-      VLerror(loc, "sorry: class properties not implemented yet.");
 }
 
 void pform_end_class_declaration(void)

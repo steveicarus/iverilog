@@ -33,8 +33,10 @@
  */
 
 # include  "Module.h"
-# include  "PEvent.h"
+# include  "PClass.h"
 # include  "PExpr.h"
+# include  "PEvent.h"
+# include  "PClass.h"
 # include  "PGate.h"
 # include  "PGenerate.h"
 # include  "PTask.h"
@@ -42,6 +44,7 @@
 # include  "Statement.h"
 # include  "AStatement.h"
 # include  "netlist.h"
+# include  "netclass.h"
 # include  "netenum.h"
 # include  "util.h"
 # include  <typeinfo>
@@ -286,6 +289,22 @@ static void elaborate_scope_enumerations(Design*des, NetScope*scope,
       }
 }
 
+static void elaborate_scope_class(Design*des, NetScope*scope,
+				  PClass*pclass)
+{
+      netclass_t*use_class = new netclass_t(pclass->type->name);
+      scope->add_class(use_class);
+}
+
+static void elaborate_scope_classes(Design*des, NetScope*scope,
+				    const map<perm_string,PClass*>&classes)
+{
+      for (map<perm_string,PClass*>::const_iterator cur = classes.begin()
+		 ; cur != classes.end() ; ++ cur) {
+	    elaborate_scope_class(des, scope, cur->second);
+      }
+}
+
 static void replace_scope_parameters_(NetScope*scope, const LineInfo&loc,
 			              const Module::replace_t&replacements)
 {
@@ -499,6 +518,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
       replace_scope_parameters_(scope, *this, replacements);
 
       elaborate_scope_enumerations(des, scope, enum_sets);
+
+      elaborate_scope_classes(des, scope, classes);
 
 	// Run through the defparams for this module and save the result
 	// in a table for later final override.

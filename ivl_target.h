@@ -224,6 +224,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_ENUMTYPE = 21,
       IVL_EX_EVENT  = 17,
       IVL_EX_MEMORY = 4,
+      IVL_EX_NULL   = 22,
       IVL_EX_NUMBER = 5,
       IVL_EX_REALNUM  = 16,
       IVL_EX_SCOPE  = 6,
@@ -426,6 +427,7 @@ typedef enum ivl_variable_type_e {
       IVL_VT_LOGIC   = 4,
       IVL_VT_STRING  = 5,
       IVL_VT_DARRAY  = 6,  /* Array (esp. dynamic array) */
+      IVL_VT_CLASS   = 7,  /* SystemVerilog class instances */
       IVL_VT_VECTOR = IVL_VT_LOGIC /* For compatibility */
 } ivl_variable_type_t;
 

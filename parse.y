@@ -658,7 +658,6 @@ class_declaration /* IEEE1800-2005: A.1.2 */
     class_items_opt K_endclass
       { // Process a class.
 	pform_end_class_declaration();
-	yyerror(@2, "sorry: Class declarations not supported yet.");
       }
     class_declaration_endname_opt
       { // Wrap up the class.
@@ -819,16 +818,18 @@ class_item_qualifier /* IEEE1800-2005 A.1.8 */
 
 class_new /* IEEE1800-2005 A.2.4 */
   : K_new '(' ')'
-      { yyerror(@1, "sorry: class_new not implemented yet.");
-	$$ = 0;
+      { PENewClass*tmp = new PENewClass;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
   | K_new '(' expression_list_proper ')'
       { yyerror(@1, "sorry: class_new not implemented yet.");
 	$$ = 0;
       }
   | K_new
-      { yyerror(@1, "sorry: class_new not implemented yet.");
-	$$ = 0;
+      { PENewClass*tmp = new PENewClass;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
   ;
 

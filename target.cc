@@ -444,6 +444,12 @@ void expr_scan_t::expr_const(const NetEConst*)
 	    "unhandled expr_const." << endl;
 }
 
+void expr_scan_t::expr_null(const NetENull*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_null." << endl;
+}
+
 void expr_scan_t::expr_param(const NetEConstParam*that)
 {
       expr_const(that);

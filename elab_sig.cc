@@ -34,6 +34,7 @@
 # include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "netclass.h"
 # include  "netenum.h"
 # include  "netstruct.h"
 # include  "netvector.h"
@@ -864,6 +865,13 @@ static bool evaluate_ranges(Design*des, NetScope*scope,
       return bad_msb | bad_lsb;
 }
 
+static netclass_t* locate_class_type(Design*des, NetScope*scope,
+				     class_type_t*class_type)
+{
+      netclass_t*use_class = scope->find_class(class_type->name);
+      return use_class;
+}
+
 static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
 					  struct_type_t*struct_type)
 {
@@ -1196,9 +1204,19 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       NetNet*sig = 0;
 
-	// If this is a struct type, then build the net with the
-	// struct type.
-      if (struct_type_t*struct_type = dynamic_cast<struct_type_t*>(set_data_type_)) {
+      if (class_type_t*class_type = dynamic_cast<class_type_t*>(set_data_type_)) {
+	      // If this is a class variable, then the class type
+	      // should already have been elaborated. All we need to
+	      // do right now is locate the netclass_t object for the
+	      // class, and use that to build the net.
+	    netclass_t*use_type = locate_class_type(des, scope, class_type);
+	      // (No arrays of classes)
+	    list<netrange_t> use_unpacked;
+	    sig = new NetNet(scope, name_, wtype, use_unpacked, use_type);
+
+      } else if (struct_type_t*struct_type = dynamic_cast<struct_type_t*>(set_data_type_)) {
+	      // If this is a struct type, then build the net with the
+	      // struct type.
 	    netstruct_t*use_type = elaborate_struct_type(des, scope, struct_type);
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype;

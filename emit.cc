@@ -551,6 +551,11 @@ void NetENetenum::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_netenum(this);
 }
 
+void NetENull::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_null(this);
+}
+
 void NetEScope::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_scope(this);

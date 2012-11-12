@@ -21,6 +21,7 @@
 # include "compiler.h"
 
 # include  "netlist.h"
+# include  "netclass.h"
 # include  "netenum.h"
 # include  <cstring>
 # include  <cstdlib>
@@ -549,6 +550,20 @@ netenum_t*NetScope::enumeration_for_name(perm_string name)
       assert(tmp != 0);
 
       return tmp->enumeration();
+}
+
+void NetScope::add_class(netclass_t*net_class)
+{
+      classes_[net_class->get_name()] = net_class;
+}
+
+netclass_t*NetScope::find_class(perm_string name)
+{
+      map<perm_string,netclass_t*>::const_iterator cur = classes_.find(name);
+      if (cur == classes_.end())
+	    return 0;
+      else
+	    return cur->second;
 }
 
 /*

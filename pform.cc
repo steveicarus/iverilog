@@ -284,10 +284,32 @@ void pform_pop_scope()
       lexical_scope = lexical_scope->parent_scope();
 }
 
+static PScopeExtra* find_nearest_scopex(LexicalScope*scope)
+{
+      PScopeExtra*scopex = dynamic_cast<PScopeExtra*> (scope);
+      while (scope && !scopex) {
+	    scope = scope->parent_scope();
+	    scopex = dynamic_cast<PScopeExtra*> (scope);
+      }
+      return scopex;
+}
+
 PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
 {
       PClass*class_scope = new PClass(name, lexical_scope);
       FILE_NAME(class_scope, loc);
+
+      PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
+
+      assert(!pform_cur_generate);
+
+      if (scopex->classes.find(name) != scopex->classes.end()) {
+	    cerr << class_scope->get_fileline() << ": error: duplicate "
+		  " definition for class '" << name << "' in '"
+		 << scopex->pscope_name() << "'." << endl;
+	    error_count += 1;
+      }
+      scopex->classes[name] = class_scope;
 
       lexical_scope = class_scope;
       return class_scope;
@@ -309,12 +331,7 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
       PTask*task = new PTask(task_name, lexical_scope, is_auto);
       FILE_NAME(task, loc);
 
-      LexicalScope*scope = lexical_scope;
-      PScopeExtra*scopex = dynamic_cast<PScopeExtra*> (scope);
-      while (scope && !scopex) {
-	    scope = scope->parent_scope();
-	    scopex = dynamic_cast<PScopeExtra*> (scope);
-      }
+      PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
       assert(scopex);
 
       if (pform_cur_generate) {
@@ -2042,7 +2059,7 @@ void pform_module_define_port(const struct vlltype&li,
       cur->set_signed(signed_flag);
 
       if (struct_type) {
-	    cur->set_packed_type(struct_type);
+	    cur->set_data_type(struct_type);
 
       } else if (range == 0) {
 	    cur->set_range_scalar((type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
@@ -2830,7 +2847,7 @@ template <class T> static void pform_set2_data_type(const struct vlltype&li, T*d
       }
 
       PWire*net = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, base_type);
-      net->set_packed_type(data_type);
+      net->set_data_type(data_type);
       pform_bind_attributes(net->attributes, attr, true);
 }
 
@@ -2855,7 +2872,7 @@ static void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type,
       assert(enum_type->range.get() != 0);
       assert(enum_type->range->size() == 1);
 	//XXXXcur->set_range(*enum_type->range, SR_NET);
-      cur->set_packed_type(enum_type);
+      cur->set_data_type(enum_type);
       pform_bind_attributes(cur->attributes, attr, true);
 }
 
@@ -2925,8 +2942,8 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
 	    return;
       }
 
-      if (/*class_type_t*class_type =*/ dynamic_cast<class_type_t*> (data_type)) {
-	    VLerror(li, "sorry: Class types not supported.");
+      if (class_type_t*class_type = dynamic_cast<class_type_t*> (data_type)) {
+	    pform_set_class_type(class_type, names, net_type, attr);
 	    return;
       }
 

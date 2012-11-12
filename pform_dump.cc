@@ -26,6 +26,7 @@
  * module in question.
  */
 # include  "pform.h"
+# include  "PClass.h"
 # include  "PEvent.h"
 # include  "PGenerate.h"
 # include  "PSpec.h"
@@ -276,6 +277,11 @@ void PEFNumber::dump(ostream &out) const
 void PENew::dump(ostream&out) const
 {
       out << "new [" << *size_ << "]";
+}
+
+void PENewClass::dump(ostream&out) const
+{
+      out << "class_new";
 }
 
 void PENull::dump(ostream&out) const
@@ -1259,6 +1265,23 @@ void LexicalScope::dump_wires_(ostream&out, unsigned indent) const
       }
 }
 
+void PScopeExtra::dump_classes_(ostream&out, unsigned indent) const
+{
+	// Dump the task definitions.
+      typedef map<perm_string,PClass*>::const_iterator class_iter_t;
+      for (class_iter_t cur = classes.begin()
+		 ; cur != classes.end() ; ++ cur ) {
+	    cur->second->dump(out, indent);
+      }
+}
+
+void PClass::dump(ostream&out, unsigned indent) const
+{
+      out << setw(indent) << "" << "class " << type->name << ";" << endl;
+      type->pform_dump(out, indent+2);
+      out << setw(indent) << "" << "endclass" << endl;
+}
+
 void Module::dump_specparams_(ostream&out, unsigned indent) const
 {
       typedef map<perm_string,param_expr_t>::const_iterator parm_iter_t;
@@ -1327,6 +1350,8 @@ void Module::dump(ostream&out) const
       dump_specparams_(out, 4);
 
       dump_enumerations_(out, 4);
+
+      dump_classes_(out, 4);
 
       typedef map<perm_string,LineInfo*>::const_iterator genvar_iter_t;
       for (genvar_iter_t cur = genvars.begin()

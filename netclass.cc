@@ -1,5 +1,3 @@
-#ifndef __PClass_H
-#define __PClass_H
 /*
  * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
  *
@@ -19,27 +17,18 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include  "PScope.h"
-# include  "LineInfo.h"
-# include  "StringHeap.h"
-# include  <iostream>
+# include  "netclass.h"
 
-/*
- * SystemVerilog supports class declarations with their own lexical
- * scope, etc. The parser arranges for these to be created and
- * collected.
- */
+netclass_t::netclass_t(perm_string name)
+: name_(name)
+{
+}
 
-class PClass : public PScopeExtra, public LineInfo {
+netclass_t::~netclass_t()
+{
+}
 
-    public:
-      explicit PClass (perm_string name, LexicalScope*parent);
-      ~PClass();
-
-      void dump(std::ostream&out, unsigned indent) const;
-
-    public:
-      class_type_t*type;
-};
-
-#endif
+ivl_variable_type_t netclass_t::base_type() const
+{
+      return IVL_VT_CLASS;
+}

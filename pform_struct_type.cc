@@ -56,7 +56,7 @@ static void pform_set_packed_struct(struct_type_t*struct_type, perm_string name,
       ivl_variable_type_t base_type = struct_type->figure_packed_base_type();
 
       PWire*net = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, base_type);
-      net->set_packed_type(struct_type);
+      net->set_data_type(struct_type);
       pform_bind_attributes(net->attributes, attr, true);
 }
 
@@ -89,7 +89,7 @@ static void pform_makewire(const struct vlltype&li,
 
       PWire*cur = pform_get_make_wire_in_scope(name, NetNet::WIRE, ptype, base_type);
       FILE_NAME(cur, li);
-      cur->set_packed_type(struct_type);
+      cur->set_data_type(struct_type);
 }
 
 void pform_makewire(const struct vlltype&li,

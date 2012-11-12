@@ -172,6 +172,9 @@ const char*data_type_string(ivl_variable_type_t vtype)
 	  case IVL_VT_DARRAY:
 	    vt = "darray";
 	    break;
+	  case IVL_VT_CLASS:
+	    vt = "class";
+	    break;
       }
 
       return vt;

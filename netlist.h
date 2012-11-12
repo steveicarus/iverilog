@@ -76,6 +76,7 @@ class NetEvTrig;
 class NetEvWait;
 class PExpr;
 class PFunction;
+class netclass_t;
 class netdarray_t;
 class netparray_t;
 class netenum_t;
@@ -835,6 +836,9 @@ class NetScope : public Attrib {
 
       netenum_t* enumeration_for_name(perm_string name);
 
+      void add_class(netclass_t*class_type);
+      netclass_t* find_class(perm_string name);
+
 	/* The parent and child() methods allow users of NetScope
 	   objects to locate nearby scopes. */
       NetScope* parent() { return up_; }
@@ -1082,6 +1086,8 @@ class NetScope : public Attrib {
 	// contain them.
       std::list<netenum_t*> enum_sets_;
       std::map<perm_string,NetEConstEnum*> enum_names_;
+
+      std::map<perm_string,netclass_t*> classes_;
 
       NetScope*up_;
       map<hname_t,NetScope*> children_;
@@ -3869,6 +3875,23 @@ class NetENetenum  : public NetExpr {
 
     private:
       netenum_t*netenum_;
+};
+
+/*
+ * The NetENull node represents the SystemVerilog (null)
+ * expression. This is always a null class handle.
+ */
+class NetENull : public NetExpr {
+
+    public:
+      NetENull();
+      ~NetENull();
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetENull* dup_expr() const;
+      virtual NexusSet* nex_input(bool rem_out = true);
+
+      virtual void dump(ostream&os) const;
 };
 
 /*

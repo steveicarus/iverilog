@@ -2385,6 +2385,10 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 		 handle it with this code instead. */
 	    rv = elaborate_rval_(des, scope, lv->sig()->net_type());
 
+      } else if (lv->more==0 && dynamic_cast<const PENewClass*> (rval())) {
+
+	    rv = elaborate_rval_(des, scope, lv->sig()->net_type());
+
       } else {
 	      /* Elaborate the r-value expression, then try to evaluate it. */
 	    rv = elaborate_rval_(des, scope, count_lval_width(lv), lv->expr_type());

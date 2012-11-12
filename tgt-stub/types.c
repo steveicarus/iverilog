@@ -56,6 +56,9 @@ static void show_net_type(ivl_type_t net_type)
 	  case IVL_VT_DARRAY:
 	    show_net_type_darray(net_type);
 	    break;
+	  case IVL_VT_CLASS:
+	    fprintf(out, "class");
+	    break;
 	  case IVL_VT_VOID:
 	    fprintf(out, "void");
 	    break;
@@ -113,6 +116,9 @@ void show_type_of_signal(ivl_signal_t net)
 	    break;
 	  case IVL_VT_VOID:
 	    fprintf(out, "void");
+	    break;
+	  case IVL_VT_CLASS:
+	    fprintf(out, "class");
 	    break;
       }
 

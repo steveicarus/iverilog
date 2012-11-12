@@ -311,6 +311,9 @@ extern void pform_set_struct_type(struct_type_t*struct_type, std::list<perm_stri
 
 extern void pform_set_string_type(string_type_t*string_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
 
+extern void pform_set_class_type(class_type_t*class_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*addr);
+
+
   /* pform_set_attrib and pform_set_type_attrib exist to support the
      $attribute syntax, which can only set string values to
      attributes. The functions keep the value strings that are

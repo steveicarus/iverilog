@@ -1,7 +1,6 @@
-#ifndef __PClass_H
-#define __PClass_H
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012 Picture Elements, Inc.
+ *    Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,27 +18,21 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include  "PScope.h"
-# include  "LineInfo.h"
-# include  "StringHeap.h"
-# include  <iostream>
+# include  "pform.h"
+# include  "parse_misc.h"
+# include  "ivl_assert.h"
 
-/*
- * SystemVerilog supports class declarations with their own lexical
- * scope, etc. The parser arranges for these to be created and
- * collected.
- */
+static void pform_set_class_type(class_type_t*class_type, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
+{
+      PWire*net = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, IVL_VT_CLASS);
+      net->set_data_type(class_type);
+      pform_bind_attributes(net->attributes, attr, true);
+}
 
-class PClass : public PScopeExtra, public LineInfo {
-
-    public:
-      explicit PClass (perm_string name, LexicalScope*parent);
-      ~PClass();
-
-      void dump(std::ostream&out, unsigned indent) const;
-
-    public:
-      class_type_t*type;
-};
-
-#endif
+void pform_set_class_type(class_type_t*class_type, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr)
+{
+      for (list<perm_string>::iterator cur = names->begin()
+		 ; cur != names->end() ; ++ cur) {
+	    pform_set_class_type(class_type, *cur, net_type, attr);
+      }
+}

@@ -467,12 +467,36 @@ class PENew : public PExpr {
       PExpr*size_;
 };
 
+class PENewClass : public PExpr {
+
+    public:
+      explicit PENewClass ();
+      ~PENewClass();
+      virtual void dump(ostream&) const;
+	// Class objects don't have a useful width, but the expression
+	// is IVL_VT_CLASS.
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  width_mode_t&mode);
+	// Note that class (new) expressions only appear in context
+	// that uses this form of the elaborate_expr method. In fact,
+	// the type argument is going to be a netclas_t object.
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     ivl_type_t type, unsigned flags) const;
+
+    private:
+};
+
 class PENull : public PExpr {
     public:
       explicit PENull();
       ~PENull();
 
       virtual void dump(ostream&) const;
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  width_mode_t&mode);
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
+				     unsigned expr_wid,
+                                     unsigned flags) const;
 };
 
 class PENumber : public PExpr {

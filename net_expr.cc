@@ -20,6 +20,7 @@
 # include  "config.h"
 # include  "netlist.h"
 # include  "netenum.h"
+# include  "netclass.h"
 # include  "netdarray.h"
 # include  "compiler.h"
 # include  "netmisc.h"
@@ -320,6 +321,14 @@ netenum_t* NetENetenum::netenum() const
       return netenum_;
 }
 
+NetENull::NetENull()
+{
+}
+
+NetENull::~NetENull()
+{
+}
+
 NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,
                        ivl_select_type_t sel_type)
 : expr_(exp), base_(base), sel_type_(sel_type)
@@ -395,8 +404,12 @@ NetESFunc::NetESFunc(const char*n, ivl_type_t rtype, unsigned np)
 	// FIXME: For now, assume that all uses of this constructor
 	// are for the IVL_VT_DARRAY type. Eventually, the type_
 	// member will go away.
-      ivl_assert(*this, dynamic_cast<const netdarray_t*>(rtype));
-      type_ = IVL_VT_DARRAY;
+      if (dynamic_cast<const netdarray_t*>(rtype))
+	    type_ = IVL_VT_DARRAY;
+      else if (dynamic_cast<const netclass_t*>(rtype))
+	    type_ = IVL_VT_CLASS;
+      else
+	    ivl_assert(*this, 0);
 }
 
 NetESFunc::NetESFunc(const char*n, netenum_t*enum_type, unsigned np)

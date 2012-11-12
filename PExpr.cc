@@ -389,6 +389,14 @@ PENew::~PENew()
       delete size_;
 }
 
+PENewClass::PENewClass(void)
+{
+}
+
+PENewClass::~PENewClass()
+{
+}
+
 PENumber::PENumber(verinum*vp)
 : value_(vp)
 {

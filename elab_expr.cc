@@ -101,6 +101,12 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 	  case IVL_VT_NO_TYPE:
 	    ivl_assert(*expr, 0);
 	    break;
+	  case IVL_VT_CLASS:
+	    cerr << expr->get_fileline() << ": sorry: "
+		 << "I do not know how to elaborate r-value as IVL_VT_CLASS." << endl;
+	    des->errors += 1;
+	    return 0;
+	    break;
       }
 
       return elab_and_eval(des, scope, expr, context_wid, need_const);
@@ -1074,7 +1080,7 @@ unsigned PECallFunction::test_width(Design*des, NetScope*scope,
 }
 
 unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
-					    width_mode_t&mode)
+					    width_mode_t&)
 {
       if (!gn_system_verilog())
 	    return 0;
@@ -2396,7 +2402,9 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    signed_flag_ = net->get_signed();
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": PEIdent::test_width: "
-		       << net->name() << " is a net, width=" << expr_width_ << endl;
+		       << net->name() << " is a net, "
+		       << "type=" << expr_type_
+		       << ", width=" << expr_width_ << endl;
 	    }
 	    return expr_width_;
       }
@@ -4018,6 +4026,44 @@ NetExpr* PENew::elaborate_expr(Design*des, NetScope*scope,
 				     IVL_VT_DARRAY, 1, 1);
       tmp->set_line(*this);
       tmp->parm(0, size);
+      return tmp;
+}
+
+unsigned PENewClass::test_width(Design*, NetScope*, width_mode_t&)
+{
+      expr_type_  = IVL_VT_CLASS;
+      expr_width_ = 1;
+      min_width_  = 1;
+      signed_flag_= false;
+      return 1;
+}
+
+NetExpr* PENewClass::elaborate_expr(Design*, NetScope*,
+				    ivl_type_t ntype, unsigned) const
+{
+      NetESFunc*tmp = new NetESFunc("$ivl_class_method$new", ntype, 0);
+      tmp->set_line(*this);
+      return tmp;
+}
+
+/*
+ * A "null" expression represents class objects/handles. This brings
+ * up a ton of special cases, but we handle it here bu setting the
+ * expr_type_ and expr_width_ to fixed values.
+ */
+unsigned PENull::test_width(Design*, NetScope*, width_mode_t&)
+{
+      expr_type_   = IVL_VT_CLASS;
+      expr_width_  = 1;
+      min_width_   = 1;
+      signed_flag_ = false;
+      return expr_width_;
+}
+
+NetExpr* PENull::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const
+{
+      NetENull*tmp = new NetENull;
+      tmp->set_line(*this);
       return tmp;
 }
 

@@ -165,6 +165,16 @@ static void show_memory_expression(ivl_expr_t net, unsigned ind)
 	      width);
 }
 
+static void show_null_expression(ivl_expr_t net, unsigned ind)
+{
+      fprintf(out, "%*s<null>\n", ind, "");
+      if (ivl_expr_value(net) != IVL_VT_CLASS) {
+	    fprintf(out, "%sERROR: null expression must be IVL_VT_CLASS, got %s.\n",
+		    ind+3, "", vt_type_string(net));
+	    stub_errors += 1;
+      }
+}
+
 static void show_select_expression(ivl_expr_t net, unsigned ind)
 {
       unsigned width = ivl_expr_width(net);
@@ -349,6 +359,10 @@ void show_expression(ivl_expr_t net, unsigned ind)
 
 	  case IVL_EX_MEMORY:
 	    show_memory_expression(net, ind);
+	    break;
+
+	  case IVL_EX_NULL:
+	    show_null_expression(net, ind);
 	    break;
 
 	  case IVL_EX_NUMBER: {
