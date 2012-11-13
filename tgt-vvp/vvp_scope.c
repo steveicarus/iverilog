@@ -620,7 +620,7 @@ static void draw_net_in_scope(ivl_signal_t sig)
 			   own name. */
 			assert(word_count == 1);
 			fprintf(vvp_out, "v%p_%u .net%s%s %s\"%s\", %d %d, %s; "
-				" %u drivers %s\n",
+				" %u drivers%s\n",
 				sig, iword, vec8, datatype_flag, local_flag,
 				vvp_mangle_name(ivl_signal_basename(sig)),
 				msb, lsb, driver,
