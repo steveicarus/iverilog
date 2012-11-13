@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008,2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -55,7 +55,7 @@ bool AProcess::elaborate(Design*des, NetScope*scope) const
 	// Evaluate the attributes for this process, if there
 	// are any. These attributes are to be attached to the
 	// NetProcTop object.
-      struct attrib_list_t*attrib_list = 0;
+      struct attrib_list_t*attrib_list;
       unsigned attrib_list_n = 0;
       attrib_list = evaluate_attributes(attributes, attrib_list_n, des, scope);
 

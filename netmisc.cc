@@ -1190,9 +1190,9 @@ NetExpr*collapse_array_exprs(Design*des, NetScope*scope,
 	// First elaborate all the expressions as far as possible.
       list<NetExpr*> exprs;
       list<long> exprs_const;
-      bool flag = indices_to_expressions(des, scope, loc, indices,
-					 net->packed_dimensions(),
-					 false, exprs, exprs_const);
+      indices_to_expressions(des, scope, loc, indices,
+                             net->packed_dimensions(),
+                             false, exprs, exprs_const);
       ivl_assert(*loc, exprs.size() == net->packed_dimensions());
 
 	// Special Case: there is only 1 packed dimension, so the

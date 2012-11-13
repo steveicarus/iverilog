@@ -512,7 +512,7 @@ void NetNet::calculate_slice_widths_from_packed_dims_(void)
 
 	// Special case: There are no actual packed dimensions, so
 	// build up a fake dimension of "1".
-      if (slice_dims_.size() == 0) {
+      if (slice_dims_.empty()) {
 	    slice_wids_.resize(1);
 	    slice_wids_[0] = net_type_->packed_width();
 	    return;
@@ -520,7 +520,7 @@ void NetNet::calculate_slice_widths_from_packed_dims_(void)
 
       slice_wids_.resize(slice_dims_.size());
 
-      ivl_assert(*this, slice_wids_.size() >= 1);
+      ivl_assert(*this, ! slice_wids_.empty());
       slice_wids_[0] = netrange_width(slice_dims_);
       vector<netrange_t>::const_iterator cur = slice_dims_.begin();
       for (size_t idx = 1 ; idx < slice_wids_.size() ; idx += 1) {
@@ -865,7 +865,7 @@ long NetNet::sb_to_idx(const list<long>&indices, long sb) const
 	// The acc_off is the possition within the innermost
 	// dimension. If this is a multi-dimension packed array then
 	// we need to add in the canonical address of the current slice.
-      if (indices.size() >= 1) {
+      if (! indices.empty()) {
 	    list<long>::const_iterator icur = indices.end();
 	    do {
 		  -- icur;

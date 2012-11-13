@@ -95,8 +95,8 @@ distclean: clean
 	rm -f vpi_config.h stamp-vpi_config-h
 
 cppcheck: $(O:.o=.c) $(OPP:.o=.cc) $(M:.o=.c) $(V:.o=.c)
-	cppcheck --enable=all -f --suppressions $(srcdir)/cppcheck.sup \
-	         $(INCLUDE_PATH) $^
+	cppcheck --enable=all -f --suppressions-list=$(srcdir)/cppcheck.sup \
+	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status
 	cd ..; ./config.status --file=vpi/$@

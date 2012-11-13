@@ -195,7 +195,6 @@ int yywrap()
 void switch_to_command_file(const char *file)
 {
       char path[4096];
-      char *cp;
 
       if (cmdfile_stack_ptr >= MAX_CMDFILE_DEPTH) {
 	    fprintf(stderr, "Error: command files nested too deeply (%d) "
@@ -213,6 +212,7 @@ void switch_to_command_file(const char *file)
          * file name.
          */
       if (file[0] != '/') {
+	    char *cp;
 	    strcpy(path, current_file);
 	    cp = strrchr(path, '/');
 	    if (cp == 0) strcpy(path, file);  /* A base file. */

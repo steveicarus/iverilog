@@ -773,7 +773,7 @@ void PGBuiltin::elaborate(Design*des, NetScope*scope) const
       NetExpr* rise_time, *fall_time, *decay_time;
       eval_delays(des, scope, rise_time, fall_time, decay_time);
 
-      struct attrib_list_t*attrib_list = 0;
+      struct attrib_list_t*attrib_list;
       unsigned attrib_list_n = 0;
       attrib_list = evaluate_attributes(attributes, attrib_list_n,
 					des, scope);
@@ -1614,7 +1614,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	    assert(sig);
 
 #ifndef NDEBUG
-	    if ((prts.size() >= 1)
+	    if ((! prts.empty())
 		&& (prts[0]->port_type() != NetNet::PINPUT)) {
 		  assert(sig->type() != NetNet::REG);
 	    }
@@ -1938,7 +1938,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
       net->fall_time(fall_expr);
       net->decay_time(decay_expr);
 
-      struct attrib_list_t*attrib_list = 0;
+      struct attrib_list_t*attrib_list;
       unsigned attrib_list_n = 0;
       attrib_list = evaluate_attributes(attributes, attrib_list_n,
 					des, scope);
@@ -2815,7 +2815,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 		       a separate case for each. (Yes, the statement
 		       will be elaborated again for each.) */
 		  PExpr*cur_expr = *idx_expr;
-		  NetExpr*gu = 0;
+		  NetExpr*gu;
 		  NetProc*st = 0;
 		  assert(cur_expr);
 		  gu = elab_and_eval(des, scope, cur_expr, -1);
@@ -4282,7 +4282,7 @@ bool PProcess::elaborate(Design*des, NetScope*scope) const
 	// Evaluate the attributes for this process, if there
 	// are any. These attributes are to be attached to the
 	// NetProcTop object.
-      struct attrib_list_t*attrib_list = 0;
+      struct attrib_list_t*attrib_list;
       unsigned attrib_list_n = 0;
       attrib_list = evaluate_attributes(attributes, attrib_list_n, des, scope);
 

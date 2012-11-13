@@ -103,7 +103,7 @@ struct vthread_s {
     public:
       inline double pop_real(void)
       {
-	    assert(stack_real_.size() > 0);
+	    assert(! stack_real_.empty());
 	    double val = stack_real_.back();
 	    stack_real_.pop_back();
 	    return val;
@@ -136,7 +136,7 @@ struct vthread_s {
     public:
       inline string pop_str(void)
       {
-	    assert(stack_str_.size() > 0);
+	    assert(! stack_str_.empty());
 	    string val = stack_str_.back();
 	    stack_str_.pop_back();
 	    return val;

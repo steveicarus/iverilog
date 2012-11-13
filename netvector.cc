@@ -22,13 +22,13 @@
 using namespace std;
 
 netvector_t::netvector_t(ivl_variable_type_t type, long msb, long lsb)
-: type_(type), signed_(false)
+: type_(type), signed_(false), isint_(false), is_scalar_(false)
 {
       packed_dims_.push_back(netrange_t(msb,lsb));
 }
 
 netvector_t::netvector_t(ivl_variable_type_t type)
-: type_(type), signed_(false)
+: type_(type), signed_(false), isint_(false), is_scalar_(false)
 {
 }
 

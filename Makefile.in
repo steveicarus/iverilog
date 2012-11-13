@@ -172,8 +172,8 @@ endif
 	rm -rf autom4te.cache
 
 cppcheck: $(O:.o=.cc) $(srcdir)/dosify.c $(srcdir)/version.c
-	cppcheck --enable=all -f --suppressions $(srcdir)/cppcheck.sup \
-	         $(INCLUDE_PATH) $^
+	cppcheck --enable=all -f --suppressions-list=$(srcdir)/cppcheck.sup \
+	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 
 cppcheck-all:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) cppcheck && ) true

@@ -24,6 +24,7 @@
 # include  <cassert>
 
 #ifdef CHECK_WITH_VALGRIND
+# include  "ivl_alloc.h"
 static char **string_pool = NULL;
 static unsigned string_pool_count = 0;
 #endif

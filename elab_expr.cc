@@ -2450,8 +2450,8 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    perm_string method_name = peek_tail_name(use_path);
 	    use_path.pop_back();
 
-	    found_in = symbol_search(this, des, scope, use_path,
-	                             net, par, eve, ex1, ex2);
+	    ivl_assert(*this, net == 0);
+	    symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
 
 	      // Check to see if we have a net and if so is it a structure?
 	    if (net != 0) {
@@ -2641,8 +2641,8 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		       << "Look for base_path " << use_path
 		       << " for member " << member_comp << "." << endl;
 
-	    found_in = symbol_search(this, des, scope, use_path,
-	                             net, par, eve, ex1, ex2);
+	    ivl_assert(*this, net == 0);
+	    symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
 
 	      // Check to see if we have a net and if so is it an
 	      // enumeration? If so then check to see if this is an
@@ -3807,6 +3807,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 		  unsigned long lwid;
 		  long idx;
 		  rc = net->sig()->sb_to_slice(prefix_indices, msv, idx, lwid);
+		  ivl_assert(*this, rc);
 
 		    // Make an expression out of the index
 		  NetEConst*idx_c = new NetEConst(verinum(idx));

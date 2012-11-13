@@ -419,7 +419,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  buffer[0] = 0;
 		  break;
 		default:
-		  fprintf(vvp_out, "\nXXXX Unexpected argument: call_string=<%s>, arg=%d, type=%d\n",
+		  fprintf(vvp_out, "\nXXXX Unexpected argument: call_string=<%s>, arg=%u, type=%d\n",
 			  call_string, idx, ivl_expr_value(expr));
 		  fflush(vvp_out);
 		  assert(0);

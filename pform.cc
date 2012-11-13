@@ -2525,7 +2525,7 @@ void pform_set_localparam(const struct vlltype&loc,
 	    error_count += 1;
       }
 
-      if ((pform_cur_module.size() > 0) &&
+      if ((! pform_cur_module.empty()) &&
 	  (scope == pform_cur_module.front()) &&
           (pform_cur_module.front()->specparams.find(name) != pform_cur_module.front()->specparams.end())) {
 	    LineInfo tloc;

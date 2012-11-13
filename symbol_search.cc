@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2012 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -79,7 +79,7 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 	// If there are components ahead of the tail, symbol_search
 	// recursively. Ideally, the result is a scope that we search
 	// for the tail key, but there are other special cases as well.
-      if (path.size() > 0) {
+      if (! path.empty()) {
 	    symbol_search_results recurse;
 	    bool flag = symbol_search(li, des, scope, path, &recurse, start_scope);
 	    if (! flag)
