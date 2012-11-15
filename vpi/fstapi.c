@@ -171,7 +171,6 @@ return(pnt);
  */
 #ifdef FST_DO_MISALIGNED_OPS
 #define fstGetUint32(x) (*(uint32_t *)(x))
-#define fstWriterSetUint32(x,y) (*(uint32_t *)(x)) = (y)
 #else
 static uint32_t fstGetUint32(unsigned char *mem)
 {
@@ -184,17 +183,6 @@ buf[2] = mem[2];
 buf[3] = mem[3];
 
 return(*(uint32_t *)buf);
-}
-
-
-static void fstWriterSetUint32(unsigned char *mem, uint32_t u32)
-{
-unsigned char *buf = (unsigned char *)(&u32);
-
-mem[0] = buf[0];
-mem[1] = buf[1];
-mem[2] = buf[2];
-mem[3] = buf[3];
 }
 #endif
 
@@ -3106,7 +3094,7 @@ char *pnt;
 int ch, scopetype;
 int vartype;
 uint32_t len, alias;
-uint32_t maxvalpos=0;
+/* uint32_t maxvalpos=0; */
 int num_signal_dyn = 65536;
 
 if(!xc) return(0);
@@ -3245,7 +3233,7 @@ while(!feof(xc->fh))
 				xc->signal_lens[xc->maxhandle] = len;
 				xc->signal_typs[xc->maxhandle] = vartype;
 
-		                maxvalpos+=len;
+		                /* maxvalpos+=len; */
 				if(len > xc->longest_signal_value_len)
 					{
 					xc->longest_signal_value_len = len;

@@ -2187,7 +2187,7 @@ void lxt2_wr_set_compression_depth(struct lxt2_wr_trace *lt, unsigned int depth)
 if(lt)
 	{
 	if(depth > 9) depth = 9;
-	sprintf(lt->zmode, "wb%d", depth);
+	sprintf(lt->zmode, "wb%u", depth);
 	}
 }
 
