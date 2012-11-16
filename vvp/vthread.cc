@@ -160,7 +160,20 @@ struct vthread_s {
       }
 
 	/* Objects are also operated on in a stack. */
-      vector<vvp_object_t> stack_obj;
+    private:
+      vector<vvp_object_t> stack_obj_;
+    public:
+      inline vvp_object_t pop_object(void)
+      {
+	    assert(stack_obj_.size() > 0);
+	    vvp_object_t val = stack_obj_.back();
+	    stack_obj_.pop_back();
+	    return val;
+      }
+      inline void push_object(vvp_object_t obj)
+      {
+	    stack_obj_.push_back(obj);
+      }
 
 	/* My parent sets this when it wants me to wake it up. */
       unsigned i_am_joining      :1;
@@ -4084,7 +4097,7 @@ bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
 	    obj = new vvp_darray (size);
       }
 
-      thr->stack_obj.push_back(obj);
+      thr->push_object(obj);
 
       return true;
 }
@@ -4927,10 +4940,7 @@ bool of_STORE_OBJ(vthread_t thr, vvp_code_t cp)
 	/* set the value into port 0 of the destination. */
       vvp_net_ptr_t ptr (cp->net, 0);
 
-      assert(!thr->stack_obj.empty());
-
-      vvp_object_t val= thr->stack_obj.back();
-      thr->stack_obj.pop_back();
+      vvp_object_t val = thr->pop_object();
 
       vvp_send_object(ptr, val, thr->wt_context);
 
