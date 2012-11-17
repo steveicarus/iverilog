@@ -1509,6 +1509,11 @@ void NetENetenum::dump(ostream&o) const
       o << "<netenum=" << netenum_ << ">";
 }
 
+void NetENew::dump(ostream&o) const
+{
+      o << "new <type>";
+}
+
 void NetENull::dump(ostream&o) const
 {
       o << "<null>";

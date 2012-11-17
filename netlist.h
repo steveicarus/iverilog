@@ -3877,6 +3877,23 @@ class NetENetenum  : public NetExpr {
       netenum_t*netenum_;
 };
 
+class NetENew : public NetExpr {
+    public:
+      explicit NetENew(ivl_type_t);
+      ~NetENew();
+
+      inline ivl_type_t get_type() const { return obj_type_; }
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetENew* dup_expr() const;
+      virtual NexusSet* nex_input(bool rem_out = true);
+
+      virtual void dump(ostream&os) const;
+
+    private:
+      ivl_type_t obj_type_;
+};
+
 /*
  * The NetENull node represents the SystemVerilog (null)
  * expression. This is always a null class handle.

@@ -224,6 +224,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_ENUMTYPE = 21,
       IVL_EX_EVENT  = 17,
       IVL_EX_MEMORY = 4,
+      IVL_EX_NEW    = 23,
       IVL_EX_NULL   = 22,
       IVL_EX_NUMBER = 5,
       IVL_EX_REALNUM  = 16,

@@ -4041,7 +4041,7 @@ unsigned PENewClass::test_width(Design*, NetScope*, width_mode_t&)
 NetExpr* PENewClass::elaborate_expr(Design*, NetScope*,
 				    ivl_type_t ntype, unsigned) const
 {
-      NetESFunc*tmp = new NetESFunc("$ivl_class_method$new", ntype, 0);
+      NetENew*tmp = new NetENew(ntype);
       tmp->set_line(*this);
       return tmp;
 }

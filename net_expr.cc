@@ -321,6 +321,15 @@ netenum_t* NetENetenum::netenum() const
       return netenum_;
 }
 
+NetENew::NetENew(ivl_type_t t)
+: obj_type_(t)
+{
+}
+
+NetENew::~NetENew()
+{
+}
+
 NetENull::NetENull()
 {
 }

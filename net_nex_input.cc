@@ -96,6 +96,11 @@ NexusSet* NetENetenum::nex_input(bool)
       return new NexusSet;
 }
 
+NexusSet* NetENew::nex_input(bool)
+{
+      return new NexusSet;
+}
+
 NexusSet* NetENull::nex_input(bool)
 {
       return new NexusSet;

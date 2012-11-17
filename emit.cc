@@ -551,6 +551,11 @@ void NetENetenum::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_netenum(this);
 }
 
+void NetENew::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_new(this);
+}
+
 void NetENull::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_null(this);
