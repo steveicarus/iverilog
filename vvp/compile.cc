@@ -232,6 +232,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%sub/wr", of_SUB_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%subi",   of_SUBI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%substr/v",of_SUBSTR_V,3,{OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%test_nul",  of_TEST_NUL, 1,{OA_FUNC_PTR,OA_NONE,     OA_NONE} },
       { "%wait",   of_WAIT,   1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
       { "%xnor",   of_XNOR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%xnor/r", of_XNORR,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -334,19 +335,16 @@ vvp_net_t* vvp_net_lookup(const char*label)
 		      return sig->net;
 		}
 
-		case vpiStringVar: {
-		      __vpiStringVar*sig = dynamic_cast<__vpiStringVar*>(vpi);
+		case vpiStringVar:
+		case vpiArrayVar:
+		case vpiClassVar: {
+		      __vpiBaseVar*sig = dynamic_cast<__vpiBaseVar*>(vpi);
 		      return sig->get_net();
 		}
 
 		case vpiNamedEvent: {
 		      __vpiNamedEvent*tmp = dynamic_cast<__vpiNamedEvent*>(vpi);
 		      return tmp->funct;
-		}
-
-		case vpiArrayVar: {
-		      __vpiDarrayVar*tmp = dynamic_cast<__vpiDarrayVar*>(vpi);
-		      return tmp->get_net();
 		}
 
 		default:

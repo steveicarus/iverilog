@@ -476,7 +476,20 @@ struct __vpiRealVar : public __vpiHandle {
 extern struct __vpiScope* vpip_scope(__vpiRealVar*sig);
 extern vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net);
 
-class __vpiStringVar : public __vpiHandle {
+class __vpiBaseVar : public __vpiHandle {
+
+    public:
+      __vpiBaseVar(__vpiScope*scope, const char*name, vvp_net_t*net);
+
+      inline vvp_net_t* get_net() const { return net_; }
+
+    private:
+      struct __vpiScope* scope_;
+      const char*name_;
+      vvp_net_t*net_;
+};
+
+class __vpiStringVar : public __vpiBaseVar {
 
     public:
       __vpiStringVar(__vpiScope*scope, const char*name, vvp_net_t*net);
@@ -484,18 +497,11 @@ class __vpiStringVar : public __vpiHandle {
       int get_type_code(void) const;
       int vpi_get(int code);
       void vpi_get_value(p_vpi_value val);
-
-      inline vvp_net_t* get_net() const { return net_; }
-
-    private:
-      struct __vpiScope* scope_;
-      const char*name_;
-      vvp_net_t*net_;
 };
 
 extern vpiHandle vpip_make_string_var(const char*name, vvp_net_t*net);
 
-class __vpiDarrayVar : public __vpiHandle {
+class __vpiDarrayVar : public __vpiBaseVar {
 
     public:
       __vpiDarrayVar(__vpiScope*scope, const char*name, vvp_net_t*net);
@@ -503,16 +509,21 @@ class __vpiDarrayVar : public __vpiHandle {
       int get_type_code(void) const;
       int vpi_get(int code);
       void vpi_get_value(p_vpi_value val);
-
-      inline vvp_net_t* get_net() const { return net_; }
-
-    private:
-      struct __vpiScope* scope_;
-      const char*name_;
-      vvp_net_t*net_;
 };
 
 extern vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net);
+
+class __vpiCobjectVar : public __vpiBaseVar {
+
+    public:
+      __vpiCobjectVar(__vpiScope*scope, const char*name, vvp_net_t*net);
+
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+};
+
+extern vpiHandle vpip_make_cobject_var(const char*name, vvp_net_t*net);
 
 /*
  * When a loaded VPI module announces a system task/function, one

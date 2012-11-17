@@ -485,6 +485,53 @@ static struct vector_info draw_binary_expr_eq_string(ivl_expr_t expr)
       return res;
 }
 
+static struct vector_info draw_binary_expr_eq_class(ivl_expr_t expr)
+{
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+
+      struct vector_info res;
+      res.base = allocate_vector(1);
+      res.wid = 1;
+      assert(res.base);
+
+      if (ivl_expr_type(le) == IVL_EX_NULL) {
+	    ivl_expr_t tmp = le;
+	    le = re;
+	    re = tmp;
+      }
+
+	/* Special case: If both operands are null, then the
+	   expression has a constant value. */
+      if (ivl_expr_type(le)==IVL_EX_NULL && ivl_expr_type(re)==IVL_EX_NULL) {
+	    switch (ivl_expr_opcode(expr)) {
+		case 'e': /* == */
+		  fprintf(vvp_out, "    %%mov %u, 1, 1;\n", res.base);
+		  break;
+		case 'n': /* != */
+		  fprintf(vvp_out, "    %%mov %u, 0, 1;\n", res.base);
+		  break;
+		default:
+		  assert(0);
+		  break;
+	    }
+	    return res;
+      }
+
+      if (ivl_expr_type(re) == IVL_EX_NULL && ivl_expr_type(le)==IVL_EX_SIGNAL) {
+	    fprintf(vvp_out, "    %%test_nul v%p_0;\n", ivl_expr_signal(le));
+	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n", res.base);
+	    if (ivl_expr_opcode(expr) == 'n')
+		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
+	    return res;
+      }
+
+      fprintf(stderr, "SORRY: Compare class handles not implemented\n");
+      fprintf(vvp_out, " ; XXXX compare class handles.\n");
+      vvp_errors += 1;
+      return res;
+}
+
 static struct vector_info draw_binary_expr_eq(ivl_expr_t expr,
 					      unsigned ewid,
 					      int stuff_ok_flag)
@@ -515,6 +562,11 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t expr,
       if ((ivl_expr_type(le) == IVL_EX_STRING)
 	  && (ivl_expr_value(re) == IVL_VT_STRING)) {
 	    return draw_binary_expr_eq_string(expr);
+      }
+
+      if ((ivl_expr_value(le) == IVL_VT_CLASS)
+	  && (ivl_expr_value(re) == IVL_VT_CLASS)) {
+	    return draw_binary_expr_eq_class(expr);
       }
 
       if (number_is_immediate(re,16,0) && !number_is_unknown(re))

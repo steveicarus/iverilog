@@ -1022,6 +1022,14 @@ that holds the index. This is the general method for getting string
 values into the vector space. The string value is NOT popped.
 
 
+* %test_nul <var-label>
+
+This instruction tests the contents of the addressed variable to see
+if it is null. If it is, set bit 4 to 1. Otherwise, set bit 4 to 0.
+
+This is intended to implement the SystemVerilog expression
+(<var>==null), where <var> is a class variable.
+
 * %vpi_call <name> [, ...] {<real> <str>}
 
 This instruction makes a call to a system task that was declared using

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012 Picture Elements, Inc.
+ *    Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,61 +18,33 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-
 # include  "compile.h"
 # include  "vpi_priv.h"
-# include  "vvp_net_sig.h"
-# include  "schedule.h"
-#ifdef CHECK_WITH_VALGRIND
-# include  "vvp_cleanup.h"
-#endif
-# include  <cstdio>
-# include  <cstdlib>
-# include  <cstring>
-# include  <cassert>
-# include  "ivl_alloc.h"
 
-using namespace std;
-
-__vpiDarrayVar::__vpiDarrayVar(__vpiScope*sc, const char*na, vvp_net_t*ne)
+__vpiCobjectVar::__vpiCobjectVar(__vpiScope*sc, const char*na, vvp_net_t*ne)
 : __vpiBaseVar(sc, na, ne)
 {
 }
 
-int __vpiDarrayVar::get_type_code(void) const
-{ return vpiArrayVar; }
+int __vpiCobjectVar::get_type_code(void) const
+{ return vpiClassVar; }
 
-
-int __vpiDarrayVar::vpi_get(int code)
+int __vpiCobjectVar::vpi_get(int)
 {
-      vvp_fun_signal_object*fun = dynamic_cast<vvp_fun_signal_object*> (get_net()->fun);
-      assert(fun);
-      vvp_object_t val = fun->get_object();
-      vvp_darray*aval = dynamic_cast<vvp_darray*> (val);
-
-      switch (code) {
-	  case vpiSize:
-	    if (aval == 0)
-		  return 0;
-	    else
-		  return aval->get_size();
-
-	  default:
-	    return 0;
-      }
+      return 0;
 }
 
-void __vpiDarrayVar::vpi_get_value(p_vpi_value val)
+void __vpiCobjectVar::vpi_get_value(p_vpi_value val)
 {
       val->format = vpiSuppressVal;
 }
 
-vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net)
+vpiHandle vpip_make_cobject_var(const char*name, vvp_net_t*net)
 {
       struct __vpiScope*scope = vpip_peek_current_scope();
       const char*use_name = name ? vpip_name_string(name) : 0;
 
-      class __vpiDarrayVar*obj = new __vpiDarrayVar(scope, use_name, net);
+      class __vpiCobjectVar*obj = new __vpiCobjectVar(scope, use_name, net);
 
       return obj;
 }

@@ -64,6 +64,11 @@ void __vpiHandle::vpi_get_delays(p_vpi_delay)
 void __vpiHandle::vpi_put_delays(p_vpi_delay)
 { }
 
+__vpiBaseVar::__vpiBaseVar(__vpiScope*scope, const char*name, vvp_net_t*net)
+: scope_(scope), name_(name), net_(net)
+{
+}
+
 /*
  * The default behavior for the vpi_free_object to an object is to
  * suppress the actual operation. This is because handles are

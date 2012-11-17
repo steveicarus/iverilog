@@ -33,7 +33,7 @@
 using namespace std;
 
 __vpiStringVar::__vpiStringVar(__vpiScope*sc, const char*na, vvp_net_t*ne)
-: scope_(sc), name_(na), net_(ne)
+: __vpiBaseVar(sc, na, ne)
 {
 }
 
@@ -42,7 +42,7 @@ int __vpiStringVar::get_type_code(void) const
 
 int __vpiStringVar::vpi_get(int code)
 {
-      vvp_fun_signal_string*fun = dynamic_cast<vvp_fun_signal_string*> (net_->fun);
+      vvp_fun_signal_string*fun = dynamic_cast<vvp_fun_signal_string*> (get_net()->fun);
       assert(fun);
       string str = fun->get_string();
 
@@ -58,7 +58,7 @@ int __vpiStringVar::vpi_get(int code)
 
 void __vpiStringVar::vpi_get_value(p_vpi_value val)
 {
-      vvp_fun_signal_string*fun = dynamic_cast<vvp_fun_signal_string*> (net_->fun);
+      vvp_fun_signal_string*fun = dynamic_cast<vvp_fun_signal_string*> (get_net()->fun);
       assert(fun);
       string str = fun->get_string();
 

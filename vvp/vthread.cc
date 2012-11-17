@@ -5108,6 +5108,25 @@ bool of_FILE_LINE(vthread_t, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %test_nul <var-label>;
+ */
+bool of_TEST_NUL(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+
+      assert(net);
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      if (obj->get_object() == 0)
+	    thr_put_bit(thr, 4, BIT4_1);
+      else
+	    thr_put_bit(thr, 4, BIT4_0);
+
+      return true;
+}
+
 bool of_VPI_CALL(vthread_t thr, vvp_code_t cp)
 {
       vpip_execute_vpi_call(thr, cp->handle);

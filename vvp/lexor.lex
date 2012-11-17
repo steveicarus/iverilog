@@ -195,6 +195,7 @@ static char* strdupnew(char const *str)
 ".ufunc"    { return K_UFUNC; }
 ".ufunc/e"  { return K_UFUNC_E; }
 ".var"      { return K_VAR; }
+".var/cobj" { return K_VAR_COBJECT; }
 ".var/darray" { return K_VAR_DARRAY; }
 ".var/real" { return K_VAR_R; }
 ".var/s"    { return K_VAR_S; }

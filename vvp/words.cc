@@ -78,8 +78,7 @@ void compile_varw_real(char*label, vvp_array_t array,
       __compile_var_real(label, 0, array, addr);
 }
 
-static void __compile_var_string(char*label, char*name,
-				 vvp_array_t array, unsigned long array_addr)
+void compile_var_string(char*label, char*name)
 {
       vvp_net_t*net = new vvp_net_t;
 
@@ -97,25 +96,12 @@ static void __compile_var_string(char*label, char*name,
       vpiHandle obj = vpip_make_string_var(name, net);
       compile_vpi_symbol(label, obj);
 
-      if (name) {
-	    assert(!array);
-	    vpip_attach_to_current_scope(obj);
-      }
-      if (array) {
-	    assert(!name);
-	    array_attach_word(array, array_addr, obj);
-      }
+      vpip_attach_to_current_scope(obj);
       free(label);
       delete[] name;
 }
 
-void compile_var_string(char*label, char*name)
-{
-      __compile_var_string(label, name, 0, 0);
-}
-
-static void __compile_var_darray(char*label, char*name,
-				 vvp_array_t array, unsigned long array_addr)
+void compile_var_darray(char*label, char*name)
 {
       vvp_net_t*net = new vvp_net_t;
 
@@ -133,21 +119,32 @@ static void __compile_var_darray(char*label, char*name,
       vpiHandle obj = vpip_make_darray_var(name, net);
       compile_vpi_symbol(label, obj);
 
-      if (name) {
-	    assert(!array);
-	    vpip_attach_to_current_scope(obj);
-      }
-      if (array) {
-	    assert(!name);
-	    array_attach_word(array, array_addr, obj);
-      }
+      vpip_attach_to_current_scope(obj);
       free(label);
       delete[] name;
 }
 
-void compile_var_darray(char*label, char*name)
+void compile_var_cobject(char*label, char*name)
 {
-      __compile_var_darray(label, name, 0, 0);
+      vvp_net_t*net = new vvp_net_t;
+
+      if (vpip_peek_current_scope()->is_automatic) {
+	    vvp_fun_signal_object_aa*tmp = new vvp_fun_signal_object_aa;
+	    net->fil = tmp;
+	    net->fun = tmp;
+      } else {
+	    net->fil = 0;
+	    net->fun = new vvp_fun_signal_object_sa;
+      }
+
+      define_functor_symbol(label, net);
+
+      vpiHandle obj = vpip_make_cobject_var(name, net);
+      compile_vpi_symbol(label, obj);
+
+      vpip_attach_to_current_scope(obj);
+      free(label);
+      delete[] name;
 }
 
 /*
