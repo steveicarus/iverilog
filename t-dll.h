@@ -320,6 +320,10 @@ struct ivl_expr_s {
 		  uint64_t value;
 	    } delay_;
 
+	    struct {
+		  ivl_expr_t size;
+	    } new_;
+
       } u_;
 };
 

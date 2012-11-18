@@ -472,6 +472,9 @@ extern "C" ivl_expr_t ivl_expr_oper1(ivl_expr_t net)
 	  case IVL_EX_MEMORY:
 	    return net->u_.memory_.idx_;
 
+	  case IVL_EX_NEW:
+	    return net->u_.new_.size;
+
 	  case IVL_EX_SIGNAL:
 	    return net->u_.signal_.word;
 

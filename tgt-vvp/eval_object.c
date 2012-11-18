@@ -24,7 +24,7 @@
 static int eval_darray_new(ivl_expr_t ex)
 {
       unsigned size_reg = allocate_word();
-      ivl_expr_t size_expr = ivl_expr_parm(ex, 0);
+      ivl_expr_t size_expr = ivl_expr_oper1(ex);
       draw_eval_expr_into_integer(size_expr, size_reg);
       clr_word(size_reg);
 
@@ -67,23 +67,27 @@ static int eval_darray_new(ivl_expr_t ex)
       return 0;
 }
 
-static int draw_eval_object_sfunc(ivl_expr_t ex)
+static int eval_class_new(ivl_expr_t ex)
 {
-      const char*name = ivl_expr_name(ex);
-
-      if (strcmp(name, "$ivl_darray_method$new") == 0)
-	    return eval_darray_new(ex);
-
-      fprintf(vvp_out, "; ERROR: Invalid system function %s for darray\n", name);
-      return 1;
+      fprintf(vvp_out, "    %%new/cobj ; XXXX Need to specify the type?\n");
+      return 0;
 }
 
 int draw_eval_object(ivl_expr_t ex)
 {
       switch (ivl_expr_type(ex)) {
-	  case IVL_EX_SFUNC:
-	    return draw_eval_object_sfunc(ex);
 
+	  case IVL_EX_NEW:
+	    switch (ivl_expr_value(ex)) {
+		case IVL_VT_CLASS:
+		  return eval_class_new(ex);
+		case IVL_VT_DARRAY:
+		  return eval_darray_new(ex);
+		default:
+		  fprintf(vvp_out, "; ERROR: Invalid type (%d) for <new>\n",
+			  ivl_expr_value(ex));
+		  return 0;
+	    }
 	  default:
 	    fprintf(vvp_out, "; ERROR: Invalid expression type %u\n", ivl_expr_type(ex));
 	    return 1;

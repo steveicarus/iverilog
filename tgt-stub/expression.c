@@ -167,11 +167,31 @@ static void show_memory_expression(ivl_expr_t net, unsigned ind)
 
 static void show_new_expression(ivl_expr_t net, unsigned ind)
 {
-      fprintf(out, "%*snew <type>\n", ind, "");
-      if (ivl_expr_value(net) != IVL_VT_CLASS) {
-	    fprintf(out, "%sERROR: new expression must be IVL_VT_CLASS, got %s.\n",
+      switch (ivl_expr_value(net)) {
+	  case IVL_VT_CLASS:
+	    fprintf(out, "%*snew <class_type>\n", ind, "");
+	    if (ivl_expr_oper1(net)) {
+		  fprintf(out, "%*sERROR: class_new expression has a size!\n",
+			  ind+3, "");
+		  show_expression(ivl_expr_oper1(net), ind+3);
+		  stub_errors += 1;
+	    }
+	    break;
+	  case IVL_VT_DARRAY:
+	    fprintf(out, "%*snew [] <type>\n", ind, "");
+	    if (ivl_expr_oper1(net)) {
+		  show_expression(ivl_expr_oper1(net), ind+3);
+	    } else {
+		  fprintf(out, "%*sERROR: darray_new missing size expression\n",
+			  ind+3, "");
+		  stub_errors += 1;
+	    }
+	    break;
+	  default:
+	    fprintf(out, "%*snew ERROR: expression type: %s\n",
 		    ind+3, "", vt_type_string(net));
 	    stub_errors += 1;
+	    break;
       }
 }
 
@@ -179,7 +199,7 @@ static void show_null_expression(ivl_expr_t net, unsigned ind)
 {
       fprintf(out, "%*s<null>\n", ind, "");
       if (ivl_expr_value(net) != IVL_VT_CLASS) {
-	    fprintf(out, "%sERROR: null expression must be IVL_VT_CLASS, got %s.\n",
+	    fprintf(out, "%*sERROR: null expression must be IVL_VT_CLASS, got %s.\n",
 		    ind+3, "", vt_type_string(net));
 	    stub_errors += 1;
       }

@@ -3879,10 +3879,16 @@ class NetENetenum  : public NetExpr {
 
 class NetENew : public NetExpr {
     public:
+	// Make class object
       explicit NetENew(ivl_type_t);
+	// dynamic array of objects.
+      explicit NetENew(ivl_type_t, NetExpr*);
       ~NetENew();
 
       inline ivl_type_t get_type() const { return obj_type_; }
+      inline const NetExpr*size_expr() const { return size_; }
+
+      virtual ivl_variable_type_t expr_type() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetENew* dup_expr() const;
@@ -3892,6 +3898,7 @@ class NetENew : public NetExpr {
 
     private:
       ivl_type_t obj_type_;
+      NetExpr*size_;
 };
 
 /*

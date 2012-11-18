@@ -4007,9 +4007,8 @@ NetExpr* PENew::elaborate_expr(Design*des, NetScope*scope,
       unsigned use_wid = size_->test_width(des, scope, mode);
       NetExpr*size = size_->elaborate_expr(des, scope, use_wid, flags);
 
-      NetESFunc*tmp = new NetESFunc("$ivl_darray_method$new", ntype, 1);
+      NetENew*tmp = new NetENew(ntype, size);
       tmp->set_line(*this);
-      tmp->parm(0, size);
       return tmp;
 }
 
@@ -4019,14 +4018,8 @@ NetExpr* PENew::elaborate_expr(Design*des, NetScope*scope,
 NetExpr* PENew::elaborate_expr(Design*des, NetScope*scope,
 				 unsigned, unsigned flags) const
 {
-      width_mode_t mode = LOSSLESS;
-      unsigned use_wid = size_->test_width(des, scope, mode);
-      NetExpr*size = size_->elaborate_expr(des, scope, use_wid, flags);
-      NetESFunc*tmp  = new NetESFunc("$ivl_darray_method$new",
-				     IVL_VT_DARRAY, 1, 1);
-      tmp->set_line(*this);
-      tmp->parm(0, size);
-      return tmp;
+      ivl_assert(*this, 0);
+      return 0;
 }
 
 unsigned PENewClass::test_width(Design*, NetScope*, width_mode_t&)

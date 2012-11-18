@@ -811,10 +811,25 @@ static int show_stmt_assign_sig_darray(ivl_statement_t net)
 	    if (rvec.base >= 4) clr_vector(rvec);
 
       } else {
+	      /* There is no l-value mux, so this must be an
+		 assignment to the array as a whole. Evaluate the
+		 "object", and store the evaluated result. */
 	    errors += draw_eval_object(rval);
 	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", var);
       }
 
+      return errors;
+}
+
+static int show_stmt_assign_sig_cobject(ivl_statement_t net)
+{
+      int errors = 0;
+      ivl_lval_t lval = ivl_stmt_lval(net, 0);
+      ivl_expr_t rval = ivl_stmt_rval(net);
+      ivl_signal_t var= ivl_lval_sig(lval);
+
+      errors += draw_eval_object(rval);
+      fprintf(vvp_out, "    %%store/obj v%p_0;\n", var);
       return errors;
 }
 
@@ -838,6 +853,10 @@ int show_stmt_assign(ivl_statement_t net)
 
       if (sig && (ivl_signal_data_type(sig) == IVL_VT_DARRAY)) {
 	    return show_stmt_assign_sig_darray(net);
+      }
+
+      if (sig && (ivl_signal_data_type(sig) == IVL_VT_CLASS)) {
+	    return show_stmt_assign_sig_cobject(net);
       }
 
       return show_stmt_assign_vector(net);
