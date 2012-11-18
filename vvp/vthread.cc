@@ -167,6 +167,7 @@ struct vthread_s {
       {
 	    assert(stack_obj_.size() > 0);
 	    vvp_object_t val = stack_obj_.back();
+	    stack_obj_.back().reset();
 	    stack_obj_.pop_back();
 	    return val;
       }
@@ -2097,7 +2098,7 @@ bool of_DELETE_OBJ(vthread_t thr, vvp_code_t cp)
 {
 	/* set the value into port 0 of the destination. */
       vvp_net_ptr_t ptr (cp->net, 0);
-      vvp_send_object(ptr, 0, thr->wt_context);
+      vvp_send_object(ptr, vvp_object_t(), thr->wt_context);
 
       return true;
 }
@@ -3193,7 +3194,7 @@ bool of_LOAD_DAR(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
       assert(obj);
 
-      vvp_darray*darray = dynamic_cast<vvp_darray*>(obj->get_object());
+      vvp_darray*darray = obj->get_object().peek<vvp_darray>();
       assert(darray);
 
       vvp_vector4_t word;
@@ -3217,7 +3218,7 @@ bool of_LOAD_DAR_R(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
       assert(obj);
 
-      vvp_darray*darray = dynamic_cast<vvp_darray*> (obj->get_object());
+      vvp_darray*darray = obj->get_object().peek<vvp_darray>();
       assert(darray);
 
       double word;
@@ -3236,7 +3237,7 @@ bool of_LOAD_DAR_STR(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
       assert(obj);
 
-      vvp_darray*darray = dynamic_cast<vvp_darray*> (obj->get_object());
+      vvp_darray*darray = obj->get_object().peek<vvp_darray>();
       assert(darray);
 
       string word;
@@ -4066,6 +4067,12 @@ bool of_NAND(vthread_t thr, vvp_code_t cp)
       return cp->opcode(thr, cp);
 }
 
+bool of_NEW_COBJ(vthread_t thr, vvp_code_t cp)
+{
+      vvp_object_t tmp;
+      thr->push_object(tmp);
+      return true;
+}
 
 bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
 {
@@ -4659,7 +4666,7 @@ bool of_SET_DAR(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
       assert(obj);
 
-      vvp_darray*darray = dynamic_cast<vvp_darray*>(obj->get_object());
+      vvp_darray*darray = obj->get_object().peek<vvp_darray>();
       assert(darray);
 
       darray->set_word(adr, value);
@@ -4904,7 +4911,7 @@ bool of_STORE_DAR_R(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
       assert(obj);
 
-      vvp_darray*darray = dynamic_cast<vvp_darray*>(obj->get_object());
+      vvp_darray*darray = obj->get_object().peek<vvp_darray>();
       assert(darray);
 
       darray->set_word(adr, value);
@@ -4927,7 +4934,7 @@ bool of_STORE_DAR_STR(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
       assert(obj);
 
-      vvp_darray*darray = dynamic_cast<vvp_darray*>(obj->get_object());
+      vvp_darray*darray = obj->get_object().peek<vvp_darray>();
       assert(darray);
 
       darray->set_word(adr, value);
@@ -5119,7 +5126,7 @@ bool of_TEST_NUL(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
       assert(obj);
 
-      if (obj->get_object() == 0)
+      if (obj->get_object().test_nil())
 	    thr_put_bit(thr, 4, BIT4_1);
       else
 	    thr_put_bit(thr, 4, BIT4_0);

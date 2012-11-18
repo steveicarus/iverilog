@@ -24,8 +24,15 @@
 
 using namespace std;
 
+int vvp_object::total_active_cnt_ = 0;
+
+void vvp_object::cleanup(void)
+{
+}
+
 vvp_object::~vvp_object()
 {
+      total_active_cnt_ -= 1;
 }
 
 vvp_darray::~vvp_darray()

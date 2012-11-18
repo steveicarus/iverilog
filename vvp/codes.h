@@ -148,6 +148,7 @@ extern bool of_MUL_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MULI(vthread_t thr, vvp_code_t code);
 extern bool of_NAND(vthread_t thr, vvp_code_t code);
 extern bool of_NANDR(vthread_t thr, vvp_code_t code);
+extern bool of_NEW_COBJ(vthread_t thr, vvp_code_t code);
 extern bool of_NEW_DARRAY(vthread_t thr, vvp_code_t code);
 extern bool of_NOOP(vthread_t thr, vvp_code_t code);
 extern bool of_NOR(vthread_t thr, vvp_code_t code);

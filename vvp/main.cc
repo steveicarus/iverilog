@@ -26,6 +26,7 @@
 # include  "vpi_priv.h"
 # include  "statistics.h"
 # include  "vvp_cleanup.h"
+# include  "vvp_object.h"
 # include  <cstdio>
 # include  <cstdlib>
 # include  <cstring>
@@ -197,6 +198,8 @@ void set_delay_selection(const char* sel)
 
 static void final_cleanup()
 {
+      vvp_object::cleanup();
+
 	/*
 	 * We only need to cleanup the memory if we are checking with valgrind.
 	 */

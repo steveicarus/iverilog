@@ -23,14 +23,102 @@
 # include  <string>
 # include  <vector>
 
-typedef class vvp_object*vvp_object_t;
 class vvp_vector4_t;
+class vvp_object_t;
 
+/*
+ * A vvp_object is a garbage collected object such as a darray or
+ * class object. The vvp_object class is a virtual base class and not
+ * generally used directly. Instead, use the vvp_object_t object as a
+ * smart pointer. This makes garbage collection automatic.
+ */
 class vvp_object {
     public:
-      inline vvp_object() { }
+      inline vvp_object() { total_active_cnt_ += 1; }
       virtual ~vvp_object() =0;
+
+      static void cleanup(void);
+
+    private:
+      friend class vvp_object_t;
+      int ref_cnt_;
+
+      static int total_active_cnt_;
 };
+
+class vvp_object_t {
+    public:
+      inline vvp_object_t() : ref_(0) { }
+      vvp_object_t(const vvp_object_t&that);
+      ~vvp_object_t();
+
+      vvp_object_t& operator = (const vvp_object_t&that);
+      vvp_object_t& operator = (class vvp_object*that);
+
+      void reset(vvp_object*tgt = 0);
+
+      bool test_nil() const { return ref_ == 0; }
+      inline bool operator == (const vvp_object_t&that) const
+          { return ref_ == that.ref_; }
+      inline bool operator != (const vvp_object_t&that) const
+          { return ref_ != that.ref_; }
+
+      template <class T> T*peek(void) const;
+
+    private:
+      class vvp_object*ref_;
+};
+
+inline vvp_object_t::vvp_object_t(const vvp_object_t&that)
+{
+      ref_ = that.ref_;
+      if (ref_) ref_->ref_cnt_ += 1;
+}
+
+inline vvp_object_t::~vvp_object_t()
+{
+      reset(0);
+}
+
+/*
+ * This is the workhorse of the vvp_object_t class. It manages the
+ * pointer to the referenced object.
+ */
+inline void vvp_object_t::reset(class vvp_object*tgt)
+{
+      if (tgt) tgt->ref_cnt_ += 1;
+      if (ref_) {
+	    ref_->ref_cnt_ -= 1;
+	    if (ref_->ref_cnt_ <= 0) delete ref_;
+	    ref_ = 0;
+      }
+      ref_ = tgt;
+}
+
+inline vvp_object_t& vvp_object_t::operator = (const vvp_object_t&that)
+{
+      if (this == &that) return *this;
+      reset(that.ref_);
+      return *this;
+}
+
+inline vvp_object_t& vvp_object_t::operator = (class vvp_object*that)
+{
+      reset(that);
+      return *this;
+}
+
+/*
+ * This peeks at the actual pointer value in the form of a derived
+ * class. It uses dynamic_cast<>() to convert the pointer to the
+ * desired type.
+ *
+ * NOTE: The vvp_object_t object retains ownership of the pointer!
+ */
+template <class T> inline T*vvp_object_t::peek(void) const
+{
+      return dynamic_cast<T*> (ref_);
+}
 
 class vvp_darray : public vvp_object {
 
