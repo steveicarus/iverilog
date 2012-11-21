@@ -21,6 +21,7 @@
 # include  "compile.h"
 # include  "vpi_priv.h"
 # include  "vvp_net_sig.h"
+# include  "vvp_darray.h"
 # include  "schedule.h"
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"

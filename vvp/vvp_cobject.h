@@ -1,3 +1,5 @@
+#ifndef __vvp_cobject_H
+#define __vvp_cobject_H
 /*
  * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
  *
@@ -18,19 +20,16 @@
  */
 
 # include  "vvp_object.h"
-# include  "vvp_net.h"
-# include  <iostream>
-# include  <typeinfo>
 
-using namespace std;
 
-int vvp_object::total_active_cnt_ = 0;
+class vvp_cobject : public vvp_object {
 
-void vvp_object::cleanup(void)
-{
-}
+    public:
+      vvp_cobject();
+      ~vvp_cobject();
 
-vvp_object::~vvp_object()
-{
-      total_active_cnt_ -= 1;
-}
+    private:
+      int stub_;
+};
+
+#endif

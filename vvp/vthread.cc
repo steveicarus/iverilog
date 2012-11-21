@@ -25,6 +25,8 @@
 # include  "event.h"
 # include  "vpi_priv.h"
 # include  "vvp_net_sig.h"
+# include  "vvp_cobject.h"
+# include  "vvp_darray.h"
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
@@ -4067,9 +4069,15 @@ bool of_NAND(vthread_t thr, vvp_code_t cp)
       return cp->opcode(thr, cp);
 }
 
+/*
+ * %new/cobj
+ * This creates a new cobject (SystemVerilog class object) and pushes
+ * it to the stack.
+ */
 bool of_NEW_COBJ(vthread_t thr, vvp_code_t cp)
 {
       vvp_object_t tmp;
+      tmp = new vvp_cobject;
       thr->push_object(tmp);
       return true;
 }

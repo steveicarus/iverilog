@@ -20,11 +20,6 @@
  */
 
 # include  <stdlib.h>
-# include  <string>
-# include  <vector>
-
-class vvp_vector4_t;
-class vvp_object_t;
 
 /*
  * A vvp_object is a garbage collected object such as a darray or
@@ -119,65 +114,5 @@ template <class T> inline T*vvp_object_t::peek(void) const
 {
       return dynamic_cast<T*> (ref_);
 }
-
-class vvp_darray : public vvp_object {
-
-    public:
-      inline vvp_darray(size_t siz) : size_(siz) { }
-      virtual ~vvp_darray();
-
-      inline size_t get_size(void) const { return size_; }
-
-      virtual void set_word(unsigned adr, const vvp_vector4_t&value);
-      virtual void get_word(unsigned adr, vvp_vector4_t&value);
-
-      virtual void set_word(unsigned adr, double value);
-      virtual void get_word(unsigned adr, double&value);
-
-      virtual void set_word(unsigned adr, const std::string&value);
-      virtual void get_word(unsigned adr, std::string&value);
-
-    private:
-      size_t size_;
-};
-
-template <class TYPE> class vvp_darray_atom : public vvp_darray {
-
-    public:
-      inline vvp_darray_atom(size_t siz) : vvp_darray(siz), array_(siz) { }
-      ~vvp_darray_atom();
-
-      void set_word(unsigned adr, const vvp_vector4_t&value);
-      void get_word(unsigned adr, vvp_vector4_t&value);
-
-    private:
-      std::vector<TYPE> array_;
-};
-
-class vvp_darray_real : public vvp_darray {
-
-    public:
-      inline vvp_darray_real(size_t siz) : vvp_darray(siz), array_(siz) { }
-      ~vvp_darray_real();
-
-      void set_word(unsigned adr, double value);
-      void get_word(unsigned adr, double&value);
-
-    private:
-      std::vector<double> array_;
-};
-
-class vvp_darray_string : public vvp_darray {
-
-    public:
-      inline vvp_darray_string(size_t siz) : vvp_darray(siz), array_(siz) { }
-      ~vvp_darray_string();
-
-      void set_word(unsigned adr, const std::string&value);
-      void get_word(unsigned adr, std::string&value);
-
-    private:
-      std::vector<std::string> array_;
-};
 
 #endif

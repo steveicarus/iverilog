@@ -17,20 +17,14 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include  "vvp_object.h"
-# include  "vvp_net.h"
-# include  <iostream>
-# include  <typeinfo>
+# include  "vvp_cobject.h"
 
 using namespace std;
 
-int vvp_object::total_active_cnt_ = 0;
-
-void vvp_object::cleanup(void)
+vvp_cobject::vvp_cobject(void)
 {
 }
 
-vvp_object::~vvp_object()
+vvp_cobject::~vvp_cobject()
 {
-      total_active_cnt_ -= 1;
 }
