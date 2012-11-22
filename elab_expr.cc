@@ -4015,8 +4015,7 @@ NetExpr* PENew::elaborate_expr(Design*des, NetScope*scope,
 /*
  * This method should never actually be called.
  */
-NetExpr* PENew::elaborate_expr(Design*des, NetScope*scope,
-				 unsigned, unsigned flags) const
+NetExpr* PENew::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const
 {
       ivl_assert(*this, 0);
       return 0;
@@ -4051,6 +4050,13 @@ unsigned PENull::test_width(Design*, NetScope*, width_mode_t&)
       min_width_   = 1;
       signed_flag_ = false;
       return expr_width_;
+}
+
+NetExpr* PENull::elaborate_expr(Design*, NetScope*, ivl_type_t, unsigned) const
+{
+      NetENull*tmp = new NetENull;
+      tmp->set_line(*this);
+      return tmp;
 }
 
 NetExpr* PENull::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const

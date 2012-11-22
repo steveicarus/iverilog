@@ -73,6 +73,12 @@ static int eval_class_new(ivl_expr_t ex)
       return 0;
 }
 
+static int eval_object_null(ivl_expr_t ex)
+{
+      fprintf(vvp_out, "    %%null;\n");
+      return 0;
+}
+
 int draw_eval_object(ivl_expr_t ex)
 {
       switch (ivl_expr_type(ex)) {
@@ -88,6 +94,10 @@ int draw_eval_object(ivl_expr_t ex)
 			  ivl_expr_value(ex));
 		  return 0;
 	    }
+
+	  case IVL_EX_NULL:
+	    return eval_object_null(ex);
+
 	  default:
 	    fprintf(vvp_out, "; ERROR: Invalid expression type %u\n", ivl_expr_type(ex));
 	    return 1;

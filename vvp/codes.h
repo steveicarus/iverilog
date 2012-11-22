@@ -153,6 +153,7 @@ extern bool of_NEW_DARRAY(vthread_t thr, vvp_code_t code);
 extern bool of_NOOP(vthread_t thr, vvp_code_t code);
 extern bool of_NOR(vthread_t thr, vvp_code_t code);
 extern bool of_NORR(vthread_t thr, vvp_code_t code);
+extern bool of_NULL(vthread_t thr, vvp_code_t code);
 extern bool of_OR(vthread_t thr, vvp_code_t code);
 extern bool of_ORR(vthread_t thr, vvp_code_t code);
 extern bool of_PAD(vthread_t thr, vvp_code_t code);

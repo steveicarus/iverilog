@@ -386,7 +386,14 @@ supports run-time calculated delays.
 * %delete/obj <var-label>
 
 Arrange for the dynamic object at the target label to be deleted.
-This has no effect on the object or string stack.
+This has no effect on the object or string stack. Note that this is
+the same as:
+
+   %null ;
+   %store/obj <var-label>
+
+but that idiom is expected to be common enough that it warrants an
+optimized shorthand.
 
 * %disable <scope-label>
 
@@ -801,6 +808,11 @@ it is valid to place the <dst> within the <src>.
 The actual operation performed is the inverted or of all the bits in
 the vector.
 
+
+* %null
+
+Push a null object and push it to the object stack. The null object
+can be used with any class or darray object, so it is not typed.
 
 * %or <dst>, <src>, <wid>
 

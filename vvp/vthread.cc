@@ -4146,6 +4146,17 @@ bool of_NORR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * Push a null to the object stack.
+ */
+bool of_NULL(vthread_t thr, vvp_code_t cp)
+{
+      vvp_object_t tmp;
+      thr->push_object(tmp);
+      return true;
+}
+
+
 bool of_ANDR(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
