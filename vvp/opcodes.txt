@@ -630,6 +630,14 @@ The dar/r variant reads a real-value into a real-valued register.
 
 (See also %set/dar)
 
+* %load/obj <var-label>
+
+This instruction loads an object handle and pushes it to the top of
+the object handle stack.
+
+See also %store/obj.
+
+
 * %load/real <vpi-label>
 
 The %load/real instruction reads a real value from the vpi-like object
@@ -978,6 +986,8 @@ For a negative shift %shiftr/i0 will pad the value with 'bx.
 
 This pops the top of the object stack and writes it to the object
 variable given by the label.
+
+See also %load/obj.
 
 * %store/real <var-label>
 * %store/reala <var-label> <index>

@@ -20,6 +20,7 @@
 # include "config.h"
 
 # include  "netlist.h"
+# include  "netclass.h"
 # include  "netdarray.h"
 
 /*
@@ -105,6 +106,21 @@ ivl_variable_type_t NetAssign_::expr_type() const
       }
 
       return sig_->data_type();
+}
+
+const ivl_type_s* NetAssign_::net_type() const
+{
+      if (dynamic_cast<const netclass_t*> (sig_->net_type()))
+	    return sig_->net_type();
+
+      if (dynamic_cast<const netdarray_t*> (sig_->net_type())) {
+	    if (word_ == 0)
+		  return sig_->net_type();
+
+	    return 0;
+      }
+
+      return 0;
 }
 
 netenum_t*NetAssign_::enumeration() const

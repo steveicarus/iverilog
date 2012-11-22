@@ -3383,6 +3383,21 @@ bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %load/obj <var-label>
+ */
+bool of_LOAD_OBJ(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*fun = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(fun);
+
+      vvp_object_t val = fun->get_object();
+      thr->push_object(val);
+
+      return true;
+}
+
+/*
  * %load/real <var-label>
  */
 bool of_LOAD_REAL(vthread_t thr, vvp_code_t cp)

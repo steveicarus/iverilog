@@ -2501,6 +2501,52 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       return expr_width_;
 }
 
+
+NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
+				 ivl_type_t ntype, unsigned) const
+{
+      NetNet*       net = 0;
+      const NetExpr*par = 0;
+      NetEvent*     eve = 0;
+      const NetExpr*ex1, *ex2;
+
+      NetScope*found_in = symbol_search(this, des, scope, path_,
+					net, par, eve,
+					ex1, ex2);
+
+      if (net == 0) {
+	    cerr << get_fileline() << ": internal error: "
+		 << "Expecting idents wtih ntype to be signals." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (net->net_type() != ntype) {
+	    cerr << get_fileline() << ": internal_error: "
+		 << "net type doesn't match context type." << endl;
+
+	    cerr << get_fileline() << ":               : "
+		 << "net type=";
+	    if (net->net_type())
+		  net->net_type()->debug_dump(cerr);
+	    else
+		  cerr << "<nil>";
+	    cerr << endl;
+
+	    cerr << get_fileline() << ":               : "
+		 << "context type=";
+	    ivl_assert(*this, ntype);
+	    ntype->debug_dump(cerr);
+	    cerr << endl;
+      }
+      ivl_assert(*this, net->net_type() == ntype);
+
+      NetESignal*tmp = new NetESignal(net);
+      tmp->set_line(*this);
+
+      return tmp;
+}
+
 /*
  * Elaborate an identifier in an expression. The identifier can be a
  * parameter name, a signal name or a memory name. It can also be a

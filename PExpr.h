@@ -312,6 +312,8 @@ class PEIdent : public PExpr {
 					 NetScope*scope,
 					 bool is_force) const;
 
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     ivl_type_t type, unsigned flags) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     unsigned expr_wid,
                                      unsigned flags) const;

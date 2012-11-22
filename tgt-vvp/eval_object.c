@@ -79,6 +79,13 @@ static int eval_object_null(ivl_expr_t ex)
       return 0;
 }
 
+static int eval_object_signal(ivl_expr_t ex)
+{
+      ivl_signal_t sig = ivl_expr_signal(ex);
+      fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+      return 0;
+}
+
 int draw_eval_object(ivl_expr_t ex)
 {
       switch (ivl_expr_type(ex)) {
@@ -90,7 +97,7 @@ int draw_eval_object(ivl_expr_t ex)
 		case IVL_VT_DARRAY:
 		  return eval_darray_new(ex);
 		default:
-		  fprintf(vvp_out, "; ERROR: Invalid type (%d) for <new>\n",
+		  fprintf(vvp_out, "; ERROR: draw_eval_object: Invalid type (%d) for <new>\n",
 			  ivl_expr_value(ex));
 		  return 0;
 	    }
@@ -98,8 +105,11 @@ int draw_eval_object(ivl_expr_t ex)
 	  case IVL_EX_NULL:
 	    return eval_object_null(ex);
 
+	  case IVL_EX_SIGNAL:
+	    return eval_object_signal(ex);
+
 	  default:
-	    fprintf(vvp_out, "; ERROR: Invalid expression type %u\n", ivl_expr_type(ex));
+	    fprintf(vvp_out, "; ERROR: draw_eval_object: Invalid expression type %u\n", ivl_expr_type(ex));
 	    return 1;
 
       }

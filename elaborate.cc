@@ -36,6 +36,8 @@
 # include  "PSpec.h"
 # include  "netlist.h"
 # include  "netvector.h"
+# include  "netdarray.h"
+# include  "netclass.h"
 # include  "netmisc.h"
 # include  "util.h"
 # include  "parse_api.h"
@@ -2377,20 +2379,18 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    delay = elaborate_delay_expr(delay_, des, scope);
 
       NetExpr*rv;
-      if (lv->more==0 && dynamic_cast<const PENew*> (rval())) {
-	      /* Special case: The l-value is a single signal, and the
-		 r-value expression is a "new" expression. The l-value
-		 has a new form of type, and the PENew expression
-		 requires the extra information that it contains. So
-		 handle it with this code instead. */
-	    rv = elaborate_rval_(des, scope, lv->sig()->net_type());
+      const ivl_type_s*lv_net_type = lv->net_type();
 
-      } else if (lv->more==0 && dynamic_cast<const PENull*> (rval())) {
-	    rv = elaborate_rval_(des, scope, lv->sig()->net_type());
+	/* If the l-value is a compound type of some sort, then use
+	   the newer net_type form of the elaborate_rval_ method to
+	   handle the new types. */
+      if (dynamic_cast<const netclass_t*> (lv_net_type)) {
+	    ivl_assert(*this, lv->more==0);
+	    rv = elaborate_rval_(des, scope, lv_net_type);
 
-      } else if (lv->more==0 && dynamic_cast<const PENewClass*> (rval())) {
-
-	    rv = elaborate_rval_(des, scope, lv->sig()->net_type());
+      } else if (dynamic_cast<const netdarray_t*> (lv_net_type)) {
+	    ivl_assert(*this, lv->more==0);
+	    rv = elaborate_rval_(des, scope, lv_net_type);
 
       } else {
 	      /* Elaborate the r-value expression, then try to evaluate it. */
