@@ -640,6 +640,7 @@ class NetNet  : public NetObj, public PortType {
       netenum_t*enumeration(void) const;
       const netstruct_t*struct_type(void) const;
       netdarray_t*darray_type(void) const;
+      netclass_t*class_type(void) const;
 
 	/* Attach a discipline to the net. */
       ivl_discipline_t get_discipline() const;
@@ -2446,6 +2447,10 @@ class NetAssign_ {
 	// that the expression calculates a CANONICAL bit address.
       void set_part(NetExpr* loff, unsigned wid,
                     ivl_select_type_t = IVL_SEL_OTHER);
+	// Set the member or property name if the signal type is a
+	// class.
+      void set_property(const perm_string&name);
+      inline perm_string get_property(void) const { return member_; }
 
 	// Get the width of the r-value that this node expects. This
 	// method accounts for the presence of the mux, so it is not
@@ -2487,6 +2492,8 @@ class NetAssign_ {
       NetNet *sig_;
 	// Memory word index
       NetExpr*word_;
+	// member/property if signal is a class.
+      perm_string member_;
 
       bool turn_sig_to_wire_on_release_;
 	// indexed part select base
@@ -3921,6 +3928,30 @@ class NetENull : public NetExpr {
       virtual NexusSet* nex_input(bool rem_out = true);
 
       virtual void dump(ostream&os) const;
+};
+
+/*
+ * The NetEProperty represents a SystemVerilog properrty select of a
+ * class object. In SV, the expression would look like "a.b", where
+ * the "a" is the signal (the NetNet) and "b" is the property name.
+ */
+class NetEProperty : public NetExpr {
+    public:
+      NetEProperty(NetNet*n, perm_string pname);
+      ~NetEProperty();
+
+      inline const NetNet* get_sig() const { return net_; }
+      inline const char*   get_pname() const { return pname_.str(); }
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetEProperty* dup_expr() const;
+      virtual NexusSet* nex_input(bool rem_out = true);
+
+      virtual void dump(ostream&os) const;
+
+    private:
+      NetNet*net_;
+      perm_string pname_;
 };
 
 /*

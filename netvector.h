@@ -38,7 +38,8 @@ class netvector_t : public ivl_type_s {
 	// special case: there is a single packed dimension and we
 	// know it in the form [<msb>:<lsb>]. This step saves me
 	// creating a netrange_t for this single item.
-      explicit netvector_t(ivl_variable_type_t type, long msb, long lsb);
+      explicit netvector_t(ivl_variable_type_t type, long msb, long lsb,
+			   bool signed_flag =false);
 
 	// Special case: scaler object--no packed dimenions at all.
       explicit netvector_t(ivl_variable_type_t type);
@@ -63,6 +64,15 @@ class netvector_t : public ivl_type_s {
       std::vector<netrange_t> slice_dimensions() const;
 
       std::ostream& debug_dump(std::ostream&) const;
+
+    public:
+	// Some commonly used predefined types
+      static netvector_t atom2s32;
+      static netvector_t atom2u32;
+      static netvector_t atom2s16;
+      static netvector_t atom2u16;
+      static netvector_t atom2s8;
+      static netvector_t atom2u8;
 
     private:
       std::vector<netrange_t> packed_dims_;

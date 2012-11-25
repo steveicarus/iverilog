@@ -205,6 +205,19 @@ static void show_null_expression(ivl_expr_t net, unsigned ind)
       }
 }
 
+static void show_property_expression(ivl_expr_t net, unsigned ind)
+{
+      ivl_signal_t sig = ivl_expr_signal(net);
+      const char* pnam = ivl_expr_name(net);
+
+      fprintf(out, "%*s%s<property>%s\n", ind, "",
+	      ivl_signal_basename(sig), pnam);
+      if (ivl_signal_data_type(sig) != IVL_VT_CLASS) {
+	    fprintf(out, "%*sERROR: Property signal must be IVL_VT_CLASS, got %s.\n",
+		    ind+3, "", data_type_string(ivl_signal_data_type(sig)));
+      }
+}
+
 static void show_select_expression(ivl_expr_t net, unsigned ind)
 {
       unsigned width = ivl_expr_width(net);
@@ -397,6 +410,10 @@ void show_expression(ivl_expr_t net, unsigned ind)
 
 	  case IVL_EX_NULL:
 	    show_null_expression(net, ind);
+	    break;
+
+	  case IVL_EX_PROPERTY:
+	    show_property_expression(net, ind);
 	    break;
 
 	  case IVL_EX_NUMBER: {

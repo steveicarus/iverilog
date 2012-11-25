@@ -27,6 +27,7 @@
 # include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "netclass.h"
 # include  "netdarray.h"
 # include  "netenum.h"
 # include  "netparray.h"
@@ -805,6 +806,11 @@ const netstruct_t*NetNet::struct_type(void) const
 netdarray_t* NetNet::darray_type(void) const
 {
       return dynamic_cast<netdarray_t*> (net_type_);
+}
+
+netclass_t* NetNet::class_type(void) const
+{
+      return dynamic_cast<netclass_t*> (net_type_);
 }
 
 /*

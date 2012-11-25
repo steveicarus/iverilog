@@ -106,6 +106,11 @@ NexusSet* NetENull::nex_input(bool)
       return new NexusSet;
 }
 
+NexusSet* NetEProperty::nex_input(bool)
+{
+      return new NexusSet;
+}
+
 NexusSet* NetEScope::nex_input(bool)
 {
       return new NexusSet;

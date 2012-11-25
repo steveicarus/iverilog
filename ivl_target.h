@@ -227,6 +227,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_NEW    = 23,
       IVL_EX_NULL   = 22,
       IVL_EX_NUMBER = 5,
+      IVL_EX_PROPERTY = 24,
       IVL_EX_REALNUM  = 16,
       IVL_EX_SCOPE  = 6,
       IVL_EX_SELECT = 7,
@@ -866,7 +867,7 @@ extern uint64_t ivl_expr_delay_val(ivl_expr_t net);
 extern double ivl_expr_dvalue(ivl_expr_t net);
   /* IVL_EX_ENUMTYPE */
 extern ivl_enumtype_t ivl_expr_enumtype(ivl_expr_t net);
-  /* IVL_EX_SIGNAL, IVL_EX_SFUNC, IVL_EX_VARIABLE */
+  /* IVL_EX_PROPERTY IVL_EX_SIGNAL IVL_EX_SFUNC IVL_EX_VARIABLE */
 extern const char* ivl_expr_name(ivl_expr_t net);
   /* IVL_EX_BACCESS */
 extern ivl_nature_t ivl_expr_nature(ivl_expr_t net);
@@ -892,7 +893,7 @@ extern ivl_select_type_t ivl_expr_sel_type(ivl_expr_t net);
 extern ivl_event_t ivl_expr_event(ivl_expr_t net);
   /* IVL_EX_SCOPE */
 extern ivl_scope_t ivl_expr_scope(ivl_expr_t net);
-  /* IVL_EX_SIGNAL */
+  /* IVL_EX_PROPERTY IVL_EX_SIGNAL */
 extern ivl_signal_t ivl_expr_signal(ivl_expr_t net);
   /* any expression */
 extern int         ivl_expr_signed(ivl_expr_t net);
@@ -1430,6 +1431,11 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  *    ivl_expr_t that represents the index expression.  Otherwise, it
  *    returns 0.
  *
+ * ivl_lval_property
+ *    If the l-value is a class object, this is the name of a property
+ *    to select from the object. If this property is not present, then
+ *    the l-value represents the class object itself.
+ *
  * SEMANTIC NOTES
  * The ivl_lval_width is not necessarily the same as the width of the
  * signal or memory word it represents. It is the width of the vector
@@ -1455,6 +1461,7 @@ extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net); /* XXXX Obsolete? */
 extern ivl_expr_t  ivl_lval_idx(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_part_off(ivl_lval_t net);
 extern ivl_select_type_t ivl_lval_sel_type(ivl_lval_t net);
+extern const char* ivl_lval_property(ivl_lval_t net);
 extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);
 
 

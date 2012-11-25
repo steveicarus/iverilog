@@ -348,6 +348,15 @@ NetENull::~NetENull()
 {
 }
 
+NetEProperty::NetEProperty(NetNet*net, perm_string pnam)
+: net_(net), pname_(pnam)
+{
+}
+
+NetEProperty::~NetEProperty()
+{
+}
+
 NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,
                        ivl_select_type_t sel_type)
 : expr_(exp), base_(base), sel_type_(sel_type)

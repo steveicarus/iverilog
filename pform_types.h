@@ -34,7 +34,10 @@
  * parse-form types.
  */
 
+class Design;
+class NetScope;
 class PExpr;
+class ivl_type_s;
 typedef named<verinum> named_number_t;
 typedef named<PExpr*> named_pexpr_t;
 typedef std::pair<PExpr*,PExpr*> pform_range_t;
@@ -77,6 +80,8 @@ class data_type_t : public LineInfo {
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
 	// This method is used by the pform dumper to diagnostic dump.
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
+	// Elaborate the type to an ivl_type_s type.
+      virtual ivl_type_s* elaborate_type(Design*des, NetScope*scope) const;
 };
 
 /*
@@ -113,6 +118,8 @@ struct atom2_type_t : public data_type_t {
       : type_code(tc), signed_flag(flag) { }
       int type_code;
       bool signed_flag;
+
+      ivl_type_s* elaborate_type(Design*des, NetScope*scope) const;
 };
 
 /*

@@ -292,7 +292,15 @@ static void elaborate_scope_enumerations(Design*des, NetScope*scope,
 static void elaborate_scope_class(Design*des, NetScope*scope,
 				  PClass*pclass)
 {
-      netclass_t*use_class = new netclass_t(pclass->type->name);
+      class_type_t*use_type = pclass->type;
+      netclass_t*use_class = new netclass_t(use_type->name);
+
+      for (map<perm_string, data_type_t*>::iterator cur = use_type->properties.begin()
+		 ; cur != use_type->properties.end() ; ++ cur) {
+	    ivl_type_s*tmp = cur->second->elaborate_type(des, scope);
+	    use_class->set_property(cur->first, tmp);
+      }
+
       scope->add_class(use_class);
 }
 

@@ -22,20 +22,31 @@
 # include  "LineInfo.h"
 # include  "ivl_target.h"
 # include  "nettypes.h"
+# include  <map>
 
 class netclass_t : public ivl_type_s {
     public:
       netclass_t(perm_string class_name);
       ~netclass_t();
 
+	// Set the property of the class during elaboration. Set the
+	// name and type, and return true. If the name is already
+	// present, then return false.
+      bool set_property(perm_string pname, ivl_type_s*ptype);
+
 	// As an ivl_type_s object, the netclass is always an
 	// ivl_VT_CLASS object.
       ivl_variable_type_t base_type() const;
 
+	// This is the name of the class type
       inline perm_string get_name() const { return name_; }
+
+      const ivl_type_s* get_property(perm_string pname) const;
 
     private:
       perm_string name_;
+	// Bind properties to their types.
+      std::map<perm_string,ivl_type_s*> properties_;
 };
 
 #endif

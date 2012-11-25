@@ -30,6 +30,12 @@ static unsigned show_assign_lval_darray(ivl_lval_t lval, unsigned ind)
       ivl_signal_t sig = ivl_lval_sig(lval);
       assert(sig);
 
+      fprintf(out, "%*s{name=%s darray width=%u l-value width=%u}\n",
+	      ind, "",
+	      ivl_signal_name(sig),
+	      ivl_signal_width(sig),
+	      ivl_lval_width(lval));
+
       if (ivl_lval_idx(lval)) {
 	    fprintf(out, "%*sAddress-0 select of ", ind+4, "");
 	    show_type_of_signal(sig);
@@ -51,20 +57,48 @@ static unsigned show_assign_lval_darray(ivl_lval_t lval, unsigned ind)
       return ivl_lval_width(lval);
 }
 
+static unsigned show_assign_lval_class(ivl_lval_t lval, unsigned ind)
+{
+      ivl_signal_t sig = ivl_lval_sig(lval);
+      const char*sig_prop = ivl_lval_property(lval);
+      assert(sig);
+
+	/* If there is no property select, then this l-value is for
+	   the class handle itself. */
+      if (sig_prop == 0) {
+	    fprintf(out, "%*s{name=%s class object}\n", ind, "", ivl_signal_name(sig));
+	    if (ivl_lval_width(lval) != 1) {
+		  fprintf(out, "%*sERROR: ivl_lval_width should be 1 for class objects\n",
+			  ind+4, "");
+		  stub_errors += 1;
+	    }
+	    return ivl_lval_width(lval);
+      }
+
+      fprintf(out, "%*s{name=%s<property>%s l-value width=%u}\n",
+	      ind, "", ivl_signal_name(sig), sig_prop, ivl_lval_width(lval));
+
+      return ivl_lval_width(lval);
+}
+
 static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
       assert(sig);
 
-      fprintf(out, "%*s{name=%s width=%u lvwidth=%u}\n",
+	/* Special case: target signal is a darray. */
+      if (ivl_signal_data_type(sig) == IVL_VT_DARRAY)
+	    return show_assign_lval_darray(lval, ind);
+
+	/* Special case: target signal is a class. */
+      if (ivl_signal_data_type(sig) == IVL_VT_CLASS)
+	    return show_assign_lval_class(lval, ind);
+
+      fprintf(out, "%*s{name=%s signal width=%u l-value width=%u}\n",
 	      ind, "",
 	      ivl_signal_name(sig),
 	      ivl_signal_width(sig),
 	      ivl_lval_width(lval));
-
-	/* Special case: target signal is a darray. */
-      if (ivl_signal_data_type(sig) == IVL_VT_DARRAY)
-	    return show_assign_lval_darray(lval, ind);
 
       if (ivl_lval_idx(lval)) {
 	    fprintf(out, "%*sAddress-0 select expression:\n", ind+4, "");

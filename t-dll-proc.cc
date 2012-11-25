@@ -162,6 +162,7 @@ void dll_target::make_assign_lvals_(const NetAssignBase*net)
 	    }
 
 	    cur->width_ = asn->lwidth();
+	    cur->property = asn->get_property();
 
 	    if (asn->sig()) {
 		  cur->type_ = IVL_LVAL_REG;

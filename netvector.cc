@@ -21,8 +21,15 @@
 
 using namespace std;
 
-netvector_t::netvector_t(ivl_variable_type_t type, long msb, long lsb)
-: type_(type), signed_(false), isint_(false), is_scalar_(false)
+netvector_t netvector_t::atom2s32 (IVL_VT_BOOL, 31, 0, true);
+netvector_t netvector_t::atom2u32 (IVL_VT_BOOL, 31, 0, false);
+netvector_t netvector_t::atom2s16 (IVL_VT_BOOL, 16, 0, true);
+netvector_t netvector_t::atom2u16 (IVL_VT_BOOL, 16, 0, false);
+netvector_t netvector_t::atom2s8  (IVL_VT_BOOL,  8, 0, true);
+netvector_t netvector_t::atom2u8  (IVL_VT_BOOL,  8, 0, false);
+
+netvector_t::netvector_t(ivl_variable_type_t type, long msb, long lsb, bool flag)
+: type_(type), signed_(flag)
 {
       packed_dims_.push_back(netrange_t(msb,lsb));
 }

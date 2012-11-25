@@ -26,6 +26,7 @@
 
 # include  "pform.h"
 # include  "netlist.h"
+# include  "netclass.h"
 # include  "netenum.h"
 # include  "netvector.h"
 # include  "discipline.h"
@@ -1673,6 +1674,28 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
       return sel;
 }
 
+static NetExpr* check_for_class_property(const LineInfo*li,
+					 Design*des, NetScope*scope,
+					 NetNet*net,
+					 const name_component_t&comp)
+{
+      netclass_t*class_type = net->class_type();
+      const ivl_type_s*ptype = class_type->get_property(comp.name);
+
+      if (ptype == 0) {
+	    cerr << li->get_fileline() << ": error: "
+		 << "Class " << class_type->get_name()
+		 << " has no property " << comp.name << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetEProperty*tmp = new NetEProperty(net, comp.name);
+      tmp->set_line(*li);
+      return tmp;
+}
+
+
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					unsigned expr_wid, unsigned flags) const
 {
@@ -2488,6 +2511,17 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 			      return expr_width_;
 			}
 		  }
+
+		  if (netclass_t*class_type = net->class_type()) {
+			const ivl_type_s*ptype = class_type->get_property(method_name);
+			if (ptype) {
+			      expr_type_   = ptype->base_type();
+			      expr_width_  = ptype->packed_width();
+			      min_width_   = expr_width_;
+			      signed_flag_ = ptype->get_signed();
+			      return expr_width_;
+			}
+		  }
 	    }
       }
 
@@ -2736,6 +2770,16 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 							member_comp);
 		  }
 
+		  if (net->class_type() != 0) {
+			if (debug_elaborate) {
+			      cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+				   << "Ident " << use_path
+				   << " look for property " << member_comp << endl;
+			}
+
+			return check_for_class_property(this, des, scope,
+							net, member_comp);
+		  }
 	    }
       }
 

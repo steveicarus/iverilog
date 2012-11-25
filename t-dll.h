@@ -140,6 +140,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_new(const NetENew*);
       void expr_null(const NetENull*);
       void expr_param(const NetEConstParam*);
+      void expr_property(const NetEProperty*);
       void expr_rparam(const NetECRealParam*);
       void expr_event(const NetEEvent*);
       void expr_scope(const NetEScope*);
@@ -324,6 +325,10 @@ struct ivl_expr_s {
 		  ivl_expr_t size;
 	    } new_;
 
+	    struct {
+		  ivl_signal_t sig;
+		  const char*pname;
+	    } property_;
       } u_;
 };
 
@@ -441,10 +446,11 @@ enum ivl_lval_type_t {
 
 struct ivl_lval_s {
       ivl_expr_t loff;
-      ivl_select_type_t sel_type;
+      ivl_select_type_t sel_type :3;
       ivl_expr_t idx;
       unsigned width_;
       unsigned type_   : 8;
+      perm_string property;
       union {
 	    ivl_signal_t sig;
 	    ivl_memory_t mem;

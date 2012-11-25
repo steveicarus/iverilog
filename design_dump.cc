@@ -857,6 +857,9 @@ void NetAssign_::dump_lval(ostream&o) const
 {
       if (sig_) {
 	    o << sig_->name();
+	    if (! member_.nil()) {
+		  o << "." << member_;
+	    }
 	    if (word_) {
 		  o << "[word=" << *word_ << "]";
 	    }
@@ -1517,6 +1520,11 @@ void NetENew::dump(ostream&o) const
 void NetENull::dump(ostream&o) const
 {
       o << "<null>";
+}
+
+void NetEProperty::dump(ostream&o) const
+{
+      o << net_->name() << "." << pname_;
 }
 
 void NetEScope::dump(ostream&o) const

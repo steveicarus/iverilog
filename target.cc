@@ -461,6 +461,12 @@ void expr_scan_t::expr_param(const NetEConstParam*that)
       expr_const(that);
 }
 
+void expr_scan_t::expr_property(const NetEProperty*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_property." << endl;
+}
+
 void expr_scan_t::expr_creal(const NetECReal*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "

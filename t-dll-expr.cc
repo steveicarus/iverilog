@@ -350,6 +350,21 @@ void dll_target::expr_null(const NetENull*net)
       expr_->net_type= 0;
 }
 
+void dll_target::expr_property(const NetEProperty*net)
+{
+      assert(expr_ == 0);
+      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_->width_  = net->expr_width();
+      expr_->signed_ = net->has_sign();
+      expr_->sized_  = 1;
+      expr_->type_   = IVL_EX_PROPERTY;
+      FILE_NAME(expr_, net);
+      expr_->value_  = net->expr_type();
+      expr_->net_type= net->net_type();
+      expr_->u_.property_.sig = find_signal(des_, net->get_sig());
+      expr_->u_.property_.pname = net->get_pname();
+}
+
 void dll_target::expr_event(const NetEEvent*net)
 {
       assert(expr_ == 0);

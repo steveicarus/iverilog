@@ -189,6 +189,12 @@ NetENull* NetENull::dup_expr() const
       return 0;
 }
 
+NetEProperty* NetEProperty::dup_expr() const
+{
+      ivl_assert(*this, 0);
+      return 0;
+}
+
 NetEScope* NetEScope::dup_expr() const
 {
       ivl_assert(*this, 0);

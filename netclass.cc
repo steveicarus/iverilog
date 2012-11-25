@@ -18,6 +18,9 @@
  */
 
 # include  "netclass.h"
+# include  <iostream>
+
+using namespace std;
 
 netclass_t::netclass_t(perm_string name)
 : name_(name)
@@ -28,7 +31,28 @@ netclass_t::~netclass_t()
 {
 }
 
+bool netclass_t::set_property(perm_string pname, ivl_type_s*ptype)
+{
+      map<perm_string,ivl_type_s*>::const_iterator cur;
+      cur = properties_.find(pname);
+      if (cur != properties_.end())
+	    return false;
+
+      properties_[pname] = ptype;
+      return true;
+}
+
 ivl_variable_type_t netclass_t::base_type() const
 {
       return IVL_VT_CLASS;
+}
+
+const ivl_type_s* netclass_t::get_property(perm_string pname) const
+{
+      map<perm_string,ivl_type_s*>::const_iterator cur;
+      cur = properties_.find(pname);
+      if (cur == properties_.end())
+	    return 0;
+      else
+	    return cur->second;
 }

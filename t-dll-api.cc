@@ -428,6 +428,9 @@ extern "C" const char* ivl_expr_name(ivl_expr_t net)
 	  case IVL_EX_SIGNAL:
 	    return net->u_.signal_.sig->name_;
 
+	  case IVL_EX_PROPERTY:
+	    return net->u_.property_.pname;
+
 	  default:
 	    assert(0);
       }
@@ -616,6 +619,9 @@ extern "C" ivl_signal_t ivl_expr_signal(ivl_expr_t net)
 	  case IVL_EX_SIGNAL:
 	  case IVL_EX_ARRAY:
 	    return net->u_.signal_.sig;
+
+	  case IVL_EX_PROPERTY:
+	    return net->u_.property_.sig;
 
 	  default:
 	    assert(0);
@@ -1552,6 +1558,15 @@ extern "C" unsigned ivl_lval_width(ivl_lval_t net)
 {
       assert(net);
       return net->width_;
+}
+
+extern "C" const char* ivl_lval_property(ivl_lval_t net)
+{
+      assert(net);
+      if (net->property.nil())
+	    return 0;
+      else
+	    return net->property.str();
 }
 
 extern "C" ivl_signal_t ivl_lval_sig(ivl_lval_t net)

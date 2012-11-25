@@ -561,6 +561,11 @@ void NetENull::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_null(this);
 }
 
+void NetEProperty::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_property(this);
+}
+
 void NetEScope::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_scope(this);
