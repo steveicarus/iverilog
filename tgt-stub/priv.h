@@ -49,6 +49,7 @@ extern ivl_discipline_t discipline_of_nexus(ivl_nexus_t nex);
  */
 extern void test_expr_is_delay(ivl_expr_t expr);
 
+extern void show_class(ivl_type_t net);
 extern void show_enumerate(ivl_enumtype_t net);
 
 /*
@@ -71,3 +72,5 @@ extern void show_switch(ivl_switch_t net);
 /*
 */
 extern const char*data_type_string(ivl_variable_type_t vtype);
+
+extern void show_net_type(ivl_type_t net_type);

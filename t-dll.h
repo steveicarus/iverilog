@@ -58,6 +58,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       bool bufz(const NetBUFZ*);
       bool branch(const NetBranch*);
+      bool class_type(const NetScope*, netclass_t*);
       bool enumeration(const NetScope*, netenum_t*);
       void event(const NetEvent*);
       void logic(const NetLogic*);
@@ -638,6 +639,7 @@ struct ivl_scope_s {
       unsigned def_lineno;
       ivl_scope_type_t type_;
 
+      std::vector<ivl_type_t> classes;
       std::vector<ivl_enumtype_t> enumerations_;
 
       std::vector<ivl_signal_t> sigs_;

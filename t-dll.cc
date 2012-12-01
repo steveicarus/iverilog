@@ -25,6 +25,7 @@
 # include  <cstdio> // sprintf()
 # include  "compiler.h"
 # include  "t-dll.h"
+# include  "netclass.h"
 # include  "netmisc.h"
 # include  "discipline.h"
 # include  <cstdlib>
@@ -394,11 +395,6 @@ void scope_add_logic(ivl_scope_t scope, ivl_net_logic_t net)
 	    scope->log_[scope->nlog_-1] = net;
       }
 
-}
-
-static void scope_add_enumeration(ivl_scope_t scope, ivl_enumtype_t net)
-{
-      scope->enumerations_.push_back(net);
 }
 
 void scope_add_event(ivl_scope_t scope, ivl_event_t net)
@@ -786,10 +782,17 @@ bool dll_target::bufz(const NetBUFZ*net)
       return true;
 }
 
+bool dll_target::class_type(const NetScope*in_scope, netclass_t*net)
+{
+      ivl_scope_t use_scope = find_scope(des_, in_scope);
+      use_scope->classes.push_back(net);
+      return true;
+}
+
 bool dll_target::enumeration(const NetScope*in_scope, netenum_t*net)
 {
-      ivl_scope_t scop = find_scope(des_, in_scope);
-      scope_add_enumeration(scop, net);
+      ivl_scope_t use_scope = find_scope(des_, in_scope);
+      use_scope->enumerations_.push_back(net);
       return true;
 }
 

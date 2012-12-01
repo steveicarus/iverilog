@@ -1741,6 +1741,8 @@ extern ivl_statement_t ivl_scope_def(ivl_scope_t net);
 extern const char* ivl_scope_def_file(ivl_scope_t net);
 extern unsigned ivl_scope_def_lineno(ivl_scope_t net);
 
+extern unsigned   ivl_scope_classes(ivl_scope_t net);
+extern ivl_type_t ivl_scope_class(ivl_scope_t net, unsigned idx);
 extern unsigned       ivl_scope_enumerates(ivl_scope_t net);
 extern ivl_enumtype_t ivl_scope_enumerate(ivl_scope_t net, unsigned idx);
 extern unsigned     ivl_scope_events(ivl_scope_t net);
@@ -2213,12 +2215,18 @@ extern unsigned ivl_switch_lineno(ivl_switch_t net);
  *    for array types.
  *
  * SEMANTIC NOTES
+ *
+ * Class types have names and properties.
  */
 extern ivl_variable_type_t ivl_type_base(ivl_type_t net);
 extern ivl_type_t ivl_type_element(ivl_type_t net);
 extern unsigned ivl_type_packed_dimensions(ivl_type_t net);
 extern int ivl_type_packed_lsb(ivl_type_t net, unsigned dim);
 extern int ivl_type_packed_msb(ivl_type_t net, unsigned dim);
+extern const char* ivl_type_name(ivl_type_t net);
+extern unsigned    ivl_type_properties(ivl_type_t net);
+extern const char* ivl_type_prop_name(ivl_type_t net, unsigned idx);
+extern ivl_type_t  ivl_type_prop_type(ivl_type_t net, unsigned idx);
 
 
 #if defined(__MINGW32__) || defined (__CYGWIN32__)

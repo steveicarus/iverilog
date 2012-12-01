@@ -43,6 +43,13 @@ bool target_t::branch(const NetBranch*obj)
       return false;
 }
 
+bool target_t::class_type(const NetScope*, netclass_t*obj)
+{
+      cerr << "<>:0" << ": error: target (" << typeid(*this).name()
+	   <<  "): Unhandled class_type <" << obj << ">." << endl;
+      return false;
+}
+
 void target_t::event(const NetEvent*ev)
 {
       cerr << ev->get_fileline() << ": error: target (" << typeid(*this).name()

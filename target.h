@@ -56,6 +56,8 @@ struct target_t {
 	   anything else is called. */
       virtual void scope(const NetScope*);
 
+      virtual bool class_type(const NetScope*, netclass_t*);
+
 	/* This is called to convert module ports from a NetNet* to an
 	 * ivl_signal_t object. */
       virtual void convert_module_ports(const NetScope*);

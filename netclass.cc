@@ -39,6 +39,7 @@ bool netclass_t::set_property(perm_string pname, ivl_type_s*ptype)
 	    return false;
 
       properties_[pname] = ptype;
+      property_table_.push_back(pname);
       return true;
 }
 
@@ -55,4 +56,16 @@ const ivl_type_s* netclass_t::get_property(perm_string pname) const
 	    return 0;
       else
 	    return cur->second;
+}
+
+const char*netclass_t::get_prop_name(size_t idx) const
+{
+      assert(idx < property_table_.size());
+      return property_table_[idx];
+}
+
+ivl_type_t netclass_t::get_prop_type(size_t idx) const
+{
+      assert(idx < property_table_.size());
+      return get_property(property_table_[idx]);
 }

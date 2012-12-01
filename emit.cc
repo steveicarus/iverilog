@@ -385,6 +385,10 @@ void NetScope::emit_scope(struct target_t*tgt) const
       for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_)
 	    tgt->event(cur);
 
+      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
+		 ; cur != classes_.end() ; ++cur)
+	    tgt->class_type(this, cur->second);
+
       for (list<netenum_t*>::const_iterator cur = enum_sets_.begin()
 		 ; cur != enum_sets_.end() ;  ++cur)
 	    tgt->enumeration(this, *cur);

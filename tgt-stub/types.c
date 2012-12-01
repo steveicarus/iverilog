@@ -21,8 +21,6 @@
 # include  "priv.h"
 # include  <string.h>
 
-static void show_net_type(ivl_type_t net_type);
-
 static void show_net_type_darray(ivl_type_t net_type)
 {
 	/* Dynamic arrays have a single element type. */
@@ -32,7 +30,7 @@ static void show_net_type_darray(ivl_type_t net_type)
       show_net_type(element_type);
 }
 
-static void show_net_type(ivl_type_t net_type)
+void show_net_type(ivl_type_t net_type)
 {
       ivl_variable_type_t data_type = ivl_type_base(net_type);
 

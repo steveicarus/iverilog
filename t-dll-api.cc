@@ -21,6 +21,7 @@
 # include  "StringHeap.h"
 # include  "t-dll.h"
 # include  "discipline.h"
+# include  "netclass.h"
 # include  "netdarray.h"
 # include  "netenum.h"
 # include  "netvector.h"
@@ -1855,6 +1856,18 @@ extern "C" int ivl_scope_children(ivl_scope_t net,
       return 0;
 }
 
+extern "C" ivl_type_t ivl_scope_class(ivl_scope_t net, unsigned idx)
+{
+      assert(idx < net->classes.size());
+      return net->classes[idx];
+}
+
+extern "C" unsigned ivl_scope_classes(ivl_scope_t net)
+{
+      return net->classes.size();
+}
+
+
 extern "C" ivl_statement_t ivl_scope_def(ivl_scope_t net)
 {
       assert(net);
@@ -2840,4 +2853,37 @@ extern "C" int ivl_type_packed_msb(ivl_type_t net, unsigned dim)
       vector<netrange_t> slice = net->slice_dimensions();
       assert(dim < slice.size());
       return slice[dim].get_msb();
+}
+
+extern "C" const char* ivl_type_name(ivl_type_t net)
+{
+      if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(net)) {
+	    return class_type->get_name();
+      }
+
+      return 0;
+}
+
+extern "C" unsigned ivl_type_properties(ivl_type_t net)
+{
+      const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);
+      assert(class_type);
+
+      return class_type->get_properties();
+}
+
+extern "C" const char* ivl_type_prop_name(ivl_type_t net, unsigned idx)
+{
+      const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);
+      assert(class_type);
+
+      return class_type->get_prop_name(idx);
+}
+
+extern "C" ivl_type_t ivl_type_prop_type(ivl_type_t net, unsigned idx)
+{
+      const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);
+      assert(class_type);
+
+      return class_type->get_prop_type(idx);
 }

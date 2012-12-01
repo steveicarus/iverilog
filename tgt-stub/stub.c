@@ -1588,6 +1588,9 @@ static int show_scope(ivl_scope_t net, void*x)
 	    }
       }
 
+      for (idx = 0 ;  idx < ivl_scope_classes(net) ; idx += 1)
+	    show_class(ivl_scope_class(net, idx));
+
       for (idx = 0 ;  idx < ivl_scope_params(net) ;  idx += 1)
 	    show_parameter(ivl_scope_param(net, idx));
 
