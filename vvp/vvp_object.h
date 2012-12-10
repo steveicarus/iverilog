@@ -45,6 +45,7 @@ class vvp_object_t {
     public:
       inline vvp_object_t() : ref_(0) { }
       vvp_object_t(const vvp_object_t&that);
+      explicit vvp_object_t(class vvp_object*that);
       ~vvp_object_t();
 
       vvp_object_t& operator = (const vvp_object_t&that);
@@ -68,6 +69,12 @@ inline vvp_object_t::vvp_object_t(const vvp_object_t&that)
 {
       ref_ = that.ref_;
       if (ref_) ref_->ref_cnt_ += 1;
+}
+
+inline vvp_object_t::vvp_object_t(class vvp_object*tgt)
+{
+      if (tgt) tgt->ref_cnt_ += 1;
+      ref_ = tgt;
 }
 
 inline vvp_object_t::~vvp_object_t()

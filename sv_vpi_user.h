@@ -57,6 +57,8 @@ EXTERN_C_START
 #define vpiEnumTypespec     633
 #define vpiEnumConst        634
 
+#define vpiClassDefn        652
+
 /********* One-to-One ***********/
 #define vpiBaseTypespec     703
 

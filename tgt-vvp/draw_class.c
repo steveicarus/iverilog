@@ -1,5 +1,3 @@
-#ifndef __vvp_cobject_H
-#define __vvp_cobject_H
 /*
  * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
  *
@@ -19,24 +17,30 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include  "vvp_object.h"
 
-class class_type;
-class vvp_vector4_t;
+# include  "vvp_priv.h"
+# include  <stdlib.h>
+# include  <string.h>
+# include  <assert.h>
+# include  <inttypes.h>
 
-class vvp_cobject : public vvp_object {
+static void show_prop_type(ivl_type_t ptype)
+{
+	// XXXX: For now, assume all properties are 32bit integers.
+      fprintf(vvp_out, "\"b32\"");
+}
 
-    public:
-      explicit vvp_cobject(const class_type*defn);
-      ~vvp_cobject();
+void draw_class_in_scope(ivl_type_t classtype)
+{
+      int idx;
+      fprintf(vvp_out, "C%p  .class \"%s\" [%d]\n",
+	      classtype, ivl_type_name(classtype), ivl_type_properties(classtype));
 
-      void set_vec4(size_t pid, const vvp_vector4_t&val);
-      void get_vec4(size_t pid, vvp_vector4_t&val);
+      for (idx = 0 ; idx < ivl_type_properties(classtype) ; idx += 1) {
+	    fprintf(vvp_out, " %3d: \"%s\", ", idx, ivl_type_prop_name(classtype,idx));
+	    show_prop_type(ivl_type_prop_type(classtype,idx));
+	    fprintf(vvp_out, "\n");
+      }
 
-    private:
-      const class_type* defn_;
-	// For now, only support 32bit bool signed properties.
-      int32_t*properties_;
-};
-
-#endif
+      fprintf(vvp_out, " ;\n");
+}

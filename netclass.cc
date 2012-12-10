@@ -33,13 +33,17 @@ netclass_t::~netclass_t()
 
 bool netclass_t::set_property(perm_string pname, ivl_type_s*ptype)
 {
-      map<perm_string,ivl_type_s*>::const_iterator cur;
+      map<perm_string,size_t>::const_iterator cur;
       cur = properties_.find(pname);
       if (cur != properties_.end())
 	    return false;
 
-      properties_[pname] = ptype;
-      property_table_.push_back(pname);
+      prop_t tmp;
+      tmp.name = pname;
+      tmp.type = ptype;
+      property_table_.push_back(tmp);
+
+      properties_[pname] = property_table_.size()-1;
       return true;
 }
 
@@ -50,22 +54,33 @@ ivl_variable_type_t netclass_t::base_type() const
 
 const ivl_type_s* netclass_t::get_property(perm_string pname) const
 {
-      map<perm_string,ivl_type_s*>::const_iterator cur;
+      map<perm_string,size_t>::const_iterator cur;
       cur = properties_.find(pname);
       if (cur == properties_.end())
 	    return 0;
-      else
-	    return cur->second;
+
+      assert(property_table_.size() > cur->second);
+      return property_table_[cur->second].type;
+}
+
+int netclass_t::property_idx_from_name(perm_string pname) const
+{
+      map<perm_string,size_t>::const_iterator cur;
+      cur = properties_.find(pname);
+      if (cur == properties_.end())
+	    return -1;
+
+      return cur->second;
 }
 
 const char*netclass_t::get_prop_name(size_t idx) const
 {
       assert(idx < property_table_.size());
-      return property_table_[idx];
+      return property_table_[idx].name;
 }
 
 ivl_type_t netclass_t::get_prop_type(size_t idx) const
 {
       assert(idx < property_table_.size());
-      return get_property(property_table_[idx]);
+      return property_table_[idx].type;
 }

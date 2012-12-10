@@ -24,6 +24,7 @@
 # include  <cstring>
 # include  "t-dll.h"
 # include  "netlist.h"
+# include  "netclass.h"
 # include  <cassert>
 # include  <cstdlib>
 # include  "ivl_alloc.h"
@@ -362,7 +363,7 @@ void dll_target::expr_property(const NetEProperty*net)
       expr_->value_  = net->expr_type();
       expr_->net_type= net->net_type();
       expr_->u_.property_.sig = find_signal(des_, net->get_sig());
-      expr_->u_.property_.pname = net->get_pname();
+      expr_->u_.property_.prop_idx = net->property_idx();
 }
 
 void dll_target::expr_event(const NetEEvent*net)

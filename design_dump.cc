@@ -1524,7 +1524,7 @@ void NetENull::dump(ostream&o) const
 
 void NetEProperty::dump(ostream&o) const
 {
-      o << net_->name() << "." << pname_;
+      o << net_->name() << ".<" << pidx_ << ">";
 }
 
 void NetEScope::dump(ostream&o) const

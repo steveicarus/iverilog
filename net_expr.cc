@@ -349,8 +349,14 @@ NetENull::~NetENull()
 }
 
 NetEProperty::NetEProperty(NetNet*net, perm_string pnam)
-: net_(net), pname_(pnam)
+: net_(net)
 {
+      const netclass_t*use_type = dynamic_cast<const netclass_t*>(net->net_type());
+      assert(use_type);
+
+      pidx_ = use_type->property_idx_from_name(pnam);
+      ivl_type_t prop_type = use_type->get_prop_type(pidx_);
+      expr_width(prop_type->packed_width());
 }
 
 NetEProperty::~NetEProperty()

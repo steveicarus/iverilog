@@ -826,10 +826,32 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
       int errors = 0;
       ivl_lval_t lval = ivl_stmt_lval(net, 0);
       ivl_expr_t rval = ivl_stmt_rval(net);
-      ivl_signal_t var= ivl_lval_sig(lval);
+      ivl_signal_t sig= ivl_lval_sig(lval);
 
-      errors += draw_eval_object(rval);
-      fprintf(vvp_out, "    %%store/obj v%p_0;\n", var);
+      int prop_idx = ivl_lval_property_idx(lval);
+
+      if (prop_idx >= 0) {
+	    ivl_type_t sig_type = ivl_signal_net_type(sig);
+	    ivl_type_t prop_type = ivl_type_prop_type(sig_type, prop_idx);
+	    assert(ivl_type_base(prop_type) == IVL_VT_BOOL);
+	    assert(ivl_type_packed_dimensions(prop_type) == 1);
+	    assert(ivl_type_packed_msb(prop_type,0) >= ivl_type_packed_lsb(prop_type, 0));
+	    int wid = ivl_type_packed_msb(prop_type,0) - ivl_type_packed_lsb(prop_type,0) + 1;
+
+	    struct vector_info val = draw_eval_expr_wid(rval, wid, STUFF_OK_XZ);
+
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+	    fprintf(vvp_out, "    %%store/prop/v %d, %u, %u;\n", prop_idx, val.base, val.wid);
+	    clr_vector(val);
+
+      } else {
+	      /* There is no property select, so evaluate the r-value
+		 as an object and assign the entire object to the
+		 variable. */
+	    errors += draw_eval_object(rval);
+	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", sig);
+      }
+
       return errors;
 }
 

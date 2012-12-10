@@ -47,12 +47,18 @@ class netclass_t : public ivl_type_s {
       const char*get_prop_name(size_t idx) const;
       ivl_type_t get_prop_type(size_t idx) const;
 
+      int property_idx_from_name(perm_string pname) const;
+
     private:
       perm_string name_;
-	// Bind properties to their types.
-      std::map<perm_string,ivl_type_s*> properties_;
-	// This is to help the get_prop_name() method work.
-      std::vector<perm_string> property_table_;
+	// Map properrty names to property table index.
+      std::map<perm_string,size_t> properties_;
+	// Vector of properties.
+      struct prop_t {
+	    perm_string name;
+	    ivl_type_s* type;
+      };
+      std::vector<prop_t> property_table_;
 };
 
 #endif

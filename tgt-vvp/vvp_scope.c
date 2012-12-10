@@ -2228,6 +2228,11 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    }
       }
 
+      for (idx = 0 ; idx < ivl_scope_classes(net) ; idx += 1) {
+	    ivl_type_t class_type = ivl_scope_class(net,idx);
+	    draw_class_in_scope(class_type);
+      }
+
 	/* Scan the scope for enumeration types, and write out
 	   enumeration typespecs. */
 

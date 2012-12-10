@@ -79,6 +79,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_ARITH_SUM K_ARITH_SUM_R K_ARITH_POW K_ARITH_POW_R K_ARITH_POW_S
 %token K_ARRAY K_ARRAY_I K_ARRAY_R K_ARRAY_S K_ARRAY_PORT
 %token K_CAST_INT K_CAST_REAL K_CAST_REAL_S K_CAST_2
+%token K_CLASS
 %token K_CMP_EEQ K_CMP_EQ K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
 %token K_CMP_GE K_CMP_GE_R K_CMP_GE_S K_CMP_GT K_CMP_GT_R K_CMP_GT_S
 %token K_CONCAT K_DEBUG K_DELAY K_DFF
@@ -821,12 +822,27 @@ statement
 
   /* Other statemehts */
 
+  | T_LABEL K_CLASS T_STRING '[' T_NUMBER ']'
+      { compile_class_start($1, $3, $5); }
+    class_properties ';'
+      { compile_class_done(); }
+
   | enum_type
       { ; }
 
   /* Oh and by the way, empty statements are OK as well. */
 
   | ';'
+  ;
+
+class_properties
+  : class_properties class_property
+  | class_property
+  ;
+
+class_property
+  : T_NUMBER ':' T_STRING ',' T_STRING
+      { compile_class_property($1, $3, $5); }
   ;
 
   /* Enumeration types */

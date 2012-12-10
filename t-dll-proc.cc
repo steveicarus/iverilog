@@ -27,6 +27,7 @@
 # include  "ivl_target.h"
 # include  "compiler.h"
 # include  "t-dll.h"
+# include  "netclass.h"
 # include  <cstdlib>
 # include  "ivl_alloc.h"
 
@@ -162,7 +163,6 @@ void dll_target::make_assign_lvals_(const NetAssignBase*net)
 	    }
 
 	    cur->width_ = asn->lwidth();
-	    cur->property = asn->get_property();
 
 	    if (asn->sig()) {
 		  cur->type_ = IVL_LVAL_REG;
@@ -180,6 +180,14 @@ void dll_target::make_assign_lvals_(const NetAssignBase*net)
 			cur->idx = expr_;
 			expr_ = 0;
 		  }
+
+		  cur->property_idx = -1;
+		  perm_string pname = asn->get_property();
+		  if (!pname.nil()) {
+			const netclass_t*use_type = dynamic_cast<const netclass_t*> (cur->n.sig->net_type);
+			cur->property_idx = use_type->property_idx_from_name(pname);
+		  }
+
 	    } else {
 		  assert(0);
 	    }

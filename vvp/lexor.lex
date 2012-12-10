@@ -129,6 +129,7 @@ static char* strdupnew(char const *str)
 ".cast/int" { return K_CAST_INT; }
 ".cast/real" { return K_CAST_REAL; }
 ".cast/real.s" { return K_CAST_REAL_S; }
+".class" { return K_CLASS; }
 ".cmp/eeq"  { return K_CMP_EEQ; }
 ".cmp/eq"   { return K_CMP_EQ; }
 ".cmp/eq.r" { return K_CMP_EQ_R; }

@@ -69,7 +69,8 @@ static int eval_darray_new(ivl_expr_t ex)
 
 static int eval_class_new(ivl_expr_t ex)
 {
-      fprintf(vvp_out, "    %%new/cobj ; XXXX Need to specify the type?\n");
+      ivl_type_t class_type = ivl_expr_net_type(ex);
+      fprintf(vvp_out, "    %%new/cobj C%p;\n", class_type);
       return 0;
 }
 

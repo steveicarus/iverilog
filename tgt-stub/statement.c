@@ -60,12 +60,12 @@ static unsigned show_assign_lval_darray(ivl_lval_t lval, unsigned ind)
 static unsigned show_assign_lval_class(ivl_lval_t lval, unsigned ind)
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
-      const char*sig_prop = ivl_lval_property(lval);
+      int sig_prop = ivl_lval_property_idx(lval);
       assert(sig);
 
 	/* If there is no property select, then this l-value is for
 	   the class handle itself. */
-      if (sig_prop == 0) {
+      if (sig_prop < 0) {
 	    fprintf(out, "%*s{name=%s class object}\n", ind, "", ivl_signal_name(sig));
 	    if (ivl_lval_width(lval) != 1) {
 		  fprintf(out, "%*sERROR: ivl_lval_width should be 1 for class objects\n",
@@ -75,7 +75,7 @@ static unsigned show_assign_lval_class(ivl_lval_t lval, unsigned ind)
 	    return ivl_lval_width(lval);
       }
 
-      fprintf(out, "%*s{name=%s<property>%s l-value width=%u}\n",
+      fprintf(out, "%*s{name=%s.<property-%d> l-value width=%u}\n",
 	      ind, "", ivl_signal_name(sig), sig_prop, ivl_lval_width(lval));
 
       return ivl_lval_width(lval);

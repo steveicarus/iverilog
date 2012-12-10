@@ -638,6 +638,15 @@ the object handle stack.
 See also %store/obj.
 
 
+* %load/prop/v <pid>, <bit>, <wid>
+
+This instruction loads from a class object property into the specified
+thread register bit. The <pid> is the number of the property and the
+<bit> is the location where the loaded value goes.
+
+The handle for the class object is found on the top of the object
+stack, and the stack is NOT popped.
+
 * %load/real <vpi-label>
 
 The %load/real instruction reads a real value from the vpi-like object
@@ -779,6 +788,11 @@ means the following:
 	otherwise   x
 
 
+* %new/cobj <label>
+
+Create a new class object. The <label> is the VPI label for a class
+type definition.
+
 * %new/darray <idx>, "<type>"
 
 Create a new array (of int objects) with a size. the <idx> is the
@@ -870,6 +884,11 @@ replaces the left operand.
 
 This opcode raises the left operand by the right operand, and pushes
 the result.
+
+* %prop/v <pid>, <base>, <wid>
+
+Write the vector into property number <pid> of the class object on the
+top of the object stack. The stack is NOT popped.
 
 * %pushi/real <mant>, <exp>
 

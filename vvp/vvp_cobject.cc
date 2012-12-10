@@ -18,13 +18,40 @@
  */
 
 # include  "vvp_cobject.h"
+# include  "class_type.h"
+# include  <iostream>
+# include  <cassert>
 
 using namespace std;
 
-vvp_cobject::vvp_cobject(void)
+vvp_cobject::vvp_cobject(const class_type*defn)
+: defn_(defn), properties_(new int32_t[defn->property_count()])
 {
 }
 
 vvp_cobject::~vvp_cobject()
 {
+      delete[]properties_;
+      properties_ = 0;
+}
+
+void vvp_cobject::set_vec4(size_t pid, const vvp_vector4_t&val)
+{
+      assert(pid < defn_->property_count());
+
+      int32_t tmp;
+      bool flag = vector4_to_value(val, tmp, true, false);
+      assert(flag);
+
+      properties_[pid] = tmp;
+}
+
+void vvp_cobject::get_vec4(size_t pid, vvp_vector4_t&val)
+{
+      assert(pid < defn_->property_count());
+
+      unsigned long tmp[1];
+      tmp[0] = properties_[pid];
+      val.resize(32);
+      val.setarray(0, 32, tmp);
 }

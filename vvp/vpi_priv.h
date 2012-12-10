@@ -23,6 +23,7 @@
 # include  "vvp_net.h"
 # include  "config.h"
 
+# include  <map>
 # include  <set>
 # include  <string>
 
@@ -32,6 +33,8 @@
  */
 #include  "delay.h"
 
+
+class class_type;
 
 /*
  * This header file contains the internal definitions that the vvp
@@ -234,6 +237,8 @@ struct __vpiScope : public __vpiHandle {
 	/* Keep an array of internal scope items. */
       class __vpiHandle**intern;
       unsigned nintern;
+	/* Set of types */
+      std::map<std::string,class_type*> classes;
         /* Keep an array of items to be automatically allocated */
       struct automatic_hooks_s**item;
       unsigned nitem;

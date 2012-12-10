@@ -27,6 +27,7 @@
 # include  "vvp_net_sig.h"
 # include  "vvp_cobject.h"
 # include  "vvp_darray.h"
+# include  "class_type.h"
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
@@ -89,6 +90,8 @@ using namespace std;
  */
 
 struct vthread_s {
+      vthread_s();
+
 	/* This is the program counter. */
       vvp_code_t pc;
 	/* These hold the private thread bits. */
@@ -163,19 +166,27 @@ struct vthread_s {
 
 	/* Objects are also operated on in a stack. */
     private:
-      vector<vvp_object_t> stack_obj_;
+      enum { STACK_OBJ_MAX_SIZE = 32 };
+      vvp_object_t stack_obj_[STACK_OBJ_MAX_SIZE];
+      int stack_obj_size_;
     public:
-      inline vvp_object_t pop_object(void)
+      inline vvp_object_t& peek_object(void)
       {
-	    assert(stack_obj_.size() > 0);
-	    vvp_object_t val = stack_obj_.back();
-	    stack_obj_.back().reset();
-	    stack_obj_.pop_back();
-	    return val;
+	    assert(stack_obj_size_  > 0);
+	    return stack_obj_[stack_obj_size_-1];
       }
-      inline void push_object(vvp_object_t obj)
+      inline void pop_object(vvp_object_t&obj)
       {
-	    stack_obj_.push_back(obj);
+	    assert(stack_obj_size_ > 0);
+	    stack_obj_size_ -= 1;
+	    obj = stack_obj_[stack_obj_size_];
+	    stack_obj_[stack_obj_size_].reset(0);
+      }
+      inline void push_object(const vvp_object_t&obj)
+      {
+	    assert(stack_obj_size_ < STACK_OBJ_MAX_SIZE);
+	    stack_obj_[stack_obj_size_] = obj;
+	    stack_obj_size_ += 1;
       }
 
 	/* My parent sets this when it wants me to wake it up. */
@@ -200,6 +211,11 @@ struct vthread_s {
       vvp_net_t*event;
       uint64_t ecount;
 };
+
+inline vthread_s::vthread_s()
+{
+      stack_obj_size_ = 0;
+}
 
 static bool test_joinable(vthread_t thr, vthread_t child);
 static void do_join(vthread_t thr, vthread_t child);
@@ -4085,14 +4101,17 @@ bool of_NAND(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %new/cobj
+ * %new/cobj <vpi_object>
  * This creates a new cobject (SystemVerilog class object) and pushes
- * it to the stack.
+ * it to the stack. The <vpi-object> is a __vpiHandle that is a
+ * vpiClassDefn object that defines the item to be created.
  */
 bool of_NEW_COBJ(vthread_t thr, vvp_code_t cp)
 {
-      vvp_object_t tmp;
-      tmp = new vvp_cobject;
+      const class_type*defn = dynamic_cast<const class_type*> (cp->handle);
+      assert(defn);
+
+      vvp_object_t tmp (new vvp_cobject(defn));
       thr->push_object(tmp);
       return true;
 }
@@ -4164,7 +4183,7 @@ bool of_NORR(vthread_t thr, vvp_code_t cp)
 /*
  * Push a null to the object stack.
  */
-bool of_NULL(vthread_t thr, vvp_code_t cp)
+bool of_NULL(vthread_t thr, vvp_code_t)
 {
       vvp_object_t tmp;
       thr->push_object(tmp);
@@ -4476,6 +4495,38 @@ bool of_POW_WR(vthread_t thr, vvp_code_t)
       double r = thr->pop_real();
       double l = thr->pop_real();
       thr->push_real(pow(l,r));
+
+      return true;
+}
+
+/*
+ * %prop/v <pid> <base> <wid>
+ *
+ * Load a property <id> from the cobject on the top of the stack into
+ * the vector space at <base>.
+ */
+bool of_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      unsigned pid = cp->bit_idx[0];
+      unsigned dst = cp->bit_idx[1];
+      unsigned wid = cp->number;
+
+      thr_check_addr(thr, dst+wid-1);
+      vvp_object_t&obj = thr->peek_object();
+      vvp_cobject*cobj = obj.peek<vvp_cobject>();
+
+      vvp_vector4_t val;
+      cobj->get_vec4(pid, val);
+
+      if (val.size() > wid)
+	    val.resize(wid);
+
+      thr->bits4.set_vec(dst, val);
+
+      if (val.size() < wid) {
+	    for (unsigned idx = val.size() ; idx < wid ; idx += 1)
+		  thr->bits4.set_bit(dst+idx, BIT4_X);
+      }
 
       return true;
 }
@@ -4981,10 +5032,32 @@ bool of_STORE_OBJ(vthread_t thr, vvp_code_t cp)
 	/* set the value into port 0 of the destination. */
       vvp_net_ptr_t ptr (cp->net, 0);
 
-      vvp_object_t val = thr->pop_object();
+      vvp_object_t val;
+      thr->pop_object(val);
 
       vvp_send_object(ptr, val, thr->wt_context);
 
+      return true;
+}
+
+/*
+ * %store/prop/v <id> <base> <wid>
+ *
+ * Store vector value into property <id> of cobject in the top of the stack.
+ */
+bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->bit_idx[0];
+      unsigned src = cp->bit_idx[1];
+      unsigned wid = cp->number;
+
+      vvp_vector4_t val = vthread_bits_to_vector(thr, src, wid);
+
+      vvp_object_t&obj = thr->peek_object();
+      vvp_cobject*cobj = obj.peek<vvp_cobject>();
+      assert(cobj);
+
+      cobj->set_vec4(pid, val);
       return true;
 }
 

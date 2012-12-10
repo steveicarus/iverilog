@@ -805,6 +805,22 @@ extern unsigned ivl_event_lineno(ivl_event_t net);
  *
  * - IVL_EX_BINARY
  *
+ * - IVL_EX_PROPERTY
+ * This expression represents the property select from a class
+ * type, for example "foo.property" where "foo" is a class handle and
+ * "property" is the name of one of the properties of the class. The
+ * ivl_expr_signal function returns the ivl_signal_t for "foo" and the
+ * data_type for the signal will be IVL_VT_CLASS.
+ *
+ * The ivl_signal_net_type(sig) for the "foo" signal will be a class
+ * type and from there you can get access to the type information.
+ *
+ * Elaboration reduces the properties of a class to a vector numbered
+ * from 0 to the number of properties. The ivl_expr_property_idx()
+ * function gets the index of the selected property into the property
+ * table. That number can be passed to ivl_type_prop_*() functions to
+ * get details about the property.
+ *
  * - IVL_EX_SELECT
  * This expression takes two operands, oper1 is the expression to
  * select from, and oper2 is the selection base. The ivl_expr_width
@@ -891,6 +907,8 @@ extern unsigned    ivl_expr_repeat(ivl_expr_t net);
 extern ivl_select_type_t ivl_expr_sel_type(ivl_expr_t net);
   /* IVL_EX_EVENT */
 extern ivl_event_t ivl_expr_event(ivl_expr_t net);
+  /* IVL_EX_PROPERTY */
+extern int ivl_expr_property_idx(ivl_expr_t net);
   /* IVL_EX_SCOPE */
 extern ivl_scope_t ivl_expr_scope(ivl_expr_t net);
   /* IVL_EX_PROPERTY IVL_EX_SIGNAL */
@@ -1431,10 +1449,10 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  *    ivl_expr_t that represents the index expression.  Otherwise, it
  *    returns 0.
  *
- * ivl_lval_property
+ * ivl_lval_property_idx
  *    If the l-value is a class object, this is the name of a property
- *    to select from the object. If this property is not present, then
- *    the l-value represents the class object itself.
+ *    to select from the object. If this property is not present (<0)
+ *    then the l-value represents the class object itself.
  *
  * SEMANTIC NOTES
  * The ivl_lval_width is not necessarily the same as the width of the
@@ -1461,7 +1479,7 @@ extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net); /* XXXX Obsolete? */
 extern ivl_expr_t  ivl_lval_idx(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_part_off(ivl_lval_t net);
 extern ivl_select_type_t ivl_lval_sel_type(ivl_lval_t net);
-extern const char* ivl_lval_property(ivl_lval_t net);
+extern int ivl_lval_property_idx(ivl_lval_t net);
 extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);
 
 
@@ -2224,9 +2242,9 @@ extern unsigned ivl_type_packed_dimensions(ivl_type_t net);
 extern int ivl_type_packed_lsb(ivl_type_t net, unsigned dim);
 extern int ivl_type_packed_msb(ivl_type_t net, unsigned dim);
 extern const char* ivl_type_name(ivl_type_t net);
-extern unsigned    ivl_type_properties(ivl_type_t net);
-extern const char* ivl_type_prop_name(ivl_type_t net, unsigned idx);
-extern ivl_type_t  ivl_type_prop_type(ivl_type_t net, unsigned idx);
+extern int         ivl_type_properties(ivl_type_t net);
+extern const char* ivl_type_prop_name(ivl_type_t net, int idx);
+extern ivl_type_t  ivl_type_prop_type(ivl_type_t net, int idx);
 
 
 #if defined(__MINGW32__) || defined (__CYGWIN32__)

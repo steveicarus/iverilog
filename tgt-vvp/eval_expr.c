@@ -2108,6 +2108,23 @@ static struct vector_info draw_number_expr(ivl_expr_t expr, unsigned wid)
       return res;
 }
 
+static struct vector_info draw_property_expr(ivl_expr_t expr, unsigned wid)
+{
+      ivl_signal_t sig = ivl_expr_signal(expr);
+      unsigned pidx = ivl_expr_property_idx(expr);
+
+      struct vector_info res;
+      res.base = allocate_vector(wid);
+      res.wid = wid;
+
+      assert(res.base != 0);
+
+      fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+      fprintf(vvp_out, "    %%prop/v %u, %u, %u;\n", pidx, res.base, wid);
+
+      return res;
+}
+
 /*
  * This little helper function generates the instructions to pad a
  * vector in place. It is assumed that the calling function has set up
@@ -3639,6 +3656,10 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t expr, unsigned wid,
 
 	  case IVL_EX_NUMBER:
 	    res = draw_number_expr(expr, wid);
+	    break;
+
+	  case IVL_EX_PROPERTY:
+	    res = draw_property_expr(expr, wid);
 	    break;
 
 	  case IVL_EX_REALNUM:

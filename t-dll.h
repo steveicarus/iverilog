@@ -328,7 +328,7 @@ struct ivl_expr_s {
 
 	    struct {
 		  ivl_signal_t sig;
-		  const char*pname;
+		  unsigned prop_idx;
 	    } property_;
       } u_;
 };
@@ -451,7 +451,7 @@ struct ivl_lval_s {
       ivl_expr_t idx;
       unsigned width_;
       unsigned type_   : 8;
-      perm_string property;
+      int property_idx;
       union {
 	    ivl_signal_t sig;
 	    ivl_memory_t mem;

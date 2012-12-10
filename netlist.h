@@ -3941,7 +3941,7 @@ class NetEProperty : public NetExpr {
       ~NetEProperty();
 
       inline const NetNet* get_sig() const { return net_; }
-      inline const char*   get_pname() const { return pname_.str(); }
+      inline size_t property_idx() const { return pidx_; }
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEProperty* dup_expr() const;
@@ -3951,7 +3951,7 @@ class NetEProperty : public NetExpr {
 
     private:
       NetNet*net_;
-      perm_string pname_;
+      size_t pidx_;
 };
 
 /*
