@@ -3,6 +3,7 @@
 // problems will not be fixed.
 
 // fstapi.c from GTKWave
+obsoleteFunctionsasctime:fstapi.c:652
 variableScope:fstapi.c:1707
 variableScope:fstapi.c:1965
 variableScope:fstapi.c:2109
@@ -11,7 +12,7 @@ variableScope:fstapi.c:2269
 variableScope:fstapi.c:2976
 variableScope:fstapi.c:3304
 variableScope:fstapi.c:3313
-variableScope:fstapi.c:4980
+variableScope:fstapi.c:4982
 
 // lxt2_write.c from GTKWave
 obsoleteFunctionsalloca:lxt2_write.c:1813
