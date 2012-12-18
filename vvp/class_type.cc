@@ -47,7 +47,7 @@ void compile_class_start(char*lab, char*nam, unsigned ntype)
       assert(compile_class == 0);
       compile_class = new class_type(nam, ntype);
       compile_vpi_symbol(lab, compile_class);
-      delete[]lab;
+      free(lab);
       delete[]nam;
 }
 
@@ -64,4 +64,3 @@ void compile_class_done(void)
       scope->classes[compile_class->class_name()] = compile_class;
       compile_class = 0;
 }
-

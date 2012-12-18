@@ -553,7 +553,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	      // itself.
 	    ivl_assert(*this, member->packed_dims.size() <= 1);
 	    ivl_assert(*this, path_tail.index.size() <= 1);
-	    if (path_tail.index.size() > 0) {
+	    if (! path_tail.index.empty()) {
 		  long tmp_off;
 		  unsigned long tmp_wid;
 		  const index_component_t&tail_sel = path_tail.index.back();

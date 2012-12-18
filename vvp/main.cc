@@ -218,6 +218,7 @@ static void final_cleanup()
       dec_str_delete();
       modpath_delete();
       vpi_handle_delete();
+      vpi_stack_delete();
       udp_defns_delete();
       island_delete();
       signal_pool_delete();

@@ -20,6 +20,10 @@
 
 # include  "compile.h"
 # include  "vpi_priv.h"
+# include  "config.h"
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+#endif
 
 __vpiCobjectVar::__vpiCobjectVar(__vpiScope*sc, const char*na, vvp_net_t*ne)
 : __vpiBaseVar(sc, na, ne)
@@ -48,3 +52,11 @@ vpiHandle vpip_make_cobject_var(const char*name, vvp_net_t*net)
 
       return obj;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void class_delete(vpiHandle item)
+{
+      class __vpiCobjectVar*obj = dynamic_cast<__vpiCobjectVar*>(item);
+      delete obj;
+}
+#endif

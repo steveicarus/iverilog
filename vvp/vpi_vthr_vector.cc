@@ -660,6 +660,10 @@ int __vpiVThrStrStack::vpi_get(int code)
       switch (code) {
 	  case vpiConstType:
 	    return vpiStringConst;
+#ifdef CHECK_WITH_VALGRIND
+	  case _vpiFromThr:
+	    return _vpiString;
+#endif
 	  default:
 	    return 0;
       }
@@ -698,3 +702,26 @@ vpiHandle vpip_make_vthr_str_stack(unsigned depth)
       class __vpiVThrStrStack*obj = new __vpiVThrStrStack(depth);
       return obj;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+static map<vpiHandle, bool> stack_map;
+
+void thread_string_delete(vpiHandle item)
+{
+      stack_map[item] = false;
+}
+
+static void thread_string_delete_real(vpiHandle item)
+{
+      class __vpiVThrStrStack*obj = dynamic_cast<__vpiVThrStrStack*>(item);
+      delete obj;
+}
+
+void vpi_stack_delete()
+{
+      map<vpiHandle, bool>::iterator iter;
+      for (iter = stack_map.begin(); iter != stack_map.end(); ++ iter ) {
+	    thread_string_delete_real(iter->first);
+      }
+}
+#endif
