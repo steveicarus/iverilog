@@ -717,7 +717,7 @@ bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*,
       return true;
 }
 
- 
+
 bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 						NetAssign_*lv,
 						const perm_string&member_name) const
