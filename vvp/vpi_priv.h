@@ -60,10 +60,11 @@ extern vpiHandle vpip_build_file_line(char*description,
 #ifdef CHECK_WITH_VALGRIND
 #define _vpiFromThr 0x1000001
 #   define _vpiNoThr  0
-#   define _vpiVThr   1
-#   define _vpiWord   2
-#   define _vpi_at_PV 3
-#   define _vpi_at_A  4
+#   define _vpiString 1
+#   define _vpiVThr   2
+#   define _vpiWord   3
+#   define _vpi_at_PV 4
+#   define _vpi_at_A  5
 #endif
 
 

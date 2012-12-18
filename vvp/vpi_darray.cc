@@ -76,3 +76,11 @@ vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net)
 
       return obj;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void darray_delete(vpiHandle item)
+{
+      class __vpiDarrayVar*obj = dynamic_cast<__vpiDarrayVar*>(item);
+      delete obj;
+}
+#endif

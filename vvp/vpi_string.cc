@@ -82,3 +82,11 @@ vpiHandle vpip_make_string_var(const char*name, vvp_net_t*net)
 
       return obj;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void string_delete(vpiHandle item)
+{
+      class __vpiStringVar*obj = dynamic_cast<__vpiStringVar*>(item);
+      delete obj;
+}
+#endif

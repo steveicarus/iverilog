@@ -843,6 +843,9 @@ void vpi_call_delete(vpiHandle item)
 		      case _vpiNoThr:
 			constant_delete(obj->args[arg]);
 			break;
+		      case _vpiString:
+			thread_string_delete(obj->args[arg]);
+			break;
 		      case _vpiVThr:
 			thread_vthr_delete(obj->args[arg]);
 			break;

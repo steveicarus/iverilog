@@ -100,7 +100,13 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		  port_delete((scope->intern)[idx]);
 		  break;
 		case vpiStringVar:
+		  string_delete((scope->intern)[idx]);
+		  break;
+		case vpiClassVar:
+		  class_delete((scope->intern)[idx]);
+		  break;
 		case vpiRegArray:
+		  darray_delete((scope->intern)[idx]);
 		  break;
 		default:
 		  fprintf(stderr, "Need support for type: %d\n",
