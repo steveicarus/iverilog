@@ -490,13 +490,21 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	      // (NetNet). We also know that sig is struct_type(), so
 	      // look for a method named method_name.
 	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: "
+		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
 		       << "Signal " << sig->name() << " is a structure, "
 		       << "try to match member " << method_name << endl;
 
 	    unsigned long member_off = 0;
 	    const struct netstruct_t::member_t*member = struct_type->packed_member(method_name, member_off);
 	    ivl_assert(*this, member);
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
+		       << "Member " << method_name
+		       << " has packed dimensions " << member->packed_dims << "." << endl;
+		  cerr << get_fileline() << ":                                : "
+		       << "Tail name has " << path_tail.index.size() << " indices." << endl;
+	    }
 
 	      // Rewrite a member select of a packed structure as a
 	      // part select of the base variable.
@@ -539,6 +547,25 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 
 	      // Currently, only support const dimensions here.
 	    ivl_assert(*this, packed_base == 0);
+
+	      // Now the lidx/midx values get us to the member. Next
+	      // up, deal with bit/part selects from the member
+	      // itself.
+	    ivl_assert(*this, member->packed_dims.size() <= 1);
+	    ivl_assert(*this, path_tail.index.size() <= 1);
+	    if (path_tail.index.size() > 0) {
+		  long tmp_off;
+		  unsigned long tmp_wid;
+		  const index_component_t&tail_sel = path_tail.index.back();
+		  ivl_assert(*this, tail_sel.sel == index_component_t::SEL_PART || tail_sel.sel == index_component_t::SEL_BIT);
+		  bool rc = calculate_part(this, des, scope, tail_sel, tmp_off, tmp_wid);
+		  ivl_assert(*this, rc);
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
+			     << "tmp_off=" << tmp_off << ", tmp_wid=" << tmp_wid << endl;
+		  lidx += tmp_off;
+		  midx = lidx + tmp_wid - 1;
+	    }
 
       } else if (sig->unpacked_dimensions() > 0) {
 

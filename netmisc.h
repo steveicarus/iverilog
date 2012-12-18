@@ -95,6 +95,10 @@ extern NetExpr*condition_reduce(NetExpr*expr);
  */
 extern NetNet*crop_to_width(Design*des, NetNet*n, unsigned w);
 
+extern bool calculate_part(const LineInfo*li, Design*des, NetScope*scope,
+			   const index_component_t&index,
+			   long&off, unsigned long&wid);
+
 /*
  * These functions generate an equation to normalize an expression using
  * the provided vector/array information.
