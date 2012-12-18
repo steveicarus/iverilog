@@ -29,7 +29,7 @@
  */
 class vvp_object {
     public:
-      inline vvp_object() { total_active_cnt_ += 1; }
+      inline vvp_object() { ref_cnt_ = 0; total_active_cnt_ += 1; }
       virtual ~vvp_object() =0;
 
       static void cleanup(void);
