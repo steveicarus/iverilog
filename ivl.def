@@ -71,6 +71,7 @@ ivl_expr_oper3
 ivl_expr_parameter
 ivl_expr_parm
 ivl_expr_parms
+ivl_expr_property_idx
 ivl_expr_repeat
 ivl_expr_scope
 ivl_expr_sel_type
@@ -141,6 +142,7 @@ ivl_lpm_width
 ivl_lval_idx
 ivl_lval_mux
 ivl_lval_part_off
+ivl_lval_property_idx
 ivl_lval_sel_type
 ivl_lval_sig
 ivl_lval_width
@@ -190,6 +192,8 @@ ivl_scope_attr_cnt
 ivl_scope_attr_val
 ivl_scope_basename
 ivl_scope_children
+ivl_scope_class
+ivl_scope_classes
 ivl_scope_def
 ivl_scope_def_file
 ivl_scope_def_lineno
@@ -302,9 +306,13 @@ ivl_switch_width
 
 ivl_type_base
 ivl_type_element
+ivl_type_name
 ivl_type_packed_dimensions
 ivl_type_packed_lsb
 ivl_type_packed_msb
+ivl_type_prop_name
+ivl_type_prop_type
+ivl_type_properties
 
 ivl_udp_init
 ivl_udp_file
