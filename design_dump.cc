@@ -519,9 +519,7 @@ void NetCaseCmp::dump_node(ostream&o, unsigned ind) const
 
 void NetConst::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "constant " << width_ << "'b";
-      for (unsigned idx = width_ ;  idx > 0 ;  idx -= 1)
-	    o << value_[idx-1];
+      o << setw(ind) << "" << "constant " << value_;
       o << ": " << name();
       if (rise_time())
 	    o << " #(" << *rise_time()

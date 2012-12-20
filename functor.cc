@@ -54,6 +54,10 @@ void functor_t::lpm_compare(Design*, NetCompare*)
 {
 }
 
+void functor_t::lpm_concat(Design*, NetConcat*)
+{
+}
+
 void functor_t::lpm_const(Design*, NetConst*)
 {
 }
@@ -189,6 +193,11 @@ void NetAddSub::functor_node(Design*des, functor_t*fun)
 void NetCompare::functor_node(Design*des, functor_t*fun)
 {
       fun->lpm_compare(des, this);
+}
+
+void NetConcat::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_concat(des, this);
 }
 
 void NetConst::functor_node(Design*des, functor_t*fun)

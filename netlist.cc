@@ -2008,44 +2008,25 @@ NetProc* NetCondit::else_clause()
 }
 
 NetConst::NetConst(NetScope*s, perm_string n, verinum::V v)
-: NetNode(s, n, 1), width_(1)
+: NetNode(s, n, 1), value_(v, 1)
 {
       pin(0).set_dir(Link::OUTPUT);
-      value_ = new verinum::V[1];
-      value_[0] = v;
-      is_string_ = false;
 }
 
 NetConst::NetConst(NetScope*s, perm_string n, const verinum&val)
-: NetNode(s, n, 1), width_(val.len())
+: NetNode(s, n, 1), value_(val)
 {
       pin(0).set_dir(Link::OUTPUT);
-      value_ = new verinum::V[width_];
-      for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
-	    value_[idx] = val.get(idx);
-      }
-      is_string_ = val.is_string();
 }
 
 NetConst::~NetConst()
 {
-      delete[]value_;
 }
 
 verinum::V NetConst::value(unsigned idx) const
 {
-      assert(idx < width_);
+      assert(idx < width());
       return value_[idx];
-}
-
-unsigned NetConst::width() const
-{
-      return width_;
-}
-
-bool NetConst::is_string() const
-{
-      return is_string_;
 }
 
 NetFuncDef::NetFuncDef(NetScope*s, NetNet*result, const vector<NetNet*>&po)

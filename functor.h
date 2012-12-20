@@ -57,6 +57,9 @@ struct functor_t {
 	/* This method is called for each structural comparator. */
       virtual void lpm_compare(class Design*des, class NetCompare*);
 
+	/* This method is called for each structural concatenation. */
+      virtual void lpm_concat(class Design*des, class NetConcat*);
+
 	/* This method is called for each structural constant. */
       virtual void lpm_const(class Design*des, class NetConst*);
 

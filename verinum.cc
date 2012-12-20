@@ -367,6 +367,13 @@ verinum::V verinum::set(unsigned idx, verinum::V val)
       return bits_[idx] = val;
 }
 
+void verinum::set(unsigned off, const verinum&val)
+{
+      assert(off + val.len() <= nbits_);
+      for (unsigned idx = 0 ; idx < val.len() ; idx += 1)
+	    bits_[off+idx] = val[idx];
+}
+
 unsigned long verinum::as_ulong() const
 {
       if (nbits_ == 0)

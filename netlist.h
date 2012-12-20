@@ -379,6 +379,7 @@ class Nexus {
 	/* Given the nexus has constant drivers, this method returns
 	   the value that has been driven. */
       verinum::V driven_value() const;
+      verinum driven_vector() const;
 
 	/* The code generator sets an ivl_nexus_t to attach code
 	   generation details to the nexus. */
@@ -1350,6 +1351,7 @@ class NetConcat  : public NetNode {
 
       void dump_node(ostream&, unsigned ind) const;
       bool emit_node(struct target_t*) const;
+      void functor_node(Design*des, functor_t*fun);
 
     private:
       unsigned width_;
@@ -2095,18 +2097,17 @@ class NetConst  : public NetNode {
       explicit NetConst(NetScope*s, perm_string n, const verinum&val);
       ~NetConst();
 
+      inline const verinum&value(void) const { return value_; }
       verinum::V value(unsigned idx) const;
-      unsigned width() const;
-      bool is_string() const;
+      inline unsigned width() const { return value_.len(); }
+      inline bool is_string() const { return value_.is_string(); }
 
       virtual bool emit_node(struct target_t*) const;
       virtual void functor_node(Design*, functor_t*);
       virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
-      unsigned width_;
-      verinum::V*value_;
-      bool is_string_;
+      verinum value_;
 };
 
 /*

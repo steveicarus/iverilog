@@ -21,6 +21,7 @@
 
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "ivl_assert.h"
 
 /*
  * Scan the link for drivers. If there are only constant drivers, then
@@ -167,6 +168,49 @@ verinum::V Nexus::driven_value() const
 	  case verinum::Vz:
 	    driven_ = Vz;
 	    break;
+      }
+
+      return val;
+}
+
+
+verinum Nexus::driven_vector() const
+{
+      const Link*cur = list_;
+
+      verinum val;
+
+      for (cur = first_nlink() ; cur  ;  cur = cur->next_nlink()) {
+
+	    const NetConst*obj;
+	    const NetNet*sig;
+	    if ((obj = dynamic_cast<const NetConst*>(cur->get_obj()))) {
+		  ivl_assert(*obj, cur->get_pin() == 0);
+		  val = obj->value();
+
+	    } else if ((sig = dynamic_cast<const NetNet*>(cur->get_obj()))) {
+
+		    // If we find an attached SUPPLY0/1, the we know
+		    // from that what the driven value is. Stop now.
+		  if (sig->type() == NetNet::SUPPLY0) {
+			driven_ = V0;
+			return verinum(verinum::V0, sig->vector_width());
+		  }
+		  if (sig->type() == NetNet::SUPPLY1) {
+			driven_ = V1;
+			return verinum(verinum::V1, sig->vector_width());
+		  }
+
+		    // If we find an attached TRI0/1, then this is a
+		    // good guess for the driven value, but keep
+		    // looking for something better.
+		  if (sig->type() == NetNet::TRI0) {
+			val = verinum(verinum::V0, sig->vector_width());
+		  }
+		  if (sig->type() == NetNet::TRI1) {
+			val = verinum(verinum::V1, sig->vector_width());
+		  }
+	    }
       }
 
       return val;

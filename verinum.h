@@ -90,6 +90,7 @@ class verinum {
 	// methods.
       V get(unsigned idx) const;
       V set(unsigned idx, V val);
+      void set(unsigned idx, const verinum&val);
 
       V operator[] (unsigned idx) const { return get(idx); }
 

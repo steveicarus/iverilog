@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -43,12 +43,14 @@ struct cprop_functor  : public functor_t {
       virtual void signal(Design*des, NetNet*obj);
       virtual void lpm_add_sub(Design*des, NetAddSub*obj);
       virtual void lpm_compare(Design*des, NetCompare*obj);
-      virtual void lpm_compare_eq_(Design*des, NetCompare*obj);
+      virtual void lpm_concat(Design*des, NetConcat*obj);
       virtual void lpm_ff(Design*des, NetFF*obj);
       virtual void lpm_logic(Design*des, NetLogic*obj);
       virtual void lpm_mux(Design*des, NetMux*obj);
       virtual void lpm_part_select(Design*des, NetPartSelect*obj);
-};
+
+      void lpm_compare_eq_(Design*des, NetCompare*obj);
+ };
 
 void cprop_functor::signal(Design*, NetNet*)
 {
@@ -74,6 +76,45 @@ void cprop_functor::lpm_compare(Design*des, NetCompare*obj)
 
 void cprop_functor::lpm_compare_eq_(Design*, NetCompare*)
 {
+}
+
+void cprop_functor::lpm_concat(Design*des, NetConcat*obj)
+{
+      verinum result (verinum::Vz, obj->width());
+      unsigned off = 0;
+
+      for (unsigned idx = 1 ; idx < obj->pin_count() ; idx += 1) {
+	    Nexus*nex = obj->pin(idx).nexus();
+	      // If there are non-constant drivers, then give up.
+	    if (! nex->drivers_constant())
+		  return;
+
+	    verinum tmp = nex->driven_vector();
+	    result.set(off, tmp);
+	    off += tmp.len();
+      }
+
+      if (debug_optimizer)
+	    cerr << obj->get_fileline() << ": cprop_functor::lpm_concat: "
+		 << "Replace NetConcat with " << result << "." << endl;
+
+
+      NetScope*scope = obj->scope();
+
+	// Create a NetConst object to carry the result. Give it the
+	// same name as the Concat object that we are replacing, and
+	// link the NetConst to the NetConcat object. Then delete the
+	// concat that is now replaced.
+      NetConst*result_obj = new NetConst(scope, obj->name(), result);
+      result_obj->set_line(*obj);
+      des->add_node(result_obj);
+      connect(obj->pin(0), result_obj->pin(0));
+
+	// Note that this will leave the const inputs to dangle. They
+	// will be reaped by other passes of cprop_functor.
+      delete obj;
+
+      count += 1;
 }
 
 void cprop_functor::lpm_ff(Design*, NetFF*obj)
@@ -256,6 +297,7 @@ void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
 
       NetConcat*concat = new NetConcat(scope, scope->local_symbol(),
 				       sig_width, part_count);
+      concat->set_line(*obj);
       des->add_node(concat);
       connect(concat->pin(0), obj->pin(1));
 
