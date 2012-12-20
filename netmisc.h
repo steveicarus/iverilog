@@ -202,6 +202,7 @@ extern NetEConst*make_const_val(unsigned long val);
  * Make A const net
  */
 extern NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid);
+extern NetNet* make_const_z(Design*des, NetScope*scope, unsigned long wid);
 
 /*
  * In some cases the lval is accessible as a pointer to the head of

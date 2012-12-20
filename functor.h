@@ -1,7 +1,7 @@
 #ifndef __functor_H
 #define __functor_H
 /*
- * Copyright (c) 1999-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2008,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -80,6 +80,8 @@ struct functor_t {
 
 	/* This method is called for each MUX. */
       virtual void lpm_mux(class Design*des, class NetMux*);
+
+      virtual void lpm_part_select(class Design*des, class NetPartSelect*);
 
 	/* This method is called for each power. */
       virtual void lpm_pow(class Design*des, class NetPow*);

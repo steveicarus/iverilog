@@ -660,6 +660,20 @@ NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid)
       return sig;
 }
 
+NetNet* make_const_z(Design*des, NetScope*scope, unsigned long wid)
+{
+      verinum xxx (verinum::Vz, wid);
+      NetConst*res = new NetConst(scope, scope->local_symbol(), xxx);
+      des->add_node(res);
+
+      netvector_t*sig_vec = new netvector_t(IVL_VT_LOGIC, wid-1, 0);
+      NetNet*sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, sig_vec);
+      sig->local_flag(true);
+
+      connect(sig->pin(0), res->pin(0));
+      return sig;
+}
+
 NetExpr* condition_reduce(NetExpr*expr)
 {
       if (expr->expr_type() == IVL_VT_REAL) {

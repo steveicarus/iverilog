@@ -24,6 +24,8 @@
 # include  "functor.h"
 # include  "netlist.h"
 
+using namespace std;
+
 functor_t::~functor_t()
 {
 }
@@ -81,6 +83,10 @@ void functor_t::lpm_mult(Design*, NetMult*)
 }
 
 void functor_t::lpm_mux(Design*, NetMux*)
+{
+}
+
+void functor_t::lpm_part_select(Design*, NetPartSelect*)
 {
 }
 
@@ -223,6 +229,11 @@ void NetMult::functor_node(Design*des, functor_t*fun)
 void NetMux::functor_node(Design*des, functor_t*fun)
 {
       fun->lpm_mux(des, this);
+}
+
+void NetPartSelect::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_part_select(des, this);
 }
 
 void NetPow::functor_node(Design*des, functor_t*fun)

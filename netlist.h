@@ -2002,12 +2002,13 @@ class NetPartSelect  : public NetNode {
 
       unsigned base()  const;
       unsigned width() const;
-      dir_t    dir()   const;
+      inline dir_t dir()   const { return dir_; }
 	/* Is the select signal signed? */
-      bool signed_flag() const { return signed_flag_; }
+      inline bool signed_flag() const { return signed_flag_; }
 
       virtual void dump_node(ostream&, unsigned ind) const;
       bool emit_node(struct target_t*tgt) const;
+      virtual void functor_node(Design*des, functor_t*fun);
 
     private:
       unsigned off_;

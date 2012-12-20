@@ -19,13 +19,14 @@
 
 # include "config.h"
 
+# include  <algorithm>
+# include  <vector>
 # include  <cstdlib>
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "functor.h"
 # include  "compiler.h"
 # include  "ivl_assert.h"
-# include  <vector>
 
 
 /*
@@ -46,6 +47,7 @@ struct cprop_functor  : public functor_t {
       virtual void lpm_ff(Design*des, NetFF*obj);
       virtual void lpm_logic(Design*des, NetLogic*obj);
       virtual void lpm_mux(Design*des, NetMux*obj);
+      virtual void lpm_part_select(Design*des, NetPartSelect*obj);
 };
 
 void cprop_functor::signal(Design*, NetNet*)
@@ -147,6 +149,141 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 	    connect(tmp->pin(1), obj->pin_Data(0));
       delete obj;
       des->add_node(tmp);
+      count += 1;
+}
+
+static bool compare_base(NetPartSelect*a, NetPartSelect*b)
+{
+      return a->base() < b->base();
+}
+
+/*
+ * This optimization searches for Nexa that are driven only by
+ * NetPartSelect(PV) outputs. These might turn from Verilog input that
+ * looks like this:
+ *    wire [7:0] foo
+ *    assign foo[7:4] = a;
+ *    assign foo[3:0] = b;
+ * The idea is to convert the part selects of the above to a single
+ * concatenation that looks like this:
+ *    assign foo = {a, b};
+ */
+void cprop_functor::lpm_part_select(Design*des, NetPartSelect*obj)
+{
+      if (obj->dir() != NetPartSelect::PV)
+	    return;
+
+      NetScope*scope = obj->scope();
+      Nexus*nex = obj->pin(1).nexus();
+      vector<NetPartSelect*> obj_set;
+
+      for (Link*cur = nex->first_nlink() ; cur ; cur = cur->next_nlink()) {
+
+	      // If this is an input (or passive) then ignore it.
+	    if (cur->get_dir() != Link::OUTPUT)
+		  continue;
+
+	      // Check to see if this is the output of a
+	      // NetPartSelect::PV. If not, then give up on the blend.
+	    NetPins*tmp_obj = cur->get_obj();
+	    unsigned tmp_pin = cur->get_pin();
+
+	    NetPartSelect*cur_obj = dynamic_cast<NetPartSelect*> (tmp_obj);
+	    if (cur_obj == 0)
+		  return;
+
+	    if (cur_obj->dir() != NetPartSelect::PV)
+		  return;
+
+	    if (tmp_pin != 1)
+		  return;
+
+	    obj_set.push_back(cur_obj);
+      }
+
+      if (obj_set.size() < 2)
+	    return;
+
+      if (debug_optimizer)
+	    cerr << obj->get_fileline() << ": cprop::lpm_part_select: "
+		 << "Found " << obj_set.size() << " NetPartSelect(PV) objects."
+		 << endl;
+
+	// Sort by increasing base offset.
+      sort(obj_set.begin(), obj_set.end(), compare_base);
+
+	// Check and make sure there are no overlaps. If there are,
+	// then give up on this optimization.
+      for (size_t idx = 1 ; idx < obj_set.size() ; idx += 1) {
+	    unsigned top = obj_set[idx-1]->base() + obj_set[idx-1]->width();
+	    if (top > obj_set[idx]->base()) {
+		  if (debug_optimizer)
+			cerr << obj->get_fileline() << ": cprop::lpm_part_select: "
+			     << "Range [" << obj_set[idx-1]->base()
+			     << " " << top << ") overlaps PV starting at "
+			     << obj_set[idx]->base() << ". Give up." << endl;
+		  return;
+	    }
+      }
+
+	// Check if the tail runs off the end of the target. If so it
+	// should be possible to replace it with a bit select to
+	// shorten the object for the target, but for now just give up.
+      unsigned sig_width = nex->vector_width();
+      if (obj_set.back()->base() + obj_set.back()->width() > sig_width) {
+	    if (debug_optimizer)
+		  cerr << obj->get_fileline() << ": cprop::lpm_part_select: "
+		       << "Range [" << obj_set.back()->base()
+		       << ":" << (obj_set.back()->base() + obj_set.back()->width() - 1)
+		       << "] runs off the end of target." << endl;
+	    return;
+      }
+
+	// Figure out how many components we are going to need.
+      unsigned part_count = 0;
+      unsigned off = 0;
+      for (size_t idx = 0 ; idx < obj_set.size() ; idx += 1) {
+	    if (obj_set[idx]->base() > off) {
+		  off = obj_set[idx]->base();
+		  part_count += 1;
+	    }
+	    off += obj_set[idx]->width();
+	    part_count += 1;
+      }
+
+      if (off < sig_width)
+	    part_count += 1;
+
+      NetConcat*concat = new NetConcat(scope, scope->local_symbol(),
+				       sig_width, part_count);
+      des->add_node(concat);
+      connect(concat->pin(0), obj->pin(1));
+
+      off = 0;
+      size_t concat_pin = 1;
+      for (size_t idx = 0 ; idx < obj_set.size() ; idx += 1) {
+	    NetPartSelect*cobj = obj_set[idx];
+	    if (cobj->base() > off) {
+		  NetNet*zzz = make_const_z(des, scope, cobj->base()-off);
+		  connect(concat->pin(concat_pin), zzz->pin(0));
+		  concat_pin += 1;
+		  off = cobj->base();
+	    }
+	    connect(concat->pin(concat_pin), cobj->pin(0));
+	    concat_pin += 1;
+	    off += cobj->width();
+      }
+      if (off < sig_width) {
+	    NetNet*zzz = make_const_z(des, scope, sig_width-off);
+	    connect(concat->pin(concat_pin), zzz->pin(0));
+	    concat_pin += 1;
+      }
+      ivl_assert(*obj, concat_pin == concat->pin_count());
+
+      for (size_t idx = 0 ; idx < obj_set.size() ; idx += 1) {
+	    delete obj_set[idx];
+      }
+
       count += 1;
 }
 

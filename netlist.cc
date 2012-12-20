@@ -1031,11 +1031,6 @@ unsigned NetPartSelect::base() const
       return off_;
 }
 
-NetPartSelect::dir_t NetPartSelect::dir() const
-{
-      return dir_;
-}
-
 NetProc::NetProc()
 : next_(0)
 {
