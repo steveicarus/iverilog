@@ -1,7 +1,7 @@
 #ifndef __expression_H
 #define __expression_H
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "StringHeap.h"
@@ -24,8 +24,10 @@
 # include  "entity.h"
 # include  <inttypes.h>
 # include  <list>
+# include  <memory>
 # include  <vector>
 
+class prange_t;
 class Entity;
 class Architecture;
 class ScopeBase;
@@ -58,6 +60,14 @@ class Expression : public LineInfo {
 	// constrained type for the expression. For a given instance,
 	// this may be called before the elaborate_expr method.
       virtual const VType*probe_type(Entity*ent, Architecture*arc) const;
+
+	// The fit_type virtual method is used by the ExpConcat class
+	// to probe the type of operands. The atype argument is the
+	// type of the ExpConcat expression itself. This expression
+	// returns its type as interpreted in this context. Really,
+	// this is mostly about helping aggregate expressions within
+	// concatenations to figure out their type.
+      virtual const VType*fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const;
 
 	// This virtual method elaborates an expression. The ltype is
 	// the type of the lvalue expression, if known, and can be
@@ -101,6 +111,7 @@ class Expression : public LineInfo {
 
 	// Debug dump of the expression.
       virtual void dump(ostream&out, int indent = 0) const =0;
+      virtual ostream& dump_inline(ostream&out) const;
 
     protected:
 	// This function is called by the derived class during
@@ -121,11 +132,18 @@ static inline void FILE_NAME(Expression*tgt, const LineInfo*src)
       tgt->set_line(*src);
 }
 
+static inline ostream& operator <<(ostream&out, const Expression&exp)
+{
+      return exp.dump_inline(out);
+}
+
 class ExpUnary : public Expression {
 
     public:
       ExpUnary(Expression*op1);
       virtual ~ExpUnary() =0;
+
+      const VType*fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const;
 
     protected:
       inline void write_to_stream_operand1(std::ostream&fd)
@@ -177,6 +195,10 @@ class ExpBinary : public Expression {
 class ExpAggregate : public Expression {
 
     public:
+	// A "choice" is only part of an element. It is the thing that
+	// is used to identify an element of the aggregate. It can
+	// represent the index (or range) of an array, or the name of
+	// a record member.
       class choice_t {
 	  public:
 	      // Create an "others" choice
@@ -185,17 +207,23 @@ class ExpAggregate : public Expression {
 	    explicit choice_t(Expression*exp);
 	      // Create a named choice
 	    explicit choice_t(perm_string name);
+	      // discreate_range choice
+	    explicit choice_t(prange_t*ran);
 	    ~choice_t();
 
 	      // true if this represents an "others" choice
 	    bool others() const;
-	      // Return expression if this reprents simple_expression.
+	      // Return expression if this represents a simple_expression.
 	    Expression*simple_expression(bool detach_flag =true);
+	      // Return prange_t if this represents a range_expression
+	    prange_t*range_expressions(void);
 
+	    void write_to_stream(std::ostream&fd);
 	    void dump(ostream&out, int indent) const;
 
 	  private:
-	    Expression*expr_;
+	    std::auto_ptr<Expression>expr_;
+	    std::auto_ptr<prange_t>  range_;
 	  private: // not implemented
 	    choice_t(const choice_t&);
 	    choice_t& operator= (const choice_t&);
@@ -207,6 +235,9 @@ class ExpAggregate : public Expression {
 	    bool alias_flag;
       };
 
+	// Elements are the syntactic items in an aggregate
+	// expression. Each element expressions a bunch of fields
+	// (choices) and binds them to a single expression
       class element_t {
 	  public:
 	    explicit element_t(std::list<choice_t*>*fields, Expression*val);
@@ -214,6 +245,9 @@ class ExpAggregate : public Expression {
 
 	    size_t count_choices() const { return fields_.size(); }
 	    void map_choices(choice_element*dst);
+
+	    inline Expression* extract_expression() { return val_; }
+	    void write_to_stream(std::ostream&fd) const;
 
 	    void dump(ostream&out, int indent) const;
 
@@ -229,6 +263,9 @@ class ExpAggregate : public Expression {
       ExpAggregate(std::list<element_t*>*el);
       ~ExpAggregate();
 
+
+      const VType*probe_type(Entity*ent, Architecture*arc) const;
+      const VType*fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
@@ -250,7 +287,7 @@ class ExpAggregate : public Expression {
 class ExpArithmetic : public ExpBinary {
 
     public:
-      enum fun_t { PLUS, MINUS, MULT, DIV, MOD, REM, POW, CONCAT };
+      enum fun_t { PLUS, MINUS, MULT, DIV, MOD, REM, POW, xCONCAT };
 
     public:
       ExpArithmetic(ExpArithmetic::fun_t op, Expression*op1, Expression*op2);
@@ -261,9 +298,6 @@ class ExpArithmetic : public ExpBinary {
       int emit(ostream&out, Entity*ent, Architecture*arc);
       virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
-
-    private:
-      int emit_concat_(ostream&out, Entity*ent, Architecture*arc);
 
     private:
       fun_t fun_;
@@ -298,6 +332,7 @@ class ExpBitstring : public Expression {
       explicit ExpBitstring(const char*);
       ~ExpBitstring();
 
+      const VType*fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
@@ -314,6 +349,7 @@ class ExpCharacter : public Expression {
       ExpCharacter(char val);
       ~ExpCharacter();
 
+      const VType*fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
@@ -330,16 +366,54 @@ class ExpCharacter : public Expression {
       char value_;
 };
 
+class ExpConcat : public Expression {
+
+    public:
+      ExpConcat(Expression*op1, Expression*op2);
+      ~ExpConcat();
+
+      const VType*probe_type(Entity*ent, Architecture*arc) const;
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
+      bool is_primary(void) const;
+      void dump(ostream&out, int indent = 0) const;
+
+    private:
+      int elaborate_expr_array_(Entity*ent, Architecture*arc, const VTypeArray*ltype);
+
+    private:
+      Expression*operand1_;
+      Expression*operand2_;
+};
+
 /*
  * The conditional expression represents the VHDL when-else
  * expressions. Note that by the VHDL syntax rules, these cannot show
- * up other then at the root of an expression.
+ * up other than at the root of an expression.
  */
 class ExpConditional : public Expression {
 
     public:
+      class else_t : public LineInfo {
+	  public:
+	    else_t(Expression*cond, std::list<Expression*>*tru);
+	    ~else_t();
+
+	    int elaborate_expr(Entity*ent, Architecture*arc, const VType*lt);
+	    int emit_when_else(ostream&out, Entity*ent, Architecture*arc);
+	    int emit_else(ostream&out, Entity*ent, Architecture*arc);
+	    void dump(ostream&out, int indent = 0) const;
+
+	  private:
+	    Expression*cond_;
+	    std::list<Expression*> true_clause_;
+      };
+
+    public:
       ExpConditional(Expression*cond, std::list<Expression*>*tru,
-		     std::list<Expression*>*els);
+		     std::list<else_t*>*fal);
       ~ExpConditional();
 
       const VType*probe_type(Entity*ent, Architecture*arc) const;
@@ -351,7 +425,7 @@ class ExpConditional : public Expression {
     private:
       Expression*cond_;
       std::list<Expression*> true_clause_;
-      std::list<Expression*> else_clause_;
+      std::list<else_t*> else_clause_;
 };
 
 /*
@@ -407,6 +481,7 @@ class ExpInteger : public Expression {
       bool is_primary(void) const;
       bool evaluate(ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
+      virtual ostream& dump_inline(ostream&out) const;
 
     private:
       int64_t value_;
@@ -443,12 +518,15 @@ class ExpName : public Expression {
       explicit ExpName(perm_string nn);
       ExpName(perm_string nn, std::list<Expression*>*indices);
       ExpName(perm_string nn, Expression*msb, Expression*lsb);
+      ExpName(ExpName*prefix, perm_string nn);
+      ExpName(ExpName*prefix, perm_string nn, Expression*msb, Expression*lsb);
       ~ExpName();
 
     public: // Base methods
       int elaborate_lval(Entity*ent, Architecture*arc, bool);
       int elaborate_rval(Entity*ent, Architecture*arc, const InterfacePort*);
       const VType* probe_type(Entity*ent, Architecture*arc) const;
+      const VType* fit_type(Entity*ent, Architecture*arc, const VTypeArray*host) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
@@ -459,7 +537,19 @@ class ExpName : public Expression {
       void dump(ostream&out, int indent = 0) const;
       const char* name() const;
 
+      void set_range(Expression*msb, Expression*lsb);
+
     private:
+      const VType* elaborate_adjust_type_with_range_(Entity*ent, Architecture*arc, const VType*type);
+
+      int elaborate_lval_(Entity*ent, Architecture*arc, bool, ExpName*suffix);
+      const VType* probe_prefix_type_(Entity*ent, Architecture*arc) const;
+      const VType* probe_prefixed_type_(Entity*ent, Architecture*arc) const;
+
+      int emit_as_prefix_(ostream&out, Entity*ent, Architecture*arc);
+
+    private:
+      std::auto_ptr<ExpName> prefix_;
       perm_string name_;
       Expression*index_;
       Expression*lsb_;
@@ -503,6 +593,7 @@ class ExpString : public Expression {
       explicit ExpString(const char*);
       ~ExpString();
 
+      const VType*fit_type(Entity*ent, Architecture*arc, const VTypeArray*atype) const;
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);

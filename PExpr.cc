@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -281,6 +281,14 @@ PExpr* PEEvent::expr() const
       return expr_;
 }
 
+PENull::PENull(void)
+{
+}
+
+PENull::~PENull()
+{
+}
+
 PEFNumber::PEFNumber(verireal*v)
 : value_(v)
 {
@@ -363,12 +371,30 @@ bool PEIdent::has_aa_term(Design*des, NetScope*scope) const
 
       const NetExpr*ex1, *ex2;
 
-      scope = symbol_search(0, des, scope, path_, net, par, eve, ex1, ex2);
+      scope = symbol_search(this, des, scope, path_, net, par, eve, ex1, ex2);
 
       if (scope)
             return scope->is_auto();
       else
             return false;
+}
+
+PENew::PENew(PExpr*size_expr)
+: size_(size_expr)
+{
+}
+
+PENew::~PENew()
+{
+      delete size_;
+}
+
+PENewClass::PENewClass(void)
+{
+}
+
+PENewClass::~PENewClass()
+{
 }
 
 PENumber::PENumber(verinum*vp)

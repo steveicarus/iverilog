@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "svector.h"
@@ -201,6 +201,9 @@ class PGModule  : public PGate {
       explicit PGModule(perm_string type, perm_string name,
 			named<PExpr*>*pins, unsigned npins);
 
+	// If the module type is known by design, then use this
+	// constructor.
+      explicit PGModule(Module*type, perm_string name);
 
       ~PGModule();
 
@@ -223,6 +226,7 @@ class PGModule  : public PGate {
       perm_string get_type() const;
 
     private:
+      Module*bound_type_;
       perm_string type_;
       list<PExpr*>*overrides_;
       named<PExpr*>*pins_;

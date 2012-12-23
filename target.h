@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "netlist.h"
@@ -55,6 +55,8 @@ struct target_t {
 	/* This is called once for each scope in the design, before
 	   anything else is called. */
       virtual void scope(const NetScope*);
+
+      virtual bool class_type(const NetScope*, netclass_t*);
 
 	/* This is called to convert module ports from a NetNet* to an
 	 * ivl_signal_t object. */
@@ -150,7 +152,10 @@ struct expr_scan_t {
       virtual ~expr_scan_t();
       virtual void expr_access_func(const NetEAccess*);
       virtual void expr_const(const NetEConst*);
+      virtual void expr_new(const NetENew*);
+      virtual void expr_null(const NetENull*);
       virtual void expr_param(const NetEConstParam*);
+      virtual void expr_property(const NetEProperty*);
       virtual void expr_rparam(const NetECRealParam*);
       virtual void expr_creal(const NetECReal*);
       virtual void expr_concat(const NetEConcat*);

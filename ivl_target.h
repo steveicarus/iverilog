@@ -1,7 +1,7 @@
 #ifndef __ivl_target_H
 #define __ivl_target_H
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,17 +16,24 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  <inttypes.h>
 
+/* Re the _CLASS define: clang++ wants this to be class to match the
+ * definition, but clang (the C) compiler needs it to be a struct
+ * since class is not defined in C. They are effecively both pointers
+ * to an object so everything works out. */
+
 #ifdef __cplusplus
 #define _BEGIN_DECL extern "C" {
 #define _END_DECL }
+#define _CLASS class
 #else
 #define _BEGIN_DECL
 #define _END_DECL
+#define _CLASS struct
 #endif
 
 #ifndef __GNUC__
@@ -157,21 +164,8 @@ typedef struct ivl_array_s    *ivl_array_t;
 typedef struct ivl_branch_s   *ivl_branch_t;
 typedef struct ivl_delaypath_s*ivl_delaypath_t;
 typedef struct ivl_design_s   *ivl_design_t;
-/* clang++ wants this to be class to match the definition, but clang
- * (the C) compiler needs it to be a struct since class is not defined
- * in C. They are effecively both pointers to an object so everything
- * works out. */
-#ifdef __cplusplus
-typedef class  ivl_discipline_s*ivl_discipline_t;
-#else
-typedef struct ivl_discipline_s*ivl_discipline_t;
-#endif
-/* See the comments above. */
-#ifdef __cplusplus
-typedef class  netenum_t      *ivl_enumtype_t;
-#else
-typedef struct netenum_t      *ivl_enumtype_t;
-#endif
+typedef _CLASS ivl_discipline_s*ivl_discipline_t;
+typedef _CLASS netenum_t      *ivl_enumtype_t;
 typedef struct ivl_event_s    *ivl_event_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
 typedef struct ivl_island_s   *ivl_island_t;
@@ -180,12 +174,7 @@ typedef struct ivl_lval_s     *ivl_lval_t;
 typedef struct ivl_net_const_s*ivl_net_const_t;
 typedef struct ivl_net_logic_s*ivl_net_logic_t;
 typedef struct ivl_udp_s      *ivl_udp_t;
-/* See the comments above. */
-#ifdef __cplusplus
-typedef class  ivl_nature_s   *ivl_nature_t;
-#else
-typedef struct ivl_nature_s   *ivl_nature_t;
-#endif
+typedef _CLASS ivl_nature_s   *ivl_nature_t;
 typedef struct ivl_net_probe_s*ivl_net_probe_t;
 typedef struct ivl_nexus_s    *ivl_nexus_t;
 typedef struct ivl_nexus_ptr_s*ivl_nexus_ptr_t;
@@ -193,9 +182,11 @@ typedef struct ivl_parameter_s*ivl_parameter_t;
 typedef struct ivl_process_s  *ivl_process_t;
 typedef struct ivl_scope_s    *ivl_scope_t;
 typedef struct ivl_signal_s   *ivl_signal_t;
+typedef struct ivl_port_info_s*ivl_port_info_t;
 typedef struct ivl_switch_s   *ivl_switch_t;
 typedef struct ivl_memory_s   *ivl_memory_t; //XXXX __attribute__((deprecated));
 typedef struct ivl_statement_s*ivl_statement_t;
+typedef const _CLASS ivl_type_s*ivl_type_t;
 
 /*
  * These are types that are defined as enumerations. These have
@@ -233,7 +224,10 @@ typedef enum ivl_expr_type_e {
       IVL_EX_ENUMTYPE = 21,
       IVL_EX_EVENT  = 17,
       IVL_EX_MEMORY = 4,
+      IVL_EX_NEW    = 23,
+      IVL_EX_NULL   = 22,
       IVL_EX_NUMBER = 5,
+      IVL_EX_PROPERTY = 24,
       IVL_EX_REALNUM  = 16,
       IVL_EX_SCOPE  = 6,
       IVL_EX_SELECT = 7,
@@ -363,7 +357,7 @@ typedef enum ivl_scope_type_e {
 
 /* Signals (ivl_signal_t) that are ports into the scope that contains
    them have a port type. Otherwise, they are port IVL_SIP_NONE. */
-typedef enum ivl_signal_port_e {
+typedef enum OUT {
       IVL_SIP_NONE  = 0,
       IVL_SIP_INPUT = 1,
       IVL_SIP_OUTPUT= 2,
@@ -406,6 +400,8 @@ typedef enum ivl_statement_type_e {
       IVL_ST_FORCE   = 14,
       IVL_ST_FOREVER = 15,
       IVL_ST_FORK    = 16,
+      IVL_ST_FORK_JOIN_ANY  = 28,
+      IVL_ST_FORK_JOIN_NONE = 29,
       IVL_ST_FREE    = 26,
       IVL_ST_RELEASE = 17,
       IVL_ST_REPEAT  = 18,
@@ -432,6 +428,8 @@ typedef enum ivl_variable_type_e {
       IVL_VT_BOOL    = 3,
       IVL_VT_LOGIC   = 4,
       IVL_VT_STRING  = 5,
+      IVL_VT_DARRAY  = 6,  /* Array (esp. dynamic array) */
+      IVL_VT_CLASS   = 7,  /* SystemVerilog class instances */
       IVL_VT_VECTOR = IVL_VT_LOGIC /* For compatibility */
 } ivl_variable_type_t;
 
@@ -770,6 +768,11 @@ extern unsigned ivl_event_lineno(ivl_event_t net);
  *    Get the data type of the expression node. This uses the variable
  *    type enum to express the type of the expression node.
  *
+ * ivl_expr_net_type
+ *    This is used in some cases to carry more advanced type
+ *    descriptions. Over the long run, all type informatino will be
+ *    moved into the ivl_type_t type description method.
+ *
  * ivl_expr_width
  *    This method returns the bit width of the expression at this
  *    node. It can be applied to any expression node, and returns the
@@ -802,6 +805,22 @@ extern unsigned ivl_event_lineno(ivl_event_t net);
  *
  * - IVL_EX_BINARY
  *
+ * - IVL_EX_PROPERTY
+ * This expression represents the property select from a class
+ * type, for example "foo.property" where "foo" is a class handle and
+ * "property" is the name of one of the properties of the class. The
+ * ivl_expr_signal function returns the ivl_signal_t for "foo" and the
+ * data_type for the signal will be IVL_VT_CLASS.
+ *
+ * The ivl_signal_net_type(sig) for the "foo" signal will be a class
+ * type and from there you can get access to the type information.
+ *
+ * Elaboration reduces the properties of a class to a vector numbered
+ * from 0 to the number of properties. The ivl_expr_property_idx()
+ * function gets the index of the selected property into the property
+ * table. That number can be passed to ivl_type_prop_*() functions to
+ * get details about the property.
+ *
  * - IVL_EX_SELECT
  * This expression takes two operands, oper1 is the expression to
  * select from, and oper2 is the selection base. The ivl_expr_width
@@ -809,6 +828,14 @@ extern unsigned ivl_event_lineno(ivl_event_t net);
  * is the base of a vector. The compiler has already figured out any
  * conversion from signal units to vector units, so the result of
  * ivl_expr_oper1 should range from 0 to ivl_expr_width().
+ *
+ * This exprsesion is also used to implement string substrings. If the
+ * sub-expression (oper1) is IVL_VT_STRING, then the base expression
+ * (oper2) is a charaster address, with 0 the first address of the
+ * string, 1 the second, and so on. This is OPPOSITE how a part select
+ * of a string cast to a vector works, to be aware. The size of the
+ * expression is an even multiple of 8, and is 8 times the number of
+ * characters to pick.
  *
  * - IVL_EX_SIGNAL
  * This expression references a signal vector. The ivl_expr_signal
@@ -839,6 +866,7 @@ extern unsigned ivl_event_lineno(ivl_event_t net);
  */
 
 extern ivl_expr_type_t ivl_expr_type(ivl_expr_t net);
+extern ivl_type_t ivl_expr_net_type(ivl_expr_t net);
 extern ivl_variable_type_t ivl_expr_value(ivl_expr_t net);
 extern const char*ivl_expr_file(ivl_expr_t net);
 extern unsigned ivl_expr_lineno(ivl_expr_t net);
@@ -855,7 +883,7 @@ extern uint64_t ivl_expr_delay_val(ivl_expr_t net);
 extern double ivl_expr_dvalue(ivl_expr_t net);
   /* IVL_EX_ENUMTYPE */
 extern ivl_enumtype_t ivl_expr_enumtype(ivl_expr_t net);
-  /* IVL_EX_SIGNAL, IVL_EX_SFUNC, IVL_EX_VARIABLE */
+  /* IVL_EX_PROPERTY IVL_EX_SIGNAL IVL_EX_SFUNC IVL_EX_VARIABLE */
 extern const char* ivl_expr_name(ivl_expr_t net);
   /* IVL_EX_BACCESS */
 extern ivl_nature_t ivl_expr_nature(ivl_expr_t net);
@@ -879,9 +907,11 @@ extern unsigned    ivl_expr_repeat(ivl_expr_t net);
 extern ivl_select_type_t ivl_expr_sel_type(ivl_expr_t net);
   /* IVL_EX_EVENT */
 extern ivl_event_t ivl_expr_event(ivl_expr_t net);
+  /* IVL_EX_PROPERTY */
+extern int ivl_expr_property_idx(ivl_expr_t net);
   /* IVL_EX_SCOPE */
 extern ivl_scope_t ivl_expr_scope(ivl_expr_t net);
-  /* IVL_EX_SIGNAL */
+  /* IVL_EX_PROPERTY IVL_EX_SIGNAL */
 extern ivl_signal_t ivl_expr_signal(ivl_expr_t net);
   /* any expression */
 extern int         ivl_expr_signed(ivl_expr_t net);
@@ -1419,6 +1449,11 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  *    ivl_expr_t that represents the index expression.  Otherwise, it
  *    returns 0.
  *
+ * ivl_lval_property_idx
+ *    If the l-value is a class object, this is the name of a property
+ *    to select from the object. If this property is not present (<0)
+ *    then the l-value represents the class object itself.
+ *
  * SEMANTIC NOTES
  * The ivl_lval_width is not necessarily the same as the width of the
  * signal or memory word it represents. It is the width of the vector
@@ -1444,6 +1479,7 @@ extern ivl_expr_t  ivl_lval_mux(ivl_lval_t net); /* XXXX Obsolete? */
 extern ivl_expr_t  ivl_lval_idx(ivl_lval_t net);
 extern ivl_expr_t  ivl_lval_part_off(ivl_lval_t net);
 extern ivl_select_type_t ivl_lval_sel_type(ivl_lval_t net);
+extern int ivl_lval_property_idx(ivl_lval_t net);
 extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);
 
 
@@ -1566,6 +1602,10 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
  *    Return the value of the parameter. This should be a simple
  *    constant expression, an IVL_EX_STRING or IVL_EX_NUMBER.
  *
+ * ivl_parameter_local
+ *    Return whether parameter was local (localparam, implicit genvar etc)
+ *    or not.
+ *
  * ivl_parameter_file
  * ivl_parameter_lineno
  *    Returns the file and line where this parameter is defined
@@ -1573,7 +1613,7 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
 extern const char* ivl_parameter_basename(ivl_parameter_t net);
 extern ivl_scope_t ivl_parameter_scope(ivl_parameter_t net);
 extern ivl_expr_t  ivl_parameter_expr(ivl_parameter_t net);
-
+extern int ivl_parameter_local(ivl_parameter_t net);
 extern const char* ivl_parameter_file(ivl_parameter_t net);
 extern unsigned ivl_parameter_lineno(ivl_parameter_t net);
 
@@ -1719,6 +1759,8 @@ extern ivl_statement_t ivl_scope_def(ivl_scope_t net);
 extern const char* ivl_scope_def_file(ivl_scope_t net);
 extern unsigned ivl_scope_def_lineno(ivl_scope_t net);
 
+extern unsigned   ivl_scope_classes(ivl_scope_t net);
+extern ivl_type_t ivl_scope_class(ivl_scope_t net, unsigned idx);
 extern unsigned       ivl_scope_enumerates(ivl_scope_t net);
 extern ivl_enumtype_t ivl_scope_enumerate(ivl_scope_t net, unsigned idx);
 extern unsigned     ivl_scope_events(ivl_scope_t net);
@@ -1736,6 +1778,12 @@ extern const char*  ivl_scope_basename(ivl_scope_t net);
 extern unsigned     ivl_scope_params(ivl_scope_t net);
 extern ivl_parameter_t ivl_scope_param(ivl_scope_t net, unsigned idx);
 extern ivl_scope_t  ivl_scope_parent(ivl_scope_t net);
+
+extern unsigned ivl_scope_mod_module_ports(ivl_scope_t net);
+extern const char *ivl_scope_mod_module_port_name(ivl_scope_t net, unsigned idx );
+extern ivl_signal_port_t ivl_scope_mod_module_port_type(ivl_scope_t net, unsigned idx );
+extern unsigned ivl_scope_mod_module_port_width(ivl_scope_t net, unsigned idx );
+
 extern unsigned     ivl_scope_ports(ivl_scope_t net);
 extern ivl_signal_t ivl_scope_port(ivl_scope_t net, unsigned idx);
 extern ivl_nexus_t  ivl_scope_mod_port(ivl_scope_t net, unsigned idx);
@@ -1876,6 +1924,7 @@ extern int         ivl_signal_msb(ivl_signal_t net) __attribute__((deprecated));
 extern int         ivl_signal_lsb(ivl_signal_t net) __attribute__((deprecated));
 extern unsigned    ivl_signal_width(ivl_signal_t net);
 extern ivl_signal_port_t ivl_signal_port(ivl_signal_t net);
+extern int         ivl_signal_module_port_index(ivl_signal_t net);
 extern int         ivl_signal_signed(ivl_signal_t net);
 extern int         ivl_signal_integer(ivl_signal_t net);
 extern int         ivl_signal_local(ivl_signal_t net);
@@ -1884,6 +1933,7 @@ extern unsigned    ivl_signal_npath(ivl_signal_t net);
 extern ivl_delaypath_t ivl_signal_path(ivl_signal_t net, unsigned idx);
 extern ivl_signal_type_t ivl_signal_type(ivl_signal_t net);
 extern ivl_variable_type_t ivl_signal_data_type(ivl_signal_t net);
+extern ivl_type_t  ivl_signal_net_type(ivl_signal_t net);
 extern const char* ivl_signal_name(ivl_signal_t net);
 extern const char* ivl_signal_basename(ivl_signal_t net);
 extern const char* ivl_signal_attr(ivl_signal_t net, const char*key);
@@ -1971,7 +2021,7 @@ extern unsigned ivl_stmt_lineno(ivl_statement_t net);
  *    Statements that have event arguments (TRIGGER and WAIT) make
  *    those event objects available through these methods.
  *
- * ivl_stmt_lval
+* ivl_stmt_lval
  * ivl_stmt_lvals
  *    Return the number of l-values for an assignment statement, or
  *    the specific l-value. If there is more than 1 l-value, then the
@@ -2069,11 +2119,11 @@ extern unsigned ivl_stmt_lineno(ivl_statement_t net);
  * triggers. The statement waits even if the sub-statement is nul.
  */
 
-  /* IVL_ST_BLOCK, IVL_ST_FORK */
+  /* IVL_ST_BLOCK, IVL_ST_FORK, IVL_ST_FORK_JOIN_ANY, IVL_ST_FORK_JOIN_NONE */
 extern unsigned ivl_stmt_block_count(ivl_statement_t net);
-  /* IVL_ST_BLOCK, IVL_ST_FORK */
+  /* IVL_ST_BLOCK, IVL_ST_FORK, IVL_ST_FORK_JOIN_ANY, IVL_ST_FORK_JOIN_NONE */
 extern ivl_scope_t ivl_stmt_block_scope(ivl_statement_t net);
-  /* IVL_ST_BLOCK, IVL_ST_FORK */
+  /* IVL_ST_BLOCK, IVL_ST_FORK, IVL_ST_FORK_JOIN_ANY, IVL_ST_FORK_JOIN_NONE */
 extern ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net, unsigned i);
   /* IVL_ST_UTASK IVL_ST_DISABLE */
 extern ivl_scope_t ivl_stmt_call(ivl_statement_t net);
@@ -2171,6 +2221,31 @@ extern ivl_attribute_t ivl_switch_attr_val(ivl_switch_t net, unsigned idx);
 *** */
 extern const char* ivl_switch_file(ivl_switch_t net);
 extern unsigned ivl_switch_lineno(ivl_switch_t net);
+
+/* TYPES
+ *
+ * ivl_type_base
+ *    This returns the base type for the type. See the
+ *    ivl_variable_type_t definition for the various base types.
+ *
+ * ivl_type_element
+ *    Return the type of the element of an array. This is only valid
+ *    for array types.
+ *
+ * SEMANTIC NOTES
+ *
+ * Class types have names and properties.
+ */
+extern ivl_variable_type_t ivl_type_base(ivl_type_t net);
+extern ivl_type_t ivl_type_element(ivl_type_t net);
+extern unsigned ivl_type_packed_dimensions(ivl_type_t net);
+extern int ivl_type_packed_lsb(ivl_type_t net, unsigned dim);
+extern int ivl_type_packed_msb(ivl_type_t net, unsigned dim);
+extern const char* ivl_type_name(ivl_type_t net);
+extern int         ivl_type_properties(ivl_type_t net);
+extern const char* ivl_type_prop_name(ivl_type_t net, int idx);
+extern ivl_type_t  ivl_type_prop_type(ivl_type_t net, int idx);
+
 
 #if defined(__MINGW32__) || defined (__CYGWIN32__)
 #  define DLLEXPORT __declspec(dllexport)

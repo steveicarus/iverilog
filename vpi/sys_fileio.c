@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "sys_priv.h"
@@ -252,7 +252,6 @@ static PLI_INT32 sys_fflush_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpiHandle arg;
       s_vpi_value val;
       PLI_UINT32 fd_mcd;
-      FILE *fp;
       errno = 0;
 
 	/* If we have no argument then flush all the streams. */
@@ -286,7 +285,7 @@ static PLI_INT32 sys_fflush_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 	    vpi_mcd_flush(fd_mcd);
       } else {
 	      /* If we have a valid file descriptor flush the file. */
-	    fp = vpi_get_file(fd_mcd);
+	    FILE *fp = vpi_get_file(fd_mcd);
 	    if (fp) fflush(fp);
       }
 

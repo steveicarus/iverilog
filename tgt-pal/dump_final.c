@@ -14,17 +14,13 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: dump_final.c,v 1.4 2003/02/26 01:24:35 steve Exp $"
-#endif
 
 # include "config.h"
 
 # include  "priv.h"
 # include  <stdio.h>
-
 
 void dump_final_design(FILE*out)
 {
@@ -53,23 +49,3 @@ void dump_final_design(FILE*out)
 	    }
       }
 }
-
-
-
-/*
- * $Log: dump_final.c,v $
- * Revision 1.4  2003/02/26 01:24:35  steve
- *  ivl_lpm_name is obsolete.
- *
- * Revision 1.3  2002/08/12 01:35:03  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.2  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.1  2000/12/09 03:42:52  steve
- *  Stuff registers into macrocells.
- *
- */
-

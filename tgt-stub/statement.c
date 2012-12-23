@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2007 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,21 +14,87 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
 # include "priv.h"
 # include <assert.h>
 
-static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
+/*
+ * If the l-value signal is a darray object, then the ivl_lval_mux()
+ * gets you the array index expression.
+ */
+static unsigned show_assign_lval_darray(ivl_lval_t lval, unsigned ind)
 {
-      unsigned wid = 0;
-
       ivl_signal_t sig = ivl_lval_sig(lval);
       assert(sig);
 
-      fprintf(out, "%*s{name=%s width=%u lvwidth=%u}\n",
+      fprintf(out, "%*s{name=%s darray width=%u l-value width=%u}\n",
+	      ind, "",
+	      ivl_signal_name(sig),
+	      ivl_signal_width(sig),
+	      ivl_lval_width(lval));
+
+      if (ivl_lval_idx(lval)) {
+	    fprintf(out, "%*sAddress-0 select of ", ind+4, "");
+	    show_type_of_signal(sig);
+	    fprintf(out, ":\n");
+	    show_expression(ivl_lval_idx(lval), ind+6);
+      }
+
+      if (ivl_lval_mux(lval)) {
+	    fprintf(out, "%*sERROR: unexpected ivl_lval_mux() expression:\n", ind+4, "");
+	    stub_errors += 1;
+	    show_expression(ivl_lval_mux(lval), ind+6);
+      }
+      if (ivl_lval_part_off(lval)) {
+	    fprintf(out, "%*sERROR: unexpected Part select expression:\n", ind+4, "");
+	    stub_errors += 1;
+	    show_expression(ivl_lval_part_off(lval), ind+8);
+      }
+
+      return ivl_lval_width(lval);
+}
+
+static unsigned show_assign_lval_class(ivl_lval_t lval, unsigned ind)
+{
+      ivl_signal_t sig = ivl_lval_sig(lval);
+      int sig_prop = ivl_lval_property_idx(lval);
+      assert(sig);
+
+	/* If there is no property select, then this l-value is for
+	   the class handle itself. */
+      if (sig_prop < 0) {
+	    fprintf(out, "%*s{name=%s class object}\n", ind, "", ivl_signal_name(sig));
+	    if (ivl_lval_width(lval) != 1) {
+		  fprintf(out, "%*sERROR: ivl_lval_width should be 1 for class objects\n",
+			  ind+4, "");
+		  stub_errors += 1;
+	    }
+	    return ivl_lval_width(lval);
+      }
+
+      fprintf(out, "%*s{name=%s.<property-%d> l-value width=%u}\n",
+	      ind, "", ivl_signal_name(sig), sig_prop, ivl_lval_width(lval));
+
+      return ivl_lval_width(lval);
+}
+
+static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
+{
+      ivl_signal_t sig = ivl_lval_sig(lval);
+      assert(sig);
+
+	/* Special case: target signal is a darray. */
+      if (ivl_signal_data_type(sig) == IVL_VT_DARRAY)
+	    return show_assign_lval_darray(lval, ind);
+
+	/* Special case: target signal is a class. */
+      if (ivl_signal_data_type(sig) == IVL_VT_CLASS)
+	    return show_assign_lval_class(lval, ind);
+
+      fprintf(out, "%*s{name=%s signal width=%u l-value width=%u}\n",
 	      ind, "",
 	      ivl_signal_name(sig),
 	      ivl_signal_width(sig),
@@ -59,9 +125,7 @@ static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
 	    show_expression(ivl_lval_part_off(lval), ind+8);
       }
 
-      wid = ivl_lval_width(lval);
-
-      return wid;
+      return ivl_lval_width(lval);
 }
 
 static void show_stmt_cassign(ivl_statement_t net, unsigned ind)
@@ -329,6 +393,28 @@ void show_statement(ivl_statement_t net, unsigned ind)
 		break;
 	  }
 
+	  case IVL_ST_FORK_JOIN_ANY: {
+		unsigned cnt = ivl_stmt_block_count(net);
+		fprintf(out, "%*sfork\n", ind, "");
+		for (idx = 0 ;  idx < cnt ;  idx += 1) {
+		      ivl_statement_t cur = ivl_stmt_block_stmt(net, idx);
+		      show_statement(cur, ind+4);
+		}
+		fprintf(out, "%*sjoin_any\n", ind, "");
+		break;
+	  }
+
+	  case IVL_ST_FORK_JOIN_NONE: {
+		unsigned cnt = ivl_stmt_block_count(net);
+		fprintf(out, "%*sfork\n", ind, "");
+		for (idx = 0 ;  idx < cnt ;  idx += 1) {
+		      ivl_statement_t cur = ivl_stmt_block_stmt(net, idx);
+		      show_statement(cur, ind+4);
+		}
+		fprintf(out, "%*sjoin_none\n", ind, "");
+		break;
+	  }
+
 	  case IVL_ST_FREE:
 	    fprintf(out, "%*sfree automatic storage ...\n", ind, "");
             break;
@@ -370,6 +456,6 @@ void show_statement(ivl_statement_t net, unsigned ind)
 	    break;
 
 	  default:
-	    fprintf(out, "%*sunknown statement type (%u)\n", ind, "", code);
+	    fprintf(out, "%*sunknown statement type (%d)\n", ind, "", code);
       }
 }

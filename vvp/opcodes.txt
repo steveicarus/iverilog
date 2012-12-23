@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -12,12 +12,25 @@ operands. In no case are there more than 3 operands. This chapter
 describes the specific behavior of each opcode, in enough detail
 (I hope) that its complete effect can be predicted.
 
-General principles of Arithmetic:
+General Principles of Arithmetic (current plan):
 
 The binary arithmetic instruction in general takes three parameters,
 the left operand, the right operand, and the base. The left operand is
 replaced with the result, which is the same width as the left and
 right operands.
+
+General Principles of Arithmetic (new plan):
+
+For strings, all arithmetic is stack based. That is, there is an
+abstract stack of strings from which operations pull their operands
+and push their results. This is somewhat like FORTH (or an HP calculator
+RPN notation) and spares the need to keep register addresses in
+operands. I may find this leads to a more compact form of instruction
+code, and may lead to more efficient operators overall, and in
+particular I may find improved efficiency overall; so after the
+experience of implementing it for strings, I'll want to change other
+types around to using this method as well. Keep this in mind whenever
+considering adding new instructions to vvp.
 
 * %abs/wr <bit-o>, <bit-i>
 
@@ -37,8 +50,8 @@ See also the %sub instruction.
 * %add/wr <bit-l>, <bit-r>
 
 This is the real valued version of the %add instruction. The arguments
-are word indices of the operands. The right operand is added into the
-left operand.
+are popped from the stack, right operand then left, and the result
+pushed in place
 
 See also the %sub/wr instruction.
 
@@ -65,14 +78,14 @@ means the following:
 	1 and 1 --> 1
 	otherwise   x
 
-* %assign/ar <array-label>, <delay>, <bit>
-* %assign/ar/d <array-label>, <delayx>, <bit>
-* %assign/ar/e <array-label>, <bit>
+* %assign/ar <array-label>, <delay>
+* %assign/ar/d <array-label>, <delayx>
+* %assign/ar/e <array-label>
 
 The %assign/ar instruction assigns a real value to a word in the
 labeled real array. The <delay> is the delay in simulation time to
-the assignment (0 for non-blocking assignment) and <bit> is the
-index register that contains the value to write.
+the assignment (0 for non-blocking assignment) and the value is popped
+from the real value stack.
 
 The memory word address is read from index register 3. The address is
 in canonical form.
@@ -139,13 +152,13 @@ This is similar to the %assign/v0 instruction, but adds the index-1
 index register with the canonical index of the destination where the
 vector is to be written. This allows for part writes into the vector.
 
-* %assign/wr <vpi-label>, <delay>, <index>
-* %assign/wr/d <vpi-label>, <delayx>, <index>
-* %assign/wr/e <vpi-label>, <index>
+* %assign/wr <vpi-label>, <delay>
+* %assign/wr/d <vpi-label>, <delayx>
+* %assign/wr/e <vpi-label>
 
 This instruction provides a non-blocking assign of the real value
 given in <index> to the real object addressed by the <vpi-label>
-label after the given <delay>.
+label after the given <delay>. The real value is popped from the stack.
 
 The %assign/wr/d variation gets the delay from integer register
 <delayx>.
@@ -181,10 +194,11 @@ manner like the expression (x ? <a> : <b>). The truth table is:
 In other words, if the bits are identical, then take that
 value. Otherwise, the value is x.
 
-* %blend/wr <bit-l>, <bit-r>
+* %blend/wr
 
 This instruction blends real values for the ternary operator. If the
-values match return that otherwise return 0.0.
+values match return that otherwise return 0.0. Two values are popped
+from the stack, one is pushed back.
 
 * %breakpoint
 
@@ -204,10 +218,11 @@ variable. This is similar to %set, but it uses the cassign port
 signal responds differently. See "VARIABLE STATEMENTS" in the
 README.txt file.
 
-* %cassign/wr <var-label>, <bit>
+* %cassign/wr <var-label>
 
 Perform a continuous assign of a constant real value to the target
-variable. See %cassign/v above.
+variable. See %cassign/v above. The value is popped from the real
+value stack.
 
 * %cassign/x0 <label>, <bit>, <wid>
 
@@ -260,9 +275,12 @@ These instructions are similar to the %cmp instructions above, except
 that the right hand operand is an immediate value. This is a positive
 number that the vector is compared with.
 
-* %cmp/wr <bit-l>, <bit-r>
+* %cmp/wr
 
-[compare real values.]
+Compare real values for equality and less-then. This opcode pops to
+values from the real-value stack and writes the comparison result to
+bits 4/5. The expressions (a < b) and (a==b) are calculated, with (b)
+poped from the stack first, then (a).
 
 * %cmp/ws <bit-l>, <bit-r>
 * %cmp/wu <bit-l>, <bit-r>
@@ -280,38 +298,60 @@ instruction will also treat x values in either operand as don't care.
 
 Only bit 4 is set by these instructions.
 
+* %cmp/str
 
-* %cvt/sr <bit-l>, <bit-r>
-* %cvt/rs <bit-l>, <bit-r>
+This instruction pops the top two strings from the string stack and
+compares them. The results of the comparison go into bits 4 and 5:
+
+	4: eq  (equal)
+	5: lt  (less than)
+
+For the purposes of calculating the lt bit, the top string is the
+right operand and the string underneath is the left operand. This
+instruction removes two strings from the stack.
+
+* %concat/str
+* %concati/str <string>
+
+Pop the top string, and concatenate it to the new top string. Or think
+of it as possing the tail, then the head, concatenating them, and
+pushing the result. The stack starts with two strings in the stack,
+and ends with one string in the stack.
+
+* %cvt/sr <bit-l>
+* %cvt/rs <bit-l>
 
 Copy a word from r to l, converting it from real to signed integer (sr)
 or signed integer to real (rs) in the process. The source and destination
 may be the same word address, leading to a convert in place. Precision
 may be lost in the conversion.
 
-* %cvt/ur <bit-l>, <bit-r>
-* %cvt/ru <bit-l>, <bit-r>
+The %cvt/sr <bit-l> gets the real value from the top of the real value
+stack (and pops the value) and writes it to the indexed register.
+
+* %cvt/ur <bit-l>
+* %cvt/ru <bit-r>
 
 Copy a word from r to l, converting it from real to unsigned integer (ur)
 or signed integer to real (ru) in the process. The source and destination
 may be the same word address, leading to a convert in place. Precision
 may be lost in the conversion.
 
-* %cvt/rv <bit-l>, <bit-r>, <wid>
-* %cvt/rv/s <bit-l>, <bit-r>, <wid>
+* %cvt/rv <bit-r>, <wid>
+* %cvt/rv/s <bit-r>, <wid>
 
-The %cvt/rv instruction converts a thread vector starting at <bit-r> and
-with the width <wid> to a real word <bit-l>. Precision may be lost in
-the conversion.
+The %cvt/rv instruction converts a thread vector starting at <bit-r>
+and with the width <wid> to a real word. Push the result onto the real
+value stack. Precision may be lost in the conversion.
 
 The %cvt/rv/s instruction is the same as %cvt/rv, but treats the thread
 vector as a signed value.
 
-* %cvt/vr <bit-l>, <bit-r>, <wid>
+* %cvt/vr <bit-l>, <wid>
 
-The %cvt/vr opcode converts a real word <bit-r> to a thread vector
+The %cvt/vr opcode converts a real word from the stack to a thread vector
 starting at <bit-l> and with the width <wid>. Non-integer precision is
-lost in the conversion.
+lost in the conversion, and the real value is popped from the stack.
 
 * %deassign <var-label>, <base>, <width>
 
@@ -343,6 +383,18 @@ This is similar to the %delay opcode, except that the parameter
 selects an index register, which contains the actual delay. This
 supports run-time calculated delays.
 
+* %delete/obj <var-label>
+
+Arrange for the dynamic object at the target label to be deleted.
+This has no effect on the object or string stack. Note that this is
+the same as:
+
+   %null ;
+   %store/obj <var-label>
+
+but that idiom is expected to be common enough that it warrants an
+optimized shorthand.
+
 * %disable <scope-label>
 
 This instruction terminates threads that are part of a specific
@@ -360,11 +412,16 @@ the bits in either vector are x or z, the entire result is x.
 The %div/s instruction is the same as %div, but does signed division.
 
 
-* %div/wr <bit-l>, <bit-r>
+* %div/wr
 
 This opcode divides the left operand by the right operand. If the
 right operand is 0, then the result is NaN.
 
+
+* dup/real
+
+These opcodes duplicate the value on the top of the stack for the
+corresponding type.
 
 * %evctl <functor-label> <idx>
 * %evctl/c
@@ -405,9 +462,10 @@ functor instead of the normal assign port (port-0), so the signal
 responds differently. See "VARIABLE STATEMENTS" and "NET STATEMENTS"
 in the README.txt file.
 
-* %force/wr <var-label>, <bit>
+* %force/wr <var-label>
 
-Force a constant real value to the target variable. See %force/v above.
+Force a constant real value to the target variable. See %force/v
+above. The value is popped from the real value stack.
 
 * %force/x0 <label>, <bit>, <wid>
 
@@ -526,6 +584,14 @@ If the matching child instruction is still running, a %join suspends
 the calling thread until the child ends. If the child is already
 ended, then the %join does not block or yield the thread.
 
+* %join/detach <n>
+
+This is also a partner to %fork. This instruction causes the thread
+to detach <n> threads from the current thread. The <n> should be ALL
+the children, and none of those children may be automatic. This
+instruction is used to implement join_none and join_any from the
+Verilog source.
+
 * %load/av <bit>, <array-label>, <wid>
 
 This instruction loads a word from the specified array. The word
@@ -552,6 +618,51 @@ bit, and the <index> is the selector for the bit to use. If <index> is
 out of range, then x is loaded. The index value is incremented by one
 if it is defined (bit 4 is not 1).
 
+* %load/dar <bit>, <functor-label>, <wid>
+* %load/dar/r <functor-label>
+
+This instruction loads an array word from a dynamic array. The
+<label> refers to the variable object, and the <bit>/<wid> are the
+location in local vector space where the extracted word goes. The
+index is implicitly extracted from index register 3.
+
+The dar/r variant reads a real-value into a real-valued register.
+
+(See also %set/dar)
+
+* %load/obj <var-label>
+
+This instruction loads an object handle and pushes it to the top of
+the object handle stack.
+
+See also %store/obj.
+
+
+* %load/prop/v <pid>, <bit>, <wid>
+
+This instruction loads from a class object property into the specified
+thread register bit. The <pid> is the number of the property and the
+<bit> is the location where the loaded value goes.
+
+The handle for the class object is found on the top of the object
+stack, and the stack is NOT popped.
+
+* %load/real <vpi-label>
+
+The %load/real instruction reads a real value from the vpi-like object
+and pushes it to the top of the real value stack.
+
+* %load/str <var-label>
+* %load/dar/str <var-label>
+
+The %load/str instruction gets the string from the string variable and
+pushes in to the string stack. (See also %store/str)
+
+The %load/dar/str is similar, but the variable is a dynamic array of
+strings, and there is an index value in index register 3.
+(See also %store/dar/str)
+
+
 * %load/v <bit>, <functor-label>, <wid>
 
 This instruction loads a vector value from the given functor node into
@@ -576,11 +687,7 @@ The <wid> is, line the %load/v, the result width. But unlike the
 %load/v, the vector is padded with 0s (%load/vp0) or sign extended
 (%load/vp0/s) to the desired width.
 
-* %load/wr <bit>, <vpi-label>
-* %load/ar <bit>, <array-label>, <index>
-
-The %load/wr instruction reads a real value from the vpi-like object
-to a word register <bit>.
+* %load/ar <array-label>, <index>
 
 The %load/ar instruction reads a real value from an array. The <index>
 is the index register that contains the canonical word address into
@@ -615,6 +722,13 @@ If <exp>==0x3fff and <mant> == 0, the value is +inf.
 If <exp>==0x7fff and <mant> == 0, the value is -inf.
 If <exp>==0x3fff and <mant> != 0, the value is NaN.
 
+* %max/wr
+* %min/wr
+
+This instruction pops the top two values from the real stack and
+pushes back the max(min) value. Avoid returning NaN by selecting the
+other if either is NaN.
+
 * %mod   <bit-l>, <bit-r>, <wid>
 * %mod/s <bit-l>, <bit-r>, <wid>
 
@@ -625,12 +739,11 @@ replaced with the result.
 
 The /s form does signed %.
 
-* %mod/wr <bit-l>, <bit-r>
+* %mod/wr
 
 This opcode is the real-valued modulus of the two real values.
 
 * %mov <dst>, <src>, <wid>
-* %mov/wr <dst>, <src>
 * %mov/wu <dst>, <src>
 * %movi <dst>, <value>, <wid>
 
@@ -652,10 +765,9 @@ are x or z, the result is x. Otherwise, the result is the arithmetic
 product.
 
 
-* %mul/wr <bit-l>, <bit-r>
+* %mul/wr
 
-This opcode multiplies two real words together. The result replaces
-the left operand.
+This opcode multiplies two real words together.
 
 
 * %muli <bit-l>, <imm>, <wid>
@@ -675,6 +787,25 @@ means the following:
 	1 and 1 --> 0
 	otherwise   x
 
+
+* %new/cobj <label>
+
+Create a new class object. The <label> is the VPI label for a class
+type definition.
+
+* %new/darray <idx>, "<type>"
+
+Create a new array (of int objects) with a size. the <idx> is the
+address of an index variable that contains the computed array size to
+use. The <type> is a string that expresses the type of the elements of
+the array. See also %delete/obj
+
+The supported types are:
+
+         "b<N>"     - unsigned bool <N>-bits
+         "sb<N>"    - signed bool <N>-bits
+	 "r"        - real
+	 "S"        - SystemVerilog string
 
 * %nor <dst>, <src>, <wid>
 
@@ -699,6 +830,11 @@ it is valid to place the <dst> within the <src>.
 The actual operation performed is the inverted or of all the bits in
 the vector.
 
+
+* %null
+
+Push a null object and push it to the object stack. The null object
+can be used with any class or darray object, so it is not typed.
 
 * %or <dst>, <src>, <wid>
 
@@ -726,6 +862,13 @@ destination vector in register space. The destination may overlap
 the source bit. The <dst> may not be 0-3. This is useful for zero
 or sign extending a vector.
 
+* %pop/str <num>
+* %pop/real <num>
+
+Pop this many items from the string stack. This is the opposite of the
+%pushX/str opcode which pushes a string to the stack. The %pop/str is
+not normally needed because the %store/str includes an implicit pop,
+but sometimes it is necessary to pop explicitly.
 
 * %pow <bit-l>, <bit-r>, <wid>
 * %pow/s <bit-l>, <bit-r>, <wid>
@@ -737,11 +880,35 @@ to calculate the result so may not produce exact results. The result
 replaces the left operand.
 
 
-* %pow/wr <bit-l>, <bit-r>
+* %pow/wr
 
-This opcode raises <bit-l> (real) to the power of <bit-r> (real). The
-result replaces the left operand.
+This opcode raises the left operand by the right operand, and pushes
+the result.
 
+* %prop/v <pid>, <base>, <wid>
+
+Write the vector into property number <pid> of the class object on the
+top of the object stack. The stack is NOT popped.
+
+* %pushi/real <mant>, <exp>
+
+This opcode loads an immediate value, floating point, into the real
+value stack. The mantissa is an unsigned integer value, up to 32 bits,
+that multiplied by 2**(<exp>-0x1000) to make a real value. The sign
+bit is OR-ed into the <exp> value at bit 0x4000, and is removed from
+the <exp> before calculating the real value.
+
+If <exp>==0x3fff and <mant> == 0, the value is +inf.
+If <exp>==0x7fff and <mant> == 0, the value is -inf.
+If <exp>==0x3fff and <mant> != 0, the value is NaN.
+
+* %pushi/str <text>
+
+Push a literal string to the string stack.
+
+* %pushv/str <src>, <wid>
+
+Convert a vector to a string and push the string to the string stack.
 
 * %release/net <functor-label>, <base>, <width>
 * %release/reg <functor-label>, <base>, <width>
@@ -766,6 +933,12 @@ Release the force on the real signal that is represented by the functor
 statement. The <type> is 0 for nets and 1 for registers. See the other
 %release commands above.
 
+* %set/dar <var-label>, <bit>, <wid>
+
+This sets a vector to a word of the dynamic array. Index register 3
+contains the word address within the dynamic array, and <bit>,<wid>
+specifies the thread vector to be written.
+
 * %set/v <var-label>, <bit>, <wid>
 
 This sets a vector to a variable, and is used to implement blocking
@@ -789,19 +962,6 @@ width is implied from the <wid> that is the argument. This is the part
 
 The address (in canonical form) is precalculated and loaded into index
 register 3. This is the address of the word within the array.
-
-* %set/wr <vpi-label>, <bit>
-* %set/ar <array-label>, <index>, <bit>
-
-The %set/wr instruction writes a real word to the specified VPI-like
-object.
-
-The %set/ar instruction writes a real work to the specified array
-word. The <array-label> addresses the array, and the <index> is the
-name of the index register to address into the word. The index
-register must contain an integer value that is the canonical address
-of the array word. The <bit> is the index register that contains the
-real value word to write.
 
 * %set/x0 <var-label>, <bit>, <wid>
 
@@ -841,6 +1001,32 @@ top bits. %shiftr/s/i0 is a signed shift, so the value is sign-extended.
 
 For a negative shift %shiftr/i0 will pad the value with 'bx.
 
+* %store/obj <var-label>
+
+This pops the top of the object stack and writes it to the object
+variable given by the label.
+
+See also %load/obj.
+
+* %store/real <var-label>
+* %store/reala <var-label> <index>
+
+This pops the top of the real variable stack and write it to the
+object variable given bu the label.
+
+The areal version is similar, but writes to a real array using the
+index in the index register <index>
+
+* %store/str <var-label>
+* %store/dar/r <var-label>
+* %store/dar/str <var-label>
+
+The %store/str instruction pops the top of the string stack and writes
+it to the string variable.
+
+The %store/dar/str is similar, but the target is a dynamic array of
+string string. The index is taken from signed index register 3.
+
 * %sub <bit-l>, <bit-r>, <wid>
 
 This instruction arithmetically subtracts the right vector out of the
@@ -861,28 +1047,53 @@ the <wid> of the left vector. The result replaces the left vector.
 See also the %addi instruction.
 
 
-* %sub/wr <bit-l>, <bit-r>
+* %sub/wr
 
 This instruction operates on real values in word registers. The right
-indexed value is subtracted from the left indexed value, and the
-result placed in the left index.
+value is popped, the left value is popped, the right is subtracted
+from the left, and the result pushed.
 
 
-* %vpi_call <name> [, ...]
+* %substr/v <bit-l>, <sel>, <wid>
+
+This instruction extracts the substring of the top string in the string
+stack and delivers the result to vector space. The <bit>,<wid> part is
+the location where the result goes, and <sel> is the index register
+that holds the index. This is the general method for getting string
+values into the vector space. The string value is NOT popped.
+
+
+* %test_nul <var-label>
+
+This instruction tests the contents of the addressed variable to see
+if it is null. If it is, set bit 4 to 1. Otherwise, set bit 4 to 0.
+
+This is intended to implement the SystemVerilog expression
+(<var>==null), where <var> is a class variable.
+
+* %vpi_call <name> [, ...] {<real> <str>}
 
 This instruction makes a call to a system task that was declared using
 VPI. The operands are compiled down to a vpiHandle for the call. The
 instruction contains only the vpiHandle for the call. See the vpi.txt
 file for more on system task/function calls.
 
+The {...} part is stack information. This tells the run-time how many
+stack items the call uses so that it knows how many to pop off the
+stack when the call returns.
 
-* %vpi_func <name>, <dst>, <wid> [, ...]
+* %vpi_func <name>, <dst>, <wid> [, ...] {<real> <str>}
 
 This instruction is similar to %vpi_call, except that it is for
 calling system functions. The difference here is the <dst> and <wid>
 parameters that specify where the return value is to go. The normal
 means that the VPI code uses to write the return value causes those
 bits to go here.
+
+The {...} part is stack information. This tells the run-time how many
+stack items the call uses so that it knows how many to pop off the
+stack when the call returns. The function call will pop the real and
+string stacks, and will push any return value.
 
 
 * %wait <functor-label>
@@ -933,5 +1144,5 @@ and leaves the result in the <dst> vector. xor is this:
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */

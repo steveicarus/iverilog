@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "expression.h"
@@ -48,28 +48,6 @@ bool Expression::symbolic_compare(const Expression*) const
 	   << "symbolic_compare() method not implemented "
 	   << "for " << typeid(*this).name() << endl;
       return false;
-}
-
-bool ExpName::symbolic_compare(const Expression*that) const
-{
-      const ExpName*that_name = dynamic_cast<const ExpName*> (that);
-      if (that_name == 0)
-	    return false;
-
-      if (name_ != that_name->name_)
-	    return false;
-
-      if (that_name->index_ && !index_)
-	    return false;
-      if (index_ && !that_name->index_)
-	    return false;
-
-      if (index_) {
-	    assert(that_name->index_);
-	    return index_->symbolic_compare(that_name->index_);
-      }
-
-      return true;
 }
 
 ExpAttribute::ExpAttribute(ExpName*bas, perm_string nam)
@@ -137,26 +115,32 @@ ExpAggregate::choice_t::choice_t(Expression*exp)
 }
 
 ExpAggregate::choice_t::choice_t()
-: expr_(0)
+{
+}
+
+ExpAggregate::choice_t::choice_t(prange_t*rang)
+: range_(rang)
 {
 }
 
 ExpAggregate::choice_t::~choice_t()
 {
-      if (expr_) delete expr_;
 }
 
 bool ExpAggregate::choice_t::others() const
 {
-      return expr_ == 0;
+      return expr_.get() == 0 && range_.get() == 0;
 }
 
 Expression*ExpAggregate::choice_t::simple_expression(bool detach_flag)
 {
-      Expression*res = expr_;
-      if (detach_flag)
-	    expr_ = 0;
+      Expression*res = detach_flag? expr_.release() : expr_.get();
       return res;
+}
+
+prange_t*ExpAggregate::choice_t::range_expressions(void)
+{
+      return range_.get();
 }
 
 ExpAggregate::element_t::element_t(list<choice_t*>*fields, Expression*val)
@@ -183,54 +167,12 @@ ExpAggregate::element_t::~element_t()
 ExpArithmetic::ExpArithmetic(ExpArithmetic::fun_t op, Expression*op1, Expression*op2)
 : ExpBinary(op1, op2), fun_(op)
 {
+	// The xCONCAT type is not actually used.
+      assert(op != xCONCAT);
 }
 
 ExpArithmetic::~ExpArithmetic()
 {
-}
-
-bool ExpArithmetic::evaluate(ScopeBase*scope, int64_t&val) const
-{
-      int64_t val1, val2;
-      bool rc;
-
-      rc = eval_operand1(scope, val1);
-      if (rc == false)
-	    return false;
-
-      rc = eval_operand2(scope, val2);
-      if (rc == false)
-	    return false;
-
-      switch (fun_) {
-	  case PLUS:
-	    val = val1 + val2;
-	    break;
-	  case MINUS:
-	    val = val1 - val2;
-	    break;
-	  case MULT:
-	    val = val1 * val2;
-	    break;
-	  case DIV:
-	    if (val2 == 0)
-		  return false;
-	    val = val1 / val2;
-	    break;
-	  case MOD:
-	    if (val2 == 0)
-		  return false;
-	    val = val1 % val2;
-	    break;
-	  case REM:
-	    return false;
-	  case POW:
-	    return false;
-	  case CONCAT:
-	    return false;
-      }
-
-      return true;
 }
 
 /*
@@ -256,11 +198,23 @@ ExpCharacter::~ExpCharacter()
 {
 }
 
-ExpConditional::ExpConditional(Expression*co, list<Expression*>*tru, list<Expression*>*els)
+ExpConcat::ExpConcat(Expression*op1, Expression*op2)
+: operand1_(op1), operand2_(op2)
+{
+}
+
+ExpConcat::~ExpConcat()
+{
+      delete operand1_;
+      delete operand2_;
+}
+
+ExpConditional::ExpConditional(Expression*co, list<Expression*>*tru,
+			       list<ExpConditional::else_t*>*fal)
 : cond_(co)
 {
       if (tru) true_clause_.splice(true_clause_.end(), *tru);
-      if (els) else_clause_.splice(else_clause_.end(), *els);
+      if (fal) else_clause_.splice(else_clause_.end(), *fal);
 }
 
 ExpConditional::~ExpConditional()
@@ -272,11 +226,28 @@ ExpConditional::~ExpConditional()
 	    delete tmp;
       }
       while (! else_clause_.empty()) {
-	    Expression*tmp = else_clause_.front();
+	    else_t*tmp = else_clause_.front();
 	    else_clause_.pop_front();
 	    delete tmp;
       }
 }
+
+ExpConditional::else_t::else_t(Expression*cond, std::list<Expression*>*tru)
+: cond_(cond)
+{
+      if (tru) true_clause_.splice(true_clause_.end(), *tru);
+}
+
+ExpConditional::else_t::~else_t()
+{
+      delete cond_;
+      while (! true_clause_.empty()) {
+	    Expression*tmp = true_clause_.front();
+	    true_clause_.pop_front();
+	    delete tmp;
+      }
+}
+
 
 ExpEdge::ExpEdge(ExpEdge::fun_t typ, Expression*op)
 : ExpUnary(op), fun_(typ)
@@ -353,6 +324,16 @@ ExpName::ExpName(perm_string nn, Expression*msb, Expression*lsb)
 {
 }
 
+ExpName::ExpName(ExpName*prefix, perm_string nn)
+: prefix_(prefix), name_(nn), index_(0), lsb_(0)
+{
+}
+
+ExpName::ExpName(ExpName*prefix, perm_string nn, Expression*msb, Expression*lsb)
+: prefix_(prefix), name_(nn), index_(msb), lsb_(lsb)
+{
+}
+
 ExpName::~ExpName()
 {
       delete index_;
@@ -361,6 +342,36 @@ ExpName::~ExpName()
 const char* ExpName::name() const
 {
       return name_;
+}
+
+bool ExpName::symbolic_compare(const Expression*that) const
+{
+      const ExpName*that_name = dynamic_cast<const ExpName*> (that);
+      if (that_name == 0)
+	    return false;
+
+      if (name_ != that_name->name_)
+	    return false;
+
+      if (that_name->index_ && !index_)
+	    return false;
+      if (index_ && !that_name->index_)
+	    return false;
+
+      if (index_) {
+	    assert(that_name->index_);
+	    return index_->symbolic_compare(that_name->index_);
+      }
+
+      return true;
+}
+
+void ExpName::set_range(Expression*msb, Expression*lsb)
+{
+      assert(index_==0);
+      index_ = msb;
+      assert(lsb_==0);
+      lsb_ = lsb;
 }
 
 ExpRelation::ExpRelation(ExpRelation::fun_t ty, Expression*op1, Expression*op2)

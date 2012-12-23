@@ -12,9 +12,8 @@
 #
 #    You should have received a copy of the GNU Library General Public
 #    License along with this program; if not, write to the Free
-#    Software Foundation, Inc.,
-#    59 Temple Place - Suite 330
-#    Boston, MA 02111-1307, USA
+#    Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+#    Boston, MA 02110-1301, USA.
 #
 SHELL = /bin/sh
 
@@ -52,11 +51,11 @@ CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
 # Object files for system.vpi
-O = sys_table.o sys_convert.o sys_deposit.o sys_display.o sys_fileio.o \
-    sys_finish.o sys_icarus.o sys_plusargs.o sys_queue.o sys_random.o \
-    sys_random_mti.o sys_readmem.o sys_readmem_lex.o sys_scanf.o sys_sdf.o \
-    sys_time.o sys_vcd.o sys_vcdoff.o vcd_priv.o mt19937int.o sys_priv.o \
-    sdf_lexor.o sdf_parse.o stringheap.o vams_simparam.o \
+O = sys_table.o sys_convert.o sys_countdrivers.o sys_darray.o sys_deposit.o sys_display.o \
+    sys_fileio.o sys_finish.o sys_icarus.o sys_plusargs.o sys_queue.o \
+    sys_random.o sys_random_mti.o sys_readmem.o sys_readmem_lex.o sys_scanf.o \
+    sys_sdf.o sys_string.o sys_time.o sys_vcd.o sys_vcdoff.o vcd_priv.o mt19937int.o \
+    sys_priv.o sdf_lexor.o sdf_parse.o stringheap.o vams_simparam.o \
     table_mod.o table_mod_lexor.o table_mod_parse.o
 OPP = vcd_priv2.o
 
@@ -96,8 +95,8 @@ distclean: clean
 	rm -f vpi_config.h stamp-vpi_config-h
 
 cppcheck: $(O:.o=.c) $(OPP:.o=.cc) $(M:.o=.c) $(V:.o=.c)
-	cppcheck --enable=all -f --suppressions $(srcdir)/cppcheck.sup \
-	         $(INCLUDE_PATH) $^
+	cppcheck --enable=all -f --suppressions-list=$(srcdir)/cppcheck.sup \
+	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status
 	cd ..; ./config.status --file=vpi/$@

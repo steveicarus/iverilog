@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  <string>
@@ -49,6 +49,7 @@ class PExpr : public LineInfo {
       static const unsigned NO_FLAGS     = 0x0;
       static const unsigned NEED_CONST   = 0x1;
       static const unsigned SYS_TASK_ARG = 0x2;
+      static const unsigned ANNOTATABLE  = 0x4;
 
       PExpr();
       virtual ~PExpr();
@@ -119,6 +120,13 @@ class PExpr : public LineInfo {
         // This method allows the expression type (signed/unsigned)
         // to be propagated down to any context-dependant operands.
       void cast_signed(bool flag) { signed_flag_ = flag; }
+
+	// This is the more generic form of the elaborate_expr method
+	// below. The plan is to replace the simpler elaborate_expr
+	// method with this version, which can handle more advanced
+	// types. But for now, this is only implemented in special cases.
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     ivl_type_t type, unsigned flags) const;
 
 	// Procedural elaboration of the expression. The expr_width is
 	// the required width of the expression.
@@ -304,13 +312,15 @@ class PEIdent : public PExpr {
 					 NetScope*scope,
 					 bool is_force) const;
 
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     ivl_type_t type, unsigned flags) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     unsigned expr_wid,
                                      unsigned flags) const;
 
 	// Elaborate the PEIdent as a port to a module. This method
 	// only applies to Ident expressions.
-      NetNet* elaborate_port(Design*des, NetScope*sc) const;
+      NetNet* elaborate_subport(Design*des, NetScope*sc) const;
 
       verinum* eval_const(Design*des, NetScope*sc) const;
 
@@ -363,9 +373,14 @@ class PEIdent : public PExpr {
       bool elaborate_lval_net_part_(Design*, NetScope*, NetAssign_*) const;
       bool elaborate_lval_net_idx_(Design*, NetScope*, NetAssign_*,
                                    index_component_t::ctype_t) const;
+      bool elaborate_lval_net_class_member_(Design*, NetScope*,
+					    NetAssign_*,
+					    const perm_string&) const;
       bool elaborate_lval_net_packed_member_(Design*, NetScope*,
 					     NetAssign_*,
 					     const perm_string&) const;
+      bool elaborate_lval_darray_bit_(Design*, NetScope*,
+				       NetAssign_*) const;
 
     private:
       NetExpr*elaborate_expr_param_(Design*des,
@@ -436,6 +451,59 @@ class PEIdent : public PExpr {
 
       bool eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 			     long&midx, long&lidx) const;
+};
+
+class PENew : public PExpr {
+
+    public:
+      explicit PENew (PExpr*s);
+      ~PENew();
+
+      virtual void dump(ostream&) const;
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  width_mode_t&mode);
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     ivl_type_t type, unsigned flags) const;
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
+				     unsigned expr_wid,
+                                     unsigned flags) const;
+
+    private:
+      PExpr*size_;
+};
+
+class PENewClass : public PExpr {
+
+    public:
+      explicit PENewClass ();
+      ~PENewClass();
+      virtual void dump(ostream&) const;
+	// Class objects don't have a useful width, but the expression
+	// is IVL_VT_CLASS.
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  width_mode_t&mode);
+	// Note that class (new) expressions only appear in context
+	// that uses this form of the elaborate_expr method. In fact,
+	// the type argument is going to be a netclas_t object.
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     ivl_type_t type, unsigned flags) const;
+
+    private:
+};
+
+class PENull : public PExpr {
+    public:
+      explicit PENull();
+      ~PENull();
+
+      virtual void dump(ostream&) const;
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  width_mode_t&mode);
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     ivl_type_t type, unsigned flags) const;
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
+				     unsigned expr_wid,
+                                     unsigned flags) const;
 };
 
 class PENumber : public PExpr {
@@ -716,7 +784,16 @@ class PECallFunction : public PExpr {
 
       bool check_call_matches_definition_(Design*des, NetScope*dscope) const;
 
+
       NetExpr* cast_to_width_(NetExpr*expr, unsigned wid) const;
+
+      NetExpr*elaborate_expr_method_(Design*des, NetScope*scope,
+				     unsigned expr_wid) const;
+#if 0
+      NetExpr*elaborate_expr_string_method_(Design*des, NetScope*scope) const;
+      NetExpr*elaborate_expr_enum_method_(Design*des, NetScope*scope,
+					  unsigned expr_wid) const;
+#endif
 
       NetExpr* elaborate_sfunc_(Design*des, NetScope*scope,
                                 unsigned expr_wid,
@@ -725,6 +802,8 @@ class PECallFunction : public PExpr {
                                       unsigned expr_wid) const;
       unsigned test_width_sfunc_(Design*des, NetScope*scope,
 			         width_mode_t&mode);
+      unsigned test_width_method_(Design*des, NetScope*scope,
+				  width_mode_t&mode);
 };
 
 /*

@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 /*
@@ -28,6 +28,7 @@
 # include  <string>
 # include  <map>
 # include  <list>
+# include  <memory>
 # include  <vector>
 # include  <set>
 # include  <utility>
@@ -35,6 +36,7 @@
 # include  "ivl_target_priv.h"
 # include  "pform_types.h"
 # include  "config.h"
+# include  "nettypes.h"
 # include  "verinum.h"
 # include  "verireal.h"
 # include  "StringHeap.h"
@@ -74,8 +76,12 @@ class NetEvTrig;
 class NetEvWait;
 class PExpr;
 class PFunction;
+class netclass_t;
+class netdarray_t;
+class netparray_t;
 class netenum_t;
 class netstruct_t;
+class netvector_t;
 
 struct target;
 struct functor_t;
@@ -373,6 +379,7 @@ class Nexus {
 	/* Given the nexus has constant drivers, this method returns
 	   the value that has been driven. */
       verinum::V driven_value() const;
+      verinum driven_vector() const;
 
 	/* The code generator sets an ivl_nexus_t to attach code
 	   generation details to the nexus. */
@@ -554,47 +561,56 @@ class NetDelaySrc  : public NetObj {
  * anything and they are not a data sink, per se. The pins follow the
  * values on the nexus.
  */
-class NetNet  : public NetObj {
+
+class PortType
+{
+public:
+    enum Enum { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT, PREF };
+
+    /*
+     * Merge Port types (used to construct a sane combined port-type
+     * for module ports with complex defining expressions).
+     *
+     */
+    static Enum merged( Enum lhs, Enum rhs );
+};
+
+
+  /*
+   * Information on actual ports (rather than port-connected signals) of
+   * module.
+   * N.b. must be POD as passed through a "C" interface in the t-dll-api.
+   */
+struct PortInfo
+{
+    PortType::Enum  type;
+    unsigned long   width;
+    perm_string     name;
+};
+
+
+class NetNet  : public NetObj, public PortType {
 
     public:
       enum Type { NONE, IMPLICIT, IMPLICIT_REG, INTEGER, WIRE, TRI, TRI1,
 		  SUPPLY0, SUPPLY1, WAND, TRIAND, TRI0, WOR, TRIOR, REG,
 		  UNRESOLVED_WIRE };
 
-      enum PortType { NOT_A_PORT, PIMPLICIT, PINPUT, POUTPUT, PINOUT, PREF };
-
-      struct range_t {
-	    inline range_t() : msb(0), lsb(0) { }
-	    inline range_t(long m, long l) : msb(m), lsb(l) { }
-	    inline range_t(const range_t&that)
-	    : msb(that.msb), lsb(that.lsb) { }
-	    inline range_t& operator = (const range_t&that)
-	    { msb = that.msb; lsb = that.lsb; return *this; }
-
-	    long msb;
-	    long lsb;
-
-	    inline unsigned long width()const
-	    { if (msb >= lsb) return msb-lsb+1; else return lsb-msb+1; }
-      };
+      typedef PortType::Enum PortType;
 
     public:
-	// The width in this case is a shorthand for ms=width-1 and
-	// ls=0. Only one pin is created, the width is of the vector
-	// that passed through.
-      explicit NetNet(NetScope*s, perm_string n, Type t, unsigned width =1);
-
-	// This form supports an array of vectors. The [ms:ls] define
-	// the base vector, and the [s0:e0] define the array
-	// dimensions. If s0==e0, then this is not an array after
-	// all.
+	// This form is the more generic form of the constructor. For
+	// now, the unpacked type is not burried into an ivl_type_s object.
       explicit NetNet(NetScope*s, perm_string n, Type t,
-		      const std::list<range_t>&packed);
-      explicit NetNet(NetScope*s, perm_string n, Type t,
-		      const std::list<range_t>&packed, long s0, long e0);
+		      const std::list<netrange_t>&unpacked,
+		      ivl_type_s*type =0);
 
-	// This form builds a NetNet from its record definition.
+	// This form builds a NetNet from its record/enum/darray
+	// definition. They should probably be replaced with a single
+	// version that takes an ivl_type_s* base.
       explicit NetNet(NetScope*s, perm_string n, Type t, netstruct_t*type);
+      explicit NetNet(NetScope*s, perm_string n, Type t, netdarray_t*type);
+      explicit NetNet(NetScope*s, perm_string n, Type t, netvector_t*type);
 
       virtual ~NetNet();
 
@@ -604,26 +620,28 @@ class NetNet  : public NetObj {
       PortType port_type() const;
       void port_type(PortType t);
 
+      // If this net net is a port (i.e. a *sub*port net of a module port)
+      // its port index is number of the module it connects through
+      int get_module_port_index() const;                // -1 Not connected to port...
+      void set_module_port_index(unsigned idx);
+
       ivl_variable_type_t data_type() const;
-      void data_type(ivl_variable_type_t t);
 
 	/* If a NetNet is signed, then its value is to be treated as
 	   signed. Otherwise, it is unsigned. */
       bool get_signed() const;
-      void set_signed(bool);
 
 	/* Used to maintain original type of net since integers are
 	   implemented as 'reg signed [31:0]' in Icarus */
       bool get_isint() const;
-      void set_isint(bool);
 
       bool get_scalar() const;
-      void set_scalar(bool);
 
-      void set_enumeration(netenum_t*enum_set);
+      inline const ivl_type_s* net_type(void) const { return net_type_; }
       netenum_t*enumeration(void) const;
-
-      netstruct_t*struct_type(void) const;
+      const netstruct_t*struct_type(void) const;
+      netdarray_t*darray_type(void) const;
+      netclass_t*class_type(void) const;
 
 	/* Attach a discipline to the net. */
       ivl_discipline_t get_discipline() const;
@@ -632,15 +650,15 @@ class NetNet  : public NetObj {
 	/* This method returns a reference to the packed dimensions
 	   for the vector. These are arranged as a list where the
 	   first range in the list (front) is the left-most range in
-	   the verilog declaration. */
-      const std::list<range_t>& packed_dims() const { return packed_dims_; }
+	   the verilog declaration. These packed dims are compressed
+	   to represent the dimensions of all the subtypes. */
+      const std::vector<netrange_t>& packed_dims() const { return slice_dims_; }
+
+      const std::vector<netrange_t>& unpacked_dims() const { return unpacked_dims_; }
 
 	/* The vector_width returns the bit width of the packed array,
-	   vector or scaler that is this NetNet object. The static
-	   method is also a convenient way to convert a range list to
-	   a vector width. */
-      static unsigned long vector_width(const std::list<NetNet::range_t>&);
-      unsigned long vector_width() const { return vector_width(packed_dims_); }
+	   vector or scaler that is this NetNet object.  */
+      inline unsigned long vector_width() const { return slice_width(0); }
 
 	/* Given a prefix of indices, figure out how wide the
 	   resulting slice would be. This is a generalization of the
@@ -670,18 +688,14 @@ class NetNet  : public NetObj {
 	/* This method returns 0 for scalars and vectors, and greater
 	   for arrays. The value is the number of array
 	   indices. (Currently only one array index is supported.) */
-      unsigned array_dimensions() const;
-      long array_first() const;
-      bool array_addr_swapped() const;
+      inline unsigned unpacked_dimensions() const { return unpacked_dims_.size(); }
+
+	/* This methor returns 0 for scalars, but vectors and other
+	   PACKED arrays have packed dimensions. */
+      inline size_t packed_dimensions() const { return slice_dims_.size(); }
 
 	// This is the number of array elements.
-      unsigned array_count() const;
-
-	// This method returns a 0 based address of an array entry as
-	// indexed by idx. The Verilog source may give index ranges
-	// that are not zero based.
-      bool array_index_is_valid(long idx) const;
-      unsigned array_index_to_address(long idx) const;
+      unsigned unpacked_count() const;
 
       bool local_flag() const { return local_flag_; }
       void local_flag(bool f) { local_flag_ = f; }
@@ -713,30 +727,33 @@ class NetNet  : public NetObj {
     private:
       Type   type_    : 5;
       PortType port_type_ : 3;
-      ivl_variable_type_t data_type_ : 3;
-      bool signed_    : 1;
-      bool isint_     : 1;		// original type of integer
-      bool is_scalar_ : 1;
       bool local_flag_: 1;
-      netenum_t*enumeration_;
-      netstruct_t*struct_type_;
+      ivl_type_s*net_type_;
       ivl_discipline_t discipline_;
 
-      std::list<range_t> packed_dims_;
-      const unsigned dimensions_;
-      long s0_, e0_;
+      std::vector<netrange_t> unpacked_dims_;
+
+	// These are the widths of the various slice depths. There is
+	// one entry in this vector for each packed dimension. The
+	// value at N is the slice width if N indices are provided.
+	//
+	// For example: slice_wids_[0] is vector_width().
+      void calculate_slice_widths_from_packed_dims_(void);
+      std::vector<netrange_t> slice_dims_;
+      std::vector<unsigned long> slice_wids_;
 
       unsigned eref_count_;
       unsigned lref_count_;
+
 	// When the signal is an unresolved wire, we need more detail
 	// which bits are assigned. This mask is true for each bit
 	// that is known to be driven.
       std::vector<bool> lref_mask_;
 
       vector<class NetDelaySrc*> delay_paths_;
+      int       port_index_;
 };
 
-extern std::ostream&operator << (std::ostream&out, const std::list<NetNet::range_t>&rlist);
 
 /*
  * This object type is used to contain a logical scope within a
@@ -750,7 +767,7 @@ class NetScope : public Attrib {
 
 	/* Create a new scope, and attach it to the given parent. The
 	   name is expected to have been permallocated. */
-      NetScope(NetScope*up, const hname_t&name, TYPE t);
+      NetScope(NetScope*up, const hname_t&name, TYPE t, bool nest=false, bool prog=false);
       ~NetScope();
 
 	/* Rename the scope using the name generated by inserting as
@@ -762,17 +779,17 @@ class NetScope : public Attrib {
 	/* Parameters exist within a scope, and these methods allow
 	   one to manipulate the set. In these cases, the name is the
 	   *simple* name of the parameter, the hierarchy is implicit in
-	   the scope. The return value from set_parameter is the
-	   previous expression, if there was one. */
+	   the scope. */
 
       struct range_t;
-      void set_parameter(perm_string name, PExpr*val,
-			 ivl_variable_type_t type,
+      void set_parameter(perm_string name, bool is_annotatable,
+			 PExpr*val, ivl_variable_type_t type,
 			 PExpr*msb, PExpr*lsb, bool signed_flag,
+			 bool local_flag,
 			 NetScope::range_t*range_list,
 			 const LineInfo&file_line);
-      NetExpr* set_localparam(perm_string name, NetExpr*val,
-			      const LineInfo&file_line);
+      void set_parameter(perm_string name, NetExpr*val,
+			 const LineInfo&file_line);
 
       const NetExpr*get_parameter(Design*des,
 				  const char* name,
@@ -788,6 +805,13 @@ class NetScope : public Attrib {
 	   range or signed_flag. Return false if the name does not
 	   exist. */
       bool replace_parameter(perm_string name, PExpr*val, NetScope*scope);
+
+	/* This is used to ensure the value of a parameter cannot be
+	   changed at run-time. This is required if a specparam is used
+	   in an expression that must be evaluated at compile-time.
+	   Returns true if the named parameter is a specparam and has
+	   not already been set to be unannotatable. */
+      bool make_parameter_unannotatable(perm_string name);
 
 	/* These methods set or access events that live in this
 	   scope. */
@@ -814,6 +838,9 @@ class NetScope : public Attrib {
 
       netenum_t* enumeration_for_name(perm_string name);
 
+      void add_class(netclass_t*class_type);
+      netclass_t* find_class(perm_string name);
+
 	/* The parent and child() methods allow users of NetScope
 	   objects to locate nearby scopes. */
       NetScope* parent() { return up_; }
@@ -821,6 +848,10 @@ class NetScope : public Attrib {
       const NetScope* parent() const { return up_; }
       const NetScope* child(const hname_t&name) const;
 
+	// Nested modules have slightly different scope search rules.
+      inline bool nested_module() const { return nested_module_; }
+	// Program blocks have elaboration constraints.
+      inline bool program_block() const { return program_block_; }
       TYPE type() const;
       void print_type(ostream&) const;
 
@@ -830,6 +861,11 @@ class NetScope : public Attrib {
 
       NetTaskDef* task_def();
       NetFuncDef* func_def();
+
+	// This is used by the evaluate_function setup to collect
+	// local variables from the scope.
+      void evaluate_function_find_locals(const LineInfo&loc,
+					 map<perm_string,NetExpr*>&context_map) const;
 
       void set_line(perm_string file, perm_string def_file,
                     unsigned lineno, unsigned def_lineno);
@@ -884,9 +920,18 @@ class NetScope : public Attrib {
       perm_string module_name() const;
 	/* If the scope is a module then it may have ports that we need
 	 * to keep track of. */
-      void add_module_port(NetNet*port);
-      unsigned module_ports() const;
-      NetNet*module_port(unsigned idx) const;
+
+      void set_num_ports(unsigned int num_ports);
+      void add_module_port_net(NetNet*port);
+      unsigned module_port_nets() const;
+      NetNet*module_port_net(unsigned idx) const;
+
+      void add_module_port_info( unsigned idx,
+                            perm_string name,  // May be "" for undeclared port
+                            PortType::Enum type,
+                            unsigned long width );
+
+      const std::vector<PortInfo> &module_port_info() const;
 
 	/* Scopes have their own time units and time precision. The
 	   unit and precision are given as power of 10, i.e., -3 is
@@ -955,7 +1000,9 @@ class NetScope : public Attrib {
 	   access to these things to make up the parameter lists. */
       struct param_expr_t : public LineInfo {
 	    param_expr_t() : msb_expr(0), lsb_expr(0), val_expr(0), val_scope(0),
-                             solving(false), type(IVL_VT_NO_TYPE), signed_flag(false),
+                             solving(false), is_annotatable(false),
+                             type(IVL_VT_NO_TYPE), signed_flag(false),
+                             local_flag(false),
                              msb(0), lsb(0), range(0), val(0) { }
               // Source expressions
 	    PExpr*msb_expr;
@@ -965,9 +1012,12 @@ class NetScope : public Attrib {
             NetScope*val_scope;
 	      // Evaluation status
 	    bool solving;
+	      // specparam status
+	    bool is_annotatable;
 	      // Type information
 	    ivl_variable_type_t type;
 	    bool signed_flag;
+            bool  local_flag;
 	    NetExpr*msb;
 	    NetExpr*lsb;
 	      // range constraints
@@ -976,20 +1026,10 @@ class NetScope : public Attrib {
 	    NetExpr*val;
       };
       map<perm_string,param_expr_t>parameters;
-      map<perm_string,param_expr_t>localparams;
 
       typedef map<perm_string,param_expr_t>::iterator param_ref_t;
 
       param_ref_t find_parameter(perm_string name);
-
-      struct spec_val_t {
-	    ivl_variable_type_t type;
-	    union {
-		  double real_val; // type == IVL_VT_REAL
-		  long integer;    // type == IVL_VT_BOOL
-	    };
-      };
-      map<perm_string,spec_val_t>specparams;
 
 	/* Module instance arrays are collected here for access during
 	   the multiple elaboration passes. */
@@ -1011,6 +1051,11 @@ class NetScope : public Attrib {
       TYPE type_;
       hname_t name_;
 
+	// True if the scope is a nested module/program block
+      bool nested_module_;
+	// True if the scope is a program block
+      bool program_block_;
+
       perm_string file_;
       perm_string def_file_;
       unsigned lineno_;
@@ -1026,7 +1071,10 @@ class NetScope : public Attrib {
       typedef std::map<perm_string,NetNet*>::const_iterator signals_map_iter_t;
       std::map <perm_string,NetNet*> signals_map_;
       perm_string module_name_;
-      vector<NetNet*>ports_;
+      vector<NetNet*> port_nets;
+
+      vector<PortInfo> ports_;
+
       union {
 	    NetTaskDef*task_;
 	    NetFuncDef*func_;
@@ -1040,6 +1088,8 @@ class NetScope : public Attrib {
 	// contain them.
       std::list<netenum_t*> enum_sets_;
       std::map<perm_string,NetEConstEnum*> enum_names_;
+
+      std::map<perm_string,netclass_t*> classes_;
 
       NetScope*up_;
       map<hname_t,NetScope*> children_;
@@ -1301,6 +1351,7 @@ class NetConcat  : public NetNode {
 
       void dump_node(ostream&, unsigned ind) const;
       bool emit_node(struct target_t*) const;
+      void functor_node(Design*des, functor_t*fun);
 
     private:
       unsigned width_;
@@ -1697,10 +1748,17 @@ class NetTran  : public NetNode, public IslandBranch {
 class NetExpr  : public LineInfo {
     public:
       explicit NetExpr(unsigned w =0);
+      explicit NetExpr(ivl_type_t t);
       virtual ~NetExpr() =0;
 
       virtual void expr_scan(struct expr_scan_t*) const =0;
       virtual void dump(ostream&) const;
+
+	// This is the advanced description of the type. I think I
+	// want to replace the other type description members with
+	// this single method. The default for this method returns
+	// nil.
+      ivl_type_t net_type() const;
 
 	// Expressions have type.
       virtual ivl_variable_type_t expr_type() const;
@@ -1738,6 +1796,14 @@ class NetExpr  : public LineInfo {
 	// any. This is a deep copy operation.
       virtual NetExpr*dup_expr() const =0;
 
+	// Evaluate the expression at compile time, a la within a
+	// constant function. This is used by the constant function
+	// evaluation function code, and the return value is an
+	// allocated constant, or nil if the expression cannot be
+	// evaluated for any reason.
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
+
 	// Get the Nexus that are the input to this
 	// expression. Normally this descends down to the reference to
 	// a signal that reads from its input.
@@ -1762,6 +1828,7 @@ class NetExpr  : public LineInfo {
       void cast_signed_base_(bool flag) { signed_flag_ = flag; }
 
     private:
+      ivl_type_t net_type_;
       unsigned width_;
       bool signed_flag_;
 
@@ -1798,6 +1865,9 @@ class NetEConst  : public NetExpr {
       virtual NetEConst* dup_expr() const;
       virtual NetNet*synthesize(Design*, NetScope*scope, NetExpr*);
       virtual NexusSet* nex_input(bool rem_out = true);
+
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
 
     private:
       verinum value_;
@@ -1934,12 +2004,13 @@ class NetPartSelect  : public NetNode {
 
       unsigned base()  const;
       unsigned width() const;
-      dir_t    dir()   const;
+      inline dir_t dir()   const { return dir_; }
 	/* Is the select signal signed? */
-      bool signed_flag() const { return signed_flag_; }
+      inline bool signed_flag() const { return signed_flag_; }
 
       virtual void dump_node(ostream&, unsigned ind) const;
       bool emit_node(struct target_t*tgt) const;
+      virtual void functor_node(Design*des, functor_t*fun);
 
     private:
       unsigned off_;
@@ -2026,18 +2097,17 @@ class NetConst  : public NetNode {
       explicit NetConst(NetScope*s, perm_string n, const verinum&val);
       ~NetConst();
 
+      inline const verinum&value(void) const { return value_; }
       verinum::V value(unsigned idx) const;
-      unsigned width() const;
-      bool is_string() const;
+      inline unsigned width() const { return value_.len(); }
+      inline bool is_string() const { return value_.is_string(); }
 
       virtual bool emit_node(struct target_t*) const;
       virtual void functor_node(Design*, functor_t*);
       virtual void dump_node(ostream&, unsigned ind) const;
 
     private:
-      unsigned width_;
-      verinum::V*value_;
-      bool is_string_;
+      verinum value_;
 };
 
 /*
@@ -2267,6 +2337,15 @@ class NetProc : public virtual LineInfo {
 	// target. The target returns true if OK, false for errors.
       virtual bool emit_proc(struct target_t*) const;
 
+	// This method is used by the NetFuncDef object to evaluate a
+	// constant function at compile time. The loc is the location
+	// of the function call, and is used for error messages. The
+	// ctx is a map of name to expression. This is for mapping
+	// identifiers to values. The function returns true if the
+	// processing succeeds, or false otherwise.
+      virtual bool evaluate_function(const LineInfo&loc,
+				     std::map<perm_string,NetExpr*>&ctx) const;
+
 	// This method is called by functors that want to scan a
 	// process in search of matchable patterns.
       virtual int match_proc(struct proc_match_t*);
@@ -2370,12 +2449,21 @@ class NetAssign_ {
 	// that the expression calculates a CANONICAL bit address.
       void set_part(NetExpr* loff, unsigned wid,
                     ivl_select_type_t = IVL_SEL_OTHER);
+	// Set the member or property name if the signal type is a
+	// class.
+      void set_property(const perm_string&name);
+      inline perm_string get_property(void) const { return member_; }
 
 	// Get the width of the r-value that this node expects. This
 	// method accounts for the presence of the mux, so it is not
 	// necessarily the same as the pin_count().
       unsigned lwidth() const;
       ivl_variable_type_t expr_type() const;
+
+	// Get the expression type of the l-value. This may be
+	// different from the type of the contained signal if for
+	// example a darray is indexed.
+      const ivl_type_s* net_type() const;
 
 	// Return the enumeration type of this l-value, or nil if it's
 	// not an enumeration.
@@ -2406,6 +2494,8 @@ class NetAssign_ {
       NetNet *sig_;
 	// Memory word index
       NetExpr*word_;
+	// member/property if signal is a class.
+      perm_string member_;
 
       bool turn_sig_to_wire_on_release_;
 	// indexed part select base
@@ -2469,6 +2559,7 @@ class NetAssign : public NetAssignBase {
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
+      virtual bool evaluate_function(const LineInfo&loc, std::map<perm_string,NetExpr*>&context_map) const;
 
     private:
       char op_;
@@ -2505,7 +2596,7 @@ class NetAssignNB  : public NetAssignBase {
 class NetBlock  : public NetProc {
 
     public:
-      enum Type { SEQU, PARA };
+      enum Type { SEQU, PARA, PARA_JOIN_ANY, PARA_JOIN_NONE };
 
       NetBlock(Type t, NetScope*subscope);
       ~NetBlock();
@@ -2518,6 +2609,8 @@ class NetBlock  : public NetProc {
       const NetProc*proc_first() const;
       const NetProc*proc_next(const NetProc*cur) const;
 
+      bool evaluate_function(const LineInfo&loc,
+			     std::map<perm_string,NetExpr*>&ctx) const;
 
 	// synthesize as asynchronous logic, and return true.
       bool synth_async(Design*des, NetScope*scope,
@@ -2656,6 +2749,8 @@ class NetCondit  : public NetProc {
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type() const;
+      virtual bool evaluate_function(const LineInfo&loc,
+				     map<perm_string,NetExpr*>&ctx) const;
 
     private:
       NetExpr* expr_;
@@ -3004,7 +3099,7 @@ class NetFree   : public NetProc {
 class NetFuncDef {
 
     public:
-      NetFuncDef(NetScope*, NetNet*result, const svector<NetNet*>&po);
+      NetFuncDef(NetScope*, NetNet*result, const std::vector<NetNet*>&po);
       ~NetFuncDef();
 
       void set_proc(NetProc*st);
@@ -3019,13 +3114,19 @@ class NetFuncDef {
 
       const NetNet*return_sig() const;
 
+	// When we want to evaluate the function during compile time,
+	// use this method to pass in the argument and get out a
+	// result. The result should be a constant. If the function
+	// cannot evaluate to a constant, this returns nil.
+      NetExpr* evaluate_function(const LineInfo&loc, const std::vector<NetExpr*>&args) const;
+
       void dump(ostream&, unsigned ind) const;
 
     private:
       NetScope*scope_;
       NetProc*statement_;
       NetNet*result_sig_;
-      svector<NetNet*>ports_;
+      std::vector<NetNet*>ports_;
 };
 
 /*
@@ -3118,7 +3219,7 @@ class NetSTask  : public NetProc {
 
     public:
       NetSTask(const char*na, ivl_sfunc_as_task_t sfat,
-               const svector<NetExpr*>&);
+               const std::vector<NetExpr*>&);
       ~NetSTask();
 
       const char* name() const;
@@ -3136,7 +3237,7 @@ class NetSTask  : public NetProc {
     private:
       const char* name_;
       ivl_sfunc_as_task_t sfunc_as_task_;
-      svector<NetExpr*>parms_;
+      std::vector<NetExpr*>parms_;
 };
 
 /*
@@ -3187,7 +3288,7 @@ class NetTaskDef {
 class NetEUFunc  : public NetExpr {
 
     public:
-      NetEUFunc(NetScope*, NetScope*, NetESignal*, svector<NetExpr*>&, bool);
+      NetEUFunc(NetScope*, NetScope*, NetESignal*, std::vector<NetExpr*>&, bool);
       ~NetEUFunc();
 
       const NetESignal*result_sig() const;
@@ -3204,13 +3305,16 @@ class NetEUFunc  : public NetExpr {
       virtual NetEUFunc*dup_expr() const;
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual NetExpr* eval_tree();
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
+
       virtual NetNet* synthesize(Design*des, NetScope*scope, NetExpr*root);
 
     private:
       NetScope*scope_;
       NetScope*func_;
       NetESignal*result_sig_;
-      svector<NetExpr*> parms_;
+      std::vector<NetExpr*> parms_;
       bool need_const_;
 
     private: // not implemented
@@ -3287,6 +3391,8 @@ class NetWhile  : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type() const;
+      virtual bool evaluate_function(const LineInfo&loc,
+				     map<perm_string,NetExpr*>&ctx) const;
 
     private:
       NetExpr* cond_;
@@ -3444,10 +3550,14 @@ class NetEBAdd : public NetEBinary {
 
       virtual NetEBAdd* dup_expr() const;
       virtual NetExpr* eval_tree();
+      virtual NetExpr* evaluate_function(const LineInfo&loc,
+					 std::map<perm_string,NetExpr*>&ctx) const;
+
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
-      NetECReal* eval_tree_real_();
+      NetExpr  * eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      NetECReal* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
 /*
@@ -3523,19 +3633,23 @@ class NetEBComp : public NetEBinary {
       virtual NetEBComp* dup_expr() const;
       virtual NetEConst* eval_tree();
 
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
+
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
-      NetEConst* must_be_leeq_(NetExpr*le, const verinum&rv, bool eq_flag);
+      NetEConst* must_be_leeq_(const NetExpr*le, const verinum&rv, bool eq_flag) const;
 
-      NetEConst*eval_eqeq_(bool ne_flag);
-      NetEConst*eval_eqeq_real_(bool ne_flag);
-      NetEConst*eval_less_();
-      NetEConst*eval_leeq_();
-      NetEConst*eval_leeq_real_(NetExpr*le, NetExpr*ri, bool eq_flag);
-      NetEConst*eval_gt_();
-      NetEConst*eval_gteq_();
-      NetEConst*eval_eqeqeq_(bool ne_flag);
+      NetEConst*eval_arguments_(const NetExpr*le, const NetExpr*re) const;
+      NetEConst*eval_eqeq_(bool ne_flag, const NetExpr*le, const NetExpr*re) const;
+      NetEConst*eval_eqeq_real_(bool ne_flag, const NetExpr*le, const NetExpr*re) const;
+      NetEConst*eval_less_(const NetExpr*le, const NetExpr*re) const;
+      NetEConst*eval_leeq_(const NetExpr*le, const NetExpr*re) const;
+      NetEConst*eval_leeq_real_(const NetExpr*le, const NetExpr*ri, bool eq_flag) const;
+      NetEConst*eval_gt_(const NetExpr*le, const NetExpr*re) const;
+      NetEConst*eval_gteq_(const NetExpr*le, const NetExpr*re) const;
+      NetEConst*eval_eqeqeq_(bool ne_flag, const NetExpr*le, const NetExpr*re) const;
 };
 
 /*
@@ -3590,10 +3704,13 @@ class NetEBMult : public NetEBinary {
 
       virtual NetEBMult* dup_expr() const;
       virtual NetExpr* eval_tree();
+      virtual NetExpr* evaluate_function(const LineInfo&loc,
+					 std::map<perm_string,NetExpr*>&ctx) const;
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
-      NetExpr* eval_tree_real_();
+      NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      NetExpr* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
 /*
@@ -3637,9 +3754,13 @@ class NetEBShift : public NetEBinary {
       virtual NetEBShift* dup_expr() const;
       virtual NetEConst* eval_tree();
 
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
+
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
+      NetEConst* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
 };
 
 
@@ -3655,16 +3776,17 @@ class NetEBShift : public NetEBinary {
 class NetEConcat  : public NetExpr {
 
     public:
-      NetEConcat(unsigned cnt, unsigned repeat =1);
+      NetEConcat(unsigned cnt, unsigned repeat, ivl_variable_type_t vt);
       ~NetEConcat();
 
 	// Manipulate the parameters.
       void set(unsigned idx, NetExpr*e);
 
       unsigned repeat() const { return repeat_; }
-      unsigned nparms() const { return parms_.count() ; }
+      unsigned nparms() const { return parms_.size() ; }
       NetExpr* parm(unsigned idx) const { return parms_[idx]; }
 
+      virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual bool has_width() const;
       virtual NetEConcat* dup_expr() const;
@@ -3674,8 +3796,9 @@ class NetEConcat  : public NetExpr {
       virtual void dump(ostream&) const;
 
     private:
-      svector<NetExpr*>parms_;
+      std::vector<NetExpr*>parms_;
       unsigned repeat_;
+      ivl_variable_type_t expr_type_;
 };
 
 
@@ -3704,10 +3827,16 @@ class NetESelect  : public NetExpr {
       const NetExpr*select() const;
       ivl_select_type_t select_type() const;
 
+	// The type of a NetESelect is the base type of the
+	// sub-expression.
+      virtual ivl_variable_type_t expr_type() const;
+
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual bool has_width() const;
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEConst* eval_tree();
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
       virtual NetESelect* dup_expr() const;
       virtual NetNet*synthesize(Design*des, NetScope*scope, NetExpr*root);
       virtual void dump(ostream&) const;
@@ -3762,6 +3891,71 @@ class NetENetenum  : public NetExpr {
       netenum_t*netenum_;
 };
 
+class NetENew : public NetExpr {
+    public:
+	// Make class object
+      explicit NetENew(ivl_type_t);
+	// dynamic array of objects.
+      explicit NetENew(ivl_type_t, NetExpr*);
+      ~NetENew();
+
+      inline ivl_type_t get_type() const { return obj_type_; }
+      inline const NetExpr*size_expr() const { return size_; }
+
+      virtual ivl_variable_type_t expr_type() const;
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetENew* dup_expr() const;
+      virtual NexusSet* nex_input(bool rem_out = true);
+
+      virtual void dump(ostream&os) const;
+
+    private:
+      ivl_type_t obj_type_;
+      NetExpr*size_;
+};
+
+/*
+ * The NetENull node represents the SystemVerilog (null)
+ * expression. This is always a null class handle.
+ */
+class NetENull : public NetExpr {
+
+    public:
+      NetENull();
+      ~NetENull();
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetENull* dup_expr() const;
+      virtual NexusSet* nex_input(bool rem_out = true);
+
+      virtual void dump(ostream&os) const;
+};
+
+/*
+ * The NetEProperty represents a SystemVerilog properrty select of a
+ * class object. In SV, the expression would look like "a.b", where
+ * the "a" is the signal (the NetNet) and "b" is the property name.
+ */
+class NetEProperty : public NetExpr {
+    public:
+      NetEProperty(NetNet*n, perm_string pname);
+      ~NetEProperty();
+
+      inline const NetNet* get_sig() const { return net_; }
+      inline size_t property_idx() const { return pidx_; }
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetEProperty* dup_expr() const;
+      virtual NexusSet* nex_input(bool rem_out = true);
+
+      virtual void dump(ostream&os) const;
+
+    private:
+      NetNet*net_;
+      size_t pidx_;
+};
+
 /*
  * This class is a special (and magical) expression node type that
  * represents scope names. These can only be found as parameters to
@@ -3795,6 +3989,7 @@ class NetESFunc  : public NetExpr {
     public:
       NetESFunc(const char*name, ivl_variable_type_t t,
 		unsigned width, unsigned nprms);
+      NetESFunc(const char*name, ivl_type_t rtype, unsigned nprms);
       NetESFunc(const char*name, netenum_t*enum_type, unsigned nprms);
       ~NetESFunc();
 
@@ -3845,6 +4040,9 @@ class NetETernary  : public NetExpr {
       virtual NetETernary* dup_expr() const;
       virtual NetExpr* eval_tree();
 
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
+
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -3855,6 +4053,8 @@ class NetETernary  : public NetExpr {
       static bool test_operand_compat(ivl_variable_type_t tru, ivl_variable_type_t fal);
 
     private:
+      NetExpr* blended_arguments_(const NetExpr*t, const NetExpr*f) const;
+
       NetExpr*cond_;
       NetExpr*true_val_;
       NetExpr*false_val_;
@@ -3970,6 +4170,10 @@ class NetESignal  : public NetExpr {
       virtual NetESignal* dup_expr() const;
       NetNet* synthesize(Design*des, NetScope*scope, NetExpr*root);
       NexusSet* nex_input(bool rem_out = true);
+      netenum_t*enumeration() const;
+
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
 
 	// This is the expression for selecting an array word, if this
 	// signal refers to an array.
@@ -3991,6 +4195,7 @@ class NetESignal  : public NetExpr {
 
     private:
       NetNet*net_;
+      netenum_t*enum_type_;
 	// Expression to select a word from the net.
       NetExpr*word_;
 };
@@ -4034,7 +4239,7 @@ class Design {
 
       const char* get_flag(const string&key) const;
 
-      NetScope* make_root_scope(perm_string name);
+      NetScope* make_root_scope(perm_string name, bool program_block);
       NetScope* find_root_scope();
       list<NetScope*> find_root_scopes();
 
@@ -4056,6 +4261,12 @@ class Design {
 	   path is taken as an absolute scope name. Otherwise, the
 	   scope is located starting at the passed scope and working
 	   up if needed. */
+      NetScope* find_scope(const hname_t&path) const;
+      NetScope* find_scope(NetScope*, const hname_t&name,
+                           NetScope::TYPE type = NetScope::MODULE) const;
+	// Note: Try to remove these versions of find_scope. Avoid
+	// using these in new code, use the above forms (or
+	// symbol_search) instead.
       NetScope* find_scope(const std::list<hname_t>&path) const;
       NetScope* find_scope(NetScope*, const std::list<hname_t>&path,
                            NetScope::TYPE type = NetScope::MODULE) const;

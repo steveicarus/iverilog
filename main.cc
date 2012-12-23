@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -15,7 +15,7 @@ const char COPYRIGHT[] =
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -784,7 +784,17 @@ int main(int argc, char*argv[])
 #if defined(TRAP_SIGINT_FOR_DEBUG)
       signal(SIGINT, &signals_handler);
 #endif
-
+      if( ::getenv("IVL_WAIT_FOR_DEBUGGER") != 0 ) {
+          fprintf( stderr, "Waiting for debugger...\n");
+          bool debugger_release = false;
+          while( !debugger_release )  {
+#if defined(__MINGW32__)
+              Sleep(1000);
+#else
+              sleep(1);
+#endif
+        }
+      }
       library_suff.push_back(strdup(".v"));
 
 	// Start the module list with the base system module.
@@ -838,6 +848,8 @@ int main(int argc, char*argv[])
 		 << VERSION << " (" << VERSION_TAG << ")" << endl << endl;
 	    cout << COPYRIGHT << endl << endl;
 	    cout << NOTICE << endl;
+
+	    cout << " FLAGS DLL " << flags["DLL"] << endl;
 
 	    dll_target_obj.test_version(flags["DLL"]);
 

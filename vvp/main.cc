@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "version_base.h"
@@ -26,6 +26,7 @@
 # include  "vpi_priv.h"
 # include  "statistics.h"
 # include  "vvp_cleanup.h"
+# include  "vvp_object.h"
 # include  <cstdio>
 # include  <cstdlib>
 # include  <cstring>
@@ -197,6 +198,8 @@ void set_delay_selection(const char* sel)
 
 static void final_cleanup()
 {
+      vvp_object::cleanup();
+
 	/*
 	 * We only need to cleanup the memory if we are checking with valgrind.
 	 */
@@ -215,6 +218,7 @@ static void final_cleanup()
       dec_str_delete();
       modpath_delete();
       vpi_handle_delete();
+      vpi_stack_delete();
       udp_defns_delete();
       island_delete();
       signal_pool_delete();
@@ -284,6 +288,20 @@ int main(int argc, char*argv[])
       vpip_module_path[0] = strdup(basepath);
 #endif
 
+
+      if( ::getenv("VVP_WAIT_FOR_DEBUGGER") != 0 ) {
+          fprintf( stderr, "Waiting for debugger...\n");
+          bool debugger_release = false;
+          while( !debugger_release )  {
+#if defined(__MINGW32__)
+              Sleep(1000);
+#else
+              sleep(1);
+#endif
+        }
+      }
+
+
         /* For non-interactive runs we do not want to run the interactive
          * debugger, so make $stop just execute a $finish. */
       stop_is_finish = false;
@@ -343,7 +361,7 @@ int main(int argc, char*argv[])
       if (version_flag) {
 	    fprintf(stderr, "Icarus Verilog runtime version " VERSION " ("
 	                    VERSION_TAG ")\n\n");
-	    fprintf(stderr, "Copyright 1998-2010 Stephen Williams\n\n");
+	    fprintf(stderr, "Copyright 1998-2012 Stephen Williams\n\n");
 	    fprintf(stderr,
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"

@@ -14,11 +14,8 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: mc_scan_plusargs.c,v 1.3 2002/08/12 01:35:02 steve Exp $"
-#endif
 
 # include  <string.h>
 # include  <vpi_user.h>
@@ -66,16 +63,3 @@ char *mc_scan_plusargs(char *plusarg)
       /* didn't find it yet */
       return (char *)0;
 }
-
-/*
- * $Log: mc_scan_plusargs.c,v $
- * Revision 1.3  2002/08/12 01:35:02  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.2  2002/05/24 21:46:21  steve
- *  Only match plusargs.
- *
- * Revision 1.1  2002/05/24 20:29:07  steve
- *  Implement mc_scan_plusargs.
- *
- */

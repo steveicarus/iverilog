@@ -14,15 +14,47 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "config.h"
 # include  "netlist.h"
 # include  "netenum.h"
+# include  "netclass.h"
+# include  "netdarray.h"
 # include  "compiler.h"
 # include  "netmisc.h"
 # include  <iostream>
+# include  "ivl_assert.h"
+
+NetExpr::NetExpr(unsigned w)
+: net_type_(0), width_(w), signed_flag_(false)
+{
+}
+
+NetExpr::NetExpr(ivl_type_t t)
+: net_type_(t), width_(0), signed_flag_(false)
+{
+}
+
+NetExpr::~NetExpr()
+{
+}
+
+ivl_type_t NetExpr::net_type() const
+{
+      return net_type_;
+}
+
+void NetExpr::cast_signed(bool flag)
+{
+      cast_signed_base_(flag);
+}
+
+bool NetExpr::has_width() const
+{
+      return true;
+}
 
 /*
  * the grand default data type is a logic vector.
@@ -184,16 +216,21 @@ bool NetEBShift::has_width() const
       return left_->has_width();
 }
 
-NetEConcat::NetEConcat(unsigned cnt, unsigned r)
-: parms_(cnt), repeat_(r)
+NetEConcat::NetEConcat(unsigned cnt, unsigned r, ivl_variable_type_t vt)
+: parms_(cnt), repeat_(r), expr_type_(vt)
 {
       expr_width(0);
 }
 
 NetEConcat::~NetEConcat()
 {
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1)
 	    delete parms_[idx];
+}
+
+ivl_variable_type_t NetEConcat::expr_type() const
+{
+      return expr_type_;
 }
 
 bool NetEConcat::has_width() const
@@ -203,7 +240,7 @@ bool NetEConcat::has_width() const
 
 void NetEConcat::set(unsigned idx, NetExpr*e)
 {
-      assert(idx < parms_.count());
+      assert(idx < parms_.size());
       assert(parms_[idx] == 0);
       parms_[idx] = e;
       expr_width( expr_width() + repeat_ * e->expr_width() );
@@ -284,6 +321,48 @@ netenum_t* NetENetenum::netenum() const
       return netenum_;
 }
 
+NetENew::NetENew(ivl_type_t t)
+: obj_type_(t), size_(0)
+{
+}
+
+NetENew::NetENew(ivl_type_t t, NetExpr*size)
+: obj_type_(t), size_(size)
+{
+}
+
+NetENew::~NetENew()
+{
+}
+
+ivl_variable_type_t NetENew::expr_type() const
+{
+      return size_ ? IVL_VT_DARRAY : IVL_VT_CLASS;
+}
+
+NetENull::NetENull()
+{
+}
+
+NetENull::~NetENull()
+{
+}
+
+NetEProperty::NetEProperty(NetNet*net, perm_string pnam)
+: net_(net)
+{
+      const netclass_t*use_type = dynamic_cast<const netclass_t*>(net->net_type());
+      assert(use_type);
+
+      pidx_ = use_type->property_idx_from_name(pnam);
+      ivl_type_t prop_type = use_type->get_prop_type(pidx_);
+      expr_width(prop_type->packed_width());
+}
+
+NetEProperty::~NetEProperty()
+{
+}
+
 NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,
                        ivl_select_type_t sel_type)
 : expr_(exp), base_(base), sel_type_(sel_type)
@@ -312,6 +391,32 @@ ivl_select_type_t NetESelect::select_type() const
       return sel_type_;
 }
 
+ivl_variable_type_t NetESelect::expr_type() const
+{
+      ivl_variable_type_t type = expr_->expr_type();
+
+	// Special case: If the sub-expression is an IVL_VT_STRING,
+	// then this node is representing a character select. The
+	// width is the width of a byte, and the data type is BOOL.
+      if (type == IVL_VT_STRING && expr_width()==8)
+	    return IVL_VT_BOOL;
+
+      if (type != IVL_VT_DARRAY)
+	    return type;
+
+      ivl_assert(*this, type == IVL_VT_DARRAY);
+
+	// Special case: If the expression is a DARRAY, then the
+	// sub-expression must be a NetESignal and the type of the
+	// NetESelect expression is the element type of the arrayed signal.
+      NetESignal*sig = dynamic_cast<NetESignal*>(expr_);
+      ivl_assert(*this, sig);
+      const netarray_t*array_type = dynamic_cast<const netarray_t*> (sig->sig()->net_type());
+      ivl_assert(*this, array_type);
+
+      return array_type->element_type()->base_type();
+}
+
 bool NetESelect::has_width() const
 {
       return true;
@@ -325,11 +430,27 @@ NetESFunc::NetESFunc(const char*n, ivl_variable_type_t t,
       expr_width(width);
 }
 
+NetESFunc::NetESFunc(const char*n, ivl_type_t rtype, unsigned np)
+: NetExpr(rtype), name_(0), type_(IVL_VT_NO_TYPE), enum_type_(0), parms_(np)
+{
+      name_ = lex_strings.add(n);
+      expr_width(rtype->packed_width());
+	// FIXME: For now, assume that all uses of this constructor
+	// are for the IVL_VT_DARRAY type. Eventually, the type_
+	// member will go away.
+      if (dynamic_cast<const netdarray_t*>(rtype))
+	    type_ = IVL_VT_DARRAY;
+      else if (dynamic_cast<const netclass_t*>(rtype))
+	    type_ = IVL_VT_CLASS;
+      else
+	    ivl_assert(*this, 0);
+}
+
 NetESFunc::NetESFunc(const char*n, netenum_t*enum_type, unsigned np)
 : name_(0), type_(enum_type->base_type()), enum_type_(enum_type), parms_(np)
 {
       name_ = lex_strings.add(n);
-      expr_width(enum_type->base_width());
+      expr_width(enum_type->packed_width());
 }
 
 NetESFunc::~NetESFunc()

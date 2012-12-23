@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "version_base.h"
@@ -63,6 +63,11 @@ void __vpiHandle::vpi_get_delays(p_vpi_delay)
 
 void __vpiHandle::vpi_put_delays(p_vpi_delay)
 { }
+
+__vpiBaseVar::__vpiBaseVar(__vpiScope*scope, const char*name, vvp_net_t*net)
+: scope_(scope), name_(name), net_(net)
+{
+}
 
 /*
  * The default behavior for the vpi_free_object to an object is to
@@ -322,6 +327,10 @@ static const char* vpi_type_values(PLI_INT32 code)
 	    return "vpiNamedEvent";
 	  case vpiNamedFork:
 	    return "vpiNamedFork";
+	  case vpiPathTerm:
+	    return "vpiPathTerm";
+	  case vpiPort:
+	    return "vpiPort";
 	  case vpiNet:
 	    return "vpiNet";
 	  case vpiNetArray:
@@ -541,8 +550,7 @@ void vpi_set_vlog_info(int argc, char** argv)
     vpi_vlog_info.argv    = argv;
 
     static char trace_buf[1024];
-
-    if (const char*path = getenv("VPI_TRACE")) {
+    if (const char*path = getenv("VPI_TRACE"))  {
 	  if (!strcmp(path,"-"))
 		vpi_trace = stdout;
 	  else {
@@ -898,6 +906,11 @@ void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
 {
       assert(expr);
       assert(vp);
+
+	// Never bother with suppressed values. All the derived
+	// classes can ignore this type.
+      if (vp->format == vpiSuppressVal)
+	    return;
 
       expr->vpi_get_value(vp);
 
@@ -1454,4 +1467,17 @@ extern "C" s_vpi_vecval vpip_calc_clog2(vpiHandle arg)
       rtn.aval = res;
       rtn.bval = 0;
       return rtn;
+}
+
+/*
+ * This routine provides the information needed to implement $countdrivers.
+ * It is done here for performance reasons - interrogating the drivers
+ * individually via the VPI interface would be much slower.
+ */
+extern "C" void vpip_count_drivers(vpiHandle ref, unsigned idx,
+                                   unsigned counts[4])
+{
+      struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
+      assert(rfp);
+      rfp->node->count_drivers(idx, counts);
 }

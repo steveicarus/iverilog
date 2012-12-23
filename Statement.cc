@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2008,2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008,2010,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -112,6 +112,13 @@ PBlock::~PBlock()
 {
       for (unsigned idx = 0 ;  idx < list_.size() ;  idx += 1)
 	    delete list_[idx];
+}
+
+void PBlock::set_join_type(PBlock::BL_TYPE type)
+{
+      assert(bl_type_ == BL_PAR);
+      assert(type==BL_PAR || type==BL_JOIN_NONE || type==BL_JOIN_ANY);
+      bl_type_ = type;
 }
 
 void PBlock::set_statement(const vector<Statement*>&st)

@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 /*
@@ -52,10 +52,8 @@ void clr_word(int res)
       word_alloc_mask &= ~ (1U << res);
 }
 
-static int draw_binary_real(ivl_expr_t expr)
+static void draw_binary_real(ivl_expr_t expr)
 {
-      int l, r = -1;
-
       switch (ivl_expr_opcode(expr)) {
 	  case 'E':
 	  case 'N':
@@ -72,93 +70,52 @@ static int draw_binary_real(ivl_expr_t expr)
 	    assert(0);
       }
 
-      l = draw_eval_real(ivl_expr_oper1(expr));
-      r = draw_eval_real(ivl_expr_oper2(expr));
+      draw_eval_real(ivl_expr_oper1(expr));
+      draw_eval_real(ivl_expr_oper2(expr));
 
       switch (ivl_expr_opcode(expr)) {
 
 	  case '+':
-	    fprintf(vvp_out, "    %%add/wr %d, %d;\n", l, r);
+	    fprintf(vvp_out, "    %%add/wr;\n");
 	    break;
 
 	  case '-':
-	    fprintf(vvp_out, "    %%sub/wr %d, %d;\n", l, r);
+	    fprintf(vvp_out, "    %%sub/wr;\n");
 	    break;
 
 	  case '*':
-	    fprintf(vvp_out, "    %%mul/wr %d, %d;\n", l, r);
+	    fprintf(vvp_out, "    %%mul/wr;\n");
 	    break;
 
 	  case '/':
-	    fprintf(vvp_out, "    %%div/wr %d, %d;\n", l, r);
+	    fprintf(vvp_out, "    %%div/wr;\n");
 	    break;
 
 	  case '%':
-	    fprintf(vvp_out, "    %%mod/wr %d, %d;\n", l, r);
+	    fprintf(vvp_out, "    %%mod/wr;\n");
 	    break;
 	  case 'p':
-	    fprintf(vvp_out, "    %%pow/wr %d, %d;\n", l, r);
+	    fprintf(vvp_out, "    %%pow/wr;\n");
 	    break;
 
-	  case 'm': { /* min(l,r) */
-		int lab_out = local_count++;
-		int lab_r = local_count++;
-		  /* If r is NaN, the go out and accept l as result. */
-		fprintf(vvp_out, "    %%cmp/wr %d, %d; Is NaN?\n", r, r);
-		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 4;\n", thread_count,
-		        lab_out);
-		  /* If l is NaN, the go out and accept r as result. */
-		fprintf(vvp_out, "    %%cmp/wr %d, %d; Is NaN?\n", l, l);
-		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 4;\n", thread_count,
-		        lab_r);
-		  /* If l <= r then go out. */
-		fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", r, l);
-		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 5;\n", thread_count,
-		        lab_out);
-		  /* At this point we know we want r as the result. */
-		fprintf(vvp_out, "T_%d.%d %%mov/wr %d, %d;\n", thread_count,
-		        lab_r, l, r);
-		fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
-		break;
-	  }
+	  case 'm':
+	    fprintf(vvp_out, "    %%min/wr;\n");
+	    break;
 
-	  case 'M': { /* max(l,r) */
-		int lab_out = local_count++;
-		int lab_r = local_count++;
-		  /* If r is NaN, the go out and accept l as result. */
-		fprintf(vvp_out, "    %%cmp/wr %d, %d; Is NaN?\n", r, r);
-		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 4;\n", thread_count,
-		        lab_out);
-		  /* If l is NaN, the go out and accept r as result. */
-		fprintf(vvp_out, "    %%cmp/wr %d, %d; Is NaN?\n", l, l);
-		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 4;\n", thread_count,
-		        lab_r);
-		  /* if l >= r then go out. */
-		fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", l, r);
-		fprintf(vvp_out, "    %%jmp/0xz T_%d.%d, 5;\n", thread_count,
-		        lab_out);
-
-		fprintf(vvp_out, "T_%d.%d %%mov/wr %d, %d;\n", thread_count,
-		        lab_r, l, r);
-		fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
-		break;
-	  }
+	  case 'M':
+	    fprintf(vvp_out, "    %%max/wr;\n");
+	    break;
 
 	  default:
 	    fprintf(stderr, "XXXX draw_binary_real(%c)\n",
 		    ivl_expr_opcode(expr));
 	    assert(0);
       }
-
-      if (r >= 0) clr_word(r);
-
-      return l;
 }
 
-static int draw_number_real(ivl_expr_t expr)
+static void draw_number_real(ivl_expr_t expr)
 {
       unsigned int idx;
-      int res = allocate_word();
       const char*bits = ivl_expr_bits(expr);
       unsigned wid = ivl_expr_width(expr);
       unsigned long mant = 0;
@@ -204,14 +161,12 @@ static int draw_number_real(ivl_expr_t expr)
       if (negate)
 	    vexp |= 0x4000;
 
-      fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load(num)= %c%lu (wid=%u)\n",
-	      res, mant, vexp, (vexp&0x4000)? '-' : '+', mant, wid);
-      return res;
+      fprintf(vvp_out, "    %%pushi/real %lu, %d; load(num)= %c%lu (wid=%u)\n",
+	      mant, vexp, (vexp&0x4000)? '-' : '+', mant, wid);
 }
 
-static int draw_realnum_real(ivl_expr_t expr)
+static void draw_realnum_real(ivl_expr_t expr)
 {
-      int res = allocate_word();
       double value = ivl_expr_dvalue(expr);
 
       double fract;
@@ -222,18 +177,18 @@ static int draw_realnum_real(ivl_expr_t expr)
 	/* Handle the special case that the value is +-inf. */
       if (isinf(value)) {
 	    if (value > 0)
-		  fprintf(vvp_out, "    %%loadi/wr %d, 0, %d; load=+inf\n",
-			  res, 0x3fff);
+		  fprintf(vvp_out, "    %%pushi/real 0, %d; load=+inf\n",
+			  0x3fff);
 	    else
-		  fprintf(vvp_out, "    %%loadi/wr %d, 0, %d; load=-inf\n",
-			  res, 0x7fff);
-	    return res;
+		  fprintf(vvp_out, "    %%pushi/real 0, %d; load=-inf\n",
+			  0x7fff);
+	    return;
       }
 	/* Handle the special case that the value is NaN. */
       if (value != value) {
-	    fprintf(vvp_out, "    %%loadi/wr %d, 1, %d; load=NaN\n",
-	            res, 0x3fff);
-	    return res;
+	    fprintf(vvp_out, "    %%pushi/real 1, %d; load=NaN\n",
+	            0x3fff);
+	    return;
       }
 
       if (value < 0) {
@@ -251,8 +206,8 @@ static int draw_realnum_real(ivl_expr_t expr)
       assert(vexp < 0x2000);
       vexp += sign;
 
-      fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load=%#g\n",
-	      res, mant, vexp, ivl_expr_dvalue(expr));
+      fprintf(vvp_out, "    %%pushi/real %lu, %d; load=%#g\n",
+	      mant, vexp, ivl_expr_dvalue(expr));
 
 	/* Capture the residual bits, if there are any. Note that an
 	   IEEE754 mantissa has 52 bits, 31 of which were accounted
@@ -268,59 +223,66 @@ static int draw_realnum_real(ivl_expr_t expr)
       vexp += sign;
 
       if (mant != 0) {
-	    int tmp_word = allocate_word();
-	    fprintf(vvp_out, "    %%loadi/wr %d, %lu, %d; load=%#g\n",
-		    tmp_word, mant, vexp, ivl_expr_dvalue(expr));
-	    fprintf(vvp_out, "    %%add/wr %d, %d;\n", res, tmp_word);
-	    clr_word(tmp_word);
+	    fprintf(vvp_out, "    %%pushi/real %lu, %d; load=%#g\n",
+		    mant, vexp, ivl_expr_dvalue(expr));
+	    fprintf(vvp_out, "    %%add/wr;\n");
       }
-
-      return res;
 }
 
 /*
  * The real value of a logic expression is the integer value of the
  * expression converted to real.
  */
-static int draw_real_logic_expr(ivl_expr_t expr, int stuff_ok_flag)
+static void draw_real_logic_expr(ivl_expr_t expr, int stuff_ok_flag)
 {
-      int res = allocate_word();
       struct vector_info sv = draw_eval_expr(expr, stuff_ok_flag);
       const char*sign_flag = ivl_expr_signed(expr)? "/s" : "";
 
       if (sv.wid > 64) {
-            fprintf(vvp_out, "    %%cvt/rv%s %d, %u, %u;\n",
-                    sign_flag, res, sv.base, sv.wid);
+            fprintf(vvp_out, "    %%cvt/rv%s  %u, %u;\n",
+                    sign_flag, sv.base, sv.wid);
       } else {
+	    int res = allocate_word();
             fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
                     sign_flag, res, sv.base, sv.wid);
 
             if (ivl_expr_signed(expr))
-                  fprintf(vvp_out, "    %%cvt/rs %d, %d;\n", res, res);
+                  fprintf(vvp_out, "    %%cvt/rs %d;\n", res);
             else
-                  fprintf(vvp_out, "    %%cvt/ru %d, %d;\n", res, res);
+                  fprintf(vvp_out, "    %%cvt/ru %d;\n", res);
+	    clr_word(res);
       }
 
       clr_vector(sv);
-
-      return res;
 }
 
-static int draw_sfunc_real(ivl_expr_t expr)
+static void draw_select_real(ivl_expr_t expr)
 {
-      int res;
+	/* The sube references the expression to be selected from. */
+      ivl_expr_t sube = ivl_expr_oper1(expr);
+	/* This is the select expression */
+      ivl_expr_t shift= ivl_expr_oper2(expr);
 
+	/* Assume the sub-expression is a signal */
+      ivl_signal_t sig = ivl_expr_signal(sube);
+      assert(ivl_signal_data_type(sig) == IVL_VT_DARRAY);
+
+      draw_eval_expr_into_integer(shift, 3);
+      fprintf(vvp_out, "    %%load/dar/r v%p_0;\n", sig);
+}
+
+static void draw_sfunc_real(ivl_expr_t expr)
+{
       switch (ivl_expr_value(expr)) {
 
 	  case IVL_VT_REAL:
 	    if (ivl_expr_parms(expr) == 0) {
-		  res = allocate_word();
-		  fprintf(vvp_out, "    %%vpi_func/r %u %u \"%s\", %d;\n",
+		  fprintf(vvp_out, "    %%vpi_func/r %u %u \"%s\" {0 0};\n",
 			  ivl_file_table_index(ivl_expr_file(expr)),
-			  ivl_expr_lineno(expr), ivl_expr_name(expr), res);
+			  ivl_expr_lineno(expr), ivl_expr_name(expr));
 
 	    } else {
-		  res = draw_vpi_rfunc_call(expr);
+		  draw_vpi_rfunc_call(expr);
 	    }
 	    break;
 
@@ -328,55 +290,53 @@ static int draw_sfunc_real(ivl_expr_t expr)
 	      /* If the value of the sfunc is a vector, then evaluate
 		 it as a vector, then convert the result to a real
 		 (via an index register) for the result. */
-	    res = draw_real_logic_expr(expr, 0);
+	    draw_real_logic_expr(expr, 0);
 	    break;
 
 	  default:
 	    assert(0);
-	    res = -1;
       }
 
-      return res;
 }
 
-static int draw_signal_real_real(ivl_expr_t expr)
+static void draw_signal_real_real(ivl_expr_t expr)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
-      int res = allocate_word();
 
       if (ivl_signal_dimensions(sig) == 0) {
-	    fprintf(vvp_out, "    %%load/wr %d, v%p_0;\n", res, sig);
-	    return res;
+	    fprintf(vvp_out, "    %%load/real v%p_0;\n", sig);
+	    return;
       }
 
       ivl_expr_t word_ex = ivl_expr_oper1(expr);
       int word_ix = allocate_word();
       draw_eval_expr_into_integer(word_ex, word_ix);
-      fprintf(vvp_out, "    %%load/ar %d, v%p, %d;\n", res, sig, word_ix);
+      fprintf(vvp_out, "    %%load/ar v%p, %d;\n", sig, word_ix);
       clr_word(word_ix);
-      return res;
 }
 
-static int draw_signal_real(ivl_expr_t expr)
+static void draw_signal_real(ivl_expr_t expr)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
       switch (ivl_signal_data_type(sig)) {
 	  case IVL_VT_LOGIC:
-	    return draw_real_logic_expr(expr, 0);
+	    draw_real_logic_expr(expr, 0);
+	    return;
 	  case IVL_VT_REAL:
-	    return draw_signal_real_real(expr);
+	    draw_signal_real_real(expr);
+	    return;
 	  default:
 	    fprintf(stderr, "vvp.tgt error: signal_data_type=%d\n",
 		    ivl_signal_data_type(sig));
 	    assert(0);
-	    return -1;
+	    return;
       }
 }
 
 /* If we have nested ternary operators they are likely tail recursive.
  * This code is structured to allow this recursion without overflowing
  * the available thread words. */
-static int draw_ternary_real(ivl_expr_t expr)
+static void draw_ternary_real(ivl_expr_t expr)
 {
       ivl_expr_t cond = ivl_expr_oper1(expr);
       ivl_expr_t true_ex = ivl_expr_oper2(expr);
@@ -385,10 +345,7 @@ static int draw_ternary_real(ivl_expr_t expr)
       struct vector_info tst;
 
       unsigned lab_true = local_count++;
-      unsigned lab_move = local_count++;
       unsigned lab_out = local_count++;
-
-      int tru, fal, res;
 
 	/* Evaluate the ternary condition. */
       tst = draw_eval_expr(cond, STUFF_OK_XZ|STUFF_OK_RO);
@@ -407,130 +364,62 @@ static int draw_ternary_real(ivl_expr_t expr)
       }
 
 	/* Evaluate the true expression second. */
-      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, %u;\n",
+      fprintf(vvp_out, "    %%jmp/1  T_%u.%u, %u;\n",
 	      thread_count, lab_true, tst.base);
 
-	/* Evaluate the false expression and copy it to the result word. */
-      fal = draw_eval_real(false_ex);
-      res = allocate_word();
-      fprintf(vvp_out, "    %%mov/wr %d, %d;\n", res, fal);
-      clr_word(fal);
-      fprintf(vvp_out, "    %%jmp/0  T_%d.%d, %u; End of false expr.\n",
+	/* Evaluate the false expression. */
+      draw_eval_real(false_ex);
+      fprintf(vvp_out, "    %%jmp/0  T_%u.%u, %u; End of false expr.\n",
               thread_count, lab_out, tst.base);
 
-	/* Evaluate the true expression. */
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_true);
-      tru = draw_eval_real(true_ex);
-      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, %u; End of true expr.\n",
-              thread_count, lab_move, tst.base);
-
 	/* If the conditional is undefined then blend the real words. */
-      fprintf(vvp_out, "    %%blend/wr %d, %d;\n", res, tru);
-      fprintf(vvp_out, "    %%jmp  T_%d.%d; End of blend\n",
+      draw_eval_real(true_ex);
+      fprintf(vvp_out, "    %%blend/wr;\n");
+      fprintf(vvp_out, "    %%jmp  T_%u.%u; End of blend\n",
               thread_count, lab_out);
 
-	/* If we only need the true result then copy it to the result word. */
-      fprintf(vvp_out, "T_%d.%d ; Move true result.\n",
-              thread_count, lab_move);
-      fprintf(vvp_out, "    %%mov/wr %d, %d;\n", res, tru);
-      clr_word(tru);
+	/* Evaluate the true expression. */
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_true);
+      draw_eval_real(true_ex);
 
 	/* This is the out label. */
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
 
       clr_vector(tst);
-
-      return res;
 }
 
-static int increment(ivl_expr_t e, int s, bool pre)
+static void increment(ivl_expr_t e, bool pre)
 {
-	ivl_signal_t	sig;
-	int		r;
-	int		one;
-
-	sig = ivl_expr_signal(e);
-	r   = s;
-
-	/* create a temporary word to hold value 1.0 */
-	one = allocate_word();
-	fprintf(vvp_out, "    %%loadi/wr %d, 1, 0x1000; load 1.0\n", one);
-
-	if (!pre) {
-		/*
-		 * post-increment must return the non-incremented value.
-		 * Therefore, copy the current value in a new word and return
-		 * it.
-		 */
-		r = allocate_word();
-		fprintf(vvp_out, "    %%mov/wr %d, %d;\n", r, s);
-	}
-
-	fprintf(vvp_out, "    %%add/wr %d, %d;\n", s, one);
-	fprintf(vvp_out, "    %%set/wr v%p_0, %d;\n", sig, s);
-
-	return r;
+      ivl_signal_t sig = ivl_expr_signal(e);
+      fprintf(vvp_out, "    %%load/real v%p_0;\n", sig);
+      if (!pre) fprintf(vvp_out, "    %%dup/real;\n");
+      fprintf(vvp_out, "    %%pushi/real 1, 0x1000;\n");
+      fprintf(vvp_out, "    %%add/wr;\n");
+      if ( pre) fprintf(vvp_out, "    %%dup/real;\n");
+      fprintf(vvp_out, "    %%store/real v%p_0;\n", sig);
 }
 
-static inline int pre_increment(ivl_expr_t e, int s)
+static void decrement(ivl_expr_t e, bool pre)
 {
-	return increment(e, s, true);
+      ivl_signal_t sig = ivl_expr_signal(e);
+      fprintf(vvp_out, "    %%load/real v%p_0;\n", sig);
+      if (!pre) fprintf(vvp_out, "    %%dup/real;\n");
+      fprintf(vvp_out, "    %%pushi/real 1, 0x1000;\n");
+      fprintf(vvp_out, "    %%sub/wr;\n");
+      if ( pre) fprintf(vvp_out, "    %%dup/real;\n");
+      fprintf(vvp_out, "    %%store/real v%p_0;\n", sig);
 }
 
-static inline int post_increment(ivl_expr_t e, int s)
-{
-	return increment(e, s, false);
-}
-
-static int decrement(ivl_expr_t e, int s, bool pre)
-{
-	ivl_signal_t	sig;
-	int		r;
-	int		one;
-
-	sig = ivl_expr_signal(e);
-	r   = s;
-
-	/* create a temporary word to hold value 1.0 */
-	one = allocate_word();
-	fprintf(vvp_out, "    %%loadi/wr %d, 1, 0x1000; load 1.0\n", one);
-
-	if (!pre) {
-		/*
-		 * post-decrement must return the non-incremented value.
-		 * Therefore, copy the current value in a new word and return
-		 * it.
-		 */
-		r = allocate_word();
-		fprintf(vvp_out, "    %%mov/wr %d, %d;\n", r, s);
-	}
-
-	fprintf(vvp_out, "    %%sub/wr %d, %d;\n", s, one);
-	fprintf(vvp_out, "    %%set/wr v%p_0, %d;\n", sig, s);
-
-	return r;
-}
-
-static inline int pre_decrement(ivl_expr_t e, int s)
-{
-	return decrement(e, s, true);
-}
-
-static inline int post_decrement(ivl_expr_t e, int s)
-{
-	return decrement(e, s, false);
-}
-
-static int draw_unary_real(ivl_expr_t expr)
+static void draw_unary_real(ivl_expr_t expr)
 {
       ivl_expr_t sube;
-      int sub;
 
 	/* If the opcode is a ~ or a ! then the sub expression must not be
 	 * a real expression, so use vector evaluation and then convert
 	 * that result to a real value. */
       if ((ivl_expr_opcode(expr) == '~') || (ivl_expr_opcode(expr) == '!')) {
-	    return draw_real_logic_expr(expr, STUFF_OK_XZ);
+	    draw_real_logic_expr(expr, STUFF_OK_XZ);
+	    return;
       }
 
       sube = ivl_expr_oper1(expr);
@@ -541,30 +430,28 @@ static int draw_unary_real(ivl_expr_t expr)
 	    assert(ivl_expr_value(sube) != IVL_VT_REAL);
 	    res = draw_eval_expr(sube, 1);
 	    if (ivl_expr_signed(sube)) suffix = "/s";
-	    sub = allocate_word();
-	    fprintf(vvp_out, "    %%cvt/rv%s %d, %u, %u;\n", suffix, sub,
-	                     res.base, res.wid);
+	    fprintf(vvp_out, "    %%cvt/rv%s %u, %u;\n", suffix, res.base, res.wid);
 	    clr_vector(res);
-	    return sub;
+	    return;
       }
 
-      sub = draw_eval_real(sube);
 
-      if (ivl_expr_opcode(expr) == '+')
-	    return sub;
+      if (ivl_expr_opcode(expr) == '+') {
+	    draw_eval_real(sube);
+	    return;
+      }
 
       if (ivl_expr_opcode(expr) == '-') {
-	    int res = allocate_word();
-	    fprintf(vvp_out, "    %%loadi/wr %d, 0, 0; load 0.0\n", res);
-	    fprintf(vvp_out, "    %%sub/wr %d, %d;\n", res, sub);
-
-	    clr_word(sub);
-	    return res;
+	    fprintf(vvp_out, "    %%pushi/real 0, 0; load 0.0\n");
+	    draw_eval_real(sube);
+	    fprintf(vvp_out, "    %%sub/wr;\n");
+	    return;
       }
 
       if (ivl_expr_opcode(expr) == 'm') { /* abs() */
-	    fprintf(vvp_out, "    %%abs/wr %d, %d;\n", sub, sub);
-	    return sub;
+	    draw_eval_real(sube);
+	    fprintf(vvp_out, "    %%abs/wr;\n");
+	    return;
       }
 
       if (ivl_expr_opcode(expr) == 'v') { /* Handled in eval_expr.c. */
@@ -573,70 +460,75 @@ static int draw_unary_real(ivl_expr_t expr)
 	    assert(0);
       }
 
-	switch (ivl_expr_opcode(expr)) {
-		case 'I':
-			return pre_increment(sube, sub);
+      switch (ivl_expr_opcode(expr)) {
+	  case 'I':
+	    increment(sube, true);
+	    return;
+	  case 'i':
+	    increment(sube, false);
+	    return;
 
-		case 'i':
-			return post_increment(sube, sub);
-
-		case 'D':
-			return pre_decrement(sube, sub);
-
-		case 'd':
-			return post_decrement(sube, sub);
+	  case 'D':
+	    decrement(sube, true);
+	    return;
+	  case 'd':
+	    decrement(sube, false);
+	    return;
 	}
 
       fprintf(stderr, "vvp.tgt error: unhandled real unary operator: %c.\n",
               ivl_expr_opcode(expr));
       assert(0);
-      return 0;
 }
 
-int draw_eval_real(ivl_expr_t expr)
+void draw_eval_real(ivl_expr_t expr)
 {
-      int res = 0;
 
 	/* If this expression/sub-expression is not real then we need
 	 * to evaluate it as a bit value and then convert the bit based
 	 * result to a real value. This is required to get integer
 	 * division to work correctly. */
       if (ivl_expr_value(expr) != IVL_VT_REAL) {
-	    return draw_real_logic_expr(expr, STUFF_OK_XZ);
+	    draw_real_logic_expr(expr, STUFF_OK_XZ);
+	    return;
       }
 
       switch (ivl_expr_type(expr)) {
 
 	  case IVL_EX_BINARY:
-	    res = draw_binary_real(expr);
+	    draw_binary_real(expr);
 	    break;
 
 	  case IVL_EX_NUMBER:
-	    res = draw_number_real(expr);
+	    draw_number_real(expr);
 	    break;
 
 	  case IVL_EX_REALNUM:
-	    res = draw_realnum_real(expr);
+	    draw_realnum_real(expr);
+	    break;
+
+	  case IVL_EX_SELECT:
+	    draw_select_real(expr);
 	    break;
 
 	  case IVL_EX_SFUNC:
-	    res = draw_sfunc_real(expr);
+	    draw_sfunc_real(expr);
 	    break;
 
 	  case IVL_EX_SIGNAL:
-	    res = draw_signal_real(expr);
+	    draw_signal_real(expr);
 	    break;
 
 	  case IVL_EX_TERNARY:
-	    res = draw_ternary_real(expr);
+	    draw_ternary_real(expr);
 	    break;
 
 	  case IVL_EX_UFUNC:
-	    res = draw_ufunc_real(expr);
+	    draw_ufunc_real(expr);
 	    break;
 
 	  case IVL_EX_UNARY:
-	    res = draw_unary_real(expr);
+	    draw_unary_real(expr);
 	    break;
 
 	  default:
@@ -645,22 +537,23 @@ int draw_eval_real(ivl_expr_t expr)
 		  const char*sign_flag = ivl_expr_signed(expr)? "/s" : "";
 
 		  clr_vector(sv);
-		  res = allocate_word();
+		  int res = allocate_word();
 
 		  fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
 			  sign_flag, res, sv.base, sv.wid);
 
-		  fprintf(vvp_out, "    %%cvt/rs %d, %d;\n", res, res);
+		  fprintf(vvp_out, "    %%cvt/rs %d;\n", res);
+
+		  clr_word(res);
 
 	    } else {
 		  fprintf(stderr, "XXXX Evaluate real expression (%d)\n",
 			  ivl_expr_type(expr));
 		  fprintf(vvp_out, " ; XXXX Evaluate real expression (%d)\n",
 			  ivl_expr_type(expr));
-		  return 0;
+		  return;
 	    }
 	    break;
       }
 
-      return res;
 }

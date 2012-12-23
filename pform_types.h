@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 // This for the perm_string type.
@@ -34,7 +34,10 @@
  * parse-form types.
  */
 
+class Design;
+class NetScope;
 class PExpr;
+class ivl_type_s;
 typedef named<verinum> named_number_t;
 typedef named<PExpr*> named_pexpr_t;
 typedef std::pair<PExpr*,PExpr*> pform_range_t;
@@ -69,11 +72,16 @@ struct decl_assignment_t {
  * "data_type" rule in the parse rule. We make the type virtual so
  * that dynamic types will work.
  */
-struct data_type_t : public LineInfo {
+class data_type_t : public LineInfo {
+    public:
       virtual ~data_type_t() = 0;
-
+	// This method is used to figure out the base type of a packed
+	// compound object. Return IVL_VT_NO_TYPE if the type is not packed.
+      virtual ivl_variable_type_t figure_packed_base_type(void)const;
 	// This method is used by the pform dumper to diagnostic dump.
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
+	// Elaborate the type to an ivl_type_s type.
+      virtual ivl_type_s* elaborate_type(Design*des, NetScope*scope) const;
 };
 
 /*
@@ -94,9 +102,13 @@ struct struct_member_t : public LineInfo {
       ivl_variable_type_t type;
       std::auto_ptr< list<pform_range_t> > range;
       std::auto_ptr< list<decl_assignment_t*> > names;
+      void pform_dump(std::ostream&out, unsigned indent) const;
 };
 
 struct struct_type_t : public data_type_t {
+      virtual ivl_variable_type_t figure_packed_base_type(void)const;
+      virtual void pform_dump(std::ostream&out, unsigned indent) const;
+
       bool packed_flag;
       std::auto_ptr< list<struct_member_t*> > members;
 };
@@ -106,27 +118,111 @@ struct atom2_type_t : public data_type_t {
       : type_code(tc), signed_flag(flag) { }
       int type_code;
       bool signed_flag;
+
+      ivl_type_s* elaborate_type(Design*des, NetScope*scope) const;
 };
 
+/*
+ * The vector_type_t class represents types in the old Verilog
+ * way. Some typical examples:
+ *
+ *   logic signed [7:0] foo
+ *   bit unsigned foo
+ *   reg foo
+ *
+ * There are a few special cases:
+ *
+ * For the most part, Verilog treats "logic" and "reg" as synonyms,
+ * but there are a few cases where the parser needs to know the
+ * difference. So "reg_flag" is set to true if the IVL_VT_LOGIC type
+ * is due to the "reg" keyword.
+ *
+ * If there are no reg/logic/bit/bool keywords, then Verilog will
+ * assume the type is logic, but the context may need to know about
+ * this case, so the implicit_flag member is set to true in that case.
+ */
 struct vector_type_t : public data_type_t {
       inline explicit vector_type_t(ivl_variable_type_t bt, bool sf,
 				    std::list<pform_range_t>*pd)
-      : base_type(bt), signed_flag(sf), pdims(pd) { }
+      : base_type(bt), signed_flag(sf), reg_flag(false), implicit_flag(false), pdims(pd) { }
+      virtual ivl_variable_type_t figure_packed_base_type(void)const;
+
       ivl_variable_type_t base_type;
       bool signed_flag;
+      bool reg_flag; // True if "reg" was used
+      bool implicit_flag; // True if this type is implicitly logic/reg
       std::auto_ptr< list<pform_range_t> > pdims;
 };
 
+/*
+ * The array_type_t is a generalization of the vector_type_t in that
+ * the base type is another general data type. Ultimately, the subtype
+ * must also be packed (as this is a packed array) but that may be
+ * worked out during elaboration.
+ */
+struct parray_type_t : public data_type_t {
+      inline explicit parray_type_t(data_type_t*btype, std::list<pform_range_t>*pd)
+      : base_type(btype), packed_dims(pd) { }
+      virtual ivl_variable_type_t figure_packed_base_type(void)const;
+      virtual void pform_dump(std::ostream&out, unsigned indent) const;
+
+      data_type_t*base_type;
+      std::auto_ptr< list<pform_range_t> > packed_dims;
+};
+
 struct real_type_t : public data_type_t {
-      inline explicit real_type_t(int tc) : type_code(tc) { }
-      int type_code;
+      enum type_t { REAL, SHORTREAL };
+      inline explicit real_type_t(type_t tc) : type_code(tc) { }
+      type_t type_code;
+};
+
+struct string_type_t : public data_type_t {
+      inline explicit string_type_t() { }
+      ~string_type_t();
 };
 
 struct class_type_t : public data_type_t {
+
       inline explicit class_type_t(perm_string n)
       : name(n) { }
 
+      void pform_dump(std::ostream&out, unsigned indent) const;
+
       perm_string name;
+
+      std::map<perm_string, data_type_t*> properties;
+};
+
+class property_qualifier_t {
+    public:
+      static inline property_qualifier_t set_none()
+      { property_qualifier_t res; res.mask_ = 0; return res; }
+
+      static inline property_qualifier_t set_static()
+      { property_qualifier_t res; res.mask_ = 1; return res; }
+
+      static inline property_qualifier_t set_protected()
+      { property_qualifier_t res; res.mask_ = 2; return res; }
+
+      static inline property_qualifier_t set_local()
+      { property_qualifier_t res; res.mask_ = 4; return res; }
+
+      static inline property_qualifier_t set_rand()
+      { property_qualifier_t res; res.mask_ = 8; return res; }
+
+      static inline property_qualifier_t set_randc()
+      { property_qualifier_t res; res.mask_ = 16; return res; }
+
+      inline property_qualifier_t operator | (property_qualifier_t r)
+      { property_qualifier_t res; res.mask_ = mask_ | r.mask_; return res; }
+
+    public:
+      inline bool test_static() const    { return mask_ & 1; }
+      inline bool test_protected() const { return mask_ & 2; }
+      inline bool test_local() const    { return mask_ & 4; }
+
+    private:
+      int mask_;
 };
 
 /*

@@ -12,9 +12,8 @@
 #
 #    You should have received a copy of the GNU Library General Public
 #    License along with this program; if not, write to the Free
-#    Software Foundation, Inc.,
-#    59 Temple Place - Suite 330
-#    Boston, MA 02111-1307, USA
+#    Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+#    Boston, MA 02110-1301, USA.
 #
 SHELL = /bin/sh
 
@@ -68,7 +67,7 @@ O = main.o architec.o compiler.o entity.o \
     lexor.o lexor_keyword.o parse.o \
     parse_misc.o library.o vhdlreal.o vhdlint.o \
     architec_emit.o entity_emit.o expression_emit.o sequential_emit.o vtype_emit.o \
-    debug.o architec_debug.o sequential_debug.o \
+    debug.o architec_debug.o expression_debug.o sequential_debug.o \
     $M
 
 all: dep vhdlpp@EXEEXT@

@@ -14,11 +14,8 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_location.c,v 1.1 2003/02/17 06:39:47 steve Exp $"
-#endif
 
 #include  <acc_user.h>
 #include  <vpi_user.h>
@@ -29,16 +26,3 @@ int acc_fetch_location(p_location loc, handle obj)
       loc->filename = "<filename>";
       return 1;
 }
-
-/*
- * $Log: a_fetch_location.c,v $
- * Revision 1.1  2003/02/17 06:39:47  steve
- *  Add at least minimal implementations for several
- *  acc_ functions. Add support for standard ACC
- *  string handling.
- *
- *  Add the _pli_types.h header file to carry the
- *  IEEE1364-2001 standard PLI type declarations.
- *
- */
-

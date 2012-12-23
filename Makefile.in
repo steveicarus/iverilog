@@ -12,9 +12,8 @@
 #
 #    You should have received a copy of the GNU Library General Public
 #    License along with this program; if not, write to the Free
-#    Software Foundation, Inc.,
-#    59 Temple Place - Suite 330
-#    Boston, MA 02111-1307, USA
+#    Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+#    Boston, MA 02110-1301, USA.
 #
 SHELL = /bin/sh
 
@@ -87,7 +86,7 @@ GIT = @GIT@
 ifeq (@srcdir@,.)
 INCLUDE_PATH = -I. -Ilibmisc
 else
-INCLUDE_PATH = -I. -Ilibmisc -I$(srcdir) -I$(srcdir)/libmisc
+INCLUDE_PATH = -I. -I$(srcdir) -I$(srcdir)/libmisc
 endif
 
 CPPFLAGS = @DEFS@ $(INCLUDE_PATH) @CPPFLAGS@
@@ -95,6 +94,7 @@ CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 PICFLAGS = @PICFLAG@
 LDFLAGS = @rdynamic@ @LDFLAGS@
+CTARGETFLAGS = @CTARGETFLAGS@
 
 # Source files in the libmisc directory
 M = LineInfo.o StringHeap.o
@@ -104,17 +104,20 @@ FF = cprop.o nodangle.o synth.o synth2.o syn-rules.o
 
 O = main.o async.o design_dump.o discipline.o dup_expr.o elaborate.o \
     elab_expr.o elaborate_analog.o elab_lval.o elab_net.o \
-    elab_scope.o elab_sig.o elab_sig_analog.o emit.o eval.o eval_attrib.o \
+    elab_scope.o elab_sig.o elab_sig_analog.o elab_type.o \
+    emit.o eval.o eval_attrib.o \
     eval_tree.o expr_synth.o functor.o lexor.o lexor_keyword.o link_const.o \
-    load_module.o netlist.o netmisc.o net_analog.o net_assign.o net_design.o \
-    netenum.o netstruct.o net_event.o net_expr.o net_func.o net_link.o net_modulo.o \
+    load_module.o netlist.o netmisc.o nettypes.o net_analog.o net_assign.o \
+    net_design.o netclass.o netdarray.o \
+    netenum.o netparray.o netstruct.o netvector.o net_event.o net_expr.o net_func.o \
+    net_func_eval.o net_link.o net_modulo.o \
     net_nex_input.o net_nex_output.o net_proc.o net_scope.o net_tran.o \
     net_udp.o pad_to_width.o parse.o parse_misc.o pform.o pform_analog.o \
-    pform_disciplines.o pform_dump.o pform_pclass.o pform_struct_type.o \
-    pform_types.o \
+    pform_disciplines.o pform_dump.o pform_package.o pform_pclass.o \
+    pform_class_type.o pform_string_type.o pform_struct_type.o pform_types.o \
     symbol_search.o sync.o sys_funcs.o verinum.o verireal.o target.o \
     Attrib.o HName.o Module.o PClass.o PDelays.o PEvent.o PExpr.o PGate.o \
-    PGenerate.o PScope.o PSpec.o PTask.o PUdp.o PFunction.o PWire.o \
+    PGenerate.o PPackage.o PScope.o PSpec.o PTask.o PUdp.o PFunction.o PWire.o \
     Statement.o AStatement.o $M $(FF) $(TT)
 
 all: dep config.h _pli_types.h version_tag.h ivl@EXEEXT@ version.exe iverilog-vpi.man
@@ -170,8 +173,8 @@ endif
 	rm -rf autom4te.cache
 
 cppcheck: $(O:.o=.cc) $(srcdir)/dosify.c $(srcdir)/version.c
-	cppcheck --enable=all -f --suppressions $(srcdir)/cppcheck.sup \
-	         $(INCLUDE_PATH) $^
+	cppcheck --enable=all -f --suppressions-list=$(srcdir)/cppcheck.sup \
+	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 
 cppcheck-all:
 	$(foreach dir,$(SUBDIRS),$(MAKE) -C $(dir) cppcheck && ) true
@@ -226,6 +229,7 @@ iverilog-vpi: $(srcdir)/iverilog-vpi.sh Makefile
 	    -e 's;@IVCXX@;$(CXX);' \
 	    -e 's;@IVCFLAGS@;$(CFLAGS);' \
 	    -e 's;@IVCXXFLAGS@;$(CXXFLAGS);' \
+	    -e 's;@IVCTARGETFLAGS@;$(CTARGETFLAGS);' \
 	    -e 's;@INCLUDEDIR@;$(includedir);' \
 	    -e 's;@LIBDIR@;@libdir@;' $< > $@
 	chmod +x $@
@@ -377,7 +381,7 @@ uninstall:
 	    do rm -f "$(DESTDIR)$(bindir)/$$f"; done
 	for f in ivl_target.h vpi_user.h _pli_types.h sv_vpi_user.h acc_user.h veriuser.h; \
 	    do rm -f "$(DESTDIR)$(includedir)/$$f"; done
-	-test X$(suffix) = X || rmdir "$(DESTDIR)/$(includedir)"
+	-test X$(suffix) = X || rmdir "$(DESTDIR)$(includedir)"
 	rm -f "$(DESTDIR)$(mandir)/man1/iverilog-vpi$(suffix).1" "$(DESTDIR)$(prefix)/iverilog-vpi$(suffix).pdf"
 
 

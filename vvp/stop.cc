@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 /*
@@ -173,6 +173,7 @@ static void cmd_call(unsigned argc, char*argv[])
 	    vpiHandle call_handle = vpip_build_vpi_call(argv[0], 0, 0, 0,
 	                                                true, false,
 	                                                vpi_argc, vpi_argv,
+							0, 0,
 	                                                1, 0);
 	    if (call_handle == 0)
 		  goto out;

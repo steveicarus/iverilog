@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "array.h"
@@ -92,10 +92,10 @@ struct __vpiArray : public __vpiHandle {
       struct __vpiScope*scope;
       const char*name; /* Permanently allocated string */
       unsigned array_count;
-      struct __vpiDecConst first_addr;
-      struct __vpiDecConst last_addr;
-      struct __vpiDecConst msb;
-      struct __vpiDecConst lsb;
+      __vpiDecConst first_addr;
+      __vpiDecConst last_addr;
+      __vpiDecConst msb;
+      __vpiDecConst lsb;
       unsigned vals_width;
 	// If this is a net array, nets lists the handles.
       vpiHandle*nets;
@@ -127,7 +127,7 @@ struct __vpiArrayIndex : public __vpiHandle {
       vpiHandle vpi_index(int idx);
       free_object_fun_t free_object_fun(void);
 
-      struct __vpiDecConst *index;
+      __vpiDecConst *index;
       unsigned done;
 };
 
@@ -716,7 +716,7 @@ static void vpi_array_var_index_get_value(vpiHandle ref, p_vpi_value vp)
 
 vpiHandle array_index_iterate(int code, vpiHandle ref)
 {
-      struct __vpiDecConst*obj = dynamic_cast<__vpiDecConst*>(ref);
+      __vpiDecConst *obj = dynamic_cast<__vpiDecConst*>(ref);
       assert(obj);
 
       if (code == vpiIndex) {
@@ -1884,7 +1884,7 @@ void compile_array_cleanup(void)
 #ifdef CHECK_WITH_VALGRIND
 void memory_delete(vpiHandle item)
 {
-      struct __vpiArray*arr = ARRAY_HANDLE(item);
+      struct __vpiArray*arr = (struct __vpiArray*) item;
       if (arr->vals_words) delete [] (arr->vals_words-1);
 
 //      if (arr->vals4) {}
@@ -1905,13 +1905,13 @@ void memory_delete(vpiHandle item)
 			constant_delete(sig->id.index);
 		    /* These should only be the real words. */
 		  } else {
-			assert(arr->nets[idx]->vpi_type->type_code ==
+			assert(arr->nets[idx]->get_type_code() ==
 			       vpiRealVar);
 			struct __vpiRealVar *sigr = (struct __vpiRealVar *)
 			                            arr->nets[idx];
 			constant_delete(sigr->id.index);
 // Why are only the real words still here?
-			free(arr->nets[idx]);
+			delete arr->nets[idx];
 		  }
 	    }
 	    free(arr->nets);
@@ -1919,18 +1919,18 @@ void memory_delete(vpiHandle item)
 
       while (arr->vpi_callbacks) {
 	    struct __vpiCallback*tmp = arr->vpi_callbacks->next;
-	    delete_vpi_callback(arr->vpi_callbacks);
+	    delete arr->vpi_callbacks;
 	    arr->vpi_callbacks = tmp;
       }
 
-      free(arr);
+      delete arr;
 }
 
 void A_delete(vpiHandle item)
 {
       struct __vpiArrayVthrA*obj = (struct __vpiArrayVthrA*) item;
       if (obj->address_handle) {
-	    switch (obj->address_handle->vpi_type->type_code) {
+	    switch (obj->address_handle->get_type_code()) {
 		case vpiMemoryWord:
 		  if (vpi_get(_vpiFromThr, obj->address_handle) == _vpi_at_A) {
 			A_delete(obj->address_handle);
@@ -1944,6 +1944,6 @@ void A_delete(vpiHandle item)
 	    }
       }
 
-      free(obj);
+      delete obj;
 }
 #endif

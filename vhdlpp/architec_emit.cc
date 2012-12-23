@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "architec.h"
@@ -67,6 +67,8 @@ int Architecture::emit(ostream&out, Entity*entity)
 	// Find typedefs that are present in the architecture body and
 	// emit them, so that following code can use the name instead
 	// of the full definition.
+
+      typedef_context_t typedef_ctx;
       for (map<perm_string,const VType*>::iterator cur = old_types_.begin()
 		 ; cur != old_types_.end() ; ++cur) {
 
@@ -74,7 +76,7 @@ int Architecture::emit(ostream&out, Entity*entity)
 	    if (def == 0)
 		  continue;
 
-	    errors += def->emit_typedef(out);
+	    errors += def->emit_typedef(out, typedef_ctx);
       }
 
       for (map<perm_string,struct const_t*>::iterator cur = old_constants_.begin()
@@ -181,29 +183,59 @@ int GenerateStatement::emit_statements(ostream&out, Entity*ent, Architecture*arc
 int ForGenerate::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
-      out << "generate genvar \\" << genvar_ << " ;" << endl;
-      out << "for (\\" << genvar_ << " = ";
+      out << "genvar \\" << get_name() << ":" << genvar_ << " ;" << endl;
+      out << "for (\\" << get_name() << ":" << genvar_ << " = ";
       errors += lsb_->emit(out, ent, arc);
-      out << "; \\" << genvar_ << " <= ";
+      out << "; \\" << get_name() << ":" << genvar_ << " <= ";
       errors += msb_->emit(out, ent, arc);
-      out << "; \\" << genvar_ << " = \\" << genvar_ << " + 1)"
+      out << "; \\" << get_name() << ":" << genvar_ << " = \\" << get_name() << ":" << genvar_ << " + 1)"
 	  << " begin : \\" << get_name() << endl;
+
+      arc->push_genvar_emit(genvar_, this);
+
+      errors += emit_statements(out, ent, arc);
+
+      arc->pop_genvar_emit();
+      out << "end" << endl;
+
+      return errors;
+}
+
+int IfGenerate::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      out << "if (";
+      cond_->emit(out, ent, arc);
+      out << ") begin : \\" << get_name() << endl;
 
       errors += emit_statements(out, ent, arc);
 
       out << "end" << endl;
-      out << "endgenerate" << endl;
+
       return errors;
 }
 
+/*
+ * Emit a process statement using "always" syntax.
+ *
+ * Note that VHDL is different from Verilog, in that the sensitivity
+ * list goes at the END of the statement list, not at the
+ * beginning. In VHDL, all the statements are initially executed once
+ * before blocking in the first wait on the sensitivity list.
+ */
 int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-      out << "always";
+      out << "always begin" << endl;
+
+      for (list<SequentialStmt*>::iterator cur = statements_list_.begin()
+		 ; cur != statements_list_.end() ; ++cur) {
+	    errors += (*cur)->emit(out, ent, arc);
+      }
 
       if (! sensitivity_list_.empty()) {
-	    out << " @(";
+	    out << "@(";
 	    const char*comma = 0;
 	    for (list<Expression*>::iterator cur = sensitivity_list_.begin()
 		       ; cur != sensitivity_list_.end() ; ++cur) {
@@ -212,14 +244,7 @@ int ProcessStatement::emit(ostream&out, Entity*ent, Architecture*arc)
 		  errors += (*cur)->emit(out, ent, arc);
 		  comma = ", ";
 	    }
-	    out << ")";
-      }
-
-      out << " begin" << endl;
-
-      for (list<SequentialStmt*>::iterator cur = statements_list_.begin()
-		 ; cur != statements_list_.end() ; ++cur) {
-	    errors += (*cur)->emit(out, ent, arc);
+	    out << ") /* sensitivity list for process */;" << endl;
       }
 
       out << "end" << endl;

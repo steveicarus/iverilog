@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 /*
@@ -168,6 +168,12 @@ const char*data_type_string(ivl_variable_type_t vtype)
 	    break;
 	  case IVL_VT_STRING:
 	    vt = "string";
+	    break;
+	  case IVL_VT_DARRAY:
+	    vt = "darray";
+	    break;
+	  case IVL_VT_CLASS:
+	    vt = "class";
 	    break;
       }
 
@@ -564,7 +570,7 @@ static void show_lpm_mux(ivl_lpm_t net)
 	      ivl_lpm_basename(net), width, size);
 
       nex = ivl_lpm_q(net);
-      fprintf(out, "    Q: %p <drive0/1 = %u/%u>\n", nex, drive0, drive1);
+      fprintf(out, "    Q: %p <drive0/1 = %d/%d>\n", nex, drive0, drive1);
       if (width != width_of_nexus(nex)) {
 	    fprintf(out, "    Q: ERROR: Nexus width is %u\n",
 		    width_of_nexus(nex));
@@ -1219,7 +1225,6 @@ static void show_signal(ivl_signal_t net)
 
       const char*type = "?";
       const char*port = "";
-      const char*data_type = "?";
       const char*sign = ivl_signal_signed(net)? "signed" : "unsigned";
 
       switch (ivl_signal_type(net)) {
@@ -1260,25 +1265,6 @@ static void show_signal(ivl_signal_t net)
 	    break;
       }
 
-      switch (ivl_signal_data_type(net)) {
-
-	  case IVL_VT_BOOL:
-	    data_type = "bool";
-	    break;
-
-	  case IVL_VT_LOGIC:
-	    data_type = "logic";
-	    break;
-
-	  case IVL_VT_REAL:
-	    data_type = "real";
-	    break;
-
-	  default:
-	    data_type = "?data?";
-	    break;
-      }
-
       const char*discipline_txt = "NONE";
       if (ivl_signal_discipline(net)) {
 	    ivl_discipline_t dis = ivl_signal_discipline(net);
@@ -1288,13 +1274,9 @@ static void show_signal(ivl_signal_t net)
       for (idx = 0 ;  idx < ivl_signal_array_count(net) ; idx += 1) {
 
 	    ivl_nexus_t nex = ivl_signal_nex(net, idx);
-	    unsigned dim;
 
-	    fprintf(out, "  %s %s %s%s", type, sign, port, data_type);
-	    for (dim = 0 ; dim < ivl_signal_packed_dimensions(net) ; dim += 1) {
-		  fprintf(out, "[%d:%d]", ivl_signal_packed_msb(net,dim),
-			  ivl_signal_packed_lsb(net,dim));
-	    }
+	    fprintf(out, "  %s %s %s", type, sign, port);
+	    show_type_of_signal(net);
 	    fprintf(out, " %s[word=%u, adr=%d]  <width=%u%s> <discipline=%s> ",
 		    ivl_signal_basename(net),
 		    idx, ivl_signal_array_base(net)+idx,
@@ -1358,6 +1340,15 @@ static void show_signal(ivl_signal_t net)
 	    }
       }
 
+      switch (ivl_signal_data_type(net)) {
+	  case IVL_VT_NO_TYPE:
+	  case IVL_VT_VOID:
+	    fprintf(out, "  ERROR: Invalid type for signal.\n");
+	    stub_errors += 1;
+	    break;
+	  default:
+	    break;
+      }
 }
 
 void test_expr_is_delay(ivl_expr_t expr)
@@ -1492,9 +1483,9 @@ static void show_logic(ivl_net_logic_t net)
       for (idx = 0 ;  idx < npins ;  idx += 1) {
 	    ivl_nexus_t nex = ivl_logic_pin(net, idx);
 
-	    fprintf(out, "    %d: %p", idx, nex);
+	    fprintf(out, "    %u: %p", idx, nex);
 	    if (idx == 0)
-		  fprintf(out, " <drive0/1 = %u/%u>", drive0, drive1);
+		  fprintf(out, " <drive0/1 = %d/%d>", drive0, drive1);
 	    fprintf(out, "\n");
 
 	    if (nex == 0) {
@@ -1507,7 +1498,7 @@ static void show_logic(ivl_net_logic_t net)
 	    }
 
 	    if (ivl_logic_width(net) != width_of_nexus(nex)) {
-		  fprintf(out, "    %d: ERROR: Nexus width is %u\n",
+		  fprintf(out, "    %u: ERROR: Nexus width is %u\n",
 			  idx, width_of_nexus(nex));
 		  stub_errors += 1;
 	    }
@@ -1596,6 +1587,9 @@ static int show_scope(ivl_scope_t net, void*x)
 		  break;
 	    }
       }
+
+      for (idx = 0 ;  idx < ivl_scope_classes(net) ; idx += 1)
+	    show_class(ivl_scope_class(net, idx));
 
       for (idx = 0 ;  idx < ivl_scope_params(net) ;  idx += 1)
 	    show_parameter(ivl_scope_param(net, idx));

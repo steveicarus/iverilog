@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "LineInfo.h"
@@ -108,6 +108,18 @@ class IfSequential  : public SequentialStmt {
       std::list<SequentialStmt*> if_;
       std::list<IfSequential::Elsif*> elsif_;
       std::list<SequentialStmt*> else_;
+};
+
+class ReturnStmt  : public SequentialStmt {
+    public:
+      ReturnStmt(Expression*val);
+      ~ReturnStmt();
+
+    public:
+      void dump(ostream&out, int indent) const;
+
+    private:
+      Expression*val_;
 };
 
 class SignalSeqAssignment  : public SequentialStmt {

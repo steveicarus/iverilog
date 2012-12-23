@@ -14,11 +14,8 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: gates.c,v 1.14 2003/11/12 03:20:14 steve Exp $"
-#endif
 
 # include  <ivl_target.h>
 # include  "fpga_priv.h"
@@ -174,40 +171,3 @@ int show_scope_gates(ivl_scope_t net, void*x)
 
       return ivl_scope_children(net, show_scope_gates, 0);
 }
-
-/*
- * $Log: gates.c,v $
- * Revision 1.14  2003/11/12 03:20:14  steve
- *  devices need show_cmp_gt
- *
- * Revision 1.13  2003/08/09 03:23:03  steve
- *  Add support for IVL_LPM_MULT device.
- *
- * Revision 1.12  2003/08/07 04:04:01  steve
- *  Add an LPM device type.
- *
- * Revision 1.11  2003/06/24 03:55:01  steve
- *  Add ivl_synthesis_cell support for virtex2.
- *
- * Revision 1.10  2002/10/28 02:05:56  steve
- *  Add Virtex code generators for left shift,
- *  subtraction, and GE comparators.
- *
- * Revision 1.9  2002/08/12 01:35:03  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.8  2002/08/11 23:47:04  steve
- *  Add missing Log and Ident strings.
- *
- * Revision 1.7  2001/09/09 22:23:28  steve
- *  Virtex support for mux devices and adders
- *  with carry chains. Also, make Virtex specific
- *  implementations of primitive logic.
- *
- * Revision 1.6  2001/09/02 21:33:07  steve
- *  Rearrange the XNF code generator to be generic-xnf
- *  so that non-XNF code generation is also possible.
- *
- *  Start into the virtex EDIF output driver.
- */
-

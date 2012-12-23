@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -191,8 +191,7 @@ static void emit_stmt_lval_piece(ivl_scope_t scope, ivl_lval_t lval)
       }
 
 	/* We have some kind of select. */
-      lsb = ivl_signal_lsb(sig);
-      msb = ivl_signal_msb(sig);
+      get_sig_msb_lsb(sig, &msb, &lsb);
       sel_type = ivl_lval_sel_type(lval);
       assert(sel_expr);
 	/* A bit select. */
@@ -320,6 +319,68 @@ static unsigned is_delayed_or_event_assign(ivl_scope_t scope,
 }
 
 /*
+ * A common routine to emit the basic assignment construct. It can also
+ * translate an assignment with an opcode when allowed.
+ */
+static void emit_assign_and_opt_opcode(ivl_scope_t scope, ivl_statement_t stmt,
+                                       unsigned allow_opcode)
+{
+      unsigned wid;
+      char opcode, *opcode_str;
+
+      assert (ivl_statement_type(stmt) == IVL_ST_ASSIGN);
+// HERE: Do we need to calculate the width? The compiler should have already
+//       done this for us.
+      wid = emit_stmt_lval(scope, stmt);
+	/* Get the opcode and the string version of the opcode. */
+      opcode = ivl_stmt_opcode(stmt);
+      switch (opcode) {
+	case  0:  opcode_str = ""; break;
+	case '+': opcode_str = "+"; break;
+	case '-': opcode_str = "-"; break;
+	case '*': opcode_str = "*"; break;
+	case '/': opcode_str = "/"; break;
+	case '%': opcode_str = "%"; break;
+	case '&': opcode_str = "&"; break;
+	case '|': opcode_str = "|"; break;
+	case '^': opcode_str = "^"; break;
+	case 'l': opcode_str = "<<"; break;
+	case 'r': opcode_str = ">>"; break;
+	case 'R': opcode_str = ">>>"; break;
+	default:
+	    fprintf(stderr, "%s:%u: vlog95 error: unknown assignment operator "
+	                    "(%c).\n",
+	                    ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
+	                    opcode);
+	    vlog_errors += 1;
+	    opcode_str = "<unknown>";
+	    break;
+      }
+      if (opcode && ! allow_opcode) {
+	    fprintf(stderr, "%s:%u: vlog95 error: assignment operator %s= is "
+	                    "not allowed in this context.\n",
+	                    ivl_stmt_file(stmt), ivl_stmt_lineno(stmt),
+	                    opcode_str);
+	    vlog_errors += 1;
+      }
+      fprintf(vlog_out, " = ");
+      if (opcode) {
+	    unsigned twid = emit_stmt_lval(scope, stmt);
+	    assert(twid == wid);
+	    fprintf(vlog_out, " %s ", opcode_str);
+	      /* The >>>= assignment operator is only allowed when the allow
+	       * signed flag is true. */
+	    if ((! allow_signed) && (opcode == 'R')) {
+		  fprintf(stderr, "%s:%u: vlog95 error: >>>= operator is not "
+		                  "supported.\n",
+		                  ivl_stmt_file(stmt), ivl_stmt_lineno(stmt));
+		  vlog_errors += 1;
+	    }
+      }
+      emit_expr(scope, ivl_stmt_rval(stmt), wid);
+}
+
+/*
  * Icarus translated for(<assign>; <cond>; <incr_assign>) <body> into
  *
  *   begin
@@ -334,7 +395,6 @@ static unsigned is_delayed_or_event_assign(ivl_scope_t scope,
  */
 static unsigned is_for_loop(ivl_scope_t scope, ivl_statement_t stmt)
 {
-      unsigned wid;
       ivl_statement_t assign, while_lp, while_blk, body, incr_assign;
 
 	/* We must have two block elements. */
@@ -368,22 +428,14 @@ static unsigned is_for_loop(ivl_scope_t scope, ivl_statement_t stmt)
 
 	/* The pattern matched so generate the appropriate code. */
       fprintf(vlog_out, "%*cfor(", get_indent(), ' ');
-	/* Emit the initialization statement. */
-// HERE: Do we need to calculate the width? The compiler should have already
-//       done this for us.
-      wid = emit_stmt_lval(scope, assign);
-      fprintf(vlog_out, " = ");
-      emit_expr(scope, ivl_stmt_rval(assign), wid);
+	/* Emit the initialization statement (no opcode is allowed). */
+      emit_assign_and_opt_opcode(scope, assign, 0);
       fprintf(vlog_out, "; ");
 	/* Emit the condition. */
       emit_expr(scope, ivl_stmt_cond_expr(while_lp), 0);
       fprintf(vlog_out, "; ");
-	/* Emit in increment statement. */
-// HERE: Do we need to calculate the width? The compiler should have already
-//       done this for us.
-      wid = emit_stmt_lval(scope, incr_assign);
-      fprintf(vlog_out, " = ");
-      emit_expr(scope, ivl_stmt_rval(incr_assign), wid);
+	/* Emit the increment statement (an opcode is allowed). */
+      emit_assign_and_opt_opcode(scope, incr_assign, 1);
       fprintf(vlog_out, ")");
       emit_stmt_file_line(stmt);
 	/* Now emit the body. */
@@ -728,13 +780,9 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
 
 static void emit_stmt_assign(ivl_scope_t scope, ivl_statement_t stmt)
 {
-      unsigned wid;
       fprintf(vlog_out, "%*c", get_indent(), ' ');
-// HERE: Do we need to calculate the width? The compiler should have already
-//       done this for us.
-      wid = emit_stmt_lval(scope, stmt);
-      fprintf(vlog_out, " = ");
-      emit_expr(scope, ivl_stmt_rval(stmt), wid);
+	/* Emit the basic assignment (an opcode is allowed).*/
+      emit_assign_and_opt_opcode(scope, stmt, 1);
       fprintf(vlog_out, ";");
       emit_stmt_file_line(stmt);
       fprintf(vlog_out, "\n");
@@ -1119,6 +1167,20 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 		  emit_stmt_fork(scope, stmt);
 	    }
 	    break;
+	case IVL_ST_FORK_JOIN_ANY:
+	    fprintf(stderr, "%s:%u: vlog95 sorry: fork/join_any is not "
+	                    "currently translated.\n",
+	                    ivl_stmt_file(stmt),
+	                    ivl_stmt_lineno(stmt));
+	    vlog_errors += 1;
+	    break;
+	case IVL_ST_FORK_JOIN_NONE:
+	    fprintf(stderr, "%s:%u: vlog95 sorry: fork/join_none is not "
+	                    "currently translated.\n",
+	                    ivl_stmt_file(stmt),
+	                    ivl_stmt_lineno(stmt));
+	    vlog_errors += 1;
+	    break;
 	case IVL_ST_FREE:
 	      /* This statement is only used with an automatic task so we
 	       * can safely skip it. The automatic task definition will
@@ -1168,6 +1230,13 @@ void emit_process(ivl_scope_t scope, ivl_process_t proc)
             break;
         case IVL_PR_ALWAYS:
             fprintf(vlog_out, "always");
+            break;
+        case IVL_PR_FINAL:
+            fprintf(vlog_out, "final");
+            fprintf(stderr, "%s:%u: vlog95 sorry: final blocks are not "
+	                    "currently translated.\n",
+                            ivl_process_file(proc), ivl_process_lineno(proc));
+            vlog_errors+= 1;
             break;
         default:
             fprintf(vlog_out, "<unknown>");

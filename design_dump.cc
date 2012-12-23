@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -28,6 +28,8 @@
 # include  "netlist.h"
 # include  "compiler.h"
 # include  "discipline.h"
+# include  "netdarray.h"
+# include  "netvector.h"
 # include  "ivl_assert.h"
 # include  "PExpr.h"
 
@@ -39,6 +41,12 @@ static ostream& operator<< (ostream&o, NetBlock::Type t)
 	    break;
 	  case NetBlock::PARA:
 	    o << "fork";
+	    break;
+	  case NetBlock::PARA_JOIN_NONE:
+	    o << "fork-join_none";
+	    break;
+	  case NetBlock::PARA_JOIN_ANY:
+	    o << "fork-join_any";
 	    break;
       }
       return o;
@@ -98,6 +106,12 @@ ostream& operator << (ostream&o, ivl_variable_type_t val)
 	  case IVL_VT_STRING:
 	    o << "string";
 	    break;
+	  case IVL_VT_DARRAY:
+	    o << "darray";
+	    break;
+	  case IVL_VT_CLASS:
+	    o << "class";
+	    break;
       }
       return o;
 }
@@ -127,6 +141,24 @@ ostream& operator << (ostream&o, ivl_switch_type_t val)
 	    o << "tran(VP)";
 	    break;
       }
+      return o;
+}
+
+ostream& ivl_type_s::debug_dump(ostream&o) const
+{
+      o << typeid(*this).name();
+      return o;
+}
+
+ostream& netdarray_t::debug_dump(ostream&o) const
+{
+      o << "dynamic array of " << *element_type();
+      return o;
+}
+
+ostream& netvector_t::debug_dump(ostream&o) const
+{
+      o << type_ << (signed_? " signed" : " unsigned") << packed_dims_;
       return o;
 }
 
@@ -187,11 +219,30 @@ void NetDelaySrc::dump(ostream&o, unsigned ind) const
       dump_node_pins(o, ind+4);
 }
 
-ostream&operator<<(ostream&out, const list<NetNet::range_t>&rlist)
+static inline ostream&operator<<(ostream&out, const netrange_t&that)
 {
-      for (list<NetNet::range_t>::const_iterator cur = rlist.begin()
+      if (that.defined())
+	    out << "[" << that.get_msb() << ":" << that.get_lsb() << "]";
+      else
+	    out << "[]";
+
+      return out;
+}
+
+ostream&operator<<(ostream&out, const list<netrange_t>&rlist)
+{
+      for (list<netrange_t>::const_iterator cur = rlist.begin()
 		 ; cur != rlist.end() ; ++cur) {
-	    out << "[" << cur->msb << ":" << cur->lsb << "]";
+	    out << *cur;
+      }
+      return out;
+}
+
+ostream&operator<<(ostream&out, const vector<netrange_t>&rlist)
+{
+      for (vector<netrange_t>::const_iterator cur = rlist.begin()
+		 ; cur != rlist.end() ; ++cur) {
+	    out << *cur;
       }
       return out;
 }
@@ -200,12 +251,10 @@ ostream&operator<<(ostream&out, const list<NetNet::range_t>&rlist)
 void NetNet::dump_net(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << type() << ": " << name()
-	<< "[" << s0_ << ":" << e0_ << " count=" << pin_count() << "]";
+	<< unpacked_dims_ << " unpacked dims=" << unpacked_dimensions();
+      o << " pin_count=" << pin_count();
       if (local_flag_)
 	    o << " (local)";
-      o << " " << data_type_;
-      if (signed_)
-	    o << " signed";
       switch (port_type_) {
 	  case NetNet::NOT_A_PORT:
 	    break;
@@ -229,7 +278,7 @@ void NetNet::dump_net(ostream&o, unsigned ind) const
       if (ivl_discipline_t dis = get_discipline())
 	    o << " discipline=" << dis->name();
 
-      o << " packed dims: " << packed_dims_;
+      if (net_type_)  o << " " << *net_type_;
 
       o << " (eref=" << peek_eref() << ", lref=" << peek_lref() << ")";
       if (scope())
@@ -470,9 +519,7 @@ void NetCaseCmp::dump_node(ostream&o, unsigned ind) const
 
 void NetConst::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "constant " << width_ << "'b";
-      for (unsigned idx = width_ ;  idx > 0 ;  idx -= 1)
-	    o << value_[idx-1];
+      o << setw(ind) << "" << "constant " << value_;
       o << ": " << name();
       if (rise_time())
 	    o << " #(" << *rise_time()
@@ -808,6 +855,9 @@ void NetAssign_::dump_lval(ostream&o) const
 {
       if (sig_) {
 	    o << sig_->name();
+	    if (! member_.nil()) {
+		  o << "." << member_;
+	    }
 	    if (word_) {
 		  o << "[word=" << *word_ << "]";
 	    }
@@ -1059,7 +1109,7 @@ void NetFuncDef::dump(ostream&o, unsigned ind) const
       if (result_sig_) {
 	    o << setw(ind+2) << "" << "Return signal: ";
 	    if (result_sig_->get_signed()) o << "+";
-	    o << result_sig_->name() << result_sig_->packed_dims() << endl;
+	    o << result_sig_->name() << endl;
       }
       o << setw(ind+2) << "" << "Arguments: ";
       if (port_count() == 0) o << "<none>";
@@ -1081,7 +1131,7 @@ void NetFuncDef::dump(ostream&o, unsigned ind) const
 		  break;
 	    }
 	    if (port(idx)->get_signed()) o << "+";
-	    o << port(idx)->name() << port(idx)->packed_dims() << endl;
+	    o << port(idx)->name() << endl;
       }
       if (statement_)
 	    statement_->dump(o, ind+2);
@@ -1127,6 +1177,9 @@ void NetScope::dump(ostream&o) const
       print_type(o);
       if (is_auto()) o << " (automatic)";
       if (is_cell()) o << " (cell)";
+      if (nested_module()) o << " (nested)";
+      if (program_block()) o << " (program)";
+
       o << endl;
 
       for (unsigned idx = 0 ;  idx < attr_cnt() ;  idx += 1)
@@ -1141,7 +1194,10 @@ void NetScope::dump(ostream&o) const
 	    map<perm_string,param_expr_t>::const_iterator pp;
 	    for (pp = parameters.begin()
 		       ; pp != parameters.end() ;  ++ pp ) {
-		  o << "    parameter ";
+		  if ((*pp).second.is_annotatable)
+			o << "    specparam ";
+		  else
+			o << "    parameter ";
 
 		  o << pp->second.type << " ";
 
@@ -1187,12 +1243,6 @@ void NetScope::dump(ostream&o) const
 		  }
 
 		  o << ";" << endl;
-	    }
-
-	    for (pp = localparams.begin()
-		       ; pp != localparams.end() ;  ++ pp ) {
-		  o << "    localparam " << (*pp).first << " = "  <<
-			*(*pp).second.val << ";" << endl;
 	    }
       }
 
@@ -1245,27 +1295,6 @@ void NetScope::dump(ostream&o) const
 	    cur->second->dump_net(o, 4);
       }
 
-	// Dump specparams
-      typedef map<perm_string,spec_val_t>::const_iterator specparam_it_t;
-      for (specparam_it_t cur = specparams.begin()
-		 ; cur != specparams.end() ;  ++ cur ) {
-	    o << "    specparam " << (*cur).first
-	      << " = ";
-	    spec_val_t value = (*cur).second;
-	    switch (value.type) {
-		case IVL_VT_REAL:
-		  o << "R:" << value.real_val;
-		  break;
-		case IVL_VT_BOOL:
-		  o << "I:" << value.integer;
-		  break;
-		default:
-		  o << "<bad type>";
-		  break;
-	    }
-	    o << endl;
-      }
-
       switch (type_) {
 	  case FUNC:
 	    if (func_def())
@@ -1293,12 +1322,12 @@ void NetSTask::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << name_;
 
-      if (parms_.count() > 0) {
+      if (! parms_.empty()) {
 	    o << "(";
 	    if (parms_[0])
 		  parms_[0]->dump(o);
 
-	    for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+	    for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
 		  o << ", ";
 		  if (parms_[idx])
 			parms_[idx]->dump(o);
@@ -1428,7 +1457,7 @@ void NetEConcat::dump(ostream&o) const
       else
 	    o << "{";
 
-      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
 	    if (parms_[idx])
 		  o << ", " << *parms_[idx];
 	    else
@@ -1481,6 +1510,21 @@ void NetENetenum::dump(ostream&o) const
       o << "<netenum=" << netenum_ << ">";
 }
 
+void NetENew::dump(ostream&o) const
+{
+      o << "new <type>";
+}
+
+void NetENull::dump(ostream&o) const
+{
+      o << "<null>";
+}
+
+void NetEProperty::dump(ostream&o) const
+{
+      o << net_->name() << ".<" << pidx_ << ">";
+}
+
 void NetEScope::dump(ostream&o) const
 {
       o << "<scope=" << scope_path(scope_) << ">";
@@ -1502,7 +1546,14 @@ void NetESelect::dump(ostream&o) const
       else
 	    o << "(0)";
 
-      o << "+:" << expr_width() << "]>";
+      o << "+:" << expr_width() << "]";
+      if (ivl_type_t nt = net_type()) {
+	    o << " net_type=(" << *nt << ")";
+      } else {
+	    o << " expr_type=" << expr_type();
+      }
+
+      o << ">";
 }
 
 void NetESFunc::dump(ostream&o) const
@@ -1521,7 +1572,8 @@ void NetESignal::dump(ostream&o) const
 	    o << "+";
       o << name();
       if (word_) o << "[word=" << *word_ << "]";
-      o << sig()->packed_dims();
+      vector<netrange_t>tmp = net_->net_type()->slice_dimensions();
+      o << tmp;
 }
 
 void NetETernary::dump(ostream&o) const
@@ -1533,9 +1585,9 @@ void NetETernary::dump(ostream&o) const
 void NetEUFunc::dump(ostream&o) const
 {
       o << func_->basename() << "(";
-      if (parms_.count() > 0) {
+      if (! parms_.empty()) {
 	    parms_[0]->dump(o);
-	    for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+	    for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
 		  o << ", ";
 		  parms_[idx]->dump(o);
 	    }

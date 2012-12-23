@@ -16,10 +16,11 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "ivl_target.h"
+# include  "nettypes.h"
 # include  "verinum.h"
 # include  "StringHeap.h"
 # include  "LineInfo.h"
@@ -28,7 +29,7 @@
 
 class NetScope;
 
-class netenum_t : public LineInfo {
+class netenum_t : public LineInfo, public ivl_type_s {
 
     public:
       explicit netenum_t(ivl_variable_type_t base_type, bool signed_flag,
@@ -36,8 +37,9 @@ class netenum_t : public LineInfo {
       ~netenum_t();
 
       ivl_variable_type_t base_type() const;
-      unsigned base_width() const;
-      bool has_sign() const;
+      long packed_width() const;
+      std::vector<netrange_t> slice_dimensions() const;
+      bool get_signed() const;
 
 	// The size() is the number of enumeration literals.
       size_t size() const;
@@ -72,16 +74,6 @@ class netenum_t : public LineInfo {
 inline ivl_variable_type_t netenum_t::base_type() const
 { return base_type_; }
 
-inline unsigned netenum_t::base_width() const
-{
-      if (msb_ >= lsb_)
-	    return msb_ - lsb_ + 1;
-      else
-	    return lsb_ - msb_ + 1;
-}
-
 inline size_t netenum_t::size() const { return names_.size(); }
-
-inline bool netenum_t::has_sign() const { return signed_flag_; }
 
 #endif

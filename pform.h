@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "netlist.h"
@@ -59,6 +59,7 @@ class PGate;
 class PExpr;
 class PSpecPath;
 class PClass;
+class PPackage;
 struct vlltype;
 
 /*
@@ -130,6 +131,10 @@ extern void pform_set_default_nettype(NetNet::Type net,
 				     const char*file,
 				     unsigned lineno);
 
+  /* Return true if currently processing a program block. This can be
+     used to reject statements that cannot exist in program blocks. */
+extern bool pform_in_program_block(void);
+
 /*
  * Look for the given wire in the current lexical scope. If the wire
  * (including variables of any type) cannot be found in the current
@@ -145,9 +150,13 @@ extern PWire* pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_ty
  * module has been noticed in the source file and the following events
  * are to apply to the scope of that module. The endmodule causes the
  * pform to close up and finish the named module.
+ *
+ * The program_flag indicates that the module is actually a program
+ * block. This has implications during parse and during
+ * elaboration/code generation.
  */
-extern void pform_startmodule(const char*, const char*file, unsigned lineno,
-			      list<named_pexpr_t>*attr);
+extern void pform_startmodule(const struct vlltype&loc, const char*name,
+			      bool program_block, list<named_pexpr_t>*attr);
 extern void pform_check_timeunit_prec();
 extern void pform_module_set_ports(vector<Module::port_t*>*);
 
@@ -160,6 +169,7 @@ extern void pform_module_define_port(const struct vlltype&li,
 				     NetNet::Type type,
 				     ivl_variable_type_t data_type,
 				     bool signed_flag,
+				     data_type_t*vtype,
 				     list<pform_range_t>*range,
 				     list<named_pexpr_t>*attr);
 
@@ -171,7 +181,15 @@ extern void pform_endmodule(const char*, bool inside_celldefine,
 
 extern void pform_start_class_declaration(const struct vlltype&loc,
 					  class_type_t*type);
+extern void pform_class_property(const struct vlltype&loc,
+				 property_qualifier_t pq,
+				 data_type_t*data_type,
+				 std::list<decl_assignment_t*>*decls);
 extern void pform_end_class_declaration(void);
+
+extern void pform_start_package_declaration(const struct vlltype&loc,
+					    const char*type);
+extern void pform_end_package_declaration(const struct vlltype&loc);
 
 extern void pform_make_udp(perm_string name, list<perm_string>*parms,
 			   svector<PWire*>*decl, list<string>*table,
@@ -193,6 +211,7 @@ extern void pform_make_udp(perm_string name,
 extern void pform_pop_scope();
 
 extern PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name);
+extern PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name);
 extern PTask*pform_push_task_scope(const struct vlltype&loc, char*name,
                                    bool is_auto);
 extern PFunction*pform_push_function_scope(const struct vlltype&loc, char*name,
@@ -254,21 +273,13 @@ extern void pform_makewire(const struct vlltype&li,
 			   list<named_pexpr_t>*attr,
 			   PWSRType rt = SR_NET);
 
-extern void pform_makewire(const struct vlltype&li,
-			   struct_type_t*struct_type,
-			   list<perm_string>*names,
-			   NetNet::PortType,
-			   list<named_pexpr_t>*attr);
-
 /* This form handles assignment declarations. */
 extern void pform_makewire(const struct vlltype&li,
-			   list<pform_range_t>*range,
-			   bool signed_flag,
 			   list<PExpr*>*delay,
 			   str_pair_t str,
 			   net_decl_assign_t*assign_list,
 			   NetNet::Type type,
-			   ivl_variable_type_t);
+			   data_type_t*data_type);
 
 /* This form handles nets declared as structures. (See pform_struct_type.cc) */
 extern void pform_makewire(const struct vlltype&li,
@@ -289,22 +300,19 @@ extern void pform_set_port_type(const struct vlltype&li,
 				bool signed_flag,
 				NetNet::PortType);
 
-extern void pform_set_net_range(list<perm_string>*names,
-				list<pform_range_t>*,
-				bool signed_flag,
-				ivl_variable_type_t,
-				std::list<named_pexpr_t>*attr);
-extern void pform_set_reg_idx(perm_string name, PExpr*l, PExpr*r);
+extern void pform_set_reg_idx(perm_string name,
+			      std::list<pform_range_t>*indices);
 extern void pform_set_reg_integer(list<perm_string>*names, list<named_pexpr_t>*attr);
 extern void pform_set_reg_time(list<perm_string>*names, list<named_pexpr_t>*attr);
 
-//XXXXextern void pform_set_integer_2atom(uint64_t width, bool signed_flag, list<perm_string>*names);
+extern void pform_set_data_type(const struct vlltype&li, data_type_t*, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr);
 
-extern void pform_set_data_type(const struct vlltype&li, data_type_t*, list<perm_string>*names, list<named_pexpr_t>*attr);
+extern void pform_set_struct_type(struct_type_t*struct_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
 
-extern void pform_set_enum(const struct vlltype&li, enum_type_t*enum_type, list<perm_string>*names, std::list<named_pexpr_t>*attr);
+extern void pform_set_string_type(string_type_t*string_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
 
-extern void pform_set_struct_type(struct_type_t*struct_type, std::list<perm_string>*names, std::list<named_pexpr_t>*attr);
+extern void pform_set_class_type(class_type_t*class_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*addr);
+
 
   /* pform_set_attrib and pform_set_type_attrib exist to support the
      $attribute syntax, which can only set string values to
@@ -331,13 +339,15 @@ extern void pform_set_localparam(const struct vlltype&loc,
 				 bool signed_flag,
 				 list<pform_range_t>*range,
 				 PExpr*expr);
+extern void pform_set_specparam(const struct vlltype&loc,
+				 perm_string name,
+				 list<pform_range_t>*range,
+				 PExpr*expr);
 extern void pform_set_defparam(const pform_name_t&name, PExpr*expr);
 
 /*
  * Functions related to specify blocks.
  */
-extern void pform_set_specparam(perm_string name, PExpr*expr);
-
 extern PSpecPath*pform_make_specify_path(const struct vlltype&li,
 					 list<perm_string>*src, char pol,
 					 bool full_flag, list<perm_string>*dst);
@@ -371,13 +381,15 @@ extern void pform_make_reals(list<perm_string>*names,
  * The makegate function creates a new gate (which need not have a
  * name) and connects it to the specified wires.
  */
-extern void pform_makegates(PGBuiltin::Type type,
+extern void pform_makegates(const struct vlltype&loc,
+			    PGBuiltin::Type type,
 			    struct str_pair_t str,
 			    list<PExpr*>*delay,
 			    svector<lgate>*gates,
 			    list<named_pexpr_t>*attr);
 
-extern void pform_make_modgates(perm_string type,
+extern void pform_make_modgates(const struct vlltype&loc,
+				perm_string type,
 				struct parmvalue_t*overrides,
 				svector<lgate>*gates);
 
@@ -417,12 +429,6 @@ extern PAssign* pform_compressed_assign_from_inc_dec(const struct vlltype&loc,
  * mod list. The dump function dumps a module to the output stream.
  */
 extern void pform_dump(ostream&out, Module*mod);
-
-/*
- * Used to report the original module location when a nested module
- * (missing endmodule) is found by the parser.
- */
-extern void pform_error_nested_modules();
 
 /* ** pform_discipline.cc
  * Functions for handling the parse of natures and disciplines. These

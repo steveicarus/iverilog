@@ -14,12 +14,15 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
 
 # include  "netlist.h"
+# include  "netclass.h"
+# include  "netdarray.h"
+# include  "ivl_assert.h"
 
 /*
  * NetAssign
@@ -84,12 +87,70 @@ ivl_select_type_t NetAssign_::select_type() const
 
 unsigned NetAssign_::lwidth() const
 {
+	// If the signal is a class type, then the situation is either
+	// "a.b" or "a.b.<member>". If this is "a.b" (no
+	// member/property reference, then return width==1. If this is
+	// "a.b.<member>", then get the type of the <member> property
+	// and return the width of that.
+      if (const netclass_t*class_type = sig_->class_type()) {
+	    if (member_.nil())
+		  return 1;
+
+	    const ivl_type_s*ptype = class_type->get_property(member_);
+	    ivl_assert(*sig_, ptype);
+
+	    return ptype->packed_width();
+      }
+
+      if (netdarray_t*darray = sig_->darray_type()) {
+	    if (word_ == 0)
+		  return 1;
+	    else
+		  return darray->element_width();
+      }
+
       return lwid_;
 }
 
 ivl_variable_type_t NetAssign_::expr_type() const
 {
+      if (const netclass_t*class_type = sig_->class_type()) {
+	    if (member_.nil())
+		  return sig_->data_type();
+
+	    const ivl_type_s*tmp = class_type->get_property(member_);
+	    return tmp->base_type();
+      }
+
+      if (netdarray_t*darray = sig_->darray_type()) {
+	    if (word_ == 0)
+		  return IVL_VT_DARRAY;
+	    else
+		  return darray->element_base_type();
+      }
+
       return sig_->data_type();
+}
+
+const ivl_type_s* NetAssign_::net_type() const
+{
+      if (const netclass_t*class_type = sig_->class_type()) {
+	    if (member_.nil())
+		  return sig_->net_type();
+
+	    const ivl_type_s*tmp = class_type->get_property(member_);
+	    ivl_assert(*sig_, tmp);
+	    return tmp;
+      }
+
+      if (dynamic_cast<const netdarray_t*> (sig_->net_type())) {
+	    if (word_ == 0)
+		  return sig_->net_type();
+
+	    return 0;
+      }
+
+      return 0;
 }
 
 netenum_t*NetAssign_::enumeration() const
@@ -131,6 +192,12 @@ void NetAssign_::set_part(NetExpr*base, unsigned wid,
       base_ = base;
       lwid_ = wid;
       sel_type_ = sel_type;
+}
+
+void NetAssign_::set_property(const perm_string&mname)
+{
+      ivl_assert(*sig_, sig_->class_type());
+      member_ = mname;
 }
 
 /*

@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -260,7 +260,7 @@ const char* PGBuiltin::gate_name() const
 }
 
 PGModule::PGModule(perm_string type, perm_string name, list<PExpr*>*pins)
-: PGate(name, pins), overrides_(0), pins_(0),
+: PGate(name, pins), bound_type_(0), overrides_(0), pins_(0),
   npins_(0), parms_(0), nparms_(0), msb_(0), lsb_(0)
 {
       type_ = type;
@@ -268,10 +268,16 @@ PGModule::PGModule(perm_string type, perm_string name, list<PExpr*>*pins)
 
 PGModule::PGModule(perm_string type, perm_string name,
 		   named<PExpr*>*pins, unsigned npins)
-: PGate(name, 0), overrides_(0), pins_(pins),
+: PGate(name, 0), bound_type_(0), overrides_(0), pins_(pins),
   npins_(npins), parms_(0), nparms_(0), msb_(0), lsb_(0)
 {
       type_ = type;
+}
+
+PGModule::PGModule(Module*type, perm_string name)
+: PGate(name, 0), bound_type_(type), overrides_(0), pins_(0),
+  npins_(0), parms_(0), nparms_(0), msb_(0), lsb_(0)
+{
 }
 
 PGModule::~PGModule()

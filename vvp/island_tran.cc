@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "vvp_island.h"
@@ -23,12 +23,16 @@
 # include  "schedule.h"
 # include  <list>
 
+# include  <iostream>
+
 using namespace std;
 
 class vvp_island_tran : public vvp_island {
 
     public:
       void run_island();
+      void count_drivers(vvp_island_port*port, unsigned bit_idx,
+                         unsigned counts[3]);
 };
 
 enum tran_state_t {
@@ -100,6 +104,83 @@ void vvp_island_tran::run_island()
 	    assert(tmp);
 	    tmp->run_output();
       }
+}
+
+static void count_drivers_(vvp_branch_ptr_t cur, bool other_side_visited,
+                           unsigned bit_idx, unsigned counts[3])
+{
+        // First count any value driven into the port associated with
+        // the current endpoint.
+      vvp_net_t*net = cur.port() ? cur.ptr()->b : cur.ptr()->a;
+      vvp_scalar_t bit = island_get_value(net).value(bit_idx);
+      update_driver_counts(bit.value(), counts);
+
+        // Now handle all the branches attached to that port.
+      vvp_branch_ptr_t idx = cur;
+      do {
+            vvp_island_branch_tran*tmp = BRANCH_TRAN(idx.ptr());
+
+              // If this branch represents a tran gate, we count the
+              // value on the other side of the tran (providing it is
+              // enabled) as a single driver.
+            if (tmp->width == 0) {
+                  if (tmp->state == tran_enabled) {
+                        net = idx.port() ? idx.ptr()->a : idx.ptr()->b;
+                        bit = island_get_sent_value(net).value(bit_idx);
+                        update_driver_counts(bit.value(), counts);
+                  }
+                  continue;
+            }
+
+              // If we get here, this branch is a part select. If we've
+              // just come from the other end of the branch, we're done.
+            if ((idx == cur) && other_side_visited)
+                  continue;
+
+              // If this is the narrow end of the part select, the other
+              // end must include the bit we are interested in. Follow
+              // the branch to collect any drivers on the other side.
+            if (idx.port() == 1) {
+                  vvp_branch_ptr_t a_side(tmp, 0);
+                  count_drivers_(a_side, true, tmp->offset + bit_idx, counts);
+                  continue;
+            }
+
+              // If we get here, this branch is the wide end of a part
+              // select. If the bit we are interested in is within the
+              // selected part, follow the branch to collect any drivers
+              // on the other side.
+            if ((bit_idx >= tmp->offset) && (bit_idx < tmp->offset+tmp->part)) {
+                  vvp_branch_ptr_t b_side(tmp, 1);
+                  count_drivers_(b_side, true, bit_idx - tmp->offset, counts);
+                  continue;
+            }
+      } while ((idx = next(idx)) != cur);
+}
+
+void vvp_island_tran::count_drivers(vvp_island_port*port, unsigned bit_idx,
+                                    unsigned counts[3])
+{
+        // First we need to find a branch that is attached to the specified
+        // port. Unfortunately there's no quick way to do this.
+      vvp_island_branch*branch = branches_;
+      unsigned side = 0;
+      while (branch) {
+            if (branch->a->fun == port) {
+                  side = 0;
+                  break;
+            }
+            if (branch->b->fun == port) {
+                  side = 1;
+                  break;
+            }
+            branch = branch->next_branch;
+      }
+      assert(branch);
+
+        // Now count the drivers, pushing through the network as necessary.
+      vvp_branch_ptr_t endpoint(branch, side);
+      count_drivers_(endpoint, false, bit_idx, counts);
 }
 
 bool vvp_island_branch_tran::run_test_enabled()

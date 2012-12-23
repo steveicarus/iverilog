@@ -1,7 +1,7 @@
 #ifndef __t_dll_H
 #define __t_dll_H
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "target.h"
@@ -58,6 +58,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       bool bufz(const NetBUFZ*);
       bool branch(const NetBranch*);
+      bool class_type(const NetScope*, netclass_t*);
       bool enumeration(const NetScope*, netenum_t*);
       void event(const NetEvent*);
       void logic(const NetLogic*);
@@ -137,7 +138,10 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_concat(const NetEConcat*);
       void expr_const(const NetEConst*);
       void expr_creal(const NetECReal*);
+      void expr_new(const NetENew*);
+      void expr_null(const NetENull*);
       void expr_param(const NetEConstParam*);
+      void expr_property(const NetEProperty*);
       void expr_rparam(const NetECRealParam*);
       void expr_event(const NetEEvent*);
       void expr_scope(const NetEScope*);
@@ -218,6 +222,7 @@ struct ivl_event_s {
 struct ivl_expr_s {
       ivl_expr_type_t type_;
       ivl_variable_type_t value_;
+      ivl_type_t net_type;
       perm_string file;
       unsigned lineno;
 
@@ -317,6 +322,14 @@ struct ivl_expr_s {
 		  uint64_t value;
 	    } delay_;
 
+	    struct {
+		  ivl_expr_t size;
+	    } new_;
+
+	    struct {
+		  ivl_signal_t sig;
+		  unsigned prop_idx;
+	    } property_;
       } u_;
 };
 
@@ -434,10 +447,11 @@ enum ivl_lval_type_t {
 
 struct ivl_lval_s {
       ivl_expr_t loff;
-      ivl_select_type_t sel_type;
+      ivl_select_type_t sel_type :3;
       ivl_expr_t idx;
       unsigned width_;
       unsigned type_   : 8;
+      int property_idx;
       union {
 	    ivl_signal_t sig;
 	    ivl_memory_t mem;
@@ -584,6 +598,7 @@ struct ivl_parameter_s {
       perm_string basename;
       ivl_scope_t scope;
       ivl_expr_t  value;
+      bool        local;
       perm_string file;
       unsigned lineno;
 };
@@ -624,10 +639,10 @@ struct ivl_scope_s {
       unsigned def_lineno;
       ivl_scope_type_t type_;
 
+      std::vector<ivl_type_t> classes;
       std::vector<ivl_enumtype_t> enumerations_;
 
-      unsigned nsigs_;
-      ivl_signal_t*sigs_;
+      std::vector<ivl_signal_t> sigs_;
 
       unsigned nlog_;
       ivl_net_logic_t*log_;
@@ -646,6 +661,10 @@ struct ivl_scope_s {
       unsigned is_auto;
 
       unsigned is_cell;
+
+      // Ports of Module scope (just introspection data for VPI) - actual connections
+      // are nets defined in u_.net (may be > 1 per module port)
+      std::vector<PortInfo>     module_ports_info;
 
       unsigned ports;
       union {
@@ -672,25 +691,24 @@ struct ivl_scope_s {
 struct ivl_signal_s {
       ivl_signal_type_t type_;
       ivl_signal_port_t port_;
-      ivl_variable_type_t data_type;
+      int module_port_index_;
       ivl_discipline_t discipline;
       perm_string file;
       unsigned lineno;
 
-      unsigned width_;
-      unsigned signed_ : 1;
-      unsigned isint_  : 1;
+	// This is the type for the signal
+      ivl_type_t net_type;
       unsigned local_  : 1;
 
       unsigned forced_net_ : 1;
 
 	/* For now, support only 0 or 1 array dimensions. */
-      unsigned array_dimensions_ : 1;
+      unsigned array_dimensions_ : 8;
       unsigned array_addr_swapped : 1;
 
 	/* These encode the declared packed dimensions for the
 	   signal, in case they are needed by the run-time */
-      std::vector<NetNet::range_t> packed_dims;
+      std::vector<netrange_t> packed_dims;
 
       perm_string name_;
       ivl_scope_t scope_;
@@ -708,6 +726,7 @@ struct ivl_signal_s {
       struct ivl_attribute_s*attr;
       unsigned nattr;
 };
+
 
 /*
  * The ivl_statement_t represents any statement. The type of statement

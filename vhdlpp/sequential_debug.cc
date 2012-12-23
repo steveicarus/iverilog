@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "sequential.h"
@@ -63,6 +63,15 @@ void IfSequential::Elsif::dump(ostream&out, int indent) const
 		 ; cur != if_.end() ; ++cur)
 	    (*cur)->dump(out, indent+4);
 
+}
+
+void ReturnStmt::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "ReturnStmt at file=" << get_fileline() << endl;
+      if (val_)
+	    val_->dump(out, indent+4);
+      else
+	    out << setw(indent+4) << "" << "()" << endl;
 }
 
 void SignalSeqAssignment::dump(ostream&out, int indent) const

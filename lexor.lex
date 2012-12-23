@@ -19,7 +19,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -192,6 +192,7 @@ TU [munpf]
 "++" { return K_INCR; }
 "--" {return K_DECR; }
 "'{" { return K_LP; }
+"::" { return K_SCOPE_RES; }
 
   /* Watch out for the tricky case of (*). Cannot parse this as "(*"
      and ")", but since I know that this is really ( * ), replace it
@@ -325,7 +326,15 @@ TU [munpf]
 
 \\[^ \t\b\f\r\n]+         {
       yylval.text = strdupnew(yytext+1);
-      return IDENTIFIER; }
+      if (gn_system_verilog()) {
+	    if (data_type_t*type = pform_test_type_identifier(yylval.text)) {
+		  delete[]yylval.text;
+		  yylval.data_type = type;
+		  return TYPE_IDENTIFIER;
+	    }
+      }
+      return IDENTIFIER;
+  }
 
 \$([a-zA-Z0-9$_]+)        {
 	/* The 1364-1995 timing checks. */

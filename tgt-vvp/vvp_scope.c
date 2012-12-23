@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "vvp_priv.h"
@@ -417,6 +417,36 @@ const char*draw_input_from_net(ivl_nexus_t nex)
 }
 
 
+/* Create flag string  for port nature */
+
+static const char *port_type_str( ivl_signal_port_t ptype )
+{
+    switch( ptype )
+    {
+    case IVL_SIP_INPUT :
+        return "INPUT";
+    case IVL_SIP_OUTPUT :
+        return "OUTPUT";
+    case IVL_SIP_INOUT :
+        return "INOUT";
+    case  IVL_SIP_NONE :
+    default :
+        return "NOT_PORT";
+    }
+}
+/* Create flag string  for et nature" port nature / localness */
+
+static const char *port_nature_flag_str( ivl_signal_t sig )
+{
+    return port_type_str( ivl_signal_port(sig) );
+}
+
+
+static const char *local_flag_str( ivl_signal_t sig )
+{
+    return ivl_signal_local(sig)? "*" : "";
+}
+
 /*
  * This function draws a reg/int/variable in the scope. This is a very
  * simple device to draw as there are no inputs to connect so no need
@@ -427,19 +457,24 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 {
       int msb;
       int lsb;
-      if (ivl_signal_packed_dimensions(sig) > 1) {
-	      // FIX ME: Improve this when vvp becomes aware of packed
-	      // arrays.
+      switch (ivl_signal_packed_dimensions(sig)) {
+	  case 0:
+	    msb = 0;
+	    lsb = 0;
+	    break;
+	  case 1:
+	    msb = ivl_signal_packed_msb(sig, 0);
+	    lsb = ivl_signal_packed_lsb(sig, 0);
+	    break;
+	  default:
 	    msb = ivl_signal_width(sig) - 1;
 	    lsb = 0;
-      } else {
-	    msb = ivl_signal_msb(sig);
-	    lsb = ivl_signal_lsb(sig);
+	    break;
       }
 
-      const char*datatype_flag = ivl_signal_integer(sig) ? "/i" :
+      const char *datatype_flag = ivl_signal_integer(sig) ? "/i" :
 			       ivl_signal_signed(sig)? "/s" : "";
-      const char*local_flag = ivl_signal_local(sig)? "*" : "";
+      const char *local_flag = local_flag_str(sig);
 
       switch (ivl_signal_data_type(sig)) {
 	  case IVL_VT_BOOL:
@@ -467,12 +502,27 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 		    vvp_mangle_name(ivl_signal_basename(sig)),
 		    swapped ? first: last, swapped ? last : first, msb, lsb);
 
+      } else if (ivl_signal_data_type(sig) == IVL_VT_DARRAY) {
+	    fprintf(vvp_out, "v%p_0 .var/darray \"%s\";%s\n", sig,
+		    vvp_mangle_name(ivl_signal_basename(sig)),
+		    ivl_signal_local(sig)? " Local signal" : "");
+
+      } else if (ivl_signal_data_type(sig) == IVL_VT_STRING) {
+	    fprintf(vvp_out, "v%p_0 .var/str \"%s\";%s\n", sig,
+		    vvp_mangle_name(ivl_signal_basename(sig)),
+		    ivl_signal_local(sig)? " Local signal" : "");
+
+      } else if (ivl_signal_data_type(sig) == IVL_VT_CLASS) {
+	    fprintf(vvp_out, "v%p_0 .var/cobj \"%s\";%s\n", sig,
+		    vvp_mangle_name(ivl_signal_basename(sig)),
+		    ivl_signal_local(sig)? " Local signal" : "");
+
       } else {
 
 	    fprintf(vvp_out, "v%p_0 .var%s %s\"%s\", %d %d;%s\n",
 		    sig, datatype_flag, local_flag,
 		    vvp_mangle_name(ivl_signal_basename(sig)), msb, lsb,
-		    ivl_signal_local(sig)? " Local signal" : "");
+		    ivl_signal_local(sig)? " Local signal" : "" );
       }
 }
 
@@ -483,11 +533,26 @@ static void draw_reg_in_scope(ivl_signal_t sig)
  */
 static void draw_net_in_scope(ivl_signal_t sig)
 {
-      int msb = ivl_signal_msb(sig);
-      int lsb = ivl_signal_lsb(sig);
+      int msb;
+      int lsb;
+      switch (ivl_signal_packed_dimensions(sig)) {
+	  case 0:
+	    msb = 0;
+	    lsb = 0;
+	    break;
+	  case 1:
+	    msb = ivl_signal_packed_msb(sig, 0);
+	    lsb = ivl_signal_packed_lsb(sig, 0);
+	    break;
+	  default:
+	    msb = ivl_signal_width(sig) - 1;
+	    lsb = 0;
+	    break;
+      }
 
       const char*datatype_flag = ivl_signal_signed(sig)? "/s" : "";
-      const char*local_flag = ivl_signal_local(sig)? "*" : "";
+      const char *local_flag = local_flag_str(sig);
+
       unsigned iword;
 
       switch (ivl_signal_data_type(sig)) {
@@ -543,7 +608,7 @@ static void draw_net_in_scope(ivl_signal_t sig)
 				sig, iword, vec8, datatype_flag, sig,
 				iword, msb, lsb, driver,
 				nex_data->drivers_count,
-				strength_aware_flag?", strength-aware":"");
+				strength_aware_flag?", strength-aware":"" );
 
 		  } else if (ivl_signal_local(sig) && ivl_scope_is_auto(ivl_signal_scope(sig))) {
 			assert(word_count == 1);
@@ -559,13 +624,13 @@ static void draw_net_in_scope(ivl_signal_t sig)
 			/* If this is an isolated word, it uses its
 			   own name. */
 			assert(word_count == 1);
-			fprintf(vvp_out, "v%p_%u .net%s%s %s\"%s\", %d %d, %s;"
+			fprintf(vvp_out, "v%p_%u .net%s%s %s\"%s\", %d %d, %s; "
 				" %u drivers%s\n",
 				sig, iword, vec8, datatype_flag, local_flag,
 				vvp_mangle_name(ivl_signal_basename(sig)),
 				msb, lsb, driver,
 				nex_data->drivers_count,
-				strength_aware_flag?", strength-aware":"");
+				strength_aware_flag?", strength-aware":"" );
 		  }
 		  nex_data->net = sig;
 		  nex_data->net_word = iword;
@@ -581,7 +646,7 @@ static void draw_net_in_scope(ivl_signal_t sig)
 
 		  if (word_count == ivl_signal_array_count(nex_data->net)) {
 		    if (iword == 0) {
-		      fprintf(vvp_out, "v%p .array \"%s\", v%p; Alias to %s\n",
+		      fprintf(vvp_out, "v%p .array \"%s\", v%p; Alias to %s \n",
 			      sig, vvp_mangle_name(ivl_signal_basename(sig)),
 			      nex_data->net,
 			      ivl_signal_basename(nex_data->net));
@@ -596,7 +661,7 @@ static void draw_net_in_scope(ivl_signal_t sig)
 				      sig,
 				      vvp_mangle_name(ivl_signal_basename(sig)),
 				      swapped ? first : last,
-				      swapped ? last : first);
+				      swapped ? last : first );
 			}
 
 			fprintf(vvp_out, "v%p_%u .alias%s v%p %u, %d %d, "
@@ -618,7 +683,7 @@ static void draw_net_in_scope(ivl_signal_t sig)
 		  if (strength_aware_flag)
 			vec8 = "8";
 
-		  fprintf(vvp_out, "v%p_%u .net%s%s %s\"%s\", %d %d, %s;"
+		  fprintf(vvp_out, "v%p_%u .net%s%s %s\"%s\", %d %d, %s; "
 				" alias, %u drivers%s\n",
 				sig, iword, vec8, datatype_flag, local_flag,
 				vvp_mangle_name(ivl_signal_basename(sig)),
@@ -725,7 +790,7 @@ static void draw_udp_def(ivl_udp_t udp)
 
   if (ivl_udp_sequ(udp))
 	fprintf(vvp_out,
-		"UDP_%s .udp/sequ \"%s\", %d, %d",
+		"UDP_%s .udp/sequ \"%s\", %d, %u",
 		vvp_mangle_id(ivl_udp_name(udp)),
 		vvp_mangle_name(ivl_udp_name(udp)),
 		ivl_udp_nin(udp),
@@ -1001,7 +1066,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    unsigned inst;
 	    for (inst = 0; inst < (unsigned)ninp; inst += 4) {
 		  if (ninp > 4)
-			fprintf(vvp_out, "L_%p/%d/%d .functor %s %u",
+			fprintf(vvp_out, "L_%p/%d/%u .functor %s %u",
 				lptr, level, inst, lcasc, vector_width);
 		  else {
 			fprintf(vvp_out, "L_%p%s .functor %s %u",
@@ -1009,7 +1074,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 				ltype, vector_width);
 
 			if (str0 != IVL_DR_STRONG || str1 != IVL_DR_STRONG)
-			      fprintf(vvp_out, " [%u %u]", str0, str1);
+			      fprintf(vvp_out, " [%d %d]", str0, str1);
 
 		  }
 		  for (pdx = inst; pdx < (unsigned)ninp && pdx < inst+4 ; pdx += 1) {
@@ -2056,6 +2121,20 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
       }
 }
 
+
+static const char *vvp_port_info_type_str(ivl_signal_port_t ptype)
+{
+      switch( ptype )
+      {
+      case IVL_SIP_INPUT :  return "/INPUT";
+      case IVL_SIP_OUTPUT : return "/OUTPUT";
+      case IVL_SIP_INOUT :  return "/INOUT";
+      case IVL_SIP_NONE :   return "/NODIR";
+      default :
+        abort(); // NO SUPPORT FOR ANYTHING ELSE YET...
+      }
+}
+
 int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 {
       unsigned idx;
@@ -2090,20 +2169,36 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       fprintf(vvp_out, " .timescale %d %d;\n", ivl_scope_time_units(net),
                                                ivl_scope_time_precision(net));
 
+      if( ivl_scope_type(net) == IVL_SCT_MODULE ) {
+
+        // Port data for VPI: needed for vpiPorts property of vpiModule
+        for( idx = 0; idx < ivl_scope_mod_module_ports(net); ++idx ) {
+            const char *name =  ivl_scope_mod_module_port_name(net,idx);
+            ivl_signal_port_t ptype = ivl_scope_mod_module_port_type(net,idx);
+            unsigned width = ivl_scope_mod_module_port_width(net,idx);
+            if( name == 0 )
+                name = "";
+            fprintf( vvp_out, "    .port_info %u %s %u \"%s\"\n",
+                    idx, vvp_port_info_type_str(ptype), width, name );
+        }
+      }
+
       for (idx = 0 ;  idx < ivl_scope_params(net) ;  idx += 1) {
 	    ivl_parameter_t par = ivl_scope_param(net, idx);
 	    ivl_expr_t pex = ivl_parameter_expr(par);
 	    switch (ivl_expr_type(pex)) {
 		case IVL_EX_STRING:
-		  fprintf(vvp_out, "P_%p .param/str \"%s\" %d %d, \"%s\";\n",
+		  fprintf(vvp_out, "P_%p .param/str \"%s\" %d %d %d, \"%s\";\n",
 			  par, ivl_parameter_basename(par),
+			  ivl_parameter_local(par),
 			  ivl_file_table_index(ivl_parameter_file(par)),
 			  ivl_parameter_lineno(par),
 			  ivl_expr_string(pex));
 		  break;
 		case IVL_EX_NUMBER:
-		  fprintf(vvp_out, "P_%p .param/l \"%s\" %d %d, %sC4<",
+		  fprintf(vvp_out, "P_%p .param/l \"%s\" %d %d %d, %sC4<",
 			  par, ivl_parameter_basename(par),
+                          ivl_parameter_local(par),
 			  ivl_file_table_index(ivl_parameter_file(par)),
 			  ivl_parameter_lineno(par),
 			  ivl_expr_signed(pex)? "+":"");
@@ -2117,8 +2212,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 		  break;
 		case IVL_EX_REALNUM:
 		  { char *res = draw_Cr_to_string(ivl_expr_dvalue(pex));
-		    fprintf(vvp_out, "P_%p .param/real \"%s\" %d %d, %s; "
+		    fprintf(vvp_out, "P_%p .param/real \"%s\" %d %d %d, %s; "
 		            "value=%#g\n", par, ivl_parameter_basename(par),
+	                     ivl_parameter_local(par),
 			    ivl_file_table_index(ivl_parameter_file(par)),
 			    ivl_parameter_lineno(par), res,
 			    ivl_expr_dvalue(pex));
@@ -2130,6 +2226,11 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 			  ivl_expr_type(pex));
 		  break;
 	    }
+      }
+
+      for (idx = 0 ; idx < ivl_scope_classes(net) ; idx += 1) {
+	    ivl_type_t class_type = ivl_scope_class(net,idx);
+	    draw_class_in_scope(class_type);
       }
 
 	/* Scan the scope for enumeration types, and write out

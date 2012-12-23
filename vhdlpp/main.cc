@@ -1,6 +1,7 @@
 
 const char COPYRIGHT[] =
-          "Copyright (c) 2011 Stephen Williams (steve@icarus.com)";
+      "Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)\n"
+      "Copyright CERN 2012 / Stephen Williams (steve@icarus.com)";
 /*
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -15,7 +16,7 @@ const char COPYRIGHT[] =
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 # include  "vhdlpp_config.h"
 # include  "version_base.h"
@@ -35,6 +36,10 @@ const char COPYRIGHT[] =
  *     libraries=<path>
  *        Enable debugging of library support by dumping library
  *        information to the file named <path>.
+ *
+ *     elaboration=<path>
+ *        Enable debugging of elaboratin by dumping elaboration
+ *        process information to the file named <path>.
  *
  *     entities=<path>
  *        Enable debugging of elaborated entities by writing the
@@ -94,7 +99,10 @@ bool verbose_flag = false;
   // Where to dump design entities
 const char*dump_design_entities_path = 0;
 const char*dump_libraries_path = 0;
+const char*debug_log_path = 0;
 
+bool debug_elaboration = false;
+ofstream debug_log_file;
 
 extern void dump_libraries(ostream&file);
 extern void parser_cleanup();
@@ -109,6 +117,10 @@ static void process_debug_token(const char*word)
 	    dump_design_entities_path = strdup(word+9);
       } else if (strncmp(word, "libraries=", 10) == 0) {
 	    dump_libraries_path = strdup(word+10);
+      } else if (strncmp(word, "log=", 4) == 0) {
+	    debug_log_path = strdup(word+4);
+      } else if (strcmp(word, "elaboration") == 0) {
+	    debug_elaboration = true;
       }
 }
 
@@ -146,6 +158,10 @@ int main(int argc, char*argv[])
 	  case 'w':
 	    work_path = optarg;
 	    break;
+      }
+
+      if (debug_log_path) {
+	    debug_log_file.open(debug_log_path);
       }
 
       if ( (rc = mkdir(work_path, 0777)) < 0 ) {

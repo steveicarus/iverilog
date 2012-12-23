@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "vvp_priv.h"
@@ -530,7 +530,7 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	   result to a vector. Then store that vector into the
 	   l-value. */
       if (ivl_expr_value(rval) == IVL_VT_REAL) {
-	    int word = draw_eval_real(rval);
+	    draw_eval_real(rval);
 	      /* This is the accumulated with of the l-value of the
 		 assignment. */
 	    unsigned wid = ivl_stmt_lwidth(net);
@@ -546,10 +546,7 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 		  vvp_errors += 1;
 	    }
 
-	    fprintf(vvp_out, "    %%cvt/vr %u, %d, %u;\n",
-		    res.base, word, res.wid);
-
-	    clr_word(word);
+	    fprintf(vvp_out, "    %%cvt/vr %u, %u;\n", res.base, res.wid);
 
       } else {
 	    res = draw_eval_expr(rval, 0);
@@ -696,13 +693,12 @@ static int show_stmt_assign_vector(ivl_statement_t net)
  */
 static int show_stmt_assign_sig_real(ivl_statement_t net)
 {
-      int res;
       ivl_lval_t lval;
       ivl_signal_t var;
 
       assert(ivl_stmt_opcode(net) == 0);
 
-      res = draw_eval_real(ivl_stmt_rval(net));
+      draw_eval_real(ivl_stmt_rval(net));
 
       assert(ivl_stmt_lvals(net) == 1);
       lval = ivl_stmt_lval(net, 0);
@@ -710,8 +706,7 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
       assert(var != 0);
 
       if (ivl_signal_dimensions(var) == 0) {
-	    clr_word(res);
-	    fprintf(vvp_out, "    %%set/wr v%p_0, %d;\n", var, res);
+	    fprintf(vvp_out, "    %%store/real v%p_0;\n", var);
 	    return 0;
       }
 
@@ -723,14 +718,142 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
       int word_ix = allocate_word();
       draw_eval_expr_into_integer(word_ex, word_ix);
 	// Generate an assignment to write to the array.
-      fprintf(vvp_out, "    %%set/ar v%p, %d, %d;\n", var, word_ix, res);
+      fprintf(vvp_out, "    %%store/reala v%p, %d;\n", var, word_ix);
 
-      clr_word(res);
       clr_word(word_ix);
 
       return 0;
 }
 
+static int show_stmt_assign_sig_string(ivl_statement_t net)
+{
+      ivl_lval_t lval = ivl_stmt_lval(net, 0);
+      ivl_expr_t rval = ivl_stmt_rval(net);
+      ivl_expr_t part = ivl_lval_part_off(lval);
+      ivl_signal_t var= ivl_lval_sig(lval);
+
+      assert(ivl_stmt_lvals(net) == 1);
+      assert(ivl_stmt_opcode(net) == 0);
+      assert(ivl_lval_mux(lval) == 0);
+
+	/* Simplest case: no mux. Evaluate the r-value as a string and
+	   store the result into the variable. Note that the
+	   %store/str opcode pops the string result. */
+      if (part == 0) {
+	    draw_eval_string(rval);
+	    fprintf(vvp_out, "    %%store/str v%p_0;\n", var);
+	    return 0;
+      }
+
+	/* Calculate the character select for the word. */
+      int mux_word = allocate_word();
+      draw_eval_expr_into_integer(part, mux_word);
+
+	/* Evaluate the r-value as a vector. */
+      struct vector_info rvec = draw_eval_expr_wid(rval, 8, STUFF_OK_XZ);
+
+      assert(rvec.wid == 8);
+      fprintf(vvp_out, "    %%putc/str/v v%p_0, %d, %u;\n", var, mux_word, rvec.base);
+
+      clr_vector(rvec);
+      clr_word(mux_word);
+      return 0;
+}
+
+static int show_stmt_assign_sig_darray(ivl_statement_t net)
+{
+      int errors = 0;
+      ivl_lval_t lval = ivl_stmt_lval(net, 0);
+      ivl_expr_t rval = ivl_stmt_rval(net);
+      ivl_expr_t part = ivl_lval_part_off(lval);
+      ivl_signal_t var= ivl_lval_sig(lval);
+      ivl_type_t var_type= ivl_signal_net_type(var);
+      assert(ivl_type_base(var_type) == IVL_VT_DARRAY);
+      ivl_type_t element_type = ivl_type_element(var_type);
+
+      ivl_expr_t mux  = ivl_lval_idx(lval);
+
+      assert(ivl_stmt_lvals(net) == 1);
+      assert(ivl_stmt_opcode(net) == 0);
+      assert(ivl_lval_mux(lval) == 0);
+      assert(part == 0);
+
+      if (mux && (ivl_type_base(element_type)==IVL_VT_REAL)) {
+	    draw_eval_real(rval);
+
+	      /* The %set/dar expects the array index to be in index
+		 register 3. Calculate the index in place. */
+	    draw_eval_expr_into_integer(mux, 3);
+
+	    fprintf(vvp_out, "    %%store/dar/r v%p_0;\n", var);
+
+      } else if (mux && ivl_type_base(element_type)==IVL_VT_STRING) {
+
+	      /* Evaluate the rval into the top of the string stack. */
+	    draw_eval_string(rval);
+
+	      /* The %store/dar/s expects the array index to me in index
+		 register 3. Calculate the index in place. */
+	    draw_eval_expr_into_integer(mux, 3);
+
+	    fprintf(vvp_out, "    %%store/dar/str v%p_0;\n", var);
+
+      } else if (mux) {
+	    struct vector_info rvec = draw_eval_expr_wid(rval, ivl_lval_width(lval),
+							 STUFF_OK_XZ);
+	      /* The %set/dar expects the array index to be in index
+		 register 3. Calculate the index in place. */
+	    draw_eval_expr_into_integer(mux, 3);
+
+	    fprintf(vvp_out, "    %%set/dar v%p_0, %u, %u;\n",
+		    var, rvec.base, rvec.wid);
+
+	    if (rvec.base >= 4) clr_vector(rvec);
+
+      } else {
+	      /* There is no l-value mux, so this must be an
+		 assignment to the array as a whole. Evaluate the
+		 "object", and store the evaluated result. */
+	    errors += draw_eval_object(rval);
+	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", var);
+      }
+
+      return errors;
+}
+
+static int show_stmt_assign_sig_cobject(ivl_statement_t net)
+{
+      int errors = 0;
+      ivl_lval_t lval = ivl_stmt_lval(net, 0);
+      ivl_expr_t rval = ivl_stmt_rval(net);
+      ivl_signal_t sig= ivl_lval_sig(lval);
+
+      int prop_idx = ivl_lval_property_idx(lval);
+
+      if (prop_idx >= 0) {
+	    ivl_type_t sig_type = ivl_signal_net_type(sig);
+	    ivl_type_t prop_type = ivl_type_prop_type(sig_type, prop_idx);
+	    assert(ivl_type_base(prop_type) == IVL_VT_BOOL);
+	    assert(ivl_type_packed_dimensions(prop_type) == 1);
+	    assert(ivl_type_packed_msb(prop_type,0) >= ivl_type_packed_lsb(prop_type, 0));
+	    int wid = ivl_type_packed_msb(prop_type,0) - ivl_type_packed_lsb(prop_type,0) + 1;
+
+	    struct vector_info val = draw_eval_expr_wid(rval, wid, STUFF_OK_XZ);
+
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+	    fprintf(vvp_out, "    %%store/prop/v %d, %u, %u;\n", prop_idx, val.base, val.wid);
+	    clr_vector(val);
+
+      } else {
+	      /* There is no property select, so evaluate the r-value
+		 as an object and assign the entire object to the
+		 variable. */
+	    errors += draw_eval_object(rval);
+	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", sig);
+      }
+
+      return errors;
+}
 
 int show_stmt_assign(ivl_statement_t net)
 {
@@ -744,6 +867,18 @@ int show_stmt_assign(ivl_statement_t net)
       sig = ivl_lval_sig(lval);
       if (sig && (ivl_signal_data_type(sig) == IVL_VT_REAL)) {
 	    return show_stmt_assign_sig_real(net);
+      }
+
+      if (sig && (ivl_signal_data_type(sig) == IVL_VT_STRING)) {
+	    return show_stmt_assign_sig_string(net);
+      }
+
+      if (sig && (ivl_signal_data_type(sig) == IVL_VT_DARRAY)) {
+	    return show_stmt_assign_sig_darray(net);
+      }
+
+      if (sig && (ivl_signal_data_type(sig) == IVL_VT_CLASS)) {
+	    return show_stmt_assign_sig_cobject(net);
       }
 
       return show_stmt_assign_vector(net);

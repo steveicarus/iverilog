@@ -14,11 +14,8 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: a_fetch_dir.c,v 1.1 2003/10/10 02:57:45 steve Exp $"
-#endif
 
 # include  <assert.h>
 # include  <ctype.h>
@@ -42,12 +39,3 @@ PLI_INT32 acc_fetch_direction(handle obj)
 
       return accInout;
 }
-
-
-/*
- * $Log: a_fetch_dir.c,v $
- * Revision 1.1  2003/10/10 02:57:45  steve
- *  Some PLI1 stubs.
- *
- */
-

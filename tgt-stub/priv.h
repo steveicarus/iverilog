@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  <ivl_target.h>
@@ -49,6 +49,7 @@ extern ivl_discipline_t discipline_of_nexus(ivl_nexus_t nex);
  */
 extern void test_expr_is_delay(ivl_expr_t expr);
 
+extern void show_class(ivl_type_t net);
 extern void show_enumerate(ivl_enumtype_t net);
 
 /*
@@ -61,8 +62,15 @@ extern void show_expression(ivl_expr_t net, unsigned ind);
  */
 extern void show_statement(ivl_statement_t net, unsigned ind);
 
+/*
+ * Show the type of the signal, in one line.
+ */
+extern void show_type_of_signal(ivl_signal_t);
+
 extern void show_switch(ivl_switch_t net);
 
 /*
 */
 extern const char*data_type_string(ivl_variable_type_t vtype);
+
+extern void show_net_type(ivl_type_t net_type);

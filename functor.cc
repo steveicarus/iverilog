@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -23,6 +23,8 @@
 
 # include  "functor.h"
 # include  "netlist.h"
+
+using namespace std;
 
 functor_t::~functor_t()
 {
@@ -49,6 +51,10 @@ void functor_t::lpm_add_sub(Design*, NetAddSub*)
 }
 
 void functor_t::lpm_compare(Design*, NetCompare*)
+{
+}
+
+void functor_t::lpm_concat(Design*, NetConcat*)
 {
 }
 
@@ -81,6 +87,10 @@ void functor_t::lpm_mult(Design*, NetMult*)
 }
 
 void functor_t::lpm_mux(Design*, NetMux*)
+{
+}
+
+void functor_t::lpm_part_select(Design*, NetPartSelect*)
 {
 }
 
@@ -185,6 +195,11 @@ void NetCompare::functor_node(Design*des, functor_t*fun)
       fun->lpm_compare(des, this);
 }
 
+void NetConcat::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_concat(des, this);
+}
+
 void NetConst::functor_node(Design*des, functor_t*fun)
 {
       fun->lpm_const(des, this);
@@ -223,6 +238,11 @@ void NetMult::functor_node(Design*des, functor_t*fun)
 void NetMux::functor_node(Design*des, functor_t*fun)
 {
       fun->lpm_mux(des, this);
+}
+
+void NetPartSelect::functor_node(Design*des, functor_t*fun)
+{
+      fun->lpm_part_select(des, this);
 }
 
 void NetPow::functor_node(Design*des, functor_t*fun)

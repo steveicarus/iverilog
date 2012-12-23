@@ -1,7 +1,7 @@
 #ifndef __scope_H
 #define __scope_H
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  <algorithm>
@@ -95,7 +95,7 @@ class ScopeBase {
 class Scope : public ScopeBase {
 
     public:
-      Scope(const ScopeBase&ref);
+      explicit Scope(const ScopeBase&ref);
       ~Scope();
 
       ComponentBase* find_component(perm_string by_name);
@@ -178,6 +178,10 @@ class ActiveScope : public ScopeBase {
       {
           cleanup();
       }
+
+	// Keep track of incomplete types until their proper
+	// definition shows up.
+      std::map<perm_string,VTypeDef*> incomplete_types;
 
     private:
       Entity*context_entity_;

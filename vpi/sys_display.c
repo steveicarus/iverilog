@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "sys_priv.h"
@@ -964,6 +964,18 @@ static char *get_display(unsigned int *rtnsz, const struct strobe_cb_info *info)
         memcpy(rtn+size-1, buf, width);
         break;
 
+       /* Process string variables like string constants: interpret
+	  the contained strings like format strings. */
+      case vpiStringVar:
+	value.format = vpiStringVal;
+	vpi_get_value(item, &value);
+	fmt = strdup(value.value.str);
+	width = get_format(&result, fmt, info, &idx);
+	free(fmt);
+        rtn = realloc(rtn, (size+width)*sizeof(char));
+        memcpy(rtn+size-1, result, width);
+	break;
+
       case vpiSysFuncCall:
         func_name = vpi_get_str(vpiName, item);
         if (strcmp(func_name, "$time") == 0) {
@@ -1071,6 +1083,7 @@ static int sys_check_args(vpiHandle callh, vpiHandle argv, const PLI_BYTE8*name,
 	      case vpiLongIntVar:
 	      case vpiTimeVar:
 	      case vpiRealVar:
+	      case vpiStringVar:
 	      case vpiSysFuncCall:
 		  break;
 
@@ -1218,7 +1231,7 @@ static PLI_INT32 strobe_cb(p_cb_data cb)
 	 * Which has the same basic effect. */
       if ((! IS_MCD(info->fd_mcd) && vpi_get_file(info->fd_mcd) != NULL) ||
           ( IS_MCD(info->fd_mcd) && my_mcd_printf(info->fd_mcd, "") != EOF)) {
-	    char* result = NULL;
+	    char* result;
 	    unsigned int size, location=0;
 	      /* Because %u and %z may put embedded NULL characters into the
 	       * returned string strlen() may not match the real size! */

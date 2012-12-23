@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "parse_misc.h"
@@ -68,6 +68,8 @@ static struct __vpiModPath*modpath_dst = 0;
       vpiHandle vpi;
 
       vvp_delay_t*cdelay;
+
+      int      vpi_enum;
 };
 
 %token K_A K_ALIAS K_ALIAS_R K_APV
@@ -77,6 +79,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_ARITH_SUM K_ARITH_SUM_R K_ARITH_POW K_ARITH_POW_R K_ARITH_POW_S
 %token K_ARRAY K_ARRAY_I K_ARRAY_R K_ARRAY_S K_ARRAY_PORT
 %token K_CAST_INT K_CAST_REAL K_CAST_REAL_S K_CAST_2
+%token K_CLASS
 %token K_CMP_EEQ K_CMP_EQ K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
 %token K_CMP_GE K_CMP_GE_R K_CMP_GE_S K_CMP_GT K_CMP_GT_R K_CMP_GT_S
 %token K_CONCAT K_DEBUG K_DELAY K_DFF
@@ -84,17 +87,19 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_EXPORT K_EXTEND_S K_FUNCTOR K_IMPORT K_ISLAND K_MODPATH
 %token K_NET K_NET_S K_NET_R K_NET_2S K_NET_2U K_NET8 K_NET8_S
 %token K_PARAM_STR K_PARAM_L K_PARAM_REAL K_PART K_PART_PV
-%token K_PART_V K_PART_V_S K_PORT K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
+%token K_PART_V K_PART_V_S K_PORT K_PORT_INFO K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
 %token K_RESOLV K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
 %token K_UFUNC K_UFUNC_E K_UDP K_UDP_C K_UDP_S
-%token K_VAR K_VAR_S K_VAR_I K_VAR_R K_VAR_2S K_VAR_2U
+%token K_VAR K_VAR_COBJECT K_VAR_DARRAY
+%token K_VAR_S K_VAR_STR K_VAR_I K_VAR_R K_VAR_2S K_VAR_2U
 %token K_vpi_call K_vpi_call_w K_vpi_call_i
 %token K_vpi_func K_vpi_func_r
 %token K_disable K_fork
 %token K_ivl_version K_ivl_delay_selection
 %token K_vpi_module K_vpi_time_precision K_file_names K_file_line
+%token K_PORT_INPUT K_PORT_OUTPUT K_PORT_INOUT K_PORT_MIXED K_PORT_NODIR
 
 %token <text> T_INSTR
 %token <text> T_LABEL
@@ -104,6 +109,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token <vect> T_VECTOR
 
 %type <flag>  local_flag
+%type <vpi_enum> port_type
 %type <numb>  signed_t_number
 %type <symb>  symbol symbol_opt
 %type <symbv> symbols symbols_net
@@ -149,6 +155,7 @@ header_line
 footer_lines
 	: K_file_names T_NUMBER ';' { file_names.reserve($2); }
 	  name_strings
+	;
 
 name_strings
 	: T_STRING ';'
@@ -570,31 +577,34 @@ statement
      after the name, and is used for function calls. */
 
   /* This version does not allow a function to be called as a task. */
-	| label_opt K_vpi_call T_NUMBER T_NUMBER T_STRING argument_opt ';'
-		{ compile_vpi_call($1, $5, true, false, $3, $4,
-		                   $6.argc, $6.argv); }
+  | label_opt K_vpi_call T_NUMBER T_NUMBER T_STRING
+    argument_opt '{' T_NUMBER T_NUMBER '}' ';'
+      { compile_vpi_call($1, $5, true, false, $3, $4,
+			 $6.argc, $6.argv, $8, $9); }
 
   /* This version allows a function to be called as a task, but prints a
    * warning message. */
-	| label_opt K_vpi_call_w T_NUMBER T_NUMBER T_STRING argument_opt ';'
-		{ compile_vpi_call($1, $5, false, true, $3, $4,
-		                   $6.argc, $6.argv); }
+  | label_opt K_vpi_call_w T_NUMBER T_NUMBER T_STRING
+    argument_opt '{' T_NUMBER T_NUMBER '}' ';'
+      { compile_vpi_call($1, $5, false, true, $3, $4,
+			 $6.argc, $6.argv, $8, $9); }
 
   /* This version allows a function to be called as a task and does not
    * print a message. */
-	| label_opt K_vpi_call_i T_NUMBER T_NUMBER T_STRING argument_opt ';'
-		{ compile_vpi_call($1, $5, false, false, $3, $4,
-		                   $6.argc, $6.argv); }
+  | label_opt K_vpi_call_i T_NUMBER T_NUMBER T_STRING
+    argument_opt '{' T_NUMBER T_NUMBER '}' ';'
+      { compile_vpi_call($1, $5, false, false, $3, $4,
+			 $6.argc, $6.argv, $8, $9); }
 
-	| label_opt K_vpi_func T_NUMBER T_NUMBER T_STRING ','
-	  T_NUMBER ',' T_NUMBER argument_opt ';'
-		{ compile_vpi_func_call($1, $5, $7, $9, $3, $4,
-		                        $10.argc, $10.argv); }
+  | label_opt K_vpi_func T_NUMBER T_NUMBER T_STRING ','
+    T_NUMBER ',' T_NUMBER argument_opt  '{' T_NUMBER T_NUMBER '}' ';'
+      { compile_vpi_func_call($1, $5, $7, $9, $3, $4,
+			      $10.argc, $10.argv, $12, $13); }
 
-	| label_opt K_vpi_func_r T_NUMBER T_NUMBER T_STRING ',' T_NUMBER
-	  argument_opt ';'
-		{ compile_vpi_func_call($1, $5, $7, -vpiRealConst, $3, $4,
-					$8.argc, $8.argv); }
+  | label_opt K_vpi_func_r T_NUMBER T_NUMBER T_STRING
+    argument_opt '{' T_NUMBER T_NUMBER '}' ';'
+      { compile_vpi_func_call($1, $5, 0, -vpiRealConst, $3, $4,
+			      $6.argc, $6.argv, $8, $9); }
 
   /* %disable statements are instructions that takes a scope reference
      as an operand. It therefore is parsed uniquely. */
@@ -649,6 +659,11 @@ statement
 		{ compile_scope_recall($2); }
 
 
+  /* Port information for scopes... currently this is just meta-data for VPI queries */
+	| K_PORT_INFO T_NUMBER port_type T_NUMBER T_STRING
+		{ compile_port_info( $2 /* port_index */, $3, $4 /* width */,
+		                     $5 /*&name */ ); }
+
 	|         K_TIMESCALE T_NUMBER T_NUMBER';'
 		{ compile_timescale($2, $3); }
 	|         K_TIMESCALE '-' T_NUMBER T_NUMBER';'
@@ -688,7 +703,16 @@ statement
       { compile_variable($1, $4, $6, $7, vpiIntVar, false, $3); }
 
   | T_LABEL K_VAR_R T_STRING ',' signed_t_number signed_t_number ';'
-      { compile_var_real($1, $3, $5, $6); }
+      { compile_var_real($1, $3); }
+
+  | T_LABEL K_VAR_STR T_STRING ';'
+      { compile_var_string($1, $3); }
+
+  | T_LABEL K_VAR_DARRAY T_STRING ';'
+      { compile_var_darray($1, $3); }
+
+  | T_LABEL K_VAR_COBJECT T_STRING ';'
+      { compile_var_cobject($1, $3); }
 
   /* Net statements are similar to .var statements, except that they
      declare nets, and they have an input list. */
@@ -758,17 +782,17 @@ statement
   /* Parameter statements come in a few simple forms. The most basic
      is the string parameter. */
 
-	| T_LABEL K_PARAM_STR T_STRING T_NUMBER T_NUMBER',' T_STRING ';'
-		{ compile_param_string($1, $3, $7, $4, $5); }
+	| T_LABEL K_PARAM_STR T_STRING T_NUMBER T_NUMBER T_NUMBER',' T_STRING ';'
+		{ compile_param_string($1, $3, $8, $4, $5, $6); }
 
-	| T_LABEL K_PARAM_L T_STRING T_NUMBER T_NUMBER',' T_SYMBOL ';'
-		{ compile_param_logic($1, $3, $7, false, $4, $5); }
+	| T_LABEL K_PARAM_L T_STRING T_NUMBER T_NUMBER T_NUMBER',' T_SYMBOL ';'
+		{ compile_param_logic($1, $3, $8, false, $4, $5, $6); }
 
-	| T_LABEL K_PARAM_L T_STRING T_NUMBER T_NUMBER',' '+' T_SYMBOL ';'
-		{ compile_param_logic($1, $3, $8, true, $4, $5); }
+	| T_LABEL K_PARAM_L T_STRING T_NUMBER T_NUMBER T_NUMBER',' '+' T_SYMBOL ';'
+		{ compile_param_logic($1, $3, $9, true, $4, $5, $6 ); }
 
-	| T_LABEL K_PARAM_REAL T_STRING T_NUMBER T_NUMBER',' T_SYMBOL ';'
-		{ compile_param_real($1, $3, $7, $4, $5); }
+	| T_LABEL K_PARAM_REAL T_STRING T_NUMBER T_NUMBER T_NUMBER',' T_SYMBOL ';'
+		{ compile_param_real($1, $3, $8, $4, $5, $6); }
 
   /* Islands */
 
@@ -798,12 +822,27 @@ statement
 
   /* Other statemehts */
 
+  | T_LABEL K_CLASS T_STRING '[' T_NUMBER ']'
+      { compile_class_start($1, $3, $5); }
+    class_properties ';'
+      { compile_class_done(); }
+
   | enum_type
       { ; }
 
   /* Oh and by the way, empty statements are OK as well. */
 
   | ';'
+  ;
+
+class_properties
+  : class_properties class_property
+  | class_property
+  ;
+
+class_property
+  : T_NUMBER ':' T_STRING ',' T_STRING
+      { compile_class_property($1, $3, $5); }
   ;
 
   /* Enumeration types */
@@ -871,23 +910,31 @@ operands
 	;
 
 operand
-	: symbol
-		{ comp_operands_t opa = (comp_operands_t)
-			calloc(1, sizeof(struct comp_operands_s));
-		  opa->argc = 1;
-		  opa->argv[0].ltype = L_SYMB;
-		  opa->argv[0].symb = $1;
-		  $$ = opa;
-		}
-	| T_NUMBER
-		{ comp_operands_t opa = (comp_operands_t)
-			calloc(1, sizeof(struct comp_operands_s));
-		  opa->argc = 1;
-		  opa->argv[0].ltype = L_NUMB;
-		  opa->argv[0].numb = $1;
-		  $$ = opa;
-		}
-	;
+  : symbol
+      { comp_operands_t opa = (comp_operands_t)
+		  calloc(1, sizeof(struct comp_operands_s));
+	opa->argc = 1;
+	opa->argv[0].ltype = L_SYMB;
+	opa->argv[0].symb = $1;
+	$$ = opa;
+      }
+  | T_NUMBER
+      { comp_operands_t opa = (comp_operands_t)
+		  calloc(1, sizeof(struct comp_operands_s));
+	opa->argc = 1;
+	opa->argv[0].ltype = L_NUMB;
+	opa->argv[0].numb = $1;
+	$$ = opa;
+      }
+  | T_STRING
+      { comp_operands_t opa = (comp_operands_t)
+		  calloc(1, sizeof(struct comp_operands_s));
+	opa->argc = 1;
+	opa->argv[0].ltype = L_STRING;
+	opa->argv[0].text = $1;
+	$$ = opa;
+      }
+  ;
 
 
   /* The argument_list is a list of vpiHandle objects that can be
@@ -1047,6 +1094,14 @@ symbol_opt
 modpath_src_list
         : modpath_src
         | modpath_src_list ',' modpath_src
+        ;
+
+port_type
+        : K_PORT_INPUT { $$ = vpiInput; }
+        | K_PORT_OUTPUT { $$ = vpiOutput; }
+        | K_PORT_INOUT  { $$ = vpiInout; }
+        | K_PORT_MIXED  { $$ = vpiMixedIO; }
+        | K_PORT_NODIR  { $$ = vpiNoDirection; }
         ;
 
 modpath_src

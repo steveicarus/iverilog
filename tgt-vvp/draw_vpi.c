@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "vvp_priv.h"
@@ -31,6 +31,12 @@ struct args_info {
       char*text;
       int vec_flag; /* True if the vec must be released. */
       struct vector_info vec;
+	/* True if this argument is a calculated string. */
+      char str_flag;
+	/* True if this argument is a calculated real. */
+      char real_flag;
+	/* Stack position if this argument is a calculated string. */
+      unsigned stack;
       struct args_info *child; /* Arguments can be nested. */
 };
 
@@ -178,6 +184,18 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 	    if (ivl_expr_type(vexpr) != IVL_EX_SIGNAL &&
 	        ivl_expr_type(vexpr) != IVL_EX_SELECT) return 0;
 
+	      /* If the expression is a substring expression, then
+		 the xPV method of passing the argument will not work
+		 and we have to resort to the default method. */
+	    if (ivl_expr_value(vexpr) == IVL_VT_STRING)
+		  return 0;
+
+	      /* If the sub-expression is a DARRAY, then this select
+		 is a dynamic-array word select. Handle that
+		 elsewhere. */
+	    if (ivl_expr_value(vexpr) == IVL_VT_DARRAY)
+		  return 0;
+
 	      /* The signal is part of an array. */
 	      /* Add &APV<> code here when it is finished. */
 	    bexpr = ivl_expr_oper2(expr);
@@ -265,6 +283,12 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 
       ivl_parameter_t par;
 
+	/* Keep track of how much string stack this function call is
+	   going to need. We'll need this for making stack references,
+	   and also to clean out the stack when done. */
+      unsigned str_stack_need = 0;
+      unsigned real_stack_need = 0;
+
 	/* Figure out how many expressions are going to be evaluated
 	   for this task call. I won't need to evaluate expressions
 	   for items that are VPI objects directly. */
@@ -312,11 +336,14 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		case IVL_EX_STRING:
 		  if (( par = ivl_expr_parameter(expr) )) {
 			snprintf(buffer, sizeof buffer, "P_%p", par);
+			args[idx].text = strdup(buffer);
 
 		  } else {
-			snprintf(buffer, sizeof buffer, "\"%s\"", ivl_expr_string(expr));
+			size_t needed_len = strlen(ivl_expr_string(expr)) + 3;
+			args[idx].text = malloc(needed_len);
+			snprintf(args[idx].text, needed_len, "\"%s\"",
+			         ivl_expr_string(expr));
 		  }
-		  args[idx].text = strdup(buffer);
 		  continue;
 
 		case IVL_EX_REALNUM:
@@ -369,15 +396,32 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 			   ivl_expr_signed(expr)? "s" : "u");
 		  break;
 		case IVL_VT_REAL:
-		  args[idx].vec_flag = 1;
-		  args[idx].vec.base = draw_eval_real(expr);
+		  draw_eval_real(expr);
+		  args[idx].vec_flag = 0;
+		  args[idx].vec.base = 0;
 		  args[idx].vec.wid  = 0;
-		  snprintf(buffer, sizeof buffer,
-		           "W<%u,r>", args[idx].vec.base);
+		  args[idx].str_flag = 0;
+		  args[idx].real_flag = 1;
+		  args[idx].stack = real_stack_need;
+		  real_stack_need += 1;
 		  break;
 		case IVL_VT_STRING:
-		    /* STRING expressions not supported yet. */
+		    /* Eval the string into the stack, and tell VPI
+		       about the stack position. */
+		  draw_eval_string(expr);
+		  args[idx].vec_flag = 0;
+		  args[idx].vec.base = 0;
+		  args[idx].vec.wid = 0;
+		  args[idx].str_flag = 1;
+		  args[idx].stack = str_stack_need;
+		  args[idx].real_flag = 0;
+		  str_stack_need += 1;
+		  buffer[0] = 0;
+		  break;
 		default:
+		  fprintf(vvp_out, "\nXXXX Unexpected argument: call_string=<%s>, arg=%u, type=%d\n",
+			  call_string, idx, ivl_expr_value(expr));
+		  fflush(vvp_out);
 		  assert(0);
 	    }
 	    args[idx].text = strdup(buffer);
@@ -388,7 +432,19 @@ static void draw_vpi_taskfunc_args(const char*call_string,
       for (idx = 0 ;  idx < parm_count ;  idx += 1) {
 	    struct args_info*ptr;
 
-	    fprintf(vvp_out, ", %s", args[idx].text);
+	    if (args[idx].str_flag) {
+		    /* If this is a string stack reference, then
+		       calculate the stack depth and use that to
+		       generate the completed string. */
+		  unsigned pos = str_stack_need - args[idx].stack - 1;
+		  fprintf(vvp_out, ", S<%u,str>",pos);
+	    } else if (args[idx].real_flag) {
+		  unsigned pos = real_stack_need - args[idx].stack - 1;
+		  fprintf(vvp_out, ", W<%u,r>",pos);
+	    } else {
+		  fprintf(vvp_out, ", %s", args[idx].text);
+	    }
+
 	    free(args[idx].text);
 	      /* Clear the nested children vectors. */
 	    for (ptr = &args[idx]; ptr != NULL; ptr = ptr->child) {
@@ -408,6 +464,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 
       free(args);
 
+      fprintf(vvp_out, " {%u %u}", real_stack_need, str_stack_need);
       fprintf(vvp_out, ";\n");
 }
 
@@ -429,7 +486,7 @@ void draw_vpi_task_call(ivl_statement_t tnet)
       }
 
       if (parm_count == 0) {
-            fprintf(vvp_out, "    %s %u %u \"%s\";\n", command,
+            fprintf(vvp_out, "    %s %u %u \"%s\" {0 0};\n", command,
                     ivl_file_table_index(ivl_stmt_file(tnet)),
                     ivl_stmt_lineno(tnet), ivl_stmt_name(tnet));
       } else {
@@ -464,16 +521,13 @@ struct vector_info draw_vpi_func_call(ivl_expr_t fnet, unsigned wid)
       return res;
 }
 
-int draw_vpi_rfunc_call(ivl_expr_t fnet)
+void draw_vpi_rfunc_call(ivl_expr_t fnet)
 {
       char call_string[1024];
-      int res = allocate_word();
 
-      sprintf(call_string, "    %%vpi_func/r %u %u \"%s\", %d",
+      sprintf(call_string, "    %%vpi_func/r %u %u \"%s\"",
               ivl_file_table_index(ivl_expr_file(fnet)),
-	      ivl_expr_lineno(fnet), ivl_expr_name(fnet), res);
+	      ivl_expr_lineno(fnet), ivl_expr_name(fnet));
 
       draw_vpi_taskfunc_args(call_string, 0, fnet);
-
-      return res;
 }

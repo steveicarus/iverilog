@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "architec.h"
@@ -22,6 +22,7 @@
 # include  "parse_types.h"
 // Need this for parse_errors?
 # include  "parse_api.h"
+# include  <cassert>
 
 using namespace std;
 
@@ -36,6 +37,54 @@ Architecture::~Architecture()
 {
     delete_all(statements_);
     ScopeBase::cleanup();
+}
+
+void Architecture::push_genvar_type(perm_string gname, const VType*gtype)
+{
+      genvar_type_t tmp;
+      tmp.name = gname;
+      tmp.vtype = gtype;
+      genvar_type_stack_.push_back(tmp);
+}
+
+void Architecture::pop_genvar_type(void)
+{
+      assert(! genvar_type_stack_.empty());
+      genvar_type_stack_.pop_back();
+}
+
+const VType* Architecture::probe_genvar_type(perm_string gname)
+{
+      for (std::list<genvar_type_t>::reverse_iterator cur = genvar_type_stack_.rbegin()
+		 ; cur != genvar_type_stack_.rend() ; ++cur) {
+	    if (cur->name == gname)
+		  return cur->vtype;
+      }
+      return 0;
+}
+
+void Architecture::push_genvar_emit(perm_string gname, const GenerateStatement*gen)
+{
+      genvar_emit_t tmp;
+      tmp.name = gname;
+      tmp.gen = gen;
+      genvar_emit_stack_.push_back(tmp);
+}
+
+void Architecture::pop_genvar_emit(void)
+{
+      assert(! genvar_emit_stack_.empty());
+      genvar_emit_stack_.pop_back();
+}
+
+const GenerateStatement* Architecture::probe_genvar_emit(perm_string gname)
+{
+      for (std::list<genvar_emit_t>::reverse_iterator cur = genvar_emit_stack_.rbegin()
+		 ; cur != genvar_emit_stack_.rend() ; ++cur) {
+	    if (cur->name == gname)
+		  return cur->gen;
+      }
+      return 0;
 }
 
 Architecture::Statement::Statement()
@@ -66,6 +115,16 @@ ForGenerate::ForGenerate(perm_string gname, perm_string genvar,
 }
 
 ForGenerate::~ForGenerate()
+{
+}
+
+IfGenerate::IfGenerate(perm_string gname, Expression*cond,
+		       std::list<Architecture::Statement*>&s)
+: GenerateStatement(gname, s), cond_(cond)
+{
+}
+
+IfGenerate::~IfGenerate()
 {
 }
 

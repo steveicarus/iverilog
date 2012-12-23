@@ -14,9 +14,12 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+
+# include  "config.h"
+# include  "delay.h"
 # include  "arith.h"
 # include  "compile.h"
 # include  "logic.h"
@@ -28,6 +31,7 @@
 # include  "vpi_priv.h"
 # include  "parse_misc.h"
 # include  "statistics.h"
+# include  "schedule.h"
 # include  <iostream>
 # include  <list>
 # include  <cstdlib>
@@ -66,7 +70,9 @@ enum operand_e {
 	/* The operand is a second functor pointer */
       OA_FUNC_PTR2,
 	/* The operand is a VPI handle */
-      OA_VPI_PTR
+      OA_VPI_PTR,
+	/* String */
+      OA_STRING
 };
 
 struct opcode_table_s {
@@ -78,17 +84,17 @@ struct opcode_table_s {
 };
 
 static const struct opcode_table_s opcode_table[] = {
-      { "%abs/wr", of_ABS_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%abs/wr", of_ABS_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%add",    of_ADD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%add/wr", of_ADD_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%add/wr", of_ADD_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%addi",   of_ADDI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%alloc",  of_ALLOC,  1,  {OA_VPI_PTR,  OA_NONE,     OA_NONE} },
       { "%and",    of_AND,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%and/r",  of_ANDR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%andi",   of_ANDI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%assign/ar",of_ASSIGN_AR,3,{OA_ARR_PTR,OA_BIT1,     OA_BIT2} },
-      { "%assign/ar/d",of_ASSIGN_ARD,3,{OA_ARR_PTR,OA_BIT1,  OA_BIT2} },
-      { "%assign/ar/e",of_ASSIGN_ARE,2,{OA_ARR_PTR,OA_BIT1,  OA_NONE} },
+      { "%assign/ar",of_ASSIGN_AR,2,{OA_ARR_PTR,OA_BIT1,     OA_NONE} },
+      { "%assign/ar/d",of_ASSIGN_ARD,2,{OA_ARR_PTR,OA_BIT1,  OA_NONE} },
+      { "%assign/ar/e",of_ASSIGN_ARE,1,{OA_ARR_PTR,OA_NONE,  OA_NONE} },
       { "%assign/av",of_ASSIGN_AV,3,{OA_ARR_PTR,OA_BIT1,     OA_BIT2} },
       { "%assign/av/d",of_ASSIGN_AVD,3,{OA_ARR_PTR,OA_BIT1,  OA_BIT2} },
       { "%assign/av/e",of_ASSIGN_AVE,2,{OA_ARR_PTR,OA_BIT1,  OA_NONE} },
@@ -98,41 +104,46 @@ static const struct opcode_table_s opcode_table[] = {
       { "%assign/v0/x1",of_ASSIGN_V0X1,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%assign/v0/x1/d",of_ASSIGN_V0X1D,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%assign/v0/x1/e",of_ASSIGN_V0X1E,2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
-      { "%assign/wr",  of_ASSIGN_WR, 3,{OA_VPI_PTR, OA_BIT1, OA_BIT2} },
-      { "%assign/wr/d",of_ASSIGN_WRD,3,{OA_VPI_PTR, OA_BIT1, OA_BIT2} },
-      { "%assign/wr/e",of_ASSIGN_WRE,2,{OA_VPI_PTR, OA_BIT1, OA_NONE} },
+      { "%assign/wr",  of_ASSIGN_WR, 2,{OA_VPI_PTR, OA_BIT1, OA_NONE} },
+      { "%assign/wr/d",of_ASSIGN_WRD,2,{OA_VPI_PTR, OA_BIT1, OA_NONE} },
+      { "%assign/wr/e",of_ASSIGN_WRE,1,{OA_VPI_PTR, OA_NONE, OA_NONE} },
       { "%assign/x0",of_ASSIGN_X0,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
-      { "%blend",    of_BLEND,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%blend/wr", of_BLEND_WR,2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%blend",    of_BLEND,   3,  {OA_BIT1,  OA_BIT2,     OA_NUMBER} },
+      { "%blend/wr", of_BLEND_WR,0,  {OA_NONE,  OA_NONE,     OA_NONE} },
       { "%breakpoint", of_BREAKPOINT, 0,  {OA_NONE, OA_NONE, OA_NONE} },
       { "%cassign/link",of_CASSIGN_LINK,2,{OA_FUNC_PTR,OA_FUNC_PTR2,OA_NONE} },
       { "%cassign/v",of_CASSIGN_V,3,{OA_FUNC_PTR,OA_BIT1,    OA_BIT2} },
-      { "%cassign/wr",of_CASSIGN_WR,2,{OA_FUNC_PTR,OA_BIT1,  OA_NONE} },
+      { "%cassign/wr",of_CASSIGN_WR,1,{OA_FUNC_PTR,OA_NONE,  OA_NONE} },
       { "%cassign/x0",of_CASSIGN_X0,3,{OA_FUNC_PTR,OA_BIT1,  OA_BIT2} },
       { "%cast2",  of_CAST2,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/s",  of_CMPS,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%cmp/str",of_CMPSTR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%cmp/u",  of_CMPU,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%cmp/wr", of_CMPWR,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%cmp/wr", of_CMPWR,  0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%cmp/ws", of_CMPWS,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%cmp/wu", of_CMPWU,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%cmp/x",  of_CMPX,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmp/z",  of_CMPZ,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmpi/s", of_CMPIS,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%cmpi/u", of_CMPIU,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%cvt/rs", of_CVT_RS, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
-      { "%cvt/ru", of_CVT_RU, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
-      { "%cvt/rv", of_CVT_RV, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%cvt/rv/s", of_CVT_RV_S, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%cvt/sr", of_CVT_SR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
-      { "%cvt/ur", of_CVT_UR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
-      { "%cvt/vr", of_CVT_VR, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%concat/str",of_CONCAT_STR,0,{OA_NONE, OA_NONE,     OA_NONE} },
+      { "%concati/str",of_CONCATI_STR,1,{OA_STRING,OA_NONE,  OA_NONE} },
+      { "%cvt/rs", of_CVT_RS, 1,  {OA_BIT1,     OA_NONE,     OA_NONE} },
+      { "%cvt/ru", of_CVT_RU, 1,  {OA_BIT1,     OA_NONE,     OA_NONE} },
+      { "%cvt/rv",   of_CVT_RV,  2, {OA_BIT1,    OA_BIT2,    OA_NONE} },
+      { "%cvt/rv/s", of_CVT_RV_S,2, {OA_BIT1,    OA_BIT2,    OA_NONE} },
+      { "%cvt/sr", of_CVT_SR, 1,  {OA_BIT1,     OA_NONE,     OA_NONE} },
+      { "%cvt/ur", of_CVT_UR, 1,  {OA_BIT1,     OA_NONE,     OA_NONE} },
+      { "%cvt/vr", of_CVT_VR, 2,  {OA_BIT1,     OA_NUMBER,   OA_NONE} },
       { "%deassign",of_DEASSIGN,3,{OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%deassign/wr",of_DEASSIGN_WR,1,{OA_FUNC_PTR, OA_NONE,     OA_NONE} },
       { "%delay",  of_DELAY,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%delayx", of_DELAYX, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
+      { "%delete/obj",of_DELETE_OBJ,1,{OA_FUNC_PTR,OA_NONE,  OA_NONE} },
       { "%div",    of_DIV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%div/s",  of_DIV_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%div/wr", of_DIV_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%div/wr",   of_DIV_WR,  0, {OA_NONE,   OA_NONE,     OA_NONE} },
+      { "%dup/real", of_DUP_REAL,0, {OA_NONE,   OA_NONE,     OA_NONE} },
       { "%end",    of_END,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%evctl",  of_EVCTL,  2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%evctl/c",of_EVCTLC, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
@@ -140,7 +151,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%evctl/s",of_EVCTLS, 2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%force/link",of_FORCE_LINK,2,{OA_FUNC_PTR,OA_FUNC_PTR2,OA_NONE} },
       { "%force/v",of_FORCE_V,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
-      { "%force/wr",of_FORCE_WR,2,{OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
+      { "%force/wr",of_FORCE_WR,1,{OA_FUNC_PTR, OA_NONE,     OA_NONE} },
       { "%force/x0",of_FORCE_X0,3,{OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%free",   of_FREE,   1,  {OA_VPI_PTR,  OA_NONE,     OA_NONE} },
       { "%inv",    of_INV,    2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
@@ -157,52 +168,76 @@ static const struct opcode_table_s opcode_table[] = {
       { "%jmp/0xz",of_JMP0XZ, 2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%jmp/1",  of_JMP1,   2,  {OA_CODE_PTR, OA_BIT1,     OA_NONE} },
       { "%join",   of_JOIN,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { "%load/ar",of_LOAD_AR,3,  {OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
+      { "%join/detach",of_JOIN_DETACH,1,{OA_NUMBER,OA_NONE,  OA_NONE} },
+      { "%load/ar",of_LOAD_AR,2,  {OA_ARR_PTR,  OA_BIT1,     OA_NONE} },
       { "%load/av",of_LOAD_AV,3,  {OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
-      { "%load/avp0",of_LOAD_AVP0,3,  {OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
-      { "%load/avp0/s",of_LOAD_AVP0_S,3,{OA_BIT1,     OA_ARR_PTR,  OA_BIT2} },
+      { "%load/avp0",of_LOAD_AVP0,3,  {OA_BIT1, OA_ARR_PTR,  OA_BIT2} },
+      { "%load/avp0/s",of_LOAD_AVP0_S,3,{OA_BIT1,OA_ARR_PTR, OA_BIT2} },
       { "%load/avx.p",of_LOAD_AVX_P,3,{OA_BIT1, OA_ARR_PTR,  OA_BIT2} },
-      { "%load/v", of_LOAD_VEC,3, {OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
+      { "%load/dar",of_LOAD_DAR,3,{OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
+      { "%load/dar/r",  of_LOAD_DAR_R,   1, {OA_FUNC_PTR, OA_NONE, OA_NONE}},
+      { "%load/dar/str",of_LOAD_DAR_STR, 1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
+      { "%load/obj",  of_LOAD_OBJ, 1,{OA_FUNC_PTR,OA_NONE,     OA_NONE} },
+      { "%load/real", of_LOAD_REAL,1,{OA_VPI_PTR, OA_NONE,     OA_NONE} },
+      { "%load/str",  of_LOAD_STR, 1,{OA_FUNC_PTR,OA_NONE,     OA_NONE} },
+      { "%load/v", of_LOAD_VEC,3,    {OA_BIT1,    OA_FUNC_PTR, OA_BIT2} },
       { "%load/vp0",of_LOAD_VP0,3,{OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
       { "%load/vp0/s",of_LOAD_VP0_S,3,{OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
-      { "%load/wr",of_LOAD_WR,2,  {OA_BIT1,     OA_VPI_PTR,  OA_BIT2} },
       { "%load/x1p",of_LOAD_X1P,3,{OA_BIT1,     OA_FUNC_PTR, OA_BIT2} },
-      { "%loadi/wr",of_LOADI_WR,3,{OA_BIT1,     OA_NUMBER,   OA_BIT2} },
+      { "%max/wr", of_MAX_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%min/wr", of_MIN_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%mod",    of_MOD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mod/s",  of_MOD_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%mod/wr", of_MOD_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%mod/wr", of_MOD_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%mov/wr", of_MOV_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%mov/wu", of_MOV_WU, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%movi",   of_MOVI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mul",    of_MUL,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%mul/wr", of_MUL_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%mul/wr", of_MUL_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%muli",   of_MULI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%nand",   of_NAND,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%nand/r", of_NANDR,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%new/cobj",  of_NEW_COBJ,  1, {OA_VPI_PTR,OA_NONE,  OA_NONE} },
+      { "%new/darray",of_NEW_DARRAY,2, {OA_BIT1,   OA_STRING,OA_NONE} },
       { "%noop",   of_NOOP,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%nor",    of_NOR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%nor/r",  of_NORR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%null",   of_NULL,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%or",     of_OR,     3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%or/r",   of_ORR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%pad",    of_PAD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%pop/real",of_POP_REAL,1, {OA_NUMBER,  OA_NONE,     OA_NONE} },
+      { "%pop/str", of_POP_STR, 1, {OA_NUMBER,  OA_NONE,     OA_NONE} },
       { "%pow",    of_POW,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%pow/s",  of_POW_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%pow/wr", of_POW_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%pow/wr", of_POW_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%prop/v", of_PROP_V, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%pushi/real",of_PUSHI_REAL,2,{OA_BIT1,   OA_BIT2,   OA_NONE} },
+      { "%pushi/str", of_PUSHI_STR, 1,{OA_STRING, OA_NONE,   OA_NONE} },
+      { "%pushv/str", of_PUSHV_STR, 2, {OA_BIT1,OA_BIT2,     OA_NONE} },
+      { "%putc/str/v",of_PUTC_STR_V,3,{OA_FUNC_PTR,OA_BIT1,  OA_BIT2} },
       { "%release/net",of_RELEASE_NET,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/reg",of_RELEASE_REG,3,{OA_FUNC_PTR,OA_BIT1,OA_BIT2} },
       { "%release/wr",of_RELEASE_WR,2,{OA_FUNC_PTR,OA_BIT1,OA_NONE} },
-      { "%set/ar", of_SET_AR, 3,  {OA_ARR_PTR,  OA_BIT1,     OA_BIT2} },
       { "%set/av", of_SET_AV, 3,  {OA_ARR_PTR,  OA_BIT1,     OA_BIT2} },
+      { "%set/dar",of_SET_DAR,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%set/v",  of_SET_VEC,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
-      { "%set/wr", of_SET_WORDR,2,{OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%set/x0", of_SET_X0, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%shiftl/i0", of_SHIFTL_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
       { "%shiftr/i0", of_SHIFTR_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
       { "%shiftr/s/i0", of_SHIFTR_S_I0,2,{OA_BIT1,OA_NUMBER, OA_NONE} },
+      { "%store/dar/r",  of_STORE_DAR_R,   1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
+      { "%store/dar/str",of_STORE_DAR_STR, 1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
+      { "%store/obj",   of_STORE_OBJ,   1, {OA_FUNC_PTR,OA_NONE, OA_NONE} },
+      { "%store/prop/v",of_STORE_PROP_V,3, {OA_BIT1,    OA_BIT2, OA_NUMBER} },
+      { "%store/real",  of_STORE_REAL,  1, {OA_FUNC_PTR,OA_NONE, OA_NONE} },
+      { "%store/reala", of_STORE_REALA, 2, {OA_ARR_PTR, OA_BIT1, OA_NONE} },
+      { "%store/str",   of_STORE_STR,   1, {OA_FUNC_PTR,OA_NONE, OA_NONE} },
       { "%sub",    of_SUB,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%sub/wr", of_SUB_WR, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
+      { "%sub/wr", of_SUB_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%subi",   of_SUBI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%substr/v",of_SUBSTR_V,3,{OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%test_nul",  of_TEST_NUL, 1,{OA_FUNC_PTR,OA_NONE,     OA_NONE} },
       { "%wait",   of_WAIT,   1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
       { "%xnor",   of_XNOR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%xnor/r", of_XNORR,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -303,6 +338,13 @@ vvp_net_t* vvp_net_lookup(const char*label)
 		case vpiRealVar: {
 		      __vpiRealVar*sig = dynamic_cast<__vpiRealVar*>(vpi);
 		      return sig->net;
+		}
+
+		case vpiStringVar:
+		case vpiArrayVar:
+		case vpiClassVar: {
+		      __vpiBaseVar*sig = dynamic_cast<__vpiBaseVar*>(vpi);
+		      return sig->get_net();
 		}
 
 		case vpiNamedEvent: {
@@ -487,6 +529,12 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 
 		  val.ptr = vpip_make_vthr_word(base, ss);
 		  sym_set_value(sym_vpi, label(), val);
+
+	    } else if (1 == sscanf(label(), "S<%u,str>%n", &base, &n)
+		       && n == strlen(label())) {
+
+		  val.ptr = vpip_make_vthr_str_stack(base);
+		  sym_set_value(sym_vpi, label(), val);
 	    }
 
       }
@@ -609,7 +657,7 @@ static void compile_array_lookup(struct vvp_code_s*code, char*label)
       resolv_submit(res);
 }
 
-static list<struct __vpiSysTaskCall*> scheduled_compiletf;
+static std::list<struct __vpiSysTaskCall*> scheduled_compiletf;
 
 void compile_compiletf(struct __vpiSysTaskCall*obj)
 {
@@ -858,7 +906,7 @@ void input_connect(vvp_net_t*fdx, unsigned port, char*label)
 void inputs_connect(vvp_net_t*fdx, unsigned argc, struct symb_s*argv)
 {
       if (argc > 4) {
-	    cerr << "XXXX argv[0] = " << argv[0].text << endl;
+	    std::cerr << "XXXX argv[0] = " << argv[0].text << std::endl;
       }
       assert(argc <= 4);
 
@@ -1457,37 +1505,46 @@ void compile_shiftr(char*label, long wid, bool signed_flag,
 
 void compile_resolver(char*label, char*type, unsigned argc, struct symb_s*argv)
 {
-      assert(argc <= 4);
-      vvp_net_fun_t* obj = 0;
+      vvp_net_t*net = new vvp_net_t;
+
+      resolv_core*core = 0;
 
       if (strcmp(type,"tri") == 0) {
-	    obj = new resolv_functor(vvp_scalar_t(BIT4_Z, 0,0));
-
-      } else if (strncmp(type,"tri$",4) == 0) {
-	    obj = new resolv_functor(vvp_scalar_t(BIT4_Z, 0,0), strdup(type+4));
+	    core = new resolv_tri(argc, net, vvp_scalar_t(BIT4_Z, 0,0));
 
       } else if (strcmp(type,"tri0") == 0) {
-	    obj = new resolv_functor(vvp_scalar_t(BIT4_0, 5,5));
+	    core = new resolv_tri(argc, net, vvp_scalar_t(BIT4_0, 5,5));
 
       } else if (strcmp(type,"tri1") == 0) {
-	    obj = new resolv_functor(vvp_scalar_t(BIT4_1, 5,5));
+	    core = new resolv_tri(argc, net, vvp_scalar_t(BIT4_1, 5,5));
 
       } else if (strcmp(type,"triand") == 0) {
-	    obj = new resolv_triand;
+	    core = new resolv_triand(argc, net);
 
       } else if (strcmp(type,"trior") == 0) {
-	    obj = new resolv_trior;
+	    core = new resolv_trior(argc, net);
 
       } else {
 	    fprintf(stderr, "invalid resolver type: %s\n", type);
 	    compile_errors += 1;
+            delete net;
       }
 
-      if (obj) {
-	    vvp_net_t*net = new vvp_net_t;
-	    net->fun = obj;
+      if (core) {
+	    net->fun = core;
 	    define_functor_symbol(label, net);
-	    inputs_connect(net, argc, argv);
+
+            for (unsigned base = 0 ;  base < argc ;  base += 4) {
+	          unsigned nports = argc - base;
+                  if (nports > 4)
+                        nports = 4;
+
+                  if (base > 0) {
+                        net = new vvp_net_t;
+                        net->fun = new resolv_extend(core, base);
+                  }
+                  inputs_connect(net, nports, argv+base);
+            }
       }
       free(type);
       free(label);
@@ -1657,6 +1714,15 @@ void compile_code(char*label, char*mnem, comp_operands_t opa)
 
 		  compile_vpi_lookup(&code->handle, opa->argv[idx].symb.text);
 		  break;
+
+		case OA_STRING:
+		  if (opa->argv[idx].ltype != L_STRING) {
+			yyerror("operand format");
+			break;
+		  }
+
+		  code->text = opa->argv[idx].text;
+		  break;
 	    }
       }
 
@@ -1732,7 +1798,8 @@ void compile_file_line(char*label, long file_idx, long lineno,
 void compile_vpi_call(char*label, char*name,
                       bool func_as_task_err, bool func_as_task_warn,
                       long file_idx, long lineno,
-                      unsigned argc, vpiHandle*argv)
+                      unsigned argc, vpiHandle*argv,
+		      unsigned real_stack, unsigned string_stack)
 {
       if (label)
 	    compile_codelabel(label);
@@ -1745,7 +1812,8 @@ void compile_vpi_call(char*label, char*name,
 	   store that handle in the instruction. */
       code->handle = vpip_build_vpi_call(name, 0, 0, 0,
                                          func_as_task_err, func_as_task_warn,
-                                         argc, argv, file_idx, lineno);
+                                         argc, argv, real_stack, string_stack,
+					 file_idx, lineno);
       if (code->handle == 0)
 	    compile_errors += 1;
 
@@ -1756,7 +1824,9 @@ void compile_vpi_call(char*label, char*name,
 void compile_vpi_func_call(char*label, char*name,
 			   unsigned vbit, int vwid,
 			   long file_idx, long lineno,
-			   unsigned argc, vpiHandle*argv)
+			   unsigned argc, vpiHandle*argv,
+			   unsigned real_stack,
+			   unsigned string_stack)
 {
       if (label)
 	    compile_codelabel(label);
@@ -1768,7 +1838,8 @@ void compile_vpi_func_call(char*label, char*name,
 	/* Create a vpiHandle that bundles the call information, and
 	   store that handle in the instruction. */
       code->handle = vpip_build_vpi_call(name, vbit, vwid, 0, true, false,
-                                         argc, argv, file_idx, lineno);
+                                         argc, argv, real_stack, string_stack,
+					 file_idx, lineno);
       if (code->handle == 0)
 	    compile_errors += 1;
 
@@ -1807,11 +1878,12 @@ void compile_thread(char*start_sym, char*flag)
 }
 
 void compile_param_logic(char*label, char*name, char*value, bool signed_flag,
+                         bool local_flag,
                          long file_idx, long lineno)
 {
       vvp_vector4_t value4 = c4string_to_vector4(value);
       vpiHandle obj = vpip_make_binary_param(name, value4, signed_flag,
-                                             file_idx, lineno);
+                                              local_flag, file_idx, lineno);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 
@@ -1820,10 +1892,11 @@ void compile_param_logic(char*label, char*name, char*value, bool signed_flag,
 }
 
 void compile_param_string(char*label, char*name, char*value,
+                          bool local_flag,
                           long file_idx, long lineno)
 {
 	// name and value become owned bi vpip_make_string_param
-      vpiHandle obj = vpip_make_string_param(name, value, file_idx, lineno);
+      vpiHandle obj = vpip_make_string_param(name, value, local_flag, file_idx, lineno);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 
@@ -1831,10 +1904,11 @@ void compile_param_string(char*label, char*name, char*value,
 }
 
 void compile_param_real(char*label, char*name, char*value,
+                        bool local_flag,
                         long file_idx, long lineno)
 {
       double dvalue = crstring_to_double(value);
-      vpiHandle obj = vpip_make_real_param(name, dvalue, file_idx, lineno);
+      vpiHandle obj = vpip_make_real_param(name, dvalue, local_flag, file_idx, lineno);
       compile_vpi_symbol(label, obj);
       vpip_attach_to_current_scope(obj);
 

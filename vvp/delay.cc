@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 #include "delay.h"
@@ -1054,7 +1054,7 @@ struct __vpiModPath* vpip_make_modpath(vvp_net_t *net)
 void modpath_delete()
 {
       for (unsigned idx = 0; idx < mp_count; idx += 1) {
-	    free(mp_list[idx]);
+	    delete mp_list[idx];
       }
       free(mp_list);
       mp_list = 0;

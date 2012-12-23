@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -385,6 +385,10 @@ void NetScope::emit_scope(struct target_t*tgt) const
       for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_)
 	    tgt->event(cur);
 
+      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
+		 ; cur != classes_.end() ; ++cur)
+	    tgt->class_type(this, cur->second);
+
       for (list<netenum_t*>::const_iterator cur = enum_sets_.begin()
 		 ; cur != enum_sets_.end() ;  ++cur)
 	    tgt->enumeration(this, *cur);
@@ -549,6 +553,21 @@ void NetEEvent::expr_scan(struct expr_scan_t*tgt) const
 void NetENetenum::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_netenum(this);
+}
+
+void NetENew::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_new(this);
+}
+
+void NetENull::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_null(this);
+}
+
+void NetEProperty::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_property(this);
 }
 
 void NetEScope::expr_scan(struct expr_scan_t*tgt) const

@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "sequential.h"
@@ -151,6 +151,16 @@ ProcedureCall::~ProcedureCall()
         param_list_->pop_front();
         delete cur;
     }
+}
+
+ReturnStmt::ReturnStmt(Expression*val)
+: val_(val)
+{
+}
+
+ReturnStmt::~ReturnStmt()
+{
+      delete val_;
 }
 
 LoopStatement::LoopStatement(perm_string name, list<SequentialStmt*>* stmts)

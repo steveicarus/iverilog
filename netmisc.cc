@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,13 +14,14 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
 
 # include  <cstdlib>
 # include  "netlist.h"
+# include  "netvector.h"
 # include  "netmisc.h"
 # include  "PExpr.h"
 # include  "pform_types.h"
@@ -30,10 +31,11 @@
 
 NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
 {
+      netvector_t*zero_vec = new netvector_t(sig->data_type(),
+					     sig->vector_width()-1, 0);
       NetNet*zero_net = new NetNet(scope, scope->local_symbol(),
-				   NetNet::WIRE, sig->vector_width());
+				   NetNet::WIRE, zero_vec);
       zero_net->set_line(*sig);
-      zero_net->data_type(sig->data_type());
       zero_net->local_flag(true);
 
       if (sig->data_type() == IVL_VT_REAL) {
@@ -62,10 +64,11 @@ NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
       connect(zero_net->pin(0), adder->pin_DataA());
       connect(adder->pin_DataB(), sig->pin(0));
 
+      netvector_t*tmp_vec = new netvector_t(sig->data_type(),
+					    sig->vector_width()-1, 0);
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-			      NetNet::WIRE, sig->vector_width());
+			      NetNet::WIRE, tmp_vec);
       tmp->set_line(*sig);
-      tmp->data_type(sig->data_type());
       tmp->local_flag(true);
 
       connect(adder->pin_Result(), tmp->pin(0));
@@ -78,9 +81,9 @@ NetNet* cast_to_int2(Design*des, NetScope*scope, NetNet*src, unsigned wid)
       if (src->data_type() == IVL_VT_BOOL)
 	    return src;
 
-      NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, wid);
+      netvector_t*tmp_vec = new netvector_t(IVL_VT_BOOL, wid-1, 0);
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, tmp_vec);
       tmp->set_line(*src);
-      tmp->data_type(IVL_VT_BOOL);
       tmp->local_flag(true);
 
       NetCastInt2*cast = new NetCastInt2(scope, scope->local_symbol(), wid);
@@ -98,9 +101,9 @@ NetNet* cast_to_int4(Design*des, NetScope*scope, NetNet*src, unsigned wid)
       if (src->data_type() != IVL_VT_REAL)
 	    return src;
 
-      NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, wid);
+      netvector_t*tmp_vec = new netvector_t(IVL_VT_LOGIC, wid-1, 0);
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, tmp_vec);
       tmp->set_line(*src);
-      tmp->data_type(IVL_VT_LOGIC);
       tmp->local_flag(true);
 
       NetCastInt4*cast = new NetCastInt4(scope, scope->local_symbol(), wid);
@@ -118,9 +121,9 @@ NetNet* cast_to_real(Design*des, NetScope*scope, NetNet*src)
       if (src->data_type() == IVL_VT_REAL)
 	    return src;
 
-      NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE);
+      netvector_t*tmp_vec = new netvector_t(IVL_VT_REAL);
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, tmp_vec);
       tmp->set_line(*src);
-      tmp->data_type(IVL_VT_REAL);
       tmp->local_flag(true);
 
       NetCastReal*cast = new NetCastReal(scope, scope->local_symbol(), src->get_signed());
@@ -145,6 +148,16 @@ NetExpr* cast_to_int2(NetExpr*expr)
 
       NetECast*cast = new NetECast('2', expr, use_width,
                                    expr->has_sign());
+      cast->set_line(*expr);
+      return cast;
+}
+
+NetExpr* cast_to_real(NetExpr*expr)
+{
+      if (expr->expr_type() == IVL_VT_REAL)
+	    return expr;
+
+      NetECast*cast = new NetECast('r', expr, 1, true);
       cast->set_line(*expr);
       return cast;
 }
@@ -178,6 +191,21 @@ static NetExpr* make_add_expr(NetExpr*expr, long val)
       res->set_line(*expr);
 
       return res;
+}
+
+static NetExpr* make_add_expr(const LineInfo*loc, NetExpr*expr1, NetExpr*expr2)
+{
+      bool use_signed = expr1->has_sign() && expr2->has_sign();
+      unsigned use_wid = expr1->expr_width();
+
+      if (expr2->expr_width() > use_wid)
+	    use_wid = expr2->expr_width();
+
+      expr1 = pad_to_width(expr1, use_wid, *loc);
+      expr2 = pad_to_width(expr2, use_wid, *loc);
+
+      NetEBAdd*tmp = new NetEBAdd('+', expr1, expr2, use_wid, use_signed);
+      return tmp;
 }
 
 /*
@@ -254,6 +282,8 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
 	    if (is_up) offset -= wid - 1;
 	      /* Calculate the space needed for the offset. */
 	    unsigned min_wid = num_bits(offset);
+	    if (num_bits(soff) > min_wid)
+		  min_wid = num_bits(soff);
 	      /* We need enough space for the larger of the offset or the
 	       * base expression. */
 	    if (min_wid < base->expr_width()) min_wid = base->expr_width();
@@ -287,6 +317,8 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
 	    if ((soff-offset) == 0) return base;
 	      /* Calculate the space needed for the offset. */
 	    unsigned min_wid = num_bits(-offset);
+	    if (num_bits(soff) > min_wid)
+		  min_wid = num_bits(soff);
 	      /* We need enough space for the larger of the offset or the
 	       * base expression. */
 	    if (min_wid < base->expr_width()) min_wid = base->expr_width();
@@ -320,61 +352,61 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
  * vector. For now, we assert that there is only one set of dimensions.
  */
 NetExpr *normalize_variable_base(NetExpr *base,
-				 const list<NetNet::range_t>&dims,
+				 const list<netrange_t>&dims,
 				 unsigned long wid, bool is_up)
 {
       ivl_assert(*base, dims.size() == 1);
-      const NetNet::range_t&rng = dims.back();
-      return normalize_variable_base(base, rng.msb, rng.lsb, wid, is_up);
+      const netrange_t&rng = dims.back();
+      return normalize_variable_base(base, rng.get_msb(), rng.get_lsb(), wid, is_up);
 }
 
 NetExpr *normalize_variable_bit_base(const list<long>&indices, NetExpr*base,
 				     const NetNet*reg)
 {
-      const list<NetNet::range_t>&packed_dims = reg->packed_dims();
+      const vector<netrange_t>&packed_dims = reg->packed_dims();
       ivl_assert(*base, indices.size()+1 == packed_dims.size());
 
 	// Get the canonical offset of the slice within which we are
 	// addressing. We need that address as a slice offset to
 	// calculate the proper complete address
-      const NetNet::range_t&rng = packed_dims.back();
-      long slice_off = reg->sb_to_idx(indices, rng.lsb);
+      const netrange_t&rng = packed_dims.back();
+      long slice_off = reg->sb_to_idx(indices, rng.get_lsb());
 
-      return normalize_variable_base(base, rng.msb, rng.lsb, 1, true, slice_off);
+      return normalize_variable_base(base, rng.get_msb(), rng.get_lsb(), 1, true, slice_off);
 }
 
 NetExpr *normalize_variable_part_base(const list<long>&indices, NetExpr*base,
 				      const NetNet*reg,
 				      unsigned long wid, bool is_up)
 {
-      const list<NetNet::range_t>&packed_dims = reg->packed_dims();
+      const vector<netrange_t>&packed_dims = reg->packed_dims();
       ivl_assert(*base, indices.size()+1 == packed_dims.size());
 
 	// Get the canonical offset of the slice within which we are
 	// addressing. We need that address as a slice offset to
 	// calculate the proper complete address
-      const NetNet::range_t&rng = packed_dims.back();
-      long slice_off = reg->sb_to_idx(indices, rng.lsb);
+      const netrange_t&rng = packed_dims.back();
+      long slice_off = reg->sb_to_idx(indices, rng.get_lsb());
 
-      return normalize_variable_base(base, rng.msb, rng.lsb, wid, is_up, slice_off);
+      return normalize_variable_base(base, rng.get_msb(), rng.get_lsb(), wid, is_up, slice_off);
 }
 
 NetExpr *normalize_variable_slice_base(const list<long>&indices, NetExpr*base,
 				       const NetNet*reg, unsigned long&lwid)
 {
-      const list<NetNet::range_t>&packed_dims = reg->packed_dims();
+      const vector<netrange_t>&packed_dims = reg->packed_dims();
       ivl_assert(*base, indices.size() < packed_dims.size());
 
-      list<NetNet::range_t>::const_iterator pcur = packed_dims.end();
+      vector<netrange_t>::const_iterator pcur = packed_dims.end();
       for (size_t idx = indices.size() ; idx < packed_dims.size(); idx += 1) {
 	    -- pcur;
       }
 
       long sb;
-      if (pcur->msb >= pcur->lsb)
-	    sb = pcur->lsb;
+      if (pcur->get_msb() >= pcur->get_lsb())
+	    sb = pcur->get_lsb();
       else
-	    sb = pcur->msb;
+	    sb = pcur->get_msb();
 
       long loff;
       reg->sb_to_slice(indices, sb, loff, lwid);
@@ -384,51 +416,213 @@ NetExpr *normalize_variable_slice_base(const list<long>&indices, NetExpr*base,
       return base;
 }
 
-/*
- * This routine generates the normalization expression needed for a variable
- * array word select.
- */
-NetExpr *normalize_variable_array_base(NetExpr *base, long offset,
-                                       unsigned count)
+ostream& operator << (ostream&o, __IndicesManip<long> val)
 {
-      assert(offset != 0);
-	/* Calculate the space needed for the offset. */
-      unsigned min_wid = num_bits(-offset);
-	/* We need enough space for the larger of the offset or the base
-	 * expression. */
-      if (min_wid < base->expr_width()) min_wid = base->expr_width();
-	/* Now that we have the minimum needed width increase it by one
-	 * to make room for the normalization calculation. */
-      min_wid += 1;
-	/* Pad the base expression to the correct width. */
-      base = pad_to_width(base, min_wid, *base);
-	/* If the offset is greater than zero then we need to do signed
-	 * math to get the location value correct. */
-      if (offset > 0 && ! base->has_sign()) {
-	      /* We need this extra select to hide the signed property
-	       * from the padding above. It will be removed automatically
-	       * during code generation. */
-	    NetESelect *tmp = new NetESelect(base, 0 , min_wid);
-	    tmp->set_line(*base);
-	    tmp->cast_signed(true);
-	    base = tmp;
+      for (list<long>::const_iterator cur = val.val.begin()
+		 ; cur != val.val.end() ; ++cur) {
+	    o << "[" << *cur << "]";
       }
-	/* Normalize the expression. */
-      base = make_add_expr(base, -offset);
+      return o;
+}
 
-	/* We should not need to do this, but .array/port does not
-	 * handle a small signed index correctly and it is a major
-	 * effort to fix it. For now we will just pad the expression
-	 * enough so that any negative value when converted to
-	 * unsigned is larger than the maximum array word. */
-      if (base->has_sign()) {
-	    unsigned range_wid = num_bits(count-1) + 1;
-	    if (min_wid < range_wid) {
-		  base = pad_to_width(base, range_wid, *base);
+ostream& operator << (ostream&o, __IndicesManip<NetExpr*> val)
+{
+      for (list<NetExpr*>::const_iterator cur = val.val.begin()
+		 ; cur != val.val.end() ; ++cur) {
+	    o << "[" << *(*cur) << "]";
+      }
+      return o;
+}
+
+/*
+ * The src is the input index expression list from the expression, and
+ * the count is the number that are to be elaborated into the indices
+ * list. At the same time, create a indices_const list that contains
+ * the evaluated values for the expression, if they can be
+ * evaluated. This function will return "true" if all the constants
+ * can be evaluated.
+ */
+bool indices_to_expressions(Design*des, NetScope*scope,
+			      // loc is for error messages.
+			    const LineInfo*loc,
+			      // src is the index list, and count is
+			      // the number of items in the list to use.
+			    const list<index_component_t>&src, unsigned count,
+			      // True if the expression MUST be constant.
+			    bool need_const,
+			      // These are the outputs.
+			    list<NetExpr*>&indices, list<long>&indices_const)
+{
+      ivl_assert(*loc, count <= src.size());
+
+      bool flag = true;
+      for (list<index_component_t>::const_iterator cur = src.begin()
+		 ; count > 0 ;  ++cur, --count) {
+	    ivl_assert(*loc, cur->sel != index_component_t::SEL_NONE);
+
+	    if (cur->sel != index_component_t::SEL_BIT) {
+		  cerr << loc->get_fileline() << ": error: "
+		       << "Array cannot be indexed by a range." << endl;
+		  des->errors += 1;
+	    }
+	    ivl_assert(*loc, cur->msb);
+
+	    NetExpr*word_index = elab_and_eval(des, scope, cur->msb, -1, need_const);
+
+	      // If the elaboration failed, then it is most certainly
+	      // not constant, either.
+	    if (word_index == 0)
+		  flag = false;
+
+	      // Track if we detect any non-constant expressions
+	      // here. This may allow for a special case.
+	    if (flag) {
+		  NetEConst*word_const = dynamic_cast<NetEConst*> (word_index);
+		  if (word_const)
+			indices_const.push_back(word_const->value().as_long());
+		  else
+			flag = false;
+	    }
+
+	    indices.push_back(word_index);
+      }
+
+      return flag;
+}
+
+static void make_strides(const vector<netrange_t>&dims,
+			 vector<long>&stride)
+{
+      stride[dims.size()-1] = 1;
+      for (size_t idx = stride.size()-1 ; idx > 0 ; --idx) {
+	    long tmp = dims[idx].width();
+	    if (idx < stride.size())
+		  tmp *= stride[idx];
+	    stride[idx-1] = tmp;
+      }
+}
+
+/*
+ * Take in a vector of constant indices and convert them to a single
+ * number that is the canonical address (zero based, 1-d) of the
+ * word. If any of the indices are out of bounds, return nil instead
+ * of an expression.
+ */
+NetExpr* normalize_variable_unpacked(const NetNet*net, list<long>&indices)
+{
+      const vector<netrange_t>&dims = net->unpacked_dims();
+
+	// Make strides for each index. The stride is the distance (in
+	// words) to the next element in the canonical array.
+      vector<long> stride (dims.size());
+      make_strides(dims, stride);
+
+      int64_t canonical_addr = 0;
+
+      int idx = 0;
+      for (list<long>::const_iterator cur = indices.begin()
+		 ; cur != indices.end() ; ++cur, ++idx) {
+	    long tmp = *cur;
+
+	    if (dims[idx].get_lsb() <= dims[idx].get_msb())
+		  tmp -= dims[idx].get_lsb();
+	    else
+		  tmp -= dims[idx].get_msb();
+
+	      // Notice of this index is out of range.
+	    if (tmp < 0 || tmp >= (long)dims[idx].width()) {
+		  return 0;
+	    }
+
+	    canonical_addr += tmp * stride[idx];
+      }
+
+      NetEConst*canonical_expr = new NetEConst(verinum(canonical_addr));
+      return canonical_expr;
+}
+
+NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
+{
+      const vector<netrange_t>&dims = net->unpacked_dims();
+
+	// Make strides for each index. The stride is the distance (in
+	// words) to the next element in the canonical array.
+      vector<long> stride (dims.size());
+      make_strides(dims, stride);
+
+      NetExpr*canonical_expr = 0;
+
+      int idx = 0;
+      for (list<NetExpr*>::const_iterator cur = indices.begin()
+		 ; cur != indices.end() ; ++cur, ++idx) {
+	    NetExpr*tmp = *cur;
+	      // If the expression elaboration generated errors, then
+	      // give up. Presumably, the error during expression
+	      // elaboration already generated the error message.
+	    if (tmp == 0)
+		  return 0;
+
+	    int64_t use_base;
+	    if (! dims[idx].defined())
+		  use_base = 0;
+	    else if (dims[idx].get_lsb() <= dims[idx].get_msb())
+		  use_base = dims[idx].get_lsb();
+	    else
+		  use_base = dims[idx].get_msb();
+
+	    int64_t use_stride = stride[idx];
+
+	      // Account for that we are doing arithmetic and should
+	      // have a proper width to make sure there are no
+	      // losses. So calculate a min_wid width.
+	    unsigned tmp_wid;
+	    unsigned min_wid = tmp->expr_width();
+	    if (use_stride != 1 && ((tmp_wid = num_bits(use_stride)) >= min_wid))
+		  min_wid = tmp_wid + 1;
+	    if (use_base != 0 && ((tmp_wid = num_bits(use_base)) >= min_wid))
+		  min_wid = tmp_wid + 1;
+	    if ((tmp_wid = num_bits(dims[idx].width()+1)) >= min_wid)
+		  min_wid = tmp_wid + 1;
+
+	    tmp = pad_to_width(tmp, min_wid, *net);
+
+	      // Now generate the math to calculate the canonical address.
+	    NetExpr*tmp_scaled = 0;
+	    if (NetEConst*tmp_const = dynamic_cast<NetEConst*> (tmp)) {
+		    // Special case: the index is constant, so this
+		    // iteration can be replaced with a constant
+		    // expression.
+		  int64_t val = tmp_const->value().as_long();
+		  val -= use_base;
+		  val *= use_stride;
+		    // Very special case: the index is zero, so we can
+		    // skip this iteration
+		  if (val == 0)
+			continue;
+		  tmp_scaled = new NetEConst(verinum(val));
+
+	    } else {
+		  tmp_scaled = tmp;
+		  if (use_base != 0)
+			tmp_scaled = make_add_expr(tmp_scaled, -use_base);
+		  if (use_stride != 1)
+			tmp_scaled = make_mult_expr(tmp_scaled, use_stride);
+	    }
+
+	    if (canonical_expr == 0) {
+		  canonical_expr = tmp_scaled;
+	    } else {
+		  canonical_expr = new NetEBAdd('+', canonical_expr, tmp_scaled,
+						canonical_expr->expr_width()+1, false);
 	    }
       }
 
-      return base;
+	// If we don't have an expression at this point, all the indices were
+	// constant zero. But this variant of normalize_variable_unpacked()
+	// is only used when at least one index is not a constant.
+	ivl_assert(*net, canonical_expr);
+
+      return canonical_expr;
 }
 
 NetEConst* make_const_x(unsigned long wid)
@@ -458,9 +652,23 @@ NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid)
       NetConst*res = new NetConst(scope, scope->local_symbol(), xxx);
       des->add_node(res);
 
-      NetNet*sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, wid);
+      netvector_t*sig_vec = new netvector_t(IVL_VT_LOGIC, wid-1, 0);
+      NetNet*sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, sig_vec);
       sig->local_flag(true);
-      sig->data_type(IVL_VT_LOGIC);
+
+      connect(sig->pin(0), res->pin(0));
+      return sig;
+}
+
+NetNet* make_const_z(Design*des, NetScope*scope, unsigned long wid)
+{
+      verinum xxx (verinum::Vz, wid);
+      NetConst*res = new NetConst(scope, scope->local_symbol(), xxx);
+      des->add_node(res);
+
+      netvector_t*sig_vec = new netvector_t(IVL_VT_LOGIC, wid-1, 0);
+      NetNet*sig = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, sig_vec);
+      sig->local_flag(true);
 
       connect(sig->pin(0), res->pin(0));
       return sig;
@@ -519,7 +727,7 @@ static const char*width_mode_name(PExpr::width_mode_t mode)
 }
 
 NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
-                       int context_width, bool need_const)
+                       int context_width, bool need_const, bool annotatable)
 {
       PExpr::width_mode_t mode = PExpr::SIZED;
       if ((context_width == -2) && !gn_strict_expr_width_flag)
@@ -562,6 +770,8 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
       unsigned flags = PExpr::NO_FLAGS;
       if (need_const)
             flags |= PExpr::NEED_CONST;
+      if (annotatable)
+            flags |= PExpr::ANNOTATABLE;
 
       NetExpr*tmp = pe->elaborate_expr(des, scope, expr_width, flags);
       if (tmp == 0) return 0;
@@ -680,7 +890,8 @@ bool eval_as_double(double&value, NetExpr*expr)
  * expression if it is present.
  */
 hname_t eval_path_component(Design*des, NetScope*scope,
-			    const name_component_t&comp)
+			    const name_component_t&comp,
+			    bool&error_flag)
 {
 	// No index expression, so the path component is an undecorated
 	// name, for example "foo".
@@ -718,6 +929,7 @@ hname_t eval_path_component(Design*des, NetScope*scope,
 	    return res;
       }
 
+#if 1
 	// Darn, the expression doesn't evaluate to a constant. That's
 	// an error to be reported. And make up a fake index value to
 	// return to the caller.
@@ -725,6 +937,8 @@ hname_t eval_path_component(Design*des, NetScope*scope,
 	   << "Scope index expression is not constant: "
 	   << *index.msb << endl;
       des->errors += 1;
+#endif
+      error_flag = true;
 
       delete tmp;
       return hname_t (comp.name, 0);
@@ -733,15 +947,20 @@ hname_t eval_path_component(Design*des, NetScope*scope,
 std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 				   const pform_name_t&path)
 {
+      bool path_error_flag = false;
       list<hname_t> res;
 
       typedef pform_name_t::const_iterator pform_path_it;
 
       for (pform_path_it cur = path.begin() ; cur != path.end(); ++ cur ) {
 	    const name_component_t&comp = *cur;
-	    res.push_back( eval_path_component(des,scope,comp) );
+	    res.push_back( eval_path_component(des,scope,comp,path_error_flag) );
       }
-
+#if 0
+      if (path_error_flag) {
+	    cerr << "XXXXX: Errors evaluating path " << path << endl;
+      }
+#endif
       return res;
 }
 
@@ -971,4 +1190,86 @@ bool evaluate_index_prefix(Design*des, NetScope*scope,
       }
 
       return true;
+}
+
+/*
+ * Evaluate the indices. The chain of indices are applied to the
+ * packed indices of a NetNet to generate a canonical expression to
+ * replace the exprs.
+ */
+NetExpr*collapse_array_exprs(Design*des, NetScope*scope,
+			     const LineInfo*loc, NetNet*net,
+			     const list<index_component_t>&indices)
+{
+	// First elaborate all the expressions as far as possible.
+      list<NetExpr*> exprs;
+      list<long> exprs_const;
+      indices_to_expressions(des, scope, loc, indices,
+                             net->packed_dimensions(),
+                             false, exprs, exprs_const);
+      ivl_assert(*loc, exprs.size() == net->packed_dimensions());
+
+	// Special Case: there is only 1 packed dimension, so the
+	// single expression should already be naturally canonical.
+      if (net->slice_width(1) == 1) {
+	    return *exprs.begin();
+      }
+
+      const std::vector<netrange_t>&pdims = net->packed_dims();
+      std::vector<netrange_t>::const_iterator pcur = pdims.begin();
+
+      list<NetExpr*>::iterator ecur = exprs.begin();
+      NetExpr* base = 0;
+      for (size_t idx = 0 ; idx < net->packed_dimensions() ; idx += 1, ++pcur, ++ecur) {
+	    unsigned cur_slice_width = net->slice_width(idx+1);
+	      // This normalizes the expression of this index based on
+	      // the msb/lsb values.
+	    NetExpr*tmp = normalize_variable_base(*ecur, pcur->get_msb(),
+						  pcur->get_lsb(),
+						  cur_slice_width, true);
+
+	      // If this slice has width, then scale it.
+	    if (net->slice_width(idx+1) != 1) {
+		  unsigned min_wid = tmp->expr_width();
+		  if (num_bits(cur_slice_width) >= min_wid) {
+			min_wid = num_bits(cur_slice_width)+1;
+			tmp = pad_to_width(tmp, min_wid, *loc);
+		  }
+
+		  tmp = make_mult_expr(tmp, cur_slice_width);
+	    }
+
+	      // Now add it to the position we've accumulated so far.
+	    if (base) {
+		  base = make_add_expr(loc, base, tmp);
+	    } else {
+		  base = tmp;
+	    }
+      }
+
+      return base;
+}
+
+/*
+ * Given a list of indices, treat them as packed indices and convert
+ * them to an expression that normalizes the list to a single index
+ * expression over a canonical equivilent 1-dimensional array.
+ */
+NetExpr*collapse_array_indices(Design*des, NetScope*scope, NetNet*net,
+			       const list<index_component_t>&indices)
+{
+      list<long>prefix_indices;
+      bool rc = evaluate_index_prefix(des, scope, prefix_indices, indices);
+      assert(rc);
+
+      const index_component_t&back_index = indices.back();
+      assert(back_index.sel == index_component_t::SEL_BIT);
+      assert(back_index.msb && !back_index.lsb);
+
+      NetExpr*base = elab_and_eval(des, scope, back_index.msb, -1, true);
+
+      NetExpr*res = normalize_variable_bit_base(prefix_indices, base, net);
+
+      eval_expr(res, -1);
+      return res;
 }

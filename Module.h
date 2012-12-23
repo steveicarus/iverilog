@@ -1,7 +1,7 @@
 #ifndef __Module_H
 #define __Module_H
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2010,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 
@@ -65,7 +65,7 @@ class Module : public PScopeExtra, public LineInfo {
     public:
 	/* The name passed here is the module name, not the instance
 	   name. This make must be a permallocated string. */
-      explicit Module(perm_string name);
+      explicit Module(LexicalScope*parent, perm_string name);
       ~Module();
 
 	/* Initially false. This is set to true if the module has been
@@ -76,13 +76,18 @@ class Module : public PScopeExtra, public LineInfo {
 
       bool is_cell;
 
+	/* This is true if the module represents a program block
+	   instead of a module/cell. Program blocks have content
+	   restrictions and slightly modify scheduling semantics. */
+      bool program_block;
+
       enum UCDriveType { UCD_NONE, UCD_PULL0, UCD_PULL1 };
       UCDriveType uc_drive;
 
-	/* specparams are simpler than other params, in that they have
-	   no type information. They are merely constant
-	   expressions. */
-      map<perm_string,PExpr*>specparams;
+	/* specparams are simpler than other parameters, in that they
+	   can have a range, but not an explicit type. The restrictions
+	   are enforced by the parser. */
+      map<perm_string,param_expr_t>specparams;
 
 	/* The module also has defparam assignments which don't create
 	   new parameters within the module, but may be used to set
@@ -116,6 +121,10 @@ class Module : public PScopeExtra, public LineInfo {
 	   the module definition. These are used at elaboration time. */
       list<PGenerate*> generate_schemes;
 
+	/* Nested modules are placed here, and are not elaborated
+	   unless they are instantiated, implicitly or explicitly. */
+      std::map<perm_string,Module*> nested_modules;
+
       list<PSpecPath*> specify_paths;
 
 	// The mod_name() is the name of the module type.
@@ -126,6 +135,9 @@ class Module : public PScopeExtra, public LineInfo {
       unsigned port_count() const;
       const vector<PEIdent*>& get_port(unsigned idx) const;
       unsigned find_port(const char*name) const;
+
+      // Return port name ("" for undeclared port)
+      perm_string get_port_name(unsigned idx) const;
 
       PGate* get_gate(perm_string name);
 
@@ -140,6 +152,7 @@ class Module : public PScopeExtra, public LineInfo {
       bool elaborate_sig(Design*, NetScope*scope) const;
 
     private:
+      void dump_specparams_(ostream&out, unsigned indent) const;
       list<PGate*> gates_;
 
     private: // Not implemented

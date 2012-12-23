@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "StringHeap.h"
@@ -29,6 +29,7 @@ class ComponentBase;
 class Entity;
 class Expression;
 class ExpName;
+class GenerateStatement;
 class SequentialStmt;
 class Signal;
 class named_expr_t;
@@ -71,6 +72,18 @@ class Architecture : public Scope, public LineInfo {
 	// Elaborate this architecture in the context of the given entity.
       int elaborate(Entity*entity);
 
+	// These methods are used while in the scope of a generate
+	// block to mark that a name is a genvar at this point.
+      const VType* probe_genvar_type(perm_string);
+      void push_genvar_type(perm_string gname, const VType*gtype);
+      void pop_genvar_type(void);
+
+	// These methods are used during EMIT to check for names that
+	// are genvar names.
+      const GenerateStatement* probe_genvar_emit(perm_string);
+      void push_genvar_emit(perm_string gname, const GenerateStatement*);
+      void pop_genvar_emit(void);
+
 	// Emit this architecture to the given out file in the context
 	// of the specified entity. This method is used by the
 	// elaborate code to display generated code to the specified
@@ -85,6 +98,18 @@ class Architecture : public Scope, public LineInfo {
 	// Concurrent statements local to this architecture
       std::list<Architecture::Statement*> statements_;
 
+      struct genvar_type_t {
+	    perm_string name;
+	    const VType*vtype;
+      };
+      std::list<genvar_type_t> genvar_type_stack_;
+
+      struct genvar_emit_t {
+	    perm_string name;
+	    const GenerateStatement*gen;
+      };
+      std::list<genvar_emit_t> genvar_emit_stack_;
+
     private: // Not implemented
 };
 
@@ -98,9 +123,9 @@ class GenerateStatement : public Architecture::Statement {
       GenerateStatement(perm_string gname, std::list<Architecture::Statement*>&s);
       ~GenerateStatement();
 
-    protected:
-      inline perm_string get_name() { return name_; }
+      inline perm_string get_name() const { return name_; }
 
+    protected:
       int elaborate_statements(Entity*ent, Architecture*arc);
       int emit_statements(ostream&out, Entity*ent, Architecture*arc);
       void dump_statements(ostream&out, int indent) const;
@@ -127,6 +152,19 @@ class ForGenerate : public GenerateStatement {
       Expression*msb_;
 };
 
+class IfGenerate : public GenerateStatement {
+
+    public:
+      IfGenerate(perm_string gname, Expression*cond,
+		 std::list<Architecture::Statement*>&s);
+      ~IfGenerate();
+
+      int elaborate(Entity*ent, Architecture*arc);
+      int emit(ostream&out, Entity*entity, Architecture*arc);
+
+    private:
+      Expression*cond_;
+};
 
 /*
  * The SignalAssignment class represents the

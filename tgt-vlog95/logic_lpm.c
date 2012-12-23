@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -606,7 +606,7 @@ static ivl_signal_t nexus_is_signal(ivl_scope_t scope, ivl_nexus_t nex,
       ivl_lpm_t lpm = 0;
       ivl_net_const_t net_const = 0;
       ivl_net_logic_t nlogic = 0;
-      ivl_signal_t sig = 0;
+      ivl_signal_t sig;
 	/* Look for a signal in the local scope first. */
       sig = find_local_signal(scope, nex, array_word);
       if (sig) return sig;
@@ -692,12 +692,11 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm)
       emit_scope_call_path(scope, ivl_signal_scope(sig));
       emit_id(ivl_signal_basename(sig));
       if (ivl_signal_dimensions(sig)) {
-	    array_word += ivl_signal_array_base(sig);
-	    fprintf(vlog_out, "[%d]", array_word);
+	    int array_idx = (int) array_word + ivl_signal_array_base(sig);
+	    fprintf(vlog_out, "[%d]", array_idx);
       }
 
-      msb = ivl_signal_msb(sig);
-      lsb = ivl_signal_lsb(sig);
+      get_sig_msb_lsb(sig, &msb, &lsb);
       if (sign_extend) {
 	    assert(base != lsb);
 	    if (msb >= lsb) base += lsb;
@@ -1222,8 +1221,7 @@ static void emit_lpm_part_pv(ivl_scope_t scope, ivl_lpm_t lpm)
       if (ivl_signal_dimensions(sig)) {
 	    fprintf(vlog_out, "[%"PRId64"]", array_word);
       }
-      msb = ivl_signal_msb(sig);
-      lsb = ivl_signal_lsb(sig);
+      get_sig_msb_lsb(sig, &msb, &lsb);
       fprintf(vlog_out, "[");
       if (width == 1) {
 	    if (msb >= lsb) base += lsb;
@@ -1853,6 +1851,9 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		      case IVL_VT_BOOL:    fprintf(stderr, " bool"); break;
 		      case IVL_VT_LOGIC:   fprintf(stderr, " logic"); break;
 		      case IVL_VT_STRING:  fprintf(stderr, " string"); break;
+		      case IVL_VT_DARRAY:  fprintf(stderr, " dynamic array");
+		      case IVL_VT_CLASS:   fprintf(stderr, " class");
+		                           break;
 		  }
 	    } else {
 		  fprintf(stderr, "Error: No/missing information!");

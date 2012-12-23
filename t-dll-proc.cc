@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -15,7 +15,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -27,6 +27,7 @@
 # include  "ivl_target.h"
 # include  "compiler.h"
 # include  "t-dll.h"
+# include  "netclass.h"
 # include  <cstdlib>
 # include  "ivl_alloc.h"
 
@@ -179,6 +180,14 @@ void dll_target::make_assign_lvals_(const NetAssignBase*net)
 			cur->idx = expr_;
 			expr_ = 0;
 		  }
+
+		  cur->property_idx = -1;
+		  perm_string pname = asn->get_property();
+		  if (!pname.nil()) {
+			const netclass_t*use_type = dynamic_cast<const netclass_t*> (cur->n.sig->net_type);
+			cur->property_idx = use_type->property_idx_from_name(pname);
+		  }
+
 	    } else {
 		  assert(0);
 	    }
@@ -386,9 +395,20 @@ bool dll_target::proc_block(const NetBlock*net)
 	   it, so fill in the block fields of the existing statement,
 	   and generate the contents for the statement array. */
 
-      stmt_cur_->type_ = (net->type() == NetBlock::SEQU)
-	    ? IVL_ST_BLOCK
-	    : IVL_ST_FORK;
+      switch (net->type()) {
+	  case NetBlock::SEQU:
+	    stmt_cur_->type_ = IVL_ST_BLOCK;
+	    break;
+	  case NetBlock::PARA:
+	    stmt_cur_->type_ = IVL_ST_FORK;
+	    break;
+	  case NetBlock::PARA_JOIN_ANY:
+	    stmt_cur_->type_ = IVL_ST_FORK_JOIN_ANY;
+	    break;
+	  case NetBlock::PARA_JOIN_NONE:
+	    stmt_cur_->type_ = IVL_ST_FORK_JOIN_NONE;
+	    break;
+      }
       stmt_cur_->u_.block_.nstmt_ = count;
       stmt_cur_->u_.block_.stmt_ = (struct ivl_statement_s*)
 	    calloc(count, sizeof(struct ivl_statement_s));

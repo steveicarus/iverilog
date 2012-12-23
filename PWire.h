@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "netlist.h"
@@ -33,6 +33,7 @@ class ostream;
 
 class PExpr;
 class Design;
+class netdarray_t;
 
 /*
  * The different type of PWire::set_range() calls.
@@ -78,10 +79,9 @@ class PWire : public LineInfo {
       void set_range_scalar(PWSRType type);
       void set_range(const std::list<pform_range_t>&ranges, PWSRType type);
 
-      void set_memory_idx(PExpr*ldx, PExpr*rdx);
+      void set_unpacked_idx(const std::list<pform_range_t>&ranges);
 
-      void set_enumeration(enum_type_t*enum_type);
-      void set_struct_type(struct_type_t*type);
+      void set_data_type(data_type_t*type);
 
       void set_discipline(ivl_discipline_t);
       ivl_discipline_t get_discipline(void) const;
@@ -115,12 +115,12 @@ class PWire : public LineInfo {
       unsigned error_cnt_;
 
 	// If this wire is actually a memory, these indices will give
-	// me the size and address range of the memory.
-      PExpr*lidx_;
-      PExpr*ridx_;
+	// me the size and address ranges of the memory.
+      std::list<pform_range_t>unpacked_;
 
-      enum_type_t*enum_type_;
-      struct_type_t*struct_type_;
+	// This is the complex type of the wire. the data_type_ may
+	// modify how this is interpreted.
+      data_type_t*set_data_type_;
 
       ivl_discipline_t discipline_;
 

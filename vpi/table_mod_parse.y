@@ -121,6 +121,7 @@ static void process_point()
    */
 table : point
       | table point
+      ;
 
   /*
    * An individual point is just a bunch of columns followed by one or more
@@ -156,6 +157,7 @@ point : columns END_LINE
 		  }
 	    }
       }
+      ;
 
   /*
    * Each column is a real value. We only save the columns we care about.
@@ -179,6 +181,7 @@ columns : REAL
 	    } else if (cur_columns == dep_column) values[indep_values] = $2;
 	    cur_columns += 1;
       }
+      ;
 
 %%
 

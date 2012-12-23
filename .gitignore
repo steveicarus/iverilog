@@ -13,6 +13,7 @@ tags
 TAGS
 cscope.*
 *.patch
+*.orig
 
 # Object files and libraries
 *.[oa]

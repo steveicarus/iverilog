@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +15,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -23,6 +24,7 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "netstruct.h"
+# include  "netclass.h"
 # include  "compiler.h"
 # include  <cstdlib>
 # include  <iostream>
@@ -163,12 +165,17 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	   the search with "a.b". */
       if (reg == 0 && path_.size() >= 2) {
 	    pform_name_t use_path = path_;
-	    method_name = peek_tail_name(use_path);
+	    perm_string tmp_name = peek_tail_name(use_path);
 	    use_path.pop_back();
 	    symbol_search(this, des, scope, use_path, reg, par, eve);
 
-	    if (reg && reg->struct_type() == 0) {
-		  method_name = perm_string();
+	    if (reg && reg->struct_type()) {
+		  method_name = tmp_name;
+
+	    } else if (reg && reg->class_type()) {
+		  method_name = tmp_name;
+
+	    } else {
 		  reg = 0;
 	    }
       }
@@ -185,7 +192,8 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       ivl_assert(*this, reg);
 	// We are processing the tail of a string of names. For
 	// example, the verilog may be "a.b.c", so we are processing
-	// "c" at this point.
+	// "c" at this point. (Note that if method_name is not nil,
+	// then this is "a.b.c.method" and "a.b.c" is a struct or class.)
       const name_component_t&name_tail = path_.back();
 
 	// Use the last index to determine what kind of select
@@ -202,7 +210,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	// slice. This is, in fact, an error in l-values. Detect the
 	// situation by noting if the index count is less than the
 	// array dimensions (unpacked).
-      if (reg->array_dimensions() > name_tail.index.size()) {
+      if (reg->unpacked_dimensions() > name_tail.index.size()) {
 	    cerr << get_fileline() << ": error: Cannot assign to array "
 		 << path_ << ". Did you forget a word index?" << endl;
 	    des->errors += 1;
@@ -228,7 +236,17 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    return lv;
       }
 
-      if (reg->array_dimensions() > 0)
+      if (reg->class_type() && !method_name.nil() && gn_system_verilog()) {
+	    NetAssign_*lv = new NetAssign_(reg);
+	    elaborate_lval_net_class_member_(des, scope, lv, method_name);
+	    return lv;
+      }
+
+	// Past this point, we should have taken care of the cases
+	// where the name is a member/method of a struct/class.
+      ivl_assert(*this, method_name.nil());
+
+      if (reg->unpacked_dimensions() > 0)
 	    return elaborate_lval_net_word_(des, scope, reg);
 
 	// This must be after the array word elaboration above!
@@ -257,9 +275,15 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
 
       if (use_sel == index_component_t::SEL_BIT) {
-	    NetAssign_*lv = new NetAssign_(reg);
-	    elaborate_lval_net_bit_(des, scope, lv);
-	    return lv;
+	    if (reg->darray_type()) {
+		  NetAssign_*lv = new NetAssign_(reg);
+		  elaborate_lval_darray_bit_(des, scope, lv);
+		  return lv;
+	    } else {
+		  NetAssign_*lv = new NetAssign_(reg);
+		  elaborate_lval_net_bit_(des, scope, lv);
+		  return lv;
+	    }
       }
 
       ivl_assert(*this, use_sel == index_component_t::SEL_NONE);
@@ -278,6 +302,15 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
 
+      if (name_tail.index.size() < reg->unpacked_dimensions()) {
+	    cerr << get_fileline() << ": error: Array " << reg->name()
+		 << " needs " << reg->unpacked_dimensions() << " indices,"
+		 << " but got only " << name_tail.index.size() << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+	// Make sure there are enough indices to address an array element.
       const index_component_t&index_head = name_tail.index.front();
       if (index_head.sel == index_component_t::SEL_PART) {
 	    cerr << get_fileline() << ": error: cannot perform a part "
@@ -286,47 +319,47 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 	    return 0;
       }
 
-      ivl_assert(*this, index_head.sel == index_component_t::SEL_BIT);
-      ivl_assert(*this, index_head.msb != 0);
-      ivl_assert(*this, index_head.lsb == 0);
 
-      NetExpr*word = elab_and_eval(des, scope, index_head.msb, -1);
+	// Evaluate all the index expressions into an
+	// "unpacked_indices" array.
+      list<NetExpr*>unpacked_indices;
+      list<long> unpacked_indices_const;
+      bool flag = indices_to_expressions(des, scope, this,
+					 name_tail.index, reg->unpacked_dimensions(),
+					 false,
+					 unpacked_indices,
+					 unpacked_indices_const);
 
-	// If there is a non-zero base to the memory, then build an
-	// expression to calculate the canonical address.
-      if (long base = reg->array_first()) {
-
-	    word = normalize_variable_array_base(word, base,
-	                                         reg->array_count());
-	    eval_expr(word);
+      NetExpr*canon_index = 0;
+      if (flag) {
+	    ivl_assert(*this, unpacked_indices_const.size() == reg->unpacked_dimensions());
+	    canon_index = normalize_variable_unpacked(reg, unpacked_indices_const);
+	    if (canon_index == 0) {
+		  cerr << get_fileline() << ": warning: "
+		       << "ignoring out of bounds l-value array access " << reg->name();
+		  for (list<long>::const_iterator cur = unpacked_indices_const.begin()
+			     ; cur != unpacked_indices_const.end() ; ++cur) {
+			cerr << "[" << *cur << "]";
+		  }
+		  cerr << "." << endl;
+	    }
+      } else {
+	    ivl_assert(*this, unpacked_indices.size() == reg->unpacked_dimensions());
+	    canon_index = normalize_variable_unpacked(reg, unpacked_indices);
       }
+
 
       NetAssign_*lv = new NetAssign_(reg);
-      lv->set_word(word);
+      lv->set_word(canon_index);
 
       if (debug_elaborate)
-	    cerr << get_fileline() << ": debug: Set array word=" << *word << endl;
+	    cerr << get_fileline() << ": debug: Set array word=" << *canon_index << endl;
 
-	// Test for the case that the index is a constant, and is out
-	// of bounds. The "word" expression is the word index already
-	// converted to canonical address, so this just needs to check
-	// that the address is not too big.
-      if (NetEConst*word_const = dynamic_cast<NetEConst*>(word)) {
-	    verinum word_val = word_const->value();
-	    long index = word_val.as_long();
-
-	    if (index < 0 || index >= (long) reg->array_count()) {
-		  cerr << get_fileline() << ": warning: Constant array index "
-		       << (index + reg->array_first())
-		       << " is out of range for array "
-		       << reg->name() << "." << endl;
-	    }
-      }
 
 	/* An array word may also have part selects applied to them. */
 
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
-      if (name_tail.index.size() > 1)
+      if (name_tail.index.size() > reg->unpacked_dimensions())
 	    use_sel = name_tail.index.back().sel;
 
       if (reg->get_scalar() &&
@@ -335,7 +368,7 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 	    if (reg->data_type() == IVL_VT_REAL) cerr << "real";
 	    else cerr << "scalar";
 	    cerr << " array word: " << reg->name()
-	         << "[" << *word << "]" << endl;
+	         << "[" << *canon_index << "]" << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -404,6 +437,22 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 		  lv->set_part(mux, lwid);
 	    }
 
+      } else if (reg->data_type() == IVL_VT_STRING) {
+	      // Special case: This is a select of a string
+	      // variable. The target of the assignment is a character
+	      // select of a string. Force the r-value to be an 8bit
+	      // vector and set the "part" to be the character select
+	      // expression. The code generator knows what to do with
+	      // this.
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Bit select of string becomes character select." << endl;
+	    }
+	    if (mux)
+		  lv->set_part(mux, 8);
+	    else
+		  lv->set_part(new NetEConst(verinum(lsb)), 8);
+
       } else if (mux) {
 	      // Non-constant bit mux. Correct the mux for the range
 	      // of the vector, then set the l-value part select
@@ -433,6 +482,26 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
       return true;
 }
 
+bool PEIdent::elaborate_lval_darray_bit_(Design*des, NetScope*scope, NetAssign_*lv)const
+{
+      const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, !name_tail.index.empty());
+
+	// For now, only support single-dimension dynamic arrays.
+      ivl_assert(*this, name_tail.index.size() == 1);
+
+      const index_component_t&index_tail = name_tail.index.back();
+      ivl_assert(*this, index_tail.msb != 0);
+      ivl_assert(*this, index_tail.lsb == 0);
+
+	// Evaluate the select expression...
+      NetExpr*mux = elab_and_eval(des, scope, index_tail.msb, -1);
+
+      lv->set_word(mux);
+
+      return true;
+}
+
 bool PEIdent::elaborate_lval_net_part_(Design*des,
 				       NetScope*scope,
 				       NetAssign_*lv) const
@@ -455,7 +524,7 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
       NetNet*reg = lv->sig();
       ivl_assert(*this, reg);
 
-      const list<NetNet::range_t>&packed = reg->packed_dims();
+      const vector<netrange_t>&packed = reg->packed_dims();
 
 	// Part selects cannot select slices. So there must be enough
 	// prefix_indices to get all the way to the final dimension.
@@ -544,14 +613,14 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 		  long lsv = base_c->value().as_long();
 		  long offset = 0;
 		    // Get the signal range.
-		  const list<NetNet::range_t>&packed = reg->packed_dims();
+		  const vector<netrange_t>&packed = reg->packed_dims();
 		  ivl_assert(*this, packed.size() == prefix_indices.size()+1);
 
 		    // We want the last range, which is where we work.
-		  const NetNet::range_t&rng = packed.back();
-		  if (((rng.msb < rng.lsb) &&
+		  const netrange_t&rng = packed.back();
+		  if (((rng.get_msb() < rng.get_lsb()) &&
                        use_sel == index_component_t::SEL_IDX_UP) ||
-		      ((rng.msb > rng.lsb) &&
+		      ((rng.get_msb() > rng.get_lsb()) &&
 		       use_sel == index_component_t::SEL_IDX_DO)) {
 			offset = -wid + 1;
 		  }
@@ -563,7 +632,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 		  if (warn_ob_select) {
 			if (rel_base < 0) {
 			      cerr << get_fileline() << ": warning: " << reg->name();
-			      if (reg->array_dimensions() > 0) cerr << "[]";
+			      if (reg->unpacked_dimensions() > 0) cerr << "[]";
 			      cerr << "[" << lsv;
 			      if (use_sel == index_component_t::SEL_IDX_UP) {
 				    cerr << "+:";
@@ -574,7 +643,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 			}
 			if (rel_base + wid > reg->vector_width()) {
 			      cerr << get_fileline() << ": warning: " << reg->name();
-			      if (reg->array_dimensions() > 0) cerr << "[]";
+			      if (reg->unpacked_dimensions() > 0) cerr << "[]";
 			      cerr << "[" << lsv;
 			      if (use_sel == index_component_t::SEL_IDX_UP) {
 				    cerr << "+:";
@@ -587,7 +656,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 	    } else {
 		  if (warn_ob_select) {
 			cerr << get_fileline() << ": warning: " << reg->name();
-			if (reg->array_dimensions() > 0) cerr << "[]";
+			if (reg->unpacked_dimensions() > 0) cerr << "[]";
 			cerr << "['bx";
 			if (use_sel == index_component_t::SEL_IDX_UP) {
 			      cerr << "+:";
@@ -621,16 +690,48 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       return true;
 }
 
-bool PEIdent::elaborate_lval_net_packed_member_(Design*des,
-						NetScope*,
+bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*,
+					       NetAssign_*lv,
+					       const perm_string&method_name) const
+{
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": elaborate_lval_net_class_member_: "
+		 << "l-value is property " << method_name
+		 << " of " << lv->sig()->name() << "." << endl;
+      }
+
+      netclass_t*class_type = lv->sig()->class_type();
+      ivl_assert(*this, class_type);
+
+	/* Make sure the property is really present in the class. If
+	   not, then generate an error message and return an error. */
+      const ivl_type_s*ptype = class_type->get_property(method_name);
+      if (ptype == 0) {
+	    cerr << get_fileline() << ": error: Class " << class_type->get_name()
+		 << " does not have a property " << method_name << "." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      lv->set_property(method_name);
+      return true;
+}
+
+
+bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 						NetAssign_*lv,
 						const perm_string&member_name) const
 {
       NetNet*reg = lv->sig();
       ivl_assert(*this, reg);
 
-      netstruct_t*struct_type = reg->struct_type();
+      const netstruct_t*struct_type = reg->struct_type();
       ivl_assert(*this, struct_type);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: elaborate lval packed member: "
+		 << "path_=" << path_ << endl;
+      }
 
       if (! struct_type->packed()) {
 	    cerr << get_fileline() << ": sorry: Only packed structures "
@@ -639,6 +740,27 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des,
 	    return false;
       }
 
+	// Shouldn't be seeing unpacked arrays of packed structs...
+      ivl_assert(*this, reg->unpacked_dimensions() == 0);
+
+	// This is a packed member, so the name is of the form
+	// "a.b[...].c[...]" which means that the path_ must have at
+	// least 2 components. We are processing "c[...]" at that
+	// point (otherwise known as member_name) so we'll save a
+	// reference to it in name_tail. We are also processing "b[]"
+	// so save that as name_base.
+
+      ivl_assert(*this, path_.size() >= 2);
+
+      pform_name_t::const_reverse_iterator name_idx = path_.rbegin();
+      ivl_assert(*this, name_idx->name == member_name);
+      const name_component_t&name_tail = *name_idx;
+      ++ name_idx;
+      const name_component_t&name_base = *name_idx;
+
+	// Calculate the offset within the packed structure of the
+	// member, and any indices. We will add in the offset of the
+	// struct into the packed array later.
       unsigned long off;
       const netstruct_t::member_t* member = struct_type->packed_member(member_name, off);
 
@@ -649,8 +771,90 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des,
 	    return false;
       }
 
-      lv->set_part(new NetEConst(verinum(off)), member->width());
-      return true;
+      unsigned long use_width = member->width();
+
+      if (name_tail.index.size() > member->packed_dims.size()) {
+	    cerr << get_fileline() << ": error: Too many index expressions for member." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+	// Get the index component type. At this point, we only
+	// support bit select or none.
+      index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
+      if (!name_tail.index.empty())
+	    use_sel = name_tail.index.back().sel;
+
+      ivl_assert(*this, use_sel == index_component_t::SEL_NONE || use_sel == index_component_t::SEL_BIT);
+
+      if (! name_tail.index.empty()) {
+	      // Evaluate all but the last index expression, into prefix_indices.
+	    list<long>prefix_indices;
+	    bool rc = evaluate_index_prefix(des, scope, prefix_indices, name_tail.index);
+	    ivl_assert(*this, rc);
+
+	      // Evaluate the last index expression into a constant long.
+	    NetExpr*texpr = elab_and_eval(des, scope, name_tail.index.back().msb, -1, true);
+	    long tmp;
+	    if (texpr == 0 || !eval_as_long(tmp, texpr)) {
+		  cerr << get_fileline() << ": error: "
+			"Array index expressions must be constant here." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+
+	    delete texpr;
+
+	      // Now use the prefix_to_slice function to calculate the
+	      // offset and width of the addressed slice of the member.
+	    long loff;
+	    unsigned long lwid;
+	    prefix_to_slice(member->packed_dims, prefix_indices, tmp, loff, lwid);
+
+	    off += loff;
+	    use_width = lwid;
+      }
+
+	// The dimenions in the expression must match the packed
+	// dimensions that are declared for the variable. For example,
+	// if foo is a packed array of struct, then this expression
+	// must be "b[n][m]" with the right number of dimensions to
+	// match the declaration of "b".
+	// Note that one of the packed dimensions is the packed struct
+	// itself.
+      ivl_assert(*this, name_base.index.size()+1 == reg->packed_dimensions());
+
+	// Generate an expression that takes the input array of
+	// expressions and generates a canonical offset into the
+	// packed array.
+      NetExpr*packed_base = 0;
+      if (reg->packed_dimensions() > 1) {
+	    list<index_component_t>tmp_index = name_base.index;
+	    index_component_t member_select;
+	    member_select.sel = index_component_t::SEL_BIT;
+	    member_select.msb = new PENumber(new verinum(off));
+	    tmp_index.push_back(member_select);
+	    packed_base = collapse_array_indices(des, scope, reg, tmp_index);
+      }
+
+      long tmp;
+      if (packed_base && eval_as_long(tmp, packed_base)) {
+	    off = tmp;
+	    delete packed_base;
+	    packed_base = 0;
+      }
+
+      if (packed_base == 0) {
+	    lv->set_part(new NetEConst(verinum(off)), use_width);
+	    return true;
+      }
+
+	// Oops, packed_base is not fully evaluated, so I don't know
+	// yet what to do with it.
+      cerr << get_fileline() << ": internal error: "
+	   << "I don't know how to handle this index expression? " << *packed_base << endl;
+      ivl_assert(*this, 0);
+      return false;
 }
 
 NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const

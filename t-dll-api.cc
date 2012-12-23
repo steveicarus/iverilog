@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,14 +14,17 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
 # include  "StringHeap.h"
 # include  "t-dll.h"
 # include  "discipline.h"
+# include  "netclass.h"
+# include  "netdarray.h"
 # include  "netenum.h"
+# include  "netvector.h"
 # include  <cstdlib>
 # include  <cstdio>
 # include  <cstring>
@@ -259,13 +262,13 @@ extern "C" ivl_variable_type_t ivl_enum_type(ivl_enumtype_t net)
 extern "C" unsigned ivl_enum_width(ivl_enumtype_t net)
 {
       assert(net);
-      return net->base_width();
+      return net->packed_width();
 }
 
 extern "C" int ivl_enum_signed(ivl_enumtype_t net)
 {
       assert(net);
-      return net->has_sign();
+      return net->get_signed();
 }
 
 extern "C" const char*ivl_enum_file(ivl_enumtype_t net)
@@ -411,6 +414,11 @@ extern "C" ivl_enumtype_t ivl_expr_enumtype(ivl_expr_t net)
       return net->u_.enumtype_.type;
 }
 
+extern "C" ivl_type_t ivl_expr_net_type(ivl_expr_t net)
+{
+      return net->net_type;
+}
+
 extern "C" const char* ivl_expr_name(ivl_expr_t net)
 {
       switch (net->type_) {
@@ -420,6 +428,13 @@ extern "C" const char* ivl_expr_name(ivl_expr_t net)
 
 	  case IVL_EX_SIGNAL:
 	    return net->u_.signal_.sig->name_;
+
+	  case IVL_EX_PROPERTY:
+	      { ivl_signal_t sig = ivl_expr_signal(net);
+		ivl_type_t use_type = ivl_signal_net_type(sig);
+		unsigned idx = ivl_expr_property_idx(net);
+		return ivl_type_prop_name(use_type, idx);
+	      }
 
 	  default:
 	    assert(0);
@@ -464,6 +479,9 @@ extern "C" ivl_expr_t ivl_expr_oper1(ivl_expr_t net)
 
 	  case IVL_EX_MEMORY:
 	    return net->u_.memory_.idx_;
+
+	  case IVL_EX_NEW:
+	    return net->u_.new_.size;
 
 	  case IVL_EX_SIGNAL:
 	    return net->u_.signal_.word;
@@ -584,6 +602,13 @@ extern "C" ivl_event_t ivl_expr_event(ivl_expr_t net)
       return net->u_.event_.event;
 }
 
+extern "C" int ivl_expr_property_idx(ivl_expr_t net)
+{
+      assert(net);
+      assert(net->type_ == IVL_EX_PROPERTY);
+      return net->u_.property_.prop_idx;
+}
+
 extern "C" ivl_scope_t ivl_expr_scope(ivl_expr_t net)
 {
       assert(net);
@@ -606,6 +631,9 @@ extern "C" ivl_signal_t ivl_expr_signal(ivl_expr_t net)
 	  case IVL_EX_SIGNAL:
 	  case IVL_EX_ARRAY:
 	    return net->u_.signal_.sig;
+
+	  case IVL_EX_PROPERTY:
+	    return net->u_.property_.sig;
 
 	  default:
 	    assert(0);
@@ -1422,7 +1450,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_REPEAT:
 	    return 0;
 	  case IVL_LPM_ARRAY: // Array ports take the signedness of the array.
-	    return net->u_.array.sig->signed_;
+	    return net->u_.array.sig->net_type->get_signed()? 1 : 0;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1542,6 +1570,12 @@ extern "C" unsigned ivl_lval_width(ivl_lval_t net)
 {
       assert(net);
       return net->width_;
+}
+
+extern "C" int ivl_lval_property_idx(ivl_lval_t net)
+{
+      assert(net);
+      return net->property_idx;
 }
 
 extern "C" ivl_signal_t ivl_lval_sig(ivl_lval_t net)
@@ -1680,6 +1714,13 @@ extern "C" const char* ivl_parameter_basename(ivl_parameter_t net)
       assert(net);
       return net->basename;
 }
+
+extern "C" int ivl_parameter_local(ivl_parameter_t net)
+{
+      assert(net);
+      return net->local;
+}
+
 
 extern "C" ivl_expr_t ivl_parameter_expr(ivl_parameter_t net)
 {
@@ -1822,6 +1863,18 @@ extern "C" int ivl_scope_children(ivl_scope_t net,
 
       return 0;
 }
+
+extern "C" ivl_type_t ivl_scope_class(ivl_scope_t net, unsigned idx)
+{
+      assert(idx < net->classes.size());
+      return net->classes[idx];
+}
+
+extern "C" unsigned ivl_scope_classes(ivl_scope_t net)
+{
+      return net->classes.size();
+}
+
 
 extern "C" ivl_statement_t ivl_scope_def(ivl_scope_t net)
 {
@@ -1979,6 +2032,40 @@ extern "C" ivl_scope_t ivl_scope_parent(ivl_scope_t net)
       return net->parent;
 }
 
+
+extern "C" unsigned ivl_scope_mod_module_ports(ivl_scope_t net)
+{
+      assert(net);
+      assert (net->type_ == IVL_SCT_MODULE );
+      return static_cast<unsigned>(net->module_ports_info.size());
+}
+
+extern "C" const char *ivl_scope_mod_module_port_name(ivl_scope_t net, unsigned idx )
+{
+      assert(net);
+      assert (net->type_ == IVL_SCT_MODULE );
+      assert( idx < net->module_ports_info.size());
+
+      return net->module_ports_info[idx].name;
+}
+
+extern "C" ivl_signal_port_t ivl_scope_mod_module_port_type(ivl_scope_t net, unsigned idx )
+{
+      switch( net->module_ports_info[idx].type )
+      {
+      case PortType::PINPUT : return IVL_SIP_INPUT;
+      case PortType::POUTPUT : return IVL_SIP_OUTPUT;
+      case PortType::PINOUT : return IVL_SIP_INOUT;
+      default : return IVL_SIP_NONE;
+      }
+}
+
+extern "C" unsigned ivl_scope_mod_module_port_width(ivl_scope_t net, unsigned idx )
+{
+    return net->module_ports_info[idx].width;
+}
+
+
 extern "C" unsigned ivl_scope_ports(ivl_scope_t net)
 {
       assert(net);
@@ -2008,13 +2095,13 @@ extern "C" ivl_nexus_t ivl_scope_mod_port(ivl_scope_t net, unsigned idx)
 extern "C" unsigned ivl_scope_sigs(ivl_scope_t net)
 {
       assert(net);
-      return net->nsigs_;
+      return net->sigs_.size();
 }
 
 extern "C" ivl_signal_t ivl_scope_sig(ivl_scope_t net, unsigned idx)
 {
       assert(net);
-      assert(idx < net->nsigs_);
+      assert(idx < net->sigs_.size());
       return net->sigs_[idx];
 }
 
@@ -2155,31 +2242,31 @@ extern "C" unsigned ivl_signal_packed_dimensions(ivl_signal_t net)
 extern "C" int ivl_signal_packed_msb(ivl_signal_t net, unsigned dim)
 {
       assert(dim < net->packed_dims.size());
-      return net->packed_dims[dim].msb;
+      return net->packed_dims[dim].get_msb();
 }
 
 extern "C" int ivl_signal_packed_lsb(ivl_signal_t net, unsigned dim)
 {
       assert(dim < net->packed_dims.size());
-      return net->packed_dims[dim].lsb;
+      return net->packed_dims[dim].get_lsb();
 }
 
 extern "C" int ivl_signal_msb(ivl_signal_t net)
 {
-      if (net->packed_dims.size() == 0)
+      if (net->packed_dims.empty())
 	    return 0;
 
       assert(net->packed_dims.size() == 1);
-      return net->packed_dims[0].msb;
+      return net->packed_dims[0].get_msb();
 }
 
 extern "C" int ivl_signal_lsb(ivl_signal_t net)
 {
-      if (net->packed_dims.size() == 0)
+      if (net->packed_dims.empty())
 	    return 0;
 
       assert(net->packed_dims.size() == 1);
-      return net->packed_dims[0].lsb;
+      return net->packed_dims[0].get_lsb();
 }
 
 extern "C" ivl_scope_t ivl_signal_scope(ivl_signal_t net)
@@ -2190,12 +2277,17 @@ extern "C" ivl_scope_t ivl_signal_scope(ivl_signal_t net)
 
 extern "C" unsigned ivl_signal_width(ivl_signal_t net)
 {
-      return net->width_;
+      return net->net_type->packed_width();
 }
 
 extern "C" ivl_signal_port_t ivl_signal_port(ivl_signal_t net)
 {
       return net->port_;
+}
+
+extern "C" int ivl_signal_module_port_index(ivl_signal_t net)
+{
+      return net->module_port_index_;
 }
 
 extern "C" int ivl_signal_local(ivl_signal_t net)
@@ -2205,7 +2297,7 @@ extern "C" int ivl_signal_local(ivl_signal_t net)
 
 extern "C" int ivl_signal_signed(ivl_signal_t net)
 {
-      return net->signed_;
+      return net->net_type->get_signed()? 1 : 0;
 }
 
 extern "C" unsigned ivl_signal_forced_net(ivl_signal_t net)
@@ -2227,12 +2319,20 @@ extern "C" unsigned ivl_signal_lineno(ivl_signal_t net)
 
 extern "C" int ivl_signal_integer(ivl_signal_t net)
 {
-      return net->isint_;
+      if (const netvector_t*vec = dynamic_cast<const netvector_t*> (net->net_type))
+	    return vec->get_isint()? 1 : 0;
+      else
+	    return 0;
 }
 
 extern "C" ivl_variable_type_t ivl_signal_data_type(ivl_signal_t net)
 {
-      return net->data_type;
+      return net->net_type->base_type();
+}
+
+extern "C" ivl_type_t ivl_signal_net_type(ivl_signal_t net)
+{
+      return net->net_type;
 }
 
 extern "C" unsigned ivl_signal_npath(ivl_signal_t net)
@@ -2271,6 +2371,8 @@ extern "C" ivl_scope_t ivl_stmt_block_scope(ivl_statement_t net)
       switch (net->type_) {
 	  case IVL_ST_BLOCK:
 	  case IVL_ST_FORK:
+	  case IVL_ST_FORK_JOIN_ANY:
+	  case IVL_ST_FORK_JOIN_NONE:
 	    return net->u_.block_.scope;
 	  default:
 	    assert(0);
@@ -2283,6 +2385,8 @@ extern "C" unsigned ivl_stmt_block_count(ivl_statement_t net)
       switch (net->type_) {
 	  case IVL_ST_BLOCK:
 	  case IVL_ST_FORK:
+	  case IVL_ST_FORK_JOIN_ANY:
+	  case IVL_ST_FORK_JOIN_NONE:
 	    return net->u_.block_.nstmt_;
 	  default:
 	    assert(0);
@@ -2296,6 +2400,8 @@ extern "C" ivl_statement_t ivl_stmt_block_stmt(ivl_statement_t net,
       switch (net->type_) {
 	  case IVL_ST_BLOCK:
 	  case IVL_ST_FORK:
+	  case IVL_ST_FORK_JOIN_ANY:
+	  case IVL_ST_FORK_JOIN_NONE:
 	    return net->u_.block_.stmt_ + i;
 	  default:
 	    assert(0);
@@ -2720,4 +2826,73 @@ extern "C" ivl_island_t ivl_switch_island(ivl_switch_t net)
 extern "C" unsigned ivl_switch_lineno(ivl_switch_t net)
 {
       return net->lineno;
+}
+
+extern "C" ivl_variable_type_t ivl_type_base(ivl_type_t net)
+{
+      if (net == 0) return IVL_VT_NO_TYPE;
+      else return net->base_type();
+}
+
+extern "C" ivl_type_t ivl_type_element(ivl_type_t net)
+{
+      if (const netarray_t*da = dynamic_cast<const netarray_t*> (net))
+	    return da->element_type();
+
+      assert(0);
+      return 0;
+}
+
+extern "C" unsigned ivl_type_packed_dimensions(ivl_type_t net)
+{
+      vector<netrange_t> slice = net->slice_dimensions();
+      return slice.size();
+}
+
+extern "C" int ivl_type_packed_lsb(ivl_type_t net, unsigned dim)
+{
+      vector<netrange_t> slice = net->slice_dimensions();
+      assert(dim < slice.size());
+      return slice[dim].get_lsb();
+}
+
+extern "C" int ivl_type_packed_msb(ivl_type_t net, unsigned dim)
+{
+      vector<netrange_t> slice = net->slice_dimensions();
+      assert(dim < slice.size());
+      return slice[dim].get_msb();
+}
+
+extern "C" const char* ivl_type_name(ivl_type_t net)
+{
+      if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(net)) {
+	    return class_type->get_name();
+      }
+
+      return 0;
+}
+
+extern "C" int ivl_type_properties(ivl_type_t net)
+{
+      const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);
+      assert(class_type);
+
+      return class_type->get_properties();
+}
+
+extern "C" const char* ivl_type_prop_name(ivl_type_t net, int idx)
+{
+      if (idx < 0) return 0;
+      const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);
+      assert(class_type);
+
+      return class_type->get_prop_name(idx);
+}
+
+extern "C" ivl_type_t ivl_type_prop_type(ivl_type_t net, int idx)
+{
+      const netclass_t*class_type = dynamic_cast<const netclass_t*>(net);
+      assert(class_type);
+
+      return class_type->get_prop_type(idx);
 }

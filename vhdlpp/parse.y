@@ -6,7 +6,8 @@
 %parse-param {perm_string parse_library_name}
 %{
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,7 +22,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "vhdlpp_config.h"
@@ -139,6 +140,47 @@ const VType*parse_type_by_name(perm_string name)
       return active_scope->find_type(name);
 }
 
+// This function is called when an aggregate expression is detected by
+// the parser. It makes the ExpAggregate. It also tries to detect the
+// special case that the aggregate is really a primary. The problem is
+// that this:
+//   ( <expression> )
+// also matches the pattern:
+//   ( [ choices => ] <expression> ... )
+// so try to assume that a single expression in parentheses is a
+// primary and fix the parse by returning an Expression instead of an
+// ExpAggregate.
+static Expression*aggregate_or_primary(const YYLTYPE&loc, std::list<ExpAggregate::element_t*>*el)
+{
+      if (el->size() != 1) {
+	    ExpAggregate*tmp = new ExpAggregate(el);
+	    FILE_NAME(tmp,loc);
+	    return tmp;
+      }
+
+      ExpAggregate::element_t*el1 = el->front();
+      if (el1->count_choices() > 0) {
+	    ExpAggregate*tmp = new ExpAggregate(el);
+	    FILE_NAME(tmp,loc);
+	    return tmp;
+      }
+
+      return el1->extract_expression();
+}
+
+static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
+						      const VType*type)
+{
+      list<VTypeRecord::element_t*>*res = new list<VTypeRecord::element_t*>;
+
+      for (list<perm_string>::iterator cur = names->begin()
+		 ; cur != names->end() ; ++cur) {
+	    res->push_back(new VTypeRecord::element_t(*cur, type));
+      }
+
+      return res;
+}
+
 %}
 
 
@@ -148,8 +190,6 @@ const VType*parse_type_by_name(perm_string name)
       char*text;
 
       std::list<perm_string>* name_list;
-      std::vector<perm_string>* compound_name;
-      std::list<std::vector<perm_string>* >* compound_name_list;
 
       bool flag;
       int64_t uni_integer;
@@ -163,6 +203,9 @@ const VType*parse_type_by_name(perm_string name)
 
       IfSequential::Elsif*elsif;
       std::list<IfSequential::Elsif*>*elsif_list;
+
+      ExpConditional::else_t*exp_else;
+      std::list<ExpConditional::else_t*>*exp_else_list;
 
       CaseSeqStmt::CaseStmtAlternative* case_alt;
       std::list<CaseSeqStmt::CaseStmtAlternative*>* case_alt_list;
@@ -184,6 +227,8 @@ const VType*parse_type_by_name(perm_string name)
       std::list<ExpAggregate::choice_t*>*choice_list;
       ExpAggregate::element_t*element;
       std::list<ExpAggregate::element_t*>*element_list;
+
+      std::list<VTypeRecord::element_t*>*record_elements;
 
       std::list<InterfacePort*>* interface_list;
 
@@ -239,8 +284,11 @@ const VType*parse_type_by_name(perm_string name)
 %type <instantiation_list> instantiation_list
 %type <component_specification> component_specification
 
-%type <arch_statement> concurrent_statement component_instantiation_statement concurrent_signal_assignment_statement
-%type <arch_statement> for_generate_statement process_statement
+%type <arch_statement> concurrent_statement component_instantiation_statement
+%type <arch_statement> concurrent_conditional_signal_assignment
+%type <arch_statement> concurrent_signal_assignment_statement
+%type <arch_statement> for_generate_statement generate_statement if_generate_statement
+%type <arch_statement> process_statement
 %type <arch_statement_list> architecture_statement_part generate_statement_body
 
 %type <choice> choice
@@ -251,7 +299,7 @@ const VType*parse_type_by_name(perm_string name)
 %type <expr> expression factor primary relation
 %type <expr> expression_logical expression_logical_and expression_logical_or
 %type <expr> expression_logical_xnor expression_logical_xor
-%type <expr> name
+%type <expr> name prefix selected_name
 %type <expr> shift_expression signal_declaration_assign_opt
 %type <expr> simple_expression term waveform_element
 %type <expr> interface_element_expression
@@ -259,24 +307,27 @@ const VType*parse_type_by_name(perm_string name)
 %type <expr_list> waveform waveform_elements
 %type <expr_list> name_list expression_list
 %type <expr_list> process_sensitivity_list process_sensitivity_list_opt
+%type <expr_list> selected_names use_clause
 
 %type <named_expr> association_element
 %type <named_expr_list> association_list port_map_aspect port_map_aspect_opt
 %type <named_expr_list> generic_map_aspect generic_map_aspect_opt
 
+%type <vtype> composite_type_definition record_type_definition
 %type <vtype> subtype_indication type_definition
+
+%type <record_elements> element_declaration element_declaration_list
 
 %type <text> architecture_body_start package_declaration_start
 %type <text> identifier_opt identifier_colon_opt logical_name suffix
 %type <name_list> logical_name_list identifier_list
 %type <name_list> enumeration_literal_list enumeration_literal
-%type <compound_name> prefix selected_name
-%type <compound_name_list> selected_names use_clause
 
 %type <sequ_list> sequence_of_statements if_statement_else
 %type <sequ> sequential_statement if_statement signal_assignment_statement
 %type <sequ> case_statement procedure_call procedure_call_statement
 %type <sequ> loop_statement variable_assignment_statement
+%type <sequ> return_statement
 
 %type <range> range
 %type <range_list> range_list index_constraint
@@ -287,6 +338,9 @@ const VType*parse_type_by_name(perm_string name)
 %type <elsif> if_statement_elsif
 %type <elsif_list> if_statement_elsif_list if_statement_elsif_list_opt
 
+%type <exp_else> else_when_waveform
+%type <exp_else_list> else_when_waveforms
+
 %%
 
  /* The design_file is the root for the VHDL parse. This rule is also
@@ -296,13 +350,13 @@ design_file : { yylloc.text = file_path; } design_units ;
 adding_operator
   : '+' { $$ = ExpArithmetic::PLUS; }
   | '-' { $$ = ExpArithmetic::MINUS; }
-  | '&' { $$ = ExpArithmetic::CONCAT; }
+  | '&' { $$ = ExpArithmetic::xCONCAT; }
   ;
 
 architecture_body
   : architecture_body_start
     K_of IDENTIFIER
-      { bind_entity_to_active_scope($3, active_scope) }
+      { bind_entity_to_active_scope($3, active_scope); }
     K_is block_declarative_items_opt
     K_begin architecture_statement_part K_end K_architecture_opt identifier_opt ';'
       { Architecture*tmp = new Architecture(lex_strings.make($1),
@@ -506,6 +560,8 @@ choice
       { $$ = new ExpAggregate::choice_t($1);}
   | K_others
       { $$ = new ExpAggregate::choice_t; }
+  | range /* discrete_range: range */
+      { $$ = new ExpAggregate::choice_t($1); }
   ;
 
 choices
@@ -595,7 +651,81 @@ component_specification
       }
   ;
 
-concurrent_signal_assignment_statement
+composite_type_definition
+  /* constrained_array_definition */
+  : K_array index_constraint K_of subtype_indication
+      { VTypeArray*tmp = new VTypeArray($4, $2);
+	delete $2;
+	$$ = tmp;
+      }
+  | record_type_definition
+      { $$ = $1; }
+  ;
+
+
+  /* The when...else..when...else syntax is not a general expression
+     in VHDL but a specific sort of assignment statement model. We
+     create Exppression objects for it, but the parser will only
+     recognize it it in specific situations. */
+concurrent_conditional_signal_assignment /* IEEE 1076-2008 P11.6 */
+  : name LEQ waveform K_when expression else_when_waveforms ';'
+      { ExpConditional*tmp = new ExpConditional($5, $3, $6);
+	FILE_NAME(tmp, @3);
+	delete $3;
+	delete $6;
+
+        ExpName*name = dynamic_cast<ExpName*> ($1);
+	assert(name);
+	SignalAssignment*tmpa = new SignalAssignment(name, tmp);
+	FILE_NAME(tmpa, @1);
+
+	$$ = tmpa;
+      }
+
+  /* Error recovery rules. */
+
+  | name LEQ error K_when expression else_when_waveforms ';'
+      { errormsg(@3, "Syntax error in waveform of conditional signal assignment.\n");
+	ExpConditional*tmp = new ExpConditional($5, 0, $6);
+	FILE_NAME(tmp, @3);
+	delete $6;
+
+        ExpName*name = dynamic_cast<ExpName*> ($1);
+	assert(name);
+	SignalAssignment*tmpa = new SignalAssignment(name, tmp);
+	FILE_NAME(tmpa, @1);
+
+	$$ = tmpa;
+      }
+  ;
+
+else_when_waveforms
+  : else_when_waveforms else_when_waveform
+      { list<ExpConditional::else_t*>*tmp = $1;
+	tmp ->push_back($2);
+	$$ = tmp;
+      }
+  | else_when_waveform
+      { list<ExpConditional::else_t*>*tmp = new list<ExpConditional::else_t*>;
+	tmp->push_back($1);
+	$$ = tmp;
+      }
+  ;
+
+else_when_waveform
+  : K_else waveform K_when expression
+      { ExpConditional::else_t*tmp = new ExpConditional::else_t($4, $2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_else waveform
+      { ExpConditional::else_t*tmp = new ExpConditional::else_t(0,  $2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  ;
+
+concurrent_signal_assignment_statement /* IEEE 1076-2008 P11.6 */
   : name LEQ waveform ';'
       { ExpName*name = dynamic_cast<ExpName*> ($1);
 	assert(name);
@@ -605,19 +735,9 @@ concurrent_signal_assignment_statement
 	$$ = tmp;
 	delete $3;
       }
-  | name LEQ waveform K_when expression K_else waveform ';'
-      { ExpConditional*tmp = new ExpConditional($5, $3, $7);
-	FILE_NAME(tmp, @3);
-	delete $3;
-	delete $7;
 
-        ExpName*name = dynamic_cast<ExpName*> ($1);
-	assert(name);
-	SignalAssignment*tmpa = new SignalAssignment(name, tmp);
-	FILE_NAME(tmpa, @1);
+  | concurrent_conditional_signal_assignment
 
-	$$ = tmpa;
-      }
   | name LEQ error ';'
       { errormsg(@2, "Syntax error in signal assignment waveform.\n");
 	delete $1;
@@ -635,7 +755,7 @@ concurrent_signal_assignment_statement
 concurrent_statement
   : component_instantiation_statement
   | concurrent_signal_assignment_statement
-  | for_generate_statement
+  | generate_statement
   | process_statement
   ;
 
@@ -699,6 +819,29 @@ constant_declaration
       { sorrymsg(@1, "Deferred constant declarations not supported\n");
 	delete $2;
       }
+
+  /* Some error handling... */
+
+  | K_constant identifier_list ':' subtype_indication VASSIGN error ';'
+      { // The syntax allows mutliple names to have the same type/value.
+	errormsg(@6, "Error in value expression for constants.\n");
+	yyerrok;
+	for (std::list<perm_string>::iterator cur = $2->begin()
+		   ; cur != $2->end() ; ++cur) {
+	      active_scope->bind_name(*cur, $4, 0);
+	}
+	delete $2;
+      }
+  | K_constant identifier_list ':' error ';'
+      { errormsg(@4, "Syntax error in constant declaration type.\n");
+	yyerrok;
+	delete $2;
+      }
+  | K_constant error ';'
+      { errormsg(@2, "Syntax error in constant declaration.\n");
+	yyerrok;
+      }
+
   ;
 
 context_clause : context_items | ;
@@ -732,6 +875,10 @@ element_association
       { ExpAggregate::element_t*tmp = new ExpAggregate::element_t($1, $3);
 	$$ = tmp;
       }
+  | expression
+      { ExpAggregate::element_t*tmp = new ExpAggregate::element_t(0, $1);
+	$$ = tmp;
+      }
   ;
 
 element_association_list
@@ -745,6 +892,21 @@ element_association_list
 	tmp->push_back($1);
 	$$ = tmp;
       }
+  ;
+
+element_declaration
+  : identifier_list ':' subtype_indication ';'
+      { $$ = record_elements($1, $3); }
+  ;
+
+element_declaration_list
+  : element_declaration_list element_declaration
+      { $$ = $1;
+	$$->splice($$->end(), *$2);
+	delete $2;
+      }
+  | element_declaration
+      { $$ = $1; }
   ;
 
   /* As an entity is declared, add it to the map of design entities. */
@@ -979,6 +1141,15 @@ for_generate_statement
       }
   ;
 
+function_specification /* IEEE 1076-2008 P4.2.1 */
+  : K_function IDENTIFIER '(' interface_list ')' K_return IDENTIFIER
+  ;
+
+generate_statement /* IEEE 1076-2008 P11.8 */
+  : if_generate_statement
+  | for_generate_statement
+  ;
+
 generate_statement_body
   : architecture_statement_part { $$ = $1; }
   ;
@@ -1033,6 +1204,29 @@ identifier_list
 identifier_opt : IDENTIFIER { $$ = $1; } |  { $$ = 0; } ;
 
 identifier_colon_opt : IDENTIFIER ':' { $$ = $1; } | { $$ = 0; };
+
+  /* The if_generate_statement rule describes the if_generate syntax.
+
+     NOTE: This does not yet implement the elsif and else parts of the
+     syntax. This shouldn't be hard, but is simply not done yet. */
+if_generate_statement /* IEEE 1076-2008 P11.8 */
+  : IDENTIFIER ':' K_if expression
+    K_generate generate_statement_body
+    K_end K_generate identifier_opt ';'
+      { perm_string name = lex_strings.make($1);
+	IfGenerate*tmp = new IfGenerate(name, $4, *$6);
+	FILE_NAME(tmp, @3);
+
+	if ($9 && name != $9) {
+	      errormsg(@1, "if-generate name %s does not match closing name %s\n",
+		       name.str(), $9);
+	}
+	delete[]$1;
+	delete  $6;
+	delete[]$9;
+	$$ = tmp;
+      }
+  ;
 
 if_statement
   : K_if expression K_then sequence_of_statements
@@ -1115,6 +1309,11 @@ if_statement_else
 index_constraint
   : '(' range_list ')'
       { $$ = $2; }
+  | '(' error ')'
+      { errormsg(@2, "Errors in the index constraint.\n");
+	yyerrok;
+	$$ = new list<prange_t*>;
+      }
   ;
 
 instantiation_list
@@ -1147,7 +1346,6 @@ interface_element
 	      port->name = *(cur);
 	      port->type = $4;
 	      port->expr = $5;
-	      ivl_assert(*port, port->type);
 	      tmp->push_back(port);
 	}
 	delete $1;
@@ -1275,18 +1473,22 @@ mode
 
 mode_opt : mode {$$ = $1;} | {$$ = PORT_NONE;} ;
 
-name
-  : IDENTIFIER
+name /* IEEE 1076-2008 P8.1 */
+  : IDENTIFIER /* simple_name (IEEE 1076-2008 P8.2) */
       { ExpName*tmp = new ExpName(lex_strings.make($1));
 	FILE_NAME(tmp, @1);
 	delete[]$1;
 	$$ = tmp;
       }
+
+  | selected_name
+      { $$ = $1; }
+
   /* Note that this rule can match array element selects and various
      function calls. The only way we can tell the difference is from
      left context, namely whether the name is a type name or function
      name. If none of the above, treat it as a array element select. */
-  | IDENTIFIER '('  expression_list ')'
+  | IDENTIFIER '(' expression_list ')'
       { perm_string name = lex_strings.make($1);
 	delete[]$1;
 	if (active_scope->is_vector_name(name)) {
@@ -1298,10 +1500,15 @@ name
 	}
 	FILE_NAME($$, @1);
       }
-  | IDENTIFIER '('  range ')'
+  | IDENTIFIER '(' range ')'
       { ExpName*tmp = new ExpName(lex_strings.make($1), $3->msb(), $3->lsb());
 	FILE_NAME(tmp, @1);
 	delete[]$1;
+	$$ = tmp;
+      }
+  | selected_name '('  range ')'
+      { ExpName*tmp = dynamic_cast<ExpName*> ($1);
+	tmp->set_range($3->msb(), $3->lsb());
 	$$ = tmp;
       }
   ;
@@ -1355,8 +1562,9 @@ package_declaration_start
 
 /* TODO: this list must be extended in the future
    presently it is only a sketch */
-package_body_declarative_item
+package_body_declarative_item /* IEEE1076-2008 P4.8 */
   : use_clause
+  | subprogram_body
   ;
 
 package_body_declarative_items
@@ -1371,8 +1579,14 @@ package_body_declarative_part_opt
 package_declarative_item
   : component_declaration
   | constant_declaration
+  | subprogram_declaration
   | subtype_declaration
+  | type_declaration
   | use_clause
+  | error ';'
+      { errormsg(@1, "Syntax error in package declarative item.\n");
+	yyerrok;
+      }
   ;
 
 package_declarative_items
@@ -1389,17 +1603,16 @@ package_body
   : K_package K_body IDENTIFIER K_is
     package_body_declarative_part_opt
     K_end K_package_opt identifier_opt ';'
-      {
-    sorrymsg(@1, "Package body is not yet supported.\n");
-    delete[] $3;
-    if($8) delete[] $8;
+      { sorrymsg(@1, "Package body is not yet supported.\n");
+	delete[] $3;
+	if($8) delete[] $8;
       }
 
   | K_package K_body IDENTIFIER K_is
     error
     K_end K_package_opt identifier_opt ';'
-      {
-    errormsg(@1, "Errors in package body.\n");
+      { errormsg(@1, "Errors in package body.\n");
+	yyerrok;
       }
   ;
 
@@ -1420,6 +1633,7 @@ port_map_aspect
       { $$ = $4; }
   | K_port K_map '(' error ')'
       { errormsg(@1, "Syntax error in port map aspect.\n");
+	yyerrok;
       }
   ;
 
@@ -1428,20 +1642,9 @@ port_map_aspect_opt
   |                  { $$ = 0; }
   ;
 
-prefix
-  : IDENTIFIER
-      { std::vector<perm_string>* tmp = new std::vector<perm_string>();
-	tmp->push_back(lex_strings.make($1));
-	delete[] $1;
-	$$ = tmp;
-      }
-  | STRING_LITERAL
-      { std::vector<perm_string>* tmp = new std::vector<perm_string>();
-	tmp->push_back(lex_strings.make($1));
-	delete[] $1;
-	$$ = tmp;
-      }
-  | selected_name
+
+prefix /* IEEE 1076-2008 P8.1 */
+  : name
       { $$ = $1; }
   ;
 
@@ -1479,7 +1682,10 @@ primary
 	delete[]$1;
 	$$ = tmp;
       }
-
+/*XXXX Caught up in element_association_list?
+  | '(' expression ')'
+      { $$ = $2; }
+*/
   /* This catches function calls that use association lists for the
      argument list. The position argument list is discovered elsewhere
      and must be discovered by elaboration (thanks to the ambiguity of
@@ -1489,11 +1695,10 @@ primary
 	$$ = 0;
       }
 
-  | '(' expression ')'
-      { $$ = $2; }
+  /* Aggregates */
+
   | '(' element_association_list ')'
-      { ExpAggregate*tmp = new ExpAggregate($2);
-	FILE_NAME(tmp,@1);
+      { Expression*tmp = aggregate_or_primary(@1, $2);
 	$$ = tmp;
       }
   ;
@@ -1638,6 +1843,13 @@ range_list
       }
   ;
 
+record_type_definition
+  : K_record element_declaration_list K_end K_record
+      { VTypeRecord*tmp = new VTypeRecord($2);
+	$$ = tmp;
+      }
+  ;
+
 relation
   : shift_expression
       { $$ = $1; }
@@ -1673,41 +1885,67 @@ relation
       }
   ;
 
+return_statement
+  : K_return expression ';'
+      { ReturnStmt*tmp = new ReturnStmt($2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_return ';'
+      { ReturnStmt*tmp = new ReturnStmt(0);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | K_return error ';'
+      { ReturnStmt*tmp = new ReturnStmt(0);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	errormsg(@2, "Error in expression in return statement.\n");
+	yyerrok;
+      }
+  ;
+
 secondary_unit
   : architecture_body
   | package_body
   ;
 
-selected_name
+selected_name /* IEEE 1076-2008 P8.3 */
   : prefix '.' suffix
-      {
-    std::vector<perm_string>* tmp = $1;
-    tmp->push_back(lex_strings.make($3));
-    delete[] $3;
-
-    $$ = tmp;
+      { Expression*pfx = $1;
+	ExpName*pfx1 = dynamic_cast<ExpName*>(pfx);
+	assert(pfx1);
+	perm_string tmp = lex_strings.make($3);
+	$$ = new ExpName(pfx1, tmp);
+	FILE_NAME($$, @3);
+	delete[]$3;
+      }
+  | error '.' suffix
+      { errormsg(@1, "Syntax error in prefix in front of \"%s\".\n", $3);
+        yyerrok;
+	$$ = new ExpName(lex_strings.make($3));
+	FILE_NAME($$, @3);
+	delete[]$3;
       }
   ;
 
 selected_names
   : selected_names ',' selected_name
-      {
-    std::list<std::vector<perm_string>* >* tmp = $1;
-    tmp->push_back($3);
-    $$ = tmp;
+      { std::list<Expression*>* tmp = $1;
+	tmp->push_back($3);
+	$$ = tmp;
       }
   | selected_name
-      {
-    std::list<std::vector<perm_string>* >* tmp = new std::list<std::vector<perm_string>* >();
-    tmp->push_back($1);
-    $$ = tmp;
+      { std::list<Expression*>* tmp = new std::list<Expression*>();
+	tmp->push_back($1);
+	$$ = tmp;
       }
   ;
 
-  /* The *_use variant of selected_name is used by the "use"
+  /* The *_lib variant of selected_name is used by the "use"
      clause. It is syntactically identical to other selected_name
      rules, but is a convenient place to attach use_clause actions. */
-selected_name_use
+selected_name_lib
   : IDENTIFIER '.' K_all
       { library_use(@1, active_scope, 0, $1, 0);
 	delete[]$1;
@@ -1725,9 +1963,9 @@ selected_name_use
       }
   ;
 
-selected_names_use
-  : selected_names_use ',' selected_name_use
-  | selected_name_use
+selected_names_lib
+  : selected_names_lib ',' selected_name_lib
+  | selected_name_lib
   ;
 
 
@@ -1753,6 +1991,7 @@ sequential_statement
   | case_statement { $$ = $1; }
   | procedure_call_statement { $$ = $1; }
   | loop_statement { $$ = $1; }
+  | return_statement { $$ = $1; }
   | K_null ';' { $$ = 0; }
   | error ';'
       { errormsg(@1, "Syntax error in sequential statement.\n");
@@ -1777,12 +2016,21 @@ signal_declaration_assign_opt
  * however, is right-recursive, which is not to nice is real LALR
  * parsers. The solution is to rewrite it as below, to make it
  * left-recursive. This is must more effecient use of the parse stack.
+ *
+ * Note that although the concatenation operator '&' is syntactically
+ * an addition operator, it is handled differently during elaboration
+ * so detect it and create a different expression type.
  */
 simple_expression
   : term
       { $$ = $1; }
   | simple_expression adding_operator term
-      { ExpArithmetic*tmp = new ExpArithmetic($2, $1, $3);
+      { Expression*tmp;
+	if ($2 == ExpArithmetic::xCONCAT) {
+	      tmp = new ExpConcat($1, $3);
+	} else {
+	      tmp = new ExpArithmetic($2, $1, $3);
+	}
 	FILE_NAME(tmp, @2);
 	$$ = tmp;
       }
@@ -1803,6 +2051,66 @@ signal_assignment_statement
       }
   ;
 
+subprogram_body /* IEEE 1076-2008 P4.3 */
+  : subprogram_specification K_is
+    subprogram_declarative_part
+    K_begin subprogram_statement_part K_end
+    subprogram_kind_opt identifier_opt ';'
+      { sorrymsg(@2, "Subprogram bodies not supported.\n");
+	if ($8) delete[]$8;
+      }
+
+  | subprogram_specification K_is
+    subprogram_declarative_part
+    K_begin error K_end
+    subprogram_kind_opt identifier_opt ';'
+      { errormsg(@2, "Syntax errors in subprogram body.\n");
+	yyerrok;
+	if ($8) delete[]$8;
+      }
+  ;
+
+subprogram_declaration
+  : subprogram_specification ';'
+      { sorrymsg(@1, "Subprogram specifications not supported.\n");
+      }
+  ;
+
+subprogram_declarative_item /* IEEE 1079-2008 P4.3 */
+  : variable_declaration
+  ;
+
+subprogram_declarative_item_list
+  : subprogram_declarative_item_list subprogram_declarative_item
+  | subprogram_declarative_item
+  ;
+
+subprogram_declarative_part /* IEEE 1076-2008 P4.3 */
+  : subprogram_declarative_item_list
+  |
+  ;
+
+subprogram_kind /* IEEE 1076-2008 P4.3 */
+  : K_function
+  | K_procedure
+  ;
+
+subprogram_kind_opt : subprogram_kind | ;
+
+subprogram_specification
+  : function_specification
+  ;
+
+  /* This is an implementation of the rule:
+     subprogram_statement_part ::= { sequential_statement }
+     where the sequence_of_statements rule is a list of
+     sequential_statement. Also handle the special case of an empty
+     list here. */
+subprogram_statement_part
+  : sequence_of_statements
+  |
+  ;
+
 subtype_declaration
   : K_subtype IDENTIFIER K_is subtype_indication ';'
       { perm_string name = lex_strings.make($2);
@@ -1819,6 +2127,7 @@ subtype_indication
       { const VType*tmp = parse_type_by_name(lex_strings.make($1));
 	if (tmp == 0) {
 	      errormsg(@1, "Can't find type name `%s'\n", $1);
+	      tmp = new VTypeERROR;
 	}
 	delete[]$1;
 	$$ = tmp;
@@ -1840,24 +2149,20 @@ subtype_indication
 	$$ = tmp;
       }
   | IDENTIFIER '(' error ')'
-      {
-    errormsg(@1, "Syntax error in subtype indication.\n");
+      { errormsg(@1, "Syntax error in subtype indication.\n");
+	yyerrok;
+	$$ = new VTypeERROR;
       }
   ;
 
 suffix
   : IDENTIFIER
-      {
-    $$ = $1;
-      }
+      { $$ = $1; }
   | CHARACTER_LITERAL
-      {
-   $$ = $1;
-      }
+      { $$ = $1; }
   | K_all
-      {
-  //do not have now better idea than using char constant
-    $$ = strcpy(new char[strlen("all"+1)], "all");
+      { //do not have now better idea than using char constant
+	$$ = strcpy(new char[strlen("all"+1)], "all");
       }
   ;
 
@@ -1892,16 +2197,34 @@ type_declaration
 	if ($4 == 0) {
 	      errormsg(@1, "Failed to declare type name %s.\n", name.str());
 	} else {
-		//VTypeDef*tmp = new VTypeDef(name, $4);
-		//active_scope->bind_name(name, tmp);
-	      active_scope->bind_name(name, $4);
+	      VTypeDef*tmp;
+	      map<perm_string,VTypeDef*>::iterator cur = active_scope->incomplete_types.find(name);
+	      if (cur == active_scope->incomplete_types.end()) {
+		    tmp = new VTypeDef(name, $4);
+		    active_scope->bind_name(name, tmp);
+	      } else {
+		    tmp = cur->second;
+		    tmp->set_definition($4);
+		    active_scope->incomplete_types.erase(cur);
+	      }
 	}
+	delete[]$2;
+      }
+  | K_type IDENTIFIER ';'
+      { perm_string name = lex_strings.make($2);
+	VTypeDef*tmp = new VTypeDef(name);
+	active_scope->incomplete_types[name] = tmp;
+	active_scope->bind_name(name, tmp);
 	delete[]$2;
       }
   | K_type IDENTIFIER K_is error ';'
       { errormsg(@4, "Error in type definition for %s\n", $2);
 	yyerrok;
 	delete[]$2;
+      }
+  | K_type error ';'
+      { errormsg(@1, "Error in type definition\n");
+	yyerrok;
       }
   ;
 
@@ -1911,40 +2234,35 @@ type_definition
 	delete $2;
 	$$ = tmp;
       }
-  /* constrained_array_definition */
-  | K_array index_constraint K_of subtype_indication
-      { VTypeArray*tmp = new VTypeArray($4, $2);
-	delete $2;
-	$$ = tmp;
-      }
+  | composite_type_definition
+      { $$ = $1; }
+
   ;
 
 use_clause
   : K_use selected_names ';'
-     {
-    $$ = $2;
-     }
+     { $$ = $2; }
   | K_use error ';'
      { errormsg(@1, "Syntax error in use clause.\n"); yyerrok; }
   ;
 
 use_clause_lib
-  : K_use selected_names_use ';'
+  : K_use selected_names_lib ';'
   | K_use error ';'
      { errormsg(@1, "Syntax error in use clause.\n"); yyerrok; }
   ;
 
-use_clauses
-  : use_clauses use_clause
-  | use_clause
+use_clauses_lib
+  : use_clauses_lib use_clause_lib
+  | use_clause_lib
   ;
 
 use_clauses_opt
-  : use_clauses
+  : use_clauses_lib
   |
   ;
 
-variable_assignment_statement
+variable_assignment_statement /* IEEE 1076-2008 P10.6.1 */
   : name VASSIGN expression ';'
       { VariableSeqAssignment*tmp = new VariableSeqAssignment($1, $3);
 	FILE_NAME(tmp, @1);
@@ -1961,6 +2279,16 @@ variable_assignment_statement
 	yyerrok;
 	delete $3;
 	$$ = 0;
+      }
+  ;
+
+variable_declaration /* IEEE 1076-2008 P6.4.2.4 */
+  : K_shared_opt K_variable identifier_list ':' subtype_indication ';'
+      { sorrymsg(@2, "variable_declaration not supported.\n"); }
+
+  | K_shared_opt K_variable error ';'
+      { errormsg(@2, "Syntax error in variable declaration.\n");
+	yyerrok;
       }
   ;
 
@@ -1997,9 +2325,10 @@ K_architecture_opt : K_architecture | ;
 K_component_opt    : K_component    | ;
 K_configuration_opt: K_configuration| ;
 K_entity_opt       : K_entity       | ;
+K_is_opt           : K_is           | ;
 K_package_opt      : K_package      | ;
 K_postponed_opt    : K_postponed    | ;
-K_is_opt           : K_is           | ;
+K_shared_opt       : K_shared       | ;
 %%
 
 static void yyerror(YYLTYPE*, yyscan_t, const char*, bool, const char* /*msg*/)

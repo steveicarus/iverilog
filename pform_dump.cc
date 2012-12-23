@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -26,6 +26,7 @@
  * module in question.
  */
 # include  "pform.h"
+# include  "PClass.h"
 # include  "PEvent.h"
 # include  "PGenerate.h"
 # include  "PSpec.h"
@@ -146,6 +147,46 @@ void data_type_t::pform_dump(ostream&out, unsigned indent) const
       out << setw(indent) << "" << typeid(*this).name() << endl;
 }
 
+void parray_type_t::pform_dump(ostream&out, unsigned indent) const
+{
+      out << setw(indent) << "" << "Packed array " << "[...]"
+	  << " of:" << endl;
+      base_type->pform_dump(out, indent+4);
+}
+
+void struct_type_t::pform_dump(ostream&out, unsigned indent) const
+{
+      out << setw(indent) << "" << "Struct " << (packed_flag?"packed":"unpacked")
+	  << " with " << members->size() << " members" << endl;
+      for (list<struct_member_t*>::iterator cur = members->begin()
+		 ; cur != members->end() ; ++ cur) {
+	    struct_member_t*curp = *cur;
+	    curp->pform_dump(out, indent+4);
+      }
+}
+
+void class_type_t::pform_dump(ostream&out, unsigned indent) const
+{
+      out << setw(indent) << "" << "class " << name << " {";
+
+      for (map<perm_string,data_type_t*>::const_iterator cur = properties.begin()
+		 ; cur != properties.end() ; ++cur) {
+	    out << " " << cur->first;
+      }
+      out << " }" << endl;
+}
+
+void struct_member_t::pform_dump(ostream&out, unsigned indent) const
+{
+      out << setw(indent) << "" << type;
+      for (list<decl_assignment_t*>::iterator cur = names->begin()
+		 ; cur != names->end() ; ++cur) {
+	    decl_assignment_t*curp = *cur;
+	    out << " " << curp->name;
+      }
+      out << ";" << endl;
+}
+
 static void dump_attributes_map(ostream&out,
 				const map<perm_string,PExpr*>&attributes,
 				int ind)
@@ -231,6 +272,21 @@ void PEEvent::dump(ostream&out) const
 void PEFNumber::dump(ostream &out) const
 {
       out << value();
+}
+
+void PENew::dump(ostream&out) const
+{
+      out << "new [" << *size_ << "]";
+}
+
+void PENewClass::dump(ostream&out) const
+{
+      out << "class_new";
+}
+
+void PENull::dump(ostream&out) const
+{
+      out << "null";
 }
 
 void PENumber::dump(ostream&out) const
@@ -376,15 +432,20 @@ void PWire::dump(ostream&out, unsigned ind) const
 
       out << " " << name_;
 
-	// If the wire has indices, dump them.
-      if (lidx_ || ridx_) {
+	// If the wire has unpacked indices, dump them.
+      for (list<pform_range_t>::const_iterator cur = unpacked_.begin()
+		 ; cur != unpacked_.end() ; ++cur) {
 	    out << "[";
-	    if (lidx_) out << *lidx_;
-	    if (ridx_) out << ":" << *ridx_;
+	    if (cur->first) out << *cur->first;
+	    if (cur->second) out << ":" << *cur->second;
 	    out << "]";
       }
 
       out << ";" << endl;
+      if (set_data_type_) {
+	    set_data_type_->pform_dump(out, 8);
+      }
+
       dump_attributes_map(out, attributes, 8);
 }
 
@@ -1046,6 +1107,16 @@ void PGenerate::dump(ostream&out, unsigned indent) const
 
       dump_localparams_(out, indent+2);
 
+      typedef list<PGenerate::named_expr_t>::const_iterator parm_hiter_t;
+      for (parm_hiter_t cur = defparms.begin()
+		 ; cur != defparms.end() ;  ++ cur ) {
+	    out << setw(indent+2) << "" << "defparam " << (*cur).first << " = ";
+	    if ((*cur).second)
+		  out << *(*cur).second << ";" << endl;
+	    else
+		  out << "/* ERROR */;" << endl;
+      }
+
       dump_events_(out, indent+2);
 
       dump_wires_(out, indent+2);
@@ -1194,6 +1265,40 @@ void LexicalScope::dump_wires_(ostream&out, unsigned indent) const
       }
 }
 
+void PScopeExtra::dump_classes_(ostream&out, unsigned indent) const
+{
+	// Dump the task definitions.
+      typedef map<perm_string,PClass*>::const_iterator class_iter_t;
+      for (class_iter_t cur = classes.begin()
+		 ; cur != classes.end() ; ++ cur ) {
+	    cur->second->dump(out, indent);
+      }
+}
+
+void PClass::dump(ostream&out, unsigned indent) const
+{
+      out << setw(indent) << "" << "class " << type->name << ";" << endl;
+      type->pform_dump(out, indent+2);
+      out << setw(indent) << "" << "endclass" << endl;
+}
+
+void Module::dump_specparams_(ostream&out, unsigned indent) const
+{
+      typedef map<perm_string,param_expr_t>::const_iterator parm_iter_t;
+      for (parm_iter_t cur = specparams.begin()
+		 ; cur != specparams.end() ; ++ cur ) {
+	    out << setw(indent) << "" << "specparam ";
+	    if ((*cur).second.msb)
+		  out << "[" << *(*cur).second.msb << ":"
+		      << *(*cur).second.lsb << "] ";
+	    out << (*cur).first << " = ";
+	    if ((*cur).second.expr)
+		  out << *(*cur).second.expr << ";" << endl;
+	    else
+		  out << "/* ERROR */;" << endl;
+      }
+}
+
 void Module::dump(ostream&out) const
 {
       if (attributes.begin() != attributes.end()) {
@@ -1231,13 +1336,22 @@ void Module::dump(ostream&out) const
 	    out << ")" << endl;
       }
 
+      for (map<perm_string,Module*>::const_iterator cur = nested_modules.begin()
+		 ; cur != nested_modules.end() ; ++cur) {
+	    out << setw(4) << "" << "Nested module " << cur->first << ";" << endl;
+      }
+
       dump_typedefs_(out, 4);
 
       dump_parameters_(out, 4);
 
       dump_localparams_(out, 4);
 
+      dump_specparams_(out, 4);
+
       dump_enumerations_(out, 4);
+
+      dump_classes_(out, 4);
 
       typedef map<perm_string,LineInfo*>::const_iterator genvar_iter_t;
       for (genvar_iter_t cur = genvars.begin()
@@ -1249,13 +1363,6 @@ void Module::dump(ostream&out) const
       for (genscheme_iter_t cur = generate_schemes.begin()
 		 ; cur != generate_schemes.end() ; ++ cur ) {
 	    (*cur)->dump(out, 4);
-      }
-
-      typedef map<perm_string,PExpr*>::const_iterator specparm_iter_t;
-      for (specparm_iter_t cur = specparams.begin()
-		 ; cur != specparams.end() ; ++ cur ) {
-	    out << "    specparam " << (*cur).first << " = "
-		<< *(*cur).second << ";" << endl;
       }
 
       typedef list<Module::named_expr_t>::const_iterator parm_hiter_t;

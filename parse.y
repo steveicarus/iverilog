@@ -2,6 +2,7 @@
 %{
 /*
  * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,7 +17,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -116,19 +117,6 @@ list<pform_range_t>* make_range_from_width(uint64_t wid)
       pform_range_t range;
       range.first  = new PENumber(new verinum(wid-1, integer_width));
       range.second = new PENumber(new verinum((uint64_t)0, integer_width));
-
-      list<pform_range_t>*rlist = new list<pform_range_t>;
-      rlist->push_back(range);
-      return rlist;
-}
-
-static list<pform_range_t>* make_range_from_pair(list<PExpr*>*rpair)
-{
-      pform_range_t range;
-      assert(rpair && rpair->size() == 2);
-      range.first  = rpair->front();
-      range.second = rpair->back();
-      delete rpair;
 
       list<pform_range_t>*rlist = new list<pform_range_t>;
       rlist->push_back(range);
@@ -262,9 +250,12 @@ static void current_task_set_statement(const YYLTYPE&loc, vector<Statement*>*s)
 	    current_task->set_statement(tmp);
 	    return;
       }
+      assert(s);
 
-	/* The parser assures that there is a non-empty vector. */
-      assert(s && !s->empty());
+        /* An empty vector represents one or more null statements. Handle
+           this as a simple null statement. */
+      if (s->empty())
+            return;
 
 	/* A vector of 1 is handled as a simple statement. */
       if (s->size() == 1) {
@@ -297,9 +288,12 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 	    current_function->set_statement(tmp);
 	    return;
       }
+      assert(s);
 
-	/* The parser assures that there is a non-empty vector. */
-      assert(s && !s->empty());
+        /* An empty vector represents one or more null statements. Handle
+           this as a simple null statement. */
+      if (s->empty())
+            return;
 
 	/* A vector of 1 is handled as a simple statement. */
       if (s->size() == 1) {
@@ -369,6 +363,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       PGBuiltin::Type gatetype;
       NetNet::PortType porttype;
       ivl_variable_type_t vartype;
+      PBlock::BL_TYPE join_keyword;
 
       PWire*wire;
       svector<PWire*>*wires;
@@ -391,6 +386,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
       data_type_t*data_type;
       class_type_t*class_type;
+      real_type_t::type_t real_type;
+      property_qualifier_t property_qualifier;
 
       verinum* number;
 
@@ -413,6 +410,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %token K_PO_POS K_PO_NEG K_POW
 %token K_PSTAR K_STARP K_DOTSTAR
 %token K_LOR K_LAND K_NAND K_NOR K_NXOR K_TRIGGER
+%token K_SCOPE_RES
 %token K_edge_descriptor
 
  /* The base tokens from 1364-1995. */
@@ -565,13 +563,17 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <struct_members> struct_union_member_list
 %type <struct_type>    struct_data_type
 
+%type <property_qualifier> class_item_qualifier property_qualifier
+%type <property_qualifier> property_qualifier_list property_qualifier_opt
+%type <property_qualifier> random_qualifier
+
 %type <ranges> range range_opt variable_dimension
 %type <ranges> dimensions_opt dimensions
 
 %type <nettype>  net_type var_type net_type_opt
 %type <gatetype> gatetype switchtype
 %type <porttype> port_direction port_direction_opt
-%type <vartype> primitive_type primitive_type_opt bit_logic
+%type <vartype> bit_logic
 %type <vartype> integer_vector_type
 %type <parmvalue> parameter_value_opt
 
@@ -586,13 +588,16 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
 %type <statement> analog_statement
 
+%type <join_keyword> join_keyword
+
 %type <letter> spec_polarity
 %type <perm_strings>  specify_path_identifiers
 
 %type <specpath> specify_simple_path specify_simple_path_decl
 %type <specpath> specify_edge_path specify_edge_path_decl
 
-%type <int_val> atom2_type non_integer_type
+%type <real_type> non_integer_type
+%type <int_val> atom2_type
 %type <int_val> module_start module_end
 
 %token K_TAND
@@ -623,13 +628,10 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
 %%
 
-  /* A degenerate source file can be completely empty. */
-main : source_file | ;
 
-source_file
-	: description
-	| source_file description
-	;
+  /* IEEE1800-2005: A.1.2 */
+  /* source_text ::= [ timeunits_declaration ] { description } */
+source_text : description_list | ;
 
 assignment_pattern /* IEEE1800-2005: A.6.7.1 */
   : K_LP expression_list_proper '}'
@@ -656,7 +658,6 @@ class_declaration /* IEEE1800-2005: A.1.2 */
     class_items_opt K_endclass
       { // Process a class.
 	pform_end_class_declaration();
-	yyerror(@2, "sorry: Class declarations not supported yet.");
       }
     class_declaration_endname_opt
       { // Wrap up the class.
@@ -765,13 +766,19 @@ class_item /* IEEE1800-2005: A.1.8 */
     /* Class properties... */
 
   | property_qualifier_opt data_type list_of_variable_decl_assignments ';'
-
+      { pform_class_property(@2, $1, $2, $3); }
 
     /* Class methods... */
 
   | method_qualifier_opt task_declaration
+      { yyerror(@2, "sorry: Class methods (tasks) not supported yet.");
+	yyerrok;
+      }
 
   | method_qualifier_opt function_declaration
+      { yyerror(@2, "sorry: Class methods (functions) not supported yet.");
+	yyerrok;
+      }
 
 
     /* Class constraints... */
@@ -804,19 +811,25 @@ class_item /* IEEE1800-2005: A.1.8 */
   ;
 
 class_item_qualifier /* IEEE1800-2005 A.1.8 */
-  : K_static
-  | K_protected
-  | K_local
+  : K_static     { $$ = property_qualifier_t::set_static(); }
+  | K_protected  { $$ = property_qualifier_t::set_protected(); }
+  | K_local      { $$ = property_qualifier_t::set_local(); }
   ;
 
 class_new /* IEEE1800-2005 A.2.4 */
   : K_new '(' ')'
-      { yyerror(@1, "sorry: class_new not implemented yet.");
-	$$ = 0;
+      { PENewClass*tmp = new PENewClass;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
   | K_new '(' expression_list_proper ')'
       { yyerror(@1, "sorry: class_new not implemented yet.");
 	$$ = 0;
+      }
+  | K_new
+      { PENewClass*tmp = new PENewClass;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
   ;
 
@@ -836,7 +849,7 @@ constraint_block_item_list_opt
 
 constraint_declaration /* IEEE1800-2005: A.1.9 */
   : K_static_opt K_constraint IDENTIFIER '{' constraint_block_item_list_opt '}'
-      { yyerror(@2, "sorry: Constraint declarations not supported.") }
+      { yyerror(@2, "sorry: Constraint declarations not supported."); }
 
   /* Error handling rules... */
 
@@ -860,7 +873,7 @@ constraint_expression_list /* */
 
 constraint_prototype /* IEEE1800-2005: A.1.9 */
   : K_static_opt K_constraint IDENTIFIER ';'
-      { yyerror(@2, "sorry: Constraint prototypes not supported.") }
+      { yyerror(@2, "sorry: Constraint prototypes not supported."); }
   ;
 
 constraint_set /* IEEE1800-2005 A.1.9 */
@@ -870,7 +883,14 @@ constraint_set /* IEEE1800-2005 A.1.9 */
 
 data_type /* IEEE1800-2005: A.2.2.1 */
   : integer_vector_type unsigned_signed_opt range_opt
-      { vector_type_t*tmp = new vector_type_t($1, $2, $3);
+      { ivl_variable_type_t use_vtype = $1;
+	bool reg_flag = false;
+	if (use_vtype == IVL_VT_NO_TYPE) {
+	      use_vtype = IVL_VT_LOGIC;
+	      reg_flag = true;
+	}
+	vector_type_t*tmp = new vector_type_t(use_vtype, $2, $3);
+	tmp->reg_flag = reg_flag;
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
@@ -888,11 +908,14 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | TYPE_IDENTIFIER
-      { $$ = $1; }
+  | TYPE_IDENTIFIER range_opt
+      { if ($2) $$ = new parray_type_t($1, $2);
+	else $$ = $1;
+      }
   | K_string
-      { yyerror(@1, "sorry: String data type not supported.");
-	$$ = 0;
+      { string_type_t*tmp = new string_type_t;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
   ;
 
@@ -907,17 +930,50 @@ data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
       { $$ = $1; }
   | signing range_opt
       { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $1, $2);
+	tmp->implicit_flag = true;
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   | range
       { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, false, $1);
+	tmp->implicit_flag = true;
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
   |
       { $$ = 0; }
   ;
+
+
+  /* NOTE 1: We pull the "timeunits_declaration" into the description
+     here in order to be a little more flexible with where timeunits
+     statements may go. This may be a bad idea, but it is legacy now. */
+
+  /* NOTE 2: The "module" rule of the description combines the
+     module_declaration and program_declaration rules from the
+     standard description. */
+
+description /* IEEE1800-2005: A.1.2 */
+  : module
+  | udp_primitive
+  | config_declaration
+  | nature_declaration
+  | package_declaration
+  | discipline_declaration
+  | timeunits_declaration
+  | KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')'
+      { perm_string tmp3 = lex_strings.make($3);
+	pform_set_type_attrib(tmp3, $5, $7);
+	delete[] $3;
+	delete[] $5;
+      }
+  ;
+
+description_list
+  : description
+  | description_list description
+  ;
+
 
    /* This implements the [ : INDENTIFIER ] part of the constructure
       rule documented in IEEE1800-2005: A.1.8 */
@@ -928,12 +984,14 @@ endnew_opt : ':' K_new | ;
 
 dynamic_array_new /* IEEE1800-2005: A.2.4 */
   : K_new '[' expression ']'
-      { yyerror(@1, "sorry: Dynamic array new expression not supported.");
-	$$ = 0;
+      { $$ = new PENew($3);
+	FILE_NAME($$, @1);
       }
   | K_new '[' expression ']' '(' expression ')'
-      { yyerror(@1, "sorry: Dynamic array new expression not supported.");
-	$$ = 0;
+      { yyerror(@1, "sorry: Dynamic array new expression with initializer not supported.");
+	delete $6;
+	$$ = new PENew($3);
+	FILE_NAME($$, @1);
       }
   ;
 
@@ -1076,10 +1134,19 @@ inside_expression /* IEEE1800-2005 A.8.3 */
   ;
 
 integer_vector_type /* IEEE1800-2005: A.2.2.1 */
-  : K_reg   { $$ = IVL_VT_LOGIC; }
+  : K_reg   { $$ = IVL_VT_NO_TYPE; } /* Usually a synonym for logic. */
   | K_bit   { $$ = IVL_VT_BOOL; }
   | K_logic { $$ = IVL_VT_LOGIC; }
   | K_bool  { $$ = IVL_VT_BOOL; } /* Icarus Verilog xtypes extension */
+  ;
+
+join_keyword /* IEEE1800-2005: A.6.3 */
+  : K_join
+      { $$ = PBlock::BL_PAR; }
+  | K_join_none
+      { $$ = PBlock::BL_JOIN_NONE; }
+  | K_join_any
+      { $$ = PBlock::BL_JOIN_ANY; }
   ;
 
 jump_statement /* IEEE1800-2005: A.6.5 */
@@ -1239,9 +1306,9 @@ method_qualifier_opt
 
 
 non_integer_type /* IEEE1800-2005: A.2.2.1 */
-  : K_real { $$ = K_real; }
-  | K_realtime { $$ = K_real; }
-  | K_shortreal { $$ = K_shortreal; }
+  : K_real { $$ = real_type_t::REAL; }
+  | K_realtime { $$ = real_type_t::REAL; }
+  | K_shortreal { $$ = real_type_t::SHORTREAL; }
   ;
 
 number  : BASED_NUMBER
@@ -1263,6 +1330,57 @@ open_range_list /* IEEE1800-2005 A.2.11 */
   : open_range_list ',' value_range
   | value_range
   ;
+
+package_declaration /* IEEE1800-2005 A.1.2 */
+  : K_package IDENTIFIER ';'
+      { pform_start_package_declaration(@1, $2);
+      }
+    package_item_list_opt
+    K_endpackage
+      { pform_end_package_declaration(@1); }
+    endname_opt
+      { // Last step: check any closing name. This is done late so
+	// that the parser can look ahead to detect the present
+	// endname_opt but still have the pform_endmodule() called
+	// early enough that the lexor can know we are outside the
+	// module.
+	if ($8 && (strcmp($2,$8) != 0)) {
+	      yyerror(@8, "error: End name doesn't match package name");
+	}
+	delete[]$2;
+	if ($8) delete[]$8;
+      }
+  ;
+
+package_import_declaration /* IEEE1800-2005 A.2.1.3 */
+  : K_import package_import_item_list ';'
+      { yyerror(@1, "sorry: Package import declarations not supported.");
+      }
+  ;
+
+package_import_item
+  : IDENTIFIER K_SCOPE_RES IDENTIFIER
+  | IDENTIFIER K_SCOPE_RES '*'
+  ;
+
+package_import_item_list
+  : package_import_item_list',' package_import_item
+  | package_import_item
+  ;
+
+package_item /* IEEE1800-2005 A.1.10 */
+  : timeunits_declaration
+  | K_localparam param_type localparam_assign_list ';'
+  | type_declaration
+  | function_declaration
+  ;
+
+package_item_list
+  : package_item_list package_item
+  | package_item
+  ;
+
+package_item_list_opt : package_item_list | ;
 
 port_direction /* IEEE1800-2005 A.1.3 */
   : K_input  { $$ = NetNet::PINPUT; }
@@ -1296,18 +1414,18 @@ property_qualifier /* IEEE1800-2005 A.1.8 */
   ;
 
 property_qualifier_opt /* IEEE1800-2005 A.1.8: ... { property_qualifier } */
-  : property_qualifier_list
-  |
+  : property_qualifier_list { $$ = $1; }
+  | { $$ = property_qualifier_t::set_none(); }
   ;
 
 property_qualifier_list /* IEEE1800-2005 A.1.8 */
-  : property_qualifier_list property_qualifier
-  | property_qualifier
+  : property_qualifier_list property_qualifier { $$ = $1 | $2; }
+  | property_qualifier { $$ = $1; }
   ;
 
 random_qualifier /* IEEE1800-2005 A.1.8 */
-  : K_rand
-  | K_randc
+  : K_rand { $$ = property_qualifier_t::set_rand(); }
+  | K_randc { $$ = property_qualifier_t::set_randc(); }
   ;
 
   /* real and realtime are exactly the same so save some code
@@ -1691,6 +1809,17 @@ tf_port_list /* IEEE1800-2005: A.2.7 */
       }
   ;
 
+  /* NOTE: Icarus Verilog is a little more generous with the
+     timeunits declarations by allowing them to happen in multiple
+     places in the file. So the rule is adjusted to be invoked by the
+     "description" rule. This theoretically allows files to be
+     concatenated together and still compile. */
+timeunits_declaration /* IEEE1800-2005: A.1.2 */
+  : K_timeunit TIME_LITERAL ';'
+      { pform_set_timeunit($2, false, false); }
+  | K_timeprecision TIME_LITERAL ';'
+      { pform_set_timeprecision($2, false, false); }
+  ;
 
 value_range /* IEEE1800-2005: A.8.3 */
   : expression
@@ -1723,7 +1852,6 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
   | '[' ']'
       { list<pform_range_t> *tmp = new list<pform_range_t>;
 	pform_range_t index (0,0);
-	yyerror("sorry: Dynamic array ranges not supported.");
 	tmp->push_back(index);
 	$$ = tmp;
       }
@@ -1822,19 +1950,19 @@ block_item_decl
      recovering from an error. */
 
   | data_type register_variable_list ';'
-      { if ($1) pform_set_data_type(@1, $1, $2, attributes_in_context);
+      { if ($1) pform_set_data_type(@1, $1, $2, NetNet::REG, attributes_in_context);
       }
 
   | K_reg data_type register_variable_list ';'
-      { if ($2) pform_set_data_type(@2, $2, $3, attributes_in_context);
+      { if ($2) pform_set_data_type(@2, $2, $3, NetNet::REG, attributes_in_context);
       }
 
   | K_event list_of_identifiers ';'
       { pform_make_events($2, @1.text, @1.first_line);
       }
 
-  | K_parameter parameter_assign_decl ';'
-  | K_localparam localparam_assign_decl ';'
+  | K_parameter param_type parameter_assign_list ';'
+  | K_localparam param_type localparam_assign_list ';'
 
   /* Blocks can have type declarations. */
 
@@ -1853,15 +1981,15 @@ block_item_decl
 	yyerrok;
       }
 
-	| K_parameter error ';'
-		{ yyerror(@1, "error: syntax error in parameter list.");
-		  yyerrok;
-		}
-	| K_localparam error ';'
-		{ yyerror(@1, "error: syntax error localparam list.");
-		  yyerrok;
-		}
-	;
+  | K_parameter error ';'
+      { yyerror(@1, "error: syntax error in parameter list.");
+	yyerrok;
+      }
+  | K_localparam error ';'
+      { yyerror(@1, "error: syntax error localparam list.");
+	yyerrok;
+      }
+  ;
 
 block_item_decls
 	: block_item_decl
@@ -1893,11 +2021,11 @@ type_declaration
 	delete[]$3;
       }
   | K_typedef K_enum   IDENTIFIER ';'
-      { yyerror(@1, "sorry: Enum forward declarations not supported yet.") }
+      { yyerror(@1, "sorry: Enum forward declarations not supported yet."); }
   | K_typedef K_struct IDENTIFIER ';'
-      { yyerror(@1, "sorry: Struct forward declarations not supported yet.") }
+      { yyerror(@1, "sorry: Struct forward declarations not supported yet."); }
   | K_typedef K_union  IDENTIFIER ';'
-      { yyerror(@1, "sorry: Union forward declarations not supported yet.") }
+      { yyerror(@1, "sorry: Union forward declarations not supported yet."); }
   | K_typedef          IDENTIFIER ';'
       { // Create a synthetic typedef for the class name so that the
 	// lexor detects the name as a type.
@@ -2273,24 +2401,6 @@ delay_value_simple
 		}
 	;
 
-description
-  : module
-  | udp_primitive
-  | config_declaration
-  | nature_declaration
-  | discipline_declaration
-  | KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')'
-      { perm_string tmp3 = lex_strings.make($3);
-	pform_set_type_attrib(tmp3, $5, $7);
-	delete[] $3;
-	delete[] $5;
-      }
-  | K_timeunit  TIME_LITERAL ';'
-      { pform_set_timeunit($2, false, false); }
-  | K_timeprecision TIME_LITERAL ';'
-      { pform_set_timeprecision($2, false, false); }
-  ;
-
   /* The discipline and nature declarations used to take no ';' after
      the identifier. The 2.3 LRM adds the ';', but since there are
      programs written to the 2.1 and 2.2 standard that don't, we
@@ -2378,8 +2488,9 @@ config_rule_statement
   ;
 
 opt_config
-  : /* The use clause takse an optional :config. */
+  : /* The use clause takes an optional :config. */
   | ':' K_config
+  ;
 
 lib_cell_id
   : IDENTIFIER
@@ -2392,6 +2503,7 @@ list_of_libraries
   : /* A NULL library means use the parents cell library. */
   | list_of_libraries IDENTIFIER
       { delete[] $2; }
+  ;
 
 drive_strength
 	: '(' dr_strength0 ',' dr_strength1 ')'
@@ -3130,8 +3242,9 @@ expr_primary
       { $$ = $1; }
 
   | K_null
-      { yyerror("sorry: null expressions not supported yet.");
-	$$ = 0;
+      { PENull*tmp = new PENull;
+	    FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
   ;
 
@@ -3467,6 +3580,7 @@ list_of_port_declarations
 					port_declaration_context.port_net_type,
 					port_declaration_context.var_type,
 					port_declaration_context.sign_flag,
+					port_declaration_context.data_type,
 					port_declaration_context.range, 0);
 		  delete[]$3;
 		  $$ = tmp;
@@ -3484,39 +3598,19 @@ list_of_port_declarations
         ;
 
 port_declaration
-  : attribute_list_opt
-    K_input net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($7);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	pform_module_define_port(@2, name, NetNet::PINPUT,
-				 $3, $4, $5, $6, $1);
-	port_declaration_context.port_type = NetNet::PINPUT;
-	port_declaration_context.port_net_type = $3;
-	port_declaration_context.var_type = $4;
-	port_declaration_context.sign_flag = $5;
-	delete port_declaration_context.range;
-	port_declaration_context.range = $6;
-	delete[]$7;
-	$$ = ptmp;
-      }
-  | attribute_list_opt
-    K_input atom2_type signed_unsigned_opt IDENTIFIER
+  : attribute_list_opt K_input net_type_opt data_type_or_implicit IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
-	list<pform_range_t>* use_range = make_range_from_width($3);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	pform_module_define_port(@2, name, NetNet::PINPUT,
-				 NetNet::UNRESOLVED_WIRE, IVL_VT_BOOL,
-				 $4, use_range, $1);
+	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
+	pform_module_define_port(@2, name, NetNet::PINPUT, $3, IVL_VT_NO_TYPE,
+				false, $4, 0, $1);
 	port_declaration_context.port_type = NetNet::PINPUT;
-	port_declaration_context.port_net_type = NetNet::UNRESOLVED_WIRE;
-	port_declaration_context.var_type = IVL_VT_BOOL;
-	port_declaration_context.sign_flag = $4;
+	port_declaration_context.port_net_type = $3;
+	port_declaration_context.var_type = IVL_VT_NO_TYPE;
+	port_declaration_context.sign_flag = false;
 	delete port_declaration_context.range;
-	port_declaration_context.range = use_range;
+	port_declaration_context.range = 0;
+	port_declaration_context.data_type = $4;
 	delete[]$5;
 	$$ = ptmp;
       }
@@ -3527,31 +3621,31 @@ port_declaration
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::PINPUT,
-				 NetNet::WIRE, IVL_VT_REAL, true, 0, $1);
+				 NetNet::WIRE, IVL_VT_REAL, true, 0, 0, $1);
 	port_declaration_context.port_type = NetNet::PINPUT;
 	port_declaration_context.port_net_type = NetNet::WIRE;
 	port_declaration_context.var_type = IVL_VT_REAL;
 	port_declaration_context.sign_flag = true;
 	delete port_declaration_context.range;
 	port_declaration_context.range = 0;
+	port_declaration_context.data_type = 0;
 	delete[]$4;
 	$$ = ptmp;
       }
-  | attribute_list_opt
-    K_inout net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER
+  | attribute_list_opt K_inout net_type_opt data_type_or_implicit IDENTIFIER
       { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($7);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	pform_module_define_port(@2, name, NetNet::PINOUT,
-				 $3, $4, $5, $6, $1);
+	perm_string name = lex_strings.make($5);
+	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
+	pform_module_define_port(@2, name, NetNet::PINOUT, $3, IVL_VT_NO_TYPE,
+				false, $4, 0, $1);
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = $3;
-	port_declaration_context.var_type = $4;
-	port_declaration_context.sign_flag = $5;
+	port_declaration_context.var_type = IVL_VT_NO_TYPE;
+	port_declaration_context.sign_flag = false;
 	delete port_declaration_context.range;
-	port_declaration_context.range = $6;
-	delete[]$7;
+	port_declaration_context.range = 0;
+	port_declaration_context.data_type = $4;
+	delete[]$5;
 	$$ = ptmp;
       }
   | attribute_list_opt
@@ -3561,130 +3655,43 @@ port_declaration
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::PINOUT,
-				 NetNet::WIRE, IVL_VT_REAL, true, 0, $1);
+				 NetNet::WIRE, IVL_VT_REAL, true, 0, 0, $1);
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = NetNet::WIRE;
 	port_declaration_context.var_type = IVL_VT_REAL;
 	port_declaration_context.sign_flag = true;
 	delete port_declaration_context.range;
 	port_declaration_context.range = 0;
+	port_declaration_context.data_type = 0;
 	delete[]$4;
 	$$ = ptmp;
       }
-  | attribute_list_opt
-    K_output net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($7);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 $3, $4, $5, $6, $1);
-	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = $3;
-	port_declaration_context.var_type = $4;
-	port_declaration_context.sign_flag = $5;
-	delete port_declaration_context.range;
-	port_declaration_context.range = $6;
-	delete[]$7;
-	$$ = ptmp;
-      }
-  | attribute_list_opt
-    K_output var_type primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($7);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 $3, $4, $5, $6, $1);
-	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = $3;
-	port_declaration_context.var_type = $4;
-	port_declaration_context.sign_flag = $5;
-	delete port_declaration_context.range;
-	port_declaration_context.range = $6;
-	delete[]$7;
-	$$ = ptmp;
-      }
-  | attribute_list_opt
-    K_output var_type primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER '=' expression
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($7);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 $3, $4, $5, $6, $1);
-	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = $3;
-	port_declaration_context.var_type = $4;
-	port_declaration_context.sign_flag = $5;
-	delete port_declaration_context.range;
-	port_declaration_context.range = $6;
-
-	pform_make_reginit(@7, name, $9);
-
-	delete[]$7;
-	$$ = ptmp;
-      }
-  | attribute_list_opt
-    K_output net_type_opt primitive_type_opt unsigned_signed_opt range_opt IDENTIFIER '=' expression
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($7);
-	NetNet::Type t   = ($3 == NetNet::IMPLICIT) ? NetNet::IMPLICIT_REG : $3;
-
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 t, $4, $5, $6, $1);
-	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = t;
-	port_declaration_context.var_type = $4;
-	port_declaration_context.sign_flag = $5;
-	delete port_declaration_context.range;
-	port_declaration_context.range = $6;
-
-	pform_make_reginit(@7, name, $9);
-
-	delete[]$7;
-	$$ = ptmp;
-      }
-  | attribute_list_opt
-    K_output atom2_type signed_unsigned_opt IDENTIFIER
+  | attribute_list_opt K_output net_type_opt data_type_or_implicit IDENTIFIER
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
-	list<pform_range_t>*use_range = make_range_from_width($3);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 NetNet::IMPLICIT_REG, IVL_VT_BOOL,
-				 $4, use_range, $1);
+	NetNet::Type use_type = $3;
+	if (use_type == NetNet::IMPLICIT) {
+	      if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($4)) {
+		    if (dtype->reg_flag)
+			  use_type = NetNet::REG;
+		    else if (dtype->implicit_flag)
+			  use_type = NetNet::IMPLICIT;
+		    else
+			  use_type = NetNet::IMPLICIT_REG;
+	      } else if (dynamic_cast<atom2_type_t*> ($4)) {
+		    use_type = NetNet::IMPLICIT_REG;
+	      }
+	}
+	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
+	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, IVL_VT_NO_TYPE,
+				false, $4, 0, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = NetNet::IMPLICIT_REG;
-	port_declaration_context.var_type = IVL_VT_BOOL;
-	port_declaration_context.sign_flag = $4;
+	port_declaration_context.port_net_type = use_type;
+	port_declaration_context.var_type = IVL_VT_NO_TYPE;
+	port_declaration_context.sign_flag = false;
 	delete port_declaration_context.range;
-	port_declaration_context.range = use_range;
-	delete[]$5;
-	$$ = ptmp;
-      }
-  | attribute_list_opt
-    K_output atom2_type signed_unsigned_opt IDENTIFIER '=' expression
-      { Module::port_t*ptmp;
-	perm_string name = lex_strings.make($5);
-	list<pform_range_t>*use_range = make_range_from_width($3);
-	ptmp = pform_module_port_reference(name, @2.text,
-					   @2.first_line);
-	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 NetNet::IMPLICIT_REG, IVL_VT_BOOL,
-				 $4, use_range, $1);
-	port_declaration_context.port_type = NetNet::POUTPUT;
-	port_declaration_context.port_net_type = NetNet::IMPLICIT_REG;
-	port_declaration_context.var_type = IVL_VT_BOOL;
-	port_declaration_context.sign_flag = $4;
-	delete port_declaration_context.range;
-	port_declaration_context.range = use_range;
-
-	pform_make_reginit(@5, name, $7);
-
+	port_declaration_context.range = 0;
+	port_declaration_context.data_type = $4;
 	delete[]$5;
 	$$ = ptmp;
       }
@@ -3695,14 +3702,45 @@ port_declaration
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 NetNet::WIRE, IVL_VT_REAL, true, 0, $1);
+				 NetNet::WIRE, IVL_VT_REAL, true, 0, 0, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = NetNet::WIRE;
 	port_declaration_context.var_type = IVL_VT_REAL;
 	port_declaration_context.sign_flag = true;
 	delete port_declaration_context.range;
 	port_declaration_context.range = 0;
+	port_declaration_context.data_type = 0;
 	delete[]$4;
+	$$ = ptmp;
+      }
+  | attribute_list_opt K_output net_type_opt data_type_or_implicit IDENTIFIER '=' expression
+      { Module::port_t*ptmp;
+	perm_string name = lex_strings.make($5);
+	NetNet::Type use_type = $3;
+	if (use_type == NetNet::IMPLICIT) {
+	      if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($4)) {
+		    if (dtype->reg_flag)
+			  use_type = NetNet::REG;
+		    else
+			  use_type = NetNet::IMPLICIT_REG;
+	      } else {
+		    use_type = NetNet::IMPLICIT_REG;
+	      }
+	}
+	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
+	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, IVL_VT_NO_TYPE,
+				false, $4, 0, $1);
+	port_declaration_context.port_type = NetNet::PINOUT;
+	port_declaration_context.port_net_type = use_type;
+	port_declaration_context.var_type = IVL_VT_NO_TYPE;
+	port_declaration_context.sign_flag = false;
+	delete port_declaration_context.range;
+	port_declaration_context.range = 0;
+	port_declaration_context.data_type = $4;
+
+	pform_make_reginit(@5, name, $7);
+
+	delete[]$5;
 	$$ = ptmp;
       }
   ;
@@ -3829,7 +3867,7 @@ local_timeunit_prec_decl
 
 module
   : attribute_list_opt module_start IDENTIFIER
-      { pform_startmodule($3, @2.text, @2.first_line, $1); }
+      { pform_startmodule(@2, $3, $2==K_program, $1); }
     module_parameter_port_list_opt
     module_port_list_opt
     module_attribute_foreign ';'
@@ -3871,11 +3909,7 @@ module
 		    break;
 	      }
 	}
-	if ($2 == K_program) {
-	      yyerror(@2, "sorry: Program blocks not supported yet.");
-	}
 	pform_endmodule($3, in_celldefine, ucd);
-	delete[]$3;
 	have_timeunit_decl = false; // We will allow decls again.
 	have_timeprec_decl = false;
       }
@@ -3888,6 +3922,7 @@ module
 	if ($15 && (strcmp($3,$15) != 0)) {
 	      yyerror(@15, "error: End name doesn't match module/program name");
 	}
+	delete[]$3;
 	if ($15) delete[]$15;
       }
   ;
@@ -3918,10 +3953,15 @@ module_attribute_foreign
 	;
 
 module_port_list_opt
-	: '(' list_of_ports ')' { $$ = $2; }
-	| '(' list_of_port_declarations ')' { $$ = $2; }
-	|                       { $$ = 0; }
-	;
+  : '(' list_of_ports ')' { $$ = $2; }
+  | '(' list_of_port_declarations ')' { $$ = $2; }
+  |                       { $$ = 0; }
+  | '(' error ')'
+      { yyerror(@2, "Errors in port declarations.");
+	yyerrok;
+	$$ = 0;
+      }
+  ;
 
   /* Module declarations include optional ANSI style module parameter
      ports. These are simply advance ways to declare parameters, so
@@ -3932,110 +3972,91 @@ module_parameter_port_list_opt
 	;
 
 module_parameter_port_list
-	: K_parameter parameter_assign
+	: K_parameter param_type parameter_assign
 	| module_parameter_port_list ',' parameter_assign
-	| module_parameter_port_list ',' K_parameter parameter_assign
+	| module_parameter_port_list ',' K_parameter param_type parameter_assign
 	;
 
 module_item
 
-  /* This rule detects net declarations that possibly include a
-     primitive type, an optional vector range and signed flag. This
-     also includes an optional delay set. The values are then applied
-     to a list of names. If the primitive type is not specified, then
-     resort to the default type LOGIC. */
+  /* Modules can contain further sub-module definitions. */
+  : module
 
-	: attribute_list_opt net_type
-          primitive_type_opt unsigned_signed_opt range_opt
-          delay3_opt
-          net_variable_list ';'
+  | attribute_list_opt net_type data_type_or_implicit delay3_opt net_variable_list ';'
 
-		{ ivl_variable_type_t dtype = $3;
-		  if (dtype == IVL_VT_NO_TYPE)
-			dtype = IVL_VT_LOGIC;
-		  pform_makewire(@2, $5, $4, $7, $2,
-				 NetNet::NOT_A_PORT, dtype, $1);
-		  if ($6 != 0) {
-			yyerror(@6, "sorry: net delays not supported.");
-			delete $6;
-		  }
-		  delete $1;
-		}
+      { data_type_t*data_type = $3;
+	if (data_type == 0) {
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
+	      FILE_NAME(data_type, @2);
+	}
+	pform_set_data_type(@2, data_type, $5, $2, $1);
+	if ($4 != 0) {
+	      yyerror(@2, "sorry: net delays not supported.");
+	      delete $4;
+	}
+	delete $1;
+      }
 
-	| attribute_list_opt K_wreal delay3 net_variable_list ';'
-		{ pform_makewire(@2, 0, true, $4, NetNet::WIRE,
-				 NetNet::NOT_A_PORT, IVL_VT_REAL, $1);
-		  if ($3 != 0) {
-			yyerror(@3, "sorry: net delays not supported.");
-			delete $3;
-		  }
-		  delete $1;
-		}
-	| attribute_list_opt K_wreal net_variable_list ';'
-		{ pform_makewire(@2, 0, true, $3, NetNet::WIRE,
-				 NetNet::NOT_A_PORT, IVL_VT_REAL, $1);
-		  delete $1;
-		}
+  | attribute_list_opt K_wreal delay3 net_variable_list ';'
+      { real_type_t*tmpt = new real_type_t(real_type_t::REAL);
+	pform_set_data_type(@2, tmpt, $4, NetNet::WIRE, $1);
+	if ($3 != 0) {
+	      yyerror(@3, "sorry: net delays not supported.");
+	      delete $3;
+	}
+	delete $1;
+      }
+
+  | attribute_list_opt K_wreal net_variable_list ';'
+      { real_type_t*tmpt = new real_type_t(real_type_t::REAL);
+	pform_set_data_type(@2, tmpt, $3, NetNet::WIRE, $1);
+	delete $1;
+      }
 
   /* Very similar to the rule above, but this takes a list of
      net_decl_assigns, which are <name> = <expr> assignment
      declarations. */
 
-	| attribute_list_opt net_type
-          primitive_type_opt unsigned_signed_opt range_opt
-          delay3_opt net_decl_assigns ';'
-
-		{ ivl_variable_type_t dtype = $3;
-		  if (dtype == IVL_VT_NO_TYPE)
-			dtype = IVL_VT_LOGIC;
-		  pform_makewire(@2, $5, $4, $6,
-				 str_strength, $7, $2, dtype);
-		  if ($1) {
-			yyerror(@2, "sorry: Attributes not supported "
-				"on net declaration assignments.");
-			delete $1;
-		  }
-		}
-
-  /* Allow struct nets. */
-
-  | attribute_list_opt net_type struct_data_type net_variable_list ';'
-
-      { pform_makewire(@2, $3, NetNet::NOT_A_PORT, $4, $1);
-	delete $1;
-      }
-
-  | attribute_list_opt net_type struct_data_type error ';'
-
-      { yyerror(@5, "error: Errors in net variable list.");
+  | attribute_list_opt net_type data_type_or_implicit delay3_opt net_decl_assigns ';'
+      { data_type_t*data_type = $3;
+	if (data_type == 0) {
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
+	      FILE_NAME(data_type, @2);
+	}
+	pform_makewire(@2, $4, str_strength, $5, $2, data_type);
+	if ($1) {
+	      yyerror(@2, "sorry: Attributes not supported "
+		      "on net declaration assignments.");
+	      delete $1;
+	}
       }
 
   /* This form doesn't have the range, but does have strengths. This
      gives strength to the assignment drivers. */
 
-	| attribute_list_opt net_type
-          primitive_type_opt unsigned_signed_opt
-          drive_strength net_decl_assigns ';'
+  | attribute_list_opt net_type data_type_or_implicit drive_strength net_decl_assigns ';'
+      { data_type_t*data_type = $3;
+	if (data_type == 0) {
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
+	      FILE_NAME(data_type, @2);
+	}
+	pform_makewire(@2, 0, $4, $5, $2, data_type);
+	if ($1) {
+	      yyerror(@2, "sorry: Attributes not supported "
+		      "on net declaration assignments.");
+	      delete $1;
+	}
+      }
 
-		{ ivl_variable_type_t dtype = $3;
-		  if (dtype == IVL_VT_NO_TYPE)
-			dtype = IVL_VT_LOGIC;
-		  pform_makewire(@2, 0, $4, 0, $5, $6, $2, dtype);
-		  if ($1) {
-			yyerror(@2, "sorry: Attributes not supported "
-				"on net declaration assignments.");
-			delete $1;
-		  }
-		}
-	| attribute_list_opt K_wreal net_decl_assigns ';'
-		{ pform_makewire(@2, 0, true, 0, str_strength, $3,
-		                 NetNet::WIRE, IVL_VT_REAL);
-		  if ($1) {
-			yyerror(@2, "sorry: Attributes not supported "
-				"on net declaration assignments.");
-			delete $1;
-		  }
-		}
+  | attribute_list_opt K_wreal net_decl_assigns ';'
+      { real_type_t*data_type = new real_type_t(real_type_t::REAL);
+        pform_makewire(@2, 0, str_strength, $3, NetNet::WIRE, data_type);
+	if ($1) {
+	      yyerror(@2, "sorry: Attributes not supported "
+		      "on net declaration assignments.");
+	      delete $1;
+	}
+      }
 
 	| K_trireg charge_strength_opt range_opt delay3_opt list_of_identifiers ';'
 		{ yyerror(@1, "sorry: trireg nets not supported.");
@@ -4123,66 +4144,50 @@ module_item
      two/three-value delay. These rules handle the different cases.
      We check that the actual number of delays is correct later. */
 
-	| attribute_list_opt gatetype gate_instance_list ';'
-		{ pform_makegates($2, str_strength, 0, $3, $1);
-		}
+  | attribute_list_opt gatetype gate_instance_list ';'
+      { pform_makegates(@2, $2, str_strength, 0, $3, $1); }
 
-	| attribute_list_opt gatetype delay3 gate_instance_list ';'
-		{ pform_makegates($2, str_strength, $3, $4, $1);
-		}
+  | attribute_list_opt gatetype delay3 gate_instance_list ';'
+      { pform_makegates(@2, $2, str_strength, $3, $4, $1); }
 
-	| attribute_list_opt gatetype drive_strength gate_instance_list ';'
-		{ pform_makegates($2, $3, 0, $4, $1);
-		}
+  | attribute_list_opt gatetype drive_strength gate_instance_list ';'
+      { pform_makegates(@2, $2, $3, 0, $4, $1); }
 
-	| attribute_list_opt gatetype drive_strength delay3 gate_instance_list ';'
-		{ pform_makegates($2, $3, $4, $5, $1);
-		}
+  | attribute_list_opt gatetype drive_strength delay3 gate_instance_list ';'
+      { pform_makegates(@2, $2, $3, $4, $5, $1); }
 
   /* The switch type gates do not support a strength. */
-	| attribute_list_opt switchtype gate_instance_list ';'
-		{ pform_makegates($2, str_strength, 0, $3, $1);
-		}
+  | attribute_list_opt switchtype gate_instance_list ';'
+      { pform_makegates(@2, $2, str_strength, 0, $3, $1); }
 
-	| attribute_list_opt switchtype delay3 gate_instance_list ';'
-		{ pform_makegates($2, str_strength, $3, $4, $1);
-		}
+  | attribute_list_opt switchtype delay3 gate_instance_list ';'
+      { pform_makegates(@2, $2, str_strength, $3, $4, $1); }
 
   /* Pullup and pulldown devices cannot have delays, and their
      strengths are limited. */
 
-	| K_pullup gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLUP, pull_strength, 0,
-				  $2, 0);
-		}
-	| K_pulldown gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLDOWN, pull_strength,
-				  0, $2, 0);
-		}
+  | K_pullup gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLUP, pull_strength, 0, $2, 0); }
+  | K_pulldown gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLDOWN, pull_strength, 0, $2, 0); }
 
-	| K_pullup '(' dr_strength1 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLUP, $3, 0, $5, 0);
-		}
+  | K_pullup '(' dr_strength1 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLUP, $3, 0, $5, 0); }
 
-	| K_pullup '(' dr_strength1 ',' dr_strength0 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLUP, $3, 0, $7, 0);
-		}
+  | K_pullup '(' dr_strength1 ',' dr_strength0 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLUP, $3, 0, $7, 0); }
 
-	| K_pullup '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLUP, $5, 0, $7, 0);
-		}
+  | K_pullup '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLUP, $5, 0, $7, 0); }
 
-	| K_pulldown '(' dr_strength0 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLDOWN, $3, 0, $5, 0);
-		}
+  | K_pulldown '(' dr_strength0 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLDOWN, $3, 0, $5, 0); }
 
-	| K_pulldown '(' dr_strength1 ',' dr_strength0 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLDOWN, $5, 0, $7, 0);
-		}
+  | K_pulldown '(' dr_strength1 ',' dr_strength0 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLDOWN, $5, 0, $7, 0); }
 
-	| K_pulldown '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
-		{ pform_makegates(PGBuiltin::PULLDOWN, $3, 0, $7, 0);
-		}
+  | K_pulldown '(' dr_strength0 ',' dr_strength1 ')' gate_instance_list ';'
+      { pform_makegates(@1, PGBuiltin::PULLDOWN, $3, 0, $7, 0); }
 
   /* This rule handles instantiations of modules and user defined
      primitives. These devices to not have delay lists or strengths,
@@ -4191,7 +4196,7 @@ module_item
 	| attribute_list_opt
 	  IDENTIFIER parameter_value_opt gate_instance_list ';'
 		{ perm_string tmp1 = lex_strings.make($2);
-		  pform_make_modgates(tmp1, $3, $4);
+		  pform_make_modgates(@2, tmp1, $3, $4);
 		  delete[]$2;
 		  if ($1) delete $1;
 		}
@@ -4296,6 +4301,12 @@ module_item
 	pform_endgenerate();
       }
 
+  | package_import_declaration
+
+  /* 1364-2001 and later allow specparam declarations outside specify blocks. */
+
+  | attribute_list_opt K_specparam specparam_decl ';'
+
   /* specify blocks are parsed but ignored. */
 
 	| K_specify K_endspecify
@@ -4313,13 +4324,6 @@ module_item
   /* These rules match various errors that the user can type into
      module items. These rules try to catch them at a point where a
      reasonable error message can be produced. */
-
-	| K_module error ';'
-		{ yyerror(@1, "error: missing endmodule or attempt to "
-		              "nest modules.");
-		  pform_error_nested_modules();
-		  yyerrok;
-		}
 
 	| error ';'
 		{ yyerror(@2, "error: invalid module item.");
@@ -4363,7 +4367,7 @@ module_item
 		{ pform_set_timeprecision($2, true, true); }
 	;
 
-generate_if : K_if '(' expression ')' { pform_start_generate_if(@1, $3); }
+generate_if : K_if '(' expression ')' { pform_start_generate_if(@1, $3); } ;
 
 generate_case_items
   : generate_case_items generate_case_item
@@ -4433,19 +4437,10 @@ net_decl_assigns
 		}
 	;
 
-primitive_type
-  : K_logic { $$ = IVL_VT_LOGIC; }
-  | K_bool  { $$ = IVL_VT_BOOL; /* Icarus Verilog xtypes */}
-  | K_bit   { $$ = IVL_VT_BOOL; /* IEEE1800 / IEEE1364-2009 */}
-  | K_real  { $$ = IVL_VT_REAL; }
-;
-
 bit_logic
   : K_logic { $$ = IVL_VT_LOGIC; }
   | K_bit   { $$ = IVL_VT_BOOL; /* IEEE1800 / IEEE1364-2009 */}
   ;
-
-primitive_type_opt : primitive_type { $$ = $1; } | { $$ = IVL_VT_NO_TYPE; } ;
 
 net_type
 	: K_wire    { $$ = NetNet::WIRE; }
@@ -4470,19 +4465,15 @@ var_type
 	: K_reg { $$ = NetNet::REG; }
 	;
 
-  /* In this rule we have matched the "parameter" keyword. The rule
-     generates a type (optional) and a list of assignments. */
-
-parameter_assign_decl
-  : parameter_assign_list
-  | range
-      { param_active_range = $1;
+param_type
+  :
+      { param_active_range = 0;
         param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
-    parameter_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
+  | range
+      { param_active_range = $1;
+        param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
   | K_signed
@@ -4490,19 +4481,9 @@ parameter_assign_decl
 	param_active_signed = true;
 	param_active_type = IVL_VT_LOGIC;
       }
-    parameter_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
   | K_signed range
       { param_active_range = $2;
 	param_active_signed = true;
-	param_active_type = IVL_VT_LOGIC;
-      }
-    parameter_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
   | K_integer
@@ -4510,18 +4491,8 @@ parameter_assign_decl
 	param_active_signed = true;
 	param_active_type = IVL_VT_LOGIC;
       }
-    parameter_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
   | K_time
       { param_active_range = make_range_from_width(64);
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-    parameter_assign_list
-      { param_active_range = 0;
 	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
       }
@@ -4530,33 +4501,42 @@ parameter_assign_decl
 	param_active_signed = true;
 	param_active_type = IVL_VT_REAL;
       }
-    parameter_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
   | atom2_type
       { param_active_range = make_range_from_width($1);
 	param_active_signed = true;
 	param_active_type = IVL_VT_BOOL;
       }
-  parameter_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
   ;
 
+  /* parameter and localparam assignment lists are broken into
+     separate BNF so that I can call slightly different parameter
+     handling code. localparams parse the same as parameters, they
+     just behave differently when someone tries to override them. */
+
 parameter_assign_list
-	: parameter_assign
-	| parameter_assign_list ',' parameter_assign
-	;
+  : parameter_assign
+  | parameter_assign_list ',' parameter_assign
+  ;
+
+localparam_assign_list
+  : localparam_assign
+  | localparam_assign_list ',' localparam_assign
+  ;
 
 parameter_assign
   : IDENTIFIER '=' expression parameter_value_ranges_opt
       { PExpr*tmp = $3;
 	pform_set_parameter(@1, lex_strings.make($1), param_active_type,
 			    param_active_signed, param_active_range, tmp, $4);
+	delete[]$1;
+      }
+  ;
+
+localparam_assign
+  : IDENTIFIER '=' expression
+      { PExpr*tmp = $3;
+	pform_set_localparam(@1, lex_strings.make($1), param_active_type,
+			     param_active_signed, param_active_range, tmp);
 	delete[]$1;
       }
   ;
@@ -4592,103 +4572,6 @@ value_range_expression
 
 from_exclude : K_from { $$ = false; } | K_exclude { $$ = true; } ;
 
-  /* Localparam assignments and assignment lists are broken into
-     separate BNF so that I can call slightly different parameter
-     handling code. They parse the same as parameters, they just
-     behave differently when someone tries to override them. */
-
-localparam_assign
-  : IDENTIFIER '=' expression
-      { PExpr*tmp = $3;
-	pform_set_localparam(@1, lex_strings.make($1),
-			     param_active_type,
-			     param_active_signed,
-			     param_active_range, tmp);
-	delete[]$1;
-      }
-  ;
-
-localparam_assign_decl
-  : localparam_assign_list
-  | range
-      { param_active_range = $1;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-    localparam_assign_list
-      { param_active_range = 0;
-        param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | K_signed
-      { param_active_range = 0;
-	param_active_signed = true;
-	param_active_type = IVL_VT_LOGIC;
-      }
-    localparam_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | K_signed range
-      { param_active_range = $2;
-	param_active_signed = true;
-	param_active_type = IVL_VT_LOGIC;
-      }
-    localparam_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | K_integer
-      { param_active_range = make_range_from_width(integer_width);
-	param_active_signed = true;
-	param_active_type = IVL_VT_LOGIC;
-      }
-    localparam_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | K_time
-      { param_active_range = make_range_from_width(64);
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-    localparam_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | real_or_realtime
-      { param_active_range = 0;
-	param_active_signed = true;
-	param_active_type = IVL_VT_REAL;
-      }
-    localparam_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | atom2_type
-      { param_active_range = make_range_from_width($1);
-	param_active_signed = true;
-	param_active_type = IVL_VT_BOOL;
-      }
-  localparam_assign_list
-      { param_active_range = 0;
-	param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  ;
-
-localparam_assign_list
-	: localparam_assign
-	| localparam_assign_list ',' localparam_assign
-	;
-
-
-
   /* The parameters of a module instance can be overridden by writing
      a list of expressions in a syntax much like a delay list. (The
      difference being the list can have any length.) The pform that
@@ -4698,7 +4581,9 @@ localparam_assign_list
      Although the BNF in IEEE1364-1995 implies that parameter value
      lists must be in parentheses, in practice most compilers will
      accept simple expressions outside of parentheses if there is only
-     one value, so I'll accept simple numbers here.
+     one value, so I'll accept simple numbers here. This also catches
+     the case of a UDP with a single delay value, so we need to accept
+     real values as well as decimal ones.
 
      The parameter value by name syntax is OVI enhancement BTF-B06 as
      approved by WG1364 on 6/28/1998. */
@@ -4727,6 +4612,17 @@ parameter_value_opt
 		  lst->by_name = 0;
 		  $$ = lst;
 		  based_size = 0;
+		}
+	| '#' REALTIME
+		{ assert($2);
+		  PEFNumber*tmp = new PEFNumber($2);
+		  FILE_NAME(tmp, @1);
+
+		  struct parmvalue_t*lst = new struct parmvalue_t;
+		  lst->by_order = new list<PExpr*>;
+		  lst->by_order->push_back(tmp);
+		  lst->by_name = 0;
+		  $$ = lst;
 		}
 	| '#' error
 		{ yyerror(@1, "error: syntax error in parameter value "
@@ -4993,8 +4889,9 @@ range_opt
   ;
 
 dimensions_opt
-	: { $$ = 0; }
-	| dimensions { $$ = $1; }
+  : { $$ = 0; }
+  | dimensions { $$ = $1; }
+  ;
 
 dimensions
   : variable_dimension
@@ -5052,19 +4949,10 @@ function_range_or_type_opt
      so that bit ranges can be assigned. */
 register_variable
   : IDENTIFIER dimensions_opt
-      { perm_string ident_name = lex_strings.make($1);
-	pform_makewire(@1, ident_name, NetNet::REG,
+      { perm_string name = lex_strings.make($1);
+	pform_makewire(@1, name, NetNet::REG,
 		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
-	if ($2 != 0) {
-	      pform_range_t index;
-	      if ($2->size() > 1) {
-		    yyerror(@2, "sorry: only 1 dimensional arrays "
-			    "are currently supported.");
-	      }
-	      index = $2->front();
-	      pform_set_reg_idx(ident_name, index.first, index.second);
-	      delete $2;
-	}
+	pform_set_reg_idx(name, $2);
 	$$ = $1;
       }
   | IDENTIFIER '=' expression
@@ -5096,16 +4984,7 @@ net_variable
       { perm_string name = lex_strings.make($1);
 	pform_makewire(@1, name, NetNet::IMPLICIT,
 		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
-	if ($2 != 0) {
-	      pform_range_t index;
-	      if ($2->size() > 1) {
-		    yyerror(@2, "sorry: only 1 dimensional arrays "
-			    "are currently supported.");
-	      }
-	      index = $2->front();
-	      pform_set_reg_idx(name, index.first, index.second);
-	      delete $2;
-	}
+	pform_set_reg_idx(name, $2);
 	$$ = $1;
       }
   ;
@@ -5126,7 +5005,7 @@ net_variable_list
 	;
 
 specify_item
-	: K_specparam specparam_list ';'
+	: K_specparam specparam_decl ';'
 	| specify_simple_path_decl ';'
                 { pform_module_specify_path($1);
 		}
@@ -5332,7 +5211,8 @@ specify_path_identifiers
 specparam
 	: IDENTIFIER '=' expression
 		{ PExpr*tmp = $3;
-		  pform_set_specparam(lex_strings.make($1), tmp);
+		  pform_set_specparam(@1, lex_strings.make($1),
+		                      param_active_range, tmp);
 		  delete[]$1;
 		}
 	| IDENTIFIER '=' expression ':' expression ':' expression
@@ -5370,7 +5250,8 @@ specparam
 		        cerr << " expression." << endl;
 		        min_typ_max_warn -= 1;
 		  }
-		  pform_set_specparam(lex_strings.make($1), tmp);
+		  pform_set_specparam(@1, lex_strings.make($1),
+		                      param_active_range, tmp);
 		  delete[]$1;
 		}
 	| PATHPULSE_IDENTIFIER '=' expression
@@ -5385,9 +5266,17 @@ specparam
 	;
 
 specparam_list
-	: specparam
-	| specparam_list ',' specparam
-	;
+  : specparam
+  | specparam_list ',' specparam
+  ;
+
+specparam_decl
+  : specparam_list
+  | range
+      { param_active_range = $1; }
+    specparam_list
+      { param_active_range = 0; }
+  ;
 
 spec_polarity
 	: '+'  { $$ = '+'; }
@@ -5532,13 +5421,13 @@ statement_item /* This is roughly statement_item in the LRM */
      need to do is remember that this is a parallel block so that the
      code generator can do the right thing. */
 
-  | K_fork K_join
-      { PBlock*tmp = new PBlock(PBlock::BL_PAR);
+  | K_fork join_keyword
+      { PBlock*tmp = new PBlock($2);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | K_fork statement_or_null_list K_join
-      { PBlock*tmp = new PBlock(PBlock::BL_PAR);
+  | K_fork statement_or_null_list join_keyword
+      { PBlock*tmp = new PBlock($3);
 	FILE_NAME(tmp, @1);
 	tmp->set_statement(*$2);
 	delete $2;
@@ -5550,11 +5439,12 @@ statement_item /* This is roughly statement_item in the LRM */
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
-    statement_or_null_list_opt K_join
+    statement_or_null_list_opt join_keyword
       { pform_pop_scope();
         assert(! current_block_stack.empty());
 	PBlock*tmp = current_block_stack.top();
 	current_block_stack.pop();
+	tmp->set_join_type($7);
 	if ($6) tmp->set_statement(*$6);
 	delete[]$3;
 	delete $6;
@@ -5670,56 +5560,56 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
 
-	| error '=' expression ';'
-                { yyerror(@2, "Syntax in assignment statement l-value.");
-		  yyerrok;
-		  $$ = new PNoop;
-		}
-	| lpvalue K_LE expression ';'
-		{ PAssignNB*tmp = new PAssignNB($1,$3);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| error K_LE expression ';'
-                { yyerror(@2, "Syntax in assignment statement l-value.");
-		  yyerrok;
-		  $$ = new PNoop;
-		}
-	| lpvalue '=' delay1 expression ';'
-		{ PExpr*del = $3->front(); $3->pop_front();
-		  assert($3->empty());
-		  PAssign*tmp = new PAssign($1,del,$4);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| lpvalue K_LE delay1 expression ';'
-		{ PExpr*del = $3->front(); $3->pop_front();
-		  assert($3->empty());
-		  PAssignNB*tmp = new PAssignNB($1,del,$4);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| lpvalue '=' event_control expression ';'
-		{ PAssign*tmp = new PAssign($1,0,$3,$4);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| lpvalue '=' K_repeat '(' expression ')' event_control expression ';'
-		{ PAssign*tmp = new PAssign($1,$5,$7,$8);
-		  FILE_NAME(tmp,@1);
-		  tmp->set_lineno(@1.first_line);
-		  $$ = tmp;
-		}
-	| lpvalue K_LE event_control expression ';'
-		{ PAssignNB*tmp = new PAssignNB($1,0,$3,$4);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
-	| lpvalue K_LE K_repeat '(' expression ')' event_control expression ';'
-		{ PAssignNB*tmp = new PAssignNB($1,$5,$7,$8);
-		  FILE_NAME(tmp, @1);
-		  $$ = tmp;
-		}
+  | error '=' expression ';'
+      { yyerror(@2, "Syntax in assignment statement l-value.");
+	yyerrok;
+	$$ = new PNoop;
+      }
+  | lpvalue K_LE expression ';'
+      { PAssignNB*tmp = new PAssignNB($1,$3);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | error K_LE expression ';'
+      { yyerror(@2, "Syntax in assignment statement l-value.");
+	yyerrok;
+	$$ = new PNoop;
+      }
+  | lpvalue '=' delay1 expression ';'
+      { PExpr*del = $3->front(); $3->pop_front();
+	assert($3->empty());
+	PAssign*tmp = new PAssign($1,del,$4);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_LE delay1 expression ';'
+      { PExpr*del = $3->front(); $3->pop_front();
+	assert($3->empty());
+	PAssignNB*tmp = new PAssignNB($1,del,$4);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue '=' event_control expression ';'
+      { PAssign*tmp = new PAssign($1,0,$3,$4);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue '=' K_repeat '(' expression ')' event_control expression ';'
+      { PAssign*tmp = new PAssign($1,$5,$7,$8);
+	FILE_NAME(tmp,@1);
+	tmp->set_lineno(@1.first_line);
+	$$ = tmp;
+      }
+  | lpvalue K_LE event_control expression ';'
+      { PAssignNB*tmp = new PAssignNB($1,0,$3,$4);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  | lpvalue K_LE K_repeat '(' expression ')' event_control expression ';'
+      { PAssignNB*tmp = new PAssignNB($1,$5,$7,$8);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
 
   /* The IEEE1800 standard defines dynamic_array_new assignment as a
      different rule from regular assignment. That implies that the
@@ -5892,12 +5782,12 @@ statement_or_null_list_opt
 statement_or_null_list
   : statement_or_null_list statement_or_null
       { vector<Statement*>*tmp = $1;
-	tmp->push_back($2);
+	if ($2) tmp->push_back($2);
 	$$ = tmp;
       }
   | statement_or_null
-      { vector<Statement*>*tmp = new vector<Statement*>(1);
-	tmp->at(0) = $1;
+      { vector<Statement*>*tmp = new vector<Statement*>(0);
+	if ($1) tmp->push_back($1);
 	$$ = tmp;
       }
   ;

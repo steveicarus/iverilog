@@ -14,13 +14,14 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "vtype.h"
 # include  "parse_types.h"
 # include  <map>
 # include  <typeinfo>
+# include  <cassert>
 
 using namespace std;
 
@@ -162,6 +163,49 @@ void VTypeEnum::show(ostream&out) const
       out << ")";
 }
 
+VTypeRecord::VTypeRecord(std::list<element_t*>*elements)
+: elements_(elements->size())
+{
+      for (size_t idx = 0 ; idx < elements_.size() ; idx += 1) {
+	    elements_[idx] = elements->front();
+	    elements->pop_front();
+      }
+      delete elements;
+}
+
+VTypeRecord::~VTypeRecord()
+{
+      for (size_t idx = 0 ; idx < elements_.size() ; idx += 1)
+	    delete elements_[idx];
+}
+
+void VTypeRecord::show(ostream&out) const
+{
+      write_to_stream(out);
+}
+
+const VTypeRecord::element_t* VTypeRecord::element_by_name(perm_string name) const
+{
+      for (vector<element_t*>::const_iterator cur = elements_.begin()
+		 ; cur != elements_.end() ; ++cur) {
+	    element_t*curp = *cur;
+	    if (curp->peek_name() == name)
+		  return curp;
+      }
+
+      return 0;
+}
+
+VTypeRecord::element_t::element_t(perm_string name, const VType*typ)
+: name_(name), type_(typ)
+{
+}
+
+VTypeDef::VTypeDef(perm_string nam)
+: name_(nam), type_(0)
+{
+}
+
 VTypeDef::VTypeDef(perm_string nam, const VType*typ)
 : name_(nam), type_(typ)
 {
@@ -169,4 +213,10 @@ VTypeDef::VTypeDef(perm_string nam, const VType*typ)
 
 VTypeDef::~VTypeDef()
 {
+}
+
+void VTypeDef::set_definition(const VType*typ)
+{
+      assert(type_ == 0);
+      type_ = typ;
 }

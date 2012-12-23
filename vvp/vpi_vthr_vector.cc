@@ -15,7 +15,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 /*
@@ -531,7 +531,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	   will not have access to the proper value. Punt and return a
 	   0.0 value instead. */
       if (vpip_current_vthread)
-	    val = vthread_get_real(vpip_current_vthread, obj->index);
+	    val = vthread_get_real_stack(vpip_current_vthread, obj->index);
 
       switch (vp->format) {
 
@@ -632,6 +632,96 @@ void vpi_handle_delete()
       for (iter = handle_map.begin(); iter != handle_map.end(); ++ iter ) {
 	    if (iter->second) thread_vthr_delete_real(iter->first);
 	    else thread_word_delete_real(iter->first);
+      }
+}
+#endif
+
+class __vpiVThrStrStack : public __vpiHandle {
+    public:
+      __vpiVThrStrStack(unsigned depth);
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+    private:
+      const char* name;
+      unsigned depth_;
+};
+
+__vpiVThrStrStack::__vpiVThrStrStack(unsigned d)
+: depth_(d)
+{
+}
+
+int __vpiVThrStrStack::get_type_code(void) const
+{ return vpiConstant; }
+
+int __vpiVThrStrStack::vpi_get(int code)
+{
+      switch (code) {
+	  case vpiConstType:
+	    return vpiStringConst;
+#ifdef CHECK_WITH_VALGRIND
+	  case _vpiFromThr:
+	    return _vpiString;
+#endif
+	  default:
+	    return 0;
+      }
+}
+
+void __vpiVThrStrStack::vpi_get_value(p_vpi_value vp)
+{
+      string val;
+      char*rbuf = 0;
+
+      if (vpip_current_vthread)
+	    val = vthread_get_str_stack(vpip_current_vthread, depth_);
+
+      switch (vp->format) {
+
+	  case vpiObjTypeVal:
+	    vp->format = vpiStringVal;
+	  case vpiStringVal:
+	    rbuf = need_result_buf(val.size()+1, RBUF_VAL);
+	    strcpy(rbuf, val.c_str());
+	    vp->value.str = rbuf;
+	    break;
+
+	  default:
+	    fprintf(stderr, "vvp error: get %d not supported "
+		      "by vpiConstant (String)\n", (int)vp->format);
+
+	    vp->format = vpiSuppressVal;
+	    break;
+      }
+}
+
+
+vpiHandle vpip_make_vthr_str_stack(unsigned depth)
+{
+      class __vpiVThrStrStack*obj = new __vpiVThrStrStack(depth);
+      return obj;
+}
+
+#ifdef CHECK_WITH_VALGRIND
+static map<vpiHandle, bool> stack_map;
+
+void thread_string_delete(vpiHandle item)
+{
+      stack_map[item] = false;
+}
+
+static void thread_string_delete_real(vpiHandle item)
+{
+      class __vpiVThrStrStack*obj = dynamic_cast<__vpiVThrStrStack*>(item);
+      delete obj;
+}
+
+void vpi_stack_delete()
+{
+      map<vpiHandle, bool>::iterator iter;
+      for (iter = stack_map.begin(); iter != stack_map.end(); ++ iter ) {
+	    thread_string_delete_real(iter->first);
       }
 }
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen G. Tell <steve@telltronics.org>
+ * Copyright (c) 2000-2012 Stephen G. Tell <steve@telltronics.org>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "vpi_priv.h"
@@ -178,7 +178,10 @@ extern "C" PLI_INT32
 vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
 {
       char buffer[4096];
+      char *buf_ptr = buffer;
       int rc = 0;
+      bool need_free = false;
+      va_list saved_ap;
 
       if (!IS_MCD(mcd)) return 0;
 
@@ -187,28 +190,59 @@ vpi_mcd_vprintf(PLI_UINT32 mcd, const char*fmt, va_list ap)
 		    (unsigned int)mcd, fmt);
       }
 
+      va_copy(saved_ap, ap);
 #ifdef __MINGW32__
 	/*
 	 * The MinGW runtime (version 3.14) fixes some things, but breaks
 	 * %f for us, so we have to us the underlying version.
 	 */
       rc = _vsnprintf(buffer, sizeof buffer, fmt, ap);
+	/*
+	 * Windows returns -1 to indicate the result was truncated (thanks for
+	 * following the standard!). Since we don't know how big to make the
+	 * buffer just keep doubling it until it works.
+	 */
+      if (rc == -1) {
+	    size_t buf_size = sizeof buffer;
+	    buf_ptr = NULL;
+	    need_free = true;
+	    while (rc == -1) {
+		  va_list tmp_ap;
+		  va_copy(tmp_ap, saved_ap);
+		  buf_size *= 2;
+		  buf_ptr = (char *)realloc(buf_ptr, buf_size);
+		  rc = vsnprintf(buf_ptr, buf_size, fmt, tmp_ap);
+		  va_end(tmp_ap);
+	    }
+      }
 #else
       rc = vsnprintf(buffer, sizeof buffer, fmt, ap);
+      assert(rc >= 0);
+	/*
+	 * If rc is greater than sizeof buffer then the result was truncated
+	 * so the print needs to be redone with a larger buffer (very rare).
+	 */
+      if ((unsigned) rc >= sizeof buffer) {
+	    buf_ptr = (char *)malloc(rc + 1);
+	    need_free = true;
+	    rc = vsnprintf(buf_ptr, rc+1, fmt, saved_ap);
+      }
 #endif
+      va_end(saved_ap);
 
       for(int i = 0; i < 31; i++) {
 	    if((mcd>>i) & 1) {
 		  if(mcd_table[i].fp) {
 			  // echo to logfile
 			if (i == 0 && logfile)
-			      fputs(buffer, logfile);
-			fputs(buffer, mcd_table[i].fp);
+			      fputs(buf_ptr, logfile);
+			fputs(buf_ptr, mcd_table[i].fp);
 		  } else {
 			rc = EOF;
 		  }
 	    }
       }
+      if (need_free) free(buf_ptr);
 
       return rc;
 }

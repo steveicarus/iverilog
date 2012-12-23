@@ -1,7 +1,7 @@
 %option prefix="yy"
 %{
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -260,6 +260,7 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
   * string.
   */
 \"            { string_enter = YY_START; BEGIN(CSTRING); ECHO; }
+<CSTRING>\\\\ |
 <CSTRING>\\\" |
 <CSTRING>\\`  { ECHO; }
 <CSTRING>\r\n |

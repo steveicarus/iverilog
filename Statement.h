@@ -1,7 +1,7 @@
 #ifndef __Statement_H
 #define __Statement_H
 /*
- * Copyright (c) 1998-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  <string>
@@ -106,6 +106,10 @@ class PAssign_  : public Statement {
       NetAssign_* elaborate_lval(Design*, NetScope*scope) const;
       NetExpr* elaborate_rval_(Design*, NetScope*, unsigned lv_width,
 			       ivl_variable_type_t type) const;
+      NetExpr* elaborate_rval_(Design*, NetScope*, ivl_type_t ntype) const;
+
+      NetExpr* elaborate_rval_obj_(Design*, NetScope*,
+				   ivl_variable_type_t type) const;
 
       PExpr* delay_;
       PEventStatement*event_;
@@ -165,7 +169,7 @@ class PAssignNB  : public PAssign_ {
 class PBlock  : public PScope, public Statement {
 
     public:
-      enum BL_TYPE { BL_SEQ, BL_PAR };
+      enum BL_TYPE { BL_SEQ, BL_PAR, BL_JOIN_NONE, BL_JOIN_ANY };
 
 	// If the block has a name, it is a scope and also has a parent.
       explicit PBlock(perm_string n, LexicalScope*parent, BL_TYPE t);
@@ -175,6 +179,10 @@ class PBlock  : public PScope, public Statement {
 
       BL_TYPE bl_type() const { return bl_type_; }
 
+	// If the bl_type() is BL_PAR, it is possible to replace it
+	// with JOIN_NONE or JOIN_ANY. This is to help the parser.
+      void set_join_type(BL_TYPE);
+
       void set_statement(const std::vector<Statement*>&st);
 
       virtual void dump(ostream&out, unsigned ind) const;
@@ -183,7 +191,7 @@ class PBlock  : public PScope, public Statement {
       virtual void elaborate_sig(Design*des, NetScope*scope) const;
 
     private:
-      const BL_TYPE bl_type_;
+      BL_TYPE bl_type_;
       std::vector<Statement*>list_;
 };
 
@@ -202,6 +210,8 @@ class PCallTask  : public Statement {
     private:
       NetProc* elaborate_sys(Design*des, NetScope*scope) const;
       NetProc* elaborate_usr(Design*des, NetScope*scope) const;
+
+      NetProc*elaborate_method_(Design*des, NetScope*scope) const;
 
       pform_name_t path_;
       vector<PExpr*> parms_;

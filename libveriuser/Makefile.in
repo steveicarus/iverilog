@@ -12,9 +12,8 @@
 #
 #    You should have received a copy of the GNU Library General Public
 #    License along with this program; if not, write to the Free
-#    Software Foundation, Inc.,
-#    59 Temple Place - Suite 330
-#    Boston, MA 02111-1307, USA
+#    Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+#    Boston, MA 02110-1301, USA.
 #
 SHELL = /bin/sh
 
@@ -43,6 +42,10 @@ INCLUDE_PATH = -I. -I..
 else
 INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
 endif
+
+LDRELOCFLAGS = @LDRELOCFLAGS@
+
+LDTARGETFLAGS = @LDTARGETFLAGS@
 
 CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
@@ -87,7 +90,7 @@ stamp-config-h: $(srcdir)/config.h.in ../config.status
 config.h: stamp-config-h
 
 libveriuser.o: $O
-	$(LD) -r -o $@ $O
+	$(LD) $(LDTARGETFLAGS) -r -o $@ $O
 
 libveriuser.a: libveriuser.o
 	rm -f $@

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "compile.h"
@@ -65,9 +65,8 @@ static void __compile_var_real(char*label, char*name,
       delete[] name;
 }
 
-void compile_var_real(char*label, char*name, int msb, int lsb)
+void compile_var_real(char*label, char*name)
 {
-      assert(msb == 0 && lsb == 0);
       __compile_var_real(label, name, 0, 0);
 }
 
@@ -77,6 +76,75 @@ void compile_varw_real(char*label, vvp_array_t array,
 {
       assert(msb == 0 && lsb == 0);
       __compile_var_real(label, 0, array, addr);
+}
+
+void compile_var_string(char*label, char*name)
+{
+      vvp_net_t*net = new vvp_net_t;
+
+      if (vpip_peek_current_scope()->is_automatic) {
+	    vvp_fun_signal_string_aa*tmp = new vvp_fun_signal_string_aa;
+	    net->fil = tmp;
+	    net->fun = tmp;
+      } else {
+	    net->fil = 0;
+	    net->fun = new vvp_fun_signal_string_sa;
+      }
+
+      define_functor_symbol(label, net);
+
+      vpiHandle obj = vpip_make_string_var(name, net);
+      compile_vpi_symbol(label, obj);
+
+      vpip_attach_to_current_scope(obj);
+      free(label);
+      delete[] name;
+}
+
+void compile_var_darray(char*label, char*name)
+{
+      vvp_net_t*net = new vvp_net_t;
+
+      if (vpip_peek_current_scope()->is_automatic) {
+	    vvp_fun_signal_object_aa*tmp = new vvp_fun_signal_object_aa;
+	    net->fil = tmp;
+	    net->fun = tmp;
+      } else {
+	    net->fil = 0;
+	    net->fun = new vvp_fun_signal_object_sa;
+      }
+
+      define_functor_symbol(label, net);
+
+      vpiHandle obj = vpip_make_darray_var(name, net);
+      compile_vpi_symbol(label, obj);
+
+      vpip_attach_to_current_scope(obj);
+      free(label);
+      delete[] name;
+}
+
+void compile_var_cobject(char*label, char*name)
+{
+      vvp_net_t*net = new vvp_net_t;
+
+      if (vpip_peek_current_scope()->is_automatic) {
+	    vvp_fun_signal_object_aa*tmp = new vvp_fun_signal_object_aa;
+	    net->fil = tmp;
+	    net->fun = tmp;
+      } else {
+	    net->fil = 0;
+	    net->fun = new vvp_fun_signal_object_sa;
+      }
+
+      define_functor_symbol(label, net);
+
+      vpiHandle obj = vpip_make_cobject_var(name, net);
+      compile_vpi_symbol(label, obj);
+
+      vpip_attach_to_current_scope(obj);
+      free(label);
+      delete[] name;
 }
 
 /*
@@ -140,6 +208,7 @@ void compile_variable(char*label, char*name,
       free(label);
       delete[] name;
 }
+
 
 vvp_net_t* create_constant_node(const char*val_str)
 {

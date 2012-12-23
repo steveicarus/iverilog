@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  <map>
@@ -104,7 +104,7 @@ class Entity : public ComponentBase {
 
 	// After the architecture is bound, elaboration calls this
 	// method to elaborate this entity. This method arranges for
-	// elaboration to hapen all the way through the architecture
+	// elaboration to happen all the way through the architecture
 	// that is bound to this entity.
       int elaborate();
 

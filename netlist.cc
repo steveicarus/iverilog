@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -27,7 +27,12 @@
 # include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "netclass.h"
+# include  "netdarray.h"
+# include  "netenum.h"
+# include  "netparray.h"
 # include  "netstruct.h"
+# include  "netvector.h"
 # include  "ivl_assert.h"
 
 
@@ -447,40 +452,18 @@ const Link& NetDelaySrc::condit_pin() const
       return pin(pin_count()-1);
 }
 
-NetNet::NetNet(NetScope*s, perm_string n, Type t, unsigned npins)
-: NetObj(s, n, 1),
-    type_(t), port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE),
-    signed_(false), isint_(false), is_scalar_(false), local_flag_(false),
-    enumeration_(0), struct_type_(0), discipline_(0),
-    dimensions_(0), s0_(0), e0_(0), eref_count_(0), lref_count_(0)
+PortType::Enum PortType::merged( Enum lhs, Enum rhs )
 {
-      assert(s);
-      assert(npins>0);
-
-	// Synthesize a single range to describe this canonical vector.
-      packed_dims_.push_back(NetNet::range_t(npins-1, 0));
-
-      Link::DIR dir = Link::PASSIVE;
-
-      switch (t) {
-	  case REG:
-	  case INTEGER:
-	  case IMPLICIT_REG:
-	    dir = Link::OUTPUT;
-	    break;
-	  case SUPPLY0:
-	    dir = Link::OUTPUT;
-	    break;
-	  case SUPPLY1:
-	    dir = Link::OUTPUT;
-	    break;
-	  default:
-	    break;
-      }
-
-      pin(0).set_dir(dir);
-
-      s->add_signal(this);
+    if( lhs == NOT_A_PORT || rhs == NOT_A_PORT )
+        return NOT_A_PORT;
+    if( lhs == PIMPLICIT )
+        return rhs;
+    if( rhs == PIMPLICIT )
+      return lhs;
+    if( lhs == rhs ) {
+        return lhs;
+    }
+    return PINOUT;
 }
 
 void NetNet::initialize_dir_(Link::DIR dir)
@@ -495,68 +478,76 @@ void NetNet::initialize_dir_(Link::DIR dir)
       }
 }
 
-NetNet::NetNet(NetScope*s, perm_string n, Type t,
-	       const list<NetNet::range_t>&packed)
-: NetObj(s, n, 1), type_(t),
-    port_type_(NOT_A_PORT), data_type_(IVL_VT_NO_TYPE), signed_(false),
-    isint_(false), is_scalar_(false), local_flag_(false),
-    enumeration_(0), struct_type_(0), discipline_(0),
-    dimensions_(0), s0_(0), e0_(0),
-    eref_count_(0), lref_count_(0)
+static unsigned calculate_count(const list<netrange_t>&unpacked)
 {
-      packed_dims_ = packed;
-      assert(s);
+      unsigned long sum = 1;
+      for (list<netrange_t>::const_iterator cur = unpacked.begin()
+		 ; cur != unpacked.end() ; ++cur) {
+	      // Special case: If there are any undefined dimensions,
+	      // then give up on trying to create pins for the net.
+	    if (! cur->defined())
+		  return 0;
 
-      Link::DIR dir = Link::PASSIVE;
-
-      switch (t) {
-	  case REG:
-	  case IMPLICIT_REG:
-	    dir = Link::OUTPUT;
-	    break;
-	  case SUPPLY0:
-	    dir = Link::OUTPUT;
-	    break;
-	  case SUPPLY1:
-	    dir = Link::OUTPUT;
-	    break;
-	  default:
-	    break;
+	    sum *= cur->width();
       }
 
-      initialize_dir_(dir);
-
-      s->add_signal(this);
-}
-
-static unsigned calculate_count(long s, long e)
-{
-      unsigned long r;
-      if (s >= e) {
-	    r = s - e;
-      } else {
-	    r = e - s;
-      }
-      if (r >= UINT_MAX) {
+      if (sum >= UINT_MAX)
 	    return 0;
+
+      return sum;
+}
+
+template <class T> static unsigned calculate_count(T*type)
+{
+      long wid = type->packed_width();
+      if (wid >= 0)
+	    return wid;
+      else
+	    return 1;
+}
+
+void NetNet::calculate_slice_widths_from_packed_dims_(void)
+{
+      ivl_assert(*this, net_type_);
+      slice_dims_ = net_type_->slice_dimensions();
+
+	// Special case: There are no actual packed dimensions, so
+	// build up a fake dimension of "1".
+      if (slice_dims_.empty()) {
+	    slice_wids_.resize(1);
+	    slice_wids_[0] = net_type_->packed_width();
+	    return;
       }
-      return r + 1;
+
+      slice_wids_.resize(slice_dims_.size());
+
+      ivl_assert(*this, ! slice_wids_.empty());
+      slice_wids_[0] = netrange_width(slice_dims_);
+      vector<netrange_t>::const_iterator cur = slice_dims_.begin();
+      for (size_t idx = 1 ; idx < slice_wids_.size() ; idx += 1) {
+	    slice_wids_[idx] = slice_wids_[idx-1] / cur->width();
+      }
 }
 
 NetNet::NetNet(NetScope*s, perm_string n, Type t,
-	       const list<NetNet::range_t>&packed, long array_s, long array_e)
-: NetObj(s, n, calculate_count(array_s, array_e)),
+	       const list<netrange_t>&unpacked, ivl_type_s*use_net_type)
+: NetObj(s, n, calculate_count(unpacked)),
     type_(t), port_type_(NOT_A_PORT),
-    data_type_(IVL_VT_NO_TYPE), signed_(false), isint_(false),
-    is_scalar_(false), local_flag_(false), enumeration_(0), struct_type_(0),
-    discipline_(0),
-    dimensions_(1), s0_(array_s), e0_(array_e),
+    local_flag_(false), net_type_(use_net_type),
+    discipline_(0), unpacked_dims_(unpacked.size()),
     eref_count_(0), lref_count_(0)
 {
-      packed_dims_ = packed;
+      calculate_slice_widths_from_packed_dims_();
+      size_t idx = 0;
+      for (list<netrange_t>::const_iterator cur = unpacked.begin()
+		 ; cur != unpacked.end() ; ++cur, idx += 1) {
+	    unpacked_dims_[idx] = *cur;
+      }
+      assert(idx == unpacked_dims_.size());
+
       ivl_assert(*this, s);
       if (pin_count() == 0) {
-	    cerr << "Array too big [" << array_s << ":" << array_e << "]" << endl;
+	    cerr << "Invalid array dimensions: " << unpacked << endl;
 	    ivl_assert(*this, 0);
       }
 
@@ -582,15 +573,6 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
       s->add_signal(this);
 }
 
-static unsigned calculate_count(netstruct_t*type)
-{
-      long wid = type->packed_width();
-      if (wid >= 0)
-	    return wid;
-      else
-	    return 1;
-}
-
 /*
  * When we create a netnet for a packed struct, create a single
  * vector with the msb_/lsb_ chosen to name enough bits for the entire
@@ -599,13 +581,71 @@ static unsigned calculate_count(netstruct_t*type)
 NetNet::NetNet(NetScope*s, perm_string n, Type t, netstruct_t*ty)
 : NetObj(s, n, 1),
     type_(t), port_type_(NOT_A_PORT),
-    data_type_(IVL_VT_NO_TYPE), signed_(false), isint_(false),
-    is_scalar_(false), local_flag_(false), enumeration_(0), struct_type_(ty),
+    local_flag_(false), net_type_(ty),
     discipline_(0),
-    dimensions_(0), s0_(0), e0_(0),
     eref_count_(0), lref_count_(0)
 {
-      packed_dims_.push_back(range_t(calculate_count(ty)-1, 0));
+	//XXXX packed_dims_.push_back(netrange_t(calculate_count(ty)-1, 0));
+      calculate_slice_widths_from_packed_dims_();
+      Link::DIR dir = Link::PASSIVE;
+
+      switch (t) {
+	  case REG:
+	  case IMPLICIT_REG:
+	    dir = Link::OUTPUT;
+	    break;
+	  case SUPPLY0:
+	    dir = Link::OUTPUT;
+	    break;
+	  case SUPPLY1:
+	    dir = Link::OUTPUT;
+	    break;
+	  default:
+	    break;
+      }
+
+      initialize_dir_(dir);
+
+      s->add_signal(this);
+}
+
+NetNet::NetNet(NetScope*s, perm_string n, Type t, netdarray_t*ty)
+: NetObj(s, n, 1),
+    type_(t), port_type_(NOT_A_PORT),
+    local_flag_(false), net_type_(ty),
+    discipline_(0),
+    eref_count_(0), lref_count_(0)
+{
+      Link::DIR dir = Link::PASSIVE;
+
+      switch (t) {
+	  case REG:
+	  case IMPLICIT_REG:
+	    dir = Link::OUTPUT;
+	    break;
+	  case SUPPLY0:
+	    dir = Link::OUTPUT;
+	    break;
+	  case SUPPLY1:
+	    dir = Link::OUTPUT;
+	    break;
+	  default:
+	    break;
+      }
+
+      initialize_dir_(dir);
+
+      s->add_signal(this);
+}
+
+NetNet::NetNet(NetScope*s, perm_string n, Type t, netvector_t*ty)
+: NetObj(s, n, 1),
+    type_(t), port_type_(NOT_A_PORT),
+    local_flag_(false), net_type_(ty),
+    discipline_(0),
+    eref_count_(0), lref_count_(0)
+{
+      calculate_slice_widths_from_packed_dims_();
       Link::DIR dir = Link::PASSIVE;
 
       switch (t) {
@@ -693,64 +733,103 @@ void NetNet::port_type(NetNet::PortType t)
       port_type_ = t;
 }
 
-ivl_variable_type_t NetNet::data_type() const
+int NetNet::get_module_port_index() const
 {
-      return data_type_;
+      return port_index_;
 }
 
-void NetNet::data_type(ivl_variable_type_t t)
+void NetNet::set_module_port_index(unsigned idx)
 {
-      data_type_ = t;
+    port_index_ = idx;
+    assert( port_index_ >= 0 );
+}
+
+ivl_variable_type_t NetNet::data_type() const
+{
+      if (net_type_==0)
+	    return IVL_VT_LOGIC;
+      else
+	    return net_type_->base_type();
 }
 
 bool NetNet::get_signed() const
 {
-      if (data_type_ == IVL_VT_REAL)
-	    return true;
+      if (net_type_==0)
+	    return false;
       else
-	    return signed_;
-}
-
-void NetNet::set_signed(bool flag)
-{
-      signed_ = flag;
+	    return net_type_->get_signed();
 }
 
 bool NetNet::get_isint() const
 {
-      return isint_;
-}
-
-void NetNet::set_isint(bool flag)
-{
-      isint_ = flag;
+      if (netvector_t*vec = dynamic_cast<netvector_t*> (net_type_))
+	    return vec->get_isint();
+      else
+	    return false;
 }
 
 bool NetNet::get_scalar() const
 {
-      return is_scalar_;
-}
-
-void NetNet::set_scalar(bool flag)
-{
-      is_scalar_ = flag;
+      if (netvector_t*vec = dynamic_cast<netvector_t*> (net_type_))
+	    return vec->get_scalar();
+      else
+	    return false;
 }
 
 netenum_t*NetNet::enumeration(void) const
 {
-      return enumeration_;
+      return dynamic_cast<netenum_t*> (net_type_);
 }
 
-void NetNet::set_enumeration(netenum_t*es)
+const netstruct_t*NetNet::struct_type(void) const
 {
-      ivl_assert(*this, struct_type_ == 0);
-      ivl_assert(*this, enumeration_ == 0);
-      enumeration_ = es;
+      const ivl_type_s*cur_type = net_type_;
+      while (cur_type) {
+	    if (const netdarray_t*da = dynamic_cast<const netdarray_t*> (cur_type)) {
+		  cur_type = da->element_type();
+		  continue;
+	    }
+	    if (const netparray_t*da = dynamic_cast<const netparray_t*> (cur_type)) {
+		  cur_type = da->element_type();
+		  continue;
+	    }
+	    if (const netstruct_t*st = dynamic_cast<const netstruct_t*> (cur_type))
+		  return st;
+	    else
+		  return 0;
+      }
+
+      assert(0);
+      return 0;
 }
 
-netstruct_t*NetNet::struct_type(void) const
+netdarray_t* NetNet::darray_type(void) const
 {
-      return struct_type_;
+      return dynamic_cast<netdarray_t*> (net_type_);
+}
+
+netclass_t* NetNet::class_type(void) const
+{
+      return dynamic_cast<netclass_t*> (net_type_);
+}
+
+/*
+ * "depth" is the number of index expressions that the user is using
+ * to index this identifer. So consider if Net was declared like so:
+ *
+ *   reg [5:0][3:0] foo;
+ *
+ * In this case, slice_width(2) == 1  (slice_width(N) where N is the
+ * number of dimensions will always be 1.) and represents
+ * $bits(foo[a][b]). Then, slice_width(1)==4 ($bits(foo[a]) and slice_width(0)==24.
+ */
+unsigned long NetNet::slice_width(size_t depth) const
+{
+      if (depth > slice_wids_.size())
+	    return 0;
+      if (depth == slice_wids_.size())
+	    return 1;
+      return slice_wids_[depth];
 }
 
 ivl_discipline_t NetNet::get_discipline() const
@@ -764,61 +843,45 @@ void NetNet::set_discipline(ivl_discipline_t dis)
       discipline_ = dis;
 }
 
-unsigned long NetNet::vector_width(const list<NetNet::range_t>&packed)
-{
-      unsigned wid = 1;
-      for (list<NetNet::range_t>::const_iterator cur = packed.begin()
-		 ; cur != packed.end() ; ++cur) {
-	    unsigned use_wid;
-	    if (cur->msb >= cur->lsb)
-		  use_wid = cur->msb - cur->lsb + 1;
-	    else
-		  use_wid = cur->lsb - cur->msb + 1;
-	    wid *= use_wid;
-      }
-
-      return wid;
-}
-
 bool NetNet::sb_is_valid(const list<long>&indices, long sb) const
 {
-      ivl_assert(*this, indices.size()+1 == packed_dims_.size());
-      assert(packed_dims_.size() == 1);
-      const range_t&rng = packed_dims_.back();
-      if (rng.msb >= rng.lsb)
-	    return (sb <= rng.msb) && (sb >= rng.lsb);
+      ivl_assert(*this, indices.size()+1 == packed_dims().size());
+      assert(packed_dims().size() == 1);
+      const netrange_t&rng = packed_dims().back();
+      if (rng.get_msb() >= rng.get_lsb())
+	    return (sb <= rng.get_msb()) && (sb >= rng.get_lsb());
       else
-	    return (sb <= rng.lsb) && (sb >= rng.msb);
+	    return (sb <= rng.get_lsb()) && (sb >= rng.get_msb());
 }
 
 long NetNet::sb_to_idx(const list<long>&indices, long sb) const
 {
-      ivl_assert(*this, indices.size()+1 == packed_dims_.size());
+      ivl_assert(*this, indices.size()+1 == packed_dims().size());
 
-      list<range_t>::const_iterator pcur = packed_dims_.end();
+      vector<netrange_t>::const_iterator pcur = packed_dims().end();
       -- pcur;
 
       long acc_off;
       long acc_wid = pcur->width();
-      if (pcur->msb >= pcur->lsb)
-	    acc_off = sb - pcur->lsb;
+      if (pcur->get_msb() >= pcur->get_lsb())
+	    acc_off = sb - pcur->get_lsb();
       else
-	    acc_off = pcur->lsb - sb;
+	    acc_off = pcur->get_lsb() - sb;
 
 	// The acc_off is the possition within the innermost
 	// dimension. If this is a multi-dimension packed array then
 	// we need to add in the canonical address of the current slice.
-      if (indices.size() >= 1) {
+      if (! indices.empty()) {
 	    list<long>::const_iterator icur = indices.end();
 	    do {
 		  -- icur;
 		  -- pcur;
 
 		  long tmp_off;
-		  if (pcur->msb >= pcur->lsb)
-			tmp_off = *icur - pcur->lsb;
+		  if (pcur->get_msb() >= pcur->get_lsb())
+			tmp_off = *icur - pcur->get_lsb();
 		  else
-			tmp_off = pcur->lsb - *icur;
+			tmp_off = pcur->get_lsb() - *icur;
 
 		  acc_off += tmp_off * acc_wid;
 		  acc_wid *= pcur->width();
@@ -831,97 +894,18 @@ long NetNet::sb_to_idx(const list<long>&indices, long sb) const
 
 bool NetNet::sb_to_slice(const list<long>&indices, long sb, long&loff, unsigned long&lwid) const
 {
-      ivl_assert(*this, indices.size() < packed_dims_.size());
+      ivl_assert(*this, indices.size() < packed_dims().size());
+      return prefix_to_slice(packed_dims(), indices, sb, loff, lwid);
+}
 
-      size_t acc_wid = 1;
-      list<range_t>::const_iterator pcur = packed_dims_.end();
-      for (size_t idx = indices.size()+1 ; idx < packed_dims_.size() ; idx += 1) {
-	    -- pcur;
-	    acc_wid *= pcur->width();
+unsigned NetNet::unpacked_count() const
+{
+      unsigned c = 1;
+      for (size_t idx = 0 ; idx < unpacked_dims_.size() ; idx += 1) {
+	    c *= unpacked_dims_[idx].width();
       }
 
-      lwid = acc_wid;
-
-      -- pcur;
-      if (sb < pcur->msb && sb < pcur->lsb)
-	    return false;
-      if (sb > pcur->msb && sb > pcur->lsb)
-	    return false;
-
-      long acc_off = 0;
-      if (pcur->msb >= pcur->lsb)
-	    acc_off += (sb - pcur->lsb) * acc_wid;
-      else
-	    acc_off += (sb - pcur->msb) * acc_wid;
-
-      if (indices.size() == 0) {
-	    loff = acc_off;
-	    return true;
-      }
-
-      lwid *= pcur->width();
-
-      list<long>::const_iterator icur = indices.end();
-      do {
-	    -- pcur;
-	    -- icur;
-	    acc_wid *= pcur->width();
-	    if (pcur->msb >= pcur->lsb)
-		  acc_off += (*icur - pcur->lsb) * acc_wid;
-	    else
-		  acc_off += (*icur - pcur->msb) * acc_wid;
-
-      } while (icur != indices.begin());
-
-      loff = acc_off;
-
-      return true;
-}
-
-
-unsigned NetNet::array_dimensions() const
-{
-      return dimensions_;
-}
-
-long NetNet::array_first() const
-{
-      if (s0_ <= e0_)
-	    return s0_;
-      else
-	    return e0_;
-}
-
-bool NetNet::array_addr_swapped() const
-{
-      if (s0_ <= e0_)
-	     return false;
-      else
-	     return true;
-}
-
-unsigned NetNet::array_count() const
-{
-      unsigned c = calculate_count(s0_, e0_);
-      ivl_assert(*this, c > 0);
       return c;
-}
-
-bool NetNet::array_index_is_valid(long sb) const
-{
-      if (sb < s0_ && sb < e0_)
-	    return false;
-      if (sb > e0_ && sb > s0_)
-	    return false;
-      return true;
-}
-
-unsigned NetNet::array_index_to_address(long sb) const
-{
-      if (s0_ <= e0_)
-	    return sb - s0_;
-      else
-	    return sb - e0_;
 }
 
 void NetNet::incr_eref()
@@ -946,7 +930,7 @@ unsigned NetNet::peek_eref() const
  */
 bool NetNet::test_part_lref(unsigned pmsb, unsigned plsb)
 {
-      if (lref_mask_.size() == 0)
+      if (lref_mask_.empty())
 	    lref_mask_.resize(vector_width());
 
       bool rc = false;
@@ -1045,11 +1029,6 @@ unsigned NetPartSelect::width() const
 unsigned NetPartSelect::base() const
 {
       return off_;
-}
-
-NetPartSelect::dir_t NetPartSelect::dir() const
-{
-      return dir_;
 }
 
 NetProc::NetProc()
@@ -2029,47 +2008,28 @@ NetProc* NetCondit::else_clause()
 }
 
 NetConst::NetConst(NetScope*s, perm_string n, verinum::V v)
-: NetNode(s, n, 1), width_(1)
+: NetNode(s, n, 1), value_(v, 1)
 {
       pin(0).set_dir(Link::OUTPUT);
-      value_ = new verinum::V[1];
-      value_[0] = v;
-      is_string_ = false;
 }
 
 NetConst::NetConst(NetScope*s, perm_string n, const verinum&val)
-: NetNode(s, n, 1), width_(val.len())
+: NetNode(s, n, 1), value_(val)
 {
       pin(0).set_dir(Link::OUTPUT);
-      value_ = new verinum::V[width_];
-      for (unsigned idx = 0 ;  idx < width_ ;  idx += 1) {
-	    value_[idx] = val.get(idx);
-      }
-      is_string_ = val.is_string();
 }
 
 NetConst::~NetConst()
 {
-      delete[]value_;
 }
 
 verinum::V NetConst::value(unsigned idx) const
 {
-      assert(idx < width_);
+      assert(idx < width());
       return value_[idx];
 }
 
-unsigned NetConst::width() const
-{
-      return width_;
-}
-
-bool NetConst::is_string() const
-{
-      return is_string_;
-}
-
-NetFuncDef::NetFuncDef(NetScope*s, NetNet*result, const svector<NetNet*>&po)
+NetFuncDef::NetFuncDef(NetScope*s, NetNet*result, const vector<NetNet*>&po)
 : scope_(s), statement_(0), result_sig_(result), ports_(po)
 {
 }
@@ -2102,12 +2062,12 @@ NetScope*NetFuncDef::scope()
 
 unsigned NetFuncDef::port_count() const
 {
-      return ports_.count();
+      return ports_.size();
 }
 
 const NetNet* NetFuncDef::port(unsigned idx) const
 {
-      assert(idx < ports_.count());
+      assert(idx < ports_.size());
       return ports_[idx];
 }
 
@@ -2117,7 +2077,7 @@ const NetNet* NetFuncDef::return_sig() const
 }
 
 NetSTask::NetSTask(const char*na, ivl_sfunc_as_task_t sfat,
-                   const svector<NetExpr*>&pa)
+                   const vector<NetExpr*>&pa)
 : name_(0), sfunc_as_task_(sfat), parms_(pa)
 {
       name_ = lex_strings.add(na);
@@ -2126,7 +2086,7 @@ NetSTask::NetSTask(const char*na, ivl_sfunc_as_task_t sfat,
 
 NetSTask::~NetSTask()
 {
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1)
 	    delete parms_[idx];
 
 	/* The name_ string is perm-allocated in lex_strings. */
@@ -2144,7 +2104,7 @@ ivl_sfunc_as_task_t NetSTask::sfunc_as_task() const
 
 unsigned NetSTask::nparms() const
 {
-      return parms_.count();
+      return parms_.size();
 }
 
 const NetExpr* NetSTask::parm(unsigned idx) const
@@ -2153,7 +2113,7 @@ const NetExpr* NetSTask::parm(unsigned idx) const
 }
 
 NetEUFunc::NetEUFunc(NetScope*scope, NetScope*def, NetESignal*res,
-                     svector<NetExpr*>&p, bool nc)
+                     vector<NetExpr*>&p, bool nc)
 : scope_(scope), func_(def), result_sig_(res), parms_(p), need_const_(nc)
 {
       expr_width(result_sig_->expr_width());
@@ -2161,7 +2121,7 @@ NetEUFunc::NetEUFunc(NetScope*scope, NetScope*def, NetESignal*res,
 
 NetEUFunc::~NetEUFunc()
 {
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1)
 	    delete parms_[idx];
 }
 #if 0
@@ -2177,12 +2137,12 @@ const NetESignal*NetEUFunc::result_sig() const
 
 unsigned NetEUFunc::parm_count() const
 {
-      return parms_.count();
+      return parms_.size();
 }
 
 const NetExpr* NetEUFunc::parm(unsigned idx) const
 {
-      assert(idx < parms_.count());
+      assert(idx < parms_.size());
       return parms_[idx];
 }
 
@@ -2249,25 +2209,6 @@ const string NetFree::name() const
 const NetScope* NetFree::scope() const
 {
       return scope_;
-}
-
-NetExpr::NetExpr(unsigned w)
-: width_(w), signed_flag_(false)
-{
-}
-
-NetExpr::~NetExpr()
-{
-}
-
-void NetExpr::cast_signed(bool flag)
-{
-      cast_signed_base_(flag);
-}
-
-bool NetExpr::has_width() const
-{
-      return true;
 }
 
 /*
@@ -2409,7 +2350,7 @@ const NetScope* NetEScope::scope() const
 }
 
 NetESignal::NetESignal(NetNet*n)
-: NetExpr(n->vector_width()), net_(n), word_(0)
+: NetExpr(n->vector_width()), net_(n), enum_type_(n->enumeration()), word_(0)
 {
       net_->incr_eref();
       set_line(*n);
@@ -2432,6 +2373,11 @@ NetESignal::~NetESignal()
 perm_string NetESignal::name() const
 {
       return net_->name();
+}
+
+netenum_t* NetESignal::enumeration() const
+{
+      return enum_type_;
 }
 
 const NetExpr* NetESignal::word_index() const
@@ -2461,21 +2407,24 @@ NetNet* NetESignal::sig()
  */
 long NetESignal::lsi() const
 {
-      const list<NetNet::range_t>&packed = net_->packed_dims();
+      const vector<netrange_t>&packed = net_->packed_dims();
       ivl_assert(*this, packed.size() == 1);
-      return packed.back().lsb;
+      return packed.back().get_lsb();
 }
 
 long NetESignal::msi() const
 {
-      const list<NetNet::range_t>&packed = net_->packed_dims();
+      const vector<netrange_t>&packed = net_->packed_dims();
       ivl_assert(*this, packed.size() == 1);
-      return packed.back().msb;
+      return packed.back().get_msb();
 }
 
 ivl_variable_type_t NetESignal::expr_type() const
 {
-      return net_->data_type();
+      if (net_->darray_type())
+	    return IVL_VT_DARRAY;
+      else
+	    return net_->data_type();
 }
 
 /*

@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "netlist.h"
@@ -79,6 +79,7 @@ extern NetNet*cast_to_int2(Design*des, NetScope*scope, NetNet*src, unsigned wid)
 extern NetNet*cast_to_real(Design*des, NetScope*scope, NetNet*src);
 
 extern NetExpr*cast_to_int2(NetExpr*expr);
+extern NetExpr*cast_to_real(NetExpr*expr);
 
 /*
  * Take the input expression and return a variation that assures that
@@ -94,6 +95,10 @@ extern NetExpr*condition_reduce(NetExpr*expr);
  */
 extern NetNet*crop_to_width(Design*des, NetNet*n, unsigned w);
 
+extern bool calculate_part(const LineInfo*li, Design*des, NetScope*scope,
+			   const index_component_t&index,
+			   long&off, unsigned long&wid);
+
 /*
  * These functions generate an equation to normalize an expression using
  * the provided vector/array information.
@@ -102,7 +107,7 @@ extern NetExpr*normalize_variable_base(NetExpr *base, long msb, long lsb,
                                        unsigned long wid, bool is_up,
 				       long slice_off =0);
 extern NetExpr*normalize_variable_base(NetExpr *base,
-				       const list<NetNet::range_t>&dims,
+				       const list<netrange_t>&dims,
 				       unsigned long wid, bool is_up);
 
 /*
@@ -142,8 +147,37 @@ extern NetExpr *normalize_variable_part_base(const list<long>&indices, NetExpr*b
 extern NetExpr*normalize_variable_slice_base(const list<long>&indices, NetExpr *base,
 					     const NetNet*reg, unsigned long&lwid);
 
-extern NetExpr*normalize_variable_array_base(NetExpr *base, long offset,
-                                             unsigned count);
+/*
+ * The as_indices() manipulator is a convenient way to emit a list of
+ * index values in the form [<>][<>]....
+ */
+template <class TYPE> struct __IndicesManip {
+      inline __IndicesManip(const std::list<TYPE>&v) : val(v) { }
+      const std::list<TYPE>&val;
+};
+template <class TYPE> inline __IndicesManip<TYPE> as_indices(const std::list<TYPE>&indices)
+{ return __IndicesManip<TYPE>(indices); }
+
+extern ostream& operator << (ostream&o, __IndicesManip<long>);
+extern ostream& operator << (ostream&o, __IndicesManip<NetExpr*>);
+
+/*
+ * Given a list of index expressions, generate elaborated expressions
+ * and constant values, if possible.
+ */
+extern bool indices_to_expressions(Design*des, NetScope*scope,
+				     // loc is for error messages.
+				   const LineInfo*loc,
+				     // src is the index list, and count is
+				     // the number of items in the list to use.
+				   const list<index_component_t>&src, unsigned count,
+				     // True if the expression MUST be constant.
+				   bool need_const,
+				     // These are the outputs.
+				   list<NetExpr*>&indices, list<long>&indices_const);
+
+extern NetExpr*normalize_variable_unpacked(const NetNet*net, list<long>&indices);
+extern NetExpr*normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices);
 
 /*
  * This function takes as input a NetNet signal and adds a constant
@@ -168,6 +202,7 @@ extern NetEConst*make_const_val(unsigned long val);
  * Make A const net
  */
 extern NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid);
+extern NetNet* make_const_z(Design*des, NetScope*scope, unsigned long wid);
 
 /*
  * In some cases the lval is accessible as a pointer to the head of
@@ -192,7 +227,8 @@ class PExpr;
 
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 			      PExpr*pe, int context_width,
-                              bool need_const =false);
+                              bool need_const =false,
+                              bool annotatable =false);
 
 /*
  * This function is a variant of elab_and_eval that elaborates and
@@ -227,17 +263,13 @@ bool eval_as_long(long&value, NetExpr*expr);
 bool eval_as_double(double&value, NetExpr*expr);
 
 /*
- * Evaluate the component of a scope path to get an hname_t value. Do
- * the evaluation in the context of the given scope.
- */
-extern hname_t eval_path_component(Design*des, NetScope*scope,
-				   const name_component_t&comp);
-
-/*
  * Evaluate an entire scope path in the context of the given scope.
  */
 extern std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
 					  const pform_name_t&path);
+extern hname_t eval_path_component(Design*des, NetScope*scope,
+				   const name_component_t&comp,
+				   bool&error_flag);
 
 /*
  * Return true if the data type is a type that is normally available
@@ -280,4 +312,12 @@ extern void collapse_partselect_pv_to_concat(Design*des, NetNet*sig);
 extern bool evaluate_index_prefix(Design*des, NetScope*scope,
 				  list<long>&prefix_indices,
 				  const list<index_component_t>&indices);
+
+extern NetExpr*collapse_array_indices(Design*des, NetScope*scope, NetNet*net,
+				      const std::list<index_component_t>&indices);
+
+extern NetExpr*collapse_array_exprs(Design*des, NetScope*scope,
+				    const LineInfo*loc, NetNet*net,
+				    const list<index_component_t>&indices);
+
 #endif

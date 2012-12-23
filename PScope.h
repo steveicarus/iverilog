@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "LineInfo.h"
@@ -30,6 +30,7 @@ class PExpr;
 class PFunction;
 class AProcess;
 class PProcess;
+class PClass;
 class PTask;
 class PWire;
 
@@ -165,8 +166,13 @@ class PScopeExtra : public PScope {
       ~PScopeExtra();
 
 	/* Task definitions within this module */
-      map<perm_string,PTask*> tasks;
-      map<perm_string,PFunction*> funcs;
+      std::map<perm_string,PTask*> tasks;
+      std::map<perm_string,PFunction*> funcs;
+	/* class definitions within this module. */
+      std::map<perm_string,PClass*> classes;
+
+    protected:
+      void dump_classes_(ostream&out, unsigned indent) const;
 };
 
 #endif

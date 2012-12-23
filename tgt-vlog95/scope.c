@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2011 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2012 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -61,8 +61,8 @@ void emit_func_return(ivl_signal_t sig)
       } else if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
 	    fprintf(vlog_out, " real");
       } else {
-	    int msb = ivl_signal_msb(sig);
-	    int lsb = ivl_signal_lsb(sig);
+	    int msb, lsb;
+	    get_sig_msb_lsb(sig, &msb, &lsb);
 	    if (msb != 0 || lsb != 0) fprintf(vlog_out, " [%d:%d]", msb, lsb);
       }
 }
@@ -108,9 +108,24 @@ void emit_var_def(ivl_signal_t sig)
 		                  ivl_signal_basename(sig));
 		  vlog_errors += 1;
 	    }
+      } else if (ivl_signal_data_type(sig) == IVL_VT_STRING) {
+	    fprintf(vlog_out, "string ");
+	    emit_sig_id(sig);
+	    fprintf(stderr, "%s:%u: vlog95 error: SystemVerilog strings (%s) "
+	                    "are not supported.\n", ivl_signal_file(sig),
+	                    ivl_signal_lineno(sig), ivl_signal_basename(sig));
+	    vlog_errors += 1;
+      } else if (ivl_signal_data_type(sig) == IVL_VT_DARRAY) {
+	    fprintf(vlog_out, "<dynamic array> ");
+	    emit_sig_id(sig);
+	    fprintf(stderr, "%s:%u: vlog95 error: SystemVerilog dynamic "
+	                    "arrays (%s) are not supported.\n",
+	                    ivl_signal_file(sig),
+	                    ivl_signal_lineno(sig), ivl_signal_basename(sig));
+	    vlog_errors += 1;
       } else {
-	    int msb = ivl_signal_msb(sig);
-	    int lsb = ivl_signal_lsb(sig);
+	    int msb, lsb;
+	    get_sig_msb_lsb(sig, &msb, &lsb);
 	    fprintf(vlog_out, "reg ");
 	    if (ivl_signal_signed(sig)) {
 		  if (allow_signed) {
@@ -184,8 +199,8 @@ static void save_net_constants(ivl_scope_t scope, ivl_signal_t sig)
 
 void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
 {
-      int msb = ivl_signal_msb(sig);
-      int lsb = ivl_signal_lsb(sig);
+      int msb, lsb;
+      get_sig_msb_lsb(sig, &msb, &lsb);
       if (ivl_signal_local(sig)) return;
       fprintf(vlog_out, "%*c", indent, ' ');
       if (ivl_signal_data_type(sig) == IVL_VT_REAL){
@@ -402,8 +417,8 @@ static void emit_sig_type(ivl_signal_t sig)
 	    } else if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
 		  fprintf(vlog_out, " real");
 	    } else {
-		  int msb = ivl_signal_msb(sig);
-		  int lsb = ivl_signal_lsb(sig);
+		  int msb, lsb;
+		  get_sig_msb_lsb(sig, &msb, &lsb);
 		  if (ivl_signal_signed(sig)) {
 			if (allow_signed) {
 			      fprintf(vlog_out, " signed");
@@ -432,8 +447,8 @@ static void emit_sig_type(ivl_signal_t sig)
 		                  ivl_signal_basename(sig));
 		  vlog_errors += 1;
 	    } else {
-		  int msb = ivl_signal_msb(sig);
-		  int lsb = ivl_signal_lsb(sig);
+		  int msb, lsb;
+		  get_sig_msb_lsb(sig, &msb, &lsb);
 		  if (ivl_signal_signed(sig)) {
 			if (allow_signed) {
 			      fprintf(vlog_out, " signed");
@@ -729,6 +744,14 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    assert(indent != 0);
 	    emit_named_block_scope(scope);
 	    return 0; /* A named begin/fork is handled in line. */
+	case IVL_SCT_GENERATE:
+	    fprintf(stderr, "%s:%u: vlog95 sorry: generate scopes are not "
+	                    "currently translated \"%s\".\n",
+	                    ivl_scope_file(scope),
+	                    ivl_scope_lineno(scope),
+	                    ivl_scope_tname(scope));
+	    vlog_errors += 1;
+	    return 0;
 	default:
 	    fprintf(stderr, "%s:%u: vlog95 error: Unsupported scope type "
 	                    "(%d) named: %s.\n", ivl_scope_file(scope),

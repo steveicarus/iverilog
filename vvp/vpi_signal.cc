@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 /*
@@ -327,9 +327,21 @@ static void format_vpiIntVal(vvp_signal_value*sig, int base, unsigned wid,
       vvp_vector4_t tmp;
       sig->vec4_value(tmp);
       vvp_vector4_t sub = tmp.subvalue(base, wid);
-      long val = 0;
-      vector4_to_value(sub, val, signed_flag, false);
-      vp->value.integer = val;
+
+	// Normally, we'd be OK with just using long in the call to
+	// vector4_to_value, but some compilers seem to take long as
+	// distinct from int32_t AND int64_t. Since the condition is
+	// constant, the compiler should eliminate the dead code.
+      if (sizeof(vp->value.integer) == sizeof(int32_t)) {
+	    int32_t val = 0;
+	    vector4_to_value(sub, val, signed_flag, false);
+	    vp->value.integer = val;
+      } else {
+	    assert(sizeof(vp->value.integer) == sizeof(int64_t));
+	    int64_t val = 0;
+	    vector4_to_value(sub, val, signed_flag, false);
+	    vp->value.integer = val;
+      }
 }
 
 static void format_vpiRealVal(vvp_signal_value*sig, int base, unsigned wid,
@@ -980,7 +992,7 @@ vpiHandle vpip_make_var4(const char*name, int msb, int lsb,
 }
 
 #ifdef CHECK_WITH_VALGRIND
-static struct __vpiSignal **signal_pool = 0;
+static struct vpiSignal_plug **signal_pool = 0;
 static unsigned signal_pool_count = 0;
 static unsigned long signal_count = 0;
 static unsigned long signal_dels = 0;
@@ -988,11 +1000,18 @@ static unsigned long signal_dels = 0;
 
 struct vpiSignal_plug {
       unsigned char space[sizeof (struct __vpiSignal)];
+#ifdef CHECK_WITH_VALGRIND
+      struct vpiSignal_plug *pool;
+#endif
 };
 
 void* __vpiSignal::operator new(size_t siz)
 {
-      assert(siz == sizeof(struct vpiSignal_plug));
+      assert(siz == sizeof(struct vpiSignal_plug)
+#ifdef CHECK_WITH_VALGRIND
+                    - sizeof(struct vpiSignal_plug *)
+#endif
+            );
       static struct vpiSignal_plug*alloc_array = 0;
       static unsigned alloc_index = 0;
       const unsigned alloc_count = 512;
@@ -1035,7 +1054,7 @@ void signal_delete(vpiHandle item)
       obj->node->fil->clear_all_callbacks();
       vvp_net_delete(obj->node);
       signal_dels += 1;
-      VALGRIND_MEMPOOL_FREE(obj->pool, obj);
+      VALGRIND_MEMPOOL_FREE(reinterpret_cast<vpiSignal_plug *>(obj)->pool, obj);
 }
 
 void signal_pool_delete()
@@ -1292,7 +1311,6 @@ static vpiHandle PV_put_value(vpiHandle ref, p_vpi_value vp, int)
 
       vvp_vector4_t val = vec4_from_vpi_value(vp, width);
 
-      fprintf(stderr, "XXXX PV_put_value(..)\n");
 	/*
 	 * If the base is less than zero then trim off any unneeded
 	 * lower bits.
@@ -1427,7 +1445,7 @@ void PV_delete(vpiHandle item)
 {
       struct __vpiPV *obj = dynamic_cast<__vpiPV*>(item);
       if (obj->sbase) {
-	    switch (obj->sbase->vpi_type->type_code) {
+	    switch (obj->sbase->get_type_code()) {
 		case vpiMemoryWord:
 		  if (vpi_get(_vpiFromThr, obj->sbase) == _vpi_at_A) {
 			A_delete(obj->sbase);

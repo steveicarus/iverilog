@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 #include  <veriuser.h>
@@ -29,6 +29,15 @@
  * some TF time routines implemented using VPI interface
  */
 
+// On some platforms (e.g. MinGW), pow() may not always generate an
+// exact integer result when supplied with integer operands. Converting
+// the result to an integer before we use it seems to be enough to work
+// round this issue.
+static ivl_u64_t pow10u(PLI_INT32 val)
+{
+      return (ivl_u64_t)pow(10, val);
+}
+
 static ivl_u64_t
 scale(int high, int low, void*obj) {
       vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
@@ -36,8 +45,8 @@ scale(int high, int low, void*obj) {
 
       scaled = high;
       scaled = (scaled << 32) | low;
-      scaled /= pow(10, vpi_get(vpiTimeUnit,obj ? (vpiHandle)obj : hand) -
-                        vpi_get(vpiTimePrecision,0));
+      scaled /= pow10u(vpi_get(vpiTimeUnit,obj ? (vpiHandle)obj : hand) -
+                       vpi_get(vpiTimePrecision,0));
 
       return scaled;
 }

@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "compile.h"
@@ -30,6 +30,15 @@ inline __vpiNamedEvent::__vpiNamedEvent(__vpiScope*sc, const char*nam)
       scope_ = sc;
       name_ = vpip_name_string(nam);
       callbacks_ = 0;
+}
+
+__vpiNamedEvent::~__vpiNamedEvent()
+{
+      while (callbacks_) {
+	    struct __vpiCallback *tmp = callbacks_->next;
+	    delete callbacks_;
+	    callbacks_ = tmp;
+      }
 }
 
 int __vpiNamedEvent::get_type_code(void) const

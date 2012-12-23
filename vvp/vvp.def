@@ -38,6 +38,7 @@ vpi_sim_vcontrol
 vpi_vprintf
 
 vpip_calc_clog2
+vpip_count_drivers
 vpip_format_strength
 vpip_make_systf_system_defined
 vpip_set_return_value

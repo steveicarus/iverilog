@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "vpi_priv.h"
@@ -83,7 +83,7 @@ void __vpiStringConst::process_string_(void)
 
 __vpiStringConst::~__vpiStringConst()
 {
-      delete[]value_;
+      delete[] value_;
 }
 
 int __vpiStringConst::get_type_code(void) const
@@ -258,6 +258,7 @@ class __vpiStringParam  : public __vpiStringConst {
       vpiHandle vpi_handle(int code);
 
       struct __vpiScope* scope;
+      bool     local_flag;
       unsigned file_idx;
       unsigned lineno;
     private:
@@ -280,10 +281,16 @@ int __vpiStringParam::get_type_code(void) const
 
 int __vpiStringParam::vpi_get(int code)
 {
-      if (code == vpiLineNo)
-	    return lineno;
+    switch (code) {
+       case vpiLineNo :
+         return lineno;
 
-      return __vpiStringConst::vpi_get(code);
+       case vpiLocalParam :
+         return local_flag;
+
+       default :
+         return __vpiStringConst::vpi_get(code);
+    }
 }
 
 
@@ -312,10 +319,11 @@ vpiHandle __vpiStringParam::vpi_handle(int code)
 }
 
 vpiHandle vpip_make_string_param(char*name, char*text,
-                                 long file_idx, long lineno)
+                                  bool local_flag, long file_idx, long lineno)
 {
       __vpiStringParam*obj = new __vpiStringParam(text, name);
       obj->scope = vpip_peek_current_scope();
+      obj->local_flag = local_flag;
       obj->file_idx = (unsigned) file_idx;
       obj->lineno = (unsigned) lineno;
 
@@ -449,6 +457,7 @@ struct __vpiBinaryParam  : public __vpiBinaryConst {
       struct __vpiScope*scope;
       unsigned file_idx;
       unsigned lineno;
+      bool     local_flag;
     private:
       char*basename_;
 };
@@ -469,10 +478,16 @@ int __vpiBinaryParam::get_type_code(void) const
 
 int __vpiBinaryParam::vpi_get(int code)
 {
-      if (code == vpiLineNo)
-	    return lineno;
+    switch (code) {
+      case vpiLineNo :
+        return lineno;
 
-      return __vpiBinaryConst::vpi_get(code);
+      case vpiLocalParam :
+        return local_flag;
+
+      default :
+        return __vpiBinaryConst::vpi_get(code);
+    }
 }
 
 char*__vpiBinaryParam::vpi_get_str(int code)
@@ -500,13 +515,14 @@ vpiHandle __vpiBinaryParam::vpi_handle(int code)
 
 
 vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
-				 bool signed_flag,
+				 bool signed_flag, bool local_flag,
 				 long file_idx, long lineno)
 {
       struct __vpiBinaryParam*obj = new __vpiBinaryParam(bits, name);
 
       obj->signed_flag = signed_flag? 1 : 0;
       obj->sized_flag = 0;
+      obj->local_flag = local_flag;
       obj->scope = vpip_peek_current_scope();
       obj->file_idx = (unsigned) file_idx;
       obj->lineno = (unsigned) lineno;
@@ -634,7 +650,7 @@ int __vpiRealConst::vpi_get(int code)
 
 	  default:
 	    fprintf(stderr, "vvp error: get %d not supported "
-		    "by vpiDecConst\n", code);
+		    "by vpiRealConst\n", code);
 	    assert(0);
 	    return 0;
       }
@@ -662,6 +678,7 @@ struct __vpiRealParam  : public __vpiRealConst {
       vpiHandle vpi_handle(int code);
 
       struct __vpiScope* scope;
+      bool local_flag;
       unsigned file_idx;
       unsigned lineno;
     private:
@@ -686,10 +703,16 @@ int __vpiRealParam::get_type_code(void) const
 
 int __vpiRealParam::vpi_get(int code)
 {
-      if (code == vpiLineNo)
-	    return lineno;
+    switch (code) {
+      case vpiLineNo :
+        return lineno;
 
-      return __vpiRealConst::vpi_get(code);
+      case vpiLocalParam :
+        return local_flag;
+
+      default :
+           return __vpiRealConst::vpi_get(code);
+    }
 }
 
 char* __vpiRealParam::vpi_get_str(int code)
@@ -716,11 +739,12 @@ vpiHandle __vpiRealParam::vpi_handle(int code)
 
 
 vpiHandle vpip_make_real_param(char*name, double value,
-                               long file_idx, long lineno)
+                                bool local_flag, long file_idx, long lineno)
 {
       struct __vpiRealParam*obj = new __vpiRealParam(value, name);
 
       obj->scope = vpip_peek_current_scope();
+      obj->local_flag = local_flag;
       obj->file_idx = (unsigned) file_idx;
       obj->lineno = (unsigned) lineno;
 
@@ -730,25 +754,20 @@ vpiHandle vpip_make_real_param(char*name, double value,
 #ifdef CHECK_WITH_VALGRIND
 void constant_delete(vpiHandle item)
 {
-      assert(item->vpi_type->type_code == vpiConstant);
+      assert(item->get_type_code() == vpiConstant);
       switch(vpi_get(vpiConstType, item)) {
-	  case vpiStringConst: {
-	    struct __vpiStringConst*rfp = dynamic_cast<__vpiStringConst*>(item);
-	    delete [] rfp->value;
-	    free(rfp);
-	    break; }
-	  case vpiDecConst: {
-	    struct __vpiDecConst*rfp = dynamic_cast<__vpiDecConst*>(item);
-	    free(rfp);
-	    break; }
-	  case vpiBinaryConst: {
-	    struct __vpiBinaryConst*rfp = dynamic_cast<__vpiBinaryConst*>(item);
-	    delete rfp;
-	    break; }
-	  case vpiRealConst: {
-	    struct __vpiRealConst*rfp = dynamic_cast<__vpiRealConst*>(item);
-	    free(rfp);
-	    break; }
+	  case vpiStringConst:
+	    delete dynamic_cast<__vpiStringConst*>(item);
+	    break;
+	  case vpiDecConst:
+	    delete dynamic_cast<__vpiDecConst*>(item);
+	    break;
+	  case vpiBinaryConst:
+	    delete dynamic_cast<__vpiBinaryConst*>(item);
+	    break;
+	  case vpiRealConst:
+	    delete dynamic_cast<__vpiRealConst*>(item);
+	    break;
 	  default:
 	    assert(0);
       }

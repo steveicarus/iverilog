@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2010,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "vpi_config.h"
@@ -24,6 +24,8 @@
 # include <string.h>
 
 extern void sys_convert_register();
+extern void sys_countdrivers_register();
+extern void sys_darray_register();
 extern void sys_fileio_register();
 extern void sys_finish_register();
 extern void sys_deposit_register();
@@ -33,6 +35,7 @@ extern void sys_queue_register();
 extern void sys_random_register();
 extern void sys_random_mti_register();
 extern void sys_readmem_register();
+extern void sys_string_register();
 extern void sys_scanf_register();
 extern void sys_sdf_register();
 extern void sys_time_register();
@@ -195,6 +198,8 @@ static void sys_lxt_or_vcd_register()
 
 void (*vlog_startup_routines[])() = {
       sys_convert_register,
+      sys_countdrivers_register,
+      sys_darray_register,
       sys_fileio_register,
       sys_finish_register,
       sys_deposit_register,
@@ -205,6 +210,7 @@ void (*vlog_startup_routines[])() = {
       sys_random_mti_register,
       sys_readmem_register,
       sys_scanf_register,
+      sys_string_register,
       sys_time_register,
       sys_lxt_or_vcd_register,
       sys_sdf_register,

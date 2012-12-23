@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve at icarus.com)
+ * Copyright (c) 2003-2012 Stephen Williams (steve at icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "edif.h"
@@ -877,7 +877,7 @@ void xilinx_shiftl(ivl_lpm_t net)
 	   inputs. The slice on the low end shifts in a 0 for a select
 	   input. */
       for (qdx = 0 ;  qdx < width ;  qdx += 1) {
-	    ivl_nexus_t nex0, nex1;
+	    ivl_nexus_t nex0;
 	    edif_joint_t jnt0;
 	    edif_joint_t jnt1;
 
@@ -885,6 +885,7 @@ void xilinx_shiftl(ivl_lpm_t net)
 	    jnt0 = edif_joint_of_nexus(edf, nex0);
 
 	    if (qdx > 0) {
+		  ivl_nexus_t nex1;
 		  nex1 = ivl_lpm_data(net,qdx-1);
 		  jnt1 = edif_joint_of_nexus(edf, nex1);
 	    } else {

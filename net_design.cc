@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -101,10 +101,11 @@ uint64_t Design::scale_to_precision(uint64_t val,
       return val;
 }
 
-NetScope* Design::make_root_scope(perm_string root)
+NetScope* Design::make_root_scope(perm_string root, bool program_block)
 {
       NetScope *root_scope_;
-      root_scope_ = new NetScope(0, hname_t(root), NetScope::MODULE);
+      root_scope_ = new NetScope(0, hname_t(root), NetScope::MODULE,
+				 false, program_block);
 	/* This relies on the fact that the basename return value is
 	   permallocated. */
       root_scope_->set_module_name(root_scope_->basename());
@@ -163,6 +164,26 @@ NetScope* Design::find_scope(const std::list<hname_t>&path) const
 }
 
 /*
+ * This method locates a scope in the design, given its rooted
+ * hierarchical name. Each component of the key is used to scan one
+ * more step down the tree until the name runs out or the search
+ * fails.
+ */
+NetScope* Design::find_scope(const hname_t&path) const
+{
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin()
+		 ; scope != root_scopes_.end(); ++ scope ) {
+
+	    NetScope*cur = *scope;
+	    if (path.peek_name() == cur->basename())
+		  return cur;
+
+      }
+
+      return 0;
+}
+
+/*
  * This is a relative lookup of a scope by name. The starting point is
  * the scope parameter within which I start looking for the scope. If
  * I do not find the scope within the passed scope, start looking in
@@ -196,13 +217,50 @@ NetScope* Design::find_scope(NetScope*scope, const std::list<hname_t>&path,
 			if (cur == 0) break;
 		  }
 		  tmp.pop_front();
-	    } while (!tmp.empty());
+	    } while (! tmp.empty());
 
 	    if (cur) return cur;
       }
 
 	// Last chance. Look for the name starting at the root.
       return find_scope(path);
+}
+
+/*
+ * This is a relative lookup of a scope by name. The starting point is
+ * the scope parameter within which I start looking for the scope. If
+ * I do not find the scope within the passed scope, start looking in
+ * parent scopes until I find it, or I run out of parent scopes.
+ */
+NetScope* Design::find_scope(NetScope*scope, const hname_t&path,
+                             NetScope::TYPE type) const
+{
+      assert(scope);
+
+      for ( ; scope ;  scope = scope->parent()) {
+
+	    NetScope*cur = scope;
+
+	      /* If we are looking for a module or we are not
+	       * looking at the last path component check for
+	       * a name match (second line). */
+	    if (cur->type() == NetScope::MODULE
+		&& (type == NetScope::MODULE)
+		&& cur->module_name()==path.peek_name()) {
+
+		    /* Up references may match module name */
+
+	    } else {
+		  cur = cur->child( path );
+	    }
+
+	    if (cur) return cur;
+      }
+
+	// Last chance. Look for the name starting at the root.
+      list<hname_t>path_list;
+      path_list.push_back(path);
+      return find_scope(path_list);
 }
 
 /*
@@ -303,11 +361,9 @@ void NetScope::run_defparams_later(Design*des)
 	    target_scopes.insert(targ_scope);
       }
 
-	// All the scopes that this defparam set touched should have
-	// their parameters re-evaluated.
-      for (set<NetScope*>::iterator cur = target_scopes.begin()
-		 ; cur != target_scopes.end() ; ++ cur )
-	    (*cur)->evaluate_parameters(des);
+	// The scopes that this defparam set touched will be
+	// re-evaluated later it a top_defparams work item. So do not
+	// do the evaluation now.
 
 	// If there are some scopes that still have missing scopes,
 	// then save them back into the defparams_later list for a
@@ -370,7 +426,8 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
       if (range_flag)
 	    lv_width = (msb >= lsb) ? 1 + msb - lsb : 1 + lsb - msb;
 
-      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, lv_width, true);
+      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, lv_width, true,
+                                   (*cur).second.is_annotatable);
       if (! expr)
             return;
 
@@ -491,7 +548,8 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
       PExpr*val_expr = (*cur).second.val_expr;
       NetScope*val_scope = (*cur).second.val_scope;
 
-      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, -1, true);
+      NetExpr*expr = elab_and_eval(des, val_scope, val_expr, -1, true,
+                                   (*cur).second.is_annotatable);
       if (! expr)
             return;
 

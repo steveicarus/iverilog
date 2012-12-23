@@ -14,12 +14,14 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "netenum.h"
 # include  "compiler.h"
 # include  <cassert>
+
+using namespace std;
 
 netenum_t::netenum_t(ivl_variable_type_t btype, bool signed_flag,
 		     long msb, long lsb, size_t name_count)
@@ -31,6 +33,27 @@ netenum_t::netenum_t(ivl_variable_type_t btype, bool signed_flag,
 netenum_t::~netenum_t()
 {
 }
+
+bool netenum_t::get_signed() const
+{
+      return signed_flag_;
+}
+
+long netenum_t::packed_width() const
+{
+      if (msb_ >= lsb_)
+	    return msb_ - lsb_ + 1;
+      else
+	    return lsb_ - msb_ + 1;
+}
+
+vector<netrange_t> netenum_t::slice_dimensions() const
+{
+      vector<netrange_t> tmp (1);
+      tmp[0] = netrange_t(msb_, lsb_);
+      return tmp;
+}
+
 
 bool netenum_t::insert_name(size_t name_idx, perm_string name, const verinum&val)
 {

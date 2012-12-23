@@ -12,9 +12,8 @@
 #
 #    You should have received a copy of the GNU Library General Public
 #    License along with this program; if not, write to the Free
-#    Software Foundation, Inc.,
-#    59 Temple Place - Suite 330
-#    Boston, MA 02111-1307, USA
+#    Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+#    Boston, MA 02110-1301, USA.
 #
 #ident "$Id: Makefile.in,v 1.26 2007/02/06 05:07:32 steve Exp $"
 #
@@ -48,8 +47,10 @@ CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
 CFLAGS = @WARNING_FLAGS@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
-O = vvp.o draw_enum.o draw_mux.o draw_net_input.o draw_switch.o draw_ufunc.o draw_vpi.o \
-    eval_bool.o eval_expr.o eval_real.o modpath.o stmt_assign.o vector.o \
+O = vvp.o draw_class.o draw_enum.o draw_mux.o draw_net_input.o \
+    draw_switch.o draw_ufunc.o draw_vpi.o \
+    eval_bool.o eval_expr.o eval_object.o eval_real.o eval_string.o \
+    modpath.o stmt_assign.o vector.o \
     vvp_process.o vvp_scope.o
 
 all: dep vvp.tgt vvp.conf vvp-s.conf

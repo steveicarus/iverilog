@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -29,7 +29,7 @@ PWire::PWire(perm_string n,
 : name_(n), type_(t), port_type_(pt), data_type_(dt),
   signed_(false), isint_(false),
   port_set_(false), net_set_(false), is_scalar_(false),
-  error_cnt_(0), lidx_(0), ridx_(0), enum_type_(0), struct_type_(0),
+  error_cnt_(0), set_data_type_(0),
   discipline_(0)
 {
       if (t == NetNet::INTEGER) {
@@ -242,30 +242,21 @@ void PWire::set_range(const list<pform_range_t>&rlist, PWSRType type)
       }
 }
 
-void PWire::set_memory_idx(PExpr*ldx, PExpr*rdx)
+void PWire::set_unpacked_idx(const list<pform_range_t>&ranges)
 {
-      if (lidx_ != 0 || ridx_ != 0) {
+      if (! unpacked_.empty()) {
 	    cerr << get_fileline() << ": error: Array ``" << name_
 	         << "'' has already been declared." << endl;
 	    error_cnt_ += 1;
       } else {
-            lidx_ = ldx;
-            ridx_ = rdx;
+	    unpacked_ = ranges;
       }
 }
 
-void PWire::set_enumeration(enum_type_t*enum_type)
+void PWire::set_data_type(data_type_t*type)
 {
-      assert(enum_type_ == 0);
-      assert(struct_type_ == 0);
-      enum_type_ = enum_type;
-}
-
-void PWire::set_struct_type(struct_type_t*type)
-{
-      assert(enum_type_ == 0);
-      assert(struct_type_ == 0);
-      struct_type_ = type;
+      assert(set_data_type_ == 0);
+      set_data_type_ = type;
 }
 
 void PWire::set_discipline(ivl_discipline_t d)

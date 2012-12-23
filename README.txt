@@ -64,7 +64,7 @@ on a UNIX-like system:
 	- termcap
 	  The readline library in turn uses termcap.
 
-If you are building from CVS, you will also need software to generate
+If you are building from git, you will also need software to generate
 the configure scripts.
 
 	- autoconf 2.53

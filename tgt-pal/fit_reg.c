@@ -14,11 +14,8 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: fit_reg.c,v 1.7 2002/08/12 01:35:03 steve Exp $"
-#endif
 
 # include "config.h"
 
@@ -133,30 +130,3 @@ int scan_ff_q(ivl_lpm_t ff, unsigned q)
       error_count += 1;
       return 0;
 }
-
-/*
- * $Log: fit_reg.c,v $
- * Revision 1.7  2002/08/12 01:35:03  steve
- *  conditional ident string using autoconfig.
- *
- * Revision 1.6  2001/07/25 03:10:50  steve
- *  Create a config.h.in file to hold all the config
- *  junk, and support gcc 3.0. (Stephan Boettcher)
- *
- * Revision 1.5  2001/05/16 03:55:30  steve
- *  Update to new LPM API for flip-flops.
- *
- * Revision 1.4  2001/02/07 22:22:00  steve
- *  ivl_target header search path fixes.
- *
- * Revision 1.3  2001/01/15 00:05:39  steve
- *  Add client data pointer for scope and process scanners.
- *
- * Revision 1.2  2000/12/09 05:40:42  steve
- *  documentation...
- *
- * Revision 1.1  2000/12/09 03:42:52  steve
- *  Stuff registers into macrocells.
- *
- */
-

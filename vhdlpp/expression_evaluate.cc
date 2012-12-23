@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "expression.h"
@@ -31,6 +31,50 @@ bool Expression::evaluate(Entity*, Architecture*arc, int64_t&val) const
       return evaluate(arc, val);
 }
 
+
+bool ExpArithmetic::evaluate(ScopeBase*scope, int64_t&val) const
+{
+      int64_t val1, val2;
+      bool rc;
+
+      rc = eval_operand1(scope, val1);
+      if (rc == false)
+	    return false;
+
+      rc = eval_operand2(scope, val2);
+      if (rc == false)
+	    return false;
+
+      switch (fun_) {
+	  case PLUS:
+	    val = val1 + val2;
+	    break;
+	  case MINUS:
+	    val = val1 - val2;
+	    break;
+	  case MULT:
+	    val = val1 * val2;
+	    break;
+	  case DIV:
+	    if (val2 == 0)
+		  return false;
+	    val = val1 / val2;
+	    break;
+	  case MOD:
+	    if (val2 == 0)
+		  return false;
+	    val = val1 % val2;
+	    break;
+	  case REM:
+	    return false;
+	  case POW:
+	    return false;
+	  case xCONCAT: // not possible
+	    return false;
+      }
+
+      return true;
+}
 
 bool ExpAttribute::evaluate(ScopeBase*, int64_t&val) const
 {
@@ -71,10 +115,24 @@ bool ExpAttribute::evaluate(Entity*, Architecture*arc, int64_t&val) const
       return evaluate(arc, val);
 }
 
+/*
+ * I don't yet know how to evaluate concatenations. It is not likely
+ * to come up anyhow.
+ */
+bool ExpConcat::evaluate(ScopeBase*scope, int64_t&val) const
+{
+      return false;
+}
+
 bool ExpName::evaluate(ScopeBase*scope, int64_t&val) const
 {
       const VType*type;
       Expression*exp;
+
+      if (prefix_.get()) {
+	    cerr << get_fileline() << ": sorry: I don't know how to evaluate ExpName prefix parts." << endl;
+	    return false;
+      }
 
       bool rc = scope->find_constant(name_, type, exp);
       if (rc == false)
@@ -85,6 +143,11 @@ bool ExpName::evaluate(ScopeBase*scope, int64_t&val) const
 
 bool ExpName::evaluate(Entity*ent, Architecture*arc, int64_t&val) const
 {
+      if (prefix_.get()) {
+	    cerr << get_fileline() << ": sorry: I don't know how to evaluate ExpName prefix parts." << endl;
+	    return false;
+      }
+
       const InterfacePort*gen = ent->find_generic(name_);
       if (gen) {
 	    cerr << get_fileline() << ": sorry: I don't necessarily handle generic overrides." << endl;

@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "compile.h"
@@ -29,6 +29,7 @@
 # include  <cstdlib>
 # include  <cassert>
 # include  "ivl_alloc.h"
+
 
 static vpiHandle *vpip_root_table_ptr = 0;
 static unsigned   vpip_root_table_cnt = 0;
@@ -48,11 +49,13 @@ void vpip_make_root_iterator(__vpiHandle**&table, unsigned&ntable)
 }
 
 #ifdef CHECK_WITH_VALGRIND
+void port_delete(__vpiHandle*handle);
+
 static void delete_sub_scopes(struct __vpiScope *scope)
 {
       for (unsigned idx = 0; idx < scope->nintern; idx += 1) {
 	    struct __vpiScope*lscope = (__vpiScope*)(scope->intern)[idx];
-	    switch(scope->intern[idx]->vpi_type->type_code) {
+	    switch(scope->intern[idx]->get_type_code()) {
 		case vpiFunction:
 		case vpiTask:
 		  contexts_delete(lscope);
@@ -69,7 +72,7 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		  break;
 		case vpiModPath:
 		    /* The destination ModPath is cleaned up later. */
-		  free((scope->intern)[idx]);
+		  delete (scope->intern)[idx];
 		  break;
 		case vpiNamedEvent:
 		  named_event_delete((scope->intern)[idx]);
@@ -93,9 +96,21 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		case vpiEnumTypespec:
 		  enum_delete((scope->intern)[idx]);
 		  break;
+		case vpiPort:
+		  port_delete((scope->intern)[idx]);
+		  break;
+		case vpiStringVar:
+		  string_delete((scope->intern)[idx]);
+		  break;
+		case vpiClassVar:
+		  class_delete((scope->intern)[idx]);
+		  break;
+		case vpiRegArray:
+		  darray_delete((scope->intern)[idx]);
+		  break;
 		default:
 		  fprintf(stderr, "Need support for type: %d\n",
-		          scope->intern[idx]->vpi_type->type_code);
+		          scope->intern[idx]->get_type_code());
 		  assert(0);
 		  break;
 	    }
@@ -524,4 +539,110 @@ unsigned vpip_add_item_to_context(automatic_hooks_s*item,
 
         /* Offset the context index by 2 to leave space for the list links. */
       return 2 + idx;
+}
+
+
+class vpiPortInfo  : public __vpiHandle {
+    public:
+      vpiPortInfo( __vpiScope *parent,
+                    unsigned index,
+                    int vpi_direction,
+                    unsigned width,
+                    const char *name );
+      ~vpiPortInfo();
+
+      int get_type_code(void) const { return vpiPort; }
+
+      int vpi_get(int code);
+      char* vpi_get_str(int code);
+      vpiHandle vpi_handle(int code);
+
+    private:
+      __vpiScope *parent_;
+      unsigned  index_;
+      int       direction_;
+      unsigned  width_;
+      const char *name_;
+};
+
+vpiPortInfo::vpiPortInfo( __vpiScope *parent,
+              unsigned index,
+              int vpi_direction,
+              unsigned width,
+              const char *name ) :
+      parent_(parent),
+      index_(index),
+      direction_(vpi_direction),
+      width_(width),
+      name_(name)
+{
+}
+
+vpiPortInfo::~vpiPortInfo()
+{
+      delete[] name_;
+}
+
+#ifdef CHECK_WITH_VALGRIND
+void port_delete(__vpiHandle *handle)
+{
+      delete dynamic_cast<vpiPortInfo *>(handle);
+}
+#endif
+
+int vpiPortInfo::vpi_get(int code)
+{
+      switch( code ) {
+
+        case vpiDirection :
+          return direction_;
+        case vpiPortIndex :
+          return index_;
+        case vpiSize :
+          return width_;
+        default :
+          return vpiUndefined;
+      }
+
+}
+
+
+char *vpiPortInfo::vpi_get_str(int code)
+{
+      switch( code ) {
+        case vpiName :
+          return simple_set_rbuf_str(name_);
+        default :
+          return NULL;
+      }
+
+}
+
+
+vpiHandle vpiPortInfo::vpi_handle(int code)
+{
+
+      switch (code) {
+
+          case vpiParent:
+          case vpiScope:
+          case vpiModule:
+            return parent_;
+          default :
+            break;
+      }
+
+      return 0;
+}
+
+
+/* Port info is meta-data to allow vpi queries of the port signature of modules for
+ * code-generators etc.  There are no actual nets corresponding to instances of module ports
+ * as elaboration directly connects nets connected through module ports.
+ */
+void compile_port_info( unsigned index, int vpi_direction, unsigned width, const char *name )
+{
+    vpiHandle obj = new vpiPortInfo( vpip_peek_current_scope(),
+                                     index, vpi_direction, width, name );
+    vpip_attach_to_current_scope(obj);
 }

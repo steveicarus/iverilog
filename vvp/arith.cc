@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "arith.h"
@@ -46,7 +46,7 @@ void vvp_arith_::dispatch_operand_(vvp_net_ptr_t ptr, vvp_vector4_t bit)
 	    op_b_ = bit;
 	    break;
 	  default:
-	    fprintf(stderr, "Unsupported port type %d.\n", port);
+	    fprintf(stderr, "Unsupported port type %u.\n", port);
 	    assert(0);
       }
 }
@@ -403,24 +403,24 @@ void vvp_arith_mult::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 {
       dispatch_operand_(ptr, bit);
 
-      if (wid_ > 8 * sizeof(long)) {
+      if (wid_ > 8 * sizeof(int64_t)) {
 	    wide_(ptr);
 	    return ;
       }
 
-      long a;
+      int64_t a;
       if (! vector4_to_value(op_a_, a, false, true)) {
 	    ptr.ptr()->send_vec4(x_val_, 0);
 	    return;
       }
 
-      long b;
+      int64_t b;
       if (! vector4_to_value(op_b_, b, false, true)) {
 	    ptr.ptr()->send_vec4(x_val_, 0);
 	    return;
       }
 
-      long val = a * b;
+      int64_t val = a * b;
       assert(wid_ <= 8*sizeof(val));
 
       vvp_vector4_t vval (wid_);

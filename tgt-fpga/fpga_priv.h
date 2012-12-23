@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  <stdio.h>
@@ -46,6 +46,5 @@ extern void xnf_mangle_logic_name(ivl_net_logic_t net, char*buf, size_t nbuf);
 extern void xnf_mangle_lpm_name(ivl_lpm_t net, char*buf, size_t nbuf);
 
 extern const char*xnf_mangle_nexus_name(ivl_nexus_t net);
-
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -56,7 +56,7 @@ NexusSet* NetEConcat::nex_input(bool rem_out)
 {
       if (parms_[0] == NULL) return NULL;
       NexusSet*result = parms_[0]->nex_input(rem_out);
-      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
 	    if (parms_[idx] == NULL) {
 		  delete result;
 		  return NULL;
@@ -92,6 +92,21 @@ NexusSet* NetEEvent::nex_input(bool)
 }
 
 NexusSet* NetENetenum::nex_input(bool)
+{
+      return new NexusSet;
+}
+
+NexusSet* NetENew::nex_input(bool)
+{
+      return new NexusSet;
+}
+
+NexusSet* NetENull::nex_input(bool)
+{
+      return new NexusSet;
+}
+
+NexusSet* NetEProperty::nex_input(bool)
 {
       return new NexusSet;
 }
@@ -159,7 +174,7 @@ NexusSet* NetESignal::nex_input(bool rem_out)
 	    delete tmp;
             if (warn_sens_entire_arr) {
                   cerr << get_fileline() << ": warning: @* is sensitive to all "
-                       << net_->array_count() << " words in array '"
+                       << net_->unpacked_count() << " words in array '"
                        << name() << "'." << endl;
             }
       }
@@ -188,7 +203,7 @@ NexusSet* NetETernary::nex_input(bool rem_out)
 NexusSet* NetEUFunc::nex_input(bool rem_out)
 {
       NexusSet*result = new NexusSet;
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
 	    NexusSet*tmp = parms_[idx]->nex_input(rem_out);
 	    result->add(*tmp);
 	    delete tmp;
@@ -257,7 +272,7 @@ NexusSet* NetBlock::nex_input(bool rem_out)
       if (last_ == 0)
 	    return new NexusSet;
 
-      if (type_ == PARA) {
+      if (type_ != SEQU) {
 	    cerr << get_fileline() << ": internal error: Sorry, "
 		 << "I don't know how to synthesize fork/join blocks."
 		 << endl;
@@ -397,13 +412,13 @@ NexusSet* NetRepeat::nex_input(bool rem_out)
  */
 NexusSet* NetSTask::nex_input(bool rem_out)
 {
-      if (parms_.count() == 0)
+      if (parms_.empty())
 	    return new NexusSet;
 
       NexusSet*result;
       if (parms_[0]) result = parms_[0]->nex_input(rem_out);
       else result = new NexusSet;
-      for (unsigned idx = 1 ;  idx < parms_.count() ;  idx += 1) {
+      for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {
 	    if (parms_[idx]) {
 		  NexusSet*tmp = parms_[idx]->nex_input(rem_out);
 		  result->add(*tmp);

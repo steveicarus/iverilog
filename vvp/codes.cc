@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "codes.h"
@@ -117,6 +117,10 @@ void codespace_delete(void)
 			exec_ufunc_delete((cur+idx));
 		  } else if ((cur+idx)->opcode == &of_FILE_LINE) {
 			delete((cur+idx)->handle);
+		  } else if (((cur+idx)->opcode == &of_CONCATI_STR) ||
+		             ((cur+idx)->opcode == &of_NEW_DARRAY) ||
+		             ((cur+idx)->opcode == &of_PUSHI_STR)) {
+			delete [] ((cur+idx)->text);
 		  }
 		  if (count_opcodes == 0) break;
 	    }

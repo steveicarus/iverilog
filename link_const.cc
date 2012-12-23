@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,13 +14,14 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
 
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "ivl_assert.h"
 
 /*
  * Scan the link for drivers. If there are only constant drivers, then
@@ -35,7 +36,6 @@ bool Nexus::drivers_constant() const
 	    return true;
 
       for (const Link*cur = first_nlink() ; cur  ;  cur = cur->next_nlink()) {
-	    const NetNet*sig;
 	    Link::DIR cur_dir;
 
 	    cur_dir = cur->get_dir();
@@ -56,6 +56,7 @@ bool Nexus::drivers_constant() const
 		 outside world. */
 
 	    if (cur_dir == Link::PASSIVE) {
+		  const NetNet*sig;
 
 		  const NetPins*obj = cur->get_obj();
 		  const NetObj*as_obj = dynamic_cast<const NetObj*>(obj);
@@ -167,6 +168,49 @@ verinum::V Nexus::driven_value() const
 	  case verinum::Vz:
 	    driven_ = Vz;
 	    break;
+      }
+
+      return val;
+}
+
+
+verinum Nexus::driven_vector() const
+{
+      const Link*cur = list_;
+
+      verinum val;
+
+      for (cur = first_nlink() ; cur  ;  cur = cur->next_nlink()) {
+
+	    const NetConst*obj;
+	    const NetNet*sig;
+	    if ((obj = dynamic_cast<const NetConst*>(cur->get_obj()))) {
+		  ivl_assert(*obj, cur->get_pin() == 0);
+		  val = obj->value();
+
+	    } else if ((sig = dynamic_cast<const NetNet*>(cur->get_obj()))) {
+
+		    // If we find an attached SUPPLY0/1, the we know
+		    // from that what the driven value is. Stop now.
+		  if (sig->type() == NetNet::SUPPLY0) {
+			driven_ = V0;
+			return verinum(verinum::V0, sig->vector_width());
+		  }
+		  if (sig->type() == NetNet::SUPPLY1) {
+			driven_ = V1;
+			return verinum(verinum::V1, sig->vector_width());
+		  }
+
+		    // If we find an attached TRI0/1, then this is a
+		    // good guess for the driven value, but keep
+		    // looking for something better.
+		  if (sig->type() == NetNet::TRI0) {
+			val = verinum(verinum::V0, sig->vector_width());
+		  }
+		  if (sig->type() == NetNet::TRI1) {
+			val = verinum(verinum::V1, sig->vector_width());
+		  }
+	    }
       }
 
       return val;

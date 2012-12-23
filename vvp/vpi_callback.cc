@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 /*
@@ -639,8 +639,9 @@ void vvp_vpi_callback::add_vpi_callback(value_callback*cb)
 void vvp_vpi_callback::clear_all_callbacks()
 {
       while (vpi_callbacks_) {
-	    struct __vpiCallback*tmp = vpi_callbacks_->next;
-	    delete_vpi_callback(vpi_callbacks_);
+	    value_callback *tmp = dynamic_cast<value_callback*>
+	                            (vpi_callbacks_->next);
+	    delete vpi_callbacks_;
 	    vpi_callbacks_ = tmp;
       }
 }
@@ -794,6 +795,16 @@ void vvp_wire_real::get_signal_value(struct t_vpi_value*vp)
       real_signal_value(vp, real_value());
 }
 
+void vvp_fun_signal_string_aa::get_signal_value(struct t_vpi_value*vp)
+{
+      assert(0);
+}
+#if 0
+void vvp_wire_string::get_signal_value(struct t_vpi_value*vp)
+{
+      assert(0);
+}
+#endif
 void vvp_wire_vec4::get_value(struct t_vpi_value*val)
 {
       get_signal_value(val);
@@ -808,3 +819,9 @@ void vvp_wire_real::get_value(struct t_vpi_value*val)
 {
       get_signal_value(val);
 }
+#if 0
+void vvp_wire_string::get_value(struct t_vpi_value*val)
+{
+      assert(0);
+}
+#endif

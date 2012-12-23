@@ -4,7 +4,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,7 +19,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "parse_misc.h"
@@ -129,6 +129,7 @@ static char* strdupnew(char const *str)
 ".cast/int" { return K_CAST_INT; }
 ".cast/real" { return K_CAST_REAL; }
 ".cast/real.s" { return K_CAST_REAL_S; }
+".class" { return K_CLASS; }
 ".cmp/eeq"  { return K_CMP_EEQ; }
 ".cmp/eq"   { return K_CMP_EQ; }
 ".cmp/eq.r" { return K_CMP_EQ_R; }
@@ -171,6 +172,7 @@ static char* strdupnew(char const *str)
 ".part/v"   { return K_PART_V; }
 ".part/v.s" { return K_PART_V_S; }
 ".port"     { return K_PORT; }
+".port_info"     { return K_PORT_INFO; }
 ".reduce/and" { return K_REDUCE_AND; }
 ".reduce/or"  { return K_REDUCE_OR; }
 ".reduce/xor" { return K_REDUCE_XOR; }
@@ -194,8 +196,11 @@ static char* strdupnew(char const *str)
 ".ufunc"    { return K_UFUNC; }
 ".ufunc/e"  { return K_UFUNC_E; }
 ".var"      { return K_VAR; }
+".var/cobj" { return K_VAR_COBJECT; }
+".var/darray" { return K_VAR_DARRAY; }
 ".var/real" { return K_VAR_R; }
 ".var/s"    { return K_VAR_S; }
+".var/str"  { return K_VAR_STR; }
 ".var/i"    { return K_VAR_I; /* integer */ }
 ".var/2s"    { return K_VAR_2S; /* byte/shortint/int/longint signed */ }
 ".var/2u"    { return K_VAR_2U; /* byte/shortint/int/longint unsigned */ }
@@ -253,6 +258,11 @@ static char* strdupnew(char const *str)
       assert(yylval.text);
       return T_SYMBOL; }
 
+"S<"[0-9]*",str>" {
+      yylval.text = strdup(yytext);
+      assert(yylval.text);
+      return T_SYMBOL; }
+
 "T<"[0-9]*","[0-9]*","[us]">" {
       yylval.text = strdup(yytext);
       assert(yylval.text);
@@ -262,6 +272,12 @@ static char* strdupnew(char const *str)
       yylval.text = strdup(yytext);
       assert(yylval.text);
       return T_SYMBOL; }
+
+ "/INPUT"  { return K_PORT_INPUT; }
+ "/OUTPUT" { return K_PORT_OUTPUT; }
+ "/INOUT"  { return K_PORT_INOUT; }
+ "/MIXED"  { return K_PORT_MIXED; }
+ "/NODIR"  { return K_PORT_NODIR; }
 
   /* Symbols are pretty much what is left. They are used to refer to
      labels so the rule must match a string that a label would match. */

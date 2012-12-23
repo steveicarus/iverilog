@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "vvp_priv.h"
@@ -96,7 +96,7 @@ static void draw_lpm_mux_ab(ivl_lpm_t net, const char*muxz)
       input[2] = draw_net_input(ivl_lpm_select(net));
       fprintf(vvp_out, "L_%p%s .functor %s %u", net, dly, muxz, width);
       if (str0!=IVL_DR_STRONG || str1!=IVL_DR_STRONG)
-	    fprintf(vvp_out, " [%u %u]", str0, str1);
+	    fprintf(vvp_out, " [%d %d]", str0, str1);
       fprintf(vvp_out, ", %s", input[0]);
       fprintf(vvp_out, ", %s", input[1]);
       fprintf(vvp_out, ", %s", input[2]);
@@ -127,15 +127,15 @@ static void draw_lpm_mux_nest(ivl_lpm_t net, const char*muxz)
       }
 
       for (level = 1 ;  level < swidth-1 ;  level += 1) {
-	    fprintf(vvp_out, "L_%p/%ds .part %s, %d, 1;\n",
+	    fprintf(vvp_out, "L_%p/%us .part %s, %u, 1;\n",
 		    net, level, select_input, level);
 
 	    for (idx = 0 ;  idx < (ivl_lpm_size(net) >> level); idx += 2) {
-		  fprintf(vvp_out, "L_%p/%d/%d .functor %s %u",
+		  fprintf(vvp_out, "L_%p/%u/%d .functor %s %u",
 			  net, level, idx/2, muxz, width);
 		  fprintf(vvp_out, ", L_%p/%d/%d", net, level-1, idx+0);
 		  fprintf(vvp_out, ", L_%p/%d/%d", net, level-1, idx+1);
-		  fprintf(vvp_out, ", L_%p/%ds",   net, level);
+		  fprintf(vvp_out, ", L_%p/%us",   net, level);
 		  fprintf(vvp_out, ", C4<>;\n");
 	    }
 

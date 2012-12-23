@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -25,6 +25,7 @@
 # include  <cstdio> // sprintf()
 # include  "compiler.h"
 # include  "t-dll.h"
+# include  "netclass.h"
 # include  "netmisc.h"
 # include  "discipline.h"
 # include  <cstdlib>
@@ -257,7 +258,7 @@ ivl_signal_t dll_target::find_signal(ivl_design_s &des, const NetNet*net)
 
       perm_string nname = net->name();
 
-      for (unsigned idx = 0 ;  idx < scope->nsigs_ ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < scope->sigs_.size() ;  idx += 1) {
 	    if (strcmp(scope->sigs_[idx]->name_, nname) == 0)
 		  return scope->sigs_[idx];
       }
@@ -396,11 +397,6 @@ void scope_add_logic(ivl_scope_t scope, ivl_net_logic_t net)
 
 }
 
-static void scope_add_enumeration(ivl_scope_t scope, ivl_enumtype_t net)
-{
-      scope->enumerations_.push_back(net);
-}
-
 void scope_add_event(ivl_scope_t scope, ivl_event_t net)
 {
       if (scope->nevent_ == 0) {
@@ -461,7 +457,7 @@ ivl_parameter_t dll_target::scope_find_param(ivl_scope_t scope,
  */
 void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 {
-      scop->nparam_ = net->parameters.size() + net->localparams.size();
+      scop->nparam_ = net->parameters.size();
       if (scop->nparam_ == 0) {
 	    scop->param_ = 0;
 	    return;
@@ -478,19 +474,7 @@ void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 	    assert(idx < scop->nparam_);
 	    ivl_parameter_t cur_par = scop->param_ + idx;
 	    cur_par->basename = (*cur_pit).first;
-	    cur_par->scope = scop;
-	    FILE_NAME(cur_par, &((*cur_pit).second));
-
-	    NetExpr*etmp = (*cur_pit).second.val;
-	    make_scope_param_expr(cur_par, etmp);
-	    idx += 1;
-      }
-      for (pit_t cur_pit = net->localparams.begin()
-		 ; cur_pit != net->localparams.end() ; ++ cur_pit ) {
-
-	    assert(idx < scop->nparam_);
-	    ivl_parameter_t cur_par = scop->param_ + idx;
-	    cur_par->basename = (*cur_pit).first;
+            cur_par->local = cur_pit->second.local_flag;
 	    cur_par->scope = scop;
 	    FILE_NAME(cur_par, &((*cur_pit).second));
 
@@ -545,8 +529,6 @@ void dll_target::add_root(ivl_design_s &des__, const NetScope *s)
       root_->name_ = name;
       FILE_NAME(root_, s);
       root_->parent = 0;
-      root_->nsigs_ = 0;
-      root_->sigs_ = 0;
       root_->nlog_ = 0;
       root_->log_ = 0;
       root_->nevent_ = 0;
@@ -563,13 +545,14 @@ void dll_target::add_root(ivl_design_s &des__, const NetScope *s)
       root_->attr  = fill_in_attributes(s);
       root_->is_auto = 0;
       root_->is_cell = s->is_cell();
-      root_->ports = s->module_ports();
+      root_->ports = s->module_port_nets();
       if (root_->ports > 0) {
 	    root_->u_.net = new NetNet*[root_->ports];
 	    for (unsigned idx = 0; idx < root_->ports; idx += 1) {
-		  root_->u_.net[idx] = s->module_port(idx);
+		  root_->u_.net[idx] = s->module_port_net(idx);
 	    }
       }
+      root_->module_ports_info = s->module_port_info();
 
       des__.nroots_++;
       if (des__.roots_)
@@ -799,10 +782,17 @@ bool dll_target::bufz(const NetBUFZ*net)
       return true;
 }
 
+bool dll_target::class_type(const NetScope*in_scope, netclass_t*net)
+{
+      ivl_scope_t use_scope = find_scope(des_, in_scope);
+      use_scope->classes.push_back(net);
+      return true;
+}
+
 bool dll_target::enumeration(const NetScope*in_scope, netenum_t*net)
 {
-      ivl_scope_t scop = find_scope(des_, in_scope);
-      scope_add_enumeration(scop, net);
+      ivl_scope_t use_scope = find_scope(des_, in_scope);
+      use_scope->enumerations_.push_back(net);
       return true;
 }
 
@@ -2291,8 +2281,6 @@ void dll_target::scope(const NetScope*net)
 	    scop->parent = find_scope(des_, net->parent());
 	    assert(scop->parent);
 	    scop->parent->children[net->fullname()] = scop;
-	    scop->nsigs_ = 0;
-	    scop->sigs_ = 0;
 	    scop->nlog_ = 0;
 	    scop->log_ = 0;
 	    scop->nevent_ = 0;
@@ -2312,14 +2300,16 @@ void dll_target::scope(const NetScope*net)
 		case NetScope::MODULE:
 		  scop->type_ = IVL_SCT_MODULE;
 		  scop->tname_ = net->module_name();
-		  scop->ports = net->module_ports();
+		  scop->ports = net->module_port_nets();
 		  if (scop->ports > 0) {
 			scop->u_.net = new NetNet*[scop->ports];
 			for (unsigned idx = 0; idx < scop->ports; idx += 1) {
-			      scop->u_.net[idx] = net->module_port(idx);
+			      scop->u_.net[idx] = net->module_port_net(idx);
 			}
 		  }
+		  scop->module_ports_info = net->module_port_info();
 		  break;
+
 		case NetScope::TASK: {
 		      const NetTaskDef*def = net->task_def();
 		      if (def == 0) {
@@ -2380,27 +2370,14 @@ void dll_target::signal(const NetNet*net)
       assert(obj->scope_);
       FILE_NAME(obj, net);
 
-      if (obj->scope_->nsigs_ == 0) {
-	    assert(obj->scope_->sigs_ == 0);
-	    obj->scope_->nsigs_ = 1;
-	    obj->scope_->sigs_ = (ivl_signal_t*)malloc(sizeof(ivl_signal_t));
-
-      } else {
-	    assert(obj->scope_->sigs_);
-	    obj->scope_->nsigs_ += 1;
-	    obj->scope_->sigs_ = (ivl_signal_t*)
-		  realloc(obj->scope_->sigs_,
-			  obj->scope_->nsigs_*sizeof(ivl_signal_t));
-      }
-
-      obj->scope_->sigs_[obj->scope_->nsigs_-1] = obj;
+      obj->scope_->sigs_.push_back(obj);
 
 
 	/* Save the primitive properties of the signal in the
 	   ivl_signal_t object. */
 
       { size_t idx = 0;
-	list<NetNet::range_t>::const_iterator cur;
+	vector<netrange_t>::const_iterator cur;
 	obj->packed_dims.resize(net->packed_dims().size());
 	for (cur = net->packed_dims().begin(), idx = 0
 		   ; cur != net->packed_dims().end() ; ++cur, idx += 1) {
@@ -2408,15 +2385,14 @@ void dll_target::signal(const NetNet*net)
 	}
       }
 
-      obj->width_ = net->vector_width();
-      obj->signed_= net->get_signed()? 1 : 0;
-      obj->isint_ = false;
+      obj->net_type = net->net_type();
       obj->local_ = net->local_flag()? 1 : 0;
       obj->forced_net_ = (net->type() != NetNet::REG) &&
                          (net->peek_lref() > 0) ? 1 : 0;
       obj->discipline = net->get_discipline();
 
-      obj->array_dimensions_ = net->array_dimensions();
+      obj->array_dimensions_ = net->unpacked_dimensions();
+      assert(obj->array_dimensions_ == net->unpacked_dimensions());
 
       switch (net->port_type()) {
 
@@ -2437,11 +2413,12 @@ void dll_target::signal(const NetNet*net)
 	    break;
       }
 
+      obj->module_port_index_ = net->get_module_port_index();
+
       switch (net->type()) {
 
 	  case NetNet::REG:
 	    obj->type_ = IVL_SIT_REG;
-	    obj->isint_ = net->get_isint();
 	    break;
 
 	      /* The SUPPLY0/1 net types are replaced with pulldown/up
@@ -2492,10 +2469,8 @@ void dll_target::signal(const NetNet*net)
       obj->npath = 0;
       obj->path = 0;
 
-      obj->data_type = net->data_type();
       obj->nattr = net->attr_cnt();
       obj->attr = fill_in_attributes(net);
-
 
 	/* Get the nexus objects for all the pins of the signal. If
 	   the signal has only one pin, then write the single
@@ -2506,9 +2481,23 @@ void dll_target::signal(const NetNet*net)
 	   t_cookie of the Nexus object so that I find it again when I
 	   next encounter the nexus. */
 
-      obj->array_base = net->array_first();
-      obj->array_words = net->array_count();
-      obj->array_addr_swapped = net->array_addr_swapped() ? 1 : 0;
+      if (obj->array_dimensions_ == 1) {
+	    const vector<netrange_t>& dims = net->unpacked_dims();
+	    if (dims[0].get_msb() < dims[0].get_lsb()) {
+		  obj->array_base = dims[0].get_msb();
+		  obj->array_addr_swapped = false;
+	    } else {
+		  obj->array_base = dims[0].get_lsb();
+		  obj->array_addr_swapped = true;
+	    }
+	    obj->array_words = net->unpacked_count();
+      } else {
+	      // The back-end API doesn't yet support multi-dimension
+	      // unpacked arrays, so just report the canonical dimensions.
+	    obj->array_base = 0;
+	    obj->array_words = net->unpacked_count();
+	    obj->array_addr_swapped = 0;
+      }
 
       ivl_assert(*net, obj->array_words == net->pin_count());
       if (debug_optimizer && obj->array_words > 1000) cerr << "debug: "

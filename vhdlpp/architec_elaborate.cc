@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "architec.h"
@@ -28,13 +28,33 @@ int Architecture::elaborate(Entity*entity)
 {
       int errors = 0;
 
+	// Constant assignments in the architecture get their types
+	// from the constant declaration itself. Elaborate the value
+	// expression with the declared type.
+
+      for (map<perm_string,struct const_t*>::iterator cur = old_constants_.begin()
+		 ; cur != old_constants_.end() ; ++cur) {
+	    cur->second->val->elaborate_expr(entity, this, cur->second->typ);
+      }
+      for (map<perm_string,struct const_t*>::iterator cur = new_constants_.begin()
+		 ; cur != new_constants_.end() ; ++cur) {
+	    cur->second->val->elaborate_expr(entity, this, cur->second->typ);
+      }
+
       for (list<Architecture::Statement*>::iterator cur = statements_.begin()
 		 ; cur != statements_.end() ; ++cur) {
 
-	    errors += (*cur)->elaborate(entity, this);
+	    int cur_errors = (*cur)->elaborate(entity, this);
+	    errors += cur_errors;
       }
 
-       return errors;
+      if (errors > 0) {
+	    cerr << errors << " errors in "
+		 << name_ << " architecture of "
+		 << entity->get_name() << "." << endl;
+      }
+
+      return errors;
 }
 
 int Architecture::Statement::elaborate(Entity*, Architecture*)
@@ -113,6 +133,15 @@ int GenerateStatement::elaborate_statements(Entity*ent, Architecture*arc)
 int ForGenerate::elaborate(Entity*ent, Architecture*arc)
 {
       int errors = 0;
+      arc->push_genvar_type(genvar_, lsb_->probe_type(ent, arc));
+      errors += elaborate_statements(ent, arc);
+      arc->pop_genvar_type();
+      return errors;
+}
+
+int IfGenerate::elaborate(Entity*ent, Architecture*arc)
+{
+      int errors = 0;
       errors += elaborate_statements(ent, arc);
       return errors;
 }
@@ -120,11 +149,11 @@ int ForGenerate::elaborate(Entity*ent, Architecture*arc)
 /*
  * This method attempts to rewrite the process content as an
  * always-@(n-edge <expr>) version of the same statement. This makes
- * for a more natural translation to verilog, if it comes to that.
+ * for a more natural translation to Verilog, if it comes to that.
  */
 int ProcessStatement::rewrite_as_always_edge_(Entity*, Architecture*)
 {
-	// If thare are multiple sensitivity expressions, I give up.
+	// If there are multiple sensitivity expressions, I give up.
       if (sensitivity_list_.size() != 1)
 	    return -1;
 
@@ -269,7 +298,10 @@ int SignalAssignment::elaborate(Entity*ent, Architecture*arc)
 	// r-value.
       const VType*lval_type = lval_->peek_type();
       if (lval_type == 0) {
-	    if (errors == 0) errors += 1;
+	    if (errors == 0) {
+		  errors += 1;
+		  cerr << get_fileline() << ": error: Unable to calculate type for l-value expression." << endl;
+	    }
 	    return errors;
       }
 

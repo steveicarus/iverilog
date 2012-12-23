@@ -1,7 +1,7 @@
 #ifndef __vvp_net_H
 #define __vvp_net_H
 /*
- * Copyright (c) 2004-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,13 +16,14 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "config.h"
 # include  "vpi_user.h"
 # include  "vvp_vpi_callback.h"
 # include  "permaheap.h"
+# include  "vvp_object.h"
 # include  <cstddef>
 # include  <cstdlib>
 # include  <cstring>
@@ -187,6 +188,24 @@ extern ostream& operator<< (ostream&o, vvp_bit4_t a);
      posedge, no edge, or negedge. */
 extern int edge(vvp_bit4_t from, vvp_bit4_t to);
 
+  /* Support for $countdrivers. */
+inline void update_driver_counts(vvp_bit4_t bit, unsigned counts[3])
+{
+      switch (bit) {
+          case BIT4_0:
+            counts[0] += 1;
+            break;
+          case BIT4_1:
+            counts[1] += 1;
+            break;
+          case BIT4_X:
+            counts[2] += 1;
+            break;
+          default:
+            break;
+      }
+}
+
 /*
  * This class represents scalar values collected into vectors. The
  * vector values can be accessed individually, or treated as a
@@ -261,7 +280,7 @@ class vvp_vector4_t {
       void set_to_x();
 
 	// Display the value into the buf as a string.
-      char*as_string(char*buf, size_t buf_len);
+      char*as_string(char*buf, size_t buf_len) const;
 
       void invert();
       vvp_vector4_t& operator &= (const vvp_vector4_t&that);
@@ -491,13 +510,12 @@ template <class T> extern T coerce_to_width(const T&that, unsigned width);
  * value will be "false", but the other bits will be transferred. This
  * is what you want if you are doing "vpi_get_value", for example.
  */
-extern bool vector4_to_value(const vvp_vector4_t&a, long&val, bool is_signed, bool is_arithmetic =true);
-extern bool vector4_to_value(const vvp_vector4_t&a, unsigned long&val);
-extern bool vector4_to_value(const vvp_vector4_t&a, int32_t&val, bool is_signed, bool is_arithmetic =true);
-#ifndef UL_AND_TIME64_SAME
-extern bool vector4_to_value(const vvp_vector4_t&a, int64_t&val, bool is_signed, bool is_arithmetic =true);
-extern bool vector4_to_value(const vvp_vector4_t&a, vvp_time64_t&val);
-#endif
+template <class T> extern bool vector4_to_value(const vvp_vector4_t&a, T&val,
+						bool is_signed,
+						bool is_arithmetic =true);
+
+template <class T> extern bool vector4_to_value(const vvp_vector4_t&a, T&val);
+
 extern bool vector4_to_value(const vvp_vector4_t&a, double&val, bool is_signed);
 
 extern bool vector2_to_value(const vvp_vector2_t&a, int32_t&val, bool is_signed);
@@ -1082,6 +1100,8 @@ class vvp_net_t {
       void send_vec8(const vvp_vector8_t&val);
       void send_real(double val, vvp_context_t context);
       void send_long(long val);
+      void send_string(const std::string&val, vvp_context_t context);
+      void send_object(vvp_object_t val, vvp_context_t context);
 
       void send_vec4_pv(const vvp_vector4_t&val,
 			unsigned base, unsigned wid, unsigned vwid,
@@ -1099,6 +1119,9 @@ class vvp_net_t {
       void force_vec4(const vvp_vector4_t&val, vvp_vector2_t mask);
       void force_vec8(const vvp_vector8_t&val, vvp_vector2_t mask);
       void force_real(double val, vvp_vector2_t mask);
+
+    public: // Method to support $countdrivers
+      void count_drivers(unsigned idx, unsigned counts[4]);
 
     private:
       vvp_net_ptr_t out_;
@@ -1156,6 +1179,10 @@ class vvp_net_fun_t {
       virtual void recv_real(vvp_net_ptr_t port, double bit,
                              vvp_context_t context);
       virtual void recv_long(vvp_net_ptr_t port, long bit);
+      virtual void recv_string(vvp_net_ptr_t port, const std::string&bit,
+			       vvp_context_t context);
+      virtual void recv_object(vvp_net_ptr_t port, vvp_object_t bit,
+			       vvp_context_t context);
 
 	// Part select variants of above
       virtual void recv_vec4_pv(vvp_net_ptr_t p, const vvp_vector4_t&bit,
@@ -1514,6 +1541,30 @@ extern void vvp_send_long(vvp_net_ptr_t ptr, long val);
 extern void vvp_send_long_pv(vvp_net_ptr_t ptr, long val,
                              unsigned base, unsigned width);
 
+inline void vvp_send_string(vvp_net_ptr_t ptr, const std::string&val, vvp_context_t context)
+{
+      while (vvp_net_t*cur = ptr.ptr()) {
+	    vvp_net_ptr_t next = cur->port[ptr.port()];
+
+	    if (cur->fun)
+		  cur->fun->recv_string(ptr, val, context);
+
+	    ptr = next;
+      }
+}
+
+inline void vvp_send_object(vvp_net_ptr_t ptr, vvp_object_t val, vvp_context_t context)
+{
+      while (vvp_net_t*cur = ptr.ptr()) {
+	    vvp_net_ptr_t next = cur->port[ptr.port()];
+
+	    if (cur->fun)
+		  cur->fun->recv_object(ptr, val, context);
+
+	    ptr = next;
+      }
+}
+
 /*
  * Part-vector versions of above functions. This function uses the
  * corresponding recv_vec4_pv method in the vvp_net_fun_t functor to
@@ -1651,6 +1702,20 @@ inline void vvp_net_t::send_real(double val, vvp_context_t context)
 	    return;
 
       vvp_send_real(out_, val, context);
+}
+
+
+inline void vvp_net_t::send_string(const std::string&val, vvp_context_t context)
+{
+      assert(!fil);
+      vvp_send_string(out_, val, context);
+}
+
+
+inline void vvp_net_t::send_object(vvp_object_t val, vvp_context_t context)
+{
+      assert(!fil);
+      vvp_send_object(out_, val, context);
 }
 
 

@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -40,6 +40,13 @@ bool target_t::branch(const NetBranch*obj)
 {
       cerr << obj->get_fileline() << ": error: target (" << typeid(*this).name()
 	   <<  "): Unhandled branch." << endl;
+      return false;
+}
+
+bool target_t::class_type(const NetScope*, netclass_t*obj)
+{
+      cerr << "<>:0" << ": error: target (" << typeid(*this).name()
+	   <<  "): Unhandled class_type <" << obj << ">." << endl;
       return false;
 }
 
@@ -444,9 +451,27 @@ void expr_scan_t::expr_const(const NetEConst*)
 	    "unhandled expr_const." << endl;
 }
 
+void expr_scan_t::expr_new(const NetENew*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_new." << endl;
+}
+
+void expr_scan_t::expr_null(const NetENull*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_null." << endl;
+}
+
 void expr_scan_t::expr_param(const NetEConstParam*that)
 {
       expr_const(that);
+}
+
+void expr_scan_t::expr_property(const NetEProperty*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_property." << endl;
 }
 
 void expr_scan_t::expr_creal(const NetECReal*)

@@ -19,7 +19,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "cfparse.h"
@@ -195,7 +195,6 @@ int yywrap()
 void switch_to_command_file(const char *file)
 {
       char path[4096];
-      char *cp;
 
       if (cmdfile_stack_ptr >= MAX_CMDFILE_DEPTH) {
 	    fprintf(stderr, "Error: command files nested too deeply (%d) "
@@ -213,6 +212,7 @@ void switch_to_command_file(const char *file)
          * file name.
          */
       if (file[0] != '/') {
+	    char *cp;
 	    strcpy(path, current_file);
 	    cp = strrchr(path, '/');
 	    if (cp == 0) strcpy(path, file);  /* A base file. */

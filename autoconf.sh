@@ -2,9 +2,9 @@
 
 #
 # This shell script exists to run autoconf on source distributions
-# that are pulled from CVS. The configure scripts are not included
-# in CVS, and there are several configure.in files, so it is easiest
-# to just run this script to autoconf wherever needed.
+# that are pulled from git The configure script is not included
+# in git, so it is easiest to just run this script whenever needed
+# to generate the configure script.
 #
 echo "Autoconf in root..."
 autoconf -f

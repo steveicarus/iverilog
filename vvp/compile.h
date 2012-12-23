@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  <cstdio>
@@ -254,11 +254,13 @@ extern void compile_vpi_symbol(const char*label, vpiHandle obj);
 extern void compile_vpi_lookup(vpiHandle *objref, char*label);
 
 extern void compile_param_string(char*label, char*name, char*value,
+                                 bool local_flag,
                                  long file_idx, long lineno);
 extern void compile_param_logic(char*label, char*name, char*value,
-				bool signed_flag,
+				bool signed_flag, bool local_flag,
                                 long file_idx, long lineno);
 extern void compile_param_real(char*label, char*name, char*value,
+                               bool local_flag,
                                long file_idx, long lineno);
 
 /*
@@ -386,7 +388,7 @@ extern void compile_named_event(char*label, char*type);
  */
 
 #define OPERAND_MAX 3
-enum ltype_e { L_NUMB, L_SYMB };
+enum ltype_e { L_NUMB, L_SYMB, L_STRING };
 
 struct comp_operands_s {
       unsigned argc;
@@ -395,6 +397,7 @@ struct comp_operands_s {
 	    union {
 		  unsigned long numb;
 		  struct symb_s symb;
+		  const char   *text;
 	    };
       } argv[OPERAND_MAX];
 };
@@ -410,7 +413,9 @@ extern void compile_file_line(char*label, long file_idx, long lineno,
 extern void compile_vpi_call(char*label, char*name,
 			     bool func_as_task_err, bool func_as_task_warn,
 			     long file_idx, long lineno,
-			     unsigned argc, vpiHandle*argv);
+			     unsigned argc, vpiHandle*argv,
+			     unsigned real_stack,
+			     unsigned string_stack);
 
 /* Compile a function call. The vbit and vwid encode the return
    type. If the vwid >0, the return type is a vector. If the vwid is
@@ -419,7 +424,9 @@ extern void compile_vpi_call(char*label, char*name,
 extern void compile_vpi_func_call(char*label, char*name,
 				  unsigned vbit, int vwid,
 				  long file_idx, long lineno,
-				  unsigned argc, vpiHandle*argv);
+				  unsigned argc, vpiHandle*argv,
+				  unsigned real_stack,
+				  unsigned string_stack);
 extern void print_vpi_call_errors();
 
 extern void compile_fork(char*label, struct symb_s targ_s,
@@ -453,8 +460,21 @@ extern void compile_variable(char*label, char*name,
 			     int msb, int lsb, int vpi_type_code,
 			     bool signed_flag, bool local_flag);
 
-extern void compile_var_real(char*label, char*name,
-			     int msb, int lsb);
+extern void compile_var_real(char*label, char*name);
+extern void compile_var_string(char*label, char*name);
+extern void compile_var_darray(char*label, char*name);
+extern void compile_var_cobject(char*label, char*name);
+
+/*
+ * This function is used to create a scope port
+ * Current ONLY module ports are supported and ports exist purely
+ * as meta-data for VPI queries (i.e. there is NO corresponding net etc)
+ * as elaboration internally eliminates port-nets by directly connecting
+ * nets connected through module ports.
+ */
+
+extern void compile_port_info( unsigned index, int vpi_port_type, unsigned width, const char *name );
+
 
 /*
  * The compile_net function is called to create a .net vector with a
@@ -501,5 +521,9 @@ extern void compile_island_tranvp(char*island, char*ba, char*bb,
 				  unsigned width, unsigned part, unsigned off);
 
 extern void delete_udp_symbols(void);
+
+extern void compile_class_start(char*lab, char*nam, unsigned nprop);
+extern void compile_class_property(unsigned idx, char*nam, char*typ);
+extern void compile_class_done(void);
 
 #endif

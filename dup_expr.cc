@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -110,10 +110,10 @@ NetEBShift* NetEBShift::dup_expr() const
 
 NetEConcat* NetEConcat::dup_expr() const
 {
-      NetEConcat*dup = new NetEConcat(parms_.count(), repeat_);
+      NetEConcat*dup = new NetEConcat(parms_.size(), repeat_, expr_type_);
       ivl_assert(*this, dup);
       dup->set_line(*this);
-      for (unsigned idx = 0 ;  idx < parms_.count() ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1)
 	    if (parms_[idx]) {
 		  NetExpr*tmp = parms_[idx]->dup_expr();
                   ivl_assert(*this, tmp);
@@ -177,6 +177,24 @@ NetENetenum* NetENetenum::dup_expr() const
       return 0;
 }
 
+NetENew* NetENew::dup_expr() const
+{
+      ivl_assert(*this, 0);
+      return 0;
+}
+
+NetENull* NetENull::dup_expr() const
+{
+      ivl_assert(*this, 0);
+      return 0;
+}
+
+NetEProperty* NetEProperty::dup_expr() const
+{
+      ivl_assert(*this, 0);
+      return 0;
+}
+
 NetEScope* NetEScope::dup_expr() const
 {
       ivl_assert(*this, 0);
@@ -232,9 +250,9 @@ NetETernary* NetETernary::dup_expr() const
 NetEUFunc* NetEUFunc::dup_expr() const
 {
       NetEUFunc*tmp;
-      svector<NetExpr*> tmp_parms (parms_.count());
+      vector<NetExpr*> tmp_parms (parms_.size());
 
-      for (unsigned idx = 0 ;  idx < tmp_parms.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < tmp_parms.size() ;  idx += 1) {
 	    ivl_assert(*this, parms_[idx]);
 	    tmp_parms[idx] = parms_[idx]->dup_expr();
       }

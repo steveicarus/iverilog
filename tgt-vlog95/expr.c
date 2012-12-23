@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -400,9 +400,7 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 		  int msb = 1;
 		  int lsb = 0;
 		  if (type == IVL_EX_SIGNAL) {
-			ivl_signal_t sig = ivl_expr_signal(sig_expr);
-			msb = ivl_signal_msb(sig);
-			lsb = ivl_signal_lsb(sig);
+			get_sig_msb_lsb(ivl_expr_signal(sig_expr), &msb, &lsb);
 		  }
 		    /* A bit select. */
 		  if (width == 1) {
@@ -430,11 +428,11 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	      /* Select part of a signal when needed. */
 	    if ((ivl_expr_type(sig_expr) == IVL_EX_SIGNAL) &&
 	        (ivl_expr_width(expr) < ivl_expr_width(sig_expr))) {
-		  ivl_signal_t sig = ivl_expr_signal(sig_expr);
-		  int msb = ivl_signal_msb(sig);
-		  int lsb = ivl_signal_lsb(sig);
-		  int64_t value = lsb;
+		  int msb, lsb;
+		  int64_t value;
 		  unsigned e_wid = ivl_expr_width(expr) - 1;
+		  get_sig_msb_lsb(ivl_expr_signal(sig_expr), &msb, &lsb);
+		  value = lsb;
 		  if (msb >= lsb) value += e_wid;
 		  else value -= e_wid;
 		  fprintf(vlog_out, "[%"PRId64":%u]", value, lsb);
@@ -534,7 +532,7 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    fprintf(vlog_out, "(");
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
 	    fprintf(vlog_out, "++)");
-	    fprintf(stderr, "%s:%u: vlog95 sorry: Pre-increment "
+	    fprintf(stderr, "%s:%u: vlog95 sorry: Post-increment "
 	                    "operator is not currently translated.\n",
 	                    ivl_expr_file(expr),
 	                    ivl_expr_lineno(expr));
@@ -554,7 +552,7 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    fprintf(vlog_out, "(");
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
 	    fprintf(vlog_out, "--)");
-	    fprintf(stderr, "%s:%u: vlog95 sorry: Pre-decrement "
+	    fprintf(stderr, "%s:%u: vlog95 sorry: Post-decrement "
 	                    "operator is not currently translated.\n",
 	                    ivl_expr_file(expr),
 	                    ivl_expr_lineno(expr));

@@ -173,7 +173,7 @@ where we will work from now on.
 
 Under certain cases, you may need to "preconfigure" the Icarus Verilog
 source tree. You should only need to do this if you are getting the
-Icarus Verilog source tree from CVS, or you are using an existing
+Icarus Verilog source tree from git, or you are using an existing
 source tree that you've patched to cause configure.in files to change.
 
     NOTE: If you are building from a fresh, bundled source tree that

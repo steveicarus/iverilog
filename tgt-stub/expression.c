@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -165,6 +165,105 @@ static void show_memory_expression(ivl_expr_t net, unsigned ind)
 	      width);
 }
 
+static void show_new_expression(ivl_expr_t net, unsigned ind)
+{
+      switch (ivl_expr_value(net)) {
+	  case IVL_VT_CLASS:
+	    fprintf(out, "%*snew <class_type>\n", ind, "");
+	    if (ivl_expr_oper1(net)) {
+		  fprintf(out, "%*sERROR: class_new expression has a size!\n",
+			  ind+3, "");
+		  show_expression(ivl_expr_oper1(net), ind+3);
+		  stub_errors += 1;
+	    }
+	    break;
+	  case IVL_VT_DARRAY:
+	    fprintf(out, "%*snew [] <type>\n", ind, "");
+	    if (ivl_expr_oper1(net)) {
+		  show_expression(ivl_expr_oper1(net), ind+3);
+	    } else {
+		  fprintf(out, "%*sERROR: darray_new missing size expression\n",
+			  ind+3, "");
+		  stub_errors += 1;
+	    }
+	    break;
+	  default:
+	    fprintf(out, "%*snew ERROR: expression type: %s\n",
+		    ind+3, "", vt_type_string(net));
+	    stub_errors += 1;
+	    break;
+      }
+}
+
+static void show_null_expression(ivl_expr_t net, unsigned ind)
+{
+      fprintf(out, "%*s<null>\n", ind, "");
+      if (ivl_expr_value(net) != IVL_VT_CLASS) {
+	    fprintf(out, "%*sERROR: null expression must be IVL_VT_CLASS, got %s.\n",
+		    ind+3, "", vt_type_string(net));
+	    stub_errors += 1;
+      }
+}
+
+static void show_property_expression(ivl_expr_t net, unsigned ind)
+{
+      ivl_signal_t sig = ivl_expr_signal(net);
+      const char* pnam = ivl_expr_name(net);
+
+      fprintf(out, "%*s<property base=%s, prop=%s, width=%u>\n", ind, "",
+	      ivl_signal_basename(sig), pnam, ivl_expr_width(net));
+      if (ivl_signal_data_type(sig) != IVL_VT_CLASS) {
+	    fprintf(out, "%*sERROR: Property signal must be IVL_VT_CLASS, got %s.\n",
+		    ind+3, "", data_type_string(ivl_signal_data_type(sig)));
+      }
+}
+
+static void show_select_expression(ivl_expr_t net, unsigned ind)
+{
+      unsigned width = ivl_expr_width(net);
+      const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
+      const char*vt = vt_type_string(net);
+      ivl_expr_t oper1 = ivl_expr_oper1(net);
+      ivl_expr_t oper2 = ivl_expr_oper2(net);
+
+      if (ivl_expr_value(oper1) == IVL_VT_STRING) {
+	      /* If the sub-expression is a STRING, then this is a
+		 substring and the code generator will handle it
+		 differently. */
+	    fprintf(out, "%*s<substring: width=%u bits, %u bytes>\n", ind, "", width, width/8);
+	    if (width%8 != 0) {
+		  fprintf(out, "%*sERROR: Width should be a multiple of 8 bits.\n", ind, "");
+		  stub_errors += 1;
+	    }
+	    assert(oper1);
+	    show_expression(oper1, ind+3);
+
+	    if (oper2) {
+		  show_expression(oper2, ind+3);
+	    } else {
+		  fprintf(out, "%*sERROR: oper2 missing! Pad makes no sense for IVL_VT_STRING expressions.\n", ind+3, "");
+		  stub_errors += 1;
+	    }
+
+      } else if (oper2) {
+	      /* If oper2 is present, then it is the base of a part
+		 select. The width of the expression defines the range
+		 of the part select. */
+	    fprintf(out, "%*s<select: width=%u, %s, type=%s>\n", ind, "",
+		    width, sign, vt);
+	    show_expression(oper1, ind+3);
+	    show_expression(oper2, ind+3);
+
+      } else {
+	      /* There is no base expression so this is a pad
+		 operation. The sub-expression is padded (signed or
+		 unsigned as appropriate) to the expression width. */
+	    fprintf(out, "%*s<expr pad: width=%u, %s>\n", ind, "",
+		    width, sign);
+	    show_expression(oper1, ind+3);
+      }
+}
+
 static void show_signal_expression(ivl_expr_t net, unsigned ind)
 {
       unsigned width = ivl_expr_width(net);
@@ -173,6 +272,7 @@ static void show_signal_expression(ivl_expr_t net, unsigned ind)
       ivl_expr_t word = ivl_expr_oper1(net);
 
       ivl_signal_t sig = ivl_expr_signal(net);
+      const char*vt_sig = data_type_string(ivl_signal_data_type(sig));
       unsigned dimensions = ivl_signal_dimensions(sig);
       unsigned word_count = ivl_signal_array_count(sig);
 
@@ -182,8 +282,8 @@ static void show_signal_expression(ivl_expr_t net, unsigned ind)
 	    stub_errors += 1;
       }
 
-      fprintf(out, "%*s<signal=%s, words=%u, width=%u, %s type=%s>\n", ind, "",
-	      ivl_expr_name(net), word_count, width, sign, vt);
+      fprintf(out, "%*s<signal=%s, words=%u, width=%u, %s type=%s (%s)>\n", ind, "",
+	      ivl_expr_name(net), word_count, width, sign, vt, vt_sig);
 
       /* If the expression refers to a signal array, then there must
          also be a word select expression, and if the signal is not an
@@ -194,6 +294,14 @@ static void show_signal_expression(ivl_expr_t net, unsigned ind)
       }
       if (dimensions >= 1 && word == 0) {
 	    fprintf(out, "%*sERROR: Missing word expression\n", ind+2, "");
+	    stub_errors += 1;
+      }
+	/* If this is not an array, then the expression with must
+	   match the signal width. We have IVL_EX_SELECT expressions
+	   for casting signal widths. */
+      if (dimensions == 0 && ivl_signal_width(sig) != width) {
+	    fprintf(out, "%*sERROR: Expression width (%u) doesn't match ivl_signal_width(sig)=%u\n",
+		    ind+2, "", width, ivl_signal_width(sig));
 	    stub_errors += 1;
       }
 
@@ -257,9 +365,10 @@ void show_unary_expression(ivl_expr_t net, unsigned ind)
 
 void show_expression(ivl_expr_t net, unsigned ind)
 {
+      assert(net);
       unsigned idx;
-      const ivl_expr_type_t code = ivl_expr_type(net);
       ivl_parameter_t par = ivl_expr_parameter(net);
+      const ivl_expr_type_t code = ivl_expr_type(net);
       unsigned width = ivl_expr_width(net);
       const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";
       const char*sized = ivl_expr_sized(net)? "sized" : "unsized";
@@ -295,6 +404,18 @@ void show_expression(ivl_expr_t net, unsigned ind)
 	    show_memory_expression(net, ind);
 	    break;
 
+	  case IVL_EX_NEW:
+	    show_new_expression(net, ind);
+	    break;
+
+	  case IVL_EX_NULL:
+	    show_null_expression(net, ind);
+	    break;
+
+	  case IVL_EX_PROPERTY:
+	    show_property_expression(net, ind);
+	    break;
+
 	  case IVL_EX_NUMBER: {
 		const char*bits = ivl_expr_bits(net);
 
@@ -312,18 +433,7 @@ void show_expression(ivl_expr_t net, unsigned ind)
 	  }
 
 	  case IVL_EX_SELECT:
-	      /* The SELECT expression can be used to express part
-		 select, or if the base is null vector extension. */
-	    if (ivl_expr_oper2(net)) {
-		  fprintf(out, "%*s<select: width=%u, %s>\n", ind, "",
-			  width, sign);
-		  show_expression(ivl_expr_oper1(net), ind+3);
-		  show_expression(ivl_expr_oper2(net), ind+3);
-	    } else {
-		  fprintf(out, "%*s<expr pad: width=%u, %s>\n", ind, "",
-			  width, sign);
-		  show_expression(ivl_expr_oper1(net), ind+3);
-	    }
+	    show_select_expression(net, ind);
 	    break;
 
 	  case IVL_EX_STRING:
@@ -384,7 +494,7 @@ void show_expression(ivl_expr_t net, unsigned ind)
 	      break;
 
 	  default:
-	    fprintf(out, "%*s<expr_type=%u>\n", ind, "", code);
+	    fprintf(out, "%*s<expr_type=%d>\n", ind, "", code);
 	    break;
       }
 }

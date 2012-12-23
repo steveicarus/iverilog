@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "vvp_config.h"
@@ -100,7 +100,7 @@ extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
 extern void draw_lpm_mux(ivl_lpm_t net);
 
 extern struct vector_info draw_ufunc_expr(ivl_expr_t expr, unsigned wid);
-extern int draw_ufunc_real(ivl_expr_t expr);
+extern void draw_ufunc_real(ivl_expr_t expr);
 
 extern void pad_expr_in_place(ivl_expr_t expr, struct vector_info res,
                               unsigned swid);
@@ -129,7 +129,9 @@ extern void draw_vpi_task_call(ivl_statement_t net);
 
 extern struct vector_info draw_vpi_func_call(ivl_expr_t expr,
 					     unsigned wid);
-extern int draw_vpi_rfunc_call(ivl_expr_t expr);
+extern void draw_vpi_rfunc_call(ivl_expr_t expr);
+
+extern void draw_class_in_scope(ivl_type_t classtype);
 
 /*
  * Enumeration draw routine.
@@ -298,11 +300,10 @@ extern long get_number_immediate(ivl_expr_t ex);
 extern uint64_t get_number_immediate64(ivl_expr_t ex);
 
 /*
- * draw_eval_real evaluates real value expressions. The return code
- * from the function is the index of the word register that contains
- * the result.
+ * draw_eval_real evaluates real value expressions. The result of the
+ * evaluation is the real result in the top of the real expression stack.
  */
-extern int draw_eval_real(ivl_expr_t ex);
+extern void draw_eval_real(ivl_expr_t ex);
 
 /*
  * draw_eval_bool64 evaluates a bool expression. The return code from
@@ -312,6 +313,18 @@ extern int draw_eval_real(ivl_expr_t ex);
  * be such that it fits in a 64bit word.
  */
 extern int draw_eval_bool64(ivl_expr_t ex);
+
+/*
+ * The draw_eval_string functio evaluates the expression as a string,
+ * and pushes the string onto the string stack.
+ */
+extern void draw_eval_string(ivl_expr_t ex);
+
+/*
+ * The draw_eval_string functio evaluates the expression as an object,
+ * and pushes the object onto the object stack.
+ */
+extern int draw_eval_object(ivl_expr_t ex);
 
 extern int show_stmt_assign(ivl_statement_t net);
 extern void show_stmt_file_line(ivl_statement_t net, const char*desc);

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,7 +15,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -23,6 +24,7 @@
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "netstruct.h"
+# include  "netvector.h"
 # include  "compiler.h"
 
 # include  <cstdlib>
@@ -97,12 +99,12 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 	   concat operator from most significant to least significant,
 	   which is the order they are given in the concat list. */
 
+      netvector_t*tmp2_vec = new netvector_t(nets[0]->data_type(),width-1,0);
       NetNet*osig = new NetNet(scope, scope->local_symbol(),
-			       NetNet::IMPLICIT, width);
+			       NetNet::IMPLICIT, tmp2_vec);
 
 	/* Assume that the data types of the nets are all the same, so
 	   we can take the data type of any, the first will do. */
-      osig->data_type(nets[0]->data_type());
       osig->local_flag(true);
       osig->set_line(*this);
 
@@ -153,8 +155,6 @@ NetNet* PEConcat::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    assert(width == 0);
       }
 
-      osig->data_type(nets[0]->data_type());
-      osig->local_flag(true);
       return osig;
 }
 
@@ -208,7 +208,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 	// Only treat as part/bit selects any index that is beyond the
 	// word selects for an array. This is not an array, then
 	// dimensions==0 and any index is treated as a select.
-      if (name_tail.index.size() <= sig->array_dimensions()) {
+      if (name_tail.index.size() <= sig->unpacked_dimensions()) {
 	    midx = sig->vector_width()-1;
 	    lidx = 0;
 	    return true;
@@ -247,7 +247,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		      if (warn_ob_select) {
 			    cerr << get_fileline() << ": warning: "
 			         << sig->name();
-			    if (sig->array_dimensions() > 0) cerr << "[]";
+			    if (sig->unpacked_dimensions() > 0) cerr << "[]";
 			    cerr << "['bx";
 			    if (index_tail.sel ==
 			        index_component_t::SEL_IDX_UP) {
@@ -279,7 +279,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		  /* Warn about an indexed part select that is out of range. */
 		if (warn_ob_select && (lidx < 0)) {
 		      cerr << get_fileline() << ": warning: " << sig->name();
-		      if (sig->array_dimensions() > 0) cerr << "[]";
+		      if (sig->unpacked_dimensions() > 0) cerr << "[]";
 		      cerr << "[" << midx_val;
 		      if (index_tail.sel == index_component_t::SEL_IDX_UP) {
 			    cerr << "+:";
@@ -290,7 +290,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		}
 		if (warn_ob_select && (midx >= (long)sig->vector_width())) {
 		      cerr << get_fileline() << ": warning: " << sig->name();
-		      if (sig->array_dimensions() > 0) {
+		      if (sig->unpacked_dimensions() > 0) {
 			    cerr << "[]";
 		      }
 		      cerr << "[" << midx_val;
@@ -337,16 +337,11 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		if (midx_tmp >= (long)sig->vector_width() || lidx_tmp < 0) {
 		      cerr << get_fileline() << ": warning: Part select "
 			   << sig->name();
-		      if (sig->array_dimensions() > 0) {
+		      if (sig->unpacked_dimensions() > 0) {
 			    cerr << "[]";
 		      }
 		      cerr << "[" << msb << ":" << lsb
 			   << "] is out of range." << endl;
-#if 0
-		      midx_tmp = sig->vector_width() - 1;
-		      lidx_tmp = 0;
-		      des->errors += 1;
-#endif
 		}
 		  /* This is completely out side the signal so just skip it. */
 		if (lidx_tmp >= (long)sig->vector_width() || midx_tmp < 0) {
@@ -359,20 +354,31 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 	  }
 
 	  case index_component_t::SEL_BIT:
-	    if (name_tail.index.size() > sig->array_dimensions()) {
+	    if (name_tail.index.size() > sig->unpacked_dimensions()) {
 		  long msb;
 		  bool bit_defined_flag;
 		  /* bool flag = */ calculate_bits_(des, scope, msb, bit_defined_flag);
 		  ivl_assert(*this, bit_defined_flag);
-		  midx = sig->sb_to_idx(prefix_indices, msb);
-		  if (midx >= (long)sig->vector_width()) {
-			cerr << get_fileline() << ": error: Index " << sig->name()
-			     << "[" << msb << "] is out of range."
-			     << endl;
-			des->errors += 1;
-			midx = 0;
+
+		  if (prefix_indices.size()+2 <= sig->packed_dims().size()) {
+			long tmp_loff;
+			unsigned long tmp_lwid;
+			bool rcl = sig->sb_to_slice(prefix_indices, msb,
+						    tmp_loff, tmp_lwid);
+			ivl_assert(*this, rcl);
+			midx = tmp_loff + tmp_lwid - 1;
+			lidx = tmp_loff;
+		  } else {
+			midx = sig->sb_to_idx(prefix_indices, msb);
+			if (midx >= (long)sig->vector_width()) {
+			      cerr << get_fileline() << ": error: Index " << sig->name()
+				   << "[" << msb << "] is out of range."
+				   << endl;
+			      des->errors += 1;
+			      midx = 0;
+			}
+			lidx = midx;
 		  }
-		  lidx = midx;
 
 	    } else {
 		  cerr << get_fileline() << ": internal error: "
@@ -412,18 +418,30 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    return 0;
       }
 
+	// Break the path_ into the tail name and the prefix. For
+	// example, a name "a.b.c" is broken into name_tail="c" and
+	// path_prefix="a.b".
+      const name_component_t&path_tail = path_.back();
+      pform_name_t path_prefix = path_;
+      path_prefix.pop_back();
+
 	/* If the signal is not found, check to see if this is a
 	   member of a struct. Take the name of the form "a.b.member",
 	   remove the member and store it into method_name, and retry
 	   the search with "a.b". */
       if (sig == 0 && path_.size() >= 2) {
-	    pform_name_t use_path = path_;
-	    method_name = peek_tail_name(use_path);
-	    use_path.pop_back();
-	    symbol_search(this, des, scope, use_path, sig, par, eve);
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
+			"Symbol not found, try again with path_prefix=" << path_prefix
+		       << " and method_name=" << path_tail.name << endl;
+	    }
+	    method_name = path_tail.name;
+	    symbol_search(this, des, scope, path_prefix, sig, par, eve);
 
 	      // Whoops, not a struct signal, so give up on this avenue.
 	    if (sig && sig->struct_type() == 0) {
+		  cerr << get_fileline() << ": XXXXX: sig=" << sig->name()
+		       << " is found, but not a struct with member " << method_name << endl;
 		  method_name = perm_string();
 		  sig = 0;
 	    }
@@ -460,19 +478,19 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       unsigned midx = sig->vector_width()-1, lidx = 0;
 	// The default word select is the first.
       long widx = 0;
-	// The widx_val is the word select as entered in the source
-	// code. It's used for error messages.
-      long widx_val = 0;
 
-      const name_component_t&name_tail = path_.back();
+      list<long> unpacked_indices_const;
 
-      netstruct_t*struct_type = 0;
+      const netstruct_t*struct_type = 0;
       if ((struct_type = sig->struct_type()) && !method_name.nil()) {
 
 	      // Detect the variable is a structure and there was a
-	      // method name detected.
+	      // method name detected. We've already found that
+	      // the path_ is <>.sig.method_name and signal
+	      // (NetNet). We also know that sig is struct_type(), so
+	      // look for a method named method_name.
 	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: "
+		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
 		       << "Signal " << sig->name() << " is a structure, "
 		       << "try to match member " << method_name << endl;
 
@@ -480,58 +498,133 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    const struct netstruct_t::member_t*member = struct_type->packed_member(method_name, member_off);
 	    ivl_assert(*this, member);
 
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
+		       << "Member " << method_name
+		       << " has packed dimensions " << member->packed_dims << "." << endl;
+		  cerr << get_fileline() << ":                                : "
+		       << "Tail name has " << path_tail.index.size() << " indices." << endl;
+	    }
+
 	      // Rewrite a member select of a packed structure as a
 	      // part select of the base variable.
 	    lidx = member_off;
 	    midx = lidx + member->width() - 1;
 
-      } else if (sig->array_dimensions() > 0) {
+	      // The dimensions of the tail of the prefix must match
+	      // the dimensions of the signal at this point. (The sig
+	      // has a packed dimension for the packed struct size.)
+	      // For example, if the path_=a[<m>][<n>].member, then
+	      // sig must have 3 packed dimenions: one for the struct
+	      // members and two actual packed dimensions.
+	    ivl_assert(*this, path_prefix.back().index.size()+1 == sig->packed_dimensions());
 
-	    if (name_tail.index.empty()) {
-		  cerr << get_fileline() << ": error: array " << sig->name()
-		       << " must be used with an index." << endl;
+	      // Elaborate an expression from the packed indices and
+	      // the member offset (into the structure) to get a
+	      // canonical expression into the packed signal vector.
+	    NetExpr*packed_base = 0;
+	    if (sig->packed_dimensions() > 1) {
+		  list<index_component_t>tmp_index = path_prefix.back().index;
+		  index_component_t member_select;
+		  member_select.sel = index_component_t::SEL_BIT;
+		  member_select.msb = new PENumber(new verinum(member_off));
+		  tmp_index.push_back(member_select);
+		  packed_base = collapse_array_indices(des, scope, sig, tmp_index);
+
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": debug: "
+			     << "packed_base expression = " << *packed_base << endl;
+		  }
+	    }
+
+	    long tmp;
+	    if (packed_base && eval_as_long(tmp, packed_base)) {
+		  lidx = tmp;
+		  midx = lidx + member->width() - 1;
+		  delete packed_base;
+		  packed_base = 0;
+	    }
+
+	      // Currently, only support const dimensions here.
+	    ivl_assert(*this, packed_base == 0);
+
+	      // Now the lidx/midx values get us to the member. Next
+	      // up, deal with bit/part selects from the member
+	      // itself.
+	    ivl_assert(*this, member->packed_dims.size() <= 1);
+	    ivl_assert(*this, path_tail.index.size() <= 1);
+	    if (! path_tail.index.empty()) {
+		  long tmp_off;
+		  unsigned long tmp_wid;
+		  const index_component_t&tail_sel = path_tail.index.back();
+		  ivl_assert(*this, tail_sel.sel == index_component_t::SEL_PART || tail_sel.sel == index_component_t::SEL_BIT);
+		  bool rc = calculate_part(this, des, scope, tail_sel, tmp_off, tmp_wid);
+		  ivl_assert(*this, rc);
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
+			     << "tmp_off=" << tmp_off << ", tmp_wid=" << tmp_wid << endl;
+		  lidx += tmp_off;
+		  midx = lidx + tmp_wid - 1;
+	    }
+
+      } else if (sig->unpacked_dimensions() > 0) {
+
+	      // Make sure there are enough indices to address an array element.
+	    if (path_tail.index.size() < sig->unpacked_dimensions()) {
+		  cerr << get_fileline() << ": error: Array " << path()
+		       << " needs " << sig->unpacked_dimensions() << " indices,"
+		       << " but got only " << path_tail.index.size() << "." << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
 
-	    const index_component_t&index_head = name_tail.index.front();
-	    if (index_head.sel == index_component_t::SEL_PART) {
-		  cerr << get_fileline() << ": error: cannot perform a part "
-		       << "select on array " << sig->name() << "." << endl;
-		  des->errors += 1;
-		  return 0;
-	    }
-	    ivl_assert(*this, index_head.sel == index_component_t::SEL_BIT);
-
-	    NetExpr*tmp_ex = elab_and_eval(des, scope, index_head.msb, -1, true);
-	    NetEConst*tmp = dynamic_cast<NetEConst*>(tmp_ex);
-	    if (!tmp) {
+	      // Evaluate all the index expressions into an
+	      // "unpacked_indices" array.
+	    list<NetExpr*>unpacked_indices;
+	    bool flag = indices_to_expressions(des, scope, this,
+					       path_tail.index, sig->unpacked_dimensions(),
+					       true,
+					       unpacked_indices,
+					       unpacked_indices_const);
+	      // Note that !flag includes that there were any other
+	      // elaboration errors generating the unpacked_indices list.
+	    if (!flag) {
 		  cerr << get_fileline() << ": error: array " << sig->name()
 		       << " index must be a constant in this context." << endl;
 		  des->errors += 1;
 		  return 0;
 	    }
 
-	    widx_val = tmp->value().as_long();
-	    if (sig->array_index_is_valid(widx_val))
-		  widx = sig->array_index_to_address(widx_val);
-	    else
+	    NetExpr*canon_index = 0;
+	    ivl_assert(*this, unpacked_indices_const.size() == sig->unpacked_dimensions());
+	    canon_index = normalize_variable_unpacked(sig, unpacked_indices_const);
+	    if (canon_index == 0) {
+		    // Normalize detected an out-of-bounds
+		    // index. Indicate that by setting the generated
+		    // widx to -1.
 		  widx = -1;
-	    delete tmp_ex;
+
+	    } else {
+		  NetEConst*canon_const = dynamic_cast<NetEConst*>(canon_index);
+		  ivl_assert(*this, canon_const);
+
+		  widx = canon_const->value().as_long();
+		  delete canon_index;
+	    }
 
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: Use [" << widx << "]"
 		       << " to index l-value array." << endl;
 
 	      /* The array has a part/bit select at the end. */
-	    if (name_tail.index.size() > sig->array_dimensions()) {
+	    if (path_tail.index.size() > sig->unpacked_dimensions()) {
 		  if (sig->get_scalar()) {
 		        cerr << get_fileline() << ": error: "
 		             << "can not select part of ";
 			if (sig->data_type() == IVL_VT_REAL) cerr << "real";
 			else cerr << "scalar";
 			cerr << " array word: " << sig->name()
-			     << "[" << widx_val << "]" << endl;
+			     << as_indices(unpacked_indices_const) << endl;
 		        des->errors += 1;
 		        return 0;
 		  }
@@ -550,7 +643,8 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  midx = midx_tmp;
 		  lidx = lidx_tmp;
 	    }
-      } else if (!name_tail.index.empty()) {
+
+      } else if (!path_tail.index.empty()) {
 	    if (sig->get_scalar()) {
 		  cerr << get_fileline() << ": error: "
 		       << "can not select part of ";
@@ -590,15 +684,16 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    if (widx < 0 || widx >= (long) sig->pin_count()) {
 		  cerr << get_fileline() << ": warning: ignoring out of "
 		          "bounds l-value array access "
-		       << sig->name() << "[" << widx_val << "]." << endl;
+		       << sig->name() << as_indices(unpacked_indices_const) << "." << endl;
 		  return 0;
 	    }
 
+	    netvector_t*tmp2_vec = new netvector_t(sig->data_type(),
+						   sig->vector_width()-1,0);
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    sig->type(), sig->vector_width());
+				    sig->type(), tmp2_vec);
 	    tmp->set_line(*this);
 	    tmp->local_flag(true);
-	    tmp->data_type( sig->data_type() );
 	    connect(sig->pin(widx), tmp->pin(0));
 	    sig = tmp;
       }
@@ -622,10 +717,11 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		       << " wid=" << subnet_wid <<"]"
 		       << endl;
 
+	    netvector_t*tmp2_vec = new netvector_t(sig->data_type(),
+						   subnet_wid-1,0);
 	    NetNet*subsig = new NetNet(sig->scope(),
 				       sig->scope()->local_symbol(),
-				       NetNet::WIRE, subnet_wid);
-	    subsig->data_type( sig->data_type() );
+				       NetNet::WIRE, tmp2_vec);
 	    subsig->local_flag(true);
 	    subsig->set_line(*this);
 
@@ -675,9 +771,9 @@ NetNet* PEIdent::elaborate_bi_net(Design*des, NetScope*scope) const
  * instantiation (PGModule::elaborate_mod_) to get NetNet objects for
  * the port.
  */
-NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
+NetNet* PEIdent::elaborate_subport(Design*des, NetScope*scope) const
 {
-      assert(scope->type() == NetScope::MODULE);
+      ivl_assert(*this, scope->type() == NetScope::MODULE);
       NetNet*sig = des->find_signal(scope, path_);
       if (sig == 0) {
 	    cerr << get_fileline() << ": error: no wire/reg " << path_
@@ -732,17 +828,17 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
 	/* If this is a part select of the entire signal (or no part
 	   select at all) then we're done. */
       if ((lidx == 0) && (midx == (long)sig->vector_width()-1)) {
-	    scope->add_module_port(sig);
+	    scope->add_module_port_net(sig);
 	    return sig;
       }
 
       unsigned swid = abs(midx - lidx) + 1;
       ivl_assert(*this, swid > 0 && swid < sig->vector_width());
 
+      netvector_t*tmp2_vec = new netvector_t(sig->data_type(),swid-1,0);
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-			      NetNet::WIRE, swid);
+			      NetNet::WIRE, tmp2_vec);
       tmp->port_type(sig->port_type());
-      tmp->data_type(sig->data_type());
       tmp->set_line(*this);
       tmp->local_flag(true);
       NetNode*ps = 0;
@@ -779,7 +875,7 @@ NetNet* PEIdent::elaborate_port(Design*des, NetScope*scope) const
       ps->set_line(*this);
       des->add_node(ps);
 
-      scope->add_module_port(sig);
+      scope->add_module_port_net(sig);
       return sig;
 }
 

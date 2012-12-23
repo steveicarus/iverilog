@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "pcb_priv.h"
@@ -117,7 +117,7 @@ void sheet_box(ivl_scope_t scope, const map<string,attr_value>&attrs)
 }
 
 /*
- * A black box is a component. Do not process the contents, other then
+ * A black box is a component. Do not process the contents, other than
  * to get at the ports that we'll attach to the netlist.
  */
 static void black_box(ivl_scope_t scope, const map<string,attr_value>&attrs)

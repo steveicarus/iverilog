@@ -16,14 +16,16 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "sv_vpi_user.h"
 # include  "vvp_net.h"
 # include  "config.h"
 
+# include  <map>
 # include  <set>
+# include  <string>
 
 /*
  * Added to use some "vvp_fun_modpath_src"
@@ -31,6 +33,8 @@
  */
 #include  "delay.h"
 
+
+class class_type;
 
 /*
  * This header file contains the internal definitions that the vvp
@@ -56,10 +60,11 @@ extern vpiHandle vpip_build_file_line(char*description,
 #ifdef CHECK_WITH_VALGRIND
 #define _vpiFromThr 0x1000001
 #   define _vpiNoThr  0
-#   define _vpiVThr   1
-#   define _vpiWord   2
-#   define _vpi_at_PV 3
-#   define _vpi_at_A  4
+#   define _vpiString 1
+#   define _vpiVThr   2
+#   define _vpiWord   3
+#   define _vpi_at_PV 4
+#   define _vpi_at_A  5
 #endif
 
 
@@ -200,6 +205,10 @@ struct __vpiScopedRealtime : public __vpiSystemTime {
       void vpi_get_value(p_vpi_value val);
 };
 
+struct __vpiPortInfo : public __vpiHandle {
+
+};
+
 
 /*
  * Scopes are created by .scope statements in the source. These
@@ -229,6 +238,8 @@ struct __vpiScope : public __vpiHandle {
 	/* Keep an array of internal scope items. */
       class __vpiHandle**intern;
       unsigned nintern;
+	/* Set of types */
+      std::map<std::string,class_type*> classes;
         /* Keep an array of items to be automatically allocated */
       struct automatic_hooks_s**item;
       unsigned nitem;
@@ -268,9 +279,6 @@ struct __vpiSignal : public __vpiHandle {
       vpiHandle vpi_handle(int code);
       vpiHandle vpi_iterate(int code);
 
-#ifdef CHECK_WITH_VALGRIND
-      struct __vpiSignal *pool;
-#endif
       union { // The scope or parent array that contains me.
 	    vpiHandle parent;
 	    struct __vpiScope* scope;
@@ -409,6 +417,7 @@ class __vpiNamedEvent : public __vpiHandle {
 
     public:
       __vpiNamedEvent(__vpiScope*scope, const char*name);
+      ~__vpiNamedEvent();
       int get_type_code(void) const;
       int vpi_get(int code);
       char* vpi_get_str(int code);
@@ -473,6 +482,54 @@ struct __vpiRealVar : public __vpiHandle {
 extern struct __vpiScope* vpip_scope(__vpiRealVar*sig);
 extern vpiHandle vpip_make_real_var(const char*name, vvp_net_t*net);
 
+class __vpiBaseVar : public __vpiHandle {
+
+    public:
+      __vpiBaseVar(__vpiScope*scope, const char*name, vvp_net_t*net);
+
+      inline vvp_net_t* get_net() const { return net_; }
+
+    private:
+      struct __vpiScope* scope_;
+      const char*name_;
+      vvp_net_t*net_;
+};
+
+class __vpiStringVar : public __vpiBaseVar {
+
+    public:
+      __vpiStringVar(__vpiScope*scope, const char*name, vvp_net_t*net);
+
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+};
+
+extern vpiHandle vpip_make_string_var(const char*name, vvp_net_t*net);
+
+class __vpiDarrayVar : public __vpiBaseVar {
+
+    public:
+      __vpiDarrayVar(__vpiScope*scope, const char*name, vvp_net_t*net);
+
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+};
+
+extern vpiHandle vpip_make_darray_var(const char*name, vvp_net_t*net);
+
+class __vpiCobjectVar : public __vpiBaseVar {
+
+    public:
+      __vpiCobjectVar(__vpiScope*scope, const char*name, vvp_net_t*net);
+
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+};
+
+extern vpiHandle vpip_make_cobject_var(const char*name, vvp_net_t*net);
 
 /*
  * When a loaded VPI module announces a system task/function, one
@@ -511,6 +568,9 @@ struct __vpiSysTaskCall : public __vpiHandle {
       struct __vpiUserSystf*defn;
       unsigned nargs;
       vpiHandle*args;
+	/* Stack consumed by this call */
+      unsigned real_stack;
+      unsigned string_stack;
 	/* Support for vpi_get_userdata. */
       void*userdata;
 	/* These represent where in the vthread to put the return value. */
@@ -521,7 +581,11 @@ struct __vpiSysTaskCall : public __vpiHandle {
       unsigned lineno;
       bool put_value;
     protected:
-      inline __vpiSysTaskCall() { }
+      inline __vpiSysTaskCall()
+      {
+	    real_stack = 0;
+	    string_stack = 0;
+      }
 };
 
 extern struct __vpiSysTaskCall*vpip_cur_task;
@@ -536,7 +600,7 @@ extern struct __vpiSysTaskCall*vpip_cur_task;
  */
 
 vpiHandle vpip_make_string_const(char*text, bool persistent =true);
-vpiHandle vpip_make_string_param(char*name, char*value,
+vpiHandle vpip_make_string_param(char*name, char*value, bool local_flag,
                                  long file_idx, long lineno);
 
 struct __vpiBinaryConst : public __vpiHandle {
@@ -554,10 +618,11 @@ struct __vpiBinaryConst : public __vpiHandle {
 
 vpiHandle vpip_make_binary_const(unsigned wid, const char*bits);
 vpiHandle vpip_make_binary_param(char*name, const vvp_vector4_t&bits,
-				 bool signed_flag,
+				 bool signed_flag, bool local_flag,
 				 long file_idx, long lineno);
 
-struct __vpiDecConst : public __vpiHandle {
+class __vpiDecConst : public __vpiHandle {
+    public:
       __vpiDecConst(int val =0);
       int get_type_code(void) const;
       int vpi_get(int code);
@@ -572,12 +637,12 @@ class __vpiRealConst : public __vpiHandle {
       int get_type_code(void) const;
       int vpi_get(int code);
       void vpi_get_value(p_vpi_value val);
-    public:
+
       double value;
 };
 
 vpiHandle vpip_make_real_const(double value);
-vpiHandle vpip_make_real_param(char*name, double value,
+vpiHandle vpip_make_real_param(char*name, double value, bool local_flag,
                                long file_idx, long lineno);
 
 /*
@@ -588,6 +653,7 @@ vpiHandle vpip_make_real_param(char*name, double value,
 vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag);
 
 vpiHandle vpip_make_vthr_word(unsigned base, const char*type);
+vpiHandle vpip_make_vthr_str_stack(unsigned depth);
 
 vpiHandle vpip_make_vthr_A(char*label, unsigned index);
 vpiHandle vpip_make_vthr_A(char*label, char*symbol);
@@ -633,6 +699,8 @@ extern vpiHandle vpip_build_vpi_call(const char*name,
 				     bool func_as_task_warn,
 				     unsigned argc,
 				     vpiHandle*argv,
+				     unsigned real_stack,
+				     unsigned string_stack,
 				     long file_idx,
 				     long lineno);
 

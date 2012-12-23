@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,13 +14,14 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
 # include "compiler.h"
 
 # include  "netlist.h"
+# include  "netclass.h"
 # include  "netenum.h"
 # include  <cstring>
 # include  <cstdlib>
@@ -38,8 +39,8 @@ class PExpr;
  * in question.
  */
 
-NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t)
-: type_(t), name_(n), up_(up)
+NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest, bool prog)
+: type_(t), name_(n), nested_module_(nest), program_block_(prog), up_(up)
 {
       events_ = 0;
       lcounter_ = 0;
@@ -114,13 +115,15 @@ void NetScope::set_line(perm_string file, perm_string def_file,
       def_lineno_ = def_lineno;
 }
 
-void NetScope::set_parameter(perm_string key, PExpr*val,
-			     ivl_variable_type_t type__,
+void NetScope::set_parameter(perm_string key, bool is_annotatable,
+			     PExpr*val, ivl_variable_type_t type__,
 			     PExpr*msb, PExpr*lsb, bool signed_flag,
+			     bool local_flag,
 			     NetScope::range_t*range_list,
 			     const LineInfo&file_line)
 {
       param_expr_t&ref = parameters[key];
+      ref.is_annotatable = is_annotatable;
       ref.msb_expr = msb;
       ref.lsb_expr = lsb;
       ref.val_expr = val;
@@ -129,12 +132,35 @@ void NetScope::set_parameter(perm_string key, PExpr*val,
       ref.msb = 0;
       ref.lsb = 0;
       ref.signed_flag = signed_flag;
+      ref.local_flag = local_flag;
       ivl_assert(file_line, ref.range == 0);
       ref.range = range_list;
       ref.val = 0;
       ref.set_line(file_line);
 
       ivl_assert(file_line, type__ != IVL_VT_NO_TYPE);
+}
+
+/*
+ * This is a simplified version of set_parameter, for use when the
+ * parameter value is already known. It is currently only used to
+ * add a genvar to the parameter list.
+ */
+void NetScope::set_parameter(perm_string key, NetExpr*val,
+			     const LineInfo&file_line)
+{
+      param_expr_t&ref = parameters[key];
+      ref.is_annotatable = false;
+      ref.msb_expr = 0;
+      ref.lsb_expr = 0;
+      ref.val_expr = 0;
+      ref.val_scope = this;
+      ref.type = IVL_VT_BOOL;
+      ref.msb = 0;
+      ref.lsb = 0;
+      ref.signed_flag = false;
+      ref.val = val;
+      ref.set_line(file_line);
 }
 
 bool NetScope::auto_name(const char*prefix, char pad, const char* suffix)
@@ -188,26 +214,17 @@ bool NetScope::replace_parameter(perm_string key, PExpr*val, NetScope*scope)
       return flag;
 }
 
-/*
- * This is not really complete (msb, lsb, sign). It is currently only
- * used to add a genvar to the local parameter list.
- */
-NetExpr* NetScope::set_localparam(perm_string key, NetExpr*val,
-				  const LineInfo&file_line)
+bool NetScope::make_parameter_unannotatable(perm_string key)
 {
-      param_expr_t&ref = localparams[key];
-      NetExpr* res = ref.val;
-      ref.msb_expr = 0;
-      ref.lsb_expr = 0;
-      ref.val_expr = 0;
-      ref.val_scope = this;
-      ref.type = IVL_VT_BOOL;
-      ref.msb = 0;
-      ref.lsb = 0;
-      ref.signed_flag = false;
-      ref.val = val;
-      ref.set_line(file_line);
-      return res;
+      bool flag = false;
+
+      if (parameters.find(key) != parameters.end()) {
+	    param_expr_t&ref = parameters[key];
+	    flag = ref.is_annotatable;
+	    ref.is_annotatable = false;
+      }
+
+      return flag;
 }
 
 /*
@@ -242,16 +259,6 @@ const NetExpr* NetScope::get_parameter(Design*des,
 	    return idx->second.val;
       }
 
-      idx = localparams.find(key);
-      if (idx != localparams.end()) {
-            if (idx->second.val_expr)
-                  evaluate_parameter_(des, idx);
-
-	    msb = idx->second.msb;
-	    lsb = idx->second.lsb;
-	    return idx->second.val;
-      }
-
       map<perm_string,NetEConstEnum*>::const_iterator eidx;
 
       eidx = enum_names_.find(key);
@@ -270,9 +277,6 @@ NetScope::param_ref_t NetScope::find_parameter(perm_string key)
 
       idx = parameters.find(key);
       if (idx != parameters.end()) return idx;
-
-      idx = localparams.find(perm_string::literal(key));
-      if (idx != localparams.end()) return idx;
 
 	// To get here the parameter must already exist, so we should
 	// never get here.
@@ -364,23 +368,51 @@ perm_string NetScope::module_name() const
       return module_name_;
 }
 
-void NetScope::add_module_port(NetNet*port)
+void NetScope::set_num_ports(unsigned int num_ports)
 {
-      assert(type_ == MODULE);
-      ports_.push_back(port);
+    assert(type_ == MODULE);
+    assert(ports_.empty());
+    ports_.resize( num_ports );
 }
 
-unsigned NetScope::module_ports() const
+void NetScope::add_module_port_net(NetNet*subport)
 {
       assert(type_ == MODULE);
-      return ports_.size();
+      port_nets.push_back(subport);
 }
 
-NetNet* NetScope::module_port(unsigned idx) const
+
+void NetScope::add_module_port_info( unsigned idx, perm_string name, PortType::Enum ptype,
+                                unsigned long width )
 {
       assert(type_ == MODULE);
-      assert(idx < ports_.size());
-      return ports_[idx];
+      PortInfo &info = ports_[idx];
+      info.name = name;
+      info.type = ptype;
+      info.width = width;
+}
+
+
+unsigned NetScope::module_port_nets() const
+{
+      assert(type_ == MODULE);
+      return port_nets.size();
+}
+
+
+const std::vector<PortInfo> & NetScope::module_port_info() const
+{
+      assert(type_ == MODULE);
+      return ports_;
+}
+
+
+
+NetNet* NetScope::module_port_net(unsigned idx) const
+{
+      assert(type_ == MODULE);
+      assert(idx < port_nets.size());
+      return port_nets[idx];
 }
 
 void NetScope::time_unit(int val)
@@ -518,6 +550,20 @@ netenum_t*NetScope::enumeration_for_name(perm_string name)
       assert(tmp != 0);
 
       return tmp->enumeration();
+}
+
+void NetScope::add_class(netclass_t*net_class)
+{
+      classes_[net_class->get_name()] = net_class;
+}
+
+netclass_t*NetScope::find_class(perm_string name)
+{
+      map<perm_string,netclass_t*>::const_iterator cur = classes_.find(name);
+      if (cur == classes_.end())
+	    return 0;
+      else
+	    return cur->second;
 }
 
 /*

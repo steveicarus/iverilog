@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2011  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2012  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -300,11 +300,6 @@ void sys_special_register(void)
 	/* Optional functions. */
       tf_data.type = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
-
-      tf_data.tfname      = "$countdrivers";
-      tf_data.user_data   = "$countdrivers";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
 
       tf_data.tfname      = "$getpattern";
       tf_data.user_data   = "$getpattern";

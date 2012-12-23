@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # define __STDC_LIMIT_MACROS
@@ -336,6 +336,17 @@ void generate_global_types(ActiveScope*res)
       res->bind_name(perm_string::literal("std_logic"), primitive_STDLOGIC);
       res->bind_name(perm_string::literal("bit_vector"),primitive_BOOL_VECTOR);
       res->bind_name(perm_string::literal("natural"),   primitive_NATURAL);
+}
+
+bool is_global_type(perm_string name)
+{
+      if (name == "boolean") return true;
+      if (name == "bit") return true;
+      if (name == "integer") return true;
+      if (name == "std_logic") return true;
+      if (name == "bit_vector") return true;
+      if (name == "natural") return true;
+      return false;
 }
 
 void library_set_work_path(const char*path)

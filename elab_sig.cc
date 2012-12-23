@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,11 +15,12 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
 
+# include  <typeinfo>
 # include  <cstdlib>
 # include  <iostream>
 
@@ -32,9 +34,16 @@
 # include  "compiler.h"
 # include  "netlist.h"
 # include  "netmisc.h"
+# include  "netclass.h"
+# include  "netenum.h"
 # include  "netstruct.h"
+# include  "netvector.h"
+# include  "netdarray.h"
+# include  "netparray.h"
 # include  "util.h"
 # include  "ivl_assert.h"
+
+using namespace std;
 
 static bool get_const_argument(NetExpr*exp, verinum&res)
 {
@@ -388,7 +397,6 @@ bool PGenerate::elaborate_sig_direct_(Design*des, NetScope*container) const
 		 ; cur != generate_schemes.end() ; ++ cur ) {
 	    PGenerate*item = *cur;
 	    if (item->scheme_type == PGenerate::GS_CASE) {
-		  typedef list<PGenerate*>::const_iterator generate_it_t;
 		  for (generate_it_t icur = item->generate_schemes.begin()
 			     ; icur != item->generate_schemes.end() ; ++ icur ) {
 			PGenerate*case_item = *icur;
@@ -479,6 +487,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
       }
 
       NetNet*ret_sig = 0;
+      netvector_t*ret_vec = 0;
 
 	/* Create the signals/variables of the return value and write
 	   them into the function scope. */
@@ -514,50 +523,51 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 			des->errors += 1;
 		  }
 
-		  list<NetNet::range_t> packed;
-		  packed.push_back(NetNet::range_t(mnum, lnum));
-		  ret_sig = new NetNet(scope, fname, NetNet::REG, packed);
-		  ret_sig->set_scalar(false);
+		  vector<netrange_t> packed;
+		  packed.push_back(netrange_t(mnum, lnum));
+		  ret_vec = new netvector_t(packed, IVL_VT_LOGIC);
+		  ret_vec->set_signed(return_type_.type == PTF_REG_S);
+		  ret_vec->set_scalar(false);
+		  ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 
 	    } else {
-		  ret_sig = new NetNet(scope, fname, NetNet::REG);
-		  ret_sig->set_scalar(true);
+		  ret_vec = new netvector_t(IVL_VT_LOGIC);
+		  ret_vec->set_signed(return_type_.type == PTF_REG_S);
+		  ret_vec->set_scalar(true);
+		  ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    }
 	    ret_sig->set_line(*this);
-	    ret_sig->set_signed(return_type_.type == PTF_REG_S);
 	    ret_sig->port_type(NetNet::POUTPUT);
-	    ret_sig->data_type(IVL_VT_LOGIC);
 	    break;
 
 	  case PTF_INTEGER:
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, integer_width);
+	    ret_vec = new netvector_t(IVL_VT_LOGIC, integer_width-1,0);
+	    ret_vec->set_signed(true);
+	    ret_vec->set_isint(true);
+	    ret_vec->set_scalar(false);
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    ret_sig->set_line(*this);
-	    ret_sig->set_signed(true);
-	    ret_sig->set_isint(true);
-	    ret_sig->set_scalar(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
-	    ret_sig->data_type(IVL_VT_LOGIC);
 	    break;
 
 	  case PTF_TIME:
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, 64);
+	    ret_vec = new netvector_t(IVL_VT_LOGIC, 64-1,0);
+	    ret_vec->set_isint(false);
+	    ret_vec->set_scalar(false);
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    ret_sig->set_line(*this);
-	    ret_sig->set_signed(false);
-	    ret_sig->set_isint(false);
-	    ret_sig->set_scalar(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
-	    ret_sig->data_type(IVL_VT_LOGIC);
 	    break;
 
 	  case PTF_REAL:
 	  case PTF_REALTIME:
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, 1);
+	    ret_vec = new netvector_t(IVL_VT_REAL);
+	    ret_vec->set_signed(true);
+	    ret_vec->set_isint(false);
+	    ret_vec->set_scalar(true);
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    ret_sig->set_line(*this);
-	    ret_sig->set_signed(true);
-	    ret_sig->set_isint(false);
-	    ret_sig->set_scalar(true);
 	    ret_sig->port_type(NetNet::POUTPUT);
-	    ret_sig->data_type(IVL_VT_REAL);
 	    break;
 
 	  case PTF_ATOM2:
@@ -592,13 +602,13 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 
 		  use_wid = mnum - lnum + 1;
 	    }
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, use_wid);
+	    ret_vec = new netvector_t(IVL_VT_BOOL, use_wid-1, 0);
+	    ret_vec->set_isint(true);
+	    ret_vec->set_scalar(false);
+	    ret_vec->set_signed(return_type_.type == PTF_ATOM2_S? true : false);
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
 	    ret_sig->set_line(*this);
-	    ret_sig->set_signed(return_type_.type == PTF_ATOM2_S? true : false);
-	    ret_sig->set_isint(true);
-	    ret_sig->set_scalar(false);
 	    ret_sig->port_type(NetNet::POUTPUT);
-	    ret_sig->data_type(IVL_VT_BOOL);
 	    break;
 
 	  case PTF_STRING:
@@ -624,7 +634,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    }
       }
 
-      svector<NetNet*>ports (ports_? ports_->count() : 0);
+      vector<NetNet*>ports (ports_? ports_->count() : 0);
 
       if (ports_)
 	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
@@ -813,64 +823,18 @@ void PWhile::elaborate_sig(Design*des, NetScope*scope) const
 	    statement_->elaborate_sig(des, scope);
 }
 
-static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
-					  struct_type_t*struct_type)
-{
-      netstruct_t*res = new netstruct_t;
-
-      res->packed(struct_type->packed_flag);
-
-      for (list<struct_member_t*>::iterator cur = struct_type->members->begin()
-		 ; cur != struct_type->members->end() ; ++ cur) {
-
-	    struct_member_t*curp = *cur;
-	    long use_msb = 0;
-	    long use_lsb = 0;
-	    if (curp->range.get() && ! curp->range->empty()) {
-		  ivl_assert(*curp, curp->range->size() == 1);
-		  pform_range_t&rangep = curp->range->front();
-		  PExpr*msb_pex = rangep.first;
-		  PExpr*lsb_pex = rangep.second;
-
-		  NetExpr*tmp = elab_and_eval(des, scope, msb_pex, -2, true);
-		  ivl_assert(*curp, tmp);
-		  bool rc = eval_as_long(use_msb, tmp);
-		  ivl_assert(*curp, rc);
-
-		  tmp = elab_and_eval(des, scope, lsb_pex, -2, true);
-		  ivl_assert(*curp, tmp);
-		  rc = eval_as_long(use_lsb, tmp);
-		  ivl_assert(*curp, rc);
-	    }
-
-	    for (list<decl_assignment_t*>::iterator name = curp->names->begin()
-		       ; name != curp->names->end() ;  ++ name) {
-		  decl_assignment_t*namep = *name;
-
-		  netstruct_t::member_t memb;
-		  memb.name = namep->name;
-		  memb.type = curp->type;
-		  memb.msb = use_msb;
-		  memb.lsb = use_lsb;
-		  res->append_member(memb);
-	    }
-      }
-
-      return res;
-}
-
 static bool evaluate_ranges(Design*des, NetScope*scope,
-			    list<NetNet::range_t>&llist,
+			    vector<netrange_t>&llist,
 			    const list<pform_range_t>&rlist)
 {
       bool bad_msb = false, bad_lsb = false;
 
       for (list<pform_range_t>::const_iterator cur = rlist.begin()
 		 ; cur != rlist.end() ; ++cur) {
-	    NetNet::range_t lrng;
+	    long use_msb, use_lsb;
 
 	    NetExpr*texpr = elab_and_eval(des, scope, cur->first, -1, true);
-	    if (! eval_as_long(lrng.msb, texpr)) {
+	    if (! eval_as_long(use_msb, texpr)) {
 		  cerr << cur->first->get_fileline() << ": error: "
 			"Range expressions must be constant." << endl;
 		  cerr << cur->first->get_fileline() << "       : "
@@ -883,7 +847,7 @@ static bool evaluate_ranges(Design*des, NetScope*scope,
 	    delete texpr;
 
 	    texpr = elab_and_eval(des, scope, cur->second, -1, true);
-	    if (! eval_as_long(lrng.lsb, texpr)) {
+	    if (! eval_as_long(use_lsb, texpr)) {
 		  cerr << cur->second->get_fileline() << ": error: "
 			"Range expressions must be constant." << endl;
 		  cerr << cur->second->get_fileline() << "       : "
@@ -895,23 +859,97 @@ static bool evaluate_ranges(Design*des, NetScope*scope,
 
 	    delete texpr;
 
-	    llist.push_back(lrng);
+	    llist.push_back(netrange_t(use_msb, use_lsb));
       }
 
       return bad_msb | bad_lsb;
 }
 
-bool test_ranges_eeq(const list<NetNet::range_t>&lef, const list<NetNet::range_t>&rig)
+static netclass_t* locate_class_type(Design*des, NetScope*scope,
+				     class_type_t*class_type)
+{
+      netclass_t*use_class = scope->find_class(class_type->name);
+      return use_class;
+}
+
+static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
+					  struct_type_t*struct_type)
+{
+      netstruct_t*res = new netstruct_t;
+
+      res->packed(struct_type->packed_flag);
+
+      for (list<struct_member_t*>::iterator cur = struct_type->members->begin()
+		 ; cur != struct_type->members->end() ; ++ cur) {
+
+	    vector<netrange_t>packed_dimensions;
+
+	    struct_member_t*curp = *cur;
+	    if (curp->range.get() && ! curp->range->empty()) {
+		  bool bad_range;
+		  bad_range = evaluate_ranges(des, scope, packed_dimensions, *curp->range);
+		  ivl_assert(*curp, !bad_range);
+	    } else {
+		  packed_dimensions.push_back(netrange_t(0,0));
+	    }
+
+	    for (list<decl_assignment_t*>::iterator name = curp->names->begin()
+		       ; name != curp->names->end() ;  ++ name) {
+		  decl_assignment_t*namep = *name;
+
+		  netstruct_t::member_t memb;
+		  memb.name = namep->name;
+		  memb.type = curp->type;
+		  memb.packed_dims = packed_dimensions;
+		  res->append_member(memb);
+	    }
+      }
+
+      return res;
+}
+
+static ivl_type_s*elaborate_type(Design*des, NetScope*scope,
+				 data_type_t*pform_type)
+{
+      if (struct_type_t*struct_type = dynamic_cast<struct_type_t*>(pform_type)) {
+	    netstruct_t*use_type = elaborate_struct_type(des, scope, struct_type);
+	    return use_type;
+      }
+
+      cerr << pform_type->get_fileline() << ": sorry: I don't know how to elaborate "
+	   << typeid(*pform_type).name() << " here." << endl;
+      des->errors += 1;
+
+      return 0;
+}
+
+static netparray_t* elaborate_parray_type(Design*des, NetScope*scope,
+					  parray_type_t*data_type)
+{
+
+      vector<netrange_t>packed_dimensions;
+      bool bad_range = evaluate_ranges(des, scope, packed_dimensions, * data_type->packed_dims);
+      ivl_assert(*data_type, !bad_range);
+
+      ivl_type_s*element_type = elaborate_type(des, scope, data_type->base_type);
+
+      netparray_t*res = new netparray_t(packed_dimensions, element_type);
+	//res->set_line(*data_type);
+
+      return res;
+}
+
+bool test_ranges_eeq(const vector<netrange_t>&lef, const vector<netrange_t>&rig)
 {
       if (lef.size() != rig.size())
 	    return false;
 
-      list<NetNet::range_t>::const_iterator lcur = lef.begin();
-      list<NetNet::range_t>::const_iterator rcur = rig.begin();
+      vector<netrange_t>::const_iterator lcur = lef.begin();
+      vector<netrange_t>::const_iterator rcur = rig.begin();
       while (lcur != lef.end()) {
-	    if (lcur->msb != rcur->msb)
+	    if (lcur->get_msb() != rcur->get_msb())
 		  return false;
-	    if (lcur->lsb != rcur->lsb)
+	    if (lcur->get_lsb() != rcur->get_lsb())
 		  return false;
 
 	    ++ lcur;
@@ -942,7 +980,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       }
 
       unsigned wid = 1;
-      list<NetNet::range_t>packed_dimensions;
+      vector<netrange_t>packed_dimensions;
 
       des->errors += error_cnt_;
 
@@ -983,7 +1021,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       if (port_set_ || net_set_) {
 	    bool bad_range = false;
-	    list<NetNet::range_t> plist, nlist;
+	    vector<netrange_t> plist, nlist;
 	    /* If they exist get the port definition MSB and LSB */
 	    if (port_set_ && !port_.empty()) {
 		  bad_range |= evaluate_ranges(des, scope, plist, port_);
@@ -1049,7 +1087,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
             }
 
 	    packed_dimensions = nlist;
-	    wid = NetNet::vector_width(packed_dimensions);
+	    wid = netrange_width(packed_dimensions);
 
       }
 
@@ -1057,19 +1095,32 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       attrib_list_t*attrib_list = evaluate_attributes(attributes, nattrib,
 						      des, scope);
 
-      long array_s0 = 0;
-      long array_e0 = 0;
-      unsigned array_dimensions = 0;
 
-	/* If the ident has idx expressions, then this is a
-	   memory. It can only have the idx registers after the msb
-	   and lsb expressions are filled. And, if it has one index,
-	   it has both. */
-      if (lidx_ || ridx_) {
-	    assert(lidx_ && ridx_);
+      list<netrange_t>unpacked_dimensions;
+      netdarray_t*netarray = 0;
 
-	    NetExpr*lexp = elab_and_eval(des, scope, lidx_, -1, true);
-	    NetExpr*rexp = elab_and_eval(des, scope, ridx_, -1, true);
+      for (list<pform_range_t>::const_iterator cur = unpacked_.begin()
+		 ; cur != unpacked_.end() ; ++cur) {
+	    PExpr*use_lidx = cur->first;
+	    PExpr*use_ridx = cur->second;
+
+	      // Special case: If we encounter an undefined
+	      // dimensions, then turn this into a dynamic array and
+	      // put all the packed dimensions there.
+	    if (use_lidx==0 && use_ridx==0) {
+		  netvector_t*vec = new netvector_t(packed_dimensions, data_type_);
+		  packed_dimensions.clear();
+		  ivl_assert(*this, netarray==0);
+		  netarray = new netdarray_t(vec);
+		  continue;
+	    }
+
+	      // Cannot handle dynamic arrays of arrays yet.
+	    ivl_assert(*this, netarray==0);
+	    ivl_assert(*this, use_lidx && use_ridx);
+
+	    NetExpr*lexp = elab_and_eval(des, scope, use_lidx, -1, true);
+	    NetExpr*rexp = elab_and_eval(des, scope, use_ridx, -1, true);
 
 	    if ((lexp == 0) || (rexp == 0)) {
 		  cerr << get_fileline() << ": internal error: There is "
@@ -1086,19 +1137,21 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    delete rexp;
 	    delete lexp;
 
-	    if (!const_flag) {
+	    long index_l, index_r;
+	    if (! const_flag) {
 		  cerr << get_fileline() << ": error: The indices "
 		       << "are not constant for array ``"
 		       << name_ << "''." << endl;
 		  des->errors += 1;
                     /* Attempt to recover from error, */
-	          array_s0 = 0;
-	          array_e0 = 0;
+	          index_l = 0;
+	          index_r = 0;
 	    } else {
-	          array_s0 = lval.as_long();
-	          array_e0 = rval.as_long();
-            }
-	    array_dimensions = 1;
+		  index_l = lval.as_long();
+		  index_r = rval.as_long();
+	    }
+
+	    unpacked_dimensions.push_back(netrange_t(index_l, index_r));
       }
 
       if (data_type_ == IVL_VT_REAL && !packed_dimensions.empty()) {
@@ -1151,10 +1204,20 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       NetNet*sig = 0;
 
-	// If this is a struct type, then build the net with the
-	// struct type.
-      if (struct_type_) {
-	    netstruct_t*use_type = elaborate_struct_type(des, scope, struct_type_);
+      if (class_type_t*class_type = dynamic_cast<class_type_t*>(set_data_type_)) {
+	      // If this is a class variable, then the class type
+	      // should already have been elaborated. All we need to
+	      // do right now is locate the netclass_t object for the
+	      // class, and use that to build the net.
+	    netclass_t*use_type = locate_class_type(des, scope, class_type);
+	      // (No arrays of classes)
+	    list<netrange_t> use_unpacked;
+	    sig = new NetNet(scope, name_, wtype, use_unpacked, use_type);
+
+      } else if (struct_type_t*struct_type = dynamic_cast<struct_type_t*>(set_data_type_)) {
+	      // If this is a struct type, then build the net with the
+	      // struct type.
+	    netstruct_t*use_type = elaborate_struct_type(des, scope, struct_type);
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype;
 		  if (use_type->packed())
@@ -1167,54 +1230,90 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    sig = new NetNet(scope, name_, wtype, use_type);
 
+      } else if (enum_type_t*enum_type = dynamic_cast<enum_type_t*>(set_data_type_)) {
+	    list<named_pexpr_t>::const_iterator sample_name = enum_type->names->begin();
+	    netenum_t*use_enum = scope->enumeration_for_name(sample_name->name);
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: Create signal " << wtype
+		       << " enumeration "
+		       << name_ << " in scope " << scope_path(scope)
+		       << " with packed_dimensions=" << packed_dimensions
+		       << " and packed_width=" << use_enum->packed_width() << endl;
+	    }
+
+	    ivl_assert(*this, packed_dimensions.empty());
+	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_enum);
+
+
+      } else if (netarray) {
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: Create signal " << wtype
+		       << " dynamic array "
+		       << name_ << " in scope " << scope_path(scope) << endl;
+	    }
+
+	    ivl_assert(*this, packed_dimensions.empty());
+	    ivl_assert(*this, unpacked_dimensions.empty());
+	    sig = new NetNet(scope, name_, wtype, netarray);
+
+      } else if (parray_type_t*parray_type = dynamic_cast<parray_type_t*>(set_data_type_)) {
+	      // The pform gives us a parray_type_t for packed arrays
+	      // that show up in type definitions. This can be handled
+	      // a lot like packed dimensions from other means.
+
+	      // The trick here is that the parray type has an
+	      // arbitrary sub-type, and not just a scalar bit...
+	    netparray_t*use_type = elaborate_parray_type(des, scope, parray_type);
+	      // Should not be getting packed dimensions other then
+	      // through the parray type declaration.
+	    ivl_assert(*this, packed_dimensions.empty());
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: Create signal " << wtype
+		       << " parray=" << use_type->packed_dimensions()
+		       << " " << name_ << unpacked_dimensions
+		       << " in scope " << scope_path(scope) << endl;
+	    }
+
+	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_type);
+
+
       } else {
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype;
 		  if (!get_scalar()) {
 			cerr << " " << packed_dimensions;
 		  }
-		  cerr << " " << name_;
-		  if (array_dimensions > 0) {
-			cerr << " [" << array_s0 << ":" << array_e0 << "]" << endl;
-		  }
+		  cerr << " " << name_ << unpacked_dimensions;
 		  cerr << " in scope " << scope_path(scope) << endl;
 	    }
 
-	    sig = array_dimensions > 0
-		  ? new NetNet(scope, name_, wtype, packed_dimensions, array_s0, array_e0)
-		  : new NetNet(scope, name_, wtype, packed_dimensions);
-      }
+	    ivl_variable_type_t use_data_type = data_type_;
+	    if (use_data_type == IVL_VT_NO_TYPE) {
+		  use_data_type = IVL_VT_LOGIC;
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": debug: "
+			     << "Signal " << name_
+			     << " in scope " << scope_path(scope)
+			     << " defaults to data type " << use_data_type << endl;
+		  }
+	    }
 
-	// If this is an enumeration, then set the enumeration set for
-	// the new signal. This turns it into an enumeration.
-      if (enum_type_) {
-	    ivl_assert(*this, struct_type_ == 0);
-	    ivl_assert(*this, ! enum_type_->names->empty());
-	    list<named_pexpr_t>::const_iterator sample_name = enum_type_->names->begin();
-	    netenum_t*use_enum = scope->enumeration_for_name(sample_name->name);
-	    sig->set_enumeration(use_enum);
+	    netvector_t*vec = new netvector_t(packed_dimensions, use_data_type);
+	    vec->set_signed(get_signed());
+	    vec->set_isint(get_isint());
+	    if (is_implicit_scalar) vec->set_scalar(true);
+	    else vec->set_scalar(get_scalar());
+	    packed_dimensions.clear();
+	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, vec);
+
       }
 
       if (wtype == NetNet::WIRE) sig->devirtualize_pins();
-
-      ivl_variable_type_t use_data_type = data_type_;
-      if (use_data_type == IVL_VT_NO_TYPE) {
-	    use_data_type = IVL_VT_LOGIC;
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: "
-		       << "Signal " << name_
-		       << " in scope " << scope_path(scope)
-		       << " defaults to data type " << use_data_type << endl;
-	    }
-      }
-
-      sig->data_type(use_data_type);
       sig->set_line(*this);
       sig->port_type(port_type_);
-      sig->set_signed(get_signed());
-      sig->set_isint(get_isint());
-      if (is_implicit_scalar) sig->set_scalar(true);
-      else sig->set_scalar(get_scalar());
 
       if (ivl_discipline_t dis = get_discipline()) {
 	    sig->set_discipline(dis);

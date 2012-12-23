@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "config.h"
@@ -33,8 +33,10 @@
  */
 
 # include  "Module.h"
-# include  "PEvent.h"
+# include  "PClass.h"
 # include  "PExpr.h"
+# include  "PEvent.h"
+# include  "PClass.h"
 # include  "PGate.h"
 # include  "PGenerate.h"
 # include  "PTask.h"
@@ -42,6 +44,7 @@
 # include  "Statement.h"
 # include  "AStatement.h"
 # include  "netlist.h"
+# include  "netclass.h"
 # include  "netenum.h"
 # include  "util.h"
 # include  <typeinfo>
@@ -51,7 +54,9 @@
 typedef map<perm_string,LexicalScope::param_expr_t>::const_iterator mparm_it_t;
 
 static void collect_parm_item_(Design*des, NetScope*scope, perm_string name,
-			       const LexicalScope::param_expr_t&cur)
+			       const LexicalScope::param_expr_t&cur,
+                               bool is_annotatable,
+                               bool local_flag)
 {
       NetScope::range_t*range_list = 0;
       for (LexicalScope::range_t*range = cur.range ; range ; range = range->next) {
@@ -87,8 +92,9 @@ static void collect_parm_item_(Design*des, NetScope*scope, perm_string name,
 	    range_list = tmp;
       }
 
-      scope->set_parameter(name, cur.expr, cur.type, cur.msb, cur.lsb,
-			   cur.signed_flag, range_list, cur);
+
+      scope->set_parameter(name, is_annotatable, cur.expr, cur.type, cur.msb,
+			   cur.lsb, cur.signed_flag, local_flag, range_list, cur);
 }
 
 static void collect_scope_parameters_(Design*des, NetScope*scope,
@@ -106,7 +112,7 @@ static void collect_scope_parameters_(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
-	    collect_parm_item_(des, scope, (*cur).first, (*cur).second);
+	    collect_parm_item_(des, scope, (*cur).first, (*cur).second, false, false);
       }
 }
 
@@ -125,7 +131,26 @@ static void collect_scope_localparams_(Design*des, NetScope*scope,
 		  des->errors += 1;
 	    }
 
-	    collect_parm_item_(des, scope, (*cur).first, (*cur).second);
+	    collect_parm_item_(des, scope, (*cur).first, (*cur).second, false, true);
+      }
+}
+
+static void collect_scope_specparams_(Design*des, NetScope*scope,
+      const map<perm_string,LexicalScope::param_expr_t>&specparams)
+{
+      for (mparm_it_t cur = specparams.begin()
+		 ; cur != specparams.end() ;  ++ cur ) {
+
+	      // A specparam can not have the same name as a genvar.
+	    if (scope->find_genvar((*cur).first)) {
+		  cerr << cur->second.get_fileline()
+		       << ": error: specparam and genvar in '"
+		       << scope->fullname() << "' have the same name '"
+		       << (*cur).first << "'." << endl;
+		  des->errors += 1;
+	    }
+
+	    collect_parm_item_(des, scope, (*cur).first, (*cur).second, true, false);
       }
 }
 
@@ -159,12 +184,12 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       verinum max_value (0);
       if (enum_type->signed_flag) {
 	    min_value = v_not((pow(verinum(2),
-	                           verinum(use_enum->base_width()-1)))) +
+	                           verinum(use_enum->packed_width()-1)))) +
 	                one_value;
-	    max_value = pow(verinum(2), verinum(use_enum->base_width()-1)) -
+	    max_value = pow(verinum(2), verinum(use_enum->packed_width()-1)) -
 	                one_value;
       } else {
-	    max_value = pow(verinum(2), verinum(use_enum->base_width())) -
+	    max_value = pow(verinum(2), verinum(use_enum->packed_width())) -
 	                one_value;
       }
       min_value.has_sign(true);
@@ -227,15 +252,15 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	      // The values are explicitly sized to the width of the
 	      // base type of the enumeration.
 	    verinum tmp_val (0);
-	    if (cur_value.len() < use_enum->base_width()) {
+	    if (cur_value.len() < (unsigned long)use_enum->packed_width()) {
 		    // Pad the current value if it is narrower than the final
 		    // width of the enum.
-		  tmp_val = pad_to_width (cur_value, use_enum->base_width());
+		  tmp_val = pad_to_width (cur_value, use_enum->packed_width());
 		  tmp_val.has_len(true);
 	    } else {
 		    // Truncate an oversized value. We report out of bound
 		    // values above. This may create duplicates.
-		  tmp_val = verinum(cur_value, use_enum->base_width());
+		  tmp_val = verinum(cur_value, use_enum->packed_width());
 	    }
 	    tmp_val.has_sign(enum_type->signed_flag);
 
@@ -261,6 +286,30 @@ static void elaborate_scope_enumerations(Design*des, NetScope*scope,
       for (list<enum_type_t*>::const_iterator cur = enum_types.begin()
 		 ; cur != enum_types.end() ; ++ cur) {
 	    elaborate_scope_enumeration(des, scope, *cur);
+      }
+}
+
+static void elaborate_scope_class(Design*des, NetScope*scope,
+				  PClass*pclass)
+{
+      class_type_t*use_type = pclass->type;
+      netclass_t*use_class = new netclass_t(use_type->name);
+
+      for (map<perm_string, data_type_t*>::iterator cur = use_type->properties.begin()
+		 ; cur != use_type->properties.end() ; ++ cur) {
+	    ivl_type_s*tmp = cur->second->elaborate_type(des, scope);
+	    use_class->set_property(cur->first, tmp);
+      }
+
+      scope->add_class(use_class);
+}
+
+static void elaborate_scope_classes(Design*des, NetScope*scope,
+				    const map<perm_string,PClass*>&classes)
+{
+      for (map<perm_string,PClass*>::const_iterator cur = classes.begin()
+		 ; cur != classes.end() ; ++ cur) {
+	    elaborate_scope_class(des, scope, cur->second);
       }
 }
 
@@ -469,12 +518,16 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
       collect_scope_localparams_(des, scope, localparams);
 
+      collect_scope_specparams_(des, scope, specparams);
+
 	// Run parameter replacements that were collected from the
 	// containing scope and meant for me.
 
       replace_scope_parameters_(scope, *this, replacements);
 
       elaborate_scope_enumerations(des, scope, enum_sets);
+
+      elaborate_scope_classes(des, scope, classes);
 
 	// Run through the defparams for this module and save the result
 	// in a table for later final override.
@@ -518,6 +571,19 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 	// way.
 
       elaborate_scope_funcs(des, scope, funcs);
+
+	// Look for implicit modules and implicit gates for them.
+
+      for (map<perm_string,Module*>::iterator cur = nested_modules.begin()
+		 ; cur != nested_modules.end() ; ++cur) {
+	      // Skip modules that must be explicitly instantiated.
+	    if (cur->second->port_count() > 0)
+		  continue;
+
+	    PGModule*nested_gate = new PGModule(cur->second, cur->second->mod_name());
+	    nested_gate->set_line(*cur->second);
+	    gates_.push_back(nested_gate);
+      }
 
 	// Gates include modules, which might introduce new scopes, so
 	// scan all of them to create those scopes.
@@ -708,7 +774,7 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 							 genvar_verinum);
 		    // The file and line information should really come
 		    // from the genvar statement, not the for loop.
-		  scope->set_localparam(loop_index, gp, *this);
+		  scope->set_parameter(loop_index, gp, *this);
 		  if (debug_scopes)
 			cerr << get_fileline() << ": debug: "
 			     << "Create implicit localparam "
@@ -1054,6 +1120,21 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 	    scope->add_genvar((*cur).first, (*cur).second);
       }
 
+	// Scan the localparams in this scope, and store the information
+        // needed to evaluate the parameter expressions. The expressions
+	// will be evaluated later, once all parameter overrides for this
+	// module have been done.
+      collect_scope_localparams_(des, scope, localparams);
+
+	// Run through the defparams for this scope and save the result
+	// in a table for later final override.
+
+      typedef list<PGenerate::named_expr_t>::const_iterator defparms_iter_t;
+      for (defparms_iter_t cur = defparms.begin()
+		 ; cur != defparms.end() ; ++ cur ) {
+	    scope->defparams.push_back(make_pair(cur->first, cur->second));
+      }
+
 	// Scan the generated scope for nested generate schemes,
 	// and *generate* new scopes, which is slightly different
 	// from simple elaboration.
@@ -1063,12 +1144,6 @@ void PGenerate::elaborate_subscope_(Design*des, NetScope*scope)
 		 ; cur != generate_schemes.end() ; ++ cur ) {
 	    (*cur) -> generate_scope(des, scope);
       }
-
-	// Scan the localparams in this scope, and store the information
-        // needed to evaluate the parameter expressions. The expressions
-	// will be evaluated later, once all parameter overrides for this
-	// module have been done.
-      collect_scope_localparams_(des, scope, localparams);
 
         // Scan through all the task and function declarations in this
         // scope.
@@ -1307,8 +1382,12 @@ void PGModule::elaborate_scope_mod_instances_(Design*des, Module*mod, NetScope*s
 		       << "." << endl;
 	    }
 
-	      // Create the new scope as a MODULE with my name.
-	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE);
+	      // Create the new scope as a MODULE with my name. Note
+	      // that if this is a nested module, mark it thus so that
+	      // scope searches will continue into the parent scope.
+	    NetScope*my_scope = new NetScope(sc, use_name, NetScope::MODULE,
+					     bound_type_? true : false,
+					     mod->program_block);
 	    my_scope->set_line(get_file(), mod->get_file(),
 	                       get_lineno(), mod->get_lineno());
 	    my_scope->set_module_name(mod->mod_name());
@@ -1525,7 +1604,9 @@ void PBlock::elaborate_scope(Design*des, NetScope*scope) const
 		       << "Elaborate block scope " << use_name
 		       << " within " << scope_path(scope) << endl;
 
-	    my_scope = new NetScope(scope, use_name, bl_type_==BL_PAR
+	      // The scope type is begin-end or fork-join. The
+	      // sub-types of fork-join are not interesting to the scope.
+	    my_scope = new NetScope(scope, use_name, bl_type_!=BL_SEQ
 				    ? NetScope::FORK_JOIN
 				    : NetScope::BEGIN_END);
 	    my_scope->set_line(get_file(), get_lineno());

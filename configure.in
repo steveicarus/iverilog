@@ -36,7 +36,7 @@ then
 	echo ""
         echo "*** Warning: No suitable gperf found. ***"
 	echo "    The gperf package is essential for building ivl from"
-	echo "    CVS sources, or modifying the parse engine of ivl itself."
+	echo "    git sources, or modifying the parse engine of ivl itself."
 	echo "    You can get away without it when simply building from"
 	echo "    snapshots or major releases."
 	echo ""
@@ -91,6 +91,20 @@ fi
 
 AC_LANG(C++)
 
+AC_ARG_WITH([m32], [AC_HELP_STRING([--with-m32], [Compile 32-bit on x86_64])],
+            [ with_m32=yes ],[ with_m32=no ])
+
+AS_IF( [test "x$with_m32" = xyes],
+    [ AC_MSG_NOTICE([Compiling for 32-bit environment - needs gcc on x86_64])
+      LDTARGETFLAGS="-m elf_i386"
+      CTARGETFLAGS="-m32"
+    ],
+    [])
+
+CFLAGS="$CTARGETFLAGS $CFLAGS"
+CXXFLAGS="$CTARGETFLAGS $CXXFLAGS"
+LDFLAGS="$CTARGETFLAGS $LDFLAGS"
+
 # Check that we are using either the GNU compilers or the Sun compilers
 # but not a mixture of the two (not currently supported).
 AC_CHECK_DECL(__SUNPRO_CC, using_sunpro_cc=1, using_sunpro_cc=0)
@@ -111,7 +125,11 @@ else
   fi
 fi
 
+iverilog_temp_cxxflags="$CXXFLAGS"
+CXXFLAGS="-DHAVE_DECL_BASENAME $CXXFLAGS"
+
 AC_CHECK_HEADERS(getopt.h inttypes.h libiberty.h iosfwd sys/wait.h)
+CXXFLAGS="$iverilog_temp_cxxflags"
 
 AC_CHECK_SIZEOF(unsigned long long)
 AC_CHECK_SIZEOF(unsigned long)
@@ -178,6 +196,11 @@ if test -z "$DLLIB" ; then
 AC_CHECK_LIB(dld,shl_load,[DLLIB=-ldld])
 fi
 AC_SUBST(DLLIB)
+AC_SUBST(LDRELOCFLAGS)
+
+AC_SUBST(CTARGETFLAGS)
+AC_SUBST(LDTARGETFLAGS)
+
 
 AC_PROG_INSTALL
 
@@ -301,7 +324,5 @@ then
 AC_MSG_ERROR(cannot configure white space in libdir: $libdir)
 fi
 AC_MSG_RESULT(ok)
-
-# XXX disable tgt-fpga for the moment
 
 AC_OUTPUT(Makefile ivlpp/Makefile vhdlpp/Makefile vvp/Makefile vpi/Makefile driver/Makefile driver-vpi/Makefile cadpli/Makefile libveriuser/Makefile tgt-null/Makefile tgt-stub/Makefile tgt-vvp/Makefile tgt-vhdl/Makefile tgt-fpga/Makefile tgt-verilog/Makefile tgt-pal/Makefile tgt-vlog95/Makefile tgt-pcb/Makefile)

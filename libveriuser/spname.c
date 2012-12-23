@@ -14,11 +14,8 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: spname.c,v 1.4 2003/06/17 16:55:08 steve Exp $"
-#endif
 
 #include  <assert.h>
 #include  <vpi_user.h>
@@ -51,29 +48,3 @@ char *tf_mipname(void)
 {
       return tf_imipname(vpi_handle(vpiSysTfCall,0));
 }
-
-/*
- * $Log: spname.c,v $
- * Revision 1.4  2003/06/17 16:55:08  steve
- *  1) setlinebuf() for vpi_trace
- *  2) Addes error checks for trace file opens
- *  3) removes now extraneous flushes
- *  4) fixes acc_next() bug
- *
- * Revision 1.3  2003/05/29 03:46:21  steve
- *  Add tf_getp/putp support for integers
- *  and real valued arguments.
- *
- *  Add tf_mipname function.
- *
- * Revision 1.2  2003/05/18 00:16:35  steve
- *  Add PLI_TRACE tracing of PLI1 modules.
- *
- *  Add tf_isetdelay and friends, and add
- *  callback return values for acc_vcl support.
- *
- * Revision 1.1  2003/03/13 04:35:09  steve
- *  Add a bunch of new acc_ and tf_ functions.
- *
- */
-

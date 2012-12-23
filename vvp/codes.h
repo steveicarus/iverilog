@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "config.h"
@@ -68,12 +68,15 @@ extern bool of_CAST2(vthread_t thr, vvp_code_t code);
 extern bool of_CMPIS(vthread_t thr, vvp_code_t code);
 extern bool of_CMPIU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPS(vthread_t thr, vvp_code_t code);
+extern bool of_CMPSTR(vthread_t thr, vvp_code_t code);
 extern bool of_CMPU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPWR(vthread_t thr, vvp_code_t code);
 extern bool of_CMPWS(vthread_t thr, vvp_code_t code);
 extern bool of_CMPWU(vthread_t thr, vvp_code_t code);
 extern bool of_CMPX(vthread_t thr, vvp_code_t code);
 extern bool of_CMPZ(vthread_t thr, vvp_code_t code);
+extern bool of_CONCAT_STR(vthread_t thr, vvp_code_t code);
+extern bool of_CONCATI_STR(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_RS(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_RU(vthread_t thr, vvp_code_t code);
 extern bool of_CVT_RV(vthread_t thr, vvp_code_t code);
@@ -85,10 +88,12 @@ extern bool of_DEASSIGN(vthread_t thr, vvp_code_t code);
 extern bool of_DEASSIGN_WR(vthread_t thr, vvp_code_t code);
 extern bool of_DELAY(vthread_t thr, vvp_code_t code);
 extern bool of_DELAYX(vthread_t thr, vvp_code_t code);
+extern bool of_DELETE_OBJ(vthread_t thr, vvp_code_t code);
 extern bool of_DISABLE(vthread_t thr, vvp_code_t code);
 extern bool of_DIV(vthread_t thr, vvp_code_t code);
 extern bool of_DIV_S(vthread_t thr, vvp_code_t code);
 extern bool of_DIV_WR(vthread_t thr, vvp_code_t code);
+extern bool of_DUP_REAL(vthread_t thr, vvp_code_t code);
 extern bool of_END(vthread_t thr, vvp_code_t code);
 extern bool of_EVCTL(vthread_t thr, vvp_code_t code);
 extern bool of_EVCTLC(vthread_t thr, vvp_code_t code);
@@ -115,22 +120,28 @@ extern bool of_JMP0(vthread_t thr, vvp_code_t code);
 extern bool of_JMP0XZ(vthread_t thr, vvp_code_t code);
 extern bool of_JMP1(vthread_t thr, vvp_code_t code);
 extern bool of_JOIN(vthread_t thr, vvp_code_t code);
+extern bool of_JOIN_DETACH(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_AR(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_AV(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_AVP0(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_AVP0_S(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_DAR(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_REAL(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_DAR_R(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_DAR_STR(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_OBJ(vthread_t thr, vvp_code_t code);
+extern bool of_LOAD_STR(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_VEC(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_VP0(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_VP0_S(vthread_t thr, vvp_code_t code);
-extern bool of_LOAD_WR(vthread_t thr, vvp_code_t code);
 extern bool of_LOAD_X1P(vthread_t thr, vvp_code_t code);
-extern bool of_LOADI_WR(vthread_t thr, vvp_code_t code);
+extern bool of_MAX_WR(vthread_t thr, vvp_code_t code);
+extern bool of_MIN_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MOD(vthread_t thr, vvp_code_t code);
 extern bool of_MOD_S(vthread_t thr, vvp_code_t code);
 extern bool of_MOD_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MOV(vthread_t thr, vvp_code_t code);
-extern bool of_MOV_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MOV_WU(vthread_t thr, vvp_code_t code);
 extern bool of_MOVI(vthread_t thr, vvp_code_t code);
 extern bool of_MUL(vthread_t thr, vvp_code_t code);
@@ -138,30 +149,48 @@ extern bool of_MUL_WR(vthread_t thr, vvp_code_t code);
 extern bool of_MULI(vthread_t thr, vvp_code_t code);
 extern bool of_NAND(vthread_t thr, vvp_code_t code);
 extern bool of_NANDR(vthread_t thr, vvp_code_t code);
+extern bool of_NEW_COBJ(vthread_t thr, vvp_code_t code);
+extern bool of_NEW_DARRAY(vthread_t thr, vvp_code_t code);
 extern bool of_NOOP(vthread_t thr, vvp_code_t code);
 extern bool of_NOR(vthread_t thr, vvp_code_t code);
 extern bool of_NORR(vthread_t thr, vvp_code_t code);
+extern bool of_NULL(vthread_t thr, vvp_code_t code);
 extern bool of_OR(vthread_t thr, vvp_code_t code);
 extern bool of_ORR(vthread_t thr, vvp_code_t code);
 extern bool of_PAD(vthread_t thr, vvp_code_t code);
+extern bool of_POP_REAL(vthread_t thr, vvp_code_t code);
+extern bool of_POP_STR(vthread_t thr, vvp_code_t code);
 extern bool of_POW(vthread_t thr, vvp_code_t code);
 extern bool of_POW_S(vthread_t thr, vvp_code_t code);
 extern bool of_POW_WR(vthread_t thr, vvp_code_t code);
+extern bool of_PROP_V(vthread_t thr, vvp_code_t code);
+extern bool of_PUSHI_STR(vthread_t thr, vvp_code_t code);
+extern bool of_PUSHI_REAL(vthread_t thr, vvp_code_t code);
+extern bool of_PUSHV_STR(vthread_t thr, vvp_code_t code);
+extern bool of_PUTC_STR_V(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_NET(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_REG(vthread_t thr, vvp_code_t code);
 extern bool of_RELEASE_WR(vthread_t thr, vvp_code_t code);
-extern bool of_SET_AR(vthread_t thr, vvp_code_t code);
 extern bool of_SET_AV(vthread_t thr, vvp_code_t code);
+extern bool of_SET_DAR(vthread_t thr, vvp_code_t code);
 extern bool of_SET_VEC(vthread_t thr, vvp_code_t code);
-extern bool of_SET_WORDR(vthread_t thr, vvp_code_t code);
 extern bool of_SET_X0(vthread_t thr, vvp_code_t code);
 extern bool of_SET_X0_X(vthread_t thr, vvp_code_t code);
 extern bool of_SHIFTL_I0(vthread_t thr, vvp_code_t code);
 extern bool of_SHIFTR_I0(vthread_t thr, vvp_code_t code);
 extern bool of_SHIFTR_S_I0(vthread_t thr, vvp_code_t code);
+extern bool of_STORE_DAR_R(vthread_t thr, vvp_code_t code);
+extern bool of_STORE_DAR_STR(vthread_t thr, vvp_code_t code);
+extern bool of_STORE_OBJ(vthread_t thr, vvp_code_t code);
+extern bool of_STORE_PROP_V(vthread_t thr, vvp_code_t code);
+extern bool of_STORE_REAL(vthread_t thr, vvp_code_t code);
+extern bool of_STORE_REALA(vthread_t thr, vvp_code_t code);
+extern bool of_STORE_STR(vthread_t thr, vvp_code_t code);
 extern bool of_SUB(vthread_t thr, vvp_code_t code);
 extern bool of_SUB_WR(vthread_t thr, vvp_code_t code);
 extern bool of_SUBI(vthread_t thr, vvp_code_t code);
+extern bool of_SUBSTR_V(vthread_t thr, vvp_code_t code);
+extern bool of_TEST_NUL(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
 extern bool of_WAIT(vthread_t thr, vvp_code_t code);
 extern bool of_XNOR(vthread_t thr, vvp_code_t code);
@@ -188,6 +217,7 @@ struct vvp_code_s {
 	    vvp_array_t array;
 	    class __vpiHandle*handle;
 	    struct __vpiScope*scope;
+	    const char*text;
       };
 
       union {

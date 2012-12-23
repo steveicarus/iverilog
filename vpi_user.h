@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 
@@ -43,6 +43,7 @@ EXTERN_C_START
 
 # include  <stdarg.h>
 # include  <stdio.h>
+# include  <stdarg.h>
 # include  "_pli_types.h"
 
 #define ICARUS_VPI_CONST
@@ -286,6 +287,7 @@ typedef struct t_vpi_delay  {
 #define vpiParameter   41
 #define vpiPartSelect  42
 #define vpiPathTerm    43
+#define vpiPort        44
 #define vpiRealVar     47
 #define vpiReg         48
 #define vpiSysFuncCall 56
@@ -308,6 +310,12 @@ typedef struct t_vpi_delay  {
 #define vpiVariables   100
 #define vpiExpr        102
 
+/********************** object types added with 1364-2001 *********************/
+
+# define vpiRegArray   116
+
+/********************** object types added with 1364-2005 *********************/
+
 #define vpiCallback  1000
 
 /* PROPERTIES */
@@ -325,6 +333,14 @@ typedef struct t_vpi_delay  {
 #define vpiTimePrecision 12
 #define vpiDefFile       15
 #define vpiDefLineNo     16
+
+#define vpiDirection 20 /* direction of port: */
+#   define vpiInput 1
+#   define vpiOutput 2
+#   define vpiInout 3
+#   define vpiMixedIO 4 /* Not currently output */
+#   define vpiNoDirection 5
+
 #define vpiNetType       22
 #   define vpiWire         1
 #   define vpiWand         2
@@ -338,6 +354,7 @@ typedef struct t_vpi_delay  {
 #   define vpiSupply1     10
 #   define vpiSupply0     11
 #define vpiArray         28
+#define vpiPortIndex     29
 #define vpiEdge          36
 #   define vpiNoEdge       0x00 /* No edge */
 #   define vpiEdge01       0x01 /* 0 --> 1 */
@@ -371,6 +388,7 @@ typedef struct t_vpi_delay  {
 #define vpiAutomatic      50
 #define vpiConstantSelect 53
 #define vpiSigned         65
+#define vpiLocalParam     70
 /* IVL private properties, also see vvp/vpi_priv.h for other properties */
 #define _vpiNexusId        0x1000000
 /* used in vvp/vpi_priv.h  0x1000001 */
@@ -603,6 +621,17 @@ extern void vpip_format_strength(char*str, s_vpi_value*value, unsigned bit);
 extern void vpip_set_return_value(int value);
 extern s_vpi_vecval vpip_calc_clog2(vpiHandle arg);
 extern void vpip_make_systf_system_defined(vpiHandle ref);
+
+  /* Return driver information for a net bit. The information is returned
+     in the 'counts' array as follows:
+       counts[0] - number of drivers driving '0' onto the net
+       counts[1] - number of drivers driving '1' onto the net
+       counts[2] - number of drivers driving 'X' onto the net
+       counts[3] - set to 1 if the net is forced, 0 otherwise
+     The 'ref' argument should reference a net. The 'idx' argument selects
+     which bit of the net is examined. */
+extern void vpip_count_drivers(vpiHandle ref, unsigned idx,
+                               unsigned counts[4]);
 
 EXTERN_C_END
 

@@ -1,5 +1,5 @@
-/* vi:sw=6
- * Copyright (c) 2003 Michael Ruff (mruff at chiaro.com)
+/*
+ * Copyright (c) 2003-2012 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,11 +14,8 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: a_handle_by_name.c,v 1.2 2003/06/17 16:55:07 steve Exp $"
-#endif
 
 # include  <acc_user.h>
 # include  <vpi_user.h>
@@ -31,12 +28,11 @@
  */
 handle acc_handle_by_name(const char*obj_name, handle scope)
 {
-      vpiHandle sys_h;
       vpiHandle res;
 
       /* if no scope provided, use tasks scope */
       if (!scope) {
-	    sys_h = vpi_handle(vpiSysTfCall, 0 /* NULL */);
+	    vpiHandle sys_h = vpi_handle(vpiSysTfCall, 0 /* NULL */);
 	    scope = vpi_handle(vpiScope, sys_h);
       }
 
@@ -50,16 +46,3 @@ handle acc_handle_by_name(const char*obj_name, handle scope)
 
       return res;
 }
-
-/*
- * $Log: a_handle_by_name.c,v $
- * Revision 1.2  2003/06/17 16:55:07  steve
- *  1) setlinebuf() for vpi_trace
- *  2) Addes error checks for trace file opens
- *  3) removes now extraneous flushes
- *  4) fixes acc_next() bug
- *
- * Revision 1.1  2003/05/24 03:02:04  steve
- *  Add implementation of acc_handle_by_name.
- *
- */

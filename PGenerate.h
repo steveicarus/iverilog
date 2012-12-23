@@ -1,7 +1,7 @@
 #ifndef __PGenerate_H
 #define __PGenerate_H
 /*
- * Copyright (c) 2006-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2010,2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "LineInfo.h"
@@ -80,15 +80,16 @@ class PGenerate : public LineInfo, public LexicalScope {
 	// test value.
       std::valarray<PExpr*> item_test;
 
+	// defparam assignments found in this scope.
+      typedef pair<pform_name_t,PExpr*> named_expr_t;
+      list<named_expr_t>defparms;
+
       list<PGate*> gates;
       void add_gate(PGate*);
 
 	// Tasks instantiated within this scheme.
       map<perm_string,PTask*> tasks;
       map<perm_string,PFunction*>funcs;
-
-	// genvars declared within this scheme.
-      map<perm_string,LineInfo*> genvars;
 
 	// Generate schemes can contain further generate schemes.
       list<PGenerate*> generate_schemes;

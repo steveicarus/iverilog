@@ -14,12 +14,15 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "config.h"
 # include  "vvp_net.h"
+# include  "vvp_net_sig.h"
+# include  "vvp_island.h"
 # include  "vpi_priv.h"
+# include  "resolv.h"
 # include  "schedule.h"
 # include  "statistics.h"
 # include  <cstdio>
@@ -147,7 +150,7 @@ void vvp_net_pool_delete()
       }
 
       for (unsigned idx = 0; idx < vvp_net_pool_count; idx += 1) {
-	    VALGRIND_DESTROY_MEMPOOL(vvp_net_pool[idx])
+	    VALGRIND_DESTROY_MEMPOOL(vvp_net_pool[idx]);
 	    ::delete [] vvp_net_pool[idx];
       }
       free(vvp_net_pool);
@@ -207,6 +210,36 @@ void vvp_net_t::unlink(vvp_net_ptr_t dst_ptr)
       }
 
       net->port[net_port] = vvp_net_ptr_t(0,0);
+}
+
+void vvp_net_t::count_drivers(unsigned idx, unsigned counts[4])
+{
+      counts[0] = 0;
+      counts[1] = 0;
+      counts[2] = 0;
+      counts[3] = 0;
+
+        /* $countdrivers can only be used on wires. */
+      vvp_wire_base*wire=dynamic_cast<vvp_wire_base*>(fil);
+      assert(wire);
+
+      if (wire->is_forced(idx))
+            counts[3] = 1;
+
+        /* If the net has multiple drivers, we need to interrogate the
+           resolver network to get the driven values. */
+      if (resolv_core*resolver = dynamic_cast<resolv_core*>(fun)) {
+            resolver->count_drivers(idx, counts);
+            return;
+      }
+      if (vvp_island_port*resolver = dynamic_cast<vvp_island_port*>(fun)) {
+            resolver->count_drivers(idx, counts);
+            return;
+      }
+
+        /* If the functor is not a resolver, there is only one driver, so
+           we can just interrogate the filter to get the driven value. */
+      update_driver_counts(wire->driven_value(idx), counts);
 }
 
 void vvp_net_fun_t::operator delete(void*)
@@ -1432,7 +1465,7 @@ void vvp_vector4_t::set_to_x()
       }
 }
 
-char* vvp_vector4_t::as_string(char*buf, size_t buf_len)
+char* vvp_vector4_t::as_string(char*buf, size_t buf_len) const
 {
       char*res = buf;
       *buf++ = 'C';
@@ -1586,8 +1619,8 @@ ostream& operator<< (ostream&out, const vvp_vector4_t&that)
       return out;
 }
 
-template <class INT>bool do_vector4_to_value(const vvp_vector4_t&vec, INT&val,
-					     bool is_signed, bool is_arithmetic)
+template <class INT>bool vector4_to_value(const vvp_vector4_t&vec, INT&val,
+					  bool is_signed, bool is_arithmetic)
 {
       long res = 0;
       INT  msk = 1;
@@ -1621,22 +1654,27 @@ template <class INT>bool do_vector4_to_value(const vvp_vector4_t&vec, INT&val,
       return rc_flag;
 }
 
-bool vector4_to_value(const vvp_vector4_t&vec, long&val,
-		      bool is_signed, bool is_arithmetic)
-{
-      return do_vector4_to_value(vec, val, is_signed, is_arithmetic);
-}
+template bool vector4_to_value(const vvp_vector4_t&vec, int8_t&val,
+			       bool is_signed, bool is_arithmetic);
+template bool vector4_to_value(const vvp_vector4_t&vec, int16_t&val,
+			       bool is_signed, bool is_arithmetic);
+template bool vector4_to_value(const vvp_vector4_t&vec, int32_t&val,
+			       bool is_signed, bool is_arithmetic);
+template bool vector4_to_value(const vvp_vector4_t&vec, int64_t&val,
+			       bool is_signed, bool is_arithmetic);
+template bool vector4_to_value(const vvp_vector4_t&vec, uint8_t&val,
+			       bool is_signed, bool is_arithmetic);
+template bool vector4_to_value(const vvp_vector4_t&vec, uint16_t&val,
+			       bool is_signed, bool is_arithmetic);
+template bool vector4_to_value(const vvp_vector4_t&vec, uint32_t&val,
+			       bool is_signed, bool is_arithmetic);
+template bool vector4_to_value(const vvp_vector4_t&vec, uint64_t&val,
+			       bool is_signed, bool is_arithmetic);
 
-bool vector4_to_value(const vvp_vector4_t&vec, int32_t&val,
-		      bool is_signed, bool is_arithmetic)
+template <class T> bool vector4_to_value(const vvp_vector4_t&vec, T&val)
 {
-      return do_vector4_to_value(vec, val, is_signed, is_arithmetic);
-}
-
-bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
-{
-      unsigned long res = 0;
-      unsigned long msk = 1;
+      T res = 0;
+      T msk = 1;
 
       unsigned size = vec.size();
       if (size > 8*sizeof(val)) size = 8*sizeof(val);
@@ -1651,44 +1689,16 @@ bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val)
 		  return false;
 	    }
 
-	    msk <<= 1UL;
+	    msk <<= static_cast<T>(1);
       }
 
       val = res;
       return true;
 }
 
+template bool vector4_to_value(const vvp_vector4_t&vec, unsigned long&val);
 #ifndef UL_AND_TIME64_SAME
-bool vector4_to_value(const vvp_vector4_t&vec, int64_t&val,
-		      bool is_signed, bool is_arithmetic)
-{
-      return do_vector4_to_value(vec, val, is_signed, is_arithmetic);
-}
-
-bool vector4_to_value(const vvp_vector4_t&vec, vvp_time64_t&val)
-{
-      vvp_time64_t res = 0;
-      vvp_time64_t msk = 1;
-
-      unsigned size = vec.size();
-      if (size > 8*sizeof(val)) size = 8*sizeof(val);
-      for (unsigned idx = 0 ;  idx < size ;  idx += 1) {
-	    switch (vec.value(idx)) {
-		case BIT4_0:
-		  break;
-		case BIT4_1:
-		  res |= msk;
-		  break;
-		default:
-		  return false;
-	    }
-
-	    msk <<= 1UL;
-      }
-
-      val = res;
-      return true;
-}
+template bool vector4_to_value(const vvp_vector4_t&vec, vvp_time64_t&val);
 #endif
 
 bool vector4_to_value(const vvp_vector4_t&vec, double&val, bool signed_flag)
@@ -2952,6 +2962,20 @@ void vvp_net_fun_t::recv_long(vvp_net_ptr_t, long)
 void vvp_net_fun_t::recv_long_pv(vvp_net_ptr_t, long, unsigned, unsigned)
 {
       fprintf(stderr, "internal error: %s: recv_long_pv not implemented\n",
+	      typeid(*this).name());
+      assert(0);
+}
+
+void vvp_net_fun_t::recv_string(vvp_net_ptr_t, const std::string&bit, vvp_context_t)
+{
+      fprintf(stderr, "internal error: %s: recv_string(%s) not implemented\n",
+	      typeid(*this).name(), bit.c_str());
+      assert(0);
+}
+
+void vvp_net_fun_t::recv_object(vvp_net_ptr_t, vvp_object_t, vvp_context_t)
+{
+      fprintf(stderr, "internal error: %s: recv_object(...) not implemented\n",
 	      typeid(*this).name());
       assert(0);
 }

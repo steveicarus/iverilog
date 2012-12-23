@@ -16,12 +16,13 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "PScope.h"
 # include  "LineInfo.h"
 # include  "StringHeap.h"
+# include  <iostream>
 
 /*
  * SystemVerilog supports class declarations with their own lexical
@@ -35,6 +36,10 @@ class PClass : public PScopeExtra, public LineInfo {
       explicit PClass (perm_string name, LexicalScope*parent);
       ~PClass();
 
+      void dump(std::ostream&out, unsigned indent) const;
+
+    public:
+      class_type_t*type;
 };
 
 #endif

@@ -14,12 +14,13 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
 
 # include  "netlist.h"
+# include  "netvector.h"
 # include  "netmisc.h"
 
 
@@ -77,19 +78,20 @@ NetNet*pad_to_width(Design*des, NetNet*net, unsigned wid, const LineInfo&info)
       connect(cc->pin(2), con->pin(0));
 
 	// Make a NetNet for the NetConst to NetConcat link.
+      netvector_t*tmp_vec = new netvector_t(net->data_type(),
+					    wid - net->vector_width() - 1, 0);
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-			       NetNet::WIRE, wid - net->vector_width());
+			      NetNet::WIRE, tmp_vec);
       tmp->set_line(info);
-      tmp->data_type( net->data_type() );
       tmp->local_flag(true);
       connect(cc->pin(2), tmp->pin(0));
 
 	// Create a NetNet of the output width and connect it to the
 	// NetConcat node output pin.
+      tmp_vec = new netvector_t(net->data_type(), wid-1, 0);
       tmp = new NetNet(scope, scope->local_symbol(),
-		       NetNet::WIRE, wid);
+		       NetNet::WIRE, tmp_vec);
       tmp->set_line(info);
-      tmp->data_type( net->data_type() );
       tmp->local_flag(true);
       connect(cc->pin(0), tmp->pin(0));
 
@@ -109,11 +111,11 @@ NetNet*pad_to_width_signed(Design*des, NetNet*net, unsigned wid,
       se->set_line(info);
       des->add_node(se);
 
-      NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, wid);
+      netvector_t*tmp_vec = new netvector_t(net->data_type(), wid-1, 0);
+      tmp_vec->set_signed(true);
+      NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, tmp_vec);
       tmp->set_line(info);
       tmp->local_flag(true);
-      tmp->data_type(net->data_type());
-      tmp->set_signed(true);
 
       connect(tmp->pin(0), se->pin(0));
       connect(se->pin(1), net->pin(0));
@@ -132,10 +134,10 @@ NetNet*crop_to_width(Design*des, NetNet*net, unsigned wid)
       ps->set_line(*net);
       des->add_node(ps);
 
+      netvector_t*tmp_vec = new netvector_t(net->data_type(), wid-1, 0);
       NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-			      NetNet::WIRE, wid);
+			      NetNet::WIRE, tmp_vec);
       tmp->set_line(*net);
-      tmp->data_type(net->data_type());
       tmp->local_flag(true);
       connect(ps->pin(0), tmp->pin(0));
 

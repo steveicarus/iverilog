@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
@@ -27,11 +27,12 @@
 list<Module::named_expr_t> Module::user_defparms;
 
 /* n is a permallocated string. */
-Module::Module(perm_string n)
-: PScopeExtra(n)
+Module::Module(LexicalScope*parent, perm_string n)
+: PScopeExtra(n, parent)
 {
       library_flag = false;
       is_cell = false;
+      program_block = false;
       uc_drive = UCD_NONE;
       timescale_warn_done = false;
       time_unit = 0;
@@ -88,6 +89,22 @@ unsigned Module::find_port(const char*name) const
 
       return ports.size();
 }
+
+perm_string Module::get_port_name(unsigned idx) const
+{
+
+      assert(idx < ports.size());
+      if (ports[idx] == 0) {
+              /* It is possible to have undeclared ports. These
+                 are ports that are skipped in the declaration,
+                 for example like so: module foo(x ,, y); The
+                 port between x and y is unnamed and thus
+                 inaccessible to binding by name. */
+            return perm_string::literal("");
+      }
+      return ports[idx]->name;
+}
+
 
 
 PGate* Module::get_gate(perm_string name)

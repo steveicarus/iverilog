@@ -14,13 +14,14 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include "config.h"
 
 # include  "functor.h"
 # include  "netlist.h"
+# include  "netvector.h"
 # include  "netmisc.h"
 # include  "compiler.h"
 # include  <cassert>
@@ -221,10 +222,10 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 		  continue;
 	    }
 
+	    netvector_t*isig_vec = new netvector_t(mux_data_type, mux_width-1, 0);
 	    isig = new NetNet(scope, scope->local_symbol(),
-			      NetNet::TRI, mux_width);
+			      NetNet::TRI, isig_vec);
 	    isig->local_flag(true);
-	    isig->data_type(mux_data_type);
 
 	    connect(mux->pin_Data(idx), isig->pin(0));
 

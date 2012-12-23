@@ -14,11 +14,8 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-#ifdef HAVE_CVS_IDENT
-#ident "$Id: d-lpm.c,v 1.12 2004/10/04 01:10:56 steve Exp $"
-#endif
 
 /*
  * This is the driver for a purely generic LPM module writer. This
@@ -873,44 +870,3 @@ const struct device_s d_lpm_edif = {
       lpm_show_mult, /* show_mult */
       lpm_show_constant /* show_constant */
 };
-
-/*
- * $Log: d-lpm.c,v $
- * Revision 1.12  2004/10/04 01:10:56  steve
- *  Clean up spurious trailing white space.
- *
- * Revision 1.11  2003/11/12 03:20:14  steve
- *  devices need show_cmp_gt
- *
- * Revision 1.10  2003/10/31 03:45:50  steve
- *  Handle adders that use Cout for the top bit.
- *
- * Revision 1.9  2003/10/27 02:18:27  steve
- *  Emit constants for LPM device.
- *
- * Revision 1.8  2003/09/03 23:34:09  steve
- *  Support synchronous set of LPM_FF devices.
- *
- * Revision 1.7  2003/08/26 04:45:47  steve
- *  iverilog-vpi support --cflags a la gtk.
- *
- * Revision 1.6  2003/08/15 02:23:53  steve
- *  Add synthesis support for synchronous reset.
- *
- * Revision 1.5  2003/08/10 16:42:23  steve
- *  Add async clear to LPM_FF devices.
- *
- * Revision 1.4  2003/08/09 03:23:03  steve
- *  Add support for IVL_LPM_MULT device.
- *
- * Revision 1.3  2003/08/09 02:40:50  steve
- *  Generate LPM_FF devices.
- *
- * Revision 1.2  2003/08/07 05:18:04  steve
- *  Add support for OR/NOR/bufif0/bufif1.
- *
- * Revision 1.1  2003/08/07 04:04:01  steve
- *  Add an LPM device type.
- *
- */
-

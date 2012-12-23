@@ -14,18 +14,59 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "expression.h"
+# include  "parse_types.h"
 # include  <iostream>
 # include  <ivl_assert.h>
 
 using namespace std;
 
-void ExpAggregate::write_to_stream(ostream&)
+void ExpAggregate::write_to_stream(ostream&fd)
 {
-      ivl_assert(*this, !"Not supported");
+      fd << "(";
+      for (vector<element_t*>::const_iterator cur = elements_.begin()
+		 ; cur != elements_.end() ; ++cur) {
+	    (*cur)->write_to_stream(fd);
+      }
+      fd << ")";
+}
+
+void ExpAggregate::element_t::write_to_stream(ostream&fd) const
+{
+      for (vector<choice_t*>::const_iterator cur = fields_.begin()
+		 ; cur != fields_.end() ; ++cur) {
+	    (*cur)->write_to_stream(fd);
+      }
+
+      fd << "=>";
+      val_->write_to_stream(fd);
+}
+
+void ExpAggregate::choice_t::write_to_stream(ostream&fd)
+{
+      if (others()) {
+	    fd << "others";
+	    return;
+      }
+
+      if (Expression*sim = simple_expression()) {
+	    sim->write_to_stream(fd);
+	    return;
+      }
+
+      if (prange_t*rp = range_expressions()) {
+	    rp->msb()->write_to_stream(fd);
+	    if (rp->is_downto())
+		  fd << " downto ";
+	    else
+		  fd << " to ";
+	    rp->msb()->write_to_stream(fd);
+      }
+
+      fd << "/* ERROR */";
 }
 
 void ExpArithmetic::write_to_stream(ostream&out)
@@ -56,8 +97,8 @@ void ExpArithmetic::write_to_stream(ostream&out)
 	  case POW:
 	    out << "**";
 	    break;
-	  case CONCAT:
-	    out << "&";
+	  case xCONCAT:
+	    ivl_assert(*this, 0);
 	    break;
       }
 
@@ -76,9 +117,23 @@ void ExpBitstring::write_to_stream(ostream&)
       ivl_assert(*this, !"Not supported");
 }
 
-void ExpCharacter::write_to_stream(ostream&)
+void ExpCharacter::write_to_stream(ostream&fd)
 {
-      ivl_assert(*this, !"Not supported");
+      char buf[4];
+      buf[0] = '\'';
+      buf[1] = value_;
+      buf[2] = '\'';
+      buf[3] = 0;
+      fd << buf;
+}
+
+void ExpConcat::write_to_stream(ostream&fd)
+{
+      fd << "(";
+      operand1_->write_to_stream(fd);
+      fd << ")&(";
+      operand2_->write_to_stream(fd);
+      fd << ")";
 }
 
 void ExpConditional::write_to_stream(ostream&)
@@ -91,9 +146,17 @@ void ExpEdge::write_to_stream(ostream&)
       ivl_assert(*this, !"Not supported");
 }
 
-void ExpFunc::write_to_stream(ostream&)
+void ExpFunc::write_to_stream(ostream&fd)
 {
-      ivl_assert(*this, !"Not supported");
+      const char*comma = "";
+      fd << name_ << "(";
+      for (vector<Expression*>::iterator cur = argv_.begin()
+		 ; cur != argv_.end() ; ++cur) {
+	    fd << comma;
+	    (*cur)->write_to_stream(fd);
+	    comma = ", ";
+      }
+      fd << ")";
 }
 
 void ExpInteger::write_to_stream(ostream&fd)
@@ -108,6 +171,11 @@ void ExpLogical::write_to_stream(ostream&)
 
 void ExpName::write_to_stream(ostream&fd)
 {
+      if (prefix_.get()) {
+	    prefix_->write_to_stream(fd);
+	    fd << ".";
+      }
+
       fd << name_;
       if (index_) {
 	    fd << "(";

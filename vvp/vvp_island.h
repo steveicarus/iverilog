@@ -1,7 +1,7 @@
 #ifndef __vvp_island_H
 #define __vvp_island_H
 /*
- * Copyright (c) 2008-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -16,7 +16,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "config.h"
@@ -55,7 +55,7 @@
 */
 
 struct vvp_island_branch;
-class vvp_island_node;
+class vvp_island_port;
 
 class vvp_island  : private vvp_gen_event_s {
 
@@ -73,6 +73,10 @@ class vvp_island  : private vvp_gen_event_s {
 	// whatever happened. The derived island class implements this
 	// method to give the island its character.
       virtual void run_island() =0;
+
+        // Support for $countdrivers.
+      virtual void count_drivers(vvp_island_port*port, unsigned bit_idx,
+                                 unsigned counts[3]) =0;
 
     protected:
 	// The base class collects a list of all the branches in the
@@ -144,6 +148,12 @@ class vvp_island_port  : public vvp_net_fun_t {
     private:
       vvp_island*island_;
 
+    public: // Support for $countdrivers.
+      inline void count_drivers(unsigned bit_idx, unsigned counts[3])
+      {
+            island_->count_drivers(this, bit_idx, counts);
+      }
+
     private: // not implemented
       vvp_island_port(const vvp_island_port&);
       vvp_island_port& operator = (const vvp_island_port&);
@@ -172,6 +182,12 @@ inline vvp_vector8_t island_get_value(vvp_net_t*net)
       }
 }
 
+inline vvp_vector8_t island_get_sent_value(vvp_net_t*net)
+{
+      vvp_island_port*fun = dynamic_cast<vvp_island_port*>(net->fun);
+      return fun->outvalue;
+}
+
 extern void island_send_value(vvp_net_t*net, const vvp_vector8_t&val);
 
 /*
@@ -195,6 +211,13 @@ struct vvp_island_branch {
       vvp_net_t*a;
       vvp_net_t*b;
 };
+
+static inline vvp_branch_ptr_t next(vvp_branch_ptr_t cur)
+{
+      vvp_island_branch*ptr = cur.ptr();
+      unsigned ab = cur.port();
+      return ptr->link[ab];
+}
 
 /*
  * This function collects into the conn list all the branch ends

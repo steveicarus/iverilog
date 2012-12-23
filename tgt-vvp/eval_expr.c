@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "vvp_priv.h"
@@ -277,8 +277,6 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
  */
 void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix)
 {
-      int word;
-
       switch (ivl_expr_value(expr)) {
 
 	  case IVL_VT_BOOL:
@@ -287,9 +285,8 @@ void draw_eval_expr_into_integer(ivl_expr_t expr, unsigned ix)
 	    break;
 
 	  case IVL_VT_REAL:
-	    word = draw_eval_real(expr);
-	    fprintf(vvp_out, "    %%cvt/sr %u, %u;\n", ix, word);
-	    clr_word(word);
+	    draw_eval_real(expr);
+	    fprintf(vvp_out, "    %%cvt/sr %u;\n", ix);
 	    break;
 
 	  default:
@@ -428,19 +425,15 @@ static struct vector_info draw_eq_immediate(ivl_expr_t expr, unsigned ewid,
 static struct vector_info draw_binary_expr_eq_real(ivl_expr_t expr)
 {
       struct vector_info res;
-      int lword, rword;
 
       res.base = allocate_vector(1);
       res.wid  = 1;
       assert(res.base);
 
-      lword = draw_eval_real(ivl_expr_oper1(expr));
-      rword = draw_eval_real(ivl_expr_oper2(expr));
+      draw_eval_real(ivl_expr_oper1(expr));
+      draw_eval_real(ivl_expr_oper2(expr));
 
-      clr_word(lword);
-      clr_word(rword);
-
-      fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", lword, rword);
+      fprintf(vvp_out, "    %%cmp/wr;\n");
       switch (ivl_expr_opcode(expr)) {
 
 	  case 'e':
@@ -456,6 +449,86 @@ static struct vector_info draw_binary_expr_eq_real(ivl_expr_t expr)
 	    assert(0);
       }
 
+      return res;
+}
+
+static struct vector_info draw_binary_expr_eq_string(ivl_expr_t expr)
+{
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+
+      struct vector_info res;
+      res.base = allocate_vector(1);
+      res.wid = 1;
+      assert(res.base);
+
+      draw_eval_string(le);
+      draw_eval_string(re);
+
+      fprintf(vvp_out, "    %%cmp/str;\n");
+
+      switch (ivl_expr_opcode(expr)) {
+
+	  case 'e': /* == */
+	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n", res.base);
+	    break;
+
+	  case 'n': /* != */
+	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n", res.base);
+	    fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+      return res;
+}
+
+static struct vector_info draw_binary_expr_eq_class(ivl_expr_t expr)
+{
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+
+      struct vector_info res;
+      res.base = allocate_vector(1);
+      res.wid = 1;
+      assert(res.base);
+
+      if (ivl_expr_type(le) == IVL_EX_NULL) {
+	    ivl_expr_t tmp = le;
+	    le = re;
+	    re = tmp;
+      }
+
+	/* Special case: If both operands are null, then the
+	   expression has a constant value. */
+      if (ivl_expr_type(le)==IVL_EX_NULL && ivl_expr_type(re)==IVL_EX_NULL) {
+	    switch (ivl_expr_opcode(expr)) {
+		case 'e': /* == */
+		  fprintf(vvp_out, "    %%mov %u, 1, 1;\n", res.base);
+		  break;
+		case 'n': /* != */
+		  fprintf(vvp_out, "    %%mov %u, 0, 1;\n", res.base);
+		  break;
+		default:
+		  assert(0);
+		  break;
+	    }
+	    return res;
+      }
+
+      if (ivl_expr_type(re) == IVL_EX_NULL && ivl_expr_type(le)==IVL_EX_SIGNAL) {
+	    fprintf(vvp_out, "    %%test_nul v%p_0;\n", ivl_expr_signal(le));
+	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n", res.base);
+	    if (ivl_expr_opcode(expr) == 'n')
+		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
+	    return res;
+      }
+
+      fprintf(stderr, "SORRY: Compare class handles not implemented\n");
+      fprintf(vvp_out, " ; XXXX compare class handles.\n");
+      vvp_errors += 1;
       return res;
 }
 
@@ -476,13 +549,35 @@ static struct vector_info draw_binary_expr_eq(ivl_expr_t expr,
 	    return draw_binary_expr_eq_real(expr);
       }
 
+      if ((ivl_expr_value(le) == IVL_VT_STRING)
+	  && (ivl_expr_value(re) == IVL_VT_STRING)) {
+	    return draw_binary_expr_eq_string(expr);
+      }
+
+      if ((ivl_expr_value(le) == IVL_VT_STRING)
+	  && (ivl_expr_type(re) == IVL_EX_STRING)) {
+	    return draw_binary_expr_eq_string(expr);
+      }
+
+      if ((ivl_expr_type(le) == IVL_EX_STRING)
+	  && (ivl_expr_value(re) == IVL_VT_STRING)) {
+	    return draw_binary_expr_eq_string(expr);
+      }
+
+      if ((ivl_expr_value(le) == IVL_VT_CLASS)
+	  && (ivl_expr_value(re) == IVL_VT_CLASS)) {
+	    return draw_binary_expr_eq_class(expr);
+      }
+
       if (number_is_immediate(re,16,0) && !number_is_unknown(re))
 	    return draw_eq_immediate(expr, ewid, le, re, stuff_ok_flag);
 
       assert(ivl_expr_value(le) == IVL_VT_LOGIC
-	     || ivl_expr_value(le) == IVL_VT_BOOL);
+	     || ivl_expr_value(le) == IVL_VT_BOOL
+	     || ivl_expr_value(le) == IVL_VT_STRING);
       assert(ivl_expr_value(re) == IVL_VT_LOGIC
-	     || ivl_expr_value(re) == IVL_VT_BOOL);
+	     || ivl_expr_value(re) == IVL_VT_BOOL
+	     || ivl_expr_value(re) == IVL_VT_STRING);
 
       wid = ivl_expr_width(le);
       if (ivl_expr_width(re) > wid)
@@ -784,36 +879,90 @@ static struct vector_info draw_binary_expr_le_real(ivl_expr_t expr)
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
 
-      int lword = draw_eval_real(le);
-      int rword = draw_eval_real(re);
 
       res.base = allocate_vector(1);
       res.wid  = 1;
 
       assert(res.base);
 
-      clr_word(lword);
-      clr_word(rword);
-
       switch (ivl_expr_opcode(expr)) {
 	  case '<':
-	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", lword, rword);
+	    draw_eval_real(le);
+	    draw_eval_real(re);
+	    fprintf(vvp_out, "    %%cmp/wr;\n");
 	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
 	    break;
 
 	  case 'L': /* <= */
-	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", lword, rword);
+	    draw_eval_real(le);
+	    draw_eval_real(re);
+	    fprintf(vvp_out, "    %%cmp/wr;\n");
 	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
 	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
 	    break;
 
 	  case '>':
-	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", rword, lword);
+	    draw_eval_real(re);
+	    draw_eval_real(le);
+	    fprintf(vvp_out, "    %%cmp/wr;\n");
 	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
 	    break;
 
 	  case 'G': /* >= */
-	    fprintf(vvp_out, "    %%cmp/wr %d, %d;\n", rword, lword);
+	    draw_eval_real(re);
+	    draw_eval_real(le);
+	    fprintf(vvp_out, "    %%cmp/wr;\n");
+	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
+	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
+	    break;
+
+	  default:
+	    assert(0);
+      }
+
+      return res;
+}
+
+static struct vector_info draw_binary_expr_le_string(ivl_expr_t expr)
+{
+      struct vector_info res;
+
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+
+      res.base = allocate_vector(1);
+      res.wid  = 1;
+
+      assert(res.base);
+
+	/* The %cmp/str function implements < and <= operands. To get
+	   the > and >= results, simply switch the order of the
+	   operands. */
+      switch (ivl_expr_opcode(expr)) {
+	  case '<':
+	  case 'L':
+	    draw_eval_string(le);
+	    draw_eval_string(re);
+	    break;
+	  case '>':
+	  case 'G':
+	    draw_eval_string(re);
+	    draw_eval_string(le);
+	    break;
+	  default:
+	    assert(0);
+      }
+
+      switch (ivl_expr_opcode(expr)) {
+	  case '<':
+	  case '>':
+	    fprintf(vvp_out, "    %%cmp/str;\n");
+	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
+	    break;
+
+	  case 'L': /* <= */
+	  case 'G': /* >= */
+	    fprintf(vvp_out, "    %%cmp/str;\n");
 	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
 	    fprintf(vvp_out, "    %%mov %u, 5, 1;\n", res.base);
 	    break;
@@ -844,21 +993,21 @@ static struct vector_info draw_binary_expr_le_bool(ivl_expr_t expr,
 
       switch (ivl_expr_opcode(expr)) {
 	  case 'G':
-	    fprintf(vvp_out, "    %%cmp/w%c %u, %u;\n", s_flag, rw, lw);
+	    fprintf(vvp_out, "    %%cmp/w%c %d, %d;\n", s_flag, rw, lw);
 	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
 	    break;
 
 	  case 'L':
-	    fprintf(vvp_out, "    %%cmp/w%c %u, %u;\n", s_flag, lw, rw);
+	    fprintf(vvp_out, "    %%cmp/w%c %d, %d;\n", s_flag, lw, rw);
 	    fprintf(vvp_out, "    %%or 5, 4, 1;\n");
 	    break;
 
 	  case '<':
-	    fprintf(vvp_out, "    %%cmp/w%c %u, %u;\n", s_flag, lw, rw);
+	    fprintf(vvp_out, "    %%cmp/w%c %d, %d;\n", s_flag, lw, rw);
 	    break;
 
 	  case '>':
-	    fprintf(vvp_out, "    %%cmp/w%c %u, %u;\n", s_flag, rw, lw);
+	    fprintf(vvp_out, "    %%cmp/w%c %d, %d;\n", s_flag, rw, lw);
 	    break;
 
 	  default:
@@ -917,6 +1066,21 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 	  && ivl_expr_value(re) == IVL_VT_BOOL
 	  && owid < 64) {
 	    return draw_binary_expr_le_bool(expr, wid);
+      }
+
+      if ((ivl_expr_value(le) == IVL_VT_STRING)
+	  && (ivl_expr_value(re) == IVL_VT_STRING)) {
+	    return draw_binary_expr_le_string(expr);
+      }
+
+      if ((ivl_expr_value(le) == IVL_VT_STRING)
+	  && (ivl_expr_type(re) == IVL_EX_STRING)) {
+	    return draw_binary_expr_le_string(expr);
+      }
+
+      if ((ivl_expr_type(le) == IVL_EX_STRING)
+	  && (ivl_expr_value(re) == IVL_VT_STRING)) {
+	    return draw_binary_expr_eq_string(expr);
       }
 
       assert(ivl_expr_value(le) == IVL_VT_LOGIC
@@ -1944,6 +2108,23 @@ static struct vector_info draw_number_expr(ivl_expr_t expr, unsigned wid)
       return res;
 }
 
+static struct vector_info draw_property_expr(ivl_expr_t expr, unsigned wid)
+{
+      ivl_signal_t sig = ivl_expr_signal(expr);
+      unsigned pidx = ivl_expr_property_idx(expr);
+
+      struct vector_info res;
+      res.base = allocate_vector(wid);
+      res.wid = wid;
+
+      assert(res.base != 0);
+
+      fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+      fprintf(vvp_out, "    %%prop/v %u, %u, %u;\n", pidx, res.base, wid);
+
+      return res;
+}
+
 /*
  * This little helper function generates the instructions to pad a
  * vector in place. It is assumed that the calling function has set up
@@ -2237,13 +2418,9 @@ static void draw_signal_dest(ivl_expr_t expr, struct vector_info res,
 
 
       if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
-	    int tmp;
-
 	    assert(add_index < 0);
-	    tmp = allocate_word();
-	    fprintf(vvp_out, "    %%load/wr %d, v%p_%u;\n", tmp, sig, word);
-	    fprintf(vvp_out, "    %%cvt/vr %u, %d, %u;\n", res.base, tmp, res.wid);
-	    clr_word(tmp);
+	    fprintf(vvp_out, "    %%load/real v%p_%u;\n", sig, word);
+	    fprintf(vvp_out, "    %%cvt/vr %u, %u;\n", res.base, res.wid);
 
       } else if (add_index >= 0) {
 
@@ -2322,14 +2499,14 @@ static struct vector_info draw_select_array(ivl_expr_t sube,
 	/* We can safely skip the bit index load below if the array word
 	 * index is undefined. We need to do this so that the bit index
 	 * load does not reset bit 4 to zero by loading a defined value. */
-      fprintf(vvp_out, "    %%jmp/1 T_%d.%d, 4;\n", thread_count, label);
+      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n", thread_count, label);
       if (ivl_expr_signed(bit_idx)) {
 	    fprintf(vvp_out, "    %%ix/get/s 0, %u, %u;\n", shiv.base,
 	                                                    shiv.wid);
       } else {
 	    fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", shiv.base, shiv.wid);
       }
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, label);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, label);
       if (shiv.base >= 8)
 	    clr_vector(shiv);
 
@@ -2362,6 +2539,17 @@ static struct vector_info draw_select_signal(ivl_expr_t expr,
 	/* Use this word of the signal. */
       unsigned use_word = 0;
       unsigned use_wid, lab_x, lab_end;
+
+	/* Special case: the sub expression is a DARRAY variable, so
+	   do a dynamic array word load. */
+      if (ivl_signal_data_type(sig) == IVL_VT_DARRAY) {
+	    res.base = allocate_vector(wid);
+	    res.wid = wid;
+	    draw_eval_expr_into_integer(bit_idx, 3);
+	    fprintf(vvp_out, "    %%load/dar %u, v%p_0, %u;\n",
+		    res.base, sig, res.wid);
+	    return res;
+      }
 
 	/* If this is an access to an array, try to get the index as a
 	   constant. If it is (and the array is not a reg array then
@@ -2415,7 +2603,7 @@ static struct vector_info draw_select_signal(ivl_expr_t expr,
       lab_end = local_count++;
 
 	/* If the index is 'bx then we just return 'bx. */
-      fprintf(vvp_out, "    %%jmp/1 T_%d.%d, 4;\n", thread_count, lab_x);
+      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n", thread_count, lab_x);
 
       use_wid = res.wid;
       if (use_wid > bit_wid)
@@ -2427,10 +2615,10 @@ static struct vector_info draw_select_signal(ivl_expr_t expr,
 	   $signed() this may be signed or unsigned (default). */
       pad_expr_in_place(expr, res, use_wid);
 
-      fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_end);
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_x);
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_end);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_x);
       fprintf(vvp_out, "    %%mov %u, 2, %u;\n", res.base, res.wid);
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_end);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_end);
 
       return res;
 }
@@ -2589,7 +2777,7 @@ static struct vector_info draw_select_unsized_literal(ivl_expr_t expr,
       clr_vector(shiv);
 
 	/* If we have an undefined index then just produce a 'bx result. */
-      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, 4;\n", thread_count, lab_x);
+      fprintf(vvp_out, "    %%jmp/1  T_%u.%u, 4;\n", thread_count, lab_x);
 
 	/* If the subv result is a magic constant, then make a copy in
 	   writable vector space and work from there instead. */
@@ -2621,14 +2809,14 @@ static struct vector_info draw_select_unsized_literal(ivl_expr_t expr,
       else
 	    fprintf(vvp_out, "    %%shiftr/i0 %u, %u;\n", subv.base, subv.wid);
 
-      fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_end);
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_end);
 
-      fprintf(vvp_out, "T_%d.%d ; Return 'bx value\n", thread_count, lab_x);
+      fprintf(vvp_out, "T_%u.%u ; Return 'bx value\n", thread_count, lab_x);
       fprintf(vvp_out, "    %%mov %u, 2, %u;\n", subv.base, wid);
-      fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_end);
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_end);
 
 	/* DONE */
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_end);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_end);
 
       if (subv.wid > wid) {
 	    res.base = subv.base;
@@ -2644,6 +2832,25 @@ static struct vector_info draw_select_unsized_literal(ivl_expr_t expr,
       }
 
       return res;
+}
+
+static void draw_select_string_dest(ivl_expr_t expr, struct vector_info res)
+{
+      ivl_expr_t sube  = ivl_expr_oper1(expr);
+      ivl_expr_t shift = ivl_expr_oper2(expr);
+      int shift_i;
+
+      draw_eval_string(sube);
+
+      shift_i = allocate_word();
+      draw_eval_expr_into_integer(shift, shift_i);
+
+      assert(res.wid % 8 == 0);
+
+      clr_word(shift_i);
+
+      fprintf(vvp_out, "    %%substr/v %u, %d, %u;\n", res.base, shift_i, res.wid);
+      fprintf(vvp_out, "    %%pop/str 1;\n");
 }
 
 static struct vector_info draw_select_expr(ivl_expr_t expr, unsigned wid,
@@ -2665,6 +2872,28 @@ static struct vector_info draw_select_expr(ivl_expr_t expr, unsigned wid,
       if ( (res.base = allocate_vector_exp(expr, wid, alloc_exclusive)) != 0) {
 	    fprintf(vvp_out, "; Reuse base=%u wid=%u from lookaside.\n",
 		    res.base, wid);
+	    return res;
+      }
+
+	/* Special case: The sub expression is a string, so do a
+	   string select then a part select from that. */
+      if (ivl_expr_value(sube) == IVL_VT_STRING) {
+	    res.base = allocate_vector(wid);
+	    res.wid  = wid;
+	    draw_select_string_dest(expr, res);
+	    return res;
+      }
+
+	/* Special case: The sub-expression is a DARRAY variable, so
+	   do a dynamic array word load. */
+      if (ivl_expr_value(sube) == IVL_VT_DARRAY) {
+	    ivl_signal_t sig = ivl_expr_signal(sube);
+	    assert(sig);
+	    res.base = allocate_vector(wid);
+	    res.wid = wid;
+	    draw_eval_expr_into_integer(shift, 3);
+	    fprintf(vvp_out, "    %%load/dar %u, v%p_0, %u;\n",
+		    res.base, sig, res.wid);
 	    return res;
       }
 
@@ -2721,24 +2950,24 @@ static struct vector_info draw_select_expr(ivl_expr_t expr, unsigned wid,
       lab_l = local_count++;
       lab_end = local_count++;
 	/* If we have an undefined index then just produce a 'bx result. */
-      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, 4;\n", thread_count, lab_l);
+      fprintf(vvp_out, "    %%jmp/1  T_%u.%u, 4;\n", thread_count, lab_l);
 
       cmp = allocate_word();
       assert(subv.wid >= wid);
 	/* Determine if we need to shift a 'bx into the top. */
-      fprintf(vvp_out, "    %%ix/load %u, %u, 0;\n", cmp, subv.wid - wid);
-      fprintf(vvp_out, "    %%cmp/ws %u, 0;\n", cmp);
+      fprintf(vvp_out, "    %%ix/load %d, %u, 0;\n", cmp, subv.wid - wid);
+      fprintf(vvp_out, "    %%cmp/ws %d, 0;\n", cmp);
       clr_word(cmp);
-      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, 5;\n", thread_count, lab_l);
+      fprintf(vvp_out, "    %%jmp/1  T_%u.%u, 5;\n", thread_count, lab_l);
 	/* Clear the cmp bit if the two values are equal. */
       fprintf(vvp_out, "    %%mov 4, 0, 1;\n");
       fprintf(vvp_out, "    %%shiftr/i0 %u, %u;\n", subv.base, subv.wid);
-      fprintf(vvp_out, "    %%jmp T_%d.%d;\n", thread_count, lab_end);
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_l);
+      fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_end);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_l);
 	/* Multiply by -1. */
       fprintf(vvp_out, "    %%ix/mul 0, %u, %u;\n", 0xFFFFFFFF, 0xFFFFFFFF);
       fprintf(vvp_out, "    %%shiftl/i0 %u, %u;\n", subv.base, subv.wid);
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_end);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_end);
 
       if (subv.wid > wid) {
 	    res.base = subv.base;
@@ -2769,6 +2998,13 @@ static void draw_select_expr_dest(ivl_expr_t expr, struct vector_info dest,
 
       ivl_expr_t sube = ivl_expr_oper1(expr);
       ivl_expr_t shift= ivl_expr_oper2(expr);
+
+	/* Special case: The sub expression is a string, so do a
+	   string select then a part select from that. */
+      if (ivl_expr_value(sube) == IVL_VT_STRING) {
+	    draw_select_string_dest(expr, dest);
+	    return;
+      }
 
 	/* If the shift expression is not present, then this is really
 	   a pad expression, and that can be handled pretty
@@ -2836,7 +3072,7 @@ static struct vector_info draw_ternary_expr(ivl_expr_t expr, unsigned wid)
 	    tst.wid = 1;
       }
 
-      fprintf(vvp_out, "    %%jmp/0  T_%d.%d, %u;\n",
+      fprintf(vvp_out, "    %%jmp/0  T_%u.%u, %u;\n",
 	      thread_count, lab_true, tst.base);
 
       tru = draw_eval_expr_wid(true_ex, wid, 0);
@@ -2853,17 +3089,17 @@ static struct vector_info draw_ternary_expr(ivl_expr_t expr, unsigned wid)
 	    tru = tmp;
       }
 
-      fprintf(vvp_out, "    %%jmp/1  T_%d.%d, %u;\n",
+      fprintf(vvp_out, "    %%jmp/1  T_%u.%u, %u;\n",
 	      thread_count, lab_out, tst.base);
 
       clear_expression_lookaside();
 
-      fprintf(vvp_out, "T_%d.%d ; End of true expr.\n",
+      fprintf(vvp_out, "T_%u.%u ; End of true expr.\n",
 	      thread_count, lab_true);
 
       fal = draw_eval_expr_wid(false_ex, wid, 0);
 
-      fprintf(vvp_out, "    %%jmp/0  T_%d.%d, %u;\n",
+      fprintf(vvp_out, "    %%jmp/0  T_%u.%u, %u;\n",
 	      thread_count, lab_false, tst.base);
 
       fprintf(vvp_out, " ; End of false expr.\n");
@@ -2873,15 +3109,15 @@ static struct vector_info draw_ternary_expr(ivl_expr_t expr, unsigned wid)
 
       fprintf(vvp_out, "    %%blend  %u, %u, %u; Condition unknown.\n",
 	      tru.base, fal.base, wid);
-      fprintf(vvp_out, "    %%jmp  T_%d.%d;\n",
+      fprintf(vvp_out, "    %%jmp  T_%u.%u;\n",
 	      thread_count, lab_out);
 
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_false);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_false);
       fprintf(vvp_out, "    %%mov %u, %u, %u; Return false value\n",
 	      tru.base, fal.base, wid);
 
 	/* This is the out label. */
-      fprintf(vvp_out, "T_%d.%d ;\n", thread_count, lab_out);
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
       clear_expression_lookaside();
 
       res = tru;
@@ -2897,7 +3133,6 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t expr, unsigned wid)
       unsigned parm_count = ivl_expr_parms(expr);
       struct vector_info res;
 
-
 	/* If the function has no parameters, then use this short-form
 	   to draw the statement. */
       if (parm_count == 0) {
@@ -2906,7 +3141,7 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t expr, unsigned wid)
 	    res.base = allocate_vector(wid);
 	    res.wid  = wid;
 	    assert(res.base);
-	    fprintf(vvp_out, "    %%vpi_func %u %u \"%s\", %u, %u;\n",
+	    fprintf(vvp_out, "    %%vpi_func %u %u \"%s\", %u, %u {0 0};\n",
 		    ivl_file_table_index(ivl_expr_file(expr)),
 		    ivl_expr_lineno(expr), ivl_expr_name(expr),
 		    res.base, res.wid);
@@ -3079,7 +3314,7 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
       struct vector_info res;
       ivl_expr_t sub = ivl_expr_oper1(expr);
       const char *rop = 0;
-      int word, inv = 0;
+      int inv = 0;
 
       switch (ivl_expr_opcode(expr)) {
 	  case '&': rop = "and";  break;
@@ -3308,11 +3543,10 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 		  break;
 
 		case IVL_VT_REAL:
-		  word = draw_eval_real(sub);
+		  draw_eval_real(sub);
 		  res.base = allocate_vector(wid);
 		  res.wid = wid;
-		  fprintf(vvp_out, "    %%cvt/vr %d, %d, %u;\n", res.base, word, wid);
-		  clr_word(word);
+		  fprintf(vvp_out, "    %%cvt/vr %d, %u;\n", res.base, wid);
 		  break;
 
 		default:
@@ -3322,12 +3556,10 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 
 	  case 'v': /* Cast a real value to an integer. */
 	    assert(ivl_expr_value(sub) == IVL_VT_REAL);
-	    word = draw_eval_real(sub);
+	    draw_eval_real(sub);
 	    res.base = allocate_vector(wid);
 	    res.wid = wid;
-	    fprintf(vvp_out, "    %%cvt/vr %u, %u, %u;\n", res.base, word,
-	                     res.wid);
-	    clr_word(word);
+	    fprintf(vvp_out, "    %%cvt/vr %u, %u;\n", res.base, res.wid);
 	    break;
 
 	  case 'r': /* Handled in eval_real.c. */
@@ -3424,6 +3656,10 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t expr, unsigned wid,
 
 	  case IVL_EX_NUMBER:
 	    res = draw_number_expr(expr, wid);
+	    break;
+
+	  case IVL_EX_PROPERTY:
+	    res = draw_property_expr(expr, wid);
 	    break;
 
 	  case IVL_EX_REALNUM:

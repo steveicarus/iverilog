@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *    Picture Elements, Inc., 777 Panoramic Way, Berkeley, CA 94704.
  */
 
@@ -208,47 +208,17 @@ void ExpAggregate::choice_t::dump(ostream&out, int indent) const
 	    return;
       }
 
-      if (expr_) {
+      if (expr_.get()) {
 	    expr_->dump(out, indent);
 	    return;
       }
 
-      out << setw(indent) << "" << "?choice_t?" << endl;
-}
-
-void ExpArithmetic::dump(ostream&out, int indent) const
-{
-      const char*fun_name = "?";
-      switch (fun_) {
-	  case PLUS:
-	    fun_name = "+";
-	    break;
-	  case MINUS:
-	    fun_name = "-";
-	    break;
-	  case MULT:
-	    fun_name = "*";
-	    break;
-	  case DIV:
-	    fun_name = "/";
-	    break;
-	  case MOD:
-	    fun_name = "mod";
-	    break;
-	  case REM:
-	    fun_name = "rem";
-	    break;
-	  case POW:
-	    fun_name = "**";
-	    break;
-	  case CONCAT:
-	    fun_name = "&";
-	    break;
+      if (range_.get()) {
+	    range_->dump(out, indent);
+	    return;
       }
 
-      out << setw(indent) << "" << "Arithmetic " << fun_name
-	  << " at " << get_fileline() << endl;
-      dump_operands(out, indent+4);
+      out << setw(indent) << "" << "?choice_t?" << endl;
 }
 
 void ExpAttribute::dump(ostream&out, int indent) const
@@ -292,11 +262,22 @@ void ExpConditional::dump(ostream&out, int indent) const
 	    (*cur)->dump(out, indent+4);
       }
 
-      out << setw(indent) << "" << "  else:" << endl;
-      for (list<Expression*>::const_iterator cur = else_clause_.begin()
+      for (list<else_t*>::const_iterator cur = else_clause_.begin()
 		 ; cur != else_clause_.end() ; ++cur) {
+	    (*cur)->dump(out, indent);
+      }
+}
+
+void ExpConditional::else_t::dump(ostream&out, int indent) const
+{
+      out << setw(indent) << "" << "when:" << endl;
+      if (cond_) cond_->dump(out, indent+4);
+      out << setw(indent) << "" << "do:" << endl;
+      for (list<Expression*>::const_iterator cur = true_clause_.begin()
+		 ; cur != true_clause_.end() ; ++cur) {
 	    (*cur)->dump(out, indent+4);
       }
+
 }
 
 void ExpEdge::dump(ostream&out, int indent) const
@@ -364,6 +345,8 @@ void ExpName::dump(ostream&out, int indent) const
 {
       out << setw(indent) << "" << "ExpName(\"" << name_ << "\")"
 	  << " at " << get_fileline() << endl;
+      if (prefix_.get())
+	    prefix_->dump(out, indent+8);
       if (index_)
 	    index_->dump(out, indent+6);
       if (lsb_)
@@ -440,4 +423,16 @@ void prange_t::dump(ostream&out, int indent) const
     left_->dump(out, indent);
     out << setw(indent) << "" << (direction_ ? "downto" : "to");
     right_->dump(out, indent);
+}
+
+ostream& Expression::dump_inline(ostream&out) const
+{
+      out << typeid(*this).name();
+      return out;
+}
+
+ostream& ExpInteger::dump_inline(ostream&out) const
+{
+      out << value_;
+      return out;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -14,12 +14,13 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "expression.h"
 # include  "vtype.h"
 # include  "architec.h"
+# include  "parse_types.h"
 # include  <typeinfo>
 # include  <iostream>
 # include  <cstdlib>
@@ -70,10 +71,24 @@ int ExpUnary::emit_operand1(ostream&out, Entity*ent, Architecture*arc)
 
 int ExpAggregate::emit(ostream&out, Entity*ent, Architecture*arc)
 {
-      if (const VTypeArray*atype = dynamic_cast<const VTypeArray*> (peek_type()))
+      if (peek_type() == 0) {
+	    out << "/* " << get_fileline() << ": internal error: "
+		<< "Aggregate literal needs well defined type." << endl;
+	    return 1;
+      }
+
+      const VType*use_type = peek_type();
+      while (const VTypeDef*def = dynamic_cast<const VTypeDef*> (use_type)) {
+	    use_type = def->peek_definition();
+      }
+
+      if (const VTypeArray*atype = dynamic_cast<const VTypeArray*> (use_type))
 	    return emit_array_(out, ent, arc, atype);
 
-      return Expression::emit(out, ent, arc);
+      out << "/* " << get_fileline() << ": internal error: "
+	  << "I don't know how to elab/emit aggregate in " << typeid(use_type).name()
+	  << " type context. */";
+      return 1;
 }
 
 int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const VTypeArray*atype)
@@ -126,27 +141,7 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
       const VTypeArray::range_t&rang = atype->dimension(0);
       assert(! rang.is_box());
 
-      map<int64_t,choice_element*> element_map;
-      choice_element*element_other = 0;
-
-      for (size_t idx = 0 ; idx < aggregate_.size() ; idx += 1) {
-	    if (aggregate_[idx].choice->others()) {
-		  ivl_assert(*this, element_other == 0);
-		  element_other = &aggregate_[idx];
-		  continue;
-	    }
-
-	    Expression*tmp = aggregate_[idx].choice->simple_expression(false);
-	    int64_t tmp_val;
-	    if (! tmp->evaluate(ent, arc, tmp_val)) {
-		  cerr << tmp->get_fileline() << ": error: Unable to evaluate aggregate choice expression." << endl;
-		  errors += 1;
-		  continue;
-	    }
-
-	    element_map[tmp_val] = &aggregate_[idx];
-      }
-
+	// Fully calculate the range numbers.
       int64_t use_msb, use_lsb;
       bool rc;
       rc = rang.msb()->evaluate(ent, arc, use_msb);
@@ -155,16 +150,105 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
       ivl_assert(*this, rc);
       ivl_assert(*this, use_msb >= use_lsb);
 
+      map<int64_t,choice_element*> element_map;
+      choice_element*element_other = 0;
+
+      bool positional_section = true;
+      int64_t positional_idx = use_msb;
+
+      for (size_t idx = 0 ; idx < aggregate_.size() ; idx += 1) {
+
+	    if (aggregate_[idx].choice == 0) {
+		    // positional association!
+		  if (!positional_section) {
+			cerr << get_fileline() << ": error: "
+			     << "All positional associations must be before"
+			     << " any named associations." << endl;
+			errors += 1;
+		  }
+		  element_map[positional_idx] = &aggregate_[idx];
+		  positional_idx -= 1;
+		  continue;
+	    }
+
+	    if (aggregate_[idx].choice->others()) {
+		  ivl_assert(*this, element_other == 0);
+		  element_other = &aggregate_[idx];
+		  continue;
+	    }
+
+	      // If this is a range choice, then calculate the bounds
+	      // of the range and scan through the values, mapping the
+	      // value to the aggregate_[idx] element.
+	    if (prange_t*range = aggregate_[idx].choice->range_expressions()) {
+		  int64_t begin_val, end_val;
+
+		  if (! range->msb()->evaluate(ent, arc, begin_val)) {
+			cerr << range->msb()->get_fileline() << ": error: "
+			     << "Unable to evaluate aggregate choice expression." << endl;
+			errors += 1;
+			continue;
+		  }
+
+		  if (! range->lsb()->evaluate(ent, arc, end_val)) {
+			cerr << range->msb()->get_fileline() << ": error: "
+			     << "Unable to evaluate aggregate choice expression." << endl;
+			errors += 1;
+			continue;
+		  }
+
+		  if (begin_val < end_val) {
+			int64_t tmp = begin_val;
+			begin_val = end_val;
+			end_val = tmp;
+		  }
+
+		  while (begin_val >= end_val) {
+			element_map[begin_val] = &aggregate_[idx];
+			begin_val -= 1;
+		  }
+
+		  continue;
+	    }
+
+	    int64_t tmp_val;
+	    Expression*tmp = aggregate_[idx].choice->simple_expression(false);
+	    ivl_assert(*this, tmp);
+
+	      // Named aggregate element. Once we see one of
+	      // these, we can no longer accept positional
+	      // elements so disable further positional
+	      // processing.
+	    positional_section = false;
+	    if (! tmp->evaluate(ent, arc, tmp_val)) {
+		  cerr << tmp->get_fileline() << ": error: "
+		       << "Unable to evaluate aggregate choice expression." << endl;
+		  errors += 1;
+		  continue;
+	    }
+
+	    element_map[tmp_val] = &aggregate_[idx];
+      }
+
+	// Emit the elements as a concatenation. This works great for
+	// vectors of bits. We implement VHDL arrays as packed arrays,
+	// so this should be generally correct.
       out << "{";
       for (int64_t idx = use_msb ; idx >= use_lsb ; idx -= 1) {
 	    choice_element*cur = element_map[idx];
 	    if (cur == 0)
 		  cur = element_other;
-	    ivl_assert(*this, cur != 0);
 
 	    if (idx < use_msb)
 		  out << ", ";
-	    errors += cur->expr->emit(out, ent, arc);
+	    if (cur == 0) {
+		  out << "/* Missing element " << idx << " */";
+		  cerr << get_fileline() << ": error: "
+		       << "Missing element " << idx << "." << endl;
+		  errors += 1;
+	    } else {
+		  errors += cur->expr->emit(out, ent, arc);
+	    }
       }
       out << "}";
 
@@ -206,9 +290,6 @@ int ExpArithmetic::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-      if (fun_ == CONCAT)
-	    return emit_concat_(out, ent, arc);
-
       errors += emit_operand1(out, ent, arc);
 
       switch (fun_) {
@@ -233,24 +314,14 @@ int ExpArithmetic::emit(ostream&out, Entity*ent, Architecture*arc)
 	  case REM:
 	    out << " /* ?remainder? */ ";
 	    break;
-	  case CONCAT:
+	  case xCONCAT:
+	    ivl_assert(*this, 0);
 	    out << " /* ?concat? */ ";
 	    break;
       }
 
       errors += emit_operand2(out, ent, arc);
 
-      return errors;
-}
-
-int ExpArithmetic::emit_concat_(ostream&out, Entity*ent, Architecture*arc)
-{
-      int errors = 0;
-      out << "{";
-      errors += emit_operand1(out, ent, arc);
-      out << ", ";
-      errors += emit_operand2(out, ent, arc);
-      out << "}";
       return errors;
 }
 
@@ -320,6 +391,26 @@ bool ExpCharacter::is_primary(void) const
       return true;
 }
 
+/*
+ * This is not exactly a "primary", but it is wrapped in its own
+ * parentheses (braces) so we return true here.
+ */
+bool ExpConcat::is_primary(void) const
+{
+      return true;
+}
+
+int ExpConcat::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      out << "{";
+      errors += operand1_->emit(out, ent, arc);
+      out << ", ";
+      errors += operand2_->emit(out, ent, arc);
+      out << "}";
+      return errors;
+}
+
 int ExpConditional::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
@@ -328,7 +419,7 @@ int ExpConditional::emit(ostream&out, Entity*ent, Architecture*arc)
       out << ")? (";
 
       if (true_clause_.size() > 1) {
-	    cerr << get_fileline() << ": sorry: Multiple expressions not supported here." << endl;
+	    cerr << get_fileline() << ": sorry: Multiple expression waveforms not supported here." << endl;
 	    errors += 1;
       }
 
@@ -337,15 +428,66 @@ int ExpConditional::emit(ostream&out, Entity*ent, Architecture*arc)
 
       out << ") : (";
 
+	// Draw out any when-else expressions. These are all the else_
+	// clauses besides the last.
       if (else_clause_.size() > 1) {
-	    cerr << get_fileline() << ": sorry: Multiple expressions not supported here." << endl;
+	    list<else_t*>::iterator last = else_clause_.end();
+	    -- last;
+
+	    for (list<else_t*>::iterator cur = else_clause_.begin()
+		       ; cur != last ; ++cur) {
+		  errors += (*cur) ->emit_when_else(out, ent, arc);
+	    }
+     }
+
+      errors += else_clause_.back()->emit_else(out, ent, arc);
+      out << ")";
+
+	// The emit_when_else() functions do not close the last
+	// parentheses so that the following expression can be
+	// nested. But that means come the end, we have some
+	// expressions to close.
+      for (size_t idx = 1 ; idx < else_clause_.size() ; idx += 1)
+	    out << ")";
+
+      return errors;
+}
+
+int ExpConditional::else_t::emit_when_else(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      assert(cond_ != 0);
+
+      out << "(";
+      errors += cond_->emit(out, ent, arc);
+      out << ")? (";
+
+      if (true_clause_.size() > 1) {
+	    cerr << get_fileline() << ": sorry: Multiple expression waveforms not supported here." << endl;
 	    errors += 1;
       }
 
-      tmp = else_clause_.front();
+      Expression*tmp = true_clause_.front();
       errors += tmp->emit(out, ent, arc);
 
-      out << ")";
+      out << ") : (";
+
+      return errors;
+}
+
+int ExpConditional::else_t::emit_else(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+	// Trailing else must have no condition.
+      assert(cond_ == 0);
+
+      if (true_clause_.size() > 1) {
+	    cerr << get_fileline() << ": sorry: Multiple expression waveforms not supported here." << endl;
+	    errors += 1;
+      }
+
+      Expression*tmp = true_clause_.front();
+      errors += tmp->emit(out, ent, arc);
 
       return errors;
 }
@@ -460,11 +602,38 @@ int ExpLogical::emit(ostream&out, Entity*ent, Architecture*arc)
       return errors;
 }
 
+int ExpName::emit_as_prefix_(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      if (prefix_.get()) {
+	    errors += prefix_->emit_as_prefix_(out, ent, arc);
+      }
+
+      out << "\\" << name_ << " ";
+      if (index_) {
+	    out << "[";
+	    errors += index_->emit(out, ent, arc);
+	    out << "]";
+	    ivl_assert(*this, lsb_ == 0);
+      }
+      out << ".";
+      return errors;
+}
+
 int ExpName::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;
 
-      out << "\\" << name_ << " ";
+      if (prefix_.get()) {
+	    errors += prefix_->emit_as_prefix_(out, ent, arc);
+      }
+
+      const GenerateStatement*gs = 0;
+      if (arc && (gs = arc->probe_genvar_emit(name_)))
+	    out << "\\" << gs->get_name() << ":" << name_ << " ";
+      else
+	    out << "\\" << name_ << " ";
+
       if (index_) {
 	    out << "[";
 	    errors += index_->emit(out, ent, arc);

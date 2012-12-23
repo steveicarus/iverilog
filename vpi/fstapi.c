@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2011 Tony Bybell.
+ * Copyright (c) 2009-2012 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,6 +25,13 @@
 #include "fstapi.h"
 #include "fastlz.h"
 
+#ifndef HAVE_LIBPTHREAD
+#undef FST_WRITER_PARALLEL
+#endif
+
+#ifdef FST_WRITER_PARALLEL
+#include <pthread.h>
+#endif
 
 /* this define is to force writer backward compatibility with old readers */
 #ifndef FST_DYNAMIC_ALIAS_DISABLE
@@ -47,13 +54,17 @@ void **JenkinsIns(void *base_i, unsigned char *mem, uint32_t length, uint32_t ha
 
 #undef  FST_DEBUG
 
-#define FST_BREAK_SIZE 			(128 * 1024 * 1024)
-#define FST_BREAK_ADD_SIZE		(4 * 1024 * 1024)
+#define FST_BREAK_SIZE 			(1UL << 27)
+#define FST_BREAK_ADD_SIZE		(1UL << 22)
+#define FST_BREAK_SIZE_MAX		(1UL << 31)
+#define FST_ACTIVATE_HUGE_BREAK		(2000000)
+#define FST_ACTIVATE_HUGE_INC		(2000000)
+
 #define FST_WRITER_STR 			"fstWriter"
 #define FST_ID_NAM_SIZ 			(512)
 #define FST_DOUBLE_ENDTEST 		(2.7182818284590452354)
 #define FST_HDR_SIM_VERSION_SIZE 	(128)
-#define FST_HDR_DATE_SIZE 		(128)
+#define FST_HDR_DATE_SIZE 		(120)
 #define FST_GZIO_LEN			(32768)
 
 #if defined(__i386__) || defined(__x86_64__) || defined(_AIX)
@@ -73,8 +84,10 @@ void **JenkinsIns(void *base_i, unsigned char *mem, uint32_t length, uint32_t ha
 
 #ifdef __MINGW32__
 #include <io.h>
+#ifndef HAVE_FSEEKO
 #define ftello ftell
 #define fseeko fseek
+#endif
 #endif
 
 
@@ -160,7 +173,6 @@ return(pnt);
  */
 #ifdef FST_DO_MISALIGNED_OPS
 #define fstGetUint32(x) (*(uint32_t *)(x))
-#define fstWriterSetUint32(x,y) (*(uint32_t *)(x)) = (y)
 #else
 static uint32_t fstGetUint32(unsigned char *mem)
 {
@@ -173,17 +185,6 @@ buf[2] = mem[2];
 buf[3] = mem[3];
 
 return(*(uint32_t *)buf);
-}
-
-
-static void fstWriterSetUint32(unsigned char *mem, uint32_t u32)
-{
-unsigned char *buf = (unsigned char *)(&u32);
-
-mem[0] = buf[0];
-mem[1] = buf[1];
-mem[2] = buf[2];
-mem[3] = buf[3];
 }
 #endif
 
@@ -480,6 +481,7 @@ unsigned vc_emitted : 1;
 unsigned is_initial_time : 1;
 unsigned fastpack : 1;
 
+int64_t timezero;
 off_t section_header_truncpos;
 uint32_t tchn_cnt, tchn_idx;
 uint64_t curtime;
@@ -506,10 +508,29 @@ unsigned skip_writing_section_hdr : 1;
 unsigned size_limit_locked : 1;
 unsigned section_header_only : 1;
 unsigned flush_context_pending : 1;
+unsigned parallel_enabled : 1;
+unsigned parallel_was_enabled : 1;
 
 /* should really be semaphores, but are bytes to cut down on read-modify-write window size */
 unsigned char already_in_flush; /* in case control-c handlers interrupt */
 unsigned char already_in_close; /* in case control-c handlers interrupt */
+
+#ifdef FST_WRITER_PARALLEL
+pthread_mutex_t mutex;
+pthread_t thread;
+pthread_attr_t thread_attr;
+struct fstWriterContext *xc_parent;
+#endif
+
+size_t fst_orig_break_size;
+size_t fst_orig_break_add_size;
+
+size_t fst_break_size;
+size_t fst_break_add_size;
+
+size_t fst_huge_break_size;
+
+fstHandle next_huge_break;
 };
 
 
@@ -603,7 +624,7 @@ fstWriterUint64(xc->handle, 0);  		/* +17 end time */
 fstFwrite(&endtest, 8, 1, xc->handle); 		/* +25 endian test for reals */
 
 #define FST_HDR_OFFS_MEM_USED			(FST_HDR_OFFS_ENDIAN_TEST + 8)
-fstWriterUint64(xc->handle, FST_BREAK_SIZE); 	/* +33 memory used by writer */
+fstWriterUint64(xc->handle, xc->fst_break_size);/* +33 memory used by writer */
 
 #define FST_HDR_OFFS_NUM_SCOPES			(FST_HDR_OFFS_MEM_USED + 8)
 fstWriterUint64(xc->handle, 0);			/* +41 scope creation count */
@@ -631,7 +652,12 @@ time(&walltime);
 strcpy(dbuf, asctime(localtime(&walltime)));
 fstFwrite(dbuf, FST_HDR_DATE_SIZE, 1, xc->handle);	/* +202 date */
 
-#define FST_HDR_LENGTH				(FST_HDR_OFFS_DATE + FST_HDR_DATE_SIZE)
+/* date size is deliberately overspecified at 120 bytes in order to provide backfill for new args */
+
+#define FST_HDR_OFFS_TIMEZERO			(FST_HDR_OFFS_DATE + FST_HDR_DATE_SIZE)
+fstWriterUint64(xc->handle, xc->timezero);	/* +322 timezero */
+
+#define FST_HDR_LENGTH				(FST_HDR_OFFS_TIMEZERO + 8)
 						/* +330 next section starts here */
 fflush(xc->handle);
 }
@@ -704,6 +730,79 @@ xc->curval_mem = NULL;
 
 
 /*
+ * set up large and small memory usages
+ * crossover point in model is FST_ACTIVATE_HUGE_BREAK number of signals
+ */
+static void fstDetermineBreakSize(struct fstWriterContext *xc)
+{
+#if defined(__linux__) || defined(FST_MACOSX)
+
+#ifdef __linux__
+FILE *f = fopen("/proc/meminfo", "rb");
+#else
+FILE *f = popen("system_profiler", "r");
+#endif
+
+int was_set = 0;
+
+if(f)
+	{
+	char buf[257];
+	char *s;
+	while(!feof(f))
+		{
+		buf[0] = 0;
+		s = fgets(buf, 256, f);
+		if(s && *s)
+			{
+#ifdef __linux__
+			if(!strncmp(s, "MemTotal:", 9))
+				{
+				size_t v = atol(s+10);
+				v *= 1024; /* convert to bytes */
+#else
+			if((s=strstr(s, "Memory:")))
+				{
+				size_t v = atol(s+7);
+				v <<= 30; /* convert GB to bytes */
+#endif
+
+				v /= 8; /* chop down to 1/8 physical memory */
+				if(v > FST_BREAK_SIZE)
+					{
+					if(v > FST_BREAK_SIZE_MAX)
+						{
+						v = FST_BREAK_SIZE_MAX;
+						}
+
+					xc->fst_huge_break_size = v;
+					was_set = 1;
+					break;
+					}
+				}
+			}
+		}
+
+#ifdef __linux__
+	fclose(f);
+#else
+	pclose(f);
+#endif
+	} 
+
+if(!was_set)
+#endif
+	{
+	xc->fst_huge_break_size = FST_BREAK_SIZE;
+	}
+
+xc->fst_break_size = xc->fst_orig_break_size = FST_BREAK_SIZE;
+xc->fst_break_add_size = xc->fst_orig_break_add_size = FST_BREAK_ADD_SIZE;
+xc->next_huge_break = FST_ACTIVATE_HUGE_BREAK;
+}
+
+
+/*
  * file creation and close
  */
 void *fstWriterCreate(const char *nam, int use_compressed_hier)
@@ -711,6 +810,7 @@ void *fstWriterCreate(const char *nam, int use_compressed_hier)
 struct fstWriterContext *xc = calloc(1, sizeof(struct fstWriterContext));
 
 xc->compress_hier = use_compressed_hier;
+fstDetermineBreakSize(xc);
 
 if((!nam)||(!(xc->handle=unlink_fopen(nam, "w+b"))))
         {
@@ -730,7 +830,7 @@ if((!nam)||(!(xc->handle=unlink_fopen(nam, "w+b"))))
 	xc->valpos_handle = tmpfile();	/* .offs */
 	xc->curval_handle = tmpfile();	/* .bits */
 	xc->tchn_handle = tmpfile();	/* .tchn */
-	xc->vchg_alloc_siz = FST_BREAK_SIZE + FST_BREAK_ADD_SIZE;
+	xc->vchg_alloc_siz = xc->fst_break_size + xc->fst_break_add_size;
 	xc->vchg_mem = malloc(xc->vchg_alloc_siz);
 
 	free(hf);
@@ -741,6 +841,11 @@ if((!nam)||(!(xc->handle=unlink_fopen(nam, "w+b"))))
 
 		fstWriterEmitHdrBytes(xc);
 		xc->nan = strtod("NaN", NULL);
+#ifdef FST_WRITER_PARALLEL
+		pthread_mutex_init(&xc->mutex, NULL);
+		pthread_attr_init(&xc->thread_attr);
+		pthread_attr_setdetachstate(&xc->thread_attr, PTHREAD_CREATE_DETACHED);
+#endif
 		}
 		else
 		{
@@ -778,6 +883,9 @@ if(xc)
 
 	fputc(FST_BL_SKIP, xc->handle);			/* temporarily tag the section, use FST_BL_VCDATA on finalize */
 	xc->section_start = ftello(xc->handle);
+#ifdef FST_WRITER_PARALLEL
+	if(xc->xc_parent) xc->xc_parent->section_start = xc->section_start;
+#endif
 	xc->section_header_only = 1;			/* indicates truncate might be needed */
 	fstWriterUint64(xc->handle, 0); 		/* placeholder = section length */
 	fstWriterUint64(xc->handle, xc->is_initial_time ? xc->firsttime : xc->curtime); 	/* begin time of section */
@@ -813,7 +921,11 @@ if(xc)
  * only to be called directly by fst code...otherwise must
  * be synced up with time changes
  */
+#ifdef FST_WRITER_PARALLEL
+static void fstWriterFlushContextPrivate2(void *ctx)
+#else
 static void fstWriterFlushContextPrivate(void *ctx)
+#endif
 {
 #ifdef FST_DEBUG
 int cnt = 0;
@@ -833,6 +945,11 @@ unsigned char *packmem;
 unsigned int packmemlen;
 uint32_t *vm4ip;
 struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+#ifdef FST_WRITER_PARALLEL
+struct fstWriterContext *xc2 = xc->xc_parent;
+#else
+struct fstWriterContext *xc2 = xc;
+#endif
 
 #ifndef FST_DYNAMIC_ALIAS_DISABLE
 Pvoid_t PJHSArray = (Pvoid_t) NULL;
@@ -880,8 +997,9 @@ for(i=0;i<xc->maxhandle;i++)
 			if(vm4ip[1] == 1)
 				{
 				wrlen = fstGetVarint32Length(vchg_mem + offs + 4); /* used to advance and determine wrlen */
+#ifndef FST_REMOVE_DUPLICATE_VC
 				xc->curval_mem[vm4ip[0]] = vchg_mem[offs + 4 + wrlen]; /* checkpoint variable */
-
+#endif
 	                        while(offs)
 	                                {
 	                                unsigned char val;
@@ -941,8 +1059,9 @@ for(i=0;i<xc->maxhandle;i++)
 			else
 			{
 			wrlen = fstGetVarint32Length(vchg_mem + offs + 4); /* used to advance and determine wrlen */
+#ifndef FST_REMOVE_DUPLICATE_VC
 			memcpy(xc->curval_mem + vm4ip[0], vchg_mem + offs + 4 + wrlen, vm4ip[1]); /* checkpoint variable */
-
+#endif
 			while(offs)
 				{
 				int idx;
@@ -1137,7 +1256,7 @@ for(i=0;i<xc->maxhandle;i++)
 #endif
 			}
 
-		vm4ip[3] = 0;
+		/* vm4ip[3] = 0; ...redundant with clearing below */
 #ifdef FST_DEBUG
 		cnt++;
 #endif
@@ -1253,21 +1372,21 @@ fflush(xc->handle);
 
 fseeko(xc->handle, endpos, SEEK_SET);				/* seek to end of file */
 
-xc->section_header_truncpos = endpos;				/* cache in case of need to truncate */
+xc2->section_header_truncpos = endpos;				/* cache in case of need to truncate */
 if(xc->dump_size_limit)
 	{
 	if(endpos >= xc->dump_size_limit)
 		{
-		xc->skip_writing_section_hdr = 1;
-		xc->size_limit_locked = 1;
-		xc->is_initial_time = 1; /* to trick emit value and emit time change */
+		xc2->skip_writing_section_hdr = 1;
+		xc2->size_limit_locked = 1;
+		xc2->is_initial_time = 1; /* to trick emit value and emit time change */
 #ifdef FST_DEBUG
 		printf("<< dump file size limit reached, stopping dumping >>\n");
 #endif
 		}
 	}
 
-if(!xc->skip_writing_section_hdr)
+if(!xc2->skip_writing_section_hdr)
 	{
 	fstWriterEmitSectionHeader(xc);				/* emit next section header */
 	}
@@ -1275,6 +1394,89 @@ fflush(xc->handle);
 
 xc->already_in_flush = 0;
 }
+
+
+#ifdef FST_WRITER_PARALLEL
+static void *fstWriterFlushContextPrivate1(void *ctx)
+{
+struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+
+fstWriterFlushContextPrivate2(xc);
+
+pthread_mutex_unlock(&(xc->xc_parent->mutex));
+
+#ifdef FST_REMOVE_DUPLICATE_VC
+free(xc->curval_mem);
+#endif
+free(xc->valpos_mem);
+free(xc->vchg_mem);
+fclose(xc->tchn_handle);
+free(xc);
+
+return(NULL);
+}
+
+
+static void fstWriterFlushContextPrivate(void *ctx)
+{
+struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+
+if(xc->parallel_enabled)
+	{
+	struct fstWriterContext *xc2 = malloc(sizeof(struct fstWriterContext));
+	int i;
+
+	pthread_mutex_lock(&xc->mutex);
+	pthread_mutex_unlock(&xc->mutex);
+
+	xc->xc_parent = xc;
+	memcpy(xc2, xc, sizeof(struct fstWriterContext));
+
+	xc2->valpos_mem = malloc(xc->maxhandle * 4 * sizeof(uint32_t));
+	memcpy(xc2->valpos_mem, xc->valpos_mem, xc->maxhandle * 4 * sizeof(uint32_t));
+
+	/* curval mem is updated in the thread */
+#ifdef FST_REMOVE_DUPLICATE_VC
+	xc2->curval_mem = malloc(xc->maxvalpos);
+	memcpy(xc2->curval_mem, xc->curval_mem, xc->maxvalpos);
+#endif
+
+	xc->vchg_mem = malloc(xc->vchg_alloc_siz);
+	xc->vchg_mem[0] = '!';
+	xc->vchg_siz = 1;
+
+	for(i=0;i<xc->maxhandle;i++)
+		{
+		uint32_t *vm4ip = &(xc->valpos_mem[4*i]);
+	        vm4ip[2] = 0; /* zero out offset val */
+	        vm4ip[3] = 0; /* zero out last time change val */
+	        }
+
+	xc->tchn_cnt = xc->tchn_idx = 0;
+	xc->tchn_handle = tmpfile();
+	fseeko(xc->tchn_handle, 0, SEEK_SET);
+	fstFtruncate(fileno(xc->tchn_handle), 0);
+
+	xc->section_header_only = 0;
+	xc->secnum++;
+
+	pthread_mutex_lock(&xc->mutex);
+
+	pthread_create(&xc->thread, &xc->thread_attr, fstWriterFlushContextPrivate1, xc2);
+	}
+	else
+	{
+	if(xc->parallel_was_enabled) /* conservatively block */
+		{
+		pthread_mutex_lock(&xc->mutex);
+		pthread_mutex_unlock(&xc->mutex);
+		}
+
+	xc->xc_parent = xc;
+	fstWriterFlushContextPrivate2(xc);
+	}
+}
+#endif
 
 
 /*
@@ -1299,6 +1501,15 @@ if(xc)
 void fstWriterClose(void *ctx)
 {
 struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+
+#ifdef FST_WRITER_PARALLEL
+if(xc)
+	{
+	pthread_mutex_lock(&xc->mutex);
+	pthread_mutex_unlock(&xc->mutex);
+	}
+#endif
+
 if(xc && !xc->already_in_close && !xc->already_in_flush)
 	{
 	unsigned char *tmem;
@@ -1328,6 +1539,10 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 					}
 				}
 			fstWriterFlushContextPrivate(xc);
+#ifdef FST_WRITER_PARALLEL
+			pthread_mutex_lock(&xc->mutex);
+			pthread_mutex_unlock(&xc->mutex);
+#endif
 			}
 		}
 	fstDestroyMmaps(xc, 1);
@@ -1556,6 +1771,11 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 	}
 #endif
 
+#ifdef FST_WRITER_PARALLEL
+	pthread_mutex_destroy(&xc->mutex);
+	pthread_attr_destroy(&xc->thread_attr);
+#endif
+
 	free(xc->filename); xc->filename = NULL;
 	free(xc);
 	}
@@ -1661,6 +1881,20 @@ if(xc && s)
 }
 
 
+void fstWriterSetTimezero(void *ctx, int64_t tim)
+{
+struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+if(xc)
+        {
+	off_t fpos = ftello(xc->handle);
+	fseeko(xc->handle, FST_HDR_OFFS_TIMEZERO, SEEK_SET);
+	fstWriterUint64(xc->handle, (xc->timezero = tim));
+	fflush(xc->handle);
+	fseeko(xc->handle, fpos, SEEK_SET);
+	}
+}
+
+
 void fstWriterSetPackType(void *ctx, int typ)
 {
 struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
@@ -1677,6 +1911,24 @@ struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
 if(xc)
 	{
 	xc->repack_on_close = (enable != 0);
+	}
+}
+
+
+void fstWriterSetParallelMode(void *ctx, int enable)
+{
+struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+if(xc)
+	{
+	xc->parallel_was_enabled |= xc->parallel_enabled; /* make sticky */
+	xc->parallel_enabled = (enable != 0);
+#ifndef FST_WRITER_PARALLEL
+	if(xc->parallel_enabled)
+		{
+		fprintf(stderr, "ERROR: fstWriterSetParallelMode(), FST_WRITER_PARALLEL not enabled during compile, exiting.\n");
+		exit(255);
+		}
+#endif
 	}
 }
 
@@ -1745,6 +1997,22 @@ if(xc && nam)
 	if(aliasHandle > xc->maxhandle) aliasHandle = 0;
 	xc->hier_file_len += fstWriterVarint(xc->hier_handle, aliasHandle);	
 	xc->numsigs++;
+	if(xc->numsigs == xc->next_huge_break)
+		{
+		if(xc->fst_break_size < xc->fst_huge_break_size)
+			{
+			xc->next_huge_break += FST_ACTIVATE_HUGE_INC;
+			xc->fst_break_size += xc->fst_orig_break_size;
+			xc->fst_break_add_size += xc->fst_orig_break_add_size;
+
+			xc->vchg_alloc_siz = xc->fst_break_size + xc->fst_break_add_size;
+			if(xc->vchg_mem)
+				{
+				xc->vchg_mem = realloc(xc->vchg_mem, xc->vchg_alloc_siz);
+				}
+			}
+		}
+
 	if(!aliasHandle)
 		{
 		uint32_t zero = 0;
@@ -1863,7 +2131,7 @@ if((xc) && (handle <= xc->maxhandle))
 	
 			if((fpos + len + 10) > xc->vchg_alloc_siz)
 				{
-				xc->vchg_alloc_siz += (FST_BREAK_ADD_SIZE + len); /* +len added in the case of extremely long vectors and small break add sizes */
+				xc->vchg_alloc_siz += (xc->fst_break_add_size + len); /* +len added in the case of extremely long vectors and small break add sizes */
 				xc->vchg_mem = realloc(xc->vchg_mem, xc->vchg_alloc_siz);
 				if(!xc->vchg_mem)
 					{
@@ -1871,7 +2139,72 @@ if((xc) && (handle <= xc->maxhandle))
 					exit(255); 
 					}
 				}
+#ifdef FST_REMOVE_DUPLICATE_VC
+			offs = vm4ip[0];
+
+			if(len != 1)
+				{
+				if((vm4ip[3]==xc->tchn_idx)&&(vm4ip[2]))
+					{
+					unsigned char *old_value = xc->vchg_mem + vm4ip[2] + 4; /* the +4 skips old vm4ip[2] value */
+					while(*(old_value++) & 0x80) { /* skips over varint encoded "xc->tchn_idx - vm4ip[3]" */ }
+					memcpy(old_value, buf, len); /* overlay new value */
 	
+					memcpy(xc->curval_mem + offs, buf, len);
+					return;
+					}
+				else
+					{
+					if(!memcmp(xc->curval_mem + offs, buf, len))
+						{
+						if(!xc->curtime)
+							{
+							int i;
+							for(i=0;i<len;i++)
+								{
+								if(buf[i]!='x') break;
+								}
+
+							if(i<len) return;
+							}
+							else
+							{
+							return;
+							}
+						}
+					}
+	
+				memcpy(xc->curval_mem + offs, buf, len);
+				}
+				else
+				{
+				if((vm4ip[3]==xc->tchn_idx)&&(vm4ip[2]))
+					{
+					unsigned char *old_value = xc->vchg_mem + vm4ip[2] + 4; /* the +4 skips old vm4ip[2] value */
+					while(*(old_value++) & 0x80) { /* skips over varint encoded "xc->tchn_idx - vm4ip[3]" */ }
+					*old_value = *buf; /* overlay new value */
+	
+					*(xc->curval_mem + offs) = *buf;
+					return;
+					}
+				else
+					{
+					if((*(xc->curval_mem + offs)) == (*buf))
+						{
+						if(!xc->curtime)
+							{
+							if(*buf != 'x') return;
+							}
+							else
+							{
+							return;
+							}
+						}
+					}
+	
+				*(xc->curval_mem + offs) = *buf;
+				}
+#endif
 			xc->vchg_siz += fstWriterUint32WithVarint32(xc, &vm4ip[2], xc->tchn_idx - vm4ip[3], buf, len); /* do one fwrite op only */
 			vm4ip[3] = xc->tchn_idx;
 			vm4ip[2] = fpos;
@@ -1912,7 +2245,7 @@ if((xc) && (handle <= xc->maxhandle))
 
 		if((fpos + len + 10 + 5) > xc->vchg_alloc_siz)
 			{
-			xc->vchg_alloc_siz += (FST_BREAK_ADD_SIZE + len + 5); /* +len added in the case of extremely long vectors and small break add sizes */
+			xc->vchg_alloc_siz += (xc->fst_break_add_size + len + 5); /* +len added in the case of extremely long vectors and small break add sizes */
 			xc->vchg_mem = realloc(xc->vchg_mem, xc->vchg_alloc_siz);
 			if(!xc->vchg_mem)
 				{
@@ -1964,7 +2297,7 @@ if(xc)
 		}
 		else
 		{
-		if((xc->vchg_siz >= FST_BREAK_SIZE) || (xc->flush_context_pending))
+		if((xc->vchg_siz >= xc->fst_break_size) || (xc->flush_context_pending))
 			{
 			xc->flush_context_pending = 0;
 			fstWriterFlushContextPrivate(xc);
@@ -2044,9 +2377,6 @@ struct fstReaderContext
 /* common entries */
 
 FILE *f, *fh;
-#ifdef __MINGW32__
-char *fh_name;
-#endif
 
 uint64_t start_time, end_time;
 uint64_t mem_used_by_writer;
@@ -2071,6 +2401,7 @@ unsigned limit_range_valid : 1;		/* valid for limit_range_start, limit_range_end
 
 char version[FST_HDR_SIM_VERSION_SIZE + 1];
 char date[FST_HDR_DATE_SIZE + 1];
+int64_t timezero;
 
 char *filename, *filename_unpacked;
 off_t hier_pos;
@@ -2410,6 +2741,12 @@ struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
 return(xc ? xc->date : NULL);
 }
 
+int64_t fstReaderGetTimezero(void *ctx)
+{
+struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
+return(xc ? xc->timezero : 0);
+}
+
 
 uint32_t fstReaderGetNumberDumpActivityChanges(void *ctx)
 {
@@ -2562,8 +2899,10 @@ if(!xc->fh)
 		return(0);
 		}
 
+#ifndef __MINGW32__
 	xc->fh = fopen(fnam, "w+b");
         if(!xc->fh)
+#endif
                 {
                 xc->fh = tmpfile();  
                 free(fnam); fnam = NULL;
@@ -2599,12 +2938,7 @@ if(!xc->fh)
                 }
         gzclose(zhandle);
 	free(mem);
-
-#ifndef __MINGW32__
 	free(fnam);
-#else
-	xc->fh_name = fnam;
-#endif
 
 	fseeko(xc->f, offs_cache, SEEK_SET);
 	}
@@ -2762,7 +3096,7 @@ char *pnt;
 int ch, scopetype;
 int vartype;
 uint32_t len, alias;
-uint32_t maxvalpos=0;
+/* uint32_t maxvalpos=0; */
 int num_signal_dyn = 65536;
 
 if(!xc) return(0);
@@ -2784,10 +3118,13 @@ if(fv)
 
 	fprintf(fv, "$date\n\t%s\n$end\n", xc->date);
 	fprintf(fv, "$version\n\t%s\n$end\n", xc->version);
+	if(xc->timezero) fprintf(fv, "$timezero\n\t%"PRId64"\n$end\n", xc->timezero);
 	
         switch(xc->timescale)
                 {
-                case 0:         break;
+                case  2:        time_scale = 100;               time_dimension[0] = ' '; break;
+                case  1:        time_scale = 10;
+                case  0:                                        time_dimension[0] = ' '; break;
 
                 case -1:        time_scale = 100;               time_dimension[0] = 'm'; break;
                 case -2:        time_scale = 10;
@@ -2898,7 +3235,7 @@ while(!feof(xc->fh))
 				xc->signal_lens[xc->maxhandle] = len;
 				xc->signal_typs[xc->maxhandle] = vartype;
 
-		                maxvalpos+=len;
+		                /* maxvalpos+=len; */
 				if(len > xc->longest_signal_value_len)
 					{
 					xc->longest_signal_value_len = len;
@@ -3117,6 +3454,7 @@ if(gzread_pass_status)
 				xc->version[FST_HDR_SIM_VERSION_SIZE] = 0;
 				fstFread(xc->date, FST_HDR_DATE_SIZE, 1, xc->f);
 				xc->date[FST_HDR_DATE_SIZE] = 0;
+				xc->timezero = fstReaderUint64(xc->f);
 				}
 			}
 		else if((sectype == FST_BL_VCDATA) || (sectype == FST_BL_VCDATA_DYN_ALIAS))
@@ -3254,6 +3592,14 @@ return(hdr_seen);
 }
 
 
+void *fstReaderOpenForUtilitiesOnly(void)
+{
+struct fstReaderContext *xc = calloc(1, sizeof(struct fstReaderContext));
+
+return(xc);
+}
+
+
 void *fstReaderOpen(const char *nam)
 {
 struct fstReaderContext *xc = calloc(1, sizeof(struct fstReaderContext));
@@ -3333,14 +3679,7 @@ if(xc)
 
 	if(xc->fh) 
 		{ 
-		fclose(xc->fh); xc->fh = NULL; 
-#ifdef __MINGW32__
-		if(xc->fh_name)
-			{
-			unlink(xc->fh_name);
-			free(xc->fh_name); xc->fh_name = NULL;
-			}
-#endif
+		fclose(xc->fh); xc->fh = NULL;
 		}
 
 	if(xc->f) 
@@ -3481,7 +3820,7 @@ for(;;)
 	uint64_t tpval;
 	int ti;
 
-	fseeko(xc->f, blkpos + seclen - 24, SEEK_SET);
+	if(fseeko(xc->f, blkpos + seclen - 24, SEEK_SET) != 0) break;
 	tsec_uclen = fstReaderUint64(xc->f);
 	tsec_clen = fstReaderUint64(xc->f);
 	tsec_nitems = fstReaderUint64(xc->f);
@@ -3489,7 +3828,9 @@ for(;;)
 	printf("\ttime section unc: %d, com: %d (%d items)\n", 
 		(int)tsec_uclen, (int)tsec_clen, (int)tsec_nitems);
 #endif		
+	if(tsec_clen > seclen) break; /* corrupted tsec_clen: by definition it can't be larger than size of section */
 	ucdata = malloc(tsec_uclen);
+	if(!ucdata) break; /* malloc fail as tsec_uclen out of range from corrupted file */
 	destlen = tsec_uclen;
 	sourcelen = tsec_clen;
 
@@ -5042,6 +5383,7 @@ int fstUtilityBinToEsc(unsigned char *d, unsigned char *s, int len)
 {
 unsigned char *src = s;
 unsigned char *dst = d;
+unsigned char val;
 int i;
 
 for(i=0;i<len;i++)
@@ -5065,10 +5407,11 @@ for(i=0;i<len;i++)
 					}
 					else
 					{
+					val = src[i];
 					*(dst++) = '\\';
-					*(dst++) = (src[i]/64) + '0';	src[i] = src[i] & 63;
-					*(dst++) = (src[i]/8)  + '0';   src[i] = src[i] & 7;
-					*(dst++) = (src[i]) + '0';
+					*(dst++) = (val/64) + '0'; val = val & 63;
+					*(dst++) = (val/8)  + '0'; val = val & 7;
+					*(dst++) = (val) + '0';
 					}
 				break;
 		}

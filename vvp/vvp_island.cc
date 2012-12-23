@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "vvp_island.h"
@@ -224,13 +224,6 @@ void vvp_island_port::force_flag(void)
 
 vvp_island_branch::~vvp_island_branch()
 {
-}
-
-static vvp_branch_ptr_t next(vvp_branch_ptr_t cur)
-{
-      vvp_island_branch*ptr = cur.ptr();
-      unsigned ab = cur.port();
-      return ptr->link[ab];
 }
 
 void island_collect_node(list<vvp_branch_ptr_t>&conn, vvp_branch_ptr_t cur)

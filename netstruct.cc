@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "netstruct.h"
@@ -65,4 +65,24 @@ long netstruct_t::packed_width(void) const
 	    res += members_[idx].width();
 
       return res;
+}
+
+vector<netrange_t> netstruct_t::slice_dimensions() const
+{
+      vector<netrange_t> tmp;
+      tmp .push_back(netrange_t(packed_width()-1, 0));
+      return tmp;
+}
+
+ivl_variable_type_t netstruct_t::base_type() const
+{
+      if (! packed_)
+	    return IVL_VT_NO_TYPE;
+
+      for (size_t idx = 0 ;  idx < members_.size() ; idx += 1) {
+	    if (members_[idx].data_type() != IVL_VT_BOOL)
+		  return members_[idx].data_type();
+      }
+
+      return IVL_VT_BOOL;
 }

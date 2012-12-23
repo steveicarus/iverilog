@@ -14,7 +14,7 @@
  *
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 # include  "schedule.h"
@@ -63,7 +63,7 @@ struct event_s {
 
 void event_s::single_step_display(void)
 {
-      cerr << "event_s: Step into event " << typeid(*this).name() << endl;
+      std::cerr << "event_s: Step into event " << typeid(*this).name() << std::endl;
 }
 
 struct event_time_s {
