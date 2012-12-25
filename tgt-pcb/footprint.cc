@@ -23,6 +23,7 @@
 # include "pcb_priv.h"
 # include "fp_api.h"
 # include <iostream>
+# include <cassert>
 
 using namespace std;
 
