@@ -27,6 +27,9 @@
 
 # include  "fp_api.h"
 # include  "pcb_priv.h"
+# include  <cstdio>
+# include  <cstdarg>
+
 
 using namespace std;
 
