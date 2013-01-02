@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -857,8 +857,13 @@ void vpi_call_delete(vpiHandle item)
 		  }
 		  break;
 		case vpiMemoryWord:
-		  if (vpi_get(_vpiFromThr, obj->args[arg]) == _vpi_at_A) {
+		  switch (vpi_get(_vpiFromThr, obj->args[arg])) {
+		      case _vpi_at_A:
 			A_delete(obj->args[arg]);
+			break;
+		      case _vpi_at_APV:
+			APV_delete(obj->args[arg]);
+			break;
 		  }
 		  break;
 		case vpiPartSelect:

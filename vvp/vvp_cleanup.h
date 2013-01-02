@@ -1,7 +1,7 @@
 #ifndef __vvp_cleanup_H
 #define __vvp_cleanup_H
 /*
- * Copyright (c) 2009-2012 Cary R. (cygcary@yahoo.com)
+ * Copyright (c) 2009-2013 Cary R. (cygcary@yahoo.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -41,6 +41,7 @@ extern void vvp_net_pool_delete(void);
 extern void ufunc_pool_delete(void);
 
 extern void A_delete(class __vpiHandle *item);
+extern void APV_delete(class __vpiHandle *item);
 extern void PV_delete(class __vpiHandle *item);
 extern void class_delete(class __vpiHandle *item);
 extern void constant_delete(class __vpiHandle *item);

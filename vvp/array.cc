@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -913,6 +913,11 @@ static int vpi_array_vthr_APV_get(int code, vpiHandle ref)
 
 	  case vpiAutomatic:
 	    return (int) parent->scope->is_automatic;
+
+#ifdef CHECK_WITH_VALGRIND
+	  case _vpiFromThr:
+	    return _vpi_at_APV;
+#endif
 
 	  case vpiConstantSelect:
 	    return 1;
@@ -1944,6 +1949,12 @@ void A_delete(vpiHandle item)
 	    }
       }
 
+      delete obj;
+}
+
+void APV_delete(vpiHandle item)
+{
+      struct __vpiArrayVthrAPV*obj = (struct __vpiArrayVthrAPV*) item;
       delete obj;
 }
 #endif

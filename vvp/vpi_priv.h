@@ -1,7 +1,7 @@
 #ifndef __vpi_priv_H
 #define __vpi_priv_H
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -59,12 +59,13 @@ extern vpiHandle vpip_build_file_line(char*description,
  */
 #ifdef CHECK_WITH_VALGRIND
 #define _vpiFromThr 0x1000001
-#   define _vpiNoThr  0
-#   define _vpiString 1
-#   define _vpiVThr   2
-#   define _vpiWord   3
-#   define _vpi_at_PV 4
-#   define _vpi_at_A  5
+#   define _vpiNoThr   0
+#   define _vpiString  1
+#   define _vpiVThr    2
+#   define _vpiWord    3
+#   define _vpi_at_PV  4
+#   define _vpi_at_A   5
+#   define _vpi_at_APV 6
 #endif
 
 
