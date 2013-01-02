@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -260,18 +260,16 @@ const char* PGBuiltin::gate_name() const
 }
 
 PGModule::PGModule(perm_string type, perm_string name, list<PExpr*>*pins)
-: PGate(name, pins), bound_type_(0), overrides_(0), pins_(0),
+: PGate(name, pins), bound_type_(0), type_(type), overrides_(0), pins_(0),
   npins_(0), parms_(0), nparms_(0), msb_(0), lsb_(0)
 {
-      type_ = type;
 }
 
 PGModule::PGModule(perm_string type, perm_string name,
 		   named<PExpr*>*pins, unsigned npins)
-: PGate(name, 0), bound_type_(0), overrides_(0), pins_(pins),
+: PGate(name, 0), bound_type_(0), type_(type), overrides_(0), pins_(pins),
   npins_(npins), parms_(0), nparms_(0), msb_(0), lsb_(0)
 {
-      type_ = type;
 }
 
 PGModule::PGModule(Module*type, perm_string name)
