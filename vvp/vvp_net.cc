@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -90,6 +90,7 @@ void* vvp_net_t::operator new (size_t size)
 static map<vvp_net_t*, bool> vvp_net_map;
 static map<sfunc_core*, bool> sfunc_map;
 static map<vvp_udp_fun_core*, bool> udp_map;
+static map<resolv_core*, bool> resolv_map;
 static vvp_net_t **local_net_pool = 0;
 static unsigned local_net_pool_count = 0;
 
@@ -109,6 +110,9 @@ void vvp_net_delete(vvp_net_t *item)
       }
       if (vvp_udp_fun_core*tmp = dynamic_cast<vvp_udp_fun_core*> (item->fun)) {
 	    udp_map[tmp] = true;
+      }
+      if (resolv_core*tmp = dynamic_cast<resolv_core*>(item->fun)) {
+	    resolv_map[tmp] = true;
       }
 }
 
@@ -141,6 +145,12 @@ void vvp_net_pool_delete()
 	    delete uiter->first;
       }
       udp_map.clear();
+
+      map<resolv_core*, bool>::iterator riter;
+      for (riter = resolv_map.begin(); riter != resolv_map.end(); ++ riter ) {
+	    delete riter->first;
+      }
+      resolv_map.clear();
 
       if (RUNNING_ON_VALGRIND && (vvp_nets_del != count_vvp_nets)) {
 	    fflush(NULL);
@@ -244,7 +254,9 @@ void vvp_net_t::count_drivers(unsigned idx, unsigned counts[4])
 
 void vvp_net_fun_t::operator delete(void*)
 {
+#ifndef CHECK_WITH_VALGRIND
       assert(0);
+#endif
 }
 
 
