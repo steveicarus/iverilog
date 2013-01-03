@@ -120,8 +120,10 @@ static char* strdupnew(char const *str)
 ".arith/sub.r" { return K_ARITH_SUB_R; }
 ".arith/sum"  { return K_ARITH_SUM; }
 ".arith/sum.r"  { return K_ARITH_SUM_R; }
-".array" { return K_ARRAY; }
-".array/i" { return K_ARRAY_I; }
+".array"    { return K_ARRAY; }
+".array/2s" { return K_ARRAY_2S; }
+".array/2u"  { return K_ARRAY_2U; }
+".array/i"  { return K_ARRAY_I; }
 ".array/real" { return K_ARRAY_R; }
 ".array/s" { return K_ARRAY_S; }
 ".array/port" { return K_ARRAY_PORT; }
