@@ -123,7 +123,6 @@ static void delete_sub_scopes(struct __vpiScope *scope)
            citer != scope->classes.end(); ++ citer ) {
             class_def_delete(citer->second);
       }
-      scope->classes.clear();
 }
 
 void root_table_delete(void)
