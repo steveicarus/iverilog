@@ -18,11 +18,12 @@
  */
 
 # include  "array.h"
-#include  "symbols.h"
-#include  "schedule.h"
-#include  "vpi_priv.h"
-#include  "vvp_net_sig.h"
-#include  "config.h"
+# include  "symbols.h"
+# include  "schedule.h"
+# include  "vpi_priv.h"
+# include  "vvp_net_sig.h"
+# include  "vvp_darray.h"
+# include  "config.h"
 #ifdef CHECK_WITH_VALGRIND
 #include  "vvp_cleanup.h"
 #endif
@@ -33,6 +34,8 @@
 # include  "compile.h"
 # include  <cassert>
 # include  "ivl_alloc.h"
+
+class vvp_darray_real;
 
 unsigned long count_net_arrays = 0;
 unsigned long count_net_array_words = 0;
@@ -101,7 +104,7 @@ struct __vpiArray : public __vpiHandle {
       vpiHandle*nets;
 	// If this is a var array, then these are used instead of nets.
       vvp_vector4array_t   *vals4;
-      vvp_realarray_t      *valsr;
+      vvp_darray_real      *valsr;
       struct __vpiArrayWord*vals_words;
 
       vvp_fun_arrayport*ports_;
@@ -1050,7 +1053,14 @@ double array_get_word_r(vvp_array_t arr, unsigned address)
       if (arr->valsr) {
 	    assert(arr->vals4 == 0);
 	    assert(arr->nets  == 0);
-	    return arr->valsr->get_word(address);
+	      // In this context, address out of bounds returns 0.0
+	      // instead of an error.
+	    if (address >= arr->valsr->get_size())
+		  return 0.0;
+
+	    double val;
+	    arr->valsr->get_word(address, val);
+	    return val;
       }
 
       assert(arr->nets);
@@ -1199,7 +1209,7 @@ void compile_real_array(char*label, char*name, int last, int first,
       struct __vpiArray*arr = dynamic_cast<__vpiArray*>(obj);
 
 	/* Make the words. */
-      arr->valsr = new vvp_realarray_t(arr->array_count);
+      arr->valsr = new vvp_darray_real(arr->array_count);
       arr->vals_width = 1;
 
 	/* For a real array the MSB and LSB must be zero. */
@@ -1515,8 +1525,10 @@ void array_word_change(vvp_array_t array, unsigned long addr)
 		  if (cur->test_value_callback_ready()) {
 			if (cur->cb_data.value) {
 			      if (vpi_array_is_real(array)) {
-				    vpip_real_get_value(array->valsr->get_word(addr),
-							cur->cb_data.value);
+				    double val = 0.0;
+				    if (addr < array->valsr->get_size())
+					  array->valsr->get_word(addr, val);
+				    vpip_real_get_value(val, cur->cb_data.value);
 			      } else {
 				    vpip_vec4_get_value(array->vals4->get_word(addr),
 							array->vals_width,
