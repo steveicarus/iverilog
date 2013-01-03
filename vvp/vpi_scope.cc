@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -116,6 +116,13 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 	    }
       }
       free(scope->intern);
+
+	/* Clean up any class definitions. */
+      map<std::string, class_type*>::iterator citer;
+      for (citer = scope->classes.begin();
+           citer != scope->classes.end(); ++ citer ) {
+            class_def_delete(citer->second);
+      }
 }
 
 void root_table_delete(void)

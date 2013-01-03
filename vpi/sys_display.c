@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -974,6 +974,7 @@ static char *get_display(unsigned int *rtnsz, const struct strobe_cb_info *info)
 	free(fmt);
         rtn = realloc(rtn, (size+width)*sizeof(char));
         memcpy(rtn+size-1, result, width);
+        free(result);
 	break;
 
       case vpiSysFuncCall:

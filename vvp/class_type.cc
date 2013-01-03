@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -20,6 +20,10 @@
 # include  "class_type.h"
 # include  "compile.h"
 # include  "vpi_priv.h"
+# include  "config.h"
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+#endif
 # include  <cassert>
 
 using namespace std;
@@ -55,6 +59,8 @@ void compile_class_property(unsigned idx, char*nam, char*typ)
 {
       assert(compile_class);
       compile_class->set_property(idx, nam);
+      delete[]nam;
+      delete[]typ;
 }
 
 void compile_class_done(void)
@@ -64,3 +70,10 @@ void compile_class_done(void)
       scope->classes[compile_class->class_name()] = compile_class;
       compile_class = 0;
 }
+
+#ifdef CHECK_WITH_VALGRIND
+void class_def_delete(class_type *item)
+{
+      delete item;
+}
+#endif
