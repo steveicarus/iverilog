@@ -1,7 +1,7 @@
 #ifndef __vvp_net_H
 #define __vvp_net_H
 /*
- * Copyright (c) 2004-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -522,25 +522,6 @@ extern bool vector2_to_value(const vvp_vector2_t&a, int32_t&val, bool is_signed)
 
 extern vvp_vector4_t vector4_from_text(const char*bits, unsigned wid);
 
-/*
- * The __vpiArray handle uses instances of this to keep an array of
- * real valued variables.
- */
-class vvp_realarray_t {
-
-    public:
-      vvp_realarray_t(unsigned words);
-      ~vvp_realarray_t();
-
-      unsigned words() const { return words_; }
-
-      double get_word(unsigned idx) const;
-      void set_word(unsigned idx, double val);
-
-    private:
-      unsigned words_;
-      double*array_;
-};
 
 /*
  * vvp_vector4array_t

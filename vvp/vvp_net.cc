@@ -1779,36 +1779,6 @@ bool vector2_to_value(const vvp_vector2_t&a, int32_t&val, bool is_signed)
       return a.size() <= 32;
 }
 
-vvp_realarray_t::vvp_realarray_t(unsigned wor)
-: words_(wor)
-{
-      array_ = new double[words_];
-	// Real array words have a default value of zero.
-      for (unsigned idx = 0 ; idx < words_; idx += 1) {
-	    array_[idx] = 0.0;
-      }
-}
-
-vvp_realarray_t::~vvp_realarray_t()
-{
-      delete[]array_;
-}
-
-void vvp_realarray_t::set_word(unsigned word, double value)
-{
-      if (word >= words_)
-	    return;
-      array_[word] = value;
-}
-
-double vvp_realarray_t::get_word(unsigned word) const
-{
-      if (word >= words_)
-	    return 0.0;
-      else
-	    return array_[word];
-}
-
 vvp_vector4array_t::vvp_vector4array_t(unsigned width__, unsigned words__)
 : width_(width__), words_(words__)
 {

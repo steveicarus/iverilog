@@ -344,6 +344,9 @@ extern char **compile_udp_table(char **table, char *row);
 extern void compile_var_array(char*label, char*name,
 			      int last, int first,
 			      int msb, int lsb, char signed_flag);
+extern void compile_var2_array(char*label, char*name,
+			      int last, int first,
+			      int msb, int lsb, bool signed_flag);
 extern void compile_real_array(char*label, char*name,
 			       int last, int first,
 			       int msb, int lsb);

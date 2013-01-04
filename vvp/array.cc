@@ -18,11 +18,12 @@
  */
 
 # include  "array.h"
-#include  "symbols.h"
-#include  "schedule.h"
-#include  "vpi_priv.h"
-#include  "vvp_net_sig.h"
-#include  "config.h"
+# include  "symbols.h"
+# include  "schedule.h"
+# include  "vpi_priv.h"
+# include  "vvp_net_sig.h"
+# include  "vvp_darray.h"
+# include  "config.h"
 #ifdef CHECK_WITH_VALGRIND
 #include  "vvp_cleanup.h"
 #endif
@@ -100,8 +101,8 @@ struct __vpiArray : public __vpiHandle {
 	// If this is a net array, nets lists the handles.
       vpiHandle*nets;
 	// If this is a var array, then these are used instead of nets.
-      vvp_vector4array_t   *vals4;
-      vvp_realarray_t      *valsr;
+      vvp_vector4array_t*vals4;
+      vvp_darray        *vals;
       struct __vpiArrayWord*vals_words;
 
       vvp_fun_arrayport*ports_;
@@ -228,13 +229,13 @@ unsigned get_array_word_size(vvp_array_t array)
       assert(array->array_count > 0);
 	/* For a net array we need to get the width from the first element. */
       if (array->nets) {
-	    assert(array->vals4 == 0 && array->valsr == 0);
+	    assert(array->vals4 == 0 && array->vals == 0);
 	    struct __vpiSignal*vsig = dynamic_cast<__vpiSignal*>(array->nets[0]);
 	    assert(vsig);
 	    width = vpip_size(vsig);
 	/* For a variable array we can get the width from vals_width. */
       } else {
-	    assert(array->vals4 || array->valsr);
+	    assert(array->vals4 || array->vals);
 	    width = array->vals_width;
       }
 
@@ -431,7 +432,7 @@ vpiHandle __vpiArrayIterator::vpi_index(int)
 
       if (array->nets) return array->nets[use_index];
 
-      assert(array->vals4 || array->valsr);
+      assert(array->vals4 || array->vals);
 
       if (array->vals_words == 0) array_make_vals_words(array);
 
@@ -601,7 +602,7 @@ static int vpi_array_var_word_get(int code, vpiHandle ref)
 
 	  case vpiSize:
 	    if (parent->vals4) {
-		  assert(parent->valsr == 0);
+		  assert(parent->vals == 0);
 		  return (int) parent->vals4->width();
 	    } else {
 		  assert(parent->vals4 == 0);
@@ -804,8 +805,10 @@ static char*vpi_array_vthr_A_get_str(int code, vpiHandle ref)
 static unsigned vpi_array_is_real(vvp_array_t arr)
 {
 	// Check to see if this is a variable/register array.
-      if (arr->valsr != 0) return 1U;  // A real variable array.
       if (arr->vals4 != 0) return 0U;  // A bit based variable/register array.
+
+      if (dynamic_cast<vvp_darray_real*> (arr->vals))
+	    return 1U;
 
 	// This must be a net array so look at element 0 to find the type.
       assert(arr->nets != 0);
@@ -989,6 +992,16 @@ void array_set_word(vvp_array_t arr,
 	    return;
       }
 
+      if (arr->vals) {
+	    assert(arr->nets == 0);
+	      // FIXME: For now, assume no part select of word?
+	    assert(part_off==0);
+	    assert(val.size() == arr->vals_width);
+	    arr->vals->set_word(address, val);
+	    array_word_change(arr, address);
+	    return;
+      }
+
       assert(arr->nets != 0);
 
 	// Select the word of the array that we affect.
@@ -1002,10 +1015,13 @@ void array_set_word(vvp_array_t arr,
 
 void array_set_word(vvp_array_t arr, unsigned address, double val)
 {
-      assert(arr->valsr!= 0);
+      assert(arr->vals != 0);
       assert(arr->nets == 0);
 
-      arr->valsr->set_word(address, val);
+      if (address >= arr->vals->get_size())
+	    return;
+
+      arr->vals->set_word(address, val);
       array_word_change(arr, address);
 }
 
@@ -1013,12 +1029,23 @@ vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
 {
       if (arr->vals4) {
 	    assert(arr->nets == 0);
-	    assert(arr->valsr == 0);
+	    assert(arr->vals == 0);
 	    return arr->vals4->get_word(address);
       }
 
+      if (arr->vals) {
+	    assert(arr->nets == 0);
+	    assert(arr->vals4== 0);
+	    if (address >= arr->vals->get_size())
+		  return vvp_vector4_t(arr->vals_width, BIT4_X);
+
+	    vvp_vector4_t val;
+	    arr->vals->get_word(address, val);
+	    return val;
+      }
+	    
       assert(arr->vals4 == 0);
-      assert(arr->valsr == 0);
+      assert(arr->vals == 0);
       assert(arr->nets != 0);
 
       if (address >= arr->array_count) {
@@ -1047,10 +1074,17 @@ vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
 
 double array_get_word_r(vvp_array_t arr, unsigned address)
 {
-      if (arr->valsr) {
+      if (arr->vals) {
 	    assert(arr->vals4 == 0);
 	    assert(arr->nets  == 0);
-	    return arr->valsr->get_word(address);
+	      // In this context, address out of bounds returns 0.0
+	      // instead of an error.
+	    if (address >= arr->vals->get_size())
+		  return 0.0;
+
+	    double val;
+	    arr->vals->get_word(address, val);
+	    return val;
       }
 
       assert(arr->nets);
@@ -1097,7 +1131,7 @@ static vpiHandle vpip_make_array(char*label, const char*name,
 	// Start off now knowing if we are nets or variables.
       obj->nets = 0;
       obj->vals4 = 0;
-      obj->valsr = 0;
+      obj->vals  = 0;
       obj->vals_width = 0;
       obj->vals_words = 0;
 
@@ -1191,6 +1225,46 @@ void compile_var_array(char*label, char*name, int last, int first,
       delete[] name;
 }
 
+void compile_var2_array(char*label, char*name, int last, int first,
+		   int msb, int lsb, bool signed_flag)
+{
+      vpiHandle obj = vpip_make_array(label, name, first, last, signed_flag);
+
+      struct __vpiArray*arr = dynamic_cast<__vpiArray*>(obj);
+
+	/* Make the words. */
+      arr->msb.value = msb;
+      arr->lsb.value = lsb;
+      arr->vals_width = labs(msb-lsb) + 1;
+
+      assert(! arr->nets);
+      if (lsb == 0 && msb == 7 && signed_flag) {
+	    arr->vals = new vvp_darray_atom<int8_t>(arr->array_count);
+      } else if (lsb == 0 && msb == 7 && !signed_flag) {
+	    arr->vals = new vvp_darray_atom<uint8_t>(arr->array_count);
+      } else if (lsb == 0 && msb == 15 && signed_flag) {
+	    arr->vals = new vvp_darray_atom<int16_t>(arr->array_count);
+      } else if (lsb == 0 && msb == 15 && !signed_flag) {
+	    arr->vals = new vvp_darray_atom<uint16_t>(arr->array_count);
+      } else if (lsb == 0 && msb == 31 && signed_flag) {
+	    arr->vals = new vvp_darray_atom<int32_t>(arr->array_count);
+      } else if (lsb == 0 && msb == 31 && !signed_flag) {
+	    arr->vals = new vvp_darray_atom<uint32_t>(arr->array_count);
+      } else if (lsb == 0 && msb == 63 && signed_flag) {
+	    arr->vals = new vvp_darray_atom<int64_t>(arr->array_count);
+      } else if (lsb == 0 && msb == 63 && !signed_flag) {
+	    arr->vals = new vvp_darray_atom<uint64_t>(arr->array_count);
+      } else {
+	      // For now, only support the atom sizes.
+	    assert(0);
+      }
+      count_var_arrays += 1;
+      count_var_array_words += arr->array_count;
+
+      free(label);
+      delete[] name;
+}
+
 void compile_real_array(char*label, char*name, int last, int first,
 			int msb, int lsb)
 {
@@ -1199,7 +1273,7 @@ void compile_real_array(char*label, char*name, int last, int first,
       struct __vpiArray*arr = dynamic_cast<__vpiArray*>(obj);
 
 	/* Make the words. */
-      arr->valsr = new vvp_realarray_t(arr->array_count);
+      arr->vals = new vvp_darray_real(arr->array_count);
       arr->vals_width = 1;
 
 	/* For a real array the MSB and LSB must be zero. */
@@ -1470,7 +1544,7 @@ static void array_attach_port(vvp_array_t array, vvp_fun_arrayport*fun)
                   vvp_vector4_t tmp(array->vals_width, BIT4_X);
                   schedule_init_propagate(fun->net_, tmp);
             }
-            if (array->valsr) {
+            if (array->vals) {
                   schedule_init_propagate(fun->net_, 0.0);
             }
       }
@@ -1515,8 +1589,10 @@ void array_word_change(vvp_array_t array, unsigned long addr)
 		  if (cur->test_value_callback_ready()) {
 			if (cur->cb_data.value) {
 			      if (vpi_array_is_real(array)) {
-				    vpip_real_get_value(array->valsr->get_word(addr),
-							cur->cb_data.value);
+				    double val = 0.0;
+				    if (addr < array->vals->get_size())
+					  array->vals->get_word(addr, val);
+				    vpip_real_get_value(val, cur->cb_data.value);
 			      } else {
 				    vpip_vec4_get_value(array->vals4->get_word(addr),
 							array->vals_width,
@@ -1752,7 +1828,7 @@ void compile_array_alias(char*label, char*name, char*src)
 	// Share the words with the source array.
       obj->nets = mem->nets;
       obj->vals4 = mem->vals4;
-      obj->valsr = mem->valsr;
+      obj->vals  = mem->vals;
       obj->vals_width = mem->vals_width;
       obj->vals_words = mem->vals_words;
 
