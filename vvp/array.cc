@@ -1043,7 +1043,7 @@ vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
 	    arr->vals->get_word(address, val);
 	    return val;
       }
-	    
+
       assert(arr->vals4 == 0);
       assert(arr->vals == 0);
       assert(arr->nets != 0);

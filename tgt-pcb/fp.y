@@ -59,7 +59,7 @@ static fp_element_t cur_element;
       long integer;
       char*text;
 };
-	     
+
 %token <text> STRING
 %token <integer> INTEGER
 %token K_ELEMENT
