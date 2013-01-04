@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,6 +31,9 @@
 # include  <cstdlib>
 # include  <cstring>
 # include  <unistd.h>
+#ifdef CHECK_WITH_VALGRIND
+# include  <pthread.h>
+#endif
 
 #if defined(HAVE_SYS_RESOURCE_H)
 # include  <sys/time.h>
@@ -232,6 +235,14 @@ static void final_cleanup()
 	 * files are automatically closed.
 	 */
       load_module_delete();
+
+#ifdef CHECK_WITH_VALGRIND
+      simulator_cb_delete();
+	/* This is needed to prevent valgrind from complaining about
+	 * _dlerror_run() having a memory leak. */
+// HERE: Is this portable? Does it break anything?
+      pthread_exit(NULL);
+#endif
 }
 
 unsigned module_cnt = 0;

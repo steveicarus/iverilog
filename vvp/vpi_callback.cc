@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,6 +31,9 @@
 # include  "event.h"
 # include  "vvp_net_sig.h"
 # include  "config.h"
+#ifdef CHECK_WITH_VALGRIND
+#include  "vvp_cleanup.h"
+#endif
 # include  <cstdio>
 # include  <cassert>
 # include  <cstdlib>
@@ -411,6 +414,36 @@ static simulator_callback*NextSimTime = 0;
 static simulator_callback*EndOfCompile = 0;
 static simulator_callback*StartOfSimulation = 0;
 static simulator_callback*EndOfSimulation = 0;
+
+#ifdef CHECK_WITH_VALGRIND
+/* This is really only needed if the simulator aborts before starting the
+ * main event loop. For that reason we can skip the next sim time queue. */
+void simulator_cb_delete(void)
+{
+      simulator_callback* cur;
+
+	/* Delete all the end of compile callbacks. */
+      while (EndOfCompile) {
+	    cur = EndOfCompile;
+	    EndOfCompile = dynamic_cast<simulator_callback*>(cur->next);
+	    delete cur;
+      }
+
+	/* Delete all the start of simulation callbacks. */
+      while (StartOfSimulation) {
+	    cur = StartOfSimulation;
+	    StartOfSimulation = dynamic_cast<simulator_callback*>(cur->next);
+	    delete cur;
+      }
+
+	/* Delete all the end of simulation callbacks. */
+      while (EndOfSimulation) {
+	    cur = EndOfSimulation;
+	    EndOfSimulation = dynamic_cast<simulator_callback*>(cur->next);
+	    delete cur;
+      }
+}
+#endif
 
 void vpiEndOfCompile(void) {
       simulator_callback* cur;
