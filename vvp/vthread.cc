@@ -3444,6 +3444,23 @@ bool of_LOAD_STR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_LOAD_STRA(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx = cp->bit_idx[0];
+      unsigned adr = thr->words[idx].w_int;
+      string word;
+
+	/* The result is 0.0 if the address is undefined. */
+      if (thr_get_bit(thr, 4) == BIT4_1) {
+	    word = "";
+      } else {
+	    word = array_get_word_str(cp->array, adr);
+      }
+
+      thr->push_str(word);
+      return true;
+}
+
 /* %load/v <bit>, <label>, <wid>
  *
  * Implement the %load/v instruction. Load the vector value of the
@@ -5092,6 +5109,20 @@ bool of_STORE_STR(vthread_t thr, vvp_code_t cp)
 
       string val = thr->pop_str();
       vvp_send_string(ptr, val, thr->wt_context);
+
+      return true;
+}
+
+/*
+ * %store/stra <array-label> <index>
+ */
+bool of_STORE_STRA(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx = cp->bit_idx[0];
+      unsigned adr = thr->words[idx].w_int;
+
+      string val = thr->pop_str();
+      array_set_word(cp->array, adr, val);
 
       return true;
 }

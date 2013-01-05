@@ -802,23 +802,39 @@ static char*vpi_array_vthr_A_get_str(int code, vpiHandle ref)
 }
 
 // This function return true if the underlying array words are real.
-static unsigned vpi_array_is_real(vvp_array_t arr)
+static bool vpi_array_is_real(vvp_array_t arr)
 {
 	// Check to see if this is a variable/register array.
-      if (arr->vals4 != 0) return 0U;  // A bit based variable/register array.
+      if (arr->vals4 != 0)  // A bit based variable/register array.
+	    return false;
 
       if (dynamic_cast<vvp_darray_real*> (arr->vals))
-	    return 1U;
+	    return true;
+
+      if (arr->vals != 0)
+	    return false;
 
 	// This must be a net array so look at element 0 to find the type.
       assert(arr->nets != 0);
       assert(arr->array_count > 0);
       struct __vpiRealVar*rsig = dynamic_cast<__vpiRealVar*>(arr->nets[0]);
       if (rsig) {
-	    return 1U;
+	    return true;
       }
 
-      return 0U;
+      return false;
+}
+
+static bool vpi_array_is_string(vvp_array_t arr)
+{
+	// Check to see if this is a variable/register array.
+      if (arr->vals4 != 0)  // A bit based variable/register array.
+	    return false;
+
+      if (dynamic_cast<vvp_darray_string*> (arr->vals))
+	    return true;
+
+      return false;
 }
 
 static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value vp)
@@ -833,6 +849,9 @@ static void vpi_array_vthr_A_get_value(vpiHandle ref, p_vpi_value vp)
       if (vpi_array_is_real(parent)) {
 	    double tmp = array_get_word_r(parent, index);
 	    vpip_real_get_value(tmp, vp);
+      } else if (vpi_array_is_string(parent)) {
+	    string tmp = array_get_word_str(parent, index);
+	    vpip_string_get_value(tmp, vp);
       } else {
 	    vvp_vector4_t tmp = array_get_word(parent, index);
 	    unsigned width = get_array_word_size(parent);
@@ -1025,6 +1044,18 @@ void array_set_word(vvp_array_t arr, unsigned address, double val)
       array_word_change(arr, address);
 }
 
+void array_set_word(vvp_array_t arr, unsigned address, const string&val)
+{
+      assert(arr->vals != 0);
+      assert(arr->nets == 0);
+
+      if (address >= arr->vals->get_size())
+	    return;
+
+      arr->vals->set_word(address, val);
+      array_word_change(arr, address);
+}
+
 vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
 {
       if (arr->vals4) {
@@ -1097,6 +1128,27 @@ double array_get_word_r(vvp_array_t arr, unsigned address)
       double val = sig->real_value();
       return val;
 
+}
+
+string array_get_word_str(vvp_array_t arr, unsigned address)
+{
+      if (arr->vals) {
+	    assert(arr->vals4 == 0);
+	    assert(arr->nets  == 0);
+	      // In this context, address out of bounds returns 0.0
+	      // instead of an error.
+	    if (address >= arr->vals->get_size())
+		  return "";
+
+	    string val;
+	    arr->vals->get_word(address, val);
+	    return val;
+      }
+
+      assert(arr->nets);
+	// Arrays of string nets not implemented!
+      assert(0);
+      return "";
 }
 
 static vpiHandle vpip_make_array(char*label, const char*name,
@@ -1265,8 +1317,7 @@ void compile_var2_array(char*label, char*name, int last, int first,
       delete[] name;
 }
 
-void compile_real_array(char*label, char*name, int last, int first,
-			int msb, int lsb)
+void compile_real_array(char*label, char*name, int last, int first)
 {
       vpiHandle obj = vpip_make_array(label, name, first, last, true);
 
@@ -1276,8 +1327,22 @@ void compile_real_array(char*label, char*name, int last, int first,
       arr->vals = new vvp_darray_real(arr->array_count);
       arr->vals_width = 1;
 
-	/* For a real array the MSB and LSB must be zero. */
-      assert(msb == 0 && lsb == 0);
+      count_real_arrays += 1;
+      count_real_array_words += arr->array_count;
+
+      free(label);
+      delete[] name;
+}
+
+void compile_string_array(char*label, char*name, int last, int first)
+{
+      vpiHandle obj = vpip_make_array(label, name, first, last, true);
+
+      struct __vpiArray*arr = dynamic_cast<__vpiArray*>(obj);
+
+	/* Make the words. */
+      arr->vals = new vvp_darray_string(arr->array_count);
+      arr->vals_width = 1;
 
       count_real_arrays += 1;
       count_real_array_words += arr->array_count;

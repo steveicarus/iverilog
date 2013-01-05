@@ -653,6 +653,7 @@ The %load/real instruction reads a real value from the vpi-like object
 and pushes it to the top of the real value stack.
 
 * %load/str <var-label>
+* %load/stra <array-label>, <index>
 * %load/dar/str <var-label>
 
 The %load/str instruction gets the string from the string variable and
@@ -1009,7 +1010,7 @@ variable given by the label.
 See also %load/obj.
 
 * %store/real <var-label>
-* %store/reala <var-label> <index>
+* %store/reala <var-label>, <index>
 
 This pops the top of the real variable stack and write it to the
 object variable given bu the label.
@@ -1018,11 +1019,14 @@ The areal version is similar, but writes to a real array using the
 index in the index register <index>
 
 * %store/str <var-label>
+* %store/stra <array-label>, <index>
 * %store/dar/r <var-label>
 * %store/dar/str <var-label>
 
 The %store/str instruction pops the top of the string stack and writes
 it to the string variable.
+
+The %store/stra targets an array.
 
 The %store/dar/str is similar, but the target is a dynamic array of
 string string. The index is taken from signed index register 3.

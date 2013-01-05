@@ -18,6 +18,7 @@
  */
 
 # include  "vvp_priv.h"
+# include  <string.h>
 # include  <assert.h>
 
 static void fallback_eval(ivl_expr_t expr)
@@ -63,12 +64,25 @@ static void string_ex_signal(ivl_expr_t expr)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
 
-      if (ivl_signal_data_type(sig) == IVL_VT_STRING) {
+      if (ivl_signal_data_type(sig) != IVL_VT_STRING) {
+	    fallback_eval(expr);
+	    return;
+      }
+
+	/* Simple case: This is a simple variable. Generate a load
+	   statement to load the string into the stack. */
+      if (ivl_signal_dimensions(sig) == 0) {
 	    fprintf(vvp_out, "    %%load/str v%p_0;\n", sig);
 	    return;
       }
 
-      fallback_eval(expr);
+	/* There is a word select expression, so load the index into a
+	   register and load from the array. */
+      ivl_expr_t word_ex = ivl_expr_oper1(expr);
+      int word_ix = allocate_word();
+      draw_eval_expr_into_integer(word_ex, word_ix);
+      fprintf(vvp_out, "    %%load/stra v%p, %d;\n", sig, word_ix);
+      clr_word(word_ix);
 }
 
 static void string_ex_select(ivl_expr_t expr)
