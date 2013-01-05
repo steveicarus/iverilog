@@ -236,6 +236,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%sub",    of_SUB,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%sub/wr", of_SUB_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%subi",   of_SUBI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%substr",  of_SUBSTR,  2,{OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%substr/v",of_SUBSTR_V,3,{OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%test_nul",  of_TEST_NUL, 1,{OA_FUNC_PTR,OA_NONE,     OA_NONE} },
       { "%wait",   of_WAIT,   1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },

@@ -1053,6 +1053,11 @@ This instruction operates on real values in word registers. The right
 value is popped, the left value is popped, the right is subtracted
 from the left, and the result pushed.
 
+* %substr <start>, <end>
+
+This instruction takes the substring of the top string in the string
+stack. This implements the SystemVerilog style substring. The string
+stack is popped and replaced with the result.
 
 * %substr/v <bit-l>, <sel>, <wid>
 

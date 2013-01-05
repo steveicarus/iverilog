@@ -5177,6 +5177,27 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %substr <first>, <last>
+ * Pop a string, take the substring (SystemVerilog style), and return
+ * the result to the stack. This opcode actually works by editing the
+ * string in place.
+ */
+bool of_SUBSTR(vthread_t thr, vvp_code_t cp)
+{
+      int32_t first = thr->words[cp->bit_idx[0]].w_int;
+      int32_t last = thr->words[cp->bit_idx[1]].w_int;
+      string&val = thr->peek_str(0);
+
+      if (first < 0 || last < first || last >= (int32_t)val.size()) {
+	    val = string("");
+	    return true;
+      }
+
+      val = val.substr(first, last-first+1);
+      return true;
+}
+
+/*
  * %substr/v <bitl>, <index>, <wid>
  */
 bool of_SUBSTR_V(vthread_t thr, vvp_code_t cp)

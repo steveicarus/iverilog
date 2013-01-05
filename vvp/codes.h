@@ -189,6 +189,7 @@ extern bool of_STORE_STR(vthread_t thr, vvp_code_t code);
 extern bool of_SUB(vthread_t thr, vvp_code_t code);
 extern bool of_SUB_WR(vthread_t thr, vvp_code_t code);
 extern bool of_SUBI(vthread_t thr, vvp_code_t code);
+extern bool of_SUBSTR(vthread_t thr, vvp_code_t code);
 extern bool of_SUBSTR_V(vthread_t thr, vvp_code_t code);
 extern bool of_TEST_NUL(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
