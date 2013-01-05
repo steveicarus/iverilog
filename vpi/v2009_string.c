@@ -73,7 +73,7 @@ static PLI_INT32 len_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
-void sys_string_register(void)
+void v2009_string_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;

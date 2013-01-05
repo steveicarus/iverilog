@@ -54,7 +54,7 @@ LDFLAGS = @LDFLAGS@
 O = sys_table.o sys_convert.o sys_countdrivers.o sys_darray.o sys_deposit.o sys_display.o \
     sys_fileio.o sys_finish.o sys_icarus.o sys_plusargs.o sys_queue.o \
     sys_random.o sys_random_mti.o sys_readmem.o sys_readmem_lex.o sys_scanf.o \
-    sys_sdf.o sys_string.o sys_time.o sys_vcd.o sys_vcdoff.o vcd_priv.o mt19937int.o \
+    sys_sdf.o sys_time.o sys_vcd.o sys_vcdoff.o vcd_priv.o mt19937int.o \
     sys_priv.o sdf_lexor.o sdf_parse.o stringheap.o vams_simparam.o \
     table_mod.o table_mod_lexor.o table_mod_parse.o
 OPP = vcd_priv2.o
@@ -73,7 +73,7 @@ M = sys_clog2.o v2005_math.o
 # Object files for va_math.vpi
 V = va_math.o
 
-V2009 = v2009_table.o v2009_enum.o
+V2009 = v2009_table.o v2009_enum.o v2009_string.o
 
 VHDL_SYS = vhdl_table.o
 
