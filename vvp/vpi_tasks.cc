@@ -706,14 +706,14 @@ void print_vpi_call_errors()
 #ifdef CHECK_WITH_VALGRIND
 static void cleanup_vpi_call_args(unsigned argc, vpiHandle*argv)
 {
-#if 0
       if (argc) {
-	    struct __vpiSysTaskCall*obj = new struct __vpiSysTaskCall;
+	      /* Since this is just being used to cleanup the arguments a
+	       * system task definition can be used. */
+	    struct __vpiSysTaskCall*obj = new systask_def;
 	    obj->nargs = argc;
 	    obj->args  = argv;
-	    vpi_call_delete(&obj->base);
+	    vpi_call_delete(obj);
       }
-#endif
 }
 #endif
 

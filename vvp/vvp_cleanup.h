@@ -34,6 +34,7 @@ extern void load_module_delete(void);
 extern void modpath_delete(void);
 extern void root_table_delete(void);
 extern void signal_pool_delete(void);
+extern void simulator_cb_delete(void);
 extern void udp_defns_delete(void);
 extern void vpi_handle_delete(void);
 extern void vpi_stack_delete(void);

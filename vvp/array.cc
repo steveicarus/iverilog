@@ -77,8 +77,8 @@ vvp_array_t array_find(const char*label)
 * an array of vvp_vector4_t vectors.
 *
 * - Array of real variables
-* The valsr member points to a vvp_realarray_t objects that has an
-* array of double variables. This is very much line the way the
+* The vals member points to a dynamic array objects that has an
+* array of double variables. This is very much like the way the
 * vector4 array works.
 */
 struct __vpiArray : public __vpiHandle {
@@ -1074,7 +1074,7 @@ vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
 	    arr->vals->get_word(address, val);
 	    return val;
       }
-	    
+
       assert(arr->vals4 == 0);
       assert(arr->vals == 0);
       assert(arr->nets != 0);
@@ -2038,10 +2038,10 @@ void memory_delete(vpiHandle item)
 // constant_delete(handle)?
       delete arr->vals4;
 
-//      if (arr->valsr) {}
+//      if (arr->vals) {}
 // Delete the individual words?
 // constant_delete(handle)?
-      delete arr->valsr;
+      delete arr->vals;
 
       if (arr->nets) {
 	    for (unsigned idx = 0; idx < arr->array_count; idx += 1) {
