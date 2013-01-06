@@ -2896,3 +2896,8 @@ extern "C" ivl_type_t ivl_type_prop_type(ivl_type_t net, int idx)
 
       return class_type->get_prop_type(idx);
 }
+
+extern "C" int ivl_type_signed(ivl_type_t net)
+{
+      return net->get_signed()? 1 : 0;
+}

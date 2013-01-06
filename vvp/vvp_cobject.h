@@ -21,8 +21,8 @@
 
 # include  <stdint.h>
 # include  "vvp_object.h"
+# include  "class_type.h"
 
-class class_type;
 class vvp_vector4_t;
 
 class vvp_cobject : public vvp_object {
@@ -37,7 +37,7 @@ class vvp_cobject : public vvp_object {
     private:
       const class_type* defn_;
 	// For now, only support 32bit bool signed properties.
-      int32_t*properties_;
+      class_type::inst_t properties_;
 };
 
 #endif

@@ -2232,6 +2232,10 @@ extern unsigned ivl_switch_lineno(ivl_switch_t net);
  *    Return the type of the element of an array. This is only valid
  *    for array types.
  *
+ * ivl_type_signed
+ *    Return TRUE if the type represents a signed packed vector or
+ *    signed atomic type, and FALSE otherwise.
+ *
  * SEMANTIC NOTES
  *
  * Class types have names and properties.
@@ -2241,6 +2245,7 @@ extern ivl_type_t ivl_type_element(ivl_type_t net);
 extern unsigned ivl_type_packed_dimensions(ivl_type_t net);
 extern int ivl_type_packed_lsb(ivl_type_t net, unsigned dim);
 extern int ivl_type_packed_msb(ivl_type_t net, unsigned dim);
+extern int ivl_type_signed(ivl_type_t net);
 extern const char* ivl_type_name(ivl_type_t net);
 extern int         ivl_type_properties(ivl_type_t net);
 extern const char* ivl_type_prop_name(ivl_type_t net, int idx);

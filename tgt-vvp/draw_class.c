@@ -24,10 +24,48 @@
 # include  <assert.h>
 # include  <inttypes.h>
 
+static void show_prop_type_vector(ivl_type_t ptype)
+{
+      ivl_variable_type_t data_type = ivl_type_base(ptype);
+      unsigned packed_dimensions = ivl_type_packed_dimensions(ptype);
+      assert(packed_dimensions < 2);
+
+      char*signed_flag = ivl_type_signed(ptype)? "s" : "";
+      char code = data_type==IVL_VT_BOOL? 'b' : 'L';
+
+      if (packed_dimensions == 0) {
+	    fprintf(vvp_out, "\"%s%c1\"", signed_flag, code);
+
+      } else {
+	    assert(packed_dimensions == 1);
+	    assert(ivl_type_packed_lsb(ptype,0) == 0);
+	    assert(ivl_type_packed_msb(ptype,0) >= 0);
+
+	    fprintf(vvp_out, "\"%s%c%d\"", signed_flag, code,
+		    ivl_type_packed_msb(ptype,0)+1);
+      }
+}
+
 static void show_prop_type(ivl_type_t ptype)
 {
-	// XXXX: For now, assume all properties are 32bit integers.
-      fprintf(vvp_out, "\"b32\"");
+      ivl_variable_type_t data_type = ivl_type_base(ptype);
+
+      switch (data_type) {
+	  case IVL_VT_REAL:
+	    fprintf(vvp_out, "\"r\"");
+	    break;
+	  case IVL_VT_STRING:
+	    fprintf(vvp_out, "\"S\"");
+	    break;
+	  case IVL_VT_BOOL:
+	  case IVL_VT_LOGIC:
+	    show_prop_type_vector(ptype);
+	    break;
+	  default:
+	    assert(0);
+	    fprintf(vvp_out, "\"<ERROR-no-type>\"");
+	    break;
+      }
 }
 
 void draw_class_in_scope(ivl_type_t classtype)

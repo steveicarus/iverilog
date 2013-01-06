@@ -23,12 +23,19 @@
 # include  <vector>
 # include  "vpi_priv.h"
 
+class class_property_t;
+class vvp_vector4_t;
+
 /*
  * This represents the TYPE information for a class. A %new operator
  * uses this information to figure out how to construct an actual
  * instance.
  */
 class class_type : public __vpiHandle {
+
+    public:
+      struct inst_x;
+      typedef inst_x*inst_t;
 
     public:
       explicit class_type(const std::string&nam, size_t nprop);
@@ -41,8 +48,21 @@ class class_type : public __vpiHandle {
 	// Set the details about the property. This is used during
 	// parse of the .vvp file to fill in the details of the
 	// property for the class definition.
-      void set_property(size_t idx, const std::string&name);
+      void set_property(size_t idx, const std::string&name, const std::string&type);
 
+	// This method is called after all the properties are
+	// defined. This calculates information about the defintion.
+      void finish_setup(void);
+
+    public:
+	// Constructures and destructors for making instances.
+      inst_t instance_new() const;
+      void instance_delete(inst_t) const;
+
+      void set_vec4(inst_t inst, size_t pid, const vvp_vector4_t&val) const;
+      void get_vec4(inst_t inst, size_t pid, vvp_vector4_t&val) const;
+
+    public: // VPI related methods
       int get_type_code(void) const;
 
     private:
@@ -50,8 +70,10 @@ class class_type : public __vpiHandle {
 
       struct prop_t {
 	    std::string name;
+	    class_property_t*type;
       };
       std::vector<prop_t> properties_;
+      size_t instance_size_;
 };
 
 #endif
