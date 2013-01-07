@@ -357,6 +357,7 @@ NetEProperty::NetEProperty(NetNet*net, perm_string pnam)
       pidx_ = use_type->property_idx_from_name(pnam);
       ivl_type_t prop_type = use_type->get_prop_type(pidx_);
       expr_width(prop_type->packed_width());
+      cast_signed(prop_type->get_signed());
 }
 
 NetEProperty::~NetEProperty()
