@@ -2711,6 +2711,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		       << " is genvar with value " << scope->genvar_tmp_val
 		       << "." << endl;
 	    verinum val (scope->genvar_tmp_val, expr_wid);
+	    val.has_sign(true);
 	    NetEConst*tmp = new NetEConst(val);
 	    tmp->set_line(*this);
 	    return tmp;
