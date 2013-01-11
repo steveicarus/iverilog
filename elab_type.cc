@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,6 +19,7 @@
 
 # include  "pform_types.h"
 # include  "netlist.h"
+# include  "netscalar.h"
 # include  "netvector.h"
 # include  <typeinfo>
 # include  "ivl_assert.h"
@@ -37,6 +38,12 @@ ivl_type_s* data_type_t::elaborate_type(Design*des, NetScope*) const
 ivl_type_s* atom2_type_t::elaborate_type(Design*des, NetScope*) const
 {
       switch (type_code) {
+	  case 64:
+	    if (signed_flag)
+		  return &netvector_t::atom2s64;
+	    else
+		  return &netvector_t::atom2u64;
+
 	  case 32:
 	    if (signed_flag)
 		  return &netvector_t::atom2s32;
@@ -61,4 +68,15 @@ ivl_type_s* atom2_type_t::elaborate_type(Design*des, NetScope*) const
 	    des->errors += 1;
 	    return 0;
       }
+}
+
+ivl_type_s* real_type_t::elaborate_type(Design*, NetScope*) const
+{
+      switch (type_code) {
+	  case REAL:
+	    return &netreal_t::type_real;
+	  case SHORTREAL:
+	    return &netreal_t::type_shortreal;
+      }
+      return 0;
 }

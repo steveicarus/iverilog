@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -211,8 +211,13 @@ static void show_property_expression(ivl_expr_t net, unsigned ind)
       const char* pnam = ivl_expr_name(net);
       char*signed_flag = ivl_expr_signed(net)? "signed" : "unsigned";
 
-      fprintf(out, "%*s<property base=%s, prop=%s, width=%u, %s>\n", ind, "",
-	      ivl_signal_basename(sig), pnam, ivl_expr_width(net), signed_flag);
+      if (ivl_expr_value(net) == IVL_VT_REAL) {
+	    fprintf(out, "%*s<property base=%s, prop=%s, real>\n", ind, "",
+		    ivl_signal_basename(sig), pnam);
+      } else {
+	    fprintf(out, "%*s<property base=%s, prop=%s, width=%u, %s>\n", ind, "",
+		    ivl_signal_basename(sig), pnam, ivl_expr_width(net), signed_flag);
+      }
       if (ivl_signal_data_type(sig) != IVL_VT_CLASS) {
 	    fprintf(out, "%*sERROR: Property signal must be IVL_VT_CLASS, got %s.\n",
 		    ind+3, "", data_type_string(ivl_signal_data_type(sig)));

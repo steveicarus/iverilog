@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -181,6 +181,13 @@ struct vthread_s {
 	    stack_obj_size_ -= 1;
 	    obj = stack_obj_[stack_obj_size_];
 	    stack_obj_[stack_obj_size_].reset(0);
+      }
+      inline void pop_object(unsigned cnt)
+      {
+	    assert(cnt <= stack_obj_size_);
+	    for (size_t idx = stack_obj_size_-cnt ; idx < stack_obj_size_ ; idx += 1)
+		  stack_obj_[idx].reset(0);
+	    stack_obj_size_ -= cnt;
       }
       inline void push_object(const vvp_object_t&obj)
       {
@@ -4415,6 +4422,16 @@ bool of_NOR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %pop/obj <number>
+ */
+bool of_POP_OBJ(vthread_t thr, vvp_code_t cp)
+{
+      unsigned cnt = cp->number;
+      thr->pop_object(cnt);
+      return true;
+}
+
+/*
  * %pop/real <number>
  */
 bool of_POP_REAL(vthread_t thr, vvp_code_t cp)
@@ -4512,6 +4529,25 @@ bool of_POW_WR(vthread_t thr, vvp_code_t)
       double r = thr->pop_real();
       double l = thr->pop_real();
       thr->push_real(pow(l,r));
+
+      return true;
+}
+
+/*
+ * %prop/r <pid>
+ *
+ * Load a real value from the cobject and push it onto the real value
+ * stack.
+ */
+bool of_PROP_R(vthread_t thr, vvp_code_t cp)
+{
+      unsigned pid = cp->number;
+
+      vvp_object_t&obj = thr->peek_object();
+      vvp_cobject*cobj = obj.peek<vvp_cobject>();
+
+      double val = cobj->get_real(pid);
+      thr->push_real(val);
 
       return true;
 }
@@ -5053,6 +5089,27 @@ bool of_STORE_OBJ(vthread_t thr, vvp_code_t cp)
       thr->pop_object(val);
 
       vvp_send_object(ptr, val, thr->wt_context);
+
+      return true;
+}
+
+/*
+ * %store/prop/r <id>
+ *
+ * Pop a real value from the real stack, and store the value into the
+ * property of the object references by the top of the stack. Do NOT
+ * pop the object stack.
+ */
+bool of_STORE_PROP_R(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      double val = thr->pop_real();
+
+      vvp_object_t&obj = thr->peek_object();
+      vvp_cobject*cobj = obj.peek<vvp_cobject>();
+      assert(cobj);
+
+      cobj->set_real(pid, val);
 
       return true;
 }

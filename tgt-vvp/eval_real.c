@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -163,6 +163,15 @@ static void draw_number_real(ivl_expr_t expr)
 
       fprintf(vvp_out, "    %%pushi/real %lu, %d; load(num)= %c%lu (wid=%u)\n",
 	      mant, vexp, (vexp&0x4000)? '-' : '+', mant, wid);
+}
+
+static void draw_property_real(ivl_expr_t expr)
+{
+      ivl_signal_t sig = ivl_expr_signal(expr);
+      unsigned pidx = ivl_expr_property_idx(expr);
+
+      fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+      fprintf(vvp_out, "    %%prop/r %u;\n", pidx);
 }
 
 static void draw_realnum_real(ivl_expr_t expr)
@@ -501,6 +510,10 @@ void draw_eval_real(ivl_expr_t expr)
 
 	  case IVL_EX_NUMBER:
 	    draw_number_real(expr);
+	    break;
+
+	  case IVL_EX_PROPERTY:
+	    draw_property_real(expr);
 	    break;
 
 	  case IVL_EX_REALNUM:

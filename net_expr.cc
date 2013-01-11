@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -362,6 +362,15 @@ NetEProperty::NetEProperty(NetNet*net, perm_string pnam)
 
 NetEProperty::~NetEProperty()
 {
+}
+
+ivl_variable_type_t NetEProperty::expr_type() const
+{
+      const netclass_t*use_type = dynamic_cast<const netclass_t*>(net_->net_type());
+      assert(use_type);
+
+      ivl_type_t prop_type = use_type->get_prop_type(pidx_);
+      return prop_type->base_type();
 }
 
 NetESelect::NetESelect(NetExpr*exp, NetExpr*base, unsigned wid,

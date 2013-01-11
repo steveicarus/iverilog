@@ -1,7 +1,7 @@
 #ifndef __class_type_H
 #define __class_type_H
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -61,6 +61,8 @@ class class_type : public __vpiHandle {
 
       void set_vec4(inst_t inst, size_t pid, const vvp_vector4_t&val) const;
       void get_vec4(inst_t inst, size_t pid, vvp_vector4_t&val) const;
+      void set_real(inst_t inst, size_t pid, double val) const;
+      double get_real(inst_t inst, size_t pid) const;
 
     public: // VPI related methods
       int get_type_code(void) const;

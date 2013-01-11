@@ -1,7 +1,7 @@
 #ifndef __netlist_H
 #define __netlist_H
 /*
- * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -3945,6 +3945,8 @@ class NetEProperty : public NetExpr {
       inline const NetNet* get_sig() const { return net_; }
       inline size_t property_idx() const { return pidx_; }
 
+    public: // Overridden methods
+      ivl_variable_type_t expr_type() const;
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEProperty* dup_expr() const;
       virtual NexusSet* nex_input(bool rem_out = true);

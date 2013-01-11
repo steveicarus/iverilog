@@ -1,5 +1,7 @@
+#ifndef __netscalar_H
+#define __netscalar_H
 /*
- * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,40 +19,19 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include  "vvp_cobject.h"
-# include  "class_type.h"
-# include  <iostream>
-# include  <cassert>
+# include  "nettypes.h"
 
-using namespace std;
+class netreal_t : public ivl_type_s {
 
-vvp_cobject::vvp_cobject(const class_type*defn)
-: defn_(defn), properties_(defn->instance_new())
-{
-}
+    public:
+      inline explicit netreal_t() { }
+      ~netreal_t();
 
-vvp_cobject::~vvp_cobject()
-{
-      defn_->instance_delete(properties_);
-      properties_ = 0;
-}
+      ivl_variable_type_t base_type() const;
 
-void vvp_cobject::set_vec4(size_t pid, const vvp_vector4_t&val)
-{
-      defn_->set_vec4(properties_, pid, val);
-}
+    public:
+      static netreal_t type_real;
+      static netreal_t type_shortreal;
+};
 
-void vvp_cobject::get_vec4(size_t pid, vvp_vector4_t&val)
-{
-      defn_->get_vec4(properties_, pid, val);
-}
-
-void vvp_cobject::set_real(size_t pid, double val)
-{
-      defn_->set_real(properties_, pid, val);
-}
-
-double vvp_cobject::get_real(size_t pid)
-{
-      return defn_->get_real(properties_, pid);
-}
+#endif

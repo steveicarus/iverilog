@@ -1,7 +1,7 @@
 #ifndef __vvp_cobject_H
 #define __vvp_cobject_H
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,6 +33,9 @@ class vvp_cobject : public vvp_object {
 
       void set_vec4(size_t pid, const vvp_vector4_t&val);
       void get_vec4(size_t pid, vvp_vector4_t&val);
+
+      void set_real(size_t pid, double val);
+      double get_real(size_t pid);
 
     private:
       const class_type* defn_;

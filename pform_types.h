@@ -1,7 +1,7 @@
 #ifndef __pform_types_H
 #define __pform_types_H
 /*
- * Copyright (c) 2007-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -174,6 +174,8 @@ struct real_type_t : public data_type_t {
       enum type_t { REAL, SHORTREAL };
       inline explicit real_type_t(type_t tc) : type_code(tc) { }
       type_t type_code;
+
+      ivl_type_s* elaborate_type(Design*des, NetScope*scope) const;
 };
 
 struct string_type_t : public data_type_t {

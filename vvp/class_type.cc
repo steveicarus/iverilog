@@ -50,6 +50,9 @@ class class_property_t {
       virtual void set_vec4(char*buf, const vvp_vector4_t&val);
       virtual void get_vec4(char*buf, vvp_vector4_t&val);
 
+      virtual void set_real(char*buf, double val);
+      virtual double get_real(char*buf);
+
     protected:
       size_t offset_;
 };
@@ -76,6 +79,17 @@ void class_property_t::get_vec4(char*, vvp_vector4_t&)
       assert(0);
 }
 
+void class_property_t::set_real(char*, double)
+{
+      assert(0);
+}
+
+double class_property_t::get_real(char*)
+{
+      assert(0);
+      return 0.0;
+}
+
 /*
  */
 template <class T> class property_atom : public class_property_t {
@@ -91,26 +105,58 @@ template <class T> class property_atom : public class_property_t {
 	*tmp = 0;
       }
 
-      void set_vec4(char*buf, const vvp_vector4_t&val)
-      {
-	    T*tmp = reinterpret_cast<T*> (buf+offset_);
-	    bool flag = vector4_to_value(val, *tmp, true, false);
-	    assert(flag);
-      }
-
-      void get_vec4(char*buf, vvp_vector4_t&val)
-      {
-	    T*src = reinterpret_cast<T*> (buf+offset_);
-	    const size_t tmp_cnt = (sizeof(T) + sizeof(unsigned long)-1)/sizeof(unsigned long);
-	    unsigned long tmp[tmp_cnt];
-	    tmp[0] = src[0];
-	    for (size_t idx = 1 ; idx < tmp_cnt ; idx += 1)
-		  tmp[idx] = 0;
-
-	    val.resize(8*sizeof(T));
-	    val.setarray(0, val.size(), tmp);
-      }
+      void set_vec4(char*buf, const vvp_vector4_t&val);
+      void get_vec4(char*buf, vvp_vector4_t&val);
 };
+
+template <class T> class property_real : public class_property_t {
+    public:
+      inline explicit property_real(void) { }
+      ~property_real() { }
+
+      size_t instance_size() const { return sizeof(T); }
+
+    public:
+      void construct(char*buf) const
+      { T*tmp = reinterpret_cast<T*> (buf+offset_);
+	*tmp = 0.0;
+      }
+
+      void set_real(char*buf, double val);
+      double get_real(char*buf);
+};
+
+template <class T> void property_atom<T>::set_vec4(char*buf, const vvp_vector4_t&val)
+{
+      T*tmp = reinterpret_cast<T*> (buf+offset_);
+      bool flag = vector4_to_value(val, *tmp, true, false);
+      assert(flag);
+}
+
+template <class T> void property_atom<T>::get_vec4(char*buf, vvp_vector4_t&val)
+{
+      T*src = reinterpret_cast<T*> (buf+offset_);
+      const size_t tmp_cnt = (sizeof(T) + sizeof(unsigned long)-1)/sizeof(unsigned long);
+      unsigned long tmp[tmp_cnt];
+      tmp[0] = src[0];
+      for (size_t idx = 1 ; idx < tmp_cnt ; idx += 1)
+	    tmp[idx] = 0;
+
+      val.resize(8*sizeof(T));
+      val.setarray(0, val.size(), tmp);
+}
+
+template <class T> void property_real<T>::set_real(char*buf, double val)
+{
+      T*tmp = reinterpret_cast<T*>(buf+offset_);
+      *tmp = val;
+}
+
+template <class T> double property_real<T>::get_real(char*buf)
+{
+      T*tmp = reinterpret_cast<T*>(buf+offset_);
+      return *tmp;
+}
 
 /* **** */
 
@@ -141,6 +187,8 @@ void class_type::set_property(size_t idx, const string&name, const string&type)
 	    properties_[idx].type = new property_atom<int32_t>;
       else if (type == "sb64")
 	    properties_[idx].type = new property_atom<int64_t>;
+      else if (type == "r")
+	    properties_[idx].type = new property_real<double>;
       else
 	    properties_[idx].type = 0;
 }
@@ -152,6 +200,7 @@ void class_type::finish_setup(void)
 	// figures out how much memory a complete instance will need.
       size_t accum = 0;
       for (size_t idx = 0 ; idx < properties_.size() ; idx += 1) {
+	    assert(properties_[idx].type);
 	    size_t instance_size = properties_[idx].type->instance_size();
 	    accum += instance_size;
 	    size_map[instance_size].push_back(idx);
@@ -209,6 +258,21 @@ void class_type::get_vec4(class_type::inst_t obj, size_t pid,
       char*buf = reinterpret_cast<char*> (obj);
       assert(pid < properties_.size());
       properties_[pid].type->get_vec4(buf, val);
+}
+
+void class_type::set_real(class_type::inst_t obj, size_t pid,
+			  double val) const
+{
+      char*buf = reinterpret_cast<char*> (obj);
+      assert(pid < properties_.size());
+      properties_[pid].type->set_real(buf, val);
+}
+
+double class_type::get_real(class_type::inst_t obj, size_t pid) const
+{
+      char*buf = reinterpret_cast<char*> (obj);
+      assert(pid < properties_.size());
+      return properties_[pid].type->get_real(buf);
 }
 
 int class_type::get_type_code(void) const
