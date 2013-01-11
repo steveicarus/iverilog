@@ -902,6 +902,32 @@ double real_from_vpi_value(s_vpi_value*vp)
       return result;
 }
 
+void vpip_string_get_value(const string&val, s_vpi_value*vp)
+{
+      char *rbuf = 0;
+
+      switch (vp->format) {
+	  default:
+	    fprintf(stderr, "sorry: Format %d not implemented for "
+	                    "getting string values.\n", (int)vp->format);
+	    assert(0);
+
+	  case vpiSuppressVal:
+	    break;
+
+	  case vpiObjTypeVal:
+	    // Use the following case to actually set the value!
+	    vp->format = vpiStringVal;
+
+	  case vpiStringVal:
+	    rbuf = need_result_buf(val.size() + 1, RBUF_VAL);
+	    strcpy(rbuf, val.c_str());
+	    vp->value.str = rbuf;
+	    break;
+      }
+}
+
+
 void vpi_get_value(vpiHandle expr, s_vpi_value*vp)
 {
       assert(expr);

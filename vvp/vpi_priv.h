@@ -771,6 +771,7 @@ extern void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 extern void vpip_vec2_get_value(const vvp_vector2_t&word_val, unsigned width,
 				bool signed_flag, s_vpi_value*vp);
 extern void vpip_real_get_value(double real, s_vpi_value*vp);
+extern void vpip_string_get_value(const std::string&val, s_vpi_value*vp);
 
 /*
  * Function defined in vpi_signal.cc to manage vpi_get_* persistent

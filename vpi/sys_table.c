@@ -35,7 +35,6 @@ extern void sys_queue_register();
 extern void sys_random_register();
 extern void sys_random_mti_register();
 extern void sys_readmem_register();
-extern void sys_string_register();
 extern void sys_scanf_register();
 extern void sys_sdf_register();
 extern void sys_time_register();
@@ -210,7 +209,6 @@ void (*vlog_startup_routines[])() = {
       sys_random_mti_register,
       sys_readmem_register,
       sys_scanf_register,
-      sys_string_register,
       sys_time_register,
       sys_lxt_or_vcd_register,
       sys_sdf_register,

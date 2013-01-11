@@ -18,6 +18,7 @@
  */
 
 # include  "vvp_priv.h"
+# include  <string.h>
 # include  <assert.h>
 
 static void fallback_eval(ivl_expr_t expr)
@@ -63,12 +64,25 @@ static void string_ex_signal(ivl_expr_t expr)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
 
-      if (ivl_signal_data_type(sig) == IVL_VT_STRING) {
+      if (ivl_signal_data_type(sig) != IVL_VT_STRING) {
+	    fallback_eval(expr);
+	    return;
+      }
+
+	/* Simple case: This is a simple variable. Generate a load
+	   statement to load the string into the stack. */
+      if (ivl_signal_dimensions(sig) == 0) {
 	    fprintf(vvp_out, "    %%load/str v%p_0;\n", sig);
 	    return;
       }
 
-      fallback_eval(expr);
+	/* There is a word select expression, so load the index into a
+	   register and load from the array. */
+      ivl_expr_t word_ex = ivl_expr_oper1(expr);
+      int word_ix = allocate_word();
+      draw_eval_expr_into_integer(word_ex, word_ix);
+      fprintf(vvp_out, "    %%load/stra v%p, %d;\n", sig, word_ix);
+      clr_word(word_ix);
 }
 
 static void string_ex_select(ivl_expr_t expr)
@@ -84,6 +98,30 @@ static void string_ex_select(ivl_expr_t expr)
 
       draw_eval_expr_into_integer(shift, 3);
       fprintf(vvp_out, "    %%load/dar/str v%p_0;\n", sig);
+}
+
+static void string_ex_substr(ivl_expr_t expr)
+{
+      ivl_expr_t arg;
+      unsigned arg1;
+      unsigned arg2;
+      assert(ivl_expr_parms(expr) == 3);
+
+      arg = ivl_expr_parm(expr,0);
+      draw_eval_string(arg);
+
+	/* Evaluate the arguments... */
+      arg = ivl_expr_parm(expr, 1);
+      arg1 = allocate_word();
+      draw_eval_expr_into_integer(arg, arg1);
+
+      arg = ivl_expr_parm(expr, 2);
+      arg2 = allocate_word();
+      draw_eval_expr_into_integer(arg, arg2);
+
+      fprintf(vvp_out, "    %%substr %u, %u;\n", arg1, arg2);
+      clr_word(arg1);
+      clr_word(arg2);
 }
 
 void draw_eval_string(ivl_expr_t expr)
@@ -104,6 +142,13 @@ void draw_eval_string(ivl_expr_t expr)
 
 	  case IVL_EX_SELECT:
 	    string_ex_select(expr);
+	    break;
+
+	  case IVL_EX_SFUNC:
+	    if (strcmp(ivl_expr_name(expr), "$ivl_string_method$substr") == 0)
+		  string_ex_substr(expr);
+	    else
+		  fallback_eval(expr);
 	    break;
 
 	  default:

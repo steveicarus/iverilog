@@ -475,6 +475,7 @@ static void draw_reg_in_scope(ivl_signal_t sig)
       const char *datatype_flag = ivl_signal_integer(sig) ? "/i" :
 			       ivl_signal_signed(sig)? "/s" : "";
       const char *local_flag = local_flag_str(sig);
+      int vector_dims = 1;
 
       switch (ivl_signal_data_type(sig)) {
 	  case IVL_VT_BOOL:
@@ -485,6 +486,11 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 	    break;
 	  case IVL_VT_REAL:
 	    datatype_flag = "/real";
+	    vector_dims = 0;
+	    break;
+	  case IVL_VT_STRING:
+	    datatype_flag = "/str";
+	    vector_dims = 0;
 	    break;
 	  default:
 	    break;
@@ -492,7 +498,20 @@ static void draw_reg_in_scope(ivl_signal_t sig)
 
 	/* If the reg objects are collected into an array, then first
 	   write out the .array record to declare the array indices. */
-      if (ivl_signal_dimensions(sig) > 0) {
+      if (ivl_signal_dimensions(sig) > 0 && vector_dims==0) {
+
+              /* Some types cannot be placed in packed dimensions, so
+		 do not include packed dimensions. */
+	    unsigned word_count = ivl_signal_array_count(sig);
+	    unsigned swapped = ivl_signal_array_addr_swapped(sig);
+	    int last = ivl_signal_array_base(sig)+word_count-1;
+	    int first = ivl_signal_array_base(sig);
+	    fprintf(vvp_out, "v%p .array%s \"%s\", %d %d;\n",
+		    sig, datatype_flag,
+		    vvp_mangle_name(ivl_signal_basename(sig)),
+		    swapped ? first: last, swapped ? last : first);
+
+      } else if (ivl_signal_dimensions(sig) > 0) {
 	    unsigned word_count = ivl_signal_array_count(sig);
 	    unsigned swapped = ivl_signal_array_addr_swapped(sig);
 	    int last = ivl_signal_array_base(sig)+word_count-1;

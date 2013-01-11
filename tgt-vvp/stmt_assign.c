@@ -730,6 +730,7 @@ static int show_stmt_assign_sig_string(ivl_statement_t net)
       ivl_lval_t lval = ivl_stmt_lval(net, 0);
       ivl_expr_t rval = ivl_stmt_rval(net);
       ivl_expr_t part = ivl_lval_part_off(lval);
+      ivl_expr_t aidx = ivl_lval_idx(lval);
       ivl_signal_t var= ivl_lval_sig(lval);
 
       assert(ivl_stmt_lvals(net) == 1);
@@ -739,9 +740,21 @@ static int show_stmt_assign_sig_string(ivl_statement_t net)
 	/* Simplest case: no mux. Evaluate the r-value as a string and
 	   store the result into the variable. Note that the
 	   %store/str opcode pops the string result. */
-      if (part == 0) {
+      if (part == 0 && aidx == 0) {
 	    draw_eval_string(rval);
 	    fprintf(vvp_out, "    %%store/str v%p_0;\n", var);
+	    return 0;
+      }
+
+	/* Assign to array. The l-value has an index expression
+	   expression so we are assigning to an array word. */
+      if (aidx != 0) {
+	    unsigned ix;
+	    assert(part == 0);
+	    draw_eval_string(rval);
+	    draw_eval_expr_into_integer(aidx, (ix = allocate_word()));
+	    fprintf(vvp_out, "    %%store/stra v%p, %u;\n", var, ix);
+	    clr_word(ix);
 	    return 0;
       }
 

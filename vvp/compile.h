@@ -348,8 +348,9 @@ extern void compile_var2_array(char*label, char*name,
 			      int last, int first,
 			      int msb, int lsb, bool signed_flag);
 extern void compile_real_array(char*label, char*name,
-			       int last, int first,
-			       int msb, int lsb);
+			       int last, int first);
+extern void compile_string_array(char*label, char*name,
+				 int last, int first);
 extern void compile_net_array(char*label, char*name,
 			      int last, int first);
 extern void compile_array_alias(char*label, char*name, char*src);

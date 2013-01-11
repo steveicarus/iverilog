@@ -1675,7 +1675,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 }
 
 static NetExpr* check_for_class_property(const LineInfo*li,
-					 Design*des, NetScope*scope,
+					 Design*des, NetScope*,
 					 NetNet*net,
 					 const name_component_t&comp)
 {
@@ -1883,6 +1883,28 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$len",
 						     IVL_VT_BOOL, 32, 1);
 		  sys_expr->parm(0, new NetESignal(net));
+		  return sys_expr;
+	    }
+
+	    if (method_name == "substr") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_string_method$substr",
+						     IVL_VT_STRING, 1, 3);
+		  sys_expr->set_line(*this);
+
+		    // First argument is the source string.
+		  sys_expr->parm(0, new NetESignal(net));
+
+		  ivl_assert(*this, parms_.size() == 2);
+		  NetExpr*tmp;
+
+		  tmp = elaborate_rval_expr(des, scope, IVL_VT_BOOL,
+					    32, parms_[0], false);
+		  sys_expr->parm(1, tmp);
+
+		  tmp = elaborate_rval_expr(des, scope, IVL_VT_BOOL,
+					    32, parms_[1], false);
+		  sys_expr->parm(2, tmp);
+
 		  return sys_expr;
 	    }
       }
@@ -2544,9 +2566,9 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       NetEvent*     eve = 0;
       const NetExpr*ex1, *ex2;
 
-      NetScope*found_in = symbol_search(this, des, scope, path_,
-					net, par, eve,
-					ex1, ex2);
+      /* NetScope*found_in = */ symbol_search(this, des, scope, path_,
+					      net, par, eve,
+					      ex1, ex2);
 
       if (net == 0) {
 	    cerr << get_fileline() << ": internal error: "
