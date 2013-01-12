@@ -1234,6 +1234,8 @@ void array_attach_word(vvp_array_t array, unsigned addr, vpiHandle word)
 	    sig->is_netarray = 1;
 	    sig->within.parent = array;
 	    sig->id.index = new __vpiDecConst(addr + array->first_addr.value);
+	      // Now we know the data type, update the array signed_flag.
+	    array->signed_flag = sig->signed_flag;
 	    return;
       }
 
@@ -1246,6 +1248,8 @@ void array_attach_word(vvp_array_t array, unsigned addr, vpiHandle word)
 	    sig->is_netarray = 1;
 	    sig->within.parent = array;
 	    sig->id.index = new __vpiDecConst(addr + array->first_addr.value);
+	      // Now we know the data type, update the array signed_flag.
+	    array->signed_flag = true;
 	    return;
       }
 }
@@ -1353,6 +1357,9 @@ void compile_string_array(char*label, char*name, int last, int first)
 
 void compile_net_array(char*label, char*name, int last, int first)
 {
+	// At this point we don't know the array data type, so we
+	// initialise signed_flag to false. This will be corrected
+	// (if necessary) when we attach words to the array.
       vpiHandle obj = vpip_make_array(label, name, first, last, false);
 
       struct __vpiArray*arr = dynamic_cast<__vpiArray*>(obj);
