@@ -34,4 +34,16 @@ class netreal_t : public ivl_type_s {
       static netreal_t type_shortreal;
 };
 
+class netstring_t : public ivl_type_s {
+
+    public:
+      inline explicit netstring_t() { }
+      ~netstring_t();
+
+      ivl_variable_type_t base_type() const;
+
+    public:
+      static netstring_t type_string;
+};
+
 #endif

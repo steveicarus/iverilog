@@ -869,6 +869,16 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		  fprintf(vvp_out, "    %%store/prop/r %d;\n", prop_idx);
 		  fprintf(vvp_out, "    %%pop/obj 1;\n");
 
+	    } else if (ivl_type_base(prop_type) == IVL_VT_STRING) {
+
+		    /* Calculate the real value into the real value
+		       stack. The %store/prop/r will pop the stack
+		       value. */
+		  draw_eval_string(rval);
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+		  fprintf(vvp_out, "    %%store/prop/str %d;\n", prop_idx);
+		  fprintf(vvp_out, "    %%pop/obj 1;\n");
+
 	    } else {
 		  assert(0);
 	    }

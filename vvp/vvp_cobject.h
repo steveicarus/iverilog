@@ -19,6 +19,7 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+# include  <string>
 # include  <stdint.h>
 # include  "vvp_object.h"
 # include  "class_type.h"
@@ -36,6 +37,9 @@ class vvp_cobject : public vvp_object {
 
       void set_real(size_t pid, double val);
       double get_real(size_t pid);
+
+      void set_string(size_t pid, const std::string&val);
+      std::string get_string(size_t pid);
 
     private:
       const class_type* defn_;

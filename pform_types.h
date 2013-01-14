@@ -181,6 +181,8 @@ struct real_type_t : public data_type_t {
 struct string_type_t : public data_type_t {
       inline explicit string_type_t() { }
       ~string_type_t();
+
+      ivl_type_s* elaborate_type(Design*des, NetScope*scope) const;
 };
 
 struct class_type_t : public data_type_t {

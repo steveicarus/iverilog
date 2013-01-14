@@ -80,3 +80,8 @@ ivl_type_s* real_type_t::elaborate_type(Design*, NetScope*) const
       }
       return 0;
 }
+
+ivl_type_s* string_type_t::elaborate_type(Design*, NetScope*) const
+{
+      return &netstring_t::type_string;
+}

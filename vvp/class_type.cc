@@ -53,6 +53,9 @@ class class_property_t {
       virtual void set_real(char*buf, double val);
       virtual double get_real(char*buf);
 
+      virtual void set_string(char*buf, const std::string&val);
+      virtual string get_string(char*buf);
+
     protected:
       size_t offset_;
 };
@@ -88,6 +91,17 @@ double class_property_t::get_real(char*)
 {
       assert(0);
       return 0.0;
+}
+
+void class_property_t::set_string(char*, const string&)
+{
+      assert(0);
+}
+
+string class_property_t::get_string(char*)
+{
+      assert(0);
+      return "";
 }
 
 /*
@@ -126,6 +140,26 @@ template <class T> class property_real : public class_property_t {
       double get_real(char*buf);
 };
 
+class property_string : public class_property_t {
+    public:
+      inline explicit property_string(void) { }
+      ~property_string() { }
+
+      size_t instance_size() const { return sizeof(std::string); }
+
+    public:
+      void construct(char*buf) const
+      { /* string*tmp = */ new (buf+offset_) string; }
+
+      void destruct(char*buf) const
+      { string*tmp = reinterpret_cast<string*> (buf+offset_);
+	tmp->~string();
+      }
+
+      void set_string(char*buf, const string&);
+      string get_string(char*buf);
+};
+
 template <class T> void property_atom<T>::set_vec4(char*buf, const vvp_vector4_t&val)
 {
       T*tmp = reinterpret_cast<T*> (buf+offset_);
@@ -155,6 +189,18 @@ template <class T> void property_real<T>::set_real(char*buf, double val)
 template <class T> double property_real<T>::get_real(char*buf)
 {
       T*tmp = reinterpret_cast<T*>(buf+offset_);
+      return *tmp;
+}
+
+void property_string::set_string(char*buf, const string&val)
+{
+      string*tmp = reinterpret_cast<string*>(buf+offset_);
+      *tmp = val;
+}
+
+string property_string::get_string(char*buf)
+{
+      string*tmp = reinterpret_cast<string*>(buf+offset_);
       return *tmp;
 }
 
@@ -189,6 +235,8 @@ void class_type::set_property(size_t idx, const string&name, const string&type)
 	    properties_[idx].type = new property_atom<int64_t>;
       else if (type == "r")
 	    properties_[idx].type = new property_real<double>;
+      else if (type == "S")
+	    properties_[idx].type = new property_string;
       else
 	    properties_[idx].type = 0;
 }
@@ -273,6 +321,21 @@ double class_type::get_real(class_type::inst_t obj, size_t pid) const
       char*buf = reinterpret_cast<char*> (obj);
       assert(pid < properties_.size());
       return properties_[pid].type->get_real(buf);
+}
+
+void class_type::set_string(class_type::inst_t obj, size_t pid,
+			    const string&val) const
+{
+      char*buf = reinterpret_cast<char*> (obj);
+      assert(pid < properties_.size());
+      properties_[pid].type->set_string(buf, val);
+}
+
+string class_type::get_string(class_type::inst_t obj, size_t pid) const
+{
+      char*buf = reinterpret_cast<char*> (obj);
+      assert(pid < properties_.size());
+      return properties_[pid].type->get_string(buf);
 }
 
 int class_type::get_type_code(void) const

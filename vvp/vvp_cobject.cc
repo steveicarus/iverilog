@@ -54,3 +54,13 @@ double vvp_cobject::get_real(size_t pid)
 {
       return defn_->get_real(properties_, pid);
 }
+
+void vvp_cobject::set_string(size_t pid, const string&val)
+{
+      defn_->set_string(properties_, pid, val);
+}
+
+string vvp_cobject::get_string(size_t pid)
+{
+      return defn_->get_string(properties_, pid);
+}

@@ -214,6 +214,9 @@ static void show_property_expression(ivl_expr_t net, unsigned ind)
       if (ivl_expr_value(net) == IVL_VT_REAL) {
 	    fprintf(out, "%*s<property base=%s, prop=%s, real>\n", ind, "",
 		    ivl_signal_basename(sig), pnam);
+      } else if (ivl_expr_value(net) == IVL_VT_STRING) {
+	    fprintf(out, "%*s<property base=%s, prop=%s, string>\n", ind, "",
+		    ivl_signal_basename(sig), pnam);
       } else {
 	    fprintf(out, "%*s<property base=%s, prop=%s, width=%u, %s>\n", ind, "",
 		    ivl_signal_basename(sig), pnam, ivl_expr_width(net), signed_flag);

@@ -4553,6 +4553,25 @@ bool of_PROP_R(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %prop/str <pid>
+ *
+ * Load a string value from the cobject and push it onto the real value
+ * stack.
+ */
+bool of_PROP_STR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned pid = cp->number;
+
+      vvp_object_t&obj = thr->peek_object();
+      vvp_cobject*cobj = obj.peek<vvp_cobject>();
+
+      string val = cobj->get_string(pid);
+      thr->push_str(val);
+
+      return true;
+}
+
+/*
  * %prop/v <pid> <base> <wid>
  *
  * Load a property <id> from the cobject on the top of the stack into
@@ -5110,6 +5129,27 @@ bool of_STORE_PROP_R(vthread_t thr, vvp_code_t cp)
       assert(cobj);
 
       cobj->set_real(pid, val);
+
+      return true;
+}
+
+/*
+ * %store/prop/str <id>
+ *
+ * Pop a string value from the string stack, and store the value into
+ * the property of the object references by the top of the stack. Do NOT
+ * pop the object stack.
+ */
+bool of_STORE_PROP_STR(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      string val = thr->pop_str();
+
+      vvp_object_t&obj = thr->peek_object();
+      vvp_cobject*cobj = obj.peek<vvp_cobject>();
+      assert(cobj);
+
+      cobj->set_string(pid, val);
 
       return true;
 }

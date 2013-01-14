@@ -890,9 +890,11 @@ the result.
 
 * %prop/v <pid>, <base>, <wid>
 * %prop/r <pid>
+* %prop/str <pid>
 
-Write the vector (/v) or real value (/r) into property number <pid> of
-the class object on the top of the object stack. The real value is popped.
+Write the vector (/v) or real value (/r) or string (/str) into
+property number <pid> of the class object on the top of the object
+stack. The real value is popped.
 
 The class object stack is NOT popped.
 
@@ -1015,6 +1017,7 @@ variable given by the label.
 See also %load/obj.
 
 * %store/prop/r <index>
+* %store/prop/str <index>
 * %store/prop/v <index>, <bit>, <wid>
 
 The %store/prop/r pops a real value from the real stack and stores it
