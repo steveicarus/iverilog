@@ -1858,6 +1858,7 @@ void PGModule::elaborate_udp_(Design*des, PUdp*udp, NetScope*scope) const
 	    if (pins[idx] == 0)
 		  continue;
 
+	    probe_expr_width(des, scope, pins[idx]);
 	    NetExpr*expr_tmp = elab_and_eval(des, scope, pins[idx], 1, 1);
 	    if (expr_tmp == 0) {
 		  cerr << "internal error: Expression too complicated "
