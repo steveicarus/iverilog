@@ -186,7 +186,7 @@ ifeq (@WIN32@,yes)
 ivl@EXEEXT@: $O $(srcdir)/ivl.def
 	$(CXX) -o ivl@EXEEXT@ $O $(dllib) @EXTRALIBS@
 	$(DLLTOOL) --dllname ivl@EXEEXT@ --def $(srcdir)/ivl.def \
-	 	--output-lib libivl.a --output-exp ivl.exp
+		--output-lib libivl.a --output-exp ivl.exp
 	$(CXX) $(LDFLAGS) -o ivl@EXEEXT@ ivl.exp $O $(dllib) @EXTRALIBS@
 else
 ivl@EXEEXT@: $O

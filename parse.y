@@ -2636,7 +2636,7 @@ var_type
 	;
 
 param_type
-  : 
+  :
       { param_active_range = 0;
 	param_active_signed = false;
 	param_active_type = IVL_VT_LOGIC;
@@ -2687,7 +2687,7 @@ param_type
       }
   ;
 
-  /* parameter and localparam assignment lists are broken into 
+  /* parameter and localparam assignment lists are broken into
      separate BNF so that I can call slightly different parameter
      handling code. localparams parse the same as parameters, they
      just behave differently when someone tries to override them. */
