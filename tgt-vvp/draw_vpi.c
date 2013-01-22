@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -404,6 +404,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  args[idx].real_flag = 1;
 		  args[idx].stack = real_stack_need;
 		  real_stack_need += 1;
+		  buffer[0] = 0;
 		  break;
 		case IVL_VT_STRING:
 		    /* Eval the string into the stack, and tell VPI
