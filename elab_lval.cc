@@ -361,7 +361,7 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 		       << reg->name();
 		  if (reg->array_dimensions() > 0) cerr << "[]";
 		  cerr << " has an undefined index." << endl;
- 
+
 		  lv->set_part(new NetEConst(verinum(verinum::Vx)), 1);
 		  return true;
 	    }
