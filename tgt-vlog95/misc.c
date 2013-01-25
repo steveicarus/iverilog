@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2013 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -281,14 +281,12 @@ static int64_t get_valid_int64_from_number(ivl_expr_t expr, int *rtype,
 	                    ivl_expr_file(expr), ivl_expr_lineno(expr),
 	                    msg, *rtype);
 	    vlog_errors += 1;
-	    return 0;
       } else if (*rtype < 0) {
 	    fprintf(vlog_out, "<invalid>");
 	    fprintf(stderr, "%s:%u: vlog95 error: Scaled %s has an undefined "
 	                    "bit and cannot be represented.\n",
 	                    ivl_expr_file(expr), ivl_expr_lineno(expr), msg);
 	    vlog_errors += 1;
-	    return 0;
       }
       return value;
 }
@@ -350,22 +348,35 @@ static unsigned is_scaled_expr(ivl_expr_t expr, int msb, int lsb)
       return 1;
 }
 
+static int64_t get_in_range_int64_from_number(ivl_expr_t expr, int *rtype,
+                                              const char *msg)
+{
+      int64_t value = get_int64_from_number(expr, rtype);
+      if (*rtype > 0) {
+	    fprintf(vlog_out, "<invalid>");
+	    fprintf(stderr, "%s:%u: vlog95 error: Scaled %s is greater than "
+	                    "64 bits (%d) and cannot be safely represented.\n",
+	                    ivl_expr_file(expr), ivl_expr_lineno(expr),
+	                    msg, *rtype);
+	    vlog_errors += 1;
+      }
+      return value;
+}
+
 void emit_scaled_range(ivl_scope_t scope, ivl_expr_t expr, unsigned width,
                        int msb, int lsb)
 {
+      int rtype;
+      int64_t value = get_in_range_int64_from_number(expr, &rtype,
+                                                     "range value");
+      if (rtype < 0) fprintf(vlog_out, "[1'bx:1'bx]");
+      if (rtype) return;
+
       if (msb >= lsb) {
-	    int rtype;
-	    int64_t value = get_valid_int64_from_number(expr, &rtype,
-	                                               "range value");
-	    if (rtype) return;
 	    value += lsb;
 	    fprintf(vlog_out, "[%"PRId64":%"PRId64"]",
 	                      value + (int64_t)(width - 1), value);
       } else {
-	    int rtype;
-	    int64_t value = get_valid_int64_from_number(expr, &rtype,
-	                                               "range value");
-	    if (rtype) return;
 	    value = (int64_t)lsb - value;
 	    fprintf(vlog_out, "[%"PRId64":%"PRId64"]",
 	                      value - (int64_t)(width - 1), value);
@@ -377,8 +388,9 @@ void emit_scaled_expr(ivl_scope_t scope, ivl_expr_t expr, int msb, int lsb)
       if (msb >= lsb) {
 	    if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
 		  int rtype;
-		  int64_t value = get_valid_int64_from_number(expr, &rtype,
-		                        "value");
+		  int64_t value = get_in_range_int64_from_number(expr, &rtype,
+		                                                 "value");
+		  if (rtype < 0) fprintf(vlog_out, "1'bx");
 		  if (rtype) return;
 		  value += lsb;
 		  fprintf(vlog_out, "%"PRId64, value);
@@ -393,8 +405,9 @@ void emit_scaled_expr(ivl_scope_t scope, ivl_expr_t expr, int msb, int lsb)
       } else {
 	    if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
 		  int rtype;
-		  int64_t value = get_valid_int64_from_number(expr, &rtype,
-		                                                  "value");
+		  int64_t value = get_in_range_int64_from_number(expr, &rtype,
+		                                                 "value");
+		  if (rtype < 0) fprintf(vlog_out, "1'bx");
 		  if (rtype) return;
 		  value = (int64_t)lsb - value;
 		  fprintf(vlog_out, "%"PRId64, value);
