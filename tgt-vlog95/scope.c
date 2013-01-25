@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2012 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2013 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -438,7 +438,8 @@ static void emit_sig_type(ivl_signal_t sig)
       } else {
 	    assert((type == IVL_SIT_TRI) ||
 	           (type == IVL_SIT_TRI0) ||
-	           (type == IVL_SIT_TRI1));
+	           (type == IVL_SIT_TRI1) ||
+	           (type == IVL_SIT_UWIRE));
 	    if (ivl_signal_data_type(sig) == IVL_VT_REAL) {
 		  fprintf(stderr, "%s:%u: vlog95 error: Real net ports (%s) "
 		                  "are not supported.\n",
