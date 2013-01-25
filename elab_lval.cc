@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -336,6 +336,7 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
       ivl_assert(*this, index_tail.lsb == 0);
 
       NetNet*reg = lv->sig();
+      assert(reg);
 
 	// These are not used, but they need to have a default value.
       ivl_variable_type_t expr_type_tmp = IVL_VT_NO_TYPE;
@@ -350,8 +351,20 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
       long lsb = 0;
 
       if (NetEConst*index_con = dynamic_cast<NetEConst*> (mux)) {
-	    lsb = index_con->value().as_long();
-	    mux = 0;
+	      // The index has a constant defined value.
+	    if (index_con->value().is_defined()) {
+		  lsb = index_con->value().as_long();
+		  mux = 0;
+	      // The index is undefined.
+	    } else {
+		  cerr << get_fileline() << ": warning: L-value bit select of "
+		       << reg->name();
+		  if (reg->array_dimensions() > 0) cerr << "[]";
+		  cerr << " has an undefined index." << endl;
+ 
+		  lv->set_part(new NetEConst(verinum(verinum::Vx)), 1);
+		  return true;
+	    }
       }
 
       if (mux) {
@@ -393,13 +406,20 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
       long msb, lsb;
       bool parts_defined_flag;
       bool flag = calculate_parts_(des, scope, msb, lsb, parts_defined_flag);
-      if (!flag)
-	    return false;
-
-      ivl_assert(*this, parts_defined_flag);
+      if (!flag) return false;
 
       NetNet*reg = lv->sig();
       assert(reg);
+
+      if (! parts_defined_flag) {
+	    cerr << get_fileline() << ": warning: L-value part select of "
+	         << reg->name();
+	    if (reg->array_dimensions() > 0) cerr << "[]";
+	    cerr << " has an undefined index." << endl;
+	    lv->set_part(new NetEConst(verinum(verinum::Vx)), 1);
+	    return true;
+      }
+
 
       if (msb == reg->msb() && lsb == reg->lsb()) {
 
@@ -517,17 +537,10 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 			}
 		  }
 	    } else {
-		  if (warn_ob_select) {
-			cerr << get_fileline() << ": warning: " << reg->name();
-			if (reg->array_dimensions() > 0) cerr << "[]";
-			cerr << "['bx";
-			if (use_sel == index_component_t::SEL_IDX_UP) {
-			      cerr << "+:";
-			} else {
-			      cerr << "-:";
-			}
-			cerr << wid << "] is always outside vector." << endl;
-		  }
+		  cerr << get_fileline() << ": warning: L-value indexed part "
+		       << "select of " << reg->name();
+		  if (reg->array_dimensions() > 0) cerr << "[]";
+		  cerr << " has an undefined base." << endl;
 	    }
       } else {
 	      /* Correct the mux for the range of the vector. */
