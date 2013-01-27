@@ -889,12 +889,13 @@ This opcode raises the left operand by the right operand, and pushes
 the result.
 
 * %prop/v <pid>, <base>, <wid>
+* %prop/obj <pid>
 * %prop/r <pid>
 * %prop/str <pid>
 
 Write the vector (/v) or real value (/r) or string (/str) into
 property number <pid> of the class object on the top of the object
-stack. The real value is popped.
+stack.
 
 The class object stack is NOT popped.
 
@@ -1016,6 +1017,7 @@ variable given by the label.
 
 See also %load/obj.
 
+* %store/prop/obj <index>
 * %store/prop/r <index>
 * %store/prop/str <index>
 * %store/prop/v <index>, <bit>, <wid>
@@ -1023,6 +1025,10 @@ See also %load/obj.
 The %store/prop/r pops a real value from the real stack and stores it
 into the the property number <index> of a cobject in the top of the
 object stack. The cobject is NOT popped.
+
+The %store/prop/obj pops an object from the top of the object stack,
+then writes it to the property number <index> of the cobject now on
+top of the object stack. The cobject is NOT popped.
 
 * %store/real <var-label>
 * %store/reala <var-label>, <index>

@@ -64,3 +64,13 @@ string vvp_cobject::get_string(size_t pid)
 {
       return defn_->get_string(properties_, pid);
 }
+
+void vvp_cobject::set_object(size_t pid, const vvp_object_t&val)
+{
+      defn_->set_object(properties_, pid, val);
+}
+
+void vvp_cobject::get_object(size_t pid, vvp_object_t&val)
+{
+      return defn_->get_object(properties_, pid, val);
+}

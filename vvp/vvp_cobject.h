@@ -41,6 +41,9 @@ class vvp_cobject : public vvp_object {
       void set_string(size_t pid, const std::string&val);
       std::string get_string(size_t pid);
 
+      void set_object(size_t pid, const vvp_object_t&val);
+      void get_object(size_t pid, vvp_object_t&val);
+
     private:
       const class_type* defn_;
 	// For now, only support 32bit bool signed properties.

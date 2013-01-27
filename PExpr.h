@@ -518,6 +518,8 @@ class PENumber : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
 
+      virtual NetEConst*elaborate_expr(Design*des, NetScope*scope,
+				       ivl_type_t type, unsigned flags) const;
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				       unsigned expr_wid, unsigned) const;
       virtual NetAssign_* elaborate_lval(Design*des,

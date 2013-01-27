@@ -57,7 +57,18 @@ void pform_class_property(const struct vlltype&loc,
 		 ; cur != decls->end() ; ++cur) {
 
 	    decl_assignment_t*curp = *cur;
-	    pform_cur_class->type->properties[curp->name] = data_type;
+	    data_type_t*use_type = data_type;
+
+	    if (curp->index.size() > 0) {
+		  list<pform_range_t>*pd = new list<pform_range_t> (curp->index);
+		  use_type = new uarray_type_t(use_type, pd);
+	    }
+
+	    if (curp->expr.get()) {
+		  VLerror(loc, "sorry: Initialization expressions for properties not implemented.");
+	    }
+
+	    pform_cur_class->type->properties[curp->name] = use_type;
       }
 }
 

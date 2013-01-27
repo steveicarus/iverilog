@@ -56,6 +56,9 @@ class class_property_t {
       virtual void set_string(char*buf, const std::string&val);
       virtual string get_string(char*buf);
 
+      virtual void set_object(char*buf, const vvp_object_t&val);
+      virtual void get_object(char*buf, vvp_object_t&val);
+
     protected:
       size_t offset_;
 };
@@ -102,6 +105,16 @@ string class_property_t::get_string(char*)
 {
       assert(0);
       return "";
+}
+
+void class_property_t::set_object(char*, const vvp_object_t&)
+{
+      assert(0);
+}
+
+void class_property_t::get_object(char*, vvp_object_t&)
+{
+      assert(0);
 }
 
 /*
@@ -160,6 +173,26 @@ class property_string : public class_property_t {
       string get_string(char*buf);
 };
 
+class property_object : public class_property_t {
+    public:
+      inline explicit property_object(void) { }
+      ~property_object() { }
+
+      size_t instance_size() const { return sizeof(vvp_object_t); }
+
+    public:
+      void construct(char*buf) const
+      { /* vvp_object_t*tmp = */ new (buf+offset_) vvp_object_t; }
+
+      void destruct(char*buf) const
+      { vvp_object_t*tmp = reinterpret_cast<vvp_object_t*> (buf+offset_);
+	tmp->~vvp_object_t();
+      }
+
+      void set_object(char*buf, const vvp_object_t&);
+      void get_object(char*buf, vvp_object_t&);
+};
+
 template <class T> void property_atom<T>::set_vec4(char*buf, const vvp_vector4_t&val)
 {
       T*tmp = reinterpret_cast<T*> (buf+offset_);
@@ -204,6 +237,19 @@ string property_string::get_string(char*buf)
       return *tmp;
 }
 
+void property_object::set_object(char*buf, const vvp_object_t&val)
+{
+      vvp_object_t*tmp = reinterpret_cast<vvp_object_t*>(buf+offset_);
+      *tmp = val;
+}
+
+void property_object::get_object(char*buf, vvp_object_t&val)
+{
+      vvp_object_t*tmp = reinterpret_cast<vvp_object_t*>(buf+offset_);
+      val = *tmp;
+}
+
+
 /* **** */
 
 class_type::class_type(const string&nam, size_t nprop)
@@ -237,6 +283,8 @@ void class_type::set_property(size_t idx, const string&name, const string&type)
 	    properties_[idx].type = new property_real<double>;
       else if (type == "S")
 	    properties_[idx].type = new property_string;
+      else if (type == "o")
+	    properties_[idx].type = new property_object;
       else
 	    properties_[idx].type = 0;
 }
@@ -336,6 +384,21 @@ string class_type::get_string(class_type::inst_t obj, size_t pid) const
       char*buf = reinterpret_cast<char*> (obj);
       assert(pid < properties_.size());
       return properties_[pid].type->get_string(buf);
+}
+
+void class_type::set_object(class_type::inst_t obj, size_t pid,
+			    const vvp_object_t&val) const
+{
+      char*buf = reinterpret_cast<char*> (obj);
+      assert(pid < properties_.size());
+      properties_[pid].type->set_object(buf, val);
+}
+
+void class_type::get_object(class_type::inst_t obj, size_t pid, vvp_object_t&val) const
+{
+      char*buf = reinterpret_cast<char*> (obj);
+      assert(pid < properties_.size());
+      properties_[pid].type->get_object(buf, val);
 }
 
 int class_type::get_type_code(void) const

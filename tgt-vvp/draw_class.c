@@ -61,9 +61,13 @@ static void show_prop_type(ivl_type_t ptype)
 	  case IVL_VT_LOGIC:
 	    show_prop_type_vector(ptype);
 	    break;
+	  case IVL_VT_DARRAY:
+	  case IVL_VT_CLASS:
+	    fprintf(vvp_out, "\"o\"");
+	    break;
 	  default:
-	    assert(0);
 	    fprintf(vvp_out, "\"<ERROR-no-type>\"");
+	    assert(0);
 	    break;
       }
 }

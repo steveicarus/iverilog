@@ -19,6 +19,7 @@
 
 # include  "pform_types.h"
 # include  "netlist.h"
+# include  "netdarray.h"
 # include  "netscalar.h"
 # include  "netvector.h"
 # include  <typeinfo>
@@ -84,4 +85,16 @@ ivl_type_s* real_type_t::elaborate_type(Design*, NetScope*) const
 ivl_type_s* string_type_t::elaborate_type(Design*, NetScope*) const
 {
       return &netstring_t::type_string;
+}
+
+ivl_type_s* uarray_type_t::elaborate_type(Design*des, NetScope*scope) const
+{
+
+      ivl_type_t btype = base_type->elaborate_type(des, scope);
+
+      assert(dims->size() == 1);
+      list<pform_range_t>::const_iterator cur = dims->begin();
+      assert(cur->first == 0 && cur->second==0);
+      ivl_type_s*res = new netdarray_t(btype);
+      return res;
 }

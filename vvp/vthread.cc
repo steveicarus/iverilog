@@ -3226,6 +3226,7 @@ bool of_LOAD_DAR(vthread_t thr, vvp_code_t cp)
       darray->get_word(adr, word);
       assert(word.size() == wid);
 
+      thr_check_addr(thr, bit+word.size());
       thr->bits4.set_vec(bit, word);
 
       return true;
@@ -4534,6 +4535,26 @@ bool of_POW_WR(vthread_t thr, vvp_code_t)
 }
 
 /*
+ * %prop/obj <pid>
+ *
+ * Load an object value from the cobject and push it onto the object stack.
+ */
+bool of_PROP_OBJ(vthread_t thr, vvp_code_t cp)
+{
+      unsigned pid = cp->number;
+
+      vvp_object_t&obj = thr->peek_object();
+      vvp_cobject*cobj = obj.peek<vvp_cobject>();
+
+      vvp_object_t val;
+      cobj->get_object(pid, val);
+
+      thr->push_object(val);
+
+      return true;
+}
+
+/*
  * %prop/r <pid>
  *
  * Load a real value from the cobject and push it onto the real value
@@ -5108,6 +5129,28 @@ bool of_STORE_OBJ(vthread_t thr, vvp_code_t cp)
       thr->pop_object(val);
 
       vvp_send_object(ptr, val, thr->wt_context);
+
+      return true;
+}
+
+/*
+ * %store/prop/obj <id>
+ *
+ * Pop an object value from the object stack, and store the value into
+ * the property of the object references by the top of the stack. Do NOT
+ * pop the object stack.
+ */
+bool of_STORE_PROP_OBJ(vthread_t thr, vvp_code_t cp)
+{
+      size_t pid = cp->number;
+      vvp_object_t val;
+      thr->pop_object(val);
+
+      vvp_object_t&obj = thr->peek_object();
+      vvp_cobject*cobj = obj.peek<vvp_cobject>();
+      assert(cobj);
+
+      cobj->set_object(pid, val);
 
       return true;
 }

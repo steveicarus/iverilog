@@ -144,6 +144,7 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, ivl_type_t, unsigned) cons
 	   << " elaborate (ivl_type_t) this expression. " << endl;
       cerr << get_fileline() << ":               : Expression is: " << *this
 	   << endl;
+      cerr << get_fileline() << ":               : Expression type: " << typeid(*this).name() << endl;
       des->errors += 1;
       return 0;
 }
@@ -1091,11 +1092,13 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
       if (path_.size() < 2)
 	    return 0;
 
+      perm_string member_name;
+      ivl_type_t  member_type = 0;
       pform_name_t use_path = path_;
       perm_string method_name = peek_tail_name(use_path);
       use_path.pop_back();
 
-      NetNet *net;
+      NetNet *net = 0;
       const NetExpr *par;
       NetEvent *eve;
       const NetExpr *ex1, *ex2;
@@ -1103,13 +1106,54 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
       symbol_search(this, des, scope, use_path,
 		    net, par, eve, ex1, ex2);
 
+      const netdarray_t*use_darray = 0;
+
+      if (net != 0)
+	    use_darray = net->darray_type();
+
+	// Net is not found, but maybe it is a member of a
+	// struct or class. Try to locate net without the member
+	// name and test if it is a type that has members.
+      if (net == 0 && use_path.size() >= 2) {
+	    pform_name_t tmp_path = use_path;
+	    member_name = peek_tail_name(tmp_path);
+	    tmp_path.pop_back();
+
+	    net = 0;
+	    symbol_search(this, des, scope, tmp_path,
+			  net, par, eve, ex1, ex2);
+	    if (net && net->class_type()) {
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PECallFunction::test_width_method_: "
+			     << "Found net=" << tmp_path
+			     << ", member_name=" << member_name
+			     << ", method_name=" << method_name
+			     << endl;
+		  }
+
+		  netclass_t* class_type = net->class_type();
+		  member_type = class_type->get_property(member_name);
+		  use_path = tmp_path;
+
+		  use_darray = dynamic_cast<const netdarray_t*> (member_type);
+
+	    } else {
+		  member_name = perm_string();
+		  net = 0;
+	    }
+      }
+
+	// After all, no sign of a net match. Give up.
       if (net == 0)
 	    return 0;
 
-      netdarray_t*darray = net->darray_type();
-
 	// function int size()
-      if (darray && method_name == "size") {
+      if (use_darray && method_name == "size") {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PECallFunction::test_width_method_: "
+		       << "Match darray size() method." << endl;
+	    }
+
 	    expr_type_  = IVL_VT_BOOL;
 	    expr_width_ = 32;
 	    min_width_  = expr_width_;
@@ -1866,7 +1910,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
       perm_string method_name = peek_tail_name(use_path);
       use_path.pop_back();
 
-      NetNet *net;
+      NetNet *net = 0;
       const NetExpr *par;
       NetEvent *eve;
       const NetExpr *ex1, *ex2;
@@ -2570,9 +2614,37 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 					      net, par, eve,
 					      ex1, ex2);
 
+      if (net == 0 && gn_system_verilog() && path_.size() >= 2) {
+	    pform_name_t use_path = path_;
+	    name_component_t member_comp = use_path.back();
+	    use_path.pop_back();
+
+	    ivl_assert(*this, net == 0);
+	    symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
+
+	    if (net == 0) {
+		    // Nope, no struct/class with member.
+
+	    } else if (net->struct_type() != 0) {
+		  return check_for_struct_members(this, des, scope,
+						  net, use_path.back().index,
+						  member_comp);
+
+	    } else if (net->class_type()!=0) {
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+			     << "Ident " << use_path
+			     << " look for property " << member_comp << endl;
+		  }
+
+		  return check_for_class_property(this, des, scope,
+						  net, member_comp);
+	    }
+      }
+
       if (net == 0) {
 	    cerr << get_fileline() << ": internal error: "
-		 << "Expecting idents wtih ntype to be signals." << endl;
+		 << "Expecting idents with ntype to be signals." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -4190,6 +4262,27 @@ unsigned PENumber::test_width(Design*, NetScope*, width_mode_t&mode)
             mode = LOSSLESS;
 
       return expr_width_;
+}
+
+NetEConst* PENumber::elaborate_expr(Design*des, NetScope*, ivl_type_t ntype, unsigned) const
+{
+      const netvector_t*use_type = dynamic_cast<const netvector_t*> (ntype);
+      if (use_type == 0) {
+	    cerr << get_fileline() << ": internal error: "
+		 << "I don't know how cast numbers to this type."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      verinum use_val = value();
+      use_val .has_sign( use_type->get_signed() );
+      use_val = cast_to_width(use_val, use_type->packed_width());
+
+      NetEConst*tmp = new NetEConst(use_val);
+      tmp->set_line(*this);
+
+      return tmp;
 }
 
 NetEConst* PENumber::elaborate_expr(Design*, NetScope*,

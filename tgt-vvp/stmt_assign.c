@@ -871,7 +871,7 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_STRING) {
 
-		    /* Calculate the real value into the real value
+		    /* Calculate the string value into the string value
 		       stack. The %store/prop/r will pop the stack
 		       value. */
 		  draw_eval_string(rval);
@@ -879,7 +879,19 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		  fprintf(vvp_out, "    %%store/prop/str %d;\n", prop_idx);
 		  fprintf(vvp_out, "    %%pop/obj 1;\n");
 
+	    } else if (ivl_type_base(prop_type) == IVL_VT_DARRAY) {
+
+		    /* The property is a darray, and there is no mux
+		       expression to the assignment is of an entire
+		       array object. */
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+		  draw_eval_object(rval);
+		  fprintf(vvp_out, "    %%store/prop/obj %d;\n", prop_idx);
+		  fprintf(vvp_out, "    %%pop/obj 1;\n");
+
 	    } else {
+		  fprintf(vvp_out, " ; ERROR: ivl_type_base(prop_type) = %d\n",
+			  ivl_type_base(prop_type));
 		  assert(0);
 	    }
 

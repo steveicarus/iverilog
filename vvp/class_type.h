@@ -65,6 +65,8 @@ class class_type : public __vpiHandle {
       double get_real(inst_t inst, size_t pid) const;
       void set_string(inst_t inst, size_t pid, const std::string&val) const;
       std::string get_string(inst_t inst, size_t pid) const;
+      void set_object(inst_t inst, size_t pid, const vvp_object_t&val) const;
+      void get_object(inst_t inst, size_t pid, vvp_object_t&val) const;
 
     public: // VPI related methods
       int get_type_code(void) const;

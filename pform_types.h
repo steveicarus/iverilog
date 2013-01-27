@@ -154,20 +154,39 @@ struct vector_type_t : public data_type_t {
       std::auto_ptr< list<pform_range_t> > pdims;
 };
 
+struct array_base_t : public data_type_t {
+    public:
+      inline explicit array_base_t(data_type_t*btype, std::list<pform_range_t>*pd)
+      : base_type(btype), dims(pd) { }
+
+      data_type_t*base_type;
+      std::auto_ptr< list<pform_range_t> > dims;
+};
+
 /*
- * The array_type_t is a generalization of the vector_type_t in that
+ * The parray_type_t is a generalization of the vector_type_t in that
  * the base type is another general data type. Ultimately, the subtype
  * must also be packed (as this is a packed array) but that may be
  * worked out during elaboration.
  */
-struct parray_type_t : public data_type_t {
+struct parray_type_t : public array_base_t {
       inline explicit parray_type_t(data_type_t*btype, std::list<pform_range_t>*pd)
-      : base_type(btype), packed_dims(pd) { }
+      : array_base_t(btype, pd) { }
+
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
+};
 
-      data_type_t*base_type;
-      std::auto_ptr< list<pform_range_t> > packed_dims;
+/*
+ * The uarray_type_t represents unpacked array types.
+ */
+struct uarray_type_t : public array_base_t {
+      inline explicit uarray_type_t(data_type_t*btype, std::list<pform_range_t>*pd)
+      : array_base_t(btype, pd) { }
+
+    public:
+      virtual void pform_dump(std::ostream&out, unsigned indent) const;
+      virtual ivl_type_s* elaborate_type(Design*des, NetScope*scope) const;
 };
 
 struct real_type_t : public data_type_t {
