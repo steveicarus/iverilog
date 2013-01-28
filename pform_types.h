@@ -212,8 +212,9 @@ struct class_type_t : public data_type_t {
       void pform_dump(std::ostream&out, unsigned indent) const;
 
       perm_string name;
-
       std::map<perm_string, data_type_t*> properties;
+
+      ivl_type_s* elaborate_type(Design*, NetScope*) const;
 };
 
 class property_qualifier_t {

@@ -19,6 +19,7 @@
 
 # include  "pform_types.h"
 # include  "netlist.h"
+# include  "netclass.h"
 # include  "netdarray.h"
 # include  "netscalar.h"
 # include  "netvector.h"
@@ -69,6 +70,11 @@ ivl_type_s* atom2_type_t::elaborate_type(Design*des, NetScope*) const
 	    des->errors += 1;
 	    return 0;
       }
+}
+
+ivl_type_s* class_type_t::elaborate_type(Design*des, NetScope*scope) const
+{
+      return scope->find_class(name);
 }
 
 ivl_type_s* real_type_t::elaborate_type(Design*, NetScope*) const

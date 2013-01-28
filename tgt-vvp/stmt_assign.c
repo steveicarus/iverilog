@@ -889,6 +889,14 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		  fprintf(vvp_out, "    %%store/prop/obj %d;\n", prop_idx);
 		  fprintf(vvp_out, "    %%pop/obj 1;\n");
 
+	    } else if (ivl_type_base(prop_type) == IVL_VT_CLASS) {
+
+		    /* The property is a class object. */
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+		  draw_eval_object(rval);
+		  fprintf(vvp_out, "    %%store/prop/obj %d;\n", prop_idx);
+		  fprintf(vvp_out, "    %%pop/obj 1;\n");
+
 	    } else {
 		  fprintf(vvp_out, " ; ERROR: ivl_type_base(prop_type) = %d\n",
 			  ivl_type_base(prop_type));
