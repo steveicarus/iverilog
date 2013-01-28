@@ -759,7 +759,7 @@ class vvp_scalar_t {
       unsigned strength1() const;
 
       bool eeq(vvp_scalar_t that) const { return value_ == that.value_; }
-      bool is_hiz() const { return value_ == 0; }
+      bool is_hiz() const { return (value_ & 0x77) == 0; }
 
     private:
 	// This class and the vvp_vector8_t class are closely related,
@@ -803,7 +803,7 @@ inline vvp_scalar_t::vvp_scalar_t(vvp_bit4_t val, unsigned str0, unsigned str1)
 
 inline vvp_bit4_t vvp_scalar_t::value() const
 {
-      if (value_ == 0) {
+      if ((value_ & 0x77) == 0) {
 	    return BIT4_Z;
       } else switch (value_ & 0x88) {
 	  case 0x00:
