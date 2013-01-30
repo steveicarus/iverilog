@@ -93,7 +93,7 @@ else
 endif
 
 pcb.tgt: $O $(TGTDEPLIBS)
-	$(CXX) @shared@ -o $@ $O $(TGTLDFLAGS)
+	$(CXX) @shared@ $(LDFLAGS) -o $@ $O $(TGTLDFLAGS)
 
 install: all installdirs $(libdir)/ivl$(suffix)/pcb.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/pcb.conf $(libdir)/ivl$(suffix)/pcb-s.conf
 
