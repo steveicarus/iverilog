@@ -1,7 +1,7 @@
 #ifndef __vvp_cobject_H
 #define __vvp_cobject_H
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,10 +19,11 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+# include  <string>
 # include  <stdint.h>
 # include  "vvp_object.h"
+# include  "class_type.h"
 
-class class_type;
 class vvp_vector4_t;
 
 class vvp_cobject : public vvp_object {
@@ -34,10 +35,19 @@ class vvp_cobject : public vvp_object {
       void set_vec4(size_t pid, const vvp_vector4_t&val);
       void get_vec4(size_t pid, vvp_vector4_t&val);
 
+      void set_real(size_t pid, double val);
+      double get_real(size_t pid);
+
+      void set_string(size_t pid, const std::string&val);
+      std::string get_string(size_t pid);
+
+      void set_object(size_t pid, const vvp_object_t&val);
+      void get_object(size_t pid, vvp_object_t&val);
+
     private:
       const class_type* defn_;
 	// For now, only support 32bit bool signed properties.
-      int32_t*properties_;
+      class_type::inst_t properties_;
 };
 
 #endif

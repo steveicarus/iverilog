@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -60,6 +60,15 @@ static void string_ex_concat(ivl_expr_t expr)
       }
 }
 
+static void string_ex_property(ivl_expr_t expr)
+{
+      ivl_signal_t sig = ivl_expr_signal(expr);
+      unsigned pidx = ivl_expr_property_idx(expr);
+
+      fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+      fprintf(vvp_out, "    %%prop/str %u;\n", pidx);
+}
+
 static void string_ex_signal(ivl_expr_t expr)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
@@ -100,6 +109,22 @@ static void string_ex_select(ivl_expr_t expr)
       fprintf(vvp_out, "    %%load/dar/str v%p_0;\n", sig);
 }
 
+static void string_ex_string(ivl_expr_t expr)
+{
+      const char*val = ivl_expr_string(expr);
+
+	/* Special case: The elaborator converts the string "" to an
+	   8-bit zero, which is in turn escaped to the 4-character
+	   string \000. Detect this special case and convert it back
+	   to an empty string. [Perhaps elaboration should be fixed?] */
+      if (ivl_expr_width(expr)==8 && (strcmp(val,"\\000") == 0)) {
+	    fprintf(vvp_out, "    %%pushi/str \"\";\n");
+	    return;
+      }
+
+      fprintf(vvp_out, "    %%pushi/str \"%s\";\n", val);
+}
+
 static void string_ex_substr(ivl_expr_t expr)
 {
       ivl_expr_t arg;
@@ -129,7 +154,7 @@ void draw_eval_string(ivl_expr_t expr)
 
       switch (ivl_expr_type(expr)) {
 	  case IVL_EX_STRING:
-	    fprintf(vvp_out, "    %%pushi/str \"%s\";\n", ivl_expr_string(expr));
+	    string_ex_string(expr);
 	    break;
 
 	  case IVL_EX_SIGNAL:
@@ -138,6 +163,10 @@ void draw_eval_string(ivl_expr_t expr)
 
 	  case IVL_EX_CONCAT:
 	    string_ex_concat(expr);
+	    break;
+
+	  case IVL_EX_PROPERTY:
+	    string_ex_property(expr);
 	    break;
 
 	  case IVL_EX_SELECT:

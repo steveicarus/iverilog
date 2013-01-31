@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,12 +21,14 @@
 
 using namespace std;
 
+netvector_t netvector_t::atom2s64 (IVL_VT_BOOL, 63, 0, true);
+netvector_t netvector_t::atom2u64 (IVL_VT_BOOL, 63, 0, false);
 netvector_t netvector_t::atom2s32 (IVL_VT_BOOL, 31, 0, true);
 netvector_t netvector_t::atom2u32 (IVL_VT_BOOL, 31, 0, false);
-netvector_t netvector_t::atom2s16 (IVL_VT_BOOL, 16, 0, true);
-netvector_t netvector_t::atom2u16 (IVL_VT_BOOL, 16, 0, false);
-netvector_t netvector_t::atom2s8  (IVL_VT_BOOL,  8, 0, true);
-netvector_t netvector_t::atom2u8  (IVL_VT_BOOL,  8, 0, false);
+netvector_t netvector_t::atom2s16 (IVL_VT_BOOL, 15, 0, true);
+netvector_t netvector_t::atom2u16 (IVL_VT_BOOL, 15, 0, false);
+netvector_t netvector_t::atom2s8  (IVL_VT_BOOL,  7, 0, true);
+netvector_t netvector_t::atom2u8  (IVL_VT_BOOL,  7, 0, false);
 
 netvector_t::netvector_t(ivl_variable_type_t type, long msb, long lsb, bool flag)
 : type_(type), signed_(flag), isint_(false), is_scalar_(false)

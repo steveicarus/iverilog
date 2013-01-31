@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -207,12 +207,16 @@ static const struct opcode_table_s opcode_table[] = {
       { "%or",     of_OR,     3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%or/r",   of_ORR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%pad",    of_PAD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%pop/obj", of_POP_OBJ, 1, {OA_NUMBER,  OA_NONE,     OA_NONE} },
       { "%pop/real",of_POP_REAL,1, {OA_NUMBER,  OA_NONE,     OA_NONE} },
       { "%pop/str", of_POP_STR, 1, {OA_NUMBER,  OA_NONE,     OA_NONE} },
       { "%pow",    of_POW,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%pow/s",  of_POW_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%pow/wr", of_POW_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
-      { "%prop/v", of_PROP_V, 3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%prop/obj",of_PROP_OBJ,1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
+      { "%prop/r",  of_PROP_R,  1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
+      { "%prop/str",of_PROP_STR,1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
+      { "%prop/v",  of_PROP_V,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%pushi/real",of_PUSHI_REAL,2,{OA_BIT1,   OA_BIT2,   OA_NONE} },
       { "%pushi/str", of_PUSHI_STR, 1,{OA_STRING, OA_NONE,   OA_NONE} },
       { "%pushv/str", of_PUSHV_STR, 2, {OA_BIT1,OA_BIT2,     OA_NONE} },
@@ -230,7 +234,10 @@ static const struct opcode_table_s opcode_table[] = {
       { "%store/dar/r",  of_STORE_DAR_R,   1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%store/dar/str",of_STORE_DAR_STR, 1, {OA_FUNC_PTR, OA_NONE, OA_NONE} },
       { "%store/obj",   of_STORE_OBJ,   1, {OA_FUNC_PTR,OA_NONE, OA_NONE} },
-      { "%store/prop/v",of_STORE_PROP_V,3, {OA_BIT1,    OA_BIT2, OA_NUMBER} },
+      { "%store/prop/obj",of_STORE_PROP_OBJ,1, {OA_NUMBER,  OA_NONE, OA_NONE} },
+      { "%store/prop/r",  of_STORE_PROP_R,  1, {OA_NUMBER,  OA_NONE, OA_NONE} },
+      { "%store/prop/str",of_STORE_PROP_STR,1, {OA_NUMBER,  OA_NONE, OA_NONE} },
+      { "%store/prop/v",  of_STORE_PROP_V,  3, {OA_BIT1,    OA_BIT2, OA_NUMBER} },
       { "%store/real",  of_STORE_REAL,  1, {OA_FUNC_PTR,OA_NONE, OA_NONE} },
       { "%store/reala", of_STORE_REALA, 2, {OA_ARR_PTR, OA_BIT1, OA_NONE} },
       { "%store/str",   of_STORE_STR,   1, {OA_FUNC_PTR,OA_NONE, OA_NONE} },

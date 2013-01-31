@@ -865,7 +865,7 @@ static bool evaluate_ranges(Design*des, NetScope*scope,
       return bad_msb | bad_lsb;
 }
 
-static netclass_t* locate_class_type(Design*des, NetScope*scope,
+static netclass_t* locate_class_type(Design*, NetScope*scope,
 				     class_type_t*class_type)
 {
       netclass_t*use_class = scope->find_class(class_type->name);
@@ -928,7 +928,7 @@ static netparray_t* elaborate_parray_type(Design*des, NetScope*scope,
 {
 
       vector<netrange_t>packed_dimensions;
-      bool bad_range = evaluate_ranges(des, scope, packed_dimensions, * data_type->packed_dims);
+      bool bad_range = evaluate_ranges(des, scope, packed_dimensions, * data_type->dims);
       ivl_assert(*data_type, !bad_range);
 
       ivl_type_s*element_type = elaborate_type(des, scope, data_type->base_type);

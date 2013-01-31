@@ -25,6 +25,7 @@
 # include  "netmisc.h"
 # include  "netstruct.h"
 # include  "netclass.h"
+# include  "netdarray.h"
 # include  "compiler.h"
 # include  <cstdlib>
 # include  <iostream>
@@ -716,7 +717,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       return true;
 }
 
-bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*,
+bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope,
 					       NetAssign_*lv,
 					       const perm_string&method_name) const
 {
@@ -740,6 +741,18 @@ bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*,
       }
 
       lv->set_property(method_name);
+
+      const netdarray_t*mtype = dynamic_cast<const netdarray_t*> (ptype);
+      if (mtype) {
+	    const name_component_t&name_tail = path_.back();
+	    if (name_tail.index.size() > 0) {
+		  cerr << get_fileline() << ": sorry: "
+		       << "Array index of array properties not supported."
+		       << endl;
+		  des->errors += 1;
+	    }
+      }
+
       return true;
 }
 

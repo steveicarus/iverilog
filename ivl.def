@@ -313,6 +313,7 @@ ivl_type_packed_msb
 ivl_type_prop_name
 ivl_type_prop_type
 ivl_type_properties
+ivl_type_signed
 
 ivl_udp_init
 ivl_udp_file

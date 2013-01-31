@@ -1,7 +1,7 @@
 #ifndef __netvector_H
 #define __netvector_H
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -67,6 +67,8 @@ class netvector_t : public ivl_type_s {
 
     public:
 	// Some commonly used predefined types
+      static netvector_t atom2s64;
+      static netvector_t atom2u64;
       static netvector_t atom2s32;
       static netvector_t atom2u32;
       static netvector_t atom2s16;

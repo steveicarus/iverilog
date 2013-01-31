@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011,2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -846,16 +846,62 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
       if (prop_idx >= 0) {
 	    ivl_type_t sig_type = ivl_signal_net_type(sig);
 	    ivl_type_t prop_type = ivl_type_prop_type(sig_type, prop_idx);
-	    assert(ivl_type_base(prop_type) == IVL_VT_BOOL);
-	    assert(ivl_type_packed_dimensions(prop_type) == 1);
-	    assert(ivl_type_packed_msb(prop_type,0) >= ivl_type_packed_lsb(prop_type, 0));
-	    int wid = ivl_type_packed_msb(prop_type,0) - ivl_type_packed_lsb(prop_type,0) + 1;
 
-	    struct vector_info val = draw_eval_expr_wid(rval, wid, STUFF_OK_XZ);
+	    if (ivl_type_base(prop_type) == IVL_VT_BOOL) {
+		  assert(ivl_type_packed_dimensions(prop_type) == 1);
+		  assert(ivl_type_packed_msb(prop_type,0) >= ivl_type_packed_lsb(prop_type, 0));
+		  int wid = ivl_type_packed_msb(prop_type,0) - ivl_type_packed_lsb(prop_type,0) + 1;
 
-	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
-	    fprintf(vvp_out, "    %%store/prop/v %d, %u, %u;\n", prop_idx, val.base, val.wid);
-	    clr_vector(val);
+		  struct vector_info val = draw_eval_expr_wid(rval, wid, STUFF_OK_XZ);
+
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+		  fprintf(vvp_out, "    %%store/prop/v %d, %u, %u;\n", prop_idx, val.base, val.wid);
+		  fprintf(vvp_out, "    %%pop/obj 1;\n");
+		  clr_vector(val);
+
+	    } else if (ivl_type_base(prop_type) == IVL_VT_REAL) {
+
+		    /* Calculate the real value into the real value
+		       stack. The %store/prop/r will pop the stack
+		       value. */
+		  draw_eval_real(rval);
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+		  fprintf(vvp_out, "    %%store/prop/r %d;\n", prop_idx);
+		  fprintf(vvp_out, "    %%pop/obj 1;\n");
+
+	    } else if (ivl_type_base(prop_type) == IVL_VT_STRING) {
+
+		    /* Calculate the string value into the string value
+		       stack. The %store/prop/r will pop the stack
+		       value. */
+		  draw_eval_string(rval);
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+		  fprintf(vvp_out, "    %%store/prop/str %d;\n", prop_idx);
+		  fprintf(vvp_out, "    %%pop/obj 1;\n");
+
+	    } else if (ivl_type_base(prop_type) == IVL_VT_DARRAY) {
+
+		    /* The property is a darray, and there is no mux
+		       expression to the assignment is of an entire
+		       array object. */
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+		  draw_eval_object(rval);
+		  fprintf(vvp_out, "    %%store/prop/obj %d;\n", prop_idx);
+		  fprintf(vvp_out, "    %%pop/obj 1;\n");
+
+	    } else if (ivl_type_base(prop_type) == IVL_VT_CLASS) {
+
+		    /* The property is a class object. */
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+		  draw_eval_object(rval);
+		  fprintf(vvp_out, "    %%store/prop/obj %d;\n", prop_idx);
+		  fprintf(vvp_out, "    %%pop/obj 1;\n");
+
+	    } else {
+		  fprintf(vvp_out, " ; ERROR: ivl_type_base(prop_type) = %d\n",
+			  ivl_type_base(prop_type));
+		  assert(0);
+	    }
 
       } else {
 	      /* There is no property select, so evaluate the r-value

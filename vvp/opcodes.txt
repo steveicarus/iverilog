@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  */
 
@@ -865,11 +865,13 @@ or sign extending a vector.
 
 * %pop/str <num>
 * %pop/real <num>
+* %pop/obj <num>
 
-Pop this many items from the string stack. This is the opposite of the
-%pushX/str opcode which pushes a string to the stack. The %pop/str is
-not normally needed because the %store/str includes an implicit pop,
-but sometimes it is necessary to pop explicitly.
+Pop this many items from the string/real/object stack. This is the
+opposite of the %pushX/str opcode which pushes a string to the
+stack. The %pop/str is not normally needed because the %store/str
+includes an implicit pop, but sometimes it is necessary to pop
+explicitly.
 
 * %pow <bit-l>, <bit-r>, <wid>
 * %pow/s <bit-l>, <bit-r>, <wid>
@@ -887,9 +889,15 @@ This opcode raises the left operand by the right operand, and pushes
 the result.
 
 * %prop/v <pid>, <base>, <wid>
+* %prop/obj <pid>
+* %prop/r <pid>
+* %prop/str <pid>
 
-Write the vector into property number <pid> of the class object on the
-top of the object stack. The stack is NOT popped.
+Write the vector (/v) or real value (/r) or string (/str) into
+property number <pid> of the class object on the top of the object
+stack.
+
+The class object stack is NOT popped.
 
 * %pushi/real <mant>, <exp>
 
@@ -1008,6 +1016,19 @@ This pops the top of the object stack and writes it to the object
 variable given by the label.
 
 See also %load/obj.
+
+* %store/prop/obj <index>
+* %store/prop/r <index>
+* %store/prop/str <index>
+* %store/prop/v <index>, <bit>, <wid>
+
+The %store/prop/r pops a real value from the real stack and stores it
+into the the property number <index> of a cobject in the top of the
+object stack. The cobject is NOT popped.
+
+The %store/prop/obj pops an object from the top of the object stack,
+then writes it to the property number <index> of the cobject now on
+top of the object stack. The cobject is NOT popped.
 
 * %store/real <var-label>
 * %store/reala <var-label>, <index>
