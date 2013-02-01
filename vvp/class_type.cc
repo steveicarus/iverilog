@@ -203,11 +203,14 @@ template <class T> void property_atom<T>::set_vec4(char*buf, const vvp_vector4_t
 template <class T> void property_atom<T>::get_vec4(char*buf, vvp_vector4_t&val)
 {
       T*src = reinterpret_cast<T*> (buf+offset_);
-      const size_t tmp_cnt = (sizeof(T) + sizeof(unsigned long)-1)/sizeof(unsigned long);
+      const size_t tmp_cnt = sizeof(T)<sizeof(unsigned long)
+				       ? 1
+				       : sizeof(T) / sizeof(unsigned long);
       unsigned long tmp[tmp_cnt];
       tmp[0] = src[0];
+
       for (size_t idx = 1 ; idx < tmp_cnt ; idx += 1)
-	    tmp[idx] = 0;
+	    tmp[idx] = src[0] >> idx * 8 * sizeof(tmp[0]);
 
       val.resize(8*sizeof(T));
       val.setarray(0, val.size(), tmp);
