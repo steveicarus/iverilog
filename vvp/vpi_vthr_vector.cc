@@ -97,7 +97,7 @@ static int vthr_vec_get(int code, vpiHandle ref)
 	  case vpiSize:
 	    return rfp->wid;
 
-#ifdef CHECK_WITH_VALGRIND
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
 	  case _vpiFromThr:
 	    return _vpiVThr;
 #endif
@@ -508,7 +508,7 @@ static int vthr_word_get(int code, vpiHandle ref)
 	  case vpiConstType:
 	    return rfp->subtype;
 
-#ifdef CHECK_WITH_VALGRIND
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
 	  case _vpiFromThr:
 	    return _vpiWord;
 #endif
@@ -660,7 +660,7 @@ int __vpiVThrStrStack::vpi_get(int code)
       switch (code) {
 	  case vpiConstType:
 	    return vpiStringConst;
-#ifdef CHECK_WITH_VALGRIND
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
 	  case _vpiFromThr:
 	    return _vpiString;
 #endif

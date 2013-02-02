@@ -633,6 +633,25 @@ extern void vpip_make_systf_system_defined(vpiHandle ref);
 extern void vpip_count_drivers(vpiHandle ref, unsigned idx,
                                unsigned counts[4]);
 
+/*
+ * Stopgap fix for br916. We need to reject any attempt to pass a thread
+ * variable to $strobe or $monitor. To do this, we use some private VPI
+ * properties that are normally only used by the VVP thread cleanup code.
+ * Normally the following definitions are provided by vvp/vpi_priv.h, but
+ * for the stopgap fix we need to make them more widely available.
+ */
+#define BR916_STOPGAP_FIX
+#ifdef BR916_STOPGAP_FIX
+#define _vpiFromThr 0x1000001
+#   define _vpiNoThr   0
+#   define _vpiString  1
+#   define _vpiVThr    2
+#   define _vpiWord    3
+#   define _vpi_at_PV  4
+#   define _vpi_at_A   5
+#   define _vpi_at_APV 6
+#endif
+
 EXTERN_C_END
 
 #endif

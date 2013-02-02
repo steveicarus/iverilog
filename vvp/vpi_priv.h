@@ -57,7 +57,7 @@ extern vpiHandle vpip_build_file_line(char*description,
 /*
  * Private VPI properties that are only used in the cleanup code.
  */
-#ifdef CHECK_WITH_VALGRIND
+#if defined(CHECK_WITH_VALGRIND) && !defined(BR916_STOPGAP_FIX)
 #define _vpiFromThr 0x1000001
 #   define _vpiNoThr   0
 #   define _vpiString  1

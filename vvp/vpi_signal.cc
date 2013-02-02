@@ -570,6 +570,11 @@ static int signal_get(int code, vpiHandle ref)
           case vpiAutomatic:
             return (int) vpip_scope(rfp)->is_automatic;
 
+#ifdef BR916_STOPGAP_FIX
+          case _vpiFromThr:
+            return _vpiNoThr;
+#endif
+
 	    // This private property must return zero when undefined.
 	  case _vpiNexusId:
 	    if (rfp->msb == rfp->lsb)
@@ -1196,7 +1201,7 @@ static int PV_get(int code, vpiHandle ref)
         case vpiAutomatic:
             return vpi_get(vpiAutomatic, rfp->parent);
 
-#ifdef CHECK_WITH_VALGRIND
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
         case _vpiFromThr:
             return _vpi_at_PV;
 #endif

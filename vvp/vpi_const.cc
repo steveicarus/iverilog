@@ -104,7 +104,7 @@ int __vpiStringConst::vpi_get(int code)
           case vpiAutomatic:
 	      return 0;
 
-#ifdef CHECK_WITH_VALGRIND
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
           case _vpiFromThr:
 	      return _vpiNoThr;
 #endif
@@ -356,7 +356,7 @@ int __vpiBinaryConst::vpi_get(int code)
           case vpiAutomatic:
 	    return 0;
 
-#ifdef CHECK_WITH_VALGRIND
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
           case _vpiFromThr:
 	      return _vpiNoThr;
 #endif
@@ -555,7 +555,7 @@ int __vpiDecConst::vpi_get(int code)
           case vpiAutomatic:
 	    return 0;
 
-#ifdef CHECK_WITH_VALGRIND
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
           case _vpiFromThr:
 	      return _vpiNoThr;
 #endif
@@ -643,7 +643,7 @@ int __vpiRealConst::vpi_get(int code)
           case vpiAutomatic:
 	    return 0;
 
-#ifdef CHECK_WITH_VALGRIND
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
           case _vpiFromThr:
 	      return _vpiNoThr;
 #endif
