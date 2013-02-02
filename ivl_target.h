@@ -295,6 +295,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_CAST_INT2 = 35,
       IVL_LPM_CAST_REAL = 33,
       IVL_LPM_CONCAT = 16,
+      IVL_LPM_CONCATZ = 36, /* Transparent concat */
       IVL_LPM_CMP_EEQ= 18, /* Case EQ (===) */
       IVL_LPM_CMP_EQ = 10,
       IVL_LPM_CMP_GE =  1,

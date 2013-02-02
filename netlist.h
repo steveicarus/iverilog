@@ -1344,10 +1344,16 @@ class NetCompare  : public NetNode {
 class NetConcat  : public NetNode {
 
     public:
-      NetConcat(NetScope*scope, perm_string n, unsigned wid, unsigned cnt);
+      NetConcat(NetScope*scope, perm_string n, unsigned wid, unsigned cnt,
+		bool transparent_flag = false);
       ~NetConcat();
 
       unsigned width() const;
+	// This is true if the concatenation is a transparent
+	// concatenation, meaning strengths are passed through as
+	// is. In this case, the output strengths of this node will be
+	// ignored.
+      bool transparent() const { return transparent_; }
 
       void dump_node(ostream&, unsigned ind) const;
       bool emit_node(struct target_t*) const;
@@ -1355,6 +1361,7 @@ class NetConcat  : public NetNode {
 
     private:
       unsigned width_;
+      bool transparent_;
 };
 
 

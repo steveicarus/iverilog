@@ -146,6 +146,7 @@ static char* strdupnew(char const *str)
 ".cmp/gt.r" { return K_CMP_GT_R; }
 ".cmp/gt.s" { return K_CMP_GT_S; }
 ".concat"   { return K_CONCAT; }
+".concat8"  { return K_CONCAT8; }
 ".delay"    { return K_DELAY; }
 ".dff"      { return K_DFF; }
 ".enum2"    { return K_ENUM2; }

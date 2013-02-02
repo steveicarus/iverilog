@@ -1989,7 +1989,7 @@ void dll_target::lpm_pow(const NetPow*net)
 bool dll_target::concat(const NetConcat*net)
 {
       ivl_lpm_t obj = new struct ivl_lpm_s;
-      obj->type = IVL_LPM_CONCAT;
+      obj->type = net->transparent()? IVL_LPM_CONCATZ : IVL_LPM_CONCAT;
       obj->name = net->name(); // NetConcat names are permallocated
       assert(net->scope());
       obj->scope = find_scope(des_, net->scope());

@@ -440,7 +440,7 @@ static void show_lpm_cmp_ne(ivl_lpm_t net)
       check_cmp_widths(net);
 }
 
-/* IVL_LPM_CONCAT
+/* IVL_LPM_CONCAT, IVL_LPM_CONCATZ
  * The concat device takes N inputs (N=ivl_lpm_size) and generates
  * a single output. The total output is known from the ivl_lpm_width
  * function. The widths of all the inputs are inferred from the widths
@@ -453,9 +453,10 @@ static void show_lpm_concat(ivl_lpm_t net)
 
       unsigned width_sum = 0;
       unsigned width = ivl_lpm_width(net);
+      const char*z = ivl_lpm_type(net)==IVL_LPM_CONCATZ? "Z" : "";
 
-      fprintf(out, "  LPM_CONCAT %s: <width=%u, inputs=%u>\n",
-	      ivl_lpm_basename(net), width, ivl_lpm_size(net));
+      fprintf(out, "  LPM_CONCAT%s %s: <width=%u, inputs=%u>\n",
+	      z, ivl_lpm_basename(net), width, ivl_lpm_size(net));
       fprintf(out, "    O: %p\n", ivl_lpm_q(net));
 
       for (idx = 0 ;  idx < ivl_lpm_size(net) ;  idx += 1) {
@@ -954,6 +955,7 @@ static void show_lpm(ivl_lpm_t net)
 	    break;
 
 	  case IVL_LPM_CONCAT:
+	  case IVL_LPM_CONCATZ:
 	    show_lpm_concat(net);
 	    break;
 

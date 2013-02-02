@@ -82,7 +82,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_CLASS
 %token K_CMP_EEQ K_CMP_EQ K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
 %token K_CMP_GE K_CMP_GE_R K_CMP_GE_S K_CMP_GT K_CMP_GT_R K_CMP_GT_S
-%token K_CONCAT K_DEBUG K_DELAY K_DFF
+%token K_CONCAT K_CONCAT8 K_DEBUG K_DELAY K_DFF
 %token K_ENUM2 K_ENUM2_S K_ENUM4 K_ENUM4_S K_EVENT K_EVENT_OR
 %token K_EXPORT K_EXTEND_S K_FUNCTOR K_IMPORT K_ISLAND K_MODPATH
 %token K_NET K_NET_S K_NET_R K_NET_2S K_NET_2U K_NET8 K_NET8_S
@@ -282,9 +282,15 @@ statement
 	| T_LABEL K_PART_V_S T_SYMBOL ',' T_SYMBOL ',' T_NUMBER ';'
 		{ compile_part_select_var($1, $3, $5, $7, true); }
 
-        | T_LABEL K_CONCAT '[' T_NUMBER T_NUMBER T_NUMBER T_NUMBER ']' ','
-	  symbols ';'
-                { compile_concat($1, $4, $5, $6, $7, $10.cnt, $10.vect); }
+  /* Concatenations */
+
+  | T_LABEL K_CONCAT '[' T_NUMBER T_NUMBER T_NUMBER T_NUMBER ']' ','
+    symbols ';'
+      { compile_concat($1, $4, $5, $6, $7, $10.cnt, $10.vect); }
+
+  | T_LABEL K_CONCAT8 '[' T_NUMBER T_NUMBER T_NUMBER T_NUMBER ']' ','
+    symbols ';'
+      { compile_concat8($1, $4, $5, $6, $7, $10.cnt, $10.vect); }
 
   /* The ABS statement is a special arithmetic node that takes 1
      input. Re-use the symbols rule. */

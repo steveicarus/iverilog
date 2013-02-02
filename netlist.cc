@@ -1121,8 +1121,8 @@ NetCastReal::NetCastReal(NetScope*scope__, perm_string n, bool signed_flag__)
       pin(1).set_dir(Link::INPUT);
 }
 
-NetConcat::NetConcat(NetScope*scope__, perm_string n, unsigned wid, unsigned cnt)
-: NetNode(scope__, n, cnt+1), width_(wid)
+NetConcat::NetConcat(NetScope*scope__, perm_string n, unsigned wid, unsigned cnt, bool trans_flag)
+: NetNode(scope__, n, cnt+1), width_(wid), transparent_(trans_flag)
 {
       pin(0).set_dir(Link::OUTPUT);
       for (unsigned idx = 1 ;  idx < cnt+1 ;  idx += 1) {

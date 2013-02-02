@@ -80,6 +80,11 @@ void cprop_functor::lpm_compare_eq_(Design*, NetCompare*)
 
 void cprop_functor::lpm_concat(Design*des, NetConcat*obj)
 {
+	// Sorry, I don't know how to constant-propagate through
+	// transparent concatenations.
+      if (obj->transparent())
+	    return;
+
       verinum result (verinum::Vz, obj->width());
       unsigned off = 0;
 

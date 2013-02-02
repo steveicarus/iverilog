@@ -417,31 +417,6 @@ const char*draw_input_from_net(ivl_nexus_t nex)
 }
 
 
-/* Create flag string  for port nature */
-
-static const char *port_type_str( ivl_signal_port_t ptype )
-{
-    switch( ptype )
-    {
-    case IVL_SIP_INPUT :
-        return "INPUT";
-    case IVL_SIP_OUTPUT :
-        return "OUTPUT";
-    case IVL_SIP_INOUT :
-        return "INOUT";
-    case  IVL_SIP_NONE :
-    default :
-        return "NOT_PORT";
-    }
-}
-/* Create flag string  for et nature" port nature / localness */
-
-static const char *port_nature_flag_str( ivl_signal_t sig )
-{
-    return port_type_str( ivl_signal_port(sig) );
-}
-
-
 static const char *local_flag_str( ivl_signal_t sig )
 {
     return ivl_signal_local(sig)? "*" : "";
@@ -1606,13 +1581,14 @@ static void draw_lpm_concat(ivl_lpm_t net)
       const char*src_table[4];
       unsigned icnt = ivl_lpm_size(net);
       const char*dly = draw_lpm_output_delay(net, IVL_VT_LOGIC);
+      const char*z = ivl_lpm_type(net)==IVL_LPM_CONCATZ? "8" : "";
 
       if (icnt <= 4) {
 	      /* This is the easiest case. There are 4 or fewer input
 		 vectors, so the entire IVL_LPM_CONCAT can be
 		 implemented with a single .concat node. */
 	    draw_lpm_data_inputs(net, 0, icnt, src_table);
-	    fprintf(vvp_out, "L_%p%s .concat ", net, dly);
+	    fprintf(vvp_out, "L_%p%s .concat%s ", net, dly, z);
 	    lpm_concat_inputs(net, 0, icnt, src_table);
 
       } else {
@@ -1640,7 +1616,7 @@ static void draw_lpm_concat(ivl_lpm_t net)
 			trans = icnt - idx;
 
 		  draw_lpm_data_inputs(net, idx, trans, src_table);
-		  fprintf(vvp_out, "LS_%p_0_%u .concat ", net, idx);
+		  fprintf(vvp_out, "LS_%p_0_%u .concat%s ", net, idx, z);
 		  wid = lpm_concat_inputs(net, idx, trans, src_table);
 
 		  tree[idx/4].base = idx;
@@ -1669,8 +1645,8 @@ static void draw_lpm_concat(ivl_lpm_t net)
 			if ((idx+trans) > icnt)
 			      trans = icnt - idx;
 
-			fprintf(vvp_out, "LS_%p_%u_%u .concat [",
-				net, depth, idx);
+			fprintf(vvp_out, "LS_%p_%u_%u .concat%s [",
+				net, depth, idx, z);
 
 			for (tdx = 0 ;  tdx < trans ;  tdx += 1) {
 			      fprintf(vvp_out, " %u", tree[idx+tdx].wid);
@@ -1698,7 +1674,7 @@ static void draw_lpm_concat(ivl_lpm_t net)
 
 	      /* Finally, draw the root node that takes in the final
 		 row of tree nodes and generates a single output. */
-	    fprintf(vvp_out, "L_%p%s .concat [", net, dly);
+	    fprintf(vvp_out, "L_%p%s .concat%s [", net, dly, z);
 	    for (idx = 0 ;  idx < icnt ;  idx += 1)
 		  fprintf(vvp_out, " %u", tree[idx].wid);
 	    for ( ;  idx < 4 ;  idx += 1)
@@ -2074,6 +2050,7 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	    return;
 
 	  case IVL_LPM_CONCAT:
+	  case IVL_LPM_CONCATZ:
 	    draw_lpm_concat(net);
 	    return;
 

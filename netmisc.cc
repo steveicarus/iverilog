@@ -1138,7 +1138,8 @@ void collapse_partselect_pv_to_concat(Design*des, NetNet*sig)
       }
 
       NetConcat*cat = new NetConcat(scope, scope->local_symbol(),
-				    ps_map.size(), device_count);
+				    ps_map.size(), device_count,
+				    true);
       des->add_node(cat);
       cat->set_line(*sig);
 

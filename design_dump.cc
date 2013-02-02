@@ -445,8 +445,12 @@ void NetCompare::dump_node(ostream&o, unsigned ind) const
 
 void NetConcat::dump_node(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "NetConcat: "
-	<< name();
+      if (transparent_)
+	    o << setw(ind) << "" << "NetConcat8: ";
+      else
+	    o << setw(ind) << "" << "NetConcat: ";
+      o << name();
+
       if (rise_time())
 	    o << " #(" << *rise_time()
 	      << "," << *fall_time() << "," << *decay_time() << ")";

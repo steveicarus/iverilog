@@ -1334,6 +1334,28 @@ class vvp_fun_concat  : public vvp_net_fun_t {
       vvp_vector4_t val_;
 };
 
+class vvp_fun_concat8  : public vvp_net_fun_t {
+
+    public:
+      vvp_fun_concat8(unsigned w0, unsigned w1,
+		     unsigned w2, unsigned w3);
+      ~vvp_fun_concat8();
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t context);
+      void recv_vec8(vvp_net_ptr_t port, const vvp_vector8_t&bit);
+
+      void recv_vec4_pv(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+			unsigned base, unsigned wid, unsigned vwid,
+                        vvp_context_t);
+      void recv_vec8_pv(vvp_net_ptr_t p, const vvp_vector8_t&bit,
+			unsigned base, unsigned wid, unsigned vwid);
+
+    private:
+      unsigned wid_[4];
+      vvp_vector8_t val_;
+};
+
 /*
  * The vvp_fun_force class objects are net functors that use their input
  * to force the associated filter. They do not actually  have an

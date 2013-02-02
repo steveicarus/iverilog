@@ -1176,6 +1176,7 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	    return net->u_.ff.d.pin;
 
 	  case IVL_LPM_CONCAT:
+	  case IVL_LPM_CONCATZ:
 	    assert(idx < net->u_.concat.inputs);
 	    return net->u_.concat.pins[idx+1];
 
@@ -1312,6 +1313,7 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net)
 	    return net->u_.ufunc.pins[0];
 
 	  case IVL_LPM_CONCAT:
+	  case IVL_LPM_CONCATZ:
 	    return net->u_.concat.pins[0];
 
 	  case IVL_LPM_PART_VP:
@@ -1394,6 +1396,7 @@ extern "C" unsigned ivl_lpm_selects(ivl_lpm_t net)
 	  case IVL_LPM_ARRAY:
 	    return net->u_.array.swid;
 	  case IVL_LPM_CONCAT:
+	  case IVL_LPM_CONCATZ:
 	    cerr << "error: ivl_lpm_selects() is no longer supported for "
 	            "IVL_LPM_CONCAT, use ivl_lpm_size() instead." << endl;
 	  default:
@@ -1443,6 +1446,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_UFUNC:
 	    return 0;
 	  case IVL_LPM_CONCAT: // Concatenations are always unsigned
+	  case IVL_LPM_CONCATZ: // Concatenations are always unsigned
 	    return 0;
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
@@ -1469,6 +1473,7 @@ extern "C" unsigned ivl_lpm_size(ivl_lpm_t net)
 	  case IVL_LPM_REPEAT:
 	    return net->u_.repeat.count;
 	  case IVL_LPM_CONCAT:
+	  case IVL_LPM_CONCATZ:
 	    return net->u_.concat.inputs;
 	  case IVL_LPM_ABS:
 	  case IVL_LPM_CAST_INT:
