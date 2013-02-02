@@ -1023,6 +1023,10 @@ static char *get_display(unsigned int *rtnsz, const struct strobe_cb_info *info)
   return rtn;
 }
 
+#ifdef BR916_STOPGAP_FIX
+static char br916_hint_issued = 0;
+#endif
+
 static int sys_check_args(vpiHandle callh, vpiHandle argv, const PLI_BYTE8*name,
                           int no_auto, int is_monitor)
 {
@@ -1060,6 +1064,31 @@ static int sys_check_args(vpiHandle callh, vpiHandle argv, const PLI_BYTE8*name,
 	      case vpiIntegerVar:
 	      case vpiTimeVar:
 	      case vpiRealVar:
+#ifdef BR916_STOPGAP_FIX
+		    // no_auto implies either $strobe or $monitor
+	          if (no_auto) {
+	  	    switch (vpi_get(_vpiFromThr, arg)) {
+		      case _vpiVThr:
+		      case _vpiWord:
+		      case _vpiString:
+	                vpi_printf("SORRY: %s:%d: ",
+				   vpi_get_str(vpiFile, callh),
+	                           (int)vpi_get(vpiLineNo, callh));
+	                vpi_printf("currently only simple signals or constant "
+                                   "expressions may be passed to %s.\n", name);
+			if (!br916_hint_issued) {
+			      vpi_printf("NOTE: You can work round this by "
+					 "assigning the desired expression "
+					 "to an intermediate net (using a "
+					 "continuous assignment) and passing "
+					 "that net to %s.\n", name);
+			}
+	                ret = 1;
+		      default:
+			break;
+		    }
+		  }
+#endif
 	      case vpiSysFuncCall:
 		  break;
 

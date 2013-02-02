@@ -51,7 +51,7 @@ static int string_get(int code, vpiHandle ref)
           case vpiAutomatic:
 	      return 0;
 
-#ifdef CHECK_WITH_VALGRIND
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
           case _vpiFromThr:
 	      return _vpiNoThr;
 #endif
@@ -363,7 +363,7 @@ static int binary_get(int code, vpiHandle ref)
           case vpiAutomatic:
 	    return 0;
 
-#ifdef CHECK_WITH_VALGRIND
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
           case _vpiFromThr:
 	      return _vpiNoThr;
 #endif
@@ -564,7 +564,7 @@ static int dec_get(int code, vpiHandle ref)
           case vpiAutomatic:
 	    return 0;
 
-#ifdef CHECK_WITH_VALGRIND
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
           case _vpiFromThr:
 	      return _vpiNoThr;
 #endif
@@ -675,7 +675,7 @@ static int real_get(int code, vpiHandle ref)
           case vpiAutomatic:
 	    return 0;
 
-#ifdef CHECK_WITH_VALGRIND
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
           case _vpiFromThr:
 	      return _vpiNoThr;
 #endif

@@ -507,7 +507,7 @@ static int vpi_array_var_word_get(int code, vpiHandle ref)
 	  case vpiAutomatic:
 	    return (int) parent->scope->is_automatic;
 
-#ifdef CHECK_WITH_VALGRIND
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
 	  case _vpiFromThr:
 	    return _vpiNoThr;
 #endif
@@ -699,7 +699,7 @@ static int vpi_array_vthr_A_get(int code, vpiHandle ref)
 	  case vpiAutomatic:
 	    return (int) parent->scope->is_automatic;
 
-#ifdef CHECK_WITH_VALGRIND
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
 	  case _vpiFromThr:
 	    return _vpi_at_A;
 #endif
