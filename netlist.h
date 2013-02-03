@@ -3527,6 +3527,8 @@ class NetEBinary  : public NetExpr {
       virtual bool has_width() const;
 
       virtual NetEBinary* dup_expr() const;
+      virtual NetExpr* evaluate_function(const LineInfo&loc,
+					 std::map<perm_string,NetExpr*>&ctx) const;
       virtual NexusSet* nex_input(bool rem_out = true);
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -3537,7 +3539,7 @@ class NetEBinary  : public NetExpr {
       NetExpr* left_;
       NetExpr* right_;
 
-      bool get_real_arguments_(verireal&lv, verireal&rv);
+      virtual NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
 };
 
 /*
@@ -3557,9 +3559,6 @@ class NetEBAdd : public NetEBinary {
 
       virtual NetEBAdd* dup_expr() const;
       virtual NetExpr* eval_tree();
-      virtual NetExpr* evaluate_function(const LineInfo&loc,
-					 std::map<perm_string,NetExpr*>&ctx) const;
-
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
@@ -3585,7 +3584,8 @@ class NetEBDiv : public NetEBinary {
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
-      NetExpr* eval_tree_real_();
+      NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      NetExpr* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
 /*
@@ -3610,8 +3610,10 @@ class NetEBBits : public NetEBinary {
 
       virtual NetEBBits* dup_expr() const;
       virtual NetEConst* eval_tree();
-
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
+
+    private:
+      NetEConst* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
 };
 
 /*
@@ -3639,10 +3641,6 @@ class NetEBComp : public NetEBinary {
       virtual ivl_variable_type_t expr_type() const;
       virtual NetEBComp* dup_expr() const;
       virtual NetEConst* eval_tree();
-
-      virtual NetExpr*evaluate_function(const LineInfo&loc,
-					std::map<perm_string,NetExpr*>&ctx) const;
-
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
@@ -3677,7 +3675,8 @@ class NetEBLogic : public NetEBinary {
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
-      NetEConst* eval_tree_real_();
+      NetEConst* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      NetEConst* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
 /*
@@ -3695,7 +3694,11 @@ class NetEBMinMax : public NetEBinary {
 
       virtual ivl_variable_type_t expr_type() const;
 
+      virtual NetExpr* eval_tree();
+
     private:
+      NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      NetExpr* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
 /*
@@ -3711,8 +3714,6 @@ class NetEBMult : public NetEBinary {
 
       virtual NetEBMult* dup_expr() const;
       virtual NetExpr* eval_tree();
-      virtual NetExpr* evaluate_function(const LineInfo&loc,
-					 std::map<perm_string,NetExpr*>&ctx) const;
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
@@ -3736,13 +3737,13 @@ class NetEBPow : public NetEBinary {
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
-      NetExpr* eval_tree_real_();
+      NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
+      NetExpr* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
 };
 
 
 /*
- * The binary logical operators are those that return boolean
- * results. The supported operators are:
+ * Support the binary shift operators. The supported operators are:
  *
  *   l  -- left shift (<<)
  *   r  -- right shift (>>)
@@ -3760,10 +3761,6 @@ class NetEBShift : public NetEBinary {
 
       virtual NetEBShift* dup_expr() const;
       virtual NetEConst* eval_tree();
-
-      virtual NetExpr*evaluate_function(const LineInfo&loc,
-					std::map<perm_string,NetExpr*>&ctx) const;
-
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -267,26 +267,8 @@ bool NetWhile::evaluate_function(const LineInfo&loc,
       return flag;
 }
 
-NetExpr* NetEBComp::evaluate_function(const LineInfo&loc,
-				      map<perm_string,NetExpr*>&context_map) const
-{
-      NetExpr*lval = left_->evaluate_function(loc, context_map);
-      NetExpr*rval = right_->evaluate_function(loc, context_map);
-
-      if (lval == 0 || rval == 0) {
-	    delete lval;
-	    delete rval;
-	    return 0;
-      }
-
-      NetEConst*res = eval_arguments_(lval, rval);
-      delete lval;
-      delete rval;
-      return res;
-}
-
-NetExpr* NetEBAdd::evaluate_function(const LineInfo&loc,
-				      map<perm_string,NetExpr*>&context_map) const
+NetExpr* NetEBinary::evaluate_function(const LineInfo&loc,
+				    map<perm_string,NetExpr*>&context_map) const
 {
       NetExpr*lval = left_->evaluate_function(loc, context_map);
       NetExpr*rval = right_->evaluate_function(loc, context_map);
@@ -298,42 +280,6 @@ NetExpr* NetEBAdd::evaluate_function(const LineInfo&loc,
       }
 
       NetExpr*res = eval_arguments_(lval, rval);
-      delete lval;
-      delete rval;
-      return res;
-}
-
-NetExpr* NetEBMult::evaluate_function(const LineInfo&loc,
-				      map<perm_string,NetExpr*>&context_map) const
-{
-      NetExpr*lval = left_->evaluate_function(loc, context_map);
-      NetExpr*rval = right_->evaluate_function(loc, context_map);
-
-      if (lval == 0 || rval == 0) {
-	    delete lval;
-	    delete rval;
-	    return 0;
-      }
-
-      NetExpr*res = eval_arguments_(lval, rval);
-      delete lval;
-      delete rval;
-      return res;
-}
-
-NetExpr* NetEBShift::evaluate_function(const LineInfo&loc,
-				      map<perm_string,NetExpr*>&context_map) const
-{
-      NetExpr*lval = left_->evaluate_function(loc, context_map);
-      NetExpr*rval = right_->evaluate_function(loc, context_map);
-
-      if (lval == 0 || rval == 0) {
-	    delete lval;
-	    delete rval;
-	    return 0;
-      }
-
-      NetEConst*res = eval_arguments_(lval, rval);
       delete lval;
       delete rval;
       return res;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -77,12 +77,10 @@ static bool get_real_arguments(const NetExpr*le, const NetExpr*re,
       return true;
 }
 
-bool NetEBinary::get_real_arguments_(verireal&lval, verireal&rval)
+NetExpr* NetEBinary::eval_arguments_(const NetExpr*, const NetExpr*) const
 {
-      if (!get_real_arg_(left_, lval)) return false;
-      if (!get_real_arg_(right_, rval)) return false;
-
-      return true;
+      ivl_assert(*this, 0);
+      return 0;
 }
 
 NetECReal* NetEBAdd::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
@@ -231,16 +229,16 @@ NetExpr* NetEBAdd::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
 NetEConst* NetEBBits::eval_tree()
 {
-      if (debug_eval_tree) {
-	    cerr << get_fileline() << ": debug: Evaluating expression:"
-	         << *this << endl;
-      }
-
       eval_expr(left_);
       eval_expr(right_);
 
-      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      return eval_arguments_(left_, right_);
+}
+
+NetEConst* NetEBBits::eval_arguments_(const NetExpr*l, const NetExpr*r) const
+{
+      const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
+      const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
       if (lc == 0 || rc == 0) return 0;
 
 	/* Notice the special case where one of the operands is 0 and
@@ -293,7 +291,15 @@ NetEConst* NetEBBits::eval_tree()
 	    return 0;
       }
 
-      return new NetEConst(res);
+      NetEConst*tmp = new NetEConst(res);
+      ivl_assert(*this, tmp);
+      tmp->set_line(*this);
+
+      if (debug_eval_tree)
+	    cerr << get_fileline() << ": debug: Evaluated: " << *this
+	         << " --> " << *tmp << endl;
+
+      return tmp;
 }
 
 NetEConst* NetEBComp::eval_less_(const NetExpr*le, const NetExpr*re) const
@@ -764,27 +770,28 @@ NetEConst* NetEBComp::eval_tree()
       return res;
 }
 
-NetExpr* NetEBDiv::eval_tree_real_()
+NetExpr* NetEBDiv::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 {
-      verireal lval;
-      verireal rval;
+      double lval;
+      double rval;
 
-      bool flag = get_real_arguments_(lval, rval);
+      bool flag = get_real_arguments(l, r, lval, rval);
       if (! flag) return 0;
 
-      NetECReal*res = 0;
+      double res_val = 0.0;
       switch (op_) {
 	  case '/':
-	    res = new NetECReal(lval / rval);
+	    res_val = lval / rval;
 	    break;
 
 	  case '%':
 	      // Since this could/may be called early we don't want to
 	      // leak functionality.
 	    if (!gn_icarus_misc_flag) return 0;
-	    res = new NetECReal(lval % rval);
+	    res_val = fmod(lval, rval);
 	    break;
       }
+      NetECReal*res = new NetECReal( verireal(res_val) );
       ivl_assert(*this, res);
       res->set_line(*this);
 
@@ -804,11 +811,16 @@ NetExpr* NetEBDiv::eval_tree()
       eval_expr(left_);
       eval_expr(right_);
 
-      if (expr_type() == IVL_VT_REAL) return eval_tree_real_();
+      return eval_arguments_(left_, right_);
+}
+
+NetExpr* NetEBDiv::eval_arguments_(const NetExpr*l, const NetExpr*r) const
+{
+      if (expr_type() == IVL_VT_REAL) return eval_tree_real_(l,r);
       assert(expr_type() == IVL_VT_LOGIC);
 
-      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
+      const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
       if (lc == 0 || rc == 0) return 0;
 
       verinum lval = lc->value();
@@ -841,25 +853,25 @@ NetExpr* NetEBDiv::eval_tree()
       return tmp;
 }
 
-NetEConst* NetEBLogic::eval_tree_real_()
+NetEConst* NetEBLogic::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 {
-      verireal lval;
-      verireal rval;
+      double lval;
+      double rval;
 
-      bool flag = get_real_arguments_(lval, rval);
+      bool flag = get_real_arguments(l, r, lval, rval);
       if (! flag) return 0;
 
       verinum::V res;
       switch (op_) {
 	  case 'a': // Logical AND (&&)
-	    if ((lval.as_double() != 0.0) && (rval.as_double() != 0.0))
+	    if ((lval != 0.0) && (rval != 0.0))
 		  res = verinum::V1;
 	    else
 		  res = verinum::V0;
 	    break;
 
 	  case 'o': // Logical OR (||)
-	    if ((lval.as_double() != 0.0) || (rval.as_double() != 0.0))
+	    if ((lval != 0.0) || (rval != 0.0))
 		  res = verinum::V1;
 	    else
 		  res = verinum::V0;
@@ -885,13 +897,17 @@ NetEConst* NetEBLogic::eval_tree()
       eval_expr(left_);
       eval_expr(right_);
 
-      if (left_->expr_type() == IVL_VT_REAL ||
-          right_->expr_type() == IVL_VT_REAL)
-	    return eval_tree_real_();
+      return eval_arguments_(left_, right_);
+}
+
+NetEConst* NetEBLogic::eval_arguments_(const NetExpr*l, const NetExpr*r) const
+{
+      if (l->expr_type() == IVL_VT_REAL || r->expr_type() == IVL_VT_REAL)
+	    return eval_tree_real_(l,r);
       assert(expr_type() == IVL_VT_LOGIC);
 
-      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
+      const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
       if (lc == 0 || rc == 0) return 0;
 
       verinum::V lv = verinum::V0;
@@ -956,6 +972,87 @@ NetEConst* NetEBLogic::eval_tree()
       return tmp;
 }
 
+NetExpr* NetEBMinMax::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
+{
+      double lval;
+      double rval;
+
+      bool flag = get_real_arguments(l, r, lval, rval);
+      if (! flag) return 0;
+
+      double res_val;
+      switch (op()) {
+	  case 'm':
+	    res_val = lval < rval ? lval : rval;
+	    break;
+	  case 'M':
+	    res_val = lval > rval ? lval : rval;
+	    break;
+	  default:
+	    ivl_assert(*this, 0);
+      }
+
+      NetECReal*res = new NetECReal( verireal(res_val) );
+      ivl_assert(*this, res);
+      res->set_line(*this);
+
+      if (debug_eval_tree)
+	    cerr << get_fileline() << ": debug: Evaluated (real): " << *this
+	         << " --> " << *res << endl;
+
+      return res;
+}
+
+NetExpr* NetEBMinMax::eval_tree()
+{
+      eval_expr(left_);
+      eval_expr(right_);
+
+      return eval_arguments_(left_, right_);
+}
+
+NetExpr* NetEBMinMax::eval_arguments_(const NetExpr*l, const NetExpr*r) const
+{
+      if (expr_type() == IVL_VT_REAL) return eval_tree_real_(l,r);
+      assert(expr_type() == IVL_VT_LOGIC);
+
+      const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
+      const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
+      if (lc == 0 || rc == 0) return 0;
+
+      verinum lval = lc->value();
+      verinum rval = rc->value();
+
+      unsigned wid = expr_width();
+      ivl_assert(*this, wid > 0);
+      ivl_assert(*this, lval.len() == wid);
+      ivl_assert(*this, rval.len() == wid);
+
+      verinum res_val;
+      if (lval.is_defined() && rval.is_defined()) {
+            switch (op()) {
+                case 'm':
+                  res_val = lval < rval ? lval : rval;
+                  break;
+                case 'M':
+                  res_val = lval > rval ? lval : rval;
+                  break;
+                default:
+                  ivl_assert(*this, 0);
+            }
+      } else {
+            res_val = verinum(verinum::Vx, wid);
+      }
+      NetEConst*res = new NetEConst(res_val);
+      ivl_assert(*this, res);
+      res->set_line(*this);
+
+      if (debug_eval_tree)
+	    cerr << get_fileline() << ": debug: Evaluated: " << *this
+	         << " --> " << *res << endl;
+
+      return res;
+}
 
 NetExpr* NetEBMult::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 {
@@ -1013,15 +1110,15 @@ NetExpr* NetEBMult::eval_arguments_(const NetExpr*l, const NetExpr*r) const
       return tmp;
 }
 
-NetExpr* NetEBPow::eval_tree_real_()
+NetExpr* NetEBPow::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 {
-      verireal lval;
-      verireal rval;
+      double lval;
+      double rval;
 
-      bool flag = get_real_arguments_(lval, rval);
+      bool flag = get_real_arguments(l, r, lval, rval);
       if (! flag) return 0;
 
-      NetECReal*res = new NetECReal( pow(lval,rval) );
+      NetECReal*res = new NetECReal( verireal( pow(lval,rval) ) );
       ivl_assert(*this, res);
       res->set_line(*this);
 
@@ -1037,11 +1134,16 @@ NetExpr* NetEBPow::eval_tree()
       eval_expr(left_);
       eval_expr(right_);
 
-      if (expr_type() == IVL_VT_REAL) return eval_tree_real_();
+      return eval_arguments_(left_, right_);
+}
+
+NetExpr* NetEBPow::eval_arguments_(const NetExpr*l, const NetExpr*r) const
+{
+      if (expr_type() == IVL_VT_REAL) return eval_tree_real_(l,r);
       assert(expr_type() == IVL_VT_LOGIC);
 
-      NetEConst*lc = dynamic_cast<NetEConst*>(left_);
-      NetEConst*rc = dynamic_cast<NetEConst*>(right_);
+      const NetEConst*lc = dynamic_cast<const NetEConst*>(l);
+      const NetEConst*rc = dynamic_cast<const NetEConst*>(r);
       if (lc == 0 || rc == 0) return 0;
 
       verinum lval = lc->value();
@@ -1071,6 +1173,7 @@ NetEConst* NetEBShift::eval_tree()
 {
       eval_expr(left_);
       eval_expr(right_);
+
       return eval_arguments_(left_,right_);
 }
 
