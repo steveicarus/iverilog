@@ -3529,6 +3529,7 @@ class NetEBinary  : public NetExpr {
       virtual bool has_width() const;
 
       virtual NetEBinary* dup_expr() const;
+      virtual NetExpr* eval_tree();
       virtual NetExpr* evaluate_function(const LineInfo&loc,
 					 std::map<perm_string,NetExpr*>&ctx) const;
       virtual NexusSet* nex_input(bool rem_out = true);
@@ -3582,7 +3583,6 @@ class NetEBDiv : public NetEBinary {
       virtual ivl_variable_type_t expr_type() const;
 
       virtual NetEBDiv* dup_expr() const;
-      virtual NetExpr* eval_tree();
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
@@ -3611,7 +3611,6 @@ class NetEBBits : public NetEBinary {
       ~NetEBBits();
 
       virtual NetEBBits* dup_expr() const;
-      virtual NetEConst* eval_tree();
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
@@ -3642,7 +3641,6 @@ class NetEBComp : public NetEBinary {
       virtual bool has_width() const;
       virtual ivl_variable_type_t expr_type() const;
       virtual NetEBComp* dup_expr() const;
-      virtual NetEConst* eval_tree();
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
@@ -3673,7 +3671,6 @@ class NetEBLogic : public NetEBinary {
       ~NetEBLogic();
 
       virtual NetEBLogic* dup_expr() const;
-      virtual NetEConst* eval_tree();
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
@@ -3696,8 +3693,6 @@ class NetEBMinMax : public NetEBinary {
 
       virtual ivl_variable_type_t expr_type() const;
 
-      virtual NetExpr* eval_tree();
-
     private:
       NetExpr* eval_arguments_(const NetExpr*l, const NetExpr*r) const;
       NetExpr* eval_tree_real_(const NetExpr*l, const NetExpr*r) const;
@@ -3715,7 +3710,6 @@ class NetEBMult : public NetEBinary {
       virtual ivl_variable_type_t expr_type() const;
 
       virtual NetEBMult* dup_expr() const;
-      virtual NetExpr* eval_tree();
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
@@ -3735,7 +3729,6 @@ class NetEBPow : public NetEBinary {
       virtual ivl_variable_type_t expr_type() const;
 
       virtual NetEBPow* dup_expr() const;
-      virtual NetExpr* eval_tree();
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
@@ -3762,7 +3755,6 @@ class NetEBShift : public NetEBinary {
       virtual bool has_width() const;
 
       virtual NetEBShift* dup_expr() const;
-      virtual NetEConst* eval_tree();
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
@@ -4129,7 +4121,6 @@ class NetEUBits : public NetEUnary {
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
       virtual NetEUBits* dup_expr() const;
-      virtual NetExpr* eval_tree();
       virtual ivl_variable_type_t expr_type() const;
 };
 
@@ -4141,7 +4132,6 @@ class NetEUReduce : public NetEUnary {
 
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
       virtual NetEUReduce* dup_expr() const;
-      virtual NetEConst* eval_tree();
       virtual ivl_variable_type_t expr_type() const;
 
     private:

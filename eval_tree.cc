@@ -77,8 +77,28 @@ static bool get_real_arguments(const NetExpr*le, const NetExpr*re,
       return true;
 }
 
+NetExpr* NetEBinary::eval_tree()
+{
+      eval_expr(left_);
+      eval_expr(right_);
+
+      NetExpr*res = eval_arguments_(left_, right_);
+      if (res != 0) {
+	    res->set_line(*this); 
+	    if (debug_eval_tree) {
+		  cerr << get_fileline() << ": debug: Evaluated";
+		  if (left_->expr_type() == IVL_VT_REAL ||
+		      right_->expr_type() == IVL_VT_REAL)
+			cerr << " (real)";
+		  cerr << ": " << *this << " --> " << *res << endl;
+	    }
+      }
+      return res;
+}
+
 NetExpr* NetEBinary::eval_arguments_(const NetExpr*, const NetExpr*) const
 {
+	// this method should be overridden in all sub-classes
       ivl_assert(*this, 0);
       return 0;
 }
@@ -106,12 +126,6 @@ NetECReal* NetEBAdd::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 
       NetECReal*res = new NetECReal( verireal(res_val) );
       ivl_assert(*this, res);
-      res->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated (real): " << *this
-	         << " --> " << *res << endl;
-
       return res;
 }
 
@@ -122,8 +136,17 @@ NetExpr* NetEBAdd::eval_tree()
 
 	// First try to elaborate the expression completely.
       NetExpr*res = eval_arguments_(left_,right_);
-      if (res != 0)
+      if (res != 0) {
+	    res->set_line(*this); 
+	    if (debug_eval_tree) {
+		  cerr << get_fileline() << ": debug: Evaluated";
+		  if (left_->expr_type() == IVL_VT_REAL ||
+		      right_->expr_type() == IVL_VT_REAL)
+			cerr << " (real)";
+		  cerr << ": " << *this << " --> " << *res << endl;
+	    }
 	    return res;
+      }
 
 	// If the expression type is real, then do not attempt the
 	// following alternative processing.
@@ -213,26 +236,12 @@ NetExpr* NetEBAdd::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
 	    NetEConst *res = new NetEConst(val);
 	    ivl_assert(*this, res);
-	    res->set_line(*this);
-
-	    if (debug_eval_tree)
-		  cerr << get_fileline() << ": debug: Evaluated: " << *this
-		  << " --> " << *res << endl;
-
 	    return res;
       }
 
 
 	/* Nothing more to be done, the value is not constant. */
       return 0;
-}
-
-NetEConst* NetEBBits::eval_tree()
-{
-      eval_expr(left_);
-      eval_expr(right_);
-
-      return eval_arguments_(left_, right_);
 }
 
 NetEConst* NetEBBits::eval_arguments_(const NetExpr*l, const NetExpr*r) const
@@ -246,12 +255,16 @@ NetEConst* NetEBBits::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 	   known to be 0. */
       if ((op() == '&') && (lc->value() == verinum(0))) {
 	    verinum res (verinum::V0, expr_width());
-	    return new NetEConst(res);
+	    NetEConst*tmp = new NetEConst(res);
+	    ivl_assert(*this, tmp);
+	    return tmp;
       }
 
       if ((op() == '&') && (rc->value() == verinum(0))) {
 	    verinum res (verinum::V0, expr_width());
-	    return new NetEConst(res);
+	    NetEConst*tmp = new NetEConst(res);
+	    ivl_assert(*this, tmp);
+	    return tmp;
       }
 
       verinum lval = lc->value();
@@ -293,12 +306,6 @@ NetEConst* NetEBBits::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
       NetEConst*tmp = new NetEConst(res);
       ivl_assert(*this, tmp);
-      tmp->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated: " << *this
-	         << " --> " << *tmp << endl;
-
       return tmp;
 }
 
@@ -747,26 +754,6 @@ NetEConst* NetEBComp::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 	    break;
 
       }
-
-      return res;
-}
-
-NetEConst* NetEBComp::eval_tree()
-{
-      eval_expr(left_);
-      eval_expr(right_);
-
-      NetEConst*res = eval_arguments_(left_, right_);
-      if (res == 0) return 0;
-      res->set_line(*this);
-
-      if (debug_eval_tree) {
-	    cerr << get_fileline() << ": debug: Evaluated";
-	    if (left_->expr_type() == IVL_VT_REAL ||
-	        right_->expr_type() == IVL_VT_REAL)
-		  cerr << " (real)";
-	    cerr << ": " << *this << " --> " << *res << endl;
-      }
       return res;
 }
 
@@ -793,25 +780,7 @@ NetExpr* NetEBDiv::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
       }
       NetECReal*res = new NetECReal( verireal(res_val) );
       ivl_assert(*this, res);
-      res->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated (real): " << *this
-	         << " --> " << *res << endl;
-
       return res;
-}
-
-/*
- * The NetEBDiv operator includes the / and % operators. First evaluate
- * the sub-expressions, then perform the required operation.
- */
-NetExpr* NetEBDiv::eval_tree()
-{
-      eval_expr(left_);
-      eval_expr(right_);
-
-      return eval_arguments_(left_, right_);
 }
 
 NetExpr* NetEBDiv::eval_arguments_(const NetExpr*l, const NetExpr*r) const
@@ -844,12 +813,6 @@ NetExpr* NetEBDiv::eval_arguments_(const NetExpr*l, const NetExpr*r) const
       }
       NetExpr*tmp = new NetEConst(val);
       ivl_assert(*this, tmp);
-      tmp->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated: " << *this
-	         << " --> " << *tmp << endl;
-
       return tmp;
 }
 
@@ -883,21 +846,7 @@ NetEConst* NetEBLogic::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 
       NetEConst*tmp = new NetEConst(verinum(res, 1));
       ivl_assert(*this, tmp);
-      tmp->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated (real): " << *this
-	         << " --> " << *tmp << endl;
-
       return tmp;
-}
-
-NetEConst* NetEBLogic::eval_tree()
-{
-      eval_expr(left_);
-      eval_expr(right_);
-
-      return eval_arguments_(left_, right_);
 }
 
 NetEConst* NetEBLogic::eval_arguments_(const NetExpr*l, const NetExpr*r) const
@@ -963,12 +912,6 @@ NetEConst* NetEBLogic::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
       NetEConst*tmp = new NetEConst(verinum(res, 1));
       ivl_assert(*this, tmp);
-      tmp->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated: " << *this
-	         << " --> " << *tmp << endl;
-
       return tmp;
 }
 
@@ -994,21 +937,7 @@ NetExpr* NetEBMinMax::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 
       NetECReal*res = new NetECReal( verireal(res_val) );
       ivl_assert(*this, res);
-      res->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated (real): " << *this
-	         << " --> " << *res << endl;
-
       return res;
-}
-
-NetExpr* NetEBMinMax::eval_tree()
-{
-      eval_expr(left_);
-      eval_expr(right_);
-
-      return eval_arguments_(left_, right_);
 }
 
 NetExpr* NetEBMinMax::eval_arguments_(const NetExpr*l, const NetExpr*r) const
@@ -1045,12 +974,6 @@ NetExpr* NetEBMinMax::eval_arguments_(const NetExpr*l, const NetExpr*r) const
       }
       NetEConst*res = new NetEConst(res_val);
       ivl_assert(*this, res);
-      res->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated: " << *this
-	         << " --> " << *res << endl;
-
       return res;
 }
 
@@ -1064,21 +987,7 @@ NetExpr* NetEBMult::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 
       NetECReal*res = new NetECReal( verireal(lval * rval) );
       ivl_assert(*this, res);
-      res->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated (real): " << *this
-	         << " --> " << *res << endl;
-
       return res;
-}
-
-NetExpr* NetEBMult::eval_tree()
-{
-      eval_expr(left_);
-      eval_expr(right_);
-
-      return eval_arguments_(left_, right_);
 }
 
 NetExpr* NetEBMult::eval_arguments_(const NetExpr*l, const NetExpr*r) const
@@ -1101,12 +1010,6 @@ NetExpr* NetEBMult::eval_arguments_(const NetExpr*l, const NetExpr*r) const
       verinum val(lval * rval, wid);
       NetEConst*tmp = new NetEConst(val);
       ivl_assert(*this, tmp);
-      tmp->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated: " << *this
-	         << " --> " << *tmp << endl;
-
       return tmp;
 }
 
@@ -1120,21 +1023,7 @@ NetExpr* NetEBPow::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 
       NetECReal*res = new NetECReal( verireal( pow(lval,rval) ) );
       ivl_assert(*this, res);
-      res->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated (real): " << *this
-	         << " --> " << *res << endl;
-
       return res;
-}
-
-NetExpr* NetEBPow::eval_tree()
-{
-      eval_expr(left_);
-      eval_expr(right_);
-
-      return eval_arguments_(left_, right_);
 }
 
 NetExpr* NetEBPow::eval_arguments_(const NetExpr*l, const NetExpr*r) const
@@ -1156,25 +1045,7 @@ NetExpr* NetEBPow::eval_arguments_(const NetExpr*l, const NetExpr*r) const
       verinum val(pow(lval, rval), wid);
       NetEConst*res = new NetEConst(val);
       ivl_assert(*this, res);
-      res->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated: " << *this
-	         << " --> " << *res << endl;
-
       return res;
-}
-
-/*
- * Evaluate the shift operator if possible. For this to work, both
- * operands must be constant.
- */
-NetEConst* NetEBShift::eval_tree()
-{
-      eval_expr(left_);
-      eval_expr(right_);
-
-      return eval_arguments_(left_,right_);
 }
 
 NetEConst* NetEBShift::eval_arguments_(const NetExpr*l, const NetExpr*r) const
@@ -1213,12 +1084,7 @@ NetEConst* NetEBShift::eval_arguments_(const NetExpr*l, const NetExpr*r) const
       }
       val.has_sign(has_sign());
       res = new NetEConst(val);
-      res->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated: " << *this
-	         << " --> " << *res << endl;
-
+      ivl_assert(*this, res);
       return res;
 }
 
@@ -1507,6 +1373,22 @@ NetExpr*NetETernary::blended_arguments_(const NetExpr*te, const NetExpr*fe) cons
       return rc;
 }
 
+NetExpr* NetEUnary::eval_tree()
+{
+      eval_expr(expr_);
+      NetExpr*res = eval_arguments_(expr_);
+      if (res != 0) {
+	    res->set_line(*this);
+	    if (debug_eval_tree) {
+		  cerr << get_fileline() << ": debug: Evaluated";
+		  if (expr_->expr_type() == IVL_VT_REAL)
+			cerr << " (real)";
+		  cerr << ": " << *this << " --> " << *res << endl;
+	    }
+      }
+      return res;
+}
+
 NetExpr* NetEUnary::eval_tree_real_(const NetExpr*ex) const
 {
       const NetECReal*val= dynamic_cast<const NetECReal*> (ex);
@@ -1530,19 +1412,7 @@ NetExpr* NetEUnary::eval_tree_real_(const NetExpr*ex) const
       }
       NetECReal *res = new NetECReal( verireal(res_val) );
       ivl_assert(*this, res);
-      res->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated (real): " << *this
-	         << " --> " << *res << endl;
-
       return res;
-}
-
-NetExpr* NetEUnary::eval_tree()
-{
-      eval_expr(expr_);
-      return eval_arguments_(expr_);
 }
 
 NetExpr* NetEUnary::eval_arguments_(const NetExpr*ex) const
@@ -1608,20 +1478,9 @@ NetExpr* NetEUnary::eval_arguments_(const NetExpr*ex) const
 
       NetEConst *res = new NetEConst(val);
       ivl_assert(*this, res);
-      res->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated: " << *this
-	         << " --> " << *res << endl;
-
       return res;
 }
 
-
-NetExpr* NetEUBits::eval_tree()
-{
-      return NetEUnary::eval_tree();
-}
 
 NetEConst* NetEUReduce::eval_tree_real_(const NetExpr*ex) const
 {
@@ -1635,19 +1494,7 @@ NetEConst* NetEUReduce::eval_tree_real_(const NetExpr*ex) const
 
       NetEConst*tmp = new NetEConst(verinum(res, 1));
       ivl_assert(*this, tmp);
-      tmp->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated (real): " << *this
-	         << " --> " << *tmp << endl;
-
       return tmp;
-}
-
-NetEConst* NetEUReduce::eval_tree()
-{
-      eval_expr(expr_);
-      return eval_arguments_(expr_);
 }
 
 NetEConst* NetEUReduce::eval_arguments_(const NetExpr*ex) const
@@ -1738,12 +1585,6 @@ NetEConst* NetEUReduce::eval_arguments_(const NetExpr*ex) const
 
       NetEConst*tmp = new NetEConst(verinum(res, 1));
       ivl_assert(*this, tmp);
-      tmp->set_line(*this);
-
-      if (debug_eval_tree)
-	    cerr << get_fileline() << ": debug: Evaluated: " << *this
-	         << " --> " << *tmp << endl;
-
       return tmp;
 }
 
