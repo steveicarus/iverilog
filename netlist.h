@@ -1943,6 +1943,8 @@ class NetECReal  : public NetExpr {
       virtual void dump(ostream&) const;
 
       virtual NetECReal* dup_expr() const;
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					std::map<perm_string,NetExpr*>&ctx) const;
       virtual NetNet*synthesize(Design*, NetScope*scope, NetExpr*);
       virtual NexusSet* nex_input(bool rem_out = true);
 
@@ -4100,6 +4102,8 @@ class NetEUnary  : public NetExpr {
 
       virtual NetEUnary* dup_expr() const;
       virtual NetExpr* eval_tree();
+      virtual NetExpr* evaluate_function(const LineInfo&loc,
+					 std::map<perm_string,NetExpr*>&ctx) const;
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
       virtual ivl_variable_type_t expr_type() const;
@@ -4112,7 +4116,8 @@ class NetEUnary  : public NetExpr {
       NetExpr* expr_;
 
     private:
-      virtual NetExpr* eval_tree_real_();
+      virtual NetExpr* eval_arguments_(const NetExpr*ex) const;
+      virtual NetExpr* eval_tree_real_(const NetExpr*ex) const;
 };
 
 class NetEUBits : public NetEUnary {
@@ -4140,7 +4145,8 @@ class NetEUReduce : public NetEUnary {
       virtual ivl_variable_type_t expr_type() const;
 
     private:
-      virtual NetEConst* eval_tree_real_();
+      virtual NetEConst* eval_arguments_(const NetExpr*ex) const;
+      virtual NetEConst* eval_tree_real_(const NetExpr*ex) const;
 };
 
 class NetECast : public NetEUnary {

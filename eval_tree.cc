@@ -1507,26 +1507,29 @@ NetExpr*NetETernary::blended_arguments_(const NetExpr*te, const NetExpr*fe) cons
       return rc;
 }
 
-NetExpr* NetEUnary::eval_tree_real_()
+NetExpr* NetEUnary::eval_tree_real_(const NetExpr*ex) const
 {
-      NetECReal*val= dynamic_cast<NetECReal*> (expr_), *res;
+      const NetECReal*val= dynamic_cast<const NetECReal*> (ex);
       if (val == 0) return 0;
 
+      double res_val = val->value().as_double();
       switch (op_) {
 	  case '+':
-	    res = new NetECReal(val->value());
-	    ivl_assert(*this, res);
 	    break;
 
 	  case '-':
-	    res = new NetECReal(-(val->value()));
-	    ivl_assert(*this, res);
+	    res_val = -res_val;
+	    break;
+
+	  case 'm':
+	    if (res_val < 0.0) res_val = -res_val;
 	    break;
 
 	  default:
 	    return 0;
       }
-
+      NetECReal *res = new NetECReal( verireal(res_val) );
+      ivl_assert(*this, res);
       res->set_line(*this);
 
       if (debug_eval_tree)
@@ -1539,9 +1542,14 @@ NetExpr* NetEUnary::eval_tree_real_()
 NetExpr* NetEUnary::eval_tree()
 {
       eval_expr(expr_);
-      if (expr_type() == IVL_VT_REAL) return eval_tree_real_();
+      return eval_arguments_(expr_);
+}
 
-      NetEConst*rval = dynamic_cast<NetEConst*>(expr_);
+NetExpr* NetEUnary::eval_arguments_(const NetExpr*ex) const
+{
+      if (expr_type() == IVL_VT_REAL) return eval_tree_real_(ex);
+
+      const NetEConst*rval = dynamic_cast<const NetEConst*>(ex);
       if (rval == 0) return 0;
 
       verinum val = rval->value();
@@ -1560,6 +1568,17 @@ NetExpr* NetEUnary::eval_tree()
 	    } else {
 		  for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
 			val.set(idx, verinum::Vx);
+	    }
+	    break;
+
+	  case 'm':
+	    if (!val.is_defined()) {
+		  for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
+			val.set(idx, verinum::Vx);
+	    } else if (val.is_negative()) {
+		  verinum tmp (verinum::V0, val.len());
+		  tmp.has_sign(val.has_sign());
+		  val = verinum(tmp - val, val.len());
 	    }
 	    break;
 
@@ -1604,11 +1623,11 @@ NetExpr* NetEUBits::eval_tree()
       return NetEUnary::eval_tree();
 }
 
-NetEConst* NetEUReduce::eval_tree_real_()
+NetEConst* NetEUReduce::eval_tree_real_(const NetExpr*ex) const
 {
       ivl_assert(*this, op_ == '!');
 
-      NetECReal*val= dynamic_cast<NetECReal*> (expr_);
+      const NetECReal*val= dynamic_cast<const NetECReal*> (ex);
       if (val == 0) return 0;
 
       verinum::V res = val->value().as_double() == 0.0 ? verinum::V1 :
@@ -1628,9 +1647,14 @@ NetEConst* NetEUReduce::eval_tree_real_()
 NetEConst* NetEUReduce::eval_tree()
 {
       eval_expr(expr_);
-      if (expr_type() == IVL_VT_REAL) return eval_tree_real_();
+      return eval_arguments_(expr_);
+}
 
-      NetEConst*rval = dynamic_cast<NetEConst*>(expr_);
+NetEConst* NetEUReduce::eval_arguments_(const NetExpr*ex) const
+{
+      if (expr_type() == IVL_VT_REAL) return eval_tree_real_(ex);
+
+      const NetEConst*rval = dynamic_cast<const NetEConst*>(ex);
       if (rval == 0) return 0;
 
       verinum val = rval->value();

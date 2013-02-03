@@ -293,6 +293,14 @@ NetExpr* NetEConst::evaluate_function(const LineInfo&,
       return res;
 }
 
+NetExpr* NetECReal::evaluate_function(const LineInfo&,
+				      map<perm_string,NetExpr*>&) const
+{
+      NetECReal*res = new NetECReal(value_);
+      res->set_line(*this);
+      return res;
+}
+
 NetExpr* NetESelect::evaluate_function(const LineInfo&loc,
 				    map<perm_string,NetExpr*>&context_map) const
 {
@@ -369,6 +377,17 @@ NetExpr* NetETernary::evaluate_function(const LineInfo&loc,
       NetExpr*res = blended_arguments_(tval, fval);
       delete tval;
       delete fval;
+      return res;
+}
+
+NetExpr* NetEUnary::evaluate_function(const LineInfo&loc,
+				    map<perm_string,NetExpr*>&context_map) const
+{
+      NetExpr*val = expr_->evaluate_function(loc, context_map);
+      if (val == 0) return 0;
+
+      NetExpr*res = eval_arguments_(val);
+      delete val;
       return res;
 }
 
