@@ -165,6 +165,8 @@ static char* strdupnew(char const *str)
 ".net/2s"   { return K_NET_2S; }
 ".net/2u"   { return K_NET_2U; }
 ".net8"     { return K_NET8; }
+".net8/2s"  { return K_NET8_2S; }
+".net8/2u"  { return K_NET8_2U; }
 ".net8/s"   { return K_NET8_S; }
 ".net/real" { return K_NET_R; }
 ".net/s"    { return K_NET_S; }

@@ -85,7 +85,8 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_CONCAT K_CONCAT8 K_DEBUG K_DELAY K_DFF
 %token K_ENUM2 K_ENUM2_S K_ENUM4 K_ENUM4_S K_EVENT K_EVENT_OR
 %token K_EXPORT K_EXTEND_S K_FUNCTOR K_IMPORT K_ISLAND K_MODPATH
-%token K_NET K_NET_S K_NET_R K_NET_2S K_NET_2U K_NET8 K_NET8_S
+%token K_NET K_NET_S K_NET_R K_NET_2S K_NET_2U
+%token K_NET8 K_NET8_2S K_NET8_2U K_NET8_S
 %token K_PARAM_STR K_PARAM_L K_PARAM_REAL K_PART K_PART_PV
 %token K_PART_V K_PART_V_S K_PORT K_PORT_INFO K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
@@ -751,7 +752,15 @@ statement
     ',' symbols_net ';'
       { compile_net($1, $4, $6, $7, -vpiLogicVar, false, $3, $9.cnt, $9.vect); }
 
+  | T_LABEL K_NET8_2U local_flag T_STRING ',' signed_t_number signed_t_number
+    ',' symbols_net ';'
+      { compile_net($1, $4, $6, $7, -vpiLogicVar, false, $3, $9.cnt, $9.vect); }
+
   | T_LABEL K_NET8_S local_flag T_STRING ',' signed_t_number signed_t_number
+    ',' symbols_net ';'
+      { compile_net($1, $4, $6, $7, -vpiLogicVar, true, $3, $9.cnt, $9.vect); }
+
+  | T_LABEL K_NET8_2S local_flag T_STRING ',' signed_t_number signed_t_number
     ',' symbols_net ';'
       { compile_net($1, $4, $6, $7, -vpiLogicVar, true, $3, $9.cnt, $9.vect); }
 
