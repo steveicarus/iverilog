@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1067,7 +1067,7 @@ static int sys_check_args(vpiHandle callh, vpiHandle argv, const PLI_BYTE8*name,
 #ifdef BR916_STOPGAP_FIX
 		    // no_auto implies either $strobe or $monitor
 	          if (no_auto) {
-	  	    switch (vpi_get(_vpiFromThr, arg)) {
+		    switch (vpi_get(_vpiFromThr, arg)) {
 		      case _vpiVThr:
 		      case _vpiWord:
 		      case _vpiString:
@@ -1077,11 +1077,14 @@ static int sys_check_args(vpiHandle callh, vpiHandle argv, const PLI_BYTE8*name,
 	                vpi_printf("currently only simple signals or constant "
                                    "expressions may be passed to %s.\n", name);
 			if (!br916_hint_issued) {
-			      vpi_printf("NOTE: You can work round this by "
-					 "assigning the desired expression "
-					 "to an intermediate net (using a "
-					 "continuous assignment) and passing "
-					 "that net to %s.\n", name);
+			      vpi_printf("NOTE: You can work around this by "
+			                 "assigning the desired expression "
+			                 "to an\n"
+			                 "      intermediate net (using a "
+			                 "continuous assignment) and passing "
+			                 "that net\n"
+			                 "      to %s.\n", name);
+			      br916_hint_issued = 1;
 			}
 	                ret = 1;
 		      default:
