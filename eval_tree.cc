@@ -84,7 +84,7 @@ NetExpr* NetEBinary::eval_tree()
 
       NetExpr*res = eval_arguments_(left_, right_);
       if (res != 0) {
-	    res->set_line(*this); 
+	    res->set_line(*this);
 	    if (debug_eval_tree) {
 		  cerr << get_fileline() << ": debug: Evaluated";
 		  if (left_->expr_type() == IVL_VT_REAL ||
@@ -137,7 +137,7 @@ NetExpr* NetEBAdd::eval_tree()
 	// First try to elaborate the expression completely.
       NetExpr*res = eval_arguments_(left_,right_);
       if (res != 0) {
-	    res->set_line(*this); 
+	    res->set_line(*this);
 	    if (debug_eval_tree) {
 		  cerr << get_fileline() << ": debug: Evaluated";
 		  if (left_->expr_type() == IVL_VT_REAL ||

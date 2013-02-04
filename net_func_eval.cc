@@ -281,7 +281,7 @@ NetExpr* NetEBinary::evaluate_function(const LineInfo&loc,
 
       NetExpr*res = eval_arguments_(lval, rval);
       if (res != 0) {
-	    res->set_line(*this); 
+	    res->set_line(*this);
 	    if (debug_eval_tree) {
 		  cerr << get_fileline() << ": debug: Evaluated";
 		  if (lval->expr_type() == IVL_VT_REAL ||
