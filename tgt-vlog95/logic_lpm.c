@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2013 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -205,6 +205,7 @@ static ivl_nexus_t get_lpm_output(ivl_scope_t scope, ivl_lpm_t lpm)
 	case IVL_LPM_CMP_NE:
 	case IVL_LPM_CMP_NEE:
 	case IVL_LPM_CONCAT:
+	case IVL_LPM_CONCATZ:
 	case IVL_LPM_DIVIDE:
 	case IVL_LPM_FF:
 	case IVL_LPM_MOD:
@@ -830,6 +831,7 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_CONCAT:
+	case IVL_LPM_CONCATZ:
 	    emit_lpm_concat(scope, lpm);
 	    break;
 	case IVL_LPM_DIVIDE:
@@ -1736,6 +1738,7 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		      case IVL_LPM_CAST_INT2: fprintf(stderr, "<int2>"); break;
 		      case IVL_LPM_CAST_REAL: fprintf(stderr, "<real>"); break;
 		      case IVL_LPM_CONCAT:    fprintf(stderr, "concat"); break;
+		      case IVL_LPM_CONCATZ:   fprintf(stderr, "concatz"); break;
 		      case IVL_LPM_CMP_EEQ:   fprintf(stderr, "eeq"); break;
 		      case IVL_LPM_CMP_EQ:    fprintf(stderr, "eq"); break;
 		      case IVL_LPM_CMP_GE:    fprintf(stderr, "ge"); break;
