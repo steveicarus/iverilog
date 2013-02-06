@@ -3789,6 +3789,8 @@ class NetEConcat  : public NetExpr {
       virtual bool has_width() const;
       virtual NetEConcat* dup_expr() const;
       virtual NetEConst*  eval_tree();
+      virtual NetExpr* evaluate_function(const LineInfo&loc,
+					 std::map<perm_string,NetExpr*>&ctx) const;
       virtual NetNet*synthesize(Design*, NetScope*scope, NetExpr*root);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -3797,6 +3799,8 @@ class NetEConcat  : public NetExpr {
       std::vector<NetExpr*>parms_;
       unsigned repeat_;
       ivl_variable_type_t expr_type_;
+
+      NetEConst* eval_arguments_(const vector<NetExpr*>&vals, unsigned gap) const;
 };
 
 

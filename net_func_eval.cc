@@ -55,8 +55,10 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 	// fills in the context_map with local variables held by the scope.
       scope_->evaluate_function_find_locals(loc, context_map);
 
-	// Perform the evaluation
-      bool flag = statement_->evaluate_function(loc, context_map);
+	// Perform the evaluation. Note that if there were errors
+	// when compiling the function definition, we may not have
+	// a valid statement.
+      bool flag = statement_ && statement_->evaluate_function(loc, context_map);
 
 	// Extract the result...
       ptr = context_map.find(scope_->basename());
@@ -292,6 +294,33 @@ NetExpr* NetEBinary::evaluate_function(const LineInfo&loc,
       }
       delete lval;
       delete rval;
+      return res;
+}
+
+NetExpr* NetEConcat::evaluate_function(const LineInfo&loc,
+				    map<perm_string,NetExpr*>&context_map) const
+{
+      vector<NetExpr*>vals(parms_.size());
+      unsigned gap = 0;
+
+      unsigned valid_vals = 0;
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
+            ivl_assert(*this, parms_[idx]);
+            vals[idx] = parms_[idx]->evaluate_function(loc, context_map);
+            if (vals[idx] == 0) continue;
+
+            gap += vals[idx]->expr_width();
+
+            valid_vals += 1;
+      }
+
+      NetExpr*res = 0;
+      if (valid_vals == parms_.size()) {
+            res = eval_arguments_(vals, gap);
+      }
+      for (unsigned idx = 0 ;  idx < vals.size() ;  idx += 1) {
+            delete vals[idx];
+      }
       return res;
 }
 

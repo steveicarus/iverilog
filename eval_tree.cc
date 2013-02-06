@@ -1090,13 +1090,7 @@ NetEConst* NetEBShift::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
 NetEConst* NetEConcat::eval_tree()
 {
-      unsigned repeat_val = repeat();
       unsigned local_errors = 0;
-
-      if (debug_eval_tree) {
-	    cerr << get_fileline() << ": debug: Evaluating expression:"
-	         << *this << endl;
-      }
 
       unsigned gap = 0;
       for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
@@ -1141,6 +1135,14 @@ NetEConst* NetEConcat::eval_tree()
 
       if (local_errors > 0) return 0;
 
+      return eval_arguments_(parms_, gap);
+}
+
+NetEConst* NetEConcat::eval_arguments_(const vector<NetExpr*>&vals,
+                                       unsigned gap) const
+{
+      unsigned repeat_val = repeat();
+
 	// At this point, the "gap" is the width of a single repeat of
 	// the concatenation. The total width of the result is the gap
 	// times the repeat count.
@@ -1150,8 +1152,8 @@ NetEConst* NetEConcat::eval_tree()
 
       unsigned cur = 0;
       bool is_string_flag = true;
-      for (unsigned idx = parms_.size() ;  idx > 0 ;  idx -= 1) {
-	    NetEConst*expr = dynamic_cast<NetEConst*>(parms_[idx-1]);
+      for (unsigned idx = vals.size() ;  idx > 0 ;  idx -= 1) {
+	    const NetEConst*expr = dynamic_cast<NetEConst*>(vals[idx-1]);
 	    if (expr == 0)
 		  return 0;
 
@@ -1176,6 +1178,12 @@ NetEConst* NetEConcat::eval_tree()
       val.has_sign( this->has_sign() );
 
       NetEConst*res = new NetEConst(val);
+      ivl_assert(*this, res);
+      res->set_line(*this); 
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": debug: Evaluated: "
+	         << *this << " --> " << *res << endl;
+      }
       return res;
 }
 
