@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -3059,9 +3059,14 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
       NetScope*task = des->find_task(scope, path_);
       if (task == 0) {
-	      // Maybe this is a method attached to a signal?
+	      // For SystemVerilog this may be a few other things.
 	    if (gn_system_verilog()) {
-		  NetProc*tmp = elaborate_method_(des, scope);
+		  NetProc *tmp;
+		    // This could be a method attached to a signal?
+		  tmp = elaborate_method_(des, scope);
+		  if (tmp) return tmp;
+		    // Or it could be a function call ignoring the return?
+		  tmp = elaborate_function_(des, scope);
 		  if (tmp) return tmp;
 	    }
 
@@ -3258,6 +3263,9 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope) const
       NetEvent *eve;
       const NetExpr *ex1, *ex2;
 
+	// There is no signal to search for so this cannot be a method.
+      if (use_path.empty()) return 0;
+
       symbol_search(this, des, scope, use_path,
 		    net, par, eve, ex1, ex2);
 
@@ -3277,6 +3285,20 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope) const
 	    return sys;
       }
 
+      return 0;
+}
+
+NetProc* PCallTask::elaborate_function_(Design*des, NetScope*scope) const
+{
+      NetFuncDef*func = des->find_function(scope, path_);
+	// This is not a function, so this task call cannot be a function
+	// call with a missing return assignment.
+      if (! func) return 0;
+
+// HERE: Should this be an assign to a dummy variable or something else?
+      cerr << get_fileline() << ": sorry: Icarus cannot currently call "
+              "functions like a tasks." << endl;
+      des->errors += 1;
       return 0;
 }
 

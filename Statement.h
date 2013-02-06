@@ -1,7 +1,7 @@
 #ifndef __Statement_H
 #define __Statement_H
 /*
- * Copyright (c) 1998-2008,2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -212,6 +212,7 @@ class PCallTask  : public Statement {
       NetProc* elaborate_usr(Design*des, NetScope*scope) const;
 
       NetProc*elaborate_method_(Design*des, NetScope*scope) const;
+      NetProc*elaborate_function_(Design*des, NetScope*scope) const;
 
       pform_name_t path_;
       vector<PExpr*> parms_;
