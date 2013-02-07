@@ -439,6 +439,41 @@ NetExpr* NetEUnary::evaluate_function(const LineInfo&loc,
       return res;
 }
 
+NetExpr* NetESFunc::evaluate_function(const LineInfo&loc,
+				      map<perm_string,NetExpr*>&context_map) const
+{
+      ID id = built_in_id_();
+      if (id == NOT_BUILT_IN) {
+	    cerr << get_fileline() << ": error: " << name_
+		 << " is not a built-in function, so cannot"
+		 << " be used in a constant function." << endl;
+	    return 0;
+      }
+
+      NetExpr*val0 = 0;
+      NetExpr*val1 = 0;
+      NetExpr*res = 0;
+      switch (nargs_(id)) {
+	  case 1:
+	    val0 = parms_[0]->evaluate_function(loc, context_map);
+	    if (val0 == 0) break;
+	    res = evaluate_one_arg_(id, val0);
+	    break;
+	  case 2:
+	    val0 = parms_[0]->evaluate_function(loc, context_map);
+	    val1 = parms_[1]->evaluate_function(loc, context_map);
+	    if (val0 == 0 || val1 == 0) break;
+	    res = evaluate_two_arg_(id, val0, val1);
+	    break;
+	  default:
+	    ivl_assert(*this, 0);
+	    break;
+      }
+      delete val0;
+      delete val1;
+      return res;
+}
+
 NetExpr* NetEUFunc::evaluate_function(const LineInfo&loc,
 				      map<perm_string,NetExpr*>&context_map) const
 {

@@ -4005,6 +4005,8 @@ class NetESFunc  : public NetExpr {
       const NetExpr* parm(unsigned idx) const;
 
       virtual NetExpr* eval_tree();
+      virtual NetExpr* evaluate_function(const LineInfo&loc,
+					 std::map<perm_string,NetExpr*>&ctx) const;
 
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true);
@@ -4016,10 +4018,42 @@ class NetESFunc  : public NetExpr {
       virtual NetNet*synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
+      enum ID { NOT_BUILT_IN = 0x0,
+		MATH_ONE_ARG = 0x100,
+		  CLOG2, LN, LOG10, EXP, SQRT, FLOOR, CEIL, 
+		  SIN,	COS,  TAN,  ASIN,  ACOS,  ATAN,
+		  SINH, COSH, TANH, ASINH, ACOSH, ATANH,
+		AMS_ONE_ARG  = 0x180,
+		  ABS,
+		MATH_TWO_ARG = 0x200,
+		  POW, ATAN2, HYPOT,
+		AMS_TWO_ARG  = 0x280,
+		  MIN, MAX };
+
+      bool is_ams_(ID id) const { return id & 0x80; };
+      unsigned nargs_(ID id) const { return id >> 8; };
+		     
       const char* name_;
       ivl_variable_type_t type_;
       netenum_t*enum_type_;
       std::vector<NetExpr*>parms_;
+
+      ID built_in_id_() const;
+
+      NetExpr* evaluate_one_arg_(ID id, const NetExpr*arg) const;
+      NetExpr* evaluate_two_arg_(ID id, const NetExpr*arg0,
+					const NetExpr*arg1) const;
+
+      NetEConst* evaluate_clog2_(const NetExpr*arg) const;
+
+      NetECReal* evaluate_math_one_arg_(ID id, const NetExpr*arg) const;
+      NetECReal* evaluate_math_two_arg_(ID id, const NetExpr*arg0,
+					       const NetExpr*arg1) const;
+
+      NetExpr* evaluate_abs_(const NetExpr*arg) const;
+
+      NetExpr* evaluate_min_max_(ID id, const NetExpr*arg0,
+					const NetExpr*arg1) const;
 
     private: // not implemented
       NetESFunc(const NetESFunc&);
