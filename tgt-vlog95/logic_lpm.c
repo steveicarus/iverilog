@@ -213,6 +213,7 @@ static ivl_nexus_t get_lpm_output(ivl_scope_t scope, ivl_lpm_t lpm)
 	case IVL_LPM_MUX:
 	case IVL_LPM_PART_PV:
 	case IVL_LPM_PART_VP:
+	case IVL_LPM_POW:
 	case IVL_LPM_RE_AND:
 	case IVL_LPM_RE_NAND:
 	case IVL_LPM_RE_NOR:
@@ -876,6 +877,17 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	    break;
 	case IVL_LPM_PART_VP:
 	    emit_lpm_part_select(scope, lpm);
+	    break;
+	case IVL_LPM_POW:
+	    fprintf(vlog_out, "(");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    fprintf(vlog_out, " ** ");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    fprintf(vlog_out, ")");
+	    fprintf(stderr, "%s:%u: vlog95 error: Power operator is not "
+	                    "supported.\n",
+	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+	    vlog_errors += 1;
 	    break;
 	case IVL_LPM_RE_AND:
 	    fprintf(vlog_out, "(&");
