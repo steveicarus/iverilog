@@ -688,6 +688,9 @@ static void emit_port(ivl_scope_t scope, struct port_expr_s port_expr)
  * appropriate task call. It returns true (1) if it successfully
  * translated the block to a task call, otherwise it returns false
  * (0) to indicate the block needs to be emitted.
+ *
+ * When calling automatic tasks there is an initial ALLOC statement
+ * and a final FREE statement.
  */
 static unsigned is_utask_call_with_args(ivl_scope_t scope,
                                         ivl_statement_t stmt)
@@ -695,17 +698,31 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
       unsigned idx, ports, task_idx = 0;
       unsigned count = ivl_stmt_block_count(stmt);
       unsigned lineno = ivl_stmt_lineno(stmt);
+      unsigned start, stop, is_auto = 0;
       ivl_scope_t task_scope = 0;
       port_expr_t port_exprs;
 	/* Check to see if the block is of the basic form first.  */
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_statement_t tmp = ivl_stmt_block_stmt(stmt, idx);
+	      /* For an automatic task the ALLOC must be first. */
+	    if (ivl_statement_type(tmp) == IVL_ST_ALLOC) {
+		  if (idx == 0) {
+			is_auto = 1;
+			continue;
+		  }
+	    }
 	    if (ivl_statement_type(tmp) == IVL_ST_ASSIGN) continue;
 	    if (ivl_statement_type(tmp) == IVL_ST_UTASK && !task_scope) {
 		  task_idx = idx;
 		  task_scope = ivl_stmt_call(tmp);
 		  assert(ivl_scope_type(task_scope) == IVL_SCT_TASK);
 		  continue;
+	    }
+	      /* For an automatic task the FREE must be last. */
+	    if (ivl_statement_type(tmp) == IVL_ST_FREE) {
+		  if (idx == count-1) {
+			if (is_auto) continue;
+		  }
 	    }
 	    return 0;
       }
@@ -720,8 +737,11 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
 	    port_exprs[idx].type = IVL_SIP_NONE;
 	    port_exprs[idx].expr.rval = 0;
       }
+
 	/* Check that the input arguments are correct. */
-      for (idx = 0; idx < task_idx; idx += 1) {
+      if (is_auto) start = 1;
+      else start = 0;
+      for (idx = start; idx < task_idx; idx += 1) {
 	    ivl_statement_t assign = ivl_stmt_block_stmt(stmt, idx);
 	    unsigned port = utask_in_port_idx(task_scope, assign);
 	    if ((port == ports) || (lineno != ivl_stmt_lineno(assign))) {
@@ -732,7 +752,9 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
 	    port_exprs[port].expr.rval = ivl_stmt_rval(assign);
       }
 	/* Check that the output arguments are correct. */
-      for (idx = task_idx + 1; idx < count; idx += 1) {
+      if (is_auto) stop = count-1;
+      else stop = count;
+      for (idx = task_idx + 1; idx < stop; idx += 1) {
 	    ivl_statement_t assign = ivl_stmt_block_stmt(stmt, idx);
 	    unsigned port = utask_out_port_idx(task_scope, assign);
 	    if ((port == ports) || (lineno != ivl_stmt_lineno(assign))) {
