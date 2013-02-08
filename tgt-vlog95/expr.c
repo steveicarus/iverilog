@@ -184,7 +184,7 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
 	    fprintf(vlog_out, ") %s (", oper);
 	    emit_expr(scope, ivl_expr_oper2(expr), wid);
-	    fprintf(vlog_out, " ? (");
+	    fprintf(vlog_out, ") ? (");
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
 	    fprintf(vlog_out, ") : (");
 	    emit_expr(scope, ivl_expr_oper2(expr), wid);
