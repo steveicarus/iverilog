@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2013 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -456,6 +456,9 @@ static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    }
 	    emit_expr(scope, ivl_expr_parm(expr, count), 0);
 	    fprintf(vlog_out, ")");
+	/* User functions without arguments are not supported. */
+      } else if (ivl_expr_type(expr) == IVL_EX_UFUNC) {
+	    fprintf(vlog_out, "()");
       }
 }
 
