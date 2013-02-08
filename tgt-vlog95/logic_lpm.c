@@ -193,6 +193,7 @@ static ivl_nexus_t get_lpm_output(ivl_scope_t scope, ivl_lpm_t lpm)
 {
       ivl_nexus_t output = 0;
       switch (ivl_lpm_type(lpm)) {
+	case IVL_LPM_ABS:
 	case IVL_LPM_ADD:
 	case IVL_LPM_ARRAY:
 	case IVL_LPM_CAST_INT:
@@ -774,6 +775,19 @@ static void emit_lpm_func(ivl_scope_t scope, ivl_lpm_t lpm)
 static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 {
       switch (ivl_lpm_type(lpm)) {
+	  /* Convert Verilog-A abs() function. This only works when the
+	   * argument has no side effect. */
+	case IVL_LPM_ABS:
+	    fprintf(vlog_out, "((");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    fprintf(vlog_out, ") > ");
+// HERE: If this is a real net then use 0.0. See the expr code.
+	    fprintf(vlog_out, "0 ? (");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    fprintf(vlog_out, ") : -(");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    fprintf(vlog_out, "))");
+	    break;
 	case IVL_LPM_ADD:
 	    fprintf(vlog_out, "(");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
