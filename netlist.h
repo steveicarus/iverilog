@@ -4020,7 +4020,7 @@ class NetESFunc  : public NetExpr {
     private:
       enum ID { NOT_BUILT_IN = 0x0,
 		MATH_ONE_ARG = 0x100,
-		  CLOG2, LN, LOG10, EXP, SQRT, FLOOR, CEIL, 
+		  CLOG2, LN, LOG10, EXP, SQRT, FLOOR, CEIL,
 		  SIN,	COS,  TAN,  ASIN,  ACOS,  ATAN,
 		  SINH, COSH, TANH, ASINH, ACOSH, ATANH,
 		AMS_ONE_ARG  = 0x180,
@@ -4032,7 +4032,7 @@ class NetESFunc  : public NetExpr {
 
       bool is_ams_(ID id) const { return id & 0x80; };
       unsigned nargs_(ID id) const { return id >> 8; };
-		     
+
       const char* name_;
       ivl_variable_type_t type_;
       netenum_t*enum_type_;
