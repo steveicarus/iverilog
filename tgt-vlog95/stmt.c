@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2013 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -174,6 +174,39 @@ static void emit_stmt_lval_ips(ivl_scope_t scope, ivl_lval_t lval,
       }
 }
 
+/*
+ * Dynamic arrays are not supported in vlog95, but this assignment can be
+ * translated correctly.
+ */
+static void emit_stmt_lval_darray(ivl_scope_t scope, ivl_lval_t lval,
+                                  ivl_signal_t sig)
+{
+      ivl_expr_t idx = ivl_lval_idx(lval);
+      emit_scope_call_path(scope, ivl_signal_scope(sig));
+      emit_id(ivl_signal_basename(sig));
+      if (idx) {
+	    fprintf(vlog_out, "[");
+	    emit_expr(scope, idx, 0);
+	    fprintf(vlog_out, "]");
+      }
+}
+
+/*
+ * Class or class properties are not supported in vlog95, but this assignment
+ * can be translated correctly.
+ */
+static void emit_stmt_lval_class(ivl_scope_t scope, ivl_lval_t lval,
+                                 ivl_signal_t sig)
+{
+      int idx = ivl_lval_property_idx(lval);
+      emit_scope_call_path(scope, ivl_signal_scope(sig));
+      emit_id(ivl_signal_basename(sig));
+      if (idx >= 0) {
+	    ivl_type_t sig_type = ivl_signal_net_type(sig);
+	    fprintf(vlog_out, ".%s", ivl_type_prop_name(sig_type, idx));
+      }
+}
+
 static void emit_stmt_lval_piece(ivl_scope_t scope, ivl_lval_t lval)
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
@@ -182,6 +215,18 @@ static void emit_stmt_lval_piece(ivl_scope_t scope, ivl_lval_t lval)
       unsigned width = ivl_lval_width(lval);
       int msb, lsb;
       assert(width > 0);
+      assert(sig);
+
+      switch (ivl_signal_data_type(sig)) {
+	case IVL_VT_DARRAY:
+	    emit_stmt_lval_darray(scope, lval, sig);
+	    return;
+	case IVL_VT_CLASS:
+	    emit_stmt_lval_class(scope, lval, sig);
+	    return;
+	default:
+	    break;
+      }
 
 	/* If there are no selects then just print the name. */
       sel_expr = ivl_lval_part_off(lval);

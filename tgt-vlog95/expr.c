@@ -398,6 +398,16 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       ivl_expr_t sel_expr = ivl_expr_oper2(expr);
       ivl_expr_t sig_expr = ivl_expr_oper1(expr);
       ivl_select_type_t sel_type = ivl_expr_sel_type(expr);
+	/* If this is a dynamic array select, translate it differently. */
+      if ((ivl_expr_type(sig_expr) == IVL_EX_SIGNAL)  &&
+          (ivl_signal_data_type(ivl_expr_signal(sig_expr)) == IVL_VT_DARRAY)) {
+	    assert(sel_expr);
+	    emit_select_name(scope, sig_expr, wid);
+	    fprintf(vlog_out, "[");
+	    emit_expr(scope, sel_expr, 0);
+	    fprintf(vlog_out, "]");
+	    return;
+      }
       if (sel_expr) {
 	    unsigned width = ivl_expr_width(expr);
 	    ivl_expr_type_t type = ivl_expr_type(sig_expr);
@@ -605,6 +615,17 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       }
 }
 
+/*
+ * Class properties are not supported in vlog95, but they can be translated.
+ */
+void emit_class_property(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+{
+      ivl_signal_t sig = ivl_expr_signal(expr);
+      emit_scope_call_path(scope, ivl_signal_scope(sig));
+      emit_id(ivl_signal_basename(sig));
+      fprintf(vlog_out, ".%s", ivl_expr_name(expr));
+}
+
 void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       switch (ivl_expr_type(expr)) {
@@ -653,12 +674,7 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	                ivl_expr_lineno(expr));
 	    break;
 	case IVL_EX_PROPERTY:
-	    fprintf(vlog_out, "<class property>");
-	    fprintf(stderr, "%s:%u: vlog95 error: Class property expression "
-	                    "is not supported.\n",
-	                    ivl_expr_file(expr),
-	                    ivl_expr_lineno(expr));
-	    vlog_errors += 1;
+	    emit_class_property(scope, expr, wid);
 	    break;
 	case IVL_EX_REALNUM:
 	    emit_real_number(ivl_expr_dvalue(expr));
