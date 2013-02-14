@@ -3668,8 +3668,35 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	    tmp->set_line(*this);
 	    return tmp;
       }
-      long sb_lsb = net->sig()->sb_to_idx(prefix_indices, lsv);
-      long sb_msb = net->sig()->sb_to_idx(prefix_indices, msv);
+      long sb_lsb, sb_msb;
+      if (prefix_indices.size()+1 < net->sig()->packed_dims().size()) {
+	      // Here we have a slice that doesn't have enough indices
+	      // to get to a single slice. For example:
+	      //    wire [9:0][5:1] foo
+	      //      ... foo[4:3] ...
+	      // Make this work by finding the indexed slices and
+	      // creating a generated slice that spans the whole
+	      // range.
+	    long loff, moff;
+	    unsigned long lwid, mwid;
+	    bool lrc;
+	    lrc = net->sig()->sb_to_slice(prefix_indices, lsv, loff, lwid);
+	    lrc = net->sig()->sb_to_slice(prefix_indices, msv, moff, mwid);
+
+	    if (moff > loff) {
+		  sb_lsb = loff;
+		  sb_msb = moff + mwid - 1;
+	    } else {
+		  sb_lsb = moff;
+		  sb_msb = loff + lwid - 1;
+	    }
+      } else {
+	      // This case, the prefix indices are enough to index
+	      // down to a single bit/slice.
+	    ivl_assert(*this, prefix_indices.size()+1 == net->sig()->packed_dims().size());
+	    sb_lsb = net->sig()->sb_to_idx(prefix_indices, lsv);
+	    sb_msb = net->sig()->sb_to_idx(prefix_indices, msv);
+      }
 
       if (sb_msb < sb_lsb) {
 	    cerr << get_fileline() << ": error: part select " << net->name();

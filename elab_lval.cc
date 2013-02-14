@@ -560,25 +560,38 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 
       const vector<netrange_t>&packed = reg->packed_dims();
 
-	// Part selects cannot select slices. So there must be enough
-	// prefix_indices to get all the way to the final dimension.
+      long loff, moff;
+      long wid;
       if (prefix_indices.size()+1 < packed.size()) {
-	    cerr << get_fileline() << ": error: Cannot select a range "
-		 << "of slices from a packed array." << endl;
-	    des->errors += 1;
-	    return false;
-      }
+	      // If there are fewer indices then there are packed
+	      // dimensions, then this is a range of slices. Calculate
+	      // it into a big slice.
+	    bool lrc;
+	    unsigned long tmp_lwid, tmp_mwid;
+	    lrc = reg->sb_to_slice(prefix_indices,lsb, loff, tmp_lwid);
+	    lrc = reg->sb_to_slice(prefix_indices,msb, moff, tmp_mwid);
 
-      long loff = reg->sb_to_idx(prefix_indices,lsb);
-      long moff = reg->sb_to_idx(prefix_indices,msb);
-      long wid = moff - loff + 1;
+	    if (loff < moff) {
+		  moff = moff + tmp_mwid - 1;
+	    } else {
+		  long ltmp = moff;
+		  moff = loff + tmp_lwid - 1;
+		  loff = ltmp;
+	    }
+	    wid = moff - loff + 1;
 
-      if (moff < loff) {
-	    cerr << get_fileline() << ": error: part select "
-		 << reg->name() << "[" << msb<<":"<<lsb<<"]"
-		 << " is reversed." << endl;
-	    des->errors += 1;
-	    return false;
+      } else {
+	    loff = reg->sb_to_idx(prefix_indices,lsb);
+	    moff = reg->sb_to_idx(prefix_indices,msb);
+	    wid = moff - loff + 1;
+
+	    if (moff < loff) {
+		  cerr << get_fileline() << ": error: part select "
+		       << reg->name() << "[" << msb<<":"<<lsb<<"]"
+		       << " is reversed." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
       }
 
 	// Special case: The range winds up selecting the entire
