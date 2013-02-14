@@ -108,10 +108,53 @@ static void emit_gate_strength(ivl_net_logic_t nlogic, unsigned strength_type)
                     "gate", ivl_logic_file(nlogic), ivl_logic_lineno(nlogic));
 }
 
+/*
+ * Look for a single driver behind an LPM that passes strength information
+ * and get the real drive information from it.
+ */
+static void get_unique_lpm_drive(ivl_lpm_t lpm, ivl_drive_t *drive1,
+                                 ivl_drive_t *drive0)
+{
+      ivl_nexus_t nex = ivl_lpm_data(lpm, 0);
+      unsigned idx, count = ivl_nexus_ptrs(nex);
+      unsigned have_driver = 0;
+
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_drive_t cur_drive1 = ivl_nexus_ptr_drive1(nex_ptr);
+	    ivl_drive_t cur_drive0 = ivl_nexus_ptr_drive0(nex_ptr);
+	    if ((cur_drive1 == IVL_DR_HiZ) &&
+	        (cur_drive0 == IVL_DR_HiZ)) continue;
+	    assert(! have_driver);
+	    *drive1 = cur_drive1;
+	    *drive0 = cur_drive0;
+	    have_driver = 1;
+      }
+
+	/* This should never happen. */
+      if (! have_driver) {
+	    fprintf(stderr, "%s:%u: vlog95 error: Unable to find drive "
+	                    "information for strength transparent LPM.\n",
+	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+	    vlog_errors += 1;
+      }
+}
+
 static void emit_lpm_strength(ivl_lpm_t lpm)
 {
-      emit_strength(ivl_lpm_drive1(lpm), ivl_lpm_drive0(lpm), 2,
-                    "LPM", ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+      ivl_lpm_type_t type = ivl_lpm_type(lpm);
+      ivl_drive_t drive1 = IVL_DR_STRONG;
+      ivl_drive_t drive0 = IVL_DR_STRONG;
+	/* This LPM object passes strength information so we need to look
+	 * for the strength information at the real driver. */
+      if (type == IVL_LPM_PART_PV) {
+	    get_unique_lpm_drive(lpm, &drive1, &drive0);
+      } else {
+	    drive1 = ivl_lpm_drive1(lpm);
+	    drive0 = ivl_lpm_drive0(lpm);
+      }
+      emit_strength(drive1, drive0, 2, "LPM",
+                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
 }
 
 static void emit_delay(ivl_scope_t scope, ivl_expr_t rise, ivl_expr_t fall,
@@ -193,6 +236,7 @@ static ivl_nexus_t get_lpm_output(ivl_scope_t scope, ivl_lpm_t lpm)
 {
       ivl_nexus_t output = 0;
       switch (ivl_lpm_type(lpm)) {
+	case IVL_LPM_ABS:
 	case IVL_LPM_ADD:
 	case IVL_LPM_ARRAY:
 	case IVL_LPM_CAST_INT:
@@ -213,6 +257,7 @@ static ivl_nexus_t get_lpm_output(ivl_scope_t scope, ivl_lpm_t lpm)
 	case IVL_LPM_MUX:
 	case IVL_LPM_PART_PV:
 	case IVL_LPM_PART_VP:
+	case IVL_LPM_POW:
 	case IVL_LPM_RE_AND:
 	case IVL_LPM_RE_NAND:
 	case IVL_LPM_RE_NOR:
@@ -773,6 +818,19 @@ static void emit_lpm_func(ivl_scope_t scope, ivl_lpm_t lpm)
 static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 {
       switch (ivl_lpm_type(lpm)) {
+	  /* Convert Verilog-A abs() function. This only works when the
+	   * argument has no side effect. */
+	case IVL_LPM_ABS:
+	    fprintf(vlog_out, "((");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    fprintf(vlog_out, ") > ");
+// HERE: If this is a real net then use 0.0. See the expr code.
+	    fprintf(vlog_out, "0 ? (");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    fprintf(vlog_out, ") : -(");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    fprintf(vlog_out, "))");
+	    break;
 	case IVL_LPM_ADD:
 	    fprintf(vlog_out, "(");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
@@ -830,8 +888,14 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
-	case IVL_LPM_CONCAT:
+	  /* A concat-Z should never be generated, but report it as an
+	   * error if one is generated. */
 	case IVL_LPM_CONCATZ:
+	    fprintf(stderr, "%s:%u: vlog95 error: Transparent concatenations "
+	                    "should not be generated.\n",
+	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+	    vlog_errors += 1;
+	case IVL_LPM_CONCAT:
 	    emit_lpm_concat(scope, lpm);
 	    break;
 	case IVL_LPM_DIVIDE:
@@ -876,6 +940,17 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	    break;
 	case IVL_LPM_PART_VP:
 	    emit_lpm_part_select(scope, lpm);
+	    break;
+	case IVL_LPM_POW:
+	    fprintf(vlog_out, "(");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    fprintf(vlog_out, " ** ");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    fprintf(vlog_out, ")");
+	    fprintf(stderr, "%s:%u: vlog95 error: Power operator is not "
+	                    "supported.\n",
+	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+	    vlog_errors += 1;
 	    break;
 	case IVL_LPM_RE_AND:
 	    fprintf(vlog_out, "(&");

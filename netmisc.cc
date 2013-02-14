@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1126,6 +1126,17 @@ void collapse_partselect_pv_to_concat(Design*des, NetNet*sig)
       }
 
       ivl_assert(*sig, idx == ps_map.size());
+
+	/* The vlog95 and possibly other code generators do not want
+	 * to have a group of part selects turned into a transparent
+	 * concatenation. */
+      if (disable_concatz_generation) {
+// HERE: If the part selects have matching strengths then we can use
+//       a normal concat with a buf-Z after if the strengths are not
+//       both strong. We would ideally delete any buf-Z driving the
+//       concat, but that is not required for the vlog95 generator.
+	    return;
+      }
 
 	// Ah HAH! The NetPartSelect::PV objects exactly cover the
 	// target signal. We can replace all of them with a single

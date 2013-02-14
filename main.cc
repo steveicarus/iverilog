@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -175,6 +175,7 @@ bool debug_optimizer = false;
 bool disable_virtual_pins = false;
 unsigned long array_size_limit = 16777216;  // Minimum required by IEEE-1364?
 unsigned recursive_mod_limit = 10;
+bool disable_concatz_generation = false;
 
 /*
  * Verbose messages enabled.
@@ -966,6 +967,9 @@ int main(int argc, char*argv[])
 
       flag_tmp = flags["RECURSIVE_MOD_LIMIT"];
       if (flag_tmp) recursive_mod_limit = strtoul(flag_tmp,NULL,0);
+
+      flag_tmp = flags["DISABLE_CONCATZ_GENERATION"];
+      if (flag_tmp) disable_concatz_generation = strcmp(flag_tmp,"true")==0;
 
 	/* Parse the input. Make the pform. */
       pform_set_timescale(def_ts_units, def_ts_prec, 0, 0);

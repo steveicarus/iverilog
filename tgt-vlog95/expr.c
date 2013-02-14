@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2013 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -105,6 +105,8 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case 'l': oper = "<<"; break;
 	case 'r': oper = ">>"; break;
 	case 'R': oper = ">>>"; break;
+	case 'm': oper = "<"; break;
+	case 'M': oper = ">"; break;
       }
 
       fprintf(vlog_out, "(");
@@ -173,6 +175,20 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
 		  vlog_errors += 1;
 	    }
+	    break;
+	  /* Convert Verilog-A min() or max() functions. This only works
+	   *  when the arguments have no side effect. */
+	case 'm':
+	case 'M':
+	    fprintf(vlog_out, "((");
+	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    fprintf(vlog_out, ") %s (", oper);
+	    emit_expr(scope, ivl_expr_oper2(expr), wid);
+	    fprintf(vlog_out, ") ? (");
+	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    fprintf(vlog_out, ") : (");
+	    emit_expr(scope, ivl_expr_oper2(expr), wid);
+	    fprintf(vlog_out, "))");
 	    break;
 	default:
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
@@ -381,6 +397,16 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       ivl_expr_t sel_expr = ivl_expr_oper2(expr);
       ivl_expr_t sig_expr = ivl_expr_oper1(expr);
       ivl_select_type_t sel_type = ivl_expr_sel_type(expr);
+	/* If this is a dynamic array select, translate it differently. */
+      if ((ivl_expr_type(sig_expr) == IVL_EX_SIGNAL)  &&
+          (ivl_signal_data_type(ivl_expr_signal(sig_expr)) == IVL_VT_DARRAY)) {
+	    assert(sel_expr);
+	    emit_select_name(scope, sig_expr, wid);
+	    fprintf(vlog_out, "[");
+	    emit_expr(scope, sel_expr, 0);
+	    fprintf(vlog_out, "]");
+	    return;
+      }
       if (sel_expr) {
 	    unsigned width = ivl_expr_width(expr);
 	    ivl_expr_type_t type = ivl_expr_type(sig_expr);
@@ -456,6 +482,9 @@ static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    }
 	    emit_expr(scope, ivl_expr_parm(expr, count), 0);
 	    fprintf(vlog_out, ")");
+	/* User functions without arguments are not supported. */
+      } else if (ivl_expr_type(expr) == IVL_EX_UFUNC) {
+	    fprintf(vlog_out, "()");
       }
 }
 
@@ -558,6 +587,20 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	                    ivl_expr_lineno(expr));
 	    vlog_errors += 1;
 	    break;
+	  /* Convert Verilog-A abs() function. This only works when the
+	   * argument has no side effect. */
+	case 'm':
+	    fprintf(vlog_out, "((");
+	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    fprintf(vlog_out, ") > ");
+	    if (ivl_expr_value(expr) == IVL_VT_REAL) fprintf(vlog_out, "0.0");
+	    else fprintf(vlog_out, "0");
+	    fprintf(vlog_out, " ? (");
+	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    fprintf(vlog_out, ") : -(");
+	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    fprintf(vlog_out, "))");
+	    break;
 	default:
 	    fprintf(vlog_out, "<unknown>");
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
@@ -569,6 +612,17 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    vlog_errors += 1;
 	    break;
       }
+}
+
+/*
+ * Class properties are not supported in vlog95, but they can be translated.
+ */
+void emit_class_property(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+{
+      ivl_signal_t sig = ivl_expr_signal(expr);
+      emit_scope_call_path(scope, ivl_signal_scope(sig));
+      emit_id(ivl_signal_basename(sig));
+      fprintf(vlog_out, ".%s", ivl_expr_name(expr));
 }
 
 void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
@@ -597,10 +651,29 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case IVL_EX_EVENT:
 	    emit_expr_event(scope, expr, wid);
 	    break;
+	case IVL_EX_NEW:
+	    fprintf(vlog_out, "<new>");
+	    fprintf(stderr, "%s:%u: vlog95 error: New operator "
+	                    "is not supported.\n",
+	                    ivl_expr_file(expr),
+	                    ivl_expr_lineno(expr));
+	    vlog_errors += 1;
+	    break;
+	case IVL_EX_NULL:
+	    fprintf(vlog_out, "<null>");
+	    fprintf(stderr, "%s:%u: vlog95 error: Null operator "
+	                    "is not supported.\n",
+	                    ivl_expr_file(expr),
+	                    ivl_expr_lineno(expr));
+	    vlog_errors += 1;
+	    break;
 	case IVL_EX_NUMBER:
 	    emit_number(ivl_expr_bits(expr), ivl_expr_width(expr),
 	                ivl_expr_signed(expr), ivl_expr_file(expr),
 	                ivl_expr_lineno(expr));
+	    break;
+	case IVL_EX_PROPERTY:
+	    emit_class_property(scope, expr, wid);
 	    break;
 	case IVL_EX_REALNUM:
 	    emit_real_number(ivl_expr_dvalue(expr));

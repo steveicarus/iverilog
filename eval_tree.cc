@@ -34,6 +34,18 @@ NetExpr* NetExpr::eval_tree()
       return 0;
 }
 
+static void eval_debug(const NetExpr*expr, NetExpr*res, bool is_real)
+{
+      if (res != 0) {
+	    res->set_line(*expr);
+	    if (debug_eval_tree) {
+		  cerr << expr->get_fileline() << ": debug: Evaluated";
+		  if (is_real) cerr << " (real)";
+		  cerr << ": " << *expr << " --> " << *res << endl;
+	    }
+      }
+}
+
 static bool get_real_arg_(const NetExpr*expr, verireal&val)
 {
       switch (expr->expr_type()) {
@@ -82,18 +94,7 @@ NetExpr* NetEBinary::eval_tree()
       eval_expr(left_);
       eval_expr(right_);
 
-      NetExpr*res = eval_arguments_(left_, right_);
-      if (res != 0) {
-	    res->set_line(*this);
-	    if (debug_eval_tree) {
-		  cerr << get_fileline() << ": debug: Evaluated";
-		  if (left_->expr_type() == IVL_VT_REAL ||
-		      right_->expr_type() == IVL_VT_REAL)
-			cerr << " (real)";
-		  cerr << ": " << *this << " --> " << *res << endl;
-	    }
-      }
-      return res;
+      return eval_arguments_(left_, right_);
 }
 
 NetExpr* NetEBinary::eval_arguments_(const NetExpr*, const NetExpr*) const
@@ -126,6 +127,7 @@ NetECReal* NetEBAdd::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 
       NetECReal*res = new NetECReal( verireal(res_val) );
       ivl_assert(*this, res);
+      eval_debug(this, res, true);
       return res;
 }
 
@@ -136,17 +138,7 @@ NetExpr* NetEBAdd::eval_tree()
 
 	// First try to elaborate the expression completely.
       NetExpr*res = eval_arguments_(left_,right_);
-      if (res != 0) {
-	    res->set_line(*this);
-	    if (debug_eval_tree) {
-		  cerr << get_fileline() << ": debug: Evaluated";
-		  if (left_->expr_type() == IVL_VT_REAL ||
-		      right_->expr_type() == IVL_VT_REAL)
-			cerr << " (real)";
-		  cerr << ": " << *this << " --> " << *res << endl;
-	    }
-	    return res;
-      }
+      if (res != 0) return res;
 
 	// If the expression type is real, then do not attempt the
 	// following alternative processing.
@@ -236,6 +228,7 @@ NetExpr* NetEBAdd::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
 	    NetEConst *res = new NetEConst(val);
 	    ivl_assert(*this, res);
+	    eval_debug(this, res, false);
 	    return res;
       }
 
@@ -257,6 +250,7 @@ NetEConst* NetEBBits::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 	    verinum res (verinum::V0, expr_width());
 	    NetEConst*tmp = new NetEConst(res);
 	    ivl_assert(*this, tmp);
+	    eval_debug(this, tmp, false);
 	    return tmp;
       }
 
@@ -264,6 +258,7 @@ NetEConst* NetEBBits::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 	    verinum res (verinum::V0, expr_width());
 	    NetEConst*tmp = new NetEConst(res);
 	    ivl_assert(*this, tmp);
+	    eval_debug(this, tmp, false);
 	    return tmp;
       }
 
@@ -306,6 +301,7 @@ NetEConst* NetEBBits::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
       NetEConst*tmp = new NetEConst(res);
       ivl_assert(*this, tmp);
+      eval_debug(this, tmp, false);
       return tmp;
 }
 
@@ -754,6 +750,8 @@ NetEConst* NetEBComp::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 	    break;
 
       }
+      eval_debug(this, res, l->expr_type() == IVL_VT_REAL ||
+                            r->expr_type() == IVL_VT_REAL);
       return res;
 }
 
@@ -780,6 +778,7 @@ NetExpr* NetEBDiv::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
       }
       NetECReal*res = new NetECReal( verireal(res_val) );
       ivl_assert(*this, res);
+      eval_debug(this, res, true);
       return res;
 }
 
@@ -813,6 +812,7 @@ NetExpr* NetEBDiv::eval_arguments_(const NetExpr*l, const NetExpr*r) const
       }
       NetExpr*tmp = new NetEConst(val);
       ivl_assert(*this, tmp);
+      eval_debug(this, tmp, false);
       return tmp;
 }
 
@@ -846,6 +846,7 @@ NetEConst* NetEBLogic::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 
       NetEConst*tmp = new NetEConst(verinum(res, 1));
       ivl_assert(*this, tmp);
+      eval_debug(this, tmp, true);
       return tmp;
 }
 
@@ -912,6 +913,7 @@ NetEConst* NetEBLogic::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
       NetEConst*tmp = new NetEConst(verinum(res, 1));
       ivl_assert(*this, tmp);
+      eval_debug(this, tmp, false);
       return tmp;
 }
 
@@ -937,6 +939,7 @@ NetExpr* NetEBMinMax::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 
       NetECReal*res = new NetECReal( verireal(res_val) );
       ivl_assert(*this, res);
+      eval_debug(this, res, true);
       return res;
 }
 
@@ -974,6 +977,7 @@ NetExpr* NetEBMinMax::eval_arguments_(const NetExpr*l, const NetExpr*r) const
       }
       NetEConst*res = new NetEConst(res_val);
       ivl_assert(*this, res);
+      eval_debug(this, res, false);
       return res;
 }
 
@@ -987,6 +991,7 @@ NetExpr* NetEBMult::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 
       NetECReal*res = new NetECReal( verireal(lval * rval) );
       ivl_assert(*this, res);
+      eval_debug(this, res, true);
       return res;
 }
 
@@ -1010,6 +1015,7 @@ NetExpr* NetEBMult::eval_arguments_(const NetExpr*l, const NetExpr*r) const
       verinum val(lval * rval, wid);
       NetEConst*tmp = new NetEConst(val);
       ivl_assert(*this, tmp);
+      eval_debug(this, tmp, false);
       return tmp;
 }
 
@@ -1023,6 +1029,7 @@ NetExpr* NetEBPow::eval_tree_real_(const NetExpr*l, const NetExpr*r) const
 
       NetECReal*res = new NetECReal( verireal( pow(lval,rval) ) );
       ivl_assert(*this, res);
+      eval_debug(this, res, true);
       return res;
 }
 
@@ -1045,6 +1052,7 @@ NetExpr* NetEBPow::eval_arguments_(const NetExpr*l, const NetExpr*r) const
       verinum val(pow(lval, rval), wid);
       NetEConst*res = new NetEConst(val);
       ivl_assert(*this, res);
+      eval_debug(this, res, false);
       return res;
 }
 
@@ -1085,18 +1093,13 @@ NetEConst* NetEBShift::eval_arguments_(const NetExpr*l, const NetExpr*r) const
       val.has_sign(has_sign());
       res = new NetEConst(val);
       ivl_assert(*this, res);
+      eval_debug(this, res, false);
       return res;
 }
 
 NetEConst* NetEConcat::eval_tree()
 {
-      unsigned repeat_val = repeat();
       unsigned local_errors = 0;
-
-      if (debug_eval_tree) {
-	    cerr << get_fileline() << ": debug: Evaluating expression:"
-	         << *this << endl;
-      }
 
       unsigned gap = 0;
       for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
@@ -1141,6 +1144,14 @@ NetEConst* NetEConcat::eval_tree()
 
       if (local_errors > 0) return 0;
 
+      return eval_arguments_(parms_, gap);
+}
+
+NetEConst* NetEConcat::eval_arguments_(const vector<NetExpr*>&vals,
+                                       unsigned gap) const
+{
+      unsigned repeat_val = repeat();
+
 	// At this point, the "gap" is the width of a single repeat of
 	// the concatenation. The total width of the result is the gap
 	// times the repeat count.
@@ -1150,8 +1161,8 @@ NetEConst* NetEConcat::eval_tree()
 
       unsigned cur = 0;
       bool is_string_flag = true;
-      for (unsigned idx = parms_.size() ;  idx > 0 ;  idx -= 1) {
-	    NetEConst*expr = dynamic_cast<NetEConst*>(parms_[idx-1]);
+      for (unsigned idx = vals.size() ;  idx > 0 ;  idx -= 1) {
+	    const NetEConst*expr = dynamic_cast<NetEConst*>(vals[idx-1]);
 	    if (expr == 0)
 		  return 0;
 
@@ -1176,16 +1187,13 @@ NetEConst* NetEConcat::eval_tree()
       val.has_sign( this->has_sign() );
 
       NetEConst*res = new NetEConst(val);
+      ivl_assert(*this, res);
+      eval_debug(this, res, false);
       return res;
 }
 
 NetEConst* NetESelect::eval_tree()
 {
-      if (debug_eval_tree) {
-	    cerr << get_fileline() << ": debug: Evaluating expression:"
-	         << *this << endl;
-      }
-
       eval_expr(expr_);
       NetEConst*expr = dynamic_cast<NetEConst*>(expr_);
 
@@ -1228,6 +1236,7 @@ NetEConst* NetESelect::eval_tree()
       oval.has_sign(has_sign());
 
       NetEConst*res = new NetEConst(oval);
+      eval_debug(this, res, false);
       return res;
 }
 
@@ -1376,17 +1385,7 @@ NetExpr*NetETernary::blended_arguments_(const NetExpr*te, const NetExpr*fe) cons
 NetExpr* NetEUnary::eval_tree()
 {
       eval_expr(expr_);
-      NetExpr*res = eval_arguments_(expr_);
-      if (res != 0) {
-	    res->set_line(*this);
-	    if (debug_eval_tree) {
-		  cerr << get_fileline() << ": debug: Evaluated";
-		  if (expr_->expr_type() == IVL_VT_REAL)
-			cerr << " (real)";
-		  cerr << ": " << *this << " --> " << *res << endl;
-	    }
-      }
-      return res;
+      return eval_arguments_(expr_);
 }
 
 NetExpr* NetEUnary::eval_tree_real_(const NetExpr*ex) const
@@ -1412,6 +1411,7 @@ NetExpr* NetEUnary::eval_tree_real_(const NetExpr*ex) const
       }
       NetECReal *res = new NetECReal( verireal(res_val) );
       ivl_assert(*this, res);
+      eval_debug(this, res, true);
       return res;
 }
 
@@ -1478,6 +1478,7 @@ NetExpr* NetEUnary::eval_arguments_(const NetExpr*ex) const
 
       NetEConst *res = new NetEConst(val);
       ivl_assert(*this, res);
+      eval_debug(this, res, false);
       return res;
 }
 
@@ -1494,6 +1495,7 @@ NetEConst* NetEUReduce::eval_tree_real_(const NetExpr*ex) const
 
       NetEConst*tmp = new NetEConst(verinum(res, 1));
       ivl_assert(*this, tmp);
+      eval_debug(this, tmp, true);
       return tmp;
 }
 
@@ -1585,15 +1587,14 @@ NetEConst* NetEUReduce::eval_arguments_(const NetExpr*ex) const
 
       NetEConst*tmp = new NetEConst(verinum(res, 1));
       ivl_assert(*this, tmp);
+      eval_debug(this, tmp, false);
       return tmp;
 }
 
-static NetEConst* evaluate_clog2(NetExpr*&arg_)
+NetEConst* NetESFunc::evaluate_clog2_(const NetExpr*arg_) const
 {
-      eval_expr(arg_);
-
-      NetEConst*tmpi = dynamic_cast<NetEConst *>(arg_);
-      NetECReal*tmpr = dynamic_cast<NetECReal *>(arg_);
+      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg_);
+      const NetECReal*tmpr = dynamic_cast<const NetECReal*>(arg_);
 
       if (tmpi == 0 && tmpr == 0) return 0;
 
@@ -1612,7 +1613,7 @@ static NetEConst* evaluate_clog2(NetExpr*&arg_)
 	    tmp.has_sign(true);
 
 	    rtn = new NetEConst(tmp);
-	    ivl_assert(*arg_, rtn);
+	    ivl_assert(*this, rtn);
       } else {
 	    bool is_neg = false;
 	    uint64_t res = 0;
@@ -1641,18 +1642,17 @@ static NetEConst* evaluate_clog2(NetExpr*&arg_)
 	    tmp.has_sign(true);
 
 	    rtn = new NetEConst(tmp);
-	    ivl_assert(*arg_, rtn);
+	    ivl_assert(*this, rtn);
       }
 
+      eval_debug(this, rtn, false);
       return rtn;
 }
 
-static NetECReal* evaluate_math_one_arg(NetExpr*&arg_, const char*name)
+NetECReal* NetESFunc::evaluate_math_one_arg_(ID id, const NetExpr*arg_) const
 {
-      eval_expr(arg_);
-
-      NetEConst*tmpi = dynamic_cast<NetEConst *>(arg_);
-      NetECReal*tmpr = dynamic_cast<NetECReal *>(arg_);
+      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg_);
+      const NetECReal*tmpr = dynamic_cast<const NetECReal*>(arg_);
 
       NetECReal*res = 0;
 
@@ -1664,79 +1664,79 @@ static NetECReal* evaluate_math_one_arg(NetExpr*&arg_, const char*name)
 		  arg = tmpr->value().as_double();
 	    }
 
-	    if (strcmp(name, "$ln") == 0) {
+	    switch (id) {
+		case LN:
 		  res = new NetECReal(verireal(log(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$log10") == 0) {
+		  break;
+		case LOG10:
 		  res = new NetECReal(verireal(log10(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$exp") == 0) {
+		  break;
+		case EXP:
 		  res = new NetECReal(verireal(exp(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$sqrt") == 0) {
+		  break;
+		case SQRT:
 		  res = new NetECReal(verireal(sqrt(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$floor") == 0) {
+		  break;
+		case FLOOR:
 		  res = new NetECReal(verireal(floor(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$ceil") == 0) {
+		  break;
+		case CEIL:
 		  res = new NetECReal(verireal(ceil(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$sin") == 0) {
+		  break;
+		case SIN:
 		  res = new NetECReal(verireal(sin(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$cos") == 0) {
+		  break;
+		case COS:
 		  res = new NetECReal(verireal(cos(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$tan") == 0) {
+		  break;
+		case TAN:
 		  res = new NetECReal(verireal(tan(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$asin") == 0) {
+		  break;
+		case ASIN:
 		  res = new NetECReal(verireal(asin(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$acos") == 0) {
+		  break;
+		case ACOS:
 		  res = new NetECReal(verireal(acos(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$atan") == 0) {
+		  break;
+		case ATAN:
 		  res = new NetECReal(verireal(atan(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$sinh") == 0) {
+		  break;
+		case SINH:
 		  res = new NetECReal(verireal(sinh(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$cosh") == 0) {
+		  break;
+		case COSH:
 		  res = new NetECReal(verireal(cosh(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$tanh") == 0) {
+		  break;
+		case TANH:
 		  res = new NetECReal(verireal(tanh(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$asinh") == 0) {
+		  break;
+		case ASINH:
 		  res = new NetECReal(verireal(asinh(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$acosh") == 0) {
+		  break;
+		case ACOSH:
 		  res = new NetECReal(verireal(acosh(arg)));
-		  ivl_assert(*arg_, res);
-	    } else if (strcmp(name, "$atanh") == 0) {
+		  break;
+		case ATANH:
 		  res = new NetECReal(verireal(atanh(arg)));
-		  ivl_assert(*arg_, res);
-	    } else {
-		  cerr << arg_->get_fileline() << ": warning: Unhandled"
-		          "constant system function " << name << "." << endl;
+		  break;
+		default:
+		  ivl_assert(*this, 0);
+		  break;
 	    }
+	    ivl_assert(*this, res);
       }
 
+      eval_debug(this, res, true);
       return res;
 }
 
-static NetECReal* evaluate_math_two_args(NetExpr*&arg0_, NetExpr*&arg1_,
-                                         const char*name)
+NetECReal* NetESFunc::evaluate_math_two_arg_(ID id, const NetExpr*arg0_,
+						    const NetExpr*arg1_) const
 {
-      eval_expr(arg0_);
-      eval_expr(arg1_);
-
-      NetEConst*tmpi0 = dynamic_cast<NetEConst *>(arg0_);
-      NetECReal*tmpr0 = dynamic_cast<NetECReal *>(arg0_);
-      NetEConst*tmpi1 = dynamic_cast<NetEConst *>(arg1_);
-      NetECReal*tmpr1 = dynamic_cast<NetECReal *>(arg1_);
+      const NetEConst*tmpi0 = dynamic_cast<const NetEConst*>(arg0_);
+      const NetECReal*tmpr0 = dynamic_cast<const NetECReal*>(arg0_);
+      const NetEConst*tmpi1 = dynamic_cast<const NetEConst*>(arg1_);
+      const NetECReal*tmpr1 = dynamic_cast<const NetECReal*>(arg1_);
 
       NetECReal*res = 0;
 
@@ -1753,73 +1753,78 @@ static NetECReal* evaluate_math_two_args(NetExpr*&arg0_, NetExpr*&arg1_,
 		  arg1 = tmpr1->value().as_double();
 	    }
 
-	    if (strcmp(name, "$pow") == 0) {
+	    switch (id) {
+		case POW:
 		  res = new NetECReal(verireal(pow(arg0, arg1)));
-		  ivl_assert(*arg0_, res);
-	    } else if (strcmp(name, "$atan2") == 0) {
+		  break;
+		case ATAN2:
 		  res = new NetECReal(verireal(atan2(arg0, arg1)));
-		  ivl_assert(*arg0_, res);
-	    } else if (strcmp(name, "$hypot") == 0) {
+		  break;
+		case HYPOT:
 		  res = new NetECReal(verireal(hypot(arg0, arg1)));
-		  ivl_assert(*arg0_, res);
-	    } else {
-		  cerr << arg0_->get_fileline() << ": warning: Unhandled"
-		          "constant system function " << name << "." << endl;
+		  break;
+		default:
+		  ivl_assert(*this, 0);
+		  break;
 	    }
+	    ivl_assert(*this, res);
       }
 
+      eval_debug(this, res, true);
       return res;
 }
 
-static NetExpr* evaluate_abs(NetExpr*&arg_)
+NetExpr* NetESFunc::evaluate_abs_(const NetExpr*arg_) const
 {
-      eval_expr(arg_);
-
       NetExpr*res = 0;
 
-      NetEConst*tmpi = dynamic_cast<NetEConst *>(arg_);
+      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg_);
       if (tmpi) {
 	    verinum arg = tmpi->value();
 	    if (arg.is_negative()) {
 		  arg = v_not(arg) + verinum(1);
 	    }
 	    res = new NetEConst(arg);
-	    ivl_assert(*arg_, res);
+	    ivl_assert(*this, res);
       }
 
-      NetECReal*tmpr = dynamic_cast<NetECReal *>(arg_);
+      const NetECReal*tmpr = dynamic_cast<const NetECReal*>(arg_);
       if (tmpr) {
 	    double arg = tmpr->value().as_double();
 	    res = new NetECReal(verireal(fabs(arg)));
-	    ivl_assert(*arg_, res);
+	    ivl_assert(*this, res);
       }
 
+      eval_debug(this, res, tmpr != 0);
       return res;
 }
 
-static NetExpr* evaluate_min_max(NetExpr*&arg0_, NetExpr*&arg1_,
-                                 const char*name)
+NetExpr* NetESFunc::evaluate_min_max_(ID id, const NetExpr*arg0_,
+					     const NetExpr*arg1_) const
 {
-      eval_expr(arg0_);
-      eval_expr(arg1_);
-
-      NetEConst*tmpi0 = dynamic_cast<NetEConst *>(arg0_);
-      NetECReal*tmpr0 = dynamic_cast<NetECReal *>(arg0_);
-      NetEConst*tmpi1 = dynamic_cast<NetEConst *>(arg1_);
-      NetECReal*tmpr1 = dynamic_cast<NetECReal *>(arg1_);
+      const NetEConst*tmpi0 = dynamic_cast<const NetEConst*>(arg0_);
+      const NetECReal*tmpr0 = dynamic_cast<const NetECReal*>(arg0_);
+      const NetEConst*tmpi1 = dynamic_cast<const NetEConst*>(arg1_);
+      const NetECReal*tmpr1 = dynamic_cast<const NetECReal*>(arg1_);
 
       NetExpr*res = 0;
 
       if (tmpi0 && tmpi1) {
 	    verinum arg0 = tmpi0->value();
 	    verinum arg1 = tmpi1->value();
-	    if (strcmp(name, "$min") == 0) {
+	    switch (id) {
+		case MIN:
 		  res = new NetEConst( arg0 < arg1 ? arg0 : arg1);
-		  ivl_assert(*arg0_, res);
-	    } else if (strcmp(name, "$max") == 0) {
+		  break;
+		case MAX:
 		  res = new NetEConst( arg0 < arg1 ? arg1 : arg0);
-		  ivl_assert(*arg0_, res);
+		  break;
+		default:
+		  ivl_assert(*this, 0);
+		  break;
 	    }
+	    ivl_assert(*this, res);
+
       } else if ((tmpi0 || tmpr0) && (tmpi1 || tmpr1)) {
 	    double arg0, arg1;
 	    if (tmpi0) {
@@ -1832,118 +1837,128 @@ static NetExpr* evaluate_min_max(NetExpr*&arg0_, NetExpr*&arg1_,
 	    } else {
 		  arg1 = tmpr1->value().as_double();
 	    }
-	    if (strcmp(name, "$min") == 0) {
+	    switch (id) {
+		case MIN:
 		  res = new NetECReal(verireal(arg0 < arg1 ? arg0 : arg1));
-		  ivl_assert(*arg0_, res);
-	    } else if (strcmp(name, "$max") == 0) {
+		  break;
+		case MAX:
 		  res = new NetECReal(verireal(arg0 < arg1 ? arg1 : arg0));
-		  ivl_assert(*arg0_, res);
-	    } else {
-		  cerr << arg0_->get_fileline() << ": warning: Unhandled"
-		          "constant system function " << name << "." << endl;
+		  break;
+		default:
+		  ivl_assert(*this, 0);
+		  break;
 	    }
+	    ivl_assert(*this, res);
       }
 
+      eval_debug(this, res, tmpr0 || tmpr1);
       return res;
+}
+
+NetExpr* NetESFunc::evaluate_one_arg_(ID id, const NetExpr*arg) const
+{
+      switch (id) {
+	  case ABS:
+	    return evaluate_abs_(arg);
+	  case CLOG2:
+	    return evaluate_clog2_(arg);
+	  default:
+	    return evaluate_math_one_arg_(id, arg);
+      }
+}
+
+NetExpr* NetESFunc::evaluate_two_arg_(ID id, const NetExpr*arg0,
+					 const NetExpr*arg1) const
+{
+      switch (id) {
+	  case MIN:
+	  case MAX:
+	    return evaluate_min_max_(id, arg0, arg1);
+	  default:
+	    return evaluate_math_two_arg_(id, arg0, arg1);
+      }
+}
+
+NetESFunc::ID NetESFunc::built_in_id_() const
+{
+	/* If we are not targeting at least Verilog-2005, Verilog-AMS
+	 * or using the Icarus misc flag then we do not treat these
+	 * functions as built-in. */
+      if (generation_flag < GN_VER2005 &&
+	  !gn_icarus_misc_flag && !gn_verilog_ams_flag) {
+	    return NOT_BUILT_IN;
+      }
+
+      static map<string,ID> built_in_func;
+
+      if (built_in_func.empty()) {
+	    built_in_func["$clog2"] = CLOG2;
+	    built_in_func["$ln"   ] = LN;
+	    built_in_func["$log10"] = LOG10;
+	    built_in_func["$exp"  ] = EXP;
+	    built_in_func["$sqrt" ] = SQRT;
+	    built_in_func["$floor"] = FLOOR;
+	    built_in_func["$ceil" ] = CEIL;
+	    built_in_func["$sin"  ] = SIN;
+	    built_in_func["$cos"  ] = COS;
+	    built_in_func["$tan"  ] = TAN;
+	    built_in_func["$asin" ] = ASIN;
+	    built_in_func["$acos" ] = ACOS;
+	    built_in_func["$atan" ] = ATAN;
+	    built_in_func["$sinh" ] = SINH;
+	    built_in_func["$cosh" ] = COSH;
+	    built_in_func["$tanh" ] = TANH;
+	    built_in_func["$asinh"] = ASINH;
+	    built_in_func["$acosh"] = ACOSH;
+	    built_in_func["$atanh"] = ATANH;
+	    built_in_func["$abs"  ] = ABS;
+	    built_in_func["$pow"  ] = POW;
+	    built_in_func["$atan2"] = ATAN2;
+	    built_in_func["$hypot"] = HYPOT;
+	    built_in_func["$min"  ] = MIN;
+	    built_in_func["$max"  ] = MAX;
+      }
+
+      map<string,ID>::iterator idx = built_in_func.find(name_);
+      if (idx == built_in_func.end())
+	    return NOT_BUILT_IN;
+
+      ID id = idx->second;
+
+      if (is_ams_(id) && !gn_icarus_misc_flag && !gn_verilog_ams_flag)
+	    return NOT_BUILT_IN;
+
+      return id;
 }
 
 NetExpr* NetESFunc::eval_tree()
 {
-	/* If we are not targeting at least Verilog-2005, Verilog-AMS
-	 * or using the Icarus misc flag then we do not support these
-	 * functions as constant. */
-      if (generation_flag < GN_VER2005 &&
-          !gn_icarus_misc_flag && !gn_verilog_ams_flag) {
+      ID id = built_in_id_();
+      if (id == NOT_BUILT_IN)
+	    return 0;
+
+      switch (nargs_(id)) {
+	  case 1:
+	    if (parms_.size() != 1) {
+		  cerr << get_fileline() << ": error: " << name_
+		       << " takes one argument." << endl;
+		  return 0;
+	    }
+	    eval_expr(parms_[0]);
+	    return evaluate_one_arg_(id, parms_[0]);
+	  case 2:
+	    if (parms_.size() != 2) {
+		  cerr << get_fileline() << ": error: " << name_
+		       << " takes two arguments." << endl;
+		  return 0;
+	    }
+	    eval_expr(parms_[0]);
+	    eval_expr(parms_[1]);
+	    return evaluate_two_arg_(id, parms_[0], parms_[1]);
+	  default:
+	    ivl_assert(*this, 0);
 	    return 0;
       }
-
-      const char*nm = name();
-      NetExpr*rtn = 0;
-	/* Only $clog2 and the builtin mathematical functions can
-	 * be a constant system function. */
-      if (strcmp(nm, "$clog2") == 0 ||
-          strcmp(nm, "$ln") == 0 ||
-          strcmp(nm, "$log10") == 0 ||
-          strcmp(nm, "$exp") == 0 ||
-          strcmp(nm, "$sqrt") == 0 ||
-          strcmp(nm, "$floor") == 0 ||
-          strcmp(nm, "$ceil") == 0 ||
-          strcmp(nm, "$sin") == 0 ||
-          strcmp(nm, "$cos") == 0 ||
-          strcmp(nm, "$tan") == 0 ||
-          strcmp(nm, "$asin") == 0 ||
-          strcmp(nm, "$acos") == 0 ||
-          strcmp(nm, "$atan") == 0 ||
-          strcmp(nm, "$sinh") == 0 ||
-          strcmp(nm, "$cosh") == 0 ||
-          strcmp(nm, "$tanh") == 0 ||
-          strcmp(nm, "$asinh") == 0 ||
-          strcmp(nm, "$acosh") == 0 ||
-          strcmp(nm, "$atanh") == 0) {
-	    if (nparms() != 1 || parm(0) == 0) {
-		  cerr << get_fileline() << ": error: " << nm
-		       << " takes a single argument." << endl;
-		  return 0;
-	    }
-	    NetExpr*arg = parm(0)->dup_expr();
-	    if (strcmp(nm, "$clog2") == 0) {
-		  rtn = evaluate_clog2(arg);
-	    } else {
-		  rtn = evaluate_math_one_arg(arg, nm);
-	    }
-	    delete arg;
-      }
-
-      if (strcmp(nm, "$pow") == 0 ||
-          strcmp(nm, "$atan2") == 0 ||
-          strcmp(nm, "$hypot") == 0) {
-	    if (nparms() != 2 || parm(0) == 0 || parm(1) == 0) {
-		  cerr << get_fileline() << ": error: " << nm
-		       << " takes two arguments." << endl;
-		  return 0;
-	    }
-	    NetExpr*arg0 = parm(0)->dup_expr();
-	    NetExpr*arg1 = parm(1)->dup_expr();
-	    rtn = evaluate_math_two_args(arg0, arg1, nm);
-	    delete arg0;
-	    delete arg1;
-      }
-
-      if ((gn_icarus_misc_flag || gn_verilog_ams_flag) &&
-          (strcmp(nm, "$abs") == 0)) {
-	    if (nparms() != 1 || parm(0) == 0) {
-		  cerr << get_fileline() << ": error: " << nm
-		       << " takes a single argument." << endl;
-		  return 0;
-	    }
-	    NetExpr*arg = parm(0)->dup_expr();
-	    rtn = evaluate_abs(arg);
-	    delete arg;
-      }
-
-      if ((gn_icarus_misc_flag || gn_verilog_ams_flag) &&
-          (strcmp(nm, "$min") == 0 || strcmp(nm, "$max") == 0)) {
-	    if (nparms() != 2 || parm(0) == 0 || parm(1) == 0) {
-		  cerr << get_fileline() << ": error: " << nm
-		       << " takes two arguments." << endl;
-		  return 0;
-	    }
-	    NetExpr*arg0 = parm(0)->dup_expr();
-	    NetExpr*arg1 = parm(1)->dup_expr();
-	    rtn = evaluate_min_max(arg0, arg1, nm);
-	    delete arg0;
-	    delete arg1;
-      }
-
-      if (rtn != 0) {
-	    rtn->set_line(*this);
-
-	    if (debug_eval_tree)
-		  cerr << get_fileline() << ": debug: Evaluated: " << *this
-		       << " --> " << *rtn << endl;
-      }
-
-      return rtn;
 }
 
 NetExpr* NetEUFunc::eval_tree()

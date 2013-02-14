@@ -176,11 +176,12 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    need_driver_flag = false;
       }
 
-	/* When we are given a non-default strength value and if the
-	 * drive source is a bit, part or indexed select we need to
-	 * add a driver (BUFZ) to convey the strength information. */
+	/* When we are given a non-default strength value and if the drive
+	 * source is a bit, part, indexed select or a concatenation we need
+	 * to add a driver (BUFZ) to convey the strength information. */
       if ((drive0 != IVL_DR_STRONG || drive1 != IVL_DR_STRONG) &&
-          (dynamic_cast<NetESelect*>(rval_expr))) {
+          ((dynamic_cast<NetESelect*>(rval_expr)) ||
+	   (dynamic_cast<NetEConcat*>(rval_expr)))) {
 	    need_driver_flag = true;
       }
 

@@ -1,7 +1,7 @@
 #ifndef __compiler_H
 #define __compiler_H
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -106,6 +106,10 @@ extern bool debug_optimizer;
 
 /* Possibly temporary flag to control virtualization of pin arrays */
 extern bool disable_virtual_pins;
+
+/* The vlog95 code generator does not want the compiler to generate concat-Z
+ * LPM objects so this flag is used to block them from being generated. */
+extern bool disable_concatz_generation;
 
 /* Limit to size of devirtualized arrays */
 extern unsigned long array_size_limit;

@@ -55,8 +55,10 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 	// fills in the context_map with local variables held by the scope.
       scope_->evaluate_function_find_locals(loc, context_map);
 
-	// Perform the evaluation
-      bool flag = statement_->evaluate_function(loc, context_map);
+	// Perform the evaluation. Note that if there were errors
+	// when compiling the function definition, we may not have
+	// a valid statement.
+      bool flag = statement_ && statement_->evaluate_function(loc, context_map);
 
 	// Extract the result...
       ptr = context_map.find(scope_->basename());
@@ -280,18 +282,35 @@ NetExpr* NetEBinary::evaluate_function(const LineInfo&loc,
       }
 
       NetExpr*res = eval_arguments_(lval, rval);
-      if (res != 0) {
-	    res->set_line(*this);
-	    if (debug_eval_tree) {
-		  cerr << get_fileline() << ": debug: Evaluated";
-		  if (lval->expr_type() == IVL_VT_REAL ||
-		      rval->expr_type() == IVL_VT_REAL)
-			cerr << " (real)";
-		  cerr << ": " << *this << " --> " << *res << endl;
-	    }
-      }
       delete lval;
       delete rval;
+      return res;
+}
+
+NetExpr* NetEConcat::evaluate_function(const LineInfo&loc,
+				    map<perm_string,NetExpr*>&context_map) const
+{
+      vector<NetExpr*>vals(parms_.size());
+      unsigned gap = 0;
+
+      unsigned valid_vals = 0;
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1) {
+            ivl_assert(*this, parms_[idx]);
+            vals[idx] = parms_[idx]->evaluate_function(loc, context_map);
+            if (vals[idx] == 0) continue;
+
+            gap += vals[idx]->expr_width();
+
+            valid_vals += 1;
+      }
+
+      NetExpr*res = 0;
+      if (valid_vals == parms_.size()) {
+            res = eval_arguments_(vals, gap);
+      }
+      for (unsigned idx = 0 ;  idx < vals.size() ;  idx += 1) {
+            delete vals[idx];
+      }
       return res;
 }
 
@@ -397,16 +416,42 @@ NetExpr* NetEUnary::evaluate_function(const LineInfo&loc,
       if (val == 0) return 0;
 
       NetExpr*res = eval_arguments_(val);
-      if (res != 0) {
-	    res->set_line(*this);
-	    if (debug_eval_tree) {
-		  cerr << get_fileline() << ": debug: Evaluated";
-		  if (val->expr_type() == IVL_VT_REAL)
-			cerr << " (real)";
-		  cerr << ": " << *this << " --> " << *res << endl;
-	    }
-      }
       delete val;
+      return res;
+}
+
+NetExpr* NetESFunc::evaluate_function(const LineInfo&loc,
+				      map<perm_string,NetExpr*>&context_map) const
+{
+      ID id = built_in_id_();
+      if (id == NOT_BUILT_IN) {
+	    cerr << get_fileline() << ": error: " << name_
+		 << " is not a built-in function, so cannot"
+		 << " be used in a constant function." << endl;
+	    return 0;
+      }
+
+      NetExpr*val0 = 0;
+      NetExpr*val1 = 0;
+      NetExpr*res = 0;
+      switch (nargs_(id)) {
+	  case 1:
+	    val0 = parms_[0]->evaluate_function(loc, context_map);
+	    if (val0 == 0) break;
+	    res = evaluate_one_arg_(id, val0);
+	    break;
+	  case 2:
+	    val0 = parms_[0]->evaluate_function(loc, context_map);
+	    val1 = parms_[1]->evaluate_function(loc, context_map);
+	    if (val0 == 0 || val1 == 0) break;
+	    res = evaluate_two_arg_(id, val0, val1);
+	    break;
+	  default:
+	    ivl_assert(*this, 0);
+	    break;
+      }
+      delete val0;
+      delete val1;
       return res;
 }
 
