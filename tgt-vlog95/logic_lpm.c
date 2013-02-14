@@ -888,8 +888,14 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
-	case IVL_LPM_CONCAT:
+	  /* A concat-Z should never be generated, but report it as an
+	   * error if one is generated. */
 	case IVL_LPM_CONCATZ:
+	    fprintf(stderr, "%s:%u: vlog95 error: Transparent concatenations "
+	                    "should not be generated.\n",
+	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+	    vlog_errors += 1;
+	case IVL_LPM_CONCAT:
 	    emit_lpm_concat(scope, lpm);
 	    break;
 	case IVL_LPM_DIVIDE:
