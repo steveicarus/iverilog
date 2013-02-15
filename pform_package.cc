@@ -82,15 +82,32 @@ void pform_package_import(const struct vlltype&, const char*pkg_name, const char
 	    return;
       }
 
-      perm_string use_ident;
-      if (ident) use_ident = lex_strings.make(ident);
-
       PPackage*pkg = pcur->second;
       LexicalScope*scope = pform_peek_scope();
 
-      for (map<perm_string,LexicalScope::param_expr_t>::const_iterator cur = pkg->parameters.begin()
-		 ; cur != pkg->parameters.end() ; ++cur) {
+      if (ident) {
+	    perm_string use_ident = lex_strings.make(ident);
+
+	    map<perm_string,LexicalScope::param_expr_t>::const_iterator cur
+		  = pkg->parameters.find(use_ident);
+	    if (cur == pkg->parameters.end()) {
+		  ostringstream msg;
+		  msg << "Symbol " << use_ident
+		      << " not found in package " << pcur->first << "." << ends;
+		  VLerror(msg.str().c_str());
+		  return;
+	    }
 
 	    scope->parameters[cur->first] = cur->second;
+
+      } else {
+
+	      // Handle the pkg::* case by importing everything from
+	      // the package.
+	    for (map<perm_string,LexicalScope::param_expr_t>::const_iterator cur = pkg->parameters.begin()
+		       ; cur != pkg->parameters.end() ; ++cur) {
+
+		  scope->parameters[cur->first] = cur->second;
+	    }
       }
 }
