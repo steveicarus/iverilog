@@ -22,9 +22,11 @@
 # include  <cstdio>
 # include  "StringHeap.h"
 # include  <string>
+# include  <ostream>
 # include  <map>
 
 class Module;
+class PPackage;
 class PUdp;
 
 /*
@@ -32,8 +34,11 @@ class PUdp;
  * Verilog source into pform for elaboration. The parser adds modules
  * to these maps as it compiles modules in the Verilog source.
  */
-extern map<perm_string,Module*> pform_modules;
-extern map<perm_string,PUdp*>   pform_primitives;
+extern std::map<perm_string,Module*> pform_modules;
+extern std::map<perm_string,PUdp*>   pform_primitives;
+
+extern std::map<perm_string,PPackage*> pform_packages;
+extern void pform_dump(std::ostream&out, const PPackage*pac);
 
 /*
  * This code actually invokes the parser to make modules. The first

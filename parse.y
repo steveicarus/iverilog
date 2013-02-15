@@ -1354,13 +1354,19 @@ package_declaration /* IEEE1800-2005 A.1.2 */
 
 package_import_declaration /* IEEE1800-2005 A.2.1.3 */
   : K_import package_import_item_list ';'
-      { yyerror(@1, "sorry: Package import declarations not supported.");
-      }
+      { }
   ;
 
 package_import_item
   : IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { pform_package_import(@2, $1, $3);
+	delete[]$1;
+	delete[]$3;
+      }
   | IDENTIFIER K_SCOPE_RES '*'
+      { pform_package_import(@2, $1, 0);
+	delete[]$1;
+      }
   ;
 
 package_import_item_list
@@ -1370,6 +1376,7 @@ package_import_item_list
 
 package_item /* IEEE1800-2005 A.1.10 */
   : timeunits_declaration
+  | K_parameter param_type parameter_assign_list ';'
   | K_localparam param_type localparam_assign_list ';'
   | type_declaration
   | function_declaration

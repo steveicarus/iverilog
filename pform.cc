@@ -294,6 +294,12 @@ static PScopeExtra* find_nearest_scopex(LexicalScope*scope)
       return scopex;
 }
 
+LexicalScope* pform_peek_scope(void)
+{
+      assert(lexical_scope);
+      return lexical_scope;
+}
+
 PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
 {
       PClass*class_scope = new PClass(name, lexical_scope);

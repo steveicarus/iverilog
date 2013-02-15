@@ -22,6 +22,7 @@
 # include  "PScope.h"
 # include  "LineInfo.h"
 # include  "StringHeap.h"
+# include  <iostream>
 
 /*
  * SystemVerilog supports class declarations with their own lexical
@@ -35,6 +36,7 @@ class PPackage : public PScopeExtra, public LineInfo {
       explicit PPackage (perm_string name, LexicalScope*parent);
       ~PPackage();
 
+      void pform_dump(std::ostream&out) const;
 };
 
 #endif
