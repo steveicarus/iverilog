@@ -49,6 +49,7 @@ NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
       } else {
 	    verinum zero ((int64_t)val);
 	    zero = pad_to_width(zero, sig->vector_width());
+	    zero.has_sign(sig->get_signed());
 	    NetConst*zero_obj = new NetConst(scope, scope->local_symbol(), zero);
 	    zero_obj->set_line(*sig);
 	    des->add_node(zero_obj);
