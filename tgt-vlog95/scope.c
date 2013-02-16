@@ -628,6 +628,44 @@ static void emit_named_block_scope(ivl_scope_t scope)
 }
 
 /*
+ * In SystemVerilog a task or function can have a process to initialize
+ * variables. In reality SystemVerilog requires this to be before the
+ * initial/always blocks are processed, but that's not how it is currently
+ * implemented in Icarus!
+ */
+static int find_tf_process(ivl_process_t proc, ivl_scope_t scope)
+{
+      if (scope == ivl_process_scope(proc)) {
+	    ivl_scope_t mod_scope = scope;
+	      /* A task or function can only have initial processes that
+	       * are used to set local variables. */
+	    assert(ivl_process_type(proc) == IVL_PR_INITIAL);
+	      /* Find the module scope for this task/function. */
+	    while (ivl_scope_type(mod_scope) != IVL_SCT_MODULE) {
+		  mod_scope = ivl_scope_parent(mod_scope);
+		  assert(mod_scope);
+	    }
+	      /* Emit the process in the module scope since that is where
+	       * this all started. */
+	    emit_process(mod_scope, proc);
+      }
+      return 0;
+}
+
+/*
+ * Emit any initial blocks for the tasks or functions in a module.
+ */
+static int emit_tf_process(ivl_scope_t scope, ivl_scope_t parent)
+{
+      ivl_scope_type_t sc_type = ivl_scope_type(scope);
+      if ((sc_type == IVL_SCT_FUNCTION) || (sc_type == IVL_SCT_TASK)) {
+	/* Output the initial/always blocks for this module. */
+	    ivl_design_process(design, (ivl_process_f)find_tf_process, scope);
+      }
+      return 0;
+}
+
+/*
  * This search method may be slow for a large structural design with a
  * large number of gate types. That's not what this converter was built
  * for so this is probably OK. If this becomes an issue then we need a
@@ -800,6 +838,10 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    for (idx = 0; idx < count; idx += 1) {
 		  emit_tran(scope, ivl_scope_switch(scope, idx));
 	    }
+
+	      /* Output any initial blocks for tasks or functions defined
+	       * in this module. Used to initialize local variables. */
+	    ivl_scope_children(scope, (ivl_scope_f*) emit_tf_process, scope);
 
 	      /* Output the initial/always blocks for this module. */
 	    ivl_design_process(design, (ivl_process_f)find_process, scope);
