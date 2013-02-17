@@ -60,7 +60,7 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest, bo
 	    time_unit_ = 0;
 	    time_prec_ = 0;
 	    time_from_timescale_ = false;
-	    assert(t == MODULE);
+	    assert(t==MODULE || t==PACKAGE);
       }
 
       switch (t) {
@@ -71,6 +71,7 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest, bo
 	    func_ = 0;
 	    break;
 	  case NetScope::MODULE:
+	  case NetScope::PACKAGE:
 	    module_name_ = perm_string();
 	    break;
 	  default:  /* BEGIN_END and FORK_JOIN, do nothing */
@@ -301,14 +302,16 @@ void NetScope::print_type(ostream&stream) const
 	    stream << "function";
 	    break;
 	case MODULE:
-	    stream << "module <" << (module_name_ ? module_name_.str() : "")
-	           << "> instance";
+	    stream << "module <" << module_name_ << "> instance";
 	    break;
 	case TASK:
 	    stream << "task";
 	    break;
 	case GENBLOCK:
 	    stream << "generate block";
+	    break;
+	  case PACKAGE:
+	    stream << "package " << module_name_;
 	    break;
       }
 }
@@ -358,13 +361,13 @@ const NetFuncDef* NetScope::func_def() const
 
 void NetScope::set_module_name(perm_string n)
 {
-      assert(type_ == MODULE);
-      module_name_ = n; /* NOTE: n must have been permallocated. */
+      assert(type_==MODULE || type_==PACKAGE);
+      module_name_ = n;
 }
 
 perm_string NetScope::module_name() const
 {
-      assert(type_ == MODULE);
+      assert(type_==MODULE || type_==PACKAGE);
       return module_name_;
 }
 

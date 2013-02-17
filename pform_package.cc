@@ -111,3 +111,22 @@ void pform_package_import(const struct vlltype&, const char*pkg_name, const char
 	    }
       }
 }
+
+PExpr* pform_package_ident(const struct vlltype&loc,
+			   const char*pkg_name, const char*ident_name)
+{
+      perm_string use_name = lex_strings.make(pkg_name);
+      map<perm_string,PPackage*>::const_iterator pcur = pform_packages.find(use_name);
+      if (pcur == pform_packages.end()) {
+	    ostringstream msg;
+	    msg << "Package " << pkg_name << " not found." << ends;
+	    VLerror(msg.str().c_str());
+	    return 0;
+      }
+
+      assert(pcur->second);
+      perm_string use_ident = lex_strings.make(ident_name);
+      PEIdent*tmp = new PEIdent(pcur->second, use_ident);
+      FILE_NAME(tmp, loc);
+      return tmp;
+}

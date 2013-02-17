@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -234,10 +235,21 @@ ivl_scope_t dll_target::find_scope(ivl_design_s &des, const NetScope*cur)
 {
       assert(cur);
 
+	// If the scope is a PACKAGE, then it is a special kind of
+	// root scope and it in the packages array instead.
+      if (cur->type() == NetScope::PACKAGE) {
+	    perm_string cur_name = cur->module_name();
+	    for (size_t idx = 0 ; idx < des.packages.size() ; idx += 1) {
+		  if (des.packages[idx]->name_ = cur_name)
+			return des.packages[idx];
+	    }
+	    return 0;
+      }
+
       ivl_scope_t scope = 0;
-      for (unsigned i = 0; i < des.nroots_ && scope == 0; i += 1) {
-	    assert(des.roots_[i]);
-	    scope = find_scope_from_root(des.roots_[i], cur);
+      for (unsigned i = 0; i < des.roots.size() && scope == 0; i += 1) {
+	    assert(des.roots[i]);
+	    scope = find_scope_from_root(des.roots[i], cur);
       }
       return scope;
 }
@@ -537,7 +549,7 @@ void dll_target::add_root(ivl_design_s &des__, const NetScope *s)
       root_->lpm_ = 0;
       root_->def = 0;
       make_scope_parameters(root_, s);
-      root_->type_ = IVL_SCT_MODULE;
+      root_->type_ = s->type()==NetScope::PACKAGE? IVL_SCT_PACKAGE : IVL_SCT_MODULE;
       root_->tname_ = root_->name_;
       root_->time_precision = s->time_precision();
       root_->time_units = s->time_unit();
@@ -545,29 +557,26 @@ void dll_target::add_root(ivl_design_s &des__, const NetScope *s)
       root_->attr  = fill_in_attributes(s);
       root_->is_auto = 0;
       root_->is_cell = s->is_cell();
-      root_->ports = s->module_port_nets();
-      if (root_->ports > 0) {
-	    root_->u_.net = new NetNet*[root_->ports];
-	    for (unsigned idx = 0; idx < root_->ports; idx += 1) {
-		  root_->u_.net[idx] = s->module_port_net(idx);
+      if (s->type()==NetScope::MODULE) {
+	    root_->ports = s->module_port_nets();
+	    if (root_->ports > 0) {
+		  root_->u_.net = new NetNet*[root_->ports];
+		  for (unsigned idx = 0; idx < root_->ports; idx += 1) {
+			root_->u_.net[idx] = s->module_port_net(idx);
+		  }
 	    }
-      }
-      root_->module_ports_info = s->module_port_info();
+	    root_->module_ports_info = s->module_port_info();
 
-      des__.nroots_++;
-      if (des__.roots_)
-	    des__.roots_ = (ivl_scope_t *)realloc(des__.roots_,
-	                                          des__.nroots_ *
-	                                            sizeof(ivl_scope_t));
-      else
-	    des__.roots_ = (ivl_scope_t *)malloc(des__.nroots_ *
-	                                           sizeof(ivl_scope_t));
-      des__.roots_[des__.nroots_ - 1] = root_;
+	    des__.roots.push_back(root_);
+
+      } else {
+	    root_->ports = 0;
+	    des__.packages.push_back(root_);
+      }
 }
 
 bool dll_target::start_design(const Design*des)
 {
-      list<NetScope *> root_scopes;
       const char*dll_path_ = des->get_flag("DLL");
 
       dll_ = ivl_dlopen(dll_path_);
@@ -591,8 +600,6 @@ bool dll_target::start_design(const Design*des)
 	// Initialize the design object.
       des_.self = des;
       des_.time_precision = des->get_precision();
-      des_.nroots_ = 0;
-      des_.roots_ = NULL;
 
       des_.disciplines.resize(disciplines.size());
       unsigned idx = 0;
@@ -603,11 +610,17 @@ bool dll_target::start_design(const Design*des)
       }
       assert(idx == des_.disciplines.size());
 
-      root_scopes = des->find_root_scopes();
-      for (list<NetScope*>::const_iterator scop = root_scopes.begin();
-	   scop != root_scopes.end(); ++ scop )
+      list<NetScope *> package_scopes = des->find_package_scopes();
+      for (list<NetScope*>::const_iterator scop = package_scopes.begin();
+	   scop != package_scopes.end(); ++ scop ) {
 	    add_root(des_, *scop);
+      }
 
+      list<NetScope *> root_scopes = des->find_root_scopes();
+      for (list<NetScope*>::const_iterator scop = root_scopes.begin();
+	   scop != root_scopes.end(); ++ scop ) {
+	    add_root(des_, *scop);
+      }
 
       target_ = (target_design_f)ivl_dlsym(dll_, LU "target_design" TU);
       if (target_ == 0) {
@@ -2267,9 +2280,9 @@ void dll_target::scope(const NetScope*net)
       if (net->parent() == 0) {
 	    unsigned i;
 	    scop = NULL;
-	    for (i = 0; i < des_.nroots_ && scop == NULL; i++) {
-		  if (strcmp(des_.roots_[i]->name_, net->basename()) == 0)
-			scop = des_.roots_[i];
+	    for (i = 0; i < des_.roots.size() && scop == NULL; i++) {
+		  if (strcmp(des_.roots[i]->name_, net->basename()) == 0)
+			scop = des_.roots[i];
 	    }
 	    assert(scop);
 
@@ -2297,6 +2310,9 @@ void dll_target::scope(const NetScope*net)
 	    scop->is_cell = net->is_cell();
 
 	    switch (net->type()) {
+		case NetScope::PACKAGE:
+		  cerr << "?:?" << ": internal error: "
+		       << "Package scopes should not have parents." << endl;
 		case NetScope::MODULE:
 		  scop->type_ = IVL_SCT_MODULE;
 		  scop->tname_ = net->module_name();

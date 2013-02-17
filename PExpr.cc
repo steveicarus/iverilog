@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 1998-2012 Stephen Williams <steve@icarus.com>
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -305,12 +306,18 @@ const verireal& PEFNumber::value() const
 }
 
 PEIdent::PEIdent(const pform_name_t&that)
-: path_(that), no_implicit_sig_(false)
+: package_(0), path_(that), no_implicit_sig_(false)
 {
 }
 
 PEIdent::PEIdent(perm_string s, bool no_implicit_sig)
-: no_implicit_sig_(no_implicit_sig)
+: package_(0), no_implicit_sig_(no_implicit_sig)
+{
+      path_.push_back(name_component_t(s));
+}
+
+PEIdent::PEIdent(PPackage*pkg, perm_string s)
+: package_(pkg), no_implicit_sig_(true)
 {
       path_.push_back(name_component_t(s));
 }

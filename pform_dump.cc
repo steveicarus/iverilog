@@ -304,6 +304,8 @@ void PENumber::dump(ostream&out) const
 
 void PEIdent::dump(ostream&out) const
 {
+      if (package_)
+	    out << package_->pscope_name() << "::";
       out << path_;
 }
 

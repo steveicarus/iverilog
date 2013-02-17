@@ -43,6 +43,7 @@
 EXTERN_C_START
 
 /********* OBJECT TYPES ***********/
+#define vpiPackage          600
 #define vpiLongIntVar       610
 #define vpiShortIntVar      611
 #define vpiIntVar           612

@@ -39,6 +39,7 @@
 # include  "PClass.h"
 # include  "PGate.h"
 # include  "PGenerate.h"
+# include  "PPackage.h"
 # include  "PTask.h"
 # include  "PWire.h"
 # include  "Statement.h"
@@ -494,6 +495,18 @@ class generate_schemes_work_item_t : public elaborator_work_item_t {
       NetScope*scope_;
       Module*mod_;
 };
+
+bool PPackage::elaborate_scope(Design*des, NetScope*scope)
+{
+      if (debug_scopes) {
+	    cerr << get_fileline() << ": debug: Elaborate package scope "
+		 << scope_path(scope) << "." << endl;
+      }
+
+      collect_scope_parameters_(des, scope, parameters);
+
+      return true;
+}
 
 bool Module::elaborate_scope(Design*des, NetScope*scope,
 			     const replace_t&replacements)

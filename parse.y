@@ -1,8 +1,8 @@
 
 %{
 /*
- * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2961,6 +2961,9 @@ expr_primary
 	  $$ = tmp;
 	  delete $1;
 	}
+
+  | IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { $$ = pform_package_ident(@3, $1, $3); }
 
   /* An identifier followed by an expression list in parentheses is a
      function call. If a system identifier, then a system function

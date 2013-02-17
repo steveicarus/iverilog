@@ -207,6 +207,9 @@ extern void pform_end_package_declaration(const struct vlltype&loc);
 extern void pform_package_import(const struct vlltype&loc,
 				 const char*pkg_name, const char*ident);
 
+extern PExpr* pform_package_ident(const struct vlltype&loc,
+				  const char*pkg_name, const char*ident);
+
 /*
  * Enter/exit name scopes. The push_scope function pushes the scope
  * name string onto the scope hierarchy. The pop pulls it off and

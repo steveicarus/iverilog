@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -73,16 +74,24 @@ extern "C" ivl_scope_t ivl_design_root(ivl_design_t des)
       cerr << "ANACHRONISM: ivl_design_root called. "
 	    "Use ivl_design_roots instead." << endl;
 
-      assert (des->nroots_);
-      return des->roots_[0];
+      assert (des->roots.size() > 0);
+      return des->roots[0];
 }
 
 extern "C" void ivl_design_roots(ivl_design_t des, ivl_scope_t **scopes,
 				 unsigned int *nscopes)
 {
       assert (nscopes && scopes);
-      *scopes = &des->roots_[0];
-      *nscopes = des->nroots_;
+      if (des->root_scope_list.size() == 0) {
+	    des->root_scope_list.resize(des->packages.size() + des->roots.size());
+	    for (size_t idx = 0 ; idx < des->packages.size() ; idx += 1)
+		  des->root_scope_list[idx] = des->packages[idx];
+	    for (size_t idx = 0 ; idx < des->roots.size() ; idx += 1)
+		  des->root_scope_list[idx+des->packages.size()] = des->roots[idx];
+      }
+
+      *scopes = &des->root_scope_list[0];
+      *nscopes = des->root_scope_list.size();
 }
 
 extern "C" int ivl_design_time_precision(ivl_design_t des)

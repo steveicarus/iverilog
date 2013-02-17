@@ -1643,10 +1643,18 @@ void NetEUnary::dump(ostream&o) const
 void Design::dump(ostream&o) const
 {
       o << "DESIGN TIME PRECISION: 10e" << get_precision() << endl;
+
+      o << "PACKAGES:" << endl;
+      for (map<perm_string,NetScope*>::const_iterator cur = packages_.begin()
+		 ; cur != packages_.end() ; ++cur) {
+	    cur->second->dump(o);
+      }
+
       o << "SCOPES:" << endl;
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
-	   scope != root_scopes_.end(); ++ scope )
+	   scope != root_scopes_.end(); ++ scope ) {
 	    (*scope)->dump(o);
+      }
 
       o << "ELABORATED NODES:" << endl;
 
