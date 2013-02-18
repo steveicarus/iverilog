@@ -611,14 +611,14 @@ bool dll_target::start_design(const Design*des)
       assert(idx == des_.disciplines.size());
 
       list<NetScope *> package_scopes = des->find_package_scopes();
-      for (list<NetScope*>::const_iterator scop = package_scopes.begin();
-	   scop != package_scopes.end(); ++ scop ) {
+      for (list<NetScope*>::const_iterator scop = package_scopes.begin()
+		 ; scop != package_scopes.end(); ++ scop ) {
 	    add_root(des_, *scop);
       }
 
       list<NetScope *> root_scopes = des->find_root_scopes();
-      for (list<NetScope*>::const_iterator scop = root_scopes.begin();
-	   scop != root_scopes.end(); ++ scop ) {
+      for (list<NetScope*>::const_iterator scop = root_scopes.begin()
+		 ; scop != root_scopes.end(); ++ scop ) {
 	    add_root(des_, *scop);
       }
 

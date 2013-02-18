@@ -98,7 +98,7 @@ void pform_package_import(const struct vlltype&, const char*pkg_name, const char
 		  return;
 	    }
 
-	    scope->parameters[cur->first] = cur->second;
+	    scope->imports[cur->first] = pkg;
 
       } else {
 
@@ -107,7 +107,7 @@ void pform_package_import(const struct vlltype&, const char*pkg_name, const char
 	    for (map<perm_string,LexicalScope::param_expr_t>::const_iterator cur = pkg->parameters.begin()
 		       ; cur != pkg->parameters.end() ; ++cur) {
 
-		  scope->parameters[cur->first] = cur->second;
+		  scope->imports[cur->first] = pkg;
 	    }
       }
 }

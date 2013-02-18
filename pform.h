@@ -211,6 +211,12 @@ extern PExpr* pform_package_ident(const struct vlltype&loc,
 				  const char*pkg_name, const char*ident);
 
 /*
+ * This creates an identifier aware of names that may have been
+ * imported from other packages.
+ */
+extern PEIdent* pform_new_ident(const pform_name_t&name);
+
+/*
  * Enter/exit name scopes. The push_scope function pushes the scope
  * name string onto the scope hierarchy. The pop pulls it off and
  * deletes it. Thus, the string pushed must be allocated.

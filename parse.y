@@ -2955,12 +2955,12 @@ expr_primary
   /* The hierarchy_identifier rule matches simple identifiers as well as
      indexed arrays and part selects */
 
-    | hierarchy_identifier
-        { PEIdent*tmp = new PEIdent(*$1);
-	  FILE_NAME(tmp, @1);
-	  $$ = tmp;
-	  delete $1;
-	}
+  | hierarchy_identifier
+      { PEIdent*tmp = pform_new_ident(*$1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	delete $1;
+      }
 
   | IDENTIFIER K_SCOPE_RES IDENTIFIER
       { $$ = pform_package_ident(@3, $1, $3); }

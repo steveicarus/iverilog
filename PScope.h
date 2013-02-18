@@ -28,6 +28,7 @@
 class PEvent;
 class PExpr;
 class PFunction;
+class PPackage;
 class AProcess;
 class PProcess;
 class PClass;
@@ -91,6 +92,10 @@ class LexicalScope {
 
 	// Named events in the scope.
       map<perm_string,PEvent*>events;
+
+	// Symbols that are imported. Bind the imported name to the
+	// package from which the name is imported.
+      std::map<perm_string,PPackage*>imports;
 
 	// Nets and variables (wires) in the scope
       map<perm_string,PWire*>wires;
