@@ -818,13 +818,14 @@ static void emit_lpm_func(ivl_scope_t scope, ivl_lpm_t lpm)
 static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 {
       switch (ivl_lpm_type(lpm)) {
-	  /* Convert Verilog-A abs() function. This only works when the
+	  /* Convert the Verilog-A abs() function. This only works when the
 	   * argument has no side effect. */
 	case IVL_LPM_ABS:
+// HERE: If this is a real net then use the $abs() function to get nan to
+//       work correctly. See the expr code.
 	    fprintf(vlog_out, "((");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, ") > ");
-// HERE: If this is a real net then use 0.0. See the expr code.
 	    fprintf(vlog_out, "0 ? (");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, ") : -(");
