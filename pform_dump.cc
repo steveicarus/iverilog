@@ -345,7 +345,10 @@ void PEBinary::dump(ostream&out) const
 	    return;
       }
 
-      out << "(" << *left_ << ")";
+      if (left_)
+	    out << "(" << *left_ << ")";
+      else
+	    out << "(<nil>)";
       switch (op_) {
 	  case 'a':
 	    out << "&&";
@@ -381,7 +384,10 @@ void PEBinary::dump(ostream&out) const
 	    out << op_;
 	    break;
       }
-      out << "(" << *right_ << ")";
+      if (right_)
+	    out << "(" << *right_ << ")";
+      else
+	    out << "(<nil>)";
 }
 
 
@@ -1285,10 +1291,36 @@ void PScopeExtra::dump_classes_(ostream&out, unsigned indent) const
       }
 }
 
+void PScopeExtra::dump_tasks_(ostream&out, unsigned indent) const
+{
+	// Dump the task definitions.
+      typedef map<perm_string,PTask*>::const_iterator task_iter_t;
+      for (task_iter_t cur = tasks.begin()
+		 ; cur != tasks.end() ; ++ cur ) {
+	    out << setw(indent) << "" << "task " << (*cur).first << ";" << endl;
+	    (*cur).second->dump(out, indent+2);
+	    out << setw(indent) << "" << "endtask;" << endl;
+      }
+}
+
+void PScopeExtra::dump_funcs_(ostream&out, unsigned indent) const
+{
+	// Dump the task definitions.
+      typedef map<perm_string,PFunction*>::const_iterator task_iter_t;
+      for (task_iter_t cur = funcs.begin()
+		 ; cur != funcs.end() ; ++ cur ) {
+	    out << setw(indent) << "" << "function " << (*cur).first << ";" << endl;
+	    (*cur).second->dump(out, indent+2);
+	    out << setw(indent) << "" << "endfunction;" << endl;
+      }
+}
+
 void PClass::dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << "class " << type->name << ";" << endl;
       type->pform_dump(out, indent+2);
+      dump_tasks_(out, indent+2);
+      dump_funcs_(out, indent+2);
       out << setw(indent) << "" << "endclass" << endl;
 }
 
@@ -1391,22 +1423,10 @@ void Module::dump(ostream&out) const
       dump_wires_(out, 4);
 
 	// Dump the task definitions.
-      typedef map<perm_string,PTask*>::const_iterator task_iter_t;
-      for (task_iter_t cur = tasks.begin()
-		 ; cur != tasks.end() ; ++ cur ) {
-	    out << "    task " << (*cur).first << ";" << endl;
-	    (*cur).second->dump(out, 6);
-	    out << "    endtask;" << endl;
-      }
+      dump_tasks_(out, 4);
 
 	// Dump the function definitions.
-      typedef map<perm_string,PFunction*>::const_iterator func_iter_t;
-      for (func_iter_t cur = funcs.begin()
-		 ; cur != funcs.end() ; ++ cur ) {
-	    out << "    function " << (*cur).first << ";" << endl;
-	    (*cur).second->dump(out, 6);
-	    out << "    endfunction;" << endl;
-      }
+      dump_funcs_(out, 4);
 
 
 	// Iterate through and display all the gates

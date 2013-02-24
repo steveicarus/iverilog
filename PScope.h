@@ -178,6 +178,8 @@ class PScopeExtra : public PScope {
 
     protected:
       void dump_classes_(ostream&out, unsigned indent) const;
+      void dump_tasks_(ostream&out, unsigned indent) const;
+      void dump_funcs_(ostream&out, unsigned indent) const;
 };
 
 #endif
