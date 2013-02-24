@@ -628,6 +628,163 @@ static void emit_named_block_scope(ivl_scope_t scope)
 }
 
 /*
+ * In SystemVerilog a task or function can have a process to initialize
+ * variables. In reality SystemVerilog requires this to be before the
+ * initial/always blocks are processed, but that's not how it is currently
+ * implemented in Icarus!
+ */
+static int find_tf_process(ivl_process_t proc, ivl_scope_t scope)
+{
+      if (scope == ivl_process_scope(proc)) {
+	    ivl_scope_t mod_scope = scope;
+	      /* A task or function can only have initial processes that
+	       * are used to set local variables. */
+	    assert(ivl_process_type(proc) == IVL_PR_INITIAL);
+	      /* Find the module scope for this task/function. */
+	    while (ivl_scope_type(mod_scope) != IVL_SCT_MODULE) {
+		  mod_scope = ivl_scope_parent(mod_scope);
+		  assert(mod_scope);
+	    }
+	      /* Emit the process in the module scope since that is where
+	       * this all started. */
+	    emit_process(mod_scope, proc);
+      }
+      return 0;
+}
+
+/*
+ * Emit any initial blocks for the tasks or functions in a module.
+ */
+static int emit_tf_process(ivl_scope_t scope, ivl_scope_t parent)
+{
+      ivl_scope_type_t sc_type = ivl_scope_type(scope);
+      if ((sc_type == IVL_SCT_FUNCTION) || (sc_type == IVL_SCT_TASK)) {
+	/* Output the initial/always blocks for this module. */
+	    ivl_design_process(design, (ivl_process_f)find_tf_process, scope);
+      }
+      return 0;
+}
+
+static void emit_path_delay(ivl_scope_t scope, ivl_delaypath_t dpath)
+{
+      unsigned idx, count = 6;
+      uint64_t pdlys [12];
+      pdlys[0] = ivl_path_delay(dpath, IVL_PE_01);
+      pdlys[1] = ivl_path_delay(dpath, IVL_PE_10);
+      pdlys[2] = ivl_path_delay(dpath, IVL_PE_0z);
+      pdlys[3] = ivl_path_delay(dpath, IVL_PE_z1);
+      pdlys[4] = ivl_path_delay(dpath, IVL_PE_1z);
+      pdlys[5] = ivl_path_delay(dpath, IVL_PE_z0);
+      pdlys[6] = ivl_path_delay(dpath, IVL_PE_0x);
+      pdlys[7] = ivl_path_delay(dpath, IVL_PE_x1);
+      pdlys[8] = ivl_path_delay(dpath, IVL_PE_1x);
+      pdlys[9] = ivl_path_delay(dpath, IVL_PE_x0);
+      pdlys[10] = ivl_path_delay(dpath, IVL_PE_xz);
+      pdlys[11] = ivl_path_delay(dpath, IVL_PE_zx);
+	/* If the first six pdlys match then this may be a 1 delay form. */
+      if ((pdlys[0] == pdlys[1]) &&
+          (pdlys[0] == pdlys[2]) &&
+          (pdlys[0] == pdlys[3]) &&
+          (pdlys[0] == pdlys[4]) &&
+          (pdlys[0] == pdlys[5])) count = 1;
+	/* Check to see if only a rise and fall value are given for the first
+	 * six pdlys. */
+      else if ((pdlys[0] == pdlys[2]) &&
+               (pdlys[0] == pdlys[3]) &&
+               (pdlys[1] == pdlys[4]) &&
+               (pdlys[1] == pdlys[5])) count = 2;
+	/* Check to see if a rise, fall and high-Z value are given for the
+	 * first six pdlys. */
+      else if ((pdlys[0] == pdlys[3]) &&
+               (pdlys[1] == pdlys[5]) &&
+               (pdlys[2] == pdlys[4])) count = 3;
+	/* Now check to see if the 'bx related pdlys match the reduced
+	 * delay form. If not then this is a twelve delay value. */
+      if ((pdlys[6]  != ((pdlys[0] < pdlys[2]) ?  pdlys[0] : pdlys[2])) ||
+          (pdlys[8]  != ((pdlys[1] < pdlys[4]) ?  pdlys[1] : pdlys[4])) ||
+          (pdlys[11] != ((pdlys[3] < pdlys[5]) ?  pdlys[3] : pdlys[5])) ||
+          (pdlys[7]  != ((pdlys[0] > pdlys[3]) ?  pdlys[0] : pdlys[3])) ||
+          (pdlys[9]  != ((pdlys[1] > pdlys[5]) ?  pdlys[1] : pdlys[5])) ||
+          (pdlys[10] != ((pdlys[2] > pdlys[4]) ?  pdlys[2] : pdlys[4]))) {
+	    count = 12;
+      }
+      emit_scaled_delay(scope, pdlys[0]);
+      for(idx = 1; idx < count; idx += 1) {
+	    fprintf(vlog_out, ", ");
+	    emit_scaled_delay(scope, pdlys[idx]);
+      }
+}
+
+static void emit_specify_paths(ivl_scope_t scope, ivl_signal_t sig)
+{
+      unsigned idx, count = ivl_signal_npath(sig);
+      for(idx = 0; idx < count; idx += 1) {
+	    ivl_delaypath_t dpath = ivl_signal_path(sig, idx);
+	    ivl_nexus_t cond = ivl_path_condit(dpath);
+	    ivl_nexus_t source = ivl_path_source(dpath);
+	    unsigned has_edge = 0;
+	    fprintf(vlog_out, "%*c", indent, ' ');
+	    if (cond) {
+		  fprintf(vlog_out, "if (");
+		  emit_nexus_as_ca(scope, cond, 0);
+		  fprintf(vlog_out, ") ");
+	    } else if (ivl_path_is_condit(dpath)) {
+		  fprintf(vlog_out, "ifnone ");
+	    }
+	    fprintf(vlog_out, "(");
+	    if (ivl_path_source_posedge(dpath)) {
+		  fprintf(vlog_out, "posedge ");
+		  has_edge = 1;
+	    }
+	    if (ivl_path_source_negedge(dpath)) {
+		  fprintf(vlog_out, "negedge ");
+		  has_edge = 1;
+	    }
+	    emit_nexus_as_ca(scope, source, 0);
+	    fprintf(vlog_out, " =>");
+	      /* The compiler does not keep the source expression for an edge
+	       * sensitive path so add a constant to get the syntax right. */
+	    if (has_edge) {
+		  fprintf(vlog_out, "(%s : 1'bx /* Missing */)",
+		                    ivl_signal_basename(sig));
+	    } else {
+		  fprintf(vlog_out, "%s", ivl_signal_basename(sig));
+	    }
+	    fprintf(vlog_out, ") = (");
+	    emit_path_delay(scope, dpath);
+	    fprintf(vlog_out, ");\n");
+      }
+}
+
+/*
+ * The path delay information from the specify block is attached to the
+ * output ports.
+ */
+static void emit_specify(ivl_scope_t scope)
+{
+      unsigned word, idx, count = ivl_scope_ports(scope);
+      unsigned need_specify = 0;
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_t nex = ivl_scope_mod_port(scope, idx);
+	    ivl_signal_t port = get_port_from_nexus(scope, nex, &word);
+// HERE: Do we need to use word? See emit_module_port_def().
+	    assert(port);
+	    if (ivl_signal_npath(port)) {
+		  if (! need_specify) {
+			fprintf(vlog_out, "\n%*cspecify\n", indent, ' ');
+			need_specify = 1;
+			indent += indent_incr;
+		  }
+		  emit_specify_paths(scope, port);
+	    }
+      }
+      if (need_specify) {
+	    indent -= indent_incr;
+	    fprintf(vlog_out, "%*cendspecify\n", indent, ' ');
+      }
+}
+
+/*
  * This search method may be slow for a large structural design with a
  * large number of gate types. That's not what this converter was built
  * for so this is probably OK. If this becomes an issue then we need a
@@ -801,6 +958,10 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 		  emit_tran(scope, ivl_scope_switch(scope, idx));
 	    }
 
+	      /* Output any initial blocks for tasks or functions defined
+	       * in this module. Used to initialize local variables. */
+	    ivl_scope_children(scope, (ivl_scope_f*) emit_tf_process, scope);
+
 	      /* Output the initial/always blocks for this module. */
 	    ivl_design_process(design, (ivl_process_f)find_process, scope);
       }
@@ -810,8 +971,11 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    emit_stmt(scope, ivl_scope_def(scope));
       }
 
-	/* Now print out any sub-scopes. */
+	/* Print any sub-scopes. */
       ivl_scope_children(scope, (ivl_scope_f*) emit_scope, scope);
+
+	/* And finally print a specify block when needed. */
+      if (sc_type == IVL_SCT_MODULE) emit_specify(scope);
 
 	/* Output the scope ending. */
       assert(indent >= indent_incr);

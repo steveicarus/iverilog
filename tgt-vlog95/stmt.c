@@ -105,6 +105,25 @@ static void emit_stmt_lval_name(ivl_scope_t scope, ivl_lval_t lval,
       }
 }
 
+static void emit_stmt_lval_packed(ivl_scope_t scope, ivl_lval_t lval,
+                                  ivl_signal_t sig, ivl_expr_t sel_expr,
+                                  unsigned wid)
+{
+      unsigned idx;
+      assert(wid > 0);
+      fprintf(vlog_out, "{");
+      for (idx = wid - 1; idx > 0; idx -= 1) {
+	    emit_stmt_lval_name(scope, lval, sig);
+	    fprintf(vlog_out, "[");
+	    emit_expr(scope, sel_expr, 0);
+	    fprintf(vlog_out, " + %u], ", idx);
+      }
+      emit_stmt_lval_name(scope, lval, sig);
+      fprintf(vlog_out, "[");
+      emit_expr(scope, sel_expr, 0);
+      fprintf(vlog_out, "]}");
+}
+
 static void emit_stmt_lval_ips(ivl_scope_t scope, ivl_lval_t lval,
                                ivl_signal_t sig, ivl_expr_t sel_expr,
                                ivl_select_type_t sel_type,
@@ -245,17 +264,18 @@ static void emit_stmt_lval_piece(ivl_scope_t scope, ivl_lval_t lval)
 	    fprintf(vlog_out, "[");
 	    emit_scaled_expr(scope, sel_expr, msb, lsb);
 	    fprintf(vlog_out, "]");
-      } else {
+      } else if (ivl_expr_type(sel_expr) == IVL_EX_NUMBER) {
 	      /* A constant part select. */
-	    if (ivl_expr_type(sel_expr) == IVL_EX_NUMBER) {
-		  emit_stmt_lval_name(scope, lval, sig);
-		  emit_scaled_range(scope, sel_expr, width, msb, lsb);
+	    emit_stmt_lval_name(scope, lval, sig);
+	    emit_scaled_range(scope, sel_expr, width, msb, lsb);
+      } else if (sel_type == IVL_SEL_OTHER) {
+	    assert(lsb == 0);
+	    assert(msb >= 0);
+	    emit_stmt_lval_packed(scope, lval, sig, sel_expr, width);
+      } else {
 	      /* An indexed part select. */
-	    } else {
-		  assert(sel_type != IVL_SEL_OTHER);
-		  emit_stmt_lval_ips(scope, lval, sig, sel_expr, sel_type,
-		                     width, msb, lsb);
-	    }
+	    emit_stmt_lval_ips(scope, lval, sig, sel_expr, sel_type,
+	                       width, msb, lsb);
       }
 }
 

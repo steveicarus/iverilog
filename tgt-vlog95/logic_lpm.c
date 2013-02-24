@@ -465,7 +465,7 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex, unsigned allow_UD)
 		  assert(! must_be_sig);
 // HERE: I think we need special input code like the following.
 #if 0
-	      /* If these is a signal in this scope that is also driven by
+	      /* If there is a signal in this scope that is also driven by
 	       * the LPM then use the signal instead. */
 	    sig = find_local_signal(scope, ivl_lpm_q(lpm), &word);
 	    if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0);
@@ -818,13 +818,14 @@ static void emit_lpm_func(ivl_scope_t scope, ivl_lpm_t lpm)
 static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 {
       switch (ivl_lpm_type(lpm)) {
-	  /* Convert Verilog-A abs() function. This only works when the
+	  /* Convert the Verilog-A abs() function. This only works when the
 	   * argument has no side effect. */
 	case IVL_LPM_ABS:
+// HERE: If this is a real net then use the $abs() function to get nan to
+//       work correctly. See the expr code.
 	    fprintf(vlog_out, "((");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, ") > ");
-// HERE: If this is a real net then use 0.0. See the expr code.
 	    fprintf(vlog_out, "0 ? (");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
 	    fprintf(vlog_out, ") : -(");
@@ -1008,9 +1009,12 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_SIGN_EXT:
+// HERE: pr1002 and one other test fails if this assert is used. A more
+//       robust method is needed to make sure things work as expected.
 //	    assert(! sign_extend);
 	    sign_extend = 1;
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 1);
+	    sign_extend = 0;
 	    break;
 	case IVL_LPM_SUB:
 	    fprintf(vlog_out, "(");

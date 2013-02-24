@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -207,6 +207,7 @@ NetESelect* NetESelect::dup_expr() const
 			              base_? base_->dup_expr() : 0,
 			              expr_width(), sel_type_);
       ivl_assert(*this, tmp);
+      tmp->cast_signed(has_sign());
       tmp->set_line(*this);
       return tmp;
 }

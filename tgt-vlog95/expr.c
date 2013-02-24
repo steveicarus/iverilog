@@ -176,19 +176,29 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 		  vlog_errors += 1;
 	    }
 	    break;
-	  /* Convert Verilog-A min() or max() functions. This only works
-	   *  when the arguments have no side effect. */
+	  /* Convert the Verilog-A min() or max() functions. */
 	case 'm':
 	case 'M':
-	    fprintf(vlog_out, "((");
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
-	    fprintf(vlog_out, ") %s (", oper);
-	    emit_expr(scope, ivl_expr_oper2(expr), wid);
-	    fprintf(vlog_out, ") ? (");
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
-	    fprintf(vlog_out, ") : (");
-	    emit_expr(scope, ivl_expr_oper2(expr), wid);
-	    fprintf(vlog_out, "))");
+	    if (ivl_expr_value(expr) == IVL_VT_REAL) {
+		    /* For a real expression use the $min()/$max() function. */
+		  if (ivl_expr_opcode(expr) == 'm') fprintf(vlog_out, "$min(");
+		  else fprintf(vlog_out, "$max(");
+		  emit_expr(scope, ivl_expr_oper1(expr), wid);
+		  fprintf(vlog_out, ",");
+		  emit_expr(scope, ivl_expr_oper2(expr), wid);
+		  fprintf(vlog_out, ")");
+	    } else {
+		    /* This only works when the argument has no side effect. */
+		  fprintf(vlog_out, "((");
+		  emit_expr(scope, ivl_expr_oper1(expr), wid);
+		  fprintf(vlog_out, ") %s (", oper);
+		  emit_expr(scope, ivl_expr_oper2(expr), wid);
+		  fprintf(vlog_out, ") ? (");
+		  emit_expr(scope, ivl_expr_oper1(expr), wid);
+		  fprintf(vlog_out, ") : (");
+		  emit_expr(scope, ivl_expr_oper2(expr), wid);
+		  fprintf(vlog_out, "))");
+	    }
 	    break;
 	default:
 	    emit_expr(scope, ivl_expr_oper1(expr), wid);
@@ -322,6 +332,27 @@ static void emit_select_name(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 }
 
 /*
+ * Emit a packed array access as a concatenation of bit selects.
+ */
+static void emit_expr_packed(ivl_scope_t scope, ivl_expr_t sig_expr,
+                             ivl_expr_t sel_expr, unsigned wid)
+{
+      unsigned idx;
+      assert(wid > 0);
+      fprintf(vlog_out, "{");
+      for (idx = wid - 1; idx > 0; idx -= 1) {
+	    emit_select_name(scope, sig_expr, wid);
+	    fprintf(vlog_out, "[");
+	    emit_expr(scope, sel_expr, 0);
+	    fprintf(vlog_out, " + %u], ", idx);
+      }
+      emit_select_name(scope, sig_expr, wid);
+      fprintf(vlog_out, "[");
+      emit_expr(scope, sel_expr, 0);
+      fprintf(vlog_out, "]}");
+}
+
+/*
  * Emit an indexed part select as a concatenation of bit selects.
  */
 static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
@@ -434,18 +465,19 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 			fprintf(vlog_out, "[");
 			emit_scaled_expr(scope, sel_expr, msb, lsb);
 			fprintf(vlog_out, "]");
+		  } else if (ivl_expr_type(sel_expr) == IVL_EX_NUMBER) {
+			  /* A constant part select. */
+			emit_select_name(scope, sig_expr, wid);
+			emit_scaled_range(scope, sel_expr, width, msb, lsb);
+		  } else if (sel_type == IVL_SEL_OTHER) {
+			  /* A packed array access. */
+			assert(lsb == 0);
+			assert(msb >= 0);
+			emit_expr_packed(scope, sig_expr, sel_expr, width);
 		  } else {
-			if (ivl_expr_type(sel_expr) == IVL_EX_NUMBER) {
-				/* A constant part select. */
-			      emit_select_name(scope, sig_expr, wid);
-			      emit_scaled_range(scope, sel_expr, width,
-			                        msb, lsb);
-			} else {
-				/* An indexed part select. */
-			      assert(sel_type != IVL_SEL_OTHER);
-			      emit_expr_ips(scope, sig_expr, sel_expr,
-			                    sel_type, width, msb, lsb);
-			}
+			  /* An indexed part select. */
+			emit_expr_ips(scope, sig_expr, sel_expr, sel_type,
+			              width, msb, lsb);
 		  }
 	    }
       } else {
@@ -587,19 +619,23 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	                    ivl_expr_lineno(expr));
 	    vlog_errors += 1;
 	    break;
-	  /* Convert Verilog-A abs() function. This only works when the
-	   * argument has no side effect. */
+	  /* Convert the Verilog-A abs() function. */
 	case 'm':
-	    fprintf(vlog_out, "((");
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
-	    fprintf(vlog_out, ") > ");
-	    if (ivl_expr_value(expr) == IVL_VT_REAL) fprintf(vlog_out, "0.0");
-	    else fprintf(vlog_out, "0");
-	    fprintf(vlog_out, " ? (");
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
-	    fprintf(vlog_out, ") : -(");
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
-	    fprintf(vlog_out, "))");
+	    if (ivl_expr_value(expr) == IVL_VT_REAL) {
+		    /* For a real expression use the $abs() function. */
+		  fprintf(vlog_out, "$abs(");
+		  emit_expr(scope, ivl_expr_oper1(expr), wid);
+		  fprintf(vlog_out, ")");
+	    } else {
+		    /* This only works when the argument has no side effect. */
+		  fprintf(vlog_out, "((");
+		  emit_expr(scope, ivl_expr_oper1(expr), wid);
+		  fprintf(vlog_out, ") > 0 ? (");
+		  emit_expr(scope, ivl_expr_oper1(expr), wid);
+		  fprintf(vlog_out, ") : -(");
+		  emit_expr(scope, ivl_expr_oper1(expr), wid);
+		  fprintf(vlog_out, "))");
+	    }
 	    break;
 	default:
 	    fprintf(vlog_out, "<unknown>");
