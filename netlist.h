@@ -4187,6 +4187,9 @@ class NetECast : public NetEUnary {
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
       virtual NetECast* dup_expr() const;
       virtual ivl_variable_type_t expr_type() const;
+
+    private:
+      virtual NetExpr* eval_arguments_(const NetExpr*ex) const;
 };
 
 /*

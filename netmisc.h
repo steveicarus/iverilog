@@ -1,7 +1,7 @@
 #ifndef __netmisc_H
 #define __netmisc_H
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -78,6 +78,8 @@ extern NetNet*cast_to_int4(Design*des, NetScope*scope, NetNet*src, unsigned wid)
 extern NetNet*cast_to_int2(Design*des, NetScope*scope, NetNet*src, unsigned wid);
 extern NetNet*cast_to_real(Design*des, NetScope*scope, NetNet*src);
 
+extern NetExpr*cast_to_int4(NetExpr*expr, unsigned width);
+extern NetExpr*cast_to_int2(NetExpr*expr, unsigned width);
 extern NetExpr*cast_to_int2(NetExpr*expr);
 extern NetExpr*cast_to_real(NetExpr*expr);
 
@@ -222,13 +224,20 @@ extern unsigned count_lval_width(const class NetAssign_*first);
  * if the expression is lossless self-determined (this last option is
  * treated as standard self-determined if the gn_strict_expr_width flag
  * is set).
+ *
+ * cast_type allows the expression to be cast to a different type
+ * (before it is evaluated). If cast to a vector type, the vector
+ * width will be set to the context_width. The default value of
+ * IVL_VT_NO_TYPE causes the expression to retain its self-determined
+ * type.
  */
 class PExpr;
 
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 			      PExpr*pe, int context_width,
                               bool need_const =false,
-                              bool annotatable =false);
+                              bool annotatable =false,
+			      ivl_variable_type_t cast_type =IVL_VT_NO_TYPE);
 
 /*
  * This function is a variant of elab_and_eval that elaborates and

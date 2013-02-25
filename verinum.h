@@ -1,7 +1,7 @@
 #ifndef __verinum_H
 #define __verinum_H
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -85,6 +85,9 @@ class verinum {
 
 	// Comparison for use in sorting algorithms.
       bool is_before(const verinum&that) const;
+
+	// Convert 4-state to 2-state
+      void cast_to_int2();
 
 	// Individual bits can be accessed with the get and set
 	// methods.

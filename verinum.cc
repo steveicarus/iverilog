@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -566,6 +566,14 @@ bool verinum::is_zero() const
 bool verinum::is_negative() const
 {
       return (bits_[nbits_-1] == V1) && has_sign();
+}
+
+void verinum::cast_to_int2()
+{
+      for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1) {
+	    if (bits_[idx] == Vx || bits_[idx] == Vz)
+		  bits_[idx] = V0;
+      }
 }
 
 verinum pad_to_width(const verinum&that, unsigned width)

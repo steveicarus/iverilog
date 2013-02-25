@@ -1591,6 +1591,39 @@ NetEConst* NetEUReduce::eval_arguments_(const NetExpr*ex) const
       return tmp;
 }
 
+NetExpr* NetECast::eval_arguments_(const NetExpr*ex) const
+{
+      NetExpr*res = 0;
+      switch (op_) {
+	  case 'r':
+	    if (const NetEConst*val = dynamic_cast<const NetEConst*>(ex)) {
+		  verireal res_val = verireal(val->value().as_double());
+		  res = new NetECReal(res_val);
+	    }
+	    break;
+	  case '2':
+	    if (const NetEConst*val = dynamic_cast<const NetEConst*>(ex)) {
+		  verinum res_val(val->value());
+		  res_val.cast_to_int2();
+		  res = new NetEConst(res_val);
+	    }
+	  case 'v':
+	    if (const NetECReal*val = dynamic_cast<const NetECReal*>(ex)) {
+		  verinum res_val = verinum(val->value().as_double(), false);
+		  res = new NetEConst(res_val);
+	    }
+	    break;
+	  default:
+	    ivl_assert(*this, 0);
+	    return 0;
+      }
+      if (res == 0) return 0;
+
+      ivl_assert(*this, res);
+      eval_debug(this, res, op_ == 'r');
+      return res;
+}
+
 NetEConst* NetESFunc::evaluate_clog2_(const NetExpr*arg_) const
 {
       const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg_);

@@ -139,7 +139,7 @@ NetNet* cast_to_real(Design*des, NetScope*scope, NetNet*src)
 
 NetExpr* cast_to_int2(NetExpr*expr)
 {
-	// Special case: The expression is alreadt BOOL
+	// Special case: The expression is already BOOL
       if (expr->expr_type() == IVL_VT_BOOL)
 	    return expr;
 
@@ -153,10 +153,44 @@ NetExpr* cast_to_int2(NetExpr*expr)
       return cast;
 }
 
+NetExpr* cast_to_int2(NetExpr*expr, unsigned width)
+{
+	// Special case: The expression is already BOOL
+      if (expr->expr_type() == IVL_VT_BOOL)
+	    return expr;
+
+      if (debug_elaborate)
+	    cerr << expr->get_fileline() << ": debug: "
+		 << "Cast expression to int2, width=" << width << "." << endl;
+
+      NetECast*cast = new NetECast('2', expr, width, expr->has_sign());
+      cast->set_line(*expr);
+      return cast;
+}
+
+NetExpr* cast_to_int4(NetExpr*expr, unsigned width)
+{
+	// Special case: The expression is already LOGIC or BOOL
+      if (expr->expr_type() != IVL_VT_REAL)
+	    return expr;
+
+      if (debug_elaborate)
+	    cerr << expr->get_fileline() << ": debug: "
+		 << "Cast expression to int4, width=" << width << "." << endl;
+
+      NetECast*cast = new NetECast('v', expr, width, expr->has_sign());
+      cast->set_line(*expr);
+      return cast;
+}
+
 NetExpr* cast_to_real(NetExpr*expr)
 {
       if (expr->expr_type() == IVL_VT_REAL)
 	    return expr;
+
+      if (debug_elaborate)
+	    cerr << expr->get_fileline() << ": debug: "
+		 << "Cast expression to real." << endl;
 
       NetECast*cast = new NetECast('r', expr, 1, true);
       cast->set_line(*expr);
@@ -728,7 +762,8 @@ static const char*width_mode_name(PExpr::width_mode_t mode)
 }
 
 NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
-                       int context_width, bool need_const, bool annotatable)
+                       int context_width, bool need_const, bool annotatable,
+                       ivl_variable_type_t cast_type)
 {
       PExpr::width_mode_t mode = PExpr::SIZED;
       if ((context_width == -2) && !gn_strict_expr_width_flag)
@@ -776,6 +811,22 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 
       NetExpr*tmp = pe->elaborate_expr(des, scope, expr_width, flags);
       if (tmp == 0) return 0;
+
+      if ((cast_type != IVL_VT_NO_TYPE) && (cast_type != tmp->expr_type())) {
+            switch (cast_type) {
+                case IVL_VT_REAL:
+                  tmp = cast_to_real(tmp);
+                  break;
+                case IVL_VT_BOOL:
+                  tmp = cast_to_int2(tmp, context_width);
+                  break;
+                case IVL_VT_LOGIC:
+                  tmp = cast_to_int4(tmp, context_width);
+                  break;
+                default:
+                  break;
+            }
+      }
 
       eval_expr(tmp, context_width);
 

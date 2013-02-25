@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -111,7 +111,8 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 	    break;
       }
 
-      return elab_and_eval(des, scope, expr, context_wid, need_const);
+      return elab_and_eval(des, scope, expr, context_wid, need_const,
+			   false, lv_type);
 }
 
 /*

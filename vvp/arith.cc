@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -140,7 +140,7 @@ void vvp_arith_cast_vec2::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
                                     vvp_context_t)
 {
       vvp_vector2_t tmp = bit;
-      ptr.ptr()->send_vec4(vector2_to_vector4(tmp,tmp.size()), 0);
+      ptr.ptr()->send_vec4(vector2_to_vector4(tmp,wid_), 0);
 }
 
 // Division
