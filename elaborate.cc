@@ -1470,6 +1470,13 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		      !prts.empty() && (prts[0]->data_type() == IVL_VT_REAL )) {
 			sig = cast_to_real(des, scope, sig);
 		  }
+		    // If we have a 4-state bit/vector signal driving a
+		    // 2-state port then we convert the value to 2-state.
+		  if ((sig->data_type() == IVL_VT_LOGIC ) &&
+		      !prts.empty() && (prts[0]->data_type() == IVL_VT_BOOL )) {
+			sig = cast_to_int2(des, scope, sig,
+					   sig->vector_width());
+		  }
 
 	    } else if (prts[0]->port_type() == NetNet::PINOUT) {
 
@@ -1596,6 +1603,18 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			           << endl;
 			      des->errors += 1;
 			      continue;
+			}
+		  }
+
+		    // If we have a 4-state bit/vector port driving a
+		    // 2-state signal then we convert the value to 2-state.
+		  if ((sig->data_type() == IVL_VT_BOOL ) &&
+		      !prts.empty() && (prts[0]->data_type() == IVL_VT_LOGIC )) {
+			for (unsigned pidx = 0; pidx < prts.size(); pidx += 1) {
+			      prts[pidx]->port_type(NetNet::NOT_A_PORT);
+			      prts[pidx] = cast_to_int2(des, scope, prts[pidx],
+			                                prts[pidx]->vector_width());
+			      prts[pidx]->port_type(NetNet::POUTPUT);
 			}
 		  }
 
@@ -3233,8 +3252,28 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    if (lv == 0)
 		  continue;
 
-	    NetESignal*sig = new NetESignal(port);
-	    NetExpr*rv = pad_to_width(sig, count_lval_width(lv), *this);
+	    NetExpr*rv = new NetESignal(port);
+
+	      /* Handle any implicit cast. */
+	    unsigned lv_width = count_lval_width(lv);
+	    if (lv->expr_type() != rv->expr_type()) {
+		  switch (lv->expr_type()) {
+		      case IVL_VT_REAL:
+			rv = cast_to_real(rv);
+			break;
+		      case IVL_VT_BOOL:
+			rv = cast_to_int2(rv, lv_width);
+			break;
+		      case IVL_VT_LOGIC:
+			rv = cast_to_int4(rv, lv_width);
+			break;
+		      default:
+			  /* Don't yet know how to handle this. */
+			ivl_assert(*this, 0);
+			break;
+		  }
+	    }
+	    rv = pad_to_width(rv, lv_width, *this);
 
 	      /* Generate the assignment statement. */
 	    NetAssign*ass = new NetAssign(lv, rv);

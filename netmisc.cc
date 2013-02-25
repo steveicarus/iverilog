@@ -82,7 +82,8 @@ NetNet* cast_to_int2(Design*des, NetScope*scope, NetNet*src, unsigned wid)
       if (src->data_type() == IVL_VT_BOOL)
 	    return src;
 
-      netvector_t*tmp_vec = new netvector_t(IVL_VT_BOOL, wid-1, 0);
+      netvector_t*tmp_vec = new netvector_t(IVL_VT_BOOL, wid-1, 0,
+					    src->get_signed());
       NetNet*tmp = new NetNet(scope, scope->local_symbol(), NetNet::WIRE, tmp_vec);
       tmp->set_line(*src);
       tmp->local_flag(true);
