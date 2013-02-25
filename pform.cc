@@ -1338,19 +1338,21 @@ static void process_udp_table(PUdp*udp, list<string>*table,
 }
 
 void pform_make_udp(perm_string name, list<perm_string>*parms,
-		    svector<PWire*>*decl, list<string>*table,
+		    vector<PWire*>*decl, list<string>*table,
 		    Statement*init_expr,
 		    const char*file, unsigned lineno)
 {
       unsigned local_errors = 0;
       assert(!parms->empty());
 
+      assert(decl);
+
 	/* Put the declarations into a map, so that I can check them
 	   off with the parameters in the list. If the port is already
 	   in the map, merge the port type. I will rebuild a list
 	   of parameters for the PUdp object. */
       map<perm_string,PWire*> defs;
-      for (unsigned idx = 0 ;  idx < decl->count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < decl->size() ;  idx += 1) {
 
 	    perm_string port_name = (*decl)[idx]->basename();
 
@@ -2301,17 +2303,17 @@ void pform_makewire(const vlltype&li,
  * constraints as those of tasks, so this works fine. Functions have
  * no output or inout ports.
  */
-svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
-				      NetNet::PortType pt,
-				      ivl_variable_type_t vtype,
-				      bool signed_flag,
-				      list<pform_range_t>*range,
-				      list<perm_string>*names,
-				      bool isint)
+vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
+				     NetNet::PortType pt,
+				     ivl_variable_type_t vtype,
+				     bool signed_flag,
+				     list<pform_range_t>*range,
+				     list<perm_string>*names,
+				     bool isint)
 {
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
       assert(names);
-      svector<PWire*>*res = new svector<PWire*>(0);
+      vector<PWire*>*res = new vector<PWire*>(0);
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
 
@@ -2336,10 +2338,7 @@ svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 		  curw->set_range(*range, SR_PORT);
 	    }
 
-	    svector<PWire*>*tmp = new svector<PWire*>(*res, curw);
-
-	    delete res;
-	    res = tmp;
+	    res->push_back(curw);
       }
 
       delete range;
@@ -2347,7 +2346,7 @@ svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
       return res;
 }
 
-svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
+vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 				      NetNet::PortType pt,
 				      data_type_t*vtype,
 				      list<perm_string>*names)
@@ -2992,9 +2991,9 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
       assert(0);
 }
 
-svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)
+vector<PWire*>* pform_make_udp_input_ports(list<perm_string>*names)
 {
-      svector<PWire*>*out = new svector<PWire*>(names->size());
+      vector<PWire*>*out = new vector<PWire*>(names->size());
 
       unsigned idx = 0;
       for (list<perm_string>::iterator cur = names->begin()

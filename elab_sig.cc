@@ -634,10 +634,10 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    }
       }
 
-      vector<NetNet*>ports (ports_? ports_->count() : 0);
+      vector<NetNet*>ports (ports_? ports_->size() : 0);
 
       if (ports_)
-	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
+	    for (unsigned idx = 0 ;  idx < ports_->size() ;  idx += 1) {
 
 		    /* Parse the port name into the task name and the reg
 		       name. We know by design that the port name is given
@@ -710,7 +710,7 @@ void PTask::elaborate_sig(Design*des, NetScope*scope) const
 
       elaborate_sig_wires_(des, scope);
 
-      svector<NetNet*>ports (ports_? ports_->count() : 0);
+      svector<NetNet*>ports (ports_? ports_->size() : 0);
       for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
 
 	    perm_string port_name = (*ports_)[idx]->basename();

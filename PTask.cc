@@ -18,11 +18,11 @@
  */
 
 # include "config.h"
-
 # include  "PTask.h"
+# include  <cassert>
 
 PTask::PTask(perm_string name, LexicalScope*parent, bool is_auto__)
-: PScope(name, parent), ports_(0), statement_(0)
+: PScope(name, parent), this_type_(0), ports_(0), statement_(0)
 {
       is_auto_ = is_auto__;
 }
@@ -31,7 +31,13 @@ PTask::~PTask()
 {
 }
 
-void PTask::set_ports(svector<PWire*>*p)
+void PTask::set_this(class_type_t*type)
+{
+      assert(this_type_ == 0);
+      this_type_ = type;
+}
+
+void PTask::set_ports(vector<PWire*>*p)
 {
       assert(ports_ == 0);
       ports_ = p;

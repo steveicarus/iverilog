@@ -21,7 +21,6 @@
 
 # include  "LineInfo.h"
 # include  "PScope.h"
-# include  "svector.h"
 # include  "StringHeap.h"
 # include  <string>
 # include  <vector>
@@ -60,7 +59,8 @@ class PTask  : public PScope, public LineInfo {
       explicit PTask(perm_string name, LexicalScope*parent, bool is_auto);
       ~PTask();
 
-      void set_ports(svector<PWire *>*p);
+      void set_this(class_type_t*use_type);
+      void set_ports(std::vector<PWire *>*p);
       void set_statement(Statement *s);
 
 	// Tasks introduce scope, to need to be handled during the
@@ -77,10 +77,15 @@ class PTask  : public PScope, public LineInfo {
 
       bool is_auto() const { return is_auto_; };
 
+	// If this task is a method of a class, this returns a pointer
+	// to the class type.
+      inline class_type_t* method_of() const { return this_type_; }
+
       void dump(ostream&, unsigned) const;
 
     private:
-      svector<PWire*>*ports_;
+      class_type_t*this_type_;
+      std::vector<PWire*>*ports_;
       Statement*statement_;
       bool is_auto_;
 
@@ -102,7 +107,8 @@ class PFunction : public PScope, public LineInfo {
       explicit PFunction(perm_string name, LexicalScope*parent, bool is_auto);
       ~PFunction();
 
-      void set_ports(svector<PWire *>*p);
+      void set_this(class_type_t*use_type);
+      void set_ports(std::vector<PWire *>*p);
       void set_statement(Statement *s);
       void set_return(PTaskFuncArg t);
 
@@ -116,11 +122,16 @@ class PFunction : public PScope, public LineInfo {
 
       bool is_auto() const { return is_auto_; };
 
+	// If this function is a method of a class, this returns a
+	// pointer to the class type.
+      inline class_type_t* method_of() const { return this_type_; }
+
       void dump(ostream&, unsigned) const;
 
     private:
+      class_type_t*this_type_;
       PTaskFuncArg return_type_;
-      svector<PWire *> *ports_;
+      std::vector<PWire *> *ports_;
       Statement *statement_;
       bool is_auto_;
 };

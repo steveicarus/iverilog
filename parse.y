@@ -366,7 +366,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       PBlock::BL_TYPE join_keyword;
 
       PWire*wire;
-      svector<PWire*>*wires;
+      vector<PWire*>*wires;
 
       PEventStatement*event_statement;
       Statement*statement;
@@ -1619,7 +1619,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 
 tf_port_declaration /* IEEE1800-2005: A.2.7 */
   : port_direction K_reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
-      { svector<PWire*>*tmp = pform_make_task_ports(@1, $1,
+      { vector<PWire*>*tmp = pform_make_task_ports(@1, $1,
 						$2 ? IVL_VT_LOGIC :
 						     IVL_VT_NO_TYPE,
 						$3, $4, $5);
@@ -1631,7 +1631,7 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
 
   | port_direction K_integer list_of_identifiers ';'
       { list<pform_range_t>*range_stub = make_range_from_width(integer_width);
-	svector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, true,
+	vector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, true,
 						    range_stub, $3, true);
 	$$ = tmp;
       }
@@ -1640,16 +1640,16 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
 
   | port_direction K_time list_of_identifiers ';'
       { list<pform_range_t>*range_stub = make_range_from_width(64);
-	svector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, false,
-						    range_stub, $3);
+	vector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, false,
+						   range_stub, $3);
 	$$ = tmp;
       }
 
   /* Ports can be real or realtime. */
 
   | port_direction real_or_realtime list_of_identifiers ';'
-      { svector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_REAL, false,
-						    0, $3);
+      { vector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_REAL, false,
+						   0, $3);
 	$$ = tmp;
       }
 
@@ -1677,10 +1677,10 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	port_declaration_context.sign_flag = true;
 	delete port_declaration_context.range;
 	port_declaration_context.range = copy_range(range_stub);
-	svector<PWire*>*tmp = pform_make_task_ports(@3, use_port_type,
-						    IVL_VT_LOGIC, true,
-						    range_stub,
-						    list_from_identifier($3), true);
+	vector<PWire*>*tmp = pform_make_task_ports(@3, use_port_type,
+						   IVL_VT_LOGIC, true,
+						   range_stub,
+						   list_from_identifier($3), true);
 	$$ = tmp;
 	if ($4) {
 	      yyerror(@4, "sorry: Port variable dimensions not supported yet.");
@@ -1703,9 +1703,9 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	port_declaration_context.sign_flag = false;
 	delete port_declaration_context.range;
 	port_declaration_context.range = copy_range(range_stub);
-	svector<PWire*>*tmp = pform_make_task_ports(@3, use_port_type, IVL_VT_LOGIC,
-						    false, range_stub,
-						    list_from_identifier($3));
+	vector<PWire*>*tmp = pform_make_task_ports(@3, use_port_type, IVL_VT_LOGIC,
+						   false, range_stub,
+						   list_from_identifier($3));
 	$$ = tmp;
 	if ($4) {
 	      yyerror(@4, "sorry: Port variable dimensions not supported yet.");
@@ -1718,7 +1718,7 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
       }
 
   | port_direction_opt data_type_or_implicit IDENTIFIER range_opt tf_port_item_expr_opt
-      { svector<PWire*>*tmp;
+      { vector<PWire*>*tmp;
 	NetNet::PortType use_port_type = $1==NetNet::PIMPLICIT? NetNet::PINPUT : $1;
 	list<perm_string>* ilist = list_from_identifier($3);
 
@@ -1784,10 +1784,13 @@ tf_port_item_expr_opt
 tf_port_list /* IEEE1800-2005: A.2.7 */
 
   : tf_port_list ',' tf_port_item
-      { svector<PWire*>*tmp;
+      { vector<PWire*>*tmp;
 	if ($1 && $3) {
-	      tmp = new svector<PWire*>(*$1, *$3);
-	      delete $1;
+	      size_t s1 = $1->size();
+	      tmp = $1;
+	      tmp->resize(tmp->size()+$3->size());
+	      for (size_t idx = 0 ; idx < $3->size() ; idx += 1)
+		    tmp->at(s1+idx) = $3->at(idx);
 	      delete $3;
 	} else if ($1) {
 	      tmp = $1;
@@ -3274,8 +3277,11 @@ function_item_list
   | function_item_list function_item
       { /* */
 	if ($1 && $2) {
-	      svector<PWire*>*tmp = new svector<PWire*>(*$1, *$2);
-	      delete $1;
+	      vector<PWire*>*tmp = $1;
+	      size_t s1 = tmp->size();
+	      tmp->resize(s1 + $2->size());
+	      for (size_t idx = 0 ; idx < $2->size() ; idx += 1)
+		    tmp->at(s1+idx) = $2->at(idx);
 	      delete $2;
 	      $$ = tmp;
 	} else if ($1) {
@@ -5804,20 +5810,23 @@ analog_statement
   /* Task items are, other than the statement, task port items and
      other block items. */
 task_item
-        : block_item_decl  { $$ = new svector<PWire*>(0); }
-        | tf_port_declaration   { $$ = $1; }
-        ;
+  : block_item_decl  { $$ = new vector<PWire*>(0); }
+  | tf_port_declaration   { $$ = $1; }
+  ;
 
 task_item_list
-	: task_item_list task_item
-		{ svector<PWire*>*tmp = new svector<PWire*>(*$1, *$2);
-		  delete $1;
-		  delete $2;
-		  $$ = tmp;
-		}
-	| task_item
-		{ $$ = $1; }
-	;
+  : task_item_list task_item
+      { vector<PWire*>*tmp = $1;
+	size_t s1 = tmp->size();
+	tmp->resize(s1 + $2->size());
+	for (size_t idx = 0 ; idx < $2->size() ; idx += 1)
+	      tmp->at(s1 + idx) = $2->at(idx);
+	delete $2;
+	$$ = tmp;
+      }
+  | task_item
+      { $$ = $1; }
+  ;
 
 task_item_list_opt
 	: task_item_list
@@ -5975,7 +5984,7 @@ udp_port_decl
   | K_output IDENTIFIER ';'
       { perm_string pname = lex_strings.make($2);
 	PWire*pp = new PWire(pname, NetNet::IMPLICIT, NetNet::POUTPUT, IVL_VT_LOGIC);
-	svector<PWire*>*tmp = new svector<PWire*>(1);
+	vector<PWire*>*tmp = new vector<PWire*>(1);
 	(*tmp)[0] = pp;
 	$$ = tmp;
 	delete[]$2;
@@ -5983,7 +5992,7 @@ udp_port_decl
   | K_reg IDENTIFIER ';'
       { perm_string pname = lex_strings.make($2);
 	PWire*pp = new PWire(pname, NetNet::REG, NetNet::PIMPLICIT, IVL_VT_LOGIC);
-	svector<PWire*>*tmp = new svector<PWire*>(1);
+	vector<PWire*>*tmp = new vector<PWire*>(1);
 	(*tmp)[0] = pp;
 	$$ = tmp;
 	delete[]$2;
@@ -5991,7 +6000,7 @@ udp_port_decl
   | K_reg K_output IDENTIFIER ';'
       { perm_string pname = lex_strings.make($3);
 	PWire*pp = new PWire(pname, NetNet::REG, NetNet::POUTPUT, IVL_VT_LOGIC);
-	svector<PWire*>*tmp = new svector<PWire*>(1);
+	vector<PWire*>*tmp = new vector<PWire*>(1);
 	(*tmp)[0] = pp;
 	$$ = tmp;
 	delete[]$3;
@@ -5999,15 +6008,18 @@ udp_port_decl
     ;
 
 udp_port_decls
-	: udp_port_decl
-		{ $$ = $1; }
-	| udp_port_decls udp_port_decl
-		{ svector<PWire*>*tmp = new svector<PWire*>(*$1, *$2);
-		  delete $1;
-		  delete $2;
-		  $$ = tmp;
-		}
-	;
+  : udp_port_decl
+      { $$ = $1; }
+  | udp_port_decls udp_port_decl
+      { vector<PWire*>*tmp = $1;
+	size_t s1 = $1->size();
+	tmp->resize(s1+$2->size());
+	for (size_t idx = 0 ; idx < $2->size() ; idx += 1)
+	      tmp->at(s1+idx) = $2->at(idx);
+	$$ = tmp;
+	delete $2;
+      }
+  ;
 
 udp_port_list
   : IDENTIFIER

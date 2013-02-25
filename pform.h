@@ -188,7 +188,7 @@ extern void pform_class_property(const struct vlltype&loc,
 extern void pform_end_class_declaration(void);
 
 extern void pform_make_udp(perm_string name, list<perm_string>*parms,
-			   svector<PWire*>*decl, list<string>*table,
+			   std::vector<PWire*>*decl, list<string>*table,
 			   Statement*init,
 			   const char*file, unsigned lineno);
 
@@ -385,7 +385,7 @@ extern void pform_module_specify_path(PSpecPath*obj);
 extern PProcess*  pform_make_behavior(ivl_process_type_t, Statement*,
 				      list<named_pexpr_t>*attr);
 
-extern svector<PWire*>* pform_make_udp_input_ports(list<perm_string>*);
+extern std::vector<PWire*>* pform_make_udp_input_ports(list<perm_string>*);
 
 extern void pform_make_events(list<perm_string>*names,
 			      const char*file, unsigned lineno);
@@ -419,7 +419,7 @@ extern void pform_make_pgassign_list(list<PExpr*>*alist,
 
 /* Given a port type and a list of names, make a list of wires that
    can be used as task port information. */
-extern svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
+extern std::vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 					     NetNet::PortType pt,
 					     ivl_variable_type_t vtype,
 					     bool signed_flag,
@@ -427,7 +427,7 @@ extern svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 					     list<perm_string>*names,
 					     bool isint = false);
 
-extern svector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
+extern std::vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 					     NetNet::PortType pt,
 					     data_type_t*vtype,
 					     list<perm_string>*names);

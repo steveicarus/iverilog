@@ -910,7 +910,7 @@ void PFunction::dump(ostream&out, unsigned ind) const
       out << pscope_name() << ";" << endl;
 
       if (ports_)
-	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
+	    for (unsigned idx = 0 ;  idx < ports_->size() ;  idx += 1) {
 		  out << setw(ind) << "";
 		  out << "input ";
 		  out << (*ports_)[idx]->basename() << ";" << endl;
@@ -948,7 +948,7 @@ void PTask::dump(ostream&out, unsigned ind) const
       if (is_auto_) cout << "automatic ";
       out << pscope_name() << ";" << endl;
       if (ports_)
-	    for (unsigned idx = 0 ;  idx < ports_->count() ;  idx += 1) {
+	    for (unsigned idx = 0 ;  idx < ports_->size() ;  idx += 1) {
 		  if ((*ports_)[idx] == 0) {
 			out << setw(ind) << "" << "ERROR PORT" << endl;
 			continue;
