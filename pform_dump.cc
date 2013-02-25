@@ -908,6 +908,8 @@ void PFunction::dump(ostream&out, unsigned ind) const
       }
 
       out << pscope_name() << ";" << endl;
+      if (this_type_)
+	    out << setw(ind) << "" << "method of " << this_type_->name << ";" << endl;
 
       if (ports_)
 	    for (unsigned idx = 0 ;  idx < ports_->size() ;  idx += 1) {
@@ -947,6 +949,8 @@ void PTask::dump(ostream&out, unsigned ind) const
       out << setw(ind) << "" << "task ";
       if (is_auto_) cout << "automatic ";
       out << pscope_name() << ";" << endl;
+      if (this_type_)
+	    out << setw(ind) << "" << "method of " << this_type_->name << ";" << endl;
       if (ports_)
 	    for (unsigned idx = 0 ;  idx < ports_->size() ;  idx += 1) {
 		  if ((*ports_)[idx] == 0) {

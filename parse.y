@@ -1022,6 +1022,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
       { current_function->set_ports($7);
 	current_function->set_return($3);
 	current_function_set_statement($8? @8 : @4, $8);
+	pform_set_this_class(current_function);
 	pform_pop_scope();
 	current_function = 0;
       }
@@ -1048,6 +1049,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
       { current_function->set_ports($7);
 	current_function->set_return($3);
 	current_function_set_statement($11? @11 : @4, $11);
+	pform_set_this_class(current_function);
 	pform_pop_scope();
 	current_function = 0;
 	if ($7==0 && !gn_system_verilog()) {
@@ -1507,6 +1509,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
     K_endtask
       { current_task->set_ports($6);
 	current_task_set_statement(@3, $7);
+	pform_set_this_class(current_task);
 	pform_pop_scope();
 	current_task = 0;
 	if ($7 && $7->size() > 1 && !gn_system_verilog()) {
@@ -1540,6 +1543,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
     K_endtask
       { current_task->set_ports($6);
 	current_task_set_statement(@3, $10);
+	pform_set_this_class(current_task);
 	pform_pop_scope();
 	current_task = 0;
 	if ($10) delete $10;
@@ -1569,10 +1573,13 @@ task_declaration /* IEEE1800-2005: A.2.7 */
     K_endtask
       { current_task->set_ports(0);
 	current_task_set_statement(@3, $9);
+	pform_set_this_class(current_task);
+	if (! current_task->method_of()) {
+	      cerr << @3 << ": warning: task definition for \"" << $3
+		   << "\" has an empty port declaration list!" << endl;
+	}
 	pform_pop_scope();
 	current_task = 0;
-	cerr << @3 << ": warning: task definition for \"" << $3
-	     << "\" has an empty port declaration list!" << endl;
 	if ($9->size() > 1 && !gn_system_verilog()) {
 	      yyerror(@9, "error: Task body with multiple statements requres SystemVerilog.");
 	}
