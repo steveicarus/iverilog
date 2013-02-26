@@ -573,7 +573,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <nettype>  net_type var_type net_type_opt
 %type <gatetype> gatetype switchtype
 %type <porttype> port_direction port_direction_opt
-%type <vartype> bit_logic
+%type <vartype> bit_logic bit_logic_opt
 %type <vartype> integer_vector_type
 %type <parmvalue> parameter_value_opt
 
@@ -4449,7 +4449,13 @@ net_decl_assigns
 
 bit_logic
   : K_logic { $$ = IVL_VT_LOGIC; }
+  | K_bool  { $$ = IVL_VT_BOOL; /* Icarus misc */}
   | K_bit   { $$ = IVL_VT_BOOL; /* IEEE1800 / IEEE1364-2009 */}
+  ;
+
+bit_logic_opt
+  : bit_logic
+  |         { $$ = IVL_VT_NO_TYPE; }
   ;
 
 net_type
@@ -4476,25 +4482,13 @@ var_type
 	;
 
 param_type
-  :
-      { param_active_range = 0;
-        param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | range
-      { param_active_range = $1;
-        param_active_signed = false;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | K_signed
-      { param_active_range = 0;
-	param_active_signed = true;
-	param_active_type = IVL_VT_LOGIC;
-      }
-  | K_signed range
-      { param_active_range = $2;
-	param_active_signed = true;
-	param_active_type = IVL_VT_LOGIC;
+  : bit_logic_opt unsigned_signed_opt range_opt
+      { param_active_range = $3;
+	param_active_signed = $2;
+	if (($1 == IVL_VT_NO_TYPE) && ($3 != 0))
+	      param_active_type = IVL_VT_LOGIC;
+	else
+	      param_active_type = $1;
       }
   | K_integer
       { param_active_range = make_range_from_width(integer_width);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -452,7 +452,8 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	    lv_width = (msb >= lsb) ? 1 + msb - lsb : 1 + lsb - msb;
 
       NetExpr*expr = elab_and_eval(des, val_scope, val_expr, lv_width, true,
-                                   (*cur).second.is_annotatable);
+                                   (*cur).second.is_annotatable,
+                                   (*cur).second.type);
       if (! expr)
             return;
 
@@ -491,15 +492,7 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	   sure the type is set right. Note that if the parameter
 	   doesn't have an explicit type or range, then it will get
 	   the signedness from the expression itself. */
-      if (range_flag) {
-	    /* If we have a real value convert it to an integer. */
-	    if(NetECReal*tmp = dynamic_cast<NetECReal*>(expr)) {
-		  verinum nval(tmp->value().as_long64(), (unsigned)lv_width);
-		  expr = new NetEConst(nval);
-		  expr->set_line(*((*cur).second.val));
-		  (*cur).second.val = expr;
-	    }
-
+      if ((*cur).second.type != IVL_VT_NO_TYPE) {
             (*cur).second.val->cast_signed((*cur).second.signed_flag);
       } else if ((*cur).second.signed_flag) {
             (*cur).second.val->cast_signed(true);
@@ -574,7 +567,8 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
       NetScope*val_scope = (*cur).second.val_scope;
 
       NetExpr*expr = elab_and_eval(des, val_scope, val_expr, -1, true,
-                                   (*cur).second.is_annotatable);
+                                   (*cur).second.is_annotatable,
+                                   (*cur).second.type);
       if (! expr)
             return;
 
@@ -594,26 +588,10 @@ void NetScope::evaluate_parameter_real_(Design*des, param_ref_t cur)
 	    }
 	    break;
 
-	  case IVL_VT_LOGIC:
-	  case IVL_VT_BOOL:
-	    if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
-		  verireal val (tmp->value().as_long());
-		  res = new NetECReal(val);
-		  res->set_line(*tmp);
-	    } else {
-		  cerr << expr->get_fileline()
-		       << ": error: "
-		       << "Unable to evaluate parameter "
-		       << (*cur).first << " value: " << *expr << endl;
-		  des->errors += 1;
-		  return;
-	    }
-	    break;
-
 	  default:
 	    cerr << expr->get_fileline()
 		 << ": internal error: "
-		 << "Unhandled expression type?" << endl;
+		 << "Failed to cast expression?" << endl;
 	    des->errors += 1;
 	    return;
 	    break;
@@ -683,6 +661,7 @@ void NetScope::evaluate_parameter_(Design*des, param_ref_t cur)
       } else {
             cur->second.solving = true;
             switch (cur->second.type) {
+                case IVL_VT_NO_TYPE:
                 case IVL_VT_BOOL:
                 case IVL_VT_LOGIC:
                   evaluate_parameter_logic_(des, cur);

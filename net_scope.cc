@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -138,8 +138,6 @@ void NetScope::set_parameter(perm_string key, bool is_annotatable,
       ref.range = range_list;
       ref.val = 0;
       ref.set_line(file_line);
-
-      ivl_assert(file_line, type__ != IVL_VT_NO_TYPE);
 }
 
 /*
