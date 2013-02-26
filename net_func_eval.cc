@@ -170,6 +170,8 @@ bool NetAssign::evaluate_function(const LineInfo&loc,
 	    delete base_result;
 	    delete rval_result;
 	    rval_result = new NetEConst(lval_v);
+      } else {
+	    rval_result->cast_signed(lval->sig()->get_signed());
       }
 
       if (ptr->second)

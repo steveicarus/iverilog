@@ -1812,23 +1812,19 @@ NetExpr* NetESFunc::evaluate_abs_(const NetExpr*arg_) const
       NetExpr*res = 0;
 
       const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg_);
-      if (tmpi) {
-	    verinum arg = tmpi->value();
-	    if (arg.is_negative()) {
-		  arg = v_not(arg) + verinum(1);
-	    }
-	    res = new NetEConst(arg);
-	    ivl_assert(*this, res);
-      }
-
       const NetECReal*tmpr = dynamic_cast<const NetECReal*>(arg_);
-      if (tmpr) {
-	    double arg = tmpr->value().as_double();
+      if (tmpi || tmpr) {
+	    double arg;
+	    if (tmpi) {
+		  arg = tmpi->value().as_double();
+	    } else {
+		  arg = tmpr->value().as_double();
+	    }
 	    res = new NetECReal(verireal(fabs(arg)));
 	    ivl_assert(*this, res);
       }
 
-      eval_debug(this, res, tmpr != 0);
+      eval_debug(this, res, true);
       return res;
 }
 
@@ -1842,23 +1838,7 @@ NetExpr* NetESFunc::evaluate_min_max_(ID id, const NetExpr*arg0_,
 
       NetExpr*res = 0;
 
-      if (tmpi0 && tmpi1) {
-	    verinum arg0 = tmpi0->value();
-	    verinum arg1 = tmpi1->value();
-	    switch (id) {
-		case MIN:
-		  res = new NetEConst( arg0 < arg1 ? arg0 : arg1);
-		  break;
-		case MAX:
-		  res = new NetEConst( arg0 < arg1 ? arg1 : arg0);
-		  break;
-		default:
-		  ivl_assert(*this, 0);
-		  break;
-	    }
-	    ivl_assert(*this, res);
-
-      } else if ((tmpi0 || tmpr0) && (tmpi1 || tmpr1)) {
+      if ((tmpi0 || tmpr0) && (tmpi1 || tmpr1)) {
 	    double arg0, arg1;
 	    if (tmpi0) {
 		  arg0 = tmpi0->value().as_double();
@@ -1884,7 +1864,7 @@ NetExpr* NetESFunc::evaluate_min_max_(ID id, const NetExpr*arg0_,
 	    ivl_assert(*this, res);
       }
 
-      eval_debug(this, res, tmpr0 || tmpr1);
+      eval_debug(this, res, true);
       return res;
 }
 

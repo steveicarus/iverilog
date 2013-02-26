@@ -192,6 +192,10 @@ verinum::verinum(double val, bool)
 	    val = -val;
       }
 
+	/* Round to the nearest integer now, as this may increase the
+	   number of bits we need to allocate. */
+      val = round(val);
+
 	/* Get the exponent and fractional part of the number. */
       fraction = frexp(val, &exponent);
       nbits_ = exponent+1;
@@ -222,7 +226,6 @@ verinum::verinum(double val, bool)
 		  bits_[idx] = (bits&1) ? V1 : V0;
 		  bits >>= 1;
 	    }
-	    if (fraction >= 0.5) *this = *this + const_one;
       } else {
 	    for (int wd = nwords; wd >= 0; wd -= 1) {
 		  unsigned long bits = (unsigned long) fraction;
@@ -235,7 +238,6 @@ verinum::verinum(double val, bool)
 		  }
 		  fraction = ldexp(fraction, BITS_IN_LONG);
 	    }
-	    if (fraction >= ldexp(0.5, BITS_IN_LONG)) *this = *this + const_one;
       }
 
 	/* Convert a negative number if needed. */
