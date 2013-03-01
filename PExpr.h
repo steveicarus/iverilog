@@ -745,7 +745,7 @@ class PETernary : public PExpr {
     private:
       NetExpr* elab_and_eval_alternative_(Design*des, NetScope*scope,
 					  PExpr*expr, unsigned expr_wid,
-                                          unsigned flags) const;
+                                          unsigned flags, bool short_cct) const;
 
     private:
       PExpr*expr_;

@@ -4490,7 +4490,7 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 			     << endl;
 
 		  return elab_and_eval_alternative_(des, scope, tru_,
-                                                    expr_wid, flags);
+                                                    expr_wid, flags, true);
 	    }
 
 	      // Condition is constant FALSE, so we only need the
@@ -4502,20 +4502,22 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
 			<< endl;
 
 		  return elab_and_eval_alternative_(des, scope, fal_,
-                                                    expr_wid, flags);
+                                                    expr_wid, flags, true);
 	    }
 
 	      // X and Z conditions need to blend both results, so we
 	      // can't short-circuit.
       }
 
-      NetExpr*tru = elab_and_eval_alternative_(des, scope, tru_, expr_wid, flags);
+      NetExpr*tru = elab_and_eval_alternative_(des, scope, tru_,
+					       expr_wid, flags, false);
       if (tru == 0) {
 	    delete con;
 	    return 0;
       }
 
-      NetExpr*fal = elab_and_eval_alternative_(des, scope, fal_, expr_wid, flags);
+      NetExpr*fal = elab_and_eval_alternative_(des, scope, fal_,
+					       expr_wid, flags, false);
       if (fal == 0) {
 	    delete con;
 	    delete tru;
@@ -4544,7 +4546,7 @@ NetExpr*PETernary::elaborate_expr(Design*des, NetScope*scope,
  */
 NetExpr* PETernary::elab_and_eval_alternative_(Design*des, NetScope*scope,
 					       PExpr*expr, unsigned expr_wid,
-                                               unsigned flags) const
+                                               unsigned flags, bool short_cct) const
 {
       int context_wid = expr_wid;
       if (type_is_vectorable(expr->expr_type()) && !type_is_vectorable(expr_type_)) {
@@ -4555,6 +4557,10 @@ NetExpr* PETernary::elab_and_eval_alternative_(Design*des, NetScope*scope,
       }
       NetExpr*tmp = expr->elaborate_expr(des, scope, expr_wid, flags);
       if (tmp == 0) return 0;
+
+      if (short_cct && (expr_type_ == IVL_VT_REAL)
+          && (expr->expr_type() != IVL_VT_REAL))
+	    tmp = cast_to_real(tmp);
 
       eval_expr(tmp, context_wid);
 
