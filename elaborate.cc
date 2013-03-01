@@ -92,6 +92,10 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    return;
       }
 
+#if 0
+	// MTW, 01-Mar-2013. The expression elaboration rework should have
+	// ensured that this can no longer occur. Leaving this here for the
+	// moment, but it should be safe to remove it.
       if (type_is_vectorable(rval_expr->expr_type())
 	  && type_is_vectorable(lval->data_type())
 	  && rval_expr->expr_width() < lval->vector_width()) {
@@ -104,6 +108,7 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    }
 	    rval_expr = pad_to_width(rval_expr, lval->vector_width(), *this);
       }
+#endif
 
       NetNet*rval = rval_expr->synthesize(des, scope, rval_expr);
 
@@ -131,20 +136,10 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       if (dynamic_cast<NetESignal*>(rval_expr))
 	    need_driver_flag = true;
 
-	/* Cast the right side when needed. */
-      if ((lval->data_type() == IVL_VT_REAL) &&
-	  (rval->data_type() != IVL_VT_REAL)) {
-	    rval = cast_to_real(des, scope, rval);
-	    need_driver_flag = false;
-      } else if ((lval->data_type() == IVL_VT_BOOL) &&
-		 (rval->data_type() != IVL_VT_BOOL)) {
-	    rval = cast_to_int2(des, scope, rval, lval->vector_width());
-	    need_driver_flag = false;
-      } else if ((lval->data_type() != IVL_VT_REAL) &&
-		 (rval->data_type() == IVL_VT_REAL)) {
-	    rval = cast_to_int4(des, scope, rval, lval->vector_width());
-	    need_driver_flag = false;
-      }
+#if 0
+	// MTW, 01-Mar-2013. The expression elaboration rework should have
+	// ensured that this can no longer occur. Leaving this here for the
+	// moment, but it should be safe to remove it.
 
 	/* If the r-value insists on being smaller than the l-value
 	   (perhaps it is explicitly sized) the pad it out to be the
@@ -157,10 +152,11 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    else
 		  rval = pad_to_width(des, rval, lval->vector_width(), *this);
       }
+#endif
+      ivl_assert(*this, rval->vector_width() >= lval->vector_width());
 
-	/* If, on the other hand, the r-value insists on being
-	   LARGER than the l-value, use a part select to chop it down
-	   down to size. */
+	/* If the r-value insists on being larger than the l-value,
+	   use a part select to chop it down down to size. */
       if (lval->vector_width() < rval->vector_width()) {
 	    NetPartSelect*tmp = new NetPartSelect(rval, 0,lval->vector_width(),
 						  NetPartSelect::VP);
@@ -2555,19 +2551,6 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    return bl;
       }
 
-      if (lv->expr_type() == IVL_VT_BOOL && rv->expr_type() != IVL_VT_BOOL) {
-	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: "
-		       << "Cast expression to int2" << endl;
-	    rv = cast_to_int2(rv);
-      }
-
-      if (lv->expr_type() == IVL_VT_REAL && rv->expr_type() != IVL_VT_REAL) {
-	    if (debug_elaborate)
-		  cerr << get_fileline() << ": debug: "
-		       << "Cast expression to real." << endl;
-	    rv = cast_to_real(rv);
-      }
       if (lv->enumeration() && (lv->enumeration() != rv->enumeration())) {
 	    cerr << get_fileline() << ": error: "
 		 << "Enumeration type mismatch in assignment." << endl;
@@ -4028,14 +4011,6 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
       NetExpr*rexp = elaborate_rval_expr(des, scope, ltype, lwid, expr_);
       if (rexp == 0)
 	    return 0;
-
-      if (ltype==IVL_VT_BOOL && rexp->expr_type()!=IVL_VT_BOOL) {
-	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: "
-		       << "Cast force rvalue to int2" << endl;
-	    }
-	    rexp = cast_to_int2(rexp);
-      }
 
       dev = new NetForce(lval, rexp);
 
