@@ -60,6 +60,19 @@ static PTask* current_task = 0;
 static PFunction* current_function = 0;
 static stack<PBlock*> current_block_stack;
 
+static pform_name_t* pform_create_this(void)
+{
+      name_component_t name (perm_string::literal("@"));
+      pform_name_t*res = new pform_name_t;
+      res->push_back(name);
+      return res;
+}
+
+static pform_name_t* pform_create_super(void)
+{
+      return 0;
+}
+
 /* This is used to keep track of the extra arguments after the notifier
  * in the $setuphold and $recrem timing checks. This allows us to print
  * a warning message that the delayed signals will not be created. We
@@ -544,9 +557,10 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <gate>  gate_instance
 %type <gates> gate_instance_list
 
-%type <pform_name> hierarchy_identifier
+%type <pform_name> hierarchy_identifier implicit_class_handle
 %type <expr>  assignment_pattern expression expr_primary expr_mintypmax
-%type <expr>  class_new dynamic_array_new inc_or_dec_expression inside_expression lpvalue
+%type <expr>  class_new dynamic_array_new
+%type <expr>  inc_or_dec_expression inside_expression lpvalue
 %type <expr>  branch_probe_expression streaming_concatenation
 %type <expr>  delay_value delay_value_simple
 %type <exprs> delay1 delay3 delay3_opt delay_value_list
@@ -771,14 +785,10 @@ class_item /* IEEE1800-2005: A.1.8 */
     /* Class methods... */
 
   | method_qualifier_opt task_declaration
-      { yyerror(@2, "sorry: Class methods (tasks) not supported yet.");
-	yyerrok;
-      }
+      { /* The task_declaration rule puts this into the class */ }
 
   | method_qualifier_opt function_declaration
-      { yyerror(@2, "sorry: Class methods (functions) not supported yet.");
-	yyerrok;
-      }
+      { /* The function_declaration rule puts this into the class */ }
 
 
     /* Class constraints... */
@@ -1095,8 +1105,8 @@ function_declaration /* IEEE1800-2005: A.2.6 */
   ;
 
 implicit_class_handle /* IEEE1800-2005: A.8.4 */
-  : K_this
-  | K_super
+  : K_this  { $$ = pform_create_this(); }
+  | K_super { $$ = pform_create_super(); }
   ;
 
   /* SystemVerilog adds support for the increment/decrement
@@ -3015,13 +3025,23 @@ expr_primary
       }
 
   | implicit_class_handle
-      { yyerror(@1, "sorry: Implicit class handles (this/super) are not supported.");
-	$$ = 0;
+      { PEIdent*tmp = new PEIdent(*$1);
+	FILE_NAME(tmp,@1);
+	delete $1;
+	$$ = tmp;
       }
 
   | implicit_class_handle '.' hierarchy_identifier
-      { yyerror(@1, "sorry: Implicit class handles (this/super) are not supported.");
-	$$ = 0;
+      { pform_name_t*nam = $1;
+	while (! $3->empty()) {
+	      nam->push_back($3->front());
+	      $3->pop_front();
+	}
+	PEIdent*tmp = new PEIdent(*nam);
+	FILE_NAME(tmp,@1);
+	delete $1;
+	delete $3;
+	$$ = tmp;
       }
 
   /* Many of the VAMS built-in functions are available as builtin
@@ -3821,10 +3841,15 @@ lpvalue
       }
 
   | implicit_class_handle '.' hierarchy_identifier
-      { yyerror(@1, "sorry: implicit class handles (this/super) not supported.");
-	PEIdent*tmp = new PEIdent(*$3);
+      { pform_name_t*tmp1 = $1;
+	while (!$3->empty()) {
+	      tmp1->push_back($3->front());
+	      $3->pop_front();
+	}
+	PEIdent*tmp = new PEIdent(*tmp1);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
+	delete tmp1;
 	delete $3;
       }
 

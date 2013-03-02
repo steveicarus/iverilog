@@ -72,15 +72,7 @@ void pform_class_property(const struct vlltype&loc,
       }
 }
 
-void pform_set_this_class(PFunction*net)
-{
-      if (pform_cur_class == 0)
-	    return;
-
-      net->set_this(pform_cur_class->type);
-}
-
-void pform_set_this_class(PTask*net)
+void pform_set_this_class(PTaskFunc*net)
 {
       if (pform_cur_class == 0)
 	    return;

@@ -21,20 +21,29 @@
 # include  "PTask.h"
 # include  <cassert>
 
+PTaskFunc::PTaskFunc(perm_string n, LexicalScope*p)
+: PScope(n,p), this_type_(0)
+{
+}
+
+PTaskFunc::~PTaskFunc()
+{
+}
+
+void PTaskFunc::set_this(class_type_t*type)
+{
+      assert(this_type_ == 0);
+      this_type_ = type;
+}
+
 PTask::PTask(perm_string name, LexicalScope*parent, bool is_auto__)
-: PScope(name, parent), this_type_(0), ports_(0), statement_(0)
+: PTaskFunc(name, parent), ports_(0), statement_(0)
 {
       is_auto_ = is_auto__;
 }
 
 PTask::~PTask()
 {
-}
-
-void PTask::set_this(class_type_t*type)
-{
-      assert(this_type_ == 0);
-      this_type_ = type;
 }
 
 void PTask::set_ports(vector<PWire*>*p)

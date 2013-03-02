@@ -50,16 +50,31 @@ struct PTaskFuncArg {
       std::list<pform_range_t>*range;
 };
 
+class PTaskFunc : public PScope, public LineInfo {
+
+    public:
+      PTaskFunc(perm_string name, LexicalScope*parent);
+      ~PTaskFunc();
+
+      void set_this(class_type_t*use_type);
+
+	// If this task is a method of a class, this returns a pointer
+	// to the class type.
+      inline class_type_t* method_of() const { return this_type_; }
+
+    private:
+      class_type_t*this_type_;
+};
+
 /*
  * The PTask holds the parsed definitions of a task.
  */
-class PTask  : public PScope, public LineInfo {
+class PTask  : public PTaskFunc {
 
     public:
       explicit PTask(perm_string name, LexicalScope*parent, bool is_auto);
       ~PTask();
 
-      void set_this(class_type_t*use_type);
       void set_ports(std::vector<PWire *>*p);
       void set_statement(Statement *s);
 
@@ -77,14 +92,9 @@ class PTask  : public PScope, public LineInfo {
 
       bool is_auto() const { return is_auto_; };
 
-	// If this task is a method of a class, this returns a pointer
-	// to the class type.
-      inline class_type_t* method_of() const { return this_type_; }
-
       void dump(ostream&, unsigned) const;
 
     private:
-      class_type_t*this_type_;
       std::vector<PWire*>*ports_;
       Statement*statement_;
       bool is_auto_;
@@ -101,13 +111,12 @@ class PTask  : public PScope, public LineInfo {
  *
  * The output value is not elaborated until elaborate_sig.
  */
-class PFunction : public PScope, public LineInfo {
+class PFunction : public PTaskFunc {
 
     public:
       explicit PFunction(perm_string name, LexicalScope*parent, bool is_auto);
       ~PFunction();
 
-      void set_this(class_type_t*use_type);
       void set_ports(std::vector<PWire *>*p);
       void set_statement(Statement *s);
       void set_return(PTaskFuncArg t);
@@ -122,14 +131,9 @@ class PFunction : public PScope, public LineInfo {
 
       bool is_auto() const { return is_auto_; };
 
-	// If this function is a method of a class, this returns a
-	// pointer to the class type.
-      inline class_type_t* method_of() const { return this_type_; }
-
       void dump(ostream&, unsigned) const;
 
     private:
-      class_type_t*this_type_;
       PTaskFuncArg return_type_;
       std::vector<PWire *> *ports_;
       Statement *statement_;

@@ -185,8 +185,8 @@ extern void pform_class_property(const struct vlltype&loc,
 				 property_qualifier_t pq,
 				 data_type_t*data_type,
 				 std::list<decl_assignment_t*>*decls);
-extern void pform_set_this_class(PFunction*net);
-extern void pform_set_this_class(PTask*net);
+extern void pform_set_this_class(PTaskFunc*net);
+
 extern void pform_end_class_declaration(void);
 
 extern void pform_make_udp(perm_string name, list<perm_string>*parms,

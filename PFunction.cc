@@ -22,7 +22,7 @@
 # include <cassert>
 
 PFunction::PFunction(perm_string name, LexicalScope*parent, bool is_auto__)
-: PScope(name, parent), this_type_(0), ports_(0), statement_(0)
+: PTaskFunc(name, parent), ports_(0), statement_(0)
 {
       is_auto_ = is_auto__;
       return_type_.type = PTF_NONE;
@@ -30,12 +30,6 @@ PFunction::PFunction(perm_string name, LexicalScope*parent, bool is_auto__)
 
 PFunction::~PFunction()
 {
-}
-
-void PFunction::set_this(class_type_t*use_type)
-{
-      assert(this_type_ == 0);
-      this_type_ = use_type;
 }
 
 void PFunction::set_ports(vector<PWire *>*p)

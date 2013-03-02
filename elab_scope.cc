@@ -302,6 +302,18 @@ static void elaborate_scope_class(Design*des, NetScope*scope,
 	    use_class->set_property(cur->first, tmp);
       }
 
+      for (map<perm_string,PTask*>::iterator cur = pclass->tasks.begin()
+		 ; cur != pclass->tasks.end() ; ++cur) {
+	    cerr << cur->second->get_fileline() << ": sorry: "
+		 << "Class methods (tasks) not supported." << endl;
+      }
+
+      for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
+		 ; cur != pclass->funcs.end() ; ++cur) {
+	    cerr << cur->second->get_fileline() << ": sorry: "
+		 << "Class methods (functions) not supported." << endl;
+      }
+
       scope->add_class(use_class);
 }
 
