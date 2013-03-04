@@ -2,6 +2,7 @@
 #define __netlist_H
 /*
  * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -763,7 +764,7 @@ class NetNet  : public NetObj, public PortType {
 class NetScope : public Attrib {
 
     public:
-      enum TYPE { MODULE, TASK, FUNC, BEGIN_END, FORK_JOIN, GENBLOCK };
+      enum TYPE { MODULE, TASK, FUNC, BEGIN_END, FORK_JOIN, GENBLOCK, PACKAGE };
 
 	/* Create a new scope, and attach it to the given parent. The
 	   name is expected to have been permallocated. */
@@ -4281,9 +4282,10 @@ class Design {
 
       NetScope* make_root_scope(perm_string name, bool program_block);
       NetScope* find_root_scope();
-      list<NetScope*> find_root_scopes();
+      std::list<NetScope*> find_root_scopes() const;
 
-      const list<NetScope*> find_root_scopes() const;
+      NetScope* make_package_scope(perm_string name);
+      std::list<NetScope*> find_package_scopes() const;
 
 	/* Attempt to set the precision to the specified value. If the
 	   precision is already more precise, the keep the precise
@@ -4304,6 +4306,9 @@ class Design {
       NetScope* find_scope(const hname_t&path) const;
       NetScope* find_scope(NetScope*, const hname_t&name,
                            NetScope::TYPE type = NetScope::MODULE) const;
+
+      NetScope* find_package(perm_string name) const;
+
 	// Note: Try to remove these versions of find_scope. Avoid
 	// using these in new code, use the above forms (or
 	// symbol_search) instead.
@@ -4371,6 +4376,10 @@ class Design {
 	// Keep a tree of scopes. The NetScope class handles the wide
 	// tree and per-hop searches for me.
       list<NetScope*>root_scopes_;
+
+	// Keep a map of all the elaborated packages. Note that
+	// packages do not nest.
+      std::map<perm_string,NetScope*>packages_;
 
 	// List the nodes in the design.
       NetNode*nodes_;

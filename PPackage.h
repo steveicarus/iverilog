@@ -2,6 +2,7 @@
 #define __PPackage_H
 /*
  * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,6 +23,7 @@
 # include  "PScope.h"
 # include  "LineInfo.h"
 # include  "StringHeap.h"
+# include  <iostream>
 
 /*
  * SystemVerilog supports class declarations with their own lexical
@@ -35,6 +37,9 @@ class PPackage : public PScopeExtra, public LineInfo {
       explicit PPackage (perm_string name, LexicalScope*parent);
       ~PPackage();
 
+      bool elaborate_scope(Design*des, NetScope*scope);
+
+      void pform_dump(std::ostream&out) const;
 };
 
 #endif

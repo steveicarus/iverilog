@@ -346,6 +346,11 @@ struct vpiScopeModule  : public __vpiScope {
       int get_type_code(void) const { return vpiModule; }
 };
 
+struct vpiScopePackage  : public __vpiScope {
+      inline vpiScopePackage() { }
+      int get_type_code(void) const { return vpiPackage; }
+};
+
 struct vpiScopeTask  : public __vpiScope {
       inline vpiScopeTask() { }
       int get_type_code(void) const { return vpiTask; }
@@ -424,6 +429,8 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
 	    scope = new vpiScopeBegin;
       } else if (strcmp(base_type,"generate") == 0) {
 	    scope = new vpiScopeBegin;
+      } else if (strcmp(base_type,"package") == 0) {
+	    scope = new vpiScopePackage;
       } else {
 	    scope = new vpiScopeModule;
 	    assert(0);

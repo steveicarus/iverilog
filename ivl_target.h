@@ -353,7 +353,8 @@ typedef enum ivl_scope_type_e {
       IVL_SCT_TASK    = 2,
       IVL_SCT_BEGIN   = 3,
       IVL_SCT_FORK    = 4,
-      IVL_SCT_GENERATE= 5
+      IVL_SCT_GENERATE= 5,
+      IVL_SCT_PACKAGE = 6
 } ivl_scope_type_t;
 
 /* Signals (ivl_signal_t) that are ports into the scope that contains

@@ -187,10 +187,6 @@ extern void pform_class_property(const struct vlltype&loc,
 				 std::list<decl_assignment_t*>*decls);
 extern void pform_end_class_declaration(void);
 
-extern void pform_start_package_declaration(const struct vlltype&loc,
-					    const char*type);
-extern void pform_end_package_declaration(const struct vlltype&loc);
-
 extern void pform_make_udp(perm_string name, list<perm_string>*parms,
 			   svector<PWire*>*decl, list<string>*table,
 			   Statement*init,
@@ -202,6 +198,23 @@ extern void pform_make_udp(perm_string name,
 			   list<perm_string>*parms,
 			   list<string>*table,
 			   const char*file, unsigned lineno);
+/*
+ * Package related functions.
+ */
+extern void pform_start_package_declaration(const struct vlltype&loc,
+					    const char*type);
+extern void pform_end_package_declaration(const struct vlltype&loc);
+extern void pform_package_import(const struct vlltype&loc,
+				 const char*pkg_name, const char*ident);
+
+extern PExpr* pform_package_ident(const struct vlltype&loc,
+				  const char*pkg_name, const char*ident);
+
+/*
+ * This creates an identifier aware of names that may have been
+ * imported from other packages.
+ */
+extern PEIdent* pform_new_ident(const pform_name_t&name);
 
 /*
  * Enter/exit name scopes. The push_scope function pushes the scope
@@ -209,6 +222,11 @@ extern void pform_make_udp(perm_string name,
  * deletes it. Thus, the string pushed must be allocated.
  */
 extern void pform_pop_scope();
+
+/*
+ * Peek at the current (most recently active) scope.
+ */
+extern LexicalScope* pform_peek_scope();
 
 extern PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name);
 extern PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name);

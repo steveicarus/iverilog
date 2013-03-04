@@ -47,8 +47,12 @@ struct ivl_design_s {
 
       ivl_process_t threads_;
 
-      ivl_scope_t *roots_;
-      unsigned nroots_;
+	// Keep arrays of root scopes.
+      std::vector<ivl_scope_t> packages;
+      std::vector<ivl_scope_t> roots;
+
+	// This is used to implement the ivl_design_roots function.
+      std::vector<ivl_scope_t> root_scope_list;
 
 	// Keep an array of constants objects.
       std::valarray<ivl_net_const_t> consts;

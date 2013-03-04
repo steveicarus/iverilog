@@ -2145,6 +2145,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       case IVL_SCT_BEGIN:    type = "begin";    break;
       case IVL_SCT_FORK:     type = "fork";     break;
       case IVL_SCT_GENERATE: type = "generate"; break;
+      case IVL_SCT_PACKAGE:  type = "package"; break;
       default:               type = "?";        assert(0);
       }
 

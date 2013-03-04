@@ -119,14 +119,39 @@ NetScope* Design::find_root_scope()
       return root_scopes_.front();
 }
 
-list<NetScope*> Design::find_root_scopes()
+list<NetScope*> Design::find_root_scopes() const
 {
       return root_scopes_;
 }
 
-const list<NetScope*> Design::find_root_scopes() const
+NetScope* Design::make_package_scope(perm_string name)
 {
-      return root_scopes_;
+      NetScope*scope;
+
+      scope = new NetScope(0, hname_t(name), NetScope::PACKAGE, false, false);
+      scope->set_module_name(scope->basename());
+      packages_[name] = scope;
+      return scope;
+}
+
+NetScope* Design::find_package(perm_string name) const
+{
+      map<perm_string,NetScope*>::const_iterator cur = packages_.find(name);
+      if (cur == packages_.end())
+	    return 0;
+
+      return cur->second;
+}
+
+list<NetScope*> Design::find_package_scopes() const
+{
+      list<NetScope*>res;
+      for (map<perm_string,NetScope*>::const_iterator cur = packages_.begin()
+		 ; cur != packages_.end() ; ++cur) {
+	    res.push_back (cur->second);
+      }
+
+      return res;
 }
 
 /*

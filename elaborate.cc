@@ -33,6 +33,7 @@
 # include  "pform.h"
 # include  "PEvent.h"
 # include  "PGenerate.h"
+# include  "PPackage.h"
 # include  "PSpec.h"
 # include  "netlist.h"
 # include  "netvector.h"
@@ -4860,6 +4861,25 @@ struct root_elem {
       NetScope *scope;
 };
 
+class elaborate_package_t : public elaborator_work_item_t {
+    public:
+      elaborate_package_t(Design*d, NetScope*scope, PPackage*p)
+      : elaborator_work_item_t(d), scope_(scope), package_(p)
+      { }
+
+      ~elaborate_package_t() { }
+
+      virtual void elaborate_runrun()
+      {
+	    if (! package_->elaborate_scope(des, scope_))
+		  des->errors += 1;
+      }
+
+    private:
+      NetScope*scope_;
+      PPackage*package_;
+};
+
 class elaborate_root_scope_t : public elaborator_work_item_t {
     public:
       elaborate_root_scope_t(Design*des__, NetScope*scope, Module*rmod)
@@ -5021,6 +5041,18 @@ Design* elaborate(list<perm_string>roots)
 	// This is the output design. I fill it in as I scan the root
 	// module and elaborate what I find.
       Design*des = new Design;
+
+	// Elaborate the packages. Package elaboration is simpler
+	// because there are fewer sub-scopes involved.
+      for (map<perm_string,PPackage*>::iterator pac = pform_packages.begin()
+		 ; pac != pform_packages.end() ; ++ pac) {
+
+	    NetScope*scope = des->make_package_scope(pac->first);
+	    scope->set_line(pac->second);
+
+	    elaborator_work_item_t*es = new elaborate_package_t(des, scope, pac->second);
+	    des->elaboration_work_list.push_back(es);
+      }
 
 	// Scan the root modules by name, and elaborate their scopes.
       for (list<perm_string>::const_iterator root = roots.begin()

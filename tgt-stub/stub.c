@@ -1701,8 +1701,13 @@ int target_design(ivl_design_t des)
       ivl_design_roots(des, &root_scopes, &nroot);
       for (idx = 0 ;  idx < nroot ;  idx += 1) {
 
-	    fprintf(out, "root module = %s;\n",
-		    ivl_scope_name(root_scopes[idx]));
+	    if (ivl_scope_type(root_scopes[idx]) == IVL_SCT_PACKAGE) {
+		  fprintf(out, "package = %s;\n",
+			  ivl_scope_name(root_scopes[idx]));
+	    } else {
+		  fprintf(out, "root module = %s;\n",
+			  ivl_scope_name(root_scopes[idx]));
+	    }
 	    show_scope(root_scopes[idx], 0);
       }
 

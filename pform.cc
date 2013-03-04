@@ -294,6 +294,12 @@ static PScopeExtra* find_nearest_scopex(LexicalScope*scope)
       return scopex;
 }
 
+LexicalScope* pform_peek_scope(void)
+{
+      assert(lexical_scope);
+      return lexical_scope;
+}
+
 PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
 {
       PClass*class_scope = new PClass(name, lexical_scope);
@@ -411,6 +417,25 @@ PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
       lexical_scope = block;
 
       return block;
+}
+
+/*
+ * Create a new identifier. Check if this is an imported name.
+ */
+PEIdent* pform_new_ident(const pform_name_t&name)
+{
+      if (name.size() != 1)
+	    return new PEIdent(name);
+
+      LexicalScope*scope = pform_peek_scope();
+      map<perm_string,PPackage*>::const_iterator pkg = scope->imports.find(name.back().name);
+      if (pkg == scope->imports.end())
+	    return new PEIdent(name);
+
+	// XXXX For now, do not support indexed imported names.
+      assert(name.back().index.size() == 0);
+
+      return new PEIdent(pkg->second, name.back().name);
 }
 
 PGenerate* pform_parent_generate(void)

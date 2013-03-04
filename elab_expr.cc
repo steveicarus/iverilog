@@ -24,6 +24,7 @@
 # include  <climits>
 # include "compiler.h"
 
+# include  "PPackage.h"
 # include  "pform.h"
 # include  "netlist.h"
 # include  "netclass.h"
@@ -2410,7 +2411,14 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
       const NetExpr*ex1, *ex2;
 
-      NetScope*found_in = symbol_search(this, des, scope, path_, net, par, eve,
+      NetScope*use_scope = scope;
+      if (package_) {
+	    use_scope = des->find_package(package_->pscope_name());
+	    ivl_assert(*this, use_scope);
+      }
+
+      NetScope*found_in = symbol_search(this, des, use_scope, path_,
+					net, par, eve,
                                         ex1, ex2);
 
 	// If there is a part/bit select expression, then process it
@@ -2610,7 +2618,13 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       NetEvent*     eve = 0;
       const NetExpr*ex1, *ex2;
 
-      /* NetScope*found_in = */ symbol_search(this, des, scope, path_,
+      NetScope*use_scope = scope;
+      if (package_) {
+	    use_scope = des->find_package(package_->pscope_name());
+	    ivl_assert(*this, use_scope);
+      }
+
+      /* NetScope*found_in = */ symbol_search(this, des, use_scope, path_,
 					      net, par, eve,
 					      ex1, ex2);
 
@@ -2718,7 +2732,13 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       if (debug_elaborate)
 	    cerr << get_fileline() << ": PEIdent::elaborate_expr: path_=" << path_ << endl;
 
-      NetScope*found_in = symbol_search(this, des, scope, path_,
+      NetScope*use_scope = scope;
+      if (package_) {
+	    use_scope = des->find_package(package_->pscope_name());
+	    ivl_assert(*this, use_scope);
+      }
+
+      NetScope*found_in = symbol_search(this, des, use_scope, path_,
 					net, par, eve,
 					ex1, ex2);
 

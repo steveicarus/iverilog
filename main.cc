@@ -987,6 +987,12 @@ int main(int argc, char*argv[])
 		       ; cur != disciplines.end() ; ++ cur ) {
 		  pform_dump(out, (*cur).second);
 	    }
+	    out << "PFORM DUMP PACKAGES:" << endl;
+	    for (map<perm_string,PPackage*>::iterator pac = pform_packages.begin()
+		       ; pac != pform_packages.end() ; ++ pac) {
+		  pform_dump(out, pac->second);
+	    }
+
 	    out << "PFORM DUMP MODULES:" << endl;
 	    for (map<perm_string,Module*>::iterator mod = pform_modules.begin()
 		       ; mod != pform_modules.end() ; ++ mod ) {

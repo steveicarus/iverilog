@@ -29,6 +29,7 @@
 # include  "PClass.h"
 # include  "PEvent.h"
 # include  "PGenerate.h"
+# include  "PPackage.h"
 # include  "PSpec.h"
 # include  "discipline.h"
 # include  "ivl_target_priv.h"
@@ -303,6 +304,8 @@ void PENumber::dump(ostream&out) const
 
 void PEIdent::dump(ostream&out) const
 {
+      if (package_)
+	    out << package_->pscope_name() << "::";
       out << path_;
 }
 
@@ -1495,4 +1498,17 @@ void pform_dump(std::ostream&out, const ivl_discipline_s*dis)
       if (const ivl_nature_s*tmp = dis->flow())
 	    out << "    flow " << tmp->name() << ";" << endl;
       out << "enddiscipline" << endl;
+}
+
+void pform_dump(std::ostream&out, const PPackage*pac)
+{
+      pac->pform_dump(out);
+}
+
+void PPackage::pform_dump(std::ostream&out) const
+{
+      out << "package " << pscope_name() << endl;
+      dump_localparams_(out, 4);
+      dump_parameters_(out, 4);
+      out << "endpackage" << endl;
 }

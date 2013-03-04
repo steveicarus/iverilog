@@ -2,6 +2,7 @@
 #define __PExpr_H
 /*
  * Copyright (c) 1998-2011 Stephen Williams <steve@icarus.com>
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,6 +34,7 @@ class LexicalScope;
 class NetNet;
 class NetExpr;
 class NetScope;
+class PPackage;
 
 /*
  * The PExpr class hierarchy supports the description of
@@ -286,6 +288,7 @@ class PEIdent : public PExpr {
 
     public:
       explicit PEIdent(perm_string, bool no_implicit_sig=false);
+      explicit PEIdent(PPackage*pkg, perm_string name);
       explicit PEIdent(const pform_name_t&);
       ~PEIdent();
 
@@ -329,6 +332,7 @@ class PEIdent : public PExpr {
       const pform_name_t& path() const { return path_; }
 
     private:
+      PPackage*package_;
       pform_name_t path_;
       bool no_implicit_sig_;
 

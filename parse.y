@@ -1,8 +1,8 @@
 
 %{
 /*
- * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1354,13 +1354,19 @@ package_declaration /* IEEE1800-2005 A.1.2 */
 
 package_import_declaration /* IEEE1800-2005 A.2.1.3 */
   : K_import package_import_item_list ';'
-      { yyerror(@1, "sorry: Package import declarations not supported.");
-      }
+      { }
   ;
 
 package_import_item
   : IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { pform_package_import(@2, $1, $3);
+	delete[]$1;
+	delete[]$3;
+      }
   | IDENTIFIER K_SCOPE_RES '*'
+      { pform_package_import(@2, $1, 0);
+	delete[]$1;
+      }
   ;
 
 package_import_item_list
@@ -1370,6 +1376,7 @@ package_import_item_list
 
 package_item /* IEEE1800-2005 A.1.10 */
   : timeunits_declaration
+  | K_parameter param_type parameter_assign_list ';'
   | K_localparam param_type localparam_assign_list ';'
   | type_declaration
   | function_declaration
@@ -2948,12 +2955,15 @@ expr_primary
   /* The hierarchy_identifier rule matches simple identifiers as well as
      indexed arrays and part selects */
 
-    | hierarchy_identifier
-        { PEIdent*tmp = new PEIdent(*$1);
-	  FILE_NAME(tmp, @1);
-	  $$ = tmp;
-	  delete $1;
-	}
+  | hierarchy_identifier
+      { PEIdent*tmp = pform_new_ident(*$1);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+	delete $1;
+      }
+
+  | IDENTIFIER K_SCOPE_RES IDENTIFIER
+      { $$ = pform_package_ident(@3, $1, $3); }
 
   /* An identifier followed by an expression list in parentheses is a
      function call. If a system identifier, then a system function
