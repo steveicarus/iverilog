@@ -25,6 +25,26 @@
 
 using namespace std;
 
+static NetExpr* fix_assign_value(const NetNet*lhs, NetExpr*rhs)
+{
+      NetEConst*ce = dynamic_cast<NetEConst*>(rhs);
+      if (ce == 0) return rhs;
+
+      unsigned lhs_width = lhs->vector_width();
+      unsigned rhs_width = rhs->expr_width();
+      if (rhs_width < lhs_width) {
+            rhs = pad_to_width(rhs, lhs_width, *rhs);
+      } else if (rhs_width > lhs_width) {
+            verinum value(ce->value(), lhs_width);
+            ce = new NetEConst(value);
+            ce->set_line(*rhs);
+            delete rhs;
+	    rhs = ce;
+      }
+      rhs->cast_signed(lhs->get_signed());
+      return rhs;
+}
+
 NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<NetExpr*>&args) const
 {
 	// Make the context map;
@@ -43,7 +63,7 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
       ivl_assert(loc, ports_.size() == args.size());
       for (size_t idx = 0 ; idx < ports_.size() ; idx += 1) {
 	    perm_string aname = ports_[idx]->name();
-	    context_map[aname] = args[idx];
+	    context_map[aname] = fix_assign_value(ports_[idx], args[idx]);
 
 	    if (debug_eval_tree) {
 		  cerr << loc.get_fileline() << ": debug: "
@@ -171,7 +191,7 @@ bool NetAssign::evaluate_function(const LineInfo&loc,
 	    delete rval_result;
 	    rval_result = new NetEConst(lval_v);
       } else {
-	    rval_result->cast_signed(lval->sig()->get_signed());
+	    rval_result = fix_assign_value(lval->sig(), rval_result);
       }
 
       if (ptr->second)
