@@ -1597,7 +1597,7 @@ NetExpr* NetECast::eval_arguments_(const NetExpr*ex) const
       switch (op_) {
 	  case 'r':
 	    if (const NetEConst*val = dynamic_cast<const NetEConst*>(ex)) {
-		  verireal res_val = verireal(val->value().as_double());
+		  verireal res_val(val->value().as_double());
 		  res = new NetECReal(res_val);
 	    }
 	    break;
@@ -1605,11 +1605,15 @@ NetExpr* NetECast::eval_arguments_(const NetExpr*ex) const
 	    if (const NetEConst*val = dynamic_cast<const NetEConst*>(ex)) {
 		  verinum res_val(val->value());
 		  res_val.cast_to_int2();
+		  if (expr_width() > 0)
+			res_val = cast_to_width(res_val, expr_width());
 		  res = new NetEConst(res_val);
 	    }
 	  case 'v':
 	    if (const NetECReal*val = dynamic_cast<const NetECReal*>(ex)) {
-		  verinum res_val = verinum(val->value().as_double(), false);
+		  verinum res_val(val->value().as_double(), false);
+		  if (expr_width() > 0)
+			res_val = cast_to_width(res_val, expr_width());
 		  res = new NetEConst(res_val);
 	    }
 	    break;

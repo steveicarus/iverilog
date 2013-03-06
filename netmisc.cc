@@ -803,10 +803,10 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
                   tmp = cast_to_real(tmp);
                   break;
                 case IVL_VT_BOOL:
-                  tmp = cast_to_int2(tmp, context_width);
+                  tmp = cast_to_int2(tmp, context_width > 0 ? context_width : 0);
                   break;
                 case IVL_VT_LOGIC:
-                  tmp = cast_to_int4(tmp, context_width);
+                  tmp = cast_to_int4(tmp, context_width > 0 ? context_width : 0);
                   break;
                 default:
                   break;

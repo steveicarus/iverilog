@@ -2646,15 +2646,16 @@ void pform_set_specparam(const struct vlltype&loc, perm_string name,
 
       parm.expr = expr;
 
-      parm.type = IVL_VT_LOGIC;
       if (range) {
 	    assert(range->size() == 1);
 	    pform_range_t&rng = range->front();
 	    assert(rng.first);
 	    assert(rng.second);
+	    parm.type = IVL_VT_LOGIC;
 	    parm.msb = rng.first;
 	    parm.lsb = rng.second;
       } else {
+	    parm.type = IVL_VT_NO_TYPE;
 	    parm.msb  = 0;
 	    parm.lsb  = 0;
       }
