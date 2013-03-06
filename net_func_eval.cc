@@ -401,6 +401,23 @@ NetExpr* NetESignal::evaluate_function(const LineInfo&,
 	    return 0;
       }
 
+      if (ptr->second == 0) {
+	    switch (expr_type()) {
+		case IVL_VT_REAL:
+		  ptr->second = new NetECReal( verireal(0.0) );
+		  break;
+		case IVL_VT_BOOL:
+		  ptr->second = make_const_0(expr_width());
+		  break;
+		case IVL_VT_LOGIC:
+		  ptr->second = make_const_x(expr_width());
+		  break;
+		default:
+		  cerr << get_fileline() << ": sorry: I don't know how to initialize " << *this << endl;
+		  return 0;
+	    }
+      }
+
       return ptr->second->dup_expr();
 }
 
