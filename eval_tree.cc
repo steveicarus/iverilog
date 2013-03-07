@@ -1985,10 +1985,16 @@ NetExpr* NetEUFunc::eval_tree()
       if (!func()->is_const_func())
             return 0;
 
+	// If we neither want nor need to evaluate the function at
+	// compile time, give up now.
+      if (!opt_const_func && !need_const_)
+            return 0;
+
         // Variables inside static functions can be accessed from outside
         // the function, so we can't be sure they are constant unless the
-        // function was called in a constant context.
-      if (!func()->is_auto() && !need_const_)
+        // function was called in a constant context or the user has told
+	// us this is safe.
+      if (!func()->is_auto() && !need_const_ && (opt_const_func < 2))
             return 0;
 
         // Run through the input parameters to check they are constants.
@@ -2000,17 +2006,13 @@ NetExpr* NetEUFunc::eval_tree()
             return 0;
       }
 
-      if (need_const_) {
-	    NetFuncDef*def = func_->func_def();
-	    ivl_assert(*this, def);
+      NetFuncDef*def = func_->func_def();
+      ivl_assert(*this, def);
 
-	    vector<NetExpr*>args(parms_.size());
-	    for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1)
-		  args[idx] = parms_[idx]->dup_expr();
+      vector<NetExpr*>args(parms_.size());
+      for (unsigned idx = 0 ;  idx < parms_.size() ;  idx += 1)
+	    args[idx] = parms_[idx]->dup_expr();
 
-	    NetExpr*res = def->evaluate_function(*this, args);
-	    return res;
-      }
-
-      return 0;
+      NetExpr*res = def->evaluate_function(*this, args);
+      return res;
 }

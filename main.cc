@@ -170,6 +170,11 @@ bool debug_synth2 = false;
 bool debug_optimizer = false;
 
 /*
+ * Optimization control flags.
+ */
+unsigned opt_const_func = 0;
+
+/*
  * Miscellaneous flags.
  */
 bool disable_virtual_pins = false;

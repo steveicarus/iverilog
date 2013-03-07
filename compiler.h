@@ -104,6 +104,15 @@ extern bool debug_elaborate;
 extern bool debug_synth2;
 extern bool debug_optimizer;
 
+/* Control evaluation of functions at compile time:
+ *   0 = only for functions in constant expressions
+ *   1 = only for automatic functions
+ *   2 = for all functions
+ * Level 2 should only be used if the user can guarantee that a
+ * function's local variables are never accessed from outside the
+ * function. */
+extern unsigned opt_const_func;
+
 /* Possibly temporary flag to control virtualization of pin arrays */
 extern bool disable_virtual_pins;
 
