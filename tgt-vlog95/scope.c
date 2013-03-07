@@ -917,6 +917,14 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	                    ivl_scope_tname(scope));
 	    vlog_errors += 1;
 	    return 0;
+	case IVL_SCT_PACKAGE:
+	    fprintf(stderr, "%s:%u: vlog95 sorry: package scopes are not "
+	                    "currently translated \"%s\".\n",
+	                    ivl_scope_file(scope),
+	                    ivl_scope_lineno(scope),
+	                    ivl_scope_tname(scope));
+	    vlog_errors += 1;
+	    return 0;
 	default:
 	    fprintf(stderr, "%s:%u: vlog95 error: Unsupported scope type "
 	                    "(%d) named: %s.\n", ivl_scope_file(scope),
