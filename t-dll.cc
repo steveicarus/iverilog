@@ -240,7 +240,7 @@ ivl_scope_t dll_target::find_scope(ivl_design_s &des, const NetScope*cur)
       if (cur->type() == NetScope::PACKAGE) {
 	    perm_string cur_name = cur->module_name();
 	    for (size_t idx = 0 ; idx < des.packages.size() ; idx += 1) {
-		  if (des.packages[idx]->name_ = cur_name)
+		  if (des.packages[idx]->name_ == cur_name)
 			return des.packages[idx];
 	    }
 	    return 0;
