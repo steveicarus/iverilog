@@ -2963,7 +2963,7 @@ expr_primary
       }
 
   | IDENTIFIER K_SCOPE_RES IDENTIFIER
-      { $$ = pform_package_ident(@3, $1, $3); }
+      { $$ = pform_package_ident(@2, $1, $3); }
 
   /* An identifier followed by an expression list in parentheses is a
      function call. If a system identifier, then a system function

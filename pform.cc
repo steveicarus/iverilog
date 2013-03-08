@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2507,8 +2507,11 @@ void pform_set_parameter(const struct vlltype&loc,
 	         << "' have the same name '" << name << "'." << endl;
 	    error_count += 1;
       }
+	// Only a Module scope has specparams.
       if ((scope == pform_cur_module.front()) &&
-          (pform_cur_module.front()->specparams.find(name) != pform_cur_module.front()->specparams.end())) {
+          (dynamic_cast<Module*> (scope)) &&
+          (pform_cur_module.front()->specparams.find(name) !=
+           pform_cur_module.front()->specparams.end())) {
 	    LineInfo tloc;
 	    FILE_NAME(&tloc, loc);
 	    cerr << tloc.get_fileline() << ": error: specparam and "
@@ -2538,7 +2541,9 @@ void pform_set_parameter(const struct vlltype&loc,
       parm.signed_flag = signed_flag;
       parm.range = value_range;
 
-      if (scope == pform_cur_module.front())
+	// Only a Module keeps the position of the parameter.
+      if ((scope == pform_cur_module.front()) &&
+          (dynamic_cast<Module*> (scope)))
             pform_cur_module.front()->param_names.push_back(name);
 }
 
