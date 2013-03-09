@@ -2767,7 +2767,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	          des->errors += 1;
                   return 0;
             }
-            if (net->scope() != scope) {
+            if (net->scope()->type() == NetScope::MODULE) {
                   if (scope->need_const_func()) {
                         cerr << get_fileline() << ": error: A reference to a "
                                 "non-local wire or reg (`" << path_ << "') is "

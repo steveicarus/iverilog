@@ -1982,7 +1982,7 @@ NetExpr* NetEUFunc::eval_tree()
 {
         // If we know the function cannot be evaluated as a constant,
         // give up now.
-      if (!func()->is_const_func())
+      if (!func()->is_const_func() || (func()->calls_sys_task() && !need_const_))
             return 0;
 
 	// If we neither want nor need to evaluate the function at

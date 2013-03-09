@@ -44,19 +44,22 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest, bo
 {
       events_ = 0;
       lcounter_ = 0;
-      need_const_func_ = false;
-      is_const_func_ = false;
       is_auto_ = false;
       is_cell_ = false;
+      calls_stask_ = false;
       in_final_ = false;
 
       if (up) {
+	    need_const_func_ = up->need_const_func_;
+	    is_const_func_ = up->is_const_func_;
 	    time_unit_ = up->time_unit();
 	    time_prec_ = up->time_precision();
 	    time_from_timescale_ = up->time_from_timescale();
 	      // Need to check for duplicate names?
 	    up_->children_[name_] = this;
       } else {
+	    need_const_func_ = false;
+	    is_const_func_ = false;
 	    time_unit_ = 0;
 	    time_prec_ = 0;
 	    time_from_timescale_ = false;

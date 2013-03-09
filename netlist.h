@@ -909,6 +909,10 @@ class NetScope : public Attrib {
       void is_cell(bool is_cell__) { is_cell_ = is_cell__; };
       bool is_cell() const { return is_cell_; };
 
+	/* Is there a call to a system task in this scope. */
+      void calls_sys_task(bool calls_stask__) { calls_stask_ = calls_stask__; };
+      bool calls_sys_task() const { return calls_stask_; };
+
         /* Is this scope elaborating a final procedure? */
       void in_final(bool in_final__) { in_final_ = in_final__; };
       bool in_final() const { return in_final_; };
@@ -1096,7 +1100,7 @@ class NetScope : public Attrib {
       map<hname_t,NetScope*> children_;
 
       unsigned lcounter_;
-      bool need_const_func_, is_const_func_, is_auto_, is_cell_;
+      bool need_const_func_, is_const_func_, is_auto_, is_cell_, calls_stask_;
 
       /* Final procedures sets this to notify statements that
 	 they are part of a final procedure. */
@@ -2827,6 +2831,9 @@ class NetDisable  : public NetProc {
 
       const NetScope*target() const;
 
+      bool evaluate_function(const LineInfo&loc,
+			     std::map<perm_string,NetExpr*>&ctx) const;
+
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -3238,6 +3245,9 @@ class NetSTask  : public NetProc {
       unsigned nparms() const;
 
       const NetExpr* parm(unsigned idx) const;
+
+      virtual bool evaluate_function(const LineInfo&loc,
+				     map<perm_string,NetExpr*>&ctx) const;
 
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual void nex_output(NexusSet&);

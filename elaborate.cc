@@ -2784,6 +2784,20 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	    cur->append(tmp);
       }
 
+	// Update flags in parent scope.
+      if (!nscope->is_const_func())
+	    scope->is_const_func(false);
+      if (nscope->calls_sys_task())
+	    scope->calls_sys_task(true);
+
+      if (!wires.empty()) {
+	    if (scope->need_const_func()) {
+		  cerr << get_fileline() << ": sorry: Block variables inside "
+			 "a constant function are not yet supported." << endl;
+	    }
+	    scope->is_const_func(false);
+      }
+
       cur->set_line(*this);
       return cur;
 }
@@ -3009,6 +3023,8 @@ NetProc* PCallTask::elaborate_sys(Design*des, NetScope*scope) const
 	    noop->set_line(*this);
 	    return noop;
       }
+
+      scope->calls_sys_task(true);
 
       NetSTask*cur = new NetSTask(name, def_sfunc_as_task, eparms);
       cur->set_line(*this);

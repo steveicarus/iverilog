@@ -25,6 +25,14 @@
 
 using namespace std;
 
+/*
+ * We only evaluate one function at a time, so to support the disable
+ * statement, we just need to record the target block and then early
+ * terminate each enclosing block or loop statement until we get back
+ * to the target block.
+ */
+static const NetScope*disable = 0;
+
 static NetExpr* fix_assign_value(const NetNet*lhs, NetExpr*rhs)
 {
       NetEConst*ce = dynamic_cast<NetEConst*>(rhs);
@@ -221,7 +229,9 @@ bool NetBlock::evaluate_function(const LineInfo&loc,
 	    cur = cur->next_;
 	    bool cur_flag = cur->evaluate_function(loc, context_map);
 	    flag = flag && cur_flag;
-      } while (cur != last_);
+      } while (cur != last_ && !disable);
+
+      if (disable == subscope_) disable = 0;
 
       return flag;
 }
@@ -247,6 +257,20 @@ bool NetCondit::evaluate_function(const LineInfo&loc,
 	    return (else_ == 0) || else_->evaluate_function(loc, context_map);
 }
 
+bool NetDisable::evaluate_function(const LineInfo&,
+				map<perm_string,NetExpr*>&) const
+{
+      disable = target_;
+      return true;
+}
+
+bool NetSTask::evaluate_function(const LineInfo&,
+				map<perm_string,NetExpr*>&) const
+{
+	// system tasks within a constant function are ignored
+      return true;
+}
+
 bool NetWhile::evaluate_function(const LineInfo&loc,
 				map<perm_string,NetExpr*>&context_map) const
 {
@@ -257,7 +281,7 @@ bool NetWhile::evaluate_function(const LineInfo&loc,
 		 << "Start loop" << endl;
       }
 
-      while (flag) {
+      while (flag && !disable) {
 	      // Evaluate the condition expression to try and get the
 	      // condition for the loop.
 	    NetExpr*cond = cond_->evaluate_function(loc, context_map);
