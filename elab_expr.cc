@@ -1280,6 +1280,16 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
       NetESFunc*fun = new NetESFunc(name, expr_type_, expr_width_, nparms);
       fun->set_line(*this);
 
+      if (!fun->is_built_in()) {
+	    if (scope->need_const_func()) {
+		  cerr << get_fileline() << ": error: " << name
+		       << " is not a built-in function, so cannot"
+		       << " be used in a constant function." << endl;
+		  des->errors += 1;
+	    }
+	    scope->is_const_func(false);
+      }
+
 	/* Now run through the expected parameters. If we find that
 	   there are missing parameters, print an error message.
 
@@ -1785,7 +1795,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
         // fully elaborated. If this is the case, elaborate it now. This
         // ensures we know whether or not it is a constant function.
       if (dscope->elab_stage() < 3) {
-            dscope->need_const_func(need_const);
+            dscope->need_const_func(need_const || scope->need_const_func());
             const PFunction*pfunc = dscope->func_pform();
             ivl_assert(*this, pfunc);
             pfunc->elaborate(des, dscope);
@@ -1797,7 +1807,6 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
                           "a constant function must be a constant function "
                           "local to the current module." << endl;
                   des->errors += 1;
-                  return 0;
             }
             scope->is_const_func(false);
       }

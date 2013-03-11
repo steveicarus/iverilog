@@ -4066,6 +4066,9 @@ class NetESFunc  : public NetExpr {
       NetExpr* evaluate_min_max_(ID id, const NetExpr*arg0,
 					const NetExpr*arg1) const;
 
+    public:
+      bool is_built_in() const { return built_in_id_() != NOT_BUILT_IN; };
+
     private: // not implemented
       NetESFunc(const NetESFunc&);
       NetESFunc& operator= (const NetESFunc&);
