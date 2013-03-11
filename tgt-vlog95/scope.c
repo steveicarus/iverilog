@@ -827,6 +827,7 @@ static unsigned emitting_scopes = 0;
 
 int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 {
+      char *package_name = 0;
       ivl_scope_type_t sc_type = ivl_scope_type(scope);
       unsigned is_auto = ivl_scope_is_auto(scope);
       unsigned idx, count;
@@ -918,13 +919,21 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    vlog_errors += 1;
 	    return 0;
 	case IVL_SCT_PACKAGE:
-	    fprintf(stderr, "%s:%u: vlog95 sorry: package scopes are not "
-	                    "currently translated \"%s\".\n",
-	                    ivl_scope_file(scope),
-	                    ivl_scope_lineno(scope),
-	                    ivl_scope_tname(scope));
-	    vlog_errors += 1;
-	    return 0;
+	    assert(indent == 0);
+	    assert(! parent);
+	      /* Set the time scale for this scope. */
+	    fprintf(vlog_out, "\n`timescale %s/%s\n",
+	                      get_time_const(ivl_scope_time_units(scope)),
+	                      get_time_const(ivl_scope_time_precision(scope)));
+	      /* Emit a package as a module with a special name. */
+	    fprintf(vlog_out, "/* This package (module) was originally "
+	                      "defined in file %s at line %u. */\n",
+	                      ivl_scope_def_file(scope),
+	                      ivl_scope_def_lineno(scope));
+	    fprintf(vlog_out, "module ");
+	    package_name = get_package_name(scope);
+	    emit_id(package_name);
+	    break;
 	default:
 	    fprintf(stderr, "%s:%u: vlog95 error: Unsupported scope type "
 	                    "(%d) named: %s.\n", ivl_scope_file(scope),
@@ -1024,6 +1033,12 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	case IVL_SCT_TASK:
 	    fprintf(vlog_out, "%*cendtask  /* %s */\n", indent, ' ',
 	                      ivl_scope_tname(scope));
+	    break;
+	case IVL_SCT_PACKAGE:
+	    fprintf(vlog_out, "endmodule  /* ");
+	    emit_id(package_name);
+	    free(package_name);
+	    fprintf(vlog_out, " */\n");
 	    break;
 	default:
 	    assert(0);

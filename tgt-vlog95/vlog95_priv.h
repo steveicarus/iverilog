@@ -1,7 +1,7 @@
 #ifndef __vlog95_priv_H
 #define __vlog95_priv_H
 /*
- * Copyright (C) 2010-2011 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2013 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -118,6 +118,13 @@ extern ivl_scope_t get_module_scope(ivl_scope_t scope);
 extern int32_t get_int32_from_number(ivl_expr_t expr, int *return_type);
 extern int64_t get_int64_from_number(ivl_expr_t expr, int *return_type);
 extern uint64_t get_uint64_from_number(ivl_expr_t expr, int *return_type);
+
+/*
+ * A package is translated to a module with a special name. This routine
+ * does that translation. To avoid a memory leak the calling routine must
+ * use free() to cleanup the string returned.
+ */
+extern char * get_package_name(ivl_scope_t scope);
 
 /*
  * Get the appropriate MSB and LSB for a signal.

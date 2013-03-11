@@ -810,6 +810,21 @@ void emit_scope_call_path(ivl_scope_t scope, ivl_scope_t call_scope)
       }
 }
 
+/*
+ * A package is emitted as a module with a special name. This routine
+ * calculates the name for the package. The returned string must be freed
+ * by the calling routine.
+ */
+char * get_package_name(ivl_scope_t scope)
+{
+      char *package_name;
+      const char *name = ivl_scope_basename(scope);
+      package_name = (char *)malloc(strlen(name)+13);
+      strcpy(package_name, "ivl_package_");
+      strcat(package_name, name);
+      return package_name;
+}
+
 static void emit_scope_path_piece(ivl_scope_t scope, ivl_scope_t call_scope)
 {
       ivl_scope_t parent = ivl_scope_parent(call_scope);
@@ -819,8 +834,13 @@ static void emit_scope_path_piece(ivl_scope_t scope, ivl_scope_t call_scope)
 	    emit_scope_path_piece(scope, parent);
 	    fprintf(vlog_out, ".");
       }
+	/* If the scope is a package then add the special part of the name. */
+      if (ivl_scope_type(call_scope) == IVL_SCT_PACKAGE) {
+	    char *package_name = get_package_name(call_scope);
+	    emit_id(package_name);
+	    free(package_name);
 	/* Print the base scope. */
-      emit_id(ivl_scope_basename(call_scope));
+      } else emit_id(ivl_scope_basename(call_scope));
 }
 
 /*
