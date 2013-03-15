@@ -22,7 +22,12 @@
 # include  "LineInfo.h"
 # include  "ivl_target.h"
 # include  "nettypes.h"
+# include  <iostream>
 # include  <map>
+
+class Design;
+class NetScope;
+class PClass;
 
 class netclass_t : public ivl_type_s {
     public:
@@ -33,6 +38,10 @@ class netclass_t : public ivl_type_s {
 	// name and type, and return true. If the name is already
 	// present, then return false.
       bool set_property(perm_string pname, ivl_type_s*ptype);
+
+	// Set the scope for the class. The scope has no parents and
+	// is used for the elaboration of methods (tasks/functions).
+      void set_class_scope(NetScope*cscope);
 
 	// As an ivl_type_s object, the netclass is always an
 	// ivl_VT_CLASS object.
@@ -49,6 +58,14 @@ class netclass_t : public ivl_type_s {
 
       int property_idx_from_name(perm_string pname) const;
 
+	// The task method scopes from the method name.
+      NetScope*method_from_name(perm_string mname);
+
+      void elaborate_sig(Design*des, PClass*pclass);
+      void elaborate(Design*des, PClass*pclass);
+
+      void dump_scope(ostream&fd) const;
+
     private:
       perm_string name_;
 	// Map properrty names to property table index.
@@ -59,6 +76,9 @@ class netclass_t : public ivl_type_s {
 	    ivl_type_s* type;
       };
       std::vector<prop_t> property_table_;
+
+	// This holds task/function definitions for methods.
+      NetScope*class_scope_;
 };
 
 #endif

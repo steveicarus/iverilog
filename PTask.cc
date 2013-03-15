@@ -22,7 +22,7 @@
 # include  <cassert>
 
 PTaskFunc::PTaskFunc(perm_string n, LexicalScope*p)
-: PScope(n,p), this_type_(0)
+: PScope(n,p), this_type_(0), ports_(0)
 {
 }
 
@@ -30,26 +30,37 @@ PTaskFunc::~PTaskFunc()
 {
 }
 
-void PTaskFunc::set_this(class_type_t*type)
+void PTaskFunc::set_ports(vector<PWire*>*p)
+{
+      assert(ports_ == 0);
+      ports_ = p;
+}
+
+void PTaskFunc::set_this(class_type_t*type, PWire*this_wire)
 {
       assert(this_type_ == 0);
       this_type_ = type;
+
+	// Push a synthetis argument that is the "this" value.
+      if (ports_==0)
+	    ports_ = new vector<PWire*>;
+
+      size_t use_size = ports_->size();
+      ports_->resize(use_size + 1);
+      for (size_t idx = use_size ; idx > 0 ; idx -= 1)
+	    ports_->at(idx) = ports_->at(idx-1);
+
+      ports_->at(0) = this_wire;
 }
 
 PTask::PTask(perm_string name, LexicalScope*parent, bool is_auto__)
-: PTaskFunc(name, parent), ports_(0), statement_(0)
+: PTaskFunc(name, parent), statement_(0)
 {
       is_auto_ = is_auto__;
 }
 
 PTask::~PTask()
 {
-}
-
-void PTask::set_ports(vector<PWire*>*p)
-{
-      assert(ports_ == 0);
-      ports_ = p;
 }
 
 void PTask::set_statement(Statement*s)

@@ -296,6 +296,18 @@ static void elaborate_scope_class(Design*des, NetScope*scope,
       class_type_t*use_type = pclass->type;
       netclass_t*use_class = new netclass_t(use_type->name);
 
+      if (debug_scopes) {
+	    cerr << pclass->get_fileline() <<": debug: "
+		 << "Elaborate scope class " << pclass->pscope_name() << endl;
+      }
+
+	// Class scopes have no parent scope, because references are
+	// not allowed to escape a class method.
+      NetScope*class_scope = new NetScope(0, hname_t(pclass->pscope_name()),
+					  NetScope::CLASS);
+      class_scope->set_class_def(use_class);
+      use_class->set_class_scope(class_scope);
+
       for (map<perm_string, data_type_t*>::iterator cur = use_type->properties.begin()
 		 ; cur != use_type->properties.end() ; ++ cur) {
 	    ivl_type_s*tmp = cur->second->elaborate_type(des, scope);
@@ -304,14 +316,38 @@ static void elaborate_scope_class(Design*des, NetScope*scope,
 
       for (map<perm_string,PTask*>::iterator cur = pclass->tasks.begin()
 		 ; cur != pclass->tasks.end() ; ++cur) {
-	    cerr << cur->second->get_fileline() << ": sorry: "
-		 << "Class methods (tasks) not supported." << endl;
+
+	    hname_t use_name (cur->first);
+	    NetScope*method_scope = new NetScope(class_scope, use_name, NetScope::TASK);
+	      // Task methods are always automatic...
+	    method_scope->is_auto(true);
+	    method_scope->set_line(cur->second);
+
+	    if (debug_scopes) {
+		  cerr << cur->second->get_fileline() << ": debug: "
+		       << "Elaborate method (task) scope "
+		       << scope_path(method_scope) << endl;
+	    }
+
+	    cur->second->elaborate_scope(des, method_scope);
       }
 
       for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
 		 ; cur != pclass->funcs.end() ; ++cur) {
-	    cerr << cur->second->get_fileline() << ": sorry: "
-		 << "Class methods (functions) not supported." << endl;
+
+	    hname_t use_name (cur->first);
+	    NetScope*method_scope = new NetScope(class_scope, use_name, NetScope::FUNC);
+	      // Function methods are always automatic...
+	    method_scope->is_auto(true);
+	    method_scope->set_line(cur->second);
+
+	    if (debug_scopes) {
+		  cerr << cur->second->get_fileline() << ": debug: "
+		       << "Elaborate method (function) scope "
+		       << scope_path(method_scope) << endl;
+	    }
+
+	    cur->second->elaborate_scope(des, method_scope);
       }
 
       scope->add_class(use_class);

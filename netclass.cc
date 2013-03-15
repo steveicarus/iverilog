@@ -18,12 +18,13 @@
  */
 
 # include  "netclass.h"
+# include  "netlist.h"
 # include  <iostream>
 
 using namespace std;
 
 netclass_t::netclass_t(perm_string name)
-: name_(name)
+: name_(name), class_scope_(0)
 {
 }
 
@@ -45,6 +46,12 @@ bool netclass_t::set_property(perm_string pname, ivl_type_s*ptype)
 
       properties_[pname] = property_table_.size()-1;
       return true;
+}
+
+void netclass_t::set_class_scope(NetScope*class_scope)
+{
+      assert(class_scope_ == 0);
+      class_scope_ = class_scope;
 }
 
 ivl_variable_type_t netclass_t::base_type() const
@@ -83,4 +90,12 @@ ivl_type_t netclass_t::get_prop_type(size_t idx) const
 {
       assert(idx < property_table_.size());
       return property_table_[idx].type;
+}
+
+NetScope*netclass_t::method_from_name(perm_string name)
+{
+      NetScope*task = class_scope_->child( hname_t(name) );
+      if (task == 0) return 0;
+      return task;
+
 }

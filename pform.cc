@@ -2346,6 +2346,35 @@ vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
       return res;
 }
 
+static vector<PWire*>*do_make_task_ports(const struct vlltype&loc,
+					 NetNet::PortType pt,
+					 ivl_variable_type_t var_type,
+					 data_type_t*data_type,
+					 list<perm_string>*names)
+{
+      assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
+      assert(names);
+      vector<PWire*>*res = new vector<PWire*>(0);
+
+      for (list<perm_string>::iterator cur = names->begin()
+		 ; cur != names->end() ; ++cur) {
+	    perm_string name = *cur;
+	    PWire*curw = pform_get_wire_in_scope(name);
+	    if (curw) {
+		  curw->set_port_type(pt);
+	    } else {
+		  curw = new PWire(name, NetNet::IMPLICIT_REG, pt, var_type);
+		  FILE_NAME(curw, loc);
+		  curw->set_data_type(data_type);
+		  pform_put_wire_in_scope(name, curw);
+	    }
+
+	    res->push_back(curw);
+      }
+      delete names;
+      return res;
+}
+
 vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 				      NetNet::PortType pt,
 				      data_type_t*vtype,
@@ -2370,8 +2399,11 @@ vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 					 true, 0, names);
       }
 
-      VLerror(loc, "sorry: Given type not supported here.");
-      return 0;
+      if (class_type_t*class_type = dynamic_cast<class_type_t*> (vtype)) {
+	    return do_make_task_ports(loc, pt, IVL_VT_CLASS, class_type, names);
+      }
+
+      return do_make_task_ports(loc, pt, IVL_VT_NO_TYPE, vtype, names);
 }
 
 /*

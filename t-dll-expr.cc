@@ -28,6 +28,7 @@
 # include  <cassert>
 # include  <cstdlib>
 # include  "ivl_alloc.h"
+# include  "ivl_assert.h"
 
 /*
  * This is a little convenience function for converting a NetExpr
@@ -562,7 +563,8 @@ void dll_target::expr_ufunc(const NetEUFunc*net)
       FILE_NAME(expr, net);
 
       expr->u_.ufunc_.def = lookup_scope_(net->func());
-      assert(expr->u_.ufunc_.def->type_ == IVL_SCT_FUNCTION);
+      ivl_assert(*net, expr->u_.ufunc_.def);
+      ivl_assert(*net, expr->u_.ufunc_.def->type_ == IVL_SCT_FUNCTION);
 
       unsigned cnt = net->parm_count();
       expr->u_.ufunc_.parms = cnt;

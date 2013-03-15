@@ -158,6 +158,11 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       NetEvent*     eve = 0;
       perm_string   method_name;
 
+	/* Try to detect the special case that we are in a method and
+	   the identifier is a member of the class. */
+      if (NetAssign_*tmp = elaborate_lval_method_class_member_(des, scope))
+	    return tmp;
+
       symbol_search(this, des, scope, path_, reg, par, eve);
 
 	/* If the signal is not found, check to see if this is a
@@ -294,6 +299,39 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       NetAssign_*lv = new NetAssign_(reg);
 
       return lv;
+}
+
+NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
+							 NetScope*scope) const
+{
+      if (!gn_system_verilog())
+	    return 0;
+      if (scope->parent() == 0)
+	    return 0;
+      if (path_.size() != 1)
+	    return 0;
+
+      const netclass_t*class_type = scope->parent()->class_def();
+      if (class_type == 0)
+	    return 0;
+
+      perm_string member_name = peek_tail_name(path_);
+      int pidx = class_type->property_idx_from_name(member_name);
+      if (pidx < 0)
+	    return 0;
+
+      NetNet*this_net = scope->find_signal(perm_string::literal("@"));
+      if (this_net == 0) {
+	    cerr << get_fileline() << ": internal error: "
+		 << "Unable to find 'this' port of " << scope_path(scope)
+		 << "." << endl;
+	    return 0;
+      }
+
+      NetAssign_*this_lval = new NetAssign_(this_net);
+      this_lval->set_property(member_name);
+
+      return this_lval;
 }
 
 NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,

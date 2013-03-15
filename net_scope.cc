@@ -50,6 +50,7 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest, bo
       in_final_ = false;
 
       if (up) {
+	    assert(t!=CLASS);
 	    need_const_func_ = up->need_const_func_;
 	    is_const_func_ = up->is_const_func_;
 	    time_unit_ = up->time_unit();
@@ -63,7 +64,7 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest, bo
 	    time_unit_ = 0;
 	    time_prec_ = 0;
 	    time_from_timescale_ = false;
-	    assert(t==MODULE || t==PACKAGE);
+	    assert(t==MODULE || t==PACKAGE || t==CLASS);
       }
 
       switch (t) {
@@ -76,6 +77,9 @@ NetScope::NetScope(NetScope*up, const hname_t&n, NetScope::TYPE t, bool nest, bo
 	  case NetScope::MODULE:
 	  case NetScope::PACKAGE:
 	    module_name_ = perm_string();
+	    break;
+	  case NetScope::CLASS:
+	    class_def_ = 0;
 	    break;
 	  default:  /* BEGIN_END and FORK_JOIN, do nothing */
 	    break;
@@ -311,8 +315,11 @@ void NetScope::print_type(ostream&stream) const
 	case GENBLOCK:
 	    stream << "generate block";
 	    break;
-	  case PACKAGE:
+	case PACKAGE:
 	    stream << "package " << module_name_;
+	    break;
+	case CLASS:
+	    stream << "class";
 	    break;
       }
 }
@@ -358,6 +365,21 @@ const NetFuncDef* NetScope::func_def() const
 {
       assert( type_ == FUNC );
       return func_;
+}
+
+void NetScope::set_class_def(netclass_t*def)
+{
+      assert( type_ == CLASS );
+      assert( class_def_==0  );
+      class_def_ = def;
+}
+
+const netclass_t* NetScope::class_def(void) const
+{
+      if (type_==CLASS)
+	    return class_def_;
+      else
+	    return 0;
 }
 
 void NetScope::set_module_name(perm_string n)
@@ -563,11 +585,27 @@ void NetScope::add_class(netclass_t*net_class)
 
 netclass_t*NetScope::find_class(perm_string name)
 {
+	// Special class: The scope itself is the class that we are
+	// looking for. This may happen for example when elaborating
+	// methods within the class.
+      if (type_==CLASS && name_==hname_t(name))
+	    return class_def_;
+
+	// Look for the class that directly within this scope.
       map<perm_string,netclass_t*>::const_iterator cur = classes_.find(name);
-      if (cur == classes_.end())
-	    return 0;
-      else
+      if (cur != classes_.end())
 	    return cur->second;
+
+	// If this is a module scope, then look no further.
+      if (type_==MODULE)
+	    return 0;
+
+	// If there is no further to look, ...
+      if (up_ == 0)
+	    return 0;
+
+	// Try looking up for the class.
+      return up_->find_class(name);
 }
 
 /*

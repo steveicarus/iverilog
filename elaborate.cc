@@ -31,6 +31,7 @@
 # include  <sstream>
 # include  <list>
 # include  "pform.h"
+# include  "PClass.h"
 # include  "PEvent.h"
 # include  "PGenerate.h"
 # include  "PPackage.h"
@@ -3325,6 +3326,20 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope) const
 	    return sys;
       }
 
+      if (netclass_t*class_type = net->class_type()) {
+	    NetScope*task = class_type->method_from_name(method_name);
+	    if (task == 0) {
+		  cerr << get_fileline() << ": XXXXX: "
+		       << "Can't find task " << method_name
+		       << " in class " << class_type->get_name() << endl;
+		  return 0;
+	    }
+
+	    NetUTask*tmp = new NetUTask(task);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
       return 0;
 }
 
@@ -4679,6 +4694,16 @@ static void elaborate_tasks(Design*des, NetScope*scope,
       }
 }
 
+static void elaborate_classes(Design*des, NetScope*scope,
+			      const map<perm_string,PClass*>&classes)
+{
+      for (map<perm_string,PClass*>::const_iterator cur = classes.begin()
+		 ; cur != classes.end() ; ++ cur) {
+	    netclass_t*use_class = scope->find_class(cur->second->pscope_name());
+	    use_class->elaborate(des, cur->second);
+      }
+}
+
 /*
  * When a module is instantiated, it creates the scope then uses this
  * method to elaborate the contents of the module.
@@ -4702,6 +4727,9 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	// behaviors so that task calls may reference these, and after
 	// the signals so that the tasks can reference them.
       elaborate_tasks(des, scope, tasks);
+
+	// Elaboate class definitions.
+      elaborate_classes(des, scope, classes);
 
 	// Get all the gates of the module and elaborate them by
 	// connecting them to the signals. The gate may be simple or
@@ -4728,6 +4756,42 @@ bool Module::elaborate(Design*des, NetScope*scope) const
       }
 
       return result_flag;
+}
+
+/*
+ * Elaborating a netclass_t means elaborating the PFunction and PTask
+ * objects that it contains. The scopes and signals have already been
+ * elaborated in the class of the netclass_t scope, so we can get the
+ * child scope for each definition and use that for the context of the
+ * function.
+ */
+void netclass_t::elaborate(Design*des, PClass*pclass)
+{
+      for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
+		 ; cur != pclass->funcs.end() ; ++ cur) {
+	    if (debug_elaborate) {
+		  cerr << cur->second->get_fileline() << ": netclass_t::elaborate: "
+		       << "Elaborate class " << scope_path(class_scope_)
+		       << " function method " << cur->first << endl;
+	    }
+
+	    NetScope*scope = class_scope_->child( hname_t(cur->first) );
+	    ivl_assert(*cur->second, scope);
+	    cur->second->elaborate(des, scope);
+      }
+
+      for (map<perm_string,PTask*>::iterator cur = pclass->tasks.begin()
+		 ; cur != pclass->tasks.end() ; ++ cur) {
+	    if (debug_elaborate) {
+		  cerr << cur->second->get_fileline() << ": netclass_t::elaborate: "
+		       << "Elaborate class " << scope_path(class_scope_)
+		       << " task method " << cur->first << endl;
+	    }
+
+	    NetScope*scope = class_scope_->child( hname_t(cur->first) );
+	    ivl_assert(*cur->second, scope);
+	    cur->second->elaborate(des, scope);
+      }
 }
 
 bool PGenerate::elaborate(Design*des, NetScope*container) const

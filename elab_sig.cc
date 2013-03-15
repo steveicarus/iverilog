@@ -25,6 +25,7 @@
 # include  <iostream>
 
 # include  "Module.h"
+# include  "PClass.h"
 # include  "PExpr.h"
 # include  "PGate.h"
 # include  "PGenerate.h"
@@ -182,6 +183,15 @@ static void elaborate_sig_tasks(Design*des, NetScope*scope,
       }
 }
 
+static void elaborate_sig_classes(Design*des, NetScope*scope,
+				  const map<perm_string,PClass*>&classes)
+{
+      for (map<perm_string,PClass*>::const_iterator cur = classes.begin()
+		 ; cur != classes.end() ; ++ cur) {
+	    netclass_t*use_class = scope->find_class(cur->second->pscope_name());
+	    use_class->elaborate_sig(des, cur->second);
+      }
+}
 
 bool Module::elaborate_sig(Design*des, NetScope*scope) const
 {
@@ -262,6 +272,7 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 
       elaborate_sig_funcs(des, scope, funcs);
       elaborate_sig_tasks(des, scope, tasks);
+      elaborate_sig_classes(des, scope, classes);
 
 	// initial and always blocks may contain begin-end and
 	// fork-join blocks that can introduce scopes. Therefore, I
@@ -276,6 +287,34 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
       }
 
       return flag;
+}
+
+void netclass_t::elaborate_sig(Design*des, PClass*pclass)
+{
+      for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
+		 ; cur != pclass->funcs.end() ; ++ cur) {
+	    if (debug_elaborate) {
+		  cerr << cur->second->get_fileline() << ": netclass_t::elaborate_sig: "
+		       << "Elaborate signals in function method " << cur->first << endl;
+	    }
+
+	    NetScope*scope = class_scope_->child( hname_t(cur->first) );
+	    ivl_assert(*cur->second, scope);
+	    cur->second->elaborate_sig(des, scope);
+      }
+
+      for (map<perm_string,PTask*>::iterator cur = pclass->tasks.begin()
+		 ; cur != pclass->tasks.end() ; ++ cur) {
+	    if (debug_elaborate) {
+		  cerr << cur->second->get_fileline() << ": netclass_t::elaborate_sig: "
+		       << "Elaborate signals in task method " << cur->first << endl;
+	    }
+
+	    NetScope*scope = class_scope_->child( hname_t(cur->first) );
+	    ivl_assert(*cur->second, scope);
+	    cur->second->elaborate_sig(des, scope);
+      }
+
 }
 
 bool PGate::elaborate_sig(Design*, NetScope*) const
@@ -475,17 +514,6 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 
       elaborate_sig_wires_(des, scope);
 
-	/* Make sure the function has at least one input port. If it
-	   fails this test, print an error message. Keep going so we
-	   can find more errors. */
-      if (ports_ == 0 && !gn_system_verilog()) {
-	    cerr << get_fileline() << ": error: Function " << fname
-		 << " has no ports." << endl;
-	    cerr << get_fileline() << ":      : Functions must have"
-		 << " at least one input port." << endl;
-	    des->errors += 1;
-      }
-
       NetNet*ret_sig = 0;
       netvector_t*ret_vec = 0;
 
@@ -621,63 +649,15 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    break;
 
 	  default:
-	    if (ports_) {
-		  cerr << get_fileline() << ": internal error: I don't know "
-		       << "how to deal with return type of function "
-		       << scope->basename() << "." << endl;
-	    } else {
-		    /* If we do not have any ports or a return type this
-		     * is probably a bad function definition. */
-		  cerr << get_fileline() << ": error: Bad definition for "
-		       << "function " << scope->basename() << "?" << endl;
-		  return;
-	    }
+	      /* If we do not have any ports or a return type this
+	       * is probably a bad function definition. */
+	    cerr << get_fileline() << ": error: Bad definition for "
+		 << "function " << scope->basename() << "?" << endl;
+	    return;
       }
 
-      vector<NetNet*>ports (ports_? ports_->size() : 0);
-
-      if (ports_)
-	    for (unsigned idx = 0 ;  idx < ports_->size() ;  idx += 1) {
-
-		    /* Parse the port name into the task name and the reg
-		       name. We know by design that the port name is given
-		       as two components: <func>.<port>. */
-
-		  perm_string pname = (*ports_)[idx]->basename();
-
-		  NetNet*tmp = scope->find_signal(pname);
-		  ports[idx] = 0;
-
-		  if (tmp == 0) {
-			cerr << get_fileline() << ": internal error: function "
-			     << scope_path(scope) << " is missing port "
-			     << pname << "." << endl;
-			scope->dump(cerr);
-			cerr << get_fileline() << ": Continuing..." << endl;
-			des->errors += 1;
-			continue;
-		  }
-
-		  if (tmp->port_type() == NetNet::NOT_A_PORT) {
-			cerr << get_fileline() << ": internal error: function "
-			     << scope_path(scope) << " port " << pname
-			     << " is a port but is not a port?" << endl;
-			des->errors += 1;
-			scope->dump(cerr);
-			continue;
-		  }
-
-		  ports[idx] = tmp;
-		  if (tmp->port_type() != NetNet::PINPUT) {
-			cerr << tmp->get_fileline() << ": error: function "
-			     << scope_path(scope) << " port " << pname
-			     << " is not an input port." << endl;
-			cerr << tmp->get_fileline() << ":      : Function arguments "
-			     << "must be input ports." << endl;
-			des->errors += 1;
-		  }
-	    }
-
+      vector<NetNet*>ports;
+      elaborate_sig_ports_(des, scope, ports);
 
       NetFuncDef*def = 0;
       if (ret_sig)  def = new NetFuncDef(scope, ret_sig, ports);
@@ -710,33 +690,76 @@ void PTask::elaborate_sig(Design*des, NetScope*scope) const
 
       elaborate_sig_wires_(des, scope);
 
-      svector<NetNet*>ports (ports_? ports_->size() : 0);
-      for (unsigned idx = 0 ;  idx < ports.count() ;  idx += 1) {
-
-	    perm_string port_name = (*ports_)[idx]->basename();
-
-	      /* Find the signal for the port. We know by definition
-		 that it is in the scope of the task, so look only in
-		 the scope. */
-	    NetNet*tmp = scope->find_signal(port_name);
-
-	    if (tmp == 0) {
-		  cerr << get_fileline() << ": internal error: "
-		       << "Could not find port " << port_name
-		       << " in scope " << scope_path(scope) << endl;
-		  scope->dump(cerr);
-		  des->errors += 1;
-	    }
-
-	    ports[idx] = tmp;
-      }
-
+      vector<NetNet*>ports;
+      elaborate_sig_ports_(des, scope, ports);
       NetTaskDef*def = new NetTaskDef(scope, ports);
       scope->set_task_def(def);
 
 	// Look for further signals in the sub-statement
       if (statement_)
 	    statement_->elaborate_sig(des, scope);
+}
+
+void PTaskFunc::elaborate_sig_ports_(Design*des, NetScope*scope,
+				     vector<NetNet*>&ports) const
+{
+      if (ports_ == 0) {
+	    ports.clear();
+
+	      /* Make sure the function has at least one input
+		 port. If it fails this test, print an error
+		 message. Keep going so we can find more errors. */
+	    if (scope->type()==NetScope::FUNC && !gn_system_verilog()) {
+		  cerr << get_fileline() << ": error: "
+		       << "Function " << scope->basename()
+		       << " has no ports." << endl;
+		  cerr << get_fileline() << ":      : "
+		       << "Functions must have at least one input port." << endl;
+		  des->errors += 1;
+	    }
+
+	    return;
+      }
+
+      ports.resize(ports_->size());
+
+      for (size_t idx = 0 ; idx < ports_->size() ; idx += 1) {
+
+	    perm_string port_name = ports_->at(idx)->basename();
+
+	    ports[idx] = 0;
+	    NetNet*tmp = scope->find_signal(port_name);
+	    if (tmp == 0) {
+		  cerr << get_fileline() << ": internal error: "
+		       << "task/function " << scope_path(scope)
+		       << " is missing port " << port_name << "." << endl;
+		  scope->dump(cerr);
+		  cerr << get_fileline() << ": Continuing..." << endl;
+		  des->errors += 1;
+		  continue;
+	    }
+
+	    if (tmp->port_type() == NetNet::NOT_A_PORT) {
+		  cerr << get_fileline() << ": internal error: "
+		       << "task/function " << scope_path(scope)
+		       << " port " << port_name
+		       << " is a port but is not a port?" << endl;
+		  des->errors += 1;
+		  scope->dump(cerr);
+		  continue;
+	    }
+
+	    ports[idx] = tmp;
+	    if (scope->type()==NetScope::FUNC && tmp->port_type()!=NetNet::PINPUT) {
+		  cerr << tmp->get_fileline() << ": error: "
+		       << "Function " << scope_path(scope)
+		       << " port " << port_name
+		       << " is not an inputport." << endl;
+		  cerr << tmp->get_fileline() << ":      : "
+		       << "Function arguments must be input ports." << endl;
+		  des->errors += 1;
+	    }
+      }
 }
 
 void PBlock::elaborate_sig(Design*des, NetScope*scope) const
@@ -1210,6 +1233,18 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      // do right now is locate the netclass_t object for the
 	      // class, and use that to build the net.
 	    netclass_t*use_type = locate_class_type(des, scope, class_type);
+	    if (use_type == 0) {
+		  cerr << get_fileline() << ": internal error: "
+		       << "Class " << class_type->name
+		       << " isn't elaborated in scope=" << scope_path(scope) << endl;
+		  des->errors += 1;
+	    }
+	    ivl_assert(*this, use_type);
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Create class instance signal " << wtype
+		       << " " << name_ << endl;
+	    }
 	      // (No arrays of classes)
 	    list<netrange_t> use_unpacked;
 	    sig = new NetNet(scope, name_, wtype, use_unpacked, use_type);

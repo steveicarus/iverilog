@@ -2354,6 +2354,9 @@ void dll_target::scope(const NetScope*net)
 		  scop->type_ = IVL_SCT_GENERATE;
 		  scop->tname_ = scop->name_;
 		  break;
+		case NetScope::CLASS:
+		  assert(0);
+		  break;
 	    }
       }
 }

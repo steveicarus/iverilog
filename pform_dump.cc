@@ -911,12 +911,7 @@ void PFunction::dump(ostream&out, unsigned ind) const
       if (method_of())
 	    out << setw(ind) << "" << "method of " << method_of()->name << ";" << endl;
 
-      if (ports_)
-	    for (unsigned idx = 0 ;  idx < ports_->size() ;  idx += 1) {
-		  out << setw(ind) << "";
-		  out << "input ";
-		  out << (*ports_)[idx]->basename() << ";" << endl;
-	    }
+      dump_ports_(out, ind);
 
       dump_parameters_(out, ind);
 
@@ -951,35 +946,7 @@ void PTask::dump(ostream&out, unsigned ind) const
       out << pscope_name() << ";" << endl;
       if (method_of())
 	    out << setw(ind) << "" << "method of " << method_of()->name << ";" << endl;
-      if (ports_)
-	    for (unsigned idx = 0 ;  idx < ports_->size() ;  idx += 1) {
-		  if ((*ports_)[idx] == 0) {
-			out << setw(ind) << "" << "ERROR PORT" << endl;
-			continue;
-		  }
-		  out << setw(ind) << "";
-		  switch ((*ports_)[idx]->get_port_type()) {
-		      case NetNet::PINPUT:
-			out << "input ";
-			break;
-		      case NetNet::POUTPUT:
-			out << "output ";
-			break;
-		      case NetNet::PINOUT:
-			out << "inout ";
-			break;
-		      case NetNet::PIMPLICIT:
-			out << "PIMPLICIT";
-			break;
-		      case NetNet::NOT_A_PORT:
-			out << "NOT_A_PORT";
-			break;
-		      default:
-			assert(0);
-			break;
-		  }
-		  out << (*ports_)[idx]->basename() << ";" << endl;
-	    }
+      dump_ports_(out, ind);
 
       dump_parameters_(out, ind);
 
@@ -993,6 +960,42 @@ void PTask::dump(ostream&out, unsigned ind) const
 	    statement_->dump(out, ind);
       else
 	    out << setw(ind) << "" << "/* NOOP */" << endl;
+}
+
+void PTaskFunc::dump_ports_(std::ostream&out, unsigned ind) const
+{
+      if (ports_ == 0)
+	    return;
+
+      for (unsigned idx = 0 ; idx < ports_->size() ; idx += 1) {
+	    if (ports_->at(idx) == 0) {
+		  out << setw(ind) << "" << "ERROR PORT" << endl;
+		  continue;
+	    }
+
+	    out << setw(ind) << "";
+	    switch (ports_->at(idx)->get_port_type()) {
+		case NetNet::PINPUT:
+		  out << "input ";
+		  break;
+		case NetNet::POUTPUT:
+		  out << "output ";
+		  break;
+		case NetNet::PINOUT:
+		  out << "inout ";
+		  break;
+		case NetNet::PIMPLICIT:
+		  out << "PIMPLICIT";
+		  break;
+		case NetNet::NOT_A_PORT:
+		  out << "NOT_A_PORT";
+		  break;
+		default:
+		  assert(0);
+		  break;
+	    }
+	    out << ports_->at(idx)->basename() << ";" << endl;
+      }
 }
 
 void PTrigger::dump(ostream&out, unsigned ind) const

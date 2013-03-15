@@ -372,6 +372,7 @@ class PEIdent : public PExpr {
 				     std::list<long>&prefix_indices) const;
 
     private:
+      NetAssign_*elaborate_lval_method_class_member_(Design*, NetScope*) const;
       NetAssign_*elaborate_lval_net_word_(Design*, NetScope*, NetNet*) const;
       bool elaborate_lval_net_bit_(Design*, NetScope*, NetAssign_*) const;
       bool elaborate_lval_net_part_(Design*, NetScope*, NetAssign_*) const;
@@ -448,6 +449,11 @@ class PEIdent : public PExpr {
 				      NetESignal*net,
 				      NetScope*found,
                                       bool need_const) const;
+
+      NetExpr*elaborate_expr_class_member_(Design*des,
+					   NetScope*scope,
+					   unsigned expr_wid,
+					   unsigned flags) const;
 
     private:
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,

@@ -1163,6 +1163,30 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 	    return expr_width_;
       }
 
+      if (netclass_t*class_type = net->class_type()) {
+	    cerr << get_fileline() << ": PECallFunction::test_width_method_: "
+		 << "Try to find method " << method_name
+		 << " of class " << class_type->get_name() << endl;
+
+	    NetScope*func = class_type->method_from_name(method_name);
+	    if (func == 0) {
+		  return 0;
+	    }
+
+	      // Get the function result size be getting the details
+	      // from the variable in the function scope that has the
+	      // name of the function.
+	    if (NetNet*res = func->find_signal(method_name)) {
+		  expr_type_ = res->data_type();
+		  expr_width_= res->vector_width();
+		  min_width_ = expr_width_;
+		  signed_flag_ = res->get_signed();
+		  return expr_width_;
+	    } else {
+		  ivl_assert(*this, 0);
+	    }
+      }
+
       return 0;
 }
 
@@ -1991,6 +2015,25 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    }
       }
 
+      if (netclass_t*class_type = net->class_type()) {
+	    NetScope*func = class_type->method_from_name(method_name);
+	    if (func == 0) {
+		  return 0;
+	    }
+
+	    NetNet*res = func->find_signal(func->basename());
+	    ivl_assert(*this, res);
+
+	    vector<NetExpr*>parms;
+	    cerr << get_fileline() << ": PECallFunction::elaborate_expr_method_: "
+		 << "Stub arguments to the function method." << endl;
+
+	    NetESignal*eres = new NetESignal(res);
+	    NetEUFunc*call = new NetEUFunc(scope, func, eres, parms, false);
+	    call->set_line(*this);
+	    return call;
+      }
+
       return 0;
 }
 
@@ -2700,6 +2743,51 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 }
 
 /*
+ * Guess that the path_ is the name of a member of a containing class,
+ * and see how that works. If it turns out that the current scope is
+ * not a method, or the name is not in the parent class, then
+ * fail. Otherwise, return a NetEProperty.
+ */
+NetExpr* PEIdent::elaborate_expr_class_member_(Design*, NetScope*scope,
+					       unsigned, unsigned) const
+{
+      if (!gn_system_verilog())
+	    return 0;
+      if (scope->parent() == 0)
+	    return 0;
+      if (path_.size() != 1)
+	    return 0;
+
+      const netclass_t*class_type = scope->parent()->class_def();
+      if (class_type == 0)
+	    return 0;
+
+      perm_string member_name = peek_tail_name(path_);
+      int pidx = class_type->property_idx_from_name(member_name);
+      if (pidx < 0)
+	    return 0;
+
+      NetNet*this_net = scope->find_signal(perm_string::literal("@"));
+      if (this_net == 0) {
+	    cerr << get_fileline() << ": internal error: "
+		 << "Unable to find 'this' port of " << scope_path(scope)
+		 << "." << endl;
+	    return 0;
+      }
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_expr_class_member: "
+		 << "Found member " << member_name
+		 << " is a member of class " << class_type->get_name()
+		 << ", so synthesizing a NetEProperty." << endl;
+      }
+
+      NetEProperty*tmp = new NetEProperty(this_net, member_name);
+      tmp->set_line(*this);
+      return tmp;
+}
+
+/*
  * Elaborate an identifier in an expression. The identifier can be a
  * parameter name, a signal name or a memory name. It can also be a
  * scope name (Return a NetEScope) but only certain callers can use
@@ -2720,6 +2808,17 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       NetEvent*     eve = 0;
 
       const NetExpr*ex1, *ex2;
+
+	// Special case: Detect the special situation that this name
+	// is the name of a variable in the class, and this is a class
+	// method. We sense that this might be the case by noting that
+	// the parent scope of where we are working is a
+	// NetScope::CLASS, the path_ is a single component, and the
+	// name is a property of the class. If that turns out to be
+	// the case, then handle this specially.
+      if (NetExpr*tmp = elaborate_expr_class_member_(des, scope, expr_wid, flags)) {
+	    return tmp;
+      }
 
       if (path_.size() > 1) {
             if (NEED_CONST & flags) {

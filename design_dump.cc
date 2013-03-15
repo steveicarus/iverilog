@@ -28,6 +28,7 @@
 # include  "netlist.h"
 # include  "compiler.h"
 # include  "discipline.h"
+# include  "netclass.h"
 # include  "netdarray.h"
 # include  "netvector.h"
 # include  "ivl_assert.h"
@@ -747,7 +748,7 @@ void NetTaskDef::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "task " << scope_path(scope_) << ";" << endl;
 
-      for (unsigned idx = 0 ;  idx < ports_.count() ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < ports_.size() ;  idx += 1) {
 	    o << setw(ind+4) << "";
 	    assert(ports_[idx]);
 	    switch (ports_[idx]->port_type()) {
@@ -767,7 +768,10 @@ void NetTaskDef::dump(ostream&o, unsigned ind) const
 	    o << ports_[idx]->name() << ";" << endl;
       }
 
-      proc_->dump(o, ind+4);
+      if (proc_)
+	    proc_->dump(o, ind+4);
+      else
+	    o << setw(ind+4) << "" << "MISSING PROCEDURAL CODE" << endl;
 
       o << setw(ind) << "" << "endtask" << endl;
 }
@@ -1140,7 +1144,7 @@ void NetFuncDef::dump(ostream&o, unsigned ind) const
       if (statement_)
 	    statement_->dump(o, ind+2);
       else
-	    o << setw(ind+2) << "" << "// NO STATEMENT" << endl;
+	    o << setw(ind+2) << "" << "MISSING PROCEDURAL CODE" << endl;
 }
 
 void NetPDelay::dump(ostream&o, unsigned ind) const
@@ -1171,6 +1175,11 @@ void NetRepeat::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "repeat (" << *expr_ << ")" << endl;
       statement_->dump(o, ind+2);
+}
+
+void netclass_t::dump_scope(ostream&fd) const
+{
+      class_scope_->dump(fd);
 }
 
 void NetScope::dump(ostream&o) const
@@ -1320,6 +1329,11 @@ void NetScope::dump(ostream&o) const
       for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
 		 ; cur != children_.end() ; ++ cur )
 	    cur->second->dump(o);
+
+      for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
+		 ; cur != classes_.end() ; ++ cur ) {
+	    cur->second->dump_scope(o);
+      }
 }
 
 void NetSTask::dump(ostream&o, unsigned ind) const
@@ -1588,7 +1602,7 @@ void NetETernary::dump(ostream&o) const
 
 void NetEUFunc::dump(ostream&o) const
 {
-      o << func_->basename() << "(";
+      o << scope_path(func_) << "(";
       if (! parms_.empty()) {
 	    parms_[0]->dump(o);
 	    for (unsigned idx = 1 ;  idx < parms_.size() ;  idx += 1) {

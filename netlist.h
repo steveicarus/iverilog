@@ -764,7 +764,7 @@ class NetNet  : public NetObj, public PortType {
 class NetScope : public Attrib {
 
     public:
-      enum TYPE { MODULE, TASK, FUNC, BEGIN_END, FORK_JOIN, GENBLOCK, PACKAGE };
+      enum TYPE { MODULE, CLASS, TASK, FUNC, BEGIN_END, FORK_JOIN, GENBLOCK, PACKAGE };
 
 	/* Create a new scope, and attach it to the given parent. The
 	   name is expected to have been permallocated. */
@@ -858,6 +858,7 @@ class NetScope : public Attrib {
 
       void set_task_def(NetTaskDef*);
       void set_func_def(NetFuncDef*);
+      void set_class_def(netclass_t*);
       void set_module_name(perm_string);
 
       NetTaskDef* task_def();
@@ -919,6 +920,7 @@ class NetScope : public Attrib {
 
       const NetTaskDef* task_def() const;
       const NetFuncDef* func_def() const;
+      const netclass_t* class_def() const;
 
 	/* If the scope represents a module instance, the module_name
 	   is the name of the module itself. */
@@ -1083,6 +1085,7 @@ class NetScope : public Attrib {
       union {
 	    NetTaskDef*task_;
 	    NetFuncDef*func_;
+	    netclass_t*class_def_;
       };
       const PFunction*func_pform_;
       unsigned elab_stage_;
@@ -3275,7 +3278,7 @@ class NetSTask  : public NetProc {
 class NetTaskDef {
 
     public:
-      NetTaskDef(NetScope*n, const svector<NetNet*>&po);
+      NetTaskDef(NetScope*n, const vector<NetNet*>&po);
       ~NetTaskDef();
 
       void set_proc(NetProc*p);
@@ -3293,7 +3296,7 @@ class NetTaskDef {
     private:
       NetScope*scope_;
       NetProc*proc_;
-      svector<NetNet*>ports_;
+      vector<NetNet*>ports_;
 
     private: // not implemented
       NetTaskDef(const NetTaskDef&);

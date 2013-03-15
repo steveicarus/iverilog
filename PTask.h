@@ -26,6 +26,7 @@
 # include  <vector>
 # include  <list>
 class Design;
+class NetNet;
 class NetScope;
 class PWire;
 class Statement;
@@ -56,14 +57,23 @@ class PTaskFunc : public PScope, public LineInfo {
       PTaskFunc(perm_string name, LexicalScope*parent);
       ~PTaskFunc();
 
-      void set_this(class_type_t*use_type);
+      void set_ports(std::vector<PWire *>*p);
+
+      void set_this(class_type_t*use_type, PWire*this_wire);
 
 	// If this task is a method of a class, this returns a pointer
 	// to the class type.
       inline class_type_t* method_of() const { return this_type_; }
 
+    protected:
+      void elaborate_sig_ports_(Design*des, NetScope*scope,
+				std::vector<NetNet*>&ports) const;
+
+      void dump_ports_(std::ostream&out, unsigned ind) const;
+
     private:
       class_type_t*this_type_;
+      std::vector<PWire*>*ports_;
 };
 
 /*
@@ -75,7 +85,6 @@ class PTask  : public PTaskFunc {
       explicit PTask(perm_string name, LexicalScope*parent, bool is_auto);
       ~PTask();
 
-      void set_ports(std::vector<PWire *>*p);
       void set_statement(Statement *s);
 
 	// Tasks introduce scope, to need to be handled during the
@@ -95,7 +104,6 @@ class PTask  : public PTaskFunc {
       void dump(ostream&, unsigned) const;
 
     private:
-      std::vector<PWire*>*ports_;
       Statement*statement_;
       bool is_auto_;
 
@@ -117,7 +125,6 @@ class PFunction : public PTaskFunc {
       explicit PFunction(perm_string name, LexicalScope*parent, bool is_auto);
       ~PFunction();
 
-      void set_ports(std::vector<PWire *>*p);
       void set_statement(Statement *s);
       void set_return(PTaskFuncArg t);
 
@@ -135,7 +142,6 @@ class PFunction : public PTaskFunc {
 
     private:
       PTaskFuncArg return_type_;
-      std::vector<PWire *> *ports_;
       Statement *statement_;
       bool is_auto_;
 };

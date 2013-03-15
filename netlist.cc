@@ -2606,7 +2606,7 @@ unsigned NetUReduce::width() const
       return width_;
 }
 
-NetTaskDef::NetTaskDef(NetScope*n, const svector<NetNet*>&po)
+NetTaskDef::NetTaskDef(NetScope*n, const vector<NetNet*>&po)
 : scope_(n), proc_(0), ports_(po)
 {
 }
@@ -2624,20 +2624,15 @@ void NetTaskDef::set_proc(NetProc*p)
 
 unsigned NetTaskDef::port_count() const
 {
-      return ports_.count();
+      return ports_.size();
 }
 
 NetNet* NetTaskDef::port(unsigned idx) const
 {
-      assert(idx < ports_.count());
+      assert(idx < ports_.size());
       return ports_[idx];
 }
-#if 0
-const string& NetTaskDef::name() const
-{
-      return name_;
-}
-#endif
+
 const NetScope* NetTaskDef::scope() const
 {
       return scope_;
