@@ -1564,6 +1564,9 @@ static int show_scope(ivl_scope_t net, void*x)
 	  case IVL_SCT_TASK:
 	    fprintf(out, " task %s%s", is_auto, ivl_scope_tname(net));
 	    break;
+	  case IVL_SCT_CLASS:
+	    fprintf(out, " class %s", ivl_scope_tname(net));
+	    break;
 	  default:
 	    fprintf(out, " type(%u) %s", ivl_scope_type(net),
 		    ivl_scope_tname(net));
@@ -1701,13 +1704,23 @@ int target_design(ivl_design_t des)
       ivl_design_roots(des, &root_scopes, &nroot);
       for (idx = 0 ;  idx < nroot ;  idx += 1) {
 
-	    if (ivl_scope_type(root_scopes[idx]) == IVL_SCT_PACKAGE) {
-		  fprintf(out, "package = %s;\n",
-			  ivl_scope_name(root_scopes[idx]));
-	    } else {
-		  fprintf(out, "root module = %s;\n",
-			  ivl_scope_name(root_scopes[idx]));
+	    ivl_scope_t cur = root_scopes[idx];
+	    switch (ivl_scope_type(cur)) {
+		case IVL_SCT_CLASS:
+		  fprintf(out, "class = %s\n", ivl_scope_name(cur));
+		  break;
+		case IVL_SCT_PACKAGE:
+		  fprintf(out, "package = %s\n", ivl_scope_name(cur));
+		  break;
+		case IVL_SCT_MODULE:
+		  fprintf(out, "root module = %s\n", ivl_scope_name(cur));
+		  break;
+		default:
+		  fprintf(out, "ERROR scope %s unknown type\n", ivl_scope_name(cur));
+		  stub_errors += 1;
+		  break;
 	    }
+
 	    show_scope(root_scopes[idx], 0);
       }
 

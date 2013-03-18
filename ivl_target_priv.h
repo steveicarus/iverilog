@@ -21,9 +21,12 @@
 
 # include  "ivl_target.h"
 # include  <inttypes.h>
+# include  <map>
 # include  <vector>
 # include  <ostream>
 # include  <valarray>
+
+class NetScope;
 
 /*
 * This header has declarations related to the ivl_target.h API that
@@ -48,6 +51,7 @@ struct ivl_design_s {
       ivl_process_t threads_;
 
 	// Keep arrays of root scopes.
+      std::map<const NetScope*,ivl_scope_t> classes;
       std::vector<ivl_scope_t> packages;
       std::vector<ivl_scope_t> roots;
 

@@ -26,7 +26,9 @@
  * target.
  */
 # include  "target.h"
+# include  "netclass.h"
 # include  "netlist.h"
+# include  "compiler.h"
 # include  <typeinfo>
 # include  <cassert>
 # include  <cstring>
@@ -378,16 +380,29 @@ void NetRepeat::emit_recurse(struct target_t*tgt) const
 	    statement_->emit_proc(tgt);
 }
 
+void netclass_t::emit_scope(struct target_t*tgt) const
+{
+      class_scope_->emit_scope(tgt);
+      class_scope_->emit_defs(tgt);
+}
+
 void NetScope::emit_scope(struct target_t*tgt) const
 {
+      if (debug_emit) {
+	    cerr << "NetScope::emit_scope: "
+		 << "Emit scope basename=" << basename() << endl;
+      }
+
       tgt->scope(this);
 
       for (NetEvent*cur = events_ ;  cur ;  cur = cur->snext_)
 	    tgt->event(cur);
 
       for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
-		 ; cur != classes_.end() ; ++cur)
+		 ; cur != classes_.end() ; ++cur) {
+	    cur->second->emit_scope(tgt);
 	    tgt->class_type(this, cur->second);
+      }
 
       for (list<netenum_t*>::const_iterator cur = enum_sets_.begin()
 		 ; cur != enum_sets_.end() ;  ++cur)
@@ -479,8 +494,8 @@ int Design::emit(struct target_t*tgt) const
 
 	// emit task and function definitions
       bool tasks_rc = true;
-      for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
-	   scope != root_scopes_.end(); ++ scope )
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin()
+		 ; scope != root_scopes_.end(); ++ scope )
 	    tasks_rc &= (*scope)->emit_defs(tgt);
 
 

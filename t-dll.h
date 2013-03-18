@@ -167,7 +167,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       static ivl_parameter_t scope_find_param(ivl_scope_t scope,
 					      const char*name);
 
-      void add_root(ivl_design_s &des_, const NetScope *s);
+      void add_root(const NetScope *s);
 
       void make_assign_lvals_(const NetAssignBase*net);
       void sub_off_from_expr_(long);

@@ -213,8 +213,9 @@ static ivl_scope_t find_scope_from_root(ivl_scope_t root, const NetScope*cur)
 {
       if (const NetScope*par = cur->parent()) {
 	    ivl_scope_t parent = find_scope_from_root(root, par);
-	    if (parent == 0)
+	    if (parent == 0) {
 		  return 0;
+	    }
 
 	    map<hname_t,ivl_scope_t>::iterator idx = parent->children.find(cur->fullname());
 	    if (idx == parent->children.end())
@@ -246,12 +247,26 @@ ivl_scope_t dll_target::find_scope(ivl_design_s &des, const NetScope*cur)
 	    return 0;
       }
 
-      ivl_scope_t scope = 0;
-      for (unsigned i = 0; i < des.roots.size() && scope == 0; i += 1) {
-	    assert(des.roots[i]);
-	    scope = find_scope_from_root(des.roots[i], cur);
+      if (cur->type() == NetScope::CLASS) {
+	    ivl_scope_t tmp = des.classes[cur];
+	    return tmp;
       }
-      return scope;
+
+      for (unsigned idx = 0; idx < des.roots.size(); idx += 1) {
+	    assert(des.roots[idx]);
+	    ivl_scope_t scope = find_scope_from_root(des.roots[idx], cur);
+	    if (scope)
+		  return scope;
+      }
+
+      for (map<const NetScope*,ivl_scope_t>::iterator idx = des.classes.begin()
+		 ; idx != des.classes.end() ; ++ idx) {
+	    ivl_scope_t scope = find_scope_from_root(idx->second, cur);
+	    if (scope)
+		  return scope;
+      }
+
+      return 0;
 }
 
 ivl_scope_t dll_target::lookup_scope_(const NetScope*cur)
@@ -534,7 +549,7 @@ void dll_target::make_scope_param_expr(ivl_parameter_t cur_par, NetExpr*etmp)
       expr_ = 0;
 }
 
-void dll_target::add_root(ivl_design_s &des__, const NetScope *s)
+void dll_target::add_root(const NetScope *s)
 {
       ivl_scope_t root_ = new struct ivl_scope_s;
       perm_string name = s->basename();
@@ -549,7 +564,19 @@ void dll_target::add_root(ivl_design_s &des__, const NetScope *s)
       root_->lpm_ = 0;
       root_->def = 0;
       make_scope_parameters(root_, s);
-      root_->type_ = s->type()==NetScope::PACKAGE? IVL_SCT_PACKAGE : IVL_SCT_MODULE;
+      switch (s->type()) {
+	  case NetScope::PACKAGE:
+	    root_->type_ = IVL_SCT_PACKAGE;
+	    break;
+	  case NetScope::MODULE:
+	    root_->type_ = IVL_SCT_MODULE;
+	    break;
+	  case NetScope::CLASS:
+	    root_->type_ = IVL_SCT_CLASS;
+	    break;
+	  default:
+	    assert(0);
+      }
       root_->tname_ = root_->name_;
       root_->time_precision = s->time_precision();
       root_->time_units = s->time_unit();
@@ -557,7 +584,9 @@ void dll_target::add_root(ivl_design_s &des__, const NetScope *s)
       root_->attr  = fill_in_attributes(s);
       root_->is_auto = 0;
       root_->is_cell = s->is_cell();
-      if (s->type()==NetScope::MODULE) {
+
+      switch (s->type()) {
+	  case NetScope::MODULE:
 	    root_->ports = s->module_port_nets();
 	    if (root_->ports > 0) {
 		  root_->u_.net = new NetNet*[root_->ports];
@@ -567,11 +596,22 @@ void dll_target::add_root(ivl_design_s &des__, const NetScope *s)
 	    }
 	    root_->module_ports_info = s->module_port_info();
 
-	    des__.roots.push_back(root_);
+	    des_.roots.push_back(root_);
+	    break;
 
-      } else {
+	  case NetScope::PACKAGE:
 	    root_->ports = 0;
-	    des__.packages.push_back(root_);
+	    des_.packages.push_back(root_);
+	    break;
+
+	  case NetScope::CLASS:
+	    root_->ports = 0;
+	    des_.classes[s] = root_;
+	    break;
+
+	  default:
+	    assert(0);
+	    break;
       }
 }
 
@@ -613,13 +653,13 @@ bool dll_target::start_design(const Design*des)
       list<NetScope *> package_scopes = des->find_package_scopes();
       for (list<NetScope*>::const_iterator scop = package_scopes.begin()
 		 ; scop != package_scopes.end(); ++ scop ) {
-	    add_root(des_, *scop);
+	    add_root(*scop);
       }
 
       list<NetScope *> root_scopes = des->find_root_scopes();
       for (list<NetScope*>::const_iterator scop = root_scopes.begin()
 		 ; scop != root_scopes.end(); ++ scop ) {
-	    add_root(des_, *scop);
+	    add_root(*scop);
       }
 
       target_ = (target_design_f)ivl_dlsym(dll_, LU "target_design" TU);
@@ -2275,20 +2315,17 @@ void dll_target::net_probe(const NetEvProbe*)
 
 void dll_target::scope(const NetScope*net)
 {
-      ivl_scope_t scop;
+      if (net->parent()==0 && net->type()==NetScope::CLASS) {
 
-      if (net->parent() == 0) {
-	    unsigned i;
-	    scop = NULL;
-	    for (i = 0; i < des_.roots.size() && scop == NULL; i++) {
-		  if (strcmp(des_.roots[i]->name_, net->basename()) == 0)
-			scop = des_.roots[i];
-	    }
-	    assert(scop);
+	    add_root(net);
+
+      } if (net->parent() == 0) {
+
+	      // Root scopes are already created...
 
       } else {
 	    perm_string sname = make_scope_name(net->fullname());
-	    scop = new struct ivl_scope_s;
+	    ivl_scope_t scop = new struct ivl_scope_s;
 	    scop->name_ = sname;
 	    FILE_NAME(scop, net);
 	    scop->parent = find_scope(des_, net->parent());

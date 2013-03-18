@@ -1192,8 +1192,8 @@ void NetScope::dump(ostream&o) const
       if (is_cell()) o << " (cell)";
       if (nested_module()) o << " (nested)";
       if (program_block()) o << " (program)";
-
-      o << endl;
+      o << " " << children_.size() << " children, "
+	<< classes_.size() << " classes" << endl;
 
       for (unsigned idx = 0 ;  idx < attr_cnt() ;  idx += 1)
 	    o << "    (* " << attr_key(idx) << " = "
