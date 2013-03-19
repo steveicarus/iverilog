@@ -3112,8 +3112,14 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
       unsigned parm_count = parms_.size();
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << "PCallTask::elaborate_usr: "
+		 << "Elaborate call to task " << task->basename()
+		 << " width " << parm_count << " arguments." << endl;
+      }
+
 	// Handle special case that the definition has no arguments
-	// but the parser found a simgle nul argument. This is an
+	// but the parser found a single nul argument. This is an
 	// argument of the parser allowing for the possibility of
 	// default values for argumets: The parser cannot tell the
 	// difference between "func()" and "func(<default>)".
@@ -3128,15 +3134,99 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      NetUTask*cur;
-
 	/* Handle non-automatic tasks with no parameters specially. There is
            no need to make a sequential block to hold the generated code. */
       if ((parm_count == 0) && !task->is_auto()) {
-	    cur = new NetUTask(task);
+	    NetUTask*cur = new NetUTask(task);
 	    cur->set_line(*this);
 	    return cur;
       }
+
+      return elaborate_build_call_(des, scope, task, 0);
+}
+
+NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope) const
+{
+      pform_name_t use_path = path_;
+      perm_string method_name = peek_tail_name(use_path);
+      use_path.pop_back();
+
+      NetNet *net;
+      const NetExpr *par;
+      NetEvent *eve;
+      const NetExpr *ex1, *ex2;
+
+	// There is no signal to search for so this cannot be a method.
+      if (use_path.empty()) return 0;
+
+      symbol_search(this, des, scope, use_path,
+		    net, par, eve, ex1, ex2);
+
+      if (net == 0)
+	    return 0;
+
+	// Is this a delete method for dynamic arrays?
+      if (net->darray_type() && method_name=="delete") {
+	    NetESignal*sig = new NetESignal(net);
+
+	    vector<NetExpr*> argv (1);
+	    argv[0] = sig;
+
+	    NetSTask*sys = new NetSTask("$ivl_darray_method$delete",
+					IVL_SFUNC_AS_TASK_IGNORE, argv);
+	    sys->set_line(*this);
+	    return sys;
+      }
+
+      if (netclass_t*class_type = net->class_type()) {
+	    NetScope*task = class_type->method_from_name(method_name);
+	    if (task == 0) {
+		  cerr << get_fileline() << ": internal error: "
+		       << "Can't find task " << method_name
+		       << " in class " << class_type->get_name() << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PCallTask::elaborate_method_: "
+		       << "Elaborate " << class_type->get_name()
+		       << " method " << task->basename() << endl;
+	    }
+
+	    NetESignal*use_this = new NetESignal(net);
+	    use_this->set_line(*this);
+
+	    return elaborate_build_call_(des, scope, task, use_this);
+      }
+
+      return 0;
+}
+
+NetProc* PCallTask::elaborate_function_(Design*des, NetScope*scope) const
+{
+      NetFuncDef*func = des->find_function(scope, path_);
+	// This is not a function, so this task call cannot be a function
+	// call with a missing return assignment.
+      if (! func) return 0;
+
+// HERE: Should this be an assign to a dummy variable or something else?
+      cerr << get_fileline() << ": sorry: Icarus cannot currently call "
+              "functions like a tasks." << endl;
+      des->errors += 1;
+      return 0;
+}
+
+NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
+					  NetScope*task, NetExpr*use_this) const
+{
+      NetTaskDef*def = task->task_def();
+
+	/* The caller has checked the parms_ size to make sure it
+	   matches the task definition, so we can just use the task
+	   definition to get the parm_count. */
+
+      unsigned parm_count = def->port_count();
 
       NetBlock*block = new NetBlock(NetBlock::SEQU, 0);
       block->set_line(*this);
@@ -3152,10 +3242,27 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 
         /* If this is an automatic task, generate a statement to
            allocate the local storage. */
+
       if (task->is_auto()) {
 	    NetAlloc*ap = new NetAlloc(task);
 	    ap->set_line(*this);
 	    block->append(ap);
+      }
+
+	/* If this is a method call, then the use_this pointer will
+	   have an expression for the "this" argument. The "this"
+	   argument is the first argument of any method, so emit it
+	   here. */
+
+      if (use_this) {
+	    ivl_assert(*this, def->port_count() >= 1);
+	    NetNet*port = def->port(0);
+	    ivl_assert(*this, port->port_type()==NetNet::PINPUT);
+
+	    NetAssign_*lv = new NetAssign_(port);
+	    NetAssign*pr = new NetAssign(lv, use_this);
+	    pr->set_line(*this);
+	    block->append(pr);
       }
 
 	/* Generate assignment statement statements for the input and
@@ -3164,9 +3271,11 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	   expression the r-value. We know by definition that the port
 	   is a reg type, so this elaboration is pretty obvious. */
 
-      for (unsigned idx = 0 ;  idx < parm_count ;  idx += 1) {
+      for (unsigned idx = use_this?1:0 ;  idx < parm_count ;  idx += 1) {
 
-	    if (parms_[idx] == 0 && !gn_system_verilog()) {
+	    size_t parms_idx = use_this? idx-1 : idx;
+
+	    if (parms_[parms_idx] == 0 && !gn_system_verilog()) {
 		  cerr << get_fileline() << ": error: "
 		       << "Missing argument " << (idx+1)
 		       << " of call to task." << endl;
@@ -3174,7 +3283,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 		  continue;
 	    }
 
-	    if (parms_[idx] == 0) {
+	    if (parms_[parms_idx] == 0) {
 		  cerr << get_fileline() << ": sorry: "
 		       << "Implicit arguments (arg " << (idx+1)
 		       << ") not supported." << endl;
@@ -3191,7 +3300,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    unsigned wid = count_lval_width(lv);
 	    ivl_variable_type_t lv_type = lv->expr_type();
 
-	    NetExpr*rv = elaborate_rval_expr(des, scope, lv_type, wid, parms_ [idx]);
+	    NetExpr*rv = elaborate_rval_expr(des, scope, lv_type, wid, parms_ [parms_idx]);
 	    if (NetEEvent*evt = dynamic_cast<NetEEvent*> (rv)) {
 		  cerr << evt->get_fileline() << ": error: An event '"
 		       << evt->event()->name() << "' can not be a user "
@@ -3206,10 +3315,9 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       }
 
 	/* Generate the task call proper... */
-      cur = new NetUTask(task);
+      NetUTask*cur = new NetUTask(task);
       cur->set_line(*this);
       block->append(cur);
-
 
 	/* Generate assignment statements for the output and INOUT
 	   ports of the task. The l-value in this case is the
@@ -3291,70 +3399,6 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       }
 
       return block;
-}
-
-NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope) const
-{
-      pform_name_t use_path = path_;
-      perm_string method_name = peek_tail_name(use_path);
-      use_path.pop_back();
-
-      NetNet *net;
-      const NetExpr *par;
-      NetEvent *eve;
-      const NetExpr *ex1, *ex2;
-
-	// There is no signal to search for so this cannot be a method.
-      if (use_path.empty()) return 0;
-
-      symbol_search(this, des, scope, use_path,
-		    net, par, eve, ex1, ex2);
-
-      if (net == 0)
-	    return 0;
-
-	// Is this a delete method for dynamic arrays?
-      if (net->darray_type() && method_name=="delete") {
-	    NetESignal*sig = new NetESignal(net);
-
-	    vector<NetExpr*> argv (1);
-	    argv[0] = sig;
-
-	    NetSTask*sys = new NetSTask("$ivl_darray_method$delete",
-					IVL_SFUNC_AS_TASK_IGNORE, argv);
-	    sys->set_line(*this);
-	    return sys;
-      }
-
-      if (netclass_t*class_type = net->class_type()) {
-	    NetScope*task = class_type->method_from_name(method_name);
-	    if (task == 0) {
-		  cerr << get_fileline() << ": XXXXX: "
-		       << "Can't find task " << method_name
-		       << " in class " << class_type->get_name() << endl;
-		  return 0;
-	    }
-
-	    NetUTask*tmp = new NetUTask(task);
-	    tmp->set_line(*this);
-	    return tmp;
-      }
-
-      return 0;
-}
-
-NetProc* PCallTask::elaborate_function_(Design*des, NetScope*scope) const
-{
-      NetFuncDef*func = des->find_function(scope, path_);
-	// This is not a function, so this task call cannot be a function
-	// call with a missing return assignment.
-      if (! func) return 0;
-
-// HERE: Should this be an assign to a dummy variable or something else?
-      cerr << get_fileline() << ": sorry: Icarus cannot currently call "
-              "functions like a tasks." << endl;
-      des->errors += 1;
-      return 0;
 }
 
 /*

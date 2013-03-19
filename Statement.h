@@ -214,6 +214,9 @@ class PCallTask  : public Statement {
       NetProc*elaborate_method_(Design*des, NetScope*scope) const;
       NetProc*elaborate_function_(Design*des, NetScope*scope) const;
 
+      NetProc*elaborate_build_call_(Design*des, NetScope*scope,
+				    NetScope*task, NetExpr*use_this) const;
+
       pform_name_t path_;
       vector<PExpr*> parms_;
 };
