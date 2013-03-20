@@ -2025,8 +2025,18 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    ivl_assert(*this, res);
 
 	    vector<NetExpr*>parms;
-	    cerr << get_fileline() << ": PECallFunction::elaborate_expr_method_: "
-		 << "Stub arguments to the function method." << endl;
+
+	    NetESignal*ethis = new NetESignal(net);
+	    ethis->set_line(*this);
+	    parms.push_back(ethis);
+
+	    if (parms_.size() > 0) {
+		  cerr << get_fileline() << ": sorry: "
+		       << "Arguments (" << parms_.size() << ")"
+		       << " to function method " << func->basename()
+		       << " not supported." << endl;
+		  des->errors += 1;
+	    }
 
 	    NetESignal*eres = new NetESignal(res);
 	    NetEUFunc*call = new NetEUFunc(scope, func, eres, parms, false);
