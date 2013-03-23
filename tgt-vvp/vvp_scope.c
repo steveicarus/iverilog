@@ -2138,12 +2138,6 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 
       const char*prefix = ivl_scope_is_auto(net) ? "auto" : "";
 
-	/* XXXX Classes may have scopes, but we are not ready yet. for
-	   now, ignore them as they are not needed. */
-      if (ivl_scope_type(net) == IVL_SCT_CLASS) {
-	    return 0;
-      }
-
       switch (ivl_scope_type(net)) {
       case IVL_SCT_MODULE:   type = "module";   break;
       case IVL_SCT_FUNCTION: type = "function"; break;
@@ -2151,7 +2145,8 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       case IVL_SCT_BEGIN:    type = "begin";    break;
       case IVL_SCT_FORK:     type = "fork";     break;
       case IVL_SCT_GENERATE: type = "generate"; break;
-      case IVL_SCT_PACKAGE:  type = "package"; break;
+      case IVL_SCT_PACKAGE:  type = "package";  break;
+      case IVL_SCT_CLASS:    type = "class";    break;
       default:               type = "?";        assert(0);
       }
 

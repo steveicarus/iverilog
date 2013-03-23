@@ -371,6 +371,11 @@ struct vpiScopeFork  : public __vpiScope {
       int get_type_code(void) const { return vpiNamedFork; }
 };
 
+struct vpiScopeClass  : public __vpiScope {
+      inline vpiScopeClass() { }
+      int get_type_code(void) const { return vpiClassTypespec; }
+};
+
 /*
  * The current_scope is a compile time concept. As the vvp source is
  * compiled, items that have scope are placed in the current
@@ -431,6 +436,8 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
 	    scope = new vpiScopeBegin;
       } else if (strcmp(base_type,"package") == 0) {
 	    scope = new vpiScopePackage;
+      } else if (strcmp(base_type,"class") == 0) {
+	    scope = new vpiScopeClass;
       } else {
 	    scope = new vpiScopeModule;
 	    assert(0);

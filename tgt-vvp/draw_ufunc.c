@@ -59,6 +59,12 @@ static void function_argument_bool(ivl_signal_t port, ivl_expr_t expr)
       function_argument_logic(port, expr);
 }
 
+static void function_argument_class(ivl_signal_t port, ivl_expr_t expr)
+{
+      draw_eval_object(expr);
+      fprintf(vvp_out, "    %%store/obj v%p_0;\n", port);
+}
+
 static void draw_function_argument(ivl_signal_t port, ivl_expr_t expr)
 {
       ivl_variable_type_t dtype = ivl_signal_data_type(port);
@@ -71,6 +77,9 @@ static void draw_function_argument(ivl_signal_t port, ivl_expr_t expr)
 	    break;
 	  case IVL_VT_BOOL:
 	    function_argument_bool(port, expr);
+	    break;
+	  case IVL_VT_CLASS:
+	    function_argument_class(port, expr);
 	    break;
 	  default:
 	    fprintf(stderr, "XXXX function argument %s type=%d?!\n",
