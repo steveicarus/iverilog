@@ -1848,46 +1848,9 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	   done in the scope of the function call, and not the scope
 	   of the function being called. The scope of the called
 	   function is elaborated when the definition is elaborated. */
-
-      unsigned parm_errors = 0;
-      unsigned missing_parms = 0;
-      for (unsigned idx = 0 ;  idx < parms.size() ;  idx += 1) {
-	    PExpr*tmp = parms_[idx];
-	    if (tmp) {
-		  parms[idx] = elaborate_rval_expr(des, scope,
-						   def->port(idx)->data_type(),
-						   (unsigned)def->port(idx)->vector_width(),
-						   tmp, need_const);
-                  if (parms[idx] == 0) {
-                        parm_errors += 1;
-                        continue;
-                  }
-		  if (NetEEvent*evt = dynamic_cast<NetEEvent*> (parms[idx])) {
-			cerr << evt->get_fileline() << ": error: An event '"
-			     << evt->event()->name() << "' can not be a user "
-			        "function argument." << endl;
-			des->errors += 1;
-		  }
-		  if (debug_elaborate)
-			cerr << get_fileline() << ": debug:"
-			     << " function " << path_
-			     << " arg " << (idx+1)
-			     << " argwid=" << parms[idx]->expr_width()
-			     << ": " << *parms[idx] << endl;
-
-	    } else {
-		  missing_parms += 1;
-		  parms[idx] = 0;
-	    }
-      }
-
-      if (missing_parms > 0) {
-	    cerr << get_fileline() << ": error: The function " << path_
-		 << " has been called with empty parameters." << endl;
-	    cerr << get_fileline() << ":      : Verilog doesn't allow "
-		 << "passing empty parameters to functions." << endl;
-	    des->errors += 1;
-      }
+      unsigned parm_errors = elaborate_arguments_(des, scope,
+						  def, need_const,
+						  parms, 0);
 
       if (need_const && !dscope->is_const_func()) {
 
@@ -1909,7 +1872,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
             return 0;
       }
 
-      if (missing_parms || parm_errors)
+      if (parm_errors)
             return 0;
 
 	/* Look for the return value signal for the called
@@ -1936,6 +1899,67 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	   << " in " << dscope->basename() << "." << endl;
       des->errors += 1;
       return 0;
+}
+
+/*
+ * Elaborate the arguments of a function or method. The parms vector
+ * is where to place the elaborated expressions, so it an output. The
+ * parm_off is where in the parms vector to start writing
+ * arguments. This value is normally 0, but is 1 if this is a method
+ * so that parms[0] can hold the "this" argument. In this latter case,
+ * def->port(0) will be the "this" argument and should be skipped.
+ */
+unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
+					      NetFuncDef*def, bool need_const,
+					      vector<NetExpr*>&parms,
+					      unsigned parm_off) const
+{
+      unsigned parm_errors = 0;
+      unsigned missing_parms = 0;
+
+      const unsigned parm_count = parms.size() - parm_off;
+
+      for (unsigned idx = 0 ; idx < parm_count ; idx += 1) {
+	    unsigned pidx = idx + parm_off;
+	    PExpr*tmp = parms_[idx];
+	    if (tmp) {
+		  parms[pidx] = elaborate_rval_expr(des, scope,
+						    def->port(pidx)->data_type(),
+						    (unsigned)def->port(pidx)->vector_width(),
+						    tmp, need_const);
+		  if (parms[pidx] == 0) {
+			parm_errors += 1;
+			continue;
+		  }
+
+		  if (NetEEvent*evt = dynamic_cast<NetEEvent*> (parms[pidx])) {
+			cerr << evt->get_fileline() << ": error: An event '"
+			     << evt->event()->name() << "' can not be a user "
+			        "function argument." << endl;
+			des->errors += 1;
+		  }
+		  if (debug_elaborate)
+			cerr << get_fileline() << ": debug:"
+			     << " function " << path_
+			     << " arg " << (idx+1)
+			     << " argwid=" << parms[pidx]->expr_width()
+			     << ": " << *parms[idx] << endl;
+	    } else {
+		  missing_parms += 1;
+		  parms[pidx] = 0;
+	    }
+      }
+
+      if (missing_parms > 0) {
+	    cerr << get_fileline() << ": error: The function " << path_
+		 << " has been called with empty parameters." << endl;
+	    cerr << get_fileline() << ":      : Verilog doesn't allow "
+		 << "passing empty parameters to functions." << endl;
+	    parm_errors += 1;
+	    des->errors += 1;
+      }
+
+      return parm_errors;
 }
 
 NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
@@ -2021,6 +2045,9 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  return 0;
 	    }
 
+	    NetFuncDef*def = func->func_def();
+	    ivl_assert(*this, def);
+
 	    NetNet*res = func->find_signal(func->basename());
 	    ivl_assert(*this, res);
 
@@ -2030,13 +2057,8 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    ethis->set_line(*this);
 	    parms.push_back(ethis);
 
-	    if (parms_.size() > 0) {
-		  cerr << get_fileline() << ": sorry: "
-		       << "Arguments (" << parms_.size() << ")"
-		       << " to function method " << func->basename()
-		       << " not supported." << endl;
-		  des->errors += 1;
-	    }
+	    parms.resize(1 + parms_.size());
+	    elaborate_arguments_(des, scope, def, false, parms, 1);
 
 	    NetESignal*eres = new NetESignal(res);
 	    NetEUFunc*call = new NetEUFunc(scope, func, eres, parms, false);

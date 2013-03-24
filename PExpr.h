@@ -816,6 +816,11 @@ class PECallFunction : public PExpr {
 			         width_mode_t&mode);
       unsigned test_width_method_(Design*des, NetScope*scope,
 				  width_mode_t&mode);
+
+      unsigned elaborate_arguments_(Design*des, NetScope*scope,
+				    NetFuncDef*def, bool need_const,
+				    std::vector<NetExpr*>&parms,
+				    unsigned parm_off) const;
 };
 
 /*
