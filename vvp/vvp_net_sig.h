@@ -323,13 +323,9 @@ class vvp_fun_signal_object : public vvp_fun_signal_base {
 
     public:
       explicit vvp_fun_signal_object() {};
-
       unsigned size() const { return 1; }
 
-      inline vvp_object_t get_object() const { return value_; }
-
-    protected:
-      vvp_object_t value_;
+      virtual vvp_object_t get_object() const =0;
 };
 
 /*
@@ -342,6 +338,11 @@ class vvp_fun_signal_object_sa : public vvp_fun_signal_object {
 
       void recv_object(vvp_net_ptr_t port, vvp_object_t bit,
 		    vvp_context_t context);
+
+      vvp_object_t get_object() const;
+
+    private:
+      vvp_object_t value_;
 };
 
 /*
@@ -359,6 +360,9 @@ class vvp_fun_signal_object_aa : public vvp_fun_signal_object, public automatic_
       void free_instance(vvp_context_t context);
 #endif
 
+      void recv_object(vvp_net_ptr_t port, vvp_object_t bit,
+		    vvp_context_t context);
+
 	// Get information about the vector value.
       unsigned   value_size() const;
       vvp_bit4_t value(unsigned idx) const;
@@ -366,6 +370,8 @@ class vvp_fun_signal_object_aa : public vvp_fun_signal_object, public automatic_
       void vec4_value(vvp_vector4_t&) const;
 	//double real_value() const;
 	//void get_signal_value(struct t_vpi_value*vp);
+
+      vvp_object_t get_object() const;
 
     public: // These objects are only permallocated.
       static void* operator new(std::size_t size);

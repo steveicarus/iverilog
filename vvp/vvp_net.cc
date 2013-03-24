@@ -296,6 +296,11 @@ vvp_net_fil_t::prop_t vvp_net_fil_t::filter_long(long&)
       return PROP;
 }
 
+vvp_net_fil_t::prop_t vvp_net_fil_t::filter_object(vvp_object_t&)
+{
+      return PROP;
+}
+
 void vvp_net_fil_t::force_mask(vvp_vector2_t mask)
 {
       if (force_mask_.size() == 0)

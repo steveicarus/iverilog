@@ -698,6 +698,11 @@ void vvp_fun_signal_object_sa::recv_object(vvp_net_ptr_t ptr, vvp_object_t bit,
       }
 }
 
+vvp_object_t vvp_fun_signal_object_sa::get_object() const
+{
+      return value_;
+}
+
 vvp_fun_signal_object_aa::vvp_fun_signal_object_aa()
 {
       context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
@@ -708,19 +713,44 @@ vvp_fun_signal_object_aa::~vvp_fun_signal_object_aa()
       assert(0);
 }
 
-void vvp_fun_signal_object_aa::alloc_instance(vvp_context_t)
+void vvp_fun_signal_object_aa::alloc_instance(vvp_context_t context)
 {
-      assert(0);
+      vvp_object_t*bits = new vvp_object_t;
+      vvp_set_context_item(context, context_idx_, bits);
+      bits->reset();
 }
 
-void vvp_fun_signal_object_aa::reset_instance(vvp_context_t)
+void vvp_fun_signal_object_aa::reset_instance(vvp_context_t context)
 {
-      assert(0);
+      vvp_object_t*bits = static_cast<vvp_object_t*>
+	    (vvp_get_context_item(context, context_idx_));
+      bits->reset();
+}
+
+vvp_object_t vvp_fun_signal_object_aa::get_object() const
+{
+      vvp_object_t*bits = static_cast<vvp_object_t*>
+	    (vthread_get_rd_context_item(context_idx_));
+      return *bits;
+}
+
+void vvp_fun_signal_object_aa::recv_object(vvp_net_ptr_t ptr, vvp_object_t bit,
+					   vvp_context_t context)
+{
+      assert(ptr.port() == 0);
+      assert(context);
+
+      vvp_object_t*bits = static_cast<vvp_object_t*>
+	    (vvp_get_context_item(context, context_idx_));
+
+      if (*bits != bit) {
+	    *bits = bit;
+	    ptr.ptr()->send_object(bit, context);
+      }
 }
 
 unsigned vvp_fun_signal_object_aa::value_size() const
 {
-      assert(0);
       return 1;
 }
 
