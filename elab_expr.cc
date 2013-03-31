@@ -1562,6 +1562,7 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	   of the function being called. The scope of the called
 	   function is elaborated when the definition is elaborated. */
 
+      unsigned parm_errors = 0;
       unsigned missing_parms = 0;
       for (unsigned idx = 0 ;  idx < parms.count() ;  idx += 1) {
 	    PExpr*tmp = parms_[idx];
@@ -1570,6 +1571,11 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 						   def->port(idx)->data_type(),
 						   def->port(idx)->vector_width(),
 						   tmp);
+		  if (parms[idx] == 0) {
+			parm_errors += 1;
+			continue;
+		  }
+
 		  if (NetEEvent*evt = dynamic_cast<NetEEvent*> (parms[idx])) {
 			cerr << evt->get_fileline() << ": error: An event '"
 			     << evt->event()->name() << "' can not be a user "
@@ -1595,8 +1601,11 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 	    cerr << get_fileline() << ":      : Verilog doesn't allow "
 		 << "passing empty parameters to functions." << endl;
 	    des->errors += 1;
+	    return 0;
       }
 
+      if (parm_errors > 0)
+	    return 0;
 
 	/* Look for the return value signal for the called
 	   function. This return value is a magic signal in the scope
