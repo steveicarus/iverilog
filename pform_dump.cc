@@ -239,6 +239,8 @@ void PEConcat::dump(ostream&out) const
 
 void PECallFunction::dump(ostream &out) const
 {
+      if (package_) out << package_->pscope_name() << "::";
+
       out << path_ << "(";
 
       if (! parms_.empty()) {
@@ -1537,5 +1539,7 @@ void PPackage::pform_dump(std::ostream&out) const
       out << "package " << pscope_name() << endl;
       dump_localparams_(out, 4);
       dump_parameters_(out, 4);
+      dump_tasks_(out, 4);
+      dump_funcs_(out, 4);
       out << "endpackage" << endl;
 }

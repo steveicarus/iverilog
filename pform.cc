@@ -519,16 +519,68 @@ data_type_t* pform_test_type_identifier(const char*txt)
 	    return 0;
 
       perm_string name = lex_strings.make(txt);
-      map<perm_string,data_type_t*>::iterator cur;
+
       LexicalScope*cur_scope = lexical_scope;
       do {
+	    map<perm_string,data_type_t*>::iterator cur;
+
+	      // First look to see if this identifier is imported from
+	      // a package. If it is, see if it is a type in that
+	      // package. If it is, then great. If imported as
+	      // something other then a type, then give up now becase
+	      // the name has at least shadowed any other possible
+	      // meaning for this name.
+	    map<perm_string,PPackage*>::iterator cur_pkg;
+	    cur_pkg = cur_scope->imports.find(name);
+	    if (cur_pkg != cur_scope->imports.end()) {
+		  PPackage*pkg = cur_pkg->second;
+		  cur = pkg->typedefs.find(name);
+		  if (cur != pkg->typedefs.end())
+			return cur->second;
+
+		    // Not a type. Give up.
+		  return 0;
+	    }
+
 	    cur = cur_scope->typedefs.find(name);
 	    if (cur != cur_scope->typedefs.end())
 		  return cur->second;
 
 	    cur_scope = cur_scope->parent_scope();
       } while (cur_scope);
+
       return 0;
+}
+
+PECallFunction* pform_make_call_function(const struct vlltype&loc,
+					 const pform_name_t&name,
+					 const list<PExpr*>&parms)
+{
+      PECallFunction*tmp = 0;
+
+	// First try to get the function name from a package. Check
+	// the imports, and if the name is there, make the function as
+	// a package member.
+      do {
+	    if (name.size() != 1)
+		  break;
+
+	    perm_string use_name = peek_tail_name(name);
+
+	    map<perm_string,PPackage*>::iterator cur_pkg;
+	    cur_pkg = lexical_scope->imports.find(use_name);
+	    if (cur_pkg == lexical_scope->imports.end())
+		  break;
+
+	    tmp = new PECallFunction(cur_pkg->second, use_name, parms);
+      } while(0);
+
+      if (tmp == 0) {
+	    tmp = new PECallFunction(name, parms);
+      }
+
+      FILE_NAME(tmp, loc);
+      return tmp;
 }
 
 static void pform_put_behavior_in_scope(PProcess*pp)

@@ -71,18 +71,8 @@ void pform_end_package_declaration(const struct vlltype&loc)
  * package is declared in pform ahead of time (it is) and that we can
  * simply transfer definitions to the current scope (we can).
  */
-void pform_package_import(const struct vlltype&, const char*pkg_name, const char*ident)
+void pform_package_import(const struct vlltype&, PPackage*pkg, const char*ident)
 {
-      perm_string use_name = lex_strings.make(pkg_name);
-      map<perm_string,PPackage*>::const_iterator pcur = pform_packages.find(use_name);
-      if (pcur == pform_packages.end()) {
-	    ostringstream msg;
-	    msg << "Package " << pkg_name << " not found." << ends;
-	    VLerror(msg.str().c_str());
-	    return;
-      }
-
-      PPackage*pkg = pcur->second;
       LexicalScope*scope = pform_peek_scope();
 
       if (ident) {
@@ -90,15 +80,36 @@ void pform_package_import(const struct vlltype&, const char*pkg_name, const char
 
 	    map<perm_string,LexicalScope::param_expr_t>::const_iterator cur
 		  = pkg->parameters.find(use_ident);
-	    if (cur == pkg->parameters.end()) {
-		  ostringstream msg;
-		  msg << "Symbol " << use_ident
-		      << " not found in package " << pcur->first << "." << ends;
-		  VLerror(msg.str().c_str());
+	    if (cur != pkg->parameters.end()) {
+		  scope->imports[cur->first] = pkg;
 		  return;
 	    }
 
-	    scope->imports[cur->first] = pkg;
+	    cur = pkg->localparams.find(use_ident);
+	    if (cur != pkg->localparams.end()) {
+		  scope->imports[cur->first] = pkg;
+		  return;
+	    }
+
+	    map<perm_string,data_type_t*>::const_iterator tcur;
+	    tcur = pkg->typedefs.find(use_ident);
+	    if (tcur != pkg->typedefs.end()) {
+		  scope->imports[tcur->first] = pkg;
+		  return;
+	    }
+
+	    map<perm_string,PFunction*>::const_iterator fcur;
+	    fcur = pkg->funcs.find(use_ident);
+	    if (fcur != pkg->funcs.end()) {
+		  scope->imports[fcur->first] = pkg;
+		  return;
+	    }
+
+	    ostringstream msg;
+	    msg << "Symbol " << use_ident
+		<< " not found in package " << pkg->pscope_name() << "." << ends;
+	    VLerror(msg.str().c_str());
+	    return;
 
       } else {
 
@@ -109,24 +120,56 @@ void pform_package_import(const struct vlltype&, const char*pkg_name, const char
 
 		  scope->imports[cur->first] = pkg;
 	    }
+
+	    for (map<perm_string,LexicalScope::param_expr_t>::const_iterator cur = pkg->localparams.begin()
+		       ; cur != pkg->localparams.end() ; ++cur) {
+
+		  scope->imports[cur->first] = pkg;
+	    }
+
+	    for (map<perm_string,data_type_t*>::const_iterator cur = pkg->typedefs.begin()
+		       ; cur != pkg->typedefs.end() ; ++cur) {
+
+		  scope->imports[cur->first] = pkg;
+	    }
+
+	    for (map<perm_string,PFunction*>::const_iterator cur = pkg->funcs.begin()
+		       ; cur != pkg->funcs.end() ; ++cur) {
+
+		  scope->imports[cur->first] = pkg;
+	    }
       }
 }
 
 PExpr* pform_package_ident(const struct vlltype&loc,
-			   const char*pkg_name, const char*ident_name)
+			   PPackage*pkg, const char*ident_name)
+{
+      perm_string use_ident = lex_strings.make(ident_name);
+      PEIdent*tmp = new PEIdent(pkg, use_ident);
+      FILE_NAME(tmp, loc);
+      return tmp;
+}
+
+data_type_t* pform_test_type_identifier(PPackage*pkg, const char*txt)
+{
+      perm_string use_name = lex_strings.make(txt);
+      map<perm_string,data_type_t*>::const_iterator cur = pkg->typedefs.find(use_name);
+      if (cur != pkg->typedefs.end())
+	    return cur->second;
+
+      return 0;
+}
+
+/*
+ * The lexor uses this function to know if the 
+ */
+PPackage* pform_test_package_identifier(const char*pkg_name)
 {
       perm_string use_name = lex_strings.make(pkg_name);
       map<perm_string,PPackage*>::const_iterator pcur = pform_packages.find(use_name);
-      if (pcur == pform_packages.end()) {
-	    ostringstream msg;
-	    msg << "Package " << pkg_name << " not found." << ends;
-	    VLerror(msg.str().c_str());
+      if (pcur == pform_packages.end())
 	    return 0;
-      }
 
       assert(pcur->second);
-      perm_string use_ident = lex_strings.make(ident_name);
-      PEIdent*tmp = new PEIdent(pcur->second, use_ident);
-      FILE_NAME(tmp, loc);
-      return tmp;
+      return pcur->second;
 }

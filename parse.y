@@ -401,6 +401,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       class_type_t*class_type;
       real_type_t::type_t real_type;
       property_qualifier_t property_qualifier;
+      PPackage*package;
 
       verinum* number;
 
@@ -410,8 +411,9 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       list<index_component_t> *dimensions;
 };
 
-%token <text>   IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
+%token <text>      IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
 %token <data_type> TYPE_IDENTIFIER
+%token <package>   PACKAGE_IDENTIFIER
 %token <discipline> DISCIPLINE_IDENTIFIER
 %token <text>   PATHPULSE_IDENTIFIER
 %token <number> BASED_NUMBER DEC_NUMBER UNBASED_NUMBER
@@ -925,6 +927,12 @@ data_type /* IEEE1800-2005: A.2.2.1 */
       { if ($2) $$ = new parray_type_t($1, $2);
 	else $$ = $1;
       }
+  | PACKAGE_IDENTIFIER K_SCOPE_RES
+      { lex_in_package_scope($1); }
+    TYPE_IDENTIFIER
+      { lex_in_package_scope(0);
+	$$ = $4;
+      }
   | K_string
       { string_type_t*tmp = new string_type_t;
 	FILE_NAME(tmp, @1);
@@ -1373,14 +1381,12 @@ package_import_declaration /* IEEE1800-2005 A.2.1.3 */
   ;
 
 package_import_item
-  : IDENTIFIER K_SCOPE_RES IDENTIFIER
+  : PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER
       { pform_package_import(@2, $1, $3);
-	delete[]$1;
 	delete[]$3;
       }
-  | IDENTIFIER K_SCOPE_RES '*'
+  | PACKAGE_IDENTIFIER K_SCOPE_RES '*'
       { pform_package_import(@2, $1, 0);
-	delete[]$1;
       }
   ;
 
@@ -2985,7 +2991,7 @@ expr_primary
 	delete $1;
       }
 
-  | IDENTIFIER K_SCOPE_RES IDENTIFIER
+  | PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER
       { $$ = pform_package_ident(@2, $1, $3); }
 
   /* An identifier followed by an expression list in parentheses is a
@@ -2993,8 +2999,7 @@ expr_primary
      call. */
 
   | hierarchy_identifier '(' expression_list_proper ')'
-      { PECallFunction*tmp = new PECallFunction(*$1, *$3);
-	FILE_NAME(tmp, @1);
+      { PECallFunction*tmp = pform_make_call_function(@1, *$1, *$3);
 	delete $1;
 	$$ = tmp;
       }
@@ -3006,14 +3011,20 @@ expr_primary
 	$$ = tmp;
       }
   | hierarchy_identifier '(' ')'
-      { const vector<PExpr*> empty;
-	PECallFunction*tmp = new PECallFunction(*$1, empty);
-	FILE_NAME(tmp, @1);
+      { const list<PExpr*> empty;
+	PECallFunction*tmp = pform_make_call_function(@1, *$1, empty);
 	delete $1;
 	$$ = tmp;
 	if (!gn_system_verilog()) {
 	      yyerror(@1, "error: Empty function argument list requires SystemVerilog.");
 	}
+      }
+  | PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER '(' expression_list_proper ')'
+      { perm_string use_name = lex_strings.make($3);
+	PECallFunction*tmp = new PECallFunction($1, use_name, *$5);
+	FILE_NAME(tmp, @3);
+	delete[]$3;
+	$$ = tmp;
       }
   | SYSTEM_IDENTIFIER '('  ')'
       { perm_string tn = lex_strings.make($1);

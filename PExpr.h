@@ -770,11 +770,15 @@ class PETernary : public PExpr {
 class PECallFunction : public PExpr {
     public:
       explicit PECallFunction(const pform_name_t&n, const vector<PExpr *> &parms);
+	// Call function defined in package.
+      explicit PECallFunction(PPackage*pkg, perm_string n, const std::vector<PExpr *> &parms);
+      explicit PECallFunction(PPackage*pkg, perm_string n, const std::list<PExpr *> &parms);
+
 	// Call of system function (name is not hierarchical)
       explicit PECallFunction(perm_string n, const vector<PExpr *> &parms);
       explicit PECallFunction(perm_string n);
 
-	// svector versions. Should be removed!
+	// std::list versions. Should be removed!
       explicit PECallFunction(const pform_name_t&n, const list<PExpr *> &parms);
       explicit PECallFunction(perm_string n, const list<PExpr *> &parms);
 
@@ -794,14 +798,17 @@ class PECallFunction : public PExpr {
 				  width_mode_t&mode);
 
     private:
+      PPackage*package_;
       pform_name_t path_;
-      vector<PExpr *> parms_;
+      std::vector<PExpr *> parms_;
 
       bool check_call_matches_definition_(Design*des, NetScope*dscope) const;
 
 
       NetExpr* cast_to_width_(NetExpr*expr, unsigned wid) const;
 
+      NetExpr*elaborate_expr_pkg_(Design*des, NetScope*scope,
+				  unsigned expr_wid, unsigned flags)const;
       NetExpr*elaborate_expr_method_(Design*des, NetScope*scope,
 				     unsigned expr_wid) const;
 #if 0

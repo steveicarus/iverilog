@@ -57,6 +57,7 @@
  */
 class PGate;
 class PExpr;
+class PPackage;
 class PSpecPath;
 class PClass;
 class PPackage;
@@ -207,10 +208,10 @@ extern void pform_start_package_declaration(const struct vlltype&loc,
 					    const char*type);
 extern void pform_end_package_declaration(const struct vlltype&loc);
 extern void pform_package_import(const struct vlltype&loc,
-				 const char*pkg_name, const char*ident);
+				 PPackage*pkg, const char*ident);
 
 extern PExpr* pform_package_ident(const struct vlltype&loc,
-				  const char*pkg_name, const char*ident);
+				  PPackage*pkg, const char*ident);
 
 /*
  * This creates an identifier aware of names that may have been
@@ -271,6 +272,14 @@ extern void pform_endgenerate();
 extern PGenerate* pform_parent_generate(void);
 
 extern void pform_set_typedef(perm_string name, data_type_t*data_type);
+
+/*
+ * This function makes a PECallFunction of the named function. Decide
+ * if this function is in the scope or is imported from a package.
+ */
+extern PECallFunction* pform_make_call_function(const struct vlltype&loc,
+						const pform_name_t&name,
+						const list<PExpr*>&parms);
 
 /*
  * The makewire functions announce to the pform code new wires. These

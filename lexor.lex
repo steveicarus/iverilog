@@ -91,6 +91,19 @@ static bool in_module = false;
 static bool in_UDP = false;
 bool in_celldefine = false;
 UCDriveType uc_drive = UCD_NONE;
+
+/*
+ * The parser sometimes needs to indicate to the lexor that the next
+ * identifier needs to be understood in the context of a package. The
+ * parser feeds back that left context with calls to the
+ * lex_in_package_scope.
+ */
+static PPackage* in_package_scope = 0;
+void lex_in_package_scope(PPackage*pkg)
+{
+      in_package_scope = pkg;
+}
+
 %}
 
 %x CCOMMENT
@@ -297,6 +310,24 @@ TU [munpf]
 	    break;
       }
 
+	/* Special case: If this is part of a scoped name, then check
+	   the package for identifier details. For example, if the
+	   source file is  foo::bar, the parse.y will note the
+	   PACKAGE_IDENTIFIER and "::" token and mark the
+	   "in_package_scope" variable. Then this lexor will see the
+	   identifier here and interpret it in the package scope. */
+      if (in_package_scope) {
+	    if (rc == IDENTIFIER) {
+		  if (data_type_t*type = pform_test_type_identifier(in_package_scope, yylval.text)) {
+			delete[]yylval.text;
+			yylval.data_type = type;
+			rc = TYPE_IDENTIFIER;
+		  }
+	    }
+	    in_package_scope = 0;
+	    return rc;
+      }
+
 	/* If this identifier names a discipline, then return this as
 	   a DISCIPLINE_IDENTIFIER and return the discipline as the
 	   value instead. */
@@ -307,6 +338,16 @@ TU [munpf]
 		  delete[]yylval.text;
 		  yylval.discipline = (*cur).second;
 		  rc = DISCIPLINE_IDENTIFIER;
+	    }
+      }
+
+	/* If this identifer names a previously declared package, then
+	   return this as a PACKAGE_IDENTIFIER instead. */
+      if (rc == IDENTIFIER && gn_system_verilog()) {
+	    if (PPackage*pkg = pform_test_package_identifier(yylval.text)) {
+		  delete[]yylval.text;
+		  yylval.package = pkg;
+		  rc = PACKAGE_IDENTIFIER;
 	    }
       }
 

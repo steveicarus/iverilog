@@ -1775,10 +1775,26 @@ static NetExpr* check_for_class_property(const LineInfo*li,
       return tmp;
 }
 
+NetExpr* PECallFunction::elaborate_expr_pkg_(Design*des, NetScope*scope,
+					     unsigned expr_wid,
+					     unsigned flags) const
+{
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PECallFunction::elaborate_expr_pkg_: "
+		 << "Elaborate " << path_
+		 << " as function in package " << package_->pscope_name()
+		 << "." << endl;
+      }
+
+      return 0;
+}
 
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					unsigned expr_wid, unsigned flags) const
 {
+      if (package_)
+	    return elaborate_expr_pkg_(des, scope, expr_wid, flags);
+
       flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
 
       if (peek_tail_name(path_)[0] == '$')
