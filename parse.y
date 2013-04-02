@@ -490,6 +490,9 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %token K_s_nexttime K_s_until K_s_until_with K_strong K_sync_accept_on
 %token K_sync_reject_on K_unique0 K_until K_until_with K_untyped K_weak
 
+ /* The new tokens from 1800-2012. */
+%token K_implements K_interconnect K_nettype K_soft
+
  /* The new tokens for Verilog-AMS 2.3. */
 %token K_above K_abs K_absdelay K_abstol K_access K_acos K_acosh
  /* 1800-2005 has defined "assert" above! */

@@ -161,6 +161,7 @@ ifnone,			GN_KEYWORDS_1364_1995,		K_ifnone
 ignore_bins,		GN_KEYWORDS_1800_2005,		K_ignore_bins
 illegal_bins,		GN_KEYWORDS_1800_2005,		K_illegal_bins
 implies,		GN_KEYWORDS_1800_2009,		K_implies
+implements,		GN_KEYWORDS_1800_2012,		K_implements
 import,			GN_KEYWORDS_1800_2005,		K_import
 incdir,			GN_KEYWORDS_1364_2001_CONFIG,	K_incdir
 include,		GN_KEYWORDS_1364_2001_CONFIG,	K_include
@@ -173,6 +174,7 @@ inside,			GN_KEYWORDS_1800_2005,		K_inside
 instance,		GN_KEYWORDS_1364_2001_CONFIG,	K_instance
 int,			GN_KEYWORDS_1800_2005,		K_int
 integer,		GN_KEYWORDS_1364_1995,		K_integer
+interconnect,		GN_KEYWORDS_1800_2012,		K_interconnect
 interface,		GN_KEYWORDS_1800_2005,		K_interface
 intersect,		GN_KEYWORDS_1800_2005,		K_intersect
 join,			GN_KEYWORDS_1364_1995,		K_join
@@ -207,6 +209,7 @@ nand,			GN_KEYWORDS_1364_1995,		K_nand
 nature,			GN_KEYWORDS_VAMS_2_3,		K_nature
 negedge,		GN_KEYWORDS_1364_1995,		K_negedge
 net_resolution,		GN_KEYWORDS_VAMS_2_3,		K_net_resolution
+nettype,		GN_KEYWORDS_1800_2012,		K_nettype
 new,			GN_KEYWORDS_1800_2005,		K_new
 nexttime,		GN_KEYWORDS_1800_2009,		K_nexttime
 nmos,			GN_KEYWORDS_1364_1995,		K_nmos
@@ -274,6 +277,7 @@ sin,			GN_KEYWORDS_VAMS_2_3,		K_sin
 sinh,			GN_KEYWORDS_VAMS_2_3,		K_sinh
 slew,			GN_KEYWORDS_VAMS_2_3,		K_slew
 small,			GN_KEYWORDS_1364_1995,		K_small
+soft,			GN_KEYWORDS_1800_2012,		K_soft
 solve,			GN_KEYWORDS_1800_2005,		K_solve
 specify,		GN_KEYWORDS_1364_1995,		K_specify
 specparam,		GN_KEYWORDS_1364_1995,		K_specparam

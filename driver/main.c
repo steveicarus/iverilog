@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -39,7 +39,7 @@ const char NOTICE[] =
 
 const char HELP[] =
 "Usage: iverilog [-ESvV] [-B base] [-c cmdfile|-f cmdfile]\n"
-"                [-g1995|-g2001|-g2005|-g2005-sv|-g2009] [-g<feature>]\n"
+"                [-g1995|-g2001|-g2005|-g2005-sv|-g2009|-g2012] [-g<feature>]\n"
 "                [-D macro[=defn]] [-I includedir]\n"
 "                [-M [mode=]depfile] [-m module]\n"
 "                [-N file] [-o filename] [-p flag=value]\n"
@@ -642,6 +642,9 @@ int process_generation(const char*name)
       else if (strcmp(name,"2009") == 0)
 	    generation = "2009";
 
+      else if (strcmp(name,"2012") == 0)
+	    generation = "2012";
+
       else if (strcmp(name,"1") == 0) { /* Deprecated: use 1995 */
 	    generation = "1995";
 	    gen_xtypes = "no-xtypes";
@@ -720,6 +723,7 @@ int process_generation(const char*name)
 		            "    2005    -- IEEE1364-2005\n"
 		            "    2005-sv -- IEEE1800-2005\n"
 		            "    2009    -- IEEE1800-2009\n"
+		            "    2012    -- IEEE1800-2012\n"
 		            "Other generation flags:\n"
 		            "    specify | no-specify\n"
 		            "    verilog-ams | no-verilog-ams\n"
@@ -1031,7 +1035,7 @@ int main(int argc, char **argv)
 
       if (version_flag || verbose_flag) {
 	    printf("Icarus Verilog version " VERSION " (" VERSION_TAG ")\n\n");
-	    printf("Copyright 1998-2011 Stephen Williams\n\n");
+	    printf("Copyright 1998-2013 Stephen Williams\n\n");
 	    puts(NOTICE);
       }
 
@@ -1057,10 +1061,11 @@ int main(int argc, char **argv)
       fprintf(iconfig_file, "sys_func:%s%csystem.sft\n", base, sep);
       fprintf(iconfig_file, "sys_func:%s%cvhdl_sys.sft\n", base, sep);
 
-	/* If verilog-2005/9 is enabled or icarus-misc or verilog-ams,
+	/* If verilog-2005/09/12 is enabled or icarus-misc or verilog-ams,
 	 * then include the v2005_math library. */
       if (strcmp(generation, "2005") == 0 ||
           strcmp(generation, "2009") == 0 ||
+          strcmp(generation, "2012") == 0 ||
           strcmp(gen_icarus, "icarus-misc") == 0 ||
           strcmp(gen_verilog_ams, "verilog-ams") == 0) {
 	    fprintf(iconfig_file, "sys_func:%s%cv2005_math.sft\n", base, sep);
@@ -1076,7 +1081,8 @@ int main(int argc, char **argv)
       /* If verilog-2009 (SystemVerilog) is enabled, then include the
          v2009 module. */
       if (strcmp(generation, "2005-sv") == 0 ||
-          strcmp(generation, "2009") == 0) {
+          strcmp(generation, "2009") == 0 ||
+          strcmp(generation, "2012") == 0) {
 	    fprintf(iconfig_file, "sys_func:%s%cv2009.sft\n", base, sep);
 	    fprintf(iconfig_file, "module:v2009\n");
       }

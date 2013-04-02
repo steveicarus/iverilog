@@ -922,7 +922,7 @@ void pform_startmodule(const struct vlltype&loc, const char*name,
 void pform_check_timeunit_prec()
 {
       assert(! pform_cur_module.empty());
-      if ((generation_flag & (GN_VER2005_SV | GN_VER2009)) &&
+      if ((generation_flag & (GN_VER2005_SV | GN_VER2009 | GN_VER2012)) &&
           (pform_cur_module.front()->time_unit < pform_cur_module.front()->time_precision)) {
 	    VLerror("error: a timeprecision is missing or is too large!");
       } else assert(pform_cur_module.front()->time_unit >=

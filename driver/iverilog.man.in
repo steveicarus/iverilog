@@ -1,4 +1,4 @@
-.TH iverilog 1 "February 27th, 2011" "" "Version %M.%m.%n %E"
+.TH iverilog 1 "April 2nd, 2013" "" "Version %M.%m.%n %E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -6,7 +6,7 @@ iverilog - Icarus Verilog compiler
 .B iverilog
 [\-ESVv] [\-Bpath] [\-ccmdfile|\-fcmdfile] [\-Dmacro[=defn]]
 [\-Pparameter=value] [\-pflag=value]
-[\-dname] [\-g1995|\-g2001|\-g2005|\-g2005-sv|\-g2009|\-g<feature>]
+[\-dname] [\-g1995|\-g2001|\-g2005|\-g2005-sv|\-g2009|\-g2012|\-g<feature>]
 [\-Iincludedir] [\-mmodule] [\-M[mode=]file] [\-Nfile] [\-ooutputfilename]
 [\-stopmodule] [\-ttype] [\-Tmin/typ/max] [\-Wclass] [\-ypath] sourcefile
 
@@ -61,10 +61,11 @@ is the Verilog input, but with file inclusions and macro references
 expanded and removed. This is useful, for example, to preprocess
 Verilog source for use by other compilers.
 .TP 8
-.B -g1995\fI|\fP-g2001\fI|\fP-g2001-noconfig\fI|\fP-g2005\fI|\fP-g2005-sv\fI|\fP-g2009
+.B -g1995\fI|\fP-g2001\fI|\fP-g2001-noconfig\fI|\fP-g2005\fI|\fP-g2005-sv\fI|\fP-g2009\fI|\fP-g2012
 Select the Verilog language \fIgeneration\fP to support in the compiler.
 This selects between \fIIEEE1364\-1995\fP, \fIIEEE1364\-2001\fP,
-\fIIEEE1364\-2005\fP, \fIIEEE1800\-2005\fP, or \fIIEEE1800\-2009\fP.
+\fIIEEE1364\-2005\fP, \fIIEEE1800\-2005\fP, \fIIEEE1800\-2009\fP, or
+\fIIEEE1800\-2012\fP.
 Icarus Verilog currently defaults to the \fIIEEE1364\-2005\fP generation
 of the language. This flag is used to restrict the language to a set of
 keywords/features, this allows simulation of older Verilog code that may

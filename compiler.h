@@ -141,6 +141,7 @@ enum generation_t {
       GN_VER2005  = 4,
       GN_VER2005_SV  = 5,
       GN_VER2009  = 6,
+      GN_VER2012  = 7,
       GN_DEFAULT  = 4
 };
 
@@ -178,7 +179,8 @@ extern bool gn_strict_expr_width_flag;
 static inline bool gn_var_can_be_uwire(void)
 {
       if (generation_flag == GN_VER2005_SV ||
-          generation_flag == GN_VER2009)
+          generation_flag == GN_VER2009  ||
+          generation_flag == GN_VER2012)
 	    return true;
       return false;
 }
@@ -186,7 +188,8 @@ static inline bool gn_var_can_be_uwire(void)
 static inline bool gn_system_verilog(void)
 {
       if (generation_flag == GN_VER2005_SV ||
-          generation_flag == GN_VER2009)
+          generation_flag == GN_VER2009  ||
+          generation_flag == GN_VER2012)
 	    return true;
       return false;
 }
@@ -207,6 +210,7 @@ enum { GN_KEYWORDS_1364_1995        = 0x0001,
        GN_KEYWORDS_VAMS_2_3         = 0x0010,
        GN_KEYWORDS_1800_2005        = 0x0020,
        GN_KEYWORDS_1800_2009        = 0x0040,
+       GN_KEYWORDS_1800_2012        = 0x0080,
        GN_KEYWORDS_ICARUS           = 0x8000
 };
 extern int lexor_keyword_mask;
