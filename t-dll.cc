@@ -467,9 +467,9 @@ ivl_parameter_t dll_target::scope_find_param(ivl_scope_t scope,
 					     const char*name)
 {
       unsigned idx = 0;
-      while (idx < scope->nparam_) {
-	    if (strcmp(name, scope->param_[idx].basename) == 0)
-		  return scope->param_ + idx;
+      while (idx < scope->param.size()) {
+	    if (strcmp(name, scope->param[idx].basename) == 0)
+		  return &scope->param[idx];
 
 	    idx += 1;
       }
@@ -484,13 +484,12 @@ ivl_parameter_t dll_target::scope_find_param(ivl_scope_t scope,
  */
 void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 {
-      scop->nparam_ = net->parameters.size();
-      if (scop->nparam_ == 0) {
-	    scop->param_ = 0;
+      if (net->parameters.size() == 0) {
+	    scop->param.clear();
 	    return;
       }
 
-      scop->param_ = new struct ivl_parameter_s [scop->nparam_];
+      scop->param.resize(net->parameters.size());
 
       unsigned idx = 0;
       typedef map<perm_string,NetScope::param_expr_t>::const_iterator pit_t;
@@ -498,14 +497,20 @@ void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
       for (pit_t cur_pit = net->parameters.begin()
 		 ; cur_pit != net->parameters.end() ; ++ cur_pit ) {
 
-	    assert(idx < scop->nparam_);
-	    ivl_parameter_t cur_par = scop->param_ + idx;
-	    cur_par->basename = (*cur_pit).first;
+	    assert(idx < scop->param.size());
+	    ivl_parameter_t cur_par = &scop->param[idx];
+	    cur_par->basename = cur_pit->first;
             cur_par->local = cur_pit->second.local_flag;
 	    cur_par->scope = scop;
-	    FILE_NAME(cur_par, &((*cur_pit).second));
+	    FILE_NAME(cur_par, &(cur_pit->second));
 
-	    NetExpr*etmp = (*cur_pit).second.val;
+	    NetExpr*etmp = cur_pit->second.val;
+	    if (etmp == 0) {
+		  cerr << "?:?: internal error: "
+		       << "What is the parameter expression for " << cur_pit->first
+		       << " in " << net->fullname() << "?" << endl;
+	    }
+	    assert(etmp);
 	    make_scope_param_expr(cur_par, etmp);
 	    idx += 1;
       }

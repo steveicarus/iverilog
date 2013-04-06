@@ -2035,14 +2035,14 @@ extern "C" const char* ivl_scope_name(ivl_scope_t net)
 extern "C" unsigned ivl_scope_params(ivl_scope_t net)
 {
       assert(net);
-      return net->nparam_;
+      return net->param.size();
 }
 
 extern "C" ivl_parameter_t ivl_scope_param(ivl_scope_t net, unsigned idx)
 {
       assert(net);
-      assert(idx < net->nparam_);
-      return net->param_ + idx;
+      assert(idx < net->param.size());
+      return & (net->param[idx]);
 }
 
 extern "C" ivl_scope_t ivl_scope_parent(ivl_scope_t net)
