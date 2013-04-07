@@ -896,6 +896,17 @@ constraint_set /* IEEE1800-2005 A.1.9 */
   | '{' constraint_expression_list '}'
   ;
 
+data_declaration /* IEEE1800-2005: A.2.1.3 */
+  : attribute_list_opt data_type_or_implicit list_of_variable_decl_assignments ';'
+      { data_type_t*data_type = $2;
+	if (data_type == 0) {
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
+	      FILE_NAME(data_type, @2);
+	}
+	pform_makewire(@2, 0, str_strength, $3, NetNet::IMPLICIT_REG, data_type);
+      }
+  ;
+
 data_type /* IEEE1800-2005: A.2.2.1 */
   : integer_vector_type unsigned_signed_opt range_opt
       { ivl_variable_type_t use_vtype = $1;
@@ -1401,6 +1412,7 @@ package_item /* IEEE1800-2005 A.1.10 */
   | K_localparam param_type localparam_assign_list ';'
   | type_declaration
   | function_declaration
+  | data_declaration
   ;
 
 package_item_list
@@ -2991,8 +3003,10 @@ expr_primary
 	delete $1;
       }
 
-  | PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER
-      { $$ = pform_package_ident(@2, $1, $3); }
+  | PACKAGE_IDENTIFIER K_SCOPE_RES hierarchy_identifier
+      { $$ = pform_package_ident(@2, $1, $3);
+	delete $3;
+      }
 
   /* An identifier followed by an expression list in parentheses is a
      function call. If a system identifier, then a system function
@@ -3848,7 +3862,7 @@ atom2_type
      rule to reflect the rules for assignment l-values. */
 lpvalue
   : hierarchy_identifier
-      { PEIdent*tmp = new PEIdent(*$1);
+      { PEIdent*tmp = pform_new_ident(*$1);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete $1;

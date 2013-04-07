@@ -211,7 +211,7 @@ extern void pform_package_import(const struct vlltype&loc,
 				 PPackage*pkg, const char*ident);
 
 extern PExpr* pform_package_ident(const struct vlltype&loc,
-				  PPackage*pkg, const char*ident);
+				  PPackage*pkg, pform_name_t*ident);
 
 /*
  * This creates an identifier aware of names that may have been
@@ -307,6 +307,13 @@ extern void pform_makewire(const struct vlltype&li,
 			   list<PExpr*>*delay,
 			   str_pair_t str,
 			   net_decl_assign_t*assign_list,
+			   NetNet::Type type,
+			   data_type_t*data_type);
+
+extern void pform_makewire(const struct vlltype&li,
+			   std::list<PExpr*>*delay,
+			   str_pair_t str,
+			   std::list<decl_assignment_t*>*assign_list,
 			   NetNet::Type type,
 			   data_type_t*data_type);
 

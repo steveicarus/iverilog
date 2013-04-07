@@ -291,7 +291,7 @@ class PEIdent : public PExpr {
 
     public:
       explicit PEIdent(perm_string, bool no_implicit_sig=false);
-      explicit PEIdent(PPackage*pkg, perm_string name);
+      explicit PEIdent(PPackage*pkg, const pform_name_t&name);
       explicit PEIdent(const pform_name_t&);
       ~PEIdent();
 

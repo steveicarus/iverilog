@@ -105,6 +105,13 @@ void pform_package_import(const struct vlltype&, PPackage*pkg, const char*ident)
 		  return;
 	    }
 
+	    map<perm_string,PWire*>::const_iterator wcur;
+	    wcur = pkg->wires.find(use_ident);
+	    if (wcur != pkg->wires.end()) {
+		  scope->imports[wcur->first] = pkg;
+		  return;
+	    }
+
 	    ostringstream msg;
 	    msg << "Symbol " << use_ident
 		<< " not found in package " << pkg->pscope_name() << "." << ends;
@@ -142,10 +149,10 @@ void pform_package_import(const struct vlltype&, PPackage*pkg, const char*ident)
 }
 
 PExpr* pform_package_ident(const struct vlltype&loc,
-			   PPackage*pkg, const char*ident_name)
+			   PPackage*pkg, pform_name_t*ident_name)
 {
-      perm_string use_ident = lex_strings.make(ident_name);
-      PEIdent*tmp = new PEIdent(pkg, use_ident);
+      assert(ident_name);
+      PEIdent*tmp = new PEIdent(pkg, *ident_name);
       FILE_NAME(tmp, loc);
       return tmp;
 }

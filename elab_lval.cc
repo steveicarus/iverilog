@@ -21,6 +21,7 @@
 # include "config.h"
 
 # include  "PExpr.h"
+# include  "PPackage.h"
 # include  "netlist.h"
 # include  "netmisc.h"
 # include  "netstruct.h"
@@ -163,7 +164,13 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       if (NetAssign_*tmp = elaborate_lval_method_class_member_(des, scope))
 	    return tmp;
 
-      symbol_search(this, des, scope, path_, reg, par, eve);
+      NetScope*use_scope = scope;
+      if (package_) {
+	    use_scope = des->find_package(package_->pscope_name());
+	    ivl_assert(*this, use_scope);
+      }
+
+      symbol_search(this, des, use_scope, path_, reg, par, eve);
 
 	/* If the signal is not found, check to see if this is a
 	   member of a struct. Take the name of the form "a.b.member",
@@ -173,7 +180,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	    pform_name_t use_path = path_;
 	    perm_string tmp_name = peek_tail_name(use_path);
 	    use_path.pop_back();
-	    symbol_search(this, des, scope, use_path, reg, par, eve);
+	    symbol_search(this, des, use_scope, use_path, reg, par, eve);
 
 	    if (reg && reg->struct_type()) {
 		  method_name = tmp_name;
@@ -228,7 +235,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	   unless this is the l-value of a force. */
       if ((reg->type() != NetNet::REG) && !is_force) {
 	    cerr << get_fileline() << ": error: " << path_ <<
-		  " is not a valid l-value in " << scope_path(scope) <<
+		  " is not a valid l-value in " << scope_path(use_scope) <<
 		  "." << endl;
 	    cerr << reg->get_fileline() << ":      : " << path_ <<
 		  " is declared here as " << reg->type() << "." << endl;
@@ -238,13 +245,13 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
       if (reg->struct_type() && !method_name.nil()) {
 	    NetAssign_*lv = new NetAssign_(reg);
-	    elaborate_lval_net_packed_member_(des, scope, lv, method_name);
+	    elaborate_lval_net_packed_member_(des, use_scope, lv, method_name);
 	    return lv;
       }
 
       if (reg->class_type() && !method_name.nil() && gn_system_verilog()) {
 	    NetAssign_*lv = new NetAssign_(reg);
-	    elaborate_lval_net_class_member_(des, scope, lv, method_name);
+	    elaborate_lval_net_class_member_(des, use_scope, lv, method_name);
 	    return lv;
       }
 
@@ -768,7 +775,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       return true;
 }
 
-bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope,
+bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*,
 					       NetAssign_*lv,
 					       const perm_string&method_name) const
 {

@@ -435,7 +435,7 @@ PEIdent* pform_new_ident(const pform_name_t&name)
 	// XXXX For now, do not support indexed imported names.
       assert(name.back().index.size() == 0);
 
-      return new PEIdent(pkg->second, name.back().name);
+      return new PEIdent(pkg->second, name);
 }
 
 PGenerate* pform_parent_generate(void)
@@ -2295,6 +2295,7 @@ void pform_makewire(const vlltype&li,
 	    first = first->next;
       } while (first != decls->next);
 
+	// The pform_set_data_type function will delete the names list.
       pform_set_data_type(li, data_type, names, type, 0);
 
 	// This time, go through the list, deleting cells as I'm done.
@@ -2313,6 +2314,35 @@ void pform_makewire(const vlltype&li,
 
 	    delete first;
 	    first = next;
+      }
+}
+
+/*
+ * This should eventually repliace the form above that takes a
+ * net_decl_assign_t argument.
+ */
+void pform_makewire(const struct vlltype&li,
+		    std::list<PExpr*>*, str_pair_t ,
+		    std::list<decl_assignment_t*>*assign_list,
+		    NetNet::Type type,
+		    data_type_t*data_type)
+{
+      list<perm_string>*names = new list<perm_string>;
+
+      for (list<decl_assignment_t*>::iterator cur = assign_list->begin()
+		 ; cur != assign_list->end() ; ++ cur) {
+	    decl_assignment_t* curp = *cur;
+	    names->push_back(curp->name);
+      }
+
+      pform_set_data_type(li, data_type, names, type, 0);
+
+      while (! assign_list->empty()) {
+	    decl_assignment_t*first = assign_list->front();
+	    assign_list->pop_front();
+	      // For now, do not handle assignment expressions.
+	    assert(! first->expr.get());
+	    delete first;
       }
 }
 
