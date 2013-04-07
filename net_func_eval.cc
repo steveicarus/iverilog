@@ -146,7 +146,7 @@ bool NetProc::evaluate_function(const LineInfo&,
 }
 
 bool NetAssign::evaluate_function(const LineInfo&loc,
-				 map<perm_string,NetExpr*>&context_map) const
+				  map<perm_string,NetExpr*>&context_map) const
 {
       if (l_val_count() != 1) {
 	    cerr << get_fileline() << ": sorry: I don't know how to evaluate "
@@ -236,6 +236,121 @@ bool NetBlock::evaluate_function(const LineInfo&loc,
       return flag;
 }
 
+bool NetCase::evaluate_function_vect_(const LineInfo&loc,
+				map<perm_string,NetExpr*>&context_map) const
+{
+      NetExpr*case_expr = expr_->evaluate_function(loc, context_map);
+      if (case_expr == 0)
+	    return false;
+
+      NetEConst*case_const = dynamic_cast<NetEConst*> (case_expr);
+      ivl_assert(loc, case_const);
+
+      verinum case_val = case_const->value();
+      delete case_expr;
+
+      NetProc*default_statement = 0;
+
+      for (unsigned cnt = 0 ; cnt < nitems_ ; cnt += 1) {
+            Item*item = &items_[cnt];
+
+            if (item->guard == 0) {
+                  default_statement = item->statement;
+                  continue;
+            }
+
+            NetExpr*item_expr = item->guard->evaluate_function(loc, context_map);
+            if (item_expr == 0)
+                  return false;
+
+            NetEConst*item_const = dynamic_cast<NetEConst*> (item_expr);
+            ivl_assert(loc, item_const);
+
+            verinum item_val = item_const->value();
+            delete item_expr;
+
+            ivl_assert(loc, item_val.len() == case_val.len());
+
+            bool match = true;
+            for (unsigned idx = 0 ; idx < item_val.len() ; idx += 1) {
+                  verinum::V bit_a = case_val.get(idx);
+                  verinum::V bit_b = item_val.get(idx);
+
+                  if (bit_a == verinum::Vx && type_ == EQX) continue;
+                  if (bit_b == verinum::Vx && type_ == EQX) continue;
+
+                  if (bit_a == verinum::Vz && type_ != EQ) continue;
+                  if (bit_b == verinum::Vz && type_ != EQ) continue;
+
+                  if (bit_a != bit_b) {
+                        match = false;
+                        break;
+                  }
+            }
+            if (!match) continue;
+
+            return item->statement->evaluate_function(loc, context_map);
+      }
+
+      if (default_statement)
+            return default_statement->evaluate_function(loc, context_map);
+
+      return true;
+}
+
+bool NetCase::evaluate_function_real_(const LineInfo&loc,
+				map<perm_string,NetExpr*>&context_map) const
+{
+      NetExpr*case_expr = expr_->evaluate_function(loc, context_map);
+      if (case_expr == 0)
+	    return false;
+
+      NetECReal*case_const = dynamic_cast<NetECReal*> (case_expr);
+      ivl_assert(loc, case_const);
+
+      double case_val = case_const->value().as_double();
+      delete case_expr;
+
+      NetProc*default_statement = 0;
+
+      for (unsigned cnt = 0 ; cnt < nitems_ ; cnt += 1) {
+            Item*item = &items_[cnt];
+
+            if (item->guard == 0) {
+                  default_statement = item->statement;
+                  continue;
+            }
+
+            NetExpr*item_expr = item->guard->evaluate_function(loc, context_map);
+            if (item_expr == 0)
+                  return false;
+
+            NetECReal*item_const = dynamic_cast<NetECReal*> (item_expr);
+            ivl_assert(loc, item_const);
+
+            double item_val = item_const->value().as_double();
+            delete item_expr;
+
+            if (item_val != case_val) continue;
+
+            return item->statement->evaluate_function(loc, context_map);
+      }
+
+      if (default_statement)
+            return default_statement->evaluate_function(loc, context_map);
+
+      return true;
+}
+
+bool NetCase::evaluate_function(const LineInfo&loc,
+				map<perm_string,NetExpr*>&context_map) const
+{
+      if (expr_->expr_type() == IVL_VT_REAL)
+	    return evaluate_function_real_(loc, context_map);
+      else
+	    return evaluate_function_vect_(loc, context_map);
+}
+
 bool NetCondit::evaluate_function(const LineInfo&loc,
 				  map<perm_string,NetExpr*>&context_map) const
 {
@@ -258,21 +373,77 @@ bool NetCondit::evaluate_function(const LineInfo&loc,
 }
 
 bool NetDisable::evaluate_function(const LineInfo&,
-				map<perm_string,NetExpr*>&) const
+				   map<perm_string,NetExpr*>&) const
 {
       disable = target_;
       return true;
 }
 
+bool NetForever::evaluate_function(const LineInfo&loc,
+				   map<perm_string,NetExpr*>&context_map) const
+{
+      bool flag = true;
+
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": debug: NetForever::evaluate_function: "
+		 << "Start loop" << endl;
+      }
+
+      while (flag && !disable) {
+	    flag = flag && statement_->evaluate_function(loc, context_map);
+      }
+
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": debug: NetForever::evaluate_function: "
+		 << "Done loop" << endl;
+      }
+
+      return flag;
+}
+
+bool NetRepeat::evaluate_function(const LineInfo&loc,
+				  map<perm_string,NetExpr*>&context_map) const
+{
+      bool flag = true;
+
+	// Evaluate the condition expression to try and get the
+	// condition for the loop.
+      NetExpr*count_expr = expr_->evaluate_function(loc, context_map);
+      if (count_expr == 0) return false;
+
+      NetEConst*count_const = dynamic_cast<NetEConst*> (count_expr);
+      ivl_assert(loc, count_const);
+
+      long count = count_const->value().as_long();
+      delete count_expr;
+
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": debug: NetRepeat::evaluate_function: "
+		 << "Repeating " << count << " times." << endl;
+      }
+
+      while ((count > 0) && flag && !disable) {
+	    flag = flag && statement_->evaluate_function(loc, context_map);
+	    count -= 1;
+      }
+
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": debug: NetRepeat::evaluate_function: "
+		 << "Finished loop" << endl;
+      }
+
+      return flag;
+}
+
 bool NetSTask::evaluate_function(const LineInfo&,
-				map<perm_string,NetExpr*>&) const
+				 map<perm_string,NetExpr*>&) const
 {
 	// system tasks within a constant function are ignored
       return true;
 }
 
 bool NetWhile::evaluate_function(const LineInfo&loc,
-				map<perm_string,NetExpr*>&context_map) const
+				 map<perm_string,NetExpr*>&context_map) const
 {
       bool flag = true;
 
@@ -399,6 +570,7 @@ NetExpr* NetESelect::evaluate_function(const LineInfo&loc,
 	    base = base_const->value().as_long();
 	    delete base_val;
       } else {
+	    sub.has_sign(has_sign());
 	    sub = pad_to_width(sub, expr_width());
       }
 

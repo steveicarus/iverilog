@@ -2692,8 +2692,14 @@ class NetCase  : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type() const;
+      virtual bool evaluate_function(const LineInfo&loc,
+				     std::map<perm_string,NetExpr*>&ctx) const;
 
     private:
+      bool evaluate_function_vect_(const LineInfo&loc,
+				   std::map<perm_string,NetExpr*>&ctx) const;
+      bool evaluate_function_real_(const LineInfo&loc,
+				   std::map<perm_string,NetExpr*>&ctx) const;
 
       TYPE type_;
 
@@ -3083,6 +3089,8 @@ class NetForever : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type() const;
+      virtual bool evaluate_function(const LineInfo&loc,
+				     std::map<perm_string,NetExpr*>&ctx) const;
 
     private:
       NetProc*statement_;
@@ -3204,6 +3212,8 @@ class NetRepeat : public NetProc {
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type() const;
+      virtual bool evaluate_function(const LineInfo&loc,
+				     std::map<perm_string,NetExpr*>&ctx) const;
 
     private:
       NetExpr*expr_;

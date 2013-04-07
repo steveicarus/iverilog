@@ -2924,6 +2924,15 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 		  context_width += 1;
       }
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": debug: case context is ";
+	    if (context_is_real) {
+		  cerr << "real" << endl;
+	    } else {
+		  cerr << (context_unsigned ? "unsigned" : "signed")
+		       << " vector, width=" << context_width << endl;
+	    }
+      }
       NetExpr*expr = elab_and_eval_case(des, scope, expr_,
 					context_is_real,
 					context_unsigned,
