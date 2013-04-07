@@ -436,6 +436,7 @@ bool NetScope::emit_defs(struct target_t*tgt) const
       bool flag = true;
 
       switch (type_) {
+	  case PACKAGE:
 	  case MODULE:
 	    for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
 		       ; cur != children_.end() ; ++ cur )
@@ -470,11 +471,17 @@ int Design::emit(struct target_t*tgt) const
       if (tgt->start_design(this) == false)
 	    return -2;
 
-	// enumerate the scopes
-      for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
-	   scope != root_scopes_.end(); ++ scope )
-	    (*scope)->emit_scope(tgt);
+	// enumerate package scopes
+      for (map<perm_string,NetScope*>::const_iterator scope = packages_.begin()
+		 ; scope != packages_.end() ; ++ scope) {
+	    scope->second->emit_scope(tgt);
+      }
 
+	// enumerate root scopes
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin()
+		 ; scope != root_scopes_.end(); ++ scope ) {
+	    (*scope)->emit_scope(tgt);
+      }
 
 	// emit nodes
       bool nodes_rc = true;
@@ -494,6 +501,9 @@ int Design::emit(struct target_t*tgt) const
 
 	// emit task and function definitions
       bool tasks_rc = true;
+      for (map<perm_string,NetScope*>::const_iterator scope = packages_.begin()
+		 ; scope != packages_.end() ; ++ scope )
+	    tasks_rc &= scope->second->emit_defs(tgt);
       for (list<NetScope*>::const_iterator scope = root_scopes_.begin()
 		 ; scope != root_scopes_.end(); ++ scope )
 	    tasks_rc &= (*scope)->emit_defs(tgt);

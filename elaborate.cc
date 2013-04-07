@@ -4876,6 +4876,19 @@ static void elaborate_classes(Design*des, NetScope*scope,
       }
 }
 
+bool PPackage::elaborate(Design*des, NetScope*scope) const
+{
+      bool result_flag = true;
+
+	// Elaborate function methods, and...
+      elaborate_functions(des, scope, funcs);
+
+	// Elaborate task methods.
+      elaborate_tasks(des, scope, tasks);
+
+      return result_flag;
+}
+
 /*
  * When a module is instantiated, it creates the scope then uses this
  * method to elaborate the contents of the module.
@@ -5122,11 +5135,6 @@ bool PScope::elaborate_behaviors_(Design*des, NetScope*scope) const
       return result_flag;
 }
 
-struct root_elem {
-      Module *mod;
-      NetScope *scope;
-};
-
 class elaborate_package_t : public elaborator_work_item_t {
     public:
       elaborate_package_t(Design*d, NetScope*scope, PPackage*p)
@@ -5298,9 +5306,21 @@ bool Design::check_proc_delay() const
  * for each root, does the whole elaboration sequence, and fills in
  * the resulting Design.
  */
+
+struct pack_elem {
+      PPackage*pack;
+      NetScope*scope;
+};
+
+struct root_elem {
+      Module *mod;
+      NetScope *scope;
+};
+
 Design* elaborate(list<perm_string>roots)
 {
-      svector<root_elem*> root_elems(roots.size());
+      vector<struct root_elem> root_elems(roots.size());
+      vector<struct pack_elem> pack_elems(pform_packages.size());
       bool rc = true;
       unsigned i = 0;
 
@@ -5310,6 +5330,7 @@ Design* elaborate(list<perm_string>roots)
 
 	// Elaborate the packages. Package elaboration is simpler
 	// because there are fewer sub-scopes involved.
+      i = 0;
       for (map<perm_string,PPackage*>::iterator pac = pform_packages.begin()
 		 ; pac != pform_packages.end() ; ++ pac) {
 
@@ -5318,9 +5339,14 @@ Design* elaborate(list<perm_string>roots)
 
 	    elaborator_work_item_t*es = new elaborate_package_t(des, scope, pac->second);
 	    des->elaboration_work_list.push_back(es);
+
+	    pack_elems[i].pack = pac->second;
+	    pack_elems[i].scope = scope;
+	    i += 1;
       }
 
 	// Scan the root modules by name, and elaborate their scopes.
+      i = 0;
       for (list<perm_string>::const_iterator root = roots.begin()
 		 ; root != roots.end() ; ++ root ) {
 
@@ -5353,10 +5379,9 @@ Design* elaborate(list<perm_string>roots)
 
 	      // Save this scope, along with its definition, in the
 	      // "root_elems" list for later passes.
-	    struct root_elem *r = new struct root_elem;
-	    r->mod = rmod;
-	    r->scope = scope;
-	    root_elems[i++] = r;
+	    root_elems[i].mod = rmod;
+	    root_elems[i].scope = scope;
+	    i += 1;
 
 	      // Arrange for these scopes to be elaborated as root
 	      // scopes. Create an "elaborate_root_scope" object to
@@ -5413,23 +5438,36 @@ Design* elaborate(list<perm_string>roots)
 	// what we need to elaborate signals and memories. This pass
 	// creates all the NetNet and NetMemory objects for declared
 	// objects.
-      for (i = 0; i < root_elems.count(); i++) {
+      for (i = 0; i < pack_elems.size(); i += 1) {
+	    PPackage*pack = pack_elems[i].pack;
+	    NetScope*scope= pack_elems[i].scope;
 
-	    Module *rmod = root_elems[i]->mod;
-	    NetScope *scope = root_elems[i]->scope;
+	    if (! pack->elaborate_sig(des, scope)) {
+		  if (debug_elaborate) {
+			cerr << "<toplevel>" << ": debug: " << pack->pscope_name()
+			     << ": elaborate_sig failed!!!" << endl;
+		  }
+		  delete des;
+		  return 0;
+	    }
+      }
+
+      for (i = 0; i < root_elems.size(); i++) {
+	    Module *rmod = root_elems[i].mod;
+	    NetScope *scope = root_elems[i].scope;
 	    scope->set_num_ports( rmod->port_count() );
 
-              if (debug_elaborate) {
-                    cerr << "<toplevel>" << ": debug: " << rmod->mod_name()
-                         << ": port elaboration root "
-                         << rmod->port_count() << " ports" << endl;
-              }
+	    if (debug_elaborate) {
+		  cerr << "<toplevel>" << ": debug: " << rmod->mod_name()
+		       << ": port elaboration root "
+		       << rmod->port_count() << " ports" << endl;
+	    }
 
 	    if (! rmod->elaborate_sig(des, scope)) {
-	             if (debug_elaborate) {
-	                    cerr << "<toplevel>" << ": debug: " << rmod->mod_name()
-	                         << ": elaborate_sig failed!!!" << endl;
-	              }
+		  if (debug_elaborate) {
+			cerr << "<toplevel>" << ": debug: " << rmod->mod_name()
+			     << ": elaborate_sig failed!!!" << endl;
+		  }
 		  delete des;
 		  return 0;
 	    }
@@ -5461,12 +5499,17 @@ Design* elaborate(list<perm_string>roots)
 
 	// Now that the structure and parameters are taken care of,
 	// run through the pform again and generate the full netlist.
-      for (i = 0; i < root_elems.count(); i++) {
-	    Module *rmod = root_elems[i]->mod;
-	    NetScope *scope = root_elems[i]->scope;
 
+      for (i = 0; i < pack_elems.size(); i += 1) {
+	    PPackage*pkg = pack_elems[i].pack;
+	    NetScope*scope = pack_elems[i].scope;
+	    rc &= pkg->elaborate(des, scope);
+      }
+
+      for (i = 0; i < root_elems.size(); i++) {
+	    Module *rmod = root_elems[i].mod;
+	    NetScope *scope = root_elems[i].scope;
 	    rc &= rmod->elaborate(des, scope);
-	    delete root_elems[i];
       }
 
       if (rc == false) {

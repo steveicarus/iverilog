@@ -552,7 +552,9 @@ bool PPackage::elaborate_scope(Design*des, NetScope*scope)
       }
 
       collect_scope_parameters_(des, scope, parameters);
-
+      collect_scope_localparams_(des, scope, localparams);
+      elaborate_scope_funcs(des, scope, funcs);
+      elaborate_scope_tasks(des, scope, tasks);
       return true;
 }
 

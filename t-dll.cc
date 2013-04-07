@@ -259,6 +259,13 @@ ivl_scope_t dll_target::find_scope(ivl_design_s &des, const NetScope*cur)
 		  return scope;
       }
 
+      for (size_t idx = 0; idx < des.packages.size(); idx += 1) {
+	    assert(des.packages[idx]);
+	    ivl_scope_t scope = find_scope_from_root(des.packages[idx], cur);
+	    if (scope)
+		  return scope;
+      }
+
       for (map<const NetScope*,ivl_scope_t>::iterator idx = des.classes.begin()
 		 ; idx != des.classes.end() ; ++ idx) {
 	    ivl_scope_t scope = find_scope_from_root(idx->second, cur);

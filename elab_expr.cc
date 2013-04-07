@@ -1786,7 +1786,22 @@ NetExpr* PECallFunction::elaborate_expr_pkg_(Design*des, NetScope*scope,
 		 << "." << endl;
       }
 
-      return 0;
+	// Find the package that contains this definition, and use the
+	// package scope as the search starting point for the function
+	// definition.
+      NetScope*pscope = des->find_package(package_->pscope_name());
+      ivl_assert(*this, pscope);
+
+      NetFuncDef*def = des->find_function(pscope, path_);
+      ivl_assert(*this, def);
+
+      NetScope*dscope = def->scope();
+      ivl_assert(*this, dscope);
+
+      if (! check_call_matches_definition_(des, dscope))
+	    return 0;
+
+      return elaborate_base_(des, scope, dscope, expr_wid, flags);
 }
 
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
@@ -1851,8 +1866,19 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
             scope->is_const_func(false);
       }
 
+      return elaborate_base_(des, scope, dscope, expr_wid, flags);
+}
+
+NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*dscope,
+					 unsigned expr_wid, unsigned flags) const
+{
+
       if (! check_call_matches_definition_(des, dscope))
 	    return 0;
+
+      NetFuncDef*def = dscope->func_def();
+
+      bool need_const = NEED_CONST & flags;
 
       unsigned parms_count = parms_.size();
       if ((parms_count == 1) && (parms_[0] == 0))

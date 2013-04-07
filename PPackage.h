@@ -38,6 +38,8 @@ class PPackage : public PScopeExtra, public LineInfo {
       ~PPackage();
 
       bool elaborate_scope(Design*des, NetScope*scope);
+      bool elaborate_sig(Design*des, NetScope*scope) const;
+      bool elaborate(Design*des, NetScope*scope) const;
 
       void pform_dump(std::ostream&out) const;
 };
