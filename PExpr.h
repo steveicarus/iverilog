@@ -53,6 +53,9 @@ class PExpr : public LineInfo {
       static const unsigned SYS_TASK_ARG = 0x2;
       static const unsigned ANNOTATABLE  = 0x4;
 
+	// Convert width mode to human-readable form.
+      static const char*width_mode_name(width_mode_t mode);
+
       PExpr();
       virtual ~PExpr();
 

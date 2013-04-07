@@ -2803,14 +2803,131 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
       return cur;
 }
 
+static int test_case_width(Design*des, NetScope*scope, PExpr*pe,
+			   PExpr::width_mode_t&mode)
+{
+      unsigned expr_width = pe->test_width(des, scope, mode);
+      if (debug_elaborate) {
+	    cerr << pe->get_fileline() << ": debug: test_width "
+		 << "of case expression " << *pe
+		 << endl;
+	    cerr << pe->get_fileline() << ":        "
+		 << "returns type=" << pe->expr_type()
+		 << ", width="      << expr_width
+		 << ", signed="     << pe->has_sign()
+		 << ", mode="       << PExpr::width_mode_name(mode)
+		 << endl;
+      }
+      return expr_width;
+}
+
+static NetExpr*elab_and_eval_case(Design*des, NetScope*scope, PExpr*pe,
+				  bool context_is_real, bool context_unsigned,
+				  unsigned context_width)
+{
+      if (context_unsigned)
+	    pe->cast_signed(false);
+
+      unsigned width = context_is_real ? pe->expr_width() : context_width;
+      NetExpr*expr = pe->elaborate_expr(des, scope, width, PExpr::NO_FLAGS);
+      if (expr == 0) return 0;
+
+      if (context_is_real)
+	    expr = cast_to_real(expr);
+
+      eval_expr(expr, context_width);
+
+      return expr;
+}
+
 /*
  * Elaborate a case statement.
  */
 NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 {
-      assert(scope);
+      ivl_assert(*this, scope);
 
-      NetExpr*expr = elab_and_eval(des, scope, expr_, -1);
+	/* The type of the case expression and case item expressions is
+	   determined according to the following rules:
+
+	    - if any of the expressions is real, all the expressions are
+	      evaluated as real (non-real expressions will be treated as
+	      self-determined, then converted to real)
+
+	    - otherwise if any of the expressions is unsigned, all the
+	      expressions are evaluated as unsigned
+
+	    - otherwise all the expressions are evaluated as signed
+
+	   If the type is not real, the bit width is determined by the
+	   largest self-determined width of any of the expressions. */
+
+      PExpr::width_mode_t context_mode = PExpr::SIZED;
+      unsigned context_width = test_case_width(des, scope, expr_, context_mode);
+      bool context_is_real = (expr_->expr_type() == IVL_VT_REAL);
+      bool context_unsigned = !expr_->has_sign();
+
+      for (unsigned idx = 0; idx < items_->count(); idx += 1) {
+
+	    PCase::Item*cur = (*items_)[idx];
+
+	    for (list<PExpr*>::iterator idx_expr = cur->expr.begin()
+		 ; idx_expr != cur->expr.end() ; ++idx_expr) {
+
+		  PExpr*cur_expr = *idx_expr;
+		  ivl_assert(*this, cur_expr);
+
+		  PExpr::width_mode_t cur_mode = PExpr::SIZED;
+		  unsigned cur_width = test_case_width(des, scope, cur_expr,
+						       cur_mode);
+		  if (cur_mode > context_mode)
+			context_mode = cur_mode;
+		  if (cur_width > context_width)
+			context_width = cur_width;
+		  if (cur_expr->expr_type() == IVL_VT_REAL)
+			context_is_real = true;
+		  if (!cur_expr->has_sign())
+			context_unsigned = true;
+	    }
+      }
+
+      if (context_is_real) {
+	    context_width = 1;
+	    context_unsigned = false;
+
+      } else if (context_mode > PExpr::SIZED) {
+
+	      /* Expressions may choose a different size if they are
+		 in an unsized context, so we need to run through the
+		 process again to get the final expression width. */
+
+	    context_width = test_case_width(des, scope, expr_, context_mode);
+
+	    for (unsigned idx = 0; idx < items_->count(); idx += 1) {
+
+		  PCase::Item*cur = (*items_)[idx];
+
+		  for (list<PExpr*>::iterator idx_expr = cur->expr.begin()
+		       ; idx_expr != cur->expr.end() ; ++idx_expr) {
+
+			PExpr*cur_expr = *idx_expr;
+			ivl_assert(*this, cur_expr);
+
+			unsigned cur_width = test_case_width(des, scope, cur_expr,
+							     context_mode);
+			if (cur_width > context_width)
+			      context_width = cur_width;
+		  }
+	    }
+
+	    if (context_width < integer_width)
+		  context_width += 1;
+      }
+
+      NetExpr*expr = elab_and_eval_case(des, scope, expr_,
+					context_is_real,
+					context_unsigned,
+					context_width);
       if (expr == 0) {
 	    cerr << get_fileline() << ": error: Unable to elaborate this case"
 		  " expression." << endl;
@@ -2840,7 +2957,7 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
       unsigned inum = 0;
       for (unsigned idx = 0 ;  idx < items_->count() ;  idx += 1) {
 
-	    assert(inum < icount);
+	    ivl_assert(*this, inum < icount);
 	    PCase::Item*cur = (*items_)[idx];
 
 	    if (cur->expr.empty()) {
@@ -2861,11 +2978,13 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
 		       a separate case for each. (Yes, the statement
 		       will be elaborated again for each.) */
 		  PExpr*cur_expr = *idx_expr;
-		  NetExpr*gu;
-		  NetProc*st = 0;
-		  assert(cur_expr);
-		  gu = elab_and_eval(des, scope, cur_expr, -1);
+		  ivl_assert(*this, cur_expr);
+		  NetExpr*gu = elab_and_eval_case(des, scope, cur_expr,
+						  context_is_real,
+						  context_unsigned,
+						  context_width);
 
+		  NetProc*st = 0;
 		  if (cur->stat)
 			st = cur->stat->elaborate(des, scope);
 

@@ -730,22 +730,6 @@ NetExpr* condition_reduce(NetExpr*expr)
       return cmp;
 }
 
-static const char*width_mode_name(PExpr::width_mode_t mode)
-{
-      switch (mode) {
-          case PExpr::SIZED:
-            return "sized";
-          case PExpr::EXPAND:
-            return "expand";
-          case PExpr::LOSSLESS:
-            return "lossless";
-          case PExpr::UNSIZED:
-            return "unsized";
-          default:
-            return "??";
-      }
-}
-
 NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
                        int context_width, bool need_const, bool annotatable,
                        ivl_variable_type_t cast_type)
@@ -773,7 +757,7 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
                  << "returns type=" << pe->expr_type()
                  << ", width=" << expr_width
                  << ", signed=" << pe->has_sign()
-                 << ", mode=" << width_mode_name(mode) << endl;
+                 << ", mode=" << PExpr::width_mode_name(mode) << endl;
       }
 
         // If we can get the same result using a smaller expression
@@ -836,7 +820,7 @@ NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
                  << "returns type=" << pe->expr_type()
                  << ", width=" << pe->expr_width()
                  << ", signed=" << pe->has_sign()
-                 << ", mode=" << width_mode_name(mode) << endl;
+                 << ", mode=" << PExpr::width_mode_name(mode) << endl;
       }
 
       unsigned flags = PExpr::SYS_TASK_ARG;

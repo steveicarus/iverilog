@@ -77,6 +77,23 @@ bool PExpr::is_collapsible_net(Design*, NetScope*) const
       return false;
 }
 
+
+const char* PExpr::width_mode_name(width_mode_t mode)
+{
+      switch (mode) {
+          case PExpr::SIZED:
+            return "sized";
+          case PExpr::EXPAND:
+            return "expand";
+          case PExpr::LOSSLESS:
+            return "lossless";
+          case PExpr::UNSIZED:
+            return "unsized";
+          default:
+            return "??";
+      }
+}
+
 PEBinary::PEBinary(char op, PExpr*l, PExpr*r)
 : op_(op), left_(l), right_(r)
 {
