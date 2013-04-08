@@ -2761,13 +2761,13 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    use_path.pop_back();
 
 	    ivl_assert(*this, net == 0);
-	    symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
+	    symbol_search(this, des, use_scope, use_path, net, par, eve, ex1, ex2);
 
 	    if (net == 0) {
 		    // Nope, no struct/class with member.
 
 	    } else if (net->struct_type() != 0) {
-		  return check_for_struct_members(this, des, scope,
+		  return check_for_struct_members(this, des, use_scope,
 						  net, use_path.back().index,
 						  member_comp);
 
@@ -3028,7 +3028,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		       << " for member " << member_comp << "." << endl;
 
 	    ivl_assert(*this, net == 0);
-	    symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
+	    symbol_search(this, des, use_scope, use_path, net, par, eve, ex1, ex2);
 
 	      // Check to see if we have a net and if so is it an
 	      // enumeration? If so then check to see if this is an
@@ -3044,7 +3044,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			  // This expression cannot be a select!
 			assert(use_path.back().index.empty());
 
-			return check_for_enum_methods(this, des, scope,
+			return check_for_enum_methods(this, des, use_scope,
 			                              netenum,
 			                              use_path, member_comp.name,
 			                              expr, expr_wid, NULL, 0);
@@ -3063,7 +3063,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 				   << "got " << use_path.back().index.size() << "." << endl;
 			}
 
-			return check_for_struct_members(this, des, scope,
+			return check_for_struct_members(this, des, use_scope,
 							net, use_path.back().index,
 							member_comp);
 		  }
@@ -3075,7 +3075,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 				   << " look for property " << member_comp << endl;
 			}
 
-			return check_for_class_property(this, des, scope,
+			return check_for_class_property(this, des, use_scope,
 							net, member_comp);
 		  }
 	    }

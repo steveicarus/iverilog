@@ -424,11 +424,8 @@ PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
  */
 PEIdent* pform_new_ident(const pform_name_t&name)
 {
-      if (name.size() != 1)
-	    return new PEIdent(name);
-
       LexicalScope*scope = pform_peek_scope();
-      map<perm_string,PPackage*>::const_iterator pkg = scope->imports.find(name.back().name);
+      map<perm_string,PPackage*>::const_iterator pkg = scope->imports.find(name.front().name);
       if (pkg == scope->imports.end())
 	    return new PEIdent(name);
 

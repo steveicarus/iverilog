@@ -164,6 +164,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       if (NetAssign_*tmp = elaborate_lval_method_class_member_(des, scope))
 	    return tmp;
 
+	/* Normally find the name in the passed scope. But if this is
+	   imported from a package, then located the variable from the
+	   package scope. */
       NetScope*use_scope = scope;
       if (package_) {
 	    use_scope = des->find_package(package_->pscope_name());
@@ -195,7 +198,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
       if (reg == 0) {
 	    cerr << get_fileline() << ": error: Could not find variable ``"
-		 << path_ << "'' in ``" << scope_path(scope) <<
+		 << path_ << "'' in ``" << scope_path(use_scope) <<
 		  "''" << endl;
 
 	    des->errors += 1;
