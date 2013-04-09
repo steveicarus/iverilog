@@ -3206,7 +3206,13 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      NetScope*task = des->find_task(scope, path_);
+      NetScope*pscope = scope;
+      if (package_) {
+	    pscope = des->find_package(package_->pscope_name());
+	    ivl_assert(*this, pscope);
+      }
+
+      NetScope*task = des->find_task(pscope, path_);
       if (task == 0) {
 	      // For SystemVerilog this may be a few other things.
 	    if (gn_system_verilog()) {

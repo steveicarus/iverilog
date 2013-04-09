@@ -580,6 +580,34 @@ PECallFunction* pform_make_call_function(const struct vlltype&loc,
       return tmp;
 }
 
+PCallTask* pform_make_call_task(const struct vlltype&loc,
+				const pform_name_t&name,
+				const list<PExpr*>&parms)
+{
+      PCallTask*tmp = 0;
+
+      do {
+	    if (name.size() != 1)
+		  break;
+
+	    perm_string use_name = peek_tail_name(name);
+
+	    map<perm_string,PPackage*>::iterator cur_pkg;
+	    cur_pkg = lexical_scope->imports.find(use_name);
+	    if (cur_pkg == lexical_scope->imports.end())
+		  break;
+
+	    tmp = new PCallTask(cur_pkg->second, name, parms);
+      } while (0);
+
+      if (tmp == 0) {
+	    tmp = new PCallTask(name, parms);
+      }
+
+      FILE_NAME(tmp, loc);
+      return tmp;
+}
+
 static void pform_put_behavior_in_scope(PProcess*pp)
 {
       lexical_scope->behaviors.push_back(pp);

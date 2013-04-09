@@ -105,6 +105,13 @@ void pform_package_import(const struct vlltype&, PPackage*pkg, const char*ident)
 		  return;
 	    }
 
+	    map<perm_string,PTask*>::const_iterator ttcur;
+	    ttcur = pkg->tasks.find(use_ident);
+	    if (ttcur != pkg->tasks.end()) {
+		  scope->imports[ttcur->first] = pkg;
+		  return;
+	    }
+
 	    map<perm_string,PWire*>::const_iterator wcur;
 	    wcur = pkg->wires.find(use_ident);
 	    if (wcur != pkg->wires.end()) {

@@ -279,7 +279,11 @@ extern void pform_set_typedef(perm_string name, data_type_t*data_type);
  */
 extern PECallFunction* pform_make_call_function(const struct vlltype&loc,
 						const pform_name_t&name,
-						const list<PExpr*>&parms);
+						const std::list<PExpr*>&parms);
+extern PCallTask* pform_make_call_task(const struct vlltype&loc,
+				       const pform_name_t&name,
+				       const std::list<PExpr*>&parms);
+
 
 /*
  * The makewire functions announce to the pform code new wires. These

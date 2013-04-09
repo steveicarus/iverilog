@@ -1412,6 +1412,7 @@ package_item /* IEEE1800-2005 A.1.10 */
   | K_localparam param_type localparam_assign_list ';'
   | type_declaration
   | function_declaration
+  | task_declaration
   | data_declaration
   ;
 
@@ -5725,8 +5726,7 @@ statement_item /* This is roughly statement_item in the LRM */
 		}
 
   | hierarchy_identifier '(' expression_list_with_nuls ')' ';'
-      { PCallTask*tmp = new PCallTask(*$1, *$3);
-	FILE_NAME(tmp, @1);
+      { PCallTask*tmp = pform_make_call_task(@1, *$1, *$3);
 	delete $1;
 	delete $3;
 	$$ = tmp;
@@ -5760,8 +5760,7 @@ statement_item /* This is roughly statement_item in the LRM */
 
   | hierarchy_identifier ';'
       { list<PExpr*>pt;
-	PCallTask*tmp = new PCallTask(*$1, pt);
-	FILE_NAME(tmp, @1);
+	PCallTask*tmp = pform_make_call_task(@1, *$1, pt);
 	delete $1;
 	$$ = tmp;
       }
@@ -5769,8 +5768,7 @@ statement_item /* This is roughly statement_item in the LRM */
   | hierarchy_identifier '(' error ')' ';'
       { yyerror(@3, "error: Syntax error in task arguments.");
 	list<PExpr*>pt;
-	PCallTask*tmp = new PCallTask(*$1, pt);
-	FILE_NAME(tmp, @1);
+	PCallTask*tmp = pform_make_call_task(@1, *$1, pt);
 	delete $1;
 	$$ = tmp;
       }

@@ -31,6 +31,7 @@
 # include  "HName.h"
 # include  "LineInfo.h"
 class PExpr;
+class PPackage;
 class Statement;
 class PEventStatement;
 class Design;
@@ -198,6 +199,7 @@ class PBlock  : public PScope, public Statement {
 class PCallTask  : public Statement {
 
     public:
+      explicit PCallTask(PPackage*pkg, const pform_name_t&n, const list<PExpr*>&parms);
       explicit PCallTask(const pform_name_t&n, const list<PExpr*>&parms);
       explicit PCallTask(perm_string n, const list<PExpr*>&parms);
       ~PCallTask();
@@ -217,6 +219,7 @@ class PCallTask  : public Statement {
       NetProc*elaborate_build_call_(Design*des, NetScope*scope,
 				    NetScope*task, NetExpr*use_this) const;
 
+      PPackage*package_;
       pform_name_t path_;
       vector<PExpr*> parms_;
 };
