@@ -950,6 +950,10 @@ static void create_skeleton_entity_for(ivl_scope_t scope, int depth)
             ss << ivl_expr_uvalue(value);
             break;
 
+         case IVL_EX_REALNUM:
+            ss << ivl_expr_dvalue(value);
+            break;
+
       default:
          assert(false);
       }
@@ -1251,4 +1255,3 @@ int draw_scope(ivl_scope_t scope, void *_parent)
 
    return 0;
 }
-
