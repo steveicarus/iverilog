@@ -280,6 +280,8 @@ void make_assignment(vhdl_procedural *proc, stmt_container *container,
    if (ivl_expr_type(rval) == IVL_EX_TERNARY) {
       rhs = translate_expr(ivl_expr_oper2(rval));
       rhs2 = translate_expr(ivl_expr_oper3(rval));
+      if (rhs2 == NULL)
+         return;
    }
    else
       rhs = translate_expr(rval);
