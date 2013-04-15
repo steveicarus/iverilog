@@ -184,7 +184,6 @@ struct __vpiArrayVthrA : public __vpiHandle {
 		      case BIT4_Z:
 			  /* Return UINT_MAX to indicate an X base. */
 			return UINT_MAX;
-			break;
 
 		      case BIT4_1:
 			tval |= 1<<idx;

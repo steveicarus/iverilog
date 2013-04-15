@@ -1149,7 +1149,6 @@ static int PV_get_base(struct __vpiPV*rfp)
 		case BIT4_Z:
 		    /* We use INT_MIN to indicate an X base. */
 		  return INT_MIN;
-		  break;
 
 		case BIT4_1:
 		  tval |= 1<<idx;
