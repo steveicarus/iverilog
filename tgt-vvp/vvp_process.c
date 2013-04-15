@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2037,7 +2037,6 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 {
       const ivl_statement_type_t code = ivl_statement_type(net);
       int rc = 0;
-      unsigned saved_file_line = 0;
 
       switch (code) {
 
@@ -2057,6 +2056,7 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 	    if (ivl_stmt_block_scope(net))
 		  rc += show_stmt_block_named(net, sscope);
 	    else {
+		  unsigned saved_file_line = 0;
 		    /* This block could really represent a single statement.
 		     * If so only emit a single %file_line opcode. */
 		  if (show_file_line) {

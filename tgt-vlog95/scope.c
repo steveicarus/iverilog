@@ -830,7 +830,7 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
       char *package_name = 0;
       ivl_scope_type_t sc_type = ivl_scope_type(scope);
       unsigned is_auto = ivl_scope_is_auto(scope);
-      unsigned idx, count;
+      unsigned idx;
 
 	/* Output the scope definition. */
       switch (sc_type) {
@@ -957,6 +957,7 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
       emit_scope_variables(scope);
 
       if (sc_type == IVL_SCT_MODULE) {
+	    unsigned count;
 	      /* Output the LPM devices. */
 	    count = ivl_scope_lpms(scope);
 	    for (idx = 0; idx < count; idx += 1) {

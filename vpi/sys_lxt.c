@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -528,22 +528,6 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       const char* ident;
       int nexus_id;
 
-      /* list of types to iterate upon */
-      int i;
-      static int types[] = {
-	    /* Value */
-	    vpiNet,
-	    vpiReg,
-	    vpiVariables,
-	    /* Scope */
-	    vpiFunction,
-	    vpiModule,
-	    vpiNamedBegin,
-	    vpiNamedFork,
-	    vpiTask,
-	    -1
-      };
-
       switch (vpi_get(vpiType, item)) {
 
 	  case vpiMemoryWord:
@@ -662,23 +646,37 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	  case vpiNamedFork:
 
 	    if (depth > 0) {
-		  int nskip;
-		  vpiHandle argv;
-
-		  const char* fullname =
-			vpi_get_str(vpiFullName, item);
+		  const char* fullname = vpi_get_str(vpiFullName, item);
+		  /* list of types to iterate upon */
+		  static int types[] = {
+			/* Value */
+			/* vpiNamedEvent, */
+			vpiNet,
+			/* vpiParameter, */
+			vpiReg,
+			vpiVariables,
+			/* Scope */
+			vpiFunction,
+			vpiModule,
+			vpiNamedBegin,
+			vpiNamedFork,
+			vpiTask,
+			-1
+		  };
+		  int i;
+		  int nskip = (vcd_names_search(&lxt_tab, fullname) != 0);
 
 #if 0
 		  vpi_printf("LXT info: scanning scope %s, %u levels\n",
 		             fullname, depth);
 #endif
-		  nskip = 0 != vcd_names_search(&lxt_tab, fullname);
 
-		  if (!nskip)
+		  if (nskip) {
+			vpi_printf("LXT warning: ignoring signals in "
+			           "previously scanned scope %s\n", fullname);
+		  } else {
 			vcd_names_add(&lxt_tab, fullname);
-		  else
-		    vpi_printf("LXT warning: ignoring signals in "
-		               "previously scanned scope %s\n", fullname);
+		  }
 
 		  name = vpi_get_str(vpiName, item);
 
@@ -686,7 +684,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 
 		  for (i=0; types[i]>0; i++) {
 			vpiHandle hand;
-			argv = vpi_iterate(types[i], item);
+			vpiHandle argv = vpi_iterate(types[i], item);
 			while (argv && (hand = vpi_scan(argv))) {
 			      scan_item(depth-1, hand, nskip);
 			}
