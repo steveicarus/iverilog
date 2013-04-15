@@ -1232,6 +1232,8 @@ static void show_signal(ivl_signal_t net)
       switch (ivl_signal_type(net)) {
 	  case IVL_SIT_REG:
 	    type = "reg";
+	    if (ivl_signal_integer(net))
+		  type = "integer";
 	    break;
 	  case IVL_SIT_TRI:
 	    type = "tri";
@@ -1350,6 +1352,11 @@ static void show_signal(ivl_signal_t net)
 	    break;
 	  default:
 	    break;
+      }
+
+      if (ivl_signal_integer(net) && ivl_signal_type(net)!=IVL_SIT_REG) {
+	    fprintf(out, "  ERROR: integers must be IVL_SIT_REG\n");
+	    stub_errors += 1;
       }
 }
 

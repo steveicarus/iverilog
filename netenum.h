@@ -49,6 +49,9 @@ class netenum_t : public LineInfo, public ivl_type_s {
 	// enumeration value.
       bool insert_name(size_t idx, perm_string name, const verinum&val);
 
+	// Indicate that there will be no more names to insert.
+      void insert_name_close(void);
+
       typedef std::map<perm_string,verinum>::const_iterator iterator;
       iterator find_name(perm_string name) const;
       iterator end_name() const;
@@ -59,7 +62,7 @@ class netenum_t : public LineInfo, public ivl_type_s {
       iterator last_name() const;
 
       perm_string name_at(size_t idx) const;
-      perm_string bits_at(size_t idx);
+      perm_string bits_at(size_t idx) const;
 
     private:
       ivl_variable_type_t base_type_;

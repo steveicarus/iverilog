@@ -32,24 +32,6 @@ class PWire;
 class Statement;
 class PExpr;
 
-enum PTaskFuncEnum {
-      PTF_NONE,
-      PTF_REG,
-      PTF_REG_S,
-      PTF_INTEGER,
-      PTF_REAL,
-      PTF_REALTIME,
-      PTF_TIME,
-      PTF_ATOM2,
-      PTF_ATOM2_S,
-      PTF_STRING,
-      PTF_VOID
-};
-
-struct PTaskFuncArg {
-      PTaskFuncEnum type;
-      std::list<pform_range_t>*range;
-};
 
 class PTaskFunc : public PScope, public LineInfo {
 
@@ -126,7 +108,7 @@ class PFunction : public PTaskFunc {
       ~PFunction();
 
       void set_statement(Statement *s);
-      void set_return(PTaskFuncArg t);
+      void set_return(const data_type_t*t);
 
       void elaborate_scope(Design*des, NetScope*scope) const;
 
@@ -141,7 +123,7 @@ class PFunction : public PTaskFunc {
       void dump(ostream&, unsigned) const;
 
     private:
-      PTaskFuncArg return_type_;
+      const data_type_t* return_type_;
       Statement *statement_;
       bool is_auto_;
 };

@@ -368,7 +368,7 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
       return task;
 }
 
-PFunction* pform_push_function_scope(const struct vlltype&loc, char*name,
+PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
                                       bool is_auto)
 {
       perm_string func_name = lex_strings.make(name);
@@ -2932,57 +2932,6 @@ void pform_set_port_type(const struct vlltype&li,
       delete range;
 }
 
-static void pform_set_reg_integer(perm_string name, list<named_pexpr_t>*attr)
-{
-      PWire*cur = pform_get_make_wire_in_scope(name, NetNet::INTEGER, NetNet::NOT_A_PORT, IVL_VT_LOGIC);
-      assert(cur);
-
-      pform_range_t rng;
-      rng.first = new PENumber(new verinum(integer_width-1, integer_width));
-      rng.second = new PENumber(new verinum((uint64_t)0, integer_width));
-      list<pform_range_t>rlist;
-      rlist.push_back(rng);
-      cur->set_range(rlist, SR_NET);
-      cur->set_signed(true);
-
-      pform_bind_attributes(cur->attributes, attr, true);
-}
-
-void pform_set_reg_integer(list<perm_string>*names, list<named_pexpr_t>*attr)
-{
-      for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end() ; ++ cur ) {
-	    perm_string txt = *cur;
-	    pform_set_reg_integer(txt, attr);
-      }
-      delete names;
-}
-
-static void pform_set_reg_time(perm_string name, list<named_pexpr_t>*attr)
-{
-      PWire*cur = pform_get_make_wire_in_scope(name, NetNet::REG, NetNet::NOT_A_PORT, IVL_VT_LOGIC);
-      assert(cur);
-
-      pform_range_t rng;
-      rng.first = new PENumber(new verinum(TIME_WIDTH-1, integer_width));
-      rng.second = new PENumber(new verinum((uint64_t)0, integer_width));
-      list<pform_range_t>rlist;
-      rlist.push_back(rng);
-      cur->set_range(rlist, SR_NET);
-
-      pform_bind_attributes(cur->attributes, attr, true);
-}
-
-void pform_set_reg_time(list<perm_string>*names, list<named_pexpr_t>*attr)
-{
-      for (list<perm_string>::iterator cur = names->begin()
-		 ; cur != names->end() ; ++ cur ) {
-	    perm_string txt = *cur;
-	    pform_set_reg_time(txt, attr);
-      }
-      delete names;
-}
-
 static void pform_set_integer_2atom(uint64_t width, bool signed_flag, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
 {
       PWire*cur = pform_get_make_wire_in_scope(name, net_type, NetNet::NOT_A_PORT, IVL_VT_BOOL);
@@ -3101,6 +3050,9 @@ void pform_set_data_type(const struct vlltype&li, data_type_t*data_type, list<pe
       }
 
       if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (data_type)) {
+	    if (net_type==NetNet::REG && vec_type->integer_flag)
+		  net_type=NetNet::INTEGER;
+
 	    pform_set_net_range(names, vec_type->pdims.get(),
 				vec_type->signed_flag,
 				vec_type->base_type, net_type, attr);

@@ -73,6 +73,32 @@ bool netenum_t::insert_name(size_t name_idx, perm_string name, const verinum&val
       return res.second;
 }
 
+void netenum_t::insert_name_close(void)
+{
+      for (size_t idx = 0 ; idx < names_.size() ; idx += 1) {
+	    netenum_t::iterator cur = names_map_.find(names_[idx]);
+
+	    vector<char>str (cur->second.len() + 1);
+	    for (unsigned bit = 0 ; bit < cur->second.len() ; bit += 1) {
+		  switch (cur->second.get(bit)) {
+		      case verinum::V0:
+			str[bit] = '0';
+			break;
+		      case verinum::V1:
+			str[bit] = '1';
+			break;
+		      case verinum::Vx:
+			str[bit] = 'x';
+			break;
+		      case verinum::Vz:
+			str[bit] = 'z';
+			break;
+		  }
+	    }
+	    bits_[idx] = bits_strings.make(&str[0]);
+      }
+}
+
 netenum_t::iterator netenum_t::find_name(perm_string name) const
 {
       return names_map_.find(name);
@@ -115,32 +141,7 @@ perm_string netenum_t::name_at(size_t idx) const
       return names_[idx];
 }
 
-perm_string netenum_t::bits_at(size_t idx)
+perm_string netenum_t::bits_at(size_t idx) const
 {
-      assert(idx < names_.size());
-
-      if (bits_[idx] == 0) {
-	    netenum_t::iterator cur = names_map_.find(names_[idx]);
-
-	    vector<char>str (cur->second.len() + 1);
-	    for (unsigned bit = 0 ; bit < cur->second.len() ; bit += 1) {
-		  switch (cur->second.get(bit)) {
-		      case verinum::V0:
-			str[bit] = '0';
-			break;
-		      case verinum::V1:
-			str[bit] = '1';
-			break;
-		      case verinum::Vx:
-			str[bit] = 'x';
-			break;
-		      case verinum::Vz:
-			str[bit] = 'z';
-			break;
-		  }
-	    }
-	    bits_[idx] = bits_strings.make(&str[0]);
-      }
-
       return bits_[idx];
 }

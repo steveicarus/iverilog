@@ -530,7 +530,7 @@ void NetNet::calculate_slice_widths_from_packed_dims_(void)
 }
 
 NetNet::NetNet(NetScope*s, perm_string n, Type t,
-	       const list<netrange_t>&unpacked, ivl_type_s*use_net_type)
+	       const list<netrange_t>&unpacked, ivl_type_t use_net_type)
 : NetObj(s, n, calculate_count(unpacked)),
     type_(t), port_type_(NOT_A_PORT),
     local_flag_(false), net_type_(use_net_type),
@@ -762,7 +762,7 @@ bool NetNet::get_signed() const
 
 bool NetNet::get_isint() const
 {
-      if (netvector_t*vec = dynamic_cast<netvector_t*> (net_type_))
+      if (const netvector_t*vec = dynamic_cast<const netvector_t*> (net_type_))
 	    return vec->get_isint();
       else
 	    return false;
@@ -770,20 +770,20 @@ bool NetNet::get_isint() const
 
 bool NetNet::get_scalar() const
 {
-      if (netvector_t*vec = dynamic_cast<netvector_t*> (net_type_))
+      if (const netvector_t*vec = dynamic_cast<const netvector_t*> (net_type_))
 	    return vec->get_scalar();
       else
 	    return false;
 }
 
-netenum_t*NetNet::enumeration(void) const
+const netenum_t*NetNet::enumeration(void) const
 {
-      return dynamic_cast<netenum_t*> (net_type_);
+      return dynamic_cast<const netenum_t*> (net_type_);
 }
 
 const netstruct_t*NetNet::struct_type(void) const
 {
-      const ivl_type_s*cur_type = net_type_;
+      ivl_type_t cur_type = net_type_;
       while (cur_type) {
 	    if (const netdarray_t*da = dynamic_cast<const netdarray_t*> (cur_type)) {
 		  cur_type = da->element_type();
@@ -803,14 +803,14 @@ const netstruct_t*NetNet::struct_type(void) const
       return 0;
 }
 
-netdarray_t* NetNet::darray_type(void) const
+const netdarray_t* NetNet::darray_type(void) const
 {
-      return dynamic_cast<netdarray_t*> (net_type_);
+      return dynamic_cast<const netdarray_t*> (net_type_);
 }
 
-netclass_t* NetNet::class_type(void) const
+const netclass_t* NetNet::class_type(void) const
 {
-      return dynamic_cast<netclass_t*> (net_type_);
+      return dynamic_cast<const netclass_t*> (net_type_);
 }
 
 /*
@@ -2375,7 +2375,7 @@ perm_string NetESignal::name() const
       return net_->name();
 }
 
-netenum_t* NetESignal::enumeration() const
+const netenum_t* NetESignal::enumeration() const
 {
       return enum_type_;
 }

@@ -280,6 +280,8 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	    if (cur_value.is_defined())
 		  cur_value = cur_value + one_value;
       }
+
+      use_enum->insert_name_close();
 }
 
 static void elaborate_scope_enumerations(Design*des, NetScope*scope,

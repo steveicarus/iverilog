@@ -423,6 +423,13 @@ void PWire::dump(ostream&out, unsigned ind) const
 	    out << " signed";
       }
 
+      if (get_isint()) {
+	    out << " integer";
+      }
+      if (set_data_type_) {
+	    out << " set_data_type_=" << typeid(*set_data_type_).name();
+      }
+
       if (discipline_) {
 	    out << " discipline<" << discipline_->name() << ">";
       }
@@ -867,47 +874,12 @@ void PForStatement::dump(ostream&out, unsigned ind) const
 void PFunction::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "function ";
-      if (is_auto_) cout << "automatic ";
-      switch (return_type_.type) {
-	  case PTF_NONE:
-	    out << "?none? ";
-	    break;
-	  case PTF_REG:
-	    out << "reg ";
-	    break;
-	  case PTF_REG_S:
-	    out << "reg_s ";
-	    break;
-	  case PTF_INTEGER:
-	    out << "integer ";
-	    break;
-	  case PTF_REAL:
-	    out << "real ";
-	    break;
-	  case PTF_REALTIME:
-	    out << "realtime ";
-	    break;
-	  case PTF_TIME:
-	    out << "time ";
-	    break;
-	  case PTF_ATOM2:
-	    out << "int unsigned ";
-	    break;
-	  case PTF_ATOM2_S:
-	    out << "int signed ";
-	    break;
-	  case PTF_STRING:
-	    out << "string ";
-	    break;
-	  case PTF_VOID:
-	    out << "void ";
-	    break;
-      }
+      if (is_auto_) out << "automatic...";
 
-      if (return_type_.range) {
-	    out << "[";
-	    out << "] ";
-      }
+      if (return_type_)
+	    return_type_->pform_dump(out, ind+8);
+      else
+	    out << setw(ind+8) << "" << "<implicit type>" << endl;
 
       out << pscope_name() << ";" << endl;
       if (method_of())
@@ -944,7 +916,7 @@ void PRepeat::dump(ostream&out, unsigned ind) const
 void PTask::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "task ";
-      if (is_auto_) cout << "automatic ";
+      if (is_auto_) out << "automatic ";
       out << pscope_name() << ";" << endl;
       if (method_of())
 	    out << setw(ind) << "" << "method of " << method_of()->name << ";" << endl;

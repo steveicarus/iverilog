@@ -1134,7 +1134,7 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 			     << endl;
 		  }
 
-		  netclass_t* class_type = net->class_type();
+		  const netclass_t* class_type = net->class_type();
 		  member_type = class_type->get_property(member_name);
 		  use_path = tmp_path;
 
@@ -1164,7 +1164,7 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 	    return expr_width_;
       }
 
-      if (netclass_t*class_type = net->class_type()) {
+      if (const netclass_t*class_type = net->class_type()) {
 	    cerr << get_fileline() << ": PECallFunction::test_width_method_: "
 		 << "Try to find method " << method_name
 		 << " of class " << class_type->get_name() << endl;
@@ -1425,7 +1425,7 @@ NetExpr* PECallFunction::elaborate_access_func_(Design*des, NetScope*scope,
  */
 static NetExpr* check_for_enum_methods(const LineInfo*li,
                                        Design*des, NetScope*scope,
-                                       netenum_t*netenum,
+                                       const netenum_t*netenum,
                                        pform_name_t use_path,
                                        perm_string method_name,
                                        NetExpr*expr,
@@ -1760,7 +1760,7 @@ static NetExpr* check_for_class_property(const LineInfo*li,
 					 NetNet*net,
 					 const name_component_t&comp)
 {
-      netclass_t*class_type = net->class_type();
+      const netclass_t*class_type = net->class_type();
       const ivl_type_s*ptype = class_type->get_property(comp.name);
 
       if (ptype == 0) {
@@ -2055,7 +2055,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    }
       }
 
-      if (netenum_t*netenum = net->enumeration()) {
+      if (const netenum_t*netenum = net->enumeration()) {
 	      // We may need the net expression for the
 	      // enumeration variable so get it.
 	    NetESignal*expr = new NetESignal(net);
@@ -2082,7 +2082,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 	    }
       }
 
-      if (netclass_t*class_type = net->class_type()) {
+      if (const netclass_t*class_type = net->class_type()) {
 	    NetScope*func = class_type->method_from_name(method_name);
 	    if (func == 0) {
 		  return 0;
@@ -2595,7 +2595,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	    ivl_assert(*this, 0);
       }
 
-      if (netdarray_t*darray = net? net->darray_type() : 0) {
+      if (const netdarray_t*darray = net? net->darray_type() : 0) {
 	    if (use_sel == index_component_t::SEL_BIT) {
 		  expr_type_   = darray->element_base_type();
 		  expr_width_  = darray->element_width();
@@ -2637,7 +2637,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	// The width of an enumeration literal is the width of the
 	// enumeration base.
       if (const NetEConstEnum*par_enum = dynamic_cast<const NetEConstEnum*> (par)) {
-	    netenum_t*use_enum = par_enum->enumeration();
+	    const netenum_t*use_enum = par_enum->enumeration();
 	    ivl_assert(*this, use_enum != 0);
 
 	    expr_type_   = use_enum->base_type();
@@ -2714,7 +2714,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 			}
 		  }
 
-		  if (netclass_t*class_type = net->class_type()) {
+		  if (const netclass_t*class_type = net->class_type()) {
 			const ivl_type_s*ptype = class_type->get_property(method_name);
 			if (ptype) {
 			      expr_type_   = ptype->base_type();
@@ -3037,7 +3037,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    if (net != 0) {
 		    // If this net is actually an enum, the method may
 		    // be an enumeration method.
-		  if (netenum_t*netenum = net->enumeration()) {
+		  if (const netenum_t*netenum = net->enumeration()) {
 			  // We may need the net expression for the
 			  // enumeration variable so get it.
 			NetESignal*expr = new NetESignal(net);
@@ -4177,7 +4177,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 
       NetExpr*mux = elab_and_eval(des, scope, index_tail.msb, -1, need_const);
 
-      if (netdarray_t*darray = net->sig()->darray_type()) {
+      if (const netdarray_t*darray = net->sig()->darray_type()) {
 	      // Special case: This is a select of a dynamic
 	      // array. Generate a NetESelect and attach it to
 	      // the NetESignal. This should be interpreted as

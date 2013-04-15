@@ -11,4 +11,4 @@
 
 ./ivl -v -Ctgt-stub/stub.conf -C./scripts/devel-stub.conf -Pa.pf -Na.net -fDLL=tgt-stub/stub.tgt foo.vl |& tee foo.log
 
-echo "*** ivl command completed, rc=$?"
+echo "*** ivl command completed"

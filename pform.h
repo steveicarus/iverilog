@@ -187,6 +187,7 @@ extern void pform_class_property(const struct vlltype&loc,
 				 data_type_t*data_type,
 				 std::list<decl_assignment_t*>*decls);
 extern void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net);
+extern void pform_set_constructor_return(PFunction*net);
 
 extern void pform_end_class_declaration(void);
 
@@ -232,10 +233,11 @@ extern void pform_pop_scope();
 extern LexicalScope* pform_peek_scope();
 
 extern PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name);
+extern PFunction*pform_push_constructor_scope(const struct vlltype&loc);
 extern PPackage* pform_push_package_scope(const struct vlltype&loc, perm_string name);
 extern PTask*pform_push_task_scope(const struct vlltype&loc, char*name,
                                    bool is_auto);
-extern PFunction*pform_push_function_scope(const struct vlltype&loc, char*name,
+extern PFunction*pform_push_function_scope(const struct vlltype&loc, const char*name,
                                            bool is_auto);
 extern PBlock*pform_push_block_scope(char*name, PBlock::BL_TYPE tt);
 
@@ -342,8 +344,6 @@ extern void pform_set_port_type(const struct vlltype&li,
 
 extern void pform_set_reg_idx(perm_string name,
 			      std::list<pform_range_t>*indices);
-extern void pform_set_reg_integer(list<perm_string>*names, list<named_pexpr_t>*attr);
-extern void pform_set_reg_time(list<perm_string>*names, list<named_pexpr_t>*attr);
 
 extern void pform_set_data_type(const struct vlltype&li, data_type_t*, list<perm_string>*names, NetNet::Type net_type, list<named_pexpr_t>*attr);
 

@@ -570,7 +570,7 @@ bool NetScope::add_enumeration_name(netenum_t*enum_set, perm_string name)
       return cur.second;
 }
 
-netenum_t*NetScope::enumeration_for_name(perm_string name)
+const netenum_t*NetScope::enumeration_for_name(perm_string name)
 {
       NetEConstEnum*tmp = enum_names_[name];
       assert(tmp != 0);

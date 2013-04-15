@@ -23,6 +23,7 @@
 # include  "netdarray.h"
 # include  "netscalar.h"
 # include  "netvector.h"
+# include  "netmisc.h"
 # include  <typeinfo>
 # include  "ivl_assert.h"
 
@@ -75,6 +76,42 @@ ivl_type_s* atom2_type_t::elaborate_type(Design*des, NetScope*) const
 ivl_type_s* class_type_t::elaborate_type(Design*, NetScope*scope) const
 {
       return scope->find_class(name);
+}
+
+ivl_type_s* vector_type_t::elaborate_type(Design*des, NetScope*scope) const
+{
+      vector<netrange_t> packed;
+
+      if (pdims.get()) {
+	    for (list<pform_range_t>::const_iterator cur = pdims->begin()
+		       ; cur != pdims->end() ; ++ cur) {
+
+		  NetExpr*me = elab_and_eval(des, scope, cur->first, 0, true);
+		  assert(me);
+
+		  NetExpr*le = elab_and_eval(des, scope, cur->second, 0, true);
+		  assert(le);
+
+		  long mnum = 0, lnum = 0;
+		  if ( ! eval_as_long(mnum, me) ) {
+			assert(0);
+			des->errors += 1;
+		  }
+
+		  if ( ! eval_as_long(lnum, le) ) {
+			assert(0);
+			des->errors += 1;
+		  }
+
+		  packed.push_back(netrange_t(mnum, lnum));
+	    }
+      }
+
+      netvector_t*tmp = new netvector_t(packed, base_type);
+      tmp->set_signed(signed_flag);
+      tmp->set_isint(integer_flag);
+
+      return tmp;
 }
 
 ivl_type_s* real_type_t::elaborate_type(Design*, NetScope*) const

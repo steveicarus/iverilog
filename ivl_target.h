@@ -165,7 +165,7 @@ typedef struct ivl_branch_s   *ivl_branch_t;
 typedef struct ivl_delaypath_s*ivl_delaypath_t;
 typedef struct ivl_design_s   *ivl_design_t;
 typedef _CLASS ivl_discipline_s*ivl_discipline_t;
-typedef _CLASS netenum_t      *ivl_enumtype_t;
+typedef const _CLASS netenum_t*ivl_enumtype_t;
 typedef struct ivl_event_s    *ivl_event_t;
 typedef struct ivl_expr_s     *ivl_expr_t;
 typedef struct ivl_island_s   *ivl_island_t;

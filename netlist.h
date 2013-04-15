@@ -604,7 +604,7 @@ class NetNet  : public NetObj, public PortType {
 	// now, the unpacked type is not burried into an ivl_type_s object.
       explicit NetNet(NetScope*s, perm_string n, Type t,
 		      const std::list<netrange_t>&unpacked,
-		      ivl_type_s*type =0);
+		      ivl_type_t type =0);
 
 	// This form builds a NetNet from its record/enum/darray
 	// definition. They should probably be replaced with a single
@@ -639,10 +639,10 @@ class NetNet  : public NetObj, public PortType {
       bool get_scalar() const;
 
       inline const ivl_type_s* net_type(void) const { return net_type_; }
-      netenum_t*enumeration(void) const;
+      const netenum_t*enumeration(void) const;
       const netstruct_t*struct_type(void) const;
-      netdarray_t*darray_type(void) const;
-      netclass_t*class_type(void) const;
+      const netdarray_t*darray_type(void) const;
+      const netclass_t*class_type(void) const;
 
 	/* Attach a discipline to the net. */
       ivl_discipline_t get_discipline() const;
@@ -729,7 +729,7 @@ class NetNet  : public NetObj, public PortType {
       Type   type_    : 5;
       PortType port_type_ : 3;
       bool local_flag_: 1;
-      ivl_type_s*net_type_;
+      ivl_type_t net_type_;
       ivl_discipline_t discipline_;
 
       std::vector<netrange_t> unpacked_dims_;
@@ -848,7 +848,7 @@ class NetScope : public Attrib {
       void add_enumeration_set(netenum_t*enum_set);
       bool add_enumeration_name(netenum_t*enum_set, perm_string enum_name);
 
-      netenum_t* enumeration_for_name(perm_string name);
+      const netenum_t* enumeration_for_name(perm_string name);
 
       void add_class(netclass_t*class_type);
       netclass_t* find_class(perm_string name);
@@ -1810,7 +1810,7 @@ class NetExpr  : public LineInfo {
 	// Return the enumeration set that defines this expressions
 	// enumeration type, or return nil if the expression is not
 	// part of the enumeration.
-      virtual netenum_t*enumeration() const;
+      virtual const netenum_t*enumeration() const;
 
 	// This method evaluates the expression and returns an
 	// equivalent expression that is reduced as far as compile
@@ -1903,12 +1903,12 @@ class NetEConstEnum  : public NetEConst {
 
     public:
       explicit NetEConstEnum(NetScope*scope, perm_string name,
-			     netenum_t*enum_set, const verinum&val);
+			     const netenum_t*enum_set, const verinum&val);
       ~NetEConstEnum();
 
       perm_string name() const;
       const NetScope*scope() const;
-      netenum_t*enumeration() const;
+      const netenum_t*enumeration() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -1917,7 +1917,7 @@ class NetEConstEnum  : public NetEConst {
 
     private:
       NetScope*scope_;
-      netenum_t*enum_set_;
+      const netenum_t*enum_set_;
       perm_string name_;
 };
 
@@ -2496,7 +2496,7 @@ class NetAssign_ {
 
 	// Return the enumeration type of this l-value, or nil if it's
 	// not an enumeration.
-      netenum_t*enumeration() const;
+      const netenum_t*enumeration() const;
 
 	// Get the name of the underlying object.
       perm_string name() const;
@@ -3916,10 +3916,10 @@ class NetEEvent : public NetExpr {
 class NetENetenum  : public NetExpr {
 
     public:
-      NetENetenum(netenum_t*);
+      NetENetenum(const netenum_t*);
       ~NetENetenum();
 
-      netenum_t* netenum() const;
+      const netenum_t* netenum() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetENetenum* dup_expr() const;
@@ -3928,7 +3928,7 @@ class NetENetenum  : public NetExpr {
       virtual void dump(ostream&os) const;
 
     private:
-      netenum_t*netenum_;
+      const netenum_t*netenum_;
 };
 
 class NetENew : public NetExpr {
@@ -4032,7 +4032,7 @@ class NetESFunc  : public NetExpr {
       NetESFunc(const char*name, ivl_variable_type_t t,
 		unsigned width, unsigned nprms);
       NetESFunc(const char*name, ivl_type_t rtype, unsigned nprms);
-      NetESFunc(const char*name, netenum_t*enum_type, unsigned nprms);
+      NetESFunc(const char*name, const netenum_t*enum_type, unsigned nprms);
       ~NetESFunc();
 
       const char* name() const;
@@ -4048,7 +4048,7 @@ class NetESFunc  : public NetExpr {
 
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true);
-      virtual netenum_t* enumeration() const;
+      virtual const netenum_t* enumeration() const;
       virtual void dump(ostream&) const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -4073,7 +4073,7 @@ class NetESFunc  : public NetExpr {
 
       const char* name_;
       ivl_variable_type_t type_;
-      netenum_t*enum_type_;
+      const netenum_t*enum_type_;
       std::vector<NetExpr*>parms_;
 
       ID built_in_id_() const;
@@ -4252,7 +4252,7 @@ class NetESignal  : public NetExpr {
       virtual NetESignal* dup_expr() const;
       NetNet* synthesize(Design*des, NetScope*scope, NetExpr*root);
       NexusSet* nex_input(bool rem_out = true);
-      netenum_t*enumeration() const;
+      const netenum_t*enumeration() const;
 
       virtual NetExpr*evaluate_function(const LineInfo&loc,
 					map<perm_string,LocalVar>&ctx) const;
@@ -4277,7 +4277,7 @@ class NetESignal  : public NetExpr {
 
     private:
       NetNet*net_;
-      netenum_t*enum_type_;
+      const netenum_t*enum_type_;
 	// Expression to select a word from the net.
       NetExpr*word_;
 };

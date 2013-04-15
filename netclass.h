@@ -59,7 +59,7 @@ class netclass_t : public ivl_type_s {
       int property_idx_from_name(perm_string pname) const;
 
 	// The task method scopes from the method name.
-      NetScope*method_from_name(perm_string mname);
+      NetScope*method_from_name(perm_string mname) const;
 
       void elaborate_sig(Design*des, PClass*pclass);
       void elaborate(Design*des, PClass*pclass);

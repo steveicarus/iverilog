@@ -790,12 +790,12 @@ bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*,
 		 << " of " << lv->sig()->name() << "." << endl;
       }
 
-      netclass_t*class_type = lv->sig()->class_type();
+      const netclass_t*class_type = lv->sig()->class_type();
       ivl_assert(*this, class_type);
 
 	/* Make sure the property is really present in the class. If
 	   not, then generate an error message and return an error. */
-      const ivl_type_s*ptype = class_type->get_property(method_name);
+      ivl_type_t ptype = class_type->get_property(method_name);
       if (ptype == 0) {
 	    cerr << get_fileline() << ": error: Class " << class_type->get_name()
 		 << " does not have a property " << method_name << "." << endl;

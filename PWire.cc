@@ -120,6 +120,7 @@ bool PWire::set_data_type(ivl_variable_type_t dt)
 
       assert(data_type_ == IVL_VT_NO_TYPE);
       data_type_ = dt;
+
       return true;
 }
 
@@ -140,7 +141,14 @@ bool PWire::get_signed() const
 
 bool PWire::get_isint() const
 {
-      return isint_;
+      if (isint_)
+	    return true;
+
+      if (vector_type_t*tmp = dynamic_cast<vector_type_t*>(set_data_type_)) {
+	    return tmp->integer_flag;
+      }
+
+      return false;
 }
 
 bool PWire::get_scalar() const
@@ -257,6 +265,11 @@ void PWire::set_data_type(data_type_t*type)
 {
       assert(set_data_type_ == 0);
       set_data_type_ = type;
+
+      if (vector_type_t*tmp = dynamic_cast<vector_type_t*>(type)) {
+	    if (tmp->integer_flag)
+		  isint_ = true;
+      }
 }
 
 void PWire::set_discipline(ivl_discipline_t d)

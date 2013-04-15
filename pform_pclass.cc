@@ -91,6 +91,22 @@ void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net)
       net->set_this(pform_cur_class->type, this_wire);
 }
 
+void pform_set_constructor_return(PFunction*net)
+{
+      assert(pform_cur_class);
+      net->set_return(pform_cur_class->type);
+}
+
+/*
+ * A constructor is basically a function with special implications.
+ */
+PFunction*pform_push_constructor_scope(const struct vlltype&loc)
+{
+      assert(pform_cur_class);
+      PFunction*func = pform_push_function_scope(loc, "new", true);
+      return func;
+}
+
 void pform_end_class_declaration(void)
 {
       assert(pform_cur_class);

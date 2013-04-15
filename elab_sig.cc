@@ -537,147 +537,20 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 
       elaborate_sig_wires_(des, scope);
 
-      NetNet*ret_sig = 0;
-      netvector_t*ret_vec = 0;
+      ivl_type_t ret_type;
 
-	/* Create the signals/variables of the return value and write
-	   them into the function scope. */
-      switch (return_type_.type) {
-
-	  case PTF_REG:
-	  case PTF_REG_S:
-	    if (return_type_.range) {
-		  ivl_assert(*this, return_type_.range->size() == 1);
-		  pform_range_t&return_range = return_type_.range->front();
-
-		  NetExpr*me = elab_and_eval(des, scope,
-					     return_range.first, -1,
-                                             true);
-		  assert(me);
-		  NetExpr*le = elab_and_eval(des, scope,
-					     return_range.second, -1,
-                                             true);
-		  assert(le);
-
-		  long mnum = 0, lnum = 0;
-		  if ( ! get_const_argument(me, mnum) ) {
-			cerr << me->get_fileline() << ": error: "
-			      "Unable to evaluate constant expression "
-			     << *me << "." << endl;
-			des->errors += 1;
-		  }
-
-		  if ( ! get_const_argument(le, lnum) ) {
-			cerr << le->get_fileline() << ": error: "
-			      "Unable to evaluate constant expression "
-			     << *le << "." << endl;
-			des->errors += 1;
-		  }
-
-		  vector<netrange_t> packed;
-		  packed.push_back(netrange_t(mnum, lnum));
-		  ret_vec = new netvector_t(packed, IVL_VT_LOGIC);
-		  ret_vec->set_signed(return_type_.type == PTF_REG_S);
-		  ret_vec->set_scalar(false);
-		  ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
-
-	    } else {
-		  ret_vec = new netvector_t(IVL_VT_LOGIC);
-		  ret_vec->set_signed(return_type_.type == PTF_REG_S);
-		  ret_vec->set_scalar(true);
-		  ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
-	    }
-	    ret_sig->set_line(*this);
-	    ret_sig->port_type(NetNet::POUTPUT);
-	    break;
-
-	  case PTF_INTEGER:
-	    ret_vec = new netvector_t(IVL_VT_LOGIC, integer_width-1,0);
-	    ret_vec->set_signed(true);
-	    ret_vec->set_isint(true);
-	    ret_vec->set_scalar(false);
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
-	    ret_sig->set_line(*this);
-	    ret_sig->port_type(NetNet::POUTPUT);
-	    break;
-
-	  case PTF_TIME:
-	    ret_vec = new netvector_t(IVL_VT_LOGIC, 64-1,0);
-	    ret_vec->set_isint(false);
-	    ret_vec->set_scalar(false);
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
-	    ret_sig->set_line(*this);
-	    ret_sig->port_type(NetNet::POUTPUT);
-	    break;
-
-	  case PTF_REAL:
-	  case PTF_REALTIME:
-	    ret_vec = new netvector_t(IVL_VT_REAL);
-	    ret_vec->set_signed(true);
-	    ret_vec->set_isint(false);
-	    ret_vec->set_scalar(true);
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
-	    ret_sig->set_line(*this);
-	    ret_sig->port_type(NetNet::POUTPUT);
-	    break;
-
-	  case PTF_ATOM2:
-	  case PTF_ATOM2_S:
-	    long use_wid;
-	    {
-		  ivl_assert(*this, return_type_.range->size() == 1);
-		  pform_range_t&return_range = return_type_.range->front();
-		  NetExpr*me = elab_and_eval(des, scope,
-					     return_range.first, -1,
-                                             true);
-		  ivl_assert(*this, me);
-		  NetExpr*le = elab_and_eval(des, scope,
-					     return_range.second, -1,
-                                             true);
-		  ivl_assert(*this, le);
-
-		  long mnum = 0, lnum = 0;
-		  if ( ! get_const_argument(me, mnum) ) {
-			cerr << me->get_fileline() << ": error: "
-			      "Unable to evaluate constant expression "
-			     << *me << "." << endl;
-			des->errors += 1;
-		  }
-
-		  if ( ! get_const_argument(le, lnum) ) {
-			cerr << le->get_fileline() << ": error: "
-			      "Unable to evaluate constant expression "
-			     << *le << "." << endl;
-			des->errors += 1;
-		  }
-
-		  use_wid = mnum - lnum + 1;
-	    }
-	    ret_vec = new netvector_t(IVL_VT_BOOL, use_wid-1, 0);
-	    ret_vec->set_isint(true);
-	    ret_vec->set_scalar(false);
-	    ret_vec->set_signed(return_type_.type == PTF_ATOM2_S? true : false);
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_vec);
-	    ret_sig->set_line(*this);
-	    ret_sig->port_type(NetNet::POUTPUT);
-	    break;
-
-	  case PTF_STRING:
-	    cerr << get_fileline() << ": sorry: String functions are not supported yet" << endl;
-	    break;
-
-	  case PTF_VOID:
-	      // Void functions have no return value, so there is no
-	      // signal to create here.
-	    break;
-
-	  default:
-	      /* If we do not have any ports or a return type this
-	       * is probably a bad function definition. */
-	    cerr << get_fileline() << ": error: Bad definition for "
-		 << "function " << scope->basename() << "?" << endl;
-	    return;
+      if (return_type_) {
+	    ret_type = return_type_->elaborate_type(des, scope);
+      } else {
+	    netvector_t*tmp = new netvector_t(IVL_VT_LOGIC);
+	    tmp->set_scalar(true);
+	    ret_type = tmp;
       }
+      list<netrange_t> ret_unpacked;
+      NetNet*ret_sig = new NetNet(scope, fname, NetNet::REG, ret_unpacked, ret_type);
+
+      ret_sig->set_line(*this);
+      ret_sig->port_type(NetNet::POUTPUT);
 
       vector<NetNet*>ports;
       elaborate_sig_ports_(des, scope, ports);
@@ -1290,7 +1163,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
       } else if (enum_type_t*enum_type = dynamic_cast<enum_type_t*>(set_data_type_)) {
 	    list<named_pexpr_t>::const_iterator sample_name = enum_type->names->begin();
-	    netenum_t*use_enum = scope->enumeration_for_name(sample_name->name);
+	    const netenum_t*use_enum = scope->enumeration_for_name(sample_name->name);
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype

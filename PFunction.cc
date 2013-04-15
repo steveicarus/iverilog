@@ -25,7 +25,7 @@ PFunction::PFunction(perm_string name, LexicalScope*parent, bool is_auto__)
 : PTaskFunc(name, parent), statement_(0)
 {
       is_auto_ = is_auto__;
-      return_type_.type = PTF_NONE;
+      return_type_ = 0;
 }
 
 PFunction::~PFunction()
@@ -39,7 +39,7 @@ void PFunction::set_statement(Statement*s)
       statement_ = s;
 }
 
-void PFunction::set_return(PTaskFuncArg t)
+void PFunction::set_return(const data_type_t*t)
 {
       return_type_ = t;
 }

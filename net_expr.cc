@@ -64,7 +64,7 @@ ivl_variable_type_t NetExpr::expr_type() const
       return IVL_VT_LOGIC;
 }
 
-netenum_t*NetExpr::enumeration() const
+const netenum_t*NetExpr::enumeration() const
 {
       return 0;
 }
@@ -246,7 +246,7 @@ void NetEConcat::set(unsigned idx, NetExpr*e)
       expr_width( expr_width() + repeat_ * e->expr_width() );
 }
 
-NetEConstEnum::NetEConstEnum(NetScope*s, perm_string n, netenum_t*eset, const verinum&v)
+NetEConstEnum::NetEConstEnum(NetScope*s, perm_string n, const netenum_t*eset, const verinum&v)
 : NetEConst(v), scope_(s), enum_set_(eset), name_(n)
 {
       assert(has_width());
@@ -256,7 +256,7 @@ NetEConstEnum::~NetEConstEnum()
 {
 }
 
-netenum_t*NetEConstEnum::enumeration() const
+const netenum_t*NetEConstEnum::enumeration() const
 {
       return enum_set_;
 }
@@ -307,7 +307,7 @@ const NetScope* NetECRealParam::scope() const
 }
 
 
-NetENetenum::NetENetenum(netenum_t*s)
+NetENetenum::NetENetenum(const netenum_t*s)
 : netenum_(s)
 {
 }
@@ -316,7 +316,7 @@ NetENetenum::~NetENetenum()
 {
 }
 
-netenum_t* NetENetenum::netenum() const
+const netenum_t* NetENetenum::netenum() const
 {
       return netenum_;
 }
@@ -456,7 +456,7 @@ NetESFunc::NetESFunc(const char*n, ivl_type_t rtype, unsigned np)
 	    ivl_assert(*this, 0);
 }
 
-NetESFunc::NetESFunc(const char*n, netenum_t*enum_type, unsigned np)
+NetESFunc::NetESFunc(const char*n, const netenum_t*enum_type, unsigned np)
 : name_(0), type_(enum_type->base_type()), enum_type_(enum_type), parms_(np)
 {
       name_ = lex_strings.add(n);
@@ -506,7 +506,7 @@ ivl_variable_type_t NetESFunc::expr_type() const
       return type_;
 }
 
-netenum_t* NetESFunc::enumeration() const
+const netenum_t* NetESFunc::enumeration() const
 {
       return enum_type_;
 }

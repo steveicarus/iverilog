@@ -385,8 +385,6 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       Statement*statement;
       vector<Statement*>*statement_list;
 
-      PTaskFuncArg function_type;
-
       net_decl_assign_t*net_decl_assign;
       enum_type_t*enum_type;
 
@@ -596,7 +594,6 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <vartype> integer_vector_type
 %type <parmvalue> parameter_value_opt
 
-%type <function_type> function_range_or_type_opt
 %type <event_expr> event_expression_list
 %type <event_expr> event_expression
 %type <event_statement> event_control
@@ -761,27 +758,36 @@ class_items /* IEEE1800-2005: A.1.2 */
 class_item /* IEEE1800-2005: A.1.8 */
 
     /* IEEE1800 A.1.8: class_constructor_declaration */
-  : method_qualifier_opt K_function K_new '(' tf_port_list_opt ')' ';'
+  : method_qualifier_opt K_function K_new
+      { assert(current_function==0);
+	current_function = pform_push_constructor_scope(@3);
+      }
+    '(' tf_port_list_opt ')' ';'
     function_item_list_opt
     statement_or_null_list_opt
     K_endfunction endnew_opt
-      { yyerror(@3, "sorry: Class constructors not supported yet.");
-	yyerrok;
+      { current_function->set_ports($6);
+	pform_set_constructor_return(current_function);
+	pform_set_this_class(@3, current_function);
+	current_function_set_statement($10? @10 : @3, $10);
+	pform_pop_scope();
+	current_function = 0;
       }
 
     /* IEEE1800 A.1.8: class_constructor_declaration with a call to
        parent constructor. Note that the implicit_class_handle must
        be K_super ("this.new" makes little sense) but that would
        cause a conflict. */
+/* XXXX
   | method_qualifier_opt K_function K_new '(' tf_port_list_opt ')' ';'
     function_item_list_opt
     attribute_list_opt implicit_class_handle '.' K_new '(' expression_list_with_nuls ')'
     statement_or_null_list_opt
     K_endfunction endnew_opt
-      { yyerror(@3, "sorry: Class constructors not supported yet.");
+      { yyerror(@3, "sorry: Class constructors with parent not supported yet.");
 	yyerrok;
       }
-
+*/
     /* Class properties... */
 
   | property_qualifier_opt data_type list_of_variable_decl_assignments ';'
@@ -934,6 +940,19 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  | K_integer signed_unsigned_opt
+      { list<pform_range_t>*pd = make_range_from_width(integer_width);
+	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $2, pd);
+	tmp->reg_flag = true;
+	tmp->integer_flag = true;
+	$$ = tmp;
+      }
+  | K_time
+      { list<pform_range_t>*pd = make_range_from_width(64);
+	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, true, pd);
+	tmp->reg_flag = true;
+	$$ = tmp;
+      }
   | TYPE_IDENTIFIER range_opt
       { if ($2) $$ = new parray_type_t($1, $2);
 	else $$ = $1;
@@ -1045,7 +1064,7 @@ for_step /* IEEE1800-2005: A.6.8 */
      definitions in the func_body to take on the scope of the function
      instead of the module. */
 function_declaration /* IEEE1800-2005: A.2.6 */
-  : K_function K_automatic_opt function_range_or_type_opt IDENTIFIER ';'
+  : K_function K_automatic_opt data_type_or_implicit IDENTIFIER ';'
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
@@ -1070,7 +1089,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	if ($11) delete[]$11;
       }
 
-  | K_function K_automatic_opt function_range_or_type_opt IDENTIFIER
+  | K_function K_automatic_opt data_type_or_implicit IDENTIFIER
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
@@ -1102,7 +1121,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 
   /* Detect and recover from some errors. */
 
-  | K_function K_automatic_opt function_range_or_type_opt IDENTIFIER error K_endfunction
+  | K_function K_automatic_opt data_type_or_implicit IDENTIFIER error K_endfunction
       { /* */
 	if (current_function) {
 	      pform_pop_scope();
@@ -1705,58 +1724,7 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
 
 tf_port_item /* IEEE1800-2005: A.2.7 */
 
-  /* Ports can be integer with a width of [31:0]. */
-
-  : port_direction_opt K_integer IDENTIFIER range_opt tf_port_item_expr_opt
-      { list<pform_range_t>*range_stub = make_range_from_width(integer_width);
-	NetNet::PortType use_port_type = $1==NetNet::PIMPLICIT? NetNet::PINPUT : $1;
-
-	port_declaration_context.port_type = use_port_type;
-	port_declaration_context.var_type = IVL_VT_LOGIC;
-	port_declaration_context.sign_flag = true;
-	delete port_declaration_context.range;
-	port_declaration_context.range = copy_range(range_stub);
-	vector<PWire*>*tmp = pform_make_task_ports(@3, use_port_type,
-						   IVL_VT_LOGIC, true,
-						   range_stub,
-						   list_from_identifier($3), true);
-	$$ = tmp;
-	if ($4) {
-	      yyerror(@4, "sorry: Port variable dimensions not supported yet.");
-	      delete $4;
-	}
-	if ($5) {
-	      yyerror(@5, "sorry: Port default expressions not supported yet.");
-	      delete $5;
-	}
-      }
-
-  /* Ports can be time with a width of [63:0] (unsigned). */
-
-  | port_direction_opt K_time IDENTIFIER range_opt tf_port_item_expr_opt
-      { list<pform_range_t>*range_stub = make_range_from_width(64);
-	NetNet::PortType use_port_type = $1==NetNet::PIMPLICIT? NetNet::PINPUT : $1;
-
-	port_declaration_context.port_type = use_port_type;
-	port_declaration_context.var_type = IVL_VT_LOGIC;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = copy_range(range_stub);
-	vector<PWire*>*tmp = pform_make_task_ports(@3, use_port_type, IVL_VT_LOGIC,
-						   false, range_stub,
-						   list_from_identifier($3));
-	$$ = tmp;
-	if ($4) {
-	      yyerror(@4, "sorry: Port variable dimensions not supported yet.");
-	      delete $4;
-	}
-	if ($5) {
-	      yyerror(@5, "sorry: Port default expressions not supported yet.");
-	      delete $5;
-	}
-      }
-
-  | port_direction_opt data_type_or_implicit IDENTIFIER range_opt tf_port_item_expr_opt
+  : port_direction_opt data_type_or_implicit IDENTIFIER range_opt tf_port_item_expr_opt
       { vector<PWire*>*tmp;
 	NetNet::PortType use_port_type = $1==NetNet::PIMPLICIT? NetNet::PINPUT : $1;
 	list<perm_string>* ilist = list_from_identifier($3);
@@ -1987,22 +1955,10 @@ attribute
 
 block_item_decl
 
-  /* Integer atom declarations are simpler in that they do not have
-     all the trappings of a general variable declaration. All of that
-     is implicit in the "integer" of the declaration. */
-
-  : K_integer signed_unsigned_opt register_variable_list ';'
-      { pform_set_reg_integer($3, attributes_in_context);
-      }
-
-  | K_time register_variable_list ';'
-      { pform_set_reg_time($2, attributes_in_context);
-      }
-
   /* variable declarations. Note that data_type can be 0 if we are
      recovering from an error. */
 
-  | data_type register_variable_list ';'
+  : data_type register_variable_list ';'
       { if ($1) pform_set_data_type(@1, $1, $2, NetNet::REG, attributes_in_context);
       }
 
@@ -5004,42 +4960,6 @@ dimensions
 	}
 	$$ = tmp;
       }
-  ;
-
-  /* This is used to express the return type of a function. This is
-     not quite right, and should be replaced with a variant that uses
-     the data_type rule. This will get us by for now. */
-function_range_or_type_opt
-  : unsigned_signed_opt range_opt
-      { /* the default type is reg unsigned and no range */
-	$$.type = PTF_REG;
-	$$.range = $2;
-	if ($1)
-	      $$.type = PTF_REG_S;
-      }
-  | K_reg unsigned_signed_opt range_opt
-      { /* the default type is reg unsigned and no range */
-	$$.type = PTF_REG;
-	$$.range = $3;
-	if ($2)
-	      $$.type = PTF_REG_S;
-      }
-  | bit_logic unsigned_signed_opt range_opt
-      { /* the default type is bit/logic unsigned and no range */
-	$$.type  = PTF_REG;
-	$$.range = $3;
-	if ($2)
-	      $$.type = PTF_REG_S;
-      }
-  | K_integer  { $$.range = 0;  $$.type = PTF_INTEGER; }
-  | K_real     { $$.range = 0;  $$.type = PTF_REAL; }
-  | K_realtime { $$.range = 0;  $$.type = PTF_REALTIME; }
-  | K_string   { $$.range = 0;  $$.type = PTF_STRING; }
-  | K_time     { $$.range = 0;  $$.type = PTF_TIME; }
-  | K_void     { $$.range = 0;  $$.type = PTF_VOID; }
-  | atom2_type { $$.range = make_range_from_width($1); $$.type = PTF_ATOM2_S; }
-  | atom2_type K_signed  { $$.range = make_range_from_width($1); $$.type = PTF_ATOM2_S; }
-  | atom2_type K_unsigned { $$.range = make_range_from_width($1); $$.type = PTF_ATOM2; }
   ;
 
   /* The register_variable rule is matched only when I am parsing

@@ -102,7 +102,7 @@ unsigned NetAssign_::lwidth() const
 	    return ptype->packed_width();
       }
 
-      if (netdarray_t*darray = sig_->darray_type()) {
+      if (const netdarray_t*darray = sig_->darray_type()) {
 	    if (word_ == 0)
 		  return 1;
 	    else
@@ -122,7 +122,7 @@ ivl_variable_type_t NetAssign_::expr_type() const
 	    return tmp->base_type();
       }
 
-      if (netdarray_t*darray = sig_->darray_type()) {
+      if (const netdarray_t*darray = sig_->darray_type()) {
 	    if (word_ == 0)
 		  return IVL_VT_DARRAY;
 	    else
@@ -153,9 +153,9 @@ const ivl_type_s* NetAssign_::net_type() const
       return 0;
 }
 
-netenum_t*NetAssign_::enumeration() const
+const netenum_t*NetAssign_::enumeration() const
 {
-      netenum_t*tmp = 0;
+      const netenum_t*tmp = 0;
 
 	// If the base signal is not an enumeration, return nil.
       if ( (tmp = sig_->enumeration()) == 0 )

@@ -92,7 +92,7 @@ ivl_type_t netclass_t::get_prop_type(size_t idx) const
       return property_table_[idx].type;
 }
 
-NetScope*netclass_t::method_from_name(perm_string name)
+NetScope*netclass_t::method_from_name(perm_string name) const
 {
       NetScope*task = class_scope_->child( hname_t(name) );
       if (task == 0) return 0;
