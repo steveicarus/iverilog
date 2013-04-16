@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -535,12 +535,10 @@ static PLI_INT32 sys_fread_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 static unsigned fread_word(FILE *fp, vpiHandle word,
                            unsigned words, unsigned bpe, s_vpi_vecval *vector)
 {
-      unsigned rtn, clr_mask, bnum;
-      int bidx, byte;
+      int bidx;
       s_vpi_value val;
       struct t_vpi_vecval *cur = &vector[words-1];
-
-      rtn = 0;
+      unsigned rtn = 0;
 
 	/* Get the current bits from the register and copy them to
 	 * my local vector. */
@@ -553,7 +551,8 @@ static unsigned fread_word(FILE *fp, vpiHandle word,
 
 	/* Copy the bytes to the local vector MSByte first. */
       for (bidx = bpe-1; bidx >= 0; bidx -= 1) {
-	    byte = fgetc(fp);
+	    unsigned clr_mask, bnum;
+	    int byte = fgetc(fp);
 	    if (byte == EOF) break;
 	      /* Clear the current byte and load the new value. */
 	    bnum = bidx % 4;

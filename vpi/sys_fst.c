@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -479,24 +479,6 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       unsigned size;
       PLI_INT32 item_type;
 
-      /* list of types to iterate upon */
-      int i;
-      static int types[] = {
-	    /* Value */
-	    vpiNamedEvent,
-	    vpiNet,
-//	    vpiParameter,
-	    vpiReg,
-	    vpiVariables,
-	    /* Scope */
-	    vpiFunction,
-	    vpiModule,
-	    vpiNamedBegin,
-	    vpiNamedFork,
-	    vpiTask,
-	    -1
-      };
-
 	/* Get the displayed type for the various $var and $scope types. */
 	/* Not all of these are supported now, but they should be in a
 	 * future development version. */
@@ -667,8 +649,25 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	  case vpiNamedFork:
 
 	    if (depth > 0) {
-		  int nskip = (vcd_names_search(&fst_tab, fullname) != 0);
 		  char *defname = NULL;
+		  /* list of types to iterate upon */
+		  static int types[] = {
+			/* Value */
+			vpiNamedEvent,
+			vpiNet,
+			/* vpiParameter, */
+			vpiReg,
+			vpiVariables,
+			/* Scope */
+			vpiFunction,
+			vpiModule,
+			vpiNamedBegin,
+			vpiNamedFork,
+			vpiTask,
+			-1
+		  };
+		  int i;
+		  int nskip = (vcd_names_search(&fst_tab, fullname) != 0);
 
 		    /* We have to always scan the scope because the
 		     * depth could be different for this call. */

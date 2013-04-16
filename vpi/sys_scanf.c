@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2006-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -469,7 +469,6 @@ static int scan_format_decimal(vpiHandle callh, vpiHandle argv,
 {
       vpiHandle arg;
       char *strval = malloc(1);
-      unsigned len = 0;
       s_vpi_value val;
       int ch;
 
@@ -495,6 +494,7 @@ static int scan_format_decimal(vpiHandle callh, vpiHandle argv,
 	    strval[0] = 'z';
 	    strval[1] = 0;
       } else {
+	    unsigned len = 0;
 
 	      /* To match a + or - we must have a digit after it. */
 	    if (ch == '+') {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -75,7 +75,6 @@ void vpip_bin_str_to_vec4(vvp_vector4_t&vec4, const char*buf)
 			vec4.set_bit(jdx, BIT4_X);
 		  }
 		  return;
-		  break;
 	    }
 
 	    idx += 1;

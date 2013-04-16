@@ -3399,6 +3399,11 @@ if(gzread_pass_status)
 			{
 			break;
 			}
+
+                if((hdr_incomplete) && (!seclen))
+                        {   
+                        break;
+                        }
 	
 		if(!hdr_seen && (sectype != FST_BL_HDR)) 
 			{

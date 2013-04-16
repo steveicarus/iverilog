@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2012 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2013 Michael Ruff (mruff at chiaro.com)
  *                         Michael Runyan (mrunyan at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
@@ -78,9 +78,9 @@ void veriusertfs_register_table(p_tfcell vtable)
       p_tfcell tf;
       s_vpi_systf_data tf_data;
       p_pli_data data;
-      static char trace_buf[1024];
 
       if (!pli_trace && (path = getenv("PLI_TRACE"))) {
+	    static char trace_buf[1024];
 	    if (strcmp(path,"-") == 0)
 		  pli_trace = stdout;
 	    else {

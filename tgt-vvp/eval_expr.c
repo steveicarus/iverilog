@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -121,7 +121,6 @@ int number_is_immediate(ivl_expr_t expr, unsigned lim_wid, int negative_ok_flag)
 long get_number_immediate(ivl_expr_t expr)
 {
       long imm = 0;
-      unsigned idx;
 
       switch (ivl_expr_type(expr)) {
 	  case IVL_EX_ULONG:
@@ -131,6 +130,7 @@ long get_number_immediate(ivl_expr_t expr)
 	  case IVL_EX_NUMBER: {
 		const char*bits = ivl_expr_bits(expr);
 		unsigned nbits = ivl_expr_width(expr);
+		unsigned idx;
 		  /* We can not copy more bits than fit into a long. */
 		if (nbits > 8*sizeof(long)) nbits = 8*sizeof(long);
 		for (idx = 0 ; idx < nbits ; idx += 1) switch (bits[idx]){
@@ -157,7 +157,6 @@ long get_number_immediate(ivl_expr_t expr)
 uint64_t get_number_immediate64(ivl_expr_t expr)
 {
       uint64_t imm = 0;
-      unsigned idx;
 
       switch (ivl_expr_type(expr)) {
 	  case IVL_EX_ULONG:
@@ -167,6 +166,7 @@ uint64_t get_number_immediate64(ivl_expr_t expr)
 	  case IVL_EX_NUMBER: {
 		const char*bits = ivl_expr_bits(expr);
 		unsigned nbits = ivl_expr_width(expr);
+		unsigned idx;
 		for (idx = 0 ; idx < nbits ; idx += 1) switch (bits[idx]){
 		    case '0':
 		      break;

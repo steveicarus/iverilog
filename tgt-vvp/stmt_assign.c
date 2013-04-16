@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -482,8 +482,6 @@ static void set_vec_to_lval_slice(ivl_lval_t lval, unsigned bit, unsigned wid)
  */
 static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
 {
-      ivl_lval_t lval;
-
       unsigned wid = res.wid;
       unsigned lidx;
       unsigned cur_rbit = 0;
@@ -492,7 +490,7 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
 	    unsigned bidx;
 	    unsigned bit_limit = wid - cur_rbit;
 
-	    lval = ivl_stmt_lval(net, lidx);
+	    ivl_lval_t lval = ivl_stmt_lval(net, lidx);
 
 	      /* Reduce bit_limit to the width of this l-value. */
 	    if (bit_limit > ivl_lval_width(lval))

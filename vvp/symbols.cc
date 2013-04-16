@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -125,79 +125,73 @@ static void delete_symbol_node(struct tree_node_*cur)
 /* Do as split_leaf_ does, but for nodes. */
 static void split_node_(struct tree_node_*cur)
 {
-	unsigned int idx, idx1, idx2, tmp;
-	struct tree_node_ *new_node;
+      assert(!cur->leaf_flag);
+      if (cur->parent) assert(! cur->parent->leaf_flag);
 
-	assert(!cur->leaf_flag);
-	if (cur->parent)  assert(! cur->parent->leaf_flag);
+      while (cur->count == node_width) {
+	      /* Create a new node to hold half the data from cur. */
+	    struct tree_node_ *new_node = new struct tree_node_;
+	    new_node->leaf_flag = false;
+	    new_node->count = cur->count / 2;
+	      /* cur is not root; new_node becomes sibling. */
+	    if (cur->parent) new_node->parent = cur->parent;
 
-	while (cur->count == node_width)
-	{
-		/* Create a new node to hold half the data from cur. */
-		new_node = new struct tree_node_;
-		new_node->leaf_flag = false;
-		new_node->count = cur->count / 2;
-		if (cur->parent)
-			/* cur is not root; new_node becomes sibling. */
-			new_node->parent = cur->parent;
+	      /* Move the last half of the data from the end of the old node
+	       * to the beginning of the new node. At the same time, reduce
+	       * the size of the old node. */
+	    unsigned idx1 = new_node->count;
+	    unsigned idx2 = cur->count;
+	    while (idx1 > 0) {
+		  idx1 -= 1;
+		  idx2 -= 1;
+		  new_node->child[idx1] = cur->child[idx2];
+		  new_node->child[idx1]->parent = new_node;
+		  cur->count -= 1;
+	    }
 
-		/* Move the last half of the data from the end of the old node
-		   to the beginning of the new node. At the same time, reduce
-		   the size of the old node. */
-		idx1 = new_node->count;
-		idx2 = cur->count;
-		while (idx1 > 0) {
-		      idx1 -= 1;
-		      idx2 -= 1;
-		      new_node->child[idx1] = cur->child[idx2];
-		      new_node->child[idx1]->parent = new_node;
-		      cur->count -= 1;
-		}
+	    assert(new_node->count > 0);
+	    assert(cur->count > 0);
 
-		assert(new_node->count > 0);
-		assert(cur->count > 0);
+	    if (cur->parent == 0) {
+		    /* cur is root. Move first half of children to another
+		     * new node, and put the two new nodes in cur. The plan
+		     * here is to make cur into the new root and split its
+		     * contents into 2 children. */
 
-		if (cur->parent == 0) {
-			/* cur is root. Move first half of children to
-			   another new node, and put the two new nodes
-			   in cur. The plan here is to make cur into
-			   the new root and split its contents into 2
-			   children. */
+		  new_node->parent = cur;
+		  struct tree_node_*new2_node = new struct tree_node_;
+		  new2_node->leaf_flag = false;
+		  new2_node->count = cur->count;
+		  new2_node->parent = cur;
+		  for (unsigned idx = 0; idx < cur->count; idx += 1) {
+			new2_node->child[idx] = cur->child[idx];
+			new2_node->child[idx]->parent = new2_node;
+		  }
+		  cur->child[0] = new2_node;
+		  cur->child[1] = new_node;
+		  cur->count = 2;
+		    /* no more ancestors, stop the while loop */
+		  break;
+	    }
 
-		      new_node->parent = cur;
-		      struct tree_node_*new2_node = new struct tree_node_;
-		      new2_node->leaf_flag = false;
-		      new2_node->count = cur->count;
-		      new2_node->parent = cur;
-		      for (idx = 0; idx < cur->count; idx += 1) {
-			    new2_node->child[idx] = cur->child[idx];
-			    new2_node->child[idx]->parent = new2_node;
-		      }
-		      cur->child[0] = new2_node;
-		      cur->child[1] = new_node;
-		      cur->count = 2;
-			/* no more ancestors, stop the while loop */
-		      break;
-		}
+	      /* cur is not root. hook new_node to cur->parent. */
+	    unsigned idx = 0;
+	    while (cur->parent->child[idx] != cur) {
+		  assert(idx < cur->parent->count);
+		  idx += 1;
+	    }
+	    idx += 1;
 
-		/* cur is not root. hook new_node to cur->parent. */
-		idx = 0;
-		while (cur->parent->child[idx] != cur) {
-			assert(idx < cur->parent->count);
-			idx += 1;
-		}
+	    for (unsigned tmp = cur->parent->count ;  tmp > idx ;  tmp -= 1) {
+		  cur->parent->child[tmp] = cur->parent->child[tmp-1];
+	    }
 
-		idx += 1;
+	    cur->parent->child[idx] = new_node;
+	    cur->parent->count += 1;
 
-		for (tmp = cur->parent->count ;  tmp > idx ;  tmp -= 1)
-			cur->parent->child[tmp] = cur->parent->child[tmp-1];
-
-		cur->parent->child[idx] = new_node;
-		cur->parent->count += 1;
-
-		/* check the ancestor */
-		cur = cur->parent;
-	}
+	      /* check the ancestor */
+	    cur = cur->parent;
+      }
 }
 
 /*

@@ -1,4 +1,3 @@
-
 /*
  * NOTE: This code as been slightly modified to interface with the
  * PLI implementations of $random. The copyright and license
@@ -84,13 +83,13 @@ unsigned long
 genrand(struct context_s *context)
 {
     unsigned long y;
-    static unsigned long mag01[2]={0x0, MATRIX_A};
-    /* mag01[x] = x * MATRIX_A  for x=0,1 */
 
     unsigned long *mt = context->mt;
     int mti = context->mti;
 
     if (mti >= N) { /* generate N words at one time */
+	/* mag01[x] = x * MATRIX_A  for x=0,1 */
+	static unsigned long mag01[2]={0x0, MATRIX_A};
         int kk;
 
         if (mti == N+1)   /* if sgenrand() has not been called, */
@@ -120,4 +119,3 @@ genrand(struct context_s *context)
 
     return y;
 }
-

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -85,13 +85,14 @@ static void gen_new_vcd_id(void)
 
 static char *truncate_bitvec(char *s)
 {
-      char l, r;
+      char r;
 
       r=*s;
       if(r=='1') return s;
       else s += 1;
 
       for(;;s++) {
+	    char l;
 	    l=r; r=*s;
 	    if(!r) return (s-1);
 	    if(l!=r) return(((l=='0')&&(r=='1'))?s:s-1);
@@ -508,24 +509,6 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       unsigned size;
       PLI_INT32 item_type;
 
-      /* list of types to iterate upon */
-      int i;
-      static int types[] = {
-	    /* Value */
-	    vpiNamedEvent,
-	    vpiNet,
-//	    vpiParameter,
-	    vpiReg,
-	    vpiVariables,
-	    /* Scope */
-	    vpiFunction,
-	    vpiModule,
-	    vpiNamedBegin,
-	    vpiNamedFork,
-	    vpiTask,
-	    -1
-      };
-
 	/* Get the displayed type for the various $var and $scope types. */
 	/* Not all of these are supported now, but they should be in a
 	 * future development version. */
@@ -690,6 +673,23 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	  case vpiNamedFork:
 
 	    if (depth > 0) {
+		/* list of types to iterate upon */
+		  static int types[] = {
+			/* Value */
+			vpiNamedEvent,
+			vpiNet,
+			/* vpiParameter, */
+			vpiReg,
+			vpiVariables,
+			/* Scope */
+			vpiFunction,
+			vpiModule,
+			vpiNamedBegin,
+			vpiNamedFork,
+			vpiTask,
+			-1
+		  };
+		  int i;
 		  int nskip = (vcd_names_search(&vcd_tab, fullname) != 0);
 
 		    /* We have to always scan the scope because the
