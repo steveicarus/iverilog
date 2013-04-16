@@ -145,27 +145,15 @@ bool NetProc::evaluate_function(const LineInfo&,
       return false;
 }
 
-bool NetAssign::evaluate_function(const LineInfo&loc,
-				  map<perm_string,NetExpr*>&context_map) const
+bool NetAssign::eval_func_lval_(const LineInfo&loc,
+				map<perm_string,NetExpr*>&context_map,
+				const NetAssign_*lval, NetExpr*rval_result) const
 {
-      if (l_val_count() != 1) {
-	    cerr << get_fileline() << ": sorry: I don't know how to evaluate "
-		  "concatenated l-values here." << endl;
-	    return false;
-      }
-
-      const NetAssign_*lval = l_val(0);
-
       map<perm_string,NetExpr*>::iterator ptr = context_map.find(lval->name());
       ivl_assert(*this, ptr != context_map.end());
 
 	// Do not support having l-values that are unpacked arrays.
       ivl_assert(loc, lval->word() == 0);
-
-	// Evaluate the r-value expression.
-      NetExpr*rval_result = rval()->evaluate_function(loc, context_map);
-      if (rval_result == 0)
-	    return false;
 
       if (const NetExpr*base_expr = lval->get_base()) {
 	    NetExpr*base_result = base_expr->evaluate_function(loc, context_map);
@@ -212,6 +200,44 @@ bool NetAssign::evaluate_function(const LineInfo&loc,
       }
 
       ptr->second = rval_result;
+
+      return true;
+}
+
+bool NetAssign::evaluate_function(const LineInfo&loc,
+				  map<perm_string,NetExpr*>&context_map) const
+{
+	// Evaluate the r-value expression.
+      NetExpr*rval_result = rval()->evaluate_function(loc, context_map);
+      if (rval_result == 0)
+	    return false;
+
+	// Handle the easy case of a single variable on the LHS.
+      if (l_val_count() == 1)
+	    return eval_func_lval_(loc, context_map, l_val(0), rval_result);
+
+	// If we get here, the LHS must be a concatenation, so we
+	// expect the RHS to be a vector value.
+      NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
+      ivl_assert(*this, rval_const);
+
+      verinum rval_full = rval_const->value();
+      delete rval_result;
+
+      unsigned base = 0;
+      for (unsigned ldx = 0 ; ldx < l_val_count() ; ldx += 1) {
+	    const NetAssign_*lval = l_val(ldx);
+
+	    verinum rval_part(verinum::Vx, lval->lwidth());
+	    for (unsigned idx = 0 ; idx < rval_part.len() ; idx += 1)
+		  rval_part.set(idx, rval_full[base+idx]);
+
+	    bool flag = eval_func_lval_(loc, context_map, lval,
+					new NetEConst(rval_part));
+	    if (!flag) return false;
+
+	    base += lval->lwidth();
+      }
 
       return true;
 }

@@ -2579,6 +2579,10 @@ class NetAssign : public NetAssignBase {
       virtual bool evaluate_function(const LineInfo&loc, std::map<perm_string,NetExpr*>&context_map) const;
 
     private:
+      bool eval_func_lval_(const LineInfo&loc,
+			   std::map<perm_string,NetExpr*>&context_map,
+			   const NetAssign_*lval, NetExpr*rval_result) const;
+
       char op_;
 };
 
