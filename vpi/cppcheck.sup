@@ -15,16 +15,16 @@ variableScope:fstapi.c:2853
 variableScope:fstapi.c:2976
 variableScope:fstapi.c:3304
 variableScope:fstapi.c:3313
-variableScope:fstapi.c:3815
-variableScope:fstapi.c:3818
-variableScope:fstapi.c:4385
-variableScope:fstapi.c:4439
-variableScope:fstapi.c:4743
-variableScope:fstapi.c:4746
-variableScope:fstapi.c:4982
-variableScope:fstapi.c:5087
-variableScope:fstapi.c:5088
-variableScope:fstapi.c:5119
+variableScope:fstapi.c:3820
+variableScope:fstapi.c:3823
+variableScope:fstapi.c:4390
+variableScope:fstapi.c:4444
+variableScope:fstapi.c:4748
+variableScope:fstapi.c:4751
+variableScope:fstapi.c:4987
+variableScope:fstapi.c:5093
+variableScope:fstapi.c:5092
+variableScope:fstapi.c:5124
 
 // lxt2_write.c from GTKWave
 obsoleteFunctionsalloca:lxt2_write.c:1813
