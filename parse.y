@@ -1847,6 +1847,10 @@ tf_port_list /* IEEE1800-2005: A.2.7 */
 timeunits_declaration /* IEEE1800-2005: A.1.2 */
   : K_timeunit TIME_LITERAL ';'
       { pform_set_timeunit($2, false, false); }
+  | K_timeunit TIME_LITERAL '/' TIME_LITERAL ';'
+      { pform_set_timeunit($2, false, false);
+        pform_set_timeprecision($4, false, false);
+      }
   | K_timeprecision TIME_LITERAL ';'
       { pform_set_timeprecision($2, false, false); }
   ;
@@ -3895,20 +3899,41 @@ cont_assign_list
   /* We allow zero, one or two unique declarations. */
 local_timeunit_prec_decl_opt
 	: /* Empty */
-        | local_timeunit_prec_decl
-        | local_timeunit_prec_decl local_timeunit_prec_decl
+	| K_timeunit TIME_LITERAL '/' TIME_LITERAL ';'
+		{ pform_set_timeunit($2, true, false);
+		  have_timeunit_decl = true;
+		  pform_set_timeprecision($4, true, false);
+		  have_timeprec_decl = true;
+		}
+	| local_timeunit_prec_decl
+	| local_timeunit_prec_decl local_timeunit_prec_decl2
 	;
 
   /* By setting the appropriate have_time???_decl we allow only
      one declaration of each type in this module. */
 local_timeunit_prec_decl
-	: K_timeunit  TIME_LITERAL ';'
+	: K_timeunit TIME_LITERAL ';'
 		{ pform_set_timeunit($2, true, false);
 		  have_timeunit_decl = true;
 		}
 	| K_timeprecision TIME_LITERAL ';'
 		{ pform_set_timeprecision($2, true, false);
 		  have_timeprec_decl = true;
+		}
+	;
+local_timeunit_prec_decl2
+	: K_timeunit TIME_LITERAL ';'
+		{ pform_set_timeunit($2, true, false);
+		  have_timeunit_decl = true;
+		}
+	| K_timeprecision TIME_LITERAL ';'
+		{ pform_set_timeprecision($2, true, false);
+		  have_timeprec_decl = true;
+		}
+	  /* As the second item this form is always a check. */
+	| K_timeunit TIME_LITERAL '/' TIME_LITERAL ';'
+		{ pform_set_timeunit($2, true, true);
+		  pform_set_timeprecision($4, true, true);
 		}
 	;
 
@@ -4414,6 +4439,10 @@ module_item
 
 	| K_timeunit_check  TIME_LITERAL ';'
 		{ pform_set_timeunit($2, true, true); }
+	| K_timeunit_check TIME_LITERAL '/' TIME_LITERAL ';'
+		{ pform_set_timeunit($2, true, true);
+		  pform_set_timeprecision($4, true, true);
+		}
 	| K_timeprecision_check TIME_LITERAL ';'
 		{ pform_set_timeprecision($2, true, true); }
 	;
