@@ -3399,6 +3399,11 @@ if(gzread_pass_status)
 			{
 			break;
 			}
+
+                if((hdr_incomplete) && (!seclen))
+                        {   
+                        break;
+                        }
 	
 		if(!hdr_seen && (sectype != FST_BL_HDR)) 
 			{
@@ -3820,7 +3825,7 @@ for(;;)
 	uint64_t tpval;
 	int ti;
 
-	fseeko(xc->f, blkpos + seclen - 24, SEEK_SET);
+	if(fseeko(xc->f, blkpos + seclen - 24, SEEK_SET) != 0) break;
 	tsec_uclen = fstReaderUint64(xc->f);
 	tsec_clen = fstReaderUint64(xc->f);
 	tsec_nitems = fstReaderUint64(xc->f);
@@ -3828,7 +3833,9 @@ for(;;)
 	printf("\ttime section unc: %d, com: %d (%d items)\n", 
 		(int)tsec_uclen, (int)tsec_clen, (int)tsec_nitems);
 #endif		
+	if(tsec_clen > seclen) break; /* corrupted tsec_clen: by definition it can't be larger than size of section */
 	ucdata = malloc(tsec_uclen);
+	if(!ucdata) break; /* malloc fail as tsec_uclen out of range from corrupted file */
 	destlen = tsec_uclen;
 	sourcelen = tsec_clen;
 
