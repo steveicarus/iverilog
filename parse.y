@@ -401,6 +401,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       class_type_t*class_type;
       real_type_t::type_t real_type;
       property_qualifier_t property_qualifier;
+      PPackage*package;
 
       verinum* number;
 
@@ -410,8 +411,9 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       list<index_component_t> *dimensions;
 };
 
-%token <text>   IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
+%token <text>      IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
 %token <data_type> TYPE_IDENTIFIER
+%token <package>   PACKAGE_IDENTIFIER
 %token <discipline> DISCIPLINE_IDENTIFIER
 %token <text>   PATHPULSE_IDENTIFIER
 %token <number> BASED_NUMBER DEC_NUMBER UNBASED_NUMBER
@@ -894,6 +896,17 @@ constraint_set /* IEEE1800-2005 A.1.9 */
   | '{' constraint_expression_list '}'
   ;
 
+data_declaration /* IEEE1800-2005: A.2.1.3 */
+  : attribute_list_opt data_type_or_implicit list_of_variable_decl_assignments ';'
+      { data_type_t*data_type = $2;
+	if (data_type == 0) {
+	      data_type = new vector_type_t(IVL_VT_LOGIC, false, 0);
+	      FILE_NAME(data_type, @2);
+	}
+	pform_makewire(@2, 0, str_strength, $3, NetNet::IMPLICIT_REG, data_type);
+      }
+  ;
+
 data_type /* IEEE1800-2005: A.2.2.1 */
   : integer_vector_type unsigned_signed_opt range_opt
       { ivl_variable_type_t use_vtype = $1;
@@ -924,6 +937,12 @@ data_type /* IEEE1800-2005: A.2.2.1 */
   | TYPE_IDENTIFIER range_opt
       { if ($2) $$ = new parray_type_t($1, $2);
 	else $$ = $1;
+      }
+  | PACKAGE_IDENTIFIER K_SCOPE_RES
+      { lex_in_package_scope($1); }
+    TYPE_IDENTIFIER
+      { lex_in_package_scope(0);
+	$$ = $4;
       }
   | K_string
       { string_type_t*tmp = new string_type_t;
@@ -1373,14 +1392,12 @@ package_import_declaration /* IEEE1800-2005 A.2.1.3 */
   ;
 
 package_import_item
-  : IDENTIFIER K_SCOPE_RES IDENTIFIER
+  : PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER
       { pform_package_import(@2, $1, $3);
-	delete[]$1;
 	delete[]$3;
       }
-  | IDENTIFIER K_SCOPE_RES '*'
+  | PACKAGE_IDENTIFIER K_SCOPE_RES '*'
       { pform_package_import(@2, $1, 0);
-	delete[]$1;
       }
   ;
 
@@ -1395,6 +1412,8 @@ package_item /* IEEE1800-2005 A.1.10 */
   | K_localparam param_type localparam_assign_list ';'
   | type_declaration
   | function_declaration
+  | task_declaration
+  | data_declaration
   ;
 
 package_item_list
@@ -2985,16 +3004,17 @@ expr_primary
 	delete $1;
       }
 
-  | IDENTIFIER K_SCOPE_RES IDENTIFIER
-      { $$ = pform_package_ident(@2, $1, $3); }
+  | PACKAGE_IDENTIFIER K_SCOPE_RES hierarchy_identifier
+      { $$ = pform_package_ident(@2, $1, $3);
+	delete $3;
+      }
 
   /* An identifier followed by an expression list in parentheses is a
      function call. If a system identifier, then a system function
      call. */
 
   | hierarchy_identifier '(' expression_list_proper ')'
-      { PECallFunction*tmp = new PECallFunction(*$1, *$3);
-	FILE_NAME(tmp, @1);
+      { PECallFunction*tmp = pform_make_call_function(@1, *$1, *$3);
 	delete $1;
 	$$ = tmp;
       }
@@ -3006,14 +3026,20 @@ expr_primary
 	$$ = tmp;
       }
   | hierarchy_identifier '(' ')'
-      { const vector<PExpr*> empty;
-	PECallFunction*tmp = new PECallFunction(*$1, empty);
-	FILE_NAME(tmp, @1);
+      { const list<PExpr*> empty;
+	PECallFunction*tmp = pform_make_call_function(@1, *$1, empty);
 	delete $1;
 	$$ = tmp;
 	if (!gn_system_verilog()) {
 	      yyerror(@1, "error: Empty function argument list requires SystemVerilog.");
 	}
+      }
+  | PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER '(' expression_list_proper ')'
+      { perm_string use_name = lex_strings.make($3);
+	PECallFunction*tmp = new PECallFunction($1, use_name, *$5);
+	FILE_NAME(tmp, @3);
+	delete[]$3;
+	$$ = tmp;
       }
   | SYSTEM_IDENTIFIER '('  ')'
       { perm_string tn = lex_strings.make($1);
@@ -3837,7 +3863,7 @@ atom2_type
      rule to reflect the rules for assignment l-values. */
 lpvalue
   : hierarchy_identifier
-      { PEIdent*tmp = new PEIdent(*$1);
+      { PEIdent*tmp = pform_new_ident(*$1);
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete $1;
@@ -5700,8 +5726,7 @@ statement_item /* This is roughly statement_item in the LRM */
 		}
 
   | hierarchy_identifier '(' expression_list_with_nuls ')' ';'
-      { PCallTask*tmp = new PCallTask(*$1, *$3);
-	FILE_NAME(tmp, @1);
+      { PCallTask*tmp = pform_make_call_task(@1, *$1, *$3);
 	delete $1;
 	delete $3;
 	$$ = tmp;
@@ -5735,8 +5760,7 @@ statement_item /* This is roughly statement_item in the LRM */
 
   | hierarchy_identifier ';'
       { list<PExpr*>pt;
-	PCallTask*tmp = new PCallTask(*$1, pt);
-	FILE_NAME(tmp, @1);
+	PCallTask*tmp = pform_make_call_task(@1, *$1, pt);
 	delete $1;
 	$$ = tmp;
       }
@@ -5744,8 +5768,7 @@ statement_item /* This is roughly statement_item in the LRM */
   | hierarchy_identifier '(' error ')' ';'
       { yyerror(@3, "error: Syntax error in task arguments.");
 	list<PExpr*>pt;
-	PCallTask*tmp = new PCallTask(*$1, pt);
-	FILE_NAME(tmp, @1);
+	PCallTask*tmp = pform_make_call_task(@1, *$1, pt);
 	delete $1;
 	$$ = tmp;
       }

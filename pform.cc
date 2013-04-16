@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -424,18 +425,15 @@ PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
  */
 PEIdent* pform_new_ident(const pform_name_t&name)
 {
-      if (name.size() != 1)
-	    return new PEIdent(name);
-
       LexicalScope*scope = pform_peek_scope();
-      map<perm_string,PPackage*>::const_iterator pkg = scope->imports.find(name.back().name);
+      map<perm_string,PPackage*>::const_iterator pkg = scope->imports.find(name.front().name);
       if (pkg == scope->imports.end())
 	    return new PEIdent(name);
 
 	// XXXX For now, do not support indexed imported names.
       assert(name.back().index.size() == 0);
 
-      return new PEIdent(pkg->second, name.back().name);
+      return new PEIdent(pkg->second, name);
 }
 
 PGenerate* pform_parent_generate(void)
@@ -519,16 +517,96 @@ data_type_t* pform_test_type_identifier(const char*txt)
 	    return 0;
 
       perm_string name = lex_strings.make(txt);
-      map<perm_string,data_type_t*>::iterator cur;
+
       LexicalScope*cur_scope = lexical_scope;
       do {
+	    map<perm_string,data_type_t*>::iterator cur;
+
+	      // First look to see if this identifier is imported from
+	      // a package. If it is, see if it is a type in that
+	      // package. If it is, then great. If imported as
+	      // something other then a type, then give up now becase
+	      // the name has at least shadowed any other possible
+	      // meaning for this name.
+	    map<perm_string,PPackage*>::iterator cur_pkg;
+	    cur_pkg = cur_scope->imports.find(name);
+	    if (cur_pkg != cur_scope->imports.end()) {
+		  PPackage*pkg = cur_pkg->second;
+		  cur = pkg->typedefs.find(name);
+		  if (cur != pkg->typedefs.end())
+			return cur->second;
+
+		    // Not a type. Give up.
+		  return 0;
+	    }
+
 	    cur = cur_scope->typedefs.find(name);
 	    if (cur != cur_scope->typedefs.end())
 		  return cur->second;
 
 	    cur_scope = cur_scope->parent_scope();
       } while (cur_scope);
+
       return 0;
+}
+
+PECallFunction* pform_make_call_function(const struct vlltype&loc,
+					 const pform_name_t&name,
+					 const list<PExpr*>&parms)
+{
+      PECallFunction*tmp = 0;
+
+	// First try to get the function name from a package. Check
+	// the imports, and if the name is there, make the function as
+	// a package member.
+      do {
+	    if (name.size() != 1)
+		  break;
+
+	    perm_string use_name = peek_tail_name(name);
+
+	    map<perm_string,PPackage*>::iterator cur_pkg;
+	    cur_pkg = lexical_scope->imports.find(use_name);
+	    if (cur_pkg == lexical_scope->imports.end())
+		  break;
+
+	    tmp = new PECallFunction(cur_pkg->second, use_name, parms);
+      } while(0);
+
+      if (tmp == 0) {
+	    tmp = new PECallFunction(name, parms);
+      }
+
+      FILE_NAME(tmp, loc);
+      return tmp;
+}
+
+PCallTask* pform_make_call_task(const struct vlltype&loc,
+				const pform_name_t&name,
+				const list<PExpr*>&parms)
+{
+      PCallTask*tmp = 0;
+
+      do {
+	    if (name.size() != 1)
+		  break;
+
+	    perm_string use_name = peek_tail_name(name);
+
+	    map<perm_string,PPackage*>::iterator cur_pkg;
+	    cur_pkg = lexical_scope->imports.find(use_name);
+	    if (cur_pkg == lexical_scope->imports.end())
+		  break;
+
+	    tmp = new PCallTask(cur_pkg->second, name, parms);
+      } while (0);
+
+      if (tmp == 0) {
+	    tmp = new PCallTask(name, parms);
+      }
+
+      FILE_NAME(tmp, loc);
+      return tmp;
 }
 
 static void pform_put_behavior_in_scope(PProcess*pp)
@@ -2243,6 +2321,7 @@ void pform_makewire(const vlltype&li,
 	    first = first->next;
       } while (first != decls->next);
 
+	// The pform_set_data_type function will delete the names list.
       pform_set_data_type(li, data_type, names, type, 0);
 
 	// This time, go through the list, deleting cells as I'm done.
@@ -2261,6 +2340,35 @@ void pform_makewire(const vlltype&li,
 
 	    delete first;
 	    first = next;
+      }
+}
+
+/*
+ * This should eventually repliace the form above that takes a
+ * net_decl_assign_t argument.
+ */
+void pform_makewire(const struct vlltype&li,
+		    std::list<PExpr*>*, str_pair_t ,
+		    std::list<decl_assignment_t*>*assign_list,
+		    NetNet::Type type,
+		    data_type_t*data_type)
+{
+      list<perm_string>*names = new list<perm_string>;
+
+      for (list<decl_assignment_t*>::iterator cur = assign_list->begin()
+		 ; cur != assign_list->end() ; ++ cur) {
+	    decl_assignment_t* curp = *cur;
+	    names->push_back(curp->name);
+      }
+
+      pform_set_data_type(li, data_type, names, type, 0);
+
+      while (! assign_list->empty()) {
+	    decl_assignment_t*first = assign_list->front();
+	    assign_list->pop_front();
+	      // For now, do not handle assignment expressions.
+	    assert(! first->expr.get());
+	    delete first;
       }
 }
 

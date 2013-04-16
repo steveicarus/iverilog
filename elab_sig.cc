@@ -29,6 +29,7 @@
 # include  "PExpr.h"
 # include  "PGate.h"
 # include  "PGenerate.h"
+# include  "PPackage.h"
 # include  "PTask.h"
 # include  "PWire.h"
 # include  "Statement.h"
@@ -166,7 +167,13 @@ static void elaborate_sig_funcs(Design*des, NetScope*scope,
 		  continue;
 	    }
 
-	    (*cur).second->elaborate_sig(des, fscope);
+	    if (debug_elaborate) {
+		  cerr << cur->second->get_fileline() << ": elaborate_sig_funcs: "
+		       << "Elaborate function " << use_name
+		       << " in " << scope_path(fscope) << endl;
+	    }
+
+	    cur->second->elaborate_sig(des, fscope);
       }
 }
 
@@ -191,6 +198,22 @@ static void elaborate_sig_classes(Design*des, NetScope*scope,
 	    netclass_t*use_class = scope->find_class(cur->second->pscope_name());
 	    use_class->elaborate_sig(des, cur->second);
       }
+}
+
+bool PPackage::elaborate_sig(Design*des, NetScope*scope) const
+{
+      bool flag = true;
+
+      flag = elaborate_sig_wires_(des, scope) && flag;
+
+	// After all the wires are elaborated, we are free to
+	// elaborate the ports of the tasks defined within this
+	// module. Run through them now.
+
+      elaborate_sig_funcs(des, scope, funcs);
+      elaborate_sig_tasks(des, scope, tasks);
+
+      return flag;
 }
 
 bool Module::elaborate_sig(Design*des, NetScope*scope) const

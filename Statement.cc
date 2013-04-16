@@ -127,7 +127,18 @@ void PBlock::set_statement(const vector<Statement*>&st)
 }
 
 PCallTask::PCallTask(const pform_name_t&n, const list<PExpr*>&p)
-: path_(n), parms_(p.size())
+: package_(0), path_(n), parms_(p.size())
+{
+      list<PExpr*>::const_iterator cur = p.begin();
+      for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
+	    parms_[idx] = *cur;
+	    ++cur;
+      }
+      assert(cur == p.end());
+}
+
+PCallTask::PCallTask(PPackage*pkg, const pform_name_t&n, const list<PExpr*>&p)
+: package_(pkg), path_(n), parms_(p.size())
 {
       list<PExpr*>::const_iterator cur = p.begin();
       for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
@@ -138,7 +149,7 @@ PCallTask::PCallTask(const pform_name_t&n, const list<PExpr*>&p)
 }
 
 PCallTask::PCallTask(perm_string n, const list<PExpr*>&p)
-: parms_(p.size())
+: package_(0), parms_(p.size())
 {
       list<PExpr*>::const_iterator cur = p.begin();
       for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {

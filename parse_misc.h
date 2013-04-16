@@ -79,12 +79,28 @@ extern bool have_timeunit_decl;
 extern bool have_timeprec_decl;
 
 /*
+ * The parser signals back to the lexor that the next identifier
+ * should be in the package scope. For example, if the source is
+ *    <package> :: <foo>
+ * Then the parser calls this function to set the package context so
+ * that the lexor can interpret <foo> in the package context.
+ */
+extern void lex_in_package_scope(PPackage*pkg);
+
+/*
  * Test if this identifier is a type identifier in the current
  * context. The pform code needs to help the lexor here because the
  * parser detects typedefs and marks the typedef'ed identifiers as
  * type names.
  */
 extern data_type_t* pform_test_type_identifier(const char*txt);
+extern data_type_t* pform_test_type_identifier(PPackage*pkg, const char*txt);
+
+/*
+ * Test if this identigier is a package name. The pform needs to help
+ * the lexor here because the parser detects packages and saves them.
+ */
+extern PPackage* pform_test_package_identifier(const char*txt);
 
 /*
  * Export these functions because we have to generate PENumber class

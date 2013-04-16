@@ -653,8 +653,7 @@ struct ivl_scope_s {
       unsigned nlpm_;
       ivl_lpm_t* lpm_;
 
-      unsigned nparam_;
-      ivl_parameter_t param_;
+      std::vector<struct ivl_parameter_s> param;
 
 	/* Scopes that are tasks/functions have a definition. */
       ivl_statement_t def;

@@ -400,9 +400,15 @@ void NetScope::run_defparams_later(Design*des)
 
 void Design::evaluate_parameters()
 {
-      for (list<NetScope*>::const_iterator scope = root_scopes_.begin();
-	   scope != root_scopes_.end(); ++ scope )
+      for (map<perm_string,NetScope*>::const_iterator cur = packages_.begin()
+		 ; cur != packages_.end() ; ++ cur) {
+	    cur->second->evaluate_parameters(this);
+      }
+
+      for (list<NetScope*>::const_iterator scope = root_scopes_.begin()
+		 ; scope != root_scopes_.end() ; ++ scope ) {
 	    (*scope)->evaluate_parameters(this);
+      }
 }
 
 void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -552,7 +553,9 @@ bool PPackage::elaborate_scope(Design*des, NetScope*scope)
       }
 
       collect_scope_parameters_(des, scope, parameters);
-
+      collect_scope_localparams_(des, scope, localparams);
+      elaborate_scope_funcs(des, scope, funcs);
+      elaborate_scope_tasks(des, scope, tasks);
       return true;
 }
 

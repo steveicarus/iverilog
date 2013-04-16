@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1775,10 +1776,41 @@ static NetExpr* check_for_class_property(const LineInfo*li,
       return tmp;
 }
 
+NetExpr* PECallFunction::elaborate_expr_pkg_(Design*des, NetScope*scope,
+					     unsigned expr_wid,
+					     unsigned flags) const
+{
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PECallFunction::elaborate_expr_pkg_: "
+		 << "Elaborate " << path_
+		 << " as function in package " << package_->pscope_name()
+		 << "." << endl;
+      }
+
+	// Find the package that contains this definition, and use the
+	// package scope as the search starting point for the function
+	// definition.
+      NetScope*pscope = des->find_package(package_->pscope_name());
+      ivl_assert(*this, pscope);
+
+      NetFuncDef*def = des->find_function(pscope, path_);
+      ivl_assert(*this, def);
+
+      NetScope*dscope = def->scope();
+      ivl_assert(*this, dscope);
+
+      if (! check_call_matches_definition_(des, dscope))
+	    return 0;
+
+      return elaborate_base_(des, scope, dscope, expr_wid, flags);
+}
 
 NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
 					unsigned expr_wid, unsigned flags) const
 {
+      if (package_)
+	    return elaborate_expr_pkg_(des, scope, expr_wid, flags);
+
       flags &= ~SYS_TASK_ARG; // don't propagate the SYS_TASK_ARG flag
 
       if (peek_tail_name(path_)[0] == '$')
@@ -1835,8 +1867,19 @@ NetExpr* PECallFunction::elaborate_expr(Design*des, NetScope*scope,
             scope->is_const_func(false);
       }
 
+      return elaborate_base_(des, scope, dscope, expr_wid, flags);
+}
+
+NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*dscope,
+					 unsigned expr_wid, unsigned flags) const
+{
+
       if (! check_call_matches_definition_(des, dscope))
 	    return 0;
+
+      NetFuncDef*def = dscope->func_def();
+
+      bool need_const = NEED_CONST & flags;
 
       unsigned parms_count = parms_.size();
       if ((parms_count == 1) && (parms_[0] == 0))
@@ -2719,13 +2762,13 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    use_path.pop_back();
 
 	    ivl_assert(*this, net == 0);
-	    symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
+	    symbol_search(this, des, use_scope, use_path, net, par, eve, ex1, ex2);
 
 	    if (net == 0) {
 		    // Nope, no struct/class with member.
 
 	    } else if (net->struct_type() != 0) {
-		  return check_for_struct_members(this, des, scope,
+		  return check_for_struct_members(this, des, use_scope,
 						  net, use_path.back().index,
 						  member_comp);
 
@@ -2986,7 +3029,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 		       << " for member " << member_comp << "." << endl;
 
 	    ivl_assert(*this, net == 0);
-	    symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
+	    symbol_search(this, des, use_scope, use_path, net, par, eve, ex1, ex2);
 
 	      // Check to see if we have a net and if so is it an
 	      // enumeration? If so then check to see if this is an
@@ -3002,7 +3045,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 			  // This expression cannot be a select!
 			assert(use_path.back().index.empty());
 
-			return check_for_enum_methods(this, des, scope,
+			return check_for_enum_methods(this, des, use_scope,
 			                              netenum,
 			                              use_path, member_comp.name,
 			                              expr, expr_wid, NULL, 0);
@@ -3021,7 +3064,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 				   << "got " << use_path.back().index.size() << "." << endl;
 			}
 
-			return check_for_struct_members(this, des, scope,
+			return check_for_struct_members(this, des, use_scope,
 							net, use_path.back().index,
 							member_comp);
 		  }
@@ -3033,7 +3076,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 				   << " look for property " << member_comp << endl;
 			}
 
-			return check_for_class_property(this, des, scope,
+			return check_for_class_property(this, des, use_scope,
 							net, member_comp);
 		  }
 	    }
