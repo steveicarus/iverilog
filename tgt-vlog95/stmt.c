@@ -696,6 +696,16 @@ static unsigned utask_out_port_idx(ivl_scope_t scope, ivl_statement_t stmt)
 	      /* We must be selecting a signal. */
 	    if (ivl_expr_type(expr) != IVL_EX_SIGNAL) return ports;
 	    rsig = ivl_expr_signal(expr);
+	/* Or a cast of a simple signal. */
+      } else if (expr_type == IVL_EX_UNARY) {
+	    ivl_expr_t expr = ivl_expr_oper1(rval);
+	    char opcode = ivl_expr_opcode(rval);
+	      /* This must be a cast opcode. */
+	    if ((opcode != '2') && (opcode != 'v') &&
+	        (opcode != 'r')) return ports;
+	      /* We must be casting a signal. */
+	    if (ivl_expr_type(expr) != IVL_EX_SIGNAL) return ports;
+	    rsig = ivl_expr_signal(expr);
       } else return ports;
 	/* The R-value must have the same scope as the task. */
       if (scope != ivl_signal_scope(rsig)) return ports;
