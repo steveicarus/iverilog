@@ -828,7 +828,7 @@ void vvp_wire_real::get_signal_value(struct t_vpi_value*vp)
       real_signal_value(vp, real_value());
 }
 
-void vvp_fun_signal_string_aa::get_signal_value(struct t_vpi_value*vp)
+void vvp_fun_signal_string_aa::get_signal_value(struct t_vpi_value*)
 {
       assert(0);
 }

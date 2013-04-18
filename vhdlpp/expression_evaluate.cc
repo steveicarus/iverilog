@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -119,7 +119,7 @@ bool ExpAttribute::evaluate(Entity*, Architecture*arc, int64_t&val) const
  * I don't yet know how to evaluate concatenations. It is not likely
  * to come up anyhow.
  */
-bool ExpConcat::evaluate(ScopeBase*scope, int64_t&val) const
+bool ExpConcat::evaluate(ScopeBase*, int64_t&) const
 {
       return false;
 }

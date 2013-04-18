@@ -168,11 +168,11 @@ struct vthread_s {
     private:
       enum { STACK_OBJ_MAX_SIZE = 32 };
       vvp_object_t stack_obj_[STACK_OBJ_MAX_SIZE];
-      int stack_obj_size_;
+      unsigned stack_obj_size_;
     public:
       inline vvp_object_t& peek_object(void)
       {
-	    assert(stack_obj_size_  > 0);
+	    assert(stack_obj_size_ > 0);
 	    return stack_obj_[stack_obj_size_-1];
       }
       inline void pop_object(vvp_object_t&obj)

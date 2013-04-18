@@ -72,7 +72,7 @@ ivl_type_s* atom2_type_t::elaborate_type(Design*des, NetScope*) const
       }
 }
 
-ivl_type_s* class_type_t::elaborate_type(Design*des, NetScope*scope) const
+ivl_type_s* class_type_t::elaborate_type(Design*, NetScope*scope) const
 {
       return scope->find_class(name);
 }

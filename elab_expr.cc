@@ -3885,7 +3885,9 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	    unsigned long lwid, mwid;
 	    bool lrc;
 	    lrc = net->sig()->sb_to_slice(prefix_indices, lsv, loff, lwid);
+	    ivl_assert(*this, lrc);
 	    lrc = net->sig()->sb_to_slice(prefix_indices, msv, moff, mwid);
+	    ivl_assert(*this, lrc);
 
 	    if (moff > loff) {
 		  sb_lsb = loff;

@@ -311,7 +311,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       return lv;
 }
 
-NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
+NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*,
 							 NetScope*scope) const
 {
       if (!gn_system_verilog())
@@ -617,7 +617,9 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 	    bool lrc;
 	    unsigned long tmp_lwid, tmp_mwid;
 	    lrc = reg->sb_to_slice(prefix_indices,lsb, loff, tmp_lwid);
+	    ivl_assert(*this, lrc);
 	    lrc = reg->sb_to_slice(prefix_indices,msb, moff, tmp_mwid);
+	    ivl_assert(*this, lrc);
 
 	    if (loff < moff) {
 		  moff = moff + tmp_mwid - 1;
