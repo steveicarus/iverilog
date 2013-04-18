@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,6 +18,7 @@
  */
 
 # include  "expression.h"
+# include  "parse_types.h"
 # include  "scope.h"
 # include  <iostream>
 # include  <typeinfo>

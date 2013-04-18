@@ -512,7 +512,7 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 {
       ivl_expr_t rval = ivl_stmt_rval(net);
       struct vector_info res;
-      struct vector_info lres;
+      struct vector_info lres = {0, 0};
       struct vec_slice_info*slices = 0;
 
 	/* If this is a compressed assignment, then get the contents

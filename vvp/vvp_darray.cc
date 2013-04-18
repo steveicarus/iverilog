@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -131,7 +131,7 @@ void vvp_darray_string::set_word(unsigned adr, const string&value)
 void vvp_darray_string::get_word(unsigned adr, string&value)
 {
       if (adr >= array_.size()) {
-	    value = 0.0;
+	    value = "";
 	    return;
       }
 
