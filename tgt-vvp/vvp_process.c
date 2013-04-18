@@ -963,11 +963,18 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
       }
       if (ivl_signal_width(lsig) > ivl_signal_width(rsig) ||
           (part_off_ex && get_number_immediate(part_off_ex) != 0)) {
-	      /* Normalize the bit/part select. */
-	    long real_msb = ivl_signal_msb(lsig);
-	    long real_lsb = ivl_signal_lsb(lsig);
+	      /* Normalize the bit/part select. This also needs to be
+	       * reworked to support packed arrays. */
+	    long real_msb = ivl_signal_packed_msb(lsig, 0);
+	    long real_lsb = ivl_signal_packed_lsb(lsig, 0);
 	    long use_wid = ivl_signal_width(rsig);
 	    long use_lsb, use_msb;
+	    if (ivl_signal_packed_dimensions(lsig) > 1) {
+		  fprintf(stderr, "%s:%u: tgt-vvp sorry: cannot %s part of a "
+		                  "packed array.\n",
+		                  ivl_stmt_file(net), ivl_stmt_lineno(net),
+		                  command_name);
+	    }
 	    if (real_msb >= real_lsb) {
 		  use_lsb = get_number_immediate(part_off_ex);
 		  use_lsb += real_lsb;
