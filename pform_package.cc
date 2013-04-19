@@ -175,7 +175,9 @@ data_type_t* pform_test_type_identifier(PPackage*pkg, const char*txt)
 }
 
 /*
- * The lexor uses this function to know if the 
+ * The lexor uses this function to know if the identifier names the
+ * package. It will call this a PACKAGE_IDENTIFIER token in that case,
+ * instead of a generic IDENTIFIER.
  */
 PPackage* pform_test_package_identifier(const char*pkg_name)
 {

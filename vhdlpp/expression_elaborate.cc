@@ -443,7 +443,7 @@ int ExpAggregate::elaborate_expr_array_(Entity*ent, Architecture*arc, const VTyp
 		    // associated with them.
 		  aggregate_[cdx].choice = 0;
 		  aggregate_[cdx].expr = ecur->extract_expression();
-		  aggregate_[cdx].alias_flag;
+		  aggregate_[cdx].alias_flag = false;
 		  cdx += 1;
 	    } else {
 		  ecur->map_choices(&aggregate_[cdx]);
