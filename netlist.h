@@ -755,6 +755,17 @@ class NetNet  : public NetObj, public PortType {
       int       port_index_;
 };
 
+/*
+ * This object type is used for holding local variable values when
+ * evaluating constant user functions.
+ */
+struct LocalVar {
+      unsigned nwords;  // zero for a simple variable
+      union {
+	    NetExpr*  value;  // a simple variable
+	    NetExpr** array;  // an array variable
+      };
+};
 
 /*
  * This object type is used to contain a logical scope within a
@@ -867,7 +878,7 @@ class NetScope : public Attrib {
 	// This is used by the evaluate_function setup to collect
 	// local variables from the scope.
       void evaluate_function_find_locals(const LineInfo&loc,
-					 map<perm_string,NetExpr*>&context_map) const;
+					 map<perm_string,LocalVar>&ctx) const;
 
       void set_line(perm_string file, perm_string def_file,
                     unsigned lineno, unsigned def_lineno);
@@ -1817,7 +1828,7 @@ class NetExpr  : public LineInfo {
 	// allocated constant, or nil if the expression cannot be
 	// evaluated for any reason.
       virtual NetExpr*evaluate_function(const LineInfo&loc,
-					std::map<perm_string,NetExpr*>&ctx) const;
+					map<perm_string,LocalVar>&ctx) const;
 
 	// Get the Nexus that are the input to this
 	// expression. Normally this descends down to the reference to
@@ -1882,7 +1893,7 @@ class NetEConst  : public NetExpr {
       virtual NexusSet* nex_input(bool rem_out = true);
 
       virtual NetExpr*evaluate_function(const LineInfo&loc,
-					std::map<perm_string,NetExpr*>&ctx) const;
+					map<perm_string,LocalVar>&ctx) const;
 
     private:
       verinum value_;
@@ -1951,10 +1962,11 @@ class NetECReal  : public NetExpr {
       virtual void dump(ostream&) const;
 
       virtual NetECReal* dup_expr() const;
-      virtual NetExpr*evaluate_function(const LineInfo&loc,
-					std::map<perm_string,NetExpr*>&ctx) const;
       virtual NetNet*synthesize(Design*, NetScope*scope, NetExpr*);
       virtual NexusSet* nex_input(bool rem_out = true);
+
+      virtual NetExpr*evaluate_function(const LineInfo&loc,
+					map<perm_string,LocalVar>&ctx) const;
 
     private:
       verireal value_;
@@ -2361,7 +2373,7 @@ class NetProc : public virtual LineInfo {
 	// identifiers to values. The function returns true if the
 	// processing succeeds, or false otherwise.
       virtual bool evaluate_function(const LineInfo&loc,
-				     std::map<perm_string,NetExpr*>&ctx) const;
+				     map<perm_string,LocalVar>&ctx) const;
 
 	// This method is called by functors that want to scan a
 	// process in search of matchable patterns.
@@ -2576,11 +2588,11 @@ class NetAssign : public NetAssignBase {
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
       virtual void dump(ostream&, unsigned ind) const;
-      virtual bool evaluate_function(const LineInfo&loc, std::map<perm_string,NetExpr*>&context_map) const;
+      virtual bool evaluate_function(const LineInfo&loc,
+				     map<perm_string,LocalVar>&ctx) const;
 
     private:
-      bool eval_func_lval_(const LineInfo&loc,
-			   std::map<perm_string,NetExpr*>&context_map,
+      bool eval_func_lval_(const LineInfo&loc, map<perm_string,LocalVar>&ctx,
 			   const NetAssign_*lval, NetExpr*rval_result) const;
 
       char op_;
@@ -2631,7 +2643,7 @@ class NetBlock  : public NetProc {
       const NetProc*proc_next(const NetProc*cur) const;
 
       bool evaluate_function(const LineInfo&loc,
-			     std::map<perm_string,NetExpr*>&ctx) const;
+			     map<perm_string,LocalVar>&ctx) const;
 
 	// synthesize as asynchronous logic, and return true.
       bool synth_async(Design*des, NetScope*scope,
@@ -2697,13 +2709,13 @@ class NetCase  : public NetProc {
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type() const;
       virtual bool evaluate_function(const LineInfo&loc,
-				     std::map<perm_string,NetExpr*>&ctx) const;
+				     map<perm_string,LocalVar>&ctx) const;
 
     private:
       bool evaluate_function_vect_(const LineInfo&loc,
-				   std::map<perm_string,NetExpr*>&ctx) const;
+				   map<perm_string,LocalVar>&ctx) const;
       bool evaluate_function_real_(const LineInfo&loc,
-				   std::map<perm_string,NetExpr*>&ctx) const;
+				   map<perm_string,LocalVar>&ctx) const;
 
       TYPE type_;
 
@@ -2777,7 +2789,7 @@ class NetCondit  : public NetProc {
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type() const;
       virtual bool evaluate_function(const LineInfo&loc,
-				     map<perm_string,NetExpr*>&ctx) const;
+				     map<perm_string,LocalVar>&ctx) const;
 
     private:
       NetExpr* expr_;
@@ -2844,11 +2856,10 @@ class NetDisable  : public NetProc {
 
       const NetScope*target() const;
 
-      bool evaluate_function(const LineInfo&loc,
-			     std::map<perm_string,NetExpr*>&ctx) const;
-
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
+      virtual bool evaluate_function(const LineInfo&loc,
+				     map<perm_string,LocalVar>&ctx) const;
 
     private:
       NetScope*target_;
@@ -3094,7 +3105,7 @@ class NetForever : public NetProc {
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type() const;
       virtual bool evaluate_function(const LineInfo&loc,
-				     std::map<perm_string,NetExpr*>&ctx) const;
+				     map<perm_string,LocalVar>&ctx) const;
 
     private:
       NetProc*statement_;
@@ -3217,7 +3228,7 @@ class NetRepeat : public NetProc {
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type() const;
       virtual bool evaluate_function(const LineInfo&loc,
-				     std::map<perm_string,NetExpr*>&ctx) const;
+				     map<perm_string,LocalVar>&ctx) const;
 
     private:
       NetExpr*expr_;
@@ -3263,13 +3274,12 @@ class NetSTask  : public NetProc {
 
       const NetExpr* parm(unsigned idx) const;
 
-      virtual bool evaluate_function(const LineInfo&loc,
-				     map<perm_string,NetExpr*>&ctx) const;
-
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual void nex_output(NexusSet&);
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
+      virtual bool evaluate_function(const LineInfo&loc,
+				     map<perm_string,LocalVar>&ctx) const;
 
     private:
       const char* name_;
@@ -3343,7 +3353,7 @@ class NetEUFunc  : public NetExpr {
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual NetExpr* eval_tree();
       virtual NetExpr*evaluate_function(const LineInfo&loc,
-					std::map<perm_string,NetExpr*>&ctx) const;
+					map<perm_string,LocalVar>&ctx) const;
 
       virtual NetNet* synthesize(Design*des, NetScope*scope, NetExpr*root);
 
@@ -3429,7 +3439,7 @@ class NetWhile  : public NetProc {
       virtual void dump(ostream&, unsigned ind) const;
       virtual DelayType delay_type() const;
       virtual bool evaluate_function(const LineInfo&loc,
-				     map<perm_string,NetExpr*>&ctx) const;
+				     map<perm_string,LocalVar>&ctx) const;
 
     private:
       NetExpr* cond_;
@@ -3559,7 +3569,7 @@ class NetEBinary  : public NetExpr {
       virtual NetEBinary* dup_expr() const;
       virtual NetExpr* eval_tree();
       virtual NetExpr* evaluate_function(const LineInfo&loc,
-					 std::map<perm_string,NetExpr*>&ctx) const;
+					 map<perm_string,LocalVar>&ctx) const;
       virtual NexusSet* nex_input(bool rem_out = true);
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -3818,7 +3828,7 @@ class NetEConcat  : public NetExpr {
       virtual NetEConcat* dup_expr() const;
       virtual NetEConst*  eval_tree();
       virtual NetExpr* evaluate_function(const LineInfo&loc,
-					 std::map<perm_string,NetExpr*>&ctx) const;
+					 map<perm_string,LocalVar>&ctx) const;
       virtual NetNet*synthesize(Design*, NetScope*scope, NetExpr*root);
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;
@@ -3866,7 +3876,7 @@ class NetESelect  : public NetExpr {
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual NetEConst* eval_tree();
       virtual NetExpr*evaluate_function(const LineInfo&loc,
-					std::map<perm_string,NetExpr*>&ctx) const;
+					map<perm_string,LocalVar>&ctx) const;
       virtual NetESelect* dup_expr() const;
       virtual NetNet*synthesize(Design*des, NetScope*scope, NetExpr*root);
       virtual void dump(ostream&) const;
@@ -4034,7 +4044,7 @@ class NetESFunc  : public NetExpr {
 
       virtual NetExpr* eval_tree();
       virtual NetExpr* evaluate_function(const LineInfo&loc,
-					 std::map<perm_string,NetExpr*>&ctx) const;
+					 map<perm_string,LocalVar>&ctx) const;
 
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true);
@@ -4108,10 +4118,8 @@ class NetETernary  : public NetExpr {
 
       virtual NetETernary* dup_expr() const;
       virtual NetExpr* eval_tree();
-
       virtual NetExpr*evaluate_function(const LineInfo&loc,
-					std::map<perm_string,NetExpr*>&ctx) const;
-
+					map<perm_string,LocalVar>&ctx) const;
       virtual ivl_variable_type_t expr_type() const;
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -4164,7 +4172,7 @@ class NetEUnary  : public NetExpr {
       virtual NetEUnary* dup_expr() const;
       virtual NetExpr* eval_tree();
       virtual NetExpr* evaluate_function(const LineInfo&loc,
-					 std::map<perm_string,NetExpr*>&ctx) const;
+					 map<perm_string,LocalVar>&ctx) const;
       virtual NetNet* synthesize(Design*, NetScope*scope, NetExpr*root);
 
       virtual ivl_variable_type_t expr_type() const;
@@ -4247,7 +4255,7 @@ class NetESignal  : public NetExpr {
       netenum_t*enumeration() const;
 
       virtual NetExpr*evaluate_function(const LineInfo&loc,
-					std::map<perm_string,NetExpr*>&ctx) const;
+					map<perm_string,LocalVar>&ctx) const;
 
 	// This is the expression for selecting an array word, if this
 	// signal refers to an array.

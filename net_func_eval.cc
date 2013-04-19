@@ -55,9 +55,9 @@ static NetExpr* fix_assign_value(const NetNet*lhs, NetExpr*rhs)
 
 NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<NetExpr*>&args) const
 {
-	// Make the context map;
-      map<perm_string,NetExpr*>::iterator ptr;
-      map<perm_string,NetExpr*>context_map;
+	// Make the context map.
+      map<perm_string,LocalVar>::iterator ptr;
+      map<perm_string,LocalVar>context_map;
 
       if (debug_eval_tree) {
 	    cerr << loc.get_fileline() << ": debug: "
@@ -65,13 +65,17 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
       }
 
 	// Put the return value into the map...
-      context_map[scope_->basename()] = 0;
+      LocalVar&return_var = context_map[scope_->basename()];
+      return_var.nwords = 0;
+      return_var.value  = 0;
 
 	// Load the input ports into the map...
       ivl_assert(loc, ports_.size() == args.size());
       for (size_t idx = 0 ; idx < ports_.size() ; idx += 1) {
 	    perm_string aname = ports_[idx]->name();
-	    context_map[aname] = fix_assign_value(ports_[idx], args[idx]);
+	    LocalVar&input_var = context_map[aname];
+	    input_var.nwords = 0;
+	    input_var.value  = fix_assign_value(ports_[idx], args[idx]);
 
 	    if (debug_eval_tree) {
 		  cerr << loc.get_fileline() << ": debug: "
@@ -90,13 +94,22 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 
 	// Extract the result...
       ptr = context_map.find(scope_->basename());
-      NetExpr*res = ptr->second;
+      NetExpr*res = ptr->second.value;
       context_map.erase(ptr);
-
 
 	// Cleanup the rest of the context.
       for (ptr = context_map.begin() ; ptr != context_map.end() ; ++ptr) {
-	    delete ptr->second;
+
+	    unsigned nwords = ptr->second.nwords;
+	    if (nwords > 0) {
+		  NetExpr**array = ptr->second.array;
+		  for (unsigned idx = 0 ; idx < nwords ; idx += 1) {
+			delete array[idx];
+		  }
+		  delete [] ptr->second.array;
+	    } else {
+		  delete ptr->second.value;
+	    }
       }
 
 	// Done.
@@ -108,7 +121,7 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 }
 
 void NetScope::evaluate_function_find_locals(const LineInfo&loc,
-			         map<perm_string,NetExpr*>&context_map) const
+				map<perm_string,LocalVar>&context_map) const
 {
       for (map<perm_string,NetNet*>::const_iterator cur = signals_map_.begin()
 		 ; cur != signals_map_.end() ; ++cur) {
@@ -118,17 +131,33 @@ void NetScope::evaluate_function_find_locals(const LineInfo&loc,
 	    if (tmp->port_type() != NetNet::NOT_A_PORT)
 		  continue;
 
-	    context_map[tmp->name()] = 0;
+	    unsigned nwords = 0;
+	    if (tmp->unpacked_dimensions() > 0)
+		  nwords = tmp->unpacked_count();
+
+	    LocalVar&local_var = context_map[tmp->name()];
+	    local_var.nwords = nwords;
+
+	    if (nwords > 0) {
+		  NetExpr**array = new NetExpr*[nwords];
+		  for (unsigned idx = 0 ; idx < nwords ; idx += 1) {
+			array[idx] = 0;
+		  }
+		  local_var.array = array;
+	    } else {
+		  local_var.value = 0;
+	    }
 
 	    if (debug_eval_tree) {
 		  cerr << loc.get_fileline() << ": debug: "
-		       << "   (local) " << tmp->name() << endl;
+		       << "   (local) " << tmp->name()
+		       << (nwords > 0 ? "[]" : "") << endl;
 	    }
       }
 }
 
 NetExpr* NetExpr::evaluate_function(const LineInfo&,
-				    map<perm_string,NetExpr*>&) const
+				    map<perm_string,LocalVar>&) const
 {
       cerr << get_fileline() << ": sorry: I don't know how to evaluate this expression at compile time." << endl;
       cerr << get_fileline() << ":      : Expression type:" << typeid(*this).name() << endl;
@@ -137,7 +166,7 @@ NetExpr* NetExpr::evaluate_function(const LineInfo&,
 }
 
 bool NetProc::evaluate_function(const LineInfo&,
-				map<perm_string,NetExpr*>&) const
+				map<perm_string,LocalVar>&) const
 {
       cerr << get_fileline() << ": sorry: I don't know how to evaluate this statement at compile time." << endl;
       cerr << get_fileline() << ":      : Statement type:" << typeid(*this).name() << endl;
@@ -146,14 +175,33 @@ bool NetProc::evaluate_function(const LineInfo&,
 }
 
 bool NetAssign::eval_func_lval_(const LineInfo&loc,
-				map<perm_string,NetExpr*>&context_map,
+				map<perm_string,LocalVar>&context_map,
 				const NetAssign_*lval, NetExpr*rval_result) const
 {
-      map<perm_string,NetExpr*>::iterator ptr = context_map.find(lval->name());
+      map<perm_string,LocalVar>::iterator ptr = context_map.find(lval->name());
       ivl_assert(*this, ptr != context_map.end());
 
-	// Do not support having l-values that are unpacked arrays.
-      ivl_assert(loc, lval->word() == 0);
+      NetExpr*old_lval;
+      unsigned word = 0;
+      if (ptr->second.nwords > 0) {
+	    NetExpr*word_result = lval->word()->evaluate_function(loc, context_map);
+	    if (word_result == 0) {
+		  delete rval_result;
+		  return false;
+	    }
+
+	    NetEConst*word_const = dynamic_cast<NetEConst*>(word_result);
+	    ivl_assert(loc, word_const);
+
+	    word = word_const->value().as_long();
+
+	    if (word >= ptr->second.nwords)
+		  return true;
+
+	    old_lval = ptr->second.array[word];
+      } else {
+	    old_lval = ptr->second.value;
+      }
 
       if (const NetExpr*base_expr = lval->get_base()) {
 	    NetExpr*base_result = base_expr->evaluate_function(loc, context_map);
@@ -170,13 +218,13 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 	    list<long>prefix (0);
 	    base = lval->sig()->sb_to_idx(prefix, base);
 
-	    if (ptr->second == 0)
-		  ptr->second = make_const_x(lval->sig()->vector_width());
+	    if (old_lval == 0)
+		  old_lval = make_const_x(lval->sig()->vector_width());
 
-	    ivl_assert(loc, base + lval->lwidth() <= ptr->second->expr_width());
+	    ivl_assert(loc, base + lval->lwidth() <= old_lval->expr_width());
 
-	    NetEConst*ptr_const = dynamic_cast<NetEConst*>(ptr->second);
-	    verinum lval_v = ptr_const->value();
+	    NetEConst*lval_const = dynamic_cast<NetEConst*>(old_lval);
+	    verinum lval_v = lval_const->value();
 	    NetEConst*rval_const = dynamic_cast<NetEConst*>(rval_result);
 	    verinum rval_v = cast_to_width(rval_const->value(), lval->lwidth());
 
@@ -190,8 +238,8 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 	    rval_result = fix_assign_value(lval->sig(), rval_result);
       }
 
-      if (ptr->second)
-	    delete ptr->second;
+      if (old_lval)
+	    delete old_lval;
 
       if (debug_eval_tree) {
 	    cerr << get_fileline() << ": debug: "
@@ -199,13 +247,16 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 		 << " = " << *rval_result << endl;
       }
 
-      ptr->second = rval_result;
+      if (ptr->second.nwords > 0)
+	    ptr->second.array[word] = rval_result;
+      else
+	    ptr->second.value = rval_result;
 
       return true;
 }
 
 bool NetAssign::evaluate_function(const LineInfo&loc,
-				  map<perm_string,NetExpr*>&context_map) const
+				  map<perm_string,LocalVar>&context_map) const
 {
 	// Evaluate the r-value expression.
       NetExpr*rval_result = rval()->evaluate_function(loc, context_map);
@@ -247,10 +298,12 @@ bool NetAssign::evaluate_function(const LineInfo&loc,
  * evaluating the statements in order.
  */
 bool NetBlock::evaluate_function(const LineInfo&loc,
-				 map<perm_string,NetExpr*>&context_map) const
+				 map<perm_string,LocalVar>&context_map) const
 {
       bool flag = true;
       NetProc*cur = last_;
+      if (cur == 0) return true;
+
       do {
 	    cur = cur->next_;
 	    bool cur_flag = cur->evaluate_function(loc, context_map);
@@ -263,7 +316,7 @@ bool NetBlock::evaluate_function(const LineInfo&loc,
 }
 
 bool NetCase::evaluate_function_vect_(const LineInfo&loc,
-				map<perm_string,NetExpr*>&context_map) const
+				map<perm_string,LocalVar>&context_map) const
 {
       NetExpr*case_expr = expr_->evaluate_function(loc, context_map);
       if (case_expr == 0)
@@ -325,7 +378,7 @@ bool NetCase::evaluate_function_vect_(const LineInfo&loc,
 }
 
 bool NetCase::evaluate_function_real_(const LineInfo&loc,
-				map<perm_string,NetExpr*>&context_map) const
+				map<perm_string,LocalVar>&context_map) const
 {
       NetExpr*case_expr = expr_->evaluate_function(loc, context_map);
       if (case_expr == 0)
@@ -369,7 +422,7 @@ bool NetCase::evaluate_function_real_(const LineInfo&loc,
 }
 
 bool NetCase::evaluate_function(const LineInfo&loc,
-				map<perm_string,NetExpr*>&context_map) const
+				map<perm_string,LocalVar>&context_map) const
 {
       if (expr_->expr_type() == IVL_VT_REAL)
 	    return evaluate_function_real_(loc, context_map);
@@ -378,7 +431,7 @@ bool NetCase::evaluate_function(const LineInfo&loc,
 }
 
 bool NetCondit::evaluate_function(const LineInfo&loc,
-				  map<perm_string,NetExpr*>&context_map) const
+				  map<perm_string,LocalVar>&context_map) const
 {
       NetExpr*cond = expr_->evaluate_function(loc, context_map);
       if (cond == 0)
@@ -399,14 +452,14 @@ bool NetCondit::evaluate_function(const LineInfo&loc,
 }
 
 bool NetDisable::evaluate_function(const LineInfo&,
-				   map<perm_string,NetExpr*>&) const
+				   map<perm_string,LocalVar>&) const
 {
       disable = target_;
       return true;
 }
 
 bool NetForever::evaluate_function(const LineInfo&loc,
-				   map<perm_string,NetExpr*>&context_map) const
+				   map<perm_string,LocalVar>&context_map) const
 {
       bool flag = true;
 
@@ -428,7 +481,7 @@ bool NetForever::evaluate_function(const LineInfo&loc,
 }
 
 bool NetRepeat::evaluate_function(const LineInfo&loc,
-				  map<perm_string,NetExpr*>&context_map) const
+				  map<perm_string,LocalVar>&context_map) const
 {
       bool flag = true;
 
@@ -462,14 +515,14 @@ bool NetRepeat::evaluate_function(const LineInfo&loc,
 }
 
 bool NetSTask::evaluate_function(const LineInfo&,
-				 map<perm_string,NetExpr*>&) const
+				 map<perm_string,LocalVar>&) const
 {
 	// system tasks within a constant function are ignored
       return true;
 }
 
 bool NetWhile::evaluate_function(const LineInfo&loc,
-				 map<perm_string,NetExpr*>&context_map) const
+				 map<perm_string,LocalVar>&context_map) const
 {
       bool flag = true;
 
@@ -513,7 +566,7 @@ bool NetWhile::evaluate_function(const LineInfo&loc,
 }
 
 NetExpr* NetEBinary::evaluate_function(const LineInfo&loc,
-				    map<perm_string,NetExpr*>&context_map) const
+				map<perm_string,LocalVar>&context_map) const
 {
       NetExpr*lval = left_->evaluate_function(loc, context_map);
       NetExpr*rval = right_->evaluate_function(loc, context_map);
@@ -531,7 +584,7 @@ NetExpr* NetEBinary::evaluate_function(const LineInfo&loc,
 }
 
 NetExpr* NetEConcat::evaluate_function(const LineInfo&loc,
-				    map<perm_string,NetExpr*>&context_map) const
+				map<perm_string,LocalVar>&context_map) const
 {
       vector<NetExpr*>vals(parms_.size());
       unsigned gap = 0;
@@ -558,7 +611,7 @@ NetExpr* NetEConcat::evaluate_function(const LineInfo&loc,
 }
 
 NetExpr* NetEConst::evaluate_function(const LineInfo&,
-				      map<perm_string,NetExpr*>&) const
+				      map<perm_string,LocalVar>&) const
 {
       NetEConst*res = new NetEConst(value_);
       res->set_line(*this);
@@ -566,7 +619,7 @@ NetExpr* NetEConst::evaluate_function(const LineInfo&,
 }
 
 NetExpr* NetECReal::evaluate_function(const LineInfo&,
-				      map<perm_string,NetExpr*>&) const
+				      map<perm_string,LocalVar>&) const
 {
       NetECReal*res = new NetECReal(value_);
       res->set_line(*this);
@@ -574,7 +627,7 @@ NetExpr* NetECReal::evaluate_function(const LineInfo&,
 }
 
 NetExpr* NetESelect::evaluate_function(const LineInfo&loc,
-				    map<perm_string,NetExpr*>&context_map) const
+				map<perm_string,LocalVar>&context_map) const
 {
       NetExpr*sub_exp = expr_->evaluate_function(loc, context_map);
       ivl_assert(loc, sub_exp);
@@ -608,43 +661,53 @@ NetExpr* NetESelect::evaluate_function(const LineInfo&loc,
       return res_const;
 }
 
-NetExpr* NetESignal::evaluate_function(const LineInfo&,
-				       map<perm_string,NetExpr*>&context_map) const
+NetExpr* NetESignal::evaluate_function(const LineInfo&loc,
+				map<perm_string,LocalVar>&context_map) const
 {
-      if (word_) {
-	    cerr << get_fileline() << ": sorry: I don't know how to evaluate signal word selects at compile time." << endl;
-	    return 0;
-      }
-
-      map<perm_string,NetExpr*>::iterator ptr = context_map.find(name());
+      map<perm_string,LocalVar>::iterator ptr = context_map.find(name());
       if (ptr == context_map.end()) {
 	    cerr << get_fileline() << ": error: Cannot evaluate " << name()
 		 << " in this context." << endl;
 	    return 0;
       }
 
-      if (ptr->second == 0) {
+      NetExpr*value = 0;
+      if (ptr->second.nwords > 0) {
+	    ivl_assert(loc, word_);
+	    NetExpr*word_result = word_->evaluate_function(loc, context_map);
+	    if (word_result == 0)
+		  return 0;
+
+	    NetEConst*word_const = dynamic_cast<NetEConst*>(word_result);
+	    ivl_assert(loc, word_const);
+
+	    unsigned word = word_const->value().as_long();
+
+	    if (word < ptr->second.nwords)
+		  value = ptr->second.array[word];
+      } else {
+	    value = ptr->second.value;
+      }
+
+      if (value == 0) {
 	    switch (expr_type()) {
 		case IVL_VT_REAL:
-		  ptr->second = new NetECReal( verireal(0.0) );
-		  break;
+		  return new NetECReal( verireal(0.0) );
 		case IVL_VT_BOOL:
-		  ptr->second = make_const_0(expr_width());
-		  break;
+		  return make_const_0(expr_width());
 		case IVL_VT_LOGIC:
-		  ptr->second = make_const_x(expr_width());
-		  break;
+		  return make_const_x(expr_width());
 		default:
 		  cerr << get_fileline() << ": sorry: I don't know how to initialize " << *this << endl;
 		  return 0;
 	    }
       }
 
-      return ptr->second->dup_expr();
+      return value->dup_expr();
 }
 
 NetExpr* NetETernary::evaluate_function(const LineInfo&loc,
-				    map<perm_string,NetExpr*>&context_map) const
+				map<perm_string,LocalVar>&context_map) const
 {
       auto_ptr<NetExpr> cval (cond_->evaluate_function(loc, context_map));
 
@@ -671,7 +734,7 @@ NetExpr* NetETernary::evaluate_function(const LineInfo&loc,
 }
 
 NetExpr* NetEUnary::evaluate_function(const LineInfo&loc,
-				    map<perm_string,NetExpr*>&context_map) const
+				map<perm_string,LocalVar>&context_map) const
 {
       NetExpr*val = expr_->evaluate_function(loc, context_map);
       if (val == 0) return 0;
@@ -682,7 +745,7 @@ NetExpr* NetEUnary::evaluate_function(const LineInfo&loc,
 }
 
 NetExpr* NetESFunc::evaluate_function(const LineInfo&loc,
-				      map<perm_string,NetExpr*>&context_map) const
+				map<perm_string,LocalVar>&context_map) const
 {
       ID id = built_in_id_();
       ivl_assert(*this, id != NOT_BUILT_IN);
@@ -712,7 +775,7 @@ NetExpr* NetESFunc::evaluate_function(const LineInfo&loc,
 }
 
 NetExpr* NetEUFunc::evaluate_function(const LineInfo&loc,
-				      map<perm_string,NetExpr*>&context_map) const
+				map<perm_string,LocalVar>&context_map) const
 {
       NetFuncDef*def = func_->func_def();
       ivl_assert(*this, def);
