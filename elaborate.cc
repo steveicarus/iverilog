@@ -1440,6 +1440,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  if (need_bufz_for_input_port(prts)) {
 			NetBUFZ*tmp = new NetBUFZ(scope, scope->local_symbol(),
 						  sig->vector_width(), true);
+			tmp->set_line(*this);
 			des->add_node(tmp);
 			connect(tmp->pin(1), sig->pin(0));
 

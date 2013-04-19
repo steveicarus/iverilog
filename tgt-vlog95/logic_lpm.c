@@ -507,6 +507,15 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex, unsigned allow_UD)
       }
 }
 
+static void emit_pull_const(char value, unsigned width)
+{
+      unsigned idx;
+      fprintf(vlog_out, "%u'b", width);
+      for (idx = 0; idx < width; idx += 1) {
+	    fprintf(vlog_out, "%c", value);
+      }
+}
+
 static void emit_logic_as_ca(ivl_scope_t scope, ivl_net_logic_t nlogic)
 {
       unsigned inputs = ivl_logic_pins(nlogic) - 1;
@@ -570,6 +579,14 @@ static void emit_logic_as_ca(ivl_scope_t scope, ivl_net_logic_t nlogic)
 	    fprintf(vlog_out, " ^ ");
 	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0);
 	    fprintf(vlog_out, ")");
+	    break;
+	  /* A pull up/down at this point has been turned into an assignment
+	   * with strength so just emit the appropriate constant. */
+	case IVL_LO_PULLDOWN:
+	    emit_pull_const('0', ivl_logic_width(nlogic));
+	    break;
+	case IVL_LO_PULLUP:
+	    emit_pull_const('1', ivl_logic_width(nlogic));
 	    break;
 	default:
 	    fprintf(vlog_out, "<unknown>");
@@ -1853,18 +1870,21 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		  ivl_scope_t const_scope = ivl_const_scope(net_const);
 		  assert(! nlogic);
 		  assert(! sig);
-		  fprintf(stderr, "Const: ");
-		  if (scope != const_scope) fprintf(stderr, "(%s) ",
-		                                  ivl_scope_name(const_scope));
+		  fprintf(stderr, "Const:");
+		  if (scope != const_scope) {
+			fprintf(stderr, " (%s)", ivl_scope_name(const_scope));
+		  }
 	    } else if (nlogic) {
 		  ivl_scope_t logic_scope = ivl_logic_scope(nlogic);
+		  ivl_logic_t logic_type = ivl_logic_type(nlogic);
 		  assert(! sig);
 		  fprintf(stderr, "Logic: ");
 		  fprintf(stderr, "{%s:%d} ", ivl_logic_file(nlogic),
 		          ivl_logic_lineno(nlogic));
-		  if (scope != logic_scope) fprintf(stderr, "(%s) ",
-		                                  ivl_scope_name(logic_scope));
-		  switch (ivl_logic_type(nlogic)) {
+		  if (scope != logic_scope) {
+			fprintf(stderr, "(%s) ", ivl_scope_name(logic_scope));
+		  }
+		  switch (logic_type) {
 		      case IVL_LO_AND:      fprintf(stderr, "and"); break;
 		      case IVL_LO_BUF:      fprintf(stderr, "buf"); break;
 		      case IVL_LO_BUFIF0:   fprintf(stderr, "bufif0"); break;
@@ -1895,7 +1915,20 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		      case IVL_LO_XOR:      fprintf(stderr, "xor"); break;
 		      default: fprintf(stderr, "<%d>", ivl_logic_type(nlogic));
 		  }
-		  fprintf(stderr, "(%u inputs)", ivl_logic_pins(nlogic) - 1);
+		    /* The BUF and NOT gates can have multiple outputs and a
+		     * single input. . */
+		  if ((logic_type == IVL_LO_BUF) ||
+		      (logic_type == IVL_LO_NOT)) {
+			unsigned outputs = ivl_logic_pins(nlogic) - 1;
+			if (outputs == 1) fprintf(stderr, "(1 output)");
+			else fprintf(stderr, "(%u outputs)", outputs);
+		    /* The rest of the gates have a single output and can
+		     * have zero or more inputs. */
+		  } else {
+			unsigned inputs = ivl_logic_pins(nlogic) - 1;
+			if (inputs == 1) fprintf(stderr, "(1 input)");
+			else fprintf(stderr, "(%u inputs)", inputs);
+		  }
 	    } else if (sig) {
 		  ivl_scope_t sig_scope = ivl_signal_scope(sig);
 		  fprintf(stderr, "Signal: \"");
@@ -1937,9 +1970,7 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		      case IVL_VT_CLASS:   fprintf(stderr, " class");
 		                           break;
 		  }
-	    } else {
-		  fprintf(stderr, "Error: No/missing information!");
-	    }
+	    } else fprintf(stderr, "Error: No/missing information!");
 	    fprintf(stderr, " (%u)\n", ivl_nexus_ptr_pin(nex_ptr));
       }
 }
