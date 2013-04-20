@@ -537,20 +537,41 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 
       elaborate_sig_wires_(des, scope);
 
-      ivl_type_t ret_type;
+      NetNet*ret_sig;
+      if (gn_system_verilog() && fname == "new") {
+	      // Special case: this is a constructor, so the return
+	      // signal is also the first argument. For example, the
+	      // source code for the definition may be:
+	      //   function new(...);
+	      //   endfunction
+	      // In this case, the "@" port is the synthetic "this"
+	      // argument and we also use it as a return value at the
+	      // same time.
+	    ret_sig = scope->find_signal(perm_string::literal("@"));
+	    ivl_assert(*this, ret_sig);
 
-      if (return_type_) {
-	    ret_type = return_type_->elaborate_type(des, scope);
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": PFunction::elaborate_sig: "
+		       << "Scope " << scope_path(scope)
+		       << " is a CONSTRUCTOR, so use \"this\" argument"
+		       << " as return value." << endl;
+
       } else {
-	    netvector_t*tmp = new netvector_t(IVL_VT_LOGIC);
-	    tmp->set_scalar(true);
-	    ret_type = tmp;
-      }
-      list<netrange_t> ret_unpacked;
-      NetNet*ret_sig = new NetNet(scope, fname, NetNet::REG, ret_unpacked, ret_type);
+	    ivl_type_t ret_type;
 
-      ret_sig->set_line(*this);
-      ret_sig->port_type(NetNet::POUTPUT);
+	    if (return_type_) {
+		  ret_type = return_type_->elaborate_type(des, scope);
+	    } else {
+		  netvector_t*tmp = new netvector_t(IVL_VT_LOGIC);
+		  tmp->set_scalar(true);
+		  ret_type = tmp;
+	    }
+	    list<netrange_t> ret_unpacked;
+	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_unpacked, ret_type);
+
+	    ret_sig->set_line(*this);
+	    ret_sig->port_type(NetNet::POUTPUT);
+      }
 
       vector<NetNet*>ports;
       elaborate_sig_ports_(des, scope, ports);

@@ -291,7 +291,15 @@ void PENew::dump(ostream&out) const
 
 void PENewClass::dump(ostream&out) const
 {
-      out << "class_new";
+      out << "class_new(";
+      if (parms_.size() > 0) {
+	    parms_[0]->dump(out);
+	    for (size_t idx = 1 ; idx < parms_.size() ; idx += 1) {
+		  out << ", ";
+		  parms_[idx]->dump(out);
+	    }
+      }
+      out << ")";
 }
 
 void PENull::dump(ostream&out) const
@@ -874,16 +882,16 @@ void PForStatement::dump(ostream&out, unsigned ind) const
 void PFunction::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "function ";
-      if (is_auto_) out << "automatic...";
+      if (is_auto_) out << "automatic ";
+
+      out << pscope_name() << ";" << endl;
+      if (method_of())
+	    out << setw(ind) << "" << "method of " << method_of()->name << ";" << endl;
 
       if (return_type_)
 	    return_type_->pform_dump(out, ind+8);
       else
 	    out << setw(ind+8) << "" << "<implicit type>" << endl;
-
-      out << pscope_name() << ";" << endl;
-      if (method_of())
-	    out << setw(ind) << "" << "method of " << method_of()->name << ";" << endl;
 
       dump_ports_(out, ind);
 

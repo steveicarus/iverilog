@@ -97,6 +97,12 @@ static int eval_object_signal(ivl_expr_t ex)
       return 0;
 }
 
+static int eval_object_ufunc(ivl_expr_t ex)
+{
+      draw_ufunc_object(ex);
+      return 0;
+}
+
 int draw_eval_object(ivl_expr_t ex)
 {
       switch (ivl_expr_type(ex)) {
@@ -121,6 +127,9 @@ int draw_eval_object(ivl_expr_t ex)
 
 	  case IVL_EX_SIGNAL:
 	    return eval_object_signal(ex);
+
+	  case IVL_EX_UFUNC:
+	    return eval_object_ufunc(ex);
 
 	  default:
 	    fprintf(vvp_out, "; ERROR: draw_eval_object: Invalid expression type %u\n", ivl_expr_type(ex));

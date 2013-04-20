@@ -4448,12 +4448,82 @@ unsigned PENewClass::test_width(Design*, NetScope*, width_mode_t&)
       return 1;
 }
 
-NetExpr* PENewClass::elaborate_expr(Design*, NetScope*,
+NetExpr* PENewClass::elaborate_expr(Design*des, NetScope*scope,
 				    ivl_type_t ntype, unsigned) const
 {
-      NetENew*tmp = new NetENew(ntype);
-      tmp->set_line(*this);
-      return tmp;
+      NetENew*obj = new NetENew(ntype);
+      obj->set_line(*this);
+
+	// Find the constructor for the class. If there is no
+	// constructor then the result of this expression is the
+	// allocation alone.
+      const netclass_t*ctype = dynamic_cast<const netclass_t*> (ntype);
+      NetScope*new_scope = ctype->method_from_name(perm_string::literal("new"));
+      if (new_scope == 0) {
+	      // No constructor.
+	    if (parms_.size() > 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "Class " << ctype->get_name()
+		       << " has no constructor, but you passed " << parms_.size()
+		       << " arguments to the new operator." << endl;
+		  des->errors += 1;
+	    }
+	    return obj;
+      }
+
+      NetFuncDef*def = new_scope->func_def();
+      ivl_assert(*this, def);
+
+      if ((parms_.size()+1) != def->port_count()) {
+	    cerr << get_fileline() << ": error: Parm count mismatch"
+		 << " passing " << parms_.size() << " arguments "
+		 << " to constructor expecting " << (def->port_count()-1)
+		 << " arguments." << endl;
+	    des->errors += 1;
+	    return obj;
+      }
+
+      vector<NetExpr*> parms (1 + parms_.size());
+      parms[0] = obj;
+
+      int missing_parms = 0;
+      int parm_errors = 0;
+      for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
+	    PExpr*tmp = parms_[idx];
+	    size_t pidx = idx + 1;
+
+	    if (tmp == 0) {
+		  parms[pidx] = 0;
+		  missing_parms += 1;
+		  continue;
+	    }
+
+	    parms[pidx] = elaborate_rval_expr(des, scope, def->port(pidx)->data_type(),
+					      def->port(pidx)->vector_width(),
+					      tmp, false);
+	    if (parms[pidx] == 0) {
+		  parm_errors += 1;
+		  continue;
+	    }
+      }
+
+      if (missing_parms > 0) {
+	    cerr << get_fileline() << ": error: The " << scope_path(new_scope)
+		 << " constructor call is missing arguments." << endl;
+	    parm_errors += 1;
+	    des->errors += 1;
+      }
+
+	// The return value for the constructor is actually the "this"
+	// variable, instead of the "new" scope name.
+      NetNet*res = new_scope->find_signal(perm_string::literal("@"));
+      ivl_assert(*this, res);
+
+      NetESignal*eres = new NetESignal(res);
+      NetEUFunc*con = new NetEUFunc(scope, new_scope, eres, parms, true);
+      con->set_line(*this);
+
+      return con;
 }
 
 /*

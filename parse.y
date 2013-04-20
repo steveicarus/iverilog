@@ -844,8 +844,10 @@ class_new /* IEEE1800-2005 A.2.4 */
 	$$ = tmp;
       }
   | K_new '(' expression_list_proper ')'
-      { yyerror(@1, "sorry: class_new not implemented yet.");
-	$$ = 0;
+      { PENewClass*tmp = new PENewClass(*$3);
+	FILE_NAME(tmp, @1);
+	delete $3;
+	$$ = tmp;
       }
   | K_new
       { PENewClass*tmp = new PENewClass;

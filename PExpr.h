@@ -489,7 +489,9 @@ class PENewClass : public PExpr {
 
     public:
       explicit PENewClass ();
+      explicit PENewClass (const std::list<PExpr*>&p);
       ~PENewClass();
+
       virtual void dump(ostream&) const;
 	// Class objects don't have a useful width, but the expression
 	// is IVL_VT_CLASS.
@@ -502,6 +504,7 @@ class PENewClass : public PExpr {
 				     ivl_type_t type, unsigned flags) const;
 
     private:
+      std::vector<PExpr*>parms_;
 };
 
 class PENull : public PExpr {

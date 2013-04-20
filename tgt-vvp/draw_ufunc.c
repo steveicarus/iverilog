@@ -88,25 +88,10 @@ static void draw_function_argument(ivl_signal_t port, ivl_expr_t expr)
       }
 }
 
-/*
- * A call to a user defined function generates a result that is the
- * result of this expression.
- *
- * The result of the function is placed by the function execution into
- * a signal within the scope of the function that also has a basename
- * the same as the function. The ivl_target API handled the result
- * mapping already, and we get the name of the result signal as
- * parameter 0 of the function definition.
- */
-
-struct vector_info draw_ufunc_expr(ivl_expr_t expr, unsigned wid)
+static void draw_ufunc_preamble(ivl_expr_t expr)
 {
-      unsigned idx;
-      unsigned swid = ivl_expr_width(expr);
       ivl_scope_t def = ivl_expr_def(expr);
-      ivl_signal_t retval = ivl_scope_port(def, 0);
-      struct vector_info res;
-      unsigned load_wid;
+      unsigned idx;
 
         /* If this is an automatic function, allocate the local storage. */
       if (ivl_scope_is_auto(def)) {
@@ -122,11 +107,44 @@ struct vector_info draw_ufunc_expr(ivl_expr_t expr, unsigned wid)
 	    draw_function_argument(port, ivl_expr_parm(expr, idx));
       }
 
-
 	/* Call the function */
       fprintf(vvp_out, "    %%fork TD_%s", vvp_mangle_id(ivl_scope_name(def)));
       fprintf(vvp_out, ", S_%p;\n", def);
       fprintf(vvp_out, "    %%join;\n");
+
+}
+
+static void draw_ufunc_epilogue(ivl_expr_t expr)
+{
+      ivl_scope_t def = ivl_expr_def(expr);
+
+        /* If this is an automatic function, free the local storage. */
+      if (ivl_scope_is_auto(def)) {
+            fprintf(vvp_out, "    %%free S_%p;\n", def);
+      }
+}
+
+/*
+ * A call to a user defined function generates a result that is the
+ * result of this expression.
+ *
+ * The result of the function is placed by the function execution into
+ * a signal within the scope of the function that also has a basename
+ * the same as the function. The ivl_target API handled the result
+ * mapping already, and we get the name of the result signal as
+ * parameter 0 of the function definition.
+ */
+
+struct vector_info draw_ufunc_expr(ivl_expr_t expr, unsigned wid)
+{
+      unsigned swid = ivl_expr_width(expr);
+      ivl_scope_t def = ivl_expr_def(expr);
+      ivl_signal_t retval = ivl_scope_port(def, 0);
+      struct vector_info res;
+      unsigned load_wid;
+
+	/* Take in arguments to function and call function code. */
+      draw_ufunc_preamble(expr);
 
 	/* Fresh basic block starts after the join. */
       clear_expression_lookaside();
@@ -159,11 +177,7 @@ struct vector_info draw_ufunc_expr(ivl_expr_t expr, unsigned wid)
       if (load_wid < wid)
 	    pad_expr_in_place(expr, res, swid);
 
-        /* If this is an automatic function, free the local storage. */
-      if (ivl_scope_is_auto(def)) {
-            fprintf(vvp_out, "    %%free S_%p;\n", def);
-      }
-
+      draw_ufunc_epilogue(expr);
       return res;
 }
 
@@ -171,24 +185,9 @@ void draw_ufunc_real(ivl_expr_t expr)
 {
       ivl_scope_t def = ivl_expr_def(expr);
       ivl_signal_t retval = ivl_scope_port(def, 0);
-      unsigned idx;
 
-        /* If this is an automatic function, allocate the local storage. */
-      if (ivl_scope_is_auto(def)) {
-            fprintf(vvp_out, "    %%alloc S_%p;\n", def);
-      }
-
-      assert(ivl_expr_parms(expr) == (ivl_scope_ports(def)-1));
-      for (idx = 0 ;  idx < ivl_expr_parms(expr) ;  idx += 1) {
-	    ivl_signal_t port = ivl_scope_port(def, idx+1);
-	    draw_function_argument(port, ivl_expr_parm(expr, idx));
-      }
-
-
-	/* Call the function */
-      fprintf(vvp_out, "    %%fork TD_%s", vvp_mangle_id(ivl_scope_name(def)));
-      fprintf(vvp_out, ", S_%p;\n", def);
-      fprintf(vvp_out, "    %%join;\n");
+	/* Take in arguments to function and call the function code. */
+      draw_ufunc_preamble(expr);
 
 	/* Return value signal cannot be an array. */
       assert(ivl_signal_dimensions(retval) == 0);
@@ -196,9 +195,20 @@ void draw_ufunc_real(ivl_expr_t expr)
 	/* Load the result into a word. */
       fprintf(vvp_out, "  %%load/real v%p_0;\n", retval);
 
-        /* If this is an automatic function, free the local storage. */
-      if (ivl_scope_is_auto(def)) {
-            fprintf(vvp_out, "    %%free S_%p;\n", def);
-      }
+      draw_ufunc_epilogue(expr);
 
+}
+
+void draw_ufunc_object(ivl_expr_t expr)
+{
+      ivl_scope_t def = ivl_expr_def(expr);
+      ivl_signal_t retval = ivl_scope_port(def, 0);
+
+	/* Take in arguments to function and call the function code. */
+      draw_ufunc_preamble(expr);
+
+	/* Load the result into the object stack. */
+      fprintf(vvp_out, "    %%load/obj v%p_0;\n", retval);
+
+      draw_ufunc_epilogue(expr);
 }
