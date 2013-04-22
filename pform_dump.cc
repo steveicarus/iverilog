@@ -302,6 +302,13 @@ void PENewClass::dump(ostream&out) const
       out << ")";
 }
 
+void PENewCopy::dump(ostream&out) const
+{
+      out << "copy_new(";
+      src_->dump(out);
+      out << ")";
+}
+
 void PENull::dump(ostream&out) const
 {
       out << "null";

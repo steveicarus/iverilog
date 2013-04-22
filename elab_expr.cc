@@ -4526,6 +4526,22 @@ NetExpr* PENewClass::elaborate_expr(Design*des, NetScope*scope,
       return con;
 }
 
+unsigned PENewCopy::test_width(Design*, NetScope*, width_mode_t&)
+{
+      expr_type_  = IVL_VT_CLASS;
+      expr_width_ = 1;
+      min_width_  = 1;
+      signed_flag_= false;
+      return 1;
+}
+
+NetExpr* PENewCopy::elaborate_expr(Design*des, NetScope*, ivl_type_t, unsigned) const
+{
+      cerr << get_fileline() << ": sorry: Shallow copy \"new\" not implemented." << endl;
+      des->errors += 1;
+      return 0;
+}
+
 /*
  * A "null" expression represents class objects/handles. This brings
  * up a ton of special cases, but we handle it here bu setting the

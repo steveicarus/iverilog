@@ -440,6 +440,15 @@ PENewClass::~PENewClass()
 {
 }
 
+PENewCopy::PENewCopy(PExpr*src)
+: src_(src)
+{
+}
+
+PENewCopy::~PENewCopy()
+{
+}
+
 PENumber::PENumber(verinum*vp)
 : value_(vp)
 {

@@ -849,6 +849,14 @@ class_new /* IEEE1800-2005 A.2.4 */
 	delete $3;
 	$$ = tmp;
       }
+  | K_new hierarchy_identifier
+      { PEIdent*tmpi = new PEIdent(*$2);
+	FILE_NAME(tmpi, @2);
+	PENewCopy*tmp = new PENewCopy(tmpi);
+	FILE_NAME(tmp, @1);
+	delete $2;
+	$$ = tmp;
+      }
   | K_new
       { PENewClass*tmp = new PENewClass;
 	FILE_NAME(tmp, @1);

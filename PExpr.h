@@ -488,8 +488,11 @@ class PENew : public PExpr {
 class PENewClass : public PExpr {
 
     public:
+	// New without (or with default) constructor
       explicit PENewClass ();
+	// New with constructor arguments
       explicit PENewClass (const std::list<PExpr*>&p);
+
       ~PENewClass();
 
       virtual void dump(ostream&) const;
@@ -505,6 +508,26 @@ class PENewClass : public PExpr {
 
     private:
       std::vector<PExpr*>parms_;
+};
+
+class PENewCopy : public PExpr {
+    public:
+      explicit PENewCopy(PExpr*src);
+      ~PENewCopy();
+
+      virtual void dump(ostream&) const;
+	// Class objects don't have a useful width, but the expression
+	// is IVL_VT_CLASS.
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  width_mode_t&mode);
+	// Note that class (new) expressions only appear in context
+	// that uses this form of the elaborate_expr method. In fact,
+	// the type argument is going to be a netclas_t object.
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     ivl_type_t type, unsigned flags) const;
+
+    private:
+      PExpr*src_;
 };
 
 class PENull : public PExpr {
