@@ -511,6 +511,20 @@ const netenum_t* NetESFunc::enumeration() const
       return enum_type_;
 }
 
+NetEShallowCopy::NetEShallowCopy(NetExpr*arg1, NetExpr*arg2)
+: arg1_(arg1), arg2_(arg2)
+{
+}
+
+NetEShallowCopy::~NetEShallowCopy()
+{
+}
+
+ivl_variable_type_t NetEShallowCopy::expr_type() const
+{
+      return arg1_->expr_type();
+}
+
 NetEAccess::NetEAccess(NetBranch*br, ivl_nature_t nat)
 : branch_(br), nature_(nat)
 {

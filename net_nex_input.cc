@@ -155,6 +155,11 @@ NexusSet* NetESFunc::nex_input(bool rem_out)
       return result;
 }
 
+NexusSet* NetEShallowCopy::nex_input(bool)
+{
+      return new NexusSet;
+}
+
 NexusSet* NetESignal::nex_input(bool rem_out)
 {
 	/*

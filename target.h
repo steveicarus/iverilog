@@ -161,6 +161,7 @@ struct expr_scan_t {
       virtual void expr_concat(const NetEConcat*);
       virtual void expr_event(const NetEEvent*);
       virtual void expr_scope(const NetEScope*);
+      virtual void expr_scopy(const NetEShallowCopy*);
       virtual void expr_select(const NetESelect*);
       virtual void expr_sfunc(const NetESFunc*);
       virtual void expr_signal(const NetESignal*);

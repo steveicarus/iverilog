@@ -4535,11 +4535,19 @@ unsigned PENewCopy::test_width(Design*, NetScope*, width_mode_t&)
       return 1;
 }
 
-NetExpr* PENewCopy::elaborate_expr(Design*des, NetScope*, ivl_type_t, unsigned) const
+NetExpr* PENewCopy::elaborate_expr(Design*des, NetScope*scope, ivl_type_t obj_type, unsigned) const
 {
-      cerr << get_fileline() << ": sorry: Shallow copy \"new\" not implemented." << endl;
-      des->errors += 1;
-      return 0;
+      NetExpr*copy_arg = src_->elaborate_expr(des, scope, obj_type, 0);
+      if (copy_arg == 0)
+	    return 0;
+
+      NetENew*obj_new = new NetENew(obj_type);
+      obj_new->set_line(*this);
+
+      NetEShallowCopy*copy = new NetEShallowCopy(obj_new, copy_arg);
+      copy->set_line(*this);
+
+      return copy;
 }
 
 /*

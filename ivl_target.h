@@ -232,6 +232,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_SCOPE  = 6,
       IVL_EX_SELECT = 7,
       IVL_EX_SFUNC  = 8,
+      IVL_EX_SHALLOWCOPY = 25,
       IVL_EX_SIGNAL = 9,
       IVL_EX_STRING = 10,
       IVL_EX_TERNARY = 11,

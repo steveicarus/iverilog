@@ -4101,6 +4101,28 @@ class NetESFunc  : public NetExpr {
       NetESFunc& operator= (const NetESFunc&);
 };
 
+class NetEShallowCopy : public NetExpr {
+    public:
+	// Make a shallow copy from arg2 into arg1.
+      explicit NetEShallowCopy(NetExpr*arg1, NetExpr*arg2);
+      ~NetEShallowCopy();
+
+      virtual ivl_variable_type_t expr_type() const;
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetEShallowCopy* dup_expr() const;
+      virtual NexusSet* nex_input(bool rem_out = true);
+
+      virtual void dump(ostream&os) const;
+
+      void expr_scan_oper1(struct expr_scan_t*) const;
+      void expr_scan_oper2(struct expr_scan_t*) const;
+
+    private:
+      NetExpr*arg1_;
+      NetExpr*arg2_;
+};
+
 /*
  * This class represents the ternary (?:) operator. It has 3
  * expressions, one of which is a condition used to select which of

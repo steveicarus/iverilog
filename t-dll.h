@@ -145,6 +145,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_rparam(const NetECRealParam*);
       void expr_event(const NetEEvent*);
       void expr_scope(const NetEScope*);
+      void expr_scopy(const NetEShallowCopy*);
       void expr_netenum(const NetENetenum*);
       void expr_select(const NetESelect*);
       void expr_sfunc(const NetESFunc*);
@@ -242,6 +243,11 @@ struct ivl_expr_s {
 		  ivl_expr_t expr_;
 		  ivl_expr_t base_;
 	    } select_;
+
+	    struct {
+		  ivl_expr_t dest;
+		  ivl_expr_t src;
+	    } shallow_;
 
 	    struct {
 		  ivl_branch_t branch;

@@ -1584,6 +1584,11 @@ void NetESFunc::dump(ostream&o) const
       o << ")";
 }
 
+void NetEShallowCopy::dump(ostream&o) const
+{
+      o << "<ShallowCopy, " << *arg1_ << " <-- " << *arg2_ << ">";
+}
+
 void NetESignal::dump(ostream&o) const
 {
       if (has_sign())

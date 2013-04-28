@@ -273,6 +273,25 @@ static void show_select_expression(ivl_expr_t net, unsigned ind)
       }
 }
 
+static void show_shallowcopy(ivl_expr_t net, unsigned ind)
+{
+      ivl_expr_t oper1 = ivl_expr_oper1(net);
+      ivl_expr_t oper2 = ivl_expr_oper2(net);
+      fprintf(out, "%*s<shallow_copy>\n", ind, "");
+      show_expression(oper1, ind+3);
+      show_expression(oper2, ind+3);
+
+      if (ivl_expr_value(oper1) != ivl_expr_value(oper2)) {
+	    fprintf(out, "%*sERROR: Shallow copy operand types must match.\n", ind+3,"");
+	    stub_errors += 1;
+      }
+
+      if (ivl_expr_value(oper1)!=IVL_VT_CLASS && ivl_expr_value(oper1)!=IVL_VT_DARRAY) {
+	    fprintf(out, "%*sERROR: Operand 1 type is %s\n", ind+3, "", vt_type_string(oper1));
+	    stub_errors += 1;
+      }
+}
+
 static void show_signal_expression(ivl_expr_t net, unsigned ind)
 {
       unsigned width = ivl_expr_width(net);
@@ -501,6 +520,10 @@ void show_expression(ivl_expr_t net, unsigned ind)
 		    fprintf(out, ">\n");
 	      }
 	      break;
+
+	  case IVL_EX_SHALLOWCOPY:
+	    show_shallowcopy(net, ind);
+	    break;
 
 	  default:
 	    fprintf(out, "%*s<expr_type=%d>\n", ind, "", code);

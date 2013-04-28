@@ -405,6 +405,28 @@ void dll_target::expr_scope(const NetEScope*net)
       expr_->u_.scope_.scope = lookup_scope_(net->scope());
 }
 
+void dll_target::expr_scopy(const NetEShallowCopy*net)
+{
+      assert(expr_ == 0);
+
+      net->expr_scan_oper1(this);
+      ivl_expr_t expr1 = expr_;
+      expr_ = 0;
+
+      net->expr_scan_oper2(this);
+      ivl_expr_t expr2 = expr_;
+      expr_ = 0;
+
+      expr_ = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_->type_ = IVL_EX_SHALLOWCOPY;
+      FILE_NAME(expr_, net);
+      expr_->value_ = net->expr_type();
+      expr_->net_type = net->net_type();
+
+      expr_->u_.shallow_.dest = expr1;
+      expr_->u_.shallow_.src  = expr2;
+}
+
 void dll_target::expr_netenum(const NetENetenum*net)
 {
       assert(expr_ == 0);

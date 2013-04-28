@@ -508,6 +508,12 @@ void expr_scan_t::expr_scope(const NetEScope*)
 	    "unhandled expr_scope." << endl;
 }
 
+void expr_scan_t::expr_scopy(const NetEShallowCopy*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_scopy." << endl;
+}
+
 void expr_scan_t::expr_select(const NetESelect*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "

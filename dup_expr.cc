@@ -227,6 +227,12 @@ NetESFunc* NetESFunc::dup_expr() const
       return tmp;
 }
 
+NetEShallowCopy* NetEShallowCopy::dup_expr() const
+{
+      ivl_assert(*this, 0);
+      return 0;
+}
+
 NetESignal* NetESignal::dup_expr() const
 {
       NetESignal*tmp = new NetESignal(net_, word_);

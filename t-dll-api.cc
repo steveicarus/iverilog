@@ -497,6 +497,9 @@ extern "C" ivl_expr_t ivl_expr_oper1(ivl_expr_t net)
 	  case IVL_EX_NEW:
 	    return net->u_.new_.size;
 
+	  case IVL_EX_SHALLOWCOPY:
+	    return net->u_.shallow_.dest;
+
 	  case IVL_EX_SIGNAL:
 	    return net->u_.signal_.word;
 
@@ -519,6 +522,9 @@ extern "C" ivl_expr_t ivl_expr_oper2(ivl_expr_t net)
 
 	  case IVL_EX_SELECT:
 	    return net->u_.select_.base_;
+
+	  case IVL_EX_SHALLOWCOPY:
+	    return net->u_.shallow_.src;
 
 	  case IVL_EX_TERNARY:
 	    return net->u_.ternary_.true_e;

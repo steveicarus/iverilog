@@ -610,6 +610,21 @@ void NetESFunc::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_sfunc(this);
 }
 
+void NetEShallowCopy::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_scopy(this);
+}
+
+void NetEShallowCopy::expr_scan_oper1(struct expr_scan_t*tgt) const
+{
+      arg1_->expr_scan(tgt);
+}
+
+void NetEShallowCopy::expr_scan_oper2(struct expr_scan_t*tgt) const
+{
+      arg2_->expr_scan(tgt);
+}
+
 void NetEUFunc::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_ufunc(this);
