@@ -300,7 +300,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope,
       netclass_t*use_class = new netclass_t(use_type->name);
 
       if (debug_scopes) {
-	    cerr << pclass->get_fileline() <<": debug: "
+	    cerr << pclass->get_fileline() <<": elaborate_scope_class: "
 		 << "Elaborate scope class " << pclass->pscope_name() << endl;
       }
 
@@ -311,9 +311,16 @@ static void elaborate_scope_class(Design*des, NetScope*scope,
       class_scope->set_class_def(use_class);
       use_class->set_class_scope(class_scope);
 
+	// Collect the properties, elaborate them, and add them to the
+	// elaborated class definition.
       for (map<perm_string, data_type_t*>::iterator cur = use_type->properties.begin()
 		 ; cur != use_type->properties.end() ; ++ cur) {
+	    if (debug_scopes) {
+		  cerr << pclass->get_fileline() << ": elaborate_scope_class: "
+		       << "  Property " << cur->first << endl;
+	    }
 	    ivl_type_s*tmp = cur->second->elaborate_type(des, scope);
+	    ivl_assert(*pclass, tmp);
 	    use_class->set_property(cur->first, tmp);
       }
 
@@ -327,7 +334,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope,
 	    method_scope->set_line(cur->second);
 
 	    if (debug_scopes) {
-		  cerr << cur->second->get_fileline() << ": debug: "
+		  cerr << cur->second->get_fileline() << ": elaborate_scope_class: "
 		       << "Elaborate method (task) scope "
 		       << scope_path(method_scope) << endl;
 	    }
@@ -345,7 +352,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope,
 	    method_scope->set_line(cur->second);
 
 	    if (debug_scopes) {
-		  cerr << cur->second->get_fileline() << ": debug: "
+		  cerr << cur->second->get_fileline() << ": elaborate_scope_class: "
 		       << "Elaborate method (function) scope "
 		       << scope_path(method_scope) << endl;
 	    }
@@ -357,12 +364,10 @@ static void elaborate_scope_class(Design*des, NetScope*scope,
 }
 
 static void elaborate_scope_classes(Design*des, NetScope*scope,
-				    const map<perm_string,PClass*>&classes)
+				    const vector<PClass*>&classes)
 {
-      for (map<perm_string,PClass*>::const_iterator cur = classes.begin()
-		 ; cur != classes.end() ; ++ cur) {
-	    elaborate_scope_class(des, scope, cur->second);
-      }
+      for (size_t idx = 0 ; idx < classes.size() ; idx += 1)
+	    elaborate_scope_class(des, scope, classes[idx]);
 }
 
 static void replace_scope_parameters_(NetScope*scope, const LineInfo&loc,
@@ -593,7 +598,8 @@ bool Module::elaborate_scope(Design*des, NetScope*scope,
 
       elaborate_scope_enumerations(des, scope, enum_sets);
 
-      elaborate_scope_classes(des, scope, classes);
+      assert(classes.size() == classes_lexical.size());
+      elaborate_scope_classes(des, scope, classes_lexical);
 
 	// Run through the defparams for this module and save the result
 	// in a table for later final override.

@@ -24,6 +24,7 @@
 # include  "pform_types.h"
 # include  "ivl_target.h"
 # include  <map>
+# include  <vector>
 
 class PEvent;
 class PExpr;
@@ -175,6 +176,9 @@ class PScopeExtra : public PScope {
       std::map<perm_string,PFunction*> funcs;
 	/* class definitions within this module. */
       std::map<perm_string,PClass*> classes;
+	/* This is the lexical order of the classes, and is used by
+	   elaboration to choose an elaboration order. */
+      std::vector<PClass*> classes_lexical;
 
     protected:
       void dump_classes_(ostream&out, unsigned indent) const;

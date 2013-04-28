@@ -317,6 +317,7 @@ PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
 	    error_count += 1;
       }
       scopex->classes[name] = class_scope;
+      scopex->classes_lexical .push_back(class_scope);
 
       lexical_scope = class_scope;
       return class_scope;
