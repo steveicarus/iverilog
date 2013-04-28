@@ -32,6 +32,8 @@ class vvp_object {
       inline vvp_object() { ref_cnt_ = 0; total_active_cnt_ += 1; }
       virtual ~vvp_object() =0;
 
+      virtual void shallow_copy(const vvp_object*that);
+
       static void cleanup(void);
 
     private:
@@ -59,6 +61,8 @@ class vvp_object_t {
       inline bool operator != (const vvp_object_t&that) const
           { return ref_ != that.ref_; }
 
+      inline void shallow_copy(const vvp_object_t&that)
+          { ref_->shallow_copy(that.ref_); }
       template <class T> T*peek(void) const;
 
     private:

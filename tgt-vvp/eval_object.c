@@ -90,6 +90,23 @@ static int eval_object_property(ivl_expr_t expr)
       return 0;
 }
 
+static int eval_object_shallowcopy(ivl_expr_t ex)
+{
+      ivl_expr_t dest = ivl_expr_oper1(ex);
+      ivl_expr_t src  = ivl_expr_oper2(ex);
+
+      draw_eval_object(dest);
+      draw_eval_object(src);
+
+	/* The %scopy opcode pops the top of the object stack as the
+	   source object, and shallow-copies it to the new top, the
+	   destination object. The destination is left on the top of
+	   the stack. */
+      fprintf(vvp_out, "    %%scopy;\n");
+
+      return 0;
+}
+
 static int eval_object_signal(ivl_expr_t ex)
 {
       ivl_signal_t sig = ivl_expr_signal(ex);
@@ -124,6 +141,9 @@ int draw_eval_object(ivl_expr_t ex)
 
 	  case IVL_EX_PROPERTY:
 	    return eval_object_property(ex);
+
+	  case IVL_EX_SHALLOWCOPY:
+	    return eval_object_shallowcopy(ex);
 
 	  case IVL_EX_SIGNAL:
 	    return eval_object_signal(ex);

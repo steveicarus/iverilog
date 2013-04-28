@@ -68,6 +68,8 @@ class class_type : public __vpiHandle {
       void set_object(inst_t inst, size_t pid, const vvp_object_t&val) const;
       void get_object(inst_t inst, size_t pid, vvp_object_t&val) const;
 
+      void copy_property(inst_t dst, size_t idx, inst_t src) const;
+
     public: // VPI related methods
       int get_type_code(void) const;
 

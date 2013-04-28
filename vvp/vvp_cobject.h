@@ -44,6 +44,8 @@ class vvp_cobject : public vvp_object {
       void set_object(size_t pid, const vvp_object_t&val);
       void get_object(size_t pid, vvp_object_t&val);
 
+      void shallow_copy(const vvp_object*that);
+
     private:
       const class_type* defn_;
 	// For now, only support 32bit bool signed properties.

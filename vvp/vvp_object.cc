@@ -34,3 +34,8 @@ vvp_object::~vvp_object()
 {
       total_active_cnt_ -= 1;
 }
+
+void vvp_object::shallow_copy(const vvp_object*that)
+{
+      assert(0);
+}

@@ -4809,6 +4809,17 @@ bool of_RELEASE_WR(vthread_t, vvp_code_t cp)
       return true;
 }
 
+bool of_SCOPY(vthread_t thr, vvp_code_t)
+{
+      vvp_object_t tmp;
+      thr->pop_object(tmp);
+
+      vvp_object_t&dest = thr->peek_object();
+      dest.shallow_copy(tmp);
+
+      return true;
+}
+
 /*
  * This implements the "%set/av <label>, <bit>, <wid>" instruction. In
  * this case, the <label> is an array label, and the <bit> and <wid>

@@ -74,3 +74,15 @@ void vvp_cobject::get_object(size_t pid, vvp_object_t&val)
 {
       return defn_->get_object(properties_, pid, val);
 }
+
+void vvp_cobject::shallow_copy(const vvp_object*obj)
+{
+      const vvp_cobject*that = dynamic_cast<const vvp_cobject*>(obj);
+      assert(that);
+
+      assert(defn_ == that->defn_);
+
+      for (size_t idx = 0 ; idx < defn_->property_count() ; idx += 1)
+	    defn_->copy_property(properties_, idx, that->properties_);
+
+}

@@ -59,6 +59,9 @@ class class_property_t {
       virtual void set_object(char*buf, const vvp_object_t&val);
       virtual void get_object(char*buf, vvp_object_t&val);
 
+	// Implement polymorphic shallow copy.
+      virtual void copy(char*buf, char*src) = 0;
+
     protected:
       size_t offset_;
 };
@@ -134,6 +137,8 @@ template <class T> class property_atom : public class_property_t {
 
       void set_vec4(char*buf, const vvp_vector4_t&val);
       void get_vec4(char*buf, vvp_vector4_t&val);
+
+      void copy(char*dst, char*src);
 };
 
 template <class T> class property_real : public class_property_t {
@@ -151,6 +156,8 @@ template <class T> class property_real : public class_property_t {
 
       void set_real(char*buf, double val);
       double get_real(char*buf);
+
+      void copy(char*dst, char*src);
 };
 
 class property_string : public class_property_t {
@@ -171,6 +178,8 @@ class property_string : public class_property_t {
 
       void set_string(char*buf, const string&);
       string get_string(char*buf);
+
+      void copy(char*dst, char*src);
 };
 
 class property_object : public class_property_t {
@@ -191,6 +200,8 @@ class property_object : public class_property_t {
 
       void set_object(char*buf, const vvp_object_t&);
       void get_object(char*buf, vvp_object_t&);
+
+      void copy(char*dst, char*src);
 };
 
 template <class T> void property_atom<T>::set_vec4(char*buf, const vvp_vector4_t&val)
@@ -216,6 +227,13 @@ template <class T> void property_atom<T>::get_vec4(char*buf, vvp_vector4_t&val)
       val.setarray(0, val.size(), tmp);
 }
 
+template <class T> void property_atom<T>::copy(char*dst, char*src)
+{
+      T*dst_obj = reinterpret_cast<T*> (dst+offset_);
+      T*src_obj = reinterpret_cast<T*> (src+offset_);
+      *dst_obj = *src_obj;
+}
+
 template <class T> void property_real<T>::set_real(char*buf, double val)
 {
       T*tmp = reinterpret_cast<T*>(buf+offset_);
@@ -226,6 +244,13 @@ template <class T> double property_real<T>::get_real(char*buf)
 {
       T*tmp = reinterpret_cast<T*>(buf+offset_);
       return *tmp;
+}
+
+template <class T> void property_real<T>::copy(char*dst, char*src)
+{
+      T*dst_obj = reinterpret_cast<T*> (dst+offset_);
+      T*src_obj = reinterpret_cast<T*> (src+offset_);
+      *dst_obj = *src_obj;
 }
 
 void property_string::set_string(char*buf, const string&val)
@@ -240,6 +265,13 @@ string property_string::get_string(char*buf)
       return *tmp;
 }
 
+void property_string::copy(char*dst, char*src)
+{
+      string*dst_obj = reinterpret_cast<string*> (dst+offset_);
+      string*src_obj = reinterpret_cast<string*> (src+offset_);
+      *dst_obj = *src_obj;
+}
+
 void property_object::set_object(char*buf, const vvp_object_t&val)
 {
       vvp_object_t*tmp = reinterpret_cast<vvp_object_t*>(buf+offset_);
@@ -252,6 +284,12 @@ void property_object::get_object(char*buf, vvp_object_t&val)
       val = *tmp;
 }
 
+void property_object::copy(char*dst, char*src)
+{
+      vvp_object_t*dst_obj = reinterpret_cast<vvp_object_t*>(dst);
+      vvp_object_t*src_obj = reinterpret_cast<vvp_object_t*>(src);
+      *dst_obj = *src_obj;
+}
 
 /* **** */
 
@@ -402,6 +440,16 @@ void class_type::get_object(class_type::inst_t obj, size_t pid, vvp_object_t&val
       char*buf = reinterpret_cast<char*> (obj);
       assert(pid < properties_.size());
       properties_[pid].type->get_object(buf, val);
+}
+
+void class_type::copy_property(class_type::inst_t dst, size_t pid, class_type::inst_t src) const
+{
+      char*dst_buf = reinterpret_cast<char*> (dst);
+      char*src_buf = reinterpret_cast<char*> (src);
+
+      assert(pid < properties_.size());
+
+      properties_[pid].type->copy(dst_buf, src_buf);
 }
 
 int class_type::get_type_code(void) const
