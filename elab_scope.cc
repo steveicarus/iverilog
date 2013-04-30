@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -308,6 +308,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope,
 	// not allowed to escape a class method.
       NetScope*class_scope = new NetScope(0, hname_t(pclass->pscope_name()),
 					  NetScope::CLASS);
+      class_scope->set_line(pclass);
       class_scope->set_class_def(use_class);
       use_class->set_class_scope(class_scope);
 

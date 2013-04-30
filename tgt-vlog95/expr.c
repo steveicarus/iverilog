@@ -724,6 +724,15 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    fprintf(vlog_out, "%s", ivl_expr_name(expr));
 	    emit_expr_func(scope, expr, wid);
 	    break;
+	case IVL_EX_SHALLOWCOPY:
+	    fprintf(vlog_out, "<new> ");
+	    emit_expr(scope, ivl_expr_oper2(expr), wid);
+	    fprintf(stderr, "%s:%u: vlog95 error: New operator "
+	                    "is not supported.\n",
+	                    ivl_expr_file(expr),
+	                    ivl_expr_lineno(expr));
+	    vlog_errors += 1;
+	    break;
 	case IVL_EX_SIGNAL:
 	    emit_expr_signal(scope, expr, wid);
 	    break;
