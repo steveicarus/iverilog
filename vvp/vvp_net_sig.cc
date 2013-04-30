@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2010,2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -681,7 +681,9 @@ vvp_fun_signal_object_sa::vvp_fun_signal_object_sa()
 #ifdef CHECK_WITH_VALGRIND
 void vvp_fun_signal_object_aa::free_instance(vvp_context_t context)
 {
-// Never knew how to do this!
+      vvp_object_t*bits = static_cast<vvp_object_t*>
+            (vvp_get_context_item(context, context_idx_));
+      delete bits;
 }
 #endif
 

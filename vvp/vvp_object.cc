@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -35,7 +35,7 @@ vvp_object::~vvp_object()
       total_active_cnt_ -= 1;
 }
 
-void vvp_object::shallow_copy(const vvp_object*that)
+void vvp_object::shallow_copy(const vvp_object*)
 {
       assert(0);
 }
