@@ -2500,7 +2500,7 @@ vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 	    return pform_make_task_ports(loc, pt, vec_type->base_type,
 					 vec_type->signed_flag,
 					 copy_range(vec_type->pdims.get()),
-					 names);
+					 names, vec_type->integer_flag);
       }
 
       if (/*real_type_t*real_type = */ dynamic_cast<real_type_t*> (vtype)) {

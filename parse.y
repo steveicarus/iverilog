@@ -959,7 +959,7 @@ data_type /* IEEE1800-2005: A.2.2.1 */
       }
   | K_time
       { list<pform_range_t>*pd = make_range_from_width(64);
-	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, true, pd);
+	vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, false, pd);
 	tmp->reg_flag = true;
 	$$ = tmp;
       }
