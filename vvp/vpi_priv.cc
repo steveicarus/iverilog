@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1009,7 +1009,7 @@ void vpip_put_value_event::run_run()
 static t_vpi_time *timedup(t_vpi_time *val)
 {
       t_vpi_time *rtn;
-      rtn = (t_vpi_time *) malloc(sizeof(t_vpi_time));
+      rtn = static_cast<t_vpi_time *> (malloc(sizeof(t_vpi_time)));
       *rtn = *val;
       return rtn;
 }
@@ -1021,7 +1021,7 @@ static t_vpi_vecval *vectordup(t_vpi_vecval *val, PLI_INT32 size)
       t_vpi_vecval *rtn;
       assert(size > 0);
       num_bytes = ((size + 31)/32)*sizeof(t_vpi_vecval);
-      rtn = (t_vpi_vecval *) malloc(num_bytes);
+      rtn = static_cast<t_vpi_vecval *> (malloc(num_bytes));
       memcpy(rtn, val, num_bytes);
       return rtn;
 }
@@ -1030,7 +1030,8 @@ static t_vpi_vecval *vectordup(t_vpi_vecval *val, PLI_INT32 size)
 static t_vpi_strengthval *strengthdup(t_vpi_strengthval *val)
 {
       t_vpi_strengthval *rtn;
-      rtn = (t_vpi_strengthval *) malloc(sizeof(t_vpi_strengthval));
+      rtn = static_cast<t_vpi_strengthval *>
+            (malloc(sizeof(t_vpi_strengthval)));
       *rtn = *val;
       return rtn;
 }

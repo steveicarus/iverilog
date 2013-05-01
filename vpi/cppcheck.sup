@@ -4,6 +4,7 @@
 
 // fstapi.c from GTKWave
 obsoleteFunctionsasctime:fstapi.c:652
+unreadVariable:fstapi.c:1297
 variableScope:fstapi.c:751
 variableScope:fstapi.c:1707
 variableScope:fstapi.c:1965

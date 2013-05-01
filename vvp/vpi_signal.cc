@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1054,7 +1054,7 @@ void __vpiSignal::operator delete(void*)
 #ifdef CHECK_WITH_VALGRIND
 void signal_delete(vpiHandle item)
 {
-      struct __vpiSignal *obj = (__vpiSignal *) item;
+      struct __vpiSignal *obj = static_cast<__vpiSignal *> (item);
       assert(obj->node->fil);
       obj->node->fil->clear_all_callbacks();
       vvp_net_delete(obj->node);

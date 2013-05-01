@@ -54,7 +54,8 @@ void port_delete(__vpiHandle*handle);
 static void delete_sub_scopes(struct __vpiScope *scope)
 {
       for (unsigned idx = 0; idx < scope->nintern; idx += 1) {
-	    struct __vpiScope*lscope = (__vpiScope*)(scope->intern)[idx];
+	    struct __vpiScope*lscope = static_cast<__vpiScope*>
+	          ((scope->intern)[idx]);
 	    switch(scope->intern[idx]->get_type_code()) {
 		case vpiFunction:
 		case vpiTask:
@@ -128,7 +129,8 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 void root_table_delete(void)
 {
       for (unsigned idx = 0; idx < vpip_root_table_cnt; idx += 1) {
-	    struct __vpiScope *scope = (__vpiScope *)vpip_root_table_ptr[idx];
+	    struct __vpiScope *scope = static_cast<__vpiScope *>
+	          (vpip_root_table_ptr[idx]);
 	    delete_sub_scopes(scope);
 	    vthreads_delete(scope);
 	    delete scope;

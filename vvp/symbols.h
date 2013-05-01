@@ -1,7 +1,7 @@
 #ifndef __symbols_H
 #define __symbols_H
 /*
- * Copyright (c) 2001-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -69,6 +69,7 @@ class symbol_table_s {
       symbol_value_t sym_get_value(const char*key);
 
     private:
+      symbol_table_s(const symbol_table_s&) { assert(0); };
       struct tree_node_*root;
       struct key_strings*str_chunk;
       unsigned str_used;

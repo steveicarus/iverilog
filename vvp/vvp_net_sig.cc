@@ -594,9 +594,9 @@ vvp_fun_signal_string_sa::vvp_fun_signal_string_sa()
 }
 
 #ifdef CHECK_WITH_VALGRIND
-void vvp_fun_signal_string_aa::free_instance(vvp_context_t context)
+void vvp_fun_signal_string_aa::free_instance(vvp_context_t)
 {
-// Never knew how to do this!
+      assert(0);
 }
 #endif
 
