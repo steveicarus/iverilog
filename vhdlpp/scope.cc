@@ -57,6 +57,11 @@ ScopeBase::ScopeBase(const ScopeBase&ref)
           insert_iterator<map<perm_string, const VType*> >(
               old_types_, old_types_.end())
     );
+    merge(ref.old_subprograms_.begin(), ref.old_subprograms_.end(),
+          ref.new_subprograms_.begin(), ref.new_subprograms_.end(),
+          insert_iterator<map<perm_string,Subprogram*> >(
+              old_subprograms_, old_subprograms_.end())
+    );
 }
 
 ScopeBase::~ScopeBase()
@@ -76,6 +81,7 @@ void ScopeBase::cleanup()
     delete_all(new_components_);
     delete_all(new_types_);
     delete_all(new_constants_);
+    delete_all(new_subprograms_);
 }
 
 const VType*ScopeBase::find_type(perm_string by_name)
@@ -146,11 +152,24 @@ void ScopeBase::do_use_from(const ScopeBase*that)
 		  continue;
 	    old_components_[cur->first] = cur->second;
       }
-       for (map<perm_string,ComponentBase*>::const_iterator cur = that->new_components_.begin()
+      for (map<perm_string,ComponentBase*>::const_iterator cur = that->new_components_.begin()
          ; cur != that->new_components_.end() ; ++ cur) {
         if (cur->second == 0)
           continue;
         old_components_[cur->first] = cur->second;
+      }
+
+      for (map<perm_string,Subprogram*>::const_iterator cur = that->old_subprograms_.begin()
+		 ; cur != that->old_subprograms_.end() ; ++ cur) {
+	    if (cur->second == 0)
+		  continue;
+	    old_subprograms_[cur->first] = cur->second;
+      }
+      for (map<perm_string,Subprogram*>::const_iterator cur = that->new_subprograms_.begin()
+         ; cur != that->new_subprograms_.end() ; ++ cur) {
+        if (cur->second == 0)
+          continue;
+        old_subprograms_[cur->first] = cur->second;
       }
 
       for (map<perm_string,const VType*>::const_iterator cur = that->old_types_.begin()

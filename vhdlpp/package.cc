@@ -104,6 +104,15 @@ void Package::write_to_stream(ostream&fd) const
 	    fd << ";" << endl;
       }
 
+      for (map<perm_string,Subprogram*>::const_iterator cur = old_subprograms_.begin()
+		 ; cur != old_subprograms_.end() ; ++cur) {
+	    cur->second->write_to_stream(fd);
+      }
+      for (map<perm_string,Subprogram*>::const_iterator cur = new_subprograms_.begin()
+		 ; cur != new_subprograms_.end() ; ++cur) {
+	    cur->second->write_to_stream(fd);
+      }
+
       for (map<perm_string,ComponentBase*>::const_iterator cur = old_components_.begin()
 		 ; cur != old_components_.end() ; ++cur) {
 

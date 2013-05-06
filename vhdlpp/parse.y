@@ -34,7 +34,8 @@
 # include "architec.h"
 # include "expression.h"
 # include "sequential.h"
-# include  "package.h"
+# include "subprogram.h"
+# include "package.h"
 # include "vsignal.h"
 # include "vtype.h"
 # include  <cstdarg>
@@ -234,6 +235,8 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 
       Architecture::Statement* arch_statement;
       std::list<Architecture::Statement*>* arch_statement_list;
+
+      Subprogram*subprogram;
 };
 
   /* The keywords are all tokens. */
@@ -340,6 +343,8 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 
 %type <exp_else> else_when_waveform
 %type <exp_else_list> else_when_waveforms
+
+%type <subprogram> function_specification subprogram_specification
 
 %%
 
@@ -1143,6 +1148,15 @@ for_generate_statement
 
 function_specification /* IEEE 1076-2008 P4.2.1 */
   : K_function IDENTIFIER '(' interface_list ')' K_return IDENTIFIER
+      { perm_string type_name = lex_strings.make($7);
+	perm_string name = lex_strings.make($2);
+	const VType*type_mark = active_scope->find_type(type_name);
+	Subprogram*tmp = new Subprogram(name, $4, type_mark);
+	FILE_NAME(tmp,@1);
+	delete[]$2;
+	delete[]$7;
+	$$ = tmp;
+      }
   ;
 
 generate_statement /* IEEE 1076-2008 P11.8 */
@@ -2057,6 +2071,7 @@ subprogram_body /* IEEE 1076-2008 P4.3 */
     K_begin subprogram_statement_part K_end
     subprogram_kind_opt identifier_opt ';'
       { sorrymsg(@2, "Subprogram bodies not supported.\n");
+	if ($1) delete $1;
 	if ($8) delete[]$8;
       }
 
@@ -2066,14 +2081,14 @@ subprogram_body /* IEEE 1076-2008 P4.3 */
     subprogram_kind_opt identifier_opt ';'
       { errormsg(@2, "Syntax errors in subprogram body.\n");
 	yyerrok;
+	if ($1) delete $1;
 	if ($8) delete[]$8;
       }
   ;
 
 subprogram_declaration
   : subprogram_specification ';'
-      { sorrymsg(@1, "Subprogram specifications not supported.\n");
-      }
+      { if ($1) active_scope->bind_name($1->name(), $1); }
   ;
 
 subprogram_declarative_item /* IEEE 1079-2008 P4.3 */
@@ -2098,7 +2113,7 @@ subprogram_kind /* IEEE 1076-2008 P4.3 */
 subprogram_kind_opt : subprogram_kind | ;
 
 subprogram_specification
-  : function_specification
+  : function_specification { $$ = $1; }
   ;
 
   /* This is an implementation of the rule:

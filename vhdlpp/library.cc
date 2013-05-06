@@ -322,11 +322,13 @@ const VTypePrimitive* primitive_BOOLEAN  = new VTypePrimitive(VTypePrimitive::BO
 const VTypePrimitive* primitive_BIT      = new VTypePrimitive(VTypePrimitive::BIT);
 const VTypePrimitive* primitive_INTEGER  = new VTypePrimitive(VTypePrimitive::INTEGER);
 const VTypePrimitive* primitive_STDLOGIC = new VTypePrimitive(VTypePrimitive::STDLOGIC);
+const VTypePrimitive* primitive_CHARACTER= new VTypePrimitive(VTypePrimitive::CHARACTER);
 
 const VTypeRange* primitive_NATURAL = new VTypeRange(primitive_INTEGER, INT64_MAX, 0);
 
-const VTypeArray* primitive_BIT_VECTOR  = new VTypeArray(primitive_BIT,      vector<VTypeArray::range_t> (1));
-const VTypeArray* primitive_BOOL_VECTOR = new VTypeArray(primitive_BOOLEAN, vector<VTypeArray::range_t> (1));
+static const VTypeArray* primitive_BIT_VECTOR  = new VTypeArray(primitive_BIT,      vector<VTypeArray::range_t> (1));
+static const VTypeArray* primitive_BOOL_VECTOR = new VTypeArray(primitive_BOOLEAN, vector<VTypeArray::range_t> (1));
+static const VTypeArray* primitive_STRING = new VTypeArray(primitive_CHARACTER, vector<VTypeArray::range_t> (1));
 
 void generate_global_types(ActiveScope*res)
 {
@@ -334,7 +336,9 @@ void generate_global_types(ActiveScope*res)
       res->bind_name(perm_string::literal("bit"),       primitive_BIT);
       res->bind_name(perm_string::literal("integer"),   primitive_INTEGER);
       res->bind_name(perm_string::literal("std_logic"), primitive_STDLOGIC);
+      res->bind_name(perm_string::literal("character"), primitive_CHARACTER);
       res->bind_name(perm_string::literal("bit_vector"),primitive_BOOL_VECTOR);
+      res->bind_name(perm_string::literal("string"),    primitive_STRING);
       res->bind_name(perm_string::literal("natural"),   primitive_NATURAL);
 }
 
@@ -344,7 +348,9 @@ bool is_global_type(perm_string name)
       if (name == "bit") return true;
       if (name == "integer") return true;
       if (name == "std_logic") return true;
+      if (name == "character") return true;
       if (name == "bit_vector") return true;
+      if (name == "string") return true;
       if (name == "natural") return true;
       return false;
 }

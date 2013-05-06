@@ -22,6 +22,7 @@
 # include  "architec.h"
 # include  "expression.h"
 # include  "parse_types.h"
+# include  "sequential.h"
 # include  "vsignal.h"
 # include  "vtype.h"
 # include  <fstream>
@@ -139,6 +140,19 @@ void Scope::dump_scope(ostream&out) const
         else
           out << "   signal " << cur->first.str() << ": ???" << endl;
       }
+	// Dump subprograms
+      for (map<perm_string,Subprogram*>::const_iterator cur = old_subprograms_.begin()
+		 ; cur != old_subprograms_.end() ; ++cur) {
+	    out << "   subprogram " << cur->first << " is" << endl;
+	    cur->second->dump(out);
+	    out << "   end subprogram " << cur->first << endl;
+      }
+      for (map<perm_string,Subprogram*>::const_iterator cur = new_subprograms_.begin()
+		 ; cur != new_subprograms_.end() ; ++cur) {
+	    out << "   subprogram " << cur->first << " is" << endl;
+	    cur->second->dump(out);
+	    out << "   end subprogram " << cur->first << endl;
+      }
 	// Dump component declarations
       for (map<perm_string,ComponentBase*>::const_iterator cur = old_components_.begin()
 		 ; cur != old_components_.end() ; ++cur) {
@@ -148,10 +162,11 @@ void Scope::dump_scope(ostream&out) const
 	    out << "   end component " << cur->first << endl;
       }
       for (map<perm_string,ComponentBase*>::const_iterator cur = new_components_.begin()
-         ; cur != new_components_.end() ; ++cur) {
-        out << "   component " << cur->first << " is" << endl;
-        cur->second->dump_ports(out);
-        out << "   end component " << cur->first << endl;
+		 ; cur != new_components_.end() ; ++cur) {
+	    out << "   component " << cur->first << " is" << endl;
+	    cur->second->dump_generics(out);
+	    cur->second->dump_ports(out);
+	    out << "   end component " << cur->first << endl;
       }
 }
 
@@ -435,4 +450,42 @@ ostream& ExpInteger::dump_inline(ostream&out) const
 {
       out << value_;
       return out;
+}
+
+void Subprogram::dump(ostream&fd) const
+{
+      fd << "     " << name_;
+
+      if (ports_->empty()) {
+	    fd << "()";
+
+      } else {
+	    fd << "(";
+
+	    list<InterfacePort*>::const_iterator cur = ports_->begin();
+	    InterfacePort*curp = *cur;
+	    fd << curp->name << ":";
+	    curp->type->show(fd);
+
+	    for (++ cur ; cur != ports_->end() ; ++ cur) {
+		  curp = *cur;
+		  fd << "; " << curp->name << ":";
+		  curp->type->show(fd);
+	    }
+	    fd << ")";
+      }
+
+      fd << " return ";
+      return_type_->show(fd);
+      fd << endl;
+
+      if (statements_== 0 || statements_->empty()) {
+	    fd << "        <no definition>" << endl;
+      } else {
+	    for (list<SequentialStmt*>::const_iterator cur = statements_->begin()
+		       ; cur != statements_->end() ; ++cur) {
+		  SequentialStmt*curp = *cur;
+		  curp->dump(fd, 8);
+	    }
+      }
 }

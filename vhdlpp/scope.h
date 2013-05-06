@@ -23,12 +23,14 @@
 # include  <list>
 # include  <map>
 # include  "StringHeap.h"
-# include "entity.h"
-# include "expression.h"
-# include "vsignal.h"
+# include  "entity.h"
+# include  "expression.h"
+# include  "subprogram.h"
+# include  "vsignal.h"
 
 class Architecture;
 class ComponentBase;
+class Subprogram;
 class VType;
 
 template<typename T>
@@ -88,6 +90,9 @@ class ScopeBase {
       };
       std::map<perm_string, struct const_t*> old_constants_; //previous scopes
       std::map<perm_string, struct const_t*> new_constants_; //current scope
+
+      std::map<perm_string, Subprogram*> old_subprograms_; //previous scopes
+      std::map<perm_string, Subprogram*> new_subprograms_; //current scope
 
       void do_use_from(const ScopeBase*that);
 };
@@ -169,6 +174,13 @@ class ActiveScope : public ScopeBase {
         if((it = old_constants_.find(name)) != old_constants_.end() )
             old_constants_.erase(it);
         new_constants_[name] = new const_t(obj, val);
+      }
+
+      void bind_name(perm_string name, Subprogram*obj)
+      { map<perm_string, Subprogram*>::iterator it;
+        if((it = old_subprograms_.find(name)) != old_subprograms_.end() )
+            old_subprograms_.erase(it);
+        new_subprograms_[name] = obj;;
       }
 
       void bind(Entity*ent)

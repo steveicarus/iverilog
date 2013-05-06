@@ -1,7 +1,8 @@
-#ifndef __parse_wrap_H
-#define __parse_wrap_H
+#ifndef __subprogram_H
+#define __subprogram_H
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,23 +20,32 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-/*
- * This header wraps the parse.h header file that is generated from
- * the parse.y source file. This is used to include definitions that
- * are needed by the parse type, etc.
- */
-
+# include  "StringHeap.h"
+# include  "LineInfo.h"
+# include  <iostream>
 # include  <list>
-# include "vhdlint.h"
-# include "vhdlreal.h"
-# include  "architec.h"
-# include  "expression.h"
-# include  "sequential.h"
-# include  "subprogram.h"
-# include  "parse_types.h"
 
+class InterfacePort;
+class SequentialStmt;
 class VType;
 
-# include  "parse.h"
+class Subprogram : public LineInfo {
+
+    public:
+      Subprogram(perm_string name, std::list<InterfacePort*>*ports,
+		 const VType*return_type);
+      ~Subprogram();
+
+      inline const perm_string&name() const { return name_; }
+
+      void write_to_stream(std::ostream&fd) const;
+      void dump(std::ostream&fd) const;
+
+    private:
+      perm_string name_;
+      std::list<InterfacePort*>*ports_;
+      const VType*return_type_;
+      std::list<SequentialStmt*>*statements_;
+};
 
 #endif
