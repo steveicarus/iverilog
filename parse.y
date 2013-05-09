@@ -5435,14 +5435,18 @@ statement_item /* This is roughly statement_item in the LRM */
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
-    statement_or_null_list_opt K_end
+    statement_or_null_list_opt K_end endname_opt
       { pform_pop_scope();
 	assert(! current_block_stack.empty());
 	PBlock*tmp = current_block_stack.top();
 	current_block_stack.pop();
 	if ($6) tmp->set_statement(*$6);
-	delete[]$3;
 	delete $6;
+	if ($8 && (strcmp($3,$8) != 0)) {
+	      yyerror(@8, "error: End name doesn't match begin name");
+	}
+	if ($8) delete[]$8;
+	delete[]$3;
 	$$ = tmp;
       }
 
@@ -5469,15 +5473,19 @@ statement_item /* This is roughly statement_item in the LRM */
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
-    statement_or_null_list_opt join_keyword
+    statement_or_null_list_opt join_keyword endname_opt
       { pform_pop_scope();
         assert(! current_block_stack.empty());
 	PBlock*tmp = current_block_stack.top();
 	current_block_stack.pop();
 	tmp->set_join_type($7);
 	if ($6) tmp->set_statement(*$6);
-	delete[]$3;
 	delete $6;
+	if ($8 && (strcmp($3,$8) != 0)) {
+	      yyerror(@8, "error: End name doesn't match fork name");
+	}
+	if ($8) delete[]$8;
+	delete[]$3;
 	$$ = tmp;
       }
 
