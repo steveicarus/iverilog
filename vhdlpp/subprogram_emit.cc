@@ -1,5 +1,3 @@
-#ifndef __subprogram_H
-#define __subprogram_H
 /*
  * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
@@ -20,35 +18,39 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include  "StringHeap.h"
-# include  "LineInfo.h"
+# include  "subprogram.h"
+# include  "sequential.h"
+# include  "vtype.h"
 # include  <iostream>
-# include  <list>
 
-class InterfacePort;
-class SequentialStmt;
-class VType;
+using namespace std;
 
-class Subprogram : public LineInfo {
+int Subprogram::emit_package(ostream&fd) const
+{
+      int errors = 0;
 
-    public:
-      Subprogram(perm_string name, std::list<InterfacePort*>*ports,
-		 const VType*return_type);
-      ~Subprogram();
+      if (return_type_) {
+	    fd << "function ";
+	    return_type_->emit_def(fd);
+	    fd << " " << name_;
+	    fd << ";" << endl;
+      } else {
+	    fd << "task " << name_ << ";" << endl;
+      }
 
-      inline const perm_string&name() const { return name_; }
+      if (statements_) {
+	    for (list<SequentialStmt*>::const_iterator cur = statements_->begin()
+		       ; cur != statements_->end() ; ++cur) {
+		  errors += (*cur)->emit(fd, 0, 0);
+	    }
+      } else {
+	    fd << " begin /* empty body */ end" << endl;
+      }
 
-	// Emit a definition as it would show up in a package.
-      int emit_package(std::ostream&fd) const;
+      if (return_type_)
+	    fd << "endfunction" << endl;
+      else
+	    fd << "endtask" << endl;
 
-      void write_to_stream(std::ostream&fd) const;
-      void dump(std::ostream&fd) const;
-
-    private:
-      perm_string name_;
-      std::list<InterfacePort*>*ports_;
-      const VType*return_type_;
-      std::list<SequentialStmt*>*statements_;
-};
-
-#endif
+      return errors;
+}

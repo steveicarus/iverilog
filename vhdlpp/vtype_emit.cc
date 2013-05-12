@@ -88,9 +88,15 @@ int VTypeArray::emit_def(ostream&out) const
 	    cur = dims.front();
 	    dims.pop_front();
 	    out << "[";
-	    errors += cur->dimension(0).msb()->emit(out, 0, 0);
+	    if (cur->dimension(0).msb())
+		  errors += cur->dimension(0).msb()->emit(out, 0, 0);
+	    else
+		  out << "?error?";
 	    out << ":";
-	    errors += cur->dimension(0).lsb()->emit(out, 0, 0);
+	    if (cur->dimension(0).lsb())
+		  errors += cur->dimension(0).lsb()->emit(out, 0, 0);
+	    else
+		  out << "?error?";
 	    out << "]";
       }
 
@@ -129,6 +135,9 @@ int VTypePrimitive::emit_primitive_type(ostream&out) const
 	    break;
 	  case INTEGER:
 	    out << "bool [31:0]";
+	    break;
+	  case CHARACTER:
+	    out << "char";
 	    break;
 	  default:
 	    assert(0);

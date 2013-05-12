@@ -20,6 +20,7 @@
 # include  "package.h"
 # include  "entity.h"
 # include  "parse_misc.h"
+# include  "ivl_assert.h"
 
 Package::Package(perm_string n, const ScopeBase&ref)
 : Scope(ref), name_(n)
@@ -29,6 +30,12 @@ Package::Package(perm_string n, const ScopeBase&ref)
 Package::~Package()
 {
     ScopeBase::cleanup();
+}
+
+void Package::set_library(perm_string lname)
+{
+      ivl_assert(*this, from_library_.str() == 0);
+      from_library_ = lname;
 }
 
 /*

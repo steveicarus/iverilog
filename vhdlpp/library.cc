@@ -134,6 +134,8 @@ void library_save_package(perm_string parse_library_name, Package*pack)
 	// library right now, then store it in the work library.
       if (parse_library_name.str() == 0)
 	    store_package_in_work(pack);
+      else
+	    pack->set_library(parse_library_name);
 }
 
 static void import_library_name(const YYLTYPE&loc, perm_string name)
@@ -368,4 +370,26 @@ static void store_package_in_work(const Package*pack)
       ofstream file (path.c_str(), ios_base::out);
 
       pack->write_to_stream(file);
+}
+
+static int emit_packages(perm_string lib_name, const map<perm_string,Package*>&packages)
+{
+      int errors = 0;
+      for (map<perm_string,Package*>::const_iterator cur = packages.begin()
+		 ; cur != packages.end() ; ++cur) {
+	    errors += cur->second->emit_package(cout);
+      }
+
+      return errors;
+}
+
+int emit_packages(void)
+{
+      int errors = 0;
+      for (map<perm_string,struct library_contents>::iterator cur = libraries.begin()
+		 ; cur != libraries.end() ; ++cur) {
+	    errors += emit_packages(cur->first, cur->second.packages);
+      }
+
+      return 0;
 }

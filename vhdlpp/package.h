@@ -1,7 +1,7 @@
 #ifndef __package_H
 #define __package_H
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -29,12 +29,19 @@ class Package : public Scope, public LineInfo {
       Package(perm_string name, const ScopeBase&ref);
       ~Package();
 
+	// The the library from which this package came. Having a
+	// source library influences the emit_package() method.
+      void set_library(perm_string);
+
       perm_string name() const { return name_; }
 
 	// This method writes a package header to a library file.
       void write_to_stream(std::ostream&fd) const;
 
+      int emit_package(std::ostream&fd) const;
+
     private:
+      perm_string from_library_;
       perm_string name_;
 };
 
