@@ -53,6 +53,9 @@ void VTypePrimitive::show(ostream&out) const
 	  case BIT:
 	    out << "BIT";
 	    break;
+	  case CHARACTER:
+	    out << "CHARACTER";
+	    break;
 	  case INTEGER:
 	    out << "INTEGER";
 	    break;
