@@ -37,6 +37,14 @@ int Expression::emit(ostream&out, Entity*, Architecture*)
       return 1;
 }
 
+int Expression::emit_package(ostream&out)
+{
+      out << " /* " << get_fileline() << ": internal error: "
+	  << "I don't know how to emit_package this expression! "
+	  << "type=" << typeid(*this).name() << " */ ";
+      return 1;
+}
+
 bool Expression::is_primary(void) const
 {
       return false;
@@ -560,6 +568,12 @@ int ExpFunc::emit(ostream&out, Entity*ent, Architecture*arc)
 }
 
 int ExpInteger::emit(ostream&out, Entity*, Architecture*)
+{
+      out << value_;
+      return 0;
+}
+
+int ExpInteger::emit_package(ostream&out)
 {
       out << value_;
       return 0;

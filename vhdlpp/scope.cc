@@ -30,13 +30,11 @@ using namespace std;
  * "old_*_" variables. This clears up the "new_*_" variables to
  * accumulate new scope values.
  */
-ScopeBase::ScopeBase(const ScopeBase&ref)
+ScopeBase::ScopeBase(const ActiveScope&ref)
 {
-    merge(ref.old_constants_.begin(), ref.old_constants_.end(),
-          ref.new_constants_.begin(), ref.new_constants_.end(),
-          insert_iterator<map<perm_string, struct const_t*> >(
-              old_constants_, old_constants_.end())
-    );
+    use_constants_ = ref.use_constants_;
+    cur_constants_ = ref.cur_constants_;
+
     merge(ref.old_signals_.begin(), ref.old_signals_.end(),
           ref.new_signals_.begin(), ref.new_signals_.end(),
           insert_iterator<map<perm_string, Signal*> >(
@@ -52,11 +50,8 @@ ScopeBase::ScopeBase(const ScopeBase&ref)
           insert_iterator<map<perm_string, ComponentBase*> >(
               old_components_, old_components_.end())
     );
-    merge(ref.old_types_.begin(), ref.old_types_.end(),
-          ref.new_types_.begin(), ref.new_types_.end(),
-          insert_iterator<map<perm_string, const VType*> >(
-              old_types_, old_types_.end())
-    );
+    use_types_ = ref.use_types_;
+    cur_types_ = ref.cur_types_;
     merge(ref.old_subprograms_.begin(), ref.old_subprograms_.end(),
           ref.new_subprograms_.begin(), ref.new_subprograms_.end(),
           insert_iterator<map<perm_string,Subprogram*> >(
@@ -79,17 +74,17 @@ void ScopeBase::cleanup()
      */
     delete_all(new_signals_);
     delete_all(new_components_);
-    delete_all(new_types_);
-    delete_all(new_constants_);
+    delete_all(cur_types_);
+    delete_all(cur_constants_);
     delete_all(new_subprograms_);
 }
 
 const VType*ScopeBase::find_type(perm_string by_name)
 {
-      map<perm_string,const VType*>::const_iterator cur = new_types_.find(by_name);
-      if (cur == new_types_.end()) {
-        cur = old_types_.find(by_name);
-        if (cur == old_types_.end())
+      map<perm_string,const VType*>::const_iterator cur = cur_types_.find(by_name);
+      if (cur == cur_types_.end()) {
+        cur = use_types_.find(by_name);
+        if (cur == use_types_.end())
           return 0;
         else
           return cur->second;
@@ -99,10 +94,10 @@ const VType*ScopeBase::find_type(perm_string by_name)
 
 bool ScopeBase::find_constant(perm_string by_name, const VType*&typ, Expression*&exp)
 {
-      map<perm_string,struct const_t*>::const_iterator cur = new_constants_.find(by_name);
-      if (cur == new_constants_.end()) {
-        cur = old_constants_.find(by_name);
-        if (cur == old_constants_.end())
+      map<perm_string,struct const_t*>::const_iterator cur = cur_constants_.find(by_name);
+      if (cur == cur_constants_.end()) {
+        cur = use_constants_.find(by_name);
+        if (cur == use_constants_.end())
           return false;
         else {
           typ = cur->second->typ;
@@ -144,6 +139,10 @@ Variable* ScopeBase::find_variable(perm_string by_name) const
       }
 }
 
+/*
+ * This method is only used by the ActiveScope derived class to import
+ * definition from another scope.
+ */
 void ScopeBase::do_use_from(const ScopeBase*that)
 {
       for (map<perm_string,ComponentBase*>::const_iterator cur = that->old_components_.begin()
@@ -172,26 +171,16 @@ void ScopeBase::do_use_from(const ScopeBase*that)
         old_subprograms_[cur->first] = cur->second;
       }
 
-      for (map<perm_string,const VType*>::const_iterator cur = that->old_types_.begin()
-		 ; cur != that->old_types_.end() ; ++ cur) {
+      for (map<perm_string,const VType*>::const_iterator cur = that->cur_types_.begin()
+		 ; cur != that->cur_types_.end() ; ++ cur) {
 	    if (cur->second == 0)
 		  continue;
-	    old_types_[cur->first] = cur->second;
-      }
-      for (map<perm_string,const VType*>::const_iterator cur = that->new_types_.begin()
-         ; cur != that->new_types_.end() ; ++ cur) {
-        if (cur->second == 0)
-          continue;
-        old_types_[cur->first] = cur->second;
+	    use_types_[cur->first] = cur->second;
       }
 
-      for (map<perm_string,const_t*>::const_iterator cur = that->old_constants_.begin()
-		 ; cur != that->old_constants_.end() ; ++ cur) {
-	    old_constants_[cur->first] = cur->second;
-      }
-      for (map<perm_string,const_t*>::const_iterator cur = that->new_constants_.begin()
-         ; cur != that->new_constants_.end() ; ++ cur) {
-        old_constants_[cur->first] = cur->second;
+      for (map<perm_string,const_t*>::const_iterator cur = that->cur_constants_.begin()
+		 ; cur != that->cur_constants_.end() ; ++ cur) {
+	    use_constants_[cur->first] = cur->second;
       }
 }
 
@@ -208,7 +197,7 @@ bool ActiveScope::is_vector_name(perm_string name) const
       return false;
 }
 
-Scope::Scope(const ScopeBase&ref)
+Scope::Scope(const ActiveScope&ref)
 : ScopeBase(ref)
 {
 }

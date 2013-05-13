@@ -2,6 +2,7 @@
 #define __package_H
 /*
  * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -26,7 +27,7 @@
 class Package : public Scope, public LineInfo {
 
     public:
-      Package(perm_string name, const ScopeBase&ref);
+      Package(perm_string name, const ActiveScope&ref);
       ~Package();
 
 	// The the library from which this package came. Having a

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -256,7 +257,7 @@ static void import_ieee_use_std_logic_1164(ActiveScope*res, perm_string name)
 
       if (all_flag || name == "std_logic_vector") {
 	    vector<VTypeArray::range_t> dims (1);
-	    res->bind_name(perm_string::literal("std_logic_vector"),
+	    res->use_name(perm_string::literal("std_logic_vector"),
 			   new VTypeArray(primitive_STDLOGIC, dims, false));
       }
 }
@@ -271,12 +272,12 @@ static void import_ieee_use_numeric_bit(ActiveScope*res, perm_string name)
 
       if (all_flag || name == "signed") {
 	    vector<VTypeArray::range_t> dims (1);
-	    res->bind_name(perm_string::literal("signed"),
+	    res->use_name(perm_string::literal("signed"),
 			   new VTypeArray(primitive_STDLOGIC, dims, true));
       }
       if (all_flag || name == "unsigned") {
 	    vector<VTypeArray::range_t> dims (1);
-	    res->bind_name(perm_string::literal("unsigned"),
+	    res->use_name(perm_string::literal("unsigned"),
 			   new VTypeArray(primitive_BIT, dims, false));
       }
 }
@@ -287,12 +288,12 @@ static void import_ieee_use_numeric_std(ActiveScope*res, perm_string name)
 
       if (all_flag || name == "signed") {
 	    vector<VTypeArray::range_t> dims (1);
-	    res->bind_name(perm_string::literal("signed"),
+	    res->use_name(perm_string::literal("signed"),
 			   new VTypeArray(primitive_STDLOGIC, dims, true));
       }
       if (all_flag || name == "unsigned") {
 	    vector<VTypeArray::range_t> dims (1);
-	    res->bind_name(perm_string::literal("unsigned"),
+	    res->use_name(perm_string::literal("unsigned"),
 			   new VTypeArray(primitive_STDLOGIC, dims, false));
       }
 }
@@ -334,14 +335,14 @@ static const VTypeArray* primitive_STRING = new VTypeArray(primitive_CHARACTER, 
 
 void generate_global_types(ActiveScope*res)
 {
-      res->bind_name(perm_string::literal("boolean"),   primitive_BOOLEAN);
-      res->bind_name(perm_string::literal("bit"),       primitive_BIT);
-      res->bind_name(perm_string::literal("integer"),   primitive_INTEGER);
-      res->bind_name(perm_string::literal("std_logic"), primitive_STDLOGIC);
-      res->bind_name(perm_string::literal("character"), primitive_CHARACTER);
-      res->bind_name(perm_string::literal("bit_vector"),primitive_BOOL_VECTOR);
-      res->bind_name(perm_string::literal("string"),    primitive_STRING);
-      res->bind_name(perm_string::literal("natural"),   primitive_NATURAL);
+      res->use_name(perm_string::literal("boolean"),   primitive_BOOLEAN);
+      res->use_name(perm_string::literal("bit"),       primitive_BIT);
+      res->use_name(perm_string::literal("integer"),   primitive_INTEGER);
+      res->use_name(perm_string::literal("std_logic"), primitive_STDLOGIC);
+      res->use_name(perm_string::literal("character"), primitive_CHARACTER);
+      res->use_name(perm_string::literal("bit_vector"),primitive_BOOL_VECTOR);
+      res->use_name(perm_string::literal("string"),    primitive_STRING);
+      res->use_name(perm_string::literal("natural"),   primitive_NATURAL);
 }
 
 bool is_global_type(perm_string name)

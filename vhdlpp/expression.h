@@ -90,6 +90,10 @@ class Expression : public LineInfo {
 	// class fills in the details of what exactly happened.
       virtual int emit(ostream&out, Entity*ent, Architecture*arc) =0;
 
+	// The emit_package virtual message is similar, but is called
+	// in a package context and to emit SV packages.
+      virtual int emit_package(std::ostream&out);
+
 	// The evaluate virtual method tries to evaluate expressions
 	// to constant literal values. Return true and set the val
 	// argument if the evaluation works, or return false if it
@@ -478,6 +482,7 @@ class ExpInteger : public Expression {
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
+      int emit_package(std::ostream&out);
       bool is_primary(void) const;
       bool evaluate(ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;

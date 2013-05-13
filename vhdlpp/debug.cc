@@ -101,31 +101,36 @@ void ComponentBase::dump_ports(ostream&out, int indent) const
 void Scope::dump_scope(ostream&out) const
 {
 	// Dump types
-      for (map<perm_string,const VType*>::const_iterator cur = old_types_.begin()
-		 ; cur != old_types_.end() ; ++cur) {
+      out << "   -- imported types" << endl;
+      for (map<perm_string,const VType*>::const_iterator cur = use_types_.begin()
+		 ; cur != use_types_.end() ; ++cur) {
 	    out << "   " << cur->first << ": ";
 	    cur->second->show(out);
 	    out << endl;
       }
-      for (map<perm_string,const VType*>::const_iterator cur = new_types_.begin()
-         ; cur != new_types_.end() ; ++cur) {
+      out << "   -- Types from this scope" << endl;
+      for (map<perm_string,const VType*>::const_iterator cur = cur_types_.begin()
+         ; cur != cur_types_.end() ; ++cur) {
         out << "   " << cur->first << ": ";
         cur->second->show(out);
         out << endl;
       }
 
 	// Dump constants
-      for (map<perm_string,const_t*>::const_iterator cur = old_constants_.begin()
-		 ; cur != old_constants_.end() ; ++cur) {
+      out << "   -- imported constants" << endl;
+      for (map<perm_string,const_t*>::const_iterator cur = use_constants_.begin()
+		 ; cur != use_constants_.end() ; ++cur) {
 	    out << "   constant " << cur->first << " = ";
 	    out << endl;
       }
-      for (map<perm_string,const_t*>::const_iterator cur = new_constants_.begin()
-         ; cur != new_constants_.end() ; ++cur) {
+      out << "   -- Constants from this scope" << endl;
+      for (map<perm_string,const_t*>::const_iterator cur = cur_constants_.begin()
+         ; cur != cur_constants_.end() ; ++cur) {
         out << "   constant " << cur->first << " = ";
         out << endl;
       }
 	// Dump signal declarations
+      out << "   -- Signals" << endl;
       for (map<perm_string,Signal*>::const_iterator cur = old_signals_.begin()
          ; cur != old_signals_.end() ; ++cur) {
         if (cur->second)
@@ -141,6 +146,7 @@ void Scope::dump_scope(ostream&out) const
           out << "   signal " << cur->first.str() << ": ???" << endl;
       }
 	// Dump subprograms
+      out << "   -- Subprograms" << endl;
       for (map<perm_string,Subprogram*>::const_iterator cur = old_subprograms_.begin()
 		 ; cur != old_subprograms_.end() ; ++cur) {
 	    out << "   subprogram " << cur->first << " is" << endl;
@@ -154,6 +160,7 @@ void Scope::dump_scope(ostream&out) const
 	    out << "   end subprogram " << cur->first << endl;
       }
 	// Dump component declarations
+      out << "   -- Components" << endl;
       for (map<perm_string,ComponentBase*>::const_iterator cur = old_components_.begin()
 		 ; cur != old_components_.end() ; ++cur) {
 	    out << "   component " << cur->first << " is" << endl;

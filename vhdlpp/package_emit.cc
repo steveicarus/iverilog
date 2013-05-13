@@ -20,14 +20,17 @@
 
 # include  "package.h"
 # include  <iostream>
+# include  "ivl_assert.h"
 
 using namespace std;
 
 int Package::emit_package(ostream&fd) const
 {
+      ivl_assert(*this, new_subprograms_.empty());
+
 	// Don't emit the package if there is nothing in it that SV
 	// cares about.
-      if (new_types_.empty() && old_subprograms_.empty() && new_subprograms_.empty())
+      if (cur_types_.empty() && cur_constants_.empty() && old_subprograms_.empty())
 	    return 0;
 
 	// If this package was imported from a library, then do not
@@ -44,19 +47,28 @@ int Package::emit_package(ostream&fd) const
 
 	// Only emit types that were defined within this package. Skip
 	// the types that were imported from elsewhere.
-      for (map<perm_string,const VType*>::const_iterator cur = new_types_.begin()
-		 ; cur != new_types_.end() ; ++ cur) {
+      for (map<perm_string,const VType*>::const_iterator cur = cur_types_.begin()
+		 ; cur != cur_types_.end() ; ++ cur) {
+	    fd << "typedef ";
 	    errors += cur->second->emit_def(fd);
-	    fd << " " << cur->first << " ;" << endl;
+	    fd << " \\" << cur->first << " ;" << endl;
+      }
+
+      for (map<perm_string,struct const_t*>::const_iterator cur = use_constants_.begin()
+		 ; cur != use_constants_.end() ; ++cur) {
+	    fd << "localparam \\" << cur->first << " = ";
+	    errors += cur->second->val->emit_package(fd);
+	    fd << ";" << endl;
+      }
+      for (map<perm_string,struct const_t*>::const_iterator cur = cur_constants_.begin()
+		 ; cur != cur_constants_.end() ; ++cur) {
+	    fd << "localparam " << cur->first << " = ";
+	    errors += cur->second->val->emit_package(fd);
+	    fd << ";" << endl;
       }
 
       for (map<perm_string,Subprogram*>::const_iterator cur = old_subprograms_.begin()
 		 ; cur != old_subprograms_.end() ; ++ cur) {
-	    errors += cur->second->emit_package(fd);
-      }
-
-      for (map<perm_string,Subprogram*>::const_iterator cur = new_subprograms_.begin()
-		 ; cur != new_subprograms_.end() ; ++ cur) {
 	    errors += cur->second->emit_package(fd);
       }
 

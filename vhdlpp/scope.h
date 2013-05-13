@@ -1,7 +1,8 @@
 #ifndef __scope_H
 #define __scope_H
 /*
- * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -28,8 +29,10 @@
 # include  "subprogram.h"
 # include  "vsignal.h"
 
+class ActiveScope;
 class Architecture;
 class ComponentBase;
+class Package;
 class Subprogram;
 class VType;
 
@@ -47,7 +50,7 @@ class ScopeBase {
 
     public:
       ScopeBase() { }
-      explicit ScopeBase(const ScopeBase&ref);
+      explicit ScopeBase(const ActiveScope&ref);
       virtual ~ScopeBase() =0;
 
       const VType* find_type(perm_string by_name);
@@ -68,6 +71,12 @@ class ScopeBase {
           for_each(c.begin(), c.end(), ::delete_pair_second<T>());
       }
 
+	// The new_*_ maps below are managed only by the ActiveScope
+	// derived class. When any scope is constructed from the
+	// ActiveScope, the new_*_ and old_*_ maps are merged and
+	// installed into the old_*_ maps. Thus, all other derived
+	// classes should only use the old_*_ maps.
+
 	// Signal declarations...
       std::map<perm_string,Signal*> old_signals_; //previous scopes
       std::map<perm_string,Signal*> new_signals_; //current scope
@@ -78,8 +87,8 @@ class ScopeBase {
       std::map<perm_string,ComponentBase*> old_components_; //previous scopes
       std::map<perm_string,ComponentBase*> new_components_; //current scope
 	// Type declarations...
-      std::map<perm_string,const VType*> old_types_; //previous scopes
-      std::map<perm_string,const VType*> new_types_; //current scope
+      std::map<perm_string,const VType*> use_types_; //imported types
+      std::map<perm_string,const VType*> cur_types_; //current types
 	// Constant declarations...
       struct const_t {
         ~const_t() {delete typ; delete val;}
@@ -88,8 +97,8 @@ class ScopeBase {
 	    const VType*typ;
 	    Expression*val;
       };
-      std::map<perm_string, struct const_t*> old_constants_; //previous scopes
-      std::map<perm_string, struct const_t*> new_constants_; //current scope
+      std::map<perm_string, struct const_t*> use_constants_; //imported constants
+      std::map<perm_string, struct const_t*> cur_constants_; //current constants
 
       std::map<perm_string, Subprogram*> old_subprograms_; //previous scopes
       std::map<perm_string, Subprogram*> new_subprograms_; //current scope
@@ -100,7 +109,7 @@ class ScopeBase {
 class Scope : public ScopeBase {
 
     public:
-      explicit Scope(const ScopeBase&ref);
+      explicit Scope(const ActiveScope&ref);
       ~Scope();
 
       ComponentBase* find_component(perm_string by_name);
@@ -128,7 +137,7 @@ class ActiveScope : public ScopeBase {
 
       ~ActiveScope() { }
 
-      void use_from(const ScopeBase*that) { do_use_from(that); }
+      void use_from(const Scope*that) { do_use_from(that); }
 
 	// This function returns true if the name is a vectorable
 	// name. The parser uses this to distinguish between function
@@ -164,16 +173,19 @@ class ActiveScope : public ScopeBase {
 
       void bind_name(perm_string name, const VType* t)
       { map<perm_string, const VType*>::iterator it;
-        if((it = old_types_.find(name)) != old_types_.end() )
-            old_types_.erase(it);
-        new_types_[name] = t;
+        if((it = use_types_.find(name)) != use_types_.end() )
+            use_types_.erase(it);
+        cur_types_[name] = t;
       }
+
+      inline void use_name(perm_string name, const VType* t)
+      { use_types_[name] = t; }
 
       void bind_name(perm_string name, const VType*obj, Expression*val)
       { map<perm_string, const_t*>::iterator it;
-        if((it = old_constants_.find(name)) != old_constants_.end() )
-            old_constants_.erase(it);
-        new_constants_[name] = new const_t(obj, val);
+        if((it = use_constants_.find(name)) != use_constants_.end() )
+            use_constants_.erase(it);
+        cur_constants_[name] = new const_t(obj, val);
       }
 
       void bind_name(perm_string name, Subprogram*obj)

@@ -32,12 +32,12 @@ int Architecture::elaborate(Entity*entity)
 	// from the constant declaration itself. Elaborate the value
 	// expression with the declared type.
 
-      for (map<perm_string,struct const_t*>::iterator cur = old_constants_.begin()
-		 ; cur != old_constants_.end() ; ++cur) {
+      for (map<perm_string,struct const_t*>::iterator cur = use_constants_.begin()
+		 ; cur != use_constants_.end() ; ++cur) {
 	    cur->second->val->elaborate_expr(entity, this, cur->second->typ);
       }
-      for (map<perm_string,struct const_t*>::iterator cur = new_constants_.begin()
-		 ; cur != new_constants_.end() ; ++cur) {
+      for (map<perm_string,struct const_t*>::iterator cur = cur_constants_.begin()
+		 ; cur != cur_constants_.end() ; ++cur) {
 	    cur->second->val->elaborate_expr(entity, this, cur->second->typ);
       }
 

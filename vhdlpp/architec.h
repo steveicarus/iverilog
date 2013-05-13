@@ -63,7 +63,7 @@ class Architecture : public Scope, public LineInfo {
     public:
 	// Create an architecture from its name and its statements.
 	// NOTE: The statement list passed in is emptied.
-      Architecture(perm_string name, const ScopeBase&ref,
+      Architecture(perm_string name, const ActiveScope&ref,
 		   std::list<Architecture::Statement*>&s);
       ~Architecture();
 
