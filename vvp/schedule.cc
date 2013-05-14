@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1126,7 +1126,8 @@ void schedule_simulate(void)
       }
 
 	// Execute final events.
-      while (schedule_final_list) {
+      schedule_runnable = true;
+      while (schedule_runnable && schedule_final_list) {
 	    struct event_s*cur = schedule_final_list->next;
 	    if (cur->next == cur) {
 		  schedule_final_list = 0;
