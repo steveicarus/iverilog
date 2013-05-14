@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -847,7 +847,7 @@ statement
 
   | T_LABEL K_CLASS T_STRING '[' T_NUMBER ']'
       { compile_class_start($1, $3, $5); }
-    class_properties ';'
+    class_properties_opt ';'
       { compile_class_done(); }
 
   | enum_type
@@ -856,6 +856,11 @@ statement
   /* Oh and by the way, empty statements are OK as well. */
 
   | ';'
+  ;
+
+class_properties_opt
+  : class_properties
+  |
   ;
 
 class_properties
