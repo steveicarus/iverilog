@@ -1264,7 +1264,6 @@ void pform_generate_block_name(char*name)
       assert(pform_cur_generate != 0);
       assert(pform_cur_generate->scope_name == 0);
       pform_cur_generate->scope_name = lex_strings.make(name);
-      delete[]name;
 }
 
 void pform_endgenerate()

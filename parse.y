@@ -527,7 +527,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <statement> udp_initial udp_init_opt
 %type <expr>    udp_initial_expr_opt
 
-%type <text> register_variable net_variable endname_opt class_declaration_endname_opt
+%type <text> register_variable net_variable endlabel_opt class_declaration_endlabel_opt
 %type <perm_strings> register_variable_list net_variable_list
 %type <perm_strings> list_of_identifiers loop_variables
 %type <port_list> list_of_port_identifiers
@@ -675,10 +675,10 @@ class_declaration /* IEEE1800-2005: A.1.2 */
       { // Process a class.
 	pform_end_class_declaration();
       }
-    class_declaration_endname_opt
+    class_declaration_endlabel_opt
       { // Wrap up the class.
 	if ($10 && $3 && $3->name != $10) {
-	      yyerror(@10, "error: Class end name doesn't match class name.");
+	      yyerror(@10, "error: Class end label doesn't match class name.");
 	      delete[]$10;
 	}
       }
@@ -708,14 +708,14 @@ class_identifier
       }
   ;
 
-  /* The endname after a class declaration is a little tricky because
+  /* The endlabel after a class declaration is a little tricky because
      the class name is detected by the lexor as a TYPE_IDENTIFIER if it
      does indeed match a name. */
-class_declaration_endname_opt
+class_declaration_endlabel_opt
   : ':' TYPE_IDENTIFIER
       { class_type_t*tmp = dynamic_cast<class_type_t*> ($2);
 	if (tmp == 0) {
-	      yyerror(@2, "error: class declaration endname is not a class name\n");
+	      yyerror(@2, "error: class declaration endlabel is not a class name\n");
 	      $$ = 0;
 	} else {
 	      $$ = strdupnew(tmp->name.str());
@@ -1087,16 +1087,20 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	pform_pop_scope();
 	current_function = 0;
       }
-    endname_opt
+    endlabel_opt
       { // Last step: check any closing name.
-	if ($11 && (strcmp($4,$11) != 0)) {
-	      yyerror(@11, "error: End name doesn't match function name");
-	}
-	if ($11 && !gn_system_verilog()) {
-	      yyerror(@11, "error: Function end names require System Verilog.");
+	if ($11) {
+	      if (strcmp($4,$11) != 0) {
+		    yyerror(@11, "error: End label doesn't match "
+		                 "function name");
+	      }
+	      if (! gn_system_verilog()) {
+		    yyerror(@11, "error: Function end label require "
+		                 "System Verilog.");
+	      }
+	      delete[]$11;
 	}
 	delete[]$4;
-	if ($11) delete[]$11;
       }
 
   | K_function K_automatic_opt data_type_or_implicit IDENTIFIER
@@ -1117,16 +1121,20 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	      yyerror(@4, "error: Empty parenthesis syntax requires SystemVerilog.");
 	}
       }
-    endname_opt
+    endlabel_opt
       { // Last step: check any closing name.
-	if ($14 && (strcmp($4,$14) != 0)) {
-	      yyerror(@14, "error: End name doesn't match function name");
-	}
-	if ($14 && !gn_system_verilog()) {
-	      yyerror(@14, "error: Function end names require System Verilog.");
+	if ($14) {
+	      if (strcmp($4,$14) != 0) {
+		    yyerror(@14, "error: End label doesn't match "
+		                 "function name");
+	      }
+	      if (! gn_system_verilog()) {
+		    yyerror(@14, "error: Function end labels require "
+		                 "System Verilog.");
+	      }
+	      delete[]$14;
 	}
 	delete[]$4;
-	if ($14) delete[]$14;
       }
 
   /* Detect and recover from some errors. */
@@ -1141,16 +1149,19 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	yyerror(@1, "error: Syntax error defining function.");
 	yyerrok;
       }
-    endname_opt
+    endlabel_opt
       { // Last step: check any closing name.
-	if ($8 && (strcmp($4,$8) != 0)) {
-	      yyerror(@4, "error: End name doesn't match function name");
-	}
-	if ($8 && !gn_system_verilog()) {
-	      yyerror(@8, "error: Function end names require System Verilog.");
+	if ($8) {
+	      if (strcmp($4,$8) != 0) {
+		    yyerror(@8, "error: End label doesn't match function name");
+	      }
+	      if (! gn_system_verilog()) {
+		    yyerror(@8, "error: Function end labels require "
+		                 "System Verilog.");
+	      }
+	      delete[]$8;
 	}
 	delete[]$4;
-	if ($8) delete[]$8;
       }
 
   ;
@@ -1399,19 +1410,16 @@ package_declaration /* IEEE1800-2005 A.1.2 */
       { pform_start_package_declaration(@1, $2);
       }
     package_item_list_opt
-    K_endpackage
-      { pform_end_package_declaration(@1); }
-    endname_opt
-      { // Last step: check any closing name. This is done late so
-	// that the parser can look ahead to detect the present
-	// endname_opt but still have the pform_endmodule() called
-	// early enough that the lexor can know we are outside the
-	// module.
-	if ($8 && (strcmp($2,$8) != 0)) {
-	      yyerror(@8, "error: End name doesn't match package name");
+    K_endpackage endlabel_opt
+      { pform_end_package_declaration(@1);
+	// If an end label is present make sure it match the package name.
+	if ($7) {
+	      if (strcmp($2,$7) != 0) {
+		    yyerror(@7, "error: End label doesn't match package name");
+	      }
+	      delete[]$7;
 	}
 	delete[]$2;
-	if ($8) delete[]$8;
       }
   ;
 
@@ -1578,20 +1586,23 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	}
 	delete $7;
       }
-    endname_opt
+    endlabel_opt
       { // Last step: check any closing name. This is done late so
 	// that the parser can look ahead to detect the present
-	// endname_opt but still have the pform_endmodule() called
+	// endlabel_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	if ($10 && (strcmp($3,$10) != 0)) {
-	      yyerror(@10, "error: End name doesn't match module/program name");
-	}
-	if ($10 && !gn_system_verilog()) {
-	      yyerror(@10, "error: Task end names require System Verilog.");
+	if ($10) {
+	      if (strcmp($3,$10) != 0) {
+		    yyerror(@10, "error: End label doesn't match task name");
+	      }
+	      if (! gn_system_verilog()) {
+		    yyerror(@10, "error: Task end labels require "
+		                 "System Verilog.");
+	      }
+	      delete[]$10;
 	}
 	delete[]$3;
-	if ($10) delete[]$10;
       }
 
   | K_task K_automatic_opt IDENTIFIER '('
@@ -1609,20 +1620,23 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	current_task = 0;
 	if ($10) delete $10;
       }
-    endname_opt
+    endlabel_opt
       { // Last step: check any closing name. This is done late so
 	// that the parser can look ahead to detect the present
-	// endname_opt but still have the pform_endmodule() called
+	// endlabel_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	if ($13 && (strcmp($3,$13) != 0)) {
-	      yyerror(@13, "error: End name doesn't match module/program name");
-	}
-	if ($13 && !gn_system_verilog()) {
-	      yyerror(@13, "error: Task end names require System Verilog.");
+	if ($13) {
+	      if (strcmp($3,$13) != 0) {
+		    yyerror(@13, "error: End label doesn't match task name");
+	      }
+	      if (! gn_system_verilog()) {
+		    yyerror(@13, "error: Task end labels require "
+		                 "System Verilog.");
+	      }
+	      delete[]$13;
 	}
 	delete[]$3;
-	if ($13) delete[]$13;
       }
 
   | K_task K_automatic_opt IDENTIFIER '(' ')' ';'
@@ -1646,40 +1660,46 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	}
 	delete $9;
       }
-    endname_opt
+    endlabel_opt
       { // Last step: check any closing name. This is done late so
 	// that the parser can look ahead to detect the present
-	// endname_opt but still have the pform_endmodule() called
+	// endlabel_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	if ($12 && (strcmp($3,$12) != 0)) {
-	      yyerror(@12, "error: End name doesn't match module/program name");
-	}
-	if ($12 && !gn_system_verilog()) {
-	      yyerror(@12, "error: Task end names require System Verilog.");
+	if ($12) {
+	      if (strcmp($3,$12) != 0) {
+		    yyerror(@12, "error: End label doesn't match task name");
+	      }
+	      if (! gn_system_verilog()) {
+		    yyerror(@12, "error: Task end labels require "
+		                 "System Verilog.");
+	      }
+	      delete[]$12;
 	}
 	delete[]$3;
-	if ($12) delete[]$12;
       }
 
   | K_task K_automatic_opt IDENTIFIER error K_endtask
       {
 	assert(current_task == 0);
       }
-    endname_opt
+    endlabel_opt
       { // Last step: check any closing name. This is done late so
 	// that the parser can look ahead to detect the present
-	// endname_opt but still have the pform_endmodule() called
+	// endlabel_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	if ($7 && (strcmp($3,$7) != 0)) {
-	      yyerror(@7, "error: End name doesn't match module/program name");
-	}
-	if ($7 && !gn_system_verilog()) {
-	      yyerror(@7, "error: Task end names require System Verilog.");
+	if ($7) {
+	      if (strcmp($3,$7) != 0) {
+		    yyerror(@7, "error: End label doesn't match task name");
+	      }
+	      if (! gn_system_verilog()) {
+		    yyerror(@7, "error: Task end labels require "
+		                 "System Verilog.");
+	      }
+	      delete[]$7;
 	}
 	delete[]$3;
-	if ($7) delete[]$7;
       }
 
   ;
@@ -3981,17 +4001,34 @@ module
 	have_timeunit_decl = false; // We will allow decls again.
 	have_timeprec_decl = false;
       }
-    endname_opt
+    endlabel_opt
       { // Last step: check any closing name. This is done late so
 	// that the parser can look ahead to detect the present
-	// endname_opt but still have the pform_endmodule() called
+	// endlabel_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	if ($15 && (strcmp($3,$15) != 0)) {
-	      yyerror(@15, "error: End name doesn't match module/program name");
+	if ($15) {
+	      if (strcmp($3,$15) != 0) {
+		    switch ($2) {
+			case K_module:
+			  yyerror(@15, "error: End label doesn't match "
+			               "module name.");
+			  break;
+			case K_program:
+			  yyerror(@15, "error: End label doesn't match "
+			               "program name.");
+			  break;
+			default:
+			  break;
+		    }
+	      }
+	      if (($2 == K_module) && (! gn_system_verilog())) {
+		    yyerror(@7, "error: Module end labels require "
+		                 "System Verilog.");
+	      }
+	      delete[]$15;
 	}
 	delete[]$3;
-	if ($15) delete[]$15;
       }
   ;
 
@@ -4010,7 +4047,7 @@ module_end
   | K_endprogram  { $$ = K_program; }
   ;
 
-endname_opt
+endlabel_opt
   : ':' IDENTIFIER { $$ = $2; }
   |                { $$ = 0; }
   ;
@@ -4410,9 +4447,16 @@ module_item
 		  yyerrok;
 		}
 
-	| K_function error K_endfunction
+	| K_function error K_endfunction endlabel_opt
 		{ yyerror(@1, "error: I give up on this "
 			  "function definition.");
+		  if ($4) {
+			if (!gn_system_verilog()) {
+			      yyerror(@4, "error: Function end names require "
+			                  "System Verilog.");
+			}
+			delete[]$4;
+		  }
 		  yyerrok;
 		}
 
@@ -4472,8 +4516,21 @@ module_item_list_opt
 generate_block
         : module_item
         | K_begin module_item_list_opt K_end
-        | K_begin ':' IDENTIFIER module_item_list_opt K_end
-             { pform_generate_block_name($3); }
+        | K_begin ':' IDENTIFIER module_item_list_opt K_end endlabel_opt
+             { pform_generate_block_name($3);
+               if ($6) {
+                     if (strcmp($3,$6) != 0) {
+                           yyerror(@6, "error: End label doesn't match "
+                                       "begin name");
+                     }
+                     if (! gn_system_verilog()) {
+                           yyerror(@6, "error: Begin end labels require "
+                                       "System Verilog.");
+                     }
+                     delete[]$6;
+               }
+               delete[]$3;
+             }
         ;
 
 generate_block_opt : generate_block | ';' ;
@@ -5435,17 +5492,23 @@ statement_item /* This is roughly statement_item in the LRM */
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
-    statement_or_null_list_opt K_end endname_opt
+    statement_or_null_list_opt K_end endlabel_opt
       { pform_pop_scope();
 	assert(! current_block_stack.empty());
 	PBlock*tmp = current_block_stack.top();
 	current_block_stack.pop();
 	if ($6) tmp->set_statement(*$6);
 	delete $6;
-	if ($8 && (strcmp($3,$8) != 0)) {
-	      yyerror(@8, "error: End name doesn't match begin name");
+	if ($8) {
+	      if (strcmp($3,$8) != 0) {
+		    yyerror(@8, "error: End label doesn't match begin name");
+	      }
+	      if (! gn_system_verilog()) {
+		    yyerror(@8, "error: Begin end labels require "
+		                "System Verilog.");
+	      }
+	      delete[]$8;
 	}
-	if ($8) delete[]$8;
 	delete[]$3;
 	$$ = tmp;
       }
@@ -5473,7 +5536,7 @@ statement_item /* This is roughly statement_item in the LRM */
 	current_block_stack.push(tmp);
       }
     block_item_decls_opt
-    statement_or_null_list_opt join_keyword endname_opt
+    statement_or_null_list_opt join_keyword endlabel_opt
       { pform_pop_scope();
         assert(! current_block_stack.empty());
 	PBlock*tmp = current_block_stack.top();
@@ -5481,10 +5544,16 @@ statement_item /* This is roughly statement_item in the LRM */
 	tmp->set_join_type($7);
 	if ($6) tmp->set_statement(*$6);
 	delete $6;
-	if ($8 && (strcmp($3,$8) != 0)) {
-	      yyerror(@8, "error: End name doesn't match fork name");
+	if ($8) {
+	      if (strcmp($3,$8) != 0) {
+		    yyerror(@8, "error: End label doesn't match fork name");
+	      }
+	      if (! gn_system_verilog()) {
+		    yyerror(@8, "error: Fork end labels require "
+		                "System Verilog.");
+	      }
+	      delete[]$8;
 	}
-	if ($8) delete[]$8;
 	delete[]$3;
 	$$ = tmp;
       }
@@ -6092,11 +6161,22 @@ udp_primitive
 	    udp_port_decls
 	    udp_init_opt
 	    udp_body
-	  K_endprimitive
+	  K_endprimitive endlabel_opt
 
 		{ perm_string tmp2 = lex_strings.make($2);
 		  pform_make_udp(tmp2, $4, $7, $9, $8,
 				 @2.text, @2.first_line);
+		  if ($11) {
+			if (strcmp($2,$11) != 0) {
+			      yyerror(@11, "error: End label doesn't match "
+			                   "primitive name");
+			}
+			if (! gn_system_verilog()) {
+			      yyerror(@11, "error: Primitive end labels "
+			                   "require System Verilog.");
+			}
+			delete[]$11;
+		  }
 		  delete[]$2;
 		}
 
@@ -6107,12 +6187,23 @@ udp_primitive
 	    '(' K_output udp_reg_opt IDENTIFIER udp_initial_expr_opt ','
 	    udp_input_declaration_list ')' ';'
 	    udp_body
-	  K_endprimitive
+	  K_endprimitive endlabel_opt
 
 		{ perm_string tmp2 = lex_strings.make($2);
 		  perm_string tmp6 = lex_strings.make($6);
 		  pform_make_udp(tmp2, $5, tmp6, $7, $9, $12,
 				 @2.text, @2.first_line);
+		  if ($14) {
+			if (strcmp($2,$14) != 0) {
+			      yyerror(@14, "error: End label doesn't match "
+			                   "primitive name");
+			}
+			if (! gn_system_verilog()) {
+			      yyerror(@14, "error: Primitive end labels "
+			                   "require System Verilog.");
+			}
+			delete[]$14;
+		  }
 		  delete[]$2;
 		  delete[]$6;
 		}
