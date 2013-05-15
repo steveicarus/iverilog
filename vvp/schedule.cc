@@ -997,6 +997,7 @@ static void run_rosync(struct event_time_s*ctim)
 
 void schedule_simulate(void)
 {
+      bool run_finals;
       sim_started = false;
 
       schedule_time = 0;
@@ -1038,6 +1039,10 @@ void schedule_simulate(void)
       if (verbose_flag) {
 	    vpi_mcd_printf(1, " ...run scheduler\n");
       }
+
+      // If there were no compiletf, etc. errors then we are going to
+      // process events and when done run the final blocks.
+      run_finals = schedule_runnable;
 
       if (schedule_runnable) while (sched_list) {
 
@@ -1126,7 +1131,7 @@ void schedule_simulate(void)
       }
 
 	// Execute final events.
-      schedule_runnable = true;
+      schedule_runnable = run_finals;
       while (schedule_runnable && schedule_final_list) {
 	    struct event_s*cur = schedule_final_list->next;
 	    if (cur->next == cur) {
