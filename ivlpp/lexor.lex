@@ -255,6 +255,12 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
     if (macro_needs_args(yytext+1)) yy_push_state(MA_START); else do_expand(0);
 }
 
+ /* `" overrides the usual lexical meaning of " and `\`" indicates
+    that the expansion should include the escape sequence \".
+  */
+`\"           { fputc('"', yyout); }
+`\\`\"        { fprintf(yyout, "\\\""); }
+
  /* Strings do not contain preprocessor directives, but can expand
   * macros. If that happens, they get expanded in the context of the
   * string.
@@ -551,15 +557,25 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
         do_expand(0);
 }
 
-  /* Stringified version of macro expansion. */
+  /* Stringified version of macro expansion.  If the sequence `` is
+   * encountered inside a macro definition, we use the SystemVerilog
+   * handling of ignoring it so that identifiers can be constructed
+   * from arguments. If istack->file is NULL, we are reading text
+   * produced from a macro, so use SystemVerilog's handling;
+   * otherwise, use the special Icarus handling.
+   */
 ``[a-zA-Z_][a-zA-Z0-9_$]* {
-      assert(do_expand_stringify_flag == 0);
-      do_expand_stringify_flag = 1;
-      fputc('"', yyout);
-      if (macro_needs_args(yytext+2))
-	    yy_push_state(MA_START);
-      else
-	    do_expand(0);
+      if (istack->file == NULL)
+	    fprintf(yyout, "%s", yytext+2);
+      else {
+	    assert(do_expand_stringify_flag == 0);
+	    do_expand_stringify_flag = 1;
+	    fputc('"', yyout);
+	    if (macro_needs_args(yytext+2))
+		  yy_push_state(MA_START);
+	    else
+		  do_expand(0);
+      }
 }
 
 <MA_START>\(  { BEGIN(MA_ADD); macro_start_args(); }
