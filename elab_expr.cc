@@ -3759,26 +3759,38 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 	// "unpacked_indices" array.
       list<NetExpr*>unpacked_indices;
       list<long> unpacked_indices_const;
-      bool flag = indices_to_expressions(des, scope, this,
-					 name_tail.index, net->unpacked_dimensions(),
-					 need_const,
-					 unpacked_indices,
-					 unpacked_indices_const);
+      indices_flags idx_flags;
+      indices_to_expressions(des, scope, this,
+			     name_tail.index, net->unpacked_dimensions(),
+			     need_const,
+			     idx_flags,
+			     unpacked_indices,
+			     unpacked_indices_const);
 
       NetExpr*canon_index = 0;
-      if (flag) {
+      if (idx_flags.invalid) {
+	    // Nothing to do.
+
+      } else if (idx_flags.undefined) {
+	    cerr << get_fileline() << ": warning: "
+		 << "returning 'bx for undefined array access "
+		 << net->name() << as_indices(unpacked_indices)
+		 << "." << endl;
+
+      } else if (idx_flags.variable) {
+	    ivl_assert(*this, unpacked_indices.size() == net->unpacked_dimensions());
+	    canon_index = normalize_variable_unpacked(net, unpacked_indices);
+
+      } else {
 	    ivl_assert(*this, unpacked_indices_const.size() == net->unpacked_dimensions());
 	    canon_index = normalize_variable_unpacked(net, unpacked_indices_const);
 
 	    if (canon_index == 0) {
 		  cerr << get_fileline() << ": warning: "
 		       << "returning 'bx for out of bounds array access "
-		       << net->name() << as_indices(unpacked_indices_const) << "." << endl;
+		       << net->name() << as_indices(unpacked_indices_const)
+		       << "." << endl;
 	    }
-
-      } else {
-	    ivl_assert(*this, unpacked_indices.size() == net->unpacked_dimensions());
-	    canon_index = normalize_variable_unpacked(net, unpacked_indices);
       }
 
       if (canon_index == 0) {

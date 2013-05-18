@@ -2213,7 +2213,7 @@ NetProc* Statement::elaborate(Design*des, NetScope*) const
 NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
 {
       assert(lval_);
-      return lval_->elaborate_lval(des, scope, false);
+      return lval_->elaborate_lval(des, scope, false, false);
 }
 
 NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
@@ -3483,7 +3483,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 		 detailed message. */
 	    NetAssign_*lv;
 	    if (parms_[idx]) {
-		  lv = parms_[idx]->elaborate_lval(des, scope, false);
+		  lv = parms_[idx]->elaborate_lval(des, scope, false, false);
 		  if (lv == 0) {
 			cerr << parms_[idx]->get_fileline() << ": error: "
 			     << "I give up on task port " << (idx+1)
@@ -3564,7 +3564,7 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      NetAssign_*lval = lval_->elaborate_lval(des, scope, false);
+      NetAssign_*lval = lval_->elaborate_lval(des, scope, true, false);
       if (lval == 0)
 	    return 0;
 
@@ -3601,7 +3601,7 @@ NetDeassign* PDeassign::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      NetAssign_*lval = lval_->elaborate_lval(des, scope, false);
+      NetAssign_*lval = lval_->elaborate_lval(des, scope, true, false);
       if (lval == 0)
 	    return 0;
 
@@ -4212,7 +4212,7 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      NetAssign_*lval = lval_->elaborate_lval(des, scope, true);
+      NetAssign_*lval = lval_->elaborate_lval(des, scope, false, true);
       if (lval == 0)
 	    return 0;
 
@@ -4400,7 +4400,7 @@ NetProc* PRelease::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
 
-      NetAssign_*lval = lval_->elaborate_lval(des, scope, true);
+      NetAssign_*lval = lval_->elaborate_lval(des, scope, false, true);
       if (lval == 0)
 	    return 0;
 

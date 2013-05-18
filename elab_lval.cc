@@ -71,7 +71,7 @@
  * is to try to make a net elaboration, and see if the result is
  * suitable for assignment.
  */
-NetAssign_* PExpr::elaborate_lval(Design*, NetScope*, bool) const
+NetAssign_* PExpr::elaborate_lval(Design*, NetScope*, bool, bool) const
 {
       NetNet*ll = 0;
       if (ll == 0) {
@@ -99,6 +99,7 @@ NetAssign_* PExpr::elaborate_lval(Design*, NetScope*, bool) const
  */
 NetAssign_* PEConcat::elaborate_lval(Design*des,
 				     NetScope*scope,
+				     bool is_cassign,
 				     bool is_force) const
 {
       if (repeat_) {
@@ -119,7 +120,8 @@ NetAssign_* PEConcat::elaborate_lval(Design*des,
 		  continue;
 	    }
 
-	    NetAssign_*tmp = parms_[idx]->elaborate_lval(des, scope, is_force);
+	    NetAssign_*tmp = parms_[idx]->elaborate_lval(des, scope,
+							 is_cassign, is_force);
 
 	      /* If the l-value doesn't elaborate, the error was
 		 already detected and printed. We just skip it and let
@@ -152,6 +154,7 @@ NetAssign_* PEConcat::elaborate_lval(Design*des,
  */
 NetAssign_* PEIdent::elaborate_lval(Design*des,
 				    NetScope*scope,
+				    bool is_cassign,
 				    bool is_force) const
 {
       NetNet*       reg = 0;
@@ -263,7 +266,8 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       ivl_assert(*this, method_name.nil());
 
       if (reg->unpacked_dimensions() > 0)
-	    return elaborate_lval_net_word_(des, scope, reg);
+	    return elaborate_lval_net_word_(des, scope, reg,
+					    is_cassign, is_force);
 
 	// This must be after the array word elaboration above!
       if (reg->get_scalar() &&
@@ -346,7 +350,9 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*,
 
 NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 					      NetScope*scope,
-					      NetNet*reg) const
+					      NetNet*reg,
+					      bool is_cassign,
+					      bool is_force) const
 {
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
@@ -373,30 +379,49 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 	// "unpacked_indices" array.
       list<NetExpr*>unpacked_indices;
       list<long> unpacked_indices_const;
-      bool flag = indices_to_expressions(des, scope, this,
-					 name_tail.index, reg->unpacked_dimensions(),
-					 false,
-					 unpacked_indices,
-					 unpacked_indices_const);
+      indices_flags flags;
+      indices_to_expressions(des, scope, this,
+			     name_tail.index, reg->unpacked_dimensions(),
+			     false,
+			     flags,
+			     unpacked_indices,
+			     unpacked_indices_const);
 
       NetExpr*canon_index = 0;
-      if (flag) {
-	    ivl_assert(*this, unpacked_indices_const.size() == reg->unpacked_dimensions());
-	    canon_index = normalize_variable_unpacked(reg, unpacked_indices_const);
-	    if (canon_index == 0) {
-		  cerr << get_fileline() << ": warning: "
-		       << "ignoring out of bounds l-value array access " << reg->name();
-		  for (list<long>::const_iterator cur = unpacked_indices_const.begin()
-			     ; cur != unpacked_indices_const.end() ; ++cur) {
-			cerr << "[" << *cur << "]";
-		  }
-		  cerr << "." << endl;
+      if (flags.invalid) {
+	    // Nothing to do.
+
+      } else if (flags.undefined) {
+	    cerr << get_fileline() << ": warning: "
+		 << "ignoring undefined l-value array access "
+		 << reg->name() << as_indices(unpacked_indices)
+		 << "." << endl;
+
+      } else if (flags.variable) {
+	    if (is_cassign || is_force) {
+		  cerr << get_fileline() << ": error: array '" << reg->name()
+		       << "' index must be a constant in this context." << endl;
+		  des->errors += 1;
+		  return 0;
 	    }
-      } else {
 	    ivl_assert(*this, unpacked_indices.size() == reg->unpacked_dimensions());
 	    canon_index = normalize_variable_unpacked(reg, unpacked_indices);
+
+      } else {
+	    ivl_assert(*this, unpacked_indices_const.size() == reg->unpacked_dimensions());
+	    canon_index = normalize_variable_unpacked(reg, unpacked_indices_const);
+
+	    if (canon_index == 0) {
+		  cerr << get_fileline() << ": warning: "
+		       << "ignoring out of bounds l-value array access "
+		       << reg->name() << as_indices(unpacked_indices_const)
+		       << "." << endl;
+	    }
       }
 
+	// Ensure invalid array accesses are ignored.
+      if (canon_index == 0)
+	    canon_index = new NetEConst(verinum(verinum::Vx));
 
       NetAssign_*lv = new NetAssign_(reg);
       lv->set_word(canon_index);
@@ -959,7 +984,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
       return false;
 }
 
-NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool) const
+NetAssign_* PENumber::elaborate_lval(Design*des, NetScope*, bool, bool) const
 {
       cerr << get_fileline() << ": error: Constant values not allowed "
 	   << "in l-value expressions." << endl;

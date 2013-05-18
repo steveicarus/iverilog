@@ -166,7 +166,12 @@ extern ostream& operator << (ostream&o, __IndicesManip<NetExpr*>);
  * Given a list of index expressions, generate elaborated expressions
  * and constant values, if possible.
  */
-extern bool indices_to_expressions(Design*des, NetScope*scope,
+struct indices_flags {
+      bool invalid;    // at least one index failed elaboration
+      bool variable;   // at least one index is a dynamic value
+      bool undefined;  // at least one index is an undefined value
+};
+extern void indices_to_expressions(Design*des, NetScope*scope,
 				     // loc is for error messages.
 				   const LineInfo*loc,
 				     // src is the index list, and count is
@@ -175,7 +180,8 @@ extern bool indices_to_expressions(Design*des, NetScope*scope,
 				     // True if the expression MUST be constant.
 				   bool need_const,
 				     // These are the outputs.
-				   list<NetExpr*>&indices, list<long>&indices_const);
+				   indices_flags&flags,
+				   list<NetExpr*>&indices,list<long>&indices_const);
 
 extern NetExpr*normalize_variable_unpacked(const NetNet*net, list<long>&indices);
 extern NetExpr*normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices);

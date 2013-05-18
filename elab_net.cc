@@ -581,35 +581,49 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	      // Evaluate all the index expressions into an
 	      // "unpacked_indices" array.
 	    list<NetExpr*>unpacked_indices;
-	    bool flag = indices_to_expressions(des, scope, this,
-					       path_tail.index, sig->unpacked_dimensions(),
-					       true,
-					       unpacked_indices,
-					       unpacked_indices_const);
-	      // Note that !flag includes that there were any other
-	      // elaboration errors generating the unpacked_indices list.
-	    if (!flag) {
-		  cerr << get_fileline() << ": error: array " << sig->name()
-		       << " index must be a constant in this context." << endl;
+	    indices_flags flags;
+	    indices_to_expressions(des, scope, this,
+				   path_tail.index, sig->unpacked_dimensions(),
+				   true,
+				   flags,
+				   unpacked_indices,
+				   unpacked_indices_const);
+
+	    if (flags.invalid) {
+		  return 0;
+
+	    } else if (flags.variable) {
+		  cerr << get_fileline() << ": error: array '" << sig->name()
+		       << "' index must be a constant in this context." << endl;
 		  des->errors += 1;
 		  return 0;
-	    }
 
-	    NetExpr*canon_index = 0;
-	    ivl_assert(*this, unpacked_indices_const.size() == sig->unpacked_dimensions());
-	    canon_index = normalize_variable_unpacked(sig, unpacked_indices_const);
-	    if (canon_index == 0) {
-		    // Normalize detected an out-of-bounds
-		    // index. Indicate that by setting the generated
-		    // widx to -1.
+	    } else if (flags.undefined) {
+		  cerr << get_fileline() << ": warning: "
+		       << "ignoring undefined l-value array access "
+		       << sig->name() << as_indices(unpacked_indices)
+		       << "." << endl;
 		  widx = -1;
 
 	    } else {
-		  NetEConst*canon_const = dynamic_cast<NetEConst*>(canon_index);
-		  ivl_assert(*this, canon_const);
+		  NetExpr*canon_index = 0;
+		  ivl_assert(*this, unpacked_indices_const.size() == sig->unpacked_dimensions());
+		  canon_index = normalize_variable_unpacked(sig, unpacked_indices_const);
 
-		  widx = canon_const->value().as_long();
-		  delete canon_index;
+		  if (canon_index == 0) {
+			cerr << get_fileline() << ": warning: "
+			     << "ignoring out of bounds l-value array access "
+			     << sig->name() << as_indices(unpacked_indices_const)
+			     << "." << endl;
+			widx = -1;
+
+		  } else {
+			NetEConst*canon_const = dynamic_cast<NetEConst*>(canon_index);
+			ivl_assert(*this, canon_const);
+
+			widx = canon_const->value().as_long();
+			delete canon_index;
+		  }
 	    }
 
 	    if (debug_elaborate)
@@ -681,12 +695,8 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       }
 
       if (sig->pin_count() > 1) {
-	    if (widx < 0 || widx >= (long) sig->pin_count()) {
-		  cerr << get_fileline() << ": warning: ignoring out of "
-		          "bounds l-value array access "
-		       << sig->name() << as_indices(unpacked_indices_const) << "." << endl;
+	    if (widx < 0 || widx >= (long) sig->pin_count())
 		  return 0;
-	    }
 
 	    netvector_t*tmp2_vec = new netvector_t(sig->data_type(),
 						   sig->vector_width()-1,0);

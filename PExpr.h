@@ -154,11 +154,12 @@ class PExpr : public LineInfo {
 
 	// Expressions that can be in the l-value of procedural
 	// assignments can be elaborated with this method. If the
-	// is_force flag is true, then the set of valid l-value types
-	// is slightly modified to accommodate the Verilog force
-	// statement
+	// is_cassign or is_force flags are true, then the set of
+	// valid l-value types is slightly modified to accommodate
+	// the Verilog procedural continuous assignment statements.
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
+					 bool is_cassign,
 					 bool is_force) const;
 
 	// This attempts to evaluate a constant expression, and return
@@ -216,6 +217,7 @@ class PEConcat : public PExpr {
                                      unsigned flags) const;
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
+					 bool is_cassign,
 					 bool is_force) const;
       virtual bool is_collapsible_net(Design*des, NetScope*scope) const;
     private:
@@ -316,6 +318,7 @@ class PEIdent : public PExpr {
 	// Identifiers are also allowed as procedural assignment l-values.
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
+					 bool is_cassign,
 					 bool is_force) const;
 
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
@@ -376,7 +379,9 @@ class PEIdent : public PExpr {
 
     private:
       NetAssign_*elaborate_lval_method_class_member_(Design*, NetScope*) const;
-      NetAssign_*elaborate_lval_net_word_(Design*, NetScope*, NetNet*) const;
+      NetAssign_*elaborate_lval_net_word_(Design*, NetScope*, NetNet*,
+					  bool is_cassign,
+					  bool is_force) const;
       bool elaborate_lval_net_bit_(Design*, NetScope*, NetAssign_*) const;
       bool elaborate_lval_net_part_(Design*, NetScope*, NetAssign_*) const;
       bool elaborate_lval_net_idx_(Design*, NetScope*, NetAssign_*,
@@ -563,6 +568,7 @@ class PENumber : public PExpr {
 				       unsigned expr_wid, unsigned) const;
       virtual NetAssign_* elaborate_lval(Design*des,
 					 NetScope*scope,
+					 bool is_cassign,
 					 bool is_force) const;
 
       virtual verinum* eval_const(Design*des, NetScope*sc) const;

@@ -458,11 +458,9 @@ ostream& operator << (ostream&o, __IndicesManip<NetExpr*> val)
  * The src is the input index expression list from the expression, and
  * the count is the number that are to be elaborated into the indices
  * list. At the same time, create a indices_const list that contains
- * the evaluated values for the expression, if they can be
- * evaluated. This function will return "true" if all the constants
- * can be evaluated.
+ * the evaluated values for the expression, if they can be evaluated.
  */
-bool indices_to_expressions(Design*des, NetScope*scope,
+void indices_to_expressions(Design*des, NetScope*scope,
 			      // loc is for error messages.
 			    const LineInfo*loc,
 			      // src is the index list, and count is
@@ -471,11 +469,14 @@ bool indices_to_expressions(Design*des, NetScope*scope,
 			      // True if the expression MUST be constant.
 			    bool need_const,
 			      // These are the outputs.
+			    indices_flags&flags,
 			    list<NetExpr*>&indices, list<long>&indices_const)
 {
       ivl_assert(*loc, count <= src.size());
 
-      bool flag = true;
+      flags.invalid   = false;
+      flags.variable  = false;
+      flags.undefined = false;
       for (list<index_component_t>::const_iterator cur = src.begin()
 		 ; count > 0 ;  ++cur, --count) {
 	    ivl_assert(*loc, cur->sel != index_component_t::SEL_NONE);
@@ -489,25 +490,21 @@ bool indices_to_expressions(Design*des, NetScope*scope,
 
 	    NetExpr*word_index = elab_and_eval(des, scope, cur->msb, -1, need_const);
 
-	      // If the elaboration failed, then it is most certainly
-	      // not constant, either.
 	    if (word_index == 0)
-		  flag = false;
+		  flags.invalid = true;
 
 	      // Track if we detect any non-constant expressions
 	      // here. This may allow for a special case.
-	    if (flag) {
-		  NetEConst*word_const = dynamic_cast<NetEConst*> (word_index);
-		  if (word_const)
-			indices_const.push_back(word_const->value().as_long());
-		  else
-			flag = false;
-	    }
+	    NetEConst*word_const = dynamic_cast<NetEConst*> (word_index);
+	    if (word_const == 0)
+		  flags.variable = true;
+	    else if (!word_const->value().is_defined())
+		  flags.undefined = true;
+	    else if (!flags.variable && !flags.undefined)
+		  indices_const.push_back(word_const->value().as_long());
 
 	    indices.push_back(word_index);
       }
-
-      return flag;
 }
 
 static void make_strides(const vector<netrange_t>&dims,
@@ -1237,9 +1234,10 @@ NetExpr*collapse_array_exprs(Design*des, NetScope*scope,
 	// First elaborate all the expressions as far as possible.
       list<NetExpr*> exprs;
       list<long> exprs_const;
+      indices_flags flags;
       indices_to_expressions(des, scope, loc, indices,
                              net->packed_dimensions(),
-                             false, exprs, exprs_const);
+                             false, flags, exprs, exprs_const);
       ivl_assert(*loc, exprs.size() == net->packed_dimensions());
 
 	// Special Case: there is only 1 packed dimension, so the

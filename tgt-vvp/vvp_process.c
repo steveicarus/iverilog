@@ -45,18 +45,22 @@ static void assign_to_array_r_word(ivl_signal_t lsig, ivl_expr_t word_ix,
                                    uint64_t delay,
                                    ivl_expr_t dexp, unsigned nevents)
 {
-      unsigned skip_assign = transient_id++;
+      unsigned end_assign = transient_id++;
 
 	/* This code is common to all the different types of array delays. */
-      if (number_is_immediate(word_ix, IMM_WID, 0)) {
-	    assert(! number_is_unknown(word_ix));
+      if (number_is_immediate(word_ix, IMM_WID, 0) &&
+	  !number_is_unknown(word_ix)) {
 	    fprintf(vvp_out, "    %%ix/load 3, %lu, 0; address\n",
 	                     get_number_immediate(word_ix));
       } else {
 	      /* Calculate array word index into index register 3 */
 	    draw_eval_expr_into_integer(word_ix, 3);
 	      /* Skip assignment if word expression is not defined. */
-	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+	    unsigned do_assign = transient_id++;
+	    fprintf(vvp_out, "    %%jmp/0 t_%u, 4;\n", do_assign);
+	    fprintf(vvp_out, "    %%pop/real 1;\n");
+	    fprintf(vvp_out, "    %%jmp t_%u;\n", end_assign);
+	    fprintf(vvp_out, "t_%u ;\n", do_assign);
       }
 
       if (dexp != 0) {
@@ -91,7 +95,7 @@ static void assign_to_array_r_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	    }
       }
 
-      fprintf(vvp_out, "t_%u ;\n", skip_assign);
+      fprintf(vvp_out, "t_%u ;\n", end_assign);
       if (nevents != 0) fprintf(vvp_out, "    %%evctl/c;\n");
 
       clear_expression_lookaside();
@@ -107,15 +111,15 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
       unsigned long part_off = 0;
       if (part_off_ex == 0) {
 	    part_off = 0;
-      } else if (number_is_immediate(part_off_ex, IMM_WID, 0)) {
-	    assert(! number_is_unknown(part_off_ex));
+      } else if (number_is_immediate(part_off_ex, IMM_WID, 0) &&
+		 !number_is_unknown(part_off_ex)) {
 	    part_off = get_number_immediate(part_off_ex);
 	    part_off_ex = 0;
       }
 
 	/* This code is common to all the different types of array delays. */
-      if (number_is_immediate(word_ix, IMM_WID, 0)) {
-	    assert(! number_is_unknown(word_ix));
+      if (number_is_immediate(word_ix, IMM_WID, 0) &&
+	  !number_is_unknown(word_ix)) {
 	    fprintf(vvp_out, "    %%ix/load 3, %lu, 0; address\n",
 	                     get_number_immediate(word_ix));
       } else {
@@ -840,12 +844,36 @@ static void force_real_to_lval(ivl_statement_t net)
 
       assert(ivl_lval_width(lval) == 1);
       assert(ivl_lval_part_off(lval) == 0);
-      assert(ivl_lval_idx(lval) == 0);
+
+      ivl_expr_t word_idx = ivl_lval_idx(lval);
+      unsigned long use_word = 0;
+      if (word_idx != 0) {
+	    assert(number_is_immediate(word_idx, IMM_WID, 0));
+	      /* An out-of-range or undefined index will have been
+		 converted to a canonical offset of 1'bx. Skip the
+		 assignment in this case. */
+	    if (number_is_unknown(word_idx)) {
+		  fprintf(vvp_out, "	%%pop/real 1;\n");
+		  return;
+	    }
+	    use_word = get_number_immediate(word_idx);
+
+	      /* We do not currently support using a word from a variable
+		 array as the L-value (SystemVerilog / Icarus extension). */
+	    if (ivl_signal_type(lsig) == IVL_SIT_REG) {
+		  fprintf(stderr, "%s:%u: tgt-vvp sorry: cannot %s to the "
+			  "word of a variable array (%s[%ld]).\n",
+			  ivl_stmt_file(net), ivl_stmt_lineno(net),
+			  command_name, ivl_signal_basename(lsig),
+			  ivl_signal_array_base(lsig) + (long)use_word);
+		  vvp_errors += 1;
+	    }
+      }
+
 	/* L-Value must be a signal: reg or wire */
       assert(lsig != 0);
 
-      fprintf(vvp_out, "    %s v%p_0;\n", command_name, lsig);
-
+      fprintf(vvp_out, "    %s v%p_%lu;\n", command_name, lsig, use_word);
 }
 
 static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
@@ -886,14 +914,33 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 		  part_off = 0;
 	    } else {
 		  assert(number_is_immediate(part_off_ex, IMM_WID, 0));
-		  assert(! number_is_unknown(part_off_ex));
+		    /* An out-of-range or undefined offset will have been
+		       converted to a canonical offset of 1'bx. Skip the
+		       assignment in this case. */
+		  if (number_is_unknown(part_off_ex))
+			return;
 		  part_off = get_number_immediate(part_off_ex);
 	    }
 
 	    if (word_idx != 0) {
 		  assert(number_is_immediate(word_idx, IMM_WID, 0));
-		  assert(! number_is_unknown(word_idx));
+		    /* An out-of-range or undefined index will have been
+		       converted to a canonical offset of 1'bx. Skip the
+		       assignment in this case. */
+		  if (number_is_unknown(word_idx))
+			return;
 		  use_word = get_number_immediate(word_idx);
+
+		    /* We do not currently support using a word from a variable
+		       array as the L-value (SystemVerilog / Icarus extension). */
+		  if (ivl_signal_type(lsig) == IVL_SIT_REG) {
+			fprintf(stderr, "%s:%u: tgt-vvp sorry: cannot %s to the "
+				"word of a variable array (%s[%ld]).\n",
+				ivl_stmt_file(net), ivl_stmt_lineno(net),
+				command_name, ivl_signal_basename(lsig),
+				ivl_signal_array_base(lsig) + (long)use_word);
+			vvp_errors += 1;
+		  }
 	    }
 
 	      /* L-Value must be a signal: reg or wire */
@@ -1000,10 +1047,14 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 	/* At least for now, only handle force to fixed words of an array. */
       if ((lword_idx = ivl_lval_idx(lval)) != 0) {
 	    assert(number_is_immediate(lword_idx, IMM_WID, 0));
-	    assert(! number_is_unknown(lword_idx));
+	      /* An out-of-range or undefined index will have been
+		 converted to a canonical offset of 1'bx. Skip the
+		 assignment in this case. */
+	    if (number_is_unknown(lword_idx))
+		  return;
 	    use_lword = get_number_immediate(lword_idx);
 	      /* We do not currently support using a word from a variable
-	       * array as the L-value (Icarus extension). */
+	       * array as the L-value (SystemVerilog / Icarus extension). */
 	    if (ivl_signal_type(lsig) == IVL_SIT_REG) {
 		    /* Normalize the array access. */
 		  long real_word = use_lword;
@@ -1019,7 +1070,11 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
       if ((rword_idx = ivl_expr_oper1(rval)) != 0) {
 	    assert(ivl_signal_dimensions(rsig) != 0);
 	    assert(number_is_immediate(rword_idx, IMM_WID, 0));
-	    assert(! number_is_unknown(rword_idx));
+	      /* An out-of-range or undefined index will have been
+		 converted to a canonical offset of 1'bx. Skip the
+		 assignment in this case. */
+	    if (number_is_unknown(rword_idx))
+		  return;
 	    use_rword = get_number_immediate(rword_idx);
 	      /* We do not currently support using a word from a variable
 	       * array as the R-value. */
@@ -1093,9 +1148,20 @@ static int show_stmt_deassign(ivl_statement_t net)
 	    lval = ivl_stmt_lval(net, 0);
 	    assert(ivl_lval_width(lval) == 1);
 	    assert(ivl_lval_part_off(lval) == 0);
-	    assert(ivl_lval_idx(lval) == 0);
 
-	    fprintf(vvp_out, "    %%deassign/wr v%p_0;\n", sig);
+	    ivl_expr_t word_idx = ivl_lval_idx(lval);
+	    unsigned long use_word = 0;
+	    if (word_idx != 0) {
+		  assert(number_is_immediate(word_idx, IMM_WID, 0));
+		    /* An out-of-range or undefined index will have been
+		       converted to a canonical offset of 1'bx. Skip the
+		       deassignment in this case. */
+		  if (number_is_unknown(word_idx))
+			return 0;
+		  use_word = get_number_immediate(word_idx);
+	    }
+
+	    fprintf(vvp_out, "    %%deassign/wr v%p_%lu;\n", sig, use_word);
 	    return 0;
       }
 
@@ -1123,7 +1189,11 @@ static int show_stmt_deassign(ivl_statement_t net)
 
 	    if (word_idx != 0) {
 		  assert(number_is_immediate(word_idx, IMM_WID, 0));
-		  assert(! number_is_unknown(word_idx));
+		    /* An out-of-range or undefined index will have been
+		       converted to a canonical offset of 1'bx. Skip the
+		       deassignment in this case. */
+		  if (number_is_unknown(word_idx))
+			return 0;
 		  use_word = get_number_immediate(word_idx);
 	    }
 
@@ -1432,11 +1502,23 @@ static int show_stmt_release(ivl_statement_t net)
 	    lval = ivl_stmt_lval(net, 0);
 	    assert(ivl_lval_width(lval) == 1);
 	    assert(ivl_lval_part_off(lval) == 0);
-	    assert(ivl_lval_idx(lval) == 0);
+
+	    ivl_expr_t word_idx = ivl_lval_idx(lval);
+	    unsigned long use_word = 0;
+	    if (word_idx != 0) {
+		  assert(number_is_immediate(word_idx, IMM_WID, 0));
+		    /* An out-of-range or undefined index will have been
+		       converted to a canonical offset of 1'bx. Skip the
+		       deassignment in this case. */
+		  if (number_is_unknown(word_idx))
+			return 0;
+		  use_word = get_number_immediate(word_idx);
+	    }
 
 	    if (ivl_signal_type(sig) == IVL_SIT_REG) type = 1;
 
-	    fprintf(vvp_out, "    %%release/wr v%p_0, %u;\n", sig, type);
+	    fprintf(vvp_out, "    %%release/wr v%p_%lu, %u;\n",
+		    sig, use_word, type);
 	    return 0;
       }
 
@@ -1459,7 +1541,11 @@ static int show_stmt_release(ivl_statement_t net)
 	    part_off = 0;
 	    if (part_off_ex != 0) {
 		  assert(number_is_immediate(part_off_ex, 64, 0));
-		  assert(! number_is_unknown(part_off_ex));
+		    /* An out-of-range or undefined offset will have been
+		       converted to a canonical offset of 1'bx. Skip the
+		       assignment in this case. */
+		  if (number_is_unknown(part_off_ex))
+			return 0;
 		  part_off = get_number_immediate(part_off_ex);
 	    }
 
@@ -1474,7 +1560,11 @@ static int show_stmt_release(ivl_statement_t net)
 
 	    if (word_idx != 0) {
 		  assert(number_is_immediate(word_idx, IMM_WID, 0));
-		  assert(! number_is_unknown(word_idx));
+		    /* An out-of-range or undefined index will have been
+		       converted to a canonical offset of 1'bx. Skip the
+		       assignment in this case. */
+		  if (number_is_unknown(word_idx))
+			return 0;
 		  use_word = get_number_immediate(word_idx);
 	    }
 
