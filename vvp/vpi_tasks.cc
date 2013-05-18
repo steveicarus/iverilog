@@ -911,17 +911,16 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
 		  }
 		  vpi_put_value(ref, &val, 0, vpiNoDelay);
 	    }
+      }
+      if (vpip_cur_task->real_stack > 0)
+	    vthread_pop_real(thr, vpip_cur_task->real_stack);
+      if (vpip_cur_task->string_stack > 0)
+	    vthread_pop_str(thr, vpip_cur_task->string_stack);
 
-	    if (vpip_cur_task->real_stack > 0)
-		  vthread_pop_real(thr, vpip_cur_task->real_stack);
-	    if (vpip_cur_task->string_stack > 0)
-		  vthread_pop_str(thr, vpip_cur_task->string_stack);
-
-	      /* If the function has a real value, then push the value
-		 to the thread stack. */
-	    if (sysfunc_real*func_real = dynamic_cast<sysfunc_real*>(ref)) {
-		  vthread_push_real(thr, func_real->return_value_);
-	    }
+	/* If the function has a real value, then push the value
+	   to the thread stack. */
+      if (sysfunc_real*func_real = dynamic_cast<sysfunc_real*>(ref)) {
+	    vthread_push_real(thr, func_real->return_value_);
       }
 }
 
