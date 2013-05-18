@@ -193,6 +193,9 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 	    NetEConst*word_const = dynamic_cast<NetEConst*>(word_result);
 	    ivl_assert(loc, word_const);
 
+	    if (!word_const->value().is_defined())
+		  return true;
+
 	    word = word_const->value().as_long();
 
 	    if (word >= ptr->second.nwords)
@@ -683,7 +686,7 @@ NetExpr* NetESignal::evaluate_function(const LineInfo&loc,
 
 	    unsigned word = word_const->value().as_long();
 
-	    if (word < ptr->second.nwords)
+	    if (word_const->value().is_defined() && (word < ptr->second.nwords))
 		  value = ptr->second.array[word];
       } else {
 	    value = ptr->second.value;
