@@ -217,6 +217,13 @@ struct vthread_s {
 	/* These are used to pass non-blocking event control information. */
       vvp_net_t*event;
       uint64_t ecount;
+
+      inline void cleanup()
+      {
+	    bits4 = vvp_vector4_t();
+	    assert(stack_real_.empty());
+	    assert(stack_str_.empty());
+      }
 };
 
 inline vthread_s::vthread_s()
@@ -618,7 +625,7 @@ static void vthread_reap(vthread_t thr)
 
 void vthread_delete(vthread_t thr)
 {
-      thr->bits4 = vvp_vector4_t();
+      thr->cleanup();
       delete thr;
 }
 
