@@ -1094,7 +1094,8 @@ static void pform_set_net_range(perm_string name,
 				const svector<PExpr*>*range,
 				bool signed_flag,
 				ivl_variable_type_t dt,
-				PWSRType rt)
+				PWSRType rt,
+				svector<named_pexpr_t*>*attr)
 {
       PWire*cur = pform_get_wire_in_scope(name);
       if (cur == 0) {
@@ -1117,6 +1118,13 @@ static void pform_set_net_range(perm_string name,
 
       if (dt != IVL_VT_NO_TYPE)
 	    cur->set_data_type(dt);
+
+      if (attr) {
+	    for (unsigned idx = 0 ;  idx < attr->count() ;  idx += 1) {
+		  named_pexpr_t*tmp = (*attr)[idx];
+		  cur->attributes[tmp->name] = tmp->parm;
+	    }
+      }
 }
 
 void pform_set_net_range(list<perm_string>*names,
@@ -1131,7 +1139,7 @@ void pform_set_net_range(list<perm_string>*names,
 		 ; cur != names->end()
 		 ; cur ++ ) {
 	    perm_string txt = *cur;
-	    pform_set_net_range(txt, range, signed_flag, dt, rt);
+	    pform_set_net_range(txt, range, signed_flag, dt, rt, 0);
       }
 
       delete names;
@@ -1614,13 +1622,15 @@ void pform_makewire(const vlltype&li,
 	    pform_makewire(li, txt, type, pt, dt, attr);
 	    /* This has already been done for real variables. */
 	    if (dt != IVL_VT_REAL) {
-		  pform_set_net_range(txt, range, signed_flag, dt, rt);
+		  pform_set_net_range(txt, range, signed_flag, dt, rt, 0);
 	    }
       }
 
       delete names;
       if (range)
 	    delete range;
+      if (attr)
+	    delete attr;
 }
 
 /*
@@ -1645,7 +1655,7 @@ void pform_makewire(const vlltype&li,
 	    /* This has already been done for real variables. */
 	    if (dt != IVL_VT_REAL) {
 		  pform_set_net_range(first->name, range, signed_flag, dt,
-		                      SR_NET);
+		                      SR_NET, 0);
 	    }
 
 	    PWire*cur = pform_get_wire_in_scope(first->name);
@@ -2044,7 +2054,8 @@ void pform_set_port_type(const struct vlltype&li,
 			 list<perm_string>*names,
 			 svector<PExpr*>*range,
 			 bool signed_flag,
-			 NetNet::PortType pt)
+			 NetNet::PortType pt,
+			 svector<named_pexpr_t*>*attr)
 {
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end()
@@ -2052,12 +2063,14 @@ void pform_set_port_type(const struct vlltype&li,
 	    perm_string txt = *cur;
 	    pform_set_port_type(txt, pt, li.text, li.first_line);
 	    pform_set_net_range(txt, range, signed_flag, IVL_VT_NO_TYPE,
-	                        SR_PORT);
+	                        SR_PORT, attr);
       }
 
       delete names;
       if (range)
 	    delete range;
+      if (attr)
+	    delete attr;
 }
 
 static void pform_set_reg_integer(perm_string name)

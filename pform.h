@@ -254,7 +254,8 @@ extern void pform_set_port_type(const struct vlltype&li,
 				list<perm_string>*names,
 				svector<PExpr*>*range,
 				bool signed_flag,
-				NetNet::PortType);
+				NetNet::PortType,
+				svector<named_pexpr_t*>*attr);
 extern void pform_set_port_type(perm_string nm, NetNet::PortType pt,
 				const char*file, unsigned lineno);
 

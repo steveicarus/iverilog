@@ -2093,7 +2093,6 @@ module_item
 			yyerror(@6, "sorry: net delays not supported.");
 			delete $6;
 		  }
-		  if ($1) delete $1;
 		}
 
   /* Very similar to the rule above, but this takes a list of
@@ -2140,58 +2139,55 @@ module_item
 		  delete $4;
 		}
 
-	| port_type signed_opt range_opt delay3_opt list_of_identifiers ';'
-		{ pform_set_port_type(@1, $5, $3, $2, $1);
-		}
+  | attribute_list_opt port_type signed_opt range_opt delay3_opt list_of_identifiers ';'
+      { pform_set_port_type(@2, $6, $4, $3, $2, $1); }
 
   /* The next two rules handle Verilog 2001 statements of the form:
        input wire signed [h:l] <list>;
      This creates the wire and sets the port type all at once. */
 
-	| port_type net_type signed_opt range_opt list_of_identifiers ';'
-		{ pform_makewire(@1, $4, $3, $5, $2, $1, IVL_VT_NO_TYPE, 0,
-		                 SR_BOTH);
-		}
+  | attribute_list_opt port_type net_type signed_opt range_opt list_of_identifiers ';'
+      { pform_makewire(@2, $5, $4, $6, $3, $2, IVL_VT_NO_TYPE, $1, SR_BOTH); }
 
-	| K_output var_type signed_opt range_opt list_of_port_identifiers ';'
-		{ list<pair<perm_string,PExpr*> >::const_iterator pp;
-		  list<perm_string>*tmp = new list<perm_string>;
-		  for (pp = $5->begin(); pp != $5->end(); pp++) {
-			tmp->push_back((*pp).first);
-		  }
-		  pform_makewire(@1, $4, $3, tmp, $2, NetNet::POUTPUT,
-		                 IVL_VT_NO_TYPE, 0, SR_BOTH);
-		  for (pp = $5->begin(); pp != $5->end(); pp++) {
-			if ((*pp).second) {
-			      pform_make_reginit(@1, (*pp).first, (*pp).second);
-			}
-		  }
-		  delete $5;
-		}
+  | attribute_list_opt K_output var_type signed_opt range_opt list_of_port_identifiers ';'
+      { list<pair<perm_string,PExpr*> >::const_iterator pp;
+	list<perm_string>*tmp = new list<perm_string>;
+	for (pp = $6->begin(); pp != $6->end(); ++ pp ) {
+	      tmp->push_back((*pp).first);
+	}
+	pform_makewire(@2, $5, $4, tmp, $3, NetNet::POUTPUT,
+		       IVL_VT_NO_TYPE, $1, SR_BOTH);
+	for (pp = $6->begin(); pp != $6->end(); ++ pp ) {
+	      if ((*pp).second) {
+		   pform_make_reginit(@2, (*pp).first, (*pp).second);
+	      }
+	}
+	delete $6;
+      }
 
   /* var_type declaration (reg variables) cannot be input or output,
      because the port declaration implies an external driver, which
      cannot be attached to a reg. These rules catch that error early. */
 
-	| K_input var_type signed_opt range_opt list_of_identifiers ';'
-		{ pform_makewire(@1, $4, $3, $5, $2, NetNet::PINPUT,
-				 IVL_VT_NO_TYPE, 0);
-		  yyerror(@2, "error: reg variables cannot be inputs.");
-		}
+  | attribute_list_opt K_input var_type signed_opt range_opt list_of_identifiers ';'
+      { pform_makewire(@2, $5, $4, $6, $3, NetNet::PINPUT,
+		       IVL_VT_NO_TYPE, $1);
+	yyerror(@3, "error: reg variables cannot be inputs.");
+      }
 
-	| K_inout var_type signed_opt range_opt list_of_identifiers ';'
-		{ pform_makewire(@1, $4, $3, $5, $2, NetNet::PINOUT,
-				 IVL_VT_NO_TYPE, 0);
-		  yyerror(@2, "error: reg variables cannot be inouts.");
-		}
+  | attribute_list_opt K_inout var_type signed_opt range_opt list_of_identifiers ';'
+      { pform_makewire(@2, $5, $4, $6, $3, NetNet::PINOUT,
+		       IVL_VT_NO_TYPE, $1);
+	yyerror(@3, "error: reg variables cannot be inouts.");
+      }
 
-	| port_type signed_opt range_opt delay3_opt error ';'
-		{ yyerror(@1, "error: Invalid variable list"
-			  " in port declaration.");
-		  if ($3) delete $3;
-		  if ($4) delete $4;
-		  yyerrok;
-		}
+  | attribute_list_opt port_type signed_opt range_opt delay3_opt error ';'
+      { yyerror(@2, "error: Invalid variable list in port declaration.");
+	if ($1) delete $1;
+	if ($4) delete $4;
+	if ($5) delete $5;
+	yyerrok;
+      }
 
   /* Maybe this is a discipline declaration? If so, then the lexor
      will see the discipline name as an identifier. We match it to the
