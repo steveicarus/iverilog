@@ -38,6 +38,12 @@ class Subprogram : public LineInfo {
 
       inline const perm_string&name() const { return name_; }
 
+      void set_program_body(std::list<SequentialStmt*>*statements);
+
+	// Return true if the specification (name, types, ports)
+	// matches this subprogram and that subprogram.
+      bool compare_specification(Subprogram*that) const;
+
 	// Emit a definition as it would show up in a package.
       int emit_package(std::ostream&fd) const;
 

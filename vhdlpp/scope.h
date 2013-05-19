@@ -57,6 +57,7 @@ class ScopeBase {
       bool find_constant(perm_string by_name, const VType*&typ, Expression*&exp);
       Signal* find_signal(perm_string by_name) const;
       Variable* find_variable(perm_string by_name) const;
+      Subprogram* find_subprogram(perm_string by_name) const;
 
     protected:
       void cleanup();
@@ -100,8 +101,8 @@ class ScopeBase {
       std::map<perm_string, struct const_t*> use_constants_; //imported constants
       std::map<perm_string, struct const_t*> cur_constants_; //current constants
 
-      std::map<perm_string, Subprogram*> old_subprograms_; //previous scopes
-      std::map<perm_string, Subprogram*> new_subprograms_; //current scope
+      std::map<perm_string, Subprogram*> use_subprograms_; //imported
+      std::map<perm_string, Subprogram*> cur_subprograms_; //current
 
       void do_use_from(const ScopeBase*that);
 };
@@ -132,17 +133,27 @@ class Scope : public ScopeBase {
 class ActiveScope : public ScopeBase {
 
     public:
-      ActiveScope() : context_entity_(0) { }
-      ActiveScope(ActiveScope*par) : ScopeBase(*par), context_entity_(0) { }
+      ActiveScope() : package_header_(0), context_entity_(0) { }
+      ActiveScope(ActiveScope*par) : ScopeBase(*par), package_header_(0), context_entity_(0) { }
 
       ~ActiveScope() { }
 
+      void set_package_header(Package*);
+
+	// Pull items from "that" scope into "this" scope as is
+	// defined by a "use" directive. The parser uses this method
+	// to implement the "use <pkg>::*" directive.
       void use_from(const Scope*that) { do_use_from(that); }
 
 	// This function returns true if the name is a vectorable
 	// name. The parser uses this to distinguish between function
 	// calls and array index operations.
       bool is_vector_name(perm_string name) const;
+
+	// Locate the subprogram by name. The subprogram body uses
+	// this to locate the sobprogram declaration. Note that the
+	// subprogram may be in a package header.
+      Subprogram* recall_subprogram(perm_string name) const;
 
       /* All bind_name function check if the given name was present
        * in previous scopes. If it is found, it is erased (but the pointer
@@ -188,11 +199,11 @@ class ActiveScope : public ScopeBase {
         cur_constants_[name] = new const_t(obj, val);
       }
 
-      void bind_name(perm_string name, Subprogram*obj)
+      inline void bind_name(perm_string name, Subprogram*obj)
       { map<perm_string, Subprogram*>::iterator it;
-        if((it = old_subprograms_.find(name)) != old_subprograms_.end() )
-            old_subprograms_.erase(it);
-        new_subprograms_[name] = obj;;
+        if((it = use_subprograms_.find(name)) != use_subprograms_.end() )
+            use_subprograms_.erase(it);
+        cur_subprograms_[name] = obj;;
       }
 
       void bind(Entity*ent)
@@ -208,6 +219,10 @@ class ActiveScope : public ScopeBase {
       std::map<perm_string,VTypeDef*> incomplete_types;
 
     private:
+	// If this is a package body, then there is a Package header
+	// already declared.
+      Package*package_header_;
+
       Entity*context_entity_;
 };
 

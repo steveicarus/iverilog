@@ -21,6 +21,7 @@
 # include  "subprogram.h"
 # include  "entity.h"
 # include  "vtype.h"
+# include  "ivl_assert.h"
 
 using namespace std;
 
@@ -32,6 +33,43 @@ Subprogram::Subprogram(perm_string nam, list<InterfacePort*>*ports,
 
 Subprogram::~Subprogram()
 {
+}
+
+void Subprogram::set_program_body(list<SequentialStmt*>*stmt)
+{
+      ivl_assert(*this, statements_==0);
+      statements_ = stmt;
+}
+
+bool Subprogram::compare_specification(Subprogram*that) const
+{
+      if (name_ != that->name_)
+	    return false;
+
+      if (return_type_==0) {
+	    if (that->return_type_!=0)
+		  return false;
+      } else {
+	    if (that->return_type_==0)
+		  return false;
+
+	    if (! return_type_->type_match(that->return_type_))
+		  return false;
+      }
+
+      if (ports_==0) {
+	    if (that->ports_!=0)
+		  return false;
+
+      } else {
+	    if (that->ports_==0)
+		  return false;
+
+	    if (ports_->size() != that->ports_->size())
+		  return false;
+      }
+
+      return true;
 }
 
 void Subprogram::write_to_stream(ostream&fd) const

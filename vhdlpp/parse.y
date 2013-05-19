@@ -322,11 +322,12 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 %type <record_elements> element_declaration element_declaration_list
 
 %type <text> architecture_body_start package_declaration_start
+%type <text> package_body_start
 %type <text> identifier_opt identifier_colon_opt logical_name suffix
 %type <name_list> logical_name_list identifier_list
 %type <name_list> enumeration_literal_list enumeration_literal
 
-%type <sequ_list> sequence_of_statements if_statement_else
+%type <sequ_list> if_statement_else sequence_of_statements subprogram_statement_part
 %type <sequ> sequential_statement if_statement signal_assignment_statement
 %type <sequ> case_statement procedure_call procedure_call_statement
 %type <sequ> loop_statement variable_assignment_statement
@@ -1613,20 +1614,40 @@ package_declarative_part_opt
   |
   ;
 
-package_body
-  : K_package K_body IDENTIFIER K_is
+package_body /* IEEE 1076-2008 P4.8 */
+  : package_body_start K_is
     package_body_declarative_part_opt
     K_end K_package_opt identifier_opt ';'
-      { sorrymsg(@1, "Package body is not yet supported.\n");
-	delete[] $3;
-	if($8) delete[] $8;
+      { perm_string name = lex_strings.make($1);
+	if ($6 && name != $6)
+	      errormsg(@6, "Package name (%s) doesn't match closing name (%s).\n", $1, $6);
+	delete[] $1;
+	if($6) delete[]$6;
+	pop_scope();
       }
 
-  | K_package K_body IDENTIFIER K_is
-    error
-    K_end K_package_opt identifier_opt ';'
-      { errormsg(@1, "Errors in package body.\n");
+  | package_body_start K_is error K_end K_package_opt identifier_opt ';'
+      { errormsg(@1, "Errors in package %s body.\n", $1);
 	yyerrok;
+	pop_scope();
+      }
+  ;
+
+/*
+ * This is a portion of the package_body rule that we factor out so
+ * that we can use this rule to start the scope.
+ */
+package_body_start
+  : K_package K_body IDENTIFIER
+      { perm_string name = lex_strings.make($3);
+	push_scope();
+	Package*pkg = library_recall_package(parse_library_name, name);
+	if (pkg != 0) {
+	      active_scope->set_package_header(pkg);
+	} else {
+	      errormsg(@1, "Package body for %s has no matching header.\n", $3);
+	}
+	$$ = $3;
       }
   ;
 
@@ -2065,14 +2086,24 @@ signal_assignment_statement
       }
   ;
 
+  /* This is a function/task body. This may have a matching subprogram
+     declaration, and if so it will be in the active scope. */
+
 subprogram_body /* IEEE 1076-2008 P4.3 */
   : subprogram_specification K_is
     subprogram_declarative_part
     K_begin subprogram_statement_part K_end
     subprogram_kind_opt identifier_opt ';'
-      { sorrymsg(@2, "Subprogram bodies not supported.\n");
-	if ($1) delete $1;
-	if ($8) delete[]$8;
+      { Subprogram*prog = $1;
+	Subprogram*tmp = active_scope->recall_subprogram(prog->name());
+	if (tmp && prog->compare_specification(tmp)) {
+	      delete prog;
+	      prog = tmp;
+	} else if (tmp) {
+	      errormsg(@1, "Subprogram specification for %s doesn't match specification in package header.\n", prog->name().str());
+	}
+	prog->set_program_body($5);
+	active_scope->bind_name(prog->name(), prog);
       }
 
   | subprogram_specification K_is
@@ -2122,8 +2153,8 @@ subprogram_specification
      sequential_statement. Also handle the special case of an empty
      list here. */
 subprogram_statement_part
-  : sequence_of_statements
-  |
+  : sequence_of_statements { $$ = $1; }
+  |                        { $$ = 0; }
   ;
 
 subtype_declaration

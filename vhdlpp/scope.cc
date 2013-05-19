@@ -18,9 +18,11 @@
  */
 
 # include  "scope.h"
+# include  "package.h"
 # include  <algorithm>
 # include  <iostream>
 # include  <iterator>
+# include  <cassert>
 
 using namespace std;
 
@@ -52,11 +54,9 @@ ScopeBase::ScopeBase(const ActiveScope&ref)
     );
     use_types_ = ref.use_types_;
     cur_types_ = ref.cur_types_;
-    merge(ref.old_subprograms_.begin(), ref.old_subprograms_.end(),
-          ref.new_subprograms_.begin(), ref.new_subprograms_.end(),
-          insert_iterator<map<perm_string,Subprogram*> >(
-              old_subprograms_, old_subprograms_.end())
-    );
+
+    use_subprograms_ = ref.use_subprograms_;
+    cur_subprograms_ = ref.cur_subprograms_;
 }
 
 ScopeBase::~ScopeBase()
@@ -76,7 +76,7 @@ void ScopeBase::cleanup()
     delete_all(new_components_);
     delete_all(cur_types_);
     delete_all(cur_constants_);
-    delete_all(new_subprograms_);
+    delete_all(cur_subprograms_);
 }
 
 const VType*ScopeBase::find_type(perm_string by_name)
@@ -139,6 +139,21 @@ Variable* ScopeBase::find_variable(perm_string by_name) const
       }
 }
 
+Subprogram* ScopeBase::find_subprogram(perm_string name) const
+{
+      map<perm_string,Subprogram*>::const_iterator cur;
+
+      cur = cur_subprograms_.find(name);
+      if (cur != cur_subprograms_.end())
+	    return cur->second;
+
+      cur = use_subprograms_.find(name);
+      if (cur != use_subprograms_.find(name))
+	  return cur->second;
+
+      return 0;
+}
+
 /*
  * This method is only used by the ActiveScope derived class to import
  * definition from another scope.
@@ -158,18 +173,13 @@ void ScopeBase::do_use_from(const ScopeBase*that)
         old_components_[cur->first] = cur->second;
       }
 
-      for (map<perm_string,Subprogram*>::const_iterator cur = that->old_subprograms_.begin()
-		 ; cur != that->old_subprograms_.end() ; ++ cur) {
+      for (map<perm_string,Subprogram*>::const_iterator cur = that->cur_subprograms_.begin()
+		 ; cur != that->cur_subprograms_.end() ; ++ cur) {
 	    if (cur->second == 0)
 		  continue;
-	    old_subprograms_[cur->first] = cur->second;
+	    use_subprograms_[cur->first] = cur->second;
       }
-      for (map<perm_string,Subprogram*>::const_iterator cur = that->new_subprograms_.begin()
-         ; cur != that->new_subprograms_.end() ; ++ cur) {
-        if (cur->second == 0)
-          continue;
-        old_subprograms_[cur->first] = cur->second;
-      }
+
 
       for (map<perm_string,const VType*>::const_iterator cur = that->cur_types_.begin()
 		 ; cur != that->cur_types_.end() ; ++ cur) {
@@ -182,6 +192,23 @@ void ScopeBase::do_use_from(const ScopeBase*that)
 		 ; cur != that->cur_constants_.end() ; ++ cur) {
 	    use_constants_[cur->first] = cur->second;
       }
+}
+
+void ActiveScope::set_package_header(Package*pkg)
+{
+      assert(package_header_ == 0);
+      package_header_ = pkg;
+}
+
+Subprogram* ActiveScope::recall_subprogram(perm_string name) const
+{
+      if (Subprogram*tmp = find_subprogram(name))
+	    return tmp;
+
+      if (package_header_)
+	    return package_header_->find_subprogram(name);
+
+      return 0;
 }
 
 bool ActiveScope::is_vector_name(perm_string name) const

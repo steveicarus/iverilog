@@ -26,11 +26,9 @@ using namespace std;
 
 int Package::emit_package(ostream&fd) const
 {
-      ivl_assert(*this, new_subprograms_.empty());
-
 	// Don't emit the package if there is nothing in it that SV
 	// cares about.
-      if (cur_types_.empty() && cur_constants_.empty() && old_subprograms_.empty())
+      if (cur_types_.empty() && cur_constants_.empty() && cur_subprograms_.empty())
 	    return 0;
 
 	// If this package was imported from a library, then do not
@@ -67,8 +65,8 @@ int Package::emit_package(ostream&fd) const
 	    fd << ";" << endl;
       }
 
-      for (map<perm_string,Subprogram*>::const_iterator cur = old_subprograms_.begin()
-		 ; cur != old_subprograms_.end() ; ++ cur) {
+      for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
+		 ; cur != cur_subprograms_.end() ; ++ cur) {
 	    errors += cur->second->emit_package(fd);
       }
 

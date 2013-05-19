@@ -146,15 +146,16 @@ void Scope::dump_scope(ostream&out) const
           out << "   signal " << cur->first.str() << ": ???" << endl;
       }
 	// Dump subprograms
-      out << "   -- Subprograms" << endl;
-      for (map<perm_string,Subprogram*>::const_iterator cur = old_subprograms_.begin()
-		 ; cur != old_subprograms_.end() ; ++cur) {
+      out << "   -- Imported Subprograms" << endl;
+      for (map<perm_string,Subprogram*>::const_iterator cur = use_subprograms_.begin()
+		 ; cur != use_subprograms_.end() ; ++cur) {
 	    out << "   subprogram " << cur->first << " is" << endl;
 	    cur->second->dump(out);
 	    out << "   end subprogram " << cur->first << endl;
       }
-      for (map<perm_string,Subprogram*>::const_iterator cur = new_subprograms_.begin()
-		 ; cur != new_subprograms_.end() ; ++cur) {
+      out << "   -- Subprograms from this scope" << endl;
+      for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
+		 ; cur != cur_subprograms_.end() ; ++cur) {
 	    out << "   subprogram " << cur->first << " is" << endl;
 	    cur->second->dump(out);
 	    out << "   end subprogram " << cur->first << endl;

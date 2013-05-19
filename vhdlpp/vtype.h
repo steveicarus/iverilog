@@ -45,6 +45,11 @@ class VType {
       VType() { }
       virtual ~VType() =0;
 
+	// This virtual method returns true if that is equivalent to
+	// this type. This method is used for example to compare
+	// function prototypes.
+      virtual bool type_match(const VType*that) const;
+
 	// This virtual method writes a VHDL-accurate representation
 	// of this type to the designated stream. This is used for
 	// writing parsed types to library files.

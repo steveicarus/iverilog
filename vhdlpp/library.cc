@@ -120,7 +120,8 @@ void dump_libraries(ostream&file)
 
 /*
  * This function saves a package into the named library. Create the
- * library if necessary.
+ * library if necessary. The parser uses this when it is finished with
+ * a package declaration.
  */
 void library_save_package(perm_string parse_library_name, Package*pack)
 {
@@ -137,6 +138,27 @@ void library_save_package(perm_string parse_library_name, Package*pack)
 	    store_package_in_work(pack);
       else
 	    pack->set_library(parse_library_name);
+}
+
+/*
+ * The parser uses this function in the package body rule to recall
+ * the package that was declared earlier.
+ */
+Package*library_recall_package(perm_string parse_library_name, perm_string package_name)
+{
+      perm_string use_libname = parse_library_name.str()
+	    ? parse_library_name
+	    : perm_string::literal("work");
+
+      map<perm_string,struct library_contents>::iterator lib = libraries.find(use_libname);
+      if (lib == libraries.end())
+	    return 0;
+
+      map<perm_string,Package*>::iterator pkg = lib->second.packages.find(package_name);
+      if (pkg == lib->second.packages.end())
+	    return 0;
+
+      return pkg->second;
 }
 
 static void import_library_name(const YYLTYPE&loc, perm_string name)

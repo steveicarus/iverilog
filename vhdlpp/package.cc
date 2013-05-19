@@ -46,8 +46,6 @@ void Package::set_library(perm_string lname)
  */
 void Package::write_to_stream(ostream&fd) const
 {
-      ivl_assert(*this, new_subprograms_.size() == 0);
-
       fd << "package " << name_ << " is" << endl;
 
 	// Start out pre-declaring all the type definitions so that
@@ -104,8 +102,8 @@ void Package::write_to_stream(ostream&fd) const
 	    fd << ";" << endl;
       }
 
-      for (map<perm_string,Subprogram*>::const_iterator cur = old_subprograms_.begin()
-		 ; cur != old_subprograms_.end() ; ++cur) {
+      for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
+		 ; cur != cur_subprograms_.end() ; ++cur) {
 	    cur->second->write_to_stream(fd);
       }
 
