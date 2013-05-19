@@ -168,6 +168,11 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 {
       symbol_search_results recurse;
       bool flag = symbol_search(li, des, scope, path, &recurse);
+      net = recurse.net;
+      par = recurse.par_val;
+      ex1 = recurse.par_msb;
+      ex2 = recurse.par_lsb;
+      eve = recurse.eve;
       if (! flag) {
 	    return 0;
       }
@@ -175,10 +180,5 @@ NetScope*symbol_search(const LineInfo*li, Design*des, NetScope*scope,
       if (recurse.is_scope())
 	    return recurse.scope;
 
-      net = recurse.net;
-      par = recurse.par_val;
-      ex1 = recurse.par_msb;
-      ex2 = recurse.par_lsb;
-      eve = recurse.eve;
       return recurse.scope;
 }
