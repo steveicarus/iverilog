@@ -340,7 +340,8 @@ extern void pform_set_port_type(const struct vlltype&li,
 				list<perm_string>*names,
 				list<pform_range_t>*range,
 				bool signed_flag,
-				NetNet::PortType);
+				NetNet::PortType,
+				list<named_pexpr_t>*attr);
 
 extern void pform_set_reg_idx(perm_string name,
 			      std::list<pform_range_t>*indices);

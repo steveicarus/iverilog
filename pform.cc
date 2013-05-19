@@ -2297,6 +2297,7 @@ void pform_makewire(const vlltype&li,
 
       delete names;
       delete range;
+      delete attr;
 }
 
 /*
@@ -2916,7 +2917,8 @@ void pform_set_port_type(const struct vlltype&li,
 			 list<perm_string>*names,
 			 list<pform_range_t>*range,
 			 bool signed_flag,
-			 NetNet::PortType pt)
+			 NetNet::PortType pt,
+			 list<named_pexpr_t>*attr)
 {
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
 
@@ -2925,11 +2927,12 @@ void pform_set_port_type(const struct vlltype&li,
 	    perm_string txt = *cur;
 	    pform_set_port_type(txt, pt, li.text, li.first_line);
 	    pform_set_net_range(txt, NetNet::NONE, range, signed_flag, IVL_VT_NO_TYPE,
-	                        SR_PORT, 0);
+	                        SR_PORT, attr);
       }
 
       delete names;
       delete range;
+      delete attr;
 }
 
 static void pform_set_integer_2atom(uint64_t width, bool signed_flag, perm_string name, NetNet::Type net_type, list<named_pexpr_t>*attr)
