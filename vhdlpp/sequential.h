@@ -1,7 +1,8 @@
 #ifndef __sequential_H
 #define __sequential_H
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -116,6 +117,7 @@ class ReturnStmt  : public SequentialStmt {
       ~ReturnStmt();
 
     public:
+      int emit(ostream&out, Entity*entity, Architecture*arc);
       void dump(ostream&out, int indent) const;
 
     private:

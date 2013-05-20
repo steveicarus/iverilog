@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -82,6 +83,14 @@ int IfSequential::Elsif::statement_emit(ostream&out, Entity*ent, Architecture*ar
       return errors;
 }
 
+int ReturnStmt::emit(ostream&out, Entity*ent, Architecture*arc)
+{
+      int errors = 0;
+      out << "return ";
+      errors += val_->emit(out, ent, arc);
+      out << ";" << endl;
+      return errors;
+}
 
 int SignalSeqAssignment::emit(ostream&out, Entity*ent, Architecture*arc)
 {
@@ -203,13 +212,23 @@ int ForLoopStatement::emit(ostream&out, Entity*ent, Architecture*arc)
       ivl_assert(*this, start_rc);
       ivl_assert(*this, finish_rc);
 
-      if (range_->is_downto() && start_val < finish_val) {
-	    out << "begin /* Degenerate loop at " << get_fileline() << " */ end" << endl;
+      if (! range_->is_downto()) {
+	    int64_t tmp = start_val;
+	    start_val = finish_val;
+	    finish_val = tmp;
+      }
+
+      if (range_->is_downto() && (start_val < finish_val)) {
+	    out << "begin /* Degenerate loop at " << get_fileline()
+		<< ": " << start_val
+		<< " downto " << finish_val << " */ end" << endl;
 	    return errors;
       }
 
       if (!range_->is_downto() && start_val > finish_val) {
-	    out << "begin /* Degenerate loop at " << get_fileline() << " */ end" << endl;
+	    out << "begin /* Degenerate loop at " << get_fileline()
+		<< ": " << start_val
+		<< " to " << finish_val << " */ end" << endl;
 	    return errors;
       }
 
