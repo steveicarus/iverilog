@@ -33,10 +33,33 @@ int Subprogram::emit_package(ostream&fd) const
 	    fd << "function ";
 	    return_type_->emit_def(fd);
 	    fd << " " << name_;
-	    fd << ";" << endl;
+	    fd << "(";
       } else {
 	    fd << "task " << name_ << ";" << endl;
       }
+
+      for (list<InterfacePort*>::const_iterator cur = ports_->begin()
+		 ; cur != ports_->end() ; ++cur) {
+	    if (cur != ports_->begin())
+		  fd << ", ";
+	    InterfacePort*curp = *cur;
+	    switch (curp->mode) {
+		case PORT_IN:
+		  fd << "input ";
+		  break;
+		case PORT_OUT:
+		  fd << "output ";
+		  break;
+		case PORT_NONE:
+		  fd << "inout /* PORT_NONE? */ ";
+		  break;
+	    }
+
+	    errors += curp->type->emit_def(fd);
+	    fd << " \\" << curp->name << " ";
+      }
+
+      fd << ");" << endl;
 
       if (statements_) {
 	    for (list<SequentialStmt*>::const_iterator cur = statements_->begin()

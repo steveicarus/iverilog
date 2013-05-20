@@ -182,6 +182,16 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
       return res;
 }
 
+static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
+{
+      for (list<InterfacePort*>::iterator cur = ports->begin()
+		 ; cur != ports->end() ; ++cur) {
+	    InterfacePort*curp = *cur;
+	    if (curp->mode == PORT_NONE)
+		  curp->mode = PORT_IN;
+      }
+}
+
 %}
 
 
@@ -1152,6 +1162,7 @@ function_specification /* IEEE 1076-2008 P4.2.1 */
       { perm_string type_name = lex_strings.make($7);
 	perm_string name = lex_strings.make($2);
 	const VType*type_mark = active_scope->find_type(type_name);
+	touchup_interface_for_functions($4);
 	Subprogram*tmp = new Subprogram(name, $4, type_mark);
 	FILE_NAME(tmp,@1);
 	delete[]$2;
