@@ -265,9 +265,10 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	// where the name is a member/method of a struct/class.
       ivl_assert(*this, method_name.nil());
 
+      bool need_const_idx = is_cassign || is_force;
+
       if (reg->unpacked_dimensions() > 0)
-	    return elaborate_lval_net_word_(des, scope, reg,
-					    is_cassign, is_force);
+	    return elaborate_lval_net_word_(des, scope, reg, need_const_idx);
 
 	// This must be after the array word elaboration above!
       if (reg->get_scalar() &&
@@ -289,7 +290,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       if (use_sel == index_component_t::SEL_IDX_UP ||
           use_sel == index_component_t::SEL_IDX_DO) {
 	    NetAssign_*lv = new NetAssign_(reg);
-	    elaborate_lval_net_idx_(des, scope, lv, use_sel);
+	    elaborate_lval_net_idx_(des, scope, lv, use_sel, need_const_idx);
 	    return lv;
       }
 
@@ -301,7 +302,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 		  return lv;
 	    } else {
 		  NetAssign_*lv = new NetAssign_(reg);
-		  elaborate_lval_net_bit_(des, scope, lv);
+		  elaborate_lval_net_bit_(des, scope, lv, need_const_idx);
 		  return lv;
 	    }
       }
@@ -351,8 +352,7 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*,
 NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 					      NetScope*scope,
 					      NetNet*reg,
-					      bool is_cassign,
-					      bool is_force) const
+					      bool need_const_idx) const
 {
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
@@ -398,7 +398,7 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 		 << "." << endl;
 
       } else if (flags.variable) {
-	    if (is_cassign || is_force) {
+	    if (need_const_idx) {
 		  cerr << get_fileline() << ": error: array '" << reg->name()
 		       << "' index must be a constant in this context." << endl;
 		  des->errors += 1;
@@ -448,21 +448,22 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       }
 
       if (use_sel == index_component_t::SEL_BIT)
-	    elaborate_lval_net_bit_(des, scope, lv);
+	    elaborate_lval_net_bit_(des, scope, lv, need_const_idx);
 
       if (use_sel == index_component_t::SEL_PART)
 	    elaborate_lval_net_part_(des, scope, lv);
 
       if (use_sel == index_component_t::SEL_IDX_UP ||
           use_sel == index_component_t::SEL_IDX_DO)
-	    elaborate_lval_net_idx_(des, scope, lv, use_sel);
+	    elaborate_lval_net_idx_(des, scope, lv, use_sel, need_const_idx);
 
       return lv;
 }
 
 bool PEIdent::elaborate_lval_net_bit_(Design*des,
 				      NetScope*scope,
-				      NetAssign_*lv) const
+				      NetAssign_*lv,
+				      bool need_const_idx) const
 {
       list<long>prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, lv->sig(), prefix_indices);
@@ -556,6 +557,13 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 	      // Non-constant bit mux. Correct the mux for the range
 	      // of the vector, then set the l-value part select
 	      // expression.
+	    if (need_const_idx) {
+		  cerr << get_fileline() << ": error: '" << reg->name()
+		       << "' bit select must be a constant in this context."
+		       << endl;
+		  des->errors += 1;
+		  return false;
+	    }
 	    mux = normalize_variable_bit_base(prefix_indices, mux, reg);
 	    lv->set_part(mux, 1);
 
@@ -694,7 +702,8 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 bool PEIdent::elaborate_lval_net_idx_(Design*des,
 				      NetScope*scope,
 				      NetAssign_*lv,
-				      index_component_t::ctype_t use_sel) const
+				      index_component_t::ctype_t use_sel,
+				      bool need_const_idx) const
 {
       list<long>prefix_indices;
       bool rc = calculate_packed_indices_(des, scope, lv->sig(), prefix_indices);
@@ -709,16 +718,6 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 
       NetNet*reg = lv->sig();
       assert(reg);
-
-      if (reg->type() != NetNet::REG) {
-	    cerr << get_fileline() << ": error: " << path_ <<
-		  " is not a reg/integer/time in " << scope_path(scope) <<
-		  "." << endl;
-	    cerr << reg->get_fileline() << ":      : " << path_ <<
-		  " is declared here as " << reg->type() << "." << endl;
-	    des->errors += 1;
-	    return false;
-      }
 
       unsigned long wid;
       calculate_up_do_width_(des, scope, wid);
@@ -782,6 +781,13 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
 		  cerr << " has an undefined base." << endl;
 	    }
       } else {
+	    if (need_const_idx) {
+		  cerr << get_fileline() << ": error: '" << reg->name()
+		       << "' base index must be a constant in this context."
+		       << endl;
+		  des->errors += 1;
+		  return false;
+	    }
 	    ivl_assert(*this, prefix_indices.size()+1 == reg->packed_dims().size());
 	      /* Correct the mux for the range of the vector. */
 	    if (use_sel == index_component_t::SEL_IDX_UP) {

@@ -197,8 +197,8 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 
       if (part_off_ex == 0) {
 	    part_off = 0;
-      } else if (number_is_immediate(part_off_ex, IMM_WID, 0)) {
-	    assert(! number_is_unknown(part_off_ex));
+      } else if (number_is_immediate(part_off_ex, IMM_WID, 0) &&
+		 !number_is_unknown(part_off_ex)) {
 	    part_off = get_number_immediate(part_off_ex);
 	    part_off_ex = 0;
       }
@@ -1183,7 +1183,8 @@ static int show_stmt_deassign(ivl_statement_t net)
 	    part_off = 0;
 	    if (part_off_ex != 0) {
 		  assert(number_is_immediate(part_off_ex, 64, 0));
-		  assert(! number_is_unknown(part_off_ex));
+		  if (number_is_unknown(part_off_ex))
+			return 0;
 		  part_off = get_number_immediate(part_off_ex);
 	    }
 

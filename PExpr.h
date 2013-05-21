@@ -380,12 +380,13 @@ class PEIdent : public PExpr {
     private:
       NetAssign_*elaborate_lval_method_class_member_(Design*, NetScope*) const;
       NetAssign_*elaborate_lval_net_word_(Design*, NetScope*, NetNet*,
-					  bool is_cassign,
-					  bool is_force) const;
-      bool elaborate_lval_net_bit_(Design*, NetScope*, NetAssign_*) const;
+					  bool need_const_idx) const;
+      bool elaborate_lval_net_bit_(Design*, NetScope*, NetAssign_*,
+				   bool need_const_idx) const;
       bool elaborate_lval_net_part_(Design*, NetScope*, NetAssign_*) const;
       bool elaborate_lval_net_idx_(Design*, NetScope*, NetAssign_*,
-                                   index_component_t::ctype_t) const;
+                                   index_component_t::ctype_t,
+			 	   bool need_const_idx) const;
       bool elaborate_lval_net_class_member_(Design*, NetScope*,
 					    NetAssign_*,
 					    const perm_string&) const;

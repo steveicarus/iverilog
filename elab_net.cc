@@ -255,7 +255,7 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 			    } else {
 				  cerr << "-:";
 			    }
-			    cerr << wid << "] is always outside vector."
+			    cerr << wid << "] is always outside the vector."
 			         << endl;
 		      }
 		      return false;
@@ -315,7 +315,18 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		long msb, lsb;
 		bool part_defined_flag;
 		/* bool flag = */ calculate_parts_(des, scope, msb, lsb, part_defined_flag);
-		ivl_assert(*this, part_defined_flag);
+
+		  /* We have an undefined index and that is out of range. */
+		if (!part_defined_flag) {
+		      if (warn_ob_select) {
+			    cerr << get_fileline() << ": warning: "
+			         << sig->name();
+			    if (sig->unpacked_dimensions() > 0) cerr << "[]";
+			    cerr << "['bx] is always outside the vector."
+			         << endl;
+		      }
+		      return false;
+		}
 
 		long lidx_tmp = sig->sb_to_idx(prefix_indices, lsb);
 		long midx_tmp = sig->sb_to_idx(prefix_indices, msb);
@@ -358,7 +369,19 @@ bool PEIdent::eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 		  long msb;
 		  bool bit_defined_flag;
 		  /* bool flag = */ calculate_bits_(des, scope, msb, bit_defined_flag);
-		  ivl_assert(*this, bit_defined_flag);
+
+		  /* We have an undefined index and that is out of range. */
+		  if (!bit_defined_flag) {
+			if (warn_ob_select) {
+			      cerr << get_fileline() << ": warning: "
+			           << sig->name();
+			      if (sig->unpacked_dimensions() > 0) cerr << "[]";
+			      cerr << "['bx] is always outside the vector."
+			           << endl;
+			}
+			return false;
+		  }
+
 
 		  if (prefix_indices.size()+2 <= sig->packed_dims().size()) {
 			long tmp_loff;
