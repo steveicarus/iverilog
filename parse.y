@@ -1229,12 +1229,14 @@ jump_statement /* IEEE1800-2005: A.6.5 */
 	$$ = 0;
       }
   | K_return ';'
-      { yyerror(@1, "sorry: return statements not supported.");
-	$$ = 0;
+      { PReturn*tmp = new PReturn(0);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
   | K_return expression ';'
-      { yyerror(@1, "sorry: return statements not supported.");
-	$$ = 0;
+      { PReturn*tmp = new PReturn($2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
   ;
 

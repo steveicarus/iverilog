@@ -4443,6 +4443,69 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
       return proc;
 }
 
+NetProc* PReturn::elaborate(Design*des, NetScope*scope) const
+{
+      NetScope*target = scope;
+      for (;;) {
+	    if (target == 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "Return statement is not in a function." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    if (target->type() == NetScope::FUNC)
+		  break;
+
+	    if (target->type() == NetScope::TASK) {
+		  cerr << get_fileline() << ": error: "
+		       << "Cannot \"return\" from tasks." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    if (target->type()==NetScope::BEGIN_END) {
+		  target = target->parent();
+		  continue;
+	    }
+
+	    cerr << get_fileline() << ": error: "
+		 << "Cannot \"return\" from this scope: " << scope_path(target) << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+	// We don't yet support void functions, so require an
+	// expression for the return statement.
+      if (expr_ == 0) {
+	    cerr << get_fileline() << ": error: "
+		 << "Return from " << scope_path(target)
+		 << " requires a return value expression." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetNet*res = target->find_signal(target->basename());
+      ivl_variable_type_t lv_type = res->data_type();
+      unsigned long wid = res->vector_width();
+      NetAssign_*lv = new NetAssign_(res);
+
+      NetExpr*val = elaborate_rval_expr(des, scope, lv_type, wid, expr_);
+
+      NetBlock*proc = new NetBlock(NetBlock::SEQU, 0);
+      proc->set_line( *this );
+
+      NetAssign*assn = new NetAssign(lv, val);
+      assn->set_line( *this );
+      proc->append(assn);
+
+      NetDisable*disa = new NetDisable(target);
+      disa->set_line( *this );
+      proc->append( disa );
+
+      return proc;
+}
+
 /*
  * A task definition is elaborated by elaborating the statement that
  * it contains, and connecting its ports to NetNet objects. The

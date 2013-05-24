@@ -462,6 +462,19 @@ class PRelease  : public Statement {
       PExpr*lval_;
 };
 
+class PReturn  : public Statement {
+
+    public:
+      explicit PReturn(PExpr*e);
+      ~PReturn();
+
+      NetProc* elaborate(Design*des, NetScope*scope) const;
+      virtual void dump(std::ostream&out, unsigned ind) const;
+
+    private:
+      PExpr*expr_;
+};
+
 /*
  * The PTrigger statement sends a trigger to a named event. Take the
  * name here.
