@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,6 +25,7 @@
 # include  <typeinfo>
 # include  <iostream>
 # include  <cstdlib>
+# include  <cstring>
 # include  "ivl_assert.h"
 # include  <cassert>
 
@@ -278,15 +280,13 @@ int ExpAttribute::emit(ostream&out, Entity*ent, Architecture*arc)
 	   the down to a literal integer at compile time, and all it
 	   needs is the type of the base expression. (The base
 	   expression doesn't even need to be evaluated.) */
-      if (name_ == "length") {
-	    int64_t val;
-	    bool rc = evaluate(ent, arc, val);
-	    out << val;
-	    if (rc)
-		  return errors;
-	    else
-		  return errors + 1;
+      if (name_=="length") {
+	    out << "$bits(";
+	    errors += base_->emit(out, ent, arc);
+	    out << ")";
+	    return errors;
       }
+
 
       out << "$ivl_attribute(";
       errors += base_->emit(out, ent, arc);
@@ -539,13 +539,12 @@ int ExpFunc::emit(ostream&out, Entity*ent, Architecture*arc)
 	    out << ")";
 
       } else if (name_ == "to_unsigned" && argv_.size() == 2) {
-	    int64_t use_size;
-	    bool rc = argv_[1]->evaluate(ent, arc, use_size);
-	    ivl_assert(*this, rc);
 
-	    out << "$unsigned(" << use_size << "'(";
+	    out << "$ivlh_to_unsigned(";
 	    errors += argv_[0]->emit(out, ent, arc);
-	    out << "))";
+	    out << ", ";
+	    errors += argv_[1]->emit(out, ent, arc);
+	    out << ")";
 
       } else if (name_ == "conv_std_logic_vector" && argv_.size() == 2) {
 	    int64_t use_size;
@@ -727,6 +726,18 @@ int ExpString::emit_as_array_(ostream& out, Entity*, Architecture*, const VTypeA
       const VTypePrimitive*etype = dynamic_cast<const VTypePrimitive*> (arr->element_type());
       assert(etype);
 
+	// Detect the special case that this is an array of
+	// CHARACTER. In this case, emit at a Verilog string.
+      if (etype->type()==VTypePrimitive::CHARACTER) {
+	    vector<char> tmp (value_.size() + 3);
+	    tmp[0] = '"';
+	    memcpy(&tmp[1], &value_[0], value_.size());
+	    tmp[value_.size()+1] = '"';
+	    tmp[value_.size()+2] = 0;
+	    out << &tmp[0];
+	    return errors;
+      }
+
       assert(etype->type() != VTypePrimitive::INTEGER);
       out << value_.size() << "'b";
       for (size_t idx = 0 ; idx < value_.size() ; idx += 1) {
@@ -742,6 +753,9 @@ int ExpString::emit_as_array_(ostream& out, Entity*, Architecture*, const VTypeA
 		  out << "z";
 		  break;
 		default:
+		  cerr << get_fileline() << ": internal error: "
+		       << "Don't know how to handle bit " << value_[idx]
+		       << " with etype==" << etype->type() << endl;
 		  assert(etype->type() == VTypePrimitive::STDLOGIC);
 		  out << "x";
 		  break;

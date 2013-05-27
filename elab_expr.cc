@@ -933,6 +933,35 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 {
       perm_string name = peek_tail_name(path_);
 
+      if (name=="$ivlh_to_unsigned") {
+	    ivl_assert(*this, parms_.size() == 2);
+	      // The Icarus Verilog specific $ivl_unsigned() system
+	      // task takes a second argument which is the output
+	      // size. This can be an arbitrary constant function.
+	    PExpr*pexpr = parms_[1];
+	    if (pexpr == 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "Missing $ivlh_to_unsigned width." << endl;
+		  return 0;
+	    }
+
+	    NetExpr*nexpr = elab_and_eval(des, scope, pexpr, -1, true);
+	    if (nexpr == 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "Unable to evaluate " << name
+		       << " width argument: " << *pexpr << endl;
+		  return 0;
+	    }
+
+	    long value = 0;
+	    bool rc = eval_as_long(value, nexpr);
+	    ivl_assert(*this, rc && value>=0);
+
+	    expr_width_ = value;
+	    signed_flag_= false;
+	    return expr_width_;
+      }
+
       if (name=="$signed" || name=="$unsigned") {
 	    PExpr*expr = parms_[0];
 	    if (expr == 0)
@@ -1227,6 +1256,19 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
                                           unsigned flags) const
 {
       perm_string name = peek_tail_name(path_);
+
+	/* Catch the special case that the system function is the
+	   $ivl_unsigned function. In this case the second argument is
+	   the size of the expression, but should already be accounted
+	   for so treat this very much like the $unsigned() function. */
+      if (name=="$ivlh_to_unsigned") {
+	    ivl_assert(*this, parms_.size()==2);
+
+	    PExpr*expr = parms_[0];
+	    ivl_assert(*this, expr);
+	    NetExpr*sub = expr->elaborate_expr(des, scope, expr_width_, flags);
+	    return cast_to_width_(sub, expr_wid);
+      }
 
 	/* Catch the special case that the system function is the $signed
 	   function. Its argument will be evaluated as a self-determined
