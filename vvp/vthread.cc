@@ -63,11 +63,11 @@ using namespace std;
  * child of the current thread, and the current thread a parent of the
  * new thread. Any child can be reaped by a %join.
  *
- * Children placed into an automatic scope are given special
- * treatment, which is required to make function/tasks calls that they
- * represent work correctly. These automatic children are copied into
- * an automatic_children set to mark them for this handling. %join
- * operations will guarantee that automatic threads are joined first,
+ * Children placed into a task or function scope are given special
+ * treatment, which is required to make task/function calls that they
+ * represent work correctly. These task/function children are copied
+ * into a task_func_children set to mark them for this handling. %join
+ * operations will guarantee that task/function threads are joined first,
  * before any non-automatic threads.
  *
  * It is a programming error for a thread that created threads to not
@@ -204,8 +204,8 @@ struct vthread_s {
       unsigned delay_delete      :1;
 	/* This points to the children of the thread. */
       set<struct vthread_s*>children;
-	/* No more than 1 of the children are automatic. */
-      set<vthread_s*>automatic_children;
+	/* No more than 1 of the children are tasks or functions. */
+      set<vthread_s*>task_func_children;
 	/* This points to my parent, if I have one. */
       struct vthread_s*parent;
 	/* This points to the containing scope. */
@@ -2743,16 +2743,18 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
                  on the write context stack. */
             child->wt_context = thr->wt_context;
             child->rd_context = thr->wt_context;
-
-	    thr->automatic_children.insert(child);
       }
 
       child->parent = thr;
       thr->children.insert(child);
 
+      int child_type = cp->scope->get_type_code();
+      if ((child_type == vpiTask) || (child_type == vpiFunction))
+	    thr->task_func_children.insert(child);
+
 	/* If the new child was created to evaluate a function,
 	   run it immediately, then return to this thread. */
-      if (cp->scope->get_type_code() == vpiFunction) {
+      if (child_type == vpiFunction) {
 	    child->is_scheduled = 1;
 	    vthread_run(child);
             running_thread = thr;
@@ -3065,8 +3067,8 @@ bool of_JMP1(vthread_t thr, vvp_code_t cp)
 
 static bool test_joinable(vthread_t thr, vthread_t child)
 {
-      set<vthread_t>::iterator auto_cur = thr->automatic_children.find(child);
-      if (!thr->automatic_children.empty() && auto_cur == thr->automatic_children.end())
+      set<vthread_t>::iterator cur = thr->task_func_children.find(child);
+      if (!thr->task_func_children.empty() && cur == thr->task_func_children.end())
 	    return false;
 
       return true;
@@ -3076,8 +3078,10 @@ static void do_join(vthread_t thr, vthread_t child)
 {
       assert(child->parent == thr);
 
+      thr->task_func_children.erase(child);
+
         /* If the immediate child thread is in an automatic scope... */
-      if (thr->automatic_children.erase(child) != 0) {
+      if (child->wt_context) {
               /* and is the top level task/function thread... */
             if (thr->wt_context != thr->rd_context) {
                     /* Pop the child context from the write context stack. */
@@ -3128,7 +3132,7 @@ bool of_JOIN_DETACH(vthread_t thr, vvp_code_t cp)
 {
       unsigned long count = cp->number;
 
-      assert(thr->automatic_children.empty());
+      assert(thr->task_func_children.empty());
       assert(count == thr->children.size());
 
       while (!thr->children.empty()) {
