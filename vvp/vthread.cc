@@ -68,7 +68,7 @@ using namespace std;
  * represent work correctly. These task/function children are copied
  * into a task_func_children set to mark them for this handling. %join
  * operations will guarantee that task/function threads are joined first,
- * before any non-automatic threads.
+ * before any non-task/function threads.
  *
  * It is a programming error for a thread that created threads to not
  * %join (or %join/detach) as many as it created before it %ends. The
@@ -2515,39 +2515,6 @@ bool of_DUP_REAL(vthread_t thr, vvp_code_t)
  * This terminates the current thread. If there is a parent who is
  * waiting for me to die, then I schedule it. At any rate, I mark
  * myself as a zombie by setting my pc to 0.
- *
- * It is possible for this thread to have children at this %end. This
- * means that my child is really my sibling created by my parent, and
- * my parent will do the proper %joins in due course. For example:
- *
- *     %fork child_1, test;
- *     %fork child_2, test;
- *     ... parent code ...
- *     %join;
- *     %join;
- *     %end;
- *
- *   child_1 ;
- *     %end;
- *   child_2 ;
- *     %end;
- *
- * In this example, the main thread creates threads child_1 and
- * child_2. It is possible that this thread is child_2, so there is a
- * parent pointer and a child pointer, even though I did no
- * %forks or %joins. This means that I have a ->child pointer and a
- * ->parent pointer.
- *
- * If the main thread has executed the first %join, then it is waiting
- * for me, and I will be reaped right away.
- *
- * If the main thread has not executed a %join yet, then this thread
- * becomes a zombie. The main thread executes its %join eventually,
- * reaping me at that time.
- *
- * It does not matter the order that child_1 and child_2 threads call
- * %end -- child_2 will be reaped by the first %join, and child_1 will
- * be reaped by the second %join.
  */
 bool of_END(vthread_t thr, vvp_code_t)
 {
@@ -2561,10 +2528,10 @@ bool of_END(vthread_t thr, vvp_code_t)
       if (thr->parent && thr->parent->i_am_joining) {
 	    vthread_t tmp = thr->parent;
 
-	      // Detect that the parent is waiting on an automatic
-	      // thread. Automatic threads must be reaped first. If
-	      // the parent is waiting on an auto (other than me) then
-	      // go into zombie state to be picked up later.
+	      // Detect that the parent is waiting on a task or function
+	      // thread. These threads must be reaped first. If the
+	      // parent is waiting on a task or function (other than me)
+	      // then go into zombie state to be picked up later.
 	    if (!test_joinable(tmp, thr))
 		  return false;
 
