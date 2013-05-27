@@ -2715,13 +2715,14 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
       child->parent = thr;
       thr->children.insert(child);
 
-      int child_type = cp->scope->get_type_code();
-      if ((child_type == vpiTask) || (child_type == vpiFunction))
+	/* If the child scope is not the same as the current scope,
+	   infer that this is a task or function call. */
+      if (cp->scope != thr->parent_scope)
 	    thr->task_func_children.insert(child);
 
 	/* If the new child was created to evaluate a function,
 	   run it immediately, then return to this thread. */
-      if (child_type == vpiFunction) {
+      if (cp->scope->get_type_code() == vpiFunction) {
 	    child->is_scheduled = 1;
 	    vthread_run(child);
             running_thread = thr;
