@@ -65,6 +65,8 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
       assert(scope);
       bool prefix_scope = false;
       bool recurse_flag = false;
+
+      ivl_assert(*li, ! path.empty());
       name_component_t path_tail = path.back();
       path.pop_back();
 

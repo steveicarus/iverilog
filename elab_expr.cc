@@ -2054,6 +2054,12 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
       perm_string method_name = peek_tail_name(use_path);
       use_path.pop_back();
 
+	// If there is no object to the left of the method name, then
+	// give up on the idea of looking for an object method.
+      if (use_path.empty()) {
+	    return 0;
+      }
+
       NetNet *net = 0;
       const NetExpr *par;
       NetEvent *eve;
