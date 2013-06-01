@@ -87,10 +87,21 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 	// fills in the context_map with local variables held by the scope.
       scope_->evaluate_function_find_locals(loc, context_map);
 
+      if (debug_eval_tree && statement_==0) {
+	    cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
+		 << "Function " << scope_path(scope_)
+		 << " has no statement?" << endl;
+      }
+
 	// Perform the evaluation. Note that if there were errors
 	// when compiling the function definition, we may not have
 	// a valid statement.
       bool flag = statement_ && statement_->evaluate_function(loc, context_map);
+
+      if (debug_eval_tree && !flag) {
+	    cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
+		 << "Cannot evaluate " << scope_path(scope_) << "." << endl;
+      }
 
 	// Extract the result...
       ptr = context_map.find(scope_->basename());

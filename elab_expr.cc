@@ -1923,6 +1923,23 @@ NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*ds
 
       bool need_const = NEED_CONST & flags;
 
+	// If this is a constant expression, it is possible that we
+	// are being elaborated before the function definition. If
+	// that's the case, try to elaborate the function as a const
+	// function.
+      if (need_const && ! def->proc()) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PECallFunction::elaborate_base_: "
+		       << "Try to elaborate " << scope_path(dscope)
+		       << " as constant function." << endl;
+	    }
+	    dscope->set_elab_stage(2);
+	    dscope->need_const_func(true);
+	    const PFunction*pfunc = dscope->func_pform();
+	    ivl_assert(*this, pfunc);
+	    pfunc->elaborate(des, dscope);
+      }
+
       unsigned parms_count = parms_.size();
       if ((parms_count == 1) && (parms_[0] == 0))
 	    parms_count = 0;
