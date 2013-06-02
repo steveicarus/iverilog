@@ -964,6 +964,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    vector<netrange_t> plist, nlist;
 	    /* If they exist get the port definition MSB and LSB */
 	    if (port_set_ && !port_.empty()) {
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PWire::elaborate_sig: "
+			     << "Evaluate ranges for port " << basename() << endl;
+		  }
 		  bad_range |= evaluate_ranges(des, scope, plist, port_);
 		  nlist = plist;
 		    /* An implicit port can have a range so note that here. */
@@ -974,9 +978,19 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    /* If they exist get the net/etc. definition MSB and LSB */
 	    if (net_set_ && !net_.empty() && !bad_range) {
 		  nlist.clear();
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PWire::elaborate_sig: "
+			     << "Evaluate ranges for net " << basename() << endl;
+		  }
 		  bad_range |= evaluate_ranges(des, scope, nlist, net_);
 	    }
             assert(net_set_ || net_.empty());
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PWire::elaborate_sig: "
+		       << "Calculated ranges for " << basename()
+		       << ". Now check for consistency." << endl;
+	    }
 
 	    /* If we find errors here, then give up on this signal. */
 	    if (bad_range)
