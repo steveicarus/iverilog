@@ -461,6 +461,10 @@ class ExpFunc : public Expression {
       ExpFunc(perm_string nn, std::list<Expression*>*args);
       ~ExpFunc();
 
+      inline perm_string func_name() const { return name_; }
+      inline size_t func_args() const { return argv_.size(); }
+      inline const Expression*func_arg(size_t idx) const { return argv_[idx]; }
+
     public: // Base methods
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       void write_to_stream(std::ostream&fd);
