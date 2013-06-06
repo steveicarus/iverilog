@@ -215,9 +215,15 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
       map<perm_string,LocalVar>::iterator ptr = context_map.find(lval->name());
       ivl_assert(*this, ptr != context_map.end());
 
+      LocalVar*var = & ptr->second;
+      while (var->nwords == -1) {
+	    assert(var->ref);
+	    var = var->ref;
+      }
+
       NetExpr*old_lval;
-      unsigned word = 0;
-      if (ptr->second.nwords > 0) {
+      int word = 0;
+      if (var->nwords > 0) {
 	    NetExpr*word_result = lval->word()->evaluate_function(loc, context_map);
 	    if (word_result == 0) {
 		  delete rval_result;
@@ -232,12 +238,13 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 
 	    word = word_const->value().as_long();
 
-	    if (word >= ptr->second.nwords)
+	    if (word >= var->nwords)
 		  return true;
 
-	    old_lval = ptr->second.array[word];
+	    old_lval = var->array[word];
       } else {
-	    old_lval = ptr->second.value;
+	    assert(var->nwords == 0);
+	    old_lval = var->value;
       }
 
       if (const NetExpr*base_expr = lval->get_base()) {
@@ -283,10 +290,12 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 		 << lval->name() << " = " << *rval_result << endl;
       }
 
-      if (ptr->second.nwords > 0)
-	    ptr->second.array[word] = rval_result;
-      else
-	    ptr->second.value = rval_result;
+      if (var->nwords > 0) {
+	    var->array[word] = rval_result;
+      } else {
+	    assert(var->nwords == 0);
+	    var->value = rval_result;
+      }
 
       return true;
 }
@@ -336,22 +345,57 @@ bool NetAssign::evaluate_function(const LineInfo&loc,
 bool NetBlock::evaluate_function(const LineInfo&loc,
 				 map<perm_string,LocalVar>&context_map) const
 {
+      if (last_ == 0) return true;
+
+	// If we need to make a local scope, then this context map
+	// will be filled in and used for statements within this block.
+      map<perm_string,LocalVar>local_context_map;
+      bool use_local_context_map = false;
+
+      if (subscope_!=0) {
+	      // First, copy the containing scope symbols into the new
+	      // scope as references.
+	    for (map<perm_string,LocalVar>::iterator cur = context_map.begin()
+		       ; cur != context_map.end() ; ++cur) {
+		  LocalVar&cur_var = local_context_map[cur->first];
+		  cur_var.nwords = -1;
+		  if (cur->second.nwords == -1)
+			cur_var.ref = cur->second.ref;
+		  else
+			cur_var.ref = &cur->second;
+	    }
+
+	      // Now collect the new locals.
+	    subscope_->evaluate_function_find_locals(loc, local_context_map);
+	    use_local_context_map = true;
+      }
+
+	// Now use the local context map if there is any local
+	// context, or the containing context map.
+      map<perm_string,LocalVar>&use_context_map = use_local_context_map? local_context_map : context_map;
+
       bool flag = true;
       NetProc*cur = last_;
-      if (cur == 0) return true;
-
       do {
 	    cur = cur->next_;
-	    bool cur_flag = cur->evaluate_function(loc, context_map);
+	    if (debug_eval_tree) {
+		  cerr << get_fileline() << ": NetBlock::evaluate_function: "
+		       << "Execute statement (" << typeid(*cur).name()
+		       << ") at " << cur->get_fileline() << "." << endl;
+	    }
+
+	    bool cur_flag = cur->evaluate_function(loc, use_context_map);
 	    flag = flag && cur_flag;
       } while (cur != last_ && !disable);
 
-      if (disable == subscope_) disable = 0;
-
       if (debug_eval_tree) {
 	    cerr << get_fileline() << ": NetBlock::evaluate_function: "
-		 << "flag=" << (flag?"true":"false") << endl;
+		 << "subscope_=" << subscope_
+		 << ", disable=" << disable
+		 << ", flag=" << (flag?"true":"false") << endl;
       }
+
+      if (disable == subscope_) disable = 0;
 
       return flag;
 }
@@ -731,8 +775,15 @@ NetExpr* NetESignal::evaluate_function(const LineInfo&loc,
 	    return 0;
       }
 
+	// Follow indirect references to the actual variable.
+      LocalVar*var = & ptr->second;
+      while (var->nwords == -1) {
+	    assert(var->ref);
+	    var = var->ref;
+      }
+
       NetExpr*value = 0;
-      if (ptr->second.nwords > 0) {
+      if (var->nwords > 0) {
 	    ivl_assert(loc, word_);
 	    NetExpr*word_result = word_->evaluate_function(loc, context_map);
 	    if (word_result == 0)
@@ -741,12 +792,12 @@ NetExpr* NetESignal::evaluate_function(const LineInfo&loc,
 	    NetEConst*word_const = dynamic_cast<NetEConst*>(word_result);
 	    ivl_assert(loc, word_const);
 
-	    unsigned word = word_const->value().as_long();
+	    int word = word_const->value().as_long();
 
-	    if (word_const->value().is_defined() && (word < ptr->second.nwords))
-		  value = ptr->second.array[word];
+	    if (word_const->value().is_defined() && (word < var->nwords))
+		  value = var->array[word];
       } else {
-	    value = ptr->second.value;
+	    value = var->value;
       }
 
       if (value == 0) {

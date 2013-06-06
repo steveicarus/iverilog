@@ -2793,14 +2793,6 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
       if (nscope->calls_sys_task())
 	    scope->calls_sys_task(true);
 
-      if (!wires.empty()) {
-	    if (scope->need_const_func()) {
-		  cerr << get_fileline() << ": sorry: Block variables inside "
-			 "a constant function are not yet supported." << endl;
-	    }
-	    scope->is_const_func(false);
-      }
-
       cur->set_line(*this);
       return cur;
 }
