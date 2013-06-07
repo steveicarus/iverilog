@@ -194,6 +194,9 @@ class ExpBinary : public Expression {
       void dump_operands(ostream&out, int indent = 0) const;
 
     private:
+      virtual const VType*resolve_operand_types_(const VType*t1, const VType*t2) const;
+
+    private:
       Expression*operand1_;
       Expression*operand2_;
 };
@@ -304,6 +307,9 @@ class ExpArithmetic : public ExpBinary {
       int emit(ostream&out, Entity*ent, Architecture*arc);
       virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
+
+    private:
+      const VType* resolve_operand_types_(const VType*t1, const VType*t2) const;
 
     private:
       fun_t fun_;

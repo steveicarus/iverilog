@@ -328,12 +328,20 @@ const VType* ExpBinary::probe_type(Entity*ent, Architecture*arc) const
       if (t1 == t2)
 	    return t1;
 
+      if (const VType*tb = resolve_operand_types_(t1, t2))
+	    return tb;
+
 	// FIXME: I should at this point try harder to find an
 	// operator that has the proper argument list and use this
 	// here, but for now we leave it for the back-end to figure out.
 #if 0
       cerr << get_fileline() << ": internal error: I don't know how to resolve types of generic binary expressions." << endl;
 #endif
+      return 0;
+}
+
+const VType*ExpBinary::resolve_operand_types_(const VType*t1, const VType*t2) const
+{
       return 0;
 }
 
@@ -489,6 +497,21 @@ int ExpArithmetic::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltyp
       ivl_assert(*this, ltype != 0);
       errors += elaborate_exprs(ent, arc, ltype);
       return errors;
+}
+
+const VType* ExpArithmetic::resolve_operand_types_(const VType*t1, const VType*t2) const
+{
+      while (const VTypeRange*tmp = dynamic_cast<const VTypeRange*> (t1))
+	    t1 = tmp->base_type();
+      while (const VTypeRange*tmp = dynamic_cast<const VTypeRange*> (t2))
+	    t2 = tmp->base_type();
+
+      if (t1->type_match(t2))
+	    return t1;
+      if (t2->type_match(t2))
+	    return t2;
+
+      return 0;
 }
 
 const VType* ExpAttribute::probe_type(Entity*ent, Architecture*arc) const

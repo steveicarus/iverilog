@@ -205,6 +205,10 @@ class VTypeRange : public VType {
       VTypeRange(const VType*base, int64_t max_val, int64_t min_val);
       ~VTypeRange();
 
+	// Get the type that is limited by the range.
+      inline const VType* base_type() const { return base_; }
+
+    public: // Virtual methods
       void write_to_stream(std::ostream&fd) const;
       int emit_def(std::ostream&out) const;
 

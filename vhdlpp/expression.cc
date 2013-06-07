@@ -40,7 +40,7 @@ Expression::~Expression()
 
 void Expression::set_type(const VType*typ)
 {
-      assert(type_ == 0);
+      assert(type_==0 || type_==typ);
       type_ = typ;
 }
 
