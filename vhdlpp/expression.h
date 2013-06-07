@@ -1,7 +1,8 @@
 #ifndef __expression_H
 #define __expression_H
 /*
- * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,6 +32,7 @@ class prange_t;
 class Entity;
 class Architecture;
 class ScopeBase;
+class Subprogram;
 class VType;
 class VTypeArray;
 class VTypePrimitive;
@@ -474,6 +476,7 @@ class ExpFunc : public Expression {
     private:
       perm_string name_;
       std::vector<Expression*> argv_;
+      Subprogram*def_;
 };
 
 class ExpInteger : public Expression {

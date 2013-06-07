@@ -21,6 +21,7 @@
 # include  "expression.h"
 # include  "vtype.h"
 # include  "architec.h"
+# include  "package.h"
 # include  "parse_types.h"
 # include  <typeinfo>
 # include  <iostream>
@@ -565,6 +566,17 @@ int ExpFunc::emit(ostream&out, Entity*ent, Architecture*arc)
 	    out << ")";
 
       } else {
+	      // If this function has an elaborated defintion, and if
+	      // that definition is in a package, then include the
+	      // package name as a scope qualifier. This assures that
+	      // the SV elaborator finds the correct VHDL elaborated
+	      // definition.
+	    if (def_) {
+		  const Package*pkg = dynamic_cast<const Package*> (def_->get_parent());
+		  if (pkg != 0)
+			out << "\\" << pkg->name() << " ::";
+	    }
+
 	    out << "\\" << name_ << " (";
 	    for (size_t idx = 0; idx < argv_.size() ; idx += 1) {
 		  if (idx > 0) out << ", ";

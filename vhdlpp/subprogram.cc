@@ -27,12 +27,18 @@ using namespace std;
 
 Subprogram::Subprogram(perm_string nam, list<InterfacePort*>*ports,
 		       const VType*return_type)
-: name_(nam), ports_(ports), return_type_(return_type), statements_(0)
+: name_(nam), parent_(0), ports_(ports), return_type_(return_type), statements_(0)
 {
 }
 
 Subprogram::~Subprogram()
 {
+}
+
+void Subprogram::set_parent(const ScopeBase*par)
+{
+      ivl_assert(*this, parent_ == 0);
+      parent_ = par;
 }
 
 void Subprogram::set_program_body(list<SequentialStmt*>*stmt)

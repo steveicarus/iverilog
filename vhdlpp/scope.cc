@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,6 +58,15 @@ ScopeBase::ScopeBase(const ActiveScope&ref)
 
     use_subprograms_ = ref.use_subprograms_;
     cur_subprograms_ = ref.cur_subprograms_;
+
+      // This constructor is invoked when the parser is finished with
+      // an active scope and is making the actual scope. At this point
+      // we know that "this" is the parent scope for the subprograms,
+      // so set it now.
+    for (map<perm_string,Subprogram*>::iterator cur = cur_subprograms_.begin()
+	       ; cur != cur_subprograms_.end() ;  ++ cur) {
+	  cur->second->set_parent(this);
+    }
 }
 
 ScopeBase::~ScopeBase()
@@ -148,7 +158,7 @@ Subprogram* ScopeBase::find_subprogram(perm_string name) const
 	    return cur->second;
 
       cur = use_subprograms_.find(name);
-      if (cur != use_subprograms_.find(name))
+      if (cur != use_subprograms_.end())
 	  return cur->second;
 
       return 0;

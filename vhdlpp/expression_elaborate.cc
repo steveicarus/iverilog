@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -636,6 +636,12 @@ int ExpConditional::else_t::elaborate_expr(Entity*ent, Architecture*arc, const V
 int ExpFunc::elaborate_expr(Entity*ent, Architecture*arc, const VType*)
 {
       int errors = 0;
+
+      ivl_assert(*this, arc);
+      Subprogram*prog = arc->find_subprogram(name_);
+
+      ivl_assert(*this, def_==0);
+      def_ = prog;
 
       for (size_t idx = 0 ; idx < argv_.size() ; idx += 1) {
 	    const VType*tmp = argv_[idx]->probe_type(ent, arc);

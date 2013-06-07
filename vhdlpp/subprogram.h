@@ -26,6 +26,7 @@
 # include  <list>
 
 class InterfacePort;
+class ScopeBase;
 class SequentialStmt;
 class VType;
 
@@ -35,6 +36,9 @@ class Subprogram : public LineInfo {
       Subprogram(perm_string name, std::list<InterfacePort*>*ports,
 		 const VType*return_type);
       ~Subprogram();
+
+      void set_parent(const ScopeBase*par);
+      inline const ScopeBase*get_parent() const { return parent_; }
 
       inline const perm_string&name() const { return name_; }
 
@@ -52,6 +56,7 @@ class Subprogram : public LineInfo {
 
     private:
       perm_string name_;
+      const ScopeBase*parent_;
       std::list<InterfacePort*>*ports_;
       const VType*return_type_;
       std::list<SequentialStmt*>*statements_;

@@ -1,7 +1,8 @@
 #ifndef __vtype_H
 #define __vtype_H
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -27,6 +28,8 @@
 # include  <inttypes.h>
 # include  "StringHeap.h"
 
+class Architecture;
+class Entity;
 class Expression;
 class prange_t;
 class VTypeDef;
@@ -44,6 +47,10 @@ class VType {
     public:
       VType() { }
       virtual ~VType() =0;
+
+	// This is rarely used, but some types may have expressions
+	// that need to be elaborated.
+      virtual int elaborate(Entity*end, Architecture*arc) const;
 
 	// This virtual method returns true if that is equivalent to
 	// this type. This method is used for example to compare
@@ -170,6 +177,7 @@ class VTypeArray : public VType {
       VTypeArray(const VType*etype, std::list<prange_t*>*r, bool signed_vector =false);
       ~VTypeArray();
 
+      int elaborate(Entity*ent, Architecture*arc) const;
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
 
