@@ -6,8 +6,8 @@
 %parse-param {perm_string parse_library_name}
 %{
 /*
- * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -674,6 +674,15 @@ composite_type_definition
 	delete $2;
 	$$ = tmp;
       }
+
+  /* unbounded_array_definition IEEE 1076-2008 P5.3.2.1 */
+  | K_array '(' index_subtype_definition_list ')' K_of subtype_indication
+      { sorrymsg(@1, "unbounded_array_definition not supported.\n");
+	std::list<prange_t*> r;
+	VTypeArray*tmp = new VTypeArray($6, &r);
+	$$ = tmp;
+      }
+
   | record_type_definition
       { $$ = $1; }
   ;
@@ -1340,6 +1349,16 @@ index_constraint
 	yyerrok;
 	$$ = new list<prange_t*>;
       }
+  ;
+
+  /* The identifier should be a type name */
+index_subtype_definition /* IEEE 1076-2008 P5.3.2.1 */
+  : IDENTIFIER K_range BOX
+  ;
+
+index_subtype_definition_list
+  : index_subtype_definition_list ',' index_subtype_definition
+  | index_subtype_definition
   ;
 
 instantiation_list
@@ -2189,12 +2208,13 @@ subtype_indication
 	delete[]$1;
 	$$ = tmp;
       }
-  | IDENTIFIER '(' simple_expression direction simple_expression ')'
-      { const VType*tmp = calculate_subtype_array(@1, $1, active_scope, $3, $4, $5);
+  | IDENTIFIER index_constraint
+      { const VType*tmp = calculate_subtype_array(@1, $1, active_scope, $2);
 	if (tmp == 0) {
 	      errormsg(@1, "Unable to calculate bounds for array of %s.\n", $1);
 	}
 	delete[]$1;
+	delete  $2;
 	$$ = tmp;
       }
   | IDENTIFIER K_range simple_expression direction simple_expression
@@ -2204,11 +2224,6 @@ subtype_indication
 	}
 	delete[]$1;
 	$$ = tmp;
-      }
-  | IDENTIFIER '(' error ')'
-      { errormsg(@1, "Syntax error in subtype indication.\n");
-	yyerrok;
-	$$ = new VTypeERROR;
       }
   ;
 

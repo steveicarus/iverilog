@@ -1,7 +1,8 @@
 #ifndef __parse_misc_H
 #define __parse_misc_H
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011,2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,6 +26,7 @@ class ActiveScope;
 class Architecture;
 class Expression;
 class Package;
+class prange_t;
 class ScopeBase;
 class VType;
 
@@ -33,9 +35,7 @@ extern void bind_architecture_to_entity(const char*ename, Architecture*arch);
 
 extern const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
 					    ScopeBase*scope,
-					    Expression*array_left,
-					    bool downto,
-					    Expression*array_right);
+					    std::list<prange_t*>*ranges);
 extern const VType* calculate_subtype_range(const YYLTYPE&loc, const char*base_name,
 					    ScopeBase*scope,
 					    Expression*range_left,

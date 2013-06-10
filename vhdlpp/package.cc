@@ -68,6 +68,12 @@ void Package::write_to_stream(ostream&fd) const
 
       for (map<perm_string,struct const_t*>::const_iterator cur = cur_constants_.begin()
 		 ; cur != cur_constants_.end() ; ++ cur) {
+	    if (cur->second==0 || cur->second->typ==0) {
+		  fd << "-- const " << cur->first
+		     << " has errors." << endl;
+		  continue;
+	    }
+
 	    fd << "constant " << cur->first << ": ";
 	    cur->second->typ->write_to_stream(fd);
 	    fd << " := ";
