@@ -233,6 +233,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
       std::list<prange_t*>*range_list;
 
       ExpArithmetic::fun_t arithmetic_op;
+      std::list<struct adding_term>*adding_terms;
 
       ExpAggregate::choice_t*choice;
       std::list<ExpAggregate::choice_t*>*choice_list;
@@ -287,6 +288,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <flag> direction
 
 %type <arithmetic_op> adding_operator
+%type <adding_terms> simple_expression_terms
 
 %type <interface_list> interface_element interface_list
 %type <interface_list> port_clause port_clause_opt
@@ -314,7 +316,7 @@ static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
 %type <expr> expression_logical_xnor expression_logical_xor
 %type <expr> name prefix selected_name
 %type <expr> shift_expression signal_declaration_assign_opt
-%type <expr> simple_expression term waveform_element
+%type <expr> simple_expression simple_expression_2 term waveform_element
 %type <expr> interface_element_expression
 
 %type <expr_list> waveform waveform_elements
@@ -1788,12 +1790,12 @@ procedure_call
     $$ = tmp;
       }
   | IDENTIFIER '(' error ')'
-      {
-    errormsg(@1, "Errors in procedure call.\n");
-    yyerrok;
-    delete[]$1;
-    $$ = 0;
-      };
+      { errormsg(@1, "Errors in procedure call.\n");
+	yyerrok;
+	delete[]$1;
+	$$ = 0;
+      }
+  ;
 
 procedure_call_statement
   : IDENTIFIER ':' procedure_call { $$ = $3; }
@@ -2067,6 +2069,11 @@ sequential_statement
 
 shift_expression : simple_expression { $$ = $1; } ;
 
+sign
+  : '+'
+  | '-'
+  ;
+
 signal_declaration_assign_opt
   : VASSIGN expression { $$ = $2; }
   |                    { $$ = 0;  }
@@ -2085,18 +2092,55 @@ signal_declaration_assign_opt
  * Note that although the concatenation operator '&' is syntactically
  * an addition operator, it is handled differently during elaboration
  * so detect it and create a different expression type.
+ *
+ * Note too that I'm using *right* recursion to implement the {...}
+ * part of the rule. This is normally bad, but expression lists aren't
+ * normally that long, and the while loop going through the formed
+ * list fixes up the associations.
  */
 simple_expression
+  : sign simple_expression_2
+      { sorrymsg(@1, "Unary expression +- not supported.\n");
+	$$ = $2;
+      }
+  | simple_expression_2
+      { $$ = $1; }
+  ;
+
+simple_expression_2
   : term
       { $$ = $1; }
-  | simple_expression adding_operator term
-      { Expression*tmp;
-	if ($2 == ExpArithmetic::xCONCAT) {
-	      tmp = new ExpConcat($1, $3);
-	} else {
-	      tmp = new ExpArithmetic($2, $1, $3);
+  | term simple_expression_terms
+      { Expression*tmp = $1;
+	list<struct adding_term>*lst = $2;
+	while (! lst->empty()) {
+	      struct adding_term item = lst->front();
+	      lst->pop_front();
+	      if (item.op == ExpArithmetic::xCONCAT)
+		    tmp = new ExpConcat(tmp, item.term);
+	      else
+		    tmp = new ExpArithmetic(item.op, tmp, item.term);
 	}
-	FILE_NAME(tmp, @2);
+	delete lst;
+	$$ = tmp;
+      }
+  ;
+
+simple_expression_terms
+  : adding_operator term
+      { struct adding_term item;
+	item.op = $1;
+	item.term = $2;
+	list<adding_term>*tmp = new list<adding_term>;
+	tmp->push_back(item);
+	$$ = tmp;
+      }
+  | simple_expression_terms adding_operator term
+      { list<adding_term>*tmp = $1;
+	struct adding_term item;
+	item.op = $2;
+	item.term = $3;
+	tmp->push_back(item);
 	$$ = tmp;
       }
   ;

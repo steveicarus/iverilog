@@ -90,4 +90,10 @@ class prange_t {
       prange_t(const prange_t&);
       prange_t operator=(const prange_t&);
 };
+
+struct adding_term {
+      ExpArithmetic::fun_t op;
+      Expression*term;
+};
+
 #endif
