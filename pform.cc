@@ -2508,6 +2508,11 @@ vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 					 true, 0, names);
       }
 
+      if (dynamic_cast<string_type_t*> (vtype)) {
+	    return pform_make_task_ports(loc, pt, IVL_VT_STRING,
+					 false, 0, names);
+      }
+
       if (class_type_t*class_type = dynamic_cast<class_type_t*> (vtype)) {
 	    return do_make_task_ports(loc, pt, IVL_VT_CLASS, class_type, names);
       }
