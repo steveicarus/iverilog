@@ -219,6 +219,7 @@ unsigned is_string_obj(vpiHandle obj)
       case vpiPartSelect:
       case vpiReg:
       case vpiTimeVar:
+      case vpiStringVar:
 	rtn = 1;
 	break;
     }
