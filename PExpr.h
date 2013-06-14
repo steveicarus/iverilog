@@ -1,7 +1,7 @@
 #ifndef __PExpr_H
 #define __PExpr_H
 /*
- * Copyright (c) 1998-2011 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2013 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -386,7 +386,7 @@ class PEIdent : public PExpr {
       bool elaborate_lval_net_part_(Design*, NetScope*, NetAssign_*) const;
       bool elaborate_lval_net_idx_(Design*, NetScope*, NetAssign_*,
                                    index_component_t::ctype_t,
-			 	   bool need_const_idx) const;
+				   bool need_const_idx) const;
       bool elaborate_lval_net_class_member_(Design*, NetScope*,
 					    NetAssign_*,
 					    const perm_string&) const;
