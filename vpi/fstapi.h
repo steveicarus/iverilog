@@ -151,6 +151,7 @@ void fstWriterSetRepackOnClose(void *ctx, int enable); 	/* type = 0 (none), 1 (l
 void fstWriterSetParallelMode(void *ctx, int enable);
 void fstWriterSetDumpSizeLimit(void *ctx, uint64_t numbytes);
 int fstWriterGetDumpSizeLimitReached(void *ctx);
+int fstWriterGetFseekFailed(void *ctx);
 
 void *fstWriterCreate(const char *nam, int use_compressed_hier);
 void fstWriterClose(void *ctx);
@@ -199,6 +200,7 @@ uint64_t fstReaderGetValueChangeSectionCount(void *ctx);
 int fstReaderGetDoubleEndianMatchState(void *ctx);
 const char *fstReaderGetVersionString(void *ctx);
 const char *fstReaderGetDateString(void *ctx);
+int fstReaderGetFseekFailed(void *ctx);
 
 void fstReaderSetLimitTimeRange(void *ctx, uint64_t start_time, uint64_t end_time);
 void fstReaderSetUnlimitedTimeRange(void *ctx);
