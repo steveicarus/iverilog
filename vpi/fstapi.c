@@ -531,7 +531,26 @@ size_t fst_break_add_size;
 size_t fst_huge_break_size;
 
 fstHandle next_huge_break;
+
+unsigned fseek_failed : 1;
 };
+
+
+static int fstWriterFseeko(struct fstWriterContext *xc, FILE *stream, off_t offset, int whence)
+{
+int rc = fseeko(stream, offset, whence);
+
+if(rc<0)
+	{
+	xc->fseek_failed = 1;
+#ifdef FST_DEBUG
+	fprintf(stderr, "Seek to #%"PRId64" (whence = %d) failed!\n", offset, whence);
+	perror("Why");
+#endif
+	}
+
+return(rc);
+}
 
 
 static uint32_t fstWriterUint32WithVarint32(struct fstWriterContext *xc, uint32_t *u, uint32_t v, const void *dbuf, uint32_t siz)
@@ -673,15 +692,15 @@ off_t curpos = ftello(xc->handle);
 fflush(xc->hier_handle);
 
 /* write out intermediate header */
-fseeko(xc->handle, FST_HDR_OFFS_START_TIME, SEEK_SET);
+fstWriterFseeko(xc, xc->handle, FST_HDR_OFFS_START_TIME, SEEK_SET);
 fstWriterUint64(xc->handle, xc->firsttime);
 fstWriterUint64(xc->handle, xc->curtime);
-fseeko(xc->handle, FST_HDR_OFFS_NUM_SCOPES, SEEK_SET);
+fstWriterFseeko(xc, xc->handle, FST_HDR_OFFS_NUM_SCOPES, SEEK_SET);
 fstWriterUint64(xc->handle, xc->numscopes);
 fstWriterUint64(xc->handle, xc->numsigs);
 fstWriterUint64(xc->handle, xc->maxhandle);
 fstWriterUint64(xc->handle, xc->secnum);
-fseeko(xc->handle, curpos, SEEK_SET);
+fstWriterFseeko(xc, xc->handle, curpos, SEEK_SET);
 fflush(xc->handle);
 
 /* do mappings */
@@ -1322,7 +1341,7 @@ fstWriterUint64(xc->handle, endpos-indxpos);		/* write delta index position at v
 /*emit time changes for block */
 fflush(xc->tchn_handle);
 tlen = ftello(xc->tchn_handle);
-fseeko(xc->tchn_handle, 0, SEEK_SET);
+fstWriterFseeko(xc, xc->tchn_handle, 0, SEEK_SET);
 
 tmem = fstMmap(NULL, tlen, PROT_READ|PROT_WRITE, MAP_SHARED, fileno(xc->tchn_handle), 0);
 if(tmem)
@@ -1348,19 +1367,19 @@ if(tmem)
 	}
 
 xc->tchn_cnt = xc->tchn_idx = 0;
-fseeko(xc->tchn_handle, 0, SEEK_SET);
+fstWriterFseeko(xc, xc->tchn_handle, 0, SEEK_SET);
 fstFtruncate(fileno(xc->tchn_handle), 0);
 
 /* write block trailer */
 endpos = ftello(xc->handle);
-fseeko(xc->handle, xc->section_start, SEEK_SET);
+fstWriterFseeko(xc, xc->handle, xc->section_start, SEEK_SET);
 fstWriterUint64(xc->handle, endpos - xc->section_start); 	/* write block length */
-fseeko(xc->handle, 8, SEEK_CUR);				/* skip begin time */
+fstWriterFseeko(xc, xc->handle, 8, SEEK_CUR);				/* skip begin time */
 fstWriterUint64(xc->handle, xc->curtime); 			/* write end time for section */
 fstWriterUint64(xc->handle, unc_memreq);			/* amount of buffer memory required in reader for full traversal */
 fflush(xc->handle);
 
-fseeko(xc->handle, xc->section_start-1, SEEK_SET);		/* write out FST_BL_VCDATA over FST_BL_SKIP */
+fstWriterFseeko(xc, xc->handle, xc->section_start-1, SEEK_SET);		/* write out FST_BL_VCDATA over FST_BL_SKIP */
 
 #ifndef FST_DYNAMIC_ALIAS_DISABLE
 fputc(FST_BL_VCDATA_DYN_ALIAS, xc->handle);
@@ -1370,7 +1389,7 @@ fputc(FST_BL_VCDATA, xc->handle);
 
 fflush(xc->handle);
 
-fseeko(xc->handle, endpos, SEEK_SET);				/* seek to end of file */
+fstWriterFseeko(xc, xc->handle, endpos, SEEK_SET);				/* seek to end of file */
 
 xc2->section_header_truncpos = endpos;				/* cache in case of need to truncate */
 if(xc->dump_size_limit)
@@ -1454,7 +1473,7 @@ if(xc->parallel_enabled)
 
 	xc->tchn_cnt = xc->tchn_idx = 0;
 	xc->tchn_handle = tmpfile();
-	fseeko(xc->tchn_handle, 0, SEEK_SET);
+	fstWriterFseeko(xc, xc->tchn_handle, 0, SEEK_SET);
 	fstFtruncate(fileno(xc->tchn_handle), 0);
 
 	xc->section_header_only = 0;
@@ -1520,7 +1539,7 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 	if(xc->section_header_only && xc->section_header_truncpos && (xc->vchg_siz <= 1) && (!xc->is_initial_time))
 		{
 		fstFtruncate(fileno(xc->handle), xc->section_header_truncpos);
-		fseeko(xc->handle, xc->section_header_truncpos, SEEK_SET);
+		fstWriterFseeko(xc, xc->handle, xc->section_header_truncpos, SEEK_SET);
 		xc->section_header_only = 0;
 		}
 		else
@@ -1571,10 +1590,10 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 		fstFwrite((destlen != tlen) ? dmem : tmem, destlen, 1, xc->handle);
 		fflush(xc->handle);
 
-		fseeko(xc->handle, fixup_offs, SEEK_SET);
+		fstWriterFseeko(xc, xc->handle, fixup_offs, SEEK_SET);
 		fputc(FST_BL_GEOM, xc->handle);			/* actual tag */
 
-		fseeko(xc->handle, 0, SEEK_END);		/* move file pointer to end for any section adds */
+		fstWriterFseeko(xc, xc->handle, 0, SEEK_END);		/* move file pointer to end for any section adds */
 		fflush(xc->handle);
 
 		free(dmem);
@@ -1604,14 +1623,14 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 			}
 
 		eos = ftello(xc->handle);
-		fseeko(xc->handle, bpos, SEEK_SET);
+		fstWriterFseeko(xc, xc->handle, bpos, SEEK_SET);
 		fstWriterUint64(xc->handle, eos - bpos);		
 		fflush(xc->handle);
 
-		fseeko(xc->handle, fixup_offs, SEEK_SET);
+		fstWriterFseeko(xc, xc->handle, fixup_offs, SEEK_SET);
 		fputc(FST_BL_BLACKOUT, xc->handle);	/* actual tag */
 
-		fseeko(xc->handle, 0, SEEK_END);	/* move file pointer to end for any section adds */
+		fstWriterFseeko(xc, xc->handle, 0, SEEK_END);	/* move file pointer to end for any section adds */
 		fflush(xc->handle);
 		}
 
@@ -1636,7 +1655,7 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 		zhandle = gzdopen(zfd, "wb4");
 		if(zhandle)
 			{
-			fseeko(xc->hier_handle, 0, SEEK_SET);
+			fstWriterFseeko(xc, xc->hier_handle, 0, SEEK_SET);
 			for(hl = 0; hl < xc->hier_file_len; hl += FST_GZIO_LEN)
 				{
 				unsigned len = ((xc->hier_file_len - hl) > FST_GZIO_LEN) ? FST_GZIO_LEN : (xc->hier_file_len - hl);
@@ -1651,16 +1670,16 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 			}
 		free(mem);
 
-		fseeko(xc->handle, 0, SEEK_END);
+		fstWriterFseeko(xc, xc->handle, 0, SEEK_END);
 		eos = ftello(xc->handle);
-		fseeko(xc->handle, hlen, SEEK_SET);
+		fstWriterFseeko(xc, xc->handle, hlen, SEEK_SET);
 		fstWriterUint64(xc->handle, eos - hlen);
 		fflush(xc->handle);
 
-		fseeko(xc->handle, fixup_offs, SEEK_SET);
+		fstWriterFseeko(xc, xc->handle, fixup_offs, SEEK_SET);
 		fputc(FST_BL_HIER, xc->handle);		/* actual tag */
 
-		fseeko(xc->handle, 0, SEEK_END);	/* move file pointer to end for any section adds */
+		fstWriterFseeko(xc, xc->handle, 0, SEEK_END);	/* move file pointer to end for any section adds */
 		fflush(xc->handle);
 
 #ifndef __MINGW32__
@@ -1671,10 +1690,10 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 		}
 
 	/* finalize out header */
-	fseeko(xc->handle, FST_HDR_OFFS_START_TIME, SEEK_SET);
+	fstWriterFseeko(xc, xc->handle, FST_HDR_OFFS_START_TIME, SEEK_SET);
 	fstWriterUint64(xc->handle, xc->firsttime);
 	fstWriterUint64(xc->handle, xc->curtime);
-	fseeko(xc->handle, FST_HDR_OFFS_NUM_SCOPES, SEEK_SET);
+	fstWriterFseeko(xc, xc->handle, FST_HDR_OFFS_NUM_SCOPES, SEEK_SET);
 	fstWriterUint64(xc->handle, xc->numscopes);
 	fstWriterUint64(xc->handle, xc->numsigs);
 	fstWriterUint64(xc->handle, xc->maxhandle);
@@ -1706,7 +1725,7 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 				int zfd;
 				char gz_membuf[FST_GZIO_LEN];
 
-				fseeko(xc->handle, 0, SEEK_END);
+				fstWriterFseeko(xc, xc->handle, 0, SEEK_END);
 				uclen = ftello(xc->handle);
 
 				fputc(FST_BL_ZWRAPPER, fp);
@@ -1714,7 +1733,7 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 				fstWriterUint64(fp, uclen);
 				fflush(fp);
 
-				fseeko(xc->handle, 0, SEEK_SET);
+				fstWriterFseeko(xc, xc->handle, 0, SEEK_SET);
 				zfd = dup(fileno(fp));
 				dsth = gzdopen(zfd, "wb4");
 				if(dsth)
@@ -1731,9 +1750,9 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 					{
 					close(zfd);
 					}
-				fseeko(fp, 0, SEEK_END);
+				fstWriterFseeko(xc, fp, 0, SEEK_END);
 				offpnt = ftello(fp);
-				fseeko(fp, 1, SEEK_SET);
+				fstWriterFseeko(xc, fp, 1, SEEK_SET);
 				fstWriterUint64(fp, offpnt - 1);
 				fclose(fp);
 				fclose(xc->handle); xc->handle = NULL; 
@@ -1794,12 +1813,12 @@ if(xc)
 	off_t fpos = ftello(xc->handle);
 	int len = strlen(dat);
 
-	fseeko(xc->handle, FST_HDR_OFFS_DATE, SEEK_SET);
+	fstWriterFseeko(xc, xc->handle, FST_HDR_OFFS_DATE, SEEK_SET);
 	memset(s, 0, FST_HDR_DATE_SIZE);
 	memcpy(s, dat, (len < FST_HDR_DATE_SIZE) ? len : FST_HDR_DATE_SIZE);
 	fstFwrite(s, FST_HDR_DATE_SIZE, 1, xc->handle);
 	fflush(xc->handle);
-	fseeko(xc->handle, fpos, SEEK_SET);
+	fstWriterFseeko(xc, xc->handle, fpos, SEEK_SET);
 	}
 }
 
@@ -1813,12 +1832,12 @@ if(xc && vers)
 	off_t fpos = ftello(xc->handle);
 	int len = strlen(vers);
 
-	fseeko(xc->handle, FST_HDR_OFFS_SIM_VERSION, SEEK_SET);
+	fstWriterFseeko(xc, xc->handle, FST_HDR_OFFS_SIM_VERSION, SEEK_SET);
 	memset(s, 0, FST_HDR_SIM_VERSION_SIZE);
 	memcpy(s, vers, (len < FST_HDR_SIM_VERSION_SIZE) ? len : FST_HDR_SIM_VERSION_SIZE);
 	fstFwrite(s, FST_HDR_SIM_VERSION_SIZE, 1, xc->handle);
 	fflush(xc->handle);
-	fseeko(xc->handle, fpos, SEEK_SET);
+	fstWriterFseeko(xc, xc->handle, fpos, SEEK_SET);
 	}
 }
 
@@ -1829,10 +1848,10 @@ struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
 if(xc)
         {
 	off_t fpos = ftello(xc->handle);
-	fseeko(xc->handle, FST_HDR_OFFS_TIMESCALE, SEEK_SET);
+	fstWriterFseeko(xc, xc->handle, FST_HDR_OFFS_TIMESCALE, SEEK_SET);
 	fputc(ts & 255, xc->handle);
 	fflush(xc->handle);
-	fseeko(xc->handle, fpos, SEEK_SET);
+	fstWriterFseeko(xc, xc->handle, fpos, SEEK_SET);
 	}
 }
 
@@ -1887,10 +1906,10 @@ struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
 if(xc)
         {
 	off_t fpos = ftello(xc->handle);
-	fseeko(xc->handle, FST_HDR_OFFS_TIMEZERO, SEEK_SET);
+	fstWriterFseeko(xc, xc->handle, FST_HDR_OFFS_TIMEZERO, SEEK_SET);
 	fstWriterUint64(xc->handle, (xc->timezero = tim));
 	fflush(xc->handle);
-	fseeko(xc->handle, fpos, SEEK_SET);
+	fstWriterFseeko(xc, xc->handle, fpos, SEEK_SET);
 	}
 }
 
@@ -1949,6 +1968,18 @@ struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
 if(xc)
         {
         return(xc->size_limit_locked != 0);
+        }
+
+return(0);
+}
+
+
+int fstWriterGetFseekFailed(void *ctx)
+{
+struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+if(xc)
+        {
+        return(xc->fseek_failed != 0);
         }
 
 return(0);
@@ -2445,7 +2476,25 @@ unsigned do_rewind : 1;
 char str_scope_nam[FST_ID_NAM_SIZ+1];
 char str_scope_comp[FST_ID_NAM_SIZ+1];
 
+unsigned fseek_failed : 1;
 };
+
+
+int fstReaderFseeko(struct fstReaderContext *xc, FILE *stream, off_t offset, int whence)
+{
+int rc = fseeko(stream, offset, whence);
+
+if(rc<0)
+	{
+	xc->fseek_failed = 1;
+#ifdef FST_DEBUG
+	fprintf(stderr, "Seek to #%"PRId64" (whence = %d) failed!\n", offset, whence);
+	perror("Why");
+#endif
+	}
+
+return(rc);
+}
 
 
 /*
@@ -2570,6 +2619,18 @@ if(xc && xc->curr_hier)
 	{
 	return(xc->curr_hier->len);
 	}
+
+return(0);
+}
+
+
+int fstReaderGetFseekFailed(void *ctx)
+{
+struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
+if(xc)
+        {
+        return(xc->fseek_failed != 0);
+        }
 
 return(0);
 }
@@ -2886,7 +2947,7 @@ if(!xc->fh)
 	int zfd;
 
 	sprintf(fnam, "%s.hier_%d_%p", xc->filename, getpid(), (void *)xc);
-	fseeko(xc->f, xc->hier_pos, SEEK_SET);
+	fstReaderFseeko(xc, xc->f, xc->hier_pos, SEEK_SET);
 	uclen = fstReaderUint64(xc->f);
 	fflush(xc->f);
 	zfd = dup(fileno(xc->f));
@@ -2940,7 +3001,7 @@ if(!xc->fh)
 	free(mem);
 	free(fnam);
 
-	fseeko(xc->f, offs_cache, SEEK_SET);
+	fstReaderFseeko(xc, xc->f, offs_cache, SEEK_SET);
 	}
 
 return(pass_status);
@@ -2989,7 +3050,7 @@ if(xc->do_rewind)
 	{
 	xc->do_rewind = 0;
 	xc->current_handle = 0;
-	fseeko(xc->fh, 0, SEEK_SET);
+	fstReaderFseeko(xc, xc->fh, 0, SEEK_SET);
 	clearerr(xc->fh);
 	}
 
@@ -3168,7 +3229,7 @@ xc->signal_lens = malloc(num_signal_dyn*sizeof(uint32_t));
 free(xc->signal_typs);
 xc->signal_typs = malloc(num_signal_dyn*sizeof(unsigned char));
 
-fseeko(xc->fh, 0, SEEK_SET);
+fstReaderFseeko(xc, xc->fh, 0, SEEK_SET);
 while(!feof(xc->fh))
 	{
 	int tag = fgetc(xc->fh);
@@ -3347,7 +3408,7 @@ if(sectype == FST_BL_ZWRAPPER)
 		}
 #endif
 
-	fseeko(xc->f, 1+8+8, SEEK_SET);
+	fstReaderFseeko(xc, xc->f, 1+8+8, SEEK_SET);
 	fflush(xc->f);
 
 	zfd = dup(fileno(xc->f));
@@ -3385,12 +3446,12 @@ if(sectype == FST_BL_ZWRAPPER)
 
 if(gzread_pass_status)
 	{
-	fseeko(xc->f, 0, SEEK_END);
+	fstReaderFseeko(xc, xc->f, 0, SEEK_END);
 	endfile = ftello(xc->f);
 
 	while(blkpos < endfile)
 		{
-		fseeko(xc->f, blkpos, SEEK_SET);
+		fstReaderFseeko(xc, xc->f, blkpos, SEEK_SET);
 		
 		sectype = fgetc(xc->f);
 		seclen = fstReaderUint64(xc->f);
@@ -3763,7 +3824,7 @@ for(;;)
 	uint32_t *tc_head = NULL;
 	traversal_mem_offs = 0;
 
-	fseeko(xc->f, blkpos, SEEK_SET);
+	fstReaderFseeko(xc, xc->f, blkpos, SEEK_SET);
 	
 	sectype = fgetc(xc->f);
 	seclen = fstReaderUint64(xc->f);
@@ -3825,7 +3886,7 @@ for(;;)
 	uint64_t tpval;
 	int ti;
 
-	if(fseeko(xc->f, blkpos + seclen - 24, SEEK_SET) != 0) break;
+	if(fstReaderFseeko(xc, xc->f, blkpos + seclen - 24, SEEK_SET) != 0) break;
 	tsec_uclen = fstReaderUint64(xc->f);
 	tsec_clen = fstReaderUint64(xc->f);
 	tsec_nitems = fstReaderUint64(xc->f);
@@ -3839,7 +3900,7 @@ for(;;)
 	destlen = tsec_uclen;
 	sourcelen = tsec_clen;
 
-	fseeko(xc->f, -24 - ((off_t)tsec_clen), SEEK_CUR);
+	fstReaderFseeko(xc, xc->f, -24 - ((off_t)tsec_clen), SEEK_CUR);
 
 	if(tsec_uclen != tsec_clen)
 		{
@@ -3877,7 +3938,7 @@ for(;;)
 	free(ucdata);
 	}
 
-	fseeko(xc->f, blkpos+32, SEEK_SET);
+	fstReaderFseeko(xc, xc->f, blkpos+32, SEEK_SET);
 
 	frame_uclen = fstReaderVarint64(xc->f);
 	frame_clen = fstReaderVarint64(xc->f);
@@ -4060,11 +4121,11 @@ for(;;)
 				}
 
 			free(mu);
-			fseeko(xc->f, -((off_t)frame_clen), SEEK_CUR);
+			fstReaderFseeko(xc, xc->f, -((off_t)frame_clen), SEEK_CUR);
 			}
 		}
 
-	fseeko(xc->f, (off_t)frame_clen, SEEK_CUR); /* skip past compressed data */
+	fstReaderFseeko(xc, xc->f, (off_t)frame_clen, SEEK_CUR); /* skip past compressed data */
 
 	vc_maxhandle = fstReaderVarint64(xc->f);
 	vc_start = ftello(xc->f);	/* points to '!' character */
@@ -4077,7 +4138,7 @@ for(;;)
 #endif
 
 	indx_pntr = blkpos + seclen - 24 -tsec_clen -8;
-	fseeko(xc->f, indx_pntr, SEEK_SET);
+	fstReaderFseeko(xc, xc->f, indx_pntr, SEEK_SET);
 	chain_clen = fstReaderUint64(xc->f);
 	indx_pos = indx_pntr - chain_clen;
 #ifdef FST_DEBUG
@@ -4085,7 +4146,7 @@ for(;;)
 #endif
 	chain_cmem = malloc(chain_clen);
 	if(!chain_cmem) goto block_err;
-	fseeko(xc->f, indx_pos, SEEK_SET);
+	fstReaderFseeko(xc, xc->f, indx_pos, SEEK_SET);
 	fstFread(chain_cmem, chain_clen, 1, xc->f);
 	
 	if(vc_maxhandle > vc_maxhandle_largest)
@@ -4172,7 +4233,7 @@ for(;;)
 				uint32_t skiplen;
 				uint32_t tdelta;
 	
-				fseeko(xc->f, vc_start + chain_table[i], SEEK_SET);
+				fstReaderFseeko(xc, xc->f, vc_start + chain_table[i], SEEK_SET);
 				val = fstReaderVarint32WithSkip(xc->f, &skiplen);
 				if(val)
 					{
@@ -4679,7 +4740,7 @@ xc->rvat_chain_pos_valid = 0;
 
 for(;;)
 	{
-	fseeko(xc->f, (prev_blkpos = blkpos), SEEK_SET);
+	fstReaderFseeko(xc, xc->f, (prev_blkpos = blkpos), SEEK_SET);
 
 	sectype = fgetc(xc->f);
 	seclen = fstReaderUint64(xc->f);
@@ -4704,7 +4765,7 @@ for(;;)
 		if((tim == end_tim) && (tim != xc->end_time))
 			{
 			off_t cached_pos = ftello(xc->f);
-			fseeko(xc->f, blkpos, SEEK_SET);
+			fstReaderFseeko(xc, xc->f, blkpos, SEEK_SET);
 
 			sectype = fgetc(xc->f);
 			seclen = fstReaderUint64(xc->f);
@@ -4719,7 +4780,7 @@ for(;;)
 				}
 			beg_tim = beg_tim2;
 			end_tim = end_tim2;
-			fseeko(xc->f, cached_pos, SEEK_SET);
+			fstReaderFseeko(xc, xc->f, cached_pos, SEEK_SET);
 			}
 		break;
 		}
@@ -4753,7 +4814,7 @@ unsigned char *tpnt;
 uint64_t tpval;
 int ti;
 
-fseeko(xc->f, blkpos + seclen - 24, SEEK_SET);
+fstReaderFseeko(xc, xc->f, blkpos + seclen - 24, SEEK_SET);
 tsec_uclen = fstReaderUint64(xc->f);
 tsec_clen = fstReaderUint64(xc->f);
 tsec_nitems = fstReaderUint64(xc->f);
@@ -4765,7 +4826,7 @@ ucdata = malloc(tsec_uclen);
 destlen = tsec_uclen;
 sourcelen = tsec_clen;
 	
-fseeko(xc->f, -24 - ((off_t)tsec_clen), SEEK_CUR);
+fstReaderFseeko(xc, xc->f, -24 - ((off_t)tsec_clen), SEEK_CUR);
 if(tsec_uclen != tsec_clen)
 	{
 	cdata = malloc(tsec_clen);
@@ -4800,7 +4861,7 @@ for(ti=0;ti<tsec_nitems;ti++)
 free(ucdata);
 }
 
-fseeko(xc->f, blkpos+32, SEEK_SET);
+fstReaderFseeko(xc, xc->f, blkpos+32, SEEK_SET);
 
 frame_uclen = fstReaderVarint64(xc->f);
 frame_clen = fstReaderVarint64(xc->f);
@@ -4839,14 +4900,14 @@ printf("\tvc_maxhandle: %d\n", (int)xc->rvat_vc_maxhandle);
 #endif
 
 indx_pntr = blkpos + seclen - 24 -tsec_clen -8;
-fseeko(xc->f, indx_pntr, SEEK_SET);
+fstReaderFseeko(xc, xc->f, indx_pntr, SEEK_SET);
 chain_clen = fstReaderUint64(xc->f);
 indx_pos = indx_pntr - chain_clen;
 #ifdef FST_DEBUG
 printf("\tindx_pos: %d (%d bytes)\n", (int)indx_pos, (int)chain_clen);
 #endif
 chain_cmem = malloc(chain_clen);
-fseeko(xc->f, indx_pos, SEEK_SET);
+fstReaderFseeko(xc, xc->f, indx_pos, SEEK_SET);
 fstFread(chain_cmem, chain_clen, 1, xc->f);
 	
 xc->rvat_chain_table = calloc((xc->rvat_vc_maxhandle+1), sizeof(off_t));
@@ -4941,7 +5002,7 @@ if(facidx != xc->rvat_chain_facidx)
 if(!xc->rvat_chain_mem)
 	{
 	uint32_t skiplen;
-	fseeko(xc->f, xc->rvat_vc_start + xc->rvat_chain_table[facidx], SEEK_SET);
+	fstReaderFseeko(xc, xc->f, xc->rvat_vc_start + xc->rvat_chain_table[facidx], SEEK_SET);
 	xc->rvat_chain_len = fstReaderVarint32WithSkip(xc->f, &skiplen);
 	if(xc->rvat_chain_len)
 		{
