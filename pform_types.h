@@ -27,6 +27,7 @@
 # include  "ivl_target.h"
 # include  <iostream>
 # include  <list>
+# include  <vector>
 # include  <map>
 # include  <memory>
 
@@ -37,6 +38,7 @@
 class Design;
 class NetScope;
 class PExpr;
+class Statement;
 class ivl_type_s;
 typedef named<verinum> named_number_t;
 typedef named<PExpr*> named_pexpr_t;
@@ -212,9 +214,17 @@ struct class_type_t : public data_type_t {
       : name(n) { }
 
       void pform_dump(std::ostream&out, unsigned indent) const;
+      void pform_dump_init(std::ostream&out, unsigned indent) const;
 
+	// This is the name of the class type.
       perm_string name;
+	// This is a map of the properties. Map the name to the type.
       std::map<perm_string, data_type_t*> properties;
+
+	// This is an ordered list of property initializers. The name
+	// is the name of the property to be assigned, and the val is
+	// the expression that is assigned.
+      std::vector<Statement*> initialize;
 
       ivl_type_s* elaborate_type(Design*, NetScope*) const;
 };

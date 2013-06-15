@@ -181,7 +181,17 @@ void class_type_t::pform_dump(ostream&out, unsigned indent) const
 		 ; cur != properties.end() ; ++cur) {
 	    out << " " << cur->first;
       }
+
       out << " }" << endl;
+}
+
+void class_type_t::pform_dump_init(ostream&out, unsigned indent) const
+{
+      for (vector<Statement*>::const_iterator cur = initialize.begin()
+		 ; cur != initialize.end() ; ++cur) {
+	    Statement*curp = *cur;
+	    curp->dump(out,indent+4);
+      }
 }
 
 void struct_member_t::pform_dump(ostream&out, unsigned indent) const
@@ -1315,6 +1325,7 @@ void PClass::dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << "class " << type->name << ";" << endl;
       type->pform_dump(out, indent+2);
+      type->pform_dump_init(out, indent+2);
       dump_tasks_(out, indent+2);
       dump_funcs_(out, indent+2);
       out << setw(indent) << "" << "endclass" << endl;

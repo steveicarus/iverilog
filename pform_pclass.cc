@@ -64,11 +64,15 @@ void pform_class_property(const struct vlltype&loc,
 		  use_type = new uarray_type_t(use_type, pd);
 	    }
 
-	    if (curp->expr.get()) {
-		  VLerror(loc, "sorry: Initialization expressions for properties not implemented.");
-	    }
-
 	    pform_cur_class->type->properties[curp->name] = use_type;
+
+	    if (PExpr*rval = curp->expr.release()) {
+		  PExpr*lval = new PEIdent(curp->name);
+		  FILE_NAME(lval, loc);
+		  PAssign*tmp = new PAssign(lval, rval);
+		  FILE_NAME(tmp, loc);
+		  pform_cur_class->type->initialize.push_back(tmp);
+	    }
       }
 }
 
