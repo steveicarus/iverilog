@@ -111,9 +111,29 @@ PFunction*pform_push_constructor_scope(const struct vlltype&loc)
       return func;
 }
 
-void pform_end_class_declaration(void)
+void pform_end_class_declaration(const struct vlltype&loc)
 {
       assert(pform_cur_class);
+
+	// If there were initializer statements, then collect them
+	// into an implicit constructor function.
+      if (! pform_cur_class->type->initialize.empty()) {
+	    PFunction*func = pform_push_function_scope(loc, "new@", true);
+	    func->set_ports(0);
+	    pform_set_constructor_return(func);
+	    pform_set_this_class(loc, func);
+
+	    class_type_t*use_class = pform_cur_class->type;
+	    if (use_class->initialize.size() == 1) {
+		  func->set_statement(use_class->initialize.front());
+	    } else {
+		  PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+		  tmp->set_statement(use_class->initialize);
+		  func->set_statement(tmp);
+	    }
+	    pform_pop_scope();
+      }
+
       pform_cur_class = 0;
       pform_pop_scope();
 }

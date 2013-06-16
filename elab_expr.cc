@@ -4464,13 +4464,35 @@ unsigned PENewClass::test_width(Design*, NetScope*, width_mode_t&)
 NetExpr* PENewClass::elaborate_expr(Design*des, NetScope*scope,
 				    ivl_type_t ntype, unsigned) const
 {
-      NetENew*obj = new NetENew(ntype);
+      NetExpr*obj = new NetENew(ntype);
       obj->set_line(*this);
 
 	// Find the constructor for the class. If there is no
 	// constructor then the result of this expression is the
 	// allocation alone.
       const netclass_t*ctype = dynamic_cast<const netclass_t*> (ntype);
+
+	// If there is an initializer function, then pass the object
+	// through that function first. Note tha the initializer
+	// function has no arguments other then the object itself.
+      if (NetScope*new1_scope = ctype->method_from_name(perm_string::literal("new@"))) {
+	    NetFuncDef*def1 = new1_scope->func_def();
+	    ivl_assert(*this, def1);
+	    ivl_assert(*this, def1->port_count()==1);
+	    vector<NetExpr*> parms1 (1);
+	    parms1[0] = obj;
+
+	      // The return value of the initializer is the "this"
+	      // variable, instead of the "new&" scope name.
+	    NetNet*res1 = new1_scope->find_signal(perm_string::literal("@"));
+	    ivl_assert(*this, res1);
+
+	    NetESignal*eres = new NetESignal(res1);
+	    NetEUFunc*tmp = new NetEUFunc(scope, new1_scope, eres, parms1, true);
+	    tmp->set_line(*this);
+	    obj = tmp;
+      }
+
       NetScope*new_scope = ctype->method_from_name(perm_string::literal("new"));
       if (new_scope == 0) {
 	      // No constructor.

@@ -538,7 +538,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
       elaborate_sig_wires_(des, scope);
 
       NetNet*ret_sig;
-      if (gn_system_verilog() && fname == "new") {
+      if (gn_system_verilog() && fname=="new" || fname=="new@") {
 	      // Special case: this is a constructor, so the return
 	      // signal is also the first argument. For example, the
 	      // source code for the definition may be:

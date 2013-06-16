@@ -304,12 +304,6 @@ static void elaborate_scope_class(Design*des, NetScope*scope,
 		 << "Elaborate scope class " << pclass->pscope_name() << endl;
       }
 
-      if (! use_type->initialize.empty()) {
-	    cerr << pclass->get_fileline() << ": sorry: "
-		 << "Class property initializers not supported." << endl;
-	    des->errors += 1;
-      }
-
 	// Class scopes have no parent scope, because references are
 	// not allowed to escape a class method.
       NetScope*class_scope = new NetScope(0, hname_t(pclass->pscope_name()),

@@ -673,7 +673,7 @@ class_declaration /* IEEE1800-2005: A.1.2 */
       }
     class_items_opt K_endclass
       { // Process a class.
-	pform_end_class_declaration();
+	pform_end_class_declaration(@8);
       }
     class_declaration_endlabel_opt
       { // Wrap up the class.
