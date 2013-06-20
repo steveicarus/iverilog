@@ -769,7 +769,7 @@ class_item /* IEEE1800-2005: A.1.8 */
       { current_function->set_ports($6);
 	pform_set_constructor_return(current_function);
 	pform_set_this_class(@3, current_function);
-	current_function_set_statement($10? @10 : @3, $10);
+	current_function_set_statement(@3, $10);
 	pform_pop_scope();
 	current_function = 0;
       }
