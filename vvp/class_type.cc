@@ -166,6 +166,31 @@ class property_bit : public class_property_t {
       size_t wid_;
 };
 
+class property_logic : public class_property_t {
+    public:
+      inline property_logic(size_t wid): wid_(wid) { }
+      ~property_logic() { }
+
+      size_t instance_size() const { return sizeof(vvp_vector4_t); }
+
+    public:
+      void construct(char*buf) const
+      { new (buf+offset_) vvp_vector4_t (0, wid_); }
+
+      void destruct(char*buf) const
+      { vvp_vector4_t*tmp = reinterpret_cast<vvp_vector4_t*>(buf+offset_);
+	tmp->~vvp_vector4_t();
+      }
+
+      void set_vec4(char*buf, const vvp_vector4_t&val);
+      void get_vec4(char*buf, vvp_vector4_t&val);
+
+      void copy(char*dst, char*src);
+
+    private:
+      size_t wid_;
+};
+
 template <class T> class property_real : public class_property_t {
     public:
       inline explicit property_real(void) { }
@@ -278,6 +303,25 @@ void property_bit::copy(char*dst, char*src)
       *dst_obj = *src_obj;
 }
 
+void property_logic::set_vec4(char*buf, const vvp_vector4_t&val)
+{
+      vvp_vector4_t*obj = reinterpret_cast<vvp_vector4_t*> (buf+offset_);
+      *obj = val;
+}
+
+void property_logic::get_vec4(char*buf, vvp_vector4_t&val)
+{
+      vvp_vector4_t*obj = reinterpret_cast<vvp_vector4_t*> (buf+offset_);
+      val = *obj;
+}
+
+void property_logic::copy(char*dst, char*src)
+{
+      vvp_vector4_t*dst_obj = reinterpret_cast<vvp_vector4_t*> (dst+offset_);
+      vvp_vector4_t*src_obj = reinterpret_cast<vvp_vector4_t*> (src+offset_);
+      *dst_obj = *src_obj;
+}
+
 template <class T> void property_real<T>::set_real(char*buf, double val)
 {
       T*tmp = reinterpret_cast<T*>(buf+offset_);
@@ -373,6 +417,9 @@ void class_type::set_property(size_t idx, const string&name, const string&type)
       else if (type[0] == 'b') {
 	    size_t wid = strtoul(type.c_str()+1, 0, 0);
 	    properties_[idx].type = new property_bit(wid);
+      } else if (type[0] == 'L') {
+	    size_t wid = strtoul(type.c_str()+1,0,0);
+	    properties_[idx].type = new property_logic(wid);
       } else {
 	    properties_[idx].type = 0;
       }
