@@ -21,6 +21,7 @@
 
 # include  "Statement.h"
 # include  "PExpr.h"
+# include  "ivl_assert.h"
 
 Statement::~Statement()
 {
@@ -124,6 +125,17 @@ void PBlock::set_join_type(PBlock::BL_TYPE type)
 void PBlock::set_statement(const vector<Statement*>&st)
 {
       list_ = st;
+}
+
+void PBlock::push_statement_front(Statement*that)
+{
+      ivl_assert(*this, bl_type_==BL_SEQ);
+
+      list_.resize(list_.size()+1);
+      for (size_t idx = list_.size()-1 ; idx > 0 ; idx -= 1)
+	    list_[idx] = list_[idx-1];
+
+      list_[0] = that;
 }
 
 PCallTask::PCallTask(const pform_name_t&n, const list<PExpr*>&p)

@@ -186,6 +186,10 @@ class PBlock  : public PScope, public Statement {
 
       void set_statement(const std::vector<Statement*>&st);
 
+	// Copy the statement from that block to the front of this
+	// block.
+      void push_statement_front(Statement*that);
+
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
