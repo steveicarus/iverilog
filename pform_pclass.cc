@@ -64,7 +64,8 @@ void pform_class_property(const struct vlltype&loc,
 		  use_type = new uarray_type_t(use_type, pd);
 	    }
 
-	    pform_cur_class->type->properties[curp->name] = use_type;
+	    pform_cur_class->type->properties[curp->name]
+		  = class_type_t::prop_info_t(property_qual,use_type);
 
 	    if (PExpr*rval = curp->expr.release()) {
 		  PExpr*lval = new PEIdent(curp->name);

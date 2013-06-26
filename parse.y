@@ -832,9 +832,9 @@ class_item /* IEEE1800-2005: A.1.8 */
   ;
 
 class_item_qualifier /* IEEE1800-2005 A.1.8 */
-  : K_static     { $$ = property_qualifier_t::set_static(); }
-  | K_protected  { $$ = property_qualifier_t::set_protected(); }
-  | K_local      { $$ = property_qualifier_t::set_local(); }
+  : K_static     { $$ = property_qualifier_t::make_static(); }
+  | K_protected  { $$ = property_qualifier_t::make_protected(); }
+  | K_local      { $$ = property_qualifier_t::make_local(); }
   ;
 
 class_new /* IEEE1800-2005 A.2.4 */
@@ -1493,7 +1493,7 @@ property_qualifier /* IEEE1800-2005 A.1.8 */
 
 property_qualifier_opt /* IEEE1800-2005 A.1.8: ... { property_qualifier } */
   : property_qualifier_list { $$ = $1; }
-  | { $$ = property_qualifier_t::set_none(); }
+  | { $$ = property_qualifier_t::make_none(); }
   ;
 
 property_qualifier_list /* IEEE1800-2005 A.1.8 */
@@ -1502,8 +1502,8 @@ property_qualifier_list /* IEEE1800-2005 A.1.8 */
   ;
 
 random_qualifier /* IEEE1800-2005 A.1.8 */
-  : K_rand { $$ = property_qualifier_t::set_rand(); }
-  | K_randc { $$ = property_qualifier_t::set_randc(); }
+  : K_rand { $$ = property_qualifier_t::make_rand(); }
+  | K_randc { $$ = property_qualifier_t::make_randc(); }
   ;
 
   /* real and realtime are exactly the same so save some code

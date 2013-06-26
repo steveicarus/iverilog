@@ -96,9 +96,9 @@ unsigned NetAssign_::lwidth() const
 	    if (member_.nil())
 		  return 1;
 
-	    const ivl_type_s*ptype = class_type->get_property(member_);
-	    ivl_assert(*sig_, ptype);
-
+	    int pidx = class_type->property_idx_from_name(member_);
+	    ivl_assert(*sig_, pidx >= 0);
+	    ivl_type_t ptype = class_type->get_prop_type(pidx);
 	    return ptype->packed_width();
       }
 
@@ -118,7 +118,9 @@ ivl_variable_type_t NetAssign_::expr_type() const
 	    if (member_.nil())
 		  return sig_->data_type();
 
-	    const ivl_type_s*tmp = class_type->get_property(member_);
+	    int pidx = class_type->property_idx_from_name(member_);
+	    ivl_assert(*sig_, pidx >= 0);
+	    ivl_type_t tmp = class_type->get_prop_type(pidx);
 	    return tmp->base_type();
       }
 
@@ -138,8 +140,9 @@ const ivl_type_s* NetAssign_::net_type() const
 	    if (member_.nil())
 		  return sig_->net_type();
 
-	    const ivl_type_s*tmp = class_type->get_property(member_);
-	    ivl_assert(*sig_, tmp);
+	    int pidx = class_type->property_idx_from_name(member_);
+	    ivl_assert(*sig_, pidx >= 0);
+	    ivl_type_t tmp = class_type->get_prop_type(pidx);
 	    return tmp;
       }
 

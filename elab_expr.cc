@@ -1135,7 +1135,11 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 		  }
 
 		  const netclass_t* class_type = net->class_type();
-		  member_type = class_type->get_property(member_name);
+		  int midx = class_type->property_idx_from_name(member_name);
+		  if (midx >= 0)
+			member_type = class_type->get_prop_type(midx);
+		  else
+			member_type = 0;
 		  use_path = tmp_path;
 
 		  use_darray = dynamic_cast<const netdarray_t*> (member_type);
@@ -1756,19 +1760,35 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 }
 
 static NetExpr* check_for_class_property(const LineInfo*li,
-					 Design*des, NetScope*,
+					 Design*des, NetScope*scope,
 					 NetNet*net,
 					 const name_component_t&comp)
 {
       const netclass_t*class_type = net->class_type();
-      const ivl_type_s*ptype = class_type->get_property(comp.name);
-
-      if (ptype == 0) {
+      int pidx = class_type->property_idx_from_name(comp.name);
+      if (pidx < 0) {
 	    cerr << li->get_fileline() << ": error: "
 		 << "Class " << class_type->get_name()
 		 << " has no property " << comp.name << "." << endl;
 	    des->errors += 1;
 	    return 0;
+      }
+
+      if (debug_elaborate) {
+	    cerr << li->get_fileline() << ": check_for_class_property: "
+		 << "Property " << comp.name
+		 << " of net " << net->name()
+		 << ", context scope=" << scope_path(scope)
+		 << endl;
+      }
+
+      property_qualifier_t qual = class_type->get_prop_qual(pidx);
+      if (qual.test_local() && ! class_type->test_scope_is_method(scope)) {
+	    cerr << li->get_fileline() << ": error: "
+		 << "Local property " << class_type->get_prop_name(pidx)
+		 << " is not accessible in this context."
+		 << " (scope=" << scope_path(scope) << ")" << endl;
+	    des->errors += 1;
       }
 
       NetEProperty*tmp = new NetEProperty(net, comp.name);
@@ -2715,8 +2735,9 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 		  }
 
 		  if (const netclass_t*class_type = net->class_type()) {
-			const ivl_type_s*ptype = class_type->get_property(method_name);
-			if (ptype) {
+			int pidx = class_type->property_idx_from_name(method_name);
+			if (pidx >= 0) {
+			      ivl_type_t ptype = class_type->get_prop_type(pidx);
 			      expr_type_   = ptype->base_type();
 			      expr_width_  = ptype->packed_width();
 			      min_width_   = expr_width_;
@@ -2823,7 +2844,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
  * not a method, or the name is not in the parent class, then
  * fail. Otherwise, return a NetEProperty.
  */
-NetExpr* PEIdent::elaborate_expr_class_member_(Design*, NetScope*scope,
+NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
 					       unsigned, unsigned) const
 {
       if (!gn_system_verilog())
@@ -2854,7 +2875,17 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*, NetScope*scope,
 	    cerr << get_fileline() << ": PEIdent::elaborate_expr_class_member: "
 		 << "Found member " << member_name
 		 << " is a member of class " << class_type->get_name()
+		 << ", context scope=" << scope_path(scope)
 		 << ", so synthesizing a NetEProperty." << endl;
+      }
+
+      property_qualifier_t qual = class_type->get_prop_qual(pidx);
+      if (qual.test_local() && ! class_type->test_scope_is_method(scope)) {
+	    cerr << get_fileline() << ": error: "
+		 << "Local property " << class_type->get_prop_name(pidx)
+		 << " is not accessible in this context."
+		 << " (scope=" << scope_path(scope) << ")" << endl;
+	    des->errors += 1;
       }
 
       NetEProperty*tmp = new NetEProperty(this_net, member_name);

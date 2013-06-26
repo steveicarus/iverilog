@@ -32,7 +32,7 @@ netclass_t::~netclass_t()
 {
 }
 
-bool netclass_t::set_property(perm_string pname, ivl_type_s*ptype)
+bool netclass_t::set_property(perm_string pname, property_qualifier_t qual, ivl_type_s*ptype)
 {
       map<perm_string,size_t>::const_iterator cur;
       cur = properties_.find(pname);
@@ -41,6 +41,7 @@ bool netclass_t::set_property(perm_string pname, ivl_type_s*ptype)
 
       prop_t tmp;
       tmp.name = pname;
+      tmp.qual = qual;
       tmp.type = ptype;
       property_table_.push_back(tmp);
 
@@ -59,17 +60,6 @@ ivl_variable_type_t netclass_t::base_type() const
       return IVL_VT_CLASS;
 }
 
-const ivl_type_s* netclass_t::get_property(perm_string pname) const
-{
-      map<perm_string,size_t>::const_iterator cur;
-      cur = properties_.find(pname);
-      if (cur == properties_.end())
-	    return 0;
-
-      assert(property_table_.size() > cur->second);
-      return property_table_[cur->second].type;
-}
-
 int netclass_t::property_idx_from_name(perm_string pname) const
 {
       map<perm_string,size_t>::const_iterator cur;
@@ -86,6 +76,12 @@ const char*netclass_t::get_prop_name(size_t idx) const
       return property_table_[idx].name;
 }
 
+property_qualifier_t netclass_t::get_prop_qual(size_t idx) const
+{
+      assert(idx < property_table_.size());
+      return property_table_[idx].qual;
+}
+
 ivl_type_t netclass_t::get_prop_type(size_t idx) const
 {
       assert(idx < property_table_.size());
@@ -98,4 +94,16 @@ NetScope*netclass_t::method_from_name(perm_string name) const
       if (task == 0) return 0;
       return task;
 
+}
+
+bool netclass_t::test_scope_is_method(const NetScope*scope) const
+{
+      while (scope && scope != class_scope_) {
+	    scope = scope->parent();
+      }
+
+      if (scope == 0)
+	    return false;
+      else
+	    return true;
 }

@@ -316,7 +316,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       return lv;
 }
 
-NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*,
+NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
 							 NetScope*scope) const
 {
       if (!gn_system_verilog())
@@ -812,7 +812,7 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       return true;
 }
 
-bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*,
+bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope,
 					       NetAssign_*lv,
 					       const perm_string&method_name) const
 {
@@ -827,16 +827,26 @@ bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*,
 
 	/* Make sure the property is really present in the class. If
 	   not, then generate an error message and return an error. */
-      ivl_type_t ptype = class_type->get_property(method_name);
-      if (ptype == 0) {
+      int pidx = class_type->property_idx_from_name(method_name);
+      if (pidx < 0) {
 	    cerr << get_fileline() << ": error: Class " << class_type->get_name()
 		 << " does not have a property " << method_name << "." << endl;
 	    des->errors += 1;
 	    return false;
       }
 
+      property_qualifier_t qual = class_type->get_prop_qual(pidx);
+      if (qual.test_local() && ! class_type->test_scope_is_method(scope)) {
+	    cerr << get_fileline() << ": error: "
+		 << "Local property " << class_type->get_prop_name(pidx)
+		 << " is not accessible (l-value) in this context."
+		 << " (scope=" << scope_path(scope) << ")" << endl;
+	    des->errors += 1;
+      }
+
       lv->set_property(method_name);
 
+      ivl_type_t ptype = class_type->get_prop_type(pidx);
       const netdarray_t*mtype = dynamic_cast<const netdarray_t*> (ptype);
       if (mtype) {
 	    const name_component_t&name_tail = path_.back();

@@ -177,7 +177,7 @@ void class_type_t::pform_dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << "class " << name << " {";
 
-      for (map<perm_string,data_type_t*>::const_iterator cur = properties.begin()
+      for (map<perm_string,prop_info_t>::const_iterator cur = properties.begin()
 		 ; cur != properties.end() ; ++cur) {
 	    out << " " << cur->first;
       }
