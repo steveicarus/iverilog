@@ -361,6 +361,15 @@ static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
 {
       unsigned idx;
       assert(wid > 0);
+	/* If it was not already given, note that a down index part select will
+	 * require the -pallowsigned=1 flag to get the index values correct if
+	 * the select expression is not signed. */
+      if ((! allow_signed ) && (sel_type == IVL_SEL_IDX_DOWN) &&
+          (! ivl_expr_signed(sel_expr))) {
+	    fprintf(stderr, "%s:%u: vlog95 note: Translating a down indexed "
+	                    "part select requires the -pallowsigned=1 flag.\n",
+	                    ivl_expr_file(sel_expr), ivl_expr_lineno(sel_expr));
+      }
       fprintf(vlog_out, "{");
       if (msb >= lsb) {
 	    if (sel_type == IVL_SEL_IDX_DOWN) {
@@ -423,6 +432,66 @@ static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
       }
 }
 
+static void check_select_signed(ivl_expr_t sig_expr, ivl_expr_t sel_expr,
+                                int msb, int lsb)
+{
+      char msg[64];
+      snprintf(msg, sizeof(msg), "%s:%u",
+                                 ivl_expr_file(sel_expr),
+                                 ivl_expr_lineno(sel_expr));
+      msg[sizeof(msg)-1] = 0;
+
+// HERE:  These first two can be fixed if the compiler is enhanced to pass
+//	  the original sign information for the base expression.
+
+	/* If the element has a MSB that is greater than the LSB and the LSB
+	 * is greater than zero the compiler created a signed expression to
+	 * normalize the access. This normalization will be removed, but we
+	 * cannot currently determine if the base expression started out
+	 * signed or not so any extra $signed() operators will need to be
+	 * removed manually. */
+      if ((msb > lsb) && (lsb > 0)) {
+	    fprintf(stderr, "%s: vlog95 sorry: The translation of a non-zero "
+	                    "based select with MSB > LSB is not smart enough "
+	                    "to remove extra $signed() operators.\n", msg);
+	    fprintf(stderr, "%*s               Any extra $signed() operators "
+	                    "will need to be removed manually.\n",
+                            (int)strlen(msg), " ");
+	    vlog_errors += 1;
+
+	/* If the element is not a parameter and the LSB > MSB then the cast
+	 * to signed ($signed()) from the normalization precess  may need to
+	 * be removed. If the select expression is a constant number then
+	 * this is not needed. */
+      } else if ((lsb > msb) && (ivl_expr_type(sig_expr) != IVL_EX_NUMBER) &&
+                 (ivl_expr_type(sel_expr) != IVL_EX_NUMBER)) {
+	    fprintf(stderr, "%s: vlog95 sorry: The translation of a select "
+	                    "with LSB > MSB is not smart enough to remove "
+	                    "extra $signed() operators.\n", msg);
+	    fprintf(stderr, "%*s               Any extra $signed() operators "
+	                    "will need to be removed manually.\n",
+                            (int)strlen(msg), " ");
+	    vlog_errors += 1;
+
+	/* Parameters are translated with normalization so for some of them
+	 * the -pallowsigned=1 flag is required to get the selection
+	 * expression 100% correct. */
+      } else if ((! allow_signed) &&
+                 (ivl_expr_type(sig_expr) == IVL_EX_NUMBER)) {
+	    int plsb, pmsb;
+// HERE: Need to get the compiler to pass the MSB and LSB for the parameter
+//       before this test will work correctly. The name code already finds
+//       the parameter so this code needs to use that information.
+	    plsb = lsb;
+	    pmsb = msb;
+	    if (plsb > pmsb) {
+		  fprintf(stderr, "%s: vlog95 note: Translating a LSB > "
+		                  "MSB parameter select requires the "
+		                  "-pallowsigned=1 flag.\n", msg);
+	    }
+      }
+}
+
 static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_expr_t sel_expr = ivl_expr_oper2(expr);
@@ -463,6 +532,7 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 		  if (width == 1) {
 			emit_select_name(scope, sig_expr, wid);
 			fprintf(vlog_out, "[");
+			check_select_signed(sig_expr, sel_expr, msb, lsb);
 			emit_scaled_expr(scope, sel_expr, msb, lsb);
 			fprintf(vlog_out, "]");
 		  } else if (ivl_expr_type(sel_expr) == IVL_EX_NUMBER) {
@@ -661,8 +731,214 @@ void emit_class_property(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       fprintf(vlog_out, ".%s", ivl_expr_name(expr));
 }
 
+/*
+ * Data type used to signify if a $signed or $unsigned should be emitted.
+ */
+typedef enum expr_sign_e {
+      NO_SIGN = 0,
+      NEED_SIGNED = 1,
+      NEED_UNSIGNED = 2
+} expr_sign_t;
+
+static expr_sign_t get_binary_sign_type(ivl_expr_t expr)
+{
+      ivl_expr_t expr1, expr2;
+      int opr_sign = 0;
+      int expr_sign = ivl_expr_signed(expr);
+      expr_sign_t rtn = NO_SIGN;
+
+      switch (ivl_expr_opcode(expr)) {
+	case 'E':
+	case 'e':
+	case 'N':
+	case 'n':
+	case '<':
+	case 'L':
+	case '>':
+	case 'G':
+	      /* The comparison operators always act as if the argument is
+	       * unsigned. */
+	    break;
+	case 'l':
+	case 'r':
+	case 'R':
+	      /* For the shift operators only the left operand is used to
+	       * determine the sign information. */
+	    opr_sign = ivl_expr_signed(ivl_expr_oper1(expr));
+	    break;
+	default:
+	      /* For the rest of the opcodes the operator is considered to
+	       * be signed if either argument is real or if both arguments
+	       * are signed. */
+	    expr1 = ivl_expr_oper1(expr);
+	    expr2 = ivl_expr_oper2(expr);
+	    if ((ivl_expr_value(expr1) == IVL_VT_REAL)  ||
+	        (ivl_expr_value(expr2) == IVL_VT_REAL)) {
+		  opr_sign = 1;
+	    } else if (ivl_expr_signed(expr1) && ivl_expr_signed(expr2)) {
+		  opr_sign = 1;
+	    }
+	    break;
+      }
+
+	/* Check to see if a $signed() or $unsigned() are needed. */
+      if (expr_sign && ! opr_sign) rtn = NEED_SIGNED;
+      if (! expr_sign && opr_sign) rtn = NEED_UNSIGNED;
+
+      return rtn;
+}
+
+static expr_sign_t get_select_sign_type(ivl_expr_t expr)
+{
+      int opr_sign = 0;
+      int expr_sign = ivl_expr_signed(expr);
+      expr_sign_t rtn = NO_SIGN;
+
+	/* If there is no select expression then the sign is determined by
+	 * the expression that is being selected (padded). */
+      if (! ivl_expr_oper2(expr)) {
+	    opr_sign = ivl_expr_signed(ivl_expr_oper1(expr));
+      }
+
+	/* Check to see if a $signed() or $unsigned() are needed. */
+      if (expr_sign && ! opr_sign) rtn = NEED_SIGNED;
+// HERE: Check to see why this causes problem and add it back in.
+//      if (! expr_sign && opr_sign) rtn = NEED_UNSIGNED;
+
+      return rtn;
+}
+
+static expr_sign_t get_unary_sign_type(ivl_expr_t expr)
+{
+      ivl_expr_t expr1;
+      int opr_sign = 0;
+      int expr_sign = ivl_expr_signed(expr);
+      expr_sign_t rtn = NO_SIGN;
+
+      switch (ivl_expr_opcode(expr)) {
+	case '&':
+	case '|':
+	case '^':
+	case 'A':
+	case 'N':
+	case 'X':
+	      /* The reduction operators always act as if the argument is
+	       * unsigned. */
+	    break;
+	case 'r':
+	      /* For a cast to real the expression should be signed and no
+	       * sign conversion is needed. */
+	    opr_sign = expr_sign;
+	    if (! expr_sign)  {
+		  fprintf(stderr, "%s:%u: vlog95 error: Cast to real "
+		                  "expression is not signed.\n",
+		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
+		  vlog_errors += 1;
+	    }
+	    break;
+	case '2':
+	case 'v':
+	      /* If the cast to a vector value is from a real then no sign
+	       * conversion is needed. Otherwise use the actual argument. */
+	    expr1 = ivl_expr_oper1(expr);
+	    if (ivl_expr_value(expr1) == IVL_VT_REAL) {
+		  opr_sign = expr_sign;
+	    } else {
+		  opr_sign = ivl_expr_signed(expr1);
+	    }
+	    break;
+	default:
+	      /* For the rest of the opcodes the argument sign type depends
+	       * on the actual argument. */
+	    opr_sign = ivl_expr_signed(ivl_expr_oper1(expr));
+	    break;
+      }
+
+	/* Check to see if a $signed() or $unsigned() are needed. */
+      if (expr_sign && ! opr_sign) rtn = NEED_SIGNED;
+      if (! expr_sign && opr_sign) rtn = NEED_UNSIGNED;
+
+      return rtn;
+}
+
+expr_sign_t get_sign_type(ivl_expr_t expr)
+{
+      expr_sign_t rtn = NO_SIGN;
+
+      switch (ivl_expr_type(expr)) {
+	case IVL_EX_ARRAY:
+	    break;
+	case IVL_EX_BINARY:
+	    rtn = get_binary_sign_type(expr);
+	    break;
+	case IVL_EX_CONCAT:
+	      /* A concatenation is always unsigned so add a $signed() when
+	       * needed. */
+	    if (ivl_expr_signed(expr)) rtn = NEED_SIGNED;
+	    break;
+	case IVL_EX_NUMBER:
+	    break;
+	case IVL_EX_PROPERTY:
+	    break;
+	case IVL_EX_REALNUM:
+	    break;
+	case IVL_EX_SCOPE:
+	    break;
+	case IVL_EX_SELECT:
+	    rtn = get_select_sign_type(expr);
+	    break;
+	case IVL_EX_SFUNC:
+	    break;
+	case IVL_EX_SIGNAL:
+	    break;
+	case IVL_EX_STRING:
+	    break;
+	case IVL_EX_TERNARY:
+	    break;
+	case IVL_EX_UFUNC:
+	    break;
+	case IVL_EX_UNARY:
+	    rtn = get_unary_sign_type(expr);
+	    break;
+	  /* These do not have/need sign casting information. */
+	case IVL_EX_DELAY:
+	case IVL_EX_ENUMTYPE:
+	case IVL_EX_EVENT:
+	case IVL_EX_NEW:
+	case IVL_EX_NULL:
+	case IVL_EX_SHALLOWCOPY:
+// HERE: Do the array, property, real number or string belong here as well?
+	default:
+	    break;
+      }
+      return rtn;
+}
+
 void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
+      expr_sign_t sign_type = get_sign_type(expr);
+
+	/* Check to see if a $signed() or $unsigned() needs to be emitted
+	 * before the expression. */
+      if (sign_type == NEED_SIGNED) {
+	    fprintf(vlog_out, "$signed(");
+	    if (! allow_signed) {
+		  fprintf(stderr, "%s:%u: vlog95 error: $signed() is not "
+		                  "supported.\n",
+		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
+		  vlog_errors += 1;
+	    }
+      }
+      if (sign_type == NEED_UNSIGNED) {
+	    fprintf(vlog_out, "$unsigned(");
+	    if (! allow_signed) {
+		  fprintf(stderr, "%s:%u: vlog95 error: $unsigned() is not "
+		                  "supported.\n",
+		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
+		  vlog_errors += 1;
+	    }
+      }
+	/* Emit the expression. */
       switch (ivl_expr_type(expr)) {
 	case IVL_EX_ARRAY:
 	    emit_expr_array(scope, expr, wid);
@@ -759,4 +1035,6 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    vlog_errors += 1;
 	    break;
       }
+	/* Close the $signed() or $unsigned() if need. */
+      if (sign_type != NO_SIGN) fprintf(vlog_out, ")");
 }
