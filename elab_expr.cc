@@ -3798,6 +3798,7 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 	    xxx->set_line(*this);
 	    return xxx;
       }
+      canon_index->set_line(*this);
 
       NetESignal*res = new NetESignal(net, canon_index);
       res->set_line(*this);

@@ -4047,6 +4047,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
       if (expr->expr_width() > 1) {
 	    assert(expr->expr_width() > 1);
 	    NetEUReduce*cmp = new NetEUReduce('|', expr);
+	    cmp->set_line(*pe);
 	    expr = cmp;
       }
 
@@ -4094,6 +4095,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	   wait. */
       assert(expr->expr_width() == 1);
       expr = new NetEBComp('N', expr, new NetEConst(verinum(verinum::V1)));
+      expr->set_line(*pe);
       eval_expr(expr);
 
       NetEvent*wait_event = new NetEvent(scope->local_symbol());

@@ -422,6 +422,7 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 	// Ensure invalid array accesses are ignored.
       if (canon_index == 0)
 	    canon_index = new NetEConst(verinum(verinum::Vx));
+      canon_index->set_line(*this);
 
       NetAssign_*lv = new NetAssign_(reg);
       lv->set_word(canon_index);
