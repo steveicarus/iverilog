@@ -48,7 +48,7 @@ static unsigned emit_power_as_shift(ivl_scope_t scope, ivl_expr_t expr,
       if (value % 2) return 0;
 	/* Generate the appropriate conversion. */
       if (ivl_expr_signed(rval)) {
-	    emit_expr(scope, rval, 0);
+	    emit_expr(scope, rval, 0, 0);
 	    fprintf(vlog_out, " < 0 ? %u'h0 : (", expr_wid);
 	    is_signed_rval = 1;
       }
@@ -63,7 +63,7 @@ static unsigned emit_power_as_shift(ivl_scope_t scope, ivl_expr_t expr,
 	    }
 	    fprintf(vlog_out, " * ");
       }
-      emit_expr(scope, rval, 0);
+      emit_expr(scope, rval, 0, 0);
       if (scale != 1) fprintf(vlog_out, ")");
       if (is_signed_rval) fprintf(vlog_out, ")");
       return 1;
@@ -79,6 +79,11 @@ static void emit_expr_array(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       char *oper = "<invalid>";
+      ivl_expr_t oper1 = ivl_expr_oper1(expr);
+      ivl_expr_t oper2 = ivl_expr_oper2(expr);
+      unsigned can_skip_unsigned = ! ivl_expr_signed(oper1) ||
+                                   ! ivl_expr_signed(oper2);
+
       switch (ivl_expr_opcode(expr)) {
 	case '+': oper = "+"; break;
 	case '-': oper = "-"; break;
@@ -134,15 +139,15 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case '|':
 	case '^':
 	case 'X':
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    emit_expr(scope, oper1, wid, can_skip_unsigned);
 	    fprintf(vlog_out, " %s ", oper);
-	    emit_expr(scope, ivl_expr_oper2(expr), wid);
+	    emit_expr(scope, oper2, wid, can_skip_unsigned);
 	    break;
 	case 'a':
 	case 'o':
-	    emit_expr(scope, ivl_expr_oper1(expr), 0);
+	    emit_expr(scope, oper1, 0, can_skip_unsigned);
 	    fprintf(vlog_out, " %s ", oper);
-	    emit_expr(scope, ivl_expr_oper2(expr), 0);
+	    emit_expr(scope, oper2, 0, can_skip_unsigned);
 	    break;
 	case 'R':
 	    if (! allow_signed) {
@@ -153,23 +158,23 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    }
 	case 'l':
 	case 'r':
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    emit_expr(scope, oper1, wid, 0);
 	    fprintf(vlog_out, " %s ", oper);
-	    emit_expr(scope, ivl_expr_oper2(expr), 0);
+	    emit_expr(scope, oper2, 0, 0);
 	    break;
 	case 'A':
 	case 'O':
 	    fprintf(vlog_out, "~(");
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    emit_expr(scope, oper1, wid, can_skip_unsigned);
 	    fprintf(vlog_out, " %s ", oper);
-	    emit_expr(scope, ivl_expr_oper2(expr), wid);
+	    emit_expr(scope, oper2, wid, can_skip_unsigned);
 	    fprintf(vlog_out, ")");
 	    break;
 	case 'p':
 	    if (! emit_power_as_shift(scope, expr, wid)) {
-		  emit_expr(scope, ivl_expr_oper1(expr), wid);
+		  emit_expr(scope, oper1, wid, can_skip_unsigned);
 		  fprintf(vlog_out, " ** ");
-		  emit_expr(scope, ivl_expr_oper2(expr), 0);
+		  emit_expr(scope, oper2, 0, can_skip_unsigned);
 		  fprintf(stderr, "%s:%u: vlog95 error: Power operator is not "
 		                  "supported.\n",
 		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
@@ -183,27 +188,27 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 		    /* For a real expression use the $min()/$max() function. */
 		  if (ivl_expr_opcode(expr) == 'm') fprintf(vlog_out, "$min(");
 		  else fprintf(vlog_out, "$max(");
-		  emit_expr(scope, ivl_expr_oper1(expr), wid);
+		  emit_expr(scope, oper1, wid, 0);
 		  fprintf(vlog_out, ",");
-		  emit_expr(scope, ivl_expr_oper2(expr), wid);
+		  emit_expr(scope, oper2, wid, 0);
 		  fprintf(vlog_out, ")");
 	    } else {
 		    /* This only works when the argument has no side effect. */
 		  fprintf(vlog_out, "((");
-		  emit_expr(scope, ivl_expr_oper1(expr), wid);
+		  emit_expr(scope, oper1, wid, 0);
 		  fprintf(vlog_out, ") %s (", oper);
-		  emit_expr(scope, ivl_expr_oper2(expr), wid);
+		  emit_expr(scope, oper2, wid, 0);
 		  fprintf(vlog_out, ") ? (");
-		  emit_expr(scope, ivl_expr_oper1(expr), wid);
+		  emit_expr(scope, oper1, wid, 0);
 		  fprintf(vlog_out, ") : (");
-		  emit_expr(scope, ivl_expr_oper2(expr), wid);
+		  emit_expr(scope, oper2, wid, 0);
 		  fprintf(vlog_out, "))");
 	    }
 	    break;
 	default:
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    emit_expr(scope, oper1, wid, 0);
 	    fprintf(vlog_out, "<unknown>");
-	    emit_expr(scope, ivl_expr_oper2(expr), wid);
+	    emit_expr(scope, oper2, wid, 0);
 	    fprintf(stderr, "%s:%u: vlog95 error: Unknown expression "
 	                    "operator (%c).\n",
 	                    ivl_expr_file(expr),
@@ -224,10 +229,10 @@ static void emit_expr_concat(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       fprintf(vlog_out, "{");
       count -= 1;
       for (idx = 0; idx < count; idx += 1) {
-	    emit_expr(scope, ivl_expr_parm(expr, idx), 0);
+	    emit_expr(scope, ivl_expr_parm(expr, idx), 0, 0);
 	    fprintf(vlog_out, ", ");
       }
-      emit_expr(scope, ivl_expr_parm(expr, count), 0);
+      emit_expr(scope, ivl_expr_parm(expr, count), 0, 0);
       fprintf(vlog_out, "}");
       if (repeat != 1) fprintf(vlog_out, "}");
 }
@@ -327,7 +332,7 @@ static void emit_select_name(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	                    ivl_expr_file(expr), ivl_expr_lineno(expr));
 	    vlog_errors += 1;
       } else {
-	    emit_expr(scope, expr, wid);
+	    emit_expr(scope, expr, wid, 0);
       }
 }
 
@@ -343,12 +348,12 @@ static void emit_expr_packed(ivl_scope_t scope, ivl_expr_t sig_expr,
       for (idx = wid - 1; idx > 0; idx -= 1) {
 	    emit_select_name(scope, sig_expr, wid);
 	    fprintf(vlog_out, "[");
-	    emit_expr(scope, sel_expr, 0);
+	    emit_expr(scope, sel_expr, 0, 0);
 	    fprintf(vlog_out, " + %u], ", idx);
       }
       emit_select_name(scope, sig_expr, wid);
       fprintf(vlog_out, "[");
-      emit_expr(scope, sel_expr, 0);
+      emit_expr(scope, sel_expr, 0, 0);
       fprintf(vlog_out, "]}");
 }
 
@@ -503,7 +508,7 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    assert(sel_expr);
 	    emit_select_name(scope, sig_expr, wid);
 	    fprintf(vlog_out, "[");
-	    emit_expr(scope, sel_expr, 0);
+	    emit_expr(scope, sel_expr, 0, 0);
 	    fprintf(vlog_out, "]");
 	    return;
       }
@@ -552,7 +557,7 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    }
       } else {
 // HERE: Should this sign extend if the expression is signed?
-	    emit_expr(scope, sig_expr, wid);
+	    emit_expr(scope, sig_expr, wid, 0);
 	      /* Select part of a signal when needed. */
 	    if ((ivl_expr_type(sig_expr) == IVL_EX_SIGNAL) &&
 	        (ivl_expr_width(expr) < ivl_expr_width(sig_expr))) {
@@ -579,10 +584,10 @@ static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    fprintf(vlog_out, "(");
 	    count -= 1;
 	    for (idx = 0; idx < count; idx += 1) {
-		  emit_expr(scope, ivl_expr_parm(expr, idx), 0);
+		  emit_expr(scope, ivl_expr_parm(expr, idx), 0, 0);
 		  fprintf(vlog_out, ", ");
 	    }
-	    emit_expr(scope, ivl_expr_parm(expr, count), 0);
+	    emit_expr(scope, ivl_expr_parm(expr, count), 0, 0);
 	    fprintf(vlog_out, ")");
 	/* User functions without arguments are not supported. */
       } else if (ivl_expr_type(expr) == IVL_EX_UFUNC) {
@@ -606,12 +611,16 @@ static void emit_expr_signal(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 
 static void emit_expr_ternary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
+      ivl_expr_t oper2 = ivl_expr_oper2(expr);
+      ivl_expr_t oper3 = ivl_expr_oper3(expr);
+      unsigned can_skip_unsigned = ! ivl_expr_signed(oper2) ||
+                                   ! ivl_expr_signed(oper3);
       fprintf(vlog_out, "(");
-      emit_expr(scope, ivl_expr_oper1(expr), 0);
+      emit_expr(scope, ivl_expr_oper1(expr), 0, 0);
       fprintf(vlog_out, " ? ");
-      emit_expr(scope, ivl_expr_oper2(expr), wid);
+      emit_expr(scope, oper2, wid, can_skip_unsigned);
       fprintf(vlog_out, " : ");
-      emit_expr(scope, ivl_expr_oper3(expr), wid);
+      emit_expr(scope, oper3, wid, can_skip_unsigned);
       fprintf(vlog_out, ")");
 }
 
@@ -640,18 +649,18 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case 'X':
 	case '!':
 	    fprintf(vlog_out, "(%s", oper);
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case '2':
 	case 'v':
 	case 'r':
 	    /* A cast is a noop. */
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
 	    break;
 	case 'I':
 	    fprintf(vlog_out, "(++");
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
 	    fprintf(vlog_out, ")");
 	    fprintf(stderr, "%s:%u: vlog95 sorry: Pre-increment "
 	                    "operator is not currently translated.\n",
@@ -661,7 +670,7 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    break;
 	case 'i':
 	    fprintf(vlog_out, "(");
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
 	    fprintf(vlog_out, "++)");
 	    fprintf(stderr, "%s:%u: vlog95 sorry: Post-increment "
 	                    "operator is not currently translated.\n",
@@ -671,7 +680,7 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    break;
 	case 'D':
 	    fprintf(vlog_out, "(--");
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
 	    fprintf(vlog_out, ")");
 	    fprintf(stderr, "%s:%u: vlog95 sorry: Pre-decrement "
 	                    "operator is not currently translated.\n",
@@ -681,7 +690,7 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    break;
 	case 'd':
 	    fprintf(vlog_out, "(");
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
 	    fprintf(vlog_out, "--)");
 	    fprintf(stderr, "%s:%u: vlog95 sorry: Post-decrement "
 	                    "operator is not currently translated.\n",
@@ -694,22 +703,22 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    if (ivl_expr_value(expr) == IVL_VT_REAL) {
 		    /* For a real expression use the $abs() function. */
 		  fprintf(vlog_out, "$abs(");
-		  emit_expr(scope, ivl_expr_oper1(expr), wid);
+		  emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
 		  fprintf(vlog_out, ")");
 	    } else {
 		    /* This only works when the argument has no side effect. */
 		  fprintf(vlog_out, "((");
-		  emit_expr(scope, ivl_expr_oper1(expr), wid);
+		  emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
 		  fprintf(vlog_out, ") > 0 ? (");
-		  emit_expr(scope, ivl_expr_oper1(expr), wid);
+		  emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
 		  fprintf(vlog_out, ") : -(");
-		  emit_expr(scope, ivl_expr_oper1(expr), wid);
+		  emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
 		  fprintf(vlog_out, "))");
 	    }
 	    break;
 	default:
 	    fprintf(vlog_out, "<unknown>");
-	    emit_expr(scope, ivl_expr_oper1(expr), wid);
+	    emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
 	    fprintf(stderr, "%s:%u: vlog95 error: Unknown unary "
 	                    "operator (%c).\n",
 	                    ivl_expr_file(expr),
@@ -808,6 +817,20 @@ static expr_sign_t get_select_sign_type(ivl_expr_t expr)
       return rtn;
 }
 
+static expr_sign_t get_signal_sign_type(ivl_expr_t expr,
+                                        unsigned can_skip_unsigned)
+{
+      int opr_sign = ivl_signal_signed(ivl_expr_signal(expr));
+      int expr_sign = ivl_expr_signed(expr);
+      expr_sign_t rtn = NO_SIGN;
+
+	/* Check to see if a $signed() or $unsigned() are needed. */
+      if (expr_sign && ! opr_sign) rtn = NEED_SIGNED;
+      if (! expr_sign && opr_sign && ! can_skip_unsigned) rtn = NEED_UNSIGNED;
+
+      return rtn;
+}
+
 static expr_sign_t get_unary_sign_type(ivl_expr_t expr)
 {
       ivl_expr_t expr1;
@@ -861,13 +884,11 @@ static expr_sign_t get_unary_sign_type(ivl_expr_t expr)
       return rtn;
 }
 
-expr_sign_t get_sign_type(ivl_expr_t expr)
+expr_sign_t get_sign_type(ivl_expr_t expr, unsigned can_skip_unsigned)
 {
       expr_sign_t rtn = NO_SIGN;
 
       switch (ivl_expr_type(expr)) {
-	case IVL_EX_ARRAY:
-	    break;
 	case IVL_EX_BINARY:
 	    rtn = get_binary_sign_type(expr);
 	    break;
@@ -876,13 +897,7 @@ expr_sign_t get_sign_type(ivl_expr_t expr)
 	       * needed. */
 	    if (ivl_expr_signed(expr)) rtn = NEED_SIGNED;
 	    break;
-	case IVL_EX_NUMBER:
-	    break;
 	case IVL_EX_PROPERTY:
-	    break;
-	case IVL_EX_REALNUM:
-	    break;
-	case IVL_EX_SCOPE:
 	    break;
 	case IVL_EX_SELECT:
 	    rtn = get_select_sign_type(expr);
@@ -890,8 +905,7 @@ expr_sign_t get_sign_type(ivl_expr_t expr)
 	case IVL_EX_SFUNC:
 	    break;
 	case IVL_EX_SIGNAL:
-	    break;
-	case IVL_EX_STRING:
+	    rtn = get_signal_sign_type(expr, can_skip_unsigned);
 	    break;
 	case IVL_EX_TERNARY:
 	    break;
@@ -901,22 +915,27 @@ expr_sign_t get_sign_type(ivl_expr_t expr)
 	    rtn = get_unary_sign_type(expr);
 	    break;
 	  /* These do not have/need sign casting information. */
+	case IVL_EX_ARRAY:
 	case IVL_EX_DELAY:
 	case IVL_EX_ENUMTYPE:
 	case IVL_EX_EVENT:
 	case IVL_EX_NEW:
 	case IVL_EX_NULL:
+	case IVL_EX_NUMBER:
+	case IVL_EX_REALNUM:
+	case IVL_EX_SCOPE:
 	case IVL_EX_SHALLOWCOPY:
-// HERE: Do the array, property, real number or string belong here as well?
+	case IVL_EX_STRING:
 	default:
 	    break;
       }
       return rtn;
 }
 
-void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
+               unsigned can_skip_unsigned)
 {
-      expr_sign_t sign_type = get_sign_type(expr);
+      expr_sign_t sign_type = get_sign_type(expr, can_skip_unsigned);
 
 	/* Check to see if a $signed() or $unsigned() needs to be emitted
 	 * before the expression. */
@@ -1002,7 +1021,7 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    break;
 	case IVL_EX_SHALLOWCOPY:
 	    fprintf(vlog_out, "<new> ");
-	    emit_expr(scope, ivl_expr_oper2(expr), wid);
+	    emit_expr(scope, ivl_expr_oper2(expr), wid, 0);
 	    fprintf(stderr, "%s:%u: vlog95 error: New operator "
 	                    "is not supported.\n",
 	                    ivl_expr_file(expr),

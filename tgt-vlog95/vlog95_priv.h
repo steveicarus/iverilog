@@ -66,7 +66,8 @@ extern unsigned allow_signed;
  * Emit various Verilog types.
  */
 extern void emit_event(ivl_scope_t scope, ivl_statement_t stmt);
-extern void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned width);
+extern void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned width,
+                      unsigned can_skip_unsigned);
 extern void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic);
 extern void emit_lpm(ivl_scope_t scope, ivl_lpm_t lpm);
 extern void emit_process(ivl_scope_t scope, ivl_process_t proc);

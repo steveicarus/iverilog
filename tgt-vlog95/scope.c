@@ -312,7 +312,7 @@ void emit_scope_variables(ivl_scope_t scope)
 	    fprintf(vlog_out, "%*cparameter ", indent, ' ');
 	    emit_id(ivl_parameter_basename(par));
 	    fprintf(vlog_out, " = ");
-	    emit_expr(scope, pex, 0);
+	    emit_expr(scope, pex, 0, 0);
 	    fprintf(vlog_out, ";");
 	    if (emit_file_line) {
 		  fprintf(vlog_out, " /* %s:%u */",
