@@ -1736,7 +1736,7 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
   /* Ports can be real or realtime. */
 
   | port_direction real_or_realtime list_of_identifiers ';'
-      { vector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_REAL, false,
+      { vector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_REAL, true,
 						   0, $3);
 	$$ = tmp;
       }
