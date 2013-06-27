@@ -629,8 +629,11 @@ NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
 	    if (canonical_expr == 0) {
 		  canonical_expr = tmp_scaled;
 	    } else {
+		  bool expr_has_sign = canonical_expr->has_sign() &&
+		                        tmp_scaled->has_sign();
 		  canonical_expr = new NetEBAdd('+', canonical_expr, tmp_scaled,
-						canonical_expr->expr_width()+1, false);
+						canonical_expr->expr_width()+1,
+		                                expr_has_sign);
 	    }
       }
 
