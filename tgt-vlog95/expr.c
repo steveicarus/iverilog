@@ -76,13 +76,36 @@ static void emit_expr_array(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       emit_id(ivl_signal_basename(sig));
 }
 
+static unsigned calc_can_skip_unsigned(ivl_expr_t oper1, ivl_expr_t oper2)
+{
+      unsigned oper1_signed, oper2_signed;
+	/* Check to see if the operands are signed or softly signed.
+	 *   The expression is signed (hard).
+	 *   It is a signed signal cast to unsigned (soft).
+	 *   It is a padding cast from signed to unsigned (soft). */
+      oper1_signed = ivl_expr_signed(oper1);
+      oper1_signed |= (ivl_expr_type(oper1) == IVL_EX_SIGNAL) &&
+                      (ivl_signal_signed(ivl_expr_signal(oper1)));
+      oper1_signed |= (ivl_expr_type(oper1) == IVL_EX_SELECT) &&
+                      (! ivl_expr_oper2(oper1)) &&
+                      (ivl_expr_signed(ivl_expr_oper1(oper1)));
+      oper2_signed = ivl_expr_signed(oper2);
+      oper2_signed |= (ivl_expr_type(oper2) == IVL_EX_SIGNAL) &&
+                      (ivl_signal_signed(ivl_expr_signal(oper2)));
+      oper2_signed |= (ivl_expr_type(oper2) == IVL_EX_SELECT) &&
+                      (! ivl_expr_oper2(oper2)) &&
+                      (ivl_expr_signed(ivl_expr_oper1(oper2)));
+	/* If either operand is a hard unsigned skip adding an explicit
+	 * $unsigned() since it will be added implicitly. */
+      return ! oper1_signed || ! oper2_signed;
+}
+
 static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       char *oper = "<invalid>";
       ivl_expr_t oper1 = ivl_expr_oper1(expr);
       ivl_expr_t oper2 = ivl_expr_oper2(expr);
-      unsigned can_skip_unsigned = ! ivl_expr_signed(oper1) ||
-                                   ! ivl_expr_signed(oper2);
+      unsigned can_skip_unsigned = calc_can_skip_unsigned(oper1, oper2);
 
       switch (ivl_expr_opcode(expr)) {
 	case '+': oper = "+"; break;
@@ -160,7 +183,7 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case 'r':
 	    emit_expr(scope, oper1, wid, 0);
 	    fprintf(vlog_out, " %s ", oper);
-	    emit_expr(scope, oper2, 0, 0);
+	    emit_expr(scope, oper2, 0, 1);
 	    break;
 	case 'A':
 	case 'O':
@@ -613,10 +636,9 @@ static void emit_expr_ternary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_expr_t oper2 = ivl_expr_oper2(expr);
       ivl_expr_t oper3 = ivl_expr_oper3(expr);
-      unsigned can_skip_unsigned = ! ivl_expr_signed(oper2) ||
-                                   ! ivl_expr_signed(oper3);
+      unsigned can_skip_unsigned = calc_can_skip_unsigned(oper2, oper3);
       fprintf(vlog_out, "(");
-      emit_expr(scope, ivl_expr_oper1(expr), 0, 0);
+      emit_expr(scope, ivl_expr_oper1(expr), 0, 1);
       fprintf(vlog_out, " ? ");
       emit_expr(scope, oper2, wid, can_skip_unsigned);
       fprintf(vlog_out, " : ");
@@ -797,7 +819,8 @@ static expr_sign_t get_binary_sign_type(ivl_expr_t expr)
       return rtn;
 }
 
-static expr_sign_t get_select_sign_type(ivl_expr_t expr)
+static expr_sign_t get_select_sign_type(ivl_expr_t expr,
+                                        unsigned can_skip_unsigned)
 {
       int opr_sign = 0;
       int expr_sign = ivl_expr_signed(expr);
@@ -811,8 +834,7 @@ static expr_sign_t get_select_sign_type(ivl_expr_t expr)
 
 	/* Check to see if a $signed() or $unsigned() are needed. */
       if (expr_sign && ! opr_sign) rtn = NEED_SIGNED;
-// HERE: Check to see why this causes problem and add it back in.
-//      if (! expr_sign && opr_sign) rtn = NEED_UNSIGNED;
+      if (! expr_sign && opr_sign && ! can_skip_unsigned) rtn = NEED_UNSIGNED;
 
       return rtn;
 }
@@ -897,24 +919,17 @@ expr_sign_t get_sign_type(ivl_expr_t expr, unsigned can_skip_unsigned)
 	       * needed. */
 	    if (ivl_expr_signed(expr)) rtn = NEED_SIGNED;
 	    break;
-	case IVL_EX_PROPERTY:
-	    break;
 	case IVL_EX_SELECT:
-	    rtn = get_select_sign_type(expr);
-	    break;
-	case IVL_EX_SFUNC:
+	    rtn = get_select_sign_type(expr, can_skip_unsigned);
 	    break;
 	case IVL_EX_SIGNAL:
 	    rtn = get_signal_sign_type(expr, can_skip_unsigned);
 	    break;
-	case IVL_EX_TERNARY:
-	    break;
-	case IVL_EX_UFUNC:
-	    break;
 	case IVL_EX_UNARY:
 	    rtn = get_unary_sign_type(expr);
 	    break;
-	  /* These do not have/need sign casting information. */
+	  /* These do not currently have sign casting information. A select
+	   * is used for that purpose. */
 	case IVL_EX_ARRAY:
 	case IVL_EX_DELAY:
 	case IVL_EX_ENUMTYPE:
@@ -922,10 +937,14 @@ expr_sign_t get_sign_type(ivl_expr_t expr, unsigned can_skip_unsigned)
 	case IVL_EX_NEW:
 	case IVL_EX_NULL:
 	case IVL_EX_NUMBER:
+	case IVL_EX_PROPERTY:
 	case IVL_EX_REALNUM:
 	case IVL_EX_SCOPE:
+	case IVL_EX_SFUNC:
 	case IVL_EX_SHALLOWCOPY:
 	case IVL_EX_STRING:
+	case IVL_EX_TERNARY:
+	case IVL_EX_UFUNC:
 	default:
 	    break;
       }

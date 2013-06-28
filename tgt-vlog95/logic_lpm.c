@@ -1035,6 +1035,7 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_SIGN_EXT:
+	    assert(! sign_extend);
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 1, 1);
 	    break;
 	case IVL_LPM_SUB:
