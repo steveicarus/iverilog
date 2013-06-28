@@ -57,6 +57,15 @@ class netclass_t : public ivl_type_s {
       property_qualifier_t get_prop_qual(size_t idx) const;
       ivl_type_t get_prop_type(size_t idx) const;
 
+	// These methods are used by the elaborator to note the
+	// initializer for constant properties. Properties start out
+	// as not initialized, and when elaboration detects an
+	// assignment to the property, it is marked initialized.
+      bool get_prop_initialized(size_t idx) const;
+      void set_prop_initialized(size_t idx) const;
+
+      bool test_for_missing_initializers(void) const;
+
 	// Map the name of a property to its index.
       int property_idx_from_name(perm_string pname) const;
 
@@ -84,6 +93,7 @@ class netclass_t : public ivl_type_s {
 	    perm_string name;
 	    property_qualifier_t qual;
 	    ivl_type_s* type;
+	    mutable bool initialized_flag;
       };
       std::vector<prop_t> property_table_;
 

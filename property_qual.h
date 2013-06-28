@@ -39,6 +39,9 @@ class property_qualifier_t {
       static inline property_qualifier_t make_randc()
       { property_qualifier_t res; res.mask_ = 16; return res; }
 
+      static inline property_qualifier_t make_const()
+      { property_qualifier_t res; res.mask_ = 32; return res; }
+
       inline property_qualifier_t operator | (property_qualifier_t r)
       { property_qualifier_t res; res.mask_ = mask_ | r.mask_; return res; }
 
@@ -48,6 +51,7 @@ class property_qualifier_t {
       inline bool test_local() const     { return mask_ & 4; }
       inline bool test_rand() const      { return mask_ & 8; }
       inline bool test_randc() const     { return mask_ & 16; }
+      inline bool test_const() const     { return mask_ & 32; }
 
     private:
       int mask_;

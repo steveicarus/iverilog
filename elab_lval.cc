@@ -343,6 +343,40 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
 	    return 0;
       }
 
+	// Detect assignment to constant properties. Note that the
+	// initializer constructor MAY assign to constant properties,
+	// as this is how the property gets its value.
+      property_qualifier_t qual = class_type->get_prop_qual(pidx);
+      if (qual.test_const()) {
+	    if (class_type->get_prop_initialized(pidx)) {
+		  cerr << get_fileline() << ": error: "
+		       << "Property " << class_type->get_prop_name(pidx)
+		       << " is constant in this method."
+		       << " (scope=" << scope_path(scope) << ")" << endl;
+		  des->errors += 1;
+
+	    } else if (scope->basename()!="new" && scope->basename()!="new@") {
+		  cerr << get_fileline() << ": error: "
+		       << "Property " << class_type->get_prop_name(pidx)
+		       << " is constant in this method."
+		       << " (scope=" << scope_path(scope) << ")" << endl;
+		  des->errors += 1;
+
+	    } else {
+
+		    // Mark this property as initilized. This is used
+		    // to know that we have initialized the constant
+		    // object so the next assignment will be marked as
+		    // illegal.
+		  class_type->set_prop_initialized(pidx);
+
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
+			     << "Found initilzers for property " << class_type->get_prop_name(pidx) << endl;
+		  }
+	    }
+      }
+
       NetAssign_*this_lval = new NetAssign_(this_net);
       this_lval->set_property(member_name);
 
@@ -841,6 +875,12 @@ bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope,
 		 << "Local property " << class_type->get_prop_name(pidx)
 		 << " is not accessible (l-value) in this context."
 		 << " (scope=" << scope_path(scope) << ")" << endl;
+	    des->errors += 1;
+
+      } else if (qual.test_const()) {
+	    cerr << get_fileline() << ": error: "
+		 << "Property " << class_type->get_prop_name(pidx)
+		 << " is constant in this context." << endl;
 	    des->errors += 1;
       }
 

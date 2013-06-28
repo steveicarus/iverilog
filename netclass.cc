@@ -43,6 +43,7 @@ bool netclass_t::set_property(perm_string pname, property_qualifier_t qual, ivl_
       tmp.name = pname;
       tmp.qual = qual;
       tmp.type = ptype;
+      tmp.initialized_flag = false;
       property_table_.push_back(tmp);
 
       properties_[pname] = property_table_.size()-1;
@@ -86,6 +87,31 @@ ivl_type_t netclass_t::get_prop_type(size_t idx) const
 {
       assert(idx < property_table_.size());
       return property_table_[idx].type;
+}
+
+bool netclass_t::get_prop_initialized(size_t idx) const
+{
+      assert(idx < property_table_.size());
+      return property_table_[idx].initialized_flag;
+}
+
+void netclass_t::set_prop_initialized(size_t idx) const
+{
+      assert(idx < property_table_.size());
+      assert(! property_table_[idx].initialized_flag);
+      property_table_[idx].initialized_flag = true;
+}
+
+bool netclass_t::test_for_missing_initializers() const
+{
+      for (size_t idx = 0 ; idx < property_table_.size() ; idx += 1) {
+	    if (property_table_[idx].initialized_flag)
+		  continue;
+	    if (property_table_[idx].qual.test_const())
+		  return true;
+      }
+
+      return false;
 }
 
 NetScope*netclass_t::method_from_name(perm_string name) const

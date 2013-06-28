@@ -4883,6 +4883,13 @@ static void elaborate_classes(Design*des, NetScope*scope,
 		 ; cur != classes.end() ; ++ cur) {
 	    netclass_t*use_class = scope->find_class(cur->second->pscope_name());
 	    use_class->elaborate(des, cur->second);
+
+	    if (use_class->test_for_missing_initializers()) {
+		  cerr << cur->second->get_fileline() << ": error: "
+		       << "Const properties of class " << use_class->get_name()
+		       << " are missing initialization." << endl;
+		  des->errors += 1;
+	    }
       }
 }
 
