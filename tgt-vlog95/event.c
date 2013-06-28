@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2013 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ void emit_event(ivl_scope_t scope, ivl_statement_t stmt)
 	    for (idx = 0; idx < count; idx += 1) {
 		  if (first) first = 0;
 		  else fprintf(vlog_out, " or ");
-		  emit_nexus_as_ca(scope, ivl_event_any(event, idx), 0);
+		  emit_nexus_as_ca(scope, ivl_event_any(event, idx), 0, 0);
 	    }
 
 	      /* Check for positive edge events. */
@@ -46,7 +46,7 @@ void emit_event(ivl_scope_t scope, ivl_statement_t stmt)
 		  if (first) first = 0;
 		  else fprintf(vlog_out, " or ");
 		  fprintf(vlog_out, "posedge ");
-		  emit_nexus_as_ca(scope, ivl_event_pos(event, idx), 0);
+		  emit_nexus_as_ca(scope, ivl_event_pos(event, idx), 0, 0);
 	    }
 
 	      /* Check for negative edge events. */
@@ -56,7 +56,7 @@ void emit_event(ivl_scope_t scope, ivl_statement_t stmt)
 		  if (first) first = 0;
 		  else fprintf(vlog_out, " or ");
 		  fprintf(vlog_out, "negedge ");
-		  emit_nexus_as_ca(scope, ivl_event_neg(event, idx), 0);
+		  emit_nexus_as_ca(scope, ivl_event_neg(event, idx), 0, 0);
 	    }
 
 	      /* We have a named event if there were no edge events. */

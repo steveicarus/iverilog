@@ -21,9 +21,6 @@
 # include "config.h"
 # include "vlog95_priv.h"
 
-/* This variable lets a select know it is really a >>> operator. */
-static unsigned sign_extend = 0;
-
 static unsigned emit_drive(ivl_drive_t drive)
 {
       switch (drive) {
@@ -289,7 +286,8 @@ static ivl_nexus_t get_lpm_output(ivl_scope_t scope, ivl_lpm_t lpm)
 }
 
 static void emit_logic_as_ca(ivl_scope_t scope, ivl_net_logic_t nlogic);
-static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm);
+static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
+                           unsigned sign_extend);
 
 /* For an undriven port look for the local signal to get the nexus name. */
 static void emit_nexus_port_signal(ivl_scope_t scope, ivl_nexus_t nex)
@@ -308,7 +306,7 @@ static void emit_nexus_port_signal(ivl_scope_t scope, ivl_nexus_t nex)
 	    }
       }
 	/* There will not be a signal for an empty port. */
-      if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, 0), 0);
+      if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, 0), 0, 0);
       else fprintf(vlog_out, "/* Empty */");
 }
 
@@ -378,8 +376,8 @@ void emit_nexus_port_driver_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 	      /* If there is a signal in this scope that is also driven by
 	       * the LPM then use the signal instead. */
 	    sig = find_local_signal(scope, ivl_lpm_q(lpm), &word);
-	    if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0);
-	    else emit_lpm_as_ca(scope, lpm);
+	    if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0, 0);
+	    else emit_lpm_as_ca(scope, lpm, 0);
 	/* A constant is driving the nexus. */
       } else if (net_const) {
 	    assert( !nlogic);
@@ -387,7 +385,7 @@ void emit_nexus_port_driver_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 	      /* If there is a signal in this scope that is also driven by
 	       * the constant then use the signal instead. */
 	    sig = find_local_signal(scope, ivl_const_nex(net_const), &word);
-	    if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0);
+	    if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0, 0);
 	    else emit_const_nexus(scope, net_const);
 	/* A logic gate is driving the nexus. */
       } else if (nlogic) {
@@ -395,11 +393,11 @@ void emit_nexus_port_driver_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
 	      /* If there is a signal in this scope that is also driven by
 	       * the logic then use the signal instead. */
 	    sig = find_local_signal(scope, ivl_logic_pin(nlogic, 0), &word);
-	    if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0);
+	    if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0, 0);
 	    else emit_logic_as_ca(scope, nlogic);
 	/* A signal is driving the nexus. */
       } else if (sig) {
-	    emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0);
+	    emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0, 0);
 	/* If there is no driver then look for a single signal that is
 	 * driven by this nexus that has the correct scope. This is needed
 	 * to translate top level ports. */
@@ -408,7 +406,8 @@ void emit_nexus_port_driver_as_ca(ivl_scope_t scope, ivl_nexus_t nex)
       }
 }
 
-void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex, unsigned allow_UD)
+void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex, unsigned allow_UD,
+                      unsigned sign_extend)
 {
 	/* If there is no nexus then there is nothing to print. */
       if (! nex) return;
@@ -468,10 +467,10 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex, unsigned allow_UD)
 	      /* If there is a signal in this scope that is also driven by
 	       * the LPM then use the signal instead. */
 	    sig = find_local_signal(scope, ivl_lpm_q(lpm), &word);
-	    if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0);
-	    else emit_lpm_as_ca(scope, lpm);
+	    if (sig) emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0, 0);
+	    else emit_lpm_as_ca(scope, lpm, sign_extend);
 #endif
-		  emit_lpm_as_ca(scope, lpm);
+		  emit_lpm_as_ca(scope, lpm, sign_extend);
 	    } else if (net_const) {
 		  assert( !nlogic);
 		  assert(! sig);
@@ -492,7 +491,8 @@ void emit_nexus_as_ca(ivl_scope_t scope, ivl_nexus_t nex, unsigned allow_UD)
 	    } else if (sig) {
 // HERE: should these be allow_UD?
 		  if (must_be_sig) {
-			emit_nexus_as_ca(scope, ivl_signal_nex(sig, word), 0);
+			emit_nexus_as_ca(scope, ivl_signal_nex(sig, word),
+			                 0, 0);
 		  } else emit_name_of_nexus(scope, nex, 0);
 // HERE: The assert causes pr1703959 to fail.
 //	    } else assert(0);
@@ -523,61 +523,61 @@ static void emit_logic_as_ca(ivl_scope_t scope, ivl_net_logic_t nlogic)
 	case IVL_LO_AND:
 	    assert(inputs == 2);
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0, 0);
 	    fprintf(vlog_out, " & ");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0);
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LO_BUF:
 	case IVL_LO_BUFT:
 	case IVL_LO_BUFZ:
 	    assert(inputs == 1);
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0, 0);
 	    break;
 	case IVL_LO_NAND:
 	    assert(inputs == 2);
 	    fprintf(vlog_out, "~(");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0, 0);
 	    fprintf(vlog_out, " & ");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0);
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LO_NOR:
 	    assert(inputs == 2);
 	    fprintf(vlog_out, "~(");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0, 0);
 	    fprintf(vlog_out, " | ");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0);
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LO_NOT:
 	    assert(inputs == 1);
 	    fprintf(vlog_out, "(~ ");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LO_OR:
 	    assert(inputs == 2);
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0, 0);
 	    fprintf(vlog_out, " | ");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0);
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LO_XNOR:
 	    assert(inputs == 2);
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0, 0);
 	    fprintf(vlog_out, " ~^ ");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0);
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LO_XOR:
 	    assert(inputs == 2);
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0, 0);
 	    fprintf(vlog_out, " ^ ");
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0);
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 2), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	  /* A pull up/down at this point has been turned into an assignment
@@ -605,7 +605,7 @@ static void emit_lpm_array(ivl_scope_t scope, ivl_lpm_t lpm)
       emit_id(ivl_signal_basename(sig));
       fprintf(vlog_out, "[");
 // HERE: Need to remove the scale to match array base instead of adding it back.
-      emit_nexus_as_ca(scope, ivl_lpm_select(lpm), 0);
+      emit_nexus_as_ca(scope, ivl_lpm_select(lpm), 0, 0);
       fprintf(vlog_out, " + %d]", ivl_signal_array_base(sig));
 }
 
@@ -623,17 +623,17 @@ static void emit_lpm_concat(ivl_scope_t scope, ivl_lpm_t lpm)
 	/* If all the nexus match then we have a repeat. */
       if ((idx == count) && (count > 1)) {
 	    fprintf(vlog_out, "%u{", count);
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, "}");
 	/* Icarus uses a concat to combine the output from multiple devices
 	 * into a single vector, because of this we need to also look for
-	 * the nexus driver outside the scope. emit_nexus_as_ca( , , 1) */
+	 * the nexus driver outside the scope. emit_nexus_as_ca( , , 1, ) */
       } else {
 	    for (idx = count-1; idx > 0; idx -= 1) {
-		  emit_nexus_as_ca(scope, ivl_lpm_data(lpm, idx), 1);
+		  emit_nexus_as_ca(scope, ivl_lpm_data(lpm, idx), 1, 0);
 		  fprintf(vlog_out, ", ");
 	    }
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 1);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 1, 0);
       }
       fprintf(vlog_out, "}");
 }
@@ -720,7 +720,8 @@ static ivl_signal_t nexus_is_signal(ivl_scope_t scope, ivl_nexus_t nex,
       return sig;
 }
 
-static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm)
+static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm,
+                                 unsigned sign_extend)
 {
       unsigned width = ivl_lpm_width(lpm);
       unsigned array_word = 0;
@@ -741,13 +742,12 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm)
 	      /* Check if the compiler used a select for a shift. */
 	    assert(base >= 0);
 	    if (base) fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    if (base) {
 		  fprintf(vlog_out, " ");
 		  if (sign_extend) fprintf(vlog_out, ">");
 		  fprintf(vlog_out, ">> %d)", base);
 	    }
-	    sign_extend = 0;
 	    return;
       }
 
@@ -765,7 +765,6 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm)
 	    if (msb >= lsb) base += lsb;
 	    else base = lsb - base;
 	    fprintf(vlog_out, " >>> %d)", base);
-	    sign_extend = 0;
 	    return;
       }
 
@@ -775,7 +774,7 @@ static void emit_lpm_part_select(ivl_scope_t scope, ivl_lpm_t lpm)
 		  fprintf(vlog_out, "[");
 // HERE: Need to scale the select nexus.
 		  if ((msb >= lsb) && (lsb == 0)) {
-			emit_nexus_as_ca(scope, sel, 0);
+			emit_nexus_as_ca(scope, sel, 0, 0);
 		  } else {
 			fprintf(stderr, "%s:%u: vlog95 sorry: Non-zero based "
 			                "variable part selects are not "
@@ -824,15 +823,16 @@ static void emit_lpm_func(ivl_scope_t scope, ivl_lpm_t lpm)
 	    count -= 1;
 	    fprintf(vlog_out, "(");
 	    for (idx = 0; idx < count; idx += 1) {
-		  emit_nexus_as_ca(scope, ivl_lpm_data(lpm, idx), 0);
+		  emit_nexus_as_ca(scope, ivl_lpm_data(lpm, idx), 0, 0);
 		  fprintf(vlog_out, ", ");
 	    }
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, count), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, count), 0, 0);
 	    fprintf(vlog_out, ")");
       }
 }
 
-static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
+static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
+                           unsigned sign_extend)
 {
       switch (ivl_lpm_type(lpm)) {
 	  /* Convert the Verilog-A abs() function. This only works when the
@@ -841,19 +841,19 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 // HERE: If this is a real net then use the $abs() function to get nan to
 //       work correctly. See the expr code.
 	    fprintf(vlog_out, "((");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, ") > ");
 	    fprintf(vlog_out, "0 ? (");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, ") : -(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, "))");
 	    break;
 	case IVL_LPM_ADD:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " + ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_ARRAY:
@@ -862,48 +862,48 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	case IVL_LPM_CAST_INT:
 	case IVL_LPM_CAST_INT2:
 	case IVL_LPM_CAST_REAL:
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    break;
 	case IVL_LPM_CMP_EEQ:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " === ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_CMP_EQ:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " == ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_CMP_GE:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " >= ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_CMP_GT:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " > ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_CMP_NE:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " != ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_CMP_NEE:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " !== ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	  /* A concat-Z should never be generated, but report it as an
@@ -918,9 +918,9 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	    break;
 	case IVL_LPM_DIVIDE:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " / ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_MOD:
@@ -932,38 +932,38 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 		  vlog_errors += 1;
 	    }
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " %% ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_MULT:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " * ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_MUX:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_select(lpm), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_select(lpm), 0, 0);
 	    fprintf(vlog_out, " ? ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, " : ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_PART_PV:
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 1);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 1, 0);
 	    break;
 	case IVL_LPM_PART_VP:
-	    emit_lpm_part_select(scope, lpm);
+	    emit_lpm_part_select(scope, lpm, sign_extend);
 	    break;
 	case IVL_LPM_POW:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " ** ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    fprintf(stderr, "%s:%u: vlog95 error: Power operator is not "
 	                    "supported.\n",
@@ -972,37 +972,37 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	    break;
 	case IVL_LPM_RE_AND:
 	    fprintf(vlog_out, "(&");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_RE_NAND:
 	    fprintf(vlog_out, "(~&");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_RE_NOR:
 	    fprintf(vlog_out, "(~|");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_RE_OR:
 	    fprintf(vlog_out, "(|");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_RE_XOR:
 	    fprintf(vlog_out, "(^");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_RE_XNOR:
 	    fprintf(vlog_out, "(~^");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_REPEAT:
 	    fprintf(vlog_out, "{%u{", ivl_lpm_size(lpm));
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, "}}");
 	    break;
 	case IVL_LPM_SFUNC:
@@ -1011,15 +1011,14 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	    break;
 	case IVL_LPM_SHIFTL:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " << ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_SHIFTR:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
-	    assert(! sign_extend);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " ");
 	    if (ivl_lpm_signed(lpm)) {
 		  if (! allow_signed) {
@@ -1032,22 +1031,17 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 		  fprintf(vlog_out, ">");
 	    }
 	    fprintf(vlog_out, ">> ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_SIGN_EXT:
-// HERE: pr1002 and one other test fails if this assert is used. A more
-//       robust method is needed to make sure things work as expected.
-//	    assert(! sign_extend);
-	    sign_extend = 1;
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 1);
-	    sign_extend = 0;
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 1, 1);
 	    break;
 	case IVL_LPM_SUB:
 	    fprintf(vlog_out, "(");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
 	    fprintf(vlog_out, " - ");
-	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case IVL_LPM_UFUNC:
@@ -1186,26 +1180,26 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
       emit_name_of_nexus(scope, ivl_lpm_q(lpm), 0);
       fprintf(vlog_out, ", ");
 	/* Emit the clock pin. */
-      emit_nexus_as_ca(scope, ivl_lpm_clk(lpm), 0);
+      emit_nexus_as_ca(scope, ivl_lpm_clk(lpm), 0, 0);
       fprintf(vlog_out, ", ");
 	/* Emit the enable pin expression(s) if needed. */
       emitted = 0;
       nex = ivl_lpm_enable(lpm);
       if (nex) {
-	    emit_nexus_as_ca(scope, nex, 0);
+	    emit_nexus_as_ca(scope, nex, 0, 0);
 	    emitted = 1;
       }
       nex = ivl_lpm_sync_clr(lpm);
       if (nex) {
 	    if (emitted) fprintf(vlog_out, " | ");
-	    emit_nexus_as_ca(scope, nex, 0);
+	    emit_nexus_as_ca(scope, nex, 0, 0);
 	    emitted = 1;
       }
       have_sset = 0;
       nex = ivl_lpm_sync_set(lpm);
       if (nex) {
 	    if (emitted) fprintf(vlog_out, " | ");
-	    emit_nexus_as_ca(scope, nex, 0);
+	    emit_nexus_as_ca(scope, nex, 0, 0);
 	    emitted = 1;
 	    have_sset = 1;
       }
@@ -1215,37 +1209,37 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
       have_data = ivl_lpm_data(lpm, 0) != 0;
       nex = ivl_lpm_sync_clr(lpm);
       if (nex) {
-	    emit_nexus_as_ca(scope, nex, 0);
+	    emit_nexus_as_ca(scope, nex, 0, 0);
 	    if (have_data | have_sset) fprintf(vlog_out, " & ");
 	    if (have_data & have_sset) fprintf(vlog_out, "(");
       }
       nex = ivl_lpm_sync_set(lpm);
       if (nex) {
 	    if (! sset_bits || (sset_bits && (sset_bits[0] == '1'))) {
-		  emit_nexus_as_ca(scope, nex, 0);
+		  emit_nexus_as_ca(scope, nex, 0, 0);
 		  if (have_data) fprintf(vlog_out, " | ");
 	    } else {
 		  fprintf(vlog_out, "~");
-		  emit_nexus_as_ca(scope, nex, 0);
+		  emit_nexus_as_ca(scope, nex, 0, 0);
 		  if (have_data) fprintf(vlog_out, " & ");
 	    }
       }
       nex = ivl_lpm_data(lpm, 0);
-      if (nex) emit_nexus_as_ca(scope, nex, 0);
+      if (nex) emit_nexus_as_ca(scope, nex, 0, 0);
       if (have_data & have_sset) fprintf(vlog_out, ")");
       fprintf(vlog_out, ", ");
 	/* Emit the clear pin expression(s) if needed. */
       emitted = 0;
       nex = ivl_lpm_async_clr(lpm);
       if (nex) {
-	    emit_nexus_as_ca(scope, nex, 0);
+	    emit_nexus_as_ca(scope, nex, 0, 0);
 	    emitted = 1;
       }
       nex = ivl_lpm_async_set(lpm);
       if (aset_bits && (aset_bits[0] != '0')) nex = 0;
       if (nex) {
 	    if (emitted) fprintf(vlog_out, " | ");
-	    emit_nexus_as_ca(scope, nex, 0);
+	    emit_nexus_as_ca(scope, nex, 0, 0);
 	    emitted = 1;
       }
       if (!emitted) fprintf(vlog_out, "1'b0");
@@ -1253,7 +1247,7 @@ static void emit_lpm_ff(ivl_scope_t scope, ivl_lpm_t lpm)
 	/* Emit the set pin expression(s) if needed. */
       nex = ivl_lpm_async_set(lpm);
       if (aset_bits && (aset_bits[0] != '1')) nex = 0;
-      if (nex) emit_nexus_as_ca(scope, nex, 0);
+      if (nex) emit_nexus_as_ca(scope, nex, 0, 0);
       else fprintf(vlog_out, "1'b0");
       fprintf(vlog_out, ");\n");
 	/* We need to emit a primitive for this instance. */
@@ -1397,7 +1391,7 @@ void emit_lpm(ivl_scope_t scope, ivl_lpm_t lpm)
       if (type == IVL_LPM_PART_PV) emit_lpm_part_pv(scope, lpm);
       else emit_name_of_nexus(scope, output, 0);
       fprintf(vlog_out, " = ");
-      emit_lpm_as_ca(scope, lpm);
+      emit_lpm_as_ca(scope, lpm, 0);
       fprintf(vlog_out, ";");
       if (emit_file_line) {
 	    fprintf(vlog_out, " /* %s:%u */",
@@ -1432,7 +1426,7 @@ static void emit_bufz(ivl_scope_t scope, ivl_net_logic_t nlogic)
       fprintf(vlog_out, " ");
       emit_name_of_nexus(scope, ivl_logic_pin(nlogic, 0), 0);
       fprintf(vlog_out, " = ");
-      emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0);
+      emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, 1), 0, 0);
       fprintf(vlog_out, ";");
       emit_logic_file_line(nlogic);
       fprintf(vlog_out, "\n");
@@ -1643,11 +1637,11 @@ void emit_logic(ivl_scope_t scope, ivl_net_logic_t nlogic)
 	    fprintf(vlog_out, ", ");
       }
       for (/* None */; idx < count; idx += 1) {
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, idx), 0);
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, idx), 0, 0);
 	    fprintf(vlog_out, ", ");
       }
       if (strength_type == 2) {
-	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, idx), 0);
+	    emit_nexus_as_ca(scope, ivl_logic_pin(nlogic, idx), 0, 0);
       } else {
 	      /* A pull gate only has a single output connection. */
 	    assert(count == 0);
@@ -1738,7 +1732,7 @@ void emit_tran(ivl_scope_t scope, ivl_switch_t tran)
       emit_name_of_nexus(scope, ivl_switch_b(tran), 0);
       if (pins == 3) {
 	    fprintf(vlog_out, ", ");
-	    emit_nexus_as_ca(scope, ivl_switch_enable(tran), 0);
+	    emit_nexus_as_ca(scope, ivl_switch_enable(tran), 0, 0);
       }
       fprintf(vlog_out, ");");
       if (emit_file_line) {

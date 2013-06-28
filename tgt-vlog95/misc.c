@@ -70,7 +70,7 @@ static void emit_delay(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
 	    ivl_signal_t sig = ivl_expr_signal(expr);
 	    if (ivl_signal_local(sig)) {
 		  assert(! is_stmt);
-		  emit_nexus_as_ca(scope, ivl_signal_nex(sig, 0), 0);
+		  emit_nexus_as_ca(scope, ivl_signal_nex(sig, 0), 0, 0);
 		  return;
 	    }
       }

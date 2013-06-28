@@ -378,10 +378,10 @@ static void emit_module_ports(ivl_scope_t scope)
       if (count == 0) return;
 
       fprintf(vlog_out, "(");
-      emit_nexus_as_ca(scope, ivl_scope_mod_port(scope, 0), 0);
+      emit_nexus_as_ca(scope, ivl_scope_mod_port(scope, 0), 0, 0);
       for (idx = 1; idx < count; idx += 1) {
 	    fprintf(vlog_out, ", ");
-	    emit_nexus_as_ca(scope, ivl_scope_mod_port(scope, idx), 0);
+	    emit_nexus_as_ca(scope, ivl_scope_mod_port(scope, idx), 0, 0);
       }
       fprintf(vlog_out, ")");
 }
@@ -537,7 +537,7 @@ static void emit_module_call_expr(ivl_scope_t scope, unsigned idx)
 	/* For an output we need to emit the signal the output is driving. */
       } else {
 	    emit_nexus_as_ca(ivl_scope_parent(scope),
-	                     ivl_signal_nex(port, word), 0);
+	                     ivl_signal_nex(port, word), 0, 0);
       }
 }
 
@@ -726,7 +726,7 @@ static void emit_specify_paths(ivl_scope_t scope, ivl_signal_t sig)
 	    fprintf(vlog_out, "%*c", indent, ' ');
 	    if (cond) {
 		  fprintf(vlog_out, "if (");
-		  emit_nexus_as_ca(scope, cond, 0);
+		  emit_nexus_as_ca(scope, cond, 0, 0);
 		  fprintf(vlog_out, ") ");
 	    } else if (ivl_path_is_condit(dpath)) {
 		  fprintf(vlog_out, "ifnone ");
@@ -740,7 +740,7 @@ static void emit_specify_paths(ivl_scope_t scope, ivl_signal_t sig)
 		  fprintf(vlog_out, "negedge ");
 		  has_edge = 1;
 	    }
-	    emit_nexus_as_ca(scope, source, 0);
+	    emit_nexus_as_ca(scope, source, 0, 0);
 	    fprintf(vlog_out, " =>");
 	      /* The compiler does not keep the source expression for an edge
 	       * sensitive path so add a constant to get the syntax right. */
