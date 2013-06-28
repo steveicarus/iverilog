@@ -1019,9 +1019,19 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm)
 	case IVL_LPM_SHIFTR:
 	    fprintf(vlog_out, "(");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0);
-	    fprintf(vlog_out, " ");
 	    assert(! sign_extend);
-	    fprintf(vlog_out, " >> ");
+	    fprintf(vlog_out, " ");
+	    if (ivl_lpm_signed(lpm)) {
+		  if (! allow_signed) {
+			fprintf(stderr, "%s:%u: vlog95 error: >>> operator "
+			                "is not supported.\n",
+			                ivl_lpm_file(lpm),
+			                ivl_lpm_lineno(lpm));
+			vlog_errors += 1;
+		  }
+		  fprintf(vlog_out, ">");
+	    }
+	    fprintf(vlog_out, ">> ");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0);
 	    fprintf(vlog_out, ")");
 	    break;
