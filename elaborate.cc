@@ -2361,11 +2361,17 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
       return cur;
 }
 
+/*
+ * Assignments within program blocks can only write to certain types
+ * of variables. We can only write to:
+ *    - variables in a program block
+ *    - static properties of a class
+ */
 static bool lval_not_program_variable(const NetAssign_*lv)
 {
       while (lv) {
 	    NetScope*sig_scope = lv->sig()->scope();
-	    if (! sig_scope->program_block())
+	    if (! sig_scope->program_block() && sig_scope->type()!=NetScope::CLASS)
 		  return true;
 
 	    lv = lv->more;
@@ -4969,6 +4975,19 @@ bool Module::elaborate(Design*des, NetScope*scope) const
  */
 void netclass_t::elaborate(Design*des, PClass*pclass)
 {
+      if (! pclass->type->initialize_static.empty()) {
+	    std::vector<Statement*>&stmt_list = pclass->type->initialize_static;
+	    NetBlock*stmt = new NetBlock(NetBlock::SEQU, 0);
+	    for (size_t idx = 0 ; idx < stmt_list.size() ; idx += 1) {
+		  NetProc*tmp = stmt_list[idx]->elaborate(des, class_scope_);
+		  if (tmp == 0) continue;
+		  stmt->append(tmp);
+	    }
+	    NetProcTop*top = new NetProcTop(class_scope_, IVL_PR_INITIAL, stmt);
+	    top->set_line(*pclass);
+	    des->add_process(top);
+      }
+
       for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
 		 ; cur != pclass->funcs.end() ; ++ cur) {
 	    if (debug_elaborate) {

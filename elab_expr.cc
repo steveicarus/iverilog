@@ -1759,6 +1759,17 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
       return sel;
 }
 
+static NetExpr* class_static_property_expression(const LineInfo*li,
+						 const netclass_t*class_type,
+						 perm_string name)
+{
+      NetNet*sig = class_type->find_static_property(name);
+      ivl_assert(*li, sig);
+      NetESignal*expr = new NetESignal(sig);
+      expr->set_line(*li);
+      return expr;
+}
+
 static NetExpr* check_for_class_property(const LineInfo*li,
 					 Design*des, NetScope*scope,
 					 NetNet*net,
@@ -1789,6 +1800,12 @@ static NetExpr* check_for_class_property(const LineInfo*li,
 		 << " is not accessible in this context."
 		 << " (scope=" << scope_path(scope) << ")" << endl;
 	    des->errors += 1;
+      }
+
+      if (qual.test_static()) {
+	    perm_string prop_name = lex_strings.make(class_type->get_prop_name(pidx));
+	    return class_static_property_expression(li, class_type,
+						    prop_name);
       }
 
       NetEProperty*tmp = new NetEProperty(net, comp.name);
@@ -2886,6 +2903,10 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
 		 << " is not accessible in this context."
 		 << " (scope=" << scope_path(scope) << ")" << endl;
 	    des->errors += 1;
+      }
+
+      if (qual.test_static()) {
+	    return class_static_property_expression(this, class_type, member_name);
       }
 
       NetEProperty*tmp = new NetEProperty(this_net, member_name);

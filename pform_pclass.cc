@@ -41,15 +41,6 @@ void pform_class_property(const struct vlltype&loc,
 {
       assert(pform_cur_class);
 
-      if (property_qual.test_static()) {
-	      // I think the thing to do with static properties is to
-	      // make them PWires directly in the PClass scope. They
-	      // are wires like program/modules wires, and not
-	      // instance members.
-	    VLerror(loc, "sorry: static class properties not implemented.");
-	    return;
-      }
-
 	// Add the non-static properties to the class type
 	// object. Unwind the list of names to make a map of name to
 	// type.
@@ -72,7 +63,11 @@ void pform_class_property(const struct vlltype&loc,
 		  FILE_NAME(lval, loc);
 		  PAssign*tmp = new PAssign(lval, rval);
 		  FILE_NAME(tmp, loc);
-		  pform_cur_class->type->initialize.push_back(tmp);
+
+		  if (property_qual.test_static())
+			pform_cur_class->type->initialize_static.push_back(tmp);
+		  else
+			pform_cur_class->type->initialize.push_back(tmp);
 	    }
       }
 }

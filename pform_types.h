@@ -233,6 +233,11 @@ struct class_type_t : public data_type_t {
 	// the expression that is assigned.
       std::vector<Statement*> initialize;
 
+	// This is an ordered list of property initializers for static
+	// properties. These are run in a synthetic "initial" block
+	// without waiting for any constructor.
+      std::vector<Statement*> initialize_static;
+
       ivl_type_s* elaborate_type(Design*, NetScope*) const;
 };
 

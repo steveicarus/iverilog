@@ -27,6 +27,7 @@
 # include  <map>
 
 class Design;
+class NetNet;
 class NetScope;
 class PClass;
 
@@ -71,6 +72,11 @@ class netclass_t : public ivl_type_s {
 
 	// The task method scopes from the method name.
       NetScope*method_from_name(perm_string mname) const;
+
+	// Find the elaborated signal (NetNet) for a static
+	// property. Search by name. The signal is created by the
+	// elaborate_sig pass.
+      NetNet*find_static_property(perm_string name) const;
 
 	// Test if this scope is a method within the class. This is
 	// used to check scope for handling data protection keywords

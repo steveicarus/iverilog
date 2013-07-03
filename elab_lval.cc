@@ -256,8 +256,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       }
 
       if (reg->class_type() && !method_name.nil() && gn_system_verilog()) {
-	    NetAssign_*lv = new NetAssign_(reg);
-	    elaborate_lval_net_class_member_(des, use_scope, lv, method_name);
+	    NetAssign_*lv = elaborate_lval_net_class_member_(des, use_scope, reg, method_name);
 	    return lv;
       }
 
@@ -846,17 +845,16 @@ bool PEIdent::elaborate_lval_net_idx_(Design*des,
       return true;
 }
 
-bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope,
-					       NetAssign_*lv,
-					       const perm_string&method_name) const
+NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope,
+				    NetNet*sig, const perm_string&method_name) const
 {
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": elaborate_lval_net_class_member_: "
 		 << "l-value is property " << method_name
-		 << " of " << lv->sig()->name() << "." << endl;
+		 << " of " << sig->name() << "." << endl;
       }
 
-      const netclass_t*class_type = lv->sig()->class_type();
+      const netclass_t*class_type = sig->class_type();
       ivl_assert(*this, class_type);
 
 	/* Make sure the property is really present in the class. If
@@ -866,7 +864,7 @@ bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope,
 	    cerr << get_fileline() << ": error: Class " << class_type->get_name()
 		 << " does not have a property " << method_name << "." << endl;
 	    des->errors += 1;
-	    return false;
+	    return 0;
       }
 
       property_qualifier_t qual = class_type->get_prop_qual(pidx);
@@ -877,6 +875,17 @@ bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope,
 		 << " (scope=" << scope_path(scope) << ")" << endl;
 	    des->errors += 1;
 
+      } else if (qual.test_static()) {
+
+	      // Special case: this is a static property. Ignore the
+	      // "this" sig and use the property itself, which is not
+	      // part of the sig, as the l-value.
+	    NetNet*psig = class_type->find_static_property(method_name);
+	    ivl_assert(*this, psig);
+
+	    NetAssign_*lv = new NetAssign_(psig);
+	    return lv;
+
       } else if (qual.test_const()) {
 	    cerr << get_fileline() << ": error: "
 		 << "Property " << class_type->get_prop_name(pidx)
@@ -884,6 +893,7 @@ bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope,
 	    des->errors += 1;
       }
 
+      NetAssign_*lv = new NetAssign_(sig);
       lv->set_property(method_name);
 
       ivl_type_t ptype = class_type->get_prop_type(pidx);
@@ -898,7 +908,7 @@ bool PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope,
 	    }
       }
 
-      return true;
+      return lv;
 }
 
 

@@ -122,6 +122,11 @@ NetScope*netclass_t::method_from_name(perm_string name) const
 
 }
 
+NetNet* netclass_t::find_static_property(perm_string name) const
+{
+      NetNet*tmp = class_scope_->find_signal(name);
+}
+
 bool netclass_t::test_scope_is_method(const NetScope*scope) const
 {
       while (scope && scope != class_scope_) {

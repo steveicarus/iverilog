@@ -314,6 +314,25 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 
 void netclass_t::elaborate_sig(Design*des, PClass*pclass)
 {
+      for (map<perm_string,struct class_type_t::prop_info_t>::iterator cur = pclass->type->properties.begin()
+		 ; cur != pclass->type->properties.end() ; ++ cur) {
+
+	    if (! cur->second.qual.test_static())
+		  continue;
+
+	    if (debug_elaborate) {
+		  cerr << pclass->get_fileline() << ": netclass_t::elaborate_sig: "
+		       << "Elaborate static property " << cur->first
+		       << " as signal in scope " << scope_path(class_scope_)
+		       << "." << endl;
+	    }
+
+	    list<netrange_t> nil_list;
+	    ivl_type_t use_type = cur->second.type->elaborate_type(des, class_scope_);
+	    NetNet*sig = new NetNet(class_scope_, cur->first, NetNet::REG,
+				    nil_list, use_type);
+      }
+
       for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
 		 ; cur != pclass->funcs.end() ; ++ cur) {
 	    if (debug_elaborate) {
