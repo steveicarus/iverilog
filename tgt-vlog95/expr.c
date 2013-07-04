@@ -35,6 +35,7 @@ static unsigned emit_power_as_shift(ivl_scope_t scope, ivl_expr_t expr,
       int rtype;
       int64_t value, scale;
       unsigned is_signed_rval = 0;
+      unsigned is_signed_expr = ivl_expr_signed(expr);
       unsigned expr_wid;
       ivl_expr_t lval = ivl_expr_oper1(expr);
       ivl_expr_t rval = ivl_expr_oper2(expr);
@@ -49,11 +50,41 @@ static unsigned emit_power_as_shift(ivl_scope_t scope, ivl_expr_t expr,
 	/* Generate the appropriate conversion. */
       if (ivl_expr_signed(rval)) {
 	    emit_expr(scope, rval, 0, 0);
-	    fprintf(vlog_out, " < 0 ? %u'h0 : (", expr_wid);
+	    fprintf(vlog_out, " < 0 ? ");
+	    if (is_signed_expr) {
+		  if (expr_wid == 32) {
+			fprintf(vlog_out, "0");
+		  } else if (allow_signed) {
+			fprintf(vlog_out, "%u'sh0", expr_wid);
+		  } else {
+			fprintf(stderr, "%s:%u: vlog95 error: Sized signed "
+			                "power operator l-value is not "
+			                "supported.\n", ivl_expr_file(expr),
+			                ivl_expr_lineno(expr));
+			vlog_errors += 1;
+			fprintf(vlog_out, "%u'h0", expr_wid);
+		  }
+	    } else {
+		  fprintf(vlog_out, "%u'h0", expr_wid);
+	    }
+	    fprintf(vlog_out, " : (");
 	    is_signed_rval = 1;
       }
       scale = value / 2;
-      fprintf(vlog_out, "%u'h1 << ", expr_wid);
+      if (is_signed_expr) {
+	    if (expr_wid == 32) {
+		  fprintf(vlog_out, "1");
+	    } else if (allow_signed) {
+		  fprintf(vlog_out, "%u'sh1", expr_wid);
+	    } else {
+		    /* This is an error condition and has already been
+		     * reported above. */
+		  fprintf(vlog_out, "%u'h1", expr_wid);
+	    }
+      } else {
+	    fprintf(vlog_out, "%u'h1", expr_wid);
+      }
+      fprintf(vlog_out, " << ");
       if (scale != 1) {
 	    if (is_signed_rval) {
 		  fprintf(vlog_out, "(%"PRId64, scale);
