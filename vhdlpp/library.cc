@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -119,7 +120,8 @@ void dump_libraries(ostream&file)
 
 /*
  * This function saves a package into the named library. Create the
- * library if necessary.
+ * library if necessary. The parser uses this when it is finished with
+ * a package declaration.
  */
 void library_save_package(perm_string parse_library_name, Package*pack)
 {
@@ -134,6 +136,29 @@ void library_save_package(perm_string parse_library_name, Package*pack)
 	// library right now, then store it in the work library.
       if (parse_library_name.str() == 0)
 	    store_package_in_work(pack);
+      else
+	    pack->set_library(parse_library_name);
+}
+
+/*
+ * The parser uses this function in the package body rule to recall
+ * the package that was declared earlier.
+ */
+Package*library_recall_package(perm_string parse_library_name, perm_string package_name)
+{
+      perm_string use_libname = parse_library_name.str()
+	    ? parse_library_name
+	    : perm_string::literal("work");
+
+      map<perm_string,struct library_contents>::iterator lib = libraries.find(use_libname);
+      if (lib == libraries.end())
+	    return 0;
+
+      map<perm_string,Package*>::iterator pkg = lib->second.packages.find(package_name);
+      if (pkg == lib->second.packages.end())
+	    return 0;
+
+      return pkg->second;
 }
 
 static void import_library_name(const YYLTYPE&loc, perm_string name)
@@ -254,7 +279,7 @@ static void import_ieee_use_std_logic_1164(ActiveScope*res, perm_string name)
 
       if (all_flag || name == "std_logic_vector") {
 	    vector<VTypeArray::range_t> dims (1);
-	    res->bind_name(perm_string::literal("std_logic_vector"),
+	    res->use_name(perm_string::literal("std_logic_vector"),
 			   new VTypeArray(primitive_STDLOGIC, dims, false));
       }
 }
@@ -269,12 +294,12 @@ static void import_ieee_use_numeric_bit(ActiveScope*res, perm_string name)
 
       if (all_flag || name == "signed") {
 	    vector<VTypeArray::range_t> dims (1);
-	    res->bind_name(perm_string::literal("signed"),
+	    res->use_name(perm_string::literal("signed"),
 			   new VTypeArray(primitive_STDLOGIC, dims, true));
       }
       if (all_flag || name == "unsigned") {
 	    vector<VTypeArray::range_t> dims (1);
-	    res->bind_name(perm_string::literal("unsigned"),
+	    res->use_name(perm_string::literal("unsigned"),
 			   new VTypeArray(primitive_BIT, dims, false));
       }
 }
@@ -285,12 +310,12 @@ static void import_ieee_use_numeric_std(ActiveScope*res, perm_string name)
 
       if (all_flag || name == "signed") {
 	    vector<VTypeArray::range_t> dims (1);
-	    res->bind_name(perm_string::literal("signed"),
+	    res->use_name(perm_string::literal("signed"),
 			   new VTypeArray(primitive_STDLOGIC, dims, true));
       }
       if (all_flag || name == "unsigned") {
 	    vector<VTypeArray::range_t> dims (1);
-	    res->bind_name(perm_string::literal("unsigned"),
+	    res->use_name(perm_string::literal("unsigned"),
 			   new VTypeArray(primitive_STDLOGIC, dims, false));
       }
 }
@@ -322,20 +347,24 @@ const VTypePrimitive* primitive_BOOLEAN  = new VTypePrimitive(VTypePrimitive::BO
 const VTypePrimitive* primitive_BIT      = new VTypePrimitive(VTypePrimitive::BIT);
 const VTypePrimitive* primitive_INTEGER  = new VTypePrimitive(VTypePrimitive::INTEGER);
 const VTypePrimitive* primitive_STDLOGIC = new VTypePrimitive(VTypePrimitive::STDLOGIC);
+const VTypePrimitive* primitive_CHARACTER= new VTypePrimitive(VTypePrimitive::CHARACTER);
 
 const VTypeRange* primitive_NATURAL = new VTypeRange(primitive_INTEGER, INT64_MAX, 0);
 
-const VTypeArray* primitive_BIT_VECTOR  = new VTypeArray(primitive_BIT,      vector<VTypeArray::range_t> (1));
-const VTypeArray* primitive_BOOL_VECTOR = new VTypeArray(primitive_BOOLEAN, vector<VTypeArray::range_t> (1));
+static const VTypeArray* primitive_BIT_VECTOR  = new VTypeArray(primitive_BIT,      vector<VTypeArray::range_t> (1));
+static const VTypeArray* primitive_BOOL_VECTOR = new VTypeArray(primitive_BOOLEAN, vector<VTypeArray::range_t> (1));
+static const VTypeArray* primitive_STRING = new VTypeArray(primitive_CHARACTER, vector<VTypeArray::range_t> (1));
 
 void generate_global_types(ActiveScope*res)
 {
-      res->bind_name(perm_string::literal("boolean"),   primitive_BOOLEAN);
-      res->bind_name(perm_string::literal("bit"),       primitive_BIT);
-      res->bind_name(perm_string::literal("integer"),   primitive_INTEGER);
-      res->bind_name(perm_string::literal("std_logic"), primitive_STDLOGIC);
-      res->bind_name(perm_string::literal("bit_vector"),primitive_BOOL_VECTOR);
-      res->bind_name(perm_string::literal("natural"),   primitive_NATURAL);
+      res->use_name(perm_string::literal("boolean"),   primitive_BOOLEAN);
+      res->use_name(perm_string::literal("bit"),       primitive_BIT);
+      res->use_name(perm_string::literal("integer"),   primitive_INTEGER);
+      res->use_name(perm_string::literal("std_logic"), primitive_STDLOGIC);
+      res->use_name(perm_string::literal("character"), primitive_CHARACTER);
+      res->use_name(perm_string::literal("bit_vector"),primitive_BOOL_VECTOR);
+      res->use_name(perm_string::literal("string"),    primitive_STRING);
+      res->use_name(perm_string::literal("natural"),   primitive_NATURAL);
 }
 
 bool is_global_type(perm_string name)
@@ -344,7 +373,9 @@ bool is_global_type(perm_string name)
       if (name == "bit") return true;
       if (name == "integer") return true;
       if (name == "std_logic") return true;
+      if (name == "character") return true;
       if (name == "bit_vector") return true;
+      if (name == "string") return true;
       if (name == "natural") return true;
       return false;
 }
@@ -362,4 +393,26 @@ static void store_package_in_work(const Package*pack)
       ofstream file (path.c_str(), ios_base::out);
 
       pack->write_to_stream(file);
+}
+
+static int emit_packages(perm_string lib_name, const map<perm_string,Package*>&packages)
+{
+      int errors = 0;
+      for (map<perm_string,Package*>::const_iterator cur = packages.begin()
+		 ; cur != packages.end() ; ++cur) {
+	    errors += cur->second->emit_package(cout);
+      }
+
+      return errors;
+}
+
+int emit_packages(void)
+{
+      int errors = 0;
+      for (map<perm_string,struct library_contents>::iterator cur = libraries.begin()
+		 ; cur != libraries.end() ; ++cur) {
+	    errors += emit_packages(cur->first, cur->second.packages);
+      }
+
+      return 0;
 }

@@ -368,6 +368,13 @@ TU [munpf]
 \\[^ \t\b\f\r\n]+         {
       yylval.text = strdupnew(yytext+1);
       if (gn_system_verilog()) {
+	    if (PPackage*pkg = pform_test_package_identifier(yylval.text)) {
+		  delete[]yylval.text;
+		  yylval.package = pkg;
+		  return PACKAGE_IDENTIFIER;
+	    }
+      }
+      if (gn_system_verilog()) {
 	    if (data_type_t*type = pform_test_type_identifier(yylval.text)) {
 		  delete[]yylval.text;
 		  yylval.data_type = type;

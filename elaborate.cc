@@ -2799,14 +2799,6 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
       if (nscope->calls_sys_task())
 	    scope->calls_sys_task(true);
 
-      if (!wires.empty()) {
-	    if (scope->need_const_func()) {
-		  cerr << get_fileline() << ": sorry: Block variables inside "
-			 "a constant function are not yet supported." << endl;
-	    }
-	    scope->is_const_func(false);
-      }
-
       cur->set_line(*this);
       return cur;
 }
@@ -4448,6 +4440,69 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
 
       NetRepeat*proc = new NetRepeat(expr, stat);
       proc->set_line( *this );
+      return proc;
+}
+
+NetProc* PReturn::elaborate(Design*des, NetScope*scope) const
+{
+      NetScope*target = scope;
+      for (;;) {
+	    if (target == 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "Return statement is not in a function." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    if (target->type() == NetScope::FUNC)
+		  break;
+
+	    if (target->type() == NetScope::TASK) {
+		  cerr << get_fileline() << ": error: "
+		       << "Cannot \"return\" from tasks." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    if (target->type()==NetScope::BEGIN_END) {
+		  target = target->parent();
+		  continue;
+	    }
+
+	    cerr << get_fileline() << ": error: "
+		 << "Cannot \"return\" from this scope: " << scope_path(target) << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+	// We don't yet support void functions, so require an
+	// expression for the return statement.
+      if (expr_ == 0) {
+	    cerr << get_fileline() << ": error: "
+		 << "Return from " << scope_path(target)
+		 << " requires a return value expression." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetNet*res = target->find_signal(target->basename());
+      ivl_variable_type_t lv_type = res->data_type();
+      unsigned long wid = res->vector_width();
+      NetAssign_*lv = new NetAssign_(res);
+
+      NetExpr*val = elaborate_rval_expr(des, scope, lv_type, wid, expr_);
+
+      NetBlock*proc = new NetBlock(NetBlock::SEQU, 0);
+      proc->set_line( *this );
+
+      NetAssign*assn = new NetAssign(lv, val);
+      assn->set_line( *this );
+      proc->append(assn);
+
+      NetDisable*disa = new NetDisable(target);
+      disa->set_line( *this );
+      proc->append( disa );
+
       return proc;
 }
 

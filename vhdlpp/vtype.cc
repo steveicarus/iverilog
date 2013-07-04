@@ -32,7 +32,7 @@ VType::~VType()
 
 void VType::show(ostream&out) const
 {
-      out << typeid(*this).name();
+      write_to_stream(out);
 }
 
 VTypePrimitive::VTypePrimitive(VTypePrimitive::type_t tt)
@@ -52,6 +52,9 @@ void VTypePrimitive::show(ostream&out) const
 	    break;
 	  case BIT:
 	    out << "BIT";
+	    break;
+	  case CHARACTER:
+	    out << "CHARACTER";
 	    break;
 	  case INTEGER:
 	    out << "INTEGER";

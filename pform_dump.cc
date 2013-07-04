@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -936,6 +936,13 @@ void PRepeat::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "repeat (" << *expr_ << ")" << endl;
       statement_->dump(out, ind+3);
+}
+
+void PReturn::dump(ostream&fd, unsigned ind) const
+{
+      fd << setw(ind) << "" << "return (";
+      if (expr_) fd << *expr_;
+      fd << ")" << endl;
 }
 
 void PTask::dump(ostream&out, unsigned ind) const

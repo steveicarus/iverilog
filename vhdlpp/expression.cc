@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -39,7 +40,7 @@ Expression::~Expression()
 
 void Expression::set_type(const VType*typ)
 {
-      assert(type_ == 0);
+      assert(type_==0 || type_==typ);
       type_ = typ;
 }
 
@@ -260,12 +261,12 @@ ExpEdge::~ExpEdge()
 }
 
 ExpFunc::ExpFunc(perm_string nn)
-: name_(nn), argv_(0)
+: name_(nn), def_(0)
 {
 }
 
 ExpFunc::ExpFunc(perm_string nn, list<Expression*>*args)
-: name_(nn), argv_(args->size())
+: name_(nn), argv_(args->size()), def_(0)
 {
       for (size_t idx = 0; idx < argv_.size() ; idx += 1) {
 	    ivl_assert(*this, !args->empty());

@@ -1,7 +1,5 @@
-#ifndef __package_H
-#define __package_H
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -20,32 +18,28 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include  "scope.h"
-# include  "LineInfo.h"
-# include  <iostream>
+# include  "vtype.h"
+# include  "expression.h"
 
-class Package : public Scope, public LineInfo {
+int VType::elaborate(Entity*, Architecture*) const
+{
+      return 0;
+}
 
-    public:
-      Package(perm_string name, const ActiveScope&ref);
-      ~Package();
+int VTypeArray::elaborate(Entity*ent, Architecture*arc) const
+{
+      int errors = 0;
+      etype_->elaborate(ent, arc);
 
-	// The the library from which this package came. Having a
-	// source library influences the emit_package() method.
-      void set_library(perm_string);
+      for (vector<range_t>::const_iterator cur = ranges_.begin()
+		 ; cur != ranges_.end() ; ++ cur) {
 
-      perm_string name() const { return name_; }
+	    Expression*tmp = cur->msb();
+	    if (tmp) errors += tmp->elaborate_expr(ent, arc, 0);
 
-      Subprogram* recall_subprogram(perm_string name) const;
+	    tmp = cur->lsb();
+	    if (tmp) errors += tmp->elaborate_expr(ent, arc, 0);
+      }
 
-	// This method writes a package header to a library file.
-      void write_to_stream(std::ostream&fd) const;
-
-      int emit_package(std::ostream&fd) const;
-
-    private:
-      perm_string from_library_;
-      perm_string name_;
-};
-
-#endif
+      return errors;
+}

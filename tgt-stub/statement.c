@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -151,6 +151,12 @@ static void show_stmt_delayx(ivl_statement_t net, unsigned ind)
       fprintf(out, "%*s#(X) /* calculated delay */\n", ind, "");
       show_expression(ivl_stmt_delay_expr(net), ind+4);
       show_statement(ivl_stmt_sub_stmt(net), ind+2);
+}
+
+static void show_stmt_disable(ivl_statement_t net, unsigned ind)
+{
+      ivl_scope_t scope = ivl_stmt_call(net);
+      fprintf(out, "%*sdisable %s\n", ind, "", ivl_scope_basename(scope));
 }
 
 static void show_stmt_force(ivl_statement_t net, unsigned ind)
@@ -376,6 +382,10 @@ void show_statement(ivl_statement_t net, unsigned ind)
 
 	  case IVL_ST_DELAYX:
 	    show_stmt_delayx(net, ind);
+	    break;
+
+	  case IVL_ST_DISABLE:
+	    show_stmt_disable(net, ind);
 	    break;
 
 	  case IVL_ST_FORCE:

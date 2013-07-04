@@ -933,6 +933,35 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 {
       perm_string name = peek_tail_name(path_);
 
+      if (name=="$ivlh_to_unsigned") {
+	    ivl_assert(*this, parms_.size() == 2);
+	      // The Icarus Verilog specific $ivl_unsigned() system
+	      // task takes a second argument which is the output
+	      // size. This can be an arbitrary constant function.
+	    PExpr*pexpr = parms_[1];
+	    if (pexpr == 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "Missing $ivlh_to_unsigned width." << endl;
+		  return 0;
+	    }
+
+	    NetExpr*nexpr = elab_and_eval(des, scope, pexpr, -1, true);
+	    if (nexpr == 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "Unable to evaluate " << name
+		       << " width argument: " << *pexpr << endl;
+		  return 0;
+	    }
+
+	    long value = 0;
+	    bool rc = eval_as_long(value, nexpr);
+	    ivl_assert(*this, rc && value>=0);
+
+	    expr_width_ = value;
+	    signed_flag_= false;
+	    return expr_width_;
+      }
+
       if (name=="$signed" || name=="$unsigned") {
 	    PExpr*expr = parms_[0];
 	    if (expr == 0)
@@ -1231,6 +1260,19 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
                                           unsigned flags) const
 {
       perm_string name = peek_tail_name(path_);
+
+	/* Catch the special case that the system function is the
+	   $ivl_unsigned function. In this case the second argument is
+	   the size of the expression, but should already be accounted
+	   for so treat this very much like the $unsigned() function. */
+      if (name=="$ivlh_to_unsigned") {
+	    ivl_assert(*this, parms_.size()==2);
+
+	    PExpr*expr = parms_[0];
+	    ivl_assert(*this, expr);
+	    NetExpr*sub = expr->elaborate_expr(des, scope, expr_width_, flags);
+	    return cast_to_width_(sub, expr_wid);
+      }
 
 	/* Catch the special case that the system function is the $signed
 	   function. Its argument will be evaluated as a self-determined
@@ -1918,6 +1960,23 @@ NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*ds
 
       bool need_const = NEED_CONST & flags;
 
+	// If this is a constant expression, it is possible that we
+	// are being elaborated before the function definition. If
+	// that's the case, try to elaborate the function as a const
+	// function.
+      if (need_const && ! def->proc()) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PECallFunction::elaborate_base_: "
+		       << "Try to elaborate " << scope_path(dscope)
+		       << " as constant function." << endl;
+	    }
+	    dscope->set_elab_stage(2);
+	    dscope->need_const_func(true);
+	    const PFunction*pfunc = dscope->func_pform();
+	    ivl_assert(*this, pfunc);
+	    pfunc->elaborate(des, dscope);
+      }
+
       unsigned parms_count = parms_.size();
       if ((parms_count == 1) && (parms_[0] == 0))
 	    parms_count = 0;
@@ -2048,6 +2107,12 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
       pform_name_t use_path = path_;
       perm_string method_name = peek_tail_name(use_path);
       use_path.pop_back();
+
+	// If there is no object to the left of the method name, then
+	// give up on the idea of looking for an object method.
+      if (use_path.empty()) {
+	    return 0;
+      }
 
       NetNet *net = 0;
       const NetExpr *par;

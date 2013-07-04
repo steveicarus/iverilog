@@ -480,7 +480,7 @@ NetEConst* NetEBComp::eval_gteq_(const NetExpr*le, const NetExpr*re) const
       if (le->expr_type() == IVL_VT_REAL || re->expr_type() == IVL_VT_REAL)
 	    return eval_leeq_real_(re, le, true);
 
-      const NetEConst*l = dynamic_cast<const NetEConst*>(left_);
+      const NetEConst*l = dynamic_cast<const NetEConst*>(le);
       if (l == 0) return 0;
 
       verinum lv = l->value();

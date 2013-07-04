@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011,2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -19,6 +20,7 @@
  */
 
 # include  "parse_misc.h"
+# include  "parse_types.h"
 # include  "parse_api.h"
 # include  "entity.h"
 # include  "architec.h"
@@ -65,11 +67,11 @@ void bind_architecture_to_entity(const char*ename, Architecture*arch)
       }
 }
 
-const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
-				     ScopeBase* /* scope */,
-				     Expression*array_left,
-				     bool /* downto*/ ,
-				     Expression*array_right)
+static const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
+					    ScopeBase* /* scope */,
+					    Expression*array_left,
+					    bool /* downto*/ ,
+					    Expression*array_right)
 {
       const VType*base_type = parse_type_by_name(lex_strings.make(base_name));
 
@@ -96,6 +98,21 @@ const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
       }
 
       return base_type;
+}
+
+const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_name,
+				     ScopeBase*scope, list<prange_t*>*ranges)
+{
+      if (ranges->size() == 1) {
+	    prange_t*tmpr = ranges->front();
+	    Expression*lef = tmpr->expr_left();
+	    Expression*rig = tmpr->expr_right();
+	    return calculate_subtype_array(loc, base_name, scope,
+					   lef, tmpr->is_downto(), rig);
+      }
+
+      sorrymsg(loc, "Don't know how to handle multiple ranges here.\n");
+      return 0;
 }
 
 const VType* calculate_subtype_range(const YYLTYPE&loc, const char*base_name,

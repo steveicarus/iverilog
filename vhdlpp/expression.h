@@ -1,7 +1,8 @@
 #ifndef __expression_H
 #define __expression_H
 /*
- * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,6 +32,7 @@ class prange_t;
 class Entity;
 class Architecture;
 class ScopeBase;
+class Subprogram;
 class VType;
 class VTypeArray;
 class VTypePrimitive;
@@ -89,6 +91,10 @@ class Expression : public LineInfo {
 	// output the generated code for the expression. The derived
 	// class fills in the details of what exactly happened.
       virtual int emit(ostream&out, Entity*ent, Architecture*arc) =0;
+
+	// The emit_package virtual message is similar, but is called
+	// in a package context and to emit SV packages.
+      virtual int emit_package(std::ostream&out);
 
 	// The evaluate virtual method tries to evaluate expressions
 	// to constant literal values. Return true and set the val
@@ -186,6 +192,9 @@ class ExpBinary : public Expression {
           { operand2_->write_to_stream(out); }
 
       void dump_operands(ostream&out, int indent = 0) const;
+
+    private:
+      virtual const VType*resolve_operand_types_(const VType*t1, const VType*t2) const;
 
     private:
       Expression*operand1_;
@@ -298,6 +307,9 @@ class ExpArithmetic : public ExpBinary {
       int emit(ostream&out, Entity*ent, Architecture*arc);
       virtual bool evaluate(ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;
+
+    private:
+      const VType* resolve_operand_types_(const VType*t1, const VType*t2) const;
 
     private:
       fun_t fun_;
@@ -457,6 +469,10 @@ class ExpFunc : public Expression {
       ExpFunc(perm_string nn, std::list<Expression*>*args);
       ~ExpFunc();
 
+      inline perm_string func_name() const { return name_; }
+      inline size_t func_args() const { return argv_.size(); }
+      inline const Expression*func_arg(size_t idx) const { return argv_[idx]; }
+
     public: // Base methods
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       void write_to_stream(std::ostream&fd);
@@ -466,6 +482,7 @@ class ExpFunc : public Expression {
     private:
       perm_string name_;
       std::vector<Expression*> argv_;
+      Subprogram*def_;
 };
 
 class ExpInteger : public Expression {
@@ -478,6 +495,7 @@ class ExpInteger : public Expression {
       int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
       void write_to_stream(std::ostream&fd);
       int emit(ostream&out, Entity*ent, Architecture*arc);
+      int emit_package(std::ostream&out);
       bool is_primary(void) const;
       bool evaluate(ScopeBase*scope, int64_t&val) const;
       void dump(ostream&out, int indent = 0) const;

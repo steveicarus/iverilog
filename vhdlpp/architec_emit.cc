@@ -69,8 +69,8 @@ int Architecture::emit(ostream&out, Entity*entity)
 	// of the full definition.
 
       typedef_context_t typedef_ctx;
-      for (map<perm_string,const VType*>::iterator cur = old_types_.begin()
-		 ; cur != old_types_.end() ; ++cur) {
+      for (map<perm_string,const VType*>::iterator cur = cur_types_.begin()
+		 ; cur != cur_types_.end() ; ++cur) {
 
 	    const VTypeDef*def = dynamic_cast<const VTypeDef*>(cur->second);
 	    if (def == 0)
@@ -79,15 +79,15 @@ int Architecture::emit(ostream&out, Entity*entity)
 	    errors += def->emit_typedef(out, typedef_ctx);
       }
 
-      for (map<perm_string,struct const_t*>::iterator cur = old_constants_.begin()
-         ; cur != old_constants_.end() ; ++cur) {
+      for (map<perm_string,struct const_t*>::iterator cur = use_constants_.begin()
+         ; cur != use_constants_.end() ; ++cur) {
 
         out << "localparam " << cur->first << " = ";
         errors += cur->second->val->emit(out, entity, this);
         out << ";" << endl;
       }
-      for (map<perm_string,struct const_t*>::iterator cur = new_constants_.begin()
-         ; cur != new_constants_.end() ; ++cur) {
+      for (map<perm_string,struct const_t*>::iterator cur = cur_constants_.begin()
+         ; cur != cur_constants_.end() ; ++cur) {
 
         out << "localparam " << cur->first << " = ";
         errors += cur->second->val->emit(out, entity, this);
