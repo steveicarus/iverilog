@@ -3809,6 +3809,7 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 		  perm_string name = peek_tail_name(path_);
 		  NetEConstParam*ptmp
 			= new NetEConstParam(found_in, name, cvalue);
+		  ptmp->set_line(*tmp);
 
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug: "
@@ -3823,6 +3824,7 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 		  perm_string name = peek_tail_name(path_);
 		  NetECRealParam*ptmp
 			= new NetECRealParam(found_in, name, rtmp->value());
+		  ptmp->set_line(*tmp);
 
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug: "
