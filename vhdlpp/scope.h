@@ -1,7 +1,8 @@
 #ifndef __scope_H
 #define __scope_H
 /*
- * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,12 +24,16 @@
 # include  <list>
 # include  <map>
 # include  "StringHeap.h"
-# include "entity.h"
-# include "expression.h"
-# include "vsignal.h"
+# include  "entity.h"
+# include  "expression.h"
+# include  "subprogram.h"
+# include  "vsignal.h"
 
+class ActiveScope;
 class Architecture;
 class ComponentBase;
+class Package;
+class Subprogram;
 class VType;
 
 template<typename T>
@@ -45,13 +50,14 @@ class ScopeBase {
 
     public:
       ScopeBase() { }
-      explicit ScopeBase(const ScopeBase&ref);
+      explicit ScopeBase(const ActiveScope&ref);
       virtual ~ScopeBase() =0;
 
       const VType* find_type(perm_string by_name);
       bool find_constant(perm_string by_name, const VType*&typ, Expression*&exp);
       Signal* find_signal(perm_string by_name) const;
       Variable* find_variable(perm_string by_name) const;
+      Subprogram* find_subprogram(perm_string by_name) const;
 
     protected:
       void cleanup();
@@ -66,6 +72,12 @@ class ScopeBase {
           for_each(c.begin(), c.end(), ::delete_pair_second<T>());
       }
 
+	// The new_*_ maps below are managed only by the ActiveScope
+	// derived class. When any scope is constructed from the
+	// ActiveScope, the new_*_ and old_*_ maps are merged and
+	// installed into the old_*_ maps. Thus, all other derived
+	// classes should only use the old_*_ maps.
+
 	// Signal declarations...
       std::map<perm_string,Signal*> old_signals_; //previous scopes
       std::map<perm_string,Signal*> new_signals_; //current scope
@@ -76,8 +88,8 @@ class ScopeBase {
       std::map<perm_string,ComponentBase*> old_components_; //previous scopes
       std::map<perm_string,ComponentBase*> new_components_; //current scope
 	// Type declarations...
-      std::map<perm_string,const VType*> old_types_; //previous scopes
-      std::map<perm_string,const VType*> new_types_; //current scope
+      std::map<perm_string,const VType*> use_types_; //imported types
+      std::map<perm_string,const VType*> cur_types_; //current types
 	// Constant declarations...
       struct const_t {
         ~const_t() {delete typ; delete val;}
@@ -86,8 +98,11 @@ class ScopeBase {
 	    const VType*typ;
 	    Expression*val;
       };
-      std::map<perm_string, struct const_t*> old_constants_; //previous scopes
-      std::map<perm_string, struct const_t*> new_constants_; //current scope
+      std::map<perm_string, struct const_t*> use_constants_; //imported constants
+      std::map<perm_string, struct const_t*> cur_constants_; //current constants
+
+      std::map<perm_string, Subprogram*> use_subprograms_; //imported
+      std::map<perm_string, Subprogram*> cur_subprograms_; //current
 
       void do_use_from(const ScopeBase*that);
 };
@@ -95,7 +110,7 @@ class ScopeBase {
 class Scope : public ScopeBase {
 
     public:
-      explicit Scope(const ScopeBase&ref);
+      explicit Scope(const ActiveScope&ref);
       ~Scope();
 
       ComponentBase* find_component(perm_string by_name);
@@ -118,17 +133,27 @@ class Scope : public ScopeBase {
 class ActiveScope : public ScopeBase {
 
     public:
-      ActiveScope() : context_entity_(0) { }
-      ActiveScope(ActiveScope*par) : ScopeBase(*par), context_entity_(0) { }
+      ActiveScope() : package_header_(0), context_entity_(0) { }
+      ActiveScope(ActiveScope*par) : ScopeBase(*par), package_header_(0), context_entity_(0) { }
 
       ~ActiveScope() { }
 
-      void use_from(const ScopeBase*that) { do_use_from(that); }
+      void set_package_header(Package*);
+
+	// Pull items from "that" scope into "this" scope as is
+	// defined by a "use" directive. The parser uses this method
+	// to implement the "use <pkg>::*" directive.
+      void use_from(const Scope*that) { do_use_from(that); }
 
 	// This function returns true if the name is a vectorable
 	// name. The parser uses this to distinguish between function
 	// calls and array index operations.
       bool is_vector_name(perm_string name) const;
+
+	// Locate the subprogram by name. The subprogram body uses
+	// this to locate the sobprogram declaration. Note that the
+	// subprogram may be in a package header.
+      Subprogram* recall_subprogram(perm_string name) const;
 
       /* All bind_name function check if the given name was present
        * in previous scopes. If it is found, it is erased (but the pointer
@@ -159,16 +184,26 @@ class ActiveScope : public ScopeBase {
 
       void bind_name(perm_string name, const VType* t)
       { map<perm_string, const VType*>::iterator it;
-        if((it = old_types_.find(name)) != old_types_.end() )
-            old_types_.erase(it);
-        new_types_[name] = t;
+        if((it = use_types_.find(name)) != use_types_.end() )
+            use_types_.erase(it);
+        cur_types_[name] = t;
       }
+
+      inline void use_name(perm_string name, const VType* t)
+      { use_types_[name] = t; }
 
       void bind_name(perm_string name, const VType*obj, Expression*val)
       { map<perm_string, const_t*>::iterator it;
-        if((it = old_constants_.find(name)) != old_constants_.end() )
-            old_constants_.erase(it);
-        new_constants_[name] = new const_t(obj, val);
+        if((it = use_constants_.find(name)) != use_constants_.end() )
+            use_constants_.erase(it);
+        cur_constants_[name] = new const_t(obj, val);
+      }
+
+      inline void bind_name(perm_string name, Subprogram*obj)
+      { map<perm_string, Subprogram*>::iterator it;
+        if((it = use_subprograms_.find(name)) != use_subprograms_.end() )
+            use_subprograms_.erase(it);
+        cur_subprograms_[name] = obj;;
       }
 
       void bind(Entity*ent)
@@ -184,6 +219,10 @@ class ActiveScope : public ScopeBase {
       std::map<perm_string,VTypeDef*> incomplete_types;
 
     private:
+	// If this is a package body, then there is a Package header
+	// already declared.
+      Package*package_header_;
+
       Entity*context_entity_;
 };
 

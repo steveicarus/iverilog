@@ -933,6 +933,35 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 {
       perm_string name = peek_tail_name(path_);
 
+      if (name=="$ivlh_to_unsigned") {
+	    ivl_assert(*this, parms_.size() == 2);
+	      // The Icarus Verilog specific $ivl_unsigned() system
+	      // task takes a second argument which is the output
+	      // size. This can be an arbitrary constant function.
+	    PExpr*pexpr = parms_[1];
+	    if (pexpr == 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "Missing $ivlh_to_unsigned width." << endl;
+		  return 0;
+	    }
+
+	    NetExpr*nexpr = elab_and_eval(des, scope, pexpr, -1, true);
+	    if (nexpr == 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "Unable to evaluate " << name
+		       << " width argument: " << *pexpr << endl;
+		  return 0;
+	    }
+
+	    long value = 0;
+	    bool rc = eval_as_long(value, nexpr);
+	    ivl_assert(*this, rc && value>=0);
+
+	    expr_width_ = value;
+	    signed_flag_= false;
+	    return expr_width_;
+      }
+
       if (name=="$signed" || name=="$unsigned") {
 	    PExpr*expr = parms_[0];
 	    if (expr == 0)
@@ -1135,7 +1164,11 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 		  }
 
 		  const netclass_t* class_type = net->class_type();
-		  member_type = class_type->get_property(member_name);
+		  int midx = class_type->property_idx_from_name(member_name);
+		  if (midx >= 0)
+			member_type = class_type->get_prop_type(midx);
+		  else
+			member_type = 0;
 		  use_path = tmp_path;
 
 		  use_darray = dynamic_cast<const netdarray_t*> (member_type);
@@ -1227,6 +1260,19 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
                                           unsigned flags) const
 {
       perm_string name = peek_tail_name(path_);
+
+	/* Catch the special case that the system function is the
+	   $ivl_unsigned function. In this case the second argument is
+	   the size of the expression, but should already be accounted
+	   for so treat this very much like the $unsigned() function. */
+      if (name=="$ivlh_to_unsigned") {
+	    ivl_assert(*this, parms_.size()==2);
+
+	    PExpr*expr = parms_[0];
+	    ivl_assert(*this, expr);
+	    NetExpr*sub = expr->elaborate_expr(des, scope, expr_width_, flags);
+	    return cast_to_width_(sub, expr_wid);
+      }
 
 	/* Catch the special case that the system function is the $signed
 	   function. Its argument will be evaluated as a self-determined
@@ -1755,20 +1801,53 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
       return sel;
 }
 
+static NetExpr* class_static_property_expression(const LineInfo*li,
+						 const netclass_t*class_type,
+						 perm_string name)
+{
+      NetNet*sig = class_type->find_static_property(name);
+      ivl_assert(*li, sig);
+      NetESignal*expr = new NetESignal(sig);
+      expr->set_line(*li);
+      return expr;
+}
+
 static NetExpr* check_for_class_property(const LineInfo*li,
-					 Design*des, NetScope*,
+					 Design*des, NetScope*scope,
 					 NetNet*net,
 					 const name_component_t&comp)
 {
       const netclass_t*class_type = net->class_type();
-      const ivl_type_s*ptype = class_type->get_property(comp.name);
-
-      if (ptype == 0) {
+      int pidx = class_type->property_idx_from_name(comp.name);
+      if (pidx < 0) {
 	    cerr << li->get_fileline() << ": error: "
 		 << "Class " << class_type->get_name()
 		 << " has no property " << comp.name << "." << endl;
 	    des->errors += 1;
 	    return 0;
+      }
+
+      if (debug_elaborate) {
+	    cerr << li->get_fileline() << ": check_for_class_property: "
+		 << "Property " << comp.name
+		 << " of net " << net->name()
+		 << ", context scope=" << scope_path(scope)
+		 << endl;
+      }
+
+      property_qualifier_t qual = class_type->get_prop_qual(pidx);
+      if (qual.test_local() && ! class_type->test_scope_is_method(scope)) {
+	    cerr << li->get_fileline() << ": error: "
+		 << "Local property " << class_type->get_prop_name(pidx)
+		 << " is not accessible in this context."
+		 << " (scope=" << scope_path(scope) << ")" << endl;
+	    des->errors += 1;
+      }
+
+      if (qual.test_static()) {
+	    perm_string prop_name = lex_strings.make(class_type->get_prop_name(pidx));
+	    return class_static_property_expression(li, class_type,
+						    prop_name);
       }
 
       NetEProperty*tmp = new NetEProperty(net, comp.name);
@@ -1880,6 +1959,23 @@ NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*ds
       NetFuncDef*def = dscope->func_def();
 
       bool need_const = NEED_CONST & flags;
+
+	// If this is a constant expression, it is possible that we
+	// are being elaborated before the function definition. If
+	// that's the case, try to elaborate the function as a const
+	// function.
+      if (need_const && ! def->proc()) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PECallFunction::elaborate_base_: "
+		       << "Try to elaborate " << scope_path(dscope)
+		       << " as constant function." << endl;
+	    }
+	    dscope->set_elab_stage(2);
+	    dscope->need_const_func(true);
+	    const PFunction*pfunc = dscope->func_pform();
+	    ivl_assert(*this, pfunc);
+	    pfunc->elaborate(des, dscope);
+      }
 
       unsigned parms_count = parms_.size();
       if ((parms_count == 1) && (parms_[0] == 0))
@@ -2011,6 +2107,12 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
       pform_name_t use_path = path_;
       perm_string method_name = peek_tail_name(use_path);
       use_path.pop_back();
+
+	// If there is no object to the left of the method name, then
+	// give up on the idea of looking for an object method.
+      if (use_path.empty()) {
+	    return 0;
+      }
 
       NetNet *net = 0;
       const NetExpr *par;
@@ -2715,8 +2817,9 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 		  }
 
 		  if (const netclass_t*class_type = net->class_type()) {
-			const ivl_type_s*ptype = class_type->get_property(method_name);
-			if (ptype) {
+			int pidx = class_type->property_idx_from_name(method_name);
+			if (pidx >= 0) {
+			      ivl_type_t ptype = class_type->get_prop_type(pidx);
 			      expr_type_   = ptype->base_type();
 			      expr_width_  = ptype->packed_width();
 			      min_width_   = expr_width_;
@@ -2823,7 +2926,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
  * not a method, or the name is not in the parent class, then
  * fail. Otherwise, return a NetEProperty.
  */
-NetExpr* PEIdent::elaborate_expr_class_member_(Design*, NetScope*scope,
+NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
 					       unsigned, unsigned) const
 {
       if (!gn_system_verilog())
@@ -2854,7 +2957,21 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*, NetScope*scope,
 	    cerr << get_fileline() << ": PEIdent::elaborate_expr_class_member: "
 		 << "Found member " << member_name
 		 << " is a member of class " << class_type->get_name()
+		 << ", context scope=" << scope_path(scope)
 		 << ", so synthesizing a NetEProperty." << endl;
+      }
+
+      property_qualifier_t qual = class_type->get_prop_qual(pidx);
+      if (qual.test_local() && ! class_type->test_scope_is_method(scope)) {
+	    cerr << get_fileline() << ": error: "
+		 << "Local property " << class_type->get_prop_name(pidx)
+		 << " is not accessible in this context."
+		 << " (scope=" << scope_path(scope) << ")" << endl;
+	    des->errors += 1;
+      }
+
+      if (qual.test_static()) {
+	    return class_static_property_expression(this, class_type, member_name);
       }
 
       NetEProperty*tmp = new NetEProperty(this_net, member_name);
@@ -4464,13 +4581,35 @@ unsigned PENewClass::test_width(Design*, NetScope*, width_mode_t&)
 NetExpr* PENewClass::elaborate_expr(Design*des, NetScope*scope,
 				    ivl_type_t ntype, unsigned) const
 {
-      NetENew*obj = new NetENew(ntype);
+      NetExpr*obj = new NetENew(ntype);
       obj->set_line(*this);
 
 	// Find the constructor for the class. If there is no
 	// constructor then the result of this expression is the
 	// allocation alone.
       const netclass_t*ctype = dynamic_cast<const netclass_t*> (ntype);
+
+	// If there is an initializer function, then pass the object
+	// through that function first. Note tha the initializer
+	// function has no arguments other then the object itself.
+      if (NetScope*new1_scope = ctype->method_from_name(perm_string::literal("new@"))) {
+	    NetFuncDef*def1 = new1_scope->func_def();
+	    ivl_assert(*this, def1);
+	    ivl_assert(*this, def1->port_count()==1);
+	    vector<NetExpr*> parms1 (1);
+	    parms1[0] = obj;
+
+	      // The return value of the initializer is the "this"
+	      // variable, instead of the "new&" scope name.
+	    NetNet*res1 = new1_scope->find_signal(perm_string::literal("@"));
+	    ivl_assert(*this, res1);
+
+	    NetESignal*eres = new NetESignal(res1);
+	    NetEUFunc*tmp = new NetEUFunc(scope, new1_scope, eres, parms1, true);
+	    tmp->set_line(*this);
+	    obj = tmp;
+      }
+
       NetScope*new_scope = ctype->method_from_name(perm_string::literal("new"));
       if (new_scope == 0) {
 	      // No constructor.

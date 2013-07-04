@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -328,12 +328,20 @@ const VType* ExpBinary::probe_type(Entity*ent, Architecture*arc) const
       if (t1 == t2)
 	    return t1;
 
+      if (const VType*tb = resolve_operand_types_(t1, t2))
+	    return tb;
+
 	// FIXME: I should at this point try harder to find an
 	// operator that has the proper argument list and use this
 	// here, but for now we leave it for the back-end to figure out.
 #if 0
       cerr << get_fileline() << ": internal error: I don't know how to resolve types of generic binary expressions." << endl;
 #endif
+      return 0;
+}
+
+const VType*ExpBinary::resolve_operand_types_(const VType*t1, const VType*t2) const
+{
       return 0;
 }
 
@@ -491,6 +499,21 @@ int ExpArithmetic::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltyp
       return errors;
 }
 
+const VType* ExpArithmetic::resolve_operand_types_(const VType*t1, const VType*t2) const
+{
+      while (const VTypeRange*tmp = dynamic_cast<const VTypeRange*> (t1))
+	    t1 = tmp->base_type();
+      while (const VTypeRange*tmp = dynamic_cast<const VTypeRange*> (t2))
+	    t2 = tmp->base_type();
+
+      if (t1->type_match(t2))
+	    return t1;
+      if (t2->type_match(t2))
+	    return t2;
+
+      return 0;
+}
+
 const VType* ExpAttribute::probe_type(Entity*ent, Architecture*arc) const
 {
       base_->probe_type(ent, arc);
@@ -636,6 +659,12 @@ int ExpConditional::else_t::elaborate_expr(Entity*ent, Architecture*arc, const V
 int ExpFunc::elaborate_expr(Entity*ent, Architecture*arc, const VType*)
 {
       int errors = 0;
+
+      ivl_assert(*this, arc);
+      Subprogram*prog = arc->find_subprogram(name_);
+
+      ivl_assert(*this, def_==0);
+      def_ = prog;
 
       for (size_t idx = 0 ; idx < argv_.size() ; idx += 1) {
 	    const VType*tmp = argv_[idx]->probe_type(ent, arc);

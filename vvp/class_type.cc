@@ -141,6 +141,56 @@ template <class T> class property_atom : public class_property_t {
       void copy(char*dst, char*src);
 };
 
+class property_bit : public class_property_t {
+    public:
+      inline property_bit(size_t wid): wid_(wid) { }
+      ~property_bit() { }
+
+      size_t instance_size() const { return sizeof(vvp_vector2_t); }
+
+    public:
+      void construct(char*buf) const
+      { new (buf+offset_) vvp_vector2_t (0, wid_); }
+
+      void destruct(char*buf) const
+      { vvp_vector2_t*tmp = reinterpret_cast<vvp_vector2_t*>(buf+offset_);
+	tmp->~vvp_vector2_t();
+      }
+
+      void set_vec4(char*buf, const vvp_vector4_t&val);
+      void get_vec4(char*buf, vvp_vector4_t&val);
+
+      void copy(char*dst, char*src);
+
+    private:
+      size_t wid_;
+};
+
+class property_logic : public class_property_t {
+    public:
+      inline property_logic(size_t wid): wid_(wid) { }
+      ~property_logic() { }
+
+      size_t instance_size() const { return sizeof(vvp_vector4_t); }
+
+    public:
+      void construct(char*buf) const
+      { new (buf+offset_) vvp_vector4_t (0, wid_); }
+
+      void destruct(char*buf) const
+      { vvp_vector4_t*tmp = reinterpret_cast<vvp_vector4_t*>(buf+offset_);
+	tmp->~vvp_vector4_t();
+      }
+
+      void set_vec4(char*buf, const vvp_vector4_t&val);
+      void get_vec4(char*buf, vvp_vector4_t&val);
+
+      void copy(char*dst, char*src);
+
+    private:
+      size_t wid_;
+};
+
 template <class T> class property_real : public class_property_t {
     public:
       inline explicit property_real(void) { }
@@ -231,6 +281,44 @@ template <class T> void property_atom<T>::copy(char*dst, char*src)
 {
       T*dst_obj = reinterpret_cast<T*> (dst+offset_);
       T*src_obj = reinterpret_cast<T*> (src+offset_);
+      *dst_obj = *src_obj;
+}
+
+void property_bit::set_vec4(char*buf, const vvp_vector4_t&val)
+{
+      vvp_vector2_t*obj = reinterpret_cast<vvp_vector2_t*> (buf+offset_);
+      *obj = val;
+}
+
+void property_bit::get_vec4(char*buf, vvp_vector4_t&val)
+{
+      vvp_vector2_t*obj = reinterpret_cast<vvp_vector2_t*> (buf+offset_);
+      val = vector2_to_vector4(*obj, obj->size());
+}
+
+void property_bit::copy(char*dst, char*src)
+{
+      vvp_vector2_t*dst_obj = reinterpret_cast<vvp_vector2_t*> (dst+offset_);
+      vvp_vector2_t*src_obj = reinterpret_cast<vvp_vector2_t*> (src+offset_);
+      *dst_obj = *src_obj;
+}
+
+void property_logic::set_vec4(char*buf, const vvp_vector4_t&val)
+{
+      vvp_vector4_t*obj = reinterpret_cast<vvp_vector4_t*> (buf+offset_);
+      *obj = val;
+}
+
+void property_logic::get_vec4(char*buf, vvp_vector4_t&val)
+{
+      vvp_vector4_t*obj = reinterpret_cast<vvp_vector4_t*> (buf+offset_);
+      val = *obj;
+}
+
+void property_logic::copy(char*dst, char*src)
+{
+      vvp_vector4_t*dst_obj = reinterpret_cast<vvp_vector4_t*> (dst+offset_);
+      vvp_vector4_t*src_obj = reinterpret_cast<vvp_vector4_t*> (src+offset_);
       *dst_obj = *src_obj;
 }
 
@@ -326,8 +414,15 @@ void class_type::set_property(size_t idx, const string&name, const string&type)
 	    properties_[idx].type = new property_string;
       else if (type == "o")
 	    properties_[idx].type = new property_object;
-      else
+      else if (type[0] == 'b') {
+	    size_t wid = strtoul(type.c_str()+1, 0, 0);
+	    properties_[idx].type = new property_bit(wid);
+      } else if (type[0] == 'L') {
+	    size_t wid = strtoul(type.c_str()+1,0,0);
+	    properties_[idx].type = new property_logic(wid);
+      } else {
 	    properties_[idx].type = 0;
+      }
 }
 
 void class_type::finish_setup(void)

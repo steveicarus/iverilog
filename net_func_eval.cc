@@ -60,7 +60,7 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
       map<perm_string,LocalVar>context_map;
 
       if (debug_eval_tree) {
-	    cerr << loc.get_fileline() << ": debug: "
+	    cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
 		 << "Evaluate function " << scope_->basename() << endl;
       }
 
@@ -78,7 +78,7 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 	    input_var.value  = fix_assign_value(ports_[idx], args[idx]);
 
 	    if (debug_eval_tree) {
-		  cerr << loc.get_fileline() << ": debug: "
+		  cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
 		       << "   input " << aname << " = " << *args[idx] << endl;
 	    }
       }
@@ -87,10 +87,21 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 	// fills in the context_map with local variables held by the scope.
       scope_->evaluate_function_find_locals(loc, context_map);
 
+      if (debug_eval_tree && statement_==0) {
+	    cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
+		 << "Function " << scope_path(scope_)
+		 << " has no statement?" << endl;
+      }
+
 	// Perform the evaluation. Note that if there were errors
 	// when compiling the function definition, we may not have
 	// a valid statement.
       bool flag = statement_ && statement_->evaluate_function(loc, context_map);
+
+      if (debug_eval_tree && !flag) {
+	    cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
+		 << "Cannot evaluate " << scope_path(scope_) << "." << endl;
+      }
 
 	// Extract the result...
       ptr = context_map.find(scope_->basename());
@@ -112,9 +123,32 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 	    }
       }
 
+      if (disable) {
+	    if (debug_eval_tree)
+		  cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
+		       << "disable of " << scope_path(disable)
+		       << " trapped in function " << scope_path(scope_)
+		       << "." << endl;
+	    ivl_assert(loc, disable==scope_);
+	    disable = 0;
+      }
+
 	// Done.
-      if (flag)
+      if (flag) {
+	    if (debug_eval_tree) {
+		  cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
+		       << "Evalutated to ";
+		  if (res) cerr << *res;
+		  else cerr << "<nil>";
+		  cerr << endl;
+	    }
 	    return res;
+      }
+
+      if (debug_eval_tree) {
+	    cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
+		 << "Evaluation failed." << endl;
+      }
 
       delete res;
       return 0;
@@ -181,9 +215,15 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
       map<perm_string,LocalVar>::iterator ptr = context_map.find(lval->name());
       ivl_assert(*this, ptr != context_map.end());
 
+      LocalVar*var = & ptr->second;
+      while (var->nwords == -1) {
+	    assert(var->ref);
+	    var = var->ref;
+      }
+
       NetExpr*old_lval;
-      unsigned word = 0;
-      if (ptr->second.nwords > 0) {
+      int word = 0;
+      if (var->nwords > 0) {
 	    NetExpr*word_result = lval->word()->evaluate_function(loc, context_map);
 	    if (word_result == 0) {
 		  delete rval_result;
@@ -198,12 +238,13 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 
 	    word = word_const->value().as_long();
 
-	    if (word >= ptr->second.nwords)
+	    if (word >= var->nwords)
 		  return true;
 
-	    old_lval = ptr->second.array[word];
+	    old_lval = var->array[word];
       } else {
-	    old_lval = ptr->second.value;
+	    assert(var->nwords == 0);
+	    old_lval = var->value;
       }
 
       if (const NetExpr*base_expr = lval->get_base()) {
@@ -245,15 +286,16 @@ bool NetAssign::eval_func_lval_(const LineInfo&loc,
 	    delete old_lval;
 
       if (debug_eval_tree) {
-	    cerr << get_fileline() << ": debug: "
-		 << "NetAssign::evaluate_function: " << lval->name()
-		 << " = " << *rval_result << endl;
+	    cerr << get_fileline() << ": NetAssign::evaluate_function: "
+		 << lval->name() << " = " << *rval_result << endl;
       }
 
-      if (ptr->second.nwords > 0)
-	    ptr->second.array[word] = rval_result;
-      else
-	    ptr->second.value = rval_result;
+      if (var->nwords > 0) {
+	    var->array[word] = rval_result;
+      } else {
+	    assert(var->nwords == 0);
+	    var->value = rval_result;
+      }
 
       return true;
 }
@@ -303,15 +345,55 @@ bool NetAssign::evaluate_function(const LineInfo&loc,
 bool NetBlock::evaluate_function(const LineInfo&loc,
 				 map<perm_string,LocalVar>&context_map) const
 {
+      if (last_ == 0) return true;
+
+	// If we need to make a local scope, then this context map
+	// will be filled in and used for statements within this block.
+      map<perm_string,LocalVar>local_context_map;
+      bool use_local_context_map = false;
+
+      if (subscope_!=0) {
+	      // First, copy the containing scope symbols into the new
+	      // scope as references.
+	    for (map<perm_string,LocalVar>::iterator cur = context_map.begin()
+		       ; cur != context_map.end() ; ++cur) {
+		  LocalVar&cur_var = local_context_map[cur->first];
+		  cur_var.nwords = -1;
+		  if (cur->second.nwords == -1)
+			cur_var.ref = cur->second.ref;
+		  else
+			cur_var.ref = &cur->second;
+	    }
+
+	      // Now collect the new locals.
+	    subscope_->evaluate_function_find_locals(loc, local_context_map);
+	    use_local_context_map = true;
+      }
+
+	// Now use the local context map if there is any local
+	// context, or the containing context map.
+      map<perm_string,LocalVar>&use_context_map = use_local_context_map? local_context_map : context_map;
+
       bool flag = true;
       NetProc*cur = last_;
-      if (cur == 0) return true;
-
       do {
 	    cur = cur->next_;
-	    bool cur_flag = cur->evaluate_function(loc, context_map);
+	    if (debug_eval_tree) {
+		  cerr << get_fileline() << ": NetBlock::evaluate_function: "
+		       << "Execute statement (" << typeid(*cur).name()
+		       << ") at " << cur->get_fileline() << "." << endl;
+	    }
+
+	    bool cur_flag = cur->evaluate_function(loc, use_context_map);
 	    flag = flag && cur_flag;
       } while (cur != last_ && !disable);
+
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": NetBlock::evaluate_function: "
+		 << "subscope_=" << subscope_
+		 << ", disable=" << disable
+		 << ", flag=" << (flag?"true":"false") << endl;
+      }
 
       if (disable == subscope_) disable = 0;
 
@@ -437,8 +519,13 @@ bool NetCondit::evaluate_function(const LineInfo&loc,
 				  map<perm_string,LocalVar>&context_map) const
 {
       NetExpr*cond = expr_->evaluate_function(loc, context_map);
-      if (cond == 0)
+      if (cond == 0) {
+	    if (debug_eval_tree) {
+		  cerr << get_fileline() << ": NetCondit::evaluate_function: "
+		       << "Unable to evaluate condition (" << *expr_ <<")" << endl;
+	    }
 	    return false;
+      }
 
       NetEConst*cond_const = dynamic_cast<NetEConst*> (cond);
       ivl_assert(loc, cond_const);
@@ -446,18 +533,32 @@ bool NetCondit::evaluate_function(const LineInfo&loc,
       long val = cond_const->value().as_long();
       delete cond;
 
+      bool flag;
+
       if (val)
 	      // The condition is true, so evaluate the if clause
-	    return (if_ == 0) || if_->evaluate_function(loc, context_map);
+	    flag = (if_ == 0) || if_->evaluate_function(loc, context_map);
       else
 	      // The condition is false, so evaluate the else clause
-	    return (else_ == 0) || else_->evaluate_function(loc, context_map);
+	    flag = (else_ == 0) || else_->evaluate_function(loc, context_map);
+
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": NetCondit::evaluate_function: "
+		 << "Finished, flag=" << (flag?"true":"false") << endl;
+      }
+      return flag;
 }
 
 bool NetDisable::evaluate_function(const LineInfo&,
 				   map<perm_string,LocalVar>&) const
 {
       disable = target_;
+
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": NetDisable::evaluate_function: "
+		 << "disable " << scope_path(disable) << endl;
+      }
+
       return true;
 }
 
@@ -530,7 +631,7 @@ bool NetWhile::evaluate_function(const LineInfo&loc,
       bool flag = true;
 
       if (debug_eval_tree) {
-	    cerr << get_fileline() << ": debug: NetWhile::evaluate_function: "
+	    cerr << get_fileline() << ": NetWhile::evaluate_function: "
 		 << "Start loop" << endl;
       }
 
@@ -561,8 +662,8 @@ bool NetWhile::evaluate_function(const LineInfo&loc,
       }
 
       if (debug_eval_tree) {
-	    cerr << get_fileline() << ": debug: NetWhile::evaluate_function: "
-		 << "Done loop" << endl;
+	    cerr << get_fileline() << ": NetWhile::evaluate_function: "
+		 << "Done loop, flag=" << (flag?"true":"false") << endl;
       }
 
       return flag;
@@ -674,8 +775,15 @@ NetExpr* NetESignal::evaluate_function(const LineInfo&loc,
 	    return 0;
       }
 
+	// Follow indirect references to the actual variable.
+      LocalVar*var = & ptr->second;
+      while (var->nwords == -1) {
+	    assert(var->ref);
+	    var = var->ref;
+      }
+
       NetExpr*value = 0;
-      if (ptr->second.nwords > 0) {
+      if (var->nwords > 0) {
 	    ivl_assert(loc, word_);
 	    NetExpr*word_result = word_->evaluate_function(loc, context_map);
 	    if (word_result == 0)
@@ -684,12 +792,12 @@ NetExpr* NetESignal::evaluate_function(const LineInfo&loc,
 	    NetEConst*word_const = dynamic_cast<NetEConst*>(word_result);
 	    ivl_assert(loc, word_const);
 
-	    unsigned word = word_const->value().as_long();
+	    int word = word_const->value().as_long();
 
-	    if (word_const->value().is_defined() && (word < ptr->second.nwords))
-		  value = ptr->second.array[word];
+	    if (word_const->value().is_defined() && (word < var->nwords))
+		  value = var->array[word];
       } else {
-	    value = ptr->second.value;
+	    value = var->value;
       }
 
       if (value == 0) {

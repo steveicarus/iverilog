@@ -1,7 +1,8 @@
 #ifndef __parse_types_H
 #define __parse_types_H
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011,2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -74,10 +75,12 @@ class prange_t {
       ~prange_t() { delete left_; delete right_; }
       void dump(ostream&out, int indent) const;
 
-      Expression*msb() { return direction_? left_ : right_; }
-      Expression*lsb() { return direction_? right_: left_;  }
+      inline Expression*msb() { return direction_? left_ : right_; }
+      inline Expression*lsb() { return direction_? right_: left_;  }
 
       inline bool is_downto() const { return direction_; }
+      inline Expression*expr_left() { return left_; }
+      inline Expression*expr_right() { return right_; }
 
     private:
       Expression *left_, *right_;
@@ -87,4 +90,10 @@ class prange_t {
       prange_t(const prange_t&);
       prange_t operator=(const prange_t&);
 };
+
+struct adding_term {
+      ExpArithmetic::fun_t op;
+      Expression*term;
+};
+
 #endif

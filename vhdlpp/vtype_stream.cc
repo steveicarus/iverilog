@@ -17,9 +17,11 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+# define __STDC_LIMIT_MACROS
 # include  "vtype.h"
 # include  "expression.h"
 # include  <typeinfo>
+# include  <stdint.h>
 # include  <cassert>
 
 using namespace std;
@@ -115,6 +117,15 @@ void VTypePrimitive::write_to_stream(ostream&fd) const
 
 void VTypeRange::write_to_stream(ostream&fd) const
 {
+	// Detect some special cases that can be written as ieee or
+	// standard types.
+      if (const VTypePrimitive*tmp = dynamic_cast<const VTypePrimitive*> (base_)) {
+	    if (min_==0 && max_==INT64_MAX && tmp->type()==VTypePrimitive::INTEGER) {
+		  fd << "natural";
+		  return;
+	    }
+      }
+
       base_->write_to_stream(fd);
       fd << " range " << min_ << " to " << max_;
 }

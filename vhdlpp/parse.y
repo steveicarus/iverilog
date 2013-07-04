@@ -6,8 +6,8 @@
 %parse-param {perm_string parse_library_name}
 %{
 /*
- * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,7 +34,8 @@
 # include "architec.h"
 # include "expression.h"
 # include "sequential.h"
-# include  "package.h"
+# include "subprogram.h"
+# include "package.h"
 # include "vsignal.h"
 # include "vtype.h"
 # include  <cstdarg>
@@ -181,6 +182,16 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
       return res;
 }
 
+static void touchup_interface_for_functions(std::list<InterfacePort*>*ports)
+{
+      for (list<InterfacePort*>::iterator cur = ports->begin()
+		 ; cur != ports->end() ; ++cur) {
+	    InterfacePort*curp = *cur;
+	    if (curp->mode == PORT_NONE)
+		  curp->mode = PORT_IN;
+      }
+}
+
 %}
 
 
@@ -222,6 +233,7 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
       std::list<prange_t*>*range_list;
 
       ExpArithmetic::fun_t arithmetic_op;
+      std::list<struct adding_term>*adding_terms;
 
       ExpAggregate::choice_t*choice;
       std::list<ExpAggregate::choice_t*>*choice_list;
@@ -234,6 +246,8 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 
       Architecture::Statement* arch_statement;
       std::list<Architecture::Statement*>* arch_statement_list;
+
+      Subprogram*subprogram;
 };
 
   /* The keywords are all tokens. */
@@ -274,6 +288,7 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 %type <flag> direction
 
 %type <arithmetic_op> adding_operator
+%type <adding_terms> simple_expression_terms
 
 %type <interface_list> interface_element interface_list
 %type <interface_list> port_clause port_clause_opt
@@ -301,7 +316,7 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 %type <expr> expression_logical_xnor expression_logical_xor
 %type <expr> name prefix selected_name
 %type <expr> shift_expression signal_declaration_assign_opt
-%type <expr> simple_expression term waveform_element
+%type <expr> simple_expression simple_expression_2 term waveform_element
 %type <expr> interface_element_expression
 
 %type <expr_list> waveform waveform_elements
@@ -319,11 +334,12 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 %type <record_elements> element_declaration element_declaration_list
 
 %type <text> architecture_body_start package_declaration_start
+%type <text> package_body_start
 %type <text> identifier_opt identifier_colon_opt logical_name suffix
 %type <name_list> logical_name_list identifier_list
 %type <name_list> enumeration_literal_list enumeration_literal
 
-%type <sequ_list> sequence_of_statements if_statement_else
+%type <sequ_list> if_statement_else sequence_of_statements subprogram_statement_part
 %type <sequ> sequential_statement if_statement signal_assignment_statement
 %type <sequ> case_statement procedure_call procedure_call_statement
 %type <sequ> loop_statement variable_assignment_statement
@@ -340,6 +356,8 @@ static list<VTypeRecord::element_t*>* record_elements(list<perm_string>*names,
 
 %type <exp_else> else_when_waveform
 %type <exp_else_list> else_when_waveforms
+
+%type <subprogram> function_specification subprogram_specification
 
 %%
 
@@ -658,6 +676,15 @@ composite_type_definition
 	delete $2;
 	$$ = tmp;
       }
+
+  /* unbounded_array_definition IEEE 1076-2008 P5.3.2.1 */
+  | K_array '(' index_subtype_definition_list ')' K_of subtype_indication
+      { sorrymsg(@1, "unbounded_array_definition not supported.\n");
+	std::list<prange_t*> r;
+	VTypeArray*tmp = new VTypeArray($6, &r);
+	$$ = tmp;
+      }
+
   | record_type_definition
       { $$ = $1; }
   ;
@@ -1143,6 +1170,16 @@ for_generate_statement
 
 function_specification /* IEEE 1076-2008 P4.2.1 */
   : K_function IDENTIFIER '(' interface_list ')' K_return IDENTIFIER
+      { perm_string type_name = lex_strings.make($7);
+	perm_string name = lex_strings.make($2);
+	const VType*type_mark = active_scope->find_type(type_name);
+	touchup_interface_for_functions($4);
+	Subprogram*tmp = new Subprogram(name, $4, type_mark);
+	FILE_NAME(tmp,@1);
+	delete[]$2;
+	delete[]$7;
+	$$ = tmp;
+      }
   ;
 
 generate_statement /* IEEE 1076-2008 P11.8 */
@@ -1314,6 +1351,16 @@ index_constraint
 	yyerrok;
 	$$ = new list<prange_t*>;
       }
+  ;
+
+  /* The identifier should be a type name */
+index_subtype_definition /* IEEE 1076-2008 P5.3.2.1 */
+  : IDENTIFIER K_range BOX
+  ;
+
+index_subtype_definition_list
+  : index_subtype_definition_list ',' index_subtype_definition
+  | index_subtype_definition
   ;
 
 instantiation_list
@@ -1599,20 +1646,40 @@ package_declarative_part_opt
   |
   ;
 
-package_body
-  : K_package K_body IDENTIFIER K_is
+package_body /* IEEE 1076-2008 P4.8 */
+  : package_body_start K_is
     package_body_declarative_part_opt
     K_end K_package_opt identifier_opt ';'
-      { sorrymsg(@1, "Package body is not yet supported.\n");
-	delete[] $3;
-	if($8) delete[] $8;
+      { perm_string name = lex_strings.make($1);
+	if ($6 && name != $6)
+	      errormsg(@6, "Package name (%s) doesn't match closing name (%s).\n", $1, $6);
+	delete[] $1;
+	if($6) delete[]$6;
+	pop_scope();
       }
 
-  | K_package K_body IDENTIFIER K_is
-    error
-    K_end K_package_opt identifier_opt ';'
-      { errormsg(@1, "Errors in package body.\n");
+  | package_body_start K_is error K_end K_package_opt identifier_opt ';'
+      { errormsg(@1, "Errors in package %s body.\n", $1);
 	yyerrok;
+	pop_scope();
+      }
+  ;
+
+/*
+ * This is a portion of the package_body rule that we factor out so
+ * that we can use this rule to start the scope.
+ */
+package_body_start
+  : K_package K_body IDENTIFIER
+      { perm_string name = lex_strings.make($3);
+	push_scope();
+	Package*pkg = library_recall_package(parse_library_name, name);
+	if (pkg != 0) {
+	      active_scope->set_package_header(pkg);
+	} else {
+	      errormsg(@1, "Package body for %s has no matching header.\n", $3);
+	}
+	$$ = $3;
       }
   ;
 
@@ -1723,12 +1790,12 @@ procedure_call
     $$ = tmp;
       }
   | IDENTIFIER '(' error ')'
-      {
-    errormsg(@1, "Errors in procedure call.\n");
-    yyerrok;
-    delete[]$1;
-    $$ = 0;
-      };
+      { errormsg(@1, "Errors in procedure call.\n");
+	yyerrok;
+	delete[]$1;
+	$$ = 0;
+      }
+  ;
 
 procedure_call_statement
   : IDENTIFIER ':' procedure_call { $$ = $3; }
@@ -2002,6 +2069,11 @@ sequential_statement
 
 shift_expression : simple_expression { $$ = $1; } ;
 
+sign
+  : '+'
+  | '-'
+  ;
+
 signal_declaration_assign_opt
   : VASSIGN expression { $$ = $2; }
   |                    { $$ = 0;  }
@@ -2020,18 +2092,55 @@ signal_declaration_assign_opt
  * Note that although the concatenation operator '&' is syntactically
  * an addition operator, it is handled differently during elaboration
  * so detect it and create a different expression type.
+ *
+ * Note too that I'm using *right* recursion to implement the {...}
+ * part of the rule. This is normally bad, but expression lists aren't
+ * normally that long, and the while loop going through the formed
+ * list fixes up the associations.
  */
 simple_expression
+  : sign simple_expression_2
+      { sorrymsg(@1, "Unary expression +- not supported.\n");
+	$$ = $2;
+      }
+  | simple_expression_2
+      { $$ = $1; }
+  ;
+
+simple_expression_2
   : term
       { $$ = $1; }
-  | simple_expression adding_operator term
-      { Expression*tmp;
-	if ($2 == ExpArithmetic::xCONCAT) {
-	      tmp = new ExpConcat($1, $3);
-	} else {
-	      tmp = new ExpArithmetic($2, $1, $3);
+  | term simple_expression_terms
+      { Expression*tmp = $1;
+	list<struct adding_term>*lst = $2;
+	while (! lst->empty()) {
+	      struct adding_term item = lst->front();
+	      lst->pop_front();
+	      if (item.op == ExpArithmetic::xCONCAT)
+		    tmp = new ExpConcat(tmp, item.term);
+	      else
+		    tmp = new ExpArithmetic(item.op, tmp, item.term);
 	}
-	FILE_NAME(tmp, @2);
+	delete lst;
+	$$ = tmp;
+      }
+  ;
+
+simple_expression_terms
+  : adding_operator term
+      { struct adding_term item;
+	item.op = $1;
+	item.term = $2;
+	list<adding_term>*tmp = new list<adding_term>;
+	tmp->push_back(item);
+	$$ = tmp;
+      }
+  | simple_expression_terms adding_operator term
+      { list<adding_term>*tmp = $1;
+	struct adding_term item;
+	item.op = $2;
+	item.term = $3;
+	tmp->push_back(item);
 	$$ = tmp;
       }
   ;
@@ -2051,13 +2160,24 @@ signal_assignment_statement
       }
   ;
 
+  /* This is a function/task body. This may have a matching subprogram
+     declaration, and if so it will be in the active scope. */
+
 subprogram_body /* IEEE 1076-2008 P4.3 */
   : subprogram_specification K_is
     subprogram_declarative_part
     K_begin subprogram_statement_part K_end
     subprogram_kind_opt identifier_opt ';'
-      { sorrymsg(@2, "Subprogram bodies not supported.\n");
-	if ($8) delete[]$8;
+      { Subprogram*prog = $1;
+	Subprogram*tmp = active_scope->recall_subprogram(prog->name());
+	if (tmp && prog->compare_specification(tmp)) {
+	      delete prog;
+	      prog = tmp;
+	} else if (tmp) {
+	      errormsg(@1, "Subprogram specification for %s doesn't match specification in package header.\n", prog->name().str());
+	}
+	prog->set_program_body($5);
+	active_scope->bind_name(prog->name(), prog);
       }
 
   | subprogram_specification K_is
@@ -2066,14 +2186,14 @@ subprogram_body /* IEEE 1076-2008 P4.3 */
     subprogram_kind_opt identifier_opt ';'
       { errormsg(@2, "Syntax errors in subprogram body.\n");
 	yyerrok;
+	if ($1) delete $1;
 	if ($8) delete[]$8;
       }
   ;
 
 subprogram_declaration
   : subprogram_specification ';'
-      { sorrymsg(@1, "Subprogram specifications not supported.\n");
-      }
+      { if ($1) active_scope->bind_name($1->name(), $1); }
   ;
 
 subprogram_declarative_item /* IEEE 1079-2008 P4.3 */
@@ -2098,7 +2218,7 @@ subprogram_kind /* IEEE 1076-2008 P4.3 */
 subprogram_kind_opt : subprogram_kind | ;
 
 subprogram_specification
-  : function_specification
+  : function_specification { $$ = $1; }
   ;
 
   /* This is an implementation of the rule:
@@ -2107,8 +2227,8 @@ subprogram_specification
      sequential_statement. Also handle the special case of an empty
      list here. */
 subprogram_statement_part
-  : sequence_of_statements
-  |
+  : sequence_of_statements { $$ = $1; }
+  |                        { $$ = 0; }
   ;
 
 subtype_declaration
@@ -2132,12 +2252,13 @@ subtype_indication
 	delete[]$1;
 	$$ = tmp;
       }
-  | IDENTIFIER '(' simple_expression direction simple_expression ')'
-      { const VType*tmp = calculate_subtype_array(@1, $1, active_scope, $3, $4, $5);
+  | IDENTIFIER index_constraint
+      { const VType*tmp = calculate_subtype_array(@1, $1, active_scope, $2);
 	if (tmp == 0) {
 	      errormsg(@1, "Unable to calculate bounds for array of %s.\n", $1);
 	}
 	delete[]$1;
+	delete  $2;
 	$$ = tmp;
       }
   | IDENTIFIER K_range simple_expression direction simple_expression
@@ -2147,11 +2268,6 @@ subtype_indication
 	}
 	delete[]$1;
 	$$ = tmp;
-      }
-  | IDENTIFIER '(' error ')'
-      { errormsg(@1, "Syntax error in subtype indication.\n");
-	yyerrok;
-	$$ = new VTypeERROR;
       }
   ;
 

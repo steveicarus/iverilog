@@ -41,15 +41,6 @@ void pform_class_property(const struct vlltype&loc,
 {
       assert(pform_cur_class);
 
-      if (property_qual.test_static()) {
-	      // I think the thing to do with static properties is to
-	      // make them PWires directly in the PClass scope. They
-	      // are wires like program/modules wires, and not
-	      // instance members.
-	    VLerror(loc, "sorry: static class properties not implemented.");
-	    return;
-      }
-
 	// Add the non-static properties to the class type
 	// object. Unwind the list of names to make a map of name to
 	// type.
@@ -64,11 +55,20 @@ void pform_class_property(const struct vlltype&loc,
 		  use_type = new uarray_type_t(use_type, pd);
 	    }
 
-	    if (curp->expr.get()) {
-		  VLerror(loc, "sorry: Initialization expressions for properties not implemented.");
-	    }
+	    pform_cur_class->type->properties[curp->name]
+		  = class_type_t::prop_info_t(property_qual,use_type);
 
-	    pform_cur_class->type->properties[curp->name] = use_type;
+	    if (PExpr*rval = curp->expr.release()) {
+		  PExpr*lval = new PEIdent(curp->name);
+		  FILE_NAME(lval, loc);
+		  PAssign*tmp = new PAssign(lval, rval);
+		  FILE_NAME(tmp, loc);
+
+		  if (property_qual.test_static())
+			pform_cur_class->type->initialize_static.push_back(tmp);
+		  else
+			pform_cur_class->type->initialize.push_back(tmp);
+	    }
       }
 }
 
@@ -107,9 +107,29 @@ PFunction*pform_push_constructor_scope(const struct vlltype&loc)
       return func;
 }
 
-void pform_end_class_declaration(void)
+void pform_end_class_declaration(const struct vlltype&loc)
 {
       assert(pform_cur_class);
+
+	// If there were initializer statements, then collect them
+	// into an implicit constructor function.
+      if (! pform_cur_class->type->initialize.empty()) {
+	    PFunction*func = pform_push_function_scope(loc, "new@", true);
+	    func->set_ports(0);
+	    pform_set_constructor_return(func);
+	    pform_set_this_class(loc, func);
+
+	    class_type_t*use_class = pform_cur_class->type;
+	    if (use_class->initialize.size() == 1) {
+		  func->set_statement(use_class->initialize.front());
+	    } else {
+		  PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+		  tmp->set_statement(use_class->initialize);
+		  func->set_statement(tmp);
+	    }
+	    pform_pop_scope();
+      }
+
       pform_cur_class = 0;
       pform_pop_scope();
 }

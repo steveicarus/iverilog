@@ -387,9 +387,9 @@ class PEIdent : public PExpr {
       bool elaborate_lval_net_idx_(Design*, NetScope*, NetAssign_*,
                                    index_component_t::ctype_t,
 				   bool need_const_idx) const;
-      bool elaborate_lval_net_class_member_(Design*, NetScope*,
-					    NetAssign_*,
-					    const perm_string&) const;
+      NetAssign_*elaborate_lval_net_class_member_(Design*, NetScope*,
+						   NetNet*,
+						   const perm_string&) const;
       bool elaborate_lval_net_packed_member_(Design*, NetScope*,
 					     NetAssign_*,
 					     const perm_string&) const;

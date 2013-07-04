@@ -293,8 +293,60 @@ static void elaborate_scope_enumerations(Design*des, NetScope*scope,
       }
 }
 
-static void elaborate_scope_class(Design*des, NetScope*scope,
-				  PClass*pclass)
+/*
+ * If the pclass includes an implicit and explicit constructor, then
+ * merge the implicit constructor into the explicit constructor as
+ * statements in the beginning.
+ *
+ * This is not necessary for proper functionality, it is an
+ * optimization, so we can easily give up if it doesn't seem like it
+ * will obviously work.
+ */
+static void blend_class_constructors(PClass*pclass)
+{
+      perm_string new1 = perm_string::literal("new");
+      perm_string new2 = perm_string::literal("new@");
+
+      map<perm_string,PFunction*>::iterator iter_new = pclass->funcs.find(new1);
+      if (iter_new == pclass->funcs.end())
+	    return;
+
+      map<perm_string,PFunction*>::iterator iter_new2 = pclass->funcs.find(new2);
+      if (iter_new2 == pclass->funcs.end())
+	    return;
+
+      PFunction*use_new  = iter_new->second;
+      PFunction*use_new2 = iter_new2->second;
+
+	// These constructors must be methods of the same class.
+      ivl_assert(*use_new, use_new->method_of() == use_new2->method_of());
+
+      Statement*def_new = use_new->get_statement();
+      Statement*def_new2 = use_new2->get_statement();
+
+	// If either constructor has no definition, then give up. This
+	// might happen, for example, during parse errors or other
+	// degenerate situations.
+      if (def_new==0 || def_new2==0)
+	    return;
+
+      PBlock*blk_new = dynamic_cast<PBlock*> (def_new);
+
+	// For now, only do this if the functions are defined by
+	// statement blocks. That should be true by definition for
+	// implicit constructors, and common for explicit constructors.
+      if (blk_new==0)
+	    return;
+
+      ivl_assert(*blk_new,  blk_new ->bl_type()==PBlock::BL_SEQ);
+
+      blk_new->push_statement_front(def_new2);
+
+      pclass->funcs.erase(iter_new2);
+      delete use_new2;
+}
+
+static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 {
       class_type_t*use_type = pclass->type;
       netclass_t*use_class = new netclass_t(use_type->name);
@@ -314,15 +366,15 @@ static void elaborate_scope_class(Design*des, NetScope*scope,
 
 	// Collect the properties, elaborate them, and add them to the
 	// elaborated class definition.
-      for (map<perm_string, data_type_t*>::iterator cur = use_type->properties.begin()
+      for (map<perm_string, class_type_t::prop_info_t>::iterator cur = use_type->properties.begin()
 		 ; cur != use_type->properties.end() ; ++ cur) {
 	    if (debug_scopes) {
 		  cerr << pclass->get_fileline() << ": elaborate_scope_class: "
 		       << "  Property " << cur->first << endl;
 	    }
-	    ivl_type_s*tmp = cur->second->elaborate_type(des, scope);
+	    ivl_type_s*tmp = cur->second.type->elaborate_type(des, scope);
 	    ivl_assert(*pclass, tmp);
-	    use_class->set_property(cur->first, tmp);
+	    use_class->set_property(cur->first, cur->second.qual, tmp);
       }
 
       for (map<perm_string,PTask*>::iterator cur = pclass->tasks.begin()
@@ -367,8 +419,10 @@ static void elaborate_scope_class(Design*des, NetScope*scope,
 static void elaborate_scope_classes(Design*des, NetScope*scope,
 				    const vector<PClass*>&classes)
 {
-      for (size_t idx = 0 ; idx < classes.size() ; idx += 1)
+      for (size_t idx = 0 ; idx < classes.size() ; idx += 1) {
+	    blend_class_constructors(classes[idx]);
 	    elaborate_scope_class(des, scope, classes[idx]);
+      }
 }
 
 static void replace_scope_parameters_(NetScope*scope, const LineInfo&loc,

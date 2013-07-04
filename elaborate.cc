@@ -2361,11 +2361,17 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
       return cur;
 }
 
+/*
+ * Assignments within program blocks can only write to certain types
+ * of variables. We can only write to:
+ *    - variables in a program block
+ *    - static properties of a class
+ */
 static bool lval_not_program_variable(const NetAssign_*lv)
 {
       while (lv) {
 	    NetScope*sig_scope = lv->sig()->scope();
-	    if (! sig_scope->program_block())
+	    if (! sig_scope->program_block() && sig_scope->type()!=NetScope::CLASS)
 		  return true;
 
 	    lv = lv->more;
@@ -2792,14 +2798,6 @@ NetProc* PBlock::elaborate(Design*des, NetScope*scope) const
 	    scope->is_const_func(false);
       if (nscope->calls_sys_task())
 	    scope->calls_sys_task(true);
-
-      if (!wires.empty()) {
-	    if (scope->need_const_func()) {
-		  cerr << get_fileline() << ": sorry: Block variables inside "
-			 "a constant function are not yet supported." << endl;
-	    }
-	    scope->is_const_func(false);
-      }
 
       cur->set_line(*this);
       return cur;
@@ -4445,6 +4443,69 @@ NetProc* PRepeat::elaborate(Design*des, NetScope*scope) const
       return proc;
 }
 
+NetProc* PReturn::elaborate(Design*des, NetScope*scope) const
+{
+      NetScope*target = scope;
+      for (;;) {
+	    if (target == 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "Return statement is not in a function." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    if (target->type() == NetScope::FUNC)
+		  break;
+
+	    if (target->type() == NetScope::TASK) {
+		  cerr << get_fileline() << ": error: "
+		       << "Cannot \"return\" from tasks." << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+
+	    if (target->type()==NetScope::BEGIN_END) {
+		  target = target->parent();
+		  continue;
+	    }
+
+	    cerr << get_fileline() << ": error: "
+		 << "Cannot \"return\" from this scope: " << scope_path(target) << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+	// We don't yet support void functions, so require an
+	// expression for the return statement.
+      if (expr_ == 0) {
+	    cerr << get_fileline() << ": error: "
+		 << "Return from " << scope_path(target)
+		 << " requires a return value expression." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      NetNet*res = target->find_signal(target->basename());
+      ivl_variable_type_t lv_type = res->data_type();
+      unsigned long wid = res->vector_width();
+      NetAssign_*lv = new NetAssign_(res);
+
+      NetExpr*val = elaborate_rval_expr(des, scope, lv_type, wid, expr_);
+
+      NetBlock*proc = new NetBlock(NetBlock::SEQU, 0);
+      proc->set_line( *this );
+
+      NetAssign*assn = new NetAssign(lv, val);
+      assn->set_line( *this );
+      proc->append(assn);
+
+      NetDisable*disa = new NetDisable(target);
+      disa->set_line( *this );
+      proc->append( disa );
+
+      return proc;
+}
+
 /*
  * A task definition is elaborated by elaborating the statement that
  * it contains, and connecting its ports to NetNet objects. The
@@ -4883,6 +4944,13 @@ static void elaborate_classes(Design*des, NetScope*scope,
 		 ; cur != classes.end() ; ++ cur) {
 	    netclass_t*use_class = scope->find_class(cur->second->pscope_name());
 	    use_class->elaborate(des, cur->second);
+
+	    if (use_class->test_for_missing_initializers()) {
+		  cerr << cur->second->get_fileline() << ": error: "
+		       << "Const properties of class " << use_class->get_name()
+		       << " are missing initialization." << endl;
+		  des->errors += 1;
+	    }
       }
 }
 
@@ -4962,6 +5030,19 @@ bool Module::elaborate(Design*des, NetScope*scope) const
  */
 void netclass_t::elaborate(Design*des, PClass*pclass)
 {
+      if (! pclass->type->initialize_static.empty()) {
+	    std::vector<Statement*>&stmt_list = pclass->type->initialize_static;
+	    NetBlock*stmt = new NetBlock(NetBlock::SEQU, 0);
+	    for (size_t idx = 0 ; idx < stmt_list.size() ; idx += 1) {
+		  NetProc*tmp = stmt_list[idx]->elaborate(des, class_scope_);
+		  if (tmp == 0) continue;
+		  stmt->append(tmp);
+	    }
+	    NetProcTop*top = new NetProcTop(class_scope_, IVL_PR_INITIAL, stmt);
+	    top->set_line(*pclass);
+	    des->add_process(top);
+      }
+
       for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
 		 ; cur != pclass->funcs.end() ; ++ cur) {
 	    if (debug_elaborate) {

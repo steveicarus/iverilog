@@ -22,10 +22,12 @@
 # include  "LineInfo.h"
 # include  "ivl_target.h"
 # include  "nettypes.h"
+# include  "property_qual.h"
 # include  <iostream>
 # include  <map>
 
 class Design;
+class NetNet;
 class NetScope;
 class PClass;
 
@@ -37,7 +39,7 @@ class netclass_t : public ivl_type_s {
 	// Set the property of the class during elaboration. Set the
 	// name and type, and return true. If the name is already
 	// present, then return false.
-      bool set_property(perm_string pname, ivl_type_s*ptype);
+      bool set_property(perm_string pname, property_qualifier_t qual, ivl_type_s*ptype);
 
 	// Set the scope for the class. The scope has no parents and
 	// is used for the elaboration of methods (tasks/functions).
@@ -50,16 +52,36 @@ class netclass_t : public ivl_type_s {
 	// This is the name of the class type
       inline perm_string get_name() const { return name_; }
 
-      const ivl_type_s* get_property(perm_string pname) const;
-
       inline size_t get_properties(void) const { return properties_.size(); }
+	// Get information about each property.
       const char*get_prop_name(size_t idx) const;
+      property_qualifier_t get_prop_qual(size_t idx) const;
       ivl_type_t get_prop_type(size_t idx) const;
 
+	// These methods are used by the elaborator to note the
+	// initializer for constant properties. Properties start out
+	// as not initialized, and when elaboration detects an
+	// assignment to the property, it is marked initialized.
+      bool get_prop_initialized(size_t idx) const;
+      void set_prop_initialized(size_t idx) const;
+
+      bool test_for_missing_initializers(void) const;
+
+	// Map the name of a property to its index.
       int property_idx_from_name(perm_string pname) const;
 
 	// The task method scopes from the method name.
       NetScope*method_from_name(perm_string mname) const;
+
+	// Find the elaborated signal (NetNet) for a static
+	// property. Search by name. The signal is created by the
+	// elaborate_sig pass.
+      NetNet*find_static_property(perm_string name) const;
+
+	// Test if this scope is a method within the class. This is
+	// used to check scope for handling data protection keywords
+	// "local" and "protected".
+      bool test_scope_is_method(const NetScope*scope) const;
 
       void elaborate_sig(Design*des, PClass*pclass);
       void elaborate(Design*des, PClass*pclass);
@@ -75,7 +97,9 @@ class netclass_t : public ivl_type_s {
 	// Vector of properties.
       struct prop_t {
 	    perm_string name;
+	    property_qualifier_t qual;
 	    ivl_type_s* type;
+	    mutable bool initialized_flag;
       };
       std::vector<prop_t> property_table_;
 

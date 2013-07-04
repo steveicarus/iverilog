@@ -110,6 +110,8 @@ class PFunction : public PTaskFunc {
       void set_statement(Statement *s);
       void set_return(const data_type_t*t);
 
+      inline Statement* get_statement() { return statement_; }
+
       void elaborate_scope(Design*des, NetScope*scope) const;
 
 	/* elaborate the ports and return value. */

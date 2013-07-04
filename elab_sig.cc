@@ -314,6 +314,25 @@ bool Module::elaborate_sig(Design*des, NetScope*scope) const
 
 void netclass_t::elaborate_sig(Design*des, PClass*pclass)
 {
+      for (map<perm_string,struct class_type_t::prop_info_t>::iterator cur = pclass->type->properties.begin()
+		 ; cur != pclass->type->properties.end() ; ++ cur) {
+
+	    if (! cur->second.qual.test_static())
+		  continue;
+
+	    if (debug_elaborate) {
+		  cerr << pclass->get_fileline() << ": netclass_t::elaborate_sig: "
+		       << "Elaborate static property " << cur->first
+		       << " as signal in scope " << scope_path(class_scope_)
+		       << "." << endl;
+	    }
+
+	    list<netrange_t> nil_list;
+	    ivl_type_t use_type = cur->second.type->elaborate_type(des, class_scope_);
+	    NetNet*sig = new NetNet(class_scope_, cur->first, NetNet::REG,
+				    nil_list, use_type);
+      }
+
       for (map<perm_string,PFunction*>::iterator cur = pclass->funcs.begin()
 		 ; cur != pclass->funcs.end() ; ++ cur) {
 	    if (debug_elaborate) {
@@ -538,7 +557,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
       elaborate_sig_wires_(des, scope);
 
       NetNet*ret_sig;
-      if (gn_system_verilog() && fname == "new") {
+      if (gn_system_verilog() && fname=="new" || fname=="new@") {
 	      // Special case: this is a constructor, so the return
 	      // signal is also the first argument. For example, the
 	      // source code for the definition may be:
@@ -964,6 +983,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    vector<netrange_t> plist, nlist;
 	    /* If they exist get the port definition MSB and LSB */
 	    if (port_set_ && !port_.empty()) {
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PWire::elaborate_sig: "
+			     << "Evaluate ranges for port " << basename() << endl;
+		  }
 		  bad_range |= evaluate_ranges(des, scope, plist, port_);
 		  nlist = plist;
 		    /* An implicit port can have a range so note that here. */
@@ -974,9 +997,19 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    /* If they exist get the net/etc. definition MSB and LSB */
 	    if (net_set_ && !net_.empty() && !bad_range) {
 		  nlist.clear();
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PWire::elaborate_sig: "
+			     << "Evaluate ranges for net " << basename() << endl;
+		  }
 		  bad_range |= evaluate_ranges(des, scope, nlist, net_);
 	    }
             assert(net_set_ || net_.empty());
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PWire::elaborate_sig: "
+		       << "Calculated ranges for " << basename()
+		       << ". Now check for consistency." << endl;
+	    }
 
 	    /* If we find errors here, then give up on this signal. */
 	    if (bad_range)

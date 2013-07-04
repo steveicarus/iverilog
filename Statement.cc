@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2008,2010,2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2008,2010,2012-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,6 +21,7 @@
 
 # include  "Statement.h"
 # include  "PExpr.h"
+# include  "ivl_assert.h"
 
 Statement::~Statement()
 {
@@ -124,6 +125,17 @@ void PBlock::set_join_type(PBlock::BL_TYPE type)
 void PBlock::set_statement(const vector<Statement*>&st)
 {
       list_ = st;
+}
+
+void PBlock::push_statement_front(Statement*that)
+{
+      ivl_assert(*this, bl_type_==BL_SEQ);
+
+      list_.resize(list_.size()+1);
+      for (size_t idx = list_.size()-1 ; idx > 0 ; idx -= 1)
+	    list_[idx] = list_[idx-1];
+
+      list_[0] = that;
 }
 
 PCallTask::PCallTask(const pform_name_t&n, const list<PExpr*>&p)
@@ -327,6 +339,16 @@ PRepeat::~PRepeat()
 {
       delete expr_;
       delete statement_;
+}
+
+PReturn::PReturn(PExpr*e)
+: expr_(e)
+{
+}
+
+PReturn::~PReturn()
+{
+      delete expr_;
 }
 
 PTrigger::PTrigger(const pform_name_t&e)

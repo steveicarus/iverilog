@@ -186,6 +186,10 @@ class PBlock  : public PScope, public Statement {
 
       void set_statement(const std::vector<Statement*>&st);
 
+	// Copy the statement from that block to the front of this
+	// block.
+      void push_statement_front(Statement*that);
+
       virtual void dump(ostream&out, unsigned ind) const;
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void elaborate_scope(Design*des, NetScope*scope) const;
@@ -460,6 +464,19 @@ class PRelease  : public Statement {
 
     private:
       PExpr*lval_;
+};
+
+class PReturn  : public Statement {
+
+    public:
+      explicit PReturn(PExpr*e);
+      ~PReturn();
+
+      NetProc* elaborate(Design*des, NetScope*scope) const;
+      virtual void dump(std::ostream&out, unsigned ind) const;
+
+    private:
+      PExpr*expr_;
 };
 
 /*

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -18,9 +19,11 @@
  */
 
 # include  "scope.h"
+# include  "package.h"
 # include  <algorithm>
 # include  <iostream>
 # include  <iterator>
+# include  <cassert>
 
 using namespace std;
 
@@ -30,13 +33,11 @@ using namespace std;
  * "old_*_" variables. This clears up the "new_*_" variables to
  * accumulate new scope values.
  */
-ScopeBase::ScopeBase(const ScopeBase&ref)
+ScopeBase::ScopeBase(const ActiveScope&ref)
 {
-    merge(ref.old_constants_.begin(), ref.old_constants_.end(),
-          ref.new_constants_.begin(), ref.new_constants_.end(),
-          insert_iterator<map<perm_string, struct const_t*> >(
-              old_constants_, old_constants_.end())
-    );
+    use_constants_ = ref.use_constants_;
+    cur_constants_ = ref.cur_constants_;
+
     merge(ref.old_signals_.begin(), ref.old_signals_.end(),
           ref.new_signals_.begin(), ref.new_signals_.end(),
           insert_iterator<map<perm_string, Signal*> >(
@@ -52,11 +53,20 @@ ScopeBase::ScopeBase(const ScopeBase&ref)
           insert_iterator<map<perm_string, ComponentBase*> >(
               old_components_, old_components_.end())
     );
-    merge(ref.old_types_.begin(), ref.old_types_.end(),
-          ref.new_types_.begin(), ref.new_types_.end(),
-          insert_iterator<map<perm_string, const VType*> >(
-              old_types_, old_types_.end())
-    );
+    use_types_ = ref.use_types_;
+    cur_types_ = ref.cur_types_;
+
+    use_subprograms_ = ref.use_subprograms_;
+    cur_subprograms_ = ref.cur_subprograms_;
+
+      // This constructor is invoked when the parser is finished with
+      // an active scope and is making the actual scope. At this point
+      // we know that "this" is the parent scope for the subprograms,
+      // so set it now.
+    for (map<perm_string,Subprogram*>::iterator cur = cur_subprograms_.begin()
+	       ; cur != cur_subprograms_.end() ;  ++ cur) {
+	  cur->second->set_parent(this);
+    }
 }
 
 ScopeBase::~ScopeBase()
@@ -74,16 +84,17 @@ void ScopeBase::cleanup()
      */
     delete_all(new_signals_);
     delete_all(new_components_);
-    delete_all(new_types_);
-    delete_all(new_constants_);
+    delete_all(cur_types_);
+    delete_all(cur_constants_);
+    delete_all(cur_subprograms_);
 }
 
 const VType*ScopeBase::find_type(perm_string by_name)
 {
-      map<perm_string,const VType*>::const_iterator cur = new_types_.find(by_name);
-      if (cur == new_types_.end()) {
-        cur = old_types_.find(by_name);
-        if (cur == old_types_.end())
+      map<perm_string,const VType*>::const_iterator cur = cur_types_.find(by_name);
+      if (cur == cur_types_.end()) {
+        cur = use_types_.find(by_name);
+        if (cur == use_types_.end())
           return 0;
         else
           return cur->second;
@@ -93,10 +104,10 @@ const VType*ScopeBase::find_type(perm_string by_name)
 
 bool ScopeBase::find_constant(perm_string by_name, const VType*&typ, Expression*&exp)
 {
-      map<perm_string,struct const_t*>::const_iterator cur = new_constants_.find(by_name);
-      if (cur == new_constants_.end()) {
-        cur = old_constants_.find(by_name);
-        if (cur == old_constants_.end())
+      map<perm_string,struct const_t*>::const_iterator cur = cur_constants_.find(by_name);
+      if (cur == cur_constants_.end()) {
+        cur = use_constants_.find(by_name);
+        if (cur == use_constants_.end())
           return false;
         else {
           typ = cur->second->typ;
@@ -138,6 +149,25 @@ Variable* ScopeBase::find_variable(perm_string by_name) const
       }
 }
 
+Subprogram* ScopeBase::find_subprogram(perm_string name) const
+{
+      map<perm_string,Subprogram*>::const_iterator cur;
+
+      cur = cur_subprograms_.find(name);
+      if (cur != cur_subprograms_.end())
+	    return cur->second;
+
+      cur = use_subprograms_.find(name);
+      if (cur != use_subprograms_.end())
+	  return cur->second;
+
+      return 0;
+}
+
+/*
+ * This method is only used by the ActiveScope derived class to import
+ * definition from another scope.
+ */
 void ScopeBase::do_use_from(const ScopeBase*that)
 {
       for (map<perm_string,ComponentBase*>::const_iterator cur = that->old_components_.begin()
@@ -146,34 +176,49 @@ void ScopeBase::do_use_from(const ScopeBase*that)
 		  continue;
 	    old_components_[cur->first] = cur->second;
       }
-       for (map<perm_string,ComponentBase*>::const_iterator cur = that->new_components_.begin()
+      for (map<perm_string,ComponentBase*>::const_iterator cur = that->new_components_.begin()
          ; cur != that->new_components_.end() ; ++ cur) {
         if (cur->second == 0)
           continue;
         old_components_[cur->first] = cur->second;
       }
 
-      for (map<perm_string,const VType*>::const_iterator cur = that->old_types_.begin()
-		 ; cur != that->old_types_.end() ; ++ cur) {
+      for (map<perm_string,Subprogram*>::const_iterator cur = that->cur_subprograms_.begin()
+		 ; cur != that->cur_subprograms_.end() ; ++ cur) {
 	    if (cur->second == 0)
 		  continue;
-	    old_types_[cur->first] = cur->second;
-      }
-      for (map<perm_string,const VType*>::const_iterator cur = that->new_types_.begin()
-         ; cur != that->new_types_.end() ; ++ cur) {
-        if (cur->second == 0)
-          continue;
-        old_types_[cur->first] = cur->second;
+	    use_subprograms_[cur->first] = cur->second;
       }
 
-      for (map<perm_string,const_t*>::const_iterator cur = that->old_constants_.begin()
-		 ; cur != that->old_constants_.end() ; ++ cur) {
-	    old_constants_[cur->first] = cur->second;
+
+      for (map<perm_string,const VType*>::const_iterator cur = that->cur_types_.begin()
+		 ; cur != that->cur_types_.end() ; ++ cur) {
+	    if (cur->second == 0)
+		  continue;
+	    use_types_[cur->first] = cur->second;
       }
-      for (map<perm_string,const_t*>::const_iterator cur = that->new_constants_.begin()
-         ; cur != that->new_constants_.end() ; ++ cur) {
-        old_constants_[cur->first] = cur->second;
+
+      for (map<perm_string,const_t*>::const_iterator cur = that->cur_constants_.begin()
+		 ; cur != that->cur_constants_.end() ; ++ cur) {
+	    use_constants_[cur->first] = cur->second;
       }
+}
+
+void ActiveScope::set_package_header(Package*pkg)
+{
+      assert(package_header_ == 0);
+      package_header_ = pkg;
+}
+
+Subprogram* ActiveScope::recall_subprogram(perm_string name) const
+{
+      if (Subprogram*tmp = find_subprogram(name))
+	    return tmp;
+
+      if (package_header_)
+	    return package_header_->find_subprogram(name);
+
+      return 0;
 }
 
 bool ActiveScope::is_vector_name(perm_string name) const
@@ -189,7 +234,7 @@ bool ActiveScope::is_vector_name(perm_string name) const
       return false;
 }
 
-Scope::Scope(const ScopeBase&ref)
+Scope::Scope(const ActiveScope&ref)
 : ScopeBase(ref)
 {
 }

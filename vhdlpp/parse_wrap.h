@@ -31,6 +31,7 @@
 # include  "architec.h"
 # include  "expression.h"
 # include  "sequential.h"
+# include  "subprogram.h"
 # include  "parse_types.h"
 
 class VType;

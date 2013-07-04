@@ -581,7 +581,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <struct_type>    struct_data_type
 
 %type <property_qualifier> class_item_qualifier property_qualifier
-%type <property_qualifier> property_qualifier_list property_qualifier_opt
+%type <property_qualifier> class_item_qualifier_list property_qualifier_list
+%type <property_qualifier> class_item_qualifier_opt property_qualifier_opt
 %type <property_qualifier> random_qualifier
 
 %type <ranges> range range_opt variable_dimension
@@ -673,7 +674,7 @@ class_declaration /* IEEE1800-2005: A.1.2 */
       }
     class_items_opt K_endclass
       { // Process a class.
-	pform_end_class_declaration();
+	pform_end_class_declaration(@8);
       }
     class_declaration_endlabel_opt
       { // Wrap up the class.
@@ -695,6 +696,7 @@ class_identifier
 	// lexor detects the name as a type.
 	perm_string name = lex_strings.make($1);
 	class_type_t*tmp = new class_type_t(name);
+	FILE_NAME(tmp, @1);
 	pform_set_typedef(name, tmp);
 	delete[]$1;
 	$$ = tmp;
@@ -769,7 +771,7 @@ class_item /* IEEE1800-2005: A.1.8 */
       { current_function->set_ports($6);
 	pform_set_constructor_return(current_function);
 	pform_set_this_class(@3, current_function);
-	current_function_set_statement($10? @10 : @3, $10);
+	current_function_set_statement(@3, $10);
 	pform_pop_scope();
 	current_function = 0;
       }
@@ -792,6 +794,9 @@ class_item /* IEEE1800-2005: A.1.8 */
 
   | property_qualifier_opt data_type list_of_variable_decl_assignments ';'
       { pform_class_property(@2, $1, $2, $3); }
+
+  | K_const class_item_qualifier_opt data_type list_of_variable_decl_assignments ';'
+      { pform_class_property(@1, $2 | property_qualifier_t::make_const(), $3, $4); }
 
     /* Class methods... */
 
@@ -832,9 +837,19 @@ class_item /* IEEE1800-2005: A.1.8 */
   ;
 
 class_item_qualifier /* IEEE1800-2005 A.1.8 */
-  : K_static     { $$ = property_qualifier_t::set_static(); }
-  | K_protected  { $$ = property_qualifier_t::set_protected(); }
-  | K_local      { $$ = property_qualifier_t::set_local(); }
+  : K_static     { $$ = property_qualifier_t::make_static(); }
+  | K_protected  { $$ = property_qualifier_t::make_protected(); }
+  | K_local      { $$ = property_qualifier_t::make_local(); }
+  ;
+
+class_item_qualifier_list
+  : class_item_qualifier_list class_item_qualifier { $$ = $1 | $2; }
+  | class_item_qualifier { $$ = $1; }
+  ;
+
+class_item_qualifier_opt
+  : class_item_qualifier_list { $$ = $1; }
+  | { $$ = property_qualifier_t::make_none(); }
   ;
 
 class_new /* IEEE1800-2005 A.2.4 */
@@ -1229,12 +1244,14 @@ jump_statement /* IEEE1800-2005: A.6.5 */
 	$$ = 0;
       }
   | K_return ';'
-      { yyerror(@1, "sorry: return statements not supported.");
-	$$ = 0;
+      { PReturn*tmp = new PReturn(0);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
   | K_return expression ';'
-      { yyerror(@1, "sorry: return statements not supported.");
-	$$ = 0;
+      { PReturn*tmp = new PReturn($2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
       }
   ;
 
@@ -1493,7 +1510,7 @@ property_qualifier /* IEEE1800-2005 A.1.8 */
 
 property_qualifier_opt /* IEEE1800-2005 A.1.8: ... { property_qualifier } */
   : property_qualifier_list { $$ = $1; }
-  | { $$ = property_qualifier_t::set_none(); }
+  | { $$ = property_qualifier_t::make_none(); }
   ;
 
 property_qualifier_list /* IEEE1800-2005 A.1.8 */
@@ -1502,8 +1519,8 @@ property_qualifier_list /* IEEE1800-2005 A.1.8 */
   ;
 
 random_qualifier /* IEEE1800-2005 A.1.8 */
-  : K_rand { $$ = property_qualifier_t::set_rand(); }
-  | K_randc { $$ = property_qualifier_t::set_randc(); }
+  : K_rand { $$ = property_qualifier_t::make_rand(); }
+  | K_randc { $$ = property_qualifier_t::make_randc(); }
   ;
 
   /* real and realtime are exactly the same so save some code
@@ -2056,6 +2073,7 @@ type_declaration
 	// lexor detects the name as a type.
 	perm_string name = lex_strings.make($3);
 	class_type_t*tmp = new class_type_t(name);
+	FILE_NAME(tmp, @3);
 	pform_set_typedef(name, tmp);
 	delete[]$3;
       }
@@ -2070,6 +2088,7 @@ type_declaration
 	// lexor detects the name as a type.
 	perm_string name = lex_strings.make($2);
 	class_type_t*tmp = new class_type_t(name);
+	FILE_NAME(tmp, @2);
 	pform_set_typedef(name, tmp);
 	delete[]$2;
       }

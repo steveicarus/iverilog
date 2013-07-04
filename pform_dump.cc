@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -177,11 +177,21 @@ void class_type_t::pform_dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << "class " << name << " {";
 
-      for (map<perm_string,data_type_t*>::const_iterator cur = properties.begin()
+      for (map<perm_string,prop_info_t>::const_iterator cur = properties.begin()
 		 ; cur != properties.end() ; ++cur) {
 	    out << " " << cur->first;
       }
+
       out << " }" << endl;
+}
+
+void class_type_t::pform_dump_init(ostream&out, unsigned indent) const
+{
+      for (vector<Statement*>::const_iterator cur = initialize.begin()
+		 ; cur != initialize.end() ; ++cur) {
+	    Statement*curp = *cur;
+	    curp->dump(out,indent+4);
+      }
 }
 
 void struct_member_t::pform_dump(ostream&out, unsigned indent) const
@@ -928,6 +938,13 @@ void PRepeat::dump(ostream&out, unsigned ind) const
       statement_->dump(out, ind+3);
 }
 
+void PReturn::dump(ostream&fd, unsigned ind) const
+{
+      fd << setw(ind) << "" << "return (";
+      if (expr_) fd << *expr_;
+      fd << ")" << endl;
+}
+
 void PTask::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "task ";
@@ -1315,6 +1332,7 @@ void PClass::dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << "class " << type->name << ";" << endl;
       type->pform_dump(out, indent+2);
+      type->pform_dump_init(out, indent+2);
       dump_tasks_(out, indent+2);
       dump_funcs_(out, indent+2);
       out << setw(indent) << "" << "endclass" << endl;

@@ -218,15 +218,22 @@ int main(int argc, char*argv[])
       }
 
       if (errors > 0) {
-        parser_cleanup();
+	    parser_cleanup();
 	    return 2;
       }
 
       errors = elaborate_entities();
       if (errors > 0) {
 	    fprintf(stderr, "%d errors elaborating design.\n", errors);
-        parser_cleanup();
+	    parser_cleanup();
 	    return 3;
+      }
+
+      errors = emit_packages();
+      if (errors > 0) {
+	    fprintf(stderr, "%d errors emitting packages.\n", errors);
+	    parser_cleanup();
+	    return 4;
       }
 
       errors = emit_entities();

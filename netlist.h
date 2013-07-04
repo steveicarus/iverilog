@@ -760,10 +760,11 @@ class NetNet  : public NetObj, public PortType {
  * evaluating constant user functions.
  */
 struct LocalVar {
-      unsigned nwords;  // zero for a simple variable
+      int nwords;  // zero for a simple variable, -1 for reference
       union {
 	    NetExpr*  value;  // a simple variable
 	    NetExpr** array;  // an array variable
+	    LocalVar* ref;    // A reference to a previous scope
       };
 };
 

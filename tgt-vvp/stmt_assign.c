@@ -872,7 +872,23 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		  struct vector_info val = draw_eval_expr_wid(rval, wid, STUFF_OK_XZ);
 
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
-		  fprintf(vvp_out, "    %%store/prop/v %d, %u, %u;\n", prop_idx, val.base, val.wid);
+		  fprintf(vvp_out, "    %%store/prop/v %d, %u, %u; Store in bool property %s\n",
+			  prop_idx, val.base, val.wid,
+			  ivl_type_prop_name(sig_type, prop_idx));
+		  fprintf(vvp_out, "    %%pop/obj 1;\n");
+		  clr_vector(val);
+
+	    } else if (ivl_type_base(prop_type) == IVL_VT_LOGIC) {
+		  assert(ivl_type_packed_dimensions(prop_type) == 1);
+		  assert(ivl_type_packed_msb(prop_type,0) >= ivl_type_packed_lsb(prop_type, 0));
+		  int wid = ivl_type_packed_msb(prop_type,0) - ivl_type_packed_lsb(prop_type,0) + 1;
+
+		  struct vector_info val = draw_eval_expr_wid(rval, wid, STUFF_OK_XZ);
+
+		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+		  fprintf(vvp_out, "    %%store/prop/v %d, %u, %u; Store in logic property %s\n",
+			  prop_idx, val.base, val.wid,
+			  ivl_type_prop_name(sig_type, prop_idx));
 		  fprintf(vvp_out, "    %%pop/obj 1;\n");
 		  clr_vector(val);
 

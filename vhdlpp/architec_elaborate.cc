@@ -32,12 +32,12 @@ int Architecture::elaborate(Entity*entity)
 	// from the constant declaration itself. Elaborate the value
 	// expression with the declared type.
 
-      for (map<perm_string,struct const_t*>::iterator cur = old_constants_.begin()
-		 ; cur != old_constants_.end() ; ++cur) {
+      for (map<perm_string,struct const_t*>::iterator cur = use_constants_.begin()
+		 ; cur != use_constants_.end() ; ++cur) {
 	    cur->second->val->elaborate_expr(entity, this, cur->second->typ);
       }
-      for (map<perm_string,struct const_t*>::iterator cur = new_constants_.begin()
-		 ; cur != new_constants_.end() ; ++cur) {
+      for (map<perm_string,struct const_t*>::iterator cur = cur_constants_.begin()
+		 ; cur != cur_constants_.end() ; ++cur) {
 	    cur->second->val->elaborate_expr(entity, this, cur->second->typ);
       }
 
@@ -174,9 +174,54 @@ int ProcessStatement::rewrite_as_always_edge_(Entity*, Architecture*)
 	    return -1;
 
       const Expression*ce_raw = stmt->peek_condition();
+	// Now we have matched this pattern:
+	//   process(<expr>) begin if <ce_raw>...
+	// The <ce_raw> is the condition.
 
-	// We expect the condition to be <name>'event AND <name>='1'.
-	// If it's not a logical AND, I give up.
+      if (const ExpFunc*ce_func = dynamic_cast<const ExpFunc*>(ce_raw)) {
+	    if (ce_func->func_args() != 1)
+		  return -1;
+	    if (ce_func->func_name()!="rising_edge" && ce_func->func_name()!="falling_edge")
+		  return -1;
+
+	    if (! se->symbolic_compare(ce_func->func_arg(0)))
+		return -1;
+
+	      // We've matched this pattern:
+	      //  process(<se>) if (rising_edge(<se>)) then ...
+	      // and we can convert it to:
+	      //  always @(posedge <se>) ...
+
+	    ExpEdge::fun_t use_edge;
+	    if (ce_func->func_name()=="rising_edge")
+		  use_edge = ExpEdge::POSEDGE;
+	    else if (ce_func->func_name()=="falling_edge")
+		  use_edge = ExpEdge::NEGEDGE;
+	    else
+		  use_edge = ExpEdge::ANYEDGE;
+
+	      // Replace the sensitivity expression with an edge
+	      // expression. The ExpEdge expression signals that this
+	      // is an always-@(edge) statement.
+	    ExpEdge*edge = new ExpEdge(use_edge, se);
+	    assert(sensitivity_list_.size() == 1);
+	    sensitivity_list_.pop_front();
+	    sensitivity_list_.push_front(edge);
+
+	      // Replace the statement with the body of the always
+	      // statement, which is the true clause of the top "if"
+	      // statement. There should be no "else" clause.
+	    assert(statements_list_.size() == 1);
+	    statements_list_.pop_front();
+	    stmt->extract_true(statements_list_);
+
+	    delete stmt;
+	    return 0;
+      }
+
+	// Here we expect the condition to be
+	//    <name>'event AND <name>='1'.
+	// So if ce_raw is not a logical AND, I give up.
       const ExpLogical*ce = dynamic_cast<const ExpLogical*> (ce_raw);
       if (ce == 0)
 	    return -1;
