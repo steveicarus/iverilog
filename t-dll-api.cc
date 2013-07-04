@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1746,6 +1746,23 @@ extern "C" int ivl_parameter_local(ivl_parameter_t net)
       return net->local;
 }
 
+extern "C" int ivl_parameter_signed(ivl_parameter_t net)
+{
+      assert(net);
+      return net->signed_flag;
+}
+
+extern "C" int ivl_parameter_msb(ivl_parameter_t net)
+{
+      assert(net);
+      return net->msb;
+}
+
+extern "C" int ivl_parameter_lsb(ivl_parameter_t net)
+{
+      assert(net);
+      return net->lsb;
+}
 
 extern "C" ivl_expr_t ivl_parameter_expr(ivl_parameter_t net)
 {

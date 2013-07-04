@@ -1,7 +1,7 @@
 #ifndef __ivl_target_H
 #define __ivl_target_H
 /*
- * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1606,6 +1606,15 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
  *    Return the value of the parameter. This should be a simple
  *    constant expression, an IVL_EX_STRING or IVL_EX_NUMBER.
  *
+ * ivl_parameter_msb
+ * ivl_parameter_lsb
+ *    Returns the MSB and LSB for the parameter. For a parameter without
+ *    a range the value is zero based and the width of the expression is
+ *    used to determine the MSB.
+ *
+ * ivl_parameter_signed
+ *    Returns if the parameter was declared to be signed.
+ *
  * ivl_parameter_local
  *    Return whether parameter was local (localparam, implicit genvar etc)
  *    or not.
@@ -1617,9 +1626,12 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
 extern const char* ivl_parameter_basename(ivl_parameter_t net);
 extern ivl_scope_t ivl_parameter_scope(ivl_parameter_t net);
 extern ivl_expr_t  ivl_parameter_expr(ivl_parameter_t net);
-extern int ivl_parameter_local(ivl_parameter_t net);
+extern int         ivl_parameter_msb(ivl_parameter_t net);
+extern int         ivl_parameter_lsb(ivl_parameter_t net);
+extern int         ivl_parameter_signed(ivl_parameter_t net);
+extern int         ivl_parameter_local(ivl_parameter_t net);
 extern const char* ivl_parameter_file(ivl_parameter_t net);
-extern unsigned ivl_parameter_lineno(ivl_parameter_t net);
+extern unsigned    ivl_parameter_lineno(ivl_parameter_t net);
 
 
 /* SCOPE

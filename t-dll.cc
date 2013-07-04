@@ -508,13 +508,33 @@ void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 	    ivl_parameter_t cur_par = &scop->param[idx];
 	    cur_par->basename = cur_pit->first;
             cur_par->local = cur_pit->second.local_flag;
+	      /* Either both the MSB and LSB expressions are provided or
+	       * neither are provided. */
+	    if (cur_pit->second.msb) {
+		  assert(cur_pit->second.lsb);
+		  /* The MSB and LSB expressions must be integral constants. */
+		  const NetEConst *msbc =
+		         dynamic_cast<const NetEConst*>(cur_pit->second.msb);
+		  const NetEConst *lsbc =
+		         dynamic_cast<const NetEConst*>(cur_pit->second.lsb);
+		  assert(msbc);
+		  assert(lsbc);
+		  cur_par->msb = msbc->value().as_long();
+		  cur_par->lsb = lsbc->value().as_long();
+	    } else {
+		  assert(! cur_pit->second.lsb);
+		  cur_par->msb = cur_pit->second.val->expr_width() - 1;
+		  assert(cur_par->msb >= 0);
+		  cur_par->lsb = 0;
+	    }
+	    cur_par->signed_flag = cur_pit->second.signed_flag;
 	    cur_par->scope = scop;
 	    FILE_NAME(cur_par, &(cur_pit->second));
 
 	    NetExpr*etmp = cur_pit->second.val;
 	    if (etmp == 0) {
-		  cerr << "?:?: internal error: "
-		       << "What is the parameter expression for " << cur_pit->first
+		  cerr << "?:?: internal error: What is the parameter "
+		       << "expression for " << cur_pit->first
 		       << " in " << net->fullname() << "?" << endl;
 	    }
 	    assert(etmp);

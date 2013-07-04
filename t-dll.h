@@ -1,7 +1,7 @@
 #ifndef __t_dll_H
 #define __t_dll_H
 /*
- * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -604,6 +604,9 @@ struct ivl_parameter_s {
       perm_string basename;
       ivl_scope_t scope;
       ivl_expr_t  value;
+      long          msb;
+      long          lsb;
+      bool  signed_flag;
       bool        local;
       perm_string file;
       unsigned lineno;
