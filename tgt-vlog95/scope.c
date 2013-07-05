@@ -880,7 +880,7 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    fprintf(vlog_out, "\n%*cfunction", indent, ' ');
 	    if (ivl_scope_ports(scope) < 2) {
 		  fprintf(stderr, "%s:%u: vlog95 error: Function (%s) has "
-		                  "no argments (or return value).\n",
+		                  "no arguments (or return value).\n",
 		                  ivl_scope_file(scope),
 		                  ivl_scope_lineno(scope),
 		                  ivl_scope_tname(scope));
