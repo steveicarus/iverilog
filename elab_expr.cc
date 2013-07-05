@@ -3305,6 +3305,102 @@ static verinum param_part_select_bits(const verinum&par_val, long wid,
       return result;
 }
 
+NetExpr* PEIdent::elaborate_expr_param_bit_(Design*des, NetScope*scope,
+					    const NetExpr*par,
+					    NetScope*found_in,
+					    const NetExpr*par_msb,
+					    const NetExpr*par_lsb,
+                                            bool need_const) const
+{
+      const NetEConst*par_ex = dynamic_cast<const NetEConst*> (par);
+      ivl_assert(*this, par_ex);
+
+      long par_msv, par_lsv;
+      if(! calculate_param_range_(des, scope, par_msb, par_msv,
+                                  par_lsb, par_lsv,
+                                  par_ex->value().len())) return 0;
+
+      const name_component_t&name_tail = path_.back();
+      ivl_assert(*this, !name_tail.index.empty());
+      const index_component_t&index_tail = name_tail.index.back();
+      ivl_assert(*this, index_tail.msb);
+      ivl_assert(*this, !index_tail.lsb);
+
+      NetExpr*sel = elab_and_eval(des, scope, index_tail.msb, -1, need_const);
+      if (sel == 0) return 0;
+
+      if (debug_elaborate)
+	    cerr << get_fileline() << ": debug: Calculate bit select "
+		 << "[" << *sel << "] from range "
+		 << "[" << par_msv << ":" << par_lsv << "]." << endl;
+
+      perm_string name = peek_tail_name(path_);
+
+	// Handle the special case that the selection is constant. In this
+	// case, just precalculate the entire constant result.
+      if (NetEConst*sel_c = dynamic_cast<NetEConst*> (sel)) {
+	      // Special case: If the bit select is constant and not fully
+	      // defined, then we know that the result must be 1'bx.
+	    if (! sel_c->value().is_defined()) {
+		  if (warn_ob_select) {
+			cerr << get_fileline() << ": warning: "
+			        "Constant undefined bit select ["
+			     << sel_c->value() << "] for parameter '"
+			     << name << "'." << endl;
+			cerr << get_fileline() << ":        : "
+			        "Replacing select with a constant 1'bx."
+			     << endl;
+		  }
+		  NetEConst*res = make_const_x(1);
+		  res->set_line(*this);
+		  return res;
+	    }
+	      // Calculate the canonical index value.
+	    long sel_v = sel_c->value().as_long();
+	    if (par_msv >= par_lsv) sel_v -= par_lsv;
+	    else sel_v = par_lsv - sel_v;
+
+	      // Select a bit from the parameter.
+	    verinum par_v = par_ex->value();
+	    verinum::V rtn = verinum::Vx;
+
+	      // A constant in range select.
+	    if ((sel_v >= 0) && ((unsigned long) sel_v < par_v.len())) {
+		  rtn = par_v[sel_v];
+	      // An unsized after select.
+	    } else if ((sel_v >= 0) && (! par_v.has_len())) {
+		  if (par_v.has_sign()) rtn = par_v[par_v.len()-1];
+		  else rtn = verinum::V0;
+	    } else if (warn_ob_select) {
+		  cerr << get_fileline() << ": warning: "
+		          "Constant bit select [" << sel_c->value().as_long()
+		       << "] is ";
+		  if (sel_v < 0) cerr << "before ";
+		  else cerr << "after ";
+		  cerr << name << "[";
+		  if (par_v.has_len()) cerr << par_msv;
+		  else cerr << "<inf>";
+		  cerr << ":" << par_lsv << "]." << endl;
+		  cerr << get_fileline() << ":        : "
+		          "Replacing select with a constant 1'bx." << endl;
+	    }
+	    NetEConst*res = new NetEConst(verinum(rtn, 1));
+	    res->set_line(*this);
+	    return res;
+      }
+
+      sel = normalize_variable_base(sel, par_msv, par_lsv, 1, true);
+
+	/* Create a parameter reference for the variable select. */
+      NetEConstParam*ptmp = new NetEConstParam(found_in, name, par_ex->value());
+      NetScope::param_ref_t pref = found_in->find_parameter(name);
+      ptmp->set_line((*pref).second);
+
+      NetExpr*tmp = new NetESelect(ptmp, sel, 1);
+      tmp->set_line(*this);
+      return tmp;
+}
+
 NetExpr* PEIdent::elaborate_expr_param_part_(Design*des, NetScope*scope,
 					     const NetExpr*par,
 					     NetScope*,
@@ -3457,6 +3553,8 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 		 << "[" << *base << "+:" << wid << "] from range "
 		 << "[" << par_msv << ":" << par_lsv << "]." << endl;
 
+      perm_string name = peek_tail_name(path_);
+
 	// Handle the special case that the base is constant. In this
 	// case, just precalculate the entire constant result.
       if (NetEConst*base_c = dynamic_cast<NetEConst*> (base)) {
@@ -3465,7 +3563,6 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 		  ex = new NetEConst(verinum(verinum::Vx, wid, true));
 		  ex->set_line(*this);
 		  if (warn_ob_select) {
-			perm_string name = peek_tail_name(path_);
 			cerr << get_fileline() << ": warning: " << name
 			     << "['bx+:" << wid
 			     << "] is always outside vector." << endl;
@@ -3492,7 +3589,6 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 		    // Get the parameter values width.
                   long pwid = -1;
                   if (par_ex->has_width()) pwid = par_ex->expr_width()-1;
-                  perm_string name = peek_tail_name(path_);
                   warn_param_ob(par_msv, par_lsv, defined, lsv-par_base, wid,
                                 pwid, this, name, true);
 	    }
@@ -3505,14 +3601,12 @@ NetExpr* PEIdent::elaborate_expr_param_idx_up_(Design*des, NetScope*scope,
 
       base = normalize_variable_base(base, par_msv, par_lsv, wid, true);
 
-      NetExpr*tmp = par->dup_expr();
-      if (!tmp) return 0;
+	/* Create a parameter reference for the variable select. */
+      NetEConstParam*ptmp = new NetEConstParam(found_in, name, par_ex->value());
+      NetScope::param_ref_t pref = found_in->find_parameter(name);
+      ptmp->set_line((*pref).second);
 
-	/* The numeric parameter value needs to have the file and line
-	 * information for the actual parameter not the expression. */
-      NetScope::param_ref_t pref = found_in->find_parameter(peek_tail_name(path_));
-      tmp->set_line((*pref).second);
-      tmp = new NetESelect(tmp, base, wid, IVL_SEL_IDX_UP);
+      NetExpr*tmp = new NetESelect(ptmp, base, wid, IVL_SEL_IDX_UP);
       tmp->set_line(*this);
       return tmp;
 }
@@ -3543,6 +3637,8 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 		 << "[" << *base << "-:" << wid << "] from range "
 		 << "[" << par_msv << ":" << par_lsv << "]." << endl;
 
+      perm_string name = peek_tail_name(path_);
+
 	// Handle the special case that the base is constant. In this
 	// case, just precalculate the entire constant result.
       if (NetEConst*base_c = dynamic_cast<NetEConst*> (base)) {
@@ -3551,7 +3647,6 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 		  ex = new NetEConst(verinum(verinum::Vx, wid, true));
 		  ex->set_line(*this);
 		  if (warn_ob_select) {
-			perm_string name = peek_tail_name(path_);
 			cerr << get_fileline() << ": warning: " << name
 			     << "['bx-:" << wid
 			     << "] is always outside vector." << endl;
@@ -3578,7 +3673,6 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 		    // Get the parameter values width.
                   long pwid = -1;
                   if (par_ex->has_width()) pwid = par_ex->expr_width()-1;
-                  perm_string name = peek_tail_name(path_);
                   warn_param_ob(par_msv, par_lsv, defined, lsv-par_base, wid,
                                 pwid, this, name, false);
 	    }
@@ -3592,14 +3686,12 @@ NetExpr* PEIdent::elaborate_expr_param_idx_do_(Design*des, NetScope*scope,
 
       base = normalize_variable_base(base, par_msv, par_lsv, wid, false);
 
-      NetExpr*tmp = par->dup_expr();
-      if (!tmp) return 0;
+	/* Create a parameter reference for the variable select. */
+      NetEConstParam*ptmp = new NetEConstParam(found_in, name, par_ex->value());
+      NetScope::param_ref_t pref = found_in->find_parameter(name);
+      ptmp->set_line((*pref).second);
 
-	/* The numeric parameter value needs to have the file and line
-	 * information for the actual parameter not the expression. */
-      NetScope::param_ref_t pref = found_in->find_parameter(peek_tail_name(path_));
-      tmp->set_line((*pref).second);
-      tmp = new NetESelect(tmp, base, wid, IVL_SEL_IDX_DOWN);
+      NetExpr*tmp = new NetESelect(ptmp, base, wid, IVL_SEL_IDX_DOWN);
       tmp->set_line(*this);
       return tmp;
 }
@@ -3643,10 +3735,10 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 	    return 0;
       }
 
-	// NOTE TO SELF: This is the way I want to see this code
-	// structured. This closely follows the structure of the
-	// elaborate_expr_net_ code, which splits all the various
-	// selects to different methods.
+      if (use_sel == index_component_t::SEL_BIT)
+	    return elaborate_expr_param_bit_(des, scope, par, found_in,
+					     par_msb, par_lsb, need_const);
+
       if (use_sel == index_component_t::SEL_PART)
 	    return elaborate_expr_param_part_(des, scope, par, found_in,
 					      par_msb, par_lsb, expr_wid);
@@ -3659,138 +3751,10 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 	    return elaborate_expr_param_idx_do_(des, scope, par, found_in,
 						par_msb, par_lsb, need_const);
 
-	// NOTE TO SELF (continued): The code below should be
-	// rewritten in the above format, as I get to it.
+      NetExpr*tmp = 0;
 
-      NetExpr*tmp = par->dup_expr();
-      if (!tmp) return 0;
-
-	/* The numeric parameter value needs to have the file and line
-	 * information for the actual parameter not the expression. */
-      if (! dynamic_cast<NetEConstEnum*>(tmp)) {
-	    NetScope::param_ref_t pref = found_in->find_parameter(peek_tail_name(path_));
-	    tmp->set_line((*pref).second);
-      }
-
-      if (use_sel == index_component_t::SEL_BIT) {
-	    ivl_assert(*this, !name_tail.index.empty());
-	    const index_component_t&index_tail = name_tail.index.back();
-	    ivl_assert(*this, index_tail.msb);
-	    ivl_assert(*this, !index_tail.lsb);
-
-	    const NetEConst*par_me =dynamic_cast<const NetEConst*>(par_msb);
-	    const NetEConst*par_le =dynamic_cast<const NetEConst*>(par_lsb);
-
-	    ivl_assert(*this, par_me || !par_msb);
-	    ivl_assert(*this, par_le || !par_lsb);
-	    ivl_assert(*this, par_me || !par_le);
-
-	      /* Handle the case where a parameter has a bit
-		 select attached to it. Generate a NetESelect
-		 object to select the bit as desired. */
-	    NetExpr*mtmp = elab_and_eval(des, scope, index_tail.msb, -1,
-                                         need_const);
-
-	      /* Let's first try to get constant values for both
-		 the parameter and the bit select. If they are
-		 both constant, then evaluate the bit select and
-		 return instead a single-bit constant. */
-
-	    NetEConst*le = dynamic_cast<NetEConst*>(tmp);
-	    NetEConst*re = dynamic_cast<NetEConst*>(mtmp);
-	    if (le && re) {
-
-		    // Special case: If the bit select is constant and
-		    // not fully defined, then we know that the result
-		    // must be 1'bx.
-		  if (! re->value().is_defined()) {
-			if (warn_ob_select) {
-			      perm_string name = peek_tail_name(path_);
-			      cerr << get_fileline() << ": warning: "
-				      "Constant undefined bit select ["
-				   << re->value() << "] for parameter '"
-				   << name << "'." << endl;
-			      cerr << get_fileline() << ":        : "
-				      "Replacing select with a constant "
-				      "1'bx." << endl;
-			}
-			NetEConst*res = make_const_x(1);
-			res->set_line(*this);
-			return res;
-		  }
-
-		    /* Argument and bit select are constant. Calculate
-		       the final result. */
-		  verinum lv = le->value();
-		  verinum rv = re->value();
-		  verinum::V rb = verinum::Vx;
-
-		  long par_mv = lv.len()-1;
-		  long par_lv = 0;
-		  if (par_me) {
-			par_mv = par_me->value().as_long();
-			par_lv = par_le->value().as_long();
-		  }
-		    /* Convert the index to canonical bit address. */
-		  long ridx = rv.as_long();
-		  if (par_mv >= par_lv) {
-			ridx -= par_lv;
-		  } else {
-			ridx = par_lv - ridx;
-		  }
-
-		  if ((ridx >= 0) && ((unsigned long) ridx < lv.len())) {
-			rb = lv[ridx];
-
-		  } else if ((ridx >= 0) && (!lv.has_len())) {
-			if (lv.has_sign())
-			      rb = lv[lv.len()-1];
-			else
-			      rb = verinum::V0;
-		  } else {
-			if (warn_ob_select) {
-			      perm_string name = peek_tail_name(path_);
-			      cerr << get_fileline() << ": warning: "
-			              "Constant bit select [" << rv.as_long()
-			           << "] is ";
-			      if (ridx < 0) cerr << "before ";
-			      else cerr << "after ";
-			      cerr << name << "[";
-			      if (lv.has_len()) cerr << par_mv;
-			      else cerr << "<inf>";
-			      cerr << ":" << par_lv << "]." << endl;
-			      cerr << get_fileline() << ":        : "
-			              "Replacing select with a constant "
-			              "1'bx." << endl;
-			}
-		  }
-
-
-		  NetEConst*re2 = new NetEConst(verinum(rb, 1));
-		  re2->set_line(*this);
-		  delete tmp;
-		  delete mtmp;
-		  tmp = re2;
-
-	    } else {
-
-		  if (par_me) {
-			mtmp = normalize_variable_base(mtmp,
-			             par_me->value().as_long(),
-			             par_le->value().as_long(),
-			             1, true);
-		  }
-
-		    /* The value is constant, but the bit select
-		       expression is not. Elaborate a NetESelect to
-		       evaluate the select at run-time. */
-
-		  NetESelect*stmp = new NetESelect(tmp, mtmp, 1);
-		  stmp->set_line(*this);
-		  tmp = stmp;
-	    }
-
-      } else if (NetEConstEnum*etmp = dynamic_cast<NetEConstEnum*>(tmp)) {
+      const NetEConstEnum*etmp = dynamic_cast<const NetEConstEnum*>(par);
+      if (etmp) {
 	    if (debug_elaborate)
 		  cerr << get_fileline() << ": debug: "
 		       << "Elaborate parameter <" << path_
@@ -3799,40 +3763,39 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
             tmp = pad_to_width(tmp, expr_wid, *this);
 
       } else {
+	    perm_string name = peek_tail_name(path_);
 
 	      /* No bit or part select. Make the constant into a
 		 NetEConstParam or NetECRealParam as appropriate. */
-	    NetEConst*ctmp = dynamic_cast<NetEConst*>(tmp);
-	    if (ctmp != 0) {
+	    const NetEConst*ctmp = dynamic_cast<const NetEConst*>(par);
+	    if (ctmp) {
                   verinum cvalue = cast_to_width(ctmp->value(), expr_wid);
 
-		  perm_string name = peek_tail_name(path_);
-		  NetEConstParam*ptmp
-			= new NetEConstParam(found_in, name, cvalue);
-		  ptmp->set_line(*tmp);
+		  
+		  tmp = new NetEConstParam(found_in, name, cvalue);
+		  tmp->set_line(*par);
 
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug: "
 			     << "Elaborate parameter <" << name
-			     << "> as constant " << *ptmp << endl;
-		  delete tmp;
-		  tmp = ptmp;
+			     << "> as constant " << *tmp << endl;
 	    }
 
-	    NetECReal*rtmp = dynamic_cast<NetECReal*>(tmp);
-	    if (rtmp != 0) {
-		  perm_string name = peek_tail_name(path_);
-		  NetECRealParam*ptmp
-			= new NetECRealParam(found_in, name, rtmp->value());
-		  ptmp->set_line(*tmp);
+	    const NetECReal*rtmp = dynamic_cast<const NetECReal*>(par);
+	    if (rtmp) {
+		  tmp = new NetECRealParam(found_in, name, rtmp->value());
+		  tmp->set_line(*par);
 
 		  if (debug_elaborate)
 			cerr << get_fileline() << ": debug: "
 			     << "Elaborate parameter <" << name
-			     << "> as constant " << *ptmp << endl;
-		  delete tmp;
-		  tmp = ptmp;
+			     << "> as constant " << *tmp << endl;
 	    }
+	      /* The numeric parameter value needs to have the file and line
+	       * information for the actual parameter not the expression. */
+	    assert(tmp);
+	    NetScope::param_ref_t pref = found_in->find_parameter(name);
+	    tmp->set_line((*pref).second);
       }
 
       return tmp;

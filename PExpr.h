@@ -405,6 +405,13 @@ class PEIdent : public PExpr {
 				    const NetExpr*par_lsb,
 				    unsigned expr_wid,
                                     unsigned flags) const;
+      NetExpr*elaborate_expr_param_bit_(Design*des,
+					NetScope*scope,
+					const NetExpr*par,
+					NetScope*found_in,
+					const NetExpr*par_msb,
+					const NetExpr*par_lsb,
+                                        bool need_const) const;
       NetExpr*elaborate_expr_param_part_(Design*des,
 					 NetScope*scope,
 					 const NetExpr*par,
