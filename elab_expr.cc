@@ -3770,8 +3770,6 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 	    const NetEConst*ctmp = dynamic_cast<const NetEConst*>(par);
 	    if (ctmp) {
                   verinum cvalue = cast_to_width(ctmp->value(), expr_wid);
-
-		  
 		  tmp = new NetEConstParam(found_in, name, cvalue);
 		  tmp->set_line(*par);
 
