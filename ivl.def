@@ -170,6 +170,10 @@ ivl_parameter_expr
 ivl_parameter_file
 ivl_parameter_lineno
 ivl_parameter_local
+ivl_parameter_lsb
+ivl_parameter_msb
+ivl_parameter_scope
+ivl_parameter_signed
 
 ivl_path_condit
 ivl_path_delay
