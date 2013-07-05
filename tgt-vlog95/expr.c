@@ -21,6 +21,10 @@
 # include "config.h"
 # include "vlog95_priv.h"
 
+/* The expression code needs to know when a parameter definition is being
+ * emitted so it can print the numeric value instead of the parameter name. */
+ivl_parameter_t emitting_param = 0;
+
 // HERE: Do we need to use wid in these routines? We should probably use
 //       it to verify that the expressions have the expected width.
 
@@ -308,6 +312,47 @@ static void emit_expr_event(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       assert(! ivl_event_nneg(event));
       emit_scope_call_path(scope, ev_scope);
       emit_id(ivl_event_basename(event));
+}
+
+/*
+ * A number can also be a parameter reference. If it is a parameter
+ * reference then emit the appropriate parameter name instead of the
+ * numeric value unless this is the actual parameter definition.
+ */
+static void emit_expr_number(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+{
+      ivl_parameter_t param = ivl_expr_parameter(expr);
+      if (param && (param != emitting_param)) {
+	    emit_scope_call_path(scope, ivl_parameter_scope(param));
+	    emit_id(ivl_parameter_basename(param));
+      } else {
+	    emit_number(ivl_expr_bits(expr), ivl_expr_width(expr),
+	                ivl_expr_signed(expr), ivl_expr_file(expr),
+	                ivl_expr_lineno(expr));
+      }
+}
+
+static void emit_expr_real_number(ivl_scope_t scope, ivl_expr_t expr,
+                                  unsigned wid)
+{
+      ivl_parameter_t param = ivl_expr_parameter(expr);
+      if (param && (param != emitting_param)) {
+	    emit_scope_call_path(scope, ivl_parameter_scope(param));
+	    emit_id(ivl_parameter_basename(param));
+      } else {
+	    emit_real_number(ivl_expr_dvalue(expr));
+      }
+}
+
+/*
+ * Class properties are not supported in vlog95, but they can be translated.
+ */
+void emit_class_property(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+{
+      ivl_signal_t sig = ivl_expr_signal(expr);
+      emit_scope_call_path(scope, ivl_signal_scope(sig));
+      emit_id(ivl_signal_basename(sig));
+      fprintf(vlog_out, ".%s", ivl_expr_name(expr));
 }
 
 static void emit_expr_scope_piece(ivl_scope_t scope)
@@ -783,17 +828,6 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 }
 
 /*
- * Class properties are not supported in vlog95, but they can be translated.
- */
-void emit_class_property(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
-{
-      ivl_signal_t sig = ivl_expr_signal(expr);
-      emit_scope_call_path(scope, ivl_signal_scope(sig));
-      emit_id(ivl_signal_basename(sig));
-      fprintf(vlog_out, ".%s", ivl_expr_name(expr));
-}
-
-/*
  * Data type used to signify if a $signed or $unsigned should be emitted.
  */
 typedef enum expr_sign_e {
@@ -1049,15 +1083,13 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 	    vlog_errors += 1;
 	    break;
 	case IVL_EX_NUMBER:
-	    emit_number(ivl_expr_bits(expr), ivl_expr_width(expr),
-	                ivl_expr_signed(expr), ivl_expr_file(expr),
-	                ivl_expr_lineno(expr));
+	    emit_expr_number(scope, expr, wid);
 	    break;
 	case IVL_EX_PROPERTY:
 	    emit_class_property(scope, expr, wid);
 	    break;
 	case IVL_EX_REALNUM:
-	    emit_real_number(ivl_expr_dvalue(expr));
+	    emit_expr_real_number(scope, expr, wid);
 	    break;
 	case IVL_EX_SCOPE:
 	    emit_expr_scope(scope, expr, wid);

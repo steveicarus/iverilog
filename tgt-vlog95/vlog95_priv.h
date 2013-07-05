@@ -45,6 +45,12 @@ extern int vlog_errors;
 extern int sim_precision;
 
 /*
+ * The expression code needs to know when a parameter definition is being
+ * emitted so it can emit the numeric value instead of the name.
+ */
+extern ivl_parameter_t emitting_param;
+
+/*
  * Keep the current indent level.
  */
 extern unsigned indent;
