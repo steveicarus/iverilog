@@ -609,11 +609,13 @@ static void emit_expr_packed(ivl_scope_t scope, ivl_expr_t sig_expr,
 }
 
 /*
- * Emit an indexed part select as a concatenation of bit selects.
+ * Emit an indexed part select as a concatenation of bit selects. Since a
+ * parameter in 1364-1995 is always zero based the select expression needs
+ * to keep any scaling that was done by the compiler.
  */
 static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
                           ivl_expr_t sel_expr, ivl_select_type_t sel_type,
-                          unsigned wid, int msb, int lsb)
+                          unsigned wid, int msb, int lsb, unsigned is_param)
 {
       unsigned idx;
       assert(wid > 0);
@@ -628,7 +630,7 @@ static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
       }
       fprintf(vlog_out, "{");
       if (msb >= lsb) {
-	    if (sel_type == IVL_SEL_IDX_DOWN) {
+	    if ((sel_type == IVL_SEL_IDX_DOWN) && ! is_param) {
 		  lsb  += wid - 1;
 		  msb  += wid - 1;
 		  emit_select_name(scope, sig_expr, wid);
@@ -644,7 +646,8 @@ static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
 		  }
 		  fprintf(vlog_out, "}");
 	    } else {
-		  assert(sel_type == IVL_SEL_IDX_UP);
+		  assert((sel_type == IVL_SEL_IDX_UP) ||
+		         (is_param && (sel_type == IVL_SEL_IDX_DOWN)));
 		  for (idx = wid - 1; idx > 0; idx -= 1) {
 			emit_select_name(scope, sig_expr, wid);
 			fprintf(vlog_out, "[");
@@ -657,7 +660,7 @@ static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
 		  fprintf(vlog_out, "]}");
 	    }
       } else {
-	    if (sel_type == IVL_SEL_IDX_UP) {
+	    if ((sel_type == IVL_SEL_IDX_UP) && ! is_param) {
 		  lsb  -= wid - 1;
 		  msb  -= wid - 1;
 		  emit_select_name(scope, sig_expr, wid);
@@ -673,7 +676,8 @@ static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
 		  }
 		  fprintf(vlog_out, "}");
 	    } else {
-		  assert(sel_type == IVL_SEL_IDX_DOWN);
+		  assert((sel_type == IVL_SEL_IDX_DOWN) ||
+		         (is_param && (sel_type == IVL_SEL_IDX_UP)));
 		  for (idx = wid - 1; idx > 0; idx -= 1) {
 			emit_select_name(scope, sig_expr, wid);
 			fprintf(vlog_out, "[");
@@ -804,7 +808,7 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 		  } else {
 			  /* An indexed part select. */
 			emit_expr_ips(scope, sig_expr, sel_expr, sel_type,
-			              width, msb, lsb);
+			              width, msb, lsb, type == IVL_EX_NUMBER);
 		  }
 	    }
       } else {
