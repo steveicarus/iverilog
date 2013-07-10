@@ -74,7 +74,7 @@ static void emit_delay(ivl_scope_t scope, ivl_expr_t expr, unsigned is_stmt)
 		  return;
 	    }
       }
-      emit_expr(scope, expr, 0, 0);
+      emit_expr(scope, expr, 0, 0, 0, 1);
 }
 
 /*
@@ -396,10 +396,10 @@ void emit_scaled_expr(ivl_scope_t scope, ivl_expr_t expr, int msb, int lsb)
 		  fprintf(vlog_out, "%"PRId64, value);
 	    } else if (lsb == 0) {
 		    /* If the LSB is zero then there is no scale. */
-		  emit_expr(scope, expr, 0, 0);
+		  emit_expr(scope, expr, 0, 0, 0, 1);
 	    } else {
 		  if (is_scaled_expr(expr, msb, lsb)) {
-			emit_expr(scope, ivl_expr_oper1(expr), 0, 0);
+			emit_expr(scope, ivl_expr_oper1(expr), 0, 0, 0, 1);
 		  }
 	    }
       } else {
@@ -413,7 +413,7 @@ void emit_scaled_expr(ivl_scope_t scope, ivl_expr_t expr, int msb, int lsb)
 		  fprintf(vlog_out, "%"PRId64, value);
 	    } else {
 		  if (is_scaled_expr(expr, msb, lsb)) {
-			emit_expr(scope, ivl_expr_oper2(expr), 0, 0);
+			emit_expr(scope, ivl_expr_oper2(expr), 0, 0, 0, 1);
 		  }
 	    }
       }

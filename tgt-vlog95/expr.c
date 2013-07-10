@@ -34,13 +34,9 @@ typedef enum expr_sign_e {
       NEED_UNSIGNED = 2
 } expr_sign_t;
 
-// HERE: Do we need to use wid in the following emit routines? We should
-//       probably use it to verify that the expressions have the expected
-//       width. For now it is not being used, but is passed.
-
 static expr_sign_t get_binary_sign_type(ivl_expr_t expr)
 {
-      ivl_expr_t expr1, expr2;
+      ivl_expr_t oper1, oper2;
       int opr_sign = 0;
       int expr_sign = ivl_expr_signed(expr);
       expr_sign_t rtn = NO_SIGN;
@@ -68,12 +64,12 @@ static expr_sign_t get_binary_sign_type(ivl_expr_t expr)
 	      /* For the rest of the opcodes the operator is considered to
 	       * be signed if either argument is real or if both arguments
 	       * are signed. */
-	    expr1 = ivl_expr_oper1(expr);
-	    expr2 = ivl_expr_oper2(expr);
-	    if ((ivl_expr_value(expr1) == IVL_VT_REAL)  ||
-	        (ivl_expr_value(expr2) == IVL_VT_REAL)) {
+	    oper1 = ivl_expr_oper1(expr);
+	    oper2 = ivl_expr_oper2(expr);
+	    if ((ivl_expr_value(oper1) == IVL_VT_REAL)  ||
+	        (ivl_expr_value(oper2) == IVL_VT_REAL)) {
 		  opr_sign = 1;
-	    } else if (ivl_expr_signed(expr1) && ivl_expr_signed(expr2)) {
+	    } else if (ivl_expr_signed(oper1) && ivl_expr_signed(oper2)) {
 		  opr_sign = 1;
 	    }
 	    break;
@@ -96,7 +92,11 @@ static expr_sign_t get_select_sign_type(ivl_expr_t expr,
 	/* If there is no select expression then the sign is determined by
 	 * the expression that is being selected (padded). */
       if (! ivl_expr_oper2(expr)) {
-	    opr_sign = ivl_expr_signed(ivl_expr_oper1(expr));
+	    ivl_expr_t oper1 = ivl_expr_oper1(expr);
+	    opr_sign = ivl_expr_signed(oper1);
+	      /* If the expression being padded is not a signal then don't
+	       * skip a soft $unsigned() (from the binary operator). */
+	    if (ivl_expr_type(oper1) != IVL_EX_SIGNAL) can_skip_unsigned -= 1;
       }
 
 	/* Check to see if a $signed() or $unsigned() are needed. */
@@ -174,16 +174,52 @@ static expr_sign_t get_unary_sign_type(ivl_expr_t expr)
 }
 
 /*
+ * This routine is used to determine if the expression is a binary operator
+ * where the width could be different to create a self-determined context.
+ */
+static unsigned is_binary_self_det(ivl_expr_t expr)
+{
+      unsigned rtn = 0;
+      if (ivl_expr_type(expr) == IVL_EX_BINARY) {
+	    switch (ivl_expr_opcode(expr)) {
+		case '+':
+		case '-':
+		case '*':
+		case '/':
+		case '%':
+		case '&':
+		case '|':
+		case '^':
+		case 'X':
+		case 'A':
+		case 'O':
+		case 'R':
+		case 'l':
+		case 'r':
+		  rtn = 1;
+		  break;
+		default:
+		  break;
+	    }
+      }
+      return rtn;
+}
+
+/*
  * Determine if a $signed() or $unsigned() system function is needed to get
  * the expression sign information correct. can_skip_unsigned may be set for
  * the binary/ternary operators if one of the operands will implicitly cast
  * the expression to unsigned. See calc_can_skip_unsigned() for the details.
  */
-static expr_sign_t get_sign_type(ivl_expr_t expr, unsigned can_skip_unsigned)
+static expr_sign_t get_sign_type(ivl_expr_t expr, unsigned wid,
+                                 unsigned can_skip_unsigned,
+                                 unsigned is_full_prec)
 {
+      unsigned expr_wid = ivl_expr_width(expr);
       expr_sign_t rtn = NO_SIGN;
+      ivl_expr_type_t type = ivl_expr_type(expr);
 
-      switch (ivl_expr_type(expr)) {
+      switch (type) {
 	case IVL_EX_BINARY:
 	    rtn = get_binary_sign_type(expr);
 	    break;
@@ -194,6 +230,15 @@ static expr_sign_t get_sign_type(ivl_expr_t expr, unsigned can_skip_unsigned)
 	    break;
 	case IVL_EX_SELECT:
 	    rtn = get_select_sign_type(expr, can_skip_unsigned);
+	      /* If there is no select expression then this is padding so use
+	       * the actual expressions width if it is a binary operator that
+	       * could create a self-determined context. */
+	    if (! ivl_expr_oper2(expr)) {
+		  ivl_expr_t oper1 = ivl_expr_oper1(expr);
+		  if (is_binary_self_det(oper1)) {
+			expr_wid = ivl_expr_width(oper1);
+		  }
+	    }
 	    break;
 	case IVL_EX_SIGNAL:
 	    rtn = get_signal_sign_type(expr, can_skip_unsigned);
@@ -221,6 +266,14 @@ static expr_sign_t get_sign_type(ivl_expr_t expr, unsigned can_skip_unsigned)
 	default:
 	    break;
       }
+
+	/* Check for a self-determined context. */
+      if ((rtn == NO_SIGN) && (wid != expr_wid) &&
+          ! (is_full_prec && ((expr_wid < wid) || (type = IVL_EX_SIGNAL)))) {
+	    if (ivl_expr_signed(expr)) rtn = NEED_SIGNED;
+	    else rtn = NEED_UNSIGNED;
+      }
+
       return rtn;
 }
 
@@ -249,7 +302,7 @@ static unsigned emit_power_as_shift(ivl_scope_t scope, ivl_expr_t expr,
       if (value % 2) return 0;
 	/* Generate the appropriate conversion. */
       if (ivl_expr_signed(rval)) {
-	    emit_expr(scope, rval, 0, 0);
+	    emit_expr(scope, rval, 0, 0, 0, 0);
 	    fprintf(vlog_out, " < 0 ? ");
 	    if (is_signed_expr) {
 		  if (expr_wid == 32) {
@@ -294,7 +347,7 @@ static unsigned emit_power_as_shift(ivl_scope_t scope, ivl_expr_t expr,
 	    }
 	    fprintf(vlog_out, " * ");
       }
-      emit_expr(scope, rval, 0, 0);
+      emit_expr(scope, rval, 0, 0, 0, 0);
       if (scale != 1) fprintf(vlog_out, ")");
       if (is_signed_rval) fprintf(vlog_out, ")");
       return 1;
@@ -305,6 +358,19 @@ static void emit_expr_array(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       ivl_signal_t sig = ivl_expr_signal(expr);
       emit_scope_call_path(scope, ivl_signal_scope(sig));
       emit_id(ivl_signal_basename(sig));
+}
+
+/*
+ * Some of the operators can do an implicit cast to real so for them emit
+ * the non-real argument in a self-determined context.
+ */
+static unsigned get_cast_width(ivl_expr_t expr, ivl_expr_t oper, unsigned wid)
+{
+      ivl_variable_type_t expr_type = ivl_expr_value(expr);
+      if ((expr_type == IVL_VT_REAL) && (expr_type != ivl_expr_value(oper))) {
+	    wid = 0;
+      }
+      return wid;
 }
 
 static unsigned calc_can_skip_unsigned(ivl_expr_t oper1, ivl_expr_t oper2)
@@ -331,7 +397,8 @@ static unsigned calc_can_skip_unsigned(ivl_expr_t oper1, ivl_expr_t oper2)
       return ! oper1_signed || ! oper2_signed;
 }
 
-static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
+                             unsigned is_full_prec)
 {
       char *oper = "<invalid>";
       ivl_expr_t oper1 = ivl_expr_oper1(expr);
@@ -364,8 +431,8 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case 'l': oper = "<<"; break;
 	case 'r': oper = ">>"; break;
 	case 'R': oper = ">>>"; break;
-	case 'm': oper = "<"; break;
-	case 'M': oper = ">"; break;
+	case 'm': oper = "min"; break;
+	case 'M': oper = "max"; break;
       }
 
       fprintf(vlog_out, "(");
@@ -381,6 +448,20 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case '-':
 	case '*':
 	case '/':
+	    emit_expr(scope, oper1, get_cast_width(expr, oper1, wid), 0,
+	              can_skip_unsigned, is_full_prec);
+	    fprintf(vlog_out, " %s ", oper);
+	    emit_expr(scope, oper2, get_cast_width(expr, oper2, wid), 0,
+	              can_skip_unsigned, is_full_prec);
+	    break;
+	case '&':
+	case '|':
+	case '^':
+	case 'X':
+	    emit_expr(scope, oper1, wid, 0, can_skip_unsigned, is_full_prec);
+	    fprintf(vlog_out, " %s ", oper);
+	    emit_expr(scope, oper2, wid, 0, can_skip_unsigned, is_full_prec);
+	    break;
 	case 'E':
 	case 'e':
 	case 'N':
@@ -389,19 +470,17 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case 'L':
 	case '>':
 	case 'G':
-	case '&':
-	case '|':
-	case '^':
-	case 'X':
-	    emit_expr(scope, oper1, wid, can_skip_unsigned);
+	    emit_expr(scope, oper1, ivl_expr_width(oper1), 0,
+	              can_skip_unsigned, 0);
 	    fprintf(vlog_out, " %s ", oper);
-	    emit_expr(scope, oper2, wid, can_skip_unsigned);
+	    emit_expr(scope, oper2, ivl_expr_width(oper2), 0,
+	              can_skip_unsigned, 0);
 	    break;
 	case 'a':
 	case 'o':
-	    emit_expr(scope, oper1, 0, can_skip_unsigned);
+	    emit_expr(scope, oper1, ivl_expr_width(oper1), 0, 1, 0);
 	    fprintf(vlog_out, " %s ", oper);
-	    emit_expr(scope, oper2, 0, can_skip_unsigned);
+	    emit_expr(scope, oper2, ivl_expr_width(oper2), 0, 1, 0);
 	    break;
 	case 'R':
 	    if (! allow_signed) {
@@ -412,23 +491,23 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    }
 	case 'l':
 	case 'r':
-	    emit_expr(scope, oper1, wid, 0);
+	    emit_expr(scope, oper1, wid, 0, 0, 0);
 	    fprintf(vlog_out, " %s ", oper);
-	    emit_expr(scope, oper2, 0, 1);
+	    emit_expr(scope, oper2, ivl_expr_width(oper2), 0, 2, 0);
 	    break;
 	case 'A':
 	case 'O':
 	    fprintf(vlog_out, "~(");
-	    emit_expr(scope, oper1, wid, can_skip_unsigned);
+	    emit_expr(scope, oper1, wid, 0, can_skip_unsigned, is_full_prec);
 	    fprintf(vlog_out, " %s ", oper);
-	    emit_expr(scope, oper2, wid, can_skip_unsigned);
+	    emit_expr(scope, oper2, wid, 0, can_skip_unsigned, is_full_prec);
 	    fprintf(vlog_out, ")");
 	    break;
 	case 'p':
 	    if (! emit_power_as_shift(scope, expr, wid)) {
-		  emit_expr(scope, oper1, wid, can_skip_unsigned);
+		  emit_expr(scope, oper1, wid, 0, 0, is_full_prec);
 		  fprintf(vlog_out, " ** ");
-		  emit_expr(scope, oper2, 0, can_skip_unsigned);
+		  emit_expr(scope, oper2, ivl_expr_width(oper2), 0, 0, 0);
 		  fprintf(stderr, "%s:%u: vlog95 error: Power operator is not "
 		                  "supported.\n",
 		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
@@ -442,27 +521,27 @@ static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 		    /* For a real expression use the $min()/$max() function. */
 		  if (ivl_expr_opcode(expr) == 'm') fprintf(vlog_out, "$min(");
 		  else fprintf(vlog_out, "$max(");
-		  emit_expr(scope, oper1, wid, 0);
+		  emit_expr(scope, oper1, wid, 0, 0, 0);
 		  fprintf(vlog_out, ",");
-		  emit_expr(scope, oper2, wid, 0);
+		  emit_expr(scope, oper2, wid, 0, 0, 0);
 		  fprintf(vlog_out, ")");
 	    } else {
 		    /* This only works when the argument has no side effect. */
 		  fprintf(vlog_out, "((");
-		  emit_expr(scope, oper1, wid, 0);
+		  emit_expr(scope, oper1, wid, 0, 0, 0);
 		  fprintf(vlog_out, ") %s (", oper);
-		  emit_expr(scope, oper2, wid, 0);
+		  emit_expr(scope, oper2, wid, 0, 0, 0);
 		  fprintf(vlog_out, ") ? (");
-		  emit_expr(scope, oper1, wid, 0);
+		  emit_expr(scope, oper1, wid, 0, 0, 0);
 		  fprintf(vlog_out, ") : (");
-		  emit_expr(scope, oper2, wid, 0);
+		  emit_expr(scope, oper2, wid, 0, 0, 0);
 		  fprintf(vlog_out, "))");
 	    }
 	    break;
 	default:
-	    emit_expr(scope, oper1, wid, 0);
+	    emit_expr(scope, oper1, wid, 0, can_skip_unsigned, 0);
 	    fprintf(vlog_out, "<unknown>");
-	    emit_expr(scope, oper2, wid, 0);
+	    emit_expr(scope, oper2, wid, 0, can_skip_unsigned, 0);
 	    fprintf(stderr, "%s:%u: vlog95 error: Unknown expression "
 	                    "operator (%c).\n",
 	                    ivl_expr_file(expr),
@@ -483,10 +562,10 @@ static void emit_expr_concat(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       fprintf(vlog_out, "{");
       count -= 1;
       for (idx = 0; idx < count; idx += 1) {
-	    emit_expr(scope, ivl_expr_parm(expr, idx), 0, 0);
+	    emit_expr(scope, ivl_expr_parm(expr, idx), 0, 0, 0, 0);
 	    fprintf(vlog_out, ", ");
       }
-      emit_expr(scope, ivl_expr_parm(expr, count), 0, 0);
+      emit_expr(scope, ivl_expr_parm(expr, count), 0, 0, 0, 0);
       fprintf(vlog_out, "}");
       if (repeat != 1) fprintf(vlog_out, "}");
 }
@@ -567,7 +646,7 @@ static void emit_expr_scope(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       emit_expr_scope_piece(ivl_expr_scope(expr));
 }
 
-static void emit_select_name(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+static void emit_select_name(ivl_scope_t scope, ivl_expr_t expr)
 {
 	/* A select of a number is really a parameter select. */
       if (ivl_expr_type(expr) == IVL_EX_NUMBER) {
@@ -583,7 +662,7 @@ static void emit_select_name(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 		  vlog_errors += 1;
 	    }
       } else {
-	    emit_expr(scope, expr, wid, 0);
+	    emit_expr(scope, expr, 0, 0, 0, 0);
       }
 }
 
@@ -597,14 +676,14 @@ static void emit_expr_packed(ivl_scope_t scope, ivl_expr_t sig_expr,
       assert(wid > 0);
       fprintf(vlog_out, "{");
       for (idx = wid - 1; idx > 0; idx -= 1) {
-	    emit_select_name(scope, sig_expr, wid);
+	    emit_select_name(scope, sig_expr);
 	    fprintf(vlog_out, "[");
-	    emit_expr(scope, sel_expr, 0, 0);
+	    emit_expr(scope, sel_expr, 0, 0, 0, 1);
 	    fprintf(vlog_out, " + %u], ", idx);
       }
-      emit_select_name(scope, sig_expr, wid);
+      emit_select_name(scope, sig_expr);
       fprintf(vlog_out, "[");
-      emit_expr(scope, sel_expr, 0, 0);
+      emit_expr(scope, sel_expr, 0, 0, 0, 1);
       fprintf(vlog_out, "]}");
 }
 
@@ -633,13 +712,13 @@ static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
 	    if ((sel_type == IVL_SEL_IDX_DOWN) && ! is_param) {
 		  lsb  += wid - 1;
 		  msb  += wid - 1;
-		  emit_select_name(scope, sig_expr, wid);
+		  emit_select_name(scope, sig_expr);
 		  fprintf(vlog_out, "[");
 		  emit_scaled_expr(scope, sel_expr, msb, lsb);
 		  fprintf(vlog_out, "]");
 		  for (idx = 1; idx < wid; idx += 1) {
 			fprintf(vlog_out, ", ");
-			emit_select_name(scope, sig_expr, wid);
+			emit_select_name(scope, sig_expr);
 			fprintf(vlog_out, "[");
 			emit_scaled_expr(scope, sel_expr, msb, lsb);
 			fprintf(vlog_out, " - %u]", idx);
@@ -649,12 +728,12 @@ static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
 		  assert((sel_type == IVL_SEL_IDX_UP) ||
 		         (is_param && (sel_type == IVL_SEL_IDX_DOWN)));
 		  for (idx = wid - 1; idx > 0; idx -= 1) {
-			emit_select_name(scope, sig_expr, wid);
+			emit_select_name(scope, sig_expr);
 			fprintf(vlog_out, "[");
 			emit_scaled_expr(scope, sel_expr, msb, lsb);
 			fprintf(vlog_out, " + %u], ", idx);
 		  }
-		  emit_select_name(scope, sig_expr, wid);
+		  emit_select_name(scope, sig_expr);
 		  fprintf(vlog_out, "[");
 		  emit_scaled_expr(scope, sel_expr, msb, lsb);
 		  fprintf(vlog_out, "]}");
@@ -663,13 +742,13 @@ static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
 	    if ((sel_type == IVL_SEL_IDX_UP) && ! is_param) {
 		  lsb  -= wid - 1;
 		  msb  -= wid - 1;
-		  emit_select_name(scope, sig_expr, wid);
+		  emit_select_name(scope, sig_expr);
 		  fprintf(vlog_out, "[");
 		  emit_scaled_expr(scope, sel_expr, msb, lsb);
 		  fprintf(vlog_out, "]");
 		  for (idx = 1; idx < wid; idx += 1) {
 			fprintf(vlog_out, ", ");
-			emit_select_name(scope, sig_expr, wid);
+			emit_select_name(scope, sig_expr);
 			fprintf(vlog_out, "[");
 			emit_scaled_expr(scope, sel_expr, msb, lsb);
 			fprintf(vlog_out, " + %u]", idx);
@@ -679,12 +758,12 @@ static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
 		  assert((sel_type == IVL_SEL_IDX_DOWN) ||
 		         (is_param && (sel_type == IVL_SEL_IDX_UP)));
 		  for (idx = wid - 1; idx > 0; idx -= 1) {
-			emit_select_name(scope, sig_expr, wid);
+			emit_select_name(scope, sig_expr);
 			fprintf(vlog_out, "[");
 			emit_scaled_expr(scope, sel_expr, msb, lsb);
 			fprintf(vlog_out, " - %u], ", idx);
 		  }
-		  emit_select_name(scope, sig_expr, wid);
+		  emit_select_name(scope, sig_expr);
 		  fprintf(vlog_out, "[");
 		  emit_scaled_expr(scope, sel_expr, msb, lsb);
 		  fprintf(vlog_out, "]}");
@@ -695,7 +774,8 @@ static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
 static void check_select_signed(ivl_expr_t sig_expr, ivl_expr_t sel_expr,
                                 int msb, int lsb)
 {
-      expr_sign_t sign_type = get_sign_type(sel_expr, 0);
+      expr_sign_t sign_type = get_sign_type(sel_expr,
+                                            ivl_expr_width(sel_expr), 0, 1);
       char msg[64];
       snprintf(msg, sizeof(msg), "%s:%u",
                                  ivl_expr_file(sel_expr),
@@ -762,9 +842,9 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       if ((ivl_expr_type(sig_expr) == IVL_EX_SIGNAL)  &&
           (ivl_signal_data_type(ivl_expr_signal(sig_expr)) == IVL_VT_DARRAY)) {
 	    assert(sel_expr);
-	    emit_select_name(scope, sig_expr, wid);
+	    emit_select_name(scope, sig_expr);
 	    fprintf(vlog_out, "[");
-	    emit_expr(scope, sel_expr, 0, 0);
+	    emit_expr(scope, sel_expr, 0, 0, 0, 1);
 	    fprintf(vlog_out, "]");
 	    return;
       }
@@ -775,7 +855,7 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	      /* The compiler uses selects for some shifts. */
 	    if (type != IVL_EX_NUMBER && type != IVL_EX_SIGNAL) {
 		  fprintf(vlog_out, "(" );
-		  emit_select_name(scope, sig_expr, wid);
+		  emit_select_name(scope, sig_expr);
 		  fprintf(vlog_out, " >> " );
 		  emit_scaled_expr(scope, sel_expr, 1, 0);
 		  fprintf(vlog_out, ")" );
@@ -791,14 +871,14 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 		  }
 		    /* A bit select. */
 		  if (width == 1) {
-			emit_select_name(scope, sig_expr, wid);
+			emit_select_name(scope, sig_expr);
 			fprintf(vlog_out, "[");
 			check_select_signed(sig_expr, sel_expr, msb, lsb);
 			emit_scaled_expr(scope, sel_expr, msb, lsb);
 			fprintf(vlog_out, "]");
 		  } else if (ivl_expr_type(sel_expr) == IVL_EX_NUMBER) {
 			  /* A constant part select. */
-			emit_select_name(scope, sig_expr, wid);
+			emit_select_name(scope, sig_expr);
 			emit_scaled_range(scope, sel_expr, width, msb, lsb);
 		  } else if (sel_type == IVL_SEL_OTHER) {
 			  /* A packed array access. */
@@ -813,17 +893,18 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    }
       } else {
 // HERE: Should this sign extend if the expression is signed?
-	    emit_expr(scope, sig_expr, wid, 0);
+	    unsigned width = ivl_expr_width(expr);
+	    unsigned sig_wid = ivl_expr_width(sig_expr);
+	    emit_expr(scope, sig_expr, sig_wid, 0, 0, 0);
 	      /* Select part of a signal when needed. */
 	    if ((ivl_expr_type(sig_expr) == IVL_EX_SIGNAL) &&
-	        (ivl_expr_width(expr) < ivl_expr_width(sig_expr))) {
+	        (width < sig_wid)) {
 		  int msb, lsb;
 		  int64_t value;
-		  unsigned e_wid = ivl_expr_width(expr) - 1;
 		  get_sig_msb_lsb(ivl_expr_signal(sig_expr), &msb, &lsb);
 		  value = lsb;
-		  if (msb >= lsb) value += e_wid;
-		  else value -= e_wid;
+		  if (msb >= lsb) value += width - 1;
+		  else value -= width - 1;
 		  fprintf(vlog_out, "[%"PRId64":%u]", value, lsb);
 	    }
       }
@@ -840,10 +921,12 @@ static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    fprintf(vlog_out, "(");
 	    count -= 1;
 	    for (idx = 0; idx < count; idx += 1) {
-		  emit_expr(scope, ivl_expr_parm(expr, idx), 0, 0);
+// HERE: For a user function should the argument width be used here.
+		  emit_expr(scope, ivl_expr_parm(expr, idx), 0, 1, 0, 0);
 		  fprintf(vlog_out, ", ");
 	    }
-	    emit_expr(scope, ivl_expr_parm(expr, count), 0, 0);
+// HERE: For a user function should the argument width be used here.
+	    emit_expr(scope, ivl_expr_parm(expr, count), 0, 1, 0, 0);
 	    fprintf(vlog_out, ")");
 	/* User functions without arguments are not supported. */
       } else if (ivl_expr_type(expr) == IVL_EX_UFUNC) {
@@ -865,23 +948,28 @@ static void emit_expr_signal(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       }
 }
 
-static void emit_expr_ternary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+static void emit_expr_ternary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
+                              unsigned is_full_prec)
 {
       ivl_expr_t oper2 = ivl_expr_oper2(expr);
       ivl_expr_t oper3 = ivl_expr_oper3(expr);
       unsigned can_skip_unsigned = calc_can_skip_unsigned(oper2, oper3);
       fprintf(vlog_out, "(");
-      emit_expr(scope, ivl_expr_oper1(expr), 0, 1);
+      emit_expr(scope, ivl_expr_oper1(expr), 0, 0, 0, 0);
       fprintf(vlog_out, " ? ");
-      emit_expr(scope, oper2, wid, can_skip_unsigned);
+// HERE: Do these two emits need to use get_cast_width() like the binary
+//       arithmetic operators?
+      emit_expr(scope, oper2, wid, 0, can_skip_unsigned, is_full_prec);
       fprintf(vlog_out, " : ");
-      emit_expr(scope, oper3, wid, can_skip_unsigned);
+      emit_expr(scope, oper3, wid, 0, can_skip_unsigned, is_full_prec);
       fprintf(vlog_out, ")");
 }
 
-static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
+                            unsigned is_full_prec)
 {
       char *oper = "invalid";
+      ivl_expr_t oper1 = ivl_expr_oper1(expr);
       switch (ivl_expr_opcode(expr)) {
 	case '-': oper = "-"; break;
 	case '~': oper = "~"; break;
@@ -896,6 +984,10 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       switch (ivl_expr_opcode(expr)) {
 	case '-':
 	case '~':
+	    fprintf(vlog_out, "(%s", oper);
+	    emit_expr(scope, oper1,  wid, 0, 0, is_full_prec);
+	    fprintf(vlog_out, ")");
+	    break;
 	case '&':
 	case '|':
 	case '^':
@@ -904,18 +996,18 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	case 'X':
 	case '!':
 	    fprintf(vlog_out, "(%s", oper);
-	    emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
+	    emit_expr(scope, oper1,  0, 0, 0, 0);
 	    fprintf(vlog_out, ")");
 	    break;
 	case '2':
 	case 'v':
 	case 'r':
 	    /* A cast is a noop. */
-	    emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
+	    emit_expr(scope, oper1,  0, 0, 0, 0);
 	    break;
 	case 'I':
 	    fprintf(vlog_out, "(++");
-	    emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
+	    emit_expr(scope, oper1,  wid, 0, 0, is_full_prec);
 	    fprintf(vlog_out, ")");
 	    fprintf(stderr, "%s:%u: vlog95 sorry: Pre-increment "
 	                    "operator is not currently translated.\n",
@@ -925,7 +1017,7 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    break;
 	case 'i':
 	    fprintf(vlog_out, "(");
-	    emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
+	    emit_expr(scope, oper1,  wid, 0, 0, is_full_prec);
 	    fprintf(vlog_out, "++)");
 	    fprintf(stderr, "%s:%u: vlog95 sorry: Post-increment "
 	                    "operator is not currently translated.\n",
@@ -935,7 +1027,7 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    break;
 	case 'D':
 	    fprintf(vlog_out, "(--");
-	    emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
+	    emit_expr(scope, oper1,  wid, 0, 0, is_full_prec);
 	    fprintf(vlog_out, ")");
 	    fprintf(stderr, "%s:%u: vlog95 sorry: Pre-decrement "
 	                    "operator is not currently translated.\n",
@@ -945,7 +1037,7 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    break;
 	case 'd':
 	    fprintf(vlog_out, "(");
-	    emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
+	    emit_expr(scope, oper1,  wid, 0, 0, is_full_prec);
 	    fprintf(vlog_out, "--)");
 	    fprintf(stderr, "%s:%u: vlog95 sorry: Post-decrement "
 	                    "operator is not currently translated.\n",
@@ -958,22 +1050,22 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 	    if (ivl_expr_value(expr) == IVL_VT_REAL) {
 		    /* For a real expression use the $abs() function. */
 		  fprintf(vlog_out, "$abs(");
-		  emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
+		  emit_expr(scope, oper1,  wid, 0, 0, is_full_prec);
 		  fprintf(vlog_out, ")");
 	    } else {
 		    /* This only works when the argument has no side effect. */
 		  fprintf(vlog_out, "((");
-		  emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
+		  emit_expr(scope, oper1,  wid, 0, 0, is_full_prec);
 		  fprintf(vlog_out, ") > 0 ? (");
-		  emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
+		  emit_expr(scope, oper1,  wid, 0, 0, is_full_prec);
 		  fprintf(vlog_out, ") : -(");
-		  emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
+		  emit_expr(scope, oper1,  wid, 0, 0, is_full_prec);
 		  fprintf(vlog_out, "))");
 	    }
 	    break;
 	default:
 	    fprintf(vlog_out, "<unknown>");
-	    emit_expr(scope, ivl_expr_oper1(expr), wid, 0);
+	    emit_expr(scope, oper1,  wid, 0, 0, 0);
 	    fprintf(stderr, "%s:%u: vlog95 error: Unknown unary "
 	                    "operator (%c).\n",
 	                    ivl_expr_file(expr),
@@ -985,9 +1077,20 @@ static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 }
 
 void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
-               unsigned can_skip_unsigned)
+               unsigned is_lval_width, unsigned can_skip_unsigned,
+               unsigned is_full_prec)
 {
-      expr_sign_t sign_type = get_sign_type(expr, can_skip_unsigned);
+      expr_sign_t sign_type;
+	/* If the width is from an L-value (assignment) then the actual
+	 * expression width can be larger. */
+      if (is_lval_width) {
+	    unsigned expr_wid = ivl_expr_width(expr);
+	    if (wid < expr_wid) wid = expr_wid;
+      }
+	/* In a self-determined context the expression set the width. */
+      if (! wid) wid = ivl_expr_width(expr);
+      sign_type = get_sign_type(expr, wid, can_skip_unsigned,
+                                is_full_prec);
 
 	/* Check to see if a $signed() or $unsigned() needs to be emitted
 	 * before the expression. */
@@ -999,6 +1102,10 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
 		  vlog_errors += 1;
 	    }
+	      /* A $signed() creates a self-determined context. */
+	    wid = 0;
+	      /* It also clears the full precision flag. */
+	    is_full_prec = 0;
       }
       if (sign_type == NEED_UNSIGNED) {
 	    fprintf(vlog_out, "$unsigned(");
@@ -1008,6 +1115,10 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 		                  ivl_expr_file(expr), ivl_expr_lineno(expr));
 		  vlog_errors += 1;
 	    }
+	      /* A $unsigned() creates a self-determined context. */
+	    wid = 0;
+	      /* It also clears the full precision flag. */
+	    is_full_prec = 0;
       }
 	/* Emit the expression. */
       switch (ivl_expr_type(expr)) {
@@ -1015,7 +1126,7 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 	    emit_expr_array(scope, expr, wid);
 	    break;
 	case IVL_EX_BINARY:
-	    emit_expr_binary(scope, expr, wid);
+	    emit_expr_binary(scope, expr, wid, is_full_prec);
 	    break;
 	case IVL_EX_CONCAT:
 	    emit_expr_concat(scope, expr, wid);
@@ -1071,7 +1182,7 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 	    break;
 	case IVL_EX_SHALLOWCOPY:
 	    fprintf(vlog_out, "<new> ");
-	    emit_expr(scope, ivl_expr_oper2(expr), wid, 0);
+	    emit_expr(scope, ivl_expr_oper2(expr), wid, 0, 0, 0);
 	    fprintf(stderr, "%s:%u: vlog95 error: New operator "
 	                    "is not supported.\n",
 	                    ivl_expr_file(expr),
@@ -1085,14 +1196,14 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 	    emit_string(ivl_expr_string(expr));
 	    break;
 	case IVL_EX_TERNARY:
-	    emit_expr_ternary(scope, expr, wid);
+	    emit_expr_ternary(scope, expr, wid, is_full_prec);
 	    break;
 	case IVL_EX_UFUNC:
 	    emit_scope_path(scope, ivl_expr_def(expr));
 	    emit_expr_func(scope, expr, wid);
 	    break;
 	case IVL_EX_UNARY:
-	    emit_expr_unary(scope, expr, wid);
+	    emit_expr_unary(scope, expr, wid, is_full_prec);
 	    break;
 	default:
 	    fprintf(vlog_out, "<unknown>");

@@ -69,7 +69,7 @@ static void emit_stmt_inter_delay(ivl_scope_t scope, ivl_statement_t stmt)
 			}
 		  } else {
 			fprintf(vlog_out, "repeat(");
-			emit_expr(scope, count, 0, 0);
+			emit_expr(scope, count, 0, 0, 0, 0);
 			fprintf(vlog_out, ") ");
 		  }
 	    }
@@ -115,12 +115,12 @@ static void emit_stmt_lval_packed(ivl_scope_t scope, ivl_lval_t lval,
       for (idx = wid - 1; idx > 0; idx -= 1) {
 	    emit_stmt_lval_name(scope, lval, sig);
 	    fprintf(vlog_out, "[");
-	    emit_expr(scope, sel_expr, 0, 0);
+	    emit_expr(scope, sel_expr, 0, 0, 0, 1);
 	    fprintf(vlog_out, " + %u], ", idx);
       }
       emit_stmt_lval_name(scope, lval, sig);
       fprintf(vlog_out, "[");
-      emit_expr(scope, sel_expr, 0, 0);
+      emit_expr(scope, sel_expr, 0, 0, 0, 1);
       fprintf(vlog_out, "]}");
 }
 
@@ -205,7 +205,7 @@ static void emit_stmt_lval_darray(ivl_scope_t scope, ivl_lval_t lval,
       emit_id(ivl_signal_basename(sig));
       if (idx) {
 	    fprintf(vlog_out, "[");
-	    emit_expr(scope, idx, 0, 0);
+	    emit_expr(scope, idx, 0, 0, 0, 1);
 	    fprintf(vlog_out, "]");
       }
 }
@@ -375,7 +375,7 @@ static unsigned is_delayed_or_event_assign(ivl_scope_t scope,
 	    emit_event(scope, delay);
       }
       fprintf(vlog_out, ") ");
-      emit_expr(scope, ivl_stmt_rval(assign), wid, 0);
+      emit_expr(scope, ivl_stmt_rval(assign), wid, 1, 0, 0);
       fprintf(vlog_out, ";");
       emit_stmt_file_line(stmt);
       fprintf(vlog_out, "\n");
@@ -442,7 +442,7 @@ static void emit_assign_and_opt_opcode(ivl_scope_t scope, ivl_statement_t stmt,
 		  vlog_errors += 1;
 	    }
       }
-      emit_expr(scope, ivl_stmt_rval(stmt), wid, 0);
+      emit_expr(scope, ivl_stmt_rval(stmt), wid, 1, 0, 0);
 }
 
 /*
@@ -497,7 +497,7 @@ static unsigned is_for_loop(ivl_scope_t scope, ivl_statement_t stmt)
       emit_assign_and_opt_opcode(scope, assign, 0);
       fprintf(vlog_out, "; ");
 	/* Emit the condition. */
-      emit_expr(scope, ivl_stmt_cond_expr(while_lp), 0, 0);
+      emit_expr(scope, ivl_stmt_cond_expr(while_lp), 0, 0, 0, 0);
       fprintf(vlog_out, "; ");
 	/* Emit the increment statement (an opcode is allowed). */
       emit_assign_and_opt_opcode(scope, incr_assign, 1);
@@ -575,13 +575,13 @@ static unsigned is_repeat_event_assign(ivl_scope_t scope, ivl_statement_t stmt)
       fprintf(vlog_out, " =");
       if (repeat) {
 	    fprintf(vlog_out, " repeat (");
-	    emit_expr(scope, ivl_stmt_cond_expr(repeat), 0, 0);
+	    emit_expr(scope, ivl_stmt_cond_expr(repeat), 0, 0, 0, 0);
 	    fprintf(vlog_out, ")");
       }
       fprintf(vlog_out, " @(");
       emit_event(scope, event);
       fprintf(vlog_out, ") ");
-      emit_expr(scope, ivl_stmt_rval(assign), wid, 0);
+      emit_expr(scope, ivl_stmt_rval(assign), wid, 1, 0, 0);
       fprintf(vlog_out, ";");
       emit_stmt_file_line(stmt);
       fprintf(vlog_out, "\n");
@@ -634,7 +634,7 @@ static unsigned is_wait(ivl_scope_t scope, ivl_statement_t stmt)
 
 	/* The pattern matched so generate the appropriate code. */
       fprintf(vlog_out, "%*cwait(", get_indent(), ' ');
-      emit_expr(scope, ivl_expr_oper1(while_expr), 0, 0);
+      emit_expr(scope, ivl_expr_oper1(while_expr), 0, 0, 0, 0);
       fprintf(vlog_out, ")");
       emit_stmt_file_line(stmt);
       single_indent = 1;
@@ -740,7 +740,8 @@ typedef struct port_expr_s {
 static void emit_port(ivl_scope_t scope, struct port_expr_s port_expr)
 {
       if (port_expr.type == IVL_SIP_INPUT) {
-	    emit_expr(scope, port_expr.expr.rval, 0, 0);
+// HERE: For a user should the argument width be used here.
+	    emit_expr(scope, port_expr.expr.rval, 0, 1, 0, 0);
       } else {
 	      /* This is a self-determined context so we don't care about
 	       * the width of the L-value. */
@@ -894,7 +895,7 @@ static void emit_stmt_assign_nb(ivl_scope_t scope, ivl_statement_t stmt)
       wid = emit_stmt_lval(scope, stmt);
       fprintf(vlog_out, " <= ");
       emit_stmt_inter_delay(scope, stmt);
-      emit_expr(scope, ivl_stmt_rval(stmt), wid, 0);
+      emit_expr(scope, ivl_stmt_rval(stmt), wid, 1, 0, 0);
       fprintf(vlog_out, ";");
       emit_stmt_file_line(stmt);
       fprintf(vlog_out, "\n");
@@ -940,7 +941,7 @@ static void emit_stmt_case(ivl_scope_t scope, ivl_statement_t stmt)
 	    assert(0);
       }
       fprintf(vlog_out, "%*c%s (", get_indent(), ' ', case_type);
-      emit_expr(scope, ivl_stmt_cond_expr(stmt), 0, 0);
+      emit_expr(scope, ivl_stmt_cond_expr(stmt), 0, 0, 0, 0);
       fprintf(vlog_out, ")");
       emit_stmt_file_line(stmt);
       fprintf(vlog_out, "\n");
@@ -955,7 +956,7 @@ static void emit_stmt_case(ivl_scope_t scope, ivl_statement_t stmt)
 		  continue;
 	    }
 	    fprintf(vlog_out, "%*c", get_indent(), ' ');
-	    emit_expr(scope, expr, 0, 0);
+	    emit_expr(scope, expr, 0, 0, 0, 0);
 	    fprintf(vlog_out, ":");
 	    single_indent = 1;
 	    emit_stmt(scope, ivl_stmt_case_stmt(stmt, idx));
@@ -978,7 +979,7 @@ static void emit_stmt_cassign(ivl_scope_t scope, ivl_statement_t stmt)
 //       done this for us.
       wid = emit_stmt_lval(scope, stmt);
       fprintf(vlog_out, " = ");
-      emit_expr(scope, ivl_stmt_rval(stmt), wid, 0);
+      emit_expr(scope, ivl_stmt_rval(stmt), wid, 1, 0, 0);
       fprintf(vlog_out, ";");
       emit_stmt_file_line(stmt);
       fprintf(vlog_out, "\n");
@@ -990,7 +991,7 @@ static void emit_stmt_condit(ivl_scope_t scope, ivl_statement_t stmt)
       ivl_statement_t false_stmt = ivl_stmt_cond_false(stmt);
       unsigned nest = 0;
       fprintf(vlog_out, "%*cif (", get_indent(), ' ');
-      emit_expr(scope, ivl_stmt_cond_expr(stmt), 0, 0);
+      emit_expr(scope, ivl_stmt_cond_expr(stmt), 0, 0, 0, 0);
       fprintf(vlog_out, ")");
       emit_stmt_file_line(stmt);
       if (true_stmt) {
@@ -1068,7 +1069,7 @@ static void emit_stmt_force(ivl_scope_t scope, ivl_statement_t stmt)
 //       done this for us.
       wid = emit_stmt_lval(scope, stmt);
       fprintf(vlog_out, " = ");
-      emit_expr(scope, ivl_stmt_rval(stmt), wid, 0);
+      emit_expr(scope, ivl_stmt_rval(stmt), wid, 1, 0, 0);
       fprintf(vlog_out, ";");
       emit_stmt_file_line(stmt);
       fprintf(vlog_out, "\n");
@@ -1115,7 +1116,7 @@ static void emit_stmt_release(ivl_scope_t scope, ivl_statement_t stmt)
 static void emit_stmt_repeat(ivl_scope_t scope, ivl_statement_t stmt)
 {
       fprintf(vlog_out, "%*crepeat (", get_indent(), ' ');
-      emit_expr(scope, ivl_stmt_cond_expr(stmt), 0, 0);
+      emit_expr(scope, ivl_stmt_cond_expr(stmt), 0, 0, 0, 0);
       fprintf(vlog_out, ")");
       emit_stmt_file_line(stmt);
       single_indent = 1;
@@ -1132,10 +1133,10 @@ static void emit_stmt_stask(ivl_scope_t scope, ivl_statement_t stmt)
 	    count -= 1;
 	    for (idx = 0; idx < count; idx += 1) {
 		  ivl_expr_t expr = ivl_stmt_parm(stmt, idx);
-		  if (expr) emit_expr(scope, expr, 0, 0);
+		  if (expr) emit_expr(scope, expr, 0, 0, 0, 0);
 		  fprintf(vlog_out, ", ");
 	    }
-	    emit_expr(scope, ivl_stmt_parm(stmt, count), 0, 0);
+	    emit_expr(scope, ivl_stmt_parm(stmt, count), 0, 0, 0, 0);
 	    fprintf(vlog_out, ")");
       }
       fprintf(vlog_out, ";");
@@ -1183,7 +1184,7 @@ static void emit_stmt_wait(ivl_scope_t scope, ivl_statement_t stmt)
 static void emit_stmt_while(ivl_scope_t scope, ivl_statement_t stmt)
 {
       fprintf(vlog_out, "%*cwhile (", get_indent(), ' ');
-      emit_expr(scope, ivl_stmt_cond_expr(stmt), 0, 0);
+      emit_expr(scope, ivl_stmt_cond_expr(stmt), 0, 0, 0, 0);
       fprintf(vlog_out, ")");
       emit_stmt_file_line(stmt);
       single_indent = 1;

@@ -314,7 +314,7 @@ void emit_scope_variables(ivl_scope_t scope)
 	    fprintf(vlog_out, " = ");
 	      /* Need to emit the parameters value not its name. */
 	    emitting_param = par;
-	    emit_expr(scope, pex, 0, 0);
+	    emit_expr(scope, pex, ivl_expr_width(pex), 1, 0, 0);
 	    emitting_param = 0;
 	    fprintf(vlog_out, ";");
 	    if (emit_file_line) {
