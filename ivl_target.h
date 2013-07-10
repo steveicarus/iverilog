@@ -1612,6 +1612,9 @@ extern ivl_signal_t ivl_nexus_ptr_sig(ivl_nexus_ptr_t net);
  *    a range the value is zero based and the width of the expression is
  *    used to determine the MSB.
  *
+ * ivl_parameter_width
+ *    return |MSB - LSB| + 1
+ *
  * ivl_parameter_signed
  *    Returns if the parameter was declared to be signed.
  *
@@ -1628,6 +1631,7 @@ extern ivl_scope_t ivl_parameter_scope(ivl_parameter_t net);
 extern ivl_expr_t  ivl_parameter_expr(ivl_parameter_t net);
 extern int         ivl_parameter_msb(ivl_parameter_t net);
 extern int         ivl_parameter_lsb(ivl_parameter_t net);
+extern unsigned    ivl_parameter_width(ivl_parameter_t net);
 extern int         ivl_parameter_signed(ivl_parameter_t net);
 extern int         ivl_parameter_local(ivl_parameter_t net);
 extern const char* ivl_parameter_file(ivl_parameter_t net);

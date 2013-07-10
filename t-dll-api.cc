@@ -1764,6 +1764,19 @@ extern "C" int ivl_parameter_lsb(ivl_parameter_t net)
       return net->lsb;
 }
 
+/*
+ * No need to waste space with storing the width of the parameter since
+ * it can easily be computed when needed.
+ */
+extern "C" unsigned ivl_parameter_width(ivl_parameter_t net)
+{
+      unsigned result = 1;
+      assert(net);
+      if (net->msb >= net->lsb) result += net->msb - net->lsb;
+      else result += net->lsb - net->msb;
+      return result;
+}
+
 extern "C" ivl_expr_t ivl_parameter_expr(ivl_parameter_t net)
 {
       assert(net);
