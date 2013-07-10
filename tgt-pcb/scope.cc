@@ -43,7 +43,6 @@ static string wire_name(ivl_signal_t sig);
 int scan_scope(ivl_scope_t scope)
 {
       int black_box_flag = 0;
-      int idx;
 
       map<string,attr_value> attrs;
 
@@ -51,7 +50,7 @@ int scan_scope(ivl_scope_t scope)
 	// black_box attribute. While we are at it, save the collected
 	// attributes into a map that we can pass on to the processing
 	// functions.
-      for (idx = 0 ; idx < ivl_scope_attr_cnt(scope) ; idx += 1) {
+      for (unsigned idx = 0 ; idx < ivl_scope_attr_cnt(scope) ; idx += 1) {
 	    ivl_attribute_t attr = ivl_scope_attr_val(scope, idx);
 	    string attr_key = attr->key;
 
