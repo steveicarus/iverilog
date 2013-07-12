@@ -395,7 +395,7 @@ static void store_package_in_work(const Package*pack)
       pack->write_to_stream(file);
 }
 
-static int emit_packages(perm_string lib_name, const map<perm_string,Package*>&packages)
+static int emit_packages(perm_string, const map<perm_string,Package*>&packages)
 {
       int errors = 0;
       for (map<perm_string,Package*>::const_iterator cur = packages.begin()
