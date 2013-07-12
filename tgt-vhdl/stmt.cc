@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for statements.
  *
- *  Copyright (C) 2008-2011  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2013  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,8 +45,8 @@ static void emit_wait_for_0(vhdl_procedural *proc, stmt_container *container,
  * in C. This function can be enabled with the flag
  * -puse-vhpi-finish=1.
  */
-static int draw_stask_finish(vhdl_procedural *proc, stmt_container *container,
-                             ivl_statement_t stmt)
+static int draw_stask_finish(vhdl_procedural *, stmt_container *container,
+                             ivl_statement_t)
 {
    const char *use_vhpi = ivl_design_flag(get_vhdl_design(), "use-vhpi-finish");
    if (strcmp(use_vhpi, "1") == 0) {
@@ -229,8 +229,8 @@ static int draw_block(vhdl_procedural *proc, stmt_container *container,
 /*
  * A no-op statement. This corresponds to a `null' statement in VHDL.
  */
-static int draw_noop(vhdl_procedural *proc, stmt_container *container,
-                     ivl_statement_t stmt)
+static int draw_noop(vhdl_procedural *, stmt_container *container,
+                     ivl_statement_t)
 {
    container->add_stmt(new vhdl_null_stmt());
    return 0;
@@ -613,7 +613,7 @@ static int draw_nbassign(vhdl_procedural *proc, stmt_container *container,
 }
 
 static int draw_assign(vhdl_procedural *proc, stmt_container *container,
-                       ivl_statement_t stmt, bool is_last)
+                       ivl_statement_t stmt)
 {
    vhdl_decl::assign_type_t assign_type = vhdl_decl::ASSIGN_NONBLOCK;
    bool emulate_blocking = proc->get_scope()->allow_signal_assignment();
@@ -1649,7 +1649,7 @@ int draw_stmt(vhdl_procedural *proc, stmt_container *container,
    case IVL_ST_NOOP:
       return draw_noop(proc, container, stmt);
    case IVL_ST_ASSIGN:
-      return draw_assign(proc, container, stmt, is_last);
+      return draw_assign(proc, container, stmt);
    case IVL_ST_ASSIGN_NB:
       return draw_nbassign(proc, container, stmt);
    case IVL_ST_DELAY:

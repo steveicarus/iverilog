@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008-2011  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2013  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -379,7 +379,7 @@ vhdl_wait_stmt::~vhdl_wait_stmt()
 }
 
 void vhdl_wait_stmt::find_vars(vhdl_var_set_t& read,
-                               vhdl_var_set_t& write)
+                               vhdl_var_set_t&)
 {
    if (expr_)
       expr_->find_vars(read);
@@ -567,7 +567,7 @@ void vhdl_pcall_stmt::emit(std::ostream &of, int level) const
 }
 
 void vhdl_pcall_stmt::find_vars(vhdl_var_set_t& read,
-                                vhdl_var_set_t& write)
+                                vhdl_var_set_t&)
 {
    exprs_.find_vars(read);
 }
@@ -617,7 +617,7 @@ void vhdl_var_ref::emit(std::ostream &of, int level) const
    }
 }
 
-void vhdl_const_string::emit(std::ostream &of, int level) const
+void vhdl_const_string::emit(std::ostream &of, int) const
 {
    of << "\"" << value_ << "\"";
 }
@@ -697,7 +697,7 @@ bool vhdl_const_bits::has_meta_bits() const
    return find_if(value_.begin(), value_.end(), is_meta_bit) != value_.end();
 }
 
-void vhdl_const_bits::emit(std::ostream &of, int level) const
+void vhdl_const_bits::emit(std::ostream &of, int) const
 {
    if (qualified_)
       of << (signed_ ? "signed" : "unsigned") << "'(";
@@ -720,23 +720,23 @@ void vhdl_const_bits::emit(std::ostream &of, int level) const
    of << (qualified_ ? "\")" : "\"");
 }
 
-void vhdl_const_bit::emit(std::ostream &of, int level) const
+void vhdl_const_bit::emit(std::ostream &of, int) const
 {
    of << "'" << vl_to_vhdl_bit(bit_) << "'";
 }
 
-void vhdl_const_int::emit(std::ostream &of, int level) const
+void vhdl_const_int::emit(std::ostream &of, int) const
 {
    of << dec << value_;
    // We need to find a way to display a comment, since $time, etc. add one.
 }
 
-void vhdl_const_bool::emit(std::ostream &of, int level) const
+void vhdl_const_bool::emit(std::ostream &of, int) const
 {
    of << (value_ ? "True" : "False");
 }
 
-void vhdl_const_time::emit(std::ostream &of, int level) const
+void vhdl_const_time::emit(std::ostream &of, int) const
 {
    of << dec << value_;
    switch (units_) {
@@ -804,7 +804,7 @@ void vhdl_report_stmt::emit(ostream& of, int level) const
    of << ";";
 }
 
-void vhdl_report_stmt::find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write)
+void vhdl_report_stmt::find_vars(vhdl_var_set_t& read, vhdl_var_set_t&)
 {
    text_->find_vars(read);
 }

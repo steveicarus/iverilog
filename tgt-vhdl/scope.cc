@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for scopes.
  *
- *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2013  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -89,7 +89,7 @@ static void link_scope_to_nexus_signal(nexus_private_t *priv, vhdl_scope *scope,
          sn->connect.push_back(sig);
    }
    else {
-      scope_nexus_t new_sn = { scope, sig, pin, "" };
+      scope_nexus_t new_sn = { scope, sig, pin, "", list<ivl_signal_t>() };
       priv->signals.push_back(new_sn);
    }
 }
@@ -100,7 +100,7 @@ static void link_scope_to_nexus_signal(nexus_private_t *priv, vhdl_scope *scope,
 static void link_scope_to_nexus_tmp(nexus_private_t *priv, vhdl_scope *scope,
                                     const string &name)
 {
-   scope_nexus_t new_sn = { scope, NULL, 0, name };
+   scope_nexus_t new_sn = { scope, NULL, 0, name, list<ivl_signal_t>() };
    priv->signals.push_back(new_sn);
 }
 
@@ -969,7 +969,7 @@ static void create_skeleton_entity_for(ivl_scope_t scope, int depth)
  * A first pass through the hierarchy: create VHDL entities for
  * each unique Verilog module type.
  */
-extern "C" int draw_skeleton_scope(ivl_scope_t scope, void *_unused)
+extern "C" int draw_skeleton_scope(ivl_scope_t scope, void *)
 {
    static int depth = 0;
 
@@ -997,7 +997,7 @@ extern "C" int draw_skeleton_scope(ivl_scope_t scope, void *_unused)
    return rc;
 }
 
-extern "C" int draw_all_signals(ivl_scope_t scope, void *_parent)
+extern "C" int draw_all_signals(ivl_scope_t scope, void *)
 {
    if (!is_default_scope_instance(scope))
       return 0;  // Not interested in this instance
@@ -1053,7 +1053,7 @@ extern "C" int draw_functions(ivl_scope_t scope, void *_parent)
  * This also has the side effect of generating all the necessary
  * nexus code.
  */
-extern "C" int draw_constant_drivers(ivl_scope_t scope, void *_parent)
+extern "C" int draw_constant_drivers(ivl_scope_t scope, void *)
 {
    if (!is_default_scope_instance(scope))
       return 0;  // Not interested in this instance
@@ -1128,7 +1128,7 @@ extern "C" int draw_constant_drivers(ivl_scope_t scope, void *_parent)
    return 0;
 }
 
-extern "C" int draw_all_logic_and_lpm(ivl_scope_t scope, void *_parent)
+extern "C" int draw_all_logic_and_lpm(ivl_scope_t scope, void *)
 {
    if (!is_default_scope_instance(scope))
       return 0;  // Not interested in this instance

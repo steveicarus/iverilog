@@ -1,7 +1,7 @@
 /*
  *  VHDL variable and signal types.
  *
- *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2013  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -148,7 +148,7 @@ std::string vhdl_type::get_type_decl_string() const
    }
 }
 
-void vhdl_type::emit(std::ostream &of, int level) const
+void vhdl_type::emit(std::ostream &of, int) const
 {
    of << get_decl_string();
 }

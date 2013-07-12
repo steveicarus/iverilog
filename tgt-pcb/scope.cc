@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -87,11 +87,11 @@ int scan_scope(ivl_scope_t scope)
 
 extern "C" int child_scan_fun(ivl_scope_t scope, void*)
 {
-      int rc = scan_scope(scope);
+      scan_scope(scope);
       return 0;
 }
 
-void sheet_box(ivl_scope_t scope, const map<string,attr_value>&attrs)
+void sheet_box(ivl_scope_t scope, const map<string,attr_value>&)
 {
       printf("Sheet %s...\n", ivl_scope_name(scope));
       unsigned sigs = ivl_scope_sigs(scope);

@@ -42,7 +42,7 @@ INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
 endif
 
 CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
-CXXFLAGS = @WARNING_FLAGS@ @CXXFLAGS@
+CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
 O = vhdl.o state.o vhdl_element.o vhdl_type.o vhdl_syntax.o scope.o process.o \

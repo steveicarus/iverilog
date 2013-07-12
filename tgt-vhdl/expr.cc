@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for expressions.
  *
- *  Copyright (C) 2008-2011  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2013  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -625,7 +625,7 @@ static vhdl_expr *translate_concat(ivl_expr_t e)
    return concat;
 }
 
-vhdl_expr *translate_sfunc_time(ivl_expr_t e)
+vhdl_expr *translate_sfunc_time(ivl_expr_t)
 {
    cerr << "warning: no translation for $time (returning 0)" << endl;
    vhdl_expr *result = new vhdl_const_int(0);
@@ -633,7 +633,7 @@ vhdl_expr *translate_sfunc_time(ivl_expr_t e)
    return result;
 }
 
-vhdl_expr *translate_sfunc_stime(ivl_expr_t e)
+vhdl_expr *translate_sfunc_stime(ivl_expr_t)
 {
    cerr << "warning: no translation for $stime (returning 0)" << endl;
    vhdl_expr *result = new vhdl_const_int(0);
@@ -641,7 +641,7 @@ vhdl_expr *translate_sfunc_stime(ivl_expr_t e)
    return result;
 }
 
-vhdl_expr *translate_sfunc_simtime(ivl_expr_t e)
+vhdl_expr *translate_sfunc_simtime(ivl_expr_t)
 {
    cerr << "warning: no translation for $simtime (returning 0)" << endl;
    vhdl_expr *result = new vhdl_const_int(0);
@@ -649,7 +649,7 @@ vhdl_expr *translate_sfunc_simtime(ivl_expr_t e)
    return result;
 }
 
-vhdl_expr *translate_sfunc_random(ivl_expr_t e)
+vhdl_expr *translate_sfunc_random(ivl_expr_t)
 {
    cerr << "warning: no translation for $random (returning 0)" << endl;
    vhdl_expr *result = new vhdl_const_int(0);
@@ -657,7 +657,7 @@ vhdl_expr *translate_sfunc_random(ivl_expr_t e)
    return result;
 }
 
-vhdl_expr *translate_sfunc_fopen(ivl_expr_t e)
+vhdl_expr *translate_sfunc_fopen(ivl_expr_t)
 {
    cerr << "warning: no translation for $fopen (returning 0)" << endl;
    vhdl_expr *result = new vhdl_const_int(0);

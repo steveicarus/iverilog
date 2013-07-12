@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for processes.
  *
- *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2013  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@ static int generate_vhdl_process(vhdl_entity *ent, ivl_process_t proc)
    return 0;
 }
 
-extern "C" int draw_process(ivl_process_t proc, void *cd)
+extern "C" int draw_process(ivl_process_t proc, void *)
 {
    ivl_scope_t scope = ivl_process_scope(proc);
 

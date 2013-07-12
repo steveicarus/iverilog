@@ -1,7 +1,7 @@
 /*
  *  VHDL abstract syntax elements.
  *
- *  Copyright (C) 2008-2010  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2013  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@ public:
    virtual vhdl_expr *to_std_ulogic();
    virtual vhdl_expr *to_vector(vhdl_type_name_t name, int w);
    virtual vhdl_expr *to_string();
-   virtual void find_vars(vhdl_var_set_t& read) {}
+   virtual void find_vars(vhdl_var_set_t&) {}
 
 protected:
    static void open_parens(ostream& of);
@@ -451,7 +451,7 @@ private:
 class vhdl_null_stmt : public vhdl_seq_stmt {
 public:
    void emit(std::ostream &of, int level) const;
-   void find_vars(vhdl_var_set_t& read, vhdl_var_set_t& write) {}
+   void find_vars(vhdl_var_set_t&, vhdl_var_set_t&) {}
 };
 
 
