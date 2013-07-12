@@ -1,8 +1,6 @@
 
 %name-prefix="fp"
 %pure-parser
-%lex-param {yyscan_t yyscanner}
-%parse-param {yyscan_t yyscanner}
 %parse-param {const char*file_path}
 
 %{
@@ -41,14 +39,14 @@ using namespace std;
   (Current).first_line   = (Rhs)[1].first_line;      \
  } while (0)
 
-static void yyerror(YYLTYPE*, yyscan_t , const char*, const char*msg)
+static void yyerror(YYLTYPE*, const char*, const char*msg)
 {
       fprintf(stderr, "%s\n", msg);
 }
 
-extern yyscan_t prepare_fp_lexor(FILE*fd);
-extern void destroy_fp_lexor(yyscan_t scanner);
-extern int fplex(union YYSTYPE*yylvalp, YYLTYPE*yylloc, yyscan_t scanner);
+extern void init_fp_lexor(FILE*fd);
+extern void destroy_fp_lexor();
+extern int fplex(union YYSTYPE*yylvalp, YYLTYPE*yylloc);
 
 static fp_pad_t cur_pad;
 static fp_element_t cur_element;
@@ -194,10 +192,10 @@ int parse_fp_file(const string&file_path)
       parse_file_path = file_path;
       parse_fp_errors = 0;
       parse_fp_sorrys = 0;
-      yyscan_t scanner = prepare_fp_lexor(fd);
-      int rc = yyparse(scanner, file_path.c_str());
+      init_fp_lexor(fd);
+      int rc = yyparse(file_path.c_str());
       fclose(fd);
-      destroy_fp_lexor(scanner);
+      destroy_fp_lexor();
 
       return rc;
 }

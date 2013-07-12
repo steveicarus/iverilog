@@ -1,7 +1,7 @@
 #ifndef __fp_api_H
 #define __fp_api_H
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -26,8 +26,6 @@
  * footprint file. The argument is the path to the element.
  */
 extern int parse_fp_file(const std::string&file_path);
-
-typedef void*yyscan_t;
 
 /*
  * The yyltype supports the passing of detailed source file location

@@ -3,11 +3,10 @@
 %option noinput
 %option nounput
 %option noyywrap
-%option reentrant
 
 %{
 /*
- *  Copyright (C) 2011 Stephen Williams (steve@icarus.com)
+ *  Copyright (C) 2011-2013 Stephen Williams (steve@icarus.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,7 +26,7 @@
 # include  "fp_api.h"
 # include  "fp.h"
 
-# define YY_DECL int yylex(YYSTYPE*yylvalp, YYLTYPE*yyllocp, yyscan_t yyscanner)
+# define YY_DECL int yylex(YYSTYPE*yylvalp, YYLTYPE*yyllocp)
 
 %}
 
@@ -75,15 +74,18 @@ SPACE [ \t\f\r]
 
 %%
 
-yyscan_t prepare_fp_lexor(FILE*fd)
+void init_fp_lexor(FILE*fd)
 {
-      yyscan_t scanner;
-      yylex_init(&scanner);
-      yyrestart(fd, scanner);
-      return scanner;
+      yyrestart(fd);
 }
 
-void destroy_fp_lexor(yyscan_t scanner)
+void destroy_fp_lexor()
 {
-      yylex_destroy(scanner);
+# ifdef FLEX_SCANNER
+#   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5
+#     if defined(YY_FLEX_SUBMINOR_VERSION) && YY_FLEX_SUBMINOR_VERSION >= 9
+      yylex_destroy();
+#     endif
+#   endif
+# endif
 }
