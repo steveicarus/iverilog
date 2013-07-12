@@ -2710,7 +2710,7 @@ ostream& operator<< (ostream&out, const vvp_vector2_t&that)
 vvp_vector8_t::vvp_vector8_t(const vvp_vector8_t&that)
 {
       size_ = that.size_;
-      if (size_ <= sizeof val_) {
+      if (size_ <= sizeof(val_)) {
 	    memcpy(val_, that.val_, sizeof val_);
       } else {
 	    ptr_ = new unsigned char[size_];
@@ -2725,7 +2725,7 @@ vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that,
       if (size_ == 0)
 	    return;
 
-      if (size_ <= sizeof val_) {
+      if (size_ <= sizeof(val_)) {
 	    ptr_ = 0; // Prefill all val_ bytes
 	    for (unsigned idx = 0 ; idx < size_ ; idx += 1)
 		  val_[idx] = vvp_scalar_t(that.value(idx),str0, str1).raw();
@@ -2743,7 +2743,7 @@ vvp_vector8_t::vvp_vector8_t(const vvp_vector2_t&that,
       if (size_ == 0)
 	    return;
 
-      if (size_ <= sizeof val_) {
+      if (size_ <= sizeof(val_)) {
 	    ptr_ = 0;
 	    for (unsigned idx = 0 ; idx < size_ ; idx += 1)
 		  val_[idx] = vvp_scalar_t(that.value(idx)? BIT4_1:BIT4_0, str0, str1).raw();
@@ -2763,7 +2763,7 @@ vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 	    return *this;
 
       if (size_ != that.size_) {
-	    if (size_ > sizeof val_)
+	    if (size_ > sizeof(val_))
 		  delete[]ptr_;
 	    size_ = 0;
       }
@@ -2773,7 +2773,7 @@ vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 	    return *this;
       }
 
-      if (that.size_ <= sizeof val_) {
+      if (that.size_ <= sizeof(val_)) {
 	    size_ = that.size_;
 	    memcpy(val_, that.val_, sizeof(val_));
 	    return *this;
@@ -2793,8 +2793,8 @@ vvp_vector8_t vvp_vector8_t::subvalue(unsigned base, unsigned wid) const
 {
       vvp_vector8_t tmp (wid);
 
-      unsigned char*tmp_ptr = tmp.size_ <= sizeof val_? tmp.val_ : tmp.ptr_;
-      const unsigned char*use_ptr = size_ <= sizeof val_? val_ : ptr_;
+      unsigned char*tmp_ptr = tmp.size_ <= sizeof(val_) ? tmp.val_ : tmp.ptr_;
+      const unsigned char*use_ptr = size_ <= sizeof(val_) ? val_ : ptr_;
 
       unsigned idx = 0;
       while ((idx < wid) && (base+idx < size_)) {
@@ -2817,8 +2817,10 @@ vvp_vector8_t part_expand(const vvp_vector8_t&that, unsigned wid, unsigned off)
       assert(off < wid);
       vvp_vector8_t tmp (wid);
 
-      unsigned char* tmp_ptr = tmp.size_<= sizeof tmp.val_? tmp.val_ : tmp.ptr_;
-      const unsigned char* that_ptr = that.size_<= sizeof that.val_? that.val_ : that.ptr_;
+      unsigned char* tmp_ptr = tmp.size_<= sizeof(tmp.val_) ?
+                               tmp.val_ : tmp.ptr_;
+      const unsigned char* that_ptr = that.size_<= sizeof(that.val_) ?
+                                      that.val_ : that.ptr_;
 
       unsigned idx = off;
 

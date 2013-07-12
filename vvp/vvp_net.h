@@ -882,9 +882,6 @@ class vvp_vector8_t {
       vvp_vector8_t& operator= (const vvp_vector8_t&that);
 
     private:
-	// This is the number of vvp_scalar_t objects we can keep in
-	// the val_ buffer. If the vector8 is bigger than this, then
-	// resort to allocations to get a larger buffer.
       unsigned size_;
       union {
 	    unsigned char*ptr_;
@@ -924,8 +921,8 @@ extern ostream& operator<< (ostream&, const vvp_vector8_t&);
 inline vvp_vector8_t::vvp_vector8_t(unsigned size__)
 : size_(size__)
 {
-      if (size_ <= sizeof val_) {
-	    memset(val_, 0, sizeof val_);
+      if (size_ <= sizeof(val_)) {
+	    memset(val_, 0, sizeof(val_));
       } else {
 	    ptr_ = new unsigned char[size_];
 	    memset(ptr_, 0, size_);
@@ -934,14 +931,14 @@ inline vvp_vector8_t::vvp_vector8_t(unsigned size__)
 
 inline vvp_vector8_t::~vvp_vector8_t()
 {
-      if (size_ > sizeof val_)
+      if (size_ > sizeof(val_))
 	    delete[]ptr_;
 }
 
 inline vvp_scalar_t vvp_vector8_t::value(unsigned idx) const
 {
       assert(idx < size_);
-      if (size_ <= sizeof val_)
+      if (size_ <= sizeof(val_))
 	    return vvp_scalar_t(val_[idx]);
       else
 	    return vvp_scalar_t(ptr_[idx]);
@@ -950,7 +947,7 @@ inline vvp_scalar_t vvp_vector8_t::value(unsigned idx) const
 inline void vvp_vector8_t::set_bit(unsigned idx, vvp_scalar_t val)
 {
       assert(idx < size_);
-      if (size_ <= sizeof val_)
+      if (size_ <= sizeof(val_))
 	    val_[idx] = val.raw();
       else
 	    ptr_[idx] = val.raw();
@@ -965,7 +962,7 @@ inline bool vvp_vector8_t::eeq(const vvp_vector8_t&that) const
       if (size_ == 0)
 	    return true;
 
-      if (size_ <= sizeof val_)
+      if (size_ <= sizeof(val_))
 	      // This is equivalent to memcmp(val_, that.val_, sizeof val_)==0
 	    return ptr_ == that.ptr_;
       else
