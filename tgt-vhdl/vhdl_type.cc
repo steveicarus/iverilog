@@ -154,8 +154,8 @@ void vhdl_type::emit(std::ostream &of, int) const
 }
 
 vhdl_type::vhdl_type(const vhdl_type &other)
-   : name_(other.name_), msb_(other.msb_), lsb_(other.lsb_),
-     array_name_(other.array_name_)
+   : vhdl_element(other), name_(other.name_),
+     msb_(other.msb_), lsb_(other.lsb_), array_name_(other.array_name_)
 {
    if (other.base_ != NULL)
       base_ = new vhdl_type(*other.base_);

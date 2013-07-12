@@ -73,6 +73,8 @@ static bool get_const_argument(NetExpr*exp, verinum&res)
       return true;
 }
 
+#if 0
+/* This function is not currently used. */
 static bool get_const_argument(NetExpr*exp, long&res)
 {
       verinum tmp;
@@ -81,6 +83,7 @@ static bool get_const_argument(NetExpr*exp, long&res)
       res = tmp.as_long();
       return true;
 }
+#endif
 
 void Statement::elaborate_sig(Design*, NetScope*) const
 {
@@ -329,7 +332,7 @@ void netclass_t::elaborate_sig(Design*des, PClass*pclass)
 
 	    list<netrange_t> nil_list;
 	    ivl_type_t use_type = cur->second.type->elaborate_type(des, class_scope_);
-	    NetNet*sig = new NetNet(class_scope_, cur->first, NetNet::REG,
+	    /* NetNet*sig = */ new NetNet(class_scope_, cur->first, NetNet::REG,
 				    nil_list, use_type);
       }
 
@@ -557,7 +560,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
       elaborate_sig_wires_(des, scope);
 
       NetNet*ret_sig;
-      if (gn_system_verilog() && fname=="new" || fname=="new@") {
+      if (gn_system_verilog() && (fname=="new" || fname=="new@")) {
 	      // Special case: this is a constructor, so the return
 	      // signal is also the first argument. For example, the
 	      // source code for the definition may be:

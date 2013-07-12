@@ -340,7 +340,7 @@ const VType* ExpBinary::probe_type(Entity*ent, Architecture*arc) const
       return 0;
 }
 
-const VType*ExpBinary::resolve_operand_types_(const VType*t1, const VType*t2) const
+const VType*ExpBinary::resolve_operand_types_(const VType*, const VType*) const
 {
       return 0;
 }
