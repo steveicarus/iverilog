@@ -38,7 +38,7 @@ srcdir = @srcdir@
 datarootdir = @datarootdir@
 
 SUBDIRS = ivlpp vhdlpp vvp vpi libveriuser cadpli tgt-null tgt-stub tgt-vvp \
-          tgt-vhdl tgt-vlog95 tgt-pcb driver
+          tgt-vhdl tgt-vlog95 tgt-pcb tgt-blif driver
 # Only run distclean for these directories.
 NOTUSED = tgt-fpga tgt-pal tgt-verilog
 

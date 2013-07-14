@@ -51,6 +51,8 @@ dep
 *.vpi
 /cadpli/cadpli.vpl
 
+/tgt-blif/Makefile
+
 # lex, yacc and gperf output
 /driver/cflexor.c
 /driver/cfparse.c
