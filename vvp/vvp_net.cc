@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2332,12 +2332,11 @@ ostream& operator<< (ostream&out, const vvp_vector2_t&that)
 vvp_vector8_t::vvp_vector8_t(const vvp_vector8_t&that)
 {
       size_ = that.size_;
-      if (size_ <= PTR_THRESH) {
+      if (size_ <= sizeof(val_)) {
 	    memcpy(val_, that.val_, sizeof(val_));
       } else {
-	    ptr_ = new vvp_scalar_t[size_];
-	    for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
-		  ptr_[idx] = that.ptr_[idx];
+	    ptr_ = new unsigned char[size_];
+	    memcpy(ptr_, that.ptr_, size_);
       }
 }
 
@@ -2348,26 +2347,25 @@ vvp_vector8_t::vvp_vector8_t(const vvp_vector4_t&that,
       if (size_ == 0)
 	    return;
 
-      vvp_scalar_t*tmp;
-      if (size_ <= PTR_THRESH)
-	    tmp = new (val_) vvp_scalar_t[PTR_THRESH];
-      else
-	    tmp = ptr_ = new vvp_scalar_t[size_];
-
-      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
-	    tmp[idx] = vvp_scalar_t (that.value(idx), str0, str1);
-
+      if (size_ <= sizeof(val_)) {
+	    ptr_ = 0; // Prefill all val_ bytes
+	    for (unsigned idx = 0 ; idx < size_ ; idx += 1)
+		  val_[idx] = vvp_scalar_t(that.value(idx),str0, str1).raw();
+      } else {
+	    ptr_ = new unsigned char[size_];
+	    for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
+		  ptr_[idx] = vvp_scalar_t(that.value(idx), str0, str1).raw();
+      }
 }
 
 vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 {
 	// Assign to self.
-      if (this == &that || (size_ > PTR_THRESH && that.size_ > PTR_THRESH &&
-                            ptr_ == that.ptr_))
+      if (this == &that)
 	    return *this;
 
       if (size_ != that.size_) {
-	    if (size_ > PTR_THRESH)
+	    if (size_ > sizeof(val_))
 		  delete[]ptr_;
 	    size_ = 0;
       }
@@ -2377,7 +2375,7 @@ vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 	    return *this;
       }
 
-      if (that.size_ <= PTR_THRESH) {
+      if (that.size_ <= sizeof(val_)) {
 	    size_ = that.size_;
 	    memcpy(val_, that.val_, sizeof(val_));
 	    return *this;
@@ -2385,11 +2383,10 @@ vvp_vector8_t& vvp_vector8_t::operator= (const vvp_vector8_t&that)
 
       if (size_ == 0) {
 	    size_ = that.size_;
-	    ptr_ = new vvp_scalar_t[size_];
+	    ptr_ = new unsigned char[size_];
       }
 
-      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1)
-	    ptr_[idx] = that.ptr_[idx];
+      memcpy(ptr_, that.ptr_, size_);
 
       return *this;
 }
@@ -2398,12 +2395,12 @@ vvp_vector8_t vvp_vector8_t::subvalue(unsigned base, unsigned wid) const
 {
       vvp_vector8_t tmp (wid);
 
-      vvp_scalar_t* tmp_ptr = tmp.size_<=PTR_THRESH? reinterpret_cast<vvp_scalar_t*>(tmp.val_) : tmp.ptr_;
-      const vvp_scalar_t* ptr = size_<=PTR_THRESH? reinterpret_cast<const vvp_scalar_t*>(val_) : ptr_;
+      unsigned char* tmp_ptr = tmp.size_ <= sizeof(val_) ? tmp.val_ : tmp.ptr_;
+      const unsigned char*use_ptr = size_ <= sizeof(val_) ? val_ : ptr_;
 
       unsigned idx = 0;
       while ((idx < wid) && (base+idx < size_)) {
-	    tmp_ptr[idx] = ptr[base+idx];
+	    tmp_ptr[idx] = use_ptr[base+idx];
 	    idx += 1;
       }
 
@@ -2415,8 +2412,10 @@ vvp_vector8_t part_expand(const vvp_vector8_t&that, unsigned wid, unsigned off)
       assert(off < wid);
       vvp_vector8_t tmp (wid);
 
-      vvp_scalar_t* tmp_ptr = tmp.size_<=vvp_vector8_t::PTR_THRESH? reinterpret_cast<vvp_scalar_t*>(tmp.val_) : tmp.ptr_;
-      const vvp_scalar_t* that_ptr = that.size_<=vvp_vector8_t::PTR_THRESH? reinterpret_cast<const vvp_scalar_t*>(that.val_) : that.ptr_;
+      unsigned char* tmp_ptr = tmp.size_<= sizeof(tmp.val_) ? 
+                               tmp.val_ : tmp.ptr_;
+      const unsigned char* that_ptr = that.size_<= sizeof(that.val_) ? 
+                                      that.val_ : that.ptr_;
 
       unsigned idx = off;
 

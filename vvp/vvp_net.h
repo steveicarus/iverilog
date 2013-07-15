@@ -1,7 +1,7 @@
 #ifndef __vvp_net_H
 #define __vvp_net_H
 /*
- * Copyright (c) 2004-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -685,6 +685,14 @@ class vvp_scalar_t {
       bool is_hiz() const { return (value_ & 0x77) == 0; }
 
     private:
+        // This class and the vvp_vector8_t class are closely related,
+        // so allow vvp_vector8_t access to the raw encoding so that
+        // it can do compact vectoring of vvp_scalar_t objects.
+      friend class vvp_vector8_t;
+      explicit vvp_scalar_t(unsigned char val) : value_(val) { }
+      unsigned char raw() const { return value_; }
+
+    private:
       unsigned char value_;
 };
 
@@ -789,14 +797,10 @@ class vvp_vector8_t {
       vvp_vector8_t& operator= (const vvp_vector8_t&that);
 
     private:
-	// This is the number of vvp_scalar_t objects we can keep in
-	// the val_ buffer. If the vector8 is bigger then this, then
-	// resort to allocations to get a larger buffer.
-      enum { PTR_THRESH = 8 };
       unsigned size_;
       union {
-	    vvp_scalar_t*ptr_;
-	    char val_[PTR_THRESH * sizeof(vvp_scalar_t)];
+	    unsigned char*ptr_;
+	    unsigned char val_[sizeof(void *)];
       };
 };
 
@@ -821,41 +825,43 @@ extern vvp_vector8_t resistive_reduction(const vvp_vector8_t&a);
      strength information in the process. */
 extern vvp_vector4_t reduce4(const vvp_vector8_t&that);
 extern vvp_vector8_t part_expand(const vvp_vector8_t&a, unsigned wid, unsigned off);
+
   /* Print a vector8 value to a stream. */
 extern ostream& operator<< (ostream&, const vvp_vector8_t&);
 
 inline vvp_vector8_t::vvp_vector8_t(unsigned size__)
 : size_(size__)
 {
-      if (size_ <= PTR_THRESH) {
-	    new (reinterpret_cast<void*>(val_)) vvp_scalar_t[PTR_THRESH];
+      if (size_ <= sizeof(val_)) {
+	    memset(val_, 0, sizeof(val_));
       } else {
-	    ptr_ = new vvp_scalar_t[size_];
+	    ptr_ = new unsigned char[size_];
+	    memset(ptr_, 0, size_);
       }
 }
 
 inline vvp_vector8_t::~vvp_vector8_t()
 {
-      if (size_ > PTR_THRESH)
+      if (size_ > sizeof(val_))
 	    delete[]ptr_;
 }
 
 inline vvp_scalar_t vvp_vector8_t::value(unsigned idx) const
 {
       assert(idx < size_);
-      if (size_ <= PTR_THRESH)
-	    return reinterpret_cast<const vvp_scalar_t*>(val_) [idx];
+      if (size_ <= sizeof(val_))
+	    return vvp_scalar_t(val_[idx]);
       else
-	    return ptr_[idx];
+	    return vvp_scalar_t(ptr_[idx]);
 }
 
 inline void vvp_vector8_t::set_bit(unsigned idx, vvp_scalar_t val)
 {
       assert(idx < size_);
-      if (size_ <= PTR_THRESH)
-	    reinterpret_cast<vvp_scalar_t*>(val_) [idx] = val;
+      if (size_ <= sizeof(val_))
+	    val_[idx] = val.raw();
       else
-	    ptr_[idx] = val;
+	    ptr_[idx] = val.raw();
 }
 
   // Exactly-equal for vvp_vector8_t is common and should be as tight
@@ -867,15 +873,11 @@ inline bool vvp_vector8_t::eeq(const vvp_vector8_t&that) const
       if (size_ == 0)
 	    return true;
 
-      if (size_ <= PTR_THRESH)
-	    return 0 == memcmp(val_, that.val_, sizeof(val_));
-
-      for (unsigned idx = 0 ;  idx < size_ ;  idx += 1) {
-	    if (! ptr_[idx] .eeq( that.ptr_[idx] ))
-		return false;
-      }
-
-      return true;
+      if (size_ <= sizeof(val_))
+	      // This is equivalent to memcmp(val_, that.val_, sizeof(val_))==0
+	    return ptr_ == that.ptr_;
+      else
+	    return memcmp(ptr_, that.ptr_, size_) == 0;
 }
 
 /*
