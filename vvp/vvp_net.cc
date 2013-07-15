@@ -2412,9 +2412,9 @@ vvp_vector8_t part_expand(const vvp_vector8_t&that, unsigned wid, unsigned off)
       assert(off < wid);
       vvp_vector8_t tmp (wid);
 
-      unsigned char* tmp_ptr = tmp.size_<= sizeof(tmp.val_) ? 
+      unsigned char* tmp_ptr = tmp.size_<= sizeof(tmp.val_) ?
                                tmp.val_ : tmp.ptr_;
-      const unsigned char* that_ptr = that.size_<= sizeof(that.val_) ? 
+      const unsigned char* that_ptr = that.size_<= sizeof(that.val_) ?
                                       that.val_ : that.ptr_;
 
       unsigned idx = off;
