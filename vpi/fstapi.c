@@ -2392,7 +2392,7 @@ static const char *vartypes[] = {
 	};
 
 static const char *modtypes[] = {
-	"module", "task", "function", "begin", "fork"
+	"module", "task", "function", "begin", "fork", "generate"
 	};
 
 struct fstCurrHier

@@ -59,9 +59,10 @@ enum fstScopeType {
     FST_ST_VCD_FUNCTION        = 2,
     FST_ST_VCD_BEGIN           = 3,
     FST_ST_VCD_FORK            = 4,
-    FST_ST_VCD_MAX             = 4,
+    FST_ST_VCD_GENERATE        = 5,
+    FST_ST_VCD_MAX             = 5,
 
-    FST_ST_MAX                 = 4,
+    FST_ST_MAX                 = 5,
 
     FST_ST_VCD_SCOPE           = 254,
     FST_ST_VCD_UPSCOPE         = 255
