@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -133,6 +133,7 @@ static void cmd_call(unsigned argc, char*argv[])
 		  switch (table[tmp]->get_type_code()) {
 
 		      case vpiModule:
+		      case vpiGenScope:
 		      case vpiFunction:
 		      case vpiTask:
 		      case vpiNamedBegin:
@@ -234,6 +235,11 @@ static void cmd_list(unsigned, char*[])
 		case vpiModule:
 		  scope = dynamic_cast<__vpiScope*>(table[idx]);
 		  printf("module  : %s\n", scope->name);
+		  break;
+
+		case vpiGenScope:
+		  scope = dynamic_cast<__vpiScope*>(table[idx]);
+		  printf("generate: %s\n", scope->name);
 		  break;
 
 		case vpiTask:

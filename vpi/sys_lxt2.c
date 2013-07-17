@@ -695,9 +695,10 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    break;
 
 	  case vpiModule:
-	  case vpiNamedBegin:
-	  case vpiTask:
+	  case vpiGenScope:
 	  case vpiFunction:
+	  case vpiTask:
+	  case vpiNamedBegin:
 	  case vpiNamedFork:
 
 	    if (depth > 0) {
@@ -712,6 +713,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			vpiVariables,
 			/* Scope */
 			vpiFunction,
+			vpiGenScope,
 			vpiModule,
 			vpiNamedBegin,
 			vpiNamedFork,

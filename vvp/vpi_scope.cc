@@ -61,6 +61,7 @@ static void delete_sub_scopes(struct __vpiScope *scope)
 		case vpiTask:
 		  contexts_delete(lscope);
 		case vpiModule:
+		case vpiGenScope:
 		case vpiNamedBegin:
 		case vpiNamedFork:
 		  delete_sub_scopes(lscope);
@@ -187,6 +188,8 @@ static const char* scope_get_type(int code)
       switch (code) {
           case vpiModule:
             return "vpiModule";
+          case vpiGenScope:
+            return "vpiGenScope";
           case vpiFunction:
             return "vpiFunction";
           case vpiTask:
@@ -273,6 +276,7 @@ static int compare_types(int code, int type)
 
       if ( code == vpiInternalScope &&
 	     (type == vpiModule ||
+	     type == vpiGenScope ||
 	     type == vpiFunction ||
 	     type == vpiTask ||
 	     type == vpiNamedBegin ||
@@ -368,6 +372,11 @@ struct vpiScopeBegin  : public __vpiScope {
       int get_type_code(void) const { return vpiNamedBegin; }
 };
 
+struct vpiScopeGenerate  : public __vpiScope {
+      inline vpiScopeGenerate() { }
+      int get_type_code(void) const { return vpiGenScope; }
+};
+
 struct vpiScopeFork  : public __vpiScope {
       inline vpiScopeFork() { }
       int get_type_code(void) const { return vpiNamedFork; }
@@ -435,7 +444,7 @@ compile_scope_decl(char*label, char*type, char*name, char*tname,
       } else if (strcmp(base_type,"begin") == 0) {
 	    scope = new vpiScopeBegin;
       } else if (strcmp(base_type,"generate") == 0) {
-	    scope = new vpiScopeBegin;
+	    scope = new vpiScopeGenerate;
       } else if (strcmp(base_type,"package") == 0) {
 	    scope = new vpiScopePackage;
       } else if (strcmp(base_type,"class") == 0) {

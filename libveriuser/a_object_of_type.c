@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2009 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2013 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -45,7 +45,7 @@ int acc_object_of_type(handle object, PLI_INT32 type)
 	  case accScope:
 	    if (vtype == vpiModule || vtype == vpiNamedBegin ||
 		vtype == vpiNamedFork || vtype == vpiTask ||
-		vtype == vpiFunction) rtn = 1;
+		vtype == vpiFunction || vtype == vpiGenScope) rtn = 1;
 	    break;
 
 	  case accNet: rtn = vtype == vpiNet; break;

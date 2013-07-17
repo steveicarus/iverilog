@@ -1,7 +1,7 @@
 #ifndef __vpi_user_H
 #define __vpi_user_H
 /*
- * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -312,11 +312,12 @@ typedef struct t_vpi_delay  {
 
 /********************** object types added with 1364-2001 *********************/
 
-# define vpiRegArray   116
+#define vpiCallback   107
+#define vpiRegArray   116
 
 /********************** object types added with 1364-2005 *********************/
 
-#define vpiCallback  1000
+#define vpiGenScope   134
 
 /* PROPERTIES */
 #define vpiUndefined   (-1)

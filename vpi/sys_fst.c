@@ -469,7 +469,9 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       struct t_cb_data cb;
       struct vcd_info* info;
 
-      PLI_INT32 type;
+      enum fstVarType type = FST_VT_VCD_MAX;
+      enum fstScopeType stype = FST_ST_VCD_MAX;
+      enum fstVarDir dir;
       const char *name;
       const char *fullname;
       char *escname;
@@ -514,11 +516,12 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    }
 	    break;
 
-	  case vpiNamedBegin: type = FST_ST_VCD_BEGIN; break;
-	  case vpiNamedFork:  type = FST_ST_VCD_FORK; break;
-	  case vpiFunction:   type = FST_ST_VCD_FUNCTION; break;
-	  case vpiModule:     type = FST_ST_VCD_MODULE; break;
-	  case vpiTask:       type = FST_ST_VCD_TASK; break;
+	  case vpiNamedBegin: stype = FST_ST_VCD_BEGIN; break;
+	  case vpiNamedFork:  stype = FST_ST_VCD_FORK; break;
+	  case vpiFunction:   stype = FST_ST_VCD_FUNCTION; break;
+	  case vpiGenScope:   stype = FST_ST_VCD_GENERATE; break;
+	  case vpiModule:     stype = FST_ST_VCD_MODULE; break;
+	  case vpiTask:       stype = FST_ST_VCD_TASK; break;
 
 	  default:
 	    vpi_printf("FST warning: $dumpvars: Unsupported argument "
@@ -596,20 +599,24 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	       * zero so we will also use a width of one for events. */
 	    if (item_type == vpiNamedEvent) size = 1;
 	    else size = vpi_get(vpiSize, item);
+	      /* The FST format supports a port direction so if the net
+	       * is a port set the direction to one of the following:
+	       *   FST_VD_INPUT, FST_VD_OUTPUT or FST_VD_INOUT */
+	    dir = FST_VD_IMPLICIT;
 
-            if (size > 1 || vpi_get(vpiLeftRange, item) != 0) {
+	    if (size > 1 || vpi_get(vpiLeftRange, item) != 0) {
 		  char *buf = malloc(strlen(escname) + 65);
 		  sprintf(buf, "%s [%i:%i]", escname,
                             (int)vpi_get(vpiLeftRange, item),
                             (int)vpi_get(vpiRightRange, item));
 
 		  new_ident = fstWriterCreateVar(dump_file, type,
-		                                 FST_VD_IMPLICIT, size, buf,
+		                                 dir, size, buf,
 		                                 (fstHandle)(long)ident);
 		  free(buf);
 	    } else {
 		  new_ident = fstWriterCreateVar(dump_file, type,
-		                                 FST_VD_IMPLICIT, size, escname,
+		                                 dir, size, escname,
 		                                 (fstHandle)(long)ident);
 	    }
 	    free(escname);
@@ -643,9 +650,10 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    break;
 
 	  case vpiModule:
-	  case vpiNamedBegin:
-	  case vpiTask:
+	  case vpiGenScope:
 	  case vpiFunction:
+	  case vpiTask:
+	  case vpiNamedBegin:
 	  case vpiNamedFork:
 
 	    if (depth > 0) {
@@ -660,6 +668,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			vpiVariables,
 			/* Scope */
 			vpiFunction,
+			vpiGenScope,
 			vpiModule,
 			vpiNamedBegin,
 			vpiNamedFork,
@@ -689,7 +698,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			free(defname);
 			defname = NULL;
 		  }
-		  fstWriterSetScope(dump_file, type, name, defname);
+		  fstWriterSetScope(dump_file, stype, name, defname);
 		  free(defname);
 
 		  for (i=0; types[i]>0; i++) {
@@ -734,10 +743,11 @@ static int draw_scope(vpiHandle item, vpiHandle callh)
 
       switch (scope_type) {
 	  case vpiNamedBegin:  type = FST_ST_VCD_BEGIN;      break;
-	  case vpiTask:        type = FST_ST_VCD_TASK;       break;
 	  case vpiFunction:    type = FST_ST_VCD_FUNCTION;   break;
 	  case vpiNamedFork:   type = FST_ST_VCD_FORK;       break;
+	  case vpiGenScope:    type = FST_ST_VCD_GENERATE;   break;
 	  case vpiModule:      type = FST_ST_VCD_MODULE;     break;
+	  case vpiTask:        type = FST_ST_VCD_TASK;       break;
 	  default:
 	    type = FST_ST_VCD_MODULE;
 	    vpi_printf("FST Error: %s:%d: $dumpvars: Unsupported scope "

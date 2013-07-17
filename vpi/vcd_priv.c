@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -178,8 +178,9 @@ PLI_INT32 sys_dumpvars_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 #endif
           /* The module types. */
           case vpiModule:
-          case vpiTask:
+          case vpiGenScope:
           case vpiFunction:
+          case vpiTask:
           case vpiNamedBegin:
           case vpiNamedFork:
           /* The variable types. */

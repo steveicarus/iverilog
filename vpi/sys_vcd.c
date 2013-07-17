@@ -545,6 +545,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    break;
 
 	  case vpiNamedBegin: type = "begin"; break;
+	  case vpiGenScope:   type = "begin"; break;
 	  case vpiNamedFork:  type = "fork"; break;
 	  case vpiFunction:   type = "function"; break;
 	  case vpiModule:     type = "module"; break;
@@ -667,9 +668,10 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	    break;
 
 	  case vpiModule:
-	  case vpiNamedBegin:
-	  case vpiTask:
+	  case vpiGenScope:
 	  case vpiFunction:
+	  case vpiTask:
+	  case vpiNamedBegin:
 	  case vpiNamedFork:
 
 	    if (depth > 0) {
@@ -683,6 +685,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			vpiVariables,
 			/* Scope */
 			vpiFunction,
+			vpiGenScope,
 			vpiModule,
 			vpiNamedBegin,
 			vpiNamedFork,
@@ -733,6 +736,7 @@ static int draw_scope(vpiHandle item, vpiHandle callh)
 
       switch (vpi_get(vpiType, scope)) {
 	  case vpiNamedBegin:  type = "begin";      break;
+	  case vpiGenScope:    type = "begin";      break;
 	  case vpiTask:        type = "task";       break;
 	  case vpiFunction:    type = "function";   break;
 	  case vpiNamedFork:   type = "fork";       break;

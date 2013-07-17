@@ -307,6 +307,8 @@ static const char* vpi_type_values(PLI_INT32 code)
 	    return "vpiEnumTypespec";
 	  case vpiFunction:
 	    return "vpiFunction";
+	  case vpiGenScope:
+	    return "vpiGenScope";
 	  case vpiIntVar:
 	    return "vpiIntVar";
 	  case vpiIntegerVar:
