@@ -20,6 +20,7 @@
  */
 
 # include  <inttypes.h>
+# include  <stddef.h>
 
 /* Re the _CLASS define: clang++ wants this to be class to match the
  * definition, but clang (the C) compiler needs it to be a struct
@@ -1678,6 +1679,11 @@ extern unsigned    ivl_parameter_lineno(ivl_parameter_t net);
  *    If the scope has no children, this method will return 0 and
  *    otherwise do nothing.
  *
+ * ivl_scope_childs
+ * ivl_scope_child
+ *    This is an alternative way of getting at the childs scopes of a
+ *    given scope.
+ *
  * ivl_scope_def
  *    Task definition scopes carry a task definition, in the form of
  *    a statement. This method accesses that definition. The
@@ -1779,6 +1785,8 @@ extern ivl_statement_t ivl_scope_def(ivl_scope_t net);
 extern const char* ivl_scope_def_file(ivl_scope_t net);
 extern unsigned ivl_scope_def_lineno(ivl_scope_t net);
 
+extern size_t      ivl_scope_childs(ivl_scope_t net);
+extern ivl_scope_t ivl_scope_child(ivl_scope_t net, size_t idx);
 extern unsigned   ivl_scope_classes(ivl_scope_t net);
 extern ivl_type_t ivl_scope_class(ivl_scope_t net, unsigned idx);
 extern unsigned       ivl_scope_enumerates(ivl_scope_t net);

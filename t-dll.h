@@ -639,6 +639,9 @@ struct ivl_process_s {
 struct ivl_scope_s {
       ivl_scope_t parent;
       std::map<hname_t,ivl_scope_t> children;
+	// This is just like the children map above, but in vector
+	// form for convenient access.
+      std::vector<ivl_scope_t> child;
 
       perm_string name_;
       perm_string tname_;

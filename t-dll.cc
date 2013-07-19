@@ -2363,6 +2363,7 @@ void dll_target::scope(const NetScope*net)
 	    scop->parent = find_scope(des_, net->parent());
 	    assert(scop->parent);
 	    scop->parent->children[net->fullname()] = scop;
+	    scop->parent->child .push_back(scop);
 	    scop->nlog_ = 0;
 	    scop->log_ = 0;
 	    scop->nevent_ = 0;

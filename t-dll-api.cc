@@ -1919,6 +1919,18 @@ extern "C" int ivl_scope_children(ivl_scope_t net,
       return 0;
 }
 
+extern "C" size_t ivl_scope_childs(ivl_scope_t net)
+{
+      assert(net->child.size() == net->children.size());
+      return net->child.size();
+}
+
+extern "C" ivl_scope_t ivl_scope_child(ivl_scope_t net, size_t idx)
+{
+      assert(net && idx < net->child.size());
+      return net->child[idx];
+}
+
 extern "C" ivl_type_t ivl_scope_class(ivl_scope_t net, unsigned idx)
 {
       assert(idx < net->classes.size());
