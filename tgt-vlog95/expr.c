@@ -269,7 +269,7 @@ static expr_sign_t get_sign_type(ivl_expr_t expr, unsigned wid,
 
 	/* Check for a self-determined context. */
       if ((rtn == NO_SIGN) && (wid != expr_wid) &&
-          ! (is_full_prec && ((expr_wid < wid) || (type = IVL_EX_SIGNAL)))) {
+          ! (is_full_prec && ((expr_wid < wid) || (type == IVL_EX_SIGNAL)))) {
 	    if (ivl_expr_signed(expr)) rtn = NEED_SIGNED;
 	    else rtn = NEED_UNSIGNED;
       }
@@ -785,16 +785,16 @@ static void check_select_signed(ivl_expr_t sig_expr, ivl_expr_t sel_expr,
 // HERE:  These first two can be fixed if the compiler is enhanced to pass
 //	  the original sign information for the base expression.
 
-	/* If the element has a MSB that is greater than the LSB and the LSB
-	 * is greater than zero the compiler created a signed expression to
-	 * normalize the access. This normalization will be removed, but we
-	 * cannot currently determine if the base expression started out
-	 * signed or not so any extra $signed() operators will need to be
-	 * removed manually. */
-      if ((msb > lsb) && (lsb > 0) && (sign_type == NEED_SIGNED)) {
-	    fprintf(stderr, "%s: vlog95 sorry: The translation of a non-zero "
-	                    "based select with MSB > LSB is not smart enough "
-	                    "to remove extra $signed() operators.\n", msg);
+	/* If the element has a MSB that is greater than or equal to the LSB
+	 * and the LSB is greater than zero the compiler created a signed
+	 * expression to normalize the access. This normalization will be
+	 * removed, but we cannot currently determine if the base expression
+	 * started out signed or not so any extra $signed() operators will
+	 * need to be removed manually. */
+      if ((msb >= lsb) && (lsb > 0) && (sign_type == NEED_SIGNED)) {
+	    fprintf(stderr, "%s: vlog95 sorry: The translation of a select "
+	                    "with MSB >= LSB > 0 is not smart enough to remove "
+	                    "the extra $signed() operators.\n", msg);
 	    fprintf(stderr, "%*s               Any extra $signed() operators "
 	                    "will need to be removed manually.\n",
                             (int)strlen(msg), " ");
@@ -809,7 +809,7 @@ static void check_select_signed(ivl_expr_t sig_expr, ivl_expr_t sel_expr,
                  (sign_type == NEED_SIGNED)) {
 	    fprintf(stderr, "%s: vlog95 sorry: The translation of a select "
 	                    "with LSB > MSB is not smart enough to remove "
-	                    "extra $signed() operators.\n", msg);
+	                    "the extra $signed() operators.\n", msg);
 	    fprintf(stderr, "%*s               Any extra $signed() operators "
 	                    "will need to be removed manually.\n",
                             (int)strlen(msg), " ");
@@ -823,9 +823,13 @@ static void check_select_signed(ivl_expr_t sig_expr, ivl_expr_t sel_expr,
 	    int pmsb, plsb;
 	    ivl_parameter_t param = ivl_expr_parameter(sig_expr);
 	    assert(param);
-	    pmsb = ivl_parameter_msb(param);;
-	    plsb = ivl_parameter_lsb(param);;
-	    if (plsb > pmsb) {
+	    pmsb = ivl_parameter_msb(param);
+	    plsb = ivl_parameter_lsb(param);
+	    if ((pmsb >= plsb) && (plsb > 0)) {
+		  fprintf(stderr, "%s: vlog95 note: Translating a MSB >= "
+		                  "LSB > 0 parameter select requires the "
+		                  "-pallowsigned=1 flag.\n", msg);
+	    } else if (plsb > pmsb) {
 		  fprintf(stderr, "%s: vlog95 note: Translating a LSB > "
 		                  "MSB parameter select requires the "
 		                  "-pallowsigned=1 flag.\n", msg);
@@ -871,9 +875,9 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 		  }
 		    /* A bit select. */
 		  if (width == 1) {
+			check_select_signed(sig_expr, sel_expr, msb, lsb);
 			emit_select_name(scope, sig_expr);
 			fprintf(vlog_out, "[");
-			check_select_signed(sig_expr, sel_expr, msb, lsb);
 			emit_scaled_expr(scope, sel_expr, msb, lsb);
 			fprintf(vlog_out, "]");
 		  } else if (ivl_expr_type(sel_expr) == IVL_EX_NUMBER) {
@@ -887,6 +891,7 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 			emit_expr_packed(scope, sig_expr, sel_expr, width);
 		  } else {
 			  /* An indexed part select. */
+			check_select_signed(sig_expr, sel_expr, msb, lsb);
 			emit_expr_ips(scope, sig_expr, sel_expr, sel_type,
 			              width, msb, lsb, type == IVL_EX_NUMBER);
 		  }
