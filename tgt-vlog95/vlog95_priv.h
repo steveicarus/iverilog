@@ -51,6 +51,12 @@ extern int sim_precision;
 extern ivl_parameter_t emitting_param;
 
 /*
+ * The statement code needs to know what name to use for a translated
+ * function return statement (disable).
+ */
+extern const char *func_rtn_name;
+
+/*
  * Keep the current indent level.
  */
 extern unsigned indent;

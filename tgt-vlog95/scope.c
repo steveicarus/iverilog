@@ -22,6 +22,8 @@
 # include "vlog95_priv.h"
 # include "ivl_alloc.h"
 
+const char *func_rtn_name = 0;
+
 static char*get_time_const(int time_value)
 {
       switch (time_value) {
@@ -788,11 +790,116 @@ static void emit_specify(ivl_scope_t scope)
 }
 
 /*
+ * Look for a disable in the statement (function body) for this scope.
+ */
+static unsigned has_func_disable(ivl_scope_t scope, ivl_statement_t stmt)
+{
+      unsigned idx, count, rtn = 0;
+	/* If there is a statement then look to see if it is or has a
+	 * disable for this function scope. */
+      if (! stmt) return 0;
+      assert(ivl_scope_type(scope) == IVL_SCT_FUNCTION);
+      switch (ivl_statement_type(stmt)) {
+	  /* These are not allowed in a function. */
+	case IVL_ST_ASSIGN_NB:
+	case IVL_ST_DELAY:
+	case IVL_ST_DELAYX:
+	case IVL_ST_FORK:
+	case IVL_ST_FORK_JOIN_ANY:
+	case IVL_ST_FORK_JOIN_NONE:
+	case IVL_ST_UTASK:
+	case IVL_ST_WAIT:
+	    assert(0);
+	    break;
+	  /* These are allowed in a function and cannot have a disable. */
+	case IVL_ST_NOOP:
+	case IVL_ST_ALLOC:
+	case IVL_ST_ASSIGN:
+	case IVL_ST_CASSIGN:
+	case IVL_ST_DEASSIGN:
+	case IVL_ST_FORCE:
+	case IVL_ST_FREE:
+	case IVL_ST_RELEASE:
+	case IVL_ST_STASK:
+	case IVL_ST_TRIGGER:
+	    break;
+	  /* Look for a disable in each block statement. */
+	case IVL_ST_BLOCK:
+	    count = ivl_stmt_block_count(stmt);
+	    for (idx = 0; (idx < count) && ! rtn; idx += 1) {
+		  rtn |= has_func_disable(scope,
+		                          ivl_stmt_block_stmt(stmt, idx));
+	    }
+	    break;
+	  /* Look for a disable in each case branch. */
+	case IVL_ST_CASE:
+	case IVL_ST_CASER:
+	case IVL_ST_CASEX:
+	case IVL_ST_CASEZ:
+	    count = ivl_stmt_case_count(stmt);
+	    for (idx = 0; (idx < count) && ! rtn; idx += 1) {
+		  rtn |= has_func_disable(scope,
+		                          ivl_stmt_case_stmt(stmt, idx));
+	    }
+	    break;
+	  /* Either the true or false clause may have a disable. */
+	case IVL_ST_CONDIT:
+	    rtn = has_func_disable(scope, ivl_stmt_cond_true(stmt));
+	    if (! rtn) {
+		  rtn = has_func_disable(scope, ivl_stmt_cond_false(stmt));
+	    }
+	    break;
+	  /* These have a single sub-statement so look for a disable there. */
+	case IVL_ST_FOREVER:
+	case IVL_ST_REPEAT:
+	case IVL_ST_WHILE:
+	    rtn = has_func_disable(scope, ivl_stmt_sub_stmt(stmt));
+	    break;
+	  /* The function has a disable if the disable scope matches the
+	   * function scope. */
+	case IVL_ST_DISABLE:
+	    rtn = scope == ivl_stmt_call(stmt);
+	    break;
+	default:
+	    fprintf(stderr, "%s:%u: vlog95 error: Unknown statment type (%d) "
+	                    "in functin disable check.\n",
+	                    ivl_stmt_file(stmt),
+	                    ivl_stmt_lineno(stmt),
+	                    (int)ivl_statement_type(stmt));
+
+	    vlog_errors += 1;
+	    break;
+      }
+      return rtn;
+}
+
+/*
+ * This is the block name used when a SystemVerilog return is used in a
+ * function and the body does not already have an enclosing named block.
+ * This is needed since the actual function cannot be disabled.
+ */
+static char *get_func_return_name(ivl_scope_t scope)
+{
+      const char *name_func = ivl_scope_basename(scope);
+      const char *name_head = "_ivl_";
+      const char *name_tail = "_return";
+      char *name_return;
+      name_return = (char *)malloc(strlen(name_head) +
+                                   strlen(name_func) +
+                                   strlen(name_tail) + 1);
+      name_return[0] = 0;
+      (void) strcpy(name_return, name_head);
+      (void) strcat(name_return, name_func);
+      (void) strcat(name_return, name_tail);
+      return name_return;
+}
+
+/*
  * This search method may be slow for a large structural design with a
  * large number of gate types. That's not what this converter was built
  * for so this is probably OK. If this becomes an issue then we need a
  * better method/data structure.
-*/
+ */
 static const char **scopes_emitted = 0;
 static unsigned num_scopes_emitted = 0;
 
@@ -968,9 +1075,8 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
       emit_scope_variables(scope);
 
       if (sc_type == IVL_SCT_MODULE) {
-	    unsigned count;
+	    unsigned count = ivl_scope_lpms(scope);
 	      /* Output the LPM devices. */
-	    count = ivl_scope_lpms(scope);
 	    for (idx = 0; idx < count; idx += 1) {
 		  emit_lpm(scope, ivl_scope_lpm(scope, idx));
 	    }
@@ -995,10 +1101,53 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	    ivl_design_process(design, (ivl_process_f)find_process, scope);
       }
 
-	/* Output the function/task body. */
-      if (sc_type == IVL_SCT_TASK || sc_type == IVL_SCT_FUNCTION) {
-	    emit_stmt(scope, ivl_scope_def(scope));
+	/* Output the function body. */
+      if (sc_type == IVL_SCT_FUNCTION) {
+	    ivl_statement_t body = ivl_scope_def(scope);
+	    assert(func_rtn_name == 0);
+	      /* If the function disables itself then that is really a
+	       * SystemVerilog return statement in disguise. A toplevel
+	       * named begin is needed to make this work in standard Verilog
+	       * so add one if it is needed. */
+	    if (ivl_statement_type(body) == IVL_ST_BLOCK) {
+		  ivl_scope_t blk_scope = ivl_stmt_block_scope(body);
+		  if (blk_scope) {
+			func_rtn_name = ivl_scope_basename(blk_scope);
+			emit_stmt(scope, body);
+			func_rtn_name = 0;
+		  } else if (has_func_disable(scope, body)) {
+			char *name_return = get_func_return_name(scope);
+			unsigned count = ivl_stmt_block_count(body);
+			fprintf(vlog_out, "%*cbegin: %s\n", indent, ' ',
+			                  name_return);
+			indent += indent_incr;
+			func_rtn_name = name_return;
+			for (idx = 0; idx < count; idx += 1) {
+			      emit_stmt(scope, ivl_stmt_block_stmt(body, idx));
+			}
+			func_rtn_name = 0;
+			indent -= indent_incr;
+			fprintf(vlog_out, "%*cend /* %s */\n", indent, ' ',
+			                  name_return);
+			free(name_return);
+		  } else emit_stmt(scope, body);
+	      /* A non-block statment may need a named block for a return. */
+	    } else if (has_func_disable(scope, body)) {
+		  char *name_return = get_func_return_name(scope);
+		  fprintf(vlog_out, "%*cbegin: %s\n", indent, ' ',
+		                     name_return);
+		  indent += indent_incr;
+		  func_rtn_name = name_return;
+		  emit_stmt(scope, body);
+		  func_rtn_name = 0;
+		  indent -= indent_incr;
+		  fprintf(vlog_out, "%*cend /* %s */\n", indent, ' ',
+		                    name_return);
+		  free(name_return);
+	    } else emit_stmt(scope, body);
       }
+	/* Output the task body. */
+      if (sc_type == IVL_SCT_TASK) emit_stmt(scope, ivl_scope_def(scope));
 
 	/* Print any sub-scopes. */
       ivl_scope_children(scope, (ivl_scope_f*) emit_scope, scope);

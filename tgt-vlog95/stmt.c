@@ -1051,11 +1051,28 @@ static void emit_stmt_delayx(ivl_scope_t scope, ivl_statement_t stmt)
       emit_stmt(scope, ivl_stmt_sub_stmt(stmt));
 }
 
+static unsigned is_func_disable(ivl_scope_t scope, ivl_scope_t disable_scope)
+{
+      assert(func_rtn_name);
+	/* Find the enclosing function scope. */
+      while (ivl_scope_type(scope) != IVL_SCT_FUNCTION) {
+	    scope = ivl_scope_parent(scope);
+	    assert(scope);
+      }
+	/* If the function scope and the scope to be disabled match then this
+	 * is a function disable (SystemVerilog return). */
+      return scope == disable_scope;
+}
+
 static void emit_stmt_disable(ivl_scope_t scope, ivl_statement_t stmt)
 {
       ivl_scope_t disable_scope = ivl_stmt_call(stmt);
       fprintf(vlog_out, "%*cdisable ", get_indent(), ' ');
-      emit_scope_path(scope, disable_scope);
+	/* If this disable is in a function and it is disabling the function
+	 * then emit the appropriate function return name. */
+      if (func_rtn_name && is_func_disable(scope, disable_scope)) {
+	    fprintf(vlog_out, "%s", func_rtn_name);
+      } else emit_scope_path(scope, disable_scope);
       fprintf(vlog_out, ";");
       emit_stmt_file_line(stmt);
       fprintf(vlog_out, "\n");
