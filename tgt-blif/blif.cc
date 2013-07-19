@@ -19,7 +19,7 @@
 
 # include  "version_base.h"
 # include  "version_tag.h"
-# include  "config.h"
+# include  "priv.h"
 # include  "ivl_target.h"
 # include  "nex_data.h"
 # include  <vector>
@@ -51,11 +51,20 @@ static const char*version_string =
 "  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.\n"
 ;
 
-static int emit_blif(const char*blif_path, ivl_scope_t model);
+int blif_errors = 0;
+
+static void emit_blif(const char*blif_path, ivl_design_t des, ivl_scope_t model);
+
+static int process_scan_fun(ivl_process_t net, void*raw)
+{
+      fprintf(stderr, "%s:%u: sorry: BLIF: Processes not supported yet.\n",
+	      ivl_process_file(net), ivl_process_lineno(net));
+      blif_errors += 1;
+      return 0;
+}
 
 int target_design(ivl_design_t des)
 {
-      int rc = 0;
       const char*blif_path = ivl_design_flag(des, "-o");
 
 	// Locate the root scope for the design. Note that the BLIF
@@ -75,11 +84,14 @@ int target_design(ivl_design_t des)
 	    return 1;
       }
 
+	// Detect processes and dispatch them.
+      ivl_design_process(des, &process_scan_fun, 0);
+
 	// Emit to the destination file.
       assert(blif_path);
-      rc += emit_blif(blif_path, roots[0]);
+      emit_blif(blif_path, des, roots[0]);
 
-      return rc;
+      return blif_errors;
 }
 
 
@@ -122,57 +134,33 @@ static void print_signal_bits(FILE*fd, ivl_signal_t sig)
       }
 }
 
-static void print_logic_gate(FILE*fd, ivl_net_logic_t net)
+
+static void emit_scope(FILE*fd, ivl_scope_t scope)
 {
-#if 0
-      fprintf(fd, "# LOGIC: name=%s, type=%d, pins=%u, width=%u\n",
-	      ivl_logic_basename(net), ivl_logic_type(net),
-	      ivl_logic_pins(net), ivl_logic_width(net));
-#endif
-
-      fprintf(fd, ".names");
-      ivl_nexus_t nex;
-      blif_nex_data_t*ned;
-      for (unsigned idx = 1 ; idx < ivl_logic_pins(net) ; idx += 1) {
-	    nex = ivl_logic_pin(net,idx);
-	    ned = blif_nex_data_t::get_nex_data(nex);
- 	    fprintf(fd, " %s", ned->get_name());
+      for (unsigned idx = 0 ; idx < ivl_scope_logs(scope) ; idx += 1) {
+	    ivl_net_logic_t net = ivl_scope_log(scope, idx);
+	    assert(net);
+	    blif_errors += print_logic_gate(fd, net);
       }
-      nex = ivl_logic_pin(net,0);
-      ned = blif_nex_data_t::get_nex_data(nex);
-      fprintf(fd, " %s", ned->get_name());
-      fprintf(fd, "\n");
 
-      switch (ivl_logic_type(net)) {
-	  case IVL_LO_AND:
-	    for (unsigned idx = 1 ; idx < ivl_logic_pins(net) ; idx += 1)
-		  fprintf(fd, "1");
-	    fprintf(fd, " 1\n");
-	    break;
-	  case IVL_LO_OR:
-	    assert(ivl_logic_pins(net)==3);
-	    fprintf(fd, "1- 1\n");
-	    fprintf(fd, "-1 1\n");
-	    break;
-	  case IVL_LO_XOR:
-	    assert(ivl_logic_pins(net)==3);
-	    fprintf(fd, "10 1\n");
-	    fprintf(fd, "01 1\n");
-	    break;
-	  default:
-	    fprintf(fd, "# ERROR: Logic type not handled\n");
-	    break;
+      for (unsigned idx = 0 ; idx < ivl_scope_lpms(scope) ; idx += 1) {
+	    ivl_lpm_t net = ivl_scope_lpm(scope, idx);
+	    blif_errors += print_lpm(fd, net);
+      }
+
+      for (size_t idx = 0 ; idx < ivl_scope_childs(scope) ; idx += 1) {
+	    ivl_scope_t child = ivl_scope_child(scope, idx);
+	    emit_scope(fd, child);
       }
 }
 
-static int emit_blif(const char*blif_path, ivl_scope_t model)
+static void emit_blif(const char*blif_path, ivl_design_t des, ivl_scope_t model)
 {
-      int rc = 0;
-
       FILE*fd = fopen(blif_path, "wt");
       if (fd == 0) {
 	    perror(blif_path);
-	    return 1;
+	    blif_errors += 1;
+	    return;
       }
 
       fprintf(fd, ".model %s\n", ivl_scope_basename(model));
@@ -197,7 +185,7 @@ static int emit_blif(const char*blif_path, ivl_scope_t model)
 		  fprintf(stderr, "BLIF: error: "
 			  "Model port %s is bi-directional.\n",
 			  ivl_signal_basename(prt));
-		  rc += 1;
+		  blif_errors += 1;
 		  ports_in.push_back(prt);
 		  ports_out.push_back(prt);
 		  break;
@@ -221,14 +209,22 @@ static int emit_blif(const char*blif_path, ivl_scope_t model)
 	    fprintf(fd, "\n");
       }
 
-      for (unsigned idx = 0 ; idx < ivl_scope_logs(model) ; idx += 1) {
-	    ivl_net_logic_t net = ivl_scope_log(model, idx);
-	    assert(net);
-	    print_logic_gate(fd, net);
-      }
+      emit_scope(fd, model);
+
+      emit_constants(fd, des, model);
 
       fprintf(fd, ".end\n");
       fclose(fd);
+}
 
-      return rc;
+bool scope_is_in_model(ivl_scope_t model, ivl_scope_t scope)
+{
+      while (scope) {
+	    if (scope==model)
+		  return true;
+
+	    scope = ivl_scope_parent(scope);
+      }
+
+      return false;
 }

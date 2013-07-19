@@ -20,6 +20,7 @@
  */
 
 # include  "ivl_target.h"
+# include  <cstddef>
 
 /*
  * The ivl_target.h API allows for binding data to a nexus. This class
@@ -41,14 +42,22 @@ class blif_nex_data_t {
 	// the same nexus.
       static blif_nex_data_t* get_nex_data(ivl_nexus_t nex);
 
+	// In certain situations, we know a priori what we want the
+	// nexus name to be. In those cases, the context can use this
+	// method to set the name. Note that this must be called
+	// before the name is otherwise queried.
       void set_name(const char*);
 
 	// Get the symbolic name chosen for this nexus.
       const char*get_name(void);
 
+	// Get the vector width for this nexus.
+      size_t get_width(void);
+
     public:
       ivl_nexus_t nex_;
       char*name_;
+      size_t width_;
 };
 
 #endif
