@@ -55,15 +55,9 @@ static int print_concat(FILE*fd, ivl_lpm_t net)
 		  ned_d = blif_nex_data_t::get_nex_data(nex_d);
 	    }
 
-	    char dsub[8];
-	    if (ned_d->get_width() > 1)
-		  snprintf(dsub, sizeof dsub, "[%u]", dpos);
-	    else
-		  dsub[0] = 0;
-
-	    fprintf(fd, ".names %s%s %s[%u]\n1 1\n",
-		    ned_d->get_name(), dsub,
-		    ned_q->get_name(), wid);
+	    fprintf(fd, ".names %s%s %s%s\n1 1\n",
+		    ned_d->get_name(), ned_d->get_name_index(dpos),
+		    ned_q->get_name(), ned_q->get_name_index(wid));
 	    dpos += 1;
       }
 
@@ -93,7 +87,9 @@ static int print_part_vp(FILE*fd, ivl_lpm_t net)
 
       assert(bit_sel < ned_in->get_width());
 
-      fprintf(fd, ".names %s[%u] %s\n1 1\n", ned_in->get_name(), bit_sel, ned_out->get_name());
+      fprintf(fd, ".names %s%s %s%s\n1 1\n",
+	      ned_in->get_name(), ned_in->get_name_index(bit_sel),
+	      ned_out->get_name(), ned_out->get_name_index(0));
 
       return rc;
 }

@@ -28,31 +28,19 @@ static void print_constant(FILE*fd, ivl_net_const_t net)
       ivl_nexus_t nex = ivl_const_nex(net);
       blif_nex_data_t*ned = blif_nex_data_t::get_nex_data(nex);
 
-      if (wid == 1) {
-	    switch (val[0]) {
-		case '1':
-		  fprintf(fd, ".names %s # const 1\n1\n", ned->get_name());
-		  break;
-		case '0':
-		  fprintf(fd, ".names %s # const 0\n", ned->get_name());
-		  break;
-		default:
-		  fprintf(fd, ".names %s # const %c\n", ned->get_name(), val[0]);
-		  break;
-	    }
-	    return;
-      }
-
       for (unsigned idx = 0 ; idx < wid ; idx += 1) {
 	    switch (val[idx]) {
 		case '1':
-		  fprintf(fd, ".names %s[%u]\n # const 1\n", ned->get_name(), idx);
+		  fprintf(fd, ".names %s%s # const 1\n1\n",
+			  ned->get_name(), ned->get_name_index(idx));
 		  break;
 		case '0':
-		  fprintf(fd, ".names %s[%u]\n # const 0", ned->get_name(), idx);
+		  fprintf(fd, ".names %s%s # const 0\n",
+			  ned->get_name(), ned->get_name_index(idx));
 		  break;
 		default:
-		  fprintf(fd, ".names %s[%u]\n # const %c", ned->get_name(), idx, val[idx]);
+		  fprintf(fd, ".names %s%s # const %c\n",
+			  ned->get_name(), ned->get_name_index(idx), val[idx]);
 		  break;
 	    }
       }

@@ -20,6 +20,7 @@
  */
 
 # include  "ivl_target.h"
+# include  <vector>
 # include  <cstddef>
 
 /*
@@ -44,12 +45,19 @@ class blif_nex_data_t {
 
 	// In certain situations, we know a priori what we want the
 	// nexus name to be. In those cases, the context can use this
-	// method to set the name. Note that this must be called
-	// before the name is otherwise queried.
-      void set_name(const char*);
+	// method to set the name (by the signal from width the name
+	// is derived). Note that this must be called before the name
+	// is otherwise queried.
+      void set_name(ivl_signal_t sig);
 
 	// Get the symbolic name chosen for this nexus.
       const char*get_name(void);
+
+	// Map a canonical bit index (0 : width-1) to the bit number
+	// as understood by the signal. This is normally a null
+	// mapping, but sometimes the signal name used for the mapping
+	// has a non-canonical bit numbering.
+      const char*get_name_index(unsigned bit);
 
 	// Get the vector width for this nexus.
       size_t get_width(void);
@@ -57,7 +65,10 @@ class blif_nex_data_t {
     public:
       ivl_nexus_t nex_;
       char*name_;
-      size_t width_;
+      std::vector<char*> name_index_;
+
+    private:
+      void make_name_from_sig_(ivl_signal_t sig);
 };
 
 #endif

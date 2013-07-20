@@ -112,25 +112,10 @@ static void print_signal_bits(FILE*fd, ivl_signal_t sig)
 {
       ivl_nexus_t nex = ivl_signal_nex(sig, 0);
       blif_nex_data_t* ned = blif_nex_data_t::get_nex_data(nex);
-      ned->set_name(ivl_signal_basename(sig));
+      ned->set_name(sig);
 
-      if (ivl_signal_packed_dimensions(sig) == 0) {
-	    fprintf(fd, " %s", ivl_signal_basename(sig));
-	    return;
-      }
-
-      assert(ivl_signal_packed_dimensions(sig) == 1);
-
-      int msb = ivl_signal_packed_msb(sig,0);
-      int lsb = ivl_signal_packed_lsb(sig,0);
-      if (msb < lsb) {
-	    int tmp = msb;
-	    msb = lsb;
-	    lsb = tmp;
-      }
-
-      for (int idx = msb ; idx >= lsb ; idx -= 1) {
-	    fprintf(fd, " %s[%d]", ivl_signal_basename(sig), idx);
+      for (unsigned idx = 0 ; idx < ned->get_width() ; idx += 1) {
+	    fprintf(fd, " %s%s", ned->get_name(), ned->get_name_index(idx));
       }
 }
 

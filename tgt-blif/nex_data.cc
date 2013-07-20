@@ -27,13 +27,16 @@
 using namespace std;
 
 inline blif_nex_data_t::blif_nex_data_t(ivl_nexus_t nex)
-: nex_(nex), name_(0), width_(0)
+: nex_(nex), name_(0)
 {
 }
 
 blif_nex_data_t::~blif_nex_data_t()
 {
       if (name_) free(name_);
+
+      for (size_t idx = 0 ; idx < name_index_.size() ; idx += 1)
+	    if (name_index_[idx]) free(name_index_[idx]);
 }
 
 blif_nex_data_t* blif_nex_data_t::get_nex_data(ivl_nexus_t nex)
@@ -46,10 +49,43 @@ blif_nex_data_t* blif_nex_data_t::get_nex_data(ivl_nexus_t nex)
       return data;
 }
 
-void blif_nex_data_t::set_name(const char*txt)
+void blif_nex_data_t::make_name_from_sig_(ivl_signal_t sig)
 {
       assert(name_ == 0);
-      name_ = strdup(txt);
+
+      string tmp = ivl_signal_basename(sig);
+      for (ivl_scope_t sscope = ivl_signal_scope(sig) ; ivl_scope_parent(sscope) ; sscope = ivl_scope_parent(sscope)) {
+	    tmp = ivl_scope_basename(sscope) + string("/") + tmp;
+      }
+
+      name_ = strdup(tmp.c_str());
+
+      assert(name_index_.size()==0);
+      if (ivl_signal_width(sig) > 1) {
+	    name_index_.resize(ivl_signal_width(sig));
+
+	    assert(ivl_signal_packed_dimensions(sig) == 1);
+	    int msb = ivl_signal_packed_msb(sig,0);
+	    int lsb = ivl_signal_packed_lsb(sig,0);
+	    int dir = (lsb <= msb)? 1 : -1;
+
+	    int val = lsb;
+	    for (unsigned idx = 0 ; idx < ivl_signal_width(sig) ; idx += 1) {
+
+		  char buf[64];
+		  snprintf(buf, sizeof buf, "[%d]", val);
+		  name_index_[idx] = strdup(buf);
+		  val += dir;
+	    }
+      }
+}
+
+void blif_nex_data_t::set_name(ivl_signal_t sig)
+{
+      assert(name_ == 0);
+      assert(ivl_signal_nex(sig,0) == nex_);
+
+      make_name_from_sig_(sig);
 }
 
 const char* blif_nex_data_t::get_name(void)
@@ -62,14 +98,7 @@ const char* blif_nex_data_t::get_name(void)
 	    if (sig == 0)
 		  continue;
 
-	    string tmp = ivl_signal_basename(sig);
-	    for (ivl_scope_t sscope = ivl_signal_scope(sig) ; ivl_scope_parent(sscope) ; sscope = ivl_scope_parent(sscope)) {
-		  tmp = ivl_scope_basename(sscope) + string("/") + tmp;
-	    }
-
-	    name_ = strdup(tmp.c_str());
-	    width_ = ivl_signal_width(sig);
-	    assert(width_ > 0);
+	    make_name_from_sig_(sig);
 	    break;
       }
 
@@ -83,24 +112,33 @@ const char* blif_nex_data_t::get_name(void)
       return name_;
 }
 
+const char* blif_nex_data_t::get_name_index(unsigned bit)
+{
+      if (name_index_.size()==0)
+	    return "";
+
+      assert(bit < name_index_.size());
+      if (name_index_[bit] != 0)
+	    return name_index_[bit];
+
+	// FIXME: For now, just use the canonical address in
+	// brackets. This is WRONG!
+      char tmp[64];
+      snprintf(tmp, sizeof tmp, "[%u]", bit);
+      name_index_[bit] = strdup(tmp);
+
+      return name_index_[bit];
+}
+
 /*
  * Get the width from any signal that is attached to the nexus.
  */
 size_t blif_nex_data_t::get_width(void)
 {
-      if (width_ > 0)
-	    return width_;
+	// Special case: If the nexus width is 1 bit, then there is no
+	// need for index_name maps, so the name_index_ will be empty.
+      if (name_index_.size()==0)
+	    return 1;
 
-      for (unsigned idx = 0 ; idx < ivl_nexus_ptrs(nex_) ; idx += 1) {
-	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex_, idx);
-	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
-	    if (sig == 0)
-		  continue;
-
-	    width_ = ivl_signal_width(sig);
-	    break;
-      }
-
-      assert(width_ > 0);
-      return width_;
+      return name_index_.size();
 }
