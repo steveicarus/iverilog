@@ -53,6 +53,7 @@ all: dep pcb.tgt
 check: all
 
 clean:
+	rm -f fp.cc fp.h fp.output fp_lex.cc
 	rm -rf *.o dep pcb.tgt
 
 distclean: clean
