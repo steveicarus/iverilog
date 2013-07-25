@@ -87,9 +87,10 @@ static int print_part_vp(FILE*fd, ivl_lpm_t net)
 
       assert(bit_sel < ned_in->get_width());
 
-      fprintf(fd, ".names %s%s %s%s\n1 1\n",
+      fprintf(fd, ".names %s%s %s%s # %s:%u\n1 1\n",
 	      ned_in->get_name(), ned_in->get_name_index(bit_sel),
-	      ned_out->get_name(), ned_out->get_name_index(0));
+	      ned_out->get_name(), ned_out->get_name_index(0),
+	      ivl_lpm_file(net), ivl_lpm_lineno(net));
 
       return rc;
 }

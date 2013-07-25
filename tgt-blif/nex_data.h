@@ -68,6 +68,7 @@ class blif_nex_data_t {
       std::vector<char*> name_index_;
 
     private:
+      void select_name_(void);
       void make_name_from_sig_(ivl_signal_t sig);
 };
 

@@ -80,18 +80,13 @@ void blif_nex_data_t::make_name_from_sig_(ivl_signal_t sig)
       }
 }
 
-void blif_nex_data_t::set_name(ivl_signal_t sig)
+/*
+ * Given that there is not an explicit binding to a signal for naming,
+ * search for a signal and use that signal to derive the name of this
+ * nexus.
+ */
+void blif_nex_data_t::select_name_(void)
 {
-      assert(name_ == 0);
-      assert(ivl_signal_nex(sig,0) == nex_);
-
-      make_name_from_sig_(sig);
-}
-
-const char* blif_nex_data_t::get_name(void)
-{
-      if (name_) return name_;
-
       for (unsigned idx = 0 ; idx < ivl_nexus_ptrs(nex_) ; idx += 1) {
 	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex_, idx);
 	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
@@ -102,31 +97,34 @@ const char* blif_nex_data_t::get_name(void)
 	    break;
       }
 
-      if (name_ == 0) {
-	    char buf[64];
-	    snprintf(buf, sizeof buf, "@%p", nex_);
-	    name_ = strdup(buf);
-      }
-
       assert(name_);
+}
+
+void blif_nex_data_t::set_name(ivl_signal_t sig)
+{
+      assert(name_ == 0);
+      assert(ivl_signal_nex(sig,0) == nex_);
+
+      make_name_from_sig_(sig);
+}
+
+const char* blif_nex_data_t::get_name(void)
+{
+      if (name_==0) select_name_();
       return name_;
 }
 
 const char* blif_nex_data_t::get_name_index(unsigned bit)
 {
-      if (name_index_.size()==0)
+      if (name_==0) select_name_();
+
+      if (name_index_.size()==0) {
+	    assert(bit == 0);
 	    return "";
+      }
 
       assert(bit < name_index_.size());
-      if (name_index_[bit] != 0)
-	    return name_index_[bit];
-
-	// FIXME: For now, just use the canonical address in
-	// brackets. This is WRONG!
-      char tmp[64];
-      snprintf(tmp, sizeof tmp, "[%u]", bit);
-      name_index_[bit] = strdup(tmp);
-
+      assert(name_index_[bit]);
       return name_index_[bit];
 }
 
