@@ -933,9 +933,10 @@ static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 // HERE: For a user function should the argument width be used here.
 	    emit_expr(scope, ivl_expr_parm(expr, count), 0, 1, 0, 0);
 	    fprintf(vlog_out, ")");
-	/* User functions without arguments are not supported. */
+	/* User functions without arguments are not supported so a dummy
+	 * argument is added both here and in the definition. */
       } else if (ivl_expr_type(expr) == IVL_EX_UFUNC) {
-	    fprintf(vlog_out, "()");
+	    fprintf(vlog_out, "(1'bx)");
       }
 }
 

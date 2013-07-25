@@ -565,7 +565,68 @@ static void emit_task_func_port_defs(ivl_scope_t scope)
 	    ivl_signal_t port = ivl_scope_port(scope, idx);
 	    emit_port(port);
       }
+	/* If the start and count are both 1 then this is a SystemVerilog
+	 * function that does not have an argument so add a dummy one. */
+      if ((start == 1) && (count == 1)) {
+	    fprintf(vlog_out, "%*cinput _vlog95_dummy;", indent, ' ');
+	    if (emit_file_line) fprintf(vlog_out, " /* no file/line */");
+	    fprintf(vlog_out, "\n");
+      }
       if (count) fprintf(vlog_out, "\n");
+}
+
+/*
+ * Recursively look for the named block in the given statement.
+ */
+static int has_named_block(ivl_scope_t scope, ivl_statement_t stmt)
+{
+      unsigned idx, count;
+      int rtn = 0;
+      if (! stmt) return 0;
+      switch (ivl_statement_type(stmt)) {
+	  /* Block or fork items can contain a named block. */
+	case IVL_ST_BLOCK:
+	case IVL_ST_FORK:
+	case IVL_ST_FORK_JOIN_ANY:
+	case IVL_ST_FORK_JOIN_NONE:
+	    if (ivl_stmt_block_scope(stmt) == scope) return 1;
+	    count = ivl_stmt_block_count(stmt);
+	    for (idx = 0; (idx < count) && ! rtn ; idx += 1) {
+		  rtn |= has_named_block(scope,
+		                         ivl_stmt_block_stmt(stmt, idx));
+	    }
+	    break;
+	  /* Case items can contain a named block. */
+	case IVL_ST_CASE:
+	case IVL_ST_CASER:
+	case IVL_ST_CASEX:
+	case IVL_ST_CASEZ:
+	    count = ivl_stmt_case_count(stmt);
+	    for (idx = 0; (idx < count) && ! rtn; idx += 1) {
+		  rtn |= has_named_block(scope,
+		                         ivl_stmt_case_stmt(stmt, idx));
+	    }
+	    break;
+	  /* Either the true or false clause may have a named block. */
+	case IVL_ST_CONDIT:
+	    rtn = has_named_block(scope, ivl_stmt_cond_true(stmt));
+	    if (! rtn) {
+		  rtn = has_named_block(scope, ivl_stmt_cond_false(stmt));
+	    }
+	    break;
+	  /* The looping statements may have a named block. */
+	case IVL_ST_FOREVER:
+	case IVL_ST_REPEAT:
+	case IVL_ST_WHILE:
+	  /* The delay and wait statements may have a named block. */
+	case IVL_ST_DELAY:
+	case IVL_ST_DELAYX:
+	case IVL_ST_WAIT:
+	    rtn = has_named_block(scope, ivl_stmt_sub_stmt(stmt));
+	    break;
+	default: /* The rest cannot have a named block. */ ;
+      }
+      return rtn;
 }
 
 /*
@@ -575,14 +636,7 @@ static void emit_task_func_port_defs(ivl_scope_t scope)
  */
 static int no_stmts_in_process(ivl_process_t proc, ivl_scope_t scope)
 {
-      ivl_statement_t stmt = ivl_process_stmt(proc);
-      switch (ivl_statement_type(stmt)) {
-	case IVL_ST_BLOCK:
-	case IVL_ST_FORK:
-	    if (ivl_stmt_block_scope(stmt) == scope) return 1;
-	default: /* Do nothing. */ ;
-      }
-      return 0;
+      return has_named_block(scope, ivl_process_stmt(proc));
 }
 
 /*
@@ -985,9 +1039,9 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 	case IVL_SCT_FUNCTION:
 	    assert(indent != 0);
 	    fprintf(vlog_out, "\n%*cfunction", indent, ' ');
-	    if (ivl_scope_ports(scope) < 2) {
+	    if (ivl_scope_ports(scope) < 1) {
 		  fprintf(stderr, "%s:%u: vlog95 error: Function (%s) has "
-		                  "no arguments (or return value).\n",
+		                  "no return value.\n",
 		                  ivl_scope_file(scope),
 		                  ivl_scope_lineno(scope),
 		                  ivl_scope_tname(scope));
