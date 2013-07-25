@@ -684,7 +684,10 @@ void AContrib::dump(ostream&out, unsigned ind) const
 
 void PAssign::dump(ostream&out, unsigned ind) const
 {
-      out << setw(ind) << "" << *lval() << " = ";
+      out << setw(ind) << "";
+      if (lval()) out << *lval();
+      else out << "<dummy>";
+      out << " = ";
       if (delay_) out << "#" << *delay_ << " ";
       if (count_) out << "repeat(" << *count_ << ") ";
       if (event_) out << *event_ << " ";

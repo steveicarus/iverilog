@@ -2212,7 +2212,23 @@ NetProc* Statement::elaborate(Design*des, NetScope*) const
 
 NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
 {
-      assert(lval_);
+	// A function called as a task does not have an L-value.
+      if (! lval_) {
+	      // The R-value must be a simple function call.
+	    assert (dynamic_cast<PECallFunction*>(rval_));
+	    PExpr::width_mode_t mode = PExpr::SIZED;
+	    rval_->test_width(des, scope, mode);
+	      // Create a L-value that matches the function return type.
+	    netvector_t*tmp_vec = new netvector_t(rval_->expr_type(),
+	                                          rval_->expr_width()-1, 0,
+	                                          rval_->has_sign());
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::REG, tmp_vec);
+	    tmp->set_file(rval_->get_file());
+	    tmp->set_lineno(rval_->get_lineno());
+	    NetAssign_*lv = new NetAssign_(tmp);
+	    return lv;
+      }
       return lval_->elaborate_lval(des, scope, false, false);
 }
 
@@ -3344,11 +3360,18 @@ NetProc* PCallTask::elaborate_function_(Design*des, NetScope*scope) const
 	// call with a missing return assignment.
       if (! func) return 0;
 
-// HERE: Should this be an assign to a dummy variable or something else?
-      cerr << get_fileline() << ": sorry: Icarus cannot currently call "
-              "functions like a tasks." << endl;
-      des->errors += 1;
-      return 0;
+	// Generate a function call version of this task call.
+      PExpr*rval = new PECallFunction(package_, path_, parms_);
+      rval->set_file(get_file());
+      rval->set_lineno(get_lineno());
+	// Generate an assign to nothing.
+      PAssign*tmp = new PAssign(0, rval);
+      tmp->set_file(get_file());
+      tmp->set_lineno(get_lineno());
+      cerr << get_fileline() << ": warning: User function '"
+           << peek_tail_name(path_) << "' is being called as a task." << endl;
+	// Elaborate the assignment to a dummy variable.
+      return tmp->elaborate(des, scope);
 }
 
 NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,

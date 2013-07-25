@@ -178,6 +178,11 @@ PECallFunction::PECallFunction(const pform_name_t&n, const vector<PExpr *> &parm
 {
 }
 
+PECallFunction::PECallFunction(PPackage*pkg, const pform_name_t&n, const vector<PExpr *> &parms)
+: package_(pkg), path_(n), parms_(parms)
+{
+}
+
 static pform_name_t pn_from_ps(perm_string n)
 {
       name_component_t tmp_name (n);

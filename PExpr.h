@@ -814,6 +814,9 @@ class PECallFunction : public PExpr {
       explicit PECallFunction(PPackage*pkg, perm_string n, const std::vector<PExpr *> &parms);
       explicit PECallFunction(PPackage*pkg, perm_string n, const std::list<PExpr *> &parms);
 
+	// Used to convert a user function called as a task
+      explicit PECallFunction(PPackage*pkg, const pform_name_t&n, const std::vector<PExpr *> &parms);
+
 	// Call of system function (name is not hierarchical)
       explicit PECallFunction(perm_string n, const vector<PExpr *> &parms);
       explicit PECallFunction(perm_string n);
