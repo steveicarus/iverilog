@@ -59,8 +59,34 @@ int print_logic_gate(FILE*fd, ivl_net_logic_t net)
 	    fprintf(fd, "10 1\n");
 	    fprintf(fd, "01 1\n");
 	    break;
+
+	  case IVL_LO_NAND:
+	    assert(ivl_logic_pins(net)==3);
+	    fprintf(fd, "0- 1\n");
+	    fprintf(fd, "-0 1\n");
+	    break;
+	  case IVL_LO_NOR:
+	    for (unsigned idx = 1 ; idx < ivl_logic_pins(net) ; idx += 1)
+		  fprintf(fd, "0");
+	    fprintf(fd, " 1\n");
+	    break;
+	  case IVL_LO_XNOR:
+	    assert(ivl_logic_pins(net)==3);
+	    fprintf(fd, "00 1\n");
+	    fprintf(fd, "11 1\n");
+	    break;
+
+	  case IVL_LO_BUF:
+	    assert(ivl_logic_pins(net)==2);
+	    fprintf(fd, "1 1\n");
+	    break;
+	  case IVL_LO_NOT:
+	    assert(ivl_logic_pins(net)==2);
+	    fprintf(fd, "0 1\n");
+	    break;
+
 	  default:
-	    fprintf(fd, "# ERROR: Logic type not handled\n");
+	    fprintf(fd, "# ERROR: Logic type %d not handled\n", ivl_logic_type(net));
 	    rc += 1;
 	    break;
       }
