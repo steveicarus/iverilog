@@ -68,6 +68,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) %{_libdir}/ivl%{suff}/ivl
 %attr(-,root,root) %{_libdir}/ivl%{suff}/ivlpp
 %attr(-,root,root) %{_libdir}/ivl%{suff}/vhdlpp
+%attr(-,root,root) %{_libdir}/ivl%{suff}/blif.txt
+%attr(-,root,root) %{_libdir}/ivl%{suff}/blif.conf
+%attr(-,root,root) %{_libdir}/ivl%{suff}/blif-s.conf
 %attr(-,root,root) %{_libdir}/ivl%{suff}/null.tgt
 %attr(-,root,root) %{_libdir}/ivl%{suff}/null.conf
 %attr(-,root,root) %{_libdir}/ivl%{suff}/null-s.conf
@@ -110,6 +113,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) /usr/include/iverilog%{suff}/_pli_types.h
 
 %changelog -n verilog
+* Thu Jul 25 2013 - steve@icarus.com
+- Add blif code generator files.
+
 * Wed Feb 25 2009 - steve@icarus.com
 - Handle a package suffix if desired.
 
