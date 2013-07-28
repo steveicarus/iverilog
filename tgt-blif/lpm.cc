@@ -103,9 +103,17 @@ int print_lpm(FILE*fd, ivl_lpm_t net)
 	  case IVL_LPM_ADD:
 	    rc += print_lpm_add(fd, net);
 	    break;
+	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_EEQ:
+	    rc += print_lpm_cmp_eq(fd, net);
+	    break;
 	  case IVL_LPM_CONCAT:
 	  case IVL_LPM_CONCATZ:
 	    rc += print_concat(fd, net);
+	    break;
+	  case IVL_LPM_CMP_NE:
+	  case IVL_LPM_CMP_NEE:
+	    rc += print_lpm_cmp_ne(fd, net);
 	    break;
 	  case IVL_LPM_PART_VP:
 	    rc += print_part_vp(fd, net);
