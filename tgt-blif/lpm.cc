@@ -100,6 +100,9 @@ int print_lpm(FILE*fd, ivl_lpm_t net)
       int rc = 0;
 
       switch (ivl_lpm_type(net)) {
+	  case IVL_LPM_ADD:
+	    rc += print_lpm_add(fd, net);
+	    break;
 	  case IVL_LPM_CONCAT:
 	  case IVL_LPM_CONCATZ:
 	    rc += print_concat(fd, net);
