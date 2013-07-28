@@ -32,6 +32,7 @@ extern int print_logic_gate(FILE*fd, ivl_net_logic_t net);
 
 extern int print_lpm(FILE*fd, ivl_lpm_t net);
 extern int print_lpm_add(FILE*fd, ivl_lpm_t net);
+extern int print_lpm_sub(FILE*fd, ivl_lpm_t net);
 
 /*
  * Emit all the constants for a model. This works by scanning the

@@ -110,6 +110,9 @@ int print_lpm(FILE*fd, ivl_lpm_t net)
 	  case IVL_LPM_PART_VP:
 	    rc += print_part_vp(fd, net);
 	    break;
+	  case IVL_LPM_SUB:
+	    rc += print_lpm_sub(fd, net);
+	    break;
 	  default:
 	    fprintf(fd, "# XXXX ivl_lpm_type(net) --> %d\n", ivl_lpm_type(net));
 	    fprintf(stderr, "%s:%u: sorry: ivl_lpm_type(net)==%d not implemented.\n",
