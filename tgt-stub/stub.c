@@ -1738,6 +1738,12 @@ int target_design(ivl_design_t des)
 	    free(cur);
       }
 
+      fprintf(out, "# There are %u constants detected\n", ivl_design_consts(des));
+      for (idx = 0 ; idx < ivl_design_consts(des) ; idx += 1) {
+	    ivl_net_const_t con = ivl_design_const(des, idx);
+	    show_constant(con);
+      }
+
       ivl_design_process(des, show_process, 0);
       fclose(out);
 

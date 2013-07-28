@@ -2301,8 +2301,7 @@ bool dll_target::net_const(const NetConst*net)
       obj->pin_ = nex->t_cookie();
       nexus_con_add(obj->pin_, obj, 0, drv0, drv1);
 
-      des_.consts.resize( des_.consts.size() + 1 );
-      des_.consts[des_.consts.size()-1] = obj;
+      des_.consts.push_back(obj);
 
       make_const_delays_(obj, net);
 
@@ -2333,8 +2332,7 @@ bool dll_target::net_literal(const NetLiteral*net)
       obj->pin_ = nex->t_cookie();
       nexus_con_add(obj->pin_, obj, 0, drv0, drv1);
 
-      des_.consts.resize( des_.consts.size() + 1 );
-      des_.consts[des_.consts.size()-1] = obj;
+      des_.consts.push_back(obj);
 
       make_const_delays_(obj, net);
 

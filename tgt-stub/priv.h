@@ -51,6 +51,7 @@ extern void test_expr_is_delay(ivl_expr_t expr);
 
 extern void show_class(ivl_type_t net);
 extern void show_enumerate(ivl_enumtype_t net);
+extern void show_constant(ivl_net_const_t net);
 
 /*
  * Show the details of the expression.

@@ -59,7 +59,7 @@ struct ivl_design_s {
       std::vector<ivl_scope_t> root_scope_list;
 
 	// Keep an array of constants objects.
-      std::valarray<ivl_net_const_t> consts;
+      std::vector<ivl_net_const_t> consts;
 
 	// Keep a handy array of all of the disciplines in the design.
       std::valarray<ivl_discipline_t> disciplines;
