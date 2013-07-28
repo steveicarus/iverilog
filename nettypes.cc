@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -98,7 +98,7 @@ bool prefix_to_slice(const std::vector<netrange_t>&dims,
       if (pcur->get_msb() >= pcur->get_lsb())
 	    acc_off += (sb - pcur->get_lsb()) * acc_wid;
       else
-	    acc_off += (sb - pcur->get_msb()) * acc_wid;
+	    acc_off += (pcur->get_lsb() - sb) * acc_wid;
 
       if (prefix.empty()) {
 	    loff = acc_off;
@@ -115,7 +115,7 @@ bool prefix_to_slice(const std::vector<netrange_t>&dims,
 	    if (pcur->get_msb() >= pcur->get_lsb())
 		  acc_off += (*icur - pcur->get_lsb()) * acc_wid;
 	    else
-		  acc_off += (*icur - pcur->get_msb()) * acc_wid;
+		  acc_off += (pcur->get_lsb() - *icur) * acc_wid;
 
       } while (icur != prefix.begin());
 

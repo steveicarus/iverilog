@@ -3981,6 +3981,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 	    ivl_assert(*this, lrc);
 	    lrc = net->sig()->sb_to_slice(prefix_indices, msv, moff, mwid);
 	    ivl_assert(*this, lrc);
+	    ivl_assert(*this, lwid == mwid);
 
 	    if (moff > loff) {
 		  sb_lsb = loff;
@@ -3989,6 +3990,7 @@ NetExpr* PEIdent::elaborate_expr_net_part_(Design*des, NetScope*scope,
 		  sb_lsb = moff;
 		  sb_msb = loff + lwid - 1;
 	    }
+	    wid = sb_msb - sb_lsb + 1;
       } else {
 	      // This case, the prefix indices are enough to index
 	      // down to a single bit/slice.
