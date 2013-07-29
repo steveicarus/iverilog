@@ -2027,7 +2027,8 @@ class NetPartSelect  : public NetNode {
       enum dir_t { VP, PV};
 
       explicit NetPartSelect(NetNet*sig,
-			     unsigned off, unsigned wid, dir_t dir);
+			     unsigned off, unsigned wid, dir_t dir,
+			     bool signed_flag__ = false);
       explicit NetPartSelect(NetNet*sig, NetNet*sel,
 			     unsigned wid, bool signed_flag__ = false);
       ~NetPartSelect();

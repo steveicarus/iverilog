@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -977,9 +977,10 @@ const NetDelaySrc* NetNet::delay_path(unsigned idx) const
 }
 
 NetPartSelect::NetPartSelect(NetNet*sig, unsigned off, unsigned wid,
-			     NetPartSelect::dir_t dir__)
+			     NetPartSelect::dir_t dir__,
+			     bool signed_flag__)
 : NetNode(sig->scope(), sig->scope()->local_symbol(), 2),
-    off_(off), wid_(wid), dir_(dir__), signed_flag_(false)
+    off_(off), wid_(wid), dir_(dir__), signed_flag_(signed_flag__)
 {
       set_line(*sig);
 

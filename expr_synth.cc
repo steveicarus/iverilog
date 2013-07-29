@@ -615,7 +615,8 @@ NetNet* NetEBShift::synthesize(Design*des, NetScope*scope, NetExpr*root)
 	      // to the amount left by the shift.
 	    NetPartSelect*psel = new NetPartSelect(lsig, shift<0? ushift : 0,
 						   part_width,
-						   NetPartSelect::VP);
+						   NetPartSelect::VP,
+	                                           signed_flag && right_flag);
 	    psel->set_line(*this);
 	    des->add_node(psel);
 

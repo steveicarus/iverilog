@@ -224,8 +224,8 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
                   break;
 
                 case 'l': // <<  Should be handled by PEBShift
-                case 'r': // <<  Should be handled by PEBShift
-                case 'R': // <<  Should be handled by PEBShift
+                case 'r': // >>  Should be handled by PEBShift
+                case 'R': // >>> Should be handled by PEBShift
                 case '<': // <   Should be handled by PEBComp
                 case '>': // >   Should be handled by PEBComp
                 case 'e': // ==  Should be handled by PEBComp
