@@ -21,6 +21,97 @@
 # include "config.h"
 # include "vlog95_priv.h"
 
+/*
+ * Data type used to signify if a $signed or $unsigned should be emitted.
+ */
+typedef enum lpm_sign_e {
+      NO_SIGN = 0,
+      NEED_SIGNED = 1,
+      NEED_UNSIGNED = 2
+} lpm_sign_t;
+
+static ivl_signal_t nexus_is_signal(ivl_scope_t scope, ivl_nexus_t nex,
+                                    int*base, unsigned*array_word);
+
+/*
+ * Look to see if the nexus driver is signed.
+ */
+static int nexus_driver_is_signed(ivl_scope_t scope, ivl_nexus_t nex)
+{
+      int is_signed = 0;
+      unsigned sign_set = 0;
+      unsigned idx, count = ivl_nexus_ptrs(nex);
+
+      for (idx = 0; idx < count; idx += 1) {
+	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
+	    ivl_lpm_t t_lpm = ivl_nexus_ptr_lpm(nex_ptr);
+	    ivl_net_const_t t_net_const = ivl_nexus_ptr_con(nex_ptr);
+	    ivl_net_logic_t t_nlogic = ivl_nexus_ptr_log(nex_ptr);
+	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
+	    ivl_drive_t cur_drive1 = ivl_nexus_ptr_drive1(nex_ptr);
+	    ivl_drive_t cur_drive0 = ivl_nexus_ptr_drive0(nex_ptr);
+	    if ((cur_drive1 == IVL_DR_HiZ) &&
+	        (cur_drive0 == IVL_DR_HiZ)) continue;
+	      /* Only one driver can set the sign information. */
+	    assert( ! sign_set);
+	    if (t_lpm) {
+		  sign_set = 1;
+		  is_signed = ivl_lpm_signed(t_lpm);
+	    }
+	    if (t_net_const) {
+		  sign_set = 1;
+		  is_signed = ivl_const_signed(t_net_const);
+	    }
+	    if (t_nlogic) {
+		  sign_set = 1;
+		    /* A BUFZ is used to drive a local signal so look for the
+		     * local signal to get the sign information. */
+		  if (ivl_logic_type(t_nlogic) == IVL_LO_BUFZ) {
+			unsigned array_word = 0;
+			int base = 0;
+			ivl_signal_t sig;
+			assert(ivl_logic_pins(t_nlogic) == 2);
+			sig = nexus_is_signal(scope,
+			                      ivl_logic_pin(t_nlogic, 0),
+			                      &base, &array_word);
+			assert(sig);
+			is_signed = ivl_signal_signed(sig);
+		  }
+		  /* The rest of the logic type are always unsigned. */
+	    }
+	    if (t_sig) {
+		  sign_set = 1;
+		  is_signed = ivl_signal_signed(t_sig);
+	    }
+      }
+
+      return is_signed;
+}
+
+static lpm_sign_t lpm_get_sign_type(ivl_lpm_t lpm,
+                                    unsigned can_skip_unsigned)
+{
+      lpm_sign_t rtn = NO_SIGN;
+      int opr_sign = 0;
+      int lpm_sign = ivl_lpm_signed(lpm);
+
+      switch (ivl_lpm_type(lpm)) {
+	case IVL_LPM_SIGN_EXT:
+	    opr_sign = nexus_driver_is_signed(ivl_lpm_scope(lpm),
+	                                      ivl_lpm_data(lpm, 0));
+	    break;
+	default:
+	    opr_sign = lpm_sign;
+	    break;
+      }
+
+	/* Check to see if a $signed() or $unsigned() is needed. */
+      if (lpm_sign && ! opr_sign) rtn = NEED_SIGNED;
+      if (! lpm_sign && opr_sign && ! can_skip_unsigned) rtn = NEED_UNSIGNED;
+
+      return rtn;
+}
+
 static unsigned emit_drive(ivl_drive_t drive)
 {
       switch (drive) {
@@ -834,6 +925,29 @@ static void emit_lpm_func(ivl_scope_t scope, ivl_lpm_t lpm)
 static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
                            unsigned sign_extend)
 {
+      lpm_sign_t sign_type;
+	/* Check to see if a $signed() or $unsigned() needs to be emitted
+	 * before the expression. */
+      sign_type = lpm_get_sign_type(lpm, 0);
+      if (sign_type == NEED_SIGNED) {
+	    fprintf(vlog_out, "$signed(");
+	    if (! allow_signed) {
+		  fprintf(stderr, "%s:%u: vlog95 error: $signed() is not "
+		                  "supported.\n",
+		                  ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+		  vlog_errors += 1;
+	    }
+      }
+      if (sign_type == NEED_UNSIGNED) {
+	    fprintf(vlog_out, "$unsigned(");
+	    if (! allow_signed) {
+		  fprintf(stderr, "%s:%u: vlog95 error: $unsigned() is not "
+		                  "supported.\n",
+		                  ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+		  vlog_errors += 1;
+	    }
+      }
+
       switch (ivl_lpm_type(lpm)) {
 	  /* Convert the Verilog-A abs() function. This only works when the
 	   * argument has no side effect. */
@@ -1056,6 +1170,9 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	                    (int)ivl_lpm_type(lpm));
 	    vlog_errors += 1;
       }
+
+	/* Close the $signed() or $unsigned() if needed. */
+      if (sign_type != NO_SIGN) fprintf(vlog_out, ")");
 }
 
 static void emit_posedge_dff_prim()
@@ -1871,6 +1988,7 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		      case IVL_LPM_UFUNC:     fprintf(stderr, "U-func"); break;
 		      default: fprintf(stderr, "<%d>", ivl_lpm_type(lpm));
 		  }
+		  if (ivl_lpm_signed(lpm)) fprintf(stderr, " <signed>");
 	    } else if (net_const) {
 		  ivl_scope_t const_scope = ivl_const_scope(net_const);
 		  assert(! nlogic);
@@ -1879,6 +1997,7 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		  if (scope != const_scope) {
 			fprintf(stderr, " (%s)", ivl_scope_name(const_scope));
 		  }
+		  if (ivl_const_signed(net_const)) fprintf(stderr, " <signed>");
 	    } else if (nlogic) {
 		  ivl_scope_t logic_scope = ivl_logic_scope(nlogic);
 		  ivl_logic_t logic_type = ivl_logic_type(nlogic);
@@ -1975,6 +2094,7 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		      case IVL_VT_CLASS:   fprintf(stderr, " class");
 		                           break;
 		  }
+		  if (ivl_signal_signed(sig)) fprintf(stderr, " <signed>");
 	    } else fprintf(stderr, "Error: No/missing information!");
 	    fprintf(stderr, " (%u)\n", ivl_nexus_ptr_pin(nex_ptr));
       }

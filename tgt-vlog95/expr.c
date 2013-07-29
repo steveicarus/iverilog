@@ -34,7 +34,7 @@ typedef enum expr_sign_e {
       NEED_UNSIGNED = 2
 } expr_sign_t;
 
-static expr_sign_t get_binary_sign_type(ivl_expr_t expr)
+static expr_sign_t expr_get_binary_sign_type(ivl_expr_t expr)
 {
       ivl_expr_t oper1, oper2;
       int opr_sign = 0;
@@ -75,15 +75,15 @@ static expr_sign_t get_binary_sign_type(ivl_expr_t expr)
 	    break;
       }
 
-	/* Check to see if a $signed() or $unsigned() are needed. */
+	/* Check to see if a $signed() or $unsigned() is needed. */
       if (expr_sign && ! opr_sign) rtn = NEED_SIGNED;
       if (! expr_sign && opr_sign) rtn = NEED_UNSIGNED;
 
       return rtn;
 }
 
-static expr_sign_t get_select_sign_type(ivl_expr_t expr,
-                                        unsigned can_skip_unsigned)
+static expr_sign_t expr_get_select_sign_type(ivl_expr_t expr,
+                                             unsigned can_skip_unsigned)
 {
       int opr_sign = 0;
       int expr_sign = ivl_expr_signed(expr);
@@ -99,28 +99,28 @@ static expr_sign_t get_select_sign_type(ivl_expr_t expr,
 	    if (ivl_expr_type(oper1) != IVL_EX_SIGNAL) can_skip_unsigned -= 1;
       }
 
-	/* Check to see if a $signed() or $unsigned() are needed. */
+	/* Check to see if a $signed() or $unsigned() is needed. */
       if (expr_sign && ! opr_sign) rtn = NEED_SIGNED;
       if (! expr_sign && opr_sign && ! can_skip_unsigned) rtn = NEED_UNSIGNED;
 
       return rtn;
 }
 
-static expr_sign_t get_signal_sign_type(ivl_expr_t expr,
-                                        unsigned can_skip_unsigned)
+static expr_sign_t expr_get_signal_sign_type(ivl_expr_t expr,
+                                             unsigned can_skip_unsigned)
 {
       int opr_sign = ivl_signal_signed(ivl_expr_signal(expr));
       int expr_sign = ivl_expr_signed(expr);
       expr_sign_t rtn = NO_SIGN;
 
-	/* Check to see if a $signed() or $unsigned() are needed. */
+	/* Check to see if a $signed() or $unsigned() is needed. */
       if (expr_sign && ! opr_sign) rtn = NEED_SIGNED;
       if (! expr_sign && opr_sign && ! can_skip_unsigned) rtn = NEED_UNSIGNED;
 
       return rtn;
 }
 
-static expr_sign_t get_unary_sign_type(ivl_expr_t expr)
+static expr_sign_t expr_get_unary_sign_type(ivl_expr_t expr)
 {
       ivl_expr_t expr1;
       int opr_sign = 0;
@@ -166,7 +166,7 @@ static expr_sign_t get_unary_sign_type(ivl_expr_t expr)
 	    break;
       }
 
-	/* Check to see if a $signed() or $unsigned() are needed. */
+	/* Check to see if a $signed() or $unsigned() is needed. */
       if (expr_sign && ! opr_sign) rtn = NEED_SIGNED;
       if (! expr_sign && opr_sign) rtn = NEED_UNSIGNED;
 
@@ -177,7 +177,7 @@ static expr_sign_t get_unary_sign_type(ivl_expr_t expr)
  * This routine is used to determine if the expression is a binary operator
  * where the width could be different to create a self-determined context.
  */
-static unsigned is_binary_self_det(ivl_expr_t expr)
+static unsigned expr_is_binary_self_det(ivl_expr_t expr)
 {
       unsigned rtn = 0;
       if (ivl_expr_type(expr) == IVL_EX_BINARY) {
@@ -211,9 +211,9 @@ static unsigned is_binary_self_det(ivl_expr_t expr)
  * the binary/ternary operators if one of the operands will implicitly cast
  * the expression to unsigned. See calc_can_skip_unsigned() for the details.
  */
-static expr_sign_t get_sign_type(ivl_expr_t expr, unsigned wid,
-                                 unsigned can_skip_unsigned,
-                                 unsigned is_full_prec)
+static expr_sign_t expr_get_sign_type(ivl_expr_t expr, unsigned wid,
+                                      unsigned can_skip_unsigned,
+                                      unsigned is_full_prec)
 {
       unsigned expr_wid = ivl_expr_width(expr);
       expr_sign_t rtn = NO_SIGN;
@@ -221,7 +221,7 @@ static expr_sign_t get_sign_type(ivl_expr_t expr, unsigned wid,
 
       switch (type) {
 	case IVL_EX_BINARY:
-	    rtn = get_binary_sign_type(expr);
+	    rtn = expr_get_binary_sign_type(expr);
 	    break;
 	case IVL_EX_CONCAT:
 	      /* A concatenation is always unsigned so add a $signed() when
@@ -229,22 +229,22 @@ static expr_sign_t get_sign_type(ivl_expr_t expr, unsigned wid,
 	    if (ivl_expr_signed(expr)) rtn = NEED_SIGNED;
 	    break;
 	case IVL_EX_SELECT:
-	    rtn = get_select_sign_type(expr, can_skip_unsigned);
+	    rtn = expr_get_select_sign_type(expr, can_skip_unsigned);
 	      /* If there is no select expression then this is padding so use
 	       * the actual expressions width if it is a binary operator that
 	       * could create a self-determined context. */
 	    if (! ivl_expr_oper2(expr)) {
 		  ivl_expr_t oper1 = ivl_expr_oper1(expr);
-		  if (is_binary_self_det(oper1)) {
+		  if (expr_is_binary_self_det(oper1)) {
 			expr_wid = ivl_expr_width(oper1);
 		  }
 	    }
 	    break;
 	case IVL_EX_SIGNAL:
-	    rtn = get_signal_sign_type(expr, can_skip_unsigned);
+	    rtn = expr_get_signal_sign_type(expr, can_skip_unsigned);
 	    break;
 	case IVL_EX_UNARY:
-	    rtn = get_unary_sign_type(expr);
+	    rtn = expr_get_unary_sign_type(expr);
 	    break;
 	  /* These do not currently have sign casting information. A select
 	   * is used for that purpose. */
@@ -774,8 +774,9 @@ static void emit_expr_ips(ivl_scope_t scope, ivl_expr_t sig_expr,
 static void check_select_signed(ivl_expr_t sig_expr, ivl_expr_t sel_expr,
                                 int msb, int lsb)
 {
-      expr_sign_t sign_type = get_sign_type(sel_expr,
-                                            ivl_expr_width(sel_expr), 0, 1);
+      expr_sign_t sign_type = expr_get_sign_type(sel_expr,
+                                                 ivl_expr_width(sel_expr),
+                                                 0, 1);
       char msg[64];
       snprintf(msg, sizeof(msg), "%s:%u",
                                  ivl_expr_file(sel_expr),
@@ -1095,8 +1096,8 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
       }
 	/* In a self-determined context the expression set the width. */
       if (! wid) wid = ivl_expr_width(expr);
-      sign_type = get_sign_type(expr, wid, can_skip_unsigned,
-                                is_full_prec);
+      sign_type = expr_get_sign_type(expr, wid, can_skip_unsigned,
+                                     is_full_prec);
 
 	/* Check to see if a $signed() or $unsigned() needs to be emitted
 	 * before the expression. */
