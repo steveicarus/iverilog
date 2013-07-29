@@ -64,37 +64,6 @@ static int print_concat(FILE*fd, ivl_lpm_t net)
       return 0;
 }
 
-/*
- * This implements the IVL_LPM_PART_VP, which is the vector-to-part
- * part select. Implement this as a .names buffer.
- */
-static int print_part_vp(FILE*fd, ivl_lpm_t net)
-{
-      int rc = 0;
-
-      ivl_nexus_t nex_out = ivl_lpm_q(net);
-      blif_nex_data_t*ned_out = blif_nex_data_t::get_nex_data(nex_out);
-
-	// Only handle bit selects.
-      assert(ned_out->get_width() == 1);
-	// Only handle constant part select base.
-      assert(ivl_lpm_data(net,1) == 0);
-
-      unsigned bit_sel = ivl_lpm_base(net);
-
-      ivl_nexus_t nex_in = ivl_lpm_data(net,0);
-      blif_nex_data_t*ned_in = blif_nex_data_t::get_nex_data(nex_in);
-
-      assert(bit_sel < ned_in->get_width());
-
-      fprintf(fd, ".names %s%s %s%s # %s:%u\n1 1\n",
-	      ned_in->get_name(), ned_in->get_name_index(bit_sel),
-	      ned_out->get_name(), ned_out->get_name_index(0),
-	      ivl_lpm_file(net), ivl_lpm_lineno(net));
-
-      return rc;
-}
-
 int print_lpm(FILE*fd, ivl_lpm_t net)
 {
       int rc = 0;
@@ -120,7 +89,7 @@ int print_lpm(FILE*fd, ivl_lpm_t net)
 	    rc += print_lpm_cmp_ne(fd, net);
 	    break;
 	  case IVL_LPM_PART_VP:
-	    rc += print_part_vp(fd, net);
+	    rc += print_lpm_part_vp(fd, net);
 	    break;
 	  case IVL_LPM_SUB:
 	    rc += print_lpm_sub(fd, net);

@@ -45,7 +45,7 @@ CXXFLAGS = @WARNING_FLAGS@ @CXXFLAGS@
 LDFLAGS = @LDFLAGS@
 
 O = blif.o constants.o logic_gate.o lpm.o lpm_add.o lpm_cmp_eq.o lpm_cmp_gt.o \
-    nex_data.o
+    lpm_part_vp.o nex_data.o
 
 all: dep blif.tgt
 
