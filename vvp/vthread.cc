@@ -2828,6 +2828,12 @@ bool of_IX_LOAD(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_IX_MOV(vthread_t thr, vvp_code_t cp)
+{
+      thr->words[cp->bit_idx[0]].w_int = thr->words[cp->bit_idx[1]].w_int;
+      return true;
+}
+
 /*
  * Load a vector into an index register. The format of the
  * opcode is:

@@ -380,13 +380,18 @@ static void set_vec_to_lval_slice(ivl_lval_t lval, unsigned bit, unsigned wid)
 	      /* Here we have a part select write into an array word. */
 	    unsigned skip_set = transient_id++;
 	    if (word_ix) {
+		  int part_off_reg = allocate_word();
+		  draw_eval_expr_into_integer(part_off_ex, part_off_reg);
+		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
 		  draw_eval_expr_into_integer(word_ix, 3);
 		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
+		  fprintf(vvp_out, "    %%ix/mov 1, %u;\n", part_off_reg);
+		  clr_word(part_off_reg);
 	    } else {
+		  draw_eval_expr_into_integer(part_off_ex, 1);
+		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
 		  fprintf(vvp_out, "    %%ix/load 3, %lu, 0;\n", use_word);
 	    }
-	    draw_eval_expr_into_integer(part_off_ex, 1);
-	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
 	    fprintf(vvp_out, "    %%set/av v%p, %u, %u;\n",
 		    sig, bit, wid);
 	    fprintf(vvp_out, "t_%u ;\n", skip_set);

@@ -553,6 +553,10 @@ register by the immediate value. The 64 bit immediate value is built
 from the two 32 bit chunks <low> and <high> (see %ix/load above).
 The <idx> value selects the index register.
 
+* %ix/mov <dst>, <src>
+
+This instruction simply sets the index register <dst> to the value of
+the index register <src>.
 
 * %jmp <code-label>
 

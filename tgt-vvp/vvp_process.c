@@ -46,15 +46,22 @@ static void assign_to_array_r_word(ivl_signal_t lsig, ivl_expr_t word_ix,
                                    ivl_expr_t dexp, unsigned nevents)
 {
       unsigned end_assign = transient_id++;
+      int word_ix_reg = 3;
+
+      /* if we have to evaluate a delay expression, evaluate word index into
+	 temp register */
+      if (dexp != 0) {
+	    word_ix_reg = allocate_word();
+      }
 
 	/* This code is common to all the different types of array delays. */
       if (number_is_immediate(word_ix, IMM_WID, 0) &&
 	  !number_is_unknown(word_ix)) {
-	    fprintf(vvp_out, "    %%ix/load 3, %lu, 0; address\n",
-	                     get_number_immediate(word_ix));
+	    fprintf(vvp_out, "    %%ix/load %u, %lu, 0; address\n",
+		    word_ix_reg, get_number_immediate(word_ix));
       } else {
 	      /* Calculate array word index into index register 3 */
-	    draw_eval_expr_into_integer(word_ix, 3);
+	    draw_eval_expr_into_integer(word_ix, word_ix_reg);
 	      /* Skip assignment if word expression is not defined. */
 	    unsigned do_assign = transient_id++;
 	    fprintf(vvp_out, "    %%jmp/0 t_%u, 4;\n", do_assign);
@@ -67,8 +74,10 @@ static void assign_to_array_r_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	      /* Calculated delay... */
 	    int delay_index = allocate_word();
 	    draw_eval_expr_into_integer(dexp, delay_index);
+	    fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
 	    fprintf(vvp_out, "    %%assign/ar/d v%p, %d;\n", lsig,
 	                     delay_index);
+	    clr_word(word_ix_reg);
 	    clr_word(delay_index);
       } else if (nevents != 0) {
 	      /* Event control delay... */
@@ -107,8 +116,11 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 				 unsigned nevents)
 {
       unsigned skip_assign = transient_id++;
-
+      int word_ix_reg = 3;
+      int part_off_reg = 1;
+      int delay_index;
       unsigned long part_off = 0;
+
       if (part_off_ex == 0) {
 	    part_off = 0;
       } else if (number_is_immediate(part_off_ex, IMM_WID, 0) &&
@@ -117,34 +129,54 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	    part_off_ex = 0;
       }
 
+      if (dexp != 0) {
+	    word_ix_reg = allocate_word();
+	    part_off_reg = allocate_word();
+      } else if (part_off_ex) {
+	    word_ix_reg = allocate_word();
+      }
+
 	/* This code is common to all the different types of array delays. */
       if (number_is_immediate(word_ix, IMM_WID, 0) &&
 	  !number_is_unknown(word_ix)) {
-	    fprintf(vvp_out, "    %%ix/load 3, %lu, 0; address\n",
+	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0; address\n", word_ix_reg,
 	                     get_number_immediate(word_ix));
       } else {
-	      /* Calculate array word index into index register 3 */
-	    draw_eval_expr_into_integer(word_ix, 3);
+	      /* Calculate array word index into word index register */
+	    draw_eval_expr_into_integer(word_ix, word_ix_reg);
 	      /* Skip assignment if word expression is not defined. */
 	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
       }
-	/* Store expression width into index word 0 */
-      fprintf(vvp_out, "    %%ix/load 0, %u, 0; word width\n", width);
       if (part_off_ex) {
-	    draw_eval_expr_into_integer(part_off_ex, 1);
+	    draw_eval_expr_into_integer(part_off_ex, part_off_reg);
 	      /* If the index expression has XZ bits, skip the assign. */
 	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+	    if (dexp == 0) {
+		  fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
+		  clr_word(word_ix_reg);
+	    }
       } else {
-	      /* Store word part select into index 1 */
-	    fprintf(vvp_out, "    %%ix/load 1, %lu, 0; part off\n", part_off);
+	      /* Store word part select into part_off_reg */
+	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0; part off\n",
+		             part_off_reg, part_off);
       }
 
       if (dexp != 0) {
 	      /* Calculated delay... */
-	    int delay_index = allocate_word();
+	    delay_index = allocate_word();
 	    draw_eval_expr_into_integer(dexp, delay_index);
+      }
+
+	/* Store expression width into index word 0 */
+      fprintf(vvp_out, "    %%ix/load 0, %u, 0; word width\n", width);
+
+      if (dexp != 0) {
+	    fprintf(vvp_out, "    %%ix/mov 1, %u;\n", part_off_reg);
+	    fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
 	    fprintf(vvp_out, "    %%assign/av/d v%p, %d, %u;\n", lsig,
 	                     delay_index, bit);
+	    clr_word(part_off_reg);
+	    clr_word(word_ix_reg);
 	    clr_word(delay_index);
       } else if (nevents != 0) {
 	      /* Event control delay... */
@@ -159,7 +191,7 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	       * delay we need to put it into an index register.
 	       */
 	    if (hig_d != 0) {
-		  int delay_index = allocate_word();
+		  delay_index = allocate_word();
 		  fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
 		          delay_index, low_d, hig_d);
 		  fprintf(vvp_out, "    %%assign/av/d v%p, %d, %u;\n", lsig,
