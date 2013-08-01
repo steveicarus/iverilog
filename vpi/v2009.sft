@@ -1,4 +1,13 @@
 #
 # This is the system function descriptor table for the
-# builtin (system) functions.
+# builtin (SystemVerilog) functions.
 #
+
+$dimensions		vpiSysFuncInt
+$unpacked_dimensions	vpiSysFuncInt
+$left			vpiSysFuncInt
+$right			vpiSysFuncInt
+$low			vpiSysFuncInt
+$high			vpiSysFuncInt
+$increment		vpiSysFuncInt
+$size			vpiSysFuncInt

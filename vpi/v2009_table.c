@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -17,16 +17,12 @@
  *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-# include "vpi_config.h"
-# include "vpi_user.h"
-# include <stdio.h>
-# include <stdlib.h>
-# include <string.h>
-
+extern void v2009_array_register(void);
 extern void v2009_enum_register(void);
 extern void v2009_string_register(void);
 
 void (*vlog_startup_routines[])() = {
+      v2009_array_register,
       v2009_enum_register,
       v2009_string_register,
       0
