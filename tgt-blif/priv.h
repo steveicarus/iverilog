@@ -36,6 +36,7 @@ extern int print_lpm_sub(FILE*fd, ivl_lpm_t net);
 extern int print_lpm_cmp_eq(FILE*fd, ivl_lpm_t net);
 extern int print_lpm_cmp_gt(FILE*fd, ivl_lpm_t net);
 extern int print_lpm_cmp_ne(FILE*fd, ivl_lpm_t net);
+extern int print_lpm_mux(FILE*fd, ivl_lpm_t net);
 extern int print_lpm_part_vp(FILE*fd, ivl_lpm_t net);
 extern int print_lpm_re_logic(FILE*fd, ivl_lpm_t net);
 
