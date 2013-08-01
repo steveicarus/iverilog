@@ -91,6 +91,14 @@ int print_lpm(FILE*fd, ivl_lpm_t net)
 	  case IVL_LPM_PART_VP:
 	    rc += print_lpm_part_vp(fd, net);
 	    break;
+	  case IVL_LPM_RE_AND:
+	  case IVL_LPM_RE_OR:
+	  case IVL_LPM_RE_XOR:
+	  case IVL_LPM_RE_NAND:
+	  case IVL_LPM_RE_NOR:
+	  case IVL_LPM_RE_XNOR:
+	    rc += print_lpm_re_logic(fd, net);
+	    break;
 	  case IVL_LPM_SUB:
 	    rc += print_lpm_sub(fd, net);
 	    break;
