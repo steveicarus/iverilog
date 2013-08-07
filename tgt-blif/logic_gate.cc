@@ -37,7 +37,7 @@ int print_logic_gate(FILE*fd, ivl_net_logic_t net)
       for (unsigned idx = 1 ; idx < ivl_logic_pins(net) ; idx += 1) {
 	    ivl_nexus_t nex = ivl_logic_pin(net,idx);
 	    blif_nex_data_t*ned = blif_nex_data_t::get_nex_data(nex);
- 	    fprintf(fd, " %s", ned->get_name());
+	    fprintf(fd, " %s", ned->get_name());
       }
 
       fprintf(fd, " %s", ned_out->get_name());
