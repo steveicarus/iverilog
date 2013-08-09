@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2012 Tony Bybell.
+ * Copyright (c) 2009-2013 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -60,9 +60,18 @@ enum fstScopeType {
     FST_ST_VCD_BEGIN           = 3,
     FST_ST_VCD_FORK            = 4,
     FST_ST_VCD_GENERATE        = 5,
-    FST_ST_VCD_MAX             = 5,
+    FST_ST_VCD_STRUCT          = 6,
+    FST_ST_VCD_UNION           = 7,
+    FST_ST_VCD_CLASS           = 8,
+    FST_ST_VCD_INTERFACE       = 9,
+    FST_ST_VCD_PACKAGE         = 10,
+    FST_ST_VCD_PROGRAM         = 11,
+    FST_ST_VCD_MAX             = 11,
 
-    FST_ST_MAX                 = 5,
+    FST_ST_MAX                 = 11,
+
+    FST_ST_GEN_ATTRBEGIN       = 252,
+    FST_ST_GEN_ATTREND         = 253,
 
     FST_ST_VCD_SCOPE           = 254,
     FST_ST_VCD_UPSCOPE         = 255
@@ -89,11 +98,21 @@ enum fstVarType {
     FST_VT_VCD_WIRE            = 16,
     FST_VT_VCD_WOR             = 17,
     FST_VT_VCD_PORT            = 18,
-    FST_VT_VCD_ARRAY           = 19,	/* used to define the rownum (index) port on the array */
+    FST_VT_VCD_SPARRAY         = 19,	/* used to define the rownum (index) port for a sparse array */
     FST_VT_VCD_REALTIME        = 20,
+
     FST_VT_GEN_STRING	       = 21,	/* generic string type   (max len is defined dynamically via fstWriterEmitVariableLengthValueChange) */
 
-    FST_VT_VCD_MAX             = 21	/* end of VCD datatypes */
+    FST_VT_SV_BIT              = 22,
+    FST_VT_SV_LOGIC            = 23,
+    FST_VT_SV_INT              = 24,	/* declare as 31:0 */
+    FST_VT_SV_SHORTINT         = 25,	/* declare as 15:0 */
+    FST_VT_SV_LONGINT          = 26,	/* declare as 63:0 */
+    FST_VT_SV_BYTE             = 27,	/* declare as 7:0  */
+    FST_VT_SV_ENUM             = 28,	/* declare as appropriate type range */
+    FST_VT_SV_SHORTREAL        = 29,	/* declare and emit same as FST_VT_VCD_REAL */
+
+    FST_VT_VCD_MAX             = 29	/* end of VCD datatypes */
 };
 
 enum fstVarDir {
@@ -109,8 +128,64 @@ enum fstHierType {
     FST_HT_SCOPE       = 0,
     FST_HT_UPSCOPE     = 1,
     FST_HT_VAR         = 2,
+    FST_HT_ATTRBEGIN   = 3,
+    FST_HT_ATTREND     = 4,
 
-    FST_HT_MAX         = 2
+    FST_HT_MAX         = 4
+};
+
+enum fstAttrType {
+    FST_AT_MISC        = 0,
+    FST_AT_ARRAY       = 1,
+    FST_AT_ENUM        = 2,
+    FST_AT_PACK        = 3,
+
+    FST_AT_MAX         = 3
+};
+
+enum fstMiscType {
+    FST_MT_COMMENT     = 0,	/* self-contained: does not need matching FST_HT_ATTREND, use fstWriterSetComment() to emit */
+    FST_MT_ENVVAR      = 1,	/* self-contained: does not need matching FST_HT_ATTREND, use fstWriterSetEnvVar() to emit */
+    FST_MT_UNKNOWN     = 2,
+
+    FST_MT_MAX         = 2
+};
+
+enum fstArrayType {
+    FST_AR_NONE        = 0,
+    FST_AR_UNPACKED    = 1,
+    FST_AR_PACKED      = 2,
+    FST_AR_SPARSE      = 3,
+
+    FST_AR_MAX         = 3
+};
+
+enum fstEnumValueType {
+    FST_EV_SV_INTEGER           = 0,
+    FST_EV_SV_BIT               = 1,
+    FST_EV_SV_LOGIC             = 2,
+    FST_EV_SV_INT               = 3,
+    FST_EV_SV_SHORTINT          = 4,
+    FST_EV_SV_LONGINT           = 5,
+    FST_EV_SV_BYTE              = 6,
+    FST_EV_SV_UNSIGNED_INTEGER  = 7,
+    FST_EV_SV_UNSIGNED_BIT      = 8,
+    FST_EV_SV_UNSIGNED_LOGIC    = 9,
+    FST_EV_SV_UNSIGNED_INT      = 10,
+    FST_EV_SV_UNSIGNED_SHORTINT = 11,
+    FST_EV_SV_UNSIGNED_LONGINT  = 12,
+    FST_EV_SV_UNSIGNED_BYTE     = 13,
+
+    FST_EV_MAX                  = 13
+};
+
+enum fstPackType {
+    FST_PT_NONE          = 0,
+    FST_PT_UNPACKED      = 1,
+    FST_PT_PACKED        = 2,
+    FST_PT_TAGGED_PACKED = 3,
+
+    FST_PT_MAX           = 3
 };
 
 struct fstHier
@@ -120,7 +195,7 @@ unsigned char htyp;
 union {
 	/* if htyp == FST_HT_SCOPE */
 	struct fstHierScope {
-		unsigned char typ; /* FST_ST_VCD_MODULE ... FST_ST_VCD_FORK */
+		unsigned char typ; /* FST_ST_VCD_MODULE ... FST_ST_VCD_PROGRAM */
 		const char *name;
 		const char *component;
 		uint32_t name_length;		/* strlen(u.scope.name) */
@@ -129,7 +204,7 @@ union {
 
 	/* if htyp == FST_HT_VAR */
 	struct fstHierVar {
-		unsigned char typ; /* FST_VT_VCD_EVENT ... FST_VT_VCD_REALTIME */
+		unsigned char typ; /* FST_VT_VCD_EVENT ... FST_VT_GEN_STRING */
 		unsigned char direction; /* FST_VD_IMPLICIT ... FST_VD_INOUT */
 		const char *name;
 		uint32_t length;
@@ -137,6 +212,15 @@ union {
 		uint32_t name_length; /* strlen(u.var.name) */
 		unsigned is_alias : 1;
 		} var;
+
+	/* if htyp == FST_HT_ATTRBEGIN */
+	struct fstHierAttr {
+		unsigned char typ; /* FST_AT_MISC ... FST_AT_PACK */
+		unsigned char subtype; /* from fstMiscType, fstArrayType, fstEnumValueType, fstPackType */
+		const char *name;
+		uint64_t arg; /* number of array elements, struct members, or some other payload (possibly ignored) */
+		uint32_t name_length; /* strlen(u.attr.name) */
+		} attr;
 	} u;
 };
 
@@ -158,6 +242,8 @@ void *fstWriterCreate(const char *nam, int use_compressed_hier);
 void fstWriterClose(void *ctx);
 void fstWriterSetDate(void *ctx, const char *dat);
 void fstWriterSetVersion(void *ctx, const char *vers);
+void fstWriterSetComment(void *ctx, const char *comm);
+void fstWriterSetEnvVar(void *ctx, const char *envvar);
 void fstWriterSetTimescale(void *ctx, int ts);
 void fstWriterSetTimescaleFromString(void *ctx, const char *s);
 void fstWriterSetTimezero(void *ctx, int64_t tim);
@@ -169,6 +255,9 @@ void fstWriterEmitVariableLengthValueChange(void *ctx, fstHandle handle, const v
 void fstWriterEmitDumpActive(void *ctx, int enable);
 void fstWriterEmitTimeChange(void *ctx, uint64_t tim);
 void fstWriterFlushContext(void *ctx);
+void fstWriterSetAttrBegin(void *ctx, enum fstAttrType attrtype, int subtype,
+                const char *attrname, uint64_t arg);
+void fstWriterSetAttrEnd(void *ctx);
 
 /*
  * reader functions
