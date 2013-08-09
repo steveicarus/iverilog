@@ -3,29 +3,29 @@
 // problems will not be fixed.
 
 // fstapi.c from GTKWave
-obsoleteFunctionsasctime:fstapi.c:671
-unreadVariable:fstapi.c:1316
-variableScope:fstapi.c:770
-variableScope:fstapi.c:1726
-variableScope:fstapi.c:1996
-variableScope:fstapi.c:2140
-variableScope:fstapi.c:2299
-variableScope:fstapi.c:2300
-variableScope:fstapi.c:2889
-variableScope:fstapi.c:2914
-variableScope:fstapi.c:3037
-variableScope:fstapi.c:3365
-variableScope:fstapi.c:3374
-variableScope:fstapi.c:3881
-variableScope:fstapi.c:3884
-variableScope:fstapi.c:4451
-variableScope:fstapi.c:4505
-variableScope:fstapi.c:4809
-variableScope:fstapi.c:4812
-variableScope:fstapi.c:5048
-variableScope:fstapi.c:5153
-variableScope:fstapi.c:5154
-variableScope:fstapi.c:5185
+obsoleteFunctionsasctime:fstapi.c:672
+unreadVariable:fstapi.c:1317
+variableScope:fstapi.c:771
+variableScope:fstapi.c:1727
+variableScope:fstapi.c:2029
+variableScope:fstapi.c:2221
+variableScope:fstapi.c:2380
+variableScope:fstapi.c:2381
+variableScope:fstapi.c:2989
+variableScope:fstapi.c:3014
+variableScope:fstapi.c:3137
+variableScope:fstapi.c:3550
+variableScope:fstapi.c:3559
+variableScope:fstapi.c:4066
+variableScope:fstapi.c:4069
+variableScope:fstapi.c:4636
+variableScope:fstapi.c:4690
+variableScope:fstapi.c:4994
+variableScope:fstapi.c:4997
+variableScope:fstapi.c:5233
+variableScope:fstapi.c:5338
+variableScope:fstapi.c:5339
+variableScope:fstapi.c:5370
 
 // lxt2_write.c from GTKWave
 obsoleteFunctionsalloca:lxt2_write.c:1813
