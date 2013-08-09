@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2012 Tony Bybell.
+ * Copyright (c) 2009-2013 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -62,6 +62,7 @@ void **JenkinsIns(void *base_i, unsigned char *mem, uint32_t length, uint32_t ha
 
 #define FST_WRITER_STR 			"fstWriter"
 #define FST_ID_NAM_SIZ 			(512)
+#define FST_ID_NAM_ATTR_SIZ		(65536+4096)
 #define FST_DOUBLE_ENDTEST 		(2.7182818284590452354)
 #define FST_HDR_SIM_VERSION_SIZE 	(128)
 #define FST_HDR_DATE_SIZE 		(120)
@@ -1842,6 +1843,38 @@ if(xc && vers)
 }
 
 
+static void fstWriterSetAttrGeneric(void *ctx, const char *comm, int typ)
+{
+struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+if(xc && comm)
+        {
+	char *s = strdup(comm);
+	char *sf = s;
+
+	while(*s)
+		{
+		if((*s == '\n') || (*s == '\r')) *s = ' ';
+		s++;
+		}
+
+	fstWriterSetAttrBegin(xc, FST_AT_MISC, typ, sf, 0);
+	free(sf);
+	}
+}
+
+
+void fstWriterSetComment(void *ctx, const char *comm)
+{
+fstWriterSetAttrGeneric(ctx, comm, FST_MT_COMMENT);
+}
+
+
+void fstWriterSetEnvVar(void *ctx, const char *envvar)
+{
+fstWriterSetAttrGeneric(ctx, envvar, FST_MT_ENVVAR);
+}
+
+
 void fstWriterSetTimescale(void *ctx, int ts)
 {
 struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
@@ -1987,7 +2020,7 @@ return(0);
 
 
 /*
- * writer scope/var creation
+ * writer attr/scope/var creation
  */
 fstHandle fstWriterCreateVar(void *ctx, enum fstVarType vt, enum fstVarDir vd,
         uint32_t len, const char *nam, fstHandle aliasHandle)
@@ -2009,7 +2042,7 @@ if(xc && nam)
 	fputc(0, xc->hier_handle);
 	xc->hier_file_len += (nlen+3);
 
-	if((vt == FST_VT_VCD_REAL) || (vt == FST_VT_VCD_REAL_PARAMETER) || (vt == FST_VT_VCD_REALTIME))
+	if((vt == FST_VT_VCD_REAL) || (vt == FST_VT_VCD_REAL_PARAMETER) || (vt == FST_VT_VCD_REALTIME) || (vt == FST_VT_SV_SHORTREAL))
 		{
 		is_real = 1;
 		len = 8; /* recast number of bytes to that of what a double is */
@@ -2093,7 +2126,7 @@ void fstWriterSetScope(void *ctx, enum fstScopeType scopetype,
 {
 struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
 
-if(xc && scopename)
+if(xc)
 	{
 	fputc(FST_ST_VCD_SCOPE, xc->hier_handle);
 	if((scopetype < FST_ST_VCD_MODULE) || (scopetype > FST_ST_MAX)) { scopetype = FST_ST_VCD_MODULE; }
@@ -2124,6 +2157,54 @@ struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
 if(xc)
 	{
 	fputc(FST_ST_VCD_UPSCOPE, xc->hier_handle);
+	xc->hier_file_len++;
+	}
+}
+
+
+void fstWriterSetAttrBegin(void *ctx, enum fstAttrType attrtype, int subtype,
+                const char *attrname, uint64_t arg)
+{
+struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+
+if(xc)
+	{
+	fputc(FST_ST_GEN_ATTRBEGIN, xc->hier_handle);
+	if((attrtype < FST_AT_MISC) || (attrtype > FST_AT_MAX)) { attrtype = FST_AT_MISC; subtype = FST_MT_UNKNOWN; }
+	fputc(attrtype, xc->hier_handle);
+
+	switch(attrtype)
+		{
+		case FST_AT_ARRAY:	if((subtype < FST_AR_NONE) || (subtype > FST_AR_MAX)) subtype = FST_AR_NONE; break;
+		case FST_AT_ENUM:	if((subtype < FST_EV_SV_INTEGER) || (subtype > FST_EV_MAX)) subtype = FST_EV_SV_INTEGER; break;
+		case FST_AT_PACK:	if((subtype < FST_PT_NONE) || (subtype > FST_PT_MAX)) subtype = FST_PT_NONE; break;
+
+		case FST_AT_MISC:
+		default:		break;
+		}
+
+	fputc(subtype, xc->hier_handle);
+	fprintf(xc->hier_handle, "%s%c",
+		attrname ? attrname : "", 0);
+	
+	if(attrname)
+		{
+		xc->hier_file_len += strlen(attrname);
+		}
+
+	xc->hier_file_len += 4; /* FST_ST_GEN_ATTRBEGIN + type + subtype + string terminating zero */
+	xc->hier_file_len += fstWriterVarint(xc->hier_handle, arg);
+	}
+}
+
+
+void fstWriterSetAttrEnd(void *ctx)
+{
+struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+
+if(xc)
+	{
+	fputc(FST_ST_GEN_ATTREND, xc->hier_handle);
 	xc->hier_file_len++;
 	}
 }
@@ -2387,13 +2468,32 @@ static const char *vartypes[] = {
 	"event", "integer", "parameter", "real", "real_parameter",
 	"reg", "supply0", "supply1", "time", "tri",
 	"triand", "trior", "trireg", "tri0", "tri1", 
-	"wand", "wire", "wor", "port", "array", "realtime",
-	"string"
+	"wand", "wire", "wor", "port", "sparray", "realtime",
+	"string",
+	"bit", "logic", "int", "shortint", "longint", "byte", "enum", "shortreal"
 	};
 
 static const char *modtypes[] = {
-	"module", "task", "function", "begin", "fork", "generate"
+	"module", "task", "function", "begin", "fork", "generate", "struct", "union", "class", "interface", "package", "program"
 	};
+
+static const char *attrtypes[] = {
+	"misc", "array", "enum", "class"
+	};
+
+static const char *arraytypes[] = {
+	"none", "unpacked", "packed", "sparse"
+	};
+
+static const char *enumvaluetypes[] = {
+	"integer", "bit", "logic", "int", "shortint", "longint", "byte",
+	"unsigned_integer", "unsigned_bit", "unsigned_logic", "unsigned_int", "unsigned_shortint", "unsigned_longint", "unsigned_byte"
+	};
+
+static const char *packtypes[] = {
+	"none", "unpacked", "packed", "tagged_packed"
+	};
+
 
 struct fstCurrHier
 {
@@ -3083,6 +3183,25 @@ if(!(isfeof=feof(xc->fh)))
 			xc->hier.htyp = FST_HT_UPSCOPE;
 			break;
 
+		case FST_ST_GEN_ATTRBEGIN:
+			xc->hier.htyp = FST_HT_ATTRBEGIN;
+			xc->hier.u.attr.typ = fgetc(xc->fh);
+			xc->hier.u.attr.subtype = fgetc(xc->fh);
+			xc->hier.u.attr.name = pnt = xc->str_scope_nam;
+			while((ch = fgetc(xc->fh))) 
+				{
+				*(pnt++) = ch; 
+				}; /* scopename */
+			*pnt = 0;
+			xc->hier.u.attr.name_length = pnt - xc->hier.u.scope.name;
+
+			xc->hier.u.attr.arg = fstReaderVarint64(xc->fh);
+			break;
+
+		case FST_ST_GEN_ATTREND:
+			xc->hier.htyp = FST_HT_ATTREND;
+			break;
+
 		case FST_VT_VCD_EVENT:
 		case FST_VT_VCD_INTEGER:
 		case FST_VT_VCD_PARAMETER:
@@ -3102,9 +3221,17 @@ if(!(isfeof=feof(xc->fh)))
 		case FST_VT_VCD_WIRE:
 		case FST_VT_VCD_WOR:
 		case FST_VT_VCD_PORT:
-		case FST_VT_VCD_ARRAY:
+		case FST_VT_VCD_SPARRAY:
 		case FST_VT_VCD_REALTIME:
 		case FST_VT_GEN_STRING:
+		case FST_VT_SV_BIT:
+		case FST_VT_SV_LOGIC:
+		case FST_VT_SV_INT:
+		case FST_VT_SV_SHORTINT:
+		case FST_VT_SV_LONGINT:
+		case FST_VT_SV_BYTE:
+		case FST_VT_SV_ENUM:
+		case FST_VT_SV_SHORTREAL:
 			xc->hier.htyp = FST_HT_VAR;
 
 			xc->hier.u.var.typ = tag;
@@ -3152,13 +3279,15 @@ return(!isfeof ? &xc->hier : NULL);
 int fstReaderProcessHier(void *ctx, FILE *fv)
 {
 struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
-char str[FST_ID_NAM_SIZ+1];
+char *str;
 char *pnt;
 int ch, scopetype;
 int vartype;
 uint32_t len, alias;
 /* uint32_t maxvalpos=0; */
 int num_signal_dyn = 65536;
+int attrtype, subtype;
+uint64_t attrarg;
 
 if(!xc) return(0);
 
@@ -3171,6 +3300,8 @@ if(!xc->fh)
 		return(0);
 		}
 	}
+
+str = malloc(FST_ID_NAM_ATTR_SIZ+1);
 
 if(fv)
 	{
@@ -3237,6 +3368,7 @@ while(!feof(xc->fh))
 		{
 		case FST_ST_VCD_SCOPE:
 			scopetype = fgetc(xc->fh);
+			if((scopetype < FST_ST_VCD_MIN) || (scopetype > FST_ST_MAX)) scopetype = FST_ST_VCD_MODULE;
 			pnt = str;
 			while((ch = fgetc(xc->fh))) 
 				{
@@ -3250,6 +3382,50 @@ while(!feof(xc->fh))
 
 		case FST_ST_VCD_UPSCOPE:
 			if(fv) fprintf(fv, "$upscope $end\n");
+			break;
+
+		case FST_ST_GEN_ATTRBEGIN:
+			attrtype = fgetc(xc->fh);
+			subtype = fgetc(xc->fh);
+			pnt = str;
+			while((ch = fgetc(xc->fh))) 
+				{
+				*(pnt++) = ch; 
+				}; /* attrname */
+			*pnt = 0;
+
+			attrarg = fstReaderVarint64(xc->fh);
+
+			if(fv)
+				{
+				switch(attrtype)
+					{
+					case FST_AT_ARRAY:	if((subtype < FST_AR_NONE) || (subtype > FST_AR_MAX)) subtype = FST_AR_NONE;
+								fprintf(fv, "$attrbegin %s %s %s %"PRId64" $end\n", attrtypes[attrtype], arraytypes[subtype], str, attrarg);
+								break;
+					case FST_AT_ENUM:	if((subtype < FST_EV_SV_INTEGER) || (subtype > FST_EV_MAX)) subtype = FST_EV_SV_INTEGER;
+								fprintf(fv, "$attrbegin %s %s %s %"PRId64" $end\n", attrtypes[attrtype], enumvaluetypes[subtype], str, attrarg);
+								break;
+					case FST_AT_PACK:	if((subtype < FST_PT_NONE) || (subtype > FST_PT_MAX)) subtype = FST_PT_NONE;
+								fprintf(fv, "$attrbegin %s %s %s %"PRId64" $end\n", attrtypes[attrtype], packtypes[subtype], str, attrarg);
+								break;
+					case FST_AT_MISC:	
+					default:		attrtype = FST_AT_MISC;
+								if(subtype == FST_MT_COMMENT)
+									{
+									fprintf(fv, "$comment\n\t%s\n$end\n", str);
+									}
+									else
+									{
+									fprintf(fv, "$attrbegin %s %02x %s %"PRId64" $end\n", attrtypes[attrtype], subtype, str, attrarg);
+									}
+								break;
+					}
+				}
+			break;
+
+		case FST_ST_GEN_ATTREND:
+			if(fv) fprintf(fv, "$attrend $end\n");
 			break;
 
 		case FST_VT_VCD_EVENT:
@@ -3271,9 +3447,17 @@ while(!feof(xc->fh))
 		case FST_VT_VCD_WIRE:
 		case FST_VT_VCD_WOR:
 		case FST_VT_VCD_PORT:
-		case FST_VT_VCD_ARRAY:
+		case FST_VT_VCD_SPARRAY:
 		case FST_VT_VCD_REALTIME:
 		case FST_VT_GEN_STRING:
+		case FST_VT_SV_BIT:
+		case FST_VT_SV_LOGIC:
+		case FST_VT_SV_INT:
+		case FST_VT_SV_SHORTINT:
+		case FST_VT_SV_LONGINT:
+		case FST_VT_SV_BYTE:
+		case FST_VT_SV_ENUM:
+		case FST_VT_SV_SHORTREAL:
 			vartype = tag;
 			/* vardir = */ fgetc(xc->fh); /* unused in VCD reader, but need to advance read pointer */
 			pnt = str;
@@ -3302,9 +3486,9 @@ while(!feof(xc->fh))
 					xc->longest_signal_value_len = len;
 					}
 
-				if((vartype == FST_VT_VCD_REAL) || (vartype == FST_VT_VCD_REAL_PARAMETER) || (vartype == FST_VT_VCD_REALTIME))
+				if((vartype == FST_VT_VCD_REAL) || (vartype == FST_VT_VCD_REAL_PARAMETER) || (vartype == FST_VT_VCD_REALTIME) || (vartype == FST_VT_SV_SHORTREAL))
 					{
-					len = 64;
+					len = (vartype != FST_VT_SV_SHORTREAL) ? 64 : 32;
 					xc->signal_typs[xc->maxhandle] = FST_VT_VCD_REAL;
 					}
 				if(fv) 
@@ -3316,9 +3500,9 @@ while(!feof(xc->fh))
 				}
 				else
 				{
-				if((vartype == FST_VT_VCD_REAL) || (vartype == FST_VT_VCD_REAL_PARAMETER) || (vartype == FST_VT_VCD_REALTIME))
+				if((vartype == FST_VT_VCD_REAL) || (vartype == FST_VT_VCD_REAL_PARAMETER) || (vartype == FST_VT_VCD_REALTIME) || (vartype == FST_VT_SV_SHORTREAL))
 					{
-					len = 64;
+					len = (vartype != FST_VT_SV_SHORTREAL) ? 64 : 32;
 					xc->signal_typs[xc->maxhandle] = FST_VT_VCD_REAL;
 					}
 				if(fv) 
@@ -3348,6 +3532,7 @@ xc->temp_signal_value_buf = malloc(xc->longest_signal_value_len + 1);
 
 xc->var_count = xc->maxhandle + xc->num_alias;
 
+free(str);
 return(1);
 }
 
