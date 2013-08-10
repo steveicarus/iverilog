@@ -68,7 +68,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) %{_libdir}/ivl%{suff}/ivl
 %attr(-,root,root) %{_libdir}/ivl%{suff}/ivlpp
 %attr(-,root,root) %{_libdir}/ivl%{suff}/vhdlpp
-%attr(-,root,root) %{_libdir}/ivl%{suff}/blif.txt
+%attr(-,root,root) %{_libdir}/ivl%{suff}/blif.tgt
 %attr(-,root,root) %{_libdir}/ivl%{suff}/blif.conf
 %attr(-,root,root) %{_libdir}/ivl%{suff}/blif-s.conf
 %attr(-,root,root) %{_libdir}/ivl%{suff}/null.tgt

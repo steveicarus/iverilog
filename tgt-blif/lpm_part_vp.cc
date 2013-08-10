@@ -65,7 +65,6 @@ static int print_part_vp_mux(FILE*fd, ivl_lpm_t net)
 	// Only handle constant part select base.
       assert(ivl_lpm_data(net,1) != 0);
 
-      
       ivl_nexus_t nex_out = ivl_lpm_q(net);
       blif_nex_data_t*ned_out = blif_nex_data_t::get_nex_data(nex_out);
 

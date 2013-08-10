@@ -150,7 +150,7 @@ static void emit_blif(const char*blif_path, ivl_design_t des, ivl_scope_t model)
 
       fprintf(fd, ".model %s\n", ivl_scope_basename(model));
 
-	// The root scope 
+	// The root scope
       vector<ivl_signal_t> ports_in;
       vector<ivl_signal_t> ports_out;
       for (unsigned idx = 0 ; idx < ivl_scope_sigs(model) ; idx += 1) {
