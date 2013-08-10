@@ -285,11 +285,6 @@ NetExpr* PEBinary::elaborate_expr(Design*des, NetScope*scope,
 	    return 0;
       }
 
-	// If either expression can be evaluated ahead of time, then
-	// do so. This can prove helpful later.
-      eval_expr(lp, l_width);
-      eval_expr(rp, r_width);
-
       return elaborate_expr_base_(des, lp, rp, expr_wid);
 }
 
