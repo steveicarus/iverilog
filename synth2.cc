@@ -24,7 +24,7 @@
 # include  "netvector.h"
 # include  "netmisc.h"
 # include  "compiler.h"
-# include  <cassert>
+# include  "ivl_assert.h"
 
 
 bool NetProc::synth_async(Design*, NetScope*, const NetBus&, NetBus&)
@@ -237,69 +237,59 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       return true;
 }
 
-bool NetCondit::synth_async(Design*des, NetScope* /*scope*/,
-			    const NetBus& /*nex_map*/, NetBus& /*nex_out*/)
+bool NetCondit::synth_async(Design*des, NetScope*scope,
+			    const NetBus&nex_map, NetBus&nex_out)
 {
-      cerr << get_fileline() << ": sorry: "
-	   << "Forgot to implement NetCondit::synth_async" << endl;
-      des->errors += 1;
-      return false;
-#if 0
-      NetNet*ssig = expr_->synthesize(des);
-      assert(ssig);
-
       if (if_ == 0) {
-	    DEBUG_SYNTH2_EXIT("NetCondit",false)
 	    return false;
       }
       if (else_ == 0) {
-	    cerr << get_line() << ": error: Asynchronous if statement"
+	    cerr << get_fileline() << ": error: Asynchronous if statement"
 		 << " is missing the else clause." << endl;
-	    DEBUG_SYNTH2_EXIT("NetCondit",false)
 	    return false;
       }
 
       assert(if_ != 0);
       assert(else_ != 0);
 
-      NetNet*asig = new NetNet(scope, scope->local_symbol(),
-			       NetNet::WIRE, nex_map->pin_count());
-      asig->local_flag(true);
+	// Synthesize the condition. This will act as a select signal
+	// for a binary mux.
+      NetNet*ssig = expr_->synthesize(des, scope, expr_);
+      assert(ssig);
+
+	// Calculate the vector width of the result.
+      unsigned mux_width = 0;
+      for (unsigned idx = 0 ;  idx < nex_out.pin_count() ;  idx += 1)
+	    mux_width += nex_out.pin(idx).nexus()->vector_width();
 
       bool flag;
+      NetBus asig(scope, 1);
       flag = if_->synth_async(des, scope, nex_map, asig);
       if (!flag) {
-	    delete asig;
-	    DEBUG_SYNTH2_EXIT("NetCondit",false)
 	    return false;
       }
 
-      NetNet*bsig = new NetNet(scope, scope->local_symbol(),
-			       NetNet::WIRE, nex_map->pin_count());
-      bsig->local_flag(true);
-
+      NetBus bsig(scope, 1);
       flag = else_->synth_async(des, scope, nex_map, bsig);
       if (!flag) {
-	    delete asig;
-	    delete bsig;
-	    DEBUG_SYNTH2_EXIT("NetCondit",false)
 	    return false;
       }
 
       NetMux*mux = new NetMux(scope, scope->local_symbol(),
-			      nex_out->vector_width(), 2, 1);
+			      mux_width, 2, 1);
+
 
       connect(mux->pin_Sel(),   ssig->pin(0));
-      connect(mux->pin_Data(1), asig->pin(0));
-      connect(mux->pin_Data(0), bsig->pin(0));
-      connect(nex_out->pin(0), mux->pin_Result());
+      connect(mux->pin_Data(1), asig.pin(0));
+      connect(mux->pin_Data(0), bsig.pin(0));
+
+	// For now, only support nex_out with 1 item.
+      ivl_assert(*this, nex_out.pin_count()==1);
+      connect(nex_out.pin(0), mux->pin_Result());
 
       des->add_node(mux);
 
-      DEBUG_SYNTH2_EXIT("NetCondit",true)
       return true;
-
-#endif
 }
 
 bool NetEvWait::synth_async(Design*des, NetScope*scope,
