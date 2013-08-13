@@ -57,7 +57,7 @@ clean:
 distclean: clean
 	rm -f Makefile config.log
 
-cppcheck: $(O:.o=.c)
+cppcheck: $(O:.o=.cc)
 	cppcheck --enable=all -f $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status
