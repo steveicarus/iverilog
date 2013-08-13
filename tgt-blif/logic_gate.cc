@@ -21,26 +21,37 @@
 # include  "nex_data.h"
 # include  <cassert>
 
+static int do_print_logic_gate(FILE*fd, ivl_net_logic_t net, unsigned bit);
+
 int print_logic_gate(FILE*fd, ivl_net_logic_t net)
 {
       int rc = 0;
+      for (unsigned idx = 0 ; idx < ivl_logic_width(net) ; idx += 1) {
+	    rc += do_print_logic_gate(fd, net, idx);
+	    if (rc != 0)
+		  break;
+      }
 
-	// Do not handle logic gate widths.
-      assert(ivl_logic_width(net) == 1);
+      return rc;
+}
+
+static int do_print_logic_gate(FILE*fd, ivl_net_logic_t net, unsigned bit)
+{
+      int rc = 0;
 
       ivl_nexus_t nex_out = ivl_logic_pin(net,0);
       blif_nex_data_t*ned_out = blif_nex_data_t::get_nex_data(nex_out);
 
-      assert(ned_out->get_width() == 1);
+      assert(ned_out->get_width() > bit);
 
       fprintf(fd, ".names");
       for (unsigned idx = 1 ; idx < ivl_logic_pins(net) ; idx += 1) {
 	    ivl_nexus_t nex = ivl_logic_pin(net,idx);
 	    blif_nex_data_t*ned = blif_nex_data_t::get_nex_data(nex);
-	    fprintf(fd, " %s", ned->get_name());
+	    fprintf(fd, " %s%s", ned->get_name(), ned->get_name_index(bit));
       }
 
-      fprintf(fd, " %s", ned_out->get_name());
+      fprintf(fd, " %s%s", ned_out->get_name(), ned_out->get_name_index(bit));
       fprintf(fd, "\n");
 
       switch (ivl_logic_type(net)) {
