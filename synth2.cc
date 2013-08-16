@@ -257,37 +257,63 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
       NetNet*ssig = expr_->synthesize(des, scope, expr_);
       assert(ssig);
 
-	// Calculate the vector width of the result.
-      unsigned mux_width = 0;
-      for (unsigned idx = 0 ;  idx < nex_out.pin_count() ;  idx += 1)
-	    mux_width += nex_out.pin(idx).nexus()->vector_width();
-
       bool flag;
-      NetBus asig(scope, 1);
+      NetBus asig(scope, nex_out.pin_count());
       flag = if_->synth_async(des, scope, nex_map, asig);
       if (!flag) {
 	    return false;
       }
 
-      NetBus bsig(scope, 1);
+      NetBus bsig(scope, nex_out.pin_count());
       flag = else_->synth_async(des, scope, nex_map, bsig);
       if (!flag) {
 	    return false;
       }
 
-      NetMux*mux = new NetMux(scope, scope->local_symbol(),
-			      mux_width, 2, 1);
+      ivl_assert(*this, nex_out.pin_count()==asig.pin_count());
+      ivl_assert(*this, nex_out.pin_count()==bsig.pin_count());
 
+	// For now, only support LOGIC types here.
+      ivl_variable_type_t mux_data_type = IVL_VT_LOGIC;
 
-      connect(mux->pin_Sel(),   ssig->pin(0));
-      connect(mux->pin_Data(1), asig.pin(0));
-      connect(mux->pin_Data(0), bsig.pin(0));
+      for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
+	    unsigned mux_width = asig.pin(idx).nexus()->vector_width();
+	    ivl_assert(*this, mux_width != 0);
+	    ivl_assert(*this, mux_width==bsig.pin(idx).nexus()->vector_width());
 
-	// For now, only support nex_out with 1 item.
-      ivl_assert(*this, nex_out.pin_count()==1);
-      connect(nex_out.pin(0), mux->pin_Result());
+	    NetMux*mux = new NetMux(scope, scope->local_symbol(),
+				    mux_width, 2, 1);
 
-      des->add_node(mux);
+	    list<netrange_t>not_an_array;
+	    netvector_t*tmp_type;
+	    if (mux_width==1)
+		  tmp_type = new netvector_t(mux_data_type);
+	    else
+		  tmp_type = new netvector_t(mux_data_type, mux_width-1,0);
+
+	      // Bind some temporary signals to carry pin type.
+	    NetNet*atmp = new NetNet(scope, scope->local_symbol(),
+				     NetNet::WIRE, not_an_array, tmp_type);
+	    atmp->local_flag(true);
+	    connect(asig.pin(idx),atmp->pin(0));
+
+	    NetNet*btmp = new NetNet(scope, scope->local_symbol(),
+				     NetNet::WIRE, not_an_array, tmp_type);
+	    btmp->local_flag(true);
+	    connect(bsig.pin(idx),btmp->pin(0));
+
+	    NetNet*otmp = new NetNet(scope, scope->local_symbol(),
+				     NetNet::WIRE, not_an_array, tmp_type);
+	    otmp->local_flag(true);
+	    connect(nex_out.pin(idx),otmp->pin(0));
+
+	    connect(mux->pin_Sel(),   ssig->pin(0));
+	    connect(mux->pin_Data(1), asig.pin(idx));
+	    connect(mux->pin_Data(0), bsig.pin(idx));
+	    connect(nex_out.pin(idx), mux->pin_Result());
+
+	    des->add_node(mux);
+      }
 
       return true;
 }
