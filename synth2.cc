@@ -194,6 +194,14 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 
       unsigned mux_size = max_guard_value + 1;
 
+	// If the sel_width can select more then just the explicit
+	// guard values, and there is a default statement, then adjust
+	// the mux size to allow for the implicit selections.
+      if (statement_default && ((1<<sel_width) > mux_size)) {
+	    mux_size = 1<<sel_width;
+      }
+
+
       NetMux*mux = new NetMux(scope, scope->local_symbol(),
 			      mux_width, mux_size, sel_width);
       des->add_node(mux);
@@ -208,13 +216,29 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	/* For now, only support logic types. */
       ivl_variable_type_t mux_data_type = IVL_VT_LOGIC;
 
-	/* Forgot to support default statements? */
-      assert(statement_default == 0);
+
+	/* If there is a default clause, synthesize is once and we'll
+	   link it in wherever it is needed. */
+      NetNet*default_sig = 0;
+      if (statement_default) {
+	    netvector_t*isig_vec = new netvector_t(mux_data_type, mux_width-1, 0);
+	    default_sig = new NetNet(scope, scope->local_symbol(),
+				     NetNet::TRI, isig_vec);
+	    default_sig->local_flag(true);
+
+	    NetBus tmp (scope, 1);
+	    connect(tmp.pin(0), default_sig->pin(0));
+	    statement_default->synth_async(des, scope, tmp, tmp);
+      }
 
       NetNet*isig;
       for (unsigned idx = 0 ;  idx < mux_size ;  idx += 1) {
 
 	    NetProc*stmt = statement_map[idx];
+	    if (stmt==0 && default_sig!=0) {
+		  connect(mux->pin_Data(idx), default_sig->pin(0));
+		  continue;
+	    }
 	    if (stmt == 0) {
 		  cerr << get_fileline() << ": error: case " << idx
 		       << " is not accounted for in asynchronous mux." << endl;
