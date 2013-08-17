@@ -1185,7 +1185,9 @@ static void show_nexus_details(ivl_signal_t net, ivl_nexus_t nex)
 		  }
 
 		  if (ivl_signal_data_type(sig) != ivl_signal_data_type(net)) {
-			fprintf(out, " (ERROR: data type mismatch)");
+			fprintf(out, " (ERROR: data type mismatch : %s vs. %s)",
+				data_type_string(ivl_signal_data_type(sig)),
+				data_type_string(ivl_signal_data_type(net)));
 			stub_errors += 1;
 		  }
 

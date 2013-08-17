@@ -197,7 +197,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	// If the sel_width can select more then just the explicit
 	// guard values, and there is a default statement, then adjust
 	// the mux size to allow for the implicit selections.
-      if (statement_default && ((1<<sel_width) > mux_size)) {
+      if (statement_default && ((1U<<sel_width) > mux_size)) {
 	    mux_size = 1<<sel_width;
       }
 
@@ -213,25 +213,23 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       assert(nex_out.pin_count() == 1);
       connect(mux->pin_Result(), nex_out.pin(0));
 
-	/* For now, only support logic types. */
-      ivl_variable_type_t mux_data_type = IVL_VT_LOGIC;
-
+	/* Make sure the output is already connected to a net. */
+      ivl_assert(*this, mux->pin_Result().nexus()->pick_any_net());
 
 	/* If there is a default clause, synthesize is once and we'll
 	   link it in wherever it is needed. */
       NetNet*default_sig = 0;
       if (statement_default) {
-	    netvector_t*isig_vec = new netvector_t(mux_data_type, mux_width-1, 0);
-	    default_sig = new NetNet(scope, scope->local_symbol(),
-				     NetNet::TRI, isig_vec);
-	    default_sig->local_flag(true);
 
 	    NetBus tmp (scope, 1);
-	    connect(tmp.pin(0), default_sig->pin(0));
 	    statement_default->synth_async(des, scope, tmp, tmp);
+
+	      // Get the signal from the synthesized statement. This
+	      // will be hooked to all the default cases.
+	    default_sig = tmp.pin(0).nexus()->pick_any_net();
+	    ivl_assert(*this, default_sig);
       }
 
-      NetNet*isig;
       for (unsigned idx = 0 ;  idx < mux_size ;  idx += 1) {
 
 	    NetProc*stmt = statement_map[idx];
@@ -246,16 +244,11 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 		  continue;
 	    }
 
-	    netvector_t*isig_vec = new netvector_t(mux_data_type, mux_width-1, 0);
-	    isig = new NetNet(scope, scope->local_symbol(),
-			      NetNet::TRI, isig_vec);
-	    isig->local_flag(true);
-
-	    connect(mux->pin_Data(idx), isig->pin(0));
-
 	    NetBus tmp (scope, 1);
-	    connect(tmp.pin(0), isig->pin(0));
 	    stmt->synth_async(des, scope, tmp, tmp);
+
+	    connect(mux->pin_Data(idx), tmp.pin(0));
+	    ivl_assert(*this, mux->pin_Data(idx).nexus()->pick_any_net());
       }
 
       return true;
@@ -297,10 +290,14 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
       ivl_assert(*this, nex_out.pin_count()==asig.pin_count());
       ivl_assert(*this, nex_out.pin_count()==bsig.pin_count());
 
-	// For now, only support LOGIC types here.
-      ivl_variable_type_t mux_data_type = IVL_VT_LOGIC;
-
       for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
+	    ivl_assert(*this, asig.pin(idx).nexus()->pick_any_net());
+	    ivl_assert(*this, bsig.pin(idx).nexus()->pick_any_net());
+	      // Guess the mux type from the type of the output.
+	    ivl_variable_type_t mux_data_type = IVL_VT_LOGIC;
+	    if (NetNet*tmp = nex_out.pin(idx).nexus()->pick_any_net()) {
+		  mux_data_type = tmp->data_type();
+	    }
 	    unsigned mux_width = asig.pin(idx).nexus()->vector_width();
 	    ivl_assert(*this, mux_width != 0);
 	    ivl_assert(*this, mux_width==bsig.pin(idx).nexus()->vector_width());
@@ -316,16 +313,6 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		  tmp_type = new netvector_t(mux_data_type, mux_width-1,0);
 
 	      // Bind some temporary signals to carry pin type.
-	    NetNet*atmp = new NetNet(scope, scope->local_symbol(),
-				     NetNet::WIRE, not_an_array, tmp_type);
-	    atmp->local_flag(true);
-	    connect(asig.pin(idx),atmp->pin(0));
-
-	    NetNet*btmp = new NetNet(scope, scope->local_symbol(),
-				     NetNet::WIRE, not_an_array, tmp_type);
-	    btmp->local_flag(true);
-	    connect(bsig.pin(idx),btmp->pin(0));
-
 	    NetNet*otmp = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, not_an_array, tmp_type);
 	    otmp->local_flag(true);
