@@ -44,6 +44,8 @@ static int print_lpm_mux_s1(FILE*fd, ivl_lpm_t net)
       ivl_nexus_t nex_d1 = ivl_lpm_data(net,1);
       blif_nex_data_t*ned_d1 = blif_nex_data_t::get_nex_data(nex_d1);
 
+      fprintf(fd, "# IVL_LPM_MUX ivl_lpm_width(net)=%u, Q=%s, D0=%s, D1=%s\n",
+	      ivl_lpm_width(net), ned_out->get_name(), ned_d0->get_name(), ned_d1->get_name());
       assert(ivl_lpm_width(net) == ned_out->get_width());
       assert(ivl_lpm_width(net) == ned_d0->get_width());
       assert(ivl_lpm_width(net) == ned_d1->get_width());
