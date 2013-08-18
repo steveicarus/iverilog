@@ -152,7 +152,7 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 }
 
 bool NetCase::synth_async(Design*des, NetScope*scope,
-			  const NetBus& /*nex_map*/, NetBus&nex_out)
+			  const NetBus&nex_map, NetBus&nex_out)
 {
 	/* Synthesize the select expression. */
       NetNet*esig = expr_->synthesize(des, scope, expr_);
@@ -163,6 +163,15 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       unsigned mux_width = 0;
       for (unsigned idx = 0 ;  idx < nex_out.pin_count() ;  idx += 1)
 	    mux_width += nex_out.pin(idx).nexus()->vector_width();
+
+      unsigned map_width = 0;
+      for (unsigned idx = 0 ; idx < nex_map.pin_count() ; idx += 1)
+	    map_width += nex_map.pin(idx).nexus()->vector_width();
+
+	/* Calculate the mux width from the map, the mex_map values
+	   are from the top level and are more reliable. */
+      if (map_width > mux_width)
+	    mux_width = map_width;
 
 	/* Collect all the statements into a map of index to
 	   statement. The guard expression it evaluated to be the
@@ -214,7 +223,15 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       connect(mux->pin_Result(), nex_out.pin(0));
 
 	/* Make sure the output is already connected to a net. */
-      ivl_assert(*this, mux->pin_Result().nexus()->pick_any_net());
+      if (mux->pin_Result().nexus()->pick_any_net() == 0) {
+	    ivl_variable_type_t mux_data_type = IVL_VT_LOGIC;
+	    netvector_t*tmp_vec = new netvector_t(mux_data_type, mux_width-1, 0);
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::TRI, tmp_vec);
+	    tmp->local_flag(true);
+	    ivl_assert(*this, tmp->vector_width() != 0);
+	    connect(mux->pin_Result(), tmp->pin(0));
+      }
 
 	/* If there is a default clause, synthesize is once and we'll
 	   link it in wherever it is needed. */
