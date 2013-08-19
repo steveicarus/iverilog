@@ -88,6 +88,9 @@ int print_lpm(FILE*fd, ivl_lpm_t net)
 	  case IVL_LPM_CMP_NEE:
 	    rc += print_lpm_cmp_ne(fd, net);
 	    break;
+	  case IVL_LPM_FF:
+	    rc += print_lpm_ff(fd, net);
+	    break;
 	  case IVL_LPM_MUX:
 	    rc += print_lpm_mux(fd, net);
 	    break;
