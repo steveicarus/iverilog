@@ -26,6 +26,7 @@
 # include  "compiler.h"
 # include  "ivl_assert.h"
 
+using namespace std;
 
 bool NetProc::synth_async(Design*, NetScope*, const NetBus&, NetBus&)
 {
@@ -34,9 +35,9 @@ bool NetProc::synth_async(Design*, NetScope*, const NetBus&, NetBus&)
 
 bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF* /*ff*/,
 			 const NetBus&nex_map, NetBus&nex_out,
-			 const svector<NetEvProbe*>&events)
+			 const vector<NetEvProbe*>&events)
 {
-      if (events.count() > 0) {
+      if (events.size() > 0) {
 	    cerr << get_fileline() << ": error: Events are unaccounted"
 		 << " for in process synthesis." << endl;
 	    des->errors += 1;
@@ -396,7 +397,7 @@ bool NetProcTop::synth_async(Design*des)
  */
 bool NetBlock::synth_sync(Design*des, NetScope* /*scope*/, NetFF* /*ff*/,
 			   const NetBus& /*nex_map*/, NetBus& /*nex_out*/,
-			   const svector<NetEvProbe*>& /*events_in*/)
+			   const vector<NetEvProbe*>& /*events_in*/)
 {
       if (last_ == 0) {
 	    return true;
@@ -561,7 +562,7 @@ bool NetBlock::synth_sync(Design*des, NetScope* /*scope*/, NetFF* /*ff*/,
  */
 bool NetCondit::synth_sync(Design*des, NetScope* /*scope*/, NetFF* /*ff*/,
 			   const NetBus& /*nex_map*/, NetBus& /*nex_out*/,
-			   const svector<NetEvProbe*>& /*events_in*/)
+			   const vector<NetEvProbe*>& /*events_in*/)
 {
       cerr << get_fileline() << ": sorry: "
 	   << "Forgot to implement NetCondit::synth_sync" << endl;
@@ -776,15 +777,15 @@ bool NetCondit::synth_sync(Design*des, NetScope* /*scope*/, NetFF* /*ff*/,
 
 bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			   const NetBus&nex_map, NetBus&nex_out,
-			   const svector<NetEvProbe*>&events_in)
+			   const vector<NetEvProbe*>&events_in)
 {
-      if (events_in.count() > 0) {
+      if (events_in.size() > 0) {
 	    cerr << get_fileline() << ": error: Events are unaccounted"
 		 << " for in process synthesis." << endl;
 	    des->errors += 1;
       }
 
-      assert(events_in.count() == 0);
+      assert(events_in.size() == 0);
 
 	/* This can't be other than one unless there are named events,
 	   which I cannot synthesize. */
@@ -792,7 +793,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       NetEvent*ev = events_[0];
 
       assert(ev->nprobe() >= 1);
-      svector<NetEvProbe*>events (ev->nprobe() - 1);
+      vector<NetEvProbe*>events (ev->nprobe() - 1);
 
 	/* Get the input set from the substatement. This will be used
 	   to figure out which of the probes is the clock. */
@@ -899,7 +900,7 @@ bool NetProcTop::synth_sync(Design*des)
 	/* Synthesize the input to the DFF. */
       bool flag = statement_->synth_sync(des, scope(), ff,
 					 nex_q, nex_d,
-					 svector<NetEvProbe*>());
+					 vector<NetEvProbe*>());
       if (! flag) {
 	    delete ff;
 	    return false;

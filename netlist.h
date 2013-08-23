@@ -43,7 +43,6 @@
 # include  "StringHeap.h"
 # include  "HName.h"
 # include  "LineInfo.h"
-# include  "svector.h"
 # include  "Attrib.h"
 # include  "PUdp.h"
 
@@ -2395,7 +2394,7 @@ class NetProc : public virtual LineInfo {
 
       virtual bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			      const NetBus&nex_map, NetBus&nex_out,
-			      const svector<NetEvProbe*>&events);
+			      const std::vector<NetEvProbe*>&events);
 
       virtual void dump(ostream&, unsigned ind) const;
 
@@ -2653,7 +2652,7 @@ class NetBlock  : public NetProc {
 
       bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		      const NetBus&nex_map, NetBus&nex_out,
-		      const svector<NetEvProbe*>&events);
+		      const std::vector<NetEvProbe*>&events);
 
 	// This version of emit_recurse scans all the statements of
 	// the begin-end block sequentially. It is typically of use
@@ -2784,7 +2783,7 @@ class NetCondit  : public NetProc {
 
       bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
 		      const NetBus&nex_map, NetBus&nex_out,
-		      const svector<NetEvProbe*>&events);
+		      const std::vector<NetEvProbe*>&events);
 
       virtual bool emit_proc(struct target_t*) const;
       virtual int match_proc(struct proc_match_t*);
@@ -3030,7 +3029,7 @@ class NetEvWait  : public NetProc {
 
       virtual bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
 			      const NetBus&nex_map, NetBus&nex_out,
-			      const svector<NetEvProbe*>&events);
+			      const std::vector<NetEvProbe*>&events);
 
       virtual void dump(ostream&, unsigned ind) const;
 	// This will ignore any statement.
