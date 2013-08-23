@@ -2162,13 +2162,13 @@ static bool do_disable(vthread_t thr, vthread_t match)
 	    vthread_reap(tmp);
       }
 
-      if (thr->parent && thr->parent->i_am_joining) {
+      vthread_t parent = thr->parent;
+      if (parent && parent->i_am_joining) {
 	      // If a parent is waiting in a %join, wake it up. Note
 	      // that it is possible to be waiting in a %join yet
 	      // already scheduled if multiple child threads are
 	      // ending. So check if the thread is already scheduled
 	      // before scheduling it again.
-	    vthread_t parent = thr->parent;
 	    parent->i_am_joining = 0;
 	    if (! parent->i_have_ended)
 		  schedule_vthread(parent, 0, true);
@@ -2176,7 +2176,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
 	      // Let the parent do the reaping.
 	    vthread_reap(thr);
 
-      } else if (thr->parent) {
+      } else if (parent) {
 	      /* If the parent is yet to %join me, let its %join
 		 do the reaping. */
 	      //assert(tmp->is_scheduled == 0);
