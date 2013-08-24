@@ -33,7 +33,7 @@ bool NetProc::synth_async(Design*, NetScope*, const NetBus&, NetBus&)
       return false;
 }
 
-bool NetProc::synth_sync(Design*des, NetScope*scope, NetFF* /*ff*/,
+bool NetProc::synth_sync(Design*des, NetScope*scope, NetNet* /* clock */,
 			 const NetBus&nex_map, NetBus&nex_out,
 			 const vector<NetEvProbe*>&events)
 {
@@ -138,11 +138,7 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 		 to the tmp_map.pin(idx) pin, and link that to the
 		 tmp_out.pin(idx) output link. */
 	    for (unsigned idx = 0 ;  idx < tmp_out.pin_count() ;  idx += 1) {
-		  unsigned ptr = 0;
-		  while (ptr < nex_map.pin_count()
-			 && ! nex_map.pin(ptr).is_linked(tmp_map.pin(idx)))
-			ptr += 1;
-
+		  unsigned ptr = nex_map.find_link(tmp_map.pin(idx));
 		  assert(ptr < nex_out.pin_count());
 		  connect(nex_out.pin(ptr), tmp_out.pin(idx));
 	    }
@@ -395,29 +391,11 @@ bool NetProcTop::synth_async(Design*des)
  * This needs to be split into a DFF bank for each statement, because
  * the statements may each infer different reset and enable signals.
  */
-bool NetBlock::synth_sync(Design*des, NetScope* /*scope*/, NetFF* /*ff*/,
-			   const NetBus& /*nex_map*/, NetBus& /*nex_out*/,
-			   const vector<NetEvProbe*>& /*events_in*/)
+bool NetBlock::synth_sync(Design*des, NetScope*scope, NetNet*clk,
+			   const NetBus&nex_map, NetBus&nex_out,
+			   const vector<NetEvProbe*>&events_in)
 {
-      if (last_ == 0) {
-	    return true;
-      }
-      cerr << get_fileline() << ": sorry: "
-	   << "Forgot to implement NetBlock::synth_sync" << endl;
-      des->errors += 1;
-      return false;
-
-#if 0
       bool flag = true;
-
-      const perm_string tmp1 = perm_string::literal("tmp1");
-      const perm_string tmp2 = perm_string::literal("tmp2");
-
-	/* Keep an accounting of which statement accounts for which
-	   bit slice of the FF bank. This is used for error checking. */
-      NetProc**pin_accounting = new NetProc* [ff->pin_count()];
-      for (unsigned idx = 0 ;  idx < ff->pin_count() ;  idx += 1)
-	    pin_accounting[idx] = 0;
 
       NetProc*cur = last_;
       do {
@@ -426,10 +404,9 @@ bool NetBlock::synth_sync(Design*des, NetScope* /*scope*/, NetFF* /*ff*/,
 	      /* Create a temporary nex_map for the substatement. */
 	    NexusSet tmp_set;
 	    cur->nex_output(tmp_set);
-	    NetNet*tmp_map = new NetNet(scope, tmp1, NetNet::WIRE,
-					tmp_set.count());
-	    for (unsigned idx = 0 ;  idx < tmp_map->pin_count() ;  idx += 1)
-		  connect(tmp_set[idx], tmp_map->pin(idx));
+	    NetBus tmp_map (scope, tmp_set.count());
+	    for (unsigned idx = 0 ;  idx < tmp_map.pin_count() ;  idx += 1)
+		  connect(tmp_set[idx], tmp_map.pin(idx));
 
 	      /* NOTE: After this point, tmp_set should not be used as
 		 the various functions I call do a lot of connecting,
@@ -440,85 +417,13 @@ bool NetBlock::synth_sync(Design*des, NetScope* /*scope*/, NetFF* /*ff*/,
 		 output. The tmp1 and tmp2 map and out sets together
 		 are used to collect the outputs from the substatement
 		 for the inputs of the FF bank. */
-	    NetNet*tmp_out = new NetNet(scope, tmp2, NetNet::WIRE,
-					tmp_map->pin_count());
-
-	    verinum tmp_aset = ff->aset_value();
-	    verinum tmp_sset = ff->sset_value();
-
-	      /* Create a new DFF to handle this part of the begin-end
-		 block. Connect this NetFF to the associated pins of
-		 the existing wide NetFF device. While I'm at it, also
-		 copy the aset_value bits for the new ff device. */
-	    NetFF*ff2 = new NetFF(scope, scope->local_symbol(),
-				  tmp_out->pin_count());
-	    des->add_node(ff2);
-
-	    verinum aset_value2 (verinum::V1, ff2->width());
-	    verinum sset_value2 (verinum::V1, ff2->width());
-	    for (unsigned idx = 0 ;  idx < ff2->width() ;  idx += 1) {
-		  unsigned ptr = find_nexus_in_set(nex_map,
-						   tmp_map->pin(idx).nexus());
-
-		    /* Connect Data and Q bits to the new FF. */
-		  connect(ff->pin_Data(ptr), ff2->pin_Data(idx));
-		  connect(ff->pin_Q(ptr), ff2->pin_Q(idx));
-
-		    /* Copy the asynch set bit to the new device. */
-		  if (ptr < tmp_aset.len())
-			aset_value2.set(idx, tmp_aset[ptr]);
-
-		    /* Copy the synch set bit to the new device. */
-		  if (ptr < tmp_sset.len())
-			sset_value2.set(idx, tmp_sset[ptr]);
-
-		  if (pin_accounting[ptr] != 0) {
-			cerr << cur->get_line() << ": error: "
-			     << "Synchronous output conflicts with "
-			     << pin_accounting[ptr]->get_line()
-			     << "." << endl;
-			flag = false;
-
-		  } else {
-			pin_accounting[ptr] = cur;
-		  }
-	    }
-
-	    if (ff->pin_Aclr().is_linked())
-		  connect(ff->pin_Aclr(),  ff2->pin_Aclr());
-	    if (ff->pin_Aset().is_linked())
-		  connect(ff->pin_Aset(),  ff2->pin_Aset());
-	    if (ff->pin_Sclr().is_linked())
-		  connect(ff->pin_Sclr(),  ff2->pin_Sclr());
-	    if (ff->pin_Sset().is_linked())
-		  connect(ff->pin_Sset(),  ff2->pin_Sset());
-	    if (ff->pin_Clock().is_linked())
-		  connect(ff->pin_Clock(), ff2->pin_Clock());
-	    if (ff->pin_Enable().is_linked())
-		  connect(ff->pin_Enable(),ff2->pin_Enable());
-
-	      /* Remember to store the aset value into the new FF. If
-		 this leads to an Aset value of 0 (and Aclr is not
-		 otherwise used) then move the Aset input to Aclr. */
-	    if (tmp_aset.len() == ff->width()) {
-
-		  if (aset_value2.is_zero()
-		      && ff2->pin_Aset().is_linked()
-		      && !ff2->pin_Aclr().is_linked()) {
-
-			connect(ff2->pin_Aclr(), ff2->pin_Aset());
-			ff2->pin_Aset().unlink();
-
-		  } else {
-			ff2->aset_value(aset_value2);
-		  }
-	    }
+	    NetBus tmp_out (scope, tmp_set.count());
 
 	      /* Now go on with the synchronous synthesis for this
 		 subset of the statement. The tmp_map is the output
 		 nexa that we expect, and the tmp_out is where we want
 		 those outputs connected. */
-	    bool ok_flag = cur->synth_sync(des, scope, ff2, tmp_map,
+	    bool ok_flag = cur->synth_sync(des, scope, clk, tmp_map,
 					   tmp_out, events_in);
 	    flag = flag && ok_flag;
 
@@ -530,28 +435,15 @@ bool NetBlock::synth_sync(Design*des, NetScope* /*scope*/, NetFF* /*ff*/,
 		 whole. It is occasionally possible to have outputs
 		 beyond the input set, for example when the l-value of
 		 an assignment is smaller than the r-value. */
-	    for (unsigned idx = 0 ;  idx < tmp_out->pin_count() ; idx += 1) {
-		  unsigned ptr = find_nexus_in_set(nex_map,
-						   tmp_map->pin(idx).nexus());
-
-		  if (ptr < nex_out->pin_count())
-			connect(nex_out->pin(ptr), tmp_out->pin(idx));
+	    for (unsigned idx = 0 ;  idx < tmp_out.pin_count() ; idx += 1) {
+		  unsigned ptr = nex_map.find_link(tmp_map.pin(idx));
+		  assert(ptr < nex_out.pin_count());
+		  connect(nex_out.pin(ptr), tmp_out.pin(idx));
 	    }
-
-	    delete tmp_map;
-	    delete tmp_out;
 
       } while (cur != last_);
 
-      delete[]pin_accounting;
-
-	/* Done. The large NetFF is no longer needed, as it has been
-	   taken up by the smaller NetFF devices. */
-      delete ff;
-
       return flag;
-
-#endif
 }
 
 /*
@@ -560,7 +452,7 @@ bool NetBlock::synth_sync(Design*des, NetScope* /*scope*/, NetFF* /*ff*/,
  * asynchronous set/reset, depending on whether the pin of the
  * expression is connected to an event, or not.
  */
-bool NetCondit::synth_sync(Design*des, NetScope* /*scope*/, NetFF* /*ff*/,
+bool NetCondit::synth_sync(Design*des, NetScope* /*scope*/, NetNet* /*clk*/,
 			   const NetBus& /*nex_map*/, NetBus& /*nex_out*/,
 			   const vector<NetEvProbe*>& /*events_in*/)
 {
@@ -775,7 +667,7 @@ bool NetCondit::synth_sync(Design*des, NetScope* /*scope*/, NetFF* /*ff*/,
 #endif
 }
 
-bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
+bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetNet*clk,
 			   const NetBus&nex_map, NetBus&nex_out,
 			   const vector<NetEvProbe*>&events_in)
 {
@@ -833,10 +725,10 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
 	    return false;
       }
 
-      connect(ff->pin_Clock(), pclk->pin(0));
+      connect(clk->pin(0), pclk->pin(0));
       if (pclk->edge() == NetEvProbe::NEGEDGE) {
 	    perm_string polarity = perm_string::literal("Clock:LPM_Polarity");
-	    ff->attribute(polarity, verinum("INVERT"));
+	    clk->attribute(polarity, verinum("INVERT"));
 
 	    if (debug_synth2) {
 		  cerr << get_fileline() << ": debug: "
@@ -846,7 +738,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope, NetFF*ff,
       }
 
 	/* Synthesize the input to the DFF. */
-      bool flag = statement_->synth_sync(des, scope, ff,
+      bool flag = statement_->synth_sync(des, scope, clk,
 					 nex_map, nex_out, events);
 
       return flag;
@@ -872,17 +764,10 @@ bool NetProcTop::synth_sync(Design*des)
 	   set, and will also take the initial connection of clocks
 	   and resets. */
 
-      if (debug_synth2) {
-	    cerr << get_fileline() << ": debug: "
-		 << "Top level making a "
-		 << nex_set[0]->vector_width() << "-wide "
-		 << "NetFF device." << endl;
-      }
-
-      NetFF*ff = new NetFF(scope(), scope()->local_symbol(),
-			   nex_set[0]->vector_width());
-      des->add_node(ff);
-      ff->attribute(perm_string::literal("LPM_FFType"), verinum("DFF"));
+	// Create a net to carry the clock for the synthesized FFs.
+      NetNet*clock = new NetNet(scope(), scope()->local_symbol(),
+				NetNet::TRI, &netvector_t::scalar_logic);
+      clock->local_flag(true);
 
       NetBus nex_d (scope(), nex_set.count());
       NetBus nex_q (scope(), nex_set.count());
@@ -898,28 +783,28 @@ bool NetProcTop::synth_sync(Design*des)
 	// Connect the input later.
 
 	/* Synthesize the input to the DFF. */
-      bool flag = statement_->synth_sync(des, scope(), ff,
+      bool flag = statement_->synth_sync(des, scope(), clock,
 					 nex_q, nex_d,
 					 vector<NetEvProbe*>());
       if (! flag) {
-	    delete ff;
+	    delete clock;
 	    return false;
       }
 
+      for (unsigned idx = 0 ;  idx < nex_set.count() ;  idx += 1) {
 
-      NetNet*tmp = nex_d.pin(0).nexus()->pick_any_net();
-      assert(tmp);
+	    if (debug_synth2) {
+		  cerr << get_fileline() << ": debug: "
+		       << "Top level making a "
+		       << nex_set[idx]->vector_width() << "-wide "
+		       << "NetFF device." << endl;
+	    }
 
-      tmp = crop_to_width(des, tmp, ff->width());
-      connect(tmp->pin(0), ff->pin_Data());
-      connect(nex_q.pin(0), ff->pin_Q());
-
-      for (unsigned idx = 1 ;  idx < nex_set.count() ;  idx += 1) {
 	    NetFF*ff2 = new NetFF(scope(), scope()->local_symbol(),
 				  nex_set[idx]->vector_width());
 	    des->add_node(ff2);
 
-	    tmp = nex_d.pin(idx).nexus()->pick_any_net();
+	    NetNet*tmp = nex_d.pin(idx).nexus()->pick_any_net();
 	    assert(tmp);
 
 	    tmp = crop_to_width(des, tmp, ff2->width());
@@ -927,7 +812,8 @@ bool NetProcTop::synth_sync(Design*des)
 	    connect(nex_q.pin(idx), ff2->pin_Q());
 	    connect(tmp->pin(0),    ff2->pin_Data());
 
-	    connect(ff->pin_Clock(), ff2->pin_Clock());
+	    connect(clock->pin(0), ff2->pin_Clock());
+#if 0
 	    if (ff->pin_Enable().is_linked())
 		  connect(ff->pin_Enable(), ff2->pin_Enable());
 	    if (ff->pin_Aset().is_linked())
@@ -938,6 +824,7 @@ bool NetProcTop::synth_sync(Design*des)
 		  connect(ff->pin_Sset(), ff2->pin_Sset());
 	    if (ff->pin_Sclr().is_linked())
 		  connect(ff->pin_Sclr(), ff2->pin_Sclr());
+#endif
       }
 
       return true;

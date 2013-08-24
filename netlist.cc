@@ -288,6 +288,19 @@ NetBus::~NetBus()
 {
 }
 
+unsigned NetBus::find_link(const Link&that) const
+{
+      unsigned ptr = 0;
+
+      while (ptr < pin_count()) {
+	    if (pin(ptr).is_linked(that))
+		  return ptr;
+
+	    ptr += 1;
+      }
+      return ptr;
+}
+
 NetDelaySrc::NetDelaySrc(NetScope*s, perm_string n, unsigned npins,
                          bool condit_src, bool conditional)
 : NetObj(s, n, npins + (condit_src?1:0))

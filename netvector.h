@@ -75,6 +75,8 @@ class netvector_t : public ivl_type_s {
       static netvector_t atom2u16;
       static netvector_t atom2s8;
       static netvector_t atom2u8;
+      static netvector_t scalar_bool;
+      static netvector_t scalar_logic;
 
     private:
       std::vector<netrange_t> packed_dims_;

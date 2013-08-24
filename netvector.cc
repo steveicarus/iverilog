@@ -30,6 +30,9 @@ netvector_t netvector_t::atom2u16 (IVL_VT_BOOL, 15, 0, false);
 netvector_t netvector_t::atom2s8  (IVL_VT_BOOL,  7, 0, true);
 netvector_t netvector_t::atom2u8  (IVL_VT_BOOL,  7, 0, false);
 
+//netvector_t netvector_t::scalar_bool (IVL_VT_BOOL);
+netvector_t netvector_t::scalar_logic (IVL_VT_LOGIC);
+
 netvector_t::netvector_t(ivl_variable_type_t type, long msb, long lsb, bool flag)
 : type_(type), signed_(flag), isint_(false), is_scalar_(false)
 {

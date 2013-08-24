@@ -449,6 +449,8 @@ class NetBus  : public NetObj {
       NetBus(NetScope*scope, unsigned pin_count);
       ~NetBus();
 
+      unsigned find_link(const Link&that) const;
+
     private: // not implemented
       NetBus(const NetBus&);
       NetBus& operator= (const NetBus&);
@@ -2392,7 +2394,20 @@ class NetProc : public virtual LineInfo {
       virtual bool synth_async(Design*des, NetScope*scope,
 			       const NetBus&nex_map, NetBus&nex_out);
 
-      virtual bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
+	// Synthesize as synchronous logic, and return true. That
+	// means binding the outputs to the data port of a FF, and the
+	// event inputs to a FF clock. Only some key NetProc sub-types
+	// that have specific meaning in synchronous statements. The
+	// remainder reduce to a call to synth_async that connects the
+	// output to the Data input of the FF.
+	//
+	// The events argument is filled in be the NetEvWait
+	// implementation of this method with the probes that it does
+	// not itself pick off as a clock. These events should be
+	// picked off by e.g. condit statements as set/reset inputs to
+	// the flipflop being generated.
+      virtual bool synth_sync(Design*des, NetScope*scope,
+			      NetNet*clock,
 			      const NetBus&nex_map, NetBus&nex_out,
 			      const std::vector<NetEvProbe*>&events);
 
@@ -2650,7 +2665,7 @@ class NetBlock  : public NetProc {
       bool synth_async(Design*des, NetScope*scope,
 		       const NetBus&nex_map, NetBus&nex_out);
 
-      bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
+      bool synth_sync(Design*des, NetScope*scope, NetNet*clock,
 		      const NetBus&nex_map, NetBus&nex_out,
 		      const std::vector<NetEvProbe*>&events);
 
@@ -2781,7 +2796,7 @@ class NetCondit  : public NetProc {
       bool synth_async(Design*des, NetScope*scope,
 		       const NetBus&nex_map, NetBus&nex_out);
 
-      bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
+      bool synth_sync(Design*des, NetScope*scope, NetNet*clock,
 		      const NetBus&nex_map, NetBus&nex_out,
 		      const std::vector<NetEvProbe*>&events);
 
@@ -3027,7 +3042,7 @@ class NetEvWait  : public NetProc {
       virtual bool synth_async(Design*des, NetScope*scope,
 			       const NetBus&nex_map, NetBus&nex_out);
 
-      virtual bool synth_sync(Design*des, NetScope*scope, NetFF*ff,
+      virtual bool synth_sync(Design*des, NetScope*scope, NetNet*clock,
 			      const NetBus&nex_map, NetBus&nex_out,
 			      const std::vector<NetEvProbe*>&events);
 
