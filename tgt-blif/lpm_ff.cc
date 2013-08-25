@@ -36,11 +36,9 @@ int print_lpm_ff(FILE*fd, ivl_lpm_t net)
       ivl_nexus_t nex_c = ivl_lpm_clk(net);
       blif_nex_data_t*ned_c = blif_nex_data_t::get_nex_data(nex_c);
 
-      if (ivl_lpm_enable(net)) {
-	    errors += 1;
-	    fprintf(stderr, "%s:%u: sorry: blif: Clock-Enable not implemented yet.\n",
-		    ivl_lpm_file(net), ivl_lpm_lineno(net));
-      }
+      ivl_nexus_t nex_ce = ivl_lpm_enable(net);
+      blif_nex_data_t*ned_ce = nex_ce? blif_nex_data_t::get_nex_data(nex_ce) : 0;
+
       if (ivl_lpm_async_clr(net)) {
 	    errors += 1;
 	    fprintf(stderr, "%s:%u: sorry: blif: Asynchronous clear not implemented yet\n",
@@ -53,14 +51,41 @@ int print_lpm_ff(FILE*fd, ivl_lpm_t net)
 		    ivl_lpm_file(net), ivl_lpm_lineno(net));
       }
 
-      fprintf(fd, "# IVL_LPM_FF: width=%u, Q=%s, D=%s, C=%s\n",
-	      ivl_lpm_width(net), ned_q->get_name(), ned_d->get_name(), ned_c->get_name());
+      fprintf(fd, "# IVL_LPM_FF: width=%u, Q=%s, D=%s, C=%s, CE=%s\n",
+	      ivl_lpm_width(net), ned_q->get_name(), ned_d->get_name(), ned_c->get_name(), ned_ce? ned_ce->get_name() : "N/A");
 
-      for (unsigned wid = 0 ; wid < ivl_lpm_width(net) ; wid += 1) {
-	    fprintf(fd, ".latch %s%s %s%s re %s%s 3\n",
-		    ned_d->get_name(), ned_d->get_name_index(wid),
-		    ned_q->get_name(), ned_q->get_name_index(wid),
-		    ned_c->get_name(), ned_c->get_name_index(0));
+      if (ned_ce) {
+	      // If there is a clock-enable, rewrite this in a form
+	      // that blif can accept. Transform this:
+	      //
+	      //   always @(posedge C) if (CE) Q <= D;
+	      //
+	      // to this:
+	      //
+	      //   always @(posedge C) Q <= CE? D : Q;
+	      //
+	      // In ASIC-land, this is probably OK.
+	    for (unsigned wid = 0 ; wid < ivl_lpm_width(net) ; wid += 1) {
+		  fprintf(fd, ".names %s%s %s%s %s%s %s%s/EN\n"
+			  "0-1 1\n"
+			  "11- 1\n",
+			  ned_ce->get_name(), ned_ce->get_name_index(0),
+			  ned_d ->get_name(), ned_d ->get_name_index(wid),
+			  ned_q ->get_name(), ned_q ->get_name_index(wid),
+			  ned_d ->get_name(), ned_d ->get_name_index(wid));
+	  
+		  fprintf(fd, ".latch %s%s/EN %s%s re %s%s 3\n",
+			  ned_d->get_name(), ned_d->get_name_index(wid),
+			  ned_q->get_name(), ned_q->get_name_index(wid),
+			  ned_c->get_name(), ned_c->get_name_index(0));
+	    }
+      } else {
+	    for (unsigned wid = 0 ; wid < ivl_lpm_width(net) ; wid += 1) {
+		  fprintf(fd, ".latch %s%s %s%s re %s%s 3\n",
+			  ned_d->get_name(), ned_d->get_name_index(wid),
+			  ned_q->get_name(), ned_q->get_name_index(wid),
+			  ned_c->get_name(), ned_c->get_name_index(0));
+	    }
       }
 
       return errors;
