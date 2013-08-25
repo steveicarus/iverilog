@@ -36,6 +36,11 @@ int print_lpm_ff(FILE*fd, ivl_lpm_t net)
       ivl_nexus_t nex_c = ivl_lpm_clk(net);
       blif_nex_data_t*ned_c = blif_nex_data_t::get_nex_data(nex_c);
 
+      if (ivl_lpm_enable(net)) {
+	    errors += 1;
+	    fprintf(stderr, "%s:%u: sorry: blif: Clock-Enable not implemented yet.\n",
+		    ivl_lpm_file(net), ivl_lpm_lineno(net));
+      }
       if (ivl_lpm_async_clr(net)) {
 	    errors += 1;
 	    fprintf(stderr, "%s:%u: sorry: blif: Asynchronous clear not implemented yet\n",

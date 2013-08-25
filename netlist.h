@@ -2407,7 +2407,7 @@ class NetProc : public virtual LineInfo {
 	// picked off by e.g. condit statements as set/reset inputs to
 	// the flipflop being generated.
       virtual bool synth_sync(Design*des, NetScope*scope,
-			      NetNet*clock,
+			      NetNet*ff_clock, NetNet*ff_ce,
 			      const NetBus&nex_map, NetBus&nex_out,
 			      const std::vector<NetEvProbe*>&events);
 
@@ -2665,7 +2665,8 @@ class NetBlock  : public NetProc {
       bool synth_async(Design*des, NetScope*scope,
 		       const NetBus&nex_map, NetBus&nex_out);
 
-      bool synth_sync(Design*des, NetScope*scope, NetNet*clock,
+      bool synth_sync(Design*des, NetScope*scope,
+		      NetNet*ff_clk, NetNet*ff_ce,
 		      const NetBus&nex_map, NetBus&nex_out,
 		      const std::vector<NetEvProbe*>&events);
 
@@ -2796,7 +2797,8 @@ class NetCondit  : public NetProc {
       bool synth_async(Design*des, NetScope*scope,
 		       const NetBus&nex_map, NetBus&nex_out);
 
-      bool synth_sync(Design*des, NetScope*scope, NetNet*clock,
+      bool synth_sync(Design*des, NetScope*scope,
+		      NetNet*ff_clk, NetNet*ff_ce,
 		      const NetBus&nex_map, NetBus&nex_out,
 		      const std::vector<NetEvProbe*>&events);
 
@@ -3042,7 +3044,8 @@ class NetEvWait  : public NetProc {
       virtual bool synth_async(Design*des, NetScope*scope,
 			       const NetBus&nex_map, NetBus&nex_out);
 
-      virtual bool synth_sync(Design*des, NetScope*scope, NetNet*clock,
+      virtual bool synth_sync(Design*des, NetScope*scope,
+			      NetNet*ff_clk, NetNet*ff_ce,
 			      const NetBus&nex_map, NetBus&nex_out,
 			      const std::vector<NetEvProbe*>&events);
 
