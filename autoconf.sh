@@ -11,3 +11,6 @@ autoconf -f
 
 echo "Precompiling lexor_keyword.gperf"
 gperf -o -i 7 -C -k 1-4,6,9,\$ -L ANSI-C -H keyword_hash -N check_identifier -t ./lexor_keyword.gperf > lexor_keyword.cc
+
+echo "Precompiling vhdlpp/lexor_keyword.gperf"
+(cd vhdlpp ; gperf -o -i 7 --ignore-case -C -k 1-4,6,9,\$ -L ANSI-C -H keyword_hash -N check_identifier -t ./lexor_keyword.gperf > lexor_keyword.cc )
