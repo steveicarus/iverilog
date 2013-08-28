@@ -1,6 +1,6 @@
 #norootforbuild
 #
-%define rev_date 20121218
+%define rev_date 20130827
 # Normally, the suff-ix is %nil, meaning the suffix is to not be used.
 # But if the builder wants to make a suffixed package, he may set this
 # to a value (i.e. -test) to cause suffixes to be put in all the right
