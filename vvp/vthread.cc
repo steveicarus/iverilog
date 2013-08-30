@@ -2717,17 +2717,20 @@ bool of_FORK(vthread_t thr, vvp_code_t cp)
 
 	/* If the child scope is not the same as the current scope,
 	   infer that this is a task or function call. */
-      if (cp->scope != thr->parent_scope)
+      switch (cp->scope->get_type_code()) {
+	  case vpiFunction:
 	    thr->task_func_children.insert(child);
-
-	/* If the new child was created to evaluate a function,
-	   run it immediately, then return to this thread. */
-      if (cp->scope->get_type_code() == vpiFunction) {
 	    child->is_scheduled = 1;
 	    vthread_run(child);
-            running_thread = thr;
-      } else {
+	    running_thread = thr;
+	    break;
+	  case vpiTask:
+	    thr->task_func_children.insert(child);
 	    schedule_vthread(child, 0, true);
+	    break;
+	  default:
+	    schedule_vthread(child, 0, true);
+	    break;
       }
 
       return true;

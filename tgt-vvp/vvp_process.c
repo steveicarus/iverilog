@@ -1388,17 +1388,9 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
       unsigned join_detach_count = 0;
       ivl_scope_t scope = ivl_stmt_block_scope(net);
       int is_named = (scope != 0);
-	/* This is TRUE if it is allowed to embed one of the threads
-	   into this thread. */
-      int is_embeddable = 1;
 
       unsigned out = transient_id++;
       unsigned id_base = transient_id;
-
-	/* Children are certainly not embeddable if they are going
-	   into a new scope. */
-      if (is_named)
-	    is_embeddable = 0;
 
       switch (ivl_statement_type(net)) {
 	  case IVL_ST_FORK:
@@ -1406,12 +1398,10 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 	  case IVL_ST_FORK_JOIN_ANY:
 	    if (join_count < 2)
 		  break;
-	    is_embeddable = 0;
 	    join_detach_count = join_count - 1;
 	    join_count = 1;
 	    break;
 	  case IVL_ST_FORK_JOIN_NONE:
-	    is_embeddable = 0;
 	    join_detach_count = join_count;
 	    join_count = 0;
 	    break;
@@ -1419,12 +1409,6 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 	    assert(0);
       }
 
-	/* cnt is the number of sub-threads. If the fork-join has no
-	   name, then we can put one of the sub-threads in the current
-	   thread, so decrement the count by one and use the current
-	   scope for all the threads. */
-      if (is_embeddable)
-	    join_count -= 1;
       if (scope==0)
 	    scope = sscope;
 
@@ -1437,11 +1421,6 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 	    fprintf(vvp_out, "    %%fork t_%u, S_%p;\n",
 		    id_base+idx, scope);
       }
-
-	/* If we are putting one sub-thread into the current thread,
-	   then draw its code here. */
-      if (is_embeddable)
-	    rc += show_statement(ivl_stmt_block_stmt(net, join_count), scope);
 
 
 	/* Generate enough joins to collect all the sub-threads. */
