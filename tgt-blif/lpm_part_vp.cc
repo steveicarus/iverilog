@@ -40,8 +40,7 @@ int print_lpm_part_vp(FILE*fd, ivl_lpm_t net)
       ivl_nexus_t nex_out = ivl_lpm_q(net);
       blif_nex_data_t*ned_out = blif_nex_data_t::get_nex_data(nex_out);
 
-	// Only handle bit selects.
-      assert(ned_out->get_width() == 1);
+      assert(ivl_lpm_width(net) == ned_out->get_width());
 	// Only handle constant part select base.
       assert(ivl_lpm_data(net,1) == 0);
 
@@ -52,10 +51,12 @@ int print_lpm_part_vp(FILE*fd, ivl_lpm_t net)
 
       assert(bit_sel < ned_in->get_width());
 
-      fprintf(fd, ".names %s%s %s%s # %s:%u\n1 1\n",
-	      ned_in->get_name(), ned_in->get_name_index(bit_sel),
-	      ned_out->get_name(), ned_out->get_name_index(0),
-	      ivl_lpm_file(net), ivl_lpm_lineno(net));
+      for (unsigned idx = 0 ; idx < ivl_lpm_width(net) ; idx += 1) {
+	    fprintf(fd, ".names %s%s %s%s # %s:%u\n1 1\n",
+		    ned_in->get_name(), ned_in->get_name_index(bit_sel+idx),
+		    ned_out->get_name(), ned_out->get_name_index(idx),
+		    ivl_lpm_file(net), ivl_lpm_lineno(net));
+      }
 
       return rc;
 }

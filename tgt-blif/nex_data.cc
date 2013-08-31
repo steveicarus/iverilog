@@ -133,6 +133,8 @@ const char* blif_nex_data_t::get_name_index(unsigned bit)
  */
 size_t blif_nex_data_t::get_width(void)
 {
+      if (name_==0) select_name_();
+
 	// Special case: If the nexus width is 1 bit, then there is no
 	// need for index_name maps, so the name_index_ will be empty.
       if (name_index_.size()==0)
