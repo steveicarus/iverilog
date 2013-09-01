@@ -273,7 +273,7 @@ void eval_expr(NetExpr*&expr, int context_width =-1);
  * possible. If it is not possible (the expression is not evaluated
  * down to a constant) then return false and leave value unchanged.
  */
-bool eval_as_long(long&value, NetExpr*expr);
+bool eval_as_long(long&value, const NetExpr*expr);
 bool eval_as_double(double&value, NetExpr*expr);
 
 /*

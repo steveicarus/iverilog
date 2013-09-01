@@ -873,14 +873,14 @@ void eval_expr(NetExpr*&expr, int context_width)
       }
 }
 
-bool eval_as_long(long&value, NetExpr*expr)
+bool eval_as_long(long&value, const NetExpr*expr)
 {
-      if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr) ) {
+      if (const NetEConst*tmp = dynamic_cast<const NetEConst*>(expr) ) {
 	    value = tmp->value().as_long();
 	    return true;
       }
 
-      if (NetECReal*rtmp = dynamic_cast<NetECReal*>(expr)) {
+      if (const NetECReal*rtmp = dynamic_cast<const NetECReal*>(expr)) {
 	    value = rtmp->value().as_long();
 	    return true;
       }
