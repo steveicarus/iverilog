@@ -1278,7 +1278,7 @@ void pform_endgenerate()
 	// must be changed to match.
       if (pform_cur_generate->scope_name == 0) {
 	    char tmp[16];
-	    snprintf(tmp, sizeof tmp, "$gen%d", pform_cur_generate->id_number);
+	    snprintf(tmp, sizeof tmp, "$gen%u", pform_cur_generate->id_number);
 	    pform_cur_generate->scope_name = lex_strings.make(tmp);
       }
 

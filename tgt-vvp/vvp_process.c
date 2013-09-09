@@ -1035,10 +1035,10 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
 	    fprintf(stderr, "%s:%u: tgt-vvp sorry: cannot %s signal to a ",
 	            ivl_stmt_file(net), ivl_stmt_lineno(net), command_name);
 	    if (use_wid > 1) {
-		  fprintf(stderr, "part select (%s[%lu:%lu]).\n",
+		  fprintf(stderr, "part select (%s[%ld:%ld]).\n",
 		          ivl_signal_basename(lsig), use_msb, use_lsb);
 	    } else {
-		  fprintf(stderr, "bit select (%s[%lu]).\n",
+		  fprintf(stderr, "bit select (%s[%ld]).\n",
 		          ivl_signal_basename(lsig), use_lsb);
 	    }
 	    vvp_errors += 1;

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2011-2013  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -549,7 +549,7 @@ static void dump_diag_info(vpiHandle callh, p_table_mod table)
 	    dump_extrap(table->control.info.extrap_low[idx]);
 	    dump_extrap(table->control.info.extrap_high[idx]);
       }
-      fprintf(stderr, ";%d\n", table->depend);
+      fprintf(stderr, ";%u\n", table->depend);
       fprintf(stderr, "%*s The data file must have at least %u columns.\n",
               (int) strlen(msg), " ", table->fields+table->depend);
 }

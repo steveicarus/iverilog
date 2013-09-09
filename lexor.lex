@@ -635,14 +635,14 @@ TU [munpf]
 		                |GN_KEYWORDS_1364_2005
 		                |GN_KEYWORDS_VAMS_2_3;
       } else {
-	    fprintf(stderr, "%s:%d: Ignoring unknown keywords string: %s\n",
+	    fprintf(stderr, "%s:%u: Ignoring unknown keywords string: %s\n",
 		    yylloc.text, yylloc.first_line, word);
       }
       BEGIN(0);
  }
 
 <PPBEGIN_KEYWORDS>.* {
-      fprintf(stderr, "%s:%d: Malformed keywords specification: %s\n",
+      fprintf(stderr, "%s:%u: Malformed keywords specification: %s\n",
 	      yylloc.text, yylloc.first_line, yytext);
       BEGIN(0);
  }
@@ -652,7 +652,7 @@ TU [munpf]
 	    lexor_keyword_mask = keyword_mask_stack.front();
 	    keyword_mask_stack.pop_front();
       } else {
-	    fprintf(stderr, "%s:%d: Mismatched end_keywords directive\n",
+	    fprintf(stderr, "%s:%u: Mismatched end_keywords directive\n",
 		    yylloc.text, yylloc.first_line);
       }
  }

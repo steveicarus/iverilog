@@ -2458,7 +2458,7 @@ void errormsg(const YYLTYPE&loc, const char*fmt, ...)
       va_list ap;
       va_start(ap, fmt);
 
-      fprintf(stderr, "%s:%d: error: ", loc.text, loc.first_line);
+      fprintf(stderr, "%s:%u: error: ", loc.text, loc.first_line);
       vfprintf(stderr, fmt, ap);
       va_end(ap);
       parse_errors += 1;
@@ -2469,7 +2469,7 @@ void sorrymsg(const YYLTYPE&loc, const char*fmt, ...)
       va_list ap;
       va_start(ap, fmt);
 
-      fprintf(stderr, "%s:%d: sorry: ", loc.text, loc.first_line);
+      fprintf(stderr, "%s:%u: sorry: ", loc.text, loc.first_line);
       vfprintf(stderr, fmt, ap);
       va_end(ap);
       parse_sorrys += 1;

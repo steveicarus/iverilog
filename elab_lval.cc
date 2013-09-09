@@ -900,7 +900,7 @@ NetAssign_* PEIdent::elaborate_lval_net_class_member_(Design*des, NetScope*scope
       const netdarray_t*mtype = dynamic_cast<const netdarray_t*> (ptype);
       if (mtype) {
 	    const name_component_t&name_tail = path_.back();
-	    if (name_tail.index.size() > 0) {
+	    if (! name_tail.index.empty()) {
 		  cerr << get_fileline() << ": sorry: "
 		       << "Array index of array properties not supported."
 		       << endl;

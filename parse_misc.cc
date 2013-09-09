@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -51,7 +51,7 @@ void VLerror(const YYLTYPE&loc, const char*msg, ...)
       va_list ap;
       va_start(ap, msg);
 
-      fprintf(stderr, "%s:%d: ", loc.text, loc.first_line);
+      fprintf(stderr, "%s:%u: ", loc.text, loc.first_line);
       vfprintf(stderr, msg, ap);
       fprintf(stderr, "\n");
 

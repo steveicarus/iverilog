@@ -852,7 +852,7 @@ void vvp_arith_real_::dispatch_operand_(vvp_net_ptr_t ptr, double bit)
 	    op_b_ = bit;
 	    break;
 	  default:
-	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
+	    fprintf(stderr, "Unsupported port type %u.\n", ptr.port());
 	    assert(0);
       }
 }

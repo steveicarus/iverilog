@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -50,7 +50,7 @@ void pform_class_property(const struct vlltype&loc,
 	    decl_assignment_t*curp = *cur;
 	    data_type_t*use_type = data_type;
 
-	    if (curp->index.size() > 0) {
+	    if (! curp->index.empty()) {
 		  list<pform_range_t>*pd = new list<pform_range_t> (curp->index);
 		  use_type = new uarray_type_t(use_type, pd);
 	    }

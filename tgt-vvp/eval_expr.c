@@ -2409,7 +2409,7 @@ static void draw_signal_dest(ivl_expr_t expr, struct vector_info res,
 		  const char*sign_flag = (add_index>0)? "/s" : "";
 
 		    /* Add an immediate value to an array value. */
-		  fprintf(vvp_out, "    %%ix/load 0, %lu, 0;\n", immediate);
+		  fprintf(vvp_out, "    %%ix/load 0, %ld, 0;\n", immediate);
 		  fprintf(vvp_out, "    %%load/avp0%s %u, v%p, %u;\n",
 			  sign_flag, res.base, sig, res.wid);
 	    }
@@ -2428,7 +2428,7 @@ static void draw_signal_dest(ivl_expr_t expr, struct vector_info res,
 
 	      /* If this is a REG (a variable) then I can do a vector read. */
 	    if (immediate >= 0) {
-		  fprintf(vvp_out, "    %%ix/load 0, %lu, 0;\n", immediate);
+		  fprintf(vvp_out, "    %%ix/load 0, %ld, 0;\n", immediate);
 	    } else {
 		  fprintf(vvp_out, "    %%ix/load 0, 0, 0; immediate=%ld\n", immediate);
 		  fprintf(vvp_out, "    %%ix/sub 0, %ld, 0;\n", -immediate);
@@ -3508,16 +3508,16 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 	         result a 1. */
 	    if (res.base == 1) {
 		  res.base = allocate_vector(wid);
-		  fprintf(vvp_out, "    %%movi %d, 1, %u;\n",
+		  fprintf(vvp_out, "    %%movi %u, 1, %u;\n",
 			  res.base, res.wid);
 		  break;
 	    }
 
-	    fprintf(vvp_out, "    %%cmpi/s %d, 0, %u;\n", res.base, res.wid);
+	    fprintf(vvp_out, "    %%cmpi/s %u, 0, %u;\n", res.base, res.wid);
 	    fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 5;\n", thread_count,
 	                     local_count);
-	    fprintf(vvp_out, "    %%inv %d, %u;\n", res.base, res.wid);
-	    fprintf(vvp_out, "    %%addi %d, 1, %u;\n", res.base, res.wid);
+	    fprintf(vvp_out, "    %%inv %u, %u;\n", res.base, res.wid);
+	    fprintf(vvp_out, "    %%addi %u, 1, %u;\n", res.base, res.wid);
 	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, local_count);
 	    local_count += 1;
 	    break;
@@ -3539,14 +3539,14 @@ static struct vector_info draw_unary_expr(ivl_expr_t expr, unsigned wid)
 			break;
 		  }
 
-		  fprintf(vvp_out, "    %%cast2 %d, %d, %u;\n", res.base, res.base, res.wid);
+		  fprintf(vvp_out, "    %%cast2 %u, %u, %u;\n", res.base, res.base, res.wid);
 		  break;
 
 		case IVL_VT_REAL:
 		  draw_eval_real(sub);
 		  res.base = allocate_vector(wid);
 		  res.wid = wid;
-		  fprintf(vvp_out, "    %%cvt/vr %d, %u;\n", res.base, wid);
+		  fprintf(vvp_out, "    %%cvt/vr %u, %u;\n", res.base, wid);
 		  break;
 
 		default:

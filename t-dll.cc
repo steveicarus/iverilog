@@ -491,7 +491,7 @@ ivl_parameter_t dll_target::scope_find_param(ivl_scope_t scope,
  */
 void dll_target::make_scope_parameters(ivl_scope_t scop, const NetScope*net)
 {
-      if (net->parameters.size() == 0) {
+      if (net->parameters.empty()) {
 	    scop->param.clear();
 	    return;
       }

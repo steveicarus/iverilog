@@ -720,7 +720,7 @@ static int show_stmt_assign_sig_real(ivl_statement_t net)
 	  !number_is_unknown(word_ex)) {
 	    unsigned long use_word = get_number_immediate(word_ex);
 	    assert(use_word < ivl_signal_array_count(var));
-	    fprintf(vvp_out, "    %%ix/load %u, %lu, 0;\n",
+	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0;\n",
 		    word_ix, use_word);
 	    fprintf(vvp_out, "    %%store/reala v%p, %d;\n",
 		    var, word_ix);
