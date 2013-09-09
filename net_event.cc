@@ -225,9 +225,10 @@ NexusSet* NetEvent::nex_async_()
 		  return 0;
 	    }
 
-	    for (unsigned idx = 0 ;  idx < cur->pin_count() ;  idx += 1)
-		  tmp->add(cur->pin(idx).nexus());
-
+	    for (unsigned idx = 0 ;  idx < cur->pin_count() ;  idx += 1) {
+		  Nexus*nex = cur->pin(idx).nexus();
+		  tmp->add(nex, 0, nex->vector_width());
+	    }
       }
 
       return tmp;

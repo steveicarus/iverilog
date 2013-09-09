@@ -36,6 +36,42 @@ void NetProc::nex_output(NexusSet&)
 	   << endl;
 }
 
+void NetAssign_::nex_output(NexusSet&out)
+{
+      if (sig_ && !word_) {
+	    Nexus*nex = sig_->pin(0).nexus();
+	    unsigned use_base = 0;
+	    unsigned use_wid = lwidth();
+	    if (base_) {
+		  long tmp = 0;
+		  bool flag = eval_as_long(tmp, base_);
+		  if (!flag) {
+			  // Unable to evaluate the bit/part select of
+			  // the l-value, so this is a mux. Pretty
+			  // sure I don't know how to handle this yet
+			  // in synthesis, so punt for now.
+			use_base = 0;
+			use_wid = nex->vector_width();
+
+		  } else {
+			use_base = tmp;
+		  }
+	    }
+
+	    out.add(nex, use_base, use_wid);
+
+      } else {
+	      /* Quoting from netlist.h comments for class NetMemory:
+	       * "This is not a node because memory objects can only be
+	       * accessed by behavioral code."
+	       */
+	    cerr << "?:?" << ": internal error: "
+		 << "NetAssignBase::nex_output on unsupported lval ";
+	    dump_lval(cerr);
+	    cerr << endl;
+      }
+}
+
 /*
  * Assignments have as output all the bits of the concatenated signals
  * of the l-value.
@@ -43,18 +79,7 @@ void NetProc::nex_output(NexusSet&)
 void NetAssignBase::nex_output(NexusSet&out)
 {
       for (NetAssign_*cur = lval_ ;  cur ;  cur = cur->more) {
-	    if (NetNet*lsig = cur->sig()) {
-		  out.add(lsig->pin(0).nexus());
-	    } else {
-		    /* Quoting from netlist.h comments for class NetMemory:
-		     * "This is not a node because memory objects can only be
-		     * accessed by behavioral code."
-		     */
-		  cerr << get_fileline() << ": internal error: "
-		       << "NetAssignBase::nex_output on unsupported lval ";
-		  dump_lval(cerr);
-		  cerr << endl;
-	    }
+	    cur->nex_output(out);
       }
 }
 

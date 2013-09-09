@@ -184,7 +184,7 @@ NexusSet* NetESignal::nex_input(bool rem_out)
             }
       }
       for (unsigned idx = 0 ;  idx < net_->pin_count() ;  idx += 1)
-	    result->add(net_->pin(idx).nexus());
+	    result->add(net_->pin(idx).nexus(), 0, net_->vector_width());
 
       return result;
 }

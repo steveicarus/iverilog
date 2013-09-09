@@ -1310,16 +1310,16 @@ static NetEvWait* make_func_trigger(Design*des, NetScope*scope, NetExpr*root)
       NetEvWait*trigger = 0;
 
       NexusSet*nset = root->nex_input(false);
-      if (nset && (nset->count() > 0)) {
+      if (nset && (nset->size() > 0)) {
             NetEvent*ev = new NetEvent(scope->local_symbol());
             ev->set_line(*root);
 
             NetEvProbe*pr = new NetEvProbe(scope, scope->local_symbol(),
                                            ev, NetEvProbe::ANYEDGE,
-                                           nset->count());
+                                           nset->size());
             pr->set_line(*root);
-            for (unsigned idx = 0 ;  idx < nset->count() ;  idx += 1)
-                  connect(nset[0][idx], pr->pin(idx));
+            for (unsigned idx = 0 ;  idx < nset->size() ;  idx += 1)
+                  connect(nset->at(idx).nex, pr->pin(idx));
 
             des->add_node(pr);
 

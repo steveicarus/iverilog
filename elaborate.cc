@@ -3850,7 +3850,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 		  return enet;
 	    }
 
-	    if (nset->count() == 0) {
+	    if (nset->size() == 0) {
 		  cerr << get_fileline() << ": warning: @* found no "
 		          "sensitivities so it will never trigger."
 		       << endl;
@@ -3869,9 +3869,9 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 
 	    NetEvProbe*pr = new NetEvProbe(scope, scope->local_symbol(),
 					   ev, NetEvProbe::ANYEDGE,
-					   nset->count());
-	    for (unsigned idx = 0 ;  idx < nset->count() ;  idx += 1)
-		  connect(nset[0][idx], pr->pin(idx));
+					   nset->size());
+	    for (unsigned idx = 0 ;  idx < nset->size() ;  idx += 1)
+		  connect(nset->at(idx).nex, pr->pin(idx));
 
 	    delete nset;
 	    des->add_node(pr);
@@ -4134,7 +4134,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      if (wait_set->count() == 0) {
+      if (wait_set->size() == 0) {
 	    cerr << get_fileline() << ": internal error: Empty NexusSet"
 		 << " from wait expression." << endl;
 	    des->errors += 1;
@@ -4143,9 +4143,9 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 
       NetEvProbe*wait_pr = new NetEvProbe(scope, scope->local_symbol(),
 					  wait_event, NetEvProbe::ANYEDGE,
-					  wait_set->count());
-      for (unsigned idx = 0; idx < wait_set->count() ;  idx += 1)
-	    connect(wait_set[0][idx], wait_pr->pin(idx));
+					  wait_set->size());
+      for (unsigned idx = 0; idx < wait_set->size() ;  idx += 1)
+	    connect(wait_set->at(idx).nex, wait_pr->pin(idx));
 
       delete wait_set;
       des->add_node(wait_pr);

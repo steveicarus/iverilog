@@ -523,109 +523,117 @@ const char* Nexus::name() const
 
 NexusSet::NexusSet()
 {
-      items_ = 0;
-      nitems_ = 0;
 }
 
 NexusSet::~NexusSet()
 {
-      if (nitems_ > 0) {
-	    assert(items_ != 0);
-	    free(items_);
-      } else {
-	    assert(items_ == 0);
-      }
 }
 
-unsigned NexusSet::count() const
+size_t NexusSet::size() const
 {
-      return nitems_;
+      return items_.size();
 }
 
-void NexusSet::add(Nexus*that)
+void NexusSet::add(Nexus*that, unsigned base, unsigned wid)
 {
       assert(that);
-      if (nitems_ == 0) {
-	    assert(items_ == 0);
-	    items_ = (Nexus**)malloc(sizeof(Nexus*));
-	    items_[0] = that;
-	    nitems_ = 1;
+      elem_t cur (that, base, wid);
+
+      if (items_.size() == 0) {
+	    items_.resize(1);
+	    items_[0] = cur;
 	    return;
       }
 
-      unsigned ptr = bsearch_(that);
-      if (ptr < nitems_) {
-	    assert(items_[ptr] == that);
+      unsigned ptr = bsearch_(cur);
+      if (ptr < items_.size()) {
 	    return;
       }
 
-      assert(ptr == nitems_);
+      assert(ptr == items_.size());
 
-      items_ = (Nexus**)realloc(items_, (nitems_+1) * sizeof(Nexus*));
-      items_[ptr] = that;
-      nitems_ += 1;
+      items_.push_back(cur);
 }
 
 void NexusSet::add(const NexusSet&that)
 {
-      for (unsigned idx = 0 ;  idx < that.nitems_ ;  idx += 1)
-	    add(that.items_[idx]);
+      for (size_t idx = 0 ;  idx < that.items_.size() ;  idx += 1)
+	    add(that.items_[idx].nex, that.items_[idx].base, that.items_[idx].wid);
 }
 
-void NexusSet::rem(Nexus*that)
+void NexusSet::rem_(const NexusSet::elem_t&that)
 {
-      assert(that);
-      if (nitems_ == 0)
+      if (items_.empty())
 	    return;
 
       unsigned ptr = bsearch_(that);
-      if (ptr >= nitems_)
+      if (ptr >= items_.size())
 	    return;
 
-      if (nitems_ == 1) {
-	    free(items_);
-	    items_ = 0;
-	    nitems_ = 0;
+      if (items_.size() == 1) {
+	    items_.clear();
 	    return;
       }
 
-      for (unsigned idx = ptr ;  idx < (nitems_-1) ;  idx += 1)
+      for (unsigned idx = ptr ;  idx < (items_.size()-1) ;  idx += 1)
 	    items_[idx] = items_[idx+1];
 
-      items_ = (Nexus**)realloc(items_, (nitems_-1) * sizeof(Nexus*));
-      nitems_ -= 1;
+      items_.pop_back();
 }
 
 void NexusSet::rem(const NexusSet&that)
 {
-      for (unsigned idx = 0 ;  idx < that.nitems_ ;  idx += 1)
-	    rem(that.items_[idx]);
+      for (size_t idx = 0 ;  idx < that.items_.size() ;  idx += 1)
+	    rem_(that.items_[idx]);
 }
 
-Nexus* NexusSet::operator[] (unsigned idx) const
+unsigned NexusSet::find_nexus(const NexusSet::elem_t&that) const
 {
-      assert(idx < nitems_);
+      return bsearch_(that);
+}
+
+const NexusSet::elem_t& NexusSet::at (unsigned idx) const
+{
+      assert(idx <  items_.size());
       return items_[idx];
 }
 
-unsigned NexusSet::bsearch_(Nexus*that) const
+size_t NexusSet::bsearch_(const NexusSet::elem_t&that) const
 {
-      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
-	    if (items_[idx] == that)
+      for (unsigned idx = 0 ;  idx < items_.size() ;  idx += 1) {
+	    if (items_[idx]==that)
 		  return idx;
       }
 
-      return nitems_;
+      return items_.size();
+}
+
+bool NexusSet::elem_t::contains(const struct elem_t&that) const
+{
+      if (nex != that.nex)
+	    return false;
+      if (that.base < base)
+	    return false;
+      if ((that.base+that.wid) > (base+wid))
+	    return false;
+
+      return true;
+}
+
+bool NexusSet::contains_(const NexusSet::elem_t&that) const
+{
+      for (unsigned idx = 0 ; idx < items_.size() ; idx += 1) {
+	    if (items_[idx].contains(that))
+		  return true;
+      }
+      return false;
 }
 
 bool NexusSet::contains(const NexusSet&that) const
 {
-      for (unsigned idx = 0 ;  idx < that.nitems_ ;  idx += 1) {
-	    unsigned where = bsearch_(that[idx]);
-	    if (where == nitems_)
-		  return false;
-	    if (items_[where] != that[idx])
-		  return false;
+      for (size_t idx = 0 ;  idx < that.items_.size() ;  idx += 1) {
+	    if (! contains_(that.items_[idx]))
+		return false;
       }
 
       return true;
@@ -633,12 +641,12 @@ bool NexusSet::contains(const NexusSet&that) const
 
 bool NexusSet::intersect(const NexusSet&that) const
 {
-      for (unsigned idx = 0 ;  idx < that.nitems_ ;  idx += 1) {
-	    unsigned where = bsearch_(that[idx]);
-	    if (where == nitems_)
+      for (size_t idx = 0 ;  idx < that.items_.size() ;  idx += 1) {
+	    size_t where = bsearch_(that.items_[idx]);
+	    if (where == items_.size())
 		  continue;
-	    if (items_[where] == that[idx])
-		  return true;
+
+	    return true;
       }
 
       return false;
