@@ -3110,8 +3110,11 @@ bool of_JOIN_DETACH(vthread_t thr, vvp_code_t cp)
 	    vthread_t child = *thr->children.begin();
 	    assert(child->parent == thr);
 
-	      // We cannot detach automatic tasks/functions
-	    assert(child->wt_context == 0);
+	      // We cannot detach automatic tasks/functions within an
+	      // automatic scope. If we try to do that, we might make
+	      // a mess of the allocation of the context. Note that it
+	      // is OK if the child context is distinct (See %exec_ufunc.)
+	    assert(child->wt_context==0 || thr->wt_context!=child->wt_context);
 	    if (child->i_have_ended) {
 		    // If the child has already ended, then reap it.
 		  vthread_reap(child);
