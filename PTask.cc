@@ -30,7 +30,7 @@ PTaskFunc::~PTaskFunc()
 {
 }
 
-void PTaskFunc::set_ports(vector<PWire*>*p)
+void PTaskFunc::set_ports(vector<pform_tf_port_t>*p)
 {
       assert(ports_ == 0);
       ports_ = p;
@@ -43,14 +43,14 @@ void PTaskFunc::set_this(class_type_t*type, PWire*this_wire)
 
 	// Push a synthetis argument that is the "this" value.
       if (ports_==0)
-	    ports_ = new vector<PWire*>;
+	    ports_ = new vector<pform_tf_port_t>;
 
       size_t use_size = ports_->size();
       ports_->resize(use_size + 1);
       for (size_t idx = use_size ; idx > 0 ; idx -= 1)
 	    ports_->at(idx) = ports_->at(idx-1);
 
-      ports_->at(0) = this_wire;
+      ports_->at(0) = pform_tf_port_t(this_wire);
 }
 
 PTask::PTask(perm_string name, LexicalScope*parent, bool is_auto__)

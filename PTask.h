@@ -39,7 +39,7 @@ class PTaskFunc : public PScope, public LineInfo {
       PTaskFunc(perm_string name, LexicalScope*parent);
       ~PTaskFunc();
 
-      void set_ports(std::vector<PWire *>*p);
+      void set_ports(std::vector<pform_tf_port_t>*p);
 
       void set_this(class_type_t*use_type, PWire*this_wire);
 
@@ -55,7 +55,7 @@ class PTaskFunc : public PScope, public LineInfo {
 
     private:
       class_type_t*this_type_;
-      std::vector<PWire*>*ports_;
+      std::vector<pform_tf_port_t>*ports_;
 };
 
 /*

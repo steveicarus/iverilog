@@ -79,13 +79,15 @@ void pform_set_this_class(const struct vlltype&loc, PTaskFunc*net)
 
       list<perm_string>*this_name = new list<perm_string>;
       this_name->push_back(perm_string::literal("@"));
-      vector<PWire*>*this_port = pform_make_task_ports(loc, NetNet::PINPUT,
+      vector<pform_tf_port_t>*this_port = pform_make_task_ports(loc,
+						       NetNet::PINPUT,
 						       pform_cur_class->type,
 						       this_name);
 	// The pform_make_task_ports() function deletes the this_name
 	// object.
 
-      PWire*this_wire = this_port->at(0);
+      assert(this_port->at(0).defe == 0);
+      PWire*this_wire = this_port->at(0).port;
       delete this_port;
 
       net->set_this(pform_cur_class->type, this_wire);

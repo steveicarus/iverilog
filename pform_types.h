@@ -39,6 +39,7 @@
 class Design;
 class NetScope;
 class PExpr;
+class PWire;
 class Statement;
 class ivl_type_s;
 typedef named<verinum> named_number_t;
@@ -68,6 +69,14 @@ struct decl_assignment_t {
       perm_string name;
       std::list<pform_range_t>index;
       std::auto_ptr<PExpr> expr;
+};
+
+struct pform_tf_port_t {
+      PWire*port;
+      PExpr*defe;
+
+      inline pform_tf_port_t() : port(0), defe(0) { }
+      inline explicit pform_tf_port_t(PWire*p) : port(p), defe(0) { }
 };
 
 /*

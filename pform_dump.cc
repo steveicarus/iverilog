@@ -984,13 +984,13 @@ void PTaskFunc::dump_ports_(std::ostream&out, unsigned ind) const
 	    return;
 
       for (unsigned idx = 0 ; idx < ports_->size() ; idx += 1) {
-	    if (ports_->at(idx) == 0) {
+	    if (ports_->at(idx).port == 0) {
 		  out << setw(ind) << "" << "ERROR PORT" << endl;
 		  continue;
 	    }
 
 	    out << setw(ind) << "";
-	    switch (ports_->at(idx)->get_port_type()) {
+	    switch (ports_->at(idx).port->get_port_type()) {
 		case NetNet::PINPUT:
 		  out << "input ";
 		  break;
@@ -1010,7 +1010,11 @@ void PTaskFunc::dump_ports_(std::ostream&out, unsigned ind) const
 		  assert(0);
 		  break;
 	    }
-	    out << ports_->at(idx)->basename() << ";" << endl;
+	    out << ports_->at(idx).port->basename();
+	    if (ports_->at(idx).defe) {
+		  out << " = " << *ports_->at(idx).defe;
+	    }
+	    out << ";" << endl;
       }
 }
 

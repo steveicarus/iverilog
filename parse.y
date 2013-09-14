@@ -339,6 +339,8 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 
       list<pair<perm_string,PExpr*> >*port_list;
 
+      vector<pform_tf_port_t>* tf_ports;
+
       pform_name_t*pform_name;
 
       ivl_discipline_t discipline;
@@ -544,9 +546,9 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <named_pexprs> enum_name_list enum_name
 %type <enum_type> enum_data_type
 
-%type <wires> task_item task_item_list task_item_list_opt
-%type <wires> tf_port_declaration tf_port_item tf_port_list tf_port_list_opt
-%type <wires> function_item function_item_list function_item_list_opt
+%type <tf_ports> function_item function_item_list function_item_list_opt
+%type <tf_ports> task_item task_item_list task_item_list_opt
+%type <tf_ports> tf_port_declaration tf_port_item tf_port_list tf_port_list_opt
 
 %type <named_pexpr> port_name parameter_value_byname
 %type <named_pexprs> port_name_list parameter_value_byname_list
@@ -1735,7 +1737,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 
 tf_port_declaration /* IEEE1800-2005: A.2.7 */
   : port_direction K_reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
-      { vector<PWire*>*tmp = pform_make_task_ports(@1, $1,
+      { vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1,
 						$2 ? IVL_VT_LOGIC :
 						     IVL_VT_NO_TYPE,
 						$3, $4, $5);
@@ -1747,7 +1749,7 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
 
   | port_direction K_integer list_of_identifiers ';'
       { list<pform_range_t>*range_stub = make_range_from_width(integer_width);
-	vector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, true,
+	vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, true,
 						    range_stub, $3, true);
 	$$ = tmp;
       }
@@ -1756,7 +1758,7 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
 
   | port_direction K_time list_of_identifiers ';'
       { list<pform_range_t>*range_stub = make_range_from_width(64);
-	vector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, false,
+	vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1, IVL_VT_LOGIC, false,
 						   range_stub, $3);
 	$$ = tmp;
       }
@@ -1764,7 +1766,7 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
   /* Ports can be real or realtime. */
 
   | port_direction real_or_realtime list_of_identifiers ';'
-      { vector<PWire*>*tmp = pform_make_task_ports(@1, $1, IVL_VT_REAL, true,
+      { vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1, IVL_VT_REAL, true,
 						   0, $3);
 	$$ = tmp;
       }
@@ -1783,7 +1785,7 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
 tf_port_item /* IEEE1800-2005: A.2.7 */
 
   : port_direction_opt data_type_or_implicit IDENTIFIER range_opt tf_port_item_expr_opt
-      { vector<PWire*>*tmp;
+      { vector<pform_tf_port_t>*tmp;
 	NetNet::PortType use_port_type = $1==NetNet::PIMPLICIT? NetNet::PINPUT : $1;
 	list<perm_string>* ilist = list_from_identifier($3);
 
@@ -1825,8 +1827,8 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	      delete $4;
 	}
 	if ($5) {
-	      yyerror(@5, "sorry: Port default expressions not supported yet.");
-	      delete $5;
+	      assert(tmp->size()==1);
+	      tmp->front().defe = $5;
 	}
      }
 
@@ -1849,7 +1851,7 @@ tf_port_item_expr_opt
 tf_port_list /* IEEE1800-2005: A.2.7 */
 
   : tf_port_list ',' tf_port_item
-      { vector<PWire*>*tmp;
+      { vector<pform_tf_port_t>*tmp;
 	if ($1 && $3) {
 	      size_t s1 = $1->size();
 	      tmp = $1;
@@ -3353,7 +3355,7 @@ function_item_list
   | function_item_list function_item
       { /* */
 	if ($1 && $2) {
-	      vector<PWire*>*tmp = $1;
+	      vector<pform_tf_port_t>*tmp = $1;
 	      size_t s1 = tmp->size();
 	      tmp->resize(s1 + $2->size());
 	      for (size_t idx = 0 ; idx < $2->size() ; idx += 1)
@@ -5931,13 +5933,13 @@ analog_statement
   /* Task items are, other than the statement, task port items and
      other block items. */
 task_item
-  : block_item_decl  { $$ = new vector<PWire*>(0); }
+  : block_item_decl  { $$ = new vector<pform_tf_port_t>(0); }
   | tf_port_declaration   { $$ = $1; }
   ;
 
 task_item_list
   : task_item_list task_item
-      { vector<PWire*>*tmp = $1;
+      { vector<pform_tf_port_t>*tmp = $1;
 	size_t s1 = tmp->size();
 	tmp->resize(s1 + $2->size());
 	for (size_t idx = 0 ; idx < $2->size() ; idx += 1)

@@ -442,7 +442,7 @@ extern void pform_make_pgassign_list(list<PExpr*>*alist,
 
 /* Given a port type and a list of names, make a list of wires that
    can be used as task port information. */
-extern std::vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
+extern std::vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 					     NetNet::PortType pt,
 					     ivl_variable_type_t vtype,
 					     bool signed_flag,
@@ -450,7 +450,7 @@ extern std::vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 					     list<perm_string>*names,
 					     bool isint = false);
 
-extern std::vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
+extern std::vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 					     NetNet::PortType pt,
 					     data_type_t*vtype,
 					     list<perm_string>*names);

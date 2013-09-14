@@ -2412,7 +2412,7 @@ void pform_makewire(const struct vlltype&li,
  * constraints as those of tasks, so this works fine. Functions have
  * no output or inout ports.
  */
-vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
+vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 				     NetNet::PortType pt,
 				     ivl_variable_type_t vtype,
 				     bool signed_flag,
@@ -2422,7 +2422,7 @@ vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 {
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
       assert(names);
-      vector<PWire*>*res = new vector<PWire*>(0);
+      vector<pform_tf_port_t>*res = new vector<pform_tf_port_t>(0);
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++ cur ) {
 
@@ -2447,7 +2447,7 @@ vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
 		  curw->set_range(*range, SR_PORT);
 	    }
 
-	    res->push_back(curw);
+	    res->push_back(pform_tf_port_t(curw));
       }
 
       delete range;
@@ -2455,7 +2455,7 @@ vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
       return res;
 }
 
-static vector<PWire*>*do_make_task_ports(const struct vlltype&loc,
+static vector<pform_tf_port_t>*do_make_task_ports(const struct vlltype&loc,
 					 NetNet::PortType pt,
 					 ivl_variable_type_t var_type,
 					 data_type_t*data_type,
@@ -2463,7 +2463,7 @@ static vector<PWire*>*do_make_task_ports(const struct vlltype&loc,
 {
       assert(pt != NetNet::PIMPLICIT && pt != NetNet::NOT_A_PORT);
       assert(names);
-      vector<PWire*>*res = new vector<PWire*>(0);
+      vector<pform_tf_port_t>*res = new vector<pform_tf_port_t>(0);
 
       for (list<perm_string>::iterator cur = names->begin()
 		 ; cur != names->end() ; ++cur) {
@@ -2478,13 +2478,13 @@ static vector<PWire*>*do_make_task_ports(const struct vlltype&loc,
 		  pform_put_wire_in_scope(name, curw);
 	    }
 
-	    res->push_back(curw);
+	    res->push_back(pform_tf_port_t(curw));
       }
       delete names;
       return res;
 }
 
-vector<PWire*>*pform_make_task_ports(const struct vlltype&loc,
+vector<pform_tf_port_t>*pform_make_task_ports(const struct vlltype&loc,
 				      NetNet::PortType pt,
 				      data_type_t*vtype,
 				      list<perm_string>*names)

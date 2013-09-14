@@ -664,7 +664,7 @@ void PTaskFunc::elaborate_sig_ports_(Design*des, NetScope*scope,
 
       for (size_t idx = 0 ; idx < ports_->size() ; idx += 1) {
 
-	    perm_string port_name = ports_->at(idx)->basename();
+	    perm_string port_name = ports_->at(idx).port->basename();
 
 	    ports[idx] = 0;
 	    NetNet*tmp = scope->find_signal(port_name);
@@ -676,6 +676,13 @@ void PTaskFunc::elaborate_sig_ports_(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": Continuing..." << endl;
 		  des->errors += 1;
 		  continue;
+	    }
+
+	    if (ports_->at(idx).defe != 0) {
+		  cerr << get_fileline() << ": sorry: "
+		       << "task/function default port expressions not supported."
+		       << endl;
+		  des->errors += 1;
 	    }
 
 	    if (tmp->port_type() == NetNet::NOT_A_PORT) {
