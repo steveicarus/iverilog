@@ -1229,6 +1229,7 @@ class vvp_net_fil_t  : public vvp_vpi_callback {
       virtual prop_t filter_real(double&val);
       virtual prop_t filter_long(long&val);
       virtual prop_t filter_object(vvp_object_t&val);
+      virtual prop_t filter_string(const std::string&val);
 
       virtual void release(vvp_net_ptr_t ptr, bool net_flag) =0;
       virtual void release_pv(vvp_net_ptr_t ptr, unsigned base, unsigned wid, bool net_flag) =0;
@@ -1708,7 +1709,9 @@ inline void vvp_net_t::send_real(double val, vvp_context_t context)
 
 inline void vvp_net_t::send_string(const std::string&val, vvp_context_t context)
 {
-      assert(!fil);
+      if (fil && !fil->filter_string(val))
+	    return;
+
       vvp_send_string(out_, val, context);
 }
 

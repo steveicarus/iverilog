@@ -296,6 +296,11 @@ vvp_net_fil_t::prop_t vvp_net_fil_t::filter_long(long&)
       return PROP;
 }
 
+vvp_net_fil_t::prop_t vvp_net_fil_t::filter_string(const string&)
+{
+      return PROP;
+}
+
 vvp_net_fil_t::prop_t vvp_net_fil_t::filter_object(vvp_object_t&)
 {
       return PROP;

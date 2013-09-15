@@ -270,7 +270,7 @@ class vvp_fun_signal_string : public vvp_fun_signal_base {
 
       unsigned size() const { return 1; }
 
-      inline const std::string& get_string() const { return value_; }
+      virtual const std::string& get_string() const =0;
 
     protected:
       std::string value_;
@@ -286,6 +286,11 @@ class vvp_fun_signal_string_sa : public vvp_fun_signal_string {
 
       void recv_string(vvp_net_ptr_t port, const std::string&bit,
 		       vvp_context_t context);
+
+      const std::string& get_string() const;
+
+    private:
+      std::string value_;
 };
 
 /*
@@ -302,6 +307,8 @@ class vvp_fun_signal_string_aa : public vvp_fun_signal_string, public automatic_
 #ifdef CHECK_WITH_VALGRIND
       void free_instance(vvp_context_t context);
 #endif
+      void recv_string(vvp_net_ptr_t port, const std::string&bit,
+		       vvp_context_t context);
 
 	// Get information about the vector value.
       unsigned   value_size() const;
@@ -309,6 +316,7 @@ class vvp_fun_signal_string_aa : public vvp_fun_signal_string, public automatic_
       vvp_scalar_t scalar_value(unsigned idx) const;
       void vec4_value(vvp_vector4_t&) const;
       double real_value() const;
+      const std::string& get_string() const;
       void get_signal_value(struct t_vpi_value*vp);
 
     public: // These objects are only permallocated.

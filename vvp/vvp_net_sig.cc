@@ -613,6 +613,11 @@ void vvp_fun_signal_string_sa::recv_string(vvp_net_ptr_t ptr, const std::string&
       }
 }
 
+const string& vvp_fun_signal_string_sa::get_string() const
+{
+      return value_;
+}
+
 vvp_fun_signal_string_aa::vvp_fun_signal_string_aa()
 {
       context_idx_ = vpip_add_item_to_context(this, vpip_peek_context_scope());
@@ -623,14 +628,41 @@ vvp_fun_signal_string_aa::~vvp_fun_signal_string_aa()
       assert(0);
 }
 
-void vvp_fun_signal_string_aa::alloc_instance(vvp_context_t)
+void vvp_fun_signal_string_aa::alloc_instance(vvp_context_t context)
 {
-      assert(0);
+      string*bits = new std::string;
+      vvp_set_context_item(context, context_idx_, bits);
+      *bits = "";
 }
 
-void vvp_fun_signal_string_aa::reset_instance(vvp_context_t)
+void vvp_fun_signal_string_aa::reset_instance(vvp_context_t context)
 {
-      assert(0);
+      string*bits = static_cast<std::string*>
+	    (vvp_get_context_item(context, context_idx_));
+      *bits = "";
+}
+
+#ifdef CHECK_WITH_VALGRIND
+void vvp_fun_signal_string_aa::free_instance(vvp_context_t context)
+{
+      string*bits = static_cast<std::string*>
+            (vvp_get_context_item(context, context_idx_));
+      delete bits;
+}
+#endif
+
+void vvp_fun_signal_string_aa::recv_string(vvp_net_ptr_t ptr, const std::string&bit, vvp_context_t context)
+{
+      assert(ptr.port() == 0);
+      assert(context);
+
+      string*bits = static_cast<std::string*>
+	    (vvp_get_context_item(context, context_idx_));
+
+      if (*bits != bit) {
+	    *bits = bit;
+	    ptr.ptr()->send_string(bit, context);
+      }
 }
 
 unsigned vvp_fun_signal_string_aa::value_size() const
@@ -660,6 +692,14 @@ double vvp_fun_signal_string_aa::real_value() const
 {
       assert(0);
       return 0.0;
+}
+
+const std::string& vvp_fun_signal_string_aa::get_string() const
+{
+      string*bits = static_cast<std::string*>
+            (vthread_get_rd_context_item(context_idx_));
+
+      return *bits;
 }
 
 void* vvp_fun_signal_string_aa::operator new(std::size_t size)
