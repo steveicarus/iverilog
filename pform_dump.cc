@@ -306,7 +306,7 @@ void PENewClass::dump(ostream&out) const
 	    parms_[0]->dump(out);
 	    for (size_t idx = 1 ; idx < parms_.size() ; idx += 1) {
 		  out << ", ";
-		  parms_[idx]->dump(out);
+		  if (parms_[idx]) parms_[idx]->dump(out);
 	    }
       }
       out << ")";

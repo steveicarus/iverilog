@@ -4604,14 +4604,8 @@ NetExpr* PENewClass::elaborate_expr(Design*des, NetScope*scope,
       int parm_errors = 0;
       for (size_t idx = 1 ; idx < parms.size() ; idx += 1) {
 	      // While there are default arguments, check them.
-	    if (idx <= parms_.size()) {
+	    if (idx <= parms_.size() && parms_[idx-1]) {
 		  PExpr*tmp = parms_[idx-1];
-		  if (tmp == 0) {
-			parms[idx] = 0;
-			missing_parms += 1;
-			continue;
-		  }
-
 		  parms[idx] = elaborate_rval_expr(des, scope, def->port(idx)->data_type(),
 						   def->port(idx)->vector_width(),
 						   tmp, false);

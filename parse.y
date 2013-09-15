@@ -168,6 +168,18 @@ template <class T> void append(vector<T>&out, const vector<T>&in)
 }
 
 /*
+ * Look at the list and pull null pointers off the end.
+ */
+static void strip_tail_items(list<PExpr*>*lst)
+{
+      while (lst->size() > 0) {
+	    if (lst->back() != 0)
+		  return;
+	    lst->pop_back();
+      }
+}
+
+/*
  * This is a shorthand for making a PECallFunction that takes a single
  * arg. This is used by some of the code that detects built-ins.
  */
@@ -855,13 +867,10 @@ class_item_qualifier_opt
   ;
 
 class_new /* IEEE1800-2005 A.2.4 */
-  : K_new '(' ')'
-      { PENewClass*tmp = new PENewClass;
-	FILE_NAME(tmp, @1);
-	$$ = tmp;
-      }
-  | K_new '(' expression_list_proper ')'
-      { PENewClass*tmp = new PENewClass(*$3);
+  : K_new '(' expression_list_with_nuls ')'
+      { list<PExpr*>*expr_list = $3;
+	strip_tail_items(expr_list);
+	PENewClass*tmp = new PENewClass(*expr_list);
 	FILE_NAME(tmp, @1);
 	delete $3;
 	$$ = tmp;
@@ -3035,8 +3044,10 @@ expr_primary
      function call. If a system identifier, then a system function
      call. */
 
-  | hierarchy_identifier '(' expression_list_proper ')'
-      { PECallFunction*tmp = pform_make_call_function(@1, *$1, *$3);
+  | hierarchy_identifier '(' expression_list_with_nuls ')'
+      { list<PExpr*>*expr_list = $3;
+	strip_tail_items(expr_list);
+	PECallFunction*tmp = pform_make_call_function(@1, *$1, *expr_list);
 	delete $1;
 	$$ = tmp;
       }
@@ -3046,15 +3057,6 @@ expr_primary
 	FILE_NAME(tmp, @1);
 	delete[]$1;
 	$$ = tmp;
-      }
-  | hierarchy_identifier '(' ')'
-      { const list<PExpr*> empty;
-	PECallFunction*tmp = pform_make_call_function(@1, *$1, empty);
-	delete $1;
-	$$ = tmp;
-	if (!gn_system_verilog()) {
-	      yyerror(@1, "error: Empty function argument list requires SystemVerilog.");
-	}
       }
   | PACKAGE_IDENTIFIER K_SCOPE_RES IDENTIFIER '(' expression_list_proper ')'
       { perm_string use_name = lex_strings.make($3);
