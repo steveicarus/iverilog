@@ -2043,8 +2043,9 @@ verinum::V NetConst::value(unsigned idx) const
       return value_[idx];
 }
 
-NetFuncDef::NetFuncDef(NetScope*s, NetNet*result, const vector<NetNet*>&po)
-: scope_(s), statement_(0), result_sig_(result), ports_(po)
+NetFuncDef::NetFuncDef(NetScope*s, NetNet*result, const vector<NetNet*>&po,
+		       const vector<NetExpr*>&pd)
+: scope_(s), statement_(0), result_sig_(result), ports_(po), pdefaults_(pd)
 {
 }
 
@@ -2083,6 +2084,12 @@ const NetNet* NetFuncDef::port(unsigned idx) const
 {
       assert(idx < ports_.size());
       return ports_[idx];
+}
+
+NetExpr* NetFuncDef::port_defe(unsigned idx) const
+{
+      assert(idx < pdefaults_.size());
+      return pdefaults_[idx];
 }
 
 const NetNet* NetFuncDef::return_sig() const
@@ -2620,8 +2627,8 @@ unsigned NetUReduce::width() const
       return width_;
 }
 
-NetTaskDef::NetTaskDef(NetScope*n, const vector<NetNet*>&po)
-: scope_(n), proc_(0), ports_(po)
+NetTaskDef::NetTaskDef(NetScope*n, const vector<NetNet*>&po, const vector<NetExpr*>&pd)
+: scope_(n), proc_(0), ports_(po), pdefaults_(pd)
 {
 }
 
@@ -2645,6 +2652,12 @@ NetNet* NetTaskDef::port(unsigned idx) const
 {
       assert(idx < ports_.size());
       return ports_[idx];
+}
+
+NetExpr* NetTaskDef::port_defe(unsigned idx) const
+{
+      assert(idx < pdefaults_.size());
+      return pdefaults_[idx];
 }
 
 const NetScope* NetTaskDef::scope() const

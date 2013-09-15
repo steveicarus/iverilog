@@ -3215,7 +3215,8 @@ class NetFree   : public NetProc {
 class NetFuncDef {
 
     public:
-      NetFuncDef(NetScope*, NetNet*result, const std::vector<NetNet*>&po);
+      NetFuncDef(NetScope*, NetNet*result, const std::vector<NetNet*>&po,
+		 const std::vector<NetExpr*>&pd);
       ~NetFuncDef();
 
       void set_proc(NetProc*st);
@@ -3227,6 +3228,7 @@ class NetFuncDef {
 
       unsigned port_count() const;
       const NetNet*port(unsigned idx) const;
+      NetExpr*port_defe(unsigned idx) const;
 
       const NetNet*return_sig() const;
 
@@ -3243,6 +3245,7 @@ class NetFuncDef {
       NetProc*statement_;
       NetNet*result_sig_;
       std::vector<NetNet*>ports_;
+      std::vector<NetExpr*>pdefaults_;
 };
 
 /*
@@ -3375,7 +3378,8 @@ class NetSTask  : public NetProc {
 class NetTaskDef {
 
     public:
-      NetTaskDef(NetScope*n, const vector<NetNet*>&po);
+      NetTaskDef(NetScope*n, const vector<NetNet*>&po,
+		 const std::vector<NetExpr*>&pd);
       ~NetTaskDef();
 
       void set_proc(NetProc*p);
@@ -3386,6 +3390,7 @@ class NetTaskDef {
 
       unsigned port_count() const;
       NetNet*port(unsigned idx) const;
+      NetExpr*port_defe(unsigned idx) const;
 
       void dump(ostream&, unsigned) const;
       DelayType delay_type() const;
@@ -3393,7 +3398,8 @@ class NetTaskDef {
     private:
       NetScope*scope_;
       NetProc*proc_;
-      vector<NetNet*>ports_;
+      std::vector<NetNet*>ports_;
+      std::vector<NetExpr*>pdefaults_; // Default expressions for ports.
 
     private: // not implemented
       NetTaskDef(const NetTaskDef&);

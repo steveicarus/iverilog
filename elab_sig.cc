@@ -596,10 +596,11 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
       }
 
       vector<NetNet*>ports;
-      elaborate_sig_ports_(des, scope, ports);
+      vector<NetExpr*>pdef;
+      elaborate_sig_ports_(des, scope, ports, pdef);
 
       NetFuncDef*def = 0;
-      if (ret_sig)  def = new NetFuncDef(scope, ret_sig, ports);
+      if (ret_sig)  def = new NetFuncDef(scope, ret_sig, ports, pdef);
 
       assert(def);
       if (debug_elaborate)
@@ -630,8 +631,9 @@ void PTask::elaborate_sig(Design*des, NetScope*scope) const
       elaborate_sig_wires_(des, scope);
 
       vector<NetNet*>ports;
-      elaborate_sig_ports_(des, scope, ports);
-      NetTaskDef*def = new NetTaskDef(scope, ports);
+      vector<NetExpr*>pdefs;
+      elaborate_sig_ports_(des, scope, ports, pdefs);
+      NetTaskDef*def = new NetTaskDef(scope, ports, pdefs);
       scope->set_task_def(def);
 
 	// Look for further signals in the sub-statement
@@ -640,10 +642,11 @@ void PTask::elaborate_sig(Design*des, NetScope*scope) const
 }
 
 void PTaskFunc::elaborate_sig_ports_(Design*des, NetScope*scope,
-				     vector<NetNet*>&ports) const
+				     vector<NetNet*>&ports, vector<NetExpr*>&pdefs) const
 {
       if (ports_ == 0) {
 	    ports.clear();
+	    pdefs.clear();
 
 	      /* Make sure the function has at least one input
 		 port. If it fails this test, print an error
@@ -661,13 +664,16 @@ void PTaskFunc::elaborate_sig_ports_(Design*des, NetScope*scope,
       }
 
       ports.resize(ports_->size());
+      pdefs.resize(ports_->size());
 
       for (size_t idx = 0 ; idx < ports_->size() ; idx += 1) {
 
 	    perm_string port_name = ports_->at(idx).port->basename();
 
 	    ports[idx] = 0;
+	    pdefs[idx] = 0;
 	    NetNet*tmp = scope->find_signal(port_name);
+	    NetExpr*tmp_def = 0;
 	    if (tmp == 0) {
 		  cerr << get_fileline() << ": internal error: "
 		       << "task/function " << scope_path(scope)
@@ -678,11 +684,18 @@ void PTaskFunc::elaborate_sig_ports_(Design*des, NetScope*scope,
 		  continue;
 	    }
 
+	      // If the port has a default expression that can be used
+	      // as a value when the caller doesn't bind, then
+	      // elaborate that expression here. This expression
+	      // should evaluate down do a constant.
 	    if (ports_->at(idx).defe != 0) {
-		  cerr << get_fileline() << ": sorry: "
-		       << "task/function default port expressions not supported."
-		       << endl;
-		  des->errors += 1;
+		  tmp_def = elab_and_eval(des, scope, ports_->at(idx).defe, -1, true);
+		  if (tmp_def==0) {
+			cerr << get_fileline() << ": error: Unable to evaluate "
+			     << *ports_->at(idx).defe
+			     << " as a port default (constant) expression." << endl;
+			des->errors += 1;
+		  }
 	    }
 
 	    if (tmp->port_type() == NetNet::NOT_A_PORT) {
@@ -696,11 +709,12 @@ void PTaskFunc::elaborate_sig_ports_(Design*des, NetScope*scope,
 	    }
 
 	    ports[idx] = tmp;
+	    pdefs[idx] = tmp_def;
 	    if (scope->type()==NetScope::FUNC && tmp->port_type()!=NetNet::PINPUT) {
 		  cerr << tmp->get_fileline() << ": error: "
 		       << "Function " << scope_path(scope)
 		       << " port " << port_name
-		       << " is not an inputport." << endl;
+		       << " is not an input port." << endl;
 		  cerr << tmp->get_fileline() << ":      : "
 		       << "Function arguments must be input ports." << endl;
 		  des->errors += 1;

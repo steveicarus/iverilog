@@ -4586,37 +4586,53 @@ NetExpr* PENewClass::elaborate_expr(Design*des, NetScope*scope,
       NetFuncDef*def = new_scope->func_def();
       ivl_assert(*this, def);
 
-      if ((parms_.size()+1) != def->port_count()) {
+	// Are there too many arguments passed to the function. If so,
+	// generate an error message. The case of too few arguments
+	// will be handled below, when we run out of arguments.
+      if ((parms_.size()+1) > def->port_count()) {
 	    cerr << get_fileline() << ": error: Parm count mismatch"
 		 << " passing " << parms_.size() << " arguments "
 		 << " to constructor expecting " << (def->port_count()-1)
 		 << " arguments." << endl;
 	    des->errors += 1;
-	    return obj;
       }
 
-      vector<NetExpr*> parms (1 + parms_.size());
+      vector<NetExpr*> parms (def->port_count());
       parms[0] = obj;
 
       int missing_parms = 0;
       int parm_errors = 0;
-      for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
-	    PExpr*tmp = parms_[idx];
-	    size_t pidx = idx + 1;
+      for (size_t idx = 1 ; idx < parms.size() ; idx += 1) {
+	      // While there are default arguments, check them.
+	    if (idx <= parms_.size()) {
+		  PExpr*tmp = parms_[idx-1];
+		  if (tmp == 0) {
+			parms[idx] = 0;
+			missing_parms += 1;
+			continue;
+		  }
 
-	    if (tmp == 0) {
-		  parms[pidx] = 0;
-		  missing_parms += 1;
+		  parms[idx] = elaborate_rval_expr(des, scope, def->port(idx)->data_type(),
+						   def->port(idx)->vector_width(),
+						   tmp, false);
+		  if (parms[idx] == 0)
+			parm_errors += 1;
+
 		  continue;
 	    }
 
-	    parms[pidx] = elaborate_rval_expr(des, scope, def->port(pidx)->data_type(),
-					      def->port(pidx)->vector_width(),
-					      tmp, false);
-	    if (parms[pidx] == 0) {
-		  parm_errors += 1;
+	      // Ran out of explicit arguments. Is there a default
+	      // argument we can use?
+	    if (NetExpr*tmp = def->port_defe(idx)) {
+		  parms[idx] = tmp;
 		  continue;
 	    }
+
+	      // If we run out of passed expressions, and there is no
+	      // default value for this port, then we will need to
+	      // report an error that we are missing parameters.
+	    missing_parms += 1;
+	    parms[idx] = 0;
       }
 
       if (missing_parms > 0) {
