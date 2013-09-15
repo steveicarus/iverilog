@@ -3432,22 +3432,6 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
 	    size_t parms_idx = use_this? idx-1 : idx;
 
-	    if (parms_[parms_idx] == 0 && !gn_system_verilog()) {
-		  cerr << get_fileline() << ": error: "
-		       << "Missing argument " << (idx+1)
-		       << " of call to task." << endl;
-		  des->errors += 1;
-		  continue;
-	    }
-
-	    if (parms_[parms_idx] == 0) {
-		  cerr << get_fileline() << ": sorry: "
-		       << "Implicit arguments (arg " << (idx+1)
-		       << ") not supported." << endl;
-		  des->errors += 1;
-		  continue;
-	    }
-
 	    NetNet*port = def->port(idx);
 	    assert(port->port_type() != NetNet::NOT_A_PORT);
 	    if (port->port_type() == NetNet::POUTPUT)
@@ -3457,11 +3441,31 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	    unsigned wid = count_lval_width(lv);
 	    ivl_variable_type_t lv_type = lv->expr_type();
 
-	    NetExpr*rv = elaborate_rval_expr(des, scope, lv_type, wid, parms_ [parms_idx]);
-	    if (NetEEvent*evt = dynamic_cast<NetEEvent*> (rv)) {
-		  cerr << evt->get_fileline() << ": error: An event '"
-		       << evt->event()->name() << "' can not be a user "
-		          "task argument." << endl;
+	    NetExpr*rv = 0;
+
+	    if (parms_[parms_idx]) {
+		  rv = elaborate_rval_expr(des, scope, lv_type, wid, parms_ [parms_idx]);
+		  if (NetEEvent*evt = dynamic_cast<NetEEvent*> (rv)) {
+			cerr << evt->get_fileline() << ": error: An event '"
+			     << evt->event()->name() << "' can not be a user "
+			      "task argument." << endl;
+			des->errors += 1;
+			continue;
+		  }
+
+	    } else if (def->port_defe(idx)) {
+		  if (! gn_system_verilog()) {
+			cerr << get_fileline() << ": internal error: "
+			     << "Found (and using) default task expression "
+			     << " requires SystemVerilog." << endl;
+			des->errors += 1;
+		  }
+		  rv = def->port_defe(idx);
+
+	    } else {
+		  cerr << get_fileline() << ": error: "
+		       << "Missing argument " << (idx+1)
+		       << " of call to task." << endl;
 		  des->errors += 1;
 		  continue;
 	    }
