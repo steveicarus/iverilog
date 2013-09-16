@@ -148,6 +148,11 @@ void data_type_t::pform_dump(ostream&out, unsigned indent) const
       out << setw(indent) << "" << typeid(*this).name() << endl;
 }
 
+void void_type_t::pform_dump(ostream&out, unsigned indent) const
+{
+      out << setw(indent) << "" << "void" << endl;
+}
+
 void parray_type_t::pform_dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << "Packed array " << "[...]"

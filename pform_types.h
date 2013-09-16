@@ -96,6 +96,10 @@ class data_type_t : public LineInfo {
       virtual ivl_type_s* elaborate_type(Design*des, NetScope*scope) const;
 };
 
+struct void_type_t : public data_type_t {
+      virtual void pform_dump(std::ostream&out, unsigned indent) const;
+};
+
 /*
  * The enum_type_t holds the parsed declaration to represent an
  * enumeration. Since this is in the pform, it represents the type

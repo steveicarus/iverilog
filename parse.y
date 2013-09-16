@@ -70,7 +70,10 @@ static pform_name_t* pform_create_this(void)
 
 static pform_name_t* pform_create_super(void)
 {
-      return 0;
+      name_component_t name (perm_string::literal("#"));
+      pform_name_t*res = new pform_name_t;
+      res->push_back(name);
+      return res;
 }
 
 /* This is used to keep track of the extra arguments after the notifier
@@ -587,7 +590,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <decl_assignment> variable_decl_assignment
 %type <decl_assignments> list_of_variable_decl_assignments
 
-%type <data_type>  data_type data_type_or_implicit
+%type <data_type>  data_type data_type_or_implicit data_type_or_implicit_or_void
 %type <data_type>  class_declaration_extends_opt
 %type <class_type> class_identifier
 %type <struct_member>  struct_union_member
@@ -790,20 +793,6 @@ class_item /* IEEE1800-2005: A.1.8 */
 	current_function = 0;
       }
 
-    /* IEEE1800 A.1.8: class_constructor_declaration with a call to
-       parent constructor. Note that the implicit_class_handle must
-       be K_super ("this.new" makes little sense) but that would
-       cause a conflict. */
-/* XXXX
-  | method_qualifier_opt K_function K_new '(' tf_port_list_opt ')' ';'
-    function_item_list_opt
-    attribute_list_opt implicit_class_handle '.' K_new '(' expression_list_with_nuls ')'
-    statement_or_null_list_opt
-    K_endfunction endnew_opt
-      { yyerror(@3, "sorry: Class constructors with parent not supported yet.");
-	yyerrok;
-      }
-*/
     /* Class properties... */
 
   | property_qualifier_opt data_type list_of_variable_decl_assignments ';'
@@ -1032,6 +1021,16 @@ data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
   ;
 
 
+data_type_or_implicit_or_void
+  : data_type_or_implicit
+      { $$ = $1; }
+  | K_void
+      { void_type_t*tmp = new void_type_t;
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+  ;
+
   /* NOTE 1: We pull the "timeunits_declaration" into the description
      here in order to be a little more flexible with where timeunits
      statements may go. This may be a bad idea, but it is legacy now. */
@@ -1100,7 +1099,7 @@ for_step /* IEEE1800-2005: A.6.8 */
      definitions in the func_body to take on the scope of the function
      instead of the module. */
 function_declaration /* IEEE1800-2005: A.2.6 */
-  : K_function K_automatic_opt data_type_or_implicit IDENTIFIER ';'
+  : K_function K_automatic_opt data_type_or_implicit_or_void IDENTIFIER ';'
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
@@ -1129,7 +1128,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	delete[]$4;
       }
 
-  | K_function K_automatic_opt data_type_or_implicit IDENTIFIER
+  | K_function K_automatic_opt data_type_or_implicit_or_void IDENTIFIER
       { assert(current_function == 0);
 	current_function = pform_push_function_scope(@1, $4, $2);
       }
@@ -1165,7 +1164,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 
   /* Detect and recover from some errors. */
 
-  | K_function K_automatic_opt data_type_or_implicit IDENTIFIER error K_endfunction
+  | K_function K_automatic_opt data_type_or_implicit_or_void IDENTIFIER error K_endfunction
       { /* */
 	if (current_function) {
 	      pform_pop_scope();
@@ -5832,6 +5831,18 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
 
+    /* IEEE1800 A.1.8: class_constructor_declaration with a call to
+       parent constructor. Note that the implicit_class_handle must
+       be K_super ("this.new" makes little sense) but that would
+       cause a conflict. Anyhow, this statement must be in the
+       beginning of a constructor, but let the elaborator figure that
+       out. */
+
+  | implicit_class_handle '.' K_new '(' expression_list_with_nuls ')' ';'
+      { yyerror(@1, "sorry: Calls to superclass constructor not supported.");
+	yyerrok;
+        $$ = new PNoop;
+      }
   | hierarchy_identifier '(' error ')' ';'
       { yyerror(@3, "error: Syntax error in task arguments.");
 	list<PExpr*>pt;
