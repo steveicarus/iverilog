@@ -4600,6 +4600,12 @@ inline __ScopePathManip scope_path(const NetScope*scope)
 
 extern ostream& operator << (ostream&o, __ScopePathManip);
 
+struct __ObjectPathManip { const NetObj*obj; };
+inline __ObjectPathManip scope_path(const NetObj*obj)
+{ __ObjectPathManip tmp; tmp.obj = obj; return tmp; }
+
+extern ostream& operator << (ostream&o, __ObjectPathManip);
+
 /*
  * If this link has a nexus_ pointer, then it is the last Link in the
  * list. next_nlink() returns 0 for the last Link.

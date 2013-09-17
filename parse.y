@@ -5816,9 +5816,14 @@ statement_item /* This is roughly statement_item in the LRM */
       }
 
   | implicit_class_handle '.' hierarchy_identifier '(' expression_list_with_nuls ')' ';'
-      { PCallTask*tmp = new PCallTask(*$3, *$5);
-	yyerror(@1, "sorry: Implicit class handle not supported in front of task names.");
+      { pform_name_t*nam = $1;
+	while (! $3->empty()) {
+	      nam->push_back($3->front());
+	      $3->pop_front();
+	}
+	PCallTask*tmp = new PCallTask(*nam, *$5);
 	FILE_NAME(tmp, @1);
+	delete $1;
 	delete $3;
 	delete $5;
 	$$ = tmp;

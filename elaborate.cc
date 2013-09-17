@@ -3309,6 +3309,10 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope) const
 	// There is no signal to search for so this cannot be a method.
       if (use_path.empty()) return 0;
 
+	// Search for an object using the use_path. This should
+	// resolve to a class object. Note that the "this" symbol
+	// (internally represented as "@") is handled by there being a
+	// "this" object in the instance scope.
       symbol_search(this, des, scope, use_path,
 		    net, par, eve, ex1, ex2);
 

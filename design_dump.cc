@@ -183,6 +183,15 @@ ostream& operator <<(ostream&o, struct __ScopePathManip marg)
       return o;
 }
 
+ostream& operator <<(ostream&o, struct __ObjectPathManip marg)
+{
+      if (marg.obj != 0) {
+	    dump_scope_path(o, marg.obj->scope());
+	    o << "." << marg.obj->name();
+      }
+      return o;
+}
+
 void NetBranch::dump(ostream&o, unsigned ind) const
 {
       static const char*pin_names[2] = {

@@ -104,6 +104,12 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
       }
 
       while (scope) {
+	    if (path_tail.name == "#") {
+		  cerr << li->get_fileline() << ": sorry: "
+		       << "Implicit class handle \"super\" not supported." << endl;
+		  return false;
+	    }
+
 	    if (NetNet*net = scope->find_signal(path_tail.name)) {
 		  res->scope = scope;
 		  res->net = net;
