@@ -1800,6 +1800,17 @@ void PDelayStatement::elaborate_scope(Design*des, NetScope*scope) const
  * intrinsically add a scope need to elaborate_scope the contained
  * statement.
  */
+void PDoWhile::elaborate_scope(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_ -> elaborate_scope(des, scope);
+}
+
+/*
+ * Statements that contain a further statement but do not
+ * intrinsically add a scope need to elaborate_scope the contained
+ * statement.
+ */
 void PEventStatement::elaborate_scope(Design*des, NetScope*scope) const
 {
       if (statement_)

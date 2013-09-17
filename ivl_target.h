@@ -402,6 +402,7 @@ typedef enum ivl_statement_type_e {
       IVL_ST_DELAY   = 11,
       IVL_ST_DELAYX  = 12,
       IVL_ST_DISABLE = 13,
+      IVL_ST_DO_WHILE = 30,
       IVL_ST_FORCE   = 14,
       IVL_ST_FOREVER = 15,
       IVL_ST_FORK    = 16,

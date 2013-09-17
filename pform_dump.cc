@@ -840,6 +840,13 @@ void PDisable::dump(ostream&out, unsigned ind) const
 	  << get_fileline() << " */" << endl;
 }
 
+void PDoWhile::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "do" << endl;
+      statement_->dump(out, ind+3);
+      out << setw(ind) << "" << "while (" << *cond_ << ");" << endl;
+}
+
 void PEventStatement::dump(ostream&out, unsigned ind) const
 {
       if (expr_.count() == 0) {

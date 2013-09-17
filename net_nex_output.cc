@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -115,6 +115,12 @@ void NetCondit::nex_output(NexusSet&out)
 	    if_->nex_output(out);
       if (else_ != 0)
 	    else_->nex_output(out);
+}
+
+void NetDoWhile::nex_output(NexusSet&out)
+{
+      if (proc_ != 0)
+	    proc_->nex_output(out);
 }
 
 void NetEvWait::nex_output(NexusSet&out)

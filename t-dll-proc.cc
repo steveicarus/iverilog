@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -616,6 +616,31 @@ bool dll_target::proc_disable(const NetDisable*net)
       stmt_cur_->type_ = IVL_ST_DISABLE;
       stmt_cur_->u_.disable_.scope = lookup_scope_(net->target());
       return true;
+}
+
+void dll_target::proc_do_while(const NetDoWhile*net)
+{
+      assert(stmt_cur_);
+      assert(stmt_cur_->type_ == IVL_ST_NONE);
+      FILE_NAME(stmt_cur_, net);
+
+      stmt_cur_->type_ = IVL_ST_DO_WHILE;
+      stmt_cur_->u_.while_.stmt_ = (struct ivl_statement_s*)
+	    calloc(1, sizeof(struct ivl_statement_s));
+
+      assert(expr_ == 0);
+      net->expr()->expr_scan(this);
+      stmt_cur_->u_.while_.cond_ = expr_;
+      expr_ = 0;
+
+	/* Now generate the statement of the do/while loop. We know it is
+	   a single statement, and we know that the
+	   emit_proc_recurse() will call emit_proc() for it. */
+
+      ivl_statement_t save_cur_ = stmt_cur_;
+      stmt_cur_ = save_cur_->u_.while_.stmt_;
+      net->emit_proc_recurse(this);
+      stmt_cur_ = save_cur_;
 }
 
 bool dll_target::proc_force(const NetForce*net)

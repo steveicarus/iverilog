@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -750,6 +750,12 @@ void PCondit::elaborate_sig(Design*des, NetScope*scope) const
 }
 
 void PDelayStatement::elaborate_sig(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_->elaborate_sig(des, scope);
+}
+
+void PDoWhile::elaborate_sig(Design*des, NetScope*scope) const
 {
       if (statement_)
 	    statement_->elaborate_sig(des, scope);

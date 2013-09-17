@@ -1334,6 +1334,71 @@ static int show_stmt_disable(ivl_statement_t net, ivl_scope_t sscope)
       return rc;
 }
 
+static struct vector_info reduction_or(struct vector_info cvec)
+{
+      struct vector_info result;
+
+      switch (cvec.base) {
+	  case 0:
+	    result.base = 0;
+	    result.wid = 1;
+	    break;
+	  case 1:
+	    result.base = 1;
+	    result.wid = 1;
+	    break;
+	  case 2:
+	  case 3:
+	    result.base = 0;
+	    result.wid = 1;
+	    break;
+	  default:
+	    clr_vector(cvec);
+	    result.base = allocate_vector(1);
+	    result.wid = 1;
+	    assert(result.base);
+	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n", result.base,
+		    cvec.base, cvec.wid);
+	    break;
+      }
+
+      return result;
+}
+
+static int show_stmt_do_while(ivl_statement_t net, ivl_scope_t sscope)
+{
+      int rc = 0;
+      struct vector_info cvec;
+
+      unsigned top_label = local_count++;
+
+      show_stmt_file_line(net, "Do/While statement.");
+
+	/* Start the loop. The top of the loop starts a basic block
+	   because it can be entered from above or from the bottom of
+	   the loop. */
+      fprintf(vvp_out, "T_%u.%u ;\n", thread_count, top_label);
+      clear_expression_lookaside();
+
+	/* Draw the body of the loop. */
+      rc += show_statement(ivl_stmt_sub_stmt(net), sscope);
+
+	/* Draw the evaluation of the condition expression, and test
+	   the result. If the expression evaluates to true, then
+	   branch to the top label. */
+      cvec = draw_eval_expr(ivl_stmt_cond_expr(net), STUFF_OK_XZ|STUFF_OK_47);
+      if (cvec.wid > 1)
+	    cvec = reduction_or(cvec);
+
+      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, %u;\n",
+	      thread_count, top_label, cvec.base);
+      if (cvec.base >= 8)
+	    clr_vector(cvec);
+
+      clear_expression_lookaside();
+      return rc;
+}
+
 static int show_stmt_force(ivl_statement_t net)
 {
       ivl_expr_t rval;
@@ -1643,37 +1708,6 @@ static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
       clear_expression_lookaside();
 
       return show_statement(ivl_stmt_sub_stmt(net), sscope);
-}
-
-static struct vector_info reduction_or(struct vector_info cvec)
-{
-      struct vector_info result;
-
-      switch (cvec.base) {
-	  case 0:
-	    result.base = 0;
-	    result.wid = 1;
-	    break;
-	  case 1:
-	    result.base = 1;
-	    result.wid = 1;
-	    break;
-	  case 2:
-	  case 3:
-	    result.base = 0;
-	    result.wid = 1;
-	    break;
-	  default:
-	    clr_vector(cvec);
-	    result.base = allocate_vector(1);
-	    result.wid = 1;
-	    assert(result.base);
-	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n", result.base,
-		    cvec.base, cvec.wid);
-	    break;
-      }
-
-      return result;
 }
 
 static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
@@ -2182,6 +2216,10 @@ static int show_statement(ivl_statement_t net, ivl_scope_t sscope)
 
 	  case IVL_ST_DISABLE:
 	    rc += show_stmt_disable(net, sscope);
+	    break;
+
+	  case IVL_ST_DO_WHILE:
+	    rc += show_stmt_do_while(net, sscope);
 	    break;
 
 	  case IVL_ST_FORCE:

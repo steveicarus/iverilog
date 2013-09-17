@@ -1269,6 +1269,13 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 	case IVL_ST_DISABLE:
 	    emit_stmt_disable(scope, stmt);
 	    break;
+	case IVL_ST_DO_WHILE:
+	    fprintf(stderr, "%s:%u: vlog95 sorry: do/while is not "
+	                    "currently translated.\n",
+	                    ivl_stmt_file(stmt),
+	                    ivl_stmt_lineno(stmt));
+	    vlog_errors += 1;
+	    break;
 	case IVL_ST_FORCE:
 	    emit_stmt_force(scope, stmt);
 	    break;

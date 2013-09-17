@@ -388,6 +388,13 @@ void show_statement(ivl_statement_t net, unsigned ind)
 	    show_stmt_disable(net, ind);
 	    break;
 
+	  case IVL_ST_DO_WHILE:
+	    fprintf(out, "%*sdo\n", ind, "");
+	    show_statement(ivl_stmt_sub_stmt(net), ind+2);
+	    fprintf(out, "%*swhile\n", ind, "");
+	    show_expression(ivl_stmt_cond_expr(net), ind+4);
+	    break;
+
 	  case IVL_ST_FORCE:
 	    show_stmt_force(net, ind);
 	    break;

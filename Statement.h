@@ -336,6 +336,22 @@ class PDisable  : public Statement {
       pform_name_t scope_;
 };
 
+class PDoWhile  : public Statement {
+
+    public:
+      PDoWhile(PExpr*ex, Statement*st);
+      ~PDoWhile();
+
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const;
+      virtual void dump(ostream&out, unsigned ind) const;
+
+    private:
+      PExpr*cond_;
+      Statement*statement_;
+};
+
 /*
  * The event statement represents the event delay in behavioral
  * code. It comes from such things as:
@@ -499,7 +515,7 @@ class PTrigger  : public Statement {
 class PWhile  : public Statement {
 
     public:
-      PWhile(PExpr*e1, Statement*st);
+      PWhile(PExpr*ex, Statement*st);
       ~PWhile();
 
       virtual NetProc* elaborate(Design*des, NetScope*scope) const;

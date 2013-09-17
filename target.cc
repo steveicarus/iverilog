@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2011 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2013 Stephen Williams <steve@icarus.com>
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -362,6 +362,13 @@ bool target_t::proc_disable(const NetDisable*obj)
 	   << "target (" << typeid(*this).name() << "): "
 	   << "does not support disable statements." << endl;
       return false;
+}
+
+void target_t::proc_do_while(const NetDoWhile*net)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled do/while:" << endl;
+      net->dump(cerr, 6);
 }
 
 bool target_t::proc_force(const NetForce*)

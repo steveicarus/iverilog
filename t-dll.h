@@ -118,6 +118,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool proc_deassign(const NetDeassign*);
       bool proc_delay(const NetPDelay*);
       bool proc_disable(const NetDisable*);
+      void proc_do_while(const NetDoWhile*);
       bool proc_force(const NetForce*);
       void proc_forever(const NetForever*);
       void proc_free(const NetFree*);

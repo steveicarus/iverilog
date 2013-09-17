@@ -1,7 +1,7 @@
 #ifndef __target_H
 #define __target_H
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -130,6 +130,7 @@ struct target_t {
       virtual bool proc_deassign(const NetDeassign*);
       virtual bool proc_delay(const NetPDelay*);
       virtual bool proc_disable(const NetDisable*);
+      virtual void proc_do_while(const NetDoWhile*);
       virtual bool proc_force(const NetForce*);
       virtual void proc_forever(const NetForever*);
       virtual void proc_free(const NetFree*);

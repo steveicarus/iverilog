@@ -2914,6 +2914,34 @@ class NetDisable  : public NetProc {
 };
 
 /*
+ * The do/while statement is a condition that is tested at the end of
+ * each iteration, and a statement (a NetProc) that is executed once and
+ * then again as long as the condition is true.
+ */
+class NetDoWhile  : public NetProc {
+
+    public:
+      NetDoWhile(NetExpr*c, NetProc*p)
+      : cond_(c), proc_(p) { }
+
+      const NetExpr*expr() const { return cond_; }
+
+      void emit_proc_recurse(struct target_t*) const;
+
+      virtual NexusSet* nex_input(bool rem_out = true);
+      virtual void nex_output(NexusSet&);
+      virtual bool emit_proc(struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+      virtual DelayType delay_type() const;
+      virtual bool evaluate_function(const LineInfo&loc,
+				     map<perm_string,LocalVar>&ctx) const;
+
+    private:
+      NetExpr* cond_;
+      NetProc*proc_;
+};
+
+/*
  * A NetEvent is an object that represents an event object, that is
  * objects declared like so in Verilog:
  *

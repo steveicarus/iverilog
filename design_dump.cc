@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1028,6 +1028,13 @@ void NetDisable::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "disable " << scope_path(target_) << "; "
 	<< "/* " << get_fileline() << " */" << endl;
+}
+
+void NetDoWhile::dump(ostream&o, unsigned ind) const
+{
+      o << setw(ind) << "" << "do" << endl;
+      proc_->dump(o, ind+3);
+      o << setw(ind) << "" << "while (" << *cond_ << ");" << endl;
 }
 
 void NetEvProbe::dump_node(ostream&o, unsigned ind) const

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -371,6 +371,15 @@ NexusSet* NetCondit::nex_input(bool rem_out)
 	    delete tmp;
       }
 
+      return result;
+}
+
+NexusSet* NetDoWhile::nex_input(bool rem_out)
+{
+      NexusSet*result = proc_->nex_input(rem_out);
+      NexusSet*tmp = cond_->nex_input(rem_out);
+      result->add(*tmp);
+      delete tmp;
       return result;
 }
 

@@ -562,6 +562,49 @@ bool NetDisable::evaluate_function(const LineInfo&,
       return true;
 }
 
+bool NetDoWhile::evaluate_function(const LineInfo&loc,
+				   map<perm_string,LocalVar>&context_map) const
+{
+      bool flag = true;
+
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": NetDoWhile::evaluate_function: "
+		 << "Start loop" << endl;
+      }
+
+      while (!disable) {
+	      // Evaluate the statement.
+	    flag = proc_->evaluate_function(loc, context_map);
+	    if (! flag)
+		   break;
+
+	      // Evaluate the condition expression to try and get the
+	      // condition for the loop.
+	    NetExpr*cond = cond_->evaluate_function(loc, context_map);
+	    if (cond == 0) {
+		  flag = false;
+		  break;
+	    }
+
+	    NetEConst*cond_const = dynamic_cast<NetEConst*> (cond);
+	    ivl_assert(loc, cond_const);
+
+	    long val = cond_const->value().as_long();
+	    delete cond;
+
+	      // If the condition is false, then the loop is done.
+	    if (val == 0)
+		  break;
+      }
+
+      if (debug_eval_tree) {
+	    cerr << get_fileline() << ": NetDoWhile::evaluate_function: "
+		 << "Done loop, flag=" << (flag?"true":"false") << endl;
+      }
+
+      return flag;
+}
+
 bool NetForever::evaluate_function(const LineInfo&loc,
 				   map<perm_string,LocalVar>&context_map) const
 {

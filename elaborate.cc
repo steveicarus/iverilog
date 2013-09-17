@@ -3719,6 +3719,18 @@ NetProc* PDisable::elaborate(Design*des, NetScope*scope) const
 }
 
 /*
+ * The do/while loop is fairly directly represented in the netlist.
+ */
+NetProc* PDoWhile::elaborate(Design*des, NetScope*scope) const
+{
+      NetExpr*tmp = elab_and_eval(des, scope, cond_, -1);
+      tmp->set_line(*this);
+      NetDoWhile*loop = new NetDoWhile(tmp, statement_->elaborate(des, scope));
+      loop->set_line(*this);
+      return loop;
+}
+
+/*
  * An event statement is an event delay of some sort, attached to a
  * statement. Some Verilog examples are:
  *

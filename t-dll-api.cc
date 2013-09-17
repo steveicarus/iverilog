@@ -2557,6 +2557,7 @@ extern "C" ivl_expr_t ivl_stmt_cond_expr(ivl_statement_t net)
 	  case IVL_ST_CASEZ:
 	    return net->u_.case_.cond;
 
+	  case IVL_ST_DO_WHILE:
 	  case IVL_ST_REPEAT:
 	  case IVL_ST_WHILE:
 	    return net->u_.while_.cond_;
@@ -2819,6 +2820,7 @@ extern "C" ivl_statement_t ivl_stmt_sub_stmt(ivl_statement_t net)
 	    return net->u_.forever_.stmt_;
 	  case IVL_ST_WAIT:
 	    return net->u_.wait_.stmt_;
+	  case IVL_ST_DO_WHILE:
 	  case IVL_ST_REPEAT:
 	  case IVL_ST_WHILE:
 	    return net->u_.while_.stmt_;

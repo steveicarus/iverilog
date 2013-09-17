@@ -2810,6 +2810,14 @@ DelayType NetCondit::delay_type() const
       return combine_delays(if_type, el_type);
 }
 
+/*
+ * A do/while will execute the body at least once.
+ */
+DelayType NetDoWhile::delay_type() const
+{
+      return proc_->delay_type();
+}
+
 DelayType NetEvWait::delay_type() const
 {
       return DEFINITE_DELAY;

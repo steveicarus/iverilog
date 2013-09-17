@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -261,6 +261,17 @@ bool NetDisable::emit_proc(struct target_t*tgt) const
       return tgt->proc_disable(this);
 }
 
+bool NetDoWhile::emit_proc(struct target_t*tgt) const
+{
+      tgt->proc_do_while(this);
+      return true;
+}
+
+void NetDoWhile::emit_proc_recurse(struct target_t*tgt) const
+{
+      proc_->emit_proc(tgt);
+}
+
 bool NetForce::emit_proc(struct target_t*tgt) const
 {
       return tgt->proc_force(this);
@@ -316,6 +327,11 @@ bool NetWhile::emit_proc(struct target_t*tgt) const
 {
       tgt->proc_while(this);
       return true;
+}
+
+void NetWhile::emit_proc_recurse(struct target_t*tgt) const
+{
+      proc_->emit_proc(tgt);
 }
 
 void NetBlock::emit_recurse(struct target_t*tgt) const
@@ -457,11 +473,6 @@ bool NetScope::emit_defs(struct target_t*tgt) const
       }
 
       return flag;
-}
-
-void NetWhile::emit_proc_recurse(struct target_t*tgt) const
-{
-      proc_->emit_proc(tgt);
 }
 
 int Design::emit(struct target_t*tgt) const

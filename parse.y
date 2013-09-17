@@ -1289,6 +1289,12 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	$$ = tmp;
       }
 
+  | K_do statement_or_null K_while '(' expression ')' ';'
+      { PDoWhile*tmp = new PDoWhile($5, $2);
+	FILE_NAME(tmp, @1);
+	$$ = tmp;
+      }
+
   | K_foreach '(' IDENTIFIER '[' loop_variables ']' ')' statement_or_null
       { yyerror(@1, "sorry: foreach loops not supported");
 	delete[]$3;
@@ -1319,6 +1325,11 @@ loop_statement /* IEEE1800-2005: A.6.8 */
   | K_while '(' error ')' statement_or_null
       { $$ = 0;
 	yyerror(@1, "error: Error in while loop condition.");
+      }
+
+  | K_do statement_or_null K_while '(' error ')' ';'
+      { $$ = 0;
+	yyerror(@1, "error: Error in do/while loop condition.");
       }
 
   | K_foreach '(' IDENTIFIER '[' error ']' ')' statement_or_null

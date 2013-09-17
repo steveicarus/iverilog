@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2008,2010,2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -247,6 +247,17 @@ PDisable::~PDisable()
 {
 }
 
+PDoWhile::PDoWhile(PExpr*ex, Statement*st)
+: cond_(ex), statement_(st)
+{
+}
+
+PDoWhile::~PDoWhile()
+{
+      delete cond_;
+      delete statement_;
+}
+
 PEventStatement::PEventStatement(const svector<PEEvent*>&ee)
 : expr_(ee), statement_(0)
 {
@@ -360,8 +371,8 @@ PTrigger::~PTrigger()
 {
 }
 
-PWhile::PWhile(PExpr*e1, Statement*st)
-: cond_(e1), statement_(st)
+PWhile::PWhile(PExpr*ex, Statement*st)
+: cond_(ex), statement_(st)
 {
 }
 
