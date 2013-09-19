@@ -3381,7 +3381,19 @@ NetProc* PCallTask::elaborate_function_(Design*des, NetScope*scope) const
 NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 					  NetScope*task, NetExpr*use_this) const
 {
-      NetTaskDef*def = task->task_def();
+      NetBaseDef*def = 0;
+      if (task->type() == NetScope::TASK) {
+	    def = task->task_def();
+
+      } else if (task->type() == NetScope::FUNC) {
+	    NetFuncDef*tmp = task->func_def();
+	    if (tmp->return_sig() != 0) {
+		  cerr << get_fileline() << ": error: "
+		       << "Calling a non-void function as a task." << endl;
+		  des->errors += 1;
+	    }
+	    def = tmp;
+      }
 
 	/* The caller has checked the parms_ size to make sure it
 	   matches the task definition, so we can just use the task

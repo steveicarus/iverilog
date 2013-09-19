@@ -200,10 +200,18 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       }
 
       if (reg == 0) {
-	    cerr << get_fileline() << ": error: Could not find variable ``"
-		 << path_ << "'' in ``" << scope_path(use_scope) <<
-		  "''" << endl;
-
+	    if (use_scope->type()==NetScope::FUNC
+		&& use_scope->func_def()->return_sig()==0
+		&& use_scope->basename()==peek_tail_name(path_)) {
+		  cerr << get_fileline() << ": error: "
+		       << "Cannot assign to " << path_
+		       << " because function " << scope_path(use_scope)
+		       << " is void." << endl;
+	    } else {
+		  cerr << get_fileline() << ": error: Could not find variable ``"
+		       << path_ << "'' in ``" << scope_path(use_scope) <<
+			"''" << endl;
+	    }
 	    des->errors += 1;
 	    return 0;
       }

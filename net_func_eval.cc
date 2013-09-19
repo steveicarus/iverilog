@@ -61,21 +61,22 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 
       if (debug_eval_tree) {
 	    cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
-		 << "Evaluate function " << scope_->basename() << endl;
+		 << "Evaluate function " << scope()->basename() << endl;
       }
 
 	// Put the return value into the map...
-      LocalVar&return_var = context_map[scope_->basename()];
+      LocalVar&return_var = context_map[scope()->basename()];
       return_var.nwords = 0;
       return_var.value  = 0;
 
 	// Load the input ports into the map...
-      ivl_assert(loc, ports_.size() == args.size());
-      for (size_t idx = 0 ; idx < ports_.size() ; idx += 1) {
-	    perm_string aname = ports_[idx]->name();
+      ivl_assert(loc, port_count() == args.size());
+      for (size_t idx = 0 ; idx < port_count() ; idx += 1) {
+	    const NetNet*pnet = port(idx);
+	    perm_string aname = pnet->name();
 	    LocalVar&input_var = context_map[aname];
 	    input_var.nwords = 0;
-	    input_var.value  = fix_assign_value(ports_[idx], args[idx]);
+	    input_var.value  = fix_assign_value(pnet, args[idx]);
 
 	    if (debug_eval_tree) {
 		  cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
@@ -85,26 +86,26 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 
 	// Ask the scope to collect definitions for local values. This
 	// fills in the context_map with local variables held by the scope.
-      scope_->evaluate_function_find_locals(loc, context_map);
+      scope()->evaluate_function_find_locals(loc, context_map);
 
-      if (debug_eval_tree && statement_==0) {
+      if (debug_eval_tree && proc_==0) {
 	    cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
-		 << "Function " << scope_path(scope_)
+		 << "Function " << scope_path(scope())
 		 << " has no statement?" << endl;
       }
 
 	// Perform the evaluation. Note that if there were errors
 	// when compiling the function definition, we may not have
 	// a valid statement.
-      bool flag = statement_ && statement_->evaluate_function(loc, context_map);
+      bool flag = proc_ && proc_->evaluate_function(loc, context_map);
 
       if (debug_eval_tree && !flag) {
 	    cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
-		 << "Cannot evaluate " << scope_path(scope_) << "." << endl;
+		 << "Cannot evaluate " << scope_path(scope()) << "." << endl;
       }
 
 	// Extract the result...
-      ptr = context_map.find(scope_->basename());
+      ptr = context_map.find(scope()->basename());
       NetExpr*res = ptr->second.value;
       context_map.erase(ptr);
 
@@ -127,9 +128,9 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
 	    if (debug_eval_tree)
 		  cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
 		       << "disable of " << scope_path(disable)
-		       << " trapped in function " << scope_path(scope_)
+		       << " trapped in function " << scope_path(scope())
 		       << "." << endl;
-	    ivl_assert(loc, disable==scope_);
+	    ivl_assert(loc, disable==scope());
 	    disable = 0;
       }
 

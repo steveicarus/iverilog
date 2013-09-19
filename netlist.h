@@ -791,6 +791,33 @@ struct LocalVar {
       };
 };
 
+class NetBaseDef {
+    public:
+      NetBaseDef(NetScope*n, const vector<NetNet*>&po,
+		 const std::vector<NetExpr*>&pd);
+      virtual ~NetBaseDef();
+
+      const NetScope*scope() const;
+      NetScope*scope();
+
+      unsigned port_count() const;
+      NetNet*port(unsigned idx) const;
+      NetExpr*port_defe(unsigned idx) const;
+
+      void set_proc(NetProc*p);
+
+	//const string& name() const;
+      const NetProc*proc() const;
+
+    private:
+      NetScope*scope_;
+      std::vector<NetNet*>ports_;
+      std::vector<NetExpr*>pdefaults_;
+
+    protected:
+      NetProc*proc_;
+};
+
 /*
  * This object type is used to contain a logical scope within a
  * design. The scope doesn't represent any executable hardware, but is
@@ -3212,23 +3239,12 @@ class NetFree   : public NetProc {
  * signals that make up its parameter list. These are all internal to
  * the scope of the function.
  */
-class NetFuncDef {
+class NetFuncDef : public NetBaseDef {
 
     public:
       NetFuncDef(NetScope*, NetNet*result, const std::vector<NetNet*>&po,
 		 const std::vector<NetExpr*>&pd);
       ~NetFuncDef();
-
-      void set_proc(NetProc*st);
-
-	//const string name() const;
-      const NetProc*proc() const;
-      const NetScope*scope() const;
-      NetScope*scope();
-
-      unsigned port_count() const;
-      const NetNet*port(unsigned idx) const;
-      NetExpr*port_defe(unsigned idx) const;
 
       const NetNet*return_sig() const;
 
@@ -3241,11 +3257,7 @@ class NetFuncDef {
       void dump(ostream&, unsigned ind) const;
 
     private:
-      NetScope*scope_;
-      NetProc*statement_;
       NetNet*result_sig_;
-      std::vector<NetNet*>ports_;
-      std::vector<NetExpr*>pdefaults_;
 };
 
 /*
@@ -3375,31 +3387,15 @@ class NetSTask  : public NetProc {
  * output and inout variables. The variables accessible as ports are
  * also elaborated and accessible as ordinary reg objects.
  */
-class NetTaskDef {
+class NetTaskDef : public NetBaseDef {
 
     public:
       NetTaskDef(NetScope*n, const vector<NetNet*>&po,
 		 const std::vector<NetExpr*>&pd);
       ~NetTaskDef();
 
-      void set_proc(NetProc*p);
-
-	//const string& name() const;
-      const NetScope* scope() const;
-      const NetProc*proc() const;
-
-      unsigned port_count() const;
-      NetNet*port(unsigned idx) const;
-      NetExpr*port_defe(unsigned idx) const;
-
       void dump(ostream&, unsigned) const;
       DelayType delay_type() const;
-
-    private:
-      NetScope*scope_;
-      NetProc*proc_;
-      std::vector<NetNet*>ports_;
-      std::vector<NetExpr*>pdefaults_; // Default expressions for ports.
 
     private: // not implemented
       NetTaskDef(const NetTaskDef&);

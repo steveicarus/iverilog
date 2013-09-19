@@ -121,16 +121,15 @@ bool dll_target::func_def(const NetScope*net)
 	   is *not* correct. Someday, I'm going to have to change
 	   this, but that will break code generators that use this
 	   result. */
-      if (const NetNet*ret_sig = def->return_sig()) {
+      if (const NetNet*ret_sig = def->return_sig())
 	    scop->u_.port[0] = find_signal(des_, ret_sig);
-	    return true;
-      }
+      else
+	    scop->u_.port[0] = 0;
 
-      cerr << "?:0" << ": internal error: "
-	   << "Function " << net->basename() << " has a return type"
-	   << " that I do not understand." << endl;
+	/* If there is no return value, then this is a void function. */
 
-      return false;
+      return true;
+
 }
 
 /*

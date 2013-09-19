@@ -582,27 +582,39 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    ivl_type_t ret_type;
 
 	    if (return_type_) {
-		  ret_type = return_type_->elaborate_type(des, scope);
+		  if (dynamic_cast<const struct void_type_t*> (return_type_)) {
+			ret_type = 0;
+		  } else {
+			ret_type = return_type_->elaborate_type(des, scope);
+			ivl_assert(*this, ret_type);
+		  }
 	    } else {
 		  netvector_t*tmp = new netvector_t(IVL_VT_LOGIC);
 		  tmp->set_scalar(true);
 		  ret_type = tmp;
 	    }
-	    list<netrange_t> ret_unpacked;
-	    ret_sig = new NetNet(scope, fname, NetNet::REG, ret_unpacked, ret_type);
 
-	    ret_sig->set_line(*this);
-	    ret_sig->port_type(NetNet::POUTPUT);
+	    if (ret_type) {
+		  list<netrange_t> ret_unpacked;
+		  ret_sig = new NetNet(scope, fname, NetNet::REG, ret_unpacked, ret_type);
+
+		  ret_sig->set_line(*this);
+		  ret_sig->port_type(NetNet::POUTPUT);
+	    } else {
+		  ret_sig = 0;
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PFunction::elaborate_sig: "
+			     << "Detected that function is void." << endl;
+		  }
+	    }
       }
 
       vector<NetNet*>ports;
       vector<NetExpr*>pdef;
       elaborate_sig_ports_(des, scope, ports, pdef);
 
-      NetFuncDef*def = 0;
-      if (ret_sig)  def = new NetFuncDef(scope, ret_sig, ports, pdef);
+      NetFuncDef*def = new NetFuncDef(scope, ret_sig, ports, pdef);
 
-      assert(def);
       if (debug_elaborate)
 	    cerr << get_fileline() << ": debug: "
 		 << "Attach function definition to scope "
