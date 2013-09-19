@@ -223,6 +223,8 @@ class PCallTask  : public Statement {
       NetProc*elaborate_build_call_(Design*des, NetScope*scope,
 				    NetScope*task, NetExpr*use_this) const;
 
+      bool test_task_calls_ok_(Design*des, NetScope*scope) const;
+
       PPackage*package_;
       pform_name_t path_;
       vector<PExpr*> parms_;

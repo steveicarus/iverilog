@@ -3208,20 +3208,6 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
 {
       assert(scope);
 
-      if (scope->in_func()) {
-	    cerr << get_fileline() << ": error: functions cannot enable/call "
-	            "tasks." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
-      if (scope->in_final()) {
-	    cerr << get_fileline() << ": error: final procedures cannot "
-	            "enable/call tasks." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
-
       NetScope*pscope = scope;
       if (package_) {
 	    pscope = des->find_package(package_->pscope_name());
@@ -3357,6 +3343,31 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope) const
       return 0;
 }
 
+/*
+ * If during elaboration we determine (for sure) that we are calling a
+ * task (and not just a void function) then this method tests if that
+ * task call is allowed in the current context. If so, return true. If
+ * not, print and error message and return false;
+ */
+bool PCallTask::test_task_calls_ok_(Design*des, NetScope*scope) const
+{
+      if (scope->in_func()) {
+	    cerr << get_fileline() << ": error: Functions cannot enable/call "
+	            "tasks." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      if (scope->in_final()) {
+	    cerr << get_fileline() << ": error: final procedures cannot "
+	            "enable/call tasks." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
+      return true;
+}
+
 NetProc* PCallTask::elaborate_function_(Design*des, NetScope*scope) const
 {
       NetFuncDef*func = des->find_function(scope, path_);
@@ -3384,6 +3395,12 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
       NetBaseDef*def = 0;
       if (task->type() == NetScope::TASK) {
 	    def = task->task_def();
+
+	      // OK, this is certainly a TASK that I'm calling. Make
+	      // sure that is OK where I am. Even if this test fails,
+	      // continue with the elaboration as if it were OK so
+	      // that we can catch more errors.
+	    test_task_calls_ok_(des, scope);
 
       } else if (task->type() == NetScope::FUNC) {
 	    NetFuncDef*tmp = task->func_def();
