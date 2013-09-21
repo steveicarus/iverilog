@@ -114,15 +114,6 @@ bool PECallFunction::check_call_matches_definition_(Design*des, NetScope*dscope)
 	    return false;
       }
 
-      if (parms_count != dscope->func_def()->port_count()) {
-	    cerr << get_fileline() << ": error: Function " << scope_path(dscope)
-		 << " expects " << (dscope->func_def()->port_count())
-		 << " arguments, you passed " << parms_count << "."
-		 << endl;
-	    des->errors += 1;
-	    return false;
-      }
-
       return true;
 }
 

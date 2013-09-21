@@ -1972,11 +1972,14 @@ NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*ds
 	    pfunc->elaborate(des, dscope);
       }
 
-      unsigned parms_count = parms_.size();
-      if ((parms_count == 1) && (parms_[0] == 0))
-	    parms_count = 0;
-
+      unsigned parms_count = def->port_count();
       vector<NetExpr*> parms (parms_count);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PECallFunction::elaborate_base_: "
+		 << "Expecting " << parms_count
+		 << " for function " << scope_path(dscope) << "." << endl;
+      }
 
 	/* Elaborate the input expressions for the function. This is
 	   done in the scope of the function call, and not the scope
@@ -2078,6 +2081,16 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
 			     << " arg " << (idx+1)
 			     << " argwid=" << parms[pidx]->expr_width()
 			     << ": " << *parms[idx] << endl;
+
+	    } else if (def->port_defe(pidx)) {
+		  if (! gn_system_verilog()) {
+			cerr << get_fileline() << ": internal error: "
+			     <<"Found (and using) default function argument "
+			     << "requires SystemVerilog." << endl;
+			des->errors += 1;
+		  }
+		  parms[pidx] = def->port_defe(pidx);
+
 	    } else {
 		  missing_parms += 1;
 		  parms[pidx] = 0;

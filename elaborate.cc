@@ -3246,29 +3246,7 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       assert(def);
 
 
-      unsigned parm_count = parms_.size();
-
-      if (debug_elaborate) {
-	    cerr << get_fileline() << "PCallTask::elaborate_usr: "
-		 << "Elaborate call to task " << task->basename()
-		 << " width " << parm_count << " arguments." << endl;
-      }
-
-	// Handle special case that the definition has no arguments
-	// but the parser found a single nul argument. This is an
-	// argument of the parser allowing for the possibility of
-	// default values for argumets: The parser cannot tell the
-	// difference between "func()" and "func(<default>)".
-      if (def->port_count() == 0 && parm_count == 1 && parms_[0] == 0)
-	    parm_count = 0;
-
-      if (parm_count != def->port_count()) {
-	    cerr << get_fileline() << ": error: Port count mismatch in call to ``"
-		 << path_ << "''. Got " << parm_count
-		 << " ports, expecting " << def->port_count() << " ports." << endl;
-	    des->errors += 1;
-	    return 0;
-      }
+      unsigned parm_count = def->port_count();
 
 	/* Handle non-automatic tasks with no parameters specially. There is
            no need to make a sequential block to hold the generated code. */
@@ -3418,6 +3396,14 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
       unsigned parm_count = def->port_count();
 
+      if (parms_.size() > parm_count) {
+	    cerr << get_fileline() << ": error: "
+		 << "Too many arguments (" << parms_.size()
+		 << ", expecting " << parm_count << ")"
+		 << " in call to task." << endl;
+	    des->errors += 1;
+      }
+
       NetBlock*block = new NetBlock(NetBlock::SEQU, 0);
       block->set_line(*this);
 
@@ -3476,7 +3462,7 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 
 	    NetExpr*rv = 0;
 
-	    if (parms_[parms_idx]) {
+	    if (parms_idx<parms_.size() && parms_[parms_idx]) {
 		  rv = elaborate_rval_expr(des, scope, lv_type, wid, parms_ [parms_idx]);
 		  if (NetEEvent*evt = dynamic_cast<NetEEvent*> (rv)) {
 			cerr << evt->get_fileline() << ": error: An event '"
@@ -3494,6 +3480,8 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 			des->errors += 1;
 		  }
 		  rv = def->port_defe(idx);
+		  if (lv_type==IVL_VT_BOOL||lv_type==IVL_VT_LOGIC)
+			rv = pad_to_width(rv->dup_expr(), wid, *this);
 
 	    } else {
 		  cerr << get_fileline() << ": error: "
