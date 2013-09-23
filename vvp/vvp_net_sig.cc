@@ -593,13 +593,6 @@ vvp_fun_signal_string_sa::vvp_fun_signal_string_sa()
 {
 }
 
-#ifdef CHECK_WITH_VALGRIND
-void vvp_fun_signal_string_aa::free_instance(vvp_context_t)
-{
-      assert(0);
-}
-#endif
-
 void vvp_fun_signal_string_sa::recv_string(vvp_net_ptr_t ptr, const std::string&bit,
 					   vvp_context_t)
 {
