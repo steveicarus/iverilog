@@ -677,7 +677,7 @@ assignment_pattern /* IEEE1800-2005: A.6.7.1 */
   | K_LP '}'
       { PEVoid*tmp = new PEVoid;
 	FILE_NAME(tmp, @1);
-	yyerror(@1, "sorry: Assignment patterns (array literals) not supported.");
+	yyerror(@1, "sorry: Assignment patterns (empty array literals) not supported.");
 	$$ = tmp;
       }
   ;
@@ -1795,12 +1795,16 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
   : port_direction_opt data_type_or_implicit IDENTIFIER range_opt tf_port_item_expr_opt
       { vector<pform_tf_port_t>*tmp;
 	NetNet::PortType use_port_type = $1==NetNet::PIMPLICIT? NetNet::PINPUT : $1;
+	perm_string name = lex_strings.make($3);
 	list<perm_string>* ilist = list_from_identifier($3);
 
 	if (($2 == 0) && ($1==NetNet::PIMPLICIT)) {
 		// Detect special case this is an undecorated
 		// identifier and we need to get the declaration from
 		// left context.
+	      if ($4 != 0) {
+		    yyerror(@4, "internal error: How can there be an unpacked range here?\n");
+	      }
 	      if (port_declaration_context.var_type == IVL_VT_NO_TYPE) {
 		    tmp = pform_make_task_ports(@3, use_port_type,
 					 port_declaration_context.data_type,
@@ -1829,11 +1833,11 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	      port_declaration_context.data_type = $2;
 	      tmp = pform_make_task_ports(@3, use_port_type, $2, ilist);
 	}
-	$$ = tmp;
-	if ($4) {
-	      yyerror(@4, "sorry: Port variable dimensions not supported yet.");
-	      delete $4;
+	if ($4 != 0) {
+	      pform_set_reg_idx(name, $4);
 	}
+
+	$$ = tmp;
 	if ($5) {
 	      assert(tmp->size()==1);
 	      tmp->front().defe = $5;

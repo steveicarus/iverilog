@@ -65,6 +65,12 @@ static void function_argument_class(ivl_signal_t port, ivl_expr_t expr)
       fprintf(vvp_out, "    %%store/obj v%p_0;\n", port);
 }
 
+static void function_argument_darray(ivl_signal_t port, ivl_expr_t expr)
+{
+      draw_eval_object(expr);
+      fprintf(vvp_out, "    %%store/obj v%p_0;\n", port);
+}
+
 static void function_argument_string(ivl_signal_t port, ivl_expr_t expr)
 {
       draw_eval_string(expr);
@@ -89,6 +95,9 @@ static void draw_function_argument(ivl_signal_t port, ivl_expr_t expr)
 	    break;
 	  case IVL_VT_STRING:
 	    function_argument_string(port, expr);
+	    break;
+	  case IVL_VT_DARRAY:
+	    function_argument_darray(port, expr);
 	    break;
 	  default:
 	    fprintf(stderr, "XXXX function argument %s type=%d?!\n",
