@@ -73,7 +73,7 @@ int print_lpm_ff(FILE*fd, ivl_lpm_t net)
 			  ned_d ->get_name(), ned_d ->get_name_index(wid),
 			  ned_q ->get_name(), ned_q ->get_name_index(wid),
 			  ned_d ->get_name(), ned_d ->get_name_index(wid));
-	  
+
 		  fprintf(fd, ".latch %s%s/EN %s%s re %s%s 3\n",
 			  ned_d->get_name(), ned_d->get_name_index(wid),
 			  ned_q->get_name(), ned_q->get_name_index(wid),
