@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -512,6 +512,7 @@ static PLI_INT32 sys_random_calltf(PLI_BYTE8 *name)
       vpiHandle callh, argv, seed = 0;
       s_vpi_value val;
       static long i_seed = 0;
+      long a_seed;
 
       /* Get the argument list and look for a seed. If it is there,
          get the value and reseed the random number generator. */
@@ -522,18 +523,18 @@ static PLI_INT32 sys_random_calltf(PLI_BYTE8 *name)
             seed = vpi_scan(argv);
             vpi_free_object(argv);
             vpi_get_value(seed, &val);
-            i_seed = val.value.integer;
-      }
+            a_seed = val.value.integer;
+      } else a_seed = i_seed;
 
       /* Calculate and return the result. */
-      val.value.integer = rtl_dist_uniform(&i_seed, INT_MIN, INT_MAX);
+      val.value.integer = rtl_dist_uniform(&a_seed, INT_MIN, INT_MAX);
       vpi_put_value(callh, &val, 0, vpiNoDelay);
 
       /* If it exists send the updated seed back to seed parameter. */
       if (seed) {
-            val.value.integer = i_seed;
+            val.value.integer = a_seed;
             vpi_put_value(seed, &val, 0, vpiNoDelay);
-      }
+      } else i_seed = a_seed;
 
       return 0;
 }
