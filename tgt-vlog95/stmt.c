@@ -1078,6 +1078,215 @@ static void emit_stmt_disable(ivl_scope_t scope, ivl_statement_t stmt)
       fprintf(vlog_out, "\n");
 }
 
+/*
+ * Emit just the statements for this named block since an outer named block
+ * was added to keep all the translated code inside a single named block.
+ */
+static void emit_stmt_do_while_body(ivl_scope_t scope, ivl_statement_t stmt)
+{
+      unsigned idx, count = ivl_stmt_block_count(stmt);
+      unsigned is_begin = 0;
+      assert(ivl_stmt_block_scope(stmt));
+      switch (ivl_statement_type(stmt)) {
+	case IVL_ST_BLOCK:
+	    fprintf(vlog_out, "%*cbegin", get_indent(), ' ');
+	    is_begin = 1;
+	    break;
+	case IVL_ST_FORK_JOIN_ANY:
+	    fprintf(stderr, "%s:%u: vlog95 sorry: fork/join_any is not "
+	                    "currently translated.\n",
+	                    ivl_stmt_file(stmt),
+	                    ivl_stmt_lineno(stmt));
+	    vlog_errors += 1;
+	    return;
+	case IVL_ST_FORK_JOIN_NONE:
+	    fprintf(stderr, "%s:%u: vlog95 sorry: fork/join_none is not "
+	                    "currently translated.\n",
+	                    ivl_stmt_file(stmt),
+	                    ivl_stmt_lineno(stmt));
+	    vlog_errors += 1;
+	    return;
+	case IVL_ST_FORK:
+	    fprintf(vlog_out, "%*cfork", get_indent(), ' ');
+	    break;
+	      /* Only named blocks should make it to this code. */
+	default:
+	    assert(0);
+	    break;
+      }
+      emit_stmt_file_line(stmt);
+      fprintf(vlog_out, "\n");
+      indent += indent_incr;
+      for (idx = 0; idx < count; idx += 1) {
+	    emit_stmt(scope, ivl_stmt_block_stmt(stmt, idx));
+      }
+      assert(indent >= indent_incr);
+      indent -= indent_incr;
+      if (is_begin) fprintf(vlog_out, "%*cend\n", get_indent(), ' ');
+      else fprintf(vlog_out, "%*cjoin\n", get_indent(), ' ');
+}
+
+/*
+ * Currently a do/while can be translated in two ways: no named blocks in
+ * the do/while statement and only a named block as the top level statement.
+ * Anything else cannot be translated since a hierarchical variable reference
+ * or disable cannot work correctly when the statement is duplicated.
+ */
+typedef enum stmt_named_type_e {
+      NO_NAMED = 0,
+      TOP_NAMED = 1,
+      OTHER_NAMED = 2
+} stmt_named_type_t;
+
+static stmt_named_type_t get_named_type(ivl_statement_t stmt, unsigned is_top);
+
+/*
+ * A block can start as either a NO_NAMED or a TOP_NAMED so pass this in.
+ */
+static stmt_named_type_t get_named_type_block(ivl_statement_t stmt,
+                                              stmt_named_type_t def_type)
+{
+      stmt_named_type_t rtn = def_type;
+      unsigned idx, count = ivl_stmt_block_count(stmt);
+      for (idx = 0; idx < count; idx += 1) {
+	    stmt_named_type_t lrtn;
+	    lrtn = get_named_type(ivl_stmt_block_stmt(stmt, idx), 0);
+	    if (lrtn > rtn) rtn = lrtn;
+	    if (rtn == OTHER_NAMED) break;
+      }
+      return rtn;
+}
+
+static stmt_named_type_t get_named_type_case(ivl_statement_t stmt)
+{
+      stmt_named_type_t rtn = NO_NAMED;
+      unsigned idx, count = ivl_stmt_case_count(stmt);
+      for (idx = 0; idx < count; idx += 1) {
+	    stmt_named_type_t lrtn;
+	    lrtn = get_named_type(ivl_stmt_case_stmt(stmt, idx), 0);
+	    if (lrtn > rtn) rtn = lrtn;
+	    if (rtn == OTHER_NAMED) break;
+      }
+      return rtn;
+}
+
+static stmt_named_type_t get_named_type_condit(ivl_statement_t stmt)
+{
+      stmt_named_type_t true_rtn, false_rtn;
+      true_rtn = get_named_type(ivl_stmt_cond_true(stmt), 0);
+      false_rtn = get_named_type(ivl_stmt_cond_false(stmt), 0);
+      if (false_rtn > true_rtn) return false_rtn;
+      return true_rtn;
+}
+
+static stmt_named_type_t get_named_type(ivl_statement_t stmt, unsigned is_top)
+{
+      stmt_named_type_t rtn = NO_NAMED;
+
+      if (! stmt) return NO_NAMED;
+
+      switch (ivl_statement_type(stmt)) {
+	case IVL_ST_BLOCK:
+	case IVL_ST_FORK:
+	case IVL_ST_FORK_JOIN_ANY:
+	case IVL_ST_FORK_JOIN_NONE:
+	      /* Check to see if this is a named top block or sub block. */
+	    if (ivl_stmt_block_scope(stmt)) {
+		  if (is_top) rtn = TOP_NAMED;
+		  else return OTHER_NAMED;
+	    }
+            rtn = get_named_type_block(stmt, rtn);
+	    break;
+	case IVL_ST_CASE:
+	case IVL_ST_CASER:
+	case IVL_ST_CASEX:
+	case IVL_ST_CASEZ:
+            rtn = get_named_type_case(stmt);
+	    break;
+	case IVL_ST_CONDIT:
+            rtn = get_named_type_condit(stmt);
+	    break;
+	  /* These statements only have a single sub-statement that is not
+	   * a top level statement relative to the original do/while. */
+	case IVL_ST_DELAY:
+	case IVL_ST_DELAYX:
+	case IVL_ST_DO_WHILE:
+	case IVL_ST_FOREVER:
+	case IVL_ST_REPEAT:
+	case IVL_ST_WAIT:
+	case IVL_ST_WHILE:
+            rtn = get_named_type(ivl_stmt_sub_stmt(stmt), 0);
+	    break;
+	default:
+	      /* The rest of the statement types do not have sub-statements. */
+	    break;
+      }
+      return rtn;
+}
+
+/*
+ *  Translate a do/while to the following:
+ *
+ *   statement
+ *   while (expr) statement
+ */
+static void emit_stmt_do_while(ivl_scope_t scope, ivl_statement_t stmt)
+{
+      ivl_statement_t sub_stmt = ivl_stmt_sub_stmt(stmt);
+      stmt_named_type_t named_type = get_named_type(sub_stmt, 1);
+
+	/* If just the original do/while statement is named then emit it as:
+	 *
+	 *   begin : name
+	 *     <var defs in named>
+	 *     statement
+	 *     while (expr) statement
+	 *   end
+	 */
+      if (named_type == TOP_NAMED) {
+	    ivl_scope_t my_scope = ivl_stmt_block_scope(sub_stmt);
+	    assert(my_scope);
+	    fprintf(vlog_out, "%*cbegin: ", get_indent(), ' ');
+	    emit_id(ivl_scope_basename(my_scope));
+	    emit_stmt_file_line(stmt);
+	    fprintf(vlog_out, "\n");
+	    indent += indent_incr;
+	    emit_scope_variables(my_scope);
+	    emit_stmt_do_while_body(my_scope, sub_stmt);
+	    fprintf(vlog_out, "%*cwhile (", get_indent(), ' ');
+	    emit_expr(scope, ivl_stmt_cond_expr(stmt), 0, 0, 0, 0);
+	    fprintf(vlog_out, ")");
+	    emit_stmt_file_line(stmt);
+	    single_indent = 1;
+	    emit_stmt_do_while_body(my_scope, sub_stmt);
+	    assert(indent >= indent_incr);
+	    indent -= indent_incr;
+	    fprintf(vlog_out, "%*cend  /* %s */\n", get_indent(), ' ',
+	                      ivl_scope_basename(my_scope));
+      } else {
+	    emit_stmt(scope, sub_stmt);
+	    fprintf(vlog_out, "%*cwhile (", get_indent(), ' ');
+	    emit_expr(scope, ivl_stmt_cond_expr(stmt), 0, 0, 0, 0);
+	    fprintf(vlog_out, ")");
+	    emit_stmt_file_line(stmt);
+	    single_indent = 1;
+	    emit_stmt(scope, sub_stmt);
+      }
+
+	/*
+	 * If the do/while has sub-statements that are named it cannot be
+	 * translated since the original do/while statement needs to be
+	 * duplicated and doing this will create two statements with the
+	 * same name.
+	 */
+      if (named_type == OTHER_NAMED) {
+	    fprintf(stderr, "%s:%u: vlog95 sorry: do/while with named "
+	                    "sub-statements cannot be translated.\n",
+	                    ivl_stmt_file(stmt), ivl_stmt_lineno(stmt));
+	    vlog_errors += 1;
+      }
+}
+
 static void emit_stmt_force(ivl_scope_t scope, ivl_statement_t stmt)
 {
       unsigned wid;
@@ -1270,11 +1479,7 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 	    emit_stmt_disable(scope, stmt);
 	    break;
 	case IVL_ST_DO_WHILE:
-	    fprintf(stderr, "%s:%u: vlog95 sorry: do/while is not "
-	                    "currently translated.\n",
-	                    ivl_stmt_file(stmt),
-	                    ivl_stmt_lineno(stmt));
-	    vlog_errors += 1;
+	    emit_stmt_do_while(scope, stmt);
 	    break;
 	case IVL_ST_FORCE:
 	    emit_stmt_force(scope, stmt);

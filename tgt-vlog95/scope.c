@@ -615,6 +615,7 @@ static int has_named_block(ivl_scope_t scope, ivl_statement_t stmt)
 	    }
 	    break;
 	  /* The looping statements may have a named block. */
+	case IVL_ST_DO_WHILE:
 	case IVL_ST_FOREVER:
 	case IVL_ST_REPEAT:
 	case IVL_ST_WHILE:
@@ -904,6 +905,7 @@ static unsigned has_func_disable(ivl_scope_t scope, ivl_statement_t stmt)
 	    }
 	    break;
 	  /* These have a single sub-statement so look for a disable there. */
+	case IVL_ST_DO_WHILE:
 	case IVL_ST_FOREVER:
 	case IVL_ST_REPEAT:
 	case IVL_ST_WHILE:
