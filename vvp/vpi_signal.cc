@@ -750,7 +750,7 @@ static vvp_vector4_t from_stringval(const char*str, unsigned wid)
 	    unsigned byte = *--cp;
 	    int bit;
 
-	    for (bit = 0 ;  bit < 8 ;  bit += 1) {
+	    for (bit = 0 ;  (bit < 8) && (idx < wid) ;  bit += 1) {
 		  if (byte & 1)
 			val.set_bit(idx, BIT4_1);
 
