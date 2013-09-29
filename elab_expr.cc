@@ -200,6 +200,16 @@ unsigned PEAssignPattern::test_width(Design*des, NetScope*scope, width_mode_t&mo
 NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 					ivl_type_t ntype, unsigned flags) const
 {
+	// Special case: If this is an empty pattern (i.e. '{}) and
+	// the expected type is a DARRAY, then convert this to a null
+	// handle. Internally, Icarus Verilog uses this to represent
+	// nil dynamic arrays.
+      if (parms_.size() == 0 && ntype->base_type()==IVL_VT_DARRAY) {
+	    NetENull*tmp = new NetENull;
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
       cerr << get_fileline() << ": sorry: I don't know how to elaborate "
 	   << "assignment_pattern expressions yet." << endl;
       cerr << get_fileline() << ":      : Expression is: " << *this
