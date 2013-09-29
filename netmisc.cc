@@ -751,13 +751,15 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
             expr_width = context_width;
 
       if (debug_elaborate) {
-            cerr << pe->get_fileline() << ": debug: test_width of "
+            cerr << pe->get_fileline() << ": elab_and_eval: test_width of "
                  << *pe << endl;
-            cerr << pe->get_fileline() << ":        "
+            cerr << pe->get_fileline() << ":              : "
                  << "returns type=" << pe->expr_type()
                  << ", width=" << expr_width
                  << ", signed=" << pe->has_sign()
                  << ", mode=" << PExpr::width_mode_name(mode) << endl;
+	    cerr << pe->get_fileline() << ":              : "
+		 << "cast_type=" << cast_type << endl;
       }
 
         // If we can get the same result using a smaller expression

@@ -759,18 +759,14 @@ void NetNet::set_module_port_index(unsigned idx)
 
 ivl_variable_type_t NetNet::data_type() const
 {
-      if (net_type_==0)
-	    return IVL_VT_LOGIC;
-      else
-	    return net_type_->base_type();
+      ivl_assert(*this, net_type_);
+      return net_type_->base_type();
 }
 
 bool NetNet::get_signed() const
 {
-      if (net_type_==0)
-	    return false;
-      else
-	    return net_type_->get_signed();
+      ivl_assert(*this, net_type_);
+      return net_type_->get_signed();
 }
 
 bool NetNet::get_isint() const

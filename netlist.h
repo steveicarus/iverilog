@@ -627,7 +627,7 @@ class NetNet  : public NetObj, public PortType {
 	// now, the unpacked type is not burried into an ivl_type_s object.
       explicit NetNet(NetScope*s, perm_string n, Type t,
 		      const std::list<netrange_t>&unpacked,
-		      ivl_type_t type =0);
+		      ivl_type_t type);
 
 	// This form builds a NetNet from its record/enum/darray
 	// definition. They should probably be replaced with a single

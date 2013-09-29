@@ -38,7 +38,9 @@ class ivl_type_s {
       virtual long packed_width(void) const;
       virtual std::vector<netrange_t> slice_dimensions() const;
 
-	// Some types have a base variable type.
+	// Some types have a base variable type. This is the bit type
+	// for packed data types, or IVL_VT_DARRAY or IVL_VT_CLASS for
+	// those specific types.
       virtual ivl_variable_type_t base_type() const;
       virtual bool get_signed() const;
 
