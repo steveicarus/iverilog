@@ -809,6 +809,26 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
       return tmp;
 }
 
+NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
+		       ivl_type_t lv_net_type, bool need_const)
+{
+      if (debug_elaborate) {
+	    cerr << pe->get_fileline() << ": elab_and_eval: "
+		 << "pe=" << *pe
+		 << ", lv_net_type=" << *lv_net_type << endl;
+      }
+
+	// Elaborate the expression using the more general
+	// elaborate_expr method.
+      unsigned flags = PExpr::NO_FLAGS;
+      if (need_const)
+            flags |= PExpr::NEED_CONST;
+
+      NetExpr*tmp = pe->elaborate_expr(des, scope, lv_net_type, flags);
+
+      return tmp;
+}
+
 NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
                            unsigned arg_idx, PExpr*pe, bool need_const)
 {

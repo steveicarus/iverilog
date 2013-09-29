@@ -18,6 +18,7 @@
  */
 
 # include  "netdarray.h"
+# include  <iostream>
 
 using namespace std;
 
@@ -33,4 +34,13 @@ netdarray_t::~netdarray_t()
 ivl_variable_type_t netdarray_t::base_type(void) const
 {
       return IVL_VT_DARRAY;
+}
+
+bool netdarray_t::test_compatibility(ivl_type_t that) const
+{
+      const netdarray_t*that_da = dynamic_cast<const netdarray_t*>(that);
+      if (that_da == 0)
+	    return false;
+
+      return element_type()->type_compatible(that_da->element_type());
 }

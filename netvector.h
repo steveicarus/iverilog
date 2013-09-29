@@ -79,6 +79,9 @@ class netvector_t : public ivl_type_s {
       static netvector_t scalar_logic;
 
     private:
+      bool test_compatibility(ivl_type_t that) const;
+
+    private:
       std::vector<netrange_t> packed_dims_;
       ivl_variable_type_t type_;
       bool signed_    : 1;

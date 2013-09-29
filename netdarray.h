@@ -45,6 +45,7 @@ class netdarray_t : public netarray_t {
       std::ostream& debug_dump(std::ostream&) const;
 
     private:
+      bool test_compatibility(ivl_type_t that) const;
 };
 
 #endif

@@ -669,15 +669,14 @@ source_text : description_list | ;
 
 assignment_pattern /* IEEE1800-2005: A.6.7.1 */
   : K_LP expression_list_proper '}'
-      { PEVoid*tmp = new PEVoid;
+      { PEAssignPattern*tmp = new PEAssignPattern(*$2);
 	FILE_NAME(tmp, @1);
-	yyerror(@1, "sorry: Assignment patterns (array literals) not supported.");
+	delete $2;
 	$$ = tmp;
       }
   | K_LP '}'
-      { PEVoid*tmp = new PEVoid;
+      { PEAssignPattern*tmp = new PEAssignPattern;
 	FILE_NAME(tmp, @1);
-	yyerror(@1, "sorry: Assignment patterns (empty array literals) not supported.");
 	$$ = tmp;
       }
   ;

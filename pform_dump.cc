@@ -230,6 +230,19 @@ void PExpr::dump(ostream&out) const
       out << typeid(*this).name();
 }
 
+void PEAssignPattern::dump(ostream&out) const
+{
+      out << "'{";
+      if (parms_.size() > 0) {
+	    parms_[0]->dump(out);
+	    for (size_t idx = 1 ; idx < parms_.size() ; idx += 1) {
+		  out << ", ";
+		  parms_[idx]->dump(out);
+	    }
+      }
+      out << "}";
+}
+
 void PEConcat::dump(ostream&out) const
 {
       if (repeat_)

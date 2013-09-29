@@ -94,6 +94,25 @@ const char* PExpr::width_mode_name(width_mode_t mode)
       }
 }
 
+PEAssignPattern::PEAssignPattern()
+{
+}
+
+PEAssignPattern::PEAssignPattern(const list<PExpr*>&p)
+: parms_(p.size())
+{
+      size_t idx = 0;
+      for (list<PExpr*>::const_iterator cur = p.begin()
+		 ; cur != p.end() ; ++cur) {
+	    parms_[idx] = *cur;
+	    idx += 1;
+      }
+}
+
+PEAssignPattern::~PEAssignPattern()
+{
+}
+
 PEBinary::PEBinary(char op, PExpr*l, PExpr*r)
 : op_(op), left_(l), right_(r)
 {

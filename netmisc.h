@@ -245,6 +245,15 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
 			      ivl_variable_type_t cast_type =IVL_VT_NO_TYPE);
 
 /*
+ * This form of elab_and_eval uses the ivl_type_t to carry type
+ * information instead of the piecemeal form. We should transition to
+ * this form as we reasonably can.
+ */
+extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
+			      PExpr*expr, ivl_type_t lv_net_type,
+			      bool need_const);
+
+/*
  * This function is a variant of elab_and_eval that elaborates and
  * evaluates the arguments of a system task.
  */
@@ -256,8 +265,14 @@ extern NetExpr* elab_sys_task_arg(Design*des, NetScope*scope,
  * of an assignment, The lv_type and lv_width are the type and width
  * of the l-value, and the expr is the expression to elaborate. The
  * result is the NetExpr elaborated and evaluated. (See elab_expr.cc)
+ *
+ * I would rather that all calls to elaborate_rval_expr use the
+ * lv_net_type argument to express the l-value type, but, for now,
+ * that it not possible. Those cases will be indicated by the
+ * lv_net_type being set to nil.
  */
 extern NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
+				    ivl_type_t lv_net_type,
 				    ivl_variable_type_t lv_type,
 				    unsigned lv_width, PExpr*expr,
                                     bool need_const =false);
