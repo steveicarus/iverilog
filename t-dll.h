@@ -135,6 +135,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       struct ivl_expr_s*expr_;
       void expr_access_func(const NetEAccess*);
+      void expr_array_pattern(const NetEArrayPattern*);
       void expr_binary(const NetEBinary*);
       void expr_concat(const NetEConcat*);
       void expr_const(const NetEConst*);
@@ -238,6 +239,11 @@ struct ivl_expr_s {
 		  ivl_expr_t lef_;
 		  ivl_expr_t rig_;
 	    } binary_;
+
+	    struct {
+		  size_t parms;
+		  ivl_expr_t*parm;
+	    } array_pattern_;
 
 	    struct {
 		  ivl_select_type_t  sel_type_;

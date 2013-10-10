@@ -152,6 +152,7 @@ struct target_t {
 struct expr_scan_t {
       virtual ~expr_scan_t();
       virtual void expr_access_func(const NetEAccess*);
+      virtual void expr_array_pattern(const NetEArrayPattern*);
       virtual void expr_const(const NetEConst*);
       virtual void expr_new(const NetENew*);
       virtual void expr_null(const NetENull*);

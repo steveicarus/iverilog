@@ -312,9 +312,11 @@ void PEFNumber::dump(ostream &out) const
       out << value();
 }
 
-void PENew::dump(ostream&out) const
+void PENewArray::dump(ostream&out) const
 {
       out << "new [" << *size_ << "]";
+      if (init_)
+	    out << "(" << *init_ << ")";
 }
 
 void PENewClass::dump(ostream&out) const

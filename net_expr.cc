@@ -61,12 +61,26 @@ bool NetExpr::has_width() const
  */
 ivl_variable_type_t NetExpr::expr_type() const
 {
-      return IVL_VT_LOGIC;
+      if (net_type_)
+	    return net_type_->base_type();
+      else
+	    return IVL_VT_LOGIC;
 }
 
 const netenum_t*NetExpr::enumeration() const
 {
       return 0;
+}
+
+NetEArrayPattern::NetEArrayPattern(ivl_type_t lv_type, vector<NetExpr*>&items)
+: NetExpr(lv_type), items_(items)
+{
+}
+
+NetEArrayPattern::~NetEArrayPattern()
+{
+      for (size_t idx = 0 ; idx < items_.size() ; idx += 1)
+	    delete items_[idx];
 }
 
 /*

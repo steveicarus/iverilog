@@ -209,6 +209,9 @@ class PEAssignPattern : public PExpr {
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     unsigned expr_wid,
                                      unsigned flags) const;
+    private:
+      NetExpr* elaborate_expr_darray_(Design*des, NetScope*scope,
+				      ivl_type_t type, unsigned flags) const;
 
     private:
       std::vector<PExpr*>parms_;
@@ -499,11 +502,11 @@ class PEIdent : public PExpr {
 			     long&midx, long&lidx) const;
 };
 
-class PENew : public PExpr {
+class PENewArray : public PExpr {
 
     public:
-      explicit PENew (PExpr*s);
-      ~PENew();
+      explicit PENewArray (PExpr*s, PExpr*i);
+      ~PENewArray();
 
       virtual void dump(ostream&) const;
       virtual unsigned test_width(Design*des, NetScope*scope,
@@ -516,6 +519,7 @@ class PENew : public PExpr {
 
     private:
       PExpr*size_;
+      PExpr*init_;
 };
 
 class PENewClass : public PExpr {

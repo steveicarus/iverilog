@@ -210,12 +210,36 @@ NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
 	    return tmp;
       }
 
+      if (ntype->base_type()==IVL_VT_DARRAY)
+	    return elaborate_expr_darray_(des, scope, ntype, flags);
+
       cerr << get_fileline() << ": sorry: I don't know how to elaborate "
 	   << "assignment_pattern expressions yet." << endl;
       cerr << get_fileline() << ":      : Expression is: " << *this
 	   << endl;
       des->errors += 1;
       return 0;
+}
+
+NetExpr*PEAssignPattern::elaborate_expr_darray_(Design*des, NetScope*scope,
+						ivl_type_t ntype, unsigned flags) const
+{
+      const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype);
+      ivl_assert(*this, array_type);
+
+	// This is an array pattern, so run through the elements of
+	// the expression and elaborate each as if they are
+	// element_type expressions.
+      ivl_type_t elem_type = array_type->element_type();
+      vector<NetExpr*> elem_exprs (parms_.size());
+      for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
+	    NetExpr*tmp = parms_[idx]->elaborate_expr(des, scope, elem_type, flags);
+	    elem_exprs[idx] = tmp;
+      }
+
+      NetEArrayPattern*res = new NetEArrayPattern(array_type, elem_exprs);
+      res->set_line(*this);
+      return res;
 }
 
 NetExpr* PEAssignPattern::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
@@ -4578,7 +4602,7 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       return node;
 }
 
-unsigned PENew::test_width(Design*, NetScope*, width_mode_t&)
+unsigned PENewArray::test_width(Design*, NetScope*, width_mode_t&)
 {
       expr_type_  = IVL_VT_DARRAY;
       expr_width_ = 1;
@@ -4587,8 +4611,8 @@ unsigned PENew::test_width(Design*, NetScope*, width_mode_t&)
       return 1;
 }
 
-NetExpr* PENew::elaborate_expr(Design*des, NetScope*scope,
-			       ivl_type_t ntype, unsigned flags) const
+NetExpr* PENewArray::elaborate_expr(Design*des, NetScope*scope,
+				    ivl_type_t ntype, unsigned flags) const
 {
 	// Elaborate the size expression.
       width_mode_t mode = LOSSLESS;
@@ -4597,13 +4621,20 @@ NetExpr* PENew::elaborate_expr(Design*des, NetScope*scope,
 
       NetENew*tmp = new NetENew(ntype, size);
       tmp->set_line(*this);
+
+      if (init_) {
+	    cerr << get_fileline() << ": sorry: Dynamic array initialization expressions "
+		 << "not supported yet." << endl;
+	    des->errors += 1;
+      }
+
       return tmp;
 }
 
 /*
  * This method should never actually be called.
  */
-NetExpr* PENew::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const
+NetExpr* PENewArray::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const
 {
       ivl_assert(*this, 0);
       return 0;

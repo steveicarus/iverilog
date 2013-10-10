@@ -1069,13 +1069,11 @@ endnew_opt : ':' K_new | ;
 
 dynamic_array_new /* IEEE1800-2005: A.2.4 */
   : K_new '[' expression ']'
-      { $$ = new PENew($3);
+      { $$ = new PENewArray($3, 0);
 	FILE_NAME($$, @1);
       }
   | K_new '[' expression ']' '(' expression ')'
-      { yyerror(@1, "sorry: Dynamic array new expression with initializer not supported.");
-	delete $6;
-	$$ = new PENew($3);
+      { $$ = new PENewArray($3, $6);
 	FILE_NAME($$, @1);
       }
   ;
@@ -5075,11 +5073,12 @@ register_variable
 	pform_set_reg_idx(name, $2);
 	$$ = $1;
       }
-  | IDENTIFIER '=' expression
-      { perm_string ident_name = lex_strings.make($1);
-	pform_makewire(@1, ident_name, NetNet::REG,
+  | IDENTIFIER dimensions_opt '=' expression
+      { perm_string name = lex_strings.make($1);
+	pform_makewire(@1, name, NetNet::REG,
 		       NetNet::NOT_A_PORT, IVL_VT_NO_TYPE, 0);
-	pform_make_reginit(@1, ident_name, $3);
+	pform_set_reg_idx(name, $2);
+	pform_make_reginit(@1, name, $4);
 	$$ = $1;
       }
   ;

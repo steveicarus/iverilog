@@ -570,6 +570,10 @@ extern "C" ivl_expr_t ivl_expr_parm(ivl_expr_t net, unsigned idx)
       assert(net);
       switch (net->type_) {
 
+	  case IVL_EX_ARRAY_PATTERN:
+	    assert(idx < net->u_.array_pattern_.parms);
+	    return net->u_.array_pattern_.parm[idx];
+
 	  case IVL_EX_CONCAT:
 	    assert(idx < net->u_.concat_.parms);
 	    return net->u_.concat_.parm[idx];
@@ -592,6 +596,9 @@ extern "C" unsigned ivl_expr_parms(ivl_expr_t net)
 {
       assert(net);
       switch (net->type_) {
+
+	  case IVL_EX_ARRAY_PATTERN:
+	    return net->u_.array_pattern_.parms;
 
 	  case IVL_EX_CONCAT:
 	    return net->u_.concat_.parms;

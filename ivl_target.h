@@ -228,6 +228,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_NEW    = 23,
       IVL_EX_NULL   = 22,
       IVL_EX_NUMBER = 5,
+      IVL_EX_ARRAY_PATTERN  = 26,
       IVL_EX_PROPERTY = 24,
       IVL_EX_REALNUM  = 16,
       IVL_EX_SCOPE  = 6,
@@ -903,9 +904,9 @@ extern ivl_expr_t  ivl_expr_oper2(ivl_expr_t net);
 extern ivl_expr_t  ivl_expr_oper3(ivl_expr_t net);
   /* and expression */
 extern ivl_parameter_t ivl_expr_parameter(ivl_expr_t net);
-  /* IVL_EX_CONCAT IVL_EX_UFUNC */
+  /* IVL_EX_ARRAY_PATTERN IVL_EX_CONCAT IVL_EX_UFUNC */
 extern ivl_expr_t  ivl_expr_parm(ivl_expr_t net, unsigned idx);
-  /* IVL_EX_CONCAT IVL_EX_SFUNC IVL_EX_UFUNC */
+  /* IVL_EX_ARRAY_PATTERN IVL_EX_CONCAT IVL_EX_SFUNC IVL_EX_UFUNC */
 extern unsigned    ivl_expr_parms(ivl_expr_t net);
   /* IVL_EX_CONCAT */
 extern unsigned    ivl_expr_repeat(ivl_expr_t net);

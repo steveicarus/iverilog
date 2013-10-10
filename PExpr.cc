@@ -436,12 +436,12 @@ bool PEIdent::has_aa_term(Design*des, NetScope*scope) const
             return false;
 }
 
-PENew::PENew(PExpr*size_expr)
-: size_(size_expr)
+PENewArray::PENewArray(PExpr*size_expr, PExpr*init_expr)
+: size_(size_expr), init_(init_expr)
 {
 }
 
-PENew::~PENew()
+PENewArray::~PENewArray()
 {
       delete size_;
 }

@@ -40,6 +40,16 @@ static void show_array_expression(ivl_expr_t net, unsigned ind)
 	      ivl_signal_dimensions(sig), width, vt);
 }
 
+static void show_array_pattern_expression(ivl_expr_t net, unsigned ind)
+{
+      size_t idx;
+      fprintf(out, "%*sArrayPattern (%s): %u expressions\n",
+	      ind, "", vt_type_string(net), ivl_expr_parms(net));
+      for (idx = 0 ; idx < ivl_expr_parms(net) ; idx += 1) {
+	    show_expression(ivl_expr_parm(net,idx), ind+4);
+      }
+}
+
 static void show_branch_access_expression(ivl_expr_t net, unsigned ind)
 {
       ivl_branch_t bra = ivl_expr_branch(net);
@@ -406,6 +416,10 @@ void show_expression(ivl_expr_t net, unsigned ind)
 
 	  case IVL_EX_ARRAY:
 	    show_array_expression(net, ind);
+	    break;
+
+	  case IVL_EX_ARRAY_PATTERN:
+	    show_array_pattern_expression(net, ind);
 	    break;
 
 	  case IVL_EX_BACCESS:

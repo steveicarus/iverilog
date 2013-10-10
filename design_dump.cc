@@ -1410,6 +1410,19 @@ void NetEAccess::dump(ostream&o) const
       o << ")";
 }
 
+void NetEArrayPattern::dump(ostream&fd) const
+{
+      fd << "'{";
+      if (items_.size() >= 1) {
+	    if (items_[0]) fd << *items_[0];
+      }
+      for (size_t idx = 1 ; idx < items_.size() ; idx += 1) {
+	    fd << ", ";
+	    if (items_[idx]) fd << *items_[idx];
+      }
+      fd << "}";
+}
+
 void NetEBinary::dump(ostream&o) const
 {
       if (op_ == 'm' || op_ == 'M') {

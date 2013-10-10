@@ -1914,6 +1914,25 @@ class NetExpr  : public LineInfo {
       NetExpr& operator=(const NetExpr&);
 };
 
+class NetEArrayPattern  : public NetExpr {
+
+    public:
+      NetEArrayPattern(ivl_type_t lv_type, std::vector<NetExpr*>&items);
+      ~NetEArrayPattern();
+
+      inline size_t item_size() const { return items_.size(); }
+      const NetExpr* item(size_t idx) const { return items_[idx]; }
+
+      void expr_scan(struct expr_scan_t*) const;
+      void dump(ostream&) const;
+
+      NetEArrayPattern* dup_expr() const;
+      NexusSet* nex_input(bool rem_out =true);
+
+    private:
+      std::vector<NetExpr*> items_;
+};
+
 /*
  * The expression constant is slightly special, and is sometimes
  * returned from other classes that can be evaluated at compile
