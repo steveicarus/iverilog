@@ -771,7 +771,14 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 	    break;
 
 	  case vpiIntVal:
-	    vp->value.integer = (int)(rval + 0.5);
+	      /* NaN or +/- infinity are translated as 0. */
+	    if (rval != rval || (rval && (rval == 0.5*rval))) {
+		  rval = 0.0;
+	    } else {
+		  if (rval >= 0.0) rval = floor(rval + 0.5);
+		  else rval = ceil(rval - 0.5);
+	    }
+	    vp->value.integer = rval;
 	    break;
 
 	  case vpiDecStrVal:
