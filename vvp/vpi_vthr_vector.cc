@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -542,8 +542,15 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 	    break;
 
 	  case vpiIntVal:
-	    vp->value.integer = (int)(val + 0.5);
-	    break;
+	      /* NaN or +/- infinity are translated as 0. */
+	    if (val != val || (val && (val == 0.5*val))) {
+		  val = 0.0;
+	    } else {
+		  if (val >= 0.0) val = floor(val + 0.5);
+		  else val = ceil(val - 0.5);
+	    }
+	    vp->value.integer = val;
+ 	    break;
 
 	  case vpiDecStrVal:
 	    sprintf(rbuf, "%0.0f", val);
