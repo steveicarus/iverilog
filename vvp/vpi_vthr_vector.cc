@@ -550,7 +550,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 		  else val = ceil(val - 0.5);
 	    }
 	    vp->value.integer = val;
- 	    break;
+	    break;
 
 	  case vpiDecStrVal:
 	    sprintf(rbuf, "%0.0f", val);
