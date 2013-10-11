@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -671,9 +671,18 @@ void vvp_fun_signal_real::get_value(struct t_vpi_value*vp)
 	    vp->value.real = real_value();
 	    break;
 
-	  case vpiIntVal:
-	    vp->value.integer = (int)(real_value() + 0.5);
+	  case vpiIntVal: {
+	    double rval = real_value();
+	      /* NaN or +/- infinity are translated as 0. */
+	    if (rval != rval || (rval && (rval == 0.5*rval))) {
+		  rval = 0.0;
+	    } else {
+		  if (rval >= 0.0) rval = floor(rval + 0.5);
+		  else rval = ceil(rval - 0.5);
+	    }
+	    vp->value.integer = rval;
 	    break;
+	  }
 
 	  case vpiDecStrVal:
 	    sprintf(rbuf, "%0.0f", real_value());
