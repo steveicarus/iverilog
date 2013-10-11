@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Michael Ruff (mruff  at chiaro.com)
+ * Copyright (c) 2003-2013 Michael Ruff (mruff  at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -158,7 +158,7 @@ static PLI_INT32 sys_itor_calltf(ICARUS_VPI_CONST PLI_BYTE8*user)
     vpi_get_value(arg, &value);
 
     /* convert */
-    value.value.real = (PLI_INT32)value.value.integer;
+    value.value.real = value.value.integer;
     value.format = vpiRealVal;
 
     /* return converted value */
@@ -203,17 +203,22 @@ static PLI_INT32 sys_rtoi_calltf(ICARUS_VPI_CONST PLI_BYTE8*user)
     vpiHandle arg  = (vpiHandle) vpi_get_userdata(callh);
     s_vpi_value value;
     static struct t_vpi_vecval res;
+    double val;
 
     /* get value */
     value.format = vpiRealVal;
     vpi_get_value(arg, &value);
 
-    /* convert */
-    if (value.value.real >= 0.0)
-      res.aval = (unsigned)value.value.real;
-    else
-      res.aval = - (unsigned)-value.value.real;
-    res.bval = 0;
+    /* If the value is NaN or +/- infinity then return 'bx */
+    val = value.value.real;
+    if (val != val || (val && (val == 0.5*val))) {
+	res.aval = ~(PLI_INT32)0;
+	res.bval = ~(PLI_INT32)0;
+    } else {
+	if (val >= 0.0) res.aval = (PLI_UINT32) val;
+	else res.aval = - (PLI_UINT32) -val;
+	res.bval = 0;
+    }
 
     value.format = vpiVectorVal;
     value.value.vector = &res;
