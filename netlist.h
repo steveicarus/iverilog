@@ -4131,20 +4131,55 @@ class NetESFunc  : public NetExpr {
       virtual NetNet*synthesize(Design*, NetScope*scope, NetExpr*root);
 
     private:
+	/* Use the 32 bit ID as follows:
+	 *   The lower sixteen bits are used to identify the individual
+	 *   functions.
+	 *
+	 *   The top sixteen bits are used to indicate the number of
+	 *   arguments the function can take by bit position. If more
+	 *   than one bit is set the argument can take a different number
+	 *   of arguments. This varies from 0 to 14 with the MSB indicating
+	 *   fifteen or more (an unbounded value). For example all bit set
+	 *   except for the LSB indicate 1 or more arguments are allowed.
+	 */
       enum ID { NOT_BUILT_IN = 0x0,
-		MATH_ONE_ARG = 0x100,
-		  CLOG2, LN, LOG10, EXP, SQRT, FLOOR, CEIL,
-		  SIN,	COS,  TAN,  ASIN,  ACOS,  ATAN,
-		  SINH, COSH, TANH, ASINH, ACOSH, ATANH,
-		AMS_ONE_ARG  = 0x180,
-		  ABS,
-		MATH_TWO_ARG = 0x200,
-		  POW, ATAN2, HYPOT,
-		AMS_TWO_ARG  = 0x280,
-		  MIN, MAX };
+                  /* Available in all version of Verilog/SystemVerilog. */
+                ITOR  = 0x00020001,  /* $itor takes one argument. */
+                RTOI  = 0x00020002,  /* $rtoi takes one argument. */
+                  /* Available in Verilog 2005 and later. */
+                ACOS  = 0x00020003,  /* $acos takes one argument. */
+                ACOSH = 0x00020004,  /* $acosh takes one argument. */
+                ASIN  = 0x00020005,  /* $asin takes one argument. */
+                ASINH = 0x00020006,  /* $asinh takes one argument. */
+                ATAN  = 0x00020007,  /* $atan takes one argument. */
+                ATANH = 0x00020008,  /* $atanh takes one argument. */
+                ATAN2 = 0x00040009,  /* $atan2 takes two argument. */
+                CEIL  = 0x0002000a,  /* $ceil takes one argument. */
+                CLOG2 = 0x0002000b,  /* $clog2 takes one argument. */
+                COS   = 0x0002000c,  /* $cos takes one argument. */
+                COSH  = 0x0002000d,  /* $cosh takes one argument. */
+                EXP   = 0x0002000e,  /* $exp takes one argument. */
+                FLOOR = 0x0002000f,  /* $floor takes one argument. */
+                HYPOT = 0x00040010,  /* $hypot takes two argument. */
+                LN    = 0x00020011,  /* $ln takes one argument. */
+                LOG10 = 0x00020012,  /* $log10 takes one argument. */
+                POW   = 0x00040013,  /* $pow takes two argument. */
+                SIN   = 0x00020014,  /* $sin takes one argument. */
+                SINH  = 0x00020015,  /* $sinh takes one argument. */
+                SQRT  = 0x00020016,  /* $sqrt takes one argument. */
+                TAN   = 0x00020017,  /* $tan takes one argument. */
+                TANH  = 0x00020018,  /* $tanh takes one argument. */
+                  /* Added as Icarus extensions to Verilog-A. */
+                ABS   = 0x00020019,  /* $abs takes one argument. */
+                MAX   = 0x0004001a,  /* $max takes two argument. */
+                MIN   = 0x0004001b,  /* $min takes two argument. */
+                  /* A dummy value to properly close the enum. */
+		DUMMY = 0xffffffff };
 
-      bool is_ams_(ID id) const { return id & 0x80; };
-      unsigned nargs_(ID id) const { return id >> 8; };
+      bool takes_nargs_(ID func, unsigned nargs) {
+	    if (nargs > 15) nargs = 15;
+	    return func & (1 << (nargs + 16));
+      }
 
       const char* name_;
       ivl_variable_type_t type_;
@@ -4157,6 +4192,9 @@ class NetESFunc  : public NetExpr {
       NetExpr* evaluate_two_arg_(ID id, const NetExpr*arg0,
 					const NetExpr*arg1) const;
 
+      NetEConst* evaluate_rtoi_(const NetExpr*arg) const;
+      NetECReal* evaluate_itor_(const NetExpr*arg) const;
+
       NetEConst* evaluate_clog2_(const NetExpr*arg) const;
 
       NetECReal* evaluate_math_one_arg_(ID id, const NetExpr*arg) const;
@@ -4164,7 +4202,6 @@ class NetESFunc  : public NetExpr {
 					       const NetExpr*arg1) const;
 
       NetExpr* evaluate_abs_(const NetExpr*arg) const;
-
       NetExpr* evaluate_min_max_(ID id, const NetExpr*arg0,
 					const NetExpr*arg1) const;
 

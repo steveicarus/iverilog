@@ -1686,6 +1686,57 @@ NetEConst* NetESFunc::evaluate_clog2_(const NetExpr*arg_) const
       return rtn;
 }
 
+NetEConst* NetESFunc::evaluate_rtoi_(const NetExpr*arg_) const
+{
+      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg_);
+      const NetECReal*tmpr = dynamic_cast<const NetECReal*>(arg_);
+
+      if (tmpi == 0 && tmpr == 0) return 0;
+
+	/* If the argument is already a bit based value just extend/trim it
+	 * to the integer width and translate all undefined bits to zero. */
+      if (tmpi) {
+	    verinum arg = verinum(tmpi->value(), integer_width);
+	    arg.cast_to_int2();
+	    return new NetEConst(arg);
+      }
+
+	/* Get the value of the real argument as a bit based value and then
+	 * extend/trim it to the integer width. */
+      double arg = tmpr->value().as_double();
+      if (arg >= 0.0) arg = floor(arg);
+      else arg = ceil(arg);
+      return new NetEConst(verinum(verinum(arg, false), integer_width));
+}
+
+NetECReal* NetESFunc::evaluate_itor_(const NetExpr*arg_) const
+{
+      const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg_);
+      const NetECReal*tmpr = dynamic_cast<const NetECReal*>(arg_);
+
+      if (tmpi == 0 && tmpr == 0) return 0;
+
+	/* If the argument is already a real value round it, but NaN and
+	 * +/- infinity need to be translated to 0.0. */
+      if (tmpr) {
+	    double arg = tmpr->value().as_double();
+	      /* Convert a NaN or +/- infinity to 0.0 since these convert
+	       * to 'bz which is then translated to 0.0. */
+	    if (arg != arg || (arg && (arg == 0.5*arg))) {
+		  return new NetECReal(verireal(0.0));
+	    }
+
+	    if (arg >= 0.0) arg = floor(arg + 0.5);
+	    else arg = ceil(arg - 0.5);
+
+	    return new NetECReal(verireal(arg));
+      }
+
+	/* Convert the bit based value to a real value. */
+      double arg = tmpi->value().as_double();
+      return new NetECReal(verireal(arg));
+}
+
 NetECReal* NetESFunc::evaluate_math_one_arg_(ID id, const NetExpr*arg_) const
 {
       const NetEConst*tmpi = dynamic_cast<const NetEConst*>(arg_);
@@ -1879,6 +1930,10 @@ NetExpr* NetESFunc::evaluate_one_arg_(ID id, const NetExpr*arg) const
 	    return evaluate_abs_(arg);
 	  case CLOG2:
 	    return evaluate_clog2_(arg);
+	  case ITOR:
+	    return evaluate_itor_(arg);
+	  case RTOI:
+	    return evaluate_rtoi_(arg);
 	  default:
 	    return evaluate_math_one_arg_(id, arg);
       }
@@ -1898,82 +1953,101 @@ NetExpr* NetESFunc::evaluate_two_arg_(ID id, const NetExpr*arg0,
 
 NetESFunc::ID NetESFunc::built_in_id_() const
 {
-	/* If we are not targeting at least Verilog-2005, Verilog-AMS
-	 * or using the Icarus misc flag then we do not treat these
-	 * functions as built-in. */
-      if (generation_flag < GN_VER2005 &&
-	  !gn_icarus_misc_flag && !gn_verilog_ams_flag) {
-	    return NOT_BUILT_IN;
+      static map<string,ID> built_in_func;
+      static bool funcs_need_init = true;
+
+	/* These functions are always available. */
+      if (funcs_need_init) {
+	    built_in_func["$itor"] = ITOR;
+	    built_in_func["$rtoi"] = RTOI;
       }
 
-      static map<string,ID> built_in_func;
-
-      if (built_in_func.empty()) {
+	/* These are available in 1364-2005 and later or if the Icarus misc
+	 * flag was given. */
+      if (funcs_need_init && ((generation_flag >= GN_VER2005) ||
+                              gn_icarus_misc_flag)) {
+	    built_in_func["$acos" ] = ACOS;
+	    built_in_func["$acosh"] = ACOSH;
+	    built_in_func["$asin" ] = ASIN;
+	    built_in_func["$asinh"] = ASINH;
+	    built_in_func["$atan" ] = ATAN;
+	    built_in_func["$atanh"] = ATANH;
+	    built_in_func["$atan2"] = ATAN2;
+	    built_in_func["$ceil" ] = CEIL;
 	    built_in_func["$clog2"] = CLOG2;
+	    built_in_func["$cos"  ] = COS;
+	    built_in_func["$cosh" ] = COSH;
+	    built_in_func["$exp"  ] = EXP;
+	    built_in_func["$floor"] = FLOOR;
+	    built_in_func["$hypot"] = HYPOT;
 	    built_in_func["$ln"   ] = LN;
 	    built_in_func["$log10"] = LOG10;
-	    built_in_func["$exp"  ] = EXP;
-	    built_in_func["$sqrt" ] = SQRT;
-	    built_in_func["$floor"] = FLOOR;
-	    built_in_func["$ceil" ] = CEIL;
-	    built_in_func["$sin"  ] = SIN;
-	    built_in_func["$cos"  ] = COS;
-	    built_in_func["$tan"  ] = TAN;
-	    built_in_func["$asin" ] = ASIN;
-	    built_in_func["$acos" ] = ACOS;
-	    built_in_func["$atan" ] = ATAN;
-	    built_in_func["$sinh" ] = SINH;
-	    built_in_func["$cosh" ] = COSH;
-	    built_in_func["$tanh" ] = TANH;
-	    built_in_func["$asinh"] = ASINH;
-	    built_in_func["$acosh"] = ACOSH;
-	    built_in_func["$atanh"] = ATANH;
-	    built_in_func["$abs"  ] = ABS;
 	    built_in_func["$pow"  ] = POW;
-	    built_in_func["$atan2"] = ATAN2;
-	    built_in_func["$hypot"] = HYPOT;
-	    built_in_func["$min"  ] = MIN;
-	    built_in_func["$max"  ] = MAX;
+	    built_in_func["$sin"  ] = SIN;
+	    built_in_func["$sinh" ] = SINH;
+	    built_in_func["$sqrt" ] = SQRT;
+	    built_in_func["$tan"  ] = TAN;
+	    built_in_func["$tanh" ] = TANH;
       }
 
+	/* These are available in Verilog-A as Icarus extensions or if the
+	 * Icarus misc flag was given. */
+      if (funcs_need_init && (gn_verilog_ams_flag || gn_icarus_misc_flag)) {
+	    built_in_func["$abs"] = ABS;
+	    built_in_func["$max"] = MAX;
+	    built_in_func["$min"] = MIN;
+      }
+
+	/* The function table has been initialized at this point. */
+      funcs_need_init = false;
+
+	/* Look for the given function and if it is not available return
+	 * NOT_BUILT_IN otherwise return the ID for the function. */
       map<string,ID>::iterator idx = built_in_func.find(name_);
-      if (idx == built_in_func.end())
-	    return NOT_BUILT_IN;
 
-      ID id = idx->second;
+      if (idx == built_in_func.end()) return NOT_BUILT_IN;
 
-      if (is_ams_(id) && !gn_icarus_misc_flag && !gn_verilog_ams_flag)
-	    return NOT_BUILT_IN;
-
-      return id;
+      return idx->second;
 }
 
 NetExpr* NetESFunc::eval_tree()
 {
+	/* Get the ID for this system function if it is can be used as a
+	 * constant function. */
       ID id = built_in_id_();
-      if (id == NOT_BUILT_IN)
-	    return 0;
+      if (id == NOT_BUILT_IN) return 0;
 
-      switch (nargs_(id)) {
+      switch (parms_.size()) {
 	  case 1:
-	    if (parms_.size() != 1) {
+	    if (! takes_nargs_(id, 1)) {
 		  cerr << get_fileline() << ": error: " << name_
-		       << " takes one argument." << endl;
+		       << "() does not support a single argument." << endl;
 		  return 0;
 	    }
 	    eval_expr(parms_[0]);
 	    return evaluate_one_arg_(id, parms_[0]);
+
 	  case 2:
-	    if (parms_.size() != 2) {
+	    if (! takes_nargs_(id, 2)) {
 		  cerr << get_fileline() << ": error: " << name_
-		       << " takes two arguments." << endl;
+		       << "() does not support two arguments." << endl;
 		  return 0;
 	    }
 	    eval_expr(parms_[0]);
 	    eval_expr(parms_[1]);
 	    return evaluate_two_arg_(id, parms_[0], parms_[1]);
+
 	  default:
-	    ivl_assert(*this, 0);
+	      /* Check to see if the function was called correctly. */
+	    if (! takes_nargs_(id, parms_.size())) {
+		  cerr << get_fileline() << ": error: " << name_
+		       << "() does not support " << parms_.size()
+		       << " arguments." << endl;
+		  return 0;
+	    }
+	    cerr << get_fileline() << ": sorry: functions with "
+	         << parms_.size() << " arguments are not supported: "
+	         << name_ << "()." << endl;
 	    return 0;
       }
 }

@@ -908,7 +908,7 @@ NetExpr* NetESFunc::evaluate_function(const LineInfo&loc,
       NetExpr*val0 = 0;
       NetExpr*val1 = 0;
       NetExpr*res = 0;
-      switch (nargs_(id)) {
+      switch (parms_.size()) {
 	  case 1:
 	    val0 = parms_[0]->evaluate_function(loc, context_map);
 	    if (val0 == 0) break;
