@@ -215,8 +215,10 @@ static PLI_INT32 sys_rtoi_calltf(ICARUS_VPI_CONST PLI_BYTE8*user)
 	res.aval = ~(PLI_INT32)0;
 	res.bval = ~(PLI_INT32)0;
     } else {
-	if (val >= 0.0) res.aval = (PLI_UINT32) val;
-	else res.aval = - (PLI_UINT32) -val;
+	/* This is not 100% correct since large real values may break this
+	 * code. See the verinum code for a more rigorous implementation. */
+	if (val >= 0.0) res.aval = (PLI_UINT64) val;
+	else res.aval = - (PLI_UINT64) -val;
 	res.bval = 0;
     }
 
