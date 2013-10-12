@@ -83,6 +83,11 @@ extern const char* vvp_signal_label(ivl_signal_t sig);
 extern unsigned width_of_nexus(ivl_nexus_t nex);
 extern ivl_variable_type_t data_type_of_nexus(ivl_nexus_t nex);
 
+/*
+ * Calculate the width (in bits) of a packed type.
+ */
+extern unsigned width_of_packed_type(ivl_type_t net);
+
 extern int can_elide_bufz(ivl_net_logic_t net, ivl_nexus_ptr_t nptr);
 
 /*

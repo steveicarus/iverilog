@@ -795,6 +795,74 @@ static int show_stmt_assign_sig_string(ivl_statement_t net)
       return 0;
 }
 
+unsigned width_of_packed_type(ivl_type_t net)
+{
+      unsigned idx;
+      unsigned width = 1;
+      for (idx = 0 ; idx < ivl_type_packed_dimensions(net) ; idx += 1) {
+	    int lsb = ivl_type_packed_lsb(net,idx);
+	    int msb = ivl_type_packed_msb(net,idx);
+	    if (lsb <= msb)
+		  width *= msb - lsb + 1;
+	    else
+		  width *= lsb - msb + 1;
+      }
+      return width;
+}
+
+/*
+ * This function handles the special case that we assign an array
+ * pattern to a dynamic array. Handle this by assigning each
+ * element. The array pattern will have a fixed size.
+ */
+static int show_stmt_assign_darray_pattern(ivl_statement_t net)
+{
+      int errors = 0;
+      ivl_lval_t lval = ivl_stmt_lval(net, 0);
+      ivl_expr_t rval = ivl_stmt_rval(net);
+
+      ivl_signal_t var= ivl_lval_sig(lval);
+      ivl_type_t var_type= ivl_signal_net_type(var);
+      assert(ivl_type_base(var_type) == IVL_VT_DARRAY);
+
+      ivl_type_t element_type = ivl_type_element(var_type);
+      unsigned idx;
+      struct vector_info rvec;
+      unsigned element_width = 1;
+      if (ivl_type_base(element_type) == IVL_VT_BOOL)
+	    element_width = width_of_packed_type(element_type);
+      else if (ivl_type_base(element_type) == IVL_VT_LOGIC)
+	    element_width = width_of_packed_type(element_type);
+
+      assert(ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN);
+      for (idx = 0 ; idx < ivl_expr_parms(rval) ; idx += 1) {
+	    switch (ivl_type_base(element_type)) {
+		case IVL_VT_BOOL:
+		case IVL_VT_LOGIC:
+		  rvec = draw_eval_expr_wid(ivl_expr_parm(rval,idx),
+					    element_width, STUFF_OK_XZ);
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%set/dar v%p_0, %u, %u;\n",
+			  var, rvec.base, rvec.wid);
+
+		  if (rvec.base >= 4) clr_vector(rvec);
+		  break;
+
+		case IVL_VT_REAL:
+		  draw_eval_real(ivl_expr_parm(rval,idx));
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%store/dar/r v%p_0;\n", var);
+		  break;
+		default:
+		  fprintf(vvp_out, "; ERROR: show_stmt_assign_darray_pattern: type_base=%d not implemented\n", ivl_type_base(element_type));
+		  errors += 1;
+		  break;
+	    }
+      }
+
+      return errors;
+}
+
 static int show_stmt_assign_sig_darray(ivl_statement_t net)
 {
       int errors = 0;
@@ -844,6 +912,12 @@ static int show_stmt_assign_sig_darray(ivl_statement_t net)
 		    var, rvec.base, rvec.wid);
 
 	    if (rvec.base >= 4) clr_vector(rvec);
+
+      } else if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
+	      /* There is no l-value mux, but the r-value is an array
+		 pattern. This is a special case of an assignment to
+		 elements of the l-value. */
+	    errors += show_stmt_assign_darray_pattern(net);
 
       } else {
 	      /* There is no l-value mux, so this must be an
