@@ -3777,8 +3777,12 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 		 NetEConstParam or NetECRealParam as appropriate. */
 	    const NetEConst*ctmp = dynamic_cast<const NetEConst*>(par);
 	    if (ctmp) {
-                  verinum cvalue = cast_to_width(ctmp->value(), expr_wid);
+                  verinum cvalue = ctmp->value();
+                  if (cvalue.has_len())
+			cvalue.has_sign(signed_flag_);
+                  cvalue = cast_to_width(cvalue, expr_wid);
 		  tmp = new NetEConstParam(found_in, name, cvalue);
+		  tmp->cast_signed(signed_flag_);
 		  tmp->set_line(*par);
 
 		  if (debug_elaborate)
