@@ -4618,15 +4618,26 @@ NetExpr* PENewArray::elaborate_expr(Design*des, NetScope*scope,
       width_mode_t mode = LOSSLESS;
       unsigned use_wid = size_->test_width(des, scope, mode);
       NetExpr*size = size_->elaborate_expr(des, scope, use_wid, flags);
+      NetExpr*init_val = 0;
 
-      NetENew*tmp = new NetENew(ntype, size);
-      tmp->set_line(*this);
+      if (dynamic_cast<PEAssignPattern*> (init_)) {
+	      // Special case: the initial value expression is an
+	      // array_pattern. Elaborate the expresion like the
+	      // r-value to an assignment to array.
+	    init_val = init_->elaborate_expr(des, scope, ntype, flags);
 
-      if (init_) {
-	    cerr << get_fileline() << ": sorry: Dynamic array initialization expressions "
-		 << "not supported yet." << endl;
-	    des->errors += 1;
+      } else if (init_) {
+	      // Regular case: The initial value is an
+	      // expression. Elaborate the expression as an element
+	      // type. The run-time will assign this value to each element.
+	    const netarray_t*array_type = dynamic_cast<const netarray_t*> (ntype);
+	    ivl_type_t elem_type = array_type->element_type();
+
+	    init_val = init_->elaborate_expr(des, scope, elem_type, flags);
       }
+
+      NetENew*tmp = new NetENew(ntype, size, init_val);
+      tmp->set_line(*this);
 
       return tmp;
 }

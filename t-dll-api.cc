@@ -520,6 +520,9 @@ extern "C" ivl_expr_t ivl_expr_oper2(ivl_expr_t net)
 	  case IVL_EX_BINARY:
 	    return net->u_.binary_.rig_;
 
+	  case IVL_EX_NEW:
+	    return net->u_.new_.init_val;
+
 	  case IVL_EX_SELECT:
 	    return net->u_.select_.base_;
 

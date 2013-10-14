@@ -337,6 +337,7 @@ struct ivl_expr_s {
 
 	    struct {
 		  ivl_expr_t size;
+		  ivl_expr_t init_val;
 	    } new_;
 
 	    struct {

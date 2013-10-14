@@ -336,12 +336,12 @@ const netenum_t* NetENetenum::netenum() const
 }
 
 NetENew::NetENew(ivl_type_t t)
-: obj_type_(t), size_(0)
+: obj_type_(t), size_(0), init_val_(0)
 {
 }
 
-NetENew::NetENew(ivl_type_t t, NetExpr*size)
-: obj_type_(t), size_(size)
+NetENew::NetENew(ivl_type_t t, NetExpr*size, NetExpr*init_val)
+: obj_type_(t), size_(size), init_val_(init_val)
 {
 }
 

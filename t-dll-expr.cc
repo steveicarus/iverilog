@@ -346,9 +346,17 @@ void dll_target::expr_creal(const NetECReal*net)
 void dll_target::expr_new(const NetENew*net)
 {
       ivl_expr_t size = 0;
+      ivl_expr_t init_val = 0;
+
       if (net->size_expr()) {
 	    net->size_expr()->expr_scan(this);
 	    size = expr_;
+	    expr_ = 0;
+      }
+
+      if (net->init_expr()) {
+	    net->init_expr()->expr_scan(this);
+	    init_val = expr_;
 	    expr_ = 0;
       }
 
@@ -362,6 +370,7 @@ void dll_target::expr_new(const NetENew*net)
       expr_->value_  = net->expr_type(); // May be IVL_VT_DARRAY or _CLASS
       expr_->net_type= net->get_type();
       expr_->u_.new_.size = size;
+      expr_->u_.new_.init_val = init_val;
 }
 
 void dll_target::expr_null(const NetENull*net)

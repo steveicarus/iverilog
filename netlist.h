@@ -4030,11 +4030,12 @@ class NetENew : public NetExpr {
 	// Make class object
       explicit NetENew(ivl_type_t);
 	// dynamic array of objects.
-      explicit NetENew(ivl_type_t, NetExpr*);
+      explicit NetENew(ivl_type_t, NetExpr*size, NetExpr* init_val=0);
       ~NetENew();
 
       inline ivl_type_t get_type() const { return obj_type_; }
       inline const NetExpr*size_expr() const { return size_; }
+      inline const NetExpr*init_expr() const { return init_val_; }
 
       virtual ivl_variable_type_t expr_type() const;
 
@@ -4047,6 +4048,7 @@ class NetENew : public NetExpr {
     private:
       ivl_type_t obj_type_;
       NetExpr*size_;
+      NetExpr*init_val_;
 };
 
 /*

@@ -1562,7 +1562,14 @@ void NetENetenum::dump(ostream&o) const
 
 void NetENew::dump(ostream&o) const
 {
-      o << "new <type>";
+      o << "new <type> [";
+      if (size_) size_->dump(o);
+      o << "]";
+      if (init_val_) {
+	    o << "(";
+	    init_val_->dump(o);
+	    o << ")";
+      }
 }
 
 void NetENull::dump(ostream&o) const
