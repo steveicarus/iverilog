@@ -1489,6 +1489,10 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
       unsigned out = transient_id++;
       unsigned id_base = transient_id;
 
+	/* Increment the number of IDs needed before the join count is
+	 * modified by the join_any or join_none code below. */
+      transient_id += join_count;
+
       switch (ivl_statement_type(net)) {
 	  case IVL_ST_FORK:
 	    break;
@@ -1508,8 +1512,6 @@ static int show_stmt_fork(ivl_statement_t net, ivl_scope_t sscope)
 
       if (scope==0)
 	    scope = sscope;
-
-      transient_id += join_count;
 
 	/* Draw a fork statement for all but one of the threads of the
 	   fork/join. Send the threads off to a bit of code where they
