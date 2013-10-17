@@ -2216,6 +2216,36 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * Implement the %disable/fork (SystemVerilog) instruction by disabling
+ * all the detached children of the given thread.
+ */
+bool of_DISABLE_FORK(vthread_t thr, vvp_code_t)
+{
+	/* If a %disable/fork is being executed then the parent thread
+	 * cannot be waiting in a join. */
+      assert(thr->i_am_joining == 0);
+
+	/* There should be no active children to disable. */
+      assert(thr->children.empty());
+
+	/* Disable any detached children. */
+fprintf(stderr, "Sorry: %%disable/fork has not been implemented. It "
+                "will be ignored.\n");
+#if 0
+      while (!thr->children.empty()) {
+	    vthread_t tmp = *(thr->children.begin());
+	    assert(tmp);
+	    assert(tmp->parent == thr);
+	      /* Disabling the children can never match the parent thread. */
+	    assert(! do_disable(tmp, thr));
+	    vthread_reap(tmp);
+      }
+#endif
+
+      return true;
+}
+
+/*
  * This function divides a 2-word number {high, a} by a 1-word
  * number. Assume that high < b.
  */

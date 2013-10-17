@@ -280,7 +280,7 @@ number that the vector is compared with.
 Compare real values for equality and less-then. This opcode pops to
 values from the real-value stack and writes the comparison result to
 bits 4/5. The expressions (a < b) and (a==b) are calculated, with (b)
-poped from the stack first, then (a).
+popped from the stack first, then (a).
 
 * %cmp/ws <bit-l>, <bit-r>
 * %cmp/wu <bit-l>, <bit-r>
@@ -314,7 +314,7 @@ instruction removes two strings from the stack.
 * %concati/str <string>
 
 Pop the top string, and concatenate it to the new top string. Or think
-of it as possing the tail, then the head, concatenating them, and
+of it as passing the tail, then the head, concatenating them, and
 pushing the result. The stack starts with two strings in the stack,
 and ends with one string in the stack.
 
@@ -400,6 +400,11 @@ optimized shorthand.
 This instruction terminates threads that are part of a specific
 scope. The label identifies the scope in question, and the threads are
 the threads that are currently within that scope.
+
+* %disable/fork
+
+This instruction terminates all the detached children for the current
+thread. There should not be any non-detached children.
 
 
 * %div <bit-l>, <bit-r>, <wid>
@@ -1038,9 +1043,9 @@ top of the object stack. The cobject is NOT popped.
 * %store/reala <var-label>, <index>
 
 This pops the top of the real variable stack and write it to the
-object variable given bu the label.
+object variable given by the label.
 
-The areal version is similar, but writes to a real array using the
+The reala version is similar, but writes to a real array using the
 index in the index register <index>
 
 * %store/str <var-label>
