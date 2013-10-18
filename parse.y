@@ -5594,6 +5594,12 @@ statement_item /* This is roughly statement_item in the LRM */
 		  delete $2;
 		  $$ = tmp;
 		}
+	| K_disable K_fork ';'
+		{ pform_name_t tmp_name;
+		  PDisable*tmp = new PDisable(tmp_name);
+		  FILE_NAME(tmp, @1);
+		  $$ = tmp;
+		}
 	| K_TRIGGER hierarchy_identifier ';'
 		{ PTrigger*tmp = new PTrigger(*$2);
 		  FILE_NAME(tmp, @1);

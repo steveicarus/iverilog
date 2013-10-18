@@ -841,8 +841,10 @@ void PDelayStatement::dump(ostream&out, unsigned ind) const
 
 void PDisable::dump(ostream&out, unsigned ind) const
 {
-      out << setw(ind) << "" << "disable " << scope_ << "; /* "
-	  << get_fileline() << " */" << endl;
+      out << setw(ind) << "" << "disable ";
+      if (scope_.empty()) out << scope_;
+      else out << "fork";
+      out << "; /* " << get_fileline() << " */" << endl;
 }
 
 void PDoWhile::dump(ostream&out, unsigned ind) const

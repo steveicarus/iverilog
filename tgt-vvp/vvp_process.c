@@ -1359,9 +1359,15 @@ static int show_stmt_disable(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
       ivl_scope_t target = ivl_stmt_call(net);
 
-      show_stmt_file_line(net, "Disable statement.");
-
-      fprintf(vvp_out, "    %%disable S_%p;\n", target);
+	/* A normal disable statement. */
+      if (target) {
+	    show_stmt_file_line(net, "Disable statement.");
+	    fprintf(vvp_out, "    %%disable S_%p;\n", target);
+	/* A SystemVerilog disable fork statement. */
+      } else {
+	    show_stmt_file_line(net, "Disable fork statement.");
+	    fprintf(vvp_out, "    %%disable/fork;\n");
+      }
 
       return rc;
 }

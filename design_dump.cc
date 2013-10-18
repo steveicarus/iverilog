@@ -1036,8 +1036,10 @@ void NetDeassign::dump(ostream&o, unsigned ind) const
 
 void NetDisable::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) << "" << "disable " << scope_path(target_) << "; "
-	<< "/* " << get_fileline() << " */" << endl;
+      o << setw(ind) << "" << "disable ";
+      if (target_) o << scope_path(target_);
+      else o << "fork";
+      o << "; " << "/* " << get_fileline() << " */" << endl;
 }
 
 void NetDoWhile::dump(ostream&o, unsigned ind) const

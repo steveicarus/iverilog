@@ -3713,6 +3713,22 @@ NetProc* PDisable::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
 
+	/* If the disable scope_ is empty then this is a SystemVerilog
+	 * disable fork statement. */
+      if (scope_.empty()) {
+	    if (gn_system_verilog()) {
+		  NetDisable*obj = new NetDisable(0);
+		  obj->set_line(*this);
+		  return obj;
+	    } else {
+		  cerr << get_fileline()
+		       << ": error: 'disable fork' requires SystemVerilog."
+		       << endl;
+		  des->errors += 1;
+		  return 0;
+	    }
+      }
+
       list<hname_t> spath = eval_scope_path(des, scope, scope_);
 
       NetScope*target = des->find_scope(scope, spath);

@@ -156,7 +156,11 @@ static void show_stmt_delayx(ivl_statement_t net, unsigned ind)
 static void show_stmt_disable(ivl_statement_t net, unsigned ind)
 {
       ivl_scope_t scope = ivl_stmt_call(net);
-      fprintf(out, "%*sdisable %s\n", ind, "", ivl_scope_basename(scope));
+      if (scope) {
+	    fprintf(out, "%*sdisable %s\n", ind, "", ivl_scope_basename(scope));
+      } else {
+	    fprintf(out, "%*sdisable fork\n", ind, "");
+      }
 }
 
 static void show_stmt_force(ivl_statement_t net, unsigned ind)
