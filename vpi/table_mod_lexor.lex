@@ -6,7 +6,7 @@
 
 %{
 /*
- *  Copyright (C) 2011  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2011-2013  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -97,6 +97,7 @@ double get_scaled_real(const char *text)
 	case 'G': scale = "e9";   break; /* giga */
 	case 'T': scale = "e12";  break; /* tera */
 	default:
+	    scale = "";
 	    assert(0);
 	    break;
       }

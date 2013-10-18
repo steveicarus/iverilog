@@ -319,6 +319,10 @@ template <class T> T coerce_to_width(const T&that, unsigned width)
       return res;
 }
 
+/* Explicitly define the vvp_vector4_t version of coerce_to_width(). */
+template vvp_vector4_t coerce_to_width(const vvp_vector4_t&that,
+                                       unsigned width);
+
 static unsigned long* vector_to_array(struct vthread_s*thr,
 				      unsigned addr, unsigned wid)
 {
