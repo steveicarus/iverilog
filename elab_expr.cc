@@ -4843,7 +4843,7 @@ unsigned PENumber::test_width(Design*, NetScope*, width_mode_t&mode)
       return expr_width_;
 }
 
-NetEConst* PENumber::elaborate_expr(Design*des, NetScope*, ivl_type_t ntype, unsigned) const
+NetExpr* PENumber::elaborate_expr(Design*des, NetScope*, ivl_type_t ntype, unsigned) const
 {
       const netvector_t*use_type = dynamic_cast<const netvector_t*> (ntype);
       if (use_type == 0) {
@@ -4852,6 +4852,15 @@ NetEConst* PENumber::elaborate_expr(Design*des, NetScope*, ivl_type_t ntype, uns
 		 << endl;
 	    des->errors += 1;
 	    return 0;
+      }
+
+	// Special case: If the context type is REAL, then cast the
+	// vector value to a real and rethrn a NetECReal.
+      if (ntype->base_type() == IVL_VT_REAL) {
+	    verireal val (value_->as_long());
+	    NetECReal*tmp = new NetECReal(val);
+	    tmp->set_line(*this);
+	    return tmp;
       }
 
       verinum use_val = value();
