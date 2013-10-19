@@ -90,6 +90,14 @@ static int eval_darray_new(ivl_expr_t ex)
 			fprintf(vvp_out, "    %%pop/real 1;\n");
 		  }
 		  break;
+		case IVL_VT_STRING:
+		  for (idx = 0 ; idx < ivl_expr_parms(init_expr) ; idx += 1) {
+			draw_eval_string(ivl_expr_parm(init_expr,idx));
+			fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+			fprintf(vvp_out, "    %%set/dar/obj/str 3;\n");
+			fprintf(vvp_out, "    %%pop/str 1;\n");
+		  }
+		  break;
 		default:
 		  fprintf(vvp_out, "; ERROR: Sorry, this type not supported here.\n");
 		  errors += 1;
@@ -122,6 +130,14 @@ static int eval_darray_new(ivl_expr_t ex)
 			fprintf(vvp_out, "    %%set/dar/obj/real 3;\n");
 		  }
 		  fprintf(vvp_out, "    %%pop/real 1;\n");
+		  break;
+		case IVL_VT_STRING:
+		  draw_eval_string(init_expr);
+		  for (idx = 0 ; idx < cnt ; idx += 1) {
+			fprintf(vvp_out, "    %%ix/load 3, %ld, 0;\n", idx);
+			fprintf(vvp_out, "    %%set/dar/obj/str 3;\n");
+		  }
+		  fprintf(vvp_out, "    %%pop/str 1;\n");
 		  break;
 		default:
 		  fprintf(vvp_out, "; ERROR: Sorry, this type not supported here.\n");

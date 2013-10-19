@@ -4898,6 +4898,16 @@ unsigned PEString::test_width(Design*, NetScope*, width_mode_t&)
       return expr_width_;
 }
 
+NetEConst* PEString::elaborate_expr(Design*, NetScope*, ivl_type_t type, unsigned)const
+{
+      verinum val(value());
+      NetEConst*tmp = new NetEConst(val);
+      tmp->cast_signed(signed_flag_);
+      tmp->set_line(*this);
+
+      return tmp;
+}
+
 NetEConst* PEString::elaborate_expr(Design*, NetScope*,
 				    unsigned expr_wid, unsigned) const
 {

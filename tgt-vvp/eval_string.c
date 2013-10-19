@@ -180,6 +180,10 @@ void draw_eval_string(ivl_expr_t expr)
 		  fallback_eval(expr);
 	    break;
 
+	  case IVL_EX_UFUNC:
+	    draw_ufunc_string(expr);
+	    break;
+
 	  default:
 	    fallback_eval(expr);
 	    break;

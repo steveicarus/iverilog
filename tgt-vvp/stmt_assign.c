@@ -853,6 +853,13 @@ static int show_stmt_assign_darray_pattern(ivl_statement_t net)
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
 		  fprintf(vvp_out, "    %%store/dar/r v%p_0;\n", var);
 		  break;
+
+		case IVL_VT_STRING:
+		  draw_eval_string(ivl_expr_parm(rval,idx));
+		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+		  fprintf(vvp_out, "    %%store/dar/str v%p_0;\n", var);
+		  break;
+
 		default:
 		  fprintf(vvp_out, "; ERROR: show_stmt_assign_darray_pattern: type_base=%d not implemented\n", ivl_type_base(element_type));
 		  errors += 1;

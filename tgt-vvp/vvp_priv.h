@@ -106,6 +106,7 @@ extern void draw_lpm_mux(ivl_lpm_t net);
 
 extern struct vector_info draw_ufunc_expr(ivl_expr_t expr, unsigned wid);
 extern void draw_ufunc_real(ivl_expr_t expr);
+extern void draw_ufunc_string(ivl_expr_t expr);
 extern void draw_ufunc_object(ivl_expr_t expr);
 
 extern void pad_expr_in_place(ivl_expr_t expr, struct vector_info res,

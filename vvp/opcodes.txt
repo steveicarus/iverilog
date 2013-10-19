@@ -963,10 +963,15 @@ a dynamic array that is in the top of the object stack. Instead of
 using a fixed index register, use the register addressed by <index>.
 
 * %set/dar/obj/real <index>
+* %set/dar/obj/str <index>
 
 The "%set/dar/obj/real" opcode sets the top value from the real-value
 stack to the index. This does NOT pop the real value off the
-stack. The intent is that this value may be written to a bunch of values.
+stack. The intent is that this value may be written to a bunch of
+values.
+
+The "%set/dar/obj/str" opcode does the same but for string values and
+uses the string stack.
 
 * %set/v <var-label>, <bit>, <wid>
 
