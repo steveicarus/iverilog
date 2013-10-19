@@ -63,6 +63,11 @@ using namespace std;
  * child of the current thread, and the current thread a parent of the
  * new thread. Any child can be reaped by a %join.
  *
+ * Children that are detached with %join/detach need to have a different
+ * parent/child relationship since the parent can still effect them if
+ * it uses the %disable/fork or %wait/fork opcodes. The i_am_detached
+ * flag and detached_children set are used for this relationship.
+ *
  * Children placed into a task or function scope are given special
  * treatment, which is required to make task/function calls that they
  * represent work correctly. These task/function children are copied
@@ -198,12 +203,15 @@ struct vthread_s {
 
 	/* My parent sets this when it wants me to wake it up. */
       unsigned i_am_joining      :1;
+      unsigned i_am_detached     :1;
       unsigned i_have_ended      :1;
       unsigned waiting_for_event :1;
       unsigned is_scheduled      :1;
       unsigned delay_delete      :1;
 	/* This points to the children of the thread. */
       set<struct vthread_s*>children;
+	/* This points to the detached children of the thread. */
+      set<struct vthread_s*>detached_children;
 	/* No more than 1 of the children are tasks or functions. */
       set<vthread_s*>task_func_children;
 	/* This points to my parent, if I have one. */
@@ -533,10 +541,11 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       thr->wt_context = 0;
       thr->rd_context = 0;
 
-      thr->i_am_joining = 0;
-      thr->is_scheduled = 0;
-      thr->i_have_ended = 0;
-      thr->delay_delete = 0;
+      thr->i_am_joining  = 0;
+      thr->i_am_detached = 0;
+      thr->is_scheduled  = 0;
+      thr->i_have_ended  = 0;
+      thr->delay_delete  = 0;
       thr->waiting_for_event = 0;
       thr->event  = 0;
       thr->ecount = 0;
@@ -603,13 +612,19 @@ static void vthread_reap(vthread_t thr)
 	    }
       }
       if (thr->parent) {
-	      //assert(thr->parent->child == thr);
-	    thr->parent->children.erase(thr);
+	      /* assert that the given element was removed. */
+	    if (thr->i_am_detached) {
+		  size_t res = thr->parent->detached_children.erase(thr);
+		  assert(res == 1);
+	    } else {
+		  size_t res = thr->parent->children.erase(thr);
+		  assert(res == 1);
+	    }
       }
 
       thr->parent = 0;
 
-	// Remove myself from the containing scope.
+	// Remove myself from the containing scope if needed.
       thr->parent_scope->threads.erase(thr);
 
       thr->pc = codespace_null();
@@ -2143,7 +2158,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
 {
       bool flag = false;
 
-	/* Pull the target thread out of its scope. */
+	/* Pull the target thread out of its scope if needed. */
       thr->parent_scope->threads.erase(thr);
 
 	/* Turn the thread off by setting is program counter to
@@ -2227,24 +2242,21 @@ bool of_DISABLE_FORK(vthread_t thr, vvp_code_t)
 {
 	/* If a %disable/fork is being executed then the parent thread
 	 * cannot be waiting in a join. */
-      assert(thr->i_am_joining == 0);
+      assert(! thr->i_am_joining);
 
 	/* There should be no active children to disable. */
       assert(thr->children.empty());
 
 	/* Disable any detached children. */
-fprintf(stderr, "Sorry: %%disable/fork has not been implemented. It "
-                "will be ignored.\n");
-#if 0
-      while (!thr->children.empty()) {
-	    vthread_t tmp = *(thr->children.begin());
-	    assert(tmp);
-	    assert(tmp->parent == thr);
+      while (!thr->detached_children.empty()) {
+	    vthread_t child = *(thr->detached_children.begin());
+	    assert(child);
+	    assert(child->parent == thr);
 	      /* Disabling the children can never match the parent thread. */
-	    assert(! do_disable(tmp, thr));
-	    vthread_reap(tmp);
+	    bool res = do_disable(child, thr);
+	    assert(! res);
+	    vthread_reap(child);
       }
-#endif
 
       return true;
 }
@@ -2556,11 +2568,27 @@ bool of_END(vthread_t thr, vvp_code_t)
       thr->i_have_ended = 1;
       thr->pc = codespace_null();
 
+	/* Fully detach any detached children. */
+      while (!thr->detached_children.empty()) {
+	    vthread_t child = *(thr->detached_children.begin());
+	    assert(child);
+	    assert(child->parent == thr);
+	    assert(child->i_am_detached);
+	    child->parent = 0;
+	    child->i_am_detached = 0;
+	    thr->detached_children.erase(thr->detached_children.begin());
+      }
+
+	/* It is an error to still have active children running at this
+	 * point in time. They should have all been detached or joined. */
+      assert(thr->children.empty());
+
 	/* If I have a parent who is waiting for me, then mark that I
 	   have ended, and schedule that parent. Also, finish the
 	   %join for the parent. */
       if (thr->parent && thr->parent->i_am_joining) {
 	    vthread_t tmp = thr->parent;
+	    assert(! thr->i_am_detached);
 
 	      // Detect that the parent is waiting on a task or function
 	      // thread. These threads must be reaped first. If the
@@ -2575,15 +2603,18 @@ bool of_END(vthread_t thr, vvp_code_t)
 	    return false;
       }
 
-	/* If I have no parents, then no one can %join me and there is
-	   no reason to stick around. This can happen, for example if
-	   I am an ``initial'' thread.
+	/* If this thread is not fully detached then remove it from the
+	 * parents detached_children set. */
+      if (thr->i_am_detached) {
+	    assert(thr->parent);
+	    size_t res = thr->parent->detached_children.erase(thr);
+	    assert(res == 1);
+      }
 
-	   If I have children at this point, then I must have been the
-	   main thread (there is no other parent) and an error (not
-	   enough %joins) has been detected. */
+	/* If I have no parent, then no one can %join me and there is
+	 * no reason to stick around. This can happen, for example if
+	 * I am an ``initial'' thread. */
       if (thr->parent == 0) {
-	    assert(thr->children.empty());
 	    vthread_reap(thr);
 	    return false;
       }
@@ -3089,6 +3120,7 @@ static void do_join(vthread_t thr, vthread_t child)
 {
       assert(child->parent == thr);
 
+	/* Remove the thread from the task/function set if needed. */
       thr->task_func_children.erase(child);
 
         /* If the immediate child thread is in an automatic scope... */
@@ -3160,8 +3192,10 @@ bool of_JOIN_DETACH(vthread_t thr, vvp_code_t cp)
 		  vthread_reap(child);
 
 	    } else {
-		  thr->children.erase(child);
-		  child->parent = 0;
+		  size_t res = child->parent->children.erase(child);
+		  assert(res == 1);
+		  child->i_am_detached = 1;
+		  thr->detached_children.insert(child);
 	    }
       }
 
