@@ -23,8 +23,10 @@
 
 static int eval_darray_new(ivl_expr_t ex)
 {
+      int errors = 0;
       unsigned size_reg = allocate_word();
       ivl_expr_t size_expr = ivl_expr_oper1(ex);
+      ivl_expr_t init_expr = ivl_expr_oper2(ex);
       draw_eval_expr_into_integer(size_expr, size_reg);
       clr_word(size_reg);
 
@@ -64,7 +66,41 @@ static int eval_darray_new(ivl_expr_t ex)
 	    break;
       }
 
-      return 0;
+      if (init_expr && ivl_expr_type(init_expr)==IVL_EX_ARRAY_PATTERN) {
+	    int idx;
+	    struct vector_info rvec;
+	    unsigned wid;
+	    switch (ivl_type_base(element_type)) {
+		case IVL_VT_BOOL:
+		  wid = width_of_packed_type(element_type);
+		  for (idx = 0 ; idx < ivl_expr_parms(init_expr) ; idx += 1) {
+			rvec = draw_eval_expr_wid(ivl_expr_parm(init_expr,idx),
+						    wid, STUFF_OK_XZ);
+			fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+			fprintf(vvp_out, "    %%set/dar/obj 3, %u, %u;\n",
+				rvec.base, rvec.wid);
+			if (rvec.base >= 4) clr_vector(rvec);
+		  }
+		  break;
+		case IVL_VT_REAL:
+		  for (idx = 0 ; idx < ivl_expr_parms(init_expr) ; idx += 1) {
+			draw_eval_real(ivl_expr_parm(init_expr,idx));
+			fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
+			fprintf(vvp_out, "    %%set/dar/obj/real 3;\n");
+			fprintf(vvp_out, "    %%pop/real 1;\n");
+		  }
+		  break;
+		default:
+		  fprintf(vvp_out, "; ERROR: Sorry, this type not supported here.\n");
+		  errors += 1;
+		  break;
+	    }
+      } else if (init_expr) {
+	    fprintf(vvp_out, "; ERROR: Init_expr not supported here\n");
+	    errors += 1;
+      }
+
+      return errors;
 }
 
 static int eval_class_new(ivl_expr_t ex)

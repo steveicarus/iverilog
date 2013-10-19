@@ -952,10 +952,21 @@ statement. The <type> is 0 for nets and 1 for registers. See the other
 %release commands above.
 
 * %set/dar <var-label>, <bit>, <wid>
+* %set/dar/obj <index>, <bit>, <wid>
 
-This sets a vector to a word of the dynamic array. Index register 3
-contains the word address within the dynamic array, and <bit>,<wid>
-specifies the thread vector to be written.
+The "%set/dar" opcode sets a vector to a word of the dynamic
+array. Index register 3 contains the word address within the dynamic
+array, and <bit>,<wid> specifies the thread vector to be written.
+
+The "%set/dar/obj" opcode is similar, except that it sets elements of
+a dynamic array that is in the top of the object stack. Instead of
+using a fixed index register, use the register addressed by <index>.
+
+* %set/dar/obj/real <index>
+
+The "%set/dar/obj/real" opcode sets the top value from the real-value
+stack to the index. This does NOT pop the real value off the
+stack. The intent is that this value may be written to a bunch of values.
 
 * %set/v <var-label>, <bit>, <wid>
 

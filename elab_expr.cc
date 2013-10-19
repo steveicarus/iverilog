@@ -2537,6 +2537,13 @@ unsigned PEFNumber::test_width(Design*, NetScope*, width_mode_t&)
       return expr_width_;
 }
 
+NetExpr* PEFNumber::elaborate_expr(Design*, NetScope*, ivl_type_t type, unsigned) const
+{
+      NetECReal*tmp = new NetECReal(*value_);
+      tmp->set_line(*this);
+      return tmp;
+}
+
 NetExpr* PEFNumber::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const
 {
       NetECReal*tmp = new NetECReal(*value_);

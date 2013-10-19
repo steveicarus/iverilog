@@ -687,7 +687,7 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 }
 
 /*
- * This function assigns a value to a real .variable. This is destined
+ * This function assigns a value to a real variable. This is destined
  * for /dev/null when typed ivl_signal_t takes over all the real
  * variable support.
  */

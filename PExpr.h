@@ -303,6 +303,8 @@ class PEFNumber : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
+				     ivl_type_t type, unsigned flags) const;
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     unsigned expr_wid,
                                      unsigned flags) const;
 

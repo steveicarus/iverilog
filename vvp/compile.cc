@@ -229,6 +229,8 @@ static const struct opcode_table_s opcode_table[] = {
       { "%scopy",  of_SCOPY,  0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%set/av", of_SET_AV, 3,  {OA_ARR_PTR,  OA_BIT1,     OA_BIT2} },
       { "%set/dar",of_SET_DAR,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
+      { "%set/dar/obj",     of_SET_DAR_OBJ,     3,{OA_NUMBER,OA_BIT1,OA_BIT2} },
+      { "%set/dar/obj/real",of_SET_DAR_OBJ_REAL,1,{OA_NUMBER,OA_NONE,OA_NONE} },
       { "%set/v",  of_SET_VEC,3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%set/x0", of_SET_X0, 3,  {OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%shiftl/i0", of_SHIFTL_I0, 2, {OA_BIT1,OA_NUMBER,   OA_NONE} },
