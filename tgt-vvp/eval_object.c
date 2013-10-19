@@ -95,8 +95,42 @@ static int eval_darray_new(ivl_expr_t ex)
 		  errors += 1;
 		  break;
 	    }
+      } else if (init_expr && number_is_immediate(size_expr,32,0)) {
+	      /* In this case, there is an init expression, the
+		 expression is NOT an array_pattern, and the size
+		 expression used to calculate the size of the array is
+		 a constant. Generate an unrolled set of assignments. */
+	    long idx;
+	    long cnt = get_number_immediate(size_expr);
+	    struct vector_info rvec;
+	    unsigned wid;
+	    switch (ivl_type_base(element_type)) {
+		case IVL_VT_BOOL:
+		  wid = width_of_packed_type(element_type);
+		  rvec = draw_eval_expr_wid(init_expr, wid, STUFF_OK_XZ);
+		  for (idx = 0 ; idx < cnt ; idx += 1) {
+			fprintf(vvp_out, "    %%ix/load 3, %ld, 0;\n", idx);
+			fprintf(vvp_out, "    %%set/dar/obj 3, %u, %u;\n",
+				rvec.base, rvec.wid);
+		  }
+		  if (rvec.base >= 4) clr_vector(rvec);
+		  break;
+		case IVL_VT_REAL:
+		  draw_eval_real(init_expr);
+		  for (idx = 0 ; idx < cnt ; idx += 1) {
+			fprintf(vvp_out, "    %%ix/load 3, %ld, 0;\n", idx);
+			fprintf(vvp_out, "    %%set/dar/obj/real 3;\n");
+		  }
+		  fprintf(vvp_out, "    %%pop/real 1;\n");
+		  break;
+		default:
+		  fprintf(vvp_out, "; ERROR: Sorry, this type not supported here.\n");
+		  errors += 1;
+		  break;
+	    }
+
       } else if (init_expr) {
-	    fprintf(vvp_out, "; ERROR: Init_expr not supported here\n");
+	    fprintf(vvp_out, "; ERROR: Sorry, I don't know how to work with this size expr.\n");
 	    errors += 1;
       }
 
