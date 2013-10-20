@@ -4721,11 +4721,15 @@ unsigned PENumber::test_width(Design*, NetScope*, width_mode_t&mode)
 {
       expr_type_   = IVL_VT_LOGIC;
       expr_width_  = value_->len();
-      min_width_   = expr_width_;
       signed_flag_ = value_->has_sign();
 
-      if ((mode < LOSSLESS) && !value_->has_len() && !value_->is_single())
-            mode = LOSSLESS;
+      if (!value_->has_len() && !value_->is_single()) {
+	    if (gn_strict_expr_width_flag)
+		  expr_width_ = integer_width;
+	    else if (mode < LOSSLESS)
+	          mode = LOSSLESS;
+      }
+      min_width_ = expr_width_;
 
       return expr_width_;
 }

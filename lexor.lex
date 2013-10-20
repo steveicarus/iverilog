@@ -801,6 +801,22 @@ void lex_end_table()
       BEGIN(INITIAL);
 }
 
+static unsigned truncate_to_integer_width(verinum::V*bits, unsigned size)
+{
+      if (size <= integer_width) return size;
+
+      verinum::V pad = bits[size-1];
+      if (pad == verinum::V1) pad = verinum::V0;
+
+      for (unsigned idx = integer_width; idx < size; idx += 1) {
+	    if (bits[idx] != pad) {
+		  yywarn(yylloc, "Unsized numeric constant truncated to integer width.");
+		  break;
+	    }
+      }
+      return integer_width;
+}
+
 verinum*make_unsized_binary(const char*txt)
 {
       bool sign_flag = false;
@@ -857,6 +873,9 @@ verinum*make_unsized_binary(const char*txt)
 	    }
 	    ptr += 1;
       }
+
+      if (gn_strict_expr_width_flag && (based_size == 0))
+	    size = truncate_to_integer_width(bits, size);
 
       verinum*out = new verinum(bits, size, false);
       out->has_sign(sign_flag);
@@ -925,6 +944,9 @@ verinum*make_unsized_octal(const char*txt)
 	    }
 	    ptr += 1;
       }
+
+      if (gn_strict_expr_width_flag && (based_size == 0))
+	    size = truncate_to_integer_width(bits, size);
 
       verinum*out = new verinum(bits, size, false);
       out->has_sign(sign_flag);
@@ -1002,6 +1024,9 @@ verinum*make_unsized_hex(const char*txt)
 	    }
 	    ptr += 1;
       }
+
+      if (gn_strict_expr_width_flag && (based_size == 0))
+	    size = truncate_to_integer_width(bits, size);
 
       verinum*out = new verinum(bits, size, false);
       out->has_sign(sign_flag);
@@ -1191,6 +1216,9 @@ verinum*make_unsized_dec(const char*ptr)
         /* Since we never have the real number of bits that a decimal
            number represents we do not check for extra bits. */
 //      if (based_size > 0) { }
+
+      if (gn_strict_expr_width_flag && (based_size == 0))
+	    size = truncate_to_integer_width(bits, size);
 
       verinum*res = new verinum(bits, size, false);
       res->has_sign(signed_flag);

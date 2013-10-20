@@ -129,7 +129,9 @@ standard compliant behavior (with some loss in performance).
 .B -gstrict-expr-width\fI|\fP-gno-strict-expr-width
 Enable or disable (default) strict compliance with the standard rules
 for determining expression bit lengths. When disabled, the RHS of a
-parameter assignment is evaluated as a lossless expression.
+parameter assignment is evaluated as a lossless expression, as is any
+expression containing an unsized constant number, and unsized constant
+numbers are not truncated to integer width.
 .TP 8
 .B -I\fIincludedir\fP
 Append directory \fIincludedir\fP to list of directories searched
