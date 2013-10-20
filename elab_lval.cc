@@ -484,7 +484,7 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 	    if (reg->data_type() == IVL_VT_REAL) cerr << "real";
 	    else cerr << "scalar";
 	    cerr << " array word: " << reg->name()
-	         << "[" << *canon_index << "]" << endl;
+	         << as_indices(unpacked_indices) << endl;
 	    des->errors += 1;
 	    return 0;
       }
