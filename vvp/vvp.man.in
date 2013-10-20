@@ -144,6 +144,12 @@ to print information about the annotation.
 .B -sdf-verbose
 This is shorthand for \-sdf\-info \-sdf\-warn.
 
+.TP 8
+.B -compatible
+This extended argument enables improved compatibility with other
+simulators. At present this only affects the display format for
+real numbers when no format string is supplied.
+
 .SH ENVIRONMENT
 .PP
 The vvp command also accepts some environment variables that control

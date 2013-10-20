@@ -29,6 +29,23 @@
 
 #define IS_MCD(mcd)     !((mcd)>>31&1)
 
+// Flag to enable better compatibility with other simulators
+static unsigned compatible_flag = 0;
+
+static void check_command_line_args(void)
+{
+      struct t_vpi_vlog_info vlog_info;
+
+      vpi_get_vlog_info(&vlog_info);
+
+      for (unsigned idx = 0 ;  idx < vlog_info.argc ;  idx += 1) {
+	    if (strcmp(vlog_info.argv[idx],"-compatible") == 0) {
+		  compatible_flag = 1;
+
+	    }
+      }
+}
+
 /* Printf wrapper to handle both MCD/FD */
 static PLI_INT32 my_mcd_printf(PLI_UINT32 mcd, const char *fmt, ...)
 {
@@ -913,7 +930,7 @@ static char *get_display(unsigned int *rtnsz, const struct strobe_cb_info *info)
         } else if (vpi_get(vpiConstType, item) == vpiRealConst) {
           value.format = vpiRealVal;
           vpi_get_value(item, &value);
-          sprintf(buf, "%#g", value.value.real);
+          sprintf(buf, compatible_flag ? "%g" : "%#g", value.value.real);
           result = strdup(buf);
           width = strlen(result);
         } else {
@@ -958,7 +975,7 @@ static char *get_display(unsigned int *rtnsz, const struct strobe_cb_info *info)
       case vpiRealVar:
         value.format = vpiRealVal;
         vpi_get_value(item, &value);
-        sprintf(buf, "%#g", value.value.real);
+        sprintf(buf, compatible_flag ? "%g" : "%#g", value.value.real);
         width = strlen(buf);
         rtn = realloc(rtn, (size+width)*sizeof(char));
         memcpy(rtn+size-1, buf, width);
@@ -2050,6 +2067,8 @@ void sys_display_register()
       s_cb_data cb_data;
       s_vpi_systf_data tf_data;
       vpiHandle res;
+
+      check_command_line_args();
 
       /*============================== display */
       tf_data.type      = vpiSysTask;
