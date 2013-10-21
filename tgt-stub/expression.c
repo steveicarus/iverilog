@@ -40,6 +40,16 @@ static void show_array_expression(ivl_expr_t net, unsigned ind)
 	      ivl_signal_dimensions(sig), width, vt);
 }
 
+static void show_array_pattern_expression(ivl_expr_t net, unsigned ind)
+{
+      size_t idx;
+      fprintf(out, "%*sArrayPattern (%s): %u expressions\n",
+	      ind, "", vt_type_string(net), ivl_expr_parms(net));
+      for (idx = 0 ; idx < ivl_expr_parms(net) ; idx += 1) {
+	    show_expression(ivl_expr_parm(net,idx), ind+4);
+      }
+}
+
 static void show_branch_access_expression(ivl_expr_t net, unsigned ind)
 {
       ivl_branch_t bra = ivl_expr_branch(net);
@@ -176,6 +186,12 @@ static void show_new_expression(ivl_expr_t net, unsigned ind)
 		  show_expression(ivl_expr_oper1(net), ind+3);
 		  stub_errors += 1;
 	    }
+	    if (ivl_expr_oper2(net)){
+		  fprintf(out, "%*sERROR: class_new with array element initializer!\n",
+			  ind+3, "");
+		  show_expression(ivl_expr_oper2(net), ind+3);
+		  stub_errors += 1;
+	    }
 	    break;
 	  case IVL_VT_DARRAY:
 	    fprintf(out, "%*snew [] <type>\n", ind, "");
@@ -185,6 +201,12 @@ static void show_new_expression(ivl_expr_t net, unsigned ind)
 		  fprintf(out, "%*sERROR: darray_new missing size expression\n",
 			  ind+3, "");
 		  stub_errors += 1;
+	    }
+	      /* The IVL_EX_NEW expression may include an element
+		 initializer. This may be an array pattern or simple
+		 expression. */
+	    if (ivl_expr_oper2(net)) {
+		  show_expression(ivl_expr_oper2(net), ind+3);
 	    }
 	    break;
 	  default:
@@ -406,6 +428,10 @@ void show_expression(ivl_expr_t net, unsigned ind)
 
 	  case IVL_EX_ARRAY:
 	    show_array_expression(net, ind);
+	    break;
+
+	  case IVL_EX_ARRAY_PATTERN:
+	    show_array_pattern_expression(net, ind);
 	    break;
 
 	  case IVL_EX_BACCESS:

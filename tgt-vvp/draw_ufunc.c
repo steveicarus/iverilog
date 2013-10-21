@@ -65,6 +65,12 @@ static void function_argument_class(ivl_signal_t port, ivl_expr_t expr)
       fprintf(vvp_out, "    %%store/obj v%p_0;\n", port);
 }
 
+static void function_argument_darray(ivl_signal_t port, ivl_expr_t expr)
+{
+      draw_eval_object(expr);
+      fprintf(vvp_out, "    %%store/obj v%p_0;\n", port);
+}
+
 static void function_argument_string(ivl_signal_t port, ivl_expr_t expr)
 {
       draw_eval_string(expr);
@@ -89,6 +95,9 @@ static void draw_function_argument(ivl_signal_t port, ivl_expr_t expr)
 	    break;
 	  case IVL_VT_STRING:
 	    function_argument_string(port, expr);
+	    break;
+	  case IVL_VT_DARRAY:
+	    function_argument_darray(port, expr);
 	    break;
 	  default:
 	    fprintf(stderr, "XXXX function argument %s type=%d?!\n",
@@ -205,7 +214,23 @@ void draw_ufunc_real(ivl_expr_t expr)
       fprintf(vvp_out, "  %%load/real v%p_0;\n", retval);
 
       draw_ufunc_epilogue(expr);
+}
 
+void draw_ufunc_string(ivl_expr_t expr)
+{
+      ivl_scope_t def = ivl_expr_def(expr);
+      ivl_signal_t retval = ivl_scope_port(def, 0);
+
+	/* Take in arguments to function and call the function code. */
+      draw_ufunc_preamble(expr);
+
+	/* Return value signal cannot be an array. */
+      assert(ivl_signal_dimensions(retval) == 0);
+
+	/* Load the result into a word. */
+      fprintf(vvp_out, "  %%load/str v%p_0;\n", retval);
+
+      draw_ufunc_epilogue(expr);
 }
 
 void draw_ufunc_object(ivl_expr_t expr)

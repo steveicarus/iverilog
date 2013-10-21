@@ -46,6 +46,19 @@ bool ivl_type_s::get_signed() const
       return false;
 }
 
+bool ivl_type_s::type_compatible(ivl_type_t that) const
+{
+      if (this == that)
+	    return true;
+
+      return test_compatibility(that);
+}
+
+bool ivl_type_s::test_compatibility(const ivl_type_s*that) const
+{
+      return false;
+}
+
 netarray_t::~netarray_t()
 {
 }

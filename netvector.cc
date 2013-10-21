@@ -18,6 +18,7 @@
  */
 
 # include  "netvector.h"
+# include  <iostream>
 
 using namespace std;
 
@@ -61,4 +62,23 @@ long netvector_t::packed_width() const
 vector<netrange_t> netvector_t::slice_dimensions() const
 {
       return packed_dims_;
+}
+
+bool netvector_t::test_compatibility(ivl_type_t that) const
+{
+      const netvector_t*that_st = dynamic_cast<const netvector_t*>(that);
+      if (that_st == 0)
+	    return false;
+
+      if (type_ != that_st->type_)
+	    return false;
+      if (packed_dims_.size() != that_st->packed_dims_.size())
+	    return false;
+
+      for (size_t idx = 0 ; idx < packed_dims_.size() ; idx += 1) {
+	    if (packed_dims_[idx] != that_st->packed_dims_[idx])
+		  return false;
+      }
+
+      return true;
 }

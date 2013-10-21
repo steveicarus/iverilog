@@ -4922,6 +4922,59 @@ bool of_SET_DAR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %set/dar/obj <index>, <bit>, <wid>
+ */
+bool of_SET_DAR_OBJ(vthread_t thr, vvp_code_t cp)
+{
+      unsigned adr = thr->words[cp->number].w_int;
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      vvp_object_t&top = thr->peek_object();
+      vvp_darray*darray = top.peek<vvp_darray>();
+      assert(darray);
+
+      darray->set_word(adr, value);
+      return true;
+}
+
+/*
+ * %set/dar/obj/real <index>
+ */
+bool of_SET_DAR_OBJ_REAL(vthread_t thr, vvp_code_t cp)
+{
+      unsigned adr = thr->words[cp->number].w_int;
+
+      double value = thr->peek_real(0);
+
+      vvp_object_t&top = thr->peek_object();
+      vvp_darray*darray = top.peek<vvp_darray>();
+      assert(darray);
+
+      darray->set_word(adr, value);
+      return true;
+}
+
+/*
+ * %set/dar/obj/str <index>
+ */
+bool of_SET_DAR_OBJ_STR(vthread_t thr, vvp_code_t cp)
+{
+      unsigned adr = thr->words[cp->number].w_int;
+
+      string value = thr->peek_str(0);
+
+      vvp_object_t&top = thr->peek_object();
+      vvp_darray*darray = top.peek<vvp_darray>();
+      assert(darray);
+
+      darray->set_word(adr, value);
+      return true;
+}
+
+/*
  * This implements the "%set/v <label>, <bit>, <wid>" instruction.
  *
  * The <label> is a reference to a vvp_net_t object, and it is in

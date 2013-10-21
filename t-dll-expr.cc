@@ -175,6 +175,31 @@ void dll_target::expr_access_func(const NetEAccess*net)
       expr_->u_.branch_.nature = net->get_nature();
 }
 
+void dll_target::expr_array_pattern(const NetEArrayPattern*net)
+{
+      assert(expr_ == 0);
+      ivl_expr_t expr_tmp = (ivl_expr_t)calloc(1, sizeof(struct ivl_expr_s));
+      expr_tmp->type_ = IVL_EX_ARRAY_PATTERN;
+      expr_tmp->value_= net->expr_type();
+      expr_tmp->net_type = net->net_type();
+      expr_tmp->width_   = 1;
+      expr_tmp->signed_  = 0;
+      expr_tmp->sized_   = 0;
+      FILE_NAME(expr_tmp, net);
+
+      expr_tmp->u_.array_pattern_.parms = net->item_size();
+      expr_tmp->u_.array_pattern_.parm = new ivl_expr_t [net->item_size()];
+
+      for (size_t idx = 0 ; idx < net->item_size() ; idx += 1) {
+	    const NetExpr*tmp = net->item(idx);
+	    tmp->expr_scan(this);
+	    expr_tmp->u_.array_pattern_.parm[idx] = expr_;
+	    expr_ = 0;
+      }
+
+      expr_ = expr_tmp;
+}
+
 void dll_target::expr_binary(const NetEBinary*net)
 {
       assert(expr_ == 0);
@@ -321,9 +346,17 @@ void dll_target::expr_creal(const NetECReal*net)
 void dll_target::expr_new(const NetENew*net)
 {
       ivl_expr_t size = 0;
+      ivl_expr_t init_val = 0;
+
       if (net->size_expr()) {
 	    net->size_expr()->expr_scan(this);
 	    size = expr_;
+	    expr_ = 0;
+      }
+
+      if (net->init_expr()) {
+	    net->init_expr()->expr_scan(this);
+	    init_val = expr_;
 	    expr_ = 0;
       }
 
@@ -337,6 +370,7 @@ void dll_target::expr_new(const NetENew*net)
       expr_->value_  = net->expr_type(); // May be IVL_VT_DARRAY or _CLASS
       expr_->net_type= net->get_type();
       expr_->u_.new_.size = size;
+      expr_->u_.new_.init_val = init_val;
 }
 
 void dll_target::expr_null(const NetENull*net)

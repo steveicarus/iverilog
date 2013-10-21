@@ -452,6 +452,12 @@ void expr_scan_t::expr_access_func(const NetEAccess*)
 	    "unhandled expr_access_func." << endl;
 }
 
+void expr_scan_t::expr_array_pattern(const NetEArrayPattern*)
+{
+      cerr << "expr_scan_t (" << typeid(*this).name() << "): "
+	    "unhandled expr_array_pattern." << endl;
+}
+
 void expr_scan_t::expr_const(const NetEConst*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "

@@ -194,6 +194,29 @@ class PExpr : public LineInfo {
 
 ostream& operator << (ostream&, const PExpr&);
 
+class PEAssignPattern : public PExpr {
+    public:
+      explicit PEAssignPattern();
+      explicit PEAssignPattern(const std::list<PExpr*>&p);
+      ~PEAssignPattern();
+
+      void dump(std::ostream&) const;
+
+      virtual unsigned test_width(Design*des, NetScope*scope, width_mode_t&mode);
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     ivl_type_t type, unsigned flags) const;
+
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     unsigned expr_wid,
+                                     unsigned flags) const;
+    private:
+      NetExpr* elaborate_expr_darray_(Design*des, NetScope*scope,
+				      ivl_type_t type, unsigned flags) const;
+
+    private:
+      std::vector<PExpr*>parms_;
+};
+
 class PEConcat : public PExpr {
 
     public:
@@ -279,6 +302,8 @@ class PEFNumber : public PExpr {
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*,
+				     ivl_type_t type, unsigned flags) const;
       virtual NetExpr*elaborate_expr(Design*des, NetScope*,
 				     unsigned expr_wid,
                                      unsigned flags) const;
@@ -479,11 +504,11 @@ class PEIdent : public PExpr {
 			     long&midx, long&lidx) const;
 };
 
-class PENew : public PExpr {
+class PENewArray : public PExpr {
 
     public:
-      explicit PENew (PExpr*s);
-      ~PENew();
+      explicit PENewArray (PExpr*s, PExpr*i);
+      ~PENewArray();
 
       virtual void dump(ostream&) const;
       virtual unsigned test_width(Design*des, NetScope*scope,
@@ -496,6 +521,7 @@ class PENew : public PExpr {
 
     private:
       PExpr*size_;
+      PExpr*init_;
 };
 
 class PENewClass : public PExpr {
@@ -570,7 +596,7 @@ class PENumber : public PExpr {
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
 
-      virtual NetEConst*elaborate_expr(Design*des, NetScope*scope,
+      virtual NetExpr  *elaborate_expr(Design*des, NetScope*scope,
 				       ivl_type_t type, unsigned flags) const;
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				       unsigned expr_wid, unsigned) const;
@@ -605,6 +631,9 @@ class PEString : public PExpr {
 
       virtual unsigned test_width(Design*des, NetScope*scope,
 				  width_mode_t&mode);
+
+      virtual NetEConst*elaborate_expr(Design*des, NetScope*scope,
+				       ivl_type_t type, unsigned flags) const;
 
       virtual NetEConst*elaborate_expr(Design*des, NetScope*,
 				       unsigned expr_wid, unsigned) const;

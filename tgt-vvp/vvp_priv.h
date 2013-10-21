@@ -83,6 +83,11 @@ extern const char* vvp_signal_label(ivl_signal_t sig);
 extern unsigned width_of_nexus(ivl_nexus_t nex);
 extern ivl_variable_type_t data_type_of_nexus(ivl_nexus_t nex);
 
+/*
+ * Calculate the width (in bits) of a packed type.
+ */
+extern unsigned width_of_packed_type(ivl_type_t net);
+
 extern int can_elide_bufz(ivl_net_logic_t net, ivl_nexus_ptr_t nptr);
 
 /*
@@ -101,6 +106,7 @@ extern void draw_lpm_mux(ivl_lpm_t net);
 
 extern struct vector_info draw_ufunc_expr(ivl_expr_t expr, unsigned wid);
 extern void draw_ufunc_real(ivl_expr_t expr);
+extern void draw_ufunc_string(ivl_expr_t expr);
 extern void draw_ufunc_object(ivl_expr_t expr);
 
 extern void pad_expr_in_place(ivl_expr_t expr, struct vector_info res,

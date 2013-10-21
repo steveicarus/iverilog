@@ -627,7 +627,7 @@ class NetNet  : public NetObj, public PortType {
 	// now, the unpacked type is not burried into an ivl_type_s object.
       explicit NetNet(NetScope*s, perm_string n, Type t,
 		      const std::list<netrange_t>&unpacked,
-		      ivl_type_t type =0);
+		      ivl_type_t type);
 
 	// This form builds a NetNet from its record/enum/darray
 	// definition. They should probably be replaced with a single
@@ -1912,6 +1912,25 @@ class NetExpr  : public LineInfo {
     private: // not implemented
       NetExpr(const NetExpr&);
       NetExpr& operator=(const NetExpr&);
+};
+
+class NetEArrayPattern  : public NetExpr {
+
+    public:
+      NetEArrayPattern(ivl_type_t lv_type, std::vector<NetExpr*>&items);
+      ~NetEArrayPattern();
+
+      inline size_t item_size() const { return items_.size(); }
+      const NetExpr* item(size_t idx) const { return items_[idx]; }
+
+      void expr_scan(struct expr_scan_t*) const;
+      void dump(ostream&) const;
+
+      NetEArrayPattern* dup_expr() const;
+      NexusSet* nex_input(bool rem_out =true);
+
+    private:
+      std::vector<NetExpr*> items_;
 };
 
 /*
@@ -4011,11 +4030,12 @@ class NetENew : public NetExpr {
 	// Make class object
       explicit NetENew(ivl_type_t);
 	// dynamic array of objects.
-      explicit NetENew(ivl_type_t, NetExpr*);
+      explicit NetENew(ivl_type_t, NetExpr*size, NetExpr* init_val=0);
       ~NetENew();
 
       inline ivl_type_t get_type() const { return obj_type_; }
       inline const NetExpr*size_expr() const { return size_; }
+      inline const NetExpr*init_expr() const { return init_val_; }
 
       virtual ivl_variable_type_t expr_type() const;
 
@@ -4028,6 +4048,7 @@ class NetENew : public NetExpr {
     private:
       ivl_type_t obj_type_;
       NetExpr*size_;
+      NetExpr*init_val_;
 };
 
 /*

@@ -84,7 +84,8 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		 << " width=" << lval->vector_width() << endl;
       }
 
-      NetExpr*rval_expr = elaborate_rval_expr(des, scope, lval->data_type(),
+      NetExpr*rval_expr = elaborate_rval_expr(des, scope, lval->net_type(),
+					      lval->data_type(),
 					      lval->vector_width(), pin(1));
 
       if (rval_expr == 0) {
@@ -2244,13 +2245,18 @@ NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
 }
 
 NetExpr* PAssign_::elaborate_rval_(Design*des, NetScope*scope,
-				   unsigned lv_width,
-				   ivl_variable_type_t lv_type) const
+				   ivl_type_t lv_net_type,
+				   ivl_variable_type_t lv_type,
+				   unsigned lv_width) const
 {
       ivl_assert(*this, rval_);
 
-      NetExpr*rv = elaborate_rval_expr(des, scope, lv_type, lv_width, rval(),
-                                       is_constant_);
+	// Don't have a good value for the lv_net_type argument to
+	// elaborate_rval_expr, so punt and pass nil. In the future we
+	// should look into fixing calls to this method to pass a
+	// net_type instead of the separate lv_width/lv_type values.
+      NetExpr*rv = elaborate_rval_expr(des, scope, lv_net_type, lv_type, lv_width,
+				       rval(), is_constant_);
 
       if (!is_constant_ || !rv) return rv;
 
@@ -2368,7 +2374,7 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
       NetAssign_*lv = elaborate_lval(des, scope);
       if (lv == 0) return 0;
 
-      NetExpr*rv = elaborate_rval_(des, scope, count_lval_width(lv), lv->expr_type());
+      NetExpr*rv = elaborate_rval_(des, scope, 0, lv->expr_type(), count_lval_width(lv));
       if (rv == 0) return 0;
 
       NetAssign*cur = new NetAssign(lv, op_, rv);
@@ -2456,7 +2462,7 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 
       } else {
 	      /* Elaborate the r-value expression, then try to evaluate it. */
-	    rv = elaborate_rval_(des, scope, count_lval_width(lv), lv->expr_type());
+	    rv = elaborate_rval_(des, scope, lv_net_type, lv->expr_type(), count_lval_width(lv));
       }
 
       if (rv == 0) return 0;
@@ -2648,7 +2654,7 @@ NetProc* PAssignNB::elaborate(Design*des, NetScope*scope) const
 	      // because it would necessarily trigger other errors.
       }
 
-      NetExpr*rv = elaborate_rval_(des, scope, count_lval_width(lv), lv->expr_type());
+      NetExpr*rv = elaborate_rval_(des, scope, 0, lv->expr_type(), count_lval_width(lv));
       if (rv == 0) return 0;
 
       NetExpr*delay = 0;
@@ -3463,7 +3469,8 @@ NetProc* PCallTask::elaborate_build_call_(Design*des, NetScope*scope,
 	    NetExpr*rv = 0;
 
 	    if (parms_idx<parms_.size() && parms_[parms_idx]) {
-		  rv = elaborate_rval_expr(des, scope, lv_type, wid, parms_ [parms_idx]);
+		  rv = elaborate_rval_expr(des, scope, port->net_type(),
+					   lv_type, wid, parms_ [parms_idx]);
 		  if (NetEEvent*evt = dynamic_cast<NetEEvent*> (rv)) {
 			cerr << evt->get_fileline() << ": error: An event '"
 			     << evt->event()->name() << "' can not be a user "
@@ -3617,7 +3624,11 @@ NetCAssign* PCAssign::elaborate(Design*des, NetScope*scope) const
       unsigned lwid = count_lval_width(lval);
       ivl_variable_type_t ltype = lval->expr_type();
 
-      NetExpr*rexp = elaborate_rval_expr(des, scope, ltype, lwid, expr_);
+	// Need to figure out a better thing to do about the
+	// lv_net_type argument to elaborate_rval_expr here. This
+	// would entail getting the NetAssign_ to give us an
+	// ivl_type_t as needed.
+      NetExpr*rexp = elaborate_rval_expr(des, scope, 0, ltype, lwid, expr_);
       if (rexp == 0)
 	    return 0;
 
@@ -4295,7 +4306,11 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
       unsigned lwid = count_lval_width(lval);
       ivl_variable_type_t ltype = lval->expr_type();
 
-      NetExpr*rexp = elaborate_rval_expr(des, scope, ltype, lwid, expr_);
+	// Like a variety of other assigns, we need to figure out a
+	// better way to get a reasonable lv_net_type value, and that
+	// probably will involve NetAssign_ having a method for
+	// synthesizing one as needed.
+      NetExpr*rexp = elaborate_rval_expr(des, scope, 0, ltype, lwid, expr_);
       if (rexp == 0)
 	    return 0;
 
@@ -4351,7 +4366,8 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 
 	/* Make the r-value of the initial assignment, and size it
 	   properly. Then use it to build the assignment statement. */
-      etmp = elaborate_rval_expr(des, scope, lv->expr_type(), lv->lwidth(),
+      etmp = elaborate_rval_expr(des, scope, sig->net_type(),
+				 lv->expr_type(), lv->lwidth(),
                                  expr1_);
 
       if (debug_elaborate) {
@@ -4566,7 +4582,8 @@ NetProc* PReturn::elaborate(Design*des, NetScope*scope) const
       unsigned long wid = res->vector_width();
       NetAssign_*lv = new NetAssign_(res);
 
-      NetExpr*val = elaborate_rval_expr(des, scope, lv_type, wid, expr_);
+      NetExpr*val = elaborate_rval_expr(des, scope, res->net_type(),
+					lv_type, wid, expr_);
 
       NetBlock*proc = new NetBlock(NetBlock::SEQU, 0);
       proc->set_line( *this );

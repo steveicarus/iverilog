@@ -228,6 +228,7 @@ typedef enum ivl_expr_type_e {
       IVL_EX_NEW    = 23,
       IVL_EX_NULL   = 22,
       IVL_EX_NUMBER = 5,
+      IVL_EX_ARRAY_PATTERN  = 26,
       IVL_EX_PROPERTY = 24,
       IVL_EX_REALNUM  = 16,
       IVL_EX_SCOPE  = 6,
@@ -827,6 +828,16 @@ extern unsigned ivl_event_lineno(ivl_event_t net);
  * table. That number can be passed to ivl_type_prop_*() functions to
  * get details about the property.
  *
+ * - IVL_EX_NEW
+ * This expression takes one or two operands. The first operand,
+ * returned by ivl_expr_oper1() is the number of elements to create
+ * for the dynamic array. The second operand, if present, is returned
+ * by the ivl_expr_oper2() function. If this returns a non-nil
+ * expression, it is the initial value to be written to the elements
+ * of the array. If the expression is an IVL_EX_ARRAY_PATTERN, then
+ * this is the very special case of a list of values to be written to
+ * array elements.
+ *
  * - IVL_EX_SELECT
  * This expression takes two operands, oper1 is the expression to
  * select from, and oper2 is the selection base. The ivl_expr_width
@@ -895,17 +906,17 @@ extern const char* ivl_expr_name(ivl_expr_t net);
 extern ivl_nature_t ivl_expr_nature(ivl_expr_t net);
   /* IVL_EX_BINARY IVL_EX_UNARY */
 extern char        ivl_expr_opcode(ivl_expr_t net);
-  /* IVL_EX_BINARY  IVL_EX_UNARY, IVL_EX_MEMORY IVL_EX_TERNARY */
+  /* IVL_EX_BINARY  IVL_EX_UNARY, IVL_EX_MEMORY IVL_EX_NEW IVL_EX_TERNARY */
 extern ivl_expr_t  ivl_expr_oper1(ivl_expr_t net);
-  /* IVL_EX_BINARY IVL_EX_TERNARY */
+  /* IVL_EX_BINARY IVL_EX_NEW IVL_EX_TERNARY */
 extern ivl_expr_t  ivl_expr_oper2(ivl_expr_t net);
   /* IVL_EX_TERNARY */
 extern ivl_expr_t  ivl_expr_oper3(ivl_expr_t net);
   /* and expression */
 extern ivl_parameter_t ivl_expr_parameter(ivl_expr_t net);
-  /* IVL_EX_CONCAT IVL_EX_UFUNC */
+  /* IVL_EX_ARRAY_PATTERN IVL_EX_CONCAT IVL_EX_UFUNC */
 extern ivl_expr_t  ivl_expr_parm(ivl_expr_t net, unsigned idx);
-  /* IVL_EX_CONCAT IVL_EX_SFUNC IVL_EX_UFUNC */
+  /* IVL_EX_ARRAY_PATTERN IVL_EX_CONCAT IVL_EX_SFUNC IVL_EX_UFUNC */
 extern unsigned    ivl_expr_parms(ivl_expr_t net);
   /* IVL_EX_CONCAT */
 extern unsigned    ivl_expr_repeat(ivl_expr_t net);

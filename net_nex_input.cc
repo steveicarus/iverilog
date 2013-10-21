@@ -43,6 +43,21 @@ NexusSet* NetProc::nex_input(bool)
       return 0;
 }
 
+NexusSet* NetEArrayPattern::nex_input(bool rem_out)
+{
+      NexusSet*result = new NexusSet;
+      for (size_t idx = 0 ; idx < items_.size() ; idx += 1) {
+	    if (items_[idx]==0) continue;
+
+	    NexusSet*tmp = items_[idx]->nex_input(rem_out);
+	    if (tmp == 0) continue;
+
+	    result->add(*tmp);
+	    delete tmp;
+      }
+      return result;
+}
+
 NexusSet* NetEBinary::nex_input(bool rem_out)
 {
       NexusSet*result = left_->nex_input(rem_out);

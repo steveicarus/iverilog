@@ -86,15 +86,34 @@ static NetBranch* find_existing_implicit_branch(NetNet*sig, NetNet*gnd)
       return 0;
 }
 
-NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
+NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 			     ivl_variable_type_t lv_type, unsigned lv_width,
 			     PExpr*expr, bool need_const)
 {
+      if (debug_elaborate) {
+	    cerr << expr->get_fileline() << ": elaborate_rval_expr: "
+		 << "expr=" << *expr;
+	    if (lv_net_type)
+		  cerr << ", lv_net_type=" << *lv_net_type;
+	    else
+		  cerr << ", lv_net_type=<nil>";
+
+	    cerr << ", lv_type=" << lv_type
+		 << ", lv_width=" << lv_width
+		 << endl;
+      }
+
       int context_wid = -1;
       switch (lv_type) {
+	  case IVL_VT_DARRAY:
+	      // For these types, use a different elab_and_eval that
+	      // uses the lv_net_type. We should eventually transition
+	      // all the types to this new form.
+	    if (lv_net_type)
+		  return elab_and_eval(des, scope, expr, lv_net_type, need_const);
+	    break;
 	  case IVL_VT_REAL:
 	  case IVL_VT_STRING:
-	  case IVL_VT_DARRAY:
 	    break;
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC:
@@ -163,6 +182,76 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
       return 0;
 }
 
+/*
+ * For now, assuse that assignment patterns are for dynamic
+ * objects. This is not really true as this expression type, fully
+ * supported, can assign to packed arrays and structs, unpacked arrays
+ * and dynamic arrays.
+ */
+unsigned PEAssignPattern::test_width(Design*des, NetScope*scope, width_mode_t&mode)
+{
+      expr_type_  = IVL_VT_DARRAY;
+      expr_width_ = 1;
+      min_width_  = 1;
+      signed_flag_= false;
+      return 1;
+}
+
+NetExpr*PEAssignPattern::elaborate_expr(Design*des, NetScope*scope,
+					ivl_type_t ntype, unsigned flags) const
+{
+	// Special case: If this is an empty pattern (i.e. '{}) and
+	// the expected type is a DARRAY, then convert this to a null
+	// handle. Internally, Icarus Verilog uses this to represent
+	// nil dynamic arrays.
+      if (parms_.size() == 0 && ntype->base_type()==IVL_VT_DARRAY) {
+	    NetENull*tmp = new NetENull;
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
+      if (ntype->base_type()==IVL_VT_DARRAY)
+	    return elaborate_expr_darray_(des, scope, ntype, flags);
+
+      cerr << get_fileline() << ": sorry: I don't know how to elaborate "
+	   << "assignment_pattern expressions yet." << endl;
+      cerr << get_fileline() << ":      : Expression is: " << *this
+	   << endl;
+      des->errors += 1;
+      return 0;
+}
+
+NetExpr*PEAssignPattern::elaborate_expr_darray_(Design*des, NetScope*scope,
+						ivl_type_t ntype, unsigned flags) const
+{
+      const netdarray_t*array_type = dynamic_cast<const netdarray_t*> (ntype);
+      ivl_assert(*this, array_type);
+
+	// This is an array pattern, so run through the elements of
+	// the expression and elaborate each as if they are
+	// element_type expressions.
+      ivl_type_t elem_type = array_type->element_type();
+      vector<NetExpr*> elem_exprs (parms_.size());
+      for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
+	    NetExpr*tmp = parms_[idx]->elaborate_expr(des, scope, elem_type, flags);
+	    elem_exprs[idx] = tmp;
+      }
+
+      NetEArrayPattern*res = new NetEArrayPattern(array_type, elem_exprs);
+      res->set_line(*this);
+      return res;
+}
+
+NetExpr* PEAssignPattern::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
+{
+      cerr << get_fileline() << ": sorry: I do not know how to"
+	   << " elaborate assignment patterns using old method." << endl;
+      cerr << get_fileline() << ":      : Expression is: " << *this
+	   << endl;
+      des->errors += 1;
+      ivl_assert(*this, 0);
+      return 0;
+}
 
 unsigned PEBinary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 {
@@ -1524,7 +1613,8 @@ static NetExpr* check_for_enum_methods(const LineInfo*li,
 	// Process the method argument if it is available.
       NetExpr* count = 0;
       if (args != 0 && parg) {
-	    count = elaborate_rval_expr(des, scope, IVL_VT_BOOL, 32, parg);
+	    count = elaborate_rval_expr(des, scope, &netvector_t::atom2u32,
+					IVL_VT_BOOL, 32, parg);
 	    if (count == 0) {
 		  cerr << li->get_fileline() << ": error: unable to elaborate "
 		          "enumeration method argument " << use_path << "."
@@ -1978,7 +2068,7 @@ NetExpr* PECallFunction::elaborate_base_(Design*des, NetScope*scope, NetScope*ds
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PECallFunction::elaborate_base_: "
 		 << "Expecting " << parms_count
-		 << " for function " << scope_path(dscope) << "." << endl;
+		 << " argument for function " << scope_path(dscope) << "." << endl;
       }
 
 	/* Elaborate the input expressions for the function. This is
@@ -2061,6 +2151,7 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
 	    PExpr*tmp = parms_[idx];
 	    if (tmp) {
 		  parms[pidx] = elaborate_rval_expr(des, scope,
+						    def->port(pidx)->net_type(),
 						    def->port(pidx)->data_type(),
 						    (unsigned)def->port(pidx)->vector_width(),
 						    tmp, need_const);
@@ -2153,12 +2244,12 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  ivl_assert(*this, parms_.size() == 2);
 		  NetExpr*tmp;
 
-		  tmp = elaborate_rval_expr(des, scope, IVL_VT_BOOL,
-					    32, parms_[0], false);
+		  tmp = elaborate_rval_expr(des, scope, &netvector_t::atom2u32,
+					    IVL_VT_BOOL, 32, parms_[0], false);
 		  sys_expr->parm(1, tmp);
 
-		  tmp = elaborate_rval_expr(des, scope, IVL_VT_BOOL,
-					    32, parms_[1], false);
+		  tmp = elaborate_rval_expr(des, scope, &netvector_t::atom2u32,
+					    IVL_VT_BOOL, 32, parms_[1], false);
 		  sys_expr->parm(2, tmp);
 
 		  return sys_expr;
@@ -2444,6 +2535,13 @@ unsigned PEFNumber::test_width(Design*, NetScope*, width_mode_t&)
       signed_flag_ = true;
 
       return expr_width_;
+}
+
+NetExpr* PEFNumber::elaborate_expr(Design*, NetScope*, ivl_type_t type, unsigned) const
+{
+      NetECReal*tmp = new NetECReal(*value_);
+      tmp->set_line(*this);
+      return tmp;
 }
 
 NetExpr* PEFNumber::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const
@@ -2902,7 +3000,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      if (net->net_type() != ntype) {
+      if (! ntype->type_compatible(net->net_type())) {
 	    cerr << get_fileline() << ": internal_error: "
 		 << "net type doesn't match context type." << endl;
 
@@ -2920,7 +3018,7 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    ntype->debug_dump(cerr);
 	    cerr << endl;
       }
-      ivl_assert(*this, net->net_type() == ntype);
+      ivl_assert(*this, ntype->type_compatible(net->net_type()));
 
       NetESignal*tmp = new NetESignal(net);
       tmp->set_line(*this);
@@ -4515,7 +4613,7 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       return node;
 }
 
-unsigned PENew::test_width(Design*, NetScope*, width_mode_t&)
+unsigned PENewArray::test_width(Design*, NetScope*, width_mode_t&)
 {
       expr_type_  = IVL_VT_DARRAY;
       expr_width_ = 1;
@@ -4524,23 +4622,41 @@ unsigned PENew::test_width(Design*, NetScope*, width_mode_t&)
       return 1;
 }
 
-NetExpr* PENew::elaborate_expr(Design*des, NetScope*scope,
-			       ivl_type_t ntype, unsigned flags) const
+NetExpr* PENewArray::elaborate_expr(Design*des, NetScope*scope,
+				    ivl_type_t ntype, unsigned flags) const
 {
 	// Elaborate the size expression.
       width_mode_t mode = LOSSLESS;
       unsigned use_wid = size_->test_width(des, scope, mode);
       NetExpr*size = size_->elaborate_expr(des, scope, use_wid, flags);
+      NetExpr*init_val = 0;
 
-      NetENew*tmp = new NetENew(ntype, size);
+      if (dynamic_cast<PEAssignPattern*> (init_)) {
+	      // Special case: the initial value expression is an
+	      // array_pattern. Elaborate the expresion like the
+	      // r-value to an assignment to array.
+	    init_val = init_->elaborate_expr(des, scope, ntype, flags);
+
+      } else if (init_) {
+	      // Regular case: The initial value is an
+	      // expression. Elaborate the expression as an element
+	      // type. The run-time will assign this value to each element.
+	    const netarray_t*array_type = dynamic_cast<const netarray_t*> (ntype);
+	    ivl_type_t elem_type = array_type->element_type();
+
+	    init_val = init_->elaborate_expr(des, scope, elem_type, flags);
+      }
+
+      NetENew*tmp = new NetENew(ntype, size, init_val);
       tmp->set_line(*this);
+
       return tmp;
 }
 
 /*
  * This method should never actually be called.
  */
-NetExpr* PENew::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const
+NetExpr* PENewArray::elaborate_expr(Design*, NetScope*, unsigned, unsigned) const
 {
       ivl_assert(*this, 0);
       return 0;
@@ -4623,7 +4739,8 @@ NetExpr* PENewClass::elaborate_expr(Design*des, NetScope*scope,
 	      // While there are default arguments, check them.
 	    if (idx <= parms_.size() && parms_[idx-1]) {
 		  PExpr*tmp = parms_[idx-1];
-		  parms[idx] = elaborate_rval_expr(des, scope, def->port(idx)->data_type(),
+		  parms[idx] = elaborate_rval_expr(des, scope, def->port(idx)->net_type(),
+						   def->port(idx)->data_type(),
 						   def->port(idx)->vector_width(),
 						   tmp, false);
 		  if (parms[idx] == 0)
@@ -4734,7 +4851,7 @@ unsigned PENumber::test_width(Design*, NetScope*, width_mode_t&mode)
       return expr_width_;
 }
 
-NetEConst* PENumber::elaborate_expr(Design*des, NetScope*, ivl_type_t ntype, unsigned) const
+NetExpr* PENumber::elaborate_expr(Design*des, NetScope*, ivl_type_t ntype, unsigned) const
 {
       const netvector_t*use_type = dynamic_cast<const netvector_t*> (ntype);
       if (use_type == 0) {
@@ -4743,6 +4860,15 @@ NetEConst* PENumber::elaborate_expr(Design*des, NetScope*, ivl_type_t ntype, uns
 		 << endl;
 	    des->errors += 1;
 	    return 0;
+      }
+
+	// Special case: If the context type is REAL, then cast the
+	// vector value to a real and rethrn a NetECReal.
+      if (ntype->base_type() == IVL_VT_REAL) {
+	    verireal val (value_->as_long());
+	    NetECReal*tmp = new NetECReal(val);
+	    tmp->set_line(*this);
+	    return tmp;
       }
 
       verinum use_val = value();
@@ -4778,6 +4904,16 @@ unsigned PEString::test_width(Design*, NetScope*, width_mode_t&)
       signed_flag_ = false;
 
       return expr_width_;
+}
+
+NetEConst* PEString::elaborate_expr(Design*, NetScope*, ivl_type_t type, unsigned)const
+{
+      verinum val(value());
+      NetEConst*tmp = new NetEConst(val);
+      tmp->cast_signed(signed_flag_);
+      tmp->set_line(*this);
+
+      return tmp;
 }
 
 NetEConst* PEString::elaborate_expr(Design*, NetScope*,
