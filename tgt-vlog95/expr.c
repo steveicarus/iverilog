@@ -1132,6 +1132,14 @@ void emit_expr(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 	case IVL_EX_ARRAY:
 	    emit_expr_array(scope, expr, wid);
 	    break;
+	case IVL_EX_ARRAY_PATTERN:
+	    fprintf(vlog_out, "<array pattern>");
+	    fprintf(stderr, "%s:%u: vlog95 error: Array pattern expressions "
+	                    "are not supported.\n",
+	                    ivl_expr_file(expr),
+	                    ivl_expr_lineno(expr));
+	    vlog_errors += 1;
+	    break;
 	case IVL_EX_BINARY:
 	    emit_expr_binary(scope, expr, wid, is_full_prec);
 	    break;
