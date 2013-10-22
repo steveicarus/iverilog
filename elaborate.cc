@@ -4280,7 +4280,7 @@ NetProc* PEventStatement::elaborate_wait_fork(Design*des, NetScope*scope) const
 NetProc* PEventStatement::elaborate(Design*des, NetScope*scope) const
 {
 	/* Check to see if this is a wait fork statement. */
-      if ((expr_.count() == 1) && (expr_[0] == 0)) 
+      if ((expr_.count() == 1) && (expr_[0] == 0))
 		  return elaborate_wait_fork(des, scope);
 
       NetProc*enet = 0;
