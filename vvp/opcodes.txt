@@ -1159,6 +1159,12 @@ threads that await the functor. When the defined sort of event occurs
 on the functor, a thread schedule event is created for all the threads
 in its list and the list is cleared.
 
+* %wait/fork
+
+This instruction puts the current thread to sleep until all the detached
+children have finished executing. The last detached child is responsible
+for restarting the parent when it finishes.
+
 * %xnor <dst>, <src>, <wid>
 
 This does a bitwise exclusive nor (~^) of the <src> and <dst> vector,

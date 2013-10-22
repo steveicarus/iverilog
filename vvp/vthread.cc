@@ -204,6 +204,7 @@ struct vthread_s {
 	/* My parent sets this when it wants me to wake it up. */
       unsigned i_am_joining      :1;
       unsigned i_am_detached     :1;
+      unsigned i_am_waiting      :1;
       unsigned i_have_ended      :1;
       unsigned waiting_for_event :1;
       unsigned is_scheduled      :1;
@@ -543,6 +544,7 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
 
       thr->i_am_joining  = 0;
       thr->i_am_detached = 0;
+      thr->i_am_waiting  = 0;
       thr->is_scheduled  = 0;
       thr->i_have_ended  = 0;
       thr->delay_delete  = 0;
@@ -2604,11 +2606,22 @@ bool of_END(vthread_t thr, vvp_code_t)
       }
 
 	/* If this thread is not fully detached then remove it from the
-	 * parents detached_children set. */
+	 * parents detached_children set and reap it. */
       if (thr->i_am_detached) {
-	    assert(thr->parent);
-	    size_t res = thr->parent->detached_children.erase(thr);
+	    vthread_t tmp = thr->parent;
+	    assert(tmp);
+	    size_t res = tmp->detached_children.erase(thr);
 	    assert(res == 1);
+	      /* If the parent is waiting for the detached children to
+	       * finish then the last detached child needs to tell the
+	       * parent to wake up when it is finished. */
+	    if (tmp->i_am_waiting && tmp->detached_children.empty()) {
+		  tmp->i_am_waiting = 0;
+		  schedule_vthread(tmp, 0, true);
+	    }
+	      /* Fully detach this thread so it will be reaped below. */
+	    thr->i_am_detached = 0;
+	    thr->parent = 0;
       }
 
 	/* If I have no parent, then no one can %join me and there is
@@ -5587,6 +5600,30 @@ bool of_WAIT(vthread_t thr, vvp_code_t cp)
       thr->wait_next = ep->add_waiting_thread(thr);
 
 	/* Return false to suspend this thread. */
+      return false;
+}
+
+/*
+ * Implement the %wait/fork (SystemVerilog) instruction by suspending
+ * the current thread until all the detached children have finished.
+ */
+bool of_WAIT_FORK(vthread_t thr, vvp_code_t)
+{
+	/* If a %wait/fork is being executed then the parent thread
+	 * cannot be waiting in a join or already waiting. */
+      assert(! thr->i_am_joining);
+      assert(! thr->i_am_waiting);
+
+	/* There should be no active children when waiting. */
+      assert(thr->children.empty());
+
+	/* If there are no detached children then there is nothing to
+	 * wait for. */
+      if (thr->detached_children.empty()) return true;
+
+	/* Flag that this process is waiting for the detached children
+	 * to finish and suspend it. */
+      thr->i_am_waiting = 1;
       return false;
 }
 

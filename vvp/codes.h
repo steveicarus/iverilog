@@ -209,6 +209,7 @@ extern bool of_SUBSTR_V(vthread_t thr, vvp_code_t code);
 extern bool of_TEST_NUL(vthread_t thr, vvp_code_t code);
 extern bool of_VPI_CALL(vthread_t thr, vvp_code_t code);
 extern bool of_WAIT(vthread_t thr, vvp_code_t code);
+extern bool of_WAIT_FORK(vthread_t thr, vvp_code_t code);
 extern bool of_XNOR(vthread_t thr, vvp_code_t code);
 extern bool of_XNORR(vthread_t thr, vvp_code_t code);
 extern bool of_XOR(vthread_t thr, vvp_code_t code);
