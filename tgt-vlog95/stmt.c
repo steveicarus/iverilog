@@ -1408,6 +1408,23 @@ static void emit_stmt_utask(ivl_scope_t scope, ivl_statement_t stmt)
       fprintf(vlog_out, "\n");
 }
 
+/* Look to see if this is a SystemVerilog wait fork statement. */
+static unsigned is_wait_fork(ivl_scope_t scope, ivl_statement_t stmt)
+{
+      if (ivl_stmt_nevent(stmt) != 1) return 0;
+      if (ivl_stmt_events(stmt, 0) != 0) return 0;
+      assert(ivl_statement_type(ivl_stmt_sub_stmt(stmt)) == IVL_ST_NOOP);
+
+      fprintf(vlog_out, "%*cwait fork;", get_indent(), ' ');
+      emit_stmt_file_line(stmt);
+      fprintf(vlog_out, "\n");
+      fprintf(stderr, "%s:%u: vlog95 sorry: wait fork is not currently "
+                      "translated.\n",
+                      ivl_stmt_file(stmt), ivl_stmt_lineno(stmt));
+      vlog_errors += 1;
+      return 1;
+}
+
 static void emit_stmt_wait(ivl_scope_t scope, ivl_statement_t stmt)
 {
       fprintf(vlog_out, "%*c@(", get_indent(), ' ');
@@ -1540,6 +1557,7 @@ void emit_stmt(ivl_scope_t scope, ivl_statement_t stmt)
 	    emit_stmt_utask(scope, stmt);
 	    break;
 	case IVL_ST_WAIT:
+	    if (is_wait_fork(scope, stmt)) break;
 	    emit_stmt_wait(scope, stmt);
 	    break;
 	case IVL_ST_WHILE:

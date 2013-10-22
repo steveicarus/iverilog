@@ -4232,9 +4232,57 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
       return block;
 }
 
+/*
+ * This is a special case of the event statement, the wait fork
+ * statement. This is elaborated into a simplified statement.
+ *
+ *     wait fork;
+ *
+ * becomes
+ *
+ *     @(0) <noop>;
+ */
+NetProc* PEventStatement::elaborate_wait_fork(Design*des, NetScope*scope) const
+{
+      assert(scope);
+      assert(expr_.count() == 1);
+      assert(expr_[0] == 0);
+      assert(! statement_);
+
+      if (scope->in_func()) {
+	    cerr << get_fileline() << ": error: functions cannot have "
+	            "wait fork statements." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (scope->in_final()) {
+	    cerr << get_fileline() << ": error: final procedures cannot "
+	            "have wait fork statements." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+      if (gn_system_verilog()) {
+	    NetEvWait*wait = new NetEvWait(0 /* noop */);
+	    wait->add_event(0);
+	    wait->set_line(*this);
+	    return wait;
+      } else {
+	    cerr << get_fileline()
+	         << ": error: 'wait fork' requires SystemVerilog." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
+}
 
 NetProc* PEventStatement::elaborate(Design*des, NetScope*scope) const
 {
+	/* Check to see if this is a wait fork statement. */
+      if ((expr_.count() == 1) && (expr_[0] == 0)) 
+		  return elaborate_wait_fork(des, scope);
+
       NetProc*enet = 0;
       if (statement_) {
 	    enet = statement_->elaborate(des, scope);

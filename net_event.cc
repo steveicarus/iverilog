@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -372,11 +372,20 @@ NetEvWait::~NetEvWait()
 
 void NetEvWait::add_event(NetEvent*tgt)
 {
-      assert(tgt);
+	/* A wait fork is an empty event. */
+      if (! tgt) {
+	    assert(nevents_ == 0);
+	    nevents_ = 1;
+	    events_ = new NetEvent*[1];
+	    events_[0] = 0;
+	    return;
+      }
+
       if (nevents_ == 0) {
 	    events_ = new NetEvent*[1];
 
       } else {
+	    assert(events_[0]);
 	    NetEvent**tmp = new NetEvent*[nevents_+1];
 	    for (unsigned idx = 0 ;  idx < nevents_ ;  idx += 1) {
 		  tmp[idx] = events_[idx];

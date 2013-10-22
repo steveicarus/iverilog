@@ -1077,7 +1077,15 @@ void NetEvTrig::dump(ostream&o, unsigned ind) const
 
 void NetEvWait::dump(ostream&o, unsigned ind) const
 {
-      o << setw(ind) <<"" << "@(";
+      o << setw(ind) << "";
+
+	/* Check for a wait fork. */
+      if ((nevents() == 1) && (event(0) == 0)) {
+	    o << "wait fork;";
+	    return;
+      }
+
+      o << "@(";
 
       if (nevents() > 0)
 	    o << event(0)->name();
@@ -1101,6 +1109,12 @@ ostream& operator << (ostream&out, const NetEvWait&obj)
 
 void NetEvWait::dump_inline(ostream&o) const
 {
+	/* Check for a wait fork. */
+      if ((nevents() == 1) && (event(0) == 0)) {
+	    o << "wait fork;";
+	    return;
+      }
+
       o << "@(";
 
       if (nevents() > 0)

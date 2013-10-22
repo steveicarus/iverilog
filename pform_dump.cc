@@ -874,6 +874,9 @@ void PEventStatement::dump(ostream&out, unsigned ind) const
       if (expr_.count() == 0) {
 	    out << setw(ind) << "" << "@* ";
 
+      } else if ((expr_.count() == 1) && (expr_[0] == 0)) {
+	    out << setw(ind) << "" << "wait fork ";
+
       } else {
 	    out << setw(ind) << "" << "@(" << *(expr_[0]);
 	    if (expr_.count() > 1)

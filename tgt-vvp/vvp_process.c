@@ -1724,6 +1724,19 @@ static int show_stmt_utask(ivl_statement_t net)
 
 static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
 {
+	/* Look to see if this is a SystemVerilog wait fork. */
+      if ((ivl_stmt_nevent(net) == 1) && (ivl_stmt_events(net, 0) == 0)) {
+	    assert(ivl_statement_type(ivl_stmt_sub_stmt(net)) == IVL_ST_NOOP);
+	    show_stmt_file_line(net, "Wait fork statement.");
+	    fprintf(vvp_out, "    %%wait_fork;\n");
+
+	    fprintf(stderr, "%s:%u: vvp.tgt sorry: wait fork is not currently "
+			    "supported.\n",
+			    ivl_stmt_file(net), ivl_stmt_lineno(net));
+	    vvp_errors += 1;
+	    return 0;
+      }
+
       show_stmt_file_line(net, "Event wait (@) statement.");
 
       if (ivl_stmt_nevent(net) == 1) {

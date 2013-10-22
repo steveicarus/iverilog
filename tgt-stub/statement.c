@@ -231,7 +231,16 @@ void show_stmt_wait(ivl_statement_t net, unsigned ind)
 {
       unsigned idx;
       const char*comma = "";
-      fprintf(out, "%*s@(", ind, "");
+      fprintf(out, "%*s", ind, "");
+
+	/* Emit a SystemVerilog wait fork. */
+      if ((ivl_stmt_nevent(net) == 1) && (ivl_stmt_events(net, 0) == 0)) {
+	    assert(ivl_statement_type(ivl_stmt_sub_stmt(net)) == IVL_ST_NOOP);
+	    fprintf(out, "wait fork;\n");
+	    return;
+      }
+
+      fprintf(out, "@(");
 
       for (idx = 0 ;  idx < ivl_stmt_nevent(net) ;  idx += 1) {
 	    ivl_event_t evnt = ivl_stmt_events(net, idx);

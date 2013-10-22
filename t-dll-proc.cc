@@ -805,8 +805,17 @@ bool dll_target::proc_wait(const NetEvWait*net)
       stmt_cur_->u_.wait_.stmt_ = (struct ivl_statement_s*)
 	    calloc(1, sizeof(struct ivl_statement_s));
 
-	// This event processing code is also in the NB assign above.
       stmt_cur_->u_.wait_.nevent = net->nevents();
+
+	/* This is a wait fork statement. */
+      if ((net->nevents() == 1) && (net->event(0) == 0)) {
+	    stmt_cur_->u_.wait_.event = 0;
+	    stmt_cur_->type_ = IVL_ST_WAIT;
+	    stmt_cur_->u_.wait_.stmt_->type_ = IVL_ST_NOOP;
+	    return true;
+      }
+
+	// This event processing code is also in the NB assign above.
       if (net->nevents() > 1) {
 	    stmt_cur_->u_.wait_.events = (ivl_event_t*)
 		  calloc(net->nevents(), sizeof(ivl_event_t*));

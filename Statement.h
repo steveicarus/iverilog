@@ -391,6 +391,7 @@ class PEventStatement  : public Statement {
       NetProc* elaborate_st(Design*des, NetScope*scope, NetProc*st) const;
 
       NetProc* elaborate_wait(Design*des, NetScope*scope, NetProc*st) const;
+      NetProc* elaborate_wait_fork(Design*des, NetScope*scope) const;
 
     private:
       svector<PEEvent*>expr_;

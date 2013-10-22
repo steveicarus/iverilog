@@ -5784,6 +5784,11 @@ statement_item /* This is roughly statement_item in the LRM */
 		  tmp->set_statement($5);
 		  $$ = tmp;
 		}
+	| K_wait K_fork ';'
+		{ PEventStatement*tmp = new PEventStatement(0);
+		  FILE_NAME(tmp,@1);
+		  $$ = tmp;
+		}
 	| SYSTEM_IDENTIFIER '(' expression_list_with_nuls ')' ';'
                 { PCallTask*tmp = new PCallTask(lex_strings.make($1), *$3);
 		  FILE_NAME(tmp,@1);
