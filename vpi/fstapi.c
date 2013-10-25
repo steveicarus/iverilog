@@ -33,24 +33,41 @@
 #include <pthread.h>
 #endif
 
-/* this define is to force writer backward compatibility with old readers */
-#ifndef FST_DYNAMIC_ALIAS_DISABLE
+#if HAVE_ALLOCA_H
+#include <alloca.h>
+#elif defined(__GNUC__)
+#ifndef __MINGW32__
+#ifndef alloca
+#define alloca __builtin_alloca
+#endif
+#else
+#include <malloc.h>
+#endif
+#elif defined(_MSC_VER)
+#include <malloc.h>
+#define alloca _alloca
+#endif
+
+#ifndef PATH_MAX
+#define PATH_MAX (4096)
+#endif
+
 /* note that Judy versus Jenkins requires more experimentation: they are  */
 /* functionally equivalent though it appears Jenkins is slightly faster.  */
 /* in addition, Jenkins is not bound by the LGPL.                         */
 #ifdef _WAVE_HAVE_JUDY
 #include <Judy.h>
 #else
+/* should be more than enough for fstWriterSetSourceStem() */
+#define FST_PATH_HASHMASK 		((1UL << 16) - 1)
 typedef const void *Pcvoid_t;
 typedef void *Pvoid_t;
 typedef void **PPvoid_t;
 #define JudyHSIns(a,b,c,d) JenkinsIns((a),(b),(c),(hashmask))
 #define JudyHSFreeArray(a,b) JenkinsFree((a),(hashmask))
 void JenkinsFree(void *base_i, uint32_t hashmask);
-void **JenkinsIns(void *base_i, unsigned char *mem, uint32_t length, uint32_t hashmask);
+void **JenkinsIns(void *base_i, const unsigned char *mem, uint32_t length, uint32_t hashmask);
 #endif
-#endif
-
 
 #undef  FST_DEBUG
 
@@ -65,7 +82,9 @@ void **JenkinsIns(void *base_i, unsigned char *mem, uint32_t length, uint32_t ha
 #define FST_ID_NAM_ATTR_SIZ		(65536+4096)
 #define FST_DOUBLE_ENDTEST 		(2.7182818284590452354)
 #define FST_HDR_SIM_VERSION_SIZE 	(128)
-#define FST_HDR_DATE_SIZE 		(120)
+#define FST_HDR_DATE_SIZE 		(119)
+#define FST_HDR_FILETYPE_SIZE		(1)
+#define FST_HDR_TIMEZERO_SIZE		(8)
 #define FST_GZIO_LEN			(32768)
 
 #if defined(__i386__) || defined(__x86_64__) || defined(_AIX)
@@ -132,6 +151,36 @@ return(fwrite(buf, siz, cnt, fp));
 static int fstFtruncate(int fd, off_t length)
 {
 return(ftruncate(fd, length));
+}
+
+
+/*
+ * realpath compatibility
+ */
+static char *fstRealpath(const char *path, char *resolved_path) 
+{
+#if defined __USE_BSD || defined __USE_XOPEN_EXTENDED || defined __CYGWIN__ || defined HAVE_REALPATH
+
+#if (defined(__MACH__) && defined(__APPLE__))
+if(!resolved_path)
+        {
+        resolved_path = malloc(PATH_MAX+1); /* fixes bug on Leopard when resolved_path == NULL */
+        }
+#endif
+                         
+return(realpath(path, resolved_path));
+
+#else
+#ifdef __MINGW32__
+if(!resolved_path)
+        {
+        resolved_path = malloc(PATH_MAX+1);
+        }
+return(_fullpath(resolved_path, path, PATH_MAX));
+#else
+return(NULL);
+#endif
+#endif
 }
 
 
@@ -301,6 +350,21 @@ while((nxt = v>>7))
 do      {
         *(--pnt) = *(--spnt);
         } while(spnt != buf);
+
+return(pnt);
+}
+
+
+static unsigned char *fstCopyVarint64ToRight(unsigned char *pnt, uint64_t v)
+{
+uint64_t nxt;
+
+while((nxt = v>>7))
+        {
+        *(pnt++) = (v&0x7f) | 0x80;
+        v = nxt;
+        }
+*(pnt++) = (v&0x7f);
 
 return(pnt);
 }
@@ -490,7 +554,6 @@ uint64_t firsttime;
 uint32_t vchg_siz;
 uint32_t vchg_alloc_siz;
 
-
 uint32_t secnum;
 off_t section_start;
 
@@ -502,6 +565,8 @@ struct fstBlackoutChain *blackout_curr;
 uint32_t num_blackouts;
 
 uint64_t dump_size_limit;
+
+unsigned char filetype; /* default is 0, FST_FT_VERILOG */
 
 unsigned compress_hier : 1;
 unsigned repack_on_close : 1;
@@ -532,6 +597,9 @@ size_t fst_break_add_size;
 size_t fst_huge_break_size;
 
 fstHandle next_huge_break;
+
+Pvoid_t path_array;
+uint32_t path_array_count;
 
 unsigned fseek_failed : 1;
 };
@@ -672,12 +740,15 @@ time(&walltime);
 strcpy(dbuf, asctime(localtime(&walltime)));
 fstFwrite(dbuf, FST_HDR_DATE_SIZE, 1, xc->handle);	/* +202 date */
 
-/* date size is deliberately overspecified at 120 bytes in order to provide backfill for new args */
+/* date size is deliberately overspecified at 119 bytes (originally 128) in order to provide backfill for new args */
 
-#define FST_HDR_OFFS_TIMEZERO			(FST_HDR_OFFS_DATE + FST_HDR_DATE_SIZE)
+#define FST_HDR_OFFS_FILETYPE			(FST_HDR_OFFS_DATE + FST_HDR_DATE_SIZE)
+fputc(xc->filetype, xc->handle);		/* +321 filetype */
+
+#define FST_HDR_OFFS_TIMEZERO			(FST_HDR_OFFS_FILETYPE + FST_HDR_FILETYPE_SIZE)
 fstWriterUint64(xc->handle, xc->timezero);	/* +322 timezero */
 
-#define FST_HDR_LENGTH				(FST_HDR_OFFS_TIMEZERO + 8)
+#define FST_HDR_LENGTH				(FST_HDR_OFFS_TIMEZERO + FST_HDR_TIMEZERO_SIZE)
 						/* +330 next section starts here */
 fflush(xc->handle);
 }
@@ -1796,6 +1867,14 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 	pthread_attr_destroy(&xc->thread_attr);
 #endif
 
+	if(xc->path_array)
+		{
+#ifndef _WAVE_HAVE_JUDY
+		const uint32_t hashmask = FST_PATH_HASHMASK;
+#endif
+		JudyHSFreeArray(&(xc->path_array), NULL);
+		}
+
 	free(xc->filename); xc->filename = NULL;
 	free(xc);
 	}
@@ -1843,7 +1922,44 @@ if(xc && vers)
 }
 
 
-static void fstWriterSetAttrGeneric(void *ctx, const char *comm, int typ)
+void fstWriterSetFileType(void *ctx, enum fstFileType filetype)
+{
+struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+if(xc)
+        {
+	if((filetype >= FST_FT_MIN) && (filetype <= FST_FT_MAX))
+		{
+	        off_t fpos = ftello(xc->handle);
+
+		xc->filetype = filetype;
+
+	        fstWriterFseeko(xc, xc->handle, FST_HDR_OFFS_FILETYPE, SEEK_SET); 
+		fputc(xc->filetype, xc->handle);
+	        fflush(xc->handle);
+	        fstWriterFseeko(xc, xc->handle, fpos, SEEK_SET);
+		}
+	}
+}
+
+
+static void fstWriterSetAttrDoubleArgGeneric(void *ctx, int typ, uint64_t arg1, uint64_t arg2)
+{
+struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+if(xc)
+        {
+	unsigned char buf[11]; /* ceil(64/7) = 10 + null term */
+	unsigned char *pnt = fstCopyVarint64ToRight(buf, arg1);
+	if(arg1)
+		{
+		*pnt = 0; /* this converts any *nonzero* arg1 when made a varint into a null-term string */
+		}
+
+	fstWriterSetAttrBegin(xc, FST_AT_MISC, typ, (char *)buf, arg2);
+	}
+}
+
+
+static void fstWriterSetAttrGeneric(void *ctx, const char *comm, int typ, uint64_t arg)
 {
 struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
 if(xc && comm)
@@ -1857,21 +1973,87 @@ if(xc && comm)
 		s++;
 		}
 
-	fstWriterSetAttrBegin(xc, FST_AT_MISC, typ, sf, 0);
+	fstWriterSetAttrBegin(xc, FST_AT_MISC, typ, sf, arg);
 	free(sf);
 	}
 }
 
 
+static void fstWriterSetSourceStem_2(void *ctx, const char *path, unsigned int line, unsigned int use_realpath, int typ)
+{
+struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
+
+if(xc && path && path[0])
+	{
+	uint64_t sidx = 0;
+	int slen = strlen(path);
+#ifndef _WAVE_HAVE_JUDY
+	const uint32_t hashmask = FST_PATH_HASHMASK;
+	const unsigned char *path2 = (const unsigned char *)path;	
+#else
+	char *path2 = alloca(slen + 1); /* judy lacks const qualifier in its JudyHSIns definition */
+	strcpy(path2, path);
+#endif
+
+	PPvoid_t pv = JudyHSIns(&(xc->path_array), path2, slen, NULL);
+        if(*pv)
+        	{
+                sidx = (long)(*pv);
+                }
+                else
+               	{
+		char *rp = NULL;
+
+		sidx = ++xc->path_array_count;
+               	*pv = (void *)(long)(xc->path_array_count);
+
+		if(use_realpath)
+			{
+			rp = fstRealpath(
+#ifndef _WAVE_HAVE_JUDY
+				(const char *)
+#endif
+				path2, NULL);
+			}
+		
+		fstWriterSetAttrGeneric(xc, rp ? rp : 
+#ifndef _WAVE_HAVE_JUDY
+			(const char *)
+#endif
+			path2, FST_MT_PATHNAME, sidx);
+
+		if(rp)
+			{
+			free(rp);
+			}
+		}
+
+	fstWriterSetAttrDoubleArgGeneric(xc, typ, sidx, line);
+	}
+}
+
+
+void fstWriterSetSourceStem(void *ctx, const char *path, unsigned int line, unsigned int use_realpath)
+{
+fstWriterSetSourceStem_2(ctx, path, line, use_realpath, FST_MT_SOURCESTEM);
+}
+
+
+void fstWriterSetSourceInstantiationStem(void *ctx, const char *path, unsigned int line, unsigned int use_realpath)
+{
+fstWriterSetSourceStem_2(ctx, path, line, use_realpath, FST_MT_SOURCEISTEM);
+}
+
+
 void fstWriterSetComment(void *ctx, const char *comm)
 {
-fstWriterSetAttrGeneric(ctx, comm, FST_MT_COMMENT);
+fstWriterSetAttrGeneric(ctx, comm, FST_MT_COMMENT, 0);
 }
 
 
 void fstWriterSetEnvVar(void *ctx, const char *envvar)
 {
-fstWriterSetAttrGeneric(ctx, envvar, FST_MT_ENVVAR);
+fstWriterSetAttrGeneric(ctx, envvar, FST_MT_ENVVAR, 0);
 }
 
 
@@ -1903,14 +2085,14 @@ if(xc && s)
         	{
                 switch(*pnt)
                 	{
-                        case 'm': seconds_exp = -3; mat = 1; break;
-                        case 'u': seconds_exp = -6; mat = 1; break;
-                        case 'n': seconds_exp = -9; mat = 1; break;
+                        case 'm': seconds_exp =  -3; mat = 1; break;
+                        case 'u': seconds_exp =  -6; mat = 1; break;
+                        case 'n': seconds_exp =  -9; mat = 1; break;
                         case 'p': seconds_exp = -12; mat = 1; break;
                         case 'f': seconds_exp = -15; mat = 1; break;
                         case 'a': seconds_exp = -18; mat = 1; break;
                         case 'z': seconds_exp = -21; mat = 1; break;
-                        case 's': seconds_exp = -0; mat = 1; break;
+                        case 's': seconds_exp =   0; mat = 1; break;
                         default: break;
                         }
 
@@ -2020,8 +2202,19 @@ return(0);
 
 
 /*
- * writer attr/scope/var creation
+ * writer attr/scope/var creation:
+ * fstWriterCreateVar2() is used to dump VHDL or other languages, but the
+ * underlying variable needs to map to Verilog/SV via the proper fstVarType vt
  */
+fstHandle fstWriterCreateVar2(void *ctx, enum fstVarType vt, enum fstVarDir vd,
+        uint32_t len, const char *nam, fstHandle aliasHandle,
+        const char *type, enum fstSupplementalVarType svt, enum fstSupplementalDataType sdt)
+{
+fstWriterSetAttrGeneric(ctx, type ? type : "", FST_MT_SUPVAR, (svt<<FST_SDT_SVT_SHIFT_COUNT) | (sdt & FST_SDT_ABS_MAX));
+return(fstWriterCreateVar(ctx, vt, vd, len, nam, aliasHandle));
+}
+
+
 fstHandle fstWriterCreateVar(void *ctx, enum fstVarType vt, enum fstVarDir vd,
         uint32_t len, const char *nam, fstHandle aliasHandle)
 {
@@ -2474,7 +2667,8 @@ static const char *vartypes[] = {
 	};
 
 static const char *modtypes[] = {
-	"module", "task", "function", "begin", "fork", "generate", "struct", "union", "class", "interface", "package", "program"
+	"module", "task", "function", "begin", "fork", "generate", "struct", "union", "class", "interface", "package", "program",
+        "vhdl_architecture", "vhdl_procedure", "vhdl_function", "vhdl_record", "vhdl_process", "vhdl_block", "vhdl_for_generate", "vhdl_if_generate", "vhdl_generate", "vhdl_package"
 	};
 
 static const char *attrtypes[] = {
@@ -2524,6 +2718,8 @@ uint32_t longest_signal_value_len;	/* longest len value encountered */
 unsigned char *temp_signal_value_buf;	/* malloced for len in longest_signal_value_len */
 
 signed char timescale;
+unsigned char filetype;
+
 unsigned double_endian_match : 1;
 unsigned native_doubles_for_cb : 1;
 unsigned contains_geom_section : 1;
@@ -2902,6 +3098,14 @@ struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
 return(xc ? xc->date : NULL);
 }
 
+
+int fstReaderGetFileType(void *ctx)
+{
+struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
+return(xc ? xc->filetype : FST_FT_VERILOG);
+}
+
+
 int64_t fstReaderGetTimezero(void *ctx)
 {
 struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
@@ -3196,6 +3400,15 @@ if(!(isfeof=feof(xc->fh)))
 			xc->hier.u.attr.name_length = pnt - xc->hier.u.scope.name;
 
 			xc->hier.u.attr.arg = fstReaderVarint64(xc->fh);
+
+			if(xc->hier.u.attr.typ == FST_AT_MISC)
+				{ 
+				if((xc->hier.u.attr.subtype == FST_MT_SOURCESTEM)||(xc->hier.u.attr.subtype == FST_MT_SOURCEISTEM))
+					{
+					int sidx_skiplen_dummy = 0;
+	                                xc->hier.u.attr.arg_from_name = fstGetVarint64((unsigned char *)xc->str_scope_nam, &sidx_skiplen_dummy);
+					}
+				}
 			break;
 
 		case FST_ST_GEN_ATTREND:
@@ -3233,7 +3446,9 @@ if(!(isfeof=feof(xc->fh)))
 		case FST_VT_SV_ENUM:
 		case FST_VT_SV_SHORTREAL:
 			xc->hier.htyp = FST_HT_VAR;
-
+			xc->hier.u.var.svt_workspace = FST_SVT_NONE;
+			xc->hier.u.var.sdt_workspace = FST_SDT_NONE;
+			xc->hier.u.var.sxt_workspace = 0;
 			xc->hier.u.var.typ = tag;
 			xc->hier.u.var.direction = fgetc(xc->fh);
 			xc->hier.u.var.name = pnt = xc->str_scope_nam;
@@ -3368,7 +3583,7 @@ while(!feof(xc->fh))
 		{
 		case FST_ST_VCD_SCOPE:
 			scopetype = fgetc(xc->fh);
-			if((scopetype < FST_ST_VCD_MIN) || (scopetype > FST_ST_MAX)) scopetype = FST_ST_VCD_MODULE;
+			if((scopetype < FST_ST_MIN) || (scopetype > FST_ST_MAX)) scopetype = FST_ST_VCD_MODULE;
 			pnt = str;
 			while((ch = fgetc(xc->fh))) 
 				{
@@ -3394,6 +3609,8 @@ while(!feof(xc->fh))
 				}; /* attrname */
 			*pnt = 0;
 
+			if(!str[0]) { strcpy(str, "\"\""); }
+
 			attrarg = fstReaderVarint64(xc->fh);
 
 			if(fv)
@@ -3417,7 +3634,17 @@ while(!feof(xc->fh))
 									}
 									else
 									{
-									fprintf(fv, "$attrbegin %s %02x %s %"PRId64" $end\n", attrtypes[attrtype], subtype, str, attrarg);
+									if((subtype == FST_MT_SOURCESTEM)||(subtype == FST_MT_SOURCEISTEM))
+										{
+										int sidx_skiplen_dummy = 0;
+										uint64_t sidx = fstGetVarint64((unsigned char *)str, &sidx_skiplen_dummy);
+
+										fprintf(fv, "$attrbegin %s %02x %"PRId64" %"PRId64" $end\n", attrtypes[attrtype], subtype, sidx, attrarg);
+										}
+										else
+										{
+										fprintf(fv, "$attrbegin %s %02x %s %"PRId64" $end\n", attrtypes[attrtype], subtype, str, attrarg);
+										}
 									}
 								break;
 					}
@@ -3705,6 +3932,8 @@ if(gzread_pass_status)
 				xc->version[FST_HDR_SIM_VERSION_SIZE] = 0;
 				fstFread(xc->date, FST_HDR_DATE_SIZE, 1, xc->f);
 				xc->date[FST_HDR_DATE_SIZE] = 0;
+				ch = fgetc(xc->f);
+				xc->filetype = (unsigned char)ch;
 				xc->timezero = fstReaderUint64(xc->f);
 				}
 			}
@@ -4003,6 +4232,8 @@ if(!xc) return(0);
 scatterptr = calloc(xc->maxhandle, sizeof(uint32_t));
 headptr = calloc(xc->maxhandle, sizeof(uint32_t));
 length_remaining = calloc(xc->maxhandle, sizeof(uint32_t));
+
+if(fv) { fprintf(fv, "$dumpvars\n"); } 
 
 for(;;)
 	{
@@ -5492,7 +5723,7 @@ acceptable.  Do NOT use for cryptographic purposes.
 --------------------------------------------------------------------
 */
 
-static uint32_t j_hash(uint8_t *k, uint32_t length, uint32_t initval)
+static uint32_t j_hash(const uint8_t *k, uint32_t length, uint32_t initval)
 {
    uint32_t a,b,c,len;
 
@@ -5551,7 +5782,7 @@ unsigned char mem[1];
 };
 
 
-void **JenkinsIns(void *base_i, unsigned char *mem, uint32_t length, uint32_t hashmask)
+void **JenkinsIns(void *base_i, const unsigned char *mem, uint32_t length, uint32_t hashmask)
 {
 struct collchain_t ***base = (struct collchain_t ***)base_i;
 uint32_t hf, h;
