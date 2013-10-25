@@ -469,8 +469,8 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
       struct t_cb_data cb;
       struct vcd_info* info;
 
-      enum fstVarType type = FST_VT_VCD_MAX;
-      enum fstScopeType stype = FST_ST_VCD_MAX;
+      enum fstVarType type = FST_VT_MAX;
+      enum fstScopeType stype = FST_ST_MAX;
       enum fstVarDir dir;
       const char *name;
       const char *fullname;
@@ -657,6 +657,7 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 	  case vpiNamedFork:
 
 	    if (depth > 0) {
+		  char *instname;
 		  char *defname = NULL;
 		  /* list of types to iterate upon */
 		  static int types[] = {
@@ -685,6 +686,21 @@ static void scan_item(unsigned depth, vpiHandle item, int skip)
 			           "previously scanned scope %s.\n", fullname);
 		  } else {
 			vcd_names_add(&fst_tab, fullname);
+		  }
+
+		    /* Set the file and line information for this scope.
+		     * Everything has instance information. Only a module
+		     * has separate definition information. */
+		  instname = vpi_get_str(vpiFile, item);
+		  fstWriterSetSourceInstantiationStem(dump_file, instname,
+		      (int)vpi_get(vpiLineNo, item), 0);
+		  if (item_type == vpiModule) {
+			fstWriterSetSourceStem(dump_file,
+			    vpi_get_str(vpiDefFile, item),
+			    (int)vpi_get(vpiDefLineNo, item), 0);
+		  } else {
+			fstWriterSetSourceStem(dump_file, instname,
+			    (int)vpi_get(vpiLineNo, item), 0);
 		  }
 
 		    /* This must be done before the other name is fetched
