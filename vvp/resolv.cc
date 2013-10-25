@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010,2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -170,8 +170,8 @@ void resolv_tri::recv_vec8_(unsigned port, const vvp_vector8_t&bit)
 
       if (! hiz_value_.is_hiz()) {
 	    for (unsigned idx = 0 ;  idx < val_[base].size() ;  idx += 1) {
-		  if (val_[base].value(idx).is_hiz())
-			val_[base].set_bit(idx, hiz_value_);
+		  val_[base].set_bit(idx, resolve(val_[base].value(idx),
+						  hiz_value_));
 	    }
       }
 
