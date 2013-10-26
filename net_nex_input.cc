@@ -313,9 +313,9 @@ NexusSet* NetBlock::nex_input(bool rem_out)
 	    if (tmp != 0) result->add(*tmp);
 	    delete tmp;
 
-	      /* Add the current outputs to the accumulated output set,
-		 so they can be removed from the input set below. */
-	    cur->nex_output(*prev);
+	      /* Add the current outputs to the accumulated output set if
+	       * they are going to be removed from the input set below. */
+	    if (rem_out) cur->nex_output(*prev);
 
 	    cur = cur->next_;
       } while (cur != last_->next_);
