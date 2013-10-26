@@ -226,6 +226,58 @@ static void str_repeat(char*buf, const char*str, unsigned rpt)
 }
 
 /*
+ * This function draws a BUFT to drive a net pullup or pulldown value.
+ * If the drive strength is strong we can draw a C4<> constant as the
+ * pull value, otherwise we need to draw a C8<> constant.
+ */
+static char* draw_net_pull(ivl_net_logic_t lptr, ivl_drive_t drive, char*level)
+{
+      char*result;
+      char tmp[32];
+      if (drive == IVL_DR_STRONG) {
+            size_t result_len = 5 + ivl_logic_width(lptr);
+            result = malloc(result_len);
+            char*dp = result;
+            strcpy(dp, "C4<");
+            dp += strlen(dp);
+            str_repeat(dp, level, ivl_logic_width(lptr));
+            dp += ivl_logic_width(lptr);
+            *dp++ = '>';
+            *dp = 0;
+            assert(dp >= result);
+            assert((unsigned)(dp - result) <= result_len);
+      } else {
+            char val[4];
+            size_t result_len = 5 + 3*ivl_logic_width(lptr);
+            result = malloc(result_len);
+            char*dp = result;
+
+            val[0] = "01234567"[drive];
+            val[1] = val[0];
+            val[2] = level[0];
+            val[3] = 0;
+
+            strcpy(dp, "C8<");
+            dp += strlen(dp);
+            str_repeat(dp, val, ivl_logic_width(lptr));
+            dp += 3*ivl_logic_width(lptr);
+            *dp++ = '>';
+            *dp = 0;
+            assert(dp >= result);
+            assert((unsigned)(dp - result) <= result_len);
+      }
+
+        /* Make the constant an argument to a BUFZ, which is
+           what we use to drive the PULLed value. */
+      fprintf(vvp_out, "L_%p .functor BUFT 1, %s, C4<0>, C4<0>, C4<0>;\n",
+              lptr, result);
+      snprintf(tmp, sizeof tmp, "L_%p", lptr);
+      result = realloc(result, strlen(tmp)+1);
+      strcpy(result, tmp);
+      return result;
+}
+
+/*
  * This function takes a nexus and looks for an input functor. It then
  * draws to the output a string that represents that functor. What we
  * are trying to do here is find the input to the net that is attached
@@ -251,94 +303,12 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 		  return strdup(draw_net_input(ivl_logic_pin(lptr, 1)));
 	    } while(0);
 
-	/* If this is a pulldown device, then there is a single pin
-	   that drives a constant value to the entire width of the
-	   vector. The driver normally drives a pull0 value, so a C8<>
-	   constant is appropriate, but if the drive is really strong,
-	   then we can draw a C4<> constant instead. */
       if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLDOWN)) {
-	    if (ivl_nexus_ptr_drive0(nptr) == IVL_DR_STRONG) {
-		  size_t result_len = ivl_logic_width(lptr) + 5;
-		  char*result = malloc(result_len);
-		  char*dp = result;
-		  strcpy(dp, "C4<");
-		  dp += strlen(dp);
-		  str_repeat(dp, "0", ivl_logic_width(lptr));
-		  dp += ivl_logic_width(lptr);
-		  *dp++ = '>';
-		  *dp = 0;
-		  assert(dp >= result);
-		  assert((unsigned)(dp - result) <= result_len);
-		  return result;
-	    } else {
-		  char val[4];
-		  size_t result_len = 3*ivl_logic_width(lptr) + 5;
-		  char*result = malloc(result_len);
-		  char*dp = result;
-
-		  val[0] = "01234567"[ivl_nexus_ptr_drive0(nptr)];
-		  val[1] = val[0];
-		  val[2] = '0';
-		  val[3] = 0;
-
-		  strcpy(dp, "C8<");
-		  dp += strlen(dp);
-		  str_repeat(dp, val, ivl_logic_width(lptr));
-		  dp += 3*ivl_logic_width(lptr);
-		  *dp++ = '>';
-		  *dp = 0;
-		  assert(dp >= result);
-		  assert((unsigned)(dp - result) <= result_len);
-		  return result;
-	    }
+	    return draw_net_pull(lptr, ivl_nexus_ptr_drive0(nptr), "0");
       }
 
       if (lptr && (ivl_logic_type(lptr) == IVL_LO_PULLUP)) {
-	    char*result;
-	    char tmp[32];
-	    if (ivl_nexus_ptr_drive1(nptr) == IVL_DR_STRONG) {
-		  size_t result_len = 5 + ivl_logic_width(lptr);
-		  result = malloc(result_len);
-		  char*dp = result;
-		  strcpy(dp, "C4<");
-		  dp += strlen(dp);
-		  str_repeat(dp, "1", ivl_logic_width(lptr));
-		  dp += ivl_logic_width(lptr);
-		  *dp++ = '>';
-		  *dp = 0;
-		  assert(dp >= result);
-		  assert((unsigned)(dp - result) <= result_len);
-
-	    } else {
-		  char val[4];
-		  size_t result_len = 5 + 3*ivl_logic_width(lptr);
-		  result = malloc(result_len);
-		  char*dp = result;
-
-		  val[0] = "01234567"[ivl_nexus_ptr_drive1(nptr)];
-		  val[1] = val[0];
-		  val[2] = '1';
-		  val[3] = 0;
-
-		  strcpy(dp, "C8<");
-		  dp += strlen(dp);
-		  str_repeat(dp, val, ivl_logic_width(lptr));
-		  dp += 3*ivl_logic_width(lptr);
-		  *dp++ = '>';
-		  *dp = 0;
-		  assert(dp >= result);
-		  assert((unsigned)(dp - result) <= result_len);
-
-	    }
-
-	      /* Make the constant an argument to a BUFZ, which is
-		 what we use to drive the PULLed value. */
-	    fprintf(vvp_out, "L_%p .functor BUFT 1, %s, C4<0>, C4<0>, C4<0>;\n",
-		    lptr, result);
-	    snprintf(tmp, sizeof tmp, "L_%p", lptr);
-	    result = realloc(result, strlen(tmp)+1);
-	    strcpy(result, tmp);
-	    return result;
+	    return draw_net_pull(lptr, ivl_nexus_ptr_drive1(nptr), "1");
       }
 
       if (lptr && (nptr_pin == 0)) {
