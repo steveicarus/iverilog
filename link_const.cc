@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,8 +25,7 @@
 
 /*
  * Scan the link for drivers. If there are only constant drivers, then
- * the nexus has a known constant value. If there is a supply net,
- * then the nexus again has a known constant value.
+ * the nexus has a known constant value.
  */
 bool Nexus::drivers_constant() const
 {
@@ -35,15 +34,23 @@ bool Nexus::drivers_constant() const
       if (driven_ != NO_GUESS)
 	    return true;
 
+      unsigned constant_drivers = 0;
       for (const Link*cur = first_nlink() ; cur  ;  cur = cur->next_nlink()) {
-	    Link::DIR cur_dir;
 
-	    cur_dir = cur->get_dir();
+	      /* A target of a procedural assign or force statement
+		 can't be treated as constant. */
+	    const NetNet*sig = dynamic_cast<const NetNet*>(cur->get_obj());
+	    if (sig && (sig->peek_lref() > 0)) {
+		  driven_ = VAR;
+		  return false;
+	    }
+
+	    Link::DIR cur_dir = cur->get_dir();
 	    if (cur_dir == Link::INPUT)
 		  continue;
 
 	      /* If this is an input or inout port of a root module,
-		 then the is probably not a constant value. I
+		 then this is probably not a constant value. I
 		 certainly don't know what the value is, anyhow. This
 		 can happen in cases like this:
 
@@ -56,15 +63,8 @@ bool Nexus::drivers_constant() const
 		 outside world. */
 
 	    if (cur_dir == Link::PASSIVE) {
-		  const NetNet*sig;
-
-		  const NetPins*obj = cur->get_obj();
-		  const NetObj*as_obj = dynamic_cast<const NetObj*>(obj);
-		  if (as_obj == 0 || as_obj->scope()->parent() != 0)
+		  if (sig == 0 || sig->scope()->parent() != 0)
 			continue;
-
-		  sig = dynamic_cast<const NetNet*>(cur->get_obj());
-		  assert(sig);
 
 		  if (sig->port_type() == NetNet::NOT_A_PORT)
 			continue;
@@ -74,19 +74,22 @@ bool Nexus::drivers_constant() const
 
 		  driven_ = VAR;
 		  return false;
-
 	    }
 
-	      /* If there is a supply net, then this nexus will have a
-		 constant value independent of any drivers. */
-	    if (const NetNet*s = dynamic_cast<const NetNet*>(cur->get_obj()))
-		  switch (s->type()) {
+	      /* If there is an implicit pullup/pulldown on a net,
+		 count it as a constant driver. */
+	    if (sig)
+		  switch (sig->type()) {
 		      case NetNet::SUPPLY0:
+		      case NetNet::TRI0:
+			constant_drivers += 1;
 			driven_ = V0;
-			return true;
+			continue;
 		      case NetNet::SUPPLY1:
+		      case NetNet::TRI1:
+			constant_drivers += 1;
 			driven_ = V1;
-			return true;
+			continue;
 		      default:
 			break;
 		  }
@@ -95,6 +98,18 @@ bool Nexus::drivers_constant() const
 		  driven_ = VAR;
 		  return false;
 	    }
+
+	    constant_drivers += 1;
+      }
+
+	/* If there is more than one constant driver for this nexus, we
+	   would need to resolve the constant value, taking into account
+	   the drive strengths. This is a lot of work for something that
+	   will rarely occur, so for now leave the resolution to be done
+	   at run time. */
+      if (constant_drivers > 1) {
+	    driven_ = VAR;
+	    return false;
       }
 
       return true;
@@ -127,28 +142,25 @@ verinum::V Nexus::driven_value() const
 	    const NetConst*obj;
 	    const NetNet*sig;
 	    if ((obj = dynamic_cast<const NetConst*>(cur->get_obj()))) {
+		    // Multiple drivers are not currently supported.
+		  ivl_assert(*obj, val == verinum::Vz);
 		  val = obj->value(cur->get_pin());
 
 	    } else if ((sig = dynamic_cast<const NetNet*>(cur->get_obj()))) {
 
-		    // If we find an attached SUPPLY0/1, the we know
-		    // from that what the driven value is. Stop now.
-		  if (sig->type() == NetNet::SUPPLY0) {
-			driven_ = V0;
-			return verinum::V0;
-		  }
-		  if (sig->type() == NetNet::SUPPLY1) {
-			driven_ = V1;
-			return verinum::V1;
-		  }
-
-		    // If we find an attached TRI0/1, then this is a
-		    // good guess for the driven value, but keep
-		    // looking for something better.
-		  if (sig->type() == NetNet::TRI0) {
+		    // If we find an implicit pullup or pulldown on a
+		    // net, this is a good guess for the driven value,
+		    // but keep looking for other drivers.
+		  if ((sig->type() == NetNet::SUPPLY0) ||
+		      (sig->type() == NetNet::TRI0)) {
+			  // Multiple drivers are not currently supported.
+			ivl_assert(*obj, val == verinum::Vz);
 			val = verinum::V0;
 		  }
-		  if (sig->type() == NetNet::TRI1) {
+		  if ((sig->type() == NetNet::SUPPLY1) ||
+		      (sig->type() == NetNet::TRI1)) {
+			  // Multiple drivers are not currently supported.
+			ivl_assert(*obj, val == verinum::Vz);
 			val = verinum::V1;
 		  }
 	    }
@@ -179,40 +191,44 @@ verinum Nexus::driven_vector() const
       const Link*cur = list_;
 
       verinum val;
+      unsigned width = 0;
 
       for (cur = first_nlink() ; cur  ;  cur = cur->next_nlink()) {
 
 	    const NetConst*obj;
 	    const NetNet*sig;
 	    if ((obj = dynamic_cast<const NetConst*>(cur->get_obj()))) {
+		    // Multiple drivers are not currently supported.
+		  ivl_assert(*obj, val.len() == 0);
 		  ivl_assert(*obj, cur->get_pin() == 0);
 		  val = obj->value();
+		  width = val.len();
 
 	    } else if ((sig = dynamic_cast<const NetNet*>(cur->get_obj()))) {
 
-		    // If we find an attached SUPPLY0/1, the we know
-		    // from that what the driven value is. Stop now.
-		  if (sig->type() == NetNet::SUPPLY0) {
-			driven_ = V0;
-			return verinum(verinum::V0, sig->vector_width());
-		  }
-		  if (sig->type() == NetNet::SUPPLY1) {
-			driven_ = V1;
-			return verinum(verinum::V1, sig->vector_width());
-		  }
+		  width = sig->vector_width();
 
-		    // If we find an attached TRI0/1, then this is a
-		    // good guess for the driven value, but keep
-		    // looking for something better.
-		  if (sig->type() == NetNet::TRI0) {
-			val = verinum(verinum::V0, sig->vector_width());
+		    // If we find an implicit pullup or pulldown on a
+		    // net, this is a good guess for the driven value,
+		    // but keep looking for other drivers.
+		  if ((sig->type() == NetNet::SUPPLY0) ||
+		      (sig->type() == NetNet::TRI0)) {
+			  // Multiple drivers are not currently supported.
+			ivl_assert(*obj, val.len() == 0);
+			val = verinum(verinum::V0, width);
 		  }
-		  if (sig->type() == NetNet::TRI1) {
-			val = verinum(verinum::V1, sig->vector_width());
+		  if ((sig->type() == NetNet::SUPPLY1) ||
+		      (sig->type() == NetNet::TRI1)) {
+			  // Multiple drivers are not currently supported.
+			ivl_assert(*obj, val.len() == 0);
+			val = verinum(verinum::V1, width);
 		  }
 	    }
       }
 
+	// If we have a width but not a value, this must be an undriven net.
+      if (val.len() != width)
+	    val = verinum(verinum::Vz, width);
+
       return val;
 }
-

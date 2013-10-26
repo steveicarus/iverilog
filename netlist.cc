@@ -479,8 +479,23 @@ PortType::Enum PortType::merged( Enum lhs, Enum rhs )
     return PINOUT;
 }
 
-void NetNet::initialize_dir_(Link::DIR dir)
+void NetNet::initialize_dir_()
 {
+      Link::DIR dir = Link::PASSIVE;
+
+      switch (type_) {
+	  case REG:
+	  case IMPLICIT_REG:
+	  case SUPPLY0:
+	  case SUPPLY1:
+	  case TRI0:
+	  case TRI1:
+	    dir = Link::OUTPUT;
+	    break;
+	  default:
+	    break;
+      }
+
       if (pins_are_virtual()) {
 	    if (0) cerr << "NetNet setting Link default dir" << endl;
 	    set_default_dir(dir);
@@ -564,24 +579,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t,
 	    ivl_assert(*this, 0);
       }
 
-      Link::DIR dir = Link::PASSIVE;
-
-      switch (t) {
-	  case REG:
-	  case IMPLICIT_REG:
-	    dir = Link::OUTPUT;
-	    break;
-	  case SUPPLY0:
-	    dir = Link::OUTPUT;
-	    break;
-	  case SUPPLY1:
-	    dir = Link::OUTPUT;
-	    break;
-	  default:
-	    break;
-      }
-
-      initialize_dir_(dir);
+      initialize_dir_();
 
       s->add_signal(this);
 }
@@ -600,24 +598,8 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, netstruct_t*ty)
 {
 	//XXXX packed_dims_.push_back(netrange_t(calculate_count(ty)-1, 0));
       calculate_slice_widths_from_packed_dims_();
-      Link::DIR dir = Link::PASSIVE;
 
-      switch (t) {
-	  case REG:
-	  case IMPLICIT_REG:
-	    dir = Link::OUTPUT;
-	    break;
-	  case SUPPLY0:
-	    dir = Link::OUTPUT;
-	    break;
-	  case SUPPLY1:
-	    dir = Link::OUTPUT;
-	    break;
-	  default:
-	    break;
-      }
-
-      initialize_dir_(dir);
+      initialize_dir_();
 
       s->add_signal(this);
 }
@@ -629,24 +611,7 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, netdarray_t*ty)
     discipline_(0),
     eref_count_(0), lref_count_(0)
 {
-      Link::DIR dir = Link::PASSIVE;
-
-      switch (t) {
-	  case REG:
-	  case IMPLICIT_REG:
-	    dir = Link::OUTPUT;
-	    break;
-	  case SUPPLY0:
-	    dir = Link::OUTPUT;
-	    break;
-	  case SUPPLY1:
-	    dir = Link::OUTPUT;
-	    break;
-	  default:
-	    break;
-      }
-
-      initialize_dir_(dir);
+      initialize_dir_();
 
       s->add_signal(this);
 }
@@ -659,24 +624,8 @@ NetNet::NetNet(NetScope*s, perm_string n, Type t, netvector_t*ty)
     eref_count_(0), lref_count_(0)
 {
       calculate_slice_widths_from_packed_dims_();
-      Link::DIR dir = Link::PASSIVE;
 
-      switch (t) {
-	  case REG:
-	  case IMPLICIT_REG:
-	    dir = Link::OUTPUT;
-	    break;
-	  case SUPPLY0:
-	    dir = Link::OUTPUT;
-	    break;
-	  case SUPPLY1:
-	    dir = Link::OUTPUT;
-	    break;
-	  default:
-	    break;
-      }
-
-      initialize_dir_(dir);
+      initialize_dir_();
 
       s->add_signal(this);
 }
@@ -712,27 +661,9 @@ void NetNet::type(NetNet::Type t)
       if (type_ == t)
 	    return;
 
-      Link::DIR dir = Link::PASSIVE;
-      switch (t) {
-	  case REG:
-	  case IMPLICIT_REG:
-	    dir = Link::OUTPUT;
-	    break;
-	  case SUPPLY0:
-	    dir = Link::OUTPUT;
-	    break;
-	  case SUPPLY1:
-	    dir = Link::OUTPUT;
-	    break;
-	  default:
-	    break;
-      }
-
       type_ = t;
-      for (unsigned idx = 0 ;  idx < pin_count() ;  idx += 1) {
-	    pin(idx).set_dir(dir);
-      }
 
+      initialize_dir_();
 }
 
 

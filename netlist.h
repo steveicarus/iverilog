@@ -581,9 +581,10 @@ class NetDelaySrc  : public NetObj {
  *
  * NetNet objects are located by searching NetScope objects.
  *
- * The pins of a NetNet object are PASSIVE: they do not drive
+ * The pins of a NetNet object are usually PASSIVE: they do not drive
  * anything and they are not a data sink, per se. The pins follow the
- * values on the nexus.
+ * values on the nexus. The exceptions are reg, trireg, tri0, tri1,
+ * supply0, and supply1 objects, whose pins are classed as OUTPUT.
  */
 
 class PortType
@@ -746,7 +747,7 @@ class NetNet  : public NetObj, public PortType {
       virtual void dump_net(ostream&, unsigned) const;
 
     private:
-      void initialize_dir_(Link::DIR dir);
+      void initialize_dir_();
 
     private:
       Type   type_    : 5;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2010,2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -161,11 +161,6 @@ void cprop_functor::lpm_mux(Design*des, NetMux*obj)
 
 	// If the select is not constant, there is nothing we can do.
       if (! sel_nex->drivers_constant())
-	    return;
-
-	// If the select input is assigned or forced, then again there
-	// is nothing we can do here.
-      if (sel_nex->assign_lval())
 	    return;
 
 	// If the constant select is 'bz or 'bx, then give up.

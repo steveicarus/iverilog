@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -311,16 +311,13 @@ bool Nexus::drivers_present() const
 		  continue;
 
 	      // Must be PASSIVE, so if it is some kind of net, see if
-	      // it is the sort that might drive the nexus.
+	      // it is the sort that might drive the nexus. Note that
+	      // supply0/1 and tri0/1 nets are classified as OUTPUT.
 	    const NetPins*obj;
 	    unsigned pin;
 	    cur->cur_link(obj, pin);
 	    if (const NetNet*net = dynamic_cast<const NetNet*>(obj))
 		  switch (net->type()) {
-		      case NetNet::SUPPLY0:
-		      case NetNet::SUPPLY1:
-		      case NetNet::TRI0:
-		      case NetNet::TRI1:
 		      case NetNet::WAND:
 		      case NetNet::WOR:
 		      case NetNet::TRIAND:
