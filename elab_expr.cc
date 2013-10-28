@@ -258,16 +258,16 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       ivl_assert(*this, left_);
       ivl_assert(*this, right_);
 
-      unsigned l_width = left_->test_width(des, scope, mode);
+      unsigned r_width = right_->test_width(des, scope, mode);
 
       width_mode_t saved_mode = mode;
 
-      unsigned r_width = right_->test_width(des, scope, mode);
+      unsigned l_width = left_->test_width(des, scope, mode);
 
-        // If the width mode changed, retest the left operand, as it
+        // If the width mode changed, retest the right operand, as it
         // may choose a different width if it is in a lossless context.
       if ((mode >= LOSSLESS) && (saved_mode < LOSSLESS))
-	    l_width = left_->test_width(des, scope, mode);
+	    r_width = right_->test_width(des, scope, mode);
 
       ivl_variable_type_t l_type =  left_->expr_type();
       ivl_variable_type_t r_type = right_->expr_type();
@@ -568,16 +568,16 @@ unsigned PEBComp::test_width(Design*des, NetScope*scope, width_mode_t&)
         // affect each other, but not the result.
       width_mode_t mode = SIZED;
 
-      unsigned l_width = left_->test_width(des, scope, mode);
+      unsigned r_width = right_->test_width(des, scope, mode);
 
       width_mode_t saved_mode = mode;
 
-      unsigned r_width = right_->test_width(des, scope, mode);
+      unsigned l_width = left_->test_width(des, scope, mode);
 
-        // If the width mode changed, retest the left operand, as it
+        // If the width mode changed, retest the right operand, as it
         // may choose a different width if it is in a lossless context.
       if ((mode >= LOSSLESS) && (saved_mode < LOSSLESS))
-	    l_width = left_->test_width(des, scope, mode);
+	    r_width = right_->test_width(des, scope, mode);
 
       ivl_variable_type_t l_type =  left_->expr_type();
       ivl_variable_type_t r_type = right_->expr_type();
