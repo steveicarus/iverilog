@@ -324,6 +324,7 @@ NexusSet* NetBlock::nex_input(bool rem_out)
            from other statements. They aren't really inputs
            to the block, just internal intermediate values. */
       if (rem_out) result->rem(*prev);
+      delete prev;
 
       return result;
 }
