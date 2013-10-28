@@ -45,9 +45,10 @@ class PPackage;
 class PExpr : public LineInfo {
 
     public:
-      enum width_mode_t { SIZED, EXPAND, LOSSLESS, UNSIZED };
+	// Mode values used by test_width() (see below for description).
+      enum width_mode_t { SIZED, UNSIZED, EXPAND, LOSSLESS, UPSIZE };
 
-        // Flag values that can be passed to elaborate_expr.
+        // Flag values that can be passed to elaborate_expr().
       static const unsigned NO_FLAGS     = 0x0;
       static const unsigned NEED_CONST   = 0x1;
       static const unsigned SYS_TASK_ARG = 0x2;
@@ -86,29 +87,38 @@ class PExpr : public LineInfo {
 	// test the width of an expression. In SIZED mode the expression
 	// width will be calculated strictly according to the IEEE standard
 	// rules for expression width.
-	// If the expression contains an unsized literal, mode will be
-	// changed to LOSSLESS. In LOSSLESS mode the expression width will
-	// be calculated as the minimum width necessary to avoid arithmetic
+	//
+	// If the expression is found to contain an unsized literal number
+	// and gn_strict_expr_width_flag is set, mode will be changed to
+	// UNSIZED. In UNSIZED mode the expression width will be calculated
+	// exactly as in SIZED mode - the change in mode simply flags that
+	// the expression contains an unsized numbers.
+	//
+	// If the expression is found to contain an unsized literal number
+	// and gn_strict_expr_width_flag is not set, mode will be changed
+	// to LOSSLESS. In LOSSLESS mode the expression width will be
+	// calculated as the minimum width necessary to avoid arithmetic
 	// overflow or underflow.
-	// If the expression both contains an unsized literal and contains
+	//
+	// Once in LOSSLESS mode, if the expression is found to contain
 	// an operation that coerces a vector operand to a different type
-	// (signed <-> unsigned), mode is changed to UNSIZED. UNSIZED mode
-	// is the same as LOSSLESS, except that the final expression width
-	// will be forced to be at least integer_width. This is necessary
-	// to ensure compatibility with the IEEE standard, which requires
-	// unsized literals to be treated as having the same width as an
-	// integer. The lossless width calculation is inadequate in this
-	// case because coercing an operand to a different type means that
-	// the expression no longer obeys the normal rules of arithmetic.
+	// (signed <-> unsigned), mode will be changed to UPSIZE. UPSIZE
+	// mode is the same as LOSSLESS, except that the final expression
+	// width will be forced to be at least integer_width. This is
+	// necessary to ensure compatibility with the IEEE standard, which
+	// requires unsized numbers to be treated as having the same width
+	// as an integer. The lossless width calculation is inadequate in
+	// this case because coercing an operand to a different type means
+	// that the expression no longer obeys the normal rules of arithmetic.
 	//
 	// If mode is initialised to EXPAND instead of SIZED, the expression
 	// width will be calculated as the minimum width necessary to avoid
 	// arithmetic overflow or underflow, even if it contains no unsized
-	// literals. mode will be changed LOSSLESS or UNSIZED as described
+	// literals. mode will be changed LOSSLESS or UPSIZE as described
 	// above. This supports a non-standard mode of expression width
 	// calculation.
 	//
-	// When the final value of mode is UNSIZED, the width returned by
+	// When the final value of mode is UPSIZE, the width returned by
 	// this method is the calculated lossless width, but the width
 	// returned by a subsequent call to the expr_width method will be
 	// the final expression width.

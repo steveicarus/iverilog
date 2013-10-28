@@ -83,12 +83,14 @@ const char* PExpr::width_mode_name(width_mode_t mode)
       switch (mode) {
           case PExpr::SIZED:
             return "sized";
+          case PExpr::UNSIZED:
+            return "unsized";
           case PExpr::EXPAND:
             return "expand";
           case PExpr::LOSSLESS:
             return "lossless";
-          case PExpr::UNSIZED:
-            return "unsized";
+          case PExpr::UPSIZE:
+            return "upsize";
           default:
             return "??";
       }

@@ -136,14 +136,14 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
 }
 
 /*
- * If the mode is UNSIZED, make sure the final expression width is at
+ * If the mode is UPSIZE, make sure the final expression width is at
  * least integer_width, but return the calculated lossless width to
  * the caller.
  */
 unsigned PExpr::fix_width_(width_mode_t mode)
 {
       unsigned width = expr_width_;
-      if ((mode == UNSIZED) && type_is_vectorable(expr_type_)
+      if ((mode == UPSIZE) && type_is_vectorable(expr_type_)
           && (width < integer_width))
             expr_width_ = integer_width;
 
@@ -265,7 +265,7 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       unsigned r_width = right_->test_width(des, scope, mode);
 
         // If the width mode changed, retest the left operand, as it
-        // may choose a different width if it is in an unsized context.
+        // may choose a different width if it is in a lossless context.
       if ((mode >= LOSSLESS) && (saved_mode < LOSSLESS))
 	    l_width = left_->test_width(des, scope, mode);
 
@@ -293,17 +293,17 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
               // calculation is unreliable and we need to make sure the
               // final expression width is at least integer_width.
             if ((mode == LOSSLESS) && (left_->has_sign() != right_->has_sign()))
-                  mode = UNSIZED;
+                  mode = UPSIZE;
 
             switch (op_) {
                 case '+':
                 case '-':
-                  if (mode != SIZED)
+                  if (mode >= EXPAND)
                         expr_width_ += 1;
                   break;
 
                 case '*':
-                  if (mode != SIZED)
+                  if (mode >= EXPAND)
                         expr_width_ = l_width + r_width;
                   break;
 
@@ -575,8 +575,8 @@ unsigned PEBComp::test_width(Design*des, NetScope*scope, width_mode_t&)
       unsigned r_width = right_->test_width(des, scope, mode);
 
         // If the width mode changed, retest the left operand, as it
-        // may choose a different width if it is in an unsized context.
-      if ((mode != SIZED) && (saved_mode == SIZED))
+        // may choose a different width if it is in a lossless context.
+      if ((mode >= LOSSLESS) && (saved_mode < LOSSLESS))
 	    l_width = left_->test_width(des, scope, mode);
 
       ivl_variable_type_t l_type =  left_->expr_type();
@@ -590,14 +590,14 @@ unsigned PEBComp::test_width(Design*des, NetScope*scope, width_mode_t&)
       if (type_is_vectorable(r_type) && (l_width > r_width))
 	    r_width_ = l_width;
 
-	// If the expression is unsized and smaller than the integer
+	// If the expression is lossless and smaller than the integer
 	// minimum, then tweak the size up.
 	// NOTE: I really would rather try to figure out what it would
 	// take to get expand the sub-expressions so that they are
 	// exactly the right width to behave just like infinite
 	// width. I suspect that adding 1 more is sufficient in all
 	// cases, but I'm not certain. Ideas?
-      if (mode != SIZED) {
+      if (mode >= EXPAND) {
             if (type_is_vectorable(l_type) && (l_width_ < integer_width))
 	          l_width_ += 1;
             if (type_is_vectorable(r_type) && (r_width_ < integer_width))
@@ -725,7 +725,7 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       expr_type_   = left_->expr_type();
       signed_flag_ = left_->has_sign();
 
-      if ((mode != SIZED) && type_is_vectorable(expr_type_)) {
+      if ((mode >= EXPAND) && type_is_vectorable(expr_type_)) {
               // We need to make our best guess at the right operand
               // value, to minimise the calculated width. This is
               // particularly important for the power operator...
@@ -782,7 +782,7 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
                     // shift may do the same, as we don't yet know the final
                     // expression type.
                   if ((mode == LOSSLESS) && signed_flag_)
-                        mode = UNSIZED;
+                        mode = UPSIZE;
                   break;
 
                 case 'p': // **
@@ -1059,7 +1059,7 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
             min_width_   = expr->min_width();
             signed_flag_ = (name[1] == 's');
 
-            if ((arg_mode != SIZED) && type_is_vectorable(expr_type_)) {
+            if ((arg_mode >= EXPAND) && type_is_vectorable(expr_type_)) {
                   if (mode < LOSSLESS)
                         mode = LOSSLESS;
                   if (expr_width_ < integer_width)
@@ -2864,8 +2864,8 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
             min_width_   = expr_width_;
             signed_flag_ = par->has_sign();
 
-            if ((mode < LOSSLESS) && !par->has_width())
-	          mode = LOSSLESS;
+            if (!par->has_width() && (mode < LOSSLESS))
+                  mode = LOSSLESS;
 
 	    return expr_width_;
       }
@@ -2879,8 +2879,12 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
             min_width_   = expr_width_;
             signed_flag_ = true;
 
-            if (mode < LOSSLESS)
-	          mode = LOSSLESS;
+            if (gn_strict_expr_width_flag) {
+                  expr_width_ = integer_width;
+                  mode = UNSIZED;
+            } else if (mode < LOSSLESS) {
+                  mode = LOSSLESS;
+            }
 
             return expr_width_;
       }
@@ -4838,15 +4842,17 @@ unsigned PENumber::test_width(Design*, NetScope*, width_mode_t&mode)
 {
       expr_type_   = IVL_VT_LOGIC;
       expr_width_  = value_->len();
+      min_width_   = expr_width_;
       signed_flag_ = value_->has_sign();
 
       if (!value_->has_len() && !value_->is_single()) {
-	    if (gn_strict_expr_width_flag)
-		  expr_width_ = integer_width;
-	    else if (mode < LOSSLESS)
-	          mode = LOSSLESS;
+            if (gn_strict_expr_width_flag) {
+                  expr_width_ = integer_width;
+                  mode = UNSIZED;
+            } else if (mode < LOSSLESS) {
+                  mode = LOSSLESS;
+            }
       }
-      min_width_ = expr_width_;
 
       return expr_width_;
 }
@@ -4941,7 +4947,7 @@ unsigned PETernary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       unsigned fal_width = fal_->test_width(des, scope, mode);
 
         // If the width mode changed, retest the true clause, as it
-        // may choose a different width if it is in an unsized context.
+        // may choose a different width if it is in a lossless context.
       if ((mode >= LOSSLESS) && (saved_mode < LOSSLESS)) {
 	    tru_width = tru_->test_width(des, scope, mode);
       }
@@ -4976,7 +4982,7 @@ unsigned PETernary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
               // calculation is unreliable and we need to make sure the
               // final expression width is at least integer_width.
             if ((mode == LOSSLESS) && (tru_->has_sign() != fal_->has_sign()))
-                  mode = UNSIZED;
+                  mode = UPSIZE;
       }
 
       if (debug_elaborate)
