@@ -33,7 +33,7 @@ class PClass;
 
 class netclass_t : public ivl_type_s {
     public:
-      netclass_t(perm_string class_name);
+      netclass_t(perm_string class_name, netclass_t*par);
       ~netclass_t();
 
 	// Set the property of the class during elaboration. Set the
@@ -52,7 +52,13 @@ class netclass_t : public ivl_type_s {
 	// This is the name of the class type
       inline perm_string get_name() const { return name_; }
 
-      inline size_t get_properties(void) const { return properties_.size(); }
+	// If this is derived from another class, then this method
+	// returns a pointer to the super-class.
+      inline const netclass_t* get_super() const { return super_; }
+
+	// Get the number of properties in this class. Include
+	// properties in the parent class.
+      size_t get_properties(void) const;
 	// Get information about each property.
       const char*get_prop_name(size_t idx) const;
       property_qualifier_t get_prop_qual(size_t idx) const;
@@ -92,6 +98,9 @@ class netclass_t : public ivl_type_s {
 
     private:
       perm_string name_;
+	// If this is derived from another base class, point to it
+	// here.
+      netclass_t*super_;
 	// Map properrty names to property table index.
       std::map<perm_string,size_t> properties_;
 	// Vector of properties.

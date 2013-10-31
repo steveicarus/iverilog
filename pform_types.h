@@ -225,13 +225,19 @@ struct string_type_t : public data_type_t {
 struct class_type_t : public data_type_t {
 
       inline explicit class_type_t(perm_string n)
-      : name(n) { }
+      : name(n), base_type(0) { }
 
       void pform_dump(std::ostream&out, unsigned indent) const;
       void pform_dump_init(std::ostream&out, unsigned indent) const;
 
 	// This is the name of the class type.
       perm_string name;
+
+	// This is the named type that is supposed to be the base
+	// class that we are extending. This is nil if there is no
+	// hierarchy.
+      data_type_t*base_type;
+
 	// This is a map of the properties. Map the name to the type.
       struct prop_info_t {
 	    inline prop_info_t() : qual(property_qualifier_t::make_none()), type(0) { }

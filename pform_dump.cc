@@ -182,12 +182,16 @@ void class_type_t::pform_dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << "class " << name << " {";
 
+      if (base_type) out << " (extends)";
+
       for (map<perm_string,prop_info_t>::const_iterator cur = properties.begin()
 		 ; cur != properties.end() ; ++cur) {
 	    out << " " << cur->first;
       }
 
       out << " }" << endl;
+
+      if (base_type) base_type->pform_dump(out, indent+4);
 }
 
 void class_type_t::pform_dump_init(ostream&out, unsigned indent) const

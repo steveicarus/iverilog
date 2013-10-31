@@ -23,8 +23,8 @@
 
 using namespace std;
 
-netclass_t::netclass_t(perm_string name)
-: name_(name), class_scope_(0)
+netclass_t::netclass_t(perm_string name, netclass_t*sup)
+: name_(name), super_(sup), class_scope_(0)
 {
 }
 
@@ -61,43 +61,85 @@ ivl_variable_type_t netclass_t::base_type() const
       return IVL_VT_CLASS;
 }
 
+size_t netclass_t::get_properties(void) const
+{
+      size_t res = properties_.size();
+      if (super_) res += super_->get_properties();
+      return res;
+}
+
 int netclass_t::property_idx_from_name(perm_string pname) const
 {
       map<perm_string,size_t>::const_iterator cur;
       cur = properties_.find(pname);
-      if (cur == properties_.end())
-	    return -1;
+      if (cur == properties_.end()) {
+	    if (super_)
+		  return super_->property_idx_from_name(pname);
+	    else
+		  return -1;
+      }
 
-      return cur->second;
+      int pidx = cur->second;
+      if (super_) pidx += super_->get_properties();
+      return pidx;
 }
 
 const char*netclass_t::get_prop_name(size_t idx) const
 {
-      assert(idx < property_table_.size());
-      return property_table_[idx].name;
+      size_t super_size = 0;
+      if (super_) super_size = super_->get_properties();
+
+      assert(idx < (super_size + property_table_.size()));
+      if (idx < super_size)
+	    return super_->get_prop_name(idx);
+      else
+	    return property_table_[idx-super_size].name;
 }
 
 property_qualifier_t netclass_t::get_prop_qual(size_t idx) const
 {
-      assert(idx < property_table_.size());
-      return property_table_[idx].qual;
+      size_t super_size = 0;
+      if (super_) super_size = super_->get_properties();
+
+      assert(idx < (super_size+property_table_.size()));
+      if (idx < super_size)
+	    return super_->get_prop_qual(idx);
+      else
+	    return property_table_[idx-super_size].qual;
 }
 
 ivl_type_t netclass_t::get_prop_type(size_t idx) const
 {
-      assert(idx < property_table_.size());
-      return property_table_[idx].type;
+      size_t super_size = 0;
+      if (super_) super_size = super_->get_properties();
+
+      assert(idx < (super_size+property_table_.size()));
+      if (idx < super_size)
+	    return super_->get_prop_type(idx);
+      else
+	    return property_table_[idx-super_size].type;
 }
 
 bool netclass_t::get_prop_initialized(size_t idx) const
 {
-      assert(idx < property_table_.size());
-      return property_table_[idx].initialized_flag;
+      size_t super_size = 0;
+      if (super_) super_size = super_->get_properties();
+
+      assert(idx < (super_size+property_table_.size()));
+      if (idx < super_size)
+	    return super_->get_prop_initialized(idx);
+      else
+	    return property_table_[idx].initialized_flag;
 }
 
 void netclass_t::set_prop_initialized(size_t idx) const
 {
-      assert(idx < property_table_.size());
+      size_t super_size = 0;
+      if (super_) super_size = super_->get_properties();
+
+      assert(idx >= super_size && idx < (super_size+property_table_.size()));
+      idx -= super_size;
+
       assert(! property_table_[idx].initialized_flag);
       property_table_[idx].initialized_flag = true;
 }

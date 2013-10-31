@@ -683,11 +683,7 @@ assignment_pattern /* IEEE1800-2005: A.6.7.1 */
 
 class_declaration /* IEEE1800-2005: A.1.2 */
   : K_virtual_opt K_class class_identifier class_declaration_extends_opt ';'
-      { pform_start_class_declaration(@2, $3);
-	if ($4) {
-	      yyerror(@4, "sorry: Class extends not supported yet.");
-	}
-      }
+      { pform_start_class_declaration(@2, $3, $4); }
     class_items_opt K_endclass
       { // Process a class.
 	pform_end_class_declaration(@8);

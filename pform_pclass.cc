@@ -26,12 +26,15 @@
  */
 static PClass*pform_cur_class = 0;
 
-void pform_start_class_declaration(const struct vlltype&loc, class_type_t*type)
+void pform_start_class_declaration(const struct vlltype&loc, class_type_t*type, data_type_t*base_type)
 {
       PClass*class_scope = pform_push_class_scope(loc, type->name);
       class_scope->type = type;
       assert(pform_cur_class == 0);
       pform_cur_class = class_scope;
+
+      assert(type->base_type == 0);
+      type->base_type = base_type;
 }
 
 void pform_class_property(const struct vlltype&loc,

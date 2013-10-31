@@ -349,12 +349,32 @@ static void blend_class_constructors(PClass*pclass)
 static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 {
       class_type_t*use_type = pclass->type;
-      netclass_t*use_class = new netclass_t(use_type->name);
 
       if (debug_scopes) {
 	    cerr << pclass->get_fileline() <<": elaborate_scope_class: "
 		 << "Elaborate scope class " << pclass->pscope_name() << endl;
       }
+
+      class_type_t*base_class = dynamic_cast<class_type_t*> (use_type->base_type);
+      if (use_type->base_type && !base_class) {
+	    cerr << pclass->get_fileline() << ": error: "
+		 << "Base type of " << use_type->name
+		 << " is not a class." << endl;
+	    des->errors += 1;
+      }
+
+      netclass_t*use_base_class = 0;
+      if (base_class) {
+	    use_base_class = scope->find_class(base_class->name);
+	    if (use_base_class == 0) {
+		  cerr << pclass->get_fileline() << ": error: "
+		       << "Base class " << base_class->name
+		       << " not found." << endl;
+		  des->errors += 1;
+	    }
+      }
+
+      netclass_t*use_class = new netclass_t(use_type->name, use_base_class);
 
 	// Class scopes have no parent scope, because references are
 	// not allowed to escape a class method.

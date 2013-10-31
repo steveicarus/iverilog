@@ -181,7 +181,8 @@ extern void pform_endmodule(const char*, bool inside_celldefine,
                             Module::UCDriveType uc_drive_def);
 
 extern void pform_start_class_declaration(const struct vlltype&loc,
-					  class_type_t*type);
+					  class_type_t*type,
+					  data_type_t*base_type);
 extern void pform_class_property(const struct vlltype&loc,
 				 property_qualifier_t pq,
 				 data_type_t*data_type,
