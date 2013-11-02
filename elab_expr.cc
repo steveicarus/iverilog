@@ -4675,16 +4675,19 @@ unsigned PENewClass::test_width(Design*, NetScope*, width_mode_t&)
       return 1;
 }
 
-NetExpr* PENewClass::elaborate_expr(Design*des, NetScope*scope,
-				    ivl_type_t ntype, unsigned) const
+/*
+ * This elaborates the constructor for a class. This arranges for the
+ * call of parent class constructors, if present, and also
+ * initializers in front of an explicit constructor.
+ */
+NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
+						 const netclass_t*ctype,
+						 NetExpr*obj, unsigned flags) const
 {
-      NetExpr*obj = new NetENew(ntype);
-      obj->set_line(*this);
+      if (const netclass_t*super_class = ctype->get_super()) {
+	    obj = elaborate_expr_constructor_(des, scope, super_class, obj, flags);
+      }
 
-	// Find the constructor for the class. If there is no
-	// constructor then the result of this expression is the
-	// allocation alone.
-      const netclass_t*ctype = dynamic_cast<const netclass_t*> (ntype);
 
 	// If there is an initializer function, then pass the object
 	// through that function first. Note tha the initializer
@@ -4719,6 +4722,7 @@ NetExpr* PENewClass::elaborate_expr(Design*des, NetScope*scope,
 	    }
 	    return obj;
       }
+
 
       NetFuncDef*def = new_scope->func_def();
       ivl_assert(*this, def);
@@ -4784,6 +4788,21 @@ NetExpr* PENewClass::elaborate_expr(Design*des, NetScope*scope,
       con->set_line(*this);
 
       return con;
+}
+
+NetExpr* PENewClass::elaborate_expr(Design*des, NetScope*scope,
+				    ivl_type_t ntype, unsigned flags) const
+{
+      NetExpr*obj = new NetENew(ntype);
+      obj->set_line(*this);
+
+	// Find the constructor for the class. If there is no
+	// constructor then the result of this expression is the
+	// allocation alone.
+      const netclass_t*ctype = dynamic_cast<const netclass_t*> (ntype);
+
+      obj = elaborate_expr_constructor_(des, scope, ctype, obj, flags);
+      return obj;
 }
 
 unsigned PENewCopy::test_width(Design*, NetScope*, width_mode_t&)
