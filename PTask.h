@@ -29,6 +29,7 @@ class Design;
 class NetExpr;
 class NetNet;
 class NetScope;
+class PChainConstructor;
 class PWire;
 class Statement;
 class PExpr;
@@ -116,6 +117,11 @@ class PFunction : public PTaskFunc {
       void set_return(const data_type_t*t);
 
       inline Statement* get_statement() { return statement_; }
+
+	// This is only used if this function is a constructor. In
+	// that case, this method looks for a PChainConstructor in the
+	// statement and extracts it if found.
+      PChainConstructor*extract_chain_constructor();
 
       void elaborate_scope(Design*des, NetScope*scope) const;
 

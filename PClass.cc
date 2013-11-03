@@ -20,7 +20,7 @@
 # include  "PClass.h"
 
 PClass::PClass(perm_string name, LexicalScope*parent)
-: PScopeExtra(name, parent)
+: PScopeExtra(name, parent), type(0), chain(0)
 {
 }
 

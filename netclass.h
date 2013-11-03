@@ -30,10 +30,11 @@ class Design;
 class NetNet;
 class NetScope;
 class PClass;
+class PExpr;
 
 class netclass_t : public ivl_type_s {
     public:
-      netclass_t(perm_string class_name, netclass_t*par);
+      netclass_t(perm_string class_name, netclass_t*par, const vector<PExpr*>&pchain_args);
       ~netclass_t();
 
 	// Set the property of the class during elaboration. Set the
@@ -44,6 +45,9 @@ class netclass_t : public ivl_type_s {
 	// Set the scope for the class. The scope has no parents and
 	// is used for the elaboration of methods (tasks/functions).
       void set_class_scope(NetScope*cscope);
+
+      inline const std::vector<PExpr*>& get_chain_args(void) const
+      { return chain_args_; }
 
 	// As an ivl_type_s object, the netclass is always an
 	// ivl_VT_CLASS object.
@@ -99,8 +103,10 @@ class netclass_t : public ivl_type_s {
     private:
       perm_string name_;
 	// If this is derived from another base class, point to it
-	// here.
+	// here. The super constructor may take arguments, and the
+	// chain_parms_ are those arguments.
       netclass_t*super_;
+      std::vector<PExpr*> chain_args_;
 	// Map properrty names to property table index.
       std::map<perm_string,size_t> properties_;
 	// Vector of properties.

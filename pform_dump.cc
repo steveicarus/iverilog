@@ -821,6 +821,19 @@ void PCase::dump(ostream&out, unsigned ind) const
       out << setw(ind) << "" << "endcase" << endl;
 }
 
+void PChainConstructor::dump(ostream&out, unsigned ind) const
+{
+      out << setw(ind) << "" << "super.new(";
+      if (parms_.size() > 0) {
+	    if (parms_[0]) out << *parms_[0];
+      }
+      for (size_t idx = 1 ; idx < parms_.size() ; idx += 1) {
+	    out << ", ";
+	    if (parms_[idx]) out << *parms_[idx];
+      }
+      out << ");" << endl;
+}
+
 void PCondit::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "if (" << *expr_ << ")" << endl;

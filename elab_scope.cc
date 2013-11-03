@@ -311,6 +311,12 @@ static void blend_class_constructors(PClass*pclass)
       if (iter_new == pclass->funcs.end())
 	    return;
 
+	// While we're here, look for a super.new() call. If we find
+	// it, strip it out of the constructor and set it aside for
+	// when we actually call the chained constructor.
+      pclass->chain = iter_new->second->extract_chain_constructor();
+
+
       map<perm_string,PFunction*>::iterator iter_new2 = pclass->funcs.find(new2);
       if (iter_new2 == pclass->funcs.end())
 	    return;
@@ -374,7 +380,10 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 	    }
       }
 
-      netclass_t*use_class = new netclass_t(use_type->name, use_base_class);
+      const static vector<PExpr*>no_args;
+      const vector<PExpr*>&use_chain_args = (pclass&&pclass->chain)? pclass->chain->chain_args() : no_args;
+
+      netclass_t*use_class = new netclass_t(use_type->name, use_base_class, use_chain_args);
 
 	// Class scopes have no parent scope, because references are
 	// not allowed to escape a class method.

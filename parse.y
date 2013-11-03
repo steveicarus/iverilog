@@ -5853,9 +5853,9 @@ statement_item /* This is roughly statement_item in the LRM */
        out. */
 
   | implicit_class_handle '.' K_new '(' expression_list_with_nuls ')' ';'
-      { yyerror(@1, "sorry: Calls to superclass constructor not supported.");
-	yyerrok;
-        $$ = new PNoop;
+      { PChainConstructor*tmp = new PChainConstructor(*$5);
+	FILE_NAME(tmp, @3);
+	$$ = tmp;
       }
   | hierarchy_identifier '(' error ')' ';'
       { yyerror(@3, "error: Syntax error in task arguments.");

@@ -31,6 +31,7 @@
 # include  "HName.h"
 # include  "LineInfo.h"
 class PExpr;
+class PChainConstructor;
 class PPackage;
 class Statement;
 class PEventStatement;
@@ -181,6 +182,11 @@ class PBlock  : public PScope, public Statement {
 
       BL_TYPE bl_type() const { return bl_type_; }
 
+	// This is only used if this block is the statement list for a
+	// constructor. We look for a PChainConstructor as the first
+	// statement, and if it is there, extract it.
+      PChainConstructor*extract_chain_constructor();
+
 	// If the bl_type() is BL_PAR, it is possible to replace it
 	// with JOIN_NONE or JOIN_ANY. This is to help the parser.
       void set_join_type(BL_TYPE);
@@ -270,6 +276,25 @@ class PCAssign  : public Statement {
     private:
       PExpr*lval_;
       PExpr*expr_;
+};
+
+/*
+ * This represents the syntax "super.new(...)". This is not really an
+ * executable statement, but the elaborator will handle these
+ * specially and will remove them from the statement stream. If any
+ */
+class PChainConstructor : public Statement {
+    public:
+      PChainConstructor(const list<PExpr*>&parms);
+      ~PChainConstructor();
+
+      virtual void dump(ostream&out, unsigned ind) const;
+
+      inline const std::vector<PExpr*>& chain_args(void) const
+      { return parms_; }
+
+    private:
+      std::vector<PExpr*> parms_;
 };
 
 class PCondit  : public Statement {

@@ -19,6 +19,7 @@
 
 # include "config.h"
 # include "PTask.h"
+# include "Statement.h"
 # include <cassert>
 
 PFunction::PFunction(perm_string name, LexicalScope*parent, bool is_auto__)
@@ -42,4 +43,18 @@ void PFunction::set_statement(Statement*s)
 void PFunction::set_return(const data_type_t*t)
 {
       return_type_ = t;
+}
+
+PChainConstructor* PFunction::extract_chain_constructor()
+{
+      PChainConstructor*res = 0;
+
+      if (res = dynamic_cast<PChainConstructor*> (statement_)) {
+	    statement_ = 0;
+
+      } else if (PBlock*blk = dynamic_cast<PBlock*>(statement_)) {
+	    res = blk->extract_chain_constructor();
+      }
+
+      return res;
 }

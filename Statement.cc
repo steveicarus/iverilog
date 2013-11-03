@@ -115,6 +115,21 @@ PBlock::~PBlock()
 	    delete list_[idx];
 }
 
+PChainConstructor* PBlock::extract_chain_constructor()
+{
+      if (list_.empty())
+	    return 0;
+
+      if (PChainConstructor*res = dynamic_cast<PChainConstructor*> (list_[0])) {
+	    for (size_t idx = 0 ; idx < list_.size()-1 ; idx += 1)
+		  list_[idx] = list_[idx+1];
+	    list_.resize(list_.size()-1);
+	    return res;
+      }
+
+      return 0;
+}
+
 void PBlock::set_join_type(PBlock::BL_TYPE type)
 {
       assert(bl_type_ == BL_PAR);
@@ -204,6 +219,21 @@ PCAssign::~PCAssign()
 {
       delete lval_;
       delete expr_;
+}
+
+PChainConstructor::PChainConstructor(const list<PExpr*>&parms)
+: parms_(parms.size())
+{
+      list<PExpr*>::const_iterator cur = parms.begin();
+      for (size_t idx = 0 ; idx < parms_.size() ; idx += 1) {
+	    parms_[idx] = *cur;
+	    ++cur;
+      }
+      assert(cur == parms.end());
+}
+
+PChainConstructor::~PChainConstructor()
+{
 }
 
 PCondit::PCondit(PExpr*ex, Statement*i, Statement*e)
