@@ -113,7 +113,7 @@ class PFunction : public PTaskFunc {
       explicit PFunction(perm_string name, LexicalScope*parent, bool is_auto);
       ~PFunction();
 
-      void set_statement(Statement *s);
+      void set_statement(Statement *s, bool rewrite_flag =false);
       void set_return(const data_type_t*t);
 
       inline Statement* get_statement() { return statement_; }

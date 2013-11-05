@@ -307,49 +307,81 @@ static void blend_class_constructors(PClass*pclass)
       perm_string new1 = perm_string::literal("new");
       perm_string new2 = perm_string::literal("new@");
 
+      PFunction*use_new;
+      PFunction*use_new2;
+
+	// Locate the explicit constructor.
       map<perm_string,PFunction*>::iterator iter_new = pclass->funcs.find(new1);
       if (iter_new == pclass->funcs.end())
+	    use_new = 0;
+      else
+	    use_new = iter_new->second;
+
+	// Locate the implicit constructor.
+      map<perm_string,PFunction*>::iterator iter_new2 = pclass->funcs.find(new2);
+      if (iter_new2 == pclass->funcs.end())
+	    use_new2 = 0;
+      else
+	    use_new2 = iter_new2->second;
+
+	// If there are no constructors, then we are done.
+      if (use_new==0 && use_new2==0)
 	    return;
 
 	// While we're here, look for a super.new() call. If we find
 	// it, strip it out of the constructor and set it aside for
 	// when we actually call the chained constructor.
-      pclass->chain = iter_new->second->extract_chain_constructor();
+      if (use_new)
+	    pclass->chain = use_new->extract_chain_constructor();
+      else
+	    pclass->chain = 0;
 
+      if (use_new && use_new2) {
+	      // These constructors must be methods of the same class.
+	    ivl_assert(*use_new, use_new->method_of() == use_new2->method_of());
 
-      map<perm_string,PFunction*>::iterator iter_new2 = pclass->funcs.find(new2);
-      if (iter_new2 == pclass->funcs.end())
-	    return;
+	    Statement*def_new = use_new->get_statement();
+	    Statement*def_new2 = use_new2->get_statement();
 
-      PFunction*use_new  = iter_new->second;
-      PFunction*use_new2 = iter_new2->second;
+	      // It is possible, i.e. recovering from a parse error,
+	      // for the statement from the constructor to be
+	      // missing. In that case, create an empty one.
+	    if (def_new==0) {
+		  def_new = new PBlock(PBlock::BL_SEQ);
+		  use_new->set_statement(def_new);
+	    }
 
-	// These constructors must be methods of the same class.
-      ivl_assert(*use_new, use_new->method_of() == use_new2->method_of());
+	    PBlock*blk_new = dynamic_cast<PBlock*> (def_new);
 
-      Statement*def_new = use_new->get_statement();
-      Statement*def_new2 = use_new2->get_statement();
+	      // If the statement for the constructor is not a block,
+	      // then convert it into a block so that we can do other
+	      // manipulations.
+	    if (blk_new==0) {
+		  PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+		  tmp->set_line(*def_new);
 
-	// If either constructor has no definition, then give up. This
-	// might happen, for example, during parse errors or other
-	// degenerate situations.
-      if (def_new==0 || def_new2==0)
-	    return;
+		  vector<Statement*>tmp_list(1);
+		  tmp_list[0] = def_new;
+		  tmp->set_statement(tmp_list);
+		  blk_new = tmp;
 
-      PBlock*blk_new = dynamic_cast<PBlock*> (def_new);
+		  use_new->set_statement(blk_new, true);
+	    }
 
-	// For now, only do this if the functions are defined by
-	// statement blocks. That should be true by definition for
-	// implicit constructors, and common for explicit constructors.
-      if (blk_new==0)
-	    return;
+	    ivl_assert(*blk_new,  blk_new ->bl_type()==PBlock::BL_SEQ);
 
-      ivl_assert(*blk_new,  blk_new ->bl_type()==PBlock::BL_SEQ);
+	    if (def_new2) {
+		  blk_new->push_statement_front(def_new2);
+	    }
 
-      blk_new->push_statement_front(def_new2);
+	      // Now the implicit initializations are all built into
+	      // the constructor. Delete the "new@" constructor.
+	    pclass->funcs.erase(iter_new2);
+	    delete use_new2;
+	    use_new2 = 0;
 
-      pclass->funcs.erase(iter_new2);
-      delete use_new2;
+      }
+
 }
 
 static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)

@@ -33,10 +33,10 @@ PFunction::~PFunction()
 {
 }
 
-void PFunction::set_statement(Statement*s)
+void PFunction::set_statement(Statement*s, bool rewrite_ok)
 {
       assert(s != 0);
-      assert(statement_ == 0);
+      assert(statement_ == 0 || rewrite_ok&&statement_);
       statement_ = s;
 }
 
