@@ -180,10 +180,22 @@ void struct_type_t::pform_dump(ostream&out, unsigned indent) const
 
 void class_type_t::pform_dump(ostream&out, unsigned indent) const
 {
-      out << setw(indent) << "" << "class " << name << " {";
+      out << setw(indent) << "" << "class " << name;
 
-      if (base_type) out << " (extends)";
+      if (base_type) out << " extends <type>";
+      if (base_args.size() > 0) {
+	    out << " (";
+	    for (list<PExpr*>::const_iterator cur = base_args.begin()
+		       ; cur != base_args.end() ; ++cur) {
+		  const PExpr*curp = *cur;
+		  if (cur != base_args.begin())
+			out << ", ";
+		  curp->dump(out);
+	    }
+	    out << ")";
+      }
 
+      out << " {";
       for (map<perm_string,prop_info_t>::const_iterator cur = properties.begin()
 		 ; cur != properties.end() ; ++cur) {
 	    out << " " << cur->first;

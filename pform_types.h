@@ -235,8 +235,10 @@ struct class_type_t : public data_type_t {
 
 	// This is the named type that is supposed to be the base
 	// class that we are extending. This is nil if there is no
-	// hierarchy.
+	// hierarchy. If there are arguments to the base class, then
+	// put them in the base_args vector.
       data_type_t*base_type;
+      std::list<PExpr*>base_args;
 
 	// This is a map of the properties. Map the name to the type.
       struct prop_info_t {

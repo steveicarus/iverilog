@@ -418,6 +418,11 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       property_qualifier_t property_qualifier;
       PPackage*package;
 
+      struct {
+	    data_type_t*type;
+	    list<PExpr*>*exprs;
+      } class_declaration_extends;
+
       verinum* number;
 
       verireal* realtime;
@@ -591,11 +596,12 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <decl_assignments> list_of_variable_decl_assignments
 
 %type <data_type>  data_type data_type_or_implicit data_type_or_implicit_or_void
-%type <data_type>  class_declaration_extends_opt
 %type <class_type> class_identifier
 %type <struct_member>  struct_union_member
 %type <struct_members> struct_union_member_list
 %type <struct_type>    struct_data_type
+
+%type <class_declaration_extends> class_declaration_extends_opt
 
 %type <property_qualifier> class_item_qualifier property_qualifier
 %type <property_qualifier> class_item_qualifier_list property_qualifier_list
@@ -683,7 +689,7 @@ assignment_pattern /* IEEE1800-2005: A.6.7.1 */
 
 class_declaration /* IEEE1800-2005: A.1.2 */
   : K_virtual_opt K_class class_identifier class_declaration_extends_opt ';'
-      { pform_start_class_declaration(@2, $3, $4); }
+      { pform_start_class_declaration(@2, $3, $4.type, $4.exprs); }
     class_items_opt K_endclass
       { // Process a class.
 	pform_end_class_declaration(@8);
@@ -751,9 +757,15 @@ class_declaration_endlabel_opt
 
 class_declaration_extends_opt /* IEEE1800-2005: A.1.2 */
   : K_extends TYPE_IDENTIFIER
-      { $$ = $2; }
+      { $$.type = $2;
+	$$.exprs= 0;
+      }
+  | K_extends TYPE_IDENTIFIER '(' expression_list_with_nuls ')'
+      { $$.type  = $2;
+	$$.exprs = $4;
+      }
   |
-      { $$ = 0; }
+      { $$.type = 0; $$.exprs = 0; }
   ;
 
   /* The class_items_opt and class_items rules together implement the

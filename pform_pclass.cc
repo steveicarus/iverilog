@@ -26,7 +26,17 @@
  */
 static PClass*pform_cur_class = 0;
 
-void pform_start_class_declaration(const struct vlltype&loc, class_type_t*type, data_type_t*base_type)
+/*
+ * The base_type is set to the base class if this declaration is
+ * starting a derived class. For example, for the syntax:
+ *
+ *    class foo extends bar (exprs) ...
+ *
+ * the base_type is the type of the class "bar", and the base_exprs,
+ * if present, are the "exprs" that would be passed to a chained
+ * constructor.
+ */
+void pform_start_class_declaration(const struct vlltype&loc, class_type_t*type, data_type_t*base_type, list<PExpr*>*base_exprs)
 {
       PClass*class_scope = pform_push_class_scope(loc, type->name);
       class_scope->type = type;
@@ -35,6 +45,15 @@ void pform_start_class_declaration(const struct vlltype&loc, class_type_t*type, 
 
       assert(type->base_type == 0);
       type->base_type = base_type;
+
+      assert(type->base_args.size() == 0);
+      if (base_exprs) {
+	    for (list<PExpr*>::iterator cur = base_exprs->begin()
+		       ; cur != base_exprs->end() ; ++ cur) {
+		  type->base_args.push_back(*cur);
+	    }
+	    delete base_exprs;
+      }
 }
 
 void pform_class_property(const struct vlltype&loc,
