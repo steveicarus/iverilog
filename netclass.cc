@@ -23,8 +23,8 @@
 
 using namespace std;
 
-netclass_t::netclass_t(perm_string name, netclass_t*sup, const vector<PExpr*>&chain_args)
-: name_(name), super_(sup), chain_args_(chain_args), class_scope_(0)
+netclass_t::netclass_t(perm_string name, netclass_t*sup)
+: name_(name), super_(sup), class_scope_(0)
 {
 }
 

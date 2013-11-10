@@ -288,6 +288,7 @@ class PChainConstructor : public Statement {
       PChainConstructor(const list<PExpr*>&parms);
       ~PChainConstructor();
 
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
       virtual void dump(ostream&out, unsigned ind) const;
 
       inline const std::vector<PExpr*>& chain_args(void) const

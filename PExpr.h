@@ -558,8 +558,7 @@ class PENewClass : public PExpr {
     private:
       NetExpr* elaborate_expr_constructor_(Design*des, NetScope*scope,
 					   const netclass_t*ctype,
-					   NetExpr*obj, unsigned flags,
-					   const netclass_t*derived) const;
+					   NetExpr*obj, unsigned flags) const;
 
     private:
       std::vector<PExpr*>parms_;

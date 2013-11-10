@@ -4677,7 +4677,7 @@ unsigned PENewClass::test_width(Design*, NetScope*, width_mode_t&)
 
 /*
  * This elaborates the constructor for a class. This arranges for the
- * call of parent class constructors, if present, and also
+ * call of class constructor, if present, and also
  * initializers in front of an explicit constructor.
  *
  * The derived argument is the type of the class derived from the
@@ -4685,18 +4685,8 @@ unsigned PENewClass::test_width(Design*, NetScope*, width_mode_t&)
  */
 NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 						 const netclass_t*ctype,
-						 NetExpr*obj, unsigned flags,
-						 const netclass_t*derived) const
+						 NetExpr*obj, unsigned flags) const
 {
-	// If there is a super-class, then call the super-class
-	// constructors first. The results of the current class
-	// constructors cannot effect the superclass, so this is the
-	// right order of events.
-      if (const netclass_t*super_class = ctype->get_super()) {
-	    obj = elaborate_expr_constructor_(des, scope, super_class, obj, flags, ctype);
-      }
-
-
 	// If there is an initializer function, then pass the object
 	// through that function first. Note tha the initializer
 	// function has no arguments other then the object itself.
@@ -4718,18 +4708,11 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 	    obj = tmp;
       }
 
-	// The parameters for the constructor are the arguments of the
-	// new(...) expression, unless we are recursing, in which case
-	// we use the chained arguments. Note that the arguments to
-	// the chained constructor must be elaborated in the scope of
-	// the subclass (so that arguments can be passed down) so also
-	// select which scope we are going to use.
-      const vector<PExpr*>&use_parms = derived? derived->get_chain_args() : parms_;
 
       NetScope*new_scope = ctype->method_from_name(perm_string::literal("new"));
       if (new_scope == 0) {
 	      // No constructor.
-	    if (use_parms.size() > 0) {
+	    if (parms_.size() > 0) {
 		  cerr << get_fileline() << ": error: "
 		       << "Class " << ctype->get_name()
 		       << " has no constructor, but you passed " << parms_.size()
@@ -4746,9 +4729,9 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 	// Are there too many arguments passed to the function. If so,
 	// generate an error message. The case of too few arguments
 	// will be handled below, when we run out of arguments.
-      if ((use_parms.size()+1) > def->port_count()) {
+      if ((parms_.size()+1) > def->port_count()) {
 	    cerr << get_fileline() << ": error: Parm count mismatch"
-		 << " passing " << use_parms.size() << " arguments "
+		 << " passing " << parms_.size() << " arguments "
 		 << " to constructor expecting " << (def->port_count()-1)
 		 << " arguments." << endl;
 	    des->errors += 1;
@@ -4761,8 +4744,8 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
       int parm_errors = 0;
       for (size_t idx = 1 ; idx < parms.size() ; idx += 1) {
 	      // While there are default arguments, check them.
-	    if (idx <= use_parms.size() && use_parms[idx-1]) {
-		  PExpr*tmp = use_parms[idx-1];
+	    if (idx <= parms_.size() && parms_[idx-1]) {
+		  PExpr*tmp = parms_[idx-1];
 		  parms[idx] = elaborate_rval_expr(des, scope,
 						   def->port(idx)->net_type(),
 						   def->port(idx)->data_type(),
@@ -4818,7 +4801,7 @@ NetExpr* PENewClass::elaborate_expr(Design*des, NetScope*scope,
 	// allocation alone.
       const netclass_t*ctype = dynamic_cast<const netclass_t*> (ntype);
 
-      obj = elaborate_expr_constructor_(des, scope, ctype, obj, flags, 0);
+      obj = elaborate_expr_constructor_(des, scope, ctype, obj, flags);
       return obj;
 }
 

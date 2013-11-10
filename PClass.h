@@ -42,7 +42,6 @@ class PClass : public PScopeExtra, public LineInfo {
 
     public:
       class_type_t*type;
-      PChainConstructor*chain;
 };
 
 #endif

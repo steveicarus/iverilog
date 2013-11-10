@@ -21,6 +21,7 @@
 # include "PTask.h"
 # include "Statement.h"
 # include <cassert>
+# include "ivl_assert.h"
 
 PFunction::PFunction(perm_string name, LexicalScope*parent, bool is_auto__)
 : PTaskFunc(name, parent), statement_(0)
@@ -33,11 +34,35 @@ PFunction::~PFunction()
 {
 }
 
-void PFunction::set_statement(Statement*s, bool rewrite_ok)
+void PFunction::set_statement(Statement*s)
 {
       assert(s != 0);
-      assert(statement_ == 0 || rewrite_ok&&statement_);
+      assert(statement_ == 0);
       statement_ = s;
+}
+
+void PFunction::push_statement_front(Statement*stmt)
+{
+	// This can only happen after the statement is initially set.
+      ivl_assert(*this, statement_);
+
+	// Get the PBlock of the statement. If it is not a PBlock,
+	// then create one to wrap the existing statement and the new
+	// statement that we're pushing.
+      PBlock*blk = dynamic_cast<PBlock*> (statement_);
+      if (blk == 0) {
+	    PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+	    tmp->set_line(*this);
+	    vector<Statement*>tmp_list(1);
+	    tmp_list[0] = statement_;
+	    tmp->set_statement(tmp_list);
+
+	    statement_ = tmp;
+	    blk = tmp;
+      }
+
+	// Now do the push.
+      blk->push_statement_front(stmt);
 }
 
 void PFunction::set_return(const data_type_t*t)

@@ -331,11 +331,19 @@ static void blend_class_constructors(PClass*pclass)
 	// While we're here, look for a super.new() call. If we find
 	// it, strip it out of the constructor and set it aside for
 	// when we actually call the chained constructor.
-      if (use_new)
-	    pclass->chain = use_new->extract_chain_constructor();
-      else
-	    pclass->chain = 0;
+      PChainConstructor*chain_new = use_new? use_new->extract_chain_constructor() : 0;
 
+	// If we do not have an explicit constructor chain, but there
+	// is a parent class, then create an implicit chain.
+      if (chain_new==0 && pclass->type->base_type!=0) {
+	    list<PExpr*>tmp_parms;
+	    chain_new = new PChainConstructor(tmp_parms);
+	    chain_new->set_line(*pclass);
+      }
+
+	// If there are both an implicit and explicit constructor,
+	// then blend the implicit constructor into the explicit
+	// constructor. This eases the task for the elaborator later.
       if (use_new && use_new2) {
 	      // These constructors must be methods of the same class.
 	    ivl_assert(*use_new, use_new->method_of() == use_new2->method_of());
@@ -351,37 +359,23 @@ static void blend_class_constructors(PClass*pclass)
 		  use_new->set_statement(def_new);
 	    }
 
-	    PBlock*blk_new = dynamic_cast<PBlock*> (def_new);
-
-	      // If the statement for the constructor is not a block,
-	      // then convert it into a block so that we can do other
-	      // manipulations.
-	    if (blk_new==0) {
-		  PBlock*tmp = new PBlock(PBlock::BL_SEQ);
-		  tmp->set_line(*def_new);
-
-		  vector<Statement*>tmp_list(1);
-		  tmp_list[0] = def_new;
-		  tmp->set_statement(tmp_list);
-		  blk_new = tmp;
-
-		  use_new->set_statement(blk_new, true);
-	    }
-
-	    ivl_assert(*blk_new,  blk_new ->bl_type()==PBlock::BL_SEQ);
-
-	    if (def_new2) {
-		  blk_new->push_statement_front(def_new2);
-	    }
+	    if (def_new2) use_new->push_statement_front(def_new2);
 
 	      // Now the implicit initializations are all built into
 	      // the constructor. Delete the "new@" constructor.
 	    pclass->funcs.erase(iter_new2);
 	    delete use_new2;
 	    use_new2 = 0;
-
       }
 
+      if (chain_new) {
+	    if (use_new2) {
+		  use_new2->push_statement_front(chain_new);
+	    } else {
+		  use_new->push_statement_front(chain_new);
+	    }
+	    chain_new = 0;
+      }
 }
 
 static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
@@ -412,10 +406,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 	    }
       }
 
-      const static vector<PExpr*>no_args;
-      const vector<PExpr*>&use_chain_args = (pclass&&pclass->chain)? pclass->chain->chain_args() : no_args;
-
-      netclass_t*use_class = new netclass_t(use_type->name, use_base_class, use_chain_args);
+      netclass_t*use_class = new netclass_t(use_type->name, use_base_class);
 
 	// Class scopes have no parent scope, because references are
 	// not allowed to escape a class method.

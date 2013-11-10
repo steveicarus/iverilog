@@ -3027,6 +3027,109 @@ NetProc* PCase::elaborate(Design*des, NetScope*scope) const
       return res;
 }
 
+NetProc* PChainConstructor::elaborate(Design*des, NetScope*scope) const
+{
+      assert(scope);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PChainConstructor::elaborate: "
+		 << "Elaborate constructor chain in scope=" << scope_path(scope) << endl;
+      }
+
+	// The scope is the <class>.new function, so scope->parent()
+	// is the class. Use that to get the class type that we are
+	// constructing.
+      NetScope*scope_class = scope->parent();
+      const netclass_t*class_this = scope_class->class_def();
+      ivl_assert(*this, class_this);
+
+	// We also need the super-class.
+      const netclass_t*class_super = class_this->get_super();
+      if (class_super == 0) {
+	    cerr << get_fileline() << ": error: "
+		 << "Class " << class_this->get_name()
+		 << " has no parent class for super.new constructor chaining." << endl;
+	    des->errors += 1;
+	    NetBlock*tmp = new NetBlock(NetBlock::SEQU, 0);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
+	// Need the "this" variable for the current constructor. We're
+	// going to pass this to the chained constructor.
+      NetNet*var_this = scope->find_signal(perm_string::literal("@"));
+
+	// If super.new is an implicit constructor, then there are no
+	// arguments (other then "this" to worry about, so make a
+	// NetEUFunc and there we go.
+      if (NetScope*new_scope = class_super->method_from_name(perm_string::literal("new@"))) {
+	    NetESignal*eres = new NetESignal(var_this);
+	    vector<NetExpr*> parms(1);
+	    parms[0] = eres;
+	    NetEUFunc*tmp = new NetEUFunc(scope, new_scope, eres, parms, true);
+	    tmp->set_line(*this);
+
+	    NetAssign_*lval_this = new NetAssign_(var_this);
+	    NetAssign*stmt = new NetAssign(lval_this, tmp);
+	    stmt->set_line(*this);
+	    return stmt;
+      }
+
+	// If super.new(...) is a user defined constructor, then call
+	// it. This is a bit more complicated because there may be arguments.
+      if (NetScope*new_scope = class_super->method_from_name(perm_string::literal("new"))) {
+
+	    int missing_parms = 0;
+	    NetFuncDef*def = new_scope->func_def();
+	    ivl_assert(*this, def);
+
+	    NetESignal*eres = new NetESignal(var_this);
+	    vector<NetExpr*> parms (def->port_count());
+	    parms[0] = eres;
+
+	    for (size_t idx = 1 ; idx < parms.size() ; idx += 1) {
+		  if (idx <= parms_.size() && parms_[idx-1]) {
+			PExpr*tmp = parms_[idx-1];
+			parms[idx] = elaborate_rval_expr(des, scope,
+							 def->port(idx)->net_type(),
+							 def->port(idx)->data_type(),
+							 def->port(idx)->vector_width(),
+							 tmp, false);
+			continue;
+		  }
+
+		  if (NetExpr*tmp = def->port_defe(idx)) {
+			parms[idx] = tmp;
+			continue;
+		  }
+
+		  missing_parms += 1;
+		  parms[idx] = 0;
+	    }
+
+	    if (missing_parms) {
+		  cerr << get_fileline() << ": error: "
+		       << "Missing " << missing_parms
+		       << " arguments to constructor " << scope_path(new_scope) << "." << endl;
+		  des->errors += 1;
+	    }
+
+	    NetEUFunc*tmp = new NetEUFunc(scope, new_scope, eres, parms, true);
+	    tmp->set_line(*this);
+
+	    NetAssign_*lval_this = new NetAssign_(var_this);
+	    NetAssign*stmt = new NetAssign(lval_this, tmp);
+	    stmt->set_line(*this);
+	    return stmt;
+      }
+
+	// There is no constructor at all in the parent, so skip it.
+      NetBlock*tmp = new NetBlock(NetBlock::SEQU, 0);
+      tmp->set_line(*this);
+      return tmp;
+      return 0;
+}
+
 NetProc* PCondit::elaborate(Design*des, NetScope*scope) const
 {
       assert(scope);
