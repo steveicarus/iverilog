@@ -46,7 +46,11 @@ struct target {
  */
 
 struct target_t {
+      inline target_t() : errors(0) { }
       virtual ~target_t();
+
+	/* Set this to count errors encountered during emit. */
+      int errors;
 
 	/* Start the design. This sets the main output file stream
 	   that the target should use. */

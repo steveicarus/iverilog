@@ -527,6 +527,15 @@ int Design::emit(struct target_t*tgt) const
       for (const NetAnalogTop*idx = aprocs_ ;  idx ;  idx = idx->next_)
 	    proc_rc &= idx->emit(tgt);
 
+      if (nodes_rc == false)
+	    tgt->errors += 1;
+      if (tasks_rc == false)
+	    tgt->errors += 1;
+      if (proc_rc == false)
+	    tgt->errors += 1;
+      if (branches_rc == false)
+	    tgt->errors += 1;
+
       rc = tgt->end_design(this);
 
       if (nodes_rc == false)
@@ -534,7 +543,7 @@ int Design::emit(struct target_t*tgt) const
       if (tasks_rc == false)
 	    return -2;
       if (proc_rc == false)
-	  return -3;
+	    return -3;
       if (branches_rc == false)
 	    return -4;
 

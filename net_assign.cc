@@ -22,6 +22,7 @@
 # include  "netlist.h"
 # include  "netclass.h"
 # include  "netdarray.h"
+# include  "netenum.h"
 # include  "ivl_assert.h"
 
 /*
@@ -38,8 +39,14 @@ unsigned count_lval_width(const NetAssign_*idx)
       return wid;
 }
 
+NetAssign_::NetAssign_(NetAssign_*n)
+: nest_(n), sig_(0), word_(0), base_(0), sel_type_(IVL_SEL_OTHER)
+{
+      more = 0;
+}
+
 NetAssign_::NetAssign_(NetNet*s)
-: sig_(s), word_(0), base_(0), sel_type_(IVL_SEL_OTHER)
+: nest_(0), sig_(s), word_(0), base_(0), sel_type_(IVL_SEL_OTHER)
 {
       lwid_ = sig_->vector_width();
       sig_->incr_lref();
@@ -57,6 +64,18 @@ NetAssign_::~NetAssign_()
 
       assert( more == 0 );
       delete word_;
+}
+
+string NetAssign_::get_fileline() const
+{
+      if (sig_) return sig_->get_fileline();
+      else return nest_->get_fileline();
+}
+
+NetScope*NetAssign_::scope() const
+{
+      if (sig_) return sig_->scope();
+      else return nest_->scope();
 }
 
 void NetAssign_::set_word(NetExpr*r)
@@ -87,55 +106,65 @@ ivl_select_type_t NetAssign_::select_type() const
 
 unsigned NetAssign_::lwidth() const
 {
-	// If the signal is a class type, then the situation is either
-	// "a.b" or "a.b.<member>". If this is "a.b" (no
-	// member/property reference, then return width==1. If this is
-	// "a.b.<member>", then get the type of the <member> property
-	// and return the width of that.
-      if (const netclass_t*class_type = sig_->class_type()) {
-	    if (member_.nil())
-		  return 1;
+	// This gets me the type of the l-value expression, down to
+	// the type of the member. If this returns nil, then resort to
+	// the lwid_ value.
+      ivl_type_t ntype = net_type();
+      if (ntype == 0)
+	    return lwid_;
 
-	    int pidx = class_type->property_idx_from_name(member_);
-	    ivl_assert(*sig_, pidx >= 0);
-	    ivl_type_t ptype = class_type->get_prop_type(pidx);
-	    return ptype->packed_width();
-      }
-
-      if (const netdarray_t*darray = sig_->darray_type()) {
+	// If the type is a darray, and there is a word index, then we
+	// actually want the width of the elements.
+      if (const netdarray_t*darray = dynamic_cast<const netdarray_t*> (ntype)) {
 	    if (word_ == 0)
 		  return 1;
 	    else
 		  return darray->element_width();
       }
 
-      return lwid_;
+      return ntype->packed_width();
 }
 
 ivl_variable_type_t NetAssign_::expr_type() const
 {
-      if (const netclass_t*class_type = sig_->class_type()) {
-	    if (member_.nil())
-		  return sig_->data_type();
-
-	    int pidx = class_type->property_idx_from_name(member_);
-	    ivl_assert(*sig_, pidx >= 0);
-	    ivl_type_t tmp = class_type->get_prop_type(pidx);
-	    return tmp->base_type();
-      }
-
-      if (const netdarray_t*darray = sig_->darray_type()) {
+      ivl_type_t ntype = net_type();
+      if (const netdarray_t*darray = dynamic_cast<const netdarray_t*>(ntype)) {
 	    if (word_ == 0)
 		  return IVL_VT_DARRAY;
 	    else
 		  return darray->element_base_type();
       }
 
+      if (ntype) return ntype->base_type();
+
+      ivl_assert(*this, sig_);
       return sig_->data_type();
 }
 
 const ivl_type_s* NetAssign_::net_type() const
 {
+      if (nest_) {
+	    const ivl_type_s*ntype = nest_->net_type();
+	    if (member_.nil())
+		  return ntype;
+
+	    if (const netclass_t*class_type = dynamic_cast<const netclass_t*>(ntype)) {
+		  int pidx = class_type->property_idx_from_name(member_);
+		  ivl_assert(*this, pidx >= 0);
+		  ivl_type_t tmp = class_type->get_prop_type(pidx);
+		  return tmp;
+	    }
+
+	    if (const netdarray_t*darray = dynamic_cast<const netdarray_t*> (ntype)) {
+		  if (word_ == 0)
+			return ntype;
+		  else
+			return darray->element_type();
+	    }
+
+	    return 0;
+      }
+
       if (const netclass_t*class_type = sig_->class_type()) {
 	    if (member_.nil())
 		  return sig_->net_type();
@@ -146,11 +175,11 @@ const ivl_type_s* NetAssign_::net_type() const
 	    return tmp;
       }
 
-      if (dynamic_cast<const netdarray_t*> (sig_->net_type())) {
+      if (const netdarray_t*darray = dynamic_cast<const netdarray_t*> (sig_->net_type())) {
 	    if (word_ == 0)
 		  return sig_->net_type();
-
-	    return 0;
+	    else
+		  return darray->element_type();
       }
 
       return 0;
@@ -159,10 +188,20 @@ const ivl_type_s* NetAssign_::net_type() const
 const netenum_t*NetAssign_::enumeration() const
 {
       const netenum_t*tmp = 0;
+      ivl_type_t ntype = net_type();
+      if (ntype == 0) {
 
-	// If the base signal is not an enumeration, return nil.
-      if ( (tmp = sig_->enumeration()) == 0 )
-	    return 0;
+	    ivl_assert(*this, sig_);
+
+	      // If the base signal is not an enumeration, return nil.
+	    if ( (tmp = sig_->enumeration()) == 0 )
+		  return 0;
+
+      } else {
+	    tmp = dynamic_cast<const netenum_t*>(ntype);
+	    if (tmp == 0)
+		  return 0;
+      }
 
 	// Part select of an enumeration is not an enumeration.
       if (base_ != 0)
@@ -199,7 +238,7 @@ void NetAssign_::set_part(NetExpr*base, unsigned wid,
 
 void NetAssign_::set_property(const perm_string&mname)
 {
-      ivl_assert(*sig_, sig_->class_type());
+	//ivl_assert(*sig_, sig_->class_type());
       member_ = mname;
 }
 

@@ -136,8 +136,9 @@ bool dll_target::func_def(const NetScope*net)
  * This private function makes the assignment lvals for the various
  * kinds of assignment statements.
  */
-void dll_target::make_assign_lvals_(const NetAssignBase*net)
+bool dll_target::make_assign_lvals_(const NetAssignBase*net)
 {
+      bool flag = true;
       assert(stmt_cur_);
 
       unsigned cnt = net->l_val_count();
@@ -188,9 +189,14 @@ void dll_target::make_assign_lvals_(const NetAssignBase*net)
 		  }
 
 	    } else {
-		  assert(0);
+		  cerr << net->get_fileline() << ": internal error: "
+		       << "I don't know how to handle nested l-values "
+		       << "in ivl_target.h API." << endl;
+		  flag = false;
 	    }
       }
+
+      return flag;
 }
 
 void dll_target::proc_alloc(const NetAlloc*net)
@@ -207,6 +213,8 @@ void dll_target::proc_alloc(const NetAlloc*net)
  */
 bool dll_target::proc_assign(const NetAssign*net)
 {
+      bool flag = true;
+
       assert(stmt_cur_);
       assert(stmt_cur_->type_ == IVL_ST_NONE);
 
@@ -216,7 +224,7 @@ bool dll_target::proc_assign(const NetAssign*net)
       stmt_cur_->u_.assign_.delay = 0;
 
 	/* Make the lval fields. */
-      make_assign_lvals_(net);
+      flag &= make_assign_lvals_(net);
 
       stmt_cur_->u_.assign_.oper = net->assign_operator();
       assert(expr_ == 0);
@@ -231,7 +239,7 @@ bool dll_target::proc_assign(const NetAssign*net)
 	    expr_ = 0;
       }
 
-      return true;
+      return flag;
 }
 
 

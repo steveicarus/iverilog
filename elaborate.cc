@@ -2392,7 +2392,7 @@ NetProc* PAssign::elaborate_compressed_(Design*des, NetScope*scope) const
 static bool lval_not_program_variable(const NetAssign_*lv)
 {
       while (lv) {
-	    NetScope*sig_scope = lv->sig()->scope();
+	    NetScope*sig_scope = lv->scope();
 	    if (! sig_scope->program_block() && sig_scope->type()!=NetScope::CLASS)
 		  return true;
 

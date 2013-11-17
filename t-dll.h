@@ -172,7 +172,7 @@ struct dll_target  : public target_t, public expr_scan_t {
 
       void add_root(const NetScope *s);
 
-      void make_assign_lvals_(const NetAssignBase*net);
+      bool make_assign_lvals_(const NetAssignBase*net);
       void sub_off_from_expr_(long);
       void mul_expr_by_const_(long);
 

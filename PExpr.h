@@ -510,6 +510,8 @@ class PEIdent : public PExpr {
       NetNet* elaborate_lnet_common_(Design*des, NetScope*scope,
 				     bool bidirectional_flag) const;
 
+      NetAssign_*scan_lname_for_nested_members_(Design*des, NetScope*scope,
+						       const pform_name_t&path) const;
       bool eval_part_select_(Design*des, NetScope*scope, NetNet*sig,
 			     long&midx, long&lidx) const;
 };

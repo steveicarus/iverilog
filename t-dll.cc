@@ -710,11 +710,20 @@ bool dll_target::start_design(const Design*des)
  */
 int dll_target::end_design(const Design*)
 {
-      if (verbose_flag) {
-	    cout << " ... invoking target_design" << endl;
+      int rc;
+      if (errors == 0) {
+	    if (verbose_flag) {
+		  cout << " ... invoking target_design" << endl;
+	    }
+
+	    rc = (target_)(&des_);
+      } else {
+	    if (verbose_flag) {
+		  cout << " ... skipping target_design due to errors." << endl;
+	    }
+	    rc = errors;
       }
 
-      int rc = (target_)(&des_);
       ivl_dlclose(dll_);
       return rc;
 }

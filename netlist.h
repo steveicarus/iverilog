@@ -2545,13 +2545,20 @@ class NetAlloc  : public NetProc {
 class NetAssign_ {
 
     public:
-      NetAssign_(NetNet*sig);
+      explicit NetAssign_(NetAssign_*nest);
+      explicit NetAssign_(NetNet*sig);
       ~NetAssign_();
+
+	// This is so NetAssign_ objects can be passed to ivl_assert
+	// and other macros that call this method.
+      string get_fileline() const;
 
 	// If this expression exists, then it is used to select a word
 	// from an array/memory.
       NetExpr*word();
       const NetExpr*word() const;
+
+      NetScope*scope()const;
 
 	// Get the base index of the part select, or 0 if there is no
 	// part select.
@@ -2609,6 +2616,8 @@ class NetAssign_ {
       void dump_lval(ostream&o) const;
 
     private:
+	// Nested l-value. If this is set, sig_ mut NOT be setl
+      NetAssign_*nest_;
       NetNet *sig_;
 	// Memory word index
       NetExpr*word_;

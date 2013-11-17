@@ -148,6 +148,44 @@ NetAssign_* PEConcat::elaborate_lval(Design*des,
       return res;
 }
 
+NetAssign_*PEIdent::scan_lname_for_nested_members_(Design*des, NetScope*scope,
+						   const pform_name_t&cur_path) const
+{
+      if (cur_path.size() == 1)
+	    return 0;
+
+      pform_name_t use_path = cur_path;
+      perm_string tmp_name = peek_tail_name(use_path);
+      use_path.pop_back();
+
+      NetNet*       reg = 0;
+      const NetExpr*par = 0;
+      NetEvent*     eve = 0;
+      symbol_search(this, des, scope, use_path, reg, par, eve);
+
+      if (reg == 0) {
+	    NetAssign_*tmp = scan_lname_for_nested_members_(des, scope, use_path);
+	    if (tmp == 0)
+		  return 0;
+
+	    tmp = new NetAssign_(tmp);
+	    tmp->set_property(tmp_name);
+	    return tmp;
+      }
+
+      if (reg->struct_type()) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "I don't know what to do with struct " << use_path << endl;
+	    return 0;
+      }
+
+      if (reg->class_type()) {
+	    return elaborate_lval_net_class_member_(des, scope, reg, tmp_name);
+      }
+
+      return 0;
+}
+
 /*
  * Handle the ident as an l-value. This includes bit and part selects
  * of that ident.
@@ -193,6 +231,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
 	    } else if (reg && reg->class_type()) {
 		  method_name = tmp_name;
+
+	    } else if (NetAssign_*subl = scan_lname_for_nested_members_(des, use_scope, path_)) {
+		  return subl;
 
 	    } else {
 		  reg = 0;
