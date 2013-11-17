@@ -1389,7 +1389,9 @@ variable_decl_assignment /* IEEE1800-2005 A.2.3 */
   | IDENTIFIER '=' K_new '(' ')'
       { decl_assignment_t*tmp = new decl_assignment_t;
 	tmp->name = lex_strings.make($1);
-	yyerror("sorry: Class initialization assignment not supported here.");
+	PENewClass*expr = new PENewClass;
+	FILE_NAME(expr, @3);
+	tmp->expr .reset(expr);
 	delete[]$1;
 	$$ = tmp;
       }
