@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2008,2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -74,7 +74,7 @@ PChainConstructor* PFunction::extract_chain_constructor()
 {
       PChainConstructor*res = 0;
 
-      if (res = dynamic_cast<PChainConstructor*> (statement_)) {
+      if ((res = dynamic_cast<PChainConstructor*> (statement_))) {
 	    statement_ = 0;
 
       } else if (PBlock*blk = dynamic_cast<PBlock*>(statement_)) {
