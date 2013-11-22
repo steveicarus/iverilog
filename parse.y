@@ -2262,8 +2262,24 @@ struct_data_type
 	tmp->members .reset($4);
 	$$ = tmp;
       }
+  | K_union K_packed_opt '{' struct_union_member_list '}'
+      { struct_type_t*tmp = new struct_type_t;
+	FILE_NAME(tmp, @1);
+	tmp->packed_flag = $2;
+	tmp->members .reset($4);
+	$$ = tmp;
+	yyerror(@4, "sorry: union data type not implemented.");
+      }
   | K_struct K_packed_opt '{' error '}'
-      { yyerror(@4, "error: Errors in struct/union member list.");
+      { yyerror(@4, "error: Errors in struct member list.");
+	yyerrok;
+	struct_type_t*tmp = new struct_type_t;
+	FILE_NAME(tmp, @1);
+	tmp->packed_flag = $2;
+	$$ = tmp;
+      }
+  | K_union K_packed_opt '{' error '}'
+      { yyerror(@4, "error: Errors in union member list.");
 	yyerrok;
 	struct_type_t*tmp = new struct_type_t;
 	FILE_NAME(tmp, @1);
