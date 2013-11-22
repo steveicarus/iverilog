@@ -2145,10 +2145,11 @@ unsigned PECallFunction::elaborate_arguments_(Design*des, NetScope*scope,
       unsigned missing_parms = 0;
 
       const unsigned parm_count = parms.size() - parm_off;
+      const unsigned actual_count = parms_.size();
 
       for (unsigned idx = 0 ; idx < parm_count ; idx += 1) {
 	    unsigned pidx = idx + parm_off;
-	    PExpr*tmp = parms_[idx];
+	    PExpr*tmp = (idx < actual_count) ? parms_[idx] : 0;
 	    if (tmp) {
 		  parms[pidx] = elaborate_rval_expr(des, scope,
 						    def->port(pidx)->net_type(),

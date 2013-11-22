@@ -601,16 +601,28 @@ void vthreads_delete(struct __vpiScope*scope)
 
 /*
  * Reaping pulls the thread out of the stack of threads. If I have a
- * child, then hand it over to my parent.
+ * child, then hand it over to my parent or fully detach it.
  */
 static void vthread_reap(vthread_t thr)
 {
       if (! thr->children.empty()) {
 	    for (set<vthread_t>::iterator cur = thr->children.begin()
 		       ; cur != thr->children.end() ; ++cur) {
-		  vthread_t curp = *cur;
-		  assert(curp->parent == thr);
-		  curp->parent = thr->parent;
+		  vthread_t child = *cur;
+		  assert(child);
+		  assert(child->parent == thr);
+		  child->parent = thr->parent;
+	    }
+      }
+      if (! thr->detached_children.empty()) {
+	    for (set<vthread_t>::iterator cur = thr->detached_children.begin()
+		       ; cur != thr->detached_children.end() ; ++cur) {
+		  vthread_t child = *cur;
+		  assert(child);
+		  assert(child->parent == thr);
+		  assert(child->i_am_detached);
+		  child->parent = 0;
+		  child->i_am_detached = 0;
 	    }
       }
       if (thr->parent) {
@@ -2071,7 +2083,7 @@ bool of_DEASSIGN(vthread_t, vvp_code_t cp)
 
 	// This is the net that is forcing me...
       if (vvp_net_t*src = sig->cassign_link) {
-	    if (!full_sig) {
+	    if (! full_sig) {
 		  fprintf(stderr, "Sorry: when a signal is assigning a "
 		          "register, I cannot deassign part of it.\n");
 		  exit(1);
@@ -2171,7 +2183,7 @@ static bool do_disable(vthread_t thr, vthread_t match)
 	/* Turn off all the children of the thread. Simulate a %join
 	   for as many times as needed to clear the results of all the
 	   %forks that this thread has done. */
-      while (!thr->children.empty()) {
+      while (! thr->children.empty()) {
 
 	    vthread_t tmp = *(thr->children.begin());
 	    assert(tmp);
@@ -2224,11 +2236,6 @@ bool of_DISABLE(vthread_t thr, vvp_code_t cp)
       while (! scope->threads.empty()) {
 	    set<vthread_t>::iterator cur = scope->threads.begin();
 
-	      /* If I am disabling myself, then remember that fact so
-		 that I can finish this statement differently. */
-	    if (*cur == thr)
-		  disabled_myself_flag = true;
-
 	    if (do_disable(*cur, thr))
 		  disabled_myself_flag = true;
       }
@@ -2250,7 +2257,7 @@ bool of_DISABLE_FORK(vthread_t thr, vvp_code_t)
       assert(thr->children.empty());
 
 	/* Disable any detached children. */
-      while (!thr->detached_children.empty()) {
+      while (! thr->detached_children.empty()) {
 	    vthread_t child = *(thr->detached_children.begin());
 	    assert(child);
 	    assert(child->parent == thr);
@@ -2571,7 +2578,7 @@ bool of_END(vthread_t thr, vvp_code_t)
       thr->pc = codespace_null();
 
 	/* Fully detach any detached children. */
-      while (!thr->detached_children.empty()) {
+      while (! thr->detached_children.empty()) {
 	    vthread_t child = *(thr->detached_children.begin());
 	    assert(child);
 	    assert(child->parent == thr);
@@ -2596,7 +2603,7 @@ bool of_END(vthread_t thr, vvp_code_t)
 	      // thread. These threads must be reaped first. If the
 	      // parent is waiting on a task or function (other than me)
 	      // then go into zombie state to be picked up later.
-	    if (!test_joinable(tmp, thr))
+	    if (! test_joinable(tmp, thr))
 		  return false;
 
 	    tmp->i_am_joining = 0;
@@ -3123,7 +3130,7 @@ bool of_JMP1(vthread_t thr, vvp_code_t cp)
 static bool test_joinable(vthread_t thr, vthread_t child)
 {
       set<vthread_t>::iterator cur = thr->task_func_children.find(child);
-      if (!thr->task_func_children.empty() && cur == thr->task_func_children.end())
+      if (! thr->task_func_children.empty() && cur == thr->task_func_children.end())
 	    return false;
 
       return true;
@@ -3163,10 +3170,10 @@ bool of_JOIN(vthread_t thr, vvp_code_t)
       for (set<vthread_t>::iterator cur = thr->children.begin()
 		 ; cur != thr->children.end() ; ++cur) {
 	    vthread_t curp = *cur;
-	    if (!curp->i_have_ended)
+	    if (! curp->i_have_ended)
 		  continue;
 
-	    if (!test_joinable(thr, curp))
+	    if (! test_joinable(thr, curp))
 		  continue;
 
 	      // found something!
@@ -3191,7 +3198,7 @@ bool of_JOIN_DETACH(vthread_t thr, vvp_code_t cp)
       assert(thr->task_func_children.empty());
       assert(count == thr->children.size());
 
-      while (!thr->children.empty()) {
+      while (! thr->children.empty()) {
 	    vthread_t child = *thr->children.begin();
 	    assert(child->parent == thr);
 
@@ -3729,7 +3736,7 @@ static void do_verylong_mod(vthread_t thr, vvp_code_t cp,
       a[len]=1;
 
       for(i=len-1;i>=0;i--) {
-	    if(!a[i]) {
+	    if(! a[i]) {
 		  mxa=i;
 		  break;
 	    }
