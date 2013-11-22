@@ -235,9 +235,6 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 	    part_off_ex = 0;
       }
 
-      if (ivl_lval_mux(lval))
-	    part_off_ex = ivl_lval_mux(lval);
-
       unsigned long low_d = delay % UINT64_C(0x100000000);
       unsigned long hig_d = delay / UINT64_C(0x100000000);
 
@@ -985,7 +982,6 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 
 	    } else {
 		    /* Do not support bit or part selects of l-values yet. */
-		  assert(ivl_lval_mux(lval) == 0);
 		  assert(ivl_lval_width(lval) == ivl_signal_width(lsig));
 
 		  assert((roff + use_wid) <= rvec.wid);
@@ -1208,7 +1204,6 @@ static int show_stmt_deassign(ivl_statement_t net)
 	    unsigned part_off;
 
 	    assert(lsig != 0);
-	    assert(ivl_lval_mux(lval) == 0);
 
 	    use_wid = ivl_lval_width(lval);
 	    part_off_ex = ivl_lval_part_off(lval);
@@ -1619,7 +1614,6 @@ static int show_stmt_release(ivl_statement_t net)
 	    unsigned part_off;
 
 	    assert(lsig != 0);
-	    assert(ivl_lval_mux(lval) == 0);
 
 	    use_wid = ivl_lval_width(lval);
 	    part_off_ex = ivl_lval_part_off(lval);

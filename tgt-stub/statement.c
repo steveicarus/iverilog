@@ -22,7 +22,7 @@
 # include <assert.h>
 
 /*
- * If the l-value signal is a darray object, then the ivl_lval_mux()
+ * If the l-value signal is a darray object, then the ivl_lval_idx()
  * gets you the array index expression.
  */
 static unsigned show_assign_lval_darray(ivl_lval_t lval, unsigned ind)
@@ -43,11 +43,6 @@ static unsigned show_assign_lval_darray(ivl_lval_t lval, unsigned ind)
 	    show_expression(ivl_lval_idx(lval), ind+6);
       }
 
-      if (ivl_lval_mux(lval)) {
-	    fprintf(out, "%*sERROR: unexpected ivl_lval_mux() expression:\n", ind+4, "");
-	    stub_errors += 1;
-	    show_expression(ivl_lval_mux(lval), ind+6);
-      }
       if (ivl_lval_part_off(lval)) {
 	    fprintf(out, "%*sERROR: unexpected Part select expression:\n", ind+4, "");
 	    stub_errors += 1;
@@ -116,10 +111,6 @@ static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
 	    stub_errors += 1;
       }
 
-      if (ivl_lval_mux(lval)) {
-	    fprintf(out, "%*sBit select expression:\n", ind+4, "");
-	    show_expression(ivl_lval_mux(lval), ind+8);
-      }
       if (ivl_lval_part_off(lval)) {
 	    fprintf(out, "%*sPart select base:\n", ind+4, "");
 	    show_expression(ivl_lval_part_off(lval), ind+8);

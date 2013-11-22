@@ -111,9 +111,6 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	    word_ix = 0;
       }
 
-      if (ivl_lval_mux(lval))
-	    part_off_ex = ivl_lval_mux(lval);
-
       if (ivl_signal_dimensions(sig)==0 && part_off_ex==0 && word_ix==0
 	  && part_off==0 && wid==ivl_signal_width(sig)) {
 
@@ -352,9 +349,6 @@ static void set_vec_to_lval_slice(ivl_lval_t lval, unsigned bit, unsigned wid)
 	    assert(use_word < ivl_signal_array_count(sig));
 	    word_ix = 0;
       }
-
-      if (ivl_lval_mux(lval))
-	    part_off_ex = ivl_lval_mux(lval);
 
       if (part_off_ex && ivl_signal_dimensions(sig) == 0) {
 	    unsigned skip_set = transient_id++;
@@ -757,7 +751,6 @@ static int show_stmt_assign_sig_string(ivl_statement_t net)
 
       assert(ivl_stmt_lvals(net) == 1);
       assert(ivl_stmt_opcode(net) == 0);
-      assert(ivl_lval_mux(lval) == 0);
 
 	/* Simplest case: no mux. Evaluate the r-value as a string and
 	   store the result into the variable. Note that the
@@ -885,7 +878,6 @@ static int show_stmt_assign_sig_darray(ivl_statement_t net)
 
       assert(ivl_stmt_lvals(net) == 1);
       assert(ivl_stmt_opcode(net) == 0);
-      assert(ivl_lval_mux(lval) == 0);
       assert(part == 0);
 
       if (mux && (ivl_type_base(element_type)==IVL_VT_REAL)) {

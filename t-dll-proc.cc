@@ -150,50 +150,59 @@ bool dll_target::make_assign_lvals_(const NetAssignBase*net)
       for (unsigned idx = 0 ;  idx < cnt ;  idx += 1) {
 	    struct ivl_lval_s*cur = stmt_cur_->u_.assign_.lval_ + idx;
 	    const NetAssign_*asn = net->l_val(idx);
-	    const NetExpr*loff = asn->get_base();
+	    flag &= make_single_lval_(net, cur, asn);
+      }
 
-	    if (loff == 0) {
-		  cur->loff = 0;
-		  cur->sel_type = IVL_SEL_OTHER;
-	    } else {
-		  loff->expr_scan(this);
-		  cur->loff = expr_;
-		  cur->sel_type = asn->select_type();
+      return flag;
+}
+
+bool dll_target::make_single_lval_(const LineInfo*li, struct ivl_lval_s*cur, const NetAssign_*asn)
+{
+      bool flag = true;
+
+      const NetExpr*loff = asn->get_base();
+
+      if (loff == 0) {
+	    cur->loff = 0;
+	    cur->sel_type = IVL_SEL_OTHER;
+      } else {
+	    loff->expr_scan(this);
+	    cur->loff = expr_;
+	    cur->sel_type = asn->select_type();
+	    expr_ = 0;
+      }
+
+      cur->width_ = asn->lwidth();
+
+      if (asn->sig()) {
+	    cur->type_ = IVL_LVAL_REG;
+	    cur->n.sig = find_signal(des_, asn->sig());
+
+	    cur->idx = 0;
+	      // If there is a word select expression, it is
+	      // really an array index. Note that the word index
+	      // expression is already converted to canonical
+	      // form by elaboration.
+	    if (asn->word()) {
+		  assert(expr_ == 0);
+		  asn->word()->expr_scan(this);
+		  cur->type_ = IVL_LVAL_ARR;
+		  cur->idx = expr_;
 		  expr_ = 0;
 	    }
 
-	    cur->width_ = asn->lwidth();
-
-	    if (asn->sig()) {
-		  cur->type_ = IVL_LVAL_REG;
-		  cur->n.sig = find_signal(des_, asn->sig());
-
-		  cur->idx = 0;
-		    // If there is a word select expression, it is
-		    // really an array index. Note that the word index
-		    // expression is already converted to canonical
-		    // form by elaboration.
-		  if (asn->word()) {
-			assert(expr_ == 0);
-			asn->word()->expr_scan(this);
-			cur->type_ = IVL_LVAL_ARR;
-			cur->idx = expr_;
-			expr_ = 0;
-		  }
-
-		  cur->property_idx = -1;
-		  perm_string pname = asn->get_property();
-		  if (!pname.nil()) {
-			const netclass_t*use_type = dynamic_cast<const netclass_t*> (cur->n.sig->net_type);
-			cur->property_idx = use_type->property_idx_from_name(pname);
-		  }
-
-	    } else {
-		  cerr << net->get_fileline() << ": internal error: "
-		       << "I don't know how to handle nested l-values "
-		       << "in ivl_target.h API." << endl;
-		  flag = false;
+	    cur->property_idx = -1;
+	    perm_string pname = asn->get_property();
+	    if (!pname.nil()) {
+		  const netclass_t*use_type = dynamic_cast<const netclass_t*> (cur->n.sig->net_type);
+		  cur->property_idx = use_type->property_idx_from_name(pname);
 	    }
+
+      } else {
+	    cerr << li->get_fileline() << ": internal error: "
+		 << "I don't know how to handle nested l-values "
+		 << "in ivl_target.h API." << endl;
+	    flag = false;
       }
 
       return flag;
