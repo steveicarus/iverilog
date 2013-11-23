@@ -43,7 +43,7 @@ static int   is_defined(const char*name);
 
 static int   macro_needs_args(const char*name);
 static void  macro_start_args();
-static void  macro_add_to_arg();
+static void  macro_add_to_arg(int is_whitespace);
 static void  macro_finish_arg();
 static void  do_expand(int use_args);
 static const char* do_magic(const char*name);
@@ -352,6 +352,9 @@ keywords (include|define|undef|ifdef|ifndef|else|elseif|endif)
 <DEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]*"("{W}? { BEGIN(DEF_ARG); def_start(); }
 <DEF_NAME>[a-zA-Z_][a-zA-Z0-9_$]*{W}?    { BEGIN(DEF_TXT); def_start(); }
 
+  /* define arg: <name> = <text> */
+<DEF_ARG>[a-zA-Z_][a-zA-Z0-9_$]*{W}*"="[^,\)]*{W}? { BEGIN(DEF_SEP); def_add_arg(); }
+  /* define arg: <name> */
 <DEF_ARG>[a-zA-Z_][a-zA-Z0-9_$]*{W}? { BEGIN(DEF_SEP); def_add_arg(); }
 
 <DEF_SEP>","{W}? { BEGIN(DEF_ARG); }
@@ -672,6 +675,7 @@ struct define_t
     char*   value;
     int     keyword; /* keywords don't get rescanned for fresh values. */
     int     argc;
+    char**  defaults;
     int     magic; /* 1 for 'magic' macros like __FILE__ and __LINE__. magic
                     * macros cannot be undefined. magic macros are expanded
                     * by do_magic. N.B. DON'T set a magic macro with
@@ -774,13 +778,22 @@ static int is_defined(const char*name)
 
 #define DEF_BUF_CHUNK 256
 
+/*
+ * During parse of macro definitions, and the name/arguments in
+ * particular, keep the names and name lengths in a compact stretch of
+ * memory. Note that we do not keep the argument names once the
+ * definition is fully processed, because arguments are always
+ * positional and the definition string hs replaced with position
+ * tokens.
+ */
 static char* def_buf = 0;
 static int   def_buf_size = 0;
 static int   def_buf_free = 0;
 
 static int   def_argc = 0;
-static int   def_argo[MAX_DEF_ARG];  /* offset of first character in arg */
-static int   def_argl[MAX_DEF_ARG];  /* length of arg string. */
+static int   def_argo[MAX_DEF_ARG];  /* offset of first character of arg name */
+static int   def_argl[MAX_DEF_ARG];  /* lengths of arg names. */
+static int   def_argd[MAX_DEF_ARG];  /* Offset of default value */
 
 /*
  * Return a pointer to the start of argument 'arg'. Returned pointers
@@ -829,23 +842,65 @@ static void def_add_arg()
     while (isspace((int)yytext[length - 1]))
         length--;
 
+      /* This can happen because we are also processing "argv[0]", the
+	 macro name, as a pseudo-argument. The lexor will match that
+	 as name(, so chop off the ( here. */
     if (yytext[length - 1] == '(')
         length--;
 
     yytext[length] = 0;
 
+    char*arg = yytext;
+    char*val;
+    int  val_length;
+
+      /* Break into ARG = value. This happens if the source specifies
+	 a default value for the formal argument. In that case, the
+	 lexor will match the whole thing as the argument and it is up
+	 to us to chop it up to name and value. */
+    if ( (val=strchr(arg,'=')) ) {
+	  *val++ = 0;
+	  while (*val && isspace(*val)) val += 1;
+
+	  val_length = strlen(val);
+	  while (val_length>0 && isspace(val[val_length-1])) {
+		val_length -= 1;
+		val[val_length] = 0;
+	  }
+
+	    /* Strip white space from betwen arg and "=". */
+	  length = strlen(arg);
+	  while (length>0 && isspace(arg[length-1])) {
+		length -= 1;
+		arg[length] = 0;
+	  }
+    }
+
     /* Make sure there's room in the buffer for the new argument. */
     def_buf_grow_to_fit(length);
 
-    /* Store the new argument. */
+    /* Store the new argument name. */
     def_argl[def_argc] = length;
     def_argo[def_argc] = def_buf_size - def_buf_free;
-    strcpy(def_argv(def_argc++), yytext);
+    strcpy(def_argv(def_argc), arg);
     def_buf_free -= length + 1;
+
+      /* If there is a default text, then stash it away as well. */
+    if (val) {
+	  def_buf_grow_to_fit(val_length);
+	  def_argd[def_argc] = def_buf_size - def_buf_free;
+	  strcpy(def_buf+def_argd[def_argc], val);
+	  def_buf_free -= val_length + 1;
+    } else {
+	  def_argd[def_argc] = 0;
+    }
+
+    def_argc += 1;
 }
 
 void define_macro(const char* name, const char* value, int keyword, int argc)
 {
+    int idx;
     struct define_t* def;
 
     def = malloc(sizeof(struct define_t));
@@ -857,6 +912,14 @@ void define_macro(const char* name, const char* value, int keyword, int argc)
     def->left = 0;
     def->right = 0;
     def->up = 0;
+    def->defaults = calloc(argc, sizeof(char*));
+    for (idx = 0 ; idx < argc ; idx += 1) {
+	  if (def_argd[idx] == 0) {
+		def->defaults[idx] = 0;
+	  } else {
+		def->defaults[idx] = strdup(def_buf+def_argd[idx]);
+	  }
+    }
 
     if (def_table == 0)
         def_table = def;
@@ -904,11 +967,15 @@ void define_macro(const char* name, const char* value, int keyword, int argc)
 
 static void free_macro(struct define_t* def)
 {
+    int idx;
     if (def == 0) return;
     free_macro(def->left);
     free_macro(def->right);
     free(def->name);
     free(def->value);
+    for (idx = 0 ; idx < def->argc ; idx += 1)
+	  free(def->defaults[idx]);
+    free(def->defaults);
     free(def);
 }
 
@@ -1171,6 +1238,7 @@ static void def_undefine()
 {
     struct define_t* cur;
     struct define_t* tail;
+    int idx;
 
     /* def_buf is used to store the macro name. Make sure there is
      * enough space.
@@ -1264,6 +1332,9 @@ static void def_undefine()
 
     free(cur->name);
     free(cur->value);
+    for (idx = 0 ; idx < cur->argc ; idx += 1)
+	  free(cur->defaults[idx]);
+    free(cur->defaults);
     free(cur);
 }
 
@@ -1294,7 +1365,7 @@ static const char* macro_name()
     return cur_macro ? cur_macro->name : "";
 }
 
-static void macro_start_args()
+static void macro_start_args(void)
 {
     /* The macro name can be found via cur_macro, so create a null
      * entry for arg 0. This will be used by macro_finish_arg() to
@@ -1398,13 +1469,22 @@ static void expand_using_args()
         {
             arg = tail[1]; assert(arg < def_argc);
 
-            length = (tail - head) + def_argl[arg];
+            char*use_argv;
+	    int  use_argl;
+	    if (def_argl[arg] == 0 && cur_macro->defaults[arg]) {
+		  use_argv = cur_macro->defaults[arg];
+		  use_argl = strlen(use_argv);
+	    } else {
+		  use_argv = def_argv(arg);
+		  use_argl = def_argl[arg];
+	    }
+	    length = (tail - head) + use_argl;
             exp_buf_grow_to_fit(length);
 
             dest = &exp_buf[exp_buf_size - exp_buf_free];
             memcpy(dest, head, tail - head);
             dest += tail - head;
-            memcpy(dest, def_argv(arg), def_argl[arg]);
+            memcpy(dest, use_argv, use_argl);
 
             exp_buf_free -= length;
 
