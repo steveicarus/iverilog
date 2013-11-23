@@ -2594,6 +2594,7 @@ class NetAssign_ {
       perm_string name() const;
 
       NetNet* sig() const;
+      inline const NetAssign_* nest() const { return nest_; }
 
 	// Mark that the synthesizer has worked with this l-value, so
 	// when it is released, the l-value signal should be turned

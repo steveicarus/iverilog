@@ -318,6 +318,38 @@ static void put_vec_to_lval(ivl_statement_t net, struct vec_slice_info*slices,
       }
 }
 
+static ivl_type_t draw_lval_expr(ivl_lval_t lval)
+{
+      ivl_lval_t lval_nest = ivl_lval_nest(lval);
+      ivl_signal_t lval_sig = ivl_lval_sig(lval);
+      ivl_type_t sub_type;
+
+      if (lval_nest) {
+	    sub_type = draw_lval_expr(lval_nest);
+      } else {
+	    assert(lval_sig);
+	    sub_type = ivl_signal_net_type(lval_sig);
+	    assert(ivl_type_base(sub_type) == IVL_VT_CLASS);
+	    fprintf(vvp_out, "    %%load/obj v%p_0;\n", lval_sig);
+      }
+
+      assert(ivl_type_base(sub_type) == IVL_VT_CLASS);
+      fprintf(vvp_out, "    %%prop/obj %d;\n", ivl_lval_property_idx(lval));
+      fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
+      return ivl_type_prop_type(sub_type, ivl_lval_property_idx(lval));
+}
+
+static void set_vec_to_lval_slice_nest(ivl_lval_t lval, unsigned bit, unsigned wid)
+{
+      ivl_lval_t lval_nest = ivl_lval_nest(lval);
+      ivl_type_t ltype = draw_lval_expr(lval_nest);
+      assert(ivl_type_base(ltype) == IVL_VT_CLASS);
+
+      fprintf(vvp_out, "    %%store/prop/v %d, %u, %u;\n",
+	      ivl_lval_property_idx(lval), bit, wid);
+      fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+}
+
 static void set_vec_to_lval_slice(ivl_lval_t lval, unsigned bit, unsigned wid)
 {
       ivl_signal_t sig  = ivl_lval_sig(lval);
@@ -329,6 +361,13 @@ static void set_vec_to_lval_slice(ivl_lval_t lval, unsigned bit, unsigned wid)
 	   word if the address is constant. */
       ivl_expr_t word_ix = ivl_lval_idx(lval);
       unsigned long use_word = 0;
+
+	/* If the l-value is nested, then it is something like a class
+	   with a chain of member names, so handle that elsewhere. */
+      if (ivl_lval_nest(lval)) {
+	    set_vec_to_lval_slice_nest(lval, bit, wid);
+	    return;
+      }
 
       if (part_off_ex == 0) {
 	    part_off = 0;
@@ -953,7 +992,7 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		  fprintf(vvp_out, "    %%store/prop/v %d, %u, %u; Store in bool property %s\n",
 			  prop_idx, val.base, val.wid,
 			  ivl_type_prop_name(sig_type, prop_idx));
-		  fprintf(vvp_out, "    %%pop/obj 1;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 		  clr_vector(val);
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_LOGIC) {
@@ -967,7 +1006,7 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		  fprintf(vvp_out, "    %%store/prop/v %d, %u, %u; Store in logic property %s\n",
 			  prop_idx, val.base, val.wid,
 			  ivl_type_prop_name(sig_type, prop_idx));
-		  fprintf(vvp_out, "    %%pop/obj 1;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 		  clr_vector(val);
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_REAL) {
@@ -978,7 +1017,7 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		  draw_eval_real(rval);
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 		  fprintf(vvp_out, "    %%store/prop/r %d;\n", prop_idx);
-		  fprintf(vvp_out, "    %%pop/obj 1;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_STRING) {
 
@@ -988,7 +1027,7 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		  draw_eval_string(rval);
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 		  fprintf(vvp_out, "    %%store/prop/str %d;\n", prop_idx);
-		  fprintf(vvp_out, "    %%pop/obj 1;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_DARRAY) {
 
@@ -998,7 +1037,7 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 		  draw_eval_object(rval);
 		  fprintf(vvp_out, "    %%store/prop/obj %d;\n", prop_idx);
-		  fprintf(vvp_out, "    %%pop/obj 1;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_CLASS) {
 
@@ -1006,7 +1045,7 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
 		  draw_eval_object(rval);
 		  fprintf(vvp_out, "    %%store/prop/obj %d;\n", prop_idx);
-		  fprintf(vvp_out, "    %%pop/obj 1;\n");
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
 	    } else {
 		  fprintf(vvp_out, " ; ERROR: ivl_type_base(prop_type) = %d\n",

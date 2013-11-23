@@ -209,7 +209,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%or",     of_OR,     3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%or/r",   of_ORR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%pad",    of_PAD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%pop/obj", of_POP_OBJ, 1, {OA_NUMBER,  OA_NONE,     OA_NONE} },
+      { "%pop/obj", of_POP_OBJ, 2, {OA_BIT1,    OA_BIT2,     OA_NONE} },
       { "%pop/real",of_POP_REAL,1, {OA_NUMBER,  OA_NONE,     OA_NONE} },
       { "%pop/str", of_POP_STR, 1, {OA_NUMBER,  OA_NONE,     OA_NONE} },
       { "%pow",    of_POW,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },

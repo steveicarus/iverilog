@@ -646,16 +646,6 @@ the object handle stack.
 
 See also %store/obj.
 
-
-* %load/prop/v <pid>, <bit>, <wid>
-
-This instruction loads from a class object property into the specified
-thread register bit. The <pid> is the number of the property and the
-<bit> is the location where the loaded value goes.
-
-The handle for the class object is found on the top of the object
-stack, and the stack is NOT popped.
-
 * %load/real <vpi-label>
 
 The %load/real instruction reads a real value from the vpi-like object
@@ -874,13 +864,17 @@ or sign extending a vector.
 
 * %pop/str <num>
 * %pop/real <num>
-* %pop/obj <num>
+* %pop/obj <num>, <skip>
 
-Pop this many items from the string/real/object stack. This is the
+Pop <num> items from the string/real/object stack. This is the
 opposite of the %pushX/str opcode which pushes a string to the
 stack. The %pop/str is not normally needed because the %store/str
 includes an implicit pop, but sometimes it is necessary to pop
 explicitly.
+
+The <skip> is the number of top positions on the stack to keep,
+beforing starting to pop. This allows for popping positions other then
+the top of the stack.
 
 * %pow <bit-l>, <bit-r>, <wid>
 * %pow/s <bit-l>, <bit-r>, <wid>
@@ -902,9 +896,10 @@ the result.
 * %prop/r <pid>
 * %prop/str <pid>
 
-Write the vector (/v) or real value (/r) or string (/str) into
-property number <pid> of the class object on the top of the object
-stack.
+Read a vector (/v) or real value (/r) or string (/str) or object from
+the property number <pid> of the class object on the stop of the
+object stack. Push the resulting value to the appropriate stack. The
+object that is the source is NOT popped from from object stack.
 
 The class object stack is NOT popped.
 

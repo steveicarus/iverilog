@@ -1625,6 +1625,15 @@ extern "C" ivl_signal_t ivl_lval_sig(ivl_lval_t net)
       }
 }
 
+extern "C" ivl_lval_t ivl_lval_nest(ivl_lval_t net)
+{
+      assert(net);
+      if (net->type_ == IVL_LVAL_LVAL)
+	    return net->n.nest;
+
+      return 0;
+}
+
 extern "C" const char* ivl_nature_name(ivl_nature_t net)
 {
       return net->name();
@@ -2728,6 +2737,7 @@ extern "C" unsigned ivl_stmt_lwidth(ivl_statement_t net)
 	    switch(cur->type_) {
 		case IVL_LVAL_REG:
 		case IVL_LVAL_ARR:
+		case IVL_LVAL_LVAL:
 		  sum += ivl_lval_width(cur);
 		  break;
 		default:

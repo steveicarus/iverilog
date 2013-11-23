@@ -187,12 +187,16 @@ struct vthread_s {
 	    obj = stack_obj_[stack_obj_size_];
 	    stack_obj_[stack_obj_size_].reset(0);
       }
-      inline void pop_object(unsigned cnt)
+      inline void pop_object(unsigned cnt, unsigned skip =0)
       {
-	    assert(cnt <= stack_obj_size_);
-	    for (size_t idx = stack_obj_size_-cnt ; idx < stack_obj_size_ ; idx += 1)
+	    assert((cnt+skip) <= stack_obj_size_);
+	    for (size_t idx = stack_obj_size_-skip-cnt ; idx < stack_obj_size_-skip ; idx += 1)
 		  stack_obj_[idx].reset(0);
 	    stack_obj_size_ -= cnt;
+	    for (size_t idx = stack_obj_size_-skip ; idx < stack_obj_size_ ; idx += 1)
+		  stack_obj_[idx] = stack_obj_[idx+skip];
+	    for (size_t idx = stack_obj_size_ ; idx < stack_obj_size_+skip ; idx += 1)
+		  stack_obj_[idx].reset(0);
       }
       inline void push_object(const vvp_object_t&obj)
       {
@@ -4502,12 +4506,14 @@ bool of_NOR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %pop/obj <number>
+ * %pop/obj <num>, <skip>
  */
 bool of_POP_OBJ(vthread_t thr, vvp_code_t cp)
 {
-      unsigned cnt = cp->number;
-      thr->pop_object(cnt);
+      unsigned cnt = cp->bit_idx[0];
+      unsigned skip = cp->bit_idx[1];
+
+      thr->pop_object(cnt, skip);
       return true;
 }
 

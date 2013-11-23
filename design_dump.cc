@@ -871,19 +871,18 @@ void NetAlloc::dump(ostream&o, unsigned ind) const
 
 void NetAssign_::dump_lval(ostream&o) const
 {
-      if (sig_) {
-	    o << sig_->name();
-	    if (! member_.nil()) {
-		  o << "." << member_;
-	    }
-	    if (word_) {
-		  o << "[word=" << *word_ << "]";
-	    }
-	    if (base_) {
-		  o << "[" << *base_ << " +: " << lwid_ << "]";
-	    }
-      } else {
-	    o << "";
+      if (sig_) o << sig_->name();
+      else if (nest_) nest_->dump_lval(o);
+      else o << "<?>";
+
+      if (! member_.nil()) {
+	    o << "." << member_;
+      }
+      if (word_) {
+	    o << "[word=" << *word_ << "]";
+      }
+      if (base_) {
+	    o << "[" << *base_ << " +: " << lwid_ << "]";
       }
 }
 

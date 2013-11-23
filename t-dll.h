@@ -454,7 +454,8 @@ struct ivl_lpm_s {
 
 enum ivl_lval_type_t {
       IVL_LVAL_REG = 0,
-      IVL_LVAL_ARR = 4
+      IVL_LVAL_ARR = 4,
+      IVL_LVAL_LVAL= 5  // Nested l-value
 };
 
 struct ivl_lval_s {
@@ -462,10 +463,11 @@ struct ivl_lval_s {
       ivl_select_type_t sel_type :3;
       ivl_expr_t idx;
       unsigned width_;
-      unsigned type_   : 8;
+      unsigned type_   : 8; /* values from ivl_lval_type_t */
       int property_idx;
       union {
 	    ivl_signal_t sig;
+	    ivl_lval_t  nest; // type_ == IVL_LVAL_LVAL
       } n;
 };
 

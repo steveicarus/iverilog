@@ -1446,6 +1446,10 @@ extern const char*ivl_lpm_string(ivl_lpm_t net);
  *
  * ivl_lval_mux (* obsolete *)
  *
+ * ivl_lval_nest
+ *    If the l-value is an object more complex than a variable, then
+ *    this returns the nested l-value (and ivl_lval_sig==0).
+ *
  * ivl_lval_sig
  *    If the l-value is a variable, this method returns the signal
  *    object that is the target of the assign.
@@ -1493,6 +1497,7 @@ extern ivl_expr_t  ivl_lval_part_off(ivl_lval_t net);
 extern ivl_select_type_t ivl_lval_sel_type(ivl_lval_t net);
 extern int ivl_lval_property_idx(ivl_lval_t net);
 extern ivl_signal_t ivl_lval_sig(ivl_lval_t net);
+extern ivl_lval_t  ivl_lval_nest(ivl_lval_t net);
 
 
 /* NEXUS

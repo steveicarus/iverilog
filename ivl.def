@@ -141,6 +141,7 @@ ivl_lpm_width
 
 ivl_lval_idx
 ivl_lval_mux
+ivl_lval_nest
 ivl_lval_part_off
 ivl_lval_property_idx
 ivl_lval_sel_type

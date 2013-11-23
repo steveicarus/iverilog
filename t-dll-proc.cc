@@ -30,6 +30,7 @@
 # include  "netclass.h"
 # include  <cstdlib>
 # include  "ivl_alloc.h"
+# include  "ivl_assert.h"
 
 bool dll_target::process(const NetProcTop*net)
 {
@@ -174,35 +175,51 @@ bool dll_target::make_single_lval_(const LineInfo*li, struct ivl_lval_s*cur, con
 
       cur->width_ = asn->lwidth();
 
+      ivl_type_t nest_type = 0;
+
       if (asn->sig()) {
 	    cur->type_ = IVL_LVAL_REG;
 	    cur->n.sig = find_signal(des_, asn->sig());
 
-	    cur->idx = 0;
-	      // If there is a word select expression, it is
-	      // really an array index. Note that the word index
-	      // expression is already converted to canonical
-	      // form by elaboration.
-	    if (asn->word()) {
-		  assert(expr_ == 0);
-		  asn->word()->expr_scan(this);
-		  cur->type_ = IVL_LVAL_ARR;
-		  cur->idx = expr_;
-		  expr_ = 0;
-	    }
-
-	    cur->property_idx = -1;
-	    perm_string pname = asn->get_property();
-	    if (!pname.nil()) {
-		  const netclass_t*use_type = dynamic_cast<const netclass_t*> (cur->n.sig->net_type);
-		  cur->property_idx = use_type->property_idx_from_name(pname);
-	    }
-
       } else {
-	    cerr << li->get_fileline() << ": internal error: "
-		 << "I don't know how to handle nested l-values "
-		 << "in ivl_target.h API." << endl;
-	    flag = false;
+	    const NetAssign_*asn_nest = asn->nest();
+	    ivl_assert(*li, asn_nest);
+	    nest_type = asn_nest->net_type();
+	    struct ivl_lval_s*cur_nest = new struct ivl_lval_s;
+	    make_single_lval_(li, cur_nest, asn_nest);
+
+	    cur->type_ = IVL_LVAL_LVAL;
+	    cur->n.nest = cur_nest;
+      }
+
+      cur->idx = 0;
+	// If there is a word select expression, it is
+	// really an array index. Note that the word index
+	// expression is already converted to canonical
+	// form by elaboration.
+      if (asn->word()) {
+	    assert(expr_ == 0);
+	    asn->word()->expr_scan(this);
+	    cur->type_ = IVL_LVAL_ARR;
+	    cur->idx = expr_;
+	    expr_ = 0;
+      }
+
+      cur->property_idx = -1;
+      perm_string pname = asn->get_property();
+      if (!pname.nil()) {
+	    const netclass_t*use_type;
+	    switch (cur->type_) {
+		case IVL_LVAL_LVAL:
+		  assert(nest_type);
+		  use_type = dynamic_cast<const netclass_t*> (nest_type);
+		  break;
+		default:
+		  use_type = dynamic_cast<const netclass_t*> (cur->n.sig->net_type);
+		  break;
+	    }
+	    assert(use_type);
+	    cur->property_idx = use_type->property_idx_from_name(pname);
       }
 
       return flag;

@@ -225,6 +225,7 @@ perm_string NetAssign_::name() const
 
 NetNet* NetAssign_::sig() const
 {
+      assert(sig_? nest_==0 : nest_!=0);
       return sig_;
 }
 

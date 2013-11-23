@@ -76,8 +76,59 @@ static unsigned show_assign_lval_class(ivl_lval_t lval, unsigned ind)
       return ivl_lval_width(lval);
 }
 
+unsigned width_of_type(ivl_type_t net)
+{
+      switch (ivl_type_packed_dimensions(net)) {
+	  case 0:
+	    return 1;
+	  case 1: {
+		int msb = ivl_type_packed_msb(net,0);
+		int lsb = ivl_type_packed_lsb(net,0);
+		if (msb > lsb)
+		      return msb-lsb+1;
+		else
+		      return lsb-msb+1;
+	  }
+	  default:
+	    return 0;
+      }
+}
+
+static ivl_type_t show_assign_lval_nest(ivl_lval_t lval, unsigned ind)
+{
+      ivl_type_t sub_type;
+
+      if (ivl_lval_nest(lval)) {
+	    fprintf(out, "%*s{nested lval property=%d}\n", ind, "",
+		    ivl_lval_property_idx(lval));
+	    sub_type = show_assign_lval_nest(ivl_lval_nest(lval), ind+4);
+
+      } else {
+	    assert(ivl_lval_sig(lval));
+	    ivl_signal_t sig = ivl_lval_sig(lval);
+	    fprintf(out, "%*s{name=%s property=%d, signal width=%u l-value width=%u}\n",
+		    ind, "",
+		    ivl_signal_name(sig),
+		    ivl_lval_property_idx(lval),
+		    ivl_signal_width(sig),
+		    ivl_lval_width(lval));
+
+	    sub_type = ivl_signal_net_type(sig);
+      }
+
+      assert(ivl_type_base(sub_type) == IVL_VT_CLASS);
+      ivl_type_t lval_type = ivl_type_prop_type(sub_type, ivl_lval_property_idx(lval));
+      return lval_type;
+}
+
 static unsigned show_assign_lval(ivl_lval_t lval, unsigned ind)
 {
+      ivl_lval_t lval_nest = ivl_lval_nest(lval);
+      if (lval_nest) {
+	    ivl_type_t net_type = show_assign_lval_nest(lval, ind);
+	    return width_of_type(net_type);
+      }
+
       ivl_signal_t sig = ivl_lval_sig(lval);
       assert(sig);
 
@@ -254,6 +305,7 @@ void show_statement(ivl_statement_t net, unsigned ind)
 {
       unsigned idx;
       char opcode = 0;
+      unsigned lwid = 0;
       const ivl_statement_type_t code = ivl_statement_type(net);
 
       switch (code) {
@@ -270,13 +322,14 @@ void show_statement(ivl_statement_t net, unsigned ind)
 		    ivl_stmt_lwidth(net), opcode);
 
 	    for (idx = 0 ;  idx < ivl_stmt_lvals(net) ;  idx += 1)
-		  show_assign_lval(ivl_stmt_lval(net, idx), ind+4);
+		  lwid += show_assign_lval(ivl_stmt_lval(net, idx), ind+4);
 
 	    if (ivl_stmt_delay_expr(net))
 		  show_expression(ivl_stmt_delay_expr(net), idx+4);
 
 	    if (ivl_stmt_rval(net))
 		  show_expression(ivl_stmt_rval(net), ind+4);
+	    fprintf(out, "%*sTotal l-value width is %u\n", ind+2, "", lwid);
 	    break;
 
 	  case IVL_ST_ASSIGN_NB:
