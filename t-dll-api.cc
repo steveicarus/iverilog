@@ -1575,7 +1575,7 @@ extern "C" ivl_event_t ivl_lpm_trigger(ivl_lpm_t net)
 /*
  * Deprecated
  */
-extern "C" ivl_expr_t ivl_lval_mux(ivl_lval_t net)
+extern "C" ivl_expr_t ivl_lval_mux(ivl_lval_t)
 {
       return 0;
 }

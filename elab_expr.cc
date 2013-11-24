@@ -2538,7 +2538,7 @@ unsigned PEFNumber::test_width(Design*, NetScope*, width_mode_t&)
       return expr_width_;
 }
 
-NetExpr* PEFNumber::elaborate_expr(Design*, NetScope*, ivl_type_t type, unsigned) const
+NetExpr* PEFNumber::elaborate_expr(Design*, NetScope*, ivl_type_t, unsigned) const
 {
       NetECReal*tmp = new NetECReal(*value_);
       tmp->set_line(*this);
@@ -4932,7 +4932,7 @@ unsigned PEString::test_width(Design*, NetScope*, width_mode_t&)
       return expr_width_;
 }
 
-NetEConst* PEString::elaborate_expr(Design*, NetScope*, ivl_type_t type, unsigned)const
+NetEConst* PEString::elaborate_expr(Design*, NetScope*, ivl_type_t, unsigned)const
 {
       verinum val(value());
       NetEConst*tmp = new NetEConst(val);
