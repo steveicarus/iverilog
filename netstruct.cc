@@ -18,17 +18,23 @@
  */
 
 # include  "netstruct.h"
+# include  "netvector.h"
 # include  <iostream>
 
 using namespace std;
 
 netstruct_t::netstruct_t()
-: packed_(false)
+: union_(false), packed_(false)
 {
 }
 
 netstruct_t::~netstruct_t()
 {
+}
+
+void netstruct_t::union_flag(bool flag)
+{
+      union_ = flag;
 }
 
 void netstruct_t::packed(bool flag)
@@ -49,7 +55,7 @@ const netstruct_t::member_t* netstruct_t::packed_member(perm_string name, unsign
 		  off = count_off;
 		  return &members_[idx-1];
 	    }
-	    count_off += members_[idx-1].width();
+	    count_off += members_[idx-1].net_type->packed_width();
       }
 
       return 0;
@@ -62,7 +68,7 @@ long netstruct_t::packed_width(void) const
 
       long res = 0;
       for (size_t idx = 0 ; idx < members_.size() ; idx += 1)
-	    res += members_[idx].width();
+	    res += members_[idx].net_type->packed_width();
 
       return res;
 }

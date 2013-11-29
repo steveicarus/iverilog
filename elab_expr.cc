@@ -1793,7 +1793,9 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
                                                           comp.name, off);
       if (mem == 0) return 0;
 
-      unsigned use_width = mem->width();
+      ivl_assert(*li, mem->net_type && mem->net_type->packed());
+
+      unsigned use_width = mem->net_type->packed_width();
 
       if (debug_elaborate) {
 	    cerr << li->get_fileline() << ": debug: check_for_struct_members: "
@@ -1805,6 +1807,11 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 	// The struct member may be a packed array. Process index
 	// expression that address the member element.
       if ( ! comp.index.empty() ) {
+	    const netvector_t*mem_vec = dynamic_cast<const netvector_t*> (mem->net_type);
+	    ivl_assert(*li, mem_vec);
+
+	    const vector<netrange_t>&packed_dims = mem_vec->packed_dims();
+
 	      // Evaluate all but the last index expression, into prefix_indices.
 	    list<long>prefix_indices;
 	    bool rc = evaluate_index_prefix(des, scope, prefix_indices, comp.index);
@@ -1814,7 +1821,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 	      // elements are in fact like bit selects. The tail may
 	      // be part selects only if we are taking the part-select
 	      // of the word of an array.
-	    ivl_assert(*li, comp.index.size() >= mem->packed_dims.size() || comp.index.back().sel == index_component_t::SEL_BIT);
+	    ivl_assert(*li, comp.index.size() >= packed_dims.size() || comp.index.back().sel == index_component_t::SEL_BIT);
 
 	      // Evaluate the part/bit select expressions. This may be
 	      // a bit select or a part select. In any case, assume
@@ -1829,7 +1836,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 	      // offset and width of the addressed slice of the member.
 	    long loff;
 	    unsigned long lwid;
-	    prefix_to_slice(mem->packed_dims, prefix_indices, poff, loff, lwid);
+	    prefix_to_slice(packed_dims, prefix_indices, poff, loff, lwid);
 
 	    if (debug_elaborate) {
 		  cerr << li->get_fileline() << ": debug: check_for_struct_members: "
@@ -1838,7 +1845,7 @@ static NetExpr* check_for_struct_members(const LineInfo*li,
 	    }
 
 	    off += loff;
-	    if (comp.index.size() >= mem->packed_dims.size())
+	    if (comp.index.size() >= packed_dims.size())
 		  use_width = pwid;
 	    else
 		  use_width = lwid;
@@ -2920,7 +2927,7 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 			                        method_name, unused);
 			if (mem) {
 			      expr_type_   = mem->data_type();
-			      expr_width_  = mem->width();
+			      expr_width_  = mem->net_type->packed_width();
 			      min_width_   = expr_width_;
 			      signed_flag_ = mem->get_signed();
 			      return expr_width_;

@@ -524,7 +524,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
 		       << "Member " << method_name
-		       << " has packed dimensions " << member->packed_dims << "." << endl;
+		       << " has type " << *member->net_type << "." << endl;
 		  cerr << get_fileline() << ":                                : "
 		       << "Tail name has " << path_tail.index.size() << " indices." << endl;
 	    }
@@ -532,7 +532,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	      // Rewrite a member select of a packed structure as a
 	      // part select of the base variable.
 	    lidx = member_off;
-	    midx = lidx + member->width() - 1;
+	    midx = lidx + member->net_type->packed_width() - 1;
 
 	      // The dimensions of the tail of the prefix must match
 	      // the dimensions of the signal at this point. (The sig
@@ -563,7 +563,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    long tmp;
 	    if (packed_base && eval_as_long(tmp, packed_base)) {
 		  lidx = tmp;
-		  midx = lidx + member->width() - 1;
+		  midx = lidx + member->net_type->packed_width() - 1;
 		  delete packed_base;
 		  packed_base = 0;
 	    }
@@ -574,7 +574,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	      // Now the lidx/midx values get us to the member. Next
 	      // up, deal with bit/part selects from the member
 	      // itself.
-	    ivl_assert(*this, member->packed_dims.size() <= 1);
+	      //XXXXivl_assert(*this, member->packed_dims.size() <= 1);
 	    ivl_assert(*this, path_tail.index.size() <= 1);
 	    if (! path_tail.index.empty()) {
 		  long tmp_off;

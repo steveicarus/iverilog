@@ -27,6 +27,7 @@
 # include  "netstruct.h"
 # include  "netclass.h"
 # include  "netdarray.h"
+# include  "netvector.h"
 # include  "compiler.h"
 # include  <cstdlib>
 # include  <iostream>
@@ -1014,9 +1015,13 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 	    return false;
       }
 
-      unsigned long use_width = member->width();
+      unsigned long use_width = member->net_type->packed_width();
 
-      if (name_tail.index.size() > member->packed_dims.size()) {
+      const netvector_t*mem_vec = dynamic_cast<const netvector_t*>(member->net_type);
+      ivl_assert(*this, mem_vec);
+      const vector<netrange_t>&mem_packed_dims = mem_vec->packed_dims();
+
+      if (name_tail.index.size() > mem_packed_dims.size()) {
 	    cerr << get_fileline() << ": error: Too many index expressions for member." << endl;
 	    des->errors += 1;
 	    return false;
@@ -1052,7 +1057,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 	      // offset and width of the addressed slice of the member.
 	    long loff;
 	    unsigned long lwid;
-	    prefix_to_slice(member->packed_dims, prefix_indices, tmp, loff, lwid);
+	    prefix_to_slice(mem_packed_dims, prefix_indices, tmp, loff, lwid);
 
 	    off += loff;
 	    use_width = lwid;

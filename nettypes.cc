@@ -26,6 +26,15 @@ ivl_type_s::~ivl_type_s()
 {
 }
 
+/*
+ * The derived class may override this to provide a more accurate
+ * response.
+ */
+bool ivl_type_s::packed(void) const
+{
+      return false;
+}
+
 long ivl_type_s::packed_width(void) const
 {
       return 1;

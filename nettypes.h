@@ -35,6 +35,7 @@ class netrange_t;
 class ivl_type_s {
     public:
       virtual ~ivl_type_s() =0;
+      virtual bool packed(void) const;
       virtual long packed_width(void) const;
       virtual std::vector<netrange_t> slice_dimensions() const;
 

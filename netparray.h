@@ -47,9 +47,9 @@ class netparray_t : public netarray_t {
 
 };
 
-inline netparray_t::netparray_t(const std::vector<netrange_t>&packed,
+inline netparray_t::netparray_t(const std::vector<netrange_t>&pd,
 				ivl_type_t etype)
-: netarray_t(etype), packed_dims_(packed)
+: netarray_t(etype), packed_dims_(pd)
 {
 }
 

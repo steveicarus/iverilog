@@ -894,14 +894,15 @@ static netstruct_t* elaborate_struct_type(Design*des, NetScope*scope,
 		  packed_dimensions.push_back(netrange_t(0,0));
 	    }
 
+	    netvector_t*mem_vec = new netvector_t(packed_dimensions, curp->type);
+
 	    for (list<decl_assignment_t*>::iterator name = curp->names->begin()
 		       ; name != curp->names->end() ;  ++ name) {
 		  decl_assignment_t*namep = *name;
 
 		  netstruct_t::member_t memb;
 		  memb.name = namep->name;
-		  memb.type = curp->type;
-		  memb.packed_dims = packed_dimensions;
+		  memb.net_type = mem_vec;
 		  res->append_member(memb);
 	    }
       }

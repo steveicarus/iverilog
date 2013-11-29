@@ -54,6 +54,14 @@ ivl_variable_type_t netvector_t::base_type() const
       return type_;
 }
 
+/*
+ * vectors are by definition packed.
+ */
+bool netvector_t::packed(void) const
+{
+      return true;
+}
+
 long netvector_t::packed_width() const
 {
       return netrange_width(packed_dims_);

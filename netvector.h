@@ -60,6 +60,7 @@ class netvector_t : public ivl_type_s {
       ivl_variable_type_t base_type() const;
       const std::vector<netrange_t>&packed_dims() const;
 
+      bool packed(void) const;
       long packed_width() const;
       std::vector<netrange_t> slice_dimensions() const;
 
@@ -89,9 +90,9 @@ class netvector_t : public ivl_type_s {
       bool is_scalar_ : 1;
 };
 
-inline netvector_t::netvector_t(const std::vector<netrange_t>&packed,
+inline netvector_t::netvector_t(const std::vector<netrange_t>&pd,
 				ivl_variable_type_t type)
-: packed_dims_(packed), type_(type), signed_(false), isint_(false),
+: packed_dims_(pd), type_(type), signed_(false), isint_(false),
   is_scalar_(false)
 {
 }
