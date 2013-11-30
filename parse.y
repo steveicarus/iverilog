@@ -2259,6 +2259,7 @@ struct_data_type
       { struct_type_t*tmp = new struct_type_t;
 	FILE_NAME(tmp, @1);
 	tmp->packed_flag = $2;
+	tmp->union_flag = false;
 	tmp->members .reset($4);
 	$$ = tmp;
       }
@@ -2266,28 +2267,34 @@ struct_data_type
       { struct_type_t*tmp = new struct_type_t;
 	FILE_NAME(tmp, @1);
 	tmp->packed_flag = $2;
+	tmp->union_flag = true;
 	tmp->members .reset($4);
 	$$ = tmp;
-	yyerror(@4, "sorry: union data type not implemented.");
       }
   | K_struct K_packed_opt '{' error '}'
-      { yyerror(@4, "error: Errors in struct member list.");
+      { yyerror(@3, "error: Errors in struct member list.");
 	yyerrok;
 	struct_type_t*tmp = new struct_type_t;
 	FILE_NAME(tmp, @1);
 	tmp->packed_flag = $2;
+	tmp->union_flag = false;
 	$$ = tmp;
       }
   | K_union K_packed_opt '{' error '}'
-      { yyerror(@4, "error: Errors in union member list.");
+      { yyerror(@3, "error: Errors in union member list.");
 	yyerrok;
 	struct_type_t*tmp = new struct_type_t;
 	FILE_NAME(tmp, @1);
 	tmp->packed_flag = $2;
+	tmp->union_flag = true;
 	$$ = tmp;
       }
   ;
 
+  /* This is an implementation of the rule snippet:
+       struct_union_member { struct_union_member }
+     that is used in the rule matching struct and union types
+     in IEEE 1800-2012 A.2.2.1. */
 struct_union_member_list
   : struct_union_member_list struct_union_member
       { list<struct_member_t*>*tmp = $1;
@@ -2301,28 +2308,11 @@ struct_union_member_list
       }
   ;
 
-struct_union_member
-  : attribute_list_opt K_bit range_opt list_of_variable_decl_assignments ';'
+struct_union_member /* IEEE 1800-2012 A.2.2.1 */
+  : attribute_list_opt data_type list_of_variable_decl_assignments ';'
       { struct_member_t*tmp = new struct_member_t;
 	FILE_NAME(tmp, @2);
-	tmp->type = IVL_VT_BOOL;
-	tmp->range .reset($3);
-	tmp->names .reset($4);
-	$$ = tmp;
-      }
-  | attribute_list_opt K_logic range_opt list_of_variable_decl_assignments ';'
-      { struct_member_t*tmp = new struct_member_t;
-	FILE_NAME(tmp, @2);
-	tmp->type = IVL_VT_LOGIC;
-	tmp->range .reset($3);
-	tmp->names .reset($4);
-	$$ = tmp;
-      }
-  | attribute_list_opt atom2_type list_of_variable_decl_assignments ';'
-      { struct_member_t*tmp = new struct_member_t;
-	FILE_NAME(tmp, @2);
-	tmp->type = IVL_VT_BOOL;
-	tmp->range .reset(make_range_from_width($2));
+	tmp->type  .reset($2);
 	tmp->names .reset($3);
 	$$ = tmp;
       }

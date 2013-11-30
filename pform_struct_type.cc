@@ -33,14 +33,21 @@ ivl_variable_type_t struct_type_t::figure_packed_base_type(void) const
 
 	    struct_member_t*tmp = *cur;
 
-	    if (tmp->type == IVL_VT_BOOL) {
+	    ivl_variable_type_t tmp_type = IVL_VT_NO_TYPE;
+	    if (tmp->type.get())
+		  tmp_type = tmp->type->figure_packed_base_type();
+
+	    if (tmp_type == IVL_VT_BOOL) {
 		  continue;
 	    }
 
-	    if (tmp->type == IVL_VT_LOGIC) {
+	    if (tmp_type == IVL_VT_LOGIC) {
 		  base_type = IVL_VT_LOGIC;
 		  continue;
 	    }
+
+	      // Oh no! Member is not a packable type!
+	    return IVL_VT_NO_TYPE;
       }
 
       return base_type;

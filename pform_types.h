@@ -24,6 +24,7 @@
 # include  "LineInfo.h"
 # include  "verinum.h"
 # include  "named.h"
+# include  "netstruct.h"
 # include  "property_qual.h"
 # include  "ivl_target.h"
 # include  <iostream>
@@ -115,8 +116,7 @@ struct enum_type_t : public data_type_t {
 };
 
 struct struct_member_t : public LineInfo {
-      ivl_variable_type_t type;
-      std::auto_ptr< list<pform_range_t> > range;
+      std::auto_ptr<data_type_t> type;
       std::auto_ptr< list<decl_assignment_t*> > names;
       void pform_dump(std::ostream&out, unsigned indent) const;
 };
@@ -124,8 +124,10 @@ struct struct_member_t : public LineInfo {
 struct struct_type_t : public data_type_t {
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
+      netstruct_t* elaborate_type(Design*des, NetScope*scope) const;
 
       bool packed_flag;
+      bool union_flag;
       std::auto_ptr< list<struct_member_t*> > members;
 };
 
