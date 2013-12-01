@@ -38,7 +38,6 @@
 # include  "netmisc.h"
 # include  "netclass.h"
 # include  "netenum.h"
-# include  "netstruct.h"
 # include  "netvector.h"
 # include  "netdarray.h"
 # include  "netparray.h"
@@ -871,47 +870,6 @@ static netclass_t* locate_class_type(Design*, NetScope*scope,
 {
       netclass_t*use_class = scope->find_class(class_type->name);
       return use_class;
-}
-
-netstruct_t* struct_type_t::elaborate_type(Design*des, NetScope*scope) const
-{
-      netstruct_t*res = new netstruct_t;
-
-      res->packed(packed_flag);
-
-      if (union_flag)
-	    res->union_flag(true);
-
-      for (list<struct_member_t*>::iterator cur = members->begin()
-		 ; cur != members->end() ; ++ cur) {
-
-	    vector<netrange_t>packed_dimensions;
-
-	    struct_member_t*curp = *cur;
-	    vector_type_t*vecp = dynamic_cast<vector_type_t*> (curp->type.get());
-	    if (vecp && vecp->pdims.get() && ! vecp->pdims->empty()) {
-		  bool bad_range;
-		  bad_range = evaluate_ranges(des, scope, packed_dimensions, *vecp->pdims);
-		  ivl_assert(*curp, !bad_range);
-	    } else {
-		  packed_dimensions.push_back(netrange_t(0,0));
-	    }
-
-	    netvector_t*mem_vec = new netvector_t(packed_dimensions,
-						  curp->type->figure_packed_base_type());
-
-	    for (list<decl_assignment_t*>::iterator name = curp->names->begin()
-		       ; name != curp->names->end() ;  ++ name) {
-		  decl_assignment_t*namep = *name;
-
-		  netstruct_t::member_t memb;
-		  memb.name = namep->name;
-		  memb.net_type = mem_vec;
-		  res->append_member(memb);
-	    }
-      }
-
-      return res;
 }
 
 static ivl_type_s*elaborate_type(Design*des, NetScope*scope,
