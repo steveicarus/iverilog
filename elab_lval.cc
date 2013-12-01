@@ -1004,7 +1004,9 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 
 	// Calculate the offset within the packed structure of the
 	// member, and any indices. We will add in the offset of the
-	// struct into the packed array later.
+	// struct into the packed array later. Note that this works
+	// for packed unions as well (although the offset will be 0
+	// for union members).
       unsigned long off;
       const netstruct_t::member_t* member = struct_type->packed_member(member_name, off);
 
@@ -1017,16 +1019,6 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 
       unsigned long use_width = member->net_type->packed_width();
 
-      const netvector_t*mem_vec = dynamic_cast<const netvector_t*>(member->net_type);
-      ivl_assert(*this, mem_vec);
-      const vector<netrange_t>&mem_packed_dims = mem_vec->packed_dims();
-
-      if (name_tail.index.size() > mem_packed_dims.size()) {
-	    cerr << get_fileline() << ": error: Too many index expressions for member." << endl;
-	    des->errors += 1;
-	    return false;
-      }
-
 	// Get the index component type. At this point, we only
 	// support bit select or none.
       index_component_t::ctype_t use_sel = index_component_t::SEL_NONE;
@@ -1036,6 +1028,25 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
       ivl_assert(*this, use_sel == index_component_t::SEL_NONE || use_sel == index_component_t::SEL_BIT);
 
       if (! name_tail.index.empty()) {
+
+	      // If there are index expressions in this l-value
+	      // expression, then the implicit assumption is that the
+	      // member is a vector type with packed dimensions. For
+	      // example, if the l-value expression is "foo.member[1][2]",
+	      // then the member should be something like:
+	      //    ... logic [h:l][m:n] foo;
+	      // Get the dimensions from the netvector_t that this implies.
+	    const netvector_t*mem_vec = dynamic_cast<const netvector_t*>(member->net_type);
+	    ivl_assert(*this, mem_vec);
+	    const vector<netrange_t>&mem_packed_dims = mem_vec->packed_dims();
+
+	    if (name_tail.index.size() > mem_packed_dims.size()) {
+		  cerr << get_fileline() << ": error: "
+		       << "Too many index expressions for member." << endl;
+		  des->errors += 1;
+		  return false;
+	    }
+
 	      // Evaluate all but the last index expression, into prefix_indices.
 	    list<long>prefix_indices;
 	    bool rc = evaluate_index_prefix(des, scope, prefix_indices, name_tail.index);
