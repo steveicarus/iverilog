@@ -157,6 +157,10 @@ extern bool gn_icarus_misc_flag;
    is false, then skip elaboration of specify behavior. */
 extern bool gn_specify_blocks_flag;
 
+/* If this flag is true, then elaborate assertions. If this flag is
+   false, then stub out assertion statements. */
+extern bool gn_assertions_flag;
+
 /* If this flag is true, then support/elaborate Verilog-AMS. */
 extern bool gn_verilog_ams_flag;
 

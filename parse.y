@@ -673,6 +673,10 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
   /* source_text ::= [ timeunits_declaration ] { description } */
 source_text : description_list | ;
 
+assertion_item /* IEEE1800-2012: A.6.10 */
+  : concurrent_assertion_item
+  ;
+
 assignment_pattern /* IEEE1800-2005: A.6.7.1 */
   : K_LP expression_list_proper '}'
       { PEAssignPattern*tmp = new PEAssignPattern(*$2);
@@ -685,6 +689,13 @@ assignment_pattern /* IEEE1800-2005: A.6.7.1 */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
+  ;
+
+  /* Some rules have a ... [ block_identifier ':' ] ... part. This
+     implements it in a LALR way. */
+block_identifier_opt /* */
+  : IDENTIFIER ':'
+  |
   ;
 
 class_declaration /* IEEE1800-2005: A.1.2 */
@@ -883,6 +894,23 @@ class_new /* IEEE1800-2005 A.2.4 */
       { PENewClass*tmp = new PENewClass;
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
+      }
+  ;
+
+  /* The concurrent_assertion_item pulls together the
+     concurrent_assertion_statement and checker_instantiation rules. */
+
+concurrent_assertion_item /* IEEE1800-2012 A.2.10 */
+  : block_identifier_opt K_assert K_property '(' property_spec ')' statement_or_null
+      { /* */
+	if (gn_assertions_flag) {
+	      yyerror(@2, "sorry: concurrent_assertion_item not supported."
+		      " Try -gno-assertion to turn this message off.");
+	}
+      }
+  | block_identifier_opt K_assert K_property '(' error ')' statement_or_null
+      { yyerrok;
+        yyerror(@2, "error: Error in property_spec of concurrent assertion item.");
       }
   ;
 
@@ -1527,6 +1555,10 @@ port_direction_opt
   |                { $$ = NetNet::PIMPLICIT; }
   ;
 
+property_expr /* IEEE1800-2012 A.2.10 */
+  : expression
+  ;
+
   /* The property_qualifier rule is as literally described in the LRM,
      but the use is usually as { property_qualifier }, which is
      implemented bt the property_qualifier_opt rule below. */
@@ -1544,6 +1576,20 @@ property_qualifier_opt /* IEEE1800-2005 A.1.8: ... { property_qualifier } */
 property_qualifier_list /* IEEE1800-2005 A.1.8 */
   : property_qualifier_list property_qualifier { $$ = $1 | $2; }
   | property_qualifier { $$ = $1; }
+  ;
+
+  /* The property_spec rule uses some helper rules to implement this
+     rule from the LRM:
+     [ clocking_event ] [ disable iff ( expression_or_dist ) ] property_expr
+     This does it is a YACC friendly way. */
+
+property_spec /* IEEE1800-2012 A.2.10 */
+  : clocking_event_opt property_spec_disable_iff_opt property_expr
+  ;
+
+property_spec_disable_iff_opt /* */
+  : K_disable K_iff '(' expression ')'
+  |
   ;
 
 random_qualifier /* IEEE1800-2005 A.1.8 */
@@ -2647,7 +2693,12 @@ dr_strength1
 	| K_weak1   { $$.str1 = IVL_DR_WEAK; }
 	;
 
-event_control
+clocking_event_opt /* */
+  : event_control
+  |
+  ;
+
+event_control /* A.K.A. clocking_event */
 	: '@' hierarchy_identifier
 		{ PEIdent*tmpi = new PEIdent(*$2);
 		  PEEvent*tmpe = new PEEvent(PEEvent::ANYEDGE, tmpi);
@@ -4384,6 +4435,8 @@ module_item
 
   | attribute_list_opt K_analog analog_statement
       { pform_make_analog_behavior(@2, IVL_PR_ALWAYS, $3); }
+
+  | attribute_list_opt assertion_item
 
   | class_declaration
 

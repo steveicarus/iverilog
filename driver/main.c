@@ -122,6 +122,7 @@ char depmode = 'a';
 
 const char*generation = "2005";
 const char*gen_specify = "no-specify";
+const char*gen_assertions = "assertions";
 const char*gen_xtypes = "xtypes";
 const char*gen_icarus = "icarus-misc";
 const char*gen_io_range_error = "io-range-error";
@@ -678,6 +679,12 @@ int process_generation(const char*name)
       else if (strcmp(name,"no-specify") == 0)
 	    gen_specify = "no-specify";
 
+      else if (strcmp(name,"assertions") == 0)
+	    gen_assertions = "assertions";
+
+      else if (strcmp(name,"no-assertions") == 0)
+	    gen_assertions = "no-assertions";
+
       else if (strcmp(name,"std-include") == 0)
 	     gen_std_include = 1;
 
@@ -1090,6 +1097,7 @@ int main(int argc, char **argv)
       if (mtm != 0) fprintf(iconfig_file, "-T:%s\n", mtm);
       fprintf(iconfig_file, "generation:%s\n", generation);
       fprintf(iconfig_file, "generation:%s\n", gen_specify);
+      fprintf(iconfig_file, "generation:%s\n", gen_assertions);
       fprintf(iconfig_file, "generation:%s\n", gen_xtypes);
       fprintf(iconfig_file, "generation:%s\n", gen_io_range_error);
       fprintf(iconfig_file, "generation:%s\n", gen_strict_ca_eval);
