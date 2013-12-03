@@ -39,6 +39,7 @@ class class_type : public __vpiHandle {
 
     public:
       explicit class_type(const std::string&nam, size_t nprop);
+      ~class_type();
 
 	// This is the name of the class type.
       inline const std::string&class_name(void) const { return class_name_; }

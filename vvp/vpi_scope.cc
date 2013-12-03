@@ -132,8 +132,8 @@ void root_table_delete(void)
       for (unsigned idx = 0; idx < vpip_root_table_cnt; idx += 1) {
 	    struct __vpiScope *scope = static_cast<__vpiScope *>
 	          (vpip_root_table_ptr[idx]);
-	    delete_sub_scopes(scope);
 	    vthreads_delete(scope);
+	    delete_sub_scopes(scope);
 	    delete scope;
       }
       free(vpip_root_table_ptr);
