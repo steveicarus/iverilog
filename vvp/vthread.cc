@@ -236,6 +236,7 @@ struct vthread_s {
 	    bits4 = vvp_vector4_t();
 	    assert(stack_real_.empty());
 	    assert(stack_str_.empty());
+	    assert(stack_obj_size_ == 0);
       }
 };
 

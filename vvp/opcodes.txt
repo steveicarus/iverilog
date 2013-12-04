@@ -897,11 +897,9 @@ the result.
 * %prop/str <pid>
 
 Read a vector (/v) or real value (/r) or string (/str) or object from
-the property number <pid> of the class object on the stop of the
+the property number <pid> of the class object on the top of the
 object stack. Push the resulting value to the appropriate stack. The
-object that is the source is NOT popped from from object stack.
-
-The class object stack is NOT popped.
+class object that is the source is NOT popped from the object stack.
 
 * %pushi/real <mant>, <exp>
 

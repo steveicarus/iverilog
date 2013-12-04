@@ -172,6 +172,7 @@ static void draw_property_real(ivl_expr_t expr)
 
       fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
       fprintf(vvp_out, "    %%prop/r %u;\n", pidx);
+      fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 }
 
 static void draw_realnum_real(ivl_expr_t expr)
