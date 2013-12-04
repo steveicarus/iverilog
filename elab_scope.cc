@@ -178,6 +178,9 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       use_enum->set_line(enum_type->li);
       scope->add_enumeration_set(use_enum);
 
+      ivl_assert(*enum_type, enum_type->net_type == 0);
+      enum_type->net_type = use_enum;
+
       verinum cur_value (0);
       verinum one_value (1);
       size_t name_idx = 0;
@@ -285,11 +288,12 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 }
 
 static void elaborate_scope_enumerations(Design*des, NetScope*scope,
-					 const list<enum_type_t*>&enum_types)
+					 const set<enum_type_t*>&enum_types)
 {
-      for (list<enum_type_t*>::const_iterator cur = enum_types.begin()
+      for (set<enum_type_t*>::const_iterator cur = enum_types.begin()
 		 ; cur != enum_types.end() ; ++ cur) {
-	    elaborate_scope_enumeration(des, scope, *cur);
+	    enum_type_t*curp = *cur;
+	    elaborate_scope_enumeration(des, scope, curp);
       }
 }
 

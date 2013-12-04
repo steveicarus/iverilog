@@ -39,6 +39,14 @@ bool netenum_t::get_signed() const
       return signed_flag_;
 }
 
+/*
+ * Enumerations are by definition always packed.
+ */
+bool netenum_t::packed() const
+{
+      return true;
+}
+
 long netenum_t::packed_width() const
 {
       if (msb_ >= lsb_)

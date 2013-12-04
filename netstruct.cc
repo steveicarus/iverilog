@@ -52,6 +52,8 @@ void netstruct_t::packed(bool flag)
 
 void netstruct_t::append_member(Design*des, const netstruct_t::member_t&val)
 {
+      ivl_assert(*this, val.net_type);
+
       members_.push_back(val);
       if (packed_) {
 	    if (! members_.back().net_type->packed()) {

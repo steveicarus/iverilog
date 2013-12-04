@@ -1328,7 +1328,7 @@ void LexicalScope::dump_localparams_(ostream&out, unsigned indent) const
 
 void LexicalScope::dump_enumerations_(ostream&out, unsigned indent) const
 {
-      for (list<enum_type_t*>::const_iterator cur = enum_sets.begin()
+      for (set<enum_type_t*>::const_iterator cur = enum_sets.begin()
 		 ; cur != enum_sets.end() ; ++ cur) {
 	    out << setw(indent) << "" << "enum {" << endl;
 

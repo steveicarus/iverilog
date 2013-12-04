@@ -24,6 +24,7 @@
 # include  "pform_types.h"
 # include  "ivl_target.h"
 # include  <map>
+# include  <set>
 # include  <vector>
 
 class PEvent;
@@ -112,7 +113,7 @@ class LexicalScope {
       list<AProcess*> analog_behaviors;
 
 	// Enumeration sets.
-      list<enum_type_t*> enum_sets;
+      std::set<enum_type_t*> enum_sets;
 
       LexicalScope* parent_scope() const { return parent_; }
 

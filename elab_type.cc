@@ -21,6 +21,7 @@
 # include  "netlist.h"
 # include  "netclass.h"
 # include  "netdarray.h"
+# include  "netenum.h"
 # include  "netscalar.h"
 # include  "netstruct.h"
 # include  "netvector.h"
@@ -77,6 +78,12 @@ ivl_type_s* atom2_type_t::elaborate_type(Design*des, NetScope*) const
 ivl_type_s* class_type_t::elaborate_type(Design*, NetScope*scope) const
 {
       return scope->find_class(name);
+}
+
+ivl_type_s* enum_type_t::elaborate_type(Design*des, NetScope*scope) const
+{
+      ivl_assert(*this, net_type);
+      return net_type;
 }
 
 ivl_type_s* vector_type_t::elaborate_type(Design*des, NetScope*scope) const
@@ -146,6 +153,8 @@ netstruct_t* struct_type_t::elaborate_type(Design*des, NetScope*scope) const
 	      // Elaborate the type of the member.
 	    struct_member_t*curp = *cur;
 	    ivl_type_t mem_vec = curp->type->elaborate_type(des, scope);
+	    if (mem_vec == 0)
+		  continue;
 
 	      // There may be several names that are the same type:
 	      //   <data_type> name1, name2, ...;

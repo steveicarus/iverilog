@@ -43,6 +43,7 @@ class PExpr;
 class PWire;
 class Statement;
 class ivl_type_s;
+class netenum_t;
 typedef named<verinum> named_number_t;
 typedef named<PExpr*> named_pexpr_t;
 typedef std::pair<PExpr*,PExpr*> pform_range_t;
@@ -104,15 +105,24 @@ struct void_type_t : public data_type_t {
 /*
  * The enum_type_t holds the parsed declaration to represent an
  * enumeration. Since this is in the pform, it represents the type
- * before elaboration to the range, for example, man not be complete
+ * before elaboration so the range, for example, may not be complete
  * until it is elaborated in a scope.
  */
 struct enum_type_t : public data_type_t {
+      inline enum_type_t(void) : net_type(0) { }
+	// Return the elaborated version of the type.
+      virtual ivl_type_s*elaborate_type(Design*des, NetScope*scope) const;
+
       ivl_variable_type_t base_type;
       bool signed_flag;
       std::auto_ptr< list<pform_range_t> > range;
       std::auto_ptr< list<named_pexpr_t> > names;
       LineInfo li;
+	// This is the elaborated type. The enumeration type is
+	// elaborated early so that names can be placed in the scope,
+	// but that means the result needs to be saved for the actual
+	// elaborate_type method to use.
+      netenum_t*net_type;
 };
 
 struct struct_member_t : public LineInfo {
@@ -124,7 +134,7 @@ struct struct_member_t : public LineInfo {
 struct struct_type_t : public data_type_t {
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
-      netstruct_t* elaborate_type(Design*des, NetScope*scope) const;
+      virtual netstruct_t* elaborate_type(Design*des, NetScope*scope) const;
 
       bool packed_flag;
       bool union_flag;

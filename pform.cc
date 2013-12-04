@@ -484,7 +484,7 @@ static void pform_put_wire_in_scope(perm_string name, PWire*net)
 
 static void pform_put_enum_type_in_scope(enum_type_t*enum_set)
 {
-      lexical_scope->enum_sets.push_back(enum_set);
+      lexical_scope->enum_sets.insert(enum_set);
 }
 
 PWire*pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_type, NetNet::PortType port_type, ivl_variable_type_t vt_type)
@@ -508,6 +508,10 @@ void pform_set_typedef(perm_string name, data_type_t*data_type)
       data_type_t*&ref = lexical_scope->typedefs[name];
       ivl_assert(*data_type, ref == 0);
       ref = data_type;
+
+      if (enum_type_t*enum_type = dynamic_cast<enum_type_t*>(data_type)) {
+	    pform_put_enum_type_in_scope(enum_type);
+      }
 }
 
 data_type_t* pform_test_type_identifier(const char*txt)

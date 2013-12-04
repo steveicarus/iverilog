@@ -36,8 +36,9 @@ class netenum_t : public LineInfo, public ivl_type_s {
 			 long msb, long lsb, size_t name_count);
       ~netenum_t();
 
-      ivl_variable_type_t base_type() const;
-      long packed_width() const;
+      virtual ivl_variable_type_t base_type() const;
+      virtual bool packed() const;
+      virtual long packed_width() const;
       std::vector<netrange_t> slice_dimensions() const;
       bool get_signed() const;
 
