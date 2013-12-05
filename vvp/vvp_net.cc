@@ -111,8 +111,16 @@ void vvp_net_delete(vvp_net_t *item)
       if (vvp_udp_fun_core*tmp = dynamic_cast<vvp_udp_fun_core*> (item->fun)) {
 	    udp_map[tmp] = true;
       }
-      if (resolv_core*tmp = dynamic_cast<resolv_core*>(item->fun)) {
+      if (resolv_core*tmp = dynamic_cast<resolv_core*> (item->fun)) {
 	    resolv_map[tmp] = true;
+      }
+	/* Only delete static object variables. */
+      if (vvp_fun_signal_object_sa*tmp = dynamic_cast<vvp_fun_signal_object_sa*> (item->fun)) {
+	    delete tmp;
+      }
+	/* Only delete static string variables. */
+      if (vvp_fun_signal_string_sa*tmp = dynamic_cast<vvp_fun_signal_string_sa*> (item->fun)) {
+	    delete tmp;
       }
 }
 

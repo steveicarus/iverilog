@@ -487,6 +487,9 @@ class __vpiBaseVar : public __vpiHandle {
 
     public:
       __vpiBaseVar(__vpiScope*scope, const char*name, vvp_net_t*net);
+#ifdef CHECK_WITH_VALGRIND
+      ~__vpiBaseVar();
+#endif
 
       inline vvp_net_t* get_net() const { return net_; }
 

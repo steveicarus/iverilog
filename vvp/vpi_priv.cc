@@ -20,6 +20,9 @@
 # include  "version_base.h"
 # include  "vpi_priv.h"
 # include  "schedule.h"
+#ifdef CHECK_WITH_VALGRIND
+# include  "vvp_cleanup.h"
+#endif
 # include  <cstdio>
 # include  <cstdarg>
 # include  <cstring>
@@ -68,6 +71,13 @@ __vpiBaseVar::__vpiBaseVar(__vpiScope*scope, const char*name, vvp_net_t*net)
 : scope_(scope), name_(name), net_(net)
 {
 }
+
+#ifdef CHECK_WITH_VALGRIND
+__vpiBaseVar::~__vpiBaseVar()
+{
+      vvp_net_delete(net_);
+}
+#endif
 
 /*
  * The default behavior for the vpi_free_object to an object is to
