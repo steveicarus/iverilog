@@ -549,7 +549,7 @@ static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 		  if (val >= 0.0) val = floor(val + 0.5);
 		  else val = ceil(val - 0.5);
 	    }
-	    vp->value.integer = val;
+	    vp->value.integer = (PLI_INT32)val;
 	    break;
 
 	  case vpiDecStrVal:

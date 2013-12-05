@@ -778,7 +778,7 @@ static void real_signal_value(struct t_vpi_value*vp, double rval)
 		  if (rval >= 0.0) rval = floor(rval + 0.5);
 		  else rval = ceil(rval - 0.5);
 	    }
-	    vp->value.integer = rval;
+	    vp->value.integer = (PLI_INT32)rval;
 	    break;
 
 	  case vpiDecStrVal:
