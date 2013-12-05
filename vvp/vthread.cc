@@ -4800,14 +4800,13 @@ bool of_PUTC_STR_V(vthread_t thr, vvp_code_t cp)
 	    return true;
 
 	/* Extract the character from the vector space. If that byte
-	   is null (8'hh00) then there is nothing more to do. */
+	   is null (8'h00) then the standard says it is to be skipped. */
       unsigned long*tmp = vector_to_array(thr, base, 8);
-      if (tmp == 0)
+      assert(tmp);
+      char tmp_val = tmp[0] & 0xff;
+      delete [] tmp;
+      if (tmp_val == 0)
 	    return true;
-      if (tmp[0] == 0)
-	    return true;
-
-      char tmp_val = tmp[0]&0xff;
 
 	/* Get the existing value of the string. If we find that the
 	   index is too big for the string, then give up. */
