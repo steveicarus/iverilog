@@ -923,6 +923,13 @@ Push a literal string to the string stack.
 
 Convert a vector to a string and push the string to the string stack.
 
+* %putc/str/v <functor-label>, <muxr>, <base>
+
+Extract a vector byte from the thread vector space and write it to a
+character of the string variable at <functtor-label>. This is
+basically an implementation of <string>.putc(<muxr>, <val>) where
+<val> is the 8bit vector at <base> in the thread space.
+
 * %release/net <functor-label>, <base>, <width>
 * %release/reg <functor-label>, <base>, <width>
 
