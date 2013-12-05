@@ -387,6 +387,12 @@ class_type::class_type(const string&nam, size_t nprop)
       instance_size_ = 0;
 }
 
+class_type::~class_type()
+{
+      for (size_t idx = 0 ; idx < properties_.size() ; idx += 1)
+	    delete properties_[idx].type;
+}
+
 void class_type::set_property(size_t idx, const string&name, const string&type)
 {
       assert(idx < properties_.size());

@@ -67,6 +67,7 @@ static void string_ex_property(ivl_expr_t expr)
 
       fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
       fprintf(vvp_out, "    %%prop/str %u;\n", pidx);
+      fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 }
 
 static void string_ex_signal(ivl_expr_t expr)

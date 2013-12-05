@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -173,6 +173,7 @@ static int eval_object_property(ivl_expr_t expr)
 
       fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
       fprintf(vvp_out, "    %%prop/obj %u;\n", pidx);
+      fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
       return 0;
 }
 

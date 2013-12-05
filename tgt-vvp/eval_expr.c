@@ -2121,6 +2121,7 @@ static struct vector_info draw_property_expr(ivl_expr_t expr, unsigned wid)
 
       fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
       fprintf(vvp_out, "    %%prop/v %u, %u, %u;\n", pidx, res.base, wid);
+      fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 
       return res;
 }
