@@ -28,7 +28,6 @@ VPATH = $(srcdir)
 bindir = @bindir@
 libdir = @libdir@
 
-CC = @CC@
 CXX = @CXX@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -79,7 +78,7 @@ else
 endif
 
 blif.tgt: $O $(TGTDEPLIBS)
-	$(CC) @shared@ $(LDFLAGS) -o $@ $O $(TGTLDFLAGS)
+	$(CXX) @shared@ $(LDFLAGS) -o $@ $O $(TGTLDFLAGS)
 
 install: all installdirs $(libdir)/ivl$(suffix)/blif.tgt $(INSTALL_DOC) $(libdir)/ivl$(suffix)/blif.conf $(libdir)/ivl$(suffix)/blif-s.conf
 
