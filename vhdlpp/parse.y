@@ -496,6 +496,10 @@ block_declarative_item
 
   | constant_declaration
 
+  | subprogram_declaration
+
+  | subprogram_body
+
   | type_declaration
 
   | use_clause_lib

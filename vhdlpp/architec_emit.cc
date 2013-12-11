@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -96,6 +96,11 @@ int Architecture::emit(ostream&out, Entity*entity)
 
       errors += emit_signals(out, entity, this);
       errors += emit_variables(out, entity, this);
+
+      for (map<perm_string,Subprogram*>::const_iterator cur = cur_subprograms_.begin()
+		 ; cur != cur_subprograms_.end() ; ++ cur) {
+	    errors += cur->second->emit_package(out);
+      }
 
       for (list<Architecture::Statement*>::iterator cur = statements_.begin()
 		 ; cur != statements_.end() ; ++cur) {
