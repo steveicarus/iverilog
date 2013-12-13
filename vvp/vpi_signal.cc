@@ -653,6 +653,24 @@ static vpiHandle signal_iterate(int code, vpiHandle ref)
       return 0;
 }
 
+static vpiHandle signal_index(int idx, vpiHandle ref)
+{
+      struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
+      assert(rfp);
+	/* Check to see if the index is in range. */
+      if (rfp->msb >= rfp->lsb) {
+	    if ((idx > rfp->msb) || (idx < rfp->lsb)) return 0;
+      } else {
+	    if ((idx < rfp->msb) || (idx > rfp->lsb)) return 0;
+      }
+	/* Return a handle for the individual bit. */
+      cerr << "Sorry: Icarus does not currently support "
+           << "vpi_get_handle_by_index() for "
+           << vpi_get_str(vpiType, ref);
+      cerr << " objects (" << vpi_get_str(vpiName, ref) << ")." << endl;
+      return 0;
+}
+
 static unsigned signal_width(const struct __vpiSignal*rfp)
 {
       unsigned wid = (rfp->msb >= rfp->lsb)
@@ -894,6 +912,9 @@ vpiHandle __vpiSignal::vpi_handle(int code)
 
 vpiHandle __vpiSignal::vpi_iterate(int code)
 { return signal_iterate(code, this); }
+
+vpiHandle __vpiSignal::vpi_index(int idx)
+{ return signal_index(idx, this); }
 
 struct signal_reg : public __vpiSignal {
       inline signal_reg() { }

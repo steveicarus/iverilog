@@ -279,6 +279,7 @@ struct __vpiSignal : public __vpiHandle {
       vpiHandle vpi_put_value(p_vpi_value val, int flags);
       vpiHandle vpi_handle(int code);
       vpiHandle vpi_iterate(int code);
+      vpiHandle vpi_index(int idx);
 
       union { // The scope or parent array that contains me.
 	    vpiHandle parent;
