@@ -170,7 +170,10 @@ void uarray_type_t::pform_dump(ostream&out, unsigned indent) const
 void struct_type_t::pform_dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << "Struct " << (packed_flag?"packed":"unpacked")
-	  << " with " << members->size() << " members" << endl;
+	  << " with " << (members.get()==0? 0 : members->size()) << " members" << endl;
+      if (members.get()==0)
+	    return;
+
       for (list<struct_member_t*>::iterator cur = members->begin()
 		 ; cur != members->end() ; ++ cur) {
 	    struct_member_t*curp = *cur;

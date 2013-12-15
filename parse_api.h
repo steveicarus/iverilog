@@ -28,6 +28,7 @@
 class Module;
 class PPackage;
 class PUdp;
+class data_type_t;
 
 /*
  * These are maps of the modules and primitives parsed from the
@@ -36,6 +37,7 @@ class PUdp;
  */
 extern std::map<perm_string,Module*> pform_modules;
 extern std::map<perm_string,PUdp*>   pform_primitives;
+extern std::map<perm_string,data_type_t*> pform_typedefs;
 
 extern std::map<perm_string,PPackage*> pform_packages;
 extern void pform_dump(std::ostream&out, const PPackage*pac);

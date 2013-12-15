@@ -46,12 +46,15 @@
 /*
  * The pform_modules is a map of the modules that have been defined in
  * the top level. This should not contain nested modules/programs.
+ * pform_primitives is similar, but for UDP primitives.
  */
 map<perm_string,Module*> pform_modules;
-/*
- */
 map<perm_string,PUdp*> pform_primitives;
 
+/*
+ * typedefs in the $root scope go here.
+ */
+map<perm_string,data_type_t*>pform_typedefs;
 
 std::string vlltype::get_fileline() const
 {
@@ -505,7 +508,13 @@ PWire*pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_type, NetN
 
 void pform_set_typedef(perm_string name, data_type_t*data_type)
 {
-      data_type_t*&ref = lexical_scope->typedefs[name];
+	// If we are in a lexical scope (i.e. a package or module)
+	// then put the typedef into that scope. Otherwise, put it
+	// into the $root scope.
+      data_type_t*&ref = lexical_scope
+	    ? lexical_scope->typedefs[name]
+	    : pform_typedefs[name];
+
       ivl_assert(*data_type, ref == 0);
       ref = data_type;
 
@@ -514,14 +523,24 @@ void pform_set_typedef(perm_string name, data_type_t*data_type)
       }
 }
 
+static data_type_t* test_type_identifier_in_root(perm_string name)
+{
+      map<perm_string,data_type_t*>::iterator cur = pform_typedefs.find(name);
+      if (cur != pform_typedefs.end())
+	    return cur->second;
+      else
+	    return 0;
+}
+
 data_type_t* pform_test_type_identifier(const char*txt)
 {
-	// If there is no lexical_scope yet, then there is NO WAY the
-	// identifier can be a type_identifier.
-      if (lexical_scope == 0)
-	    return 0;
-
       perm_string name = lex_strings.make(txt);
+
+	// If there is no lexical_scope yet, then look only in the
+	// $root scope for typedefs.
+      if (lexical_scope == 0) {
+	    return test_type_identifier_in_root(name);
+      }
 
       LexicalScope*cur_scope = lexical_scope;
       do {
@@ -551,6 +570,10 @@ data_type_t* pform_test_type_identifier(const char*txt)
 
 	    cur_scope = cur_scope->parent_scope();
       } while (cur_scope);
+
+	// See if there is a typedef in the $root scope.
+      if (data_type_t*tmp = test_type_identifier_in_root(name))
+	    return tmp;
 
       return 0;
 }

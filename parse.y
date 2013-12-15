@@ -1081,7 +1081,7 @@ description /* IEEE1800-2005: A.1.2 */
   | nature_declaration
   | package_declaration
   | discipline_declaration
-  | timeunits_declaration
+  | package_item
   | KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')'
       { perm_string tmp3 = lex_strings.make($3);
 	pform_set_type_attrib(tmp3, $5, $7);
@@ -2361,6 +2361,11 @@ struct_union_member /* IEEE 1800-2012 A.2.2.1 */
 	tmp->type  .reset($2);
 	tmp->names .reset($3);
 	$$ = tmp;
+      }
+  | error ';'
+      { yyerror(@2, "Error in struct/union member.");
+	yyerrok;
+	$$ = 0;
       }
   ;
 
