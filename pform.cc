@@ -55,6 +55,7 @@ map<perm_string,PUdp*> pform_primitives;
  * typedefs in the $root scope go here.
  */
 map<perm_string,data_type_t*>pform_typedefs;
+set<enum_type_t*>pform_enum_sets;
 
 std::string vlltype::get_fileline() const
 {
@@ -487,7 +488,12 @@ static void pform_put_wire_in_scope(perm_string name, PWire*net)
 
 static void pform_put_enum_type_in_scope(enum_type_t*enum_set)
 {
-      lexical_scope->enum_sets.insert(enum_set);
+      if (lexical_scope) {
+	    ivl_assert(*enum_set, lexical_scope);
+	    lexical_scope->enum_sets.insert(enum_set);
+      } else {
+	    pform_enum_sets.insert(enum_set);
+      }
 }
 
 PWire*pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_type, NetNet::PortType port_type, ivl_variable_type_t vt_type)

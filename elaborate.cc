@@ -5663,6 +5663,9 @@ Design* elaborate(list<perm_string>roots)
 	// module and elaborate what I find.
       Design*des = new Design;
 
+	// Elaborate enum sets in $root scope.
+      elaborate_rootscope_enumerations(des);
+
 	// Elaborate the packages. Package elaboration is simpler
 	// because there are fewer sub-scopes involved.
       i = 0;

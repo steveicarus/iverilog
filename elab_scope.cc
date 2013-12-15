@@ -48,6 +48,7 @@
 # include  "netlist.h"
 # include  "netclass.h"
 # include  "netenum.h"
+# include  "parse_api.h"
 # include  "util.h"
 # include  <typeinfo>
 # include  <cassert>
@@ -156,6 +157,10 @@ static void collect_scope_specparams_(Design*des, NetScope*scope,
       }
 }
 
+/*
+ * Elaborate the enumeration into the given scope. If scope==0, then
+ * the enumeration goes into $root instead of a scope.
+ */
 static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 					enum_type_t*enum_type)
 {
@@ -176,7 +181,10 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 					 msb, lsb, enum_type->names->size());
 
       use_enum->set_line(enum_type->li);
-      scope->add_enumeration_set(use_enum);
+      if (scope)
+	    scope->add_enumeration_set(use_enum);
+      else
+	    des->add_enumeration_set(use_enum);
 
       ivl_assert(*enum_type, enum_type->net_type == 0);
       enum_type->net_type = use_enum;
@@ -270,7 +278,11 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	    tmp_val.has_sign(enum_type->signed_flag);
 
 	    rc_flag = use_enum->insert_name(name_idx, cur->name, tmp_val);
-	    rc_flag &= scope->add_enumeration_name(use_enum, cur->name);
+	    if (scope)
+		  rc_flag &= scope->add_enumeration_name(use_enum, cur->name);
+	    else
+		  rc_flag &= des->add_enumeration_name(use_enum, cur->name);
+
 	    if (! rc_flag) {
 		  cerr << use_enum->get_fileline()
 		       << ": error: Duplicate enumeration name "
@@ -294,6 +306,15 @@ static void elaborate_scope_enumerations(Design*des, NetScope*scope,
 		 ; cur != enum_types.end() ; ++ cur) {
 	    enum_type_t*curp = *cur;
 	    elaborate_scope_enumeration(des, scope, curp);
+      }
+}
+
+void elaborate_rootscope_enumerations(Design*des)
+{
+      for (set<enum_type_t*>::const_iterator cur = pform_enum_sets.begin()
+		 ; cur != pform_enum_sets.end() ; ++ cur) {
+	    enum_type_t*curp = *cur;
+	    elaborate_scope_enumeration(des, 0, curp);
       }
 }
 

@@ -965,7 +965,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	         << "'." << endl;
 	    des->errors += 1;
       }
-	// A signal can not have the same name as a parameter.
+	// A signal can not have the same name as a parameter. Note
+	// that we treat enumeration literals similar to parameters,
+	// so if the name matches an enumeration literal, it will be
+	// caught here.
       const NetExpr *ex_msb, *ex_lsb;
       const NetExpr *parm = scope->get_parameter(des, name_, ex_msb, ex_lsb);
       if (parm) {

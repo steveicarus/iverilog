@@ -820,11 +820,43 @@ class NetBaseDef {
 };
 
 /*
+ * Some definitions (and methods to manipulate them) are common to a
+ * couple of types. Keep them here.
+ */
+class Definitions {
+
+    public:
+      Definitions();
+      ~Definitions();
+
+      void add_enumeration_set(netenum_t*enum_set);
+      bool add_enumeration_name(netenum_t*enum_set, perm_string enum_name);
+
+	// Look up the enumeration literal in this scope. if the name
+	// is present, then return the enumeration type that declares it.
+      const netenum_t* enumeration_for_name(perm_string name);
+
+	// Look up an enumeration literal in this scope. If the
+	// literal is present, return the expression that defines its
+	// value.
+      const NetExpr* enumeration_expr(perm_string key);
+
+    protected:
+	// Enumerations. The enum_sets_ is a list of all the
+	// enumerations present in this scope. The enum_names_ is a
+	// map of all the enumeration names back to the sets that
+	// contain them.
+      std::list<netenum_t*> enum_sets_;
+      std::map<perm_string,NetEConstEnum*> enum_names_;
+
+};
+
+/*
  * This object type is used to contain a logical scope within a
  * design. The scope doesn't represent any executable hardware, but is
  * just a handle that netlist processors can use to grab at the design.
  */
-class NetScope : public Attrib {
+class NetScope : public Definitions, public Attrib {
 
     public:
       enum TYPE { MODULE, CLASS, TASK, FUNC, BEGIN_END, FORK_JOIN, GENBLOCK, PACKAGE };
@@ -896,11 +928,6 @@ class NetScope : public Attrib {
       void add_signal(NetNet*);
       void rem_signal(NetNet*);
       NetNet* find_signal(perm_string name);
-
-      void add_enumeration_set(netenum_t*enum_set);
-      bool add_enumeration_name(netenum_t*enum_set, perm_string enum_name);
-
-      const netenum_t* enumeration_for_name(perm_string name);
 
       void add_class(netclass_t*class_type);
       netclass_t* find_class(perm_string name);
@@ -1152,13 +1179,6 @@ class NetScope : public Attrib {
       };
       const PFunction*func_pform_;
       unsigned elab_stage_;
-
-	// Enumerations. The enum_sets_ is a list of all the
-	// enumerations present in this scope. The enum_names_ is a
-	// map of all the enumeration names back to the sets that
-	// contain them.
-      std::list<netenum_t*> enum_sets_;
-      std::map<perm_string,NetEConstEnum*> enum_names_;
 
       std::map<perm_string,netclass_t*> classes_;
 
@@ -1973,12 +1993,11 @@ class NetEConst  : public NetExpr {
 class NetEConstEnum  : public NetEConst {
 
     public:
-      explicit NetEConstEnum(NetScope*scope, perm_string name,
+      explicit NetEConstEnum(Definitions*scope, perm_string name,
 			     const netenum_t*enum_set, const verinum&val);
       ~NetEConstEnum();
 
       perm_string name() const;
-      const NetScope*scope() const;
       const netenum_t*enumeration() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -1987,7 +2006,7 @@ class NetEConstEnum  : public NetEConst {
       virtual NetEConstEnum* dup_expr() const;
 
     private:
-      NetScope*scope_;
+      Definitions*scope_;
       const netenum_t*enum_set_;
       perm_string name_;
 };
@@ -4499,7 +4518,7 @@ struct elaborator_work_item_t {
  * This class contains an entire design. It includes processes and a
  * netlist, and can be passed around from function to function.
  */
-class Design {
+class Design : public Definitions {
 
     public:
       Design();
