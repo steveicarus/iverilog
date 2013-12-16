@@ -188,7 +188,7 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
  * supported, can assign to packed arrays and structs, unpacked arrays
  * and dynamic arrays.
  */
-unsigned PEAssignPattern::test_width(Design*des, NetScope*scope, width_mode_t&mode)
+unsigned PEAssignPattern::test_width(Design*, NetScope*, width_mode_t&)
 {
       expr_type_  = IVL_VT_DARRAY;
       expr_width_ = 1;
@@ -1078,10 +1078,14 @@ unsigned PECallFunction::test_width_sfunc_(Design*des, NetScope*scope,
 	    if (expr == 0)
 		  return 0;
 
-              // The argument type/width is self-determined and doesn't
-              // affect the result type/width.
-            width_mode_t arg_mode = SIZED;
-	    expr->test_width(des, scope, arg_mode);
+	    if (! dynamic_cast<PETypename*>(expr)) {
+		    // The argument type/width is self-determined and doesn't
+		    // affect the result type/width. Note that if the
+		    // argument is a type name (a special case) then
+		    // don't bother with this step.
+		  width_mode_t arg_mode = SIZED;
+		  expr->test_width(des, scope, arg_mode);
+	    }
 
 	    expr_type_   = IVL_VT_BOOL;
 	    expr_width_  = integer_width;
@@ -1393,11 +1397,18 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 
 	    PExpr*expr = parms_[0];
 
-	    verinum val ( (uint64_t)expr->expr_width(), integer_width);
-	    NetEConst*sub = new NetEConst(val);
-	    sub->set_line(*this);
+	    if (PETypename*type_expr = dynamic_cast<PETypename*>(expr)) {
+		  cerr << get_fileline() << ": sorry: "
+		       << "I don't yet support typename argumets to $bits." << endl;
+		  des->errors += 1;
+		  return 0;
+	    } else {
+		  verinum val ( (uint64_t)expr->expr_width(), integer_width);
+		  NetEConst*sub = new NetEConst(val);
+		  sub->set_line(*this);
 
-	    return cast_to_width_(sub, expr_wid);
+		  return cast_to_width_(sub, expr_wid);
+	    }
       }
 
 	/* Interpret the internal $is_signed system function to return
@@ -5156,6 +5167,31 @@ NetExpr* PETernary::elab_and_eval_alternative_(Design*des, NetScope*scope,
       eval_expr(tmp, context_wid);
 
       return tmp;
+}
+
+/*
+ * A typename expression is only legal in very narrow cases. This is
+ * just a placeholder.
+ */
+unsigned PETypename::test_width(Design*des, NetScope*, width_mode_t&)
+{
+      cerr << get_fileline() << ": error: "
+	   << "Type names are not valid expressions here." << endl;
+      des->errors += 1;
+
+      expr_type_   = IVL_VT_NO_TYPE;
+      expr_width_  = 1;
+      min_width_   = 1;
+      signed_flag_ = false;
+      return expr_width_;
+}
+
+NetExpr*PETypename::elaborate_expr(Design*des, NetScope*,
+				   ivl_type_t, unsigned) const
+{
+      cerr << get_fileline() << ": error: Type name not a valid expression here." << endl;
+      des->errors += 1;
+      return 0;
 }
 
 unsigned PEUnary::test_width(Design*des, NetScope*scope, width_mode_t&mode)

@@ -3097,6 +3097,14 @@ expr_primary
 	delete[]$1;
       }
 
+  /* There are a few special cases (notably $bits argument) where the
+     expression may be a type name. Let the elaborator sort this out. */
+  | TYPE_IDENTIFIER
+  { PETypename*tmp = new PETypename($1);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
+      }
+
   /* The hierarchy_identifier rule matches simple identifiers as well as
      indexed arrays and part selects */
 

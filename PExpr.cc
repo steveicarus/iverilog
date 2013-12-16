@@ -540,6 +540,15 @@ bool PETernary::has_aa_term(Design*des, NetScope*scope) const
            || fal_->has_aa_term(des, scope);
 }
 
+PETypename::PETypename(data_type_t*dt)
+: data_type_(dt)
+{
+}
+
+PETypename::~PETypename()
+{
+}
+
 PEUnary::PEUnary(char op, PExpr*ex)
 : op_(op), expr_(ex)
 {

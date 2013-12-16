@@ -385,6 +385,11 @@ void PETernary::dump(ostream&out) const
       out << "(" << *expr_ << ")?(" << *tru_ << "):(" << *fal_ << ")";
 }
 
+void PETypename::dump(ostream&fd) const
+{
+      fd << "<type>";
+}
+
 void PEUnary::dump(ostream&out) const
 {
       switch (op_) {
