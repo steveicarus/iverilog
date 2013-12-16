@@ -1397,18 +1397,29 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 
 	    PExpr*expr = parms_[0];
 
+	    uint64_t use_width = 0;
 	    if (PETypename*type_expr = dynamic_cast<PETypename*>(expr)) {
-		  cerr << get_fileline() << ": sorry: "
-		       << "I don't yet support typename argumets to $bits." << endl;
-		  des->errors += 1;
-		  return 0;
-	    } else {
-		  verinum val ( (uint64_t)expr->expr_width(), integer_width);
-		  NetEConst*sub = new NetEConst(val);
-		  sub->set_line(*this);
+		  ivl_type_t tmp_type = type_expr->get_type()->elaborate_type(des, scope);
+		  ivl_assert(*this, tmp_type);
+		  use_width = tmp_type->packed_width();
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PECallFunction::elaborate_sfunc_: "
+			     << " Packed width of type argument is " << use_width << endl;
+		  }
 
-		  return cast_to_width_(sub, expr_wid);
+	    } else {
+		  use_width = expr->expr_width();
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PECallFunction::elaborate_sfunc_: "
+			     << " Width of expression argument is " << use_width << endl;
+		  }
 	    }
+
+	    verinum val (use_width, integer_width);
+	    NetEConst*sub = new NetEConst(val);
+	    sub->set_line(*this);
+
+	    return cast_to_width_(sub, expr_wid);
       }
 
 	/* Interpret the internal $is_signed system function to return

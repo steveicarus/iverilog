@@ -671,6 +671,8 @@ class PETypename : public PExpr {
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     ivl_type_t type, unsigned flags) const;
 
+      inline data_type_t* get_type() const { return data_type_; }
+
     private:
       data_type_t*data_type_;
 };
