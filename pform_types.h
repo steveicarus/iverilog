@@ -116,7 +116,6 @@ struct void_type_t : public data_type_t {
  * until it is elaborated in a scope.
  */
 struct enum_type_t : public data_type_t {
-      inline enum_type_t(void) : net_type(0) { }
 	// Return the elaborated version of the type.
       virtual ivl_type_s*elaborate_type_raw(Design*des, NetScope*scope) const;
 
@@ -125,11 +124,6 @@ struct enum_type_t : public data_type_t {
       std::auto_ptr< list<pform_range_t> > range;
       std::auto_ptr< list<named_pexpr_t> > names;
       LineInfo li;
-	// This is the elaborated type. The enumeration type is
-	// elaborated early so that names can be placed in the scope,
-	// but that means the result needs to be saved for the actual
-	// elaborate_type method to use.
-      netenum_t*net_type;
 };
 
 struct struct_member_t : public LineInfo {

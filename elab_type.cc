@@ -80,10 +80,20 @@ ivl_type_s* class_type_t::elaborate_type_raw(Design*, NetScope*scope) const
       return scope->find_class(name);
 }
 
+/*
+ * elaborate_type_raw for enumerations is actually mostly performed
+ * during scope elaboration so that the enumeration literals are
+ * available at the right time. At tha time, the netenum_t* object is
+ * stashed in the scope so that I can retrieve it here.
+ */
 ivl_type_s* enum_type_t::elaborate_type_raw(Design*des, NetScope*scope) const
 {
-      ivl_assert(*this, net_type);
-      return net_type;
+      ivl_assert(*this, scope);
+      ivl_type_s*tmp = scope->enumeration_for_key(this);
+      if (tmp) return tmp;
+
+      tmp = des->enumeration_for_key(this);
+      return tmp;
 }
 
 ivl_type_s* vector_type_t::elaborate_type_raw(Design*des, NetScope*scope) const

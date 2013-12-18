@@ -182,12 +182,9 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 
       use_enum->set_line(enum_type->li);
       if (scope)
-	    scope->add_enumeration_set(use_enum);
+	    scope->add_enumeration_set(enum_type, use_enum);
       else
-	    des->add_enumeration_set(use_enum);
-
-      ivl_assert(*enum_type, enum_type->net_type == 0);
-      enum_type->net_type = use_enum;
+	    des->add_enumeration_set(enum_type, use_enum);
 
       verinum cur_value (0);
       verinum one_value (1);

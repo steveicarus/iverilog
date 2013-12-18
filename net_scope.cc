@@ -38,9 +38,11 @@ Definitions::~Definitions()
 {
 }
 
-void Definitions::add_enumeration_set(netenum_t*enum_set)
+void Definitions::add_enumeration_set(const enum_type_t*key, netenum_t*enum_set)
 {
-      enum_sets_.push_back(enum_set);
+      netenum_t*&tmp = enum_sets_[key];
+      assert(tmp == 0);
+      tmp = enum_set;
 }
 
 bool Definitions::add_enumeration_name(netenum_t*enum_set, perm_string name)
@@ -55,6 +57,17 @@ bool Definitions::add_enumeration_name(netenum_t*enum_set, perm_string name)
 
 	// Return TRUE if the name is added (i.e. is NOT a duplicate.)
       return cur.second;
+}
+
+netenum_t* Definitions::enumeration_for_key(const enum_type_t*key) const
+{
+      map<const enum_type_t*,netenum_t*>::const_iterator cur;
+
+      cur = enum_sets_.find(key);
+      if (cur != enum_sets_.end())
+	    return cur->second;
+      else
+	    return 0;
 }
 
 /*

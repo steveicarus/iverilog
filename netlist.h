@@ -76,6 +76,7 @@ class NetEvTrig;
 class NetEvWait;
 class PExpr;
 class PFunction;
+class enum_type_t;
 class netclass_t;
 class netdarray_t;
 class netparray_t;
@@ -829,12 +830,21 @@ class Definitions {
       Definitions();
       ~Definitions();
 
-      void add_enumeration_set(netenum_t*enum_set);
+	// Add the enumeration to the set of enumerations in this
+	// scope. Include a key that the elaboration can use to look
+	// up this enumeration based on the pform type.
+      void add_enumeration_set(const enum_type_t*key, netenum_t*enum_set);
+
       bool add_enumeration_name(netenum_t*enum_set, perm_string enum_name);
 
 	// Look up the enumeration literal in this scope. if the name
 	// is present, then return the enumeration type that declares it.
       const netenum_t* enumeration_for_name(perm_string name);
+
+	// Look up the enumeration set that was added with the given
+	// key. This is used by enum_type_t::elaborate_type to locate
+	// a previously elaborated enumeration.
+      netenum_t* enumeration_for_key(const enum_type_t*key) const;
 
 	// Look up an enumeration literal in this scope. If the
 	// literal is present, return the expression that defines its
@@ -846,7 +856,7 @@ class Definitions {
 	// enumerations present in this scope. The enum_names_ is a
 	// map of all the enumeration names back to the sets that
 	// contain them.
-      std::list<netenum_t*> enum_sets_;
+      std::map<const enum_type_t*,netenum_t*> enum_sets_;
       std::map<perm_string,NetEConstEnum*> enum_names_;
 
 };
