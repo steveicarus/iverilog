@@ -1996,7 +1996,8 @@ static bool check_dimension(const NetExpr*dim_expr, long &dim)
 }
 
 /* Get the left and right values for the argument at the given dimension
- * if it exists. Return true if no values are available. */
+ * if it exists. Return true if no values are available. Set defer to true
+ * if this should be handled in the run time. */
 static bool get_array_info(const NetExpr*arg, long dim,
                            long &left, long &right, bool&defer)
 {
@@ -2005,7 +2006,6 @@ static bool get_array_info(const NetExpr*arg, long dim,
       if (esig == 0) return true;
       const NetNet *sig = esig->sig();
 	/* A string or dynamic array must be handled by the run time. */
-      defer = false;
       switch (sig->data_type()) {
 	case IVL_VT_DARRAY:
 	case IVL_VT_STRING:
@@ -2048,7 +2048,7 @@ NetEConst* NetESFunc::evaluate_array_funcs_(ID id,
 	/* Get the left/right information for this dimension if it exists. */
       long left = 0;
       long right = 0;
-      bool defer;
+      bool defer = false;
       if (get_array_info(arg0, dim, left, right, defer)) {
 	      /* If this is a string or dynamic array defer this function
 	       * call since the left/right information is dynamic and is
