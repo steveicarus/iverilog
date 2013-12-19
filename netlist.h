@@ -4176,37 +4176,53 @@ class NetESFunc  : public NetExpr {
 	 */
       enum ID { NOT_BUILT_IN = 0x0,
                   /* Available in all version of Verilog/SystemVerilog. */
-                ITOR  = 0x00020001,  /* $itor takes one argument. */
-                RTOI  = 0x00020002,  /* $rtoi takes one argument. */
+                ITOR   = 0x00020001,  /* $itor takes one argument. */
+                RTOI   = 0x00020002,  /* $rtoi takes one argument. */
                   /* Available in Verilog 2005 and later. */
-                ACOS  = 0x00020003,  /* $acos takes one argument. */
-                ACOSH = 0x00020004,  /* $acosh takes one argument. */
-                ASIN  = 0x00020005,  /* $asin takes one argument. */
-                ASINH = 0x00020006,  /* $asinh takes one argument. */
-                ATAN  = 0x00020007,  /* $atan takes one argument. */
-                ATANH = 0x00020008,  /* $atanh takes one argument. */
-                ATAN2 = 0x00040009,  /* $atan2 takes two argument. */
-                CEIL  = 0x0002000a,  /* $ceil takes one argument. */
-                CLOG2 = 0x0002000b,  /* $clog2 takes one argument. */
-                COS   = 0x0002000c,  /* $cos takes one argument. */
-                COSH  = 0x0002000d,  /* $cosh takes one argument. */
-                EXP   = 0x0002000e,  /* $exp takes one argument. */
-                FLOOR = 0x0002000f,  /* $floor takes one argument. */
-                HYPOT = 0x00040010,  /* $hypot takes two argument. */
-                LN    = 0x00020011,  /* $ln takes one argument. */
-                LOG10 = 0x00020012,  /* $log10 takes one argument. */
-                POW   = 0x00040013,  /* $pow takes two argument. */
-                SIN   = 0x00020014,  /* $sin takes one argument. */
-                SINH  = 0x00020015,  /* $sinh takes one argument. */
-                SQRT  = 0x00020016,  /* $sqrt takes one argument. */
-                TAN   = 0x00020017,  /* $tan takes one argument. */
-                TANH  = 0x00020018,  /* $tanh takes one argument. */
+                ACOS   = 0x00020003,  /* $acos takes one argument. */
+                ACOSH  = 0x00020004,  /* $acosh takes one argument. */
+                ASIN   = 0x00020005,  /* $asin takes one argument. */
+                ASINH  = 0x00020006,  /* $asinh takes one argument. */
+                ATAN   = 0x00020007,  /* $atan takes one argument. */
+                ATANH  = 0x00020008,  /* $atanh takes one argument. */
+                ATAN2  = 0x00040009,  /* $atan2 takes two argument. */
+                CEIL   = 0x0002000a,  /* $ceil takes one argument. */
+                CLOG2  = 0x0002000b,  /* $clog2 takes one argument. */
+                COS    = 0x0002000c,  /* $cos takes one argument. */
+                COSH   = 0x0002000d,  /* $cosh takes one argument. */
+                EXP    = 0x0002000e,  /* $exp takes one argument. */
+                FLOOR  = 0x0002000f,  /* $floor takes one argument. */
+                HYPOT  = 0x00040010,  /* $hypot takes two argument. */
+                LN     = 0x00020011,  /* $ln takes one argument. */
+                LOG10  = 0x00020012,  /* $log10 takes one argument. */
+                POW    = 0x00040013,  /* $pow takes two argument. */
+                SIN    = 0x00020014,  /* $sin takes one argument. */
+                SINH   = 0x00020015,  /* $sinh takes one argument. */
+                SQRT   = 0x00020016,  /* $sqrt takes one argument. */
+                TAN    = 0x00020017,  /* $tan takes one argument. */
+                TANH   = 0x00020018,  /* $tanh takes one argument. */
+                  /* Added in SystemVerilog 2005 and later. */
+                DIMS   = 0x00020019,  /* $dimensions takes one argument. */
+                HIGH   = 0x0006001a,  /* $high takes one or two arguments. */
+                INCR   = 0x0006001b,  /* $increment takes one or two arguments. */
+                LEFT   = 0x0006001c,  /* $left takes one or two arguments. */
+                LOW    = 0x0006001d,  /* $low takes one or two arguments. */
+                RIGHT  = 0x0006001e,  /* $right takes one or two arguments. */
+                SIZE   = 0x0006001f,  /* $size takes one or two arguments. */
+                UPDIMS = 0x00020020,  /* $unpacked_dimensions takes one argument. */
+                ISUNKN = 0x00020021,  /* $isunknown takes one argument. */
+                ONEHT  = 0x00020022,  /* $onehot takes one argument. */
+                ONEHT0 = 0x00020023,  /* $onehot0 takes one argument. */
+                  /* Added in SystemVerilog 2009 and later. */
+                CTONES = 0x00020024,  /* $countones takes one argument. */
+                  /* Added in SystemVerilog 2012 and later. */
+                CTBITS = 0xfffe0025,  /* $countbits takes one or more arguments. */
                   /* Added as Icarus extensions to Verilog-A. */
-                ABS   = 0x00020019,  /* $abs takes one argument. */
-                MAX   = 0x0004001a,  /* $max takes two argument. */
-                MIN   = 0x0004001b,  /* $min takes two argument. */
+                ABS    = 0x00020026,  /* $abs takes one argument. */
+                MAX    = 0x00040027,  /* $max takes two argument. */
+                MIN    = 0x00040028,  /* $min takes two argument. */
                   /* A dummy value to properly close the enum. */
-		DUMMY = 0xffffffff };
+		DUMMY  = 0xffffffff };
 
       bool takes_nargs_(ID func, unsigned nargs) {
 	    if (nargs > 15) nargs = 15;
@@ -4236,6 +4252,24 @@ class NetESFunc  : public NetExpr {
       NetExpr* evaluate_abs_(const NetExpr*arg) const;
       NetExpr* evaluate_min_max_(ID id, const NetExpr*arg0,
 					const NetExpr*arg1) const;
+
+	/* Constant SystemVerilog functions. */
+      NetEConst* evaluate_countones_(const NetExpr*arg) const;
+      NetEConst* evaluate_dimensions_(const NetExpr*arg) const;
+      NetEConst* evaluate_isunknown_(const NetExpr*arg) const;
+      NetEConst* evaluate_onehot_(const NetExpr*arg) const;
+      NetEConst* evaluate_onehot0_(const NetExpr*arg) const;
+      NetEConst* evaluate_unpacked_dimensions_(const NetExpr*arg) const;
+
+	/* This value is used as a default when the array functions are
+	 * called with a single argument. */
+      static const NetEConst*const_one_;
+
+      NetEConst* evaluate_array_funcs_(ID id,
+                                       const NetExpr*arg0,
+                                       const NetExpr*arg1) const;
+      NetEConst* evaluate_countbits_(const NetExpr*arg0,
+                                     const NetExpr*arg1) const;
 
     public:
       bool is_built_in() const { return built_in_id_() != NOT_BUILT_IN; };
