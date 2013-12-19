@@ -3321,9 +3321,14 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 				   << "got " << use_path.back().index.size() << "." << endl;
 			}
 
-			return check_for_struct_members(this, des, use_scope,
-							net, use_path.back().index,
-							member_comp);
+			NetExpr*tmp = check_for_struct_members(this, des, use_scope,
+							       net, use_path.back().index,
+							       member_comp);
+			if (!tmp) return 0;
+
+			tmp = pad_to_width(tmp, expr_wid, *this);
+			tmp->cast_signed(signed_flag_);
+			return tmp;
 		  }
 
 		  if (net->class_type() != 0) {

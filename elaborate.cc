@@ -129,8 +129,8 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 		 << ", expr=" << *rval_expr << endl;
       }
 
-      assert(lval && rval);
-      assert(rval->pin_count() == 1);
+      ivl_assert(*this, lval && rval);
+      ivl_assert(*this, rval->pin_count() == 1);
 
 	// Detect the case that the rvalue-expression is a simple
 	// expression. In this case, we will need to create a driver
@@ -139,23 +139,14 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       if (dynamic_cast<NetESignal*>(rval_expr))
 	    need_driver_flag = true;
 
-#if 0
-	// MTW, 01-Mar-2013. The expression elaboration rework should have
-	// ensured that this can no longer occur. Leaving this here for the
-	// moment, but it should be safe to remove it.
-
-	/* If the r-value insists on being smaller than the l-value
-	   (perhaps it is explicitly sized) the pad it out to be the
-	   right width so that something is connected to all the bits
-	   of the l-value. */
-      if (lval->vector_width() > rval->vector_width()) {
-	    if (rval->get_signed())
-		  rval = pad_to_width_signed(des, rval, lval->vector_width(),
-		                             *this);
-	    else
-		  rval = pad_to_width(des, rval, lval->vector_width(), *this);
+	// expression elaboration should have caused the rval width to
+	// match the l-value by now.
+      if (rval->vector_width() < lval->vector_width()) {
+	    cerr << get_fileline() << ": internal error: "
+		 << "lval-rval width mismatch: "
+		 << "rval->vector_width()==" << rval->vector_width()
+		 << ", lval->vector_width()==" << lval->vector_width() << endl;
       }
-#endif
       ivl_assert(*this, rval->vector_width() >= lval->vector_width());
 
 	/* If the r-value insists on being larger than the l-value,
