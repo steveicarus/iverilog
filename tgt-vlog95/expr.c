@@ -267,8 +267,9 @@ static expr_sign_t expr_get_sign_type(ivl_expr_t expr, unsigned wid,
 	    break;
       }
 
-	/* Check for a self-determined context. */
-      if ((rtn == NO_SIGN) && (wid != expr_wid) &&
+	/* Check for a self-determined context. A zero width expression
+	 * is special and is not considered a self determined context. */
+      if ((rtn == NO_SIGN) && (wid != expr_wid) && expr_wid &&
           ! (is_full_prec && ((expr_wid < wid) || (type == IVL_EX_SIGNAL)))) {
 	    if (ivl_expr_signed(expr)) rtn = NEED_SIGNED;
 	    else rtn = NEED_UNSIGNED;
