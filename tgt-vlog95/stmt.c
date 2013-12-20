@@ -214,16 +214,27 @@ static void emit_stmt_lval_darray(ivl_scope_t scope, ivl_lval_t lval,
  * Class or class properties are not supported in vlog95, but this assignment
  * can be translated correctly.
  */
-static void emit_stmt_lval_class(ivl_scope_t scope, ivl_lval_t lval,
-                                 ivl_signal_t sig)
+static ivl_type_t emit_stmt_lval_class(ivl_scope_t scope, ivl_lval_t lval)
 {
+      ivl_lval_t nest = ivl_lval_nest(lval);
+      ivl_signal_t sig = ivl_lval_sig(lval);
+      ivl_type_t type;
       int idx = ivl_lval_property_idx(lval);
-      emit_scope_call_path(scope, ivl_signal_scope(sig));
-      emit_id(ivl_signal_basename(sig));
-      if (idx >= 0) {
-	    ivl_type_t sig_type = ivl_signal_net_type(sig);
-	    fprintf(vlog_out, ".%s", ivl_type_prop_name(sig_type, idx));
+
+      if (nest) {
+	    type = emit_stmt_lval_class(scope, nest);
+	    assert(type);
+      } else {
+	    assert(sig);
+	    emit_scope_call_path(scope, ivl_signal_scope(sig));
+	    emit_id(ivl_signal_basename(sig));
+	    type = ivl_signal_net_type(sig);
       }
+
+      if (idx >= 0) {
+	    fprintf(vlog_out, ".%s", ivl_type_prop_name(type, idx));
+	    return ivl_type_prop_type(type, idx);
+      } else return 0;
 }
 
 static void emit_stmt_lval_piece(ivl_scope_t scope, ivl_lval_t lval)
@@ -234,14 +245,20 @@ static void emit_stmt_lval_piece(ivl_scope_t scope, ivl_lval_t lval)
       unsigned width = ivl_lval_width(lval);
       int msb, lsb;
       assert(width > 0);
-      assert(sig);
+
+	/* A class supports a nested L-value so it may not have a signal
+	 * at this level. */
+      if (! sig) {
+	    (void) emit_stmt_lval_class(scope, lval);
+	    return;
+      }
 
       switch (ivl_signal_data_type(sig)) {
 	case IVL_VT_DARRAY:
 	    emit_stmt_lval_darray(scope, lval, sig);
 	    return;
 	case IVL_VT_CLASS:
-	    emit_stmt_lval_class(scope, lval, sig);
+	    (void) emit_stmt_lval_class(scope, lval);
 	    return;
 	default:
 	    break;
