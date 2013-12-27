@@ -209,9 +209,9 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
       clear_expression_lookaside();
 }
 
-static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
+static void assign_to_lvector(ivl_lval_t lval,
 			      uint64_t delay, ivl_expr_t dexp,
-			      unsigned width, unsigned nevents)
+			      unsigned nevents)
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
       ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
@@ -221,9 +221,13 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
       const unsigned long use_word = 0;
 
       if (ivl_signal_dimensions(sig) > 0) {
+#if 0
 	    assert(word_ix);
 	    assign_to_array_word(sig, word_ix, bit, delay, dexp, part_off_ex,
 	                         width, nevents);
+#else
+	    fprintf(stderr, "XXXX %%assign to array word not supported yet.\n");
+#endif
 	    return;
       }
 
@@ -247,9 +251,13 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 		  draw_eval_expr_into_integer(part_off_ex, 1);
 		    /* If the index expression has XZ bits, skip the assign. */
 		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+#if 0
 		  fprintf(vvp_out, "    %%ix/load 0, %u, 0;\n", width);
 		  fprintf(vvp_out, "    %%assign/v0/x1/d v%p_%lu, %d, %u;\n",
 		          sig, use_word, delay_index, bit);
+#else
+		  assert(0); // XXXX
+#endif
 		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
 		  clr_word(delay_index);
 	    } else if (nevents != 0) {
@@ -257,9 +265,13 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 		  draw_eval_expr_into_integer(part_off_ex, 1);
 		    /* If the index expression has XZ bits, skip the assign. */
 		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+#if 0
 		  fprintf(vvp_out, "    %%ix/load 0, %u, 0;\n", width);
 		  fprintf(vvp_out, "    %%assign/v0/x1/e v%p_%lu, %u;\n",
 		          sig, use_word, bit);
+#else
+		  assert(0); // XXXX
+#endif
 		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
 		  fprintf(vvp_out, "    %%evctl/c;\n");
 	    } else {
@@ -267,6 +279,7 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 		  draw_eval_expr_into_integer(part_off_ex, 1);
 		    /* If the index expression has XZ bits, skip the assign. */
 		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+#if 0
 		  fprintf(vvp_out, "    %%ix/load 0, %u, 0;\n", width);
 		    /*
 		     * The %assign can only take a 32 bit delay. For a larger
@@ -285,10 +298,14 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 			        "    %%assign/v0/x1 v%p_%lu, %lu, %u;\n",
 			        sig, use_word, low_d, bit);
 		  }
+#else
+		  assert(0); // XXXX
+#endif
 		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
 	    }
 
       } else if (part_off>0 || ivl_lval_width(lval)!=ivl_signal_width(sig)) {
+#if 0
 	      /* There is no mux expression, but a constant part
 		 offset. Load that into index x1 and generate a
 		 single-bit set instruction. */
@@ -331,23 +348,41 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 			        sig, use_word, low_d, bit);
 		  }
 	    }
+#else
+	    if (dexp != 0) {
+		  assert(0); // XXXX
+
+	    } else if (nevents != 0) {
+		  assert(0); // XXXX
+
+	    } else {
+		  int offset_index = allocate_word();
+		  int delay_index = allocate_word();
+		  fprintf(vvp_out, "    %%ix/load %d, %lu, 0;\n", offset_index, part_off);
+		  if (dexp)
+			draw_eval_expr_into_integer(dexp,delay_index);
+		  else
+			fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
+				delay_index, low_d, hig_d);
+		  fprintf(vvp_out, "    %%assign/vec4/off/d v%p_%lu, %d, %d;\n",
+			  sig, use_word, offset_index, delay_index);
+		  clr_word(offset_index);
+		  clr_word(delay_index);
+	    }
+#endif
 
       } else if (dexp != 0) {
 	      /* Calculated delay... */
 	    int delay_index = allocate_word();
 	    draw_eval_expr_into_integer(dexp, delay_index);
-	    fprintf(vvp_out, "    %%ix/load 0, %u, 0;\n", width);
-	    fprintf(vvp_out, "    %%assign/v0/d v%p_%lu, %d, %u;\n",
-		    sig, use_word, delay_index, bit);
+	    fprintf(vvp_out, "    %%assign/vec4/d v%p_%lu, %d;\n",
+		    sig, use_word, delay_index);
 	    clr_word(delay_index);
       } else if (nevents != 0) {
 	      /* Event control delay... */
-	    fprintf(vvp_out, "    %%ix/load 0, %u, 0;\n", width);
-	    fprintf(vvp_out, "    %%assign/v0/e v%p_%lu, %u;\n",
-		    sig, use_word, bit);
+	    fprintf(vvp_out, "    %%assign/vec4/e v%p_%lu;\n",
+		    sig, use_word);
       } else {
-	      /* Constant delay... */
-	    fprintf(vvp_out, "    %%ix/load 0, %u, 0;\n", width);
 	      /*
 	       * The %assign can only take a 32 bit delay. For a larger
 	       * delay we need to put it into an index register.
@@ -356,12 +391,12 @@ static void assign_to_lvector(ivl_lval_t lval, unsigned bit,
 		  int delay_index = allocate_word();
 		  fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
 		          delay_index, low_d, hig_d);
-		  fprintf(vvp_out, "    %%assign/v0/d v%p_%lu, %d, %u;\n",
-		          sig, use_word, delay_index, bit);
+		  fprintf(vvp_out, "    %%assign/vec4/d v%p_%lu, %d;\n",
+		          sig, use_word, delay_index);
 		  clr_word(delay_index);
 	    } else {
-		  fprintf(vvp_out, "    %%assign/v0 v%p_%lu, %lu, %u;\n",
-		          sig, use_word, low_d, bit);
+		  fprintf(vvp_out, "    %%assign/vec4 v%p_%lu, %lu;\n",
+		          sig, use_word, low_d);
 	    }
       }
 }
@@ -546,7 +581,7 @@ static int show_stmt_assign_nb(ivl_statement_t net)
       }
 
 
-      { struct vector_info res;
+      { struct vector_info res = {0,0};
 	unsigned wid;
 	unsigned lidx;
 	unsigned cur_rbit = 0;
@@ -574,21 +609,29 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 		      res.base, res.wid);
 
 	} else {
-	      res = draw_eval_expr(rval, 0);
-	      wid = res.wid;
+	      wid = ivl_stmt_lwidth(net);
+	      draw_eval_vec4(rval, 0);
+	      if (ivl_expr_width(rval) != wid) {
+		    if (ivl_expr_signed(rval))
+			  fprintf(vvp_out, "    %%pad/s %u;\n", wid);
+		    else
+			  fprintf(vvp_out, "    %%pad/u %u;\n", wid);
+	      }
 	}
 
+	  /* Spread the r-value vector over the bits of the l-value. */
 	for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ;  lidx += 1) {
 	      unsigned bit_limit = wid - cur_rbit;
-	      unsigned bidx;
 
 	      lval = ivl_stmt_lval(net, lidx);
 
 	      if (bit_limit > ivl_lval_width(lval))
 		    bit_limit = ivl_lval_width(lval);
 
-	      bidx = res.base < 4? res.base : (res.base+cur_rbit);
-	      assign_to_lvector(lval, bidx, delay, del, bit_limit, nevents);
+		/* XXXX For now, don't know how to actually split
+		   vectors */
+	      assert(lidx == 0);
+	      assign_to_lvector(lval, delay, del, nevents);
 
 	      cur_rbit += bit_limit;
 
@@ -655,7 +698,6 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
       ivl_expr_t expr = ivl_stmt_cond_expr(net);
-      struct vector_info cond = draw_eval_expr(expr, 0);
       unsigned count = ivl_stmt_case_count(net);
 
       unsigned local_base = local_count;
@@ -666,6 +708,11 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 
       local_count += count + 1;
 
+	/* Evaluate the case condition to the top of the vec4
+	   stack. This expression will be compared multiple times to
+	   each case guard. */
+      draw_eval_vec4(expr,0);
+
 	/* First draw the branch table.  All the non-default cases
 	   generate a branch out of here, to the code that implements
 	   the case. The default will fall through all the tests. */
@@ -673,55 +720,34 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 
       for (idx = 0 ;  idx < count ;  idx += 1) {
 	    ivl_expr_t cex = ivl_stmt_case_expr(net, idx);
-	    struct vector_info cvec;
 
 	    if (cex == 0) {
 		  default_case = idx;
 		  continue;
 	    }
 
-	      /* Is the guard expression something I can pass to a
-		 %cmpi/u instruction? If so, use that instead. */
-
-	    if ((ivl_statement_type(net) == IVL_ST_CASE)
-		&& (ivl_expr_type(cex) == IVL_EX_NUMBER)
-		&& (! number_is_unknown(cex))
-		&& number_is_immediate(cex, 16, 0)) {
-
-		  unsigned long imm = get_number_immediate(cex);
-
-		  fprintf(vvp_out, "    %%cmpi/u %u, %lu, %u;\n",
-			  cond.base, imm, cond.wid);
-		  fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 6;\n",
-			  thread_count, local_base+idx);
-
-		  continue;
-	    }
-
-	      /* Oh well, do this case the hard way. */
-
-	    cvec = draw_eval_expr_wid(cex, cond.wid, STUFF_OK_RO);
-	    assert(cvec.wid == cond.wid);
+	      /* Duplicate the case expression so that the cmp
+		 instructions below do not completely erase the
+		 value. Do this in fromt of each compare. */
+	    fprintf(vvp_out, "    %%dup/vec4;\n");
+	    draw_eval_vec4(cex, STUFF_OK_RO);
 
 	    switch (ivl_statement_type(net)) {
 
 		case IVL_ST_CASE:
-		  fprintf(vvp_out, "    %%cmp/u %u, %u, %u;\n",
-			  cond.base, cvec.base, cond.wid);
+		  fprintf(vvp_out, "    %%cmp/u;\n");
 		  fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 6;\n",
 			  thread_count, local_base+idx);
 		  break;
 
 		case IVL_ST_CASEX:
-		  fprintf(vvp_out, "    %%cmp/x %u, %u, %u;\n",
-			  cond.base, cvec.base, cond.wid);
+		  fprintf(vvp_out, "    %%cmp/x;\n");
 		  fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n",
 			  thread_count, local_base+idx);
 		  break;
 
 		case IVL_ST_CASEZ:
-		  fprintf(vvp_out, "    %%cmp/z %u, %u, %u;\n",
-			  cond.base, cvec.base, cond.wid);
+		  fprintf(vvp_out, "    %%cmp/z;\n");
 		  fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n",
 			  thread_count, local_base+idx);
 		  break;
@@ -729,13 +755,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 		default:
 		  assert(0);
 	    }
-
-	      /* Done with the case expression */
-	    clr_vector(cvec);
       }
-
-	/* Done with the condition expression */
-      clr_vector(cond);
 
 	/* Emit code for the default case. */
       if (default_case < count) {
@@ -757,6 +777,7 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 	    clear_expression_lookaside();
 	    rc += show_statement(cst, sscope);
 
+	      /* Statement is done, jump to the out of the case. */
 	    fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count,
 		    local_base+count);
 
@@ -765,6 +786,10 @@ static int show_stmt_case(ivl_statement_t net, ivl_scope_t sscope)
 
 	/* The out of the case. */
       fprintf(vvp_out, "T_%u.%u ;\n",  thread_count, local_base+count);
+	/* The case tests will leave the case expression on the top of
+	   the stack, but we are done with it now. Pop it. */
+      fprintf(vvp_out, "    %%pop/vec4 1;\n");
+
       clear_expression_lookaside();
 
       return rc;
@@ -1238,23 +1263,20 @@ static int show_stmt_condit(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
       unsigned lab_false, lab_out;
       ivl_expr_t expr = ivl_stmt_cond_expr(net);
-      struct vector_info cond;
 
       show_stmt_file_line(net, "If statement.");
 
-      cond = draw_eval_expr(expr, STUFF_OK_XZ|STUFF_OK_47|STUFF_OK_RO);
-
-      assert(cond.wid == 1);
+      draw_eval_vec4(expr, STUFF_OK_XZ|STUFF_OK_47|STUFF_OK_RO);
 
       lab_false = local_count++;
       lab_out = local_count++;
 
-      fprintf(vvp_out, "    %%jmp/0xz  T_%u.%u, %u;\n",
-	      thread_count, lab_false, cond.base);
-
-	/* Done with the condition expression. */
-      if (cond.base >= 8)
-	    clr_vector(cond);
+      int use_flag = allocate_flag();
+	/* The %flag/vec4 pops the vec4 bit and puts it to the flag. */
+      fprintf(vvp_out, "    %%flag_set/vec4 %d;\n", use_flag);
+      fprintf(vvp_out, "    %%jmp/0xz  T_%u.%u, %d;\n",
+	      thread_count, lab_false, use_flag);
+      clr_flag(use_flag);
 
       if (ivl_stmt_cond_true(net))
 	    rc += show_statement(ivl_stmt_cond_true(net), sscope);
@@ -1320,20 +1342,19 @@ static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
 
       show_stmt_file_line(net, "Delay statement.");
 
+      int use_idx = allocate_word();
       switch (ivl_expr_value(expr)) {
 
 	  case IVL_VT_BOOL:
 	  case IVL_VT_LOGIC: {
-		struct vector_info del = draw_eval_expr(expr, 0);
-		fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n",
-			del.base, del.wid);
-		clr_vector(del);
+		draw_eval_vec4(expr, 0);
+		fprintf(vvp_out, "    %%ix/vec4 %d;\n", use_idx);
 		break;
 	  }
 
 	  case IVL_VT_REAL: {
 		draw_eval_real(expr);
-		fprintf(vvp_out, "    %%cvt/ur 0;\n");
+		fprintf(vvp_out, "    %%cvt/ur %d;\n", use_idx);
 		break;
 	  }
 
@@ -1341,7 +1362,9 @@ static int show_stmt_delayx(ivl_statement_t net, ivl_scope_t sscope)
 	    assert(0);
       }
 
-      fprintf(vvp_out, "    %%delayx 0;\n");
+      fprintf(vvp_out, "    %%delayx %d;\n", use_idx);
+      clr_word(use_idx);
+
 	/* Lots of things can happen during a delay. */
       clear_expression_lookaside();
 
@@ -1755,7 +1778,6 @@ static int show_stmt_wait(ivl_statement_t net, ivl_scope_t sscope)
 static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
-      struct vector_info cvec;
 
       unsigned top_label = local_count++;
       unsigned out_label = local_count++;
@@ -1771,14 +1793,16 @@ static int show_stmt_while(ivl_statement_t net, ivl_scope_t sscope)
 	/* Draw the evaluation of the condition expression, and test
 	   the result. If the expression evaluates to false, then
 	   branch to the out label. */
-      cvec = draw_eval_expr(ivl_stmt_cond_expr(net), STUFF_OK_XZ|STUFF_OK_47);
-      if (cvec.wid > 1)
-	    cvec = reduction_or(cvec);
+      draw_eval_vec4(ivl_stmt_cond_expr(net), STUFF_OK_XZ|STUFF_OK_47);
+      if (ivl_expr_width(ivl_stmt_cond_expr(net)) > 1) {
+	    fprintf(vvp_out, "    %%or/r;\n");
+      }
 
+      int use_flag = allocate_flag();
+      fprintf(vvp_out, "    %%flag_set/vec4 %d;\n", use_flag);
       fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, %u;\n",
-	      thread_count, out_label, cvec.base);
-      if (cvec.base >= 8)
-	    clr_vector(cvec);
+	      thread_count, out_label, use_flag);
+      clr_flag(use_flag);
 
 	/* Draw the body of the loop. */
       rc += show_statement(ivl_stmt_sub_stmt(net), sscope);
@@ -1966,7 +1990,7 @@ static unsigned is_repeat_event_assign(ivl_scope_t scope,
  */
 static unsigned is_wait(ivl_scope_t scope, ivl_statement_t stmt)
 {
-      ivl_statement_t while_wait, wait, wait_stmt;
+      ivl_statement_t while_wait, wait_x, wait_stmt;
       ivl_expr_t while_expr, expr;
       const char *bits;
 	/* We must have two block elements. */
@@ -1975,9 +1999,9 @@ static unsigned is_wait(ivl_scope_t scope, ivl_statement_t stmt)
       while_wait = ivl_stmt_block_stmt(stmt, 0);
       if (ivl_statement_type(while_wait) != IVL_ST_WHILE) return 0;
 	/* That has a wait with a NOOP statement. */
-      wait = ivl_stmt_sub_stmt(while_wait);
-      if (ivl_statement_type(wait) != IVL_ST_WAIT) return 0;
-      wait_stmt = ivl_stmt_sub_stmt(wait);
+      wait_x = ivl_stmt_sub_stmt(while_wait);
+      if (ivl_statement_type(wait_x) != IVL_ST_WAIT) return 0;
+      wait_stmt = ivl_stmt_sub_stmt(wait_x);
       if (ivl_statement_type(wait_stmt) != IVL_ST_NOOP) return 0;
 	/* Check that the while condition has the correct form. */
       while_expr = ivl_stmt_cond_expr(while_wait);
@@ -1994,7 +2018,7 @@ static unsigned is_wait(ivl_scope_t scope, ivl_statement_t stmt)
 	/* And finally the two statements that represent the wait must
 	 * have the same line number as the block. */
       if ((ivl_stmt_lineno(stmt) != ivl_stmt_lineno(while_wait)) ||
-          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(wait))) {
+          (ivl_stmt_lineno(stmt) != ivl_stmt_lineno(wait_x))) {
 	    return 0;
       }
 

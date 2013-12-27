@@ -339,6 +339,7 @@ static ivl_type_t draw_lval_expr(ivl_lval_t lval)
       return ivl_type_prop_type(sub_type, ivl_lval_property_idx(lval));
 }
 
+#if 0
 static void set_vec_to_lval_slice_nest(ivl_lval_t lval, unsigned bit, unsigned wid)
 {
       ivl_lval_t lval_nest = ivl_lval_nest(lval);
@@ -349,7 +350,9 @@ static void set_vec_to_lval_slice_nest(ivl_lval_t lval, unsigned bit, unsigned w
 	      ivl_lval_property_idx(lval), bit, wid);
       fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 }
+#endif
 
+#if 0
 static void set_vec_to_lval_slice(ivl_lval_t lval, unsigned bit, unsigned wid)
 {
       ivl_signal_t sig  = ivl_lval_sig(lval);
@@ -507,8 +510,8 @@ static void set_vec_to_lval_slice(ivl_lval_t lval, unsigned bit, unsigned wid)
 
       }
 }
-
-
+#endif
+#if 0
 /*
  * This is a private function to generate %set code for the
  * statement. At this point, the r-value is evaluated and stored in
@@ -542,6 +545,24 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
 	    cur_rbit += bit_limit;
       }
 }
+#endif
+
+/*
+ * Store a vector from the vec4 stack to the statement l-values. This
+ * all assumes that the value to be assigned is already on the top of
+ * the stack.
+ */
+static void store_vec4_to_lval(ivl_statement_t net)
+{
+      assert(ivl_stmt_lvals(net) == 1);
+
+      ivl_lval_t lval = ivl_stmt_lval(net,0);
+      ivl_signal_t lsig = ivl_lval_sig(lval);
+
+      assert(ivl_lval_width(lval) == ivl_signal_width(lsig));
+
+      fprintf(vvp_out, "    %%store/vec4 v%p_0, %u;\n", lsig, ivl_signal_width(lsig));
+}
 
 static int show_stmt_assign_vector(ivl_statement_t net)
 {
@@ -554,7 +575,7 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	   of the l-value. We need these values as part of the r-value
 	   calculation. */
       if (ivl_stmt_opcode(net) != 0) {
-	    slices = calloc(ivl_stmt_lvals(net), sizeof(struct vec_slice_info));
+            slices = calloc(ivl_stmt_lvals(net), sizeof(struct vec_slice_info));
 	    lres = get_vec_from_lval(net, slices);
       }
 
@@ -563,7 +584,7 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	   result to a vector. Then store that vector into the
 	   l-value. */
       if (ivl_expr_value(rval) == IVL_VT_REAL) {
-	    draw_eval_real(rval);
+            draw_eval_real(rval);
 	      /* This is the accumulated with of the l-value of the
 		 assignment. */
 	    unsigned wid = ivl_stmt_lwidth(net);
@@ -582,12 +603,14 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	    fprintf(vvp_out, "    %%cvt/vr %u, %u;\n", res.base, res.wid);
 
       } else {
-	    res = draw_eval_expr(rval, 0);
+	    draw_eval_vec4(rval, 0);
+	    res.base = 0; // XXXX This is just to suppress the clr_vector below.
+	    res.wid = 0;
       }
 
       switch (ivl_stmt_opcode(net)) {
 	  case 0:
-	    set_vec_to_lval(net, res);
+	    store_vec4_to_lval(net);
 	    break;
 
 	  case '+':

@@ -97,16 +97,48 @@ using namespace std;
 struct vthread_s {
       vthread_s();
 
+      void debug_dump(ostream&fd);
+
 	/* This is the program counter. */
       vvp_code_t pc;
 	/* These hold the private thread bits. */
-      vvp_vector4_t bits4;
+	//vvp_vector4_t bits4;
+      enum { FLAGS_COUNT = 16, WORDS_COUNT = 16 };
+      vvp_bit4_t flags[FLAGS_COUNT];
 
 	/* These are the word registers. */
       union {
 	    int64_t  w_int;
 	    uint64_t w_uint;
-      } words[16];
+      } words[WORDS_COUNT];
+
+    private:
+      vector<vvp_vector4_t>stack_vec4_;
+    public:
+      inline vvp_vector4_t pop_vec4(void)
+      {
+	    assert(! stack_vec4_.empty());
+	    vvp_vector4_t val = stack_vec4_.back();
+	    stack_vec4_.pop_back();
+	    return val;
+      }
+      inline void push_vec4(const vvp_vector4_t&val)
+      {
+	    stack_vec4_.push_back(val);
+      }
+      inline const vvp_vector4_t& peek_vec4(unsigned depth)
+      {
+	    assert(depth < stack_vec4_.size());
+	    unsigned use_index = stack_vec4_.size()-1-depth;
+	    return stack_vec4_[use_index];
+      }
+      inline void pop_vec4(unsigned cnt)
+      {
+	    while (cnt > 0) {
+		  stack_vec4_.pop_back();
+		  cnt -= 1;
+	    }
+      }
 
     private:
       vector<double> stack_real_;
@@ -233,7 +265,7 @@ struct vthread_s {
 
       inline void cleanup()
       {
-	    bits4 = vvp_vector4_t();
+	    assert(stack_vec4_.empty());
 	    assert(stack_real_.empty());
 	    assert(stack_str_.empty());
 	    assert(stack_obj_size_ == 0);
@@ -243,6 +275,18 @@ struct vthread_s {
 inline vthread_s::vthread_s()
 {
       stack_obj_size_ = 0;
+}
+
+void vthread_s::debug_dump(ostream&fd)
+{
+      fd << "**** Flags: ";
+      for (int idx = 0 ; idx < FLAGS_COUNT ; idx += 1)
+	    fd << flags[idx];
+      fd << endl;
+      fd << "**** vec4 stack..." << endl;
+      for (size_t idx = stack_vec4_.size() ; idx > 0 ; idx -= 1)
+	    fd << "    " << (stack_vec4_.size()-idx) << ": " << stack_vec4_[idx-1] << endl;
+      fd << "**** Done ****" << endl;
 }
 
 static bool test_joinable(vthread_t thr, vthread_t child);
@@ -259,6 +303,7 @@ struct vthread_s*running_thread = 0;
 // vvp_bit4_t bit values.
 static vvp_bit4_t thr_index_to_bit4[4] = { BIT4_0, BIT4_1, BIT4_X, BIT4_Z };
 
+#if 0
 static inline void thr_check_addr(struct vthread_s*thr, unsigned addr)
 {
       if (thr->bits4.size() <= addr)
@@ -277,22 +322,26 @@ static inline void thr_put_bit(struct vthread_s*thr,
       thr_check_addr(thr, addr);
       thr->bits4.set_bit(addr, val);
 }
-
-// REMOVE ME
-static inline void thr_clr_bit_(struct vthread_s*thr, unsigned addr)
-{
-      thr->bits4.set_bit(addr, BIT4_0);
-}
+#endif
 
 vvp_bit4_t vthread_get_bit(struct vthread_s*thr, unsigned addr)
 {
+#if 0
       if (vpi_mode_flag == VPI_MODE_COMPILETF) return BIT4_X;
       else return thr_get_bit(thr, addr);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: vthread_get_bit(..., %u)\n", addr);
+      return BIT4_X;
+#endif
 }
 
 void vthread_put_bit(struct vthread_s*thr, unsigned addr, vvp_bit4_t bit)
 {
+#if 0
       thr_put_bit(thr, addr, bit);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: vthread_put_bit(..., %u, %u)\n", addr, bit);
+#endif
 }
 
 void vthread_push_real(struct vthread_s*thr, double val)
@@ -336,7 +385,7 @@ template <class T> T coerce_to_width(const T&that, unsigned width)
 /* Explicitly define the vvp_vector4_t version of coerce_to_width(). */
 template vvp_vector4_t coerce_to_width(const vvp_vector4_t&that,
                                        unsigned width);
-
+#if 0
 static unsigned long* vector_to_array(struct vthread_s*thr,
 				      unsigned addr, unsigned wid)
 {
@@ -365,7 +414,9 @@ static unsigned long* vector_to_array(struct vthread_s*thr,
 
       return thr->bits4.subarray(addr, wid);
 }
+#endif
 
+#if 0
 /*
  * This function gets from the thread a vector of bits starting from
  * the addressed location and for the specified width.
@@ -382,6 +433,7 @@ static vvp_vector4_t vthread_bits_to_vector(struct vthread_s*thr,
 	    return vvp_vector4_t(wid, thr_index_to_bit4[bit]);
       }
 }
+#endif
 
 /*
  * Some of the instructions do wide addition to arrays of long. They
@@ -540,7 +592,7 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
 {
       vthread_t thr = new struct vthread_s;
       thr->pc     = pc;
-      thr->bits4  = vvp_vector4_t(32);
+	//thr->bits4  = vvp_vector4_t(32);
       thr->parent = 0;
       thr->parent_scope = scope;
       thr->wait_next = 0;
@@ -557,10 +609,12 @@ vthread_t vthread_new(vvp_code_t pc, struct __vpiScope*scope)
       thr->event  = 0;
       thr->ecount = 0;
 
-      thr_put_bit(thr, 0, BIT4_0);
-      thr_put_bit(thr, 1, BIT4_1);
-      thr_put_bit(thr, 2, BIT4_X);
-      thr_put_bit(thr, 3, BIT4_Z);
+      thr->flags[0] = BIT4_0;
+      thr->flags[1] = BIT4_1;
+      thr->flags[2] = BIT4_X;
+      thr->flags[3] = BIT4_Z;
+      for (int idx = 4 ; idx < 8 ; idx += 1)
+	    thr->flags[idx] = BIT4_X;
 
       scope->threads .insert(thr);
       return thr;
@@ -787,52 +841,20 @@ bool of_ALLOC(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-static bool of_AND_wide(vthread_t thr, vvp_code_t cp)
+bool of_AND(vthread_t thr, vvp_code_t)
 {
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned idx2 = cp->bit_idx[1];
-      unsigned wid = cp->number;
-
-      vvp_vector4_t val = vthread_bits_to_vector(thr, idx1, wid);
-      val &= vthread_bits_to_vector(thr, idx2, wid);
-      thr->bits4.set_vec(idx1, val);
-
+      vvp_vector4_t vala = thr->pop_vec4();
+      vvp_vector4_t valb = thr->pop_vec4();
+      assert(vala.size() == valb.size());
+      vala &= valb;
+      thr->push_vec4(vala);
       return true;
-}
-
-static bool of_AND_narrow(vthread_t thr, vvp_code_t cp)
-{
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned idx2 = cp->bit_idx[1];
-      unsigned wid = cp->number;
-
-      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
-	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
-	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
-	    thr_put_bit(thr, idx1, lb&rb);
-	    idx1 += 1;
-	    if (idx2 >= 4)
-		  idx2 += 1;
-      }
-
-      return true;
-}
-
-bool of_AND(vthread_t thr, vvp_code_t cp)
-{
-      assert(cp->bit_idx[0] >= 4);
-
-      if (cp->number <= 4)
-	    cp->opcode = &of_AND_narrow;
-      else
-	    cp->opcode = &of_AND_wide;
-
-      return cp->opcode(thr, cp);
 }
 
 
 bool of_ANDI(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned idx1 = cp->bit_idx[0];
       unsigned long imm = cp->bit_idx[1];
       unsigned wid = cp->number;
@@ -850,9 +872,13 @@ bool of_ANDI(vthread_t thr, vvp_code_t cp)
       val &= imv;
 
       thr->bits4.set_vec(idx1, val);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%andi ...\n");
+#endif
       return true;
 }
 
+#if 0
 bool of_ADD(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
@@ -886,6 +912,42 @@ bool of_ADD(vthread_t thr, vvp_code_t cp)
 
       return true;
 }
+#endif
+
+bool of_ADD(vthread_t thr, vvp_code_t)
+{
+      vvp_vector4_t r = thr->pop_vec4();
+      vvp_vector4_t l = thr->pop_vec4();
+
+      unsigned wid = l.size();
+      assert(wid = r.size());
+
+      unsigned long*lva = l.subarray(0,wid);
+      unsigned long*lvb = r.subarray(0,wid);
+      if (lva==0 || lvb==0)
+	    goto x_out;
+
+      unsigned long carry;
+      carry = 0;
+      for (unsigned idx = 0 ; (idx*CPU_WORD_BITS) < wid ; idx += 1)
+	    lva[idx] = add_with_carry(lva[idx], lvb[idx], carry);
+
+      l.setarray(0,wid,lva);
+
+      thr->push_vec4(l);
+
+      delete[]lva;
+      delete[]lvb;
+      return true;
+
+ x_out:
+      delete[]lva;
+      delete[]lvb;
+
+      vvp_vector4_t tmp (wid, BIT4_X);
+      thr->push_vec4(tmp);
+      return true;
+}
 
 bool of_ADD_WR(vthread_t thr, vvp_code_t)
 {
@@ -903,6 +965,7 @@ bool of_ADD_WR(vthread_t thr, vvp_code_t)
  */
 bool of_ADDI(vthread_t thr, vvp_code_t cp)
 {
+#if 0
 	// Collect arguments
       unsigned bit_addr       = cp->bit_idx[0];
       unsigned long imm_value = cp->bit_idx[1];
@@ -938,7 +1001,9 @@ bool of_ADDI(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t tmp (bit_width, BIT4_X);
       thr->bits4.set_vec(bit_addr, tmp);
-
+#else
+      fprintf(stderr, "XXXX NOT IMLEMENTED: %%addi ...\n");
+#endif
       return true;
 }
 
@@ -1010,6 +1075,7 @@ bool of_ASSIGN_ARE(vthread_t thr, vvp_code_t cp)
  */
 bool of_ASSIGN_AV(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned wid = thr->words[0].w_int;
       long off = thr->words[1].w_int;
       long adr = thr->words[3].w_int;
@@ -1038,6 +1104,9 @@ bool of_ASSIGN_AV(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
       schedule_assign_array_word(cp->array, adr, off, value, delay);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%assign/av ...\n");
+#endif
       return true;
 }
 
@@ -1049,6 +1118,7 @@ bool of_ASSIGN_AV(vthread_t thr, vvp_code_t cp)
  */
 bool of_ASSIGN_AVD(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned wid = thr->words[0].w_int;
       long off = thr->words[1].w_int;
       long adr = thr->words[3].w_int;
@@ -1077,6 +1147,9 @@ bool of_ASSIGN_AVD(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
       schedule_assign_array_word(cp->array, adr, off, value, delay);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED %%assign/av/d ...\n");
+#endif
       return true;
 }
 
@@ -1106,6 +1179,7 @@ bool of_ASSIGN_AVE(vthread_t thr, vvp_code_t cp)
 
       assert(wid > 0);
 
+#if 0
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 	// If the count is zero then just put the value.
       if (thr->ecount == 0) {
@@ -1113,9 +1187,13 @@ bool of_ASSIGN_AVE(vthread_t thr, vvp_code_t cp)
       } else {
 	    schedule_evctl(cp->array, adr, value, off, thr->event, thr->ecount);
       }
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%assign/av/e ...\n");
+#endif
       return true;
 }
 
+#if 0
 /*
  * This is %assign/v0 <label>, <delay>, <bit>
  * Index register 0 contains a vector width.
@@ -1139,7 +1217,50 @@ bool of_ASSIGN_V0(vthread_t thr, vvp_code_t cp)
 
       return true;
 }
+#endif
 
+/*
+ * %assign/vec4 <var>, <delay>
+ */
+bool of_ASSIGN_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_ptr_t ptr (cp->net, 0);
+      unsigned delay = cp->bit_idx[0];
+      vvp_vector4_t val = thr->pop_vec4();
+
+      schedule_assign_plucked_vector(ptr, delay, val, 0, val.size());
+      return true;
+}
+
+/*
+ * %assign/vec4/off/d <var>, <off>, <del>
+ */
+bool of_ASSIGN_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_ptr_t ptr (cp->net, 0);
+      unsigned off_index = cp->bit_idx[0];
+      unsigned del_index = cp->bit_idx[1];
+      vvp_vector4_t val = thr->pop_vec4();
+
+      int off = thr->words[off_index].w_int;
+      int del = thr->words[del_index].w_int;
+
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
+      assert(sig);
+
+      if (off >= (long)sig->value_size())
+	    return true;
+      if (off < 0) {
+	    if ((unsigned)-off >= sig->value_size())
+		  return true;
+	    assert(0); // XXXX Not implemented yet.
+      }
+
+      schedule_assign_vector(ptr, off, sig->value_size(), val, del);
+      return true;
+}
+
+#if 0
 /*
  * This is %assign/v0/d <label>, <delay_idx>, <bit>
  * Index register 0 contains a vector width, and the named index
@@ -1154,7 +1275,6 @@ bool of_ASSIGN_V0D(vthread_t thr, vvp_code_t cp)
       unsigned bit = cp->bit_idx[1];
 
       vvp_net_ptr_t ptr (cp->net, 0);
-
       if (bit >= 4) {
 	    schedule_assign_plucked_vector(ptr, delay, thr->bits4, bit, wid);
       } else {
@@ -1164,7 +1284,8 @@ bool of_ASSIGN_V0D(vthread_t thr, vvp_code_t cp)
 
       return true;
 }
-
+#endif
+#if 0
 /*
  * This is %assign/v0/e <label>, <bit>
  * Index register 0 contains a vector width.
@@ -1191,6 +1312,19 @@ bool of_ASSIGN_V0E(vthread_t thr, vvp_code_t cp)
 
       return true;
 }
+#endif
+
+bool of_ASSIGN_VEC4D(vthread_t thr, vvp_code_t cp)
+{
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%assign/vec4/d\n");
+      return true;
+}
+
+bool of_ASSIGN_VEC4E(vthread_t thr, vvp_code_t cp)
+{
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%assign/vec4/e\n");
+      return true;
+}
 
 /*
  * This is %assign/v0/x1 <label>, <delay>, <bit>
@@ -1199,6 +1333,7 @@ bool of_ASSIGN_V0E(vthread_t thr, vvp_code_t cp)
  */
 bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned wid = thr->words[0].w_int;
       long off = thr->words[1].w_int;
       unsigned delay = cp->bit_idx[0];
@@ -1224,7 +1359,9 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
 
       vvp_net_ptr_t ptr (cp->net, 0);
       schedule_assign_vector(ptr, off, sig->value_size(), value, delay);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%assign/v0/x1 ...\n");
+#endif
       return true;
 }
 
@@ -1235,6 +1372,7 @@ bool of_ASSIGN_V0X1(vthread_t thr, vvp_code_t cp)
  */
 bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned wid = thr->words[0].w_int;
       long off = thr->words[1].w_int;
       vvp_time64_t delay = thr->words[cp->bit_idx[0]].w_uint;
@@ -1260,7 +1398,9 @@ bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
 
       vvp_net_ptr_t ptr (cp->net, 0);
       schedule_assign_vector(ptr, off, sig->value_size(), value, delay);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%assign/v0/x1/d ...\n");
+#endif
       return true;
 }
 
@@ -1271,6 +1411,7 @@ bool of_ASSIGN_V0X1D(vthread_t thr, vvp_code_t cp)
  */
 bool of_ASSIGN_V0X1E(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned wid = thr->words[0].w_int;
       long off = thr->words[1].w_int;
       unsigned bit = cp->bit_idx[0];
@@ -1311,7 +1452,9 @@ bool of_ASSIGN_V0X1E(vthread_t thr, vvp_code_t cp)
 
       thr->event = 0;
       thr->ecount = 0;
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%assign/v0/x1/e ...\n");
+#endif
       return true;
 }
 
@@ -1395,25 +1538,20 @@ bool of_ASSIGN_X0(vthread_t, vvp_code_t)
       return true;
 }
 
-bool of_BLEND(vthread_t thr, vvp_code_t cp)
+bool of_BLEND(vthread_t thr, vvp_code_t)
 {
-      assert(cp->bit_idx[0] >= 4);
+      vvp_vector4_t vala = thr->pop_vec4();
+      vvp_vector4_t valb = thr->pop_vec4();
+      assert(vala.size() == valb.size());
 
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned idx2 = cp->bit_idx[1];
+      for (unsigned idx = 0 ; idx < vala.size() ; idx += 1) {
+	    if (vala.value(idx) == valb.value(idx))
+		  continue;
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
-	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
-
-	    if (lb != rb)
-		  thr_put_bit(thr, idx1, BIT4_X);
-
-	    idx1 += 1;
-	    if (idx2 >= 4)
-		  idx2 += 1;
+	    vala.set_bit(idx, BIT4_X);
       }
 
+      thr->push_vec4(vala);
       return true;
 }
 
@@ -1482,6 +1620,7 @@ bool of_CASSIGN_LINK(vthread_t, vvp_code_t cp)
  */
 bool of_CASSIGN_V(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       vvp_net_t*net  = cp->net;
       unsigned  base = cp->bit_idx[0];
       unsigned  wid  = cp->bit_idx[1];
@@ -1492,7 +1631,9 @@ bool of_CASSIGN_V(vthread_t thr, vvp_code_t cp)
 	/* set the value into port 1 of the destination. */
       vvp_net_ptr_t ptr (net, 1);
       vvp_send_vec4(ptr, value, 0);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%cassign/v ...\n");
+#endif
       return true;
 }
 
@@ -1510,6 +1651,7 @@ bool of_CASSIGN_WR(vthread_t thr, vvp_code_t cp)
 
 bool of_CASSIGN_X0(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       vvp_net_t*net = cp->net;
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
@@ -1538,12 +1680,15 @@ bool of_CASSIGN_X0(vthread_t thr, vvp_code_t cp)
 
       vvp_net_ptr_t ptr (net, 1);
       vvp_send_vec4_pv(ptr, vector, index, wid, sig->value_size(), 0);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%cassign/x0 ...\n");
+#endif
       return true;
 }
 
 bool of_CAST2(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned dst = cp->bit_idx[0];
       unsigned src = cp->bit_idx[1];
       unsigned wid = cp->number;
@@ -1567,6 +1712,9 @@ bool of_CAST2(vthread_t thr, vvp_code_t cp)
       }
 
       thr->bits4.set_vec(dst, res);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%cast2 ...\n");
+#endif
       return true;
 }
 
@@ -1576,23 +1724,18 @@ bool of_CMPS(vthread_t thr, vvp_code_t cp)
       vvp_bit4_t eeq = BIT4_1;
       vvp_bit4_t lt  = BIT4_0;
 
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned idx2 = cp->bit_idx[1];
+      vvp_vector4_t rval = thr->pop_vec4();
+      vvp_vector4_t lval = thr->pop_vec4();
 
-      const unsigned end1 = (idx1 < 4)? idx1 : idx1 + cp->number - 1;
-      const unsigned end2 = (idx2 < 4)? idx2 : idx2 + cp->number - 1;
+      assert(rval.size() == lval.size());
+      unsigned wid = lval.size();
 
-      if (end1 > end2)
-	    thr_check_addr(thr, end1);
-      else
-	    thr_check_addr(thr, end2);
+      const vvp_bit4_t sig1 = lval.value(wid-1);
+      const vvp_bit4_t sig2 = rval.value(wid-1);
 
-      const vvp_bit4_t sig1 = thr_get_bit(thr, end1);
-      const vvp_bit4_t sig2 = thr_get_bit(thr, end2);
-
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    vvp_bit4_t lv = thr_get_bit(thr, idx1);
-	    vvp_bit4_t rv = thr_get_bit(thr, idx2);
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    vvp_bit4_t lv = lval.value(idx);
+	    vvp_bit4_t rv = rval.value(idx);
 
 	    if (lv > rv) {
 		  lt  = BIT4_0;
@@ -1609,9 +1752,6 @@ bool of_CMPS(vthread_t thr, vvp_code_t cp)
 		  if (bit4_is_xz(lv) || bit4_is_xz(rv))
 			eq = BIT4_X;
 	    }
-
-	    if (idx1 >= 4) idx1 += 1;
-	    if (idx2 >= 4) idx2 += 1;
       }
 
       if (eq == BIT4_X)
@@ -1634,9 +1774,9 @@ bool of_CMPS(vthread_t thr, vvp_code_t cp)
 		  lt = BIT4_0;
       }
 
-      thr_put_bit(thr, 4, eq);
-      thr_put_bit(thr, 5, lt);
-      thr_put_bit(thr, 6, eeq);
+      thr->flags[4] = eq;
+      thr->flags[5] = lt;
+      thr->flags[6] = eeq;
 
       return true;
 }
@@ -1662,8 +1802,8 @@ bool of_CMPSTR(vthread_t thr, vvp_code_t)
 	    lt = BIT4_0;
       }
 
-      thr_put_bit(thr, 4, eq);
-      thr_put_bit(thr, 5, lt);
+      thr->flags[4] = eq;
+      thr->flags[5] = lt;
 
       return true;
 }
@@ -1673,7 +1813,7 @@ bool of_CMPIS(vthread_t thr, vvp_code_t cp)
       vvp_bit4_t eq  = BIT4_1;
       vvp_bit4_t eeq = BIT4_1;
       vvp_bit4_t lt  = BIT4_0;
-
+#if 0
       unsigned idx1 = cp->bit_idx[0];
       unsigned imm  = cp->bit_idx[1];
 
@@ -1709,10 +1849,12 @@ bool of_CMPIS(vthread_t thr, vvp_code_t cp)
 	    lt = BIT4_X;
       else if (sig1 == BIT4_1)
 	    lt = BIT4_1;
-
-      thr_put_bit(thr, 4, eq);
-      thr_put_bit(thr, 5, lt);
-      thr_put_bit(thr, 6, eeq);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%cmpi/s ...\n");
+#endif
+      thr->flags[4] = eq;
+      thr->flags[5] = lt;
+      thr->flags[6] = eeq;
 
       return true;
 }
@@ -1724,6 +1866,7 @@ bool of_CMPIS(vthread_t thr, vvp_code_t cp)
  * none in the imm value) so the eeq result must be false. Otherwise,
  * the eq result may be 0 or x, and the lt bit is x.
  */
+#if 0
 static bool of_CMPIU_the_hard_way(vthread_t thr, vvp_code_t cp)
 {
 
@@ -1759,9 +1902,10 @@ static bool of_CMPIU_the_hard_way(vthread_t thr, vvp_code_t cp)
 
       return true;
 }
-
+#endif
 bool of_CMPIU(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned addr = cp->bit_idx[0];
       unsigned long imm  = cp->bit_idx[1];
       unsigned wid  = cp->number;
@@ -1791,20 +1935,21 @@ bool of_CMPIU(vthread_t thr, vvp_code_t cp)
       thr_put_bit(thr, 4, eq);
       thr_put_bit(thr, 5, lt);
       thr_put_bit(thr, 6, eq);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%cmpi/u ...\n");
+#endif
       return true;
 }
 
-bool of_CMPU_the_hard_way(vthread_t thr, vvp_code_t cp)
+bool of_CMPU_the_hard_way(vthread_t thr, vvp_code_t cp, unsigned wid,
+			  const vvp_vector4_t&lval, const vvp_vector4_t&rval)
 {
       vvp_bit4_t eq = BIT4_1;
       vvp_bit4_t eeq = BIT4_1;
 
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned idx2 = cp->bit_idx[1];
-
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    vvp_bit4_t lv = thr_get_bit(thr, idx1);
-	    vvp_bit4_t rv = thr_get_bit(thr, idx2);
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    vvp_bit4_t lv = lval.value(idx);
+	    vvp_bit4_t rv = rval.value(idx);
 
 	    if (lv != rv)
 		  eeq = BIT4_0;
@@ -1819,14 +1964,11 @@ bool of_CMPU_the_hard_way(vthread_t thr, vvp_code_t cp)
 	    if (eq == BIT4_0)
 		  break;
 
-	    if (idx1 >= 4) idx1 += 1;
-	    if (idx2 >= 4) idx2 += 1;
-
       }
 
-      thr_put_bit(thr, 4, eq);
-      thr_put_bit(thr, 5, BIT4_X);
-      thr_put_bit(thr, 6, eeq);
+      thr->flags[4] = eq;
+      thr->flags[5] = BIT4_X;
+      thr->flags[6] = eeq;
 
       return true;
 }
@@ -1836,17 +1978,19 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
       vvp_bit4_t eq = BIT4_1;
       vvp_bit4_t lt = BIT4_0;
 
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned idx2 = cp->bit_idx[1];
-      unsigned wid  = cp->number;
+      vvp_vector4_t rval = thr->pop_vec4();
+      vvp_vector4_t lval = thr->pop_vec4();
 
-      unsigned long*larray = vector_to_array(thr, idx1, wid);
-      if (larray == 0) return of_CMPU_the_hard_way(thr, cp);
+      assert(rval.size() == lval.size());
+      unsigned wid = lval.size();
 
-      unsigned long*rarray = vector_to_array(thr, idx2, wid);
+      unsigned long*larray = lval.subarray(0,wid);
+      if (larray == 0) return of_CMPU_the_hard_way(thr, cp, wid, lval, rval);
+
+      unsigned long*rarray = rval.subarray(0,wid);
       if (rarray == 0) {
 	    delete[]larray;
-	    return of_CMPU_the_hard_way(thr, cp);
+	    return of_CMPU_the_hard_way(thr, cp, wid, lval, rval);
       }
 
       unsigned words = (wid+CPU_WORD_BITS-1) / CPU_WORD_BITS;
@@ -1865,9 +2009,9 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
       delete[]larray;
       delete[]rarray;
 
-      thr_put_bit(thr, 4, eq);
-      thr_put_bit(thr, 5, lt);
-      thr_put_bit(thr, 6, eq);
+      thr->flags[4] = eq;
+      thr->flags[5] = lt;
+      thr->flags[6] = eq;
 
       return true;
 }
@@ -1875,7 +2019,7 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
 bool of_CMPX(vthread_t thr, vvp_code_t cp)
 {
       vvp_bit4_t eq = BIT4_1;
-
+#if 0
       unsigned idx1 = cp->bit_idx[0];
       unsigned idx2 = cp->bit_idx[1];
 
@@ -1891,8 +2035,10 @@ bool of_CMPX(vthread_t thr, vvp_code_t cp)
 	    if (idx1 >= 4) idx1 += 1;
 	    if (idx2 >= 4) idx2 += 1;
       }
-
-      thr_put_bit(thr, 4, eq);
+#else
+      fprintf(stderr, "XXXX NOT IMLEMENTED: %%cmpx ...\n");
+#endif
+      thr->flags[4] = eq;
 
       return true;
 }
@@ -1905,8 +2051,8 @@ bool of_CMPWR(vthread_t thr, vvp_code_t)
       vvp_bit4_t eq = (l == r)? BIT4_1 : BIT4_0;
       vvp_bit4_t lt = (l <  r)? BIT4_1 : BIT4_0;
 
-      thr_put_bit(thr, 4, eq);
-      thr_put_bit(thr, 5, lt);
+      thr->flags[4] = eq;
+      thr->flags[5] = lt;
 
       return true;
 }
@@ -1919,8 +2065,8 @@ bool of_CMPWS(vthread_t thr, vvp_code_t cp)
       vvp_bit4_t eq = (l == r)? BIT4_1 : BIT4_0;
       vvp_bit4_t lt = (l <  r)? BIT4_1 : BIT4_0;
 
-      thr_put_bit(thr, 4, eq);
-      thr_put_bit(thr, 5, lt);
+      thr->flags[4] = eq;
+      thr->flags[5] = lt;
 
       return true;
 }
@@ -1933,8 +2079,8 @@ bool of_CMPWU(vthread_t thr, vvp_code_t cp)
       vvp_bit4_t eq = (l == r)? BIT4_1 : BIT4_0;
       vvp_bit4_t lt = (l <  r)? BIT4_1 : BIT4_0;
 
-      thr_put_bit(thr, 4, eq);
-      thr_put_bit(thr, 5, lt);
+      thr->flags[4] = eq;
+      thr->flags[5] = lt;
 
       return true;
 }
@@ -1942,7 +2088,7 @@ bool of_CMPWU(vthread_t thr, vvp_code_t cp)
 bool of_CMPZ(vthread_t thr, vvp_code_t cp)
 {
       vvp_bit4_t eq = BIT4_1;
-
+#if 0
       unsigned idx1 = cp->bit_idx[0];
       unsigned idx2 = cp->bit_idx[1];
 
@@ -1958,8 +2104,10 @@ bool of_CMPZ(vthread_t thr, vvp_code_t cp)
 	    if (idx1 >= 4) idx1 += 1;
 	    if (idx2 >= 4) idx2 += 1;
       }
-
-      thr_put_bit(thr, 4, eq);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%cmpz ...\n");
+#endif
+      thr->flags[4] = eq;
 
       return true;
 }
@@ -2002,25 +2150,31 @@ bool of_CVT_RU(vthread_t thr, vvp_code_t cp)
 
 bool of_CVT_RV(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
       vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
       double val;
       vector4_to_value(vector, val, false);
       thr->push_real(val);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%cvt/rv ...\n");
+#endif
       return true;
 }
 
 bool of_CVT_RV_S(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
       vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
       double val;
       vector4_to_value(vector, val, true);
       thr->push_real(val);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%cvt/rv/s ...\n");
+#endif
       return true;
 }
 
@@ -2053,6 +2207,7 @@ bool of_CVT_UR(vthread_t thr, vvp_code_t cp)
  */
 bool of_CVT_VR(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       double r = thr->pop_real();
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->number;
@@ -2061,7 +2216,9 @@ bool of_CVT_VR(vthread_t thr, vvp_code_t cp)
 	/* Make sure there is enough space for the new vector. */
       thr_check_addr(thr, base+wid-1);
       thr->bits4.set_vec(base, tmp);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%cvt/vr ...\n");
+#endif
       return true;
 }
 
@@ -2129,6 +2286,14 @@ bool of_DEASSIGN_WR(vthread_t, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %debug/thr
+ */
+bool of_DEBUG_THR(vthread_t thr, vvp_code_t)
+{
+      thr->debug_dump(cerr);
+      return true;
+}
 
 /*
  * The delay takes two 32bit numbers to make up a 64bit time.
@@ -2152,7 +2317,7 @@ bool of_DELAYX(vthread_t thr, vvp_code_t cp)
 {
       vvp_time64_t delay;
 
-      assert(cp->number < 4);
+      assert(cp->number < vthread_s::WORDS_COUNT);
       delay = thr->words[cp->number].w_uint;
       schedule_vthread(thr, delay);
       return false;
@@ -2405,6 +2570,7 @@ static unsigned long* divide_bits(unsigned long*ap, unsigned long*bp, unsigned w
 
 bool of_DIV(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned adra = cp->bit_idx[0];
       unsigned adrb = cp->bit_idx[1];
       unsigned wid = cp->number;
@@ -2457,6 +2623,9 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
       delete[]ap;
       delete[]bp;
       delete[]result;
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%div ...\n");
+#endif
       return true;
 }
 
@@ -2470,6 +2639,7 @@ static void negate_words(unsigned long*val, unsigned words)
 
 bool of_DIV_S(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned adra = cp->bit_idx[0];
       unsigned adrb = cp->bit_idx[1];
       unsigned wid = cp->number;
@@ -2553,6 +2723,9 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
       delete[]ap;
       delete[]bp;
       delete[]result;
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%div/s ...\n");
+#endif
       return true;
 }
 
@@ -2568,6 +2741,12 @@ bool of_DIV_WR(vthread_t thr, vvp_code_t)
 bool of_DUP_REAL(vthread_t thr, vvp_code_t)
 {
       thr->push_real(thr->peek_real(0));
+      return true;
+}
+
+bool of_DUP_VEC4(vthread_t thr, vvp_code_t)
+{
+      thr->push_vec4(thr->peek_vec4(0));
       return true;
 }
 
@@ -2682,6 +2861,41 @@ bool of_EVCTLS(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_FLAG_GET_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      int flag = cp->number;
+      assert(flag < vthread_s::FLAGS_COUNT);
+
+      vvp_vector4_t val (1, thr->flags[flag]);
+      thr->push_vec4(val);
+
+      return true;
+}
+
+bool of_FLAG_SET_IMM(vthread_t thr, vvp_code_t cp)
+{
+      int flag = cp->number;
+      int vali = cp->bit_idx[0];
+
+      assert(flag < vthread_s::FLAGS_COUNT);
+      assert(vali >= 0 && vali < 4);
+
+      static vvp_bit4_t map_bit[4] = {BIT4_0, BIT4_1, BIT4_Z, BIT4_X};
+      thr->flags[flag] = map_bit[vali];
+      return true;
+}
+
+bool of_FLAG_SET_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      int flag = cp->number;
+      assert(flag < vthread_s::FLAGS_COUNT);
+
+      vvp_vector4_t val = thr->pop_vec4();
+      thr->flags[flag] = val.value(0);
+
+      return true;
+}
+
 /*
  * the %force/link instruction connects a source node to a
  * destination node. The destination node must be a signal, as it is
@@ -2714,6 +2928,7 @@ bool of_FORCE_LINK(vthread_t, vvp_code_t cp)
  */
 bool of_FORCE_V(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       vvp_net_t*net  = cp->net;
       unsigned  base = cp->bit_idx[0];
       unsigned  wid  = cp->bit_idx[1];
@@ -2728,7 +2943,9 @@ bool of_FORCE_V(vthread_t thr, vvp_code_t cp)
 	    value = coerce_to_width(value, net->fil->filter_size());
 
       net->force_vec4(value, vvp_vector2_t(vvp_vector2_t::FILL1, net->fil->filter_size()));
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%force/v ...\n");
+#endif
       return true;
 }
 
@@ -2745,6 +2962,7 @@ bool of_FORCE_WR(vthread_t thr, vvp_code_t cp)
 
 bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       vvp_net_t*net = cp->net;
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
@@ -2781,7 +2999,9 @@ bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
       value.set_vec(index, vector);
 
       net->force_vec4(value, mask);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%force/x0 ...\n");
+#endif
       return true;
 }
 
@@ -2838,41 +3058,11 @@ bool of_FREE(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-static bool of_INV_wide(vthread_t thr, vvp_code_t cp)
-{
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-
-      vvp_vector4_t val = vthread_bits_to_vector(thr, idx1, wid);
-      thr->bits4.set_vec(idx1, ~val);
-
-      return true;
-}
-
-static bool of_INV_narrow(vthread_t thr, vvp_code_t cp)
-{
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-
-      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
-	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
-	    thr_put_bit(thr, idx1, ~lb);
-	    idx1 += 1;
-      }
-
-      return true;
-}
-
 bool of_INV(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx[0] >= 4);
-
-      if (cp->number <= 4)
-	    cp->opcode = &of_INV_narrow;
-      else
-	    cp->opcode = &of_INV_wide;
-
-      return cp->opcode(thr, cp);
+      vvp_vector4_t val = thr->pop_vec4();
+      thr->push_vec4(~val);
+      return true;
 }
 
 
@@ -2943,7 +3133,7 @@ static uint64_t vector_to_index(vthread_t thr, unsigned base,
 {
       uint64_t v = 0;
       bool unknown_flag = false;
-
+#if 0
       vvp_bit4_t vv = BIT4_0;
       for (unsigned i = 0 ;  i < width ;  i += 1) {
 	    vv = thr_get_bit(thr, base);
@@ -2966,9 +3156,11 @@ static uint64_t vector_to_index(vthread_t thr, unsigned base,
 		  v |= pad << i;
 	    }
       }
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: vector_to_index(...)\n");
+#endif
 	/* Set bit 4 as a flag if the input is unknown. */
-      thr_put_bit(thr, 4, unknown_flag ? BIT4_1 : BIT4_0);
+      thr->flags[4] = unknown_flag? BIT4_1 : BIT4_0;
 
       return v;
 }
@@ -3017,7 +3209,7 @@ bool of_IX_GETV(vthread_t thr, vvp_code_t cp)
 	    thr->words[index].w_uint = 0;
 
 	/* Set bit 4 as a flag if the input is unknown. */
-      thr_put_bit(thr, 4, known_flag ? BIT4_0 : BIT4_1);
+      thr->flags[4] = known_flag ? BIT4_0 : BIT4_1;
 
       return true;
 }
@@ -3048,8 +3240,57 @@ bool of_IX_GETV_S(vthread_t thr, vvp_code_t cp)
 	    thr->words[index].w_int = 0;
 
 	/* Set bit 4 as a flag if the input is unknown. */
-      thr_put_bit(thr, 4, known_flag ? BIT4_0 : BIT4_1);
+      thr->flags[4] = known_flag? BIT4_0 : BIT4_1;
 
+      return true;
+}
+
+static uint64_t vec4_to_index(vthread_t thr, bool signed_flag)
+{
+      vvp_vector4_t val = thr->pop_vec4();
+      uint64_t v = 0;
+      bool unknown_flag = false;
+
+      vvp_bit4_t vv = BIT4_0;
+      for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
+	    vv = val.value(idx);
+	    if (bit4_is_xz(vv)) {
+		  v = 0UL;
+		  unknown_flag = true;
+		  break;
+	    }
+
+	    v |= (uint64_t) vv << idx;
+      }
+
+      if (signed_flag && !unknown_flag) {
+	    uint64_t pad = vv;
+	    for (unsigned idx = val.size() ; idx < 8*sizeof(v) ; idx += 1) {
+		  v |= pad << idx;
+	    }
+      }
+
+      thr->flags[4] = unknown_flag? BIT4_1 : BIT4_0;
+      return v;
+}
+
+/*
+ * %ix/vec4 <idx>
+ */
+bool of_IX_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      unsigned use_idx = cp->number;
+      thr->words[use_idx].w_uint = vec4_to_index(thr, false);
+      return true;
+}
+
+/*
+ * %ix/vec4/s <idx>
+ */
+bool of_IX_VEC4_S(vthread_t thr, vvp_code_t cp)
+{
+      unsigned use_idx = cp->number;
+      thr->words[use_idx].w_uint = vec4_to_index(thr, true);
       return true;
 }
 
@@ -3074,9 +3315,12 @@ bool of_JMP(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %jmp/0 <pc>, <flag>
+ */
 bool of_JMP0(vthread_t thr, vvp_code_t cp)
 {
-      if (thr_get_bit(thr, cp->bit_idx[0]) == 0)
+      if (thr->flags[cp->bit_idx[0]] == BIT4_0)
 	    thr->pc = cp->cptr;
 
 	/* Normally, this returns true so that the processor just
@@ -3091,9 +3335,12 @@ bool of_JMP0(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %jmp/0xz <pc>, <flag>
+ */
 bool of_JMP0XZ(vthread_t thr, vvp_code_t cp)
 {
-      if (thr_get_bit(thr, cp->bit_idx[0]) != BIT4_1)
+      if (thr->flags[cp->bit_idx[0]] != BIT4_1)
 	    thr->pc = cp->cptr;
 
 	/* Normally, this returns true so that the processor just
@@ -3108,9 +3355,12 @@ bool of_JMP0XZ(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %jmp/1 <pc>, <flag>
+ */
 bool of_JMP1(vthread_t thr, vvp_code_t cp)
 {
-      if (thr_get_bit(thr, cp->bit_idx[0]) == 1)
+      if (thr->flags[cp->bit_idx[0]] == BIT4_1)
 	    thr->pc = cp->cptr;
 
 	/* Normally, this returns true so that the processor just
@@ -3237,7 +3487,7 @@ bool of_LOAD_AR(vthread_t thr, vvp_code_t cp)
       double word;
 
 	/* The result is 0.0 if the address is undefined. */
-      if (thr_get_bit(thr, 4) == BIT4_1) {
+      if (thr->flags[4] == BIT4_1) {
 	    word = 0.0;
       } else {
 	    word = array_get_word_r(cp->array, adr);
@@ -3258,6 +3508,7 @@ bool of_LOAD_AR(vthread_t thr, vvp_code_t cp)
  */
 bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
       unsigned adr = thr->words[3].w_int;
@@ -3285,7 +3536,9 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
 	   with BIT4_X values. */
       for (unsigned idx = word.size() ; idx < wid ; idx += 1)
 	    thr->bits4.set_bit(bit+idx, BIT4_X);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%load/av ...\n");
+#endif
       return true;
 }
 
@@ -3294,6 +3547,7 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
 */
 bool of_LOAD_DAR(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
       unsigned adr = thr->words[3].w_int;
@@ -3312,7 +3566,9 @@ bool of_LOAD_DAR(vthread_t thr, vvp_code_t cp)
 
       thr_check_addr(thr, bit+word.size());
       thr->bits4.set_vec(bit, word);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%load/dar ...\n");
+#endif
       return true;
 }
 
@@ -3367,6 +3623,7 @@ bool of_LOAD_DAR_STR(vthread_t thr, vvp_code_t cp)
 #endif
 static void load_vp0_common(vthread_t thr, vvp_code_t cp, const vvp_vector4_t&sig_value)
 {
+#if 0
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
       int64_t addend = thr->words[0].w_int;
@@ -3394,6 +3651,9 @@ static void load_vp0_common(vthread_t thr, vvp_code_t cp, const vvp_vector4_t&si
 	   directly to skip the excess calls to thr_check_addr. */
       thr->bits4.setarray(bit, wid, val);
       delete[]val;
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: load_vp0_common()\n");
+#endif
 }
 
 /*
@@ -3408,6 +3668,7 @@ static void load_vp0_common(vthread_t thr, vvp_code_t cp, const vvp_vector4_t&si
  */
 bool of_LOAD_AVP0(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned wid = cp->bit_idx[1];
       unsigned adr = thr->words[3].w_int;
 
@@ -3426,11 +3687,15 @@ bool of_LOAD_AVP0(vthread_t thr, vvp_code_t cp)
       sig_value.copy_bits(array_get_word(cp->array, adr));
 
       load_vp0_common(thr, cp, sig_value);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%load/avp0 ...\n");
+#endif
       return true;
 }
 
 bool of_LOAD_AVP0_S(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned wid = cp->bit_idx[1];
       unsigned adr = thr->words[3].w_int;
 
@@ -3451,11 +3716,14 @@ bool of_LOAD_AVP0_S(vthread_t thr, vvp_code_t cp)
       sig_value.copy_bits(tmp);
 
       load_vp0_common(thr, cp, sig_value);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%load/avp0/s ... \n");
+#endif
       return true;
 }
 
 /*
- * %load/avx.p <bit>, <array-label>, <idx> ;
+ * %load/avx.p <bit>, <array-label>, <wid> ;
  *
  * <bit> is the thread bit address for the result
  * <array-label> is the array to access, and
@@ -3465,6 +3733,7 @@ bool of_LOAD_AVP0_S(vthread_t thr, vvp_code_t cp)
  */
 bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned bit = cp->bit_idx[0];
       unsigned index = cp->bit_idx[1];
       unsigned adr = thr->words[3].w_int;
@@ -3486,7 +3755,9 @@ bool of_LOAD_AVX_P(vthread_t thr, vvp_code_t cp)
       }
 
       thr->words[index].w_int = use_index + 1;
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%load/avx.p ...\n");
+#endif
       return true;
 }
 
@@ -3542,8 +3813,7 @@ bool of_LOAD_STRA(vthread_t thr, vvp_code_t cp)
       unsigned adr = thr->words[idx].w_int;
       string word;
 
-	/* The result is 0.0 if the address is undefined. */
-      if (thr_get_bit(thr, 4) == BIT4_1) {
+      if (thr->flags[4] == BIT4_1) {
 	    word = "";
       } else {
 	    word = array_get_word_str(cp->array, adr);
@@ -3584,6 +3854,7 @@ static void load_base(vvp_code_t cp, vvp_vector4_t&dst)
       sig->vec4_value(dst);
 }
 
+#if 0
 bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
 {
       unsigned bit = cp->bit_idx[0];
@@ -3606,6 +3877,20 @@ bool of_LOAD_VEC(vthread_t thr, vvp_code_t cp)
 	   with BIT4_X values. */
       for (unsigned idx = sig_value.size() ; idx < wid ; idx += 1)
 	    thr->bits4.set_bit(bit+idx, BIT4_X);
+
+      return true;
+}
+#endif
+
+/*
+ * %load/vec4 <net>
+ */
+bool of_LOAD_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      vvp_vector4_t sig_value;
+      load_base(cp, sig_value);
+
+      thr->push_vec4(sig_value);
 
       return true;
 }
@@ -3654,6 +3939,7 @@ bool of_LOAD_VP0_S(vthread_t thr, vvp_code_t cp)
  */
 bool of_LOAD_X1P(vthread_t thr, vvp_code_t cp)
 {
+#if 0
 	// <bit> is the thread bit to load
       assert(cp->bit_idx[0] >= 4);
       unsigned bit = cp->bit_idx[0];
@@ -3681,10 +3967,12 @@ bool of_LOAD_X1P(vthread_t thr, vvp_code_t cp)
 
 	    thr_put_bit(thr, bit+idx, val);
       }
-
+#else
+      fprintf(stderr, "XXXX NOT IMLEMENTED: %%load/x1p ...\n");
+#endif
       return true;
 }
-
+#if 0
 static void do_verylong_mod(vthread_t thr, vvp_code_t cp,
 			    bool left_is_neg, bool right_is_neg)
 {
@@ -3809,7 +4097,7 @@ static void do_verylong_mod(vthread_t thr, vvp_code_t cp,
 
       return;
 }
-
+#endif
 bool of_MAX_WR(vthread_t thr, vvp_code_t)
 {
       double r = thr->pop_real();
@@ -3842,6 +4130,7 @@ bool of_MIN_WR(vthread_t thr, vvp_code_t)
 
 bool of_MOD(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] >= 4);
 
       if(cp->number <= 8*sizeof(unsigned long long)) {
@@ -3884,12 +4173,15 @@ bool of_MOD(vthread_t thr, vvp_code_t cp)
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
 	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%mod ...\n");
+#endif
       return true;
 }
 
 bool of_MOD_S(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] >= 4);
 
 	/* Handle the case that we can fit the bits into a long-long
@@ -3947,7 +4239,9 @@ bool of_MOD_S(vthread_t thr, vvp_code_t cp)
  x_out:
       for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
 	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%mod/s ...\n");
+#endif
       return true;
 }
 
@@ -3972,7 +4266,7 @@ bool of_MOD_WR(vthread_t thr, vvp_code_t)
  *   more directly does the job. All the of_MOV*_ functions are
  *   functions that of_MOV might use to replace itself.
  */
-
+#if 0
 static bool of_MOV1XZ_(vthread_t thr, vvp_code_t cp)
 {
       thr_check_addr(thr, cp->bit_idx[0]+cp->number-1);
@@ -3994,9 +4288,10 @@ static bool of_MOV_(vthread_t thr, vvp_code_t cp)
 
       return true;
 }
-
+#endif
 bool of_MOV(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] >= 4);
 
       if (cp->bit_idx[1] >= 4) {
@@ -4007,23 +4302,104 @@ bool of_MOV(vthread_t thr, vvp_code_t cp)
 	    cp->opcode = &of_MOV1XZ_;
 	    return cp->opcode(thr, cp);
       }
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%mov ...\n");
+#endif
+      return true;
+}
+
+/*
+ * %pad/s <wid>
+ */
+bool of_PAD_S(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->number;
+
+      vvp_vector4_t val = thr->pop_vec4();
+      unsigned old_size = val.size();
+      val.resize(wid);
+
+	// Sign-extend.
+      if (old_size < wid) {
+	    vvp_bit4_t sb = val.value(old_size-1);
+	    for (unsigned idx = old_size ; idx < wid ; idx += 1)
+		  val.set_bit(idx, sb);
+      }
+
+      thr->push_vec4(val);
 
       return true;
 }
 
-bool of_PAD(vthread_t thr, vvp_code_t cp)
+/*
+ * %pad/u <wid>
+ */
+bool of_PAD_U(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx[0] >= 4);
+      unsigned wid = cp->number;
 
-      vvp_bit4_t pad_bit;
-      if (cp->bit_idx[1] < 4)
-            pad_bit = thr_index_to_bit4[cp->bit_idx[1]];
-      else
-            pad_bit = thr->bits4.value(cp->bit_idx[1]);
+      vvp_vector4_t val = thr->pop_vec4();
+      unsigned old_size = val.size();
+      val.resize(wid);
 
-      thr_check_addr(thr, cp->bit_idx[0]+cp->number-1);
-      vvp_vector4_t tmp (cp->number, pad_bit);
-      thr->bits4.set_vec(cp->bit_idx[0], tmp);
+      if (old_size < wid) {
+	    vvp_bit4_t pad = BIT4_0;
+	    for (unsigned idx = old_size ; idx < wid ; idx += 1)
+		  val.set_bit(idx,pad);
+      }
+
+      thr->push_vec4(val);
+
+      return true;
+}
+
+/*
+ * %part <wid>
+ * Two values are popped from the stack. First, pop the canonical
+ * index of the part select, and second is the value to be
+ * selected. The result is pushed back to the stack.
+ */
+bool of_PART(vthread_t thr, vvp_code_t cp)
+{
+      unsigned wid = cp->number;
+
+      vvp_vector4_t base4 = thr->pop_vec4();
+      vvp_vector4_t value = thr->pop_vec4();
+
+      vvp_vector4_t res (wid, BIT4_X);
+
+	// NOTE: This is treating the vector as signed. Is that correct?
+      int32_t base;
+      bool value_ok = vector4_to_value(base4, base, true);
+      if (! value_ok) {
+	    thr->push_vec4(res);
+	    return true;
+      }
+
+      if (base >= (int32_t)value.size()) {
+	    thr->push_vec4(res);
+	    return true;
+      }
+
+      if ((base+(int)wid) <= 0) {
+	    thr->push_vec4(res);
+	    return true;
+      }
+
+      long vbase = 0;
+      if (base < 0) {
+	    vbase = -base;
+	    wid -= vbase;
+	    base = 0;
+      }
+
+      if ((base+wid) > value.size()) {
+	    wid = value.size() - base;
+      }
+
+      res .set_vec(vbase, value.subvalue(base, wid));
+      thr->push_vec4(res);
+
       return true;
 }
 
@@ -4041,6 +4417,7 @@ bool of_MOV_WU(vthread_t thr, vvp_code_t cp)
 
 bool of_MOVI(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned dst = cp->bit_idx[0];
       static unsigned long val[8] = {0, 0, 0, 0, 0, 0, 0, 0};
       unsigned wid = cp->number;
@@ -4060,12 +4437,15 @@ bool of_MOVI(vthread_t thr, vvp_code_t cp)
 	    wid -= trans;
 	    dst += trans;
       }
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%movi ...\n");
+#endif
       return true;
 }
 
 bool of_MUL(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned adra = cp->bit_idx[0];
       unsigned adrb = cp->bit_idx[1];
       unsigned wid = cp->number;
@@ -4119,6 +4499,9 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
       delete[]ap;
       delete[]bp;
       delete[]res;
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%mul ...\n");
+#endif
       return true;
 }
 
@@ -4133,6 +4516,7 @@ bool of_MUL_WR(vthread_t thr, vvp_code_t)
 
 bool of_MULI(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned adr = cp->bit_idx[0];
       unsigned long imm = cp->bit_idx[1];
       unsigned wid = cp->number;
@@ -4163,9 +4547,12 @@ bool of_MULI(vthread_t thr, vvp_code_t cp)
       thr->bits4.setarray(adr, wid, res);
       delete[]val;
       delete[]res;
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%muli ...\n");
+#endif
       return true;
 }
-
+#if 0
 static bool of_NAND_wide(vthread_t thr, vvp_code_t cp)
 {
       unsigned idx1 = cp->bit_idx[0];
@@ -4196,9 +4583,10 @@ static bool of_NAND_narrow(vthread_t thr, vvp_code_t cp)
 
       return true;
 }
-
+#endif
 bool of_NAND(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] >= 4);
 
       if (cp->number <= 4)
@@ -4207,6 +4595,10 @@ bool of_NAND(vthread_t thr, vvp_code_t cp)
 	    cp->opcode = &of_NAND_wide;
 
       return cp->opcode(thr, cp);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%nand ...\n");
+      return true;
+#endif
 }
 
 /*
@@ -4267,6 +4659,7 @@ bool of_NOOP(vthread_t, vvp_code_t)
 
 bool of_NORR(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] >= 4);
 
       vvp_bit4_t lb = BIT4_1;
@@ -4285,7 +4678,9 @@ bool of_NORR(vthread_t thr, vvp_code_t cp)
       }
 
       thr_put_bit(thr, cp->bit_idx[0], lb);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%nor/r ...\n");
+#endif
       return true;
 }
 
@@ -4302,6 +4697,7 @@ bool of_NULL(vthread_t thr, vvp_code_t)
 
 bool of_ANDR(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] >= 4);
 
       vvp_bit4_t lb = BIT4_1;
@@ -4320,12 +4716,15 @@ bool of_ANDR(vthread_t thr, vvp_code_t cp)
       }
 
       thr_put_bit(thr, cp->bit_idx[0], lb);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%and/r ...\n");
+#endif
       return true;
 }
 
 bool of_NANDR(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] >= 4);
 
       vvp_bit4_t lb = BIT4_0;
@@ -4344,12 +4743,15 @@ bool of_NANDR(vthread_t thr, vvp_code_t cp)
       }
 
       thr_put_bit(thr, cp->bit_idx[0], lb);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%nand/r ...\n");
+#endif
       return true;
 }
 
 bool of_ORR(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] >= 4);
 
       vvp_bit4_t lb = BIT4_0;
@@ -4368,12 +4770,15 @@ bool of_ORR(vthread_t thr, vvp_code_t cp)
       }
 
       thr_put_bit(thr, cp->bit_idx[0], lb);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%orr ...\n");
+#endif
       return true;
 }
 
 bool of_XORR(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] >= 4);
 
       vvp_bit4_t lb = BIT4_0;
@@ -4391,12 +4796,15 @@ bool of_XORR(vthread_t thr, vvp_code_t cp)
       }
 
       thr_put_bit(thr, cp->bit_idx[0], lb);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%xorr ...\n");
+#endif
       return true;
 }
 
 bool of_XNORR(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] >= 4);
 
       vvp_bit4_t lb = BIT4_1;
@@ -4414,53 +4822,22 @@ bool of_XNORR(vthread_t thr, vvp_code_t cp)
       }
 
       thr_put_bit(thr, cp->bit_idx[0], lb);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%xnorr...\n");
+#endif
       return true;
 }
 
-static bool of_OR_wide(vthread_t thr, vvp_code_t cp)
+bool of_OR(vthread_t thr, vvp_code_t)
 {
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned idx2 = cp->bit_idx[1];
-      unsigned wid = cp->number;
-
-      vvp_vector4_t val = vthread_bits_to_vector(thr, idx1, wid);
-      val |= vthread_bits_to_vector(thr, idx2, wid);
-      thr->bits4.set_vec(idx1, val);
-
+      vvp_vector4_t vala = thr->pop_vec4();
+      vvp_vector4_t valb = thr->pop_vec4();
+      vala |= valb;
+      thr->push_vec4(vala);
       return true;
 }
 
-static bool of_OR_narrow(vthread_t thr, vvp_code_t cp)
-{
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned idx2 = cp->bit_idx[1];
-      unsigned wid = cp->number;
-
-      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
-	    vvp_bit4_t lb = thr_get_bit(thr, idx1);
-	    vvp_bit4_t rb = thr_get_bit(thr, idx2);
-	    thr_put_bit(thr, idx1, lb|rb);
-	    idx1 += 1;
-	    if (idx2 >= 4)
-		  idx2 += 1;
-      }
-
-      return true;
-}
-
-bool of_OR(vthread_t thr, vvp_code_t cp)
-{
-      assert(cp->bit_idx[0] >= 4);
-
-      if (cp->number <= 4)
-	    cp->opcode = &of_OR_narrow;
-      else
-	    cp->opcode = &of_OR_wide;
-
-      return cp->opcode(thr, cp);
-}
-
+#if 0
 static bool of_NOR_wide(vthread_t thr, vvp_code_t cp)
 {
       assert(cp->bit_idx[0] >= 4);
@@ -4493,17 +4870,20 @@ static bool of_NOR_narrow(vthread_t thr, vvp_code_t cp)
 
       return true;
 }
-
+#endif
 bool of_NOR(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx[0] >= 4);
-
+#if 0
       if (cp->number <= 4)
 	    cp->opcode = &of_NOR_narrow;
       else
 	    cp->opcode = &of_NOR_wide;
 
       return cp->opcode(thr, cp);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%nor ...\n");
+      return true;
+#endif
 }
 
 /*
@@ -4540,8 +4920,19 @@ bool of_POP_STR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ *  %pop/vec4 <number>
+ */
+bool of_POP_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      unsigned cnt = cp->number;
+      thr->pop_vec4(cnt);
+      return true;
+}
+
 bool of_POW(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] >= 4);
 
       unsigned idx = cp->bit_idx[0];
@@ -4574,12 +4965,15 @@ bool of_POW(vthread_t thr, vvp_code_t cp)
       for (unsigned jdx = 0;  jdx < wid;  jdx += 1)
 	    thr_put_bit(thr, cp->bit_idx[0]+jdx,
 	                result.value(jdx) ? BIT4_1 : BIT4_0);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%pow ...\n");
+#endif
       return true;
 }
 
 bool of_POW_S(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] >= 4);
 
       unsigned idx = cp->bit_idx[0];
@@ -4607,7 +5001,9 @@ bool of_POW_S(vthread_t thr, vvp_code_t cp)
         /* Copy the result. */
       for (unsigned jdx = 0;  jdx < wid;  jdx += 1)
 	    thr_put_bit(thr, cp->bit_idx[0]+jdx, res.value(jdx));
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%pow/s ...\n");
+#endif
       return true;
 }
 
@@ -4686,6 +5082,7 @@ bool of_PROP_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_PROP_V(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned pid = cp->bit_idx[0];
       unsigned dst = cp->bit_idx[1];
       unsigned wid = cp->number;
@@ -4706,7 +5103,9 @@ bool of_PROP_V(vthread_t thr, vvp_code_t cp)
 	    for (unsigned idx = val.size() ; idx < wid ; idx += 1)
 		  thr->bits4.set_bit(dst+idx, BIT4_X);
       }
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%prop/v ...\n");
+#endif
       return true;
 }
 
@@ -4748,8 +5147,53 @@ bool of_PUSHI_STR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %pushi/vec4 <vala>, <valb>, <wid>
+ */
+bool of_PUSHI_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      uint32_t vala = cp->bit_idx[0];
+      uint32_t valb = cp->bit_idx[1];
+      unsigned wid  = cp->number;
+
+      vvp_vector4_t val (wid, BIT4_0);
+      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+	    uint32_t ba = 0;
+	      // If the requested width is /32, then there are no
+	      // actual immediate bits, but we can pad with zero. So
+	      // here we test if we are still working on he LSB, and
+	      // process them if so.
+	    if (idx < 32) {
+		  ba = ((valb >> idx) & 1) << 1;
+		  ba |= (vala >> idx) & 1;
+	    }
+	    vvp_bit4_t use_bit = BIT4_0;
+	    switch (ba) {
+		case 1:
+		  use_bit = BIT4_1;
+		  break;
+		case 2:
+		  use_bit = BIT4_Z;
+		  break;
+		case 3:
+		  use_bit = BIT4_X;
+		  break;
+		default:
+		  break;
+	    }
+	    if (use_bit == BIT4_0)
+		  continue;
+	    val.set_bit(idx, use_bit);
+      }
+
+      thr->push_vec4(val);
+
+      return true;
+}
+
 bool of_PUSHV_STR(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned src = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
 
@@ -4780,6 +5224,9 @@ bool of_PUSHV_STR(vthread_t thr, vvp_code_t cp)
       }
 
       thr->push_str(val);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%push/str ...\n");
+#endif
       return true;
 }
 
@@ -4788,6 +5235,7 @@ bool of_PUSHV_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_PUTC_STR_V(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned muxr = cp->bit_idx[0];
       unsigned base = cp->bit_idx[1];
 
@@ -4827,7 +5275,9 @@ bool of_PUTC_STR_V(vthread_t thr, vvp_code_t cp)
 	   variable so that the new value propagates. */
       val[mux] = tmp_val;
       vvp_send_string(vvp_net_ptr_t(cp->net, 0), val, thr->wt_context);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%putc/str/v ...\n");
+#endif
       return true;
 }
 
@@ -4912,6 +5362,7 @@ bool of_SCOPY(vthread_t thr, vvp_code_t)
  */
 bool of_SET_AV(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
       unsigned off = thr->words[1].w_int;
@@ -4921,6 +5372,9 @@ bool of_SET_AV(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 
       array_set_word(cp->array, adr, off, value);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%set/av ...\n");
+#endif
       return true;
 }
 
@@ -4929,6 +5383,7 @@ bool of_SET_AV(vthread_t thr, vvp_code_t cp)
  */
 bool of_SET_DAR(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
       unsigned adr = thr->words[3].w_int;
@@ -4944,6 +5399,9 @@ bool of_SET_DAR(vthread_t thr, vvp_code_t cp)
       assert(darray);
 
       darray->set_word(adr, value);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%set/dar ...\n");
+#endif
       return true;
 }
 
@@ -4952,6 +5410,7 @@ bool of_SET_DAR(vthread_t thr, vvp_code_t cp)
  */
 bool of_SET_DAR_OBJ(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       unsigned adr = thr->words[cp->number].w_int;
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
@@ -4963,6 +5422,9 @@ bool of_SET_DAR_OBJ(vthread_t thr, vvp_code_t cp)
       assert(darray);
 
       darray->set_word(adr, value);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%set/dar/obj ...\n");
+#endif
       return true;
 }
 
@@ -5013,6 +5475,7 @@ bool of_SET_DAR_OBJ_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_SET_VEC(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[1] > 0);
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
@@ -5022,7 +5485,9 @@ bool of_SET_VEC(vthread_t thr, vvp_code_t cp)
 
       vvp_send_vec4(ptr, vthread_bits_to_vector(thr, bit, wid),
                     thr->wt_context);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%set/vec ...\n");
+#endif
       return true;
 }
 
@@ -5039,6 +5504,7 @@ bool of_SET_VEC(vthread_t thr, vvp_code_t cp)
  */
 bool of_SET_X0(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       vvp_net_t*net = cp->net;
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
@@ -5083,10 +5549,13 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
 
       vvp_net_ptr_t ptr (net, 0);
       vvp_send_vec4_pv(ptr, bit_vec, index, wid, sig->value_size(), thr->wt_context);
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%set/x0 ...\n");
+#endif
       return true;
 }
 
+#if 0
 bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
 {
       int base = cp->bit_idx[0];
@@ -5132,7 +5601,52 @@ bool of_SHIFTL_I0(vthread_t thr, vvp_code_t cp)
       }
       return true;
 }
+#endif
 
+/*
+ * %shiftl <idx>
+ */
+bool of_SHIFTL(vthread_t thr, vvp_code_t cp)
+{
+      int use_index = cp->number;
+      int shift = thr->words[use_index].w_int;
+
+      vvp_vector4_t val = thr->pop_vec4();
+      int wid  = val.size();
+
+      if (thr->flags[4] == BIT4_1) {
+	      // The result is 'bx if the shift amount is undefined
+	    val = vvp_vector4_t(wid, BIT4_X);
+
+      } else if (shift >= wid) {
+	      // Shift is so big that all value is shifted out. Write
+	      // a constant 0 result.
+	    val = vvp_vector4_t(wid, BIT4_0);
+
+      } else if (shift > 0) {
+	    val.mov(shift, 0, wid-shift);
+
+	    vvp_vector4_t tmp (shift, BIT4_0);
+	    val.set_vec(0, tmp);
+
+      } else if (shift < -wid) {
+	    val = vvp_vector4_t(wid, BIT4_X);
+
+      } else if (shift < 0) {
+	      // Negative left shift is a right shift.
+	      // For a negative shift, we pad with 'bx.
+	    int use_shift = -shift;
+	    val.mov(0, use_shift, wid-use_shift);
+	    vvp_vector4_t tmp (use_shift, BIT4_X);
+	    val.set_vec(wid-use_shift, tmp);
+      }
+
+      thr->push_vec4(val);
+      return true;
+}
+
+
+#if 0
 /*
  * This is an unsigned right shift:
  *
@@ -5184,7 +5698,51 @@ bool of_SHIFTR_I0(vthread_t thr, vvp_code_t cp)
       }
       return true;
 }
+#endif
 
+/*
+ * %shiftr <idx>
+ * This is an unsigned right shift. The <idx> is a number that selects
+ * the index register with the amount of the shift. This instruction
+ * checks flag bit 4, which will be true if the shift is invalid.
+ */
+bool of_SHIFTR(vthread_t thr, vvp_code_t cp)
+{
+      int use_index = cp->number;
+      int shift = thr->words[use_index].w_int;
+
+      vvp_vector4_t val = thr->pop_vec4();
+      int wid  = val.size();
+
+      if (thr->flags[4] == BIT4_1) {
+	    val = vvp_vector4_t(wid, BIT4_X);
+
+      } else if (shift > wid) {
+	    val = vvp_vector4_t(wid, BIT4_0);
+
+      } else if (shift > 0) {
+	    val.mov(0, shift, wid-shift);
+
+	    vvp_vector4_t tmp (shift, BIT4_0);
+	    val.set_vec(wid-shift, tmp);
+
+      } else if (shift < -wid) {
+	    val = vvp_vector4_t(wid, BIT4_X);
+
+      } else if (shift < 0) {
+	      // Negative right shift is a left shift.
+	      // For a negative shift, we pad with 'bx.
+	    int use_shift = -shift;
+	    val.mov(use_shift, 0, wid-use_shift);
+	    vvp_vector4_t tmp (use_shift, BIT4_X);
+	    val.set_vec(0, tmp);
+      }
+
+      thr->push_vec4(val);
+      return true;
+}
+
+#if 0
 bool of_SHIFTR_S_I0(vthread_t thr, vvp_code_t cp)
 {
       int base = cp->bit_idx[0];
@@ -5226,6 +5784,14 @@ bool of_SHIFTR_S_I0(vthread_t thr, vvp_code_t cp)
       }
       return true;
 }
+#endif
+
+bool of_SHIFTR_S(vthread_t thr, vvp_code_t cp)
+{
+      fprintf(stderr, "XXXX of_SHIFTR_S not implemented\n");
+      return true;
+}
+
 
 bool of_STORE_DAR_R(vthread_t thr, vvp_code_t cp)
 {
@@ -5353,6 +5919,7 @@ bool of_STORE_PROP_STR(vthread_t thr, vvp_code_t cp)
  */
 bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       size_t pid = cp->bit_idx[0];
       unsigned src = cp->bit_idx[1];
       unsigned wid = cp->number;
@@ -5364,6 +5931,9 @@ bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
       assert(cobj);
 
       cobj->set_vec4(pid, val);
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%store/prop/v ...\n");
+#endif
       return true;
 }
 
@@ -5416,27 +5986,51 @@ bool of_STORE_STRA(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %store/vec4 <var-label>, <wid>
+ */
+bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
+{
+	/* Set the value into port 0 of the destination */
+      vvp_net_ptr_t ptr (cp->net, 0);
+      unsigned wid = cp->bit_idx[0];
+
+      vvp_vector4_t val = thr->pop_vec4();
+      assert(val.size() >= wid);
+      if (val.size() > wid)
+	    val.resize(wid);
+
+      vvp_send_vec4(ptr, val, thr->wt_context);
+
+      return true;
+}
 
 bool of_SUB(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx[0] >= 4);
+      vvp_vector4_t r = thr->pop_vec4();
+      vvp_vector4_t l = thr->pop_vec4();
 
-      unsigned long*lva = vector_to_array(thr, cp->bit_idx[0], cp->number);
-      unsigned long*lvb = vector_to_array(thr, cp->bit_idx[1], cp->number);
+      unsigned wid = l.size();
+      assert(wid == r.size());
+
+      unsigned long*lva = l.subarray(0,wid);
+      unsigned long*lvb = r.subarray(0,wid);
       if (lva == 0 || lvb == 0)
 	    goto x_out;
 
 
       unsigned long carry;
       carry = 1;
-      for (unsigned idx = 0 ;  (idx*CPU_WORD_BITS) < cp->number ;  idx += 1)
+      for (unsigned idx = 0 ;  (idx*CPU_WORD_BITS) < wid ;  idx += 1)
 	    lva[idx] = add_with_carry(lva[idx], ~lvb[idx], carry);
 
 
 	/* We know from the vector_to_array that the address is valid
 	   in the thr->bitr4 vector, so just do the set bit. */
 
-      thr->bits4.setarray(cp->bit_idx[0], cp->number, lva);
+      l.setarray(0,wid,lva);
+      thr->push_vec4(l);
+
       delete[]lva;
       delete[]lvb;
 
@@ -5447,7 +6041,7 @@ bool of_SUB(vthread_t thr, vvp_code_t cp)
       delete[]lvb;
 
       vvp_vector4_t tmp(cp->number, BIT4_X);
-      thr->bits4.set_vec(cp->bit_idx[0], tmp);
+      thr->push_vec4(tmp);
 
       return true;
 }
@@ -5462,6 +6056,7 @@ bool of_SUB_WR(vthread_t thr, vvp_code_t)
 
 bool of_SUBI(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] >= 4);
 
       unsigned word_count = (cp->number+CPU_WORD_BITS-1)/CPU_WORD_BITS;
@@ -5494,6 +6089,10 @@ bool of_SUBI(vthread_t thr, vvp_code_t cp)
       thr->bits4.set_vec(cp->bit_idx[0], tmp);
 
       return true;
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%subi ...\n");
+      return true;
+#endif
 }
 
 /*
@@ -5522,11 +6121,11 @@ bool of_SUBSTR(vthread_t thr, vvp_code_t cp)
  */
 bool of_SUBSTR_V(vthread_t thr, vvp_code_t cp)
 {
-      string&val = thr->peek_str(0);
+	//string&val = thr->peek_str(0);
       uint32_t bitl = cp->bit_idx[0];
       uint32_t sel = cp->bit_idx[1];
       unsigned wid = cp->number;
-
+#if 0
       thr_check_addr(thr, bitl+wid);
       assert(bitl >= 4);
 
@@ -5547,7 +6146,9 @@ bool of_SUBSTR_V(vthread_t thr, vvp_code_t cp)
 	    bitl += 8;
 	    use_sel += 1;
       }
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED : %%substr/v %u, %u, %u\n", bitl, sel, wid);
+#endif
       return true;
 }
 
@@ -5565,6 +6166,8 @@ bool of_FILE_LINE(vthread_t, vvp_code_t cp)
 
 /*
  * %test_nul <var-label>;
+ * Test if the object at the specified variable is nil. If so, write
+ * "1" into flags[4], otherwise write "0" into flags[4].
  */
 bool of_TEST_NUL(vthread_t thr, vvp_code_t cp)
 {
@@ -5575,9 +6178,9 @@ bool of_TEST_NUL(vthread_t thr, vvp_code_t cp)
       assert(obj);
 
       if (obj->get_object().test_nil())
-	    thr_put_bit(thr, 4, BIT4_1);
+	    thr->flags[4] = BIT4_1;
       else
-	    thr_put_bit(thr, 4, BIT4_0);
+	    thr->flags[4] = BIT4_0;
 
       return true;
 }
@@ -5643,6 +6246,7 @@ bool of_WAIT_FORK(vthread_t thr, vvp_code_t)
 
 bool of_XNOR(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] >= 4);
 
       unsigned idx1 = cp->bit_idx[0];
@@ -5658,13 +6262,16 @@ bool of_XNOR(vthread_t thr, vvp_code_t cp)
 	    if (idx2 >= 4)
 		  idx2 += 1;
       }
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%xnor ...\n");
+#endif
       return true;
 }
 
 
 bool of_XOR(vthread_t thr, vvp_code_t cp)
 {
+#if 0
       assert(cp->bit_idx[0] >= 4);
 
       unsigned idx1 = cp->bit_idx[0];
@@ -5695,7 +6302,9 @@ bool of_XOR(vthread_t thr, vvp_code_t cp)
 	    if (idx2 >= 4)
 		  idx2 += 1;
       }
-
+#else
+      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%xor ...\n");
+#endif
       return true;
 }
 

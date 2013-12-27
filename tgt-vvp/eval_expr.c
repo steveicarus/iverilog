@@ -189,7 +189,7 @@ uint64_t get_number_immediate64(ivl_expr_t expr)
       return imm;
 }
 
-static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
+void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 {
       switch (ivl_expr_type(expr)) {
 
@@ -200,7 +200,7 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		    if (number_is_unknown(expr)) {
 			    /* We are loading a 'bx so mimic %ix/get. */
 			  fprintf(vvp_out, "    %%ix/load %u, 0, 0;\n", ix);
-			  fprintf(vvp_out, "    %%mov 4, 1, 1;\n");
+			  fprintf(vvp_out, "    %%flag_set/imm 4, 1;\n");
 			  break;
 		    }
 		    long imm = get_number_immediate(expr);
@@ -210,11 +210,14 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 			  fprintf(vvp_out, "    %%ix/load %u, 0, 0; loading %ld\n", ix, imm);
 			  fprintf(vvp_out, "    %%ix/sub %u, %ld, 0;\n", ix, -imm);
 		    }
-		      /* This can not have have a X/Z value so clear bit 4. */
-		    fprintf(vvp_out, "    %%mov 4, 0, 1;\n");
+		      /* This can not have have a X/Z value so clear flag 4. */
+		    fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
 	      }
 	      break;
 
+		/* Special case: There is an %ix instruction for
+		   reading index values directly from variables. In
+		   this case, try to use that special instruction. */
 	  case IVL_EX_SIGNAL: {
 		ivl_signal_t sig = ivl_expr_signal(expr);
 
@@ -227,11 +230,8 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 			   variable array. In this case, the ix/getv
 			   will not work, so do it the hard way. */
 		      if (ivl_signal_type(sig) == IVL_SIT_REG) {
-			    struct vector_info rv;
-			    rv = draw_eval_expr(expr, 0);
-			    fprintf(vvp_out, "    %%ix/get%s %u, %u, %u;\n",
-				    type, ix, rv.base, rv.wid);
-			    clr_vector(rv);
+			    draw_eval_vec4(expr, 0);
+			    fprintf(vvp_out, "    %%ix/vec4%s %u;\n", type, ix);
 			    break;
 		      }
 
@@ -240,11 +240,8 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		            assert(! number_is_unknown(ixe));
 		            word = get_number_immediate(ixe);
 		      } else {
-		            struct vector_info rv;
-		            rv = draw_eval_expr(expr, 0);
-		            fprintf(vvp_out, "    %%ix/get%s %u, %u, %u;\n",
-		                    type, ix, rv.base, rv.wid);
-		            clr_vector(rv);
+		            draw_eval_vec4(expr, 0);
+		            fprintf(vvp_out, "    %%ix/vec4%s %u;\n", type, ix);
 		            break;
 		      }
 		}
@@ -254,20 +251,15 @@ static void eval_logic_into_integer(ivl_expr_t expr, unsigned ix)
 		break;
 	  }
 
-	  default: {
-		  struct vector_info rv;
-		  rv = draw_eval_expr(expr, 0);
-		    /* Is this a signed expression? */
-		  if (ivl_expr_signed(expr)) {
-		      fprintf(vvp_out, "    %%ix/get/s %u, %u, %u;\n",
-		                       ix, rv.base, rv.wid);
-		  } else {
-		      fprintf(vvp_out, "    %%ix/get %u, %u, %u;\n",
-		                       ix, rv.base, rv.wid);
-		  }
-		  clr_vector(rv);
-		  break;
+	  default:
+	    draw_eval_vec4(expr, 0);
+	      /* Is this a signed expression? */
+	    if (ivl_expr_signed(expr)) {
+		  fprintf(vvp_out, "    %%ix/vec4/s %u;\n", ix);
+	    } else {
+		  fprintf(vvp_out, "    %%ix/vec4 %u;\n", ix);
 	    }
+	    break;
       }
 }
 

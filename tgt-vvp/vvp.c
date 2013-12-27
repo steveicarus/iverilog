@@ -48,6 +48,8 @@ FILE*vvp_out = 0;
 int vvp_errors = 0;
 unsigned show_file_line = 0;
 
+static uint32_t allocate_flag_mask = 0x00ff;
+
 __inline__ static void draw_execute_header(ivl_design_t des)
 {
       const char*cp = ivl_design_flag(des, "VVP_EXECUTABLE");
@@ -85,6 +87,30 @@ __inline__ static void draw_module_declarations(ivl_design_t des)
       }
 }
 
+int allocate_flag(void)
+{
+      int idx;
+      for (idx = 0 ; idx < 8*sizeof(allocate_flag_mask) ; idx += 1) {
+	    uint32_t mask = 1 << idx;
+	    if (allocate_flag_mask & mask)
+		  continue;
+
+	    allocate_flag_mask |= mask;
+	    return idx;
+      }
+
+      return -1;
+}
+
+void clr_flag(int idx)
+{
+      assert(idx < 8*sizeof(allocate_flag_mask));
+      uint32_t mask = 1 << idx;
+
+      assert(allocate_flag_mask & mask);
+
+      allocate_flag_mask &= ~mask;
+}
 
 int target_design(ivl_design_t des)
 

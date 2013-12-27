@@ -307,6 +307,12 @@ extern long get_number_immediate(ivl_expr_t ex);
 extern uint64_t get_number_immediate64(ivl_expr_t ex);
 
 /*
+ * draw_eval_vec4 evaluates vec4 expressions. The result of the
+ * evaluation is the vec4 result in the top of the vec4 expression stack.
+ */
+extern void draw_eval_vec4(ivl_expr_t ex, int stuff_ok_flag);
+
+/*
  * draw_eval_real evaluates real value expressions. The result of the
  * evaluation is the real result in the top of the real expression stack.
  */
@@ -341,6 +347,12 @@ extern void show_stmt_file_line(ivl_statement_t net, const char*desc);
  */
 extern int allocate_word(void);
 extern void clr_word(int idx);
+
+/*
+ * These functions manage flag bit allocation.
+ */
+extern int allocate_flag(void);
+extern void clr_flag(int idx);
 
 /*
  * These are used to count labels as I generate code.

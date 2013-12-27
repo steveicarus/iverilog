@@ -32,12 +32,19 @@ experience of implementing it for strings, I'll want to change other
 types around to using this method as well. Keep this in mind whenever
 considering adding new instructions to vvp.
 
+FLAGS
+
+There are up to 16 bits in each thread that are available for
+flags. These are used as destinations for operations that return
+boolean values, for example comparisons. They are also used as inputs
+for test and branch opcodes.
+
 * %abs/wr <bit-o>, <bit-i>
 
 This instruction calculates the absolute value of a real value. It uses
 the fabs() function in the run-time to do the work.
 
-* %add <bit-l>, <bit-r>, <wid>
+* %add <bit-l>, <bit-r>, <wid> (XXXX Old version)
 
 This instruction adds the right vector into the left vector, the
 vectors having the width <wid>. If any of the bits of either vector
@@ -46,6 +53,13 @@ sum.
 
 See also the %sub instruction.
 
+* %add
+
+This opcode pops and adds two vec4 values from the vec4 stack, adds
+them, and pushes the result back to the stack. The input values must
+have the same size, and the pushed result will have the same width.
+
+See also the %sub instruction.
 
 * %add/wr <bit-l>, <bit-r>
 
@@ -67,16 +81,19 @@ is zero extended to match any width.
 This instruction allocates the storage for a new instance of an
 automatically allocated scope.
 
-* %and <bit-l>, <bit-r>, <wid>
+* %and
 
-Perform the bitwise AND of the two vectors, and store the result in
-the left vector. Each bit is calculated independent of other bits. AND
-means the following:
+Perform the bitwise AND of the two vectors popped from the vec4 stack,
+and push the result. Each bit is calculated independent of other
+bits. AND means the following:
 
 	0 and ? --> 0
 	? and 0 --> 0
 	1 and 1 --> 1
 	otherwise   x
+
+The input vectors must be the same width, and the output vector will
+be the width of the input.
 
 * %assign/ar <array-label>, <delay>
 * %assign/ar/d <array-label>, <delayx>
@@ -123,9 +140,9 @@ The %assign/av/e variation uses the information in the thread
 event control registers to determine when to perform the assign.
 %evctl is used to set the event control information.
 
-* %assign/v0 <var-label>, <delay>, <bit>
-* %assign/v0/d <var-label>, <delayx>, <bit>
-* %assign/v0/e <var-label>, <bit>
+* %assign/v0 <var-label>, <delay>, <bit> (XXXX Old description)
+* %assign/v0/d <var-label>, <delayx>, <bit> (XXXX Old description
+* %assign/v0/e <var-label>, <bit> (XXXX Old description)
 
 The %assign/v0 instruction is a vector version of non-blocking
 assignment. The <delay> is the number of clock ticks in the future
@@ -151,6 +168,27 @@ assignments. For blocking assignments, see %set/v.
 This is similar to the %assign/v0 instruction, but adds the index-1
 index register with the canonical index of the destination where the
 vector is to be written. This allows for part writes into the vector.
+
+* %assign/vec4 <var-label>, <delay>
+* %assign/vec4/d <var-label>, <delayx>
+* %assign/vec4/e <var-label>
+
+The %assign/vec4 instruction if a vec4 version of non-blocking
+assignment, The <delay> is the number lf clock ticks in the future
+where the assignment should schedule, and the value to assign is
+pulled from the vec4 stack.
+
+The %assign/vec4/d instruction is the same, but gets its delay value
+from the index register <delayx> instead.
+
+* %assign/vec4/off/d <var-label>, <off-index>, <delay-index>
+
+This is for writing parts to the target variable. The <var-label> is
+the variable to write, as usual. The <off-index> selects an index
+register that holds the offset into the target variable, and the
+<delay-index> selects the index register that contains the delay. The
+offset is in canonical bits. The width that is written is taken from
+the width of the value on the stack.
 
 * %assign/wr <vpi-label>, <delay>
 * %assign/wr/d <vpi-label>, <delayx>
@@ -180,10 +218,12 @@ The <bit> is the address of the thread register that contains the bit
 value to assign.
 
 
-* %blend <bit-l>, <bit-r>, <wid>
+* %blend
 
-This instruction blends the bits of a vector into the destination in a
-manner like the expression (x ? <a> : <b>). The truth table is:
+This instruction blends the bits of two vectors into a result in a
+manner line the expressions ('bx ? <a> : <b>). The two source vectors
+are popped from the vec4 stack (and must have the same width) and the
+result poshed in their place. The truth table for each bit is:
 
 	1  1 --> 1
 	0  0 --> 0
@@ -238,8 +278,8 @@ Convert the source vector, of type logic, to a bool vector by
 changing all the X and Z bits to 0. The source and destinations may
 overlap.
 
-* %cmp/u <bit-l>, <bit-r>, <wid>
-* %cmp/s <bit-l>, <bit-r>, <wid>
+* %cmp/u <bit-l>, <bit-r>, <wid> (XXXX Old meaning)
+* %cmp/s <bit-l>, <bit-r>, <wid> (XXXX Old meaning)
 
 These instructions perform a generic comparison of two vectors of equal
 size. The <bit-l> and <bit-r> numbers address the least-significant
@@ -267,6 +307,21 @@ The %cmp/u and %cmp/s differ only in the handling of the lt bit. The
 %cmp/u does an unsigned compare, whereas the %cmp/s does a signed
 compare. In either case, if either operand contains x or z, then lt
 bit gets the x value.
+
+* %cmp/s
+* %cmp/u
+
+These instructions perform a generic comparison of two vectors of
+equal size. Two values are pulled from the top of the stack, and not
+replaced. The results are written into flag bits 4,5,6. The
+expressions (a<b), (a==b) and (a===b) are calculated, with (b) popped
+from the stack first, then (a).
+
+The results of the comparison go into flags 4, 5, 6 and 7:
+
+	4: eq  (equal)
+	5: lt  (less than)
+	6: eeq (case equal)
 
 * %cmpi/s <bit-l>, <immr>, <wid>
 * %cmpi/u <bit-l>, <immr>, <wid>
@@ -424,6 +479,7 @@ right operand is 0, then the result is NaN.
 
 
 * dup/real
+* dup/vec4
 
 These opcodes duplicate the value on the top of the stack for the
 corresponding type.
@@ -458,6 +514,18 @@ the format of the output is:
 <description> is a string, if string is 0 then the following default
 message is used: "Procedural tracing.".
 
+* %flag_set/imm <flag>, <value>
+
+This instruction sets an immediate value into a flag bit. This is a
+single bit, and the value is 0==0, 1==1, 2==z, 3==x.
+
+* %flag_get/vec4 <flag>
+* %flag_set/vec4 <flag>
+
+These instructions provide a means for accessing flag bits. The
+%flag_get/vec4 loads the numbered flag as a vec4 on top of the vec4
+stack, and the %flag_set/vec4 pops the top of the vec4 stack and
+writes the LSB to the selected flag.
 
 * %force/v <label>, <bit>, <wid>
 
@@ -497,10 +565,10 @@ This instruction de-allocates the storage for a previously allocated
 instance of as automatically allocated scope.
 
 
-* %inv <bit>, <wid>
+* %inv
 
-Perform a bitwise invert of the vector starting at <bit>. The result
-replaces the input. Invert means the following, independently for each
+Perform a bitwise invert of the vector on top of the vec4 stack. The result
+replaces the input. Invert means the following, independently, for each
 bit:
 
 	0  --> 1
@@ -509,20 +577,20 @@ bit:
 	z  --> x
 
 
-* %ix/get <idx>, <bit>, <wid>
-* %ix/get/s <idx>, <bit>, <wid>
+* %ix/vec4 <idx>
+* %ix/vec4/s <idx>
 
-This instruction loads a thread vector starting at <bit>, size <wid>,
-into the index register <idx>. The <bit> is the LSB of the value in
-thread bit space, and <wid> is the width of the vector.
+This instruction loads a vec4 value from the vec4 stack, into the
+index register <idx>. The value is popped from the vec4 stack and
+written to the index register.
 
-The function converts the 4-value bits into a binary number, without
-sign extension. If any of the bits of the vector is x or z, then the
-index register gets the value 0. The %ix/get/s is the same, except
-that it assumes the source vector is sign extended to fit the index
-register.
+The %ix/vec4 instruction converts the 4-value bits into a binary
+number, without sign extension. If any of the bits of the vector is x
+or z, then the index register gets the value 0. The %ix/vec4/s
+instruction is the same, except that it assumes the source vector is
+sign extended to fit the index register.
 
-The function also writes into bit 4 a 1 if any of the bits of the
+The instruction also writes into bit 4 a 1 if any of the bits of the
 input vector are x or z. This is a flag that the 0 value written into
 the index register is really the result of calculating from unknown
 bits.
@@ -568,10 +636,10 @@ the index register <src>.
 The %jmp instruction performs an unconditional branch to a given
 location. The parameter is the label of the destination instruction.
 
-* %jmp/[01xz] <code-label>, <bit>
+* %jmp/[01xz] <code-label>, <flag>
 
 This is a conditional version of the %jmp instruction. In this case,
-a single bit (addressed by <bit>) is tested. If it is one of the
+a flag bit (addressed by <bit>) is tested. If it is one of the
 values in the part after the /, the jump is taken. For example:
 
 	%jmp/xz T_label, 8;
@@ -663,7 +731,7 @@ strings, and there is an index value in index register 3.
 (See also %store/dar/str)
 
 
-* %load/v <bit>, <functor-label>, <wid>
+* %load/v <bit>, <functor-label>, <wid> (XXXX Old implementation)
 
 This instruction loads a vector value from the given functor node into
 the specified thread register bit. The functor-label can refer to a
@@ -673,6 +741,11 @@ thread bit <bit>. It is an OK for the width to not match the vector
 width at the functor. If the <wid> is less than the width at the
 functor, then the most significant bits are dropped. If the <wid> is
 more than the width at the functor, the value is padded with X bits.
+
+* %load/vec4 <var-label>
+
+This instruction loads a vector value from the given functor node and
+pushes it onto the vec4 stack. See also the %store/vec4 instruction.
 
 * %load/vp0 <bit>, <functor-label>, <wid>
 * %load/vp0/s <bit>, <functor-label>, <wid>
@@ -836,10 +909,11 @@ the vector.
 Push a null object and push it to the object stack. The null object
 can be used with any class or darray object, so it is not typed.
 
-* %or <dst>, <src>, <wid>
+* %or
 
-Perform the bitwise or of the vectors. Each bit in the <dst> is
-combined with the corresponding bit in the source, according to the
+Perform the bitwise or of twp vectors. Pop two values from the vec4
+stack to get the input arguments. Each bit in the result is combined
+with the corresponding bit in the input arguments, according to the
 truth table:
 
 	1 or ? --> 1
@@ -847,6 +921,8 @@ truth table:
 	0 or 0 --> 0
 	otherwise  x
 
+The results is then pushed onto the vec4 stack. The inputs and the
+output are all the same width.
 
 * %or/r <dst>, <src>, <wid>
 
@@ -855,18 +931,33 @@ and the <dst> is a writable scalar. The <dst> gets the value of the
 or of all the bits of the src vector.
 
 
-* %pad <dst>, <src>, <wid>
+* %pad <dst>, <src>, <wid> (XXXX Old version)
 
 This instruction replicates a single bit in register space into a
 destination vector in register space. The destination may overlap
 the source bit. The <dst> may not be 0-3. This is useful for zero
 or sign extending a vector.
 
+* %pad/s <wid>
+* %pad/u <wid>
+
+These instruction change the size of the top item in the vec4
+stack. If this item is larger then this, it is truncated. If smaller,
+then extended. The /s variant sign extends, the /u variant unsigned
+extends.
+
+* %part <wid>
+
+This instruction implements a part select. It pops from the top of the
+vec4 the base value, then it pops the base to select from. The width
+is the fixed number <wid>. The result is pushed back to the stack.
+
 * %pop/str <num>
 * %pop/real <num>
 * %pop/obj <num>, <skip>
+* %pop/vec4 <num>
 
-Pop <num> items from the string/real/object stack. This is the
+Pop <num> items from the string/real/object/vec4 stack. This is the
 opposite of the %pushX/str opcode which pushes a string to the
 stack. The %pop/str is not normally needed because the %store/str
 includes an implicit pop, but sometimes it is necessary to pop
@@ -916,6 +1007,21 @@ If <exp>==0x3fff and <mant> != 0, the value is NaN.
 * %pushi/str <text>
 
 Push a literal string to the string stack.
+
+* %pushi/vec4 <vala>, <valb>, <wid>
+
+This opcode loads an immediate value, vector4, into the vector
+stack. The <vala> is the boolean value bits, and the <valb> bits are
+modifiers to support z and x values. The a/b encodings for the 4
+possible logic values are:
+
+   a b  val
+   0 0   0
+   1 0   1
+   1 1   x
+   0 1   z
+
+This opcode is limited to 32bit numbers.
 
 * %pushv/str <src>, <wid>
 
@@ -1013,7 +1119,7 @@ not assigned. Also, if the bits go beyond the end of the signal, those
 bits are not written anywhere.
 
 
-* %shiftl/i0 <bit>, <wid>
+* %shiftl/i0 <bit>, <wid> (XXXX Old implementation)
 
 This instruction shifts the vector left (towards more significant
 bits) by the amount in index register 0. The <bit> is the address of
@@ -1022,8 +1128,8 @@ done in place. Zero values are shifted in.
 
 For a negative shift the value is padded with 'bx.
 
-* %shiftr/i0 <bit>, <wid>
-* %shiftr/s/i0 <bit>, <wid>
+* %shiftr/i0 <bit>, <wid> (XXXX Old implementation)
+* %shiftr/s/i0 <bit>, <wid> (XXXX Old implementation)
 
 This instruction shifts the vector right (towards the less significant
 bits) by the amount in the index register 0. The <bit> is the address
@@ -1034,6 +1140,14 @@ shift is done in place.
 top bits. %shiftr/s/i0 is a signed shift, so the value is sign-extended.
 
 For a negative shift %shiftr/i0 will pad the value with 'bx.
+
+* %shiftl <idx>
+* %shiftr <idx>
+* %shiftr/s <idx>
+
+These instructions shift the top value in the vec4 stack left (towards
+MSB) or right, possibly signed. The <idx> is the address of the index
+register that contains the amount to shift.
 
 * %store/obj <var-label>
 
@@ -1077,7 +1191,14 @@ The %store/stra targets an array.
 The %store/dar/str is similar, but the target is a dynamic array of
 string string. The index is taken from signed index register 3.
 
-* %sub <bit-l>, <bit-r>, <wid>
+* %store/vec4 <var-label>, <wid>
+
+Store a logic vector into the variable. The value (and its width) is
+popped off the top of the stack and written to the variable. The value
+is then optionally truncated to <wid> bits and assigned to the
+variable. It is an error for the value to be fewer then <wid> bits.
+
+* %sub <bit-l>, <bit-r>, <wid> (XXXX Old version)
 
 This instruction arithmetically subtracts the right vector out of the
 left vector. It accomplishes this by adding to the left vector 1 plus
@@ -1085,6 +1206,14 @@ the 1s complement of the right vector. The carry value is dropped, and
 the result, placed in <bit-l>, is the subtraction of <bit-r> from the
 input <bit-l>. Both vectors have the same width. If any bits in either
 operand are x, then the entire result is x.
+
+See also the %add instruction.
+
+* %sub
+
+This instruction subtracts vec4 values. The right value is popped from
+the vec4 stack, then the left value is popped. The right is subtracted
+from the left, and the result pushed.
 
 See also the %add instruction.
 
@@ -1121,7 +1250,8 @@ values into the vector space. The string value is NOT popped.
 * %test_nul <var-label>
 
 This instruction tests the contents of the addressed variable to see
-if it is null. If it is, set bit 4 to 1. Otherwise, set bit 4 to 0.
+if it is null. If it is, set flag bit 4 to 1. Otherwise, set flag bit
+4 to 0.
 
 This is intended to implement the SystemVerilog expression
 (<var>==null), where <var> is a class variable.
