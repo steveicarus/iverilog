@@ -321,6 +321,32 @@ static void draw_binary_vec4(ivl_expr_t expr, int stuff_ok_flag)
       }
 }
 
+static void draw_concat_vec4(ivl_expr_t expr, int stuff_ok_flag)
+{
+	/* Repeat the concatenation this many times to make a
+	   super-concatenation. */
+      unsigned repeat = ivl_expr_repeat(expr);
+	/* This is the number of expressions that go into the
+	   concatenation. */
+      unsigned num_sube = ivl_expr_parms(expr);
+      unsigned sub_idx;
+
+      assert(num_sube > 0);
+
+	/* Start with the least-significant bits. */
+      draw_eval_vec4(ivl_expr_parm(expr, 0), stuff_ok_flag);
+
+      for (sub_idx = 1 ; sub_idx < num_sube ; sub_idx += 1) {
+	      /* Concatenate progressively higher parts. */
+	    draw_eval_vec4(ivl_expr_parm(expr, sub_idx), stuff_ok_flag);
+	    fprintf(vvp_out, "    %%concat/vec4;\n");
+      }
+
+      if (repeat > 1) {
+	    fprintf(vvp_out, "    %%replicate %u;\n", repeat);
+      }
+}
+
 static void draw_number_vec4(ivl_expr_t expr)
 {
       unsigned long val0 = 0;
@@ -464,6 +490,10 @@ void draw_eval_vec4(ivl_expr_t expr, int stuff_ok_flag)
       switch (ivl_expr_type(expr)) {
 	  case IVL_EX_BINARY:
 	    draw_binary_vec4(expr, stuff_ok_flag);
+	    return;
+
+	  case IVL_EX_CONCAT:
+	    draw_concat_vec4(expr, stuff_ok_flag);
 	    return;
 
 	  case IVL_EX_NUMBER:

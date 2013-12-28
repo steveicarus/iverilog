@@ -373,6 +373,12 @@ of it as passing the tail, then the head, concatenating them, and
 pushing the result. The stack starts with two strings in the stack,
 and ends with one string in the stack.
 
+* %concat/vec4
+
+Pop two vec4 vectors, concatenate them, and push the combined
+result. The top of the vec4 stack is the LSB of the result, and the
+next in this stack is the MSB bits of the result.
+
 * %cvt/sr <bit-l>
 * %cvt/rs <bit-l>
 
@@ -1148,6 +1154,15 @@ For a negative shift %shiftr/i0 will pad the value with 'bx.
 These instructions shift the top value in the vec4 stack left (towards
 MSB) or right, possibly signed. The <idx> is the address of the index
 register that contains the amount to shift.
+
+* %split/vec4 <wid>
+
+Pull the top vec4 vector from the stack and split it into two
+parts. Split off <wid> bits from the LSB, then push the remaining bits
+of the original (the MSB) back to the stack. Then push the split off
+LSB vector.
+
+The <wid> must be less then the width of the original, unsplit vector.
 
 * %store/obj <var-label>
 

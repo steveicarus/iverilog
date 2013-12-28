@@ -628,9 +628,11 @@ static int show_stmt_assign_nb(ivl_statement_t net)
 	      if (bit_limit > ivl_lval_width(lval))
 		    bit_limit = ivl_lval_width(lval);
 
-		/* XXXX For now, don't know how to actually split
-		   vectors */
-	      assert(lidx == 0);
+		/* If there are more lvals after this, split off from
+		   the top of the vec4 stack only the bits (lsb) that
+		   we need for the current lval. */
+	      if (lidx+1 < ivl_stmt_lvals(net))
+		    fprintf(vvp_out, "    %%split/vec4 %u;\n", bit_limit);
 	      assign_to_lvector(lval, delay, del, nevents);
 
 	      cur_rbit += bit_limit;

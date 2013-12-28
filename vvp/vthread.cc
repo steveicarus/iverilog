@@ -2132,6 +2132,22 @@ bool of_CONCATI_STR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %concat/vec4
+ */
+bool of_CONCAT_VEC4(vthread_t thr, vvp_code_t)
+{
+      vvp_vector4_t lsb = thr->pop_vec4();
+      vvp_vector4_t msb = thr->pop_vec4();
+
+      vvp_vector4_t res (msb.size()+lsb.size(), BIT4_X);
+      res.set_vec(0, lsb);
+      res.set_vec(lsb.size(), msb);
+
+      thr->push_vec4(res);
+      return true;
+}
+
 bool of_CVT_RS(vthread_t thr, vvp_code_t cp)
 {
       int64_t r = thr->words[cp->bit_idx[0]].w_int;
@@ -5792,6 +5808,23 @@ bool of_SHIFTR_S(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %split/vec4 <wid>
+ */
+bool of_SPLIT_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      unsigned lsb_wid = cp->number;
+
+      vvp_vector4_t val = thr->pop_vec4();
+      assert(lsb_wid < val.size());
+
+      vvp_vector4_t lsb = val.subvalue(0, lsb_wid);
+      vvp_vector4_t msb = val.subvalue(lsb_wid, val.size()-lsb_wid);
+
+      thr->push_vec4(msb);
+      thr->push_vec4(lsb);
+      return true;
+}
 
 bool of_STORE_DAR_R(vthread_t thr, vvp_code_t cp)
 {
