@@ -288,6 +288,13 @@ NetEConst* NetEBBits::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 		break;
 	  }
 
+	  case 'X': {
+		for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+		      res.set(idx, ~(lval.get(idx) ^ rval.get(idx)));
+
+		break;
+	}
+
 	  case '^': {
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		      res.set(idx, lval.get(idx) ^ rval.get(idx));
