@@ -3123,6 +3123,7 @@ static struct vector_info draw_ternary_expr(ivl_expr_t expr, unsigned wid)
 
 static struct vector_info draw_sfunc_expr(ivl_expr_t expr, unsigned wid)
 {
+#if 0
       unsigned parm_count = ivl_expr_parms(expr);
       struct vector_info res;
 
@@ -3148,6 +3149,13 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t expr, unsigned wid)
       clear_expression_lookaside();
 
       return res;
+#else
+      fprintf(stderr, "XXXX draw_sfunc_expr: Not implemented\n");
+      struct vector_info res;
+      res.base = 0;
+      res.wid = 0;
+      return res;
+#endif
 }
 
 static struct vector_info increment(ivl_expr_t e, unsigned wid, bool pre)

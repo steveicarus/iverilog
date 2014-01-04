@@ -174,7 +174,7 @@ static void cmd_call(unsigned argc, char*argv[])
 	    vpiHandle call_handle = vpip_build_vpi_call(argv[0], 0, 0, 0,
 	                                                true, false,
 	                                                vpi_argc, vpi_argv,
-							0, 0,
+							0, 0, 0,
 	                                                1, 0);
 	    if (call_handle == 0)
 		  goto out;

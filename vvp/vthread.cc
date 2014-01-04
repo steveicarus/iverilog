@@ -344,9 +344,19 @@ void vthread_put_bit(struct vthread_s*thr, unsigned addr, vvp_bit4_t bit)
 #endif
 }
 
+void vthread_push_vec4(struct vthread_s*thr, const vvp_vector4_t&val)
+{
+      thr->push_vec4(val);
+}
+
 void vthread_push_real(struct vthread_s*thr, double val)
 {
       thr->push_real(val);
+}
+
+void vthread_pop_vec4(struct vthread_s*thr, unsigned depth)
+{
+      thr->pop_vec4(depth);
 }
 
 void vthread_pop_real(struct vthread_s*thr, unsigned depth)
@@ -3988,12 +3998,13 @@ bool of_LOAD_X1P(vthread_t thr, vvp_code_t cp)
 #endif
       return true;
 }
-#if 0
-static void do_verylong_mod(vthread_t thr, vvp_code_t cp,
+
+static void do_verylong_mod(vthread_t thr,
+			    const vvp_vector4_t&vala, const vvp_vector4_t&valb,
 			    bool left_is_neg, bool right_is_neg)
 {
       bool out_is_neg = left_is_neg;
-      int len=cp->number;
+      const int len=vala.size();
       unsigned char *a, *z, *t;
       a = new unsigned char[len+1];
       z = new unsigned char[len+1];
@@ -4006,20 +4017,19 @@ static void do_verylong_mod(vthread_t thr, vvp_code_t cp,
       int i;
       int current, copylen;
 
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned idx2 = cp->bit_idx[1];
-
       unsigned lb_carry = left_is_neg? 1 : 0;
       unsigned rb_carry = right_is_neg? 1 : 0;
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    unsigned lb = thr_get_bit(thr, idx1);
-	    unsigned rb = thr_get_bit(thr, idx2);
+      for (int idx = 0 ;  idx < len ;  idx += 1) {
+	    unsigned lb = vala.value(idx);
+	    unsigned rb = valb.value(idx);
 
 	    if ((lb | rb) & 2) {
 		  delete []t;
 		  delete []z;
 		  delete []a;
-		  goto x_out;
+		  vvp_vector4_t tmp(len, BIT4_X);
+		  thr->push_vec4(tmp);
+		  return;
 	    }
 
 	    if (left_is_neg) {
@@ -4035,10 +4045,6 @@ static void do_verylong_mod(vthread_t thr, vvp_code_t cp,
 
 	    z[idx]=lb;
 	    a[idx]=1-rb;	// for 2s complement add..
-
-	    idx1 += 1;
-	    if (idx2 >= 4)
-		  idx2 += 1;
       }
 
       z[len]=0;
@@ -4063,7 +4069,9 @@ static void do_verylong_mod(vthread_t thr, vvp_code_t cp,
 		  delete []t;
 		  delete []z;
 		  delete []a;
-		  goto x_out;
+		  vvp_vector4_t tmpx (len, BIT4_X);
+		  thr->push_vec4(tmpx);
+		  return;
 	    }
 
 	    goto tally;
@@ -4091,29 +4099,23 @@ static void do_verylong_mod(vthread_t thr, vvp_code_t cp,
 
  tally:
 
+      vvp_vector4_t tmp (len, BIT4_X);
       carry = out_is_neg? 1 : 0;
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < len ;  idx += 1) {
 	    unsigned ob = z[idx];
 	    if (out_is_neg) {
 		  ob = (1-ob) + carry;
 		  carry = (ob & ~1)? 1 : 0;
 		  ob = ob & 1;
 	    }
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, ob?BIT4_1:BIT4_0);
+	    tmp.set_bit(idx, ob?BIT4_1:BIT4_0);
       }
-
+      thr->push_vec4(tmp);
       delete []t;
       delete []z;
       delete []a;
-      return;
-
- x_out:
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
-
-      return;
 }
-#endif
+
 bool of_MAX_WR(vthread_t thr, vvp_code_t)
 {
       double r = thr->pop_real();
@@ -4195,69 +4197,65 @@ bool of_MOD(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_MOD_S(vthread_t thr, vvp_code_t cp)
+/*
+ * %mod/s
+ */
+bool of_MOD_S(vthread_t thr, vvp_code_t)
 {
-#if 0
-      assert(cp->bit_idx[0] >= 4);
+      vvp_vector4_t valb = thr->pop_vec4();
+      vvp_vector4_t vala = thr->pop_vec4();
+
+      assert(vala.size()==valb.size());
+      unsigned wid = vala.size();
 
 	/* Handle the case that we can fit the bits into a long-long
 	   variable. We cause use native % to do the work. */
-      if(cp->number <= 8*sizeof(long long)) {
-	    unsigned idx1 = cp->bit_idx[0];
-	    unsigned idx2 = cp->bit_idx[1];
+      if(wid <= 8*sizeof(long long)) {
 	    long long lv = 0, rv = 0;
 
-	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  long long lb = thr_get_bit(thr, idx1);
-		  long long rb = thr_get_bit(thr, idx2);
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		  long long lb = vala.value(idx);
+		  long long rb = valb.value(idx);
 
 		  if ((lb | rb) & 2)
 			goto x_out;
 
 		  lv |= (long long) lb << idx;
 		  rv |= (long long) rb << idx;
-
-		  idx1 += 1;
-		  if (idx2 >= 4)
-			idx2 += 1;
 	    }
 
 	    if (rv == 0)
 		  goto x_out;
 
 	      /* Sign extend the signed operands when needed. */
-	    if (cp->number < 8*sizeof(long long)) {
-		  if (lv & (1LL << (cp->number-1)))
-			lv |= -1LL << cp->number;
-		  if (rv & (1LL << (cp->number-1)))
-			rv |= -1LL << cp->number;
+	    if (wid < 8*sizeof(long long)) {
+		  if (lv & (1LL << (wid-1)))
+			lv |= -1LL << wid;
+		  if (rv & (1LL << (wid-1)))
+			rv |= -1LL << wid;
 	    }
 
 	    lv %= rv;
 
-	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1)?BIT4_1:BIT4_0);
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		  vala.set_bit(idx, (lv&1)? BIT4_1 : BIT4_0);
 		  lv >>= 1;
 	    }
+	    thr->push_vec4(vala);
 
 	    return true;
 
       } else {
 
-	    bool left_is_neg
-		  = thr_get_bit(thr,cp->bit_idx[0]+cp->number-1) == 1;
-	    bool right_is_neg
-		  = thr_get_bit(thr,cp->bit_idx[1]+cp->number-1) == 1;
-	    do_verylong_mod(thr, cp, left_is_neg, right_is_neg);
+	    bool left_is_neg  = vala.value(vala.size()-1) == BIT4_1;
+	    bool right_is_neg = valb.value(valb.size()-1) == BIT4_1;
+	    do_verylong_mod(thr, vala, valb, left_is_neg, right_is_neg);
 	    return true;
       }
 
  x_out:
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%mod/s ...\n");
-#endif
+      vvp_vector4_t tmp (wid, BIT4_X);
+      thr->push_vec4(tmp);
       return true;
 }
 
@@ -4459,34 +4457,36 @@ bool of_MOVI(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %mul
+ */
 bool of_MUL(vthread_t thr, vvp_code_t cp)
 {
-#if 0
-      unsigned adra = cp->bit_idx[0];
-      unsigned adrb = cp->bit_idx[1];
-      unsigned wid = cp->number;
+      vvp_vector4_t vala = thr->pop_vec4();
+      vvp_vector4_t valb = thr->pop_vec4();
+      assert(vala.size() == valb.size());
+      unsigned wid = vala.size();
 
-      assert(adra >= 4);
-
-      unsigned long*ap = vector_to_array(thr, adra, wid);
+      unsigned long*ap = vala.subarray(0, wid);
       if (ap == 0) {
 	    vvp_vector4_t tmp(wid, BIT4_X);
-	    thr->bits4.set_vec(adra, tmp);
+	    thr->push_vec4(tmp);
 	    return true;
       }
 
-      unsigned long*bp = vector_to_array(thr, adrb, wid);
+      unsigned long*bp = valb.subarray(0, wid);
       if (bp == 0) {
 	    delete[]ap;
 	    vvp_vector4_t tmp(wid, BIT4_X);
-	    thr->bits4.set_vec(adra, tmp);
+	    thr->push_vec4(tmp);
 	    return true;
       }
 
 	// If the value fits in a single CPU word, then do it the easy way.
       if (wid <= CPU_WORD_BITS) {
 	    ap[0] *= bp[0];
-	    thr->bits4.setarray(adra, wid, ap);
+	    vala.setarray(0, wid, ap);
+	    thr->push_vec4(vala);
 	    delete[]ap;
 	    delete[]bp;
 	    return true;
@@ -4511,13 +4511,12 @@ bool of_MUL(vthread_t thr, vvp_code_t cp)
 	    }
       }
 
-      thr->bits4.setarray(adra, wid, res);
+      vala.setarray(0, wid, res);
+      thr->push_vec4(vala);
       delete[]ap;
       delete[]bp;
       delete[]res;
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%mul ...\n");
-#endif
+
       return true;
 }
 
@@ -4673,17 +4672,18 @@ bool of_NOOP(vthread_t, vvp_code_t)
       return true;
 }
 
-bool of_NORR(vthread_t thr, vvp_code_t cp)
+/*
+ * %nor/r
+ */
+bool of_NORR(vthread_t thr, vvp_code_t)
 {
-#if 0
-      assert(cp->bit_idx[0] >= 4);
+      vvp_vector4_t val = thr->pop_vec4();
 
       vvp_bit4_t lb = BIT4_1;
-      unsigned idx2 = cp->bit_idx[1];
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < val.size() ;  idx += 1) {
 
-	    vvp_bit4_t rb = thr_get_bit(thr, idx2+idx);
+	    vvp_bit4_t rb = val.value(idx);
 	    if (rb == BIT4_1) {
 		  lb = BIT4_0;
 		  break;
@@ -4693,10 +4693,9 @@ bool of_NORR(vthread_t thr, vvp_code_t cp)
 		  lb = BIT4_X;
       }
 
-      thr_put_bit(thr, cp->bit_idx[0], lb);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%nor/r ...\n");
-#endif
+      vvp_vector4_t res (1, lb);
+      thr->push_vec4(res);
+
       return true;
 }
 

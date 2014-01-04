@@ -29,8 +29,14 @@
 
 static void draw_binary_vec4_arith(ivl_expr_t expr, int stuff_ok_flag)
 {
-      draw_eval_vec4(ivl_expr_oper1(expr), stuff_ok_flag);
-      draw_eval_vec4(ivl_expr_oper2(expr), stuff_ok_flag);
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+
+      int signed_flag = ivl_expr_signed(le) && ivl_expr_signed(re) ? 1 : 0;
+      const char*signed_string = signed_flag? "/s" : "";
+
+      draw_eval_vec4(le, stuff_ok_flag);
+      draw_eval_vec4(re, stuff_ok_flag);
 
       switch (ivl_expr_opcode(expr)) {
 	  case '+':
@@ -42,6 +48,21 @@ static void draw_binary_vec4_arith(ivl_expr_t expr, int stuff_ok_flag)
 	  case '*':
 	    fprintf(vvp_out, "    %%mul;\n");
 	    break;
+	  case '/':
+	    fprintf(vvp_out, "    %%div%s;\n", signed_string);
+	    break;
+	  case '%':
+	    fprintf(vvp_out, "    %%mod%s;\n", signed_string);
+	    break;
+	  case 'p':
+	      /* Note that the power operator is signed if EITHER of
+		 the operands is signed. This is different from other
+		 arithmetic operators. */
+	    if (ivl_expr_signed(le) || ivl_expr_signed(re))
+		  signed_string = "/s";
+	    fprintf(vvp_out, "    %%pow%s;\n", signed_string);
+	    break;
+
 	  default:
 	    assert(0);
 	    break;
@@ -282,6 +303,9 @@ static void draw_binary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	  case '+':
 	  case '-':
 	  case '*':
+	  case '/':
+	  case '%':
+	  case 'p': /* ** (power) */
 	    draw_binary_vec4_arith(expr, stuff_ok_flag);
 	    break;
 
@@ -355,9 +379,10 @@ static void draw_number_vec4(ivl_expr_t expr)
       const char*bits = ivl_expr_bits(expr);
 
       int idx;
+      int accum = 0;
+      int count_pushi = 0;
 
-      assert(wid <= 64);
-
+	/* Scan the literal bits, MSB first. */
       for (idx = 0 ; idx < wid ; idx += 1) {
 	    val0 <<= 1;
 	    valx <<= 1;
@@ -379,8 +404,27 @@ static void draw_number_vec4(ivl_expr_t expr)
 		  assert(0);
 		  break;
 	    }
+	    accum += 1;
+	    if (accum == 32) {
+		  fprintf(vvp_out, "    %%pushi/vec4 %lu, %lu, 32;\n", val0, valx);
+		  accum = 0;
+		  val0 = 0;
+		  valx = 0;
+		    /* If there is already at least 1 pushi, then
+		       concatenate this result to what we've done
+		       already. */
+		  if (count_pushi)
+			fprintf(vvp_out, "    %%concat/vec4;\n");
+		  count_pushi += 1;
+	    }
       }
-      fprintf(vvp_out, "    %%pushi/vec4 %lu, %lu, %u;\n", val0, valx, wid);
+
+      if (accum) {
+	    fprintf(vvp_out, "    %%pushi/vec4 %lu, %lu, %u;\n", val0, valx, accum);
+	    if (count_pushi)
+		  fprintf(vvp_out, "    %%concat/vec4;\n");
+	    count_pushi += 1;
+      }
 }
 
 static void draw_select_vec4(ivl_expr_t expr)
@@ -416,6 +460,26 @@ static void draw_select_pad_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	    fprintf(vvp_out, "    %%pad/s %u;\n", wid);
       else
 	    fprintf(vvp_out, "    %%pad/u %u;\n", wid);
+}
+
+static void draw_sfunc_vec4(ivl_expr_t expr, int stuff_ok_flag)
+{
+      unsigned parm_count = ivl_expr_parms(expr);
+
+	/* Special case: If there are no arguments to print, then the
+	   %vpi_call statement is easy to draw. */
+      if (parm_count == 0) {
+	    assert(ivl_expr_value(expr)==IVL_VT_LOGIC
+		   || ivl_expr_value(expr)==IVL_VT_BOOL);
+
+	    fprintf(vvp_out, "    %%vpi_func %u %u \"%s\" %u {0 0 0};\n",
+		    ivl_file_table_index(ivl_expr_file(expr)),
+		    ivl_expr_lineno(expr), ivl_expr_name(expr),
+		    ivl_expr_width(expr));
+	    return;
+      }
+
+      draw_vpi_func_call(expr);
 }
 
 static void draw_signal_vec4(ivl_expr_t expr)
@@ -479,6 +543,12 @@ static void draw_unary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	    draw_eval_vec4(sub, stuff_ok_flag);
 	    fprintf(vvp_out, "    %%inv;\n");
 	    break;
+
+	  case '!':
+	    draw_eval_vec4(sub, STUFF_OK_XZ);
+	    fprintf(vvp_out, "    %%nor/r;\n");
+	    break;
+
 	  default:
 	    fprintf(stderr, "XXXX Unary operator %c no implemented\n", ivl_expr_opcode(expr));
 	    break;
@@ -505,6 +575,10 @@ void draw_eval_vec4(ivl_expr_t expr, int stuff_ok_flag)
 		  draw_select_pad_vec4(expr, stuff_ok_flag);
 	    else
 		  draw_select_vec4(expr);
+	    return;
+
+	  case IVL_EX_SFUNC:
+	    draw_sfunc_vec4(expr, stuff_ok_flag);
 	    return;
 
 	  case IVL_EX_SIGNAL:

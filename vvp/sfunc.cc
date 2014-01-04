@@ -147,17 +147,27 @@ void compile_sfunc(char*label, char*name,  char*format_string,
 		   unsigned argc, struct symb_s*argv,
                    char*trigger_label)
 {
+      unsigned vec4_stack = 0;
       unsigned real_stack = 0;
       unsigned string_stack = 0;
       vpiHandle*vpi_argv = new vpiHandle[argc];
-      int width_code = make_vpi_argv(argc, vpi_argv, format_string);
+      int val_code = make_vpi_argv(argc, vpi_argv, format_string);
+      unsigned val_width = 0;
       delete[] format_string;
+
+	// The make_vpi_argv returns for the function return value a
+	// >0 value for the vector width if this is a vector. Convert
+	// it to the form that the vpip_build_vpi_call uses.
+      if (val_code > 0) {
+	    val_width = val_code;
+	    val_code = -vpiVectorVal;
+      }
 
       vvp_net_t*ptr = new vvp_net_t;
 
-      vpiHandle sys = vpip_build_vpi_call(name, 0, width_code, ptr,
+      vpiHandle sys = vpip_build_vpi_call(name, val_code, val_width, ptr,
                                           true, false, argc, vpi_argv,
-					  real_stack, string_stack,
+					  vec4_stack, real_stack, string_stack,
                                           file_idx, lineno);
       assert(sys);
 

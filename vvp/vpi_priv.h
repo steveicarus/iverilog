@@ -574,6 +574,7 @@ struct __vpiSysTaskCall : public __vpiHandle {
       unsigned nargs;
       vpiHandle*args;
 	/* Stack consumed by this call */
+      unsigned vec4_stack;
       unsigned real_stack;
       unsigned string_stack;
 	/* Support for vpi_get_userdata. */
@@ -690,20 +691,22 @@ extern unsigned vpip_module_path_cnt;
  * call. However, the vpiSysTaskCall that is the returned handle,
  * holds a parameter argument list that is passed in here.
  *
- * The vbit and vwid fields are used if this turns out to be a system
- * function. In that case, the vbit and vwid are used to address the
- * vector in thread bit space where the result is supposed to go.
+ * The val_type and return_width fields are used if this turns out to
+ * be a system function. In that case, the val_type encodes the return
+ * type (-vpiRealVal, -vpiVectorVal) and if a vector the return_width
+ * has the vector width.
  *
  * Note that the argv array is saved in the handle, and should should
  * not be released by the caller.
  */
 extern vpiHandle vpip_build_vpi_call(const char*name,
-				     unsigned vbit, int vwid,
+				     int val_type, unsigned return_width,
 				     class vvp_net_t*fnet,
 				     bool func_as_task_err,
 				     bool func_as_task_warn,
 				     unsigned argc,
 				     vpiHandle*argv,
+				     unsigned vec4_stack,
 				     unsigned real_stack,
 				     unsigned string_stack,
 				     long file_idx,

@@ -116,8 +116,10 @@ extern vvp_context_item_t vthread_get_rd_context_item(unsigned context_idx);
 extern vvp_bit4_t vthread_get_bit(struct vthread_s*thr, unsigned addr);
 extern void vthread_put_bit(struct vthread_s*thr, unsigned addr, vvp_bit4_t bit);
 
+extern void vthread_push_vec4(struct vthread_s*thr, const vvp_vector4_t&val);
 extern void vthread_push_real(struct vthread_s*thr, double val);
 
+extern void vthread_pop_vec4(struct vthread_s*thr, unsigned count);
 extern void vthread_pop_str(struct vthread_s*thr, unsigned count);
 extern void vthread_pop_real(struct vthread_s*thr, unsigned count);
 

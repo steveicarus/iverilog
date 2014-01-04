@@ -128,11 +128,16 @@ static unsigned allocate_vector_no_lookaside(unsigned wid, int skip_lookaside)
  */
 unsigned allocate_vector(unsigned wid)
 {
+#if 0
       unsigned base = allocate_vector_no_lookaside(wid, 1);
 
       if (base == 0)
 	    base = allocate_vector_no_lookaside(wid, 0);
       return base;
+#else
+      assert(0);
+      return 0;
+#endif
 }
 
 /*

@@ -29,13 +29,13 @@
 
 struct args_info {
       char*text;
-      int vec_flag; /* True if the vec must be released. */
-      struct vector_info vec;
+	/* True if this argument is a calculated vec4. */
+      char vec_flag;
 	/* True if this argument is a calculated string. */
       char str_flag;
 	/* True if this argument is a calculated real. */
       char real_flag;
-	/* Stack position if this argument is a calculated string. */
+	/* Stack position if this argument is a calculated value. */
       unsigned stack;
       struct args_info *child; /* Arguments can be nested. */
 };
@@ -156,6 +156,7 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 			      return 0;
 			}
 		  } else if (word_ex) {
+#if 0
 			/* Fallback case: evaluate expression. */
 			struct vector_info av;
 			av = draw_eval_expr(word_ex, STUFF_OK_XZ);
@@ -164,6 +165,9 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 			         (ivl_expr_signed(word_ex) ? "s" : "u"));
 			result->vec = av;
 			result->vec_flag = 1;
+#else
+			assert(0); // XXXX
+#endif
 		  } else {
 			assert(use_word_defined);
 			snprintf(buffer, sizeof buffer, "&A<v%p, %u>",
@@ -247,6 +251,7 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 			return 0;
 		  }
 	    } else {
+#if 0
 		    /* Fallback case: evaluate the expression. */
 		  struct vector_info rv;
 		  rv = draw_eval_expr(bexpr, STUFF_OK_XZ);
@@ -258,6 +263,9 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 		           ivl_expr_width(expr));
 		  result->vec = rv;
 		  result->vec_flag = 1;
+#else
+		  assert(0); // XXXX
+#endif
 	    }
 	    result->text = strdup(buffer);
 	    return 1;
@@ -286,6 +294,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 	/* Keep track of how much string stack this function call is
 	   going to need. We'll need this for making stack references,
 	   and also to clean out the stack when done. */
+      unsigned vec4_stack_need = 0;
       unsigned str_stack_need = 0;
       unsigned real_stack_need = 0;
 
@@ -389,17 +398,17 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 	    switch (ivl_expr_value(expr)) {
 		case IVL_VT_LOGIC:
 		case IVL_VT_BOOL:
+		  draw_eval_vec4(expr, 0);
 		  args[idx].vec_flag = 1;
-		  args[idx].vec = draw_eval_expr(expr, 0);
-		  snprintf(buffer, sizeof buffer,
-			   "T<%u,%u,%s>", args[idx].vec.base, args[idx].vec.wid,
-			   ivl_expr_signed(expr)? "s" : "u");
+		  args[idx].str_flag = 0;
+		  args[idx].real_flag = 0;
+		  args[idx].stack = vec4_stack_need;
+		  vec4_stack_need += 1;
+		  buffer[0] = 0;
 		  break;
 		case IVL_VT_REAL:
 		  draw_eval_real(expr);
 		  args[idx].vec_flag = 0;
-		  args[idx].vec.base = 0;
-		  args[idx].vec.wid  = 0;
 		  args[idx].str_flag = 0;
 		  args[idx].real_flag = 1;
 		  args[idx].stack = real_stack_need;
@@ -411,9 +420,8 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		       about the stack position. */
 		  draw_eval_string(expr);
 		  args[idx].vec_flag = 0;
-		  args[idx].vec.base = 0;
-		  args[idx].vec.wid = 0;
 		  args[idx].str_flag = 1;
+		  args[idx].real_flag = 0;
 		  args[idx].stack = str_stack_need;
 		  args[idx].real_flag = 0;
 		  str_stack_need += 1;
@@ -434,7 +442,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 	    struct args_info*ptr;
 
 	    if (args[idx].str_flag) {
-		    /* If this is a string stack reference, then
+		    /* If this is a stack reference, then
 		       calculate the stack depth and use that to
 		       generate the completed string. */
 		  unsigned pos = str_stack_need - args[idx].stack - 1;
@@ -442,18 +450,14 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 	    } else if (args[idx].real_flag) {
 		  unsigned pos = real_stack_need - args[idx].stack - 1;
 		  fprintf(vvp_out, ", W<%u,r>",pos);
+	    } else if (args[idx].vec_flag) {
+		  unsigned pos = vec4_stack_need - args[idx].stack - 1;
+		  fprintf(vvp_out, ", S<%u,vec4>",pos);
 	    } else {
 		  fprintf(vvp_out, ", %s", args[idx].text);
 	    }
 
 	    free(args[idx].text);
-	      /* Clear the nested children vectors. */
-	    for (ptr = &args[idx]; ptr != NULL; ptr = ptr->child) {
-		  if (ptr->vec_flag) {
-			if (ptr->vec.wid > 0) clr_vector(ptr->vec);
-			else clr_word(ptr->vec.base);
-		  }
-	    }
 	      /* Free the nested children. */
 	    ptr = args[idx].child;
 	    while (ptr != NULL) {
@@ -465,7 +469,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 
       free(args);
 
-      fprintf(vvp_out, " {%u %u}", real_stack_need, str_stack_need);
+      fprintf(vvp_out, " {%u %u %u}", vec4_stack_need, real_stack_need, str_stack_need);
       fprintf(vvp_out, ";\n");
 }
 
@@ -487,7 +491,7 @@ void draw_vpi_task_call(ivl_statement_t tnet)
       }
 
       if (parm_count == 0) {
-            fprintf(vvp_out, "    %s %u %u \"%s\" {0 0};\n", command,
+            fprintf(vvp_out, "    %s %u %u \"%s\" {0 0 0};\n", command,
                     ivl_file_table_index(ivl_stmt_file(tnet)),
                     ivl_stmt_lineno(tnet), ivl_stmt_name(tnet));
       } else {
@@ -499,27 +503,16 @@ void draw_vpi_task_call(ivl_statement_t tnet)
       }
 }
 
-struct vector_info draw_vpi_func_call(ivl_expr_t fnet, unsigned wid)
+void draw_vpi_func_call(ivl_expr_t fnet)
 {
       char call_string[1024];
-      struct vector_info res;
 
-      res.base = allocate_vector(wid);
-      res.wid  = wid;
-      if (res.base == 0) {
-	    fprintf(stderr, "%s:%u: vvp.tgt error: "
-		    "Unable to allocate %u thread bits for system function result.\n",
-		    ivl_expr_file(fnet), ivl_expr_lineno(fnet), wid);
-	    vvp_errors += 1;
-      }
-
-      sprintf(call_string, "    %%vpi_func %u %u \"%s\", %u, %u",
+      sprintf(call_string, "    %%vpi_func %u %u \"%s\" %u",
               ivl_file_table_index(ivl_expr_file(fnet)),
-	      ivl_expr_lineno(fnet), ivl_expr_name(fnet), res.base, res.wid);
+	      ivl_expr_lineno(fnet), ivl_expr_name(fnet),
+	      ivl_expr_width(fnet));
 
       draw_vpi_taskfunc_args(call_string, 0, fnet);
-
-      return res;
 }
 
 void draw_vpi_rfunc_call(ivl_expr_t fnet)

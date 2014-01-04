@@ -199,12 +199,12 @@ static const struct opcode_table_s opcode_table[] = {
       { "%max/wr", of_MAX_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%min/wr", of_MIN_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%mod",    of_MOD,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%mod/s",  of_MOD_S,  3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%mod/s",  of_MOD_S,  0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%mod/wr", of_MOD_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%mov",    of_MOV,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%mov/wu", of_MOV_WU, 2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%movi",   of_MOVI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%mul",    of_MUL,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%mul",    of_MUL,    0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%mul/wr", of_MUL_WR, 0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%muli",   of_MULI,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
       { "%nand",   of_NAND,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -213,7 +213,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%new/darray",of_NEW_DARRAY,2, {OA_BIT1,   OA_STRING,OA_NONE} },
       { "%noop",   of_NOOP,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%nor",    of_NOR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
-      { "%nor/r",  of_NORR,   3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
+      { "%nor/r",  of_NORR,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%null",   of_NULL,   0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%or",     of_OR,     0,  {OA_NONE,     OA_NONE,     OA_NONE} },
       { "%or/r",   of_ORR,    3,  {OA_BIT1,     OA_BIT2,     OA_NUMBER} },
@@ -1831,7 +1831,7 @@ void compile_vpi_call(char*label, char*name,
                       bool func_as_task_err, bool func_as_task_warn,
                       long file_idx, long lineno,
                       unsigned argc, vpiHandle*argv,
-		      unsigned real_stack, unsigned string_stack)
+		      unsigned vec4_stack, unsigned real_stack, unsigned string_stack)
 {
       if (label)
 	    compile_codelabel(label);
@@ -1842,9 +1842,9 @@ void compile_vpi_call(char*label, char*name,
 
 	/* Create a vpiHandle that bundles the call information, and
 	   store that handle in the instruction. */
-      code->handle = vpip_build_vpi_call(name, 0, 0, 0,
-                                         func_as_task_err, func_as_task_warn,
-                                         argc, argv, real_stack, string_stack,
+      code->handle = vpip_build_vpi_call(name, 0, 0,
+					 0, func_as_task_err, func_as_task_warn,
+                                         argc, argv, vec4_stack, real_stack, string_stack,
 					 file_idx, lineno);
       if (code->handle == 0)
 	    compile_errors += 1;
@@ -1854,9 +1854,10 @@ void compile_vpi_call(char*label, char*name,
 }
 
 void compile_vpi_func_call(char*label, char*name,
-			   unsigned vbit, int vwid,
+			   int val_type, unsigned val_wid,
 			   long file_idx, long lineno,
 			   unsigned argc, vpiHandle*argv,
+			   unsigned vec4_stack,
 			   unsigned real_stack,
 			   unsigned string_stack)
 {
@@ -1869,8 +1870,9 @@ void compile_vpi_func_call(char*label, char*name,
 
 	/* Create a vpiHandle that bundles the call information, and
 	   store that handle in the instruction. */
-      code->handle = vpip_build_vpi_call(name, vbit, vwid, 0, true, false,
-                                         argc, argv, real_stack, string_stack,
+      code->handle = vpip_build_vpi_call(name, val_type, val_wid,
+					 0, true, false,
+                                         argc, argv, vec4_stack, real_stack, string_stack,
 					 file_idx, lineno);
       if (code->handle == 0)
 	    compile_errors += 1;

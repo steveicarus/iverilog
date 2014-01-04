@@ -808,13 +808,13 @@ This instruction pops the top two values from the real stack and
 pushes back the max(min) value. Avoid returning NaN by selecting the
 other if either is NaN.
 
-* %mod   <bit-l>, <bit-r>, <wid>
-* %mod/s <bit-l>, <bit-r>, <wid>
+* %mod
+* %mod/s
 
 This instruction calculates the modulus %r of the left operand, and
-replaces the left operand with the result. The <wid> gives the width
-of the left and the right vectors, and the left vector is completely
-replaced with the result.
+replaces the left operand with the result. The left and right vectors
+are popped from the vec4 stack and have identical width. The result is
+pushed onto the vec4 stack.
 
 The /s form does signed %.
 
@@ -836,12 +836,13 @@ The %movi variant moves a binary value, LSB first, into the
 destination vector. The immediate value is up to 32bits, padded with
 zeros to fill out the width.
 
-* %mul <bit-l>, <bit-r>, <wid>
+* %mul
 
 This instruction multiplies the left vector by the right vector, the
-vectors having the width <wid>. If any of the bits of either vector
-are x or z, the result is x. Otherwise, the result is the arithmetic
-product.
+vectors pare popped from the vec4 stack and have the same width. If
+any of the bits of either vector are x or z, the result is
+x. Otherwise, the result is the arithmetic product. In any case, the
+result is pushed back on the vec4 stack.
 
 
 * %mul/wr
@@ -898,7 +899,7 @@ truth table:
 	otherwise  x
 
 
-* %nor/r <dst>, <src>, <wid>
+* %nor/r <dst>, <src>, <wid> (XXXX Old definition)
 
 The %nor/r instruction is a reduction nor. That is, the <src> is a
 vector with width, but the result is a single bit. The <src> vector is
@@ -909,6 +910,12 @@ it is valid to place the <dst> within the <src>.
 The actual operation performed is the inverted or of all the bits in
 the vector.
 
+* %nor/r
+
+The %nor/r instruction is a reduction nor. That is, a vec4 value is
+popped from the vec4 stack, the bits of the vector are or'ed together
+to a signal bit, that bit is inverted and the resulting 1-bit vector
+pushed back to the vec4 stack. See also the "%or" instruction.
 
 * %null
 
@@ -1271,7 +1278,7 @@ if it is null. If it is, set flag bit 4 to 1. Otherwise, set flag bit
 This is intended to implement the SystemVerilog expression
 (<var>==null), where <var> is a class variable.
 
-* %vpi_call <name> [, ...] {<real> <str>}
+* %vpi_call <name> [, ...] {<vec4> <real> <str>}
 
 This instruction makes a call to a system task that was declared using
 VPI. The operands are compiled down to a vpiHandle for the call. The
@@ -1282,18 +1289,19 @@ The {...} part is stack information. This tells the run-time how many
 stack items the call uses so that it knows how many to pop off the
 stack when the call returns.
 
-* %vpi_func <name>, <dst>, <wid> [, ...] {<real> <str>}
+* %vpi_func <file> <line> <name> [, ...] {<vec4> <real> <str>}
+* %vpi_func/r <file> <line> <name> [, ...] {<vec4> <real> <str>}
 
 This instruction is similar to %vpi_call, except that it is for
-calling system functions. The difference here is the <dst> and <wid>
-parameters that specify where the return value is to go. The normal
+calling system functions. The difference here is the return value from
+the function call is pushed onto the appropriate stack. The normal
 means that the VPI code uses to write the return value causes those
 bits to go here.
 
 The {...} part is stack information. This tells the run-time how many
-stack items the call uses so that it knows how many to pop off the
-stack when the call returns. The function call will pop the real and
-string stacks, and will push any return value.
+stack items the call uses from each stack so that it knows how many to
+pop off the stack when the call returns. The function call will pop
+the real and string stacks, and will push any return value.
 
 
 * %wait <functor-label>

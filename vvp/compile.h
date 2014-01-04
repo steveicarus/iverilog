@@ -422,6 +422,7 @@ extern void compile_vpi_call(char*label, char*name,
 			     bool func_as_task_err, bool func_as_task_warn,
 			     long file_idx, long lineno,
 			     unsigned argc, vpiHandle*argv,
+			     unsigned vec4_stack,
 			     unsigned real_stack,
 			     unsigned string_stack);
 
@@ -430,9 +431,10 @@ extern void compile_vpi_call(char*label, char*name,
    <0, the return type is -vpiRealConst or some other constant subtype
    code that represents the function type. */
 extern void compile_vpi_func_call(char*label, char*name,
-				  unsigned vbit, int vwid,
+				  int val_type, unsigned val_wid,
 				  long file_idx, long lineno,
 				  unsigned argc, vpiHandle*argv,
+				  unsigned vec4_stack,
 				  unsigned real_stack,
 				  unsigned string_stack);
 extern void print_vpi_call_errors();

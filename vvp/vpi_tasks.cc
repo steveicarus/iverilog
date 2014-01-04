@@ -461,6 +461,54 @@ vpiHandle sysfunc_real::vpi_put_value(p_vpi_value vp, int)
       return 0;
 }
 
+class sysfunc_vec4 : public __vpiSysTaskCall {
+    public:
+      inline sysfunc_vec4(unsigned wid): return_value_(wid, BIT4_X) { }
+      int get_type_code(void) const { return vpiSysFuncCall; }
+      int vpi_get(int code)         { return sysfunc_get(code, this); }
+      char* vpi_get_str(int code)   { return systask_get_str(code, this); }
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
+      vpiHandle vpi_handle(int code)
+            { return systask_handle(code, this); }
+      vpiHandle vpi_iterate(int code)
+            { return systask_iter(code, this); }
+
+      inline const vvp_vector4_t& return_value() const { return return_value_; }
+
+    private:
+      vpiHandle put_value_int_(p_vpi_value vp);
+
+    private:
+      vvp_vector4_t return_value_;
+};
+
+vpiHandle sysfunc_vec4::put_value_int_(p_vpi_value vp)
+{
+      long tmp = vp->value.integer;
+      unsigned width = return_value_.size();
+      for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
+	    return_value_.set_bit(idx, (tmp&1)? BIT4_1 : BIT4_0);
+	    tmp >>= 1;
+      }
+
+      return 0;
+}
+
+vpiHandle sysfunc_vec4::vpi_put_value(p_vpi_value vp, int)
+{
+      put_value = true;
+
+      switch (vp->format) {
+	  case vpiIntVal:
+	    return put_value_int_(vp);
+	  default:
+	    fprintf(stderr, "Unsupported format %d.\n", (int)vp->format);
+	    assert(0);
+      }
+
+      return 0;
+}
+
 struct sysfunc_4net : public __vpiSysTaskCall {
       inline sysfunc_4net() { }
       int get_type_code(void) const { return vpiSysFuncCall; }
@@ -729,11 +777,11 @@ static void cleanup_vpi_call_args(unsigned argc, vpiHandle*argv)
  * non-zero value that represents the width or type of the result. The
  * vbit is also a non-zero value, the address in thread space of the result.
  */
-vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
+vpiHandle vpip_build_vpi_call(const char*name, int val_code, unsigned return_width,
 			      vvp_net_t*fnet,
 			      bool func_as_task_err, bool func_as_task_warn,
 			      unsigned argc, vpiHandle*argv,
-			      unsigned real_stack, unsigned string_stack,
+			      unsigned vec4_stack, unsigned real_stack, unsigned string_stack,
 			      long file_idx, long lineno)
 {
       assert(!(func_as_task_err && func_as_task_warn));
@@ -749,7 +797,7 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 
       switch (defn->info.type) {
 	  case vpiSysTask:
-	    if (vwid != 0 || fnet != 0) {
+	    if (val_code != 0 || fnet != 0) {
 		  add_vpi_call_error(VPI_CALL_TASK_AS_FUNC, name, file_idx,
 		                     lineno);
 #ifdef CHECK_WITH_VALGRIND
@@ -757,11 +805,10 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 #endif
 		  return 0;
 	    }
-	    assert(vbit == 0);
 	    break;
 
 	  case vpiSysFunc:
-	    if (vwid == 0 && fnet == 0) {
+	    if (val_code == 0 && fnet == 0) {
 		  if (func_as_task_err) {
 			add_vpi_call_error(VPI_CALL_FUNC_AS_TASK,
 			                   name, file_idx, lineno);
@@ -790,22 +837,26 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
 	    break;
 
 	  case vpiSysFunc:
-	    if (fnet && vwid == -vpiRealConst) {
+	    if (fnet && val_code == -vpiRealVal) {
 		  obj = new sysfunc_rnet;
 
-	    } else if (fnet && vwid > 0) {
+	    } else if (fnet && val_code > 0) { // XXXX What's this?
 		  obj = new sysfunc_4net;
 
-	    } else if (vwid == -vpiRealConst) {
+	    } else if (val_code == -vpiRealVal) {
 		  obj = new sysfunc_real;
 
-	    } else if (vwid > 0) {
+	    } else if (val_code == -vpiVectorVal) {
+		  obj = new sysfunc_vec4(return_width);
+
+	    } else if (val_code > 0) { // XXXX should not happen?
 		  obj = new sysfunc_def;
 
-           } else if (vwid == 0 && fnet == 0) {
+           } else if (val_code == 0 && fnet == 0) {
 		  obj = new sysfunc_no;
 
 	    } else {
+		  fprintf(stderr, "XXXX fnet=%p, val_code=%d\n", fnet, val_code);
 		  assert(0);
 	    }
 	    break;
@@ -815,10 +866,11 @@ vpiHandle vpip_build_vpi_call(const char*name, unsigned vbit, int vwid,
       obj->defn  = defn;
       obj->nargs = argc;
       obj->args  = argv;
+      obj->vec4_stack = vec4_stack;
       obj->real_stack = real_stack;
       obj->string_stack = string_stack;
-      obj->vbit  = vbit;
-      obj->vwid  = vwid;
+      obj->vbit  = 0;
+      obj->vwid  = 0;
       obj->fnet  = fnet;
       obj->file_idx  = (unsigned) file_idx;
       obj->lineno   = (unsigned) lineno;
@@ -902,7 +954,7 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
 	    if (ref->get_type_code() == vpiSysFuncCall &&
 	        !vpip_cur_task->put_value) {
 		  s_vpi_value val;
-		  if (vpip_cur_task->vwid == -vpiRealConst) {
+		  if (vpip_cur_task->vwid == -vpiRealVal) {
 			val.format = vpiRealVal;
 			val.value.real = 0.0;
 		  } else {
@@ -912,6 +964,8 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
 		  vpi_put_value(ref, &val, 0, vpiNoDelay);
 	    }
       }
+      if (vpip_cur_task->vec4_stack > 0)
+	    vthread_pop_vec4(thr, vpip_cur_task->vec4_stack);
       if (vpip_cur_task->real_stack > 0)
 	    vthread_pop_real(thr, vpip_cur_task->real_stack);
       if (vpip_cur_task->string_stack > 0)
@@ -921,6 +975,9 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
 	   to the thread stack. */
       if (sysfunc_real*func_real = dynamic_cast<sysfunc_real*>(ref)) {
 	    vthread_push_real(thr, func_real->return_value_);
+      }
+      if (sysfunc_vec4*func_vec4 = dynamic_cast<sysfunc_vec4*>(ref)) {
+	    vthread_push_vec4(thr, func_vec4->return_value());
       }
 }
 
