@@ -115,9 +115,9 @@ The %assign/ar/e variation uses the information in the thread
 event control registers to determine when to perform the assign.
 %evctl is used to set the event control information.
 
-* %assign/av <array-label>, <delay>, <bit>
-* %assign/av/d <array-label>, <delayx>, <bit>
-* %assign/av/e <array-label>, <bit>
+* %assign/av <array-label>, <delay>, <bit> (XXXX Old definition)
+* %assign/av/d <array-label>, <delayx>, <bit> (XXXX Old definition)
+* %assign/av/e <array-label>, <bit> (XXXX Old definition)
 
 The %assign/av instruction assigns a vector value to a word in the
 labeled array. The <delay> is the delay in simulation time to the
@@ -180,6 +180,19 @@ pulled from the vec4 stack.
 
 The %assign/vec4/d instruction is the same, but gets its delay value
 from the index register <delayx> instead.
+
+* %assign/vec4/a/d <var-label>, <off-index>, <delay-index>
+* %assign/vec4/a/e <var-label>, <off-index>
+
+This instruction implements delayed assignment to an array word. The
+value is popped from the vec4 stack; the width is taken from the
+popped value. The <off-index> index register contains the canonical
+offset into the memory word for a part select, and the <delay-index>
+index register contains the delay for the assignment. Index register 3
+contains the word address.
+
+The <off-index> and <delay-index> index registers can be 0, which
+means a zero value instead of the contents of index register 0.
 
 * %assign/vec4/off/d <var-label>, <off-index>, <delay-index>
 
@@ -250,7 +263,7 @@ debugger commands.
 This may not work on all platforms. If run-time debugging is compiled
 out, then this function is a no-op.
 
-* %cassign/v <var-label>, <bit>, <wid>
+* %cassign/vec4 <var-label>
 
 Perform a continuous assign of a constant value to the target
 variable. This is similar to %set, but it uses the cassign port
@@ -342,8 +355,8 @@ popped from the stack first, then (a).
 
 [compare signed/unsigned integer words.]
 
-* %cmp/z <bit-l>, <bit-r>, <wid>
-* %cmp/x <bit-l>, <bit-r>, <wid>
+* %cmp/z
+* %cmp/x
 
 These instructions are for implementing the casez and casex
 comparisons. These work similar to the %cmp/u instructions, except
@@ -426,6 +439,12 @@ will be deactivated. For a full deactivation the <base> is 0 and
 * %deassign/wr <var-label>
 
 The same as %deassign above except this is used for real variables.
+
+* %debug/thr
+
+These opcodes are aids for debugging the vvp engine. The vvp code
+generator should not generate these, and they should not alter code
+flow, data contents, etc.
 
 * %delay <low>, <high>
 
@@ -536,7 +555,7 @@ writes the LSB to the selected flag.
 * %force/v <label>, <bit>, <wid>
 
 Force a constant value to the target variable. This is similar to %set
-and %cassign/v, but it uses the force port (port-2) of the signal
+and %cassign/vec4, but it uses the force port (port-2) of the signal
 functor instead of the normal assign port (port-0), so the signal
 responds differently. See "VARIABLE STATEMENTS" and "NET STATEMENTS"
 in the README.txt file.
@@ -752,6 +771,15 @@ more than the width at the functor, the value is padded with X bits.
 
 This instruction loads a vector value from the given functor node and
 pushes it onto the vec4 stack. See also the %store/vec4 instruction.
+
+* %load/vec4a <arr-label>, <addr-index>
+
+This instruction loads a vec4 value from the array and pushes the
+value onto the stack. The <addr-index> is the index register that
+holds the canonical array index.
+
+The load checks flag bit 4. If it is 1, then the load it cancelled and
+replaced with a load of all X bits. See %ix/vec4.
 
 * %load/vp0 <bit>, <functor-label>, <wid>
 * %load/vp0/s <bit>, <functor-label>, <wid>
@@ -1070,6 +1098,12 @@ Release the force on the real signal that is represented by the functor
 statement. The <type> is 0 for nets and 1 for registers. See the other
 %release commands above.
 
+* %replicate <count>
+
+Pop the vec4 value, replicate it <count> times, then push the
+result. In other words, push the concatenation of <count> copies.
+See also the %concat instruction.
+
 * %set/dar <var-label>, <bit>, <wid>
 * %set/dar/obj <index>, <bit>, <wid>
 
@@ -1214,11 +1248,17 @@ The %store/dar/str is similar, but the target is a dynamic array of
 string string. The index is taken from signed index register 3.
 
 * %store/vec4 <var-label>, <wid>
+* %store/vec4/off <var-label>, <offset>, <wid>
 
 Store a logic vector into the variable. The value (and its width) is
 popped off the top of the stack and written to the variable. The value
 is then optionally truncated to <wid> bits and assigned to the
 variable. It is an error for the value to be fewer then <wid> bits.
+
+The %store/vec4/off is similar, but it uses the index register
+<offset> to get a vector offset into the target vec4 variable.
+
+NOTE: The <wid> is not necessary, and should be removed.
 
 * %sub <bit-l>, <bit-r>, <wid> (XXXX Old version)
 

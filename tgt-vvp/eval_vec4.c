@@ -435,10 +435,12 @@ static void draw_select_vec4(ivl_expr_t expr)
       ivl_expr_t base = ivl_expr_oper2(expr);
 	// This is the part select width
       unsigned wid = ivl_expr_width(expr);
+	// Is the select base expression signed or unsigned?
+      char sign_suff = ivl_expr_signed(base)? 's' : 'u';
 
       draw_eval_vec4(subexpr, 0);
       draw_eval_vec4(base, 0);
-      fprintf(vvp_out, "    %%part %u;\n", wid);
+      fprintf(vvp_out, "    %%part/%c %u;\n", sign_suff, wid);
 }
 
 static void draw_select_pad_vec4(ivl_expr_t expr, int stuff_ok_flag)
@@ -486,8 +488,19 @@ static void draw_signal_vec4(ivl_expr_t expr)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
 
-      assert(ivl_signal_dimensions(sig) == 0);
-      fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", sig);
+	/* Handle the simple case, a signal expression that is a
+	   simple vector, no array dimensions. */
+      if (ivl_signal_dimensions(sig) == 0) {
+	    fprintf(vvp_out, "    %%load/vec4 v%p_0;\n", sig);
+	    return;
+      }
+
+	/* calculate the array index... */
+      int addr_index = allocate_word();
+      draw_eval_expr_into_integer(ivl_expr_oper1(expr), addr_index);
+
+      fprintf(vvp_out, "    %%load/vec4a v%p, %d;\n", sig, addr_index);
+      clr_word(addr_index);
 }
 
 static void draw_ternary_vec4(ivl_expr_t expr, int stuff_ok_flag)

@@ -111,8 +111,8 @@ static void assign_to_array_r_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 }
 
 static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
-				 unsigned bit, uint64_t delay, ivl_expr_t dexp,
-				 ivl_expr_t part_off_ex, unsigned width,
+				 uint64_t delay, ivl_expr_t dexp,
+				 ivl_expr_t part_off_ex,
 				 unsigned nevents)
 {
       unsigned skip_assign = transient_id++;
@@ -121,6 +121,10 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
       int delay_index;
       unsigned long part_off = 0;
 
+	/* Figure the constant part offset, if possible. If we can do
+	   so, then forget about the expression and use the calculated
+	   value. After this block, if the part_off_ex!=0, then the
+	   part offset is used, otherwise, use part_off. */
       if (part_off_ex == 0) {
 	    part_off = 0;
       } else if (number_is_immediate(part_off_ex, IMM_WID, 0) &&
@@ -136,25 +140,16 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	    word_ix_reg = allocate_word();
       }
 
-	/* This code is common to all the different types of array delays. */
-      if (number_is_immediate(word_ix, IMM_WID, 0) &&
-	  !number_is_unknown(word_ix)) {
-	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0; address\n", word_ix_reg,
-	                     get_number_immediate(word_ix));
-      } else {
-	      /* Calculate array word index into word index register */
-	    draw_eval_expr_into_integer(word_ix, word_ix_reg);
-	      /* Skip assignment if word expression is not defined. */
-	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
-      }
+	/* Calculate array word index into word index register */
+      draw_eval_expr_into_integer(word_ix, word_ix_reg);
+	/* Skip assignment if word expression is not defined. */
+      fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+
       if (part_off_ex) {
 	    draw_eval_expr_into_integer(part_off_ex, part_off_reg);
 	      /* If the index expression has XZ bits, skip the assign. */
 	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
-	    if (dexp == 0) {
-		  fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
-		  clr_word(word_ix_reg);
-	    }
+
       } else {
 	      /* Store word part select into part_off_reg */
 	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0; part off\n",
@@ -165,42 +160,34 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	      /* Calculated delay... */
 	    delay_index = allocate_word();
 	    draw_eval_expr_into_integer(dexp, delay_index);
-      }
-
-	/* Store expression width into index word 0 */
-      fprintf(vvp_out, "    %%ix/load 0, %u, 0; word width\n", width);
-
-      if (dexp != 0) {
-	    fprintf(vvp_out, "    %%ix/mov 1, %u;\n", part_off_reg);
-	    fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
-	    fprintf(vvp_out, "    %%assign/av/d v%p, %d, %u;\n", lsig,
-	                     delay_index, bit);
+	    if (word_ix_reg != 3) {
+		  fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
+		  clr_word(word_ix_reg);
+	    }
+	    fprintf(vvp_out, "    %%assign/vec4/a/d v%p, %d, %d;\n", lsig,
+	                     delay_index, part_off_reg);
 	    clr_word(part_off_reg);
-	    clr_word(word_ix_reg);
 	    clr_word(delay_index);
+
       } else if (nevents != 0) {
 	      /* Event control delay... */
-	    fprintf(vvp_out, "    %%assign/av/e v%p, %u;\n", lsig, bit);
+	    fprintf(vvp_out, "    %%assign/vec4/a/e v%p, 0;\n", lsig);
+
       } else {
 	      /* Constant delay... */
 	    unsigned long low_d = delay % UINT64_C(0x100000000);
 	    unsigned long hig_d = delay / UINT64_C(0x100000000);
 
-	      /*
-	       * The %assign can only take a 32 bit delay. For a larger
-	       * delay we need to put it into an index register.
-	       */
-	    if (hig_d != 0) {
-		  delay_index = allocate_word();
-		  fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
-		          delay_index, low_d, hig_d);
-		  fprintf(vvp_out, "    %%assign/av/d v%p, %d, %u;\n", lsig,
-		  delay_index, bit);
-		  clr_word(delay_index);
-	    } else {
-		  fprintf(vvp_out, "    %%assign/av v%p, %lu, %u;\n",
-		          lsig, low_d, bit);
+	    delay_index = allocate_word();
+	    fprintf(vvp_out, "    %%ix/load %d, %lu, %lu; Constant delay\n",
+		    delay_index, low_d, hig_d);
+	    if (word_ix_reg != 3) {
+		  fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
+		  clr_word(word_ix_reg);
 	    }
+	    fprintf(vvp_out, "    %%assign/vec4/a/d v%p, %d, %u;\n", lsig,
+		    part_off_reg, delay_index);
+	    clr_word(delay_index);
       }
 
       fprintf(vvp_out, "t_%u ;\n", skip_assign);
@@ -209,6 +196,11 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
       clear_expression_lookaside();
 }
 
+/*
+ * The code to generate here assumes that a vec4 vector of the right
+ * width is top of the vec4 stack. Arrange for it to be popped and
+ * assigned to the given l-value.
+ */
 static void assign_to_lvector(ivl_lval_t lval,
 			      uint64_t delay, ivl_expr_t dexp,
 			      unsigned nevents)
@@ -217,17 +209,15 @@ static void assign_to_lvector(ivl_lval_t lval,
       ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
       unsigned long part_off = 0;
 
-      ivl_expr_t word_ix = ivl_lval_idx(lval);
       const unsigned long use_word = 0;
 
+	// Detect the case that this is actually a non-blocking assign
+	// to an array word. In that case, run off somewhere else to
+	// deal with it.
       if (ivl_signal_dimensions(sig) > 0) {
-#if 0
+	    ivl_expr_t word_ix = ivl_lval_idx(lval);
 	    assert(word_ix);
-	    assign_to_array_word(sig, word_ix, bit, delay, dexp, part_off_ex,
-	                         width, nevents);
-#else
-	    fprintf(stderr, "XXXX %%assign to array word not supported yet.\n");
-#endif
+	    assign_to_array_word(sig, word_ix, delay, dexp, part_off_ex, nevents);
 	    return;
       }
 
@@ -243,6 +233,10 @@ static void assign_to_lvector(ivl_lval_t lval,
       unsigned long hig_d = delay / UINT64_C(0x100000000);
 
       if (part_off_ex) {
+	      // The part select offset is calculated (not constant)
+	      // so in these cases we'll need to use
+	      // %assign/vec4/off/... variants.
+
 	    unsigned skip_assign = transient_id++;
 	    if (dexp != 0) {
 		    /* Calculated delay... */
@@ -275,32 +269,20 @@ static void assign_to_lvector(ivl_lval_t lval,
 		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
 		  fprintf(vvp_out, "    %%evctl/c;\n");
 	    } else {
+		  int offset_index = allocate_word();
+		  int delay_index = allocate_word();
+
 		    /* Constant delay... */
-		  draw_eval_expr_into_integer(part_off_ex, 1);
+		  fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
+			  delay_index, low_d, hig_d);
+		    /* Calculated part offset... */
+		  draw_eval_expr_into_integer(part_off_ex, offset_index);
 		    /* If the index expression has XZ bits, skip the assign. */
 		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
-#if 0
-		  fprintf(vvp_out, "    %%ix/load 0, %u, 0;\n", width);
-		    /*
-		     * The %assign can only take a 32 bit delay. For a larger
-		     * delay we need to put it into an index register.
-		     */
-		  if (hig_d != 0) {
-			int delay_index = allocate_word();
-			fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
-			        delay_index, low_d, hig_d);
-			fprintf(vvp_out,
-			        "    %%assign/v0/x1/d v%p_%lu, %d, %u;\n",
-			        sig, use_word, delay_index, bit);
-			clr_word(delay_index);
-		  } else {
-			fprintf(vvp_out,
-			        "    %%assign/v0/x1 v%p_%lu, %lu, %u;\n",
-			        sig, use_word, low_d, bit);
-		  }
-#else
-		  assert(0); // XXXX
-#endif
+		  fprintf(vvp_out, "    %%assign/vec4/off/d v%p_%lu, %d, %d;\n",
+			  sig, use_word, offset_index, delay_index);
+		  clr_word(offset_index);
+		  clr_word(delay_index);
 		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
 	    }
 
@@ -356,6 +338,9 @@ static void assign_to_lvector(ivl_lval_t lval,
 		  assert(0); // XXXX
 
 	    } else {
+		    // Constant part offset, non-constant (calculated)
+		    // assignment delay. Use the %assign/vec4/off/d
+		    // instruction to handle this case.
 		  int offset_index = allocate_word();
 		  int delay_index = allocate_word();
 		  fprintf(vvp_out, "    %%ix/load %d, %lu, 0;\n", offset_index, part_off);
@@ -932,26 +917,21 @@ static void force_real_to_lval(ivl_statement_t net)
       fprintf(vvp_out, "    %s v%p_%lu;\n", command_name, lsig, use_word);
 }
 
-static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
+static void force_vector_to_lval(ivl_statement_t net)
 {
       unsigned lidx;
-      unsigned roff = 0;
 
       const char*command_name;
-      const char*command_name_x0;
 
       switch (ivl_statement_type(net)) {
 	  case IVL_ST_CASSIGN:
-	    command_name = "%cassign/v";
-	    command_name_x0 = "%cassign/x0";
+	    command_name = "%cassign/vec4";
 	    break;
 	  case IVL_ST_FORCE:
-	    command_name = "%force/v";
-	    command_name_x0 = "%force/x0";
+	    command_name = "%force/vec4";
 	    break;
 	  default:
 	    command_name = "ERROR";
-	    command_name_x0 = "ERROR";
 	    assert(0);
 	    break;
       }
@@ -960,23 +940,8 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 	    ivl_lval_t lval = ivl_stmt_lval(net, lidx);
 	    ivl_signal_t lsig = ivl_lval_sig(lval);
 
-	    unsigned use_wid = ivl_lval_width(lval);
-	    ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
-	    unsigned long part_off;
 	    ivl_expr_t word_idx = ivl_lval_idx(lval);
 	    unsigned long use_word = 0;
-
-	    if (part_off_ex == 0) {
-		  part_off = 0;
-	    } else {
-		  assert(number_is_immediate(part_off_ex, IMM_WID, 0));
-		    /* An out-of-range or undefined offset will have been
-		       converted to a canonical offset of 1'bx. Skip the
-		       assignment in this case. */
-		  if (number_is_unknown(part_off_ex))
-			return;
-		  part_off = get_number_immediate(part_off_ex);
-	    }
 
 	    if (word_idx != 0) {
 		  assert(number_is_immediate(word_idx, IMM_WID, 0));
@@ -1001,24 +966,13 @@ static void force_vector_to_lval(ivl_statement_t net, struct vector_info rvec)
 
 	      /* L-Value must be a signal: reg or wire */
 	    assert(lsig != 0);
+	      /* Do not support bit or part selects of l-values yet. */
+	    assert(ivl_lval_width(lval) == ivl_signal_width(lsig));
+	    assert(!ivl_lval_part_off(lval));
 
-	    if (part_off != 0 || use_wid != ivl_signal_width(lsig)) {
 
-		  command_name = command_name_x0;
-		  fprintf(vvp_out, "    %%ix/load 0, %lu, 0;\n", part_off);
+	    fprintf(vvp_out, "    %s v%p_%lu;\n", command_name, lsig, use_word);
 
-	    } else {
-		    /* Do not support bit or part selects of l-values yet. */
-		  assert(ivl_lval_width(lval) == ivl_signal_width(lsig));
-
-		  assert((roff + use_wid) <= rvec.wid);
-	    }
-
-	    fprintf(vvp_out, "    %s v%p_%lu, %u, %u;\n", command_name,
-		    lsig, use_word, rvec.base+roff, use_wid);
-
-	    if (rvec.base >= 4)
-		  roff += use_wid;
       }
 }
 
@@ -1170,13 +1124,11 @@ static int show_stmt_cassign(ivl_statement_t net)
 	    force_real_to_lval(net);
 
       } else {
-	    struct vector_info rvec;
 
-	    rvec = draw_eval_expr(rval, STUFF_OK_47);
-
+	    draw_eval_vec4(rval, STUFF_OK_47);
 	      /* Write out initial continuous assign instructions to assign
 	         the expression value to the l-value. */
-	    force_vector_to_lval(net, rvec);
+	    force_vector_to_lval(net);
       }
 
       force_link_rval(net, rval);
@@ -1474,13 +1426,12 @@ static int show_stmt_force(ivl_statement_t net)
             force_real_to_lval(net);
 
       } else {
-            struct vector_info rvec;
 
-            rvec = draw_eval_expr(rval, STUFF_OK_47);
+            draw_eval_vec4(rval, STUFF_OK_47);
 
               /* Write out initial continuous assign instructions to assign
                  the expression value to the l-value. */
-            force_vector_to_lval(net, rvec);
+            force_vector_to_lval(net);
       }
 
       force_link_rval(net, rval);
@@ -1686,28 +1637,27 @@ static int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
       unsigned lab_top = local_count++, lab_out = local_count++;
       ivl_expr_t expr = ivl_stmt_cond_expr(net);
-      struct vector_info cnt;
       const char *sign = ivl_expr_signed(expr) ? "s" : "u";
 
       show_stmt_file_line(net, "Repeat statement.");
 
-      cnt = draw_eval_expr(expr, 0);
+	/* Calculate the repeat count onto the top of the vec4 stack. */
+      draw_eval_vec4(expr, STUFF_OK_XZ);
 
 	/* Test that 0 < expr */
-      fprintf(vvp_out, "T_%u.%u %%cmp/%s 0, %u, %u;\n", thread_count,
-	      lab_top, sign, cnt.base, cnt.wid);
-      clear_expression_lookaside();
-      fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 5;\n", thread_count, lab_out);
+      fprintf(vvp_out, "T_%u.%u %%dup/vec4;\n", thread_count, lab_top);
+      fprintf(vvp_out, "    %%pushi/vec4 0, 0, %u;\n", ivl_expr_width(expr));
+      fprintf(vvp_out, "    %%cmp/%s;\n", sign);
+      fprintf(vvp_out, "    %%jmp/1xz T_%u.%u, 5;\n", thread_count, lab_out);
 	/* This adds -1 (all ones in 2's complement) to the count. */
-      fprintf(vvp_out, "    %%add %u, 1, %u;\n", cnt.base, cnt.wid);
+      fprintf(vvp_out, "    %%pushi/vec4 1, 0, %u;\n", ivl_expr_width(expr));
+      fprintf(vvp_out, "    %%sub;\n");
 
       rc += show_statement(ivl_stmt_sub_stmt(net), sscope);
 
       fprintf(vvp_out, "    %%jmp T_%u.%u;\n", thread_count, lab_top);
       fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
-      clear_expression_lookaside();
-
-      clr_vector(cnt);
+      fprintf(vvp_out, "    %%pop/vec4 1;\n");
 
       return rc;
 }

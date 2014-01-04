@@ -551,17 +551,38 @@ static void set_vec_to_lval(ivl_statement_t net, struct vector_info res)
  * Store a vector from the vec4 stack to the statement l-values. This
  * all assumes that the value to be assigned is already on the top of
  * the stack.
+ *
+ * NOTE TO SELF: The %store/vec4 takes a width, but the %assign/vec4
+ * instructions do not, instead relying on the expression width. I
+ * think that it the proper way to do it, so soon I should change the
+ * %store/vec4 to not include the width operand.
  */
 static void store_vec4_to_lval(ivl_statement_t net)
 {
-      assert(ivl_stmt_lvals(net) == 1);
+      for (unsigned lidx = 0 ; lidx < ivl_stmt_lvals(net) ; lidx += 1) {
+	    ivl_lval_t lval = ivl_stmt_lval(net,lidx);
+	    ivl_signal_t lsig = ivl_lval_sig(lval);
+	    unsigned lwid = ivl_lval_width(lval);
 
-      ivl_lval_t lval = ivl_stmt_lval(net,0);
-      ivl_signal_t lsig = ivl_lval_sig(lval);
+	    ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
 
-      assert(ivl_lval_width(lval) == ivl_signal_width(lsig));
+	    if (lidx+1 < ivl_stmt_lvals(net))
+		  fprintf(vvp_out, "    %%split/vec4 %u;\n", lwid);
 
-      fprintf(vvp_out, "    %%store/vec4 v%p_0, %u;\n", lsig, ivl_signal_width(lsig));
+	    if (part_off_ex) {
+		    /* Dynamically calculated part offset */
+		  int offset_index = allocate_word();
+		  draw_eval_expr_into_integer(part_off_ex, offset_index);
+		  fprintf(vvp_out, "    %%store/vec4/off v%p_0, %d, %u;\n",
+			  lsig, offset_index, lwid);
+		  clr_word(offset_index);
+
+	    } else {
+		    /* No offset expression, so use simpler store function. */
+		  assert(lwid == ivl_signal_width(lsig));
+		  fprintf(vvp_out, "    %%store/vec4 v%p_0, %u;\n", lsig, lwid);
+	    }
+      }
 }
 
 static int show_stmt_assign_vector(ivl_statement_t net)

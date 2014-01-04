@@ -379,6 +379,11 @@ double vthread_get_real_stack(struct vthread_s*thr, unsigned depth)
       return thr->peek_real(depth);
 }
 
+const vvp_vector4_t& vthread_get_vec4_stack(struct vthread_s*thr, unsigned depth)
+{
+      return thr->peek_vec4(depth);
+}
+
 template <class T> T coerce_to_width(const T&that, unsigned width)
 {
       if (that.size() == width)
@@ -1243,6 +1248,25 @@ bool of_ASSIGN_VEC4(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %assign/vec4/a/d <arr>, <offx>, <delx>
+ */
+bool of_ASSIGN_VEC4_A_D(vthread_t thr, vvp_code_t cp)
+{
+      int off_idx = cp->bit_idx[0];
+      int del_idx = cp->bit_idx[1];
+      int adr_idx = 3;
+
+      long     off = off_idx? thr->words[off_idx].w_int  : 0;
+      unsigned del = del_idx? thr->words[del_idx].w_uint : 0;
+      long     adr = thr->words[adr_idx].w_int;
+
+      vvp_vector4_t value = thr->pop_vec4();
+
+      schedule_assign_array_word(cp->array, adr, off, value, del);
+      return true;
+}
+
+/*
  * %assign/vec4/off/d <var>, <off>, <del>
  */
 bool of_ASSIGN_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
@@ -1617,10 +1641,10 @@ bool of_CASSIGN_LINK(vthread_t, vvp_code_t cp)
 }
 
 /*
- * the %cassign/v instruction invokes a continuous assign of a
+ * the %cassign/vec4 instruction invokes a continuous assign of a
  * constant value to a signal. The instruction arguments are:
  *
- *     %cassign/v <net>, <base>, <wid> ;
+ *     %cassign/vec4 <net>;
  *
  * Where the <net> is the net label assembled into a vvp_net pointer,
  * and the <base> and <wid> are stashed in the bit_idx array.
@@ -1628,22 +1652,15 @@ bool of_CASSIGN_LINK(vthread_t, vvp_code_t cp)
  * This instruction writes vvp_vector4_t values to port-1 of the
  * target signal.
  */
-bool of_CASSIGN_V(vthread_t thr, vvp_code_t cp)
+bool of_CASSIGN_VEC4(vthread_t thr, vvp_code_t cp)
 {
-#if 0
-      vvp_net_t*net  = cp->net;
-      unsigned  base = cp->bit_idx[0];
-      unsigned  wid  = cp->bit_idx[1];
-
-	/* Collect the thread bits into a vector4 item. */
-      vvp_vector4_t value = vthread_bits_to_vector(thr, base, wid);
+      vvp_net_t*net = cp->net;
+      vvp_vector4_t value = thr->pop_vec4();
 
 	/* set the value into port 1 of the destination. */
       vvp_net_ptr_t ptr (net, 1);
       vvp_send_vec4(ptr, value, 0);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%cassign/v ...\n");
-#endif
+
       return true;
 }
 
@@ -2026,30 +2043,28 @@ bool of_CMPU(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %cmp/x
+ */
 bool of_CMPX(vthread_t thr, vvp_code_t cp)
 {
       vvp_bit4_t eq = BIT4_1;
-#if 0
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned idx2 = cp->bit_idx[1];
+      vvp_vector4_t rval = thr->pop_vec4();
+      vvp_vector4_t lval = thr->pop_vec4();
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    vvp_bit4_t lv = thr_get_bit(thr, idx1);
-	    vvp_bit4_t rv = thr_get_bit(thr, idx2);
+      assert(rval.size() == lval.size());
+      unsigned wid = lval.size();
 
+      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+	    vvp_bit4_t lv = lval.value(idx);
+	    vvp_bit4_t rv = rval.value(idx);
 	    if ((lv != rv) && !bit4_is_xz(lv) && !bit4_is_xz(rv)) {
 		  eq = BIT4_0;
 		  break;
 	    }
-
-	    if (idx1 >= 4) idx1 += 1;
-	    if (idx2 >= 4) idx2 += 1;
       }
-#else
-      fprintf(stderr, "XXXX NOT IMLEMENTED: %%cmpx ...\n");
-#endif
-      thr->flags[4] = eq;
 
+      thr->flags[4] = eq;
       return true;
 }
 
@@ -2095,30 +2110,28 @@ bool of_CMPWU(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %cmp/z
+ */
 bool of_CMPZ(vthread_t thr, vvp_code_t cp)
 {
       vvp_bit4_t eq = BIT4_1;
-#if 0
-      unsigned idx1 = cp->bit_idx[0];
-      unsigned idx2 = cp->bit_idx[1];
+      vvp_vector4_t rval = thr->pop_vec4();
+      vvp_vector4_t lval = thr->pop_vec4();
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-	    vvp_bit4_t lv = thr_get_bit(thr, idx1);
-	    vvp_bit4_t rv = thr_get_bit(thr, idx2);
+      assert(rval.size() == lval.size());
+      unsigned wid = lval.size();
 
-	    if ((lv != BIT4_Z) && (rv != BIT4_Z) && (lv != rv)) {
+      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+	    vvp_bit4_t lv = lval.value(idx);
+	    vvp_bit4_t rv = rval.value(idx);
+	    if ((lv != rv) && (rv != BIT4_Z) && (lv != BIT4_Z)) {
 		  eq = BIT4_0;
 		  break;
 	    }
-
-	    if (idx1 >= 4) idx1 += 1;
-	    if (idx2 >= 4) idx2 += 1;
       }
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%cmpz ...\n");
-#endif
-      thr->flags[4] = eq;
 
+      thr->flags[4] = eq;
       return true;
 }
 
@@ -2941,26 +2954,22 @@ bool of_FORCE_LINK(vthread_t, vvp_code_t cp)
 }
 
 /*
- * The %force/v instruction invokes a force assign of a constant value
+ * The %force/vec4 instruction invokes a force assign of a constant value
  * to a signal. The instruction arguments are:
  *
- *     %force/v <net>, <base>, <wid> ;
+ *     %force/vec4 <net> ;
  *
  * where the <net> is the net label assembled into a vvp_net pointer,
- * and the <base> and <wid> are stashed in the bit_idx array.
+ * and the value to be forced is popped from the vec4 stack.\.
  *
  * The instruction writes a vvp_vector4_t value to port-2 of the
  * target signal.
  */
-bool of_FORCE_V(vthread_t thr, vvp_code_t cp)
+bool of_FORCE_VEC4(vthread_t thr, vvp_code_t cp)
 {
-#if 0
-      vvp_net_t*net  = cp->net;
-      unsigned  base = cp->bit_idx[0];
-      unsigned  wid  = cp->bit_idx[1];
+      vvp_net_t*net = cp->net;
 
-	/* Collect the thread bits into a vector4 item. */
-      vvp_vector4_t value = vthread_bits_to_vector(thr, base, wid);
+      vvp_vector4_t value = thr->pop_vec4();
 
 	/* Send the force value to the filter on the node. */
 
@@ -2969,9 +2978,7 @@ bool of_FORCE_V(vthread_t thr, vvp_code_t cp)
 	    value = coerce_to_width(value, net->fil->filter_size());
 
       net->force_vec4(value, vvp_vector2_t(vvp_vector2_t::FILL1, net->fil->filter_size()));
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%force/v ...\n");
-#endif
+
       return true;
 }
 
@@ -3387,6 +3394,26 @@ bool of_JMP0XZ(vthread_t thr, vvp_code_t cp)
 bool of_JMP1(vthread_t thr, vvp_code_t cp)
 {
       if (thr->flags[cp->bit_idx[0]] == BIT4_1)
+	    thr->pc = cp->cptr;
+
+	/* Normally, this returns true so that the processor just
+	   keeps going to the next instruction. However, if there was
+	   a $stop or vpiStop, returning false here can break the
+	   simulation out of a hung loop. */
+      if (schedule_stopped()) {
+	    schedule_vthread(thr, 0, false);
+	    return false;
+      }
+
+      return true;
+}
+
+/*
+ * %jmp/1xz <pc>, <flag>
+ */
+bool of_JMP1XZ(vthread_t thr, vvp_code_t cp)
+{
+      if (thr->flags[cp->bit_idx[0]] != BIT4_0)
 	    thr->pc = cp->cptr;
 
 	/* Normally, this returns true so that the processor just
@@ -3922,6 +3949,29 @@ bool of_LOAD_VEC4(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %load/vec4a <arr>, <adrx>
+ */
+bool of_LOAD_VEC4A(vthread_t thr, vvp_code_t cp)
+{
+      int adr_index = cp->bit_idx[0];
+
+      long adr = thr->words[adr_index].w_int;
+
+	// If flag[3] is set, then the calculation of the address
+	// failed, and this load should return X instead of the actual
+	// value.
+      if (thr->flags[4] == BIT4_1) {
+	    vvp_vector4_t tmp (get_array_word_size(cp->array), BIT4_X);
+	    thr->push_vec4(tmp);
+	    return true;
+      }
+
+      vvp_vector4_t tmp (array_get_word(cp->array, adr));
+      thr->push_vec4(tmp);
+      return true;
+}
+
+/*
  * This is like of_LOAD_VEC, but includes an add of an integer value from
  * index 0. The <wid> is the expected result width not the vector width.
  */
@@ -4368,12 +4418,13 @@ bool of_PAD_U(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %part <wid>
+ * %part/s <wid>
+ * %part/u <wid>
  * Two values are popped from the stack. First, pop the canonical
  * index of the part select, and second is the value to be
  * selected. The result is pushed back to the stack.
  */
-bool of_PART(vthread_t thr, vvp_code_t cp)
+static bool of_PART_base(vthread_t thr, vvp_code_t cp, bool signed_flag)
 {
       unsigned wid = cp->number;
 
@@ -4384,7 +4435,7 @@ bool of_PART(vthread_t thr, vvp_code_t cp)
 
 	// NOTE: This is treating the vector as signed. Is that correct?
       int32_t base;
-      bool value_ok = vector4_to_value(base4, base, true);
+      bool value_ok = vector4_to_value(base4, base, signed_flag);
       if (! value_ok) {
 	    thr->push_vec4(res);
 	    return true;
@@ -4415,6 +4466,16 @@ bool of_PART(vthread_t thr, vvp_code_t cp)
       thr->push_vec4(res);
 
       return true;
+}
+
+bool of_PART_S(vthread_t thr, vvp_code_t cp)
+{
+      return of_PART_base(thr, cp, true);
+}
+
+bool of_PART_U(vthread_t thr, vvp_code_t cp)
+{
+      return of_PART_base(thr, cp, false);
 }
 
 /*
@@ -5359,6 +5420,21 @@ bool of_RELEASE_WR(vthread_t, vvp_code_t cp)
       return true;
 }
 
+bool of_REPLICATE(vthread_t thr, vvp_code_t cp)
+{
+      int rept = cp->number;
+      vvp_vector4_t val = thr->pop_vec4();
+      vvp_vector4_t res (val.size() * rept, BIT4_X);
+
+      for (int idx = 0 ; idx < rept ; idx += 1) {
+	    res.set_vec(idx * val.size(), val);
+      }
+
+      thr->push_vec4(res);
+
+      return true;
+}
+
 bool of_SCOPY(vthread_t thr, vvp_code_t)
 {
       vvp_object_t tmp;
@@ -6033,6 +6109,28 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
 	    val.resize(wid);
 
       vvp_send_vec4(ptr, val, thr->wt_context);
+
+      return true;
+}
+
+/*
+ * %storevec4/off <var-label>, <offset>, <wid>
+ */
+bool of_STORE_VEC4_OFF(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_ptr_t ptr(cp->net, 0);
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
+      unsigned off_index = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+      int off = thr->words[off_index].w_int;
+
+      vvp_vector4_t val = thr->pop_vec4();
+      assert(val.size() >= wid);
+      if (val.size() > wid)
+	    val.resize(wid);
+
+      vvp_send_vec4_pv(ptr, val, off, wid, sig->value_size(), thr->wt_context);
 
       return true;
 }

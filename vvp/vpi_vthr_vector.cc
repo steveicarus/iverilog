@@ -650,7 +650,6 @@ class __vpiVThrStrStack : public __vpiHandle {
       int vpi_get(int code);
       void vpi_get_value(p_vpi_value val);
     private:
-      const char* name;
       unsigned depth_;
 };
 
@@ -703,10 +702,67 @@ void __vpiVThrStrStack::vpi_get_value(p_vpi_value vp)
       }
 }
 
+class __vpiVThrVec4Stack : public __vpiHandle {
+    public:
+      __vpiVThrVec4Stack(unsigned depth);
+      int get_type_code(void) const;
+      int vpi_get(int code);
+      void vpi_get_value(p_vpi_value val);
+    private:
+      unsigned depth_;
+};
+
+__vpiVThrVec4Stack::__vpiVThrVec4Stack(unsigned d)
+: depth_(d)
+{
+}
+
+int __vpiVThrVec4Stack::get_type_code(void) const
+{ return vpiConstant; }
+
+
+int __vpiVThrVec4Stack::vpi_get(int code)
+{
+      switch (code) {
+	  case vpiSigned:
+	    return 0;
+
+	  case vpiConstType:
+	    return vpiBinaryConst;
+
+#if defined(CHECK_WITH_VALGRIND) || defined(BR916_STOPGAP_FIX)
+	  case _vpiFromThr:
+	    return _vpiVThr;
+#endif
+
+	  default:
+	    return 0;
+      }
+}
+
+void __vpiVThrVec4Stack::vpi_get_value(p_vpi_value vp)
+{
+      assert(vpip_current_vthread);
+      vvp_vector4_t val = vthread_get_vec4_stack(vpip_current_vthread, depth_);
+
+      switch (vp->format) {
+	  default:
+	    fprintf(stderr, "internal error: vpi_get_value(<format=%d>)"
+		    " not implemented for __vpiVThrVec4Stack.\n", vp->format);
+	    assert(0);
+      }
+
+}
 
 vpiHandle vpip_make_vthr_str_stack(unsigned depth)
 {
       class __vpiVThrStrStack*obj = new __vpiVThrStrStack(depth);
+      return obj;
+}
+
+vpiHandle vpip_make_vthr_vec4_stack(unsigned depth)
+{
+      class __vpiVThrVec4Stack*obj = new __vpiVThrVec4Stack(depth);
       return obj;
 }
 

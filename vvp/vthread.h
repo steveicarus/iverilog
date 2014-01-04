@@ -129,6 +129,7 @@ extern void vthread_pop_real(struct vthread_s*thr, unsigned count);
    depth==1, etc. */
 extern const std::string&vthread_get_str_stack(struct vthread_s*thr, unsigned depth);
 extern double vthread_get_real_stack(struct vthread_s*thr, unsigned depth);
+extern const vvp_vector4_t& vthread_get_vec4_stack(struct vthread_s*thr, unsigned depth);
 
 /* This is used to actually delete a thread once we are done with it. */
 extern void vthread_delete(vthread_t thr);
