@@ -877,11 +877,10 @@ This instruction is the same as %mul, but the second operand is an
 immediate value that is padded to the width of the result.
 
 
-* %nand <dst>, <src>, <wid>
+* %nand
 
-Perform the bitwise NAND of the two vectors, and store the result in
-the left vector. Each bit is calculated independent of other bits. NAND
-means the following:
+Perform the bitwise NAND of two vec4 vectors, and push the result. Each
+bit is calculated independent of other bits. NAND means the following:
 
 	0 and ? --> 1
 	? and 0 --> 1
@@ -908,11 +907,11 @@ The supported types are:
 	 "r"        - real
 	 "S"        - SystemVerilog string
 
-* %nor <dst>, <src>, <wid>
+* %nor
 
-Perform the bitwise nor of the vectors. Each bit in the <dst> is
-combined with the corresponding bit in the source, according to the
-truth table:
+Perform the bitwise nor of vec4 vectors, and push the result. Eack bit
+in the source vectors is combined to make a result bit according to the
+truth table.
 
 	1 nor ? --> 0
 	? nor 1 --> 0
@@ -1351,10 +1350,11 @@ This instruction puts the current thread to sleep until all the detached
 children have finished executing. The last detached child is responsible
 for restarting the parent when it finishes.
 
-* %xnor <dst>, <src>, <wid>
+* %xnor
 
-This does a bitwise exclusive nor (~^) of the <src> and <dst> vector,
-and leaves the result in the <dst> vector. xnor is this:
+This instruction pops two vectors from the vec4 stack, does a bitwise
+exclusive nor (~^) of the vectors, and pushes the result. The truth
+table for the xor is:
 
 	0 xnor 0 --> 1
 	0 xnor 1 --> 0
@@ -1363,16 +1363,17 @@ and leaves the result in the <dst> vector. xnor is this:
 	otherwise    x
 
 
-* %xor <dst>, <src>, <wid>
+* %xor
 
-This does a bitwise exclusive or (^) of the <src> and <dst> vector,
-and leaves the result in the <dst> vector. xor is this:
+This instruction pops two vectors from the vec4 stack, does a bitwise
+exclusive or (^) of the vectors, and pushes the result. The truth
+table for the xor is:
 
 	0 xor 0 --> 0
 	0 xor 1 --> 1
 	1 xor 0 --> 1
 	1 xor 1 --> 0
-	otherwise    x
+	otherwise   x
 
 
 /*

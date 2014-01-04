@@ -81,6 +81,18 @@ static void draw_binary_vec4_bitwise(ivl_expr_t expr, int stuff_ok_flag)
 	  case '|':
 	    fprintf(vvp_out, "    %%or;\n");
 	    break;
+	  case '^':
+	    fprintf(vvp_out, "    %%xor;\n");
+	    break;
+	  case 'A': /* ~& */
+	    fprintf(vvp_out, "    %%nand;\n");
+	    break;
+	  case 'O': /* ~| */
+	    fprintf(vvp_out, "    %%nor;\n");
+	    break;
+	  case 'X': /* ~^ */
+	    fprintf(vvp_out, "    %%xnor;\n");
+	    break;
 	  default:
 	    assert(0);
 	    break;
@@ -311,6 +323,10 @@ static void draw_binary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 
 	  case '&':
 	  case '|':
+	  case '^':
+	  case 'A': /* NAND (~&) */
+	  case 'O': /* NOR  (~|) */
+	  case 'X': /* exclusive nor (~^) */
 	    draw_binary_vec4_bitwise(expr, stuff_ok_flag);
 	    break;
 
