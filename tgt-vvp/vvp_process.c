@@ -939,6 +939,7 @@ static void force_vector_to_lval(ivl_statement_t net)
       for (lidx = 0 ;  lidx < ivl_stmt_lvals(net) ; lidx += 1) {
 	    ivl_lval_t lval = ivl_stmt_lval(net, lidx);
 	    ivl_signal_t lsig = ivl_lval_sig(lval);
+	    ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
 
 	    ivl_expr_t word_idx = ivl_lval_idx(lval);
 	    unsigned long use_word = 0;
@@ -964,14 +965,23 @@ static void force_vector_to_lval(ivl_statement_t net)
 		  }
 	    }
 
+
+	    if (lidx+1 < ivl_stmt_lvals(net))
+		  fprintf(vvp_out, "    %%split/vec4 %u;\n", ivl_lval_width(lval));
+
 	      /* L-Value must be a signal: reg or wire */
 	    assert(lsig != 0);
 	      /* Do not support bit or part selects of l-values yet. */
-	    assert(ivl_lval_width(lval) == ivl_signal_width(lsig));
-	    assert(!ivl_lval_part_off(lval));
-
-
-	    fprintf(vvp_out, "    %s v%p_%lu;\n", command_name, lsig, use_word);
+	    if (part_off_ex) {
+		  int off_index = allocate_word();
+		  draw_eval_expr_into_integer(part_off_ex, off_index);
+		  fprintf(vvp_out, "    %s/off v%p_%lu, %d;\n", command_name, lsig, use_word, off_index);
+		  clr_word(off_index);
+	    } else {
+		  assert(ivl_lval_width(lval) == ivl_signal_width(lsig));
+		  assert(!ivl_lval_part_off(lval));
+		  fprintf(vvp_out, "    %s v%p_%lu;\n", command_name, lsig, use_word);
+	    }
 
       }
 }

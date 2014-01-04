@@ -264,6 +264,7 @@ This may not work on all platforms. If run-time debugging is compiled
 out, then this function is a no-op.
 
 * %cassign/vec4 <var-label>
+* %cassign/vec4/off <var-label>, <off-index>
 
 Perform a continuous assign of a constant value to the target
 variable. This is similar to %set, but it uses the cassign port
@@ -276,14 +277,6 @@ README.txt file.
 Perform a continuous assign of a constant real value to the target
 variable. See %cassign/v above. The value is popped from the real
 value stack.
-
-* %cassign/x0 <label>, <bit>, <wid>
-
-Perform continuous assign of a constant value to part of the target
-variable. This is similar to %set/x instruction, but it uses the
-cassign port (port-1) of the signal functor instead of the normal
-assign port (port-0), so the signal responds differently. See
-"VARIABLE STATEMENTS" and "NET STATEMENTS" in the README.txt file.
 
 * %cast2 <dst>, <src>, <wid>
 

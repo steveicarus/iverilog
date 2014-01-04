@@ -1664,6 +1664,42 @@ bool of_CASSIGN_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %cassign/vec4/off <var>, <off>
+ */
+bool of_CASSIGN_VEC4_OFF(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+      unsigned base_idx = cp->bit_idx[0];
+      long base = thr->words[base_idx].w_int;
+      vvp_vector4_t value = thr->pop_vec4();
+      unsigned wid = value.size();
+
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
+      assert(sig);
+
+      if (base < 0 && (wid <= (unsigned)-base))
+	    return true;
+
+      if (base >= (long)sig->value_size())
+	    return true;
+
+      if (base < 0) {
+	    wid -= (unsigned) -base;
+	    base = 0;
+	    value.resize(wid);
+      }
+
+      if (base+wid > sig->value_size()) {
+	    wid = sig->value_size() - base;
+	    value.resize(wid);
+      }
+
+      vvp_net_ptr_t ptr (net, 1);
+      vvp_send_vec4_pv(ptr, value, base, wid, sig->value_size(), 0);
+      return true;
+}
+
 bool of_CASSIGN_WR(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net  = cp->net;
@@ -1676,42 +1712,6 @@ bool of_CASSIGN_WR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_CASSIGN_X0(vthread_t thr, vvp_code_t cp)
-{
-#if 0
-      vvp_net_t*net = cp->net;
-      unsigned base = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-
-	// Implicitly, we get the base into the target vector from the
-	// X0 register.
-      long index = thr->words[0].w_int;
-
-      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
-
-      if (index < 0 && (wid <= (unsigned)-index))
-	    return true;
-
-      if (index >= (long)sig->value_size())
-	    return true;
-
-      if (index < 0) {
-	    wid -= (unsigned) -index;
-	    index = 0;
-      }
-
-      if (index+wid > sig->value_size())
-	    wid = sig->value_size() - index;
-
-      vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
-
-      vvp_net_ptr_t ptr (net, 1);
-      vvp_send_vec4_pv(ptr, vector, index, wid, sig->value_size(), 0);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%cassign/x0 ...\n");
-#endif
-      return true;
-}
 
 bool of_CAST2(vthread_t thr, vvp_code_t cp)
 {
