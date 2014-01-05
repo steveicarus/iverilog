@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -48,7 +48,7 @@ NetNet* sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig)
 
       } else {
 	    verinum zero ((int64_t)val);
-	    zero = pad_to_width(zero, sig->vector_width());
+	    zero = cast_to_width(zero, sig->vector_width());
 	    zero.has_sign(sig->get_signed());
 	    NetConst*zero_obj = new NetConst(scope, scope->local_symbol(), zero);
 	    zero_obj->set_line(*sig);
