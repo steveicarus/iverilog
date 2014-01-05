@@ -1654,11 +1654,15 @@ static int show_stmt_repeat(ivl_statement_t net, ivl_scope_t sscope)
 	/* Calculate the repeat count onto the top of the vec4 stack. */
       draw_eval_vec4(expr, STUFF_OK_XZ);
 
-	/* Test that 0 < expr */
+	/* Test that 0 < expr, escape if expr <= 0. If the expr is
+	   unsigned, then we only need to try to escape if expr==0 as
+	   it will never be <0. */
       fprintf(vvp_out, "T_%u.%u %%dup/vec4;\n", thread_count, lab_top);
       fprintf(vvp_out, "    %%pushi/vec4 0, 0, %u;\n", ivl_expr_width(expr));
       fprintf(vvp_out, "    %%cmp/%s;\n", sign);
-      fprintf(vvp_out, "    %%jmp/1xz T_%u.%u, 5;\n", thread_count, lab_out);
+      if (ivl_expr_signed(expr))
+	    fprintf(vvp_out, "    %%jmp/1xz T_%u.%u, 5;\n", thread_count, lab_out);
+      fprintf(vvp_out, "    %%jmp/1 T_%u.%u, 4;\n", thread_count, lab_out);
 	/* This adds -1 (all ones in 2's complement) to the count. */
       fprintf(vvp_out, "    %%pushi/vec4 1, 0, %u;\n", ivl_expr_width(expr));
       fprintf(vvp_out, "    %%sub;\n");

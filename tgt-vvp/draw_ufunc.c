@@ -24,7 +24,6 @@
 
 static void function_argument_logic(ivl_signal_t port, ivl_expr_t expr)
 {
-      struct vector_info res;
       unsigned ewidth, pwidth;
 
 	/* ports cannot be arrays. */
@@ -32,16 +31,12 @@ static void function_argument_logic(ivl_signal_t port, ivl_expr_t expr)
 
       ewidth = ivl_expr_width(expr);
       pwidth = ivl_signal_width(port);
-	/* Just like a normal assignment the function arguments need to
-	 * be evaluated at either their width or the argument width if
-	 * it is larger. */
-      if (ewidth < pwidth) ewidth = pwidth;
-      res = draw_eval_expr_wid(expr, ewidth, 0);
 
-	/* We could have extra bits so only select the ones we need. */
-      fprintf(vvp_out, "    %%set/v v%p_0, %u, %u;\n", port, res.base, pwidth);
+      draw_eval_vec4(expr, 0);
+      if (ewidth < pwidth)
+	    fprintf(vvp_out, "    %%pad/u %u;\n", pwidth);
 
-      clr_vector(res);
+      fprintf(vvp_out, "    %%store/vec4 v%p_0, %u;\n", port, pwidth);
 }
 
 static void function_argument_real(ivl_signal_t port, ivl_expr_t expr)
@@ -153,13 +148,10 @@ static void draw_ufunc_epilogue(ivl_expr_t expr)
  * parameter 0 of the function definition.
  */
 
-struct vector_info draw_ufunc_expr(ivl_expr_t expr, unsigned wid)
+void draw_ufunc_vec4(ivl_expr_t expr)
 {
-      unsigned swid = ivl_expr_width(expr);
       ivl_scope_t def = ivl_expr_def(expr);
       ivl_signal_t retval = ivl_scope_port(def, 0);
-      struct vector_info res;
-      unsigned load_wid;
 
 	/* Take in arguments to function and call function code. */
       draw_ufunc_preamble(expr);
@@ -167,36 +159,10 @@ struct vector_info draw_ufunc_expr(ivl_expr_t expr, unsigned wid)
 	/* Fresh basic block starts after the join. */
       clear_expression_lookaside();
 
-	/* The return value is in a signal that has the name of the
-	   expression. Load that into the thread and return the
-	   vector result. */
-
-      res.base = allocate_vector(wid);
-      res.wid  = wid;
-      if (res.base == 0) {
-	    fprintf(stderr, "%s:%u: vvp.tgt error: "
-		    "Unable to allocate %u thread bits for function result.\n",
-		    ivl_expr_file(expr), ivl_expr_lineno(expr), wid);
-	    vvp_errors += 1;
-	    return res;
-      }
-
-      assert(res.base != 0);
-
-      load_wid = swid;
-      if (load_wid > ivl_signal_width(retval))
-	    load_wid = ivl_signal_width(retval);
-
       assert(ivl_signal_dimensions(retval) == 0);
-      fprintf(vvp_out, "    %%load/v  %u, v%p_0, %u;\n",
-	      res.base, retval, load_wid);
-
-	/* Pad the signal value with zeros. */
-      if (load_wid < wid)
-	    pad_expr_in_place(expr, res, swid);
+      fprintf(vvp_out, "    %%load/vec4  v%p_0;\n", retval);
 
       draw_ufunc_epilogue(expr);
-      return res;
 }
 
 void draw_ufunc_real(ivl_expr_t expr)

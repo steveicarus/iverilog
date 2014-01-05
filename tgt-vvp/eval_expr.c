@@ -3685,11 +3685,11 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t expr, unsigned wid,
 	  case IVL_EX_SFUNC:
 	    res = draw_sfunc_expr(expr, wid);
 	    break;
-
+#if 0
 	  case IVL_EX_UFUNC:
 	    res = draw_ufunc_expr(expr, wid);
 	    break;
-
+#endif
 	  case IVL_EX_UNARY:
 	    res = draw_unary_expr(expr, wid);
 	    break;
