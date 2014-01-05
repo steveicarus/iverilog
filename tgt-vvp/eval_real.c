@@ -245,16 +245,14 @@ static void draw_realnum_real(ivl_expr_t expr)
  */
 static void draw_real_logic_expr(ivl_expr_t expr, int stuff_ok_flag)
 {
-      struct vector_info sv = draw_eval_expr(expr, stuff_ok_flag);
+      draw_eval_vec4(expr, stuff_ok_flag);
       const char*sign_flag = ivl_expr_signed(expr)? "/s" : "";
 
-      if (sv.wid > 64) {
-            fprintf(vvp_out, "    %%cvt/rv%s  %u, %u;\n",
-                    sign_flag, sv.base, sv.wid);
+      if (ivl_expr_width(expr) > 64) {
+            fprintf(vvp_out, "    %%cvt/rv%s;\n", sign_flag);
       } else {
 	    int res = allocate_word();
-            fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
-                    sign_flag, res, sv.base, sv.wid);
+            fprintf(vvp_out, "    %%ix/vec4%s %d;\n", sign_flag, res);
 
             if (ivl_expr_signed(expr))
                   fprintf(vvp_out, "    %%cvt/rs %d;\n", res);
@@ -262,8 +260,6 @@ static void draw_real_logic_expr(ivl_expr_t expr, int stuff_ok_flag)
                   fprintf(vvp_out, "    %%cvt/ru %d;\n", res);
 	    clr_word(res);
       }
-
-      clr_vector(sv);
 }
 
 static void draw_select_real(ivl_expr_t expr)
@@ -547,15 +543,12 @@ void draw_eval_real(ivl_expr_t expr)
 
 	  default:
 	    if (ivl_expr_value(expr) == IVL_VT_VECTOR) {
-		  struct vector_info sv = draw_eval_expr(expr, 0);
+		  draw_eval_vec4(expr, 0);
 		  const char*sign_flag = ivl_expr_signed(expr)? "/s" : "";
 
-		  clr_vector(sv);
 		  int res = allocate_word();
 
-		  fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n",
-			  sign_flag, res, sv.base, sv.wid);
-
+		  fprintf(vvp_out, "    %%ix/vec4%s %d;\n", sign_flag, res);
 		  fprintf(vvp_out, "    %%cvt/rs %d;\n", res);
 
 		  clr_word(res);

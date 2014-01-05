@@ -2898,6 +2898,17 @@ bool of_END(vthread_t thr, vvp_code_t)
       return false;
 }
 
+/*
+ * %event <var-label>
+ */
+bool of_EVENT(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_ptr_t ptr (cp->net, 0);
+      vvp_vector4_t tmp (1, BIT4_X);
+      vvp_send_vec4(ptr, tmp, 0);
+      return true;
+}
+
 bool of_EVCTL(vthread_t thr, vvp_code_t cp)
 {
       assert(thr->event == 0 && thr->ecount == 0);
@@ -3174,77 +3185,6 @@ bool of_IX_LOAD(vthread_t thr, vvp_code_t cp)
 bool of_IX_MOV(vthread_t thr, vvp_code_t cp)
 {
       thr->words[cp->bit_idx[0]].w_int = thr->words[cp->bit_idx[1]].w_int;
-      return true;
-}
-
-/*
- * Load a vector into an index register. The format of the
- * opcode is:
- *
- *   %ix/get <ix>, <base>, <wid>
- *
- * where <ix> is the index register, <base> is the base of the
- * vector and <wid> is the width in bits.
- *
- * Index registers only hold binary values, so if any of the
- * bits of the vector are x or z, then set the value to 0,
- * set bit[4] to 1, and give up.
- */
-
-static uint64_t vector_to_index(vthread_t thr, unsigned base,
-                                unsigned width, bool signed_flag)
-{
-      uint64_t v = 0;
-      bool unknown_flag = false;
-#if 0
-      vvp_bit4_t vv = BIT4_0;
-      for (unsigned i = 0 ;  i < width ;  i += 1) {
-	    vv = thr_get_bit(thr, base);
-	    if (bit4_is_xz(vv)) {
-		  v = 0UL;
-		  unknown_flag = true;
-		  break;
-	    }
-
-	    v |= (uint64_t) vv << i;
-
-	    if (base >= 4)
-		  base += 1;
-      }
-
-	/* Extend to fill the integer value. */
-      if (signed_flag && !unknown_flag) {
-	    uint64_t pad = vv;
-	    for (unsigned i = width ; i < 8*sizeof(v) ;  i += 1) {
-		  v |= pad << i;
-	    }
-      }
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: vector_to_index(...)\n");
-#endif
-	/* Set bit 4 as a flag if the input is unknown. */
-      thr->flags[4] = unknown_flag? BIT4_1 : BIT4_0;
-
-      return v;
-}
-
-bool of_IX_GET(vthread_t thr, vvp_code_t cp)
-{
-      unsigned index = cp->bit_idx[0];
-      unsigned base  = cp->bit_idx[1];
-      unsigned width = cp->number;
-
-      thr->words[index].w_uint = vector_to_index(thr, base, width, false);
-      return true;
-}
-
-bool of_IX_GET_S(vthread_t thr, vvp_code_t cp)
-{
-      unsigned index = cp->bit_idx[0];
-      unsigned base  = cp->bit_idx[1];
-      unsigned width = cp->number;
-
-      thr->words[index].w_int = vector_to_index(thr, base, width, true);
       return true;
 }
 

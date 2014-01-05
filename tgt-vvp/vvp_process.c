@@ -1687,7 +1687,7 @@ static int show_stmt_trigger(ivl_statement_t net)
 
       show_stmt_file_line(net, "Event trigger statement.");
 
-      fprintf(vvp_out, "    %%set/v E_%p, 0,1;\n", ev);
+      fprintf(vvp_out, "    %%event E_%p;\n", ev);
       return 0;
 }
 

@@ -520,6 +520,11 @@ event control information and the other %evctl statements assert
 that this information has been cleared. You can get an assert if
 this information is not managed correctly.
 
+* %event <functor-label>
+
+This instruction is used to send a pulse to an event object. The
+<functor-label> is an event variable. This instruction simply writes
+an arbitrary value to the event to trigger the event.
 
 * %file_line <file> <line> <description>
 

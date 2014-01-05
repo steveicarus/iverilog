@@ -46,17 +46,14 @@
 static int eval_bool64_logic(ivl_expr_t expr)
 {
       int res;
-      struct vector_info tmp;
       const char*s_flag = "";
 
-      tmp = draw_eval_expr(expr, STUFF_OK_XZ);
+      draw_eval_vec4(expr, STUFF_OK_XZ);
       res = allocate_word();
       if (ivl_expr_signed(expr))
 	    s_flag = "/s";
 
-      fprintf(vvp_out, "    %%ix/get%s %d, %u, %u;\n", s_flag, res,
-              tmp.base, tmp.wid);
-      clr_vector(tmp);
+      fprintf(vvp_out, "    %%ix/vec4%s %d;\n", s_flag, res);
 
       return res;
 }
