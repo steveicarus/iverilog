@@ -95,6 +95,11 @@ bits. AND means the following:
 The input vectors must be the same width, and the output vector will
 be the width of the input.
 
+* %and/r
+
+Pop the top value from the vec4 stack, perform a reduction &, then
+return the single-bit result.
+
 * %assign/ar <array-label>, <delay>
 * %assign/ar/d <array-label>, <delayx>
 * %assign/ar/e <array-label>
@@ -414,11 +419,12 @@ value stack. Precision may be lost in the conversion.
 The %cvt/rv/s instruction is the same as %cvt/rv, but treats the thread
 vector as a signed value.
 
-* %cvt/vr <bit-l>, <wid>
+* %cvt/vr <wid>
 
-The %cvt/vr opcode converts a real word from the stack to a thread vector
-starting at <bit-l> and with the width <wid>. Non-integer precision is
-lost in the conversion, and the real value is popped from the stack.
+The %cvt/vr opcode converts a real word from the stack to a vec4 that
+is <wid> wide. Non-integer precision is lost in the conversion, and
+the real value is popped from the stack. The result is pushed to the
+vec4 stack.
 
 * %deassign <var-label>, <base>, <width>
 

@@ -609,6 +609,21 @@ static void draw_unary_vec4(ivl_expr_t expr, int stuff_ok_flag)
       ivl_expr_t sub = ivl_expr_oper1(expr);
 
       switch (ivl_expr_opcode(expr)) {
+	  case '&':
+	    draw_eval_vec4(sub, stuff_ok_flag);
+	    fprintf(vvp_out, "    %%and/r;\n");
+	    break;
+
+	  case '|':
+	    draw_eval_vec4(sub, stuff_ok_flag);
+	    fprintf(vvp_out, "    %%or/r;\n");
+	    break;
+
+	  case '^':
+	    draw_eval_vec4(sub, stuff_ok_flag);
+	    fprintf(vvp_out, "    %%xor/r;\n");
+	    break;
+
 	  case '~':
 	    draw_eval_vec4(sub, stuff_ok_flag);
 	    fprintf(vvp_out, "    %%inv;\n");
@@ -619,8 +634,72 @@ static void draw_unary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	    fprintf(vvp_out, "    %%nor/r;\n");
 	    break;
 
+	  case '-':
+	    draw_eval_vec4(sub, stuff_ok_flag);
+	    fprintf(vvp_out, "    %%inv;\n");
+	    fprintf(vvp_out, "    %%pushi/vec4 1, 0, %u;\n", ivl_expr_width(sub));
+	    fprintf(vvp_out, "    %%add;\n");
+	    break;
+
+	  case 'A': /* nand (~&) */
+	    draw_eval_vec4(sub, stuff_ok_flag);
+	    fprintf(vvp_out, "    %%nand/r;\n");
+	    break;
+
+	  case 'N': /* nor (~|) */
+	    draw_eval_vec4(sub, stuff_ok_flag);
+	    fprintf(vvp_out, "    %%nor/r;\n");
+	    break;
+
+	  case 'X': /* xnor (~^) */
+	    draw_eval_vec4(sub, stuff_ok_flag);
+	    fprintf(vvp_out, "    %%xnor/r;\n");
+	    break;
+
+	  case 'm': /* abs(m) */
+	    draw_eval_vec4(sub, stuff_ok_flag);
+	    if (! ivl_expr_signed(sub))
+		  break;
+
+	      /* Test if (m) < 0 */
+	    fprintf(vvp_out, "    %%dup/vec4;\n");
+	    fprintf(vvp_out, "    %%pushi/vec4 0, 0, %u;\n", ivl_expr_width(sub));
+	    fprintf(vvp_out, "    %%cmp/s;\n");
+	    fprintf(vvp_out, "    %%jmp/0xz T_%u.%u, 5;\n", thread_count, local_count);
+	      /* If so, calculate -(m) */
+	    fprintf(vvp_out, "    %%inv;\n");
+	    fprintf(vvp_out, "    %%pushi/vec4 1, 0, %u;\n", ivl_expr_width(sub));
+	    fprintf(vvp_out, "    %%add;\n");
+	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, local_count);
+	    break;
+
+	  case 'v': /* Cast real to vec4 */
+	    assert(ivl_expr_value(sub) == IVL_VT_REAL);
+	    draw_eval_real(sub);
+	    fprintf(vvp_out, "    %%cvt/vr %u;\n", ivl_expr_width(expr));
+	    break;
+
+	  case '2': /* Cast expression to bool */
+	    switch (ivl_expr_value(sub)) {
+		case IVL_VT_LOGIC:
+		  draw_eval_vec4(sub, STUFF_OK_XZ);
+		  fprintf(vvp_out, "    %%cast2;\n");
+		  break;
+		case IVL_VT_BOOL:
+		  draw_eval_vec4(sub, 0);
+		  break;
+		case IVL_VT_REAL:
+		  draw_eval_real(sub);
+		  fprintf(vvp_out, "    %%cvt/vr;\n");
+		  break;
+		default:
+		  assert(0);
+		  break;
+	    }
+	    break;
+
 	  default:
-	    fprintf(stderr, "XXXX Unary operator %c no implemented\n", ivl_expr_opcode(expr));
+	    fprintf(stderr, "XXXX Unary operator %c not implemented\n", ivl_expr_opcode(expr));
 	    break;
       }
 }

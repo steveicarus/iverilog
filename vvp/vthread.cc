@@ -1742,36 +1742,25 @@ bool of_CASSIGN_WR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-
-bool of_CAST2(vthread_t thr, vvp_code_t cp)
+/*
+ * %cast2
+ */
+bool of_CAST2(vthread_t thr, vvp_code_t)
 {
-#if 0
-      unsigned dst = cp->bit_idx[0];
-      unsigned src = cp->bit_idx[1];
-      unsigned wid = cp->number;
+      vvp_vector4_t val = thr->pop_vec4();
+      unsigned wid = val.size();
 
-      thr_check_addr(thr, dst+wid-1);
-      thr_check_addr(thr, src+wid-1);
-
-      vvp_vector4_t res;
-      switch (src) {
-	  case 0:
-	  case 2:
-	  case 3:
-	    res = vvp_vector4_t(wid, BIT4_0);
-	    break;
-	  case 1:
-	    res = vvp_vector4_t(wid, BIT4_1);
-	    break;
-	  default:
-	    res = vector2_to_vector4(vvp_vector2_t(vthread_bits_to_vector(thr, src, wid)), wid);
-	    break;
+      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+	    switch (val.value(idx)) {
+		case BIT4_1:
+		  val.set_bit(idx, BIT4_1);
+		  break;
+		default:
+		  val.set_bit(idx, BIT4_0);
+		  break;
+	    }
       }
-
-      thr->bits4.set_vec(dst, res);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%cast2 ...\n");
-#endif
+      thr->push_vec4(val);
       return true;
 }
 
@@ -2272,22 +2261,15 @@ bool of_CVT_UR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %cvt/vr <bit> <wid>
+ * %cvt/vr <wid>
  */
 bool of_CVT_VR(vthread_t thr, vvp_code_t cp)
 {
-#if 0
       double r = thr->pop_real();
-      unsigned base = cp->bit_idx[0];
       unsigned wid = cp->number;
-      vvp_vector4_t tmp(wid, r);
 
-	/* Make sure there is enough space for the new vector. */
-      thr_check_addr(thr, base+wid-1);
-      thr->bits4.set_vec(base, tmp);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%cvt/vr ...\n");
-#endif
+      vvp_vector4_t tmp(wid, r);
+      thr->push_vec4(tmp);
       return true;
 }
 
@@ -4709,45 +4691,43 @@ bool of_NULL(vthread_t thr, vvp_code_t)
       return true;
 }
 
-
-bool of_ANDR(vthread_t thr, vvp_code_t cp)
+/*
+ * %and/r
+ */
+bool of_ANDR(vthread_t thr, vvp_code_t)
 {
-#if 0
-      assert(cp->bit_idx[0] >= 4);
+      vvp_vector4_t val = thr->pop_vec4();
 
       vvp_bit4_t lb = BIT4_1;
-      unsigned idx2 = cp->bit_idx[1];
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-
-	    vvp_bit4_t rb = thr_get_bit(thr, idx2+idx);
+      for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
+	    vvp_bit4_t rb = val.value(idx);
 	    if (rb == BIT4_0) {
 		  lb = BIT4_0;
 		  break;
 	    }
 
-	    if (rb != BIT4_1)
+	    if (rb != 1)
 		  lb = BIT4_X;
       }
 
-      thr_put_bit(thr, cp->bit_idx[0], lb);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%and/r ...\n");
-#endif
+      vvp_vector4_t res (1, lb);
+      thr->push_vec4(res);
+
       return true;
 }
 
-bool of_NANDR(vthread_t thr, vvp_code_t cp)
+/*
+ * %nand/r
+ */
+bool of_NANDR(vthread_t thr, vvp_code_t)
 {
-#if 0
-      assert(cp->bit_idx[0] >= 4);
+      vvp_vector4_t val = thr->pop_vec4();
 
       vvp_bit4_t lb = BIT4_0;
-      unsigned idx2 = cp->bit_idx[1];
+      for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-
-	    vvp_bit4_t rb = thr_get_bit(thr, idx2+idx);
+	    vvp_bit4_t rb = val.value(idx);
 	    if (rb == BIT4_0) {
 		  lb = BIT4_1;
 		  break;
@@ -4757,24 +4737,22 @@ bool of_NANDR(vthread_t thr, vvp_code_t cp)
 		  lb = BIT4_X;
       }
 
-      thr_put_bit(thr, cp->bit_idx[0], lb);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%nand/r ...\n");
-#endif
+      vvp_vector4_t res (1, lb);
+      thr->push_vec4(res);
+
       return true;
 }
 
-bool of_ORR(vthread_t thr, vvp_code_t cp)
+/*
+ * %or/r
+ */
+bool of_ORR(vthread_t thr, vvp_code_t)
 {
-#if 0
-      assert(cp->bit_idx[0] >= 4);
+      vvp_vector4_t val = thr->pop_vec4();
 
       vvp_bit4_t lb = BIT4_0;
-      unsigned idx2 = cp->bit_idx[1];
-
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-
-	    vvp_bit4_t rb = thr_get_bit(thr, idx2+idx);
+      for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
+	    vvp_bit4_t rb = val.value(idx);
 	    if (rb == BIT4_1) {
 		  lb = BIT4_1;
 		  break;
@@ -4784,24 +4762,22 @@ bool of_ORR(vthread_t thr, vvp_code_t cp)
 		  lb = BIT4_X;
       }
 
-      thr_put_bit(thr, cp->bit_idx[0], lb);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%orr ...\n");
-#endif
+      vvp_vector4_t res (1, lb);
+      thr->push_vec4(res);
       return true;
 }
 
-bool of_XORR(vthread_t thr, vvp_code_t cp)
+/*
+ * %xor/r
+ */
+bool of_XORR(vthread_t thr, vvp_code_t)
 {
-#if 0
-      assert(cp->bit_idx[0] >= 4);
+      vvp_vector4_t val = thr->pop_vec4();
 
       vvp_bit4_t lb = BIT4_0;
-      unsigned idx2 = cp->bit_idx[1];
+      for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-
-	    vvp_bit4_t rb = thr_get_bit(thr, idx2+idx);
+	    vvp_bit4_t rb = val.value(idx);
 	    if (rb == BIT4_1)
 		  lb = ~lb;
 	    else if (rb != BIT4_0) {
@@ -4810,24 +4786,22 @@ bool of_XORR(vthread_t thr, vvp_code_t cp)
 	    }
       }
 
-      thr_put_bit(thr, cp->bit_idx[0], lb);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%xorr ...\n");
-#endif
+      vvp_vector4_t res (1, lb);
+      thr->push_vec4(res);
       return true;
 }
 
+/*
+ * %xnor/r
+ */
 bool of_XNORR(vthread_t thr, vvp_code_t cp)
 {
-#if 0
-      assert(cp->bit_idx[0] >= 4);
+      vvp_vector4_t val = thr->pop_vec4();
 
       vvp_bit4_t lb = BIT4_1;
-      unsigned idx2 = cp->bit_idx[1];
+      for (unsigned idx = 0 ; idx < val.size() ; idx += 1) {
 
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-
-	    vvp_bit4_t rb = thr_get_bit(thr, idx2+idx);
+	    vvp_bit4_t rb = val.value(idx);
 	    if (rb == BIT4_1)
 		  lb = ~lb;
 	    else if (rb != BIT4_0) {
@@ -4836,10 +4810,8 @@ bool of_XNORR(vthread_t thr, vvp_code_t cp)
 	    }
       }
 
-      thr_put_bit(thr, cp->bit_idx[0], lb);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%xnorr...\n");
-#endif
+      vvp_vector4_t res (1, lb);
+      thr->push_vec4(res);
       return true;
 }
 
