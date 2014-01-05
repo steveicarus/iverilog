@@ -36,7 +36,7 @@ static void function_argument_logic(ivl_signal_t port, ivl_expr_t expr)
       if (ewidth < pwidth)
 	    fprintf(vvp_out, "    %%pad/u %u;\n", pwidth);
 
-      fprintf(vvp_out, "    %%store/vec4 v%p_0, %u;\n", port, pwidth);
+      fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", port, pwidth);
 }
 
 static void function_argument_real(ivl_signal_t port, ivl_expr_t expr)

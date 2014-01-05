@@ -1128,7 +1128,7 @@ register that contains the LSB of the vector, and the <wid> is the
 size of the vector. The width must exactly match the width of the
 signal.
 
-* %set/av <array-label>, <bit>, <wid>
+* %set/av <array-label>, <bit>, <wid> (XXXX Old definition)
 
 This sets a thread vector to an array word. The <array-label>
 addresses an array device, and the <bit>,<wid> describe a vector to be
@@ -1239,16 +1239,23 @@ The %store/stra targets an array.
 The %store/dar/str is similar, but the target is a dynamic array of
 string string. The index is taken from signed index register 3.
 
-* %store/vec4 <var-label>, <wid>
-* %store/vec4/off <var-label>, <offset>, <wid>
+* %store/vec4 <var-label>, <offset>, <wid>
+* %store/vec4a <var-label>, <addr>, <offset>
 
 Store a logic vector into the variable. The value (and its width) is
 popped off the top of the stack and written to the variable. The value
 is then optionally truncated to <wid> bits and assigned to the
-variable. It is an error for the value to be fewer then <wid> bits.
+variable. It is an error for the value to be fewer then <wid>
+bits. The <offset> is the index register that contains a part offset
+for writing into a part of the variable.
 
-The %store/vec4/off is similar, but it uses the index register
-<offset> to get a vector offset into the target vec4 variable.
+The %store/vec4a is similar, but the target is an array of vec4, the
+<addr> is an index register that contains the canonical address, and
+the <offset> is an index register that contains the vector part
+offset.
+
+Both index registers can be 0, to mean a zero value instead of a zero
+register.
 
 NOTE: The <wid> is not necessary, and should be removed.
 

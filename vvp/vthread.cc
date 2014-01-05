@@ -6035,47 +6035,55 @@ bool of_STORE_STRA(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %store/vec4 <var-label>, <wid>
+ * %store/vec4 <var-label>, <offset>, <wid>
  */
 bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
-{
-	/* Set the value into port 0 of the destination */
-      vvp_net_ptr_t ptr (cp->net, 0);
-      unsigned wid = cp->bit_idx[0];
-
-      vvp_vector4_t val = thr->pop_vec4();
-      assert(val.size() >= wid);
-      if (val.size() > wid)
-	    val.resize(wid);
-
-      vvp_send_vec4(ptr, val, thr->wt_context);
-
-      return true;
-}
-
-/*
- * %storevec4/off <var-label>, <offset>, <wid>
- */
-bool of_STORE_VEC4_OFF(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_ptr_t ptr(cp->net, 0);
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
       unsigned off_index = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
 
-      int off = thr->words[off_index].w_int;
+      int off = off_index? thr->words[off_index].w_int : 0;
 
       vvp_vector4_t val = thr->pop_vec4();
       assert(val.size() >= wid);
       if (val.size() > wid)
 	    val.resize(wid);
 
-      vvp_send_vec4_pv(ptr, val, off, wid, sig->value_size(), thr->wt_context);
+      if (off==0 && val.size()==sig->value_size())
+	    vvp_send_vec4(ptr, val, thr->wt_context);
+      else
+	    vvp_send_vec4_pv(ptr, val, off, wid, sig->value_size(), thr->wt_context);
 
       return true;
 }
 
-bool of_SUB(vthread_t thr, vvp_code_t cp)
+/*
+ * %store/vec4a <var-label>, <addr>, <offset>
+ */
+bool of_STORE_VEC4A(vthread_t thr, vvp_code_t cp)
+{
+      unsigned adr_index = cp->bit_idx[0];
+      unsigned off_index = cp->bit_idx[1];
+
+      vvp_vector4_t value = thr->pop_vec4();
+
+      long adr = adr_index? thr->words[adr_index].w_int : 0;
+      long off = off_index? thr->words[off_index].w_int : 0;
+
+      array_set_word(cp->array, adr, off, value);
+
+      return true;
+}
+
+/*
+ * %sub
+ *   pop r;
+ *   pop l;
+ *   push l-r;
+ */
+bool of_SUB(vthread_t thr, vvp_code_t)
 {
       vvp_vector4_t r = thr->pop_vec4();
       vvp_vector4_t l = thr->pop_vec4();
@@ -6110,7 +6118,7 @@ bool of_SUB(vthread_t thr, vvp_code_t cp)
       delete[]lva;
       delete[]lvb;
 
-      vvp_vector4_t tmp(cp->number, BIT4_X);
+      vvp_vector4_t tmp(wid, BIT4_X);
       thr->push_vec4(tmp);
 
       return true;

@@ -565,22 +565,44 @@ static void store_vec4_to_lval(ivl_statement_t net)
 	    unsigned lwid = ivl_lval_width(lval);
 
 	    ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
+	      /* This is non-nil if the l-val is the word of a memory,
+		 and nil otherwise. */
+	    ivl_expr_t word_ex = ivl_lval_idx(lval);
 
 	    if (lidx+1 < ivl_stmt_lvals(net))
 		  fprintf(vvp_out, "    %%split/vec4 %u;\n", lwid);
 
-	    if (part_off_ex) {
+	    if (word_ex) {
+		    /* Handle index into an array */
+		  int word_index = allocate_word();
+		  int part_index = 0;
+		    /* Calculate the word address into word_index */
+		  draw_eval_expr_into_integer(word_ex, word_index);
+		    /* If there is a part_offset, calcualte it into part_index. */
+		  if (part_off_ex) {
+			part_index = allocate_word();
+			draw_eval_expr_into_integer(part_off_ex, part_index);
+		  }
+
+		  fprintf(vvp_out, "    %%store/vec4a v%p, %d, %d;\n",
+			  lsig, word_index, part_index);
+
+		  clr_word(word_index);
+		  if (part_index)
+			clr_word(part_index);
+
+	    } else if (part_off_ex) {
 		    /* Dynamically calculated part offset */
 		  int offset_index = allocate_word();
 		  draw_eval_expr_into_integer(part_off_ex, offset_index);
-		  fprintf(vvp_out, "    %%store/vec4/off v%p_0, %d, %u;\n",
+		  fprintf(vvp_out, "    %%store/vec4 v%p_0, %d, %u;\n",
 			  lsig, offset_index, lwid);
 		  clr_word(offset_index);
 
 	    } else {
 		    /* No offset expression, so use simpler store function. */
 		  assert(lwid == ivl_signal_width(lsig));
-		  fprintf(vvp_out, "    %%store/vec4 v%p_0, %u;\n", lsig, lwid);
+		  fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", lsig, lwid);
 	    }
       }
 }
@@ -588,7 +610,7 @@ static void store_vec4_to_lval(ivl_statement_t net)
 static int show_stmt_assign_vector(ivl_statement_t net)
 {
       ivl_expr_t rval = ivl_stmt_rval(net);
-      struct vector_info res;
+	//struct vector_info res;
       struct vector_info lres = {0, 0};
       struct vec_slice_info*slices = 0;
 
@@ -610,30 +632,25 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 		 assignment. */
 	    unsigned wid = ivl_stmt_lwidth(net);
 
-	    res.base = allocate_vector(wid);
-	    res.wid = wid;
-
-	    if (res.base == 0) {
-		  fprintf(stderr, "%s:%u: vvp.tgt error: "
-			  "Unable to allocate %u thread bits for "
-			  "r-value expression.\n", ivl_expr_file(rval),
-			  ivl_expr_lineno(rval), wid);
-		  vvp_errors += 1;
-	    }
-
-	    fprintf(vvp_out, "    %%cvt/vr %u, %u;\n", res.base, res.wid);
+	      /* Convert a calculated real value to a vec4 value of
+		 the given width. We need to include the width of the
+		 result because real values to not have any inherit
+		 width. The real value will be popped, and a vec4
+		 value pushed. */
+	    fprintf(vvp_out, "    %%cvt/vr %u;\n", wid);
 
       } else {
 	    draw_eval_vec4(rval, 0);
-	    res.base = 0; // XXXX This is just to suppress the clr_vector below.
-	    res.wid = 0;
+	      //res.base = 0; // XXXX This is just to suppress the clr_vector below.
+	      //res.wid = 0;
       }
 
       switch (ivl_stmt_opcode(net)) {
 	  case 0:
 	    store_vec4_to_lval(net);
 	    break;
-
+#if 0
+	      // XXXX These need to be converted to vec4 style.
 	  case '+':
 	    if (res.base > 3) {
 		  fprintf(vvp_out, "    %%add %u, %u, %u;\n",
@@ -748,7 +765,7 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
 		    res.base, lres.base, res.wid);
 	    break;
-
+#endif
 	  default:
 	    fprintf(vvp_out, "; UNSUPPORTED ASSIGNMENT OPCODE: %c\n", ivl_stmt_opcode(net));
 	    assert(0);
@@ -757,8 +774,6 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 
       if (slices)
 	    free(slices);
-      if (res.base > 3)
-	    clr_vector(res);
 
       return 0;
 }
