@@ -1204,6 +1204,7 @@ bool of_ASSIGN_AVE(vthread_t thr, vvp_code_t cp)
       }
 #else
       fprintf(stderr, "XXXX NOT IMPLEMENTED: %%assign/av/e ...\n");
+      assert(0);
 #endif
       return true;
 }
@@ -1348,15 +1349,44 @@ bool of_ASSIGN_V0E(vthread_t thr, vvp_code_t cp)
 }
 #endif
 
+/*
+ * %assign/vec4/d <var-label> <delay>
+ */
 bool of_ASSIGN_VEC4D(vthread_t thr, vvp_code_t cp)
 {
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%assign/vec4/d\n");
+      vvp_net_ptr_t ptr (cp->net, 0);
+      unsigned del_index = cp->bit_idx[0];
+      vvp_time64_t del = thr->words[del_index].w_int;
+
+      vvp_vector4_t value = thr->pop_vec4();
+
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
+      assert(sig);
+
+      schedule_assign_vector(ptr, 0, sig->value_size(), value, del);
+
       return true;
 }
 
+/*
+ * %assign/vec4/e <var-label>
+ */
 bool of_ASSIGN_VEC4E(vthread_t thr, vvp_code_t cp)
 {
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%assign/vec4/e\n");
+      vvp_net_ptr_t ptr (cp->net, 0);
+      vvp_vector4_t value = thr->pop_vec4();
+
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
+      assert(sig);
+
+      if (thr->ecount == 0) {
+	    schedule_assign_vector(ptr, 0, sig->value_size(), value, 0);
+      } else {
+	    schedule_evctl(ptr, value, 0, sig->value_size(), thr->event, thr->ecount);
+      }
+
+      thr->event = 0;
+      thr->ecount = 0;
       return true;
 }
 
@@ -5494,36 +5524,6 @@ bool of_SET_DAR_OBJ_STR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * This implements the "%set/v <label>, <bit>, <wid>" instruction.
- *
- * The <label> is a reference to a vvp_net_t object, and it is in
- * cp->net.
- *
- * The <bit> is the thread bit address, and is in cp->bin_idx[0].
- *
- * The <wid> is the width of the vector I'm to make, and is in
- * cp->bin_idx[1].
- */
-bool of_SET_VEC(vthread_t thr, vvp_code_t cp)
-{
-#if 0
-      assert(cp->bit_idx[1] > 0);
-      unsigned bit = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-
-	/* set the value into port 0 of the destination. */
-      vvp_net_ptr_t ptr (cp->net, 0);
-
-      vvp_send_vec4(ptr, vthread_bits_to_vector(thr, bit, wid),
-                    thr->wt_context);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%set/vec ...\n");
-#endif
-      return true;
-}
-
-
-/*
  * Implement the %set/x instruction:
  *
  *      %set/x <functor>, <bit>, <wid>
@@ -5582,6 +5582,7 @@ bool of_SET_X0(vthread_t thr, vvp_code_t cp)
       vvp_send_vec4_pv(ptr, bit_vec, index, wid, sig->value_size(), thr->wt_context);
 #else
       fprintf(stderr, "XXXX NOT IMPLEMENTED: %%set/x0 ...\n");
+      assert(0);
 #endif
       return true;
 }

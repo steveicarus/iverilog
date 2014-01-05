@@ -1118,7 +1118,7 @@ values.
 The "%set/dar/obj/str" opcode does the same but for string values and
 uses the string stack.
 
-* %set/v <var-label>, <bit>, <wid>
+* %set/v <var-label>, <bit>, <wid> (XXXX Old definition)
 
 This sets a vector to a variable, and is used to implement blocking
 assignments. The <var-label> identifies the variable to receive the

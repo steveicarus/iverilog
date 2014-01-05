@@ -427,7 +427,7 @@ static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp, int)
 	  }
 
 	  default:
-	    fprintf(stderr, "Unsupported format %d.\n", (int)vp->format);
+	    fprintf(stderr, "Unsupported format %d setting vec4 value.\n", (int)vp->format);
 	    assert(0);
 
       }

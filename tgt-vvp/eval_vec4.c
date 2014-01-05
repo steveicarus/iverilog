@@ -32,11 +32,25 @@ static void draw_binary_vec4_arith(ivl_expr_t expr, int stuff_ok_flag)
       ivl_expr_t le = ivl_expr_oper1(expr);
       ivl_expr_t re = ivl_expr_oper2(expr);
 
+      unsigned lwid = ivl_expr_width(le);
+      unsigned rwid = ivl_expr_width(re);
+      unsigned ewid = ivl_expr_width(expr);
+
       int signed_flag = ivl_expr_signed(le) && ivl_expr_signed(re) ? 1 : 0;
       const char*signed_string = signed_flag? "/s" : "";
 
+	/* All the arithmetic operations handled here require that the
+	   operands (and the result) be the same width. We further
+	   assume that the core has not given us an operand wider then
+	   the expression width. So padd operands as needed. */
       draw_eval_vec4(le, stuff_ok_flag);
+      if (lwid < ewid) {
+	    fprintf(vvp_out, "    %%pad/%c %u;\n", ivl_expr_signed(le)? 's' : 'u', ewid);
+      }
       draw_eval_vec4(re, stuff_ok_flag);
+      if (rwid < ewid) {
+	    fprintf(vvp_out, "    %%pad/%c %u;\n", ivl_expr_signed(re)? 's' : 'u', ewid);
+      }
 
       switch (ivl_expr_opcode(expr)) {
 	  case '+':

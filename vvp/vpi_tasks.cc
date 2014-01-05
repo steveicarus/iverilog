@@ -477,6 +477,7 @@ class sysfunc_vec4 : public __vpiSysTaskCall {
 
     private:
       vpiHandle put_value_int_(p_vpi_value vp);
+      vpiHandle put_value_time_(p_vpi_value vp);
 
     private:
       vvp_vector4_t return_value_;
@@ -494,6 +495,24 @@ vpiHandle sysfunc_vec4::put_value_int_(p_vpi_value vp)
       return 0;
 }
 
+vpiHandle sysfunc_vec4::put_value_time_(p_vpi_value vp)
+{
+      unsigned width = return_value_.size();
+      long tmp = 0;
+      for (unsigned idx = 0 ; idx < width ; idx += 1) {
+	    if (idx == 0)
+		  tmp = vp->value.time->low;
+	    else if (idx == 32)
+		  tmp = vp->value.time->high;
+	    else if (idx == 64)
+		  tmp = 0;
+
+	    return_value_.set_bit(idx, (tmp&1)? BIT4_1 : BIT4_0);
+	    tmp >>= 1;
+      }
+      return 0;
+}
+
 vpiHandle sysfunc_vec4::vpi_put_value(p_vpi_value vp, int)
 {
       put_value = true;
@@ -501,8 +520,10 @@ vpiHandle sysfunc_vec4::vpi_put_value(p_vpi_value vp, int)
       switch (vp->format) {
 	  case vpiIntVal:
 	    return put_value_int_(vp);
+	  case vpiTimeVal:
+	    return put_value_time_(vp);
 	  default:
-	    fprintf(stderr, "Unsupported format %d.\n", (int)vp->format);
+	    fprintf(stderr, "Unsupported format %d seting sysfunc vec4 value.\n", (int)vp->format);
 	    assert(0);
       }
 
