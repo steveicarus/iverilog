@@ -709,6 +709,8 @@ class __vpiVThrVec4Stack : public __vpiHandle {
       int vpi_get(int code);
       void vpi_get_value(p_vpi_value val);
     private:
+      void vpi_get_value_string_(p_vpi_value val, const vvp_vector4_t&val);
+    private:
       unsigned depth_;
 };
 
@@ -746,12 +748,47 @@ void __vpiVThrVec4Stack::vpi_get_value(p_vpi_value vp)
       vvp_vector4_t val = vthread_get_vec4_stack(vpip_current_vthread, depth_);
 
       switch (vp->format) {
+	  case vpiStringVal:
+	    vpi_get_value_string_(vp, val);
+	    break;
+
 	  default:
 	    fprintf(stderr, "internal error: vpi_get_value(<format=%d>)"
 		    " not implemented for __vpiVThrVec4Stack.\n", vp->format);
 	    assert(0);
       }
 
+}
+
+void __vpiVThrVec4Stack::vpi_get_value_string_(p_vpi_value vp, const vvp_vector4_t&val)
+{
+      char*rbuf = need_result_buf((val.size() / 8) + 1, RBUF_VAL);
+      char*cp = rbuf;
+
+      char tmp = 0;
+      for (int bitnr = val.size()-1 ; bitnr >= 0 ; bitnr -= 1) {
+	    tmp <<= 1;
+	    switch (val.value(bitnr)) {
+		case BIT4_1:
+		  tmp |= 1;
+		  break;
+		case BIT4_0:
+		default:
+		  break;
+	    }
+
+	    if ((bitnr&7)==0) {
+		    // Don't include leading nuls
+		  if (tmp == 0 && cp == rbuf)
+			continue;
+
+		  *cp++ = tmp? tmp : ' ';
+		  tmp = 0;
+	    }
+      }
+      *cp++ = 0;
+      vp->format = vpiStringVal;
+      vp->value.str = rbuf;
 }
 
 vpiHandle vpip_make_vthr_str_stack(unsigned depth)
