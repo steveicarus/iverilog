@@ -2619,27 +2619,29 @@ static unsigned long* divide_bits(unsigned long*ap, unsigned long*bp, unsigned w
       return result;
 }
 
-bool of_DIV(vthread_t thr, vvp_code_t cp)
+/*
+ * %div
+ */
+bool of_DIV(vthread_t thr, vvp_code_t)
 {
-#if 0
-      unsigned adra = cp->bit_idx[0];
-      unsigned adrb = cp->bit_idx[1];
-      unsigned wid = cp->number;
+      vvp_vector4_t valb = thr->pop_vec4();
+      vvp_vector4_t vala = thr->pop_vec4();
 
-      assert(adra >= 4);
+      assert(vala.size()== valb.size());
+      unsigned wid = vala.size();
 
-      unsigned long*ap = vector_to_array(thr, adra, wid);
+      unsigned long*ap = vala.subarray(0, wid);
       if (ap == 0) {
 	    vvp_vector4_t tmp(wid, BIT4_X);
-	    thr->bits4.set_vec(adra, tmp);
+	    thr->push_vec4(tmp);
 	    return true;
       }
 
-      unsigned long*bp = vector_to_array(thr, adrb, wid);
+      unsigned long*bp = valb.subarray(0, wid);
       if (bp == 0) {
 	    delete[]ap;
 	    vvp_vector4_t tmp(wid, BIT4_X);
-	    thr->bits4.set_vec(adra, tmp);
+	    thr->push_vec4(tmp);
 	    return true;
       }
 
@@ -2647,10 +2649,11 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
       if (wid <= CPU_WORD_BITS) {
 	    if (bp[0] == 0) {
 		  vvp_vector4_t tmp(wid, BIT4_X);
-		  thr->bits4.set_vec(adra, tmp);
+		  thr->push_vec4(tmp);
 	    } else {
 		  ap[0] /= bp[0];
-		  thr->bits4.setarray(adra, wid, ap);
+		  vala.setarray(0, wid, ap);
+		  thr->push_vec4(vala);
 	    }
 	    delete[]ap;
 	    delete[]bp;
@@ -2662,7 +2665,7 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
 	    delete[]ap;
 	    delete[]bp;
 	    vvp_vector4_t tmp(wid, BIT4_X);
-	    thr->bits4.set_vec(adra, tmp);
+	    thr->push_vec4(tmp);
 	    return true;
       }
 
@@ -2670,13 +2673,12 @@ bool of_DIV(vthread_t thr, vvp_code_t cp)
 	// desired result. We should find that:
 	//  input-a = bp * result + ap;
 
-      thr->bits4.setarray(adra, wid, result);
+      vala.setarray(0, wid, result);
+      thr->push_vec4(vala);
       delete[]ap;
       delete[]bp;
       delete[]result;
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%div ...\n");
-#endif
+
       return true;
 }
 
@@ -2688,31 +2690,33 @@ static void negate_words(unsigned long*val, unsigned words)
 	    val[idx] = add_with_carry(0, ~val[idx], carry);
 }
 
-bool of_DIV_S(vthread_t thr, vvp_code_t cp)
+/*
+ * %div/s
+ */
+bool of_DIV_S(vthread_t thr, vvp_code_t)
 {
-#if 0
-      unsigned adra = cp->bit_idx[0];
-      unsigned adrb = cp->bit_idx[1];
-      unsigned wid = cp->number;
-      unsigned words = (wid + CPU_WORD_BITS - 1) / CPU_WORD_BITS;
+      vvp_vector4_t valb = thr->pop_vec4();
+      vvp_vector4_t vala = thr->pop_vec4();
 
-      assert(adra >= 4);
+      assert(vala.size()== valb.size());
+      unsigned wid = vala.size();
+      unsigned words = (wid + CPU_WORD_BITS - 1) / CPU_WORD_BITS;
 
 	// Get the values, left in right, in binary form. If there is
 	// a problem with either (caused by an X or Z bit) then we
 	// know right away that the entire result is X.
-      unsigned long*ap = vector_to_array(thr, adra, wid);
+      unsigned long*ap = vala.subarray(0, wid);
       if (ap == 0) {
 	    vvp_vector4_t tmp(wid, BIT4_X);
-	    thr->bits4.set_vec(adra, tmp);
+	    thr->push_vec4(tmp);
 	    return true;
       }
 
-      unsigned long*bp = vector_to_array(thr, adrb, wid);
+      unsigned long*bp = valb.subarray(0, wid);
       if (bp == 0) {
 	    delete[]ap;
 	    vvp_vector4_t tmp(wid, BIT4_X);
-	    thr->bits4.set_vec(adra, tmp);
+	    thr->push_vec4(tmp);
 	    return true;
       }
 
@@ -2730,13 +2734,14 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
       if (wid <= CPU_WORD_BITS) {
 	    if (bp[0] == 0) {
 		  vvp_vector4_t tmp(wid, BIT4_X);
-		  thr->bits4.set_vec(adra, tmp);
+		  thr->push_vec4(tmp);
 	    } else {
 		  long tmpa = (long) ap[0];
 		  long tmpb = (long) bp[0];
 		  long res = tmpa / tmpb;
 		  ap[0] = ((unsigned long)res) & ~sign_mask;
-		  thr->bits4.setarray(adra, wid, ap);
+		  vala.setarray(0, wid, ap);
+		  thr->push_vec4(vala);
 	    }
 	    delete[]ap;
 	    delete[]bp;
@@ -2760,7 +2765,7 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
 	    delete[]ap;
 	    delete[]bp;
 	    vvp_vector4_t tmp(wid, BIT4_X);
-	    thr->bits4.set_vec(adra, tmp);
+	    thr->push_vec4(tmp);
 	    return true;
       }
 
@@ -2770,13 +2775,11 @@ bool of_DIV_S(vthread_t thr, vvp_code_t cp)
 
       result[words-1] &= ~sign_mask;
 
-      thr->bits4.setarray(adra, wid, result);
+      vala.setarray(0, wid, result);
+      thr->push_vec4(vala);
       delete[]ap;
       delete[]bp;
       delete[]result;
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%div/s ...\n");
-#endif
       return true;
 }
 
@@ -4148,29 +4151,26 @@ bool of_MIN_WR(vthread_t thr, vvp_code_t)
       return true;
 }
 
-bool of_MOD(vthread_t thr, vvp_code_t cp)
+bool of_MOD(vthread_t thr, vvp_code_t)
 {
-#if 0
-      assert(cp->bit_idx[0] >= 4);
+      vvp_vector4_t valb = thr->pop_vec4();
+      vvp_vector4_t vala = thr->pop_vec4();
 
-      if(cp->number <= 8*sizeof(unsigned long long)) {
-	    unsigned idx1 = cp->bit_idx[0];
-	    unsigned idx2 = cp->bit_idx[1];
+      assert(vala.size()==valb.size());
+      unsigned wid = vala.size();
+
+      if(wid <= 8*sizeof(unsigned long long)) {
 	    unsigned long long lv = 0, rv = 0;
 
-	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  unsigned long long lb = thr_get_bit(thr, idx1);
-		  unsigned long long rb = thr_get_bit(thr, idx2);
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		  unsigned long long lb = vala.value(idx);
+		  unsigned long long rb = valb.value(idx);
 
 		  if ((lb | rb) & 2)
 			goto x_out;
 
 		  lv |= (unsigned long long) lb << idx;
 		  rv |= (unsigned long long) rb << idx;
-
-		  idx1 += 1;
-		  if (idx2 >= 4)
-			idx2 += 1;
 	    }
 
 	    if (rv == 0)
@@ -4178,24 +4178,22 @@ bool of_MOD(vthread_t thr, vvp_code_t cp)
 
 	    lv %= rv;
 
-	    for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1) {
-		  thr_put_bit(thr, cp->bit_idx[0]+idx, (lv&1)?BIT4_1 : BIT4_0);
+	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+		  vala.set_bit(idx, (lv&1)?BIT4_1 : BIT4_0);
 		  lv >>= 1;
 	    }
+	    thr->push_vec4(vala);
 
 	    return true;
 
       } else {
-	    do_verylong_mod(thr, cp, false, false);
+	    do_verylong_mod(thr, vala, valb, false, false);
 	    return true;
       }
 
  x_out:
-      for (unsigned idx = 0 ;  idx < cp->number ;  idx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+idx, BIT4_X);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%mod ...\n");
-#endif
+      vvp_vector4_t tmp (wid, BIT4_X);
+      thr->push_vec4(tmp);
       return true;
 }
 
