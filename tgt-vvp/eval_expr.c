@@ -2231,7 +2231,7 @@ static struct vector_info draw_realnum_expr(ivl_expr_t expr, unsigned wid)
       return res;
 }
 
-static char *process_octal_codes(const char *in, unsigned width)
+char *process_octal_codes(const char *in, unsigned width)
 {
       unsigned idx = 0;
       unsigned ridx = 0;

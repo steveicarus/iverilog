@@ -560,6 +560,41 @@ static void draw_signal_vec4(ivl_expr_t expr)
       clr_word(addr_index);
 }
 
+static void draw_string_vec4(ivl_expr_t expr, int stuff_ok_flag)
+{
+      unsigned wid = ivl_expr_width(expr);
+      char*fp = process_octal_codes(ivl_expr_string(expr), wid);
+      char*p = fp;
+
+      unsigned long tmp = 0;
+      unsigned tmp_wid = 0;
+      int push_flag = 0;
+
+      for (unsigned idx = 0 ; idx < wid ; idx += 8) {
+	    tmp <<= 8;
+	    tmp |= *p;
+	    p += 1;
+	    tmp_wid += 8;
+	    if (tmp_wid == 32) {
+		  fprintf(vvp_out, "    %%pushi/vec4 %lu, 0, 32;\n", tmp);
+		  tmp = 0;
+		  tmp_wid = 0;
+		  if (push_flag != 0)
+			push_flag += 1;
+		  else
+			fprintf(vvp_out, "    %%concat/vec4;\n");
+	    }
+      }
+
+      if (tmp_wid > 0) {
+	    fprintf(vvp_out, "    %%pushi/vec4 %lu, 0, %u;\n", tmp, tmp_wid);
+	    if (push_flag != 0)
+		  fprintf(vvp_out, "    %%oncat/vec4;\n");
+      }
+
+      free(fp);
+}
+
 static void draw_ternary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 {
       ivl_expr_t cond = ivl_expr_oper1(expr);
@@ -732,6 +767,10 @@ void draw_eval_vec4(ivl_expr_t expr, int stuff_ok_flag)
 
 	  case IVL_EX_SIGNAL:
 	    draw_signal_vec4(expr);
+	    return;
+
+	  case IVL_EX_STRING:
+	    draw_string_vec4(expr, stuff_ok_flag);
 	    return;
 
 	  case IVL_EX_TERNARY:

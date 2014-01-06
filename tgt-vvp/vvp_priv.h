@@ -112,6 +112,8 @@ extern void draw_ufunc_object(ivl_expr_t expr);
 extern void pad_expr_in_place(ivl_expr_t expr, struct vector_info res,
                               unsigned swid);
 
+extern char* process_octal_codes(const char*txt, unsigned wid);
+
 /*
  * modpath.c symbols.
  *
