@@ -4886,21 +4886,24 @@ bool of_POP_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_POW(vthread_t thr, vvp_code_t cp)
+/*
+ * %pow
+ */
+bool of_POW(vthread_t thr, vvp_code_t)
 {
-#if 0
-      assert(cp->bit_idx[0] >= 4);
+      vvp_vector4_t valb = thr->pop_vec4();
+      vvp_vector4_t vala = thr->pop_vec4();
 
-      unsigned idx = cp->bit_idx[0];
-      unsigned idy = cp->bit_idx[1];
-      unsigned wid = cp->number;
-      vvp_vector2_t xv2 = vvp_vector2_t(vthread_bits_to_vector(thr, idx, wid));
-      vvp_vector2_t yv2 = vvp_vector2_t(vthread_bits_to_vector(thr, idy, wid));
+      assert(vala.size()==valb.size());
+      unsigned wid = vala.size();
+
+      vvp_vector2_t xv2 = vvp_vector2_t(vala);
+      vvp_vector2_t yv2 = vvp_vector2_t(valb);
 
         /* If we have an X or Z in the arguments return X. */
       if (xv2.is_NaN() || yv2.is_NaN()) {
-	    for (unsigned jdx = 0 ;  jdx < wid ;  jdx += 1)
-		  thr_put_bit(thr, cp->bit_idx[0]+jdx, BIT4_X);
+	    vvp_vector4_t tmp (wid, BIT4_X);
+	    thr->push_vec4(tmp);
 	    return true;
       }
 
@@ -4910,38 +4913,34 @@ bool of_POW(vthread_t thr, vvp_code_t cp)
 
       vvp_vector2_t result = pow(xv2, yv2);
 
-        /* If the result is too small zero pad it. */
-      if (result.size() < wid) {
-	    for (unsigned jdx = wid-1;  jdx >= result.size();  jdx -= 1)
-		  thr_put_bit(thr, cp->bit_idx[0]+jdx, BIT4_0);
-	    wid = result.size();
+        /* Copy only what we need of the result. If the result is too
+	   small, zero-pad it. */
+      for (unsigned jdx = 0;  jdx < wid;  jdx += 1) {
+	    if (jdx >= result.size())
+		  vala.set_bit(jdx, BIT4_0);
+	    else
+		  vala.set_bit(jdx, result.value(jdx) ? BIT4_1 : BIT4_0);
       }
+      thr->push_vec4(vala);
 
-        /* Copy only what we need of the result. */
-      for (unsigned jdx = 0;  jdx < wid;  jdx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+jdx,
-	                result.value(jdx) ? BIT4_1 : BIT4_0);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%pow ...\n");
-#endif
       return true;
 }
 
-bool of_POW_S(vthread_t thr, vvp_code_t cp)
+/*
+ * %pow/s
+ */
+bool of_POW_S(vthread_t thr, vvp_code_t)
 {
-#if 0
-      assert(cp->bit_idx[0] >= 4);
+      vvp_vector4_t yv = thr->pop_vec4();
+      vvp_vector4_t xv = thr->pop_vec4();
 
-      unsigned idx = cp->bit_idx[0];
-      unsigned idy = cp->bit_idx[1];
-      unsigned wid = cp->number;
-      vvp_vector4_t xv = vthread_bits_to_vector(thr, idx, wid);
-      vvp_vector4_t yv = vthread_bits_to_vector(thr, idy, wid);
+      assert(xv.size()==yv.size());
+      unsigned wid = xv.size();
 
         /* If we have an X or Z in the arguments return X. */
       if (xv.has_xz() || yv.has_xz()) {
-	    for (unsigned jdx = 0 ;  jdx < wid ;  jdx += 1)
-		  thr_put_bit(thr, cp->bit_idx[0]+jdx, BIT4_X);
+	    vvp_vector4_t tmp (wid, BIT4_X);
+	    thr->push_vec4(tmp);
 	    return true;
       }
 
@@ -4954,12 +4953,7 @@ bool of_POW_S(vthread_t thr, vvp_code_t cp)
       else resd = pow(xd, yd);
       vvp_vector4_t res = vvp_vector4_t(wid, resd);
 
-        /* Copy the result. */
-      for (unsigned jdx = 0;  jdx < wid;  jdx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+jdx, res.value(jdx));
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%pow/s ...\n");
-#endif
+      thr->push_vec4(res);
       return true;
 }
 
