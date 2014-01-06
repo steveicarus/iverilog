@@ -709,7 +709,7 @@ class __vpiVThrVec4Stack : public __vpiHandle {
       int vpi_get(int code);
       void vpi_get_value(p_vpi_value val);
     private:
-      void vpi_get_value_string_(p_vpi_value val, const vvp_vector4_t&val);
+      void vpi_get_value_string_(p_vpi_value vp, const vvp_vector4_t&val);
     private:
       unsigned depth_;
 };
