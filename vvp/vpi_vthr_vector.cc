@@ -35,6 +35,9 @@
 # include  <cassert>
 # include  "ivl_alloc.h"
 
+extern const char hex_digits[256];
+extern const char oct_digits[64];
+
 struct __vpiVThrVec : public __vpiHandle {
       __vpiVThrVec();
       int get_type_code(void) const;
@@ -704,18 +707,25 @@ void __vpiVThrStrStack::vpi_get_value(p_vpi_value vp)
 
 class __vpiVThrVec4Stack : public __vpiHandle {
     public:
-      __vpiVThrVec4Stack(unsigned depth);
+      __vpiVThrVec4Stack(unsigned depth, bool signed_flag);
       int get_type_code(void) const;
       int vpi_get(int code);
       void vpi_get_value(p_vpi_value val);
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
     private:
       void vpi_get_value_string_(p_vpi_value vp, const vvp_vector4_t&val);
+      void vpi_get_value_binstr_(p_vpi_value vp, const vvp_vector4_t&val);
+      void vpi_get_value_decstr_(p_vpi_value vp, const vvp_vector4_t&val);
+      void vpi_get_value_real_  (p_vpi_value vp, const vvp_vector4_t&val);
+      void vpi_get_value_hexstr_(p_vpi_value vp, const vvp_vector4_t&val);
+      void vpi_get_value_vector_(p_vpi_value vp, const vvp_vector4_t&val);
     private:
       unsigned depth_;
+      bool signed_flag_;
 };
 
-__vpiVThrVec4Stack::__vpiVThrVec4Stack(unsigned d)
-: depth_(d)
+__vpiVThrVec4Stack::__vpiVThrVec4Stack(unsigned d, bool sf)
+: depth_(d), signed_flag_(sf)
 {
 }
 
@@ -748,8 +758,24 @@ void __vpiVThrVec4Stack::vpi_get_value(p_vpi_value vp)
       vvp_vector4_t val = vthread_get_vec4_stack(vpip_current_vthread, depth_);
 
       switch (vp->format) {
+
+	  case vpiBinStrVal:
+	    vpi_get_value_binstr_(vp, val);
+	    break;
+	  case vpiDecStrVal:
+	    vpi_get_value_decstr_(vp, val);
+	    break;
+	  case vpiHexStrVal:
+	    vpi_get_value_hexstr_(vp, val);
+	    break;
+	  case vpiRealVal:
+	    vpi_get_value_real_(vp, val);
+	    break;
 	  case vpiStringVal:
 	    vpi_get_value_string_(vp, val);
+	    break;
+	  case vpiVectorVal:
+	    vpi_get_value_vector_(vp, val);
 	    break;
 
 	  default:
@@ -758,6 +784,80 @@ void __vpiVThrVec4Stack::vpi_get_value(p_vpi_value vp)
 	    assert(0);
       }
 
+}
+
+void __vpiVThrVec4Stack::vpi_get_value_binstr_(p_vpi_value vp, const vvp_vector4_t&val)
+{
+      unsigned wid = val.size();
+      char*rbuf = need_result_buf(wid+1, RBUF_VAL);
+      for (unsigned idx = 0 ; idx < wid ; idx += 1) {
+	    rbuf[wid-idx-1] = vvp_bit4_to_ascii(val.value(idx));
+      }
+      rbuf[wid] = 0;
+      vp->value.str = rbuf;
+}
+
+void __vpiVThrVec4Stack::vpi_get_value_decstr_(p_vpi_value vp, const vvp_vector4_t&val)
+{
+      unsigned wid = val.size();
+      int nbuf = (wid+2)/3 + 1;
+      char *rbuf = need_result_buf(nbuf, RBUF_VAL);
+
+      vpip_vec4_to_dec_str(val, rbuf, nbuf, signed_flag_);
+      vp->value.str = rbuf;
+}
+
+void __vpiVThrVec4Stack::vpi_get_value_hexstr_(p_vpi_value vp, const vvp_vector4_t&val)
+{
+      unsigned wid = val.size();
+      unsigned hwid = (wid + 3) /4;
+      char*rbuf = need_result_buf(hwid+1, RBUF_VAL);
+      rbuf[hwid] = 0;
+
+      unsigned hval = 0;
+      for (unsigned idx = 0; idx < wid ; idx += 1) {
+	    unsigned tmp = 0;
+	    switch (val.value(idx)) {
+		case BIT4_0:
+		  tmp = 0;
+		  break;
+		case BIT4_1:
+		  tmp = 1;
+		  break;
+		case BIT4_X:
+		  tmp = 2;
+		  break;
+		case BIT4_Z:
+		  tmp = 3;
+		  break;
+	    }
+	    hval = hval | (tmp << 2*(idx%4));
+
+	    if (idx%4 == 3) {
+		  hwid -= 1;
+		  rbuf[hwid] = hex_digits[hval];
+		  hval = 0;
+	    }
+      }
+
+      if (hwid > 0) {
+	    hwid -= 1;
+	    rbuf[hwid] = hex_digits[hval];
+	    hval = 0;
+      }
+      vp->value.str = rbuf;
+}
+
+void __vpiVThrVec4Stack::vpi_get_value_real_(p_vpi_value vp, const vvp_vector4_t&val)
+{
+      unsigned wid = val.size();
+      vp->value.real = 0.0;
+
+      for (unsigned idx = wid ; idx > 0 ; idx -= 1) {
+	    vp->value.real *= 2.0;
+	    if (val.value(idx-1) == BIT4_1)
+		  vp->value.real += 1.0;
+      }
 }
 
 void __vpiVThrVec4Stack::vpi_get_value_string_(p_vpi_value vp, const vvp_vector4_t&val)
@@ -791,15 +891,62 @@ void __vpiVThrVec4Stack::vpi_get_value_string_(p_vpi_value vp, const vvp_vector4
       vp->value.str = rbuf;
 }
 
+void __vpiVThrVec4Stack::vpi_get_value_vector_(p_vpi_value vp, const vvp_vector4_t&val)
+{
+      unsigned wid = val.size();
+
+      vp->value.vector = (s_vpi_vecval*)
+	    need_result_buf((wid+31)/32*sizeof(s_vpi_vecval), RBUF_VAL);
+      assert(vp->value.vector);
+
+      for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
+	    int word = idx/32;
+	    PLI_INT32 mask = 1 << (idx%32);
+
+	    switch (val.value(idx)) {
+		case BIT4_0:
+		  vp->value.vector[word].aval &= ~mask;
+		  vp->value.vector[word].bval &= ~mask;
+		  break;
+		case BIT4_1:
+		  vp->value.vector[word].aval |=  mask;
+		  vp->value.vector[word].bval &= ~mask;
+		  break;
+		case BIT4_X:
+		  vp->value.vector[word].aval |=  mask;
+		  vp->value.vector[word].bval |=  mask;
+		  break;
+		case BIT4_Z:
+		  vp->value.vector[word].aval &= ~mask;
+		  vp->value.vector[word].bval |=  mask;
+		  break;
+	    }
+      }
+}
+
+vpiHandle __vpiVThrVec4Stack::vpi_put_value(p_vpi_value vp, int /*flags*/)
+{
+      assert(vpip_current_vthread);
+
+      switch (vp->format) {
+
+	  default:
+	    fprintf(stderr, "internal error: vpi_put_value(<format=%d>)"
+		    " not implemented for __vpiVThrVec4Stack.\n", vp->format);
+	    assert(0);
+	    return 0;
+      }
+}
+
 vpiHandle vpip_make_vthr_str_stack(unsigned depth)
 {
       class __vpiVThrStrStack*obj = new __vpiVThrStrStack(depth);
       return obj;
 }
 
-vpiHandle vpip_make_vthr_vec4_stack(unsigned depth)
+vpiHandle vpip_make_vthr_vec4_stack(unsigned depth, bool signed_flag)
 {
-      class __vpiVThrVec4Stack*obj = new __vpiVThrVec4Stack(depth);
+      class __vpiVThrVec4Stack*obj = new __vpiVThrVec4Stack(depth, signed_flag);
       return obj;
 }
 

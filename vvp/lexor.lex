@@ -269,7 +269,7 @@ static char* strdupnew(char const *str)
       assert(yylval.text);
       return T_SYMBOL; }
 
-"S<"[0-9]*",vec4>" {
+"S<"[0-9]*",vec4,"[us]">" {
       yylval.text = strdup(yytext);
       assert(yylval.text);
       return T_SYMBOL; }

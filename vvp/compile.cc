@@ -572,10 +572,21 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 		  val.ptr = vpip_make_vthr_str_stack(base);
 		  sym_set_value(sym_vpi, label(), val);
 
-	    } else if (1 == sscanf(label(), "S<%u,vec4>%n", &base, &n)
+	    } else if (2 == sscanf(label(), "S<%u,vec4,%[su]>%n", &base, ss, &n)
 		       && n == strlen(label())) {
 
-		  val.ptr = vpip_make_vthr_vec4_stack(base);
+		  bool signed_flag = false;
+		  for (char*fp = ss ;  *fp ;  fp += 1) switch (*fp) {
+		      case 's':
+			signed_flag = true;
+			break;
+		      case 'u':
+			signed_flag = false;
+			break;
+		      default:
+			break;
+		  }
+		  val.ptr = vpip_make_vthr_vec4_stack(base, signed_flag);
 		  sym_set_value(sym_vpi, label(), val);
 	    }
 

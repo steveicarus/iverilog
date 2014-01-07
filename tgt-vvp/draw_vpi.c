@@ -29,7 +29,7 @@
 
 struct args_info {
       char*text;
-	/* True if this argument is a calculated vec4. */
+	/* True ('s' or 'u' if this argument is a calculated vec4. */
       char vec_flag;
 	/* True if this argument is a calculated string. */
       char str_flag;
@@ -399,7 +399,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		case IVL_VT_LOGIC:
 		case IVL_VT_BOOL:
 		  draw_eval_vec4(expr, 0);
-		  args[idx].vec_flag = 1;
+		  args[idx].vec_flag = ivl_expr_signed(expr)? 's' : 'u';
 		  args[idx].str_flag = 0;
 		  args[idx].real_flag = 0;
 		  args[idx].stack = vec4_stack_need;
@@ -452,7 +452,8 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  fprintf(vvp_out, ", W<%u,r>",pos);
 	    } else if (args[idx].vec_flag) {
 		  unsigned pos = vec4_stack_need - args[idx].stack - 1;
-		  fprintf(vvp_out, ", S<%u,vec4>",pos);
+		  char sign_flag = args[idx].vec_flag;
+		  fprintf(vvp_out, ", S<%u,vec4,%c>",pos, sign_flag);
 	    } else {
 		  fprintf(vvp_out, ", %s", args[idx].text);
 	    }
