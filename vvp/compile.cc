@@ -536,7 +536,14 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 	    unsigned base, wid;
 	    unsigned n = 0;
 	    char ss[32];
-	    if (2 <= sscanf(label(), "T<%u,%u>%n", &base, &wid, &n)
+	    if (2 == sscanf(label(), "W<%u,%[r]>%n", &base, ss, &n)
+		       && n == strlen(label())) {
+
+		  val.ptr = vpip_make_vthr_word(base, ss);
+		  sym_set_value(sym_vpi, label(), val);
+#if 0
+		    // The T<...> forms are obsolete.
+	    } else if (2 <= sscanf(label(), "T<%u,%u>%n", &base, &wid, &n)
 		&& n == strlen(label())) {
 		  val.ptr = vpip_make_vthr_vector(base, wid, false);
 		  sym_set_value(sym_vpi, label(), val);
@@ -559,13 +566,7 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 
 		  val.ptr = vpip_make_vthr_vector(base, wid, signed_flag);
 		  sym_set_value(sym_vpi, label(), val);
-
-	    } else if (2 == sscanf(label(), "W<%u,%[r]>%n", &base, ss, &n)
-		       && n == strlen(label())) {
-
-		  val.ptr = vpip_make_vthr_word(base, ss);
-		  sym_set_value(sym_vpi, label(), val);
-
+#endif
 	    } else if (1 == sscanf(label(), "S<%u,str>%n", &base, &n)
 		       && n == strlen(label())) {
 

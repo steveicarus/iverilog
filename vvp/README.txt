@@ -856,17 +856,6 @@ or &A<>/&PV<> select. The third form retrieves the <base> from thread
 space using <twid> bits starting at <tbase>. The base value may be
 signed or unsigned.
 
-* The T<> argument
-
-This is the catch-all for arguments that are not otherwise
-handled. This references the bits directly in the thread. The format
-is:
-
-   T '<' <base>, <wid>, <su> '>'
-
-The <base> and <wid> are the base of a vector value in the thread and
-the width of the vector. The <su> is 's' or 'u' for signed or unsigned.
-
 TRUTH TABLES
 
 The logic that a functor represents is expressed as a truth table. The

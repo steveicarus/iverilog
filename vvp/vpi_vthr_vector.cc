@@ -38,6 +38,7 @@
 extern const char hex_digits[256];
 extern const char oct_digits[64];
 
+#if 0
 struct __vpiVThrVec : public __vpiHandle {
       __vpiVThrVec();
       int get_type_code(void) const;
@@ -51,7 +52,8 @@ struct __vpiVThrVec : public __vpiHandle {
       unsigned signed_flag : 1;
       const char *name;
 };
-
+#endif
+#if 0
 inline static
 vvp_bit4_t get_bit(struct __vpiVThrVec *rfp, unsigned idx)
 {
@@ -63,7 +65,7 @@ void set_bit(struct __vpiVThrVec *rfp, unsigned idx, vvp_bit4_t bit)
 {
       return vthread_put_bit(vpip_current_vthread, rfp->bas+idx, bit);
 }
-
+#endif
 
 /*
  * Hex digits that represent 4-value bits of Verilog are not as
@@ -81,6 +83,7 @@ extern const char hex_digits[256];
 
 extern const char oct_digits[64];
 
+#if 0
 /*
  *  vpi_get
  */
@@ -109,7 +112,8 @@ static int vthr_vec_get(int code, vpiHandle ref)
 	    return 0;
       }
 }
-
+#endif
+#if 0
 static char* vthr_vec_get_str(int code, vpiHandle ref)
 {
       struct __vpiVThrVec*rfp = dynamic_cast<__vpiVThrVec*>(ref);
@@ -123,7 +127,8 @@ static char* vthr_vec_get_str(int code, vpiHandle ref)
 
       return 0;
 }
-
+#endif
+#if 0
 static void vthr_vec_DecStrVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 {
       int nbuf = (rfp->wid+2)/3 + 1;
@@ -138,7 +143,8 @@ static void vthr_vec_DecStrVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 
       return;
 }
-
+#endif
+#if 0
 static void vthr_vec_StringVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 {
     char tmp = 0;
@@ -172,7 +178,8 @@ static void vthr_vec_StringVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
     vp->value.str = rbuf;
     return;
 }
-
+#endif
+#if 0
 /*
  * The get_value method reads the values of the functors and returns
  * the vector to the caller. This causes no side-effect, and reads the
@@ -357,7 +364,8 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	    assert(0);
       }
 }
-
+#endif
+#if 0
 /*
  * The put_value method writes the value into the vector.
  */
@@ -437,7 +445,9 @@ static vpiHandle vthr_vec_put_value(vpiHandle ref, s_vpi_value*vp, int)
 
       return ref;
 }
+#endif
 
+#if 0
 // The code fully supports vpiReg, vpi_Net, but we do not
 // create such things, yet.  Lacking a name, for example.
 
@@ -458,7 +468,8 @@ void __vpiVThrVec::vpi_get_value(p_vpi_value val)
 
 vpiHandle __vpiVThrVec::vpi_put_value(p_vpi_value val, int flags)
 { return vthr_vec_put_value(this, val, flags); }
-
+#endif
+#if 0
 /*
  * Construct a vpiReg object. Give the object specified dimensions,
  * and point to the specified functor for the lsb.
@@ -475,6 +486,7 @@ vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag)
 
       return obj;
 }
+#endif
 
 #ifdef CHECK_WITH_VALGRIND
 static map<vpiHandle, bool> handle_map;

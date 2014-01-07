@@ -656,7 +656,9 @@ vpiHandle vpip_make_real_param(char*name, double value, bool local_flag,
  *  thread.
  */
 
+#if 0
 vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag);
+#endif
 
 vpiHandle vpip_make_vthr_word(unsigned base, const char*type);
 vpiHandle vpip_make_vthr_str_stack(unsigned depth);
