@@ -579,7 +579,7 @@ static void draw_string_vec4(ivl_expr_t expr, int stuff_ok_flag)
 		  fprintf(vvp_out, "    %%pushi/vec4 %lu, 0, 32;\n", tmp);
 		  tmp = 0;
 		  tmp_wid = 0;
-		  if (push_flag != 0)
+		  if (push_flag == 0)
 			push_flag += 1;
 		  else
 			fprintf(vvp_out, "    %%concat/vec4;\n");
@@ -589,7 +589,7 @@ static void draw_string_vec4(ivl_expr_t expr, int stuff_ok_flag)
       if (tmp_wid > 0) {
 	    fprintf(vvp_out, "    %%pushi/vec4 %lu, 0, %u;\n", tmp, tmp_wid);
 	    if (push_flag != 0)
-		  fprintf(vvp_out, "    %%oncat/vec4;\n");
+		  fprintf(vvp_out, "    %%concat/vec4;\n");
       }
 
       free(fp);

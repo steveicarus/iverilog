@@ -640,7 +640,15 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	    fprintf(vvp_out, "    %%cvt/vr %u;\n", wid);
 
       } else {
+	    unsigned wid = ivl_stmt_lwidth(net);
 	    draw_eval_vec4(rval, 0);
+	    if (ivl_expr_width(rval)==wid) {
+		  ; /* Normally, the rval expression size is correct. */
+	    } else if (ivl_expr_signed(rval)) {
+		  fprintf(vvp_out, "    %%pad/s %u;\n", wid);
+	    } else {
+		  fprintf(vvp_out, "    %%pad/u %u;\n", wid);
+	    }
 	      //res.base = 0; // XXXX This is just to suppress the clr_vector below.
 	      //res.wid = 0;
       }
