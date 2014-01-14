@@ -283,7 +283,7 @@ static void draw_sfunc_real(ivl_expr_t expr)
 
 	  case IVL_VT_REAL:
 	    if (ivl_expr_parms(expr) == 0) {
-		  fprintf(vvp_out, "    %%vpi_func/r %u %u \"%s\" {0 0};\n",
+		  fprintf(vvp_out, "    %%vpi_func/r %u %u \"%s\" {0 0 0};\n",
 			  ivl_file_table_index(ivl_expr_file(expr)),
 			  ivl_expr_lineno(expr), ivl_expr_name(expr));
 
