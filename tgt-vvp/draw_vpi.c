@@ -156,18 +156,9 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 			      return 0;
 			}
 		  } else if (word_ex) {
-#if 0
-			/* Fallback case: evaluate expression. */
-			struct vector_info av;
-			av = draw_eval_expr(word_ex, STUFF_OK_XZ);
-			snprintf(buffer, sizeof buffer, "&A<v%p, %u %u \"%s\">",
-			         sig, av.base, av.wid,
-			         (ivl_expr_signed(word_ex) ? "s" : "u"));
-			result->vec = av;
-			result->vec_flag = 1;
-#else
-			assert(0); // XXXX
-#endif
+			/* Fallback case: Give up and evaluate expression. */
+			return 0;
+
 		  } else {
 			assert(use_word_defined);
 			snprintf(buffer, sizeof buffer, "&A<v%p, %u>",
@@ -251,21 +242,8 @@ static int get_vpi_taskfunc_signal_arg(struct args_info *result,
 			return 0;
 		  }
 	    } else {
-#if 0
-		    /* Fallback case: evaluate the expression. */
-		  struct vector_info rv;
-		  rv = draw_eval_expr(bexpr, STUFF_OK_XZ);
-		  snprintf(buffer, sizeof buffer,
-		           "&PV<v%p_0, %u %u \"%s\", %u>",
-		           ivl_expr_signal(vexpr),
-		           rv.base, rv.wid,
-		           (ivl_expr_signed(bexpr) ? "s" : "u"),
-		           ivl_expr_width(expr));
-		  result->vec = rv;
-		  result->vec_flag = 1;
-#else
-		  assert(0); // XXXX
-#endif
+		    /* Fallback case: Punt and let caller handle it. */
+		  return 0;
 	    }
 	    result->text = strdup(buffer);
 	    return 1;
@@ -386,9 +364,18 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 
 		case IVL_EX_SIGNAL:
 		case IVL_EX_SELECT:
-		  if (get_vpi_taskfunc_signal_arg(&args[idx], expr)) continue;
-		  else break;
-
+		  args[idx].stack = vec4_stack_need;
+		  if (get_vpi_taskfunc_signal_arg(&args[idx], expr)) {
+			if (args[idx].vec_flag) {
+			      vec4_stack_need += 1;
+			} else {
+			      args[idx].stack = 0;
+			}
+			continue;
+		  } else {
+			args[idx].stack = 0;
+			break;
+		  }
 		    /* Everything else will need to be evaluated and
 		       passed as a constant to the vpi task. */
 		default:
