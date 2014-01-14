@@ -157,6 +157,8 @@ static const struct opcode_table_s opcode_table[] = {
       { "%evctl/s",of_EVCTLS, 2,  {OA_FUNC_PTR, OA_BIT1,     OA_NONE} },
       { "%event",  of_EVENT,  1,  {OA_FUNC_PTR, OA_NONE,     OA_NONE} },
       { "%flag_get/vec4", of_FLAG_GET_VEC4, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
+      { "%flag_mov",      of_FLAG_MOV,      2, {OA_BIT1,   OA_BIT2, OA_NONE} },
+      { "%flag_or",       of_FLAG_OR,       2, {OA_BIT1,   OA_BIT2, OA_NONE} },
       { "%flag_set/imm",  of_FLAG_SET_IMM,  2, {OA_NUMBER, OA_BIT1, OA_NONE} },
       { "%flag_set/vec4", of_FLAG_SET_VEC4, 1, {OA_NUMBER, OA_NONE, OA_NONE} },
       { "%force/link",    of_FORCE_LINK,2,{OA_FUNC_PTR, OA_FUNC_PTR2, OA_NONE} },

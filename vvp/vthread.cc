@@ -1263,6 +1263,11 @@ bool of_ASSIGN_VEC4_A_D(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t value = thr->pop_vec4();
 
+	// Abort if flags[4] is set. This can happen if the calulation
+	// into an index register failed.
+      if (thr->flags[4] == BIT4_1)
+	    return true;
+
       schedule_assign_array_word(cp->array, adr, off, value, del);
       return true;
 }
@@ -1279,6 +1284,11 @@ bool of_ASSIGN_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
 
       int off = thr->words[off_index].w_int;
       int del = thr->words[del_index].w_int;
+
+	// Abort if flags[4] is set. This can happen if the calulation
+	// into an index register failed.
+      if (thr->flags[4] == BIT4_1)
+	    return true;
 
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
       assert(sig);
@@ -2934,6 +2944,30 @@ bool of_FLAG_GET_VEC4(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t val (1, thr->flags[flag]);
       thr->push_vec4(val);
 
+      return true;
+}
+
+/*
+ * %flag_mov <flag1>, <flag2)
+ */
+bool of_FLAG_MOV(vthread_t thr, vvp_code_t cp)
+{
+      int flag1 = cp->bit_idx[0];
+      int flag2 = cp->bit_idx[1];
+
+      thr->flags[flag1] = thr->flags[flag2];
+      return true;
+}
+
+/*
+ * %flag_or <flag1>, <flag2>
+ */
+bool of_FLAG_OR(vthread_t thr, vvp_code_t cp)
+{
+      int flag1 = cp->bit_idx[0];
+      int flag2 = cp->bit_idx[1];
+
+      thr->flags[flag1] = thr->flags[flag1] | thr->flags[flag2];
       return true;
 }
 
@@ -5836,6 +5870,11 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
       if (val.size() > wid)
 	    val.resize(wid);
 
+	// If there is a problem loading the index register, flags-4
+	// will be set to 1, and we know here to skip the actual assignment.
+      if (off_index!=0 && thr->flags[4] == BIT4_1)
+	    return true;
+
       if (off==0 && val.size()==sig->value_size())
 	    vvp_send_vec4(ptr, val, thr->wt_context);
       else
@@ -5856,6 +5895,10 @@ bool of_STORE_VEC4A(vthread_t thr, vvp_code_t cp)
 
       long adr = adr_index? thr->words[adr_index].w_int : 0;
       long off = off_index? thr->words[off_index].w_int : 0;
+
+	// Suppress action if flags-4 is true.
+      if (thr->flags[4] == BIT4_1)
+	    return true;
 
       array_set_word(cp->array, adr, off, value);
 

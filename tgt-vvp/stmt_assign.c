@@ -578,10 +578,14 @@ static void store_vec4_to_lval(ivl_statement_t net)
 		  int part_index = 0;
 		    /* Calculate the word address into word_index */
 		  draw_eval_expr_into_integer(word_ex, word_index);
-		    /* If there is a part_offset, calcualte it into part_index. */
+		    /* If there is a part_offset, calculate it into part_index. */
 		  if (part_off_ex) {
+			int flag_index = allocate_flag();
 			part_index = allocate_word();
+			fprintf(vvp_out, "    %%flag_mov %d, 4;\n", flag_index);
 			draw_eval_expr_into_integer(part_off_ex, part_index);
+			fprintf(vvp_out, "    %%flag_or 4, %d;\n", flag_index);
+			clr_flag(flag_index);
 		  }
 
 		  fprintf(vvp_out, "    %%store/vec4a v%p, %d, %d;\n",
@@ -595,6 +599,7 @@ static void store_vec4_to_lval(ivl_statement_t net)
 		    /* Dynamically calculated part offset */
 		  int offset_index = allocate_word();
 		  draw_eval_expr_into_integer(part_off_ex, offset_index);
+		    /* Note that flag4 is set by the eval above. */
 		  fprintf(vvp_out, "    %%store/vec4 v%p_0, %d, %u;\n",
 			  lsig, offset_index, lwid);
 		  clr_word(offset_index);

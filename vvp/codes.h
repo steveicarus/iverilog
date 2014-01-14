@@ -108,6 +108,8 @@ extern bool of_EVCTLI(vthread_t thr, vvp_code_t code);
 extern bool of_EVCTLS(vthread_t thr, vvp_code_t code);
 extern bool of_FILE_LINE(vthread_t thr, vvp_code_t code);
 extern bool of_FLAG_GET_VEC4(vthread_t thr, vvp_code_t code);
+extern bool of_FLAG_MOV(vthread_t thr, vvp_code_t code);
+extern bool of_FLAG_OR(vthread_t thr, vvp_code_t code);
 extern bool of_FLAG_SET_IMM(vthread_t thr, vvp_code_t code);
 extern bool of_FLAG_SET_VEC4(vthread_t thr, vvp_code_t code);
 extern bool of_FORCE_LINK(vthread_t thr, vvp_code_t code);

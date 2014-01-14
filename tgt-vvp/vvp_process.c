@@ -121,6 +121,9 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
       int delay_index;
       unsigned long part_off = 0;
 
+      int error_flag = allocate_flag();
+      fprintf(vvp_out, "    %%flag_set/imm %d, 0;\n", error_flag);
+
 	/* Figure the constant part offset, if possible. If we can do
 	   so, then forget about the expression and use the calculated
 	   value. After this block, if the part_off_ex!=0, then the
@@ -142,13 +145,11 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 
 	/* Calculate array word index into word index register */
       draw_eval_expr_into_integer(word_ix, word_ix_reg);
-	/* Skip assignment if word expression is not defined. */
-      fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+      fprintf(vvp_out, "    %%flag_or %d, 4;\n", error_flag);
 
       if (part_off_ex) {
 	    draw_eval_expr_into_integer(part_off_ex, part_off_reg);
-	      /* If the index expression has XZ bits, skip the assign. */
-	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
+	    fprintf(vvp_out, "    %%flag_or %d, 4;\n", error_flag);
 
       } else {
 	      /* Store word part select into part_off_reg */
@@ -160,6 +161,7 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	      /* Calculated delay... */
 	    delay_index = allocate_word();
 	    draw_eval_expr_into_integer(dexp, delay_index);
+	    fprintf(vvp_out, "    %%flag_or 4, %d;\n", error_flag);
 	    if (word_ix_reg != 3) {
 		  fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
 		  clr_word(word_ix_reg);
@@ -193,6 +195,7 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
       fprintf(vvp_out, "t_%u ;\n", skip_assign);
       if (nevents != 0) fprintf(vvp_out, "    %%evctl/c;\n");
 
+      clr_flag(error_flag);
       clear_expression_lookaside();
 }
 
@@ -275,15 +278,16 @@ static void assign_to_lvector(ivl_lval_t lval,
 		    /* Constant delay... */
 		  fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
 			  delay_index, low_d, hig_d);
-		    /* Calculated part offset... */
+		    /* Calculated part offset. This will leave flag
+		       bit 4 set to 1 if the copy into the index
+		       detected xz values. The %assign will use that
+		       to know to skip the assign. */
 		  draw_eval_expr_into_integer(part_off_ex, offset_index);
 		    /* If the index expression has XZ bits, skip the assign. */
-		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
 		  fprintf(vvp_out, "    %%assign/vec4/off/d v%p_%lu, %d, %d;\n",
 			  sig, use_word, offset_index, delay_index);
 		  clr_word(offset_index);
 		  clr_word(delay_index);
-		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
 	    }
 
       } else if (part_off>0 || ivl_lval_width(lval)!=ivl_signal_width(sig)) {
@@ -344,11 +348,13 @@ static void assign_to_lvector(ivl_lval_t lval,
 		  int offset_index = allocate_word();
 		  int delay_index = allocate_word();
 		  fprintf(vvp_out, "    %%ix/load %d, %lu, 0;\n", offset_index, part_off);
-		  if (dexp)
+		  if (dexp) {
 			draw_eval_expr_into_integer(dexp,delay_index);
-		  else
+		  } else {
 			fprintf(vvp_out, "    %%ix/load %d, %lu, %lu;\n",
 				delay_index, low_d, hig_d);
+			fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+		  }
 		  fprintf(vvp_out, "    %%assign/vec4/off/d v%p_%lu, %d, %d;\n",
 			  sig, use_word, offset_index, delay_index);
 		  clr_word(offset_index);

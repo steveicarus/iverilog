@@ -199,6 +199,10 @@ contains the word address.
 The <off-index> and <delay-index> index registers can be 0, which
 means a zero value instead of the contents of index register 0.
 
+If flag bit 4 is set, then the value will be popped from the stack,
+but it will not be assigned. This handles the case that the index
+values is undefined.
+
 * %assign/vec4/off/d <var-label>, <off-index>, <delay-index>
 
 This is for writing parts to the target variable. The <var-label> is
@@ -207,6 +211,9 @@ register that holds the offset into the target variable, and the
 <delay-index> selects the index register that contains the delay. The
 offset is in canonical bits. The width that is written is taken from
 the width of the value on the stack.
+
+The actual assignment is suppressed if flags-4 is 1. This is so that
+calculations of offset can set the flag on errors.
 
 * %assign/wr <vpi-label>, <delay>
 * %assign/wr/d <vpi-label>, <delayx>
@@ -543,6 +550,15 @@ the format of the output is:
 <description> is a string, if string is 0 then the following default
 message is used: "Procedural tracing.".
 
+* %flag_mov <flag1>, <flag2>
+
+This instruction copies the flag bit from <flag2> to <flag1>.
+
+* %flag_or <flag1>, <flag2>
+
+This instruction calculates the verilog OR of the flag bits in <flag1>
+and <flag2>, and leaves the result in <flag1>.
+
 * %flag_set/imm <flag>, <value>
 
 This instruction sets an immediate value into a flag bit. This is a
@@ -625,7 +641,7 @@ bits.
 * %ix/getv <idx>, <functor-label>
 * %ix/getv/s <idx>, <functor-label>
 
-These instructions are like the %ix/get instructions, except that they
+These instructions are like the %ix/vec4 instructions, except that they
 read directly from a functor label instead of from thread bits. They
 set bit 4 just like %ix/get.
 
@@ -1244,6 +1260,14 @@ offset.
 
 Both index registers can be 0, to mean a zero value instead of a zero
 register.
+
+The %store/vec4a will check flag bit 4, and if it is true, it will
+suppress the actual assignment. This is so that the context can
+indicate that the address is invalid.
+
+The %store/vec4 will check flag bit 4, only if the <offset> is a
+non-zero index register. A 0 index is a fixed constant and cannot
+fail.
 
 NOTE: The <wid> is not necessary, and should be removed.
 
