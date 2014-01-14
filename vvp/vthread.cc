@@ -5512,10 +5512,10 @@ bool of_SHIFTL(vthread_t thr, vvp_code_t cp)
 	    val = vvp_vector4_t(wid, BIT4_0);
 
       } else if (shift > 0) {
-	    val.mov(shift, 0, wid-shift);
-
+	    vvp_vector4_t blk = val.subvalue(0, wid-shift);
 	    vvp_vector4_t tmp (shift, BIT4_0);
 	    val.set_vec(0, tmp);
+	    val.set_vec(shift, blk);
 
       } else if (shift < -wid) {
 	    val = vvp_vector4_t(wid, BIT4_X);
@@ -5524,8 +5524,9 @@ bool of_SHIFTL(vthread_t thr, vvp_code_t cp)
 	      // Negative left shift is a right shift.
 	      // For a negative shift, we pad with 'bx.
 	    int use_shift = -shift;
-	    val.mov(0, use_shift, wid-use_shift);
+	    vvp_vector4_t blk = val.subvalue(use_shift, wid-use_shift);
 	    vvp_vector4_t tmp (use_shift, BIT4_X);
+	    val.set_vec(0, blk);
 	    val.set_vec(wid-use_shift, tmp);
       }
 
@@ -5554,9 +5555,9 @@ bool of_SHIFTR(vthread_t thr, vvp_code_t cp)
 	    val = vvp_vector4_t(wid, BIT4_0);
 
       } else if (shift > 0) {
-	    val.mov(0, shift, wid-shift);
-
+	    vvp_vector4_t blk = val.subvalue(shift, wid-shift);
 	    vvp_vector4_t tmp (shift, BIT4_0);
+	    val.set_vec(0, blk);
 	    val.set_vec(wid-shift, tmp);
 
       } else if (shift < -wid) {
@@ -5566,9 +5567,10 @@ bool of_SHIFTR(vthread_t thr, vvp_code_t cp)
 	      // Negative right shift is a left shift.
 	      // For a negative shift, we pad with 'bx.
 	    int use_shift = -shift;
-	    val.mov(use_shift, 0, wid-use_shift);
+	    vvp_vector4_t blk = val.subvalue(0, wid-use_shift);
 	    vvp_vector4_t tmp (use_shift, BIT4_X);
 	    val.set_vec(0, tmp);
+	    val.set_vec(use_shift, blk);
       }
 
       thr->push_vec4(val);
@@ -5595,9 +5597,9 @@ bool of_SHIFTR_S(vthread_t thr, vvp_code_t cp)
 	    val = vvp_vector4_t(wid, sign_bit);
 
       } else if (shift > 0) {
-	    val.mov(0, shift, wid-shift);
-
+	    vvp_vector4_t blk = val.subvalue(shift, wid-shift);
 	    vvp_vector4_t tmp (shift, sign_bit);
+	    val.set_vec(0, blk);
 	    val.set_vec(wid-shift, tmp);
 
       } else if (shift < -wid) {
@@ -5605,9 +5607,10 @@ bool of_SHIFTR_S(vthread_t thr, vvp_code_t cp)
 
       } else if (shift < 0) {
 	    int use_shift = -shift;
-	    val.mov(use_shift, 0, wid-use_shift);
+	    vvp_vector4_t blk = val.subvalue(0, wid-use_shift);
 	    vvp_vector4_t tmp(use_shift, BIT4_X);
 	    val.set_vec(0, tmp);
+	    val.set_vec(use_shift, blk);
       }
 
       thr->push_vec4(val);
