@@ -3008,6 +3008,43 @@ bool of_FORCE_VEC4(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+/*
+ * %force/vec4/off <net>, <off>
+ */
+bool of_FORCE_VEC4_OFF(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+      unsigned base_idx = cp->bit_idx[0];
+      long base = thr->words[base_idx].w_int;
+      vvp_vector4_t value = thr->pop_vec4();
+      unsigned wid = value.size();
+
+      assert(net->fil);
+
+	// This is the width of the target vector.
+      unsigned use_size = net->fil->filter_size();
+
+      if (base >= (long)use_size)
+	    return true;
+      if (base < -(long)use_size)
+	    return true;
+
+      if ((base + wid) > use_size)
+	    wid = use_size - base;
+
+	// Make a mask of which bits are to be forced, 0 for unforced
+	// bits and 1 for forced bits.
+      vvp_vector2_t mask (vvp_vector2_t::FILL0, use_size);
+      for (unsigned idx = 0 ; idx < wid ; idx += 1)
+	    mask.set_bit(base+idx, 1);
+
+      vvp_vector4_t tmp (use_size, BIT4_Z);
+      tmp.set_vec(base, value);
+
+      net->force_vec4(tmp, mask);
+      return true;
+}
+
 bool of_FORCE_WR(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net  = cp->net;
@@ -3015,52 +3052,6 @@ bool of_FORCE_WR(vthread_t thr, vvp_code_t cp)
 
       net->force_real(value, vvp_vector2_t(vvp_vector2_t::FILL1, 1));
 
-      return true;
-}
-
-
-bool of_FORCE_X0(vthread_t thr, vvp_code_t cp)
-{
-#if 0
-      vvp_net_t*net = cp->net;
-      unsigned base = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-
-      assert(net->fil);
-
-	// Implicitly, we get the base into the target vector from the
-	// X0 register.
-      long index = thr->words[0].w_int;
-
-      if (index < 0 && (wid <= (unsigned)-index))
-	    return true;
-
-      if (index < 0) {
-	    wid -= (unsigned) -index;
-	    index = 0;
-      }
-
-      unsigned use_size = net->fil->filter_size();
-
-
-      if (index >= (long)use_size)
-	    return true;
-
-      if (index+wid > use_size)
-	    wid = use_size - index;
-
-      vvp_vector2_t mask(vvp_vector2_t::FILL0, use_size);
-      for (unsigned idx = 0 ; idx < wid ; idx += 1)
-	    mask.set_bit(index+idx, 1);
-
-      vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
-      vvp_vector4_t value(use_size, BIT4_Z);
-      value.set_vec(index, vector);
-
-      net->force_vec4(value, mask);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%force/x0 ...\n");
-#endif
       return true;
 }
 

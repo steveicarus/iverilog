@@ -556,26 +556,20 @@ These instructions provide a means for accessing flag bits. The
 stack, and the %flag_set/vec4 pops the top of the vec4 stack and
 writes the LSB to the selected flag.
 
-* %force/v <label>, <bit>, <wid>
+* %force/vec4 <label>
+* %force/vec4/off <label>, <off>
 
-Force a constant value to the target variable. This is similar to %set
-and %cassign/vec4, but it uses the force port (port-2) of the signal
-functor instead of the normal assign port (port-0), so the signal
-responds differently. See "VARIABLE STATEMENTS" and "NET STATEMENTS"
-in the README.txt file.
+Perform a "force" assign of a values to the tarvet variable. The value
+to be forced is popped from the vec4 stack and forced to the target
+variable. The /off variant forces a part of a vector. The width of the
+part comes from the width of the popped value, and the <off> is an
+index register that contains the cannonical offset where the value
+sets written.
 
 * %force/wr <var-label>
 
 Force a constant real value to the target variable. See %force/v
 above. The value is popped from the real value stack.
-
-* %force/x0 <label>, <bit>, <wid>
-
-Force a constant value to part of the target variable. This is similar
-to %set/x instruction, but it uses the force port (port-2) of the signal
-functor instead of the normal assign port (port-0), so the signal
-responds differently. See "VARIABLE STATEMENTS" and "NET STATEMENTS"
-in the README.txt file.
 
 * %fork <code-label>, <scope-label>
 
