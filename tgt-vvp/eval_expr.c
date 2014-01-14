@@ -1294,152 +1294,6 @@ static struct vector_info draw_binary_expr_logic(ivl_expr_t expr,
       return lv;
 }
 
-/*
- * Draw code to evaluate the << expression. Use the %shiftl/i0
- * or %shiftr/i0 instruction to do the real work of shifting. This
- * means that I can handle both left and right shifts in this
- * function, with the only difference the opcode I generate at the
- * end.
- */
-static struct vector_info draw_binary_expr_lrs(ivl_expr_t expr, unsigned wid)
-{
-      ivl_expr_t le = ivl_expr_oper1(expr);
-      ivl_expr_t re = ivl_expr_oper2(expr);
-      const char*opcode = "?";
-
-      struct vector_info lv;
-
-	/* Evaluate the expression that is to be shifted. */
-      switch (ivl_expr_opcode(expr)) {
-
-	  case 'l': /* << (left shift) */
-	    lv = draw_eval_expr_wid(le, wid, 0);
-
-	      /* Shifting 0 gets 0, if we can be sure the shift value
-                 contains no 'x' or 'z' bits. */
-	    if ((lv.base == 0) && (ivl_expr_value(re) == IVL_VT_BOOL))
-		  return lv;
-
-	    if (lv.base < 4) {
-		  struct vector_info tmp;
-		  tmp.base = allocate_vector(lv.wid);
-		  tmp.wid = lv.wid;
-		  if (tmp.base == 0) {
-			fprintf(stderr, "%s:%u: vvp.tgt error: "
-				"Unable to allocate %u thread bits "
-				"for result of left shift (<<).\n",
-				ivl_expr_file(expr), ivl_expr_lineno(expr),
-				wid);
-			vvp_errors += 1;
-		  }
-
-		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
-			  tmp.base, lv.base, lv.wid);
-		  lv = tmp;
-	    }
-	    opcode = "%shiftl";
-	    break;
-
-	  case 'r': /* >> (unsigned right shift) */
-
-	      /* with the right shift, there may be high bits that are
-		 shifted into the desired width of the expression, so
-		 we let the expression size itself, if it is bigger
-		 then what is requested of us. */
-	    if (wid > ivl_expr_width(le)) {
-		  lv = draw_eval_expr_wid(le, wid, 0);
-	    } else {
-		  lv = draw_eval_expr_wid(le, ivl_expr_width(le), 0);
-	    }
-
-	      /* Shifting 0 gets 0, if we can be sure the shift value
-                 contains no 'x' or 'z' bits. */
-	    if ((lv.base == 0) && (ivl_expr_value(re) == IVL_VT_BOOL))
-		  return lv;
-
-	    if (lv.base < 4) {
-		  struct vector_info tmp;
-		  tmp.base = allocate_vector(lv.wid);
-		  tmp.wid = lv.wid;
-		  if (tmp.base == 0) {
-			fprintf(stderr, "%s:%u: vvp.tgt error: "
-				"Unable to allocate %u thread bits "
-				"for result of right shift (>>).\n",
-				ivl_expr_file(expr), ivl_expr_lineno(expr),
-				lv.wid);
-			vvp_errors += 1;
-		  }
-
-		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
-			  tmp.base, lv.base, lv.wid);
-		  lv = tmp;
-	    }
-	    opcode = "%shiftr";
-	    break;
-
-	  case 'R': /* >>> (signed right shift) */
-
-	      /* with the right shift, there may be high bits that are
-		 shifted into the desired width of the expression, so
-		 we let the expression size itself, if it is bigger
-		 then what is requested of us. */
-	    if (wid > ivl_expr_width(le)) {
-		  lv = draw_eval_expr_wid(le, wid, 0);
-	    } else {
-		  lv = draw_eval_expr_wid(le, ivl_expr_width(le), 0);
-	    }
-
-	      /* Shifting 0 gets 0, if we can be sure the shift value
-                 contains no 'x' or 'z' bits. */
-	    if ((lv.base == 0) && (ivl_expr_value(re) == IVL_VT_BOOL))
-		  return lv;
-
-	      /* Similarly, sign extending any constant bit begets itself,
-                 if this expression is signed. */
-	    if ((lv.base < 4) && ivl_expr_signed(expr)
-                && (ivl_expr_value(re) == IVL_VT_BOOL))
-		  return lv;
-
-	    if (lv.base < 4) {
-		  struct vector_info tmp;
-		  tmp.base = allocate_vector(lv.wid);
-		  tmp.wid = lv.wid;
-		  if (tmp.base == 0) {
-			fprintf(stderr, "%s:%u: vvp.tgt error: "
-				"Unable to allocate %u thread bits "
-				"for result of right shift (>>>).\n",
-				ivl_expr_file(expr), ivl_expr_lineno(expr),
-				lv.wid);
-			vvp_errors += 1;
-		  }
-
-		  fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
-			  tmp.base, lv.base, lv.wid);
-		  lv = tmp;
-	    }
-
-	    if (ivl_expr_signed(expr))
-		  opcode = "%shiftr/s";
-	    else
-		  opcode = "%shiftr";
-	    break;
-
-	  default:
-	    assert(0);
-      }
-
-	/* Figure out the shift amount and load that into the index
-	   register. The value may be a constant, or may need to be
-	   evaluated at run time. */
-      eval_logic_into_integer(re,0);
-
-      fprintf(vvp_out, "    %s/i0  %u, %u;\n", opcode, lv.base, lv.wid);
-
-      if (lv.base >= 8)
-	    save_expression_lookaside(lv.base, expr, lv.wid);
-
-      return lv;
-}
 
 static struct vector_info draw_load_add_immediate(ivl_expr_t le,
 						  ivl_expr_t re,
@@ -1781,12 +1635,6 @@ static struct vector_info draw_binary_expr(ivl_expr_t expr,
 	    rv = draw_binary_expr_arith(expr, wid);
 	    break;
 
-	  case 'l': /* << */
-	  case 'r': /* >> */
-	  case 'R': /* >>> */
-	    rv = draw_binary_expr_lrs(expr, wid);
-	    break;
-
 	  case 'o': /* || (logical or) */
 	    rv = draw_binary_expr_lor(expr, wid, stuff_ok_flag);
 	    stuff_ok_used_flag = 1;
@@ -1802,7 +1650,7 @@ static struct vector_info draw_binary_expr(ivl_expr_t expr,
 	    break;
 
 	  default:
-	    fprintf(stderr, "vvp.tgt error: unsupported binary (%c)\n",
+	    fprintf(stderr, "vvp.tgt error: draw_binary_expr: unsupported binary (%c)\n",
 		    ivl_expr_opcode(expr));
 	    assert(0);
       }

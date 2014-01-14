@@ -336,7 +336,10 @@ static void draw_binary_vec4_lrs(ivl_expr_t expr, int stuff_ok_flag)
 	    fprintf(vvp_out, "    %%shiftr %u;\n", use_index_reg);
 	    break;
 	  case 'R': /* >>> */
-	    fprintf(vvp_out, "    %%shiftrs %u;\n", use_index_reg);
+	    if (ivl_expr_signed(le))
+		  fprintf(vvp_out, "    %%shiftr/s %u;\n", use_index_reg);
+	    else
+		  fprintf(vvp_out, "    %%shiftr %u;\n", use_index_reg);
 	    break;
 	  default:
 	    assert(0);

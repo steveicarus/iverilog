@@ -1168,29 +1168,6 @@ The index may be signed, and if less than 0, the beginning bits are
 not assigned. Also, if the bits go beyond the end of the signal, those
 bits are not written anywhere.
 
-
-* %shiftl/i0 <bit>, <wid> (XXXX Old implementation)
-
-This instruction shifts the vector left (towards more significant
-bits) by the amount in index register 0. The <bit> is the address of
-the LSB of the vector, and <wid> the width of the vector. The shift is
-done in place. Zero values are shifted in.
-
-For a negative shift the value is padded with 'bx.
-
-* %shiftr/i0 <bit>, <wid> (XXXX Old implementation)
-* %shiftr/s/i0 <bit>, <wid> (XXXX Old implementation)
-
-This instruction shifts the vector right (towards the less significant
-bits) by the amount in the index register 0. The <bit> is the address
-of the LSB of the vector, and <wid> is the width of the vector. The
-shift is done in place.
-
-%shiftr/i0 is an unsigned down shift, so zeros are shifted into the
-top bits. %shiftr/s/i0 is a signed shift, so the value is sign-extended.
-
-For a negative shift %shiftr/i0 will pad the value with 'bx.
-
 * %shiftl <idx>
 * %shiftr <idx>
 * %shiftr/s <idx>
@@ -1198,6 +1175,12 @@ For a negative shift %shiftr/i0 will pad the value with 'bx.
 These instructions shift the top value in the vec4 stack left (towards
 MSB) or right, possibly signed. The <idx> is the address of the index
 register that contains the amount to shift.
+
+The instruction also checks flag bit 4. If it is true, the result is
+replaced with X instead of a shifted result. This is intended to
+detect that the index contents were not valid.
+
+For a negative shift, %shiftr will pad the vlaue with 'bx.
 
 * %split/vec4 <wid>
 
