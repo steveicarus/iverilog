@@ -37,6 +37,8 @@ struct args_info {
       char real_flag;
 	/* Stack position if this argument is a calculated value. */
       unsigned stack;
+	/* Expression width: Only used of vec_flag is true. */
+      unsigned vec_wid;
       struct args_info *child; /* Arguments can be nested. */
 };
 
@@ -390,6 +392,7 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 		  args[idx].str_flag = 0;
 		  args[idx].real_flag = 0;
 		  args[idx].stack = vec4_stack_need;
+		  args[idx].vec_wid = ivl_expr_width(expr);
 		  vec4_stack_need += 1;
 		  buffer[0] = 0;
 		  break;
@@ -440,7 +443,8 @@ static void draw_vpi_taskfunc_args(const char*call_string,
 	    } else if (args[idx].vec_flag) {
 		  unsigned pos = vec4_stack_need - args[idx].stack - 1;
 		  char sign_flag = args[idx].vec_flag;
-		  fprintf(vvp_out, ", S<%u,vec4,%c>",pos, sign_flag);
+		  unsigned wid = args[idx].vec_wid;
+		  fprintf(vvp_out, ", S<%u,vec4,%c%u>",pos, sign_flag, wid);
 	    } else {
 		  fprintf(vvp_out, ", %s", args[idx].text);
 	    }

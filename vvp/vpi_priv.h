@@ -589,6 +589,7 @@ struct __vpiSysTaskCall : public __vpiHandle {
     protected:
       inline __vpiSysTaskCall()
       {
+	    vec4_stack = 0;
 	    real_stack = 0;
 	    string_stack = 0;
       }
@@ -656,13 +657,9 @@ vpiHandle vpip_make_real_param(char*name, double value, bool local_flag,
  *  thread.
  */
 
-#if 0
-vpiHandle vpip_make_vthr_vector(unsigned base, unsigned wid, bool signed_flag);
-#endif
-
 vpiHandle vpip_make_vthr_word(unsigned base, const char*type);
 vpiHandle vpip_make_vthr_str_stack(unsigned depth);
-vpiHandle vpip_make_vthr_vec4_stack(unsigned depth, bool signed_flag);
+vpiHandle vpip_make_vthr_vec4_stack(unsigned depth, bool signed_flag, unsigned wid);
 
 vpiHandle vpip_make_vthr_A(char*label, unsigned index);
 vpiHandle vpip_make_vthr_A(char*label, char*symbol);

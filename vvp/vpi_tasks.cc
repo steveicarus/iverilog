@@ -318,7 +318,7 @@ class sysfunc_vec4 : public __vpiSysTaskCall {
     public:
       inline sysfunc_vec4(unsigned wid): return_value_(wid, BIT4_X) { }
       int get_type_code(void) const { return vpiSysFuncCall; }
-      int vpi_get(int code)         { return sysfunc_get(code, this); }
+      int vpi_get(int code);
       char* vpi_get_str(int code)   { return systask_get_str(code, this); }
       vpiHandle vpi_put_value(p_vpi_value val, int flags);
       vpiHandle vpi_handle(int code)
@@ -338,6 +338,23 @@ class sysfunc_vec4 : public __vpiSysTaskCall {
     private:
       vvp_vector4_t return_value_;
 };
+
+int sysfunc_vec4::vpi_get(int code)
+{
+      switch (code) {
+	  case vpiSize:
+	    return return_value_.size();
+
+	  case vpiLineNo:
+	    return lineno;
+
+	  case vpiUserDefn:
+	    return defn->is_user_defn;
+
+	  default:
+	    return vpiUndefined;
+      }
+}
 
 vpiHandle sysfunc_vec4::put_value_scalar_(p_vpi_value vp)
 {

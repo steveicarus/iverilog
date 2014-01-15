@@ -575,7 +575,7 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 		  val.ptr = vpip_make_vthr_str_stack(base);
 		  sym_set_value(sym_vpi, label(), val);
 
-	    } else if (2 == sscanf(label(), "S<%u,vec4,%[su]>%n", &base, ss, &n)
+	    } else if (3 == sscanf(label(), "S<%u,vec4,%[su]%u>%n", &base, ss, &wid, &n)
 		       && n == strlen(label())) {
 
 		  bool signed_flag = false;
@@ -589,7 +589,7 @@ bool vpi_handle_resolv_list_s::resolve(bool mes)
 		      default:
 			break;
 		  }
-		  val.ptr = vpip_make_vthr_vec4_stack(base, signed_flag);
+		  val.ptr = vpip_make_vthr_vec4_stack(base, signed_flag, wid);
 		  sym_set_value(sym_vpi, label(), val);
 	    }
 
