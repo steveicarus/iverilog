@@ -201,6 +201,11 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       NetEvent*     eve = 0;
       perm_string   method_name;
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_lval: "
+		 << "Elaborate l-value ident expression: " << *this << endl;
+      }
+
 	/* Try to detect the special case that we are in a method and
 	   the identifier is a member of the class. */
       if (NetAssign_*tmp = elaborate_lval_method_class_member_(des, scope))
@@ -259,6 +264,13 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       }
 
       ivl_assert(*this, reg);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_lval: "
+		 << "Found l-value as reg."
+		 << " unpacked_dimensions()=" << reg->unpacked_dimensions() << endl;
+      }
+
 	// We are processing the tail of a string of names. For
 	// example, the verilog may be "a.b.c", so we are processing
 	// "c" at this point. (Note that if method_name is not nil,
@@ -440,6 +452,11 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       const name_component_t&name_tail = path_.back();
       ivl_assert(*this, !name_tail.index.empty());
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_lval_net_word_: "
+		 << "Handle as n-dimensional array." << endl;
+      }
+
       if (name_tail.index.size() < reg->unpacked_dimensions()) {
 	    cerr << get_fileline() << ": error: Array " << reg->name()
 		 << " needs " << reg->unpacked_dimensions() << " indices,"
@@ -447,6 +464,8 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 	    des->errors += 1;
 	    return 0;
       }
+
+      unsigned array_need_words = reg->unpacked_count();
 
 	// Make sure there are enough indices to address an array element.
       const index_component_t&index_head = name_tail.index.front();
@@ -465,7 +484,7 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       indices_flags flags;
       indices_to_expressions(des, scope, this,
 			     name_tail.index, reg->unpacked_dimensions(),
-			     false,
+			     false, array_need_words,
 			     flags,
 			     unpacked_indices,
 			     unpacked_indices_const);
@@ -506,6 +525,11 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
       if (canon_index == 0)
 	    canon_index = new NetEConst(verinum(verinum::Vx));
       canon_index->set_line(*this);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_lval_net_word_: "
+		 << "canon_index=" << *canon_index << endl;
+      }
 
       NetAssign_*lv = new NetAssign_(reg);
       lv->set_word(canon_index);

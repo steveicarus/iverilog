@@ -468,11 +468,20 @@ void indices_to_expressions(Design*des, NetScope*scope,
 			    const list<index_component_t>&src, unsigned count,
 			      // True if the expression MUST be constant.
 			    bool need_const,
+			      // Total words in target array
+			    unsigned need_addr,
 			      // These are the outputs.
 			    indices_flags&flags,
 			    list<NetExpr*>&indices, list<long>&indices_const)
 {
       ivl_assert(*loc, count <= src.size());
+
+      int need_wid = ceil(log2(need_addr)) + 1;
+      if (debug_elaborate) {
+	    cerr << loc->get_fileline() << ": indices_to_expressions: "
+		 << "To address " << need_addr << " words, "
+		 << "we need " << need_wid << " bits." << endl;
+      }
 
       flags.invalid   = false;
       flags.variable  = false;
@@ -488,7 +497,7 @@ void indices_to_expressions(Design*des, NetScope*scope,
 	    }
 	    ivl_assert(*loc, cur->msb);
 
-	    NetExpr*word_index = elab_and_eval(des, scope, cur->msb, -1, need_const);
+	    NetExpr*word_index = elab_and_eval_min_width(des, scope, cur->msb, need_wid, need_const);
 
 	    if (word_index == 0)
 		  flags.invalid = true;
@@ -730,13 +739,16 @@ NetExpr* condition_reduce(NetExpr*expr)
       return cmp;
 }
 
-NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
-                       int context_width, bool need_const, bool annotatable,
-                       ivl_variable_type_t cast_type)
+static NetExpr* do_elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
+				 int context_width, bool need_const, bool annotatable,
+				 bool width_is_min,
+				 ivl_variable_type_t cast_type)
 {
       PExpr::width_mode_t mode = PExpr::SIZED;
       if ((context_width == -2) && !gn_strict_expr_width_flag)
             mode = PExpr::EXPAND;
+      if (width_is_min)
+	    mode = PExpr::EXPAND;
 
       pe->test_width(des, scope, mode);
 
@@ -755,8 +767,10 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
                  << *pe << endl;
             cerr << pe->get_fileline() << ":              : "
                  << "returns type=" << pe->expr_type()
-                 << ", width=" << expr_width
+		 << ", context_width=" << context_width
                  << ", signed=" << pe->has_sign()
+		 << ", width_is_min=" << width_is_min
+                 << ", expr_width=" << expr_width
                  << ", mode=" << PExpr::width_mode_name(mode) << endl;
 	    cerr << pe->get_fileline() << ":              : "
 		 << "cast_type=" << cast_type << endl;
@@ -764,7 +778,8 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 
         // If we can get the same result using a smaller expression
         // width, do so.
-      if ((context_width > 0) && (pe->expr_type() != IVL_VT_REAL)
+      if ((context_width > 0) && (!width_is_min)
+	  && (pe->expr_type() != IVL_VT_REAL)
           && (expr_width > (unsigned)context_width)) {
             expr_width = max(pe->min_width(), (unsigned)context_width);
 
@@ -779,6 +794,11 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
             flags |= PExpr::NEED_CONST;
       if (annotatable)
             flags |= PExpr::ANNOTATABLE;
+
+      if (debug_elaborate) {
+	    cerr << pe->get_fileline() << ": elab_and_eval: "
+		 << "Calculated width is " << expr_width << "." << endl;
+      }
 
       NetExpr*tmp = pe->elaborate_expr(des, scope, expr_width, flags);
       if (tmp == 0) return 0;
@@ -799,6 +819,13 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
             }
       }
 
+	// If the context_width sent is is actually the minimim width,
+	// then raise the context_width to be big enough for the
+	// lossless expression.
+      if (width_is_min && context_width > 0) {
+	    context_width = max(context_width, (int)expr_width);
+      }
+
       eval_expr(tmp, context_width);
 
       if (NetEConst*ce = dynamic_cast<NetEConst*>(tmp)) {
@@ -807,6 +834,23 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
       }
 
       return tmp;
+}
+
+NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
+		       int context_width, bool need_const, bool annotatable,
+		       ivl_variable_type_t cast_type)
+{
+      return do_elab_and_eval(des, scope, pe, context_width,
+			      need_const, annotatable, false, cast_type);
+}
+
+NetExpr* elab_and_eval_min_width(Design*des, NetScope*scope, PExpr*pe,
+				 int context_width, bool need_const, bool annotatable,
+				 ivl_variable_type_t cast_type)
+{
+      ivl_assert(*pe, context_width > 0);
+      return do_elab_and_eval(des, scope, pe, context_width,
+			      need_const, annotatable, true, cast_type);
 }
 
 NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
@@ -1262,7 +1306,7 @@ NetExpr*collapse_array_exprs(Design*des, NetScope*scope,
       indices_flags flags;
       indices_to_expressions(des, scope, loc, indices,
                              net->packed_dimensions(),
-                             false, flags, exprs, exprs_const);
+                             false, net->unpacked_count(), flags, exprs, exprs_const);
       ivl_assert(*loc, exprs.size() == net->packed_dimensions());
 
 	// Special Case: there is only 1 packed dimension, so the

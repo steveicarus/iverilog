@@ -607,7 +607,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    indices_flags flags;
 	    indices_to_expressions(des, scope, this,
 				   path_tail.index, sig->unpacked_dimensions(),
-				   true,
+				   true, sig->unpacked_count(),
 				   flags,
 				   unpacked_indices,
 				   unpacked_indices_const);

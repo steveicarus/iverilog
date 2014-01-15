@@ -3964,7 +3964,7 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
       indices_flags idx_flags;
       indices_to_expressions(des, scope, this,
 			     name_tail.index, net->unpacked_dimensions(),
-			     need_const,
+			     need_const, net->unpacked_count(),
 			     idx_flags,
 			     unpacked_indices,
 			     unpacked_indices_const);

@@ -179,6 +179,8 @@ extern void indices_to_expressions(Design*des, NetScope*scope,
 				   const list<index_component_t>&src, unsigned count,
 				     // True if the expression MUST be constant.
 				   bool need_const,
+				     // Total array size, for sizing expressions
+				   unsigned need_addr,
 				     // These are the outputs.
 				   indices_flags&flags,
 				   list<NetExpr*>&indices,list<long>&indices_const);
@@ -239,6 +241,12 @@ extern unsigned count_lval_width(const class NetAssign_*first);
 class PExpr;
 
 extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
+			      PExpr*pe, int context_width,
+                              bool need_const =false,
+                              bool annotatable =false,
+			      ivl_variable_type_t cast_type =IVL_VT_NO_TYPE);
+
+extern NetExpr* elab_and_eval_min_width(Design*des, NetScope*scope,
 			      PExpr*pe, int context_width,
                               bool need_const =false,
                               bool annotatable =false,
