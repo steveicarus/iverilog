@@ -1281,6 +1281,7 @@ bool of_ASSIGN_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
       unsigned off_index = cp->bit_idx[0];
       unsigned del_index = cp->bit_idx[1];
       vvp_vector4_t val = thr->pop_vec4();
+      unsigned wid = val.size();
 
       int off = thr->words[off_index].w_int;
       int del = thr->words[del_index].w_int;
@@ -1298,6 +1299,9 @@ bool of_ASSIGN_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
       if (off < 0) {
 	    if ((unsigned)-off >= sig->value_size())
 		  return true;
+	    assert(0); // XXXX Not implemented yet.
+      }
+      if (off+wid > sig->value_size()) {
 	    assert(0); // XXXX Not implemented yet.
       }
 
@@ -5874,6 +5878,29 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
 	// will be set to 1, and we know here to skip the actual assignment.
       if (off_index!=0 && thr->flags[4] == BIT4_1)
 	    return true;
+
+      if (off <= -(int)wid)
+	    return true;
+      if (off >= (int)sig->value_size())
+	    return true;
+
+	// If the index is below the vector, then only assign the high
+	// bits that overlap with the target.
+      if (off < 0) {
+	    int use_off = -off;
+	    wid -= use_off;
+	    val = val.subvalue(use_off, wid);
+	    off = 0;
+      }
+
+	// If the value is partly above the target, then only assign
+	// the bits that overlap.
+      if ((off+wid) > sig->value_size()) {
+	    wid = sig->value_size()-off;
+	    val = val.subvalue(0, wid);
+	    val.resize(wid);
+      }
+
 
       if (off==0 && val.size()==sig->value_size())
 	    vvp_send_vec4(ptr, val, thr->wt_context);
