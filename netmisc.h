@@ -246,7 +246,7 @@ extern NetExpr* elab_and_eval(Design*des, NetScope*scope,
                               bool annotatable =false,
 			      ivl_variable_type_t cast_type =IVL_VT_NO_TYPE);
 
-extern NetExpr* elab_and_eval_min_width(Design*des, NetScope*scope,
+extern NetExpr* elab_and_eval_lossless(Design*des, NetScope*scope,
 			      PExpr*pe, int context_width,
                               bool need_const =false,
                               bool annotatable =false,
