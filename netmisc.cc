@@ -246,16 +246,26 @@ static NetExpr* make_sub_expr(long val, NetExpr*expr)
       return res;
 }
 
+/*
+ * Multiple an existing expression by a signed positive number.
+ * This does a lossless multiply, so the arguments will need to be
+ * sized to match the output size.
+ */
 static NetExpr* make_mult_expr(NetExpr*expr, unsigned long val)
 {
-      verinum val_v (val, expr->expr_width());
+      const unsigned val_wid = ceil(log2((double)val)) ;
+      unsigned use_wid = expr->expr_width() + val_wid;
+      verinum val_v (val, use_wid);
       val_v.has_sign(true);
 
       NetEConst*val_c = new NetEConst(val_v);
       val_c->set_line(*expr);
 
-      NetEBMult*res = new NetEBMult('*', expr, val_c, expr->expr_width(),
-                                  expr->has_sign());
+	// We know by definitions that the expr argument needs to be
+	// padded to be the right argument width for this lossless multiply.
+      expr = pad_to_width(expr, use_wid, *expr);
+
+      NetEBMult*res = new NetEBMult('*', expr, val_c, use_wid, expr->has_sign());
       res->set_line(*expr);
 
       return res;
