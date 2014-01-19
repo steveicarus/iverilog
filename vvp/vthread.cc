@@ -1719,6 +1719,9 @@ bool of_CASSIGN_VEC4_OFF(vthread_t thr, vvp_code_t cp)
       vvp_vector4_t value = thr->pop_vec4();
       unsigned wid = value.size();
 
+      if (thr->flags[4] == BIT4_1)
+	    return true;
+
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
       assert(sig);
 
@@ -3058,6 +3061,9 @@ bool of_FORCE_VEC4_OFF(vthread_t thr, vvp_code_t cp)
       unsigned wid = value.size();
 
       assert(net->fil);
+
+      if (thr->flags[4] == BIT4_1)
+	    return true;
 
 	// This is the width of the target vector.
       unsigned use_size = net->fil->filter_size();

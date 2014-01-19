@@ -284,6 +284,10 @@ variable. This is similar to %set, but it uses the cassign port
 signal responds differently. See "VARIABLE STATEMENTS" in the
 README.txt file.
 
+The %cassign/vec4/off instruction will check the flags[4] flag, and if
+it is 1, it will suppress the assignment. This is so that failed index
+calculations can report the failure by setting the flag.
+
 * %cassign/wr <var-label>
 
 Perform a continuous assign of a constant real value to the target
@@ -581,6 +585,10 @@ variable. The /off variant forces a part of a vector. The width of the
 part comes from the width of the popped value, and the <off> is an
 index register that contains the cannonical offset where the value
 sets written.
+
+The %foce/vec4/off instruction will test the value if flags[4], and if
+it is 1, will suppress the actual assignment. This is intended to help
+with detection of invalid index expressions.
 
 * %force/wr <var-label>
 
