@@ -1258,7 +1258,7 @@ bool of_ASSIGN_VEC4_A_D(vthread_t thr, vvp_code_t cp)
       int adr_idx = 3;
 
       long     off = off_idx? thr->words[off_idx].w_int  : 0;
-      unsigned del = del_idx? thr->words[del_idx].w_uint : 0;
+      vvp_time64_t del = del_idx? thr->words[del_idx].w_uint : 0;
       long     adr = thr->words[adr_idx].w_int;
 
       vvp_vector4_t value = thr->pop_vec4();
@@ -1284,7 +1284,7 @@ bool of_ASSIGN_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
       unsigned wid = val.size();
 
       int off = thr->words[off_index].w_int;
-      int del = thr->words[del_index].w_int;
+      vvp_time64_t del = thr->words[del_index].w_uint;
 
 	// Abort if flags[4] is set. This can happen if the calulation
 	// into an index register failed.
