@@ -98,7 +98,7 @@ static int make_vpi_argv(unsigned argc, vpiHandle*vpi_argv,
       switch (*cp) {
 	  case 'r': // real result
 	    cp += 1;
-	    return_type = -vpiRealConst;
+	    return_type = -vpiRealVal;
 	    break;
 
 	  case 'v': // vector4_t
