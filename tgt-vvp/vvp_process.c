@@ -335,10 +335,7 @@ static void assign_to_lvector(ivl_lval_t lval,
 		  }
 	    }
 #else
-	    if (dexp != 0) {
-		  assert(0); // XXXX
-
-	    } else if (nevents != 0) {
+	    if (nevents != 0) {
 		  assert(0); // XXXX
 
 	    } else {
