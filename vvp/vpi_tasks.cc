@@ -94,7 +94,8 @@ static int sysfunc_get(int type, vpiHandle ref)
 
       switch (type) {
 	  case vpiSize:
-	    return rfp->vwid;
+	    assert(0); // This should be handled by derived classes
+	    return 0;
 
 	  case vpiLineNo:
 	    return rfp->lineno;
@@ -149,110 +150,6 @@ struct systask_def : public __vpiSysTaskCall {
       vpiHandle vpi_handle(int code) { return systask_handle(code, this); }
       vpiHandle vpi_iterate(int code){ return systask_iter(code, this); }
 };
-
-
-static vpiHandle sysfunc_put_4net_value(vpiHandle ref, p_vpi_value vp, int)
-{
-      struct __vpiSysTaskCall*rfp = dynamic_cast<__vpiSysTaskCall*>(ref);
-
-      rfp->put_value = true;
-
-      unsigned vwid = (unsigned) rfp->vwid;
-      vvp_vector4_t val (vwid);
-
-      switch (vp->format) {
-
-          case vpiScalarVal: {
-	        switch(vp->value.scalar) {
-		      case vpi0:
-			val.set_bit(0, BIT4_0);
-                        break;
-		      case vpi1:
-                        val.set_bit(0, BIT4_1);
-                        break;
-		      case vpiX:
-                        val.set_bit(0, BIT4_X);
-                        break;
-		      case vpiZ:
-                        val.set_bit(0, BIT4_Z);
-                        break;
-		      default:
-                        fprintf(stderr, "Unsupported bit value %d.\n",
-                                (int)vp->value.scalar);
-                        assert(0);
-                }
-          }
-
-	  case vpiIntVal: {
-		long tmp = vp->value.integer;
-		for (unsigned idx = 0 ;  idx < vwid ;  idx += 1) {
-		      val.set_bit(idx, (tmp&1)? BIT4_1 : BIT4_0);
-		      tmp >>= 1;
-		}
-		break;
-	  }
-
-          case vpiTimeVal: {
-                unsigned long tmp = vp->value.time->low;
-                for (unsigned idx = 0 ;  idx < vwid ;  idx += 1) {
-                      val.set_bit(idx, (tmp&1)? BIT4_1 : BIT4_0);
-
-                      if (idx == 31)
-                            tmp = vp->value.time->high;
-                      else
-                            tmp >>= 1;
-                }
-                break;
-          }
-
-	  case vpiVectorVal:
-
-	    for (unsigned wdx = 0 ;  wdx < vwid ;  wdx += 32) {
-		  unsigned word = wdx / 32;
-		  unsigned long aval = vp->value.vector[word].aval;
-		  unsigned long bval = vp->value.vector[word].bval;
-
-		  for (unsigned idx = 0 ;  (wdx+idx) < vwid && idx < 32;
-		       idx += 1) {
-			int bit = (aval&1) | ((bval<<1)&2);
-			vvp_bit4_t bit4;
-
-			switch (bit) {
-			    case 0:
-			      bit4 = BIT4_0;
-			      break;
-			    case 1:
-			      bit4 = BIT4_1;
-			      break;
-			    case 2:
-			      bit4 = BIT4_Z;
-			      break;
-			    case 3:
-			      bit4 = BIT4_X;
-			      break;
-			    default:
-			      bit4 = BIT4_X;
-			      fprintf(stderr, "Unsupported bit value %d.\n",
-			              bit);
-			      assert(0);
-			}
-			val.set_bit(wdx+idx, bit4);
-
-			aval >>= 1;
-			bval >>= 1;
-		  }
-	    }
-	    break;
-
-	  default:
-	    fprintf(stderr, "XXXX format=%d, vwid=%u\n", (int)vp->format,
-	            rfp->vwid);
-	    assert(0);
-      }
-
-      rfp->fnet->send_vec4(val, vthread_get_wt_context());
-      return 0;
-}
 
 static vpiHandle sysfunc_put_rnet_value(vpiHandle ref, p_vpi_value vp, int)
 {
@@ -492,16 +389,18 @@ vpiHandle sysfunc_vec4::vpi_put_value(p_vpi_value vp, int)
 }
 
 struct sysfunc_4net : public __vpiSysTaskCall {
-      inline sysfunc_4net() { }
+      inline sysfunc_4net(unsigned wid) : vwid_(wid) { }
       int get_type_code(void) const { return vpiSysFuncCall; }
-      int vpi_get(int code)         { return sysfunc_get(code, this); }
+      int vpi_get(int code);
       char* vpi_get_str(int code)   { return systask_get_str(code, this); }
-      vpiHandle vpi_put_value(p_vpi_value val, int flags)
-            { return sysfunc_put_4net_value(this, val, flags); }
+      vpiHandle vpi_put_value(p_vpi_value val, int flags);
       vpiHandle vpi_handle(int code)
             { return systask_handle(code, this); }
       vpiHandle vpi_iterate(int code)
             { return systask_iter(code, this); }
+
+    private:
+      unsigned vwid_;
 };
 
 struct sysfunc_rnet : public __vpiSysTaskCall {
@@ -529,6 +428,125 @@ struct sysfunc_no : public __vpiSysTaskCall {
       vpiHandle vpi_iterate(int code)
             { return systask_iter(code, this); }
 };
+
+
+// support getting vpiSize for a system function call
+int sysfunc_4net::vpi_get(int code)
+{
+      switch (code) {
+	  case vpiSize:
+	    return vwid_;
+
+	  case vpiLineNo:
+	    return lineno;
+
+	  case vpiUserDefn:
+	    return defn->is_user_defn;
+
+	  default:
+	    return vpiUndefined;
+      }
+}
+
+vpiHandle sysfunc_4net::vpi_put_value(p_vpi_value vp, int)
+{
+      put_value = true;
+
+      vvp_vector4_t val (vwid_);
+
+      switch (vp->format) {
+
+          case vpiScalarVal: {
+	        switch(vp->value.scalar) {
+		      case vpi0:
+			val.set_bit(0, BIT4_0);
+                        break;
+		      case vpi1:
+                        val.set_bit(0, BIT4_1);
+                        break;
+		      case vpiX:
+                        val.set_bit(0, BIT4_X);
+                        break;
+		      case vpiZ:
+                        val.set_bit(0, BIT4_Z);
+                        break;
+		      default:
+                        fprintf(stderr, "Unsupported bit value %d.\n",
+                                (int)vp->value.scalar);
+                        assert(0);
+                }
+          }
+
+	  case vpiIntVal: {
+		long tmp = vp->value.integer;
+		for (unsigned idx = 0 ;  idx < vwid_ ;  idx += 1) {
+		      val.set_bit(idx, (tmp&1)? BIT4_1 : BIT4_0);
+		      tmp >>= 1;
+		}
+		break;
+	  }
+
+          case vpiTimeVal: {
+                unsigned long tmp = vp->value.time->low;
+                for (unsigned idx = 0 ;  idx < vwid_ ;  idx += 1) {
+                      val.set_bit(idx, (tmp&1)? BIT4_1 : BIT4_0);
+
+                      if (idx == 31)
+                            tmp = vp->value.time->high;
+                      else
+                            tmp >>= 1;
+                }
+                break;
+          }
+
+	  case vpiVectorVal:
+
+	    for (unsigned wdx = 0 ;  wdx < vwid_ ;  wdx += 32) {
+		  unsigned word = wdx / 32;
+		  unsigned long aval = vp->value.vector[word].aval;
+		  unsigned long bval = vp->value.vector[word].bval;
+
+		  for (unsigned idx = 0 ;  (wdx+idx) < vwid_ && idx < 32;
+		       idx += 1) {
+			int bit = (aval&1) | ((bval<<1)&2);
+			vvp_bit4_t bit4;
+
+			switch (bit) {
+			    case 0:
+			      bit4 = BIT4_0;
+			      break;
+			    case 1:
+			      bit4 = BIT4_1;
+			      break;
+			    case 2:
+			      bit4 = BIT4_Z;
+			      break;
+			    case 3:
+			      bit4 = BIT4_X;
+			      break;
+			    default:
+			      bit4 = BIT4_X;
+			      fprintf(stderr, "Unsupported bit value %d.\n",
+			              bit);
+			      assert(0);
+			}
+			val.set_bit(wdx+idx, bit4);
+
+			aval >>= 1;
+			bval >>= 1;
+		  }
+	    }
+	    break;
+
+	  default:
+	    fprintf(stderr, "XXXX format=%d, vwid_=%u\n", (int)vp->format, vwid_);
+	    assert(0);
+      }
+
+      fnet->send_vec4(val, vthread_get_wt_context());
+      return 0;
+}
+
 
   /* **** Manipulate the internal data structures. **** */
 
@@ -754,10 +772,6 @@ static void cleanup_vpi_call_args(unsigned argc, vpiHandle*argv)
  * %vpi_call statement is encountered. Create here a vpiHandle that
  * describes the call, and return it. The %vpi_call instruction will
  * store this handle for when it is executed.
- *
- * If this is called to make a function, then the vwid will be a
- * non-zero value that represents the width or type of the result. The
- * vbit is also a non-zero value, the address in thread space of the result.
  */
 vpiHandle vpip_build_vpi_call(const char*name, int val_code, unsigned return_width,
 			      vvp_net_t*fnet,
@@ -822,8 +836,8 @@ vpiHandle vpip_build_vpi_call(const char*name, int val_code, unsigned return_wid
 	    if (fnet && val_code == -vpiRealVal) {
 		  obj = new sysfunc_rnet;
 
-	    } else if (fnet && val_code > 0) { // XXXX What's this?
-		  obj = new sysfunc_4net;
+	    } else if (fnet && val_code == -vpiVectorVal) {
+		  obj = new sysfunc_4net(return_width);
 
 	    } else if (val_code == -vpiRealVal) {
 		  obj = new sysfunc_real;
@@ -848,8 +862,6 @@ vpiHandle vpip_build_vpi_call(const char*name, int val_code, unsigned return_wid
       obj->vec4_stack = vec4_stack;
       obj->real_stack = real_stack;
       obj->string_stack = string_stack;
-      obj->vbit  = 0;
-      obj->vwid  = 0;
       obj->fnet  = fnet;
       obj->file_idx  = (unsigned) file_idx;
       obj->lineno   = (unsigned) lineno;
@@ -933,13 +945,8 @@ void vpip_execute_vpi_call(vthread_t thr, vpiHandle ref)
 	    if (ref->get_type_code() == vpiSysFuncCall &&
 	        !vpip_cur_task->put_value) {
 		  s_vpi_value val;
-		  if (vpip_cur_task->vwid == -vpiRealVal) {
-			val.format = vpiRealVal;
-			val.value.real = 0.0;
-		  } else {
-			val.format = vpiIntVal;
-			val.value.integer = 0;
-		  }
+		  val.format = vpiIntVal;
+		  val.value.integer = 0;
 		  vpi_put_value(ref, &val, 0, vpiNoDelay);
 	    }
       }

@@ -579,9 +579,7 @@ struct __vpiSysTaskCall : public __vpiHandle {
       unsigned string_stack;
 	/* Support for vpi_get_userdata. */
       void*userdata;
-	/* These represent where in the vthread to put the return value. */
-      unsigned vbit;
-      signed   vwid;
+	// This is set if this is a structural call to a function
       class    vvp_net_t*fnet;
       unsigned file_idx;
       unsigned lineno;
