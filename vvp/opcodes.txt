@@ -986,12 +986,10 @@ truth table:
 The results is then pushed onto the vec4 stack. The inputs and the
 output are all the same width.
 
-* %or/r <dst>, <src>, <wid>
+* %or/r
 
-This is a reduction version of the %or opcode. The <src> is a vector,
-and the <dst> is a writable scalar. The <dst> gets the value of the
-or of all the bits of the src vector.
-
+This is a reduction version of the %or opcode. Pop a single value from
+the vec4 stack, perform the reduction or and return the result to the stack.
 
 * %pad <dst>, <src>, <wid> (XXXX Old version)
 

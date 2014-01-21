@@ -348,35 +348,27 @@ static void draw_ternary_real(ivl_expr_t expr)
       ivl_expr_t true_ex = ivl_expr_oper2(expr);
       ivl_expr_t false_ex = ivl_expr_oper3(expr);
 
-      struct vector_info tst;
-
       unsigned lab_true = local_count++;
       unsigned lab_out = local_count++;
 
+      int cond_flag = allocate_flag();
+
 	/* Evaluate the ternary condition. */
-      tst = draw_eval_expr(cond, STUFF_OK_XZ|STUFF_OK_RO);
-      if ((tst.base >= 4) && (tst.wid > 1)) {
-	    struct vector_info tmp;
+      draw_eval_vec4(cond, STUFF_OK_XZ|STUFF_OK_RO);
+      if (ivl_expr_width(cond) > 1)
+	    fprintf(vvp_out, "    %%or/r;\n");
 
-	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n",
-		    tst.base, tst.base, tst.wid);
+      fprintf(vvp_out, "    %%flag_set/vec4 %d;\n", cond_flag);
 
-	    tmp = tst;
-	    tmp.base += 1;
-	    tmp.wid -= 1;
-	    clr_vector(tmp);
-
-	    tst.wid = 1;
-      }
 
 	/* Evaluate the true expression second. */
-      fprintf(vvp_out, "    %%jmp/1  T_%u.%u, %u;\n",
-	      thread_count, lab_true, tst.base);
+      fprintf(vvp_out, "    %%jmp/1  T_%u.%u, %d;\n",
+	      thread_count, lab_true, cond_flag);
 
 	/* Evaluate the false expression. */
       draw_eval_real(false_ex);
-      fprintf(vvp_out, "    %%jmp/0  T_%u.%u, %u; End of false expr.\n",
-              thread_count, lab_out, tst.base);
+      fprintf(vvp_out, "    %%jmp/0  T_%u.%u, %d; End of false expr.\n",
+              thread_count, lab_out, cond_flag);
 
 	/* If the conditional is undefined then blend the real words. */
       draw_eval_real(true_ex);
@@ -391,7 +383,7 @@ static void draw_ternary_real(ivl_expr_t expr)
 	/* This is the out label. */
       fprintf(vvp_out, "T_%u.%u ;\n", thread_count, lab_out);
 
-      clr_vector(tst);
+      clr_flag(cond_flag);
 }
 
 static void increment(ivl_expr_t e, bool pre)
@@ -431,13 +423,11 @@ static void draw_unary_real(ivl_expr_t expr)
       sube = ivl_expr_oper1(expr);
 
       if (ivl_expr_opcode(expr) == 'r') { /* Cast an integer value to a real. */
-	    struct vector_info res;
 	    const char *suffix = "";
 	    assert(ivl_expr_value(sube) != IVL_VT_REAL);
-	    res = draw_eval_expr(sube, 1);
+	    draw_eval_vec4(sube, STUFF_OK_XZ);
 	    if (ivl_expr_signed(sube)) suffix = "/s";
-	    fprintf(vvp_out, "    %%cvt/rv%s %u, %u;\n", suffix, res.base, res.wid);
-	    clr_vector(res);
+	    fprintf(vvp_out, "    %%cvt/rv%s;\n", suffix);
 	    return;
       }
 

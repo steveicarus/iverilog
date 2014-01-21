@@ -2223,33 +2223,27 @@ bool of_CVT_RU(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_CVT_RV(vthread_t thr, vvp_code_t cp)
+/*
+ * %cvt/rv
+ */
+bool of_CVT_RV(vthread_t thr, vvp_code_t)
 {
-#if 0
-      unsigned base = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-      vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
       double val;
-      vector4_to_value(vector, val, false);
+      vvp_vector4_t val4 = thr->pop_vec4();
+      vector4_to_value(val4, val, false);
       thr->push_real(val);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%cvt/rv ...\n");
-#endif
       return true;
 }
 
+/*
+ * %cvt/rv/s
+ */
 bool of_CVT_RV_S(vthread_t thr, vvp_code_t cp)
 {
-#if 0
-      unsigned base = cp->bit_idx[0];
-      unsigned wid = cp->bit_idx[1];
-      vvp_vector4_t vector = vthread_bits_to_vector(thr, base, wid);
       double val;
-      vector4_to_value(vector, val, true);
+      vvp_vector4_t val4 = thr->pop_vec4();
+      vector4_to_value(val4, val, true);
       thr->push_real(val);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%cvt/rv/s ...\n");
-#endif
       return true;
 }
 
