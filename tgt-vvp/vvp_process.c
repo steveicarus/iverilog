@@ -242,21 +242,23 @@ static void assign_to_lvector(ivl_lval_t lval,
 
 	    unsigned skip_assign = transient_id++;
 	    if (dexp != 0) {
+		    /* Calculated offset... */
+		  int offset_index = allocate_word();
 		    /* Calculated delay... */
 		  int delay_index = allocate_word();
 		  draw_eval_expr_into_integer(dexp, delay_index);
-		  draw_eval_expr_into_integer(part_off_ex, 1);
+		    /* Calculated part offset. This will leave flag
+		       bit 4 set to 1 if the copy into the index
+		       detected xz values. The %assign will use that
+		       to know to skip the assign. */
+		  draw_eval_expr_into_integer(part_off_ex, offset_index);
 		    /* If the index expression has XZ bits, skip the assign. */
-		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
-#if 0
-		  fprintf(vvp_out, "    %%ix/load 0, %u, 0;\n", width);
-		  fprintf(vvp_out, "    %%assign/v0/x1/d v%p_%lu, %d, %u;\n",
-		          sig, use_word, delay_index, bit);
-#else
-		  assert(0); // XXXX
-#endif
-		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
+		  fprintf(vvp_out, "    %%assign/vec4/off/d v%p_%lu, %d, %d;\n",
+			  sig, use_word, offset_index, delay_index);
+
+		  clr_word(offset_index);
 		  clr_word(delay_index);
+
 	    } else if (nevents != 0) {
 		    /* Event control delay... */
 		  draw_eval_expr_into_integer(part_off_ex, 1);
