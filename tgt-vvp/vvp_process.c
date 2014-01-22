@@ -166,8 +166,8 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 		  fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
 		  clr_word(word_ix_reg);
 	    }
-	    fprintf(vvp_out, "    %%assign/vec4/a/d v%p, %d, %d;\n", lsig,
-	                     delay_index, part_off_reg);
+	    fprintf(vvp_out, "    %%assign/vec4/a/d v%p, %d, %d;\n",
+		    lsig, part_off_reg, delay_index);
 	    clr_word(part_off_reg);
 	    clr_word(delay_index);
 
@@ -187,8 +187,8 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 		  fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
 		  clr_word(word_ix_reg);
 	    }
-	    fprintf(vvp_out, "    %%assign/vec4/a/d v%p, %d, %u;\n", lsig,
-		    part_off_reg, delay_index);
+	    fprintf(vvp_out, "    %%assign/vec4/a/d v%p, %d, %u;\n",
+		    lsig, part_off_reg, delay_index);
 	    clr_word(delay_index);
       }
 
