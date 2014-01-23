@@ -709,6 +709,7 @@ static void draw_unary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	    fprintf(vvp_out, "    %%pushi/vec4 1, 0, %u;\n", ivl_expr_width(sub));
 	    fprintf(vvp_out, "    %%add;\n");
 	    fprintf(vvp_out, "T_%u.%u ;\n", thread_count, local_count);
+	    local_count += 1;
 	    break;
 
 	  case 'v': /* Cast real to vec4 */
