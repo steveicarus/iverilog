@@ -117,7 +117,7 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 {
       unsigned skip_assign = transient_id++;
       int word_ix_reg = 3;
-      int part_off_reg = 1;
+      int part_off_reg = 0;
       int delay_index;
       unsigned long part_off = 0;
 
@@ -138,7 +138,6 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 
       if (dexp != 0) {
 	    word_ix_reg = allocate_word();
-	    part_off_reg = allocate_word();
       } else if (part_off_ex) {
 	    word_ix_reg = allocate_word();
       }
@@ -148,11 +147,13 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
       fprintf(vvp_out, "    %%flag_or %d, 4;\n", error_flag);
 
       if (part_off_ex) {
+	    part_off_reg = allocate_word();
 	    draw_eval_expr_into_integer(part_off_ex, part_off_reg);
 	    fprintf(vvp_out, "    %%flag_or %d, 4;\n", error_flag);
 
-      } else {
+      } else if (part_off != 0) {
 	      /* Store word part select into part_off_reg */
+	    part_off_reg = allocate_word();
 	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0; part off\n",
 		             part_off_reg, part_off);
       }
@@ -161,19 +162,18 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	      /* Calculated delay... */
 	    delay_index = allocate_word();
 	    draw_eval_expr_into_integer(dexp, delay_index);
-	    fprintf(vvp_out, "    %%flag_or 4, %d;\n", error_flag);
+	    fprintf(vvp_out, "    %%flag_mov 4, %d;\n", error_flag);
 	    if (word_ix_reg != 3) {
 		  fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
 		  clr_word(word_ix_reg);
 	    }
 	    fprintf(vvp_out, "    %%assign/vec4/a/d v%p, %d, %d;\n",
 		    lsig, part_off_reg, delay_index);
-	    clr_word(part_off_reg);
 	    clr_word(delay_index);
 
       } else if (nevents != 0) {
 	      /* Event control delay... */
-	    fprintf(vvp_out, "    %%assign/vec4/a/e v%p, 0;\n", lsig);
+	    fprintf(vvp_out, "    %%assign/vec4/a/e v%p, %d;\n", lsig, part_off_reg);
 
       } else {
 	      /* Constant delay... */
@@ -196,6 +196,8 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
       if (nevents != 0) fprintf(vvp_out, "    %%evctl/c;\n");
 
       clr_flag(error_flag);
+      if (part_off_reg)
+	    clr_word(part_off_reg);
       clear_expression_lookaside();
 }
 
@@ -240,7 +242,6 @@ static void assign_to_lvector(ivl_lval_t lval,
 	      // so in these cases we'll need to use
 	      // %assign/vec4/off/... variants.
 
-	    unsigned skip_assign = transient_id++;
 	    if (dexp != 0) {
 		    /* Calculated offset... */
 		  int offset_index = allocate_word();
@@ -260,19 +261,15 @@ static void assign_to_lvector(ivl_lval_t lval,
 		  clr_word(delay_index);
 
 	    } else if (nevents != 0) {
+		  int offset_index = allocate_word();
 		    /* Event control delay... */
-		  draw_eval_expr_into_integer(part_off_ex, 1);
-		    /* If the index expression has XZ bits, skip the assign. */
-		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
-#if 0
-		  fprintf(vvp_out, "    %%ix/load 0, %u, 0;\n", width);
-		  fprintf(vvp_out, "    %%assign/v0/x1/e v%p_%lu, %u;\n",
-		          sig, use_word, bit);
-#else
-		  assert(0); // XXXX
-#endif
-		  fprintf(vvp_out, "t_%u ;\n", skip_assign);
+		  draw_eval_expr_into_integer(part_off_ex, offset_index);
+		  fprintf(vvp_out, "    %%assign/vec4/off/e v%p_%lu, %d;\n",
+			  sig, use_word, offset_index);
 		  fprintf(vvp_out, "    %%evctl/c;\n");
+
+		  clr_word(offset_index);
+
 	    } else {
 		  int offset_index = allocate_word();
 		  int delay_index = allocate_word();
@@ -338,7 +335,15 @@ static void assign_to_lvector(ivl_lval_t lval,
 	    }
 #else
 	    if (nevents != 0) {
-		  assert(0); // XXXX
+		  assert(dexp==0);
+		  int offset_index = allocate_word();
+		  fprintf(vvp_out, "    %%ix/load %d, %lu, 0;\n",
+			  offset_index, part_off);
+		  fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+		  fprintf(vvp_out, "    %%assign/vec4/off/e v%p_%lu, %d;\n",
+			  sig, use_word, offset_index);
+		  fprintf(vvp_out, "    %%evctl/c;\n");
+		  clr_word(offset_index);
 
 	    } else {
 		    // Constant part offset, non-constant (calculated)
@@ -372,6 +377,8 @@ static void assign_to_lvector(ivl_lval_t lval,
 	      /* Event control delay... */
 	    fprintf(vvp_out, "    %%assign/vec4/e v%p_%lu;\n",
 		    sig, use_word);
+	    fprintf(vvp_out, "    %%evctl/c;\n");
+
       } else {
 	      /*
 	       * The %assign can only take a 32 bit delay. For a larger

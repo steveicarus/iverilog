@@ -1168,6 +1168,7 @@ bool of_ASSIGN_AVD(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+#if 0
 bool of_ASSIGN_AVE(vthread_t thr, vvp_code_t cp)
 {
       unsigned wid = thr->words[0].w_int;
@@ -1194,7 +1195,6 @@ bool of_ASSIGN_AVE(vthread_t thr, vvp_code_t cp)
 
       assert(wid > 0);
 
-#if 0
       vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
 	// If the count is zero then just put the value.
       if (thr->ecount == 0) {
@@ -1202,12 +1202,10 @@ bool of_ASSIGN_AVE(vthread_t thr, vvp_code_t cp)
       } else {
 	    schedule_evctl(cp->array, adr, value, off, thr->event, thr->ecount);
       }
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%assign/av/e ...\n");
-      assert(0);
-#endif
+
       return true;
 }
+#endif
 
 #if 0
 /*
@@ -1261,14 +1259,82 @@ bool of_ASSIGN_VEC4_A_D(vthread_t thr, vvp_code_t cp)
       vvp_time64_t del = del_idx? thr->words[del_idx].w_uint : 0;
       long     adr = thr->words[adr_idx].w_int;
 
-      vvp_vector4_t value = thr->pop_vec4();
+      vvp_vector4_t val = thr->pop_vec4();
+      unsigned wid = val.size();
+      const unsigned array_wid = get_array_word_size(cp->array);
 
 	// Abort if flags[4] is set. This can happen if the calulation
 	// into an index register failed.
       if (thr->flags[4] == BIT4_1)
 	    return true;
 
-      schedule_assign_array_word(cp->array, adr, off, value, del);
+      if (off >= (long)array_wid)
+	    return true;
+      if (off < 0) {
+	    if ((unsigned)-off >= array_wid)
+		  return true;
+
+	    int use_off = -off;
+	    assert(wid > use_off);
+	    unsigned use_wid = wid - use_off;
+	    val = val.subvalue(use_off, use_wid);
+	    off = 0;
+	    wid = use_wid;
+      }
+      if (off+wid > array_wid) {
+	    val = val.subvalue(0, array_wid-off);
+	    wid = val.size();
+      }
+
+      schedule_assign_array_word(cp->array, adr, off, val, del);
+
+      return true;
+}
+
+/*
+ * %assign/vec4/a/e <arr>, <offx>
+ */
+bool of_ASSIGN_VEC4_A_E(vthread_t thr, vvp_code_t cp)
+{
+      int off_idx = cp->bit_idx[0];
+      int adr_idx = 3;
+
+      long     off = off_idx? thr->words[off_idx].w_int  : 0;
+      long     adr = thr->words[adr_idx].w_int;
+
+      vvp_vector4_t val = thr->pop_vec4();
+      unsigned wid = val.size();
+      const unsigned array_wid = get_array_word_size(cp->array);
+
+	// Abort if flags[4] is set. This can happen if the calulation
+	// into an index register failed.
+      if (thr->flags[4] == BIT4_1)
+	    return true;
+
+      if (off >= (long)array_wid)
+	    return true;
+      if (off < 0) {
+	    if ((unsigned)-off >= array_wid)
+		  return true;
+
+	    int use_off = -off;
+	    assert(wid > (unsigned)use_off);
+	    unsigned use_wid = wid - use_off;
+	    val = val.subvalue(use_off, use_wid);
+	    off = 0;
+	    wid = use_wid;
+      }
+      if (off+wid > array_wid) {
+	    val = val.subvalue(0, array_wid-off);
+	    wid = val.size();
+      }
+
+      if (thr->ecount == 0) {
+	    schedule_assign_array_word(cp->array, adr, off, val, 0);
+      } else {
+	    schedule_evctl(cp->array, adr, val, off, thr->event, thr->ecount);
+      }
+
       return true;
 }
 
@@ -1306,6 +1372,53 @@ bool of_ASSIGN_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
       }
 
       schedule_assign_vector(ptr, off, sig->value_size(), val, del);
+      return true;
+}
+
+/*
+ * %assign/vec4/off/e <var>, <off>
+ */
+bool of_ASSIGN_VEC4_OFF_E(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_ptr_t ptr (cp->net, 0);
+      unsigned off_index = cp->bit_idx[0];
+      vvp_vector4_t val = thr->pop_vec4();
+      unsigned wid = val.size();
+
+      int off = thr->words[off_index].w_int;
+
+	// Abort if flags[4] is set. This can happen if the calulation
+	// into an index register failed.
+      if (thr->flags[4] == BIT4_1)
+	    return true;
+
+      vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (cp->net->fil);
+      assert(sig);
+
+      if (off >= (long)sig->value_size())
+	    return true;
+      if (off < 0) {
+	    if ((unsigned)-off >= sig->value_size())
+		  return true;
+
+	    int use_off = -off;
+	    assert(wid > use_off);
+	    unsigned use_wid = wid - use_off;
+	    val = val.subvalue(use_off, use_wid);
+	    off = 0;
+	    wid = use_wid;
+      }
+      if (off+wid > sig->value_size()) {
+	    val = val.subvalue(0, sig->value_size()-off);
+	    wid = val.size();
+      }
+
+      if (thr->ecount == 0) {
+	    schedule_assign_vector(ptr, off, sig->value_size(), val, 0);
+      } else {
+	    schedule_evctl(ptr, val, off, sig->value_size(), thr->event, thr->ecount);
+      }
+
       return true;
 }
 
