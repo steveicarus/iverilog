@@ -48,7 +48,10 @@ FILE*vvp_out = 0;
 int vvp_errors = 0;
 unsigned show_file_line = 0;
 
-static uint32_t allocate_flag_mask = 0x00ff;
+# define FLAGS_COUNT 256
+
+static uint32_t allocate_flag_mask[FLAGS_COUNT / 32] = { 0x000000ff, 0 };
+
 
 __inline__ static void draw_execute_header(ivl_design_t des)
 {
@@ -90,12 +93,13 @@ __inline__ static void draw_module_declarations(ivl_design_t des)
 int allocate_flag(void)
 {
       int idx;
-      for (idx = 0 ; idx < 8*sizeof(allocate_flag_mask) ; idx += 1) {
-	    uint32_t mask = 1 << idx;
-	    if (allocate_flag_mask & mask)
+      for (idx = 0 ; idx < FLAGS_COUNT ; idx += 1) {
+	    int word = idx / 32;
+	    uint32_t mask = 1 << (idx%32);
+	    if (allocate_flag_mask[word] & mask)
 		  continue;
 
-	    allocate_flag_mask |= mask;
+	    allocate_flag_mask[word] |= mask;
 	    return idx;
       }
 
@@ -104,12 +108,13 @@ int allocate_flag(void)
 
 void clr_flag(int idx)
 {
-      assert(idx < 8*sizeof(allocate_flag_mask));
-      uint32_t mask = 1 << idx;
+      assert(idx < FLAGS_COUNT);
+      int word = idx / 32;
+      uint32_t mask = 1 << (idx%32);
 
-      assert(allocate_flag_mask & mask);
+      assert(allocate_flag_mask[word] & mask);
 
-      allocate_flag_mask &= ~mask;
+      allocate_flag_mask[word] &= ~mask;
 }
 
 int target_design(ivl_design_t des)

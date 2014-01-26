@@ -270,8 +270,14 @@ static void draw_binary_vec4_le(ivl_expr_t expr, int stuff_ok_flag)
 	    break;
       }
 
+	/* NOTE: I think I would rather the elaborator handle the
+	   operand widths. When that happens, take this code out. */
       draw_eval_vec4(le, stuff_ok_flag);
+      if (ivl_expr_width(le) < ivl_expr_width(re))
+	    fprintf(vvp_out, "    %%pad/%c %u;\n", s_flag, ivl_expr_width(re));
       draw_eval_vec4(re, stuff_ok_flag);
+      if (ivl_expr_width(re) < ivl_expr_width(le))
+	    fprintf(vvp_out, "    %%pad/%c %u;\n", s_flag, ivl_expr_width(le));
 
       switch (use_opcode) {
 	  case 'L':

@@ -103,7 +103,7 @@ struct vthread_s {
       vvp_code_t pc;
 	/* These hold the private thread bits. */
 	//vvp_vector4_t bits4;
-      enum { FLAGS_COUNT = 16, WORDS_COUNT = 16 };
+      enum { FLAGS_COUNT = 256, WORDS_COUNT = 16 };
       vvp_bit4_t flags[FLAGS_COUNT];
 
 	/* These are the word registers. */
@@ -1363,12 +1363,19 @@ bool of_ASSIGN_VEC4_OFF_D(vthread_t thr, vvp_code_t cp)
       if (off >= (long)sig->value_size())
 	    return true;
       if (off < 0) {
-	    if ((unsigned)-off >= sig->value_size())
+	    if ((unsigned)-off >= wid)
 		  return true;
-	    assert(0); // XXXX Not implemented yet.
+
+	    int use_off = -off;
+	    assert(wid > use_off);
+	    unsigned use_wid = wid - use_off;
+	    val = val.subvalue(use_off, use_wid);
+	    off = 0;
+	    wid = use_wid;
       }
       if (off+wid > sig->value_size()) {
-	    assert(0); // XXXX Not implemented yet.
+	    val = val.subvalue(0, sig->value_size()-off);
+	    wid = val.size();
       }
 
       schedule_assign_vector(ptr, off, sig->value_size(), val, del);
@@ -1398,7 +1405,7 @@ bool of_ASSIGN_VEC4_OFF_E(vthread_t thr, vvp_code_t cp)
       if (off >= (long)sig->value_size())
 	    return true;
       if (off < 0) {
-	    if ((unsigned)-off >= sig->value_size())
+	    if ((unsigned)-off >= wid)
 		  return true;
 
 	    int use_off = -off;
@@ -3014,7 +3021,7 @@ bool of_EVENT(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_ptr_t ptr (cp->net, 0);
       vvp_vector4_t tmp (1, BIT4_X);
-      vvp_send_vec4(ptr, tmp, 0);
+      vvp_send_vec4(ptr, tmp, thr->wt_context);
       return true;
 }
 
@@ -5036,7 +5043,6 @@ bool of_POW(vthread_t thr, vvp_code_t)
       vvp_vector4_t valb = thr->pop_vec4();
       vvp_vector4_t vala = thr->pop_vec4();
 
-      assert(vala.size()==valb.size());
       unsigned wid = vala.size();
 
       vvp_vector2_t xv2 = vvp_vector2_t(vala);
