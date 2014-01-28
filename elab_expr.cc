@@ -4720,7 +4720,7 @@ unsigned PENewClass::test_width(Design*, NetScope*, width_mode_t&)
  */
 NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 						 const netclass_t*ctype,
-						 NetExpr*obj, unsigned flags) const
+						 NetExpr*obj, unsigned /*flags*/) const
 {
 	// If there is an initializer function, then pass the object
 	// through that function first. Note tha the initializer
