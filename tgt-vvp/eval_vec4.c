@@ -735,7 +735,7 @@ static void draw_unary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 		  break;
 		case IVL_VT_REAL:
 		  draw_eval_real(sub);
-		  fprintf(vvp_out, "    %%cvt/vr;\n");
+		  fprintf(vvp_out, "    %%cvt/vr %u;\n", ivl_expr_width(expr));
 		  break;
 		default:
 		  assert(0);
