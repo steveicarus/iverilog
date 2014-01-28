@@ -138,7 +138,7 @@ NetExpr* NetFuncDef::evaluate_function(const LineInfo&loc, const std::vector<Net
       if (flag) {
 	    if (debug_eval_tree) {
 		  cerr << loc.get_fileline() << ": NetFuncDef::evaluate_function: "
-		       << "Evalutated to ";
+		       << "Evaluated to ";
 		  if (res) cerr << *res;
 		  else cerr << "<nil>";
 		  cerr << endl;

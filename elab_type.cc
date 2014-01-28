@@ -83,7 +83,7 @@ ivl_type_s* class_type_t::elaborate_type_raw(Design*, NetScope*scope) const
 /*
  * elaborate_type_raw for enumerations is actually mostly performed
  * during scope elaboration so that the enumeration literals are
- * available at the right time. At tha time, the netenum_t* object is
+ * available at the right time. At that time, the netenum_t* object is
  * stashed in the scope so that I can retrieve it here.
  */
 ivl_type_s* enum_type_t::elaborate_type_raw(Design*des, NetScope*scope) const

@@ -1260,7 +1260,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      // The trick here is that the parray type has an
 	      // arbitrary sub-type, and not just a scalar bit...
 	    netparray_t*use_type = elaborate_parray_type(des, scope, parray_type);
-	      // Should not be getting packed dimensions other then
+	      // Should not be getting packed dimensions other than
 	      // through the parray type declaration.
 	    ivl_assert(*this, packed_dimensions.empty());
 

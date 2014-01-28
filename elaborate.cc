@@ -3051,7 +3051,7 @@ NetProc* PChainConstructor::elaborate(Design*des, NetScope*scope) const
       NetNet*var_this = scope->find_signal(perm_string::literal("@"));
 
 	// If super.new is an implicit constructor, then there are no
-	// arguments (other then "this" to worry about, so make a
+	// arguments (other than "this" to worry about, so make a
 	// NetEUFunc and there we go.
       if (NetScope*new_scope = class_super->method_from_name(perm_string::literal("new@"))) {
 	    NetESignal*eres = new NetESignal(var_this);

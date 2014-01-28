@@ -555,7 +555,7 @@ data_type_t* pform_test_type_identifier(const char*txt)
 	      // First look to see if this identifier is imported from
 	      // a package. If it is, see if it is a type in that
 	      // package. If it is, then great. If imported as
-	      // something other then a type, then give up now becase
+	      // something other than a type, then give up now because
 	      // the name has at least shadowed any other possible
 	      // meaning for this name.
 	    map<perm_string,PPackage*>::iterator cur_pkg;

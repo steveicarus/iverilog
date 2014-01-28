@@ -755,7 +755,7 @@ const netclass_t* NetNet::class_type(void) const
 
 /*
  * "depth" is the number of index expressions that the user is using
- * to index this identifer. So consider if Net was declared like so:
+ * to index this identifier. So consider if Net was declared like so:
  *
  *   reg [5:0][3:0] foo;
  *

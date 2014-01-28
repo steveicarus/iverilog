@@ -566,7 +566,7 @@ int ExpFunc::emit(ostream&out, Entity*ent, Architecture*arc)
 	    out << ")";
 
       } else {
-	      // If this function has an elaborated defintion, and if
+	      // If this function has an elaborated definition, and if
 	      // that definition is in a package, then include the
 	      // package name as a scope qualifier. This assures that
 	      // the SV elaborator finds the correct VHDL elaborated

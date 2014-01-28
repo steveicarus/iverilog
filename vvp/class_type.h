@@ -52,7 +52,7 @@ class class_type : public __vpiHandle {
       void set_property(size_t idx, const std::string&name, const std::string&type);
 
 	// This method is called after all the properties are
-	// defined. This calculates information about the defintion.
+	// defined. This calculates information about the definition.
       void finish_setup(void);
 
     public:

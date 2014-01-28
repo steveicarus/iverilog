@@ -45,7 +45,7 @@ int load_footprints(void)
 }
 
 /*
- * The fpparse funciton calls back the callback_fp_element function
+ * The fpparse function calls back the callback_fp_element function
  * for each Element that it parses. The check_footprint function
  * stores in the cur_footprint variable the name of the footprint that
  * we are trying to find in the file. The callback uses that name to

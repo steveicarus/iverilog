@@ -4723,8 +4723,8 @@ NetExpr* PENewClass::elaborate_expr_constructor_(Design*des, NetScope*scope,
 						 NetExpr*obj, unsigned /*flags*/) const
 {
 	// If there is an initializer function, then pass the object
-	// through that function first. Note tha the initializer
-	// function has no arguments other then the object itself.
+	// through that function first. Note that the initializer
+	// function has no arguments other than the object itself.
       if (NetScope*new1_scope = ctype->method_from_name(perm_string::literal("new@"))) {
 	    NetFuncDef*def1 = new1_scope->func_def();
 	    ivl_assert(*this, def1);
@@ -4866,7 +4866,7 @@ NetExpr* PENewCopy::elaborate_expr(Design*des, NetScope*scope, ivl_type_t obj_ty
 
 /*
  * A "null" expression represents class objects/handles. This brings
- * up a ton of special cases, but we handle it here bu setting the
+ * up a ton of special cases, but we handle it here by setting the
  * expr_type_ and expr_width_ to fixed values.
  */
 unsigned PENull::test_width(Design*, NetScope*, width_mode_t&)

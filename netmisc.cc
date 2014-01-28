@@ -1309,7 +1309,7 @@ NetExpr*collapse_array_exprs(Design*des, NetScope*scope,
 /*
  * Given a list of indices, treat them as packed indices and convert
  * them to an expression that normalizes the list to a single index
- * expression over a canonical equivilent 1-dimensional array.
+ * expression over a canonical equivalent 1-dimensional array.
  */
 NetExpr*collapse_array_indices(Design*des, NetScope*scope, NetNet*net,
 			       const list<index_component_t>&indices)
