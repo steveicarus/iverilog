@@ -648,6 +648,51 @@ static void draw_ternary_vec4(ivl_expr_t expr, int stuff_ok_flag)
       clr_flag(use_flag);
 }
 
+static void draw_unary_inc_dec(ivl_expr_t sub, bool incr, bool pre)
+{
+      ivl_signal_t sig = 0;
+      unsigned wid = 0;
+
+      switch (ivl_expr_type(sub)) {
+	  case IVL_EX_SELECT: {
+		ivl_expr_t e1 = ivl_expr_oper1(sub);
+		sig = ivl_expr_signal(e1);
+		wid = ivl_expr_width(e1);
+		break;
+	  }
+
+	  case IVL_EX_SIGNAL:
+	    sig = ivl_expr_signal(sub);
+	    wid = ivl_expr_width(sub);
+	    break;
+
+	  default:
+	    assert(0);
+	    break;
+      }
+
+      draw_eval_vec4(sub, STUFF_OK_XZ);
+
+      const char*cmd = incr? "%add" : "%sub";
+
+      if (pre) {
+	      /* prefix means we add the result first, and store the
+		 result, as well as leaving a copy on the stack. */
+	    fprintf(vvp_out, "    %%pushi/vec4 1, 0, %u;\n", wid);
+	    fprintf(vvp_out, "    %s;\n", cmd);
+	    fprintf(vvp_out, "    %%dup/vec4;\n");
+	    fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", sig, wid);
+
+      } else {
+	      /* The post-fix decrement returns the non-decremented
+		 version, so there is a slight re-arrange. */
+	    fprintf(vvp_out, "    %%dup/vec4;\n");
+	    fprintf(vvp_out, "    %%pushi/vec4 1, 0, %u;\n", wid);
+	    fprintf(vvp_out, "    %s;\n", cmd);
+	    fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", sig, wid);
+      }
+}
+
 static void draw_unary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 {
       ivl_expr_t sub = ivl_expr_oper1(expr);
@@ -688,6 +733,22 @@ static void draw_unary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	  case 'A': /* nand (~&) */
 	    draw_eval_vec4(sub, stuff_ok_flag);
 	    fprintf(vvp_out, "    %%nand/r;\n");
+	    break;
+
+	  case 'D': /* pre-decrement (--x) */
+	    draw_unary_inc_dec(sub, false, true);
+	    break;
+
+	  case 'd': /* post_decrement (x--) */
+	    draw_unary_inc_dec(sub, false, false);
+	    break;
+
+	  case 'I': /* pre-increment (++x) */
+	    draw_unary_inc_dec(sub, true, true);
+	    break;
+
+	  case 'i': /* post-increment (x++) */
+	    draw_unary_inc_dec(sub, true, false);
 	    break;
 
 	  case 'N': /* nor (~|) */
