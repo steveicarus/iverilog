@@ -133,6 +133,26 @@ static void draw_binary_vec4_compare_real(ivl_expr_t expr)
       }
 }
 
+static void draw_binary_vec4_compare_string(ivl_expr_t expr)
+{
+      draw_eval_string(ivl_expr_oper1(expr));
+      draw_eval_string(ivl_expr_oper2(expr));
+
+      switch (ivl_expr_opcode(expr)) {
+	  case 'e': /* == */
+	    fprintf(vvp_out, "    %%cmp/str;\n");
+	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
+	    break;
+	  case 'n': /* != */
+	    fprintf(vvp_out, "    %%cmp/str;\n");
+	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
+	    fprintf(vvp_out, "    %%inv;\n");
+	    break;
+	  default:
+	    assert(0);
+      }
+}
+
 static void draw_binary_vec4_compare(ivl_expr_t expr, int stuff_ok_flag)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
@@ -141,6 +161,24 @@ static void draw_binary_vec4_compare(ivl_expr_t expr, int stuff_ok_flag)
       if ((ivl_expr_value(le) == IVL_VT_REAL)
 	  || (ivl_expr_value(re) == IVL_VT_REAL)) {
 	    draw_binary_vec4_compare_real(expr);
+	    return;
+      }
+
+      if ((ivl_expr_value(le)==IVL_VT_STRING)
+	  && (ivl_expr_value(re)==IVL_VT_STRING)) {
+	    draw_binary_vec4_compare_string(expr);
+	    return;
+      }
+
+      if ((ivl_expr_value(le)==IVL_VT_STRING)
+	  && (ivl_expr_type(re)==IVL_EX_STRING)) {
+	    draw_binary_vec4_compare_string(expr);
+	    return;
+      }
+
+      if ((ivl_expr_type(le)==IVL_EX_STRING)
+	  && (ivl_expr_value(re)==IVL_VT_STRING)) {
+	    draw_binary_vec4_compare_string(expr);
 	    return;
       }
 
@@ -238,6 +276,50 @@ static void draw_binary_vec4_le_real(ivl_expr_t expr)
       }
 }
 
+static void draw_binary_vec4_le_string(ivl_expr_t expr)
+{
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+
+      switch (ivl_expr_opcode(expr)) {
+	  case '<':
+	    draw_eval_string(le);
+	    draw_eval_string(re);
+	    fprintf(vvp_out, "    %%cmp/str;\n");
+	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
+	    break;
+
+	  case 'L': /* <= */
+	    draw_eval_string(le);
+	    draw_eval_string(re);
+	    fprintf(vvp_out, "    %%cmp/str;\n");
+	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
+	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
+	    fprintf(vvp_out, "    %%or;\n");
+	    break;
+
+	  case '>':
+	    draw_eval_string(re);
+	    draw_eval_string(le);
+	    fprintf(vvp_out, "    %%cmp/str;\n");
+	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
+	    break;
+
+	  case 'G': /* >= */
+	    draw_eval_string(re);
+	    draw_eval_string(le);
+	    fprintf(vvp_out, "    %%cmp/str;\n");
+	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
+	    fprintf(vvp_out, "    %%flag_get/vec4 5;\n");
+	    fprintf(vvp_out, "    %%or;\n");
+	    break;
+
+	  default:
+	    assert(0);
+	    break;
+      }
+}
+
 static void draw_binary_vec4_le(ivl_expr_t expr, int stuff_ok_flag)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
@@ -268,6 +350,24 @@ static void draw_binary_vec4_le(ivl_expr_t expr, int stuff_ok_flag)
 	    re = tmp;
 	    use_opcode = '<';
 	    break;
+      }
+
+      if ((ivl_expr_value(le)==IVL_VT_STRING)
+	  && (ivl_expr_value(re)==IVL_VT_STRING)) {
+	    draw_binary_vec4_le_string(expr);
+	    return;
+      }
+
+      if ((ivl_expr_value(le)==IVL_VT_STRING)
+	  && (ivl_expr_type(re)==IVL_EX_STRING)) {
+	    draw_binary_vec4_le_string(expr);
+	    return;
+      }
+
+      if ((ivl_expr_type(le)==IVL_EX_STRING)
+	  && (ivl_expr_value(re)==IVL_VT_STRING)) {
+	    draw_binary_vec4_le_string(expr);
+	    return;
       }
 
 	/* NOTE: I think I would rather the elaborator handle the
