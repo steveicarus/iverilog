@@ -26,8 +26,12 @@ ivl_variable_type_t struct_type_t::figure_packed_base_type(void) const
       if (! packed_flag)
 	    return IVL_VT_NO_TYPE;
 
+      if (members.get() == 0)
+	    return IVL_VT_NO_TYPE;
+
       ivl_variable_type_t base_type = IVL_VT_BOOL;
 
+      ivl_assert(*this, members.get());
       for (list<struct_member_t*>::iterator cur = members->begin()
 		 ; cur != members->end() ; ++ cur) {
 

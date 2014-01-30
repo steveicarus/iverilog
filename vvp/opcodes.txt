@@ -1024,7 +1024,7 @@ includes an implicit pop, but sometimes it is necessary to pop
 explicitly.
 
 The <skip> is the number of top positions on the stack to keep,
-beforing starting to pop. This allows for popping positions other then
+beforing starting to pop. This allows for popping positions other than
 the top of the stack.
 
 * %pow <bit-l>, <bit-r>, <wid>

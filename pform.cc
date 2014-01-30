@@ -46,12 +46,16 @@
 /*
  * The pform_modules is a map of the modules that have been defined in
  * the top level. This should not contain nested modules/programs.
+ * pform_primitives is similar, but for UDP primitives.
  */
 map<perm_string,Module*> pform_modules;
-/*
- */
 map<perm_string,PUdp*> pform_primitives;
 
+/*
+ * typedefs in the $root scope go here.
+ */
+map<perm_string,data_type_t*>pform_typedefs;
+set<enum_type_t*>pform_enum_sets;
 
 std::string vlltype::get_fileline() const
 {
@@ -484,7 +488,12 @@ static void pform_put_wire_in_scope(perm_string name, PWire*net)
 
 static void pform_put_enum_type_in_scope(enum_type_t*enum_set)
 {
-      lexical_scope->enum_sets.insert(enum_set);
+      if (lexical_scope) {
+	    ivl_assert(*enum_set, lexical_scope);
+	    lexical_scope->enum_sets.insert(enum_set);
+      } else {
+	    pform_enum_sets.insert(enum_set);
+      }
 }
 
 PWire*pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_type, NetNet::PortType port_type, ivl_variable_type_t vt_type)
@@ -505,7 +514,13 @@ PWire*pform_get_make_wire_in_scope(perm_string name, NetNet::Type net_type, NetN
 
 void pform_set_typedef(perm_string name, data_type_t*data_type)
 {
-      data_type_t*&ref = lexical_scope->typedefs[name];
+	// If we are in a lexical scope (i.e. a package or module)
+	// then put the typedef into that scope. Otherwise, put it
+	// into the $root scope.
+      data_type_t*&ref = lexical_scope
+	    ? lexical_scope->typedefs[name]
+	    : pform_typedefs[name];
+
       ivl_assert(*data_type, ref == 0);
       ref = data_type;
 
@@ -514,14 +529,24 @@ void pform_set_typedef(perm_string name, data_type_t*data_type)
       }
 }
 
+static data_type_t* test_type_identifier_in_root(perm_string name)
+{
+      map<perm_string,data_type_t*>::iterator cur = pform_typedefs.find(name);
+      if (cur != pform_typedefs.end())
+	    return cur->second;
+      else
+	    return 0;
+}
+
 data_type_t* pform_test_type_identifier(const char*txt)
 {
-	// If there is no lexical_scope yet, then there is NO WAY the
-	// identifier can be a type_identifier.
-      if (lexical_scope == 0)
-	    return 0;
-
       perm_string name = lex_strings.make(txt);
+
+	// If there is no lexical_scope yet, then look only in the
+	// $root scope for typedefs.
+      if (lexical_scope == 0) {
+	    return test_type_identifier_in_root(name);
+      }
 
       LexicalScope*cur_scope = lexical_scope;
       do {
@@ -530,7 +555,7 @@ data_type_t* pform_test_type_identifier(const char*txt)
 	      // First look to see if this identifier is imported from
 	      // a package. If it is, see if it is a type in that
 	      // package. If it is, then great. If imported as
-	      // something other then a type, then give up now becase
+	      // something other than a type, then give up now because
 	      // the name has at least shadowed any other possible
 	      // meaning for this name.
 	    map<perm_string,PPackage*>::iterator cur_pkg;
@@ -551,6 +576,10 @@ data_type_t* pform_test_type_identifier(const char*txt)
 
 	    cur_scope = cur_scope->parent_scope();
       } while (cur_scope);
+
+	// See if there is a typedef in the $root scope.
+      if (data_type_t*tmp = test_type_identifier_in_root(name))
+	    return tmp;
 
       return 0;
 }

@@ -76,6 +76,7 @@ class NetEvTrig;
 class NetEvWait;
 class PExpr;
 class PFunction;
+struct enum_type_t;
 class netclass_t;
 class netdarray_t;
 class netparray_t;
@@ -820,11 +821,52 @@ class NetBaseDef {
 };
 
 /*
+ * Some definitions (and methods to manipulate them) are common to a
+ * couple of types. Keep them here.
+ */
+class Definitions {
+
+    public:
+      Definitions();
+      ~Definitions();
+
+	// Add the enumeration to the set of enumerations in this
+	// scope. Include a key that the elaboration can use to look
+	// up this enumeration based on the pform type.
+      void add_enumeration_set(const enum_type_t*key, netenum_t*enum_set);
+
+      bool add_enumeration_name(netenum_t*enum_set, perm_string enum_name);
+
+	// Look up the enumeration literal in this scope. if the name
+	// is present, then return the enumeration type that declares it.
+      const netenum_t* enumeration_for_name(perm_string name);
+
+	// Look up the enumeration set that was added with the given
+	// key. This is used by enum_type_t::elaborate_type to locate
+	// a previously elaborated enumeration.
+      netenum_t* enumeration_for_key(const enum_type_t*key) const;
+
+	// Look up an enumeration literal in this scope. If the
+	// literal is present, return the expression that defines its
+	// value.
+      const NetExpr* enumeration_expr(perm_string key);
+
+    protected:
+	// Enumerations. The enum_sets_ is a list of all the
+	// enumerations present in this scope. The enum_names_ is a
+	// map of all the enumeration names back to the sets that
+	// contain them.
+      std::map<const enum_type_t*,netenum_t*> enum_sets_;
+      std::map<perm_string,NetEConstEnum*> enum_names_;
+
+};
+
+/*
  * This object type is used to contain a logical scope within a
  * design. The scope doesn't represent any executable hardware, but is
  * just a handle that netlist processors can use to grab at the design.
  */
-class NetScope : public Attrib {
+class NetScope : public Definitions, public Attrib {
 
     public:
       enum TYPE { MODULE, CLASS, TASK, FUNC, BEGIN_END, FORK_JOIN, GENBLOCK, PACKAGE };
@@ -896,11 +938,6 @@ class NetScope : public Attrib {
       void add_signal(NetNet*);
       void rem_signal(NetNet*);
       NetNet* find_signal(perm_string name);
-
-      void add_enumeration_set(netenum_t*enum_set);
-      bool add_enumeration_name(netenum_t*enum_set, perm_string enum_name);
-
-      const netenum_t* enumeration_for_name(perm_string name);
 
       void add_class(netclass_t*class_type);
       netclass_t* find_class(perm_string name);
@@ -1152,13 +1189,6 @@ class NetScope : public Attrib {
       };
       const PFunction*func_pform_;
       unsigned elab_stage_;
-
-	// Enumerations. The enum_sets_ is a list of all the
-	// enumerations present in this scope. The enum_names_ is a
-	// map of all the enumeration names back to the sets that
-	// contain them.
-      std::list<netenum_t*> enum_sets_;
-      std::map<perm_string,NetEConstEnum*> enum_names_;
 
       std::map<perm_string,netclass_t*> classes_;
 
@@ -1973,12 +2003,11 @@ class NetEConst  : public NetExpr {
 class NetEConstEnum  : public NetEConst {
 
     public:
-      explicit NetEConstEnum(NetScope*scope, perm_string name,
+      explicit NetEConstEnum(Definitions*scope, perm_string name,
 			     const netenum_t*enum_set, const verinum&val);
       ~NetEConstEnum();
 
       perm_string name() const;
-      const NetScope*scope() const;
       const netenum_t*enumeration() const;
 
       virtual void expr_scan(struct expr_scan_t*) const;
@@ -1987,7 +2016,7 @@ class NetEConstEnum  : public NetEConst {
       virtual NetEConstEnum* dup_expr() const;
 
     private:
-      NetScope*scope_;
+      Definitions*scope_;
       const netenum_t*enum_set_;
       perm_string name_;
 };
@@ -4176,37 +4205,53 @@ class NetESFunc  : public NetExpr {
 	 */
       enum ID { NOT_BUILT_IN = 0x0,
                   /* Available in all version of Verilog/SystemVerilog. */
-                ITOR  = 0x00020001,  /* $itor takes one argument. */
-                RTOI  = 0x00020002,  /* $rtoi takes one argument. */
+                ITOR   = 0x00020001,  /* $itor takes one argument. */
+                RTOI   = 0x00020002,  /* $rtoi takes one argument. */
                   /* Available in Verilog 2005 and later. */
-                ACOS  = 0x00020003,  /* $acos takes one argument. */
-                ACOSH = 0x00020004,  /* $acosh takes one argument. */
-                ASIN  = 0x00020005,  /* $asin takes one argument. */
-                ASINH = 0x00020006,  /* $asinh takes one argument. */
-                ATAN  = 0x00020007,  /* $atan takes one argument. */
-                ATANH = 0x00020008,  /* $atanh takes one argument. */
-                ATAN2 = 0x00040009,  /* $atan2 takes two argument. */
-                CEIL  = 0x0002000a,  /* $ceil takes one argument. */
-                CLOG2 = 0x0002000b,  /* $clog2 takes one argument. */
-                COS   = 0x0002000c,  /* $cos takes one argument. */
-                COSH  = 0x0002000d,  /* $cosh takes one argument. */
-                EXP   = 0x0002000e,  /* $exp takes one argument. */
-                FLOOR = 0x0002000f,  /* $floor takes one argument. */
-                HYPOT = 0x00040010,  /* $hypot takes two argument. */
-                LN    = 0x00020011,  /* $ln takes one argument. */
-                LOG10 = 0x00020012,  /* $log10 takes one argument. */
-                POW   = 0x00040013,  /* $pow takes two argument. */
-                SIN   = 0x00020014,  /* $sin takes one argument. */
-                SINH  = 0x00020015,  /* $sinh takes one argument. */
-                SQRT  = 0x00020016,  /* $sqrt takes one argument. */
-                TAN   = 0x00020017,  /* $tan takes one argument. */
-                TANH  = 0x00020018,  /* $tanh takes one argument. */
+                ACOS   = 0x00020003,  /* $acos takes one argument. */
+                ACOSH  = 0x00020004,  /* $acosh takes one argument. */
+                ASIN   = 0x00020005,  /* $asin takes one argument. */
+                ASINH  = 0x00020006,  /* $asinh takes one argument. */
+                ATAN   = 0x00020007,  /* $atan takes one argument. */
+                ATANH  = 0x00020008,  /* $atanh takes one argument. */
+                ATAN2  = 0x00040009,  /* $atan2 takes two argument. */
+                CEIL   = 0x0002000a,  /* $ceil takes one argument. */
+                CLOG2  = 0x0002000b,  /* $clog2 takes one argument. */
+                COS    = 0x0002000c,  /* $cos takes one argument. */
+                COSH   = 0x0002000d,  /* $cosh takes one argument. */
+                EXP    = 0x0002000e,  /* $exp takes one argument. */
+                FLOOR  = 0x0002000f,  /* $floor takes one argument. */
+                HYPOT  = 0x00040010,  /* $hypot takes two argument. */
+                LN     = 0x00020011,  /* $ln takes one argument. */
+                LOG10  = 0x00020012,  /* $log10 takes one argument. */
+                POW    = 0x00040013,  /* $pow takes two argument. */
+                SIN    = 0x00020014,  /* $sin takes one argument. */
+                SINH   = 0x00020015,  /* $sinh takes one argument. */
+                SQRT   = 0x00020016,  /* $sqrt takes one argument. */
+                TAN    = 0x00020017,  /* $tan takes one argument. */
+                TANH   = 0x00020018,  /* $tanh takes one argument. */
+                  /* Added in SystemVerilog 2005 and later. */
+                DIMS   = 0x00020019,  /* $dimensions takes one argument. */
+                HIGH   = 0x0006001a,  /* $high takes one or two arguments. */
+                INCR   = 0x0006001b,  /* $increment takes one or two arguments. */
+                LEFT   = 0x0006001c,  /* $left takes one or two arguments. */
+                LOW    = 0x0006001d,  /* $low takes one or two arguments. */
+                RIGHT  = 0x0006001e,  /* $right takes one or two arguments. */
+                SIZE   = 0x0006001f,  /* $size takes one or two arguments. */
+                UPDIMS = 0x00020020,  /* $unpacked_dimensions takes one argument. */
+                ISUNKN = 0x00020021,  /* $isunknown takes one argument. */
+                ONEHT  = 0x00020022,  /* $onehot takes one argument. */
+                ONEHT0 = 0x00020023,  /* $onehot0 takes one argument. */
+                  /* Added in SystemVerilog 2009 and later. */
+                CTONES = 0x00020024,  /* $countones takes one argument. */
+                  /* Added in SystemVerilog 2012 and later. */
+                CTBITS = 0xfffe0025,  /* $countbits takes one or more arguments. */
                   /* Added as Icarus extensions to Verilog-A. */
-                ABS   = 0x00020019,  /* $abs takes one argument. */
-                MAX   = 0x0004001a,  /* $max takes two argument. */
-                MIN   = 0x0004001b,  /* $min takes two argument. */
+                ABS    = 0x00020026,  /* $abs takes one argument. */
+                MAX    = 0x00040027,  /* $max takes two argument. */
+                MIN    = 0x00040028,  /* $min takes two argument. */
                   /* A dummy value to properly close the enum. */
-		DUMMY = 0xffffffff };
+		DUMMY  = 0xffffffff };
 
       bool takes_nargs_(ID func, unsigned nargs) {
 	    if (nargs > 15) nargs = 15;
@@ -4236,6 +4281,24 @@ class NetESFunc  : public NetExpr {
       NetExpr* evaluate_abs_(const NetExpr*arg) const;
       NetExpr* evaluate_min_max_(ID id, const NetExpr*arg0,
 					const NetExpr*arg1) const;
+
+	/* Constant SystemVerilog functions. */
+      NetEConst* evaluate_countones_(const NetExpr*arg) const;
+      NetEConst* evaluate_dimensions_(const NetExpr*arg) const;
+      NetEConst* evaluate_isunknown_(const NetExpr*arg) const;
+      NetEConst* evaluate_onehot_(const NetExpr*arg) const;
+      NetEConst* evaluate_onehot0_(const NetExpr*arg) const;
+      NetEConst* evaluate_unpacked_dimensions_(const NetExpr*arg) const;
+
+	/* This value is used as a default when the array functions are
+	 * called with a single argument. */
+      static const NetEConst*const_one_;
+
+      NetEConst* evaluate_array_funcs_(ID id,
+                                       const NetExpr*arg0,
+                                       const NetExpr*arg1) const;
+      NetEConst* evaluate_countbits_(const NetExpr*arg0,
+                                     const NetExpr*arg1) const;
 
     public:
       bool is_built_in() const { return built_in_id_() != NOT_BUILT_IN; };
@@ -4465,7 +4528,7 @@ struct elaborator_work_item_t {
  * This class contains an entire design. It includes processes and a
  * netlist, and can be passed around from function to function.
  */
-class Design {
+class Design : public Definitions {
 
     public:
       Design();

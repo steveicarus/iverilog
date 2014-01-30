@@ -660,6 +660,23 @@ class PEString : public PExpr {
       char*text_;
 };
 
+class PETypename : public PExpr {
+    public:
+      explicit PETypename(data_type_t*data_type);
+      ~PETypename();
+
+      virtual void dump(ostream&) const;
+      virtual unsigned test_width(Design*des, NetScope*scope,
+				  width_mode_t&mode);
+      virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
+				     ivl_type_t type, unsigned flags) const;
+
+      inline data_type_t* get_type() const { return data_type_; }
+
+    private:
+      data_type_t*data_type_;
+};
+
 class PEUnary : public PExpr {
 
     public:

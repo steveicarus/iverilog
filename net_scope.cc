@@ -30,6 +30,72 @@
 
 class PExpr;
 
+Definitions::Definitions()
+{
+}
+
+Definitions::~Definitions()
+{
+}
+
+void Definitions::add_enumeration_set(const enum_type_t*key, netenum_t*enum_set)
+{
+      netenum_t*&tmp = enum_sets_[key];
+      assert(tmp == 0);
+      tmp = enum_set;
+}
+
+bool Definitions::add_enumeration_name(netenum_t*enum_set, perm_string name)
+{
+      netenum_t::iterator enum_val = enum_set->find_name(name);
+      assert(enum_val != enum_set->end_name());
+
+      NetEConstEnum*val = new NetEConstEnum(this, name, enum_set, enum_val->second);
+
+      pair<map<perm_string,NetEConstEnum*>::iterator, bool> cur;
+      cur = enum_names_.insert(make_pair(name,val));
+
+	// Return TRUE if the name is added (i.e. is NOT a duplicate.)
+      return cur.second;
+}
+
+netenum_t* Definitions::enumeration_for_key(const enum_type_t*key) const
+{
+      map<const enum_type_t*,netenum_t*>::const_iterator cur;
+
+      cur = enum_sets_.find(key);
+      if (cur != enum_sets_.end())
+	    return cur->second;
+      else
+	    return 0;
+}
+
+/*
+ * This locates the enumeration TYPE for the given enumeration literal.
+ */
+const netenum_t*Definitions::enumeration_for_name(perm_string name)
+{
+      NetEConstEnum*tmp = enum_names_[name];
+      assert(tmp != 0);
+
+      return tmp->enumeration();
+}
+
+/*
+ * This locates the VALUE for the given enumeration literal.
+ */
+const NetExpr* Definitions::enumeration_expr(perm_string key)
+{
+      map<perm_string,NetEConstEnum*>::const_iterator eidx;
+
+      eidx = enum_names_.find(key);
+      if (eidx != enum_names_.end()) {
+	    return eidx->second;
+      } else {
+	    return 0;
+      }
+}
+
 /*
  * The NetScope class keeps a scope tree organized. Each node of the
  * scope tree points to its parent, its right sibling and its leftmost
@@ -265,14 +331,13 @@ const NetExpr* NetScope::get_parameter(Design*des,
 	    return idx->second.val;
       }
 
-      map<perm_string,NetEConstEnum*>::const_iterator eidx;
+      msb = 0;
+      lsb = 0;
+      const NetExpr*tmp = enumeration_expr(key);
+      if (tmp) return tmp;
 
-      eidx = enum_names_.find(key);
-      if (eidx != enum_names_.end()) {
-	    msb = 0;
-	    lsb = 0;
-	    return eidx->second;
-      }
+      tmp = des->enumeration_expr(key);
+      if (tmp) return tmp;
 
       return 0;
 }
@@ -549,33 +614,6 @@ NetNet* NetScope::find_signal(perm_string key)
 	    return signals_map_[key];
       else
 	    return 0;
-}
-
-void NetScope::add_enumeration_set(netenum_t*enum_set)
-{
-      enum_sets_.push_back(enum_set);
-}
-
-bool NetScope::add_enumeration_name(netenum_t*enum_set, perm_string name)
-{
-      netenum_t::iterator enum_val = enum_set->find_name(name);
-      assert(enum_val != enum_set->end_name());
-
-      NetEConstEnum*val = new NetEConstEnum(this, name, enum_set, enum_val->second);
-
-      pair<map<perm_string,NetEConstEnum*>::iterator, bool> cur;
-      cur = enum_names_.insert(make_pair(name,val));
-
-	// Return TRUE if the name is added (i.e. is NOT a duplicate.)
-      return cur.second;
-}
-
-const netenum_t*NetScope::enumeration_for_name(perm_string name)
-{
-      NetEConstEnum*tmp = enum_names_[name];
-      assert(tmp != 0);
-
-      return tmp->enumeration();
 }
 
 void NetScope::add_class(netclass_t*net_class)

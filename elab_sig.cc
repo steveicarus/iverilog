@@ -563,7 +563,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	      // Special case: this is a constructor, so the return
 	      // signal is also the first argument. For example, the
 	      // source code for the definition may be:
-	      //   function new(...);
+ //   function new(...);
 	      //   endfunction
 	      // In this case, the "@" port is the synthetic "this"
 	      // argument and we also use it as a return value at the
@@ -876,7 +876,7 @@ static ivl_type_s*elaborate_type(Design*des, NetScope*scope,
 				 data_type_t*pform_type)
 {
       if (struct_type_t*struct_type = dynamic_cast<struct_type_t*>(pform_type)) {
-	    netstruct_t*use_type = struct_type->elaborate_type(des, scope);
+	    ivl_type_s*use_type = struct_type->elaborate_type(des, scope);
 	    return use_type;
       }
 
@@ -965,7 +965,10 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	         << "'." << endl;
 	    des->errors += 1;
       }
-	// A signal can not have the same name as a parameter.
+	// A signal can not have the same name as a parameter. Note
+	// that we treat enumeration literals similar to parameters,
+	// so if the name matches an enumeration literal, it will be
+	// caught here.
       const NetExpr *ex_msb, *ex_lsb;
       const NetExpr *parm = scope->get_parameter(des, name_, ex_msb, ex_lsb);
       if (parm) {
@@ -1207,7 +1210,8 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       } else if (struct_type_t*struct_type = dynamic_cast<struct_type_t*>(set_data_type_)) {
 	      // If this is a struct type, then build the net with the
 	      // struct type.
-	    netstruct_t*use_type = struct_type->elaborate_type(des, scope);
+	    ivl_type_s*tmp_type = struct_type->elaborate_type(des, scope);
+	    netstruct_t*use_type = dynamic_cast<netstruct_t*>(tmp_type);
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype;
 		  if (use_type->packed())
@@ -1256,7 +1260,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	      // The trick here is that the parray type has an
 	      // arbitrary sub-type, and not just a scalar bit...
 	    netparray_t*use_type = elaborate_parray_type(des, scope, parray_type);
-	      // Should not be getting packed dimensions other then
+	      // Should not be getting packed dimensions other than
 	      // through the parray type declaration.
 	    ivl_assert(*this, packed_dimensions.empty());
 

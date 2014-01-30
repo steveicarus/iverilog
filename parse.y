@@ -1081,7 +1081,7 @@ description /* IEEE1800-2005: A.1.2 */
   | nature_declaration
   | package_declaration
   | discipline_declaration
-  | timeunits_declaration
+  | package_item
   | KK_attribute '(' IDENTIFIER ',' STRING ',' STRING ')'
       { perm_string tmp3 = lex_strings.make($3);
 	pform_set_type_attrib(tmp3, $5, $7);
@@ -2362,6 +2362,11 @@ struct_union_member /* IEEE 1800-2012 A.2.2.1 */
 	tmp->names .reset($3);
 	$$ = tmp;
       }
+  | error ';'
+      { yyerror(@2, "Error in struct/union member.");
+	yyerrok;
+	$$ = 0;
+      }
   ;
 
 case_item
@@ -3090,6 +3095,14 @@ expr_primary
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
 	delete[]$1;
+      }
+
+  /* There are a few special cases (notably $bits argument) where the
+     expression may be a type name. Let the elaborator sort this out. */
+  | TYPE_IDENTIFIER
+  { PETypename*tmp = new PETypename($1);
+	FILE_NAME(tmp,@1);
+	$$ = tmp;
       }
 
   /* The hierarchy_identifier rule matches simple identifiers as well as

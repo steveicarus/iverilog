@@ -341,7 +341,7 @@ TU [munpf]
 	    }
       }
 
-	/* If this identifer names a previously declared package, then
+	/* If this identifier names a previously declared package, then
 	   return this as a PACKAGE_IDENTIFIER instead. */
       if (rc == IDENTIFIER && gn_system_verilog()) {
 	    if (PPackage*pkg = pform_test_package_identifier(yylval.text)) {

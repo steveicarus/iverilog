@@ -88,14 +88,21 @@ struct pform_tf_port_t {
  */
 class data_type_t : public LineInfo {
     public:
+      inline explicit data_type_t() : cache_type_elaborate_(0) { }
       virtual ~data_type_t() = 0;
 	// This method is used to figure out the base type of a packed
 	// compound object. Return IVL_VT_NO_TYPE if the type is not packed.
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
 	// This method is used by the pform dumper to diagnostic dump.
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
+
+      ivl_type_s* elaborate_type(Design*des, NetScope*scope);
+
+    private:
 	// Elaborate the type to an ivl_type_s type.
-      virtual ivl_type_s* elaborate_type(Design*des, NetScope*scope) const;
+      virtual ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
+
+      ivl_type_s*cache_type_elaborate_;
 };
 
 struct void_type_t : public data_type_t {
@@ -109,20 +116,14 @@ struct void_type_t : public data_type_t {
  * until it is elaborated in a scope.
  */
 struct enum_type_t : public data_type_t {
-      inline enum_type_t(void) : net_type(0) { }
 	// Return the elaborated version of the type.
-      virtual ivl_type_s*elaborate_type(Design*des, NetScope*scope) const;
+      virtual ivl_type_s*elaborate_type_raw(Design*des, NetScope*scope) const;
 
       ivl_variable_type_t base_type;
       bool signed_flag;
       std::auto_ptr< list<pform_range_t> > range;
       std::auto_ptr< list<named_pexpr_t> > names;
       LineInfo li;
-	// This is the elaborated type. The enumeration type is
-	// elaborated early so that names can be placed in the scope,
-	// but that means the result needs to be saved for the actual
-	// elaborate_type method to use.
-      netenum_t*net_type;
 };
 
 struct struct_member_t : public LineInfo {
@@ -134,7 +135,7 @@ struct struct_member_t : public LineInfo {
 struct struct_type_t : public data_type_t {
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
-      virtual netstruct_t* elaborate_type(Design*des, NetScope*scope) const;
+      virtual netstruct_t* elaborate_type_raw(Design*des, NetScope*scope) const;
 
       bool packed_flag;
       bool union_flag;
@@ -147,7 +148,7 @@ struct atom2_type_t : public data_type_t {
       int type_code;
       bool signed_flag;
 
-      ivl_type_s* elaborate_type(Design*des, NetScope*scope) const;
+      ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
 };
 
 /*
@@ -174,7 +175,7 @@ struct vector_type_t : public data_type_t {
 				    std::list<pform_range_t>*pd)
       : base_type(bt), signed_flag(sf), reg_flag(false), integer_flag(false), implicit_flag(false), pdims(pd) { }
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
-      ivl_type_s* elaborate_type(Design*des, NetScope*scope) const;
+      ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
 
       ivl_variable_type_t base_type;
       bool signed_flag;
@@ -216,7 +217,7 @@ struct uarray_type_t : public array_base_t {
 
     public:
       virtual void pform_dump(std::ostream&out, unsigned indent) const;
-      virtual ivl_type_s* elaborate_type(Design*des, NetScope*scope) const;
+      virtual ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
 };
 
 struct real_type_t : public data_type_t {
@@ -224,14 +225,14 @@ struct real_type_t : public data_type_t {
       inline explicit real_type_t(type_t tc) : type_code(tc) { }
       type_t type_code;
 
-      ivl_type_s* elaborate_type(Design*des, NetScope*scope) const;
+      ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
 };
 
 struct string_type_t : public data_type_t {
       inline explicit string_type_t() { }
       ~string_type_t();
 
-      ivl_type_s* elaborate_type(Design*des, NetScope*scope) const;
+      ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
 };
 
 struct class_type_t : public data_type_t {
@@ -271,7 +272,7 @@ struct class_type_t : public data_type_t {
 	// without waiting for any constructor.
       std::vector<Statement*> initialize_static;
 
-      ivl_type_s* elaborate_type(Design*, NetScope*) const;
+      ivl_type_s* elaborate_type_raw(Design*, NetScope*) const;
 };
 
 /*

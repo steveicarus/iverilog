@@ -114,7 +114,7 @@ class PFunction : public PTaskFunc {
       ~PFunction();
 
       void set_statement(Statement *s);
-      void set_return(const data_type_t*t);
+      void set_return(data_type_t*t);
 
       inline Statement* get_statement() { return statement_; }
 
@@ -141,7 +141,7 @@ class PFunction : public PTaskFunc {
       void dump(ostream&, unsigned) const;
 
     private:
-      const data_type_t* return_type_;
+      data_type_t* return_type_;
       Statement *statement_;
       bool is_auto_;
 };

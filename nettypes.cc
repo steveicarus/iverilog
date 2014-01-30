@@ -63,7 +63,7 @@ bool ivl_type_s::type_compatible(ivl_type_t that) const
       return test_compatibility(that);
 }
 
-bool ivl_type_s::test_compatibility(const ivl_type_s*that) const
+bool ivl_type_s::test_compatibility(const ivl_type_s* /*that*/) const
 {
       return false;
 }

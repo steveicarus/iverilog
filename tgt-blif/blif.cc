@@ -55,7 +55,7 @@ int blif_errors = 0;
 
 static void emit_blif(const char*blif_path, ivl_design_t des, ivl_scope_t model);
 
-static int process_scan_fun(ivl_process_t net, void*raw)
+static int process_scan_fun(ivl_process_t net, void* /*raw*/)
 {
       fprintf(stderr, "%s:%u: sorry: BLIF: Processes not supported yet.\n",
 	      ivl_process_file(net), ivl_process_lineno(net));

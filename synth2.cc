@@ -232,7 +232,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 
       unsigned mux_size = max_guard_value + 1;
 
-	// If the sel_width can select more then just the explicit
+	// If the sel_width can select more than just the explicit
 	// guard values, and there is a default statement, then adjust
 	// the mux size to allow for the implicit selections.
       if (statement_default && ((1U<<sel_width) > mux_size)) {

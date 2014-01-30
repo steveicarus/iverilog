@@ -65,7 +65,7 @@ void PFunction::push_statement_front(Statement*stmt)
       blk->push_statement_front(stmt);
 }
 
-void PFunction::set_return(const data_type_t*t)
+void PFunction::set_return(data_type_t*t)
 {
       return_type_ = t;
 }

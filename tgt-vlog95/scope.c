@@ -917,8 +917,8 @@ static unsigned has_func_disable(ivl_scope_t scope, ivl_statement_t stmt)
 	    rtn = scope == ivl_stmt_call(stmt);
 	    break;
 	default:
-	    fprintf(stderr, "%s:%u: vlog95 error: Unknown statment type (%d) "
-	                    "in functin disable check.\n",
+	    fprintf(stderr, "%s:%u: vlog95 error: Unknown statement type (%d) "
+	                    "in function disable check.\n",
 	                    ivl_stmt_file(stmt),
 	                    ivl_stmt_lineno(stmt),
 	                    (int)ivl_statement_type(stmt));
@@ -1187,7 +1187,7 @@ int emit_scope(ivl_scope_t scope, ivl_scope_t parent)
 			                  name_return);
 			free(name_return);
 		  } else emit_stmt(scope, body);
-	      /* A non-block statment may need a named block for a return. */
+	      /* A non-block statement may need a named block for a return. */
 	    } else if (has_func_disable(scope, body)) {
 		  char *name_return = get_func_return_name(scope);
 		  fprintf(vlog_out, "%*cbegin: %s\n", indent, ' ',

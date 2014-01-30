@@ -288,6 +288,13 @@ NetEConst* NetEBBits::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 		break;
 	  }
 
+	  case 'X': {
+		for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
+		      res.set(idx, ~(lval.get(idx) ^ rval.get(idx)));
+
+		break;
+	}
+
 	  case '^': {
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1)
 		      res.set(idx, lval.get(idx) ^ rval.get(idx));
@@ -1923,6 +1930,173 @@ NetExpr* NetESFunc::evaluate_min_max_(ID id, const NetExpr*arg0_,
       return res;
 }
 
+NetEConst* NetESFunc::evaluate_countbits_(const NetExpr* /*arg0*/,
+                                          const NetExpr* /*arg1*/) const
+{
+      return 0;
+}
+
+NetEConst* NetESFunc::evaluate_countones_(const NetExpr* /*arg*/) const
+{
+      return 0;
+}
+
+/* Get the total number of dimensions for the given expression. */
+NetEConst* NetESFunc::evaluate_dimensions_(const NetExpr*arg) const
+{
+      const NetESignal*esig = dynamic_cast<const NetESignal*>(arg);
+      long res = 0;
+      if (esig != 0) {
+	    const NetNet *sig = esig->sig();
+	    res = sig->packed_dimensions() + sig->unpacked_dimensions();
+	      /* Icarus does not think a string has a packed size so to
+	       * make these routines work correct add one if this is a
+	       * string data type. */
+	    if (sig->data_type() == IVL_VT_STRING) {
+		  assert(sig->packed_dimensions() == 0);
+		  res += 1;
+	    }
+      }
+	/* Return the result as an integer sized constant. */
+      return new NetEConst(verinum(verinum(res), integer_width));
+}
+
+NetEConst* NetESFunc::evaluate_isunknown_(const NetExpr* /*arg*/) const
+{
+      return 0;
+}
+
+NetEConst* NetESFunc::evaluate_onehot_(const NetExpr* /*arg*/) const
+{
+      return 0;
+}
+
+NetEConst* NetESFunc::evaluate_onehot0_(const NetExpr* /*arg*/) const
+{
+      return 0;
+}
+
+/* Get the number of unpacked dimensions for the given expression. */
+NetEConst* NetESFunc::evaluate_unpacked_dimensions_(const NetExpr*arg) const
+{
+      const NetESignal*esig = dynamic_cast<const NetESignal*>(arg);
+      long res = 0;
+      if (esig != 0) {
+	    const NetNet *sig = esig->sig();
+	    res = sig->unpacked_dimensions();
+      }
+	/* Return the result as an integer sized constant. */
+      return new NetEConst(verinum(verinum(res), integer_width));
+}
+
+/* This code assumes that the dimension value will fit in a long.
+ * Return true if no constant dimension value is available. */
+static bool check_dimension(const NetExpr*dim_expr, long &dim)
+{
+      const NetEConst*dimi = dynamic_cast<const NetEConst*>(dim_expr);
+      const NetECReal*dimr = dynamic_cast<const NetECReal*>(dim_expr);
+      if (dimi == 0 && dimr == 0) return true;
+
+      if (dimi) dim = dimi->value().as_long();
+      if (dimr) dim = dimr->value().as_long();
+      return false;
+}
+
+/* Get the left and right values for the argument at the given dimension
+ * if it exists. Return true if no values are available. Set defer to true
+ * if this should be handled in the run time. */
+static bool get_array_info(const NetExpr*arg, long dim,
+                           long &left, long &right, bool&defer)
+{
+	/* The argument must be a signal that has enough dimensions. */
+      const NetESignal*esig = dynamic_cast<const NetESignal*>(arg);
+      if (esig == 0) return true;
+      const NetNet *sig = esig->sig();
+	/* A string or dynamic array must be handled by the run time. */
+      switch (sig->data_type()) {
+	case IVL_VT_DARRAY:
+	case IVL_VT_STRING:
+	    defer = true;
+	    return true;
+	    break;
+	default:
+	    break;
+      }
+      long pdims = sig->packed_dimensions();
+      long updims = sig->unpacked_dimensions();
+      if (dim > (pdims + updims)) return true;
+	/* Get the appropriate unpacked or packed dimension information. */
+      if (dim > updims) {
+	    const vector<netrange_t>&dim_vals = sig->packed_dims();
+	    const netrange_t&range = dim_vals[dim-updims-1];
+	    left = range.get_msb();
+	    right = range.get_lsb();
+      } else {
+	    const vector<netrange_t>&dim_vals = sig->unpacked_dims();
+	    const netrange_t&range = dim_vals[dim-1];
+	    left = range.get_msb();
+	    right = range.get_lsb();
+      }
+      return false;
+}
+
+/* Calculate the array property functions. */
+NetEConst* NetESFunc::evaluate_array_funcs_(ID id,
+                                            const NetExpr*arg0,
+                                            const NetExpr*arg1) const
+{
+      long dim = 0;
+	/* Check to see if the dimension argument is constant. */
+      if (check_dimension(arg1, dim)) return 0;
+	/* If dimension is less than 1 return undefined. */
+      if (dim < 1) {
+	    return new NetEConst(verinum(verinum::Vx, integer_width));
+      }
+	/* Get the left/right information for this dimension if it exists. */
+      long left = 0;
+      long right = 0;
+      bool defer = false;
+      if (get_array_info(arg0, dim, left, right, defer)) {
+	      /* If this is a string or dynamic array defer this function
+	       * call since the left/right information is dynamic and is
+	       * not available yet. */
+	    if (defer) return 0;
+	    return new NetEConst(verinum(verinum::Vx, integer_width));
+      }
+	/* Calculate the appropriate array function result. */
+      long res;
+      switch (id) {
+	case HIGH:
+	    res = (right > left) ? right : left;
+	    break;
+	case INCR:
+	    res = (right > left) ? -1 : 1;
+	    break;
+	case LEFT:
+	    res = left;
+	    break;
+	case LOW:
+	    res = (right > left) ? left : right;
+	    break;
+	case RIGHT:
+	    res = right;
+	    break;
+	case SIZE:
+	    res = (right > left) ? right - left : left - right;
+	    res += 1;
+	    break;
+	default:
+	    res = 0;
+	    assert(0);
+      }
+	/* Return the result as an integer sized constant. */
+      return new NetEConst(verinum(verinum(res), integer_width));
+}
+
+/* Make a constant one value that can be used by the one argument
+ * array properties calls. */
+const NetEConst* NetESFunc::const_one_ = new NetEConst(verinum(1U, 32U));
+
 NetExpr* NetESFunc::evaluate_one_arg_(ID id, const NetExpr*arg) const
 {
       switch (id) {
@@ -1930,21 +2104,51 @@ NetExpr* NetESFunc::evaluate_one_arg_(ID id, const NetExpr*arg) const
 	    return evaluate_abs_(arg);
 	  case CLOG2:
 	    return evaluate_clog2_(arg);
+	  case CTONES:
+	    return evaluate_countones_(arg);
+	  case DIMS:
+	    return evaluate_dimensions_(arg);
+	      /* The array functions are handled together. */
+	  case HIGH:
+	  case INCR:
+	  case LEFT:
+	  case LOW:
+	  case RIGHT:
+	  case SIZE:
+	    return evaluate_array_funcs_(id, arg, const_one_);
+	  case ISUNKN:
+	    return evaluate_isunknown_(arg);
 	  case ITOR:
 	    return evaluate_itor_(arg);
+	  case ONEHT:
+	    return evaluate_onehot_(arg);
+	  case ONEHT0:
+	    return evaluate_onehot0_(arg);
 	  case RTOI:
 	    return evaluate_rtoi_(arg);
+	  case UPDIMS:
+	    return evaluate_unpacked_dimensions_(arg);
 	  default:
 	    return evaluate_math_one_arg_(id, arg);
       }
 }
 
 NetExpr* NetESFunc::evaluate_two_arg_(ID id, const NetExpr*arg0,
-					 const NetExpr*arg1) const
+                                      const NetExpr*arg1) const
 {
       switch (id) {
-	  case MIN:
+	  case CTBITS:
+	    return evaluate_countbits_(arg0, arg1);
+	      /* The array functions are handled together. */
+	  case HIGH:
+	  case INCR:
+	  case LEFT:
+	  case LOW:
+	  case RIGHT:
+	  case SIZE:
+	    return evaluate_array_funcs_(id, arg0, arg1);
 	  case MAX:
+	  case MIN:
 	    return evaluate_min_max_(id, arg0, arg1);
 	  default:
 	    return evaluate_math_two_arg_(id, arg0, arg1);
@@ -1988,6 +2192,31 @@ NetESFunc::ID NetESFunc::built_in_id_() const
 	    built_in_func["$sqrt" ] = SQRT;
 	    built_in_func["$tan"  ] = TAN;
 	    built_in_func["$tanh" ] = TANH;
+      }
+
+	/* These are available in 1800-2005 and later. */
+      if (funcs_need_init && (generation_flag >= GN_VER2005_SV)) {
+	    built_in_func["$dimensions" ] = DIMS;
+	    built_in_func["$high" ]       = HIGH;
+	    built_in_func["$increment" ]  = INCR;
+	    built_in_func["$isunknown" ]  = ISUNKN;
+	    built_in_func["$left" ]       = LEFT;
+	    built_in_func["$low" ]        = LOW;
+	    built_in_func["$onehot" ]     = ONEHT;
+	    built_in_func["$onehot0" ]    = ONEHT0;
+	    built_in_func["$right" ]      = RIGHT;
+	    built_in_func["$size" ]       = SIZE;
+	    built_in_func["$unpacked_dimensions" ] = UPDIMS;
+      }
+
+	/* These are available in 1800-2009 and later. */
+      if (funcs_need_init && (generation_flag >= GN_VER2009)) {
+	    built_in_func["$countones" ] = CTONES;
+      }
+
+	/* These are available in 1800-2012 and later. */
+      if (funcs_need_init && (generation_flag >= GN_VER2012)) {
+	    built_in_func["$countbits" ] = CTBITS;
       }
 
 	/* These are available in Verilog-A as Icarus extensions or if the
@@ -2045,6 +2274,7 @@ NetExpr* NetESFunc::eval_tree()
 		       << " arguments." << endl;
 		  return 0;
 	    }
+// HERE: Need to add support for a multi argument $countbits().
 	    cerr << get_fileline() << ": sorry: functions with "
 	         << parms_.size() << " arguments are not supported: "
 	         << name_ << "()." << endl;

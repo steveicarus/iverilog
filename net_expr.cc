@@ -260,7 +260,7 @@ void NetEConcat::set(unsigned idx, NetExpr*e)
       expr_width( expr_width() + repeat_ * e->expr_width() );
 }
 
-NetEConstEnum::NetEConstEnum(NetScope*s, perm_string n, const netenum_t*eset, const verinum&v)
+NetEConstEnum::NetEConstEnum(Definitions*s, perm_string n, const netenum_t*eset, const verinum&v)
 : NetEConst(v), scope_(s), enum_set_(eset), name_(n)
 {
       assert(has_width());
