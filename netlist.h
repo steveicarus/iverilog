@@ -76,7 +76,7 @@ class NetEvTrig;
 class NetEvWait;
 class PExpr;
 class PFunction;
-class enum_type_t;
+struct enum_type_t;
 class netclass_t;
 class netdarray_t;
 class netparray_t;

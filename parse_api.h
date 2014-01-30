@@ -31,7 +31,7 @@ class Module;
 class PPackage;
 class PUdp;
 class data_type_t;
-class enum_type_t;
+struct enum_type_t;
 
 /*
  * These are maps of the modules and primitives parsed from the
