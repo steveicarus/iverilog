@@ -808,7 +808,7 @@ long NetNet::sb_to_idx(const list<long>&indices, long sb) const
       else
 	    acc_off = pcur->get_lsb() - sb;
 
-	// The acc_off is the possition within the innermost
+	// The acc_off is the position within the innermost
 	// dimension. If this is a multi-dimension packed array then
 	// we need to add in the canonical address of the current slice.
       if (! indices.empty()) {

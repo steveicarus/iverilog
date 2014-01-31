@@ -2378,7 +2378,7 @@ void pform_makewire(const vlltype&li,
 }
 
 /*
- * This should eventually repliace the form above that takes a
+ * This should eventually replace the form above that takes a
  * net_decl_assign_t argument.
  */
 void pform_makewire(const struct vlltype&li,

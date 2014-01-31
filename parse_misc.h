@@ -97,7 +97,7 @@ extern data_type_t* pform_test_type_identifier(const char*txt);
 extern data_type_t* pform_test_type_identifier(PPackage*pkg, const char*txt);
 
 /*
- * Test if this identigier is a package name. The pform needs to help
+ * Test if this identifier is a package name. The pform needs to help
  * the lexor here because the parser detects packages and saves them.
  */
 extern PPackage* pform_test_package_identifier(const char*txt);

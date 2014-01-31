@@ -41,7 +41,7 @@ class netvector_t : public ivl_type_s {
       explicit netvector_t(ivl_variable_type_t type, long msb, long lsb,
 			   bool signed_flag =false);
 
-	// Special case: scaler object--no packed dimenions at all.
+	// Special case: scalar object--no packed dimensions at all.
       explicit netvector_t(ivl_variable_type_t type);
 
       ~netvector_t();

@@ -56,7 +56,7 @@ class class_type : public __vpiHandle {
       void finish_setup(void);
 
     public:
-	// Constructures and destructors for making instances.
+	// Constructors and destructors for making instances.
       inst_t instance_new() const;
       void instance_delete(inst_t) const;
 

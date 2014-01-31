@@ -626,7 +626,7 @@ class NetNet  : public NetObj, public PortType {
 
     public:
 	// This form is the more generic form of the constructor. For
-	// now, the unpacked type is not burried into an ivl_type_s object.
+	// now, the unpacked type is not buried into an ivl_type_s object.
       explicit NetNet(NetScope*s, perm_string n, Type t,
 		      const std::list<netrange_t>&unpacked,
 		      ivl_type_t type);
@@ -683,7 +683,7 @@ class NetNet  : public NetObj, public PortType {
       const std::vector<netrange_t>& unpacked_dims() const { return unpacked_dims_; }
 
 	/* The vector_width returns the bit width of the packed array,
-	   vector or scaler that is this NetNet object.  */
+	   vector or scalar that is this NetNet object.  */
       inline unsigned long vector_width() const { return slice_width(0); }
 
 	/* Given a prefix of indices, figure out how wide the
@@ -716,7 +716,7 @@ class NetNet  : public NetObj, public PortType {
 	   indices. (Currently only one array index is supported.) */
       inline unsigned unpacked_dimensions() const { return unpacked_dims_.size(); }
 
-	/* This methor returns 0 for scalars, but vectors and other
+	/* This method returns 0 for scalars, but vectors and other
 	   PACKED arrays have packed dimensions. */
       inline size_t packed_dimensions() const { return slice_dims_.size(); }
 
@@ -2636,7 +2636,7 @@ class NetAssign_ {
 	// expression idx.
       NexusSet* nex_input(bool rem_out = true);
 
-	// Figuring out nex_output to proces ultimately comes down to
+	// Figuring out nex_output to process ultimately comes down to
 	// this method.
       void nex_output(NexusSet&);
 
@@ -2646,7 +2646,7 @@ class NetAssign_ {
       void dump_lval(ostream&o) const;
 
     private:
-	// Nested l-value. If this is set, sig_ mut NOT be setl
+	// Nested l-value. If this is set, sig_ must NOT be set!
       NetAssign_*nest_;
       NetNet *sig_;
 	// Memory word index
@@ -4109,7 +4109,7 @@ class NetENull : public NetExpr {
 };
 
 /*
- * The NetEProperty represents a SystemVerilog properrty select of a
+ * The NetEProperty represents a SystemVerilog property select of a
  * class object. In SV, the expression would look like "a.b", where
  * the "a" is the signal (the NetNet) and "b" is the property name.
  */

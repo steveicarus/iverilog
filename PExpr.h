@@ -83,7 +83,7 @@ class PExpr : public LineInfo {
 	// without changing the result. This allows the expression width to
 	// be pruned when not all bits of the result are used.
 	//
-	// Normally mode should be initialised to SIZED before starting to
+	// Normally mode should be initialized to SIZED before starting to
 	// test the width of an expression. In SIZED mode the expression
 	// width will be calculated strictly according to the IEEE standard
 	// rules for expression width.
@@ -111,7 +111,7 @@ class PExpr : public LineInfo {
 	// this case because coercing an operand to a different type means
 	// that the expression no longer obeys the normal rules of arithmetic.
 	//
-	// If mode is initialised to EXPAND instead of SIZED, the expression
+	// If mode is initialized to EXPAND instead of SIZED, the expression
 	// width will be calculated as the minimum width necessary to avoid
 	// arithmetic overflow or underflow, even if it contains no unsized
 	// literals. mode will be changed LOSSLESS or UPSIZE as described
@@ -553,7 +553,7 @@ class PENewClass : public PExpr {
 				  width_mode_t&mode);
 	// Note that class (new) expressions only appear in context
 	// that uses this form of the elaborate_expr method. In fact,
-	// the type argument is going to be a netclas_t object.
+	// the type argument is going to be a netclass_t object.
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     ivl_type_t type, unsigned flags) const;
 
@@ -578,7 +578,7 @@ class PENewCopy : public PExpr {
 				  width_mode_t&mode);
 	// Note that class (new) expressions only appear in context
 	// that uses this form of the elaborate_expr method. In fact,
-	// the type argument is going to be a netclas_t object.
+	// the type argument is going to be a netclass_t object.
       virtual NetExpr*elaborate_expr(Design*des, NetScope*scope,
 				     ivl_type_t type, unsigned flags) const;
 

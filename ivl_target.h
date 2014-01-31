@@ -24,7 +24,7 @@
 
 /* Re the _CLASS define: clang++ wants this to be class to match the
  * definition, but clang (the C) compiler needs it to be a struct
- * since class is not defined in C. They are effecively both pointers
+ * since class is not defined in C. They are effectively both pointers
  * to an object so everything works out. */
 
 #ifdef __cplusplus
@@ -777,7 +777,7 @@ extern unsigned ivl_event_lineno(ivl_event_t net);
  *
  * ivl_expr_net_type
  *    This is used in some cases to carry more advanced type
- *    descriptions. Over the long run, all type informatino will be
+ *    descriptions. Over the long run, all type information will be
  *    moved into the ivl_type_t type description method.
  *
  * ivl_expr_width
@@ -846,9 +846,9 @@ extern unsigned ivl_event_lineno(ivl_event_t net);
  * conversion from signal units to vector units, so the result of
  * ivl_expr_oper1 should range from 0 to ivl_expr_width().
  *
- * This exprsesion is also used to implement string substrings. If the
+ * This expression is also used to implement string substrings. If the
  * sub-expression (oper1) is IVL_VT_STRING, then the base expression
- * (oper2) is a charaster address, with 0 the first address of the
+ * (oper2) is a character address, with 0 the first address of the
  * string, 1 the second, and so on. This is OPPOSITE how a part select
  * of a string cast to a vector works, to be aware. The size of the
  * expression is an even multiple of 8, and is 8 times the number of
@@ -1326,7 +1326,7 @@ extern unsigned    ivl_lpm_lineno(ivl_lpm_t net);
  * repeated to get the desired width. The ivl core assures that the
  * input vector is exactly ivl_lpm_width() / ivl_lpm_size() bits.
  *
- * - Sign Exend (IVL_LPM_SIGN_EXT)
+ * - Sign Extend (IVL_LPM_SIGN_EXT)
  * This node takes a single input and generates a single output. The
  * input must be signed, and the output will be a vector sign extended
  * to the desired width. The ivl_lpm_width() value is the output
