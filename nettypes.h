@@ -46,13 +46,13 @@ class ivl_type_s {
       virtual bool get_signed() const;
 
 	// Return true if "that" type is compatible with this
-	// type. Compatibile means the types are essentially the same.
+	// type. Compatible means the types are essentially the same.
       bool type_compatible(ivl_type_t that) const;
 
       virtual std::ostream& debug_dump(std::ostream&) const;
 
     private:
-	// The "type_compatibile" method uses this virtual method to
+	// The "type_compatible" method uses this virtual method to
 	// invoke type-specific tests of compatibility. This should
 	// only be called by the type_compatible method above.
       virtual bool test_compatibility(ivl_type_t that) const;

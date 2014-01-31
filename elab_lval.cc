@@ -413,7 +413,7 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
 
 	    } else {
 
-		    // Mark this property as initilized. This is used
+		    // Mark this property as initialized. This is used
 		    // to know that we have initialized the constant
 		    // object so the next assignment will be marked as
 		    // illegal.
@@ -421,7 +421,7 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
 
 		  if (debug_elaborate) {
 			cerr << get_fileline() << ": PEIdent::elaborate_lval_method_class_member_: "
-			     << "Found initilzers for property " << class_type->get_prop_name(pidx) << endl;
+			     << "Found initialzers for property " << class_type->get_prop_name(pidx) << endl;
 		  }
 	    }
       }
@@ -1074,7 +1074,7 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 	    use_width = lwid;
       }
 
-	// The dimenions in the expression must match the packed
+	// The dimensions in the expression must match the packed
 	// dimensions that are declared for the variable. For example,
 	// if foo is a packed array of struct, then this expression
 	// must be "b[n][m]" with the right number of dimensions to

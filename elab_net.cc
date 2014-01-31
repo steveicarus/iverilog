@@ -538,7 +538,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	      // the dimensions of the signal at this point. (The sig
 	      // has a packed dimension for the packed struct size.)
 	      // For example, if the path_=a[<m>][<n>].member, then
-	      // sig must have 3 packed dimenions: one for the struct
+	      // sig must have 3 packed dimensions: one for the struct
 	      // members and two actual packed dimensions.
 	    ivl_assert(*this, path_prefix.back().index.size()+1 == sig->packed_dimensions());
 

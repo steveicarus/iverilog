@@ -183,7 +183,7 @@ NetExpr* PExpr::elaborate_expr(Design*des, NetScope*, unsigned, unsigned) const
 }
 
 /*
- * For now, assuse that assignment patterns are for dynamic
+ * For now, assume that assignment patterns are for dynamic
  * objects. This is not really true as this expression type, fully
  * supported, can assign to packed arrays and structs, unpacked arrays
  * and dynamic arrays.
@@ -727,7 +727,7 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
       if ((mode >= EXPAND) && type_is_vectorable(expr_type_)) {
               // We need to make our best guess at the right operand
-              // value, to minimise the calculated width. This is
+              // value, to minimize the calculated width. This is
               // particularly important for the power operator...
 
               // Start off by assuming the maximum value for the
@@ -4672,7 +4672,7 @@ NetExpr* PENewArray::elaborate_expr(Design*des, NetScope*scope,
 
       if (dynamic_cast<PEAssignPattern*> (init_)) {
 	      // Special case: the initial value expression is an
-	      // array_pattern. Elaborate the expresion like the
+	      // array_pattern. Elaborate the expression like the
 	      // r-value to an assignment to array.
 	    init_val = init_->elaborate_expr(des, scope, ntype, flags);
 
@@ -4923,7 +4923,7 @@ NetExpr* PENumber::elaborate_expr(Design*des, NetScope*, ivl_type_t ntype, unsig
       }
 
 	// Special case: If the context type is REAL, then cast the
-	// vector value to a real and rethrn a NetECReal.
+	// vector value to a real and return a NetECReal.
       if (ntype->base_type() == IVL_VT_REAL) {
 	    verireal val (value_->as_long());
 	    NetECReal*tmp = new NetECReal(val);
@@ -5317,7 +5317,7 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 
 			/*
 			 * **** Valid use of operator ***
-			 * For REAL variables draw_unary_real() is ivoked during
+			 * For REAL variables draw_unary_real() is invoked during
 			 * evaluation and for LOGIC/BOOLEAN draw_unary_expr()
 			 * is called for evaluation.
 			 */

@@ -1187,7 +1187,7 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 			delete pins[pidx];
 			pins_fromwc[pidx] = false;
 
-		    // If I already explicitely bound something to
+		    // If I already explicitly bound something to
 		    // this port, then the pins array will already
 		    // have a pointer value where I want to place this
 		    // expression.
@@ -5226,7 +5226,7 @@ bool Module::elaborate(Design*des, NetScope*scope) const
 	// the signals so that the tasks can reference them.
       elaborate_tasks(des, scope, tasks);
 
-	// Elaboate class definitions.
+	// Elaborate class definitions.
       elaborate_classes(des, scope, classes);
 
 	// Get all the gates of the module and elaborate them by
@@ -5396,7 +5396,7 @@ bool PGenerate::elaborate_direct_(Design*des, NetScope*container) const
 	    }
 
 	      // Special case: If this is a case generate scheme, then
-	      // the PGenerate object (item) does not acctually
+	      // the PGenerate object (item) does not actually
 	      // contain anything. Instead scan the case items, which
 	      // are listed as sub-schemes of the item.
 	    if (item->scheme_type == PGenerate::GS_CASE) {
