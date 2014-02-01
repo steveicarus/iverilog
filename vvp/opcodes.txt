@@ -1087,12 +1087,12 @@ This opcode is limited to 32bit numbers.
 
 Convert a vector to a string and push the string to the string stack.
 
-* %putc/str/v <functor-label>, <muxr>, <base>
+* %putc/str/v <functor-label>, <muxr>
 
-Extract a vector byte from the thread vector space and write it to a
+Pop a vector byte from the thread vec4 stack and write it to a
 character of the string variable at <functtor-label>. This is
 basically an implementation of <string>.putc(<muxr>, <val>) where
-<val> is the 8bit vector at <base> in the thread space.
+<val> is the 8bit vector popped from the stack.
 
 * %release/net <functor-label>, <base>, <width>
 * %release/reg <functor-label>, <base>, <width>
@@ -1317,13 +1317,14 @@ This instruction takes the substring of the top string in the string
 stack. This implements the SystemVerilog style substring. The string
 stack is popped and replaced with the result.
 
-* %substr/v <bit-l>, <sel>, <wid>
+* %substr/vec4 <sel>, <wid>
 
-This instruction extracts the substring of the top string in the string
-stack and delivers the result to vector space. The <bit>,<wid> part is
-the location where the result goes, and <sel> is the index register
-that holds the index. This is the general method for getting string
-values into the vector space. The string value is NOT popped.
+This instruction extracts the substring of the top string in the
+string stack and pushes the result to the vec4 stack. The <sel> is the
+index register that holds the select base, and the <wid> is the width,
+in bits, of the result. Note that <wid> must be a multiple of 8.
+
+The string value is NOT popped.
 
 
 * %test_nul <var-label>

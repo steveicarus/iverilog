@@ -884,17 +884,15 @@ static int show_stmt_assign_sig_string(ivl_statement_t net)
 	    return 0;
       }
 
+      assert(ivl_expr_width(rval)==8);
+      draw_eval_vec4(rval, STUFF_OK_XZ);
+
 	/* Calculate the character select for the word. */
       int mux_word = allocate_word();
       draw_eval_expr_into_integer(part, mux_word);
 
-	/* Evaluate the r-value as a vector. */
-      struct vector_info rvec = draw_eval_expr_wid(rval, 8, STUFF_OK_XZ);
+      fprintf(vvp_out, "    %%putc/str/vec4 v%p_0, %d;\n", var, mux_word);
 
-      assert(rvec.wid == 8);
-      fprintf(vvp_out, "    %%putc/str/v v%p_0, %d, %u;\n", var, mux_word, rvec.base);
-
-      clr_vector(rvec);
       clr_word(mux_word);
       return 0;
 }

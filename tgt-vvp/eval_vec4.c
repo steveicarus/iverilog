@@ -604,6 +604,20 @@ static void draw_select_vec4(ivl_expr_t expr)
 	// Is the select base expression signed or unsigned?
       char sign_suff = ivl_expr_signed(base)? 's' : 'u';
 
+	// Special Case: If the sub-expression is a STRING, then this
+	// is a select from that string.
+      if (ivl_expr_value(subexpr)==IVL_VT_STRING) {
+	    assert(base);
+	    assert(wid==8);
+	    draw_eval_string(subexpr);
+	    int base_idx = allocate_word();
+	    draw_eval_expr_into_integer(base, base_idx);
+	    fprintf(vvp_out, "    %%substr/vec4 %d, %u;\n", base_idx, wid);
+	    fprintf(vvp_out, "    %%pop/str 1;\n");
+	    clr_word(base_idx);
+	    return;
+      }
+
       draw_eval_vec4(subexpr, 0);
       draw_eval_vec4(base, 0);
       fprintf(vvp_out, "    %%part/%c %u;\n", sign_suff, wid);

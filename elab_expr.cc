@@ -1271,6 +1271,18 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
       if (net == 0)
 	    return 0;
 
+	// Look fonr built in string attributes.
+      if (net->data_type()==IVL_VT_STRING) {
+
+	    if (method_name == "len") {
+		  expr_type_  = IVL_VT_BOOL;
+		  expr_width_ = 32;
+		  min_width_  = 32;
+		  signed_flag_= true;
+		  return expr_width_;
+	    }
+      }
+
 	// function int size()
       if (use_darray && method_name == "size") {
 	    if (debug_elaborate) {

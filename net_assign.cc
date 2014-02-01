@@ -135,6 +135,9 @@ ivl_variable_type_t NetAssign_::expr_type() const
 		  return darray->element_base_type();
       }
 
+      if (sig_->data_type()==IVL_VT_STRING && base_!=0)
+	    return IVL_VT_BOOL;
+
       if (ntype) return ntype->base_type();
 
       ivl_assert(*this, sig_);

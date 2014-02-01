@@ -4003,7 +4003,7 @@ static void load_base(vvp_code_t cp, vvp_vector4_t&dst)
 	   signal functor. Only signals save their vector value. */
       vvp_signal_value*sig = dynamic_cast<vvp_signal_value*> (net->fil);
       if (sig == 0) {
-	    cerr << "%%load/v error: Net arg not a signal? "
+	    cerr << "%load/v error: Net arg not a signal? "
 		 << (net->fil ? typeid(*net->fil).name() : typeid(*net->fun).name()) << endl;
 	    assert(sig);
       }
@@ -5329,29 +5329,17 @@ bool of_PUSHV_STR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %putc/str/v  <var>, <muxr>, <base>
+ * %putc/str/vec4 <var>, <mux>
  */
-bool of_PUTC_STR_V(vthread_t thr, vvp_code_t cp)
+bool of_PUTC_STR_VEC4(vthread_t thr, vvp_code_t cp)
 {
-#if 0
       unsigned muxr = cp->bit_idx[0];
-      unsigned base = cp->bit_idx[1];
+      int32_t mux = muxr? thr->words[muxr].w_int : 0;
 
-	/* The mux is the index into the string. If it is <0, then
-	   this operation cannot possible effect the string, so we are
-	   done. */
-      assert(muxr < 16);
-      int32_t mux = thr->words[muxr].w_int;
+      vvp_vector4_t val = thr->pop_vec4();
+      assert(val.size() == 8);
+
       if (mux < 0)
-	    return true;
-
-	/* Extract the character from the vector space. If that byte
-	   is null (8'h00) then the standard says it is to be skipped. */
-      unsigned long*tmp = vector_to_array(thr, base, 8);
-      assert(tmp);
-      char tmp_val = tmp[0] & 0xff;
-      delete [] tmp;
-      if (tmp_val == 0)
 	    return true;
 
 	/* Get the existing value of the string. If we find that the
@@ -5360,24 +5348,27 @@ bool of_PUTC_STR_V(vthread_t thr, vvp_code_t cp)
       vvp_fun_signal_string*fun = dynamic_cast<vvp_fun_signal_string*> (net->fun);
       assert(fun);
 
-      string val = fun->get_string();
-      if (val.size() <= (size_t)mux)
+      string tmp = fun->get_string();
+      if (tmp.size() <= (size_t)mux)
 	    return true;
 
-	/* If the value to write is the same as the destination, then
-	   stop now. */
-      if (val[mux] == tmp_val)
+      char val_str = 0;
+      for (size_t idx = 0 ; idx < 8 ; idx += 1) {
+	    if (val.value(idx)==BIT4_1)
+		  val_str |= 1<<idx;
+      }
+
+	// It is a quirk of the Verilog standard that putc(..., 'h00)
+	// has no effect. Test for that case here.
+      if (val_str == 0)
 	    return true;
 
-	/* Finally, modify the string and write the new string to the
-	   variable so that the new value propagates. */
-      val[mux] = tmp_val;
-      vvp_send_string(vvp_net_ptr_t(cp->net, 0), val, thr->wt_context);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%putc/str/v ...\n");
-#endif
+      tmp[mux] = val_str;
+
+      vvp_send_string(vvp_net_ptr_t(cp->net, 0), tmp, thr->wt_context);
       return true;
 }
+
 
 /*
  * These implement the %release/net and %release/reg instructions. The
@@ -6169,6 +6160,39 @@ bool of_SUBSTR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %substr/vec4 <index>, <wid>
+ */
+bool of_SUBSTR_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      unsigned sel_idx = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+      int32_t sel = thr->words[sel_idx].w_int;
+      string&val = thr->peek_str(0);
+
+      assert(wid%8 == 0);
+
+      if (sel < 0 || sel >= (int32_t)val.size()) {
+	    vvp_vector4_t res (wid, BIT4_0);
+	    thr->push_vec4(res);
+	    return true;
+      }
+
+      vvp_vector4_t res (wid, BIT4_0);
+
+      assert(wid==8);
+      unsigned char tmp = val[sel];
+      for (int idx = 0 ; idx < 8 ; idx += 1) {
+	    if (tmp & (1<<idx))
+		  res.set_bit(idx, BIT4_1);
+      }
+
+      thr->push_vec4(res);
+      return true;
+}
+
+#if 0
+/*
  * %substr/v <bitl>, <index>, <wid>
  */
 bool of_SUBSTR_V(vthread_t thr, vvp_code_t cp)
@@ -6177,7 +6201,7 @@ bool of_SUBSTR_V(vthread_t thr, vvp_code_t cp)
       uint32_t bitl = cp->bit_idx[0];
       uint32_t sel = cp->bit_idx[1];
       unsigned wid = cp->number;
-#if 0
+
       thr_check_addr(thr, bitl+wid);
       assert(bitl >= 4);
 
@@ -6198,11 +6222,10 @@ bool of_SUBSTR_V(vthread_t thr, vvp_code_t cp)
 	    bitl += 8;
 	    use_sel += 1;
       }
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED : %%substr/v %u, %u, %u\n", bitl, sel, wid);
-#endif
+
       return true;
 }
+#endif
 
 bool of_FILE_LINE(vthread_t, vvp_code_t cp)
 {
