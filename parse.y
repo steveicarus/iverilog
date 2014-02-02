@@ -33,7 +33,6 @@
 
 class PSpecPath;
 
-extern void lex_start_table();
 extern void lex_end_table();
 
 bool have_timeunit_decl = false;
@@ -6076,11 +6075,27 @@ tf_port_list_opt
   |                     { $$ = 0; }
   ;
 
+  /* Note that the lexor notices the "table" keyword and starts
+     the UDPTABLE state. It needs to happen there so that all the
+     characters in the table are interpreted in that mode. It is still
+     up to this rule to take us out of the UDPTABLE state. */
 udp_body
-	: K_table { lex_start_table(); }
-	    udp_entry_list
-	  K_endtable { lex_end_table(); $$ = $3; }
-	;
+  : K_table udp_entry_list K_endtable
+      { lex_end_table();
+	$$ = $2;
+      }
+  | K_table K_endtable
+      { lex_end_table();
+	yyerror(@1, "error: Empty UDP table.");
+	$$ = 0;
+      }
+  | K_table error K_endtable
+      { lex_end_table();
+	yyerror(@2, "Errors in UDP table");
+	yyerrok;
+	$$ = 0;
+      }
+  ;
 
 udp_entry_list
 	: udp_comb_entry_list
@@ -6202,6 +6217,7 @@ udp_input_sym
 	| 'q' { $$ = 'q'; }
 	| '_' { $$ = '_'; }
 	| '+' { $$ = '+'; }
+        | DEC_NUMBER { yyerror(@1, "internal error: Input digits parse as decimal number!"); $$ = '0'; }
 	;
 
 udp_output_sym
@@ -6209,6 +6225,7 @@ udp_output_sym
 	| '1' { $$ = '1'; }
 	| 'x' { $$ = 'x'; }
 	| '-' { $$ = '-'; }
+        | DEC_NUMBER { yyerror(@1, "internal error: Output digits parse as decimal number!"); $$ = '0'; }
 	;
 
   /* Port declarations create wires for the inputs and the output. The

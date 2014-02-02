@@ -229,6 +229,8 @@ TU [munpf]
 		return STRING; }
 <CSTRING>.    { yymore(); }
 
+  /* The UDP Table is a unique lexical environment. These are most
+     tokens that we can expect in a table. */
 <UDPTABLE>\(\?0\)    { return '_'; }
 <UDPTABLE>\(\?1\)    { return '+'; }
 <UDPTABLE>\(\?[xX]\) { return '%'; }
@@ -253,7 +255,7 @@ TU [munpf]
 <UDPTABLE>[xX]     { return 'x'; }
 <UDPTABLE>[nN]     { return 'n'; }
 <UDPTABLE>[pP]     { return 'p'; }
-<UDPTABLE>[01\?\*\-] { return yytext[0]; }
+<UDPTABLE>[01\?\*\-:;] { return yytext[0]; }
 
 <EDGES>"01" { return K_edge_descriptor; }
 <EDGES>"0x" { return K_edge_descriptor; }
@@ -294,6 +296,10 @@ TU [munpf]
 
 	  case K_endprimitive:
 	    in_UDP = false;
+	    break;
+
+	  case K_table:
+	    BEGIN(UDPTABLE);
 	    break;
 
 	    /* Translate these to checks if we already have or are
@@ -440,10 +446,18 @@ TU [munpf]
       generation_flag = generation_save;
       return UNBASED_NUMBER; }
 
+  /* Decimal numbers are the usual. But watch out for the UDPTABLE
+     mode, where there are no decimal numbers. Reject the match if we
+     are in the UDPTABLE state. */
 [0-9][0-9_]* {
-      yylval.number = make_unsized_dec(yytext);
-      based_size = yylval.number->as_ulong();
-      return DEC_NUMBER; }
+      if (YY_START==UDPTABLE) {
+	    REJECT;
+      } else {
+	    yylval.number = make_unsized_dec(yytext);
+	    based_size = yylval.number->as_ulong();
+	    return DEC_NUMBER;
+      }
+}
 
   /* This rule handles scaled time values for SystemVerilog. */
 [0-9][0-9_]*(\.[0-9][0-9_]*)?{TU}?s {
@@ -791,11 +805,6 @@ TU [munpf]
  * lexor. The level characters are normally accepted as other things,
  * so the parser needs to switch my mode when it believes in needs to.
  */
-void lex_start_table()
-{
-      BEGIN(UDPTABLE);
-}
-
 void lex_end_table()
 {
       BEGIN(INITIAL);
