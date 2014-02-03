@@ -360,9 +360,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 
       ivl_assert(*this, use_sel == index_component_t::SEL_NONE);
 
-      if (reg->type()==NetNet::UNRESOLVED_WIRE) {
+      if (reg->type()==NetNet::UNRESOLVED_WIRE && !is_force) {
 	    cerr << get_fileline() << ": error: "
-		 << path_ << " Unable assign to unresolved wires."
+		 << path_ << " Unable to assign to unresolved wires."
 		 << endl;
 	    des->errors += 1;
 	    return 0;
