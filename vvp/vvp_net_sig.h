@@ -394,6 +394,16 @@ class vvp_fun_signal_object_aa : public vvp_fun_signal_object, public automatic_
  * The vvp_wire is different from vvp_variable objects in that it
  * exists only as a filter. The vvp_wire class tree is for
  * implementing verilog wires/nets (as opposed to regs/variables).
+ *
+ *   vvp_vpi_callback
+ *          |
+ *          |
+ *    vvp_net_fil_t   vvp_signal_value
+ *          |               |
+ *           \             /
+ *            \           /
+ *             \         /
+ *            vvp_wire_base
  */
 
 class vvp_wire_base  : public vvp_net_fil_t, public vvp_signal_value {
