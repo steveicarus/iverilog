@@ -789,11 +789,14 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
       }
 
       if (reg->type()==NetNet::UNRESOLVED_WIRE) {
-	    cerr << get_fileline() << ": error: "
-		 << path_ << " Unable to part select unresolved wires."
-		 << endl;
-	    des->errors += 1;
-	    return false;
+	    bool rct = reg->test_and_set_part_driver(msb, lsb);
+	    if (rct) {
+		  cerr << get_fileline() << ": error: "
+		       << path_ << "Part select is double-driving unresolved wire."
+		       << endl;
+		  des->errors += 1;
+		  return false;
+	    }
       }
 
       const vector<netrange_t>&packed = reg->packed_dims();
