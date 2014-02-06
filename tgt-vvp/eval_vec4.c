@@ -618,6 +618,18 @@ static void draw_select_vec4(ivl_expr_t expr)
 	    return;
       }
 
+      if (ivl_expr_value(subexpr)==IVL_VT_DARRAY) {
+	    ivl_signal_t sig = ivl_expr_signal(subexpr);
+	    assert(sig);
+	    assert(ivl_signal_data_type(sig)==IVL_VT_DARRAY);
+
+	    assert(base);
+	    draw_eval_expr_into_integer(base, 3);
+	    fprintf(vvp_out, "    %%load/dar/vec4 v%p_0;\n", sig);
+
+	    return;
+      }
+
       draw_eval_vec4(subexpr, 0);
       draw_eval_vec4(base, 0);
       fprintf(vvp_out, "    %%part/%c %u;\n", sign_suff, wid);

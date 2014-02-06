@@ -741,8 +741,7 @@ bit, and the <index> is the selector for the bit to use. If <index> is
 out of range, then x is loaded. The index value is incremented by one
 if it is defined (bit 4 is not 1).
 
-* %load/dar <bit>, <functor-label>, <wid>
-* %load/dar/r <functor-label>
+* %load/dar <bit>, <functor-label>, <wid> (XXXX Old implementation)
 
 This instruction loads an array word from a dynamic array. The
 <label> refers to the variable object, and the <bit>/<wid> are the
@@ -761,9 +760,13 @@ the object handle stack.
 See also %store/obj.
 
 * %load/real <vpi-label>
+* %load/dar/r <functor-label>
 
 The %load/real instruction reads a real value from the vpi-like object
 and pushes it to the top of the real value stack.
+
+The %load/dar/r loads the real word from the darray and pushes it onto
+the stack.
 
 * %load/str <var-label>
 * %load/stra <array-label>, <index>
@@ -1241,6 +1244,7 @@ index in the index register <index>
 * %store/stra <array-label>, <index>
 * %store/dar/r <var-label>
 * %store/dar/str <var-label>
+* %store/dar/vec4 <var-label>
 
 The %store/str instruction pops the top of the string stack and writes
 it to the string variable.

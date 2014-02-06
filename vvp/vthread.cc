@@ -3699,12 +3699,12 @@ bool of_LOAD_AV(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+#if 0
 /*
  * %load/dar <bit>, <array-label>, <index>;
 */
 bool of_LOAD_DAR(vthread_t thr, vvp_code_t cp)
 {
-#if 0
       unsigned bit = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
       unsigned adr = thr->words[3].w_int;
@@ -3723,11 +3723,10 @@ bool of_LOAD_DAR(vthread_t thr, vvp_code_t cp)
 
       thr_check_addr(thr, bit+word.size());
       thr->bits4.set_vec(bit, word);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%load/dar ...\n");
-#endif
+
       return true;
 }
+#endif
 
 /*
  * %load/dar/r <array-label>;
@@ -3766,6 +3765,25 @@ bool of_LOAD_DAR_STR(vthread_t thr, vvp_code_t cp)
       string word;
       darray->get_word(adr, word);
       thr->push_str(word);
+
+      return true;
+}
+
+bool of_LOAD_DAR_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      unsigned adr = thr->words[3].w_int;
+      vvp_net_t*net = cp->net;
+
+      assert(net);
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_darray*darray = obj->get_object().peek<vvp_darray>();
+      assert(darray);
+
+      vvp_vector4_t word;
+      darray->get_word(adr, word);
+      thr->push_vec4(word);
 
       return true;
 }
@@ -5815,6 +5833,24 @@ bool of_STORE_DAR_STR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+
+bool of_STORE_DAR_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      long adr = thr->words[3].w_int;
+
+	// Pop the real value to be store...
+      vvp_vector4_t value = thr->pop_vec4();
+
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_darray*darray = obj->get_object().peek<vvp_darray>();
+      assert(darray);
+
+      darray->set_word(adr, value);
+      return true;
+}
 
 bool of_STORE_OBJ(vthread_t thr, vvp_code_t cp)
 {

@@ -941,16 +941,13 @@ static int show_stmt_assign_sig_darray(ivl_statement_t net)
 	    fprintf(vvp_out, "    %%store/dar/str v%p_0;\n", var);
 
       } else if (mux) {
-	    struct vector_info rvec = draw_eval_expr_wid(rval, ivl_lval_width(lval),
-							 STUFF_OK_XZ);
-	      /* The %set/dar expects the array index to be in index
+	    draw_eval_vec4(rval, STUFF_OK_XZ);
+
+	      /* The %store/dar/vec4 expects the array index to be in index
 		 register 3. Calculate the index in place. */
 	    draw_eval_expr_into_integer(mux, 3);
 
-	    fprintf(vvp_out, "    %%set/dar v%p_0, %u, %u;\n",
-		    var, rvec.base, rvec.wid);
-
-	    if (rvec.base >= 4) clr_vector(rvec);
+	    fprintf(vvp_out, "    %%store/dar/vec4 v%p_0;\n", var);
 
       } else if (ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN) {
 	      /* There is no l-value mux, but the r-value is an array
