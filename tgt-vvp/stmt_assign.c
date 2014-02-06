@@ -82,7 +82,7 @@ struct vec_slice_info {
 };
 
 static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
-				    unsigned bit, unsigned wid)
+				    unsigned wid)
 {
       ivl_signal_t sig = ivl_lval_sig(lval);
       ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
@@ -116,8 +116,7 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 
 	    slice->type = SLICE_SIMPLE_VECTOR;
 	    slice->u_.simple_vector.use_word = use_word;
-	    fprintf(vvp_out, "    %%load/v %u, v%p_%lu, %u;\n",
-		    bit, sig, use_word, wid);
+	    fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
 
       } else if (ivl_signal_dimensions(sig)==0 && part_off_ex==0 && word_ix==0) {
 
@@ -126,35 +125,26 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	    slice->type = SLICE_PART_SELECT_STATIC;
 	    slice->u_.part_select_static.part_off = part_off;
 
-	    fprintf(vvp_out, "    %%ix/load 1, %lu, 0;\n", part_off);
-	    fprintf(vvp_out, "    %%load/x1p %u, v%p_0, %u;\n", bit, sig, wid);
+	    fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
+	    fprintf(vvp_out, "    %%pushi/vec4 %lu, 0, 32;\n", part_off);
+	    fprintf(vvp_out, "    %%part/u %u;\n", wid);
 
       } else if (ivl_signal_dimensions(sig)==0 && part_off_ex!=0 && word_ix==0) {
-
-	    unsigned skip_set = transient_id++;
-	    unsigned out_set  = transient_id++;
 
 	    assert(use_word == 0);
 	    assert(part_off == 0);
 
 	    slice->type = SLICE_PART_SELECT_DYNAMIC;
 
-	    draw_eval_expr_into_integer(part_off_ex, 1);
-
 	    slice->u_.part_select_dynamic.word_idx_reg = allocate_word();
-	    slice->u_.part_select_dynamic.x_flag = allocate_vector(1);
+	    slice->u_.part_select_dynamic.x_flag = allocate_flag();
 
-	    fprintf(vvp_out, "    %%mov %u, %u, 1;\n",
-		    slice->u_.part_select_dynamic.x_flag, 4);
-	    fprintf(vvp_out, "    %%mov/wu %d, %d;\n",
-		    slice->u_.part_select_dynamic.word_idx_reg, 1);
-
-	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
-	    fprintf(vvp_out, "    %%load/x1p %u, v%p_0, %u;\n", bit, sig, wid);
-	    fprintf(vvp_out, "    %%jmp t_%u;\n", out_set);
-	    fprintf(vvp_out, "t_%u ;\n", skip_set);
-	    fprintf(vvp_out, "    %%mov %u, 2, %u;\n", bit, wid);
-	    fprintf(vvp_out, "t_%u ;\n", out_set);
+	    fprintf(vvp_out, "    %%load/vec4 v%p_%lu;\n", sig, use_word);
+	    draw_eval_vec4(part_off_ex, STUFF_OK_XZ);
+	    fprintf(vvp_out, "    %%flag_mov %u, 4;\n", slice->u_.part_select_dynamic.x_flag);
+	    fprintf(vvp_out, "    %%dup/vec4;\n");
+	    fprintf(vvp_out, "    %%ix/vec4 %u;\n", slice->u_.part_select_dynamic.word_idx_reg);
+	    fprintf(vvp_out, "    %%part/u %u;\n", wid);
 
       } else if (ivl_signal_dimensions(sig) > 0 && word_ix == 0) {
 
@@ -163,161 +153,152 @@ static void get_vec_from_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice
 	    if (use_word < ivl_signal_array_count(sig)) {
 		  fprintf(vvp_out, "    %%ix/load 3, %lu, 0;\n",
 			  use_word);
-		  fprintf(vvp_out, "    %%load/av %u, v%p, %u;\n",
-			  bit, sig, wid);
+		  fprintf(vvp_out, "    %%load/vec4a v%p, 3;\n", sig);
 	    } else {
-		  fprintf(vvp_out, "    %%mov %u, 2, %u; OUT OF BOUNDS\n",
-			  bit, wid);
+		  assert(wid <= 32);
+		  fprintf(vvp_out, "    %%pushi/vec4 4294967295, 4294967295, %u;\n", wid);
 	    }
 
       } else if (ivl_signal_dimensions(sig) > 0 && word_ix != 0) {
 
-	    unsigned skip_set = transient_id++;
-	    unsigned out_set  = transient_id++;
 	    slice->type = SLICE_MEMORY_WORD_DYNAMIC;
 
-	    draw_eval_expr_into_integer(word_ix, 3);
 	    slice->u_.memory_word_dynamic.word_idx_reg = allocate_word();
-	    slice->u_.memory_word_dynamic.x_flag = allocate_vector(1);
-	    fprintf(vvp_out, "    %%mov/wu %d, 3;\n",
-		    slice->u_.memory_word_dynamic.word_idx_reg);
-	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n",
-		    slice->u_.memory_word_dynamic.x_flag);
+	    slice->u_.memory_word_dynamic.x_flag = allocate_flag();
 
-	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
-	    fprintf(vvp_out, "    %%ix/load 1, 0, 0;\n");
-	    fprintf(vvp_out, "    %%load/av %u, v%p, %u;\n",
-		    bit, sig, wid);
-	    fprintf(vvp_out, "    %%jmp t_%u;\n", out_set);
-	    fprintf(vvp_out, "t_%u ;\n", skip_set);
-	    fprintf(vvp_out, "    %%mov %u, 2, %u;\n", bit, wid);
-	    fprintf(vvp_out, "t_%u ;\n", out_set);
+	    draw_eval_expr_into_integer(word_ix, slice->u_.memory_word_dynamic.word_idx_reg);
+	    fprintf(vvp_out, "    %%flag_mov %d, 4;\n", slice->u_.memory_word_dynamic.x_flag);
+	    fprintf(vvp_out, "    %%load/vec4a v%p, %d;\n", sig, slice->u_.memory_word_dynamic.word_idx_reg);
 
       } else {
 	    assert(0);
       }
 }
 
-static struct vector_info get_vec_from_lval(ivl_statement_t net,
-					    struct vec_slice_info*slices)
+/*
+ * This loads the l-value values into the top of the stack, and also
+ * leaves in the slices the information needed to store the slice
+ * results back.
+ */
+static void get_vec_from_lval(ivl_statement_t net, struct vec_slice_info*slices)
 {
-      struct vector_info res;
       unsigned lidx;
       unsigned cur_bit;
 
-      res.wid = ivl_stmt_lwidth(net);
-      res.base = allocate_vector(res.wid);
+      unsigned wid = ivl_stmt_lwidth(net);
 
       cur_bit = 0;
       for (lidx = 0 ; lidx < ivl_stmt_lvals(net) ; lidx += 1) {
-	    unsigned bidx;
 	    ivl_lval_t lval;
-	    unsigned bit_limit = res.wid - cur_bit;
+	    unsigned bit_limit = wid - cur_bit;
 
 	    lval = ivl_stmt_lval(net, lidx);
 
 	    if (bit_limit > ivl_lval_width(lval))
 		  bit_limit = ivl_lval_width(lval);
 
-	    bidx = res.base + cur_bit;
-
-	    get_vec_from_lval_slice(lval, slices+lidx, bidx, bit_limit);
+	    get_vec_from_lval_slice(lval, slices+lidx, bit_limit);
+	    if (lidx > 0) {
+		  fprintf(vvp_out, "    %%concat/vec4;\n");
+	    }
 
 	    cur_bit += bit_limit;
       }
 
-      return res;
 }
 
 static void put_vec_to_lval_slice(ivl_lval_t lval, struct vec_slice_info*slice,
-				  unsigned bit, unsigned wid)
+				  unsigned wid)
 {
-      unsigned skip_set = transient_id++;
-      struct vector_info tmp;
+	//unsigned skip_set = transient_id++;
       ivl_signal_t sig = ivl_lval_sig(lval);
+      int part_off_idx;
 
 	/* If the slice of the l-value is a BOOL variable, then cast
 	   the data to a BOOL vector so that the stores can be valid. */
       if (ivl_signal_data_type(sig) == IVL_VT_BOOL) {
-	    fprintf(vvp_out, "    %%cast2 %u, %u, %u;\n", bit, bit, wid);
+	    fprintf(vvp_out, "    %%cast2;\n");
       }
 
       switch (slice->type) {
 	  default:
+	    fprintf(vvp_out, " ; XXXX slice->type=%d\n", slice->type);
 	    assert(0);
 	    break;
 
 	  case SLICE_SIMPLE_VECTOR:
-	    fprintf(vvp_out, "    %%set/v v%p_%lu, %u, %u;\n",
-		    sig, slice->u_.simple_vector.use_word, bit, wid);
+	    fprintf(vvp_out, "    %%store/vec4 v%p_%lu, 0, %u;\n",
+		    sig, slice->u_.simple_vector.use_word, wid);
 	    break;
 
 	  case SLICE_PART_SELECT_STATIC:
-	    fprintf(vvp_out, "    %%ix/load 0, %lu, 0;\n",
-		    slice->u_.part_select_static.part_off);
-	    fprintf(vvp_out, "    %%set/x0 v%p_0, %u, %u;\n", sig, bit, wid);
+	    part_off_idx = allocate_word();
+	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0;\n",
+		    part_off_idx, slice->u_.part_select_static.part_off);
+	    fprintf(vvp_out, "    %%flag_set/imm 4, 0;\n");
+	    fprintf(vvp_out, "    %%store/vec4 v%p_0, %d, %u;\n",
+		    sig, part_off_idx, wid);
+	    clr_word(part_off_idx);
 	    break;
 
 	  case SLICE_PART_SELECT_DYNAMIC:
-	    fprintf(vvp_out, "    %%jmp/1 t_%u, %u;\n", skip_set,
+	    fprintf(vvp_out, "    %%flag_mov 4, %u;\n",
 		    slice->u_.part_select_dynamic.x_flag);
-	    fprintf(vvp_out, "    %%mov/wu 0, %d;\n",
-		    slice->u_.part_select_dynamic.word_idx_reg);
-	    fprintf(vvp_out, "    %%set/x0 v%p_0, %u, %u;\n", sig, bit, wid);
-	    fprintf(vvp_out, "t_%u ;\n", skip_set);
+	    fprintf(vvp_out, "    %%store/vec4 v%p_0, %d, %u;\n",
+		    sig, slice->u_.part_select_dynamic.word_idx_reg, wid);
+	    clr_word(slice->u_.part_select_dynamic.word_idx_reg);
+	    clr_flag(slice->u_.part_select_dynamic.x_flag);
 	    break;
 
 	  case SLICE_MEMORY_WORD_STATIC:
-	    if (slice->u_.simple_vector.use_word >= ivl_signal_array_count(sig))
-		  break;
-	    fprintf(vvp_out, "    %%ix/load 3, %lu, 0;\n",
-		    slice->u_.simple_vector.use_word);
-	    fprintf(vvp_out, "    %%set/av v%p, %u, %u;\n",
-		    sig, bit, wid);
+	    if (slice->u_.memory_word_static.use_word < ivl_signal_array_count(sig)) {
+		  int word_idx = allocate_word();
+		  fprintf(vvp_out,"    %%flag_set/imm 4, 0;\n");
+		  fprintf(vvp_out,"    %%ix/load %d, %lu, 0;\n", word_idx, slice->u_.memory_word_static.use_word);
+		  fprintf(vvp_out,"    %%store/vec4a v%p, %d, 0;\n", sig, word_idx);
+		  clr_word(word_idx);
+	    } else {
+		  fprintf(vvp_out," ; Skip this slice write to v%p [%lu]\n", sig, slice->u_.memory_word_static.use_word);
+	    }
 	    break;
 
 	  case SLICE_MEMORY_WORD_DYNAMIC:
-	    fprintf(vvp_out, "    %%jmp/1 t_%u, %u;\n", skip_set,
-		    slice->u_.memory_word_dynamic.x_flag);
-	    fprintf(vvp_out, "    %%mov/wu 3, %d;\n",
-		    slice->u_.memory_word_dynamic.word_idx_reg);
-	    fprintf(vvp_out, "    %%set/av v%p, %u, %u;\n",
-		    ivl_lval_sig(lval), bit, wid);
-	    fprintf(vvp_out, "t_%u ;\n", skip_set);
-
-	    tmp.base = slice->u_.memory_word_dynamic.x_flag;
-	    tmp.wid = 1;
-	    clr_vector(tmp);
+	    fprintf(vvp_out, "    %%flag_mov 4, %d;\n", slice->u_.memory_word_dynamic.x_flag);
+	    fprintf(vvp_out, "    %%store/vec4a v%p, %d, 0;\n", sig, slice->u_.memory_word_dynamic.word_idx_reg);
 	    clr_word(slice->u_.memory_word_dynamic.word_idx_reg);
+	    clr_flag(slice->u_.memory_word_dynamic.x_flag);
 	    break;
+
       }
 }
 
-static void put_vec_to_lval(ivl_statement_t net, struct vec_slice_info*slices,
-			    struct vector_info res)
+static void put_vec_to_lval(ivl_statement_t net, struct vec_slice_info*slices)
 {
       unsigned lidx;
       unsigned cur_bit;
 
+      unsigned wid = ivl_stmt_lwidth(net);
+
       cur_bit = 0;
       for (lidx = 0 ; lidx < ivl_stmt_lvals(net) ; lidx += 1) {
-	    unsigned bidx;
 	    ivl_lval_t lval;
-	    unsigned bit_limit = res.wid - cur_bit;
+	    unsigned bit_limit = wid - cur_bit;
 
 	    lval = ivl_stmt_lval(net, lidx);
 
 	    if (bit_limit > ivl_lval_width(lval))
 		  bit_limit = ivl_lval_width(lval);
 
-	    bidx = res.base + cur_bit;
+	    if (lidx+1 < ivl_stmt_lvals(net))
+		  fprintf(vvp_out, "    %%split/vec4 %u;\n", bit_limit);
 
-	    put_vec_to_lval_slice(lval, slices+lidx, bidx, bit_limit);
+	    put_vec_to_lval_slice(lval, slices+lidx, bit_limit);
 
 	    cur_bit += bit_limit;
       }
 }
 
+#if 0
 static ivl_type_t draw_lval_expr(ivl_lval_t lval)
 {
       ivl_lval_t lval_nest = ivl_lval_nest(lval);
@@ -338,6 +319,7 @@ static ivl_type_t draw_lval_expr(ivl_lval_t lval)
       fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
       return ivl_type_prop_type(sub_type, ivl_lval_property_idx(lval));
 }
+#endif
 
 #if 0
 static void set_vec_to_lval_slice_nest(ivl_lval_t lval, unsigned bit, unsigned wid)
@@ -616,15 +598,16 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 {
       ivl_expr_t rval = ivl_stmt_rval(net);
 	//struct vector_info res;
-      struct vector_info lres = {0, 0};
+	//struct vector_info lres = {0, 0};
       struct vec_slice_info*slices = 0;
+      int idx_reg;
 
 	/* If this is a compressed assignment, then get the contents
 	   of the l-value. We need these values as part of the r-value
 	   calculation. */
       if (ivl_stmt_opcode(net) != 0) {
             slices = calloc(ivl_stmt_lvals(net), sizeof(struct vec_slice_info));
-	    lres = get_vec_from_lval(net, slices);
+	    get_vec_from_lval(net, slices);
       }
 
 	/* Handle the special case that the expression is a real
@@ -662,123 +645,71 @@ static int show_stmt_assign_vector(ivl_statement_t net)
 	  case 0:
 	    store_vec4_to_lval(net);
 	    break;
-#if 0
-	      // XXXX These need to be converted to vec4 style.
+
 	  case '+':
-	    if (res.base > 3) {
-		  fprintf(vvp_out, "    %%add %u, %u, %u;\n",
-			  res.base, lres.base, res.wid);
-		  clr_vector(lres);
-	    } else {
-		  fprintf(vvp_out, "    %%add %u, %u, %u;\n",
-			  lres.base, res.base, res.wid);
-		  res.base = lres.base;
-	    }
-	    put_vec_to_lval(net, slices, res);
+	    fprintf(vvp_out, "    %%add;\n");
+	    put_vec_to_lval(net, slices);
 	    break;
 
 	  case '-':
-	    fprintf(vvp_out, "    %%sub %u, %u, %u;\n",
-		    lres.base, res.base, res.wid);
-	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
-		    res.base, lres.base, res.wid);
-	    clr_vector(lres);
-	    put_vec_to_lval(net, slices, res);
+	    fprintf(vvp_out, "    %%sub;\n");
+	    put_vec_to_lval(net, slices);
 	    break;
 
 	  case '*':
-	    if (res.base > 3) {
-		  fprintf(vvp_out, "    %%mul %u, %u, %u;\n",
-			  res.base, lres.base, res.wid);
-		  clr_vector(lres);
-	    } else {
-		  fprintf(vvp_out, "    %%mul %u, %u, %u;\n",
-			  lres.base, res.base, res.wid);
-		  res.base = lres.base;
-	    }
-	    put_vec_to_lval(net, slices, res);
+	    fprintf(vvp_out, "    %%mul;\n");
+	    put_vec_to_lval(net, slices);
 	    break;
 
 	  case '/':
-	    fprintf(vvp_out, "    %%div%s %u, %u, %u;\n",
-		    ivl_expr_signed(rval)? "/s" : "",
-		    lres.base, res.base, res.wid);
-	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
-		    res.base, lres.base, res.wid);
-	    clr_vector(lres);
-	    put_vec_to_lval(net, slices, res);
+	    fprintf(vvp_out, "    %%div%s;\n", ivl_expr_signed(rval)? "/s":"");
+	    put_vec_to_lval(net, slices);
 	    break;
 
 	  case '%':
-	    fprintf(vvp_out, "    %%mod%s %u, %u, %u;\n",
-		    ivl_expr_signed(rval)? "/s" : "",
-		    lres.base, res.base, res.wid);
-	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
-		    res.base, lres.base, res.wid);
-	    clr_vector(lres);
-	    put_vec_to_lval(net, slices, res);
+	    fprintf(vvp_out, "    %%mod%s;\n", ivl_expr_signed(rval)? "/s":"");
+	    put_vec_to_lval(net, slices);
 	    break;
 
 	  case '&':
-	    if (res.base > 3) {
-		  fprintf(vvp_out, "    %%and %u, %u, %u;\n",
-			  res.base, lres.base, res.wid);
-		  clr_vector(lres);
-	    } else {
-		  fprintf(vvp_out, "    %%and %u, %u, %u;\n",
-			  lres.base, res.base, res.wid);
-		  res.base = lres.base;
-	    }
-	    put_vec_to_lval(net, slices, res);
+	    fprintf(vvp_out, "    %%and;\n");
+	    put_vec_to_lval(net, slices);
 	    break;
 
 	  case '|':
-	    if (res.base > 3) {
-		  fprintf(vvp_out, "    %%or %u, %u, %u;\n",
-			  res.base, lres.base, res.wid);
-		  clr_vector(lres);
-	    } else {
-		  fprintf(vvp_out, "    %%or %u, %u, %u;\n",
-			  lres.base, res.base, res.wid);
-		  res.base = lres.base;
-	    }
-	    put_vec_to_lval(net, slices, res);
+	    fprintf(vvp_out, "    %%or;\n");
+	    put_vec_to_lval(net, slices);
 	    break;
 
 	  case '^':
-	    if (res.base > 3) {
-		  fprintf(vvp_out, "    %%xor %u, %u, %u;\n",
-			  res.base, lres.base, res.wid);
-		  clr_vector(lres);
-	    } else {
-		  fprintf(vvp_out, "    %%xor %u, %u, %u;\n",
-			  lres.base, res.base, res.wid);
-		  res.base = lres.base;
-	    }
-	    put_vec_to_lval(net, slices, res);
+	    fprintf(vvp_out, "    %%xor;\n");
+	    put_vec_to_lval(net, slices);
 	    break;
 
-	  case 'l': /* lres <<= res */
-	    fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", res.base, res.wid);
-	    fprintf(vvp_out, "    %%shiftl/i0 %u, %u;\n", lres.base, res.wid);
-	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
-		    res.base, lres.base, res.wid);
+	  case 'l': /* lval <<= expr */
+	    idx_reg = allocate_word();
+	    fprintf(vvp_out, "    %%ix/vec4 %d;\n", idx_reg);
+	    fprintf(vvp_out, "    %%shiftl %d;\n", idx_reg);
+	    clr_word(idx_reg);
+	    put_vec_to_lval(net, slices);
 	    break;
 
-	  case 'r': /* lres >>= res */
-	    fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", res.base, res.wid);
-	    fprintf(vvp_out, "    %%shiftr/i0 %u, %u;\n", lres.base, res.wid);
-	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
-		    res.base, lres.base, res.wid);
+	  case 'r': /* lval >>= expr */
+	    idx_reg = allocate_word();
+	    fprintf(vvp_out, "    %%ix/vec4 %d;\n", idx_reg);
+	    fprintf(vvp_out, "    %%shiftr %d;\n", idx_reg);
+	    clr_word(idx_reg);
+	    put_vec_to_lval(net, slices);
 	    break;
 
-	  case 'R': /* lres >>>= res */
-	    fprintf(vvp_out, "    %%ix/get 0, %u, %u;\n", res.base, res.wid);
-	    fprintf(vvp_out, "    %%shiftr/s/i0 %u, %u;\n", lres.base, res.wid);
-	    fprintf(vvp_out, "    %%mov %u, %u, %u;\n",
-		    res.base, lres.base, res.wid);
+	  case 'R': /* lval >>>= expr */
+	    idx_reg = allocate_word();
+	    fprintf(vvp_out, "    %%ix/vec4 %d;\n", idx_reg);
+	    fprintf(vvp_out, "    %%shiftr/s %d;\n", idx_reg);
+	    clr_word(idx_reg);
+	    put_vec_to_lval(net, slices);
 	    break;
-#endif
+
 	  default:
 	    fprintf(vvp_out, "; UNSUPPORTED ASSIGNMENT OPCODE: %c\n", ivl_stmt_opcode(net));
 	    assert(0);

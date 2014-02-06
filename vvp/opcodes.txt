@@ -294,11 +294,10 @@ Perform a continuous assign of a constant real value to the target
 variable. See %cassign/v above. The value is popped from the real
 value stack.
 
-* %cast2 <dst>, <src>, <wid>
+* %cast2
 
-Convert the source vector, of type logic, to a bool vector by
-changing all the X and Z bits to 0. The source and destinations may
-overlap.
+Pop a value from the vec4 stack, convert it using Verilog rules to a
+vector2 (binary) value, and push the result.
 
 * %cmp/u <bit-l>, <bit-r>, <wid> (XXXX Old meaning)
 * %cmp/s <bit-l>, <bit-r>, <wid> (XXXX Old meaning)
@@ -1006,7 +1005,8 @@ stack. If this item is larger then this, it is truncated. If smaller,
 then extended. The /s variant sign extends, the /u variant unsigned
 extends.
 
-* %part <wid>
+* %part/s <wid>
+* %part/u <wid>
 
 This instruction implements a part select. It pops from the top of the
 vec4 the base value, then it pops the base to select from. The width
@@ -1117,7 +1117,8 @@ Release the force on the real signal that is represented by the functor
 statement. The <type> is 0 for nets and 1 for registers. See the other
 %release commands above.
 
-* %replicate <count>
+* %repli
+cate <count>
 
 Pop the vec4 value, replicate it <count> times, then push the
 result. In other words, push the concatenation of <count> copies.
