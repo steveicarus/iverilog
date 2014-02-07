@@ -860,25 +860,21 @@ static int show_stmt_assign_darray_pattern(ivl_statement_t net)
 
       ivl_type_t element_type = ivl_type_element(var_type);
       unsigned idx;
-      struct vector_info rvec;
+#if 0
       unsigned element_width = 1;
       if (ivl_type_base(element_type) == IVL_VT_BOOL)
 	    element_width = width_of_packed_type(element_type);
       else if (ivl_type_base(element_type) == IVL_VT_LOGIC)
 	    element_width = width_of_packed_type(element_type);
-
+#endif
       assert(ivl_expr_type(rval) == IVL_EX_ARRAY_PATTERN);
       for (idx = 0 ; idx < ivl_expr_parms(rval) ; idx += 1) {
 	    switch (ivl_type_base(element_type)) {
 		case IVL_VT_BOOL:
 		case IVL_VT_LOGIC:
-		  rvec = draw_eval_expr_wid(ivl_expr_parm(rval,idx),
-					    element_width, STUFF_OK_XZ);
+		  draw_eval_vec4(ivl_expr_parm(rval,idx), STUFF_OK_XZ);
 		  fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
-		  fprintf(vvp_out, "    %%set/dar v%p_0, %u, %u;\n",
-			  var, rvec.base, rvec.wid);
-
-		  if (rvec.base >= 4) clr_vector(rvec);
+		  fprintf(vvp_out, "    %%store/dar/vec4 v%p_0;\n", var);
 		  break;
 
 		case IVL_VT_REAL:
@@ -982,30 +978,26 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 	    if (ivl_type_base(prop_type) == IVL_VT_BOOL) {
 		  assert(ivl_type_packed_dimensions(prop_type) == 1);
 		  assert(ivl_type_packed_msb(prop_type,0) >= ivl_type_packed_lsb(prop_type, 0));
-		  int wid = ivl_type_packed_msb(prop_type,0) - ivl_type_packed_lsb(prop_type,0) + 1;
 
-		  struct vector_info val = draw_eval_expr_wid(rval, wid, STUFF_OK_XZ);
+		  draw_eval_vec4(rval, STUFF_OK_XZ);
+		  if (ivl_expr_value(rval)!=IVL_VT_BOOL)
+			fprintf(vvp_out, "    %%cast2;\n");
 
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
-		  fprintf(vvp_out, "    %%store/prop/v %d, %u, %u; Store in bool property %s\n",
-			  prop_idx, val.base, val.wid,
-			  ivl_type_prop_name(sig_type, prop_idx));
+		  fprintf(vvp_out, "    %%store/prop/v %d; Store in bool property %s\n",
+			  prop_idx, ivl_type_prop_name(sig_type, prop_idx));
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-		  clr_vector(val);
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_LOGIC) {
 		  assert(ivl_type_packed_dimensions(prop_type) == 1);
 		  assert(ivl_type_packed_msb(prop_type,0) >= ivl_type_packed_lsb(prop_type, 0));
-		  int wid = ivl_type_packed_msb(prop_type,0) - ivl_type_packed_lsb(prop_type,0) + 1;
 
-		  struct vector_info val = draw_eval_expr_wid(rval, wid, STUFF_OK_XZ);
+		  draw_eval_vec4(rval, STUFF_OK_XZ);
 
 		  fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
-		  fprintf(vvp_out, "    %%store/prop/v %d, %u, %u; Store in logic property %s\n",
-			  prop_idx, val.base, val.wid,
-			  ivl_type_prop_name(sig_type, prop_idx));
+		  fprintf(vvp_out, "    %%store/prop/v %d; Store in logic property %s\n",
+			  prop_idx, ivl_type_prop_name(sig_type, prop_idx));
 		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
-		  clr_vector(val);
 
 	    } else if (ivl_type_base(prop_type) == IVL_VT_REAL) {
 

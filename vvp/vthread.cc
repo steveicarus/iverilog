@@ -5191,37 +5191,22 @@ bool of_PROP_STR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %prop/v <pid> <base> <wid>
+ * %prop/v <pid>
  *
  * Load a property <id> from the cobject on the top of the stack into
  * the vector space at <base>.
  */
 bool of_PROP_V(vthread_t thr, vvp_code_t cp)
 {
-#if 0
-      unsigned pid = cp->bit_idx[0];
-      unsigned dst = cp->bit_idx[1];
-      unsigned wid = cp->number;
+      unsigned pid = cp->number;
 
-      thr_check_addr(thr, dst+wid-1);
       vvp_object_t&obj = thr->peek_object();
       vvp_cobject*cobj = obj.peek<vvp_cobject>();
 
       vvp_vector4_t val;
       cobj->get_vec4(pid, val);
+      thr->push_vec4(val);
 
-      if (val.size() > wid)
-	    val.resize(wid);
-
-      thr->bits4.set_vec(dst, val);
-
-      if (val.size() < wid) {
-	    for (unsigned idx = val.size() ; idx < wid ; idx += 1)
-		  thr->bits4.set_bit(dst+idx, BIT4_X);
-      }
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%prop/v ...\n");
-#endif
       return true;
 }
 
@@ -5558,6 +5543,23 @@ bool of_SET_DAR_OBJ_REAL(vthread_t thr, vvp_code_t cp)
       unsigned adr = thr->words[cp->number].w_int;
 
       double value = thr->peek_real(0);
+
+      vvp_object_t&top = thr->peek_object();
+      vvp_darray*darray = top.peek<vvp_darray>();
+      assert(darray);
+
+      darray->set_word(adr, value);
+      return true;
+}
+
+/*
+ * %set/dar/obj/str <index>
+ */
+bool of_SET_DAR_OBJ_VEC4(vthread_t thr, vvp_code_t cp)
+{
+      unsigned adr = thr->words[cp->number].w_int;
+
+      vvp_vector4_t value = thr->peek_vec4(0);
 
       vvp_object_t&top = thr->peek_object();
       vvp_darray*darray = top.peek<vvp_darray>();
@@ -5930,27 +5932,20 @@ bool of_STORE_PROP_STR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
- * %store/prop/v <id> <base> <wid>
+ * %store/prop/v <id>
  *
  * Store vector value into property <id> of cobject in the top of the stack.
  */
 bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
 {
-#if 0
-      size_t pid = cp->bit_idx[0];
-      unsigned src = cp->bit_idx[1];
-      unsigned wid = cp->number;
-
-      vvp_vector4_t val = vthread_bits_to_vector(thr, src, wid);
+      size_t pid = cp->number;
+      vvp_vector4_t val = thr->pop_vec4();
 
       vvp_object_t&obj = thr->peek_object();
       vvp_cobject*cobj = obj.peek<vvp_cobject>();
       assert(cobj);
 
       cobj->set_vec4(pid, val);
-#else
-      fprintf(stderr, "XXXX NOT IMPLEMENTED: %%store/prop/v ...\n");
-#endif
       return true;
 }
 

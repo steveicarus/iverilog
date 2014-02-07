@@ -1366,41 +1366,9 @@ static int show_stmt_disable(ivl_statement_t net, ivl_scope_t sscope)
       return rc;
 }
 
-static struct vector_info reduction_or(struct vector_info cvec)
-{
-      struct vector_info result;
-
-      switch (cvec.base) {
-	  case 0:
-	    result.base = 0;
-	    result.wid = 1;
-	    break;
-	  case 1:
-	    result.base = 1;
-	    result.wid = 1;
-	    break;
-	  case 2:
-	  case 3:
-	    result.base = 0;
-	    result.wid = 1;
-	    break;
-	  default:
-	    clr_vector(cvec);
-	    result.base = allocate_vector(1);
-	    result.wid = 1;
-	    assert(result.base);
-	    fprintf(vvp_out, "    %%or/r %u, %u, %u;\n", result.base,
-		    cvec.base, cvec.wid);
-	    break;
-      }
-
-      return result;
-}
-
 static int show_stmt_do_while(ivl_statement_t net, ivl_scope_t sscope)
 {
       int rc = 0;
-      struct vector_info cvec;
 
       unsigned top_label = local_count++;
 
@@ -1418,16 +1386,16 @@ static int show_stmt_do_while(ivl_statement_t net, ivl_scope_t sscope)
 	/* Draw the evaluation of the condition expression, and test
 	   the result. If the expression evaluates to true, then
 	   branch to the top label. */
-      cvec = draw_eval_expr(ivl_stmt_cond_expr(net), STUFF_OK_XZ|STUFF_OK_47);
-      if (cvec.wid > 1)
-	    cvec = reduction_or(cvec);
+      draw_eval_vec4(ivl_stmt_cond_expr(net), STUFF_OK_XZ|STUFF_OK_47);
+      if (ivl_expr_width(ivl_stmt_cond_expr(net)) > 1)
+	    fprintf(vvp_out, "    %%or/r;\n");
 
+      int use_flag = allocate_flag();
+      fprintf(vvp_out, "    %%flag_set/vec4 %d;\n", use_flag);
       fprintf(vvp_out, "    %%jmp/1 T_%u.%u, %u;\n",
-	      thread_count, top_label, cvec.base);
-      if (cvec.base >= 8)
-	    clr_vector(cvec);
+	      thread_count, top_label, use_flag);
+      clr_flag(use_flag);
 
-      clear_expression_lookaside();
       return rc;
 }
 

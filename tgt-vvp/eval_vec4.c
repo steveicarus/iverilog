@@ -27,6 +27,17 @@
 # include  <assert.h>
 # include  <stdbool.h>
 
+static void resize_vec4_wid(ivl_expr_t expr, unsigned wid)
+{
+      if (ivl_expr_width(expr) == wid)
+	    return;
+
+      if (ivl_expr_signed(expr))
+	    fprintf(vvp_out, "    %%pad/s %u;\n", wid);
+      else
+	    fprintf(vvp_out, "    %%pad/u %u;\n", wid);
+}
+
 static void draw_binary_vec4_arith(ivl_expr_t expr, int stuff_ok_flag)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
@@ -153,6 +164,47 @@ static void draw_binary_vec4_compare_string(ivl_expr_t expr)
       }
 }
 
+static void draw_binary_vec4_compare_class(ivl_expr_t expr)
+{
+      ivl_expr_t le = ivl_expr_oper1(expr);
+      ivl_expr_t re = ivl_expr_oper2(expr);
+
+      if (ivl_expr_type(le) == IVL_EX_NULL) {
+	    ivl_expr_t tmp = le;
+	    le = re;
+	    re = tmp;
+      }
+
+	/* Special case: If both operands are null, then the
+	   expression has a constant value. */
+      if (ivl_expr_type(le)==IVL_EX_NULL && ivl_expr_type(re)==IVL_EX_NULL) {
+	    switch (ivl_expr_opcode(expr)) {
+		case 'e': /* == */
+		  fprintf(vvp_out, "    %%pushi/vec4 1, 0, 1;\n");
+		  break;
+		case 'n': /* != */
+		  fprintf(vvp_out, "    %%pushi/vec4 0, 0, 1;\n");
+		  break;
+		default:
+		  assert(0);
+		  break;
+	    }
+	    return;
+      }
+
+      if (ivl_expr_type(re)==IVL_EX_NULL && ivl_expr_type(le)==IVL_EX_SIGNAL) {
+	    fprintf(vvp_out, "    %%test_nul v%p_0;\n", ivl_expr_signal(le));
+	    fprintf(vvp_out, "    %%flag_get/vec4 4;\n");
+	    if (ivl_expr_opcode(expr) == 'n')
+		  fprintf(vvp_out, "    %%inv;\n");
+	    return;
+      }
+
+      fprintf(stderr, "SORRY: Compare class handles not implemented\n");
+      fprintf(vvp_out, " ; XXXX compare class handles.\n");
+      vvp_errors += 1;
+}
+
 static void draw_binary_vec4_compare(ivl_expr_t expr, int stuff_ok_flag)
 {
       ivl_expr_t le = ivl_expr_oper1(expr);
@@ -182,8 +234,21 @@ static void draw_binary_vec4_compare(ivl_expr_t expr, int stuff_ok_flag)
 	    return;
       }
 
+      if ((ivl_expr_value(le)==IVL_VT_CLASS)
+	  && (ivl_expr_value(re)==IVL_VT_CLASS)) {
+	    draw_binary_vec4_compare_class(expr);
+	    return;
+      }
+
+      unsigned use_wid = ivl_expr_width(le);
+      if (ivl_expr_width(re) > use_wid)
+	    use_wid = ivl_expr_width(re);
+
       draw_eval_vec4(le, stuff_ok_flag);
+      resize_vec4_wid(le, use_wid);
+
       draw_eval_vec4(re, stuff_ok_flag);
+      resize_vec4_wid(re, use_wid);
 
       switch (ivl_expr_opcode(expr)) {
 	  case 'e': /* == */
@@ -372,12 +437,16 @@ static void draw_binary_vec4_le(ivl_expr_t expr, int stuff_ok_flag)
 
 	/* NOTE: I think I would rather the elaborator handle the
 	   operand widths. When that happens, take this code out. */
+
+      unsigned use_wid = ivl_expr_width(le);
+      if (ivl_expr_width(re) > use_wid)
+	    use_wid = ivl_expr_width(re);
+
       draw_eval_vec4(le, stuff_ok_flag);
-      if (ivl_expr_width(le) < ivl_expr_width(re))
-	    fprintf(vvp_out, "    %%pad/%c %u;\n", s_flag, ivl_expr_width(re));
+      resize_vec4_wid(le, use_wid);
+
       draw_eval_vec4(re, stuff_ok_flag);
-      if (ivl_expr_width(re) < ivl_expr_width(le))
-	    fprintf(vvp_out, "    %%pad/%c %u;\n", s_flag, ivl_expr_width(le));
+      resize_vec4_wid(re, use_wid);
 
       switch (use_opcode) {
 	  case 'L':
@@ -591,6 +660,16 @@ static void draw_number_vec4(ivl_expr_t expr)
 		  fprintf(vvp_out, "    %%concat/vec4;\n");
 	    count_pushi += 1;
       }
+}
+
+static void draw_property_vec4(ivl_expr_t expr)
+{
+      ivl_signal_t sig = ivl_expr_signal(expr);
+      unsigned pidx = ivl_expr_property_idx(expr);
+
+      fprintf(vvp_out, "    %%load/obj v%p_0;\n", sig);
+      fprintf(vvp_out, "    %%prop/v %u;\n", pidx);
+      fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 }
 
 static void draw_select_vec4(ivl_expr_t expr)
@@ -915,6 +994,10 @@ static void draw_unary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	    switch (ivl_expr_value(sub)) {
 		case IVL_VT_LOGIC:
 		  draw_eval_vec4(sub, STUFF_OK_XZ);
+		  if (ivl_expr_width(expr) < ivl_expr_width(sub)) {
+			fprintf(vvp_out, "    %%pushi/vec4 0, 0, 1;\n");
+			fprintf(vvp_out, "    %%part/u %u;\n", ivl_expr_width(expr));
+		  }
 		  fprintf(vvp_out, "    %%cast2;\n");
 		  break;
 		case IVL_VT_BOOL:
@@ -980,6 +1063,10 @@ void draw_eval_vec4(ivl_expr_t expr, int stuff_ok_flag)
 
 	  case IVL_EX_UNARY:
 	    draw_unary_vec4(expr, stuff_ok_flag);
+	    return;
+
+	  case IVL_EX_PROPERTY:
+	    draw_property_vec4(expr);
 	    return;
 
 	  default:

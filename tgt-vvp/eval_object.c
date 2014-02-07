@@ -68,18 +68,13 @@ static int eval_darray_new(ivl_expr_t ex)
 
       if (init_expr && ivl_expr_type(init_expr)==IVL_EX_ARRAY_PATTERN) {
 	    int idx;
-	    struct vector_info rvec;
-	    unsigned wid;
 	    switch (ivl_type_base(element_type)) {
 		case IVL_VT_BOOL:
-		  wid = width_of_packed_type(element_type);
 		  for (idx = 0 ; idx < ivl_expr_parms(init_expr) ; idx += 1) {
-			rvec = draw_eval_expr_wid(ivl_expr_parm(init_expr,idx),
-						    wid, STUFF_OK_XZ);
+			draw_eval_vec4(ivl_expr_parm(init_expr,idx), STUFF_OK_XZ);
 			fprintf(vvp_out, "    %%ix/load 3, %u, 0;\n", idx);
-			fprintf(vvp_out, "    %%set/dar/obj 3, %u, %u;\n",
-				rvec.base, rvec.wid);
-			if (rvec.base >= 4) clr_vector(rvec);
+			fprintf(vvp_out, "    %%set/dar/obj/vec4 3;\n");
+			fprintf(vvp_out, "    %%pop/vec4 1;\n");
 		  }
 		  break;
 		case IVL_VT_REAL:

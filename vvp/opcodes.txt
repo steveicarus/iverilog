@@ -1045,7 +1045,7 @@ replaces the left operand.
 This opcode raises the left operand by the right operand, and pushes
 the result.
 
-* %prop/v <pid>, <base>, <wid>
+* %prop/v <pid>
 * %prop/obj <pid>
 * %prop/r <pid>
 * %prop/str <pid>
@@ -1120,8 +1120,7 @@ Release the force on the real signal that is represented by the functor
 statement. The <type> is 0 for nets and 1 for registers. See the other
 %release commands above.
 
-* %repli
-cate <count>
+* %replicate <count>
 
 Pop the vec4 value, replicate it <count> times, then push the
 result. In other words, push the concatenation of <count> copies.
@@ -1140,6 +1139,7 @@ using a fixed index register, use the register addressed by <index>.
 
 * %set/dar/obj/real <index>
 * %set/dar/obj/str <index>
+* %set/dar/obj/vec4 <index>
 
 The "%set/dar/obj/real" opcode sets the top value from the real-value
 stack to the index. This does NOT pop the real value off the
@@ -1147,7 +1147,8 @@ stack. The intent is that this value may be written to a bunch of
 values.
 
 The "%set/dar/obj/str" opcode does the same but for string values and
-uses the string stack.
+uses the string stack, and the "%set/dar/obj/vec4" for vec4 values and
+the vector stack.
 
 * %set/v <var-label>, <bit>, <wid> (XXXX Old definition)
 
@@ -1221,7 +1222,7 @@ See also %load/obj.
 * %store/prop/obj <index>
 * %store/prop/r <index>
 * %store/prop/str <index>
-* %store/prop/v <index>, <bit>, <wid>
+* %store/prop/v <index>
 
 The %store/prop/r pops a real value from the real stack and stores it
 into the the property number <index> of a cobject in the top of the
