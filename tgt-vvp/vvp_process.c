@@ -1150,6 +1150,8 @@ static int show_stmt_cassign(ivl_statement_t net)
       } else {
 
 	    draw_eval_vec4(rval, STUFF_OK_47);
+	    resize_vec4_wid(rval, ivl_stmt_lwidth(net));
+
 	      /* Write out initial continuous assign instructions to assign
 	         the expression value to the l-value. */
 	    force_vector_to_lval(net);

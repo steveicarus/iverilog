@@ -6002,6 +6002,10 @@ bool of_STORE_STRA(vthread_t thr, vvp_code_t cp)
 
 /*
  * %store/vec4 <var-label>, <offset>, <wid>
+ *
+ * NOTE: This instruction may loose the <wid> argument because it is
+ * not consistent with the %store/vec4/<etc> instructions which have
+ * no <wid>.
  */
 bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
 {
@@ -6013,6 +6017,11 @@ bool of_STORE_VEC4(vthread_t thr, vvp_code_t cp)
       int off = off_index? thr->words[off_index].w_int : 0;
 
       vvp_vector4_t val = thr->pop_vec4();
+
+      if (val.size() < wid) {
+	    cerr << "XXXX Internal error: val.size()=" << val.size()
+		 << ", expecting >= " << wid << endl;
+      }
       assert(val.size() >= wid);
       if (val.size() > wid)
 	    val.resize(wid);

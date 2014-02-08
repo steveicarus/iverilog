@@ -27,7 +27,7 @@
 # include  <assert.h>
 # include  <stdbool.h>
 
-static void resize_vec4_wid(ivl_expr_t expr, unsigned wid)
+void resize_vec4_wid(ivl_expr_t expr, unsigned wid)
 {
       if (ivl_expr_width(expr) == wid)
 	    return;
@@ -994,11 +994,8 @@ static void draw_unary_vec4(ivl_expr_t expr, int stuff_ok_flag)
 	    switch (ivl_expr_value(sub)) {
 		case IVL_VT_LOGIC:
 		  draw_eval_vec4(sub, STUFF_OK_XZ);
-		  if (ivl_expr_width(expr) < ivl_expr_width(sub)) {
-			fprintf(vvp_out, "    %%pushi/vec4 0, 0, 1;\n");
-			fprintf(vvp_out, "    %%part/u %u;\n", ivl_expr_width(expr));
-		  }
 		  fprintf(vvp_out, "    %%cast2;\n");
+		  resize_vec4_wid(sub, ivl_expr_width(expr));
 		  break;
 		case IVL_VT_BOOL:
 		  draw_eval_vec4(sub, 0);
