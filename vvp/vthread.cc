@@ -97,7 +97,7 @@ using namespace std;
 struct vthread_s {
       vthread_s();
 
-      void debug_dump(ostream&fd);
+      void debug_dump(ostream&fd, const char*label_text);
 
 	/* This is the program counter. */
       vvp_code_t pc;
@@ -277,8 +277,9 @@ inline vthread_s::vthread_s()
       stack_obj_size_ = 0;
 }
 
-void vthread_s::debug_dump(ostream&fd)
+void vthread_s::debug_dump(ostream&fd, const char*label)
 {
+      fd << "**** " << label << endl;
       fd << "**** Flags: ";
       for (int idx = 0 ; idx < FLAGS_COUNT ; idx += 1)
 	    fd << flags[idx];
@@ -2471,9 +2472,10 @@ bool of_DEASSIGN_WR(vthread_t, vvp_code_t cp)
 /*
  * %debug/thr
  */
-bool of_DEBUG_THR(vthread_t thr, vvp_code_t)
+bool of_DEBUG_THR(vthread_t thr, vvp_code_t cp)
 {
-      thr->debug_dump(cerr);
+      const char*text = cp->text;
+      thr->debug_dump(cerr, text);
       return true;
 }
 

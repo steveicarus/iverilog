@@ -961,8 +961,10 @@ static void force_vector_to_lval(ivl_statement_t net)
 		    /* An out-of-range or undefined index will have been
 		       converted to a canonical offset of 1'bx. Skip the
 		       assignment in this case. */
-		  if (number_is_unknown(word_idx))
+		  if (number_is_unknown(word_idx)) {
+			fprintf(vvp_out, "    %%pop/vec4 1; force to out of bounds index suppressed.\n");
 			return;
+		  }
 		  use_word = get_number_immediate(word_idx);
 
 		    /* We do not currently support using a word from a variable

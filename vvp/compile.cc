@@ -141,7 +141,7 @@ static const struct opcode_table_s opcode_table[] = {
       { "%cvt/vr", of_CVT_VR, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%deassign",of_DEASSIGN,3,{OA_FUNC_PTR, OA_BIT1,     OA_BIT2} },
       { "%deassign/wr",of_DEASSIGN_WR,1,{OA_FUNC_PTR, OA_NONE,     OA_NONE} },
-      { "%debug/thr",  of_DEBUG_THR,  0,{OA_NONE,     OA_NONE,     OA_NONE} },
+      { "%debug/thr",  of_DEBUG_THR,  1,{OA_STRING,   OA_NONE,     OA_NONE} },
       { "%delay",  of_DELAY,  2,  {OA_BIT1,     OA_BIT2,     OA_NONE} },
       { "%delayx", of_DELAYX, 1,  {OA_NUMBER,   OA_NONE,     OA_NONE} },
       { "%delete/obj",of_DELETE_OBJ,1,{OA_FUNC_PTR,OA_NONE,  OA_NONE} },
