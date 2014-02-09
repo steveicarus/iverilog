@@ -26,6 +26,8 @@
 
 struct sizer_statistics {
       unsigned flop_count;
+      unsigned gate_count;
+      unsigned adder_count;
 
       unsigned lpm_unknown;
       unsigned log_unknown;
@@ -33,6 +35,8 @@ struct sizer_statistics {
       inline sizer_statistics()
       {
 	    flop_count = 0;
+	    gate_count = 0;
+	    adder_count = 0;
 
 	    lpm_unknown = 0;
 	    log_unknown = 0;

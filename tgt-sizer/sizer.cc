@@ -111,6 +111,7 @@ static void emit_sizer_root(ivl_design_t des, ivl_scope_t model)
       scan_lpms(model, stats);
 
       fprintf(sizer_out, "     Flip-Flops   : %u\n", stats.flop_count);
+      fprintf(sizer_out, "     Logic Gates  : %u\n", stats.gate_count);
       fprintf(sizer_out, "     LPM Unknown  : %u\n", stats.lpm_unknown);
       fprintf(sizer_out, "     Logic Unknown: %u\n", stats.log_unknown);
 }

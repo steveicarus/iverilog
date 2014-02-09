@@ -19,7 +19,7 @@
 
 # include  "sizer_priv.h"
 
-static void scan_lpms_ff(ivl_scope_t scope, ivl_lpm_t lpm, struct sizer_statistics&stats)
+static void scan_lpms_ff(ivl_scope_t, ivl_lpm_t lpm, struct sizer_statistics&stats)
 {
       ivl_nexus_t out = ivl_lpm_q(lpm);
       unsigned wid = get_nexus_width(out);
@@ -32,9 +32,25 @@ void scan_lpms(ivl_scope_t scope, struct sizer_statistics&stats)
       for (unsigned idx = 0 ; idx < ivl_scope_lpms(scope) ; idx += 1) {
 	    ivl_lpm_t lpm = ivl_scope_lpm(scope,idx);
 	    switch (ivl_lpm_type(lpm)) {
+		    // Part select nodes don't actually take up
+		    // hardware. These represent things like bundle
+		    // manipulations, which are done in routing.
+		case IVL_LPM_PART_VP:
+		case IVL_LPM_PART_PV:
+		case IVL_LPM_CONCAT:
+		case IVL_LPM_CONCATZ:
+		case IVL_LPM_REPEAT:
+		  break;
+
+		case IVL_LPM_ADD:
+		  stats.adder_count += 1;
+		  break;
+
+		    // D-Type flip-flops.
 		case IVL_LPM_FF:
 		  scan_lpms_ff(scope, lpm, stats);
 		  break;
+
 		default:
 		  stats.lpm_unknown += 1;
 		  break;
