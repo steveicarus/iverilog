@@ -22,25 +22,26 @@
 # include  "config.h"
 # include  "ivl_target.h"
 
+# include  <map>
 # include  <cstdio>
 
 struct sizer_statistics {
+	// These are the accumulated global statistics
       unsigned flop_count;
       unsigned gate_count;
-      unsigned adder_count;
-
-      unsigned lpm_unknown;
-      unsigned log_unknown;
+	// Count adders of various dimension
+      std::map<unsigned,unsigned> adder_count;
+	// Different kinds of nodes that we have not accounted for
+      std::map<ivl_lpm_type_t,unsigned> lpm_bytype;
+      std::map<ivl_logic_t,unsigned>    log_bytype;
 
       inline sizer_statistics()
       {
 	    flop_count = 0;
 	    gate_count = 0;
-	    adder_count = 0;
-
-	    lpm_unknown = 0;
-	    log_unknown = 0;
       }
+
+      struct sizer_statistics& operator += (const struct sizer_statistics&that);
 };
 
 extern int sizer_errors;

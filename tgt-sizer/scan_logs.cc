@@ -20,7 +20,7 @@
 
 # include  "sizer_priv.h"
 
-void scan_logs_gates(ivl_scope_t scope, ivl_net_logic_t log, struct sizer_statistics&stats)
+void scan_logs_gates(ivl_scope_t, ivl_net_logic_t log, struct sizer_statistics&stats)
 {
       unsigned wid = ivl_logic_width(log);
 
@@ -35,11 +35,15 @@ void scan_logs(ivl_scope_t scope, struct sizer_statistics&stats)
 		case IVL_LO_AND:
 		case IVL_LO_OR:
 		case IVL_LO_XOR:
+		case IVL_LO_NAND:
+		case IVL_LO_NOR:
 		case IVL_LO_XNOR:
+		case IVL_LO_BUF:
+		case IVL_LO_NOT:
 		  scan_logs_gates(scope, log, stats);
 		  break;
 		default:
-		  stats.log_unknown += 1;
+		  stats.log_bytype[ivl_logic_type(log)] += 1;
 		  break;
 	    }
       }

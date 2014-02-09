@@ -19,12 +19,31 @@
 
 # include  "sizer_priv.h"
 
+using namespace std;
+
+/*
+ * Count each bit of flip-flops. It is clear and obvious how these
+ * come out, so no need to make alternate counts as well.
+ */
 static void scan_lpms_ff(ivl_scope_t, ivl_lpm_t lpm, struct sizer_statistics&stats)
 {
       ivl_nexus_t out = ivl_lpm_q(lpm);
       unsigned wid = get_nexus_width(out);
 
       stats.flop_count += wid;
+}
+
+/*
+ * Count adders as 2m gates.
+ * Also keep a count of adders by width, just out of curiosity.
+ */
+static void scans_lpms_add(ivl_scope_t, ivl_lpm_t lpm, struct sizer_statistics&stats)
+{
+      unsigned wid = ivl_lpm_width(lpm);
+
+      stats.adder_count[wid] += 1;
+
+      stats.gate_count += 2*wid;
 }
 
 void scan_lpms(ivl_scope_t scope, struct sizer_statistics&stats)
@@ -43,7 +62,7 @@ void scan_lpms(ivl_scope_t scope, struct sizer_statistics&stats)
 		  break;
 
 		case IVL_LPM_ADD:
-		  stats.adder_count += 1;
+		  scans_lpms_add(scope, lpm, stats);
 		  break;
 
 		    // D-Type flip-flops.
@@ -52,7 +71,7 @@ void scan_lpms(ivl_scope_t scope, struct sizer_statistics&stats)
 		  break;
 
 		default:
-		  stats.lpm_unknown += 1;
+		  stats.lpm_bytype[ivl_lpm_type(lpm)] += 1;
 		  break;
 	    }
       }
