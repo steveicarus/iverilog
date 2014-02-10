@@ -189,18 +189,18 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       unsigned sel_width = esig->vector_width();
       assert(sel_width > 0);
 
-      unsigned mux_width = 0;
-      for (unsigned idx = 0 ;  idx < nex_out.pin_count() ;  idx += 1)
-	    mux_width += nex_out.pin(idx).nexus()->vector_width();
+      ivl_assert(*this, nex_map.size() == nex_out.pin_count());
 
-      unsigned map_width = 0;
-      for (unsigned idx = 0 ; idx < nex_map.size() ; idx += 1)
-	    map_width += nex_map[idx].wid;
+      vector<unsigned> mux_width (nex_out.pin_count());
+      for (unsigned idx = 0 ;  idx < nex_out.pin_count() ;  idx += 1) {
+	    mux_width[idx] = nex_map[idx].wid;
+	    if (debug_synth2) {
+		  cerr << get_fileline() << ": NetCase::synth_async: "
+		       << "idx=" << idx
+		       << ", mux_width[idx]=" << mux_width[idx] << endl;
+	    }
+      }
 
-	/* Calculate the mux width from the map, the mex_map values
-	   are from the top level and are more reliable. */
-      if (map_width > mux_width)
-	    mux_width = map_width;
 
 	/* Collect all the statements into a map of index to
 	   statement. The guard expression it evaluated to be the
@@ -230,6 +230,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 		  max_guard_value = sel_idx;
       }
 
+	// The mux_size is the number of inputs that are selected.
       unsigned mux_size = max_guard_value + 1;
 
 	// If the sel_width can select more than just the explicit
@@ -240,48 +241,59 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       }
 
 
-      NetMux*mux = new NetMux(scope, scope->local_symbol(),
-			      mux_width, mux_size, sel_width);
-      des->add_node(mux);
-
-	/* The select signal is already synthesized. Simply hook it up. */
-      connect(mux->pin_Sel(), esig->pin(0));
-
-	/* For now, assume that the output is only 1 signal. */
-      ivl_assert(*this, nex_out.pin_count() == 1);
-      connect(mux->pin_Result(), nex_out.pin(0));
-
-	/* Make sure the output is already connected to a net. */
-      if (mux->pin_Result().nexus()->pick_any_net() == 0) {
-	    ivl_variable_type_t mux_data_type = IVL_VT_LOGIC;
-	    netvector_t*tmp_vec = new netvector_t(mux_data_type, mux_width-1, 0);
-	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::TRI, tmp_vec);
-	    tmp->local_flag(true);
-	    ivl_assert(*this, tmp->vector_width() != 0);
-	    connect(mux->pin_Result(), tmp->pin(0));
-      }
-
 	/* If there is a default clause, synthesize is once and we'll
 	   link it in wherever it is needed. */
-      NetNet*default_sig = 0;
+      NetBus default_bus (scope, nex_map.size());
+      vector<NetNet*>default_sig (nex_map.size());
+
       if (statement_default) {
 
-	    NetBus tmp (scope, nex_map.size());
-	    statement_default->synth_async(des, scope, nex_map, tmp);
+	    statement_default->synth_async(des, scope, nex_map, default_bus);
 
 	      // Get the signal from the synthesized statement. This
 	      // will be hooked to all the default cases.
-	    ivl_assert(*this, tmp.pin_count()==1);
-	    default_sig = tmp.pin(0).nexus()->pick_any_net();
-	    ivl_assert(*this, default_sig);
+	    ivl_assert(*this, default_bus.pin_count()==1);
+	    default_sig[0] = default_bus.pin(0).nexus()->pick_any_net();
+	    ivl_assert(*this, default_sig[0]);
+      }
+
+      vector<NetMux*> mux (mux_width.size());
+      for (size_t mdx = 0 ; mdx < mux_width.size() ; mdx += 1) {
+	    mux[mdx] = new NetMux(scope, scope->local_symbol(),
+				  mux_width[mdx], mux_size, sel_width);
+	    des->add_node(mux[mdx]);
+
+	      // The select signal is already synthesized, and is
+	      // common for every mux of this case statement. Simply
+	      // hook it up.
+	    connect(mux[mdx]->pin_Sel(), esig->pin(0));
+
+	      // The outputs are in the nex_out, and connected to the
+	      // mux Result pins.
+	    connect(mux[mdx]->pin_Result(), nex_out.pin(mdx));
+
+	      // Make sure the output is now connected to a net. If
+	      // not, then create a fake one to carry the net-ness of
+	      // the pin.
+	    if (mux[mdx]->pin_Result().nexus()->pick_any_net() == 0) {
+		  ivl_variable_type_t mux_data_type = IVL_VT_LOGIC;
+		  netvector_t*tmp_vec = new netvector_t(mux_data_type, mux_width[mdx]-1, 0);
+		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+					  NetNet::TRI, tmp_vec);
+		  tmp->local_flag(true);
+		  ivl_assert(*this, tmp->vector_width() != 0);
+		  connect(mux[mdx]->pin_Result(), tmp->pin(0));
+	    }
       }
 
       for (unsigned idx = 0 ;  idx < mux_size ;  idx += 1) {
 
 	    NetProc*stmt = statement_map[idx];
-	    if (stmt==0 && default_sig!=0) {
-		  connect(mux->pin_Data(idx), default_sig->pin(0));
+	    if (stmt==0 && statement_default) {
+		  ivl_assert(*this, default_sig.size() == mux.size());
+		  for (size_t mdx = 0 ; mdx < mux.size() ; mdx += 1)
+			connect(mux[mdx]->pin_Data(idx), default_sig[mdx]->pin(0));
+
 		  continue;
 	    }
 	    if (stmt == 0) {
@@ -294,9 +306,24 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    NetBus tmp (scope, nex_map.size());
 	    stmt->synth_async(des, scope, nex_map, tmp);
 
-	    ivl_assert(*this, tmp.pin_count()==1);
-	    connect(mux->pin_Data(idx), tmp.pin(0));
-	    ivl_assert(*this, mux->pin_Data(idx).nexus()->pick_any_net());
+	    ivl_assert(*this, tmp.pin_count() == mux.size());
+	    for (size_t mdx = 0 ; mdx < mux.size() ; mdx += 1) {
+		  connect(mux[mdx]->pin_Data(idx), tmp.pin(mdx));
+
+		  if (mux[mdx]->pin_Data(idx).nexus()->pick_any_net()==0) {
+			cerr << get_fileline() << ": warning: case " << idx
+			     << " has no input for mux " << mdx << "." << endl;
+
+			ivl_variable_type_t mux_data_type = IVL_VT_LOGIC;
+			netvector_t*tmp_vec = new netvector_t(mux_data_type, mux_width[mdx]-1, 0);
+			NetNet*tmpn = new NetNet(scope, scope->local_symbol(),
+						 NetNet::TRI, tmp_vec);
+			tmpn->local_flag(true);
+			ivl_assert(*this, tmpn->vector_width() != 0);
+			connect(mux[mdx]->pin_Data(idx), tmpn->pin(0));
+		  }
+		  ivl_assert(*this, mux[mdx]->pin_Data(idx).nexus()->pick_any_net());
+	    }
       }
 
       return true;
@@ -842,15 +869,16 @@ bool NetProcTop::synth_sync(Design*des)
 
       for (unsigned idx = 0 ;  idx < nex_set.size() ;  idx += 1) {
 
+	    ivl_assert(*this, nex_set[idx].nex);
 	    if (debug_synth2) {
 		  cerr << get_fileline() << ": debug: "
 		       << "Top level making a "
-		       << nex_set[idx].nex->vector_width() << "-wide "
+		       << nex_set[idx].wid << "-wide "
 		       << "NetFF device." << endl;
 	    }
 
 	    NetFF*ff2 = new NetFF(scope(), scope()->local_symbol(),
-				  nex_set[idx].nex->vector_width());
+				  nex_set[idx].wid);
 	    des->add_node(ff2);
 	    ff2->set_line(*this);
 
