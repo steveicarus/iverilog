@@ -58,9 +58,9 @@ struct symbol_search_results {
       NetEvent*eve;
 };
 
-bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
-		   pform_name_t path, struct symbol_search_results*res,
-		   NetScope*start_scope = 0)
+static bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
+			  pform_name_t path, struct symbol_search_results*res,
+			  NetScope*start_scope = 0)
 {
       assert(scope);
       bool prefix_scope = false;
@@ -100,6 +100,9 @@ bool symbol_search(const LineInfo*li, Design*des, NetScope*scope,
 			      "`" << path_tail.name << "' in path `" << path << "'" << endl;
 			des->errors += 1;
 		  }
+	    } else {
+		    // Prefix is present, but is NOT a scope. Fail!
+		  return false;
 	    }
       }
 

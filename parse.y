@@ -3853,7 +3853,14 @@ port_declaration
 			  use_type = NetNet::IMPLICIT;
 		    else
 			  use_type = NetNet::IMPLICIT_REG;
+
+		      // The SystemVerilog types that can show up as
+		      // output ports are implicitly (on the inside)
+		      // variables because "reg" is not valid syntax
+		      // here.
 	      } else if (dynamic_cast<atom2_type_t*> ($4)) {
+		    use_type = NetNet::IMPLICIT_REG;
+	      } else if (dynamic_cast<struct_type_t*> ($4)) {
 		    use_type = NetNet::IMPLICIT_REG;
 	      }
 	}

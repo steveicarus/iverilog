@@ -301,7 +301,9 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	/* Get the signal referenced by the identifier, and make sure
 	   it is a register. Wires are not allowed in this context,
 	   unless this is the l-value of a force. */
-      if ((reg->type() != NetNet::REG) && !is_force) {
+      if ((reg->type() != NetNet::REG)
+	  && (reg->type() != NetNet::UNRESOLVED_WIRE)
+	  && !is_force) {
 	    cerr << get_fileline() << ": error: " << path_ <<
 		  " is not a valid l-value in " << scope_path(use_scope) <<
 		  "." << endl;
@@ -326,7 +328,7 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
 	// where the name is a member/method of a struct/class.
       ivl_assert(*this, method_name.nil());
 
-      bool need_const_idx = is_cassign || is_force;
+      bool need_const_idx = is_cassign || is_force || (reg->type()==NetNet::UNRESOLVED_WIRE);
 
       if (reg->unpacked_dimensions() > 0)
 	    return elaborate_lval_net_word_(des, scope, reg, need_const_idx);
@@ -369,6 +371,14 @@ NetAssign_* PEIdent::elaborate_lval(Design*des,
       }
 
       ivl_assert(*this, use_sel == index_component_t::SEL_NONE);
+
+      if (reg->type()==NetNet::UNRESOLVED_WIRE && !is_force) {
+	    cerr << get_fileline() << ": error: "
+		 << path_ << " Unable to assign to unresolved wires."
+		 << endl;
+	    des->errors += 1;
+	    return 0;
+      }
 
 	/* No select expressions. */
 
@@ -531,6 +541,13 @@ NetAssign_* PEIdent::elaborate_lval_net_word_(Design*des,
 		 << "canon_index=" << *canon_index << endl;
       }
 
+      if (reg->type()==NetNet::UNRESOLVED_WIRE) {
+	    cerr << get_fileline() << ": error: "
+		 << "Unable to assign words of unresolved wire array." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       NetAssign_*lv = new NetAssign_(reg);
       lv->set_word(canon_index);
 
@@ -623,6 +640,19 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 	    }
       }
 
+      if (debug_elaborate && (reg->type()==NetNet::UNRESOLVED_WIRE)) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_lval_net_bit_: "
+		 << "Try to assign bits of unresolved wire."
+		 << endl;
+      }
+
+	// Notice that we might be assigning to an unresolved wire. This
+	// can happen if we are actually assigning to a variable that
+	// has a partial continuous assignment to it. If that is the
+	// case, then the bit select must be constant.
+      ivl_assert(*this, need_const_idx || (reg->type()!=NetNet::UNRESOLVED_WIRE));
+
+
       if (prefix_indices.size()+2 <= reg->packed_dims().size()) {
 	      // Special case: this is a slice of a multi-dimensional
 	      // packed array. For example:
@@ -637,8 +667,19 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 		  bool rcl = reg->sb_to_slice(prefix_indices, lsb, loff, lwid);
 		  ivl_assert(*this, rcl);
 
+		  if (reg->type()==NetNet::UNRESOLVED_WIRE) {
+			bool rct = reg->test_and_set_part_driver(loff+lwid-1, loff);
+			if (rct) {
+			      cerr << get_fileline() << ": error: "
+				   << "These bits are already driven." << endl;
+			      des->errors += 1;
+			}
+		  }
+
 		  lv->set_part(new NetEConst(verinum(loff)), lwid);
+
 	    } else {
+		  ivl_assert(*this, reg->type()!=NetNet::UNRESOLVED_WIRE);
 		  unsigned long lwid;
 		  mux = normalize_variable_slice_base(prefix_indices, mux,
 						      reg, lwid);
@@ -646,6 +687,7 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 	    }
 
       } else if (reg->data_type() == IVL_VT_STRING) {
+	    ivl_assert(*this, reg->type()!=NetNet::UNRESOLVED_WIRE);
 	      // Special case: This is a select of a string
 	      // variable. The target of the assignment is a character
 	      // select of a string. Force the r-value to be an 8bit
@@ -662,6 +704,8 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 		  lv->set_part(new NetEConst(verinum(lsb)), 8);
 
       } else if (mux) {
+	    ivl_assert(*this, reg->type()!=NetNet::UNRESOLVED_WIRE);
+
 	      // Non-constant bit mux. Correct the mux for the range
 	      // of the vector, then set the l-value part select
 	      // expression.
@@ -679,6 +723,10 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 	      // Constant bit mux that happens to select the only bit
 	      // of the l-value. Don't bother with any select at all.
 
+	      // NOTE: Don't know what to do about unresolved wires
+	      // here, but they are probably wrong.
+	    ivl_assert(*this, reg->type()!=NetNet::UNRESOLVED_WIRE);
+
       } else {
 	      // Constant bit select that does something useful.
 	    long loff = reg->sb_to_idx(prefix_indices,lsb);
@@ -689,6 +737,15 @@ bool PEIdent::elaborate_lval_net_bit_(Design*des,
 		       << " is out of range." << endl;
 		  des->errors += 1;
 		  return 0;
+	    }
+
+	    if (reg->type()==NetNet::UNRESOLVED_WIRE) {
+		  bool rct = reg->test_and_set_part_driver(loff, loff);
+		  if (rct) {
+			cerr << get_fileline() << ": error: "
+			     << "Bit " << loff << " is already driven." << endl;
+			des->errors += 1;
+		  }
 	    }
 
 	    lv->set_part(new NetEConst(verinum(loff)), 1);
@@ -704,6 +761,14 @@ bool PEIdent::elaborate_lval_darray_bit_(Design*des, NetScope*scope, NetAssign_*
 
 	// For now, only support single-dimension dynamic arrays.
       ivl_assert(*this, name_tail.index.size() == 1);
+
+      if (lv->sig()->type()==NetNet::UNRESOLVED_WIRE) {
+	    cerr << get_fileline() << ": error: "
+		 << path_ << " Unable to darray word select unresolved wires."
+		 << endl;
+	    des->errors += 1;
+	    return false;
+      }
 
       const index_component_t&index_tail = name_tail.index.back();
       ivl_assert(*this, index_tail.msb != 0);
@@ -745,6 +810,17 @@ bool PEIdent::elaborate_lval_net_part_(Design*des,
 	      // undefined bit or part select.
 	    lv->set_part(new NetEConst(verinum(verinum::Vx)), 2);
 	    return true;
+      }
+
+      if (reg->type()==NetNet::UNRESOLVED_WIRE) {
+	    bool rct = reg->test_and_set_part_driver(msb, lsb);
+	    if (rct) {
+		  cerr << get_fileline() << ": error: "
+		       << path_ << "Part select is double-driving unresolved wire."
+		       << endl;
+		  des->errors += 1;
+		  return false;
+	    }
       }
 
       const vector<netrange_t>&packed = reg->packed_dims();
@@ -1125,6 +1201,14 @@ bool PEIdent::elaborate_lval_net_packed_member_(Design*des, NetScope*scope,
 	    off = tmp;
 	    delete packed_base;
 	    packed_base = 0;
+      }
+
+      if (reg->type()==NetNet::UNRESOLVED_WIRE) {
+	    cerr << get_fileline() << ": error: "
+		 << path_ << " Unable to member-select unresolved wires."
+		 << endl;
+	    des->errors += 1;
+	    return false;
       }
 
       if (packed_base == 0) {

@@ -74,6 +74,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(-,root,root) %{_libdir}/ivl%{suff}/null.tgt
 %attr(-,root,root) %{_libdir}/ivl%{suff}/null.conf
 %attr(-,root,root) %{_libdir}/ivl%{suff}/null-s.conf
+%attr(-,root,root) %{_libdir}/ivl%{suff}/sizer.tgt
+%attr(-,root,root) %{_libdir}/ivl%{suff}/sizer.conf
+%attr(-,root,root) %{_libdir}/ivl%{suff}/sizer-s.conf
 %attr(-,root,root) %{_libdir}/ivl%{suff}/stub.tgt
 %attr(-,root,root) %{_libdir}/ivl%{suff}/stub.conf
 %attr(-,root,root) %{_libdir}/ivl%{suff}/stub-s.conf

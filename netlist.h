@@ -726,17 +726,22 @@ class NetNet  : public NetObj, public PortType {
       bool local_flag() const { return local_flag_; }
       void local_flag(bool f) { local_flag_ = f; }
 
-	/* NetESignal objects may reference this object. Keep a
-	   reference count so that I keep track of them. */
+	// NetESignal objects may reference this object. Keep a
+	// reference count so that I keep track of them.
       void incr_eref();
       void decr_eref();
       unsigned peek_eref() const;
 
-	/* Assignment statements count their lrefs here. */
+	// Assignment statements count their lrefs here. And by
+	// asignment statements, we mean BEHAVIORAL assignments.
       void incr_lref();
       void decr_lref();
       unsigned peek_lref() const { return lref_count_; }
-      bool test_part_lref(unsigned msb, unsigned lsb);
+
+	// Treating this node as a uwire, this function tests whether
+	// any bits in the canonical part are already driven. This is
+	// only useful for UNRESOLVED_WIRE objects.
+      bool test_and_set_part_driver(unsigned msb, unsigned lsb);
 
       unsigned get_refs() const;
 

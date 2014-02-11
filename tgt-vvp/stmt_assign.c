@@ -438,8 +438,16 @@ static void set_vec_to_lval_slice(ivl_lval_t lval, unsigned bit, unsigned wid)
 	    assert(ivl_lval_width(lval) == wid);
 
 	      /* If the word index is a constant, then we can write
-	         directly to the word and save the index calculation. */
-	    if (word_ix == 0) {
+	         directly to the word and save the index
+	         calculation. Also, note the special case that we are
+	         writing to a UWIRE. In that case, use the %force/x0
+	         instruction to get the desired effect. */
+	    if (word_ix == 0 && ivl_signal_type(sig)==IVL_SIT_UWIRE) {
+		  fprintf(vvp_out, "    %%ix/load 0, %lu, 0;\n", part_off);
+		  fprintf(vvp_out, "    %%force/x0 v%p_%lu, %u, %u;\n",
+		          sig, use_word, bit, wid);
+
+	    } else if (word_ix == 0) {
 		  fprintf(vvp_out, "    %%ix/load 0, %lu, 0;\n", part_off);
 		  fprintf(vvp_out, "    %%set/x0 v%p_%lu, %u, %u;\n",
 		          sig, use_word, bit, wid);
