@@ -590,8 +590,13 @@ static void store_vec4_to_lval(ivl_statement_t net)
 		  int offset_index = allocate_word();
 		  draw_eval_expr_into_integer(part_off_ex, offset_index);
 		    /* Note that flag4 is set by the eval above. */
-		  fprintf(vvp_out, "    %%store/vec4 v%p_0, %d, %u;\n",
-			  lsig, offset_index, lwid);
+		  if (ivl_signal_type(lsig)==IVL_SIT_UWIRE) {
+			fprintf(vvp_out, "    %%force/vec4/off v%p_0, %u;\n",
+				lsig, offset_index);
+		  } else {
+			fprintf(vvp_out, "    %%store/vec4 v%p_0, %d, %u;\n",
+				lsig, offset_index, lwid);
+		  }
 		  clr_word(offset_index);
 
 	    } else {
