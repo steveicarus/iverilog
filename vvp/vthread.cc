@@ -936,7 +936,7 @@ bool of_ADD(vthread_t thr, vvp_code_t)
       vvp_vector4_t l = thr->pop_vec4();
 
       unsigned wid = l.size();
-      assert(wid = r.size());
+      assert(wid == r.size());
 
       unsigned long*lva = l.subarray(0,wid);
       unsigned long*lvb = r.subarray(0,wid);

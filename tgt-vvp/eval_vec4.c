@@ -55,11 +55,11 @@ static void draw_binary_vec4_arith(ivl_expr_t expr, int stuff_ok_flag)
 	   assume that the core has not given us an operand wider then
 	   the expression width. So padd operands as needed. */
       draw_eval_vec4(le, stuff_ok_flag);
-      if (lwid < ewid) {
+      if (lwid != ewid) {
 	    fprintf(vvp_out, "    %%pad/%c %u;\n", ivl_expr_signed(le)? 's' : 'u', ewid);
       }
       draw_eval_vec4(re, stuff_ok_flag);
-      if (rwid < ewid) {
+      if (rwid != ewid) {
 	    fprintf(vvp_out, "    %%pad/%c %u;\n", ivl_expr_signed(re)? 's' : 'u', ewid);
       }
 
