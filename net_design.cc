@@ -483,6 +483,20 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 		  des->errors += 1;
 		  return;
 	    }
+
+	      // If the parameter has type or range information, then
+	      // make sure the type is set right. Note that if the
+	      // parameter doesn't have an explicit type or range,
+	      // then it will get the signedness from the expression itself.
+	    if (cur->second.type != IVL_VT_NO_TYPE) {
+		  expr->cast_signed(cur->second.signed_flag);
+	    } else if (cur->second.signed_flag) {
+		  expr->cast_signed(true);
+	    }
+
+	    if (!range_flag && !expr->has_width()) {
+		  expr = pad_to_width(expr, integer_width, *expr);
+	    }
 	    break;
 
 	  default:
@@ -492,17 +506,8 @@ void NetScope::evaluate_parameter_logic_(Design*des, param_ref_t cur)
 	    des->errors += 1;
 	    return;
       }
-      (*cur).second.val = expr;
 
-	/* If the parameter has type or range information, then make
-	   sure the type is set right. Note that if the parameter
-	   doesn't have an explicit type or range, then it will get
-	   the signedness from the expression itself. */
-      if ((*cur).second.type != IVL_VT_NO_TYPE) {
-            (*cur).second.val->cast_signed((*cur).second.signed_flag);
-      } else if ((*cur).second.signed_flag) {
-            (*cur).second.val->cast_signed(true);
-      }
+      cur->second.val = expr;
 
 	// If there are no value ranges to test the value against,
 	// then we are done.
