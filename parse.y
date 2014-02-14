@@ -2782,209 +2782,209 @@ expression
       { $$ = $1; }
   | inside_expression
       { $$ = $1; }
-	| '+' expr_primary %prec UNARY_PREC
-		{ $$ = $2; }
-	| '-' expr_primary %prec UNARY_PREC
-		{ PEUnary*tmp = new PEUnary('-', $2);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| '~' expr_primary %prec UNARY_PREC
-		{ PEUnary*tmp = new PEUnary('~', $2);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| '&' expr_primary %prec UNARY_PREC
-		{ PEUnary*tmp = new PEUnary('&', $2);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| '!' expr_primary %prec UNARY_PREC
-		{ PEUnary*tmp = new PEUnary('!', $2);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| '|' expr_primary %prec UNARY_PREC
-		{ PEUnary*tmp = new PEUnary('|', $2);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| '^' expr_primary %prec UNARY_PREC
-		{ PEUnary*tmp = new PEUnary('^', $2);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| '~' '&' expr_primary %prec UNARY_PREC
-		{ yyerror(@1, "error: '~' '&'  is not a valid expression. "
-			  "Please use operator '~&' instead.");
-		  $$ = 0;
-		}
-	| '~' '|' expr_primary %prec UNARY_PREC
-		{ yyerror(@1, "error: '~' '|'  is not a valid expression. "
-			  "Please use operator '~|' instead.");
-		  $$ = 0;
-		}
-	| '~' '^' expr_primary %prec UNARY_PREC
-		{ yyerror(@1, "error: '~' '^'  is not a valid expression. "
-			  "Please use operator '~^' instead.");
-		  $$ = 0;
-		}
-	| K_NAND expr_primary %prec UNARY_PREC
-		{ PEUnary*tmp = new PEUnary('A', $2);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| K_NOR expr_primary %prec UNARY_PREC
-		{ PEUnary*tmp = new PEUnary('N', $2);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| K_NXOR expr_primary %prec UNARY_PREC
-		{ PEUnary*tmp = new PEUnary('X', $2);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| '!' error %prec UNARY_PREC
-		{ yyerror(@1, "error: Operand of unary ! "
-			  "is not a primary expression.");
-		  $$ = 0;
-		}
-	| '^' error %prec UNARY_PREC
-		{ yyerror(@1, "error: Operand of reduction ^ "
-			  "is not a primary expression.");
-		  $$ = 0;
-		}
-	| expression '^' expression
-		{ PEBinary*tmp = new PEBinary('^', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression K_POW expression
-		{ PEBinary*tmp = new PEBPower('p', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression '*' expression
-		{ PEBinary*tmp = new PEBinary('*', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression '/' expression
-		{ PEBinary*tmp = new PEBinary('/', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression '%' expression
-		{ PEBinary*tmp = new PEBinary('%', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression '+' expression
-		{ PEBinary*tmp = new PEBinary('+', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression '-' expression
-		{ PEBinary*tmp = new PEBinary('-', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression '&' expression
-		{ PEBinary*tmp = new PEBinary('&', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression '|' expression
-		{ PEBinary*tmp = new PEBinary('|', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression K_NAND expression
-		{ PEBinary*tmp = new PEBinary('A', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression K_NOR expression
-		{ PEBinary*tmp = new PEBinary('O', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression K_NXOR expression
-		{ PEBinary*tmp = new PEBinary('X', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression '<' expression
-		{ PEBinary*tmp = new PEBComp('<', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression '>' expression
-		{ PEBinary*tmp = new PEBComp('>', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression K_LS expression
-		{ PEBinary*tmp = new PEBShift('l', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression K_RS expression
-		{ PEBinary*tmp = new PEBShift('r', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression K_RSS expression
-		{ PEBinary*tmp = new PEBShift('R', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression K_EQ expression
-		{ PEBinary*tmp = new PEBComp('e', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression K_CEQ expression
-		{ PEBinary*tmp = new PEBComp('E', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression K_LE expression
-		{ PEBinary*tmp = new PEBComp('L', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression K_GE expression
-		{ PEBinary*tmp = new PEBComp('G', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression K_NE expression
-		{ PEBinary*tmp = new PEBComp('n', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression K_CNE expression
-		{ PEBinary*tmp = new PEBComp('N', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression K_LOR expression
-		{ PEBinary*tmp = new PEBLogic('o', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression K_LAND expression
-		{ PEBinary*tmp = new PEBLogic('a', $1, $3);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	| expression '?' expression ':' expression
-		{ PETernary*tmp = new PETernary($1, $3, $5);
-		  FILE_NAME(tmp, @2);
-		  $$ = tmp;
-		}
-	;
+  | '+' attribute_list_opt expr_primary %prec UNARY_PREC
+      { $$ = $3; }
+  | '-' attribute_list_opt expr_primary %prec UNARY_PREC
+      { PEUnary*tmp = new PEUnary('-', $3);
+	FILE_NAME(tmp, @3);
+	$$ = tmp;
+      }
+  | '~' attribute_list_opt expr_primary %prec UNARY_PREC
+      { PEUnary*tmp = new PEUnary('~', $3);
+	FILE_NAME(tmp, @3);
+	$$ = tmp;
+      }
+  | '&' attribute_list_opt expr_primary %prec UNARY_PREC
+      { PEUnary*tmp = new PEUnary('&', $3);
+	FILE_NAME(tmp, @3);
+	$$ = tmp;
+      }
+  | '!' attribute_list_opt expr_primary %prec UNARY_PREC
+      { PEUnary*tmp = new PEUnary('!', $3);
+	FILE_NAME(tmp, @3);
+	$$ = tmp;
+      }
+  | '|' attribute_list_opt expr_primary %prec UNARY_PREC
+      { PEUnary*tmp = new PEUnary('|', $3);
+	FILE_NAME(tmp, @3);
+	$$ = tmp;
+      }
+  | '^' attribute_list_opt expr_primary %prec UNARY_PREC
+      { PEUnary*tmp = new PEUnary('^', $3);
+	FILE_NAME(tmp, @3);
+	$$ = tmp;
+      }
+  | '~' '&' attribute_list_opt expr_primary %prec UNARY_PREC
+      { yyerror(@1, "error: '~' '&'  is not a valid expression. "
+		"Please use operator '~&' instead.");
+	$$ = 0;
+      }
+  | '~' '|' attribute_list_opt expr_primary %prec UNARY_PREC
+      { yyerror(@1, "error: '~' '|'  is not a valid expression. "
+		"Please use operator '~|' instead.");
+	$$ = 0;
+      }
+  | '~' '^' attribute_list_opt expr_primary %prec UNARY_PREC
+      { yyerror(@1, "error: '~' '^'  is not a valid expression. "
+		"Please use operator '~^' instead.");
+	$$ = 0;
+      }
+  | K_NAND attribute_list_opt expr_primary %prec UNARY_PREC
+      { PEUnary*tmp = new PEUnary('A', $3);
+	FILE_NAME(tmp, @3);
+	$$ = tmp;
+      }
+  | K_NOR attribute_list_opt expr_primary %prec UNARY_PREC
+      { PEUnary*tmp = new PEUnary('N', $3);
+	FILE_NAME(tmp, @3);
+	$$ = tmp;
+      }
+  | K_NXOR attribute_list_opt expr_primary %prec UNARY_PREC
+      { PEUnary*tmp = new PEUnary('X', $3);
+	FILE_NAME(tmp, @3);
+	$$ = tmp;
+      }
+  | '!' error %prec UNARY_PREC
+      { yyerror(@1, "error: Operand of unary ! "
+		"is not a primary expression.");
+	$$ = 0;
+      }
+  | '^' error %prec UNARY_PREC
+      { yyerror(@1, "error: Operand of reduction ^ "
+		"is not a primary expression.");
+	$$ = 0;
+      }
+  | expression '^' attribute_list_opt expression
+      { PEBinary*tmp = new PEBinary('^', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_POW attribute_list_opt expression
+      { PEBinary*tmp = new PEBPower('p', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression '*' attribute_list_opt expression
+      { PEBinary*tmp = new PEBinary('*', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression '/' attribute_list_opt expression
+      { PEBinary*tmp = new PEBinary('/', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression '%' attribute_list_opt expression
+      { PEBinary*tmp = new PEBinary('%', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression '+' attribute_list_opt expression
+      { PEBinary*tmp = new PEBinary('+', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression '-' attribute_list_opt expression
+      { PEBinary*tmp = new PEBinary('-', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression '&' attribute_list_opt expression
+      { PEBinary*tmp = new PEBinary('&', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression '|' attribute_list_opt expression
+      { PEBinary*tmp = new PEBinary('|', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_NAND attribute_list_opt expression
+      { PEBinary*tmp = new PEBinary('A', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_NOR attribute_list_opt expression
+      { PEBinary*tmp = new PEBinary('O', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_NXOR attribute_list_opt expression
+      { PEBinary*tmp = new PEBinary('X', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression '<' attribute_list_opt expression
+      { PEBinary*tmp = new PEBComp('<', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression '>' attribute_list_opt expression
+      { PEBinary*tmp = new PEBComp('>', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_LS attribute_list_opt expression
+      { PEBinary*tmp = new PEBShift('l', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_RS attribute_list_opt expression
+      { PEBinary*tmp = new PEBShift('r', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_RSS attribute_list_opt expression
+      { PEBinary*tmp = new PEBShift('R', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_EQ attribute_list_opt expression
+      { PEBinary*tmp = new PEBComp('e', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_CEQ attribute_list_opt expression
+      { PEBinary*tmp = new PEBComp('E', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_LE attribute_list_opt expression
+      { PEBinary*tmp = new PEBComp('L', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_GE attribute_list_opt expression
+      { PEBinary*tmp = new PEBComp('G', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_NE attribute_list_opt expression
+      { PEBinary*tmp = new PEBComp('n', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_CNE attribute_list_opt expression
+      { PEBinary*tmp = new PEBComp('N', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_LOR attribute_list_opt expression
+      { PEBinary*tmp = new PEBLogic('o', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression K_LAND attribute_list_opt expression
+      { PEBinary*tmp = new PEBLogic('a', $1, $4);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  | expression '?' attribute_list_opt expression ':' expression
+      { PETernary*tmp = new PETernary($1, $4, $6);
+	FILE_NAME(tmp, @2);
+	$$ = tmp;
+      }
+  ;
 
 expr_mintypmax
 	: expression
