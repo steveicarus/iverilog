@@ -1346,7 +1346,7 @@ NetExpr*NetETernary::blended_arguments_(const NetExpr*te, const NetExpr*fe) cons
       if (t == 0 || f == 0) {
 	    verireal tv, fv;
 	    if (!get_real_arg_(te, tv)) return 0;
-	    if (!get_real_arg_(te, fv)) return 0;
+	    if (!get_real_arg_(fe, fv)) return 0;
 
 	    verireal val = verireal(0.0);
 	    if (tv.as_double() == fv.as_double()) val = tv;
