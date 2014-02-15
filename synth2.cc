@@ -366,10 +366,17 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    return false;
       }
       if (else_ == 0) {
-	    cerr << get_fileline() << ": warning: Asynchronous if statement"
-		 << " is missing the else clause, and I" << endl;
-	    cerr << get_fileline() << ":        : don't know how to check"
-		 << " for latches yet." << endl;
+	    bool latch_flag = false;
+	    for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
+		  if (! accumulated_nex_out.pin(idx).is_linked())
+			latch_flag = true;
+	    }
+	    if (latch_flag) {
+		  cerr << get_fileline() << ": error: Asynchronous if statement"
+		       << " cannot synthesize missing \"else\""
+		       << " without generating latches." << endl;
+		  return false;
+	    }
       }
 
       ivl_assert(*this, if_ != 0);
@@ -389,15 +396,16 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 
       NetBus btmp(scope, nex_out.pin_count());
       NetBus bsig(scope, nex_out.pin_count());
-      if (else_) {
-	    flag = else_->synth_async(des, scope, nex_map, bsig, btmp);
-	    if (!flag) {
-		  return false;
-	    }
-      } else {
+
+      if (else_==0) {
 	    for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
 		  connect(bsig.pin(idx), accumulated_nex_out.pin(idx));
 		  accumulated_nex_out.pin(idx).unlink();
+	    }
+      } else {
+	    flag = else_->synth_async(des, scope, nex_map, bsig, btmp);
+	    if (!flag) {
+		  return false;
 	    }
       }
 
