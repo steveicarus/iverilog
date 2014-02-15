@@ -1319,7 +1319,7 @@ static NetEvWait* make_func_trigger(Design*des, NetScope*scope, NetExpr*root)
                                            nset->size());
             pr->set_line(*root);
             for (unsigned idx = 0 ;  idx < nset->size() ;  idx += 1)
-                  connect(nset->at(idx).nex, pr->pin(idx));
+                  connect(nset->at(idx).lnk, pr->pin(idx));
 
             des->add_node(pr);
 
