@@ -619,9 +619,11 @@ class vvp_vector2_t {
       vvp_vector2_t(const vvp_vector2_t&);
       vvp_vector2_t(const vvp_vector2_t&, unsigned newsize);
       vvp_vector2_t(const vvp_vector2_t&, unsigned base, unsigned wid);
-	// Make a vvp_vector2_t from a vvp_vector4_t. If there are X
-	// or Z bits, then the result becomes a NaN value.
-      vvp_vector2_t(const vvp_vector4_t&that);
+	// Make a vvp_vector2_t from a vvp_vector4_t. If enable_NaN
+	// is true and there are X or Z bits, then the result becomes
+	// a NaN value. If enable_NaN is false then X or Z bits are
+	// converted to 0 as per the standard Verilog rules.
+      vvp_vector2_t(const vvp_vector4_t&that, bool allow_NaN = false);
 	// Make from a native long and a specified width.
       vvp_vector2_t(unsigned long val, unsigned wid);
 	// Make with the width, and filled with 1 or 0 bits.
@@ -693,8 +695,13 @@ inline vvp_vector2_t::vvp_vector2_t(const vvp_vector2_t&that)
       copy_from_that_(that);
 }
 
-inline vvp_vector2_t::vvp_vector2_t(const vvp_vector4_t&that)
+inline vvp_vector2_t::vvp_vector2_t(const vvp_vector4_t&that, bool enable_NaN)
 {
+      if (enable_NaN && that.has_xz()) {
+	    vec_ = 0;
+	    wid_ = 0;
+	    return;
+      }
       copy_from_that_(that);
 }
 

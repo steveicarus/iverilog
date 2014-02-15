@@ -4547,8 +4547,8 @@ bool of_POW(vthread_t thr, vvp_code_t cp)
       unsigned idx = cp->bit_idx[0];
       unsigned idy = cp->bit_idx[1];
       unsigned wid = cp->number;
-      vvp_vector2_t xv2 = vvp_vector2_t(vthread_bits_to_vector(thr, idx, wid));
-      vvp_vector2_t yv2 = vvp_vector2_t(vthread_bits_to_vector(thr, idy, wid));
+      vvp_vector2_t xv2 = vvp_vector2_t(vthread_bits_to_vector(thr, idx, wid), true);
+      vvp_vector2_t yv2 = vvp_vector2_t(vthread_bits_to_vector(thr, idy, wid), true);
 
         /* If we have an X or Z in the arguments return X. */
       if (xv2.is_NaN() || yv2.is_NaN()) {

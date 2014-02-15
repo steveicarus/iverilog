@@ -156,13 +156,13 @@ vvp_arith_div::~vvp_arith_div()
 
 void vvp_arith_div::wide4_(vvp_net_ptr_t ptr)
 {
-      vvp_vector2_t a2 (op_a_);
+      vvp_vector2_t a2 (op_a_, true);
       if (a2.is_NaN()) {
 	    ptr.ptr()->send_vec4(x_val_, 0);
 	    return;
       }
 
-      vvp_vector2_t b2 (op_b_);
+      vvp_vector2_t b2 (op_b_, true);
       if (b2.is_NaN() || b2.is_zero()) {
 	    ptr.ptr()->send_vec4(x_val_, 0);
 	    return;
@@ -270,13 +270,13 @@ vvp_arith_mod::~vvp_arith_mod()
 
 void vvp_arith_mod::wide_(vvp_net_ptr_t ptr)
 {
-      vvp_vector2_t a2 (op_a_);
+      vvp_vector2_t a2 (op_a_, true);
       if (a2.is_NaN()) {
 	    ptr.ptr()->send_vec4(x_val_, 0);
 	    return;
       }
 
-      vvp_vector2_t b2 (op_b_);
+      vvp_vector2_t b2 (op_b_, true);
       if (b2.is_NaN() || b2.is_zero()) {
 	    ptr.ptr()->send_vec4(x_val_, 0);
 	    return;
@@ -384,8 +384,8 @@ vvp_arith_mult::~vvp_arith_mult()
 
 void vvp_arith_mult::wide_(vvp_net_ptr_t ptr)
 {
-      vvp_vector2_t a2 (op_a_);
-      vvp_vector2_t b2 (op_b_);
+      vvp_vector2_t a2 (op_a_, true);
+      vvp_vector2_t b2 (op_b_, true);
 
       if (a2.is_NaN() || b2.is_NaN()) {
 	    ptr.ptr()->send_vec4(x_val_, 0);
@@ -469,8 +469,8 @@ void vvp_arith_pow::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 
 	    res4 = vvp_vector4_t(wid_, resd);
       } else {
-	    vvp_vector2_t a2 (op_a_);
-	    vvp_vector2_t b2 (op_b_);
+	    vvp_vector2_t a2 (op_a_, true);
+	    vvp_vector2_t b2 (op_b_, true);
 
 	    if (a2.is_NaN() || b2.is_NaN()) {
 		  ptr.ptr()->send_vec4(x_val_, 0);
