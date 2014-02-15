@@ -248,6 +248,7 @@ NetEConst* NetEBBits::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 	   known to be 0. */
       if ((op() == '&') && (lc->value() == verinum(0))) {
 	    verinum res (verinum::V0, expr_width());
+	    res.has_sign(has_sign());
 	    NetEConst*tmp = new NetEConst(res);
 	    ivl_assert(*this, tmp);
 	    eval_debug(this, tmp, false);
@@ -256,6 +257,7 @@ NetEConst* NetEBBits::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
       if ((op() == '&') && (rc->value() == verinum(0))) {
 	    verinum res (verinum::V0, expr_width());
+	    res.has_sign(has_sign());
 	    NetEConst*tmp = new NetEConst(res);
 	    ivl_assert(*this, tmp);
 	    eval_debug(this, tmp, false);
@@ -306,6 +308,7 @@ NetEConst* NetEBBits::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 	    return 0;
       }
 
+      res.has_sign(has_sign());
       NetEConst*tmp = new NetEConst(res);
       ivl_assert(*this, tmp);
       eval_debug(this, tmp, false);
@@ -982,6 +985,7 @@ NetExpr* NetEBMinMax::eval_arguments_(const NetExpr*l, const NetExpr*r) const
       } else {
             res_val = verinum(verinum::Vx, wid);
       }
+      res_val.has_sign(has_sign());
       NetEConst*res = new NetEConst(res_val);
       ivl_assert(*this, res);
       eval_debug(this, res, false);
