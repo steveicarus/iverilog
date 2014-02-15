@@ -28,14 +28,14 @@
 
 using namespace std;
 
-bool NetProc::synth_async(Design*, NetScope*, const NexusSet&, NetBus&)
+bool NetProc::synth_async(Design*, NetScope*, NexusSet&, NetBus&, NetBus&)
 {
       return false;
 }
 
 bool NetProc::synth_sync(Design*des, NetScope*scope,
 			 NetNet* /* ff_clk */, NetNet* /* ff_ce */,
-			 const NexusSet&nex_map, NetBus&nex_out,
+			 NexusSet&nex_map, NetBus&nex_out,
 			 const vector<NetEvProbe*>&events)
 {
       if (events.size() > 0) {
@@ -45,7 +45,8 @@ bool NetProc::synth_sync(Design*des, NetScope*scope,
       }
 
 	/* Synthesize the input to the DFF. */
-      return synth_async(des, scope, nex_map, nex_out);
+      NetBus accumulated_nex_out (scope, nex_out.pin_count());
+      return synth_async(des, scope, nex_map, nex_out, accumulated_nex_out);
 }
 
 
@@ -60,7 +61,8 @@ bool NetProc::synth_sync(Design*des, NetScope*scope,
  * r-value.
  */
 bool NetAssignBase::synth_async(Design*des, NetScope*scope,
-				const NexusSet&nex_map, NetBus&nex_out)
+				NexusSet&nex_map, NetBus&nex_out,
+				NetBus&)
 {
       NetNet*rsig = rval_->synthesize(des, scope, rval_);
       assert(rsig);
@@ -138,7 +140,8 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
  * substatements.
  */
 bool NetBlock::synth_async(Design*des, NetScope*scope,
-			   const NexusSet&nex_map, NetBus&nex_out)
+			   NexusSet&nex_map, NetBus&nex_out,
+			   NetBus&accumulated_nex_out)
 {
       if (last_ == 0) {
 	    return true;
@@ -158,30 +161,48 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 		 output from the synthesis. */
 	    NetBus tmp_out (scope, tmp_map.size());
 
-	    bool ok_flag = cur->synth_async(des, scope, tmp_map, tmp_out);
+	      // Map (and move) the accumulated_nex_out for this block
+	      // to the version that we can pass to the next
+	      // statement. We will move the result back later.
+	    NetBus accumulated_tmp_out (scope, tmp_map.size());
+
+	    for (unsigned idx = 0 ; idx < accumulated_nex_out.pin_count() ; idx += 1) {
+		  unsigned ptr = tmp_map.find_nexus(nex_map[idx]);
+		  if (ptr >= tmp_map.size())
+			continue;
+
+		  connect(accumulated_tmp_out.pin(ptr), accumulated_nex_out.pin(idx));
+		  accumulated_nex_out.pin(idx).unlink();
+	    }
+
+	    bool ok_flag = cur->synth_async(des, scope, tmp_map, tmp_out, accumulated_tmp_out);
 
 	    flag = flag && ok_flag;
 	    if (ok_flag == false)
 		  continue;
 
-	      /* Now find the tmp_map pins in the nex_map global map,
-		 and use that to direct the connection to the nex_out
-		 output bus. Look for the nex_map pin that is linked
-		 to the tmp_map.pin(idx) pin, and link that to the
-		 tmp_out.pin(idx) output link. */
+	      // Now map the output from the substatement back to the
+	      // accumulated_nex_out for this block. Look for the
+	      // nex_map pin that is linked to the tmp_map.pin(idx)
+	      // pin, and link that to the tmp_out.pin(idx) output link.
 	    for (unsigned idx = 0 ;  idx < tmp_out.pin_count() ;  idx += 1) {
 		  unsigned ptr = nex_map.find_nexus(tmp_map[idx]);
-		  ivl_assert(*this, ptr < nex_out.pin_count());
-		  connect(nex_out.pin(ptr), tmp_out.pin(idx));
+		  ivl_assert(*this, ptr < accumulated_nex_out.pin_count());
+		  connect(accumulated_nex_out.pin(ptr), tmp_out.pin(idx));
 	    }
 
       } while (cur != last_);
+
+	// The output from the block is now the accumulated outputs.
+      for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1)
+	    connect(nex_out.pin(idx), accumulated_nex_out.pin(idx));
 
       return flag;
 }
 
 bool NetCase::synth_async(Design*des, NetScope*scope,
-			  const NexusSet&nex_map, NetBus&nex_out)
+			  NexusSet&nex_map, NetBus&nex_out,
+			  NetBus&)
 {
 	/* Synthesize the select expression. */
       NetNet*esig = expr_->synthesize(des, scope, expr_);
@@ -248,7 +269,8 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 
       if (statement_default) {
 
-	    statement_default->synth_async(des, scope, nex_map, default_bus);
+	    NetBus tmp (scope, nex_out.pin_count());
+	    statement_default->synth_async(des, scope, nex_map, default_bus, tmp);
 
 	      // Get the signal from the synthesized statement. This
 	      // will be hooked to all the default cases.
@@ -304,7 +326,8 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    }
 
 	    NetBus tmp (scope, nex_map.size());
-	    stmt->synth_async(des, scope, nex_map, tmp);
+	    NetBus accumulated_tmp (scope, nex_map.size());
+	    stmt->synth_async(des, scope, nex_map, tmp, accumulated_tmp);
 
 	    ivl_assert(*this, tmp.pin_count() == mux.size());
 	    for (size_t mdx = 0 ; mdx < mux.size() ; mdx += 1) {
@@ -329,20 +352,34 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       return true;
 }
 
+/*
+ * A condit statement (if (cond) ... else ... ;) infers an A-B mux,
+ * with the cond expression acting as a select input. If the cond
+ * expression is true, the if_ clause is selected, and if false, the
+ * else_ clause is selected.
+ */
 bool NetCondit::synth_async(Design*des, NetScope*scope,
-			    const NexusSet&nex_map, NetBus&nex_out)
+			    NexusSet&nex_map, NetBus&nex_out,
+			    NetBus&accumulated_nex_out)
 {
       if (if_ == 0) {
 	    return false;
       }
       if (else_ == 0) {
-	    cerr << get_fileline() << ": error: Asynchronous if statement"
-		 << " is missing the else clause." << endl;
-	    return false;
+	    bool latch_flag = false;
+	    for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
+		  if (! accumulated_nex_out.pin(idx).is_linked())
+			latch_flag = true;
+	    }
+	    if (latch_flag) {
+		  cerr << get_fileline() << ": error: Asynchronous if statement"
+		       << " cannot synthesize missing \"else\""
+		       << " without generating latches." << endl;
+		  return false;
+	    }
       }
 
-      assert(if_ != 0);
-      assert(else_ != 0);
+      ivl_assert(*this, if_ != 0);
 
 	// Synthesize the condition. This will act as a select signal
 	// for a binary mux.
@@ -351,15 +388,25 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 
       bool flag;
       NetBus asig(scope, nex_out.pin_count());
-      flag = if_->synth_async(des, scope, nex_map, asig);
+      NetBus atmp(scope, nex_out.pin_count());
+      flag = if_->synth_async(des, scope, nex_map, asig, atmp);
       if (!flag) {
 	    return false;
       }
 
+      NetBus btmp(scope, nex_out.pin_count());
       NetBus bsig(scope, nex_out.pin_count());
-      flag = else_->synth_async(des, scope, nex_map, bsig);
-      if (!flag) {
-	    return false;
+
+      if (else_==0) {
+	    for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
+		  connect(bsig.pin(idx), accumulated_nex_out.pin(idx));
+		  accumulated_nex_out.pin(idx).unlink();
+	    }
+      } else {
+	    flag = else_->synth_async(des, scope, nex_map, bsig, btmp);
+	    if (!flag) {
+		  return false;
+	    }
       }
 
       ivl_assert(*this, nex_out.pin_count()==asig.pin_count());
@@ -405,9 +452,10 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 }
 
 bool NetEvWait::synth_async(Design*des, NetScope*scope,
-			    const NexusSet&nex_map, NetBus&nex_out)
+			    NexusSet&nex_map, NetBus&nex_out,
+			    NetBus&accumulated_nex_out)
 {
-      bool flag = statement_->synth_async(des, scope, nex_map, nex_out);
+      bool flag = statement_->synth_async(des, scope, nex_map, nex_out, accumulated_nex_out);
       return flag;
 }
 
@@ -431,11 +479,11 @@ bool NetProcTop::synth_async(Design*des)
 
       NetBus nex_q (scope(), nex_set.size());
       for (unsigned idx = 0 ;  idx < nex_set.size() ;  idx += 1) {
-	    const NexusSet::elem_t&item = nex_set[idx];
-	    if (item.base != 0 || item.wid!=item.nex->vector_width()) {
+	    NexusSet::elem_t&item = nex_set[idx];
+	    if (item.base != 0 || item.wid!=item.lnk.nexus()->vector_width()) {
 		  ivl_variable_type_t tmp_data_type = IVL_VT_LOGIC;
 		  list<netrange_t>not_an_array;
-		  netvector_t*tmp_type = new netvector_t(tmp_data_type, item.nex->vector_width()-1,0);
+		  netvector_t*tmp_type = new netvector_t(tmp_data_type, item.lnk.nexus()->vector_width()-1,0);
 		  NetNet*tmp_sig = new NetNet(scope(), scope()->local_symbol(),
 					      NetNet::WIRE, not_an_array, tmp_type);
 		  tmp_sig->local_flag(true);
@@ -445,14 +493,15 @@ bool NetProcTop::synth_async(Design*des)
 		  des->add_node(tmp);
 		  tmp->set_line(*this);
 		  connect(tmp->pin(0), nex_q.pin(idx));
-		  connect(item.nex, tmp_sig->pin(0));
+		  connect(item.lnk, tmp_sig->pin(0));
 
 	    } else {
-		  connect(item.nex, nex_q.pin(idx));
+		  connect(item.lnk, nex_q.pin(idx));
 	    }
       }
 
-      bool flag = statement_->synth_async(des, scope(), nex_set, nex_q);
+      NetBus tmp_q (scope(), nex_set.size());
+      bool flag = statement_->synth_async(des, scope(), nex_set, nex_q, tmp_q);
       return flag;
 }
 
@@ -472,7 +521,7 @@ bool NetProcTop::synth_async(Design*des)
  */
 bool NetBlock::synth_sync(Design*des, NetScope*scope,
 			  NetNet*ff_clk, NetNet*ff_ce,
-			  const NexusSet&nex_map, NetBus&nex_out,
+			  NexusSet&nex_map, NetBus&nex_out,
 			  const vector<NetEvProbe*>&events_in)
 {
       bool flag = true;
@@ -531,7 +580,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
  */
 bool NetCondit::synth_sync(Design*des, NetScope*scope,
 			   NetNet*ff_clk, NetNet*ff_ce,
-			   const NexusSet&nex_map, NetBus&nex_out,
+			   NexusSet&nex_map, NetBus&nex_out,
 			   const vector<NetEvProbe*>&events_in)
 {
 	/* First try to turn the condition expression into an
@@ -689,7 +738,8 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	/* If this is an if/then/else, then it is likely a
 	   combinational if, and I should synthesize it that way. */
       if (if_ && else_) {
-	    bool flag = synth_async(des, scope, nex_map, nex_out);
+	    NetBus tmp (scope, nex_out.pin_count());
+	    bool flag = synth_async(des, scope, nex_map, nex_out, tmp);
 	    return flag;
       }
 
@@ -740,7 +790,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 
 bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 			   NetNet*ff_clk, NetNet*ff_ce,
-			   const NexusSet&nex_map, NetBus&nex_out,
+			   NexusSet&nex_map, NetBus&nex_out,
 			   const vector<NetEvProbe*>&events_in)
 {
       if (events_in.size() > 0) {
@@ -853,7 +903,7 @@ bool NetProcTop::synth_sync(Design*des)
 	   pass the nex_q as a map to the statement's synth_sync
 	   method to map it to the correct nex_d pin. */
       for (unsigned idx = 0 ;  idx < nex_set.size() ;  idx += 1) {
-	    connect(nex_set[idx].nex, nex_q.pin(idx));
+	    connect(nex_set[idx].lnk, nex_q.pin(idx));
       }
 
 	// Connect the input later.
@@ -869,7 +919,7 @@ bool NetProcTop::synth_sync(Design*des)
 
       for (unsigned idx = 0 ;  idx < nex_set.size() ;  idx += 1) {
 
-	    ivl_assert(*this, nex_set[idx].nex);
+	      //ivl_assert(*this, nex_set[idx].nex);
 	    if (debug_synth2) {
 		  cerr << get_fileline() << ": debug: "
 		       << "Top level making a "
