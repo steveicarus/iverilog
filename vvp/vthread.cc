@@ -4557,18 +4557,7 @@ bool of_POW(vthread_t thr, vvp_code_t cp)
 	    return true;
       }
 
-        /* To make the result more manageable trim off the extra bits. */
-      xv2.trim();
-      yv2.trim();
-
       vvp_vector2_t result = pow(xv2, yv2);
-
-        /* If the result is too small zero pad it. */
-      if (result.size() < wid) {
-	    for (unsigned jdx = wid-1;  jdx >= result.size();  jdx -= 1)
-		  thr_put_bit(thr, cp->bit_idx[0]+jdx, BIT4_0);
-	    wid = result.size();
-      }
 
         /* Copy only what we need of the result. */
       for (unsigned jdx = 0;  jdx < wid;  jdx += 1)

@@ -2362,23 +2362,21 @@ bool vvp_vector2_t::is_zero() const
  */
 vvp_vector2_t pow(const vvp_vector2_t&x, vvp_vector2_t&y)
 {
-        /* If we have a zero exponent just return a 1 bit wide 1. */
+        /* If we have a zero exponent just return 1. */
       if (y == vvp_vector2_t(0L, 1)) {
-	    return vvp_vector2_t(1L, 1);
+ 	    return vvp_vector2_t(1L, x.size());
       }
 
         /* Is the value odd? */
       if (y.value(0) == 1) {
 	    y.set_bit(0, 0);  // A quick subtract by 1.
 	    vvp_vector2_t res = x * pow(x, y);
-	    res.trim();  // To keep the size under control trim extra zeros.
 	    return res;
       }
 
       y >>= 1;  // A fast divide by two. We know the LSB is zero.
       vvp_vector2_t z = pow(x, y);
       vvp_vector2_t res = z * z;
-      res.trim();  // To keep the size under control trim extra zeros.
       return res;
 }
 
@@ -2422,25 +2420,22 @@ static void multiply_long(unsigned long a, unsigned long b,
       low  = (res[1] << 4UL*sizeof(unsigned long)) | res[0];
 }
 
-/*
- * Multiplication of two vector2 vectors returns a product as wide as
- * the sum of the widths of the input vectors.
- */
 vvp_vector2_t operator * (const vvp_vector2_t&a, const vvp_vector2_t&b)
 {
       const unsigned bits_per_word = 8 * sizeof(a.vec_[0]);
-      vvp_vector2_t r (0, a.size() + b.size());
 
-      unsigned awords = (a.wid_ + bits_per_word - 1) / bits_per_word;
-      unsigned bwords = (b.wid_ + bits_per_word - 1) / bits_per_word;
-      unsigned rwords = (r.wid_ + bits_per_word - 1) / bits_per_word;
+	// The compiler ensures that the two operands are of equal size.
+      assert(a.size() == b.size());
+      vvp_vector2_t r (0, a.size());
 
-      for (unsigned bdx = 0 ;  bdx < bwords ;  bdx += 1) {
+      unsigned words = (r.wid_ + bits_per_word - 1) / bits_per_word;
+
+      for (unsigned bdx = 0 ;  bdx < words ;  bdx += 1) {
 	    unsigned long tmpb = b.vec_[bdx];
 	    if (tmpb == 0)
 		  continue;
 
-	    for (unsigned adx = 0 ;  adx < awords ;  adx += 1) {
+	    for (unsigned adx = 0 ;  adx < words ;  adx += 1) {
 		  unsigned long tmpa = a.vec_[adx];
 		  if (tmpa == 0)
 			continue;
@@ -2450,7 +2445,7 @@ vvp_vector2_t operator * (const vvp_vector2_t&a, const vvp_vector2_t&b)
 
 		  unsigned long carry = 0;
 		  for (unsigned sdx = 0
-			     ; (adx+bdx+sdx) < rwords
+			     ; (adx+bdx+sdx) < words
 			     ;  sdx += 1) {
 
 			r.vec_[adx+bdx+sdx] = add_carry(r.vec_[adx+bdx+sdx],
@@ -2460,7 +2455,6 @@ vvp_vector2_t operator * (const vvp_vector2_t&a, const vvp_vector2_t&b)
 		  }
 	    }
       }
-
 
       return r;
 }
