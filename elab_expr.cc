@@ -788,7 +788,7 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
                 case 'p': // **
                   if (lc && rc) {
                         verinum result = pow(lc->value(), rc->value());
-                        use_width = result.len();
+                        use_width = max(use_width, result.len());
                   } else {
                         if (signed_flag_) use_width -= 1;
                         use_width *= (unsigned)r_val;
