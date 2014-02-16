@@ -607,7 +607,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %type <property_qualifier> class_item_qualifier_opt property_qualifier_opt
 %type <property_qualifier> random_qualifier
 
-%type <ranges> range range_opt variable_dimension
+%type <ranges> variable_dimension
 %type <ranges> dimensions_opt dimensions
 
 %type <nettype>  net_type var_type net_type_opt
@@ -973,7 +973,7 @@ data_declaration /* IEEE1800-2005: A.2.1.3 */
   ;
 
 data_type /* IEEE1800-2005: A.2.2.1 */
-  : integer_vector_type unsigned_signed_opt range_opt
+  : integer_vector_type unsigned_signed_opt dimensions_opt
       { ivl_variable_type_t use_vtype = $1;
 	bool reg_flag = false;
 	if (use_vtype == IVL_VT_NO_TYPE) {
@@ -1012,7 +1012,7 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	tmp->reg_flag = true;
 	$$ = tmp;
       }
-  | TYPE_IDENTIFIER range_opt
+  | TYPE_IDENTIFIER dimensions_opt
       { if ($2) $$ = new parray_type_t($1, $2);
 	else $$ = $1;
       }
@@ -1038,13 +1038,13 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 data_type_or_implicit /* IEEE1800-2005: A.2.2.1 */
   : data_type
       { $$ = $1; }
-  | signing range_opt
+  | signing dimensions_opt
       { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, $1, $2);
 	tmp->implicit_flag = true;
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | range
+  | dimensions
       { vector_type_t*tmp = new vector_type_t(IVL_VT_LOGIC, false, $1);
 	tmp->implicit_flag = true;
 	FILE_NAME(tmp, @1);
@@ -1796,7 +1796,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 
 
 tf_port_declaration /* IEEE1800-2005: A.2.7 */
-  : port_direction K_reg_opt unsigned_signed_opt range_opt list_of_identifiers ';'
+  : port_direction K_reg_opt unsigned_signed_opt dimensions_opt list_of_identifiers ';'
       { vector<pform_tf_port_t>*tmp = pform_make_task_ports(@1, $1,
 						$2 ? IVL_VT_LOGIC :
 						     IVL_VT_NO_TYPE,
@@ -1844,7 +1844,7 @@ tf_port_declaration /* IEEE1800-2005: A.2.7 */
 
 tf_port_item /* IEEE1800-2005: A.2.7 */
 
-  : port_direction_opt data_type_or_implicit IDENTIFIER range_opt tf_port_item_expr_opt
+  : port_direction_opt data_type_or_implicit IDENTIFIER dimensions_opt tf_port_item_expr_opt
       { vector<pform_tf_port_t>*tmp;
 	NetNet::PortType use_port_type = $1==NetNet::PIMPLICIT? NetNet::PINPUT : $1;
 	perm_string name = lex_strings.make($3);
@@ -2204,7 +2204,7 @@ enum_data_type
 	enum_type->range.reset(make_range_from_width(integer_width));
 	$$ = enum_type;
       }
-  | K_enum K_logic unsigned_signed_opt range '{' enum_name_list '}'
+  | K_enum K_logic unsigned_signed_opt dimensions '{' enum_name_list '}'
       { enum_type_t*enum_type = new enum_type_t;
 	FILE_NAME(enum_type, @1);
 	enum_type->names .reset($6);
@@ -2213,7 +2213,7 @@ enum_data_type
 	enum_type->range.reset($4);
 	$$ = enum_type;
       }
-  | K_enum K_reg unsigned_signed_opt range '{' enum_name_list '}'
+  | K_enum K_reg unsigned_signed_opt dimensions '{' enum_name_list '}'
       { enum_type_t*enum_type = new enum_type_t;
 	FILE_NAME(enum_type, @1);
 	enum_type->names .reset($6);
@@ -2222,7 +2222,7 @@ enum_data_type
 	enum_type->range.reset($4);
 	$$ = enum_type;
       }
-  | K_enum K_bit unsigned_signed_opt range '{' enum_name_list '}'
+  | K_enum K_bit unsigned_signed_opt dimensions '{' enum_name_list '}'
       { enum_type_t*enum_type = new enum_type_t;
 	FILE_NAME(enum_type, @1);
 	enum_type->names .reset($6);
@@ -2425,12 +2425,12 @@ defparam_assign
 	;
 
 defparam_assign_list
-	: defparam_assign
-	| range defparam_assign
-		{ yyerror(@1, "error: defparam may not include a range.");
-		  delete $1;
-		}
-	| defparam_assign_list ',' defparam_assign
+  : defparam_assign
+  | dimensions defparam_assign
+      { yyerror(@1, "error: defparam may not include a range.");
+	delete $1;
+      }
+  | defparam_assign_list ',' defparam_assign
 	;
 
 delay1
@@ -3471,7 +3471,7 @@ gate_instance
 		  $$ = tmp;
 		}
 
-  | IDENTIFIER range '(' expression_list_with_nuls ')'
+  | IDENTIFIER dimensions '(' expression_list_with_nuls ')'
       { lgate*tmp = new lgate;
 	list<pform_range_t>*rng = $2;
 	tmp->name = $1;
@@ -3497,7 +3497,7 @@ gate_instance
 
   /* Degenerate modules can have no ports. */
 
-  | IDENTIFIER range
+  | IDENTIFIER dimensions
       { lgate*tmp = new lgate;
 	list<pform_range_t>*rng = $2;
 	tmp->name = $1;
@@ -3526,7 +3526,7 @@ gate_instance
 	$$ = tmp;
       }
 
-  | IDENTIFIER range '(' port_name_list ')'
+  | IDENTIFIER dimensions '(' port_name_list ')'
       { lgate*tmp = new lgate;
 	list<pform_range_t>*rng = $2;
 	tmp->name = $1;
@@ -3555,7 +3555,7 @@ gate_instance
 		  $$ = tmp;
 		}
 
-	| IDENTIFIER range '(' error ')'
+	| IDENTIFIER dimensions '(' error ')'
 		{ lgate*tmp = new lgate;
 		  tmp->name = $1;
 		  tmp->parms = 0;
@@ -3773,7 +3773,7 @@ list_of_port_declarations
         ;
 
 port_declaration
-  : attribute_list_opt K_input net_type_opt data_type_or_implicit IDENTIFIER
+  : attribute_list_opt K_input net_type_opt data_type_or_implicit IDENTIFIER dimensions_opt
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
@@ -3787,6 +3787,10 @@ port_declaration
 	port_declaration_context.range = 0;
 	port_declaration_context.data_type = $4;
 	delete[]$5;
+	if ($6) {
+	      yyerror(@6, "sorry: Input ports with unpacked dimensions not supported.");
+	      delete $6;
+	}
 	$$ = ptmp;
       }
   | attribute_list_opt
@@ -3807,7 +3811,7 @@ port_declaration
 	delete[]$4;
 	$$ = ptmp;
       }
-  | attribute_list_opt K_inout net_type_opt data_type_or_implicit IDENTIFIER
+  | attribute_list_opt K_inout net_type_opt data_type_or_implicit IDENTIFIER dimensions_opt
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
@@ -3821,6 +3825,10 @@ port_declaration
 	port_declaration_context.range = 0;
 	port_declaration_context.data_type = $4;
 	delete[]$5;
+	if ($6) {
+	      yyerror(@6, "sorry: Inout ports with unpacked dimensions not supported.");
+	      delete $6;
+	}
 	$$ = ptmp;
       }
   | attribute_list_opt
@@ -3841,7 +3849,7 @@ port_declaration
 	delete[]$4;
 	$$ = ptmp;
       }
-  | attribute_list_opt K_output net_type_opt data_type_or_implicit IDENTIFIER
+  | attribute_list_opt K_output net_type_opt data_type_or_implicit IDENTIFIER dimensions_opt
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	NetNet::Type use_type = $3;
@@ -3875,6 +3883,10 @@ port_declaration
 	port_declaration_context.range = 0;
 	port_declaration_context.data_type = $4;
 	delete[]$5;
+	if ($6) {
+	      yyerror(@6, "sorry: Output ports with unpacked dimensions not supported.");
+	      delete $6;
+	}
 	$$ = ptmp;
       }
   | attribute_list_opt
@@ -4283,23 +4295,23 @@ module_item
 	}
       }
 
-	| K_trireg charge_strength_opt range_opt delay3_opt list_of_identifiers ';'
+	| K_trireg charge_strength_opt dimensions_opt delay3_opt list_of_identifiers ';'
 		{ yyerror(@1, "sorry: trireg nets not supported.");
 		  delete $3;
 		  delete $4;
 		}
 
-  | attribute_list_opt port_direction unsigned_signed_opt range_opt delay3_opt list_of_identifiers ';'
+  | attribute_list_opt port_direction unsigned_signed_opt dimensions_opt delay3_opt list_of_identifiers ';'
       { pform_set_port_type(@2, $6, $4, $3, $2, $1); }
 
   /* The next two rules handle Verilog 2001 statements of the form:
        input wire signed [h:l] <list>;
      This creates the wire and sets the port type all at once. */
 
-  | attribute_list_opt port_direction net_type unsigned_signed_opt range_opt list_of_identifiers ';'
+  | attribute_list_opt port_direction net_type unsigned_signed_opt dimensions_opt list_of_identifiers ';'
       { pform_makewire(@2, $5, $4, $6, $3, $2, IVL_VT_NO_TYPE, $1, SR_BOTH); }
 
-  | attribute_list_opt K_output var_type unsigned_signed_opt range_opt list_of_port_identifiers ';'
+  | attribute_list_opt K_output var_type unsigned_signed_opt dimensions_opt list_of_port_identifiers ';'
       { list<pair<perm_string,PExpr*> >::const_iterator pp;
 	list<perm_string>*tmp = new list<perm_string>;
 	for (pp = $6->begin(); pp != $6->end(); ++ pp ) {
@@ -4324,19 +4336,19 @@ module_item
      because the port declaration implies an external driver, which
      cannot be attached to a reg. These rules catch that error early. */
 
-  | attribute_list_opt K_input var_type unsigned_signed_opt range_opt list_of_identifiers ';'
+  | attribute_list_opt K_input var_type unsigned_signed_opt dimensions_opt list_of_identifiers ';'
       { pform_makewire(@2, $5, $4, $6, $3, NetNet::PINPUT,
 		       IVL_VT_NO_TYPE, $1);
 	yyerror(@3, "error: reg variables cannot be inputs.");
       }
 
-  | attribute_list_opt K_inout var_type unsigned_signed_opt range_opt list_of_identifiers ';'
+  | attribute_list_opt K_inout var_type unsigned_signed_opt dimensions_opt list_of_identifiers ';'
       { pform_makewire(@2, $5, $4, $6, $3, NetNet::PINOUT,
 		       IVL_VT_NO_TYPE, $1);
 	yyerror(@3, "error: reg variables cannot be inouts.");
       }
 
-  | attribute_list_opt port_direction unsigned_signed_opt range_opt delay3_opt error ';'
+  | attribute_list_opt port_direction unsigned_signed_opt dimensions_opt delay3_opt error ';'
       { yyerror(@2, "error: Invalid variable list in port declaration.");
 	if ($1) delete $1;
 	if ($4) delete $4;
@@ -4720,7 +4732,7 @@ var_type
 	;
 
 param_type
-  : bit_logic_opt unsigned_signed_opt range_opt
+  : bit_logic_opt unsigned_signed_opt dimensions_opt
       { param_active_range = $3;
 	param_active_signed = $2;
 	if (($1 == IVL_VT_NO_TYPE) && ($3 != 0))
@@ -5112,24 +5124,6 @@ port_reference_list
 	;
 
   /* The range is a list of variable dimensions. */
-range
-  : variable_dimension
-      { $$ = $1; }
-  | range variable_dimension
-      { list<pform_range_t>*tmp = $1;
-	if ($2) {
-	      tmp->splice(tmp->end(), *$2);
-	      delete $2;
-	}
-	$$ = tmp;
-      }
-  ;
-
-range_opt
-  : range
-  | { $$ = 0; }
-  ;
-
 dimensions_opt
   : { $$ = 0; }
   | dimensions { $$ = $1; }
@@ -5479,7 +5473,7 @@ specparam_list
 
 specparam_decl
   : specparam_list
-  | range
+  | dimensions
       { param_active_range = $1; }
     specparam_list
       { param_active_range = 0; }
