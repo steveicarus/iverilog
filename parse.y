@@ -2169,6 +2169,15 @@ type_declaration
 	pform_set_typedef(name, tmp);
 	delete[]$2;
       }
+
+  | K_typedef data_type TYPE_IDENTIFIER ';'
+      { yyerror(@3, "error: Typedef identifier is already a type name."); }
+
+  | K_typedef error ';'
+      { yyerror(@2, "error: Syntax error in typedef clause.");
+	yyerrok;
+      }
+
   ;
 
   /* The structure for an enumeration data type is the keyword "enum",
