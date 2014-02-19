@@ -4540,24 +4540,50 @@ bool of_POP_STR(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_POW(vthread_t thr, vvp_code_t cp)
+static bool of_POW_base(vthread_t thr, vvp_code_t cp, bool signed_flag)
 {
       assert(cp->bit_idx[0] >= 4);
 
       unsigned idx = cp->bit_idx[0];
       unsigned idy = cp->bit_idx[1];
       unsigned wid = cp->number;
-      vvp_vector2_t xv2 = vvp_vector2_t(vthread_bits_to_vector(thr, idx, wid), true);
-      vvp_vector2_t yv2 = vvp_vector2_t(vthread_bits_to_vector(thr, idy, wid), true);
+      vvp_vector2_t a2 = vvp_vector2_t(vthread_bits_to_vector(thr, idx, wid), true);
+      vvp_vector2_t b2 = vvp_vector2_t(vthread_bits_to_vector(thr, idy, wid), true);
 
-        /* If we have an X or Z in the arguments return X. */
-      if (xv2.is_NaN() || yv2.is_NaN()) {
+        // If we have an X or Z in the arguments return X.
+      if (a2.is_NaN() || b2.is_NaN()) {
 	    for (unsigned jdx = 0 ;  jdx < wid ;  jdx += 1)
 		  thr_put_bit(thr, cp->bit_idx[0]+jdx, BIT4_X);
 	    return true;
       }
 
-      vvp_vector2_t result = pow(xv2, yv2);
+	// Is the exponent negative? If so, table 5-6 in IEEE1364-2005
+	// defines what value is returned.
+      if (signed_flag && b2.value(b2.size()-1)) {
+	    int a_val;
+	    vvp_bit4_t pad = BIT4_0, lsb = BIT4_0;
+	    if (vector2_to_value(a2, a_val, true)) {
+		  if (a_val == 0) {
+			pad = BIT4_X; lsb = BIT4_X;
+		  }
+		  if (a_val == 1) {
+			pad = BIT4_0; lsb = BIT4_1;
+		  }
+		  if (a_val == -1) {
+			if (b2.value(0)) {
+			      pad = BIT4_1; lsb = BIT4_1;
+			} else {
+			      pad = BIT4_0; lsb = BIT4_1;
+			}
+		  }
+	    }
+	    thr_put_bit(thr, cp->bit_idx[0], lsb);
+	    for (unsigned jdx = 1 ;  jdx < wid ;  jdx += 1)
+		  thr_put_bit(thr, cp->bit_idx[0]+jdx, pad);
+	    return true;
+      }
+
+      vvp_vector2_t result = pow(a2, b2);
 
         /* Copy only what we need of the result. */
       for (unsigned jdx = 0;  jdx < wid;  jdx += 1)
@@ -4567,37 +4593,14 @@ bool of_POW(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_POW(vthread_t thr, vvp_code_t cp)
+{
+      return of_POW_base(thr, cp, false);
+}
+
 bool of_POW_S(vthread_t thr, vvp_code_t cp)
 {
-      assert(cp->bit_idx[0] >= 4);
-
-      unsigned idx = cp->bit_idx[0];
-      unsigned idy = cp->bit_idx[1];
-      unsigned wid = cp->number;
-      vvp_vector4_t xv = vthread_bits_to_vector(thr, idx, wid);
-      vvp_vector4_t yv = vthread_bits_to_vector(thr, idy, wid);
-
-        /* If we have an X or Z in the arguments return X. */
-      if (xv.has_xz() || yv.has_xz()) {
-	    for (unsigned jdx = 0 ;  jdx < wid ;  jdx += 1)
-		  thr_put_bit(thr, cp->bit_idx[0]+jdx, BIT4_X);
-	    return true;
-      }
-
-        /* Calculate the result using the double pow() function. */
-      double xd, yd, resd;
-      vector4_to_value(xv, xd, true);
-      vector4_to_value(yv, yd, true);
-	/* 2**-1 and -2**-1 are defined to be zero. */
-      if ((yd == -1.0) && (fabs(xd) == 2.0)) resd = 0.0;
-      else resd = pow(xd, yd);
-      vvp_vector4_t res = vvp_vector4_t(wid, resd);
-
-        /* Copy the result. */
-      for (unsigned jdx = 0;  jdx < wid;  jdx += 1)
-	    thr_put_bit(thr, cp->bit_idx[0]+jdx, res.value(jdx));
-
-      return true;
+      return of_POW_base(thr, cp, true);
 }
 
 bool of_POW_WR(vthread_t thr, vvp_code_t)
