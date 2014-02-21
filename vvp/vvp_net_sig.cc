@@ -200,7 +200,11 @@ void vvp_fun_signal4_sa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 	    break;
 
 	  case 1: // Continuous assign value
-	    bits4_ = bit;
+	      // Handle the simple case of the linked source being wider
+	      // than this signal. Note we don't yet support the case of
+	      // the linked source being narrower than this signal, or
+	      // the case of an expression being assigned.
+	    bits4_ = coerce_to_width(bit, bits4_.size());
 	    assign_mask_ = vvp_vector2_t(vvp_vector2_t::FILL1, bits4_.size());
 	    ptr.ptr()->send_vec4(bits4_, 0);
 	    break;
