@@ -584,6 +584,31 @@ data_type_t* pform_test_type_identifier(const char*txt)
       return 0;
 }
 
+/*
+ * The parser uses this function to test if the name is a typedef in
+ * the current scope. We use this to know if we can override the
+ * definition because it shadows a containing scope.
+ */
+bool pform_test_type_identifier_local(perm_string name)
+{
+      if (lexical_scope == 0) {
+	    if (test_type_identifier_in_root(name))
+		  return true;
+	    else
+		  return false;
+      }
+
+      LexicalScope*cur_scope = lexical_scope;
+
+      map<perm_string,data_type_t*>::iterator cur;
+
+      cur = cur_scope->typedefs.find(name);
+      if (cur != cur_scope->typedefs.end())
+	    return true;
+
+      return false;
+}
+
 PECallFunction* pform_make_call_function(const struct vlltype&loc,
 					 const pform_name_t&name,
 					 const list<PExpr*>&parms)

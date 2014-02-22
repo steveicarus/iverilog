@@ -418,6 +418,11 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       PPackage*package;
 
       struct {
+	    char*text;
+	    data_type_t*type;
+      } type_identifier;
+
+      struct {
 	    data_type_t*type;
 	    list<PExpr*>*exprs;
       } class_declaration_extends;
@@ -431,7 +436,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 };
 
 %token <text>      IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
-%token <data_type> TYPE_IDENTIFIER
+%token <type_identifier> TYPE_IDENTIFIER
 %token <package>   PACKAGE_IDENTIFIER
 %token <discipline> DISCIPLINE_IDENTIFIER
 %token <text>   PATHPULSE_IDENTIFIER
@@ -730,10 +735,11 @@ class_identifier
 	$$ = tmp;
       }
   | TYPE_IDENTIFIER
-      { class_type_t*tmp = dynamic_cast<class_type_t*>($1);
+      { class_type_t*tmp = dynamic_cast<class_type_t*>($1.type);
 	if (tmp == 0) {
-	      yyerror(@1, "Type name is not a predeclared class name.");
+	      yyerror(@1, "Type name \"%s\"is not a predeclared class name.", $1.text);
 	}
+	delete[]$1.text;
 	$$ = tmp;
       }
   ;
@@ -743,13 +749,14 @@ class_identifier
      does indeed match a name. */
 class_declaration_endlabel_opt
   : ':' TYPE_IDENTIFIER
-      { class_type_t*tmp = dynamic_cast<class_type_t*> ($2);
+      { class_type_t*tmp = dynamic_cast<class_type_t*> ($2.type);
 	if (tmp == 0) {
-	      yyerror(@2, "error: class declaration endlabel is not a class name\n");
+	      yyerror(@2, "error: class declaration endlabel \"%s\" is not a class name\n", $2.text);
 	      $$ = 0;
 	} else {
 	      $$ = strdupnew(tmp->name.str());
 	}
+	delete[]$2.text;
       }
   | ':' IDENTIFIER
       { $$ = $2; }
@@ -767,12 +774,14 @@ class_declaration_endlabel_opt
 
 class_declaration_extends_opt /* IEEE1800-2005: A.1.2 */
   : K_extends TYPE_IDENTIFIER
-      { $$.type = $2;
+      { $$.type = $2.type;
 	$$.exprs= 0;
+	delete[]$2.text;
       }
   | K_extends TYPE_IDENTIFIER '(' expression_list_with_nuls ')'
-      { $$.type  = $2;
+      { $$.type  = $2.type;
 	$$.exprs = $4;
+	delete[]$2.text;
       }
   |
       { $$.type = 0; $$.exprs = 0; }
@@ -1013,14 +1022,16 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	$$ = tmp;
       }
   | TYPE_IDENTIFIER dimensions_opt
-      { if ($2) $$ = new parray_type_t($1, $2);
-	else $$ = $1;
+      { if ($2) $$ = new parray_type_t($1.type, $2);
+	else $$ = $1.type;
+	delete[]$1.text;
       }
   | PACKAGE_IDENTIFIER K_SCOPE_RES
       { lex_in_package_scope($1); }
     TYPE_IDENTIFIER
       { lex_in_package_scope(0);
-	$$ = $4;
+	$$ = $4.type;
+	delete[]$4.text;
       }
   | K_string
       { string_type_t*tmp = new string_type_t;
@@ -2143,6 +2154,20 @@ type_declaration
 	delete[]$3;
       }
 
+  /* If the IDENTIFIER already is a typedef, it is possible for this
+     code to override the definition, but only if the typedef is
+     inherited from a different scope. */
+  | K_typedef data_type TYPE_IDENTIFIER ';'
+      { perm_string name = lex_strings.make($3.text);
+	if (pform_test_type_identifier_local(name)) {
+	      yyerror(@3, "error: Typedef identifier \"%s\" is already a type name.", $3.text);
+
+	} else {
+	      pform_set_typedef(name, $2);
+	}
+	delete[]$3.text;
+      }
+
   /* These are forward declarations... */
 
   | K_typedef K_class  IDENTIFIER ';'
@@ -2169,9 +2194,6 @@ type_declaration
 	pform_set_typedef(name, tmp);
 	delete[]$2;
       }
-
-  | K_typedef data_type TYPE_IDENTIFIER ';'
-      { yyerror(@3, "error: Typedef identifier is already a type name."); }
 
   | K_typedef error ';'
       { yyerror(@2, "error: Syntax error in typedef clause.");
@@ -3108,9 +3130,10 @@ expr_primary
   /* There are a few special cases (notably $bits argument) where the
      expression may be a type name. Let the elaborator sort this out. */
   | TYPE_IDENTIFIER
-  { PETypename*tmp = new PETypename($1);
+      { PETypename*tmp = new PETypename($1.type);
 	FILE_NAME(tmp,@1);
 	$$ = tmp;
+	delete[]$1.text;
       }
 
   /* The hierarchy_identifier rule matches simple identifiers as well as

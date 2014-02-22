@@ -96,6 +96,8 @@ extern void lex_in_package_scope(PPackage*pkg);
 extern data_type_t* pform_test_type_identifier(const char*txt);
 extern data_type_t* pform_test_type_identifier(PPackage*pkg, const char*txt);
 
+extern bool pform_test_type_identifier_local(perm_string txt);
+
 /*
  * Test if this identifier is a package name. The pform needs to help
  * the lexor here because the parser detects packages and saves them.
