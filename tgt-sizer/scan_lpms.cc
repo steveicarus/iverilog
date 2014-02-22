@@ -46,6 +46,21 @@ static void scans_lpms_add(ivl_scope_t, ivl_lpm_t lpm, struct sizer_statistics&s
       stats.gate_count += 2*wid;
 }
 
+/*
+ * Count mux devices as 2m gates.
+ */
+static void scan_lpms_mux(ivl_scope_t, ivl_lpm_t lpm, struct sizer_statistics&stats)
+{
+	// For now, don't generate statistics for wide mux devices.
+      if (ivl_lpm_size(lpm) > 2) {
+	    stats.lpm_bytype[ivl_lpm_type(lpm)] += 1;
+	    return;
+      }
+
+      unsigned wid = ivl_lpm_width(lpm);
+      stats.gate_count += 2*wid;
+}
+
 void scan_lpms(ivl_scope_t scope, struct sizer_statistics&stats)
 {
       for (unsigned idx = 0 ; idx < ivl_scope_lpms(scope) ; idx += 1) {
@@ -68,6 +83,10 @@ void scan_lpms(ivl_scope_t scope, struct sizer_statistics&stats)
 		    // D-Type flip-flops.
 		case IVL_LPM_FF:
 		  scan_lpms_ff(scope, lpm, stats);
+		  break;
+
+		case IVL_LPM_MUX:
+		  scan_lpms_mux(scope, lpm, stats);
 		  break;
 
 		default:

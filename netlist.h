@@ -96,6 +96,7 @@ class Link {
       friend void connect(Link&, Link&);
       friend class NetPins;
       friend class Nexus;
+      friend class NexusSet;
 
     public:
       enum DIR { PASSIVE, INPUT, OUTPUT };
@@ -409,17 +410,25 @@ class NexusSet {
     public:
       struct elem_t {
 	    inline elem_t(Nexus*n, unsigned b, unsigned w)
-	    : nex(n), base(b), wid(w)
-	    { }
-	    inline elem_t() : nex(0), base(0), wid(0) { }
+	    : base(b), wid(w)
+	    {
+		  lnk.set_dir(Link::PASSIVE);
+		  n->connect(lnk);
+	    }
+	    inline elem_t() : base(0), wid(0)
+	    {
+	    }
 	    inline bool operator == (const struct elem_t&that) const
-	    { return nex==that.nex && base==that.base && wid==that.wid; }
+	    { return lnk.is_linked(that.lnk) && base==that.base && wid==that.wid; }
 
 	    bool contains(const struct elem_t&that) const;
 
-	    Nexus*nex;
+	    Link lnk;
 	    unsigned base;
 	    unsigned wid;
+	  private:
+	    elem_t(const elem_t&);
+	    elem_t& operator= (elem_t&);
       };
 
     public:
@@ -430,15 +439,15 @@ class NexusSet {
 
 	// Add the nexus/part to the set, if it is not already present.
       void add(Nexus*that, unsigned base, unsigned wid);
-      void add(const NexusSet&that);
+      void add(NexusSet&that);
 
 	// Remove the nexus from the set, if it is present.
       void rem(const NexusSet&that);
 
       unsigned find_nexus(const elem_t&that) const;
 
-      const elem_t& at(unsigned idx) const;
-      inline const elem_t& operator[] (unsigned idx) const { return at(idx); }
+      elem_t& at(unsigned idx);
+      inline elem_t& operator[] (unsigned idx) { return at(idx); }
 
 	// Return true if this set contains every nexus/part in that
 	// set. That means that every bit of that set is accounted for
@@ -450,11 +459,11 @@ class NexusSet {
 
     private:
 	// NexSet items are canonical part selects of vectors.
-      std::vector<struct elem_t> items_;
+      std::vector<struct elem_t*> items_;
 
       size_t bsearch_(const struct elem_t&that) const;
-      void rem_(const struct elem_t&that);
-      bool contains_(const elem_t&htat) const;
+      void rem_(const struct elem_t*that);
+      bool contains_(const elem_t&that) const;
 
     private: // not implemented
       NexusSet(const NexusSet&);
@@ -2493,9 +2502,14 @@ class NetProc : public virtual LineInfo {
 	// process. Most process types are not.
       virtual bool is_synchronous();
 
-	// Synthesize as asynchronous logic, and return true.
+	// Synthesize as asynchronous logic, and return true. The
+	// nex_out is where this function attaches its output
+	// results. The accumulated_nex_out is used by sequential
+	// blocks to show outputs from the previous code.
       virtual bool synth_async(Design*des, NetScope*scope,
-			       const NexusSet&nex_map, NetBus&nex_out);
+			       NexusSet&nex_map,
+			       NetBus&nex_out,
+			       NetBus&accumulated_nex_out);
 
 	// Synthesize as synchronous logic, and return true. That
 	// means binding the outputs to the data port of a FF, and the
@@ -2511,7 +2525,7 @@ class NetProc : public virtual LineInfo {
 	// the flipflop being generated.
       virtual bool synth_sync(Design*des, NetScope*scope,
 			      NetNet*ff_clock, NetNet*ff_ce,
-			      const NexusSet&nex_map, NetBus&nex_out,
+			      NexusSet&nex_map, NetBus&nex_out,
 			      const std::vector<NetEvProbe*>&events);
 
       virtual void dump(ostream&, unsigned ind) const;
@@ -2695,7 +2709,8 @@ class NetAssignBase : public NetProc {
       unsigned lwidth() const;
 
       bool synth_async(Design*des, NetScope*scope,
-		       const NexusSet&nex_map, NetBus&nex_out);
+		       NexusSet&nex_map, NetBus&nex_out,
+		       NetBus&accumulated_nex_out);
 
 	// This dumps all the lval structures.
       void dump_lval(ostream&) const;
@@ -2780,11 +2795,12 @@ class NetBlock  : public NetProc {
 
 	// synthesize as asynchronous logic, and return true.
       bool synth_async(Design*des, NetScope*scope,
-		       const NexusSet&nex_map, NetBus&nex_out);
+		       NexusSet&nex_map, NetBus&nex_out,
+		       NetBus&accumulated_nex_out);
 
       bool synth_sync(Design*des, NetScope*scope,
 		      NetNet*ff_clk, NetNet*ff_ce,
-		      const NexusSet&nex_map, NetBus&nex_out,
+		      NexusSet&nex_map, NetBus&nex_out,
 		      const std::vector<NetEvProbe*>&events);
 
 	// This version of emit_recurse scans all the statements of
@@ -2837,7 +2853,8 @@ class NetCase  : public NetProc {
       virtual void nex_output(NexusSet&out);
 
       bool synth_async(Design*des, NetScope*scope,
-		       const NexusSet&nex_map, NetBus&nex_out);
+		       NexusSet&nex_map, NetBus&nex_out,
+		       NetBus&accumulated_nex_out);
 
       virtual bool emit_proc(struct target_t*) const;
       virtual void dump(ostream&, unsigned ind) const;
@@ -2912,11 +2929,12 @@ class NetCondit  : public NetProc {
 
       bool is_asynchronous();
       bool synth_async(Design*des, NetScope*scope,
-		       const NexusSet&nex_map, NetBus&nex_out);
+		       NexusSet&nex_map, NetBus&nex_out,
+		       NetBus&accumulated_nex_out);
 
       bool synth_sync(Design*des, NetScope*scope,
 		      NetNet*ff_clk, NetNet*ff_ce,
-		      const NexusSet&nex_map, NetBus&nex_out,
+		      NexusSet&nex_map, NetBus&nex_out,
 		      const std::vector<NetEvProbe*>&events);
 
       virtual bool emit_proc(struct target_t*) const;
@@ -3187,11 +3205,12 @@ class NetEvWait  : public NetProc {
       virtual void nex_output(NexusSet&out);
 
       virtual bool synth_async(Design*des, NetScope*scope,
-			       const NexusSet&nex_map, NetBus&nex_out);
+			       NexusSet&nex_map, NetBus&nex_out,
+			       NetBus&accumulated_nex_out);
 
       virtual bool synth_sync(Design*des, NetScope*scope,
 			      NetNet*ff_clk, NetNet*ff_ce,
-			      const NexusSet&nex_map, NetBus&nex_out,
+			      NexusSet&nex_map, NetBus&nex_out,
 			      const std::vector<NetEvProbe*>&events);
 
       virtual void dump(ostream&, unsigned ind) const;

@@ -5068,16 +5068,13 @@ bool of_POW(vthread_t thr, vvp_code_t)
       vvp_vector2_t xv2 = vvp_vector2_t(vala);
       vvp_vector2_t yv2 = vvp_vector2_t(valb);
 
+
         /* If we have an X or Z in the arguments return X. */
       if (xv2.is_NaN() || yv2.is_NaN()) {
 	    vvp_vector4_t tmp (wid, BIT4_X);
 	    thr->push_vec4(tmp);
 	    return true;
       }
-
-        /* To make the result more manageable trim off the extra bits. */
-      xv2.trim();
-      yv2.trim();
 
       vvp_vector2_t result = pow(xv2, yv2);
 

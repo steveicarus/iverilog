@@ -344,9 +344,11 @@ verinum::~verinum()
 verinum& verinum::operator= (const verinum&that)
 {
       if (this == &that) return *this;
-      delete[]bits_;
-      nbits_ = that.nbits_;
-      bits_ = new V[that.nbits_];
+      if (nbits_ != that.nbits_) {
+            delete[]bits_;
+            nbits_ = that.nbits_;
+            bits_ = new V[that.nbits_];
+      }
       for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1)
 	    bits_[idx] = that.bits_[idx];
 
@@ -1126,53 +1128,95 @@ verinum operator * (const verinum&left, const verinum&right)
       return trim_vnum(result);
 }
 
+static verinum make_p_one(unsigned len, bool has_len, bool has_sign)
+{
+      verinum tmp (verinum::V0, has_len ? len : 2, has_len);
+      tmp.set(0, verinum::V1);
+      tmp.has_sign(has_sign);
+      return tmp;
+}
+
+static verinum make_m_one(unsigned len, bool has_len, bool has_sign)
+{
+      verinum tmp (verinum::V1, has_len ? len : 1, has_len);
+      tmp.has_sign(has_sign);
+      return tmp;
+}
+
+static verinum recursive_pow(const verinum&left, verinum&right)
+{
+        // If the exponent is zero, return a value of 1
+      if (right.is_zero()) {
+            return make_p_one(left.len(), left.has_len(), left.has_sign());
+      }
+
+      verinum res;
+      if (right.get(0) == 1) {
+              // The exponent is odd, so subtract 1 from it and recurse
+	    right.set(0, verinum::V0);
+	    res = pow(left, right);
+	    res = left * res;
+      } else {
+              // The exponent is even, so divide it by 2 and recurse
+            right = right >> 1;
+            res = pow(left, right);
+            res = res * res;
+      }
+      if (left.has_len()) {
+            res = verinum(res, left.len());
+      }
+      return res;
+}
+
 verinum pow(const verinum&left, const verinum&right)
 {
-      verinum result = left;
-      long pow_count = right.as_long();
+      verinum result;
 
 	// We need positive and negative one in a few places.
-      unsigned len = left.len();
-	// Positive one must be at least two bits wide!
-      verinum one (verinum::V0, (len<2) ? 2 : len, left.has_len());
-      one.has_sign(left.has_sign());
-      one.set(0, verinum::V1);
-      verinum m_one (verinum::V1, len, left.has_len());
-      m_one.has_sign(true);
+      verinum p_one = make_p_one(left.len(), left.has_len(), left.has_sign());
+      verinum m_one = make_m_one(left.len(), left.has_len(), left.has_sign());
 
 	// If either the right or left values are undefined we return 'bx.
       if (!right.is_defined() || !left.is_defined()) {
-	    result = verinum(verinum::Vx, len, left.has_len());
-	    result.has_sign(left.has_sign());
+	    result = verinum(verinum::Vx, left.len(), left.has_len());
+            result.has_sign(left.has_sign());
+
 	// If the right value is zero we need to set the result to 1.
-      } else if (pow_count == 0)  {
-	    result = one;
-      } else if (pow_count < 0) {
+      } else if (right.is_zero()) {
+	    result = p_one;
+
+      } else if (right.is_negative()) {
+
 	      // 0 ** <negative> is 'bx.
 	    if (left.is_zero()) {
-		  result = verinum(verinum::Vx, len, left.has_len());
-		  result.has_sign(left.has_sign());
-	      // 1 ** <negative> is 1.
-	    } else if (left == one) {
-		  result = one;
-	      // -1 ** <negative> is 1 or -1.
+		  result = verinum(verinum::Vx, left.len(), left.has_len());
+                  result.has_sign(left.has_sign());
+
+	      // -1 ** <negative> is 1 or -1. Note that this must be done
+              // before testing for +1 in case 'left' has a width of 1.
 	    } else if (left.has_sign() && left == m_one) {
-		  if (pow_count%2 == 0) {
-			result = one;
+		  if (right.get(0) == verinum::V0) {
+			result = p_one;
 		  } else {
 			result = m_one;
 		  }
+
+	      // 1 ** <negative> is 1.
+	    } else if (left == p_one) {
+		  result = p_one;
+
 	      // Everything else is 0.
 	    } else {
-		  result = verinum(verinum::V0, len, left.has_len());
-		  result.has_sign(left.has_sign());
+		  result = verinum(verinum::V0, left.len(), left.has_len());
+                  result.has_sign(left.has_sign());
 	    }
+
+      } else {
+            verinum exponent = right;
+            result = recursive_pow(left, exponent);
       }
 
-      for (long idx = 1 ;  idx < pow_count ;  idx += 1)
-	    result = result * left;
-
-      return result;
+      return trim_vnum(result);
 }
 
 verinum operator << (const verinum&that, unsigned shift)

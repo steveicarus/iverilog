@@ -524,6 +524,8 @@ NexusSet::NexusSet()
 
 NexusSet::~NexusSet()
 {
+      for (size_t idx = 0 ; idx < items_.size() ; idx += 1)
+	    delete items_[idx];
 }
 
 size_t NexusSet::size() const
@@ -534,7 +536,7 @@ size_t NexusSet::size() const
 void NexusSet::add(Nexus*that, unsigned base, unsigned wid)
 {
       assert(that);
-      elem_t cur (that, base, wid);
+      elem_t*cur = new elem_t(that, base, wid);
 
       if (items_.size() == 0) {
 	    items_.resize(1);
@@ -542,8 +544,9 @@ void NexusSet::add(Nexus*that, unsigned base, unsigned wid)
 	    return;
       }
 
-      unsigned ptr = bsearch_(cur);
+      unsigned ptr = bsearch_(*cur);
       if (ptr < items_.size()) {
+	    delete cur;
 	    return;
       }
 
@@ -552,26 +555,28 @@ void NexusSet::add(Nexus*that, unsigned base, unsigned wid)
       items_.push_back(cur);
 }
 
-void NexusSet::add(const NexusSet&that)
+void NexusSet::add(NexusSet&that)
 {
       for (size_t idx = 0 ;  idx < that.items_.size() ;  idx += 1)
-	    add(that.items_[idx].nex, that.items_[idx].base, that.items_[idx].wid);
+	    add(that.items_[idx]->lnk.nexus(), that.items_[idx]->base, that.items_[idx]->wid);
 }
 
-void NexusSet::rem_(const NexusSet::elem_t&that)
+void NexusSet::rem_(const NexusSet::elem_t*that)
 {
       if (items_.empty())
 	    return;
 
-      unsigned ptr = bsearch_(that);
+      unsigned ptr = bsearch_(*that);
       if (ptr >= items_.size())
 	    return;
 
       if (items_.size() == 1) {
+	    delete items_[0];
 	    items_.clear();
 	    return;
       }
 
+      delete items_[ptr];
       for (unsigned idx = ptr ;  idx < (items_.size()-1) ;  idx += 1)
 	    items_[idx] = items_[idx+1];
 
@@ -589,16 +594,16 @@ unsigned NexusSet::find_nexus(const NexusSet::elem_t&that) const
       return bsearch_(that);
 }
 
-const NexusSet::elem_t& NexusSet::at (unsigned idx) const
+NexusSet::elem_t& NexusSet::at (unsigned idx)
 {
       assert(idx <  items_.size());
-      return items_[idx];
+      return *items_[idx];
 }
 
 size_t NexusSet::bsearch_(const NexusSet::elem_t&that) const
 {
       for (unsigned idx = 0 ;  idx < items_.size() ;  idx += 1) {
-	    if (items_[idx]==that)
+	    if (*items_[idx] == that)
 		  return idx;
       }
 
@@ -607,7 +612,7 @@ size_t NexusSet::bsearch_(const NexusSet::elem_t&that) const
 
 bool NexusSet::elem_t::contains(const struct elem_t&that) const
 {
-      if (nex != that.nex)
+      if (! lnk.is_linked(that.lnk))
 	    return false;
       if (that.base < base)
 	    return false;
@@ -620,7 +625,7 @@ bool NexusSet::elem_t::contains(const struct elem_t&that) const
 bool NexusSet::contains_(const NexusSet::elem_t&that) const
 {
       for (unsigned idx = 0 ; idx < items_.size() ; idx += 1) {
-	    if (items_[idx].contains(that))
+	    if (items_[idx]->contains(that))
 		  return true;
       }
       return false;
@@ -629,7 +634,7 @@ bool NexusSet::contains_(const NexusSet::elem_t&that) const
 bool NexusSet::contains(const NexusSet&that) const
 {
       for (size_t idx = 0 ;  idx < that.items_.size() ;  idx += 1) {
-	    if (! contains_(that.items_[idx]))
+	    if (! contains_(*that.items_[idx]))
 		return false;
       }
 
@@ -639,7 +644,7 @@ bool NexusSet::contains(const NexusSet&that) const
 bool NexusSet::intersect(const NexusSet&that) const
 {
       for (size_t idx = 0 ;  idx < that.items_.size() ;  idx += 1) {
-	    size_t where = bsearch_(that.items_[idx]);
+	    size_t where = bsearch_(*that.items_[idx]);
 	    if (where == items_.size())
 		  continue;
 

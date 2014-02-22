@@ -116,6 +116,15 @@ int target_design(ivl_design_t des)
  */
 static int process_scan_fun(ivl_process_t net, void* /*raw*/)
 {
+      for (unsigned idx = 0 ; idx < ivl_process_attr_cnt(net) ; idx += 1) {
+	    ivl_attribute_t att = ivl_process_attr_val(net, idx);
+
+	      // If synthesis is explicitly turned off for this
+	      // process, then we just ignore it.
+	    if (strcmp(att->key, "ivl_synthesis_off") == 0)
+		  return 0;
+      }
+
       fprintf(stderr, "%s:%u: SIZER: Processes not synthesized for statistics.\n",
 	      ivl_process_file(net), ivl_process_lineno(net));
       sizer_errors += 1;
@@ -124,6 +133,7 @@ static int process_scan_fun(ivl_process_t net, void* /*raw*/)
 
 static void emit_sizer_scope(ivl_design_t des, ivl_scope_t scope, struct sizer_statistics&stats)
 {
+
       fprintf(sizer_out, "**** module/scope: %s\n", ivl_scope_name(scope));
 
       scan_logs(scope, stats);

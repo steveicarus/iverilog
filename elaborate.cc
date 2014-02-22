@@ -4029,7 +4029,7 @@ NetProc* PEventStatement::elaborate_st(Design*des, NetScope*scope,
 					   ev, NetEvProbe::ANYEDGE,
 					   nset->size());
 	    for (unsigned idx = 0 ;  idx < nset->size() ;  idx += 1)
-		  connect(nset->at(idx).nex, pr->pin(idx));
+		  connect(nset->at(idx).lnk, pr->pin(idx));
 
 	    delete nset;
 	    des->add_node(pr);
@@ -4303,7 +4303,7 @@ NetProc* PEventStatement::elaborate_wait(Design*des, NetScope*scope,
 					  wait_event, NetEvProbe::ANYEDGE,
 					  wait_set->size());
       for (unsigned idx = 0; idx < wait_set->size() ;  idx += 1)
-	    connect(wait_set->at(idx).nex, wait_pr->pin(idx));
+	    connect(wait_set->at(idx).lnk, wait_pr->pin(idx));
 
       delete wait_set;
       des->add_node(wait_pr);
