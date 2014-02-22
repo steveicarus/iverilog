@@ -358,6 +358,10 @@ NetEConst* NetEBComp::eval_less_(const NetExpr*le, const NetExpr*re) const
 
 NetEConst* NetEBComp::must_be_leeq_(const NetExpr*le, const verinum&rv, bool eq_flag) const
 {
+	// The following optimization is not valid if le can contain 'x'
+	// or 'z' values.
+      if (le->expr_type() == IVL_VT_LOGIC) return 0;
+
       assert(le->expr_width() > 0);
       verinum lv (verinum::V1, le->expr_width());
       if (le->has_sign() && rv.has_sign()) {

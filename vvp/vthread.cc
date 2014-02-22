@@ -5058,7 +5058,7 @@ bool of_POP_VEC4(vthread_t thr, vvp_code_t cp)
 /*
  * %pow
  */
-bool of_POW(vthread_t thr, vvp_code_t)
+static bool of_POW_base(vthread_t thr, vvp_code_t cp, bool signed_flag)
 {
       vvp_vector4_t valb = thr->pop_vec4();
       vvp_vector4_t vala = thr->pop_vec4();
@@ -5072,6 +5072,32 @@ bool of_POW(vthread_t thr, vvp_code_t)
         /* If we have an X or Z in the arguments return X. */
       if (xv2.is_NaN() || yv2.is_NaN()) {
 	    vvp_vector4_t tmp (wid, BIT4_X);
+	    thr->push_vec4(tmp);
+	    return true;
+      }
+
+	// Is the exponent negative? If so, table 5-6 in IEEE1364-2005
+	// defines what value is returned.
+      if (signed_flag && yv2.value(yv2.size()-1)) {
+	    int a_val;
+	    vvp_bit4_t pad = BIT4_0, lsb = BIT4_0;
+	    if (vector2_to_value(xv2, a_val, true)) {
+		  if (a_val == 0) {
+			pad = BIT4_X; lsb = BIT4_X;
+		  }
+		  if (a_val == 1) {
+			pad = BIT4_0; lsb = BIT4_1;
+		  }
+		  if (a_val == -1) {
+			if (yv2.value(0)) {
+			      pad = BIT4_1; lsb = BIT4_1;
+			} else {
+			      pad = BIT4_0; lsb = BIT4_1;
+			}
+		  }
+	    }
+	    vvp_vector4_t tmp (wid, pad);
+	    tmp.set_bit(0, lsb);
 	    thr->push_vec4(tmp);
 	    return true;
       }
@@ -5091,35 +5117,14 @@ bool of_POW(vthread_t thr, vvp_code_t)
       return true;
 }
 
-/*
- * %pow/s
- */
-bool of_POW_S(vthread_t thr, vvp_code_t)
+bool of_POW(vthread_t thr, vvp_code_t cp)
 {
-      vvp_vector4_t yv = thr->pop_vec4();
-      vvp_vector4_t xv = thr->pop_vec4();
+      return of_POW_base(thr, cp, false);
+}
 
-      assert(xv.size()==yv.size());
-      unsigned wid = xv.size();
-
-        /* If we have an X or Z in the arguments return X. */
-      if (xv.has_xz() || yv.has_xz()) {
-	    vvp_vector4_t tmp (wid, BIT4_X);
-	    thr->push_vec4(tmp);
-	    return true;
-      }
-
-        /* Calculate the result using the double pow() function. */
-      double xd, yd, resd;
-      vector4_to_value(xv, xd, true);
-      vector4_to_value(yv, yd, true);
-	/* 2**-1 and -2**-1 are defined to be zero. */
-      if ((yd == -1.0) && (fabs(xd) == 2.0)) resd = 0.0;
-      else resd = pow(xd, yd);
-      vvp_vector4_t res = vvp_vector4_t(wid, resd);
-
-      thr->push_vec4(res);
-      return true;
+bool of_POW_S(vthread_t thr, vvp_code_t cp)
+{
+      return of_POW_base(thr, cp, true);
 }
 
 bool of_POW_WR(vthread_t thr, vvp_code_t)

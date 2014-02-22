@@ -1011,8 +1011,18 @@ static void force_link_rval(ivl_statement_t net, ivl_expr_t rval)
       ivl_expr_t lword_idx, rword_idx;
       unsigned long use_lword = 0, use_rword = 0;
 
-      if (ivl_expr_type(rval) != IVL_EX_SIGNAL)
+      if (ivl_expr_type(rval) != IVL_EX_SIGNAL) {
+	    if (ivl_expr_type(rval) == IVL_EX_NUMBER ||
+	        ivl_expr_type(rval) == IVL_EX_REALNUM)
+		  return;
+
+	    fprintf(stderr, "%s:%u: tgt-vvp sorry: procedural continuous "
+		    "assignments are not yet fully supported. The RHS of "
+		    "this assignment will only be evaluated once, at the "
+		    "time the assignment statement is executed.\n",
+		    ivl_stmt_file(net), ivl_stmt_lineno(net));
 	    return;
+      }
 
       switch (ivl_statement_type(net)) {
 	  case IVL_ST_CASSIGN:

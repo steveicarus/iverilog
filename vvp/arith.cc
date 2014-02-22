@@ -453,35 +453,37 @@ void vvp_arith_pow::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 {
       dispatch_operand_(ptr, bit);
 
-      vvp_vector4_t res4;
-      if (signed_flag_) {
-	    if (op_a_.has_xz() || op_b_.has_xz()) {
-		  ptr.ptr()->send_vec4(x_val_, 0);
-		  return;
-	    }
+      vvp_vector2_t a2 (op_a_, true);
+      vvp_vector2_t b2 (op_b_, true);
 
-	    double ad, bd, resd;
-	    vector4_to_value(op_a_, ad, true);
-	    vector4_to_value(op_b_, bd, true);
-	      /* 2**-1 and -2**-1 are defined to be zero. */
-	    if ((bd == -1) && (fabs(ad) == 2.0)) resd = 0.0;
-	    else resd = pow(ad, bd);
-
-	    res4 = vvp_vector4_t(wid_, resd);
-      } else {
-	    vvp_vector2_t a2 (op_a_, true);
-	    vvp_vector2_t b2 (op_b_, true);
-
-	    if (a2.is_NaN() || b2.is_NaN()) {
-		  ptr.ptr()->send_vec4(x_val_, 0);
-		  return;
-	    }
-
-	    vvp_vector2_t result = pow(a2, b2);
-	    res4 = vector2_to_vector4(result, wid_);
+        // If we have an X or Z in the arguments return X.
+      if (a2.is_NaN() || b2.is_NaN()) {
+	    ptr.ptr()->send_vec4(x_val_, 0);
+	    return;
       }
 
-      ptr.ptr()->send_vec4(res4, 0);
+	// Is the exponent negative? If so, table 5-6 in IEEE1364-2005
+	// defines what value is returned.
+      if (signed_flag_ && b2.value(b2.size()-1)) {
+	    int a_val;
+	    double r_val = 0.0;
+	    if (vector2_to_value(a2, a_val, true)) {
+		  if (a_val == 0) {
+			ptr.ptr()->send_vec4(x_val_, 0);
+			return;
+		  }
+		  if (a_val == 1) {
+			r_val = 1.0;
+		  }
+		  if (a_val == -1) {
+			r_val = b2.value(0) ? -1.0 : 1.0;
+		  }
+	    }
+	    ptr.ptr()->send_vec4(vvp_vector4_t(wid_, r_val), 0);
+	    return;
+      }
+
+      ptr.ptr()->send_vec4(vector2_to_vector4(pow(a2, b2), wid_), 0);
 }
 
 
