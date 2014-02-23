@@ -1318,10 +1318,42 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	$$ = tmp;
       }
 
+      // Handle for_variable_declaration syntax by wrapping the for(...)
+      // statement in a synthetic named block. We can name the block
+      // after the variable that we are creating, that identifier is
+      // safe in the controlling scope.
   | K_for '(' data_type IDENTIFIER '=' expression ';' expression ';' for_step ')'
+      { static unsigned for_counter = 0;
+	char for_block_name [64];
+	snprintf(for_block_name, sizeof for_block_name, "$ivl_for_loop%u", for_counter);
+	for_counter += 1;
+	PBlock*tmp = pform_push_block_scope(for_block_name, PBlock::BL_SEQ);
+	FILE_NAME(tmp, @1);
+	current_block_stack.push(tmp);
+
+	list<decl_assignment_t*>assign_list;
+	decl_assignment_t*tmp_assign = new decl_assignment_t;
+	tmp_assign->name = lex_strings.make($4);
+	assign_list.push_back(tmp_assign);
+	pform_makewire(@4, 0, str_strength, &assign_list, NetNet::REG, $3);
+      }
     statement_or_null
-      { $$ = 0;
-	yyerror(@3, "sorry: for_variable_declaration not supported");
+      { pform_name_t tmp_hident;
+	tmp_hident.push_back(name_component_t(lex_strings.make($4)));
+
+	PEIdent*tmp_ident = pform_new_ident(tmp_hident);
+	FILE_NAME(tmp_ident, @4);
+
+	PForStatement*tmp_for = new PForStatement(tmp_ident, $6, $8, $10, $13);
+	FILE_NAME(tmp_for, @1);
+
+	pform_pop_scope();
+	vector<Statement*>tmp_for_list (1);
+	tmp_for_list[0] = tmp_for;
+	PBlock*tmp_blk = current_block_stack.top();
+	tmp_blk->set_statement(tmp_for_list);
+	$$ = tmp_blk;
+	delete[]$4;
       }
 
   | K_forever statement_or_null
