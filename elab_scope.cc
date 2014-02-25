@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -193,9 +193,7 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
       verinum min_value (0);
       verinum max_value (0);
       if (enum_type->signed_flag) {
-	    min_value = v_not((pow(verinum(2),
-	                           verinum(use_enum->packed_width()-1)))) +
-	                one_value;
+	    min_value = -pow(verinum(2), verinum(use_enum->packed_width()-1));
 	    max_value = pow(verinum(2), verinum(use_enum->packed_width()-1)) -
 	                one_value;
       } else {

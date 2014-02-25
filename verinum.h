@@ -1,7 +1,7 @@
 #ifndef __verinum_H
 #define __verinum_H
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -171,11 +171,13 @@ inline verinum::V operator != (const verinum&left, const verinum&right)
 { return (left == right)? verinum::V0 : verinum::V1; }
 
 
-/* These are arithmetic operators. These generally work to produce
-   results that do not overflow. That means the result may expand or
-   contract to hold the bits needed to hold the operation results
-   accurately. It is up to the caller to truncate or pad if a specific
-   width is expected. */
+/* These are arithmetic operators. If any operand is unsized, they
+   generally work to produce results that do not overflow. That means
+   the result may expand or contract to hold the bits needed to hold
+   the operation results accurately. It is up to the caller to truncate
+   or pad if a specific width is expected. If all operands are sized,
+   the normal Verilog rules for result size are used. */
+extern verinum operator - (const verinum&right);
 extern verinum operator + (const verinum&left, const verinum&right);
 extern verinum operator - (const verinum&left, const verinum&right);
 extern verinum operator * (const verinum&left, const verinum&right);
@@ -190,6 +192,6 @@ extern verinum operator>> (const verinum&left, unsigned shift);
 extern verinum concat(const verinum&left, const verinum&right);
 
 /* Bitwise not returns the ones complement. */
-extern verinum v_not(const verinum&left);
+extern verinum operator ~ (const verinum&left);
 
 #endif

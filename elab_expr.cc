@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -5341,13 +5341,8 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 	  case '-':
 	    if (NetEConst*ipc = dynamic_cast<NetEConst*>(ip)) {
 
-		  verinum val = ipc->value();
-
-		    /* Calculate unary minus as 0-val */
-		  verinum zero (verinum::V0, expr_wid);
-		  zero.has_sign(val.has_sign());
-		  verinum nval = verinum(zero - val, expr_wid);
-		  tmp = new NetEConst(nval);
+		  verinum val = - ipc->value();
+		  tmp = new NetEConst(val);
 		  tmp->cast_signed(signed_flag_);
 		  tmp->set_line(*this);
 		  delete ip;
@@ -5460,7 +5455,7 @@ NetExpr* PEUnary::elaborate_expr_bits_(NetExpr*operand, unsigned expr_wid) const
 	      // The only operand that I know can get here is the
 	      // unary not (~).
 	    ivl_assert(*this, op_ == '~');
-	    value = v_not(value);
+	    value = ~value;
 
 	    ctmp = new NetEConst(value);
 	    ctmp->set_line(*this);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -261,7 +261,7 @@ verinum* PEUnary::eval_const(Design*des, NetScope*scope) const
 		for (unsigned idx = 0 ;  idx < val->len() ;  idx += 1)
 		      tmp.set(idx, val->get(idx));
 
-		*val = v_not(tmp) + verinum(verinum::V1, 1);
+		*val = -tmp;
 		val->has_sign(true);
 		return val;
 	  }
