@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1431,7 +1431,7 @@ bool of_BREAKPOINT(vthread_t, vvp_code_t)
 }
 
 /*
- * the %cassign/link instruction connects a source node to a
+ * The %cassign/link instruction connects a source node to a
  * destination node. The destination node must be a signal, as it is
  * marked with the source of the cassign so that it may later be
  * unlinked without specifically knowing the source that this
@@ -1446,17 +1446,8 @@ bool of_CASSIGN_LINK(vthread_t, vvp_code_t cp)
 	    = dynamic_cast<vvp_fun_signal_base*>(dst->fun);
       assert(sig);
 
-	/* Detect the special case that we are already continuous
-	   assigning the source onto the destination. */
-      if (sig->cassign_link == src)
-	    return true;
-
-	/* If there is an existing cassign driving this node, then
-	   unlink it. We can have only 1 cassign at a time. */
-      if (sig->cassign_link != 0) {
-	    vvp_net_ptr_t tmp (dst, 1);
-	    sig->cassign_link->unlink(tmp);
-      }
+	/* Any previous continuous assign should have been removed already. */
+      assert(sig->cassign_link == 0);
 
       sig->cassign_link = src;
 
@@ -1469,7 +1460,27 @@ bool of_CASSIGN_LINK(vthread_t, vvp_code_t cp)
 }
 
 /*
- * the %cassign/v instruction invokes a continuous assign of a
+ * If there is an existing continuous assign linked to the destination
+ * node, unlink it. This must be done before applying a new continuous
+ * assign, otherwise the initial assigned value will be propagated to
+ * any other nodes driven by the old continuous assign source.
+ */
+static void cassign_unlink(vvp_net_t*dst)
+{
+      vvp_fun_signal_base*sig
+	    = dynamic_cast<vvp_fun_signal_base*>(dst->fun);
+      assert(sig);
+
+      if (sig->cassign_link == 0)
+	    return;
+
+      vvp_net_ptr_t tmp (dst, 1);
+      sig->cassign_link->unlink(tmp);
+      sig->cassign_link = 0;
+}
+
+/*
+ * The %cassign/v instruction invokes a continuous assign of a
  * constant value to a signal. The instruction arguments are:
  *
  *     %cassign/v <net>, <base>, <wid> ;
@@ -1486,10 +1497,13 @@ bool of_CASSIGN_V(vthread_t thr, vvp_code_t cp)
       unsigned  base = cp->bit_idx[0];
       unsigned  wid  = cp->bit_idx[1];
 
+	/* Remove any previous continuous assign to this net. */
+      cassign_unlink(net);
+
 	/* Collect the thread bits into a vector4 item. */
       vvp_vector4_t value = vthread_bits_to_vector(thr, base, wid);
 
-	/* set the value into port 1 of the destination. */
+	/* Set the value into port 1 of the destination. */
       vvp_net_ptr_t ptr (net, 1);
       vvp_send_vec4(ptr, value, 0);
 
@@ -1500,6 +1514,9 @@ bool of_CASSIGN_WR(vthread_t thr, vvp_code_t cp)
 {
       vvp_net_t*net  = cp->net;
       double value = thr->pop_real();
+
+	/* Remove any previous continuous assign to this net. */
+      cassign_unlink(net);
 
 	/* Set the value into port 1 of the destination. */
       vvp_net_ptr_t ptr (net, 1);
@@ -1513,6 +1530,9 @@ bool of_CASSIGN_X0(vthread_t thr, vvp_code_t cp)
       vvp_net_t*net = cp->net;
       unsigned base = cp->bit_idx[0];
       unsigned wid = cp->bit_idx[1];
+
+	/* Remove any previous continuous assign to this net. */
+      cassign_unlink(net);
 
 	// Implicitly, we get the base into the target vector from the
 	// X0 register.
