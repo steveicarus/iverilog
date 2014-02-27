@@ -538,7 +538,7 @@ NetExpr* PEBinary::elaborate_expr_base_mult_(Design*,
 		  return tmp;
 	    }
 
-	    if (rp_val.is_zero()) {
+	    if (rp_val.is_zero() && (lp->expr_type() != IVL_VT_LOGIC)) {
 		  NetEConst*tmp = make_const_0(expr_wid);
                   tmp->cast_signed(signed_flag_);
                   tmp->set_line(*this);
