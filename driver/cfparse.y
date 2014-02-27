@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 2001-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -61,6 +61,7 @@ static void translate_file_name(char*text)
 %token TOK_Da TOK_Dc TOK_Dv TOK_Dy
 %token TOK_DEFINE TOK_INCDIR TOK_INTEGER_WIDTH TOK_LIBDIR TOK_LIBDIR_NOCASE
 %token TOK_LIBEXT TOK_PARAMETER TOK_TIMESCALE TOK_VHDL_WORK TOK_VHDL_LIBDIR
+%token TOK_WIDTH_CAP
 %token <text> TOK_PLUSARG TOK_PLUSWORD TOK_STRING
 
 %%
@@ -188,6 +189,13 @@ item
                 { char*tmp = substitutions($2);
 		  free($2);
 		  integer_width = strtoul(tmp,0,10);
+		  free(tmp);
+		}
+
+	| TOK_WIDTH_CAP TOK_PLUSARG
+                { char*tmp = substitutions($2);
+		  free($2);
+		  width_cap = strtoul(tmp,0,10);
 		  free(tmp);
 		}
 

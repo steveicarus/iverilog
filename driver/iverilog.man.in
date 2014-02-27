@@ -1,4 +1,4 @@
-.TH iverilog 1 "April 2nd, 2013" "" "Version %M.%m.%n %E"
+.TH iverilog 1 "February 26th, 2014" "" "Version %M.%m.%n %E"
 .SH NAME
 iverilog - Icarus Verilog compiler
 
@@ -462,6 +462,12 @@ This allows the programmer to select the width for integer variables
 in the Verilog source. The default is 32, the value can be any desired
 integer value.
 
+.TP 8
+.B +width-cap+\fIvalue\fP
+This allows the programmer to select the width cap for unsized expressions.
+If the calculated width for an unsized expression exceeds this value, the
+compiler will issue a warning and limit the expression width to this value.
+
 .SH "VARIABLES IN COMMAND FILES"
 
 In certain cases, iverilog supports variables in command files. These
@@ -515,7 +521,7 @@ Tips on using, debugging, and developing the compiler can be found at
 
 .SH COPYRIGHT
 .nf
-Copyright \(co  2002\-2011 Stephen Williams
+Copyright \(co  2002\-2014 Stephen Williams
 
 This document can be freely redistributed according to the terms of the
 GNU General Public License version 2.0

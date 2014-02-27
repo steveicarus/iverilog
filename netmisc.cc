@@ -746,9 +746,9 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 
         // If context_width is positive, this is the RHS of an assignment,
         // so the LHS width must also be included in the width calculation.
-      if ((context_width > 0) && (pe->expr_type() != IVL_VT_REAL)
-          && (expr_width < (unsigned)context_width))
-            expr_width = context_width;
+      unsigned pos_context_width = context_width > 0 ? context_width : 0;
+      if ((pe->expr_type() != IVL_VT_REAL) && (expr_width < pos_context_width))
+            expr_width = pos_context_width;
 
       if (debug_elaborate) {
             cerr << pe->get_fileline() << ": elab_and_eval: test_width of "
@@ -765,13 +765,22 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
         // If we can get the same result using a smaller expression
         // width, do so.
       if ((context_width > 0) && (pe->expr_type() != IVL_VT_REAL)
-          && (expr_width > (unsigned)context_width)) {
-            expr_width = max(pe->min_width(), (unsigned)context_width);
+          && (expr_width > pos_context_width)) {
+            expr_width = max(pe->min_width(), pos_context_width);
 
             if (debug_elaborate) {
                   cerr << pe->get_fileline() << ":        "
                        << "pruned to width=" << expr_width << endl;
             }
+      }
+
+      if ((mode >= PExpr::LOSSLESS) && (expr_width > width_cap)
+          && (expr_width > pos_context_width)) {
+            cerr << pe->get_fileline() << ": warning: excessive unsized "
+                 << "expression width detected." << endl;
+            cerr << pe->get_fileline() << ":        : The expression width "
+                 << "is capped at " << width_cap << " bits." << endl;
+	    expr_width = width_cap;
       }
 
       unsigned flags = PExpr::NO_FLAGS;
@@ -789,10 +798,10 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
                   tmp = cast_to_real(tmp);
                   break;
                 case IVL_VT_BOOL:
-                  tmp = cast_to_int2(tmp, context_width > 0 ? context_width : 0);
+                  tmp = cast_to_int2(tmp, pos_context_width);
                   break;
                 case IVL_VT_LOGIC:
-                  tmp = cast_to_int4(tmp, context_width > 0 ? context_width : 0);
+                  tmp = cast_to_int4(tmp, pos_context_width);
                   break;
                 default:
                   break;

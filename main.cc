@@ -1,5 +1,5 @@
 const char COPYRIGHT[] =
-          "Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)";
+          "Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)";
 
 /*
  *    This source code is free software; you can redistribute it
@@ -190,6 +190,11 @@ bool disable_concatz_generation = false;
 bool verbose_flag = false;
 
 unsigned integer_width = 32;
+
+/*
+ * Width limit for unsized expressions.
+ */
+unsigned width_cap = 65536;
 
 int def_ts_units = 0;
 int def_ts_prec = 0;
@@ -646,6 +651,9 @@ static void read_iconfig_file(const char*ipath)
 
 	    } else if (strcmp(buf, "iwidth") == 0) {
 		  integer_width = strtoul(cp,0,10);
+
+	    } else if (strcmp(buf, "widthcap") == 0) {
+		  width_cap = strtoul(cp,0,10);
 
 	    } else if (strcmp(buf, "library_file") == 0) {
 		  perm_string path = filename_strings.make(cp);

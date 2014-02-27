@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -140,6 +140,8 @@ int gen_relative_include = 0;
 char warning_flags[16] = "n";
 
 unsigned integer_width = 32;
+
+unsigned width_cap = 65536;
 
 char*mod_list = 0;
 char*command_filename = 0;
@@ -1191,6 +1193,8 @@ int main(int argc, char **argv)
       }
 
       fprintf(iconfig_file, "iwidth:%u\n", integer_width);
+
+      fprintf(iconfig_file, "widthcap:%u\n", width_cap);
 
 	/* Write the preprocessor command needed to preprocess a
 	   single file. This may be used to preprocess library
