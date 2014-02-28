@@ -97,9 +97,14 @@ class verinum {
 
       V operator[] (unsigned idx) const { return get(idx); }
 
-
+	// Return the value as a native unsigned integer. If the value is
+	// larger than can be represented by the returned type, return
+	// the maximum value of that type. If the value has any x or z
+	// bits or has zero width, return the value 0.
       uint64_t as_ulong64() const;
+      unsigned as_unsigned() const;
       unsigned long as_ulong() const;
+
       signed long   as_long() const;
       double as_double() const;
       string as_string() const;

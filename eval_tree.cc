@@ -1089,7 +1089,7 @@ NetEConst* NetEBShift::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
       verinum val;
       if (rv.is_defined()) {
-	    unsigned shift = rv.as_ulong();
+	    unsigned shift = rv.as_unsigned();
 
 	    switch (op_) {
 		case 'l':

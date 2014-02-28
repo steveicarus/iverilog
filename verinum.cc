@@ -378,6 +378,25 @@ void verinum::set(unsigned off, const verinum&val)
 	    bits_[off+idx] = val[idx];
 }
 
+unsigned verinum::as_unsigned() const
+{
+      if (nbits_ == 0)
+	    return 0;
+
+      if (!is_defined())
+	    return 0;
+
+      unsigned val = 0;
+      unsigned mask = 1;
+      for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1, mask <<= 1)
+	    if (bits_[idx] == V1) {
+		  if (mask == 0) return ~mask;
+		  val |= mask;
+	    }
+
+      return val;
+}
+
 unsigned long verinum::as_ulong() const
 {
       if (nbits_ == 0)
@@ -386,15 +405,13 @@ unsigned long verinum::as_ulong() const
       if (!is_defined())
 	    return 0;
 
-      unsigned top = nbits_;
-      if (top >= (8 * sizeof(unsigned long)))
-	  top = 8 * sizeof(unsigned long);
-
       unsigned long val = 0;
       unsigned long mask = 1;
-      for (unsigned idx = 0 ;  idx < top ;  idx += 1, mask <<= 1)
-	    if (bits_[idx] == V1)
+      for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1, mask <<= 1)
+	    if (bits_[idx] == V1) {
+		  if (mask == 0) return ~mask;
 		  val |= mask;
+	    }
 
       return val;
 }
@@ -407,15 +424,13 @@ uint64_t verinum::as_ulong64() const
       if (!is_defined())
 	    return 0;
 
-      unsigned top = nbits_;
-      if (top >= (8 * sizeof(uint64_t)))
-	  top = 8 * sizeof(uint64_t);
-
       uint64_t val = 0;
       uint64_t mask = 1;
-      for (unsigned idx = 0 ;  idx < top ;  idx += 1, mask <<= 1)
-	    if (bits_[idx] == V1)
+      for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1, mask <<= 1)
+	    if (bits_[idx] == V1) {
+		  if (mask == 0) return ~mask;
 		  val |= mask;
+	    }
 
       return val;
 }
