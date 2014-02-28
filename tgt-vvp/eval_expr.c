@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1490,12 +1490,6 @@ static struct vector_info draw_add_immediate(ivl_expr_t le,
       assert(number_is_immediate(re, IMM_WID, 0));
       imm = get_number_immediate(re);
 
-	/* This shouldn't generally happen, because the elaborator
-	   should take care of simple constant propagation like this,
-	   but it doesn't have to and it is easy to catch here. */
-      if (imm == 0)
-	    return lv;
-
       switch (lv.base) {
 	  case 0: /* Left expression is 0. */
 	    lv.base = allocate_vector(wid);
@@ -1556,8 +1550,6 @@ static struct vector_info draw_sub_immediate(ivl_expr_t le,
       assert(! number_is_unknown(re));
       assert(number_is_immediate(re, IMM_WID, 0));
       imm = get_number_immediate(re);
-      if (imm == 0)
-	    return lv;
 
       switch (lv.base) {
 	  case 0:
@@ -1602,8 +1594,6 @@ static struct vector_info draw_mul_immediate(ivl_expr_t le,
       assert(! number_is_unknown(re));
       assert(number_is_immediate(re, IMM_WID, 0));
       imm = get_number_immediate(re);
-      if (imm == 0)
-	    return lv;
 
       fprintf(vvp_out, "    %%muli %u, %lu, %u;\n", lv.base, imm, lv.wid);
 
