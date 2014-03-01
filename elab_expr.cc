@@ -759,7 +759,7 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
               // in the following calculations.
             if (r_val < 0)
                   r_val = 0;
-            if (r_val > width_cap)
+            if ((unsigned long)r_val > width_cap)
                   r_val = width_cap;
 
               // If the left operand is a simple unsized number, we
