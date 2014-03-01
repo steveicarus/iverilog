@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -538,7 +538,7 @@ NetExpr* PEBinary::elaborate_expr_base_mult_(Design*,
 		  return tmp;
 	    }
 
-	    if (rp_val.is_zero()) {
+	    if (rp_val.is_zero() && (lp->expr_type() != IVL_VT_LOGIC)) {
 		  NetEConst*tmp = make_const_0(expr_wid);
                   tmp->cast_signed(signed_flag_);
                   tmp->set_line(*this);
@@ -756,12 +756,11 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
                   r_val = rc->value().as_long();
 
               // Clip to a sensible range to avoid underflow/overflow
-              // in the following calculations. 1024 bits should be
-              // enough for anyone...
+              // in the following calculations.
             if (r_val < 0)
                   r_val = 0;
-            if (r_val > 1024)
-                  r_val = 1024;
+            if ((unsigned long)r_val > width_cap)
+                  r_val = width_cap;
 
               // If the left operand is a simple unsized number, we
               // can calculate the actual width required for the power
@@ -5373,13 +5372,8 @@ NetExpr* PEUnary::elaborate_expr(Design*des, NetScope*scope,
 	  case '-':
 	    if (NetEConst*ipc = dynamic_cast<NetEConst*>(ip)) {
 
-		  verinum val = ipc->value();
-
-		    /* Calculate unary minus as 0-val */
-		  verinum zero (verinum::V0, expr_wid);
-		  zero.has_sign(val.has_sign());
-		  verinum nval = verinum(zero - val, expr_wid);
-		  tmp = new NetEConst(nval);
+		  verinum val = - ipc->value();
+		  tmp = new NetEConst(val);
 		  tmp->cast_signed(signed_flag_);
 		  tmp->set_line(*this);
 		  delete ip;
@@ -5492,7 +5486,7 @@ NetExpr* PEUnary::elaborate_expr_bits_(NetExpr*operand, unsigned expr_wid) const
 	      // The only operand that I know can get here is the
 	      // unary not (~).
 	    ivl_assert(*this, op_ == '~');
-	    value = v_not(value);
+	    value = ~value;
 
 	    ctmp = new NetEConst(value);
 	    ctmp->set_line(*this);

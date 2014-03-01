@@ -1,7 +1,7 @@
 #ifndef __globals_H
 #define __globals_H
 /*
- * Copyright (c) 2000-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -23,6 +23,9 @@
 
   /* This is the integer-width argument that will be passed to ivl. */
 extern unsigned integer_width;
+
+  /* This is the width-cap argument that will be passed to ivl. */
+extern unsigned width_cap;
 
 extern const char*vhdlpp_work;
 extern const char**vhdlpp_libdir;

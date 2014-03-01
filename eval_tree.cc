@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -175,11 +175,11 @@ NetExpr* NetEBAdd::eval_tree()
 	    if (op_ == se->op_) {
 		    /* (a + lval) + rval  --> a + (rval+lval) */
 		    /* (a - lval) - rval  --> a - (rval+lval) */
-		  val = verinum(rval + lval, wid);
+		  val = cast_to_width(rval + lval, wid);
 	    } else {
 		    /* (a - lval) + rval  -->  a + (rval-lval) */
 		    /* (a + lval) - rval  -->  a - (rval-lval) */
-		  val = verinum(rval - lval, wid);
+		  val = cast_to_width(rval - lval, wid);
 	    }
 
 	    NetEConst*tmp = new NetEConst(val);
@@ -217,10 +217,10 @@ NetExpr* NetEBAdd::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 	    verinum val;
 	    switch (op_) {
 		case '+':
-		  val = verinum(lval + rval, wid);
+		  val = cast_to_width(lval + rval, wid);
 		  break;
 		case '-':
-		  val = verinum(lval - rval, wid);
+		  val = cast_to_width(lval - rval, wid);
 		  break;
 		default:
 		  return 0;
@@ -816,14 +816,15 @@ NetExpr* NetEBDiv::eval_arguments_(const NetExpr*l, const NetExpr*r) const
       verinum val;
       switch (op_) {
 	  case '/':
-	    val = verinum(lval / rval, wid);
+	    val = cast_to_width(lval / rval, wid);
 	    break;
 	  case '%':
-	    val = verinum(lval % rval, wid);
+	    val = cast_to_width(lval % rval, wid);
 	    break;
 	  default:
 	    return 0;
       }
+
       NetExpr*tmp = new NetEConst(val);
       ivl_assert(*this, tmp);
       eval_debug(this, tmp, false);
@@ -1027,7 +1028,7 @@ NetExpr* NetEBMult::eval_arguments_(const NetExpr*l, const NetExpr*r) const
       ivl_assert(*this, lval.len() == wid);
       ivl_assert(*this, rval.len() == wid);
 
-      verinum val(lval * rval, wid);
+      verinum val = cast_to_width(lval * rval, wid);
       NetEConst*tmp = new NetEConst(val);
       ivl_assert(*this, tmp);
       eval_debug(this, tmp, false);
@@ -1064,7 +1065,7 @@ NetExpr* NetEBPow::eval_arguments_(const NetExpr*l, const NetExpr*r) const
       ivl_assert(*this, wid > 0);
       ivl_assert(*this, lval.len() == wid);
 
-      verinum val(pow(lval, rval), wid);
+      verinum val = cast_to_width(pow(lval, rval), wid);
       NetEConst*res = new NetEConst(val);
       ivl_assert(*this, res);
       eval_debug(this, res, false);
@@ -1088,16 +1089,16 @@ NetEConst* NetEBShift::eval_arguments_(const NetExpr*l, const NetExpr*r) const
 
       verinum val;
       if (rv.is_defined()) {
-	    unsigned shift = rv.as_ulong();
+	    unsigned shift = rv.as_unsigned();
 
 	    switch (op_) {
 		case 'l':
-		  val = verinum(lv << shift, wid);
+		  val = cast_to_width(lv << shift, wid);
 		  break;
 		case 'r':
                   lv.has_sign(false);
 		case 'R':
-		  val = verinum(lv >> shift, wid);
+		  val = cast_to_width(lv >> shift, wid);
 		  break;
 		default:
 		  return 0;
@@ -1446,14 +1447,7 @@ NetExpr* NetEUnary::eval_arguments_(const NetExpr*ex) const
 	    break;
 
 	  case '-':
-	    if (val.is_defined()) {
-		  verinum tmp (verinum::V0, val.len());
-		  tmp.has_sign(val.has_sign());
-		  val = verinum(tmp - val, val.len());
-	    } else {
-		  for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
-			val.set(idx, verinum::Vx);
-	    }
+	    val = -val;
 	    break;
 
 	  case 'm':
@@ -1461,9 +1455,7 @@ NetExpr* NetEUnary::eval_arguments_(const NetExpr*ex) const
 		  for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
 			val.set(idx, verinum::Vx);
 	    } else if (val.is_negative()) {
-		  verinum tmp (verinum::V0, val.len());
-		  tmp.has_sign(val.has_sign());
-		  val = verinum(tmp - val, val.len());
+		  val = -val;
 	    }
 	    break;
 

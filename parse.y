@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -2259,7 +2259,7 @@ pos_neg_number
       { $$ = $1;
       }
   | '-' number
-      { verinum tmp = v_not(*($2)) + verinum(1);
+      { verinum tmp = -(*($2));
 	*($2) = tmp;
 	$$ = $2;
       }

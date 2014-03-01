@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1079,6 +1079,7 @@ static struct vector_info draw_binary_expr_le(ivl_expr_t expr,
 
       return lv;
 }
+
 
 static struct vector_info draw_binary_expr(ivl_expr_t expr,
 					   unsigned wid,

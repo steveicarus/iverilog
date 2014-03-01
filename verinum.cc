@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,6 +24,7 @@
 # include  <cassert>
 # include  <cmath> // Needed to get pow for as_double().
 # include  <cstdio> // Needed to get snprintf for as_string().
+# include  <algorithm>
 
 #if !defined(HAVE_LROUND)
 /*
@@ -200,7 +201,6 @@ verinum::verinum(double val, bool)
       fraction = frexp(val, &exponent);
       nbits_ = exponent+1;
       bits_ = new V[nbits_];
-      const verinum const_one(1);
 
 	/* If the value is small enough just use lround(). */
       if (nbits_ <= BITS_IN_LONG) {
@@ -230,9 +230,9 @@ verinum::verinum(double val, bool)
 	    for (int wd = nwords; wd >= 0; wd -= 1) {
 		  unsigned long bits = (unsigned long) fraction;
 		  fraction = fraction - (double) bits;
-		  unsigned max = (wd+1)*BITS_IN_LONG;
-		  if (max > nbits_) max = nbits_;
-		  for (unsigned idx = wd*BITS_IN_LONG; idx < max; idx += 1) {
+		  unsigned max_idx = (wd+1)*BITS_IN_LONG;
+		  if (max_idx > nbits_) max_idx = nbits_;
+		  for (unsigned idx = wd*BITS_IN_LONG; idx < max_idx; idx += 1) {
 			bits_[idx] = (bits&1) ? V1 : V0;
 			bits >>= 1;
 		  }
@@ -242,7 +242,7 @@ verinum::verinum(double val, bool)
 
 	/* Convert a negative number if needed. */
       if (is_neg) {
-	    *this = v_not(*this) + const_one;
+	    *this = -(*this);
       }
 
 	/* Trim the result. */
@@ -378,6 +378,25 @@ void verinum::set(unsigned off, const verinum&val)
 	    bits_[off+idx] = val[idx];
 }
 
+unsigned verinum::as_unsigned() const
+{
+      if (nbits_ == 0)
+	    return 0;
+
+      if (!is_defined())
+	    return 0;
+
+      unsigned val = 0;
+      unsigned mask = 1;
+      for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1, mask <<= 1)
+	    if (bits_[idx] == V1) {
+		  if (mask == 0) return ~mask;
+		  val |= mask;
+	    }
+
+      return val;
+}
+
 unsigned long verinum::as_ulong() const
 {
       if (nbits_ == 0)
@@ -386,15 +405,13 @@ unsigned long verinum::as_ulong() const
       if (!is_defined())
 	    return 0;
 
-      unsigned top = nbits_;
-      if (top >= (8 * sizeof(unsigned long)))
-	  top = 8 * sizeof(unsigned long);
-
       unsigned long val = 0;
       unsigned long mask = 1;
-      for (unsigned idx = 0 ;  idx < top ;  idx += 1, mask <<= 1)
-	    if (bits_[idx] == V1)
+      for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1, mask <<= 1)
+	    if (bits_[idx] == V1) {
+		  if (mask == 0) return ~mask;
 		  val |= mask;
+	    }
 
       return val;
 }
@@ -407,15 +424,13 @@ uint64_t verinum::as_ulong64() const
       if (!is_defined())
 	    return 0;
 
-      unsigned top = nbits_;
-      if (top >= (8 * sizeof(uint64_t)))
-	  top = 8 * sizeof(uint64_t);
-
       uint64_t val = 0;
       uint64_t mask = 1;
-      for (unsigned idx = 0 ;  idx < top ;  idx += 1, mask <<= 1)
-	    if (bits_[idx] == V1)
+      for (unsigned idx = 0 ;  idx < nbits_ ;  idx += 1, mask <<= 1)
+	    if (bits_[idx] == V1) {
+		  if (mask == 0) return ~mask;
 		  val |= mask;
+	    }
 
       return val;
 }
@@ -968,7 +983,7 @@ static verinum::V add_with_carry(verinum::V l, verinum::V r, verinum::V&c)
 	    return verinum::V0;
 }
 
-verinum v_not(const verinum&left)
+verinum operator ~ (const verinum&left)
 {
       verinum val = left;
       for (unsigned idx = 0 ;  idx < val.len() ;  idx += 1)
@@ -988,137 +1003,190 @@ verinum v_not(const verinum&left)
 }
 
 /*
- * Addition works a bit at a time, from the least significant up to
- * the most significant. The result is signed only if both of the
- * operands are signed. The result is also expanded as needed to
- * prevent overflow. It is up to the caller to shrink the result back
- * down if that is the desire.
+ * Addition and subtraction works a bit at a time, from the least
+ * significant up to the most significant. The result is signed only
+ * if both of the operands are signed. If either operand is unsized,
+ * the result is expanded as needed to prevent overflow.
  */
+
 verinum operator + (const verinum&left, const verinum&right)
 {
-      unsigned min = left.len();
-      if (right.len() < min) min = right.len();
+      const bool has_len_flag = left.has_len() && right.has_len();
+      const bool signed_flag = left.has_sign() && right.has_sign();
 
-      unsigned max = left.len();
-      if (right.len() > max) max = right.len();
+      unsigned min_len = min(left.len(), right.len());
+      unsigned max_len = max(left.len(), right.len());
 
-      bool signed_flag = left.has_sign() && right.has_sign();
-      verinum::V*val_bits = new verinum::V[max+1];
+	// If either the left or right values are undefined, the
+	// entire result is undefined.
+      if (!left.is_defined() || !right.is_defined()) {
+	    unsigned len = has_len_flag ? max_len : 1;
+	    verinum result (verinum::Vx, len, has_len_flag);
+	    result.has_sign(signed_flag);
+	    return result;
+      }
+
+      verinum::V*val_bits = new verinum::V[max_len+1];
 
       verinum::V carry = verinum::V0;
-      for (unsigned idx = 0 ;  idx < min ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < min_len ;  idx += 1)
 	    val_bits[idx] = add_with_carry(left[idx], right[idx], carry);
 
-      verinum::V rpad = signed_flag? right[right.len()-1] : verinum::V0;
-      verinum::V lpad = signed_flag? left[left.len()-1]   : verinum::V0;
+      verinum::V rpad = sign_bit(right);
+      verinum::V lpad = sign_bit(left);
 
       if (left.len() > right.len()) {
 
-	    for (unsigned idx = min ;  idx < left.len() ;  idx += 1)
+	    for (unsigned idx = min_len ;  idx < max_len ;  idx += 1)
 		  val_bits[idx] = add_with_carry(left[idx], rpad, carry);
 
       } else {
 
-	    for (unsigned idx = min ;  idx < right.len() ;  idx += 1)
+	    for (unsigned idx = min_len ;  idx < max_len ;  idx += 1)
 		  val_bits[idx] = add_with_carry(lpad, right[idx], carry);
       }
 
-      val_bits[max] = add_with_carry(lpad, rpad, carry);
-#if 0
-      if (signed_flag) {
-	    if (val_bits[max] != val_bits[max-1])
-		  max += 1;
+      unsigned len = max_len;
+      if (!has_len_flag) {
+	    val_bits[max_len] = add_with_carry(lpad, rpad, carry);
+	    if (signed_flag) {
+		  if (val_bits[max_len] != val_bits[max_len-1]) len += 1;
+	    } else {
+		  if (val_bits[max_len] != verinum::V0) len += 1;
+	    }
       }
-#endif
-      verinum val (val_bits, max+1, false);
-      val.has_sign(signed_flag);
+      verinum result (val_bits, len, has_len_flag);
+      result.has_sign(signed_flag);
 
       delete[]val_bits;
 
-      return val;
+      return result;
 }
 
 verinum operator - (const verinum&left, const verinum&right)
 {
-      unsigned min = left.len();
-      if (right.len() < min) min = right.len();
+      const bool has_len_flag = left.has_len() && right.has_len();
+      const bool signed_flag = left.has_sign() && right.has_sign();
 
-      unsigned max = left.len();
-      if (right.len() > max) max = right.len();
+      unsigned min_len = min(left.len(), right.len());
+      unsigned max_len = max(left.len(), right.len());
 
-      bool signed_flag = left.has_sign() && right.has_sign();
-      verinum::V*val_bits = new verinum::V[max+1];
+	// If either the left or right values are undefined, the
+	// entire result is undefined.
+      if (!left.is_defined() || !right.is_defined()) {
+	    unsigned len = has_len_flag ? max_len : 1;
+	    verinum result (verinum::Vx, len, has_len_flag);
+	    result.has_sign(signed_flag);
+	    return result;
+      }
+
+      verinum::V*val_bits = new verinum::V[max_len+1];
 
       verinum::V carry = verinum::V1;
-      for (unsigned idx = 0 ;  idx < min ;  idx += 1)
+      for (unsigned idx = 0 ;  idx < min_len ;  idx += 1)
 	    val_bits[idx] = add_with_carry(left[idx], ~right[idx], carry);
 
-      verinum::V rpad = signed_flag? ~right[right.len()-1] : verinum::V1;
-      verinum::V lpad = signed_flag?  left[left.len()-1]   : verinum::V0;
+      verinum::V rpad = sign_bit(right);
+      verinum::V lpad = sign_bit(left);
 
       if (left.len() > right.len()) {
 
-	    for (unsigned idx = min ;  idx < left.len() ;  idx += 1)
-		  val_bits[idx] = add_with_carry(left[idx], rpad, carry);
+	    for (unsigned idx = min_len ;  idx < max_len ;  idx += 1)
+		  val_bits[idx] = add_with_carry(left[idx], ~rpad, carry);
 
       } else {
 
-	    for (unsigned idx = min ;  idx < right.len() ;  idx += 1)
+	    for (unsigned idx = min_len ;  idx < max_len ;  idx += 1)
 		  val_bits[idx] = add_with_carry(lpad, ~right[idx], carry);
       }
 
-      if (signed_flag) {
-	    val_bits[max] = add_with_carry(lpad, rpad, carry);
-	    if (val_bits[max] != val_bits[max-1])
-		  max += 1;
+      unsigned len = max_len;
+      if (signed_flag && !has_len_flag) {
+	    val_bits[max_len] = add_with_carry(lpad, ~rpad, carry);
+	    if (val_bits[max_len] != val_bits[max_len-1]) len += 1;
       }
-
-      verinum val (val_bits, max, false);
-      val.has_sign(signed_flag);
+      verinum result (val_bits, len, has_len_flag);
+      result.has_sign(signed_flag);
 
       delete[]val_bits;
 
-      return val;
+      return result;
+}
+
+verinum operator - (const verinum&right)
+{
+      const bool has_len_flag = right.has_len();
+      const bool signed_flag = right.has_sign();
+
+      unsigned len = right.len();
+
+	// If either the left or right values are undefined, the
+	// entire result is undefined.
+      if (!right.is_defined()) {
+	    verinum result (verinum::Vx, has_len_flag ? len : 1, has_len_flag);
+	    result.has_sign(signed_flag);
+	    return result;
+      }
+
+      verinum::V*val_bits = new verinum::V[len+1];
+
+      verinum::V carry = verinum::V1;
+      for (unsigned idx = 0 ;  idx < len ;  idx += 1)
+	    val_bits[idx] = add_with_carry(verinum::V0, ~right[idx], carry);
+
+      if (signed_flag && !has_len_flag) {
+	    val_bits[len] = add_with_carry(verinum::V0, ~sign_bit(right), carry);
+	    if (val_bits[len] != val_bits[len-1]) len += 1;
+      }
+      verinum result (val_bits, len, has_len_flag);
+      result.has_sign(signed_flag);
+
+      delete[]val_bits;
+
+      return result;
 }
 
 /*
- * This multiplies two verinum numbers together into a verinum
- * result. The resulting number is as large as the sum of the sizes of
- * the operand.
+ * This operator multiplies the left number by the right number. The
+ * result is signed only if both of the operands are signed. If either
+ * operand is unsized, the resulting number is as large as the sum of
+ * the sizes of the operands.
  *
  * The algorithm used is successive shift and add operations,
  * implemented as the nested loops.
- *
- * If either value is not completely defined, then the result is not
- * defined either.
  */
 verinum operator * (const verinum&left, const verinum&right)
 {
       const bool has_len_flag = left.has_len() && right.has_len();
+      const bool signed_flag = left.has_sign() && right.has_sign();
 
-	/* If either operand is not fully defined, then the entire
-	   result is undefined. Create a result that is the right size
-	   and is filled with 'bx bits. */
-      if (! (left.is_defined() && right.is_defined())) {
-	    verinum result (verinum::Vx, left.len()+right.len(), has_len_flag);
-	    result.has_sign(left.has_sign() || right.has_sign());
+      const unsigned l_len = left.len();
+      const unsigned r_len = right.len();
+
+      unsigned len = has_len_flag ? max(l_len, r_len) : l_len + r_len;
+
+	// If either the left or right values are undefined, the
+	// entire result is undefined.
+      if (!left.is_defined() || !right.is_defined()) {
+	    verinum result (verinum::Vx, has_len_flag ? len : 1, has_len_flag);
+	    result.has_sign(signed_flag);
 	    return result;
       }
 
-      verinum result(verinum::V0, left.len() + right.len(), has_len_flag);
-      result.has_sign(left.has_sign() || right.has_sign());
+      verinum result(verinum::V0, len, has_len_flag);
+      result.has_sign(signed_flag);
 
       verinum::V r_sign = sign_bit(right);
-      for (unsigned rdx = 0 ;  rdx < result.len() ;  rdx += 1) {
+      for (unsigned rdx = 0 ;  rdx < len ;  rdx += 1) {
 
-	    verinum::V r_bit = rdx < right.len()? right.get(rdx) : r_sign;
+	    verinum::V r_bit = rdx < r_len ? right.get(rdx) : r_sign;
 	    if (r_bit == verinum::V0)
 		  continue;
 
 	    verinum::V l_sign = sign_bit(left);
 	    verinum::V carry = verinum::V0;
-	    for (unsigned ldx = 0 ;  ldx < result.len()-rdx ;  ldx += 1) {
-		  verinum::V l_bit = ldx < left.len()? left[ldx] : l_sign;
+	    for (unsigned ldx = 0 ;  ldx < (len - rdx) ;  ldx += 1) {
+		  verinum::V l_bit = ldx < l_len ? left[ldx] : l_sign;
 		  result.set(ldx+rdx, add_with_carry(l_bit,
 						     result[rdx+ldx],
 						     carry));
@@ -1150,22 +1218,20 @@ static verinum recursive_pow(const verinum&left, verinum&right)
             return make_p_one(left.len(), left.has_len(), left.has_sign());
       }
 
-      verinum res;
+      verinum result;
       if (right.get(0) == 1) {
-              // The exponent is odd, so subtract 1 from it and recurse
+              // The exponent is odd, so subtract 1 from it and recurse.
+	      // We know it's odd, so the subtraction is easy.
 	    right.set(0, verinum::V0);
-	    res = pow(left, right);
-	    res = left * res;
+	    result = pow(left, right);
+	    result = left * result;
       } else {
               // The exponent is even, so divide it by 2 and recurse
             right = right >> 1;
-            res = pow(left, right);
-            res = res * res;
+            result = pow(left, right);
+            result = result * result;
       }
-      if (left.has_len()) {
-            res = verinum(res, left.len());
-      }
-      return res;
+      return result;
 }
 
 verinum pow(const verinum&left, const verinum&right)
@@ -1176,8 +1242,9 @@ verinum pow(const verinum&left, const verinum&right)
       verinum p_one = make_p_one(left.len(), left.has_len(), left.has_sign());
       verinum m_one = make_m_one(left.len(), left.has_len(), left.has_sign());
 
-	// If either the right or left values are undefined we return 'bx.
-      if (!right.is_defined() || !left.is_defined()) {
+	// If either the left or right values are undefined, the
+	// entire result is undefined.
+      if (!left.is_defined() || !right.is_defined()) {
 	    result = verinum(verinum::Vx, left.len(), left.has_len());
             result.has_sign(left.has_sign());
 
@@ -1221,40 +1288,52 @@ verinum pow(const verinum&left, const verinum&right)
 
 verinum operator << (const verinum&that, unsigned shift)
 {
-      verinum result(verinum::V0, that.len() + shift, that.has_len());
+      bool has_len_flag = that.has_len();
+
+      unsigned len = that.len();
+      if (!has_len_flag) len += shift;
+
+      verinum result(verinum::V0, len, has_len_flag);
       result.has_sign(that.has_sign());
 
-      for (unsigned idx = 0 ;  idx < that.len() ;  idx += 1)
-	    result.set(idx+shift, that.get(idx));
+      for (unsigned idx = shift ;  idx < len ;  idx += 1)
+	    result.set(idx, that.get(idx - shift));
 
-      return result;
+      return trim_vnum(result);
 }
 
 verinum operator >> (const verinum&that, unsigned shift)
 {
-      if (shift >= that.len()) {
-	    if (that.has_sign()) {
-		  verinum result (that.get(that.len()-1), 1);
-		  result.has_sign(true);
-		  return result;
-	    } else {
-		  verinum result(verinum::V0, 1);
-		  return result;
-	    }
+      bool has_len_flag = that.has_len();
+
+      unsigned len = that.len();
+
+      verinum::V sign_bit = that.has_sign() ? that.get(len-1) : verinum::V0;
+
+      if (shift >= len) {
+	    if (!has_len_flag) len = 1;
+	    verinum result(sign_bit, len, has_len_flag);
+	    result.has_sign(that.has_sign());
+	    return result;
       }
 
-      verinum result(that.has_sign()? that.get(that.len()-1) : verinum::V0,
-		     that.len() - shift, that.has_len());
+      if (!has_len_flag) len -= shift;
+      verinum result(sign_bit, len, has_len_flag);
       result.has_sign(that.has_sign());
 
       for (unsigned idx = shift ;  idx < that.len() ;  idx += 1)
 	    result.set(idx-shift, that.get(idx));
 
-      return result;
+      return trim_vnum(result);
 }
 
 static verinum unsigned_divide(verinum num, verinum den, bool signed_result)
 {
+	// We need the following calculations to be lossless. The
+	// result will be cast to the required width by the caller.
+      num.has_len(false);
+      den.has_len(false);
+
       unsigned nwid = num.len();
       while (nwid > 0 && (num.get(nwid-1) == verinum::V0))
 	    nwid -= 1;
@@ -1289,6 +1368,11 @@ static verinum unsigned_divide(verinum num, verinum den, bool signed_result)
 
 static verinum unsigned_modulus(verinum num, verinum den)
 {
+	// We need the following calculations to be lossless. The
+	// result will be cast to the required width by the caller.
+      num.has_len(false);
+      den.has_len(false);
+
       unsigned nwid = num.len();
       while (nwid > 0 && (num.get(nwid-1) == verinum::V0))
 	    nwid -= 1;
@@ -1316,39 +1400,29 @@ static verinum unsigned_modulus(verinum num, verinum den)
 }
 
 /*
- * This operator divides the left number by the right number. If
- * either value is signed, the result is signed. If both values have a
- * defined length, then the result has a defined length.
+ * This operator divides the left number by the right number. The result
+ * is signed only if both of the operands are signed.
  */
 verinum operator / (const verinum&left, const verinum&right)
 {
       const bool has_len_flag = left.has_len() && right.has_len();
+      const bool signed_flag = left.has_sign() && right.has_sign();
 
       unsigned use_len = left.len();
 
-	/* If either operand is not fully defined, then the entire
-	   result is undefined. Create a result that is the right size
-	   and is filled with 'bx bits. */
-      if (! (left.is_defined() && right.is_defined())) {
+	// If either the left or right values are undefined, or the
+	// right value is zero, the entire result is undefined.
+      if (!left.is_defined() || !right.is_defined() || right.is_zero()) {
 	    verinum result (verinum::Vx, use_len, has_len_flag);
-	    result.has_sign(left.has_sign() || right.has_sign());
-	    return result;
-      }
-
-	/* If the right expression is a zero value, then the result is
-	   filled with 'bx bits. */
-      if (right.is_zero()) {
-	    verinum result (verinum::Vx, use_len, has_len_flag);
-	    result.has_sign(left.has_sign() || right.has_sign());
+	    result.has_sign(signed_flag);
 	    return result;
       }
 
       verinum result(verinum::Vz, use_len, has_len_flag);
-      result.has_sign(left.has_sign() || right.has_sign());
 
 	/* do the operation differently, depending on whether the
 	   result is signed or not. */
-      if (result.has_sign()) {
+      if (signed_flag) {
 
 	    if (use_len <= (8*sizeof(long) - 1)) {
 		  long l = left.as_long();
@@ -1361,23 +1435,23 @@ verinum operator / (const verinum&left, const verinum&right)
 
 	    } else {
 		  verinum use_left, use_right;
-		  verinum zero(verinum::V0, 1, false);
-		  zero.has_sign(true);
 		  bool negative = false;
-		  if (left < zero) {
-			use_left = zero - left;
+		  if (left.is_negative()) {
+			use_left = -left;
 			negative = !negative;
 		  } else {
 			use_left = left;
 		  }
-		  if (right < zero) {
-			use_right = zero - right;
+		  use_left.has_sign(false);
+		  if (right.is_negative()) {
+			use_right = -right;
 			negative = !negative;
 		  } else {
 			use_right = right;
 		  }
+		  use_right.has_sign(false);
 		  result = unsigned_divide(use_left, use_right, true);
-		  if (negative) result = zero - result;
+		  if (negative) result = -result;
 	    }
 
       } else {
@@ -1398,36 +1472,31 @@ verinum operator / (const verinum&left, const verinum&right)
 	    }
       }
 
+      if (has_len_flag)
+	    result = cast_to_width(result, use_len);
+
+      result.has_sign(signed_flag);
       return trim_vnum(result);
 }
 
 verinum operator % (const verinum&left, const verinum&right)
 {
       const bool has_len_flag = left.has_len() && right.has_len();
+      const bool signed_flag = left.has_sign() && right.has_sign();
 
       unsigned use_len = left.len();
 
-	/* If either operand is not fully defined, then the entire
-	   result is undefined. Create a result that is the right size
-	   and is filled with 'bx bits. */
-      if (! (left.is_defined() && right.is_defined())) {
+	// If either the left or right values are undefined, or the
+	// right value is zero, the entire result is undefined.
+      if (!left.is_defined() || !right.is_defined() || right.is_zero()) {
 	    verinum result (verinum::Vx, use_len, has_len_flag);
-	    result.has_sign(left.has_sign() || right.has_sign());
-	    return result;
-      }
-
-	/* If the right expression is a zero value, then the result is
-	   filled with 'bx bits. */
-      if (right.as_ulong() == 0) {
-	    verinum result (verinum::Vx, use_len, has_len_flag);
-	    result.has_sign(left.has_sign() || right.has_sign());
+	    result.has_sign(signed_flag);
 	    return result;
       }
 
       verinum result(verinum::Vz, use_len, has_len_flag);
-      result.has_sign(left.has_sign() || right.has_sign());
 
-      if (result.has_sign()) {
+      if (signed_flag) {
 	    if (use_len <= 8*sizeof(long)) {
 		    /* Use native signed modulus to do the work. */
 		  long l = left.as_long();
@@ -1439,23 +1508,22 @@ verinum operator % (const verinum&left, const verinum&right)
 		  }
 	    } else {
 		  verinum use_left, use_right;
-		  verinum zero(verinum::V0, 1, false);
-		  zero.has_sign(true);
 		  bool negative = false;
-		  if (left < zero) {
-			use_left = zero - left;
+		  if (left.is_negative()) {
+			use_left = -left;
 			negative = true;
 		  } else {
 			use_left = left;
 		  }
-		  if (right < zero) {
-			use_right = zero - right;
+		  use_left.has_sign(false);
+		  if (right.is_negative()) {
+			use_right = -right;
 		  } else {
 			use_right = right;
 		  }
+		  use_right.has_sign(false);
 		  result = unsigned_modulus(use_left, use_right);
-		  result.has_sign(true);
-		  if (negative) result = zero - result;
+		  if (negative) result = -result;
 	    }
       } else {
 	    if (use_len <= 8*sizeof(unsigned long)) {
@@ -1472,6 +1540,10 @@ verinum operator % (const verinum&left, const verinum&right)
 	    }
       }
 
+      if (has_len_flag)
+	    result = cast_to_width(result, use_len);
+
+      result.has_sign(signed_flag);
       return trim_vnum(result);
 }
 

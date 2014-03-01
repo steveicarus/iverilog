@@ -1,7 +1,7 @@
 #ifndef __compiler_H
 #define __compiler_H
 /*
- * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -35,6 +35,11 @@
  * self-determined contexts.
  */
 extern unsigned integer_width;
+
+/*
+ * The width_cap is the width limit for unsized expressions.
+ */
+extern unsigned width_cap;
 
 /*
  * This is the maximum number of recursive module loops allowed within

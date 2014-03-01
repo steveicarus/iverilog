@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2364,7 +2364,7 @@ vvp_vector2_t pow(const vvp_vector2_t&x, vvp_vector2_t&y)
 {
         /* If we have a zero exponent just return 1. */
       if (y == vvp_vector2_t(0L, 1)) {
- 	    return vvp_vector2_t(1L, x.size());
+	    return vvp_vector2_t(1L, x.size());
       }
 
         /* Is the value odd? */
