@@ -910,7 +910,7 @@ NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
               // determine the exact width required to hold the result.
               // But leave literal numbers exactly as the user supplied
               // them.
-            if ((mode >= PExpr::LOSSLESS) && !dynamic_cast<PENumber*>(pe))
+            if ((mode >= PExpr::LOSSLESS) && !dynamic_cast<PENumber*>(pe) && tmp->expr_width()>32)
                   ce->trim();
       }
 

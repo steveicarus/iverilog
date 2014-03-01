@@ -1998,7 +1998,7 @@ class NetEConst  : public NetExpr {
         /* This method allows the constant value to be converted
            to an unsized value. This is used after evaluating a
            unsized constant expression. */
-      virtual void trim();
+      void trim();
 
       virtual void expr_scan(struct expr_scan_t*) const;
       virtual void dump(ostream&) const;

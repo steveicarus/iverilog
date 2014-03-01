@@ -1326,6 +1326,13 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 
 NetExpr*PECallFunction::cast_to_width_(NetExpr*expr, unsigned wid) const
 {
+      if (debug_elaborate) {
+            cerr << get_fileline() << ": PECallFunction::cast_to_width_: "
+		 << "cast to " << wid
+                 << " bits " << (signed_flag_?"signed":"unsigned")
+		 << " from expr_width()=" << expr->expr_width() << endl;
+      }
+
         /* If the expression is a const, then replace it with a new
            const. This is a more efficient result. */
       if (NetEConst*tmp = dynamic_cast<NetEConst*>(expr)) {
@@ -1337,10 +1344,6 @@ NetExpr*PECallFunction::cast_to_width_(NetExpr*expr, unsigned wid) const
             }
             return tmp;
       }
-
-      if (debug_elaborate)
-            cerr << get_fileline() << ": debug: cast to " << wid
-                 << " bits " << (signed_flag_?"signed":"unsigned") << endl;
 
       NetESelect*tmp = new NetESelect(expr, 0, wid);
       tmp->cast_signed(signed_flag_);
@@ -1385,6 +1388,10 @@ NetExpr* PECallFunction::elaborate_sfunc_(Design*des, NetScope*scope,
 		  return 0;
 	    }
 
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PECallFunction::elaborate_sfunc_: "
+		       << name << " expression is the argument cast to expr_wid=" << expr_wid << endl;
+	    }
 	    PExpr*expr = parms_[0];
 	    NetExpr*sub = expr->elaborate_expr(des, scope, expr_width_, flags);
 
@@ -4916,8 +4923,21 @@ unsigned PENumber::test_width(Design*, NetScope*, width_mode_t&mode)
                   expr_width_ = integer_width;
                   mode = UNSIZED;
             } else if (mode < LOSSLESS) {
-                  mode = LOSSLESS;
+		  if (expr_width_ < integer_width) {
+			expr_width_ = integer_width;
+			if (mode < UNSIZED)
+			      mode = UNSIZED;
+		  } else {
+			mode = LOSSLESS;
+		  }
             }
+      }
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PENumber::test_width: "
+		 << "Value=" << *value_
+		 << ", width=" << expr_width_
+		 << ", output mode=" << width_mode_name(mode) << endl;
       }
 
       return expr_width_;
