@@ -173,20 +173,25 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 
 	/* Construct some phantom code that is the thread of the
 	   function call. The first instruction, at the start_address
-	   of the function, loads the points and calls the function.
-	   The last instruction is the usual %end. So the thread looks
+	   of the function, loads the ports and calls the function.
+	   The second instruction collects the function result. The
+	   last instruction is the usual %end. So the thread looks
 	   like this:
 
 	      %exec_ufunc <core>;
+	      %reap_ufunc <core>;
 	      %end;
 
-	   The %exec_ufunc copies the input values into local regs,
-           runs the function code, then copies the output values to
-           the destination net functors. */
+	   The %exec_ufunc copies the input values into local regs
+           and runs the function code. The %reap_ufunc then copies
+	   the output value to the destination net functor. */
 
-      vvp_code_t start_code = codespace_allocate();
-      start_code->opcode = of_EXEC_UFUNC;
-      code_label_lookup(start_code, code);
+      vvp_code_t exec_code = codespace_allocate();
+      exec_code->opcode = of_EXEC_UFUNC;
+      code_label_lookup(exec_code, code);
+
+      vvp_code_t reap_code = codespace_allocate();
+      reap_code->opcode = of_REAP_UFUNC;
 
       vvp_code_t end_code = codespace_allocate();
       end_code->opcode = &of_END;
@@ -204,13 +209,14 @@ void compile_ufunc(char*label, char*code, unsigned wid,
 	   that will contain the execution. */
       vvp_net_t*ptr = new vvp_net_t;
       ufunc_core*fcore = new ufunc_core(wid, ptr, portc, ports,
-					start_code, call_scope,
+					exec_code, call_scope,
 					retv.text, scope_label);
       ptr->fun = fcore;
       define_functor_symbol(label, ptr);
       free(label);
 
-      start_code->ufunc_core_ptr = fcore;
+      exec_code->ufunc_core_ptr = fcore;
+      reap_code->ufunc_core_ptr = fcore;
 
       wide_inputs_connect(fcore, argc, argv);
 

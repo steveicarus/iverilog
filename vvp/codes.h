@@ -218,6 +218,7 @@ extern bool of_XORR(vthread_t thr, vvp_code_t code);
 extern bool of_ZOMBIE(vthread_t thr, vvp_code_t code);
 
 extern bool of_EXEC_UFUNC(vthread_t thr, vvp_code_t code);
+extern bool of_REAP_UFUNC(vthread_t thr, vvp_code_t code);
 
 extern bool of_CHUNK_LINK(vthread_t thr, vvp_code_t code);
 
