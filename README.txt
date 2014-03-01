@@ -8,7 +8,7 @@ Icarus Verilog is intended to compile ALL of the Verilog HDL as
 described in the IEEE-1364 standard. Of course, it's not quite there
 yet. It does currently handle a mix of structural and behavioral
 constructs. For a view of the current state of Icarus Verilog, see its
-home page at <http://www.icarus.com/eda/verilog>.
+home page at <http://iverilog.icarus.com/>.
 
 Icarus Verilog is not aimed at being a simulator in the traditional
 sense, but a compiler that generates code employed by back-end
