@@ -298,7 +298,6 @@ static void put_vec_to_lval(ivl_statement_t net, struct vec_slice_info*slices)
       }
 }
 
-#if 0
 static ivl_type_t draw_lval_expr(ivl_lval_t lval)
 {
       ivl_lval_t lval_nest = ivl_lval_nest(lval);
@@ -319,7 +318,6 @@ static ivl_type_t draw_lval_expr(ivl_lval_t lval)
       fprintf(vvp_out, "    %%pop/obj 1, 1;\n");
       return ivl_type_prop_type(sub_type, ivl_lval_property_idx(lval));
 }
-#endif
 
 #if 0
 static void set_vec_to_lval_slice_nest(ivl_lval_t lval, unsigned bit, unsigned wid)
@@ -552,7 +550,9 @@ static void store_vec4_to_lval(ivl_statement_t net)
       for (unsigned lidx = 0 ; lidx < ivl_stmt_lvals(net) ; lidx += 1) {
 	    ivl_lval_t lval = ivl_stmt_lval(net,lidx);
 	    ivl_signal_t lsig = ivl_lval_sig(lval);
+	    ivl_lval_t nest = ivl_lval_nest(lval);
 	    unsigned lwid = ivl_lval_width(lval);
+
 
 	    ivl_expr_t part_off_ex = ivl_lval_part_off(lval);
 	      /* This is non-nil if the l-val is the word of a memory,
@@ -578,6 +578,7 @@ static void store_vec4_to_lval(ivl_statement_t net)
 			clr_flag(flag_index);
 		  }
 
+		  assert(lsig);
 		  fprintf(vvp_out, "    %%store/vec4a v%p, %d, %d;\n",
 			  lsig, word_index, part_index);
 
@@ -590,6 +591,7 @@ static void store_vec4_to_lval(ivl_statement_t net)
 		  int offset_index = allocate_word();
 		  draw_eval_expr_into_integer(part_off_ex, offset_index);
 		    /* Note that flag4 is set by the eval above. */
+		  assert(lsig);
 		  if (ivl_signal_type(lsig)==IVL_SIT_UWIRE) {
 			fprintf(vvp_out, "    %%force/vec4/off v%p_0, %u;\n",
 				lsig, offset_index);
@@ -599,8 +601,20 @@ static void store_vec4_to_lval(ivl_statement_t net)
 		  }
 		  clr_word(offset_index);
 
+	    } else if (nest) {
+		    /* No offset expression, but the l-value is
+		       nested, which probably means that it is a class
+		       member. We will use a property assign
+		       function. */
+		  assert(!lsig);
+		  ivl_type_t sub_type = draw_lval_expr(nest);
+		  assert(ivl_type_base(sub_type) == IVL_VT_CLASS);
+		  fprintf(vvp_out, "    %%store/prop/v %u;\n", ivl_lval_property_idx(lval));
+		  fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
+
 	    } else {
 		    /* No offset expression, so use simpler store function. */
+		  assert(lsig);
 		  assert(lwid == ivl_signal_width(lsig));
 		  fprintf(vvp_out, "    %%store/vec4 v%p_0, 0, %u;\n", lsig, lwid);
 	    }
