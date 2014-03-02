@@ -238,7 +238,16 @@ static void elaborate_scope_enumeration(Design*des, NetScope*scope,
 	    }
 
 	      // The enumeration value must fit into the enumeration bits.
-	    if ((cur_value > max_value) ||
+	    if (!cur_value.is_defined()) {
+		  if (cur_value.len() > (unsigned long)use_enum->packed_width()) {
+			cerr << use_enum->get_fileline()
+			     << ": error: Enumeration name " << cur->name
+			     << " value=" << cur_value
+			     << " is too wide for enumeration base type." << endl;
+			des->errors += 1;
+		  }
+
+	    } else if ((cur_value > max_value) ||
                 (cur_value.has_sign() && (cur_value < min_value))) {
 		  cerr << use_enum->get_fileline()
 		       << ": error: Enumeration name " << cur->name
