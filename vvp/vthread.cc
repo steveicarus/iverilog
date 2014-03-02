@@ -5078,15 +5078,15 @@ bool of_POP_VEC4(vthread_t thr, vvp_code_t cp)
 /*
  * %pow
  */
-static bool of_POW_base(vthread_t thr, vvp_code_t cp, bool signed_flag)
+static bool of_POW_base(vthread_t thr, bool signed_flag)
 {
       vvp_vector4_t valb = thr->pop_vec4();
       vvp_vector4_t vala = thr->pop_vec4();
 
       unsigned wid = vala.size();
 
-      vvp_vector2_t xv2 = vvp_vector2_t(vala);
-      vvp_vector2_t yv2 = vvp_vector2_t(valb);
+      vvp_vector2_t xv2 = vvp_vector2_t(vala, true);
+      vvp_vector2_t yv2 = vvp_vector2_t(valb, true);
 
 
         /* If we have an X or Z in the arguments return X. */
@@ -5137,14 +5137,14 @@ static bool of_POW_base(vthread_t thr, vvp_code_t cp, bool signed_flag)
       return true;
 }
 
-bool of_POW(vthread_t thr, vvp_code_t cp)
+bool of_POW(vthread_t thr, vvp_code_t)
 {
-      return of_POW_base(thr, cp, false);
+      return of_POW_base(thr, false);
 }
 
-bool of_POW_S(vthread_t thr, vvp_code_t cp)
+bool of_POW_S(vthread_t thr, vvp_code_t)
 {
-      return of_POW_base(thr, cp, true);
+      return of_POW_base(thr, true);
 }
 
 bool of_POW_WR(vthread_t thr, vvp_code_t)
