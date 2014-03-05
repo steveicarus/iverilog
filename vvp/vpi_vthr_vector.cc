@@ -292,6 +292,7 @@ class __vpiVThrVec4Stack : public __vpiHandle {
       void vpi_get_value_string_(p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_binstr_(p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_decstr_(p_vpi_value vp, const vvp_vector4_t&val);
+      void vpi_get_value_int_   (p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_real_  (p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_hexstr_(p_vpi_value vp, const vvp_vector4_t&val);
       void vpi_get_value_vector_(p_vpi_value vp, const vvp_vector4_t&val);
@@ -360,6 +361,9 @@ void __vpiVThrVec4Stack::vpi_get_value(p_vpi_value vp)
 	    break;
 	  case vpiHexStrVal:
 	    vpi_get_value_hexstr_(vp, val);
+	    break;
+	  case vpiIntVal:
+	    vpi_get_value_int_(vp, val);
 	    break;
 	  case vpiRealVal:
 	    vpi_get_value_real_(vp, val);
@@ -439,6 +443,14 @@ void __vpiVThrVec4Stack::vpi_get_value_hexstr_(p_vpi_value vp, const vvp_vector4
 	    hval = 0;
       }
       vp->value.str = rbuf;
+}
+
+void __vpiVThrVec4Stack::vpi_get_value_int_(p_vpi_value vp, const vvp_vector4_t&val)
+{
+      int32_t vali = 0;
+      int signed_flag = 0;
+      vector4_to_value(val, vali, signed_flag, false);
+      vp->value.integer = vali;
 }
 
 void __vpiVThrVec4Stack::vpi_get_value_real_(p_vpi_value vp, const vvp_vector4_t&val)
