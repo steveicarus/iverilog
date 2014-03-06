@@ -249,6 +249,7 @@ NetESignal* NetESignal::dup_expr() const
       NetESignal*tmp = new NetESignal(net_, word_);
       ivl_assert(*this, tmp);
       tmp->expr_width(expr_width());
+      tmp->cast_signed(has_sign());
       tmp->set_line(*this);
       return tmp;
 }

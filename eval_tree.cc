@@ -1384,6 +1384,7 @@ NetExpr*NetETernary::blended_arguments_(const NetExpr*te, const NetExpr*fe) cons
 	    if (tv == fv) val.set(idx, tv);
 	    else val.set(idx, verinum::Vx);
       }
+      val.has_sign(has_sign());
 
       if (debug_eval_tree) {
 	    cerr << get_fileline() << ": debug: Evaluate ternary with "
