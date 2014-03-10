@@ -46,12 +46,8 @@ static ivl_variable_type_t param_active_type = IVL_VT_LOGIC;
 static struct {
       NetNet::Type port_net_type;
       NetNet::PortType port_type;
-      ivl_variable_type_t var_type;
-      bool sign_flag;
       data_type_t* data_type;
-      list<pform_range_t>* range;
-} port_declaration_context = {NetNet::NONE, NetNet::NOT_A_PORT,
-                              IVL_VT_NO_TYPE, false, 0, 0};
+} port_declaration_context = {NetNet::NONE, NetNet::NOT_A_PORT, 0};
 
 /* The task and function rules need to briefly hold the pointer to the
    task/function that is currently in progress. */
@@ -1900,27 +1896,16 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	      if ($4 != 0) {
 		    yyerror(@4, "internal error: How can there be an unpacked range here?\n");
 	      }
-	      if (port_declaration_context.var_type == IVL_VT_NO_TYPE) {
-		    tmp = pform_make_task_ports(@3, use_port_type,
-					 port_declaration_context.data_type,
-					 ilist);
-	      } else {
-		    tmp = pform_make_task_ports(@3, use_port_type,
-					 port_declaration_context.var_type,
-					 port_declaration_context.sign_flag,
-					 copy_range(port_declaration_context.range),
-					 ilist);
-	      }
+	      tmp = pform_make_task_ports(@3, use_port_type,
+					  port_declaration_context.data_type,
+					  ilist);
+
 
 	} else {
 		// Otherwise, the decorations for this identifier
 		// indicate the type. Save the type for any right
 		// context thta may come later.
 	      port_declaration_context.port_type = use_port_type;
-	      port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	      port_declaration_context.sign_flag = false;
-	      delete port_declaration_context.range;
-	      port_declaration_context.range = 0;
 	      if ($2 == 0) {
 		    $2 = new vector_type_t(IVL_VT_LOGIC, false, 0);
 		    FILE_NAME($2, @3);
@@ -3817,10 +3802,7 @@ list_of_port_declarations
 		  pform_module_define_port(@3, name,
 					port_declaration_context.port_type,
 					port_declaration_context.port_net_type,
-					port_declaration_context.var_type,
-					port_declaration_context.sign_flag,
-					port_declaration_context.data_type,
-					port_declaration_context.range, 0);
+					port_declaration_context.data_type, 0);
 		  delete[]$3;
 		  $$ = tmp;
 		}
@@ -3841,14 +3823,9 @@ port_declaration
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
-	pform_module_define_port(@2, name, NetNet::PINPUT, $3, IVL_VT_NO_TYPE,
-				false, $4, 0, $1);
+	pform_module_define_port(@2, name, NetNet::PINPUT, $3, $4, $1);
 	port_declaration_context.port_type = NetNet::PINPUT;
 	port_declaration_context.port_net_type = $3;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
 	port_declaration_context.data_type = $4;
 	delete[]$5;
 	if ($6) {
@@ -3863,15 +3840,13 @@ port_declaration
 	perm_string name = lex_strings.make($4);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
-	pform_module_define_port(@2, name, NetNet::PINPUT,
-				 NetNet::WIRE, IVL_VT_REAL, true, 0, 0, $1);
+	real_type_t*real_type = new real_type_t(real_type_t::REAL);
+	FILE_NAME(real_type, @3);
+	pform_module_define_port(@2, name, NetNet::PINPUT, 
+				 NetNet::WIRE, real_type, $1);
 	port_declaration_context.port_type = NetNet::PINPUT;
 	port_declaration_context.port_net_type = NetNet::WIRE;
-	port_declaration_context.var_type = IVL_VT_REAL;
-	port_declaration_context.sign_flag = true;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
-	port_declaration_context.data_type = 0;
+	port_declaration_context.data_type = real_type;
 	delete[]$4;
 	$$ = ptmp;
       }
@@ -3879,14 +3854,9 @@ port_declaration
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
-	pform_module_define_port(@2, name, NetNet::PINOUT, $3, IVL_VT_NO_TYPE,
-				false, $4, 0, $1);
+	pform_module_define_port(@2, name, NetNet::PINOUT, $3, $4, $1);
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = $3;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
 	port_declaration_context.data_type = $4;
 	delete[]$5;
 	if ($6) {
@@ -3901,15 +3871,13 @@ port_declaration
 	perm_string name = lex_strings.make($4);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
+	real_type_t*real_type = new real_type_t(real_type_t::REAL);
+	FILE_NAME(real_type, @3);
 	pform_module_define_port(@2, name, NetNet::PINOUT,
-				 NetNet::WIRE, IVL_VT_REAL, true, 0, 0, $1);
+				 NetNet::WIRE, real_type, $1);
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = NetNet::WIRE;
-	port_declaration_context.var_type = IVL_VT_REAL;
-	port_declaration_context.sign_flag = true;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
-	port_declaration_context.data_type = 0;
+	port_declaration_context.data_type = real_type;
 	delete[]$4;
 	$$ = ptmp;
       }
@@ -3937,14 +3905,9 @@ port_declaration
 	      }
 	}
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
-	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, IVL_VT_NO_TYPE,
-				false, $4, 0, $1);
+	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, $4, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = use_type;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
 	port_declaration_context.data_type = $4;
 	delete[]$5;
 	if ($6) {
@@ -3959,15 +3922,13 @@ port_declaration
 	perm_string name = lex_strings.make($4);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
+	real_type_t*real_type = new real_type_t(real_type_t::REAL);
+	FILE_NAME(real_type, @3);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 NetNet::WIRE, IVL_VT_REAL, true, 0, 0, $1);
+				 NetNet::WIRE, real_type, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = NetNet::WIRE;
-	port_declaration_context.var_type = IVL_VT_REAL;
-	port_declaration_context.sign_flag = true;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
-	port_declaration_context.data_type = 0;
+	port_declaration_context.data_type = real_type;
 	delete[]$4;
 	$$ = ptmp;
       }
@@ -3986,14 +3947,9 @@ port_declaration
 	      }
 	}
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
-	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, IVL_VT_NO_TYPE,
-				false, $4, 0, $1);
+	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, $4, $1);
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = use_type;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
 	port_declaration_context.data_type = $4;
 
 	pform_make_reginit(@5, name, $7);

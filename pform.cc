@@ -2154,15 +2154,14 @@ void pform_make_reginit(const struct vlltype&li,
  */
 void pform_module_define_port(const struct vlltype&li,
 			      perm_string name,
-			      NetNet::PortType port_type,
+			      NetNet::PortType port_kind,
 			      NetNet::Type type,
-			      ivl_variable_type_t data_type,
-			      bool signed_flag,
 			      data_type_t*vtype,
-			      list<pform_range_t>*range,
 			      list<named_pexpr_t>*attr)
 {
       struct_type_t*struct_type = 0;
+      ivl_variable_type_t data_type = IVL_VT_NO_TYPE;
+      bool signed_flag = false;
 
       PWire*cur = pform_get_wire_in_scope(name);
       if (cur) {
@@ -2174,10 +2173,7 @@ void pform_module_define_port(const struct vlltype&li,
 	    return;
       }
 
-      if (vtype) {
-	    ivl_assert(li, data_type == IVL_VT_NO_TYPE);
-	    ivl_assert(li, range == 0);
-      }
+      list<pform_range_t>*range = 0;
 
       if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype)) {
 	    data_type = vec_type->base_type;
@@ -2216,7 +2212,7 @@ void pform_module_define_port(const struct vlltype&li,
       if (data_type == IVL_VT_NO_TYPE)
 	    data_type = IVL_VT_LOGIC;
 
-      cur = new PWire(name, type, port_type, data_type);
+      cur = new PWire(name, type, port_kind, data_type);
       FILE_NAME(cur, li);
 
       cur->set_signed(signed_flag);
