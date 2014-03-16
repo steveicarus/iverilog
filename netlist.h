@@ -610,6 +610,7 @@ public:
     static Enum merged( Enum lhs, Enum rhs );
 };
 
+extern std::ostream& operator << (std::ostream&, PortType::Enum);
 
   /*
    * Information on actual ports (rather than port-connected signals) of
