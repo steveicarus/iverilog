@@ -77,11 +77,19 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
 	    return;
       }
 
+	// If this turns out to be an assignment to an unpacked array,
+	// then handle that special case elsewhere.
+      if (lval->pin_count() > 1) {
+	    elaborate_unpacked_array_(des, scope, lval);
+	    return;
+      }
+
       ivl_assert(*this, lval->pin_count() == 1);
 
       if (debug_elaborate) {
-	    cerr << get_fileline() << ": debug: PGAssign: elaborated l-value"
-		 << " width=" << lval->vector_width() << endl;
+	    cerr << get_fileline() << ": PGAssign::elaborate: elaborated l-value"
+		 << " width=" << lval->vector_width()
+		 << ", pin_count=" << lval->pin_count() << endl;
       }
 
       NetExpr*rval_expr = elaborate_rval_expr(des, scope, lval->net_type(),
@@ -209,6 +217,26 @@ void PGAssign::elaborate(Design*des, NetScope*scope) const
       if (lval->local_flag())
 	    delete lval;
 
+}
+
+void PGAssign::elaborate_unpacked_array_(Design*des, NetScope*scope, NetNet*lval) const
+{
+      PEIdent*rval_pident = dynamic_cast<PEIdent*> (pin(1));
+      ivl_assert(*this, rval_pident);
+
+      NetNet*rval_net = rval_pident->elaborate_unpacked_net(des, scope);
+
+      ivl_assert(*this, rval_net->pin_count() == lval->pin_count());
+
+      for (unsigned idx = 0 ; idx < lval->pin_count() ; idx += 1) {
+	    NetBUFZ*driver = new NetBUFZ(scope, scope->local_symbol(),
+					 lval->vector_width(), false);
+	    driver->set_line(*this);
+	    des->add_node(driver);
+
+	    connect(lval->pin(idx), driver->pin(0));
+	    connect(driver->pin(1), rval_net->pin(idx));
+      }
 }
 
 unsigned PGBuiltin::calculate_array_count_(Design*des, NetScope*scope,

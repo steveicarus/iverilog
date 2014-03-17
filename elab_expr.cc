@@ -2585,6 +2585,7 @@ bool PEIdent::calculate_packed_indices_(Design*des, NetScope*scope, NetNet*net,
 {
       list<index_component_t> index;
       index = path_.back().index;
+      ivl_assert(*this, index.size() >= net->unpacked_dimensions());
       for (size_t idx = 0 ; idx < net->unpacked_dimensions() ; idx += 1)
 	    index.pop_front();
 

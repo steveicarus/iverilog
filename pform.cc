@@ -2173,24 +2173,34 @@ void pform_module_define_port(const struct vlltype&li,
 	    return;
       }
 
-      list<pform_range_t>*range = 0;
+	// Packed ranges
+      list<pform_range_t>*prange = 0;
+	// Unpacked dimensions
+      list<pform_range_t>*urange = 0;
+
+	// If this is an unpacked array, then split out the parts that
+	// we can send to the PWire object that we create.
+      if (uarray_type_t*uarr_type = dynamic_cast<uarray_type_t*> (vtype)) {
+	    urange = uarr_type->dims.get();
+	    vtype = uarr_type->base_type;
+      }
 
       if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype)) {
 	    data_type = vec_type->base_type;
 	    signed_flag = vec_type->signed_flag;
-	    range = vec_type->pdims.get();
+	    prange = vec_type->pdims.get();
 	    if (vec_type->reg_flag)
 		  type = NetNet::REG;
 
       } else if (atom2_type_t*atype = dynamic_cast<atom2_type_t*>(vtype)) {
 	    data_type = IVL_VT_BOOL;
 	    signed_flag = atype->signed_flag;
-	    range = make_range_from_width(atype->type_code);
+	    prange = make_range_from_width(atype->type_code);
 
       } else if (real_type_t*rtype = dynamic_cast<real_type_t*>(vtype)) {
 	    data_type = IVL_VT_REAL;
 	    signed_flag = true;
-	    range = 0;
+	    prange = 0;
 
 	    if (rtype->type_code != real_type_t::REAL) {
 		  VLerror(li, "sorry: Only real (not shortreal) supported here (%s:%d).",
@@ -2200,7 +2210,7 @@ void pform_module_define_port(const struct vlltype&li,
       } else if ((struct_type = dynamic_cast<struct_type_t*>(vtype))) {
 	    data_type = struct_type->figure_packed_base_type();
 	    signed_flag = false;
-	    range = 0;
+	    prange = 0;
 
       } else if (vtype) {
 	    VLerror(li, "sorry: Given type %s not supported here (%s:%d).",
@@ -2220,11 +2230,15 @@ void pform_module_define_port(const struct vlltype&li,
       if (struct_type) {
 	    cur->set_data_type(struct_type);
 
-      } else if (range == 0) {
+      } else if (prange == 0) {
 	    cur->set_range_scalar((type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
 
       } else {
-	    cur->set_range(*range, (type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
+	    cur->set_range(*prange, (type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
+      }
+
+      if (urange) {
+	    cur->set_unpacked_idx(*urange);
       }
 
       pform_bind_attributes(cur->attributes, attr);
