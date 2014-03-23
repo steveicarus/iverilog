@@ -228,15 +228,7 @@ void PGAssign::elaborate_unpacked_array_(Design*des, NetScope*scope, NetNet*lval
 
       ivl_assert(*this, rval_net->pin_count() == lval->pin_count());
 
-      for (unsigned idx = 0 ; idx < lval->pin_count() ; idx += 1) {
-	    NetBUFZ*driver = new NetBUFZ(scope, scope->local_symbol(),
-					 lval->vector_width(), false);
-	    driver->set_line(*this);
-	    des->add_node(driver);
-
-	    connect(lval->pin(idx), driver->pin(0));
-	    connect(driver->pin(1), rval_net->pin(idx));
-      }
+      assign_unpacked_with_bufz(des, scope, this, lval, rval_net);
 }
 
 unsigned PGBuiltin::calculate_array_count_(Design*des, NetScope*scope,
@@ -1378,18 +1370,22 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  unsigned int prt_vector_width = 0;
 		  PortType::Enum ptype = PortType::PIMPLICIT;
 		    // Scan the module sub-ports for this instance...
+		    // (Sub-ports are concatenated ports that form the
+		    // single port for the instance. This is not a
+		    // commonly used feature.)
 		  for (unsigned ldx = 0 ;  ldx < mport.size() ;  ldx += 1) {
 			unsigned lbase = inst * mport.size();
 			PEIdent*pport = mport[ldx];
-			assert(pport);
+			ivl_assert(*this, pport);
 			NetNet *netnet = pport->elaborate_subport(des, inst_scope);
 			prts[lbase + ldx] = netnet;
 			if (netnet == 0)
 			      continue;
 
-			assert(netnet);
-			prts_vector_width += netnet->vector_width();
-			prt_vector_width += netnet->vector_width();
+			ivl_assert(*this, netnet);
+			unsigned port_width = netnet->vector_width() * netnet->pin_count();
+			prts_vector_width += port_width;
+			prt_vector_width += port_width;
 			ptype = PortType::merged(netnet->port_type(), ptype);
 		  }
 		  inst_scope->add_module_port_info(idx, rmod->get_port_name(idx), ptype, prt_vector_width );
@@ -1420,8 +1416,24 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 	      // module[s] port. sig is the thing outside the module
 	      // that connects to the port.
 
-	    NetNet*sig;
+	    NetNet*sig = 0;
 	    if (prts.empty() || (prts[0]->port_type() == NetNet::PINPUT)) {
+
+		    // Special case: If the input port is an unpacked
+		    // array, then there should be no sub-ports and
+		    // the r-value expression is processed
+		    // differently.
+		  if (prts.size() >= 1 && prts[0]->pin_count()>1) {
+			ivl_assert(*this, prts.size()==1);
+
+			PEIdent*rval_pident = dynamic_cast<PEIdent*> (pins[idx]);
+			ivl_assert(*this, rval_pident);
+
+			NetNet*rval_net = rval_pident->elaborate_unpacked_net(des, scope);
+			ivl_assert(*this, rval_net->pin_count() == prts[0]->pin_count());
+			assign_unpacked_with_bufz(des, scope, this, prts[0], rval_net);
+			continue;
+		  }
 
 		    /* Input to module. elaborate the expression to
 		       the desired width. If this in an instance
@@ -1499,6 +1511,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	    } else if (prts[0]->port_type() == NetNet::PINOUT) {
 
+		    // For now, do not support unpacked array outputs.
+		  ivl_assert(*this, prts[0]->unpacked_dimensions()==0);
+
 		    /* Inout to/from module. This is a more
 		       complicated case, where the expression must be
 		       an lnet, but also an r-value net.
@@ -1554,6 +1569,9 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 
 	    } else {
+
+		    // For now, do not support unpacked array outputs.
+		  ivl_assert(*this, prts[0]->unpacked_dimensions()==0);
 
 		    /* Port type must be OUTPUT here. */
 		  ivl_assert(*this, prts[0]->port_type() == NetNet::POUTPUT);
@@ -5840,7 +5858,9 @@ Design* elaborate(list<perm_string>roots)
 			  // stuff to the design that should be cleaned later.
 			NetNet *netnet = mport[pin]->elaborate_subport(des, scope);
 			if (netnet != 0) {
-			  // Elaboration may actually fail with erroneous input source
+			  // Elaboration may actually fail with
+			  // erroneous input source
+			  ivl_assert(*mport[pin], netnet->pin_count()==1);
                           prt_vector_width += netnet->vector_width();
                           ptype = PortType::merged(netnet->port_type(), ptype);
 			}

@@ -1338,3 +1338,21 @@ NetExpr*collapse_array_indices(Design*des, NetScope*scope, NetNet*net,
       eval_expr(res, -1);
       return res;
 }
+
+void assign_unpacked_with_bufz(Design*des, NetScope*scope,
+			       const LineInfo*loc,
+			       NetNet*lval, NetNet*rval)
+{
+      ivl_assert(*loc, lval->pin_count()==rval->pin_count());
+
+      for (unsigned idx = 0 ; idx < lval->pin_count() ; idx += 1) {
+	    NetBUFZ*driver = new NetBUFZ(scope, scope->local_symbol(),
+					 lval->vector_width(), false);
+	    driver->set_line(*loc);
+	    des->add_node(driver);
+
+	    connect(lval->pin(idx), driver->pin(0));
+	    connect(driver->pin(1), rval->pin(idx));
+      }
+}
+

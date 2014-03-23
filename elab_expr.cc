@@ -3970,7 +3970,7 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 
       if (name_tail.index.empty()) {
 	    cerr << get_fileline() << ": error: Array " << path()
-		 << " Needs an array index here." << endl;
+		 << " needs an array index here." << endl;
 	    des->errors += 1;
 	    return 0;
       }

@@ -890,11 +890,24 @@ NetNet* PEIdent::elaborate_subport(Design*des, NetScope*scope) const
 		 << ", port_type()=" << sig->port_type() << endl;
       }
 
-      if (sig->unpacked_dimensions()) {
-	    cerr << get_fileline() << ": sorry: "
-		 << "Don't know now to elaborate unpacked array ports." << endl;
+      if (sig->unpacked_dimensions() && !gn_system_verilog()) {
+	    cerr << get_fileline() << ": error: "
+		 << "Ports cannot be unpacked arrays. Try enabling SystemVerilog support." << endl;
 	    des->errors += 1;
 	    return 0;
+      }
+
+	// There cannot be parts to an unpacked array, so process this
+	// simply as an unpacked array.
+      if (sig->unpacked_dimensions()) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_subport: "
+		       << "path_=\"" << path_
+		       << "\" is an unpacked array with " << sig->pin_count()
+		       << " elements." << endl;
+	    }
+	    scope->add_module_port_net(sig);
+	    return sig;
       }
 
 	/* Evaluate the part/bit select expressions, to get the part

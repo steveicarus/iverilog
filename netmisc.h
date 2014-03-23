@@ -349,4 +349,8 @@ extern NetExpr*collapse_array_exprs(Design*des, NetScope*scope,
 				    const LineInfo*loc, NetNet*net,
 				    const list<index_component_t>&indices);
 
+extern void assign_unpacked_with_bufz(Design*des, NetScope*scope,
+				      const LineInfo*loc,
+				      NetNet*lval, NetNet*rval);
+
 #endif
