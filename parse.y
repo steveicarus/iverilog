@@ -3882,6 +3882,8 @@ port_declaration
   | attribute_list_opt K_output net_type_opt data_type_or_implicit IDENTIFIER dimensions_opt
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
+	data_type_t*use_dtype = $4;
+	if ($6) use_dtype = new uarray_type_t(use_dtype, $6);
 	NetNet::Type use_type = $3;
 	if (use_type == NetNet::IMPLICIT) {
 	      if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($4)) {
@@ -3903,15 +3905,11 @@ port_declaration
 	      }
 	}
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
-	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, $4, $1);
+	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, use_dtype, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = use_type;
 	port_declaration_context.data_type = $4;
 	delete[]$5;
-	if ($6) {
-	      yyerror(@6, "sorry: Output ports with unpacked dimensions not supported.");
-	      delete $6;
-	}
 	$$ = ptmp;
       }
   | attribute_list_opt

@@ -1570,11 +1570,30 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 
 	    } else {
 
-		    // For now, do not support unpacked array outputs.
-		  ivl_assert(*this, prts[0]->unpacked_dimensions()==0);
-
 		    /* Port type must be OUTPUT here. */
 		  ivl_assert(*this, prts[0]->port_type() == NetNet::POUTPUT);
+
+		    // Special case: If the output port is an unpacked
+		    // array, then there should be no sub-ports and
+		    // the passed pexxpression is processed
+		    // differently. Note that we are calling it the
+		    // "r-value" expression, but since this is an
+		    // output port, we assign to it from the internal object.
+		  if (prts[0]->pin_count() > 1) {
+			ivl_assert(*this, prts.size()==1);
+
+			PEIdent*rval_pident = dynamic_cast<PEIdent*>(pins[idx]);
+			ivl_assert(*this, rval_pident);
+
+			NetNet*rval_net = rval_pident->elaborate_unpacked_net(des, scope);
+			ivl_assert(*this, rval_net->pin_count() == prts[0]->pin_count());
+
+			assign_unpacked_with_bufz(des, scope, this, rval_net, prts[0]);
+			continue;
+		  }
+
+		    // At this point, arrays are handled.
+		  ivl_assert(*this, prts[0]->unpacked_dimensions()==0);
 
 		    /* Output from module. Elaborate the port
 		       expression as the l-value of a continuous
