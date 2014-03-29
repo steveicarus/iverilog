@@ -309,7 +309,7 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
 	    if (min_wid < base->expr_width()) min_wid = base->expr_width();
 	      /* Now that we have the minimum needed width increase it by
 	       * one to make room for the normalization calculation. */
-	    min_wid += 1;
+	    min_wid += 2;
 	      /* Pad the base expression to the correct width. */
 	    base = pad_to_width(base, min_wid, *base);
 	      /* If the base expression is unsigned and either the lsb
@@ -344,7 +344,7 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
 	    if (min_wid < base->expr_width()) min_wid = base->expr_width();
 	      /* Now that we have the minimum needed width increase it by
 	       * one to make room for the normalization calculation. */
-	    min_wid += 1;
+	    min_wid += 2;
 	      /* Pad the base expression to the correct width. */
 	    base = pad_to_width(base, min_wid, *base);
 	      /* If the offset is greater than zero then we need to do

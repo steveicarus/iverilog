@@ -559,8 +559,9 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  packed_base = collapse_array_indices(des, scope, sig, tmp_index);
 
 		  if (debug_elaborate) {
-			cerr << get_fileline() << ": debug: "
-			     << "packed_base expression = " << *packed_base << endl;
+			cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
+			     << "packed_base=" << *packed_base
+			     << ", member_off=" << member_off << endl;
 		  }
 	    }
 
