@@ -750,8 +750,10 @@ class NetNet  : public NetObj, public PortType {
 
 	// Treating this node as a uwire, this function tests whether
 	// any bits in the canonical part are already driven. This is
-	// only useful for UNRESOLVED_WIRE objects.
-      bool test_and_set_part_driver(unsigned msb, unsigned lsb);
+	// only useful for UNRESOLVED_WIRE objects. The msb and lsb
+	// are the part select of the signal, and the widx is the word
+	// index if this is an unpacked array.
+      bool test_and_set_part_driver(unsigned msb, unsigned lsb, int widx =0);
 
       unsigned get_refs() const;
 

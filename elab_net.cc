@@ -735,7 +735,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       unsigned subnet_wid = midx-lidx+1;
 
 	/* Check if the l-value bits are double-driven. */
-      if (sig->type() == NetNet::UNRESOLVED_WIRE && sig->test_and_set_part_driver(midx,lidx)) {
+      if (sig->type() == NetNet::UNRESOLVED_WIRE && sig->test_and_set_part_driver(midx,lidx, widx_flag? widx : 0)) {
 	    cerr << get_fileline() << ": error: Unresolved net/uwire "
 	         << sig->name() << " cannot have multiple drivers." << endl;
 	    des->errors += 1;
