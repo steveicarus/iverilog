@@ -1790,6 +1790,11 @@ bool calculate_part(const LineInfo*li, Design*des, NetScope*scope,
 	    }
 	    return true;
 
+	  case index_component_t::SEL_IDX_UP:
+	    wid = lsb;
+	    off = msb;
+	    break;
+
 	  default:
 	    ivl_assert(*li, 0);
 	    break;
