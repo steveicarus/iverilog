@@ -200,9 +200,7 @@ static inline void dump_scope_path(ostream&o, const NetScope*scope)
 	    o << ".";
       }
       const hname_t name = scope->fullname();
-      o << name.peek_name();
-      if (name.has_number())
-	    o << "[" << name.peek_number() << "]";
+      o << name;
 }
 
 ostream& operator <<(ostream&o, struct __ScopePathManip marg)

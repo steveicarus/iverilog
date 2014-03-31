@@ -883,8 +883,10 @@ bool PGenerate::generate_scope_loop_(Design*des, NetScope*container)
 
 	// Check the generate block name.
 
-	// A generate "loop" can not have the same name as another scope object.
-      const NetScope *child = container->child(hname_t(scope_name));
+	// A generate "loop" can not have the same name as another
+	// scope object. Find any scope with this name, not just an
+	// exact match scope.
+      const NetScope *child = container->child_byname(scope_name);
       if (child) {
 	    cerr << get_fileline() << ": error: generate \"loop\" and ";
 	    child->print_type(cerr);

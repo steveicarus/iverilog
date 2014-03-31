@@ -949,7 +949,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
       des->errors += error_cnt_;
 
 	// A signal can not have the same name as a scope object.
-      const NetScope *child = scope->child(hname_t(name_));
+      const NetScope *child = scope->child_byname(name_);
       if (child) {
 	    cerr << get_fileline() << ": error: signal and ";
 	    child->print_type(cerr);

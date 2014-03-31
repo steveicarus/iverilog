@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -22,22 +22,26 @@
 # include  <iostream>
 # include  <cstring>
 # include  <cstdlib>
-# include  <climits>
 
+using namespace std;
 
 hname_t::hname_t()
 {
-      number_ = INT_MIN;
 }
 
 hname_t::hname_t(perm_string text)
 : name_(text)
 {
-      number_ = INT_MIN;
 }
 
 hname_t::hname_t(perm_string text, int num)
-: name_(text), number_(num)
+: name_(text), number_(1)
+{
+      number_[0] = num;
+}
+
+hname_t::hname_t(perm_string text, vector<int>&nums)
+: name_(text), number_(nums)
 {
 }
 
@@ -53,24 +57,50 @@ hname_t& hname_t::operator = (const hname_t&that)
       return *this;
 }
 
-bool operator < (const hname_t&l, const hname_t&r)
+bool hname_t::operator < (const hname_t&r) const
 {
-      int cmp = strcmp(l.peek_name(), r.peek_name());
+      int cmp = strcmp(name_, r.name_);
       if (cmp < 0) return true;
       if (cmp > 0) return false;
-      if (l.has_number() && r.has_number())
-	    return l.peek_number() < r.peek_number();
-      else
-	    return false;
+
+	// The text parts are equal, so compare then number
+	// parts. Finish as soon as we find one to be less or more
+	// than the other.
+      size_t idx = 0;
+      while (number_.size() > idx || r.number_.size() > idx) {
+
+	      // Ran out of l numbers, so less.
+	    if (number_.size() <= idx)
+		  return true;
+
+	      // Ran out of r numbers, so greater.
+	    if (r.number_.size() <= idx)
+		  return false;
+
+	    if (number_[idx] < r.number_[idx])
+		  return true;
+
+	    if (number_[idx] > r.number_[idx])
+		  return false;
+
+	    idx += 1;
+      }
+
+	// Fall-through means that we are equal, including all the
+	// number parts, so not less.
+      return false;
 }
 
-bool operator == (const hname_t&l, const hname_t&r)
+bool hname_t::operator == (const hname_t&r) const
 {
-      if (l.peek_name() == r.peek_name()) {
-	    if (l.has_number() && r.has_number())
-		  return l.peek_number() == r.peek_number();
-	    else
-		  return true;
+      if (name_ == r.name_) {
+	    if (number_.size() != r.number_.size())
+		  return false;
+
+	    for (size_t idx = 0 ; idx < number_.size() ; idx += 1)
+		  if (number_[idx] != r.number_[idx]) return false;
+
+	    return true;
       }
 
       return false;
@@ -84,8 +114,8 @@ ostream& operator<< (ostream&out, const hname_t&that)
       }
 
       out << that.peek_name();
-      if (that.has_number())
-	    out << "[" << that.peek_number() << "]";
+      for (size_t idx = 0 ; idx < that.number_.size() ; idx += 1)
+	    out << "[" << that.number_[idx] << "]";
 
       return out;
 }

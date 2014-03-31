@@ -950,50 +950,48 @@ hname_t eval_path_component(Design*des, NetScope*scope,
       if (comp.index.empty())
 	    return hname_t(comp.name);
 
-	// The parser will assure that path components will have only
-	// one index. For example, foo[N] is one index, foo[n][m] is two.
-      assert(comp.index.size() == 1);
+      vector<int> index_values;
 
-      const index_component_t&index = comp.index.front();
+      for (list<index_component_t>::const_iterator cur = comp.index.begin()
+		 ; cur != comp.index.end() ; ++cur) {
+	    const index_component_t&index = *cur;
 
-      if (index.sel != index_component_t::SEL_BIT) {
-	    cerr << index.msb->get_fileline() << ": error: "
-		 << "Part select is not valid for this kind of object." << endl;
-	    des->errors += 1;
-	    return hname_t(comp.name, 0);
-      }
+	    if (index.sel != index_component_t::SEL_BIT) {
+		  cerr << index.msb->get_fileline() << ": error: "
+		       << "Part select is not valid for this kind of object." << endl;
+		  des->errors += 1;
+		  return hname_t(comp.name, 0);
+	    }
 
-	// The parser will assure that path components will have only
-	// bit select index expressions. For example, "foo[n]" is OK,
-	// but "foo[n:m]" is not.
-      assert(index.sel == index_component_t::SEL_BIT);
+	      // The parser will assure that path components will have only
+	      // bit select index expressions. For example, "foo[n]" is OK,
+	      // but "foo[n:m]" is not.
+	    assert(index.sel == index_component_t::SEL_BIT);
 
-	// Evaluate the bit select to get a number.
-      NetExpr*tmp = elab_and_eval(des, scope, index.msb, -1);
-      ivl_assert(*index.msb, tmp);
+	      // Evaluate the bit select to get a number.
+	    NetExpr*tmp = elab_and_eval(des, scope, index.msb, -1);
+	    ivl_assert(*index.msb, tmp);
 
-	// Now we should have a constant value for the bit select
-	// expression, and we can use it to make the final hname_t
-	// value, for example "foo[5]".
-      if (NetEConst*ctmp = dynamic_cast<NetEConst*>(tmp)) {
-	    hname_t res(comp.name, ctmp->value().as_long());
-	    delete ctmp;
-	    return res;
-      }
-
+	    if (NetEConst*ctmp = dynamic_cast<NetEConst*>(tmp)) {
+		  index_values.push_back(ctmp->value().as_long());
+		  delete ctmp;
+		  continue;
+	    }
 #if 1
-	// Darn, the expression doesn't evaluate to a constant. That's
-	// an error to be reported. And make up a fake index value to
-	// return to the caller.
-      cerr << index.msb->get_fileline() << ": error: "
-	   << "Scope index expression is not constant: "
-	   << *index.msb << endl;
-      des->errors += 1;
+	      // Darn, the expression doesn't evaluate to a constant. That's
+	      // an error to be reported. And make up a fake index value to
+	      // return to the caller.
+	    cerr << index.msb->get_fileline() << ": error: "
+		 << "Scope index expression is not constant: "
+		 << *index.msb << endl;
+	    des->errors += 1;
 #endif
-      error_flag = true;
+	    error_flag = true;
 
-      delete tmp;
-      return hname_t (comp.name, 0);
+	    delete tmp;
+      }
+
+      return hname_t(comp.name, index_values);
 }
 
 std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,

@@ -966,6 +966,12 @@ class NetScope : public Definitions, public Attrib {
       const NetScope* parent() const { return up_; }
       const NetScope* child(const hname_t&name) const;
 
+	// Look for a child scope by name. This ignores the number
+	// part of the child scope name, so there may be multiple
+	// matches. Only return one. This function is only really
+	// useful for some elaboration error checking.
+      const NetScope* child_byname(perm_string name) const;
+
 	// Nested modules have slightly different scope search rules.
       inline bool nested_module() const { return nested_module_; }
 	// Program blocks have elaboration constraints.
