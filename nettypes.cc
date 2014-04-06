@@ -18,6 +18,7 @@
  */
 
 # include  "nettypes.h"
+# include  <iostream>
 # include  <cassert>
 
 using namespace std;
@@ -101,6 +102,12 @@ bool prefix_to_slice(const std::vector<netrange_t>&dims,
 {
       assert(prefix.size() < dims.size());
 
+	// Figure out the width of the slice, given the number of
+	// prefix numbers there are. We don't need to look at the
+	// actual values yet, but we do need to know how many there
+	// are compared to the actual dimensions of the target. So do
+	// this by multiplying the widths of the dims that are NOT
+	// accounted for by the prefix or sb indices.
       size_t acc_wid = 1;
       vector<netrange_t>::const_iterator pcur = dims.end();
       for (size_t idx = prefix.size()+1 ; idx < dims.size() ; idx += 1) {
@@ -108,8 +115,12 @@ bool prefix_to_slice(const std::vector<netrange_t>&dims,
 	    acc_wid *= pcur->width();
       }
 
-      lwid = acc_wid;
+      lwid = acc_wid; // lwid is now the final slice width.
 
+	// pcur is pointing to the dimension AFTER the dimension that
+	// we have an index for, so step back one, then this will be
+	// used with the sb index. Start accumulating in the acc_off
+	// the offset into the n-dimensional vector.
       -- pcur;
       if (sb < pcur->get_msb() && sb < pcur->get_lsb())
 	    return false;
@@ -122,16 +133,18 @@ bool prefix_to_slice(const std::vector<netrange_t>&dims,
       else
 	    acc_off += (pcur->get_lsb() - sb) * acc_wid;
 
+	// If there are no more prefix items, we are done.
       if (prefix.empty()) {
 	    loff = acc_off;
 	    return true;
       }
 
-      lwid *= pcur->width();
-
+	// Now similarly go through the prefix numbers, working
+	// through the dimensions until we run out. Accumulate a
+	// growing slice width (acc_wid) that is used to caculate the
+	// growing offset (acc_off).
       list<long>::const_iterator icur = prefix.end();
       do {
-	    -- pcur;
 	    -- icur;
 	    acc_wid *= pcur->width();
 	    if (pcur->get_msb() >= pcur->get_lsb())
@@ -139,8 +152,11 @@ bool prefix_to_slice(const std::vector<netrange_t>&dims,
 	    else
 		  acc_off += (pcur->get_lsb() - *icur) * acc_wid;
 
+	    -- pcur;
+
       } while (icur != prefix.begin());
 
+	// Got our final offset.
       loff = acc_off;
 
       return true;

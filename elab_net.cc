@@ -708,6 +708,16 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 	    }
 
       } else if (!path_tail.index.empty()) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_lnet_common_: "
+		       << "path_tail.index.size()=" << path_tail.index.size()
+		       << endl;
+	    }
+
+	      // There are index expressions on the name, so this is a
+	      // bit/slice select of the name. Calculate a canonical
+	      // part select.
+
 	    if (sig->get_scalar()) {
 		  cerr << get_fileline() << ": error: "
 		       << "can not select part of ";
@@ -739,6 +749,13 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
       if (sig->type() == NetNet::UNRESOLVED_WIRE && sig->test_and_set_part_driver(midx,lidx, widx_flag? widx : 0)) {
 	    cerr << get_fileline() << ": error: Unresolved net/uwire "
 	         << sig->name() << " cannot have multiple drivers." << endl;
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ":      : Overlap in "
+		       << "[" << midx << ":" << lidx << "] (canonical)"
+		       << ", widx=" << (widx_flag? widx : 0)
+		       << ", vector width=" << sig->vector_width()
+		       << endl;
+	    }
 	    des->errors += 1;
 	    return 0;
       }

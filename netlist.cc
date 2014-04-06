@@ -762,6 +762,9 @@ const netclass_t* NetNet::class_type(void) const
  * In this case, slice_width(2) == 1  (slice_width(N) where N is the
  * number of dimensions will always be 1.) and represents
  * $bits(foo[a][b]). Then, slice_width(1)==4 ($bits(foo[a]) and slice_width(0)==24.
+ *
+ * NOTE: The caller should already have accounted for unpacked
+ * dimensions. The "depth" is only for the packed dimensions.
  */
 unsigned long NetNet::slice_width(size_t depth) const
 {
