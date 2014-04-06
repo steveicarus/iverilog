@@ -162,6 +162,7 @@ void acc_vcl_add(handle obj, PLI_INT32(*consumer)(p_vc_record),
 
       switch (vpi_get(vpiType, obj)) {
 	  case vpiNet:
+	  case vpiReg:
 	    cur = malloc(sizeof (struct vcl_record));
 	    cur->obj = obj;
 	    cur->consumer = consumer;

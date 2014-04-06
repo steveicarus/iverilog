@@ -567,6 +567,11 @@ static int signal_get(int code, vpiHandle ref)
 	  case vpiRightRange:
             return rfp->lsb;
 
+	  case vpiScalar:
+	    return (rfp->msb == 0 && rfp->lsb == 0);
+	  case vpiVector:
+	    return (rfp->msb != rfp->lsb);
+
           case vpiAutomatic:
             return (int) vpip_scope(rfp)->is_automatic;
 
