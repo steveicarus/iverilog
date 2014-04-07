@@ -1534,6 +1534,16 @@ package_declaration /* IEEE1800-2005 A.1.2 */
       }
   ;
 
+module_package_import_list_opt
+  :
+  | package_import_list
+  ;
+
+package_import_list
+  : package_import_declaration
+  | package_import_list package_import_declaration
+  ;
+
 package_import_declaration /* IEEE1800-2005 A.2.1.3 */
   : K_import package_import_item_list ';'
       { }
@@ -4104,10 +4114,11 @@ local_timeunit_prec_decl2
 module
   : attribute_list_opt module_start IDENTIFIER
       { pform_startmodule(@2, $3, $2==K_program, $1); }
+    module_package_import_list_opt
     module_parameter_port_list_opt
     module_port_list_opt
     module_attribute_foreign ';'
-      { pform_module_set_ports($6); }
+      { pform_module_set_ports($7); }
     local_timeunit_prec_decl_opt
       { have_timeunit_decl = true; // Every thing past here is
 	have_timeprec_decl = true; // a check!
@@ -4133,13 +4144,13 @@ module
 	}
 	  // Check that program/endprogram and module/endmodule
 	  // keywords match.
-	if ($2 != $13) {
+	if ($2 != $14) {
 	      switch ($2) {
 		  case K_module:
-		    yyerror(@13, "error: module not closed by endmodule.");
+		    yyerror(@14, "error: module not closed by endmodule.");
 		    break;
 		  case K_program:
-		    yyerror(@13, "error: program not closed by endprogram.");
+		    yyerror(@14, "error: program not closed by endprogram.");
 		    break;
 		  default:
 		    break;
@@ -4155,15 +4166,15 @@ module
 	// endlabel_opt but still have the pform_endmodule() called
 	// early enough that the lexor can know we are outside the
 	// module.
-	if ($15) {
-	      if (strcmp($3,$15) != 0) {
+	if ($16) {
+	      if (strcmp($3,$16) != 0) {
 		    switch ($2) {
 			case K_module:
-			  yyerror(@15, "error: End label doesn't match "
+			  yyerror(@16, "error: End label doesn't match "
 			               "module name.");
 			  break;
 			case K_program:
-			  yyerror(@15, "error: End label doesn't match "
+			  yyerror(@16, "error: End label doesn't match "
 			               "program name.");
 			  break;
 			default:
@@ -4171,10 +4182,10 @@ module
 		    }
 	      }
 	      if (($2 == K_module) && (! gn_system_verilog())) {
-		    yyerror(@7, "error: Module end labels require "
+		    yyerror(@8, "error: Module end labels require "
 		                 "System Verilog.");
 	      }
-	      delete[]$15;
+	      delete[]$16;
 	}
 	delete[]$3;
       }
