@@ -1790,6 +1790,11 @@ bool calculate_part(const LineInfo*li, Design*des, NetScope*scope,
 	    }
 	    return true;
 
+	  case index_component_t::SEL_IDX_UP:
+	    wid = lsb;
+	    off = msb;
+	    break;
+
 	  default:
 	    ivl_assert(*li, 0);
 	    break;
@@ -2585,6 +2590,7 @@ bool PEIdent::calculate_packed_indices_(Design*des, NetScope*scope, NetNet*net,
 {
       list<index_component_t> index;
       index = path_.back().index;
+      ivl_assert(*this, index.size() >= net->unpacked_dimensions());
       for (size_t idx = 0 ; idx < net->unpacked_dimensions() ; idx += 1)
 	    index.pop_front();
 
@@ -2826,7 +2832,10 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 		const index_component_t&index_tail = name_tail.index.back();
 		ivl_assert(*this, index_tail.msb);
 	      }
-	      use_width = 1;
+		// If we have a net in hand, then we can predict what
+		// the slice width will be. If not, then just guess.
+	      if (net == 0)
+		    use_width = 1;
 	      break;
 	  default:
 	    ivl_assert(*this, 0);
@@ -2858,15 +2867,35 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
 	// The width of a signal expression is the width of the signal.
       if (net != 0) {
+	    size_t use_depth = name_tail.index.size();
+	      // Account for unpacked dimensions by assuming that the
+	      // unpacked dimensions are consumed first, so subtract
+	      // the unpacked dimensions from the dimension depth
+	      // useable for making the slice.
+	    if (use_depth >= net->unpacked_dimensions()) {
+		  use_depth -= net->unpacked_dimensions();
+
+	    } else {
+		    // In this case, we have a slice of an unpacked
+		    // array. This likely handled as an array instead
+		    // of a slice. Hmm...
+		  use_depth = 0;
+	    }
+
 	    expr_type_   = net->data_type();
-	    expr_width_  = net->vector_width();
+	    expr_width_  = net->slice_width(use_depth);
 	    min_width_   = expr_width_;
 	    signed_flag_ = net->get_signed();
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": PEIdent::test_width: "
 		       << net->name() << " is a net, "
 		       << "type=" << expr_type_
-		       << ", width=" << expr_width_ << endl;
+		       << ", width=" << expr_width_
+		       << ", signed_=" << (signed_flag_?"true":"false")
+		       << ", use_depth=" << use_depth
+		       << ", packed_dimensions=" << net->packed_dimensions()
+		       << ", unpacked_dimensions=" << net->unpacked_dimensions()
+		       << endl;
 	    }
 	    return expr_width_;
       }
@@ -3221,6 +3250,13 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
                                              expr_wid, flags);
 
             if (!tmp) return 0;
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+		       << "Expression as net. expr_wid=" << expr_wid
+		       << ", tmp->expr_width()=" << tmp->expr_width()
+		       << ", tmp=" << *tmp << endl;
+	    }
 
             tmp = pad_to_width(tmp, expr_wid, *this);
             tmp->cast_signed(signed_flag_);
@@ -3969,7 +4005,7 @@ NetExpr* PEIdent::elaborate_expr_net_word_(Design*des, NetScope*scope,
 
       if (name_tail.index.empty()) {
 	    cerr << get_fileline() << ": error: Array " << path()
-		 << " Needs an array index here." << endl;
+		 << " needs an array index here." << endl;
 	    des->errors += 1;
 	    return 0;
       }
@@ -4439,6 +4475,15 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	// making a mux part in the netlist.
       if (NetEConst*msc = dynamic_cast<NetEConst*> (mux)) {
 
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_expr_net_bit_: "
+		       << "mux is constant=" << *msc
+		       << ", packed_dims()=" << net->sig()->packed_dims()
+		       << ", packed_dims().size()=" << net->sig()->packed_dims().size()
+		       << ", prefix_indices.size()=" << prefix_indices.size()
+		       << endl;
+	    }
+
 	      // Special case: The bit select expression is constant
 	      // x/z. The result of the expression is 1'bx.
 	    if (! msc->value().is_defined()) {
@@ -4456,6 +4501,7 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 			     << endl;
 		  }
 
+		    // FIXME: Should I be using slice_width() here?
 		  NetEConst*tmp = make_const_x(1);
 		  tmp->set_line(*this);
 		  delete mux;
@@ -4546,6 +4592,12 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
 	      // bit select will return the scalar itself.
 	    if (net->vector_width() == 1)
 		  return net;
+
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::elaborate_expr_net_bit_: "
+		       << "Make bit select idx=" << idx
+		       << endl;
+	    }
 
 	      // Make an expression out of the index
 	    NetEConst*idx_c = new NetEConst(verinum(idx));

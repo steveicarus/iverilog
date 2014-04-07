@@ -309,7 +309,7 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
 	    if (min_wid < base->expr_width()) min_wid = base->expr_width();
 	      /* Now that we have the minimum needed width increase it by
 	       * one to make room for the normalization calculation. */
-	    min_wid += 1;
+	    min_wid += 2;
 	      /* Pad the base expression to the correct width. */
 	    base = pad_to_width(base, min_wid, *base);
 	      /* If the base expression is unsigned and either the lsb
@@ -344,7 +344,7 @@ NetExpr *normalize_variable_base(NetExpr *base, long msb, long lsb,
 	    if (min_wid < base->expr_width()) min_wid = base->expr_width();
 	      /* Now that we have the minimum needed width increase it by
 	       * one to make room for the normalization calculation. */
-	    min_wid += 1;
+	    min_wid += 2;
 	      /* Pad the base expression to the correct width. */
 	    base = pad_to_width(base, min_wid, *base);
 	      /* If the offset is greater than zero then we need to do
@@ -950,50 +950,48 @@ hname_t eval_path_component(Design*des, NetScope*scope,
       if (comp.index.empty())
 	    return hname_t(comp.name);
 
-	// The parser will assure that path components will have only
-	// one index. For example, foo[N] is one index, foo[n][m] is two.
-      assert(comp.index.size() == 1);
+      vector<int> index_values;
 
-      const index_component_t&index = comp.index.front();
+      for (list<index_component_t>::const_iterator cur = comp.index.begin()
+		 ; cur != comp.index.end() ; ++cur) {
+	    const index_component_t&index = *cur;
 
-      if (index.sel != index_component_t::SEL_BIT) {
-	    cerr << index.msb->get_fileline() << ": error: "
-		 << "Part select is not valid for this kind of object." << endl;
-	    des->errors += 1;
-	    return hname_t(comp.name, 0);
-      }
+	    if (index.sel != index_component_t::SEL_BIT) {
+		  cerr << index.msb->get_fileline() << ": error: "
+		       << "Part select is not valid for this kind of object." << endl;
+		  des->errors += 1;
+		  return hname_t(comp.name, 0);
+	    }
 
-	// The parser will assure that path components will have only
-	// bit select index expressions. For example, "foo[n]" is OK,
-	// but "foo[n:m]" is not.
-      assert(index.sel == index_component_t::SEL_BIT);
+	      // The parser will assure that path components will have only
+	      // bit select index expressions. For example, "foo[n]" is OK,
+	      // but "foo[n:m]" is not.
+	    assert(index.sel == index_component_t::SEL_BIT);
 
-	// Evaluate the bit select to get a number.
-      NetExpr*tmp = elab_and_eval(des, scope, index.msb, -1);
-      ivl_assert(*index.msb, tmp);
+	      // Evaluate the bit select to get a number.
+	    NetExpr*tmp = elab_and_eval(des, scope, index.msb, -1);
+	    ivl_assert(*index.msb, tmp);
 
-	// Now we should have a constant value for the bit select
-	// expression, and we can use it to make the final hname_t
-	// value, for example "foo[5]".
-      if (NetEConst*ctmp = dynamic_cast<NetEConst*>(tmp)) {
-	    hname_t res(comp.name, ctmp->value().as_long());
-	    delete ctmp;
-	    return res;
-      }
-
+	    if (NetEConst*ctmp = dynamic_cast<NetEConst*>(tmp)) {
+		  index_values.push_back(ctmp->value().as_long());
+		  delete ctmp;
+		  continue;
+	    }
 #if 1
-	// Darn, the expression doesn't evaluate to a constant. That's
-	// an error to be reported. And make up a fake index value to
-	// return to the caller.
-      cerr << index.msb->get_fileline() << ": error: "
-	   << "Scope index expression is not constant: "
-	   << *index.msb << endl;
-      des->errors += 1;
+	      // Darn, the expression doesn't evaluate to a constant. That's
+	      // an error to be reported. And make up a fake index value to
+	      // return to the caller.
+	    cerr << index.msb->get_fileline() << ": error: "
+		 << "Scope index expression is not constant: "
+		 << *index.msb << endl;
+	    des->errors += 1;
 #endif
-      error_flag = true;
+	    error_flag = true;
 
-      delete tmp;
-      return hname_t (comp.name, 0);
+	    delete tmp;
+      }
+
+      return hname_t(comp.name, index_values);
 }
 
 std::list<hname_t> eval_scope_path(Design*des, NetScope*scope,
@@ -1338,3 +1336,21 @@ NetExpr*collapse_array_indices(Design*des, NetScope*scope, NetNet*net,
       eval_expr(res, -1);
       return res;
 }
+
+void assign_unpacked_with_bufz(Design*des, NetScope*scope,
+			       const LineInfo*loc,
+			       NetNet*lval, NetNet*rval)
+{
+      ivl_assert(*loc, lval->pin_count()==rval->pin_count());
+
+      for (unsigned idx = 0 ; idx < lval->pin_count() ; idx += 1) {
+	    NetBUFZ*driver = new NetBUFZ(scope, scope->local_symbol(),
+					 lval->vector_width(), false);
+	    driver->set_line(*loc);
+	    des->add_node(driver);
+
+	    connect(lval->pin(idx), driver->pin(0));
+	    connect(driver->pin(1), rval->pin(idx));
+      }
+}
+

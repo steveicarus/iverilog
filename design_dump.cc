@@ -145,6 +145,35 @@ ostream& operator << (ostream&o, ivl_switch_type_t val)
       return o;
 }
 
+ostream& operator << (ostream&fd, PortType::Enum val)
+{
+      switch (val) {
+	  case PortType::NOT_A_PORT:
+	    fd << "NOT_A_PORT";
+	    break;
+	  case PortType::PIMPLICIT:
+	    fd << "PIMPLICIT";
+	    break;
+	  case PortType::PINPUT:
+	    fd << "PINPUT";
+	    break;
+	  case PortType::POUTPUT:
+	    fd << "POUTPUT";
+	    break;
+	  case PortType::PINOUT:
+	    fd << "PINOUT";
+	    break;
+	  case PortType::PREF:
+	    fd << "PREF";
+	    break;
+	  default:
+	    fd << "PortType::Enum::?";
+	    break;
+      }
+
+      return fd;
+}
+
 ostream& ivl_type_s::debug_dump(ostream&o) const
 {
       o << typeid(*this).name();
@@ -171,9 +200,7 @@ static inline void dump_scope_path(ostream&o, const NetScope*scope)
 	    o << ".";
       }
       const hname_t name = scope->fullname();
-      o << name.peek_name();
-      if (name.has_number())
-	    o << "[" << name.peek_number() << "]";
+      o << name;
 }
 
 ostream& operator <<(ostream&o, struct __ScopePathManip marg)

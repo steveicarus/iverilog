@@ -1,7 +1,7 @@
 #ifndef __HName_H
 #define __HName_H
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,13 +21,10 @@
 
 # include  <iostream>
 # include  <list>
+# include  <vector>
 # include  "StringHeap.h"
-# include  <climits>
-#ifdef __GNUC__
-#if __GNUC__ > 2
-using namespace std;
-#endif
-#endif
+
+# include  <cassert>
 
 /*
  * This class represents a component of a Verilog hierarchical name. A
@@ -39,27 +36,33 @@ using namespace std;
 
 class hname_t {
 
+      friend ostream& operator<< (ostream&out, const hname_t&that);
+
     public:
       hname_t ();
       explicit hname_t (perm_string text);
       explicit hname_t (perm_string text, int num);
+      explicit hname_t (perm_string text, std::vector<int>&nums);
       hname_t (const hname_t&that);
       ~hname_t();
 
       hname_t& operator= (const hname_t&);
 
+      bool operator == (const hname_t&that) const;
+      bool operator <  (const hname_t&that) const;
+
 	// Return the string part of the hname_t.
       perm_string peek_name(void) const;
 
-      bool has_number() const;
-      int peek_number() const;
+      size_t has_numbers() const;
+      int peek_number(size_t idx) const;
 
     private:
       perm_string name_;
 	// If the number is anything other than INT_MIN, then this is
 	// the numeric part of the name. Otherwise, it is not part of
 	// the name at all.
-      int number_;
+      std::vector<int> number_;
 
     private: // not implemented
 };
@@ -73,18 +76,17 @@ inline perm_string hname_t::peek_name(void) const
       return name_;
 }
 
-inline int hname_t::peek_number() const
+inline int hname_t::peek_number(size_t idx) const
 {
-      return number_;
+      assert(number_.size() > idx);
+      return number_[idx];
 }
 
-inline bool hname_t::has_number() const
+inline size_t hname_t::has_numbers() const
 {
-      return number_ != INT_MIN;
+      return number_.size();
 }
 
-extern bool operator <  (const hname_t&, const hname_t&);
-extern bool operator == (const hname_t&, const hname_t&);
 extern ostream& operator<< (ostream&, const hname_t&);
 
 inline bool operator != (const hname_t&l, const hname_t&r)

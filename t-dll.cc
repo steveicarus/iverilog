@@ -160,12 +160,21 @@ inline static const char *basename(ivl_scope_t scope, const char *inst)
 
 static perm_string make_scope_name(const hname_t&name)
 {
-      if (! name.has_number())
+      if (! name.has_numbers())
 	    return name.peek_name();
 
       char buf[1024];
-      snprintf(buf, sizeof buf, "%s[%d]",
-	       name.peek_name().str(), name.peek_number());
+      snprintf(buf, sizeof buf, "%s", name.peek_name().str());
+
+      char*cp = buf + strlen(buf);
+      size_t ncp = sizeof buf - (cp-buf);
+
+      for (size_t idx = 0 ; idx < name.has_numbers() ; idx += 1) {
+	    int len = snprintf(cp, ncp, "[%d]", name.peek_number(idx));
+	    cp += len;
+	    ncp -= len;
+      }
+
       return lex_strings.make(buf);
 }
 

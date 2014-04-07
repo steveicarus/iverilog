@@ -366,6 +366,11 @@ class PEIdent : public PExpr {
 	// only applies to Ident expressions.
       NetNet* elaborate_subport(Design*des, NetScope*sc) const;
 
+	// Elaborate the identifier allowing for unpacked arrays. This
+	// method only applies to Ident expressions because only Ident
+	// expressions can can be unpacked arrays.
+      NetNet* elaborate_unpacked_net(Design*des, NetScope*sc) const;
+
       verinum* eval_const(Design*des, NetScope*sc) const;
 
       virtual bool is_collapsible_net(Design*des, NetScope*scope) const;

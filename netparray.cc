@@ -49,7 +49,7 @@ vector<netrange_t> netparray_t::slice_dimensions() const
       vector<netrange_t> res (packed_dims_.size() + elem_dims.size());
 
       for (size_t idx = 0 ; idx < packed_dims_.size() ; idx += 1)
-	    res[idx] = packed_dims_[0];
+	    res[idx] = packed_dims_[idx];
       for (size_t idx = 0 ; idx < elem_dims.size() ; idx += 1)
 	    res[idx+packed_dims_.size()] = elem_dims[idx];
 

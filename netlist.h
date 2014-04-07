@@ -610,6 +610,7 @@ public:
     static Enum merged( Enum lhs, Enum rhs );
 };
 
+extern std::ostream& operator << (std::ostream&, PortType::Enum);
 
   /*
    * Information on actual ports (rather than port-connected signals) of
@@ -749,8 +750,10 @@ class NetNet  : public NetObj, public PortType {
 
 	// Treating this node as a uwire, this function tests whether
 	// any bits in the canonical part are already driven. This is
-	// only useful for UNRESOLVED_WIRE objects.
-      bool test_and_set_part_driver(unsigned msb, unsigned lsb);
+	// only useful for UNRESOLVED_WIRE objects. The msb and lsb
+	// are the part select of the signal, and the widx is the word
+	// index if this is an unpacked array.
+      bool test_and_set_part_driver(unsigned msb, unsigned lsb, int widx =0);
 
       unsigned get_refs() const;
 
@@ -962,6 +965,12 @@ class NetScope : public Definitions, public Attrib {
       NetScope* child(const hname_t&name);
       const NetScope* parent() const { return up_; }
       const NetScope* child(const hname_t&name) const;
+
+	// Look for a child scope by name. This ignores the number
+	// part of the child scope name, so there may be multiple
+	// matches. Only return one. This function is only really
+	// useful for some elaboration error checking.
+      const NetScope* child_byname(perm_string name) const;
 
 	// Nested modules have slightly different scope search rules.
       inline bool nested_module() const { return nested_module_; }

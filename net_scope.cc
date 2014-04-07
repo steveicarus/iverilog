@@ -668,6 +668,21 @@ const NetScope* NetScope::child(const hname_t&name) const
 	    return cur->second;
 }
 
+const NetScope* NetScope::child_byname(perm_string name) const
+{
+      hname_t hname (name);
+      map<hname_t,NetScope*>::const_iterator cur = children_.lower_bound(hname);
+
+      if (cur == children_.end())
+	    return 0;
+
+      if (cur->first.peek_name() == name)
+	    return cur->second;
+
+      return 0;
+}
+
+
 perm_string NetScope::local_symbol()
 {
       ostringstream res;

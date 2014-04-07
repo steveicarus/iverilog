@@ -124,6 +124,7 @@ class PGAssign  : public PGate {
       virtual bool elaborate_sig(Design*des, NetScope*scope) const;
 
     private:
+      void elaborate_unpacked_array_(Design*des, NetScope*scope, NetNet*lval) const;
 };
 
 

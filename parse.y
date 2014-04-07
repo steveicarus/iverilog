@@ -46,12 +46,8 @@ static ivl_variable_type_t param_active_type = IVL_VT_LOGIC;
 static struct {
       NetNet::Type port_net_type;
       NetNet::PortType port_type;
-      ivl_variable_type_t var_type;
-      bool sign_flag;
       data_type_t* data_type;
-      list<pform_range_t>* range;
-} port_declaration_context = {NetNet::NONE, NetNet::NOT_A_PORT,
-                              IVL_VT_NO_TYPE, false, 0, 0};
+} port_declaration_context = {NetNet::NONE, NetNet::NOT_A_PORT, 0};
 
 /* The task and function rules need to briefly hold the pointer to the
    task/function that is currently in progress. */
@@ -418,6 +414,11 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       PPackage*package;
 
       struct {
+	    char*text;
+	    data_type_t*type;
+      } type_identifier;
+
+      struct {
 	    data_type_t*type;
 	    list<PExpr*>*exprs;
       } class_declaration_extends;
@@ -431,7 +432,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 };
 
 %token <text>      IDENTIFIER SYSTEM_IDENTIFIER STRING TIME_LITERAL
-%token <data_type> TYPE_IDENTIFIER
+%token <type_identifier> TYPE_IDENTIFIER
 %token <package>   PACKAGE_IDENTIFIER
 %token <discipline> DISCIPLINE_IDENTIFIER
 %token <text>   PATHPULSE_IDENTIFIER
@@ -730,10 +731,11 @@ class_identifier
 	$$ = tmp;
       }
   | TYPE_IDENTIFIER
-      { class_type_t*tmp = dynamic_cast<class_type_t*>($1);
+      { class_type_t*tmp = dynamic_cast<class_type_t*>($1.type);
 	if (tmp == 0) {
-	      yyerror(@1, "Type name is not a predeclared class name.");
+	      yyerror(@1, "Type name \"%s\"is not a predeclared class name.", $1.text);
 	}
+	delete[]$1.text;
 	$$ = tmp;
       }
   ;
@@ -743,13 +745,14 @@ class_identifier
      does indeed match a name. */
 class_declaration_endlabel_opt
   : ':' TYPE_IDENTIFIER
-      { class_type_t*tmp = dynamic_cast<class_type_t*> ($2);
+      { class_type_t*tmp = dynamic_cast<class_type_t*> ($2.type);
 	if (tmp == 0) {
-	      yyerror(@2, "error: class declaration endlabel is not a class name\n");
+	      yyerror(@2, "error: class declaration endlabel \"%s\" is not a class name\n", $2.text);
 	      $$ = 0;
 	} else {
 	      $$ = strdupnew(tmp->name.str());
 	}
+	delete[]$2.text;
       }
   | ':' IDENTIFIER
       { $$ = $2; }
@@ -767,12 +770,14 @@ class_declaration_endlabel_opt
 
 class_declaration_extends_opt /* IEEE1800-2005: A.1.2 */
   : K_extends TYPE_IDENTIFIER
-      { $$.type = $2;
+      { $$.type = $2.type;
 	$$.exprs= 0;
+	delete[]$2.text;
       }
   | K_extends TYPE_IDENTIFIER '(' expression_list_with_nuls ')'
-      { $$.type  = $2;
+      { $$.type  = $2.type;
 	$$.exprs = $4;
+	delete[]$2.text;
       }
   |
       { $$.type = 0; $$.exprs = 0; }
@@ -1013,14 +1018,16 @@ data_type /* IEEE1800-2005: A.2.2.1 */
 	$$ = tmp;
       }
   | TYPE_IDENTIFIER dimensions_opt
-      { if ($2) $$ = new parray_type_t($1, $2);
-	else $$ = $1;
+      { if ($2) $$ = new parray_type_t($1.type, $2);
+	else $$ = $1.type;
+	delete[]$1.text;
       }
   | PACKAGE_IDENTIFIER K_SCOPE_RES
       { lex_in_package_scope($1); }
     TYPE_IDENTIFIER
       { lex_in_package_scope(0);
-	$$ = $4;
+	$$ = $4.type;
+	delete[]$4.text;
       }
   | K_string
       { string_type_t*tmp = new string_type_t;
@@ -1307,10 +1314,42 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	$$ = tmp;
       }
 
+      // Handle for_variable_declaration syntax by wrapping the for(...)
+      // statement in a synthetic named block. We can name the block
+      // after the variable that we are creating, that identifier is
+      // safe in the controlling scope.
   | K_for '(' data_type IDENTIFIER '=' expression ';' expression ';' for_step ')'
+      { static unsigned for_counter = 0;
+	char for_block_name [64];
+	snprintf(for_block_name, sizeof for_block_name, "$ivl_for_loop%u", for_counter);
+	for_counter += 1;
+	PBlock*tmp = pform_push_block_scope(for_block_name, PBlock::BL_SEQ);
+	FILE_NAME(tmp, @1);
+	current_block_stack.push(tmp);
+
+	list<decl_assignment_t*>assign_list;
+	decl_assignment_t*tmp_assign = new decl_assignment_t;
+	tmp_assign->name = lex_strings.make($4);
+	assign_list.push_back(tmp_assign);
+	pform_makewire(@4, 0, str_strength, &assign_list, NetNet::REG, $3);
+      }
     statement_or_null
-      { $$ = 0;
-	yyerror(@3, "sorry: for_variable_declaration not supported");
+      { pform_name_t tmp_hident;
+	tmp_hident.push_back(name_component_t(lex_strings.make($4)));
+
+	PEIdent*tmp_ident = pform_new_ident(tmp_hident);
+	FILE_NAME(tmp_ident, @4);
+
+	PForStatement*tmp_for = new PForStatement(tmp_ident, $6, $8, $10, $13);
+	FILE_NAME(tmp_for, @1);
+
+	pform_pop_scope();
+	vector<Statement*>tmp_for_list (1);
+	tmp_for_list[0] = tmp_for;
+	PBlock*tmp_blk = current_block_stack.top();
+	tmp_blk->set_statement(tmp_for_list);
+	$$ = tmp_blk;
+	delete[]$4;
       }
 
   | K_forever statement_or_null
@@ -1857,27 +1896,16 @@ tf_port_item /* IEEE1800-2005: A.2.7 */
 	      if ($4 != 0) {
 		    yyerror(@4, "internal error: How can there be an unpacked range here?\n");
 	      }
-	      if (port_declaration_context.var_type == IVL_VT_NO_TYPE) {
-		    tmp = pform_make_task_ports(@3, use_port_type,
-					 port_declaration_context.data_type,
-					 ilist);
-	      } else {
-		    tmp = pform_make_task_ports(@3, use_port_type,
-					 port_declaration_context.var_type,
-					 port_declaration_context.sign_flag,
-					 copy_range(port_declaration_context.range),
-					 ilist);
-	      }
+	      tmp = pform_make_task_ports(@3, use_port_type,
+					  port_declaration_context.data_type,
+					  ilist);
+
 
 	} else {
 		// Otherwise, the decorations for this identifier
 		// indicate the type. Save the type for any right
 		// context thta may come later.
 	      port_declaration_context.port_type = use_port_type;
-	      port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	      port_declaration_context.sign_flag = false;
-	      delete port_declaration_context.range;
-	      port_declaration_context.range = 0;
 	      if ($2 == 0) {
 		    $2 = new vector_type_t(IVL_VT_LOGIC, false, 0);
 		    FILE_NAME($2, @3);
@@ -2143,6 +2171,20 @@ type_declaration
 	delete[]$3;
       }
 
+  /* If the IDENTIFIER already is a typedef, it is possible for this
+     code to override the definition, but only if the typedef is
+     inherited from a different scope. */
+  | K_typedef data_type TYPE_IDENTIFIER ';'
+      { perm_string name = lex_strings.make($3.text);
+	if (pform_test_type_identifier_local(name)) {
+	      yyerror(@3, "error: Typedef identifier \"%s\" is already a type name.", $3.text);
+
+	} else {
+	      pform_set_typedef(name, $2);
+	}
+	delete[]$3.text;
+      }
+
   /* These are forward declarations... */
 
   | K_typedef K_class  IDENTIFIER ';'
@@ -2169,9 +2211,6 @@ type_declaration
 	pform_set_typedef(name, tmp);
 	delete[]$2;
       }
-
-  | K_typedef data_type TYPE_IDENTIFIER ';'
-      { yyerror(@3, "error: Typedef identifier is already a type name."); }
 
   | K_typedef error ';'
       { yyerror(@2, "error: Syntax error in typedef clause.");
@@ -3108,9 +3147,10 @@ expr_primary
   /* There are a few special cases (notably $bits argument) where the
      expression may be a type name. Let the elaborator sort this out. */
   | TYPE_IDENTIFIER
-  { PETypename*tmp = new PETypename($1);
+      { PETypename*tmp = new PETypename($1.type);
 	FILE_NAME(tmp,@1);
 	$$ = tmp;
+	delete[]$1.text;
       }
 
   /* The hierarchy_identifier rule matches simple identifiers as well as
@@ -3762,10 +3802,7 @@ list_of_port_declarations
 		  pform_module_define_port(@3, name,
 					port_declaration_context.port_type,
 					port_declaration_context.port_net_type,
-					port_declaration_context.var_type,
-					port_declaration_context.sign_flag,
-					port_declaration_context.data_type,
-					port_declaration_context.range, 0);
+					port_declaration_context.data_type, 0);
 		  delete[]$3;
 		  $$ = tmp;
 		}
@@ -3785,21 +3822,14 @@ port_declaration
   : attribute_list_opt K_input net_type_opt data_type_or_implicit IDENTIFIER dimensions_opt
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
+	data_type_t*use_type = $4;
+	if ($6) use_type = new uarray_type_t(use_type, $6);
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
-	pform_module_define_port(@2, name, NetNet::PINPUT, $3, IVL_VT_NO_TYPE,
-				false, $4, 0, $1);
+	pform_module_define_port(@2, name, NetNet::PINPUT, $3, use_type, $1);
 	port_declaration_context.port_type = NetNet::PINPUT;
 	port_declaration_context.port_net_type = $3;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
 	port_declaration_context.data_type = $4;
 	delete[]$5;
-	if ($6) {
-	      yyerror(@6, "sorry: Input ports with unpacked dimensions not supported.");
-	      delete $6;
-	}
 	$$ = ptmp;
       }
   | attribute_list_opt
@@ -3808,15 +3838,13 @@ port_declaration
 	perm_string name = lex_strings.make($4);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
-	pform_module_define_port(@2, name, NetNet::PINPUT,
-				 NetNet::WIRE, IVL_VT_REAL, true, 0, 0, $1);
+	real_type_t*real_type = new real_type_t(real_type_t::REAL);
+	FILE_NAME(real_type, @3);
+	pform_module_define_port(@2, name, NetNet::PINPUT, 
+				 NetNet::WIRE, real_type, $1);
 	port_declaration_context.port_type = NetNet::PINPUT;
 	port_declaration_context.port_net_type = NetNet::WIRE;
-	port_declaration_context.var_type = IVL_VT_REAL;
-	port_declaration_context.sign_flag = true;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
-	port_declaration_context.data_type = 0;
+	port_declaration_context.data_type = real_type;
 	delete[]$4;
 	$$ = ptmp;
       }
@@ -3824,14 +3852,9 @@ port_declaration
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
-	pform_module_define_port(@2, name, NetNet::PINOUT, $3, IVL_VT_NO_TYPE,
-				false, $4, 0, $1);
+	pform_module_define_port(@2, name, NetNet::PINOUT, $3, $4, $1);
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = $3;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
 	port_declaration_context.data_type = $4;
 	delete[]$5;
 	if ($6) {
@@ -3846,21 +3869,21 @@ port_declaration
 	perm_string name = lex_strings.make($4);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
+	real_type_t*real_type = new real_type_t(real_type_t::REAL);
+	FILE_NAME(real_type, @3);
 	pform_module_define_port(@2, name, NetNet::PINOUT,
-				 NetNet::WIRE, IVL_VT_REAL, true, 0, 0, $1);
+				 NetNet::WIRE, real_type, $1);
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = NetNet::WIRE;
-	port_declaration_context.var_type = IVL_VT_REAL;
-	port_declaration_context.sign_flag = true;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
-	port_declaration_context.data_type = 0;
+	port_declaration_context.data_type = real_type;
 	delete[]$4;
 	$$ = ptmp;
       }
   | attribute_list_opt K_output net_type_opt data_type_or_implicit IDENTIFIER dimensions_opt
       { Module::port_t*ptmp;
 	perm_string name = lex_strings.make($5);
+	data_type_t*use_dtype = $4;
+	if ($6) use_dtype = new uarray_type_t(use_dtype, $6);
 	NetNet::Type use_type = $3;
 	if (use_type == NetNet::IMPLICIT) {
 	      if (vector_type_t*dtype = dynamic_cast<vector_type_t*> ($4)) {
@@ -3882,20 +3905,11 @@ port_declaration
 	      }
 	}
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
-	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, IVL_VT_NO_TYPE,
-				false, $4, 0, $1);
+	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, use_dtype, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = use_type;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
 	port_declaration_context.data_type = $4;
 	delete[]$5;
-	if ($6) {
-	      yyerror(@6, "sorry: Output ports with unpacked dimensions not supported.");
-	      delete $6;
-	}
 	$$ = ptmp;
       }
   | attribute_list_opt
@@ -3904,15 +3918,13 @@ port_declaration
 	perm_string name = lex_strings.make($4);
 	ptmp = pform_module_port_reference(name, @2.text,
 					   @2.first_line);
+	real_type_t*real_type = new real_type_t(real_type_t::REAL);
+	FILE_NAME(real_type, @3);
 	pform_module_define_port(@2, name, NetNet::POUTPUT,
-				 NetNet::WIRE, IVL_VT_REAL, true, 0, 0, $1);
+				 NetNet::WIRE, real_type, $1);
 	port_declaration_context.port_type = NetNet::POUTPUT;
 	port_declaration_context.port_net_type = NetNet::WIRE;
-	port_declaration_context.var_type = IVL_VT_REAL;
-	port_declaration_context.sign_flag = true;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
-	port_declaration_context.data_type = 0;
+	port_declaration_context.data_type = real_type;
 	delete[]$4;
 	$$ = ptmp;
       }
@@ -3931,14 +3943,9 @@ port_declaration
 	      }
 	}
 	ptmp = pform_module_port_reference(name, @2.text, @2.first_line);
-	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, IVL_VT_NO_TYPE,
-				false, $4, 0, $1);
+	pform_module_define_port(@2, name, NetNet::POUTPUT, use_type, $4, $1);
 	port_declaration_context.port_type = NetNet::PINOUT;
 	port_declaration_context.port_net_type = use_type;
-	port_declaration_context.var_type = IVL_VT_NO_TYPE;
-	port_declaration_context.sign_flag = false;
-	delete port_declaration_context.range;
-	port_declaration_context.range = 0;
 	port_declaration_context.data_type = $4;
 
 	pform_make_reginit(@5, name, $7);

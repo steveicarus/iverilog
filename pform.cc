@@ -584,6 +584,31 @@ data_type_t* pform_test_type_identifier(const char*txt)
       return 0;
 }
 
+/*
+ * The parser uses this function to test if the name is a typedef in
+ * the current scope. We use this to know if we can override the
+ * definition because it shadows a containing scope.
+ */
+bool pform_test_type_identifier_local(perm_string name)
+{
+      if (lexical_scope == 0) {
+	    if (test_type_identifier_in_root(name))
+		  return true;
+	    else
+		  return false;
+      }
+
+      LexicalScope*cur_scope = lexical_scope;
+
+      map<perm_string,data_type_t*>::iterator cur;
+
+      cur = cur_scope->typedefs.find(name);
+      if (cur != cur_scope->typedefs.end())
+	    return true;
+
+      return false;
+}
+
 PECallFunction* pform_make_call_function(const struct vlltype&loc,
 					 const pform_name_t&name,
 					 const list<PExpr*>&parms)
@@ -2129,15 +2154,14 @@ void pform_make_reginit(const struct vlltype&li,
  */
 void pform_module_define_port(const struct vlltype&li,
 			      perm_string name,
-			      NetNet::PortType port_type,
+			      NetNet::PortType port_kind,
 			      NetNet::Type type,
-			      ivl_variable_type_t data_type,
-			      bool signed_flag,
 			      data_type_t*vtype,
-			      list<pform_range_t>*range,
 			      list<named_pexpr_t>*attr)
 {
       struct_type_t*struct_type = 0;
+      ivl_variable_type_t data_type = IVL_VT_NO_TYPE;
+      bool signed_flag = false;
 
       PWire*cur = pform_get_wire_in_scope(name);
       if (cur) {
@@ -2149,27 +2173,34 @@ void pform_module_define_port(const struct vlltype&li,
 	    return;
       }
 
-      if (vtype) {
-	    ivl_assert(li, data_type == IVL_VT_NO_TYPE);
-	    ivl_assert(li, range == 0);
+	// Packed ranges
+      list<pform_range_t>*prange = 0;
+	// Unpacked dimensions
+      list<pform_range_t>*urange = 0;
+
+	// If this is an unpacked array, then split out the parts that
+	// we can send to the PWire object that we create.
+      if (uarray_type_t*uarr_type = dynamic_cast<uarray_type_t*> (vtype)) {
+	    urange = uarr_type->dims.get();
+	    vtype = uarr_type->base_type;
       }
 
       if (vector_type_t*vec_type = dynamic_cast<vector_type_t*> (vtype)) {
 	    data_type = vec_type->base_type;
 	    signed_flag = vec_type->signed_flag;
-	    range = vec_type->pdims.get();
+	    prange = vec_type->pdims.get();
 	    if (vec_type->reg_flag)
 		  type = NetNet::REG;
 
       } else if (atom2_type_t*atype = dynamic_cast<atom2_type_t*>(vtype)) {
 	    data_type = IVL_VT_BOOL;
 	    signed_flag = atype->signed_flag;
-	    range = make_range_from_width(atype->type_code);
+	    prange = make_range_from_width(atype->type_code);
 
       } else if (real_type_t*rtype = dynamic_cast<real_type_t*>(vtype)) {
 	    data_type = IVL_VT_REAL;
 	    signed_flag = true;
-	    range = 0;
+	    prange = 0;
 
 	    if (rtype->type_code != real_type_t::REAL) {
 		  VLerror(li, "sorry: Only real (not shortreal) supported here (%s:%d).",
@@ -2179,7 +2210,7 @@ void pform_module_define_port(const struct vlltype&li,
       } else if ((struct_type = dynamic_cast<struct_type_t*>(vtype))) {
 	    data_type = struct_type->figure_packed_base_type();
 	    signed_flag = false;
-	    range = 0;
+	    prange = 0;
 
       } else if (vtype) {
 	    VLerror(li, "sorry: Given type %s not supported here (%s:%d).",
@@ -2191,7 +2222,7 @@ void pform_module_define_port(const struct vlltype&li,
       if (data_type == IVL_VT_NO_TYPE)
 	    data_type = IVL_VT_LOGIC;
 
-      cur = new PWire(name, type, port_type, data_type);
+      cur = new PWire(name, type, port_kind, data_type);
       FILE_NAME(cur, li);
 
       cur->set_signed(signed_flag);
@@ -2199,11 +2230,15 @@ void pform_module_define_port(const struct vlltype&li,
       if (struct_type) {
 	    cur->set_data_type(struct_type);
 
-      } else if (range == 0) {
+      } else if (prange == 0) {
 	    cur->set_range_scalar((type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
 
       } else {
-	    cur->set_range(*range, (type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
+	    cur->set_range(*prange, (type == NetNet::IMPLICIT) ? SR_PORT : SR_BOTH);
+      }
+
+      if (urange) {
+	    cur->set_unpacked_idx(*urange);
       }
 
       pform_bind_attributes(cur->attributes, attr);

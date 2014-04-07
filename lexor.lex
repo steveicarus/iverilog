@@ -325,8 +325,8 @@ TU [munpf]
       if (in_package_scope) {
 	    if (rc == IDENTIFIER) {
 		  if (data_type_t*type = pform_test_type_identifier(in_package_scope, yylval.text)) {
-			delete[]yylval.text;
-			yylval.data_type = type;
+			yylval.type_identifier.text = yylval.text;
+			yylval.type_identifier.type = type;
 			rc = TYPE_IDENTIFIER;
 		  }
 	    }
@@ -361,8 +361,8 @@ TU [munpf]
 	   return this as a TYPE_IDENTIFIER instead. */
       if (rc == IDENTIFIER && gn_system_verilog()) {
 	    if (data_type_t*type = pform_test_type_identifier(yylval.text)) {
-		  delete[]yylval.text;
-		  yylval.data_type = type;
+		  yylval.type_identifier.text = yylval.text;
+		  yylval.type_identifier.type = type;
 		  rc = TYPE_IDENTIFIER;
 	    }
       }
@@ -382,8 +382,8 @@ TU [munpf]
       }
       if (gn_system_verilog()) {
 	    if (data_type_t*type = pform_test_type_identifier(yylval.text)) {
-		  delete[]yylval.text;
-		  yylval.data_type = type;
+		  yylval.type_identifier.text = yylval.text;
+		  yylval.type_identifier.type = type;
 		  return TYPE_IDENTIFIER;
 	    }
       }
