@@ -44,7 +44,7 @@ const char* acc_fetch_type_str(PLI_INT32 type)
 /*
  * FIXME: What does this do? How should it be declared in acc_user.h?
  */
-PLI_INT32 acc_fetch_paramtype(PLI_INT32 type)
+PLI_INT32 acc_fetch_paramtype(handle obj)
 {
       return 0;
 }
