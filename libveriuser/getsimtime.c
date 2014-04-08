@@ -43,10 +43,31 @@ scale(int high, int low, void*obj) {
       vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
       ivl_u64_t scaled;
 
+      vpiHandle use_obj = obj;
+      if (use_obj == 0) {
+	      /* If object is not passed in, then use current scope. */
+	    use_obj = hand;
+      } else {
+	      /* If object IS passed in, make sure it is a scope. If
+		 it is not, then get the scope of the object. We need
+		 a scope handle to go on. */
+	    switch (vpi_get(vpiType,use_obj)) {
+		case vpiModule:
+		case vpiGenScope:
+		case vpiFunction:
+		case vpiTask:
+		case vpiNamedBegin:
+		case vpiNamedFork:
+		  break;
+		default:
+		  use_obj = vpi_handle(vpiScope, use_obj);
+		  break;
+	    }
+      }
+
       scaled = high;
       scaled = (scaled << 32) | low;
-      scaled /= pow10u(vpi_get(vpiTimeUnit,obj ? (vpiHandle)obj : hand) -
-                       vpi_get(vpiTimePrecision,0));
+      scaled /= pow10u(vpi_get(vpiTimeUnit, use_obj) - vpi_get(vpiTimePrecision,0));
 
       return scaled;
 }
