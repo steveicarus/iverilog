@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2013 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2014 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -414,7 +414,14 @@ static ivl_signal_t get_port_from_nexus(ivl_scope_t scope, ivl_nexus_t nex,
 static void emit_sig_type(ivl_signal_t sig)
 {
       ivl_signal_type_t type = ivl_signal_type(sig);
-      assert(ivl_signal_dimensions(sig) == 0);
+      if (ivl_signal_dimensions(sig) != 0) {
+	    fprintf(stderr, "%s:%u: vlog95 error: Array ports (%s) are not "
+	                    "supported.\n",
+	                    ivl_signal_file(sig),
+	                    ivl_signal_lineno(sig),
+	                    ivl_signal_basename(sig));
+	    vlog_errors += 1;
+      }
 	/* Check to see if we have a variable (reg) or a net. */
       if (type == IVL_SIT_REG) {
 	    if (ivl_signal_integer(sig)) {
