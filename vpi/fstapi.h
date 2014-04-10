@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009-2013 Tony Bybell.
+ * Copyright (c) 2009-2014 Tony Bybell.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,6 +40,12 @@ extern "C" {
 
 typedef uint32_t fstHandle;
 
+enum fstWriterPackType {
+    FST_WR_PT_ZLIB             = 0,
+    FST_WR_PT_FASTLZ           = 1,
+    FST_WR_PT_LZ4              = 2
+};
+
 enum fstFileType {
     FST_FT_MIN                 = 0,
 
@@ -57,6 +63,9 @@ enum fstBlockType {
     FST_BL_GEOM                = 3,
     FST_BL_HIER                = 4,
     FST_BL_VCDATA_DYN_ALIAS    = 5,
+    FST_BL_HIER_LZ4            = 6,
+    FST_BL_HIER_LZ4DUO         = 7,
+    FST_BL_VCDATA_DYN_ALIAS2   = 8,
 
     FST_BL_ZWRAPPER	       = 254,   /* indicates that whole trace is gz wrapped */
     FST_BL_SKIP		       = 255	/* used while block is being written */
@@ -338,7 +347,7 @@ void 		fstWriterSetDate(void *ctx, const char *dat);
 void 		fstWriterSetDumpSizeLimit(void *ctx, uint64_t numbytes);
 void 		fstWriterSetEnvVar(void *ctx, const char *envvar);
 void 		fstWriterSetFileType(void *ctx, enum fstFileType filetype);
-void 		fstWriterSetPackType(void *ctx, int typ); 		/* type = 0 (libz), 1 (fastlz) */
+void 		fstWriterSetPackType(void *ctx, enum fstWriterPackType typ);
 void 		fstWriterSetParallelMode(void *ctx, int enable);
 void 		fstWriterSetRepackOnClose(void *ctx, int enable); 	/* type = 0 (none), 1 (libz) */
 void 		fstWriterSetScope(void *ctx, enum fstScopeType scopetype,
@@ -401,6 +410,7 @@ void 		fstReaderSetFacProcessMask(void *ctx, fstHandle facidx);
 void 		fstReaderSetFacProcessMaskAll(void *ctx);
 void 		fstReaderSetLimitTimeRange(void *ctx, uint64_t start_time, uint64_t end_time);
 void 		fstReaderSetUnlimitedTimeRange(void *ctx);
+void		fstReaderSetVcdExtensions(void *ctx, int enable);
 
 
 /*

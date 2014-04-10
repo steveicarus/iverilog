@@ -215,7 +215,7 @@ static FASTLZ_INLINE int FASTLZ_COMPRESSOR(const void* input, int length, void* 
     if(ip[0] == ip[-1] && FASTLZ_READU16(ip-1)==FASTLZ_READU16(ip+1))
     {
       distance = 1;
-      ip += 3;
+      /* ip += 3; */ /* scan-build, never used */
       ref = anchor - 1 + 3;
       goto match;
     }
