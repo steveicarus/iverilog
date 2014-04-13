@@ -23,6 +23,7 @@
 #ifdef CHECK_WITH_VALGRIND
 # include  "vvp_cleanup.h"
 #endif
+# include  <vector>
 # include  <cstdio>
 # include  <cstdarg>
 # include  <cstring>
@@ -31,6 +32,7 @@
 # include  <cmath>
 # include  <iostream>
 
+using namespace std;
 vpi_mode_t vpi_mode_flag = VPI_MODE_NONE;
 FILE*vpi_trace = 0;
 
@@ -1262,22 +1264,30 @@ static vpiHandle find_name(const char *name, vpiHandle handle)
 
 static vpiHandle find_scope(const char *name, vpiHandle handle, int depth)
 {
-      vpiHandle iter, hand, rtn = 0;
 
-      iter = !handle ? vpi_iterate(vpiModule, NULL) :
-		       vpi_iterate(vpiInternalScope, handle);
+      vpiHandle iter = handle==0
+	    ? vpi_iterate(vpiModule, NULL)
+	    : vpi_iterate(vpiInternalScope, handle);
 
+      vector<char> name_buf (strlen(name)+1);
+      strcpy(&name_buf[0], name);
+      char*nm_first = &name_buf[0];
+      char*nm_rest = strchr(nm_first, '.');
+      if (nm_rest) {
+	    *nm_rest++ = 0;
+      }
+
+      vpiHandle rtn = 0;
+      vpiHandle hand;
       while (iter && (hand = vpi_scan(iter))) {
 	    char *nm = vpi_get_str(vpiName, hand);
-	    int len = strlen(nm);
-	    const char *cp = name + len;	/* hier separator */
 
-	    if (!handle && !strcmp(name, nm)) {
-		  /* root module */
-		  rtn = hand;
-	    } else if (!strncmp(name, nm, len) && *(cp) == '.')
-		  /* recurse deeper */
-		  rtn = find_scope(cp+1, hand, depth + 1);
+	    if (strcmp(nm_first,nm)==0) {
+		  if (nm_rest)
+			rtn=find_scope(nm_rest, hand, depth+1);
+		  else
+			rtn = hand;
+	    }
 
 	    /* found it yet ? */
 	    if (rtn) {
@@ -1285,9 +1295,6 @@ static vpiHandle find_scope(const char *name, vpiHandle handle, int depth)
 		  break;
 	    }
       }
-
-      /* matched up to here */
-      if (!rtn) rtn = handle;
 
       return rtn;
 }
@@ -1299,6 +1306,20 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
       if (vpi_trace) {
 	    fprintf(vpi_trace, "vpi_handle_by_name(%s, %p) -->\n",
 		    name, scope);
+      }
+
+	// Chop the name into path and base. For example, if the name
+	// is "a.b.c", then nm_path becomes "a.b" and nm_base becomes
+	// "c". If the name is "c" then nm_path is nil and nm_base is "c".
+      vector<char> name_buf (strlen(name)+1);
+      strcpy(&name_buf[0], name);
+      char*nm_path = &name_buf[0];
+      char*nm_base = strrchr(nm_path, '.');
+      if (nm_base) {
+	    *nm_base++ = 0;
+      } else {
+	    nm_base = nm_path;
+	    nm_path = 0;
       }
 
       /* If scope provided, look in corresponding module; otherwise
@@ -1315,26 +1336,60 @@ vpiHandle vpi_handle_by_name(const char *name, vpiHandle scope)
 	          hand = scope;
 	          break;
 		default:
+		  if (vpi_trace) {
+			fprintf(vpi_trace, "vpi_handle_by_name: "
+				"Scope is not a vpiScope or vpiModule\n");
+		  }
 	          // Use vpi_chk_error() here when it is implemented.
 	          return 0;
 	    }
+
+      } else if (nm_path) {
+	      // The name has a path, and no other scope handle was
+	      // passed in. That suggests we are looking for "a.b.c"
+	      // in the root scope. So convert "a.b" to a scope and
+	      // start there to look for "c".
+	    hand = find_scope(nm_path, NULL, 0);
+	    nm_path = 0;
+
       } else {
-	    hand = find_scope(name, NULL, 0);
+	      // Special case: scope==<nil>, meaning we are looking in
+	      // the root, and there is no path to the name, i.e. the
+	      // string is "c" instead of "top.c". Try to find "c" as
+	      // a scope and return that.
+	    hand = find_scope(nm_base, NULL, 0);
       }
 
-      if (hand) {
-	    /* remove hierarchical portion of name */
-	    const char *nm = vpi_get_str(vpiFullName, hand);
-	    int len = strlen(nm);
-	    const char *cp = name + len;
-	    if (!strncmp(name, nm, len) && *cp == '.') name = cp + 1;
+      if (hand == 0) {
+	    if (vpi_trace) {
+		  fprintf(vpi_trace, "vpi_handle_by_name: "
+			  "Scope does not exist. Giving up.\n");
+	    }
 
-	    /* Ok, time to burn some cycles */
-	    vpiHandle out = find_name(name, hand);
-	    return out;
+	    return 0;
       }
 
-      return 0;
+	// If there is a path part, then use it to find the
+	// scope. For example, if the full name is a.b.c, then
+	// the nm_path string is a.b and we search for that
+	// scope. If we find it, then set hand to that scope.
+      if (nm_path) {
+	    vpiHandle tmp = find_scope(nm_path, hand, 0);
+	    while (tmp == 0 && hand != 0) {
+		  hand = vpi_handle(vpiScope, hand);
+		  tmp = find_scope(nm_path, hand, 0);
+	    }
+	    hand = tmp;
+      }
+
+	// Now we have the correct scope, look for the item.
+      vpiHandle out = find_name(nm_base, hand);
+
+      if (vpi_trace) {
+	    fprintf(vpi_trace, "vpi_handle_by_name: DONE\n");
+      }
+
+      return out;
 }
 
 
