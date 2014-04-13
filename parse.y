@@ -3850,7 +3850,7 @@ port_declaration
 					   @2.first_line);
 	real_type_t*real_type = new real_type_t(real_type_t::REAL);
 	FILE_NAME(real_type, @3);
-	pform_module_define_port(@2, name, NetNet::PINPUT, 
+	pform_module_define_port(@2, name, NetNet::PINPUT,
 				 NetNet::WIRE, real_type, $1);
 	port_declaration_context.port_type = NetNet::PINPUT;
 	port_declaration_context.port_net_type = NetNet::WIRE;
