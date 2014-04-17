@@ -93,8 +93,10 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 		 << ", nex_out.pin_count()==" << nex_out.pin_count() << endl;
       }
 
-	/* For now, assume there is exactly one output. */
-      ivl_assert(*this, nex_out.pin_count() == 1);
+      ivl_assert(*this, nex_out.pin_count()==1);
+      ivl_assert(*this, rsig->pin_count()==1);
+      connect(nex_out.pin(0), rsig->pin(0));
+
 #if 0
       if (lval_->lwidth() != lsig->vector_width()) {
 	    ivl_assert(*this, lval_->lwidth() < lsig->vector_width());
@@ -121,7 +123,6 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    rsig = tmp;
       }
 #endif
-      connect(nex_out.pin(0), rsig->pin(0));
 
 	/* This lval_ represents a reg that is a WIRE in the
 	   synthesized results. This function signals the destructor
@@ -129,6 +130,57 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	   WIRE. It is done then, at the last minute, so that pending
 	   synthesis can continue to work with it as a WIRE. */
       lval_->turn_sig_to_wire_on_release();
+
+      return true;
+}
+
+bool NetProc::synth_async_block_substatement_(Design*des, NetScope*scope,
+					      NexusSet&nex_map,
+					      NetBus&accumulated_nex_out,
+					      NetProc*substmt)
+{
+	// Create a temporary map of the output only from this statement.
+      NexusSet tmp_map;
+      substmt->nex_output(tmp_map);
+      if (debug_synth2) {
+	    cerr << get_fileline() << ": NetProc::synth_async_block_substatement_: "
+		 << "tmp_map.size()==" << tmp_map.size()
+		 << " for statement at " << substmt->get_fileline()
+		 << endl;
+      }
+
+	/* Create also a temporary NetBus to collect the
+	   output from the synthesis. */
+      NetBus tmp_out (scope, tmp_map.size());
+
+	// Map (and move) the accumulated_nex_out for this block
+	// to the version that we can pass to the next
+	// statement. We will move the result back later.
+      NetBus accumulated_tmp_out (scope, tmp_map.size());
+
+      for (unsigned idx = 0 ; idx < accumulated_nex_out.pin_count() ; idx += 1) {
+	    unsigned ptr = tmp_map.find_nexus(nex_map[idx]);
+	    if (ptr >= tmp_map.size())
+		  continue;
+
+	    connect(accumulated_tmp_out.pin(ptr), accumulated_nex_out.pin(idx));
+	    accumulated_nex_out.pin(idx).unlink();
+      }
+
+      bool ok_flag = substmt->synth_async(des, scope, tmp_map, tmp_out, accumulated_tmp_out);
+
+      if (ok_flag == false)
+	    return false;
+
+	// Now map the output from the substatement back to the
+	// accumulated_nex_out for this block. Look for the
+	// nex_map pin that is linked to the tmp_map.pin(idx)
+	// pin, and link that to the tmp_out.pin(idx) output link.
+      for (unsigned idx = 0 ;  idx < tmp_out.pin_count() ;  idx += 1) {
+	    unsigned ptr = nex_map.find_nexus(tmp_map[idx]);
+	    ivl_assert(*this, ptr < accumulated_nex_out.pin_count());
+	    connect(accumulated_nex_out.pin(ptr), tmp_out.pin(idx));
+      }
 
       return true;
 }
@@ -152,44 +204,12 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
       do {
 	    cur = cur->next_;
 
-	      /* Create a temporary map of the output only from this
-		 statement. */
-	    NexusSet tmp_map;
-	    cur->nex_output(tmp_map);
-
-	      /* Create also a temporary NetBus to collect the
-		 output from the synthesis. */
-	    NetBus tmp_out (scope, tmp_map.size());
-
-	      // Map (and move) the accumulated_nex_out for this block
-	      // to the version that we can pass to the next
-	      // statement. We will move the result back later.
-	    NetBus accumulated_tmp_out (scope, tmp_map.size());
-
-	    for (unsigned idx = 0 ; idx < accumulated_nex_out.pin_count() ; idx += 1) {
-		  unsigned ptr = tmp_map.find_nexus(nex_map[idx]);
-		  if (ptr >= tmp_map.size())
-			continue;
-
-		  connect(accumulated_tmp_out.pin(ptr), accumulated_nex_out.pin(idx));
-		  accumulated_nex_out.pin(idx).unlink();
-	    }
-
-	    bool ok_flag = cur->synth_async(des, scope, tmp_map, tmp_out, accumulated_tmp_out);
-
+	    bool ok_flag = synth_async_block_substatement_(des, scope, nex_map,
+							   accumulated_nex_out,
+							   cur);
 	    flag = flag && ok_flag;
 	    if (ok_flag == false)
 		  continue;
-
-	      // Now map the output from the substatement back to the
-	      // accumulated_nex_out for this block. Look for the
-	      // nex_map pin that is linked to the tmp_map.pin(idx)
-	      // pin, and link that to the tmp_out.pin(idx) output link.
-	    for (unsigned idx = 0 ;  idx < tmp_out.pin_count() ;  idx += 1) {
-		  unsigned ptr = nex_map.find_nexus(tmp_map[idx]);
-		  ivl_assert(*this, ptr < accumulated_nex_out.pin_count());
-		  connect(accumulated_nex_out.pin(ptr), tmp_out.pin(idx));
-	    }
 
       } while (cur != last_);
 
@@ -386,6 +406,12 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
       NetNet*ssig = expr_->synthesize(des, scope, expr_);
       assert(ssig);
 
+      if (debug_synth2) {
+	    cerr << get_fileline() << ": NetCondit::synth_async: "
+		 << "Synthesize if clause at " << if_->get_fileline()
+		 << endl;
+      }
+
       bool flag;
       NetBus asig(scope, nex_out.pin_count());
       NetBus atmp(scope, nex_out.pin_count());
@@ -402,16 +428,29 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		  connect(bsig.pin(idx), accumulated_nex_out.pin(idx));
 		  accumulated_nex_out.pin(idx).unlink();
 	    }
+
       } else {
-	    flag = else_->synth_async(des, scope, nex_map, bsig, btmp);
+
+	    if (debug_synth2) {
+		  cerr << get_fileline() << ": NetCondit::synth_async: "
+		       << "Synthesize else clause at " << else_->get_fileline()
+		       << endl;
+	    }
+
+	    flag = synth_async_block_substatement_(des, scope, nex_map, accumulated_nex_out, else_);
 	    if (!flag) {
 		  return false;
+	    }
+	    for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
+		  connect(bsig.pin(idx), accumulated_nex_out.pin(idx));
+		  accumulated_nex_out.pin(idx).unlink();
 	    }
       }
 
       ivl_assert(*this, nex_out.pin_count()==asig.pin_count());
       ivl_assert(*this, nex_out.pin_count()==bsig.pin_count());
 
+      bool rc_flag = true;
       for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
 	    ivl_assert(*this, asig.pin(idx).nexus()->pick_any_net());
 	    ivl_assert(*this, bsig.pin(idx).nexus()->pick_any_net());
@@ -422,7 +461,15 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    }
 	    unsigned mux_width = asig.pin(idx).nexus()->vector_width();
 	    ivl_assert(*this, mux_width != 0);
-	    ivl_assert(*this, mux_width==bsig.pin(idx).nexus()->vector_width());
+	    if (mux_width != bsig.pin(idx).nexus()->vector_width()) {
+		  cerr << get_fileline() << ": internal error: "
+		       << "NetCondit::synth_async: "
+		       << "Mux input sizes do not match."
+		       << "A size=" << mux_width
+		       << ", B size=" << bsig.pin(idx).nexus()->vector_width()
+		       << endl;
+		  rc_flag = false;
+	    }
 
 	    NetMux*mux = new NetMux(scope, scope->local_symbol(),
 				    mux_width, 2, 1);
@@ -448,7 +495,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    des->add_node(mux);
       }
 
-      return true;
+      return rc_flag;
 }
 
 bool NetEvWait::synth_async(Design*des, NetScope*scope,

@@ -2542,6 +2542,11 @@ class NetProc : public virtual LineInfo {
 	// Recursively checks to see if there is delay in this element.
       virtual DelayType delay_type() const;
 
+    protected:
+      bool synth_async_block_substatement_(Design*des, NetScope*scope,
+					   NexusSet&nex_map,
+					   NetBus&accumulated_nex_out,
+					   NetProc*substmt);
     private:
       friend class NetBlock;
       NetProc*next_;
