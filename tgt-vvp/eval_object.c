@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -67,7 +67,7 @@ static int eval_darray_new(ivl_expr_t ex)
       }
 
       if (init_expr && ivl_expr_type(init_expr)==IVL_EX_ARRAY_PATTERN) {
-	    int idx;
+	    unsigned idx;
 	    struct vector_info rvec;
 	    unsigned wid;
 	    switch (ivl_type_base(element_type)) {

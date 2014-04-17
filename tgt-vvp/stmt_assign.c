@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -418,7 +418,7 @@ static void set_vec_to_lval_slice(ivl_lval_t lval, unsigned bit, unsigned wid)
 		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
 		  draw_eval_expr_into_integer(word_ix, 3);
 		  fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_set);
-		  fprintf(vvp_out, "    %%ix/mov 1, %u;\n", part_off_reg);
+		  fprintf(vvp_out, "    %%ix/mov 1, %d;\n", part_off_reg);
 		  clr_word(part_off_reg);
 	    } else {
 		  draw_eval_expr_into_integer(part_off_ex, 1);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,7 +57,7 @@ static void assign_to_array_r_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	/* This code is common to all the different types of array delays. */
       if (number_is_immediate(word_ix, IMM_WID, 0) &&
 	  !number_is_unknown(word_ix)) {
-	    fprintf(vvp_out, "    %%ix/load %u, %lu, 0; address\n",
+	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0; address\n",
 		    word_ix_reg, get_number_immediate(word_ix));
       } else {
 	      /* Calculate array word index into index register 3 */
@@ -74,7 +74,7 @@ static void assign_to_array_r_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	      /* Calculated delay... */
 	    int delay_index = allocate_word();
 	    draw_eval_expr_into_integer(dexp, delay_index);
-	    fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
+	    fprintf(vvp_out, "    %%ix/mov 3, %d;\n", word_ix_reg);
 	    fprintf(vvp_out, "    %%assign/ar/d v%p, %d;\n", lsig,
 	                     delay_index);
 	    clr_word(word_ix_reg);
@@ -152,7 +152,7 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	      /* If the index expression has XZ bits, skip the assign. */
 	    fprintf(vvp_out, "    %%jmp/1 t_%u, 4;\n", skip_assign);
 	    if (dexp == 0) {
-		  fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
+		  fprintf(vvp_out, "    %%ix/mov 3, %d;\n", word_ix_reg);
 		  clr_word(word_ix_reg);
 	    }
       } else {
@@ -171,8 +171,8 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
       fprintf(vvp_out, "    %%ix/load 0, %u, 0; word width\n", width);
 
       if (dexp != 0) {
-	    fprintf(vvp_out, "    %%ix/mov 1, %u;\n", part_off_reg);
-	    fprintf(vvp_out, "    %%ix/mov 3, %u;\n", word_ix_reg);
+	    fprintf(vvp_out, "    %%ix/mov 1, %d;\n", part_off_reg);
+	    fprintf(vvp_out, "    %%ix/mov 3, %d;\n", word_ix_reg);
 	    fprintf(vvp_out, "    %%assign/av/d v%p, %d, %u;\n", lsig,
 	                     delay_index, bit);
 	    clr_word(part_off_reg);
