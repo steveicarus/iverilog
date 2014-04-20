@@ -1009,7 +1009,8 @@ bool NetProcTop::synth_sync(Design*des)
 	    connect(tmp->pin(0),    ff2->pin_Data());
 
 	    connect(clock->pin(0),  ff2->pin_Clock());
-	    connect(ce->pin(0),     ff2->pin_Enable());
+	    if (ce->is_linked())
+		  connect(ce->pin(0),     ff2->pin_Enable());
 #if 0
 	    if (ff->pin_Aset().is_linked())
 		  connect(ff->pin_Aset(), ff2->pin_Aset());
