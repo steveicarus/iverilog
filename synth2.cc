@@ -44,6 +44,11 @@ bool NetProc::synth_sync(Design*des, NetScope*scope,
 	    des->errors += 1;
       }
 
+      if (debug_synth2) {
+	    cerr << get_fileline() << ": NetProc::synth_sync: "
+		 << "This statement is an async input to a sync process." << endl;
+      }
+
 	/* Synthesize the input to the DFF. */
       NetBus accumulated_nex_out (scope, nex_out.pin_count());
       return synth_async(des, scope, nex_map, nex_out, accumulated_nex_out);
@@ -571,6 +576,11 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 			  NexusSet&nex_map, NetBus&nex_out,
 			  const vector<NetEvProbe*>&events_in)
 {
+      if (debug_synth2) {
+	    cerr << get_fileline() << ": NetBlock::synth_sync: "
+		 << "Examine this block for synchronous logic." << endl;
+      }
+
       bool flag = true;
 
       NetProc*cur = last_;
@@ -580,11 +590,6 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 	      /* Create a temporary nex_map for the substatement. */
 	    NexusSet tmp_set;
 	    cur->nex_output(tmp_set);
-
-	      /* NOTE: After this point, tmp_set should not be used as
-		 the various functions I call do a lot of connecting,
-		 and the nexa in the tmp_set may get realloced. Use
-		 the tmp_map instead. */
 
 	      /* Create also a temporary net_out to collect the
 		 output. The tmp1 and tmp2 map and out sets together
@@ -615,6 +620,11 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 	    }
 
       } while (cur != last_);
+
+      if (debug_synth2) {
+	    cerr << get_fileline() << ": NetBlock::synth_sync: "
+		 << "Done Examining this block for synchronous logic." << endl;
+      }
 
       return flag;
 }
@@ -840,6 +850,11 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 			   NexusSet&nex_map, NetBus&nex_out,
 			   const vector<NetEvProbe*>&events_in)
 {
+      if (debug_synth2) {
+	    cerr << get_fileline() << ": NetEvWait::synth_sync: "
+		 << "Synchronous process an event statement." << endl;
+      }
+
       if (events_in.size() > 0) {
 	    cerr << get_fileline() << ": error: Events are unaccounted"
 		 << " for in process synthesis." << endl;
@@ -894,6 +909,11 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 	    return false;
       }
 
+      if (debug_synth2) {
+	    cerr << get_fileline() << ": NetEvWait::synth_sync: "
+		 << "Found and synthesized the FF clock." << endl;
+      }
+
       connect(ff_clk->pin(0), pclk->pin(0));
       if (pclk->edge() == NetEvProbe::NEGEDGE) {
 	    perm_string polarity = perm_string::literal("Clock:LPM_Polarity");
@@ -921,7 +941,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 bool NetProcTop::synth_sync(Design*des)
 {
       if (debug_synth2) {
-	    cerr << get_fileline() << ": debug: "
+	    cerr << get_fileline() << ": NetProcTop::synth_sync: "
 		 << "Process is apparently synchronous. Making NetFFs."
 		 << endl;
       }
@@ -1033,7 +1053,7 @@ void synth2_f::process(Design*des, NetProcTop*top)
       if (top->scope()->attribute(perm_string::literal("ivl_synthesis_cell")).len() > 0)
 	    return;
 
-      if (top->is_synchronous()) do {
+      if (top->is_synchronous()) {
 	    bool flag = top->synth_sync(des);
 	    if (! flag) {
 		  cerr << top->get_fileline() << ": error: "
@@ -1043,7 +1063,7 @@ void synth2_f::process(Design*des, NetProcTop*top)
 	    }
 	    des->delete_process(top);
 	    return;
-      } while (0);
+      }
 
       if (! top->is_asynchronous()) {
 	    bool synth_error_flag = false;

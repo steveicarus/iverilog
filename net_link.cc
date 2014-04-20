@@ -105,6 +105,8 @@ Link::Link()
 : dir_(PASSIVE), drive0_(IVL_DR_STRONG), drive1_(IVL_DR_STRONG),
   next_(0), nexus_(0)
 {
+      node_ = 0;
+      pin_zero_ = true;
 }
 
 Link::~Link()
