@@ -88,7 +88,7 @@ struct pform_tf_port_t {
  */
 class data_type_t : public LineInfo {
     public:
-      inline explicit data_type_t() : cache_type_elaborate_(0) { }
+      inline explicit data_type_t() { }
       virtual ~data_type_t() = 0;
 	// This method is used to figure out the base type of a packed
 	// compound object. Return IVL_VT_NO_TYPE if the type is not packed.
@@ -102,7 +102,8 @@ class data_type_t : public LineInfo {
 	// Elaborate the type to an ivl_type_s type.
       virtual ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
 
-      ivl_type_s*cache_type_elaborate_;
+	// Keep per-scope elaboration results cached.
+      std::map<NetScope*,ivl_type_s*> cache_type_elaborate_;
 };
 
 struct void_type_t : public data_type_t {
@@ -175,6 +176,7 @@ struct vector_type_t : public data_type_t {
 				    std::list<pform_range_t>*pd)
       : base_type(bt), signed_flag(sf), reg_flag(false), integer_flag(false), implicit_flag(false), pdims(pd) { }
       virtual ivl_variable_type_t figure_packed_base_type(void)const;
+      virtual void pform_dump(std::ostream&out, unsigned indent) const;
       ivl_type_s* elaborate_type_raw(Design*des, NetScope*scope) const;
 
       ivl_variable_type_t base_type;

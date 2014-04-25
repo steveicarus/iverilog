@@ -563,7 +563,7 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	      // Special case: this is a constructor, so the return
 	      // signal is also the first argument. For example, the
 	      // source code for the definition may be:
- //   function new(...);
+	      //   function new(...);
 	      //   endfunction
 	      // In this case, the "@" port is the synthetic "this"
 	      // argument and we also use it as a return value at the
@@ -594,6 +594,11 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
 	    }
 
 	    if (ret_type) {
+		  if (debug_elaborate) {
+			cerr << get_fileline() << ": PFunction::elaborate_sig: "
+			     << "return type: " << *ret_type << endl;
+			return_type_->pform_dump(cerr, 8);
+		  }
 		  list<netrange_t> ret_unpacked;
 		  ret_sig = new NetNet(scope, fname, NetNet::REG, ret_unpacked, ret_type);
 
@@ -615,9 +620,10 @@ void PFunction::elaborate_sig(Design*des, NetScope*scope) const
       NetFuncDef*def = new NetFuncDef(scope, ret_sig, ports, pdef);
 
       if (debug_elaborate)
-	    cerr << get_fileline() << ": debug: "
-		 << "Attach function definition to scope "
-		 << scope_path(scope) << "." << endl;
+	    cerr << get_fileline() << ": PFunction::elaborate_sig: "
+		 << "Attach function definition " << scope_path(scope)
+		 << " with ret_sig width=" << (ret_sig? ret_sig->vector_width() : 0)
+		 << "." << endl;
 
       scope->set_func_def(def);
 

@@ -1440,6 +1440,12 @@ NetNet* NetEUFunc::synthesize(Design*des, NetScope*scope, NetExpr*root)
       osig->local_flag(true);
       connect(net->pin(0), osig->pin(0));
 
+      if (debug_synth2) {
+	    cerr << get_fileline() << ": NetEUFunc::synthesize: "
+		 << "result_sig_->vector_width()=" << result_sig_->vector_width()
+		 << ", osig->vector_width()=" << osig->vector_width() << endl;
+      }
+
         /* Connect the pins to the arguments. */
       NetFuncDef*def = func_->func_def();
       for (unsigned idx = 0; idx < eparms.size(); idx += 1) {

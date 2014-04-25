@@ -24,15 +24,6 @@ data_type_t::~data_type_t()
 {
 }
 
-ivl_type_s* data_type_t::elaborate_type(Design*des, NetScope*scope)
-{
-      if (cache_type_elaborate_)
-	    return cache_type_elaborate_;
-
-      cache_type_elaborate_ = elaborate_type_raw(des, scope);
-      return cache_type_elaborate_;
-}
-
 string_type_t::~string_type_t()
 {
 }

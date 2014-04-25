@@ -89,6 +89,8 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 		 << "r-value signal is " << rsig->vector_width() << " bits." << endl;
 	    cerr << get_fileline() << ": NetAssignBase::synth_async: "
 		 << "lval_->lwidth()=" << lval_->lwidth() << endl;
+	    cerr << get_fileline() << ": NetAssignBase::synth_async: "
+		 << "lsig = " << scope_path(scope) << "." << lsig->name() << endl;
 	    if (const NetExpr*base = lval_->get_base()) {
 		  cerr << get_fileline() << ": NetAssignBase::synth_async: "
 		       << "base_=" << *base << endl;
@@ -450,6 +452,12 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		  connect(bsig.pin(idx), accumulated_nex_out.pin(idx));
 		  accumulated_nex_out.pin(idx).unlink();
 	    }
+
+	    if (debug_synth2) {
+		  cerr << get_fileline() << ": NetCondit::synth_async: "
+		       << "synthesize else clause at " << else_->get_fileline()
+		       << " is done." << endl;
+	    }
       }
 
       ivl_assert(*this, nex_out.pin_count()==asig.pin_count());
@@ -470,9 +478,23 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": internal error: "
 		       << "NetCondit::synth_async: "
 		       << "Mux input sizes do not match."
-		       << "A size=" << mux_width
+		       << " A size=" << mux_width
 		       << ", B size=" << bsig.pin(idx).nexus()->vector_width()
 		       << endl;
+		  cerr << get_fileline() << ":               : "
+		       << "asig node pins:" << endl;
+		  asig.dump_node_pins(cerr, 8);
+		  cerr << get_fileline() << ":               : "
+		       << "if_ statement:" << endl;
+		  if_->dump(cerr, 8);
+		  cerr << get_fileline() << ":               : "
+		       << "bsig node pins:" << endl;
+		  bsig.dump_node_pins(cerr, 4);
+		  if (else_) {
+			cerr << get_fileline() << ":               : "
+			     << "else_ statement:" << endl;
+			else_->dump(cerr, 8);
+		  }
 		  rc_flag = false;
 	    }
 

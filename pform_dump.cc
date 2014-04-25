@@ -160,13 +160,6 @@ void parray_type_t::pform_dump(ostream&out, unsigned indent) const
       base_type->pform_dump(out, indent+4);
 }
 
-void uarray_type_t::pform_dump(ostream&out, unsigned indent) const
-{
-      out << setw(indent) << "" << "Unpacked array " << "[...]"
-	  << " of:" << endl;
-      base_type->pform_dump(out, indent+4);
-}
-
 void struct_type_t::pform_dump(ostream&out, unsigned indent) const
 {
       out << setw(indent) << "" << "Struct " << (packed_flag?"packed":"unpacked")
@@ -179,6 +172,23 @@ void struct_type_t::pform_dump(ostream&out, unsigned indent) const
 	    struct_member_t*curp = *cur;
 	    curp->pform_dump(out, indent+4);
       }
+}
+
+void uarray_type_t::pform_dump(ostream&out, unsigned indent) const
+{
+      out << setw(indent) << "" << "Unpacked array " << "[...]"
+	  << " of:" << endl;
+      base_type->pform_dump(out, indent+4);
+}
+
+void vector_type_t::pform_dump(ostream&fd, unsigned indent) const
+{
+      fd << setw(indent) << "" << "vector of " << base_type;
+      for (list<pform_range_t>::iterator cur = pdims->begin()
+		 ; cur != pdims->end() ; ++cur) {
+	    fd << "[" << *(cur->first) << ":" << *(cur->second) << "]";
+      }
+      fd << endl;
 }
 
 void class_type_t::pform_dump(ostream&out, unsigned indent) const

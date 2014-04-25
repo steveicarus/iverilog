@@ -31,6 +31,21 @@
 
 using namespace std;
 
+/*
+ * Elaborations of types may vary depending on the scope that it is
+ * done in, so keep a per-scope cache of the results.
+ */
+ivl_type_s* data_type_t::elaborate_type(Design*des, NetScope*scope)
+{
+      map<NetScope*,ivl_type_s*>::iterator pos = cache_type_elaborate_.lower_bound(scope);
+      if (pos->first == scope)
+	    return pos->second;
+
+      ivl_type_s*tmp = elaborate_type_raw(des, scope);
+      cache_type_elaborate_.insert(pos, pair<NetScope*,ivl_type_s*>(scope, tmp));
+      return tmp;
+}
+
 ivl_type_s* data_type_t::elaborate_type_raw(Design*des, NetScope*) const
 {
       cerr << get_fileline() << ": internal error: "
