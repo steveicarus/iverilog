@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -101,7 +101,7 @@ void sdf_select_instance(const char*celltype, const char*cellinst)
 	    vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
 	               (int)vpi_get(vpiLineNo, sdf_callh));
 	    vpi_printf("Unable to find %s in scope %s.\n",
-		       cellinst, vpi_get_str(vpiFullName, scope));
+		       src, vpi_get_str(vpiFullName, scope));
 	    return;
       }
 
@@ -110,16 +110,16 @@ void sdf_select_instance(const char*celltype, const char*cellinst)
 	    vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
 	               (int)vpi_get(vpiLineNo, sdf_callh));
 	    vpi_printf("Scope %s in %s is not a module.\n",
-		       cellinst, vpi_get_str(vpiFullName, sdf_scope));
+		       src, vpi_get_str(vpiFullName, scope));
       }
 
 	/* The matching scope (a module) should have the expected type. */
       if (strcmp(celltype,vpi_get_str(vpiDefName,sdf_cur_cell)) != 0) {
 	    vpi_printf("SDF WARNING: %s:%d: ", vpi_get_str(vpiFile, sdf_callh),
 	               (int)vpi_get(vpiLineNo, sdf_callh));
-	    vpi_printf("Module %s in %s is not a %s; it is an %s\n", cellinst,
-		       vpi_get_str(vpiFullName, sdf_scope), celltype,
-		       vpi_get_str(vpiDefName, sdf_cur_cell));
+	    vpi_printf("Module %s in %s is not a %s; it is a ", src,
+		       vpi_get_str(vpiFullName, scope), celltype);
+	    vpi_printf("%s\n", vpi_get_str(vpiDefName, sdf_cur_cell));
       }
 
 }
