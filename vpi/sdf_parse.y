@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 1998-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -44,13 +44,15 @@ char sdf_use_hchar = '.';
       struct sdf_delval_list_s delval_list;
 };
 
-%token K_ABSOLUTE K_CELL K_CELLTYPE K_COND K_DATE K_DELAYFILE K_DELAY K_DESIGN
-%token K_DIVIDER K_HOLD K_INCREMENT K_INSTANCE K_INTERCONNECT K_IOPATH
-%token K_NEGEDGE K_POSEDGE K_PROCESS K_PROGRAM K_RECREM K_RECOVERY
-%token K_REMOVAL K_SDFVERSION K_SETUP K_SETUPHOLD K_TEMPERATURE
-%token K_TIMESCALE K_TIMINGCHECK K_VENDOR K_VERSION K_VOLTAGE K_WIDTH
+%token K_ABSOLUTE K_CELL K_CELLTYPE K_COND K_CONDELSE K_DATE K_DELAYFILE
+%token K_DELAY K_DESIGN K_DIVIDER K_HOLD K_INCREMENT K_INSTANCE
+%token K_INTERCONNECT K_IOPATH K_NEGEDGE K_POSEDGE K_PROCESS K_PROGRAM
+%token K_RECREM K_RECOVERY K_REMOVAL K_SDFVERSION K_SETUP K_SETUPHOLD
+%token K_TEMPERATURE K_TIMESCALE K_TIMINGCHECK K_VENDOR K_VERSION
+%token K_VOLTAGE K_WIDTH
 %token K_01 K_10 K_0Z K_Z1 K_1Z K_Z0
 %token K_EQ K_NE K_CEQ K_CNE K_LOGICAL_ONE K_LOGICAL_ZERO
+%token K_LAND K_LOR
 
 %token HCHAR
 %token <string_val> QSTRING IDENTIFIER
@@ -69,6 +71,10 @@ char sdf_use_hchar = '.';
 %type <port_with_edge> port_edge port_spec
 
 %type <delval_list> delval_list
+
+%left K_LOR
+%left K_LAND
+%left K_EQ K_NE K_CEQ K_CNE
 
 %%
 
@@ -261,6 +267,26 @@ del_def
   | '(' K_IOPATH error ')'
       { vpi_printf("%s:%d: SDF ERROR: Invalid/malformed IOPATH\n",
 		   sdf_parse_path, @2.first_line); }
+  | '(' K_COND conditional_port_expr
+    '(' K_IOPATH port_spec port_instance delval_list ')' ')'
+      {
+	/* Skip conditional path back annotation for now. */
+      }
+  | '(' K_COND QSTRING conditional_port_expr 
+    '(' K_IOPATH port_spec port_instance delval_list ')' ')'
+      {
+	/* Skip conditional path back annotation for now. */
+      }
+  | '(' K_COND error ')'
+      { vpi_printf("%s:%d: SDF ERROR: Invalid/malformed COND\n",
+		   sdf_parse_path, @2.first_line); }
+  | '(' K_CONDELSE '(' K_IOPATH port_spec port_instance delval_list ')' ')'
+      {
+	/* Skip ifnone back annotation for now. */
+      }
+  | '(' K_CONDELSE error ')'
+      { vpi_printf("%s:%d: SDF ERROR: Invalid/malformed CONDELSE\n",
+		   sdf_parse_path, @2.first_line); }
   /* | '(' K_INTERCONNECT port_instance port_instance delval_list ')' */
   | '(' K_INTERCONNECT port_interconnect port_interconnect delval_list ')'
       { if (sdf_flag_warning) vpi_printf("%s:%d: SDF WARNING: "
@@ -320,6 +346,19 @@ timing_check_condition
   | '~' port_interconnect
   | '!' port_interconnect
   | port_interconnect equality_operator scalar_constant
+  ;
+
+  /* This is not complete! */
+conditional_port_expr
+  : port
+  | scalar_constant
+  | '(' conditional_port_expr ')'
+  | conditional_port_expr K_LAND conditional_port_expr
+  | conditional_port_expr K_LOR conditional_port_expr
+  | conditional_port_expr K_EQ conditional_port_expr
+  | conditional_port_expr K_NE conditional_port_expr
+  | conditional_port_expr K_CEQ conditional_port_expr
+  | conditional_port_expr K_CNE conditional_port_expr
   ;
 
 equality_operator
