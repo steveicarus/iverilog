@@ -272,7 +272,7 @@ del_def
       {
 	/* Skip conditional path back annotation for now. */
       }
-  | '(' K_COND QSTRING conditional_port_expr 
+  | '(' K_COND QSTRING conditional_port_expr
     '(' K_IOPATH port_spec port_instance delval_list ')' ')'
       {
 	/* Skip conditional path back annotation for now. */
