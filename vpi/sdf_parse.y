@@ -269,20 +269,29 @@ del_def
 		   sdf_parse_path, @2.first_line); }
   | '(' K_COND conditional_port_expr
     '(' K_IOPATH port_spec port_instance delval_list ')' ')'
-      {
-	/* Skip conditional path back annotation for now. */
+      { if (sdf_flag_warning) vpi_printf("%s:%d: SDF WARNING: "
+					 "COND not supported.\n",
+					 sdf_parse_path, @2.first_line);
+	free($6.string_val);
+	free($7);
       }
   | '(' K_COND QSTRING conditional_port_expr
     '(' K_IOPATH port_spec port_instance delval_list ')' ')'
-      {
-	/* Skip conditional path back annotation for now. */
+      { if (sdf_flag_warning) vpi_printf("%s:%d: SDF WARNING: "
+					 "COND not supported.\n",
+					 sdf_parse_path, @2.first_line);
+	free($7.string_val);
+	free($8);
       }
   | '(' K_COND error ')'
       { vpi_printf("%s:%d: SDF ERROR: Invalid/malformed COND\n",
 		   sdf_parse_path, @2.first_line); }
   | '(' K_CONDELSE '(' K_IOPATH port_spec port_instance delval_list ')' ')'
-      {
-	/* Skip ifnone back annotation for now. */
+      { if (sdf_flag_warning) vpi_printf("%s:%d: SDF WARNING: "
+					 "CONDELSE not supported.\n",
+					 sdf_parse_path, @2.first_line);
+	free($5.string_val);
+	free($6);
       }
   | '(' K_CONDELSE error ')'
       { vpi_printf("%s:%d: SDF ERROR: Invalid/malformed CONDELSE\n",
