@@ -280,6 +280,7 @@ del_def
       { if (sdf_flag_warning) vpi_printf("%s:%d: SDF WARNING: "
 					 "COND not supported.\n",
 					 sdf_parse_path, @2.first_line);
+	free($3);
 	free($7.string_val);
 	free($8);
       }
@@ -327,11 +328,17 @@ tchk_def
 
 port_tchk
   : port_instance
+      { free($1); }
   /* This must only be an edge. For now we just accept everything. */
   | cond_edge_start port_instance ')'
+      { free($2); }
   /* These must only be a cond. For now we just accept everything. */
   | cond_edge_start timing_check_condition port_spec ')'
+      { free($3.string_val); }
   | cond_edge_start QSTRING timing_check_condition port_spec ')'
+      { free($2);
+	free($4.string_val);
+      }
   ;
 
 cond_edge_start
@@ -352,14 +359,19 @@ cond_edge_identifier
 
 timing_check_condition
   : port_interconnect
+      { free($1); }
   | '~' port_interconnect
+      { free($2); }
   | '!' port_interconnect
+      { free($2); }
   | port_interconnect equality_operator scalar_constant
+      { free($1); }
   ;
 
   /* This is not complete! */
 conditional_port_expr
   : port
+      { free($1); }
   | scalar_constant
   | '(' conditional_port_expr ')'
   | conditional_port_expr K_LAND conditional_port_expr
