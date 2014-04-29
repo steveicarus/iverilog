@@ -52,6 +52,10 @@
 #include <pthread.h>
 #endif
 
+#ifdef __MINGW32__
+#include <windows.h>
+#endif
+
 #if HAVE_ALLOCA_H
 #include <alloca.h>
 #elif defined(__GNUC__)
@@ -169,6 +173,85 @@ static FILE *unlink_fopen(const char *nam, const char *mode)
 unlink(nam);
 return(fopen(nam, mode));
 }
+
+
+/*
+ * system-specific temp file handling
+ */
+#ifdef __MINGW32__
+
+static FILE* tmpfile_open(char **nam)
+{
+char *fname = NULL;
+TCHAR szTempFileName[MAX_PATH];
+TCHAR lpTempPathBuffer[MAX_PATH];
+DWORD dwRetVal = 0;
+UINT uRetVal = 0;
+FILE *fh = NULL;
+
+if(nam) /* cppcheck warning fix: nam is always defined, so this is not needed */
+	{
+	dwRetVal = GetTempPath(MAX_PATH, lpTempPathBuffer);
+	if((dwRetVal > MAX_PATH) || (dwRetVal == 0))
+	        {
+	        fprintf(stderr, "GetTempPath() failed in "__FILE__" line %d, exiting.\n", __LINE__);
+		exit(255);
+	        }
+	        else   
+	        {
+	        uRetVal = GetTempFileName(lpTempPathBuffer, TEXT("FSTW"), 0, szTempFileName);
+	        if (uRetVal == 0)
+	                {
+	                fprintf(stderr, "GetTempFileName() failed in "__FILE__" line %d, exiting.\n", __LINE__);
+			exit(255);
+	                }
+	                else
+	                {
+	                fname = strdup(szTempFileName);
+	                }
+	        }
+
+	if(fname)
+		{
+		*nam = fname;
+		fh = unlink_fopen(fname, "w+b");
+		}
+	}
+
+return(fh);
+}
+
+#else
+
+static FILE* tmpfile_open(char **nam)
+{
+FILE *f = tmpfile(); /* replace with mkstemp() + fopen(), etc if this is not good enough */
+if(nam) { *nam = NULL; }
+return(f);
+}
+
+#endif
+
+
+static void tmpfile_close(FILE **f, char **nam)
+{
+if(f)
+	{
+	if(*f) { fclose(*f); *f = NULL; }
+	}
+
+if(nam)
+	{
+	if(*nam) 
+		{ 
+		unlink(*nam); 
+		free(*nam);
+		*nam = NULL; 
+		}
+	}
+}
+
+/*****************************************/
 
 
 /* 
@@ -702,6 +785,11 @@ Pvoid_t path_array;
 uint32_t path_array_count;
 
 unsigned fseek_failed : 1;
+
+char *geom_handle_nam;
+char *valpos_handle_nam;
+char *curval_handle_nam;
+char *tchn_handle_nam;
 };
 
 
@@ -1018,7 +1106,8 @@ struct fstWriterContext *xc = calloc(1, sizeof(struct fstWriterContext));
 xc->compress_hier = use_compressed_hier;
 fstDetermineBreakSize(xc);
 
-if((!nam)||(!(xc->handle=unlink_fopen(nam, "w+b"))))
+if((!nam)||
+	(!(xc->handle=unlink_fopen(nam, "w+b"))))
         {
         free(xc);
         xc=NULL;
@@ -1032,14 +1121,13 @@ if((!nam)||(!(xc->handle=unlink_fopen(nam, "w+b"))))
 	strcpy(hf + flen, ".hier");
 	xc->hier_handle = unlink_fopen(hf, "w+b");
 
-	xc->geom_handle = tmpfile();	/* .geom */
-	xc->valpos_handle = tmpfile();	/* .offs */
-	xc->curval_handle = tmpfile();	/* .bits */
-	xc->tchn_handle = tmpfile();	/* .tchn */
+	xc->geom_handle = tmpfile_open(&xc->geom_handle_nam);		/* .geom */
+	xc->valpos_handle = tmpfile_open(&xc->valpos_handle_nam);	/* .offs */
+	xc->curval_handle = tmpfile_open(&xc->curval_handle_nam);	/* .bits */
+	xc->tchn_handle = tmpfile_open(&xc->tchn_handle_nam);		/* .tchn */
 	xc->vchg_alloc_siz = xc->fst_break_size + xc->fst_break_add_size;
 	xc->vchg_mem = malloc(xc->vchg_alloc_siz);
 
-	free(hf);
 	if(xc->hier_handle && xc->geom_handle && xc->valpos_handle && xc->curval_handle && xc->vchg_mem && xc->tchn_handle)
 		{
 	        xc->filename = strdup(nam);
@@ -1055,15 +1143,18 @@ if((!nam)||(!(xc->handle=unlink_fopen(nam, "w+b"))))
 		}
 		else
 		{
-		if(xc->hier_handle) fclose(xc->hier_handle);
-		if(xc->geom_handle) fclose(xc->geom_handle);
-		if(xc->valpos_handle) fclose(xc->valpos_handle);
-		if(xc->curval_handle) fclose(xc->curval_handle);
-		if(xc->tchn_handle) fclose(xc->tchn_handle);
+		fclose(xc->handle);
+		if(xc->hier_handle) { fclose(xc->hier_handle); unlink(hf); }
+		tmpfile_close(&xc->geom_handle, &xc->geom_handle_nam);
+		tmpfile_close(&xc->valpos_handle, &xc->valpos_handle_nam);
+		tmpfile_close(&xc->curval_handle, &xc->curval_handle_nam);
+		tmpfile_close(&xc->tchn_handle, &xc->tchn_handle_nam);
 		free(xc->vchg_mem);
 	        free(xc);
 	        xc=NULL;
 		}
+
+	free(hf);
 	}
 
 return(xc);
@@ -1688,7 +1779,7 @@ free(xc->curval_mem);
 #endif
 free(xc->valpos_mem);
 free(xc->vchg_mem);
-fclose(xc->tchn_handle);
+tmpfile_close(&xc->tchn_handle, &xc->tchn_handle_nam);
 free(xc);
 
 return(NULL);
@@ -1731,7 +1822,7 @@ if(xc->parallel_enabled)
 	        }
 
 	xc->tchn_cnt = xc->tchn_idx = 0;
-	xc->tchn_handle = tmpfile();
+	xc->tchn_handle = tmpfile_open(&xc->tchn_handle_nam); /* child thread will deallocate file/name */
 	fstWriterFseeko(xc, xc->tchn_handle, 0, SEEK_SET);
 	fstFtruncate(fileno(xc->tchn_handle), 0);
 
@@ -2003,11 +2094,11 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 	fstWriterUint64(xc->handle, xc->secnum);
 	fflush(xc->handle);
 	
-	if(xc->tchn_handle) { fclose(xc->tchn_handle); xc->tchn_handle = NULL; }
+	tmpfile_close(&xc->tchn_handle, &xc->tchn_handle_nam);
 	free(xc->vchg_mem); xc->vchg_mem = NULL;
-	if(xc->curval_handle) { fclose(xc->curval_handle); xc->curval_handle = NULL; }
-	if(xc->valpos_handle) { fclose(xc->valpos_handle); xc->valpos_handle = NULL; }
-	if(xc->geom_handle) { fclose(xc->geom_handle); xc->geom_handle = NULL; }
+	tmpfile_close(&xc->curval_handle, &xc->curval_handle_nam);
+	tmpfile_close(&xc->valpos_handle, &xc->valpos_handle_nam);
+	tmpfile_close(&xc->geom_handle, &xc->geom_handle_nam);
 	if(xc->hier_handle) { fclose(xc->hier_handle); xc->hier_handle = NULL; }
 	if(xc->handle) 
 		{ 
@@ -3016,6 +3107,9 @@ int writex_pos;
 int writex_fd;
 unsigned char writex_buf[FST_WRITEX_MAX];
 #endif
+
+char *f_nam;
+char *fh_nam;
 };
 
 
@@ -3535,14 +3629,16 @@ if(!xc->fh)
 	sprintf(fnam, "%s.hier_%d_%p", xc->filename, getpid(), (void *)xc);
 	fstReaderFseeko(xc, xc->f, xc->hier_pos, SEEK_SET);
 	uclen = fstReaderUint64(xc->f);
+#ifndef __MINGW32__
 	fflush(xc->f);
-
+#endif
 	if(htyp == FST_BL_HIER)
 		{
 		fstReaderFseeko(xc, xc->f, xc->hier_pos, SEEK_SET);
 		uclen = fstReaderUint64(xc->f);
+#ifndef __MINGW32__
 		fflush(xc->f);
-
+#endif
 		zfd = dup(fileno(xc->f));
 		zhandle = gzdopen(zfd, "rb");
 		if(!zhandle)
@@ -3559,7 +3655,9 @@ if(!xc->fh)
 		fstReaderFseeko(xc, xc->f, xc->hier_pos - 8, SEEK_SET); /* get section len */
 		clen =  fstReaderUint64(xc->f) - 16;
 		uclen = fstReaderUint64(xc->f);
+#ifndef __MINGW32__
 		fflush(xc->f);
+#endif
 		}
 
 #ifndef __MINGW32__
@@ -3567,10 +3665,11 @@ if(!xc->fh)
         if(!xc->fh)
 #endif
                 {
-                xc->fh = tmpfile();  
+                xc->fh = tmpfile_open(&xc->fh_nam);  
                 free(fnam); fnam = NULL;
                 if(!xc->fh)
 			{
+			tmpfile_close(&xc->fh, &xc->fh_nam);
 			free(mem);
 			return(0);
 			}
@@ -4158,9 +4257,9 @@ if(sectype == FST_BL_ZWRAPPER)
 	fcomp = fopen(hf, "w+b");
 	if(!fcomp)
 		{
-		fcomp = tmpfile();
+		fcomp = tmpfile_open(&xc->f_nam);
 		free(hf); hf = NULL;
-		if(!fcomp) return(0);
+		if(!fcomp) { tmpfile_close(&fcomp, &xc->f_nam); return(0); } 
 		}
 
 #if defined(FST_MACOSX)
@@ -4179,7 +4278,9 @@ if(sectype == FST_BL_ZWRAPPER)
 #endif
 
 	fstReaderFseeko(xc, xc->f, 1+8+8, SEEK_SET);
+#ifndef __MINGW32__
 	fflush(xc->f);
+#endif
 
 	zfd = dup(fileno(xc->f));
 	zhandle = gzdopen(zfd, "rb");
@@ -4528,12 +4629,12 @@ if(xc)
 
 	if(xc->fh) 
 		{ 
-		fclose(xc->fh); xc->fh = NULL;
+		tmpfile_close(&xc->fh, &xc->fh_nam); 
 		}
 
 	if(xc->f) 
 		{ 
-		fclose(xc->f); xc->f = NULL; 
+		tmpfile_close(&xc->f, &xc->f_nam); 
 		if(xc->filename_unpacked)
 			{
 			unlink(xc->filename_unpacked);
