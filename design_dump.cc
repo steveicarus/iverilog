@@ -1165,6 +1165,13 @@ void NetForever::dump(ostream&o, unsigned ind) const
       statement_->dump(o, ind+2);
 }
 
+void NetForLoop::dump(ostream&fd, unsigned ind) const
+{
+      fd << setw(ind) << "" << "FOR LOOP index=" << index_->name() << endl;
+      statement_->dump(fd, ind+4);
+      step_statement_->dump(fd, ind+4);
+}
+
 void NetFree::dump(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "// free storage : " << scope_path(scope_) << endl;

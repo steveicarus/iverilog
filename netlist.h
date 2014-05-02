@@ -1172,6 +1172,8 @@ class NetScope : public Definitions, public Attrib {
       perm_string genvar_tmp;
       long genvar_tmp_val;
 
+      std::map<perm_string,LocalVar> loop_index_tmp;
+
     private:
       void evaluate_parameter_logic_(Design*des, param_ref_t cur);
       void evaluate_parameter_real_(Design*des, param_ref_t cur);
@@ -3306,6 +3308,44 @@ class NetForever : public NetProc {
 
     private:
       NetProc*statement_;
+};
+
+class NetForLoop : public NetProc {
+
+    public:
+      explicit NetForLoop(NetNet*index, NetExpr*initial_expr, NetExpr*cond,
+			  NetProc*sub, NetProc*step);
+      ~NetForLoop();
+
+      void wrap_up();
+
+      void emit_recurse(struct target_t*) const;
+
+      virtual NexusSet* nex_input(bool rem_out = true);
+      virtual void nex_output(NexusSet&);
+      virtual bool emit_proc(struct target_t*) const;
+      virtual void dump(ostream&, unsigned ind) const;
+      virtual DelayType delay_type() const;
+      virtual bool evaluate_function(const LineInfo&loc,
+				     map<perm_string,LocalVar>&ctx) const;
+
+	// synthesize as asynchronous logic, and return true.
+      bool synth_async(Design*des, NetScope*scope,
+		       NexusSet&nex_map, NetBus&nex_out,
+		       NetBus&accumulated_nex_out);
+
+    private:
+      NetNet*index_;
+      NetExpr*init_expr_;
+      NetExpr*condition_;
+      NetProc*statement_;
+      NetProc*step_statement_;
+
+	// The code generator needs to see this rewritten as a while
+	// loop with synthetic statements. This is a hack that I
+	// should probably take out later as the ivl_target learns
+	// about for loops.
+      NetBlock*as_block_;
 };
 
 class NetFree   : public NetProc {

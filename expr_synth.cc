@@ -1271,6 +1271,22 @@ NetNet* NetETernary::synthesize(Design *des, NetScope*scope, NetExpr*root)
  */
 NetNet* NetESignal::synthesize(Design*des, NetScope*scope, NetExpr*root)
 {
+	// If this is a synthesis with a specific value for the
+	// signal, then replace it (here) with a constant value.
+      if (net_->scope()==scope && net_->name()==scope->genvar_tmp) {
+	    netvector_t*tmp_vec = new netvector_t(net_->data_type(),
+						  net_->vector_width()-1, 0);
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::IMPLICIT, tmp_vec);
+	    verinum tmp_val ((uint64_t)scope->genvar_tmp_val, net_->vector_width());
+	    NetConst*tmp_const = new NetConst(scope, scope->local_symbol(), tmp_val);
+	    tmp_const->set_line(*this);
+	    des->add_node(tmp_const);
+
+	    connect(tmp->pin(0), tmp_const->pin(0));
+	    return tmp;
+      }
+
       if (word_ == 0)
 	    return net_;
 

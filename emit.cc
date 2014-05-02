@@ -283,6 +283,11 @@ bool NetForever::emit_proc(struct target_t*tgt) const
       return true;
 }
 
+bool NetForLoop::emit_proc(struct target_t*tgt) const
+{
+      return tgt->proc_block(as_block_);
+}
+
 bool NetFree::emit_proc(struct target_t*tgt) const
 {
       tgt->proc_free(this);

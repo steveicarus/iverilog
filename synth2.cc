@@ -100,16 +100,22 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 		 << ", nex_out.pin_count()==" << nex_out.pin_count() << endl;
       }
 
-      ivl_assert(*this, nex_out.pin_count()==1);
-      ivl_assert(*this, rsig->pin_count()==1);
-      connect(nex_out.pin(0), rsig->pin(0));
-
-#if 0
+	// Here we note if the l-value is actually a bit/part
+	// select. If so, generate a NetPartSelect to perform the select.
       if (lval_->lwidth() != lsig->vector_width()) {
 	    ivl_assert(*this, lval_->lwidth() < lsig->vector_width());
 
+	      // XXXX If we ar within a NetForLoop or similar
+	      // processing, then there may be an index value. I
+	      // currently do not know how to handle that, but
+	      // probably I'm going to need the index_args passed in.
 	    long base_off = 0;
-	    if (! eval_as_long(base_off, lval_->get_base())) {
+
+	      // Evaluate the index expression to a constant.
+	    const NetExpr*base_expr_raw = lval_->get_base();
+	    ivl_assert(*this, base_expr_raw);
+	    NetExpr*base_expr = base_expr_raw->evaluate_function(*this, scope->loop_index_tmp);
+	    if (! eval_as_long(base_off, base_expr)) {
 		  assert(0);
 	    }
 	    ivl_assert(*this, base_off >= 0);
@@ -129,7 +135,11 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    connect(ps->pin(0), rsig->pin(0));
 	    rsig = tmp;
       }
-#endif
+
+      ivl_assert(*this, nex_out.pin_count()==1);
+      ivl_assert(*this, rsig->pin_count()==1);
+      connect(nex_out.pin(0), rsig->pin(0));
+
 
 	/* This lval_ represents a reg that is a WIRE in the
 	   synthesized results. This function signals the destructor
@@ -531,6 +541,83 @@ bool NetEvWait::synth_async(Design*des, NetScope*scope,
 {
       bool flag = statement_->synth_async(des, scope, nex_map, nex_out, accumulated_nex_out);
       return flag;
+}
+
+bool NetForLoop::synth_async(Design*des, NetScope*scope,
+			     NexusSet&nex_map, NetBus&nex_out,
+			     NetBus&accumulated_nex_out)
+{
+      if (debug_synth2) {
+	    cerr << get_fileline() << ": NetForLoop::synth_async: "
+		 << "Index variable is " << index_->name() << endl;
+	    cerr << get_fileline() << ": NetForLoop::synth_async: "
+		 << "Initialization expression: " << *init_expr_ << endl;
+      }
+
+	// Get the step assignment statement and break it into the
+	// l-value (should be the index) and the r-value, which is the
+	// step expressions.
+      NetAssign*step_assign = dynamic_cast<NetAssign*> (step_statement_);
+      ivl_assert(*this, step_assign);
+      ivl_assert(*this, step_assign->assign_operator()==0);
+      NetExpr*step_expr = step_assign->rval();
+
+	// Tell the scope that this index value is like a genvar.
+      LocalVar index_var;
+      index_var.nwords = 0;
+
+      map<perm_string,LocalVar> index_args;
+
+	// Calculate the initial value for the index.
+      index_var.value = init_expr_->evaluate_function(*this, index_args);
+      ivl_assert(*this, index_var.value);
+      index_args[index_->name()] = index_var;
+
+      for (;;) {
+	      // Evaluate the condition expression. If it is false,
+	      // then we are going to break out of this synthesis loop.
+	    NetExpr*tmp = condition_->evaluate_function(*this, index_args);
+	    ivl_assert(*this, tmp);
+
+	    long cond_value;
+	    bool rc = eval_as_long(cond_value, tmp);
+	    ivl_assert(*this, rc);
+	    delete tmp;
+	    if (!cond_value) break;
+
+	    scope->genvar_tmp = index_->name();
+	    rc = eval_as_long(scope->genvar_tmp_val, index_var.value);
+	    ivl_assert(*this, rc);
+
+	    if (debug_synth2) {
+		  cerr << get_fileline() << ": NetForLoop::synth_async: "
+		       << "Synthesis iteration with " << index_->name()
+		       << "=" << *index_var.value << endl;
+	    }
+
+	      // Synthesize the iterated expression. Stash the loop
+	      // index value so that the substatements can see this
+	      // value and use it during its own synthesis.
+	    ivl_assert(*this, scope->loop_index_tmp.empty());
+	    scope->loop_index_tmp = index_args;
+	    rc = statement_->synth_async(des, scope, nex_map, nex_out, accumulated_nex_out);
+	    scope->loop_index_tmp.clear();
+
+	      // Evaluate the step_expr to generate the next index value.
+	    tmp = step_expr->evaluate_function(*this, index_args);
+	    ivl_assert(*this, tmp);
+	    delete index_var.value;
+	    index_var.value = tmp;
+	    index_args[index_->name()] = index_var;
+      }
+
+      delete index_var.value;
+#if 0
+      cerr << get_fileline() << ": sorry: Synthesis of for-loops not implemented." << endl;
+      return as_block_->synth_async(des, scope, nex_map, nex_out, accumulated_nex_out);
+#else
+      return true;
+#endif
 }
 
 /*

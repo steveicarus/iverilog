@@ -406,6 +406,25 @@ NexusSet* NetForce::nex_input(bool)
       return new NexusSet;
 }
 
+NexusSet* NetForLoop::nex_input(bool rem_out)
+{
+      NexusSet*result = init_expr_->nex_input(rem_out);
+
+      NexusSet*tmp = condition_->nex_input(rem_out);
+      result->add(*tmp);
+      delete tmp;
+
+      tmp = statement_->nex_input(rem_out);
+      result->add(*tmp);
+      delete tmp;
+
+      tmp = step_statement_->nex_input(rem_out);
+      result->add(*tmp);
+      delete tmp;
+
+      return result;
+}
+
 NexusSet* NetForever::nex_input(bool rem_out)
 {
       NexusSet*result = statement_->nex_input(rem_out);

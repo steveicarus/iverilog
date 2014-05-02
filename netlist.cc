@@ -2756,6 +2756,11 @@ DelayType NetForever::delay_type() const
       return statement_->delay_type();
 }
 
+DelayType NetForLoop::delay_type() const
+{
+      return get_loop_delay_type(condition_, statement_);
+}
+
 DelayType NetPDelay::delay_type() const
 {
       if (expr_) {

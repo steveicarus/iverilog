@@ -4549,14 +4549,11 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 {
-      NetExpr*etmp;
+      NetExpr*initial_expr;
       assert(scope);
 
       const PEIdent*id1 = dynamic_cast<const PEIdent*>(name1_);
       assert(id1);
-
-      NetBlock*top = new NetBlock(NetBlock::SEQU, 0);
-      top->set_line(*this);
 
 	/* make the expression, and later the initial assignment to
 	   the condition variable. The statement in the for loop is
@@ -4569,34 +4566,23 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	    return 0;
       }
       assert(sig);
-      NetAssign_*lv = new NetAssign_(sig);
 
 	/* Make the r-value of the initial assignment, and size it
 	   properly. Then use it to build the assignment statement. */
-      etmp = elaborate_rval_expr(des, scope, sig->net_type(),
-				 lv->expr_type(), lv->lwidth(),
-                                 expr1_);
+      initial_expr = elaborate_rval_expr(des, scope, sig->net_type(),
+					 sig->data_type(), sig->vector_width(),
+					 expr1_);
 
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: FOR initial assign: "
-		 << sig->name() << " = " << *etmp << endl;
+		 << sig->name() << " = " << *initial_expr << endl;
       }
-
-      NetAssign*init = new NetAssign(lv, etmp);
-      init->set_line(*this);
-
-      top->append(init);
-
-      NetBlock*body = new NetBlock(NetBlock::SEQU, 0);
-      body->set_line(*this);
 
 	/* Elaborate the statement that is contained in the for
 	   loop. If there is an error, this will return 0 and I should
 	   skip the append. No need to worry, the error has been
 	   reported so it's OK that the netlist is bogus. */
-      NetProc*tmp = statement_->elaborate(des, scope);
-      if (tmp)
-	    body->append(tmp);
+      NetProc*sub = statement_->elaborate(des, scope);
 
 
 	/* Now elaborate the for_step statement. I really should do
@@ -4604,12 +4590,10 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	   really does step the variable. */
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": debug: Elaborate for_step statement "
-		 << sig->name() << " = " << *etmp << endl;
+		 << sig->name() << " = " << *initial_expr << endl;
       }
 
       NetProc*step = step_->elaborate(des, scope);
-
-      body->append(step);
 
 
 	/* Elaborate the condition expression. Try to evaluate it too,
@@ -4617,7 +4601,8 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 	   worthy of a warning. */
       NetExpr*ce = elab_and_eval(des, scope, cond_, -1);
       if (ce == 0) {
-	    delete top;
+	    delete sub;
+	    delete step;
 	    return 0;
       }
 
@@ -4629,10 +4614,10 @@ NetProc* PForStatement::elaborate(Design*des, NetScope*scope) const
 
 	/* All done, build up the loop. */
 
-      NetWhile*loop = new NetWhile(ce, body);
+      NetForLoop*loop = new NetForLoop(sig, initial_expr, ce, sub, step);
       loop->set_line(*this);
-      top->append(loop);
-      return top;
+      loop->wrap_up();
+      return loop;
 }
 
 /*

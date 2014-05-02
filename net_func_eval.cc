@@ -628,6 +628,16 @@ bool NetForever::evaluate_function(const LineInfo&loc,
       return flag;
 }
 
+/*
+ * For now, resort to the block form of the statement until we learn
+ * to do this directly.
+ */
+bool NetForLoop::evaluate_function(const LineInfo&loc,
+				   map<perm_string,LocalVar>&context_map) const
+{
+      return as_block_->evaluate_function(loc, context_map);
+}
+
 bool NetRepeat::evaluate_function(const LineInfo&loc,
 				  map<perm_string,LocalVar>&context_map) const
 {

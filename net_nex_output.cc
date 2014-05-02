@@ -134,6 +134,11 @@ void NetEvWait::nex_output(NexusSet&out)
       statement_->nex_output(out);
 }
 
+void NetForLoop::nex_output(NexusSet&out)
+{
+      if (statement_) statement_->nex_output(out);
+}
+
 void NetPDelay::nex_output(NexusSet&out)
 {
       if (statement_) statement_->nex_output(out);
