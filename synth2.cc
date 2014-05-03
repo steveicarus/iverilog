@@ -136,10 +136,21 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    rsig = tmp;
       }
 
-      ivl_assert(*this, nex_out.pin_count()==1);
-      ivl_assert(*this, rsig->pin_count()==1);
-      connect(nex_out.pin(0), rsig->pin(0));
+      if (nex_out.pin_count() > 1) {
+	    NexusSet tmp_set;
+	    nex_output(tmp_set);
+	    ivl_assert(*this, tmp_set.size()==1);
+	    unsigned ptr = nex_map.find_nexus(tmp_set[0]);
+	    ivl_assert(*this, rsig->pin_count()==1);
+	    ivl_assert(*this, nex_map.size()==nex_out.pin_count());
+	    ivl_assert(*this, nex_out.pin_count() > ptr);
+	    connect(nex_out.pin(ptr), rsig->pin(0));
 
+      } else {
+	    ivl_assert(*this, nex_out.pin_count()==1);
+	    ivl_assert(*this, rsig->pin_count()==1);
+	    connect(nex_out.pin(0), rsig->pin(0));
+      }
 
 	/* This lval_ represents a reg that is a WIRE in the
 	   synthesized results. This function signals the destructor
