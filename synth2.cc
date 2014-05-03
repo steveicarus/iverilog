@@ -558,8 +558,8 @@ bool NetForLoop::synth_async(Design*des, NetScope*scope,
 	// l-value (should be the index) and the r-value, which is the
 	// step expressions.
       NetAssign*step_assign = dynamic_cast<NetAssign*> (step_statement_);
+      char assign_operator = step_assign->assign_operator();
       ivl_assert(*this, step_assign);
-      ivl_assert(*this, step_assign->assign_operator()==0);
       NetExpr*step_expr = step_assign->rval();
 
 	// Tell the scope that this index value is like a genvar.
@@ -606,18 +606,35 @@ bool NetForLoop::synth_async(Design*des, NetScope*scope,
 	      // Evaluate the step_expr to generate the next index value.
 	    tmp = step_expr->evaluate_function(*this, index_args);
 	    ivl_assert(*this, tmp);
+
+	      // If there is an assign_operator, then replace the
+	      // index_var.value with (value <op> tmp) and evaluate
+	      // that to get the next value. "value" is the existing
+	      // value, and "tmp" is the step value. We are replacing
+	      // (value += tmp) with (value = value + tmp) and
+	      // evaluating it.
+	    switch (assign_operator) {
+		case 0:
+		  break;
+		case '+':
+		case '-':
+		  index_var.value = new NetEBAdd(assign_operator, tmp, index_var.value, 32, true);
+		  tmp = index_var.value->evaluate_function(*this, index_args);
+		  break;
+
+		default:
+		  cerr << get_fileline() << ": internal error: "
+		       << "NetForLoop::synth_async: What to do with assign_operator=" << assign_operator << endl;
+		  ivl_assert(*this, 0);
+	    }
 	    delete index_var.value;
 	    index_var.value = tmp;
 	    index_args[index_->name()] = index_var;
       }
 
       delete index_var.value;
-#if 0
-      cerr << get_fileline() << ": sorry: Synthesis of for-loops not implemented." << endl;
-      return as_block_->synth_async(des, scope, nex_map, nex_out, accumulated_nex_out);
-#else
+
       return true;
-#endif
 }
 
 /*
