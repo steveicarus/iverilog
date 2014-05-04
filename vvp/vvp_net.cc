@@ -1707,12 +1707,13 @@ template <class T> bool vector4_to_value(const vvp_vector4_t&vec, T&val)
       T msk = 1;
 
       unsigned size = vec.size();
-      if (size > 8*sizeof(val)) size = 8*sizeof(val);
       for (unsigned idx = 0 ;  idx < size ;  idx += 1) {
 	    switch (vec.value(idx)) {
 		case BIT4_0:
 		  break;
 		case BIT4_1:
+		    // On overflow, return the maximum value of type T
+		  if (msk == 0) return ~msk;
 		  res |= msk;
 		  break;
 		default:
