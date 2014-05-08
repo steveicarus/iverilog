@@ -117,7 +117,7 @@ void nodangle_f::event(Design*, NetEvent*ev)
 
                   NetEvent*tmp = *idx;
                   assert(tmp != ev);
-                  tmp ->replace_event(ev);
+		  tmp ->replace_event(ev);
             }
       }
 }

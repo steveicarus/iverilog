@@ -153,7 +153,10 @@ class Link {
       bool is_equal(const Link&that) const;
 
 	// Return information about the object that this link is
-	// a part of.
+	// a part of. Note that the get_obj() method can return NIL if
+	// this Link is part of a NexusSet. That should be OK, because
+	// they are collection variables, and not functional parts of
+	// a design.
       const NetPins*get_obj() const;
       NetPins*get_obj();
       unsigned get_pin() const;
@@ -3200,9 +3203,9 @@ class NetEvWait  : public NetProc {
       void add_event(NetEvent*tgt);
       void replace_event(NetEvent*orig, NetEvent*repl);
 
-      unsigned nevents() const;
-      const NetEvent*event(unsigned) const;
-      NetEvent*event(unsigned);
+      inline unsigned nevents() const { return events_.size(); }
+      inline const NetEvent*event(unsigned idx) const { return events_[idx]; }
+      inline NetEvent*event(unsigned idx) { return events_[idx]; }
 
       NetProc*statement();
 
@@ -3236,9 +3239,8 @@ class NetEvWait  : public NetProc {
 
     private:
       NetProc*statement_;
-
-      unsigned nevents_;
-      NetEvent**events_;
+	// Events that I might wait for.
+      std::vector<NetEvent*>events_;
 };
 
 ostream& operator << (ostream&out, const NetEvWait&obj);

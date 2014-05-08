@@ -1002,7 +1002,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 
 	/* This can't be other than one unless there are named events,
 	   which I cannot synthesize. */
-      assert(nevents_ == 1);
+      ivl_assert(*this, events_.size() == 1);
       NetEvent*ev = events_[0];
 
       assert(ev->nprobe() >= 1);

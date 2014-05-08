@@ -180,7 +180,11 @@ NetPins::NetPins(unsigned npins)
 
 NetPins::~NetPins()
 {
-      delete[] pins_;
+      if (pins_) {
+	    assert(pins_[0].node_ == this);
+	    assert(pins_[0].pin_zero_);
+	    delete[] pins_;
+      }
 }
 
 Link& NetPins::pin(unsigned idx)
@@ -194,7 +198,7 @@ Link& NetPins::pin(unsigned idx)
       }
 
       assert(idx < npins_);
-      assert(idx == 0? pins_[0].pin_zero_ : pins_[idx].pin_==idx);
+      assert(idx == 0? (pins_[0].pin_zero_ && pins_[0].node_==this) : pins_[idx].pin_==idx);
 
       return pins_[idx];
 }
@@ -208,7 +212,7 @@ const Link& NetPins::pin(unsigned idx) const
       }
       assert(pins_);
       assert(idx < npins_);
-      assert(idx == 0? pins_[0].pin_zero_ : pins_[idx].pin_==idx);
+      assert(idx == 0? (pins_[0].pin_zero_ && pins_[0].node_==this) : pins_[idx].pin_==idx);
       return pins_[idx];
 }
 

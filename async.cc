@@ -50,8 +50,8 @@ bool NetEvWait::is_asynchronous()
 	   level sensitive, but the nex_async_ method takes care of
 	   that test. */
       NexusSet*sense = new NexusSet;
-      for (unsigned idx = 0 ;  idx < nevents_ ;  idx += 1) {
-	    NexusSet*tmp = event(idx)->nex_async_();
+      for (unsigned idx = 0 ;  idx < events_.size() ;  idx += 1) {
+	    NexusSet*tmp = events_[idx]->nex_async_();
 	    if (tmp == 0) {
 		  delete sense;
 		  return false;
