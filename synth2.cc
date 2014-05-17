@@ -611,7 +611,11 @@ bool NetForLoop::synth_async(Design*des, NetScope*scope,
 	      // value and use it during its own synthesis.
 	    ivl_assert(*this, scope->loop_index_tmp.empty());
 	    scope->loop_index_tmp = index_args;
-	    rc = statement_->synth_async(des, scope, nex_map, nex_out, accumulated_nex_out);
+
+	    rc = synth_async_block_substatement_(des, scope, nex_map,
+						 accumulated_nex_out,
+						 statement_);
+
 	    scope->loop_index_tmp.clear();
 
 	      // Evaluate the step_expr to generate the next index value.
@@ -644,6 +648,10 @@ bool NetForLoop::synth_async(Design*des, NetScope*scope,
       }
 
       delete index_var.value;
+
+	// The output from the block is now the accumulated outputs.
+      for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1)
+	    connect(nex_out.pin(idx), accumulated_nex_out.pin(idx));
 
       return true;
 }
