@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -1307,6 +1307,10 @@ void PGModule::elaborate_mod_(Design*des, Module*rmod, NetScope*scope) const
 		  perm_string pname = peek_tail_name(mport[0]->path());
 
 		  NetNet*tmp = instance[0]->find_signal(pname);
+
+		    // Handle the error case where there is no internal
+		    // signal connected to the port.
+		  if (!tmp) continue;
 		  assert(tmp);
 
 		  if (tmp->port_type() == NetNet::PINPUT) {
