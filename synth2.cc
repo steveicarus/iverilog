@@ -105,7 +105,7 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
       if (lval_->lwidth() != lsig->vector_width()) {
 	    ivl_assert(*this, lval_->lwidth() < lsig->vector_width());
 
-	      // XXXX If we ar within a NetForLoop or similar
+	      // XXXX If we are within a NetForLoop or similar
 	      // processing, then there may be an index value. I
 	      // currently do not know how to handle that, but
 	      // probably I'm going to need the index_args passed in.
@@ -481,6 +481,12 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    }
       }
 
+	/* The nex_out output, asig input, and bsig input all have the
+	   same pin count (usually, but not always 1) because they are
+	   net arrays of the same dimension. The for loop below creates
+	   a NetMux for each pin of the output. (Note that pins may
+	   be, in fact usually are, vectors.) */
+
       ivl_assert(*this, nex_out.pin_count()==asig.pin_count());
       ivl_assert(*this, nex_out.pin_count()==bsig.pin_count());
 
@@ -493,13 +499,51 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    if (NetNet*tmp = nex_out.pin(idx).nexus()->pick_any_net()) {
 		  mux_data_type = tmp->data_type();
 	    }
+
+	    unsigned mux_off = 0;
 	    unsigned mux_width = asig.pin(idx).nexus()->vector_width();
+	    const unsigned mux_lwidth = mux_width;
 	    ivl_assert(*this, mux_width != 0);
+
+	    NetPartSelect*apv = detect_partselect_lval(asig.pin(idx));
+	    if (debug_synth2 && apv) {
+		  cerr << get_fileline() << ": NetCondit::synth_async: "
+		       << "Assign-to-part apv base=" << apv->base()
+		       << ", width=" << apv->width() << endl;
+	    }
+
+	    NetPartSelect*bpv = detect_partselect_lval(bsig.pin(idx));
+	    if (debug_synth2 && bpv) {
+		  cerr << get_fileline() << ": NetCondit::synth_async: "
+		       << "Assign-to-part bpv base=" << bpv->base()
+		       << ", width=" << bpv->width() << endl;
+	    }
+
+	    if (apv && bpv && apv->width()==bpv->width() && apv->base()==bpv->base()) {
+		    // The a and b sides are both assigning to the
+		    // same bits of the output, so we can use that to
+		    // create a much narrower mux that only
+		    // manipulates the width of the part.
+		  mux_width = apv->width();
+		  mux_off = apv->base();
+		  asig.pin(idx).unlink();
+		  bsig.pin(idx).unlink();
+		  connect(asig.pin(idx), apv->pin(0));
+		  connect(bsig.pin(idx), bpv->pin(0));
+		  delete apv;
+		  delete bpv;
+
+	    } else {
+		    // The part selects are of no use. Forget them.
+		  apv = 0;
+		  bpv = 0;
+	    }
+
 	    if (mux_width != bsig.pin(idx).nexus()->vector_width()) {
 		  cerr << get_fileline() << ": internal error: "
 		       << "NetCondit::synth_async: "
 		       << "Mux input sizes do not match."
-		       << " A size=" << mux_width
+		       << " A size=" << mux_lwidth
 		       << ", B size=" << bsig.pin(idx).nexus()->vector_width()
 		       << endl;
 		  cerr << get_fileline() << ":               : "
@@ -533,12 +577,26 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    NetNet*otmp = new NetNet(scope, scope->local_symbol(),
 				     NetNet::WIRE, not_an_array, tmp_type);
 	    otmp->local_flag(true);
-	    connect(nex_out.pin(idx),otmp->pin(0));
+	    connect(mux->pin_Result(),otmp->pin(0));
 
 	    connect(mux->pin_Sel(),   ssig->pin(0));
 	    connect(mux->pin_Data(1), asig.pin(idx));
 	    connect(mux->pin_Data(0), bsig.pin(idx));
-	    connect(nex_out.pin(idx), mux->pin_Result());
+
+	      // We are only muxing a part of the output vector, so
+	      // make a NetPartSelect::PV to widen the vector to the
+	      // output at hand.
+	    if (mux_width < mux_lwidth) {
+		  tmp_type = new netvector_t(mux_data_type, mux_lwidth-1,0);
+		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+					  NetNet::WIRE, not_an_array, tmp_type);
+		  NetPartSelect*ps = new NetPartSelect(tmp, mux_off, mux_width, NetPartSelect::PV);
+		  des->add_node(ps);
+		  connect(ps->pin(0), otmp->pin(0));
+		  otmp = tmp;
+	    }
+
+	    connect(nex_out.pin(idx), otmp->pin(0));
 
 	    des->add_node(mux);
       }

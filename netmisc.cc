@@ -1354,3 +1354,68 @@ void assign_unpacked_with_bufz(Design*des, NetScope*scope,
       }
 }
 
+/*
+ * synthesis sometimes needs to unpack assignment to a part
+ * select. That looks like this:
+ *
+ *    foo[N] <= <expr> ;
+ *
+ * The NetAssignBase::synth_async() method will turn that into a
+ * netlist like this:
+ *
+ *   NetAssignBase(PV) --> base()==<N>
+ *    (0)      (1)
+ *     |        |
+ *     v        v
+ *   <expr>    foo
+ *
+ * This search will return a pointer to the NetAssignBase(PV) object,
+ * but only if it matches this pattern.
+ */
+NetPartSelect* detect_partselect_lval(Link&pin)
+{
+      NetPartSelect*found_ps = 0;
+
+      Nexus*nex = pin.nexus();
+      for (Link*cur = nex->first_nlink() ; cur ; cur = cur->next_nlink()) {
+	    NetPins*obj;
+	    unsigned obj_pin;
+	    cur->cur_link(obj, obj_pin);
+
+	      // NetNet pins have no effect on this search.
+	    if (dynamic_cast<NetNet*> (obj))
+		  continue;
+
+	    if (NetPartSelect*ps = dynamic_cast<NetPartSelect*> (obj)) {
+
+		    // If this is the input side of a NetPartSelect, skip.
+		  if (ps->pin(obj_pin).get_dir()==Link::INPUT)
+			continue;
+
+		    // Oops, driven by the wrong size of a
+		    // NetPartSelect, so this is not going to work out.
+		  if (ps->dir()==NetPartSelect::VP)
+			return 0;
+
+		    // So now we know this is a NetPartSelect::PV. It
+		    // is a candidate for our part-select assign. If
+		    // we already have a candidate, then give up.
+		  if (found_ps)
+			return 0;
+
+		    // This is our candidate. Carry on.
+		  found_ps = ps;
+		  continue;
+
+	    }
+
+	      // If this is a driver to the Nexus that is not a
+	      // NetPartSelect device. This cannot happen to
+	      // part selected lval nets, so quit now.
+	    if (obj->pin(obj_pin).get_dir() == Link::OUTPUT)
+		  return 0;
+
+      }
+
+      return found_ps;
+}

@@ -353,4 +353,6 @@ extern void assign_unpacked_with_bufz(Design*des, NetScope*scope,
 				      const LineInfo*loc,
 				      NetNet*lval, NetNet*rval);
 
+extern NetPartSelect* detect_partselect_lval(Link&pin);
+
 #endif
