@@ -31,6 +31,12 @@ struct sizer_statistics {
       unsigned gate_count;
 	// Count adders of various dimension
       std::map<unsigned,unsigned> adder_count;
+	// count equality comparators
+      std::map<unsigned,unsigned> equality_count;
+	// Count magnitude comparators
+      std::map<unsigned,unsigned> magnitude_count;
+	// Count mux's of various dimension
+      std::map<unsigned,unsigned> mux_count;
 	// Different kinds of nodes that we have not accounted for
       std::map<ivl_lpm_type_t,unsigned> lpm_bytype;
       std::map<ivl_logic_t,unsigned>    log_bytype;

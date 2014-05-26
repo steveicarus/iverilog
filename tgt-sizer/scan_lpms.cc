@@ -37,7 +37,7 @@ static void scan_lpms_ff(ivl_scope_t, ivl_lpm_t lpm, struct sizer_statistics&sta
  * Count adders as 2m gates.
  * Also keep a count of adders by width, just out of curiosity.
  */
-static void scans_lpms_add(ivl_scope_t, ivl_lpm_t lpm, struct sizer_statistics&stats)
+static void scan_lpms_add(ivl_scope_t, ivl_lpm_t lpm, struct sizer_statistics&stats)
 {
       unsigned wid = ivl_lpm_width(lpm);
 
@@ -47,7 +47,34 @@ static void scans_lpms_add(ivl_scope_t, ivl_lpm_t lpm, struct sizer_statistics&s
 }
 
 /*
+ * Count equality comparator as 2m gates.
+ * Also keep a count of comparators by width, just out of curiosity.
+ */
+static void scan_lpms_equality(ivl_scope_t, ivl_lpm_t lpm, struct sizer_statistics&stats)
+{
+      unsigned wid = ivl_lpm_width(lpm);
+
+      stats.equality_count[wid] += 1;
+
+      stats.gate_count += 2*wid;
+}
+
+/*
+ * Count magnitude comparators as 2m gates.
+ * Also keep a count of comparators by width, just out of curiosity.
+ */
+static void scan_lpms_magnitude(ivl_scope_t, ivl_lpm_t lpm, struct sizer_statistics&stats)
+{
+      unsigned wid = ivl_lpm_width(lpm);
+
+      stats.magnitude_count[wid] += 1;
+
+      stats.gate_count += 2*wid;
+}
+
+/*
  * Count mux devices as 2m gates.
+ * Also count the mux slices of various select sizes.
  */
 static void scan_lpms_mux(ivl_scope_t, ivl_lpm_t lpm, struct sizer_statistics&stats)
 {
@@ -57,8 +84,23 @@ static void scan_lpms_mux(ivl_scope_t, ivl_lpm_t lpm, struct sizer_statistics&st
 	    return;
       }
 
+	// The "width" of a mux is the number of 1-bit slices.
       unsigned wid = ivl_lpm_width(lpm);
+
+	// Count the slices of the various width of muxes.
+      stats.mux_count[2] += wid;
+
       stats.gate_count += 2*wid;
+}
+
+/*
+ * Count reduction gates (wide input gates) as 1m gates.
+ */
+static void scan_lpms_reduction(ivl_scope_t, ivl_lpm_t lpm, struct sizer_statistics&stats)
+{
+      unsigned wid = ivl_lpm_width(lpm);
+
+      stats.gate_count += wid;
 }
 
 void scan_lpms(ivl_scope_t scope, struct sizer_statistics&stats)
@@ -77,7 +119,19 @@ void scan_lpms(ivl_scope_t scope, struct sizer_statistics&stats)
 		  break;
 
 		case IVL_LPM_ADD:
-		  scans_lpms_add(scope, lpm, stats);
+		  scan_lpms_add(scope, lpm, stats);
+		  break;
+
+		case IVL_LPM_CMP_EQ:
+		case IVL_LPM_CMP_NE:
+		case IVL_LPM_CMP_EEQ:
+		case IVL_LPM_CMP_NEE:
+		  scan_lpms_equality(scope, lpm, stats);
+		  break;
+
+		case IVL_LPM_CMP_GE:
+		case IVL_LPM_CMP_GT:
+		  scan_lpms_magnitude(scope, lpm, stats);
 		  break;
 
 		    // D-Type flip-flops.
@@ -87,6 +141,15 @@ void scan_lpms(ivl_scope_t scope, struct sizer_statistics&stats)
 
 		case IVL_LPM_MUX:
 		  scan_lpms_mux(scope, lpm, stats);
+		  break;
+
+		case IVL_LPM_RE_AND:
+		case IVL_LPM_RE_NAND:
+		case IVL_LPM_RE_OR:
+		case IVL_LPM_RE_NOR:
+		case IVL_LPM_RE_XOR:
+		case IVL_LPM_RE_XNOR:
+		  scan_lpms_reduction(scope, lpm, stats);
 		  break;
 
 		default:
