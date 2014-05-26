@@ -440,6 +440,8 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		 << endl;
       }
 
+      NetBus statement_input (scope, nex_out.pin_count());
+
       bool flag;
       NetBus asig(scope, nex_out.pin_count());
       NetBus atmp(scope, nex_out.pin_count());
@@ -459,6 +461,9 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 
       } else {
 
+	    for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
+		  connect(statement_input.pin(idx), accumulated_nex_out.pin(idx));
+	    }
 	    if (debug_synth2) {
 		  cerr << get_fileline() << ": NetCondit::synth_async: "
 		       << "Synthesize else clause at " << else_->get_fileline()
@@ -597,6 +602,27 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    }
 
 	    connect(nex_out.pin(idx), otmp->pin(0));
+
+	      // Handle the special case that this NetMux is only
+	      // assigning to a part of the vector. If that is the
+	      // case, then we need to blend this output with the
+	      // already calculated input to this statement so that we
+	      // don't accidentally disconnect the other drivers to
+	      // other bits.
+	      // FIXME: NEED TO CHECK THAT THESE DRIVERS DON'T
+	      // OVERLAP. THIS CODE CURRENTLY DOESN'T DO THAT TEST.
+	    if (mux_width < mux_lwidth && if_ && else_) {
+		  if (debug_synth2) {
+			cerr << get_fileline() << ": NetCondit::synth_async: "
+			     << "This MetMux only impacts a few bits of output," 
+			     << " so combine nex_out with statement input."
+			     << endl;
+			cerr << get_fileline() << ": NetCondit::synth_async: "
+			     << "MISSING TEST FOR CORRECTNESS OF THE BLEND!"
+			     << endl;
+		  }
+		  connect(nex_out.pin(idx), statement_input.pin(idx));
+	    }
 
 	    des->add_node(mux);
       }

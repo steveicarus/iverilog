@@ -1382,6 +1382,10 @@ NetPartSelect* detect_partselect_lval(Link&pin)
 	    unsigned obj_pin;
 	    cur->cur_link(obj, obj_pin);
 
+	      // Skip NexusSet objects.
+	    if (obj == 0)
+		  continue;
+
 	      // NetNet pins have no effect on this search.
 	    if (dynamic_cast<NetNet*> (obj))
 		  continue;
