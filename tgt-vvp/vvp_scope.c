@@ -1804,7 +1804,7 @@ static int sfunc_has_modpath_output(ivl_lpm_t lptr)
 static void draw_sfunc_output_def(ivl_lpm_t net, char type)
 {
       ivl_nexus_t nex = ivl_lpm_q(net);
-      char *suf = (type == 'd') ? "/d" : "";
+      const char *suf = (type == 'd') ? "/d" : "";
 
       switch (data_type_of_nexus(nex)) {
 	case IVL_VT_REAL:

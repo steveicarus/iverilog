@@ -231,7 +231,7 @@ static void show_property_expression(ivl_expr_t net, unsigned ind)
 {
       ivl_signal_t sig = ivl_expr_signal(net);
       const char* pnam = ivl_expr_name(net);
-      char*signed_flag = ivl_expr_signed(net)? "signed" : "unsigned";
+      const char*signed_flag = ivl_expr_signed(net)? "signed" : "unsigned";
 
       if (ivl_expr_value(net) == IVL_VT_REAL) {
 	    fprintf(out, "%*s<property base=%s, prop=%s, real>\n", ind, "",

@@ -401,7 +401,7 @@ static unsigned calc_can_skip_unsigned(ivl_expr_t oper1, ivl_expr_t oper2)
 static void emit_expr_binary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
                              unsigned is_full_prec)
 {
-      char *oper = "<invalid>";
+      const char *oper = "<invalid>";
       ivl_expr_t oper1 = ivl_expr_oper1(expr);
       ivl_expr_t oper2 = ivl_expr_oper2(expr);
       unsigned can_skip_unsigned = calc_can_skip_unsigned(oper1, oper2);
@@ -976,7 +976,7 @@ static void emit_expr_ternary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
 static void emit_expr_unary(ivl_scope_t scope, ivl_expr_t expr, unsigned wid,
                             unsigned is_full_prec)
 {
-      char *oper = "invalid";
+      const char *oper = "invalid";
       ivl_expr_t oper1 = ivl_expr_oper1(expr);
       switch (ivl_expr_opcode(expr)) {
 	case '-': oper = "-"; break;

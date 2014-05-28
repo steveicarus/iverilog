@@ -408,7 +408,8 @@ static void emit_assign_and_opt_opcode(ivl_scope_t scope, ivl_statement_t stmt,
                                        unsigned allow_opcode)
 {
       unsigned wid;
-      char opcode, *opcode_str;
+      char opcode;
+      const char *opcode_str;
 
       assert (ivl_statement_type(stmt) == IVL_ST_ASSIGN);
 // HERE: Do we need to calculate the width? The compiler should have already
@@ -941,7 +942,7 @@ static void emit_stmt_block_named(ivl_scope_t scope, ivl_statement_t stmt)
 
 static void emit_stmt_case(ivl_scope_t scope, ivl_statement_t stmt)
 {
-      char *case_type;
+      const char *case_type;
       unsigned idx, default_case, count = ivl_stmt_case_count(stmt);
       switch (ivl_statement_type(stmt)) {
 	case IVL_ST_CASE:
