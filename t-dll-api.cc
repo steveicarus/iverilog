@@ -1648,7 +1648,7 @@ extern "C" const char* ivl_nexus_name(ivl_nexus_t net)
       assert(net);
       if (net->name_ == 0) {
 	    char tmp[2 * sizeof(net) + 5];
-	    snprintf(tmp, sizeof tmp, "n%p", net);
+	    snprintf(tmp, sizeof tmp, "n%p", (void *)net);
 	    net->name_ = api_strings.add(tmp);
       }
       return net->name_;
