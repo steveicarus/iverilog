@@ -621,6 +621,10 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 			     << "MISSING TEST FOR CORRECTNESS OF THE BLEND!"
 			     << endl;
 		  }
+		  vector<bool>mask = statement_input.pin(idx).nexus()->driven_mask();
+		  for (size_t bit = mux_off ; bit < mux_off+mux_width ; bit += 1) {
+			ivl_assert(*this, mask[bit]==false);
+		  }
 		  connect(nex_out.pin(idx), statement_input.pin(idx));
 	    }
 

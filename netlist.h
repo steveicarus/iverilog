@@ -386,6 +386,11 @@ class Nexus {
       verinum::V driven_value() const;
       verinum driven_vector() const;
 
+	/* Return a mask of the bits of this vector that are
+	   driven. This is usually all false or all true, but in
+	   special cases it may be a blend. */
+      std::vector<bool> driven_mask(void)const;
+
 	/* The code generator sets an ivl_nexus_t to attach code
 	   generation details to the nexus. */
       ivl_nexus_t t_cookie() const { return t_cookie_; }

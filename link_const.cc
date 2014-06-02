@@ -232,3 +232,58 @@ verinum Nexus::driven_vector() const
 
       return val;
 }
+
+/*
+ * Calculate a vector that represent all the bits of the vector, with
+ * each driven bit set to true, otherwise false.
+ */
+vector<bool> Nexus::driven_mask(void) const
+{
+      vector<bool> mask (vector_width());
+
+      for (const Link*cur = first_nlink() ; cur ; cur = cur->next_nlink()) {
+
+	    Link::DIR link_dir = cur->get_dir();
+	    if (link_dir==Link::PASSIVE)
+		  continue;
+	    if (link_dir==Link::INPUT)
+		  continue;
+
+	    const NetPins*obj = cur->get_obj();
+
+	      // If the link is to a variable (REG or INTEGER) then
+	      // the variable is driving all the bits. We have our
+	      // complete answer, mark all the bits as driven and
+	      // finish. Otherwise, we are not going to get new
+	      // information from this node, move on.
+	    if (const NetNet*sig = dynamic_cast<const NetNet*> (obj)) {
+		  NetNet::Type sig_type = sig->type();
+		  if (sig_type==NetNet::INTEGER || sig_type==NetNet::REG) {
+			for (size_t idx = 0 ; idx < mask.size() ; idx += 1)
+			      mask[idx] = true;
+			return mask;
+		  }
+		  continue;
+	    }
+
+	    const NetPartSelect*obj_ps = dynamic_cast<const NetPartSelect*>(obj);
+	    if (obj_ps && obj_ps->dir()==NetPartSelect::VP)
+		  continue;
+	    if (obj_ps && cur->get_pin()!=1)
+		  continue;
+	    if (obj_ps) {
+		  for (unsigned idx = 0 ; idx < obj_ps->width() ; idx += 1) {
+			size_t bit = idx + obj_ps->base();
+			ivl_assert(*obj, bit < mask.size());
+			mask[bit] = true;
+		  }
+		  continue;
+	    }
+
+	    for (size_t idx = 0 ; idx < mask.size() ; idx += 1)
+		  mask[idx] = true;
+	    return mask;
+      }
+
+      return mask;
+}
