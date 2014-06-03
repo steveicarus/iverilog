@@ -1713,8 +1713,10 @@ template <class T> bool vector4_to_value(const vvp_vector4_t&vec, T&val)
 		  break;
 		case BIT4_1:
 		    // On overflow, return the maximum value of type T
-		  if (msk == 0) return ~msk;
-		  res |= msk;
+		  if (msk == 0)
+			res = ~msk;
+		  else
+			res |= msk;
 		  break;
 		default:
 		  return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -344,7 +344,16 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
       FILE_NAME(task, loc);
 
       PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
-      assert(scopex);
+      if ((scopex == 0) && (generation_flag < GN_VER2005_SV)) {
+	    cerr << task->get_fileline() << ": error: task declarations "
+		  "must be contained within a module." << endl;
+	    error_count += 1;
+      }
+      if ((scopex == 0) && (generation_flag >= GN_VER2005_SV)) {
+	    cerr << task->get_fileline() << ": sorry: task declarations "
+		  "in the compilation unit scope are not yet supported." << endl;
+	    error_count += 1;
+      }
 
       if (pform_cur_generate) {
 	      // Check if the task is already in the dictionary.
@@ -357,7 +366,7 @@ PTask* pform_push_task_scope(const struct vlltype&loc, char*name, bool is_auto)
 		  error_count += 1;
 	    }
 	    pform_cur_generate->tasks[task->pscope_name()] = task;
-      } else {
+      } else if (scopex) {
 	      // Check if the task is already in the dictionary.
 	    if (scopex->tasks.find(task->pscope_name()) != scopex->tasks.end()) {
 		  cerr << task->get_fileline() << ": error: duplicate "
@@ -381,13 +390,17 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
       PFunction*func = new PFunction(func_name, lexical_scope, is_auto);
       FILE_NAME(func, loc);
 
-      LexicalScope*scope = lexical_scope;
-      PScopeExtra*scopex = dynamic_cast<PScopeExtra*> (scope);
-      while (scope && !scopex) {
-	    scope = scope->parent_scope();
-	    scopex = dynamic_cast<PScopeExtra*> (scope);
+      PScopeExtra*scopex = find_nearest_scopex(lexical_scope);
+      if ((scopex == 0) && (generation_flag < GN_VER2005_SV)) {
+	    cerr << func->get_fileline() << ": error: function declarations "
+		  "must be contained within a module." << endl;
+	    error_count += 1;
       }
-      assert(scopex);
+      if ((scopex == 0) && (generation_flag >= GN_VER2005_SV)) {
+	    cerr << func->get_fileline() << ": sorry: function declarations "
+		  "in the compilation unit scope are not yet supported." << endl;
+	    error_count += 1;
+      }
 
       if (pform_cur_generate) {
 	      // Check if the function is already in the dictionary.
@@ -400,7 +413,7 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 		  error_count += 1;
 	    }
 	    pform_cur_generate->funcs[func->pscope_name()] = func;
-      } else {
+      } else if (scopex != 0) {
 	      // Check if the function is already in the dictionary.
 	    if (scopex->funcs.find(func->pscope_name()) != scopex->funcs.end()) {
 		  cerr << func->get_fileline() << ": error: duplicate "
