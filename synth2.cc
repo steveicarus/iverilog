@@ -250,7 +250,7 @@ bool NetBlock::synth_async(Design*des, NetScope*scope,
 
 bool NetCase::synth_async(Design*des, NetScope*scope,
 			  NexusSet&nex_map, NetBus&nex_out,
-			  NetBus&)
+			  NetBus&accumulated_nex_out)
 {
 	/* Synthesize the select expression. */
       NetNet*esig = expr_->synthesize(des, scope, expr_);
@@ -270,6 +270,14 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    }
       }
 
+	// The accumulated_nex_out is taken as the input for this
+	// statement. Since there are collection of statements that
+	// start at this same point, we save all these inputs and
+	// reuse them for each statement.
+      NetBus statement_input (scope, nex_out.pin_count());
+      for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
+	    connect(statement_input.pin(idx), accumulated_nex_out.pin(idx));
+      }
 
 	/* Collect all the statements into a map of index to
 	   statement. The guard expression it evaluated to be the
@@ -310,21 +318,28 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       }
 
 
-	/* If there is a default clause, synthesize is once and we'll
+	/* If there is a default clause, synthesize it once and we'll
 	   link it in wherever it is needed. */
       NetBus default_bus (scope, nex_map.size());
-      vector<NetNet*>default_sig (nex_map.size());
-
       if (statement_default) {
 
-	    NetBus tmp (scope, nex_out.pin_count());
-	    statement_default->synth_async(des, scope, nex_map, default_bus, tmp);
+	    bool flag = synth_async_block_substatement_(des, scope, nex_map,
+							accumulated_nex_out,
+							statement_default);
+	    if (!flag) {
+		  return false;
+	    }
 
-	      // Get the signal from the synthesized statement. This
-	      // will be hooked to all the default cases.
-	    ivl_assert(*this, default_bus.pin_count()==1);
-	    default_sig[0] = default_bus.pin(0).nexus()->pick_any_net();
-	    ivl_assert(*this, default_sig[0]);
+	    for (unsigned idx = 0 ; idx < default_bus.pin_count() ; idx += 1) {
+		  connect(default_bus.pin(idx), accumulated_nex_out.pin(idx));
+		  accumulated_nex_out.pin(idx).unlink();
+	    }
+
+	    if (debug_synth2) {
+		  cerr << get_fileline() << ": NetCase::synth_async: "
+		       << "synthesize default clause at " << statement_default->get_fileline()
+		       << " is done." << endl;
+	    }
       }
 
       vector<NetMux*> mux (mux_width.size());
@@ -360,9 +375,9 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 
 	    NetProc*stmt = statement_map[idx];
 	    if (stmt==0 && statement_default) {
-		  ivl_assert(*this, default_sig.size() == mux.size());
+		  ivl_assert(*this, default_bus.pin_count() == mux.size());
 		  for (size_t mdx = 0 ; mdx < mux.size() ; mdx += 1)
-			connect(mux[mdx]->pin_Data(idx), default_sig[mdx]->pin(0));
+			connect(mux[mdx]->pin_Data(idx), default_bus.pin(mdx));
 
 		  continue;
 	    }
@@ -373,17 +388,19 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 		  continue;
 	    }
 
-	    NetBus tmp (scope, nex_map.size());
 	    NetBus accumulated_tmp (scope, nex_map.size());
-	    stmt->synth_async(des, scope, nex_map, tmp, accumulated_tmp);
+	    for (unsigned pin = 0 ; pin < nex_map.size() ; pin += 1)
+		  connect(accumulated_tmp.pin(pin), statement_input.pin(pin));
 
-	    ivl_assert(*this, tmp.pin_count() == mux.size());
+
+	    synth_async_block_substatement_(des, scope, nex_map, accumulated_tmp, stmt);
+
 	    for (size_t mdx = 0 ; mdx < mux.size() ; mdx += 1) {
-		  connect(mux[mdx]->pin_Data(idx), tmp.pin(mdx));
+		  connect(mux[mdx]->pin_Data(idx), accumulated_tmp.pin(mdx));
 
 		  if (mux[mdx]->pin_Data(idx).nexus()->pick_any_net()==0) {
 			cerr << get_fileline() << ": warning: case " << idx
-			     << " has no input for mux " << mdx << "." << endl;
+			     << " has no input for mux slice " << mdx << "." << endl;
 
 			ivl_variable_type_t mux_data_type = IVL_VT_LOGIC;
 			netvector_t*tmp_vec = new netvector_t(mux_data_type, mux_width[mdx]-1, 0);
