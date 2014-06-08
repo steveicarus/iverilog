@@ -30,18 +30,18 @@
 
 static char *lxt2_wr_vcd_truncate_bitvec(char *s)
 {
-char l, r;  
+char l, r;
 
 r=*s;
-if(r=='1')   
+if(r=='1')
         {
         return s;
-        } 
+        }
         else
         {
         s++;
         }
-         
+
 for(;;s++)
         {
         l=r; r=*s;
@@ -50,7 +50,7 @@ for(;;s++)
         if(l!=r)
                 {
                 return(((l=='0')&&(r=='1'))?s:s-1);
-                } 
+                }
         }
 }
 
@@ -155,7 +155,7 @@ static lxt2_wr_ds_Tree * lxt2_wr_ds_insert(granmsk_t i, lxt2_wr_ds_Tree * t, int
 /* Insert i into the tree t, unless it's already there.    */
 /* Return a pointer to the resulting tree.                 */
     lxt2_wr_ds_Tree * n;
-    
+
     n = (lxt2_wr_ds_Tree *) calloc (1, sizeof (lxt2_wr_ds_Tree));
     if (n == NULL) {
 	fprintf(stderr, "ds_insert: ran out of memory, exiting.\n");
@@ -245,7 +245,7 @@ static lxt2_wr_dslxt_Tree * lxt2_wr_dslxt_insert(char *i, lxt2_wr_dslxt_Tree * t
 /* Return a pointer to the resulting tree.                 */
     lxt2_wr_dslxt_Tree * n;
     int dir;
-    
+
     n = (lxt2_wr_dslxt_Tree *) calloc (1, sizeof (lxt2_wr_dslxt_Tree));
     if (n == NULL) {
 	fprintf(stderr, "dslxt_insert: ran out of memory, exiting.\n");
@@ -281,7 +281,7 @@ static lxt2_wr_dslxt_Tree * lxt2_wr_dslxt_insert(char *i, lxt2_wr_dslxt_Tree * t
 /*
  * functions which emit various big endian
  * data to a file
- */ 
+ */
 static int lxt2_wr_emit_u8(struct lxt2_wr_trace *lt, int value)
 {
 unsigned char buf[1];
@@ -340,7 +340,7 @@ return(rc);
  * data to a file.  (lt->position needs to be
  * fixed up on gzclose so the tables don't
  * get out of sync!)
- */ 
+ */
 static int gzwrite_buffered(struct lxt2_wr_trace *lt)
 {
 int rc = 1;
@@ -446,7 +446,7 @@ return(rc);
 static int lxt2_wr_emit_stringz(struct lxt2_wr_trace *lt, char *value)
 {
 int rc=1;
-do  
+do
 	{
         rc&=lxt2_wr_emit_u8z(lt, *value);
         } while(*(value++));
@@ -473,7 +473,7 @@ for(p=s;*p;p++)
                 {
                 h=h^(g>>24);
                 h=h^g;
-                }   
+                }
         }
 
 h^=h2;						/* combine the two hashes */
@@ -500,17 +500,17 @@ struct lxt2_wr_symbol *temp;
 
 hv=lxt2_wr_hash(s);
 if(!(temp=lt->sym[hv])) return(NULL); /* no hash entry, add here wanted to add */
-	
+
 while(temp)
         {
         if(!strcmp(temp->name,s))
                 {
-                return(temp); /* in table already */    
+                return(temp); /* in table already */
                 }
         if(!temp->next) break;
         temp=temp->next;
         }
-	
+
 return(NULL); /* not found, add here if you want to add*/
 }
 
@@ -535,13 +535,13 @@ if(lt->compress_fac_str)
 	lxt2_wr_emit_u16z(lt, i);
 	lxt2_wr_emit_stringz(lt, str+i);
         free(lt->compress_fac_str);
-        } 
+        }
         else
         {
 	lxt2_wr_emit_u16z(lt, 0);
 	lxt2_wr_emit_stringz(lt, str);
         }
-         
+
 lt->compress_fac_str = (char *) malloc((lt->compress_fac_len=len)+1);
 strcpy(lt->compress_fac_str, str);
 }
@@ -567,10 +567,10 @@ while(lastch!=s->name)
 
 	if(*lastch=='[')
 		{
-		*lastch=0x00;	
+		*lastch=0x00;
 		return;
 		}
-	lastch--;	
+	lastch--;
 	}
 return;
 }
@@ -597,19 +597,19 @@ if((lt)&&(lt->numfacs))
 			strip_brack(s);
 			s=s->symchain;
 			}
-		else	
+		else
 		for(i=0;i<lt->numfacs;i++)
 			{
 			lt->sorted_facs[lt->numfacs - i - 1] = s;	/* facs were chained backwards so reverse to restore bitslicing */
 			s=s->symchain;
-			}	
+			}
 		wave_msort(lt->sorted_facs, lt->numfacs);
 
 		if(lt->partial_preference)
 			{
 			/* move preferenced facs up */
 			struct lxt2_wr_symbol **prefcache = aliascache;
-			int prefs_encountered = 0; 
+			int prefs_encountered = 0;
 
 			facs_encountered = 0;
 			for(i=0;i<lt->numfacs;i++)
@@ -700,7 +700,7 @@ if((lt)&&(lt->numfacs))
 		free(lt->compress_fac_str); lt->compress_fac_str=NULL;
 		lt->compress_fac_len=0;
 		lt->zfacname_predec_size = lt->zpackcount;
-	
+
 		gzflush_buffered(lt, 1);
 		fseeko(lt->handle, 0L, SEEK_END);
 		lt->position=ftello(lt->handle);
@@ -746,7 +746,7 @@ if((lt)&&(lt->numfacs))
 }
 
 
-/* 
+/*
  * initialize the trace and get back an lt context
  */
 struct lxt2_wr_trace *lxt2_wr_init(const char *name)
@@ -805,15 +805,15 @@ if(lt)
 	{
 	lt->partial = 1;
 	lt->partial_zip = (zipmode != 0);
-	lt->partial_iter = LXT2_WR_PARTIAL_SIZE; 
+	lt->partial_iter = LXT2_WR_PARTIAL_SIZE;
 	}
 }
 
 void lxt2_wr_set_partial_preference(struct lxt2_wr_trace *lt, const char *name)
 {
 struct lxt2_wr_symbol *s;
-         
-if((lt)&&(name)&&(!lt->sorted_facs)) 
+
+if((lt)&&(name)&&(!lt->sorted_facs))
 	{
 	s=lxt2_wr_symfind(lt, name);
 	if(s)
@@ -852,8 +852,8 @@ if(lt)
 /*
  * set initial value of trace (0, 1, x, z) only legal vals
  */
-void lxt2_wr_set_initial_value(struct lxt2_wr_trace *lt, char value) 
-{ 
+void lxt2_wr_set_initial_value(struct lxt2_wr_trace *lt, char value)
+{
 if(lt)
 	{
 	switch(value)
@@ -991,7 +991,7 @@ return(sa);
 }
 
 
-/* 
+/*
  * set current time/granule updating
  */
 int lxt2_wr_inc_time_by_delta(struct lxt2_wr_trace *lt, unsigned int timeval)
@@ -1221,7 +1221,7 @@ if(using_partial)
 		lxt2_wr_emit_u32(lt, partial_length+9);	/* size of this section (uncompressed) */
 		lxt2_wr_emit_u32(lt, iter);		/* begin iter of section               */
 		fflush(lt->handle);
-	
+
 		lt->zhandle = gzdopen(dup(fileno(lt->handle)), lt->zmode);
 		lt->zpackcount = 0;
 		}
@@ -1331,7 +1331,7 @@ if((lt->timegranule>=lt->maxgranule)||(do_finalize)||(early_flush))
 		lxt2_wr_emit_u32(lt, 0);		/* size of this section (uncompressed) */
 		lxt2_wr_emit_u32(lt, ~0);		/* control section		       */
 		fflush(lt->handle);
-	
+
 		lt->zhandle = gzdopen(dup(fileno(lt->handle)), lt->zmode);
 		lt->zpackcount = 0;
 		}
@@ -1354,9 +1354,9 @@ if((lt->timegranule>=lt->maxgranule)||(do_finalize)||(early_flush))
 			exit(255);
 			}
 
-		lxt2_wr_emit_stringz(lt, ds->item); 
+		lxt2_wr_emit_stringz(lt, ds->item);
 		ds2 = ds->next;
-		free(ds->item); 
+		free(ds->item);
 		free(ds);
 		ds = ds2;
 		}
@@ -1382,7 +1382,7 @@ if((lt->timegranule>=lt->maxgranule)||(do_finalize)||(early_flush))
 #endif
 
 		dt2 = dt->next;
-		free(dt); 
+		free(dt);
 		dt = dt2;
 		}
 	lt->mapdict_head = lt->mapdict_curr = lt->mapdict = NULL;
@@ -1399,11 +1399,11 @@ if((lt->timegranule>=lt->maxgranule)||(do_finalize)||(early_flush))
 	if(using_partial_zip)
 		{
 		off_t c_len;
-	
+
 		gzflush_buffered(lt, 1);
 		fseeko(lt->handle, 0L, SEEK_END);
 		lt->position=ftello(lt->handle);
-	
+
 		c_len = lt->position - current_iter_pos - 12;
 		fseeko(lt->handle, current_iter_pos, SEEK_SET);
 
@@ -1467,7 +1467,7 @@ if(lt)
 				{
 				lt->bumptime = 0;
 
-				if(!lt->flush_valid) 
+				if(!lt->flush_valid)
 					{
 					lt->timepos++;
 					}
@@ -1475,7 +1475,7 @@ if(lt)
 					{
 					lt->flush_valid = 0;
 					}
-	
+
 				if(lt->timepos == LXT2_WR_GRANULE_SIZE)
 					{
 					/* fprintf(stderr, "flushing granule to disk at time %d\n", (unsigned int)timeval); */
@@ -1484,7 +1484,7 @@ if(lt)
 				}
 
 			/* fprintf(stderr, "updating time to %d (%d dict entries/%d bytes)\n", (unsigned int)timeval, lt->num_dict_entries, lt->dict_string_mem_required); */
-			lt->timetable[lt->timepos] = timeval;			
+			lt->timetable[lt->timepos] = timeval;
 			lt->lasttime = timeval;
 			}
 		}
@@ -1493,7 +1493,7 @@ if(lt)
 		lt->timeset = 1;
 		lt->mintime = lt->maxtime = timeval;
 
-		lt->timetable[lt->timepos] = timeval;		
+		lt->timetable[lt->timepos] = timeval;
 		}
 
 	if( (!lt->timepos) && (!lt->timegranule) )
@@ -1524,7 +1524,7 @@ if(lt)
 					else if (s->flags&LXT2_WR_SYM_F_DOUBLE)
 						{
 						double value = 0;
-	
+
 						sscanf(s->value, "%lg", &value);
 						errno = 0;
 						lxt2_wr_emit_value_double(lt, s, 0, value);
@@ -1625,7 +1625,7 @@ int rc=0;
 
 if((!lt)||(lt->blackout)||(!s)||(row)) return(rc);
 
-if(!lt->emitted) 
+if(!lt->emitted)
 	{
 	lxt2_wr_emitfacs(lt);
 	lt->emitted = 1;
@@ -1666,7 +1666,7 @@ if(s->flags&LXT2_WR_SYM_F_DOUBLE)
 
 		if(lt->dict_curr)
 			{
-			lt->dict_curr->next = lt->dict;	
+			lt->dict_curr->next = lt->dict;
 			lt->dict_curr = lt->dict;
 			}
 			else
@@ -1707,7 +1707,7 @@ int rc=0;
 
 if((!lt)||(lt->blackout)||(!s)||(!value)||(row)) return(rc);
 
-if(!lt->emitted) 
+if(!lt->emitted)
 	{
 	lxt2_wr_emitfacs(lt);
 	lt->emitted = 1;
@@ -1746,7 +1746,7 @@ if(s->flags&LXT2_WR_SYM_F_STRING)
 
 		if(lt->dict_curr)
 			{
-			lt->dict_curr->next = lt->dict;	
+			lt->dict_curr->next = lt->dict;
 			lt->dict_curr = lt->dict;
 			}
 			else
@@ -1791,7 +1791,7 @@ int i;
 
 if((!lt)||(lt->blackout)||(!s)||(!value)||(!*value)||(row)) return(rc);
 
-if(!lt->emitted) 
+if(!lt->emitted)
 	{
 	lxt2_wr_emitfacs(lt);
 	lt->emitted = 1;
@@ -1856,12 +1856,12 @@ if(!(s->flags&(LXT2_WR_SYM_F_DOUBLE|LXT2_WR_SYM_F_STRING)))
 	prevch = *vpnt;
 	while(*vpnt)
 		{
-		if(prevch == *vpnt) 
+		if(prevch == *vpnt)
 			{
 			vpnt++;
 			}
 			else
-			{	
+			{
 			prevch = 0;
 			break;
 			}
@@ -1968,7 +1968,7 @@ idxchk:	if(idx<0)
 
 			if(lt->dict_curr)
 				{
-				lt->dict_curr->next = lt->dict;	
+				lt->dict_curr->next = lt->dict;
 				lt->dict_curr = lt->dict;
 				}
 				else
@@ -2016,15 +2016,15 @@ struct lxt2_wr_symbol *s;
 
 if((lt)&&(!lt->blackout))
 	{
-	if(!lt->emitted) 
+	if(!lt->emitted)
 	        {
 	        lxt2_wr_emitfacs(lt);
 	        lt->emitted = 1;
-	                
+
 	        if(!lt->timeset)
 	                {
 	                lxt2_wr_set_time(lt, 0);
-	                }        
+	                }
 	        }
 
 	s = lt->symchain;
@@ -2036,7 +2036,7 @@ if((lt)&&(!lt->blackout))
 				{
 				s->msk |= (LXT2_WR_GRAN_1VAL<<lt->timepos);
 				s->chg[s->chgpos] = LXT2_WR_ENC_BLACKOUT;
-		
+
 				s->chgpos++;
 				}
 				else
@@ -2158,7 +2158,7 @@ if(lt)
 		{
 		struct lxt2_wr_symbol *s = lt->symchain;
 		struct lxt2_wr_symbol *s2;
-		
+
 		while(s)
 			{
 			free(s->name);
@@ -2170,7 +2170,7 @@ if(lt)
 
 		lt->symchain=NULL;
 		}
-	
+
 	free(lt->lxtname);
 	free(lt->sorted_facs);
 	fclose(lt->handle);
@@ -2193,13 +2193,13 @@ if(lt)
 
 
 /*
- * time zero offset      
+ * time zero offset
  */
-void lxt2_wr_set_timezero(struct lxt2_wr_trace *lt, lxtstime_t timeval)               
-{                        
+void lxt2_wr_set_timezero(struct lxt2_wr_trace *lt, lxtstime_t timeval)
+{
 if(lt)
-        {                
+        {
         lt->timezero = timeval;
-        }                 
+        }
 }
 

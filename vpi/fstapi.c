@@ -56,7 +56,7 @@
 #include <windows.h>
 #endif
 
-#if HAVE_ALLOCA_H
+#ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #elif defined(__GNUC__)
 #ifndef __MINGW32__
@@ -125,7 +125,7 @@ void **JenkinsIns(void *base_i, const unsigned char *mem, uint32_t length, uint3
 #endif
 
 #if defined(__APPLE__) && defined(__MACH__)
-#define FST_MACOSX 
+#define FST_MACOSX
 #include <sys/sysctl.h>
 #endif
 
@@ -197,7 +197,7 @@ if(nam) /* cppcheck warning fix: nam is always defined, so this is not needed */
 	        fprintf(stderr, "GetTempPath() failed in "__FILE__" line %d, exiting.\n", __LINE__);
 		exit(255);
 	        }
-	        else   
+	        else
 	        {
 	        uRetVal = GetTempFileName(lpTempPathBuffer, TEXT("FSTW"), 0, szTempFileName);
 	        if (uRetVal == 0)
@@ -242,11 +242,11 @@ if(f)
 
 if(nam)
 	{
-	if(*nam) 
-		{ 
-		unlink(*nam); 
+	if(*nam)
+		{
+		unlink(*nam);
 		free(*nam);
-		*nam = NULL; 
+		*nam = NULL;
 		}
 	}
 }
@@ -254,7 +254,7 @@ if(nam)
 /*****************************************/
 
 
-/* 
+/*
  * to remove warn_unused_result compile time messages
  * (in the future there needs to be results checking)
  */
@@ -277,7 +277,7 @@ return(ftruncate(fd, length));
 /*
  * realpath compatibility
  */
-static char *fstRealpath(const char *path, char *resolved_path) 
+static char *fstRealpath(const char *path, char *resolved_path)
 {
 #if defined __USE_BSD || defined __USE_XOPEN_EXTENDED || defined __CYGWIN__ || defined HAVE_REALPATH
 
@@ -287,7 +287,7 @@ if(!resolved_path)
         resolved_path = malloc(PATH_MAX+1); /* fixes bug on Leopard when resolved_path == NULL */
         }
 #endif
-                         
+
 return(realpath(path, resolved_path));
 
 #else
@@ -406,12 +406,12 @@ for(;;)
 	{
 	rc <<= 7;
 	rc |= (uint32_t)(*mem & 0x7f);
-	if(mem == mem_orig) 
+	if(mem == mem_orig)
 		{
 		break;
 		}
 	mem--;
-	} 
+	}
 
 return(rc);
 }
@@ -449,14 +449,14 @@ for(;;)
                 }
         mem--;
         }
- 
-return(rc);       
+
+return(rc);
 }
 
 
 static unsigned char *fstCopyVarint32ToLeft(unsigned char *pnt, uint32_t v)
 {
-unsigned char *spnt;  
+unsigned char *spnt;
 uint32_t nxt = v;
 int cnt = 1;
 int i;
@@ -495,7 +495,7 @@ while((nxt = v>>7))
 
 return(pnt);
 }
- 
+
 
 static uint64_t fstGetVarint64(unsigned char *mem, int *skiplen)
 {
@@ -517,8 +517,8 @@ for(;;)
                 }
         mem--;
         }
- 
-return(rc);       
+
+return(rc);
 }
 
 
@@ -546,8 +546,8 @@ for(;;)
                 }
         mem--;
         }
- 
-return(rc);       
+
+return(rc);
 }
 
 
@@ -576,8 +576,8 @@ for(;;)
                 }
         mem--;
         }
- 
-return(rc);       
+
+return(rc);
 }
 
 
@@ -605,8 +605,8 @@ for(;;)
                 }
         mem--;
         }
- 
-return(rc);       
+
+return(rc);
 }
 
 
@@ -1051,7 +1051,7 @@ if(f)
 		}
 
 	fclose(f);
-	} 
+	}
 
 if(!was_set)
 	{
@@ -1280,7 +1280,7 @@ for(i=0;i<xc->maxhandle;i++)
 	{
 	vm4ip = &(xc->valpos_mem[4*i]);
 
-	if(vm4ip[2]) 
+	if(vm4ip[2])
 		{
 		uint32_t offs = vm4ip[2];
 		uint32_t next_offs;
@@ -1302,8 +1302,8 @@ for(i=0;i<xc->maxhandle;i++)
 	                                unsigned char val;
 	                                uint32_t time_delta, rcv;
 	                                next_offs = fstGetUint32(vchg_mem + offs);
-	                                offs += 4;   
-                        
+	                                offs += 4;
+
 	                                time_delta = fstGetVarint32(vchg_mem + offs, &wrlen);
 	                                val = vchg_mem[offs+wrlen];
 					offs = next_offs;
@@ -1313,7 +1313,7 @@ for(i=0;i<xc->maxhandle;i++)
 	                                        case '0':
 	                                        case '1':               rcv = ((val&1)<<1) | (time_delta<<2);
 	                                                                break; /* pack more delta bits in for 0/1 vchs */
-	        
+
 	                                        case 'x': case 'X':     rcv = FST_RCV_X | (time_delta<<4); break;
 	                                        case 'z': case 'Z':     rcv = FST_RCV_Z | (time_delta<<4); break;
 	                                        case 'h': case 'H':     rcv = FST_RCV_H | (time_delta<<4); break;
@@ -1322,7 +1322,7 @@ for(i=0;i<xc->maxhandle;i++)
 	                                        case 'l': case 'L':     rcv = FST_RCV_L | (time_delta<<4); break;
 	                                        default:                rcv = FST_RCV_D | (time_delta<<4); break;
 	                                        }
-	                
+
 	                                scratchpnt = fstCopyVarint32ToLeft(scratchpnt, rcv);
 					}
 				}
@@ -1332,7 +1332,7 @@ for(i=0;i<xc->maxhandle;i++)
 				/* fstGetUint32 (next_offs) + fstGetVarint32 (time_delta) + fstGetVarint32 (len) + payload */
 				unsigned char *pnt;
 				uint32_t record_len;
-				uint32_t time_delta;				
+				uint32_t time_delta;
 
 				while(offs)
 					{
@@ -1402,8 +1402,8 @@ for(i=0;i<xc->maxhandle;i++)
 							*(--scratchpnt) = acc;
 							shift = 0;
 							acc = 0;
-							}						
-						}					
+							}
+						}
 #else
                                         /* new algorithm */
                                         idx = ((vm4ip[1]+7) & ~7);
@@ -1609,11 +1609,11 @@ if(1)
 				fpos += fstWriterVarint(f, (zerocnt << 1));
 				zerocnt = 0;
 				}
-	
+
 			if(vm4ip[2] & 0x80000000)
 				{
 				if(vm4ip[2] != prev_alias)
-					{					
+					{
 					fpos += fstWriterSVarint(f, (((int64_t)((int32_t)(prev_alias = vm4ip[2]))) << 1) | 1);
 					}
 					else
@@ -1631,7 +1631,7 @@ if(1)
 			}
 			else
 			{
-			zerocnt++;		
+			zerocnt++;
 			}
 		}
 	}
@@ -1649,7 +1649,7 @@ if(1)
 				fpos += fstWriterVarint(f, (zerocnt << 1));
 				zerocnt = 0;
 				}
-	
+
 			if(vm4ip[2] & 0x80000000)
 				{
 				fpos += fstWriterVarint(f, 0); /* signal, note that using a *signed* varint would be more efficient than this byte escape! */
@@ -1665,7 +1665,7 @@ if(1)
 			}
 			else
 			{
-			zerocnt++;		
+			zerocnt++;
 			}
 		}
 	}
@@ -1900,7 +1900,7 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 			if(xc->is_initial_time) /* simulation time never advanced so mock up the changes as time zero ones */
 				{
 				fstHandle dupe_idx;
-	
+
 				fstWriterEmitTimeChange(xc, 0); /* emit some time change just to have one */
 				for(dupe_idx = 0; dupe_idx < xc->maxhandle; dupe_idx++) /* now clone the values */
 					{
@@ -1969,12 +1969,12 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 			cur_bl = xc->blackout_head->tim;
 			xc->blackout_curr = xc->blackout_head->next;
 			free(xc->blackout_head);
-			xc->blackout_head = xc->blackout_curr;	
+			xc->blackout_head = xc->blackout_curr;
 			}
 
 		eos = ftello(xc->handle);
 		fstWriterFseeko(xc, xc->handle, bpos, SEEK_SET);
-		fstWriterUint64(xc->handle, eos - bpos);		
+		fstWriterUint64(xc->handle, eos - bpos);
 		fflush(xc->handle);
 
 		fstWriterFseeko(xc, xc->handle, fixup_offs, SEEK_SET);
@@ -1999,7 +1999,7 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 		hlen = ftello(xc->handle);
 		fstWriterUint64(xc->handle, 0);			/* section length */
 		fstWriterUint64(xc->handle, xc->hier_file_len);	/* uncompressed length */
-		
+
 		if(!xc->fourpack)
 			{
 			unsigned char *mem = malloc(FST_GZIO_LEN);
@@ -2059,7 +2059,7 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 				fstFwrite(mem, packed_len, 1, xc->handle);
 				}
 
-			free(mem);			
+			free(mem);
 			}
 
 		fstWriterFseeko(xc, xc->handle, 0, SEEK_END);
@@ -2069,8 +2069,8 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 		fflush(xc->handle);
 
 		fstWriterFseeko(xc, xc->handle, fixup_offs, SEEK_SET);
-		fputc(xc->fourpack ? 
-			( fourpack_duo ? FST_BL_HIER_LZ4DUO : FST_BL_HIER_LZ4) : 
+		fputc(xc->fourpack ?
+			( fourpack_duo ? FST_BL_HIER_LZ4DUO : FST_BL_HIER_LZ4) :
 			FST_BL_HIER, xc->handle); /* actual tag now also == compression type */
 
 		fstWriterFseeko(xc, xc->handle, 0, SEEK_END);	/* move file pointer to end for any section adds */
@@ -2093,15 +2093,15 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 	fstWriterUint64(xc->handle, xc->maxhandle);
 	fstWriterUint64(xc->handle, xc->secnum);
 	fflush(xc->handle);
-	
+
 	tmpfile_close(&xc->tchn_handle, &xc->tchn_handle_nam);
 	free(xc->vchg_mem); xc->vchg_mem = NULL;
 	tmpfile_close(&xc->curval_handle, &xc->curval_handle_nam);
 	tmpfile_close(&xc->valpos_handle, &xc->valpos_handle_nam);
 	tmpfile_close(&xc->geom_handle, &xc->geom_handle_nam);
 	if(xc->hier_handle) { fclose(xc->hier_handle); xc->hier_handle = NULL; }
-	if(xc->handle) 
-		{ 
+	if(xc->handle)
+		{
 		if(xc->repack_on_close)
 			{
 			FILE *fp;
@@ -2149,7 +2149,7 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 				fstWriterFseeko(xc, fp, 1, SEEK_SET);
 				fstWriterUint64(fp, offpnt - 1);
 				fclose(fp);
-				fclose(xc->handle); xc->handle = NULL; 
+				fclose(xc->handle); xc->handle = NULL;
 
 				unlink(xc->filename);
 				rename(hf, xc->filename);
@@ -2157,18 +2157,18 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
 				else
 				{
 				xc->repack_on_close = 0;
-				fclose(xc->handle); xc->handle = NULL; 
+				fclose(xc->handle); xc->handle = NULL;
 				}
 
 			free(hf);
 			}
 			else
 			{
-			fclose(xc->handle); xc->handle = NULL; 
+			fclose(xc->handle); xc->handle = NULL;
 			}
 		}
 
-#ifdef __MINGW32__ 
+#ifdef __MINGW32__
 	{
 	int flen = strlen(xc->filename);
 	char *hf = calloc(1, flen + 6);
@@ -2255,7 +2255,7 @@ if(xc)
 
 		xc->filetype = filetype;
 
-	        fstWriterFseeko(xc, xc->handle, FST_HDR_OFFS_FILETYPE, SEEK_SET); 
+	        fstWriterFseeko(xc, xc->handle, FST_HDR_OFFS_FILETYPE, SEEK_SET);
 		fputc(xc->filetype, xc->handle);
 	        fflush(xc->handle);
 	        fstWriterFseeko(xc, xc->handle, fpos, SEEK_SET);
@@ -2311,7 +2311,7 @@ if(xc && path && path[0])
 	int slen = strlen(path);
 #ifndef _WAVE_HAVE_JUDY
 	const uint32_t hashmask = FST_PATH_HASHMASK;
-	const unsigned char *path2 = (const unsigned char *)path;	
+	const unsigned char *path2 = (const unsigned char *)path;
 #else
 	char *path2 = alloca(slen + 1); /* judy lacks const qualifier in its JudyHSIns definition */
 	strcpy(path2, path);
@@ -2337,8 +2337,8 @@ if(xc && path && path[0])
 #endif
 				path2, NULL);
 			}
-		
-		fstWriterSetAttrGeneric(xc, rp ? rp : 
+
+		fstWriterSetAttrGeneric(xc, rp ? rp :
 #ifndef _WAVE_HAVE_JUDY
 			(const char *)
 #endif
@@ -2425,13 +2425,13 @@ if(xc && s)
 	if(tv == 10)
         	{
                 seconds_exp++;
-                } 
+                }
         else
         if(tv == 100)
         	{
                 seconds_exp+=2;
                 }
-                              
+
 	fstWriterSetTimescale(ctx, seconds_exp);
         }
 }
@@ -2543,7 +2543,7 @@ fstHandle fstWriterCreateVar(void *ctx, enum fstVarType vt, enum fstVarDir vd,
 {
 struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
 int i, nlen, is_real;
-                
+
 if(xc && nam)
         {
 	if(xc->valpos_mem)
@@ -2572,10 +2572,10 @@ if(xc && nam)
 			}
 		}
 
-	xc->hier_file_len += fstWriterVarint(xc->hier_handle, len);	
+	xc->hier_file_len += fstWriterVarint(xc->hier_handle, len);
 
 	if(aliasHandle > xc->maxhandle) aliasHandle = 0;
-	xc->hier_file_len += fstWriterVarint(xc->hier_handle, aliasHandle);	
+	xc->hier_file_len += fstWriterVarint(xc->hier_handle, aliasHandle);
 	xc->numsigs++;
 	if(xc->numsigs == xc->next_huge_break)
 		{
@@ -2621,8 +2621,8 @@ if(xc && nam)
 			else
 			{
 			fstFwrite(&xc->nan, 8, 1, xc->curval_handle); /* initialize doubles to NaN rather than x */
-			}			
-		
+			}
+
 		xc->maxvalpos+=len;
 		xc->maxhandle++;
 		return(xc->maxhandle);
@@ -2650,7 +2650,7 @@ if(xc)
 	fprintf(xc->hier_handle, "%s%c%s%c",
 		scopename ? scopename : "", 0,
 		scopecomp ? scopecomp : "", 0);
-	
+
 	if(scopename)
 		{
 		xc->hier_file_len += strlen(scopename);
@@ -2702,7 +2702,7 @@ if(xc)
 	fputc(subtype, xc->hier_handle);
 	fprintf(xc->hier_handle, "%s%c",
 		attrname ? attrname : "", 0);
-	
+
 	if(attrname)
 		{
 		xc->hier_file_len += strlen(attrname);
@@ -2756,7 +2756,7 @@ if((xc) && (handle <= xc->maxhandle))
 		if(!xc->is_initial_time)
 			{
 			fpos = xc->vchg_siz;
-	
+
 			if((fpos + len + 10) > xc->vchg_alloc_siz)
 				{
 				xc->vchg_alloc_siz += (xc->fst_break_add_size + len); /* +len added in the case of extremely long vectors and small break add sizes */
@@ -2764,7 +2764,7 @@ if((xc) && (handle <= xc->maxhandle))
 				if(!xc->vchg_mem)
 					{
 					fprintf(stderr, "FATAL ERROR, could not realloc() in fstWriterEmitValueChange, exiting.\n");
-					exit(255); 
+					exit(255);
 					}
 				}
 #ifdef FST_REMOVE_DUPLICATE_VC
@@ -2777,7 +2777,7 @@ if((xc) && (handle <= xc->maxhandle))
 					unsigned char *old_value = xc->vchg_mem + vm4ip[2] + 4; /* the +4 skips old vm4ip[2] value */
 					while(*(old_value++) & 0x80) { /* skips over varint encoded "xc->tchn_idx - vm4ip[3]" */ }
 					memcpy(old_value, buf, len); /* overlay new value */
-	
+
 					memcpy(xc->curval_mem + offs, buf, len);
 					return;
 					}
@@ -2801,7 +2801,7 @@ if((xc) && (handle <= xc->maxhandle))
 							}
 						}
 					}
-	
+
 				memcpy(xc->curval_mem + offs, buf, len);
 				}
 				else
@@ -2811,7 +2811,7 @@ if((xc) && (handle <= xc->maxhandle))
 					unsigned char *old_value = xc->vchg_mem + vm4ip[2] + 4; /* the +4 skips old vm4ip[2] value */
 					while(*(old_value++) & 0x80) { /* skips over varint encoded "xc->tchn_idx - vm4ip[3]" */ }
 					*old_value = *buf; /* overlay new value */
-	
+
 					*(xc->curval_mem + offs) = *buf;
 					return;
 					}
@@ -2829,7 +2829,7 @@ if((xc) && (handle <= xc->maxhandle))
 							}
 						}
 					}
-	
+
 				*(xc->curval_mem + offs) = *buf;
 				}
 #endif
@@ -2878,7 +2878,7 @@ if((xc) && (handle <= xc->maxhandle))
 			if(!xc->vchg_mem)
 				{
 				fprintf(stderr, "FATAL ERROR, could not realloc() in fstWriterEmitVariableLengthValueChange, exiting.\n");
-				exit(255); 
+				exit(255);
 				}
 			}
 
@@ -2983,7 +2983,7 @@ if(xc)
 static const char *vartypes[] = {
 	"event", "integer", "parameter", "real", "real_parameter",
 	"reg", "supply0", "supply1", "time", "tri",
-	"triand", "trior", "trireg", "tri0", "tri1", 
+	"triand", "trior", "trireg", "tri0", "tri1",
 	"wand", "wire", "wor", "port", "sparray", "realtime",
 	"string",
 	"bit", "logic", "int", "shortint", "longint", "byte", "enum", "shortreal"
@@ -3083,7 +3083,7 @@ unsigned char *rvat_chain_mem;
 fstHandle rvat_chain_facidx;
 
 uint32_t rvat_chain_pos_tidx;
-uint32_t rvat_chain_pos_idx;  
+uint32_t rvat_chain_pos_idx;
 uint64_t rvat_chain_pos_time;
 unsigned rvat_chain_pos_valid : 1;
 
@@ -3213,7 +3213,7 @@ if(xc)
 const char *fstReaderPopScope(void *ctx)
 {
 struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
-if(xc && xc->curr_hier)   
+if(xc && xc->curr_hier)
         {
 	struct fstCurrHier *ch = xc->curr_hier;
 	if(xc->curr_hier->prev)
@@ -3310,9 +3310,9 @@ return(0);
 int fstReaderGetFacProcessMask(void *ctx, fstHandle facidx)
 {
 struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
-                                 
+
 if(xc)
-        {      
+        {
 	facidx--;
 	if(facidx<xc->maxhandle)
 		{
@@ -3329,9 +3329,9 @@ return(0);
 void fstReaderSetFacProcessMask(void *ctx, fstHandle facidx)
 {
 struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
-                                 
+
 if(xc)
-        { 
+        {
 	facidx--;
 	if(facidx<xc->maxhandle)
 		{
@@ -3347,9 +3347,9 @@ if(xc)
 void fstReaderClrFacProcessMask(void *ctx, fstHandle facidx)
 {
 struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
-                                 
+
 if(xc)
-        { 
+        {
 	facidx--;
 	if(facidx<xc->maxhandle)
 		{
@@ -3365,9 +3365,9 @@ if(xc)
 void fstReaderSetFacProcessMaskAll(void *ctx)
 {
 struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
-                                 
+
 if(xc)
-        { 
+        {
 	memset(xc->process_mask, 0xff, (xc->maxhandle+7)/8);
 	}
 }
@@ -3376,9 +3376,9 @@ if(xc)
 void fstReaderClrFacProcessMaskAll(void *ctx)
 {
 struct fstReaderContext *xc = (struct fstReaderContext *)ctx;
-                                 
+
 if(xc)
-        { 
+        {
 	memset(xc->process_mask, 0x00, (xc->maxhandle+7)/8);
 	}
 }
@@ -3665,7 +3665,7 @@ if(!xc->fh)
         if(!xc->fh)
 #endif
                 {
-                xc->fh = tmpfile_open(&xc->fh_nam);  
+                xc->fh = tmpfile_open(&xc->fh_nam);
                 free(fnam); fnam = NULL;
                 if(!xc->fh)
 			{
@@ -3673,7 +3673,7 @@ if(!xc->fh)
 			free(mem);
 			return(0);
 			}
-                }    
+                }
 
 #ifndef __MINGW32__
 	if(fnam) unlink(fnam);
@@ -3686,13 +3686,13 @@ if(!xc->fh)
 	                size_t len = ((uclen - hl) > FST_GZIO_LEN) ? FST_GZIO_LEN : (uclen - hl);
 			size_t gzreadlen = gzread(zhandle, mem, len); /* rc should equal len... */
 			size_t fwlen;
-	
+
 			if(gzreadlen != len)
 				{
 				pass_status = 0;
 				break;
 				}
-	
+
 			fwlen = fstFwrite(mem, len, 1, xc->fh);
 			if(fwlen != 1)
 				{
@@ -3705,10 +3705,10 @@ if(!xc->fh)
 	else
 	if(htyp == FST_BL_HIER_LZ4DUO)
 		{
-		unsigned char *lz4_cmem  = malloc(clen);		
-		unsigned char *lz4_ucmem = malloc(uclen);		
-		unsigned char *lz4_ucmem2;		
-		uint64_t uclen2;		
+		unsigned char *lz4_cmem  = malloc(clen);
+		unsigned char *lz4_ucmem = malloc(uclen);
+		unsigned char *lz4_ucmem2;
+		uint64_t uclen2;
 		int skiplen2 = 0;
 
 		fstFread(lz4_cmem, clen, 1, xc->f);
@@ -3733,9 +3733,9 @@ if(!xc->fh)
 	else
 	if(htyp == FST_BL_HIER_LZ4)
 		{
-		unsigned char *lz4_cmem  = malloc(clen);		
-		unsigned char *lz4_ucmem = malloc(uclen);		
-		
+		unsigned char *lz4_cmem  = malloc(clen);
+		unsigned char *lz4_ucmem = malloc(uclen);
+
 		fstFread(lz4_cmem, clen, 1, xc->f);
 		pass_status = (uclen == LZ4_decompress_safe_partial ((char *)lz4_cmem, (char *)lz4_ucmem, clen, uclen, uclen));
 
@@ -3817,17 +3817,17 @@ if(!(isfeof=feof(xc->fh)))
 			xc->hier.htyp = FST_HT_SCOPE;
 			xc->hier.u.scope.typ = fgetc(xc->fh);
 			xc->hier.u.scope.name = pnt = xc->str_scope_nam;
-			while((ch = fgetc(xc->fh))) 
+			while((ch = fgetc(xc->fh)))
 				{
-				*(pnt++) = ch; 
+				*(pnt++) = ch;
 				}; /* scopename */
 			*pnt = 0;
 			xc->hier.u.scope.name_length = pnt - xc->hier.u.scope.name;
 
 			xc->hier.u.scope.component = pnt = xc->str_scope_comp;
-			while((ch = fgetc(xc->fh))) 
+			while((ch = fgetc(xc->fh)))
 				{
-				*(pnt++) = ch; 
+				*(pnt++) = ch;
 				}; /* scopecomp */
 			*pnt = 0;
 			xc->hier.u.scope.component_length = pnt - xc->hier.u.scope.component;
@@ -3842,9 +3842,9 @@ if(!(isfeof=feof(xc->fh)))
 			xc->hier.u.attr.typ = fgetc(xc->fh);
 			xc->hier.u.attr.subtype = fgetc(xc->fh);
 			xc->hier.u.attr.name = pnt = xc->str_scope_nam;
-			while((ch = fgetc(xc->fh))) 
+			while((ch = fgetc(xc->fh)))
 				{
-				*(pnt++) = ch; 
+				*(pnt++) = ch;
 				}; /* scopename */
 			*pnt = 0;
 			xc->hier.u.attr.name_length = pnt - xc->hier.u.scope.name;
@@ -3852,7 +3852,7 @@ if(!(isfeof=feof(xc->fh)))
 			xc->hier.u.attr.arg = fstReaderVarint64(xc->fh);
 
 			if(xc->hier.u.attr.typ == FST_AT_MISC)
-				{ 
+				{
 				if((xc->hier.u.attr.subtype == FST_MT_SOURCESTEM)||(xc->hier.u.attr.subtype == FST_MT_SOURCEISTEM))
 					{
 					int sidx_skiplen_dummy = 0;
@@ -3902,9 +3902,9 @@ if(!(isfeof=feof(xc->fh)))
 			xc->hier.u.var.typ = tag;
 			xc->hier.u.var.direction = fgetc(xc->fh);
 			xc->hier.u.var.name = pnt = xc->str_scope_nam;
-			while((ch = fgetc(xc->fh))) 
+			while((ch = fgetc(xc->fh)))
 				{
-				*(pnt++) = ch; 
+				*(pnt++) = ch;
 				}; /* varname */
 			*pnt = 0;
 			xc->hier.u.var.name_length = pnt - xc->hier.u.var.name;
@@ -3928,11 +3928,11 @@ if(!(isfeof=feof(xc->fh)))
 				xc->hier.u.var.handle = alias;
 				xc->hier.u.var.is_alias = 1;
 				}
-		
+
 			break;
 
 		default:
-			isfeof = 1; 
+			isfeof = 1;
 			break;
 		}
 	}
@@ -3977,7 +3977,7 @@ if(fv)
 	fprintf(fv, "$date\n\t%s\n$end\n", xc->date);
 	fprintf(fv, "$version\n\t%s\n$end\n", xc->version);
 	if(xc->timezero) fprintf(fv, "$timezero\n\t%"PRId64"\n$end\n", xc->timezero);
-	
+
         switch(xc->timescale)
                 {
                 case  2:        time_scale = 100;               time_dimension[0] = 0;   break;
@@ -3987,15 +3987,15 @@ if(fv)
                 case -1:        time_scale = 100;               time_dimension[0] = 'm'; break;
                 case -2:        time_scale = 10;
                 case -3:                                        time_dimension[0] = 'm'; break;
-         
+
                 case -4:        time_scale = 100;               time_dimension[0] = 'u'; break;
                 case -5:        time_scale = 10;
                 case -6:                                        time_dimension[0] = 'u'; break;
-        
+
                 case -10:       time_scale = 100;               time_dimension[0] = 'p'; break;
                 case -11:       time_scale = 10;
                 case -12:                                       time_dimension[0] = 'p'; break;
-        
+
                 case -13:       time_scale = 100;               time_dimension[0] = 'f'; break;
                 case -14:       time_scale = 10;
                 case -15:                                       time_dimension[0] = 'f'; break;
@@ -4007,7 +4007,7 @@ if(fv)
                 case -19:       time_scale = 100;               time_dimension[0] = 'z'; break;
                 case -20:       time_scale = 10;
                 case -21:                                       time_dimension[0] = 'z'; break;
-        
+
                 case -7:        time_scale = 100;               time_dimension[0] = 'n'; break;
                 case -8:        time_scale = 10;
                 case -9:
@@ -4017,7 +4017,7 @@ if(fv)
 	if(fv) fprintf(fv, "$timescale\n\t%d%ss\n$end\n", time_scale, time_dimension);
 	}
 
-xc->maxhandle = 0; 
+xc->maxhandle = 0;
 xc->num_alias = 0;
 
 free(xc->signal_lens);
@@ -4036,9 +4036,9 @@ while(!feof(xc->fh))
 			scopetype = fgetc(xc->fh);
 			if((scopetype < FST_ST_MIN) || (scopetype > FST_ST_MAX)) scopetype = FST_ST_VCD_MODULE;
 			pnt = str;
-			while((ch = fgetc(xc->fh))) 
+			while((ch = fgetc(xc->fh)))
 				{
-				*(pnt++) = ch; 
+				*(pnt++) = ch;
 				}; /* scopename */
 			*pnt = 0;
 			while(fgetc(xc->fh)) { }; /* scopecomp */
@@ -4054,9 +4054,9 @@ while(!feof(xc->fh))
 			attrtype = fgetc(xc->fh);
 			subtype = fgetc(xc->fh);
 			pnt = str;
-			while((ch = fgetc(xc->fh))) 
+			while((ch = fgetc(xc->fh)))
 				{
-				*(pnt++) = ch; 
+				*(pnt++) = ch;
 				}; /* attrname */
 			*pnt = 0;
 
@@ -4077,7 +4077,7 @@ while(!feof(xc->fh))
 					case FST_AT_PACK:	if((subtype < FST_PT_NONE) || (subtype > FST_PT_MAX)) subtype = FST_PT_NONE;
 								fprintf(fv, "$attrbegin %s %s %s %"PRId64" $end\n", attrtypes[attrtype], packtypes[subtype], str, attrarg);
 								break;
-					case FST_AT_MISC:	
+					case FST_AT_MISC:
 					default:		attrtype = FST_AT_MISC;
 								if(subtype == FST_MT_COMMENT)
 									{
@@ -4139,9 +4139,9 @@ while(!feof(xc->fh))
 			vartype = tag;
 			/* vardir = */ fgetc(xc->fh); /* unused in VCD reader, but need to advance read pointer */
 			pnt = str;
-			while((ch = fgetc(xc->fh))) 
+			while((ch = fgetc(xc->fh)))
 				{
-				*(pnt++) = ch; 
+				*(pnt++) = ch;
 				}; /* varname */
 			*pnt = 0;
 			len = fstReaderVarint32(xc->fh);
@@ -4169,7 +4169,7 @@ while(!feof(xc->fh))
 					len = (vartype != FST_VT_SV_SHORTREAL) ? 64 : 32;
 					xc->signal_typs[xc->maxhandle] = FST_VT_VCD_REAL;
 					}
-				if(fv) 
+				if(fv)
 					{
 					char vcdid_buf[16];
 					uint32_t modlen = (vartype != FST_VT_VCD_PORT) ? len : ((len - 2) / 3);
@@ -4185,7 +4185,7 @@ while(!feof(xc->fh))
 					len = (vartype != FST_VT_SV_SHORTREAL) ? 64 : 32;
 					xc->signal_typs[xc->maxhandle] = FST_VT_VCD_REAL;
 					}
-				if(fv) 
+				if(fv)
 					{
 					char vcdid_buf[16];
 					uint32_t modlen = (vartype != FST_VT_VCD_PORT) ? len : ((len - 2) / 3);
@@ -4194,7 +4194,7 @@ while(!feof(xc->fh))
 					}
 				xc->num_alias++;
 				}
-		
+
 			break;
 
 		default:
@@ -4259,7 +4259,7 @@ if(sectype == FST_BL_ZWRAPPER)
 		{
 		fcomp = tmpfile_open(&xc->f_nam);
 		free(hf); hf = NULL;
-		if(!fcomp) { tmpfile_close(&fcomp, &xc->f_nam); return(0); } 
+		if(!fcomp) { tmpfile_close(&fcomp, &xc->f_nam); return(0); }
 		}
 
 #if defined(FST_MACOSX)
@@ -4270,7 +4270,7 @@ if(sectype == FST_BL_ZWRAPPER)
 	setvbuf(fcomp, (char *)NULL, _IONBF, 0);   /* keeps gzip from acting weird in tandem with fopen */
 	xc->filename_unpacked = hf;
 #else
-	if(hf) 
+	if(hf)
 		{
 		unlink(hf);
 		free(hf);
@@ -4323,25 +4323,25 @@ if(gzread_pass_status)
 	while(blkpos < endfile)
 		{
 		fstReaderFseeko(xc, xc->f, blkpos, SEEK_SET);
-		
+
 		sectype = fgetc(xc->f);
 		seclen = fstReaderUint64(xc->f);
-	
-		if(sectype == EOF) 
+
+		if(sectype == EOF)
 			{
 			break;
 			}
 
                 if((hdr_incomplete) && (!seclen))
-                        {   
+                        {
                         break;
                         }
-	
-		if(!hdr_seen && (sectype != FST_BL_HDR)) 
+
+		if(!hdr_seen && (sectype != FST_BL_HDR))
 			{
 			break;
 			}
-	
+
 		blkpos++;
 		if(sectype == FST_BL_HDR)
 			{
@@ -4349,12 +4349,12 @@ if(gzread_pass_status)
 				{
 				int ch;
 				double dcheck;
-	
+
 				xc->start_time = fstReaderUint64(xc->f);
-				xc->end_time = fstReaderUint64(xc->f); 
-	
+				xc->end_time = fstReaderUint64(xc->f);
+
 				hdr_incomplete = (xc->start_time == 0) && (xc->end_time == 0);
-	
+
 				fstFread(&dcheck, 8, 1, xc->f);
 				xc->double_endian_match = (dcheck == FST_DOUBLE_ENDTEST);
 				if(!xc->double_endian_match)
@@ -4363,10 +4363,10 @@ if(gzread_pass_status)
 	  					unsigned char rvs_buf[8];
 	  					double d;
 	  					} vu;
-	
+
 					unsigned char *dcheck_alias = (unsigned char *)&dcheck;
 					int rvs_idx;
-	
+
 					for(rvs_idx=0;rvs_idx<8;rvs_idx++)
 						{
 						vu.rvs_buf[rvs_idx] = dcheck_alias[7-rvs_idx];
@@ -4376,15 +4376,15 @@ if(gzread_pass_status)
 						break; /* either corrupt file or wrong architecture (offset +33 also functions as matchword) */
 						}
 					}
-	
+
 				hdr_seen = 1;
-	
-				xc->mem_used_by_writer = fstReaderUint64(xc->f); 
-				xc->scope_count = fstReaderUint64(xc->f); 
-				xc->var_count = fstReaderUint64(xc->f); 
-				xc->maxhandle = fstReaderUint64(xc->f); 
+
+				xc->mem_used_by_writer = fstReaderUint64(xc->f);
+				xc->scope_count = fstReaderUint64(xc->f);
+				xc->var_count = fstReaderUint64(xc->f);
+				xc->maxhandle = fstReaderUint64(xc->f);
 				xc->num_alias = xc->var_count - xc->maxhandle;
-				xc->vc_section_count = fstReaderUint64(xc->f); 
+				xc->vc_section_count = fstReaderUint64(xc->f);
 				ch = fgetc(xc->f);
 				xc->timescale = (signed char)ch;
 				fstFread(xc->version, FST_HDR_SIM_VERSION_SIZE, 1, xc->f);
@@ -4402,7 +4402,7 @@ if(gzread_pass_status)
 				{
 				uint64_t bt = fstReaderUint64(xc->f);
 				xc->end_time = fstReaderUint64(xc->f);
-		
+
 				if(!vc_section_count_actual) { xc->start_time = bt; }
 				}
 
@@ -4417,7 +4417,7 @@ if(gzread_pass_status)
 				unsigned char *ucdata = malloc(uclen);
 				unsigned char *pnt = ucdata;
 				int i;
-	
+
 				xc->contains_geom_section = 1;
 				xc->maxhandle = fstReaderUint64(xc->f);
 				xc->longest_signal_value_len = 32; /* arbitrarily set at 32...this is much longer than an expanded double */
@@ -4431,7 +4431,7 @@ if(gzread_pass_status)
 				        unsigned long destlen = uclen;
 				        unsigned long sourcelen = clen;
 					int rc;
-	
+
 					fstFread(cdata, clen, 1, xc->f);
 					rc = uncompress(ucdata, &destlen, cdata, sourcelen);
 
@@ -4440,26 +4440,26 @@ if(gzread_pass_status)
 						printf("geom uncompress rc = %d\n", rc);
 						exit(255);
 						}
-					
+
 					free(cdata);
 					}
 					else
 					{
 					fstFread(ucdata, uclen, 1, xc->f);
 					}
-		
+
 				free(xc->signal_lens);
 				xc->signal_lens = malloc(sizeof(uint32_t) * xc->maxhandle);
 				free(xc->signal_typs);
 				xc->signal_typs = malloc(sizeof(unsigned char) * xc->maxhandle);
-	
+
 				for(i=0;i<xc->maxhandle;i++)
 					{
 			                int skiplen;
 		               		uint64_t val = fstGetVarint32(pnt, &skiplen);
-	
+
 					pnt += skiplen;
-	
+
 					if(val)
 						{
 						xc->signal_lens[i] = (val != 0xFFFFFFFF) ? val : 0;
@@ -4478,8 +4478,8 @@ if(gzread_pass_status)
 					}
 
 				free(xc->temp_signal_value_buf);
-				xc->temp_signal_value_buf = malloc(xc->longest_signal_value_len + 1); 
-	
+				xc->temp_signal_value_buf = malloc(xc->longest_signal_value_len + 1);
+
 				free(ucdata);
 				}
 			}
@@ -4519,7 +4519,7 @@ if(gzread_pass_status)
 				xc->blackout_times[i] = cur_bl;
 				}
 			}
-	
+
 		blkpos += seclen;
 		if(!hdr_seen) break;
 		}
@@ -4530,7 +4530,7 @@ if(gzread_pass_status)
 			{
 			xc->vc_section_count = vc_section_count_actual;
 			}
-	
+
 		if(!xc->contains_geom_section)
 			{
 			fstReaderProcessHier(xc, NULL); /* recreate signal_lens/signal_typs info */
@@ -4627,14 +4627,14 @@ if(xc)
 	free(xc->signal_lens); xc->signal_lens = NULL;
 	free(xc->filename); xc->filename = NULL;
 
-	if(xc->fh) 
-		{ 
-		tmpfile_close(&xc->fh, &xc->fh_nam); 
+	if(xc->fh)
+		{
+		tmpfile_close(&xc->fh, &xc->fh_nam);
 		}
 
-	if(xc->f) 
-		{ 
-		tmpfile_close(&xc->f, &xc->f_nam); 
+	if(xc->f)
+		{
+		tmpfile_close(&xc->f, &xc->f_nam);
 		if(xc->filename_unpacked)
 			{
 			unlink(xc->filename_unpacked);
@@ -4677,7 +4677,7 @@ uint64_t seclen, beg_tim;
 #ifdef FST_DEBUG
 uint64_t end_tim;
 #endif
-uint64_t frame_uclen, frame_clen, frame_maxhandle, vc_maxhandle; 
+uint64_t frame_uclen, frame_clen, frame_maxhandle, vc_maxhandle;
 off_t vc_start;
 off_t indx_pntr, indx_pos;
 off_t *chain_table = NULL;
@@ -4706,14 +4706,14 @@ headptr = calloc(xc->maxhandle, sizeof(uint32_t));
 length_remaining = calloc(xc->maxhandle, sizeof(uint32_t));
 
 if(fv)
-	{ 
-	fprintf(fv, "$dumpvars\n"); 
+	{
+	fprintf(fv, "$dumpvars\n");
 #ifndef FST_WRITEX_DISABLE
 	fflush(fv);
 	setvbuf(fv, (char *) NULL, _IONBF, 0); /* even buffered IO is slow so disable it and use our own routines that don't need seeking */
 	xc->writex_fd = fileno(fv);
 #endif
-	} 
+	}
 
 for(;;)
 	{
@@ -4721,7 +4721,7 @@ for(;;)
 	traversal_mem_offs = 0;
 
 	fstReaderFseeko(xc, xc->f, blkpos, SEEK_SET);
-	
+
 	sectype = fgetc(xc->f);
 	seclen = fstReaderUint64(xc->f);
 
@@ -4744,7 +4744,7 @@ for(;;)
 
 	beg_tim = fstReaderUint64(xc->f);
 #ifdef FST_DEBUG
-	end_tim = 
+	end_tim =
 #endif
 	fstReaderUint64(xc->f);
 
@@ -4787,9 +4787,9 @@ for(;;)
 	tsec_clen = fstReaderUint64(xc->f);
 	tsec_nitems = fstReaderUint64(xc->f);
 #ifdef FST_DEBUG
-	fprintf(stderr, "\ttime section unc: %d, com: %d (%d items)\n", 
+	fprintf(stderr, "\ttime section unc: %d, com: %d (%d items)\n",
 		(int)tsec_uclen, (int)tsec_clen, (int)tsec_nitems);
-#endif		
+#endif
 	if(tsec_clen > seclen) break; /* corrupted tsec_clen: by definition it can't be larger than size of section */
 	ucdata = malloc(tsec_uclen);
 	if(!ucdata) break; /* malloc fail as tsec_uclen out of range from corrupted file */
@@ -4802,22 +4802,22 @@ for(;;)
 		{
 		cdata = malloc(tsec_clen);
 		fstFread(cdata, tsec_clen, 1, xc->f);
-	
+
 		rc = uncompress(ucdata, &destlen, cdata, sourcelen);
-	                
+
 		if(rc != Z_OK)
 			{
 			printf("tsec uncompress rc = %d\n", rc);
 			exit(255);
 			}
-	
+
 		free(cdata);
 		}
 		else
 		{
 		fstFread(ucdata, tsec_uclen, 1, xc->f);
 		}
-	
+
 	free(time_table);
 	time_table = calloc(tsec_nitems, sizeof(uint64_t));
 	tpnt = ucdata;
@@ -4827,7 +4827,7 @@ for(;;)
 		int skiplen;
 		uint64_t val = fstGetVarint64(tpnt, &skiplen);
 		tpval = time_table[ti] = tpval + val;
-		tpnt += skiplen;	
+		tpnt += skiplen;
 		}
 
 	tc_head = calloc(tsec_nitems /* scan-build */ ? tsec_nitems : 1, sizeof(uint32_t));
@@ -4852,9 +4852,9 @@ for(;;)
 				char wx_buf[32];
 				int wx_len;
 
-				if(beg_tim) 
-					{ 
-					wx_len = sprintf(wx_buf, "#%"PRIu64"\n", beg_tim); 
+				if(beg_tim)
+					{
+					wx_len = sprintf(wx_buf, "#%"PRIu64"\n", beg_tim);
 					fstWritex(xc, wx_buf, wx_len);
 					}
 				if((xc->num_blackouts)&&(cur_blackout != xc->num_blackouts))
@@ -4944,7 +4944,7 @@ for(;;)
 									int vcdid_len = fstVcdIDForFwrite(vcd_id+1, idx+1);
 
 									vcd_id[0] = (xc->signal_typs[idx] != FST_VT_VCD_PORT) ? 'b' : 'p';
-									fstWritex(xc, vcd_id, 1);		
+									fstWritex(xc, vcd_id, 1);
 									fstWritex(xc,mu+sig_offs, xc->signal_lens[idx]);
 
 									vcd_id[0] = ' '; /* collapse 3 writes into one I/O call */
@@ -4958,7 +4958,7 @@ for(;;)
 							double d;
 							unsigned char *clone_d;
 							unsigned char *srcdata = mu+sig_offs;
-		
+
 							if(value_change_callback)
 								{
 								if(xc->native_doubles_for_cb)
@@ -4970,7 +4970,7 @@ for(;;)
 										else
 										{
 										int j;
-		
+
 										clone_d = (unsigned char *)&d;
 										for(j=0;j<8;j++)
 											{
@@ -4989,7 +4989,7 @@ for(;;)
 										else
 										{
 										int j;
-		
+
 										for(j=0;j<8;j++)
 											{
 											clone_d[j] = srcdata[7-j];
@@ -5015,13 +5015,13 @@ for(;;)
 										else
 										{
 										int j;
-		
+
 										for(j=0;j<8;j++)
 											{
 											clone_d[j] = srcdata[7-j];
 											}
 										}
-						
+
 									fstVcdID(vcdid_buf, idx+1);
 									wx_len = sprintf(wx_buf, "r%.16g %s\n", d, vcdid_buf);
 									fstWritex(xc, wx_buf, wx_len);
@@ -5029,7 +5029,7 @@ for(;;)
 								}
 							}
 						}
-					}	
+					}
 
 				sig_offs += xc->signal_lens[idx];
 				}
@@ -5062,7 +5062,7 @@ for(;;)
 	if(!chain_cmem) goto block_err;
 	fstReaderFseeko(xc, xc->f, indx_pos, SEEK_SET);
 	fstFread(chain_cmem, chain_clen, 1, xc->f);
-	
+
 	if(vc_maxhandle > vc_maxhandle_largest)
 		{
 		free(chain_table);
@@ -5118,7 +5118,7 @@ for(;;)
 					chain_table[idx++] = 0;
 					}
 				}
-			
+
 			pnt += skiplen;
 			} while (pnt != (chain_cmem + chain_clen));
 		}
@@ -5127,7 +5127,7 @@ for(;;)
 		do	{
 			int skiplen;
 			uint64_t val = fstGetVarint32(pnt, &skiplen);
-		
+
 			if(!val)
 				{
 				pnt += skiplen;
@@ -5136,7 +5136,7 @@ for(;;)
 				chain_table_lengths[idx] = -val;	/* because during this loop iter would give stale data! */
 				idx++;
 				}
-			else 
+			else
 			if(val&1)
 				{
 				pval = chain_table[idx] = pval + (val >> 1);
@@ -5151,7 +5151,7 @@ for(;;)
 					chain_table[idx++] = 0;
 					}
 				}
-			
+
 			pnt += skiplen;
 			} while (pnt != (chain_cmem + chain_clen));
 		}
@@ -5169,7 +5169,7 @@ for(;;)
 			if(((uint32_t)v32) < i) /* sanity check */
 				{
 				chain_table[i] = chain_table[v32];
-				chain_table_lengths[i] = chain_table_lengths[v32];	
+				chain_table_lengths[i] = chain_table_lengths[v32];
 				}
 			}
 		}
@@ -5196,7 +5196,7 @@ for(;;)
 				uint32_t val;
 				uint32_t skiplen;
 				uint32_t tdelta;
-	
+
 				fstReaderFseeko(xc, xc->f, vc_start + chain_table[i], SEEK_SET);
 				val = fstReaderVarint32WithSkip(xc->f, &skiplen);
 				if(val)
@@ -5211,7 +5211,7 @@ for(;;)
 						free(mc_mem);
 						mc_mem = malloc(mc_mem_len = chain_table_lengths[i]);
 						}
-					mc = mc_mem;	
+					mc = mc_mem;
 
 					fstFread(mc, chain_table_lengths[i], 1, xc->f);
 
@@ -5240,13 +5240,13 @@ for(;;)
 					length_remaining[i] = destlen;
 					traversal_mem_offs += destlen;
 					}
-	
+
 				if(rc != Z_OK)
 					{
 					printf("\tfac: %d clen: %d (rc=%d)\n", (int)i, (int)val, rc);
 					exit(255);
 					}
-	
+
 				if(xc->signal_lens[i] == 1)
 					{
 					uint32_t vli = fstGetVarint32NoSkip(mem_for_traversal + headptr[i]);
@@ -5258,7 +5258,7 @@ for(;;)
 					uint32_t vli = fstGetVarint32NoSkip(mem_for_traversal + headptr[i]);
 					tdelta = vli >> 1;
 					}
-	
+
 				scatterptr[i] = tc_head[tdelta];
 				tc_head[tdelta] = i+1;
 				}
@@ -5302,7 +5302,7 @@ for(;;)
 				previous_time = time_table[i];
 				}
 			}
-	
+
 		while(tc_head[i])
 			{
 			idx = tc_head[i] - 1;
@@ -5316,7 +5316,7 @@ for(;;)
 					if(!(vli & 1))
 						{
 						/* tdelta = vli >> 2; */ /* scan-build */
-						val = ((vli >> 1) & 1) | '0'; 
+						val = ((vli >> 1) & 1) | '0';
 						}
 						else
 						{
@@ -5332,7 +5332,7 @@ for(;;)
 						}
 						else
 						{
-						if(fv) 
+						if(fv)
 							{
 							char vcd_id[16];
 							int vcdid_len = fstVcdIDForFwrite(vcd_id+1, idx+1);
@@ -5344,17 +5344,17 @@ for(;;)
 						}
 					headptr[idx] += skiplen;
 					length_remaining[idx] -= skiplen;
-	
+
 					tc_head[i] = scatterptr[idx];
 					scatterptr[idx] = 0;
-		
+
 					if(length_remaining[idx])
 						{
 						int shamt;
 						vli = fstGetVarint32NoSkip(mem_for_traversal + headptr[idx]);
 						shamt = 2 << (vli & 1);
 						tdelta = vli >> shamt;
-	
+
 						scatterptr[idx] = tc_head[i+tdelta];
 						tc_head[i+tdelta] = idx+1;
 						}
@@ -5378,13 +5378,13 @@ for(;;)
 							}
 							else
 							{
-							if(fv) 
+							if(fv)
 								{
 								char vcd_id[16];
 								int vcdid_len;
 
 								vcd_id[0] = 's';
-								fstWritex(xc, vcd_id, 1);	
+								fstWritex(xc, vcd_id, 1);
 
 								vcdid_len = fstVcdIDForFwrite(vcd_id+1, idx+1);
 								{
@@ -5394,7 +5394,7 @@ for(;;)
 								free(vesc);
 								}
 
-								vcd_id[0] = ' ';								
+								vcd_id[0] = ' ';
 								vcd_id[vcdid_len + 1] = '\n';
 								fstWritex(xc, vcd_id, vcdid_len+2);
 								}
@@ -5407,12 +5407,12 @@ for(;;)
 
 					tc_head[i] = scatterptr[idx];
 					scatterptr[idx] = 0;
-	
+
 					if(length_remaining[idx])
 						{
 						vli = fstGetVarint32NoSkip(mem_for_traversal + headptr[idx]);
 						tdelta = vli >> 1;
-	
+
 						scatterptr[idx] = tc_head[i+tdelta];
 						tc_head[i+tdelta] = idx+1;
 						}
@@ -5451,9 +5451,9 @@ for(;;)
 							}
 							else
 							{
-							if(fv)	{ 
+							if(fv)	{
 								unsigned char ch_bp = (xc->signal_typs[idx] != FST_VT_VCD_PORT) ? 'b' : 'p';
-							
+
 								fstWritex(xc, &ch_bp, 1);
 								fstWritex(xc, xc->temp_signal_value_buf, len);
 								}
@@ -5500,7 +5500,7 @@ for(;;)
 							ch = ((vdata[0] >> bit) & 1) | '0';
 							buf[j] = ch;
 							}
-	
+
 						len = 1;
 						srcdata = buf;
 						}
@@ -5520,7 +5520,7 @@ for(;;)
 								else
 								{
 								int j;
-		
+
 								clone_d = (unsigned char *)&d;
 								for(j=0;j<8;j++)
 									{
@@ -5539,7 +5539,7 @@ for(;;)
 								else
 								{
 								int j;
-		
+
 								for(j=0;j<8;j++)
 									{
 									clone_d[j] = srcdata[7-j];
@@ -5564,20 +5564,20 @@ for(;;)
 								else
 								{
 								int j;
-		
+
 								for(j=0;j<8;j++)
 									{
 									clone_d[j] = srcdata[7-j];
 									}
 								}
-						
+
 							wx_len = sprintf(wx_buf, "r%.16g", d);
 							fstWritex(xc, wx_buf, wx_len);
 							}
 						}
 					}
 
-				if(fv) 
+				if(fv)
 					{
 					char vcd_id[16];
 					int vcdid_len = fstVcdIDForFwrite(vcd_id+1, idx+1);
@@ -5592,7 +5592,7 @@ for(;;)
 
 				tc_head[i] = scatterptr[idx];
 				scatterptr[idx] = 0;
-	
+
 				if(length_remaining[idx])
 					{
 					vli = fstGetVarint32NoSkip(mem_for_traversal + headptr[idx]);
@@ -5676,7 +5676,7 @@ if(xc->signal_lens[facidx] == 1)
 				clone_d[j] = srcdata[7-j];
 				}
 			}
-						
+
 		sprintf((char *)buf, "%.16g", d);
 		}
 	}
@@ -5790,7 +5790,7 @@ xc->rvat_beg_tim = beg_tim;
 xc->rvat_end_tim = end_tim;
 
 #ifdef FST_DEBUG
-mem_required_for_traversal = 
+mem_required_for_traversal =
 #endif
 	fstReaderUint64(xc->f);
 
@@ -5816,27 +5816,27 @@ tsec_uclen = fstReaderUint64(xc->f);
 tsec_clen = fstReaderUint64(xc->f);
 tsec_nitems = fstReaderUint64(xc->f);
 #ifdef FST_DEBUG
-fprintf(stderr, "\ttime section unc: %d, com: %d (%d items)\n", 
+fprintf(stderr, "\ttime section unc: %d, com: %d (%d items)\n",
 	(int)tsec_uclen, (int)tsec_clen, (int)tsec_nitems);
-#endif		
+#endif
 ucdata = malloc(tsec_uclen);
 destlen = tsec_uclen;
 sourcelen = tsec_clen;
-	
+
 fstReaderFseeko(xc, xc->f, -24 - ((off_t)tsec_clen), SEEK_CUR);
 if(tsec_uclen != tsec_clen)
 	{
 	cdata = malloc(tsec_clen);
 	fstFread(cdata, tsec_clen, 1, xc->f);
-	
+
 	rc = uncompress(ucdata, &destlen, cdata, sourcelen);
-	                
+
 	if(rc != Z_OK)
 		{
 		printf("tsec uncompress rc = %d\n", rc);
 		exit(255);
 		}
-	
+
 	free(cdata);
 	}
 	else
@@ -5852,7 +5852,7 @@ for(ti=0;ti<tsec_nitems;ti++)
 	int skiplen;
 	uint64_t val = fstGetVarint64(tpnt, &skiplen);
 	tpval = xc->rvat_time_table[ti] = tpval + val;
-	tpnt += skiplen;	
+	tpnt += skiplen;
 	}
 
 free(ucdata);
@@ -5906,7 +5906,7 @@ fprintf(stderr, "\tindx_pos: %d (%d bytes)\n", (int)indx_pos, (int)chain_clen);
 chain_cmem = malloc(chain_clen);
 fstReaderFseeko(xc, xc->f, indx_pos, SEEK_SET);
 fstFread(chain_cmem, chain_clen, 1, xc->f);
-	
+
 xc->rvat_chain_table = calloc((xc->rvat_vc_maxhandle+1), sizeof(off_t));
 xc->rvat_chain_table_lengths = calloc((xc->rvat_vc_maxhandle+1), sizeof(uint32_t));
 
@@ -5926,7 +5926,7 @@ do
                 xc->rvat_chain_table_lengths[idx] = -val;
                 idx++;
                 }
-	else		
+	else
 	if(val&1)
 		{
 		pval = xc->rvat_chain_table[idx] = pval + (val >> 1);
@@ -5941,11 +5941,11 @@ do
 			xc->rvat_chain_table[idx++] = 0;
 			}
 		}
-		
+
 	pnt += skiplen;
 	} while (pnt != (chain_cmem + chain_clen));
 
-free(chain_cmem); 
+free(chain_cmem);
 xc->rvat_chain_table[idx] = indx_pos - xc->rvat_vc_start;
 xc->rvat_chain_table_lengths[pidx] = xc->rvat_chain_table[idx] - xc->rvat_chain_table[pidx];
 
@@ -5970,7 +5970,7 @@ fprintf(stderr, "\tdecompressed chain idx len: %"PRIu32"\n", idx);
 
 xc->rvat_data_valid = 1;
 
-/* all data at this point is loaded or resident in fst cache, process and return appropriate value */ 
+/* all data at this point is loaded or resident in fst cache, process and return appropriate value */
 process_value:
 if(facidx > xc->rvat_vc_maxhandle)
 	{
@@ -6008,17 +6008,17 @@ if(!xc->rvat_chain_mem)
 		unsigned long destlen = xc->rvat_chain_len;
 		unsigned long sourcelen = xc->rvat_chain_table_lengths[facidx];
 		int rc;
-		
+
 		fstFread(mc, xc->rvat_chain_table_lengths[facidx], 1, xc->f);
 		rc = uncompress(mu, &destlen, mc, sourcelen);
 		free(mc);
-	
+
 		if(rc != Z_OK)
 			{
 			printf("\tclen: %d (rc=%d)\n", (int)xc->rvat_chain_len, rc);
 			exit(255);
 			}
-	
+
 		/* data to process is for(j=0;j<destlen;j++) in mu[j] */
 		xc->rvat_chain_mem = mu;
 		}
@@ -6032,7 +6032,7 @@ if(!xc->rvat_chain_mem)
 		}
 
 	xc->rvat_chain_facidx = facidx;
-	}	
+	}
 
 /* process value chain here */
 
@@ -6088,7 +6088,7 @@ if(xc->signal_lens[facidx] == 1)
 
 		if(!(pvli & 1))
 			{
-			buf[0] = ((pvli >> 1) & 1) | '0'; 
+			buf[0] = ((pvli >> 1) & 1) | '0';
 			}
 			else
 			{
@@ -6189,7 +6189,7 @@ if(xc->signal_lens[facidx] == 1)
 					ch = ((vdata[0] >> bit) & 1) | '0';
 					bufd[j] = ch;
 					}
-	
+
 				srcdata = bufd;
 				}
 				else
@@ -6219,7 +6219,7 @@ if(xc->signal_lens[facidx] == 1)
 		{
 		return(fstExtractRvatDataFromFrame(xc, facidx, buf));
 		}
-        }               
+        }
 }
 
 /* return(NULL); */
@@ -6246,16 +6246,16 @@ For every delta with one or two bits set, and the deltas of all three
   have at least 1/4 probability of changing.
 * If mix() is run forward, every bit of c will change between 1/3 and
   2/3 of the time.  (Well, 22/100 and 78/100 for some 2-bit deltas.)
-mix() was built out of 36 single-cycle latency instructions in a 
+mix() was built out of 36 single-cycle latency instructions in a
   structure that could supported 2x parallelism, like so:
-      a -= b; 
+      a -= b;
       a -= c; x = (c>>13);
       b -= c; a ^= x;
       b -= a; x = (a<<8);
       c -= a; b ^= x;
       c -= b; x = (b>>13);
       ...
-  Unfortunately, superscalar Pentiums and Sparcs can't take advantage 
+  Unfortunately, superscalar Pentiums and Sparcs can't take advantage
   of that parallelism.  They've also turned some of those single-cycle
   latency instructions into multi-cycle latency instructions.  Still,
   this is the fastest good hash I could find.  There were about 2^^68
@@ -6396,8 +6396,8 @@ while(chain)
 
 chain = calloc(1, sizeof(struct collchain_t) + length - 1);
 memcpy(chain->mem, mem, length);
-chain->fullhash = hf;	
-chain->length = length;	
+chain->fullhash = hf;
+chain->length = length;
 chain->next = ar[h];
 ar[h] = chain;
 return(&(chain->payload));

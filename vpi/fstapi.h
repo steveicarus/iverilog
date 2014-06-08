@@ -51,7 +51,7 @@ enum fstFileType {
 
     FST_FT_VERILOG             = 0,
     FST_FT_VHDL                = 1,
-    FST_FT_VERILOG_VHDL        = 2, 
+    FST_FT_VERILOG_VHDL        = 2,
 
     FST_FT_MAX                 = 2
 };
@@ -118,7 +118,7 @@ enum fstVarType {
     FST_VT_VCD_REG             = 5,
     FST_VT_VCD_SUPPLY0         = 6,
     FST_VT_VCD_SUPPLY1         = 7,
-    FST_VT_VCD_TIME            = 8,  
+    FST_VT_VCD_TIME            = 8,
     FST_VT_VCD_TRI             = 9,
     FST_VT_VCD_TRIAND          = 10,
     FST_VT_VCD_TRIOR           = 11,
