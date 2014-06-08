@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -614,7 +614,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    if (mux_width < mux_lwidth && if_ && else_) {
 		  if (debug_synth2) {
 			cerr << get_fileline() << ": NetCondit::synth_async: "
-			     << "This MetMux only impacts a few bits of output," 
+			     << "This MetMux only impacts a few bits of output,"
 			     << " so combine nex_out with statement input."
 			     << endl;
 			cerr << get_fileline() << ": NetCondit::synth_async: "
