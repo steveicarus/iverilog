@@ -1634,7 +1634,8 @@ static const char* do_magic(const char*name)
 
         int actual_len = snprintf(magic_text, desired_cnt,
                                   "%u", get_line(istack));
-        assert(actual_len < desired_cnt);
+        assert(actual_len >= 0);
+        assert((unsigned) actual_len < desired_cnt);
         return magic_text;
     }
     else if(!strcmp(name, "__FILE__"))
@@ -1654,7 +1655,9 @@ static const char* do_magic(const char*name)
 
             int actual_len = snprintf(magic_text, desired_cnt,
                                     "\"%s\"", path);
-            assert(actual_len < desired_cnt);
+
+            assert(actual_len >= 0);
+            assert((unsigned) actual_len < (unsigned)desired_cnt);
             return magic_text;
         }
     }

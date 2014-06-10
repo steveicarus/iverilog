@@ -799,7 +799,7 @@ int main(int argc, char **argv)
 {
       int e_flag = 0;
       int version_flag = 0;
-      int opt, idx;
+      int opt;
 
 #ifdef __MINGW32__
 	/* Calculate the ivl_root from the path to the command. This
@@ -1142,7 +1142,7 @@ int main(int argc, char **argv)
 	    vhdlpp_work = "ivl_vhdl_work";
       fprintf(defines_file, "vhdlpp:%s%cvhdlpp\n", vhdlpp_dir, sep);
       fprintf(defines_file, "vhdlpp-work:%s\n", vhdlpp_work);
-      for (idx = 0 ; idx < vhdlpp_libdir_cnt ; idx += 1)
+      for (unsigned idx = 0 ; idx < vhdlpp_libdir_cnt ; idx += 1)
 	    fprintf(defines_file, "vhdlpp-libdir:%s\n", vhdlpp_libdir[idx]);
 
     /* Process parameter definition from command line. The last
@@ -1156,7 +1156,7 @@ int main(int argc, char **argv)
 
 	/* Finally, process all the remaining words on the command
 	   line as file names. */
-      for (idx = optind ;  idx < argc ;  idx += 1)
+      for (int idx = optind ;  idx < argc ;  idx += 1)
 	    process_file_name(argv[idx], 0);
 
 	/* If the use of a default include directory is not

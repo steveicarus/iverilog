@@ -75,11 +75,10 @@ static int32_t get_int32_from_bits(const char *bits, unsigned nbits,
  * otherwise emit them as a hex constant. */
 static void emit_bits(const char *bits, unsigned nbits, unsigned is_signed)
 {
-      int idx;
       unsigned has_undef = 0;
 
 	/* Check for an undefined bit. */
-      for (idx = (int)nbits-1; idx >= 0; idx -= 1) {
+      for (int idx = (int)nbits-1; idx >= 0; idx -= 1) {
 	    if ((bits[idx] != '0') && (bits[idx] != '1')) {
 		  has_undef = 1;
 		  break;
@@ -92,23 +91,23 @@ static void emit_bits(const char *bits, unsigned nbits, unsigned is_signed)
 	/* Emit as a binary constant. */
       if (has_undef || (nbits < 2)) {
 	    fprintf(vlog_out, "b");
-	    for (idx = (int)nbits-1; idx >= 0; idx -= 1) {
+	    for (int idx = (int)nbits-1; idx >= 0; idx -= 1) {
 		  fprintf(vlog_out, "%c", bits[idx]);
 	    }
 	/* Emit as a hex constant. */
       } else {
-	    int start = 4*(nbits/4);
+	    unsigned start = 4*(nbits/4);
 	    unsigned result = 0;
 	    fprintf(vlog_out, "h");
 	    /* The first digit may not be a full hex digit. */
 	    if (start < nbits) {
-		  for (idx = start; idx < nbits; idx += 1) {
+		  for (unsigned idx = start; idx < nbits; idx += 1) {
 			if (bits[idx] == '1') result |= 1U << (idx%4);
 		  }
 		  fprintf(vlog_out, "%1x", result);
 	    }
 	    /* Now print the full hex digits. */
-	    for (idx = start-1; idx >= 0; idx -= 4) {
+	    for (int idx = start-1; idx >= 0; idx -= 4) {
 		  result = 0;
 		  if (bits[idx] == '1') result |= 0x8;
 		  if (bits[idx-1] == '1') result |= 0x4;

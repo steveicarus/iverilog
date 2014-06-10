@@ -38,7 +38,7 @@ static void check_command_line_args(void)
 
       vpi_get_vlog_info(&vlog_info);
 
-      for (unsigned idx = 0 ;  idx < vlog_info.argc ;  idx += 1) {
+      for (int idx = 0 ;  idx < vlog_info.argc ;  idx += 1) {
 	    if (strcmp(vlog_info.argv[idx],"-compatible") == 0) {
 		  compatible_flag = 1;
 

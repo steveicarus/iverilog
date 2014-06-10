@@ -113,7 +113,6 @@ unsigned is_const_string_obj(vpiHandle arg)
 static void check_command_line_flags()
 {
       struct t_vpi_vlog_info vlog_info;
-      unsigned idx;
       static unsigned command_line_processed = 0;
 
 	/* If we have already processed the arguments then just return. */
@@ -121,7 +120,7 @@ static void check_command_line_flags()
 
       vpi_get_vlog_info(&vlog_info);
 
-      for (idx = 0; idx < vlog_info.argc; idx += 1) {
+      for (int idx = 0; idx < vlog_info.argc; idx += 1) {
 	    if (strcmp(vlog_info.argv[idx], "-table-model-debug") == 0) {
 		  table_model_debug = 1;
 	    }
