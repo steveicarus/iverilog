@@ -789,7 +789,7 @@ enum vpi_rbuf_t {
       RBUF_DEL
 	/* Delete the storage for both buffers. */
 };
-extern char *need_result_buf(unsigned cnt, vpi_rbuf_t type);
+extern void *need_result_buf(unsigned cnt, vpi_rbuf_t type);
 /* following two routines use need_result_buf(, RBUF_STR) */
 extern char *simple_set_rbuf_str(const char *s1);
 extern char *generic_get_str(int code, vpiHandle ref, const char *name, const char *index);

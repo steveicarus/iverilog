@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -584,7 +584,7 @@ static void vec4_get_value_string(const vvp_vector4_t&word_val, unsigned width,
       unsigned nchar = width / 8;
       unsigned tail = width % 8;
 
-      char*rbuf = need_result_buf(nchar + 1, RBUF_VAL);
+      char*rbuf = (char *) need_result_buf(nchar + 1, RBUF_VAL);
       char*cp = rbuf;
 
       if (tail > 0) {
@@ -636,7 +636,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 	    break;
 
 	  case vpiBinStrVal:
-	    rbuf = need_result_buf(width+1, RBUF_VAL);
+	    rbuf = (char *) need_result_buf(width+1, RBUF_VAL);
 	    for (unsigned idx = 0 ;  idx < width ;  idx += 1) {
 		  vvp_bit4_t bit = word_val.value(idx);
 		  rbuf[width-idx-1] = vvp_bit4_to_ascii(bit);
@@ -647,7 +647,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 
 	  case vpiOctStrVal: {
 		unsigned hwid = ((width+2) / 3) + 1;
-		rbuf = need_result_buf(hwid, RBUF_VAL);
+		rbuf = (char *) need_result_buf(hwid, RBUF_VAL);
 		vpip_vec4_to_oct_str(word_val, rbuf, hwid);
 		vp->value.str = rbuf;
 		break;
@@ -655,7 +655,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 
 	  case vpiDecStrVal: {
 // HERE need a better estimate.
-		rbuf = need_result_buf(width+1, RBUF_VAL);
+		rbuf = (char *) need_result_buf(width+1, RBUF_VAL);
 		vpip_vec4_to_dec_str(word_val, rbuf, width+1, signed_flag);
 		vp->value.str = rbuf;
 		break;
@@ -663,7 +663,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 
 	  case vpiHexStrVal: {
 		unsigned  hwid = ((width + 3) / 4) + 1;
-		rbuf = need_result_buf(hwid, RBUF_VAL);
+		rbuf = (char *) need_result_buf(hwid, RBUF_VAL);
 		vpip_vec4_to_hex_str(word_val, rbuf, hwid);
 		vp->value.str = rbuf;
 		break;
@@ -714,7 +714,7 @@ void vpip_vec4_get_value(const vvp_vector4_t&word_val, unsigned width,
 	  case vpiVectorVal: {
 		unsigned hwid = (width + 31)/32;
 
-		rbuf = need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
+		rbuf = (char *) need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
 		s_vpi_vecval *op = (p_vpi_vecval)rbuf;
 		vp->value.vector = op;
 
@@ -779,7 +779,7 @@ void vpip_vec2_get_value(const vvp_vector2_t&word_val, unsigned width,
 	  case vpiVectorVal: {
 		unsigned hwid = (width + 31)/32;
 
-		rbuf = need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
+		rbuf = (char *) need_result_buf(hwid * sizeof(s_vpi_vecval), RBUF_VAL);
 		s_vpi_vecval *op = (p_vpi_vecval)rbuf;
 		vp->value.vector = op;
 
@@ -860,7 +860,7 @@ void vpip_real_get_value(double real, s_vpi_value*vp)
 	    break;
 
 	  case vpiDecStrVal:
-	    rbuf = need_result_buf(1025, RBUF_VAL);
+	    rbuf = (char *) need_result_buf(1025, RBUF_VAL);
 	    vpip_vec4_to_dec_str(vvp_vector4_t(1024, real), rbuf, 1025, true);
 	    vp->value.str = rbuf;
 	    break;
@@ -934,7 +934,7 @@ void vpip_string_get_value(const string&val, s_vpi_value*vp)
 	    vp->format = vpiStringVal;
 
 	  case vpiStringVal:
-	    rbuf = need_result_buf(val.size() + 1, RBUF_VAL);
+	    rbuf = (char *) need_result_buf(val.size() + 1, RBUF_VAL);
 	    strcpy(rbuf, val.c_str());
 	    vp->value.str = rbuf;
 	    break;
