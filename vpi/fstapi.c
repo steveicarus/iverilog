@@ -1696,7 +1696,7 @@ if(tmem)
         unsigned char *dmem = malloc(compressBound(destlen));
         int rc = compress2(dmem, &destlen, tmem, tlen, 9);
 
-        if((rc == Z_OK) && (destlen < tlen))
+        if((rc == Z_OK) && (((off_t)destlen) < tlen))
                 {
                 fstFwrite(dmem, destlen, 1, xc->handle);
                 }
@@ -1926,7 +1926,7 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
                 unsigned char *dmem = malloc(compressBound(destlen));
                 int rc = compress2(dmem, &destlen, tmem, tlen, 9);
 
-                if((rc != Z_OK) || (destlen > tlen))
+                if((rc != Z_OK) || (((off_t)destlen) > tlen))
                         {
                         destlen = tlen;
                         }
@@ -1937,7 +1937,7 @@ if(xc && !xc->already_in_close && !xc->already_in_flush)
                 fstWriterUint64(xc->handle, tlen);              /* uncompressed */
                                                                 /* compressed len is section length - 24 */
                 fstWriterUint64(xc->handle, xc->maxhandle);     /* maxhandle */
-                fstFwrite((destlen != tlen) ? dmem : tmem, destlen, 1, xc->handle);
+                fstFwrite((((off_t)destlen) != tlen) ? dmem : tmem, destlen, 1, xc->handle);
                 fflush(xc->handle);
 
                 fstWriterFseeko(xc, xc->handle, fixup_offs, SEEK_SET);
