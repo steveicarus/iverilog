@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -552,7 +552,7 @@ static PLI_INT32 sys_random_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-/* From System Verilog 3.1a. */
+/* From System Verilog */
 static PLI_INT32 sys_urandom_range_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
@@ -561,20 +561,17 @@ static PLI_INT32 sys_urandom_range_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 
       /* Check that there are arguments. */
       if (argv == 0) {
-            vpi_printf("ERROR: %s requires two arguments.\n", name);
+            vpi_printf("ERROR: %s requires one or two arguments.\n", name);
             vpi_control(vpiFinish, 1);
             return 0;
       }
 
-      /* Check that there are at least two arguments. */
+      /* Check that there is at least one arguments. */
       arg = vpi_scan(argv);  /* This should never be zero. */
       assert(arg);
       arg = vpi_scan(argv);
-      if (arg == 0) {
-            vpi_printf("ERROR: %s requires two arguments.\n", name);
-            vpi_control(vpiFinish, 1);
-            return 0;
-      }
+      /* Is this a signle argument function call? */
+      if (arg == 0) return 0;
 
       /* These functions takes at most two argument. */
       arg = vpi_scan(argv);
@@ -588,7 +585,7 @@ static PLI_INT32 sys_urandom_range_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-/* From System Verilog 3.1a. */
+/* From System Verilog */
 static unsigned long urandom(long *seed, unsigned long max, unsigned long min)
 {
       static long i_seed = 0;
@@ -603,7 +600,7 @@ static unsigned long urandom(long *seed, unsigned long max, unsigned long min)
       return result;
 }
 
-/* From System Verilog 3.1a. */
+/* From System Verilog */
 static PLI_INT32 sys_urandom_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed = 0;
@@ -639,7 +636,7 @@ static PLI_INT32 sys_urandom_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-/* From System Verilog 3.1a. */
+/* From System Verilog */
 static PLI_INT32 sys_urandom_range_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, maxval, minval;
@@ -656,8 +653,14 @@ static PLI_INT32 sys_urandom_range_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpi_get_value(maxval, &val);
       i_maxval = val.value.integer;
 
-      vpi_get_value(minval, &val);
-      i_minval = val.value.integer;
+      /* Is this a two or one argument function call? */
+      if (minval) {
+	    vpi_get_value(minval, &val);
+	    i_minval = val.value.integer;
+	    vpi_free_object(argv);
+      } else {
+	    i_minval = 0;
+      }
 
       /* Swap the two arguments if they are out of order. */
       if (i_minval > i_maxval) {
@@ -669,7 +672,6 @@ static PLI_INT32 sys_urandom_range_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       /* Calculate and return the result. */
       val.value.integer = urandom(0, i_maxval, i_minval);
       vpi_put_value(callh, &val, 0, vpiNoDelay);
-      vpi_free_object(argv);
       return 0;
 }
 
@@ -922,7 +924,7 @@ void sys_random_register()
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
-      /* From System Verilog 3.1a. */
+      /* From System Verilog */
       tf_data.type = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncSized;
       tf_data.tfname = "$urandom";
@@ -933,7 +935,7 @@ void sys_random_register()
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
-      /* From System Verilog 3.1a. */
+      /* From System Verilog */
       tf_data.type = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncSized;
       tf_data.tfname = "$urandom_range";
