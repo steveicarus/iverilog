@@ -514,8 +514,26 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 
       bool rc_flag = true;
       for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
-	    ivl_assert(*this, asig.pin(idx).nexus()->pick_any_net());
-	    ivl_assert(*this, bsig.pin(idx).nexus()->pick_any_net());
+	      // It should not be possible for the a (true) or b
+	      // (false) signals to be missing. If either is, print a
+	      // warning and clear a flag so that the rest of this
+	      // code can find a way to cope.
+	    bool asig_is_present = true;
+	    if (! asig.pin(idx).nexus()->pick_any_net()) {
+		  cerr << get_fileline() << ": warning: "
+		       << "True clause of conditional statement might not"
+		       << " drive all expected outputs." << endl;
+		  asig_is_present = false;
+	    }
+
+	    bool bsig_is_present = true;
+	    if (! bsig.pin(idx).nexus()->pick_any_net()) {
+		  cerr << get_fileline() << ": warning: "
+		       << "False clause of conditional statement might not"
+		       << " drive all expected outputs." << endl;
+		  bsig_is_present = false;
+	    }
+
 	      // Guess the mux type from the type of the output.
 	    ivl_variable_type_t mux_data_type = IVL_VT_LOGIC;
 	    if (NetNet*tmp = nex_out.pin(idx).nexus()->pick_any_net()) {
@@ -523,7 +541,14 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    }
 
 	    unsigned mux_off = 0;
-	    unsigned mux_width = asig.pin(idx).nexus()->vector_width();
+	    unsigned mux_width;
+	    if (asig_is_present)
+		  mux_width = asig.pin(idx).nexus()->vector_width();
+	    else if (bsig_is_present)
+		  mux_width = bsig.pin(idx).nexus()->vector_width();
+	    else
+		  mux_width = 0;
+
 	    const unsigned mux_lwidth = mux_width;
 	    ivl_assert(*this, mux_width != 0);
 
@@ -561,7 +586,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		  bpv = 0;
 	    }
 
-	    if (mux_width != bsig.pin(idx).nexus()->vector_width()) {
+	    if (bsig_is_present && mux_width != bsig.pin(idx).nexus()->vector_width()) {
 		  cerr << get_fileline() << ": internal error: "
 		       << "NetCondit::synth_async: "
 		       << "Mux input sizes do not match."
@@ -587,9 +612,10 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 
 	    NetMux*mux = new NetMux(scope, scope->local_symbol(),
 				    mux_width, 2, 1);
+	    mux->set_line(*this);
 
 	    list<netrange_t>not_an_array;
-	    netvector_t*tmp_type;
+	    netvector_t*tmp_type = 0;
 	    if (mux_width==1)
 		  tmp_type = new netvector_t(mux_data_type);
 	    else
@@ -604,6 +630,20 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    connect(mux->pin_Sel(),   ssig->pin(0));
 	    connect(mux->pin_Data(1), asig.pin(idx));
 	    connect(mux->pin_Data(0), bsig.pin(idx));
+
+	    if (! asig_is_present) {
+		  tmp_type = new netvector_t(mux_data_type, mux_width-1,0);
+		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+					  NetNet::WIRE, not_an_array, tmp_type);
+		  connect(mux->pin_Data(1), tmp->pin(0));
+	    }
+
+	    if (! bsig_is_present) {
+		  tmp_type = new netvector_t(mux_data_type, mux_width-1,0);
+		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+					  NetNet::WIRE, not_an_array, tmp_type);
+		  connect(mux->pin_Data(0), tmp->pin(0));
+	    }
 
 	      // We are only muxing a part of the output vector, so
 	      // make a NetPartSelect::PV to widen the vector to the
