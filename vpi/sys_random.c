@@ -552,7 +552,7 @@ static PLI_INT32 sys_random_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-/* From System Verilog */
+/* From SystemVerilog. */
 static PLI_INT32 sys_urandom_range_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
@@ -566,11 +566,11 @@ static PLI_INT32 sys_urandom_range_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
             return 0;
       }
 
-      /* Check that there is at least one arguments. */
+      /* Check that there is at least one argument. */
       arg = vpi_scan(argv);  /* This should never be zero. */
       assert(arg);
       arg = vpi_scan(argv);
-      /* Is this a signle argument function call? */
+      /* Is this a single argument function call? */
       if (arg == 0) return 0;
 
       /* These functions takes at most two argument. */
@@ -585,7 +585,7 @@ static PLI_INT32 sys_urandom_range_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-/* From System Verilog */
+/* From SystemVerilog. */
 static unsigned long urandom(long *seed, unsigned long max, unsigned long min)
 {
       static long i_seed = 0;
@@ -600,7 +600,7 @@ static unsigned long urandom(long *seed, unsigned long max, unsigned long min)
       return result;
 }
 
-/* From System Verilog */
+/* From SystemVerilog. */
 static PLI_INT32 sys_urandom_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, seed = 0;
@@ -636,7 +636,7 @@ static PLI_INT32 sys_urandom_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-/* From System Verilog */
+/* From SystemVerilog. */
 static PLI_INT32 sys_urandom_range_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 {
       vpiHandle callh, argv, maxval, minval;
@@ -924,7 +924,7 @@ void sys_random_register()
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
-      /* From System Verilog */
+      /* From SystemVerilog. */
       tf_data.type = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncSized;
       tf_data.tfname = "$urandom";
@@ -935,7 +935,7 @@ void sys_random_register()
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
-      /* From System Verilog */
+      /* From SystemVerilog. */
       tf_data.type = vpiSysFunc;
       tf_data.sysfunctype = vpiSysFuncSized;
       tf_data.tfname = "$urandom_range";
