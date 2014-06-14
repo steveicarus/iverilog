@@ -252,7 +252,14 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 			  NexusSet&nex_map, NetBus&nex_out,
 			  NetBus&accumulated_nex_out)
 {
-      if (type()==NetCase::EQZ)
+      if (type()==NetCase::EQZ || type()==NetCase::EQX)
+	    return synth_async_casez_(des, scope, nex_map, nex_out, accumulated_nex_out);
+
+	// Special case: If the case expression is constant, then this
+	// is a pattern where the guards are non-constant and tested
+	// against a constant case. Handle this as chained conditions
+	// instead.
+      if (dynamic_cast<NetEConst*> (expr_))
 	    return synth_async_casez_(des, scope, nex_map, nex_out, accumulated_nex_out);
 
 	/* Synthesize the select expression. */
@@ -298,7 +305,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 	    }
 
 	    NetEConst*ge = dynamic_cast<NetEConst*>(items_[item].guard);
-	    assert(ge);
+	    ivl_assert(*this, ge);
 	    verinum gval = ge->value();
 
 	    unsigned sel_idx = gval.as_ulong();
