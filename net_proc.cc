@@ -71,23 +71,18 @@ const NetProc* NetBlock::proc_next(const NetProc*cur) const
 }
 
 NetCase::NetCase(NetCase::TYPE c, NetExpr*ex, unsigned cnt)
-: type_(c), expr_(ex), nitems_(cnt)
+: type_(c), expr_(ex), items_(cnt)
 {
       assert(expr_);
-      items_ = new Item[nitems_];
-      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
-	    items_[idx].statement = 0;
-      }
 }
 
 NetCase::~NetCase()
 {
       delete expr_;
-      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+      for (size_t idx = 0 ;  idx < items_.size() ;  idx += 1) {
 	    delete items_[idx].guard;
 	    if (items_[idx].statement) delete items_[idx].statement;
       }
-      delete[]items_;
 }
 
 NetCase::TYPE NetCase::type() const
@@ -97,7 +92,7 @@ NetCase::TYPE NetCase::type() const
 
 void NetCase::set_case(unsigned idx, NetExpr*e, NetProc*p)
 {
-      assert(idx < nitems_);
+      assert(idx < items_.size());
       items_[idx].guard = e;
       items_[idx].statement = p;
 }

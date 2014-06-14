@@ -450,6 +450,8 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_CONCATZ:
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_EQX:
+	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:

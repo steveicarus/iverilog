@@ -274,7 +274,7 @@ NetNet* NetEBComp::synthesize(Design*des, NetScope*scope, NetExpr*root)
 
       if (op_ == 'E' || op_ == 'N') {
 	    NetCaseCmp*gate = new NetCaseCmp(scope, scope->local_symbol(),
-					     width, op_=='E'?true:false);
+					     width, op_=='E'?NetCaseCmp::EEQ:NetCaseCmp::NEQ);
 	    gate->set_line(*this);
 	    connect(gate->pin(0), osig->pin(0));
 	    connect(gate->pin(1), lsig->pin(0));

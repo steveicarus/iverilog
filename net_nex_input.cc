@@ -340,7 +340,7 @@ NexusSet* NetCase::nex_input(bool rem_out)
       if (result == 0)
 	    return 0;
 
-      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+      for (size_t idx = 0 ;  idx < items_.size() ;  idx += 1) {
 
 	      /* Skip cases that have empty statements. */
 	    if (items_[idx].statement == 0)

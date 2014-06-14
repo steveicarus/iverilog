@@ -102,7 +102,7 @@ void NetBlock::nex_output(NexusSet&out)
 
 void NetCase::nex_output(NexusSet&out)
 {
-      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+      for (size_t idx = 0 ;  idx < items_.size() ;  idx += 1) {
 
 	      // Empty statements clearly have no output.
 	    if (items_[idx].statement == 0)

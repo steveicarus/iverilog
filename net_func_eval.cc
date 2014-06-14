@@ -416,8 +416,8 @@ bool NetCase::evaluate_function_vect_(const LineInfo&loc,
 
       NetProc*default_statement = 0;
 
-      for (unsigned cnt = 0 ; cnt < nitems_ ; cnt += 1) {
-            Item*item = &items_[cnt];
+      for (unsigned cnt = 0 ; cnt < items_.size() ; cnt += 1) {
+            const Item*item = &items_[cnt];
 
             if (item->guard == 0) {
                   default_statement = item->statement;
@@ -478,8 +478,8 @@ bool NetCase::evaluate_function_real_(const LineInfo&loc,
 
       NetProc*default_statement = 0;
 
-      for (unsigned cnt = 0 ; cnt < nitems_ ; cnt += 1) {
-            Item*item = &items_[cnt];
+      for (unsigned cnt = 0 ; cnt < items_.size() ; cnt += 1) {
+            const Item*item = &items_[cnt];
 
             if (item->guard == 0) {
                   default_statement = item->statement;

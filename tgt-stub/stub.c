@@ -371,13 +371,31 @@ static void show_lpm_divide(ivl_lpm_t net)
       show_lpm_arithmetic_pins(net);
 }
 
-/* IVL_LPM_CMP_EEQ/NEE
+/* IVL_LPM_CMP_EEQ/EQX/EQZ/NEE
  * This LPM node supports two-input compare. The output width is
  * actually always 1, the lpm_width is the expected width of the inputs.
  */
 static void show_lpm_cmp_eeq(ivl_lpm_t net)
 {
-      const char*str = (ivl_lpm_type(net) == IVL_LPM_CMP_EEQ)? "EEQ" : "NEE";
+      const char*str;
+      switch (ivl_lpm_type(net)) {
+	  case IVL_LPM_CMP_EEQ:
+	    str = "EEQ";
+	    break;
+	  case IVL_LPM_CMP_EQX:
+	    str = "EQX";
+	    break;
+	  case IVL_LPM_CMP_EQZ:
+	    str = "EQZ";
+	    break;
+	  case IVL_LPM_CMP_NEE:
+	    str = "NEE";
+	    break;
+	  default:
+	    assert(0);
+	    break;
+      }
+
       unsigned width = ivl_lpm_width(net);
 
       fprintf(out, "  LPM_CMP_%s %s: <width=%u>\n", str,
@@ -934,6 +952,8 @@ static void show_lpm(ivl_lpm_t net)
 	    break;
 
 	  case IVL_LPM_CMP_EEQ:
+	  case IVL_LPM_CMP_EQX:
+	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_NEE:
 	    show_lpm_cmp_eeq(net);
 	    break;

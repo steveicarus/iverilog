@@ -1903,8 +1903,8 @@ unsigned NetBUFZ::width() const
       return width_;
 }
 
-NetCaseCmp::NetCaseCmp(NetScope*s, perm_string n, unsigned wid, bool eeq__)
-: NetNode(s, n, 3), width_(wid), eeq_(eeq__)
+NetCaseCmp::NetCaseCmp(NetScope*s, perm_string n, unsigned wid, kind_t k)
+: NetNode(s, n, 3), width_(wid), kind_(k)
 {
       pin(0).set_dir(Link::OUTPUT);
       pin(1).set_dir(Link::INPUT);
@@ -1918,11 +1918,6 @@ NetCaseCmp::~NetCaseCmp()
 unsigned NetCaseCmp::width() const
 {
       return width_;
-}
-
-bool NetCaseCmp::eeq() const
-{
-      return eeq_;
 }
 
 NetCondit::NetCondit(NetExpr*ex, NetProc*i, NetProc*e)

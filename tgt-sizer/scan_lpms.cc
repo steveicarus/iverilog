@@ -59,6 +59,15 @@ static void scan_lpms_equality(ivl_scope_t, ivl_lpm_t lpm, struct sizer_statisti
       stats.gate_count += 2*wid;
 }
 
+static void scan_lpms_equality_wild(ivl_scope_t, ivl_lpm_t lpm, struct sizer_statistics&stats)
+{
+      unsigned wid = ivl_lpm_width(lpm);
+
+      stats.equality_wc_count[wid] += 1;
+
+      stats.gate_count += 2*wid;
+}
+
 /*
  * Count magnitude comparators as 2m gates.
  * Also keep a count of comparators by width, just out of curiosity.
@@ -127,6 +136,11 @@ void scan_lpms(ivl_scope_t scope, struct sizer_statistics&stats)
 		case IVL_LPM_CMP_EEQ:
 		case IVL_LPM_CMP_NEE:
 		  scan_lpms_equality(scope, lpm, stats);
+		  break;
+
+		case IVL_LPM_CMP_EQX:
+		case IVL_LPM_CMP_EQZ:
+		  scan_lpms_equality_wild(scope, lpm, stats);
 		  break;
 
 		case IVL_LPM_CMP_GE:

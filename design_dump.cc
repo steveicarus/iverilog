@@ -174,6 +174,25 @@ ostream& operator << (ostream&fd, PortType::Enum val)
       return fd;
 }
 
+ostream& operator << (ostream&fd, NetCaseCmp::kind_t that)
+{
+      switch (that) {
+	  case NetCaseCmp::EEQ:
+	    fd << "===";
+	    break;
+	  case NetCaseCmp::NEQ:
+	    fd << "!==";
+	    break;
+	  case NetCaseCmp::XEQ:
+	    fd << "==?";
+	    break;
+	  case NetCaseCmp::ZEQ:
+	    fd << "==z?";
+	    break;
+      }
+      return fd;
+}
+
 ostream& ivl_type_s::debug_dump(ostream&o) const
 {
       o << typeid(*this).name();
@@ -550,10 +569,7 @@ void NetBUFZ::dump_node(ostream&o, unsigned ind) const
 
 void NetCaseCmp::dump_node(ostream&o, unsigned ind) const
 {
-      if (eeq_)
-	    o << setw(ind) << "" << "case compare === : " << name() << endl;
-      else
-	    o << setw(ind) << "" << "case compare !== : " << name() << endl;
+      o << setw(ind) << "" << "case compare " << kind_ << ": " << name() << endl;
 
       dump_node_pins(o, ind+4);
 }
@@ -1004,7 +1020,7 @@ void NetCase::dump(ostream&o, unsigned ind) const
 	    break;
       }
 
-      for (unsigned idx = 0 ;  idx < nitems_ ;  idx += 1) {
+      for (unsigned idx = 0 ;  idx < items_.size() ;  idx += 1) {
 	    o << setw(ind+2) << "";
 	    if (items_[idx].guard)
 		  o << *items_[idx].guard << ":";

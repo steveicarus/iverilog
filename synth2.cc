@@ -252,11 +252,14 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 			  NexusSet&nex_map, NetBus&nex_out,
 			  NetBus&accumulated_nex_out)
 {
+      if (type()==NetCase::EQZ)
+	    return synth_async_casez_(des, scope, nex_map, nex_out, accumulated_nex_out);
+
 	/* Synthesize the select expression. */
       NetNet*esig = expr_->synthesize(des, scope, expr_);
 
       unsigned sel_width = esig->vector_width();
-      assert(sel_width > 0);
+      ivl_assert(*this, sel_width > 0);
 
       ivl_assert(*this, nex_map.size() == nex_out.pin_count());
 
@@ -288,7 +291,7 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
       map<unsigned long,NetProc*>statement_map;
       NetProc*statement_default = 0;
 
-      for (unsigned item = 0 ;  item < nitems_ ;  item += 1) {
+      for (size_t item = 0 ;  item < items_.size() ;  item += 1) {
 	    if (items_[item].guard == 0) {
 		  statement_default = items_[item].statement;
 		  continue;
@@ -412,6 +415,168 @@ bool NetCase::synth_async(Design*des, NetScope*scope,
 		  }
 		  ivl_assert(*this, mux[mdx]->pin_Data(idx).nexus()->pick_any_net());
 	    }
+      }
+
+      return true;
+}
+
+/*
+ * casez statements are hard to implement as a single wide mux because
+ * the test doesn't really map to a select input. Instead, implement
+ * it as a chain of binary muxes. This gives the synthesizer my
+ * flexibility, and is more typically what is desired from a casez anyhow.
+ */
+bool NetCase::synth_async_casez_(Design*des, NetScope*scope,
+				 NexusSet&nex_map, NetBus&nex_out,
+				 NetBus&accumulated_nex_out)
+{
+	/* Synthesize the select expression. */
+      NetNet*esig = expr_->synthesize(des, scope, expr_);
+
+      unsigned sel_width = esig->vector_width();
+      ivl_assert(*this, sel_width > 0);
+
+      ivl_assert(*this, nex_map.size() == nex_out.pin_count());
+
+      vector<unsigned>mux_width (nex_out.pin_count());
+      for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
+	    mux_width[idx] = nex_map[idx].wid;
+	    if (debug_synth2) {
+		  cerr << get_fileline() << ": NetCase::synth_async_casez_: "
+		       << "idx=" << idx
+		       << ", mux_width[idx]=" << mux_width[idx] << endl;
+	    }
+      }
+
+	// The accumulated_nex_out is taken as the input for this
+	// statement. Since there are collection of statements that
+	// start at this same point, we save all these inputs and
+	// reuse them for each statement.
+      NetBus statement_input (scope, nex_out.pin_count());
+      for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
+	    connect(statement_input.pin(idx), accumulated_nex_out.pin(idx));
+      }
+
+	// Look for a default statement.
+      NetProc*statement_default = 0;
+      for (size_t item = 0 ; item < items_.size() ; item += 1) {
+	    if (items_[item].guard != 0)
+		  continue;
+
+	    ivl_assert(*this, statement_default==0);
+	    statement_default = items_[item].statement;
+      }
+
+      NetBus default_bus (scope, nex_out.pin_count());
+      if (statement_default) {
+	    bool flag = synth_async_block_substatement_(des, scope, nex_map,
+							accumulated_nex_out,
+							statement_default);
+	    if (!flag) {
+		  return false;
+	    }
+
+	    for (unsigned idx = 0 ; idx < default_bus.pin_count() ; idx += 1) {
+		  connect(default_bus.pin(idx), accumulated_nex_out.pin(idx));
+		  accumulated_nex_out.pin(idx).unlink();
+	    }
+
+	    if (debug_synth2) {
+		  cerr << get_fileline() << ": NetCase::synth_async_casez_: "
+		       << "synthesize default clause at " << statement_default->get_fileline()
+		       << " is done." << endl;
+	    }
+      }
+
+      netvector_t*condit_type = new netvector_t(IVL_VT_LOGIC, 0, 0);
+
+      NetCaseCmp::kind_t case_kind;
+      switch (type()) {
+	  case NetCase::EQ:
+	    case_kind = NetCaseCmp::EEQ;
+	    break;
+	  case NetCase::EQX:
+	    case_kind = NetCaseCmp::XEQ;
+	    break;
+	  case NetCase::EQZ:
+	    case_kind = NetCaseCmp::ZEQ;
+	    break;
+      }
+
+	// Process the items from last to first. We generate a
+	// true/false must, with the select being the comparison of
+	// the case select with the guard expression. The true input
+	// (data1) is the current statement, and the false input is
+	// the result of a later statement.
+      vector<NetMux*>mux_prev (mux_width.size());
+      for (size_t idx = 0 ; idx < items_.size() ; idx += 1) {
+	    size_t item = items_.size()-idx-1;
+	    if (items_[item].guard == 0)
+		  continue;
+
+	    NetProc*stmt = items_[item].statement;
+	    ivl_assert(*this, stmt);
+
+	    NetExpr*guard_expr = items_[item].guard;
+	    NetNet*guard = guard_expr->synthesize(des, scope, guard_expr);
+
+	    NetCaseCmp*condit_dev = new NetCaseCmp(scope, scope->local_symbol(),
+						   sel_width, case_kind);
+	    des->add_node(condit_dev);
+	    condit_dev->set_line(*this);
+	      // Note that the expression that may have windcards must
+	      // go in the pin(2) input. This is the definiton of the
+	      // NetCaseCmp statement.
+	    connect(condit_dev->pin(2), esig->pin(0));
+	    connect(condit_dev->pin(1), guard->pin(0));
+
+	    NetNet*condit = new NetNet(scope, scope->local_symbol(),
+				       NetNet::TRI, condit_type);
+	    condit->set_line(*this);
+	    condit->local_flag(true);
+	    connect(condit_dev->pin(0), condit->pin(0));
+
+	      // Synthesize the guarded statement.
+	    NetBus true_bus (scope, nex_out.pin_count());
+	    for (unsigned pin = 0 ; pin < nex_map.size() ; pin += 1)
+		  connect(true_bus.pin(pin), statement_input.pin(pin));
+
+	    synth_async_block_substatement_(des, scope, nex_map, true_bus, stmt);
+
+	    for (unsigned mdx = 0 ; mdx < mux_width.size() ; mdx += 1) {
+		  NetMux*mux_cur = new NetMux(scope, scope->local_symbol(),
+					      mux_width[mdx], 2, 1);
+		  des->add_node(mux_cur);
+		  mux_cur->set_line(*this);
+		  connect(mux_cur->pin_Sel(), condit->pin(0));
+
+		  connect(mux_cur->pin_Data(1), true_bus.pin(mdx));
+
+		    // If there is a previous mux, then use that as the
+		    // false clause input. Otherwise, use the default.
+		  if (mux_prev[mdx]) {
+			connect(mux_cur->pin_Data(0), mux_prev[mdx]->pin_Result());
+		  } else {
+			connect(mux_cur->pin_Data(0), default_bus.pin(mdx));
+		  }
+
+		    // Make a NetNet for the result.
+		  ivl_variable_type_t mux_data_type = IVL_VT_LOGIC;
+		  netvector_t*tmp_vec = new netvector_t(mux_data_type, mux_width[mdx]-1, 0);
+		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+					  NetNet::TRI, tmp_vec);
+		  tmp->local_flag(true);
+		  ivl_assert(*this, tmp->vector_width() != 0);
+		  connect(mux_cur->pin_Result(), tmp->pin(0));
+
+		    // This mux becomes the "false" input to the next mux.
+		  mux_prev[mdx] = mux_cur;
+	    }
+      }
+
+	// Connect the last mux to the output.
+      for (size_t mdx = 0 ; mdx < mux_prev.size() ; mdx += 1) {
+	    connect(mux_prev[mdx]->pin_Result(), nex_out.pin(mdx));
       }
 
       return true;

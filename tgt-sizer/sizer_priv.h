@@ -33,6 +33,8 @@ struct sizer_statistics {
       std::map<unsigned,unsigned> adder_count;
 	// count equality comparators
       std::map<unsigned,unsigned> equality_count;
+	// count equality (with wildcard) comparators
+      std::map<unsigned,unsigned> equality_wc_count;
 	// Count magnitude comparators
       std::map<unsigned,unsigned> magnitude_count;
 	// Count mux's of various dimension

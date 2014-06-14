@@ -1190,7 +1190,20 @@ bool dll_target::ureduce(const NetUReduce*net)
 void dll_target::net_case_cmp(const NetCaseCmp*net)
 {
       struct ivl_lpm_s*obj = new struct ivl_lpm_s;
-      obj->type  = net->eeq()? IVL_LPM_CMP_EEQ : IVL_LPM_CMP_NEE;
+      switch (net->kind()) {
+	  case NetCaseCmp::EEQ:
+	    obj->type = IVL_LPM_CMP_EEQ;
+	    break;
+	  case NetCaseCmp::NEQ:
+	    obj->type = IVL_LPM_CMP_NEE;
+	    break;
+	  case NetCaseCmp::XEQ:
+	      obj->type = IVL_LPM_CMP_EQX;
+	    break;
+	  case NetCaseCmp::ZEQ:
+	    obj->type = IVL_LPM_CMP_EQZ;
+	    break;
+      }
       obj->name  = net->name();
       obj->scope = find_scope(des_, net->scope());
       assert(obj->scope);

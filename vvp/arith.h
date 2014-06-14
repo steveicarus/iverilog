@@ -157,6 +157,24 @@ class vvp_cmp_eq  : public vvp_arith_ {
 
 };
 
+class vvp_cmp_eqx  : public vvp_arith_ {
+
+    public:
+      explicit vvp_cmp_eqx(unsigned wid);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
+
+};
+
+class vvp_cmp_eqz  : public vvp_arith_ {
+
+    public:
+      explicit vvp_cmp_eqz(unsigned wid);
+      void recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
+                     vvp_context_t);
+
+};
+
 class vvp_cmp_ne  : public vvp_arith_ {
 
     public:

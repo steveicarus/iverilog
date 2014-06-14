@@ -181,6 +181,10 @@ extern void compile_cmp_nee(char*label, long width,
 			   unsigned argc, struct symb_s*argv);
 extern void compile_cmp_eq(char*label, long width,
 			   unsigned argc, struct symb_s*argv);
+extern void compile_cmp_eqx(char*label, long width,
+			    unsigned argc, struct symb_s*argv);
+extern void compile_cmp_eqz(char*label, long width,
+			    unsigned argc, struct symb_s*argv);
 extern void compile_cmp_ne(char*label, long width,
 			   unsigned argc, struct symb_s*argv);
 extern void compile_cmp_ge(char*label, long width, bool signed_flag,

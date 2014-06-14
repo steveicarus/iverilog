@@ -1245,6 +1245,34 @@ void compile_cmp_eq(char*label, long wid, unsigned argc, struct symb_s*argv)
       make_arith(arith, label, argc, argv);
 }
 
+void compile_cmp_eqx(char*label, long wid, unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if (argc != 2) {
+	    fprintf(stderr, "%s .cmp/eqx has wrong number of symbols\n",label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_ *arith = new vvp_cmp_eqx(wid);
+      make_arith(arith, label, argc, argv);
+}
+
+void compile_cmp_eqz(char*label, long wid, unsigned argc, struct symb_s*argv)
+{
+      assert( wid > 0 );
+
+      if (argc != 2) {
+	    fprintf(stderr, "%s .cmp/eqz has wrong number of symbols\n",label);
+	    compile_errors += 1;
+	    return;
+      }
+
+      vvp_arith_ *arith = new vvp_cmp_eqz(wid);
+      make_arith(arith, label, argc, argv);
+}
+
 void compile_cmp_eq_r(char*label, unsigned argc, struct symb_s*argv)
 {
       if (argc != 2) {

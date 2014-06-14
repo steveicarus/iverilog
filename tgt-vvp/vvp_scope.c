@@ -1280,6 +1280,8 @@ static const char* draw_lpm_output_delay(ivl_lpm_t net, ivl_variable_type_t dt)
       switch (ivl_lpm_type(net)) {
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_EQX:
+	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:
@@ -1487,6 +1489,16 @@ static void draw_lpm_cmp(ivl_lpm_t net)
 		  type = "eq.r";
 	    else
 		  type = "eq";
+	    signed_string = "";
+	    break;
+	  case IVL_LPM_CMP_EQX:
+	    assert(dtc != IVL_VT_REAL);
+	    type = "eqx";
+	    signed_string = "";
+	    break;
+	  case IVL_LPM_CMP_EQZ:
+	    assert(dtc != IVL_VT_REAL);
+	    type = "eqz";
 	    signed_string = "";
 	    break;
 	  case IVL_LPM_CMP_GE:
@@ -2060,6 +2072,8 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 
 	  case IVL_LPM_CMP_EEQ:
 	  case IVL_LPM_CMP_EQ:
+	  case IVL_LPM_CMP_EQX:
+	  case IVL_LPM_CMP_EQZ:
 	  case IVL_LPM_CMP_GE:
 	  case IVL_LPM_CMP_GT:
 	  case IVL_LPM_CMP_NE:

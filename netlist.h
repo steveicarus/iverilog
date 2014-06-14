@@ -2218,29 +2218,42 @@ class NetBUFZ  : public NetNode {
  * input. The elaboration, btw, needs to make sure the input widths
  * match.
  *
+ * The case compare can be generated to handle ===/!==, or also
+ * to test guards in the case/casez/casex statements.
+ *
  * This pins are assigned as:
  *
  *     0   -- Output (always returns 0 or 1)
  *     1   -- Input
- *     2   -- Input
+ *     2   -- Input (windcard input for EQX and EQZ variants)
  */
 class NetCaseCmp  : public NetNode {
 
     public:
-      explicit NetCaseCmp(NetScope*s, perm_string n, unsigned wid, bool eeq);
+      enum kind_t {
+	    EEQ, // ===
+	    NEQ, // !==
+	    XEQ, // casex guard tests
+	    ZEQ  // casez guard tests
+      };
+
+    public:
+      explicit NetCaseCmp(NetScope*s, perm_string n, unsigned wid, kind_t eeq);
       ~NetCaseCmp();
 
       unsigned width() const;
-	// true if this is ===, false if this is !==
-      bool eeq() const;
+	// What kind of case compare?
+      inline kind_t kind() const { return kind_; }
 
       virtual void dump_node(ostream&, unsigned ind) const;
       virtual bool emit_node(struct target_t*) const;
 
     private:
       unsigned width_;
-      bool eeq_;
+      const kind_t kind_;
 };
+
+extern ostream& operator << (ostream&fd, NetCaseCmp::kind_t that);
 
 /* NOTE: This class should be replaced with the NetLiteral class
  * below, that is more general in that it supports different types of
@@ -2868,10 +2881,10 @@ class NetCase  : public NetProc {
 
       TYPE type() const;
       const NetExpr*expr() const { return expr_; }
-      unsigned nitems() const { return nitems_; }
+      inline unsigned nitems() const { return items_.size(); }
 
-      const NetExpr*expr(unsigned idx) const { return items_[idx].guard;}
-      const NetProc*stat(unsigned idx) const { return items_[idx].statement; }
+      inline const NetExpr*expr(unsigned idx) const { return items_[idx].guard;}
+      inline const NetProc*stat(unsigned idx) const { return items_[idx].statement; }
 
       virtual NexusSet* nex_input(bool rem_out = true);
       virtual void nex_output(NexusSet&out);
@@ -2892,16 +2905,20 @@ class NetCase  : public NetProc {
       bool evaluate_function_real_(const LineInfo&loc,
 				   map<perm_string,LocalVar>&ctx) const;
 
+      bool synth_async_casez_(Design*des, NetScope*scope,
+			      NexusSet&nex_map, NetBus&nex_out,
+			      NetBus&accumulated_nex_out);
+
       TYPE type_;
 
       struct Item {
+	    inline Item() : guard(0), statement(0) { }
 	    NetExpr*guard;
 	    NetProc*statement;
       };
 
       NetExpr* expr_;
-      unsigned nitems_;
-      Item*items_;
+      std::vector<Item>items_;
 };
 
 /*

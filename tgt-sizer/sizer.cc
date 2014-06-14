@@ -164,6 +164,11 @@ static void show_stats(struct sizer_statistics&stats)
 	    fprintf(sizer_out, "     EQUALITY[%u]: %u units\n", cur->first, cur->second);
       }
 
+      for (map<unsigned,unsigned>::const_iterator cur = stats.equality_wc_count.begin()
+		 ; cur != stats.equality_wc_count.end() ; ++ cur) {
+	    fprintf(sizer_out, "     EQUALITY_WC[%u]: %u units\n", cur->first, cur->second);
+      }
+
       for (map<unsigned,unsigned>::const_iterator cur = stats.magnitude_count.begin()
 		 ; cur != stats.magnitude_count.end() ; ++ cur) {
 	    fprintf(sizer_out, "     MAGNITUDE[%u]: %u units\n", cur->first, cur->second);
@@ -213,6 +218,10 @@ struct sizer_statistics& sizer_statistics::operator += (const sizer_statistics&t
       for (map<unsigned,unsigned>::const_iterator cur = that.equality_count.begin()
 		 ; cur != that.equality_count.end() ; ++ cur)
 	    equality_count[cur->first] += cur->second;
+
+      for (map<unsigned,unsigned>::const_iterator cur = that.equality_wc_count.begin()
+		 ; cur != that.equality_wc_count.end() ; ++ cur)
+	    equality_wc_count[cur->first] += cur->second;
 
       for (map<unsigned,unsigned>::const_iterator cur = that.magnitude_count.begin()
 		 ; cur != that.magnitude_count.end() ; ++ cur)

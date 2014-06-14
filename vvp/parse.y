@@ -80,7 +80,8 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_ARRAY K_ARRAY_2U K_ARRAY_2S K_ARRAY_I K_ARRAY_R K_ARRAY_S K_ARRAY_STR K_ARRAY_PORT
 %token K_CAST_INT K_CAST_REAL K_CAST_REAL_S K_CAST_2
 %token K_CLASS
-%token K_CMP_EEQ K_CMP_EQ K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
+%token K_CMP_EEQ K_CMP_EQ K_CMP_EQX K_CMP_EQZ
+%token K_CMP_EQ_R K_CMP_NEE K_CMP_NE K_CMP_NE_R
 %token K_CMP_GE K_CMP_GE_R K_CMP_GE_S K_CMP_GT K_CMP_GT_R K_CMP_GT_S
 %token K_CONCAT K_CONCAT8 K_DEBUG K_DELAY K_DFF
 %token K_ENUM2 K_ENUM2_S K_ENUM4 K_ENUM4_S K_EVENT K_EVENT_OR
@@ -412,6 +413,16 @@ statement
 	| T_LABEL K_CMP_EQ T_NUMBER ',' symbols ';'
 		{ struct symbv_s obj = $5;
 		  compile_cmp_eq($1, $3, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_CMP_EQX T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_eqx($1, $3, obj.cnt, obj.vect);
+		}
+
+	| T_LABEL K_CMP_EQZ T_NUMBER ',' symbols ';'
+		{ struct symbv_s obj = $5;
+		  compile_cmp_eqz($1, $3, obj.cnt, obj.vect);
 		}
 
 	| T_LABEL K_CMP_EQ_R T_NUMBER ',' symbols ';'
