@@ -66,7 +66,7 @@ ifeq (@HAVE_LIBBZ2@,yes)
 O += sys_lxt.o lxt_write.o
 endif
 O += sys_lxt2.o lxt2_write.o
-O += sys_fst.o fstapi.o fastlz.o
+O += sys_fst.o fstapi.o fastlz.o lz4.o
 endif
 
 # Object files for v2005_math.vpi

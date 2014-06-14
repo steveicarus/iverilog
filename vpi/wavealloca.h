@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) Tony Bybell 1999.
  *
  * This program is free software; you can redistribute it and/or
@@ -10,7 +10,7 @@
 #ifndef WAVE_ALLOCA_H
 #define WAVE_ALLOCA_H
 #include <stdlib.h>
-#if HAVE_ALLOCA_H
+#ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #elif defined(__GNUC__)
 #ifndef __MINGW32__
@@ -25,5 +25,5 @@
 #define alloca _alloca
 #endif
 #define wave_alloca alloca
-#endif 
+#endif
 
