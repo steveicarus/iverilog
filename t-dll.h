@@ -625,7 +625,7 @@ struct ivl_parameter_s {
  */
 struct ivl_process_s {
       ivl_process_type_t type_ : 2;
-      int analog_flag          : 1;
+      unsigned int analog_flag : 1;
       ivl_scope_t scope_;
       ivl_statement_t stmt_;
       perm_string file;

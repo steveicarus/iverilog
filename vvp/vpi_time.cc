@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -106,7 +106,7 @@ static void timevar_get_value(vpiHandle ref, s_vpi_value*vp, bool is_int_func,
       vvp_time64_t x, simtime = schedule_simtime();
       int units = rfp->scope? rfp->scope->time_units : vpi_time_precision;
 
-      char*rbuf = need_result_buf(128, RBUF_VAL);
+      char*rbuf = (char *) need_result_buf(128, RBUF_VAL);
 
 	/* Calculate the divisor needed to scale the simulation time
 	   (in time_precision units) to time units of the scope. */

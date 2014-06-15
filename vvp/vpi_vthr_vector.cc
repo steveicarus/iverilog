@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>
  *
  *    This source code is free software; you can redistribute it
@@ -124,7 +124,7 @@ static char* vthr_vec_get_str(int code, vpiHandle ref)
 static void vthr_vec_DecStrVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 {
       int nbuf = (rfp->wid+2)/3 + 1;
-      char *rbuf = need_result_buf(nbuf, RBUF_VAL);
+      char *rbuf = (char *) need_result_buf(nbuf, RBUF_VAL);
 
       vvp_vector4_t tmp (rfp->wid);
       for (unsigned idx = 0 ;  idx < rfp->wid ;  idx += 1)
@@ -139,7 +139,7 @@ static void vthr_vec_DecStrVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 static void vthr_vec_StringVal(struct __vpiVThrVec*rfp, s_vpi_value*vp)
 {
     char tmp = 0;
-    char *rbuf = need_result_buf((rfp->wid / 8) + 1, RBUF_VAL);
+    char *rbuf = (char *) need_result_buf((rfp->wid / 8) + 1, RBUF_VAL);
     char *cp = rbuf;
 
     for(int bitnr=rfp->wid-1; bitnr>=0; bitnr--){
@@ -186,7 +186,7 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
       switch (vp->format) {
 
 	  case vpiBinStrVal:
-	    rbuf = need_result_buf(wid+1, RBUF_VAL);
+	    rbuf = (char *) need_result_buf(wid+1, RBUF_VAL);
 	    for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
 		  rbuf[wid-idx-1] = vvp_bit4_to_ascii(get_bit(rfp, idx));
 	    }
@@ -197,7 +197,7 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	  case vpiHexStrVal: {
 		unsigned hval, hwid;
 		hwid = (wid + 3) / 4;
-		rbuf = need_result_buf(hwid+1, RBUF_VAL);
+		rbuf = (char *) need_result_buf(hwid+1, RBUF_VAL);
 		rbuf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
@@ -237,7 +237,7 @@ static void vthr_vec_get_value(vpiHandle ref, s_vpi_value*vp)
 	  case vpiOctStrVal: {
 		unsigned hval, hwid;
 		hwid = (wid + 2) / 3;
-		rbuf = need_result_buf(hwid+1, RBUF_VAL);
+		rbuf = (char *) need_result_buf(hwid+1, RBUF_VAL);
 		rbuf[hwid] = 0;
 		hval = 0;
 		for (unsigned idx = 0 ;  idx < wid ;  idx += 1) {
@@ -521,7 +521,7 @@ static int vthr_word_get(int code, vpiHandle ref)
 static void vthr_real_get_value(vpiHandle ref, s_vpi_value*vp)
 {
       struct __vpiVThrWord*obj = dynamic_cast<__vpiVThrWord*>(ref);
-      char *rbuf = need_result_buf(66, RBUF_VAL);
+      char *rbuf = (char *) need_result_buf(66, RBUF_VAL);
 
       double val = 0.0;
 
@@ -689,7 +689,7 @@ void __vpiVThrStrStack::vpi_get_value(p_vpi_value vp)
 	  case vpiObjTypeVal:
 	    vp->format = vpiStringVal;
 	  case vpiStringVal:
-	    rbuf = need_result_buf(val.size()+1, RBUF_VAL);
+	    rbuf = (char *) need_result_buf(val.size()+1, RBUF_VAL);
 	    strcpy(rbuf, val.c_str());
 	    vp->value.str = rbuf;
 	    break;

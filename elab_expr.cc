@@ -2832,9 +2832,11 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 		const index_component_t&index_tail = name_tail.index.back();
 		ivl_assert(*this, index_tail.msb);
 	      }
-		// If we have a net in hand, then we can predict what
-		// the slice width will be. If not, then just guess.
-	      if (net == 0)
+		// If we have a net in hand, then we can predict what the
+		// slice width will be. If not, then assume it will be a
+		// simple bit select. If the net only has a single dimension
+		// then this is still a simple bit select.
+	      if ((net == 0) || (net->packed_dimensions() <= 1))
 		    use_width = 1;
 	      break;
 	  default:

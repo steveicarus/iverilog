@@ -230,7 +230,7 @@ static void str_repeat(char*buf, const char*str, unsigned rpt)
  * If the drive strength is strong we can draw a C4<> constant as the
  * pull value, otherwise we need to draw a C8<> constant.
  */
-static char* draw_net_pull(ivl_net_logic_t lptr, ivl_drive_t drive, char*level)
+static char* draw_net_pull(ivl_net_logic_t lptr, ivl_drive_t drive, const char*level)
 {
       char*result;
       char tmp[32];

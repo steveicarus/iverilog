@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -760,7 +760,7 @@ void vvp_signal_value::get_signal_value(struct t_vpi_value*vp)
 
 static void real_signal_value(struct t_vpi_value*vp, double rval)
 {
-      char*rbuf = need_result_buf(64 + 1, RBUF_VAL);
+      char*rbuf = (char *) need_result_buf(64 + 1, RBUF_VAL);
 
       switch (vp->format) {
 	  case vpiObjTypeVal:

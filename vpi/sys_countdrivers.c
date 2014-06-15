@@ -102,7 +102,7 @@ static PLI_INT32 sys_countdrivers_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 
         /* The optional arguments must be variables. */
       for (arg_num = 2; arg_num < 7; arg_num += 1) {
-	    char *arg_name = NULL;
+	    const char *arg_name = NULL;
 	    switch (arg_num) {
 	        case 2: arg_name = "second"; break;
 	        case 3: arg_name = "third";  break;

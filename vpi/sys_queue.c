@@ -587,7 +587,7 @@ static unsigned check_numeric_args(vpiHandle argv, unsigned count,
 	/* Check that the first count arguments are numeric. Currently
 	 * only three are needed/supported. */
       for (idx = 0; idx < count; idx += 1) {
-	    char *loc = NULL;
+	    const char *loc = NULL;
 	    vpiHandle arg = vpi_scan(argv);
 
 	      /* Get the name for this argument. */

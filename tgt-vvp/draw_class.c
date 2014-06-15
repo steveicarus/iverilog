@@ -30,7 +30,7 @@ static void show_prop_type_vector(ivl_type_t ptype)
       unsigned packed_dimensions = ivl_type_packed_dimensions(ptype);
       assert(packed_dimensions < 2);
 
-      char*signed_flag = ivl_type_signed(ptype)? "s" : "";
+      const char*signed_flag = ivl_type_signed(ptype)? "s" : "";
       char code = data_type==IVL_VT_BOOL? 'b' : 'L';
 
       if (packed_dimensions == 0) {

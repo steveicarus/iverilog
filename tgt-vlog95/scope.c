@@ -24,7 +24,7 @@
 
 const char *func_rtn_name = 0;
 
-static char*get_time_const(int time_value)
+static const char*get_time_const(int time_value)
 {
       switch (time_value) {
 	case   2: return "100s";

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1816,7 +1816,7 @@ static int sfunc_has_modpath_output(ivl_lpm_t lptr)
 static void draw_sfunc_output_def(ivl_lpm_t net, char type)
 {
       ivl_nexus_t nex = ivl_lpm_q(net);
-      char *suf = (type == 'd') ? "/d" : "";
+      const char *suf = (type == 'd') ? "/d" : "";
 
       switch (data_type_of_nexus(nex)) {
 	case IVL_VT_REAL:
@@ -2165,8 +2165,10 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       }
 
       fprintf(vvp_out, "S_%p .scope %s%s, \"%s\" \"%s\" %d %d",
-	      net, prefix, type, vvp_mangle_name(ivl_scope_basename(net)),
-              ivl_scope_tname(net), ivl_file_table_index(ivl_scope_file(net)),
+	      net, prefix, type,
+	      vvp_mangle_name(ivl_scope_basename(net)),
+              vvp_mangle_name(ivl_scope_tname(net)),
+	      ivl_file_table_index(ivl_scope_file(net)),
               ivl_scope_lineno(net));
 
       if (parent) {
@@ -2191,7 +2193,8 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
             if( name == 0 )
                 name = "";
             fprintf( vvp_out, "    .port_info %u %s %u \"%s\"\n",
-                    idx, vvp_port_info_type_str(ptype), width, name );
+                    idx, vvp_port_info_type_str(ptype), width,
+		    vvp_mangle_name(name) );
         }
       }
 
@@ -2201,7 +2204,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    switch (ivl_expr_type(pex)) {
 		case IVL_EX_STRING:
 		  fprintf(vvp_out, "P_%p .param/str \"%s\" %d %d %d, \"%s\";\n",
-			  par, ivl_parameter_basename(par),
+			  par, vvp_mangle_name(ivl_parameter_basename(par)),
 			  ivl_parameter_local(par),
 			  ivl_file_table_index(ivl_parameter_file(par)),
 			  ivl_parameter_lineno(par),
@@ -2209,7 +2212,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 		  break;
 		case IVL_EX_NUMBER:
 		  fprintf(vvp_out, "P_%p .param/l \"%s\" %d %d %d, %sC4<",
-			  par, ivl_parameter_basename(par),
+			  par, vvp_mangle_name(ivl_parameter_basename(par)),
                           ivl_parameter_local(par),
 			  ivl_file_table_index(ivl_parameter_file(par)),
 			  ivl_parameter_lineno(par),
@@ -2225,8 +2228,9 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 		case IVL_EX_REALNUM:
 		  { char *res = draw_Cr_to_string(ivl_expr_dvalue(pex));
 		    fprintf(vvp_out, "P_%p .param/real \"%s\" %d %d %d, %s; "
-		            "value=%#g\n", par, ivl_parameter_basename(par),
-	                     ivl_parameter_local(par),
+		            "value=%#g\n", par,
+			    vvp_mangle_name(ivl_parameter_basename(par)),
+	                    ivl_parameter_local(par),
 			    ivl_file_table_index(ivl_parameter_file(par)),
 			    ivl_parameter_lineno(par), res,
 			    ivl_expr_dvalue(pex));

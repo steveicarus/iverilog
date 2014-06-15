@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -131,7 +131,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 	    vp->format = vpiStringVal;
 
 	  case vpiStringVal:
-	    rbuf = need_result_buf(size + 1, RBUF_VAL);
+	    rbuf = (char *) need_result_buf(size + 1, RBUF_VAL);
 	    strcpy(rbuf, value_);
 	    vp->value.str = rbuf;
 	    break;
@@ -143,7 +143,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 		  fprintf(stderr, "Warning (vpi_const.cc): %%d on constant strings only looks "
 			  "at first 4 bytes!\n");
 	      }
-	      rbuf = need_result_buf(size + 1, RBUF_VAL);
+	      rbuf = (char *) need_result_buf(size + 1, RBUF_VAL);
 	      uint_value = 0;
 	      for(unsigned i=0; i<size; i += 1){
 		  uint_value <<=8;
@@ -154,7 +154,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 	      break;
 
           case vpiBinStrVal:
-	      rbuf = need_result_buf(8 * size + 1, RBUF_VAL);
+	      rbuf = (char *) need_result_buf(8 * size + 1, RBUF_VAL);
 	      cp = rbuf;
 	      for(unsigned i=0; i<size; i += 1){
 		  for(int bit=7; bit>=0; bit -= 1){
@@ -166,7 +166,7 @@ void __vpiStringConst::vpi_get_value(p_vpi_value vp)
 	      break;
 
           case vpiHexStrVal:
-	      rbuf = need_result_buf(2 * size + 1, RBUF_VAL);
+	      rbuf = (char *) need_result_buf(2 * size + 1, RBUF_VAL);
 	      cp = rbuf;
 	      for(unsigned i=0; i<size; i += 1){
 		  for(int nibble=1; nibble>=0; nibble -= 1){
@@ -571,7 +571,7 @@ int __vpiDecConst::vpi_get(int code)
 
 void __vpiDecConst::vpi_get_value(p_vpi_value vp)
 {
-      char*rbuf = need_result_buf(64 + 1, RBUF_VAL);
+      char*rbuf = (char *) need_result_buf(64 + 1, RBUF_VAL);
       char*cp = rbuf;
 
       switch (vp->format) {
