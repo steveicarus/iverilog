@@ -2557,7 +2557,7 @@ class NetProc : public virtual LineInfo {
 	// the flipflop being generated.
       virtual bool synth_sync(Design*des, NetScope*scope,
 			      NetNet*ff_clock, NetNet*ff_ce,
-			      NetNet*ff_aclr,  NetNet*ff_aset,
+			      NetBus&ff_aclr,  NetBus&ff_aset,
 			      NexusSet&nex_map, NetBus&nex_out,
 			      const std::vector<NetEvProbe*>&events);
 
@@ -2838,7 +2838,7 @@ class NetBlock  : public NetProc {
 
       bool synth_sync(Design*des, NetScope*scope,
 		      NetNet*ff_clk, NetNet*ff_ce,
-		      NetNet*ff_aclr,NetNet*ff_aset,
+		      NetBus&ff_aclr,NetBus&ff_aset,
 		      NexusSet&nex_map, NetBus&nex_out,
 		      const std::vector<NetEvProbe*>&events);
 
@@ -2977,7 +2977,7 @@ class NetCondit  : public NetProc {
 
       bool synth_sync(Design*des, NetScope*scope,
 		      NetNet*ff_clk, NetNet*ff_ce,
-		      NetNet*ff_aclr,NetNet*ff_aset,
+		      NetBus&ff_aclr,NetBus&ff_aset,
 		      NexusSet&nex_map, NetBus&nex_out,
 		      const std::vector<NetEvProbe*>&events);
 
@@ -3254,7 +3254,7 @@ class NetEvWait  : public NetProc {
 
       virtual bool synth_sync(Design*des, NetScope*scope,
 			      NetNet*ff_clk, NetNet*ff_ce,
-			      NetNet*ff_aclr,NetNet*ff_aset,
+			      NetBus&ff_aclr,NetBus&ff_aset,
 			      NexusSet&nex_map, NetBus&nex_out,
 			      const std::vector<NetEvProbe*>&events);
 

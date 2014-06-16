@@ -35,7 +35,7 @@ bool NetProc::synth_async(Design*, NetScope*, NexusSet&, NetBus&, NetBus&)
 
 bool NetProc::synth_sync(Design*des, NetScope*scope,
 			 NetNet* /* ff_clk */, NetNet* /* ff_ce */,
-			 NetNet* /* ff_aclr*/, NetNet* /* ff_aset*/,
+			 NetBus& /* ff_aclr*/, NetBus& /* ff_aset*/,
 			 NexusSet&nex_map, NetBus&nex_out,
 			 const vector<NetEvProbe*>&events)
 {
@@ -1036,7 +1036,7 @@ bool NetProcTop::synth_async(Design*des)
  */
 bool NetBlock::synth_sync(Design*des, NetScope*scope,
 			  NetNet*ff_clk, NetNet*ff_ce,
-			  NetNet*ff_aclr,NetNet*ff_aset,
+			  NetBus&ff_aclr,NetBus&ff_aset,
 			  NexusSet&nex_map, NetBus&nex_out,
 			  const vector<NetEvProbe*>&events_in)
 {
@@ -1102,7 +1102,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
  */
 bool NetCondit::synth_sync(Design*des, NetScope*scope,
 			   NetNet*ff_clk, NetNet*ff_ce,
-			   NetNet*ff_aclr,NetNet*ff_aset,
+			   NetBus&ff_aclr,NetBus&ff_aset,
 			   NexusSet&nex_map, NetBus&nex_out,
 			   const vector<NetEvProbe*>&events_in)
 {
@@ -1143,45 +1143,54 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	    flag = if_->synth_async(des, scope, nex_map, tmp_out, accumulated_tmp_out);
 	    ivl_assert(*this, flag);
 
-	    ivl_assert(*this, tmp_out.pin_count()==1);
-	    Nexus*rst_nex = tmp_out.pin(0).nexus();
+	    ivl_assert(*this, tmp_out.pin_count() == ff_aclr.pin_count());
+	    ivl_assert(*this, tmp_out.pin_count() == ff_aset.pin_count());
 
-	    vector<bool> rst_mask = rst_nex->driven_mask();
-	    cerr << get_fileline() << ": NetCondit::synth_sync: "
-		 << "rst_mask.size()==" << rst_mask.size()
-		 << ", rst_nex->vector_width()=" << rst_nex->vector_width()
-		 << endl;
+	    for (unsigned pin = 0 ; pin < tmp_out.pin_count() ; pin += 1) {
+		  Nexus*rst_nex = tmp_out.pin(pin).nexus();
 
-	    ivl_assert(*this, rst_mask.size()==1);
-	    if (rst_mask[0]==false) {
-		  cerr << get_fileline() << ": sorry: "
-		       << "Asynchronous LOAD not implemented." << endl;
-		  return false;
-	    }
+		  vector<bool> rst_mask = rst_nex->driven_mask();
+		  if (debug_synth2) {
+			cerr << get_fileline() << ": NetCondit::synth_sync: "
+			     << "nex_out pin=" << pin
+			     << ", rst_mask.size()==" << rst_mask.size()
+			     << ", rst_nex->vector_width()=" << rst_nex->vector_width()
+			     << endl;
+		  }
 
-	    verinum rst_drv = rst_nex->driven_vector();
-	    ivl_assert(*this, rst_drv.len()==1);
+		  for (size_t bit = 0 ; bit < rst_mask.size() ; bit += 1) {
+			if (rst_mask[bit]==false) {
+			      cerr << get_fileline() << ": sorry: "
+				   << "Asynchronous LOAD not implemented." << endl;
+			      return false;
+			}
+		  }
 
-	    if (rst_drv[0]==verinum::V0) {
-		  ivl_assert(*this, ff_aclr && ff_aclr->pin_count()==1);
-		    // Don't yet support multiple asynchronous reset inputs.
-		  ivl_assert(*this, ! ff_aclr->pin(0).is_linked());
+		  verinum rst_drv = rst_nex->driven_vector();
+		  ivl_assert(*this, rst_drv.len()==rst_mask.size());
 
-		  ivl_assert(*this, rst->pin_count()==1);
-		  connect(ff_aclr->pin(0), rst->pin(0));
+		  verinum zero (verinum::V0, rst_drv.len());
+		  verinum ones (verinum::V1, rst_drv.len());
 
-	    } else if (rst_drv[0]==verinum::V1) {
-		  ivl_assert(*this, ff_aset && ff_aset->pin_count()==1);
-		    // Don't yet support multiple asynchronous set inputs.
-		  ivl_assert(*this, ! ff_aset->pin(0).is_linked());
+		  if (rst_drv==zero) {
+			  // Don't yet support multiple asynchronous reset inputs.
+			ivl_assert(*this, ! ff_aclr.pin(pin).is_linked());
 
-		  ivl_assert(*this, rst->pin_count()==1);
-		  connect(ff_aset->pin(0), rst->pin(0));
+			ivl_assert(*this, rst->pin_count()==1);
+			connect(ff_aclr.pin(pin), rst->pin(0));
 
-	    } else {
-		  cerr << get_fileline() << ": sorry: "
-		       << "Forgot how to implement asynchronous scramble (set to x/z)." << endl;
-		  return false;
+		  } else if (rst_drv==ones) {
+			  // Don't yet support multiple asynchronous set inputs.
+			ivl_assert(*this, ! ff_aset.pin(pin).is_linked());
+
+			ivl_assert(*this, rst->pin_count()==1);
+			connect(ff_aset.pin(pin), rst->pin(0));
+
+		  } else {
+			cerr << get_fileline() << ": sorry: "
+			     << "Forgot how to implement asynchronous scramble (set to x/z)." << endl;
+			return false;
+		  }
 	    }
 
 	    return else_->synth_sync(des, scope, ff_clk, ff_ce,
@@ -1319,7 +1328,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 
 bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 			   NetNet*ff_clk, NetNet*ff_ce,
-			   NetNet*ff_aclr,NetNet*ff_aset,
+			   NetBus&ff_aclr,NetBus&ff_aset,
 			   NexusSet&nex_map, NetBus&nex_out,
 			   const vector<NetEvProbe*>&events_in)
 {
@@ -1436,16 +1445,10 @@ bool NetProcTop::synth_sync(Design*des)
 			     NetNet::TRI, &netvector_t::scalar_logic);
       ce->local_flag(true);
 
-      NetNet*aclr = new NetNet(scope(), scope()->local_symbol(),
-			       NetNet::TRI, &netvector_t::scalar_logic);
-      aclr->local_flag(true);
-
-      NetNet*aset = new NetNet(scope(), scope()->local_symbol(),
-			       NetNet::TRI, &netvector_t::scalar_logic);
-      aset->local_flag(true);
-
       NetBus nex_d (scope(), nex_set.size());
       NetBus nex_q (scope(), nex_set.size());
+      NetBus aclr (scope(), nex_set.size());
+      NetBus aset (scope(), nex_set.size());
 
 	/* The Q of the NetFF devices is connected to the output that
 	   we are. The nex_q is a bundle of the outputs. We will also
@@ -1493,10 +1496,10 @@ bool NetProcTop::synth_sync(Design*des)
 	    connect(clock->pin(0),  ff2->pin_Clock());
 	    if (ce->is_linked())
 		  connect(ce->pin(0),     ff2->pin_Enable());
-	    if (aclr->is_linked())
-		  connect(aclr->pin(0),   ff2->pin_Aclr());
-	    if (aset->is_linked())
-		  connect(aset->pin(0),   ff2->pin_Aset());
+	    if (aclr.pin(idx).is_linked())
+		  connect(aclr.pin(idx),  ff2->pin_Aclr());
+	    if (aset.pin(idx).is_linked())
+		  connect(aset.pin(idx),  ff2->pin_Aset());
 #if 0
 	    if (ff->pin_Sset().is_linked())
 		  connect(ff->pin_Sset(), ff2->pin_Sset());
