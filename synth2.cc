@@ -35,6 +35,7 @@ bool NetProc::synth_async(Design*, NetScope*, NexusSet&, NetBus&, NetBus&)
 
 bool NetProc::synth_sync(Design*des, NetScope*scope,
 			 NetNet* /* ff_clk */, NetNet* /* ff_ce */,
+			 NetNet* /* ff_aclr*/, NetNet* /* ff_aset*/,
 			 NexusSet&nex_map, NetBus&nex_out,
 			 const vector<NetEvProbe*>&events)
 {
@@ -1035,6 +1036,7 @@ bool NetProcTop::synth_async(Design*des)
  */
 bool NetBlock::synth_sync(Design*des, NetScope*scope,
 			  NetNet*ff_clk, NetNet*ff_ce,
+			  NetNet*ff_aclr,NetNet*ff_aset,
 			  NexusSet&nex_map, NetBus&nex_out,
 			  const vector<NetEvProbe*>&events_in)
 {
@@ -1064,6 +1066,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 		 nexa that we expect, and the tmp_out is where we want
 		 those outputs connected. */
 	    bool ok_flag = cur->synth_sync(des, scope, ff_clk, ff_ce,
+					   ff_aclr, ff_aset,
 					   tmp_set, tmp_out, events_in);
 	    flag = flag && ok_flag;
 
@@ -1099,6 +1102,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
  */
 bool NetCondit::synth_sync(Design*des, NetScope*scope,
 			   NetNet*ff_clk, NetNet*ff_ce,
+			   NetNet*ff_aclr,NetNet*ff_aset,
 			   NexusSet&nex_map, NetBus&nex_out,
 			   const vector<NetEvProbe*>&events_in)
 {
@@ -1118,65 +1122,71 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	    if (! expr_input->contains(pin_set))
 		  continue;
 
-	    cerr << get_fileline() << ": sorry: "
-		 << "Forgot how to implement asynchronous set/reset." << endl;
-	    return false;
-#if 0
-	      /* Ah, this edge is in the sensitivity list for the
-		 expression, so we have an asynchronous
-		 input. Synthesize the set/reset input expression. */
-
-	    NetNet*rst = expr_->synthesize(des);
-	    assert(rst->pin_count() == 1);
+	      // Synthesize the set/reset input expression.
+	    NetNet*rst = expr_->synthesize(des, scope, expr_);
+	    ivl_assert(*this, rst->pin_count() == 1);
 
 	      /* XXXX I really should find a way to check that the
 		 edge used on the reset input is correct. This would
 		 involve interpreting the expression that is fed by the
 		 reset expression. */
-	      //assert(ev->edge() == NetEvProbe::POSEDGE);
+	    ivl_assert(*this, ev->edge() == NetEvProbe::POSEDGE);
 
-	      /* Synthesize the true clause to figure out what
-		 kind of set/reset we have. */
-	    NetNet*asig = new NetNet(scope, scope->local_symbol(),
-				     NetNet::WIRE, nex_map->pin_count());
-	    asig->local_flag(true);
+	      // Synthesize the true clause to figure out what kind of
+	      // set/reset we have. This should synthesize down to a
+	      // constant. If not, we have an asynchronous LOAD, a
+	      // very different beast.
+	    ivl_assert(*this, if_);
+	    bool flag;
+	    NetBus tmp_out(scope, nex_out.pin_count());
+	    NetBus accumulated_tmp_out(scope, nex_out.pin_count());
+	    flag = if_->synth_async(des, scope, nex_map, tmp_out, accumulated_tmp_out);
+	    ivl_assert(*this, flag);
 
-	    assert(if_ != 0);
-	    bool flag = if_->synth_async(des, scope, nex_map, asig);
+	    ivl_assert(*this, tmp_out.pin_count()==1);
+	    Nexus*rst_nex = tmp_out.pin(0).nexus();
 
-	    assert(asig->pin_count() == ff->width());
+	    vector<bool> rst_mask = rst_nex->driven_mask();
+	    cerr << get_fileline() << ": NetCondit::synth_sync: "
+		 << "rst_mask.size()==" << rst_mask.size()
+		 << ", rst_nex->vector_width()=" << rst_nex->vector_width()
+		 << endl;
 
-	      /* Collect the set/reset value into a verinum. If
-		 this turns out to be entirely 0 values, then
-		 use the Aclr input. Otherwise, use the Aset
-		 input and save the set value. */
-	    verinum tmp (verinum::V0, ff->width());
-	    for (unsigned bit = 0 ;  bit < ff->width() ;  bit += 1) {
-
-		  assert(asig->pin(bit).nexus()->drivers_constant());
-		  tmp.set(bit, asig->pin(bit).nexus()->driven_value());
+	    ivl_assert(*this, rst_mask.size()==1);
+	    if (rst_mask[0]==false) {
+		  cerr << get_fileline() << ": sorry: "
+		       << "Asynchronous LOAD not implemented." << endl;
+		  return false;
 	    }
 
-	    assert(tmp.is_defined());
-	    if (tmp.is_zero()) {
-		  connect(ff->pin_Aclr(), rst->pin(0));
+	    verinum rst_drv = rst_nex->driven_vector();
+	    ivl_assert(*this, rst_drv.len()==1);
+
+	    if (rst_drv[0]==verinum::V0) {
+		  ivl_assert(*this, ff_aclr && ff_aclr->pin_count()==1);
+		    // Don't yet support multiple asynchronous reset inputs.
+		  ivl_assert(*this, ! ff_aclr->pin(0).is_linked());
+
+		  ivl_assert(*this, rst->pin_count()==1);
+		  connect(ff_aclr->pin(0), rst->pin(0));
+
+	    } else if (rst_drv[0]==verinum::V1) {
+		  ivl_assert(*this, ff_aset && ff_aset->pin_count()==1);
+		    // Don't yet support multiple asynchronous set inputs.
+		  ivl_assert(*this, ! ff_aset->pin(0).is_linked());
+
+		  ivl_assert(*this, rst->pin_count()==1);
+		  connect(ff_aset->pin(0), rst->pin(0));
 
 	    } else {
-		  connect(ff->pin_Aset(), rst->pin(0));
-		  ff->aset_value(tmp);
+		  cerr << get_fileline() << ": sorry: "
+		       << "Forgot how to implement asynchronous scramble (set to x/z)." << endl;
+		  return false;
 	    }
 
-	    delete asig;
-	    delete expr_input;
-
-	    assert(events_in.count() == 1);
-	    assert(else_ != 0);
-	    flag = else_->synth_sync(des, scope, ff, nex_map,
-				     nex_out, svector<NetEvProbe*>(0))
-		  && flag;
-            DEBUG_SYNTH2_EXIT("NetCondit",flag)
-	    return flag;
-#endif
+	    return else_->synth_sync(des, scope, ff_clk, ff_ce,
+				     ff_aclr, ff_aset,
+				     nex_map, nex_out, vector<NetEvProbe*>(0));
       }
 
       delete expr_input;
@@ -1302,13 +1312,14 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	    connect(ff_ce->pin(0), ce->pin(0));
       }
 
-      bool flag = if_->synth_sync(des, scope, ff_clk, ff_ce, nex_map, nex_out, events_in);
+      bool flag = if_->synth_sync(des, scope, ff_clk, ff_ce, ff_aclr, ff_aset, nex_map, nex_out, events_in);
 
       return flag;
 }
 
 bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 			   NetNet*ff_clk, NetNet*ff_ce,
+			   NetNet*ff_aclr,NetNet*ff_aset,
 			   NexusSet&nex_map, NetBus&nex_out,
 			   const vector<NetEvProbe*>&events_in)
 {
@@ -1390,6 +1401,7 @@ bool NetEvWait::synth_sync(Design*des, NetScope*scope,
 
 	/* Synthesize the input to the DFF. */
       bool flag = statement_->synth_sync(des, scope, ff_clk, ff_ce,
+					 ff_aclr, ff_aset,
 					 nex_map, nex_out, events);
 
       return flag;
@@ -1424,6 +1436,14 @@ bool NetProcTop::synth_sync(Design*des)
 			     NetNet::TRI, &netvector_t::scalar_logic);
       ce->local_flag(true);
 
+      NetNet*aclr = new NetNet(scope(), scope()->local_symbol(),
+			       NetNet::TRI, &netvector_t::scalar_logic);
+      aclr->local_flag(true);
+
+      NetNet*aset = new NetNet(scope(), scope()->local_symbol(),
+			       NetNet::TRI, &netvector_t::scalar_logic);
+      aset->local_flag(true);
+
       NetBus nex_d (scope(), nex_set.size());
       NetBus nex_q (scope(), nex_set.size());
 
@@ -1438,7 +1458,7 @@ bool NetProcTop::synth_sync(Design*des)
 	// Connect the input later.
 
 	/* Synthesize the input to the DFF. */
-      bool flag = statement_->synth_sync(des, scope(), clock, ce,
+      bool flag = statement_->synth_sync(des, scope(), clock, ce, aclr, aset,
 					 nex_set, nex_d,
 					 vector<NetEvProbe*>());
       if (! flag) {
@@ -1473,11 +1493,11 @@ bool NetProcTop::synth_sync(Design*des)
 	    connect(clock->pin(0),  ff2->pin_Clock());
 	    if (ce->is_linked())
 		  connect(ce->pin(0),     ff2->pin_Enable());
+	    if (aclr->is_linked())
+		  connect(aclr->pin(0),   ff2->pin_Aclr());
+	    if (aset->is_linked())
+		  connect(aset->pin(0),   ff2->pin_Aset());
 #if 0
-	    if (ff->pin_Aset().is_linked())
-		  connect(ff->pin_Aset(), ff2->pin_Aset());
-	    if (ff->pin_Aclr().is_linked())
-		  connect(ff->pin_Aclr(), ff2->pin_Aclr());
 	    if (ff->pin_Sset().is_linked())
 		  connect(ff->pin_Sset(), ff2->pin_Sset());
 	    if (ff->pin_Sclr().is_linked())

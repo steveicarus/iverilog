@@ -42,11 +42,37 @@ class vvp_dff  : public vvp_net_fun_t {
       void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
                      vvp_context_t);
 
+    protected:
+      void recv_clear(vvp_net_ptr_t port);
+      void recv_set(vvp_net_ptr_t port);
+
     private:
       bool iclk_, ice_;
       vvp_bit4_t clk_cur_;
       vvp_bit4_t enable_;
       vvp_vector4_t d_;
+};
+
+class vvp_dff_aclr  : public vvp_dff {
+
+    public:
+      explicit vvp_dff_aclr(bool invert_clk =false, bool invert_ce =false);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
+    private:
+      vvp_bit4_t a_;
+};
+
+class vvp_dff_aset  : public vvp_dff {
+
+    public:
+      explicit vvp_dff_aset(bool invert_clk =false, bool invert_ce =false);
+
+      void recv_vec4(vvp_net_ptr_t port, const vvp_vector4_t&bit,
+                     vvp_context_t);
+    private:
+      vvp_bit4_t a_;
 };
 
 #endif

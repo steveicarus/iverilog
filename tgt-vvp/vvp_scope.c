@@ -1724,10 +1724,16 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	 * generator in V0.10 and later for how this might be done. */
       assert(ivl_lpm_sync_clr(net) == 0);
       assert(ivl_lpm_sync_set(net) == 0);
-      assert(ivl_lpm_async_clr(net) == 0);
-      assert(ivl_lpm_async_set(net) == 0);
 
-      fprintf(vvp_out, "L_%p .dff ", net);
+      if (ivl_lpm_async_clr(net)) {
+	    assert(! ivl_lpm_async_set(net));
+	    fprintf(vvp_out, "L_%p .dff/aclr ", net);
+      } else if (ivl_lpm_async_set(net)) {
+	    assert(! ivl_lpm_async_clr(net));
+	    fprintf(vvp_out, "L_%p .dff/aset ", net);
+      } else {
+	    fprintf(vvp_out, "L_%p .dff ", net);
+      }
 
       nex = ivl_lpm_data(net,0);
       assert(nex);
@@ -1747,8 +1753,13 @@ static void draw_lpm_ff(ivl_lpm_t net)
 	    fprintf(vvp_out, ", C4<1>");
       }
 
-	/* Stub asynchronous input for now. */
-      fprintf(vvp_out, ", C4<z>");
+      if ( (nex = ivl_lpm_async_clr(net)) ) {
+	    fprintf(vvp_out, ", %s", draw_net_input(nex));
+      }
+
+      if ( (nex = ivl_lpm_async_set(net)) ) {
+	    fprintf(vvp_out, ", %s", draw_net_input(nex));
+      }
 
       fprintf(vvp_out, ";\n");
 }

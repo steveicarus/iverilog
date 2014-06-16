@@ -517,8 +517,28 @@ static void show_lpm_ff(ivl_lpm_t net)
 	    }
       }
 
+      if (ivl_lpm_async_clr(net)) {
+	    nex = ivl_lpm_async_clr(net);
+	    fprintf(out, "   Aclr: %p\n", nex);
+	    if (width_of_nexus(nex) != 1) {
+		  fprintf(out, "  Aclr: ERROR: Nexus width is %u\n",
+			  width_of_nexus(nex));
+		  stub_errors += 1;
+	    }
+      }
+
+      if (ivl_lpm_async_set(net)) {
+	    nex = ivl_lpm_async_set(net);
+	    fprintf(out, "   Aset: %p\n", nex);
+	    if (width_of_nexus(nex) != 1) {
+		  fprintf(out, "  Aset: ERROR: Nexus width is %u\n",
+			  width_of_nexus(nex));
+		  stub_errors += 1;
+	    }
+      }
+
       nex = ivl_lpm_data(net,0);
-      fprintf(out, "    D: %p\n", nex);
+      fprintf(out, "      D: %p\n", nex);
       if (width_of_nexus(nex) != width) {
 	    fprintf(out, "    D: ERROR: Nexus width is %u\n",
 		    width_of_nexus(nex));
@@ -526,7 +546,7 @@ static void show_lpm_ff(ivl_lpm_t net)
       }
 
       nex = ivl_lpm_q(net);
-      fprintf(out, "    Q: %p\n", nex);
+      fprintf(out, "      Q: %p\n", nex);
       if (width_of_nexus(nex) != width) {
 	    fprintf(out, "    Q: ERROR: Nexus width is %u\n",
 		    width_of_nexus(nex));

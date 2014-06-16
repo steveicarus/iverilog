@@ -207,8 +207,18 @@ extern void compile_cmp_gt_r(char*label, unsigned argc, struct symb_s*argv);
 extern void compile_dff(char*label,
 			struct symb_s arg_d,
 			struct symb_s arg_c,
-			struct symb_s arg_e,
-			struct symb_s arg_a);
+			struct symb_s arg_e);
+
+extern void compile_dff_aclr(char*label,
+			     struct symb_s arg_d,
+			     struct symb_s arg_c,
+			     struct symb_s arg_e,
+			     struct symb_s arg_a);
+extern void compile_dff_aset(char*label,
+			     struct symb_s arg_d,
+			     struct symb_s arg_c,
+			     struct symb_s arg_e,
+			     struct symb_s arg_a);
 
 extern void compile_enum2_type(char*label, long width, bool signed_flag,
 			      std::list<struct enum_name_s>*names);

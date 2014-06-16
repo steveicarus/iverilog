@@ -192,16 +192,18 @@ The Verilog language itself does not have a DFF primitive, but post
 synthesis readily creates DFF devices that are best simulated with a
 common device. Thus, there is the DFF statement to create DFF devices:
 
-        <label> .dff <d>, <clk>, <ce>, <async-input>;
+        <label> .dff <d>, <clk>, <ce>;
+        <label> .dff/aclr <d>, <clk>, <ce>, <async-input>;
+        <label> .dff/aset <d>, <clk>, <ce>, <async-input>;
 
 The generated functor is generally synchronous on the <clk> rising
 edge of <clk>, with the <ce> enable active high. The <clk> and <ce>
 are single bit vectors (or scalars) on ports 1 and 2. Port-0 is any
 type of datum at all. The device will transfer the input to the output
 when it is loaded by a clock. The <async-input> is a special
-asynchronous input that is immediately stored and transferred to the
-output when data arrives here. This is useful for implementing
-asynchronous set/clear functions.
+asynchronous input that on the rising edge causes the device to
+clear/set, and force the output to propagate. Thus, they implement DFF
+with asynchronous clr or set.
 
 UDP STATEMENTS:
 
