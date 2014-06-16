@@ -535,8 +535,8 @@ bool NetCase::synth_async_casez_(Design*des, NetScope*scope,
 	      // Note that the expression that may have windcards must
 	      // go in the pin(2) input. This is the definiton of the
 	      // NetCaseCmp statement.
-	    connect(condit_dev->pin(2), esig->pin(0));
-	    connect(condit_dev->pin(1), guard->pin(0));
+	    connect(condit_dev->pin(1), esig->pin(0));
+	    connect(condit_dev->pin(2), guard->pin(0));
 
 	    NetNet*condit = new NetNet(scope, scope->local_symbol(),
 				       NetNet::TRI, condit_type);
