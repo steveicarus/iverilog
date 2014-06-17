@@ -509,6 +509,8 @@ bool NetCase::synth_async_casez_(Design*des, NetScope*scope,
 	  case NetCase::EQZ:
 	    case_kind = NetCaseCmp::ZEQ;
 	    break;
+	  default:
+	    assert(0);
       }
 
 	// Process the items from last to first. We generate a
