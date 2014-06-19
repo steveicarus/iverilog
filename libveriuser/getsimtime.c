@@ -39,13 +39,14 @@ static ivl_u64_t pow10u(PLI_INT32 val)
 }
 
 static ivl_u64_t
-scale(int high, int low, void*obj) {
-      vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
+scale(int high, int low, void*obj)
+{
       ivl_u64_t scaled;
 
       vpiHandle use_obj = obj;
       if (use_obj == 0) {
 	      /* If object is not passed in, then use current scope. */
+	    vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
 	    use_obj = hand;
       } else {
 	      /* If object IS passed in, make sure it is a scope. If
