@@ -1131,33 +1131,54 @@ vpiHandle vpi_put_value(vpiHandle obj, s_vpi_value*vp,
 
 vpiHandle vpi_handle(PLI_INT32 type, vpiHandle ref)
 {
-      if (type == vpiSysTfCall) {
-	    if (ref != 0) {
+      vpiHandle res = 0;
+
+      if (ref == 0) {
+	      // A few types can apply to a nil handle. These are ways
+	      // that the current function can get started finding things.
+	    switch (type) {
+
+		case vpiScope:
+		    // The IEEE1364-2005 doesn't seem to allow this,
+		    // but some users seem to think it's handy, so
+		    // return the scope that contains this SysTfCall.
+		  assert(vpip_cur_task);
+		  res = vpip_cur_task->vpi_handle(vpiScope);
+		  break;
+
+		case vpiSysTfCall:
+		    // This is how VPI users get a first handle into
+		    // the system. This is the handle of the system
+		    // task/function call currently being executed.
+		  if (vpi_trace) {
+			fprintf(vpi_trace, "vpi_handle(vpiSysTfCall, 0) "
+				"-> %p (%s)\n", vpip_cur_task,
+				vpip_cur_task->defn->info.tfname);
+		  }
+		  return vpip_cur_task;
+
+		default:
+		  fprintf(stderr, "VPI error: vpi_handle(type=%d, ref=0).\n",
+			  (int)type);
+		  res = 0;
+		  break;
+	    }
+
+      } else {
+
+	    if (type == vpiSysTfCall) {
 		  fprintf(stderr, "VPI error: vpi_handle(vpiSysTfCall, "
-		                  "ref!=0).\n");
+			  "ref!=0).\n");
 		  return 0;
 	    }
 
-	    if (vpi_trace) {
-		  fprintf(vpi_trace, "vpi_handle(vpiSysTfCall, 0) "
-			  "-> %p (%s)\n", vpip_cur_task,
-			  vpip_cur_task->defn->info.tfname);
-	    }
-
-	    return vpip_cur_task;
+	    res = ref->vpi_handle(type);
       }
 
-      if (ref == 0) {
-	    fprintf(stderr, "VPI error: vpi_handle(type=%d, ref=0).\n",
-		    (int)type);
-	    return 0;
-      }
-
-      vpiHandle res = ref->vpi_handle(type);
 
       if (vpi_trace) {
-	    fprintf(vpi_trace, "vpi_handle(%d, %p) -> %p\n",
-		    (int)type, ref, res);
+	    fprintf(vpi_trace, "vpi_handle(vpiScope, ref=%p) "
+		    "-> %p\n", vpip_cur_task, ref);
       }
 
       return res;
