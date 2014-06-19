@@ -144,6 +144,12 @@ void nodangle_f::signal(Design*, NetNet*sig)
 	  && (sig->scope()->attribute(perm_string::literal("ivl_synthesis_cell")) != verinum()))
 	    return;
 
+	/* Don't delete signals that are marked with the
+	   ivl_do_not_elide property. */
+      if (!sig->local_flag()
+	  && (sig->attribute(perm_string::literal("ivl_do_not_elide")) != verinum()))
+	    return;
+
 	/* Check to see if the signal is completely unconnected. If
 	   all the bits are unlinked, then delete it. */
       if (! sig->is_linked()) {
