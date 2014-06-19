@@ -537,6 +537,12 @@ __vpiDecConst::__vpiDecConst(int val)
       value = val;
 }
 
+__vpiDecConst::__vpiDecConst(const __vpiDecConst&that)
+: value(that.value)
+{
+}
+
+
 int __vpiDecConst::get_type_code(void) const
 { return vpiConstant; }
 

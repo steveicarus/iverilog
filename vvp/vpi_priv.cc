@@ -105,7 +105,7 @@ struct vpip_string_chunk {
 
 unsigned vpip_size(__vpiSignal *sig)
 {
-      return abs(sig->msb - sig->lsb) + 1;
+      return abs(sig->msb.get_value() - sig->lsb.get_value()) + 1;
 }
 
 struct __vpiScope* vpip_scope(__vpiSignal*sig)

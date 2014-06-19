@@ -268,7 +268,7 @@ static void cmd_list(unsigned, char*[])
 
 		case vpiReg:
 		  sig = dynamic_cast<__vpiSignal*>(table[idx]);
-		  if ((sig->msb == 0) && (sig->lsb == 0))
+		  if ((sig->msb.get_value() == 0) && (sig->lsb.get_value() == 0))
 			printf("reg     : %s%s\n",
 			       vpi_get_str(vpiName, table[idx]),
 			       sig->signed_flag? "signed " : "");
@@ -276,12 +276,12 @@ static void cmd_list(unsigned, char*[])
 			printf("reg     : %s%s[%d:%d]\n",
 			       vpi_get_str(vpiName, table[idx]),
 			       sig->signed_flag? "signed " : "",
-			       sig->msb, sig->lsb);
+			       sig->msb.get_value(), sig->lsb.get_value());
 		  break;
 
 		case vpiNet:
 		  sig = dynamic_cast<__vpiSignal*>(table[idx]);
-		  if ((sig->msb == 0) && (sig->lsb == 0))
+		  if ((sig->msb.get_value() == 0) && (sig->lsb.get_value() == 0))
 			printf("net     : %s%s\n",
 			       vpi_get_str(vpiName, table[idx]),
 			       sig->signed_flag? "signed " : "");
@@ -289,7 +289,7 @@ static void cmd_list(unsigned, char*[])
 			printf("net     : %s%s[%d:%d]\n",
 			       vpi_get_str(vpiName, table[idx]),
 			       sig->signed_flag? "signed " : "",
-			       sig->msb, sig->lsb);
+			       sig->msb.get_value(), sig->lsb.get_value());
 		  break;
 
 		default:

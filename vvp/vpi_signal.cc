@@ -550,10 +550,7 @@ static int signal_get(int code, vpiHandle ref)
 	    }
 
 	  case vpiSize:
-	    if (rfp->msb >= rfp->lsb)
-		  return rfp->msb - rfp->lsb + 1;
-	    else
-		  return rfp->lsb - rfp->msb + 1;
+	    return rfp->width();
 
 	  case vpiNetType:
 	    if (ref->get_type_code()==vpiNet)
@@ -562,15 +559,15 @@ static int signal_get(int code, vpiHandle ref)
 		  return vpiUndefined;
 
 	  case vpiLeftRange:
-            return rfp->msb;
+            return rfp->msb.get_value();
 
 	  case vpiRightRange:
-            return rfp->lsb;
+            return rfp->lsb.get_value();
 
 	  case vpiScalar:
-	    return (rfp->msb == 0 && rfp->lsb == 0);
+	    return (rfp->msb.get_value() == 0 && rfp->lsb.get_value() == 0);
 	  case vpiVector:
-	    return (rfp->msb != rfp->lsb);
+	    return (rfp->msb.get_value() != rfp->lsb.get_value());
 
           case vpiAutomatic:
             return (int) vpip_scope(rfp)->is_automatic;
@@ -582,7 +579,7 @@ static int signal_get(int code, vpiHandle ref)
 
 	    // This private property must return zero when undefined.
 	  case _vpiNexusId:
-	    if (rfp->msb == rfp->lsb)
+	    if (rfp->msb.get_value() == rfp->lsb.get_value())
 		  return (int) (unsigned long) rfp->node;
 	    else
 		  return 0;
@@ -636,6 +633,11 @@ static vpiHandle signal_get_handle(int code, vpiHandle ref)
 	  case vpiIndex:
 	    return rfp->is_netarray? rfp->id.index : 0;
 
+	  case vpiLeftRange:
+	    return &rfp->msb;
+	  case vpiRightRange:
+	    return &rfp->lsb;
+
 	  case vpiScope:
 	    return vpip_scope(rfp);
 
@@ -663,10 +665,10 @@ static vpiHandle signal_index(int idx, vpiHandle ref)
       struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
       assert(rfp);
 	/* Check to see if the index is in range. */
-      if (rfp->msb >= rfp->lsb) {
-	    if ((idx > rfp->msb) || (idx < rfp->lsb)) return 0;
+      if (rfp->msb.get_value() >= rfp->lsb.get_value()) {
+	    if ((idx > rfp->msb.get_value()) || (idx < rfp->lsb.get_value())) return 0;
       } else {
-	    if ((idx < rfp->msb) || (idx > rfp->lsb)) return 0;
+	    if ((idx < rfp->msb.get_value()) || (idx > rfp->lsb.get_value())) return 0;
       }
 	/* Return a handle for the individual bit. */
       cerr << "Sorry: Icarus does not currently support "
@@ -676,11 +678,11 @@ static vpiHandle signal_index(int idx, vpiHandle ref)
       return 0;
 }
 
-static unsigned signal_width(const struct __vpiSignal*rfp)
+unsigned __vpiSignal::width(void) const
 {
-      unsigned wid = (rfp->msb >= rfp->lsb)
-	    ? (rfp->msb - rfp->lsb + 1)
-	    : (rfp->lsb - rfp->msb + 1);
+      unsigned wid = (msb.get_value() >= lsb.get_value())
+	    ? (msb.get_value() - lsb.get_value() + 1)
+	    : (lsb.get_value() - msb.get_value() + 1);
 
       return wid;
 }
@@ -695,7 +697,7 @@ static void signal_get_value(vpiHandle ref, s_vpi_value*vp)
       struct __vpiSignal*rfp = dynamic_cast<__vpiSignal*>(ref);
       assert(rfp);
 
-      unsigned wid = signal_width(rfp);
+      unsigned wid = rfp->width();
 
       vvp_signal_value*vsig = dynamic_cast<vvp_signal_value*>(rfp->node->fil);
       assert(vsig);
@@ -817,9 +819,9 @@ static vpiHandle signal_put_value(vpiHandle ref, s_vpi_value*vp, int flags)
 	/* Make a vvp_vector4_t vector to receive the translated value
 	   that we are going to poke. This will get populated
 	   differently depending on the format. */
-      wid = (rfp->msb >= rfp->lsb)
-	    ? (rfp->msb - rfp->lsb + 1)
-	    : (rfp->lsb - rfp->msb + 1);
+      wid = (rfp->msb.get_value() >= rfp->lsb.get_value())
+	    ? (rfp->msb.get_value() - rfp->lsb.get_value() + 1)
+	    : (rfp->lsb.get_value() - rfp->msb.get_value() + 1);
 
 
       vvp_vector4_t val = vec4_from_vpi_value(vp, wid);
