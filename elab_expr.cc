@@ -530,7 +530,7 @@ NetExpr* PEBinary::elaborate_expr_base_mult_(Design*,
       if (NetEConst*rp_const = dynamic_cast<NetEConst*> (rp)) {
 	    verinum rp_val = rp_const->value();
 
-	    if (! rp_val.is_defined()) {
+	    if (!rp_val.is_defined() && (lp->expr_type() == IVL_VT_LOGIC)) {
 		  NetEConst*tmp = make_const_x(expr_wid);
                   tmp->cast_signed(signed_flag_);
                   tmp->set_line(*this);
@@ -538,7 +538,7 @@ NetExpr* PEBinary::elaborate_expr_base_mult_(Design*,
 		  return tmp;
 	    }
 
-	    if (rp_val.is_zero() && (lp->expr_type() != IVL_VT_LOGIC)) {
+	    if (rp_val.is_zero() && (lp->expr_type() == IVL_VT_BOOL)) {
 		  NetEConst*tmp = make_const_0(expr_wid);
                   tmp->cast_signed(signed_flag_);
                   tmp->set_line(*this);
