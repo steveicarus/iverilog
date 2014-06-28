@@ -1,0 +1,8 @@
+// These are the global access functions called from the compiler so they
+// are not used here.
+
+// target_design()
+unusedFunction:sizer.cc:76
+
+// target_query()
+unusedFunction:sizer.cc:65

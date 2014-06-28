@@ -61,7 +61,11 @@ distclean: clean
 	rm -f stamp-pcb_config-h pcb_config.h
 
 cppcheck: $(O:.o=.cc)
-	cppcheck --enable=all -f $(INCLUDE_PATH) $^
+	cppcheck --enable=all -f --suppressions-list=$(srcdir)/cppcheck.sup \
+	         -UYY_USER_INIT \
+	         -UYYPARSE_PARAM -UYYPRINT -Usize_t -Ushort -Uyyoverflow \
+	         -UYYTYPE_INT8 -UYYTYPE_INT16 -UYYTYPE_UINT8 -UYYTYPE_UINT16 \
+	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status
 	cd ..; ./config.status --file=tgt-pcb/$@

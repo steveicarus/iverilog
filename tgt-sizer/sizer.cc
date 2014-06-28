@@ -193,11 +193,9 @@ static void show_stats(struct sizer_statistics&stats)
 
 unsigned get_nexus_width(ivl_nexus_t nex)
 {
-      ivl_signal_t sig = 0;
-
       for (unsigned idx = 0 ; idx < ivl_nexus_ptrs(nex) ; idx += 1) {
 	    ivl_nexus_ptr_t ptr = ivl_nexus_ptr(nex,idx);
-	    sig = ivl_nexus_ptr_sig(ptr);
+	    ivl_signal_t sig = ivl_nexus_ptr_sig(ptr);
 	    if (sig) return ivl_signal_width(sig);
       }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -384,24 +384,23 @@ static void edif_show_logic(ivl_net_logic_t net)
 
 static void edif_show_generic_dff(ivl_lpm_t net)
 {
-      ivl_nexus_t nex;
       char jbuf[1024];
       unsigned idx;
       ivl_nexus_t aclr = ivl_lpm_async_clr(net);
       ivl_nexus_t aset = ivl_lpm_async_set(net);
-      ivl_expr_t avalue = 0;
       const char*abits = 0;
       const char*fdcell = "FDCE";
 
       if (aset != 0) {
+	    ivl_expr_t avalue = ivl_lpm_aset_value(net);
 	    fdcell = "FDCPE";
-	    avalue = ivl_lpm_aset_value(net);
 	    assert(avalue);
 	    abits = ivl_expr_bits(avalue);
 	    assert(abits);
       }
 
       for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
+	    ivl_nexus_t nex;
 
 	    edif_uref += 1;
 

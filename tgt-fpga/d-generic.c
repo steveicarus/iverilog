@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -358,7 +358,7 @@ static void generic_show_cmp_eq(ivl_lpm_t net)
 static void generic_show_mux(ivl_lpm_t net)
 {
       char name[1024];
-      ivl_nexus_t nex, sel;
+      ivl_nexus_t sel;
       unsigned idx;
 
       xnf_mangle_lpm_name(net, name, sizeof name);
@@ -369,6 +369,8 @@ static void generic_show_mux(ivl_lpm_t net)
       sel = ivl_lpm_select(net, 0);
 
       for (idx = 0 ;  idx < ivl_lpm_width(net) ;  idx += 1) {
+	    ivl_nexus_t nex;
+
 	    fprintf(xnf, "SYM, %s/M%u, EQN, "
 		    "EQN=((I0 * ~I2) + (I1 * I2))\n",
 		    name, idx);
