@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -690,7 +690,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           vpi_printf("WARNING: %s:%d: incompatible value for %s%s.\n",
                      info->filename, info->lineno, info->name, fmtb);
         } else {
-          PLI_INT32 veclen, word, byte, bits;
+          PLI_INT32 veclen, word, byte;
           char *cp;
 
           veclen = (vpi_get(vpiSize, info->items[*idx])+31)/32;
@@ -699,7 +699,7 @@ static unsigned int get_format_char(char **rtn, int ljust, int plus,
           if (size > ini_size) result = realloc(result, size*sizeof(char));
           cp = result;
           for (word = 0; word < veclen; word += 1) {
-            bits = value.value.vector[word].aval &
+            PLI_INT32 bits = value.value.vector[word].aval &
                    ~value.value.vector[word].bval;
 #ifdef WORDS_BIGENDIAN
             for (byte = 3; byte >= 0; byte -= 1) {

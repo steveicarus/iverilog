@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011-2012  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2011-2014  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -433,7 +433,7 @@ static uint64_t get_average_wait_time(int64_t idx)
       uint64_t high = base[idx].wait_time_high;
       uint64_t low = base[idx].wait_time_low;
       s_vpi_time cur_time;
-      uint64_t c_time, add_time;
+      uint64_t c_time;
 
 	/* Get the current simulation time. */
       cur_time.type = vpiSimTime;
@@ -445,7 +445,7 @@ static uint64_t get_average_wait_time(int64_t idx)
 	/* For each element still in the queue, add its wait time to the
 	 * total wait time. */
       for (count = 0; count < elems; count += 1) {
-	    add_time = base[idx].queue[loc].time;
+	    uint64_t add_time = base[idx].queue[loc].time;
 	    assert(c_time >= add_time);
 	    add_to_wait_time(&high, &low, c_time-add_time);
 
@@ -720,7 +720,7 @@ static PLI_INT32 fill_variable_with_scaled_time(vpiHandle var, uint64_t c_time)
       uint64_t max_val = 0;
       uint64_t scale = 1;
       uint64_t frac;
-      PLI_INT32 rtn, idx, units, prec;
+      PLI_INT32 rtn, units, prec;
       p_vpi_vecval val_ptr = (p_vpi_vecval) malloc(words*sizeof(s_vpi_vecval));
 
       assert(val_ptr);
@@ -773,7 +773,7 @@ static PLI_INT32 fill_variable_with_scaled_time(vpiHandle var, uint64_t c_time)
 	    rtn = IVL_QUEUE_VALUE_OVERFLOWED;
       } else {
 	      /* Fill the vector with 0. */
-	    for (idx = 0; idx < words; idx += 1) {
+	    for (PLI_INT32 idx = 0; idx < words; idx += 1) {
 		  val_ptr[idx].aval = 0x00000000;
 		  val_ptr[idx].bval = 0x00000000;
 	    }
