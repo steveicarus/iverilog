@@ -63,7 +63,7 @@ distclean: clean
 cppcheck: $(O:.o=.cc)
 	cppcheck --enable=all -f --suppressions-list=$(srcdir)/cppcheck.sup \
 	         -UYY_USER_INIT \
-	         -UYYPARSE_PARAM -UYYPRINT -Usize_t -Ushort -Uyyoverflow \
+	         -UYYPARSE_PARAM -UYYPRINT -Ushort -Usize_t -Uyyoverflow \
 	         -UYYTYPE_INT8 -UYYTYPE_INT16 -UYYTYPE_UINT8 -UYYTYPE_UINT16 \
 	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 

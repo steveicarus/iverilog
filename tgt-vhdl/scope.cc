@@ -1,7 +1,7 @@
 /*
  *  VHDL code generation for scopes.
  *
- *  Copyright (C) 2008-2013  Nick Gasson (nick@nickg.me.uk)
+ *  Copyright (C) 2008-2014  Nick Gasson (nick@nickg.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -204,7 +204,7 @@ void draw_nexus(ivl_nexus_t nexus)
 
             ostringstream ss;
             ss << "LO" << ivl_logic_basename(log);
-            vhdl_scope->add_decl(new vhdl_signal_decl(ss.str().c_str(), type));
+            vhdl_scope->add_decl(new vhdl_signal_decl(ss.str(), type));
 
             link_scope_to_nexus_tmp(priv, vhdl_scope, ss.str());
          }
@@ -251,7 +251,7 @@ void draw_nexus(ivl_nexus_t nexus)
             ss << ivl_lpm_basename(lpm);
 
             if (!vhdl_scope->have_declared(ss.str()))
-               vhdl_scope->add_decl(new vhdl_signal_decl(ss.str().c_str(), type));
+               vhdl_scope->add_decl(new vhdl_signal_decl(ss.str(), type));
 
             link_scope_to_nexus_tmp(priv, vhdl_scope, ss.str());
          }
@@ -561,7 +561,7 @@ static void declare_one_signal(vhdl_entity *ent, ivl_signal_t sig,
 
       vhdl_type *array_type =
          vhdl_type::array_of(base_type, type_name, msb, lsb);
-      vhdl_decl *array_decl = new vhdl_type_decl(type_name.c_str(), array_type);
+      vhdl_decl *array_decl = new vhdl_type_decl(type_name, array_type);
       ent->get_arch()->get_scope()->add_decl(array_decl);
 
       sig_type = new vhdl_type(*array_type);
@@ -578,7 +578,7 @@ static void declare_one_signal(vhdl_entity *ent, ivl_signal_t sig,
    switch (mode) {
    case IVL_SIP_NONE:
       {
-         vhdl_decl *decl = new vhdl_signal_decl(name.c_str(), sig_type);
+         vhdl_decl *decl = new vhdl_signal_decl(name, sig_type);
 
          ostringstream ss;
          if (ivl_signal_local(sig)) {
@@ -612,11 +612,11 @@ static void declare_one_signal(vhdl_entity *ent, ivl_signal_t sig,
          // which represents the register
          std::string newname(name);
          newname += "_Reg";
-         rename_signal(sig, newname.c_str());
+         rename_signal(sig, newname);
 
          vhdl_type *reg_type = new vhdl_type(*sig_type);
          ent->get_arch()->get_scope()->add_decl
-            (new vhdl_signal_decl(newname.c_str(), reg_type));
+            (new vhdl_signal_decl(newname, reg_type));
 
          // Create a concurrent assignment statement to
          // connect the register to the output
@@ -892,7 +892,7 @@ static int draw_task(ivl_scope_t scope, ivl_scope_t parent)
          signame += taskname;
       }
 
-      vhdl_signal_decl *decl = new vhdl_signal_decl(signame.c_str(), sigtype);
+      vhdl_signal_decl *decl = new vhdl_signal_decl(signame, sigtype);
 
       ostringstream ss;
       ss << "Declared at " << ivl_signal_file(sig) << ":"

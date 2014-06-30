@@ -3187,7 +3187,6 @@ NetProc* PChainConstructor::elaborate(Design*des, NetScope*scope) const
       NetBlock*tmp = new NetBlock(NetBlock::SEQU, 0);
       tmp->set_line(*this);
       return tmp;
-      return 0;
 }
 
 NetProc* PCondit::elaborate(Design*des, NetScope*scope) const

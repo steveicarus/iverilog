@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -595,7 +595,7 @@ NetNet* PEIdent::elaborate_lnet_common_(Design*des, NetScope*scope,
 		  midx = lidx + tmp_wid - 1;
 	    }
 
-      } else if (gn_system_verilog() && sig->unpacked_dimensions() > 0 && path_tail.index.size() == 0) {
+      } else if (gn_system_verilog() && sig->unpacked_dimensions() > 0 && path_tail.index.empty()) {
 
 	      // In this case, we are doing a continuous assignment to
 	      // an unpacked array. The NetNet representation is a

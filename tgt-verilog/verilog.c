@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -232,7 +232,6 @@ static void show_expression(ivl_expr_t net)
 static void show_assign_lval(ivl_lval_t lval)
 {
       ivl_nexus_t nex;
-      ivl_nexus_ptr_t ptr;
       ivl_signal_t sig=NULL;
 
       unsigned idx;
@@ -245,6 +244,7 @@ static void show_assign_lval(ivl_lval_t lval)
 
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
 	    unsigned pin;
+	    ivl_nexus_ptr_t ptr;
 
 	    ptr = ivl_nexus_ptr(nex, idx);
 	    sig = ivl_nexus_ptr_sig(ptr);

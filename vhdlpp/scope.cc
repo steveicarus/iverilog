@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -34,10 +34,8 @@ using namespace std;
  * accumulate new scope values.
  */
 ScopeBase::ScopeBase(const ActiveScope&ref)
+: use_constants_(ref.use_constants_), cur_constants_(ref.cur_constants_)
 {
-    use_constants_ = ref.use_constants_;
-    cur_constants_ = ref.cur_constants_;
-
     merge(ref.old_signals_.begin(), ref.old_signals_.end(),
           ref.new_signals_.begin(), ref.new_signals_.end(),
           insert_iterator<map<perm_string, Signal*> >(

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -281,7 +281,7 @@ void vvp_fun_muxr::recv_real(vvp_net_ptr_t ptr, double bit,
 	    break;
 
 	  default:
-	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
+	    fprintf(stderr, "Unsupported port type %u.\n", ptr.port());
 	    assert(0);
       }
 

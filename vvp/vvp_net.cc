@@ -183,8 +183,8 @@ void vvp_net_t::operator delete(void*)
 }
 
 vvp_net_t::vvp_net_t()
+: out_(vvp_net_ptr_t(0,0))
 {
-      out_ = vvp_net_ptr_t(0,0);
       fun = 0;
       fil = 0;
 }

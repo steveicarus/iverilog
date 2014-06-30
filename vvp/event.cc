@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -98,9 +98,8 @@ void schedule_evctl(__vpiHandle*handle, double value,
 
 evctl_vector::evctl_vector(vvp_net_ptr_t ptr, const vvp_vector4_t&value,
                            unsigned off, unsigned wid, unsigned long ecount)
-:evctl(ecount), value_(value)
+:evctl(ecount), ptr_(ptr), value_(value)
 {
-      ptr_ = ptr;
       off_ = off;
       wid_ = wid;
 }

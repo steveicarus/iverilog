@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -196,7 +196,7 @@ void class_type_t::pform_dump(ostream&out, unsigned indent) const
       out << setw(indent) << "" << "class " << name;
 
       if (base_type) out << " extends <type>";
-      if (base_args.size() > 0) {
+      if (! base_args.empty()) {
 	    out << " (";
 	    for (list<PExpr*>::const_iterator cur = base_args.begin()
 		       ; cur != base_args.end() ; ++cur) {

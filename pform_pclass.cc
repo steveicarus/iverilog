@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,7 +46,7 @@ void pform_start_class_declaration(const struct vlltype&loc, class_type_t*type, 
       assert(type->base_type == 0);
       type->base_type = base_type;
 
-      assert(type->base_args.size() == 0);
+      assert(type->base_args.empty());
       if (base_exprs) {
 	    for (list<PExpr*>::iterator cur = base_exprs->begin()
 		       ; cur != base_exprs->end() ; ++ cur) {

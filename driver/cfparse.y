@@ -221,7 +221,7 @@ item
 		}
 
 	| error
-		{ fprintf(stderr, "Error: unable to parse line %d in "
+		{ fprintf(stderr, "Error: unable to parse line %u in "
 		          "%s.\n", cflloc.first_line, current_file);
 		  return 1;
 		}

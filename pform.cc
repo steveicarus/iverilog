@@ -1534,7 +1534,7 @@ void pform_make_udp(perm_string name, list<perm_string>*parms,
         unsigned idx;
         for (cur = parms->begin(), idx = 0
 		   ; cur != parms->end()
-		   ; idx++, cur++) {
+		   ; ++ idx, ++ cur) {
 	      pins[idx] = defs[*cur];
 	      pin_names[idx] = *cur;
 	}
@@ -1700,7 +1700,7 @@ void pform_make_udp(perm_string name, bool synchronous_flag,
         unsigned idx;
         for (cur = parms->begin(), idx = 1
 		   ;  cur != parms->end()
-		   ;  idx += 1, cur++) {
+		   ;  idx += 1, ++ cur) {
 	      assert(idx < pins.count());
 	      pins[idx] = new PWire(*cur, NetNet::WIRE,
 				    NetNet::PINPUT, IVL_VT_LOGIC);
@@ -2912,13 +2912,13 @@ extern PSpecPath* pform_make_specify_path(const struct vlltype&li,
       list<perm_string>::const_iterator cur;
 
       idx = 0;
-      for (idx = 0, cur = src->begin() ;  cur != src->end() ;  idx++, cur++) {
+      for (idx = 0, cur = src->begin() ;  cur != src->end() ;  ++ idx, ++ cur) {
 	    path->src[idx] = *cur;
       }
       assert(idx == path->src.size());
       delete src;
 
-      for (idx = 0, cur = dst->begin() ;  cur != dst->end() ;  idx++, cur++) {
+      for (idx = 0, cur = dst->begin() ;  cur != dst->end() ;  ++ idx, ++ cur) {
 	    path->dst[idx] = *cur;
       }
       assert(idx == path->dst.size());

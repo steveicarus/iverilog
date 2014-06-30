@@ -170,7 +170,7 @@ template <class T> void append(vector<T>&out, const vector<T>&in)
  */
 static void strip_tail_items(list<PExpr*>*lst)
 {
-      while (lst->size() > 0) {
+      while (! lst->empty()) {
 	    if (lst->back() != 0)
 		  return;
 	    lst->pop_back();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -379,7 +379,7 @@ static vpiHandle sysfunc_put_4net_value(vpiHandle ref, p_vpi_value vp, int)
 	    break;
 
 	  default:
-	    fprintf(stderr, "XXXX format=%d, vwid=%u\n", (int)vp->format,
+	    fprintf(stderr, "XXXX format=%d, vwid=%d\n", (int)vp->format,
 	            rfp->vwid);
 	    assert(0);
       }

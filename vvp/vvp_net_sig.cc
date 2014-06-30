@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -210,7 +210,7 @@ void vvp_fun_signal4_sa::recv_vec4(vvp_net_ptr_t ptr, const vvp_vector4_t&bit,
 	    break;
 
 	  default:
-	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
+	    fprintf(stderr, "Unsupported port type %u.\n", ptr.port());
 	    assert(0);
 	    break;
       }
@@ -266,7 +266,7 @@ void vvp_fun_signal4_sa::recv_vec4_pv(vvp_net_ptr_t ptr, const vvp_vector4_t&bit
 	    break;
 
 	  default:
-	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
+	    fprintf(stderr, "Unsupported port type %u.\n", ptr.port());
 	    assert(0);
 	    break;
       }
@@ -490,7 +490,7 @@ void vvp_fun_signal_real_sa::recv_real(vvp_net_ptr_t ptr, double bit,
 	    break;
 
 	  default:
-	    fprintf(stderr, "Unsupported port type %d.\n", ptr.port());
+	    fprintf(stderr, "Unsupported port type %u.\n", ptr.port());
 	    assert(0);
 	    break;
       }

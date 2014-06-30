@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -218,8 +218,7 @@ static inline void dump_scope_path(ostream&o, const NetScope*scope)
 	    dump_scope_path(o, parent);
 	    o << ".";
       }
-      const hname_t name = scope->fullname();
-      o << name;
+      o << scope->fullname();
 }
 
 ostream& operator <<(ostream&o, struct __ScopePathManip marg)
