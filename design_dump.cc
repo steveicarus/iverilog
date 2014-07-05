@@ -237,6 +237,68 @@ ostream& operator <<(ostream&o, struct __ObjectPathManip marg)
       return o;
 }
 
+ostream& operator <<(ostream&fd, Link::DIR dir)
+{
+      switch (dir) {
+	  case Link::PASSIVE:
+	    fd << "PASSIVE";
+	    break;
+	  case Link::INPUT:
+	    fd << "INPUT";
+	    break;
+	  case Link::OUTPUT:
+	    fd << "OUTPUT";
+	    break;
+	  default:
+	    fd << "<" << (int)dir << ">";
+	    break;
+      }
+      return fd;
+}
+
+void NetPins::show_type(ostream&fd) const
+{
+      fd << typeid(*this).name();
+}
+
+void NetObj::show_type(ostream&fd) const
+{
+      fd << typeid(*this).name() << "[" << scope_path(scope_) << "." << name_ << "]";
+}
+
+struct __ShowTypeManip { const NetPins*pins; };
+inline __ShowTypeManip show_type(const NetPins*pins)
+{ __ShowTypeManip tmp; tmp.pins = pins; return tmp; }
+
+inline ostream& operator << (ostream&fd, __ShowTypeManip man)
+{
+      if (man.pins == 0)
+	    fd << "NexusSet";
+      else
+	    man.pins->show_type(fd);
+      return fd;
+}
+
+
+void Link::dump_link(ostream&fd, unsigned ind) const
+{
+      const Link*cur;
+      const Nexus*nex = nexus();
+
+      if (nex == 0) {
+	    fd << setw(ind) << "" << "<unlinked>" << endl;
+	    return;
+      }
+
+      for (cur = nex->first_nlink() ; cur; cur = cur->next_nlink()) {
+	    const NetPins*obj = cur->get_obj();
+	    unsigned pin = cur->get_pin();
+	    fd << setw(ind) << "" << "Pin " << pin
+	       << " of " << show_type(obj)
+	       << ", dir=" << cur->dir_ << endl;
+      }
+}
+
 void NetBranch::dump(ostream&o, unsigned ind) const
 {
       static const char*pin_names[2] = {

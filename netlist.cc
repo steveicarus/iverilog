@@ -561,6 +561,8 @@ void NetNet::calculate_slice_widths_from_packed_dims_(void)
       }
 }
 
+const list<netrange_t> NetNet::not_an_array;
+
 NetNet::NetNet(NetScope*s, perm_string n, Type t,
 	       const list<netrange_t>&unpacked, ivl_type_t use_net_type)
 : NetObj(s, n, calculate_count(unpacked)),

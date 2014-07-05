@@ -161,6 +161,8 @@ class Link {
       NetPins*get_obj();
       unsigned get_pin() const;
 
+      void dump_link(ostream&fd, unsigned ind) const;
+
     private:
 	// The NetNode manages these. They point back to the
 	// NetNode so that following the links can get me here.
@@ -207,6 +209,10 @@ class NetPins : public LineInfo {
       bool is_linked();
       bool pins_are_virtual(void) const;
       void devirtualize_pins(void);
+
+	// This is for showing a brief description of the object to
+	// the stream. It is used for debug and diagnostics.
+      virtual void show_type(std::ostream&fd) const;
 
     private:
       Link*pins_;
@@ -257,6 +263,8 @@ class NetObj  : public NetPins, public Attrib {
       void decay_time(const NetExpr* d) { delay3_ = d; }
 
       void dump_obj_attr(ostream&, unsigned) const;
+
+      virtual void show_type(std::ostream&fd) const;
 
     private:
       NetScope*scope_;
@@ -641,6 +649,8 @@ class NetNet  : public NetObj, public PortType {
 		  UNRESOLVED_WIRE };
 
       typedef PortType::Enum PortType;
+
+      static const std::list<netrange_t>not_an_array;
 
     public:
 	// This form is the more generic form of the constructor. For
