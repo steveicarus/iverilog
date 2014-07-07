@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2014 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -332,6 +332,8 @@ static ivl_nexus_t get_lpm_output(ivl_scope_t scope, ivl_lpm_t lpm)
 	case IVL_LPM_CAST_REAL:
 	case IVL_LPM_CMP_EEQ:
 	case IVL_LPM_CMP_EQ:
+	case IVL_LPM_CMP_EQX:
+	case IVL_LPM_CMP_EQZ:
 	case IVL_LPM_CMP_GE:
 	case IVL_LPM_CMP_GT:
 	case IVL_LPM_CMP_NE:
@@ -991,6 +993,30 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	    fprintf(vlog_out, " == ");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
+	    break;
+	case IVL_LPM_CMP_EQX:
+// HERE: Need to heck that this is not a real nexus.
+	    fprintf(vlog_out, "(");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
+	    fprintf(vlog_out, " ==? ");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
+	    fprintf(vlog_out, ")");
+	    fprintf(stderr, "%s:%u: vlog95 error: Compare wildcard equal "
+	                    "operator is not supported.\n",
+	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+	    vlog_errors += 1;
+	    break;
+	case IVL_LPM_CMP_EQZ:
+// HERE: Need to heck that this is not a real nexus.
+	    fprintf(vlog_out, "(");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 0), 0, 0);
+	    fprintf(vlog_out, " == ");
+	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
+	    fprintf(vlog_out, ")");
+	    fprintf(stderr, "%s:%u: vlog95 error: Compare equal Z (caseZ) "
+	                    "operator is not supported.\n",
+	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+	    vlog_errors += 1;
 	    break;
 	case IVL_LPM_CMP_GE:
 	    fprintf(vlog_out, "(");
