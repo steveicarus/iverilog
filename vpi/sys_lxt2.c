@@ -254,12 +254,12 @@ __inline__ static int dump_header_pending(void)
  * This function writes out all the traced variables, whether they
  * changed or not.
  */
-static void vcd_checkpoint()
+static void vcd_checkpoint(void)
 {
       functor_all_vcd_info( show_this_item );
 }
 
-static void vcd_checkpoint_x()
+static void vcd_checkpoint_x(void)
 {
       functor_all_vcd_info( show_this_item_x );
 }
@@ -873,7 +873,7 @@ static void* lxt2_thread(void*arg)
       return 0;
 }
 
-void sys_lxt2_register()
+void sys_lxt2_register(void)
 {
       int idx;
       struct t_vpi_vlog_info vlog_info;
