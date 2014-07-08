@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-1999 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -44,6 +44,14 @@ verinum* PEBinary::eval_const(Design*des, NetScope*scope) const
       verinum*res;
 
       switch (op_) {
+	  case 'p': {
+		if (l->is_defined() && r->is_defined()) {
+		      res = new verinum(pow(*l, *r));
+		} else {
+		      res = new verinum(verinum::Vx, l->len());
+		}
+		break;
+	  }
 	  case '+': {
 		if (l->is_defined() && r->is_defined()) {
 		      res = new verinum(*l + *r);
