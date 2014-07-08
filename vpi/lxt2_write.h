@@ -163,7 +163,7 @@ off_t current_chunk, current_chunkz;
 struct lxt2_wr_symbol *sym[LXT2_WR_SYMPRIME];
 struct lxt2_wr_symbol **sorted_facs;
 struct lxt2_wr_symbol *symchain;
-int numfacs, numalias;
+unsigned int numfacs, numalias;
 int numfacbytes;
 int longestname;
 
@@ -174,7 +174,7 @@ lxttime_t mintime, maxtime;
 lxtstime_t timezero;
 unsigned int timegranule;
 int timescale;
-int timepos;
+unsigned int timepos;
 unsigned int maxgranule;
 lxttime_t firsttime, lasttime;
 lxttime_t timetable[LXT2_WR_GRANULE_SIZE];

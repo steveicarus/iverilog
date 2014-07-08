@@ -94,8 +94,13 @@ distclean: clean
 	rm -f Makefile config.log
 	rm -f vpi_config.h stamp-vpi_config-h
 
+# The -U flag is used to skip checking paths that depend on that define having
+# an explict value (i.e. the define is expected to be real code).
 cppcheck: $(O:.o=.c) $(OPP:.o=.cc) $(M:.o=.c) $(V:.o=.c)
 	cppcheck --enable=all -f --suppressions-list=$(srcdir)/cppcheck.sup \
+	         -UYY_USER_INIT \
+	         -UYYPARSE_PARAM -UYYPRINT -Ushort -Uyyoverflow \
+	         -UYYTYPE_INT8 -UYYTYPE_INT16 -UYYTYPE_UINT8 -UYYTYPE_UINT16 \
 	         --relative-paths=$(srcdir) $(INCLUDE_PATH) $^
 
 Makefile: $(srcdir)/Makefile.in ../config.status
