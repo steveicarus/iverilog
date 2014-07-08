@@ -21,6 +21,6 @@
  * Things that should be statically linked by VPI modules go here.
  */
 
-void __libvpi_c_dummy_function()
+void __libvpi_c_dummy_function(void)
 {
 }

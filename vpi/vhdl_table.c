@@ -182,7 +182,7 @@ static void vhdl_register(void)
       vpi_register_cb(&cb);
 }
 
-void (*vlog_startup_routines[])() = {
+void (*vlog_startup_routines[])(void) = {
       vhdl_register,
       0
 };

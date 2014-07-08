@@ -196,7 +196,7 @@ args_done:
 /*
  * Routine to register the system tasks/functions provided in this file.
  */
-void sys_countdrivers_register()
+void sys_countdrivers_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;

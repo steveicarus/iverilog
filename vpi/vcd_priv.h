@@ -45,7 +45,7 @@ EXTERN const char *vcd_names_search(struct vcd_names_list_s*tab,
 
 EXTERN void vcd_names_sort(struct vcd_names_list_s*tab);
 
-EXTERN void vcd_names_delete();
+EXTERN void vcd_names_delete(struct vcd_names_list_s*tab);
 
 /*
  * Keep a map of nexus ident's to help with alias detection.
@@ -53,7 +53,7 @@ EXTERN void vcd_names_delete();
 EXTERN const char*find_nexus_ident(int nex);
 EXTERN void       set_nexus_ident(int nex, const char *id);
 
-EXTERN void nexus_ident_delete();
+EXTERN void nexus_ident_delete(void);
 
 /*
  * Keep a set of scope names to help with duplicate detection.

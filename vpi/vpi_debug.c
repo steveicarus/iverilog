@@ -93,7 +93,7 @@ static PLI_INT32 vpi_tree_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
-void sys_register()
+void sys_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;
@@ -108,7 +108,7 @@ void sys_register()
       vpip_make_systf_system_defined(res);
 }
 
-void (*vlog_startup_routines[])() = {
+void (*vlog_startup_routines[])(void) = {
       sys_register,
       0
 };

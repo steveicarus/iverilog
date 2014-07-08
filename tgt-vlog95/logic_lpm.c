@@ -1201,7 +1201,7 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
       if (sign_type != NO_SIGN) fprintf(vlog_out, ")");
 }
 
-static void emit_posedge_dff_prim()
+static void emit_posedge_dff_prim(void)
 {
       fprintf(vlog_out, "\n");
       fprintf(vlog_out, "/* Icarus generated UDP to represent a synthesized "

@@ -48,7 +48,7 @@ static PLI_INT32 sys_dumpvars_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
-void sys_vcdoff_register()
+void sys_vcdoff_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;

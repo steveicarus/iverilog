@@ -64,7 +64,7 @@ static PLI_INT32 cleanup_table_mod(p_cb_data cause)
  * Create an empty table model object and add it to the list of table
  * model objects.
  */
-static p_table_mod create_table()
+static p_table_mod create_table(void)
 {
 	/* Create an empty table model object. */
       p_table_mod obj = (p_table_mod) malloc(sizeof(s_table_mod));
@@ -110,7 +110,7 @@ unsigned is_const_string_obj(vpiHandle arg)
 /*
  * Get any command line flags. For now we only have a debug flag.
  */
-static void check_command_line_flags()
+static void check_command_line_flags(void)
 {
       struct t_vpi_vlog_info vlog_info;
       static unsigned command_line_processed = 0;
@@ -684,7 +684,7 @@ static PLI_INT32 sys_table_model_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 /*
  * Routine to register the system function provided in this file.
  */
-void table_model_register()
+void table_model_register(void)
 {
       s_vpi_systf_data tf_data;
       s_cb_data cb;

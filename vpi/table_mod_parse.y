@@ -90,7 +90,7 @@ static p_table_mod table_def;
 extern int tblmodlex(void);
 static void yyerror(const char *fmt, ...);
 
-static void process_point()
+static void process_point(void)
 {
       assert(cur_value == indep_values);
   #if 0

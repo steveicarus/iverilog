@@ -94,8 +94,8 @@ typedef struct t_table_mod {
 
 extern unsigned parse_table_model(FILE *fp, vpiHandle callh, p_table_mod table);
 
-extern int tblmodlex();
-extern void destroy_tblmod_lexor();
+extern int tblmodlex(void);
+extern void destroy_tblmod_lexor(void);
 extern void init_tblmod_lexor(FILE *fp);
 
 #endif

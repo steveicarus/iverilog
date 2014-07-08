@@ -30,29 +30,29 @@
 # include  "globals.h"
 # include  "ivl_alloc.h"
 
-static void output_init();
+static void output_init(void);
 #define YY_USER_INIT output_init()
 
-static void  def_start();
-static void  def_add_arg();
-static void  def_finish();
-static void  def_undefine();
-static void  do_define();
-static int   def_is_done();
+static void  def_start(void);
+static void  def_add_arg(void);
+static void  def_finish(void);
+static void  def_undefine(void);
+static void  do_define(void);
+static int   def_is_done(void);
 static int   is_defined(const char*name);
 
 static int   macro_needs_args(const char*name);
-static void  macro_start_args();
+static void  macro_start_args(void);
 static void  macro_add_to_arg(int is_whitespace);
-static void  macro_finish_arg();
+static void  macro_finish_arg(void);
 static void  do_expand(int use_args);
 static const char* do_magic(const char*name);
-static const char* macro_name();
+static const char* macro_name(void);
 
-static void include_filename();
-static void do_include();
+static void include_filename(void);
+static void do_include(void);
 
-static int load_next_input();
+static int load_next_input(void);
 
 struct include_stack_t
 {
@@ -804,7 +804,7 @@ static /* inline */ char* def_argv(int arg)
     return def_buf + def_argo[arg];
 }
 
-static void check_for_max_args()
+static void check_for_max_args(void)
 {
     if (def_argc == MAX_DEF_ARG)
     {
@@ -825,14 +825,14 @@ static void def_buf_grow_to_fit(int length)
     }
 }
 
-static void def_start()
+static void def_start(void)
 {
     def_buf_free = def_buf_size;
     def_argc = 0;
     def_add_arg();
 }
 
-static void def_add_arg()
+static void def_add_arg(void)
 {
     int length = yyleng;
 
@@ -979,7 +979,7 @@ static void free_macro(struct define_t* def)
     free(def);
 }
 
-void free_macros()
+void free_macros(void)
 {
     free_macro(def_table);
 }
@@ -1052,7 +1052,7 @@ static char *find_arg(char*ptr, char*head, char*arg)
  * continuation, then return 1 and this function may be called again
  * to collect another line of the definition.
  */
-static void do_define()
+static void do_define(void)
 {
     char* cp;
     char* head;
@@ -1202,7 +1202,7 @@ static void do_define()
  * Return true if the definition text is done. This is the opposite of
  * the define_continue_flag.
  */
-static int def_is_done()
+static int def_is_done(void)
 {
     return !define_continue_flag;
 }
@@ -1212,7 +1212,7 @@ static int def_is_done()
  * assigned value to the parsed name. If there is no value, then
  * assign the string "" (empty string.)
  */
-static void def_finish()
+static void def_finish(void)
 {
     define_continue_flag = 0;
 
@@ -1234,7 +1234,7 @@ static void def_finish()
     def_argc = 0;
 }
 
-static void def_undefine()
+static void def_undefine(void)
 {
     struct define_t* cur;
     struct define_t* tail;
@@ -1360,7 +1360,7 @@ static int macro_needs_args(const char*text)
     }
 }
 
-static const char* macro_name()
+static const char* macro_name(void)
 {
     return cur_macro ? cur_macro->name : "";
 }
@@ -1402,7 +1402,7 @@ static void macro_add_to_arg(int is_white_space)
     def_buf_free -= length;
 }
 
-static void macro_finish_arg()
+static void macro_finish_arg(void)
 {
     char* tail = &def_buf[def_buf_size - def_buf_free];
 
@@ -1443,7 +1443,7 @@ static void exp_buf_grow_to_fit(int length)
     }
 }
 
-static void expand_using_args()
+static void expand_using_args(void)
 {
     char* head;
     char* tail;
@@ -1687,13 +1687,13 @@ static const char* do_magic(const char*name)
  * parsing resumes.
  */
 
-static void output_init()
+static void output_init(void)
 {
     if (line_direct_flag)
         fprintf(yyout, "`line 1 \"%s\" 0\n", istack->path);
 }
 
-static void include_filename()
+static void include_filename(void)
 {
     if(standby) {
         emit_pathline(istack);
@@ -1712,7 +1712,7 @@ static void include_filename()
     standby->comment = NULL;
 }
 
-static void do_include()
+static void do_include(void)
 {
     /* standby is defined by include_filename() */
     if (standby->path[0] == '/') {
@@ -1835,7 +1835,7 @@ static void emit_pathline(struct include_stack_t* isp)
     fprintf(stderr, "%s:%u: ", isp->path, isp->lineno+1);
 }
 
-static void lexor_done()
+static void lexor_done(void)
 {
     while (ifdef_stack)
     {
@@ -1923,7 +1923,7 @@ static void open_input_file(struct include_stack_t*isp)
  * end of a base file, in which case the next base source file is
  * opened.
  */
-static int load_next_input()
+static int load_next_input(void)
 {
     int line_mask_flag = 0;
     struct include_stack_t* isp = istack;
@@ -2193,7 +2193,7 @@ void reset_lexor(FILE* out, char* paths[])
 /*
  * Modern version of flex (>=2.5.9) can clean up the scanner data.
  */
-void destroy_lexor()
+void destroy_lexor(void)
 {
 # ifdef FLEX_SCANNER
 #   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5

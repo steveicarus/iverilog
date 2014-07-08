@@ -23,7 +23,7 @@
 
 static unsigned single_indent = 0;
 
-static unsigned get_indent()
+static unsigned get_indent(void)
 {
       if (single_indent) {
 	    single_indent = 0;

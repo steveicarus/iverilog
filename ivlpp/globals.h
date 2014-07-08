@@ -22,11 +22,11 @@
 # include  <stdio.h>
 
 extern void reset_lexor(FILE*out, char*paths[]);
-extern void destroy_lexor();
+extern void destroy_lexor(void);
 extern void load_precompiled_defines(FILE*src);
 extern void define_macro(const char*name, const char*value, int keyword,
                          int argc);
-extern void free_macros();
+extern void free_macros(void);
 extern void dump_precompiled_defines(FILE*out);
 
 /* These variables contain the include directories to be searched when
@@ -54,6 +54,6 @@ extern char dep_mode;
 extern int verbose_flag;
 
 /* This is the entry to the lexer. */
-extern int yylex();
+extern int yylex(void);
 
 #endif

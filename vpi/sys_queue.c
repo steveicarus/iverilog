@@ -1393,7 +1393,7 @@ static PLI_INT32 sys_q_exam_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 /*
  * Routine to register the system tasks/functions provided in this file.
  */
-void sys_queue_register()
+void sys_queue_register(void)
 {
       s_vpi_systf_data tf_data;
       s_cb_data cb;

@@ -909,7 +909,7 @@ static PLI_INT32 sys_rand_func_sizetf(PLI_BYTE8 *x)
       return 32;
 }
 
-void sys_random_register()
+void sys_random_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;

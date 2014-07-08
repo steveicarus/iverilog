@@ -205,7 +205,7 @@ void add_cmd_file(const char* filename)
 }
 
 /* Function to return the top command file name from the FIFO. */
-char *get_cmd_file()
+char *get_cmd_file(void)
 {
       char *filename;
 
@@ -402,7 +402,7 @@ static int t_preprocess_only(void)
  * needed to run the command from the configuration file (which is
  * already parsed for us) so we can handle must of the generic cases.
  */
-static int t_compile()
+static int t_compile(void)
 {
       unsigned rc;
 

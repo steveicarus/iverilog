@@ -30,8 +30,8 @@ extern char *readmem_error_token;
 
 extern void sys_readmem_start_file(FILE*in, int bin_flag,
 				   unsigned width, struct t_vpi_vecval*val);
-extern int readmemlex();
+extern int readmemlex(void);
 
-extern void destroy_readmem_lexor();
+extern void destroy_readmem_lexor(void);
 
 #endif

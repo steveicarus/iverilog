@@ -371,7 +371,7 @@ static void sys_v2005_math_register(void)
 /*
  * Hook to get Icarus Verilog to find the registration function.
  */
-extern void sys_clog2_register();
+extern void sys_clog2_register(void);
 
 void (*vlog_startup_routines[])(void) = {
     sys_v2005_math_register,

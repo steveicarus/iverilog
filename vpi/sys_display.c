@@ -2062,7 +2062,7 @@ static PLI_INT32 sys_end_of_simulation(p_cb_data cb_data)
       return 0;
 }
 
-void sys_display_register()
+void sys_display_register(void)
 {
       s_cb_data cb_data;
       s_vpi_systf_data tf_data;

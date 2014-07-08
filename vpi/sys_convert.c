@@ -231,7 +231,7 @@ static PLI_INT32 sys_rtoi_calltf(ICARUS_VPI_CONST PLI_BYTE8*user)
     return 0;
 }
 
-void sys_convert_register()
+void sys_convert_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;

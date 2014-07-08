@@ -213,7 +213,7 @@ static void process_quoted_string(void)
 /*
  * Modern version of flex (>=2.5.9) can clean up the scanner data.
  */
-static void destroy_sdf_lexor()
+static void destroy_sdf_lexor(void)
 {
 # ifdef FLEX_SCANNER
 #   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5

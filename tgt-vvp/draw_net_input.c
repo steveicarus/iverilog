@@ -158,7 +158,7 @@ static char* draw_C8_to_string(ivl_net_const_t cptr,
       return result;
 }
 
-static struct vvp_nexus_data*new_nexus_data()
+static struct vvp_nexus_data*new_nexus_data(void)
 {
       struct vvp_nexus_data*data = calloc(1, sizeof(struct vvp_nexus_data));
       return data;

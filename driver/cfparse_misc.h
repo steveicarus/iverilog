@@ -38,7 +38,7 @@ int cflex(void);
 int cferror(const char *);
 int cfparse(void);
 void switch_to_command_file(const char *);
-void destroy_lexor();
+void destroy_lexor(void);
 char *current_file;
 
 #endif

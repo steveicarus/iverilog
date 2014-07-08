@@ -1435,7 +1435,7 @@ static PLI_INT32 sys_sscanf_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-void sys_scanf_register()
+void sys_scanf_register(void)
 {
       s_vpi_systf_data tf_data;
       vpiHandle res;

@@ -150,7 +150,7 @@ void init_tblmod_lexor(FILE *fp)
 /*
  * Modern version of flex (>=2.5.9) can clean up the scanner data.
  */
-void destroy_tblmod_lexor()
+void destroy_tblmod_lexor(void)
 {
 # ifdef FLEX_SCANNER
 #   if YY_FLEX_MAJOR_VERSION >= 2 && YY_FLEX_MINOR_VERSION >= 5
