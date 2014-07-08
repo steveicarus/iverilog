@@ -44,6 +44,14 @@ verinum* PEBinary::eval_const(Design*des, NetScope*scope) const
       verinum*res;
 
       switch (op_) {
+	  case 'p': {
+		if (l->is_defined() && r->is_defined()) {
+		      res = new verinum(pow(*l, *r));
+		} else {
+		      res = new verinum(verinum::Vx, l->len());
+		}
+		break;
+	  }
 	  case '+': {
 		if (l->is_defined() && r->is_defined()) {
 		      res = new verinum(*l + *r);
