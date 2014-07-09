@@ -81,8 +81,9 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[]])],
 CFLAGS="$iverilog_temp_cflags"
 
 AC_SUBST(DEPENDENCY_FLAG, [-MD])
-AC_SUBST(WARNING_FLAGS, ["-Wall -Wshadow"])
-AC_SUBST(WARNING_FLAGS_CXX, ["$iverilog_wextra_flag"])
+AC_SUBST(WARNING_FLAGS, ["-Wall $iverilog_wextra_flag -Wshadow"])
+AC_SUBST(WARNING_FLAGS_CC, ["-Wno-unused -Wno-sign-compare -Wno-type-limits"])
+AC_SUBST(WARNING_FLAGS_CXX, [""])
 fi
 
 AC_LANG(C++)

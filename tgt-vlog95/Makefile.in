@@ -40,7 +40,7 @@ INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
 endif
 
 CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
-CFLAGS = @WARNING_FLAGS@ @CFLAGS@
+CFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
 O = vlog95.o event.o expr.o logic_lpm.o misc.o numbers.o scope.o stmt.o udp.o

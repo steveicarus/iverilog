@@ -44,7 +44,7 @@ INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
 endif
 
 CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
-CFLAGS = @WARNING_FLAGS@ @CFLAGS@
+CFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
 O = vvp.o draw_class.o draw_enum.o draw_mux.o draw_net_input.o \

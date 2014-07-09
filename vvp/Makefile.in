@@ -33,7 +33,7 @@ includedir = @includedir@
 
 # For a cross compile these defines will need to be set accordingly.
 HOSTCC = @CC@
-HOSTCFLAGS = @WARNING_FLAGS@ @CFLAGS@
+HOSTCFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 
 CC = @CC@
 CXX = @CXX@
@@ -56,7 +56,7 @@ INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
 endif
 
 CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@
-CFLAGS = @WARNING_FLAGS@ @CFLAGS@
+CFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 CXXFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CXX@ @CXXFLAGS@
 LDFLAGS = @rdynamic@ @LDFLAGS@
 LIBS = @LIBS@ @EXTRALIBS@

@@ -41,7 +41,7 @@ INCLUDE_PATH = -I. -I.. -I$(srcdir) -I$(srcdir)/..
 endif
 
 CPPFLAGS = $(INCLUDE_PATH) @CPPFLAGS@ @DEFS@ @PICFLAG@
-CFLAGS = @WARNING_FLAGS@ @CFLAGS@
+CFLAGS = @WARNING_FLAGS@ @WARNING_FLAGS_CC@ @CFLAGS@
 LDFLAGS = @LDFLAGS@
 
 O = stub.o classes.o constant.o enumerate.o expression.o statement.o switches.o types.o
