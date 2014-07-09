@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,5 +46,6 @@ const char* acc_fetch_type_str(PLI_INT32 type)
  */
 PLI_INT32 acc_fetch_paramtype(handle obj)
 {
+      (void)obj; /* Parameter is not used. */
       return 0;
 }

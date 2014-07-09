@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -36,7 +36,7 @@
 
 static const char*version_string =
 "Icarus Verilog STUB Code Generator " VERSION " (" VERSION_TAG ")\n\n"
-"Copyright (c) 2000-2011 Stephen Williams (steve@icarus.com)\n\n"
+"Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)\n\n"
 "  This program is free software; you can redistribute it and/or modify\n"
 "  it under the terms of the GNU General Public License as published by\n"
 "  the Free Software Foundation; either version 2 of the License, or\n"
@@ -1067,6 +1067,8 @@ static int show_process(ivl_process_t net, void*x)
 {
       unsigned idx;
 
+      (void)x; /* Parameter is not used. */
+
       switch (ivl_process_type(net)) {
 	  case IVL_PR_INITIAL:
 	    if (ivl_process_analog(net))
@@ -1590,6 +1592,8 @@ static int show_scope(ivl_scope_t net, void*x)
 {
       unsigned idx;
       const char *is_auto;
+
+      (void)x; /* Parameter is not used. */
 
       fprintf(out, "scope: %s (%u parameters, %u signals, %u logic)",
 	      ivl_scope_name(net), ivl_scope_params(net),

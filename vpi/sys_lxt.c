@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -354,6 +354,8 @@ static PLI_INT32 sys_dumpoff_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       s_vpi_time now;
       PLI_UINT64 now64;
 
+      (void)name; /* Parameter is not used. */
+
       if (dump_is_off) return 0;
 
       dump_is_off = 1;
@@ -381,6 +383,8 @@ static PLI_INT32 sys_dumpon_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       s_vpi_time now;
       PLI_UINT64 now64;
 
+      (void)name; /* Parameter is not used. */
+
       if (!dump_is_off) return 0;
 
       dump_is_off = 0;
@@ -407,6 +411,8 @@ static PLI_INT32 sys_dumpall_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       s_vpi_time now;
       PLI_UINT64 now64;
+
+      (void)name; /* Parameter is not used. */
 
       if (dump_is_off) return 0;
       if (dump_file == 0) return 0;
@@ -501,6 +507,7 @@ static PLI_INT32 sys_dumpfile_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
  */
 static PLI_INT32 sys_dumpflush_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
+      (void)name; /* Parameter is not used. */
       return 0;
 }
 
@@ -509,6 +516,8 @@ static PLI_INT32 sys_dumplimit_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);
       s_vpi_value val;
+
+      (void)name; /* Parameter is not used. */
 
       /* Get the value and set the dump limit. */
       val.format = vpiIntVal;
@@ -726,6 +735,8 @@ static PLI_INT32 sys_dumpvars_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpiHandle item;
       s_vpi_value value;
       unsigned depth = 0;
+
+      (void)name; /* Parameter is not used. */
 
       if (dump_file == 0) {
 	    open_dumpfile(callh);

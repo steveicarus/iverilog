@@ -1399,6 +1399,8 @@ static PLI_INT32 monitor_cb_2(p_cb_data cb)
       char* result;
       unsigned int size, location=0;
 
+      (void)cb; /* Parameter is not used. */
+
 	/* Because %u and %z may put embedded NULL characters into the
 	 * returned string strlen() may not match the real size! */
       result = get_display(&size, &monitor_info);
@@ -1427,6 +1429,8 @@ static PLI_INT32 monitor_cb_1(p_cb_data cause)
 {
       struct t_cb_data cb;
       struct t_vpi_time timerec;
+
+      (void)cause; /* Parameter is not used. */
 
       if (monitor_enabled == 0) return 0;
       if (monitor_scheduled) return 0;
@@ -1464,6 +1468,8 @@ static PLI_INT32 sys_monitor_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       unsigned idx;
       struct t_cb_data cb;
       struct t_vpi_time timerec;
+
+      (void)name; /* Parameter is not used. */
 
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
@@ -1544,6 +1550,7 @@ static PLI_INT32 sys_monitor_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 static PLI_INT32 sys_monitoron_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
+      (void)name; /* Parameter is not used. */
       monitor_enabled = 1;
       monitor_cb_1(0);
       return 0;
@@ -1551,6 +1558,7 @@ static PLI_INT32 sys_monitoron_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 static PLI_INT32 sys_monitoroff_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
+      (void)name; /* Parameter is not used. */
       monitor_enabled = 0;
       return 0;
 }
@@ -1722,6 +1730,7 @@ static PLI_INT32 sys_sformat_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 
 static PLI_INT32 sys_end_of_compile(p_cb_data cb_data)
 {
+      (void)cb_data; /* Parameter is not used. */
 	/* The default timeformat prints times in unit of simulation
 	   precision. */
       free(timeformat_info.suff);
@@ -1808,11 +1817,13 @@ static PLI_INT32 sys_timeformat_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_timeformat_calltf(ICARUS_VPI_CONST PLI_BYTE8*xx)
+static PLI_INT32 sys_timeformat_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       s_vpi_value value;
       vpiHandle sys   = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv  = vpi_iterate(vpiArgument, sys);
+
+      (void)name; /* Parameter is not used. */
 
       if (argv) {
             vpiHandle units = vpi_scan(argv);
@@ -1920,11 +1931,14 @@ static PLI_INT32 sys_printtimescale_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
-static PLI_INT32 sys_printtimescale_calltf(ICARUS_VPI_CONST PLI_BYTE8*xx)
+static PLI_INT32 sys_printtimescale_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
       vpiHandle callh   = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv  = vpi_iterate(vpiArgument, callh);
       vpiHandle item, scope;
+
+      (void)name; /* Parameter is not used. */
+
       if (!argv) {
             item = sys_func_module(callh);
       } else {
@@ -2049,6 +2063,7 @@ static PLI_INT32 sys_severity_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 
 static PLI_INT32 sys_end_of_simulation(p_cb_data cb_data)
 {
+      (void)cb_data; /* Parameter is not used. */
       free(monitor_callbacks);
       monitor_callbacks = 0;
       free(monitor_info.filename);

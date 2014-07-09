@@ -41,6 +41,7 @@ static struct context_s global_context = {NP1, {0} };
 
 static long mti_dist_uniform(long*seed, long start, long end)
 {
+      (void)seed; /* Parameter is not used. */
       if (start >= end) return start;
 
       if ((start > LONG_MIN) || (end < LONG_MAX)) {
@@ -56,6 +57,8 @@ static PLI_INT32 sys_mti_dist_uniform_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       vpiHandle callh, argv, seed, start, end;
       s_vpi_value val;
       long i_seed, i_start, i_end;
+
+      (void)name; /* Parameter is not used. */
 
 	/* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
@@ -92,6 +95,8 @@ static PLI_INT32 sys_mti_random_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       s_vpi_value val;
       int i_seed = COOKIE;
       struct context_s *context;
+
+      (void)name; /* Parameter is not used. */
 
 	/* Get the argument list and look for a seed. If it is there,
 	   get the value and reseed the random number generator. */

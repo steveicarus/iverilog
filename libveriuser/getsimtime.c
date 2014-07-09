@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2011 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2014 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -146,6 +146,8 @@ void tf_unscale_longdelay(void*obj, PLI_INT32 low, PLI_INT32 high,
       ivl_u64_t unscaled;
       vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
 
+      (void)obj; /* Parameter is not used. */
+
       unscaled = high;
       unscaled = (unscaled << 32) | low;
       unscaled *= pow(10, vpi_get(vpiTimeUnit, hand) -
@@ -159,6 +161,8 @@ void tf_scale_realdelay(void*obj, double real, double *areal)
 {
       vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
 
+      (void)obj; /* Parameter is not used. */
+
       *areal = real / pow(10, vpi_get(vpiTimeUnit, hand) -
 			      vpi_get(vpiTimePrecision, 0));
 }
@@ -166,6 +170,8 @@ void tf_scale_realdelay(void*obj, double real, double *areal)
 void tf_unscale_realdelay(void*obj, double real, double *areal)
 {
       vpiHandle hand = vpi_handle(vpiScope, vpi_handle(vpiSysTfCall,0));
+
+      (void)obj; /* Parameter is not used. */
 
       *areal = real * pow(10, vpi_get(vpiTimeUnit, hand) -
 			      vpi_get(vpiTimePrecision, 0));

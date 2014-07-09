@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2013 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2014 Michael Ruff (mruff at chiaro.com)
  *                         Michael Runyan (mrunyan at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
@@ -56,6 +56,8 @@ static unsigned udata_count = 0;
 static PLI_INT32 sys_end_of_simulation(p_cb_data cb_data)
 {
       unsigned idx;
+
+      (void)cb_data; /* Parameter is not used. */
 
       for (idx = 0; idx < udata_count; idx += 1) {
         free(udata_store[idx]);

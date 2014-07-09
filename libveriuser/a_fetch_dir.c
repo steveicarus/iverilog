@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@picturel.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@picturel.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,6 +25,7 @@
 
 PLI_INT32 acc_fetch_direction(handle obj)
 {
+      (void)obj; /* Parameter is not used. */
       if (pli_trace) {
 	    fprintf(pli_trace, "acc_fetch_direction: enter.\n");
 	    fflush(pli_trace);

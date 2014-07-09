@@ -369,7 +369,7 @@ void emit_scaled_range(ivl_scope_t scope, ivl_expr_t expr, unsigned width,
       int rtype;
       int64_t value = get_in_range_int64_from_number(expr, &rtype,
                                                      "range value");
-      (void)scope;  /* scope is not used. */
+      (void)scope;  /* Parameter is not used. */
       if (rtype < 0) fprintf(vlog_out, "[1'bx:1'bx]");
       if (rtype) return;
 
@@ -690,7 +690,7 @@ static unsigned is_local_input(ivl_scope_t scope, ivl_nexus_t nex)
       ivl_signal_t sig = 0;
       unsigned idx, count = ivl_nexus_ptrs(nex);
 
-      (void)scope;  /* scope is not used. */
+      (void)scope;  /* Parameter is not used. */
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
 	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);

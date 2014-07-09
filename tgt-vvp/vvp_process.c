@@ -1364,6 +1364,8 @@ static int show_stmt_disable(ivl_statement_t net, ivl_scope_t sscope)
       int rc = 0;
       ivl_scope_t target = ivl_stmt_call(net);
 
+      (void)sscope; /* Parameter is not used. */
+
 	/* A normal disable statement. */
       if (target) {
 	    show_stmt_file_line(net, "Disable statement.");
@@ -1574,6 +1576,7 @@ static int show_stmt_free(ivl_statement_t net)
  */
 static int show_stmt_noop(ivl_statement_t net)
 {
+      (void)net; /* Parameter is not used. */
       return 0;
 }
 
@@ -1853,6 +1856,8 @@ static unsigned is_delayed_or_event_assign(ivl_scope_t scope,
       ivl_expr_t rval;
       ivl_signal_t lsig, rsig;
 
+      (void)scope; /* Parameter is not used. */
+
 	/* We must have two block elements. */
       if (ivl_stmt_block_count(stmt) != 2) return 0;
 	/* The first must be an assign. */
@@ -1918,6 +1923,8 @@ static unsigned is_repeat_event_assign(ivl_scope_t scope,
       ivl_expr_t rval;
       ivl_signal_t lsig, rsig;
 
+      (void)scope; /* Parameter is not used. */
+
 	/* We must have three block elements. */
       if (ivl_stmt_block_count(stmt) != 3) return 0;
 	/* The first must be an assign. */
@@ -1979,6 +1986,9 @@ static unsigned is_wait(ivl_scope_t scope, ivl_statement_t stmt)
       ivl_statement_t while_wait, wait, wait_stmt;
       ivl_expr_t while_expr, expr;
       const char *bits;
+
+      (void)scope; /* Parameter is not used. */
+
 	/* We must have two block elements. */
       if (ivl_stmt_block_count(stmt) != 2) return 0;
 	/* The first must be a while. */
@@ -2119,6 +2129,9 @@ static unsigned is_utask_call_with_args(ivl_scope_t scope,
       unsigned lineno = ivl_stmt_lineno(stmt);
       ivl_scope_t task_scope = 0;
       port_expr_t port_exprs;
+
+      (void)scope; /* Parameter is not used. */
+
 	/* Check to see if the block is of the basic form first.  */
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_statement_t tmp = ivl_stmt_block_stmt(stmt, idx);
@@ -2349,6 +2362,8 @@ int draw_process(ivl_process_t net, void*x)
       ivl_statement_t stmt = ivl_process_stmt(net);
 
       int push_flag = 0;
+
+      (void)x; /* Parameter is not used. */
 
       for (idx = 0 ;  idx < ivl_process_attr_cnt(net) ;  idx += 1) {
 

@@ -293,7 +293,7 @@ static unsigned emit_power_as_shift(ivl_scope_t scope, ivl_expr_t expr,
       unsigned expr_wid;
       ivl_expr_t lval = ivl_expr_oper1(expr);
       ivl_expr_t rval = ivl_expr_oper2(expr);
-      (void)wid;  /* wid is not used. */
+      (void)wid;  /* Parameter is not used. */
 	/* The L-value must be a number. */
       if (ivl_expr_type(lval) != IVL_EX_NUMBER) return 0;
 	/* The L-value must of the form 2^n. */
@@ -358,7 +358,7 @@ static unsigned emit_power_as_shift(ivl_scope_t scope, ivl_expr_t expr,
 static void emit_expr_array(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
-      (void)wid;  /* wid is not used. */
+      (void)wid;  /* Parameter is not used. */
       emit_scope_call_path(scope, ivl_signal_scope(sig));
       emit_id(ivl_signal_basename(sig));
 }
@@ -561,7 +561,7 @@ static void emit_expr_concat(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       unsigned repeat = ivl_expr_repeat(expr);
       unsigned idx, count = ivl_expr_parms(expr);
 
-      (void)wid;  /* wid is not used. */
+      (void)wid;  /* Parameter is not used. */
       if (repeat != 1) fprintf(vlog_out, "{%u", repeat);
       fprintf(vlog_out, "{");
       count -= 1;
@@ -576,7 +576,7 @@ static void emit_expr_concat(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 
 static void emit_expr_delay(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
-      (void)wid;  /* wid is not used. */
+      (void)wid;  /* Parameter is not used. */
       emit_scaled_delay(scope, ivl_expr_delay_val(expr));
 }
 
@@ -587,7 +587,7 @@ static void emit_expr_event(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_event_t event = ivl_expr_event(expr);
       ivl_scope_t ev_scope = ivl_event_scope(event);
-      (void)wid;  /* wid is not used. */
+      (void)wid;  /* Parameter is not used. */
       assert(! ivl_event_nany(event));
       assert(! ivl_event_npos(event));
       assert(! ivl_event_nneg(event));
@@ -603,7 +603,7 @@ static void emit_expr_event(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 static void emit_expr_number(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_parameter_t param = ivl_expr_parameter(expr);
-      (void)wid;  /* wid is not used. */
+      (void)wid;  /* Parameter is not used. */
       if (param && (param != emitting_param)) {
 	    emit_scope_call_path(scope, ivl_parameter_scope(param));
 	    emit_id(ivl_parameter_basename(param));
@@ -618,7 +618,7 @@ static void emit_expr_real_number(ivl_scope_t scope, ivl_expr_t expr,
                                   unsigned wid)
 {
       ivl_parameter_t param = ivl_expr_parameter(expr);
-      (void)wid;  /* wid is not used. */
+      (void)wid;  /* Parameter is not used. */
       if (param && (param != emitting_param)) {
 	    emit_scope_call_path(scope, ivl_parameter_scope(param));
 	    emit_id(ivl_parameter_basename(param));
@@ -633,7 +633,7 @@ static void emit_expr_real_number(ivl_scope_t scope, ivl_expr_t expr,
 void emit_class_property(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
-      (void)wid;  /* wid is not used. */
+      (void)wid;  /* Parameter is not used. */
       emit_scope_call_path(scope, ivl_signal_scope(sig));
       emit_id(ivl_signal_basename(sig));
       fprintf(vlog_out, ".%s", ivl_expr_name(expr));
@@ -652,8 +652,8 @@ static void emit_expr_scope_piece(ivl_scope_t scope)
 
 static void emit_expr_scope(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
-      (void)scope;  /* scope is not used. */
-      (void)wid;  /* wid is not used. */
+      (void)scope;  /* Parameter is not used. */
+      (void)wid;  /* Parameter is not used. */
       emit_expr_scope_piece(ivl_expr_scope(expr));
 }
 
@@ -854,7 +854,7 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       ivl_expr_t sel_expr = ivl_expr_oper2(expr);
       ivl_expr_t sig_expr = ivl_expr_oper1(expr);
       ivl_select_type_t sel_type = ivl_expr_sel_type(expr);
-      (void)wid;  /* wid is not used. */
+      (void)wid;  /* Parameter is not used. */
 	/* If this is a dynamic array select, translate it differently. */
       if ((ivl_expr_type(sig_expr) == IVL_EX_SIGNAL)  &&
           (ivl_signal_data_type(ivl_expr_signal(sig_expr)) == IVL_VT_DARRAY)) {
@@ -934,7 +934,7 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       unsigned count = ivl_expr_parms(expr);
-      (void)wid;  /* wid is not used. */
+      (void)wid;  /* Parameter is not used. */
       if (count) {
 	    unsigned idx;
 	    fprintf(vlog_out, "(");
@@ -957,7 +957,7 @@ static void emit_expr_func(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 static void emit_expr_signal(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
-      (void)wid;  /* wid is not used. */
+      (void)wid;  /* Parameter is not used. */
       emit_scope_call_path(scope, ivl_signal_scope(sig));
       emit_id(ivl_signal_basename(sig));
       if (ivl_signal_dimensions(sig)) {

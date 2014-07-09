@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2012  Martin Whitaker. (icarus@martin-whitaker.me.uk)
+ *  Copyright (C) 2012-2014  Martin Whitaker. (icarus@martin-whitaker.me.uk)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -136,6 +136,8 @@ static PLI_INT32 sys_countdrivers_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       unsigned counts[4];
       unsigned num_drivers;
       s_vpi_value val;
+
+      (void)name;  /* Parameter is not used. */
 
         /* All returned values are integers. */
       val.format = vpiIntVal;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -34,6 +34,8 @@ static PLI_INT32 sys_test_plusargs_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       int idx;
       int flag = 0;
       size_t slen, len;
+
+      (void)name; /* Parameter is not used. */
 
       vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
       vpiHandle argv = vpi_iterate(vpiArgument, callh);

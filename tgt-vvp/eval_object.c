@@ -162,6 +162,7 @@ static int eval_class_new(ivl_expr_t ex)
 
 static int eval_object_null(ivl_expr_t ex)
 {
+      (void)ex; /* Parameter is not used. */
       fprintf(vvp_out, "    %%null;\n");
       return 0;
 }

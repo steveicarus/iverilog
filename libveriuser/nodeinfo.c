@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -25,6 +25,8 @@
 
 struct t_tfnoeinfo* tf_nodeinfo(PLI_INT32 a, struct t_tfnodeinfo*ip)
 {
+      (void)a; /* Parameter is not used. */
+      (void)ip; /* Parameter is not used. */
       if (pli_trace) {
 	    fprintf(pli_trace, "tf_nodeinfo: enter.\n");
 	    fflush(pli_trace);

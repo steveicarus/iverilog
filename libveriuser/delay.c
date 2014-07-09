@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -24,6 +24,7 @@
 
 static PLI_INT32 delay_callback(struct t_cb_data*cb)
 {
+      (void)cb; /* Parameter is not used. */
       vpi_printf("XXXX delay_callback called.\n");
       return 0;
 }

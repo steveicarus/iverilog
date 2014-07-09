@@ -527,6 +527,8 @@ static PLI_INT32 sys_random_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       static long i_seed = 0;
       long a_seed;
 
+      (void)name; /* Parameter is not used. */
+
       /* Get the argument list and look for a seed. If it is there,
          get the value and reseed the random number generator. */
       callh = vpi_handle(vpiSysTfCall, 0);
@@ -607,6 +609,8 @@ static PLI_INT32 sys_urandom_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       s_vpi_value val;
       long i_seed;
 
+      (void)name; /* Parameter is not used. */
+
       /* Get the argument list and look for a seed. If it is there,
          get the value and reseed the random number generator. */
       callh = vpi_handle(vpiSysTfCall, 0);
@@ -642,6 +646,8 @@ static PLI_INT32 sys_urandom_range_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpiHandle callh, argv, maxval, minval;
       s_vpi_value val;
       unsigned long i_maxval, i_minval;
+
+      (void)name; /* Parameter is not used. */
 
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
@@ -681,6 +687,8 @@ static PLI_INT32 sys_dist_uniform_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       s_vpi_value val;
       long i_seed, i_start, i_end;
 
+      (void)name; /* Parameter is not used. */
+
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
@@ -715,6 +723,8 @@ static PLI_INT32 sys_dist_normal_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpiHandle callh, argv, seed, mean, sd;
       s_vpi_value val;
       long i_seed, i_mean, i_sd;
+
+      (void)name; /* Parameter is not used. */
 
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
@@ -751,6 +761,8 @@ static PLI_INT32 sys_dist_exponential_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       s_vpi_value val;
       long i_seed, i_mean;
 
+      (void)name; /* Parameter is not used. */
+
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
@@ -781,6 +793,8 @@ static PLI_INT32 sys_dist_poisson_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpiHandle callh, argv, seed, mean;
       s_vpi_value val;
       long i_seed, i_mean;
+
+      (void)name; /* Parameter is not used. */
 
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
@@ -813,6 +827,8 @@ static PLI_INT32 sys_dist_chi_square_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       s_vpi_value val;
       long i_seed, i_df;
 
+      (void)name; /* Parameter is not used. */
+
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
@@ -843,6 +859,8 @@ static PLI_INT32 sys_dist_t_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpiHandle callh, argv, seed, df;
       s_vpi_value val;
       long i_seed, i_df;
+
+      (void)name; /* Parameter is not used. */
 
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
@@ -875,6 +893,8 @@ static PLI_INT32 sys_dist_erlang_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       s_vpi_value val;
       long i_seed, i_k, i_mean;
 
+      (void)name; /* Parameter is not used. */
+
       /* Get the argument handles and convert them. */
       callh = vpi_handle(vpiSysTfCall, 0);
       argv = vpi_iterate(vpiArgument, callh);
@@ -904,8 +924,9 @@ static PLI_INT32 sys_dist_erlang_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       return 0;
 }
 
-static PLI_INT32 sys_rand_func_sizetf(PLI_BYTE8 *x)
+static PLI_INT32 sys_rand_func_sizetf(PLI_BYTE8 *name)
 {
+      (void)name; /* Parameter is not used. */
       return 32;
 }
 

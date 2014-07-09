@@ -2484,6 +2484,8 @@ static struct vector_info draw_select_array(ivl_expr_t sube,
       struct vector_info shiv;
       struct vector_info res;
 
+      (void)bit_width; /* Parameter is not used. */
+
       shiv = draw_eval_expr(bit_idx, STUFF_OK_XZ|STUFF_OK_RO);
       draw_eval_expr_into_integer(ix, 3);
       label = local_count++;
@@ -2623,6 +2625,8 @@ static void draw_select_signal_dest(ivl_expr_t expr,
       struct vector_info tmp;
       ivl_signal_t sig = ivl_expr_signal(sube);
 
+      (void)stuff_ok_flag; /* Parameter is not used. */
+
 	/* Special case: If the operand is a signal (not an array) and
 	   the part select is coming from the LSB, and the part select
 	   is no larger than the signal itself, then we can load the
@@ -2660,6 +2664,8 @@ static struct vector_info draw_select_unsized_literal(ivl_expr_t expr,
       struct vector_info subv, shiv, res;
       ivl_expr_t sube  = ivl_expr_oper1(expr);
       ivl_expr_t shift = ivl_expr_oper2(expr);
+
+      (void)stuff_ok_flag; /* Parameter is not used. */
 
       assert(!ivl_expr_sized(sube));
       res.wid = wid;

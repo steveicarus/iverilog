@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008-2011  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2008-2014  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -71,7 +71,7 @@ static PLI_INT32 sys_clog2_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name)
 
       assert(callh != 0);
       argv = vpi_iterate(vpiArgument, callh);
-      (void) name;  /* Not used! */
+      (void)name;  /* Parameter is not used. */
 
 	/* We must have an argument. */
       if (argv == 0) {
@@ -120,7 +120,7 @@ static PLI_INT32 sys_clog2_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       vpiHandle arg;
       s_vpi_value val;
       s_vpi_vecval vec;
-      (void) name;  /* Not used! */
+      (void)name;  /* Parameter is not used. */
 
 	/* Get the argument. */
       arg = vpi_scan(argv);

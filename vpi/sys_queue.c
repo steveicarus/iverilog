@@ -848,6 +848,8 @@ static PLI_INT32 sys_q_initialize_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       s_vpi_value val;
       unsigned invalid_id, invalid_type, invalid_length;
 
+      (void)name; /* Parameter is not used. */
+
 	/* Get the id. */
       invalid_id = get_valid_32(vpi_scan(argv), &id);
 
@@ -964,6 +966,8 @@ static PLI_INT32 sys_q_add_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       s_vpi_vecval job, inform;
       s_vpi_value val;
       unsigned invalid_id;
+
+      (void)name; /* Parameter is not used. */
 
 	/* Get the id. */
       invalid_id = get_valid_32(vpi_scan(argv), &id);
@@ -1086,6 +1090,8 @@ static PLI_INT32 sys_q_remove_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       s_vpi_value val;
       unsigned invalid_id;
 
+      (void)name; /* Parameter is not used. */
+
 	/* Get the id. */
       invalid_id = get_valid_32(vpi_scan(argv), &id);
 
@@ -1193,6 +1199,8 @@ static PLI_INT32 sys_q_full_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       s_vpi_value val;
       unsigned invalid_id;
 
+      (void)name; /* Parameter is not used. */
+
 	/* Get the id. */
       invalid_id = get_valid_32(vpi_scan(argv), &id);
 
@@ -1288,6 +1296,8 @@ static PLI_INT32 sys_q_exam_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name)
       PLI_INT32 id, code, idx, rtn;
       s_vpi_value val;
       unsigned invalid_id, invalid_code;
+
+      (void)name; /* Parameter is not used. */
 
 	/* Get the id. */
       invalid_id = get_valid_32(vpi_scan(argv), &id);

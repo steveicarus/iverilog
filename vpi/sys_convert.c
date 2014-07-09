@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003-2013 Michael Ruff (mruff  at chiaro.com)
+ * Copyright (c) 2003-2014 Michael Ruff (mruff  at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -90,8 +90,16 @@ static void error_message(vpiHandle callh, const char* msg)
     vpi_control(vpiFinish, 1);
 }
 
-static PLI_INT32 sizetf_32 (PLI_BYTE8*x) { return 32; }
-static PLI_INT32 sizetf_64 (PLI_BYTE8*x) { return 64; }
+static PLI_INT32 sizetf_32 (PLI_BYTE8*name)
+{
+    (void)name;  /* Parameter is not used. */
+    return 32;
+}
+static PLI_INT32 sizetf_64 (PLI_BYTE8*name)
+{
+    (void)name;  /* Parameter is not used. */
+    return 64;
+}
 
 static PLI_INT32 sys_convert_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
@@ -123,13 +131,15 @@ static PLI_INT32 sys_convert_compiletf(ICARUS_VPI_CONST PLI_BYTE8*name)
     return 0;
 }
 
-static PLI_INT32 sys_bitstoreal_calltf(ICARUS_VPI_CONST PLI_BYTE8*user)
+static PLI_INT32 sys_bitstoreal_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
     vpiHandle arg  = (vpiHandle) vpi_get_userdata(callh);
     s_vpi_value value;
 
     PLI_UINT32 bits[2];
+
+    (void)name;  /* Parameter is not used. */
 
     /* get value */
     value.format = vpiVectorVal;
@@ -147,11 +157,13 @@ static PLI_INT32 sys_bitstoreal_calltf(ICARUS_VPI_CONST PLI_BYTE8*user)
     return 0;
 }
 
-static PLI_INT32 sys_itor_calltf(ICARUS_VPI_CONST PLI_BYTE8*user)
+static PLI_INT32 sys_itor_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
     vpiHandle arg  = (vpiHandle) vpi_get_userdata(callh);
     s_vpi_value value;
+
+    (void)name;  /* Parameter is not used. */
 
     /* get value */
     value.format = vpiIntVal;
@@ -167,7 +179,7 @@ static PLI_INT32 sys_itor_calltf(ICARUS_VPI_CONST PLI_BYTE8*user)
     return 0;
 }
 
-static PLI_INT32 sys_realtobits_calltf(ICARUS_VPI_CONST PLI_BYTE8*user)
+static PLI_INT32 sys_realtobits_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
     vpiHandle arg  = (vpiHandle) vpi_get_userdata(callh);
@@ -175,6 +187,8 @@ static PLI_INT32 sys_realtobits_calltf(ICARUS_VPI_CONST PLI_BYTE8*user)
     static struct t_vpi_vecval res[2];
 
     PLI_UINT32 bits[2];
+
+    (void)name;  /* Parameter is not used. */
 
     /* get value */
     value.format = vpiRealVal;
@@ -197,13 +211,15 @@ static PLI_INT32 sys_realtobits_calltf(ICARUS_VPI_CONST PLI_BYTE8*user)
     return 0;
 }
 
-static PLI_INT32 sys_rtoi_calltf(ICARUS_VPI_CONST PLI_BYTE8*user)
+static PLI_INT32 sys_rtoi_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 {
     vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
     vpiHandle arg  = (vpiHandle) vpi_get_userdata(callh);
     s_vpi_value value;
     static struct t_vpi_vecval res;
     double val;
+
+    (void)name;  /* Parameter is not used. */
 
     /* get value */
     value.format = vpiRealVal;

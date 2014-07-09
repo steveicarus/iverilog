@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002 Michael Ruff (mruff at chiaro.com)
+ * Copyright (c) 2002-2014 Michael Ruff (mruff at chiaro.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,6 +57,8 @@ PLI_INT32 tf_message(PLI_INT32 level, char*facility,
 		     char*messno, char*fmt, ...)
 {
       va_list ap;
+
+      (void)level; /* Parameter is not used. */
 
       vpi_printf("%s[%s] ", facility, messno);
 

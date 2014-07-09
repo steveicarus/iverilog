@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011-2013  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2011-2014  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,7 +40,8 @@ static unsigned table_count = 0;
 static PLI_INT32 cleanup_table_mod(p_cb_data cause)
 {
       unsigned idx;
-      (void) cause;  /* Unused argument. */
+
+      (void)cause; /* Parameter is not used. */
 
       for (idx = 0; idx < table_count; idx += 1) {
 	    free(tables[idx]->indep);
@@ -633,6 +634,8 @@ static unsigned initialize_table_model(vpiHandle callh, const char *name,
 static double eval_table_model(vpiHandle callh, p_table_mod table)
 {
       unsigned idx;
+
+      (void)callh; /* Parameter is not used. */
 fprintf(stderr, "Evaluating table \"%s\" with %u variables\n",
         table->file.name, table->dims);
       for (idx = 0; idx < table->dims; idx += 1) {

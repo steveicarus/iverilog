@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -411,6 +411,8 @@ static PLI_INT32 sys_readmem_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
 static PLI_INT32 free_readmempath(p_cb_data cb_data)
 {
       unsigned idx;
+
+      (void)cb_data; /* Parameter is not used. */
       for(idx = 0; idx < sl_count; idx += 1) {
 	    free(search_list[idx]);
       }

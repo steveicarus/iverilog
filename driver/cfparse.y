@@ -270,5 +270,6 @@ skip_arg : TOK_PLUSARG
 
 int yyerror(const char*msg)
 {
+	(void)msg; /* Parameter is not used. */
 	return 0;
 }
