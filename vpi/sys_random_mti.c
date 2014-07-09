@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -37,13 +37,7 @@
 /* Icarus seed cookie */
 #define COOKIE	0x1ca1ca1c
 
-static struct context_s global_context = {
-#if defined(__GCC__)
-    .mti =
-#else
-    /* For MSVC simply use the fact that mti is located first */
-#endif
-        NP1 };
+static struct context_s global_context = {NP1, {0} };
 
 static long mti_dist_uniform(long*seed, long start, long end)
 {

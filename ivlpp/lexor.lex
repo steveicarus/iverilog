@@ -1,7 +1,7 @@
 %option prefix="yy"
 %{
 /*
- * Copyright (c) 1999-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -852,7 +852,7 @@ static void def_add_arg(void)
 
     char*arg = yytext;
     char*val;
-    int  val_length;
+    int  val_length = 0;
 
       /* Break into ARG = value. This happens if the source specifies
 	 a default value for the formal argument. In that case, the
