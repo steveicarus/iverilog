@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2013 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2014 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -1429,6 +1429,7 @@ static void emit_stmt_utask(ivl_scope_t scope, ivl_statement_t stmt)
 /* Look to see if this is a SystemVerilog wait fork statement. */
 static unsigned is_wait_fork(ivl_scope_t scope, ivl_statement_t stmt)
 {
+      (void)scope;  /* scope is not used. */
       if (ivl_stmt_nevent(stmt) != 1) return 0;
       if (ivl_stmt_events(stmt, 0) != 0) return 0;
       assert(ivl_statement_type(ivl_stmt_sub_stmt(stmt)) == IVL_ST_NOOP);

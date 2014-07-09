@@ -725,6 +725,7 @@ static int find_tf_process(ivl_process_t proc, ivl_scope_t scope)
 static int emit_tf_process(ivl_scope_t scope, ivl_scope_t parent)
 {
       ivl_scope_type_t sc_type = ivl_scope_type(scope);
+      (void)parent;  /* parent is not used. */
       if ((sc_type == IVL_SCT_FUNCTION) || (sc_type == IVL_SCT_TASK)) {
 	/* Output the initial/always blocks for this module. */
 	    ivl_design_process(design, (ivl_process_f)find_tf_process, scope);

@@ -738,6 +738,7 @@ static ivl_signal_t find_output_signal(ivl_scope_t scope, ivl_nexus_t nex,
                                        unsigned*array_word)
 {
       unsigned idx, count = ivl_nexus_ptrs(nex);
+      (void)array_word;  /* array_word is not used. */
       for (idx = 0; idx < count; idx += 1) {
 	    ivl_nexus_ptr_t nex_ptr = ivl_nexus_ptr(nex, idx);
 	    ivl_signal_t t_sig = ivl_nexus_ptr_sig(nex_ptr);
