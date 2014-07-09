@@ -313,6 +313,8 @@ return(NULL);
 
 static void *fstMmap2(size_t __len, int __fd, off_t __off)
 {
+(void)__off;
+
 unsigned char *pnt = malloc(__len);
 off_t cur_offs = lseek(__fd, 0, SEEK_CUR);
 size_t i;
