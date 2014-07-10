@@ -23,7 +23,8 @@
 # include  <vpi_user.h>
 # include  "priv.h"
 
-struct t_tfnoeinfo* tf_nodeinfo(PLI_INT32 a, struct t_tfnodeinfo*ip)
+/* XXX Not declared or used anywhere? */
+struct t_tfnodeinfo* tf_nodeinfo(PLI_INT32 a, struct t_tfnodeinfo*ip)
 {
       (void)a; /* Parameter is not used. */
       (void)ip; /* Parameter is not used. */

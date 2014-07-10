@@ -1486,7 +1486,7 @@ static void emit_lpm_part_pv(ivl_scope_t scope, ivl_lpm_t lpm)
       fprintf(vlog_out, "]");
 }
 
-unsigned  output_is_module_instantiation_input(ivl_scope_t scope,
+static unsigned  output_is_module_instantiation_input(ivl_scope_t scope,
                                                ivl_nexus_t nex)
 {
       unsigned idx, count = ivl_nexus_ptrs(nex);

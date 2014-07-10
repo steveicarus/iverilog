@@ -57,7 +57,7 @@
 /*
  * Routine to add the given time to the the total time (high/low).
  */
-void add_to_wait_time(uint64_t *high, uint64_t *low, uint64_t c_time)
+static void add_to_wait_time(uint64_t *high, uint64_t *low, uint64_t c_time)
 {
       uint64_t carry = 0U;
 
@@ -71,7 +71,7 @@ void add_to_wait_time(uint64_t *high, uint64_t *low, uint64_t c_time)
  * Routine to divide the given total time (high/low) by the number of
  * items to get the average.
  */
-uint64_t calc_average_wait_time(uint64_t high, uint64_t low, uint64_t total)
+static uint64_t calc_average_wait_time(uint64_t high, uint64_t low, uint64_t total)
 {
       int bit = 64;
       uint64_t result = 0U;

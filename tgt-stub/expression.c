@@ -386,7 +386,7 @@ static void show_ternary_expression(ivl_expr_t net, unsigned ind)
       }
 }
 
-void show_unary_expression(ivl_expr_t net, unsigned ind)
+static void show_unary_expression(ivl_expr_t net, unsigned ind)
 {
       unsigned width = ivl_expr_width(net);
       const char*sign = ivl_expr_signed(net)? "signed" : "unsigned";

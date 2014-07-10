@@ -134,7 +134,7 @@ const char* vvp_signal_label(ivl_signal_t sig)
       return buf;
 }
 
-ivl_signal_t signal_of_nexus(ivl_nexus_t nex, unsigned*word)
+static ivl_signal_t signal_of_nexus(ivl_nexus_t nex, unsigned*word)
 {
       unsigned idx;
       for (idx = 0 ;  idx < ivl_nexus_ptrs(nex) ;  idx += 1) {
@@ -180,7 +180,7 @@ ivl_variable_type_t data_type_of_nexus(ivl_nexus_t nex)
 }
 
 
-ivl_nexus_ptr_t ivl_logic_pin_ptr(ivl_net_logic_t net, unsigned pin)
+static ivl_nexus_ptr_t ivl_logic_pin_ptr(ivl_net_logic_t net, unsigned pin)
 {
       ivl_nexus_t nex = ivl_logic_pin(net, pin);
       unsigned idx;
@@ -201,6 +201,7 @@ ivl_nexus_ptr_t ivl_logic_pin_ptr(ivl_net_logic_t net, unsigned pin)
       return 0;
 }
 
+#if 0
 const char*drive_string(ivl_drive_t drive)
 {
       switch (drive) {
@@ -224,6 +225,7 @@ const char*drive_string(ivl_drive_t drive)
 
       return "";
 }
+#endif
 
 
 /*

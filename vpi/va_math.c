@@ -164,7 +164,7 @@ static void va_error_message(vpiHandle callh, const char *format,
 /*
  * Process an argument.
  */
-vpiHandle va_process_argument(vpiHandle callh, const char *name,
+static vpiHandle va_process_argument(vpiHandle callh, const char *name,
                               vpiHandle arg, const char *post) {
     PLI_INT32 type;
 

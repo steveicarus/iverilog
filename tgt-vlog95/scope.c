@@ -51,7 +51,7 @@ static const char*get_time_const(int time_value)
       }
 }
 
-void emit_func_return(ivl_signal_t sig)
+static void emit_func_return(ivl_signal_t sig)
 {
       if (ivl_signal_dimensions(sig) > 0) {
 	    fprintf(stderr, "%s:%u: vlog95 error: A function cannot return "
@@ -86,7 +86,7 @@ static void emit_sig_id(ivl_signal_t sig)
       fprintf(vlog_out, "\n");
 }
 
-void emit_var_def(ivl_signal_t sig)
+static void emit_var_def(ivl_signal_t sig)
 {
       if (ivl_signal_local(sig)) return;
       fprintf(vlog_out, "%*c", indent, ' ');
@@ -199,7 +199,7 @@ static void save_net_constants(ivl_scope_t scope, ivl_signal_t sig)
       }
 }
 
-void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
+static void emit_net_def(ivl_scope_t scope, ivl_signal_t sig)
 {
       int msb, lsb;
       get_sig_msb_lsb(sig, &msb, &lsb);

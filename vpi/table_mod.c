@@ -92,7 +92,7 @@ static p_table_mod create_table(void)
  * Check to see if this is a constant string. It returns 1 if the argument
  * is a constant string otherwise it returns 0.
  */
-unsigned is_const_string_obj(vpiHandle arg)
+static unsigned is_const_string_obj(vpiHandle arg)
 {
       unsigned rtn = 0;
 

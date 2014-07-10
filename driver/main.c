@@ -188,7 +188,7 @@ static const char** defparm_base = 0;
 static int defparm_size = 0;
 
 /* Function to add a command file name to the FIFO. */
-void add_cmd_file(const char* filename)
+static void add_cmd_file(const char* filename)
 {
       p_command_file new;
 
@@ -205,7 +205,7 @@ void add_cmd_file(const char* filename)
 }
 
 /* Function to return the top command file name from the FIFO. */
-char *get_cmd_file(void)
+static char *get_cmd_file(void)
 {
       char *filename;
 
@@ -625,7 +625,7 @@ void process_file_name(const char*name, int lib_flag)
       }
 }
 
-int process_generation(const char*name)
+static int process_generation(const char*name)
 {
       if (strcmp(name,"1995") == 0)
 	    generation = "1995";
@@ -750,7 +750,7 @@ int process_generation(const char*name)
       return 0;
 }
 
-int process_depfile(const char*name)
+static int process_depfile(const char*name)
 {
       const char*cp = strchr(name, '=');
       if (cp) {
@@ -784,7 +784,7 @@ int process_depfile(const char*name)
 /*
  * If it exists add the SFT file for the given module.
  */
-void add_sft_file(const char *module)
+static void add_sft_file(const char *module)
 {
       char *file;
 

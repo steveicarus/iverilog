@@ -630,7 +630,7 @@ static void emit_expr_real_number(ivl_scope_t scope, ivl_expr_t expr,
 /*
  * Class properties are not supported in vlog95, but they can be translated.
  */
-void emit_class_property(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
+static void emit_class_property(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
 {
       ivl_signal_t sig = ivl_expr_signal(expr);
       (void)wid;  /* Parameter is not used. */

@@ -19,6 +19,7 @@
 
 #include  <vpi_user.h>
 #include  <stdio.h>
+#include "veriuser.h"
 
 /*
  * tf_nump implemented using VPI interface

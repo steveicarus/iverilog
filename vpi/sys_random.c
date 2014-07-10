@@ -41,7 +41,7 @@ static double chi_square(long *seed, long deg_of_free);
 static double t(long *seed, long deg_of_free);
 static double erlangian(long *seed, long k, long mean);
 
-long rtl_dist_chi_square(long *seed, long df)
+static long rtl_dist_chi_square(long *seed, long df)
 {
       double r;
       long i;
@@ -64,7 +64,7 @@ long rtl_dist_chi_square(long *seed, long df)
       return i;
 }
 
-long rtl_dist_erlang(long *seed, long k, long mean)
+static long rtl_dist_erlang(long *seed, long k, long mean)
 {
       double r;
       long i;
@@ -87,7 +87,7 @@ long rtl_dist_erlang(long *seed, long k, long mean)
       return i;
 }
 
-long rtl_dist_exponential(long *seed, long mean)
+static long rtl_dist_exponential(long *seed, long mean)
 {
       double r;
       long i;
@@ -110,7 +110,7 @@ long rtl_dist_exponential(long *seed, long mean)
       return i;
 }
 
-long rtl_dist_normal(long *seed, long mean, long sd)
+static long rtl_dist_normal(long *seed, long mean, long sd)
 {
       double r;
       long i;
@@ -127,7 +127,7 @@ long rtl_dist_normal(long *seed, long mean, long sd)
       return i;
 }
 
-long rtl_dist_poisson(long *seed, long mean)
+static long rtl_dist_poisson(long *seed, long mean)
 {
       long i;
 
@@ -142,7 +142,7 @@ long rtl_dist_poisson(long *seed, long mean)
       return i;
 }
 
-long rtl_dist_t(long *seed, long df)
+static long rtl_dist_t(long *seed, long df)
 {
       double r;
       long i;
@@ -166,7 +166,7 @@ long rtl_dist_t(long *seed, long df)
 }
 
 /* copied from IEEE1364-2001, with slight modifications for 64bit machines. */
-long rtl_dist_uniform(long *seed, long start, long end)
+static long rtl_dist_uniform(long *seed, long start, long end)
 {
       double r;
       long i;

@@ -269,7 +269,7 @@ static void show_stmt_trigger(ivl_statement_t net, unsigned ind)
  * The wait statement contains simply an array of events to wait on,
  * and a sub-statement to execute when an event triggers.
  */
-void show_stmt_wait(ivl_statement_t net, unsigned ind)
+static void show_stmt_wait(ivl_statement_t net, unsigned ind)
 {
       unsigned idx;
       const char*comma = "";
