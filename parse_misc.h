@@ -30,10 +30,10 @@
  * YYLTYPE compels the lexor to use this type and not something other.
  */
 struct vlltype {
-      unsigned first_line;
-      unsigned first_column;
-      unsigned last_line;
-      unsigned last_column;
+      int first_line;
+      int first_column;
+      int last_line;
+      int last_column;
       const char*text;
       std::string get_fileline() const;
 };

@@ -230,7 +230,7 @@ extern "C" void vcd_work_sync(void)
       }
 }
 
-extern "C" extern "C" void vcd_work_flush(void)
+extern "C" void vcd_work_flush(void)
 {
       struct vcd_work_item_s*cell = grab_item();
       cell->type = WT_FLUSH;

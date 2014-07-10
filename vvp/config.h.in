@@ -96,7 +96,7 @@ typedef uint64_t vvp_time64_t;
 # define TIME_FMT_X PRIx64
 #endif
 
-# if UINT64_T_AND_ULONG_SAME
+# ifdef UINT64_T_AND_ULONG_SAME
 #  define UL_AND_TIME64_SAME
 # endif
 
