@@ -82,7 +82,7 @@ CFLAGS="$iverilog_temp_cflags"
 
 AC_SUBST(DEPENDENCY_FLAG, [-MD])
 AC_SUBST(WARNING_FLAGS, ["-Wall $iverilog_wextra_flag -Wshadow"])
-AC_SUBST(WARNING_FLAGS_CC, ["-Wno-unused -Wno-sign-compare"])
+AC_SUBST(WARNING_FLAGS_CC, ["-Wno-sign-compare"])
 AC_SUBST(WARNING_FLAGS_CXX, [""])
 fi
 
