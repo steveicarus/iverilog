@@ -110,7 +110,7 @@ static void draw_lpm_mux_nest(ivl_lpm_t net, const char*muxz)
       unsigned swidth = ivl_lpm_selects(net);
       char*select_input;
 
-      assert(swidth < sizeof(unsigned));
+      assert(swidth < 8*sizeof(unsigned));
       assert(ivl_lpm_size(net) == (1U << swidth));
 
       select_input = strdup(draw_net_input(ivl_lpm_select(net)));
@@ -127,8 +127,8 @@ static void draw_lpm_mux_nest(ivl_lpm_t net, const char*muxz)
       }
 
       for (level = 1 ;  level < swidth-1 ;  level += 1) {
-	    fprintf(vvp_out, "L_%p/%us .part %s, %u, 1;\n",
-		    net, level, select_input, level);
+	    fprintf(vvp_out, "L_%p/%us .part %s, %u, 1; Bit %u of the select\n",
+		    net, level, select_input, level, level);
 
 	    for (idx = 0 ;  idx < (ivl_lpm_size(net) >> level); idx += 2) {
 		  fprintf(vvp_out, "L_%p/%u/%d .functor %s %u",
