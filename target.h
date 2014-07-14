@@ -116,6 +116,7 @@ struct target_t {
       virtual bool net_literal(const NetLiteral*);
       virtual void net_probe(const NetEvProbe*);
       virtual bool sign_extend(const NetSignExtend*);
+      virtual bool substitute(const NetSubstitute*);
 
 	/* Output a process (called for each process). It is up to the
 	   target to recurse if desired. */

@@ -197,6 +197,7 @@ static char* strdupnew(char const *str)
 ".shift/l"  { return K_SHIFTL; }
 ".shift/r"  { return K_SHIFTR; }
 ".shift/rs" { return K_SHIFTRS; }
+".substitute" { return K_SUBSTITUTE; }
 ".thread"   { return K_THREAD; }
 ".timescale" { return K_TIMESCALE; }
 ".tran"     { return K_TRAN; }

@@ -60,19 +60,18 @@ void NetAssign_::nex_output(NexusSet&out)
       }
       Nexus*nex = sig_->pin(use_word).nexus();
       if (base_) {
-	    long tmp = 0;
-	    bool flag = eval_as_long(tmp, base_);
-	    if (!flag) {
-		    // Unable to evaluate the bit/part select of
-		    // the l-value, so this is a mux. Pretty
-		    // sure I don't know how to handle this yet
-		    // in synthesis, so punt for now.
-		  use_base = 0;
-		  use_wid = nex->vector_width();
 
-	    } else {
-		  use_base = tmp;
-	    }
+	      // Unable to evaluate the bit/part select of
+	      // the l-value, so this is a mux. Pretty
+	      // sure I don't know how to handle this yet
+	      // in synthesis, so punt for now.
+
+	      // Even with constant bit/part select, we want to
+	      // return the entire signal as an output. The
+	      // context will need to sort out which bits are
+	      // actually assigned.
+	    use_base = 0;
+	    use_wid = nex->vector_width();
       }
       out.add(nex, use_base, use_wid);
 }

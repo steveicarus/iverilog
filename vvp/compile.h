@@ -124,6 +124,10 @@ extern void compile_concat8(char*label, unsigned w0, unsigned w1,
 			    unsigned w2, unsigned w3,
 			    unsigned argc, struct symb_s*argv);
 
+extern void compile_substitute(char*label, unsigned width,
+			       unsigned soff, unsigned swidth,
+			       unsigned argc, struct symb_s*argv);
+
 /*
  * Arrange for the system task/function call to have its compiletf
  * function called.

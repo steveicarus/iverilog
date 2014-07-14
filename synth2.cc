@@ -68,7 +68,7 @@ bool NetProc::synth_sync(Design*des, NetScope*scope,
  */
 bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 				NexusSet&nex_map, NetBus&nex_out,
-				NetBus&)
+				NetBus&accumulated_nex_out)
 {
       NetNet*rsig = rval_->synthesize(des, scope, rval_);
       assert(rsig);
@@ -103,13 +103,14 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 
 	// Here we note if the l-value is actually a bit/part
 	// select. If so, generate a NetPartSelect to perform the select.
-      if (lval_->lwidth() != lsig->vector_width()) {
+      if ((lval_->lwidth()!=lsig->vector_width()) && !scope->loop_index_tmp.empty()) {
+	      // If we are within a NetForLoop, there may be an index
+	      // value. That is collected from the scope member
+	      // loop_index_tmp, and the evaluate_function method
+	      // knows how to apply it.
+	    ivl_assert(*this, !scope->loop_index_tmp.empty());
 	    ivl_assert(*this, lval_->lwidth() < lsig->vector_width());
 
-	      // XXXX If we are within a NetForLoop or similar
-	      // processing, then there may be an index value. I
-	      // currently do not know how to handle that, but
-	      // probably I'm going to need the index_args passed in.
 	    long base_off = 0;
 
 	      // Evaluate the index expression to a constant.
@@ -117,16 +118,15 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    ivl_assert(*this, base_expr_raw);
 	    NetExpr*base_expr = base_expr_raw->evaluate_function(*this, scope->loop_index_tmp);
 	    if (! eval_as_long(base_off, base_expr)) {
-		  assert(0);
+		  ivl_assert(*this, 0);
 	    }
 	    ivl_assert(*this, base_off >= 0);
 
 	    ivl_variable_type_t tmp_data_type = rsig->data_type();
-	    list<netrange_t>not_an_array;
 	    netvector_t*tmp_type = new netvector_t(tmp_data_type, lsig->vector_width()-1,0);
 
 	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-				    NetNet::WIRE, not_an_array, tmp_type);
+				    NetNet::WIRE, NetNet::not_an_array, tmp_type);
 	    tmp->local_flag(true);
 
 	    NetPartSelect*ps = new NetPartSelect(tmp, base_off, lval_->lwidth(), NetPartSelect::PV);
@@ -134,6 +134,57 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    des->add_node(ps);
 
 	    connect(ps->pin(0), rsig->pin(0));
+	    rsig = tmp;
+
+      } else if (lval_->lwidth() != lsig->vector_width()) {
+	      // In this case, there is no loop_index_tmp, so we are
+	      // not within a NetForLoop. Generate a NetSubstitute
+	      // object to handle the bit/part-select in the l-value.
+	    ivl_assert(*this, scope->loop_index_tmp.empty());
+	    ivl_assert(*this, lval_->lwidth() < lsig->vector_width());
+
+	    long base_off = 0;
+
+	    const NetExpr*base_expr_raw = lval_->get_base();
+	    ivl_assert(*this, base_expr_raw);
+	    NetExpr*base_expr = base_expr_raw->evaluate_function(*this, scope->loop_index_tmp);
+	    if (! eval_as_long(base_off, base_expr)) {
+		  ivl_assert(*this, 0);
+	    }
+	    ivl_assert(*this, base_off >= 0);
+
+	    ivl_variable_type_t tmp_data_type = rsig->data_type();
+	    netvector_t*tmp_type = new netvector_t(tmp_data_type, lsig->vector_width()-1,0);
+
+	    NetNet*tmp = new NetNet(scope, scope->local_symbol(),
+				    NetNet::WIRE, NetNet::not_an_array, tmp_type);
+	      //tmp->local_flag(true);
+
+	    ivl_assert(*this, accumulated_nex_out.pin_count()==1);
+	    NetNet*use_lsig = lsig;
+	    if (accumulated_nex_out.pin(0).is_linked()) {
+		  if (debug_synth2) {
+			cerr << get_fileline() << ": NetAssignBase::synth_async: "
+			     << " Found a use_sig:" << endl;
+			accumulated_nex_out.pin(0).dump_link(cerr, 8);
+		  }
+		  Nexus*tmp_nex = accumulated_nex_out.pin(0).nexus();
+		  use_lsig = tmp_nex->pick_any_net();
+		  ivl_assert(*this, use_lsig);
+	    } else {
+		  if (debug_synth2) {
+			cerr << get_fileline() << ": NetAssignBase::synth_async: "
+			     << " Found no use_sig, resorting to lsig." << endl;
+		  }
+	    }
+
+	    NetSubstitute*ps = new NetSubstitute(use_lsig, rsig,
+						 tmp->vector_width(),
+						 base_off);
+	    ps->set_line(*this);
+	    des->add_node(ps);
+
+	    connect(ps->pin(0), tmp->pin(0));
 	    rsig = tmp;
       }
 
@@ -176,6 +227,11 @@ bool NetProc::synth_async_block_substatement_(Design*des, NetScope*scope,
 		 << "tmp_map.size()==" << tmp_map.size()
 		 << " for statement at " << substmt->get_fileline()
 		 << endl;
+	    for (unsigned idx  = 0 ; idx < accumulated_nex_out.pin_count() ; idx += 1) {
+		  cerr << get_fileline() << ": NetProc::synth_async_block_substatement_: "
+		       << "accumulated_nex_out[" << idx << "] dump link" << endl;
+		  accumulated_nex_out.pin(idx).dump_link(cerr, 8);
+	    }
       }
 
 	/* Create also a temporary NetBus to collect the
@@ -186,7 +242,6 @@ bool NetProc::synth_async_block_substatement_(Design*des, NetScope*scope,
 	// to the version that we can pass to the next
 	// statement. We will move the result back later.
       NetBus accumulated_tmp_out (scope, tmp_map.size());
-
       for (unsigned idx = 0 ; idx < accumulated_nex_out.pin_count() ; idx += 1) {
 	    unsigned ptr = tmp_map.find_nexus(nex_map[idx]);
 	    if (ptr >= tmp_map.size())
@@ -196,7 +251,28 @@ bool NetProc::synth_async_block_substatement_(Design*des, NetScope*scope,
 	    accumulated_nex_out.pin(idx).unlink();
       }
 
+      if (debug_synth2) {
+	    for (unsigned idx = 0 ; idx < nex_map.size() ; idx += 1) {
+		  cerr << get_fileline() << ": NetProc::synth_async_block_substatement_: nex_map[" << idx << "] dump link, base=" << nex_map[idx].base << ", wid=" << nex_map[idx].wid << endl;
+		  nex_map[idx].lnk.dump_link(cerr, 8);
+             }
+	    for (unsigned idx = 0 ; idx < tmp_map.size() ; idx += 1) {
+	          cerr << get_fileline() << ": NetProc::synth_async_block_substatement_: tmp_map[" << idx << "] dump link, base=" << tmp_map[idx].base << ", wid=" << tmp_map[idx].wid << endl;
+		  tmp_map[idx].lnk.dump_link(cerr, 8);
+             }
+	    for (unsigned idx  = 0 ; idx < accumulated_tmp_out.pin_count() ; idx += 1) {
+	          cerr << get_fileline() << ": NetProc::synth_async_block_substatement_: accumulated_tmp_out[" << idx << "] dump link" << endl;
+		  accumulated_tmp_out.pin(idx).dump_link(cerr, 8);
+            }
+      }
+
       bool ok_flag = substmt->synth_async(des, scope, tmp_map, tmp_out, accumulated_tmp_out);
+
+      if (debug_synth2) {
+	    cerr << get_fileline() << ": NetProc::synth_async_block_substatement_: "
+		  "substmt->synch_async(...) --> " << (ok_flag? "true" : "false")
+		 << " for statement at " << substmt->get_fileline() << "." << endl;
+      }
 
       if (ok_flag == false)
 	    return false;
@@ -208,6 +284,11 @@ bool NetProc::synth_async_block_substatement_(Design*des, NetScope*scope,
       for (unsigned idx = 0 ;  idx < tmp_out.pin_count() ;  idx += 1) {
 	    unsigned ptr = nex_map.find_nexus(tmp_map[idx]);
 	    ivl_assert(*this, ptr < accumulated_nex_out.pin_count());
+	    if (debug_synth2) {
+	          cerr << get_fileline() << ": NetProc::synth_async_block_substatement_: "
+		       << "tmp_out.pin(" << idx << "):" << endl;
+		  tmp_out.pin(idx).dump_link(cerr, 8);
+            }
 	    connect(accumulated_nex_out.pin(ptr), tmp_out.pin(idx));
       }
 
@@ -615,12 +696,11 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		  cerr << get_fileline() << ": error: Asynchronous if statement"
 		       << " cannot synthesize missing \"else\""
 		       << " without generating latches." << endl;
-		  return false;
+		    //return false;
 	    }
       }
 
       ivl_assert(*this, if_ != 0);
-
 	// Synthesize the condition. This will act as a select signal
 	// for a binary mux.
       NetNet*ssig = expr_->synthesize(des, scope, expr_);
@@ -630,14 +710,26 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    cerr << get_fileline() << ": NetCondit::synth_async: "
 		 << "Synthesize if clause at " << if_->get_fileline()
 		 << endl;
+	    for (unsigned idx = 0 ; idx < accumulated_nex_out.pin_count(); idx += 1) {
+		  cerr << get_fileline() << ": NetCondit::synth_async: "
+		       << "accumulated_nex_out.pin(" << idx << "):" << endl;
+		  accumulated_nex_out.pin(idx).dump_link(cerr, 8);
+	    }
       }
 
       NetBus statement_input (scope, nex_out.pin_count());
+      for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
+	    connect(statement_input.pin(idx), accumulated_nex_out.pin(idx));
+	    if (debug_synth2) {
+		  cerr << get_fileline() << ": NetCondit::synth_async: "
+		       << "statement_input.pin(" << idx << "):" << endl;
+		  statement_input.pin(idx).dump_link(cerr, 8);
+	    }
+      }
 
       bool flag;
       NetBus asig(scope, nex_out.pin_count());
-      NetBus atmp(scope, nex_out.pin_count());
-      flag = if_->synth_async(des, scope, nex_map, asig, atmp);
+      flag = if_->synth_async(des, scope, nex_map, asig, accumulated_nex_out);
       if (!flag) {
 	    return false;
       }
@@ -653,29 +745,56 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 
       } else {
 
-	    for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
-		  connect(statement_input.pin(idx), accumulated_nex_out.pin(idx));
-	    }
 	    if (debug_synth2) {
 		  cerr << get_fileline() << ": NetCondit::synth_async: "
 		       << "Synthesize else clause at " << else_->get_fileline()
 		       << endl;
+		  for (unsigned idx = 0 ; idx < accumulated_nex_out.pin_count(); idx += 1) {
+			cerr << get_fileline() << ": NetCondit::synth_async: "
+			     << "accumulated_nex_out.pin(" << idx << "):" << endl;
+			accumulated_nex_out.pin(idx).dump_link(cerr, 8);
+		  }
+		  for (unsigned idx = 0 ; idx < statement_input.pin_count() ; idx += 1) {
+			cerr << get_fileline() << ": NetCondit::synth_async: "
+			     << "statement_input.pin(" << idx << "):" << endl;
+			statement_input.pin(idx).dump_link(cerr, 8);
+		  }
 	    }
 
-	    flag = synth_async_block_substatement_(des, scope, nex_map, accumulated_nex_out, else_);
+	    NetBus accumulated_btmp_out (scope, statement_input.pin_count());
+	    for (unsigned idx = 0 ; idx < accumulated_btmp_out.pin_count() ; idx += 1) {
+		  if (statement_input.pin(idx).is_linked())
+			connect(accumulated_btmp_out.pin(idx), statement_input.pin(idx));
+		  else
+			connect(accumulated_btmp_out.pin(idx), accumulated_nex_out.pin(idx));
+	    }
+	    if (debug_synth2) {
+		  for (unsigned idx = 0 ; idx < accumulated_btmp_out.pin_count() ; idx += 1) {
+			cerr << get_fileline() << ": NetCondit::synth_async: "
+			     << "accumulated_btmp_out.pin(" << idx << "):" << endl;
+			accumulated_btmp_out.pin(idx).dump_link(cerr, 8);
+		  }
+	    }
+
+	    flag = synth_async_block_substatement_(des, scope, nex_map, accumulated_btmp_out, else_);
 	    if (!flag) {
 		  return false;
 	    }
-	    for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
-		  connect(bsig.pin(idx), accumulated_nex_out.pin(idx));
-		  accumulated_nex_out.pin(idx).unlink();
-	    }
-
 	    if (debug_synth2) {
 		  cerr << get_fileline() << ": NetCondit::synth_async: "
 		       << "synthesize else clause at " << else_->get_fileline()
 		       << " is done." << endl;
+		  for (unsigned idx = 0 ; idx < accumulated_btmp_out.pin_count() ; idx += 1) {
+			cerr << get_fileline() << ": NetCondit::synth_async: "
+			     << "accumulated_btmp_out.pin(" << idx << "):" << endl;
+			accumulated_btmp_out.pin(idx).dump_link(cerr, 8);
+		  }
 	    }
+	    for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
+		  connect(bsig.pin(idx), accumulated_btmp_out.pin(idx));
+		  accumulated_btmp_out.pin(idx).unlink();
+	    }
+
       }
 
 	/* The nex_out output, asig input, and bsig input all have the
@@ -724,8 +843,21 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    else
 		  mux_width = 0;
 
-	    const unsigned mux_lwidth = mux_width;
-	    ivl_assert(*this, mux_width != 0);
+	    if (debug_synth2) {
+		  if (asig_is_present)
+			cerr << get_fileline() << ": NetCondit::synth_async: "
+			     << "asig_is_present,"
+			     << " asig width=" << asig.pin(idx).nexus()->vector_width()
+			     << endl;
+		  if (bsig_is_present)
+			cerr << get_fileline() << ": NetCondit::synth_async: "
+			     << "bsig_is_present,"
+			     << " bsig width=" << bsig.pin(idx).nexus()->vector_width()
+			     << endl;
+		  cerr << get_fileline() << ": NetCondit::synth_async: "
+		       << "Calculated mux_width=" << mux_width
+		       << endl;
+	    }
 
 	    NetPartSelect*apv = detect_partselect_lval(asig.pin(idx));
 	    if (debug_synth2 && apv) {
@@ -741,6 +873,9 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		       << ", width=" << bpv->width() << endl;
 	    }
 
+	    unsigned mux_lwidth = mux_width;
+	    ivl_assert(*this, mux_width != 0);
+
 	    if (apv && bpv && apv->width()==bpv->width() && apv->base()==bpv->base()) {
 		    // The a and b sides are both assigning to the
 		    // same bits of the output, so we can use that to
@@ -754,7 +889,6 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 		  connect(bsig.pin(idx), bpv->pin(0));
 		  delete apv;
 		  delete bpv;
-
 	    } else {
 		    // The part selects are of no use. Forget them.
 		  apv = 0;
@@ -789,7 +923,6 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 				    mux_width, 2, 1);
 	    mux->set_line(*this);
 
-	    list<netrange_t>not_an_array;
 	    netvector_t*tmp_type = 0;
 	    if (mux_width==1)
 		  tmp_type = new netvector_t(mux_data_type);
@@ -798,7 +931,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 
 	      // Bind some temporary signals to carry pin type.
 	    NetNet*otmp = new NetNet(scope, scope->local_symbol(),
-				     NetNet::WIRE, not_an_array, tmp_type);
+				     NetNet::WIRE, NetNet::not_an_array, tmp_type);
 	    otmp->local_flag(true);
 	    connect(mux->pin_Result(),otmp->pin(0));
 
@@ -809,14 +942,14 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    if (! asig_is_present) {
 		  tmp_type = new netvector_t(mux_data_type, mux_width-1,0);
 		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-					  NetNet::WIRE, not_an_array, tmp_type);
+					  NetNet::WIRE, NetNet::not_an_array, tmp_type);
 		  connect(mux->pin_Data(1), tmp->pin(0));
 	    }
 
 	    if (! bsig_is_present) {
 		  tmp_type = new netvector_t(mux_data_type, mux_width-1,0);
 		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-					  NetNet::WIRE, not_an_array, tmp_type);
+					  NetNet::WIRE, NetNet::not_an_array, tmp_type);
 		  connect(mux->pin_Data(0), tmp->pin(0));
 	    }
 
@@ -826,7 +959,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    if (mux_width < mux_lwidth) {
 		  tmp_type = new netvector_t(mux_data_type, mux_lwidth-1,0);
 		  NetNet*tmp = new NetNet(scope, scope->local_symbol(),
-					  NetNet::WIRE, not_an_array, tmp_type);
+					  NetNet::WIRE, NetNet::not_an_array, tmp_type);
 		  NetPartSelect*ps = new NetPartSelect(tmp, mux_off, mux_width, NetPartSelect::PV);
 		  des->add_node(ps);
 		  connect(ps->pin(0), otmp->pin(0));
@@ -846,7 +979,7 @@ bool NetCondit::synth_async(Design*des, NetScope*scope,
 	    if (mux_width < mux_lwidth && if_ && else_) {
 		  if (debug_synth2) {
 			cerr << get_fileline() << ": NetCondit::synth_async: "
-			     << "This MetMux only impacts a few bits of output,"
+			     << "This NetMux only impacts a few bits of output,"
 			     << " so combine nex_out with statement input."
 			     << endl;
 			cerr << get_fileline() << ": NetCondit::synth_async: "
@@ -999,10 +1132,9 @@ bool NetProcTop::synth_async(Design*des)
 	    NexusSet::elem_t&item = nex_set[idx];
 	    if (item.base != 0 || item.wid!=item.lnk.nexus()->vector_width()) {
 		  ivl_variable_type_t tmp_data_type = IVL_VT_LOGIC;
-		  list<netrange_t>not_an_array;
 		  netvector_t*tmp_type = new netvector_t(tmp_data_type, item.lnk.nexus()->vector_width()-1,0);
 		  NetNet*tmp_sig = new NetNet(scope(), scope()->local_symbol(),
-					      NetNet::WIRE, not_an_array, tmp_type);
+					      NetNet::WIRE, NetNet::not_an_array, tmp_type);
 		  tmp_sig->local_flag(true);
 
 		  NetPartSelect*tmp = new NetPartSelect(tmp_sig, item.base,

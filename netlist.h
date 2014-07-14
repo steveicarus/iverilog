@@ -2193,6 +2193,40 @@ class NetPartSelect  : public NetNode {
 };
 
 /*
+ * This device supports simple substitution of a part within a wider
+ * vector. For example, this:
+ *
+ *      wire [7:0] foo = NetSubstitute(bar, bat, off);
+ *
+ * meaus that bar is a vector the same width as foo, bat is a narrower
+ * vector. The off is a constant offset into the bar vector. This
+ * looks something like this:
+ *
+ *      foo = bar;
+ *      foo[off +: <width_of_bat>] = bat;
+ *
+ * There is no direct way in Verilog to express this (as a single
+ * device), it instead turns up in certain synthesis situation,
+ * i.e. the example above.
+ */
+class NetSubstitute : public NetNode {
+
+    public:
+      NetSubstitute(NetNet*sig, NetNet*sub, unsigned wid, unsigned off);
+      ~NetSubstitute();
+
+      inline unsigned width() const { return wid_; }
+      inline unsigned base() const  { return off_; }
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*tgt) const;
+
+    private:
+      unsigned wid_;
+      unsigned off_;
+};
+
+/*
  * The NetBUFZ is a magic device that represents the continuous
  * assign, with the output being the target register and the input
  * the logic that feeds it. The netlist preserves the directional

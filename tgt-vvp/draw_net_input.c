@@ -476,6 +476,7 @@ static char* draw_net_input_drive(ivl_nexus_t nex, ivl_nexus_ptr_t nptr)
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV: /* NOTE: This is only a partial driver. */
 	  case IVL_LPM_REPEAT:
+	  case IVL_LPM_SUBSTITUTE:
 	    if (ivl_lpm_q(lpm) == nex) {
 		  char tmp[128];
 		  snprintf(tmp, sizeof tmp, "L_%p", lpm);

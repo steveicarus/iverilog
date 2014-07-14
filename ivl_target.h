@@ -328,6 +328,7 @@ typedef enum ivl_lpm_type_e {
       IVL_LPM_SHIFTR =  7,
       IVL_LPM_SIGN_EXT=27,
       IVL_LPM_SUB    =  8,
+      IVL_LPM_SUBSTITUTE=39,
       /* IVL_LPM_RAM =  9, / obsolete */
       IVL_LPM_UFUNC  = 14
 } ivl_lpm_type_t;
@@ -1409,7 +1410,7 @@ extern ivl_nexus_t ivl_lpm_sync_set(ivl_lpm_t net);
 extern ivl_expr_t  ivl_lpm_sset_value(ivl_lpm_t net);
   /* IVL_LPM_ARRAY */
 extern ivl_signal_t ivl_lpm_array(ivl_lpm_t net);
-  /* IVL_LPM_PART */
+  /* IVL_LPM_PART IVL_LPM_SUBSTITUTE */
 extern unsigned ivl_lpm_base(ivl_lpm_t net);
   /* IVL_LPM_FF */
 extern ivl_nexus_t ivl_lpm_clk(ivl_lpm_t net);
@@ -1419,14 +1420,14 @@ extern ivl_scope_t  ivl_lpm_define(ivl_lpm_t net);
 extern ivl_nexus_t ivl_lpm_enable(ivl_lpm_t net);
   /* IVL_LPM_ADD IVL_LPM_CONCAT IVL_LPM_FF IVL_LPM_PART IVL_LPM_MULT
      IVL_LPM_MUX IVL_LPM_POW IVL_LPM_SHIFTL IVL_LPM_SHIFTR IVL_LPM_SUB
-     IVL_LPM_UFUNC */
+     IVL_LPM_UFUNC IVL_LPM_SUBSTITUTE */
 extern ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_MULT IVL_LPM_POW IVL_LPM_SUB IVL_LPM_CMP_EQ
      IVL_LPM_CMP_EEQ IVL_LPM_CMP_EQX IVL_LPM_CMP_EQZ IVL_LPM_CMP_NEE */
 extern ivl_nexus_t ivl_lpm_datab(ivl_lpm_t net, unsigned idx);
   /* IVL_LPM_ADD IVL_LPM_FF IVL_LPM_MULT IVL_LPM_PART IVL_LPM_POW
      IVL_LPM_SUB IVL_LPM_UFUNC IVL_LPM_CMP_EEQ IVL_LPM_CMP_EQX
-     IVL_LPM_CMP_EQZ IVL_LPM_CMP_NEE */
+     IVL_LPM_CMP_EQZ IVL_LPM_CMP_NEE IVL_LPM_SUBSTITUTE */
 extern ivl_nexus_t ivl_lpm_q(ivl_lpm_t net);
 extern ivl_drive_t ivl_lpm_drive0(ivl_lpm_t net);
 extern ivl_drive_t ivl_lpm_drive1(ivl_lpm_t net);

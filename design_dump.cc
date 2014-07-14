@@ -778,6 +778,21 @@ void NetPartSelect::dump_node(ostream&o, unsigned ind) const
       dump_obj_attr(o, ind+4);
 }
 
+void NetSubstitute::dump_node(ostream&fd, unsigned ind) const
+{
+      fd << setw(ind) << "" << "NetSubstitute: "
+	 << name();
+      if (rise_time())
+	    fd << " #(" << *rise_time()
+	       << "," << *fall_time()
+	       << "," << *decay_time() << ")";
+      else
+	    fd << " #(.,.,.)";
+      fd << " width=" << wid_ << " base=" << off_ <<endl;
+      dump_node_pins(fd, ind+4);
+      dump_obj_attr(fd, ind+4);
+}
+
 void NetReplicate::dump_node(ostream&o, unsigned ind) const
 {
       o << setw(ind) << "" << "NetReplicate: "

@@ -1100,6 +1100,32 @@ bool dll_target::tran(const NetTran*net)
       return true;
 }
 
+bool dll_target::substitute(const NetSubstitute*net)
+{
+      ivl_lpm_t obj = new struct ivl_lpm_s;
+      obj->type = IVL_LPM_SUBSTITUTE;
+      obj->name = net->name();
+      assert(net->scope());
+      obj->scope = find_scope(des_, net->scope());
+      assert(obj->scope);
+      FILE_NAME(obj, net);
+
+      obj->width = net->width();
+      obj->u_.substitute.base = net->base();
+
+      obj->u_.substitute.q = net->pin(0).nexus()->t_cookie();
+      obj->u_.substitute.a = net->pin(1).nexus()->t_cookie();
+      obj->u_.substitute.s = net->pin(2).nexus()->t_cookie();
+      nexus_lpm_add(obj->u_.substitute.q, obj, 0, IVL_DR_STRONG, IVL_DR_STRONG);
+      nexus_lpm_add(obj->u_.substitute.a, obj, 0, IVL_DR_HiZ,    IVL_DR_HiZ);
+      nexus_lpm_add(obj->u_.substitute.s, obj, 0, IVL_DR_HiZ,    IVL_DR_HiZ);
+
+      make_lpm_delays_(obj, net);
+      scope_add_lpm(obj->scope, obj);
+
+      return true;
+}
+
 bool dll_target::sign_extend(const NetSignExtend*net)
 {
       struct ivl_lpm_s*obj = new struct ivl_lpm_s;

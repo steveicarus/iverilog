@@ -2134,6 +2134,10 @@ static void draw_lpm_in_scope(ivl_lpm_t net)
 	    draw_lpm_sfunc(net);
 	    return;
 
+	  case IVL_LPM_SUBSTITUTE:
+	    draw_lpm_substitute(net);
+	    return;
+
 	  case IVL_LPM_UFUNC:
 	    draw_lpm_ufunc(net);
 	    return;
