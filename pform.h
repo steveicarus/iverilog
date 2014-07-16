@@ -406,6 +406,7 @@ extern void pform_module_specify_path(PSpecPath*obj);
  */
 extern PProcess*  pform_make_behavior(ivl_process_type_t, Statement*,
 				      list<named_pexpr_t>*attr);
+extern void pform_mc_translate_on(bool flag);
 
 extern std::vector<PWire*>* pform_make_udp_input_ports(list<perm_string>*);
 

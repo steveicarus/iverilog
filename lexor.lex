@@ -134,9 +134,12 @@ TU [munpf]
 \n { yylloc.first_line += 1; }
 
   /* C++ style comments start with / / and run to the end of the
-     current line. These are very easy to handle. */
+     current line. These are very easy to handle. The meta-comments
+     format is a little more tricky to handle, but do what we can. */
 
-"//".* { comment_enter = YY_START; BEGIN(LCOMMENT); }
+"//"{W}*"synthesis"{W}*"translate_on"{W}*\n { return K_MC_TRANSLATE_ON; }
+"//"{W}*"synthesis"{W}*"translate_off"{W}*\n { return K_MC_TRANSLATE_OFF; }
+"//" { comment_enter = YY_START; BEGIN(LCOMMENT); }
 <LCOMMENT>.    { yymore(); }
 <LCOMMENT>\n   { yylloc.first_line += 1; BEGIN(comment_enter); }
 

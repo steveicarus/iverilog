@@ -44,6 +44,15 @@
 # include  "ivl_alloc.h"
 
 /*
+ * The "// synthesis translate_on/off" meta-comments cause this flag
+ * to be turned off or on. The pform_make_behavior and similar
+ * functions look at this flag and may choose to add implicit ivl
+ * synthesis flags.
+ */
+static bool pform_mc_translate_flag = true;
+void pform_mc_translate_on(bool flag) { pform_mc_translate_flag = flag; }
+
+/*
  * The pform_modules is a map of the modules that have been defined in
  * the top level. This should not contain nested modules/programs.
  * pform_primitives is similar, but for UDP primitives.
@@ -3196,6 +3205,18 @@ PProcess* pform_make_behavior(ivl_process_type_t type, Statement*st,
 			      list<named_pexpr_t>*attr)
 {
       PProcess*pp = new PProcess(type, st);
+
+	// If we are in a part of the code where the meta-comment
+	// synthesis translate_off is in effect, then implicitly add
+	// the ivl_synthesis_off attribute to any behavioral code that
+	// we run into.
+      if (pform_mc_translate_flag == false) {
+	    if (attr == 0) attr = new list<named_pexpr_t>;
+	    named_pexpr_t tmp;
+	    tmp.name = perm_string::literal("ivl_synthesis_off");
+	    tmp.parm = 0;
+	    attr->push_back(tmp);
+      }
 
       pform_bind_attributes(pp->attributes, attr);
 
