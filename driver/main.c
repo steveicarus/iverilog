@@ -907,7 +907,7 @@ int main(int argc, char **argv)
 	}
       }
 
-      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hI:M:m:N::o:P:p:Ss:T:t:vVW:y:Y:")) != EOF) {
+      while ((opt = getopt(argc, argv, "B:c:D:d:Ef:g:hI:M:m:N:o:P:p:Ss:T:t:vVW:y:Y:")) != EOF) {
 
 	    switch (opt) {
 		case 'B':
