@@ -1075,6 +1075,8 @@ extern "C" unsigned ivl_lpm_base(ivl_lpm_t net)
 	  case IVL_LPM_PART_VP:
 	  case IVL_LPM_PART_PV:
 	    return net->u_.part.base;
+	  case IVL_LPM_SUBSTITUTE:
+	    return net->u_.substitute.base;
 	  default:
 	    assert(0);
 	    return 0;
@@ -1229,6 +1231,13 @@ extern "C" ivl_nexus_t ivl_lpm_data(ivl_lpm_t net, unsigned idx)
 	    assert(idx < (net->u_.sfunc.ports-1));
 	    return net->u_.sfunc.pins[idx+1];
 
+	  case IVL_LPM_SUBSTITUTE:
+	    assert(idx <= 1);
+	    if (idx == 0)
+		  return net->u_.substitute.a;
+	    else
+		  return net->u_.substitute.s;
+
 	  case IVL_LPM_UFUNC:
 	      // Skip the return port.
 	    assert(idx < (net->u_.ufunc.ports-1));
@@ -1356,6 +1365,9 @@ extern "C" ivl_nexus_t ivl_lpm_q(ivl_lpm_t net)
 
 	  case IVL_LPM_REPEAT:
 	    return net->u_.repeat.q;
+
+	  case IVL_LPM_SUBSTITUTE:
+	    return net->u_.substitute.q;
 
 	  case IVL_LPM_ARRAY:
 	    return net->u_.array.q;
@@ -1488,6 +1500,7 @@ extern "C" int ivl_lpm_signed(ivl_lpm_t net)
 	  case IVL_LPM_PART_PV:
 	    return net->u_.part.signed_flag;
 	  case IVL_LPM_REPEAT:
+	  case IVL_LPM_SUBSTITUTE:
 	    return 0;
 	  case IVL_LPM_ARRAY: // Array ports take the signedness of the array.
 	    return net->u_.array.sig->net_type->get_signed()? 1 : 0;

@@ -167,6 +167,11 @@ bool NetSignExtend::emit_node(struct target_t*tgt) const
       return tgt->sign_extend(this);
 }
 
+bool NetSubstitute::emit_node(struct target_t*tgt) const
+{
+      return tgt->substitute(this);
+}
+
 bool NetUReduce::emit_node(struct target_t*tgt) const
 {
       return tgt->ureduce(this);

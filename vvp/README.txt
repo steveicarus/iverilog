@@ -533,6 +533,22 @@ the *output* vector. The <rept count> is the number of time the input
 vector value is repeated to make the output width. The input width is
 implicit from these numbers. The <symbol> is then the input source.
 
+SUBSTITUTION STATEMENTS:
+
+The substition statement doesn't have a direct analog in Verilog, it
+only turns up in synthesis. It is a sorthand for forms like this:
+
+   foo = <a>;
+   foo[n] = <s>;
+
+The format of the substitute statement is:
+
+        <label> .substitute <wid>, <soff> <swid>, <symbol>, <symbol> ;
+
+The first <symbol> must have the width <wid>, and is passed through,
+except for the bits within [<soff> +: <swid>]. The second <symbol>
+collects a vector that goes into that part.
+
 REDUCTION LOGIC
 
 The reduction logic statements take in a single vector, and propagate

@@ -103,6 +103,7 @@ extern int draw_func_definition(ivl_scope_t scope);
 extern int draw_scope(ivl_scope_t scope, ivl_scope_t parent);
 
 extern void draw_lpm_mux(ivl_lpm_t net);
+extern void draw_lpm_substitute(ivl_lpm_t net);
 
 extern struct vector_info draw_ufunc_expr(ivl_expr_t expr, unsigned wid);
 extern void draw_ufunc_real(ivl_expr_t expr);

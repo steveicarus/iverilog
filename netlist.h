@@ -161,6 +161,8 @@ class Link {
       NetPins*get_obj();
       unsigned get_pin() const;
 
+      void dump_link(ostream&fd, unsigned ind) const;
+
     private:
 	// The NetNode manages these. They point back to the
 	// NetNode so that following the links can get me here.
@@ -207,6 +209,10 @@ class NetPins : public LineInfo {
       bool is_linked();
       bool pins_are_virtual(void) const;
       void devirtualize_pins(void);
+
+	// This is for showing a brief description of the object to
+	// the stream. It is used for debug and diagnostics.
+      virtual void show_type(std::ostream&fd) const;
 
     private:
       Link*pins_;
@@ -257,6 +263,8 @@ class NetObj  : public NetPins, public Attrib {
       void decay_time(const NetExpr* d) { delay3_ = d; }
 
       void dump_obj_attr(ostream&, unsigned) const;
+
+      virtual void show_type(std::ostream&fd) const;
 
     private:
       NetScope*scope_;
@@ -641,6 +649,8 @@ class NetNet  : public NetObj, public PortType {
 		  UNRESOLVED_WIRE };
 
       typedef PortType::Enum PortType;
+
+      static const std::list<netrange_t>not_an_array;
 
     public:
 	// This form is the more generic form of the constructor. For
@@ -2180,6 +2190,40 @@ class NetPartSelect  : public NetNode {
       unsigned wid_;
       dir_t    dir_;
       bool signed_flag_;
+};
+
+/*
+ * This device supports simple substitution of a part within a wider
+ * vector. For example, this:
+ *
+ *      wire [7:0] foo = NetSubstitute(bar, bat, off);
+ *
+ * meaus that bar is a vector the same width as foo, bat is a narrower
+ * vector. The off is a constant offset into the bar vector. This
+ * looks something like this:
+ *
+ *      foo = bar;
+ *      foo[off +: <width_of_bat>] = bat;
+ *
+ * There is no direct way in Verilog to express this (as a single
+ * device), it instead turns up in certain synthesis situation,
+ * i.e. the example above.
+ */
+class NetSubstitute : public NetNode {
+
+    public:
+      NetSubstitute(NetNet*sig, NetNet*sub, unsigned wid, unsigned off);
+      ~NetSubstitute();
+
+      inline unsigned width() const { return wid_; }
+      inline unsigned base() const  { return off_; }
+
+      virtual void dump_node(ostream&, unsigned ind) const;
+      virtual bool emit_node(struct target_t*tgt) const;
+
+    private:
+      unsigned wid_;
+      unsigned off_;
 };
 
 /*

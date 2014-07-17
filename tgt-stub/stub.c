@@ -860,6 +860,37 @@ static void show_lpm_sub(ivl_lpm_t net)
       show_lpm_arithmetic_pins(net);
 }
 
+static void show_lpm_substitute(ivl_lpm_t net)
+{
+      unsigned width = ivl_lpm_width(net);
+      ivl_nexus_t nex_q = ivl_lpm_q(net);
+      ivl_nexus_t nex_a = ivl_lpm_data(net,0);
+      ivl_nexus_t nex_s = ivl_lpm_data(net,1);
+
+      unsigned sbase  = ivl_lpm_base(net);
+      unsigned swidth = width_of_nexus(nex_s);
+
+      fprintf(out, "  LPM_SUBSTITUTE %s: <width=%u, sbase=%u, swidth=%u>\n",
+	      ivl_lpm_basename(net), width, sbase, swidth);
+      fprintf(out, "    Q: %p\n", nex_q);
+      if (width != width_of_nexus(nex_q)) {
+	    fprintf(out, "    ERROR: Width of Q is %u, expecting %u\n",
+		    width_of_nexus(nex_q), width);
+	    stub_errors += 1;
+      }
+      fprintf(out, "    A: %p\n", nex_a);
+      if (width != width_of_nexus(nex_a)) {
+	    fprintf(out, "    ERROR: Width of A is %u, expecting %u\n",
+		    width_of_nexus(nex_a), width);
+	    stub_errors += 1;
+      }
+      fprintf(out, "    S: %p\n", nex_s);
+      if (sbase + swidth > width) {
+	    fprintf(out, "    ERROR: S part is out of bounds\n");
+	    stub_errors += 1;
+      }
+}
+
 static void show_lpm_sfunc(ivl_lpm_t net)
 {
       unsigned width = ivl_lpm_width(net);
@@ -1022,6 +1053,10 @@ static void show_lpm(ivl_lpm_t net)
 
 	  case IVL_LPM_SUB:
 	    show_lpm_sub(net);
+	    break;
+
+	  case IVL_LPM_SUBSTITUTE:
+	    show_lpm_substitute(net);
 	    break;
 
 	  case IVL_LPM_MOD:

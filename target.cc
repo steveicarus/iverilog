@@ -270,6 +270,13 @@ bool target_t::sign_extend(const NetSignExtend*)
       return false;
 }
 
+bool target_t::substitute(const NetSubstitute*)
+{
+      cerr << "target (" << typeid(*this).name() <<  "): "
+	    "Unhandled NetSubstitute node." << endl;
+      return false;
+}
+
 bool target_t::process(const NetProcTop*)
 {
       cerr << "target (" << typeid(*this).name() <<  "): "

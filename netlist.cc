@@ -561,6 +561,8 @@ void NetNet::calculate_slice_widths_from_packed_dims_(void)
       }
 }
 
+const list<netrange_t> NetNet::not_an_array;
+
 NetNet::NetNet(NetScope*s, perm_string n, Type t,
 	       const list<netrange_t>&unpacked, ivl_type_t use_net_type)
 : NetObj(s, n, calculate_count(unpacked)),
@@ -985,6 +987,20 @@ unsigned NetPartSelect::width() const
 unsigned NetPartSelect::base() const
 {
       return off_;
+}
+
+NetSubstitute::NetSubstitute(NetNet*sig, NetNet*sub, unsigned wid, unsigned off)
+: NetNode(sig->scope(), sig->scope()->local_symbol(), 3), wid_(wid), off_(off)
+{
+      pin(0).set_dir(Link::OUTPUT);
+      pin(1).set_dir(Link::INPUT);
+      pin(2).set_dir(Link::INPUT);
+      connect(pin(1), sig->pin(0));
+      connect(pin(2), sub->pin(0));
+}
+
+NetSubstitute::~NetSubstitute()
+{
 }
 
 NetProc::NetProc()

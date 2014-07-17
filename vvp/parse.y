@@ -92,6 +92,7 @@ static struct __vpiModPath*modpath_dst = 0;
 %token K_PART_V K_PART_V_S K_PORT K_PORT_INFO K_PV K_REDUCE_AND K_REDUCE_OR K_REDUCE_XOR
 %token K_REDUCE_NAND K_REDUCE_NOR K_REDUCE_XNOR K_REPEAT
 %token K_RESOLV K_SCOPE K_SFUNC K_SFUNC_E K_SHIFTL K_SHIFTR K_SHIFTRS
+%token K_SUBSTITUTE
 %token K_THREAD K_TIMESCALE K_TRAN K_TRANIF0 K_TRANIF1 K_TRANVP
 %token K_UFUNC K_UFUNC_E K_UDP K_UDP_C K_UDP_S
 %token K_VAR K_VAR_COBJECT K_VAR_DARRAY
@@ -293,6 +294,10 @@ statement
   | T_LABEL K_CONCAT8 '[' T_NUMBER T_NUMBER T_NUMBER T_NUMBER ']' ','
     symbols ';'
       { compile_concat8($1, $4, $5, $6, $7, $10.cnt, $10.vect); }
+
+  /* Substitutions (similar to concatenations) */
+  | T_LABEL K_SUBSTITUTE T_NUMBER ',' T_NUMBER T_NUMBER ',' symbols ';'
+      { compile_substitute($1, $3, $5, $6, $8.cnt, $8.vect); }
 
   /* The ABS statement is a special arithmetic node that takes 1
      input. Re-use the symbols rule. */

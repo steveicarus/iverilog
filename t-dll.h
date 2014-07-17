@@ -90,6 +90,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       bool net_literal(const NetLiteral*);
       void net_probe(const NetEvProbe*);
       bool sign_extend(const NetSignExtend*);
+      bool substitute(const NetSubstitute*);
 
       bool process(const NetProcTop*);
       bool process(const NetAnalogTop*);
@@ -436,6 +437,11 @@ struct ivl_lpm_s {
 		  ivl_nexus_t*pins;
 		  ivl_event_t trigger;
 	    } sfunc;
+
+	    struct ivl_lpm_substitute {
+		  unsigned base;
+		  ivl_nexus_t q, a, s;
+	    } substitute;
 
 	    struct ivl_lpm_ufunc_s {
 		  ivl_scope_t def;
