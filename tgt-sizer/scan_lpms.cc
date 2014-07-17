@@ -125,6 +125,7 @@ void scan_lpms(ivl_scope_t scope, struct sizer_statistics&stats)
 		case IVL_LPM_CONCAT:
 		case IVL_LPM_CONCATZ:
 		case IVL_LPM_REPEAT:
+		case IVL_LPM_SUBSTITUTE:
 		  break;
 
 		case IVL_LPM_ADD:
