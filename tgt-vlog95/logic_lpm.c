@@ -360,6 +360,7 @@ static ivl_nexus_t get_lpm_output(ivl_scope_t scope, ivl_lpm_t lpm)
 	case IVL_LPM_SHIFTR:
 	case IVL_LPM_SIGN_EXT:
 	case IVL_LPM_SUB:
+	case IVL_LPM_SUBSTITUTE:
 	case IVL_LPM_UFUNC:
 	      /* If the output of this LPM is a local signal then something
 	       * else will request that this be emitted. */
@@ -1185,6 +1186,13 @@ static void emit_lpm_as_ca(ivl_scope_t scope, ivl_lpm_t lpm,
 	    fprintf(vlog_out, " - ");
 	    emit_nexus_as_ca(scope, ivl_lpm_data(lpm, 1), 0, 0);
 	    fprintf(vlog_out, ")");
+	    break;
+	case IVL_LPM_SUBSTITUTE:
+	    fprintf(vlog_out, "<unknown>");
+	    fprintf(stderr, "%s:%u: vlog95 sorry: Substitute LPMs are "
+	                    "not currently translated.\n",
+	                    ivl_lpm_file(lpm), ivl_lpm_lineno(lpm));
+	    vlog_errors += 1;
 	    break;
 	case IVL_LPM_UFUNC:
 	    emit_scope_path(scope, ivl_lpm_define(lpm));
