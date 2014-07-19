@@ -514,16 +514,24 @@ const char* Nexus::name() const
 		 << obj->name() << " pin " << pin
 		 << " type=" << typeid(*obj).name() << "?" << endl;
 
-      }
-      assert(sig);
-      ostringstream tmp;
-      tmp << scope_path(sig->scope()) << "." << sig->name();
-      if (sig->pin_count() > 1)
-	    tmp << "<" << pin << ">";
+	    ostringstream tmp;
+	    tmp << "nex=" << this << ends;
+	    const string tmps = tmp.str();
+	    name_ = new char[strlen(tmps.c_str()) + 1];
+	    strcpy(name_, tmps.c_str());
+      } else {
+	    assert(sig);
+	    ostringstream tmp;
+	    tmp << scope_path(sig->scope()) << "." << sig->name();
+	    if (sig->pin_count() > 1)
+		  tmp << "<" << pin << ">";
+	    tmp << ends;
 
-      const string tmps = tmp.str();
-      name_ = new char[strlen(tmps.c_str()) + 1];
-      strcpy(name_, tmps.c_str());
+	    const string tmps = tmp.str();
+	    name_ = new char[strlen(tmps.c_str()) + 1];
+	    strcpy(name_, tmps.c_str());
+      }
+
       return name_;
 }
 
