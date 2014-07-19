@@ -34,7 +34,7 @@ bool NetProc::synth_async(Design*, NetScope*, NexusSet&, NetBus&, NetBus&)
 }
 
 bool NetProc::synth_sync(Design*des, NetScope*scope,
-			 NetNet* /* ff_clk */, NetNet* /* ff_ce */,
+			 NetNet* /* ff_clk */, NetBus& /* ff_ce */,
 			 NetBus& /* ff_aclr*/, NetBus& /* ff_aset*/,
 			 NexusSet&nex_map, NetBus&nex_out,
 			 const vector<NetEvProbe*>&events)
@@ -1169,7 +1169,7 @@ bool NetProcTop::synth_async(Design*des)
  * the statements may each infer different reset and enable signals.
  */
 bool NetBlock::synth_sync(Design*des, NetScope*scope,
-			  NetNet*ff_clk, NetNet*ff_ce,
+			  NetNet*ff_clk, NetBus&ff_ce,
 			  NetBus&ff_aclr,NetBus&ff_aset,
 			  NexusSet&nex_map, NetBus&nex_out,
 			  const vector<NetEvProbe*>&events_in)
@@ -1195,11 +1195,25 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 		 for the inputs of the FF bank. */
 	    NetBus tmp_out (scope, tmp_set.size());
 
+	      /* Create a temporary ff_ce (FF clock-enable) that
+		 accounts for the subset of outputs that this
+		 substatement drives. This allows for the possibility
+		 that the substatement has CE patterns of its own. */
+	    NetBus tmp_ce (scope, tmp_set.size());
+	    for (unsigned idx = 0 ; idx < tmp_ce.pin_count() ; idx += 1) {
+		  unsigned ptr = nex_map.find_nexus(tmp_set[idx]);
+		  ivl_assert(*this, ptr < nex_out.pin_count());
+		  if (ff_ce.pin(ptr).is_linked()) {
+			connect(tmp_ce.pin(idx), ff_ce.pin(ptr));
+			ff_ce.pin(ptr).unlink();
+		  }
+	    }
+
 	      /* Now go on with the synchronous synthesis for this
 		 subset of the statement. The tmp_map is the output
 		 nexa that we expect, and the tmp_out is where we want
 		 those outputs connected. */
-	    bool ok_flag = cur->synth_sync(des, scope, ff_clk, ff_ce,
+	    bool ok_flag = cur->synth_sync(des, scope, ff_clk, tmp_ce,
 					   ff_aclr, ff_aset,
 					   tmp_set, tmp_out, events_in);
 	    flag = flag && ok_flag;
@@ -1214,8 +1228,9 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
 		 an assignment is smaller than the r-value. */
 	    for (unsigned idx = 0 ;  idx < tmp_out.pin_count() ; idx += 1) {
 		  unsigned ptr = nex_map.find_nexus(tmp_set[idx]);
-		  assert(ptr < nex_out.pin_count());
+		  ivl_assert(*this, ptr < nex_out.pin_count());
 		  connect(nex_out.pin(ptr), tmp_out.pin(idx));
+		  connect(ff_ce.pin(ptr),   tmp_ce.pin(idx));
 	    }
 
       } while (cur != last_);
@@ -1235,7 +1250,7 @@ bool NetBlock::synth_sync(Design*des, NetScope*scope,
  * expression is connected to an event, or not.
  */
 bool NetCondit::synth_sync(Design*des, NetScope*scope,
-			   NetNet*ff_clk, NetNet*ff_ce,
+			   NetNet*ff_clk, NetBus&ff_ce,
 			   NetBus&ff_aclr,NetBus&ff_aset,
 			   NexusSet&nex_map, NetBus&nex_out,
 			   const vector<NetEvProbe*>&events_in)
@@ -1420,7 +1435,33 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 
 	/* Synthesize the enable expression. */
       NetNet*ce = expr_->synthesize(des, scope, expr_);
-      ivl_assert(*this, ce->pin_count()==1 && ce->vector_width()==1);
+      ivl_assert(*this, ce && ce->pin_count()==1 && ce->vector_width()==1);
+
+      if (debug_synth2) {
+	    NexusSet if_set;
+	    if_->nex_output(if_set);
+
+	    cerr << get_fileline() << ": NetCondit::synth_sync: "
+		 << "Found ce pattern."
+		 << " ff_ce.pin_count()=" << ff_ce.pin_count()
+		 << endl;
+	    for (unsigned idx = 0 ; idx < nex_map.size() ; idx += 1) {
+		  cerr << get_fileline() << ": NetCondit::synth_sync: "
+		       << "nex_map[" << idx << "]: "
+		       << "base=" << nex_map[idx].base
+		       << ", wid=" << nex_map[idx].wid
+		       << endl;
+		  nex_map[idx].lnk.dump_link(cerr, 8);
+	    }
+	    for (unsigned idx = 0 ; idx < if_set.size() ; idx += 1) {
+		  cerr << get_fileline() << ": NetCondit::synth_sync: "
+		       << "if_set[" << idx << "]: "
+		       << "base=" << if_set[idx].base
+		       << ", wid=" << if_set[idx].wid
+		       << endl;
+		  if_set[idx].lnk.dump_link(cerr, 8);
+	    }
+      }
 
 	/* What's left, is a synchronous CE statement like this:
 
@@ -1439,20 +1480,22 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	   In this case, we are working on the inner IF, so we AND the
 	   a and b expressions to make a new CE. */
 
-      if (ff_ce->pin(0).is_linked()) {
-	    NetLogic*ce_and = new NetLogic(scope,
-					   scope->local_symbol(), 3,
-					   NetLogic::AND, 1);
-	    des->add_node(ce_and);
-	    connect(ff_ce->pin(0), ce_and->pin(1));
-	    connect(ce->pin(0), ce_and->pin(2));
+      for (unsigned idx = 0 ; idx < ff_ce.pin_count() ; idx += 1) {
+	    if (ff_ce.pin(idx).is_linked()) {
+		  NetLogic*ce_and = new NetLogic(scope,
+						 scope->local_symbol(), 3,
+						 NetLogic::AND, 1);
+		  des->add_node(ce_and);
+		  connect(ff_ce.pin(idx), ce_and->pin(1));
+		  connect(ce->pin(0), ce_and->pin(2));
 
-	    ff_ce->pin(0).unlink();
-	    connect(ff_ce->pin(0), ce_and->pin(0));
+		  ff_ce.pin(idx).unlink();
+		  connect(ff_ce.pin(idx), ce_and->pin(0));
 
-      } else {
+	    } else {
 
-	    connect(ff_ce->pin(0), ce->pin(0));
+		  connect(ff_ce.pin(idx), ce->pin(0));
+	    }
       }
 
       bool flag = if_->synth_sync(des, scope, ff_clk, ff_ce, ff_aclr, ff_aset, nex_map, nex_out, events_in);
@@ -1461,7 +1504,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 }
 
 bool NetEvWait::synth_sync(Design*des, NetScope*scope,
-			   NetNet*ff_clk, NetNet*ff_ce,
+			   NetNet*ff_clk, NetBus&ff_ce,
 			   NetBus&ff_aclr,NetBus&ff_aset,
 			   NexusSet&nex_map, NetBus&nex_out,
 			   const vector<NetEvProbe*>&events_in)
@@ -1575,10 +1618,13 @@ bool NetProcTop::synth_sync(Design*des)
 				NetNet::TRI, &netvector_t::scalar_logic);
       clock->local_flag(true);
 
+#if 0
       NetNet*ce = new NetNet(scope(), scope()->local_symbol(),
 			     NetNet::TRI, &netvector_t::scalar_logic);
       ce->local_flag(true);
-
+#else
+      NetBus ce (scope(), nex_set.size());
+#endif
       NetBus nex_d (scope(), nex_set.size());
       NetBus nex_q (scope(), nex_set.size());
       NetBus aclr (scope(), nex_set.size());
@@ -1628,8 +1674,8 @@ bool NetProcTop::synth_sync(Design*des)
 	    connect(tmp->pin(0),    ff2->pin_Data());
 
 	    connect(clock->pin(0),  ff2->pin_Clock());
-	    if (ce->is_linked())
-		  connect(ce->pin(0),     ff2->pin_Enable());
+	    if (ce.pin(idx).is_linked())
+		  connect(ce.pin(idx),    ff2->pin_Enable());
 	    if (aclr.pin(idx).is_linked())
 		  connect(aclr.pin(idx),  ff2->pin_Aclr());
 	    if (aset.pin(idx).is_linked())
@@ -1646,7 +1692,9 @@ bool NetProcTop::synth_sync(Design*des)
 	// back to the flip-flop. Delete them now. The connections
 	// will persist.
       delete clock;
+#if 0
       delete ce;
+#endif
       return true;
 }
 
