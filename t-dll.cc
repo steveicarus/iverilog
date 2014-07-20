@@ -2079,6 +2079,13 @@ void dll_target::lpm_mux(const NetMux*net)
 	    nex = net->pin_Data(sdx).nexus();
 	    ivl_nexus_t tmp = nex->t_cookie();
 	    obj->u_.mux.d[sdx] = tmp;
+	    if (tmp == 0) {
+		  cerr << net->get_fileline() << ": internal error: "
+		       << "dll_target::lpm_mux: "
+		       << "Missing data port " << sdx
+		       << " of mux " << obj->name << "." << endl;
+	    }
+	    ivl_assert(*net, tmp);
 	    nexus_lpm_add(tmp, obj, 0, IVL_DR_HiZ, IVL_DR_HiZ);
       }
 

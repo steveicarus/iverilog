@@ -527,6 +527,19 @@ bool NetCase::synth_async_casez_(Design*des, NetScope*scope,
 
       ivl_assert(*this, nex_map.size() == nex_out.pin_count());
 
+      if (debug_synth2) {
+	    for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
+		  cerr << get_fileline() << ": NetCase::synth_async_casez_: "
+		       << "nex_out.pin(" << idx << "):" << endl;
+		  nex_out.pin(idx).dump_link(cerr, 8);
+	    }
+	    for (unsigned idx = 0 ; idx < accumulated_nex_out.pin_count() ; idx += 1) {
+		  cerr << get_fileline() << ": NetCase::synth_async_casez_: "
+		       << "accumulated_nex_out.pin(" << idx << "):" << endl;
+		  accumulated_nex_out.pin(idx).dump_link(cerr, 8);
+	    }
+      }
+
       vector<unsigned>mux_width (nex_out.pin_count());
       for (unsigned idx = 0 ; idx < nex_out.pin_count() ; idx += 1) {
 	    mux_width[idx] = nex_map[idx].wid;
@@ -595,7 +608,7 @@ bool NetCase::synth_async_casez_(Design*des, NetScope*scope,
       }
 
 	// Process the items from last to first. We generate a
-	// true/false must, with the select being the comparison of
+	// true/false mux, with the select being the comparison of
 	// the case select with the guard expression. The true input
 	// (data1) is the current statement, and the false input is
 	// the result of a later statement.
@@ -644,11 +657,16 @@ bool NetCase::synth_async_casez_(Design*des, NetScope*scope,
 		  connect(mux_cur->pin_Data(1), true_bus.pin(mdx));
 
 		    // If there is a previous mux, then use that as the
-		    // false clause input. Otherwise, use the default.
+		    // false clause input. Otherwise, use the
+		    // default. But wait, if there is no default, then
+		    // use the accumulated input.
 		  if (mux_prev[mdx]) {
 			connect(mux_cur->pin_Data(0), mux_prev[mdx]->pin_Result());
-		  } else {
+		  } else if (default_bus.pin(mdx).is_linked()) {
 			connect(mux_cur->pin_Data(0), default_bus.pin(mdx));
+
+		  } else {
+			connect(mux_cur->pin_Data(0), statement_input.pin(mdx));
 		  }
 
 		    // Make a NetNet for the result.
