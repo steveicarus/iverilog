@@ -1072,9 +1072,9 @@ if(!sysctl(mib, 2, &v, &length, NULL, 0))
         {
         v /= 8;
 
-        if(v > FST_BREAK_SIZE)
+        if(v > (int64_t)FST_BREAK_SIZE)
                 {
-                if(v > FST_BREAK_SIZE_MAX)
+                if(v > (int64_t)FST_BREAK_SIZE_MAX)
                         {
                         v = FST_BREAK_SIZE_MAX;
                         }
