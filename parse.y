@@ -5630,7 +5630,7 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
   /* In SystemVerilog an unnamed block can contain variable declarations. */
-  | K_begin 
+  | K_begin
       { PBlock*tmp = pform_push_block_scope(0, PBlock::BL_SEQ);
 	FILE_NAME(tmp, @1);
 	current_block_stack.push(tmp);
