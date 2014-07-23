@@ -5702,14 +5702,41 @@ statement_item /* This is roughly statement_item in the LRM */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | K_fork statement_or_null_list join_keyword
-// HERE
-// Create an anonymous scope and if no definitions are found then delete
-// the scope and use a simple block.
-      { PBlock*tmp = new PBlock($3);
+  /* In SystemVerilog an unnamed block can contain variable declarations. */
+  | K_fork
+      { PBlock*tmp = pform_push_block_scope(0, PBlock::BL_PAR);
 	FILE_NAME(tmp, @1);
-	tmp->set_statement(*$2);
-	delete $2;
+	current_block_stack.push(tmp);
+      }
+    block_item_decls_opt
+      { if ($3) {
+	    if (! gn_system_verilog()) {
+		  yyerror("error: Variable declaration in unnamed block "
+		          "requires SystemVerilog.");
+	    }
+	} else {
+	    /* If there are no declarations in the scope then just delete it. */
+	    pform_pop_scope();
+	    assert(! current_block_stack.empty());
+	    PBlock*tmp = current_block_stack.top();
+	    current_block_stack.pop();
+	    delete tmp;
+	}
+      }
+    statement_or_null_list join_keyword
+      { PBlock*tmp;
+	if ($3) {
+	    pform_pop_scope();
+	    assert(! current_block_stack.empty());
+	    tmp = current_block_stack.top();
+	    current_block_stack.pop();
+	    tmp->set_join_type($6);
+	} else {
+	    tmp = new PBlock($6);
+	    FILE_NAME(tmp, @1);
+	}
+	if ($5) tmp->set_statement(*$5);
+	delete $5;
 	$$ = tmp;
       }
   | K_fork ':' IDENTIFIER
