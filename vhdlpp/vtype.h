@@ -1,7 +1,7 @@
-#ifndef __vtype_H
-#define __vtype_H
+#ifndef IVL_vtype_H
+#define IVL_vtype_H
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -295,4 +295,4 @@ class VTypeDef : public VType {
       const VType*type_;
 };
 
-#endif
+#endif /* IVL_vtype_H */

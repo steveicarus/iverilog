@@ -1,7 +1,7 @@
-#ifndef __event_H
-#define __event_H
+#ifndef IVL_event_H
+#define IVL_event_H
 /*
- * Copyright (c) 2004-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -406,4 +406,4 @@ class vvp_named_event_aa : public vvp_named_event, public automatic_hooks_s {
       unsigned context_idx_;
 };
 
-#endif // __event_H
+#endif /* IVL_event_H */

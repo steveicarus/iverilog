@@ -1,7 +1,7 @@
-#ifndef __property_qual_H
-#define __property_qual_H
+#ifndef IVL_property_qual_H
+#define IVL_property_qual_H
 /*
- * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -57,4 +57,4 @@ class property_qualifier_t {
       int mask_;
 };
 
-#endif
+#endif /* IVL_property_qual_H */

@@ -1,7 +1,7 @@
-#ifndef __package_H
-#define __package_H
+#ifndef IVL_package_H
+#define IVL_package_H
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -48,4 +48,4 @@ class Package : public Scope, public LineInfo {
       perm_string name_;
 };
 
-#endif
+#endif /* IVL_package_H */

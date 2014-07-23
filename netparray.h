@@ -1,7 +1,7 @@
-#ifndef __netarray_H
-#define __netarray_H
+#ifndef IVL_netarray_H
+#define IVL_netarray_H
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2012 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -53,4 +53,4 @@ inline netparray_t::netparray_t(const std::vector<netrange_t>&pd,
 {
 }
 
-#endif
+#endif /* IVL_netarray_H */

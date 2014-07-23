@@ -1,7 +1,7 @@
-#ifndef __udp_H
-#define __udp_H
+#ifndef IVL_udp_H
+#define IVL_udp_H
 /*
- * Copyright (c) 2005-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2014 Stephen Williams (steve@icarus.com)
  *
  * (This is a rewrite of code that was ...
  * Copyright (c) 2001 Stephan Boettcher <stephan@nevis.columbia.edu>)
@@ -238,4 +238,4 @@ class vvp_udp_fun_core  : public vvp_wide_fun_core, private vvp_gen_event_s {
       udp_levels_table current_;
 };
 
-#endif
+#endif /* IVL_udp_H */

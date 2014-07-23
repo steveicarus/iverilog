@@ -1,7 +1,7 @@
-#ifndef __scope_H
-#define __scope_H
+#ifndef IVL_scope_H
+#define IVL_scope_H
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -226,4 +226,4 @@ class ActiveScope : public ScopeBase {
       Entity*context_entity_;
 };
 
-#endif
+#endif /* IVL_scope_H */

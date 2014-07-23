@@ -1,7 +1,7 @@
-#ifndef __netclass_H
-#define __netclass_H
+#ifndef IVL_netclass_H
+#define IVL_netclass_H
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -117,4 +117,4 @@ class netclass_t : public ivl_type_s {
       NetScope*class_scope_;
 };
 
-#endif
+#endif /* IVL_netclass_H */

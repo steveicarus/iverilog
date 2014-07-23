@@ -1,7 +1,7 @@
-#ifndef __logic_H
-#define __logic_H
+#ifndef IVL_logic_H
+#define IVL_logic_H
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -212,4 +212,4 @@ class vvp_fun_xor  : public vvp_fun_boolean_ {
       bool invert_;
 };
 
-#endif // __logic_H
+#endif /* IVL_logic_H */

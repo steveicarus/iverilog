@@ -1,7 +1,7 @@
-#ifndef __sv_vpi_user_H
-#define __sv_vpi_user_H
+#ifndef SV_VPI_USER_H
+#define SV_VPI_USER_H
 /*
- * Copyright (c) 2010-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2010-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -69,4 +69,4 @@ EXTERN_C_START
 
 EXTERN_C_END
 
-#endif
+#endif /* SV_VPI_USER_H */

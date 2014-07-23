@@ -1,7 +1,7 @@
-#ifndef __t_dll_H
-#define __t_dll_H
+#ifndef IVL_t_dll_H
+#define IVL_t_dll_H
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -929,4 +929,4 @@ static inline void FILE_NAME(ivl_signal_t net, const LineInfo*info)
       net->lineno = info->get_lineno();
 }
 
-#endif
+#endif /* IVL_t_dll_H */

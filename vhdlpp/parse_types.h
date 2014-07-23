@@ -1,7 +1,7 @@
-#ifndef __parse_types_H
-#define __parse_types_H
+#ifndef IVL_parse_types_H
+#define IVL_parse_types_H
 /*
- * Copyright (c) 2011,2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011,2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -96,4 +96,4 @@ struct adding_term {
       Expression*term;
 };
 
-#endif
+#endif /* IVL_parse_types_H */

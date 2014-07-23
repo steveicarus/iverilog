@@ -1,7 +1,7 @@
-#ifndef __priv_H
-#define __priv_H
+#ifndef IVL_priv_H
+#define IVL_priv_H
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -97,4 +97,4 @@ extern int fit_logic(void);
 
 extern int emit_jedec(const char*path);
 
-#endif
+#endif /* IVL_priv_H */

@@ -1,7 +1,7 @@
-#ifndef __functor_H
-#define __functor_H
+#ifndef IVL_functor_H
+#define IVL_functor_H
 /*
- * Copyright (c) 1999-2008,2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -105,4 +105,4 @@ struct proc_match_t {
       virtual int block(class NetBlock*);
 };
 
-#endif
+#endif /* IVL_functor_H */

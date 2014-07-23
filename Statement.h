@@ -1,7 +1,7 @@
-#ifndef __Statement_H
-#define __Statement_H
+#ifndef IVL_Statement_H
+#define IVL_Statement_H
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -558,4 +558,4 @@ class PWhile  : public Statement {
       Statement*statement_;
 };
 
-#endif
+#endif /* IVL_Statement_H */

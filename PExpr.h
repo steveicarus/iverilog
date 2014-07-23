@@ -1,7 +1,7 @@
-#ifndef __PExpr_H
-#define __PExpr_H
+#ifndef IVL_PExpr_H
+#define IVL_PExpr_H
 /*
- * Copyright (c) 1998-2013 Stephen Williams <steve@icarus.com>
+ * Copyright (c) 1998-2014 Stephen Williams <steve@icarus.com>
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -985,4 +985,4 @@ class PEVoid : public PExpr {
                                      unsigned flags) const;
 };
 
-#endif
+#endif /* IVL_PExpr_H */

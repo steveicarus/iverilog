@@ -1,7 +1,7 @@
-#ifndef __stringheap_H
-#define __stringheap_H
+#ifndef IVL_stringheap_H
+#define IVL_stringheap_H
 /*
- * Copyright (c) 2003-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,4 +33,4 @@ const char*strdup_sh(struct stringheap_s*hp, const char*str);
 
 void string_heap_delete(struct stringheap_s*hp);
 
-#endif
+#endif /* IVL_stringheap_H */

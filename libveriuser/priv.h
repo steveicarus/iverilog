@@ -1,7 +1,7 @@
-#ifndef __priv_H
-#define __priv_H
+#ifndef IVL_priv_H
+#define IVL_priv_H
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,4 +33,4 @@ extern char* __acc_newstring(const char*txt);
  */
 FILE* pli_trace;
 
-#endif
+#endif /* IVL_priv_H */

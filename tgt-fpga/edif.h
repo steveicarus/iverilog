@@ -1,7 +1,7 @@
-#ifndef __edif_H
-#define __edif_H
+#ifndef IVL_edif_H
+#define IVL_edif_H
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -226,4 +226,4 @@ extern void edif_add_to_joint(edif_joint_t jnt,
  */
 extern void edif_print(FILE*fd, edif_t design);
 
-#endif
+#endif /* IVL_edif_H */

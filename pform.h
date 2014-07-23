@@ -1,7 +1,7 @@
-#ifndef __pform_H
-#define __pform_H
+#ifndef IVL_pform_H
+#define IVL_pform_H
 /*
- * Copyright (c) 1998-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -524,4 +524,4 @@ extern void pform_set_timeunit(const char*txt, bool in_module, bool only_check);
 extern void pform_set_timeprecision(const char*txt, bool in_module,
                                     bool only_check);
 
-#endif
+#endif /* IVL_pform_H */

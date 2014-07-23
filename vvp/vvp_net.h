@@ -1,7 +1,7 @@
-#ifndef __vvp_net_H
-#define __vvp_net_H
+#ifndef IVL_vvp_net_H
+#define IVL_vvp_net_H
 /*
- * Copyright (c) 2004-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -1759,4 +1759,4 @@ inline bool vvp_net_fil_t::test_force_mask_is_zero(void) const
 #undef calloc
 #undef __ivl_alloc_H
 
-#endif
+#endif /* IVL_vvp_net_H */

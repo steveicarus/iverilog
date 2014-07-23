@@ -1,7 +1,7 @@
-#ifndef __cfparse_misc_H
-#define __cfparse_misc_H
+#ifndef IVL_cfparse_misc_H
+#define IVL_cfparse_misc_H
 /*
- * Copyright (c) 2001-2009 Picture Elements, Inc.
+ * Copyright (c) 2001-2014 Picture Elements, Inc.
  *    Stephen Williams (steve@picturel.com)
  *
  *    This source code is free software; you can redistribute it
@@ -41,4 +41,4 @@ void switch_to_command_file(const char *);
 void destroy_lexor(void);
 char *current_file;
 
-#endif
+#endif /* IVL_cfparse_misc_H */

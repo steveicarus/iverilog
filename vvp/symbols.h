@@ -1,7 +1,7 @@
-#ifndef __symbols_H
-#define __symbols_H
+#ifndef IVL_symbols_H
+#define IVL_symbols_H
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -115,4 +115,4 @@ template <class T> class symbol_map_s : private symbol_table_s {
       }
 };
 
-#endif
+#endif /* IVL_symbols_H */

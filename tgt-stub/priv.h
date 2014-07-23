@@ -1,5 +1,7 @@
+#ifndef IVL_priv_H
+#define IVL_priv_H
 /*
- * Copyright (c) 2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2004-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -77,3 +79,4 @@ extern void show_switch(ivl_switch_t net);
 extern const char*data_type_string(ivl_variable_type_t vtype);
 
 extern void show_net_type(ivl_type_t net_type);
+#endif /* IVL_priv_H */

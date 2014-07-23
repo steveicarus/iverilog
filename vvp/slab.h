@@ -1,7 +1,7 @@
-#ifndef __slab_H
-#define __slab_H
+#ifndef IVL_slab_H
+#define IVL_slab_H
 /*
- * Copyright (c) 2008 Picture Elements, Inc.
+ * Copyright (c) 2008-2014 Picture Elements, Inc.
  *    Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -77,4 +77,4 @@ inline void slab_t<SLAB_SIZE,CHUNK_COUNT>::free_slab(void*ptr)
       heap_ = cur;
 }
 
-#endif
+#endif /* IVL_slab_H */

@@ -1,7 +1,7 @@
-#ifndef __lexor_keyword_H
-#define __lexor_keyword_H
+#ifndef IVL_lexor_keyword_H
+#define IVL_lexor_keyword_H
 /*
- * Copyright (c) 2000 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -21,4 +21,4 @@
 
 extern int lexor_keyword_code (const char*str, unsigned len);
 
-#endif
+#endif /* IVL_lexor_keyword_H */

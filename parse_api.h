@@ -1,7 +1,7 @@
-#ifndef __parse_api_H
-#define __parse_api_H
+#ifndef IVL_parse_api_H
+#define IVL_parse_api_H
 /*
- * Copyright (c) 2001-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -64,4 +64,4 @@ extern void pform_set_timescale(int units, int prec, const char*file,
 extern int def_ts_units;
 extern int def_ts_prec;
 
-#endif
+#endif /* IVL_parse_api_H */

@@ -1,7 +1,7 @@
-#ifndef __vvp_island_H
-#define __vvp_island_H
+#ifndef IVL_vvp_island_H
+#define IVL_vvp_island_H
 /*
- * Copyright (c) 2008-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -233,4 +233,4 @@ extern void island_collect_node(std::list<vvp_branch_ptr_t>&conn, vvp_branch_ptr
 extern void compile_island_base(char*label, vvp_island*use_island);
 extern vvp_island* compile_find_island(const char*island_name);
 
-#endif
+#endif /* IVL_vvp_island_H */

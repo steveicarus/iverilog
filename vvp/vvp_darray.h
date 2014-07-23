@@ -1,7 +1,7 @@
-#ifndef __vvp_darray_H
-#define __vvp_darray_H
+#ifndef IVL_vvp_darray_H
+#define IVL_vvp_darray_H
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -86,4 +86,4 @@ class vvp_darray_string : public vvp_darray {
 };
 
 
-#endif
+#endif /* IVL_vvp_darray_H */

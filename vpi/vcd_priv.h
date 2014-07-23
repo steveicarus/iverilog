@@ -1,7 +1,7 @@
-#ifndef __vcd_priv_H
-#define __vcd_priv_H
+#ifndef IVL_vcd_priv_H
+#define IVL_vcd_priv_H
 /*
- * Copyright (c) 2003-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -131,4 +131,4 @@ EXTERN PLI_INT32 sys_dumpvars_compiletf(ICARUS_VPI_CONST PLI_BYTE8 *name);
 
 #undef EXTERN
 
-#endif
+#endif /* IVL_vcd_priv_H */

@@ -1,7 +1,7 @@
-#ifndef __ivl_target_H
-#define __ivl_target_H
+#ifndef IVL_ivl_target_H
+#define IVL_ivl_target_H
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -2332,4 +2332,4 @@ typedef const char* (*target_query_f) (const char*key);
 
 _END_DECL
 
-#endif
+#endif /* IVL_ivl_target_H */

@@ -1,5 +1,5 @@
-#ifndef __HName_H
-#define __HName_H
+#ifndef IVL_HName_H
+#define IVL_HName_H
 /*
  * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
@@ -104,4 +104,4 @@ inline ostream& operator<< (ostream&out, const list<hname_t>&ll)
       return out;
 }
 
-#endif
+#endif /* IVL_HName_H */

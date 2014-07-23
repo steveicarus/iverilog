@@ -1,7 +1,7 @@
-#ifndef __xilinx_H
-#define __xilinx_H
+#ifndef IVL_xilinx_H
+#define IVL_xilinx_H
 /*
- * Copyright (c) 2003 Stephen Williams (steve at icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve at icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -125,4 +125,4 @@ extern void xilinx_mux(ivl_lpm_t net);
 extern void xilinx_add(ivl_lpm_t net);
 extern void xilinx_shiftl(ivl_lpm_t net);
 
-#endif
+#endif /* IVL_xilinx_H */

@@ -1,5 +1,5 @@
-#ifndef __sizer_priv_H
-#define __sizer_priv_H
+#ifndef IVL_sizer_priv_H
+#define IVL_sizer_priv_H
 /*
  * Copyright (c) 2014 Stephen Williams (steve@icarus.com)
  *
@@ -61,4 +61,4 @@ extern void scan_lpms(ivl_scope_t scope, struct sizer_statistics&stats);
 
 extern unsigned get_nexus_width(ivl_nexus_t nex);
 
-#endif
+#endif /* IVL_sizer_priv_H */

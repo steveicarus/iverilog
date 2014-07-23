@@ -1,7 +1,7 @@
-#ifndef __pform_types_H
-#define __pform_types_H
+#ifndef IVL_pform_types_H
+#define IVL_pform_types_H
 /*
- * Copyright (c) 2007-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2007-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -320,4 +320,4 @@ extern std::ostream& operator<< (std::ostream&out, const pform_name_t&);
 extern std::ostream& operator<< (std::ostream&out, const name_component_t&that);
 extern std::ostream& operator<< (std::ostream&out, const index_component_t&that);
 
-#endif
+#endif /* IVL_pform_types_H */

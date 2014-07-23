@@ -1,7 +1,7 @@
-#ifndef __vvp_cobject_H
-#define __vvp_cobject_H
+#ifndef IVL_vvp_cobject_H
+#define IVL_vvp_cobject_H
 /*
- * Copyright (c) 2012-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -52,4 +52,4 @@ class vvp_cobject : public vvp_object {
       class_type::inst_t properties_;
 };
 
-#endif
+#endif /* IVL_vvp_cobject_H */

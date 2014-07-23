@@ -1,7 +1,7 @@
-#ifndef __codes_H
-#define __codes_H
+#ifndef IVL_codes_H
+#define IVL_codes_H
 /*
- * Copyright (c) 2001-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -264,4 +264,4 @@ extern vvp_code_t codespace_allocate(void);
 extern vvp_code_t codespace_next(void);
 extern vvp_code_t codespace_null(void);
 
-#endif
+#endif /* IVL_codes_H */

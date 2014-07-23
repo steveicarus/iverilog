@@ -1,7 +1,7 @@
-#ifndef __vvp_object_H
-#define __vvp_object_H
+#ifndef IVL_vvp_object_H
+#define IVL_vvp_object_H
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -126,4 +126,4 @@ template <class T> inline T*vvp_object_t::peek(void) const
       return dynamic_cast<T*> (ref_);
 }
 
-#endif
+#endif /* IVL_vvp_object_H */

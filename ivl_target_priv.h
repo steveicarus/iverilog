@@ -1,7 +1,7 @@
-#ifndef __ivl_target_priv_H
-#define __ivl_target_priv_H
+#ifndef IVL_ivl_target_priv_H
+#define IVL_ivl_target_priv_H
 /*
- * Copyright (c) 2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -90,4 +90,4 @@ struct ivl_island_s {
 
 extern std::ostream& operator << (std::ostream&o, ivl_drive_t str);
 
-#endif
+#endif /* IVL_ivl_target_priv_H */

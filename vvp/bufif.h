@@ -1,7 +1,7 @@
-#ifndef __bufif_H
-#define __bufif_H
+#ifndef IVL_bufif_H
+#define IVL_bufif_H
 /*
- * Copyright (c) 2001-2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2001-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -49,4 +49,4 @@ class vvp_fun_bufif  : public vvp_net_fun_t {
       unsigned drive1_ : 8;
 };
 
-#endif
+#endif /* IVL_bufif_H */

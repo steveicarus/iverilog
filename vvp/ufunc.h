@@ -1,7 +1,7 @@
-#ifndef __ufunc_H
-#define __ufunc_H
+#ifndef IVL_ufunc_H
+#define IVL_ufunc_H
 /*
- * Copyright (c) 2002-2008 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2002-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -93,4 +93,4 @@ class ufunc_core : public vvp_wide_fun_core {
       vvp_net_t*result_;
 };
 
-#endif
+#endif /* IVL_ufunc_H */

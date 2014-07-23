@@ -1,7 +1,7 @@
-#ifndef __Module_H
-#define __Module_H
+#ifndef IVL_Module_H
+#define IVL_Module_H
 /*
- * Copyright (c) 1998-2010,2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -160,4 +160,4 @@ class Module : public PScopeExtra, public LineInfo {
       Module& operator= (const Module&);
 };
 
-#endif
+#endif /* IVL_Module_H */

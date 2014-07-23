@@ -1,5 +1,5 @@
-#ifndef __compiler_H
-#define __compiler_H
+#ifndef IVL_compiler_H
+#define IVL_compiler_H
 /*
  * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  *
@@ -283,4 +283,4 @@ extern void cleanup_sys_func_table();
  */
 extern ivl_sfunc_as_task_t def_sfunc_as_task;
 
-#endif
+#endif /* IVL_compiler_H */

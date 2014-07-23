@@ -1,7 +1,7 @@
-#ifndef __PEvent_H
-#define __PEvent_H
+#ifndef IVL_PEvent_H
+#define IVL_PEvent_H
 /*
- * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -51,4 +51,4 @@ class PEvent : public LineInfo {
       PEvent& operator= (const PEvent&);
 };
 
-#endif
+#endif /* IVL_PEvent_H */

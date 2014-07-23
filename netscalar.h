@@ -1,7 +1,7 @@
-#ifndef __netscalar_H
-#define __netscalar_H
+#ifndef IVL_netscalar_H
+#define IVL_netscalar_H
 /*
- * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -46,4 +46,4 @@ class netstring_t : public ivl_type_s {
       static netstring_t type_string;
 };
 
-#endif
+#endif /* IVL_netscalar_H */

@@ -1,7 +1,7 @@
-#ifndef __verireal_H
-#define __verireal_H
+#ifndef IVL_verireal_H
+#define IVL_verireal_H
 /*
- * Copyright (c) 1999-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -82,4 +82,4 @@ extern verireal operator% (const verireal&, const verinum&);
 extern verireal pow(const verireal&, const verireal&);
 extern verireal operator- (const verireal&);
 
-#endif
+#endif /* IVL_verireal_H */

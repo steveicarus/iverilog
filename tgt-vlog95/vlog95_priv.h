@@ -1,7 +1,7 @@
-#ifndef __vlog95_priv_H
-#define __vlog95_priv_H
+#ifndef IVL_vlog95_priv_H
+#define IVL_vlog95_priv_H
 /*
- * Copyright (C) 2010-2013 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2010-2014 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -155,4 +155,4 @@ extern void free_emitted_scope_list(void);
 */
 extern void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex);
 
-#endif /* __vlog95_priv_H */
+#endif /* IVL_vlog95_priv_H */

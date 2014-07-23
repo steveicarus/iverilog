@@ -1,7 +1,7 @@
-#ifndef __vsignal_H
-#define __vsignal_H
+#ifndef IVL_vsignal_H
+#define IVL_vsignal_H
 /*
- * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -92,4 +92,4 @@ inline Variable::Variable(perm_string name, const VType*type)
 {
 }
 
-#endif
+#endif /* IVL_vsignal_H */

@@ -1,7 +1,7 @@
-#ifndef __vvp_dff_H
-#define __vvp_dff_H
+#ifndef IVL_dff_H
+#define IVL_dff_H
 /*
- * Copyright (c) 2005 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -75,4 +75,4 @@ class vvp_dff_aset  : public vvp_dff {
       vvp_bit4_t a_;
 };
 
-#endif
+#endif /* IVL_dff_H */

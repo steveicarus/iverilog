@@ -1,7 +1,7 @@
-#ifndef __part_H
-#define __part_H
+#ifndef IVL_part_H
+#define IVL_part_H
 /*
- * Copyright (c) 2005-2009 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2005-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -189,4 +189,4 @@ class vvp_fun_part_var_aa  : public vvp_fun_part_var, public automatic_hooks_s {
       unsigned context_idx_;
 };
 
-#endif
+#endif /* IVL_part_H */

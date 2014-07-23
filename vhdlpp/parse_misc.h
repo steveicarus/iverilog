@@ -1,7 +1,7 @@
-#ifndef __parse_misc_H
-#define __parse_misc_H
+#ifndef IVL_parse_misc_H
+#define IVL_parse_misc_H
 /*
- * Copyright (c) 2011,2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011,2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -67,4 +67,4 @@ extern void generate_global_types(ActiveScope*res);
 
 extern bool is_global_type(perm_string type_name);
 
-#endif
+#endif /* IVL_parse_misc_H */

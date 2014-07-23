@@ -1,7 +1,7 @@
-#ifndef __netstruct_H
-#define __netstruct_H
+#ifndef IVL_netstruct_H
+#define IVL_netstruct_H
 /*
- * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -80,4 +80,4 @@ class netstruct_t : public LineInfo, public ivl_type_s {
 inline bool netstruct_t::union_flag(void) const { return union_; }
 inline bool netstruct_t::packed(void) const { return packed_; }
 
-#endif
+#endif /* IVL_netstruct_H */

@@ -1,7 +1,7 @@
-#ifndef __PUdp_H
-#define __PUdp_H
+#ifndef IVL_PUdp_H
+#define IVL_PUdp_H
 /*
- * Copyright (c) 1998-2011 Stephen Williams (steve@picturel.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@picturel.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -76,4 +76,4 @@ class PUdp : public LineInfo {
       PUdp& operator= (const PUdp&);
 };
 
-#endif
+#endif /* IVL_PUdp_H */

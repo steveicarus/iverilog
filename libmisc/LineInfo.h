@@ -1,7 +1,7 @@
-#ifndef __LineInfo_H
-#define __LineInfo_H
+#ifndef IVL_LineInfo_H
+#define IVL_LineInfo_H
 /*
- * Copyright (c) 1999-2011 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1999-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -54,4 +54,4 @@ class LineInfo {
       unsigned lineno_;
 };
 
-#endif
+#endif /* IVL_LineInfo_H */

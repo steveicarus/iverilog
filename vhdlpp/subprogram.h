@@ -1,7 +1,7 @@
-#ifndef __subprogram_H
-#define __subprogram_H
+#ifndef IVL_subprogram_H
+#define IVL_subprogram_H
 /*
- * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -62,4 +62,4 @@ class Subprogram : public LineInfo {
       std::list<SequentialStmt*>*statements_;
 };
 
-#endif
+#endif /* IVL_subprogram_H */

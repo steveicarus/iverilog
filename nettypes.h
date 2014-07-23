@@ -1,7 +1,7 @@
-#ifndef __nettypes_H
-#define __nettypes_H
+#ifndef IVL_nettypes_H
+#define IVL_nettypes_H
 /*
- * Copyright (c) 2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2012-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -142,4 +142,4 @@ extern bool prefix_to_slice(const std::vector<netrange_t>&dims,
 			    const std::list<long>&prefix, long sb,
 			    long&loff, unsigned long&lwid);
 
-#endif
+#endif /* IVL_nettypes_H */

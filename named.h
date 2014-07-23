@@ -1,7 +1,7 @@
-#ifndef __named_H
-#define __named_H
+#ifndef IVL_named_H
+#define IVL_named_H
 /*
- * Copyright (c) 2000-2004 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -31,4 +31,4 @@ template <class T> struct named {
       T parm;
 };
 
-#endif
+#endif /* IVL_named_H */

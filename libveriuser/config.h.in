@@ -1,7 +1,7 @@
-#ifndef __config_H
-#define __config_H
+#ifndef IVL_config_H
+#define IVL_config_H
 /*
- * Copyright (c) 2003 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2003-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -37,4 +37,4 @@ typedef unsigned long ivl_u64_t;
 # endif
 #endif
 
-#endif
+#endif /* IVL_config_H */

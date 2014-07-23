@@ -1,7 +1,7 @@
-#ifndef __nex_data_H
-#define __nex_data_H
+#ifndef IVL_nex_data_H
+#define IVL_nex_data_H
 /*
- * Copyright (c) 2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2013-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -72,4 +72,4 @@ class blif_nex_data_t {
       void make_name_from_sig_(ivl_signal_t sig);
 };
 
-#endif
+#endif /* IVL_nex_data_H */

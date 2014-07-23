@@ -1,7 +1,7 @@
-#ifndef __fp_api_H
-#define __fp_api_H
+#ifndef IVL_fp_api_H
+#define IVL_fp_api_H
 /*
- * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -63,4 +63,4 @@ extern void callback_fp_element(const struct fp_element_t&);
 //extern int parse_errors;
 extern int parse_fp_sorrys;
 
-#endif
+#endif /* IVL_fp_api_H */

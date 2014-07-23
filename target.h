@@ -1,7 +1,7 @@
-#ifndef __target_H
-#define __target_H
+#ifndef IVL_target_H
+#define IVL_target_H
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -189,4 +189,4 @@ extern string mangle(const string&str);
    used inside a string constant for a C++ compiler. */
 extern string stresc(const string&str);
 
-#endif
+#endif /* IVL_target_H */

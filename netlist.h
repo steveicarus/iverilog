@@ -1,7 +1,7 @@
-#ifndef __netlist_H
-#define __netlist_H
+#ifndef IVL_netlist_H
+#define IVL_netlist_H
 /*
- * Copyright (c) 1998-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 1998-2014 Stephen Williams (steve@icarus.com)
  * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
@@ -4926,4 +4926,4 @@ inline unsigned Link::get_pin() const
 	    return pin_;
 }
 
-#endif
+#endif /* IVL_netlist_H */

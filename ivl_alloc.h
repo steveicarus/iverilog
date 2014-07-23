@@ -1,7 +1,7 @@
-#ifndef __ivl_alloc_H
-#define __ivl_alloc_H
+#ifndef IVL_ivl_alloc_H
+#define IVL_ivl_alloc_H
 /*
- *  Copyright (C) 2010  Cary R. (cygcary@yahoo.com)
+ *  Copyright (C) 2010-2014  Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -83,4 +83,4 @@
       __ivl_rtn; \
 })
 
-#endif
+#endif /* IVL_ivl_alloc_H */

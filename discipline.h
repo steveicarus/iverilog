@@ -1,7 +1,7 @@
-#ifndef __discipline_H
-#define __discipline_H
+#ifndef IVL_discipline_H
+#define IVL_discipline_H
 /*
- * Copyright (c) 2008-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2008-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -74,4 +74,4 @@ extern map<perm_string,ivl_discipline_t> disciplines;
   // Map access function name to the nature that it accesses.
 extern map<perm_string,ivl_nature_t> access_function_nature;
 
-#endif
+#endif /* IVL_discipline_H */
