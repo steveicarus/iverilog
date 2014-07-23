@@ -242,6 +242,11 @@ static list<Module*>pform_cur_module;
 
 bool pform_library_flag = false;
 
+/*
+ * Give each unnamed block that has a variable declaration a unique name.
+ */
+static unsigned scope_unnamed_block_with_decl = 1;
+
   /* increment this for generate schemes within a module, and set it
      to zero when a new module starts. */
 static unsigned scope_generate_counter = 1;
@@ -439,7 +444,16 @@ PFunction* pform_push_function_scope(const struct vlltype&loc, const char*name,
 
 PBlock* pform_push_block_scope(char*name, PBlock::BL_TYPE bt)
 {
-      perm_string block_name = lex_strings.make(name);
+      perm_string block_name;
+      if (name) block_name = lex_strings.make(name);
+      else {
+	      // Create a unique name for this unnamed block.
+	    char tmp[32];
+	    snprintf(tmp, sizeof tmp, "$unm_blk_%u",
+	             scope_unnamed_block_with_decl);
+	    block_name = lex_strings.make(tmp);
+	    scope_unnamed_block_with_decl += 1;
+      }
 
       PBlock*block = new PBlock(block_name, lexical_scope, bt);
       lexical_scope = block;

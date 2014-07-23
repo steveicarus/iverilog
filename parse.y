@@ -535,7 +535,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
  /* Support some meta-comments as pragmas. */
 %token K_MC_TRANSLATE_ON K_MC_TRANSLATE_OFF
 
-%type <flag>    from_exclude
+%type <flag>    from_exclude block_item_decls_opt
 %type <number>  number pos_neg_number
 %type <flag>    signing unsigned_signed_opt signed_unsigned_opt
 %type <flag>    K_automatic_opt K_packed_opt K_reg_opt K_static_opt K_virtual_opt
@@ -2170,8 +2170,8 @@ block_item_decls
 	;
 
 block_item_decls_opt
-	: block_item_decls
-	|
+	: block_item_decls { $$ = true; }
+	| { $$ = false; }
 	;
 
   /* Type declarations are parsed here. The rule actions call pform
@@ -5629,11 +5629,40 @@ statement_item /* This is roughly statement_item in the LRM */
 	FILE_NAME(tmp, @1);
 	$$ = tmp;
       }
-  | K_begin statement_or_null_list K_end
-      { PBlock*tmp = new PBlock(PBlock::BL_SEQ);
+  /* In SystemVerilog an unnamed block can contain variable declarations. */
+  | K_begin 
+      { PBlock*tmp = pform_push_block_scope(0, PBlock::BL_SEQ);
 	FILE_NAME(tmp, @1);
-	tmp->set_statement(*$2);
-	delete $2;
+	current_block_stack.push(tmp);
+      }
+    block_item_decls_opt
+      { if ($3) {
+	    if (! gn_system_verilog()) {
+		  yyerror("error: Variable declaration in unnamed block "
+		          "requires SystemVerilog.");
+	    }
+	} else {
+	    /* If there are no declarations in the scope then just delete it. */
+	    pform_pop_scope();
+	    assert(! current_block_stack.empty());
+	    PBlock*tmp = current_block_stack.top();
+	    current_block_stack.pop();
+	    delete tmp;
+	}
+      }
+    statement_or_null_list K_end
+      { PBlock*tmp;
+	if ($3) {
+	    pform_pop_scope();
+	    assert(! current_block_stack.empty());
+	    tmp = current_block_stack.top();
+	    current_block_stack.pop();
+	} else {
+	    tmp = new PBlock(PBlock::BL_SEQ);
+	    FILE_NAME(tmp, @1);
+	}
+	if ($5) tmp->set_statement(*$5);
+	delete $5;
 	$$ = tmp;
       }
   | K_begin ':' IDENTIFIER
@@ -5674,6 +5703,9 @@ statement_item /* This is roughly statement_item in the LRM */
 	$$ = tmp;
       }
   | K_fork statement_or_null_list join_keyword
+// HERE
+// Create an anonymous scope and if no definitions are found then delete
+// the scope and use a simple block.
       { PBlock*tmp = new PBlock($3);
 	FILE_NAME(tmp, @1);
 	tmp->set_statement(*$2);
