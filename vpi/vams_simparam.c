@@ -225,7 +225,7 @@ static PLI_INT32 simparam_str_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name_ext)
 	    retval = strdup(vpi_get_str(vpiFullName,
 	                    vpi_handle(vpiScope,callh)));
       } else {
-	    if (defval == 0) {
+	    if (defval == NULL) {
 		  vpi_printf("ERROR: %s:%d: ", vpi_get_str(vpiFile, callh),
 		             (int)vpi_get(vpiLineNo, callh));
 		  vpi_printf("$simparam%s unknown parameter name \"%s\".\n",
@@ -241,6 +241,7 @@ static PLI_INT32 simparam_str_calltf(ICARUS_VPI_CONST PLI_BYTE8 *name_ext)
       val.format = vpiStringVal;
       val.value.str = retval;
       vpi_put_value(callh, &val, 0, vpiNoDelay);
+      if (defval != retval) free(defval);
       free(retval);
 
       return 0;
