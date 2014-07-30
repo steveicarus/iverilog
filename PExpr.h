@@ -505,6 +505,11 @@ class PEIdent : public PExpr {
 				      NetESignal*net,
 				      NetScope*found,
                                       bool need_const) const;
+      NetExpr*elaborate_expr_net_bit_last_(Design*des,
+					   NetScope*scope,
+					   NetESignal*net,
+					   NetScope*found,
+					   bool need_const) const;
 
       NetExpr*elaborate_expr_class_member_(Design*des,
 					   NetScope*scope,

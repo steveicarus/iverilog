@@ -46,10 +46,40 @@ class ivl_type_s;
 class netenum_t;
 typedef named<verinum> named_number_t;
 typedef named<PExpr*> named_pexpr_t;
+
+/*
+ * The pform_range_t holds variable diimensions for type
+ * declarations. The two expressions are interpreted as the first and
+ * last values of the range. For example:
+ *
+ *   [<expr1> : <expr2>]  -- Normal array range
+ *       first == <expr1>
+ *       second = <expr2>
+ *
+ *   [<expr>] -- SystemVerilog canonical range
+ *       first = PENumber(0)
+ *       second = <expr> - 1;
+ *
+ *   [ ] -- Dynamic array
+ *       first = 0
+ *       second = 0
+ *
+ *   [ $ ] -- Queue type
+ *       first = PENull
+ *       second = 0
+ */
 typedef std::pair<PExpr*,PExpr*> pform_range_t;
 
+/*
+ * Semantic NOTES:
+ * - The SEL_BIT is a single expression. This might me a bit select
+ * of a vector, or a word select of an array.
+ *
+ * - The SEL_BIT_LAST index component is an array/queue [$] index,
+ * that is the last item in the variable.
+ */
 struct index_component_t {
-      enum ctype_t { SEL_NONE, SEL_BIT, SEL_PART, SEL_IDX_UP, SEL_IDX_DO };
+      enum ctype_t { SEL_NONE, SEL_BIT, SEL_BIT_LAST, SEL_PART, SEL_IDX_UP, SEL_IDX_DO };
 
       index_component_t() : sel(SEL_NONE), msb(0), lsb(0) { };
       ~index_component_t() { }

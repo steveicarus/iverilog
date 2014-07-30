@@ -41,6 +41,7 @@
 # include  "netvector.h"
 # include  "netdarray.h"
 # include  "netparray.h"
+# include  "netqueue.h"
 # include  "util.h"
 # include  "ivl_assert.h"
 
@@ -1084,7 +1085,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 
       list<netrange_t>unpacked_dimensions;
-      netdarray_t*netarray = 0;
+      netdarray_t*netdarray = 0;
 
       for (list<pform_range_t>::const_iterator cur = unpacked_.begin()
 		 ; cur != unpacked_.end() ; ++cur) {
@@ -1097,13 +1098,27 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    if (use_lidx==0 && use_ridx==0) {
 		  netvector_t*vec = new netvector_t(packed_dimensions, data_type_);
 		  packed_dimensions.clear();
-		  ivl_assert(*this, netarray==0);
-		  netarray = new netdarray_t(vec);
+		  ivl_assert(*this, netdarray==0);
+		  netdarray = new netdarray_t(vec);
 		  continue;
 	    }
 
+	      // Special case: Detect the mark for a QUEUE
+	      // declaration, which is the dimensions [null:<nil>].
+	    if (use_ridx==0 && dynamic_cast<PENull*>(use_lidx)) {
+		  netvector_t*vec = new netvector_t(packed_dimensions, data_type_);
+		  packed_dimensions.clear();
+		  ivl_assert(*this, netdarray==0);
+		  netdarray = new netqueue_t(vec);
+		  continue;
+	    }
+
+	    cerr << get_fileline() << ": XXXX: "
+		 << "use_lidx=" << use_lidx
+		 << ", use_ridx=" << use_ridx << endl;
+
 	      // Cannot handle dynamic arrays of arrays yet.
-	    ivl_assert(*this, netarray==0);
+	    ivl_assert(*this, netdarray==0);
 	    ivl_assert(*this, use_lidx && use_ridx);
 
 	    NetExpr*lexp = elab_and_eval(des, scope, use_lidx, -1, true);
@@ -1246,7 +1261,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_enum);
 
 
-      } else if (netarray) {
+      } else if (netdarray) {
 
 	    if (debug_elaborate) {
 		  cerr << get_fileline() << ": debug: Create signal " << wtype
@@ -1256,7 +1271,7 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 
 	    ivl_assert(*this, packed_dimensions.empty());
 	    ivl_assert(*this, unpacked_dimensions.empty());
-	    sig = new NetNet(scope, name_, wtype, netarray);
+	    sig = new NetNet(scope, name_, wtype, netdarray);
 
       } else if (parray_type_t*parray_type = dynamic_cast<parray_type_t*>(set_data_type_)) {
 	      // The pform gives us a parray_type_t for packed arrays

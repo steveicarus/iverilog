@@ -62,6 +62,9 @@ ostream& operator<< (ostream&out, const index_component_t&that)
 	  case index_component_t::SEL_BIT:
 	    out << *that.msb;
 	    break;
+	  case index_component_t::SEL_BIT_LAST:
+	    out << "$";
+	    break;
 	  case index_component_t::SEL_PART:
 	    out << *that.msb << ":" << *that.lsb;
 	    break;

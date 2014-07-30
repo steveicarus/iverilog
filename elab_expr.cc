@@ -1749,6 +1749,14 @@ static const netstruct_t::member_t*get_struct_member(const LineInfo*li,
 bool calculate_part(const LineInfo*li, Design*des, NetScope*scope,
 		    const index_component_t&index, long&off, unsigned long&wid)
 {
+      if (index.sel == index_component_t::SEL_BIT_LAST) {
+	    cerr << li->get_fileline() << ": sorry: "
+		 << "Last element select expression "
+		 << "not supported." << endl;
+	    des->errors += 1;
+	    return false;
+      }
+
 	// Evaluate the last index expression into a constant long.
       NetExpr*texpr = elab_and_eval(des, scope, index.msb, -1, true);
       long msb;
@@ -2839,21 +2847,31 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 	      if ((net == 0) || (net->packed_dimensions() <= 1))
 		    use_width = 1;
 	      break;
+	  case index_component_t::SEL_BIT_LAST:
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PEIdent::test_width: "
+		       << "Queue/Darray last index ($)" << endl;
+	    }
+	    break;
 	  default:
 	    ivl_assert(*this, 0);
       }
 
       if (const netdarray_t*darray = net? net->darray_type() : 0) {
-	    if (use_sel == index_component_t::SEL_BIT) {
+	    switch (use_sel) {
+		case index_component_t::SEL_BIT:
+		case index_component_t::SEL_BIT_LAST:
 		  expr_type_   = darray->element_base_type();
 		  expr_width_  = darray->element_width();
 		  min_width_   = expr_width_;
 		  signed_flag_ = net->get_signed();
-	    } else {
+		  break;
+		default:
 		  expr_type_   = net->data_type();
 		  expr_width_  = net->vector_width();
 		  min_width_   = expr_width_;
 		  signed_flag_ = net->get_signed();
+		  break;
 	    }
 	    return expr_width_;
       }
@@ -3917,6 +3935,8 @@ NetExpr* PEIdent::elaborate_expr_param_(Design*des,
 	    return 0;
       }
 
+      ivl_assert(*this, use_sel != index_component_t::SEL_BIT_LAST);
+
       if (use_sel == index_component_t::SEL_BIT)
 	    return elaborate_expr_param_bit_(des, scope, par, found_in,
 					     par_msb, par_lsb, need_const);
@@ -4645,6 +4665,17 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
       return ss;
 }
 
+NetExpr* PEIdent::elaborate_expr_net_bit_last_(Design*des, NetScope*scope,
+					       NetESignal*net,
+					       NetScope*found_in,
+					       bool need_const) const
+{
+      cerr << get_fileline() << ": sorry: "
+	   << "Don't yet know how to elaborate net expresion [$]" << endl;
+      des->errors += 1;
+      return 0;
+}
+
 NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
 				     NetNet*net, NetScope*found_in,
                                      unsigned expr_wid,
@@ -4696,6 +4727,10 @@ NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,
       if (use_sel == index_component_t::SEL_BIT)
 	    return elaborate_expr_net_bit_(des, scope, node, found_in,
                                            need_const);
+
+      if (use_sel == index_component_t::SEL_BIT_LAST)
+	    return elaborate_expr_net_bit_last_(des, scope, node, found_in,
+						need_const);
 
 	// It's not anything else, so this must be a simple identifier
 	// expression with no part or bit select. Return the signal

@@ -2041,10 +2041,8 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
   | '[' '$' ']'
       { // SystemVerilog queue
 	list<pform_range_t> *tmp = new list<pform_range_t>;
-	pform_range_t index (0,0);
-	if (gn_system_verilog()) {
-	      yyerror("sorry: Dynamic array ranges not supported.");
-	} else {
+	pform_range_t index (new PENull,0);
+	if (!gn_system_verilog()) {
 	      yyerror("error: Queue declarations require System Verilog.");
 	}
 	tmp->push_back(index);
@@ -3699,6 +3697,20 @@ hierarchy_identifier
 	  index_component_t itmp;
 	  itmp.sel = index_component_t::SEL_BIT;
 	  itmp.msb = $3;
+	  tail.index.push_back(itmp);
+	  $$ = tmp;
+	}
+    | hierarchy_identifier '[' '$' ']'
+        { pform_name_t * tmp = $1;
+	  name_component_t&tail = tmp->back();
+	  if (! gn_system_verilog()) {
+		yyerror(@3, "error: Last element expression ($) "
+			"requires SystemVerilog. Try enabling SystemVerilog.");
+	  }
+	  index_component_t itmp;
+	  itmp.sel = index_component_t::SEL_BIT_LAST;
+	  itmp.msb = 0;
+	  itmp.lsb = 0;
 	  tail.index.push_back(itmp);
 	  $$ = tmp;
 	}
