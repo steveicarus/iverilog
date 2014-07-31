@@ -26,7 +26,6 @@
  * FST_DYNAMIC_ALIAS_DISABLE : dynamic aliases are not processed
  * FST_DYNAMIC_ALIAS2_DISABLE : new encoding for dynamic aliases is not generated
  * FST_WRITEX_DISABLE : fast write I/O routines are disabled
- * FST_DISABLE_DUFFS_DEVICE : only if indirect branches are incredibly bad on host arch
  *
  * possible enables:
  *
@@ -314,6 +313,8 @@ return(NULL);
 
 static void *fstMmap2(size_t __len, int __fd, off_t __off)
 {
+(void)__off;
+
 unsigned char *pnt = malloc(__len);
 off_t cur_offs = lseek(__fd, 0, SEEK_CUR);
 size_t i;
@@ -979,6 +980,8 @@ if(!xc->curval_mem)
 
 static void fstDestroyMmaps(struct fstWriterContext *xc, int is_closing)
 {
+(void)is_closing;
+
 fstMunmap(xc->valpos_mem, xc->maxhandle * 4 * sizeof(uint32_t));
 xc->valpos_mem = NULL;
 
@@ -1069,9 +1072,9 @@ if(!sysctl(mib, 2, &v, &length, NULL, 0))
         {
         v /= 8;
 
-        if(v > FST_BREAK_SIZE)
+        if(v > (int64_t)FST_BREAK_SIZE)
                 {
-                if(v > FST_BREAK_SIZE_MAX)
+                if(v > (int64_t)FST_BREAK_SIZE_MAX)
                         {
                         v = FST_BREAK_SIZE_MAX;
                         }
@@ -1390,21 +1393,6 @@ for(i=0;i<xc->maxhandle;i++)
                                 if(is_binary)
                                         {
                                         unsigned char acc = 0;
-#ifdef FST_DISABLE_DUFFS_DEVICE
-                                        /* old algorithm */
-                                        int shift = 7 - ((vm4ip[1]-1) & 7);
-                                        for(idx=vm4ip[1]-1;idx>=0;idx--)
-                                                {
-                                                acc |= (pnt[idx] & 1) << shift;
-                                                shift++;
-                                                if(shift == 8)
-                                                        {
-                                                        *(--scratchpnt) = acc;
-                                                        shift = 0;
-                                                        acc = 0;
-                                                        }
-                                                }
-#else
                                         /* new algorithm */
                                         idx = ((vm4ip[1]+7) & ~7);
                                         switch(vm4ip[1] & 7)
@@ -1421,7 +1409,6 @@ for(i=0;i<xc->maxhandle;i++)
                                                                 idx -= 8;
                                                         } while(idx);
                                                 }
-#endif
 
                                         scratchpnt = fstCopyVarint32ToLeft(scratchpnt, (time_delta << 1));
                                         }
@@ -2249,7 +2236,7 @@ void fstWriterSetFileType(void *ctx, enum fstFileType filetype)
 struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
 if(xc)
         {
-        if((filetype >= FST_FT_MIN) && (filetype <= FST_FT_MAX))
+        if(/*(filetype >= FST_FT_MIN) &&*/ (filetype <= FST_FT_MAX))
                 {
                 off_t fpos = ftello(xc->handle);
 
@@ -2646,7 +2633,7 @@ struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
 if(xc)
         {
         fputc(FST_ST_VCD_SCOPE, xc->hier_handle);
-        if((scopetype < FST_ST_VCD_MODULE) || (scopetype > FST_ST_MAX)) { scopetype = FST_ST_VCD_MODULE; }
+        if(/*(scopetype < FST_ST_VCD_MODULE) ||*/ (scopetype > FST_ST_MAX)) { scopetype = FST_ST_VCD_MODULE; }
         fputc(scopetype, xc->hier_handle);
         fprintf(xc->hier_handle, "%s%c%s%c",
                 scopename ? scopename : "", 0,
@@ -2687,7 +2674,7 @@ struct fstWriterContext *xc = (struct fstWriterContext *)ctx;
 if(xc)
         {
         fputc(FST_ST_GEN_ATTRBEGIN, xc->hier_handle);
-        if((attrtype < FST_AT_MISC) || (attrtype > FST_AT_MAX)) { attrtype = FST_AT_MISC; subtype = FST_MT_UNKNOWN; }
+        if(/*(attrtype < FST_AT_MISC) ||*/ (attrtype > FST_AT_MAX)) { attrtype = FST_AT_MISC; subtype = FST_MT_UNKNOWN; }
         fputc(attrtype, xc->hier_handle);
 
         switch(attrtype)
@@ -4768,7 +4755,7 @@ for(;;)
         mem_required_for_traversal = fstReaderUint64(xc->f);
         mem_for_traversal = malloc(mem_required_for_traversal + 66); /* add in potential fastlz overhead */
 #ifdef FST_DEBUG
-        fprintf(stderr, "sec: %d seclen: %d begtim: %d endtim: %d\n",
+        fprintf(stderr, "sec: %u seclen: %d begtim: %d endtim: %d\n",
                 secnum, (int)seclen, (int)beg_tim, (int)end_tim);
         fprintf(stderr, "\tmem_required_for_traversal: %d\n", (int)mem_required_for_traversal);
 #endif
@@ -5796,7 +5783,7 @@ mem_required_for_traversal =
         fstReaderUint64(xc->f);
 
 #ifdef FST_DEBUG
-fprintf(stderr, "rvat sec: %d seclen: %d begtim: %d endtim: %d\n",
+fprintf(stderr, "rvat sec: %u seclen: %d begtim: %d endtim: %d\n",
         secnum, (int)seclen, (int)beg_tim, (int)end_tim);
 fprintf(stderr, "\tmem_required_for_traversal: %d\n", (int)mem_required_for_traversal);
 #endif

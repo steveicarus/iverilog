@@ -578,13 +578,13 @@ return;
 
 static void lxt2_wr_emitfacs(struct lxt2_wr_trace *lt)
 {
-int i;
+unsigned int i;
 
 if((lt)&&(lt->numfacs))
 	{
 	struct lxt2_wr_symbol *s = lt->symchain;
 	struct lxt2_wr_symbol **aliascache = calloc(lt->numalias ? lt->numalias : 1, sizeof(struct lxt2_wr_symbol *));
-	int aliases_encountered, facs_encountered;
+	unsigned int aliases_encountered, facs_encountered;
 
 	lt->sorted_facs = (struct lxt2_wr_symbol **)calloc(lt->numfacs, sizeof(struct lxt2_wr_symbol *));
 
@@ -1057,7 +1057,7 @@ if(!clone)
 for(cnt = 0; cnt < lt->break_header_size; cnt += sizeof(buf))
 	{
 	seg = lt->break_header_size - cnt;
-	if(seg > sizeof(buf))
+	if(seg > (off_t)sizeof(buf))
 		{
 		seg = sizeof(buf);
 		}
@@ -1369,7 +1369,7 @@ if((lt->timegranule>=lt->maxgranule)||(do_finalize)||(early_flush))
 	for(i=0;i<lt->num_map_entries;i++)
 		{
 		/* fprintf(stderr, "+++ %08x (%d)(%d)\n", dt->item, i, dt->val); */
-		if(dt->val != i)
+		if(((unsigned int)dt->val) != i)
 			{
 			fprintf(stderr, "internal error line %d\n", __LINE__);
 			exit(255);

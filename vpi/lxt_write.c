@@ -1004,7 +1004,7 @@ if(s1->val > s2->val) return(1); else return(-1);	/* they're *never* equal */
 
 static void lt_finalize_dictionary(struct lt_trace *lt)
 {
-int i;
+unsigned int i;
 
 lt->sorted_dict = calloc(lt->num_dict_entries, sizeof(dslxt_Tree *));
 
@@ -1594,7 +1594,7 @@ if(lt)
 /*
  * emission for trace values..
  */
-static unsigned int lt_optimask[]=
+static int lt_optimask[]=
 {
 0x00000000,
 
@@ -1674,7 +1674,7 @@ while(s->aliased_to)	/* find root alias if exists */
 if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 	{
 	int numbytes;				/* number of bytes to store value minus one */
-	int len = ((s->flags)&LT_SYM_F_INTEGER) ? 32 : s->len;
+	unsigned int len = ((s->flags)&LT_SYM_F_INTEGER) ? 32 : s->len;
 	unsigned int last_change_delta;
 
 	if((lt->clock_compress)&&(s->rows==0))
@@ -2283,7 +2283,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 	char prevch;
 	unsigned int last_change_delta;
 
-	int len = ((s->flags)&LT_SYM_F_INTEGER) ? 32 : s->len;
+	unsigned int len = ((s->flags)&LT_SYM_F_INTEGER) ? 32 : s->len;
 
 	if((lt->clock_compress)&&(s->rows==0))
 	{
@@ -2291,7 +2291,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 		{
 		int legal = 0;
 		int ivalue = 0;
-		int i;
+		unsigned int i;
 		char *pntv = value;
 		int delta1, delta2;
 
@@ -2589,10 +2589,10 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 
 		if(!tagadd)
 			{
-			int len2 = ((s->flags)&LT_SYM_F_INTEGER) ? 32 : s->len;
+			unsigned int len2 = ((s->flags)&LT_SYM_F_INTEGER) ? 32 : s->len;
 			if((mvl & (LT_MVL_2|LT_MVL_4|LT_MVL_9)) == LT_MVL_2)
 				{
-				int i;
+				unsigned int i;
 				int bitpos = 7;
 				int outval = 0;
 				int thisval= 0;
@@ -2676,7 +2676,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 			else
 			if((mvl & (LT_MVL_4|LT_MVL_9)) == LT_MVL_4)
 				{
-				int i;
+				unsigned int i;
 				int bitpos = 6;
 				int outval = 0;
 				int thisval= 0;
@@ -2710,7 +2710,7 @@ if(!(s->flags&(LT_SYM_F_DOUBLE|LT_SYM_F_STRING)))
 			else
 			/* if(mvl & LT_MVL_9) */
 				{
-				int i;
+				unsigned int i;
 				int bitpos = 4;
 				int outval = 0;
 				int thisval= 0;
