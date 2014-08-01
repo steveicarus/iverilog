@@ -214,9 +214,6 @@ AX_LD_EXTRALIBS
 # CFLAGS inherited by cadpli/Makefile?
 AX_C_PICFLAG
 
-# may modify CPPFLAGS and CFLAGS
-AX_CPP_PRECOMP
-
 # may modify LDFLAGS
 AX_C99_STRTOD
 
