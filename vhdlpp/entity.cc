@@ -47,9 +47,12 @@ void ComponentBase::set_interface(std::list<InterfacePort*>*parms,
 		  parms->pop_front();
 	    }
       }
-      while (! ports->empty()) {
-	    ports_.push_back(ports->front());
-	    ports->pop_front();
+
+      if (ports) {
+        while (! ports->empty()) {
+          ports_.push_back(ports->front());
+          ports->pop_front();
+        }
       }
 }
 
