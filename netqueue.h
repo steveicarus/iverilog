@@ -33,6 +33,13 @@ class netqueue_t : public netdarray_t {
       explicit netqueue_t(ivl_type_t vec);
       ~netqueue_t();
 
+	// This is the "base_type()" virtual method of the
+	// nettype_base_t. The ivl_target api expects this to return
+	// IVL_VT_QUEUE for queues.
+      ivl_variable_type_t base_type() const;
+
+      std::ostream& debug_dump(std::ostream&) const;
+
     private:
       bool test_compatibility(ivl_type_t that) const;
 };

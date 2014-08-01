@@ -30,6 +30,7 @@
 # include  "discipline.h"
 # include  "netclass.h"
 # include  "netdarray.h"
+# include  "netqueue.h"
 # include  "netvector.h"
 # include  "ivl_assert.h"
 # include  "PExpr.h"
@@ -112,6 +113,9 @@ ostream& operator << (ostream&o, ivl_variable_type_t val)
 	    break;
 	  case IVL_VT_CLASS:
 	    o << "class";
+	    break;
+	  case IVL_VT_QUEUE:
+	    o << "queue";
 	    break;
       }
       return o;
@@ -203,6 +207,12 @@ ostream& netdarray_t::debug_dump(ostream&o) const
 {
       o << "dynamic array of " << *element_type();
       return o;
+}
+
+ostream& netqueue_t::debug_dump(ostream&fd) const
+{
+      fd << "queue of " << *element_type();
+      return fd;
 }
 
 ostream& netvector_t::debug_dump(ostream&o) const

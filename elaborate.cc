@@ -3427,6 +3427,38 @@ NetProc* PCallTask::elaborate_usr(Design*des, NetScope*scope) const
       return elaborate_build_call_(des, scope, task, 0);
 }
 
+/*
+ * This private method is called to elaborate built-in methods. The
+ * method_name is the detected name of the built-in method, and the
+ * sys_task_name is the internal system-task name to use.
+ */
+NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
+					       NetNet*net,
+					       perm_string method_name,
+					       const char*sys_task_name) const
+{
+      NetESignal*sig = new NetESignal(net);
+      sig->set_line(*this);
+
+      vector<NetExpr*>argv (1 + parms_.size());
+      argv[0] = sig;
+
+      for (unsigned idx = 0 ; idx < parms_.size() ; idx += 1) {
+	    PExpr*ex = parms_[idx];
+	    if (ex != 0) {
+		  argv[idx+1] = elab_sys_task_arg(des, scope,
+						  method_name,
+						  idx, ex);
+	    } else {
+		  argv[idx+1] = 0;
+	    }
+      }
+
+      NetSTask*sys = new NetSTask(sys_task_name, IVL_SFUNC_AS_TASK_IGNORE, argv);
+      sys->set_line(*this);
+      return sys;
+}
+
 NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope) const
 {
       pform_name_t use_path = path_;
@@ -3453,15 +3485,20 @@ NetProc* PCallTask::elaborate_method_(Design*des, NetScope*scope) const
 
 	// Is this a delete method for dynamic arrays?
       if (net->darray_type() && method_name=="delete") {
-	    NetESignal*sig = new NetESignal(net);
+	    return elaborate_sys_task_method_(des, scope, net,
+					      method_name,
+					      "$ivl_darray_method$delete");
+      }
 
-	    vector<NetExpr*> argv (1);
-	    argv[0] = sig;
-
-	    NetSTask*sys = new NetSTask("$ivl_darray_method$delete",
-					IVL_SFUNC_AS_TASK_IGNORE, argv);
-	    sys->set_line(*this);
-	    return sys;
+      if (net->queue_type()) {
+	    if (method_name=="push_back")
+		  return elaborate_sys_task_method_(des, scope, net,
+						    method_name,
+						    "$ivl_queue_method$push_back");
+	    if (method_name=="push_front")
+		  return elaborate_sys_task_method_(des, scope, net,
+						    method_name,
+						    "$ivl_queue_method$push_front");
       }
 
       if (const netclass_t*class_type = net->class_type()) {

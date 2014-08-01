@@ -490,6 +490,7 @@ extern void compile_var_real(char*label, char*name);
 extern void compile_var_string(char*label, char*name);
 extern void compile_var_darray(char*label, char*name);
 extern void compile_var_cobject(char*label, char*name);
+extern void compile_var_queue(char*label, char*name);
 
 /*
  * This function is used to create a scope port

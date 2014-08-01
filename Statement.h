@@ -229,7 +229,10 @@ class PCallTask  : public Statement {
 
       NetProc*elaborate_build_call_(Design*des, NetScope*scope,
 				    NetScope*task, NetExpr*use_this) const;
-
+      NetProc*elaborate_sys_task_method_(Design*des, NetScope*scope,
+					 NetNet*net,
+					 perm_string method_name,
+					 const char*sys_task_name) const;
       bool test_task_calls_ok_(Design*des, NetScope*scope) const;
 
       PPackage*package_;

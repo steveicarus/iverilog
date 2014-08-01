@@ -49,6 +49,7 @@ extern void class_def_delete(class_type *item);
 extern void constant_delete(class __vpiHandle *item);
 extern void contexts_delete(struct __vpiScope *scope);
 extern void darray_delete(class __vpiHandle *item);
+extern void queue_delete(class __vpiHandle *item);
 extern void enum_delete(class __vpiHandle *item);
 extern void memory_delete(class __vpiHandle *item);
 extern void named_event_delete(class __vpiHandle *item);

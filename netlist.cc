@@ -31,6 +31,7 @@
 # include  "netdarray.h"
 # include  "netenum.h"
 # include  "netparray.h"
+# include  "netqueue.h"
 # include  "netstruct.h"
 # include  "netvector.h"
 # include  "ivl_assert.h"
@@ -752,6 +753,11 @@ const netstruct_t*NetNet::struct_type(void) const
 const netdarray_t* NetNet::darray_type(void) const
 {
       return dynamic_cast<const netdarray_t*> (net_type_);
+}
+
+const netqueue_t* NetNet::queue_type(void) const
+{
+      return dynamic_cast<const netqueue_t*> (net_type_);
 }
 
 const netclass_t* NetNet::class_type(void) const

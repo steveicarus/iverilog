@@ -80,6 +80,7 @@ struct enum_type_t;
 class netclass_t;
 class netdarray_t;
 class netparray_t;
+class netqueue_t;
 class netenum_t;
 class netstruct_t;
 class netvector_t;
@@ -695,6 +696,7 @@ class NetNet  : public NetObj, public PortType {
       const netenum_t*enumeration(void) const;
       const netstruct_t*struct_type(void) const;
       const netdarray_t*darray_type(void) const;
+      const netqueue_t*queue_type(void) const;
       const netclass_t*class_type(void) const;
 
 	/* Attach a discipline to the net. */

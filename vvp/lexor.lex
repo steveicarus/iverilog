@@ -209,6 +209,7 @@ static char* strdupnew(char const *str)
 ".var"      { return K_VAR; }
 ".var/cobj" { return K_VAR_COBJECT; }
 ".var/darray" { return K_VAR_DARRAY; }
+".var/queue"  { return K_VAR_QUEUE; }
 ".var/real" { return K_VAR_R; }
 ".var/s"    { return K_VAR_S; }
 ".var/str"  { return K_VAR_STR; }
