@@ -246,7 +246,7 @@ static void generic_show_logic(ivl_net_logic_t net)
 	    break;
 
 	  default:
-	    fprintf(stderr, "fpga.tgt: unknown logic type %u\n",
+	    fprintf(stderr, "fpga.tgt: unknown logic type %d\n",
 		    ivl_logic_type(net));
 	    break;
       }

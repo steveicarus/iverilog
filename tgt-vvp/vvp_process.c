@@ -57,7 +57,7 @@ static void assign_to_array_r_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	/* This code is common to all the different types of array delays. */
       if (number_is_immediate(word_ix, IMM_WID, 0) &&
 	  !number_is_unknown(word_ix)) {
-	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0; address\n",
+	    fprintf(vvp_out, "    %%ix/load %d, %ld, 0; address\n",
 		    word_ix_reg, get_number_immediate(word_ix));
       } else {
 	      /* Calculate array word index into index register 3 */
@@ -139,7 +139,7 @@ static void assign_to_array_word(ivl_signal_t lsig, ivl_expr_t word_ix,
 	/* This code is common to all the different types of array delays. */
       if (number_is_immediate(word_ix, IMM_WID, 0) &&
 	  !number_is_unknown(word_ix)) {
-	    fprintf(vvp_out, "    %%ix/load %d, %lu, 0; address\n", word_ix_reg,
+	    fprintf(vvp_out, "    %%ix/load %d, %ld, 0; address\n", word_ix_reg,
 	                     get_number_immediate(word_ix));
       } else {
 	      /* Calculate array word index into word index register */
@@ -379,7 +379,7 @@ void show_stmt_file_line(ivl_statement_t net, const char* desc)
 	       * should be reported/fixed. */
 	    unsigned lineno = ivl_stmt_lineno(net);
 	    assert(lineno);
-	    fprintf(vvp_out, "    %%file_line %d %u \"%s\";\n",
+	    fprintf(vvp_out, "    %%file_line %u %u \"%s\";\n",
 	            ivl_file_table_index(ivl_stmt_file(net)), lineno, desc);
       }
 }

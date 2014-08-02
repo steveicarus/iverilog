@@ -786,14 +786,14 @@ static void draw_udp_def(ivl_udp_t udp)
 
   if (ivl_udp_sequ(udp))
 	fprintf(vvp_out,
-		"UDP_%s .udp/sequ \"%s\", %d, %u",
+		"UDP_%s .udp/sequ \"%s\", %u, %u",
 		vvp_mangle_id(ivl_udp_name(udp)),
 		vvp_mangle_name(ivl_udp_name(udp)),
 		ivl_udp_nin(udp),
 		init );
   else
 	fprintf(vvp_out,
-		"UDP_%s .udp/comb \"%s\", %d",
+		"UDP_%s .udp/comb \"%s\", %u",
 		vvp_mangle_id(ivl_udp_name(udp)),
 		vvp_mangle_name(ivl_udp_name(udp)),
 		ivl_udp_nin(udp));
@@ -1040,7 +1040,7 @@ static void draw_logic_in_scope(ivl_net_logic_t lptr)
 	    break;
 
 	  default:
-	    fprintf(stderr, "vvp.tgt: error: Unhandled logic type: %u\n",
+	    fprintf(stderr, "vvp.tgt: error: Unhandled logic type: %d\n",
 		    ivl_logic_type(lptr));
 	    ltype = "?";
 	    break;
@@ -1793,7 +1793,7 @@ static void draw_type_string_of_nex(ivl_nexus_t nex)
 	    break;
 	  case IVL_VT_LOGIC:
           case IVL_VT_BOOL:
-	    fprintf(vvp_out, "v%d", width_of_nexus(nex));
+	    fprintf(vvp_out, "v%u", width_of_nexus(nex));
 	    break;
 	  default:
 	    assert(0);
@@ -2181,7 +2181,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
       default:               type = "?";        assert(0);
       }
 
-      fprintf(vvp_out, "S_%p .scope %s%s, \"%s\" \"%s\" %d %d",
+      fprintf(vvp_out, "S_%p .scope %s%s, \"%s\" \"%s\" %u %u",
 	      net, prefix, type,
 	      vvp_mangle_name(ivl_scope_basename(net)),
               vvp_mangle_name(ivl_scope_tname(net)),
@@ -2189,7 +2189,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
               ivl_scope_lineno(net));
 
       if (parent) {
-	    fprintf(vvp_out, ", %d %d %u, S_%p;\n",
+	    fprintf(vvp_out, ", %u %u %u, S_%p;\n",
 	            ivl_file_table_index(ivl_scope_def_file(net)),
 	            ivl_scope_def_lineno(net), ivl_scope_is_cell(net), parent);
       } else {
@@ -2220,7 +2220,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 	    ivl_expr_t pex = ivl_parameter_expr(par);
 	    switch (ivl_expr_type(pex)) {
 		case IVL_EX_STRING:
-		  fprintf(vvp_out, "P_%p .param/str \"%s\" %d %d %d, \"%s\";\n",
+		  fprintf(vvp_out, "P_%p .param/str \"%s\" %d %u %u, \"%s\";\n",
 			  par, vvp_mangle_name(ivl_parameter_basename(par)),
 			  ivl_parameter_local(par),
 			  ivl_file_table_index(ivl_parameter_file(par)),
@@ -2228,7 +2228,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 			  ivl_expr_string(pex));
 		  break;
 		case IVL_EX_NUMBER:
-		  fprintf(vvp_out, "P_%p .param/l \"%s\" %d %d %d, %sC4<",
+		  fprintf(vvp_out, "P_%p .param/l \"%s\" %d %u %u, %sC4<",
 			  par, vvp_mangle_name(ivl_parameter_basename(par)),
                           ivl_parameter_local(par),
 			  ivl_file_table_index(ivl_parameter_file(par)),
@@ -2244,7 +2244,7 @@ int draw_scope(ivl_scope_t net, ivl_scope_t parent)
 		  break;
 		case IVL_EX_REALNUM:
 		  { char *res = draw_Cr_to_string(ivl_expr_dvalue(pex));
-		    fprintf(vvp_out, "P_%p .param/real \"%s\" %d %d %d, %s; "
+		    fprintf(vvp_out, "P_%p .param/real \"%s\" %d %u %u, %s; "
 		            "value=%#g\n", par,
 			    vvp_mangle_name(ivl_parameter_basename(par)),
 	                    ivl_parameter_local(par),

@@ -232,53 +232,57 @@ unusedFunction:fastlz.c:150
 // lz4.c from GTKWave
 // These functions are not used by Icarus
 // LZ4_compress_continue()
-unusedFunction:lz4.c:806
+unusedFunction:lz4.c:817
 // LZ4_compress_forceExtDict()
-unusedFunction:lz4.c:818
+unusedFunction:lz4.c:829
 // LZ4_compress_limitedOutput()
-unusedFunction:lz4.c:662
+unusedFunction:lz4.c:664
 // LZ4_compress_limitedOutput_continue()
-unusedFunction:lz4.c:811
+unusedFunction:lz4.c:822
 // LZ4_compress_limitedOutput_withState()
-unusedFunction:lz4.c:1223
+unusedFunction:lz4.c:1228
 // LZ4_compress_withState()
-unusedFunction:lz4.c:1212
+unusedFunction:lz4.c:1217
 // LZ4_create()
-unusedFunction:lz4.c:1192
+unusedFunction:lz4.c:1197
 // LZ4_createStream()
-unusedFunction:lz4.c:687
+unusedFunction:lz4.c:699
 // LZ4_createStreamDecode()
-unusedFunction:lz4.c:1074
+unusedFunction:lz4.c:1073
 // LZ4_decompress_fast_continue()
-unusedFunction:lz4.c:1123
+unusedFunction:lz4.c:1128
 // LZ4_decompress_fast_usingDict()
-unusedFunction:lz4.c:1156
+unusedFunction:lz4.c:1161
 // LZ4_decompress_fast_withPrefix64k()
-unusedFunction:lz4.c:1241
+unusedFunction:lz4.c:1246
 // LZ4_decompress_safe_continue()
-unusedFunction:lz4.c:1103
+unusedFunction:lz4.c:1108
 // LZ4_decompress_safe_usingDict()
-unusedFunction:lz4.c:1151
+unusedFunction:lz4.c:1156
 // LZ4_decompress_safe_withPrefix64k()
-unusedFunction:lz4.c:1236
-// LZ4_free()
-unusedFunction:lz4.c:694
+unusedFunction:lz4.c:1241
+// LZ4_freeStream()
+unusedFunction:lz4.c:706
+// LZ4_freeStreamDecode()
+unusedFunction:lz4.c:1080
 // LZ4_loadDict()
-unusedFunction:lz4.c:701
+unusedFunction:lz4.c:713
 // LZ4_resetStreamState()
-unusedFunction:lz4.c:1185
-// LZ4_setDictDecode()
-unusedFunction:lz4.c:1088
+unusedFunction:lz4.c:1190
+// LZ4_setStreamDecode()
+unusedFunction:lz4.c:1093
 // LZ4_sizeofState()
-unusedFunction:lz4.c:1210
+unusedFunction:lz4.c:1215
 // LZ4_sizeofStreamState()
-unusedFunction:lz4.c:1177
+unusedFunction:lz4.c:1182
 // LZ4_slideInputBuffer()
-unusedFunction:lz4.c:1199
+unusedFunction:lz4.c:1204
 // LZ4_uncompress()
-unusedFunction:lz4.c:1171
+unusedFunction:lz4.c:1176
 // LZ4_uncompress_unknownOutputSize()
-unusedFunction:lz4.c:1172
+unusedFunction:lz4.c:1177
+// LZ4_versionNumber()
+unusedFunction:lz4.c:370
 
 // The routines in sys_random.c are exact copies from IEEE1364-2005 and
 // they have scope warnings that we need to ignore.
