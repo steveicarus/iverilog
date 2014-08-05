@@ -240,7 +240,7 @@ int draw_eval_object(ivl_expr_t ex)
 	    return eval_object_ufunc(ex);
 
 	  default:
-	    fprintf(vvp_out, "; ERROR: draw_eval_object: Invalid expression type %u\n", ivl_expr_type(ex));
+	    fprintf(vvp_out, "; ERROR: draw_eval_object: Invalid expression type %d\n", ivl_expr_type(ex));
 	    return 1;
 
       }

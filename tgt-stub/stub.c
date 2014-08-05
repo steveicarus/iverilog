@@ -264,7 +264,7 @@ static void show_lpm_abs(ivl_lpm_t net)
       }
 
       if (width_of_nexus(nex) != width) {
-	    fprintf(out, "    ERROR: D width (%d) is wrong\n",
+	    fprintf(out, "    ERROR: D width (%u) is wrong\n",
 		    width_of_nexus(nex));
 	    stub_errors += 1;
       }
@@ -1656,7 +1656,7 @@ static int show_scope(ivl_scope_t net, void*x)
 	    fprintf(out, " class %s", ivl_scope_tname(net));
 	    break;
 	  default:
-	    fprintf(out, " type(%u) %s", ivl_scope_type(net),
+	    fprintf(out, " type(%d) %s", ivl_scope_type(net),
 		    ivl_scope_tname(net));
 	    break;
       }

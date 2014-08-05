@@ -694,7 +694,7 @@ void xilinx_logic(ivl_net_logic_t net)
 	    break;
 
 	  default:
-	    fprintf(stderr, "UNSUPPORTED LOGIC TYPE: %u\n",
+	    fprintf(stderr, "UNSUPPORTED LOGIC TYPE: %d\n",
 		    ivl_logic_type(net));
 	    break;
       }

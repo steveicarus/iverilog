@@ -378,7 +378,7 @@ static void edif_show_logic(ivl_net_logic_t net)
 	    break;
 
 	  default:
-	    fprintf(stderr, "UNSUPPORT LOGIC TYPE: %u\n", ivl_logic_type(net));
+	    fprintf(stderr, "UNSUPPORT LOGIC TYPE: %d\n", ivl_logic_type(net));
       }
 }
 

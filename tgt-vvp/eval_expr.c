@@ -3626,7 +3626,7 @@ struct vector_info draw_eval_expr_wid(ivl_expr_t expr, unsigned wid,
 	  default:
 	  case IVL_EX_NONE:
 	    fprintf(stderr, "%s:%u:  vvp.tgt error: unhandled expr. type: "
-	            "%u at %s:%d\n", ivl_expr_file(expr), ivl_expr_lineno(expr),
+	            "%d at %s:%d\n", ivl_expr_file(expr), ivl_expr_lineno(expr),
                     ivl_expr_type(expr), __FILE__, __LINE__);
 	    exit(1);
 	    break;

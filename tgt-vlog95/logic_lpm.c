@@ -1979,7 +1979,7 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		  assert(! nlogic);
 		  assert(! sig);
 		  fprintf(stderr, "LPM: ");
-		  fprintf(stderr, "{%s:%d} ", ivl_lpm_file(lpm),
+		  fprintf(stderr, "{%s:%u} ", ivl_lpm_file(lpm),
 		          ivl_lpm_lineno(lpm));
 		  if (scope != lpm_scope) fprintf(stderr, "(%s) ",
 		                                  ivl_scope_name(lpm_scope));
@@ -2038,7 +2038,7 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		  ivl_logic_t logic_type = ivl_logic_type(nlogic);
 		  assert(! sig);
 		  fprintf(stderr, "Logic: ");
-		  fprintf(stderr, "{%s:%d} ", ivl_logic_file(nlogic),
+		  fprintf(stderr, "{%s:%u} ", ivl_logic_file(nlogic),
 		          ivl_logic_lineno(nlogic));
 		  if (scope != logic_scope) {
 			fprintf(stderr, "(%s) ", ivl_scope_name(logic_scope));
@@ -2100,7 +2100,7 @@ void dump_nexus_information(ivl_scope_t scope, ivl_nexus_t nex)
 		  fprintf(stderr, "\"");
 // HERE: Do we need to add support for an array word or is that an LPM.
 		  if (ivl_signal_local(sig)) fprintf(stderr, " {local}");
-		  else fprintf(stderr, " {%s:%d}", ivl_signal_file(sig),
+		  else fprintf(stderr, " {%s:%u}", ivl_signal_file(sig),
 		               ivl_signal_lineno(sig));
 		  switch (ivl_signal_port(sig)) {
 		      case IVL_SIP_INPUT:  fprintf(stderr, " input"); break;
