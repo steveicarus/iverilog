@@ -20,6 +20,7 @@
  */
 
 # include  "vvp_object.h"
+# include  <list>
 # include  <string>
 # include  <vector>
 
@@ -85,5 +86,48 @@ class vvp_darray_string : public vvp_darray {
       std::vector<std::string> array_;
 };
 
+
+class vvp_queue : public vvp_darray {
+
+    public:
+      inline vvp_queue(void) : vvp_darray(0) { }
+      ~vvp_queue();
+
+      virtual void push_back(const vvp_vector4_t&value);
+      virtual void push_front(const vvp_vector4_t&value);
+
+      virtual void push_back(double value);
+      virtual void push_front(double value);
+
+      virtual void push_back(const std::string&value);
+      virtual void push_front(const std::string&value);
+};
+
+class vvp_queue_vec4 : public vvp_queue {
+
+    public:
+      ~vvp_queue_vec4();
+
+      void push_back(const vvp_vector4_t&value);
+      void push_front(const vvp_vector4_t&value);
+
+    private:
+      std::list<vvp_vector4_t> array_;
+};
+
+
+class vvp_queue_string : public vvp_queue {
+
+    public:
+      ~vvp_queue_string();
+
+	//void set_word(unsigned adr, const std::string&value);
+	//void get_word(unsigned adr, std::string&value);
+      void push_back(const std::string&value);
+	//void push_front(const std::string&value);
+
+    private:
+      std::list<std::string> array_;
+};
 
 #endif /* IVL_vvp_darray_H */

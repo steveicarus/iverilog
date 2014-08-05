@@ -997,6 +997,12 @@ width is implied from the <wid> that is the argument. This is the part
 The address (in canonical form) is precalculated and loaded into index
 register 3. This is the address of the word within the array.
 
+* %set/qb <var-label>, <bit>, <wid>
+* %set/qf <var-label>, <bit>, <wid>
+
+This sets the vector value into the back (qb) or front (qf) of a queue
+variable.
+
 * %set/x0 <var-label>, <bit>, <wid>
 
 This sets the part of a signal vector, the address calculated by
@@ -1068,6 +1074,10 @@ index in the index register <index>
 * %store/stra <array-label>, <index>
 * %store/dar/r <var-label>
 * %store/dar/str <var-label>
+* %store/qf/r <var-label>
+* %store/qf/str <var-label>
+* %store/qb/r <var-label>
+* %store/qb/str <var-label>
 
 The %store/str instruction pops the top of the string stack and writes
 it to the string variable.
@@ -1076,6 +1086,11 @@ The %store/stra targets an array.
 
 The %store/dar/str is similar, but the target is a dynamic array of
 string string. The index is taken from signed index register 3.
+
+The %store/qf/* and %store/qb/* instructions are queue manipulations,
+which implement the push_back (qb) and push_front (qf)
+functions. These only apply to queue object, and are distinct from the
+dar versions because the begin/front don't exist, by definition.
 
 * %sub <bit-l>, <bit-r>, <wid>
 

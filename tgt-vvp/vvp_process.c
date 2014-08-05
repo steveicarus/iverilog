@@ -1820,12 +1820,66 @@ static int show_delete_method(ivl_statement_t net)
       return 0;
 }
 
+static int show_push_frontback_method(ivl_statement_t net)
+{
+      const char*stmt_name = ivl_stmt_name(net);
+
+      show_stmt_file_line(net, "queue: push_back");
+
+      const char*type_code = "?";
+      if (strcmp(stmt_name,"$ivl_queue_method$push_front") == 0)
+	    type_code = "qf";
+      else if (strcmp(stmt_name,"$ivl_queue_method$push_back") == 0)
+	    type_code = "qb";
+      else
+	    type_code = "??";
+
+      unsigned parm_count = ivl_stmt_parm_count(net);
+      if (parm_count != 2)
+	    return 1;
+
+      ivl_expr_t parm0 = ivl_stmt_parm(net,0);
+      assert(ivl_expr_type(parm0) == IVL_EX_SIGNAL);
+      ivl_signal_t var = ivl_expr_signal(parm0);
+      ivl_type_t var_type = ivl_signal_net_type(var);
+      assert(ivl_type_base(var_type)== IVL_VT_QUEUE);
+
+      ivl_type_t element_type = ivl_type_element(var_type);
+
+      ivl_expr_t parm1 = ivl_stmt_parm(net,1);
+      struct vector_info vec;
+      switch (ivl_type_base(element_type)) {
+	  case IVL_VT_REAL:
+	    draw_eval_real(parm1);
+	    fprintf(vvp_out, "    %%store/%s/r v%p_0;\n", type_code, var);
+	    break;
+	  case IVL_VT_STRING:
+	    draw_eval_string(parm1);
+	    fprintf(vvp_out, "    %%store/%s/str v%p_0;\n", type_code, var);
+	    break;
+	  default:
+	    vec = draw_eval_expr(parm1, STUFF_OK_RO);
+	    fprintf(vvp_out, "    %%set/%s v%p_0, %u, %u;\n",
+		    type_code, var, vec.base, vec.wid);
+	    if (vec.base >= 4) clr_vector(vec);
+	    break;
+      }
+
+      return 0;
+}
+
 static int show_system_task_call(ivl_statement_t net)
 {
       const char*stmt_name = ivl_stmt_name(net);
 
       if (strcmp(stmt_name,"$ivl_darray_method$delete") == 0)
 	    return show_delete_method(net);
+
+      if (strcmp(stmt_name,"$ivl_queue_method$push_front") == 0)
+	    return show_push_frontback_method(net);
+
+      if (strcmp(stmt_name,"$ivl_queue_method$push_back") == 0)
+	    return show_push_frontback_method(net);
 
       show_stmt_file_line(net, "System task call.");
 

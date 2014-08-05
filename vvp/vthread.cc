@@ -5013,6 +5013,64 @@ bool of_SET_DAR_OBJ_STR(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %set/qb <var-label> <bit>, <wid>
+ */
+bool of_SET_QB(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+	/* Make a vector of the desired width. */
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      if (dqueue == 0) {
+	    assert(obj->get_object().test_nil());
+	    dqueue = new vvp_queue_vec4;
+	    vvp_object_t val (dqueue);
+	    vvp_net_ptr_t ptr (cp->net, 0);
+	    vvp_send_object(ptr, val, thr->wt_context);
+      }
+
+      assert(dqueue);
+      dqueue->push_back(value);
+      return true;
+}
+
+/*
+ * %set/qf <var-label> <bit>, <wid>
+ */
+bool of_SET_QF(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+	/* Make a vector of the desired width. */
+      vvp_vector4_t value = vthread_bits_to_vector(thr, bit, wid);
+
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      if (dqueue == 0) {
+	    assert(obj->get_object().test_nil());
+	    dqueue = new vvp_queue_vec4;
+	    vvp_object_t val (dqueue);
+	    vvp_net_ptr_t ptr (cp->net, 0);
+	    vvp_send_object(ptr, val, thr->wt_context);
+      }
+
+      assert(dqueue);
+      dqueue->push_front(value);
+      return true;
+}
+
+/*
  * This implements the "%set/v <label>, <bit>, <wid>" instruction.
  *
  * The <label> is a reference to a vvp_net_t object, and it is in
@@ -5376,6 +5434,60 @@ bool of_STORE_PROP_V(vthread_t thr, vvp_code_t cp)
       assert(cobj);
 
       cobj->set_vec4(pid, val);
+      return true;
+}
+
+/*
+ * %store/qb/r <var-label>
+ */
+bool of_STORE_QB_R(vthread_t thr, vvp_code_t cp)
+{
+      fprintf(stderr, "XXXX %%store/qb/r NOT IMPLEMENTED\n");
+      return true;
+}
+
+/*
+ * %store/qb/str <var-label>
+ */
+bool of_STORE_QB_STR(vthread_t thr, vvp_code_t cp)
+{
+	// Pop the string to be stored...
+      string value = thr->pop_str();
+
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      if (dqueue == 0) {
+	    assert(obj->get_object().test_nil());
+	    dqueue = new vvp_queue_string;
+	    vvp_object_t val (dqueue);
+	    vvp_net_ptr_t ptr (cp->net, 0);
+	    vvp_send_object(ptr, val, thr->wt_context);
+
+      }
+
+      assert(dqueue);
+      dqueue->push_back(value);
+      return true;
+}
+
+/*
+ * %store/qf/r <var-label>
+ */
+bool of_STORE_QF_R(vthread_t thr, vvp_code_t cp)
+{
+      fprintf(stderr, "XXXX %%store/qf/r NOT IMPLEMENTED\n");
+      return true;
+}
+
+/*
+ * %store/qf/str <var-label>
+ */
+bool of_STORE_QF_STR(vthread_t thr, vvp_code_t cp)
+{
+      fprintf(stderr, "XXXX %%store/qf/str NOT IMPLEMENTED\n");
       return true;
 }
 

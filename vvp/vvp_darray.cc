@@ -137,3 +137,60 @@ void vvp_darray_string::get_word(unsigned adr, string&value)
 
       value = array_[adr];
 }
+
+vvp_queue::~vvp_queue()
+{
+}
+
+void vvp_queue::push_back(const vvp_vector4_t&)
+{
+      cerr << "XXXX push_back(vvp_vector4_t) not implemented for " << typeid(*this).name() << endl;
+}
+
+void vvp_queue::push_front(const vvp_vector4_t&)
+{
+      cerr << "XXXX push_front(vvp_vector4_t) not implemented for " << typeid(*this).name() << endl;
+}
+
+void vvp_queue::push_back(double)
+{
+      cerr << "XXXX push_back(double) not implemented for " << typeid(*this).name() << endl;
+}
+
+void vvp_queue::push_front(double)
+{
+      cerr << "XXXX push_front(double) not implemented for " << typeid(*this).name() << endl;
+}
+
+void vvp_queue::push_back(const string&)
+{
+      cerr << "XXXX push_back(string) not implemented for " << typeid(*this).name() << endl;
+}
+
+void vvp_queue::push_front(const string&)
+{
+      cerr << "XXXX push_front(string) not implemented for " << typeid(*this).name() << endl;
+}
+
+vvp_queue_string::~vvp_queue_string()
+{
+}
+
+void vvp_queue_string::push_back(const string&val)
+{
+      array_.push_back(val);
+}
+
+vvp_queue_vec4::~vvp_queue_vec4()
+{
+}
+
+void vvp_queue_vec4::push_back(const vvp_vector4_t&val)
+{
+      array_.push_back(val);
+}
+
+void vvp_queue_vec4::push_front(const vvp_vector4_t&val)
+{
+      array_.push_front(val);
+}
