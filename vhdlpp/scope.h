@@ -92,7 +92,7 @@ class ScopeBase {
       std::map<perm_string,const VType*> cur_types_; //current types
 	// Constant declarations...
       struct const_t {
-        ~const_t() {delete typ; delete val;}
+        ~const_t() {delete val;}
         const_t(const VType*t, Expression* v) : typ(t), val(v) {};
 
 	    const VType*typ;
