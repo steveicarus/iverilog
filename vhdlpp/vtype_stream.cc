@@ -39,7 +39,7 @@ void VType::write_type_to_stream(ostream&fd) const
 void VTypeArray::write_to_stream(ostream&fd) const
 {
 	// Special case: std_logic_vector
-      if (etype_ == primitive_STDLOGIC) {
+      if (etype_ == &primitive_STDLOGIC) {
 	    fd << "std_logic_vector";
 	    if (! ranges_.empty() && ! ranges_[0].is_box()) {
 		  assert(ranges_.size() < 2);

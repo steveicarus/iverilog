@@ -143,12 +143,12 @@ class VTypePrimitive : public VType {
       type_t type_;
 };
 
-extern const VTypePrimitive* primitive_BOOLEAN;
-extern const VTypePrimitive* primitive_BIT;
-extern const VTypePrimitive* primitive_INTEGER;
-extern const VTypePrimitive* primitive_REAL;
-extern const VTypePrimitive* primitive_STDLOGIC;
-extern const VTypePrimitive* primitive_CHARACTER;
+extern const VTypePrimitive primitive_BOOLEAN;
+extern const VTypePrimitive primitive_BIT;
+extern const VTypePrimitive primitive_INTEGER;
+extern const VTypePrimitive primitive_REAL;
+extern const VTypePrimitive primitive_STDLOGIC;
+extern const VTypePrimitive primitive_CHARACTER;
 
 /*
  * An array is a compound N-dimensional array of element type. The

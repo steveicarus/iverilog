@@ -519,7 +519,7 @@ const VType* ExpAttribute::probe_type(Entity*ent, Architecture*arc) const
       base_->probe_type(ent, arc);
 
       if (name_ == "length") {
-	    return primitive_INTEGER;
+	    return &primitive_INTEGER;
       }
 
       return 0;
@@ -676,7 +676,7 @@ int ExpFunc::elaborate_expr(Entity*ent, Architecture*arc, const VType*)
 
 const VType* ExpInteger::probe_type(Entity*, Architecture*) const
 {
-      return primitive_INTEGER;
+      return &primitive_INTEGER;
 }
 
 int ExpInteger::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
@@ -694,7 +694,7 @@ int ExpInteger::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
 
 const VType* ExpReal::probe_type(Entity*, Architecture*) const
 {
-      return primitive_REAL;
+      return &primitive_REAL;
 }
 
 int ExpReal::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
@@ -830,7 +830,7 @@ const VType* ExpRelation::probe_type(Entity*ent, Architecture*arc) const
       /* const VType*type1 = */ peek_operand1()->probe_type(ent, arc);
       /* const VType*type2 = */ peek_operand2()->probe_type(ent, arc);
 
-      return primitive_BOOLEAN;
+      return &primitive_BOOLEAN;
 }
 
 int ExpRelation::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
