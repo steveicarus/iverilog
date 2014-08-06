@@ -605,6 +605,23 @@ bool ExpInteger::is_primary(void) const
       return true;
 }
 
+int ExpReal::emit(ostream&out, Entity*, Architecture*)
+{
+      out << value_;
+      return 0;
+}
+
+int ExpReal::emit_package(ostream&out)
+{
+      out << value_;
+      return 0;
+}
+
+bool ExpReal::is_primary(void) const
+{
+      return true;
+}
+
 int ExpLogical::emit(ostream&out, Entity*ent, Architecture*arc)
 {
       int errors = 0;

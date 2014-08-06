@@ -346,6 +346,7 @@ static void import_ieee_use(ActiveScope*res, perm_string package, perm_string na
 const VTypePrimitive* primitive_BOOLEAN  = new VTypePrimitive(VTypePrimitive::BOOLEAN);
 const VTypePrimitive* primitive_BIT      = new VTypePrimitive(VTypePrimitive::BIT);
 const VTypePrimitive* primitive_INTEGER  = new VTypePrimitive(VTypePrimitive::INTEGER);
+const VTypePrimitive* primitive_REAL     = new VTypePrimitive(VTypePrimitive::REAL);
 const VTypePrimitive* primitive_STDLOGIC = new VTypePrimitive(VTypePrimitive::STDLOGIC);
 const VTypePrimitive* primitive_CHARACTER= new VTypePrimitive(VTypePrimitive::CHARACTER);
 
@@ -360,6 +361,7 @@ void generate_global_types(ActiveScope*res)
       res->use_name(perm_string::literal("boolean"),   primitive_BOOLEAN);
       res->use_name(perm_string::literal("bit"),       primitive_BIT);
       res->use_name(perm_string::literal("integer"),   primitive_INTEGER);
+      res->use_name(perm_string::literal("real"),      primitive_REAL);
       res->use_name(perm_string::literal("std_logic"), primitive_STDLOGIC);
       res->use_name(perm_string::literal("character"), primitive_CHARACTER);
       res->use_name(perm_string::literal("bit_vector"),primitive_BOOL_VECTOR);
@@ -372,6 +374,7 @@ bool is_global_type(perm_string name)
       if (name == "boolean") return true;
       if (name == "bit") return true;
       if (name == "integer") return true;
+      if (name == "real") return true;
       if (name == "std_logic") return true;
       if (name == "character") return true;
       if (name == "bit_vector") return true;

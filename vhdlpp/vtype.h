@@ -2,7 +2,8 @@
 #define IVL_vtype_H
 /*
  * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2013 / Stephen Williams (steve@icarus.com),
+ *                       Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -124,7 +125,7 @@ class VTypeERROR : public VType {
 class VTypePrimitive : public VType {
 
     public:
-      enum type_t { BOOLEAN, BIT, INTEGER, STDLOGIC, CHARACTER };
+      enum type_t { BOOLEAN, BIT, INTEGER, REAL, STDLOGIC, CHARACTER };
 
     public:
       VTypePrimitive(type_t);
@@ -145,6 +146,7 @@ class VTypePrimitive : public VType {
 extern const VTypePrimitive* primitive_BOOLEAN;
 extern const VTypePrimitive* primitive_BIT;
 extern const VTypePrimitive* primitive_INTEGER;
+extern const VTypePrimitive* primitive_REAL;
 extern const VTypePrimitive* primitive_STDLOGIC;
 extern const VTypePrimitive* primitive_CHARACTER;
 

@@ -2,7 +2,8 @@
 #define IVL_expression_H
 /*
  * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2013 / Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2014 / Stephen Williams (steve@icarus.com),
+ *                       Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -462,6 +463,7 @@ class ExpEdge : public ExpUnary {
     private:
       fun_t fun_;
 };
+
 class ExpFunc : public Expression {
 
     public:
@@ -503,6 +505,26 @@ class ExpInteger : public Expression {
 
     private:
       int64_t value_;
+};
+
+class ExpReal : public Expression {
+
+    public:
+      ExpReal(double val);
+      ~ExpReal();
+
+      const VType*probe_type(Entity*ent, Architecture*arc) const;
+      int elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype);
+      void write_to_stream(std::ostream&fd);
+      int emit(ostream&out, Entity*ent, Architecture*arc);
+      int emit_package(std::ostream&out);
+      bool is_primary(void) const;
+      bool evaluate(ScopeBase*scope, double&val) const;
+      void dump(ostream&out, int indent = 0) const;
+      virtual ostream& dump_inline(ostream&out) const;
+
+    private:
+      double value_;
 };
 
 class ExpLogical : public ExpBinary {

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2012 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2014 CERN / Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -136,6 +137,9 @@ int VTypePrimitive::emit_primitive_type(ostream&out) const
 	  case INTEGER:
 	    out << "bool [31:0]";
 	    break;
+      case REAL:
+        out << "real";
+        break;
 	  case CHARACTER:
 	    out << "char";
 	    break;

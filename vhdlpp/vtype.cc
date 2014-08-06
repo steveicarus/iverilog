@@ -59,6 +59,9 @@ void VTypePrimitive::show(ostream&out) const
 	  case INTEGER:
 	    out << "INTEGER";
 	    break;
+	  case REAL:
+        out << "REAL";
+        break;
 	  case STDLOGIC:
 	    out << "std_logic";
 	    break;

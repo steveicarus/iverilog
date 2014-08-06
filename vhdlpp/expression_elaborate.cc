@@ -692,6 +692,24 @@ int ExpInteger::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
       return errors;
 }
 
+const VType* ExpReal::probe_type(Entity*, Architecture*) const
+{
+      return primitive_REAL;
+}
+
+int ExpReal::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
+{
+      int errors = 0;
+
+      if (ltype == 0) {
+        ltype = probe_type(ent, arc);
+      }
+
+      ivl_assert(*this, ltype != 0);
+
+      return errors;
+}
+
 int ExpLogical::elaborate_expr(Entity*ent, Architecture*arc, const VType*ltype)
 {
       int errors = 0;

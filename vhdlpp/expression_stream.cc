@@ -164,6 +164,11 @@ void ExpInteger::write_to_stream(ostream&fd)
       fd << value_;
 }
 
+void ExpReal::write_to_stream(ostream&fd)
+{
+      fd << value_;
+}
+
 void ExpLogical::write_to_stream(ostream&)
 {
       ivl_assert(*this, !"Not supported");

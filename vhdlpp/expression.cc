@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2011-2013 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2012-2013 / Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2012-2014 / Stephen Williams (steve@icarus.com),
+ *                            Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -292,6 +293,21 @@ ExpInteger::~ExpInteger()
 }
 
 bool ExpInteger::evaluate(ScopeBase*, int64_t&val) const
+{
+      val = value_;
+      return true;
+}
+
+ExpReal::ExpReal(double val)
+: value_(val)
+{
+}
+
+ExpReal::~ExpReal()
+{
+}
+
+bool ExpReal::evaluate(ScopeBase*, double&val) const
 {
       val = value_;
       return true;
