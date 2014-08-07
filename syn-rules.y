@@ -1,7 +1,7 @@
 
 %{
 /*
- * Copyright (c) 2000-2010 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -100,7 +100,13 @@ static void hookup_DFF_CE(NetFF*ff, NetESignal*d, NetEvProbe*pclk,
                           NetNet*ce, NetAssign_*a, unsigned rval_pinoffset)
 {
 
-      assert(rval_pinoffset == 0);
+      if (rval_pinoffset != 0) {
+	    cerr << a->get_fileline() << ": sorry: "
+                 << "unable to hook up an R-value with offset "
+	         << rval_pinoffset << " to signal " << a->name()
+	         << "." << endl;
+	    return;
+      }
 	// a->sig() is a *NetNet, which doesn't have the loff_ and
 	// lwid_ context.  Add the correction for loff_ ourselves.
 

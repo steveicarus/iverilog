@@ -82,7 +82,15 @@ bool NetAssignBase::synth_async(Design*des, NetScope*scope,
 	    des->errors += 1;
 	    return false;
       }
-      assert(lval_->more == 0);
+      if (lval_->more) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "NetAssignBase::synth_async does not support an "
+	         << "L-value concatenation ";
+	    dump_lval(cerr);
+	    cerr << endl;
+	    des->errors += 1;
+	    return false;
+      }
 
       if (debug_synth2) {
 	    cerr << get_fileline() << ": NetAssignBase::synth_async: "
@@ -1308,7 +1316,7 @@ bool NetCondit::synth_sync(Design*des, NetScope*scope,
 	    NetBus tmp_out(scope, nex_out.pin_count());
 	    NetBus accumulated_tmp_out(scope, nex_out.pin_count());
 	    flag = if_->synth_async(des, scope, nex_map, tmp_out, accumulated_tmp_out);
-	    ivl_assert(*this, flag);
+	    if (! flag) return false;
 
 	    ivl_assert(*this, tmp_out.pin_count() == ff_aclr.pin_count());
 	    ivl_assert(*this, tmp_out.pin_count() == ff_aset.pin_count());
