@@ -519,7 +519,6 @@ class ExpReal : public Expression {
       int emit(ostream&out, Entity*ent, Architecture*arc);
       int emit_package(std::ostream&out);
       bool is_primary(void) const;
-      bool evaluate(ScopeBase*scope, double&val) const;
       void dump(ostream&out, int indent = 0) const;
       virtual ostream& dump_inline(ostream&out) const;
 
