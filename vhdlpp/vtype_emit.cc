@@ -88,16 +88,14 @@ int VTypeArray::emit_def(ostream&out) const
       while (! dims.empty()) {
 	    cur = dims.front();
 	    dims.pop_front();
+
 	    out << "[";
-	    if (cur->dimension(0).msb())
+	    if (cur->dimension(0).msb() && cur->dimension(0).lsb()) {
+	      // bounded array, unbounded arrays have msb() & lsb() nullified
 		  errors += cur->dimension(0).msb()->emit(out, 0, 0);
-	    else
-		  out << "?error?";
-	    out << ":";
-	    if (cur->dimension(0).lsb())
+	      out << ":";
 		  errors += cur->dimension(0).lsb()->emit(out, 0, 0);
-	    else
-		  out << "?error?";
+	    }
 	    out << "]";
       }
 
