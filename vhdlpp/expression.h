@@ -639,6 +639,7 @@ class ExpString : public Expression {
       int emit(ostream&out, Entity*ent, Architecture*arc);
       bool is_primary(void) const;
       void dump(ostream&out, int indent = 0) const;
+      const std::vector<char>& get_value() const { return value_; }
 
     private:
       int emit_as_array_(ostream&out, Entity*ent, Architecture*arc, const VTypeArray*arr);

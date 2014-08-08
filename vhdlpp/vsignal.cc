@@ -27,6 +27,21 @@ using namespace std;
 SigVarBase::SigVarBase(perm_string nam, const VType*typ, Expression*exp)
 : name_(nam), type_(typ), init_expr_(exp), refcnt_sequ_(0)
 {
+    if(init_expr_)
+    {
+      // convert the initializing string to bitstring if applicable
+      const ExpString *string = dynamic_cast<const ExpString*>(init_expr_);
+      if(string) {
+        const std::vector<char>& val = string->get_value();
+        char buf[val.size() + 1];
+        std::copy(val.begin(), val.end(), buf);
+        buf[val.size()] = 0;
+
+        ExpBitstring *bitstring = new ExpBitstring(buf);
+        delete init_expr_;
+        init_expr_ = bitstring;
+      }
+    }
 }
 
 SigVarBase::~SigVarBase()
