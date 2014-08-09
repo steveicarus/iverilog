@@ -106,6 +106,7 @@ NetExpr* elaborate_rval_expr(Design*des, NetScope*scope, ivl_type_t lv_net_type,
       int context_wid = -1;
       switch (lv_type) {
 	  case IVL_VT_DARRAY:
+	  case IVL_VT_QUEUE:
 	      // For these types, use a different elab_and_eval that
 	      // uses the lv_net_type. We should eventually transition
 	      // all the types to this new form.
@@ -2782,6 +2783,48 @@ bool PEIdent::calculate_param_range_(Design*, NetScope*,
       return true;
 }
 
+unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&mode)
+{
+      if (!gn_system_verilog())
+	    return 0;
+      if (path_.size() < 2)
+	    return 0;
+
+      pform_name_t use_path = path_;
+      perm_string member_name = peek_tail_name(path_);
+      use_path.pop_back();
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::test_width_method_: "
+		 << "Try to find method=" << member_name
+		 << " of signal " << use_path << endl;
+      }
+
+      NetNet*net = 0;
+      const NetExpr*par = 0;
+      NetEvent*eve = 0;
+      const NetExpr*ex1 = 0, *ex2 = 0;
+      symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
+      if (net == 0) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": PEIdent::test_width_method_: "
+		       << "Only nets can have methods, so give up here." << endl;
+	    return 0;
+      }
+
+      if (const netdarray_t*dtype = net->darray_type()) {
+	    if (member_name == "size") {
+		  expr_type_  = IVL_VT_BOOL;
+		  expr_width_ = 32;
+		  min_width_  = 32;
+		  signed_flag_= true;
+		  return 32;
+	    }
+      }
+
+      return 0;
+}
+
 unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 {
       NetNet*       net = 0;
@@ -2794,6 +2837,10 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       if (package_) {
 	    use_scope = des->find_package(package_->pscope_name());
 	    ivl_assert(*this, use_scope);
+      }
+
+      if (unsigned tmp = test_width_method_(des, scope, mode)) {
+	    return tmp;
       }
 
       NetScope*found_in = symbol_search(this, des, use_scope, path_,
@@ -3167,6 +3214,55 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
       return tmp;
 }
 
+NetExpr* PEIdent::elaborate_expr_method_(Design*des, NetScope*scope,
+					 unsigned expr_wid, unsigned flags) const
+{
+      if (!gn_system_verilog())
+	    return 0;
+      if (path_.size() < 2)
+	    return 0;
+
+      pform_name_t use_path = path_;
+      perm_string member_name = peek_tail_name(path_);
+      use_path.pop_back();
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_expr_method_: "
+		 << "Try to find method=" << member_name
+		 << " of signal " << use_path << endl;
+      }
+
+      NetNet*net = 0;
+      const NetExpr*par = 0;
+      NetEvent*eve = 0;
+      const NetExpr*ex1 = 0, *ex2 = 0;
+      symbol_search(this, des, scope, use_path, net, par, eve, ex1, ex2);
+      if (net == 0) {
+	    if (debug_elaborate)
+		  cerr << get_fileline() << ": PEIdent::elaborate_expr_method_: "
+		       << "Only nets can have methods, so give up here." << endl;
+	    return 0;
+      }
+
+      if (const netdarray_t*dtype = net->darray_type()) {
+	    if (member_name == "size") {
+		  NetESFunc*fun = new NetESFunc("$ivl_queue_method$size",
+						expr_type_, expr_width_, 1);
+		  fun->set_line(*this);
+
+		  NetESignal*arg = new NetESignal(net);
+		  arg->set_line(*net);
+
+		  fun->parm(0, arg);
+		  return fun;
+	    }
+
+	    return 0;
+      }
+
+      return 0;
+}
+
 /*
  * Elaborate an identifier in an expression. The identifier can be a
  * parameter name, a signal name or a memory name. It can also be a
@@ -3225,6 +3321,14 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       if (package_) {
 	    use_scope = des->find_package(package_->pscope_name());
 	    ivl_assert(*this, use_scope);
+      }
+
+	// Special case: Detect the special situation that the name is
+	// a method of an object (including built-in methods) that has
+	// no arguments. For example, "foo.size" is the call to the
+	// size() method if foo is an array type.
+      if (NetExpr*tmp = elaborate_expr_method_(des, scope, expr_wid, flags)) {
+	    return tmp;
       }
 
       NetScope*found_in = symbol_search(this, des, use_scope, path_,
