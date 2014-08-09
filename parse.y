@@ -532,8 +532,6 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
 %token K_resolveto K_sin K_sinh K_slew K_split K_sqrt K_tan K_tanh
 %token K_timer K_transition K_units K_white_noise K_wreal
 %token K_zi_nd K_zi_np K_zi_zd K_zi_zp
- /* Support some meta-comments as pragmas. */
-%token K_MC_TRANSLATE_ON K_MC_TRANSLATE_OFF
 
 %type <flag>    from_exclude block_item_decls_opt
 %type <number>  number pos_neg_number
@@ -4247,13 +4245,6 @@ module_item
 
   /* Modules can contain further sub-module definitions. */
   : module
-
-    /* The lexor detects "// synthesis translate_on/off" meta-comments,
-       we handle them here by turning on/off a flag. The pform uses
-       that flag to attach implicit attributes to "initial" and
-       "always" statements. */
-  | K_MC_TRANSLATE_OFF { pform_mc_translate_on(false); }
-  | K_MC_TRANSLATE_ON { pform_mc_translate_on(true); }
 
   | attribute_list_opt net_type data_type_or_implicit delay3_opt net_variable_list ';'
 
