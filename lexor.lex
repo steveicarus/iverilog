@@ -137,8 +137,13 @@ TU [munpf]
      current line. These are very easy to handle. The meta-comments
      format is a little more tricky to handle, but do what we can. */
 
-"//"{W}*"synthesis"{W}*"translate_on"{W}*\n { return K_MC_TRANSLATE_ON; }
-"//"{W}*"synthesis"{W}*"translate_off"{W}*\n { return K_MC_TRANSLATE_OFF; }
+  /* The lexor detects "// synthesis translate_on/off" meta-comments,
+     we handle them here by turning on/off a flag. The pform uses
+     that flag to attach implicit attributes to "initial" and
+     "always" statements. */
+
+"//"{W}*"synthesis"{W}*"translate_on"{W}*\n { pform_mc_translate_on(true); }
+"//"{W}*"synthesis"{W}*"translate_off"{W}*\n { pform_mc_translate_on(false); }
 "//" { comment_enter = YY_START; BEGIN(LCOMMENT); }
 <LCOMMENT>.    { yymore(); }
 <LCOMMENT>\n   { yylloc.first_line += 1; BEGIN(comment_enter); }
