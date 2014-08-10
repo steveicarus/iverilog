@@ -62,6 +62,11 @@ template <class TYPE> vvp_darray_atom<TYPE>::~vvp_darray_atom()
 {
 }
 
+template <class TYPE> size_t vvp_darray_atom<TYPE>::get_size() const
+{
+      return array_.size();
+}
+
 template <class TYPE> void vvp_darray_atom<TYPE>::set_word(unsigned adr, const vvp_vector4_t&value)
 {
       if (adr >= array_.size())
@@ -100,6 +105,11 @@ vvp_darray_real::~vvp_darray_real()
 {
 }
 
+size_t vvp_darray_real::get_size() const
+{
+      return array_.size();
+}
+
 void vvp_darray_real::set_word(unsigned adr, double value)
 {
       if (adr >= array_.size())
@@ -119,6 +129,11 @@ void vvp_darray_real::get_word(unsigned adr, double&value)
 
 vvp_darray_string::~vvp_darray_string()
 {
+}
+
+size_t vvp_darray_string::get_size() const
+{
+      return array_.size();
 }
 
 void vvp_darray_string::set_word(unsigned adr, const string&value)
@@ -176,6 +191,11 @@ vvp_queue_string::~vvp_queue_string()
 {
 }
 
+size_t vvp_queue_string::get_size() const
+{
+      return array_.size();
+}
+
 void vvp_queue_string::push_back(const string&val)
 {
       array_.push_back(val);
@@ -183,6 +203,11 @@ void vvp_queue_string::push_back(const string&val)
 
 vvp_queue_vec4::~vvp_queue_vec4()
 {
+}
+
+size_t vvp_queue_vec4::get_size() const
+{
+      return array_.size();
 }
 
 void vvp_queue_vec4::push_back(const vvp_vector4_t&val)

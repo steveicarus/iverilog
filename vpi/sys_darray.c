@@ -83,11 +83,11 @@ void sys_darray_register(void)
 
       tf_data.type      = vpiSysFunc;
       tf_data.sysfunctype = vpiIntFunc;
-      tf_data.tfname    = "$ivl_darray_method$size";
+      tf_data.tfname    = "$size";
       tf_data.calltf    = size_calltf;
       tf_data.compiletf = one_darray_arg_compiletf;
       tf_data.sizetf    = 0;
-      tf_data.user_data = "$ivl_darray_method$size";
+      tf_data.user_data = "$size";
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 }

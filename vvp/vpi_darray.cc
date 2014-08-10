@@ -93,7 +93,7 @@ int __vpiQueueVar::vpi_get(int code)
       vvp_fun_signal_object*fun = dynamic_cast<vvp_fun_signal_object*> (get_net()->fun);
       assert(fun);
       vvp_object_t val = fun->get_object();
-      vvp_darray*aval = val.peek<vvp_darray>();
+      vvp_queue*aval = val.peek<vvp_queue>();
 
       switch (code) {
 	  case vpiArrayType:

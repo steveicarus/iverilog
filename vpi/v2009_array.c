@@ -75,9 +75,4 @@ void v2009_array_register(void)
       tf_data.user_data   = "$increment";
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
-
-      tf_data.tfname      = "$size";
-      tf_data.user_data   = "$size";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
 }

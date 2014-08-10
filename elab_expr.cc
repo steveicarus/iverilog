@@ -2318,7 +2318,7 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
       if (net->darray_type()) {
 
 	    if (method_name == "size") {
-		  NetESFunc*sys_expr = new NetESFunc("$ivl_darray_method$size",
+		  NetESFunc*sys_expr = new NetESFunc("$size",
 						     IVL_VT_BOOL, 32, 1);
 		  sys_expr->parm(0, new NetESignal(net));
 		  sys_expr->set_line(*this);
@@ -2812,7 +2812,7 @@ unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&mo
 	    return 0;
       }
 
-      if (const netdarray_t*dtype = net->darray_type()) {
+      if (/*const netdarray_t*dtype =*/ net->darray_type()) {
 	    if (member_name == "size") {
 		  expr_type_  = IVL_VT_BOOL;
 		  expr_width_ = 32;
@@ -3246,8 +3246,7 @@ NetExpr* PEIdent::elaborate_expr_method_(Design*des, NetScope*scope,
 
       if (const netdarray_t*dtype = net->darray_type()) {
 	    if (member_name == "size") {
-		  NetESFunc*fun = new NetESFunc("$ivl_queue_method$size",
-						expr_type_, expr_width_, 1);
+		  NetESFunc*fun = new NetESFunc("$size", IVL_VT_BOOL, 32, 1);
 		  fun->set_line(*this);
 
 		  NetESignal*arg = new NetESignal(net);

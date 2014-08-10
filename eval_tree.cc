@@ -2016,6 +2016,7 @@ static bool get_array_info(const NetExpr*arg, long dim,
 	/* A string or dynamic array must be handled by the run time. */
       switch (sig->data_type()) {
 	case IVL_VT_DARRAY:
+	case IVL_VT_QUEUE:
 	case IVL_VT_STRING:
 	    defer = true;
 	    return true;

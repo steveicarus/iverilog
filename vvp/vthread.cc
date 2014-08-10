@@ -4272,7 +4272,8 @@ bool of_NEW_DARRAY(vthread_t thr, vvp_code_t cp)
       } else if (strcmp(text,"S") == 0) {
 	    obj = new vvp_darray_string(size);
       } else {
-	    obj = new vvp_darray (size);
+	      // XXXX This should not happen.
+	    obj = new vvp_darray_atom<uint8_t> (size);
       }
 
       thr->push_object(obj);
