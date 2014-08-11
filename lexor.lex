@@ -142,8 +142,8 @@ TU [munpf]
      that flag to attach implicit attributes to "initial" and
      "always" statements. */
 
-"//"{W}*"synthesis"{W}*"translate_on"{W}*\n { pform_mc_translate_on(true); }
-"//"{W}*"synthesis"{W}*"translate_off"{W}*\n { pform_mc_translate_on(false); }
+"//"{W}*"synthesis"{W}+"translate_on"{W}*\n { pform_mc_translate_on(true); }
+"//"{W}*"synthesis"{W}+"translate_off"{W}*\n { pform_mc_translate_on(false); }
 "//" { comment_enter = YY_START; BEGIN(LCOMMENT); }
 <LCOMMENT>.    { yymore(); }
 <LCOMMENT>\n   { yylloc.first_line += 1; BEGIN(comment_enter); }
