@@ -594,12 +594,12 @@ NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
 	      // losses. So calculate a min_wid width.
 	    unsigned tmp_wid;
 	    unsigned min_wid = tmp->expr_width();
-	    if (use_stride != 1 && ((tmp_wid = num_bits(use_stride)) >= min_wid))
-		  min_wid = tmp_wid + 1;
 	    if (use_base != 0 && ((tmp_wid = num_bits(use_base)) >= min_wid))
 		  min_wid = tmp_wid + 1;
 	    if ((tmp_wid = num_bits(dims[idx].width()+1)) >= min_wid)
 		  min_wid = tmp_wid + 1;
+	    if (use_stride != 1)
+		  min_wid += num_bits(use_stride);
 
 	    tmp = pad_to_width(tmp, min_wid, *net);
 
