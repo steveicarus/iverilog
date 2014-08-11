@@ -104,7 +104,7 @@ static void string_ex_select(ivl_expr_t expr)
 
 	/* Assume the sub-expression is a signal */
       ivl_signal_t sig = ivl_expr_signal(sube);
-      assert(ivl_signal_data_type(sig) == IVL_VT_DARRAY);
+      assert(ivl_signal_data_type(sig) == IVL_VT_DARRAY || ivl_signal_data_type(sig) == IVL_VT_QUEUE);
 
       draw_eval_expr_into_integer(shift, 3);
       fprintf(vvp_out, "    %%load/dar/str v%p_0;\n", sig);

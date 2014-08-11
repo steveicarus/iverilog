@@ -109,6 +109,8 @@ class vvp_queue_vec4 : public vvp_queue {
       ~vvp_queue_vec4();
 
       size_t get_size(void) const;
+      void set_word(unsigned adr, const vvp_vector4_t&value);
+      void get_word(unsigned adr, vvp_vector4_t&value);
       void push_back(const vvp_vector4_t&value);
       void push_front(const vvp_vector4_t&value);
 
@@ -123,8 +125,8 @@ class vvp_queue_string : public vvp_queue {
       ~vvp_queue_string();
 
       size_t get_size(void) const;
-	//void set_word(unsigned adr, const std::string&value);
-	//void get_word(unsigned adr, std::string&value);
+      void set_word(unsigned adr, const std::string&value);
+      void get_word(unsigned adr, std::string&value);
       void push_back(const std::string&value);
 	//void push_front(const std::string&value);
 

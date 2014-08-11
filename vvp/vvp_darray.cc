@@ -201,6 +201,36 @@ void vvp_queue_string::push_back(const string&val)
       array_.push_back(val);
 }
 
+void vvp_queue_string::set_word(unsigned adr, const string&value)
+{
+      if (adr >= array_.size())
+	    return;
+
+      list<string>::iterator cur = array_.begin();
+      while (adr > 0) {
+	    cur ++;
+	    adr -= 1;
+      }
+
+      *cur = value;
+}
+
+void vvp_queue_string::get_word(unsigned adr, string&value)
+{
+      if (adr >= array_.size()) {
+	    value = "";
+	    return;
+      }
+
+      list<string>::const_iterator cur = array_.begin();
+      while (adr > 0) {
+	    cur ++;
+	    adr -= 1;
+      }
+
+      value = *cur;
+}
+
 vvp_queue_vec4::~vvp_queue_vec4()
 {
 }
@@ -208,6 +238,36 @@ vvp_queue_vec4::~vvp_queue_vec4()
 size_t vvp_queue_vec4::get_size() const
 {
       return array_.size();
+}
+
+void vvp_queue_vec4::set_word(unsigned adr, const vvp_vector4_t&value)
+{
+      if (adr >= array_.size())
+	    return;
+
+      list<vvp_vector4_t>::iterator cur = array_.begin();
+      while (adr > 0) {
+	    cur ++;
+	    adr -= 1;
+      }
+
+      *cur = value;
+}
+
+void vvp_queue_vec4::get_word(unsigned adr, vvp_vector4_t&value)
+{
+      if (adr >= array_.size()) {
+	    value = vvp_vector4_t();
+	    return;
+      }
+
+      list<vvp_vector4_t>::const_iterator cur = array_.begin();
+      while (adr > 0) {
+	    cur ++;
+	    adr -= 1;
+      }
+
+      value = *cur;
 }
 
 void vvp_queue_vec4::push_back(const vvp_vector4_t&val)
