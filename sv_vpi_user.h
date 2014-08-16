@@ -45,7 +45,7 @@ EXTERN_C_START
 /********* OBJECT TYPES ***********/
 #define vpiPackage          600
 #define vpiArrayType        606
-#define   vpiStaticARray      1
+#define   vpiStaticArray      1
 #define   vpiDynamicArray     2
 #define   vpiAssocArray       3
 #define   vpiQueueArray       4
