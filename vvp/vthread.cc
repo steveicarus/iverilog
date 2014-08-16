@@ -3328,7 +3328,13 @@ bool of_LOAD_DAR(vthread_t thr, vvp_code_t cp)
 
       vvp_vector4_t word;
       darray->get_word(adr, word);
-      assert(word.size() == wid);
+
+      if (word.size() != wid) {
+	    cerr << __FILE__ << ":" << __LINE__
+		 << ": %load/dar element word.size()=" << word.size()
+		 << ", expecting wid=" << wid << "." << endl;
+	    abort();
+      }
 
       thr_check_addr(thr, bit+word.size());
       thr->bits4.set_vec(bit, word);

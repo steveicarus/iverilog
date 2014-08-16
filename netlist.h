@@ -3614,6 +3614,31 @@ class NetTaskDef : public NetBaseDef {
 };
 
 /*
+ * The NetELast expression node takes as an argument a net, that is
+ * intended to be a queue or dynamic array object. The return value is
+ * the index of the last item in the node. This is intended to
+ * implement the '$' is the expression "foo[$]".
+ */
+class NetELast : public NetExpr {
+
+    public:
+      explicit NetELast(NetNet*sig);
+      ~NetELast();
+
+      inline const NetNet*sig() const { return sig_; }
+
+      virtual ivl_variable_type_t expr_type() const;
+      virtual void dump(std::ostream&) const;
+
+      virtual void expr_scan(struct expr_scan_t*) const;
+      virtual NetELast*dup_expr() const;
+      virtual NexusSet* nex_input(bool rem_out = true);
+
+    private:
+      NetNet*sig_;
+};
+
+/*
  * This node represents a function call in an expression. The object
  * contains a pointer to the function definition, which is used to
  * locate the value register and input expressions.

@@ -4768,15 +4768,27 @@ NetExpr* PEIdent::elaborate_expr_net_bit_(Design*des, NetScope*scope,
       return ss;
 }
 
-NetExpr* PEIdent::elaborate_expr_net_bit_last_(Design*des, NetScope*scope,
+NetExpr* PEIdent::elaborate_expr_net_bit_last_(Design*, NetScope*,
 					       NetESignal*net,
-					       NetScope*found_in,
+					       NetScope* /* found_in */,
 					       bool need_const) const
 {
-      cerr << get_fileline() << ": sorry: "
-	   << "Don't yet know how to elaborate net expresion [$]" << endl;
-      des->errors += 1;
-      return 0;
+      if (need_const) {
+	    cerr << get_fileline() << ": error: "
+		 << "Expression with \"[$]\" is not constant." << endl;
+	    return 0;
+      }
+
+      unsigned use_width = 1;
+      if (const netdarray_t*darray = net->sig()->darray_type()) {
+	    use_width = darray->element_width();
+      }
+
+      NetELast*mux = new NetELast(net->sig());
+      mux->set_line(*this);
+      NetESelect*ss = new NetESelect(net, mux, use_width);
+      ss->set_line(*this);
+      return ss;
 }
 
 NetExpr* PEIdent::elaborate_expr_net(Design*des, NetScope*scope,

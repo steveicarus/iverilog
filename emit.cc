@@ -610,6 +610,11 @@ void NetEEvent::expr_scan(struct expr_scan_t*tgt) const
       tgt->expr_event(this);
 }
 
+void NetELast::expr_scan(struct expr_scan_t*tgt) const
+{
+      tgt->expr_last(this);
+}
+
 void NetENetenum::expr_scan(struct expr_scan_t*tgt) const
 {
       tgt->expr_netenum(this);

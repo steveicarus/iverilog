@@ -343,6 +343,38 @@ void dll_target::expr_creal(const NetECReal*net)
       expr_->u_.real_.value = net->value().as_double();
 }
 
+void dll_target::expr_last(const NetELast*net)
+{
+      assert(expr_ == 0);
+      ivl_expr_t expr = new struct ivl_expr_s;
+      expr->type_   = IVL_EX_SFUNC;
+      expr->value_  = IVL_VT_LOGIC;
+      expr->width_  = 32;
+      expr->signed_ = 1;
+      expr->sized_  = 1;
+      expr->net_type  = 0;
+      FILE_NAME(expr, net);
+
+      expr->u_.sfunc_.name_ = "$high";
+
+      ivl_signal_t sig = find_signal(des_, net->sig());
+
+      ivl_expr_t esig = new struct ivl_expr_s;
+      esig->type_   = IVL_EX_SIGNAL;
+      esig->value_  = IVL_VT_DARRAY;
+      esig->net_type= sig->net_type;
+      esig->width_  = 1;
+      FILE_NAME(esig, net);
+      esig->u_.signal_.word = 0;
+      esig->u_.signal_.sig = sig;
+
+      expr->u_.sfunc_.parms = 1;
+      expr->u_.sfunc_.parm = new ivl_expr_t[1];
+      expr->u_.sfunc_.parm[0] = esig;
+
+      expr_ = expr;
+}
+
 void dll_target::expr_new(const NetENew*net)
 {
       ivl_expr_t size = 0;

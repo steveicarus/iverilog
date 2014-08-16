@@ -2533,9 +2533,10 @@ static struct vector_info draw_select_signal(ivl_expr_t expr,
       unsigned use_word = 0;
       unsigned use_wid, lab_x, lab_end;
 
-	/* Special case: the sub expression is a DARRAY variable, so
-	   do a dynamic array word load. */
-      if (ivl_signal_data_type(sig) == IVL_VT_DARRAY) {
+	/* Special case: the sub expression is a DARRAY or QUEUE
+	   variable, so do a dynamic array word load. */
+      if ((ivl_signal_data_type(sig) == IVL_VT_DARRAY)
+	  || (ivl_signal_data_type(sig) == IVL_VT_QUEUE)) {
 	    res.base = allocate_vector(wid);
 	    res.wid = wid;
 	    draw_eval_expr_into_integer(bit_idx, 3);

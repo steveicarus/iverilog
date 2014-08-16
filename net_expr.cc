@@ -321,6 +321,20 @@ const NetScope* NetECRealParam::scope() const
 }
 
 
+NetELast::NetELast(NetNet*s)
+: sig_(s)
+{
+}
+
+NetELast::~NetELast()
+{
+}
+
+ivl_variable_type_t NetELast::expr_type() const
+{
+      return IVL_VT_BOOL;
+}
+
 NetENetenum::NetENetenum(const netenum_t*s)
 : netenum_(s)
 {

@@ -1704,6 +1704,11 @@ void NetEEvent::dump(ostream&o) const
       o << "<event=" << event_->name() << ">";
 }
 
+void NetELast::dump(ostream&fd) const
+{
+      fd << "<last of " << sig_->name() << ">";
+}
+
 void NetENetenum::dump(ostream&o) const
 {
       o << "<netenum=" << netenum_ << ">";

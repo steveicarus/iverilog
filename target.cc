@@ -471,6 +471,12 @@ void expr_scan_t::expr_const(const NetEConst*)
 	    "unhandled expr_const." << endl;
 }
 
+void expr_scan_t::expr_last(const NetELast*exp)
+{
+      cerr << exp->get_fileline() << ": expr_scan_t(" << typeid(*this).name() << "): "
+	   << "unhandled expr_last." << endl;
+}
+
 void expr_scan_t::expr_new(const NetENew*)
 {
       cerr << "expr_scan_t (" << typeid(*this).name() << "): "

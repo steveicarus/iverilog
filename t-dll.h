@@ -141,6 +141,7 @@ struct dll_target  : public target_t, public expr_scan_t {
       void expr_concat(const NetEConcat*);
       void expr_const(const NetEConst*);
       void expr_creal(const NetECReal*);
+      void expr_last(const NetELast*);
       void expr_new(const NetENew*);
       void expr_null(const NetENull*);
       void expr_param(const NetEConstParam*);
