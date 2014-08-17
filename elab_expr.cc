@@ -1285,10 +1285,27 @@ unsigned PECallFunction::test_width_method_(Design*des, NetScope*scope,
 	    return expr_width_;
       }
 
+      if (use_darray && (method_name == "pop_back" || method_name=="pop_front")) {
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PECallFunction::test_width_method_: "
+		       << "Detected " << method_name << " method"
+		       << " of dynamic arrays." << endl;
+	    }
+
+	    expr_type_  = use_darray->element_base_type();
+	    expr_width_ = use_darray->element_width();
+	    min_width_  = expr_width_;
+	    signed_flag_= false;
+
+	    return expr_width_;
+      }
+
       if (const netclass_t*class_type = net->class_type()) {
-	    cerr << get_fileline() << ": PECallFunction::test_width_method_: "
-		 << "Try to find method " << method_name
-		 << " of class " << class_type->get_name() << endl;
+	    if (debug_elaborate) {
+		  cerr << get_fileline() << ": PECallFunction::test_width_method_: "
+		       << "Try to find method " << method_name
+		       << " of class " << class_type->get_name() << endl;
+	    }
 
 	    NetScope*func = class_type->method_from_name(method_name);
 	    if (func == 0) {
@@ -2324,6 +2341,25 @@ NetExpr* PECallFunction::elaborate_expr_method_(Design*des, NetScope*scope,
 		  sys_expr->set_line(*this);
 		  return sys_expr;
 	    }
+
+	    if (method_name == "pop_back") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_darray_method$pop_back",
+						     expr_type_,
+						     expr_width_, 1);
+		  sys_expr->parm(0, new NetESignal(net));
+		  sys_expr->set_line(*this);
+		  return sys_expr;
+	    }
+
+	    if (method_name == "pop_front") {
+		  NetESFunc*sys_expr = new NetESFunc("$ivl_darray_method$pop_front",
+						     expr_type_,
+						     expr_width_, 1);
+		  sys_expr->parm(0, new NetESignal(net));
+		  sys_expr->set_line(*this);
+		  return sys_expr;
+	    }
+
       }
 
       if (const netclass_t*class_type = net->class_type()) {
