@@ -150,6 +150,22 @@ static void string_ex_substr(ivl_expr_t expr)
       clr_word(arg2);
 }
 
+static void string_ex_pop(ivl_expr_t expr)
+{
+      const char*fb;
+      ivl_expr_t arg;
+
+      if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_back")==0)
+	    fb = "b";
+      else
+	    fb = "f";
+
+      arg = ivl_expr_parm(expr, 0);
+      assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
+
+      fprintf(vvp_out, "    %%qpop/%s/str v%p_0;\n", fb, ivl_expr_signal(arg));
+}
+
 void draw_eval_string(ivl_expr_t expr)
 {
 
@@ -177,6 +193,10 @@ void draw_eval_string(ivl_expr_t expr)
 	  case IVL_EX_SFUNC:
 	    if (strcmp(ivl_expr_name(expr), "$ivl_string_method$substr") == 0)
 		  string_ex_substr(expr);
+	    else if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_back")==0)
+		  string_ex_pop(expr);
+	    else if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_front")==0)
+		  string_ex_pop(expr);
 	    else
 		  fallback_eval(expr);
 	    break;

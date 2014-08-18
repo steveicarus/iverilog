@@ -4850,6 +4850,91 @@ bool of_PUTC_STR_V(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_QPOP_B(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      assert(dqueue);
+
+      size_t size = dqueue->get_size();
+      assert(size > 0);
+
+      vvp_vector4_t value;
+      dqueue->get_word(size-1, value);
+      dqueue->pop_back();
+
+      assert(value.size() == wid);
+      thr->bits4.set_vec(bit, value);
+      return true;
+}
+
+bool of_QPOP_F(vthread_t thr, vvp_code_t cp)
+{
+      unsigned bit = cp->bit_idx[0];
+      unsigned wid = cp->bit_idx[1];
+
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      assert(dqueue);
+
+      size_t size = dqueue->get_size();
+      assert(size > 0);
+
+      vvp_vector4_t value;
+      dqueue->get_word(0, value);
+      dqueue->pop_front();
+
+      assert(value.size() == wid);
+      thr->bits4.set_vec(bit, value);
+      return true;
+}
+
+bool of_QPOP_B_STR(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      assert(dqueue);
+
+      size_t size = dqueue->get_size();
+      assert(size > 0);
+
+      string value;
+      dqueue->get_word(size-1, value);
+      dqueue->pop_back();
+
+      thr->push_str(value);
+      return true;
+}
+
+bool of_QPOP_F_STR(vthread_t thr, vvp_code_t cp)
+{
+      vvp_net_t*net = cp->net;
+      vvp_fun_signal_object*obj = dynamic_cast<vvp_fun_signal_object*> (net->fun);
+      assert(obj);
+
+      vvp_queue*dqueue = obj->get_object().peek<vvp_queue>();
+      assert(dqueue);
+
+      string value;
+      dqueue->get_word(0, value);
+      dqueue->pop_front();
+
+      thr->push_str(value);
+      return true;
+}
+
 /*
  * These implement the %release/net and %release/reg instructions. The
  * %release/net instruction applies to a net kind of functor by

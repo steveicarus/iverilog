@@ -101,6 +101,9 @@ class vvp_queue : public vvp_darray {
 
       virtual void push_back(const std::string&value);
       virtual void push_front(const std::string&value);
+
+      virtual void pop_back(void) =0;
+      virtual void pop_front(void)=0;
 };
 
 class vvp_queue_vec4 : public vvp_queue {
@@ -113,6 +116,8 @@ class vvp_queue_vec4 : public vvp_queue {
       void get_word(unsigned adr, vvp_vector4_t&value);
       void push_back(const vvp_vector4_t&value);
       void push_front(const vvp_vector4_t&value);
+      void pop_back(void);
+      void pop_front(void);
 
     private:
       std::list<vvp_vector4_t> array_;
@@ -129,6 +134,8 @@ class vvp_queue_string : public vvp_queue {
       void get_word(unsigned adr, std::string&value);
       void push_back(const std::string&value);
 	//void push_front(const std::string&value);
+      void pop_back(void);
+      void pop_front(void);
 
     private:
       std::list<std::string> array_;

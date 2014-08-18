@@ -231,6 +231,16 @@ void vvp_queue_string::get_word(unsigned adr, string&value)
       value = *cur;
 }
 
+void vvp_queue_string::pop_back(void)
+{
+      array_.pop_back();
+}
+
+void vvp_queue_string::pop_front(void)
+{
+      array_.pop_front();
+}
+
 vvp_queue_vec4::~vvp_queue_vec4()
 {
 }
@@ -278,4 +288,14 @@ void vvp_queue_vec4::push_back(const vvp_vector4_t&val)
 void vvp_queue_vec4::push_front(const vvp_vector4_t&val)
 {
       array_.push_front(val);
+}
+
+void vvp_queue_vec4::pop_back(void)
+{
+      array_.pop_back();
+}
+
+void vvp_queue_vec4::pop_front(void)
+{
+      array_.pop_front();
 }

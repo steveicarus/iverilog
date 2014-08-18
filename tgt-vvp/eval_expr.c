@@ -3126,6 +3126,29 @@ static struct vector_info draw_ternary_expr(ivl_expr_t expr, unsigned wid)
       return res;
 }
 
+static struct vector_info draw_darray_pop(ivl_expr_t expr, unsigned wid)
+{
+      struct vector_info res;
+      ivl_expr_t arg;
+      const char*fb;
+
+      if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_back")==0)
+	    fb = "b";
+      else
+	    fb = "f";
+
+      res.base = allocate_vector(wid);
+      res.wid = wid;
+
+      arg = ivl_expr_parm(expr, 0);
+      assert(ivl_expr_type(arg) == IVL_EX_SIGNAL);
+
+      fprintf(vvp_out, "    %%qpop/%s v%p_0, %u, %u;\n", fb,
+	      ivl_expr_signal(arg), res.base, res.wid);
+
+      return res;
+}
+
 static struct vector_info draw_sfunc_expr(ivl_expr_t expr, unsigned wid)
 {
       unsigned parm_count = ivl_expr_parms(expr);
@@ -3146,6 +3169,11 @@ static struct vector_info draw_sfunc_expr(ivl_expr_t expr, unsigned wid)
 	    return res;
 
       }
+
+      if (strcmp(ivl_expr_name(expr), "$ivl_darray_method$pop_back")==0)
+	    return draw_darray_pop(expr, wid);
+      if (strcmp(ivl_expr_name(expr),"$ivl_darray_method$pop_front")==0)
+	    return draw_darray_pop(expr, wid);
 
       res = draw_vpi_func_call(expr, wid);
 
