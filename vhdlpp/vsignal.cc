@@ -27,25 +27,34 @@ using namespace std;
 SigVarBase::SigVarBase(perm_string nam, const VType*typ, Expression*exp)
 : name_(nam), type_(typ), init_expr_(exp), refcnt_sequ_(0)
 {
-    if(init_expr_)
-    {
+}
+
+SigVarBase::~SigVarBase()
+{
+}
+
+void SigVarBase::elaborate_init_expr(Entity*ent, Architecture*arc)
+{
+    if(init_expr_) {
       // convert the initializing string to bitstring if applicable
-      const ExpString *string = dynamic_cast<const ExpString*>(init_expr_);
+      const ExpString*string = dynamic_cast<const ExpString*>(init_expr_);
       if(string) {
         const std::vector<char>& val = string->get_value();
         char buf[val.size() + 1];
         std::copy(val.begin(), val.end(), buf);
         buf[val.size()] = 0;
 
-        ExpBitstring *bitstring = new ExpBitstring(buf);
+        ExpBitstring*bitstring = new ExpBitstring(buf);
         delete init_expr_;
         init_expr_ = bitstring;
       }
+      else {
+        ExpAggregate*aggr = dynamic_cast<ExpAggregate*>(init_expr_);
+        if(aggr) {
+          aggr->elaborate_expr(ent, arc, peek_type());
+        }
+      }
     }
-}
-
-SigVarBase::~SigVarBase()
-{
 }
 
 void SigVarBase::type_elaborate_(VType::decl_t&decl)
