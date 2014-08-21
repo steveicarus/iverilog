@@ -42,3 +42,5 @@ ivl_variable_type_t vector_type_t::figure_packed_base_type(void) const
 {
       return base_type;
 }
+
+atom2_type_t size_type (32, true);

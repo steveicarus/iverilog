@@ -1376,12 +1376,29 @@ loop_statement /* IEEE1800-2005: A.6.8 */
 	$$ = tmp;
       }
 
-  | K_foreach '(' IDENTIFIER '[' loop_variables ']' ')' statement_or_null
-      { yyerror(@1, "sorry: foreach loops not supported");
-	delete[]$3;
-	delete $5;
-	delete $8;
-	$$ = 0;
+      // When matching a foreach loop, implicitly create a named block
+      // to hold the definitions for the index variables.
+  | K_foreach '(' IDENTIFIER '[' loop_variables ']' ')'
+      { static unsigned foreach_counter = 0;
+	char for_block_name[64];
+	snprintf(for_block_name, sizeof for_block_name, "$ivl_foreach%u", foreach_counter);
+	foreach_counter += 1;
+
+	PBlock*tmp = pform_push_block_scope(for_block_name, PBlock::BL_SEQ);
+	FILE_NAME(tmp, @1);
+	current_block_stack.push(tmp);
+
+	pform_make_foreach_declarations(@1, $5);
+      }
+    statement_or_null
+      { PForeach*tmp_for = pform_make_foreach(@1, $3, $5, $9);
+
+	pform_pop_scope();
+	vector<Statement*>tmp_for_list(1);
+	tmp_for_list[0] = tmp_for;
+	PBlock*tmp_blk = current_block_stack.top();
+	tmp_blk->set_statement(tmp_for_list);
+	$$ = tmp_blk;
       }
 
   /* Error forms for loop statements. */

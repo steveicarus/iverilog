@@ -704,6 +704,42 @@ PCallTask* pform_make_call_task(const struct vlltype&loc,
       return tmp;
 }
 
+void pform_make_foreach_declarations(const struct vlltype&loc,
+				     std::list<perm_string>*loop_vars)
+{
+      static const struct str_pair_t str = { IVL_DR_STRONG, IVL_DR_STRONG };
+
+      list<decl_assignment_t*>assign_list;
+      for (list<perm_string>::const_iterator cur = loop_vars->begin()
+		 ; cur != loop_vars->end() ; ++ cur) {
+	    decl_assignment_t*tmp_assign = new decl_assignment_t;
+	    tmp_assign->name = lex_strings.make(*cur);
+	    assign_list.push_back(tmp_assign);
+      }
+
+      pform_makewire(loc, 0, str, &assign_list, NetNet::REG, &size_type);
+}
+
+PForeach* pform_make_foreach(const struct vlltype&loc,
+			     char*name,
+			     list<perm_string>*loop_vars,
+			     Statement*stmt)
+{
+      perm_string use_name = lex_strings.make(name);
+      delete[]name;
+
+      perm_string use_index = loop_vars->front();
+      loop_vars->pop_front();
+
+      ivl_assert(loc, loop_vars->empty());
+      delete loop_vars;
+
+      PForeach*fe = new PForeach(use_name, use_index, stmt);
+      FILE_NAME(fe, loc);
+
+      return fe;
+}
+
 static void pform_put_behavior_in_scope(PProcess*pp)
 {
       lexical_scope->behaviors.push_back(pp);

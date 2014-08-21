@@ -806,6 +806,12 @@ void PEventStatement::elaborate_sig(Design*des, NetScope*scope) const
 	    statement_->elaborate_sig(des, scope);
 }
 
+void PForeach::elaborate_sig(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_->elaborate_sig(des, scope);
+}
+
 void PForever::elaborate_sig(Design*des, NetScope*scope) const
 {
       if (statement_)

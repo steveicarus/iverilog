@@ -4576,6 +4576,65 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
 }
 
 /*
+ * The foreach statement can be written as a for statement like so:
+ *
+ *     for (<idx> = $low(<array>) ; <idx> <= $high(<array>) ; <idx> += 1)
+ *          <statement_>
+ *
+ * The <idx> variable is already known to be in the containing named
+ * block scope, which was created by the parser.
+ */
+NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
+{
+	// Get the signal for the index variable.
+      pform_name_t index_name;
+      index_name.push_back(name_component_t(index_var_));
+      NetNet*idx_sig = des->find_signal(scope, index_name);
+      ivl_assert(*this, idx_sig);
+
+      NetESignal*idx_exp = new NetESignal(idx_sig);
+      idx_exp->set_line(*this);
+
+	// Get the signal for the array variable
+      pform_name_t array_name;
+      array_name.push_back(name_component_t(array_var_));
+      NetNet*array_sig = des->find_signal(scope, array_name);
+      ivl_assert(*this, array_sig);
+
+      NetESignal*array_exp = new NetESignal(array_sig);
+      array_exp->set_line(*this);
+
+	// Make an initialization expression for the index.
+      NetESFunc*init_expr = new NetESFunc("$low", IVL_VT_BOOL, 32, 1);
+      init_expr->set_line(*this);
+      init_expr->parm(0, array_exp);
+
+	// Make a condition expression: idx <= $high(array)
+      NetESFunc*high_exp = new NetESFunc("$high", IVL_VT_BOOL, 32, 1);
+      high_exp->set_line(*this);
+      high_exp->parm(0, array_exp);
+
+      NetEBComp*cond_expr = new NetEBComp('L', idx_exp, high_exp);
+      cond_expr->set_line(*this);
+
+	/* Elaborate the statement that is contained in the foreach
+	   loop. */
+      NetProc*sub = statement_->elaborate(des, scope);
+
+	/* Make a step statement: idx += 1 */
+      NetAssign_*idx_lv = new NetAssign_(idx_sig);
+      NetEConst*step_val = make_const_val(1);
+      NetAssign*step = new NetAssign(idx_lv, '+', step_val);
+      step->set_line(*this);
+
+      NetForLoop*stmt = new NetForLoop(idx_sig, init_expr, cond_expr, sub, step);
+      stmt->set_line(*this);
+      stmt->wrap_up();
+
+      return stmt;
+}
+
+/*
  * elaborate the for loop as the equivalent while loop. This eases the
  * task for the target code generator. The structure is:
  *

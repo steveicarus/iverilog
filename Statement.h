@@ -443,6 +443,22 @@ class PForce  : public Statement {
       PExpr*expr_;
 };
 
+class PForeach : public Statement {
+    public:
+      explicit PForeach(perm_string var, perm_string ix, Statement*stmt);
+      ~PForeach();
+
+      virtual NetProc* elaborate(Design*des, NetScope*scope) const;
+      virtual void elaborate_scope(Design*des, NetScope*scope) const;
+      virtual void elaborate_sig(Design*des, NetScope*scope) const;
+      virtual void dump(ostream&out, unsigned ind) const;
+
+    private:
+      perm_string array_var_;
+      perm_string index_var_;
+      Statement*statement_;
+};
+
 class PForever : public Statement {
     public:
       explicit PForever(Statement*s);

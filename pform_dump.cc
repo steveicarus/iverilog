@@ -967,6 +967,15 @@ void PForce::dump(ostream&out, unsigned ind) const
 	  << "; /* " << get_fileline() << " */" << endl;
 }
 
+void PForeach::dump(ostream&fd, unsigned ind) const
+{
+      fd << setw(ind) << "" << "foreach "
+	 << "variable=" << array_var_
+	 << ", index=" << index_var_
+	 << " /* " << get_fileline() << " */" << endl;
+      statement_->dump(fd, ind+3);
+}
+
 void PForever::dump(ostream&out, unsigned ind) const
 {
       out << setw(ind) << "" << "forever /* " << get_fileline() << " */" << endl;

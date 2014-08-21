@@ -285,6 +285,12 @@ extern PCallTask* pform_make_call_task(const struct vlltype&loc,
 				       const pform_name_t&name,
 				       const std::list<PExpr*>&parms);
 
+extern void pform_make_foreach_declarations(const struct vlltype&loc,
+					    std::list<perm_string>*loop_vars);
+extern PForeach* pform_make_foreach(const struct vlltype&loc,
+				    char*ident,
+				    std::list<perm_string>*loop_vars,
+				    Statement*stmt);
 
 /*
  * The makewire functions announce to the pform code new wires. These
@@ -349,7 +355,7 @@ extern void pform_set_data_type(const struct vlltype&li, data_type_t*, list<perm
 
 extern void pform_set_struct_type(struct_type_t*struct_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
 
-extern void pform_set_string_type(string_type_t*string_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
+extern void pform_set_string_type(const string_type_t*string_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*attr);
 
 extern void pform_set_class_type(class_type_t*class_type, std::list<perm_string>*names, NetNet::Type net_type, std::list<named_pexpr_t>*addr);
 

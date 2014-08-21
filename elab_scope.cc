@@ -1891,6 +1891,18 @@ void PEventStatement::elaborate_scope(Design*des, NetScope*scope) const
 }
 
 /*
+ * The standard says that we create an implicit scope for foreach
+ * loops, but that is just to hold the index variables, and we'll
+ * handle them by creating unique names. So just jump into the
+ * contained statement for scope elaboration.
+ */
+void PForeach::elaborate_scope(Design*des, NetScope*scope) const
+{
+      if (statement_)
+	    statement_ -> elaborate_scope(des, scope);
+}
+
+/*
  * Statements that contain a further statement but do not
  * intrinsically add a scope need to elaborate_scope the contained
  * statement.
