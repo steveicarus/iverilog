@@ -114,6 +114,57 @@ static PLI_INT32 high_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
       return 0;
 }
 
+static void low_array(const char*name, vpiHandle callh, vpiHandle arg)
+{
+      s_vpi_value value;
+      int array_type;
+
+      switch ( (array_type = vpi_get(vpiArrayType, arg)) ) {
+	  case vpiDynamicArray:
+	  case vpiQueueArray:
+	    value.format = vpiIntVal;
+	    value.value.integer = 0;
+	    vpi_put_value(callh, &value, 0, vpiNoDelay);
+	    break;
+
+	  default:
+	    vpi_printf("SORRY: %s:%d: function %s() argument object code is %d\n",
+		       vpi_get_str(vpiFile,callh), (int)vpi_get(vpiLineNo, callh),
+		       name, array_type);
+	    break;
+      }
+}
+
+static PLI_INT32 low_calltf(ICARUS_VPI_CONST PLI_BYTE8*name)
+{
+      vpiHandle callh = vpi_handle(vpiSysTfCall, 0);
+      vpiHandle argv;
+      vpiHandle arg;
+      int object_code;
+
+      (void)name; /* Parameter is not used. */
+
+      argv = vpi_iterate(vpiArgument, callh);
+      assert(argv);
+      arg = vpi_scan(argv);
+      assert(arg);
+      vpi_free_object(argv);
+
+      switch ( (object_code = vpi_get(vpiType, arg)) ) {
+	  case vpiArrayVar:
+	    low_array(name, callh, arg);
+	    break;
+
+	  default:
+	    vpi_printf("SORRY: %s:%d: function %s() argument object code is %d\n",
+		       vpi_get_str(vpiFile,callh), (int)vpi_get(vpiLineNo, callh),
+		       name, object_code);
+	    return 0;
+      }
+
+      return 0;
+}
+
 void v2009_array_register(void)
 {
       s_vpi_systf_data tf_data;
@@ -146,11 +197,6 @@ void v2009_array_register(void)
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 
-      tf_data.tfname      = "$low";
-      tf_data.user_data   = "$low";
-      res = vpi_register_systf(&tf_data);
-      vpip_make_systf_system_defined(res);
-
       tf_data.tfname      = "$increment";
       tf_data.user_data   = "$increment";
       res = vpi_register_systf(&tf_data);
@@ -160,6 +206,13 @@ void v2009_array_register(void)
       tf_data.user_data   = "$high";
       tf_data.compiletf   = one_array_arg_compiletf;
       tf_data.calltf      = high_calltf;
+      res = vpi_register_systf(&tf_data);
+      vpip_make_systf_system_defined(res);
+
+      tf_data.tfname      = "$low";
+      tf_data.user_data   = "$low";
+      tf_data.compiletf   = one_array_arg_compiletf;
+      tf_data.calltf      = low_calltf;
       res = vpi_register_systf(&tf_data);
       vpip_make_systf_system_defined(res);
 }
