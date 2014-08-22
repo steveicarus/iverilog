@@ -1119,10 +1119,6 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 		  continue;
 	    }
 
-	    cerr << get_fileline() << ": XXXX: "
-		 << "use_lidx=" << use_lidx
-		 << ", use_ridx=" << use_ridx << endl;
-
 	      // Cannot handle dynamic arrays of arrays yet.
 	    ivl_assert(*this, netdarray==0);
 	    ivl_assert(*this, use_lidx && use_ridx);
