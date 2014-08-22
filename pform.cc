@@ -731,7 +731,11 @@ PForeach* pform_make_foreach(const struct vlltype&loc,
       perm_string use_index = loop_vars->front();
       loop_vars->pop_front();
 
-      ivl_assert(loc, loop_vars->empty());
+      if (! loop_vars->empty()) {
+	    cerr << loc.get_fileline() << ": sorry: "
+		 << "Multi-dimension foreach indices not supported." << endl;
+	    error_count += 1;
+      }
       delete loop_vars;
 
       PForeach*fe = new PForeach(use_name, use_index, stmt);
