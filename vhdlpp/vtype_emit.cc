@@ -21,7 +21,7 @@
 
 # include  "vtype.h"
 # include  "expression.h"
-# include  <iostream>
+# include  <sstream>
 # include  <typeinfo>
 # include  <cassert>
 
@@ -33,7 +33,6 @@ int VType::decl_t::emit(ostream&out, perm_string name) const
       return type->emit_decl(out, name, reg_flag);
 }
 
-
 int VType::emit_decl(ostream&out, perm_string name, bool reg_flag) const
 {
       int errors = 0;
@@ -41,9 +40,8 @@ int VType::emit_decl(ostream&out, perm_string name, bool reg_flag) const
       if (!reg_flag)
 	    out << "wire ";
 
-      errors += emit_def(out);
-
-      out << " \\" << name << " ";
+      errors += emit_def(out, name);
+      out << " ";
       return errors;
 }
 
@@ -52,13 +50,55 @@ int VType::emit_typedef(std::ostream&, typedef_context_t&) const
       return 0;
 }
 
-int VTypeERROR::emit_def(ostream&out) const
+int VTypeERROR::emit_def(ostream&out, perm_string) const
 {
       out << "/* ERROR */";
       return 1;
 }
 
-int VTypeArray::emit_def(ostream&out) const
+int VTypeArray::emit_def(ostream&out, perm_string name) const
+{
+      int errors = 0;
+
+      const VTypeArray*cur = this;
+      while (const VTypeArray*sub = dynamic_cast<const VTypeArray*> (cur->etype_)) {
+	    cur = sub;
+      }
+
+      const VType*raw_base = cur->etype_;
+      const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*> (raw_base);
+      stringstream buf;
+
+      if (base) {
+	    assert(dimensions() == 1);
+
+	    base->emit_def(buf, empty_perm_string);
+	    if (signed_flag_)
+		  buf << " signed";
+      } else {
+	    raw_base->emit_def(buf, empty_perm_string);
+      }
+
+      string tmp(buf.str());
+      out << tmp.substr(0, tmp.length() - 2);  // drop the empty type name (\ )
+
+      if(raw_base->can_be_packed()) {
+        errors += emit_dimensions(out);
+        out << " \\" << name;
+      } else {
+        out << "\\" << name << " ";
+        errors += emit_dimensions(out);
+      }
+
+      return errors;
+}
+
+int VTypeArray::emit_typedef(std::ostream&out, typedef_context_t&ctx) const
+{
+      return etype_->emit_typedef(out, ctx);
+}
+
+int VTypeArray::emit_dimensions(std::ostream&out) const
 {
       int errors = 0;
 
@@ -68,21 +108,6 @@ int VTypeArray::emit_def(ostream&out) const
 	    dims.push_back(cur);
 	    cur = sub;
       }
-
-      const VType*raw_base = cur->etype_;
-
-      const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*> (raw_base);
-
-      if (base) {
-	    assert(dimensions() == 1);
-
-	    base->emit_def(out);
-	    if (signed_flag_)
-		  out << " signed";
-      } else {
-	    raw_base->emit_def(out);
-      }
-
       dims.push_back(cur);
 
       while (! dims.empty()) {
@@ -102,12 +127,7 @@ int VTypeArray::emit_def(ostream&out) const
       return errors;
 }
 
-int VTypeArray::emit_typedef(std::ostream&out, typedef_context_t&ctx) const
-{
-      return etype_->emit_typedef(out, ctx);
-}
-
-int VTypeEnum::emit_def(ostream&out) const
+int VTypeEnum::emit_def(ostream&out, perm_string name) const
 {
       int errors = 0;
       out << "enum {";
@@ -116,7 +136,7 @@ int VTypeEnum::emit_def(ostream&out) const
       for (size_t idx = 1 ; idx < names_.size() ; idx += 1)
 	    out << ", \\" << names_[idx] << " ";
 
-      out << "}";
+      out << "} \\" << name << " ";
 
       return errors;
 }
@@ -148,22 +168,23 @@ int VTypePrimitive::emit_primitive_type(ostream&out) const
       return errors;
 }
 
-int VTypePrimitive::emit_def(ostream&out) const
+int VTypePrimitive::emit_def(ostream&out, perm_string name) const
 {
       int errors = 0;
       errors += emit_primitive_type(out);
+      out << " \\" << name << " ";
       return errors;
 }
 
-int VTypeRange::emit_def(ostream&out) const
+int VTypeRange::emit_def(ostream&out, perm_string name) const
 {
       int errors = 0;
       out << "/* Internal error: Don't know how to emit range */";
-      errors += base_->emit_def(out);
+      errors += base_->emit_def(out, name);
       return errors;
 }
 
-int VTypeRecord::emit_def(ostream&out) const
+int VTypeRecord::emit_def(ostream&out, perm_string name) const
 {
       int errors = 0;
       out << "struct packed {";
@@ -172,11 +193,11 @@ int VTypeRecord::emit_def(ostream&out) const
 		 ; cur != elements_.end() ; ++cur) {
 	    perm_string element_name = (*cur)->peek_name();
 	    const VType*element_type = (*cur)->peek_type();
-	    element_type->emit_def(out);
+	    element_type->emit_def(out, empty_perm_string);
 	    out << " \\" << element_name << " ; ";
       }
 
-      out << "}";
+      out << "} \\ " << name << " ";
       return errors;
 }
 
@@ -185,7 +206,7 @@ int VTypeRecord::emit_def(ostream&out) const
  * type. (We are defining a variable here, not the type itself.) The
  * emit_typedef() method was presumably called to define type already.
  */
-int VTypeDef::emit_def(ostream&out) const
+int VTypeDef::emit_def(ostream&out, perm_string) const
 {
       int errors = 0;
       out << "\\" << name_ << " ";
@@ -200,7 +221,7 @@ int VTypeDef::emit_decl(ostream&out, perm_string name, bool reg_flag) const
       else
 	    out << "wire ";
 
-      errors += type_->emit_def(out);
+      errors += type_->emit_def(out, name);
       out << " \\" << name << " ";
       return errors;
 }
@@ -227,8 +248,14 @@ int VTypeDef::emit_typedef(ostream&out, typedef_context_t&ctx) const
       int errors = type_->emit_typedef(out, ctx);
       flag = MARKED;
 
+      // Array types are used directly anyway and typedefs for unpacked
+      // arrays do not work currently
+      if(dynamic_cast<const VTypeArray*>(type_))
+        out << "// ";
+
       out << "typedef ";
-      errors += type_->emit_def(out);
-      out << " \\" << name_ << " ;" << endl;
+      errors += type_->emit_def(out, name_);
+      out << " ;" << endl;
+
       return errors;
 }

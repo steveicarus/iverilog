@@ -74,7 +74,7 @@ class VType {
 
 	// This virtual method emits a definition for the specific
 	// type. It is used to emit typedef's.
-      virtual int emit_def(std::ostream&out) const =0;
+      virtual int emit_def(std::ostream&out, perm_string name) const =0;
 
 	// This virtual method causes VTypeDef types to emit typedefs
 	// of themselves. The VTypeDef implementation of this method
@@ -118,7 +118,7 @@ extern void preload_global_types(void);
  */
 class VTypeERROR : public VType {
     public:
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
 };
 
 /*
@@ -140,7 +140,7 @@ class VTypePrimitive : public VType {
       type_t type() const { return type_; }
 
       int emit_primitive_type(std::ostream&fd) const;
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
 
       bool can_be_packed() const { return packed_; }
 
@@ -197,8 +197,9 @@ class VTypeArray : public VType {
 
       const VType* element_type() const;
 
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
+      int emit_dimensions(std::ostream&out) const;
 
       bool can_be_packed() const { return etype_->can_be_packed(); }
 
@@ -220,7 +221,7 @@ class VTypeRange : public VType {
 
     public: // Virtual methods
       void write_to_stream(std::ostream&fd) const;
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
 
     private:
       const VType*base_;
@@ -234,7 +235,7 @@ class VTypeEnum : public VType {
       ~VTypeEnum();
 
       void show(std::ostream&) const;
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
 
     private:
       std::vector<perm_string>names_;
@@ -267,7 +268,7 @@ class VTypeRecord : public VType {
 
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
 
       const element_t* element_by_name(perm_string name) const;
 
@@ -296,7 +297,7 @@ class VTypeDef : public VType {
       void write_type_to_stream(ostream&fd) const;
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
 
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
     private:
       int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 

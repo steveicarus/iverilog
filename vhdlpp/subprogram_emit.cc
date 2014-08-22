@@ -31,7 +31,7 @@ int Subprogram::emit_package(ostream&fd) const
 
       if (return_type_) {
 	    fd << "function ";
-	    return_type_->emit_def(fd);
+	    return_type_->emit_def(fd, empty_perm_string);
 	    fd << " " << name_;
 	    fd << "(";
       } else {
@@ -55,8 +55,7 @@ int Subprogram::emit_package(ostream&fd) const
 		  break;
 	    }
 
-	    errors += curp->type->emit_def(fd);
-	    fd << " \\" << curp->name << " ";
+	    errors += curp->type->emit_def(fd, curp->name);
       }
 
       fd << ");" << endl;
