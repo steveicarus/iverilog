@@ -159,7 +159,8 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
       ivl_assert(*this, rc);
       rc = rang.lsb()->evaluate(ent, arc, use_lsb);
       ivl_assert(*this, rc);
-      ivl_assert(*this, use_msb >= use_lsb);
+      if(use_msb < use_lsb)
+        swap(use_msb, use_lsb);
 
       map<int64_t,choice_element*> element_map;
       choice_element*element_other = 0;
