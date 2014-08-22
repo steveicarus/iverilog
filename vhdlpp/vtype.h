@@ -82,6 +82,9 @@ class VType {
 	// all the types that it emits.
       virtual int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
 
+	// Determines if a type can be used in Verilog packed array.
+      virtual bool can_be_packed() const { return false; }
+
     private:
       friend class decl_t;
 	// This virtual method is called to emit the declaration. This
@@ -128,7 +131,7 @@ class VTypePrimitive : public VType {
       enum type_t { BOOLEAN, BIT, INTEGER, REAL, STDLOGIC, CHARACTER };
 
     public:
-      VTypePrimitive(type_t);
+      VTypePrimitive(type_t tt, bool packed = false);
       ~VTypePrimitive();
 
       void write_to_stream(std::ostream&fd) const;
@@ -139,8 +142,11 @@ class VTypePrimitive : public VType {
       int emit_primitive_type(std::ostream&fd) const;
       int emit_def(std::ostream&out) const;
 
+      bool can_be_packed() const { return packed_; }
+
     private:
       type_t type_;
+      bool packed_;
 };
 
 extern const VTypePrimitive primitive_BOOLEAN;
@@ -193,6 +199,8 @@ class VTypeArray : public VType {
 
       int emit_def(std::ostream&out) const;
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
+
+      bool can_be_packed() const { return etype_->can_be_packed(); }
 
     private:
       const VType*etype_;

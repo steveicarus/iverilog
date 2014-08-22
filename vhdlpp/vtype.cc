@@ -35,8 +35,8 @@ void VType::show(ostream&out) const
       write_to_stream(out);
 }
 
-VTypePrimitive::VTypePrimitive(VTypePrimitive::type_t tt)
-: type_(tt)
+VTypePrimitive::VTypePrimitive(VTypePrimitive::type_t tt, bool packed)
+: type_(tt), packed_(packed)
 {
 }
 
@@ -60,8 +60,8 @@ void VTypePrimitive::show(ostream&out) const
 	    out << "INTEGER";
 	    break;
 	  case REAL:
-        out << "REAL";
-        break;
+	    out << "REAL";
+	    break;
 	  case STDLOGIC:
 	    out << "std_logic";
 	    break;

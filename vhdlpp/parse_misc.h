@@ -67,4 +67,7 @@ extern void generate_global_types(ActiveScope*res);
 
 extern bool is_global_type(perm_string type_name);
 
+// Returns true if a type can be used as the base type in Verilog packed array.
+extern bool can_be_packed(perm_string type_name);
+
 #endif /* IVL_parse_misc_H */

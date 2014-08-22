@@ -343,11 +343,11 @@ static void import_ieee_use(ActiveScope*res, perm_string package, perm_string na
       }
 }
 
-const VTypePrimitive primitive_BOOLEAN(VTypePrimitive::BOOLEAN);
-const VTypePrimitive primitive_BIT(VTypePrimitive::BIT);
+const VTypePrimitive primitive_BOOLEAN(VTypePrimitive::BOOLEAN, true);
+const VTypePrimitive primitive_BIT(VTypePrimitive::BIT, true);
 const VTypePrimitive primitive_INTEGER(VTypePrimitive::INTEGER);
 const VTypePrimitive primitive_REAL(VTypePrimitive::REAL);
-const VTypePrimitive primitive_STDLOGIC(VTypePrimitive::STDLOGIC);
+const VTypePrimitive primitive_STDLOGIC(VTypePrimitive::STDLOGIC, true);
 const VTypePrimitive primitive_CHARACTER(VTypePrimitive::CHARACTER);
 
 const VTypeRange primitive_NATURAL(&primitive_INTEGER, INT64_MAX, 0);
@@ -381,6 +381,15 @@ bool is_global_type(perm_string name)
       if (name == "string") return true;
       if (name == "natural") return true;
       return false;
+}
+
+bool can_be_packed(perm_string name)
+{
+      if (name == "boolean") return true;
+      if (name == "bit") return true;
+      if (name == "std_logic") return true;
+      if (name == "bit_vector") return true;
+      return true;
 }
 
 void library_set_work_path(const char*path)
