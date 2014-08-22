@@ -153,7 +153,7 @@ int VTypePrimitive::emit_primitive_type(ostream&out) const
 	    out << "logic";
 	    break;
 	  case INTEGER:
-	    out << "bool [31:0]";
+	    out << "integer";
 	    break;
       case REAL:
         out << "real";
