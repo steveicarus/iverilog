@@ -52,6 +52,7 @@ class perm_string {
       const char*text_;
 };
 
+extern const perm_string empty_perm_string;
 extern bool operator == (perm_string a, perm_string b);
 extern bool operator == (perm_string a, const char* b);
 extern bool operator != (perm_string a, perm_string b);
