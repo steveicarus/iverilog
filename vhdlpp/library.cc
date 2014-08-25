@@ -383,15 +383,6 @@ bool is_global_type(perm_string name)
       return false;
 }
 
-bool can_be_packed(perm_string name)
-{
-      if (name == "boolean") return true;
-      if (name == "bit") return true;
-      if (name == "std_logic") return true;
-      if (name == "bit_vector") return true;
-      return true;
-}
-
 void library_set_work_path(const char*path)
 {
       assert(library_work_path == 0);

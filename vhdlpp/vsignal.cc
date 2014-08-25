@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2014 / Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU

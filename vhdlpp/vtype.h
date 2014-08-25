@@ -2,7 +2,7 @@
 #define IVL_vtype_H
 /*
  * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2013 / Stephen Williams (steve@icarus.com),
+ * Copyright CERN 2014 / Stephen Williams (steve@icarus.com),
  *                       Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
