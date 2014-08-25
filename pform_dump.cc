@@ -973,8 +973,13 @@ void PForeach::dump(ostream&fd, unsigned ind) const
 {
       fd << setw(ind) << "" << "foreach "
 	 << "variable=" << array_var_
-	 << ", index=" << index_var_
-	 << " /* " << get_fileline() << " */" << endl;
+	 << ", indices=[";
+      for (size_t idx = 0 ; idx < index_vars_.size() ; idx += 1) {
+	    if (idx > 0) fd << ",";
+	    fd << index_vars_[idx];
+      }
+
+      fd << "] /* " << get_fileline() << " */" << endl;
       statement_->dump(fd, ind+3);
 }
 

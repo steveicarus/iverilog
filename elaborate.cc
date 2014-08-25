@@ -4591,9 +4591,15 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
 {
+      if (index_vars_.size() != 1) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "Multi-index foreach loops not supported." << endl;
+	    des->errors += 1;
+      }
+
 	// Get the signal for the index variable.
       pform_name_t index_name;
-      index_name.push_back(name_component_t(index_var_));
+      index_name.push_back(name_component_t(index_vars_[0]));
       NetNet*idx_sig = des->find_signal(scope, index_name);
       ivl_assert(*this, idx_sig);
 
