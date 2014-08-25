@@ -270,6 +270,8 @@ class VTypeRecord : public VType {
       void show(std::ostream&) const;
       int emit_def(std::ostream&out, perm_string name) const;
 
+      bool can_be_packed() const { return true; }
+
       const element_t* element_by_name(perm_string name) const;
 
     private:
@@ -298,6 +300,8 @@ class VTypeDef : public VType {
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
 
       int emit_def(std::ostream&out, perm_string name) const;
+
+      bool can_be_packed() const { return type_->can_be_packed(); }
     private:
       int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 
