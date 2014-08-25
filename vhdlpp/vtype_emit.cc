@@ -153,11 +153,11 @@ int VTypePrimitive::emit_primitive_type(ostream&out) const
 	    out << "logic";
 	    break;
 	  case INTEGER:
-	    out << "integer";
+	    out << "bool[31:0]";
 	    break;
-      case REAL:
-        out << "real";
-        break;
+	  case REAL:
+	    out << "real";
+	    break;
 	  case CHARACTER:
 	    out << "char";
 	    break;
