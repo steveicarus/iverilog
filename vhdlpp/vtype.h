@@ -103,6 +103,12 @@ class VType {
 	    bool reg_flag;
       };
 
+    protected:
+      inline void emit_name(std::ostream&out, perm_string name) const
+      {
+        if(name != empty_perm_string)
+            out << " \\" << name << " ";
+      }
 };
 
 inline std::ostream&operator << (std::ostream&out, const VType&item)

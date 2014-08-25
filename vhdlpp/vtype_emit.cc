@@ -67,26 +67,22 @@ int VTypeArray::emit_def(ostream&out, perm_string name) const
 
       const VType*raw_base = cur->etype_;
       const VTypePrimitive*base = dynamic_cast<const VTypePrimitive*> (raw_base);
-      stringstream buf;
 
       if (base) {
 	    assert(dimensions() == 1);
 
-	    base->emit_def(buf, empty_perm_string);
+	    base->emit_def(out, empty_perm_string);
 	    if (signed_flag_)
-		  buf << " signed";
+		  out << " signed";
       } else {
-	    raw_base->emit_def(buf, empty_perm_string);
+	    raw_base->emit_def(out, empty_perm_string);
       }
-
-      string tmp(buf.str());
-      out << tmp.substr(0, tmp.length() - 2);  // drop the empty type name (\ )
 
       if(raw_base->can_be_packed()) {
         errors += emit_dimensions(out);
-        out << " \\" << name;
+        emit_name(out, name);
       } else {
-        out << "\\" << name << " ";
+        emit_name(out, name);
         errors += emit_dimensions(out);
       }
 
@@ -136,7 +132,8 @@ int VTypeEnum::emit_def(ostream&out, perm_string name) const
       for (size_t idx = 1 ; idx < names_.size() ; idx += 1)
 	    out << ", \\" << names_[idx] << " ";
 
-      out << "} \\" << name << " ";
+      out << "}";
+      emit_name(out, name);
 
       return errors;
 }
@@ -172,7 +169,7 @@ int VTypePrimitive::emit_def(ostream&out, perm_string name) const
 {
       int errors = 0;
       errors += emit_primitive_type(out);
-      out << " \\" << name << " ";
+      emit_name(out, name);
       return errors;
 }
 
@@ -197,7 +194,8 @@ int VTypeRecord::emit_def(ostream&out, perm_string name) const
 	    out << " \\" << element_name << " ; ";
       }
 
-      out << "} \\ " << name << " ";
+      out << "}";
+      emit_name(out, name);
       return errors;
 }
 
@@ -209,7 +207,7 @@ int VTypeRecord::emit_def(ostream&out, perm_string name) const
 int VTypeDef::emit_def(ostream&out, perm_string) const
 {
       int errors = 0;
-      out << "\\" << name_ << " ";
+      emit_name(out, name_);
       return errors;
 }
 
@@ -222,7 +220,6 @@ int VTypeDef::emit_decl(ostream&out, perm_string name, bool reg_flag) const
 	    out << "wire ";
 
       errors += type_->emit_def(out, name);
-      out << " \\" << name << " ";
       return errors;
 }
 
