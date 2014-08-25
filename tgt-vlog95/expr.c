@@ -855,9 +855,11 @@ static void emit_expr_select(ivl_scope_t scope, ivl_expr_t expr, unsigned wid)
       ivl_expr_t sig_expr = ivl_expr_oper1(expr);
       ivl_select_type_t sel_type = ivl_expr_sel_type(expr);
       (void)wid;  /* Parameter is not used. */
-	/* If this is a dynamic array select, translate it differently. */
+	/* If this is a dynamic array or queue select, translate the
+	 * select differently. */
       if ((ivl_expr_type(sig_expr) == IVL_EX_SIGNAL)  &&
-          (ivl_signal_data_type(ivl_expr_signal(sig_expr)) == IVL_VT_DARRAY)) {
+          ((ivl_signal_data_type(ivl_expr_signal(sig_expr)) == IVL_VT_DARRAY) ||
+           (ivl_signal_data_type(ivl_expr_signal(sig_expr)) == IVL_VT_QUEUE))) {
 	    assert(sel_expr);
 	    emit_select_name(scope, sig_expr);
 	    fprintf(vlog_out, "[");
