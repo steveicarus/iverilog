@@ -20,6 +20,7 @@
 # include "config.h"
 
 # include  <cstdlib>
+# include  <climits>
 # include  "netlist.h"
 # include  "netvector.h"
 # include  "netmisc.h"
@@ -764,12 +765,13 @@ NetExpr* elab_and_eval(Design*des, NetScope*scope, PExpr*pe,
 
         // If we can get the same result using a smaller expression
         // width, do so.
-      if ((context_width > 0) && (pe->expr_type() != IVL_VT_REAL)
-          && (expr_width > pos_context_width)) {
-            expr_width = max(pe->min_width(), pos_context_width);
+      unsigned min_width = pe->min_width();
+      if ((min_width != UINT_MAX) && (pe->expr_type() != IVL_VT_REAL)
+          && (pos_context_width > 0) && (expr_width > pos_context_width)) {
+            expr_width = max(min_width, pos_context_width);
 
             if (debug_elaborate) {
-                  cerr << pe->get_fileline() << ":        "
+                  cerr << pe->get_fileline() << ":              : "
                        << "pruned to width=" << expr_width << endl;
             }
       }

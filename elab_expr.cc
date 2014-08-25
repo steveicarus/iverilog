@@ -310,7 +310,7 @@ unsigned PEBinary::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
                 case '%':
                 case '/':
-                  min_width_ = max(min_width_, expr_width_);
+                  min_width_ = UINT_MAX; // disable width pruning
                   break;
 
                 case 'l': // <<  Should be handled by PEBShift
@@ -816,7 +816,7 @@ unsigned PEBLeftWidth::test_width(Design*des, NetScope*scope, width_mode_t&mode)
       if (op_ == 'l')
             min_width_ = left_->min_width();
       else
-            min_width_ = expr_width_;
+            min_width_ = UINT_MAX; // disable width pruning
 
       return fix_width_(mode);
 }
