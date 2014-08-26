@@ -1384,14 +1384,16 @@ static void emit_stmt_stask(ivl_scope_t scope, ivl_statement_t stmt)
       fprintf(vlog_out, "%*c%s", get_indent(), ' ', ivl_stmt_name(stmt));
       if (count != 0) {
 	    unsigned idx;
+	    ivl_expr_t expr;
 	    fprintf(vlog_out, "(");
 	    count -= 1;
 	    for (idx = 0; idx < count; idx += 1) {
-		  ivl_expr_t expr = ivl_stmt_parm(stmt, idx);
+		  expr = ivl_stmt_parm(stmt, idx);
 		  if (expr) emit_expr(scope, expr, 0, 0, 0, 0);
 		  fprintf(vlog_out, ", ");
 	    }
-	    emit_expr(scope, ivl_stmt_parm(stmt, count), 0, 0, 0, 0);
+	    expr = ivl_stmt_parm(stmt, count);
+	    if (expr) emit_expr(scope, expr, 0, 0, 0, 0);
 	    fprintf(vlog_out, ")");
       }
       fprintf(vlog_out, ";");
