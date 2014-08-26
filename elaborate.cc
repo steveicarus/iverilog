@@ -3440,10 +3440,15 @@ NetProc* PCallTask::elaborate_sys_task_method_(Design*des, NetScope*scope,
       NetESignal*sig = new NetESignal(net);
       sig->set_line(*this);
 
-      vector<NetExpr*>argv (1 + parms_.size());
+	/* If there is a single NULL argument then ignore it since it is
+	 * left over from the parser and is not needed by the method. */
+      unsigned nparms = parms_.size();
+      if ((nparms == 1) && (parms_[0] == 0)) nparms = 0;
+
+      vector<NetExpr*>argv (1 + nparms);
       argv[0] = sig;
 
-      for (unsigned idx = 0 ; idx < parms_.size() ; idx += 1) {
+      for (unsigned idx = 0 ; idx < nparms ; idx += 1) {
 	    PExpr*ex = parms_[idx];
 	    if (ex != 0) {
 		  argv[idx+1] = elab_sys_task_arg(des, scope,
