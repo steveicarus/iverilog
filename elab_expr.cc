@@ -2819,7 +2819,7 @@ bool PEIdent::calculate_param_range_(Design*, NetScope*,
       return true;
 }
 
-unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&mode)
+unsigned PEIdent::test_width_method_(Design*des, NetScope*scope, width_mode_t&)
 {
       if (!gn_system_verilog())
 	    return 0;
@@ -3251,7 +3251,7 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
 }
 
 NetExpr* PEIdent::elaborate_expr_method_(Design*des, NetScope*scope,
-					 unsigned expr_wid, unsigned flags) const
+					 unsigned, unsigned) const
 {
       if (!gn_system_verilog())
 	    return 0;
@@ -3280,7 +3280,7 @@ NetExpr* PEIdent::elaborate_expr_method_(Design*des, NetScope*scope,
 	    return 0;
       }
 
-      if (const netdarray_t*dtype = net->darray_type()) {
+      if (net->darray_type()) {
 	    if (member_name == "size") {
 		  NetESFunc*fun = new NetESFunc("$size", IVL_VT_BOOL, 32, 1);
 		  fun->set_line(*this);
