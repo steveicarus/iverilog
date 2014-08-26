@@ -4591,6 +4591,25 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
  */
 NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
 {
+	// Get the signal for the array variable
+      pform_name_t array_name;
+      array_name.push_back(name_component_t(array_var_));
+      NetNet*array_sig = des->find_signal(scope, array_name);
+      ivl_assert(*this, array_sig);
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PForeach::elaborate: "
+		 << "Scan array " << array_sig->name()
+		 << " with " << array_sig->unpacked_dims().size() << " unpacked"
+		 << " and " << array_sig->packed_dims().size()
+		 << " packed dimensions." << endl;
+      }
+
+      if (array_sig->data_type()==IVL_VT_BOOL)
+	    return elaborate_static_array_(des, scope, array_sig);
+      if (array_sig->data_type()==IVL_VT_LOGIC)
+	    return elaborate_static_array_(des, scope, array_sig);
+
       if (index_vars_.size() != 1) {
 	    cerr << get_fileline() << ": sorry: "
 		 << "Multi-index foreach loops not supported." << endl;
@@ -4603,17 +4622,11 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
       NetNet*idx_sig = des->find_signal(scope, index_name);
       ivl_assert(*this, idx_sig);
 
-      NetESignal*idx_exp = new NetESignal(idx_sig);
-      idx_exp->set_line(*this);
-
-	// Get the signal for the array variable
-      pform_name_t array_name;
-      array_name.push_back(name_component_t(array_var_));
-      NetNet*array_sig = des->find_signal(scope, array_name);
-      ivl_assert(*this, array_sig);
-
       NetESignal*array_exp = new NetESignal(array_sig);
       array_exp->set_line(*this);
+
+      NetESignal*idx_exp = new NetESignal(idx_sig);
+      idx_exp->set_line(*this);
 
 	// Make an initialization expression for the index.
       NetESFunc*init_expr = new NetESFunc("$low", IVL_VT_BOOL, 32, 1);
@@ -4643,6 +4656,69 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
       stmt->wrap_up();
 
       return stmt;
+}
+
+/*
+ * This is a variant of the PForeach::elaborate() method that handles
+ * the case that the array has static dimensions. We can use constants
+ * and possibly do some optimizations.
+ */
+NetProc* PForeach::elaborate_static_array_(Design*des, NetScope*scope,
+					   NetNet*array_sig) const
+{
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PForeach::elaborate_static_array_: "
+		 << "Handle as array with static dimensions." << endl;
+      }
+
+      ivl_assert(*this, index_vars_.size() > 0);
+      ivl_assert(*this, array_sig->unpacked_dims().size() == index_vars_.size());
+
+      NetProc*sub = statement_->elaborate(des, scope);
+      NetForLoop*stmt = 0;
+
+      for (int idx_idx = index_vars_.size()-1 ; idx_idx >= 0 ; idx_idx -= 1) {
+	    const netrange_t&idx_range = array_sig->unpacked_dims()[idx_idx];
+
+	      // Get the $high and $low constant values for this slice
+	      // of the array.
+	    NetEConst*hig_expr = make_const_val_s(idx_range.get_msb());
+	    NetEConst*low_expr = make_const_val_s(idx_range.get_lsb());
+	    if (idx_range.get_msb() < idx_range.get_lsb()) {
+		  NetEConst*tmp = hig_expr;
+		  hig_expr = low_expr;
+		  low_expr = tmp;
+	    }
+
+	    hig_expr->set_line(*this);
+	    low_expr->set_line(*this);
+
+	    pform_name_t idx_name;
+	    idx_name.push_back(name_component_t(index_vars_[idx_idx]));
+	    NetNet*idx_sig = des->find_signal(scope, idx_name);
+	    ivl_assert(*this, idx_sig);
+
+	      // Make the condition expression <idx> <= $high(slice)
+	    NetESignal*idx_expr = new NetESignal(idx_sig);
+	    idx_expr->set_line(*this);
+
+	    NetEBComp*cond_expr = new NetEBComp('L', idx_expr, hig_expr);
+	    cond_expr->set_line(*this);
+
+	      // Make the step statement: <idx> += 1
+	    NetAssign_*idx_lv = new NetAssign_(idx_sig);
+	    NetEConst*step_val = make_const_val_s(1);
+	    NetAssign*step = new NetAssign(idx_lv, '+', step_val);
+	    step->set_line(*this);
+
+	    stmt = new NetForLoop(idx_sig, low_expr, cond_expr, sub, step);
+	    stmt->set_line(*this);
+	    stmt->wrap_up();
+
+	    sub = stmt;
+      }
+
+      return stmt? stmt : sub;
 }
 
 /*

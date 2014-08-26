@@ -454,6 +454,10 @@ class PForeach : public Statement {
       virtual void dump(ostream&out, unsigned ind) const;
 
     private:
+      NetProc* elaborate_static_array_(Design*des, NetScope*scope,
+				       NetNet*array_sig) const;
+
+    private:
       perm_string array_var_;
       std::vector<perm_string> index_vars_;
       Statement*statement_;

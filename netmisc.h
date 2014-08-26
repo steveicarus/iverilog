@@ -204,6 +204,7 @@ extern NetNet*sub_net_from(Design*des, NetScope*scope, long val, NetNet*sig);
 extern NetEConst*make_const_x(unsigned long wid);
 extern NetEConst*make_const_0(unsigned long wid);
 extern NetEConst*make_const_val(unsigned long val);
+extern NetEConst*make_const_val_s(long val);
 
 /*
  * Make A const net

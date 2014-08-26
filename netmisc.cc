@@ -667,6 +667,14 @@ NetEConst* make_const_val(unsigned long value)
       return res;
 }
 
+NetEConst* make_const_val_s(long value)
+{
+      verinum tmp (value, integer_width);
+      tmp.has_sign(true);
+      NetEConst*res = new NetEConst(tmp);
+      return res;
+}
+
 NetNet* make_const_x(Design*des, NetScope*scope, unsigned long wid)
 {
       verinum xxx (verinum::Vx, wid);
