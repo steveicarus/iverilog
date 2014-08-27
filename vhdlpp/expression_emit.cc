@@ -159,7 +159,8 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
       ivl_assert(*this, rc);
       rc = rang.lsb()->evaluate(ent, arc, use_lsb);
       ivl_assert(*this, rc);
-      ivl_assert(*this, use_msb >= use_lsb);
+      if(use_msb < use_lsb)
+        swap(use_msb, use_lsb);
 
       map<int64_t,choice_element*> element_map;
       choice_element*element_other = 0;
@@ -244,6 +245,10 @@ int ExpAggregate::emit_array_(ostream&out, Entity*ent, Architecture*arc, const V
 	// Emit the elements as a concatenation. This works great for
 	// vectors of bits. We implement VHDL arrays as packed arrays,
 	// so this should be generally correct.
+      // TODO uncomment this once ivl supports assignments of '{}
+      /*if(!peek_type()->can_be_packed())
+        out << "'";*/
+
       out << "{";
       for (int64_t idx = use_msb ; idx >= use_lsb ; idx -= 1) {
 	    choice_element*cur = element_map[idx];

@@ -82,6 +82,12 @@ static const VType* calculate_subtype_array(const YYLTYPE&loc, const char*base_n
 
       assert(array_left==0 || array_right!=0);
 
+      // unfold typedef, if it is the case
+      const VTypeDef*type_def = dynamic_cast<const VTypeDef*> (base_type);
+      if (type_def) {
+          base_type = type_def->peek_definition();
+      }
+
       const VTypeArray*base_array = dynamic_cast<const VTypeArray*> (base_type);
       if (base_array) {
 	    assert(array_left && array_right);

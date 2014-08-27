@@ -684,8 +684,8 @@ composite_type_definition
 
   /* unbounded_array_definition IEEE 1076-2008 P5.3.2.1 */
   | K_array '(' index_subtype_definition_list ')' K_of subtype_indication
-      { sorrymsg(@1, "unbounded_array_definition not supported.\n");
-	std::list<prange_t*> r;
+      { std::list<prange_t*> r;
+    r.push_back(new prange_t(NULL, NULL, true));   // NULL boundaries indicate unbounded array type
 	VTypeArray*tmp = new VTypeArray($6, &r);
 	$$ = tmp;
       }

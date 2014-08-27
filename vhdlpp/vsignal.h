@@ -41,6 +41,9 @@ class SigVarBase : public LineInfo {
 
       void dump(ostream&out, int indent = 0) const;
 
+	// Elaborates initializer expressions if needed.
+      void elaborate_init_expr(Entity*ent, Architecture*arc);
+
     protected:
       perm_string peek_name_() const { return name_; }
       unsigned peek_refcnt_sequ_() const { return refcnt_sequ_; }

@@ -343,11 +343,11 @@ static void import_ieee_use(ActiveScope*res, perm_string package, perm_string na
       }
 }
 
-const VTypePrimitive primitive_BOOLEAN(VTypePrimitive::BOOLEAN);
-const VTypePrimitive primitive_BIT(VTypePrimitive::BIT);
-const VTypePrimitive primitive_INTEGER(VTypePrimitive::INTEGER);
+const VTypePrimitive primitive_BOOLEAN(VTypePrimitive::BOOLEAN, true);
+const VTypePrimitive primitive_BIT(VTypePrimitive::BIT, true);
+const VTypePrimitive primitive_INTEGER(VTypePrimitive::INTEGER, true);
 const VTypePrimitive primitive_REAL(VTypePrimitive::REAL);
-const VTypePrimitive primitive_STDLOGIC(VTypePrimitive::STDLOGIC);
+const VTypePrimitive primitive_STDLOGIC(VTypePrimitive::STDLOGIC, true);
 const VTypePrimitive primitive_CHARACTER(VTypePrimitive::CHARACTER);
 
 const VTypeRange primitive_NATURAL(&primitive_INTEGER, INT64_MAX, 0);

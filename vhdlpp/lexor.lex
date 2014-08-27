@@ -409,6 +409,7 @@ static char*make_bitstring_bin(int width_prefix, bool sflag, bool,
       while (*src) {
 	    *rp++ = *src++;
       }
+      *rp = 0;
 
       return res;
 }

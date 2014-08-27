@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011 Stephen Williams (steve@icarus.com)
+ * Copyright CERN 2014 / Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -33,6 +34,30 @@ SigVarBase::~SigVarBase()
 {
 }
 
+void SigVarBase::elaborate_init_expr(Entity*ent, Architecture*arc)
+{
+    if(init_expr_) {
+      // convert the initializing string to bitstring if applicable
+      const ExpString*string = dynamic_cast<const ExpString*>(init_expr_);
+      if(string) {
+        const std::vector<char>& val = string->get_value();
+        char buf[val.size() + 1];
+        std::copy(val.begin(), val.end(), buf);
+        buf[val.size()] = 0;
+
+        ExpBitstring*bitstring = new ExpBitstring(buf);
+        delete init_expr_;
+        init_expr_ = bitstring;
+      }
+      else {
+        ExpAggregate*aggr = dynamic_cast<ExpAggregate*>(init_expr_);
+        if(aggr) {
+          aggr->elaborate_expr(ent, arc, peek_type());
+        }
+      }
+    }
+}
+
 void SigVarBase::type_elaborate_(VType::decl_t&decl)
 {
       decl.type = type_;
@@ -44,7 +69,7 @@ int Signal::emit(ostream&out, Entity*ent, Architecture*arc)
 
       VType::decl_t decl;
       type_elaborate_(decl);
-      if (peek_refcnt_sequ_() > 0)
+      if (peek_refcnt_sequ_() > 0 || !peek_type()->can_be_packed())
 	    decl.reg_flag = true;
       errors += decl.emit(out, peek_name_());
 
@@ -63,7 +88,7 @@ int Variable::emit(ostream&out, Entity*, Architecture*)
 
       VType::decl_t decl;
       type_elaborate_(decl);
-      if (peek_refcnt_sequ_() > 0)
+      if (peek_refcnt_sequ_() > 0 || !peek_type()->can_be_packed())
 	    decl.reg_flag = true;
       errors += decl.emit(out, peek_name_());
       out << ";" << endl;

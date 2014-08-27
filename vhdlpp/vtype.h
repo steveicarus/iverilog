@@ -2,7 +2,7 @@
 #define IVL_vtype_H
 /*
  * Copyright (c) 2011-2014 Stephen Williams (steve@icarus.com)
- * Copyright CERN 2013 / Stephen Williams (steve@icarus.com),
+ * Copyright CERN 2014 / Stephen Williams (steve@icarus.com),
  *                       Maciej Suminski (maciej.suminski@cern.ch)
  *
  *    This source code is free software; you can redistribute it
@@ -74,13 +74,16 @@ class VType {
 
 	// This virtual method emits a definition for the specific
 	// type. It is used to emit typedef's.
-      virtual int emit_def(std::ostream&out) const =0;
+      virtual int emit_def(std::ostream&out, perm_string name) const =0;
 
 	// This virtual method causes VTypeDef types to emit typedefs
 	// of themselves. The VTypeDef implementation of this method
 	// uses this method recursively to do a depth-first emit of
 	// all the types that it emits.
       virtual int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
+
+	// Determines if a type can be used in Verilog packed array.
+      virtual bool can_be_packed() const { return false; }
 
     private:
       friend class decl_t;
@@ -100,6 +103,12 @@ class VType {
 	    bool reg_flag;
       };
 
+    protected:
+      inline void emit_name(std::ostream&out, perm_string name) const
+      {
+        if(name != empty_perm_string)
+            out << " \\" << name << " ";
+      }
 };
 
 inline std::ostream&operator << (std::ostream&out, const VType&item)
@@ -115,7 +124,7 @@ extern void preload_global_types(void);
  */
 class VTypeERROR : public VType {
     public:
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
 };
 
 /*
@@ -128,7 +137,7 @@ class VTypePrimitive : public VType {
       enum type_t { BOOLEAN, BIT, INTEGER, REAL, STDLOGIC, CHARACTER };
 
     public:
-      VTypePrimitive(type_t);
+      VTypePrimitive(type_t tt, bool packed = false);
       ~VTypePrimitive();
 
       void write_to_stream(std::ostream&fd) const;
@@ -137,10 +146,13 @@ class VTypePrimitive : public VType {
       type_t type() const { return type_; }
 
       int emit_primitive_type(std::ostream&fd) const;
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
+
+      bool can_be_packed() const { return packed_; }
 
     private:
       type_t type_;
+      bool packed_;
 };
 
 extern const VTypePrimitive primitive_BOOLEAN;
@@ -191,8 +203,11 @@ class VTypeArray : public VType {
 
       const VType* element_type() const;
 
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
+      int emit_dimensions(std::ostream&out) const;
+
+      bool can_be_packed() const { return etype_->can_be_packed(); }
 
     private:
       const VType*etype_;
@@ -212,7 +227,7 @@ class VTypeRange : public VType {
 
     public: // Virtual methods
       void write_to_stream(std::ostream&fd) const;
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
 
     private:
       const VType*base_;
@@ -226,7 +241,7 @@ class VTypeEnum : public VType {
       ~VTypeEnum();
 
       void show(std::ostream&) const;
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
 
     private:
       std::vector<perm_string>names_;
@@ -259,7 +274,9 @@ class VTypeRecord : public VType {
 
       void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
+
+      bool can_be_packed() const { return true; }
 
       const element_t* element_by_name(perm_string name) const;
 
@@ -288,7 +305,9 @@ class VTypeDef : public VType {
       void write_type_to_stream(ostream&fd) const;
       int emit_typedef(std::ostream&out, typedef_context_t&ctx) const;
 
-      int emit_def(std::ostream&out) const;
+      int emit_def(std::ostream&out, perm_string name) const;
+
+      bool can_be_packed() const { return type_->can_be_packed(); }
     private:
       int emit_decl(std::ostream&out, perm_string name, bool reg_flag) const;
 
