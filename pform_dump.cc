@@ -187,9 +187,11 @@ void uarray_type_t::pform_dump(ostream&out, unsigned indent) const
 void vector_type_t::pform_dump(ostream&fd, unsigned indent) const
 {
       fd << setw(indent) << "" << "vector of " << base_type;
-      for (list<pform_range_t>::iterator cur = pdims->begin()
-		 ; cur != pdims->end() ; ++cur) {
-	    fd << "[" << *(cur->first) << ":" << *(cur->second) << "]";
+      if (pdims.get()) {
+	    for (list<pform_range_t>::iterator cur = pdims->begin()
+		       ; cur != pdims->end() ; ++cur) {
+		  fd << "[" << *(cur->first) << ":" << *(cur->second) << "]";
+	    }
       }
       fd << endl;
 }
