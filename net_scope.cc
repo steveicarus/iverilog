@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000-2013 Stephen Williams (steve@icarus.com)
+ * Copyright (c) 2000-2014 Stephen Williams (steve@icarus.com)
  *
  *    This source code is free software; you can redistribute it
  *    and/or modify it in source code form under the terms of the GNU
@@ -187,6 +187,22 @@ void NetScope::set_line(perm_string file, perm_string def_file,
       def_file_ = def_file;
       lineno_ = lineno;
       def_lineno_ = def_lineno;
+}
+
+/*
+ * Look for the enumeration in the current scope and any parent scopes.
+ */
+const netenum_t*NetScope::find_enumeration_for_name(perm_string name)
+{
+      NetScope *cur_scope = this;
+      while (cur_scope) {
+	    NetEConstEnum*tmp = cur_scope->enum_names_[name];
+	    if (tmp) break;
+	    cur_scope = cur_scope->parent();
+      }
+
+      assert(cur_scope);
+      return cur_scope->enum_names_[name]->enumeration();
 }
 
 void NetScope::set_parameter(perm_string key, bool is_annotatable,

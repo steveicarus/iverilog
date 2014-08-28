@@ -919,6 +919,10 @@ class NetScope : public Definitions, public Attrib {
 	   if a unique name couldn't be generated. */
       bool auto_name(const char* prefix, char pad, const char* suffix);
 
+	/* Routine to search for the enumeration given a name. It basically
+	 * does what enumeration_for_name() does but searched the hierarchy. */
+      const netenum_t*find_enumeration_for_name(perm_string name);
+
 	/* Parameters exist within a scope, and these methods allow
 	   one to manipulate the set. In these cases, the name is the
 	   *simple* name of the parameter, the hierarchy is implicit in
