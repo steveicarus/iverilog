@@ -219,7 +219,14 @@ int VTypeDef::emit_decl(ostream&out, perm_string name, bool reg_flag) const
       else
 	    out << "wire ";
 
-      errors += type_->emit_def(out, name);
+      if(dynamic_cast<const VTypeArray*>(type_)) {
+          errors += type_->emit_def(out, name);
+      } else {
+          assert(name_ != empty_perm_string);
+          cout << "\\" << name_;
+          emit_name(out, name);
+      }
+
       return errors;
 }
 
