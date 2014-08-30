@@ -1142,6 +1142,12 @@ int main(int argc, char*argv[])
 	    (*idx).second = 0;
       }
 
+      for(map<perm_string,data_type_t*>::iterator it = pform_typedefs.begin()
+                 ; it != pform_typedefs.end() ; ++it) {
+            delete (*it).second;
+            (*it).second = 0;
+      }
+
       if (verbose_flag) {
 	    if (times_flag) {
 		  times(cycles+2);

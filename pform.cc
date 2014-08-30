@@ -1885,7 +1885,6 @@ static void pform_set_net_range(list<perm_string>*names,
       }
 
       delete names;
-      delete range;
 }
 
 /*

@@ -31,6 +31,9 @@ PScope::PScope(perm_string n)
 
 PScope::~PScope()
 {
+    for(map<perm_string, data_type_t*>::iterator it = typedefs.begin();
+        it != typedefs.end(); ++it)
+        delete it->second;
 }
 
 PWire* LexicalScope::wires_find(perm_string name)
