@@ -4600,14 +4600,18 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
       if (debug_elaborate) {
 	    cerr << get_fileline() << ": PForeach::elaborate: "
 		 << "Scan array " << array_sig->name()
-		 << " with " << array_sig->unpacked_dims().size() << " unpacked"
-		 << " and " << array_sig->packed_dims().size()
+		 << " of " << array_sig->data_type()
+		 << " with " << array_sig->unpacked_dimensions() << " unpacked"
+		 << " and " << array_sig->packed_dimensions()
 		 << " packed dimensions." << endl;
       }
 
+	// Classic arrays are processed this way.
       if (array_sig->data_type()==IVL_VT_BOOL)
 	    return elaborate_static_array_(des, scope, array_sig);
       if (array_sig->data_type()==IVL_VT_LOGIC)
+	    return elaborate_static_array_(des, scope, array_sig);
+      if (array_sig->unpacked_dimensions() >= index_vars_.size())
 	    return elaborate_static_array_(des, scope, array_sig);
 
       if (index_vars_.size() != 1) {

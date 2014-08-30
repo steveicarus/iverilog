@@ -43,6 +43,11 @@ void vvp_darray::set_word(unsigned, const string&)
       cerr << "XXXX set_word(string) not implemented for " << typeid(*this).name() << endl;
 }
 
+void vvp_darray::set_word(unsigned, const vvp_object_t&)
+{
+      cerr << "XXXX set_word(vvp_object_t) not implemented for " << typeid(*this).name() << endl;
+}
+
 void vvp_darray::get_word(unsigned, vvp_vector4_t&)
 {
       cerr << "XXXX get_word(vvp_vector4_t) not implemented for " << typeid(*this).name() << endl;
@@ -56,6 +61,11 @@ void vvp_darray::get_word(unsigned, double&)
 void vvp_darray::get_word(unsigned, string&)
 {
       cerr << "XXXX get_word(string) not implemented for " << typeid(*this).name() << endl;
+}
+
+void vvp_darray::get_word(unsigned, vvp_object_t&)
+{
+      cerr << "XXXX get_word(vvp_object_t) not implemented for " << typeid(*this).name() << endl;
 }
 
 template <class TYPE> vvp_darray_atom<TYPE>::~vvp_darray_atom()
@@ -100,6 +110,32 @@ template class vvp_darray_atom<int8_t>;
 template class vvp_darray_atom<int16_t>;
 template class vvp_darray_atom<int32_t>;
 template class vvp_darray_atom<int64_t>;
+
+vvp_darray_object::~vvp_darray_object()
+{
+}
+
+size_t vvp_darray_object::get_size() const
+{
+      return array_.size();
+}
+
+void vvp_darray_object::set_word(unsigned adr, const vvp_object_t&value)
+{
+      if (adr >= array_.size())
+	    return;
+      array_[adr] = value;
+}
+
+void vvp_darray_object::get_word(unsigned adr, vvp_object_t&value)
+{
+      if (adr >= array_.size()) {
+	    value = vvp_object_t();
+	    return;
+      }
+
+      value = array_[adr];
+}
 
 vvp_darray_real::~vvp_darray_real()
 {

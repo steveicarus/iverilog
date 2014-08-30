@@ -124,6 +124,7 @@ static char* strdupnew(char const *str)
 ".array/2s" { return K_ARRAY_2S; }
 ".array/2u"  { return K_ARRAY_2U; }
 ".array/i"  { return K_ARRAY_I; }
+".array/obj" { return K_ARRAY_OBJ; }
 ".array/real" { return K_ARRAY_R; }
 ".array/s" { return K_ARRAY_S; }
 ".array/str" { return K_ARRAY_STR; }

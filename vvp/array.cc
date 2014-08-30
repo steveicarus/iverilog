@@ -1055,6 +1055,18 @@ void array_set_word(vvp_array_t arr, unsigned address, const string&val)
       array_word_change(arr, address);
 }
 
+void array_set_word(vvp_array_t arr, unsigned address, const vvp_object_t&val)
+{
+      assert(arr->vals != 0);
+      assert(arr->nets == 0);
+
+      if (address >= arr->vals->get_size())
+	    return;
+
+      arr->vals->set_word(address, val);
+      array_word_change(arr, address);
+}
+
 vvp_vector4_t array_get_word(vvp_array_t arr, unsigned address)
 {
       if (arr->vals4) {
@@ -1127,6 +1139,28 @@ double array_get_word_r(vvp_array_t arr, unsigned address)
       double val = sig->real_value();
       return val;
 
+}
+
+void array_get_word_obj(vvp_array_t arr, unsigned address, vvp_object_t&val)
+{
+      if (arr->vals) {
+	    assert(arr->vals4 == 0);
+	    assert(arr->nets  == 0);
+	      // In this context, address out of bounds returns 0.0
+	      // instead of an error.
+	    if (address >= arr->vals->get_size()) {
+		  val = vvp_object_t();
+		  return;
+	    }
+
+	    arr->vals->get_word(address, val);
+	    return;
+      }
+
+      assert(arr->nets);
+	// Arrays of string nets not implemented!
+      assert(0);
+      return;
 }
 
 string array_get_word_str(vvp_array_t arr, unsigned address)
@@ -1345,6 +1379,23 @@ void compile_string_array(char*label, char*name, int last, int first)
 
 	/* Make the words. */
       arr->vals = new vvp_darray_string(arr->array_count);
+      arr->vals_width = 1;
+
+      count_real_arrays += 1;
+      count_real_array_words += arr->array_count;
+
+      free(label);
+      delete[] name;
+}
+
+void compile_object_array(char*label, char*name, int last, int first)
+{
+      vpiHandle obj = vpip_make_array(label, name, first, last, true);
+
+      struct __vpiArray*arr = dynamic_cast<__vpiArray*>(obj);
+
+	/* Make the words. */
+      arr->vals = new vvp_darray_object(arr->array_count);
       arr->vals_width = 1;
 
       count_real_arrays += 1;

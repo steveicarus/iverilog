@@ -1066,7 +1066,19 @@ static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 		 as an object and assign the entire object to the
 		 variable. */
 	    errors += draw_eval_object(rval);
-	    fprintf(vvp_out, "    %%store/obj v%p_0;\n", sig);
+
+	    if (ivl_signal_array_count(sig) > 1) {
+		  unsigned ix;
+		  ivl_expr_t aidx = ivl_lval_idx(lval);
+
+		  draw_eval_expr_into_integer(aidx, (ix = allocate_word()));
+		  fprintf(vvp_out, "    %%store/obja v%p, %u;\n", sig, ix);
+		  clr_word(ix);
+
+	    } else {
+		    /* Not an array, so no index expression */
+		  fprintf(vvp_out, "    %%store/obj v%p_0;\n", sig);
+	    }
       }
 
       return errors;

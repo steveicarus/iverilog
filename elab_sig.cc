@@ -1222,13 +1222,12 @@ NetNet* PWire::elaborate_sig(Design*des, NetScope*scope) const
 	    }
 	    ivl_assert(*this, use_type);
 	    if (debug_elaborate) {
-		  cerr << get_fileline() << ": debug: "
+		  cerr << get_fileline() << ": PWire::elaborate_sig: "
 		       << "Create class instance signal " << wtype
-		       << " " << name_ << endl;
+		       << " " << packed_dimensions << name_ << unpacked_dimensions << endl;
 	    }
-	      // (No arrays of classes)
-	    list<netrange_t> use_unpacked;
-	    sig = new NetNet(scope, name_, wtype, use_unpacked, use_type);
+
+	    sig = new NetNet(scope, name_, wtype, unpacked_dimensions, use_type);
 
       } else if (struct_type_t*struct_type = dynamic_cast<struct_type_t*>(set_data_type_)) {
 	      // If this is a struct type, then build the net with the

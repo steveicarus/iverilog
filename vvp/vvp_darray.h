@@ -42,6 +42,9 @@ class vvp_darray : public vvp_object {
 
       virtual void set_word(unsigned adr, const std::string&value);
       virtual void get_word(unsigned adr, std::string&value);
+
+      virtual void set_word(unsigned adr, const vvp_object_t&value);
+      virtual void get_word(unsigned adr, vvp_object_t&value);
 };
 
 template <class TYPE> class vvp_darray_atom : public vvp_darray {
@@ -86,6 +89,19 @@ class vvp_darray_string : public vvp_darray {
       std::vector<std::string> array_;
 };
 
+class vvp_darray_object : public vvp_darray {
+
+    public:
+      inline vvp_darray_object(size_t siz) : array_(siz) { }
+      ~vvp_darray_object();
+
+      size_t get_size(void) const;
+      void set_word(unsigned adr, const vvp_object_t&value);
+      void get_word(unsigned adr, vvp_object_t&value);
+
+    private:
+      std::vector<vvp_object_t> array_;
+};
 
 class vvp_queue : public vvp_darray {
 

@@ -3531,6 +3531,23 @@ bool of_LOAD_OBJ(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
+bool of_LOAD_OBJA(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx = cp->bit_idx[0];
+      unsigned adr = thr->words[idx].w_int;
+      vvp_object_t word;
+
+	/* The result is 0.0 if the address is undefined. */
+      if (thr_get_bit(thr, 4) == BIT4_1) {
+	    ; // Return nil
+      } else {
+	    array_get_word_obj(cp->array, adr, word);
+      }
+
+      thr->push_object(word);
+      return true;
+}
+
 /*
  * %load/real <var-label>
  */
@@ -5445,6 +5462,23 @@ bool of_STORE_OBJ(vthread_t thr, vvp_code_t cp)
 }
 
 /*
+ * %store/obja <array-label> <index>
+ */
+bool of_STORE_OBJA(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx = cp->bit_idx[0];
+      unsigned adr = thr->words[idx].w_int;
+
+      vvp_object_t val;
+      thr->pop_object(val);
+
+      array_set_word(cp->array, adr, val);
+
+      return true;
+}
+
+
+/*
  * %store/prop/obj <id>
  *
  * Pop an object value from the object stack, and store the value into
@@ -5791,6 +5825,27 @@ bool of_TEST_NUL(vthread_t thr, vvp_code_t cp)
       assert(obj);
 
       if (obj->get_object().test_nil())
+	    thr_put_bit(thr, 4, BIT4_1);
+      else
+	    thr_put_bit(thr, 4, BIT4_0);
+
+      return true;
+}
+
+bool of_TEST_NULA(vthread_t thr, vvp_code_t cp)
+{
+      unsigned idx = cp->bit_idx[0];
+      unsigned adr = thr->words[idx].w_int;
+      vvp_object_t word;
+
+	/* If the address is undefined, return true. */
+      if (thr_get_bit(thr, 4) == BIT4_1) {
+	    thr_put_bit(thr, 4, BIT4_1);
+	    return true;
+      }
+
+      array_get_word_obj(cp->array, adr, word);
+      if (word.test_nil())
 	    thr_put_bit(thr, 4, BIT4_1);
       else
 	    thr_put_bit(thr, 4, BIT4_0);

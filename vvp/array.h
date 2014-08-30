@@ -45,9 +45,12 @@ extern void array_set_word(vvp_array_t arr, unsigned idx,
 			   double val);
 extern void array_set_word(vvp_array_t arr, unsigned idx,
 			   const std::string&val);
+extern void array_set_word(vvp_array_t arr, unsigned idx,
+			   const vvp_object_t&val);
 
 extern vvp_vector4_t array_get_word(vvp_array_t array, unsigned address);
 extern double array_get_word_r(vvp_array_t array, unsigned address);
+extern void array_get_word_obj(vvp_array_t array, unsigned address, vvp_object_t&val);
 extern std::string array_get_word_str(vvp_array_t array, unsigned address);
 
 /* VPI hooks */

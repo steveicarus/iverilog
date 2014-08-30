@@ -3113,8 +3113,10 @@ unsigned PEIdent::test_width(Design*des, NetScope*scope, width_mode_t&mode)
 
 
 NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
-				 ivl_type_t ntype, unsigned) const
+				 ivl_type_t ntype, unsigned flags) const
 {
+      bool need_const = NEED_CONST & flags;
+
       NetNet*       net = 0;
       const NetExpr*par = 0;
       NetEvent*     eve = 0;
@@ -3185,7 +3187,69 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
       }
       ivl_assert(*this, ntype->type_compatible(net->net_type()));
 
-      NetESignal*tmp = new NetESignal(net);
+      const name_component_t&use_comp = path_.back();
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_expr: "
+		 << "Typed ident " << net->name()
+		 << " with " << use_comp.index.size() << " indices"
+		 << " and " << net->unpacked_dimensions() << " expected."
+		 << endl;
+      }
+
+      if (net->unpacked_dimensions() != use_comp.index.size()) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "Net " << net->name()
+		 << " expects " << net->unpacked_dimensions()
+		 << ", but got " << use_comp.index.size() << "."
+		 << endl;
+	    des->errors += 1;
+
+	    NetESignal*tmp = new NetESignal(net);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
+      if (net->unpacked_dimensions() == 0) {
+	    NetESignal*tmp = new NetESignal(net);
+	    tmp->set_line(*this);
+	    return tmp;
+      }
+
+	// Convert a set of index expressions to a single expression
+	// that addresses the canonical element.
+      list<NetExpr*>unpacked_indices;
+      list<long> unpacked_indices_const;
+      indices_flags idx_flags;
+      indices_to_expressions(des, scope, this,
+			     use_comp.index, net->unpacked_dimensions(),
+			     need_const,
+			     idx_flags,
+			     unpacked_indices,
+			     unpacked_indices_const);
+
+      NetExpr*canon_index = 0;
+
+      if (idx_flags.invalid) {
+	      // Nothing to do
+
+      } else if (idx_flags.undefined) {
+	    cerr << get_fileline() << ": warning: "
+		 << "returning 'bx for undefined array access "
+		 << net->name() << as_indices(unpacked_indices)
+		 << "." << endl;
+
+      } else if (idx_flags.variable) {
+	    ivl_assert(*this, unpacked_indices.size() == net->unpacked_dimensions());
+	    canon_index = normalize_variable_unpacked(net, unpacked_indices);
+
+      } else {
+	    ivl_assert(*this, unpacked_indices_const.size() == net->unpacked_dimensions());
+	    canon_index = normalize_variable_unpacked(net, unpacked_indices_const);
+      }
+
+      ivl_assert(*this, canon_index);
+      NetESignal*tmp = new NetESignal(net, canon_index);
       tmp->set_line(*this);
 
       return tmp;
