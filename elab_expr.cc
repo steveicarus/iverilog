@@ -3359,6 +3359,12 @@ NetExpr* PEIdent::elaborate_expr_method_(Design*des, NetScope*scope,
 	    return 0;
       }
 
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PEIdent::elaborate_expr_method_: "
+		 << "Give up trying to find method " << member_name
+		 << " of " << path_ << "." << endl;
+      }
+
       return 0;
 }
 
