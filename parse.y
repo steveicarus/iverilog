@@ -3456,11 +3456,14 @@ expr_primary
   | '{' '}'
       { // This is the empty queue syntax.
 	if (gn_system_verilog()) {
-	      yyerror(@1, "sorry: Expty queue expressions not supported.");
+	      list<PExpr*> empty_list;
+	      PEConcat*tmp = new PEConcat(empty_list);
+	      FILE_NAME(tmp, @1);
+	      $$ = tmp;
 	} else {
 	      yyerror(@1, "error: Concatenations are not allowed to be empty.");
+	      $$ = 0;
 	}
-	$$ = 0;
       }
 
   /* Cast expressions are primaries */

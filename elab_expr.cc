@@ -2497,6 +2497,24 @@ unsigned PEConcat::test_width(Design*des, NetScope*scope, width_mode_t&)
 // Keep track of the concatenation/repeat depth.
 static int concat_depth = 0;
 
+NetExpr* PEConcat::elaborate_expr(Design*, NetScope*,
+				  ivl_type_t type, unsigned /*flags*/) const
+{
+      switch (type->base_type()) {
+	  case IVL_VT_QUEUE:
+	    if (parms_.size() == 0) {
+		  NetENull*tmp = new NetENull;
+		  tmp->set_line(*this);
+		  return tmp;
+	    }
+	  default:
+	    cerr << get_fileline() << ": internal error: "
+		 << "I don't know how to elaborate(ivl_type_t)"
+		 << " this expression: " << *this << endl;
+	    return 0;
+      }
+}
+
 NetExpr* PEConcat::elaborate_expr(Design*des, NetScope*scope,
 				  unsigned expr_wid, unsigned flags) const
 {

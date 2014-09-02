@@ -976,6 +976,30 @@ static int show_stmt_assign_sig_darray(ivl_statement_t net)
       return errors;
 }
 
+static int show_stmt_assign_sig_queue(ivl_statement_t net)
+{
+      int errors = 0;
+      ivl_lval_t lval = ivl_stmt_lval(net, 0);
+      ivl_expr_t rval = ivl_stmt_rval(net);
+      ivl_signal_t var= ivl_lval_sig(lval);
+      ivl_type_t var_type= ivl_signal_net_type(var);
+      assert(ivl_type_base(var_type) == IVL_VT_QUEUE);
+
+      switch (ivl_expr_type(rval)) {
+	  case IVL_EX_NULL:
+	    errors += draw_eval_object(rval);
+	    break;
+	  default:
+	    fprintf(stderr, "XXXX: I don't know how to handle expr_type=%d here\n", ivl_expr_type(rval));
+	    fprintf(vvp_out, " ; XXXX expr_type=%d\n", ivl_expr_type(rval));
+	    errors += 1;
+	    break;
+      }
+
+      fprintf(vvp_out, "    %%store/obj v%p_0;\n", var);
+      return errors;
+}
+
 static int show_stmt_assign_sig_cobject(ivl_statement_t net)
 {
       int errors = 0;
@@ -1104,6 +1128,10 @@ int show_stmt_assign(ivl_statement_t net)
 
       if (sig && (ivl_signal_data_type(sig) == IVL_VT_DARRAY)) {
 	    return show_stmt_assign_sig_darray(net);
+      }
+
+      if (sig && (ivl_signal_data_type(sig) == IVL_VT_QUEUE)) {
+	    return show_stmt_assign_sig_queue(net);
       }
 
       if (sig && (ivl_signal_data_type(sig) == IVL_VT_CLASS)) {
