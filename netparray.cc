@@ -22,6 +22,10 @@
 
 using namespace std;
 
+netsarray_t::~netsarray_t()
+{
+}
+
 netparray_t::~netparray_t()
 {
 }
@@ -34,8 +38,8 @@ long netparray_t::packed_width(void) const
 {
       long cur_width = element_type()->packed_width();
 
-      for (vector<netrange_t>::const_iterator cur = packed_dims_.begin()
-		 ; cur != packed_dims_.end() ; ++cur) {
+      for (vector<netrange_t>::const_iterator cur = static_dimensions().begin()
+		 ; cur != static_dimensions().end() ; ++cur) {
 	    cur_width *= cur->width();
       }
 
@@ -44,14 +48,20 @@ long netparray_t::packed_width(void) const
 
 vector<netrange_t> netparray_t::slice_dimensions() const
 {
+      const vector<netrange_t>&packed_dims = static_dimensions();
+
       vector<netrange_t> elem_dims = element_type()->slice_dimensions();
 
-      vector<netrange_t> res (packed_dims_.size() + elem_dims.size());
+      vector<netrange_t> res (packed_dims.size() + elem_dims.size());
 
-      for (size_t idx = 0 ; idx < packed_dims_.size() ; idx += 1)
-	    res[idx] = packed_dims_[idx];
+      for (size_t idx = 0 ; idx < packed_dims.size() ; idx += 1)
+	    res[idx] = packed_dims[idx];
       for (size_t idx = 0 ; idx < elem_dims.size() ; idx += 1)
-	    res[idx+packed_dims_.size()] = elem_dims[idx];
+	    res[idx+packed_dims.size()] = elem_dims[idx];
 
       return res;
+}
+
+netuarray_t::~netuarray_t()
+{
 }

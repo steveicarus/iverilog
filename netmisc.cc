@@ -22,6 +22,7 @@
 # include  <cstdlib>
 # include  <climits>
 # include  "netlist.h"
+# include  "netparray.h"
 # include  "netvector.h"
 # include  "netmisc.h"
 # include  "PExpr.h"
@@ -526,10 +527,8 @@ static void make_strides(const vector<netrange_t>&dims,
  * word. If any of the indices are out of bounds, return nil instead
  * of an expression.
  */
-NetExpr* normalize_variable_unpacked(const NetNet*net, list<long>&indices)
+static NetExpr* normalize_variable_unpacked(const vector<netrange_t>&dims, list<long>&indices)
 {
-      const vector<netrange_t>&dims = net->unpacked_dims();
-
 	// Make strides for each index. The stride is the distance (in
 	// words) to the next element in the canonical array.
       vector<long> stride (dims.size());
@@ -559,10 +558,20 @@ NetExpr* normalize_variable_unpacked(const NetNet*net, list<long>&indices)
       return canonical_expr;
 }
 
-NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
+NetExpr* normalize_variable_unpacked(const NetNet*net, list<long>&indices)
 {
       const vector<netrange_t>&dims = net->unpacked_dims();
+      return normalize_variable_unpacked(dims, indices);
+}
 
+NetExpr* normalize_variable_unpacked(const netsarray_t*stype, list<long>&indices)
+{
+      const vector<netrange_t>&dims = stype->static_dimensions();
+      return normalize_variable_unpacked(dims, indices);
+}
+
+NetExpr* normalize_variable_unpacked(const LineInfo&loc, const vector<netrange_t>&dims, list<NetExpr*>&indices)
+{
 	// Make strides for each index. The stride is the distance (in
 	// words) to the next element in the canonical array.
       vector<long> stride (dims.size());
@@ -602,7 +611,7 @@ NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
 	    if (use_stride != 1)
 		  min_wid += num_bits(use_stride);
 
-	    tmp = pad_to_width(tmp, min_wid, *net);
+	    tmp = pad_to_width(tmp, min_wid, loc);
 
 	      // Now generate the math to calculate the canonical address.
 	    NetExpr*tmp_scaled = 0;
@@ -641,9 +650,21 @@ NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
 	// If we don't have an expression at this point, all the indices were
 	// constant zero. But this variant of normalize_variable_unpacked()
 	// is only used when at least one index is not a constant.
-	ivl_assert(*net, canonical_expr);
+	ivl_assert(loc, canonical_expr);
 
       return canonical_expr;
+}
+
+NetExpr* normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices)
+{
+      const vector<netrange_t>&dims = net->unpacked_dims();
+      return normalize_variable_unpacked(*net, dims, indices);
+}
+
+NetExpr* normalize_variable_unpacked(const LineInfo&loc, const netsarray_t*stype, list<NetExpr*>&indices)
+{
+      const vector<netrange_t>&dims = stype->static_dimensions();
+      return normalize_variable_unpacked(loc, dims, indices);
 }
 
 NetEConst* make_const_x(unsigned long wid)
@@ -883,6 +904,48 @@ NetExpr* elab_sys_task_arg(Design*des, NetScope*scope, perm_string name,
       }
 
       return tmp;
+}
+
+bool evaluate_ranges(Design*des, NetScope*scope,
+		     vector<netrange_t>&llist,
+		     const list<pform_range_t>&rlist)
+{
+      bool bad_msb = false, bad_lsb = false;
+
+      for (list<pform_range_t>::const_iterator cur = rlist.begin()
+		 ; cur != rlist.end() ; ++cur) {
+	    long use_msb, use_lsb;
+
+	    NetExpr*texpr = elab_and_eval(des, scope, cur->first, -1, true);
+	    if (! eval_as_long(use_msb, texpr)) {
+		  cerr << cur->first->get_fileline() << ": error: "
+			"Range expressions must be constant." << endl;
+		  cerr << cur->first->get_fileline() << "       : "
+			"This MSB expression violates the rule: "
+		       << *cur->first << endl;
+		  des->errors += 1;
+		  bad_msb = true;
+	    }
+
+	    delete texpr;
+
+	    texpr = elab_and_eval(des, scope, cur->second, -1, true);
+	    if (! eval_as_long(use_lsb, texpr)) {
+		  cerr << cur->second->get_fileline() << ": error: "
+			"Range expressions must be constant." << endl;
+		  cerr << cur->second->get_fileline() << "       : "
+			"This LSB expression violates the rule: "
+		       << *cur->second << endl;
+		  des->errors += 1;
+		  bad_lsb = true;
+	    }
+
+	    delete texpr;
+
+	    llist.push_back(netrange_t(use_msb, use_lsb));
+      }
+
+      return bad_msb | bad_lsb;
 }
 
 void eval_expr(NetExpr*&expr, int context_width)

@@ -21,6 +21,8 @@
 
 # include  "netlist.h"
 
+class netsarray_t;
+
 /*
  * Search for a symbol using the "start" scope as the starting
  * point. If the path includes a scope part, then locate the
@@ -184,7 +186,10 @@ extern void indices_to_expressions(Design*des, NetScope*scope,
 				   list<NetExpr*>&indices,list<long>&indices_const);
 
 extern NetExpr*normalize_variable_unpacked(const NetNet*net, list<long>&indices);
+extern NetExpr*normalize_variable_unpacked(const netsarray_t*net, list<long>&indices);
+
 extern NetExpr*normalize_variable_unpacked(const NetNet*net, list<NetExpr*>&indices);
+extern NetExpr*normalize_variable_unpacked(const LineInfo&loc, const netsarray_t*net, list<NetExpr*>&indices);
 
 /*
  * This function takes as input a NetNet signal and adds a constant
@@ -278,6 +283,9 @@ extern NetExpr* elaborate_rval_expr(Design*des, NetScope*scope,
 				    unsigned lv_width, PExpr*expr,
                                     bool need_const =false);
 
+extern bool evaluate_ranges(Design*des, NetScope*scope,
+			    std::vector<netrange_t>&llist,
+			    const std::list<pform_range_t>&rlist);
 /*
  * This procedure evaluates an expression and if the evaluation is
  * successful the original expression is replaced with the new one.

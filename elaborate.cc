@@ -40,6 +40,7 @@
 # include  "netlist.h"
 # include  "netvector.h"
 # include  "netdarray.h"
+# include  "netparray.h"
 # include  "netclass.h"
 # include  "netmisc.h"
 # include  "util.h"
@@ -2290,6 +2291,14 @@ NetAssign_* PAssign_::elaborate_lval(Design*des, NetScope*scope) const
 	    NetAssign_*lv = new NetAssign_(tmp);
 	    return lv;
       }
+
+      if (debug_elaborate) {
+	    cerr << get_fileline() << ": PAssign_::elaborate_lval: "
+		 << "lval_ = " << *lval_ << endl;
+	    cerr << get_fileline() << ": PAssign_::elaborate_lval: "
+		 << "lval_ expr type = " << typeid(*lval_).name() << endl;
+      }
+
       return lval_->elaborate_lval(des, scope, false, false);
 }
 
@@ -2517,6 +2526,22 @@ NetProc* PAssign::elaborate(Design*des, NetScope*scope) const
 	    ivl_type_t use_lv_type = lv_net_type;
 	    if (lv->word())
 		  use_lv_type = dtype->element_type();
+
+	    rv = elaborate_rval_(des, scope, use_lv_type);
+
+      } else if (const netuarray_t*utype = dynamic_cast<const netuarray_t*>(lv_net_type)) {
+	    ivl_assert(*this, lv->more==0);
+	    if (debug_elaborate) {
+		  if (lv->word())
+			cerr << get_fileline() << ": PAssign::elaborate: "
+			     << "lv->word() = " << *lv->word() << endl;
+		  else
+			cerr << get_fileline() << ": PAssign::elaborate: "
+			     << "lv->word() = <nil>" << endl;
+	    }
+	    ivl_type_t use_lv_type = lv_net_type;
+	    ivl_assert(*this, lv->word());
+	    use_lv_type = utype->element_type();
 
 	    rv = elaborate_rval_(des, scope, use_lv_type);
 
@@ -4595,6 +4620,16 @@ NetProc* PForeach::elaborate(Design*des, NetScope*scope) const
       pform_name_t array_name;
       array_name.push_back(name_component_t(array_var_));
       NetNet*array_sig = des->find_signal(scope, array_name);
+
+      if (array_sig == 0) {
+	    cerr << get_fileline() << ": error:"
+		 << " Unable to find " << array_name
+		 << " in scope " << scope_path(scope)
+		 << "." << endl;
+	    des->errors += 1;
+	    return 0;
+      }
+
       ivl_assert(*this, array_sig);
 
       if (debug_elaborate) {
