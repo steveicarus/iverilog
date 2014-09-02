@@ -434,6 +434,7 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
       class_scope->set_line(pclass);
       class_scope->set_class_def(use_class);
       use_class->set_class_scope(class_scope);
+      use_class->set_definition_scope(scope);
 
 	// Collect the properties, elaborate them, and add them to the
 	// elaborated class definition.
