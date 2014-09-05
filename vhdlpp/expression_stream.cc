@@ -29,6 +29,9 @@ void ExpAggregate::write_to_stream(ostream&fd)
       fd << "(";
       for (vector<element_t*>::const_iterator cur = elements_.begin()
 		 ; cur != elements_.end() ; ++cur) {
+            if(cur != elements_.begin())
+                fd << ", ";
+
 	    (*cur)->write_to_stream(fd);
       }
       fd << ")";
