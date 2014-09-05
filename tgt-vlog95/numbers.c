@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2012 Cary R. (cygcary@yahoo.com)
+ * Copyright (C) 2011-2014 Cary R. (cygcary@yahoo.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+# include <math.h>
 # include <stdlib.h>
 # include <string.h>
 # include "config.h"
@@ -168,18 +169,19 @@ void emit_number(const char *bits, unsigned nbits, unsigned is_signed,
 void emit_real_number(double value)
 {
 	/* Check for NaN. */
-      if (value != value) {
+      if (isnan(value)) {
 	    fprintf(vlog_out, "(0.0/0.0)");
 	    return;
       }
 	/* Check for the infinities. */
-      if (value && value == 0.5*value) {
-	    if (value > 0) fprintf(vlog_out, "(1.0/0.0)");
-	    else fprintf(vlog_out, "(-1.0/0.0)");
+      if (isinf(value)) {
+	    if (signbit(value)) fprintf(vlog_out, "(-1.0/0.0)");
+	    else fprintf(vlog_out, "(1.0/0.0)");
 	    return;
       }
+	/* Check for +/- zero. */
       if (value == 0.0) {
-	    if (1.0/value < 0.0) fprintf(vlog_out, "-0.0");
+	    if (signbit(value)) fprintf(vlog_out, "-0.0");
 	    else fprintf(vlog_out, "0.0");
       } else {
 	    char buffer[32];
