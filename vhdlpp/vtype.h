@@ -240,6 +240,7 @@ class VTypeEnum : public VType {
       VTypeEnum(const std::list<perm_string>*names);
       ~VTypeEnum();
 
+      void write_to_stream(std::ostream&fd) const;
       void show(std::ostream&) const;
       int emit_def(std::ostream&out, perm_string name) const;
 

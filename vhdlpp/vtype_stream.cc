@@ -148,3 +148,18 @@ void VTypeRecord::element_t::write_to_stream(ostream&fd) const
       fd << name_ << ": ";
       type_->write_to_stream(fd);
 }
+
+void VTypeEnum::write_to_stream(std::ostream&fd) const
+{
+      fd << "(";
+      for (vector<perm_string>::const_iterator it = names_.begin();
+        it != names_.end(); ++it) {
+            if(it != names_.begin())
+                fd << ",";
+
+            fd << *it;
+
+      }
+      fd << ")";
+}
+
