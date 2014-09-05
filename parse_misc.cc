@@ -53,6 +53,7 @@ void VLerror(const YYLTYPE&loc, const char*msg, ...)
 
       fprintf(stderr, "%s:%d: ", loc.text, loc.first_line);
       vfprintf(stderr, msg, ap);
+      va_end(ap);
       fprintf(stderr, "\n");
 
       error_count += 1;
