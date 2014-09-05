@@ -84,7 +84,8 @@ class netclass_t : public ivl_type_s {
 
       bool test_for_missing_initializers(void) const;
 
-	// Map the name of a property to its index.
+	// Map the name of a property to its index. Return <0 if the
+	// name is not a property in the class.
       int property_idx_from_name(perm_string pname) const;
 
 	// The task method scopes from the method name.

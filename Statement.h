@@ -455,7 +455,7 @@ class PForeach : public Statement {
 
     private:
       NetProc* elaborate_static_array_(Design*des, NetScope*scope,
-				       NetNet*array_sig) const;
+				       const std::vector<netrange_t>&dims) const;
 
     private:
       perm_string array_var_;
