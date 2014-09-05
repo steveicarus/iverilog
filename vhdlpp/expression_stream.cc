@@ -112,9 +112,14 @@ void ExpAttribute::write_to_stream(ostream&)
       ivl_assert(*this, !"Not supported");
 }
 
-void ExpBitstring::write_to_stream(ostream&)
+void ExpBitstring::write_to_stream(ostream&fd)
 {
-      ivl_assert(*this, !"Not supported");
+      fd << "\"";
+      for(vector<char>::const_iterator it = value_.begin();
+        it != value_.end(); ++it) {
+          fd << *it;
+      }
+      fd << "\"";
 }
 
 void ExpCharacter::write_to_stream(ostream&fd)
