@@ -203,9 +203,14 @@ void ExpRelation::write_to_stream(ostream&)
       ivl_assert(*this, !"Not supported");
 }
 
-void ExpString::write_to_stream(ostream&)
+void ExpString::write_to_stream(ostream&fd)
 {
-      ivl_assert(*this, !"Not supported");
+    fd << "\"";
+    for(vector<char>::const_iterator it = value_.begin();
+      it != value_.end(); ++it) {
+        fd << *it;
+    }
+    fd << "\"";
 }
 
 void ExpUAbs::write_to_stream(ostream&fd)
