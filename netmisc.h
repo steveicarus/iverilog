@@ -310,6 +310,13 @@ extern hname_t eval_path_component(Design*des, NetScope*scope,
 				   bool&error_flag);
 
 /*
+ * If this scope is contained within a class scope (i.e. a method of a
+ * class) then return the class definition that contains it.
+ */
+extern const netclass_t*find_class_containing_scope(const LineInfo&loc,const NetScope*scope);
+extern NetScope* find_method_containing_scope(const LineInfo&log, NetScope*scope);
+
+/*
  * Return true if the data type is a type that is normally available
  * in vector for. IVL_VT_BOOL and IVL_VT_LOGIC are vectorable,
  * IVL_VT_REAL is not.

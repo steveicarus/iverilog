@@ -4607,17 +4607,10 @@ NetForce* PForce::elaborate(Design*des, NetScope*scope) const
 
 static void find_property_in_class(const LineInfo&loc, const NetScope*scope, perm_string name, const netclass_t*&found_in, int&property)
 {
-	// Search up for the containing class.
-      while (scope && scope->type() != NetScope::CLASS)
-	    scope = scope->parent();
-
-      found_in = 0;
+      found_in = find_class_containing_scope(loc, scope);
       property = -1;
 
-      if (scope==0) return;
-
-      found_in = scope->class_def();
-      ivl_assert(loc, found_in);
+      if (found_in==0) return;
 
       property = found_in->property_idx_from_name(name);
       if (property < 0) {

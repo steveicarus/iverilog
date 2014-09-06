@@ -3146,6 +3146,10 @@ NetExpr* PEIdent::elaborate_expr(Design*des, NetScope*scope,
 	    ivl_assert(*this, use_scope);
       }
 
+      if (NetExpr* tmp = elaborate_expr_class_member_(des, scope, 0, flags)) {
+	    return tmp;
+      }
+
       /* NetScope*found_in = */ symbol_search(this, des, use_scope, path_,
 					      net, par, eve,
 					      ex1, ex2);
@@ -3289,7 +3293,7 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
       if (path_.size() != 1)
 	    return 0;
 
-      const netclass_t*class_type = scope->parent()->class_def();
+      const netclass_t*class_type = find_class_containing_scope(*this, scope);
       if (class_type == 0)
 	    return 0;
 
@@ -3298,10 +3302,13 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
       if (pidx < 0)
 	    return 0;
 
-      NetNet*this_net = scope->find_signal(perm_string::literal("@"));
+      NetScope*scope_method = find_method_containing_scope(*this, scope);
+      ivl_assert(*this, scope_method);
+
+      NetNet*this_net = scope_method->find_signal(perm_string::literal("@"));
       if (this_net == 0) {
 	    cerr << get_fileline() << ": internal error: "
-		 << "Unable to find 'this' port of " << scope_path(scope)
+		 << "Unable to find 'this' port of " << scope_path(scope_method)
 		 << "." << endl;
 	    return 0;
       }

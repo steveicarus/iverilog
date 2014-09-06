@@ -1496,3 +1496,36 @@ NetPartSelect* detect_partselect_lval(Link&pin)
 
       return found_ps;
 }
+
+const netclass_t* find_class_containing_scope(const LineInfo&loc, const NetScope*scope)
+{
+      while (scope && scope->type() != NetScope::CLASS)
+	    scope = scope->parent();
+
+      if (scope == 0)
+	    return 0;
+
+      const netclass_t*found_in = scope->class_def();
+      ivl_assert(loc, found_in);
+      return found_in;
+}
+/*
+ * Find the scope that contains this scope, that is the method for a
+ * class scope. Look for the scope whose PARENT is the scope for a
+ * class. This is going to be a method.
+ */
+NetScope* find_method_containing_scope(const LineInfo&, NetScope*scope)
+{
+      NetScope*up = scope->parent();
+
+      while (up && up->type() != NetScope::CLASS) {
+	    scope = up;
+	    up = up->parent();
+      }
+
+      if (up == 0) return 0;
+
+	// Should I check if this scope is a TASK or FUNC?
+
+      return scope;
+}

@@ -651,6 +651,11 @@ void dll_target::expr_ufunc(const NetEUFunc*net)
       FILE_NAME(expr, net);
 
       expr->u_.ufunc_.def = lookup_scope_(net->func());
+      if (expr->u_.ufunc_.def == 0) {
+	    cerr << net->get_fileline() << ": internal error: "
+		 << "dll_target::expr_ufunc: "
+		 << "Unable to match scope " << scope_path(net->func()) << endl;
+      }
       ivl_assert(*net, expr->u_.ufunc_.def);
       ivl_assert(*net, expr->u_.ufunc_.def->type_ == IVL_SCT_FUNCTION);
 
