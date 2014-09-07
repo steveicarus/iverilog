@@ -409,14 +409,13 @@ void NetRepeat::emit_recurse(struct target_t*tgt) const
 void netclass_t::emit_scope(struct target_t*tgt) const
 {
       class_scope_->emit_scope(tgt);
-      class_scope_->emit_defs(tgt);
 }
 
 void NetScope::emit_scope(struct target_t*tgt) const
 {
       if (debug_emit) {
 	    cerr << "NetScope::emit_scope: "
-		 << "Emit scope basename=" << basename() << endl;
+		 << "Emit scope " << scope_path(this) << endl;
       }
 
       tgt->scope(this);
@@ -461,11 +460,19 @@ bool NetScope::emit_defs(struct target_t*tgt) const
 {
       bool flag = true;
 
+      if (debug_emit) {
+	    cerr << "NetScope::emit_defs: "
+		 << "Emit definitions for " << scope_path(this) << endl;
+      }
+
       switch (type_) {
 	  case PACKAGE:
 	  case MODULE:
 	    for (map<hname_t,NetScope*>::const_iterator cur = children_.begin()
 		       ; cur != children_.end() ; ++ cur )
+		  flag &= cur->second->emit_defs(tgt);
+	    for (map<perm_string,netclass_t*>::const_iterator cur = classes_.begin()
+		       ; cur != classes_.end() ; ++ cur)
 		  flag &= cur->second->emit_defs(tgt);
 	    break;
 
@@ -483,6 +490,11 @@ bool NetScope::emit_defs(struct target_t*tgt) const
       }
 
       return flag;
+}
+
+bool netclass_t::emit_defs(struct target_t*tgt) const
+{
+      return class_scope_->emit_defs(tgt);
 }
 
 int Design::emit(struct target_t*tgt) const

@@ -105,6 +105,7 @@ class netclass_t : public ivl_type_s {
       void elaborate(Design*des, PClass*pclass);
 
       void emit_scope(struct target_t*tgt) const;
+      bool emit_defs(struct target_t*tgt) const;
 
       void dump_scope(ostream&fd) const;
 
