@@ -1134,9 +1134,13 @@ values into the vector space. The string value is NOT popped.
 
 
 * %test_nul <var-label>
+* %test_nul/obj
 
 This instruction tests the contents of the addressed variable to see
 if it is null. If it is, set bit 4 to 1. Otherwise, set bit 4 to 0.
+
+The %test_null/obj tests the object on the top of the stack, instead
+of any variable. The value in the stack is NOT popped.
 
 This is intended to implement the SystemVerilog expression
 (<var>==null), where <var> is a class variable.

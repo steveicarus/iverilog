@@ -5832,7 +5832,7 @@ bool of_TEST_NUL(vthread_t thr, vvp_code_t cp)
       return true;
 }
 
-bool of_TEST_NULA(vthread_t thr, vvp_code_t cp)
+bool of_TEST_NUL_A(vthread_t thr, vvp_code_t cp)
 {
       unsigned idx = cp->bit_idx[0];
       unsigned adr = thr->words[idx].w_int;
@@ -5850,6 +5850,15 @@ bool of_TEST_NULA(vthread_t thr, vvp_code_t cp)
       else
 	    thr_put_bit(thr, 4, BIT4_0);
 
+      return true;
+}
+
+bool of_TEST_NUL_OBJ(vthread_t thr, vvp_code_t)
+{
+      if (thr->peek_object().test_nil())
+	    thr_put_bit(thr, 4, BIT4_1);
+      else
+	    thr_put_bit(thr, 4, BIT4_0);
       return true;
 }
 

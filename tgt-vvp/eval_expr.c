@@ -527,9 +527,19 @@ static struct vector_info draw_binary_expr_eq_class(ivl_expr_t expr)
 		  ivl_expr_t word_ex = ivl_expr_oper1(le);
 		  int word_ix = allocate_word();
 		  draw_eval_expr_into_integer(word_ex, word_ix);
-		  fprintf(vvp_out, "    %%test_nula v%p, %d;\n", sig, word_ix);
+		  fprintf(vvp_out, "    %%test_nul/a v%p, %d;\n", sig, word_ix);
 		  clr_word(word_ix);
 	    }
+	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n", res.base);
+	    if (ivl_expr_opcode(expr) == 'n')
+		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
+	    return res;
+      }
+
+      if (ivl_expr_type(re) == IVL_EX_NULL && ivl_expr_value(le)==IVL_VT_CLASS) {
+	    draw_eval_object(le);
+	    fprintf(vvp_out, "    %%test_nul/obj;\n");
+	    fprintf(vvp_out, "    %%pop/obj 1, 0;\n");
 	    fprintf(vvp_out, "    %%mov %u, 4, 1;\n", res.base);
 	    if (ivl_expr_opcode(expr) == 'n')
 		  fprintf(vvp_out, "    %%inv %u, 1;\n", res.base);
