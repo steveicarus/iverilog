@@ -328,9 +328,20 @@ PClass* pform_push_class_scope(const struct vlltype&loc, perm_string name)
 
       assert(!pform_cur_generate);
 
+	/* If no scope was found then this is being defined in the
+	 * compilation unit scope. */
+      if (scopex == 0) {
+	    cerr << class_scope->get_fileline() << ": sorry: class "
+	            "declarations in the compilation unit scope are not yet "
+	            "supported." << endl;
+	    error_count += 1;
+	    lexical_scope = class_scope;
+	    return class_scope;
+      }
+
       if (scopex->classes.find(name) != scopex->classes.end()) {
 	    cerr << class_scope->get_fileline() << ": error: duplicate "
-		  " definition for class '" << name << "' in '"
+		  "definition for class '" << name << "' in '"
 		 << scopex->pscope_name() << "'." << endl;
 	    error_count += 1;
       }

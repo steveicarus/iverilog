@@ -1589,6 +1589,7 @@ package_item /* IEEE1800-2005 A.1.10 */
   | function_declaration
   | task_declaration
   | data_declaration
+  | class_declaration
   ;
 
 package_item_list
