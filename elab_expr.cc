@@ -30,6 +30,7 @@
 # include  "netlist.h"
 # include  "netclass.h"
 # include  "netenum.h"
+# include  "netparray.h"
 # include  "netvector.h"
 # include  "discipline.h"
 # include  "netmisc.h"
@@ -3318,7 +3319,8 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
 		 << "Found member " << member_name
 		 << " is a member of class " << class_type->get_name()
 		 << ", context scope=" << scope_path(scope)
-		 << ", so synthesizing a NetEProperty." << endl;
+		 << ", type=" << *class_type->get_prop_type(pidx)
+		 << ", so making a NetEProperty." << endl;
       }
 
       property_qualifier_t qual = class_type->get_prop_qual(pidx);
@@ -3332,6 +3334,13 @@ NetExpr* PEIdent::elaborate_expr_class_member_(Design*des, NetScope*scope,
 
       if (qual.test_static()) {
 	    return class_static_property_expression(this, class_type, member_name);
+      }
+
+      ivl_type_t tmp_type = class_type->get_prop_type(pidx);
+      if (/* const netuarray_t*tmp_ua =*/ dynamic_cast<const netuarray_t*>(tmp_type)) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "Unpacked array properties not supported yet." << endl;
+	    des->errors += 1;
       }
 
       NetEProperty*tmp = new NetEProperty(this_net, member_name);

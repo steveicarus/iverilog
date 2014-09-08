@@ -440,12 +440,13 @@ static void elaborate_scope_class(Design*des, NetScope*scope, PClass*pclass)
 	// elaborated class definition.
       for (map<perm_string, class_type_t::prop_info_t>::iterator cur = use_type->properties.begin()
 		 ; cur != use_type->properties.end() ; ++ cur) {
-	    if (debug_scopes) {
-		  cerr << pclass->get_fileline() << ": elaborate_scope_class: "
-		       << "  Property " << cur->first << endl;
-	    }
 	    ivl_type_s*tmp = cur->second.type->elaborate_type(des, scope);
 	    ivl_assert(*pclass, tmp);
+	    if (debug_scopes) {
+		  cerr << pclass->get_fileline() << ": elaborate_scope_class: "
+		       << "  Property " << cur->first
+		       << " type=" << *tmp << endl;
+	    }
 	    use_class->set_property(cur->first, cur->second.qual, tmp);
       }
 

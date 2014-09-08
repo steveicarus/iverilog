@@ -488,6 +488,13 @@ NetAssign_* PEIdent::elaborate_lval_method_class_member_(Design*des,
 	    }
       }
 
+      ivl_type_t tmp_type = class_type->get_prop_type(pidx);
+      if (const netuarray_t*tmp_ua = dynamic_cast<const netuarray_t*>(tmp_type)) {
+	    cerr << get_fileline() << ": sorry: "
+		 << "Unpacked array properties (l-values) not supported yet." << endl;
+	    des->errors += 1;
+      }
+
       NetAssign_*this_lval = new NetAssign_(this_net);
       this_lval->set_property(member_name);
       if (canon_index) this_lval->set_word(canon_index);
