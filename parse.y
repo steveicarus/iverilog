@@ -263,7 +263,7 @@ static void current_task_set_statement(const YYLTYPE&loc, vector<Statement*>*s)
       if (s == 0) {
 	      /* if the statement list is null, then the parser
 		 detected the case that there are no statements in the
-		 task. If this is System Verilog, handle it as an
+		 task. If this is SystemVerilog, handle it as an
 		 an empty block. */
 	    if (!gn_system_verilog()) {
 		  yyerror(loc, "error: Support for empty tasks requires SystemVerilog.");
@@ -301,7 +301,7 @@ static void current_function_set_statement(const YYLTYPE&loc, vector<Statement*>
       if (s == 0) {
 	      /* if the statement list is null, then the parser
 		 detected the case that there are no statements in the
-		 task. If this is System Verilog, handle it as an
+		 task. If this is SystemVerilog, handle it as an
 		 an empty block. */
 	    if (!gn_system_verilog()) {
 		  yyerror(loc, "error: Support for empty functions requires SystemVerilog.");
@@ -1160,7 +1160,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@11, "error: Function end label require "
-		                 "System Verilog.");
+		                 "SystemVerilog.");
 	      }
 	      delete[]$11;
 	}
@@ -1194,7 +1194,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@14, "error: Function end labels require "
-		                 "System Verilog.");
+		                 "SystemVerilog.");
 	      }
 	      delete[]$14;
 	}
@@ -1221,7 +1221,7 @@ function_declaration /* IEEE1800-2005: A.2.6 */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@8, "error: Function end labels require "
-		                 "System Verilog.");
+		                 "SystemVerilog.");
 	      }
 	      delete[]$8;
 	}
@@ -1755,7 +1755,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@10, "error: Task end labels require "
-		                 "System Verilog.");
+		                 "SystemVerilog.");
 	      }
 	      delete[]$10;
 	}
@@ -1789,7 +1789,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@13, "error: Task end labels require "
-		                 "System Verilog.");
+		                 "SystemVerilog.");
 	      }
 	      delete[]$13;
 	}
@@ -1829,7 +1829,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@12, "error: Task end labels require "
-		                 "System Verilog.");
+		                 "SystemVerilog.");
 	      }
 	      delete[]$12;
 	}
@@ -1852,7 +1852,7 @@ task_declaration /* IEEE1800-2005: A.2.7 */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@7, "error: Task end labels require "
-		                 "System Verilog.");
+		                 "SystemVerilog.");
 	      }
 	      delete[]$7;
 	}
@@ -2061,7 +2061,7 @@ variable_dimension /* IEEE1800-2005: A.2.5 */
 	list<pform_range_t> *tmp = new list<pform_range_t>;
 	pform_range_t index (new PENull,0);
 	if (!gn_system_verilog()) {
-	      yyerror("error: Queue declarations require System Verilog.");
+	      yyerror("error: Queue declarations require SystemVerilog.");
 	}
 	tmp->push_back(index);
 	$$ = tmp;
@@ -4213,7 +4213,7 @@ module
 	      }
 	      if (($2 == K_module) && (! gn_system_verilog())) {
 		    yyerror(@8, "error: Module end labels require "
-		                 "System Verilog.");
+		                 "SystemVerilog.");
 	      }
 	      delete[]$16;
 	}
@@ -4641,7 +4641,7 @@ module_item
 		  if ($4) {
 			if (!gn_system_verilog()) {
 			      yyerror(@4, "error: Function end names require "
-			                  "System Verilog.");
+			                  "SystemVerilog.");
 			}
 			delete[]$4;
 		  }
@@ -4713,7 +4713,7 @@ generate_block
                      }
                      if (! gn_system_verilog()) {
                            yyerror(@6, "error: Begin end labels require "
-                                       "System Verilog.");
+                                       "SystemVerilog.");
                      }
                      delete[]$6;
                }
@@ -5705,7 +5705,7 @@ statement_item /* This is roughly statement_item in the LRM */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@8, "error: Begin end labels require "
-		                "System Verilog.");
+		                "SystemVerilog.");
 	      }
 	      delete[]$8;
 	}
@@ -5780,7 +5780,7 @@ statement_item /* This is roughly statement_item in the LRM */
 	      }
 	      if (! gn_system_verilog()) {
 		    yyerror(@8, "error: Fork end labels require "
-		                "System Verilog.");
+		                "SystemVerilog.");
 	      }
 	      delete[]$8;
 	}
@@ -6449,7 +6449,7 @@ udp_primitive
 			}
 			if (! gn_system_verilog()) {
 			      yyerror(@11, "error: Primitive end labels "
-			                   "require System Verilog.");
+			                   "require SystemVerilog.");
 			}
 			delete[]$11;
 		  }
@@ -6476,7 +6476,7 @@ udp_primitive
 			}
 			if (! gn_system_verilog()) {
 			      yyerror(@14, "error: Primitive end labels "
-			                   "require System Verilog.");
+			                   "require SystemVerilog.");
 			}
 			delete[]$14;
 		  }

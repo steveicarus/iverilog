@@ -21,7 +21,7 @@ code. To convert a design to blif, use this command:
 
     iverilog -tblif -o<path>.blif  <source files>...
 
-The source files can be Verilog, System Verilog, VHDL, whatever Icarus
+The source files can be Verilog, SystemVerilog, VHDL, whatever Icarus
 Verilog supports, so long as it elaborates down to the limited subset
 that the code generator supports. In other words, the files must be
 structural.
